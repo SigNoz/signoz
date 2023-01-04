@@ -8,8 +8,8 @@ import (
 	"github.com/smartystreets/assertions/should"
 
 	. "github.com/smartystreets/goconvey/convey"
-	"go.signoz.io/query-service/app/metrics"
-	"go.signoz.io/query-service/model"
+	"go.signoz.io/signoz/pkg/query-service/app/metrics"
+	"go.signoz.io/signoz/pkg/query-service/model"
 )
 
 func TestParseFilterSingleFilter(t *testing.T) {
@@ -23,7 +23,7 @@ func TestParseFilterSingleFilter(t *testing.T) {
 		req, _ := http.NewRequest("POST", "", bytes.NewReader(postBody))
 		res, _ := parseFilterSet(req)
 		query, _ := metrics.BuildMetricsTimeSeriesFilterQuery(res, []string{}, "table", model.NOOP)
-		So(query, ShouldContainSubstring, "signoz_metrics.time_series_v2 WHERE metric_name = 'table' AND labels_object.namespace = 'a'")
+		So(query, ShouldContainSubstring, "signoz_metrics.time_series_v2 WHERE metric_name = 'table' AND JSONExtractString(labels, 'namespace') = 'a'")
 	})
 }
 
@@ -39,8 +39,8 @@ func TestParseFilterMultipleFilter(t *testing.T) {
 		req, _ := http.NewRequest("POST", "", bytes.NewReader(postBody))
 		res, _ := parseFilterSet(req)
 		query, _ := metrics.BuildMetricsTimeSeriesFilterQuery(res, []string{}, "table", model.NOOP)
-		So(query, should.ContainSubstring, "labels_object.host IN ['host-1','host-2']")
-		So(query, should.ContainSubstring, "labels_object.namespace = 'a'")
+		So(query, should.ContainSubstring, "JSONExtractString(labels, 'host') IN ['host-1','host-2']")
+		So(query, should.ContainSubstring, "JSONExtractString(labels, 'namespace') = 'a'")
 	})
 }
 

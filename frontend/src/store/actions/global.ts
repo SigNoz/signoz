@@ -2,6 +2,7 @@ import { Time } from 'container/TopNav/DateTimeSelection/config';
 import GetMinMax from 'lib/getMinMax';
 import { Dispatch } from 'redux';
 import AppActions from 'types/actions';
+import { UPDATE_TIME_INTERVAL } from 'types/actions/globalTime';
 
 export const UpdateTimeInterval = (
 	interval: Time,
@@ -11,7 +12,7 @@ export const UpdateTimeInterval = (
 		const { maxTime, minTime } = GetMinMax(interval, dateTimeRange);
 
 		dispatch({
-			type: 'UPDATE_TIME_INTERVAL',
+			type: UPDATE_TIME_INTERVAL,
 			payload: {
 				maxTime,
 				minTime,

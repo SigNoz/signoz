@@ -1,4 +1,4 @@
-import { Alerts } from './getAll';
+import { AlertDef } from './def';
 
 export interface Props {
 	silenced: boolean;
@@ -7,8 +7,8 @@ export interface Props {
 	[key: string]: string | boolean;
 }
 export interface Group {
-	alerts: Alerts[];
-	label: Alerts['labels'];
+	alerts: AlertDef[];
+	label: AlertDef['labels'];
 	receiver: {
 		[key: string]: string;
 	};

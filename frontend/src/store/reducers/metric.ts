@@ -21,7 +21,7 @@ const InitialValue: InitialValueTypes = {
 	services: [],
 	dbOverView: [],
 	externalService: [],
-	topEndPoints: [],
+	topOperations: [],
 	externalAverageDuration: [],
 	externalError: [],
 	serviceOverview: [],
@@ -29,6 +29,7 @@ const InitialValue: InitialValueTypes = {
 	resourceAttributePromQLQuery: resourceAttributesQueryToPromQL(
 		GetResourceAttributeQueriesFromURL() || [],
 	),
+	topLevelOperations: [],
 };
 
 const metrics = (
@@ -88,22 +89,24 @@ const metrics = (
 		case GET_INTIAL_APPLICATION_DATA: {
 			const {
 				// dbOverView,
-				topEndPoints,
+				topOperations,
 				serviceOverview,
 				// externalService,
 				// externalAverageDuration,
 				// externalError,
+				topLevelOperations,
 			} = action.payload;
 
 			return {
 				...state,
 				// dbOverView,
-				topEndPoints,
+				topOperations,
 				serviceOverview,
 				// externalService,
 				// externalAverageDuration,
 				// externalError,
 				metricsApplicationLoading: false,
+				topLevelOperations,
 			};
 		}
 

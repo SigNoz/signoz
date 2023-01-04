@@ -1,10 +1,11 @@
-import { Button } from 'antd';
 import { NotificationInstance } from 'antd/lib/notification/index';
 import deleteAlerts from 'api/alerts/delete';
 import { State } from 'hooks/useFetch';
 import React, { useState } from 'react';
 import { PayloadProps as DeleteAlertPayloadProps } from 'types/api/alerts/delete';
-import { Alerts } from 'types/api/alerts/getAll';
+import { GettableAlert } from 'types/api/alerts/get';
+
+import { ColumnButton } from './styles';
 
 function DeleteAlert({
 	id,
@@ -72,20 +73,20 @@ function DeleteAlert({
 	};
 
 	return (
-		<Button
+		<ColumnButton
 			disabled={deleteAlertState.loading || false}
 			loading={deleteAlertState.loading || false}
 			onClick={(): Promise<void> => onDeleteHandler(id)}
 			type="link"
 		>
 			Delete
-		</Button>
+		</ColumnButton>
 	);
 }
 
 interface DeleteAlertProps {
-	id: Alerts['id'];
-	setData: React.Dispatch<React.SetStateAction<Alerts[]>>;
+	id: GettableAlert['id'];
+	setData: React.Dispatch<React.SetStateAction<GettableAlert[]>>;
 	notifications: NotificationInstance;
 }
 

@@ -35,11 +35,8 @@ export const SettingsPage = Loadable(
 	() => import(/* webpackChunkName: "SettingsPage" */ 'pages/Settings'),
 );
 
-export const InstrumentationPage = Loadable(
-	() =>
-		import(
-			/* webpackChunkName: "InstrumentationPage" */ 'pages/AddInstrumentation'
-		),
+export const GettingStarted = Loadable(
+	() => import(/* webpackChunkName: "GettingStarted" */ 'pages/GettingStarted'),
 );
 
 export const DashboardPage = Loadable(
@@ -100,6 +97,10 @@ export const MySettings = Loadable(
 	() => import(/* webpackChunkName: "All MySettings" */ 'pages/MySettings'),
 );
 
+export const Logs = Loadable(
+	() => import(/* webpackChunkName: "Logs" */ 'pages/Logs'),
+);
+
 export const Login = Loadable(
 	() => import(/* webpackChunkName: "Login" */ 'pages/Login'),
 );
@@ -117,4 +118,8 @@ export const SomethingWentWrong = Loadable(
 		import(
 			/* webpackChunkName: "SomethingWentWrong" */ 'pages/SomethingWentWrong'
 		),
+);
+
+export const LicensePage = Loadable(
+	() => import(/* webpackChunkName: "All Channels" */ 'pages/License'),
 );

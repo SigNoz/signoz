@@ -29,15 +29,15 @@ function PromQLQueryContainer({
 		toggleDelete,
 	}: IPromQLQueryHandleChange): void => {
 		const allQueries = queryData[WIDGET_PROMQL_QUERY_KEY_NAME];
-		const currentIndexQuery = allQueries[queryIndex];
-		if (query) currentIndexQuery.query = query;
-		if (legend) currentIndexQuery.legend = legend;
+		const currentIndexQuery = allQueries[queryIndex as number];
+		if (query !== undefined) currentIndexQuery.query = query;
+		if (legend !== undefined) currentIndexQuery.legend = legend;
 
 		if (toggleDisable) {
 			currentIndexQuery.disabled = !currentIndexQuery.disabled;
 		}
 		if (toggleDelete) {
-			allQueries.splice(queryIndex, 1);
+			allQueries.splice(queryIndex as number, 1);
 		}
 		updateQueryData({ updatedQuery: { ...queryData } });
 	};

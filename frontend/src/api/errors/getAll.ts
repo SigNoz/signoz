@@ -10,9 +10,8 @@ const getAll = async (
 ): Promise<SuccessResponse<PayloadProps> | ErrorResponse> => {
 	try {
 		const response = await axios.get(
-			`/errors?${createQueryParams({
-				start: props.start.toString(),
-				end: props.end.toString(),
+			`/listErrors?${createQueryParams({
+				...props,
 			})}`,
 		);
 

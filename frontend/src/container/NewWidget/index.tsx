@@ -1,6 +1,7 @@
 import { Button, Modal, Typography } from 'antd';
 import ROUTES from 'constants/routes';
 import { GRAPH_TYPES } from 'container/NewDashboard/ComponentsSlider';
+import { getDashboardVariables } from 'lib/dashbaordVariables/getDashboardVariables';
 import history from 'lib/history';
 import { DashboardWidgetPageParams } from 'pages/DashboardWidget';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
@@ -143,6 +144,7 @@ function NewWidget({
 				widgetId: selectedWidget?.id || '',
 				graphType: selectedGraph,
 				globalSelectedInterval,
+				variables: getDashboardVariables(),
 			});
 		}
 	}, [

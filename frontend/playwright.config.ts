@@ -14,8 +14,10 @@ const config: PlaywrightTestConfig = {
 		baseURL: process.env.PLAYWRIGHT_TEST_BASE_URL || 'http://localhost:3301',
 	},
 	updateSnapshots: 'all',
-	fullyParallel: false,
-	quiet: true,
+	fullyParallel: !!process.env.CI,
+	quiet: false,
+	testMatch: ['**/*.spec.ts'],
+	reporter: process.env.CI ? 'github' : 'list',
 };
 
 export default config;

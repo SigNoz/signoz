@@ -57,6 +57,7 @@ function ListOfAllDashboard(): JSX.Element {
 		isImportJSONModalVisible,
 		setIsImportJSONModalVisible,
 	] = useState<boolean>(false);
+	const [uploadedGrafana, setUploadedGrafana] = useState<boolean>(false);
 
 	const [filteredDashboards, setFilteredDashboards] = useState<Dashboard[]>();
 
@@ -137,6 +138,7 @@ function ListOfAllDashboard(): JSX.Element {
 				title: t('new_dashboard_title', {
 					ns: 'dashboard',
 				}),
+				uploadedGrafana: false,
 			});
 
 			if (response.statusCode === 200) {
@@ -182,8 +184,9 @@ function ListOfAllDashboard(): JSX.Element {
 		newDashboardState.loading,
 	]);
 
-	const onModalHandler = (): void => {
+	const onModalHandler = (uploadedGrafana: boolean): void => {
 		setIsImportJSONModalVisible((state) => !state);
+		setUploadedGrafana(uploadedGrafana);
 	};
 
 	const menu = useMemo(
@@ -198,8 +201,17 @@ function ListOfAllDashboard(): JSX.Element {
 						{t('create_dashboard')}
 					</Menu.Item>
 				)}
-				<Menu.Item onClick={onModalHandler} key={t('import_json').toString()}>
+				<Menu.Item
+					onClick={(): void => onModalHandler(false)}
+					key={t('import_json').toString()}
+				>
 					{t('import_json')}
+				</Menu.Item>
+				<Menu.Item
+					onClick={(): void => onModalHandler(true)}
+					key={t('import_grafana_json').toString()}
+				>
+					{t('import_grafana_json')}
 				</Menu.Item>
 			</Menu>
 		),
@@ -256,7 +268,8 @@ function ListOfAllDashboard(): JSX.Element {
 			<TableContainer>
 				<ImportJSON
 					isImportJSONModalVisible={isImportJSONModalVisible}
-					onModalHandler={onModalHandler}
+					uploadedGrafana={uploadedGrafana}
+					onModalHandler={(): void => onModalHandler(false)}
 				/>
 				<Table
 					pagination={{

@@ -7,6 +7,7 @@ import {
 	timeItems,
 	timePreferance,
 } from 'container/NewWidget/RightContainer/timeItems';
+import { getDashboardVariables } from 'lib/dashbaordVariables/getDashboardVariables';
 import getChartData from 'lib/getChartData';
 import React, { useCallback, useState } from 'react';
 import { useQuery } from 'react-query';
@@ -45,13 +46,14 @@ function FullView({
 	const response = useQuery<
 		SuccessResponse<MetricRangePayloadProps> | ErrorResponse
 	>(
-		`FullViewGetMetricsQueryRange-${selectedTime.enum}-${globalSelectedTime}`,
+		`FullViewGetMetricsQueryRange-${selectedTime.enum}-${globalSelectedTime}-${widget.id}`,
 		() =>
 			GetMetricQueryRange({
 				selectedTime: selectedTime.enum,
 				graphType: widget.panelTypes,
 				query: widget.query,
 				globalSelectedInterval: globalSelectedTime,
+				variables: getDashboardVariables(),
 			}),
 	);
 

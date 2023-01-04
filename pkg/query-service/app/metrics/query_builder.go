@@ -6,8 +6,9 @@ import (
 	"strings"
 
 	"github.com/SigNoz/govaluate"
-	"go.signoz.io/query-service/constants"
-	"go.signoz.io/query-service/model"
+	"go.signoz.io/signoz/pkg/query-service/constants"
+	"go.signoz.io/signoz/pkg/query-service/model"
+	"go.uber.org/zap"
 )
 
 type RunQueries struct {
@@ -50,8 +51,8 @@ func GoValuateFuncs() map[string]govaluate.ExpressionFunction {
 	return GoValuateFuncs
 }
 
-// formattedValue formats the value to be used in clickhouse query
-func formattedValue(v interface{}) string {
+// FormattedValue formats the value to be used in clickhouse query
+func FormattedValue(v interface{}) string {
 	switch x := v.(type) {
 	case int:
 		return fmt.Sprintf("%d", x)
@@ -62,6 +63,9 @@ func formattedValue(v interface{}) string {
 	case bool:
 		return fmt.Sprintf("%v", x)
 	case []interface{}:
+		if len(x) == 0 {
+			return ""
+		}
 		switch x[0].(type) {
 		case string:
 			str := "["
@@ -75,10 +79,12 @@ func formattedValue(v interface{}) string {
 			return str
 		case int, float32, float64, bool:
 			return strings.Join(strings.Fields(fmt.Sprint(x)), ",")
+		default:
+			zap.L().Error("invalid type for formatted value", zap.Any("type", reflect.TypeOf(x[0])))
+			return ""
 		}
-		return ""
 	default:
-		// may be log the warning here?
+		zap.L().Error("invalid type for formatted value", zap.Any("type", reflect.TypeOf(x)))
 		return ""
 	}
 }
@@ -87,14 +93,13 @@ func formattedValue(v interface{}) string {
 // timeseries based on search criteria
 func BuildMetricsTimeSeriesFilterQuery(fs *model.FilterSet, groupTags []string, metricName string, aggregateOperator model.AggregateOperator) (string, error) {
 	var conditions []string
-	conditions = append(conditions, fmt.Sprintf("metric_name = %s", formattedValue(metricName)))
+	conditions = append(conditions, fmt.Sprintf("metric_name = %s", FormattedValue(metricName)))
 	if fs != nil && len(fs.Items) != 0 {
 		for _, item := range fs.Items {
 			toFormat := item.Value
+			op := strings.ToLower(strings.TrimSpace(item.Operator))
 			// if the received value is an array for like/match op, just take the first value
-			if strings.ToLower(item.Operation) == "like" ||
-				strings.ToLower(item.Operation) == "match" ||
-				strings.ToLower(item.Operation) == "nlike" {
+			if op == "like" || op == "match" || op == "nlike" || op == "nmatch" {
 				x, ok := item.Value.([]interface{})
 				if ok {
 					if len(x) == 0 {
@@ -103,22 +108,24 @@ func BuildMetricsTimeSeriesFilterQuery(fs *model.FilterSet, groupTags []string, 
 					toFormat = x[0]
 				}
 			}
-			fmtVal := formattedValue(toFormat)
-			switch op := strings.ToLower(item.Operation); op {
+			fmtVal := FormattedValue(toFormat)
+			switch op {
 			case "eq":
-				conditions = append(conditions, fmt.Sprintf("labels_object.%s = %s", item.Key, fmtVal))
+				conditions = append(conditions, fmt.Sprintf("JSONExtractString(labels, '%s') = %s", item.Key, fmtVal))
 			case "neq":
-				conditions = append(conditions, fmt.Sprintf("labels_object.%s != %s", item.Key, fmtVal))
+				conditions = append(conditions, fmt.Sprintf("JSONExtractString(labels, '%s') != %s", item.Key, fmtVal))
 			case "in":
-				conditions = append(conditions, fmt.Sprintf("labels_object.%s IN %s", item.Key, fmtVal))
+				conditions = append(conditions, fmt.Sprintf("JSONExtractString(labels, '%s') IN %s", item.Key, fmtVal))
 			case "nin":
-				conditions = append(conditions, fmt.Sprintf("labels_object.%s NOT IN %s", item.Key, fmtVal))
+				conditions = append(conditions, fmt.Sprintf("JSONExtractString(labels, '%s') NOT IN %s", item.Key, fmtVal))
 			case "like":
-				conditions = append(conditions, fmt.Sprintf("like(labels_object.%s, %s)", item.Key, fmtVal))
+				conditions = append(conditions, fmt.Sprintf("like(JSONExtractString(labels, '%s'), %s)", item.Key, fmtVal))
 			case "nlike":
-				conditions = append(conditions, fmt.Sprintf("notLike(labels_object.%s, %s)", item.Key, fmtVal))
+				conditions = append(conditions, fmt.Sprintf("notLike(JSONExtractString(labels, '%s'), %s)", item.Key, fmtVal))
 			case "match":
-				conditions = append(conditions, fmt.Sprintf("match(labels_object.%s, %s)", item.Key, fmtVal))
+				conditions = append(conditions, fmt.Sprintf("match(JSONExtractString(labels, '%s'), %s)", item.Key, fmtVal))
+			case "nmatch":
+				conditions = append(conditions, fmt.Sprintf("not match(JSONExtractString(labels, '%s'), %s)", item.Key, fmtVal))
 			default:
 				return "", fmt.Errorf("unsupported operation")
 			}
@@ -131,7 +138,7 @@ func BuildMetricsTimeSeriesFilterQuery(fs *model.FilterSet, groupTags []string, 
 		selectLabels = "labels,"
 	} else {
 		for _, tag := range groupTags {
-			selectLabels += fmt.Sprintf(" labels_object.%s as %s,", tag, tag)
+			selectLabels += fmt.Sprintf(" JSONExtractString(labels, '%s') as %s,", tag, tag)
 		}
 	}
 
@@ -151,7 +158,7 @@ func BuildMetricQuery(qp *model.QueryRangeParamsV2, mq *model.MetricQuery, table
 		return "", err
 	}
 
-	samplesTableTimeFilter := fmt.Sprintf("metric_name = %s AND timestamp_ms >= %d AND timestamp_ms <= %d", formattedValue(mq.MetricName), qp.Start, qp.End)
+	samplesTableTimeFilter := fmt.Sprintf("metric_name = %s AND timestamp_ms >= %d AND timestamp_ms <= %d", FormattedValue(mq.MetricName), qp.Start, qp.End)
 
 	// Select the aggregate value for interval
 	queryTmpl :=
@@ -159,7 +166,7 @@ func BuildMetricQuery(qp *model.QueryRangeParamsV2, mq *model.MetricQuery, table
 			" toStartOfInterval(toDateTime(intDiv(timestamp_ms, 1000)), INTERVAL %d SECOND) as ts," +
 			" %s as value" +
 			" FROM " + constants.SIGNOZ_METRIC_DBNAME + "." + constants.SIGNOZ_SAMPLES_TABLENAME +
-			" INNER JOIN" +
+			" GLOBAL INNER JOIN" +
 			" (%s) as filtered_time_series" +
 			" USING fingerprint" +
 			" WHERE " + samplesTableTimeFilter +
@@ -221,7 +228,7 @@ func BuildMetricQuery(qp *model.QueryRangeParamsV2, mq *model.MetricQuery, table
 				" toStartOfInterval(toDateTime(intDiv(timestamp_ms, 1000)), INTERVAL %d SECOND) as ts," +
 				" any(value) as value" +
 				" FROM " + constants.SIGNOZ_METRIC_DBNAME + "." + constants.SIGNOZ_SAMPLES_TABLENAME +
-				" INNER JOIN" +
+				" GLOBAL INNER JOIN" +
 				" (%s) as filtered_time_series" +
 				" USING fingerprint" +
 				" WHERE " + samplesTableTimeFilter +
@@ -364,7 +371,7 @@ func expressionToQuery(qp *model.QueryRangeParamsV2, varToQuery map[string]strin
 		joinUsing = strings.Join(groupTags, ",")
 		formulaSubQuery += fmt.Sprintf("(%s) as %s ", query, var_)
 		if idx < len(vars)-1 {
-			formulaSubQuery += "INNER JOIN"
+			formulaSubQuery += "GLOBAL INNER JOIN"
 		} else if len(vars) > 1 {
 			formulaSubQuery += fmt.Sprintf("USING (%s)", joinUsing)
 		}
@@ -416,6 +423,33 @@ func PrepareBuilderMetricQueries(qp *model.QueryRangeParamsV2, tableName string)
 	if len(errs) != 0 {
 		return &RunQueries{Err: fmt.Errorf("errors with formulas: %s", FormatErrs(errs, "\n"))}
 	}
-	fmt.Println(namedQueries)
 	return &RunQueries{Queries: namedQueries}
+}
+
+// PromFormattedValue formats the value to be used in promql
+func PromFormattedValue(v interface{}) string {
+	switch x := v.(type) {
+	case int:
+		return fmt.Sprintf("%d", x)
+	case float32, float64:
+		return fmt.Sprintf("%f", x)
+	case string:
+		return fmt.Sprintf("%s", x)
+	case bool:
+		return fmt.Sprintf("%v", x)
+	case []interface{}:
+		if len(x) == 0 {
+			return ""
+		}
+		switch x[0].(type) {
+		case string, int, float32, float64, bool:
+			return strings.Trim(strings.Join(strings.Fields(fmt.Sprint(x)), "|"), "[]")
+		default:
+			zap.L().Error("invalid type for prom formatted value", zap.Any("type", reflect.TypeOf(x[0])))
+			return ""
+		}
+	default:
+		zap.L().Error("invalid type for prom formatted value", zap.Any("type", reflect.TypeOf(x)))
+		return ""
+	}
 }

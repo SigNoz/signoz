@@ -4,6 +4,7 @@ import styled from 'styled-components';
 export const Container = styled.div`
 	display: flex;
 	justify-content: space-between;
+	height: 100%;
 `;
 
 export const AvatarContainer = styled.div`
@@ -60,4 +61,8 @@ export const ToggleButton = styled(Switch)<DarkModeProps>`
 	.ant-switch-inner {
 		font-size: 1rem !important;
 	}
+`;
+
+export const IconContainer = styled.div`
+	color: white;
 `;

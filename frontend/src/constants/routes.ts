@@ -1,14 +1,14 @@
 const ROUTES = {
 	SIGN_UP: '/signup',
 	LOGIN: '/login',
-	SERVICE_METRICS: '/application/:servicename',
+	SERVICE_METRICS: '/services/:servicename',
 	SERVICE_MAP: '/service-map',
 	TRACE: '/trace',
 	TRACE_DETAIL: '/trace/:id',
 	SETTINGS: '/settings',
-	INSTRUMENTATION: '/add-instrumentation',
+	INSTRUMENTATION: '/get-started',
 	USAGE_EXPLORER: '/usage-explorer',
-	APPLICATION: '/application',
+	APPLICATION: '/services',
 	ALL_DASHBOARD: '/dashboard',
 	DASHBOARD: '/dashboard/:dashboardId',
 	DASHBOARD_WIDGET: '/dashboard/:dashboardId/:widgetId',
@@ -26,8 +26,10 @@ const ROUTES = {
 	SOMETHING_WENT_WRONG: '/something-went-wrong',
 	UN_AUTHORIZED: '/un-authorized',
 	NOT_FOUND: '/not-found',
+	LOGS: '/logs',
 	HOME_PAGE: '/',
 	PASSWORD_RESET: '/password-reset',
+	LIST_LICENSES: '/licenses',
 };
 
 export default ROUTES;

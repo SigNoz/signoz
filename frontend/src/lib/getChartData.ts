@@ -6,6 +6,16 @@ import convertIntoEpoc from './covertIntoEpoc';
 import { colors } from './getRandomColor';
 
 const getChartData = ({ queryData }: GetChartDataProps): ChartData => {
+	const uniqueTimeLabels = new Set<number>();
+	queryData.forEach((data) => {
+		data.queryData.forEach((query) => {
+			query.values.forEach((value) => {
+				uniqueTimeLabels.add(value[0]);
+			});
+		});
+	});
+	const labels = Array.from(uniqueTimeLabels).sort((a, b) => a - b);
+
 	const response = queryData.map(
 		({ queryData, query: queryG, legend: legendG }) => {
 			return queryData.map((e) => {
@@ -22,11 +32,24 @@ const getChartData = ({ queryData }: GetChartDataProps): ChartData => {
 						second: Number(parseFloat(second)),
 					};
 				});
+				// Fill the missing data with null
+				const filledDataValues = Array.from(labels).map((e) => {
+					const td1 = new Date(parseInt(convertIntoEpoc(e * 1000), 10));
+					const data = dataValue.find((e1) => {
+						return e1.first.getTime() === td1.getTime();
+					});
+					return (
+						data || {
+							first: new Date(parseInt(convertIntoEpoc(e * 1000), 10)),
+							second: null,
+						}
+					);
+				});
 
 				return {
 					label: labelNames !== 'undefined' ? labelNames : '',
-					first: dataValue.map((e) => e.first),
-					second: dataValue.map((e) => e.second),
+					first: filledDataValues.map((e) => e.first),
+					second: filledDataValues.map((e) => e.second),
 				};
 			});
 		},

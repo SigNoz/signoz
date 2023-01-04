@@ -2,6 +2,13 @@ export interface Props {
 	id: string;
 }
 
+export interface GetTraceItemProps {
+	id: string;
+	spanId: string | null;
+	levelUp: string | null;
+	levelDown: string | null;
+}
+
 export interface PayloadProps {
 	[id: string]: {
 		events: Span[];
@@ -18,10 +25,11 @@ export type Span = [
 	string,
 	string,
 	string,
-	string | string[],
-	string | string[],
-	string | string[],
-	ITraceTree[],
+	string[],
+	string[],
+	string[],
+	string[],
+	boolean,
 ];
 
 export interface ITraceTree {
@@ -37,6 +45,10 @@ export interface ITraceTree {
 	serviceColour: string;
 	hasError?: boolean;
 	event?: ITraceEvents[];
+	isMissing?: boolean;
+	// For internal use
+	isProcessed?: boolean;
+	references?: Record<string, string>[];
 }
 
 export interface ITraceTag {
@@ -44,7 +56,13 @@ export interface ITraceTag {
 	value: string;
 }
 
-interface ITraceEvents {
+export interface ITraceEvents {
 	attributeMap: { event: string; [key: string]: string };
 	name?: string;
+	timeUnixNano: number;
+}
+
+export interface ITraceForest {
+	spanTree: ITraceTree[];
+	missingSpanTree: ITraceTree[];
 }

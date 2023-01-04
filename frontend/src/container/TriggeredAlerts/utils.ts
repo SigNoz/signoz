@@ -1,4 +1,4 @@
-import { Alerts } from 'types/api/alerts/getAll';
+import { Alerts } from 'types/api/alerts/getTriggered';
 
 import { Value } from './Filter';
 

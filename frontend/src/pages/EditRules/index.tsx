@@ -47,7 +47,12 @@ function EditRules(): JSX.Element {
 		return <Spinner tip="Loading Rules..." />;
 	}
 
-	return <EditRulesContainer ruleId={ruleId} initialData={data.payload.data} />;
+	return (
+		<EditRulesContainer
+			ruleId={parseInt(ruleId, 10)}
+			initialValue={data.payload.data}
+		/>
+	);
 }
 
 export default EditRules;

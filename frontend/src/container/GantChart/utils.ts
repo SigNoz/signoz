@@ -1,4 +1,5 @@
-import { ITraceTree } from 'types/api/trace/getTraceItem';
+import { set } from 'lodash-es';
+import { ITraceForest, ITraceTree } from 'types/api/trace/getTraceItem';
 
 interface GetTraceMetaData {
 	globalStart: number;
@@ -65,25 +66,48 @@ export function getTopLeftFromBody(
 
 export const getNodeById = (
 	searchingId: string,
-	treeData: ITraceTree,
-): ITraceTree | undefined => {
-	let foundNode: ITraceTree | undefined;
-	const traverse = (treeNode: ITraceTree, level = 0): void => {
+	treesData: ITraceForest | undefined,
+): ITraceForest => {
+	const newtreeData: ITraceForest = {} as ITraceForest;
+
+	const traverse = (
+		treeNode: ITraceTree,
+		setCallBack: (arg0: ITraceTree) => void,
+		level = 0,
+	): void => {
 		if (!treeNode) {
 			return;
 		}
 
 		if (searchingId === treeNode.id) {
-			foundNode = treeNode;
+			setCallBack(treeNode);
 		}
 
 		treeNode.children.forEach((childNode) => {
-			traverse(childNode, level + 1);
+			traverse(childNode, setCallBack, level + 1);
 		});
 	};
-	traverse(treeData, 1);
 
-	return foundNode;
+	const spanTreeSetCallback = (
+		path: (keyof ITraceForest)[],
+		value: ITraceTree,
+	): ITraceForest => set(newtreeData, path, [value]);
+
+	if (treesData?.spanTree)
+		treesData.spanTree.forEach((tree) => {
+			traverse(tree, (value) => spanTreeSetCallback(['spanTree'], value), 1);
+		});
+
+	if (treesData?.missingSpanTree)
+		treesData.missingSpanTree.forEach((tree) => {
+			traverse(
+				tree,
+				(value) => spanTreeSetCallback(['missingSpanTree'], value),
+				1,
+			);
+		});
+
+	return newtreeData;
 };
 
 const getSpanWithoutChildren = (

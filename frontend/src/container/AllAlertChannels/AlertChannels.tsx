@@ -5,6 +5,7 @@ import ROUTES from 'constants/routes';
 import useComponentPermission from 'hooks/useComponentPermission';
 import history from 'lib/history';
 import React, { useCallback, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useSelector } from 'react-redux';
 import { generatePath } from 'react-router-dom';
 import { AppState } from 'store/reducers';
@@ -14,6 +15,7 @@ import AppReducer from 'types/reducer/app';
 import Delete from './Delete';
 
 function AlertChannels({ allChannels }: AlertChannelsProps): JSX.Element {
+	const { t } = useTranslation(['channels']);
 	const [notifications, Element] = notification.useNotification();
 	const [channels, setChannels] = useState<Channels[]>(allChannels);
 	const { role } = useSelector<AppState, AppReducer>((state) => state.app);
@@ -29,12 +31,12 @@ function AlertChannels({ allChannels }: AlertChannelsProps): JSX.Element {
 
 	const columns: ColumnsType<Channels> = [
 		{
-			title: 'Name',
+			title: t('column_channel_name'),
 			dataIndex: 'name',
 			key: 'name',
 		},
 		{
-			title: 'Type',
+			title: t('column_channel_type'),
 			dataIndex: 'type',
 			key: 'type',
 		},
@@ -42,14 +44,14 @@ function AlertChannels({ allChannels }: AlertChannelsProps): JSX.Element {
 
 	if (action) {
 		columns.push({
-			title: 'Action',
+			title: t('column_channel_action'),
 			dataIndex: 'id',
 			key: 'action',
 			align: 'center',
 			render: (id: string): JSX.Element => (
 				<>
 					<Button onClick={(): void => onClickEditHandler(id)} type="link">
-						Edit
+						{t('column_channel_edit')}
 					</Button>
 					<Delete id={id} setChannels={setChannels} notifications={notifications} />
 				</>

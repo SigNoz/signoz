@@ -9,7 +9,7 @@ const { TextArea } = Input;
 
 interface IMetricsBuilderFormulaProps {
 	formulaData: IMetricsBuilderFormula;
-	formulaIndex: number;
+	formulaIndex: number | string;
 	handleFormulaChange: (args: IQueryBuilderFormulaHandleChange) => void;
 }
 function MetricsBuilderFormula({
@@ -36,6 +36,14 @@ function MetricsBuilderFormula({
 				defaultValue={formulaData.expression}
 				style={{ marginBottom: '0.5rem' }}
 				rows={2}
+			/>
+			<Input
+				onChange={(event): void => {
+					handleFormulaChange({ formulaIndex, legend: event.target.value });
+				}}
+				size="middle"
+				defaultValue={formulaData.legend}
+				addonBefore="Legend Format"
 			/>
 		</QueryHeader>
 	);

@@ -7,17 +7,13 @@ export const getYAxisFormattedValue = (
 	let decimalPrecision: number | undefined;
 	const parsedValue = getValueFormat(format)(
 		parseFloat(value),
-		12,
-		12,
+		undefined,
+		undefined,
 		undefined,
 	);
-
 	try {
 		const decimalSplitted = parsedValue.text.split('.');
-		if (
-			decimalSplitted.length === 1 ||
-			parseFloat(parsedValue.text) === parseInt(parsedValue.text, 10)
-		) {
+		if (decimalSplitted.length === 1) {
 			decimalPrecision = 0;
 		} else {
 			const decimalDigits = decimalSplitted[1].split('');

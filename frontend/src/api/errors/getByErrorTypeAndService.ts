@@ -10,11 +10,8 @@ const getByErrorType = async (
 ): Promise<SuccessResponse<PayloadProps> | ErrorResponse> => {
 	try {
 		const response = await axios.get(
-			`/errorWithType?${createQueryParams({
-				start: props.start.toString(),
-				end: props.end.toString(),
-				serviceName: props.serviceName,
-				errorType: props.errorType,
+			`/errorFromGroupID?${createQueryParams({
+				...props,
 			})}`,
 		);
 

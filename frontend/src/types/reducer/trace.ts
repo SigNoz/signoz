@@ -69,7 +69,10 @@ export type TraceFilterEnum =
 	| 'httpUrl'
 	| 'operation'
 	| 'serviceName'
-	| 'status';
+	| 'status'
+	| 'responseStatusCode'
+	| 'rpcMethod'
+	| 'traceID';
 
 export const AllPanelHeading: {
 	key: TraceFilterEnum;
@@ -108,11 +111,23 @@ export const AllPanelHeading: {
 		displayValue: 'Operation',
 	},
 	{
+		key: 'responseStatusCode',
+		displayValue: 'Status Code',
+	},
+	{
+		key: 'rpcMethod',
+		displayValue: 'RPC Method',
+	},
+	{
 		key: 'serviceName',
 		displayValue: 'Service Name',
 	},
 	{
 		key: 'status',
 		displayValue: 'Status',
+	},
+	{
+		key: 'traceID',
+		displayValue: 'Trace ID',
 	},
 ];

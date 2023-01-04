@@ -8,7 +8,7 @@ import (
 	jwtmiddleware "github.com/auth0/go-jwt-middleware"
 	"github.com/golang-jwt/jwt"
 	"github.com/pkg/errors"
-	"go.signoz.io/query-service/model"
+	"go.signoz.io/signoz/pkg/query-service/model"
 	"go.uber.org/zap"
 	"google.golang.org/grpc/metadata"
 )

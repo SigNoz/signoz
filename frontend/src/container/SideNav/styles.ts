@@ -83,9 +83,3 @@ export const Tags = styled(Tag)`
 		border-radius: 0.5rem;
 	}
 `;
-
-export const Name = styled(Typography.Paragraph)`
-	&&& {
-		margin: 0;
-	}
-`;

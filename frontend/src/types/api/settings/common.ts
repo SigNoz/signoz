@@ -1,1 +1,1 @@
-export type TTTLType = 'metrics' | 'traces';
+export type TTTLType = 'metrics' | 'traces' | 'logs';

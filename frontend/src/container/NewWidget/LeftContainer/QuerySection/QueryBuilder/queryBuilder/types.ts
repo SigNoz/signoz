@@ -4,7 +4,7 @@ import {
 } from 'types/api/dashboard/getAll';
 
 export interface IQueryBuilderQueryHandleChange {
-	queryIndex: number;
+	queryIndex: number | string;
 	aggregateFunction?: IMetricsBuilderQuery['aggregateOperator'];
 	metricName?: IMetricsBuilderQuery['metricName'];
 	tagFilters?: IMetricsBuilderQuery['tagFilters']['items'];
@@ -16,8 +16,9 @@ export interface IQueryBuilderQueryHandleChange {
 }
 
 export interface IQueryBuilderFormulaHandleChange {
-	formulaIndex: number;
+	formulaIndex: number | string;
 	expression?: IMetricsBuilderFormula['expression'];
 	toggleDisable?: IMetricsBuilderFormula['disabled'];
+	legend?: IMetricsBuilderFormula['legend'];
 	toggleDelete?: boolean;
 }

@@ -1,5 +1,7 @@
+import { AlertDef } from 'types/api/alerts/def';
+
 export interface Props {
-	query: string;
+	data: AlertDef;
 }
 
 export interface PayloadProps {

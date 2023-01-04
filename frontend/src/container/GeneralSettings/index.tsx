@@ -21,6 +21,7 @@ function GeneralSettings(): JSX.Element {
 	const [
 		getRetentionPeriodMetricsApiResponse,
 		getRetentionPeriodTracesApiResponse,
+		getRetentionPeriodLogsApiResponse,
 		getDisksResponse,
 	] = useQueries([
 		{
@@ -32,6 +33,10 @@ function GeneralSettings(): JSX.Element {
 			queryFn: (): TRetentionAPIReturn<'traces'> =>
 				getRetentionPeriodApi('traces'),
 			queryKey: 'getRetentionPeriodApiTraces',
+		},
+		{
+			queryFn: (): TRetentionAPIReturn<'logs'> => getRetentionPeriodApi('logs'),
+			queryKey: 'getRetentionPeriodApiLogs',
 		},
 		{
 			queryFn: getDisks,
@@ -60,17 +65,27 @@ function GeneralSettings(): JSX.Element {
 			</Typography>
 		);
 	}
+	// Error State - When RetentionPeriodLogsApi or getDiskApi gets errored out.
+	if (getRetentionPeriodLogsApiResponse.isError || getDisksResponse.isError) {
+		return (
+			<Typography>
+				{getRetentionPeriodLogsApiResponse.data?.error ||
+					getDisksResponse.data?.error ||
+					t('something_went_wrong')}
+			</Typography>
+		);
+	}
 
 	// Loading State - When Metrics, Traces and Disk API are in progress and the promise has not been resolved/reject.
 	if (
-		getRetentionPeriodMetricsApiResponse.isLoading ||
 		getDisksResponse.isLoading ||
 		!getDisksResponse.data?.payload ||
+		getRetentionPeriodMetricsApiResponse.isLoading ||
 		!getRetentionPeriodMetricsApiResponse.data?.payload ||
 		getRetentionPeriodTracesApiResponse.isLoading ||
-		getDisksResponse.isLoading ||
-		!getDisksResponse.data?.payload ||
-		!getRetentionPeriodTracesApiResponse.data?.payload
+		!getRetentionPeriodTracesApiResponse.data?.payload ||
+		getRetentionPeriodLogsApiResponse.isLoading ||
+		!getRetentionPeriodLogsApiResponse.data?.payload
 	) {
 		return <Spinner tip="Loading.." height="70vh" />;
 	}
@@ -83,6 +98,8 @@ function GeneralSettings(): JSX.Element {
 				metricsTtlValuesRefetch: getRetentionPeriodMetricsApiResponse.refetch,
 				tracesTtlValuesPayload: getRetentionPeriodTracesApiResponse.data?.payload,
 				tracesTtlValuesRefetch: getRetentionPeriodTracesApiResponse.refetch,
+				logsTtlValuesPayload: getRetentionPeriodLogsApiResponse.data?.payload,
+				logsTtlValuesRefetch: getRetentionPeriodLogsApiResponse.refetch,
 			}}
 		/>
 	);

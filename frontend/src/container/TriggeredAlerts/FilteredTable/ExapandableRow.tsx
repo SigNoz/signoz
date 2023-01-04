@@ -2,7 +2,7 @@ import { Tag, Typography } from 'antd';
 import convertDateToAmAndPm from 'lib/convertDateToAmAndPm';
 import getFormattedDate from 'lib/getFormatedDate';
 import React from 'react';
-import { Alerts } from 'types/api/alerts/getAll';
+import { Alerts } from 'types/api/alerts/getTriggered';
 
 import Status from '../TableComponents/AlertStatus';
 import { TableCell, TableRow } from './styles';

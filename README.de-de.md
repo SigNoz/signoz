@@ -5,7 +5,6 @@
 </p>
 
 <p align="center">
-    <img alt="Lizenz" src="https://img.shields.io/badge/license-MIT-brightgreen"> </a>
     <img alt="Downloads" src="https://img.shields.io/docker/pulls/signoz/frontend?label=Downloads"> </a>
     <img alt="GitHub issues" src="https://img.shields.io/github/issues/signoz/signoz"> </a>
     <a href="https://twitter.com/intent/tweet?text=Monitor%20your%20applications%20and%20troubleshoot%20problems%20with%20SigNoz,%20an%20open-source%20alternative%20to%20DataDog,%20NewRelic.&url=https://signoz.io/&via=SigNozHQ&hashtags=opensource,signoz,observability"> 
@@ -15,10 +14,10 @@
   
 <h3 align="center">
   <a href="https://signoz.io/docs"><b>Dokumentation</b></a> &bull;
-  <a href="https://github.com/SigNoz/signoz/blob/main/README.zh-cn.md"><b>ReadMe auf Chinesisch</b></a> &bull;
-  <a href="https://github.com/SigNoz/signoz/blob/main/README.pt-br.md"><b>ReadMe auf Portugiesisch</b></a> &bull;
+  <a href="https://github.com/SigNoz/signoz/blob/develop/README.zh-cn.md"><b>ReadMe auf Chinesisch</b></a> &bull;
+  <a href="https://github.com/SigNoz/signoz/blob/develop/README.pt-br.md"><b>ReadMe auf Portugiesisch</b></a> &bull;
   <a href="https://signoz.io/slack"><b>Slack Community</b></a> &bull;
-  <a href="https://twitter.com/SigNozHq"><b>Twitter</b></a>
+  <a href="https://twitter.com/SigNozHQ"><b>Twitter</b></a>
 </h3>
 
 ## 

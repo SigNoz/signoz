@@ -15,7 +15,6 @@ import AppReducer from 'types/reducer/app';
 import menus from './menuItems';
 import Slack from './Slack';
 import {
-	Name,
 	RedDot,
 	Sider,
 	SlackButton,
@@ -105,7 +104,7 @@ function SideNav(): JSX.Element {
 						onClick={(): void => onClickHandler(to)}
 					>
 						<Space>
-							<Name ellipsis>{name}</Name>
+							<div>{name}</div>
 							{tags &&
 								tags.map((e) => (
 									<Tags style={{ lineHeight: '1rem' }} color="#177DDC" key={e}>

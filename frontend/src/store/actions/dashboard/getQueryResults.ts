@@ -19,7 +19,7 @@ import { Dispatch } from 'redux';
 import store from 'store';
 import AppActions from 'types/actions';
 import { ErrorResponse, SuccessResponse } from 'types/api';
-import { Query } from 'types/api/dashboard/getAll';
+import { IDashboardVariable, Query } from 'types/api/dashboard/getAll';
 import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
 import { EDataSource, EPanelType, EQueryType } from 'types/common/dashboard';
 import { GlobalReducer } from 'types/reducer/globalTime';
@@ -29,11 +29,13 @@ export async function GetMetricQueryRange({
 	globalSelectedInterval,
 	graphType,
 	selectedTime,
+	variables = {},
 }: {
 	query: Query;
 	graphType: GRAPH_TYPES;
 	selectedTime: timePreferenceType;
 	globalSelectedInterval: Time;
+	variables?: Record<string, unknown>;
 }): Promise<SuccessResponse<MetricRangePayloadProps> | ErrorResponse> {
 	const { queryType } = query;
 	const queryKey: Record<EQueryTypeToQueryKeyMapping, string> =
@@ -76,9 +78,11 @@ export async function GetMetricQueryRange({
 
 			queryData[WIDGET_QUERY_BUILDER_FORMULA_KEY_NAME].map((formula) => {
 				const generatedFormulaPayload = {};
+				legendMap[formula.name] = formula.legend || formula.name;
 				generatedFormulaPayload.queryName = formula.name;
 				generatedFormulaPayload.expression = formula.expression;
 				generatedFormulaPayload.disabled = formula.disabled;
+				generatedFormulaPayload.legend = formula.legend;
 				builderQueries[formula.name] = generatedFormulaPayload;
 			});
 			QueryPayload.compositeMetricQuery.builderQueries = builderQueries;
@@ -136,6 +140,7 @@ export async function GetMetricQueryRange({
 		start: parseInt(start, 10) * 1e3,
 		end: parseInt(end, 10) * 1e3,
 		step: getStep({ start, end, inputFormat: 'ms' }),
+		variables,
 		...QueryPayload,
 	});
 	if (response.statusCode >= 400) {
@@ -143,17 +148,23 @@ export async function GetMetricQueryRange({
 			`API responded with ${response.statusCode} -  ${response.error}`,
 		);
 	}
-
 	if (response.payload?.data?.result) {
 		response.payload.data.result = response.payload.data.result.map(
 			(queryData) => {
 				const newQueryData = queryData;
-				newQueryData.legend = legendMap[queryData.queryName];
+				newQueryData.legend = legendMap[queryData.queryName]; // Adds the legend if it is already defined by the user.
+				// If metric names is an empty object
 				if (isEmpty(queryData.metric)) {
-					newQueryData.metric[queryData.queryName] = queryData.queryName;
-					newQueryData.legend = queryData.queryName;
+					// If metrics list is empty && the user haven't defined a legend then add the legend equal to the name of the query.
+					if (!newQueryData.legend) {
+						newQueryData.legend = queryData.queryName;
+					}
+					// If name of the query and the legend if inserted is same then add the same to the metrics object.
+					if (queryData.queryName === newQueryData.legend) {
+						newQueryData.metric[queryData.queryName] = queryData.queryName;
+					}
 				}
-				return queryData;
+				return newQueryData;
 			},
 		);
 	}
@@ -165,6 +176,14 @@ export const GetQueryResults = (
 ): ((dispatch: Dispatch<AppActions>) => void) => {
 	return async (dispatch: Dispatch<AppActions>): Promise<void> => {
 		try {
+			dispatch({
+				type: 'QUERY_ERROR',
+				payload: {
+					errorMessage: '',
+					widgetId: props.widgetId,
+					errorBoolean: false,
+				},
+			});
 			const response = await GetMetricQueryRange(props);
 
 			const isError = response.error;
@@ -191,14 +210,6 @@ export const GetQueryResults = (
 					},
 				},
 			});
-			dispatch({
-				type: 'QUERY_ERROR',
-				payload: {
-					errorMessage: '',
-					widgetId: props.widgetId,
-					errorBoolean: false,
-				},
-			});
 		} catch (error) {
 			dispatch({
 				type: 'QUERY_ERROR',
@@ -218,4 +229,5 @@ export interface GetQueryResultsProps {
 	query: Query;
 	graphType: ITEMS;
 	globalSelectedInterval: GlobalReducer['selectedTime'];
+	variables: Record<string, unknown>;
 }

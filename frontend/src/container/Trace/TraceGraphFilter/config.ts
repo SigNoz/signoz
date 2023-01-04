@@ -39,6 +39,14 @@ export const groupBy: Dropdown[] = [
 		key: 'httpCode',
 	},
 	{
+		displayValue: 'RPC Method',
+		key: 'rpcMethod',
+	},
+	{
+		displayValue: 'Status Code',
+		key: 'responseStatusCode',
+	},
+	{
 		displayValue: 'Database name',
 		key: 'dbName',
 	},

@@ -28,6 +28,7 @@ test('loads and displays greeting', () => {
 						spread: 0,
 						totalSpans: 0,
 					},
+					missingSpanTree: false,
 					treeData: {
 						children: [],
 						id: '',

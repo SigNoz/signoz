@@ -1,7 +1,7 @@
 import { MinusSquareOutlined, PlusSquareOutlined } from '@ant-design/icons';
 import { Tag } from 'antd';
 import React, { useState } from 'react';
-import { Alerts } from 'types/api/alerts/getAll';
+import { Alerts } from 'types/api/alerts/getTriggered';
 
 import ExapandableRow from './ExapandableRow';
 import { IconContainer, StatusContainer, TableCell, TableRow } from './styles';

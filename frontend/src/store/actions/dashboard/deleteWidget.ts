@@ -30,6 +30,7 @@ export const DeleteWidget = ({
 					tags: selectedDashboard.data.tags,
 					widgets: updatedWidgets,
 					layout: updatedLayout,
+					variables: selectedDashboard.data.variables,
 				},
 				uuid: selectedDashboard.uuid,
 			};

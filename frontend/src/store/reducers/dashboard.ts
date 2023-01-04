@@ -18,6 +18,7 @@ import {
 	SAVE_SETTING_TO_PANEL_SUCCESS,
 	TOGGLE_EDIT_MODE,
 	UPDATE_DASHBOARD,
+	UPDATE_DASHBOARD_VARIABLES,
 	UPDATE_QUERY,
 	UPDATE_TITLE_DESCRIPTION_TAGS_SUCCESS,
 } from 'types/actions/dashboard';
@@ -170,7 +171,6 @@ const dashboard = (
 
 		case QUERY_ERROR: {
 			const { widgetId, errorMessage, errorBoolean = true } = action.payload;
-
 			const [selectedDashboard] = state.dashboards;
 			const { data } = selectedDashboard;
 
@@ -397,7 +397,25 @@ const dashboard = (
 				],
 			};
 		}
+		case UPDATE_DASHBOARD_VARIABLES: {
+			const variablesData = action.payload;
+			const { dashboards } = state;
+			const [selectedDashboard] = dashboards;
+			const { data } = selectedDashboard;
 
+			return {
+				...state,
+				dashboards: [
+					{
+						...selectedDashboard,
+						data: {
+							...data,
+							variables: variablesData,
+						},
+					},
+				],
+			};
+		}
 		default:
 			return state;
 	}

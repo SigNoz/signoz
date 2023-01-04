@@ -18,7 +18,8 @@ export const CustomText = styled(Paragraph)`
 export const CustomSubTitle = styled(Title)`
 	&&& {
 		font-size: 14px;
-		margin-bottom: 8px;
+		margin-bottom: 0.1rem;
+		margin-top: 0.5rem;
 	}
 `;
 
@@ -26,13 +27,19 @@ interface CustomSubTextProps {
 	isDarkMode: boolean;
 }
 
+export const SubTextContainer = styled.div<CustomSubTextProps>`
+	&&& {
+		background: ${({ isDarkMode }): string => (isDarkMode ? '#444' : '#ddd')};
+	}
+`;
+
 export const CustomSubText = styled(Paragraph)<CustomSubTextProps>`
 	&&& {
 		background: ${({ isDarkMode }): string => (isDarkMode ? '#444' : '#ddd')};
 		font-size: 12px;
-		padding: 6px 8px;
+		padding: 4px 8px;
 		word-break: break-all;
-		margin-bottom: 16px;
+		margin-bottom: 0rem;
 	}
 `;
 
@@ -81,10 +88,15 @@ const overflow = css`
 	}
 `;
 
+const buttonContainer = css`
+	height: 1.5rem;
+`;
+
 export const styles = {
 	removeMargin,
 	removePadding,
 	selectedSpanDetailsContainer,
 	spanEventsTabsContainer,
 	overflow,
+	buttonContainer,
 };

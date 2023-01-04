@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	. "github.com/smartystreets/goconvey/convey"
-	"go.signoz.io/query-service/model"
+	"go.signoz.io/signoz/pkg/query-service/model"
 )
 
 func TestBuildQuery(t *testing.T) {
@@ -42,8 +42,9 @@ func TestBuildQueryWithFilters(t *testing.T) {
 					"a": {
 						QueryName:  "a",
 						MetricName: "name",
-						TagFilters: &model.FilterSet{Operation: "AND", Items: []model.FilterItem{
-							{Key: "a", Value: "b", Operation: "neq"},
+						TagFilters: &model.FilterSet{Operator: "AND", Items: []model.FilterItem{
+							{Key: "a", Value: "b", Operator: "neq"},
+							{Key: "code", Value: "ERROR_*", Operator: "nmatch"},
 						}},
 						AggregateOperator: model.RATE_MAX,
 						Expression:        "a",
@@ -54,8 +55,9 @@ func TestBuildQueryWithFilters(t *testing.T) {
 		queries := PrepareBuilderMetricQueries(q, "table").Queries
 		So(len(queries), ShouldEqual, 1)
 
-		So(queries["a"], ShouldContainSubstring, "WHERE metric_name = 'name' AND labels_object.a != 'b'")
+		So(queries["a"], ShouldContainSubstring, "WHERE metric_name = 'name' AND JSONExtractString(labels, 'a') != 'b'")
 		So(queries["a"], ShouldContainSubstring, "runningDifference(value)/runningDifference(ts)")
+		So(queries["a"], ShouldContainSubstring, "not match(JSONExtractString(labels, 'code'), 'ERROR_*')")
 	})
 }
 
@@ -70,8 +72,8 @@ func TestBuildQueryWithMultipleQueries(t *testing.T) {
 					"a": {
 						QueryName:  "a",
 						MetricName: "name",
-						TagFilters: &model.FilterSet{Operation: "AND", Items: []model.FilterItem{
-							{Key: "in", Value: []interface{}{"a", "b", "c"}, Operation: "in"},
+						TagFilters: &model.FilterSet{Operator: "AND", Items: []model.FilterItem{
+							{Key: "in", Value: []interface{}{"a", "b", "c"}, Operator: "in"},
 						}},
 						AggregateOperator: model.RATE_AVG,
 						Expression:        "a",
@@ -87,7 +89,7 @@ func TestBuildQueryWithMultipleQueries(t *testing.T) {
 		}
 		queries := PrepareBuilderMetricQueries(q, "table").Queries
 		So(len(queries), ShouldEqual, 2)
-		So(queries["a"], ShouldContainSubstring, "WHERE metric_name = 'name' AND labels_object.in IN ['a','b','c']")
+		So(queries["a"], ShouldContainSubstring, "WHERE metric_name = 'name' AND JSONExtractString(labels, 'in') IN ['a','b','c']")
 		So(queries["a"], ShouldContainSubstring, "runningDifference(value)/runningDifference(ts)")
 	})
 }
@@ -103,8 +105,8 @@ func TestBuildQueryWithMultipleQueriesAndFormula(t *testing.T) {
 					"a": {
 						QueryName:  "a",
 						MetricName: "name",
-						TagFilters: &model.FilterSet{Operation: "AND", Items: []model.FilterItem{
-							{Key: "in", Value: []interface{}{"a", "b", "c"}, Operation: "in"},
+						TagFilters: &model.FilterSet{Operator: "AND", Items: []model.FilterItem{
+							{Key: "in", Value: []interface{}{"a", "b", "c"}, Operator: "in"},
 						}},
 						AggregateOperator: model.RATE_MAX,
 						Expression:        "a",
@@ -124,7 +126,7 @@ func TestBuildQueryWithMultipleQueriesAndFormula(t *testing.T) {
 		queries := PrepareBuilderMetricQueries(q, "table").Queries
 		So(len(queries), ShouldEqual, 3)
 		So(queries["c"], ShouldContainSubstring, "SELECT ts, a.value / b.value")
-		So(queries["c"], ShouldContainSubstring, "WHERE metric_name = 'name' AND labels_object.in IN ['a','b','c']")
+		So(queries["c"], ShouldContainSubstring, "WHERE metric_name = 'name' AND JSONExtractString(labels, 'in') IN ['a','b','c']")
 		So(queries["c"], ShouldContainSubstring, "runningDifference(value)/runningDifference(ts)")
 	})
 }

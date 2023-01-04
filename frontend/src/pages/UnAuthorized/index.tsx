@@ -13,7 +13,7 @@ function UnAuthorizePage(): JSX.Element {
 					Oops.. you don&apos;t have permission to view this page
 				</Typography.Title>
 				<Button to={ROUTES.APPLICATION} tabIndex={0}>
-					Return To Metrics Page
+					Return To Services Page
 				</Button>
 			</Space>
 		</Container>

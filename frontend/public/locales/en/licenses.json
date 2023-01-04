@@ -1,0 +1,13 @@
+{
+  "column_license_key": "License Key",
+  "column_valid_from": "Valid From",
+  "column_valid_until": "Valid Until",
+  "column_license_status": "Status",
+  "button_apply": "Apply",
+  "placeholder_license_key": "Enter a License Key",
+  "tab_current_license": "Current License",
+  "tab_license_history": "History",
+  "loading_licenses": "Loading licenses...",
+  "enter_license_key": "Please enter a license key",
+  "license_applied": "License applied successfully"
+}

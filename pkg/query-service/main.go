@@ -2,14 +2,15 @@ package main
 
 import (
 	"context"
+	"flag"
 	"os"
 	"os/signal"
 	"syscall"
 
-	"go.signoz.io/query-service/app"
-	"go.signoz.io/query-service/auth"
-	"go.signoz.io/query-service/constants"
-	"go.signoz.io/query-service/version"
+	"go.signoz.io/signoz/pkg/query-service/app"
+	"go.signoz.io/signoz/pkg/query-service/auth"
+	"go.signoz.io/signoz/pkg/query-service/constants"
+	"go.signoz.io/signoz/pkg/query-service/version"
 
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
@@ -25,6 +26,18 @@ func initZapLog() *zap.Logger {
 }
 
 func main() {
+	var promConfigPath string
+
+	// disables rule execution but allows change to the rule definition
+	var disableRules bool
+
+	// the url used to build link in the alert messages in slack and other systems
+	var ruleRepoURL string
+
+	flag.StringVar(&promConfigPath, "config", "./config/prometheus.yml", "(prometheus config to read metrics)")
+	flag.BoolVar(&disableRules, "rules.disable", false, "(disable rule evaluation)")
+	flag.StringVar(&ruleRepoURL, "rules.repo-url", constants.AlertHelpPage, "(host address used to build rule link in alert messages)")
+	flag.Parse()
 
 	loggerMgr := initZapLog()
 	zap.ReplaceGlobals(loggerMgr)
@@ -35,7 +48,10 @@ func main() {
 
 	serverOptions := &app.ServerOptions{
 		HTTPHostPort:    constants.HTTPHostPort,
+		PromConfigPath:  promConfigPath,
 		PrivateHostPort: constants.PrivateHostPort,
+		DisableRules:    disableRules,
+		RuleRepoURL:     ruleRepoURL,
 	}
 
 	// Read the jwt secret key

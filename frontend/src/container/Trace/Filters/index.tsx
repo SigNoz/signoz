@@ -9,11 +9,14 @@ export const AllTraceFilterEnum: TraceFilterEnum[] = [
 	'serviceName',
 	'operation',
 	'component',
-	'httpCode',
+	'rpcMethod',
+	'responseStatusCode',
+	// 'httpCode',
 	'httpHost',
 	'httpMethod',
 	'httpRoute',
 	'httpUrl',
+	'traceID',
 ];
 
 function Filters(): JSX.Element {

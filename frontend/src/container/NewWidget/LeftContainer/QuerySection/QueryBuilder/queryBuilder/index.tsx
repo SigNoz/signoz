@@ -50,12 +50,12 @@ function QueryBuilderQueryContainer({
 	}: IQueryBuilderQueryHandleChange): void => {
 		const allQueries =
 			queryData[WIDGET_QUERY_BUILDER_QUERY_KEY_NAME].queryBuilder;
-		const currentIndexQuery = allQueries[queryIndex];
+		const currentIndexQuery = allQueries[queryIndex as number];
 		if (aggregateFunction) {
 			currentIndexQuery.aggregateOperator = aggregateFunction;
 		}
 
-		if (metricName) {
+		if (metricName !== undefined) {
 			currentIndexQuery.metricName = metricName;
 		}
 
@@ -78,13 +78,14 @@ function QueryBuilderQueryContainer({
 			currentIndexQuery.disabled = !currentIndexQuery.disabled;
 		}
 		if (toggleDelete) {
-			allQueries.splice(queryIndex, 1);
+			allQueries.splice(queryIndex as number, 1);
 		}
 		updateQueryData({ updatedQuery: { ...queryData } });
 	};
 	const handleQueryBuilderFormulaChange = ({
 		formulaIndex,
 		expression,
+		legend,
 		toggleDisable,
 		toggleDelete,
 	}: IQueryBuilderFormulaHandleChange): void => {
@@ -92,10 +93,13 @@ function QueryBuilderQueryContainer({
 			queryData[WIDGET_QUERY_BUILDER_QUERY_KEY_NAME][
 				WIDGET_QUERY_BUILDER_FORMULA_KEY_NAME
 			];
-		const currentIndexFormula = allFormulas[formulaIndex];
+		const currentIndexFormula = allFormulas[formulaIndex as number];
 
-		if (expression) {
+		if (expression !== undefined) {
 			currentIndexFormula.expression = expression;
+		}
+		if (legend !== undefined) {
+			currentIndexFormula.legend = legend;
 		}
 
 		if (toggleDisable) {
@@ -103,7 +107,7 @@ function QueryBuilderQueryContainer({
 		}
 
 		if (toggleDelete) {
-			allFormulas.splice(formulaIndex, 1);
+			allFormulas.splice(formulaIndex as number, 1);
 		}
 		updateQueryData({ updatedQuery: { ...queryData } });
 	};

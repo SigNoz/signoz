@@ -79,6 +79,7 @@ const interceptorRejected = async (
 
 			// when refresh token is expired
 			if (response.status === 401 && response.config.url === '/login') {
+				console.log('logging out ');
 				Logout();
 			}
 		}
@@ -102,6 +103,11 @@ export const AxiosAlertManagerInstance = axios.create({
 export const ApiV2Instance = axios.create({
 	baseURL: `${ENVIRONMENT.baseURL}${apiV2}`,
 });
+ApiV2Instance.interceptors.response.use(
+	interceptorsResponse,
+	interceptorRejected,
+);
+ApiV2Instance.interceptors.request.use(interceptorsRequestResponse);
 
 AxiosAlertManagerInstance.interceptors.response.use(
 	interceptorsResponse,
