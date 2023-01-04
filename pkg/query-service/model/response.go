@@ -180,13 +180,9 @@ type GetFilterSpansResponseItem struct {
 	ServiceName        string    `ch:"serviceName" json:"serviceName"`
 	Operation          string    `ch:"name" json:"operation"`
 	DurationNano       uint64    `ch:"durationNano" json:"durationNano"`
-	HttpCode           string    `ch:"httpCode"`
 	HttpMethod         string    `ch:"httpMethod"`
-	GRPCode            string    `ch:"gRPCCode"`
-	GRPMethod          string    `ch:"gRPCMethod"`
-	StatusCode         string    `json:"statusCode"`
 	Method             string    `json:"method"`
-	ResponseStatusCode string    `ch:"responseStatusCode"`
+	ResponseStatusCode string    `ch:"responseStatusCode" json:"statusCode"`
 	RPCMethod          string    `ch:"rpcMethod"`
 }
 
