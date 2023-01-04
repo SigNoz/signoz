@@ -16,3 +16,7 @@ export const Container = styled(Card)`
 	animation-duration: 0.2s;
 	animation-timing-function: ease-in;
 `;
+
+export const LogFieldContainer = styled.div`
+	margin-left: 0.5rem;
+`;
