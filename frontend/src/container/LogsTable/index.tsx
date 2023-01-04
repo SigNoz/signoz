@@ -2,7 +2,7 @@
 import { Typography } from 'antd';
 import LogItem from 'components/Logs/LogItem';
 import Spinner from 'components/Spinner';
-import { map } from 'lodash-es';
+import map from 'lodash-es/map';
 import React, { memo } from 'react';
 import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
@@ -22,14 +22,7 @@ function LogsTable(): JSX.Element {
 	return (
 		<Container flex="auto">
 			<Heading>
-				<Typography.Text
-					style={{
-						fontSize: '1rem',
-						fontWeight: 400,
-					}}
-				>
-					Event
-				</Typography.Text>
+				<Typography.Text>Event</Typography.Text>
 			</Heading>
 			{Array.isArray(logs) && logs.length > 0 ? (
 				map(logs, (log) => <LogItem key={log.id} logData={log} />)

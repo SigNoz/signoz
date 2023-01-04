@@ -4,7 +4,7 @@ import {
 	RightOutlined,
 } from '@ant-design/icons';
 import { Button, Divider, Select } from 'antd';
-import React, { memo } from 'react';
+import React, { memo, useMemo } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
 import {
@@ -15,16 +15,19 @@ import {
 } from 'types/actions/logs';
 import { ILogsReducer } from 'types/reducer/logs';
 
+import { ITEMS_PER_PAGE_OPTIONS } from './config';
 import { Container } from './styles';
 
 const { Option } = Select;
 
-const ITEMS_PER_PAGE_OPTIONS = [25, 50, 100, 200];
-
 function LogControls(): JSX.Element | null {
-	const { logLinesPerPage, liveTail } = useSelector<AppState, ILogsReducer>(
-		(state) => state.logs,
-	);
+	const {
+		logLinesPerPage,
+		liveTail,
+		isLoading: isLogsLoading,
+		isLoadingAggregate,
+		logs,
+	} = useSelector<AppState, ILogsReducer>((state) => state.logs);
 	const dispatch = useDispatch();
 
 	const handleLogLinesPerPageChange = (e: number): void => {
@@ -51,29 +54,58 @@ function LogControls(): JSX.Element | null {
 		});
 	};
 
+	const isLoading = isLogsLoading || isLoadingAggregate;
+
+	const isNextAndPreviousDisabled = useMemo(
+		() =>
+			isLoading ||
+			logLinesPerPage === 0 ||
+			logs.length === 0 ||
+			logs.length < logLinesPerPage,
+		[isLoading, logLinesPerPage, logs.length],
+	);
+
 	if (liveTail !== 'STOPPED') {
 		return null;
 	}
+
 	return (
 		<Container>
-			<Button size="small" type="link" onClick={handleGoToLatest}>
+			<Button
+				loading={isLoading}
+				size="small"
+				type="link"
+				onClick={handleGoToLatest}
+			>
 				<FastBackwardOutlined /> Go to latest
 			</Button>
 			<Divider type="vertical" />
-			<Button size="small" type="link" onClick={handleNavigatePrevious}>
+			<Button
+				loading={isLoading}
+				size="small"
+				type="link"
+				disabled={isNextAndPreviousDisabled}
+				onClick={handleNavigatePrevious}
+			>
 				<LeftOutlined /> Previous
 			</Button>
-			<Button size="small" type="link" onClick={handleNavigateNext}>
+			<Button
+				loading={isLoading}
+				size="small"
+				type="link"
+				disabled={isNextAndPreviousDisabled}
+				onClick={handleNavigateNext}
+			>
 				Next <RightOutlined />
 			</Button>
 			<Select
-				style={{ width: 120 }}
+				loading={isLoading}
 				value={logLinesPerPage}
 				onChange={handleLogLinesPerPageChange}
 			>
-				{ITEMS_PER_PAGE_OPTIONS.map((count) => {
-					return <Option key={count} value={count}>{`${count} / page`}</Option>;
-				})}
+				{ITEMS_PER_PAGE_OPTIONS.map((count) => (
+					<Option key={count} value={count}>{`${count} / page`}</Option>
+				))}
 			</Select>
 		</Container>
 	);
