@@ -1,12 +1,10 @@
 import { CloseCircleFilled } from '@ant-design/icons';
 import { useMachine } from '@xstate/react';
 import { Button, Select, Spin } from 'antd';
+import { useIsDarkMode } from 'hooks/useDarkMode';
 import { map } from 'lodash-es';
 import React, { useCallback, useEffect, useState } from 'react';
-import { useSelector } from 'react-redux';
-import { AppState } from 'store/reducers';
 import { IMetricsBuilderQuery } from 'types/api/dashboard/getAll';
-import AppReducer from 'types/reducer/app';
 import { v4 as uuid } from 'uuid';
 
 import { ResourceAttributesFilterMachine } from './MetricTagKey.machine';
@@ -32,7 +30,7 @@ function MetricTagKeyFilter({
 	onSetQuery,
 	selectedTagFilters: selectedTagQueries,
 }: IMetricTagKeyFilterProps): JSX.Element | null {
-	const { isDarkMode } = useSelector<AppState, AppReducer>((state) => state.app);
+	const isDarkMode = useIsDarkMode();
 	const [loading, setLoading] = useState(true);
 	const [selectedValues, setSelectedValues] = useState<string[]>([]);
 	const [staging, setStaging] = useState<string[]>([]);

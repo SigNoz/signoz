@@ -572,7 +572,7 @@ function GeneralSettings({
 									onOkHandler(category.name.toLowerCase() as TTTLType)
 								}
 								centered
-								visible={category.save.modal}
+								open={category.save.modal}
 								confirmLoading={category.save.apiLoading}
 							>
 								<Typography>
