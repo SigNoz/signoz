@@ -102,7 +102,7 @@ export interface SetLogsAggregateSeries {
 }
 export interface SetDetailedLogData {
 	type: typeof SET_DETAILED_LOG_DATA;
-	payload: ILog;
+	payload: ILog | null;
 }
 
 export interface ToggleLiveTail {
