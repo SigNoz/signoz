@@ -15,6 +15,8 @@ export interface Props {
 	orderParam?: OrderBy;
 	limit?: number;
 	offset?: number;
+	exceptionType?: string;
+	serviceName?: string;
 }
 
 export interface Exception {
