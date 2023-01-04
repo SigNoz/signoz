@@ -68,6 +68,7 @@ const initialValue: TraceReducer = {
 		['responseStatusCode', INITIAL_FILTER_VALUE],
 		['serviceName', INITIAL_FILTER_VALUE],
 		['status', INITIAL_FILTER_VALUE],
+		['traceID', INITIAL_FILTER_VALUE],
 	]),
 };
 

@@ -77,7 +77,7 @@ export const getDefaultOrder = (
 export const getNanoSeconds = (date: string): string => {
 	return (
 		Math.floor(new Date(date).getTime() / 1e3).toString() +
-		Timestamp.fromString(date).getNano().toString()
+		String(Timestamp.fromString(date).getNano().toString()).padStart(9, '0')
 	);
 };
 

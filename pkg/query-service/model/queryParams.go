@@ -123,11 +123,12 @@ const (
 )
 
 type QueryRangeParamsV2 struct {
-	DataSource           DataSource            `json:"dataSource"`
-	Start                int64                 `json:"start"`
-	End                  int64                 `json:"end"`
-	Step                 int64                 `json:"step"`
-	CompositeMetricQuery *CompositeMetricQuery `json:"compositeMetricQuery"`
+	DataSource           DataSource             `json:"dataSource"`
+	Start                int64                  `json:"start"`
+	End                  int64                  `json:"end"`
+	Step                 int64                  `json:"step"`
+	CompositeMetricQuery *CompositeMetricQuery  `json:"compositeMetricQuery"`
+	Variables            map[string]interface{} `json:"variables,omitempty"`
 }
 
 // Metric auto complete types
@@ -186,6 +187,7 @@ type TagQuery struct {
 }
 
 type GetFilteredSpansParams struct {
+	TraceID            []string   `json:"traceID"`
 	ServiceName        []string   `json:"serviceName"`
 	Operation          []string   `json:"operation"`
 	Kind               string     `json:"kind"`
@@ -213,6 +215,7 @@ type GetFilteredSpansParams struct {
 }
 
 type GetFilteredSpanAggregatesParams struct {
+	TraceID            []string   `json:"traceID"`
 	ServiceName        []string   `json:"serviceName"`
 	Operation          []string   `json:"operation"`
 	Kind               string     `json:"kind"`
@@ -241,6 +244,7 @@ type GetFilteredSpanAggregatesParams struct {
 }
 
 type SpanFilterParams struct {
+	TraceID            []string `json:"traceID"`
 	Status             []string `json:"status"`
 	ServiceName        []string `json:"serviceName"`
 	HttpRoute          []string `json:"httpRoute"`
@@ -263,6 +267,7 @@ type SpanFilterParams struct {
 }
 
 type TagFilterParams struct {
+	TraceID            []string `json:"traceID"`
 	Status             []string `json:"status"`
 	ServiceName        []string `json:"serviceName"`
 	HttpRoute          []string `json:"httpRoute"`

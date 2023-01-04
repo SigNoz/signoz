@@ -3,12 +3,13 @@ package rules
 import (
 	"context"
 	"fmt"
-	opentracing "github.com/opentracing/opentracing-go"
-	"go.signoz.io/query-service/utils/labels"
-	"go.uber.org/zap"
 	"sort"
 	"sync"
 	"time"
+
+	opentracing "github.com/opentracing/opentracing-go"
+	"go.signoz.io/signoz/pkg/query-service/utils/labels"
+	"go.uber.org/zap"
 )
 
 // RuleTask holds a rule (with composite queries)

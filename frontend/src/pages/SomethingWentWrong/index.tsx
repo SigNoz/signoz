@@ -16,7 +16,7 @@ function SomethingWentWrong(): JSX.Element {
 					history.push(ROUTES.APPLICATION);
 				}}
 			>
-				Return to Metrics page
+				Return to Services page
 			</Button>
 		</Container>
 	);

@@ -3,6 +3,7 @@ import { AxiosError } from 'axios';
 import { ChartData } from 'chart.js';
 import Spinner from 'components/Spinner';
 import GridGraphComponent from 'container/GridGraphComponent';
+import { getDashboardVariables } from 'lib/dashbaordVariables/getDashboardVariables';
 import getChartData from 'lib/getChartData';
 import isEmpty from 'lodash-es/isEmpty';
 import React, { memo, useCallback, useEffect, useState } from 'react';
@@ -104,11 +105,18 @@ function GridCardGraph({
 	useEffect(() => {
 		(async (): Promise<void> => {
 			try {
+				setState((state) => ({
+					...state,
+					error: false,
+					errorMessage: '',
+					loading: true,
+				}));
 				const response = await GetMetricQueryRange({
 					selectedTime: widget.timePreferance,
 					graphType: widget.panelTypes,
 					query: widget.query,
 					globalSelectedInterval,
+					variables: getDashboardVariables(),
 				});
 
 				const isError = response.error;
@@ -142,6 +150,11 @@ function GridCardGraph({
 					...state,
 					error: true,
 					errorMessage: (error as AxiosError).toString(),
+					loading: false,
+				}));
+			} finally {
+				setState((state) => ({
+					...state,
 					loading: false,
 				}));
 			}

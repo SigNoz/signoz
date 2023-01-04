@@ -3,18 +3,19 @@ package rules
 import (
 	"context"
 	"fmt"
-	"github.com/go-kit/log"
-	"github.com/go-kit/log/level"
-	"go.uber.org/zap"
 	"sync"
 	"time"
 
+	"github.com/go-kit/log"
+	"github.com/go-kit/log/level"
+	"go.uber.org/zap"
+
 	plabels "github.com/prometheus/prometheus/pkg/labels"
 	pql "github.com/prometheus/prometheus/promql"
-	"go.signoz.io/query-service/model"
-	qslabels "go.signoz.io/query-service/utils/labels"
-	"go.signoz.io/query-service/utils/times"
-	"go.signoz.io/query-service/utils/timestamp"
+	"go.signoz.io/signoz/pkg/query-service/model"
+	qslabels "go.signoz.io/signoz/pkg/query-service/utils/labels"
+	"go.signoz.io/signoz/pkg/query-service/utils/times"
+	"go.signoz.io/signoz/pkg/query-service/utils/timestamp"
 	yaml "gopkg.in/yaml.v2"
 )
 

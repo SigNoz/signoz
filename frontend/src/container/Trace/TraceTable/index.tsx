@@ -1,6 +1,11 @@
 import { TableProps, Tag, Typography } from 'antd';
 import Table, { ColumnsType } from 'antd/lib/table';
 import ROUTES from 'constants/routes';
+import {
+	getSpanOrder,
+	getSpanOrderParam,
+} from 'container/Trace/TraceTable/util';
+import { formUrlParams } from 'container/TraceDetail/utils';
 import dayjs from 'dayjs';
 import duration from 'dayjs/plugin/duration';
 import history from 'lib/history';
@@ -44,7 +49,11 @@ function TraceTable(): JSX.Element {
 	type TableType = FlatArray<TraceReducer['spansAggregate']['data'], 1>;
 
 	const getLink = (record: TableType): string => {
-		return `${ROUTES.TRACE}/${record.traceID}?spanId=${record.spanID}`;
+		return `${ROUTES.TRACE}/${record.traceID}${formUrlParams({
+			spanId: record.spanID,
+			levelUp: 0,
+			levelDown: 0,
+		})}`;
 	};
 
 	const getValue = (value: string): JSX.Element => {
@@ -111,16 +120,6 @@ function TraceTable(): JSX.Element {
 		},
 	];
 
-	const getSortKey = (key: string): string => {
-		if (key === 'durationNano') {
-			return 'duration';
-		}
-		if (key === 'timestamp') {
-			return 'timestamp';
-		}
-		return '';
-	};
-
 	const onChangeHandler: TableProps<TableType>['onChange'] = (
 		props,
 		_,
@@ -129,8 +128,8 @@ function TraceTable(): JSX.Element {
 		if (!Array.isArray(sort)) {
 			const { order = spansAggregateOrder } = sort;
 			if (props.current && props.pageSize) {
-				const spanOrder = order === 'ascend' ? 'ascending' : 'descending';
-				const orderParam = getSortKey(sort.field as string);
+				const spanOrder = getSpanOrder(order || '');
+				const orderParam = getSpanOrderParam(sort.field as string);
 
 				dispatch({
 					type: UPDATE_SPAN_ORDER,
@@ -195,7 +194,11 @@ function TraceTable(): JSX.Element {
 				onClick: (event): void => {
 					event.preventDefault();
 					event.stopPropagation();
-					history.push(getLink(record));
+					if (event.metaKey || event.ctrlKey) {
+						window.open(getLink(record), '_blank');
+					} else {
+						history.push(getLink(record));
+					}
 				},
 			})}
 			pagination={{

@@ -3,7 +3,7 @@ package dao
 import (
 	"context"
 
-	"go.signoz.io/query-service/model"
+	"go.signoz.io/signoz/pkg/query-service/model"
 )
 
 type ModelDao interface {
@@ -37,9 +37,11 @@ type Mutations interface {
 	CreateInviteEntry(ctx context.Context, req *model.InvitationObject) *model.ApiError
 	DeleteInvitation(ctx context.Context, email string) *model.ApiError
 
-	CreateUser(ctx context.Context, user *model.User) (*model.User, *model.ApiError)
+	CreateUser(ctx context.Context, user *model.User, isFirstUser bool) (*model.User, *model.ApiError)
 	EditUser(ctx context.Context, update *model.User) (*model.User, *model.ApiError)
 	DeleteUser(ctx context.Context, id string) *model.ApiError
+
+	UpdateUserFlags(ctx context.Context, userId string, flags map[string]string) (model.UserFlag, *model.ApiError)
 
 	CreateGroup(ctx context.Context, group *model.Group) (*model.Group, *model.ApiError)
 	DeleteGroup(ctx context.Context, id string) *model.ApiError

@@ -4,12 +4,13 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/google/uuid"
 	"sort"
 	"strconv"
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/google/uuid"
 
 	"github.com/go-kit/log"
 
@@ -19,9 +20,9 @@ import (
 	"github.com/pkg/errors"
 
 	// opentracing "github.com/opentracing/opentracing-go"
-	am "go.signoz.io/query-service/integrations/alertManager"
-	"go.signoz.io/query-service/model"
-	"go.signoz.io/query-service/utils/labels"
+	am "go.signoz.io/signoz/pkg/query-service/integrations/alertManager"
+	"go.signoz.io/signoz/pkg/query-service/model"
+	"go.signoz.io/signoz/pkg/query-service/utils/labels"
 )
 
 // namespace for prom metrics
@@ -241,7 +242,7 @@ func (m *Manager) EditRule(ruleStr string, id string) error {
 func (m *Manager) editTask(rule *PostableRule, taskName string) error {
 	m.mtx.Lock()
 	defer m.mtx.Unlock()
-	
+
 	zap.S().Debugf("msg:", "editing a rule task", "\t task name:", taskName)
 
 	newTask, err := m.prepareTask(false, rule, taskName)

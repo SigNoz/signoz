@@ -5,9 +5,10 @@ import (
 
 	"github.com/ClickHouse/clickhouse-go/v2"
 	"github.com/prometheus/prometheus/promql"
+	"github.com/prometheus/prometheus/storage"
 	"github.com/prometheus/prometheus/util/stats"
-	am "go.signoz.io/query-service/integrations/alertManager"
-	"go.signoz.io/query-service/model"
+	am "go.signoz.io/signoz/pkg/query-service/integrations/alertManager"
+	"go.signoz.io/signoz/pkg/query-service/model"
 )
 
 type Reader interface {
@@ -45,7 +46,7 @@ type Reader interface {
 	GetNextPrevErrorIDs(ctx context.Context, params *model.GetErrorParams) (*model.NextPrevErrorIDs, *model.ApiError)
 
 	// Search Interfaces
-	SearchTraces(ctx context.Context, traceID string) (*[]model.SearchSpansResult, error)
+	SearchTraces(ctx context.Context, traceID string, spanId string, levelUp int, levelDown int, spanLimit int, smartTraceAlgorithm func(payload []model.SearchSpanResponseItem, targetSpanId string, levelUp int, levelDown int, spanLimit int) ([]model.SearchSpansResult, error)) (*[]model.SearchSpansResult, error)
 
 	// Setter Interfaces
 	SetTTL(ctx context.Context, ttlParams *model.TTLParams) (*model.SetTTLResponseItem, *model.ApiError)
@@ -54,13 +55,14 @@ type Reader interface {
 	GetMetricAutocompleteTagKey(ctx context.Context, params *model.MetricAutocompleteTagParams) (*[]string, *model.ApiError)
 	GetMetricAutocompleteTagValue(ctx context.Context, params *model.MetricAutocompleteTagParams) (*[]string, *model.ApiError)
 	GetMetricResult(ctx context.Context, query string) ([]*model.Series, error)
+	GetMetricResultEE(ctx context.Context, query string) ([]*model.Series, string, error)
 
 	GetTotalSpans(ctx context.Context) (uint64, error)
 	GetSpansInLastHeartBeatInterval(ctx context.Context) (uint64, error)
 	GetTimeSeriesInfo(ctx context.Context) (map[string]interface{}, error)
 	GetSamplesInfoInLastHeartBeatInterval(ctx context.Context) (uint64, error)
 	GetLogsInfoInLastHeartBeatInterval(ctx context.Context) (uint64, error)
-
+	GetTagsInfoInLastHeartBeatInterval(ctx context.Context) (*model.TagsInfo, error)
 	// Logs
 	GetLogFields(ctx context.Context) (*model.GetFieldsResponse, *model.ApiError)
 	UpdateLogField(ctx context.Context, field *model.UpdateField) *model.ApiError
@@ -70,4 +72,8 @@ type Reader interface {
 
 	// Connection needed for rules, not ideal but required
 	GetConn() clickhouse.Conn
+	GetQueryEngine() *promql.Engine
+	GetFanoutStorage() *storage.Storage
+
+	QueryDashboardVars(ctx context.Context, query string) (*model.DashboardVar, error)
 }

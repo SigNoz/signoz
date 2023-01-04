@@ -4,18 +4,18 @@ import React from 'react';
 import { Link, RouteComponentProps, withRouter } from 'react-router-dom';
 
 const breadcrumbNameMap = {
-	[ROUTES.APPLICATION]: 'Application',
+	[ROUTES.APPLICATION]: 'Services',
 	[ROUTES.TRACE]: 'Traces',
 	[ROUTES.SERVICE_MAP]: 'Service Map',
 	[ROUTES.USAGE_EXPLORER]: 'Usage Explorer',
-	[ROUTES.INSTRUMENTATION]: 'Add instrumentation',
+	[ROUTES.INSTRUMENTATION]: 'Get Started',
 	[ROUTES.SETTINGS]: 'Settings',
 	[ROUTES.DASHBOARD]: 'Dashboard',
 	[ROUTES.ALL_ERROR]: 'Exceptions',
 	[ROUTES.VERSION]: 'Status',
 	[ROUTES.ORG_SETTINGS]: 'Organization Settings',
 	[ROUTES.MY_SETTINGS]: 'My Settings',
-	[ROUTES.ERROR_DETAIL]: 'Errors',
+	[ROUTES.ERROR_DETAIL]: 'Exceptions',
 	[ROUTES.LIST_ALL_ALERT]: 'Alerts',
 	[ROUTES.ALL_DASHBOARD]: 'Dashboard',
 	[ROUTES.LOGS]: 'Logs',

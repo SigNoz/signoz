@@ -2,8 +2,9 @@ package rules
 
 import (
 	"context"
-	"go.signoz.io/query-service/utils/labels"
 	"time"
+
+	"go.signoz.io/signoz/pkg/query-service/utils/labels"
 )
 
 // A Rule encapsulates a vector expression which is evaluated at a specified

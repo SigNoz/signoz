@@ -27,24 +27,34 @@ function ClickHouseQueryContainer({
 		toggleDisable,
 		toggleDelete,
 	}: IClickHouseQueryHandleChange): void => {
-		const allQueries = queryData[WIDGET_CLICKHOUSE_QUERY_KEY_NAME];
-		const currentIndexQuery = allQueries[queryIndex];
+		// we must check if queryIndex is number type. because -
+		// ClickHouseQueryBuilder.handleQueryChange has a queryIndex
+		// parameter which supports both number and string formats.
+		// it is because, the dashboard side of query builder has queryIndex as number
+		// while the alert builder uses string format for query index (similar to backend)
+		// hence, this method is only applies when queryIndex is in number format.
 
-		if (rawQuery !== undefined) {
-			currentIndexQuery.rawQuery = rawQuery;
-		}
+		if (typeof queryIndex === 'number') {
+			const allQueries = queryData[WIDGET_CLICKHOUSE_QUERY_KEY_NAME];
 
-		if (legend !== undefined) {
-			currentIndexQuery.legend = legend;
-		}
+			const currentIndexQuery = allQueries[queryIndex];
 
-		if (toggleDisable) {
-			currentIndexQuery.disabled = !currentIndexQuery.disabled;
+			if (rawQuery !== undefined) {
+				currentIndexQuery.rawQuery = rawQuery;
+			}
+
+			if (legend !== undefined) {
+				currentIndexQuery.legend = legend;
+			}
+
+			if (toggleDisable) {
+				currentIndexQuery.disabled = !currentIndexQuery.disabled;
+			}
+			if (toggleDelete) {
+				allQueries.splice(queryIndex, 1);
+			}
+			updateQueryData({ updatedQuery: { ...queryData } });
 		}
-		if (toggleDelete) {
-			allQueries.splice(queryIndex, 1);
-		}
-		updateQueryData({ updatedQuery: { ...queryData } });
 	};
 	const addQueryHandler = (): void => {
 		queryData[WIDGET_CLICKHOUSE_QUERY_KEY_NAME].push({

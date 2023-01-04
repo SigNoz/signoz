@@ -32,7 +32,17 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
-      - name: Build  query-service image
+      - name: Build query-service image
         shell: bash
         run: |
           make build-query-service-amd64
+
+  build-ee-query-service:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+      - name: Build EE query-service image
+        shell: bash
+        run: |
+          make build-ee-query-service-amd64

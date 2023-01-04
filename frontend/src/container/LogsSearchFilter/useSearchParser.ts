@@ -23,7 +23,7 @@ export function useSearchParser(): {
 
 	const updateQueryString = useCallback(
 		(updatedQueryString) => {
-			history.push({
+			history.replace({
 				pathname: history.location.pathname,
 				search: updatedQueryString ? `?q=${updatedQueryString}` : '',
 			});
@@ -44,7 +44,7 @@ export function useSearchParser(): {
 	);
 
 	useEffect(() => {
-		updateQueryString(queryString);
+		if (queryString !== null) updateQueryString(queryString);
 	}, [queryString, updateQueryString]);
 
 	const updateParsedQuery = useCallback(

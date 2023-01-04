@@ -19,7 +19,7 @@ import { Dispatch } from 'redux';
 import store from 'store';
 import AppActions from 'types/actions';
 import { ErrorResponse, SuccessResponse } from 'types/api';
-import { Query } from 'types/api/dashboard/getAll';
+import { IDashboardVariable, Query } from 'types/api/dashboard/getAll';
 import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
 import { EDataSource, EPanelType, EQueryType } from 'types/common/dashboard';
 import { GlobalReducer } from 'types/reducer/globalTime';
@@ -29,11 +29,13 @@ export async function GetMetricQueryRange({
 	globalSelectedInterval,
 	graphType,
 	selectedTime,
+	variables = {},
 }: {
 	query: Query;
 	graphType: GRAPH_TYPES;
 	selectedTime: timePreferenceType;
 	globalSelectedInterval: Time;
+	variables?: Record<string, unknown>;
 }): Promise<SuccessResponse<MetricRangePayloadProps> | ErrorResponse> {
 	const { queryType } = query;
 	const queryKey: Record<EQueryTypeToQueryKeyMapping, string> =
@@ -138,6 +140,7 @@ export async function GetMetricQueryRange({
 		start: parseInt(start, 10) * 1e3,
 		end: parseInt(end, 10) * 1e3,
 		step: getStep({ start, end, inputFormat: 'ms' }),
+		variables,
 		...QueryPayload,
 	});
 	if (response.statusCode >= 400) {
@@ -173,6 +176,14 @@ export const GetQueryResults = (
 ): ((dispatch: Dispatch<AppActions>) => void) => {
 	return async (dispatch: Dispatch<AppActions>): Promise<void> => {
 		try {
+			dispatch({
+				type: 'QUERY_ERROR',
+				payload: {
+					errorMessage: '',
+					widgetId: props.widgetId,
+					errorBoolean: false,
+				},
+			});
 			const response = await GetMetricQueryRange(props);
 
 			const isError = response.error;
@@ -199,14 +210,6 @@ export const GetQueryResults = (
 					},
 				},
 			});
-			dispatch({
-				type: 'QUERY_ERROR',
-				payload: {
-					errorMessage: '',
-					widgetId: props.widgetId,
-					errorBoolean: false,
-				},
-			});
 		} catch (error) {
 			dispatch({
 				type: 'QUERY_ERROR',
@@ -226,4 +229,5 @@ export interface GetQueryResultsProps {
 	query: Query;
 	graphType: ITEMS;
 	globalSelectedInterval: GlobalReducer['selectedTime'];
+	variables: Record<string, unknown>;
 }

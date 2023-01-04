@@ -77,12 +77,7 @@ export const spanToTreeUtil = (inputSpanList: Span[]): ITraceForest => {
 			serviceName: span[3],
 			hasError: !!span[11],
 			serviceColour: '',
-			event: span[10].map((e) => {
-				return (
-					JSON.parse(decodeURIComponent((e as never) || ('{}' as never))) ||
-					({} as Record<string, unknown>)
-				);
-			}),
+			event: span[10].map((e) => JSON.parse(e || '{}') || {}),
 			references: spanReferences,
 		};
 		spanMap[span[1]] = spanObject;

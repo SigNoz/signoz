@@ -1,4 +1,29 @@
 receivers:
+  filelog/dockercontainers:
+    include: [  "/var/lib/docker/containers/*/*.log" ]
+    start_at: end
+    include_file_path: true
+    include_file_name: false
+    operators:
+    - type: json_parser
+      id: parser-docker
+      output: extract_metadata_from_filepath
+      timestamp:
+        parse_from: attributes.time
+        layout: '%Y-%m-%dT%H:%M:%S.%LZ'
+    - type: regex_parser
+      id: extract_metadata_from_filepath
+      regex: '^.*containers/(?P<container_id>[^_]+)/.*log$'
+      parse_from: attributes["log.file.path"]
+      output: parse_body
+    - type: move
+      id: parse_body
+      from: attributes.log
+      to: body
+      output: time
+    - type: remove
+      id: time
+      field: attributes.time
   opencensus:
     endpoint: 0.0.0.0:55678
   otlp/spanmetrics:
@@ -22,7 +47,7 @@ receivers:
       # thrift_binary:
       #   endpoint: 0.0.0.0:6832
   hostmetrics:
-    collection_interval: 60s
+    collection_interval: 30s
     scrapers:
       cpu: {}
       load: {}
@@ -30,6 +55,16 @@ receivers:
       disk: {}
       filesystem: {}
       network: {}
+  prometheus:
+    config:
+      global:
+        scrape_interval: 60s
+      scrape_configs:
+        # otel-collector internal metrics
+        - job_name: otel-collector
+          static_configs:
+            - targets:
+              - otel-collector:8888
 
 processors:
   batch:
@@ -39,7 +74,7 @@ processors:
   signozspanmetrics/prometheus:
     metrics_exporter: prometheus
     latency_histogram_buckets: [100us, 1ms, 2ms, 6ms, 10ms, 50ms, 100ms, 250ms, 500ms, 1000ms, 1400ms, 2000ms, 5s, 10s, 20s, 40s, 60s ]
-    dimensions_cache_size: 10000
+    dimensions_cache_size: 100000
     dimensions:
       - name: service.namespace
         default: default
@@ -63,7 +98,6 @@ processors:
   resourcedetection:
     detectors: [env, system]
     timeout: 2s
-    override: false
 
 extensions:
   health_check:
@@ -76,6 +110,7 @@ extensions:
 exporters:
   clickhousetraces:
     datasource: tcp://clickhouse:9000/?database=signoz_traces
+    docker_multi_node_cluster: ${DOCKER_MULTI_NODE_CLUSTER}
   clickhousemetricswrite:
     endpoint: tcp://clickhouse:9000/?database=signoz_metrics
     resource_to_telemetry_conversion:
@@ -83,6 +118,18 @@ exporters:
   prometheus:
     endpoint: 0.0.0.0:8889
   # logging: {}
+
+  clickhouselogsexporter:
+    dsn: tcp://clickhouse:9000/
+    docker_multi_node_cluster: ${DOCKER_MULTI_NODE_CLUSTER}
+    timeout: 5s
+    sending_queue:
+      queue_size: 100
+    retry_on_failure:
+      enabled: true
+      initial_interval: 5s
+      max_interval: 30s
+      max_elapsed_time: 300s
 
 service:
   telemetry:
@@ -101,10 +148,14 @@ service:
       receivers: [otlp]
       processors: [batch]
       exporters: [clickhousemetricswrite]
-    metrics/hostmetrics:
-      receivers: [hostmetrics]
+    metrics/generic:
+      receivers: [hostmetrics, prometheus]
       processors: [resourcedetection, batch]
       exporters: [clickhousemetricswrite]
     metrics/spanmetrics:
       receivers: [otlp/spanmetrics]
       exporters: [prometheus]
+    logs:
+      receivers: [otlp, filelog/dockercontainers]
+      processors: [batch]
+      exporters: [clickhouselogsexporter]

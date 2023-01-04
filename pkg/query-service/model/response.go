@@ -12,10 +12,40 @@ import (
 	"k8s.io/apimachinery/pkg/labels"
 )
 
+type BaseApiError interface {
+	Type() ErrorType
+	ToError() error
+	Error() string
+	IsNil() bool
+}
+
 type ApiError struct {
 	Typ ErrorType
 	Err error
 }
+
+func (a *ApiError) Type() ErrorType {
+	return a.Typ
+}
+
+func (a *ApiError) ToError() error {
+	if a != nil {
+		return a.Err
+	}
+	return a
+}
+
+func (a *ApiError) Error() string {
+	if a == nil || a.Err == nil {
+		return ""
+	}
+	return a.Err.Error()
+}
+
+func (a *ApiError) IsNil() bool {
+	return a == nil || a.Err == nil
+}
+
 type ErrorType string
 
 const (
@@ -33,6 +63,30 @@ const (
 	ErrorConflict              ErrorType = "conflict"
 	ErrorStreamingNotSupported ErrorType = "streaming is not supported"
 )
+
+// BadRequest returns a ApiError object of bad request
+func BadRequest(err error) *ApiError {
+	return &ApiError{
+		Typ: ErrorBadData,
+		Err: err,
+	}
+}
+
+// BadRequestStr returns a ApiError object of bad request
+func BadRequestStr(s string) *ApiError {
+	return &ApiError{
+		Typ: ErrorBadData,
+		Err: fmt.Errorf(s),
+	}
+}
+
+// InternalError returns a ApiError object of internal type
+func InternalError(err error) *ApiError {
+	return &ApiError{
+		Typ: ErrorInternal,
+		Err: err,
+	}
+}
 
 type QueryDataV2 struct {
 	ResultType promql.ValueType `json:"resultType"`
@@ -141,7 +195,7 @@ type GetFilterSpansResponse struct {
 	TotalSpans uint64                       `json:"totalSpans"`
 }
 
-type SearchSpanDBReponseItem struct {
+type SearchSpanDBResponseItem struct {
 	Timestamp time.Time `ch:"timestamp"`
 	TraceID   string    `ch:"traceID"`
 	Model     string    `ch:"model"`
@@ -154,18 +208,21 @@ type Event struct {
 	IsError      bool                   `json:"isError,omitempty"`
 }
 
-type SearchSpanReponseItem struct {
+//easyjson:json
+type SearchSpanResponseItem struct {
 	TimeUnixNano uint64            `json:"timestamp"`
-	SpanID       string            `json:"spanID"`
-	TraceID      string            `json:"traceID"`
+	DurationNano int64             `json:"durationNano"`
+	SpanID       string            `json:"spanId"`
+	RootSpanID   string            `json:"rootSpanId"`
+	TraceID      string            `json:"traceId"`
+	HasError     bool              `json:"hasError"`
+	Kind         int32             `json:"kind"`
 	ServiceName  string            `json:"serviceName"`
 	Name         string            `json:"name"`
-	Kind         int32             `json:"kind"`
 	References   []OtelSpanRef     `json:"references,omitempty"`
-	DurationNano int64             `json:"durationNano"`
 	TagMap       map[string]string `json:"tagMap"`
 	Events       []string          `json:"event"`
-	HasError     bool              `json:"hasError"`
+	RootName     string            `json:"rootName"`
 }
 
 type OtelSpanRef struct {
@@ -174,14 +231,14 @@ type OtelSpanRef struct {
 	RefType string `json:"refType,omitempty"`
 }
 
-func (ref *OtelSpanRef) toString() string {
+func (ref *OtelSpanRef) ToString() string {
 
 	retString := fmt.Sprintf(`{TraceId=%s, SpanId=%s, RefType=%s}`, ref.TraceId, ref.SpanId, ref.RefType)
 
 	return retString
 }
 
-func (item *SearchSpanReponseItem) GetValues() []interface{} {
+func (item *SearchSpanResponseItem) GetValues() []interface{} {
 
 	references := []OtelSpanRef{}
 	jsonbody, _ := json.Marshal(item.References)
@@ -189,7 +246,7 @@ func (item *SearchSpanReponseItem) GetValues() []interface{} {
 
 	referencesStringArray := []string{}
 	for _, item := range references {
-		referencesStringArray = append(referencesStringArray, item.toString())
+		referencesStringArray = append(referencesStringArray, item.ToString())
 	}
 
 	if item.Events == nil {
@@ -342,6 +399,11 @@ type DBResponseTotal struct {
 	NumTotal uint64 `ch:"numTotal"`
 }
 
+type DBResponseMinMax struct {
+	Min uint64 `ch:"min"`
+	Max uint64 `ch:"max"`
+}
+
 type SpanFiltersResponse struct {
 	ServiceName        map[string]uint64 `json:"serviceName"`
 	Status             map[string]uint64 `json:"status"`
@@ -430,16 +492,16 @@ type GetFieldsResponse struct {
 type GetLogsResponse struct {
 	Timestamp          uint64             `json:"timestamp" ch:"timestamp"`
 	ID                 string             `json:"id" ch:"id"`
-	TraceID            string             `json:"traceId" ch:"trace_id"`
-	SpanID             string             `json:"spanId" ch:"span_id"`
-	TraceFlags         uint32             `json:"traceFlags" ch:"trace_flags"`
-	SeverityText       string             `json:"severityText" ch:"severity_text"`
-	SeverityNumber     uint8              `json:"severityNumber" ch:"severity_number"`
+	TraceID            string             `json:"trace_id" ch:"trace_id"`
+	SpanID             string             `json:"span_id" ch:"span_id"`
+	TraceFlags         uint32             `json:"trace_flags" ch:"trace_flags"`
+	SeverityText       string             `json:"severity_text" ch:"severity_text"`
+	SeverityNumber     uint8              `json:"severity_number" ch:"severity_number"`
 	Body               string             `json:"body" ch:"body"`
-	Resources_string   map[string]string  `json:"resourcesString" ch:"resources_string"`
-	Attributes_string  map[string]string  `json:"attributesString" ch:"attributes_string"`
-	Attributes_int64   map[string]int64   `json:"attributesInt" ch:"attributes_int64"`
-	Attributes_float64 map[string]float64 `json:"attributesFloat" ch:"attributes_float64"`
+	Resources_string   map[string]string  `json:"resources_string" ch:"resources_string"`
+	Attributes_string  map[string]string  `json:"attributes_string" ch:"attributes_string"`
+	Attributes_int64   map[string]int64   `json:"attributes_int" ch:"attributes_int64"`
+	Attributes_float64 map[string]float64 `json:"attributes_float" ch:"attributes_float64"`
 }
 
 type LogsTailClient struct {
@@ -491,4 +553,19 @@ func (s *ServiceItem) MarshalJSON() ([]byte, error) {
 	}{
 		Alias: (*Alias)(s),
 	})
+}
+
+type DashboardVar struct {
+	VariableValues []interface{} `json:"variableValues"`
+}
+
+type TagsInfo struct {
+	Languages map[string]interface{} `json:"languages"`
+	Env       string                 `json:"env"`
+}
+
+type TagTelemetryData struct {
+	ServiceName string `json:"serviceName" ch:"serviceName"`
+	Env         string `json:"env" ch:"env"`
+	Language    string `json:"language" ch:"language"`
 }

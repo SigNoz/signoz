@@ -1,5 +1,5 @@
 import { PlusOutlined } from '@ant-design/icons';
-import { notification, Tabs } from 'antd';
+import { Button, notification, Tabs } from 'antd';
 import MetricsBuilderFormula from 'container/NewWidget/LeftContainer/QuerySection/QueryBuilder/queryBuilder/formula';
 import MetricsBuilder from 'container/NewWidget/LeftContainer/QuerySection/QueryBuilder/queryBuilder/query';
 import {
@@ -8,13 +8,16 @@ import {
 } from 'container/NewWidget/LeftContainer/QuerySection/QueryBuilder/queryBuilder/types';
 import React, { useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
+import { AlertTypes } from 'types/api/alerts/alertTypes';
 import {
+	IChQueries,
 	IFormulaQueries,
 	IMetricQueries,
 	IPromQueries,
 } from 'types/api/alerts/compositeQuery';
 import { EAggregateOperator, EQueryType } from 'types/common/dashboard';
 
+import ChQuerySection from './ChQuerySection';
 import PromqlSection from './PromqlSection';
 import { FormContainer, QueryButton, StepHeading } from './styles';
 import { toIMetricsBuilderQuery } from './utils';
@@ -29,6 +32,10 @@ function QuerySection({
 	setFormulaQueries,
 	promQueries,
 	setPromQueries,
+	chQueries,
+	setChQueries,
+	alertType,
+	runQuery,
 }: QuerySectionProps): JSX.Element {
 	// init namespace for translations
 	const { t } = useTranslation('alerts');
@@ -49,6 +56,20 @@ function QuerySection({
 			});
 		}
 
+		if (
+			parseInt(s, 10) === EQueryType.CLICKHOUSE &&
+			(!chQueries || Object.keys(chQueries).length === 0)
+		) {
+			setChQueries({
+				A: {
+					rawQuery: '',
+					name: 'A',
+					query: '',
+					legend: '',
+					disabled: false,
+				},
+			});
+		}
 		setQueryCategory(parseInt(s, 10));
 	};
 
@@ -196,6 +217,10 @@ function QuerySection({
 		);
 	};
 
+	const renderChQueryUI = (): JSX.Element => {
+		return <ChQuerySection chQueries={chQueries} setChQueries={setChQueries} />;
+	};
+
 	const renderFormulaButton = (): JSX.Element => {
 		return (
 			<QueryButton onClick={addFormula} icon={<PlusOutlined />}>
@@ -258,23 +283,85 @@ function QuerySection({
 			</div>
 		);
 	};
-	return (
-		<>
-			<StepHeading> {t('alert_form_step1')}</StepHeading>
-			<FormContainer>
-				<div style={{ display: 'flex' }}>
+
+	const handleRunQuery = (): void => {
+		runQuery();
+	};
+
+	const renderTabs = (typ: AlertTypes): JSX.Element | null => {
+		switch (typ) {
+			case AlertTypes.TRACES_BASED_ALERT:
+			case AlertTypes.LOGS_BASED_ALERT:
+			case AlertTypes.EXCEPTIONS_BASED_ALERT:
+				return (
+					<Tabs
+						type="card"
+						style={{ width: '100%' }}
+						defaultActiveKey={EQueryType.CLICKHOUSE.toString()}
+						activeKey={queryCategory.toString()}
+						onChange={handleQueryCategoryChange}
+						tabBarExtraContent={
+							<span style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
+								{queryCategory === EQueryType.CLICKHOUSE && (
+									<Button type="primary" onClick={handleRunQuery}>
+										Run Query
+									</Button>
+								)}
+							</span>
+						}
+					>
+						<TabPane
+							tab={t('tab_qb')}
+							key={EQueryType.QUERY_BUILDER.toString()}
+							disabled
+						/>
+						<TabPane tab={t('tab_chquery')} key={EQueryType.CLICKHOUSE.toString()} />
+					</Tabs>
+				);
+			case AlertTypes.METRICS_BASED_ALERT:
+			default:
+				return (
 					<Tabs
 						type="card"
 						style={{ width: '100%' }}
 						defaultActiveKey={EQueryType.QUERY_BUILDER.toString()}
 						activeKey={queryCategory.toString()}
 						onChange={handleQueryCategoryChange}
+						tabBarExtraContent={
+							<span style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
+								{queryCategory === EQueryType.CLICKHOUSE && (
+									<Button type="primary" onClick={handleRunQuery}>
+										Run Query
+									</Button>
+								)}
+							</span>
+						}
 					>
 						<TabPane tab={t('tab_qb')} key={EQueryType.QUERY_BUILDER.toString()} />
+						<TabPane tab={t('tab_chquery')} key={EQueryType.CLICKHOUSE.toString()} />
 						<TabPane tab={t('tab_promql')} key={EQueryType.PROM.toString()} />
 					</Tabs>
-				</div>
-				{queryCategory === EQueryType.PROM ? renderPromqlUI() : renderMetricUI()}
+				);
+		}
+	};
+	const renderQuerySection = (c: EQueryType): JSX.Element | null => {
+		switch (c) {
+			case EQueryType.PROM:
+				return renderPromqlUI();
+			case EQueryType.CLICKHOUSE:
+				return renderChQueryUI();
+			case EQueryType.QUERY_BUILDER:
+				return renderMetricUI();
+			default:
+				return null;
+		}
+	};
+	return (
+		<>
+			<StepHeading> {t('alert_form_step1')}</StepHeading>
+			<FormContainer>
+				<div style={{ display: 'flex' }}>{renderTabs(alertType)}</div>
+				{renderQuerySection(queryCategory)}
 			</FormContainer>
 		</>
 	);
@@ -289,6 +376,10 @@ interface QuerySectionProps {
 	setFormulaQueries: (b: IFormulaQueries) => void;
 	promQueries: IPromQueries;
 	setPromQueries: (p: IPromQueries) => void;
+	chQueries: IChQueries;
+	setChQueries: (q: IChQueries) => void;
+	alertType: AlertTypes;
+	runQuery: () => void;
 }
 
 export default QuerySection;

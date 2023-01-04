@@ -26,6 +26,7 @@ import { EditorContainer, FooterContainer } from './styles';
 
 function ImportJSON({
 	isImportJSONModalVisible,
+	uploadedGrafana,
 	onModalHandler,
 }: ImportJSONProps): JSX.Element {
 	const [jsonData, setJsonData] = useState<Record<string, unknown>>();
@@ -89,6 +90,7 @@ function ImportJSON({
 
 			const response = await createDashboard({
 				...parsedWidgets,
+				uploadedGrafana,
 			});
 
 			if (response.statusCode === 200) {
@@ -186,6 +188,7 @@ function ImportJSON({
 interface ImportJSONProps {
 	isImportJSONModalVisible: boolean;
 	onModalHandler: VoidFunction;
+	uploadedGrafana: boolean;
 }
 
 export default ImportJSON;

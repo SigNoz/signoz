@@ -4,14 +4,15 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/pkg/errors"
-	"go.signoz.io/query-service/model"
-	"go.uber.org/zap"
 	"time"
 	"unicode/utf8"
 
-	"go.signoz.io/query-service/utils/times"
-	"go.signoz.io/query-service/utils/timestamp"
+	"github.com/pkg/errors"
+	"go.signoz.io/signoz/pkg/query-service/model"
+	"go.uber.org/zap"
+
+	"go.signoz.io/signoz/pkg/query-service/utils/times"
+	"go.signoz.io/signoz/pkg/query-service/utils/timestamp"
 	yaml "gopkg.in/yaml.v2"
 )
 
@@ -31,6 +32,7 @@ func newApiErrorBadData(err error) *model.ApiError {
 // PostableRule is used to create alerting rule from HTTP api
 type PostableRule struct {
 	Alert       string   `yaml:"alert,omitempty" json:"alert,omitempty"`
+	AlertType   string   `yaml:"alertType,omitempty" json:"alertType,omitempty"`
 	Description string   `yaml:"description,omitempty" json:"description,omitempty"`
 	RuleType    RuleType `yaml:"ruleType,omitempty" json:"ruleType,omitempty"`
 	EvalWindow  Duration `yaml:"evalWindow,omitempty" json:"evalWindow,omitempty"`
@@ -91,7 +93,7 @@ func parseIntoRule(initRule PostableRule, content []byte, kind string) (*Postabl
 			CompositeMetricQuery: &model.CompositeMetricQuery{
 				QueryType: model.PROM,
 				PromQueries: map[string]*model.PromQuery{
-					"A": &model.PromQuery{
+					"A": {
 						Query: rule.Expr,
 					},
 				},

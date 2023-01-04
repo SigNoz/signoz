@@ -2,7 +2,7 @@ import { StyledDiv } from 'components/Styled';
 import { ITraceMetaData } from 'container/GantChart';
 import { IIntervalUnit, INTERVAL_UNITS } from 'container/TraceDetail/utils';
 import useThemeMode from 'hooks/useThemeMode';
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useMeasure } from 'react-use';
 
 import { styles, Svg, TimelineInterval } from './styles';
@@ -19,10 +19,6 @@ function Timeline({
 }: TimelineProps): JSX.Element {
 	const [ref, { width }] = useMeasure<HTMLDivElement>();
 	const { isDarkMode } = useThemeMode();
-
-	const asd = useRef('');
-
-	asd.current = '1';
 
 	const [intervals, setIntervals] = useState<Interval[] | null>(null);
 

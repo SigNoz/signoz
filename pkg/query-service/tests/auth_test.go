@@ -9,8 +9,8 @@ import (
 
 	"github.com/pkg/errors"
 	"github.com/stretchr/testify/require"
-	"go.signoz.io/query-service/auth"
-	"go.signoz.io/query-service/model"
+	"go.signoz.io/signoz/pkg/query-service/auth"
+	"go.signoz.io/signoz/pkg/query-service/model"
 )
 
 func invite(t *testing.T, email string) *model.InviteResponse {

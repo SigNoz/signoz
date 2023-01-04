@@ -207,7 +207,7 @@ If you don't want to install the SigNoz backend just for doing frontend developm
 
 Please ping us in the [`#contributing`](https://signoz-community.slack.com/archives/C01LWQ8KS7M) channel or ask `@Prashant Shahi` in our [Slack Community](https://signoz.io/slack)  and we will DM you with `<test environment URL>`.
 
-**Frontend should now be accessible at** [`http://localhost:3301/application`](http://localhost:3301/application)
+**Frontend should now be accessible at** [`http://localhost:3301/services`](http://localhost:3301/services)
 
  **[`^top^`](#)**
  
@@ -362,10 +362,6 @@ There are many other ways to get involved with the community and to participate 
 - Help answer questions on forums such as Stack Overflow and [SigNoz Community Slack Channel](https://signoz.io/slack).
 - Tell others about the project on Twitter, your blog, etc.
 
-
-## License
-
-By contributing to SigNoz, you agree that your contributions will be licensed under its MIT license.
 
 Again, Feel free to ping us on [`#contributing`](https://signoz-community.slack.com/archives/C01LWQ8KS7M) or [`#contributing-frontend`](https://signoz-community.slack.com/archives/C027134DM8B) on our slack community if you need any help on this :)
 

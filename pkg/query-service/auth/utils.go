@@ -5,8 +5,8 @@ import (
 	"encoding/hex"
 
 	"github.com/pkg/errors"
-	"go.signoz.io/query-service/constants"
-	"go.signoz.io/query-service/model"
+	"go.signoz.io/signoz/pkg/query-service/constants"
+	"go.signoz.io/signoz/pkg/query-service/model"
 )
 
 var (
