@@ -11,6 +11,6 @@ jobs:
       - name: Remove label
         uses: buildsville/add-remove-label@v1
         with:
-          label: ok-to-test
+          label: ok-to-test,testing-deploy
           type: remove
           token: ${{ secrets.GITHUB_TOKEN }}

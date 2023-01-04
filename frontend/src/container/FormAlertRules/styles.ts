@@ -9,17 +9,13 @@ import {
 	Select,
 	Typography,
 } from 'antd';
-import FormItem from 'antd/lib/form/FormItem';
-import TextArea from 'antd/lib/input/TextArea';
 import styled from 'styled-components';
+
+const { TextArea } = Input;
+const { Item } = Form;
 
 export const PanelContainer = styled(Row)`
 	flex-wrap: nowrap;
-`;
-
-export const StyledRightContainer = styled(Col)`
-	&&& {
-	}
 `;
 
 export const StyledLeftContainer = styled(Col)`
@@ -111,7 +107,7 @@ export const TextareaMedium = styled(TextArea)`
 	width: 70%;
 `;
 
-export const FormItemMedium = styled(FormItem)`
+export const FormItemMedium = styled(Item)`
 	width: 70%;
 `;
 

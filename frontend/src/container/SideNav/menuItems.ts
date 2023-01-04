@@ -27,7 +27,7 @@ const menus: SidebarMenu[] = [
 		Icon: AlignLeftOutlined,
 		to: ROUTES.LOGS,
 		name: 'Logs',
-		tags: ['Beta'],
+		// tags: ['Beta'],
 	},
 	{
 		Icon: DashboardFilled,

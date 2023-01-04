@@ -1,10 +1,10 @@
-import { Switch, Typography } from 'antd';
+import { Avatar, Switch, Typography } from 'antd';
 import styled from 'styled-components';
 
 export const Container = styled.div`
 	display: flex;
 	justify-content: space-between;
-	height: 100%;
+	height: 4rem;
 `;
 
 export const AvatarContainer = styled.div`
@@ -65,4 +65,16 @@ export const ToggleButton = styled(Switch)<DarkModeProps>`
 
 export const IconContainer = styled.div`
 	color: white;
+`;
+
+export const NavLinkWrapper = styled.div`
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	height: 100%;
+	gap: 0.5rem;
+`;
+
+export const AvatarWrapper = styled(Avatar)`
+	background-color: rgba(255, 255, 255, 0.25);
 `;
