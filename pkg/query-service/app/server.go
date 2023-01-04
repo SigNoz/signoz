@@ -242,21 +242,26 @@ func extractDashboardMetaData(path string, r *http.Request) (map[string]interfac
 	pathToExtractBodyFrom := "/api/v2/metrics/query_range"
 	var requestBody map[string]interface{}
 	data := map[string]interface{}{}
-
+	fmt.Println("Inside function ...", path, r.Method)
 	if path == pathToExtractBodyFrom && (r.Method == "POST") {
 		bodyBytes, _ := ioutil.ReadAll(r.Body)
 		r.Body.Close() //  must close
 		r.Body = ioutil.NopCloser(bytes.NewBuffer(bodyBytes))
-
+		fmt.Println("Inside If...before unmarshal")
 		json.Unmarshal(bodyBytes, &requestBody)
+		fmt.Println("Inside If...after unmarshal")
 
 	} else {
+		fmt.Println("Inside Else...")
 		return nil, false
 	}
 
 	compositeMetricQuery, compositeMetricQueryExists := requestBody["compositeMetricQuery"]
 	compositeMetricQueryMap := compositeMetricQuery.(map[string]interface{})
 	signozMetricFound := false
+
+	fmt.Println("Step1: ", compositeMetricQueryExists)
+	fmt.Println("Step2: ", compositeMetricQueryMap)
 
 	if compositeMetricQueryExists {
 		signozMetricFound = telemetry.GetInstance().CheckSigNozMetrics(compositeMetricQueryMap)
