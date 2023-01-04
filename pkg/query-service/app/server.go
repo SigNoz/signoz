@@ -308,6 +308,8 @@ func (s *Server) analyticsMiddleware(next http.Handler) http.Handler {
 		route := mux.CurrentRoute(r)
 		path, _ := route.GetPathTemplate()
 
+		fmt.Println("Inside analytics middleware ....")
+
 		dashboardMetadata, metadataExists := extractDashboardMetaData(path, r)
 		getActiveLogs(path, r)
 
