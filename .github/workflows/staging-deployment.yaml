@@ -13,24 +13,25 @@ jobs:
       - name: Executing remote ssh commands using ssh key
         uses: appleboy/ssh-action@v0.1.6
         env:
-          DOCKER_TAG: develop
+          GITHUB_BRANCH: develop
           GITHUB_SHA: ${{ github.sha }}
         with:
           host: ${{ secrets.HOST_DNS }}
           username: ${{ secrets.USERNAME }}
           key: ${{ secrets.EC2_SSH_KEY }}
-          envs: DOCKER_TAG,GITHUB_SHA
+          envs: GITHUB_BRANCH,GITHUB_SHA
           command_timeout: 60m
           script: |
-            echo "DOCKER_TAG: ${DOCKER_TAG}"
+            echo "GITHUB_BRANCH: ${GITHUB_BRANCH}"
             echo "GITHUB_SHA: ${GITHUB_SHA}"
+            export DOCKER_TAG="${GITHUB_SHA:0:7}" # needed for child process to access it
             docker system prune --force
             cd ~/signoz
             git status
             git add .
             git stash push -m "stashed on $(date --iso-8601=seconds)"
             git fetch origin
-            git checkout develop
+            git checkout ${GITHUB_BRANCH}
             git pull
             make build-ee-query-service-amd64
             make build-frontend-amd64
