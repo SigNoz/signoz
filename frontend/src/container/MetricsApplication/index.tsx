@@ -11,29 +11,6 @@ import DBCall from './Tabs/DBCall';
 import External from './Tabs/External';
 import Overview from './Tabs/Overview';
 
-/* Since we moved to query builder, the below function isn't required anymore */
-
-// const getWidget = (query: PromQLWidgets['query']): PromQLWidgets => {
-// 	return {
-// 		description: '',
-// 		id: '',
-// 		isStacked: false,
-// 		nullZeroValues: '',
-// 		opacity: '0',
-// 		panelTypes: 'TIME_SERIES',
-// 		query,
-// 		queryData: {
-// 			data: { queryData: [] },
-// 			error: false,
-// 			errorMessage: '',
-// 			loading: false,
-// 		},
-// 		timePreferance: 'GLOBAL_TIME',
-// 		title: '',
-// 		stepSize: 60,
-// 	};
-// };
-
 const getWidgetQueryBuilder = (query: Widgets['query']): Widgets => {
 	return {
 		description: '',

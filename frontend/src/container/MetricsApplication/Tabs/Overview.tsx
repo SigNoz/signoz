@@ -35,11 +35,6 @@ function Application({ getWidgetQueryBuilder }: DashboardProps): JSX.Element {
 		resourceAttributeQueries,
 		topLevelOperations,
 	} = useSelector<AppState, MetricReducer>((state) => state.metrics);
-	// const operationsRegex = useMemo(() => {
-	// 	return encodeURIComponent(
-	// 		topLevelOperations.map((e) => escapeRegExp(e)).join('|'),
-	// 	);
-	// }, [topLevelOperations]);
 
 	const selectedTraceTags: string = JSON.stringify(
 		convertRawQueriesToTraceSelectedTags(resourceAttributeQueries, 'array') || [],
