@@ -1,5 +1,6 @@
 import history from 'lib/history';
 import { parseQuery, reverseParser } from 'lib/logql';
+import { ILogQLParsedQueryItem } from 'lib/logql/types';
 import { isEqual } from 'lodash-es';
 import { useCallback, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
@@ -10,19 +11,21 @@ import {
 } from 'types/actions/logs';
 import { ILogsReducer } from 'types/reducer/logs';
 
-export function useSearchParser(): {
+export interface IUseSearchParser {
 	queryString: string;
 	parsedQuery: unknown;
-	updateParsedQuery: (arg0: unknown) => void;
-	updateQueryString: (arg0: unknown) => void;
-} {
+	updateParsedQuery: (updatedParsedPayload: ILogQLParsedQueryItem[]) => void;
+	updateQueryString: (updatedQueryString: string) => void;
+}
+
+export function useSearchParser(): IUseSearchParser {
 	const dispatch = useDispatch();
 	const {
 		searchFilter: { parsedQuery, queryString },
 	} = useSelector<AppState, ILogsReducer>((store) => store.logs);
 
 	const updateQueryString = useCallback(
-		(updatedQueryString) => {
+		(updatedQueryString: string) => {
 			history.replace({
 				pathname: history.location.pathname,
 				search: updatedQueryString ? `?q=${updatedQueryString}` : '',
@@ -48,7 +51,7 @@ export function useSearchParser(): {
 	}, [queryString, updateQueryString]);
 
 	const updateParsedQuery = useCallback(
-		(updatedParsedPayload) => {
+		(updatedParsedPayload: ILogQLParsedQueryItem[]) => {
 			dispatch({
 				type: SET_SEARCH_QUERY_PARSED_PAYLOAD,
 				payload: updatedParsedPayload,

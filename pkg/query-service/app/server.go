@@ -247,7 +247,6 @@ func extractDashboardMetaData(path string, r *http.Request) (map[string]interfac
 		bodyBytes, _ := ioutil.ReadAll(r.Body)
 		r.Body.Close() //  must close
 		r.Body = ioutil.NopCloser(bytes.NewBuffer(bodyBytes))
-
 		json.Unmarshal(bodyBytes, &requestBody)
 
 	} else {
