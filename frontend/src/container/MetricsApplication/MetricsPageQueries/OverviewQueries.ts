@@ -5,21 +5,21 @@ import {
 } from 'types/api/dashboard/getAll';
 
 import {
-	getQueryBuilderQueriesTop,
-	getQueryBuilderQueriesTopWithFormula,
+	getQueryBuilderQueriesOperation,
+	getQueryBuilderQueriesOperationWithFormula,
 } from './MetricsPageQueriesFactory';
 
 export const operationPerSec = ({
 	servicename,
 	tagFilterItems,
 	topLevelOperations,
-}: OPSProps): {
+}: OperationPerSecProps): {
 	formulas: IMetricsBuilderFormula[];
 	queryBuilder: IMetricsBuilderQuery[];
 } => {
 	const metricName = 'signoz_latency_count';
 	const legend = 'Operations';
-	return getQueryBuilderQueriesTop({
+	return getQueryBuilderQueriesOperation({
 		servicename,
 		legend,
 		tagFilterItems,
@@ -32,7 +32,7 @@ export const errorPercentage = ({
 	servicename,
 	tagFilterItems,
 	topLevelOperations,
-}: OPSProps): {
+}: OperationPerSecProps): {
 	formulas: IMetricsBuilderFormula[];
 	queryBuilder: IMetricsBuilderQuery[];
 } => {
@@ -49,7 +49,7 @@ export const errorPercentage = ({
 	const legend = legendFormula;
 	const expression = 'A*100/B';
 	const disabled = true;
-	return getQueryBuilderQueriesTopWithFormula({
+	return getQueryBuilderQueriesOperationWithFormula({
 		metricNameA,
 		metricNameB,
 		additionalItems,
@@ -63,7 +63,7 @@ export const errorPercentage = ({
 	});
 };
 
-export interface OPSProps {
+export interface OperationPerSecProps {
 	servicename: string | undefined;
 	tagFilterItems: IQueryBuilderTagFilterItems[];
 	topLevelOperations: string[];

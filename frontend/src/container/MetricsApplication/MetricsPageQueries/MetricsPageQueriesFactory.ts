@@ -184,13 +184,13 @@ export const getQueryBuilderQuerieswithAdditionalItems = ({
 	],
 });
 
-export const getQueryBuilderQueriesTop = ({
+export const getQueryBuilderQueriesOperation = ({
 	metricName,
 	servicename,
 	tagFilterItems,
 	legend,
 	topLevelOperations,
-}: BuilderQueriesPropsTop): {
+}: BuilderQueriesOperationProps): {
 	formulas: IMetricsBuilderFormula[];
 	queryBuilder: IMetricsBuilderQuery[];
 } => ({
@@ -224,7 +224,7 @@ export const getQueryBuilderQueriesTop = ({
 		},
 	],
 });
-export const getQueryBuilderQueriesTopWithFormula = ({
+export const getQueryBuilderQueriesOperationWithFormula = ({
 	servicename,
 	legend,
 	legendFormula,
@@ -236,7 +236,7 @@ export const getQueryBuilderQueriesTopWithFormula = ({
 	groupBy,
 	expression,
 	additionalItems,
-}: BuilderQueriesTopWithFormulaProps): {
+}: BuilderQueriesOperationWithFormulaProps): {
 	formulas: IMetricsBuilderFormula[];
 	queryBuilder: IMetricsBuilderQuery[];
 } => ({
@@ -314,7 +314,7 @@ interface BuilderQueriesProps extends ExternalCallProps {
 	legend: string;
 }
 
-interface BuilderQueriesPropsTop extends BuilderQueriesProps {
+interface BuilderQueriesOperationProps extends BuilderQueriesProps {
 	topLevelOperations: string[];
 }
 
@@ -333,7 +333,7 @@ interface BuilderQuerieswithAdditionalItems
 	additionalItems: IQueryBuilderTagFilterItems;
 }
 
-interface BuilderQueriesTopWithFormulaProps
+interface BuilderQueriesOperationWithFormulaProps
 	extends BuilderQuerieswithAdditionalItems {
 	topLevelOperations: string[];
 }
