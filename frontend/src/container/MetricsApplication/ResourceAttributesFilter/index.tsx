@@ -10,7 +10,6 @@ import { useDispatch, useSelector } from 'react-redux';
 import { ResetInitialData } from 'store/actions/metrics/resetInitialData';
 import { SetResourceAttributeQueries } from 'store/actions/metrics/setResourceAttributeQueries';
 import { AppState } from 'store/reducers';
-import AppReducer from 'types/reducer/app';
 import MetricReducer from 'types/reducer/metrics';
 import { v4 as uuid } from 'uuid';
 
@@ -38,7 +37,6 @@ function ResourceAttributesFilter(): JSX.Element | null {
 		};
 	}, [dispatch]);
 
-	const { isDarkMode } = useSelector<AppState, AppReducer>((state) => state.app);
 	const { resourceAttributeQueries } = useSelector<AppState, MetricReducer>(
 		(state) => state.metrics,
 	);
@@ -156,7 +154,7 @@ function ResourceAttributesFilter(): JSX.Element | null {
 	}
 
 	return (
-		<SearchContainer isDarkMode={isDarkMode} disabled={disabled}>
+		<SearchContainer disabled={disabled}>
 			<div
 				style={{
 					maxWidth: disabled ? '100%' : '70%',

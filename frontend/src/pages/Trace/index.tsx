@@ -109,7 +109,7 @@ function Trace({
 		};
 	}, [dispatch]);
 
-	const onClickHandler = useCallback(
+	const onClickHandler: React.MouseEventHandler<HTMLElement> = useCallback(
 		(e) => {
 			e.preventDefault();
 			e.stopPropagation();
