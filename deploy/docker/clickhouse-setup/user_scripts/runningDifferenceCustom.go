@@ -28,33 +28,40 @@ import (
 */
 
 func main() {
-	reader := bufio.NewReader(os.Stdin)
-	text, _ := reader.ReadString('\n')
-	var numbers []float64
-	text = text[2 : len(text)-3]
-	for _, num := range strings.Split(text, ",") {
-		num = strings.TrimSpace(num)
-		number, err := strconv.ParseFloat(num, 64)
-		if err == nil {
-			numbers = append(numbers, number)
+	scanner := bufio.NewScanner(os.Stdin)
+	for scanner.Scan() {
+		text := scanner.Text()
+		var numbers []float64
+		text = text[2 : len(text)-2]
+		for _, num := range strings.Split(text, ",") {
+			num = strings.TrimSpace(num)
+			number, err := strconv.ParseFloat(num, 64)
+			if err == nil {
+				numbers = append(numbers, number)
+			}
 		}
-	}
-	var prev float64
-	var diffArray []float64
-	for _, num := range numbers {
-		diff := num - prev
-		if prev > num {
-			diff += prev
+		var prev float64
+		var diffArray []float64
+		for _, num := range numbers {
+			diff := num - prev
+			if prev > num {
+				diff += prev
+			}
+			diffArray = append(diffArray, diff)
+			prev = num
 		}
-		diffArray = append(diffArray, diff)
-		prev = num
-	}
-	fmt.Print("\"[")
-	for idx, num := range diffArray {
-		fmt.Print(num)
-		if idx < len(diffArray)-1 {
-			fmt.Print(",")
+		fmt.Print("\"[")
+		for idx, num := range diffArray {
+			fmt.Print(num)
+			if idx < len(diffArray)-1 {
+				fmt.Print(",")
+			}
 		}
+		fmt.Print("]\"")
+		fmt.Print("\n")
 	}
-	fmt.Print("]\"")
+
+	if err := scanner.Err(); err != nil {
+		fmt.Fprintln(os.Stderr, "reading standard input:", err)
+	}
 }
