@@ -426,8 +426,15 @@ func parseTagValueRequest(r *http.Request) (*model.TagFilterParams, error) {
 	if err != nil {
 		return nil, err
 	}
-	if postData.TagKey == "" {
-		return nil, fmt.Errorf("%s param missing in query", postData.TagKey)
+	if postData.TagKey == (model.TagKey{}) {
+		return nil, fmt.Errorf("TagKey param missing in query")
+	}
+
+	if postData.TagKey.Type != model.TagTypeString {
+		return nil, fmt.Errorf("tag keys type %s is not supported", postData.TagKey.Type)
+	}
+	if postData.Limit == 0 {
+		postData.Limit = 100
 	}
 
 	postData.Start, err = parseTimeStr(postData.StartStr, "start")

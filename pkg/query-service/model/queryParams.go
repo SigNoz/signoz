@@ -176,9 +176,11 @@ type GetServiceOverviewParams struct {
 }
 
 type TagQuery struct {
-	Key      string
-	Values   []string
-	Operator string
+	Key          TagKey
+	StringValues []string
+	BoolValues   []bool
+	NumberValues []float64
+	Operator     string
 }
 
 type GetFilteredSpansParams struct {
@@ -279,9 +281,23 @@ type TagFilterParams struct {
 	MaxDuration        string   `json:"maxDuration"`
 	StartStr           string   `json:"start"`
 	EndStr             string   `json:"end"`
-	TagKey             string   `json:"tagKey"`
+	TagKey             TagKey   `json:"tagKey"`
+	Limit              int      `json:"limit"`
 	Start              *time.Time
 	End                *time.Time
+}
+
+type TagType string
+
+const (
+	TagTypeString TagType = "string"
+	TagTypeNumber TagType = "number"
+	TagTypeBool   TagType = "bool"
+)
+
+type TagKey struct {
+	Key  string  `json:"key"`
+	Type TagType `json:"type"`
 }
 
 type TTLParams struct {

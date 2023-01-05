@@ -1448,34 +1448,44 @@ func String(length int) string {
 func buildQueryWithTagParams(ctx context.Context, tags []model.TagQuery, query *string, args []interface{}) ([]interface{}, *model.ApiError) {
 
 	for _, item := range tags {
+		tagMapType := ""
+		// values := make([]interface{}, len(item.Values))
+		if item.Key.Type == model.TagTypeString {
+			tagMapType = "stringTagMap"
+			// values = item.StringValues
+		} else if item.Key.Type == model.TagTypeNumber {
+			tagMapType = "numberTagMap"
+		} else if item.Key.Type == model.TagTypeBool {
+			tagMapType = "boolTagMap"
+		}
 		if item.Operator == "in" {
-			for i, value := range item.Values {
+			for i, value := range item.StringValues {
 				tagKey := "inTagKey" + String(5)
 				tagValue := "inTagValue" + String(5)
-				if i == 0 && i == len(item.Values)-1 {
-					*query += fmt.Sprintf(" AND tagMap[@%s] = @%s", tagKey, tagValue)
-				} else if i == 0 && i != len(item.Values)-1 {
-					*query += fmt.Sprintf(" AND (tagMap[@%s] = @%s", tagKey, tagValue)
-				} else if i != 0 && i == len(item.Values)-1 {
-					*query += fmt.Sprintf(" OR tagMap[@%s] = @%s)", tagKey, tagValue)
+				if i == 0 && i == len(item.StringValues)-1 {
+					*query += fmt.Sprintf(" AND %s[@%s] = @%s", tagMapType, tagKey, tagValue)
+				} else if i == 0 && i != len(item.StringValues)-1 {
+					*query += fmt.Sprintf(" AND (%s[@%s] = @%s", tagMapType, tagKey, tagValue)
+				} else if i != 0 && i == len(item.StringValues)-1 {
+					*query += fmt.Sprintf(" OR %s[@%s] = @%s)", tagMapType, tagKey, tagValue)
 				} else {
-					*query += fmt.Sprintf(" OR tagMap[@%s] = @%s", tagKey, tagValue)
+					*query += fmt.Sprintf(" OR %s[@%s] = @%s", tagMapType, tagKey, tagValue)
 				}
 				args = append(args, clickhouse.Named(tagKey, item.Key))
 				args = append(args, clickhouse.Named(tagValue, value))
 			}
 		} else if item.Operator == "not in" {
-			for i, value := range item.Values {
+			for i, value := range item.StringValues {
 				tagKey := "notinTagKey" + String(5)
 				tagValue := "notinTagValue" + String(5)
-				if i == 0 && i == len(item.Values)-1 {
-					*query += fmt.Sprintf(" AND NOT tagMap[@%s] = @%s", tagKey, tagValue)
-				} else if i == 0 && i != len(item.Values)-1 {
-					*query += fmt.Sprintf(" AND NOT (tagMap[@%s] = @%s", tagKey, tagValue)
-				} else if i != 0 && i == len(item.Values)-1 {
-					*query += fmt.Sprintf(" OR tagMap[@%s] = @%s)", tagKey, tagValue)
+				if i == 0 && i == len(item.StringValues)-1 {
+					*query += fmt.Sprintf(" AND NOT %s[@%s] = @%s", tagMapType, tagKey, tagValue)
+				} else if i == 0 && i != len(item.StringValues)-1 {
+					*query += fmt.Sprintf(" AND NOT (%s[@%s] = @%s", tagMapType, tagKey, tagValue)
+				} else if i != 0 && i == len(item.StringValues)-1 {
+					*query += fmt.Sprintf(" OR %s[@%s] = @%s)", tagMapType, tagKey, tagValue)
 				} else {
-					*query += fmt.Sprintf(" OR tagMap[@%s] = @%s", tagKey, tagValue)
+					*query += fmt.Sprintf(" OR %s[@%s] = @%s", tagMapType, tagKey, tagValue)
 				}
 				args = append(args, clickhouse.Named(tagKey, item.Key))
 				args = append(args, clickhouse.Named(tagValue, value))
@@ -1487,7 +1497,7 @@ func buildQueryWithTagParams(ctx context.Context, tags []model.TagQuery, query *
 	return args, nil
 }
 
-func (r *ClickHouseReader) GetTagFilters(ctx context.Context, queryParams *model.TagFilterParams) (*[]model.TagFilters, *model.ApiError) {
+func (r *ClickHouseReader) GetTagFilters(ctx context.Context, queryParams *model.TagFilterParams) (*model.TagFilters, *model.ApiError) {
 
 	excludeMap := make(map[string]struct{})
 	for _, e := range queryParams.Exclude {
@@ -1546,8 +1556,8 @@ func (r *ClickHouseReader) GetTagFilters(ctx context.Context, queryParams *model
 
 	tagFilters := []model.TagFilters{}
 
-	finalQuery := fmt.Sprintf(`SELECT DISTINCT arrayJoin(tagMap.keys) as tagKeys FROM %s.%s WHERE timestamp >= @timestampL AND timestamp <= @timestampU`, r.TraceDB, r.indexTable)
-	// Alternative query: SELECT groupUniqArrayArray(mapKeys(tagMap)) as tagKeys  FROM signoz_index_v2
+	// Alternative finalQuery := fmt.Sprintf(`SELECT DISTINCT arrayJoin(tagMap.keys) as tagKeys FROM %s.%s WHERE timestamp >= @timestampL AND timestamp <= @timestampU`, r.TraceDB, r.indexTable)
+	finalQuery := fmt.Sprintf(`SELECT groupUniqArrayArray(mapKeys(stringTagMap)) as stringTagKeys, groupUniqArrayArray(mapKeys(numberTagMap)) as numberTagKeys, groupUniqArrayArray(mapKeys(boolTagMap)) as boolTagKeys FROM %s.%s WHERE timestamp >= @timestampL AND timestamp <= @timestampU`, r.TraceDB, r.indexTable)
 	finalQuery += query
 	err := r.db.Select(ctx, &tagFilters, finalQuery, args...)
 
@@ -1557,12 +1567,16 @@ func (r *ClickHouseReader) GetTagFilters(ctx context.Context, queryParams *model
 		zap.S().Debug("Error in processing sql query: ", err)
 		return nil, &model.ApiError{Typ: model.ErrorExec, Err: fmt.Errorf("Error in processing sql query")}
 	}
-	tagFilters = excludeTags(ctx, tagFilters)
-
-	return &tagFilters, nil
+	tagFiltersResult := model.TagFilters{}
+	if len(tagFilters) != 0 {
+		tagFiltersResult.StringTagKeys = excludeTags(ctx, tagFilters[0].StringTagKeys)
+		tagFiltersResult.NumberTagKeys = excludeTags(ctx, tagFilters[0].NumberTagKeys)
+		tagFiltersResult.BoolTagKeys = excludeTags(ctx, tagFilters[0].BoolTagKeys)
+	}
+	return &tagFiltersResult, nil
 }
 
-func excludeTags(ctx context.Context, tags []model.TagFilters) []model.TagFilters {
+func excludeTags(ctx context.Context, tags []string) []string {
 	excludedTagsMap := map[string]bool{
 		"http.code":           true,
 		"http.route":          true,
@@ -1576,9 +1590,9 @@ func excludeTags(ctx context.Context, tags []model.TagFilters) []model.TagFilter
 		"error":               true,
 		"service.name":        true,
 	}
-	var newTags []model.TagFilters
+	var newTags []string
 	for _, tag := range tags {
-		_, ok := excludedTagsMap[tag.TagKeys]
+		_, ok := excludedTagsMap[tag]
 		if !ok {
 			newTags = append(newTags, tag)
 		}
@@ -1639,10 +1653,12 @@ func (r *ClickHouseReader) GetTagValues(ctx context.Context, queryParams *model.
 
 	tagValues := []model.TagValues{}
 
-	finalQuery := fmt.Sprintf(`SELECT tagMap[@key] as tagValues FROM %s.%s WHERE timestamp >= @timestampL AND timestamp <= @timestampU`, r.TraceDB, r.indexTable)
+	finalQuery := fmt.Sprintf(`SELECT DISTINCT stringTagMap[@key] as stringTagValues FROM %s.%s WHERE timestamp >= @timestampL AND timestamp <= @timestampU`, r.TraceDB, r.indexTable)
 	finalQuery += query
-	finalQuery += " GROUP BY tagMap[@key]"
-	args = append(args, clickhouse.Named("key", queryParams.TagKey))
+	finalQuery += " LIMIT @limit"
+
+	args = append(args, clickhouse.Named("key", queryParams.TagKey.Key))
+	args = append(args, clickhouse.Named("limit", queryParams.Limit))
 	err := r.db.Select(ctx, &tagValues, finalQuery, args...)
 
 	zap.S().Info(query)
@@ -1654,7 +1670,7 @@ func (r *ClickHouseReader) GetTagValues(ctx context.Context, queryParams *model.
 
 	cleanedTagValues := []model.TagValues{}
 	for _, e := range tagValues {
-		if e.TagValues != "" {
+		if e.StringTagValues != "" {
 			cleanedTagValues = append(cleanedTagValues, e)
 		}
 	}

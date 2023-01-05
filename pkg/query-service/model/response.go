@@ -279,11 +279,13 @@ type TopOperationsItem struct {
 }
 
 type TagFilters struct {
-	TagKeys string `json:"tagKeys" ch:"tagKeys"`
+	StringTagKeys []string `json:"stringTagKeys" ch:"stringTagKeys"`
+	NumberTagKeys []string `json:"numberTagKeys" ch:"numberTagKeys"`
+	BoolTagKeys   []string `json:"boolTagKeys" ch:"boolTagKeys"`
 }
 
 type TagValues struct {
-	TagValues string `json:"tagValues" ch:"tagValues"`
+	StringTagValues string `json:"tagValues" ch:"stringTagValues"`
 }
 
 type ServiceMapDependencyResponseItem struct {
