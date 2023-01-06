@@ -315,11 +315,11 @@ func (s *Server) analyticsMiddleware(next http.Handler) http.Handler {
 			}
 		}
 
-		if telemetry.GetInstance().IsSampled() {
-			if _, ok := telemetry.IgnoredPaths()[path]; !ok {
-				telemetry.GetInstance().SendEvent(telemetry.TELEMETRY_EVENT_PATH, data)
-			}
+		// if telemetry.GetInstance().IsSampled() {
+		if _, ok := telemetry.IgnoredPaths()[path]; !ok {
+			telemetry.GetInstance().SendEvent(telemetry.TELEMETRY_EVENT_PATH, data)
 		}
+		// }
 
 	})
 }

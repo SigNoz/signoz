@@ -228,10 +228,10 @@ func getOutboundIP() string {
 }
 
 func (a *Telemetry) IdentifyUser(user *model.User) {
+	a.SetCompanyDomain(user.Email)
 	if !a.isTelemetryEnabled() || a.isTelemetryAnonymous() {
 		return
 	}
-	a.SetCompanyDomain(user.Email)
 
 	a.operator.Enqueue(analytics.Identify{
 		UserId: a.ipAddress,
