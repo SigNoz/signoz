@@ -23,6 +23,8 @@ const ROUTES = {
 	VERSION: '/status',
 	MY_SETTINGS: '/my-settings',
 	ORG_SETTINGS: '/settings/org-settings',
+	COST_OPTIMIZER: '/settings/cost-optimizer',
+	INGESTION_ANALYTICS: '/settings/cost-optimizer/ingestion-analytics',
 	SOMETHING_WENT_WRONG: '/something-went-wrong',
 	UN_AUTHORIZED: '/un-authorized',
 	NOT_FOUND: '/not-found',

@@ -5,6 +5,7 @@ import { RouteProps } from 'react-router-dom';
 import {
 	AllAlertChannels,
 	AllErrors,
+	CostOptimizerSettings,
 	CreateAlertChannelAlerts,
 	CreateNewAlerts,
 	DashboardPage,
@@ -12,6 +13,7 @@ import {
 	EditRulesPage,
 	ErrorDetails,
 	GettingStarted,
+	IngestionAnalytics,
 	LicensePage,
 	ListAllALertsPage,
 	Login,
@@ -194,6 +196,20 @@ const routes: AppRoutes[] = [
 		component: OrganizationSettings,
 		isPrivate: true,
 		key: 'ORG_SETTINGS',
+	},
+	{
+		path: ROUTES.COST_OPTIMIZER,
+		exact: true,
+		component: CostOptimizerSettings,
+		isPrivate: true,
+		key: 'COST_OPTIMIZER',
+	},
+	{
+		path: ROUTES.INGESTION_ANALYTICS,
+		exact: true,
+		component: IngestionAnalytics,
+		isPrivate: true,
+		key: 'INGESTION_ANALYTICS',
 	},
 	{
 		path: ROUTES.MY_SETTINGS,

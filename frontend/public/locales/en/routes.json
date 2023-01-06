@@ -5,5 +5,7 @@
 	"my_settings": "My Settings",
 	"overview_metrics": "Overview Metrics",
 	"dbcall_metrics": "Database Calls",
-	"external_metrics": "External Calls"
+	"external_metrics": "External Calls",
+	"cost_optimizer": "Cost Optimizer",
+	"ingestion_analytics": "Ingestion Analytics"
 }

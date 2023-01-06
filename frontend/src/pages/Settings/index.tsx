@@ -1,6 +1,7 @@
 import RouteTab from 'components/RouteTab';
 import ROUTES from 'constants/routes';
 import AlertChannels from 'container/AllAlertChannels';
+import CostOpimizer from 'container/CostOptimizer';
 import GeneralSettings from 'container/GeneralSettings';
 import OrganizationSettings from 'container/OrganizationSettings';
 import useComponentPermission from 'hooks/useComponentPermission';
@@ -27,6 +28,13 @@ function SettingsPage(): JSX.Element {
 		if (pathname === ROUTES.ORG_SETTINGS && currentOrgSettings) {
 			return t('organization_settings');
 		}
+		// todo: add perms
+		if (
+			pathname === ROUTES.COST_OPTIMIZER ||
+			pathname === ROUTES.INGESTION_ANALYTICS
+		) {
+			return t('cost_optimizer');
+		}
 		return t('alert_channels');
 	};
 
@@ -40,6 +48,11 @@ function SettingsPage(): JSX.Element {
 			Component: AlertChannels,
 			name: t('alert_channels'),
 			route: ROUTES.ALL_CHANNELS,
+		},
+		{
+			Component: CostOpimizer,
+			name: t('cost_optimizer'),
+			route: ROUTES.COST_OPTIMIZER,
 		},
 	];
 

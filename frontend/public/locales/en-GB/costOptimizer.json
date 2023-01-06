@@ -1,0 +1,6 @@
+{
+    "ingestion_analytics": "Ingestion Analytics",
+    "ingestion_analytics_desc": "Analyze Statistics of Ingested Data",
+    "manage_drop_rule": "Manage Drop Rules",
+    "manage_drop_rule_desc": "Create or Edit Drop Rules to discard unwanted data"
+}
