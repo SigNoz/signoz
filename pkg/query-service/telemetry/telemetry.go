@@ -37,6 +37,7 @@ const (
 	TELEMETRY_EVENT_DISTRIBUTED           = "Distributed"
 	TELEMETRY_EVENT_DASHBOARDS_METADATA   = "Dashboards Metadata"
 	TELEMETRY_EVENT_ACTIVE_USER           = "Active User"
+	TELEMETRY_EVENT_ACTIVE_USER_PH        = "Active User V2"
 )
 
 const api_key = "4Gmoa4ixJAUHx2BpJxsjwA1bEfnwEeRz"
@@ -323,6 +324,17 @@ func (a *Telemetry) SendEvent(event string, data map[string]interface{}, opts ..
 		a.phOperator.Enqueue(ph.Capture{
 			DistinctId: userId,
 			Event:      TELEMETRY_EVENT_NUMBER_OF_SERVICES_PH,
+			Properties: ph.Properties(properties),
+			Groups: ph.NewGroups().
+				Set("companyDomain", a.getCompanyDomain()),
+		})
+
+	}
+	if event == TELEMETRY_EVENT_ACTIVE_USER {
+
+		a.phOperator.Enqueue(ph.Capture{
+			DistinctId: userId,
+			Event:      TELEMETRY_EVENT_ACTIVE_USER_PH,
 			Properties: ph.Properties(properties),
 			Groups: ph.NewGroups().
 				Set("companyDomain", a.getCompanyDomain()),
