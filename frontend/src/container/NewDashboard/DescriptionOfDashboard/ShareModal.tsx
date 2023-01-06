@@ -83,7 +83,7 @@ function ShareModal({
 
 	return (
 		<Modal
-			open={isJSONModalVisible}
+			visible={isJSONModalVisible}
 			onCancel={(): void => {
 				onToggleHandler();
 				setIsViewJSON(false);

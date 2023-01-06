@@ -1,5 +1,6 @@
 /* eslint-disable react/jsx-no-bind */
-import { DatePicker, Modal } from 'antd';
+import { Modal } from 'antd';
+import DatePicker from 'components/DatePicker';
 import dayjs, { Dayjs } from 'dayjs';
 import React, { useState } from 'react';
 
@@ -12,22 +13,22 @@ function CustomDateTimeModal({
 	onCreate,
 	onCancel,
 }: CustomDateTimeModalProps): JSX.Element {
-	const [customDateTimeRange, setCustomDateTimeRange] = useState();
+	const [
+		customDateTimeRange,
+		setCustomDateTimeRange,
+	] = useState<DateTimeRangeType>();
 
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	function handleRangePickerOk(date_time: any): void {
+	function handleRangePickerOk(date_time: DateTimeRangeType): void {
 		setCustomDateTimeRange(date_time);
 	}
 
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	function disabledDate(current: any): boolean {
-		const currentDay = dayjs(current);
-		return currentDay.isAfter(dayjs());
+	function disabledDate(current: Dayjs): boolean {
+		return current > dayjs();
 	}
 
 	return (
 		<Modal
-			open={visible}
+			visible={visible}
 			title="Chose date and time range"
 			okText="Apply"
 			cancelText="Cancel"

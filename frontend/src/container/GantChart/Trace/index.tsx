@@ -2,7 +2,7 @@ import { CaretDownFilled, CaretRightFilled } from '@ant-design/icons';
 import { Col } from 'antd';
 import { StyledCol, StyledRow } from 'components/Styled';
 import { IIntervalUnit } from 'container/TraceDetail/utils';
-import { useIsDarkMode } from 'hooks/useDarkMode';
+import useThemeMode from 'hooks/useThemeMode';
 import { SPAN_DETAILS_LEFT_COL_WIDTH } from 'pages/TraceDetail/constants';
 import React, { useEffect, useRef, useState } from 'react';
 import { ITraceTree } from 'types/api/trace/getTraceItem';
@@ -42,8 +42,7 @@ function Trace(props: TraceProps): JSX.Element {
 		isMissing,
 	} = props;
 
-	const isDarkMode = useIsDarkMode();
-
+	const { isDarkMode } = useThemeMode();
 	const [isOpen, setOpen] = useState<boolean>(activeSpanPath[level] === id);
 
 	const localTreeExpandInteraction = useRef<boolean | 0>(0); // Boolean is for the state of the expansion whereas the number i.e. 0 is for skipping the user interaction.
