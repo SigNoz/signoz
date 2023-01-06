@@ -211,16 +211,15 @@ func BuildMetricQuery(qp *model.QueryRangeParamsV2, mq *model.MetricQuery, table
 		subQuery := fmt.Sprintf(
 			queryTmpl, rateGroupTags, qp.Step, op, filterSubQuery, rateGroupBy, rateGroupTags,
 		) // labels will be same so any should be fine
-		query := `SELECT %s arrayJoin(arrayMap((x, y, z) -> (x/y, z), runningDifferenceCustom(groupArray(value)), runningDifferenceCustom(groupArray(toUnixTimestamp(ts))), groupArray(ts))) as data FROM(%s) GROUP BY %s`
+		query := `SELECT %s ts, runningDifference(value)/runningDifference(ts) as value FROM(%s) OFFSET 1`
 		query = fmt.Sprintf(query, groupTags, subQuery, strings.Join(mq.GroupingTags, ","))
-		query = fmt.Sprintf(`SELECT %s data.2 AS ts, sum(data.1) as value FROM (%s) GROUP BY %s ORDER BY %s ts`, groupTags, query, groupBy, groupTags)
+		query = fmt.Sprintf(`SELECT %s ts, sum(value) as value FROM (%s) GROUP BY %s ORDER BY %s ts`, groupTags, query, groupBy, groupTags)
 		return query, nil
 	case model.RATE_SUM, model.RATE_MAX, model.RATE_AVG, model.RATE_MIN:
 		op := fmt.Sprintf("%s(value)", AggregateOperatorToSQLFunc[mq.AggregateOperator])
 		subQuery := fmt.Sprintf(queryTmpl, groupTags, qp.Step, op, filterSubQuery, groupBy, groupTags)
-		query := `SELECT %s arrayJoin(arrayMap((x, y, z) -> (x/y, z), runningDifferenceCustom(groupArray(value)), runningDifferenceCustom(groupArray(toUnixTimestamp(ts))), groupArray(ts))) as data FROM(%s) GROUP BY %s`
-		query = fmt.Sprintf(query, groupTags, subQuery, strings.Join(mq.GroupingTags, ","))
-		query = fmt.Sprintf(`SELECT %s data.2 AS ts, data.1 as value FROM (%s)`, groupTags, query)
+		query := `SELECT %s ts, runningDifference(value)/runningDifference(ts) as value FROM(%s) OFFSET 1`
+		query = fmt.Sprintf(query, groupTags, subQuery)
 		return query, nil
 	case model.P05, model.P10, model.P20, model.P25, model.P50, model.P75, model.P90, model.P95, model.P99:
 		op := fmt.Sprintf("quantile(%v)(value)", AggregateOperatorToPercentile[mq.AggregateOperator])
@@ -233,9 +232,9 @@ func BuildMetricQuery(qp *model.QueryRangeParamsV2, mq *model.MetricQuery, table
 		subQuery := fmt.Sprintf(
 			queryTmpl, rateGroupTags, qp.Step, op, filterSubQuery, rateGroupBy, rateGroupTags,
 		) // labels will be same so any should be fine
-		query := `SELECT %s arrayJoin(arrayMap((x, y, z) -> (x/y, z), runningDifferenceCustom(groupArray(value)), runningDifferenceCustom(groupArray(toUnixTimestamp(ts))), groupArray(ts))) as data FROM(%s) GROUP BY %s`
-		query = fmt.Sprintf(query, groupTags, subQuery, strings.Join(mq.GroupingTags, ","))
-		query = fmt.Sprintf(`SELECT %s data.2 AS ts, sum(data.1) as value FROM (%s) GROUP BY %s ORDER BY %s ts`, groupTags, query, groupBy, groupTags)
+		query := `SELECT %s ts, runningDifference(value)/runningDifference(ts) as value FROM(%s) OFFSET 1`
+		query = fmt.Sprintf(query, groupTags, subQuery)
+		query = fmt.Sprintf(`SELECT %s ts, sum(value) as value FROM (%s) GROUP BY %s ORDER BY %s ts`, groupTags, query, groupBy, groupTags)
 		value := AggregateOperatorToPercentile[mq.AggregateOperator]
 
 		query = fmt.Sprintf(`SELECT %s ts, histogramQuantile(arrayMap(x -> toFloat64(x), groupArray(le)), groupArray(value), %.3f) as value FROM (%s) GROUP BY %s ORDER BY %s ts`, groupTagsWithoutLe, value, query, groupByWithoutLe, groupTagsWithoutLe)
