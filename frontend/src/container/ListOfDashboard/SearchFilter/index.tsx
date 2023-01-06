@@ -5,7 +5,10 @@ import { RefSelectProps } from 'antd/lib/select';
 import history from 'lib/history';
 import { filter, map } from 'lodash-es';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { useSelector } from 'react-redux';
+import { AppState } from 'store/reducers';
 import { Dashboard } from 'types/api/dashboard/getAll';
+import AppReducer from 'types/reducer/app';
 import { v4 as uuidv4 } from 'uuid';
 
 import { DashboardSearchAndFilter } from './Dashboard.machine';
@@ -27,6 +30,7 @@ function SearchFilter({
 	searchData: Dashboard[];
 	filterDashboards: (filteredDashboards: Dashboard[]) => void;
 }): JSX.Element {
+	const { isDarkMode } = useSelector<AppState, AppReducer>((state) => state.app);
 	const [category, setCategory] = useState<TCategory>();
 	const [optionsData, setOptionsData] = useState<IOptionsData>(
 		OptionsSchemas.attribute,
@@ -150,8 +154,14 @@ function SearchFilter({
 	};
 
 	return (
-		<SearchContainer>
-			<div>
+		<SearchContainer isDarkMode={isDarkMode}>
+			<div
+				style={{
+					maxWidth: '70%',
+					display: 'flex',
+					overflowX: 'auto',
+				}}
+			>
 				{map(queries, (query) => (
 					<QueryChip key={query.id} queryData={query} onRemove={removeQueryById} />
 				))}

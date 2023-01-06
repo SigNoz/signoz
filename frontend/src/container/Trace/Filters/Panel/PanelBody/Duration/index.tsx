@@ -171,7 +171,7 @@ function Duration(): JSX.Element {
 		updatedUrl(min, max);
 	};
 
-	const TipComponent = useCallback((value: number | undefined) => {
+	const TipComponent = useCallback((value) => {
 		if (value === undefined) {
 			return <div />;
 		}

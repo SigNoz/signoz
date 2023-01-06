@@ -7,7 +7,6 @@ import {
 import { Button, Popover, Select, Space } from 'antd';
 import { LiveTail } from 'api/logs/livetail';
 import dayjs from 'dayjs';
-import { useIsDarkMode } from 'hooks/useDarkMode';
 import { throttle } from 'lodash-es';
 import React, { useCallback, useEffect, useMemo, useRef } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
@@ -20,6 +19,7 @@ import {
 	TOGGLE_LIVE_TAIL,
 } from 'types/actions/logs';
 import { TLogsLiveTailState } from 'types/api/logs/liveTail';
+import AppReducer from 'types/reducer/app';
 import { GlobalReducer } from 'types/reducer/globalTime';
 import { ILogsReducer } from 'types/reducer/logs';
 
@@ -35,8 +35,7 @@ function LogLiveTail(): JSX.Element {
 		liveTailStartRange,
 		logs,
 	} = useSelector<AppState, ILogsReducer>((state) => state.logs);
-	const isDarkMode = useIsDarkMode();
-
+	const { isDarkMode } = useSelector<AppState, AppReducer>((state) => state.app);
 	const { selectedAutoRefreshInterval } = useSelector<AppState, GlobalReducer>(
 		(state) => state.globalTime,
 	);

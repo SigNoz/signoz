@@ -213,7 +213,7 @@ function NewWidget({
 					onClickSaveHandler();
 				}}
 				centered
-				open={saveModal}
+				visible={saveModal}
 				width={600}
 			>
 				{hasUnstagedChanges ? (

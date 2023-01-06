@@ -23,8 +23,10 @@ import {
 } from 'chart.js';
 import * as chartjsAdapter from 'chartjs-adapter-date-fns';
 import annotationPlugin from 'chartjs-plugin-annotation';
-import { useIsDarkMode } from 'hooks/useDarkMode';
 import React, { useCallback, useEffect, useRef } from 'react';
+import { useSelector } from 'react-redux';
+import { AppState } from 'store/reducers';
+import AppReducer from 'types/reducer/app';
 
 import { hasData } from './hasData';
 import { legend } from './Plugin';
@@ -65,9 +67,8 @@ function Graph({
 	staticLine,
 	containerHeight,
 }: GraphProps): JSX.Element {
+	const { isDarkMode } = useSelector<AppState, AppReducer>((state) => state.app);
 	const chartRef = useRef<HTMLCanvasElement>(null);
-	const isDarkMode = useIsDarkMode();
-
 	const currentTheme = isDarkMode ? 'dark' : 'light';
 	const xAxisTimeUnit = useXAxisTimeUnit(data); // Computes the relevant time unit for x axis by analyzing the time stamp data
 
