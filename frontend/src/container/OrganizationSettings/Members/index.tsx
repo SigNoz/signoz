@@ -1,5 +1,5 @@
-import { Button, Modal, notification, Space, Table, Typography } from 'antd';
-import { ColumnsType } from 'antd/lib/table';
+import { Button, Modal, notification, Space, Typography } from 'antd';
+import Table, { ColumnsType } from 'antd/lib/table';
 import deleteUser from 'api/user/deleteUser';
 import editUserApi from 'api/user/editUser';
 import getOrgUser from 'api/user/getOrgUser';
@@ -176,7 +176,7 @@ function UserFunction({
 			</Space>
 			<Modal
 				title="Edit member details"
-				open={isModalVisible}
+				visible={isModalVisible}
 				onOk={(): void => onModalToggleHandler(setIsModalVisible, false)}
 				onCancel={(): void => onModalToggleHandler(setIsModalVisible, false)}
 				centered
@@ -214,7 +214,7 @@ function UserFunction({
 			</Modal>
 			<Modal
 				title="Edit member details"
-				open={isDeleteModalVisible}
+				visible={isDeleteModalVisible}
 				onOk={onDeleteHandler}
 				onCancel={(): void => onModalToggleHandler(setIsDeleteModalVisible, false)}
 				centered

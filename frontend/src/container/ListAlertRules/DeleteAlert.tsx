@@ -1,4 +1,4 @@
-import { NotificationInstance } from 'antd/es/notification/interface';
+import { NotificationInstance } from 'antd/lib/notification/index';
 import deleteAlerts from 'api/alerts/delete';
 import { State } from 'hooks/useFetch';
 import React, { useState } from 'react';

@@ -14,7 +14,7 @@ import { ILogsReducer } from 'types/reducer/logs';
 
 import AddToQueryHOC from '../AddToQueryHOC';
 import CopyClipboardHOC from '../CopyClipboardHOC';
-import { Container, Text, TextContainer } from './styles';
+import { Container } from './styles';
 import { isValidLogField } from './util';
 
 interface LogFieldProps {
@@ -23,17 +23,21 @@ interface LogFieldProps {
 }
 function LogGeneralField({ fieldKey, fieldValue }: LogFieldProps): JSX.Element {
 	return (
-		<TextContainer>
-			<Text ellipsis type="secondary">
-				{fieldKey}
-			</Text>
+		<div
+			style={{
+				display: 'flex',
+				overflow: 'hidden',
+				width: '100%',
+			}}
+		>
+			<Typography.Text type="secondary">{fieldKey}</Typography.Text>
 			<CopyClipboardHOC textToCopy={fieldValue}>
 				<Typography.Text ellipsis>
 					{': '}
 					{fieldValue}
 				</Typography.Text>
 			</CopyClipboardHOC>
-		</TextContainer>
+		</div>
 	);
 }
 function LogSelectedField({

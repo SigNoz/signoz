@@ -50,9 +50,27 @@
 		<meta data-react-helmet="true" name="docusaurus_locale" content="en" />
 		<meta data-react-helmet="true" name="docusaurus_tag" content="default" />
 		<link data-react-helmet="true" rel="shortcut icon" href="/favicon.ico" />
+
+		<link
+			id="appMode"
+			rel="stylesheet"
+			type="text/css"
+			rel="preload"
+		/>
 	</head>
-	<body style="margin: 0; padding: 0; box-sizing: border-box;">
+	<body>
 		<noscript>You need to enable JavaScript to run this app.</noscript>
 		<div id="root"></div>
+
+		<script>
+			const themeNode = document.getElementById('appMode');
+			let userTheme = localStorage.getItem('theme') || "";
+
+			if (userTheme === 'lightMode') {
+				themeNode.setAttribute('href', '/css/antd.min.css');
+			} else {
+				themeNode.setAttribute('href', '/css/antd.dark.min.css');
+			}
+		</script>
 	</body>
 </html>

@@ -1,6 +1,8 @@
 import MEditor, { EditorProps } from '@monaco-editor/react';
-import { useIsDarkMode } from 'hooks/useDarkMode';
 import React from 'react';
+import { useSelector } from 'react-redux';
+import { AppState } from 'store/reducers';
+import AppReducer from 'types/reducer/app';
 
 function Editor({
 	value,
@@ -10,7 +12,7 @@ function Editor({
 	height,
 	options,
 }: MEditorProps): JSX.Element {
-	const isDarkMode = useIsDarkMode();
+	const { isDarkMode } = useSelector<AppState, AppReducer>((state) => state.app);
 	return (
 		<MEditor
 			theme={isDarkMode ? 'vs-dark' : 'vs-light'}

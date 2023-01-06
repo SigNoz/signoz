@@ -1,11 +1,13 @@
 import getLocalStorageKey from 'api/browser/localstorage/get';
 import { IS_SIDEBAR_COLLAPSED } from 'constants/app';
 import { LOCALSTORAGE } from 'constants/localStorage';
+import getTheme from 'lib/theme/getTheme';
 import { getInitialUserTokenRefreshToken } from 'store/utils';
 import {
 	AppAction,
 	LOGGED_IN,
 	SIDEBAR_COLLAPSE,
+	SWITCH_DARK_MODE,
 	UPDATE_CONFIGS,
 	UPDATE_CURRENT_ERROR,
 	UPDATE_CURRENT_VERSION,
@@ -43,6 +45,7 @@ const getInitialUser = (): User | null => {
 };
 
 const InitialValue: InitialValueTypes = {
+	isDarkMode: getTheme() === 'darkMode',
 	isLoggedIn: getLocalStorageKey(LOCALSTORAGE.IS_LOGGED_IN) === 'true',
 	isSideBarCollapsed: getLocalStorageKey(IS_SIDEBAR_COLLAPSED) === 'true',
 	currentVersion: '',
@@ -64,6 +67,13 @@ const appReducer = (
 	action: AppAction,
 ): InitialValueTypes => {
 	switch (action.type) {
+		case SWITCH_DARK_MODE: {
+			return {
+				...state,
+				isDarkMode: !state.isDarkMode,
+			};
+		}
+
 		case LOGGED_IN: {
 			return {
 				...state,

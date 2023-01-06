@@ -1,7 +1,7 @@
 import { InfoCircleOutlined } from '@ant-design/icons';
 import { Popover, Space } from 'antd';
 import { convertTimeToRelevantUnit } from 'container/TraceDetail/utils';
-import { useIsDarkMode } from 'hooks/useDarkMode';
+import useThemeMode from 'hooks/useThemeMode';
 import React from 'react';
 
 import { CustomSubText, CustomSubTitle } from '../styles';
@@ -10,7 +10,7 @@ function StartTime({
 	firstSpanStartTime,
 	timeUnixNano,
 }: StartTimeProps): JSX.Element {
-	const isDarkMode = useIsDarkMode();
+	const { isDarkMode } = useThemeMode();
 
 	const { time, timeUnitName } = convertTimeToRelevantUnit(
 		timeUnixNano / 1e6 - (firstSpanStartTime || 0),
