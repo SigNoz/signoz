@@ -45,9 +45,9 @@ const ph_api_key = "H-htDCae7CR3RV57gUzmol6IAKtm5IMCvbcm_fwnL-w"
 const IP_NOT_FOUND_PLACEHOLDER = "NA"
 const DEFAULT_NUMBER_OF_SERVICES = 6
 
-const HEART_BEAT_DURATION = 6 * time.Hour
+// const HEART_BEAT_DURATION = 6 * time.Hour
 
-// const HEART_BEAT_DURATION = 10 * time.Second
+const HEART_BEAT_DURATION = 30 * time.Second
 
 const RATE_LIMIT_CHECK_DURATION = 1 * time.Minute
 const RATE_LIMIT_VALUE = 2
@@ -88,13 +88,19 @@ func (telemetry *Telemetry) CheckSigNozMetrics(compositeMetricQueryMap map[strin
 }
 
 func (telemetry *Telemetry) AddActiveTracesUser() {
+	telemetry.mutex.Lock()
 	telemetry.activeUser["traces"] = 1
+	telemetry.mutex.Unlock()
 }
 func (telemetry *Telemetry) AddActiveMetricsUser() {
+	telemetry.mutex.Lock()
 	telemetry.activeUser["metrics"] = 1
+	telemetry.mutex.Unlock()
 }
 func (telemetry *Telemetry) AddActiveLogsUser() {
+	telemetry.mutex.Lock()
 	telemetry.activeUser["logs"] = 1
+	telemetry.mutex.Unlock()
 }
 
 type Telemetry struct {
@@ -111,6 +117,7 @@ type Telemetry struct {
 	rateLimits    map[string]int8
 	activeUser    map[string]int8
 	countUsers    int8
+	mutex         sync.RWMutex
 }
 
 func createTelemetry() {
