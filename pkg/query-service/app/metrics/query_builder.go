@@ -212,7 +212,7 @@ func BuildMetricQuery(qp *model.QueryRangeParamsV2, mq *model.MetricQuery, table
 			queryTmpl, rateGroupTags, qp.Step, op, filterSubQuery, rateGroupBy, rateGroupTags,
 		) // labels will be same so any should be fine
 		query := `SELECT %s ts, runningDifference(value)/runningDifference(ts) as value FROM(%s) OFFSET 1`
-		query = fmt.Sprintf(query, groupTags, subQuery, strings.Join(mq.GroupingTags, ","))
+		query = fmt.Sprintf(query, groupTags, subQuery)
 		query = fmt.Sprintf(`SELECT %s ts, sum(value) as value FROM (%s) GROUP BY %s ORDER BY %s ts`, groupTags, query, groupBy, groupTags)
 		return query, nil
 	case model.RATE_SUM, model.RATE_MAX, model.RATE_AVG, model.RATE_MIN:
