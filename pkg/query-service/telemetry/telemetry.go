@@ -45,9 +45,9 @@ const ph_api_key = "H-htDCae7CR3RV57gUzmol6IAKtm5IMCvbcm_fwnL-w"
 const IP_NOT_FOUND_PLACEHOLDER = "NA"
 const DEFAULT_NUMBER_OF_SERVICES = 6
 
-// const HEART_BEAT_DURATION = 6 * time.Hour
+const HEART_BEAT_DURATION = 6 * time.Hour
 
-const HEART_BEAT_DURATION = 30 * time.Second
+// const HEART_BEAT_DURATION = 30 * time.Second
 
 const RATE_LIMIT_CHECK_DURATION = 1 * time.Minute
 const RATE_LIMIT_VALUE = 2

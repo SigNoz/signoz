@@ -277,7 +277,7 @@ func extractDashboardMetaData(path string, r *http.Request) (map[string]interfac
 
 	if !signozMetricFound {
 		telemetry.GetInstance().AddActiveMetricsUser()
-		telemetry.GetInstance().SendEvent(telemetry.TELEMETRY_EVENT_DASHBOARDS_METADATA, data, false)
+		telemetry.GetInstance().SendEvent(telemetry.TELEMETRY_EVENT_DASHBOARDS_METADATA, data, true)
 	}
 
 	return data, true
