@@ -247,7 +247,6 @@ func extractDashboardMetaData(path string, r *http.Request) (map[string]interfac
 		bodyBytes, _ := ioutil.ReadAll(r.Body)
 		r.Body.Close() //  must close
 		r.Body = ioutil.NopCloser(bytes.NewBuffer(bodyBytes))
-
 		json.Unmarshal(bodyBytes, &requestBody)
 
 	} else {
@@ -278,7 +277,7 @@ func extractDashboardMetaData(path string, r *http.Request) (map[string]interfac
 
 	if !signozMetricFound {
 		telemetry.GetInstance().AddActiveMetricsUser()
-		telemetry.GetInstance().SendEvent(telemetry.TELEMETRY_EVENT_DASHBOARDS_METADATA, data, false)
+		telemetry.GetInstance().SendEvent(telemetry.TELEMETRY_EVENT_DASHBOARDS_METADATA, data, true)
 	}
 
 	return data, true
@@ -316,11 +315,11 @@ func (s *Server) analyticsMiddleware(next http.Handler) http.Handler {
 			}
 		}
 
-		if telemetry.GetInstance().IsSampled() {
-			if _, ok := telemetry.IgnoredPaths()[path]; !ok {
-				telemetry.GetInstance().SendEvent(telemetry.TELEMETRY_EVENT_PATH, data)
-			}
+		// if telemetry.GetInstance().IsSampled() {
+		if _, ok := telemetry.IgnoredPaths()[path]; !ok {
+			telemetry.GetInstance().SendEvent(telemetry.TELEMETRY_EVENT_PATH, data)
 		}
+		// }
 
 	})
 }

@@ -45,7 +45,7 @@ build-frontend-amd64:
 	@echo "--> Building frontend docker image for amd64"
 	@echo "------------------"
 	@cd $(FRONTEND_DIRECTORY) && \
-	docker build --file Dockerfile  --no-cache -t $(REPONAME)/$(FRONTEND_DOCKER_IMAGE):$(DOCKER_TAG) \
+	docker build --file Dockerfile -t $(REPONAME)/$(FRONTEND_DOCKER_IMAGE):$(DOCKER_TAG) \
 	--build-arg TARGETPLATFORM="linux/amd64" .
 
 # Step to build and push docker image of frontend(used in push pipeline)
@@ -54,7 +54,7 @@ build-push-frontend:
 	@echo "--> Building and pushing frontend docker image"
 	@echo "------------------"
 	@cd $(FRONTEND_DIRECTORY) && \
-	docker buildx build --file Dockerfile --progress plane --no-cache --push --platform linux/amd64 \
+	docker buildx build --file Dockerfile --progress plane --push --platform linux/amd64 \
 	--tag $(REPONAME)/$(FRONTEND_DOCKER_IMAGE):$(DOCKER_TAG) .
 
 # Steps to build and push docker image of query service
@@ -65,7 +65,7 @@ build-query-service-amd64:
 	@echo "--> Building query-service docker image for amd64"
 	@echo "------------------"
 	@docker build --file $(QUERY_SERVICE_DIRECTORY)/Dockerfile \
-	--no-cache -t $(REPONAME)/$(QUERY_SERVICE_DOCKER_IMAGE):$(DOCKER_TAG) \
+	-t $(REPONAME)/$(QUERY_SERVICE_DOCKER_IMAGE):$(DOCKER_TAG) \
 	--build-arg TARGETPLATFORM="linux/amd64" --build-arg LD_FLAGS="$(LD_FLAGS)" .
 
 # Step to build and push docker image of query in amd64 and arm64 (used in push pipeline)
@@ -73,7 +73,7 @@ build-push-query-service:
 	@echo "------------------"
 	@echo "--> Building and pushing query-service docker image"
 	@echo "------------------"
-	@docker buildx build --file $(QUERY_SERVICE_DIRECTORY)/Dockerfile --progress plane --no-cache \
+	@docker buildx build --file $(QUERY_SERVICE_DIRECTORY)/Dockerfile --progress plane \
 	--push --platform linux/arm64,linux/amd64 --build-arg LD_FLAGS="$(LD_FLAGS)" \
 	--tag $(REPONAME)/$(QUERY_SERVICE_DOCKER_IMAGE):$(DOCKER_TAG) .
 
@@ -84,11 +84,11 @@ build-ee-query-service-amd64:
 	@echo "------------------"
 	@if [ $(DEV_BUILD) != "" ]; then \
 		docker build --file $(EE_QUERY_SERVICE_DIRECTORY)/Dockerfile \
-		--no-cache -t $(REPONAME)/$(QUERY_SERVICE_DOCKER_IMAGE):$(DOCKER_TAG) \
+		-t $(REPONAME)/$(QUERY_SERVICE_DOCKER_IMAGE):$(DOCKER_TAG) \
 		--build-arg TARGETPLATFORM="linux/amd64" --build-arg LD_FLAGS="${LD_FLAGS} ${DEV_LD_FLAGS}" .; \
 	else \
 		docker build --file $(EE_QUERY_SERVICE_DIRECTORY)/Dockerfile \
-		--no-cache -t $(REPONAME)/$(QUERY_SERVICE_DOCKER_IMAGE):$(DOCKER_TAG) \
+		-t $(REPONAME)/$(QUERY_SERVICE_DOCKER_IMAGE):$(DOCKER_TAG) \
 		--build-arg TARGETPLATFORM="linux/amd64" --build-arg LD_FLAGS="$(LD_FLAGS)" .; \
 	fi
 
@@ -98,7 +98,7 @@ build-push-ee-query-service:
 	@echo "--> Building and pushing query-service docker image"
 	@echo "------------------"
 	@docker buildx build --file $(EE_QUERY_SERVICE_DIRECTORY)/Dockerfile \
-	--progress plane --no-cache --push --platform linux/arm64,linux/amd64 \
+	--progress plane --push --platform linux/arm64,linux/amd64 \
 	--build-arg LD_FLAGS="$(LD_FLAGS)" --tag $(REPONAME)/$(QUERY_SERVICE_DOCKER_IMAGE):$(DOCKER_TAG) .
 
 dev-setup:
@@ -119,16 +119,19 @@ down-local:
 	$(STANDALONE_DIRECTORY)/docker-compose-core.yaml -f $(STANDALONE_DIRECTORY)/docker-compose-local.yaml \
 	down -v
 
-run-x86:
+pull-signoz:
+	@docker-compose -f $(STANDALONE_DIRECTORY)/docker-compose.yaml pull
+
+run-signoz:
 	@docker-compose -f $(STANDALONE_DIRECTORY)/docker-compose.yaml up --build -d
 
-down-x86:
+down-signoz:
 	@docker-compose -f $(STANDALONE_DIRECTORY)/docker-compose.yaml down -v
 
 clear-standalone-data:
 	@docker run --rm -v "$(PWD)/$(STANDALONE_DIRECTORY)/data:/pwd" busybox \
-	sh -c "cd /pwd && rm -rf alertmanager/* clickhous*/* signoz/* zookeeper-*/*"
+	sh -c "cd /pwd && rm -rf alertmanager/* clickhouse*/* signoz/* zookeeper-*/*"
 
 clear-swarm-data:
 	@docker run --rm -v "$(PWD)/$(SWARM_DIRECTORY)/data:/pwd" busybox \
-	sh -c "cd /pwd && rm -rf alertmanager/* clickhous*/* signoz/* zookeeper-*/*"
+	sh -c "cd /pwd && rm -rf alertmanager/* clickhouse*/* signoz/* zookeeper-*/*"

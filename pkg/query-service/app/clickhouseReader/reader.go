@@ -1401,18 +1401,13 @@ func (r *ClickHouseReader) GetFilteredSpans(ctx context.Context, queryParams *mo
 
 	var getFilterSpansResponseItems []model.GetFilterSpansResponseItem
 
-	baseQuery := fmt.Sprintf("SELECT timestamp, spanID, traceID, serviceName, name, durationNano, httpCode, gRPCCode, gRPCMethod, httpMethod, rpcMethod, responseStatusCode FROM %s WHERE timestamp >= @timestampL AND timestamp <= @timestampU", queryTable)
+	baseQuery := fmt.Sprintf("SELECT timestamp, spanID, traceID, serviceName, name, durationNano, httpMethod, rpcMethod, responseStatusCode FROM %s WHERE timestamp >= @timestampL AND timestamp <= @timestampU", queryTable)
 	baseQuery += query
 	err := r.db.Select(ctx, &getFilterSpansResponseItems, baseQuery, args...)
 	// Fill status and method
 	for i, e := range getFilterSpansResponseItems {
-		if e.GRPCode != "" {
-			getFilterSpansResponseItems[i].StatusCode = e.GRPCode
-		} else {
-			getFilterSpansResponseItems[i].StatusCode = e.HttpCode
-		}
-		if e.GRPMethod != "" {
-			getFilterSpansResponseItems[i].Method = e.GRPMethod
+		if e.RPCMethod != "" {
+			getFilterSpansResponseItems[i].Method = e.RPCMethod
 		} else {
 			getFilterSpansResponseItems[i].Method = e.HttpMethod
 		}
@@ -2592,12 +2587,12 @@ func (r *ClickHouseReader) CountErrors(ctx context.Context, queryParams *model.C
 	query := fmt.Sprintf("SELECT count(distinct(groupID)) FROM %s.%s WHERE timestamp >= @timestampL AND timestamp <= @timestampU", r.TraceDB, r.errorTable)
 	args := []interface{}{clickhouse.Named("timestampL", strconv.FormatInt(queryParams.Start.UnixNano(), 10)), clickhouse.Named("timestampU", strconv.FormatInt(queryParams.End.UnixNano(), 10))}
 	if len(queryParams.ServiceName) != 0 {
-		query = query + " AND serviceName = @serviceName"
-		args = append(args, clickhouse.Named("serviceName", queryParams.ServiceName))
+		query = query + " AND serviceName ilike @serviceName"
+		args = append(args, clickhouse.Named("serviceName", "%"+queryParams.ServiceName+"%"))
 	}
 	if len(queryParams.ExceptionType) != 0 {
-		query = query + " AND exceptionType = @exceptionType"
-		args = append(args, clickhouse.Named("exceptionType", queryParams.ExceptionType))
+		query = query + " AND exceptionType ilike @exceptionType"
+		args = append(args, clickhouse.Named("exceptionType", "%"+queryParams.ExceptionType+"%"))
 	}
 	err := r.db.QueryRow(ctx, query, args...).Scan(&errorCount)
 	zap.S().Info(query)

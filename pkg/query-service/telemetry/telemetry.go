@@ -37,6 +37,7 @@ const (
 	TELEMETRY_EVENT_DISTRIBUTED           = "Distributed"
 	TELEMETRY_EVENT_DASHBOARDS_METADATA   = "Dashboards Metadata"
 	TELEMETRY_EVENT_ACTIVE_USER           = "Active User"
+	TELEMETRY_EVENT_ACTIVE_USER_PH        = "Active User V2"
 )
 
 const api_key = "4Gmoa4ixJAUHx2BpJxsjwA1bEfnwEeRz"
@@ -47,7 +48,7 @@ const DEFAULT_NUMBER_OF_SERVICES = 6
 
 const HEART_BEAT_DURATION = 6 * time.Hour
 
-// const HEART_BEAT_DURATION = 10 * time.Second
+// const HEART_BEAT_DURATION = 30 * time.Second
 
 const RATE_LIMIT_CHECK_DURATION = 1 * time.Minute
 const RATE_LIMIT_VALUE = 2
@@ -88,13 +89,19 @@ func (telemetry *Telemetry) CheckSigNozMetrics(compositeMetricQueryMap map[strin
 }
 
 func (telemetry *Telemetry) AddActiveTracesUser() {
+	telemetry.mutex.Lock()
 	telemetry.activeUser["traces"] = 1
+	telemetry.mutex.Unlock()
 }
 func (telemetry *Telemetry) AddActiveMetricsUser() {
+	telemetry.mutex.Lock()
 	telemetry.activeUser["metrics"] = 1
+	telemetry.mutex.Unlock()
 }
 func (telemetry *Telemetry) AddActiveLogsUser() {
+	telemetry.mutex.Lock()
 	telemetry.activeUser["logs"] = 1
+	telemetry.mutex.Unlock()
 }
 
 type Telemetry struct {
@@ -111,6 +118,7 @@ type Telemetry struct {
 	rateLimits    map[string]int8
 	activeUser    map[string]int8
 	countUsers    int8
+	mutex         sync.RWMutex
 }
 
 func createTelemetry() {
@@ -221,10 +229,10 @@ func getOutboundIP() string {
 }
 
 func (a *Telemetry) IdentifyUser(user *model.User) {
+	a.SetCompanyDomain(user.Email)
 	if !a.isTelemetryEnabled() || a.isTelemetryAnonymous() {
 		return
 	}
-	a.SetCompanyDomain(user.Email)
 
 	a.operator.Enqueue(analytics.Identify{
 		UserId: a.ipAddress,
@@ -316,6 +324,17 @@ func (a *Telemetry) SendEvent(event string, data map[string]interface{}, opts ..
 		a.phOperator.Enqueue(ph.Capture{
 			DistinctId: userId,
 			Event:      TELEMETRY_EVENT_NUMBER_OF_SERVICES_PH,
+			Properties: ph.Properties(properties),
+			Groups: ph.NewGroups().
+				Set("companyDomain", a.getCompanyDomain()),
+		})
+
+	}
+	if event == TELEMETRY_EVENT_ACTIVE_USER {
+
+		a.phOperator.Enqueue(ph.Capture{
+			DistinctId: userId,
+			Event:      TELEMETRY_EVENT_ACTIVE_USER_PH,
 			Properties: ph.Properties(properties),
 			Groups: ph.NewGroups().
 				Set("companyDomain", a.getCompanyDomain()),
