@@ -86,6 +86,8 @@ processors:
         default: default
       - name: deployment.environment
         default: default
+      # This must be create by SDK
+      - name: 'service.instance.id'
   # memory_limiter:
   #   # 80% of maximum memory up to 2G
   #   limit_mib: 1500
