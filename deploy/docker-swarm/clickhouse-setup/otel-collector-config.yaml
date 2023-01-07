@@ -86,7 +86,10 @@ processors:
         default: default
       - name: deployment.environment
         default: default
-      # This must be create by SDK
+      # This must be created by SDK
+      # When users configure the receivers that are not OTLP (they might be 
+      # migrating from jaeger to OTEL slowly)
+      # We will use the collector service instance ID for the single write principle.
       - name: 'service.instance.id'
   # memory_limiter:
   #   # 80% of maximum memory up to 2G
