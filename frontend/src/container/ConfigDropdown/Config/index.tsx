@@ -1,12 +1,13 @@
 import { Menu, Space } from 'antd';
 import Spinner from 'components/Spinner';
-import { useIsDarkMode } from 'hooks/useDarkMode';
 import React, { Suspense, useMemo } from 'react';
+import { useSelector } from 'react-redux';
+import { AppState } from 'store/reducers';
 import { ConfigProps } from 'types/api/dynamicConfigs/getDynamicConfigs';
+import AppReducer from 'types/reducer/app';
 
 import ErrorLink from './ErrorLink';
 import LinkContainer from './Link';
-import { MenuItem } from './styles';
 
 function HelpToolTip({ config }: HelpToolTipProps): JSX.Element {
 	const sortedConfig = useMemo(
@@ -14,10 +15,10 @@ function HelpToolTip({ config }: HelpToolTipProps): JSX.Element {
 		[config.components],
 	);
 
-	const isDarkMode = useIsDarkMode();
+	const { isDarkMode } = useSelector<AppState, AppReducer>((state) => state.app);
 
 	return (
-		<Menu>
+		<Menu.ItemGroup>
 			{sortedConfig.map((item) => {
 				const iconName = `${isDarkMode ? item.darkIcon : item.lightIcon}`;
 
@@ -27,19 +28,19 @@ function HelpToolTip({ config }: HelpToolTipProps): JSX.Element {
 				return (
 					<ErrorLink key={item.text + item.href}>
 						<Suspense fallback={<Spinner height="5vh" />}>
-							<MenuItem>
+							<Menu.Item>
 								<LinkContainer href={item.href}>
 									<Space size="small" align="start">
 										<Component />
 										{item.text}
 									</Space>
 								</LinkContainer>
-							</MenuItem>
+							</Menu.Item>
 						</Suspense>
 					</ErrorLink>
 				);
 			})}
-		</Menu>
+		</Menu.ItemGroup>
 	);
 }
 

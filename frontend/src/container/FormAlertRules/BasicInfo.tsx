@@ -1,4 +1,5 @@
-import { Form, Select } from 'antd';
+import { Select } from 'antd';
+import FormItem from 'antd/lib/form/FormItem';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { AlertDef, Labels } from 'types/api/alerts/def';
@@ -30,7 +31,7 @@ function BasicInfo({ alertDef, setAlertDef }: BasicInfoProps): JSX.Element {
 		<>
 			<StepHeading> {t('alert_form_step3')} </StepHeading>
 			<FormContainer>
-				<Form.Item
+				<FormItem
 					label={t('field_severity')}
 					labelAlign="left"
 					name={['labels', 'severity']}
@@ -53,9 +54,9 @@ function BasicInfo({ alertDef, setAlertDef }: BasicInfoProps): JSX.Element {
 						<Option value="warning">{t('option_warning')}</Option>
 						<Option value="info">{t('option_info')}</Option>
 					</SeveritySelect>
-				</Form.Item>
+				</FormItem>
 
-				<Form.Item label={t('field_alert_name')} labelAlign="left" name="alert">
+				<FormItem label={t('field_alert_name')} labelAlign="left" name="alert">
 					<InputSmall
 						onChange={(e): void => {
 							setAlertDef({
@@ -64,8 +65,8 @@ function BasicInfo({ alertDef, setAlertDef }: BasicInfoProps): JSX.Element {
 							});
 						}}
 					/>
-				</Form.Item>
-				<Form.Item
+				</FormItem>
+				<FormItem
 					label={t('field_alert_desc')}
 					labelAlign="left"
 					name={['annotations', 'description']}
@@ -81,7 +82,7 @@ function BasicInfo({ alertDef, setAlertDef }: BasicInfoProps): JSX.Element {
 							});
 						}}
 					/>
-				</Form.Item>
+				</FormItem>
 				<FormItemMedium label={t('field_labels')}>
 					<LabelSelect
 						onSetLabels={(l: Labels): void => {

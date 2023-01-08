@@ -5,7 +5,6 @@ import {
 	QuestionCircleOutlined,
 } from '@ant-design/icons';
 import { Dropdown, Menu, Space } from 'antd';
-import { useIsDarkMode } from 'hooks/useDarkMode';
 import React, { useMemo, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
@@ -16,8 +15,9 @@ import HelpToolTip from './Config';
 function DynamicConfigDropdown({
 	frontendId,
 }: DynamicConfigDropdownProps): JSX.Element {
-	const { configs } = useSelector<AppState, AppReducer>((state) => state.app);
-	const isDarkMode = useIsDarkMode();
+	const { configs, isDarkMode } = useSelector<AppState, AppReducer>(
+		(state) => state.app,
+	);
 	const [isHelpDropDownOpen, setIsHelpDropDownOpen] = useState<boolean>(false);
 
 	const config = useMemo(

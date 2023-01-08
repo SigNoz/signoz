@@ -183,7 +183,7 @@ function GridCardGraph({
 				<Modal
 					destroyOnClose
 					onCancel={(): void => onToggleModal(setDeleteModal)}
-					open={deleteModal}
+					visible={deleteModal}
 					title="Delete"
 					height="10vh"
 					onOk={onDeleteHandler}
@@ -196,7 +196,7 @@ function GridCardGraph({
 					title="View"
 					footer={[]}
 					centered
-					open={modal}
+					visible={modal}
 					onCancel={(): void => onToggleModal(setModal)}
 					width="85%"
 					destroyOnClose

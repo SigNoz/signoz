@@ -1,7 +1,9 @@
 import { Tooltip } from 'antd';
-import { useIsDarkMode } from 'hooks/useDarkMode';
 import React, { useMemo } from 'react';
+import { useSelector } from 'react-redux';
+import { AppState } from 'store/reducers';
 import { ITraceTag } from 'types/api/trace/getTraceItem';
+import AppReducer from 'types/reducer/app';
 
 import EllipsedButton from '../EllipsedButton';
 import { CustomSubText, CustomSubTitle, SubTextContainer } from '../styles';
@@ -9,7 +11,7 @@ import { CommonTagsProps } from '.';
 import { Container } from './styles';
 
 function Tag({ tags, onToggleHandler, setText }: TagProps): JSX.Element {
-	const isDarkMode = useIsDarkMode();
+	const { isDarkMode } = useSelector<AppState, AppReducer>((state) => state.app);
 
 	const { value, isEllipsed } = useMemo(() => {
 		const value = tags.key === 'error' ? 'true' : tags.value;

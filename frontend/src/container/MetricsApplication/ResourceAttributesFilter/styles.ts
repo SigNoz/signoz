@@ -3,8 +3,10 @@ import { Tag } from 'antd';
 import styled from 'styled-components';
 
 export const SearchContainer = styled.div<{
+	isDarkMode: boolean;
 	disabled: boolean;
 }>`
+	background: ${({ isDarkMode }): string => (isDarkMode ? '#000' : '#fff')};
 	width: 100%;
 	display: flex;
 	align-items: center;

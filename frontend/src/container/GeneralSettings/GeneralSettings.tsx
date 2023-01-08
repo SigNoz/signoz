@@ -572,7 +572,7 @@ function GeneralSettings({
 									onOkHandler(category.name.toLowerCase() as TTTLType)
 								}
 								centered
-								open={category.save.modal}
+								visible={category.save.modal}
 								confirmLoading={category.save.apiLoading}
 							>
 								<Typography>
@@ -591,20 +591,18 @@ function GeneralSettings({
 
 	return (
 		<Col xs={24} md={22} xl={20} xxl={18} style={{ margin: 'auto' }}>
-			<>
-				{Element}
-				<ErrorTextContainer>
-					<TextToolTip
-						{...{
-							text: `More details on how to set retention period`,
-							url: 'https://signoz.io/docs/userguide/retention-period/',
-						}}
-					/>
-					{errorText && <ErrorText>{errorText}</ErrorText>}
-				</ErrorTextContainer>
+			{Element}
+			<ErrorTextContainer>
+				<TextToolTip
+					{...{
+						text: `More details on how to set retention period`,
+						url: 'https://signoz.io/docs/userguide/retention-period/',
+					}}
+				/>
+				{errorText && <ErrorText>{errorText}</ErrorText>}
+			</ErrorTextContainer>
 
-				<Row justify="start">{renderConfig}</Row>
-			</>
+			<Row justify="start">{renderConfig}</Row>
 		</Col>
 	);
 }

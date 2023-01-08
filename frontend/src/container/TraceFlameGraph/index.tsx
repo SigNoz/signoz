@@ -1,7 +1,7 @@
 /* eslint-disable react/no-unstable-nested-components */
 import Color from 'color';
 import { ITraceMetaData } from 'container/GantChart';
-import { useIsDarkMode } from 'hooks/useDarkMode';
+import useThemeMode from 'hooks/useThemeMode';
 import React, { useLayoutEffect, useMemo, useState } from 'react';
 import { ITraceTree } from 'types/api/trace/getTraceItem';
 
@@ -37,7 +37,7 @@ function SpanItem({
 	const { serviceColour } = spanData;
 	const [isSelected, setIsSelected] = useState<boolean>(false);
 	// const [isLocalHover, setIsLocalHover] = useState<boolean>(false);
-	const isDarkMode = useIsDarkMode();
+	const { isDarkMode } = useThemeMode();
 
 	useLayoutEffect(() => {
 		if (

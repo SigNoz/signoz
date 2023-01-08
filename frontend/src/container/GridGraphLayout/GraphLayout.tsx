@@ -1,6 +1,5 @@
 import { PlusOutlined, SaveFilled } from '@ant-design/icons';
 import useComponentPermission from 'hooks/useComponentPermission';
-import { useIsDarkMode } from 'hooks/useDarkMode';
 import React from 'react';
 import { Layout } from 'react-grid-layout';
 import { useSelector } from 'react-redux';
@@ -28,7 +27,7 @@ function GraphLayout({
 	setLayout,
 }: GraphLayoutProps): JSX.Element {
 	const { role } = useSelector<AppState, AppReducer>((state) => state.app);
-	const isDarkMode = useIsDarkMode();
+	const { isDarkMode } = useSelector<AppState, AppReducer>((state) => state.app);
 
 	const [saveLayoutPermission, addPanelPermission] = useComponentPermission(
 		['save_layout', 'add_panel'],

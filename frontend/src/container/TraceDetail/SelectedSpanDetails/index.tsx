@@ -1,7 +1,7 @@
 import { Modal, Tabs, Tooltip } from 'antd';
 import Editor from 'components/Editor';
 import { StyledSpace } from 'components/Styled';
-import { useIsDarkMode } from 'hooks/useDarkMode';
+import useThemeMode from 'hooks/useThemeMode';
 import React, { useMemo, useState } from 'react';
 import { ITraceTree } from 'types/api/trace/getTraceItem';
 
@@ -20,7 +20,7 @@ const { TabPane } = Tabs;
 function SelectedSpanDetails(props: SelectedSpanDetailsProps): JSX.Element {
 	const { tree, firstSpanStartTime } = props;
 
-	const isDarkMode = useIsDarkMode();
+	const { isDarkMode } = useThemeMode();
 
 	const OverLayComponentName = useMemo(() => tree?.name, [tree?.name]);
 	const OverLayComponentServiceName = useMemo(() => tree?.serviceName, [
@@ -67,7 +67,7 @@ function SelectedSpanDetails(props: SelectedSpanDetailsProps): JSX.Element {
 			<Modal
 				onCancel={(): void => onToggleHandler(false)}
 				title={text.text}
-				open={isOpen}
+				visible={isOpen}
 				destroyOnClose
 				footer={[]}
 				width="70vw"

@@ -2,7 +2,10 @@ import { grey } from '@ant-design/colors';
 import { Tag } from 'antd';
 import styled from 'styled-components';
 
-export const SearchContainer = styled.div`
+export const SearchContainer = styled.div<{
+	isDarkMode: boolean;
+}>`
+	background: ${({ isDarkMode }): string => (isDarkMode ? '#000' : '#fff')};
 	width: 100%;
 	display: flex;
 	align-items: center;

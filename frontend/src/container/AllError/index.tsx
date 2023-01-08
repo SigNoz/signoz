@@ -10,8 +10,7 @@ import {
 	Tooltip,
 	Typography,
 } from 'antd';
-import { ColumnType, TablePaginationConfig } from 'antd/es/table';
-import { FilterValue, SorterResult } from 'antd/es/table/interface';
+import { ColumnType } from 'antd/es/table';
 import { ColumnsType } from 'antd/lib/table';
 import { FilterConfirmProps } from 'antd/lib/table/interface';
 import getAll from 'api/errors/getAll';
@@ -31,7 +30,6 @@ import { ErrorResponse, SuccessResponse } from 'types/api';
 import { Exception, PayloadProps } from 'types/api/errors/getAll';
 import { GlobalReducer } from 'types/reducer/globalTime';
 
-import { FilterDropdownExtendsProps } from './types';
 import {
 	extractFilterValues,
 	getDefaultFilterValue,
@@ -178,13 +176,7 @@ function AllErrors(): JSX.Element {
 	);
 
 	const filterDropdownWrapper = useCallback(
-		({
-			setSelectedKeys,
-			selectedKeys,
-			confirm,
-			placeholder,
-			filterKey,
-		}: FilterDropdownExtendsProps) => {
+		({ setSelectedKeys, selectedKeys, confirm, placeholder, filterKey }) => {
 			return (
 				<Card size="small">
 					<Space align="start" direction="vertical">
@@ -200,11 +192,11 @@ function AllErrors(): JSX.Element {
 								getUpdatedServiceName,
 								getUpdatedExceptionType,
 							)}
-							onPressEnter={handleSearch(confirm, String(selectedKeys[0]), filterKey)}
+							onPressEnter={handleSearch(confirm, selectedKeys[0], filterKey)}
 						/>
 						<Button
 							type="primary"
-							onClick={handleSearch(confirm, String(selectedKeys[0]), filterKey)}
+							onClick={handleSearch(confirm, selectedKeys[0], filterKey)}
 							icon={<SearchOutlined />}
 							size="small"
 						>
@@ -217,8 +209,8 @@ function AllErrors(): JSX.Element {
 		[getUpdatedExceptionType, getUpdatedServiceName, handleSearch],
 	);
 
-	const onExceptionTypeFilter: ColumnType<Exception>['onFilter'] = useCallback(
-		(value: unknown, record: Exception): boolean => {
+	const onExceptionTypeFilter = useCallback(
+		(value, record: Exception): boolean => {
 			if (record.exceptionType && typeof value === 'string') {
 				return record.exceptionType.toLowerCase().includes(value.toLowerCase());
 			}
@@ -228,7 +220,7 @@ function AllErrors(): JSX.Element {
 	);
 
 	const onApplicationTypeFilter = useCallback(
-		(value: unknown, record: Exception): boolean => {
+		(value, record: Exception): boolean => {
 			if (record.serviceName && typeof value === 'string') {
 				return record.serviceName.toLowerCase().includes(value.toLowerCase());
 			}
@@ -351,11 +343,7 @@ function AllErrors(): JSX.Element {
 	];
 
 	const onChangeHandler: TableProps<Exception>['onChange'] = useCallback(
-		(
-			paginations: TablePaginationConfig,
-			filters: Record<string, FilterValue | null>,
-			sorter: SorterResult<Exception>[] | SorterResult<Exception>,
-		) => {
+		(paginations, filters, sorter) => {
 			if (!Array.isArray(sorter)) {
 				const { pageSize = 0, current = 0 } = paginations;
 				const { columnKey = '', order } = sorter;
