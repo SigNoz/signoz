@@ -389,7 +389,7 @@ func expressionToQuery(qp *model.QueryRangeParamsV2, varToQuery map[string]strin
 		groupTags = append(groupTags, "ts")
 		if joinUsing == "" {
 			for _, tag := range groupTags {
-				joinUsing += fmt.Sprintf("%s.%s, ", var_, tag)
+				joinUsing += fmt.Sprintf("%s.%s as %s, ", var_, tag, tag)
 			}
 			joinUsing = strings.TrimSuffix(joinUsing, ", ")
 		}
