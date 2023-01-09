@@ -2,6 +2,7 @@ package telemetry
 
 import (
 	"context"
+	"encoding/json"
 	"io/ioutil"
 	"math/rand"
 	"net/http"
@@ -32,19 +33,27 @@ const (
 	TELEMETRY_LICENSE_ACT_FAILED          = "License Activation Failed"
 	TELEMETRY_EVENT_ENVIRONMENT           = "Environment"
 	TELEMETRY_EVENT_LANGUAGE              = "Language"
+	TELEMETRY_EVENT_LOGS_FILTERS          = "Logs Filters"
+	TELEMETRY_EVENT_DISTRIBUTED           = "Distributed"
+	TELEMETRY_EVENT_DASHBOARDS_METADATA   = "Dashboards Metadata"
+	TELEMETRY_EVENT_ACTIVE_USER           = "Active User"
+	TELEMETRY_EVENT_ACTIVE_USER_PH        = "Active User V2"
 )
 
 const api_key = "4Gmoa4ixJAUHx2BpJxsjwA1bEfnwEeRz"
 const ph_api_key = "H-htDCae7CR3RV57gUzmol6IAKtm5IMCvbcm_fwnL-w"
 
 const IP_NOT_FOUND_PLACEHOLDER = "NA"
+const DEFAULT_NUMBER_OF_SERVICES = 6
 
 const HEART_BEAT_DURATION = 6 * time.Hour
+const ACTIVE_USER_DURATION = 30 * time.Minute
 
-// const HEART_BEAT_DURATION = 10 * time.Second
+// const HEART_BEAT_DURATION = 30 * time.Second
+// const ACTIVE_USER_DURATION = 30 * time.Second
 
 const RATE_LIMIT_CHECK_DURATION = 1 * time.Minute
-const RATE_LIMIT_VALUE = 10
+const RATE_LIMIT_VALUE = 2
 
 // const RATE_LIMIT_CHECK_DURATION = 20 * time.Second
 // const RATE_LIMIT_VALUE = 5
@@ -64,6 +73,39 @@ func (a *Telemetry) IsSampled() bool {
 
 }
 
+func (telemetry *Telemetry) CheckSigNozMetrics(compositeMetricQueryMap map[string]interface{}) bool {
+
+	builderQueries, builderQueriesExists := compositeMetricQueryMap["builderQueries"]
+	if builderQueriesExists {
+		builderQueriesStr, _ := json.Marshal(builderQueries)
+		return strings.Contains(string(builderQueriesStr), "signoz_")
+	}
+
+	promQueries, promQueriesExists := compositeMetricQueryMap["promQueries"]
+	if promQueriesExists {
+		promQueriesStr, _ := json.Marshal(promQueries)
+		return strings.Contains(string(promQueriesStr), "signoz_")
+	}
+
+	return false
+}
+
+func (telemetry *Telemetry) AddActiveTracesUser() {
+	telemetry.mutex.Lock()
+	telemetry.activeUser["traces"] = 1
+	telemetry.mutex.Unlock()
+}
+func (telemetry *Telemetry) AddActiveMetricsUser() {
+	telemetry.mutex.Lock()
+	telemetry.activeUser["metrics"] = 1
+	telemetry.mutex.Unlock()
+}
+func (telemetry *Telemetry) AddActiveLogsUser() {
+	telemetry.mutex.Lock()
+	telemetry.activeUser["logs"] = 1
+	telemetry.mutex.Unlock()
+}
+
 type Telemetry struct {
 	operator      analytics.Client
 	phOperator    ph.Client
@@ -76,6 +118,9 @@ type Telemetry struct {
 	minRandInt    int
 	maxRandInt    int
 	rateLimits    map[string]int8
+	activeUser    map[string]int8
+	countUsers    int8
+	mutex         sync.RWMutex
 }
 
 func createTelemetry() {
@@ -85,6 +130,7 @@ func createTelemetry() {
 		phOperator: ph.New(ph_api_key),
 		ipAddress:  getOutboundIP(),
 		rateLimits: make(map[string]int8),
+		activeUser: make(map[string]int8),
 	}
 	telemetry.minRandInt = 0
 	telemetry.maxRandInt = int(1 / DEFAULT_SAMPLING)
@@ -97,6 +143,8 @@ func createTelemetry() {
 	telemetry.SendEvent(TELEMETRY_EVENT_HEART_BEAT, data)
 
 	ticker := time.NewTicker(HEART_BEAT_DURATION)
+	activeUserTicker := time.NewTicker(ACTIVE_USER_DURATION)
+
 	rateLimitTicker := time.NewTicker(RATE_LIMIT_CHECK_DURATION)
 
 	go func() {
@@ -110,7 +158,15 @@ func createTelemetry() {
 	go func() {
 		for {
 			select {
+			case <-activeUserTicker.C:
+				if (telemetry.activeUser["traces"] != 0) || (telemetry.activeUser["metrics"] != 0) || (telemetry.activeUser["logs"] != 0) {
+					telemetry.activeUser["any"] = 1
+				}
+				telemetry.SendEvent(TELEMETRY_EVENT_ACTIVE_USER, map[string]interface{}{"traces": telemetry.activeUser["traces"], "metrics": telemetry.activeUser["metrics"], "logs": telemetry.activeUser["logs"], "any": telemetry.activeUser["any"]})
+				telemetry.activeUser = map[string]int8{"traces": 0, "metrics": 0, "logs": 0, "any": 0}
+
 			case <-ticker.C:
+
 				tagsInfo, _ := telemetry.reader.GetTagsInfoInLastHeartBeatInterval(context.Background())
 
 				if len(tagsInfo.Env) != 0 {
@@ -128,16 +184,28 @@ func createTelemetry() {
 
 				getLogsInfoInLastHeartBeatInterval, _ := telemetry.reader.GetLogsInfoInLastHeartBeatInterval(context.Background())
 
+				traceTTL, _ := telemetry.reader.GetTTL(context.Background(), &model.GetTTLParams{Type: constants.TraceTTL})
+				metricsTTL, _ := telemetry.reader.GetTTL(context.Background(), &model.GetTTLParams{Type: constants.MetricsTTL})
+				logsTTL, _ := telemetry.reader.GetTTL(context.Background(), &model.GetTTLParams{Type: constants.LogsTTL})
+
 				data := map[string]interface{}{
 					"totalSpans":                            totalSpans,
 					"spansInLastHeartBeatInterval":          spansInLastHeartBeatInterval,
 					"getSamplesInfoInLastHeartBeatInterval": getSamplesInfoInLastHeartBeatInterval,
 					"getLogsInfoInLastHeartBeatInterval":    getLogsInfoInLastHeartBeatInterval,
+					"countUsers":                            telemetry.countUsers,
+					"metricsTTLStatus":                      metricsTTL.Status,
+					"tracesTTLStatus":                       traceTTL.Status,
+					"logsTTLStatus":                         logsTTL.Status,
 				}
 				for key, value := range tsInfo {
 					data[key] = value
 				}
 				telemetry.SendEvent(TELEMETRY_EVENT_HEART_BEAT, data)
+
+				getDistributedInfoInLastHeartBeatInterval, _ := telemetry.reader.GetDistributedInfoInLastHeartBeatInterval(context.Background())
+				telemetry.SendEvent(TELEMETRY_EVENT_DISTRIBUTED, getDistributedInfoInLastHeartBeatInterval)
+
 			}
 		}
 	}()
@@ -166,10 +234,10 @@ func getOutboundIP() string {
 }
 
 func (a *Telemetry) IdentifyUser(user *model.User) {
+	a.SetCompanyDomain(user.Email)
 	if !a.isTelemetryEnabled() || a.isTelemetryAnonymous() {
 		return
 	}
-	a.setCompanyDomain(user.Email)
 
 	a.operator.Enqueue(analytics.Identify{
 		UserId: a.ipAddress,
@@ -185,7 +253,11 @@ func (a *Telemetry) IdentifyUser(user *model.User) {
 
 }
 
-func (a *Telemetry) setCompanyDomain(email string) {
+func (a *Telemetry) SetCountUsers(countUsers int8) {
+	a.countUsers = countUsers
+}
+
+func (a *Telemetry) SetCompanyDomain(email string) {
 
 	email_split := strings.Split(email, "@")
 	if len(email_split) != 2 {
@@ -207,7 +279,12 @@ func (a *Telemetry) checkEvents(event string) bool {
 	return sendEvent
 }
 
-func (a *Telemetry) SendEvent(event string, data map[string]interface{}) {
+func (a *Telemetry) SendEvent(event string, data map[string]interface{}, opts ...bool) {
+
+	rateLimitFlag := true
+	if len(opts) > 0 {
+		rateLimitFlag = opts[0]
+	}
 
 	if !a.isTelemetryEnabled() {
 		return
@@ -218,10 +295,12 @@ func (a *Telemetry) SendEvent(event string, data map[string]interface{}) {
 		return
 	}
 
-	if a.rateLimits[event] < RATE_LIMIT_VALUE {
-		a.rateLimits[event] += 1
-	} else {
-		return
+	if rateLimitFlag {
+		if a.rateLimits[event] < RATE_LIMIT_VALUE {
+			a.rateLimits[event] += 1
+		} else {
+			return
+		}
 	}
 
 	// zap.S().Info(data)
@@ -250,6 +329,17 @@ func (a *Telemetry) SendEvent(event string, data map[string]interface{}) {
 		a.phOperator.Enqueue(ph.Capture{
 			DistinctId: userId,
 			Event:      TELEMETRY_EVENT_NUMBER_OF_SERVICES_PH,
+			Properties: ph.Properties(properties),
+			Groups: ph.NewGroups().
+				Set("companyDomain", a.getCompanyDomain()),
+		})
+
+	}
+	if event == TELEMETRY_EVENT_ACTIVE_USER {
+
+		a.phOperator.Enqueue(ph.Capture{
+			DistinctId: userId,
+			Event:      TELEMETRY_EVENT_ACTIVE_USER_PH,
 			Properties: ph.Properties(properties),
 			Groups: ph.NewGroups().
 				Set("companyDomain", a.getCompanyDomain()),

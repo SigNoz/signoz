@@ -279,20 +279,23 @@ func CheckIfPrevousPaginateAndModifyOrder(params *model.LogsFilterParams) (isPag
 	return
 }
 
-func GenerateSQLWhere(allFields *model.GetFieldsResponse, params *model.LogsFilterParams) (string, error) {
+func GenerateSQLWhere(allFields *model.GetFieldsResponse, params *model.LogsFilterParams) (string, int, error) {
 	var tokens []string
 	var err error
 	var sqlWhere string
+	var lenTokens = 0
 	if params.Query != "" {
 		tokens, err = parseLogQuery(params.Query)
+
 		if err != nil {
-			return sqlWhere, err
+			return sqlWhere, -1, err
 		}
+		lenTokens = len(tokens)
 	}
 
 	tokens, err = replaceInterestingFields(allFields, tokens)
 	if err != nil {
-		return sqlWhere, err
+		return sqlWhere, -1, err
 	}
 
 	filterTokens := []string{}
@@ -342,5 +345,5 @@ func GenerateSQLWhere(allFields *model.GetFieldsResponse, params *model.LogsFilt
 
 	sqlWhere = strings.Join(tokens, "")
 
-	return sqlWhere, nil
+	return sqlWhere, lenTokens, nil
 }

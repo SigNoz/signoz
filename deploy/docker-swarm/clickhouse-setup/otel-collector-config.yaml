@@ -64,7 +64,9 @@ receivers:
         - job_name: otel-collector
           static_configs:
           - targets:
-            - localhost:8888
+              - localhost:8888
+            labels:
+              job_name: otel-collector
 
 processors:
   batch:
@@ -104,11 +106,12 @@ exporters:
   clickhousetraces:
     datasource: tcp://clickhouse:9000/?database=signoz_traces
     docker_multi_node_cluster: ${DOCKER_MULTI_NODE_CLUSTER}
-
   clickhousemetricswrite:
     endpoint: tcp://clickhouse:9000/?database=signoz_metrics
     resource_to_telemetry_conversion:
       enabled: true
+  clickhousemetricswrite/prometheus:
+    endpoint: tcp://clickhouse:9000/?database=signoz_metrics
   prometheus:
     endpoint: 0.0.0.0:8889
   # logging: {}
@@ -147,9 +150,13 @@ service:
       processors: [batch]
       exporters: [clickhousemetricswrite]
     metrics/generic:
-      receivers: [hostmetrics, prometheus]
+      receivers: [hostmetrics]
       processors: [resourcedetection, batch]
       exporters: [clickhousemetricswrite]
+    metrics/prometheus:
+      receivers: [prometheus]
+      processors: [batch]
+      exporters: [clickhousemetricswrite/prometheus]
     metrics/spanmetrics:
       receivers: [otlp/spanmetrics]
       exporters: [prometheus]

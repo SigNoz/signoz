@@ -164,6 +164,8 @@ func (mds *ModelDaoSqlite) EditOrg(ctx context.Context, org *model.Organization)
 	}
 
 	telemetry.GetInstance().SetTelemetryAnonymous(org.IsAnonymous)
+	telemetry.GetInstance().SetDistinctId(org.Id)
+
 	return nil
 }
 
