@@ -195,3 +195,9 @@ const (
 // written clickhouse query. The column alias indcate which value is
 // to be considered as final result (or target)
 var ReservedColumnTargetAliases = map[string]bool{"result": true, "res": true, "value": true}
+
+const (
+	StringTagMapCol = "stringTagMap"
+	NumberTagMapCol = "numberTagMap"
+	BoolTagMapCol   = "boolTagMap"
+)
