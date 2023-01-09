@@ -83,11 +83,10 @@ processors:
         default: default
       - name: deployment.environment
         default: default
-      # This must be created by SDK
-      # When users configure the receivers that are not OTLP (they might be 
-      # migrating from jaeger to OTEL slowly)
-      # We will use the collector service instance ID for the single write principle.
-      - name: 'service.instance.id'
+      # This is added to ensure the uniqueness of the timeseries
+      # Otherwise, identical timeseries produced by multiple replicas of
+      # collectors result in incorrect APM metrics
+      - name: 'signoz.collector.id'
   # memory_limiter:
   #   # 80% of maximum memory up to 2G
   #   limit_mib: 1500
