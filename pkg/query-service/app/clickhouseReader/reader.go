@@ -772,7 +772,10 @@ func (r *ClickHouseReader) GetServices(ctx context.Context, queryParams *model.G
 				clickhouse.Named("serviceName", svc),
 				clickhouse.Named("names", ops),
 			)
-			args, errStatus := buildQueryWithTagParams(ctx, queryParams.Tags, &query, args)
+			// create TagQuery from TagQueryParams
+			tags := []model.TagQuery{}
+			tags = createTagQueryFromTagQueryParams(queryParams.Tags, tags)
+			args, errStatus := buildQueryWithTagParams(ctx, tags, &query, args)
 			if errStatus != nil {
 				zap.S().Error("Error in processing sql query: ", errStatus)
 				return
@@ -791,8 +794,7 @@ func (r *ClickHouseReader) GetServices(ctx context.Context, queryParams *model.G
 				zap.S().Error("Error in processing sql query: ", err)
 				return
 			}
-
-			args, errStatus = buildQueryWithTagParams(ctx, queryParams.Tags, &errorQuery, args)
+			args, errStatus = buildQueryWithTagParams(ctx, tags, &errorQuery, args)
 			err = r.db.QueryRow(ctx, errorQuery, args...).Scan(&numErrors)
 			if err != nil {
 				zap.S().Error("Error in processing sql query: ", err)
@@ -849,7 +851,11 @@ func (r *ClickHouseReader) GetServiceOverview(ctx context.Context, queryParams *
 	)
 	args := []interface{}{}
 	args = append(args, namedArgs...)
-	args, errStatus := buildQueryWithTagParams(ctx, queryParams.Tags, &query, args)
+
+	// create TagQuery from TagQueryParams
+	tags := []model.TagQuery{}
+	tags = createTagQueryFromTagQueryParams(queryParams.Tags, tags)
+	args, errStatus := buildQueryWithTagParams(ctx, tags, &query, args)
 	if errStatus != nil {
 		return nil, errStatus
 	}
@@ -875,7 +881,7 @@ func (r *ClickHouseReader) GetServiceOverview(ctx context.Context, queryParams *
 	)
 	args = []interface{}{}
 	args = append(args, namedArgs...)
-	args, errStatus = buildQueryWithTagParams(ctx, queryParams.Tags, &query, args)
+	args, errStatus = buildQueryWithTagParams(ctx, tags, &query, args)
 	if errStatus != nil {
 		return nil, errStatus
 	}
@@ -1357,7 +1363,10 @@ func (r *ClickHouseReader) GetFilteredSpans(ctx context.Context, queryParams *mo
 		args = append(args, clickhouse.Named("kind", queryParams.Kind))
 	}
 
-	args, errStatus := buildQueryWithTagParams(ctx, queryParams.Tags, &query, args)
+	// create TagQuery from TagQueryParams
+	tags := []model.TagQuery{}
+	tags = createTagQueryFromTagQueryParams(queryParams.Tags, tags)
+	args, errStatus := buildQueryWithTagParams(ctx, tags, &query, args)
 	if errStatus != nil {
 		return nil, errStatus
 	}
@@ -1428,6 +1437,21 @@ func (r *ClickHouseReader) GetFilteredSpans(ctx context.Context, queryParams *mo
 	return &getFilterSpansResponse, nil
 }
 
+func createTagQueryFromTagQueryParams(queryParams []model.TagQueryParam, tags []model.TagQuery) []model.TagQuery {
+	for _, tag := range queryParams {
+		if len(tag.StringValues) > 0 {
+			tags = append(tags, model.NewTagQueryString(tag.Key, tag.StringValues, tag.Operator))
+		}
+		if len(tag.NumberValues) > 0 {
+			tags = append(tags, model.NewTagQueryNumber(tag.Key, tag.NumberValues, tag.Operator))
+		}
+		if len(tag.BoolValues) > 0 {
+			tags = append(tags, model.NewTagQueryBool(tag.Key, tag.BoolValues, tag.Operator))
+		}
+	}
+	return tags
+}
+
 func StringWithCharset(length int, charset string) string {
 	b := make([]byte, length)
 	for i := range b {
@@ -1444,52 +1468,110 @@ func buildQueryWithTagParams(ctx context.Context, tags []model.TagQuery, query *
 
 	for _, item := range tags {
 		tagMapType := ""
-		// values := make([]interface{}, len(item.Values))
-		if item.Key.Type == model.TagTypeString {
-			tagMapType = "stringTagMap"
-			// values = item.StringValues
-		} else if item.Key.Type == model.TagTypeNumber {
-			tagMapType = "numberTagMap"
-		} else if item.Key.Type == model.TagTypeBool {
-			tagMapType = "boolTagMap"
+		switch item.(type) {
+		case model.TagQueryString:
+			tagMapType = constants.StringTagMapCol
+		case model.TagQueryNumber:
+			tagMapType = constants.NumberTagMapCol
+		case model.TagQueryBool:
+			tagMapType = constants.BoolTagMapCol
+		default:
+			// type not supported error
+			return nil, &model.ApiError{Typ: model.ErrorBadData, Err: fmt.Errorf("type not supported")}
 		}
-		if item.Operator == "in" {
-			for i, value := range item.StringValues {
-				tagKey := "inTagKey" + String(5)
-				tagValue := "inTagValue" + String(5)
-				if i == 0 && i == len(item.StringValues)-1 {
-					*query += fmt.Sprintf(" AND %s[@%s] = @%s", tagMapType, tagKey, tagValue)
-				} else if i == 0 && i != len(item.StringValues)-1 {
-					*query += fmt.Sprintf(" AND (%s[@%s] = @%s", tagMapType, tagKey, tagValue)
-				} else if i != 0 && i == len(item.StringValues)-1 {
-					*query += fmt.Sprintf(" OR %s[@%s] = @%s)", tagMapType, tagKey, tagValue)
-				} else {
-					*query += fmt.Sprintf(" OR %s[@%s] = @%s", tagMapType, tagKey, tagValue)
-				}
-				args = append(args, clickhouse.Named(tagKey, item.Key))
-				args = append(args, clickhouse.Named(tagValue, value))
-			}
-		} else if item.Operator == "not in" {
-			for i, value := range item.StringValues {
-				tagKey := "notinTagKey" + String(5)
-				tagValue := "notinTagValue" + String(5)
-				if i == 0 && i == len(item.StringValues)-1 {
-					*query += fmt.Sprintf(" AND NOT %s[@%s] = @%s", tagMapType, tagKey, tagValue)
-				} else if i == 0 && i != len(item.StringValues)-1 {
-					*query += fmt.Sprintf(" AND NOT (%s[@%s] = @%s", tagMapType, tagKey, tagValue)
-				} else if i != 0 && i == len(item.StringValues)-1 {
-					*query += fmt.Sprintf(" OR %s[@%s] = @%s)", tagMapType, tagKey, tagValue)
-				} else {
-					*query += fmt.Sprintf(" OR %s[@%s] = @%s", tagMapType, tagKey, tagValue)
-				}
-				args = append(args, clickhouse.Named(tagKey, item.Key))
-				args = append(args, clickhouse.Named(tagValue, value))
-			}
+		if item.GetOperator() == model.InOperator {
+			args = addInOperator(item, query, tagMapType, args)
+		} else if item.GetOperator() == model.NotInOperator {
+			args = addNotInOperator(item, query, tagMapType, args)
+		} else if item.GetOperator() == model.LessThanEqualOperator {
+			args = addLessThanEqualOperator(item, query, tagMapType, args)
+		} else if item.GetOperator() == model.GreaterThanEqualOperator {
+			args = addGreaterThanEqualOperator(item, query, tagMapType, args)
 		} else {
-			return nil, &model.ApiError{Typ: model.ErrorExec, Err: fmt.Errorf("Tag Operator %s not supported", item.Operator)}
+			return nil, &model.ApiError{Typ: model.ErrorExec, Err: fmt.Errorf("Tag Operator %s not supported", item.GetOperator())}
 		}
 	}
 	return args, nil
+}
+
+func addNotInOperator(item model.TagQuery, query *string, tagMapType string, args []interface{}) []interface{} {
+	for i, value := range item.GetValues() {
+		tagKey := "notinTagKey" + String(5)
+		tagValue := "notinTagValue" + String(5)
+		if i == 0 && i == len(item.GetValues())-1 {
+			*query += fmt.Sprintf(" AND NOT %s[@%s] = @%s", tagMapType, tagKey, tagValue)
+		} else if i == 0 && i != len(item.GetValues())-1 {
+			*query += fmt.Sprintf(" AND NOT (%s[@%s] = @%s", tagMapType, tagKey, tagValue)
+		} else if i != 0 && i == len(item.GetValues())-1 {
+			*query += fmt.Sprintf(" OR %s[@%s] = @%s)", tagMapType, tagKey, tagValue)
+		} else {
+			*query += fmt.Sprintf(" OR %s[@%s] = @%s", tagMapType, tagKey, tagValue)
+		}
+		args = append(args, clickhouse.Named(tagKey, item.GetKey()))
+		args = append(args, clickhouse.Named(tagValue, value))
+	}
+	return args
+}
+
+func addInOperator(item model.TagQuery, query *string, tagMapType string, args []interface{}) []interface{} {
+	values := item.GetValues()
+	for i, value := range values {
+		tagKey := "inTagKey" + String(5)
+		tagValue := "inTagValue" + String(5)
+		if i == 0 && i == len(item.GetValues())-1 {
+			*query += fmt.Sprintf(" AND %s[@%s] = @%s", tagMapType, tagKey, tagValue)
+		} else if i == 0 && i != len(item.GetValues())-1 {
+			*query += fmt.Sprintf(" AND (%s[@%s] = @%s", tagMapType, tagKey, tagValue)
+		} else if i != 0 && i == len(item.GetValues())-1 {
+			*query += fmt.Sprintf(" OR %s[@%s] = @%s)", tagMapType, tagKey, tagValue)
+		} else {
+			*query += fmt.Sprintf(" OR %s[@%s] = @%s", tagMapType, tagKey, tagValue)
+		}
+		args = append(args, clickhouse.Named(tagKey, item.GetKey()))
+		args = append(args, clickhouse.Named(tagValue, value))
+	}
+	fmt.Println(*query)
+	return args
+}
+
+func addLessThanEqualOperator(item model.TagQuery, query *string, tagMapType string, args []interface{}) []interface{} {
+	values := item.GetValues()
+	for i, value := range values {
+		tagKey := "lessThanEqualTagKey" + String(5)
+		tagValue := "lessThanEqualTagValue" + String(5)
+		if i == 0 && i == len(item.GetValues())-1 {
+			*query += fmt.Sprintf(" AND %s[@%s] <= @%s", tagMapType, tagKey, tagValue)
+		} else if i == 0 && i != len(item.GetValues())-1 {
+			*query += fmt.Sprintf(" AND (%s[@%s] <= @%s", tagMapType, tagKey, tagValue)
+		} else if i != 0 && i == len(item.GetValues())-1 {
+			*query += fmt.Sprintf(" OR %s[@%s] <= @%s)", tagMapType, tagKey, tagValue)
+		} else {
+			*query += fmt.Sprintf(" OR %s[@%s] <= @%s", tagMapType, tagKey, tagValue)
+		}
+		args = append(args, clickhouse.Named(tagKey, item.GetKey()))
+		args = append(args, clickhouse.Named(tagValue, value))
+	}
+	return args
+}
+
+func addGreaterThanEqualOperator(item model.TagQuery, query *string, tagMapType string, args []interface{}) []interface{} {
+	values := item.GetValues()
+	for i, value := range values {
+		tagKey := "greaterThanEqualTagKey" + String(5)
+		tagValue := "greaterThanEqualTagValue" + String(5)
+		if i == 0 && i == len(item.GetValues())-1 {
+			*query += fmt.Sprintf(" AND %s[@%s] >= @%s", tagMapType, tagKey, tagValue)
+		} else if i == 0 && i != len(item.GetValues())-1 {
+			*query += fmt.Sprintf(" AND (%s[@%s] >= @%s", tagMapType, tagKey, tagValue)
+		} else if i != 0 && i == len(item.GetValues())-1 {
+			*query += fmt.Sprintf(" OR %s[@%s] >= @%s)", tagMapType, tagKey, tagValue)
+		} else {
+			*query += fmt.Sprintf(" OR %s[@%s] >= @%s", tagMapType, tagKey, tagValue)
+		}
+		args = append(args, clickhouse.Named(tagKey, item.GetKey()))
+		args = append(args, clickhouse.Named(tagValue, value))
+	}
+	return args
 }
 
 func (r *ClickHouseReader) GetTagFilters(ctx context.Context, queryParams *model.TagFilterParams) (*model.TagFilters, *model.ApiError) {
@@ -1695,7 +1777,10 @@ func (r *ClickHouseReader) GetTopOperations(ctx context.Context, queryParams *mo
 	)
 	args := []interface{}{}
 	args = append(args, namedArgs...)
-	args, errStatus := buildQueryWithTagParams(ctx, queryParams.Tags, &query, args)
+	// create TagQuery from TagQueryParams
+	tags := []model.TagQuery{}
+	tags = createTagQueryFromTagQueryParams(queryParams.Tags, tags)
+	args, errStatus := buildQueryWithTagParams(ctx, tags, &query, args)
 	if errStatus != nil {
 		return nil, errStatus
 	}
@@ -1982,8 +2067,10 @@ func (r *ClickHouseReader) GetFilteredSpansAggregates(ctx context.Context, query
 		query = query + " AND kind = @kind"
 		args = append(args, clickhouse.Named("kind", queryParams.Kind))
 	}
-
-	args, errStatus := buildQueryWithTagParams(ctx, queryParams.Tags, &query, args)
+	// create TagQuery from TagQueryParams
+	tags := []model.TagQuery{}
+	tags = createTagQueryFromTagQueryParams(queryParams.Tags, tags)
+	args, errStatus := buildQueryWithTagParams(ctx, tags, &query, args)
 	if errStatus != nil {
 		return nil, errStatus
 	}

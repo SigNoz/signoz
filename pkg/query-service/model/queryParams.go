@@ -142,7 +142,7 @@ type GetTopOperationsParams struct {
 	ServiceName string `json:"service"`
 	Start       *time.Time
 	End         *time.Time
-	Tags        []TagQuery `json:"tags"`
+	Tags        []TagQueryParam `json:"tags"`
 }
 
 type GetUsageParams struct {
@@ -161,7 +161,7 @@ type GetServicesParams struct {
 	Period    int
 	Start     *time.Time
 	End       *time.Time
-	Tags      []TagQuery `json:"tags"`
+	Tags      []TagQueryParam `json:"tags"`
 }
 
 type GetServiceOverviewParams struct {
@@ -170,72 +170,177 @@ type GetServiceOverviewParams struct {
 	Period      string
 	Start       *time.Time
 	End         *time.Time
-	Tags        []TagQuery `json:"tags"`
-	ServiceName string     `json:"service"`
-	StepSeconds int        `json:"step"`
+	Tags        []TagQueryParam `json:"tags"`
+	ServiceName string          `json:"service"`
+	StepSeconds int             `json:"step"`
 }
 
-type TagQuery struct {
-	Key          TagKey
-	StringValues []string
-	BoolValues   []bool
-	NumberValues []float64
-	Operator     string
+type TagQueryParam struct {
+	Key          string    `json:"key"`
+	StringValues []string  `json:"stringValues"`
+	BoolValues   []bool    `json:"boolValues"`
+	NumberValues []float64 `json:"numberValues"`
+	Operator     Operator  `json:"operator"`
+}
+
+type Operator string
+
+const (
+	InOperator               Operator = "IN"
+	NotInOperator            Operator = "NotIN"
+	LessThanEqualOperator    Operator = "<="
+	GreaterThanEqualOperator Operator = ">="
+)
+
+type TagQuery interface {
+	GetKey() string
+	GetValues() []interface{}
+	GetOperator() Operator
+}
+
+type TagQueryString struct {
+	key      string
+	values   []string
+	operator Operator
+}
+
+func NewTagQueryString(key string, values []string, operator Operator) TagQueryString {
+	return TagQueryString{
+		key:      key,
+		values:   values,
+		operator: operator,
+	}
+}
+
+func (tqn TagQueryNumber) GetKey() string {
+	return tqn.key
+}
+
+func (tqs TagQueryString) GetValues() []interface{} {
+	values := make([]interface{}, len(tqs.values))
+	for i, v := range tqs.values {
+		values[i] = v
+	}
+	return values
+}
+
+func (tqs TagQueryString) GetOperator() Operator {
+	return tqs.operator
+}
+
+type TagQueryBool struct {
+	key      string
+	values   []bool
+	operator Operator
+}
+
+func NewTagQueryBool(key string, values []bool, operator Operator) TagQueryBool {
+	return TagQueryBool{
+		key:      key,
+		values:   values,
+		operator: operator,
+	}
+}
+
+func (tqb TagQueryBool) GetKey() string {
+	return tqb.key
+}
+
+func (tqb TagQueryBool) GetValues() []interface{} {
+	values := make([]interface{}, len(tqb.values))
+	for i, v := range tqb.values {
+		values[i] = v
+	}
+	return values
+}
+
+func (tqb TagQueryBool) GetOperator() Operator {
+	return tqb.operator
+}
+
+type TagQueryNumber struct {
+	key      string
+	values   []float64
+	operator Operator
+}
+
+func NewTagQueryNumber(key string, values []float64, operator Operator) TagQueryNumber {
+	return TagQueryNumber{
+		key:      key,
+		values:   values,
+		operator: operator,
+	}
+}
+
+func (tqs TagQueryString) GetKey() string {
+	return tqs.key
+}
+
+func (tqn TagQueryNumber) GetValues() []interface{} {
+	values := make([]interface{}, len(tqn.values))
+	for i, v := range tqn.values {
+		values[i] = v
+	}
+	return values
+}
+
+func (tqn TagQueryNumber) GetOperator() Operator {
+	return tqn.operator
 }
 
 type GetFilteredSpansParams struct {
-	TraceID            []string   `json:"traceID"`
-	ServiceName        []string   `json:"serviceName"`
-	Operation          []string   `json:"operation"`
-	Kind               string     `json:"kind"`
-	Status             []string   `json:"status"`
-	HttpRoute          []string   `json:"httpRoute"`
-	HttpCode           []string   `json:"httpCode"`
-	HttpUrl            []string   `json:"httpUrl"`
-	HttpHost           []string   `json:"httpHost"`
-	HttpMethod         []string   `json:"httpMethod"`
-	Component          []string   `json:"component"`
-	RPCMethod          []string   `json:"rpcMethod"`
-	ResponseStatusCode []string   `json:"responseStatusCode"`
-	StartStr           string     `json:"start"`
-	EndStr             string     `json:"end"`
-	MinDuration        string     `json:"minDuration"`
-	MaxDuration        string     `json:"maxDuration"`
-	Limit              int64      `json:"limit"`
-	OrderParam         string     `json:"orderParam"`
-	Order              string     `json:"order"`
-	Offset             int64      `json:"offset"`
-	Tags               []TagQuery `json:"tags"`
-	Exclude            []string   `json:"exclude"`
+	TraceID            []string        `json:"traceID"`
+	ServiceName        []string        `json:"serviceName"`
+	Operation          []string        `json:"operation"`
+	Kind               string          `json:"kind"`
+	Status             []string        `json:"status"`
+	HttpRoute          []string        `json:"httpRoute"`
+	HttpCode           []string        `json:"httpCode"`
+	HttpUrl            []string        `json:"httpUrl"`
+	HttpHost           []string        `json:"httpHost"`
+	HttpMethod         []string        `json:"httpMethod"`
+	Component          []string        `json:"component"`
+	RPCMethod          []string        `json:"rpcMethod"`
+	ResponseStatusCode []string        `json:"responseStatusCode"`
+	StartStr           string          `json:"start"`
+	EndStr             string          `json:"end"`
+	MinDuration        string          `json:"minDuration"`
+	MaxDuration        string          `json:"maxDuration"`
+	Limit              int64           `json:"limit"`
+	OrderParam         string          `json:"orderParam"`
+	Order              string          `json:"order"`
+	Offset             int64           `json:"offset"`
+	Tags               []TagQueryParam `json:"tags"`
+	Exclude            []string        `json:"exclude"`
 	Start              *time.Time
 	End                *time.Time
 }
 
 type GetFilteredSpanAggregatesParams struct {
-	TraceID            []string   `json:"traceID"`
-	ServiceName        []string   `json:"serviceName"`
-	Operation          []string   `json:"operation"`
-	Kind               string     `json:"kind"`
-	Status             []string   `json:"status"`
-	HttpRoute          []string   `json:"httpRoute"`
-	HttpCode           []string   `json:"httpCode"`
-	HttpUrl            []string   `json:"httpUrl"`
-	HttpHost           []string   `json:"httpHost"`
-	HttpMethod         []string   `json:"httpMethod"`
-	Component          []string   `json:"component"`
-	RPCMethod          []string   `json:"rpcMethod"`
-	ResponseStatusCode []string   `json:"responseStatusCode"`
-	MinDuration        string     `json:"minDuration"`
-	MaxDuration        string     `json:"maxDuration"`
-	Tags               []TagQuery `json:"tags"`
-	StartStr           string     `json:"start"`
-	EndStr             string     `json:"end"`
-	StepSeconds        int        `json:"step"`
-	Dimension          string     `json:"dimension"`
-	AggregationOption  string     `json:"aggregationOption"`
-	GroupBy            string     `json:"groupBy"`
-	Function           string     `json:"function"`
-	Exclude            []string   `json:"exclude"`
+	TraceID            []string        `json:"traceID"`
+	ServiceName        []string        `json:"serviceName"`
+	Operation          []string        `json:"operation"`
+	Kind               string          `json:"kind"`
+	Status             []string        `json:"status"`
+	HttpRoute          []string        `json:"httpRoute"`
+	HttpCode           []string        `json:"httpCode"`
+	HttpUrl            []string        `json:"httpUrl"`
+	HttpHost           []string        `json:"httpHost"`
+	HttpMethod         []string        `json:"httpMethod"`
+	Component          []string        `json:"component"`
+	RPCMethod          []string        `json:"rpcMethod"`
+	ResponseStatusCode []string        `json:"responseStatusCode"`
+	MinDuration        string          `json:"minDuration"`
+	MaxDuration        string          `json:"maxDuration"`
+	Tags               []TagQueryParam `json:"tags"`
+	StartStr           string          `json:"start"`
+	EndStr             string          `json:"end"`
+	StepSeconds        int             `json:"step"`
+	Dimension          string          `json:"dimension"`
+	AggregationOption  string          `json:"aggregationOption"`
+	GroupBy            string          `json:"groupBy"`
+	Function           string          `json:"function"`
+	Exclude            []string        `json:"exclude"`
 	Start              *time.Time
 	End                *time.Time
 }
