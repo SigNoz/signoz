@@ -233,6 +233,6 @@ func TestBuildQueryWithThreeOrMoreQueriesRefAndFormula(t *testing.T) {
 		So(strings.Count(queries["F4"], " ON "), ShouldEqual, 2)
 
 		So(queries["F5"], ShouldContainSubstring, "SELECT A.ts as ts, ((A.value - B.value) / B.value) * 100")
-		So(strings.Count(queries["F5"], " ON "), ShouldEqual, 2)
+		So(strings.Count(queries["F5"], " ON "), ShouldEqual, 1)
 	})
 }
