@@ -83,6 +83,10 @@ processors:
         default: default
       - name: deployment.environment
         default: default
+      # This is added to ensure the uniqueness of the timeseries
+      # Otherwise, identical timeseries produced by multiple replicas of
+      # collectors result in incorrect APM metrics
+      - name: 'signoz.collector.id'
   # memory_limiter:
   #   # 80% of maximum memory up to 2G
   #   limit_mib: 1500
