@@ -10,7 +10,13 @@ interface LogoProps {
 }
 
 export const Sider = styled(SiderComponent)`
-	z-index: 999;
+	&&& {
+		background: #1f1f1f;
+
+		.ant-layout-sider-trigger {
+			background: #1f1f1f;
+		}
+	}
 `;
 
 interface ButtonProps {
@@ -28,6 +34,7 @@ export const SlackMenuItemContainer = styled.div<LogoProps>`
 	bottom: ${({ index }): string => `${index * 48 + (index + 16)}px`};
 	width: ${({ collapsed }): string => (!collapsed ? '200px' : '80px')};
 	transition: inherit;
+	background: #1f1f1f;
 
 	&&& {
 		li {
