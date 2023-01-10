@@ -6,6 +6,12 @@ import {
 	UPDATE_AUTO_REFRESH_INTERVAL,
 	UPDATE_TIME_INTERVAL,
 } from 'types/actions/globalTime';
+import {
+	GET_NEXT_LOG_LINES,
+	GET_PREVIOUS_LOG_LINES,
+	RESET_ID_START_AND_END,
+	SET_LOG_LINES_PER_PAGE,
+} from 'types/actions/logs';
 import { GlobalReducer } from 'types/reducer/globalTime';
 
 const intitalState: GlobalReducer = {
@@ -50,6 +56,17 @@ const globalTimeReducer = (
 			return {
 				...state,
 				selectedAutoRefreshInterval: action.payload,
+			};
+		}
+
+		case GET_NEXT_LOG_LINES:
+		case GET_PREVIOUS_LOG_LINES:
+		case RESET_ID_START_AND_END:
+		case SET_LOG_LINES_PER_PAGE: {
+			return {
+				...state,
+				maxTime: action.payload.maxTime,
+				minTime: action.payload.minTime,
 			};
 		}
 

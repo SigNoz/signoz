@@ -126,7 +126,7 @@ export const LogsReducer = (
 		case SET_LOG_LINES_PER_PAGE: {
 			return {
 				...state,
-				logLinesPerPage: action.payload,
+				logLinesPerPage: action.payload.logsLinesPerPage,
 			};
 		}
 

@@ -1,4 +1,5 @@
 import { Input, InputRef, Popover } from 'antd';
+import { getMinMax } from 'container/TopNav/AutoRefresh/config';
 import useUrlQuery from 'hooks/useUrlQuery';
 import getStep from 'lib/getStep';
 import { debounce } from 'lodash-es';
@@ -45,7 +46,7 @@ function SearchFilter({
 		AppState,
 		ILogsReducer
 	>((state) => state.logs);
-	const { maxTime, minTime } = useSelector<AppState, GlobalReducer>(
+	const globalTime = useSelector<AppState, GlobalReducer>(
 		(state) => state.globalTime,
 	);
 	const dispatch = useDispatch<Dispatch<AppActions>>();
@@ -86,6 +87,12 @@ function SearchFilter({
 					0,
 				);
 			} else {
+				const { maxTime, minTime } = getMinMax(
+					globalTime.selectedTime,
+					globalTime.minTime,
+					globalTime.maxTime,
+				);
+
 				getLogs({
 					q: customQuery,
 					limit: logLinesPerPage,
@@ -117,8 +124,7 @@ function SearchFilter({
 			idStart,
 			liveTail,
 			logLinesPerPage,
-			maxTime,
-			minTime,
+			globalTime,
 		],
 	);
 
@@ -145,12 +151,12 @@ function SearchFilter({
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [
 		urlQueryString,
-		maxTime,
-		minTime,
 		idEnd,
 		idStart,
 		logLinesPerPage,
 		dispatch,
+		globalTime.maxTime,
+		globalTime.minTime,
 	]);
 
 	return (

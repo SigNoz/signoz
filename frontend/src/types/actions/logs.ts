@@ -13,6 +13,8 @@ import { TLogsLiveTailState } from 'types/api/logs/liveTail';
 import { ILog } from 'types/api/logs/log';
 import { ILogsAggregate } from 'types/api/logs/logAggregate';
 
+import { GlobalTime } from './globalTime';
+
 // export const GET_SERVICE_LIST_SUCCESS = 'GET_SERVICE_LIST_SUCCESS';
 // export const GET_SERVICE_LIST_LOADING_START = 'GET_SERVICE_LIST_LOADING_START';
 // export const GET_SERVICE_LIST_ERROR = 'GET_SERVICE_LIST_ERROR';
@@ -75,17 +77,24 @@ export interface UpdateLogs {
 }
 export interface SetLogsLinesPerPage {
 	type: typeof SET_LOG_LINES_PER_PAGE;
-	payload: number;
+	payload: {
+		logsLinesPerPage: number;
+		minTime: GlobalTime['minTime'];
+		maxTime: GlobalTime['maxTime'];
+	};
 }
 
 export interface PreviousLogsLines {
 	type: typeof GET_PREVIOUS_LOG_LINES;
+	payload: GlobalTime;
 }
 export interface NextLogsLines {
 	type: typeof GET_NEXT_LOG_LINES;
+	payload: GlobalTime;
 }
 export interface ResetIdStartAndEnd {
 	type: typeof RESET_ID_START_AND_END;
+	payload: GlobalTime;
 }
 export interface SetLoading {
 	type: typeof SET_LOADING;
