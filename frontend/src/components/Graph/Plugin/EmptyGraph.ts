@@ -11,7 +11,7 @@ export const emptyGraph = {
 		ctx.textBaseline = 'middle';
 		ctx.font = '1.5rem sans-serif';
 		ctx.fillStyle = `${grey.primary}`;
-		ctx.fillText('No data to display', width / 2, height / 2);
+		ctx.fillText('No data', width / 2, height / 2);
 		ctx.restore();
 	},
 };
