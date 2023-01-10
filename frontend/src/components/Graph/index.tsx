@@ -28,6 +28,11 @@ import React, { useCallback, useEffect, useRef } from 'react';
 
 import { hasData } from './hasData';
 import { legend } from './Plugin';
+import {
+	createDragSelectPlugin,
+	dragSelectPluginId,
+	DragSelectPluginOptions,
+} from './Plugin/DragSelect';
 import { emptyGraph } from './Plugin/EmptyGraph';
 import { LegendsContainer } from './styles';
 import { useXAxisTimeUnit } from './xAxisConfig';
@@ -64,6 +69,8 @@ function Graph({
 	forceReRender,
 	staticLine,
 	containerHeight,
+	onDragSelect,
+	dragSelectColor,
 }: GraphProps): JSX.Element {
 	const chartRef = useRef<HTMLCanvasElement>(null);
 	const isDarkMode = useIsDarkMode();
@@ -91,7 +98,9 @@ function Graph({
 		}
 
 		if (chartRef.current !== null) {
-			const options: ChartOptions = {
+			const options: ChartOptions & {
+				plugins: { [dragSelectPluginId]: DragSelectPluginOptions | false };
+			} = {
 				animation: {
 					duration: animate ? 200 : 0,
 				},
@@ -148,6 +157,12 @@ function Graph({
 							},
 						},
 					},
+					[dragSelectPluginId]: onDragSelect
+						? {
+								color: dragSelectColor,
+								onSelect: onDragSelect,
+						  }
+						: false,
 				},
 				layout: {
 					padding: 0,
@@ -211,7 +226,12 @@ function Graph({
 			const chartHasData = hasData(data);
 			const chartPlugins = [];
 
-			if (!chartHasData) chartPlugins.push(emptyGraph);
+			if (chartHasData) {
+				chartPlugins.push(createDragSelectPlugin());
+			} else {
+				chartPlugins.push(emptyGraph);
+			}
+
 			chartPlugins.push(legend(name, data.datasets.length > 3));
 
 			lineChartRef.current = new Chart(chartRef.current, {
@@ -234,6 +254,8 @@ function Graph({
 		yAxisUnit,
 		onClickHandler,
 		staticLine,
+		onDragSelect,
+		dragSelectColor,
 	]);
 
 	useEffect(() => {
@@ -260,6 +282,8 @@ interface GraphProps {
 	forceReRender?: boolean | null | number;
 	staticLine?: StaticLineProps | undefined;
 	containerHeight?: string | number;
+	onDragSelect?: (start: number, end: number) => void;
+	dragSelectColor?: string;
 }
 
 export interface StaticLineProps {
@@ -287,5 +311,7 @@ Graph.defaultProps = {
 	forceReRender: undefined,
 	staticLine: undefined,
 	containerHeight: '85%',
+	onDragSelect: undefined,
+	dragSelectColor: undefined,
 };
 export default Graph;
