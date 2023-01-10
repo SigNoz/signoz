@@ -22,11 +22,7 @@ function DisplayName({
 	const [isLoading, setIsLoading] = useState<boolean>(false);
 	const dispatch = useDispatch<Dispatch<AppActions>>();
 
-	const onSubmit = async ({
-		name: orgName,
-	}: {
-		name: string;
-	}): Promise<void> => {
+	const onSubmit = async ({ name: orgName }: OnSubmitProps): Promise<void> => {
 		try {
 			setIsLoading(true);
 			const { statusCode, error } = await editOrg({
@@ -95,6 +91,10 @@ interface DisplayNameProps {
 	index: number;
 	id: User['userId'];
 	isAnonymous: boolean;
+}
+
+interface OnSubmitProps {
+	name: string;
 }
 
 export default DisplayName;
