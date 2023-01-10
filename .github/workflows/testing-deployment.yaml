@@ -15,17 +15,17 @@ jobs:
         env:
           GITHUB_BRANCH: ${{ github.head_ref || github.ref_name }}
           GITHUB_SHA: ${{ github.sha }}
-          DEV_BUILD: "1"
         with:
           host: ${{ secrets.HOST_DNS }}
           username: ${{ secrets.USERNAME }}
           key: ${{ secrets.EC2_SSH_KEY }}
-          envs: GITHUB_BRANCH,GITHUB_SHA,DEV_BUILD
+          envs: GITHUB_BRANCH,GITHUB_SHA
           command_timeout: 60m
           script: |
             echo "GITHUB_BRANCH: ${GITHUB_BRANCH}"
             echo "GITHUB_SHA: ${GITHUB_SHA}"
             export DOCKER_TAG="${GITHUB_SHA:0:7}" # needed for child process to access it
+            export DEV_BUILD="1"
             docker system prune --force
             cd ~/signoz
             git status
