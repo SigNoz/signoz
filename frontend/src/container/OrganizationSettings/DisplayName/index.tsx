@@ -79,7 +79,7 @@ function DisplayName({
 				/>
 				<Button
 					onClick={onClickHandler}
-					disabled={isLoading}
+					disabled={isLoading || orgName === name}
 					loading={isLoading}
 					type="primary"
 				>
