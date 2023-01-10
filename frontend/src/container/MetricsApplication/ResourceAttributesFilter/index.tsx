@@ -1,6 +1,6 @@
 import { CloseCircleFilled } from '@ant-design/icons';
 import { useMachine } from '@xstate/react';
-import { Button, Select, Spin } from 'antd';
+import { Button, Select, Spin, Typography } from 'antd';
 import ROUTES from 'constants/routes';
 import history from 'lib/history';
 import { convertMetricKeyToTrace } from 'lib/resourceAttributes';
@@ -155,34 +155,22 @@ function ResourceAttributesFilter(): JSX.Element | null {
 
 	return (
 		<SearchContainer disabled={disabled}>
-			<div
-				style={{
-					maxWidth: disabled ? '100%' : '70%',
-					display: 'flex',
-					overflowX: 'auto',
-				}}
-			>
-				{map(
-					queries,
-					(query): JSX.Element => {
-						return (
-							<QueryChip
-								disabled={disabled}
-								key={query.id}
-								queryData={query}
-								onClose={handleClose}
-							/>
-						);
-					},
-				)}
-				{map(staging, (item, idx) => {
-					return (
-						<QueryChipItem key={uuid()}>
-							{idx === 0 ? convertMetricKeyToTrace(item) : item}
-						</QueryChipItem>
-					);
-				})}
-			</div>
+			{map(
+				queries,
+				(query): JSX.Element => (
+					<QueryChip
+						disabled={disabled}
+						key={query.id}
+						queryData={query}
+						onClose={handleClose}
+					/>
+				),
+			)}
+			{map(staging, (item, idx) => (
+				<QueryChipItem key={uuid()}>
+					{idx === 0 ? convertMetricKeyToTrace(item) : item}
+				</QueryChipItem>
+			))}
 			{!disabled && (
 				<Select
 					placeholder={
@@ -200,14 +188,14 @@ function ResourceAttributesFilter(): JSX.Element | null {
 					onBlur={handleBlur}
 					notFoundContent={
 						loading ? (
-							<span>
+							<Typography>
 								<Spin size="small" /> Loading...{' '}
-							</span>
+							</Typography>
 						) : (
-							<span>
+							<Typography>
 								No resource attributes available to filter. Please refer docs to send
 								attributes.
-							</span>
+							</Typography>
 						)
 					}
 				/>

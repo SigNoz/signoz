@@ -17,9 +17,9 @@ import Slack from './Slack';
 import {
 	RedDot,
 	Sider,
-	SlackButton,
 	SlackMenuItemContainer,
 	Tags,
+	Text,
 	VersionContainer,
 } from './styles';
 
@@ -28,6 +28,7 @@ function SideNav(): JSX.Element {
 	const [collapsed, setCollapsed] = useState<boolean>(
 		getLocalStorageKey(IS_SIDEBAR_COLLAPSED) === 'true',
 	);
+
 	const { currentVersion, latestVersion, isCurrentVersionError } = useSelector<
 		AppState,
 		AppReducer
@@ -67,7 +68,7 @@ function SideNav(): JSX.Element {
 		{
 			onClick: onClickSlackHandler,
 			icon: <Slack />,
-			text: <SlackButton>Support</SlackButton>,
+			text: <Text isMargin>Support</Text>,
 		},
 		{
 			onClick: onClickVersionHandler,
@@ -79,9 +80,9 @@ function SideNav(): JSX.Element {
 			text: (
 				<VersionContainer>
 					{!isCurrentVersionError ? (
-						<SlackButton>{currentVersion}</SlackButton>
+						<Text isMargin>{currentVersion}</Text>
 					) : (
-						<SlackButton>{t('n_a')}</SlackButton>
+						<Text isMargin>{t('n_a')}</Text>
 					)}
 					{isNotCurrentVersion && <RedDot />}
 				</VersionContainer>
@@ -107,12 +108,11 @@ function SideNav(): JSX.Element {
 					>
 						<Space>
 							<div>{name}</div>
-							{tags &&
-								tags.map((e) => (
-									<Tags style={{ lineHeight: '1rem' }} color="#177DDC" key={e}>
-										<Typography.Text style={{ fontWeight: '300' }}>{e}</Typography.Text>
-									</Tags>
-								))}
+							{tags?.map((e) => (
+								<Tags style={{ lineHeight: '1rem' }} color="#177DDC" key={e}>
+									<Typography.Text>{e}</Typography.Text>
+								</Tags>
+							))}
 						</Space>
 					</Menu.Item>
 				))}

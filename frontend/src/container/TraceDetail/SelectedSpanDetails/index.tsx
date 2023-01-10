@@ -1,4 +1,4 @@
-import { Modal, Tabs, Tooltip } from 'antd';
+import { Modal, Tabs, Tooltip, Typography } from 'antd';
 import Editor from 'components/Editor';
 import { StyledSpace } from 'components/Styled';
 import { useIsDarkMode } from 'hooks/useDarkMode';
@@ -51,7 +51,9 @@ function SelectedSpanDetails(props: SelectedSpanDetailsProps): JSX.Element {
 				direction="vertical"
 				style={{ marginLeft: '0.5rem' }}
 			>
-				<strong> Details for selected Span </strong>
+				<Typography.Text strong ellipsis>
+					Details for selected Span
+				</Typography.Text>
 
 				<CustomTitle>Service</CustomTitle>
 				<Tooltip overlay={OverLayComponentServiceName}>

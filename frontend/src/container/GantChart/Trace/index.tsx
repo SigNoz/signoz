@@ -1,10 +1,10 @@
 import { CaretDownFilled, CaretRightFilled } from '@ant-design/icons';
-import { Col } from 'antd';
+import { Col, Typography } from 'antd';
 import { StyledCol, StyledRow } from 'components/Styled';
 import { IIntervalUnit } from 'container/TraceDetail/utils';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { SPAN_DETAILS_LEFT_COL_WIDTH } from 'pages/TraceDetail/constants';
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { ITraceTree } from 'types/api/trace/getTraceItem';
 
 import { ITraceMetaData } from '..';
@@ -19,6 +19,7 @@ import {
 	styles,
 	Wrapper,
 } from './styles';
+import { getIconStyles } from './utils';
 
 function Trace(props: TraceProps): JSX.Element {
 	const {
@@ -107,10 +108,11 @@ function Trace(props: TraceProps): JSX.Element {
 	};
 	const { totalSpans } = getMetaDataFromSpanTree(props);
 
-	const inMsCount = value;
 	const nodeLeftOffset = ((startTime - globalStart) * 1e2) / globalSpread;
 	const width = (value * 1e2) / (globalSpread * 1e6);
 	const panelWidth = SPAN_DETAILS_LEFT_COL_WIDTH - level * (16 + 1) - 48;
+
+	const iconStyles = useMemo(() => getIconStyles(isDarkMode), [isDarkMode]);
 
 	return (
 		<Wrapper
@@ -137,9 +139,13 @@ function Trace(props: TraceProps): JSX.Element {
 									isDarkMode={isDarkMode}
 									onClick={onClickTreeExpansion}
 								>
-									{totalSpans}
+									<Typography.Text>{totalSpans}</Typography.Text>
 									<CaretContainer>
-										{isOpen ? <CaretDownFilled /> : <CaretRightFilled />}
+										{isOpen ? (
+											<CaretDownFilled style={iconStyles} />
+										) : (
+											<CaretRightFilled style={iconStyles} />
+										)}
 									</CaretContainer>
 								</CardComponent>
 							)}
@@ -154,7 +160,7 @@ function Trace(props: TraceProps): JSX.Element {
 						leftOffset={nodeLeftOffset.toString()}
 						width={width.toString()}
 						bgColor={serviceColour}
-						inMsCount={inMsCount / 1e6}
+						inMsCount={value / 1e6}
 					/>
 				</Col>
 			</CardContainer>

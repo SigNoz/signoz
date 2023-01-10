@@ -1,17 +1,15 @@
 import { Typography } from 'antd';
 import styled from 'styled-components';
 
-export const Span = styled(Typography.Paragraph)`
+export const Span = styled(Typography.Text)`
 	&&& {
 		font-size: 0.75rem;
 		margin: 0;
-		/* border-bottom: 1px solid grey; */
 	}
 `;
 
 export const Service = styled(Typography.Paragraph)`
 	&&& {
-		color: #acacac;
 		font-size: 0.75rem;
 	}
 `;

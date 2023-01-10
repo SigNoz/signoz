@@ -1,5 +1,5 @@
 import { FilterOutlined } from '@ant-design/icons';
-import { Button, Col } from 'antd';
+import { Button, Col, Typography } from 'antd';
 import {
 	StyledCol,
 	StyledDiv,
@@ -188,9 +188,11 @@ function TraceDetail({ response }: TraceDetailProps): JSX.Element {
 							justifyContent: 'center',
 						}}
 					>
-						{tree &&
-							traceMetaData.globalStart &&
-							dayjs(traceMetaData.globalStart).format('hh:mm:ss a MM/DD')}
+						<Typography.Text>
+							{tree &&
+								traceMetaData.globalStart &&
+								dayjs(traceMetaData.globalStart).format('hh:mm:ss a MM/DD')}
+						</Typography.Text>
 					</StyledCol>
 					<StyledCol flex="auto" styledclass={[styles.timelineContainer]}>
 						<Timeline

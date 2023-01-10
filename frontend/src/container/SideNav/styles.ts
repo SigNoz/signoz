@@ -11,24 +11,21 @@ interface LogoProps {
 
 export const Sider = styled(SiderComponent)`
 	z-index: 999;
-	.ant-typography {
-		color: white;
-	}
-	.ant-layout-sider-trigger {
-		background-color: #1f1f1f;
-	}
 `;
 
-export const SlackButton = styled(Typography)`
+interface ButtonProps {
+	isMargin?: boolean;
+}
+export const Text = styled(Typography)<ButtonProps>`
 	&&& {
-		margin-left: 1rem;
+		margin-left: ${({ isMargin = false }): string => (isMargin ? '1rem' : '0')};
+		color: white;
 	}
 `;
 
 export const SlackMenuItemContainer = styled.div<LogoProps>`
 	position: fixed;
 	bottom: ${({ index }): string => `${index * 48 + (index + 16)}px`};
-	background: #262626;
 	width: ${({ collapsed }): string => (!collapsed ? '200px' : '80px')};
 	transition: inherit;
 
