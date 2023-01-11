@@ -256,7 +256,7 @@ function AuthDomains(): JSX.Element {
 					title="Configure Authentication Method"
 					onCancel={onCloseHandler(setIsSettingsOpen)}
 					destroyOnClose
-					visible={isSettingsOpen}
+					open={isSettingsOpen}
 					footer={null}
 				>
 					<Create
@@ -285,7 +285,7 @@ function AuthDomains(): JSX.Element {
 				title="Configure Authentication Method"
 				onCancel={onCloseHandler(setIsSettingsOpen)}
 				destroyOnClose
-				visible={isSettingsOpen}
+				open={isSettingsOpen}
 				footer={null}
 			>
 				<Create
@@ -297,7 +297,7 @@ function AuthDomains(): JSX.Element {
 			</Modal>
 
 			<Modal
-				visible={isEditModalOpen}
+				open={isEditModalOpen}
 				centered
 				title={EditModalTitleText(currentDomain?.ssoType)}
 				onCancel={onCloseHandler(setIsEditModalOpen)}

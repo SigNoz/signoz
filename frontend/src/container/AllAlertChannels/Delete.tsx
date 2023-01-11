@@ -1,5 +1,5 @@
 import { Button } from 'antd';
-import { NotificationInstance } from 'antd/lib/notification';
+import { NotificationInstance } from 'antd/es/notification/interface';
 import deleteChannel from 'api/channels/delete';
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';

@@ -1,5 +1,5 @@
 import { ExclamationCircleOutlined, SaveOutlined } from '@ant-design/icons';
-import { FormInstance, Modal, notification, Typography } from 'antd';
+import { Col, FormInstance, Modal, notification, Typography } from 'antd';
 import saveAlertApi from 'api/alerts/save';
 import testAlertApi from 'api/alerts/testAlert';
 import ROUTES from 'constants/routes';
@@ -34,7 +34,6 @@ import {
 	MainFormContainer,
 	PanelContainer,
 	StyledLeftContainer,
-	StyledRightContainer,
 } from './styles';
 import useDebounce from './useDebounce';
 import UserGuide from './UserGuide';
@@ -535,9 +534,9 @@ function FormAlertRules({
 						</ButtonContainer>
 					</MainFormContainer>
 				</StyledLeftContainer>
-				<StyledRightContainer flex="1 1 300px">
+				<Col flex="1 1 300px">
 					<UserGuide queryType={queryCategory} />
-				</StyledRightContainer>
+				</Col>
 			</PanelContainer>
 		</>
 	);

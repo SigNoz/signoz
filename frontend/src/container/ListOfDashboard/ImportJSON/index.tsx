@@ -131,7 +131,7 @@ function ImportJSON({
 
 	return (
 		<Modal
-			visible={isImportJSONModalVisible}
+			open={isImportJSONModalVisible}
 			centered
 			maskClosable
 			destroyOnClose
