@@ -1,5 +1,5 @@
 import { Collapse } from 'antd';
-import useThemeMode from 'hooks/useThemeMode';
+import { useIsDarkMode } from 'hooks/useDarkMode';
 import keys from 'lodash-es/keys';
 import map from 'lodash-es/map';
 import React from 'react';
@@ -18,7 +18,7 @@ function ErrorTag({
 	setText,
 	firstSpanStartTime,
 }: ErrorTagProps): JSX.Element {
-	const { isDarkMode } = useThemeMode();
+	const isDarkMode = useIsDarkMode();
 
 	return (
 		<>

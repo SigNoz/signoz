@@ -135,3 +135,6 @@ clear-standalone-data:
 clear-swarm-data:
 	@docker run --rm -v "$(PWD)/$(SWARM_DIRECTORY)/data:/pwd" busybox \
 	sh -c "cd /pwd && rm -rf alertmanager/* clickhouse*/* signoz/* zookeeper-*/*"
+
+test:
+	go test ./pkg/query-service/app/metrics/...

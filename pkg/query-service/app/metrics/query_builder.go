@@ -340,6 +340,7 @@ func varToQuery(qp *model.QueryRangeParamsV2, tableName string) (map[string]stri
 	evalFuncs := GoValuateFuncs()
 	varToQuery := make(map[string]string)
 	for _, builderQuery := range qp.CompositeMetricQuery.BuilderQueries {
+		// err should be nil here since the expression is already validated
 		expression, _ := govaluate.NewEvaluableExpressionWithFunctions(builderQuery.Expression, evalFuncs)
 
 		// Use the parsed expression and build the query for each variable
@@ -347,7 +348,11 @@ func varToQuery(qp *model.QueryRangeParamsV2, tableName string) (map[string]stri
 		var errs []error
 		for _, _var := range expression.Vars() {
 			if _, ok := varToQuery[_var]; !ok {
-				mq := qp.CompositeMetricQuery.BuilderQueries[_var]
+				mq, varExists := qp.CompositeMetricQuery.BuilderQueries[_var]
+				if !varExists {
+					errs = append(errs, fmt.Errorf("variable %s not found in builder queries", _var))
+					continue
+				}
 				query, err := BuildMetricQuery(qp, mq, tableName)
 				if err != nil {
 					errs = append(errs, err)
@@ -369,10 +374,22 @@ func varToQuery(qp *model.QueryRangeParamsV2, tableName string) (map[string]stri
 	return varToQuery, nil
 }
 
+func unique(slice []string) []string {
+	keys := make(map[string]struct{})
+	list := []string{}
+	for _, entry := range slice {
+		if _, value := keys[entry]; !value {
+			keys[entry] = struct{}{}
+			list = append(list, entry)
+		}
+	}
+	return list
+}
+
 // expressionToQuery constructs the query for the expression
 func expressionToQuery(qp *model.QueryRangeParamsV2, varToQuery map[string]string, expression *govaluate.EvaluableExpression) (string, error) {
 	var formulaQuery string
-	vars := expression.Vars()
+	vars := unique(expression.Vars())
 	for idx, var_ := range vars[1:] {
 		x, y := vars[idx], var_
 		if !reflect.DeepEqual(qp.CompositeMetricQuery.BuilderQueries[x].GroupingTags, qp.CompositeMetricQuery.BuilderQueries[y].GroupingTags) {
@@ -389,21 +406,34 @@ func expressionToQuery(qp *model.QueryRangeParamsV2, varToQuery map[string]strin
 		}
 		modified = append(modified, token)
 	}
+	// err should be nil here since the expression is already validated
 	formula, _ := govaluate.NewEvaluableExpressionFromTokens(modified)
 
 	var formulaSubQuery string
 	var joinUsing string
+	var prevVar string
 	for idx, var_ := range vars {
 		query := varToQuery[var_]
 		groupTags := qp.CompositeMetricQuery.BuilderQueries[var_].GroupingTags
 		groupTags = append(groupTags, "ts")
-		joinUsing = strings.Join(groupTags, ",")
-		formulaSubQuery += fmt.Sprintf("(%s) as %s ", query, var_)
-		if idx < len(vars)-1 {
-			formulaSubQuery += "GLOBAL INNER JOIN"
-		} else if len(vars) > 1 {
-			formulaSubQuery += fmt.Sprintf("USING (%s)", joinUsing)
+		if joinUsing == "" {
+			for _, tag := range groupTags {
+				joinUsing += fmt.Sprintf("%s.%s as %s, ", var_, tag, tag)
+			}
+			joinUsing = strings.TrimSuffix(joinUsing, ", ")
 		}
+		formulaSubQuery += fmt.Sprintf("(%s) as %s ", query, var_)
+		if idx > 0 {
+			formulaSubQuery += " ON "
+			for _, tag := range groupTags {
+				formulaSubQuery += fmt.Sprintf("%s.%s = %s.%s AND ", prevVar, tag, var_, tag)
+			}
+			formulaSubQuery = strings.TrimSuffix(formulaSubQuery, " AND ")
+		}
+		if idx < len(vars)-1 {
+			formulaSubQuery += " GLOBAL INNER JOIN"
+		}
+		prevVar = var_
 	}
 	formulaQuery = fmt.Sprintf("SELECT %s, %s as value FROM ", joinUsing, formula.ExpressionString()) + formulaSubQuery
 	return formulaQuery, nil

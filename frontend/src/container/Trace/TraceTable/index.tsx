@@ -1,5 +1,5 @@
-import { TableProps, Tag, Typography } from 'antd';
-import Table, { ColumnsType } from 'antd/lib/table';
+import { Table, TableProps, Tag, Typography } from 'antd';
+import { ColumnsType } from 'antd/lib/table';
 import ROUTES from 'constants/routes';
 import {
 	getSpanOrder,
