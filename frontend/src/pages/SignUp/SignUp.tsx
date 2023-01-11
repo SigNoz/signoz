@@ -411,6 +411,7 @@ function SignUp({ version }: SignUpProps): JSX.Element {
 								!email ||
 								!organizationName ||
 								(!precheck.sso && (!password || !confirmPassword)) ||
+								(!isDetailsDisable && !firstName) ||
 								confirmPasswordError ||
 								isPasswordPolicyError
 							}
