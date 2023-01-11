@@ -8,6 +8,10 @@ import React, { useMemo, useState } from 'react';
 import { ILog } from 'types/api/logs/log';
 
 import ActionItem from './ActionItem';
+import {
+	ResizeTableWrapper,
+	ResizableHeader,
+} from 'components/ResizeTableWrapper';
 
 // Fields which should be restricted from adding it to query
 const RESTRICTED_FIELDS = ['timestamp'];
@@ -58,7 +62,7 @@ function TableView({ logData }: TableViewProps): JSX.Element | null {
 			title: 'Field',
 			dataIndex: 'field',
 			key: 'field',
-			width: '35%',
+			width: 100,
 			render: (field: string): JSX.Element => {
 				const fieldKey = field.split('.').slice(-1);
 				const renderedField = <span style={{ color: blue[4] }}>{field}</span>;
@@ -78,15 +82,16 @@ function TableView({ logData }: TableViewProps): JSX.Element | null {
 			title: 'Value',
 			dataIndex: 'value',
 			key: 'value',
+			width: 80,
 			ellipsis: false,
 			render: (field: never): JSX.Element => (
 				<CopyClipboardHOC textToCopy={field}>
 					<span style={{ color: orange[6] }}>{field}</span>
 				</CopyClipboardHOC>
 			),
-			width: '60%',
 		},
 	];
+
 	return (
 		<div style={{ position: 'relative' }}>
 			<Input
@@ -95,13 +100,15 @@ function TableView({ logData }: TableViewProps): JSX.Element | null {
 				value={fieldSearchInput}
 				onChange={(e): void => setFieldSearchInput(e.target.value)}
 			/>
-			<Table
-				// scroll={{ x: true }}
-				tableLayout="fixed"
-				dataSource={dataSource}
-				columns={columns as never}
-				pagination={false}
-			/>
+			<ResizeTableWrapper columns={columns as never}>
+				<Table
+					// scroll={{ x: true }}
+					tableLayout="fixed"
+					dataSource={dataSource}
+					components={{ header: { cell: ResizableHeader } }}
+					pagination={false}
+				/>
+			</ResizeTableWrapper>
 		</div>
 	);
 }

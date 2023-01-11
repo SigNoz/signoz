@@ -15,7 +15,10 @@ import { AppState } from 'store/reducers';
 import { ErrorResponse, SuccessResponse } from 'types/api';
 import { GettableAlert } from 'types/api/alerts/get';
 import AppReducer from 'types/reducer/app';
-
+import {
+	ResizeTableWrapper,
+	ResizableHeader,
+} from 'components/ResizeTableWrapper';
 import DeleteAlert from './DeleteAlert';
 import { Button, ButtonContainer, ColumnButton, StyledTag } from './styles';
 import Status from './TableComponents/Status';
@@ -58,6 +61,7 @@ function ListAlert({ allAlertRules, refetch }: ListAlertProps): JSX.Element {
 		{
 			title: 'Status',
 			dataIndex: 'state',
+			width: 80,
 			key: 'state',
 			sorter: (a, b): number =>
 				(b.state ? b.state.charCodeAt(0) : 1000) -
@@ -67,6 +71,7 @@ function ListAlert({ allAlertRules, refetch }: ListAlertProps): JSX.Element {
 		{
 			title: 'Alert Name',
 			dataIndex: 'alert',
+			width: 100,
 			key: 'name',
 			sorter: (a, b): number =>
 				(a.alert ? a.alert.charCodeAt(0) : 1000) -
@@ -82,6 +87,7 @@ function ListAlert({ allAlertRules, refetch }: ListAlertProps): JSX.Element {
 		{
 			title: 'Severity',
 			dataIndex: 'labels',
+			width: 80,
 			key: 'severity',
 			sorter: (a, b): number =>
 				(a.labels ? a.labels.severity.length : 0) -
@@ -99,7 +105,7 @@ function ListAlert({ allAlertRules, refetch }: ListAlertProps): JSX.Element {
 			dataIndex: 'labels',
 			key: 'tags',
 			align: 'center',
-			width: 350,
+			width: 100,
 			render: (value): JSX.Element => {
 				const objectKeys = Object.keys(value);
 				const withOutSeverityKeys = objectKeys.filter((e) => e !== 'severity');
@@ -128,6 +134,7 @@ function ListAlert({ allAlertRules, refetch }: ListAlertProps): JSX.Element {
 			title: 'Action',
 			dataIndex: 'id',
 			key: 'action',
+			width: 120,
 			render: (id: GettableAlert['id'], record): JSX.Element => {
 				return (
 					<>
@@ -165,8 +172,13 @@ function ListAlert({ allAlertRules, refetch }: ListAlertProps): JSX.Element {
 					</Button>
 				)}
 			</ButtonContainer>
-
-			<Table rowKey="id" columns={columns} dataSource={data} />
+			<ResizeTableWrapper columns={columns}>
+				<Table
+					rowKey="id"
+					components={{ header: { cell: ResizableHeader } }}
+					dataSource={data}
+				/>
+			</ResizeTableWrapper>
 		</>
 	);
 }

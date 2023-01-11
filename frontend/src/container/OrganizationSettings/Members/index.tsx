@@ -15,6 +15,10 @@ import { ROLES } from 'types/roles';
 
 import DeleteMembersDetails from '../DeleteMembersDetails';
 import EditMembersDetails from '../EditMembersDetails';
+import {
+	ResizeTableWrapper,
+	ResizableHeader,
+} from 'components/ResizeTableWrapper';
 
 function UserFunction({
 	setDataSource,
@@ -256,21 +260,25 @@ function Members(): JSX.Element {
 			title: 'Name',
 			dataIndex: 'name',
 			key: 'name',
+			width: 100,
 		},
 		{
 			title: 'Emails',
 			dataIndex: 'email',
 			key: 'email',
+			width: 100,
 		},
 		{
 			title: 'Access Level',
 			dataIndex: 'accessLevel',
 			key: 'accessLevel',
+			width: 50,
 		},
 		{
 			title: 'Joined On',
 			dataIndex: 'joinedOn',
 			key: 'joinedOn',
+			width: 60,
 			render: (_, record): JSX.Element => {
 				const { joinedOn } = record;
 				return (
@@ -283,6 +291,7 @@ function Members(): JSX.Element {
 		{
 			title: 'Action',
 			dataIndex: 'action',
+			width: 80,
 			render: (_, record): JSX.Element => (
 				<UserFunction
 					{...{
@@ -301,13 +310,15 @@ function Members(): JSX.Element {
 	return (
 		<Space direction="vertical" size="middle">
 			<Typography.Title level={3}>Members</Typography.Title>
-			<Table
-				tableLayout="fixed"
-				dataSource={dataSource}
-				columns={columns}
-				pagination={false}
-				loading={status === 'loading'}
-			/>
+			<ResizeTableWrapper columns={columns}>
+				<Table
+					tableLayout="fixed"
+					dataSource={dataSource}
+					components={{ header: { cell: ResizableHeader } }}
+					pagination={false}
+					loading={status === 'loading'}
+				/>
+			</ResizeTableWrapper>
 		</Space>
 	);
 }

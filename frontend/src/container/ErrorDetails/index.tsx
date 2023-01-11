@@ -10,7 +10,10 @@ import { useTranslation } from 'react-i18next';
 import { useQuery } from 'react-query';
 import { useLocation } from 'react-router-dom';
 import { PayloadProps as GetByErrorTypeAndServicePayload } from 'types/api/errors/getByErrorTypeAndService';
-
+import {
+	ResizeTableWrapper,
+	ResizableHeader,
+} from 'components/ResizeTableWrapper';
 import { DashedContainer, EditorContainer, EventContainer } from './styles';
 
 function ErrorDetails(props: ErrorDetailsProps): JSX.Element {
@@ -53,12 +56,14 @@ function ErrorDetails(props: ErrorDetailsProps): JSX.Element {
 		() => [
 			{
 				title: 'Key',
+				width: 100,
 				dataIndex: 'key',
 				key: 'key',
 			},
 			{
 				title: 'Value',
 				dataIndex: 'value',
+				width: 100,
 				key: 'value',
 			},
 		],
@@ -167,7 +172,13 @@ function ErrorDetails(props: ErrorDetailsProps): JSX.Element {
 
 			<EditorContainer>
 				<Space direction="vertical">
-					<Table tableLayout="fixed" columns={columns} dataSource={data} />
+					<ResizeTableWrapper columns={columns}>
+						<Table
+							components={{ header: { cell: ResizableHeader } }}
+							tableLayout="fixed"
+							dataSource={data}
+						/>
+					</ResizeTableWrapper>
 				</Space>
 			</EditorContainer>
 		</>

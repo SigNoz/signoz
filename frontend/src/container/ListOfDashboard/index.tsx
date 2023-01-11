@@ -31,7 +31,10 @@ import { GET_ALL_DASHBOARD_SUCCESS } from 'types/actions/dashboard';
 import { Dashboard } from 'types/api/dashboard/getAll';
 import AppReducer from 'types/reducer/app';
 import DashboardReducer from 'types/reducer/dashboards';
-
+import {
+	ResizeTableWrapper,
+	ResizableHeader,
+} from 'components/ResizeTableWrapper';
 import ImportJSON from './ImportJSON';
 import { ButtonContainer, NewDashboardButton, TableContainer } from './styles';
 import Createdby from './TableComponents/CreatedBy';
@@ -74,20 +77,24 @@ function ListOfAllDashboard(): JSX.Element {
 		{
 			title: 'Name',
 			dataIndex: 'name',
+			width: 100,
 			render: Name,
 		},
 		{
 			title: 'Description',
+			width: 100,
 			dataIndex: 'description',
 		},
 		{
 			title: 'Tags (can be multiple)',
 			dataIndex: 'tags',
+			width: 80,
 			render: Tags,
 		},
 		{
 			title: 'Created At',
 			dataIndex: 'createdBy',
+			width: 80,
 			sorter: (a: Data, b: Data): number => {
 				const prev = new Date(a.createdBy).getTime();
 				const next = new Date(b.createdBy).getTime();
@@ -98,6 +105,7 @@ function ListOfAllDashboard(): JSX.Element {
 		},
 		{
 			title: 'Last Updated Time',
+			width: 90,
 			dataIndex: 'lastUpdatedTime',
 			sorter: (a: Data, b: Data): number => {
 				const prev = new Date(a.lastUpdatedTime).getTime();
@@ -114,6 +122,7 @@ function ListOfAllDashboard(): JSX.Element {
 			title: 'Action',
 			dataIndex: '',
 			key: 'x',
+			width: 40,
 			render: DeleteButton,
 		});
 	}
@@ -271,19 +280,21 @@ function ListOfAllDashboard(): JSX.Element {
 					uploadedGrafana={uploadedGrafana}
 					onModalHandler={(): void => onModalHandler(false)}
 				/>
-				<Table
-					pagination={{
-						pageSize: 9,
-						defaultPageSize: 9,
-					}}
-					showHeader
-					bordered
-					sticky
-					loading={loading}
-					columns={columns}
-					dataSource={data}
-					showSorterTooltip
-				/>
+				<ResizeTableWrapper columns={columns}>
+					<Table
+						pagination={{
+							pageSize: 9,
+							defaultPageSize: 9,
+						}}
+						showHeader
+						bordered
+						sticky
+						loading={loading}
+						components={{ header: { cell: ResizableHeader } }}
+						dataSource={data}
+						showSorterTooltip
+					/>
+				</ResizeTableWrapper>
 			</TableContainer>
 		</Card>
 	);

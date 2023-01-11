@@ -10,7 +10,10 @@ import { AppState } from 'store/reducers';
 import AppActions from 'types/actions';
 import { IDashboardVariable } from 'types/api/dashboard/getAll';
 import DashboardReducer from 'types/reducer/dashboards';
-
+import {
+	ResizeTableWrapper,
+	ResizableHeader,
+} from 'components/ResizeTableWrapper';
 import { TVariableViewMode } from './types';
 import VariableItem from './VariableItem/VariableItem';
 
@@ -104,15 +107,18 @@ function VariablesSetting({
 		{
 			title: 'Variable',
 			dataIndex: 'name',
+			width: 100,
 			key: 'name',
 		},
 		{
 			title: 'Definition',
 			dataIndex: 'description',
+			width: 100,
 			key: 'description',
 		},
 		{
 			title: 'Actions',
+			width: 50,
 			key: 'action',
 			render: (_: IDashboardVariable): JSX.Element => (
 				<Space>
@@ -159,7 +165,12 @@ function VariablesSetting({
 							<PlusOutlined /> New Variables
 						</Button>
 					</Row>
-					<Table columns={columns} dataSource={variablesTableData} />
+					<ResizeTableWrapper columns={columns}>
+						<Table
+							components={{ header: { cell: ResizableHeader } }}
+							dataSource={variablesTableData}
+						/>
+					</ResizeTableWrapper>
 				</>
 			)}
 			<Modal
