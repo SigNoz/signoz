@@ -1,4 +1,4 @@
-import { Card } from 'antd';
+import { Card, Typography } from 'antd';
 import styled, { keyframes } from 'styled-components';
 
 const fadeInAnimation = keyframes`
@@ -15,4 +15,17 @@ export const Container = styled(Card)`
 	animation-name: ${fadeInAnimation};
 	animation-duration: 0.2s;
 	animation-timing-function: ease-in;
+`;
+
+export const Text = styled(Typography.Text)`
+	&&& {
+		min-width: 1.5rem;
+		white-space: nowrap;
+	}
+`;
+
+export const TextContainer = styled.div`
+	display: flex;
+	overflow: hidden;
+	width: 100%;
 `;
