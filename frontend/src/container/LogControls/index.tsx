@@ -36,18 +36,10 @@ function LogControls(): JSX.Element | null {
 	const dispatch = useDispatch();
 
 	const handleLogLinesPerPageChange = (e: number): void => {
-		const { maxTime, minTime } = getMinMax(
-			globalTime.selectedTime,
-			globalTime.minTime,
-			globalTime.maxTime,
-		);
-
 		dispatch({
 			type: SET_LOG_LINES_PER_PAGE,
 			payload: {
 				logLinesPerPage: e,
-				maxTime,
-				minTime,
 			},
 		});
 	};
@@ -69,33 +61,13 @@ function LogControls(): JSX.Element | null {
 	};
 
 	const handleNavigatePrevious = (): void => {
-		const { maxTime, minTime } = getMinMax(
-			globalTime.selectedTime,
-			globalTime.minTime,
-			globalTime.maxTime,
-		);
-
 		dispatch({
 			type: GET_PREVIOUS_LOG_LINES,
-			payload: {
-				maxTime,
-				minTime,
-			},
 		});
 	};
 	const handleNavigateNext = (): void => {
-		const { maxTime, minTime } = getMinMax(
-			globalTime.selectedTime,
-			globalTime.minTime,
-			globalTime.maxTime,
-		);
-
 		dispatch({
 			type: GET_NEXT_LOG_LINES,
-			payload: {
-				minTime,
-				maxTime,
-			},
 		});
 	};
 

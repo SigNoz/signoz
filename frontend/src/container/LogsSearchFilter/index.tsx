@@ -1,5 +1,4 @@
 import { Input, InputRef, Popover } from 'antd';
-import { getMinMax } from 'container/TopNav/AutoRefresh/config';
 import useUrlQuery from 'hooks/useUrlQuery';
 import getStep from 'lib/getStep';
 import { debounce } from 'lodash-es';
@@ -87,11 +86,7 @@ function SearchFilter({
 					0,
 				);
 			} else {
-				const { maxTime, minTime } = getMinMax(
-					globalTime.selectedTime,
-					globalTime.minTime,
-					globalTime.maxTime,
-				);
+				const { maxTime, minTime } = globalTime;
 
 				getLogs({
 					q: customQuery,

@@ -79,18 +79,14 @@ export interface SetLogsLinesPerPage {
 	type: typeof SET_LOG_LINES_PER_PAGE;
 	payload: {
 		logsLinesPerPage: number;
-		minTime: GlobalTime['minTime'];
-		maxTime: GlobalTime['maxTime'];
 	};
 }
 
 export interface PreviousLogsLines {
 	type: typeof GET_PREVIOUS_LOG_LINES;
-	payload: GlobalTime;
 }
 export interface NextLogsLines {
 	type: typeof GET_NEXT_LOG_LINES;
-	payload: GlobalTime;
 }
 export interface ResetIdStartAndEnd {
 	type: typeof RESET_ID_START_AND_END;

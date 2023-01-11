@@ -1,11 +1,6 @@
 import { Time } from 'container/TopNav/DateTimeSelection/config';
 
-import {
-	NextLogsLines,
-	PreviousLogsLines,
-	ResetIdStartAndEnd,
-	SetLogsLinesPerPage,
-} from './logs';
+import { ResetIdStartAndEnd } from './logs';
 
 export const UPDATE_TIME_INTERVAL = 'UPDATE_TIME_INTERVAL';
 export const GLOBAL_TIME_LOADING_START = 'GLOBAL_TIME_LOADING_START';
@@ -45,7 +40,4 @@ export type GlobalTimeAction =
 	| GlobalTimeLoading
 	| UpdateAutoRefreshDisabled
 	| UpdateAutoRefreshInterval
-	| NextLogsLines
-	| PreviousLogsLines
-	| ResetIdStartAndEnd
-	| SetLogsLinesPerPage;
+	| ResetIdStartAndEnd;
