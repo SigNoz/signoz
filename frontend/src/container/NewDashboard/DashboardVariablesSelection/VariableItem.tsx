@@ -1,29 +1,34 @@
-import { orange } from '@ant-design/colors';
-import { WarningOutlined } from '@ant-design/icons';
+import React, { useCallback, useEffect, useState } from 'react';
+import { map } from 'lodash-es';
 import { Input, Popover, Select, Typography } from 'antd';
+import { orange } from '@ant-design/colors';
+import WarningOutlined from '@ant-design/icons';
+import { connect } from 'react-redux';
+import { ThunkDispatch } from 'redux-thunk';
+import { bindActionCreators, Dispatch } from 'redux';
+
 import query from 'api/dashboard/variables/query';
 import { commaValuesParser } from 'lib/dashbaordVariables/customCommaValuesParser';
 import sortValues from 'lib/dashbaordVariables/sortVariableValues';
-import { map } from 'lodash-es';
-import React, { useCallback, useEffect, useState } from 'react';
 import { IDashboardVariable } from 'types/api/dashboard/getAll';
-
+import {
+	getDefaultOption,
+	Time,
+} from 'container/TopNav/DateTimeSelection/config';
+import AppActions from 'types/actions';
+import { UpdateTimeInterval } from 'store/actions';
 import { VariableContainer, VariableName } from './styles';
 
 const { Option } = Select;
 
 const ALL_SELECT_VALUE = '__ALL__';
 
-interface VariableItemProps {
-	variableData: IDashboardVariable;
-	onValueUpdate: (name: string | undefined, arg1: string | string[]) => void;
-	onAllSelectedUpdate: (name: string | undefined, arg1: boolean) => void;
-}
 function VariableItem({
 	variableData,
 	onValueUpdate,
 	onAllSelectedUpdate,
-}: VariableItemProps): JSX.Element {
+	updateTimeInterval,
+}: Props): JSX.Element {
 	const [optionsData, setOptionsData] = useState([]);
 	const [isLoading, setIsLoading] = useState<boolean>(false);
 
@@ -69,6 +74,10 @@ function VariableItem({
 		getOptions();
 	}, [getOptions]);
 
+	const onRefreshHandler = (): void => {
+		updateTimeInterval(getDefaultOption(location.pathname));
+	};
+
 	const handleChange = (value: string | string[]): void => {
 		if (
 			value === ALL_SELECT_VALUE ||
@@ -79,6 +88,7 @@ function VariableItem({
 		} else {
 			onValueUpdate(variableData.name, value);
 			onAllSelectedUpdate(variableData.name, false);
+			onRefreshHandler();
 		}
 	};
 	return (
@@ -134,4 +144,25 @@ function VariableItem({
 	);
 }
 
-export default VariableItem;
+interface DispatchProps {
+	updateTimeInterval: (
+		interval: Time,
+		dateTimeRange?: [number, number],
+	) => (dispatch: Dispatch<AppActions>) => void;
+}
+
+interface VariableItemProps {
+	variableData: IDashboardVariable;
+	onValueUpdate: (name: string | undefined, arg1: string | string[]) => void;
+	onAllSelectedUpdate: (name: string | undefined, arg1: boolean) => void;
+}
+
+const mapDispatchToProps = (
+	dispatch: ThunkDispatch<unknown, unknown, AppActions>,
+): DispatchProps => ({
+	updateTimeInterval: bindActionCreators(UpdateTimeInterval, dispatch),
+});
+
+type Props = VariableItemProps & DispatchProps;
+
+export default connect(null, mapDispatchToProps)(VariableItem);
