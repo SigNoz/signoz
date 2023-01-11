@@ -1,9 +1,7 @@
 import { ActiveElement, Chart, ChartData, ChartEvent } from 'chart.js';
 import Graph from 'components/Graph';
-// utils
 import { METRICS_PAGE_QUERY_PARAM } from 'constants/query';
 import ROUTES from 'constants/routes';
-// components
 import FullView from 'container/GridGraphLayout/Graph/FullView';
 import convertToNanoSecondsToSecond from 'lib/convertToNanoSecondsToSecond';
 import { colors } from 'lib/getRandomColor';
@@ -14,12 +12,10 @@ import React, { useCallback, useMemo, useRef } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useParams } from 'react-router-dom';
 import { UpdateTimeInterval } from 'store/actions';
-// interfaces
 import { AppState } from 'store/reducers';
 import { PromQLWidgets } from 'types/api/dashboard/getAll';
 import MetricReducer from 'types/reducer/metrics';
 
-// styles
 import { Card, Col, GraphContainer, GraphTitle, Row } from '../styles';
 import TopOperationsTable from '../TopOperationsTable';
 import { Button } from './styles';
