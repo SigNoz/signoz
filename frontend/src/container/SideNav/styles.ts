@@ -22,6 +22,7 @@ export const Sider = styled(SiderComponent)`
 export const SlackButton = styled(Typography)`
 	&&& {
 		margin-left: 1rem;
+		color: white;
 	}
 `;
 
