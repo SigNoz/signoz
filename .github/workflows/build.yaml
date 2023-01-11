@@ -32,6 +32,10 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
+      - name: Run tests
+        shell: bash
+        run: |
+          make test
       - name: Build query-service image
         shell: bash
         run: |
