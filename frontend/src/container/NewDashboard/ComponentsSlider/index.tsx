@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/naming-convention */
 import { notification } from 'antd';
+import { useIsDarkMode } from 'hooks/useDarkMode';
 import history from 'lib/history';
 import React, { useCallback } from 'react';
 import { connect, useSelector } from 'react-redux';
@@ -11,7 +12,6 @@ import {
 } from 'store/actions/dashboard/toggleAddWidget';
 import { AppState } from 'store/reducers';
 import AppActions from 'types/actions';
-import AppReducer from 'types/reducer/app';
 import DashboardReducer from 'types/reducer/dashboards';
 
 import menuItems, { ITEMS } from './menuItems';
@@ -50,7 +50,7 @@ function DashboardGraphSlider({ toggleAddWidget }: Props): JSX.Element {
 		},
 		[data, toggleAddWidget],
 	);
-	const { isDarkMode } = useSelector<AppState, AppReducer>((state) => state.app);
+	const isDarkMode = useIsDarkMode();
 	const fillColor: React.CSSProperties['color'] = isDarkMode ? 'white' : 'black';
 
 	return (
