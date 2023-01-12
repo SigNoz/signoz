@@ -37,6 +37,7 @@ const (
 	TELEMETRY_EVENT_DISTRIBUTED           = "Distributed"
 	TELEMETRY_EVENT_DASHBOARDS_METADATA   = "Dashboards Metadata"
 	TELEMETRY_EVENT_ACTIVE_USER           = "Active User"
+	TELEMETRY_EVENT_ACTIVE_USER_PH        = "Active User V2"
 )
 
 const api_key = "4Gmoa4ixJAUHx2BpJxsjwA1bEfnwEeRz"
@@ -46,8 +47,10 @@ const IP_NOT_FOUND_PLACEHOLDER = "NA"
 const DEFAULT_NUMBER_OF_SERVICES = 6
 
 const HEART_BEAT_DURATION = 6 * time.Hour
+const ACTIVE_USER_DURATION = 30 * time.Minute
 
-// const HEART_BEAT_DURATION = 10 * time.Second
+// const HEART_BEAT_DURATION = 30 * time.Second
+// const ACTIVE_USER_DURATION = 30 * time.Second
 
 const RATE_LIMIT_CHECK_DURATION = 1 * time.Minute
 const RATE_LIMIT_VALUE = 2
@@ -88,13 +91,19 @@ func (telemetry *Telemetry) CheckSigNozMetrics(compositeMetricQueryMap map[strin
 }
 
 func (telemetry *Telemetry) AddActiveTracesUser() {
+	telemetry.mutex.Lock()
 	telemetry.activeUser["traces"] = 1
+	telemetry.mutex.Unlock()
 }
 func (telemetry *Telemetry) AddActiveMetricsUser() {
+	telemetry.mutex.Lock()
 	telemetry.activeUser["metrics"] = 1
+	telemetry.mutex.Unlock()
 }
 func (telemetry *Telemetry) AddActiveLogsUser() {
+	telemetry.mutex.Lock()
 	telemetry.activeUser["logs"] = 1
+	telemetry.mutex.Unlock()
 }
 
 type Telemetry struct {
@@ -111,6 +120,7 @@ type Telemetry struct {
 	rateLimits    map[string]int8
 	activeUser    map[string]int8
 	countUsers    int8
+	mutex         sync.RWMutex
 }
 
 func createTelemetry() {
@@ -133,6 +143,8 @@ func createTelemetry() {
 	telemetry.SendEvent(TELEMETRY_EVENT_HEART_BEAT, data)
 
 	ticker := time.NewTicker(HEART_BEAT_DURATION)
+	activeUserTicker := time.NewTicker(ACTIVE_USER_DURATION)
+
 	rateLimitTicker := time.NewTicker(RATE_LIMIT_CHECK_DURATION)
 
 	go func() {
@@ -146,13 +158,14 @@ func createTelemetry() {
 	go func() {
 		for {
 			select {
-			case <-ticker.C:
-
+			case <-activeUserTicker.C:
 				if (telemetry.activeUser["traces"] != 0) || (telemetry.activeUser["metrics"] != 0) || (telemetry.activeUser["logs"] != 0) {
 					telemetry.activeUser["any"] = 1
 				}
 				telemetry.SendEvent(TELEMETRY_EVENT_ACTIVE_USER, map[string]interface{}{"traces": telemetry.activeUser["traces"], "metrics": telemetry.activeUser["metrics"], "logs": telemetry.activeUser["logs"], "any": telemetry.activeUser["any"]})
 				telemetry.activeUser = map[string]int8{"traces": 0, "metrics": 0, "logs": 0, "any": 0}
+
+			case <-ticker.C:
 
 				tagsInfo, _ := telemetry.reader.GetTagsInfoInLastHeartBeatInterval(context.Background())
 
@@ -221,10 +234,10 @@ func getOutboundIP() string {
 }
 
 func (a *Telemetry) IdentifyUser(user *model.User) {
+	a.SetCompanyDomain(user.Email)
 	if !a.isTelemetryEnabled() || a.isTelemetryAnonymous() {
 		return
 	}
-	a.SetCompanyDomain(user.Email)
 
 	a.operator.Enqueue(analytics.Identify{
 		UserId: a.ipAddress,
@@ -316,6 +329,17 @@ func (a *Telemetry) SendEvent(event string, data map[string]interface{}, opts ..
 		a.phOperator.Enqueue(ph.Capture{
 			DistinctId: userId,
 			Event:      TELEMETRY_EVENT_NUMBER_OF_SERVICES_PH,
+			Properties: ph.Properties(properties),
+			Groups: ph.NewGroups().
+				Set("companyDomain", a.getCompanyDomain()),
+		})
+
+	}
+	if event == TELEMETRY_EVENT_ACTIVE_USER {
+
+		a.phOperator.Enqueue(ph.Capture{
+			DistinctId: userId,
+			Event:      TELEMETRY_EVENT_ACTIVE_USER_PH,
 			Properties: ph.Properties(properties),
 			Groups: ph.NewGroups().
 				Set("companyDomain", a.getCompanyDomain()),

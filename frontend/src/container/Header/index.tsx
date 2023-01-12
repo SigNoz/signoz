@@ -3,7 +3,7 @@ import {
 	CaretUpFilled,
 	LogoutOutlined,
 } from '@ant-design/icons';
-import { Divider, Dropdown, Layout, Menu, Space, Typography } from 'antd';
+import { Divider, Dropdown, Menu, Space, Typography } from 'antd';
 import { Logout } from 'api/utils';
 import ROUTES from 'constants/routes';
 import Config from 'container/ConfigDropdown';
@@ -20,6 +20,7 @@ import SignedInAS from './SignedInAs';
 import {
 	AvatarWrapper,
 	Container,
+	Header,
 	IconContainer,
 	LogoutContainer,
 	NavLinkWrapper,
@@ -71,7 +72,7 @@ function HeaderContainer(): JSX.Element {
 	);
 
 	return (
-		<Layout.Header>
+		<Header>
 			<Container>
 				<NavLink to={ROUTES.APPLICATION}>
 					<NavLinkWrapper>
@@ -111,7 +112,7 @@ function HeaderContainer(): JSX.Element {
 					</Dropdown>
 				</Space>
 			</Container>
-		</Layout.Header>
+		</Header>
 	);
 }
 
