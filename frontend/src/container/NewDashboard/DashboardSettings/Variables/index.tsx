@@ -165,7 +165,7 @@ function VariablesSetting({
 			<Modal
 				title="Delete variable"
 				centered
-				visible={deleteVariableModal}
+				open={deleteVariableModal}
 				onOk={handleDeleteConfirm}
 				onCancel={handleDeleteCancel}
 			>

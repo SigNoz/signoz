@@ -69,7 +69,7 @@ function AddDomain({ refetch }: Props): JSX.Element {
 				centered
 				title="Add Domain"
 				footer={null}
-				visible={isAddDomains}
+				open={isAddDomains}
 				destroyOnClose
 				onCancel={(): void => setIsDomain(false)}
 			>

@@ -275,22 +275,31 @@ func extractDashboardMetaData(path string, r *http.Request) (map[string]interfac
 	data := map[string]interface{}{}
 
 	if path == pathToExtractBodyFrom && (r.Method == "POST") {
-		bodyBytes, _ := ioutil.ReadAll(r.Body)
-		r.Body.Close() //  must close
-		r.Body = ioutil.NopCloser(bytes.NewBuffer(bodyBytes))
-
-		json.Unmarshal(bodyBytes, &requestBody)
+		if r.Body != nil {
+			bodyBytes, err := ioutil.ReadAll(r.Body)
+			if err != nil {
+				return nil, false
+			}
+			r.Body.Close() //  must close
+			r.Body = ioutil.NopCloser(bytes.NewBuffer(bodyBytes))
+			json.Unmarshal(bodyBytes, &requestBody)
+		} else {
+			return nil, false
+		}
 
 	} else {
 		return nil, false
 	}
 
 	compositeMetricQuery, compositeMetricQueryExists := requestBody["compositeMetricQuery"]
-	compositeMetricQueryMap := compositeMetricQuery.(map[string]interface{})
+
 	signozMetricFound := false
 
 	if compositeMetricQueryExists {
+		compositeMetricQueryMap := compositeMetricQuery.(map[string]interface{})
+
 		signozMetricFound = telemetry.GetInstance().CheckSigNozMetrics(compositeMetricQueryMap)
+
 		queryType, queryTypeExists := compositeMetricQueryMap["queryType"]
 		if queryTypeExists {
 			data["queryType"] = queryType

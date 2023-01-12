@@ -4,7 +4,7 @@ import getLocalStorageKey from 'api/browser/localstorage/get';
 import { IS_SIDEBAR_COLLAPSED } from 'constants/app';
 import ROUTES from 'constants/routes';
 import history from 'lib/history';
-import React, { useCallback, useLayoutEffect, useState } from 'react';
+import React, { useCallback, useLayoutEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useDispatch, useSelector } from 'react-redux';
 import { useLocation } from 'react-router-dom';
@@ -12,6 +12,7 @@ import { SideBarCollapse } from 'store/actions/app';
 import { AppState } from 'store/reducers';
 import AppReducer from 'types/reducer/app';
 
+import { styles } from './config';
 import menus from './menuItems';
 import Slack from './Slack';
 import {
@@ -89,7 +90,10 @@ function SideNav(): JSX.Element {
 		},
 	];
 
-	const currentMenu = menus.find((menu) => pathname.startsWith(menu.to));
+	const currentMenu = useMemo(
+		() => menus.find((menu) => pathname.startsWith(menu.to)),
+		[pathname],
+	);
 
 	return (
 		<Sider collapsible collapsed={collapsed} onCollapse={onCollapse} width={200}>
@@ -98,6 +102,7 @@ function SideNav(): JSX.Element {
 				defaultSelectedKeys={[ROUTES.APPLICATION]}
 				selectedKeys={currentMenu ? [currentMenu?.to] : []}
 				mode="inline"
+				style={styles}
 			>
 				{menus.map(({ to, Icon, name, tags }) => (
 					<Menu.Item

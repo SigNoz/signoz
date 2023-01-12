@@ -3,17 +3,16 @@
 
 import { Card } from 'antd';
 import Spinner from 'components/Spinner';
+import { useIsDarkMode } from 'hooks/useDarkMode';
 import React, { useEffect, useRef } from 'react';
 import { ForceGraph2D } from 'react-force-graph';
-import { connect, useSelector } from 'react-redux';
+import { connect } from 'react-redux';
 import { RouteComponentProps, withRouter } from 'react-router-dom';
 import { getDetailedServiceMapItems, ServiceMapStore } from 'store/actions';
 import { AppState } from 'store/reducers';
 import styled from 'styled-components';
 import { GlobalTime } from 'types/actions/globalTime';
-import AppReducer from 'types/reducer/app';
 
-import SelectService from './SelectService';
 import { getGraphData, getTooltip, getZoomPx, transformLabel } from './utils';
 
 const Container = styled.div`
@@ -61,7 +60,7 @@ export interface graphDataType {
 function ServiceMap(props: ServiceMapProps): JSX.Element {
 	const fgRef = useRef();
 
-	const { isDarkMode } = useSelector<AppState, AppReducer>((state) => state.app);
+	const isDarkMode = useIsDarkMode();
 
 	const { getDetailedServiceMapItems, globalTime, serviceMap } = props;
 
@@ -89,25 +88,10 @@ function ServiceMap(props: ServiceMapProps): JSX.Element {
 		);
 	}
 
-	const zoomToService = (value: string): void => {
-		fgRef &&
-			fgRef.current &&
-			fgRef.current.zoomToFit(700, getZoomPx(), (e) => e.id === value);
-	};
-
-	const zoomToDefault = () => {
-		fgRef && fgRef.current && fgRef.current.zoomToFit(100, 120);
-	};
-
 	const { nodes, links } = getGraphData(serviceMap, isDarkMode);
 	const graphData = { nodes, links };
 	return (
 		<Container>
-			{/* <SelectService
-				services={serviceMap.items}
-				zoomToService={zoomToService}
-				zoomToDefault={zoomToDefault}
-			/> */}
 			<ForceGraph2D
 				ref={fgRef}
 				cooldownTicks={100}
@@ -153,12 +137,10 @@ const mapStateToProps = (
 ): {
 	serviceMap: serviceMapStore;
 	globalTime: GlobalTime;
-} => {
-	return {
-		serviceMap: state.serviceMap,
-		globalTime: state.globalTime,
-	};
-};
+} => ({
+	serviceMap: state.serviceMap,
+	globalTime: state.globalTime,
+});
 
 export default withRouter(
 	connect(mapStateToProps, {
