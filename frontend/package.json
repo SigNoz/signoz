@@ -80,6 +80,7 @@
 		"react-redux": "^7.2.2",
 		"react-router-dom": "^5.2.0",
 		"react-use": "^17.3.2",
+		"react-virtuoso": "4.0.3",
 		"react-vis": "^1.11.7",
 		"redux": "^4.0.5",
 		"redux-thunk": "^2.3.0",
