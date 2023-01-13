@@ -10,6 +10,7 @@ type ChartDragHandlers = {
 	mousedown: ChartEventHandler;
 	mousemove: ChartEventHandler;
 	mouseup: ChartEventHandler;
+	globalMouseup: () => void;
 };
 
 export type DragSelectPluginOptions = {
@@ -68,7 +69,9 @@ function createMousemoveHandler(
 			dragPositionX = right;
 		}
 
-		dragData.onDrag(dragPositionX);
+		const valuePositionX = chart.scales.x.getValueForPixel(dragPositionX);
+
+		dragData.onDrag(dragPositionX, valuePositionX);
 		chart.update('none');
 	};
 }
@@ -98,6 +101,41 @@ function createMouseupHandler(
 		dragData.onDragEnd(endRelativePostionX, endValuePositionX);
 
 		chart.update('none');
+
+		if (
+			typeof options.onSelect === 'function' &&
+			typeof dragData.startValuePositionX === 'number' &&
+			typeof dragData.endValuePositionX === 'number'
+		) {
+			const start = Math.min(
+				dragData.startValuePositionX,
+				dragData.endValuePositionX,
+			);
+			const end = Math.max(
+				dragData.startValuePositionX,
+				dragData.endValuePositionX,
+			);
+
+			options.onSelect(start, end);
+		}
+	};
+}
+
+function createGlobalMouseupHandler(
+	options: DragSelectPluginOptions,
+	dragData: DragSelectData,
+): () => void {
+	return (): void => {
+		const { isDragging, endRelativePixelPositionX, endValuePositionX } = dragData;
+
+		if (!isDragging) {
+			return;
+		}
+
+		dragData.onDragEnd(
+			endRelativePixelPositionX as number,
+			endValuePositionX as number,
+		);
 
 		if (
 			typeof options.onSelect === 'function' &&
@@ -152,9 +190,13 @@ class DragSelectData {
 		this.endValuePositionX = null;
 	}
 
-	public onDrag(endRelativePixelPositionX: number): void {
+	public onDrag(
+		endRelativePixelPositionX: number,
+		endValuePositionX: number | undefined,
+	): void {
 		this.isDragging = true;
 		this.endRelativePixelPositionX = endRelativePixelPositionX;
+		this.endValuePositionX = endValuePositionX;
 	}
 
 	public onDragEnd(
@@ -184,6 +226,7 @@ export const createDragSelectPlugin = (): Plugin<
 		mousedown: () => {},
 		mousemove: () => {},
 		mouseup: () => {},
+		globalMouseup: () => {},
 	};
 
 	const dragSelectPlugin: Plugin<
@@ -204,14 +247,22 @@ export const createDragSelectPlugin = (): Plugin<
 			const mousedownHandler = createMousedownHandler(chart, dragData);
 			const mousemoveHandler = createMousemoveHandler(chart, dragData);
 			const mouseupHandler = createMouseupHandler(chart, pluginOptions, dragData);
+			const globalMouseupHandler = createGlobalMouseupHandler(
+				pluginOptions,
+				dragData,
+			);
 
-			canvas.addEventListener('mousedown', mousedownHandler);
-			canvas.addEventListener('mousemove', mousemoveHandler);
-			canvas.addEventListener('mouseup', mouseupHandler);
+			canvas.addEventListener('mousedown', mousedownHandler, { passive: true });
+			canvas.addEventListener('mousemove', mousemoveHandler, { passive: true });
+			canvas.addEventListener('mouseup', mouseupHandler, { passive: true });
+			document.addEventListener('mouseup', globalMouseupHandler, {
+				passive: true,
+			});
 
 			handlers.mousedown = mousedownHandler;
 			handlers.mousemove = mousemoveHandler;
 			handlers.mouseup = mouseupHandler;
+			handlers.globalMouseup = globalMouseupHandler;
 		},
 		beforeDestroy: (chart: Chart) => {
 			const { canvas } = chart;
@@ -223,6 +274,7 @@ export const createDragSelectPlugin = (): Plugin<
 			canvas.removeEventListener('mousedown', handlers.mousedown);
 			canvas.removeEventListener('mousemove', handlers.mousemove);
 			canvas.removeEventListener('mouseup', handlers.mouseup);
+			document.removeEventListener('mouseup', handlers.globalMouseup);
 		},
 		afterDatasetsDraw: (chart: Chart) => {
 			const {
