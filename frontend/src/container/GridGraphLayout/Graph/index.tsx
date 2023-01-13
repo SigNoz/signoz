@@ -213,6 +213,14 @@ function GridCardGraph({
 		);
 	};
 
+	function handleOnView(): void {
+		onToggleModal(setModal);
+	}
+
+	function handleOnDelete(): void {
+		onToggleModal(setDeleteModal);
+	}
+
 	const isEmptyLayout = widget?.id === 'empty' || isEmpty(widget);
 
 	if (state.error && !isEmptyLayout) {
@@ -224,8 +232,8 @@ function GridCardGraph({
 						parentHover={hovered}
 						title={widget?.title}
 						widget={widget}
-						onView={(): void => onToggleModal(setModal)}
-						onDelete={(): void => onToggleModal(setDeleteModal)}
+						onView={handleOnView}
+						onDelete={handleOnDelete}
 					/>
 				</div>
 
