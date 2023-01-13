@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { map } from 'lodash-es';
+import { useLocation } from 'react-router-dom';
 import { Input, Popover, Select, Typography } from 'antd';
 import { orange } from '@ant-design/colors';
 import WarningOutlined from '@ant-design/icons';
@@ -29,10 +30,11 @@ function VariableItem({
 	onAllSelectedUpdate,
 	updateTimeInterval,
 }: Props): JSX.Element {
+	const { pathname } = useLocation();
 	const [optionsData, setOptionsData] = useState([]);
 	const [isLoading, setIsLoading] = useState<boolean>(false);
-
 	const [errorMessage, setErrorMessage] = useState<null | string>(null);
+
 	const getOptions = useCallback(async (): Promise<void> => {
 		if (variableData.type === 'QUERY') {
 			try {
@@ -75,7 +77,7 @@ function VariableItem({
 	}, [getOptions]);
 
 	const onRefreshHandler = (): void => {
-		updateTimeInterval(getDefaultOption(location.pathname));
+		updateTimeInterval(getDefaultOption(pathname));
 	};
 
 	const handleChange = (value: string | string[]): void => {
