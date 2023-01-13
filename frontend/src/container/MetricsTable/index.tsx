@@ -8,6 +8,10 @@ import type {
 } from 'antd/es/table/interface';
 import localStorageGet from 'api/browser/localstorage/get';
 import localStorageSet from 'api/browser/localstorage/set';
+import {
+	ResizableHeader,
+	ResizeTableWrapper,
+} from 'components/ResizeTableWrapper';
 import { SKIP_ONBOARDING } from 'constants/onboarding';
 import ROUTES from 'constants/routes';
 import React, { useCallback, useMemo, useState } from 'react';
@@ -16,10 +20,7 @@ import { Link, useLocation } from 'react-router-dom';
 import { AppState } from 'store/reducers';
 import { ServicesList } from 'types/api/metrics/getService';
 import MetricReducer from 'types/reducer/metrics';
-import {
-	ResizeTableWrapper,
-	ResizableHeader,
-} from 'components/ResizeTableWrapper';
+
 import SkipBoardModal from './SkipOnBoardModal';
 import { Container, Name } from './styles';
 

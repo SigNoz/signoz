@@ -4,6 +4,10 @@ import deleteUser from 'api/user/deleteUser';
 import editUserApi from 'api/user/editUser';
 import getOrgUser from 'api/user/getOrgUser';
 import updateRole from 'api/user/updateRole';
+import {
+	ResizableHeader,
+	ResizeTableWrapper,
+} from 'components/ResizeTableWrapper';
 import dayjs from 'dayjs';
 import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -15,10 +19,6 @@ import { ROLES } from 'types/roles';
 
 import DeleteMembersDetails from '../DeleteMembersDetails';
 import EditMembersDetails from '../EditMembersDetails';
-import {
-	ResizeTableWrapper,
-	ResizableHeader,
-} from 'components/ResizeTableWrapper';
 
 function UserFunction({
 	setDataSource,

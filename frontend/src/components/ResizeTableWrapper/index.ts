@@ -1,4 +1,4 @@
-import ResizeTableWrapper from './ResizeTableWrapper';
 import ResizableHeader from './ResizableHeader';
+import ResizeTableWrapper from './ResizeTableWrapper';
 
-export { ResizeTableWrapper, ResizableHeader };
+export { ResizableHeader, ResizeTableWrapper };

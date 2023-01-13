@@ -10,6 +10,10 @@ import {
 } from 'antd';
 import createDashboard from 'api/dashboard/create';
 import { AxiosError } from 'axios';
+import {
+	ResizableHeader,
+	ResizeTableWrapper,
+} from 'components/ResizeTableWrapper';
 import TextToolTip from 'components/TextToolTip';
 import ROUTES from 'constants/routes';
 import SearchFilter from 'container/ListOfDashboard/SearchFilter';
@@ -31,10 +35,7 @@ import { GET_ALL_DASHBOARD_SUCCESS } from 'types/actions/dashboard';
 import { Dashboard } from 'types/api/dashboard/getAll';
 import AppReducer from 'types/reducer/app';
 import DashboardReducer from 'types/reducer/dashboards';
-import {
-	ResizeTableWrapper,
-	ResizableHeader,
-} from 'components/ResizeTableWrapper';
+
 import ImportJSON from './ImportJSON';
 import { ButtonContainer, NewDashboardButton, TableContainer } from './styles';
 import Createdby from './TableComponents/CreatedBy';

@@ -2,6 +2,10 @@
 import { PlusOutlined } from '@ant-design/icons';
 import { notification, Table, Typography } from 'antd';
 import { ColumnsType } from 'antd/lib/table';
+import {
+	ResizableHeader,
+	ResizeTableWrapper,
+} from 'components/ResizeTableWrapper';
 import TextToolTip from 'components/TextToolTip';
 import ROUTES from 'constants/routes';
 import useComponentPermission from 'hooks/useComponentPermission';
@@ -15,10 +19,7 @@ import { AppState } from 'store/reducers';
 import { ErrorResponse, SuccessResponse } from 'types/api';
 import { GettableAlert } from 'types/api/alerts/get';
 import AppReducer from 'types/reducer/app';
-import {
-	ResizeTableWrapper,
-	ResizableHeader,
-} from 'components/ResizeTableWrapper';
+
 import DeleteAlert from './DeleteAlert';
 import { Button, ButtonContainer, ColumnButton, StyledTag } from './styles';
 import Status from './TableComponents/Status';

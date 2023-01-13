@@ -2,16 +2,16 @@ import { blue, orange } from '@ant-design/colors';
 import { Input, Table } from 'antd';
 import AddToQueryHOC from 'components/Logs/AddToQueryHOC';
 import CopyClipboardHOC from 'components/Logs/CopyClipboardHOC';
+import {
+	ResizableHeader,
+	ResizeTableWrapper,
+} from 'components/ResizeTableWrapper';
 import flatten from 'flat';
 import { fieldSearchFilter } from 'lib/logs/fieldSearch';
 import React, { useMemo, useState } from 'react';
 import { ILog } from 'types/api/logs/log';
 
 import ActionItem from './ActionItem';
-import {
-	ResizeTableWrapper,
-	ResizableHeader,
-} from 'components/ResizeTableWrapper';
 
 // Fields which should be restricted from adding it to query
 const RESTRICTED_FIELDS = ['timestamp'];

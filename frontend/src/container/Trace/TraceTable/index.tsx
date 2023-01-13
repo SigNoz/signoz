@@ -1,14 +1,14 @@
 import { Table, TableProps, Tag, Typography } from 'antd';
 import { ColumnsType } from 'antd/lib/table';
+import {
+	ResizableHeader,
+	ResizeTableWrapper,
+} from 'components/ResizeTableWrapper';
 import ROUTES from 'constants/routes';
 import {
 	getSpanOrder,
 	getSpanOrderParam,
 } from 'container/Trace/TraceTable/util';
-import {
-	ResizeTableWrapper,
-	ResizableHeader,
-} from 'components/ResizeTableWrapper';
 import { formUrlParams } from 'container/TraceDetail/utils';
 import dayjs from 'dayjs';
 import duration from 'dayjs/plugin/duration';

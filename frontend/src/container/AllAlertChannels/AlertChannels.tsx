@@ -2,8 +2,8 @@
 import { Button, notification, Table } from 'antd';
 import { ColumnsType } from 'antd/lib/table';
 import {
-	ResizeTableWrapper,
 	ResizableHeader,
+	ResizeTableWrapper,
 } from 'components/ResizeTableWrapper';
 import ROUTES from 'constants/routes';
 import useComponentPermission from 'hooks/useComponentPermission';

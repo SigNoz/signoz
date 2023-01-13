@@ -5,7 +5,7 @@ import { Resizable, ResizeCallbackData } from 'react-resizable';
 // # Styles import
 import { SpanStyle } from './styles';
 
-const ResizableHeader = (
+function ResizableHeader(
 	props: React.HTMLAttributes<any> & {
 		onResize: (
 			e: React.SyntheticEvent<Element>,
@@ -13,7 +13,7 @@ const ResizableHeader = (
 		) => void;
 		width: number;
 	},
-) => {
+) {
 	const { onResize, width, ...restProps } = props;
 	if (!width) {
 		return <th {...restProps} />;
@@ -36,6 +36,6 @@ const ResizableHeader = (
 			<th {...restProps} />
 		</Resizable>
 	);
-};
+}
 
 export default ResizableHeader;

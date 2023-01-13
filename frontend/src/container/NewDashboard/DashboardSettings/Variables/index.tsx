@@ -1,6 +1,10 @@
 import { blue, red } from '@ant-design/colors';
 import { PlusOutlined } from '@ant-design/icons';
 import { Button, Modal, Row, Space, Table, Tag } from 'antd';
+import {
+	ResizableHeader,
+	ResizeTableWrapper,
+} from 'components/ResizeTableWrapper';
 import React, { useRef, useState } from 'react';
 import { connect, useSelector } from 'react-redux';
 import { bindActionCreators, Dispatch } from 'redux';
@@ -10,10 +14,7 @@ import { AppState } from 'store/reducers';
 import AppActions from 'types/actions';
 import { IDashboardVariable } from 'types/api/dashboard/getAll';
 import DashboardReducer from 'types/reducer/dashboards';
-import {
-	ResizeTableWrapper,
-	ResizableHeader,
-} from 'components/ResizeTableWrapper';
+
 import { TVariableViewMode } from './types';
 import VariableItem from './VariableItem/VariableItem';
 

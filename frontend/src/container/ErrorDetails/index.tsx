@@ -1,6 +1,10 @@
 import { Button, Divider, notification, Space, Table, Typography } from 'antd';
 import getNextPrevId from 'api/errors/getNextPrevId';
 import Editor from 'components/Editor';
+import {
+	ResizableHeader,
+	ResizeTableWrapper,
+} from 'components/ResizeTableWrapper';
 import { getNanoSeconds } from 'container/AllError/utils';
 import dayjs from 'dayjs';
 import history from 'lib/history';
@@ -10,10 +14,7 @@ import { useTranslation } from 'react-i18next';
 import { useQuery } from 'react-query';
 import { useLocation } from 'react-router-dom';
 import { PayloadProps as GetByErrorTypeAndServicePayload } from 'types/api/errors/getByErrorTypeAndService';
-import {
-	ResizeTableWrapper,
-	ResizableHeader,
-} from 'components/ResizeTableWrapper';
+
 import { DashedContainer, EditorContainer, EventContainer } from './styles';
 
 function ErrorDetails(props: ErrorDetailsProps): JSX.Element {

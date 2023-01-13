@@ -1,13 +1,13 @@
 import { Table } from 'antd';
 import { ColumnsType } from 'antd/lib/table';
+import {
+	ResizableHeader,
+	ResizeTableWrapper,
+} from 'components/ResizeTableWrapper';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { License } from 'types/api/licenses/def';
 import { PayloadProps } from 'types/api/licenses/getAll';
-import {
-	ResizeTableWrapper,
-	ResizableHeader,
-} from 'components/ResizeTableWrapper';
 
 function ListLicenses({ licenses }: ListLicensesProps): JSX.Element {
 	const { t } = useTranslation(['licenses']);
@@ -40,15 +40,13 @@ function ListLicenses({ licenses }: ListLicensesProps): JSX.Element {
 	];
 
 	return (
-		<>
-			<ResizeTableWrapper columns={columns}>
-				<Table
-					rowKey="id"
-					dataSource={licenses}
-					components={{ header: { cell: ResizableHeader } }}
-				/>
-			</ResizeTableWrapper>
-		</>
+		<ResizeTableWrapper columns={columns}>
+			<Table
+				rowKey="id"
+				dataSource={licenses}
+				components={{ header: { cell: ResizableHeader } }}
+			/>
+		</ResizeTableWrapper>
 	);
 }
 

@@ -1,6 +1,10 @@
 /* eslint-disable react/display-name */
 import { Table, Tag, Typography } from 'antd';
 import { ColumnsType } from 'antd/lib/table';
+import {
+	ResizableHeader,
+	ResizeTableWrapper,
+} from 'components/ResizeTableWrapper';
 import AlertStatus from 'container/TriggeredAlerts/TableComponents/AlertStatus';
 import convertDateToAmAndPm from 'lib/convertDateToAmAndPm';
 import getFormattedDate from 'lib/getFormatedDate';
@@ -9,10 +13,6 @@ import { Alerts } from 'types/api/alerts/getTriggered';
 
 import { Value } from './Filter';
 import { FilterAlerts } from './utils';
-import {
-	ResizeTableWrapper,
-	ResizableHeader,
-} from 'components/ResizeTableWrapper';
 
 function NoFilterTable({
 	allAlerts,

@@ -4,6 +4,10 @@ import { ColumnsType } from 'antd/lib/table';
 import deleteDomain from 'api/SAML/deleteDomain';
 import listAllDomain from 'api/SAML/listAllDomain';
 import updateDomain from 'api/SAML/updateDomain';
+import {
+	ResizableHeader,
+	ResizeTableWrapper,
+} from 'components/ResizeTableWrapper';
 import TextToolTip from 'components/TextToolTip';
 import { SIGNOZ_UPGRADE_PLAN_URL } from 'constants/app';
 import { FeatureKeys } from 'constants/featureKeys';
@@ -23,10 +27,6 @@ import EditSSO from './Edit';
 import { ConfigureSsoButtonText, EditModalTitleText } from './helpers';
 import { ColumnWithTooltip } from './styles';
 import SwitchComponent from './Switch';
-import {
-	ResizeTableWrapper,
-	ResizableHeader,
-} from 'components/ResizeTableWrapper';
 
 function AuthDomains(): JSX.Element {
 	const { t } = useTranslation(['common', 'organizationsettings']);

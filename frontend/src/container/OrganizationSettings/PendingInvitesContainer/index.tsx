@@ -4,6 +4,10 @@ import { ColumnsType } from 'antd/lib/table';
 import deleteInvite from 'api/user/deleteInvite';
 import getPendingInvites from 'api/user/getPendingInvites';
 import sendInvite from 'api/user/sendInvite';
+import {
+	ResizableHeader,
+	ResizeTableWrapper,
+} from 'components/ResizeTableWrapper';
 import { INVITE_MEMBERS_HASH } from 'constants/app';
 import ROUTES from 'constants/routes';
 import React, { useCallback, useEffect, useState } from 'react';
@@ -16,10 +20,6 @@ import { ROLES } from 'types/roles';
 
 import InviteTeamMembers from '../InviteTeamMembers';
 import { TitleWrapper } from './styles';
-import {
-	ResizeTableWrapper,
-	ResizableHeader,
-} from 'components/ResizeTableWrapper';
 
 function PendingInvitesContainer(): JSX.Element {
 	const [

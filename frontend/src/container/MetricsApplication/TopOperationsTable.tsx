@@ -1,5 +1,9 @@
 import { Table, Tooltip, Typography } from 'antd';
 import { ColumnsType } from 'antd/lib/table';
+import {
+	ResizableHeader,
+	ResizeTableWrapper,
+} from 'components/ResizeTableWrapper';
 import { METRICS_PAGE_QUERY_PARAM } from 'constants/query';
 import ROUTES from 'constants/routes';
 import history from 'lib/history';
@@ -10,10 +14,6 @@ import { useParams } from 'react-router-dom';
 import { AppState } from 'store/reducers';
 import { GlobalReducer } from 'types/reducer/globalTime';
 import MetricReducer from 'types/reducer/metrics';
-import {
-	ResizeTableWrapper,
-	ResizableHeader,
-} from 'components/ResizeTableWrapper';
 
 function TopOperationsTable(props: TopOperationsTableProps): JSX.Element {
 	const { minTime, maxTime } = useSelector<AppState, GlobalReducer>(
@@ -99,20 +99,18 @@ function TopOperationsTable(props: TopOperationsTableProps): JSX.Element {
 	];
 
 	return (
-		<>
-			<ResizeTableWrapper columns={columns}>
-				<Table
-					showHeader
-					title={(): string => {
-						return 'Key Operations';
-					}}
-					tableLayout="fixed"
-					dataSource={data}
-					components={{ header: { cell: ResizableHeader } }}
-					rowKey="name"
-				/>
-			</ResizeTableWrapper>
-		</>
+		<ResizeTableWrapper columns={columns}>
+			<Table
+				showHeader
+				title={(): string => {
+					return 'Key Operations';
+				}}
+				tableLayout="fixed"
+				dataSource={data}
+				components={{ header: { cell: ResizableHeader } }}
+				rowKey="name"
+			/>
+		</ResizeTableWrapper>
 	);
 }
 

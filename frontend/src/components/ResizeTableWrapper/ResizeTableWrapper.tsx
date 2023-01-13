@@ -1,9 +1,12 @@
-// # Global import
-import React, { useState } from 'react';
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { ColumnsType } from 'antd/lib/table';
+import React, { useState } from 'react';
 import { ResizeCallbackData } from 'react-resizable';
 
-function ResizeTableWrapper(props: any): JSX.Element {
+function ResizeTableWrapper(props: {
+	columns: any;
+	children: any;
+}): JSX.Element {
 	const { columns, children } = props;
 	const [columnsData, setColumns] = useState<ColumnsType>(columns);
 
