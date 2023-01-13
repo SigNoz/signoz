@@ -801,7 +801,7 @@ func prepareQuery(r *http.Request) (string, error) {
 		return "", fmt.Errorf("failed to decode request body: %v", err)
 	}
 
-	query := postData.Query
+	query := strings.TrimSpace(postData.Query)
 
 	if query == "" {
 		return "", fmt.Errorf("query is required")
