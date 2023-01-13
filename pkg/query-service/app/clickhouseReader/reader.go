@@ -1988,8 +1988,11 @@ func (r *ClickHouseReader) GetFilteredSpansAggregates(ctx context.Context, query
 
 	var query string
 	var customStr []string
-	if queryParams.GroupBy != "" && constants.GroupByColMap[queryParams.GroupBy] == struct{}{} {
-		query = fmt.Sprintf("SELECT toStartOfInterval(timestamp, INTERVAL %d minute) as time, @groupByVar as groupBy, %s FROM %s.%s WHERE timestamp >= @timestampL AND timestamp <= @timestampU", queryParams.StepSeconds/60, aggregation_query, r.TraceDB, r.indexTable)
+	_, columnExists := constants.GroupByColMap[queryParams.GroupBy]
+	// Using %s for groupBy params as it can be a custom column and custom columns are not supported by clickhouse-go yet: 
+	// issue link: https://github.com/ClickHouse/clickhouse-go/issues/870
+	if queryParams.GroupBy != "" && columnExists {
+		query = fmt.Sprintf("SELECT toStartOfInterval(timestamp, INTERVAL %d minute) as time, %s as groupBy, %s FROM %s.%s WHERE timestamp >= @timestampL AND timestamp <= @timestampU", queryParams.StepSeconds/60, queryParams.GroupBy, aggregation_query, r.TraceDB, r.indexTable)
 		args = append(args, clickhouse.Named("groupByVar", queryParams.GroupBy))
 	} else if queryParams.GroupBy != "" {
 		customStr = strings.Split(queryParams.GroupBy, ".(")
@@ -1997,16 +2000,15 @@ func (r *ClickHouseReader) GetFilteredSpansAggregates(ctx context.Context, query
 			return nil, &model.ApiError{Typ: model.ErrorBadData, Err: fmt.Errorf("GroupBy: %s not supported", queryParams.GroupBy)}
 		}
 		if customStr[1] == "string)" {
-			query = fmt.Sprintf("SELECT toStartOfInterval(timestamp, INTERVAL %d minute) as time, stringTagMap[@groupByVar] as groupBy, %s FROM %s.%s WHERE timestamp >= @timestampL AND timestamp <= @timestampU", queryParams.StepSeconds/60, aggregation_query, r.TraceDB, r.indexTable)
+			query = fmt.Sprintf("SELECT toStartOfInterval(timestamp, INTERVAL %d minute) as time, stringTagMap['%s'] as groupBy, %s FROM %s.%s WHERE timestamp >= @timestampL AND timestamp <= @timestampU", queryParams.StepSeconds/60, customStr[0], aggregation_query, r.TraceDB, r.indexTable)
 		} else if customStr[1] == "number)" {
-			query = fmt.Sprintf("SELECT toStartOfInterval(timestamp, INTERVAL %d minute) as time, numberTagMap[@groupByVar] as groupBy, %s FROM %s.%s WHERE timestamp >= @timestampL AND timestamp <= @timestampU", queryParams.StepSeconds/60, aggregation_query, r.TraceDB, r.indexTable)
+			query = fmt.Sprintf("SELECT toStartOfInterval(timestamp, INTERVAL %d minute) as time, numberTagMap['%s'] as groupBy, %s FROM %s.%s WHERE timestamp >= @timestampL AND timestamp <= @timestampU", queryParams.StepSeconds/60, customStr[0], aggregation_query, r.TraceDB, r.indexTable)
 		} else if customStr[1] == "bool)" {
-			query = fmt.Sprintf("SELECT toStartOfInterval(timestamp, INTERVAL %d minute) as time, boolTagMap[@groupByVar] as groupBy, %s FROM %s.%s WHERE timestamp >= @timestampL AND timestamp <= @timestampU", queryParams.StepSeconds/60, aggregation_query, r.TraceDB, r.indexTable)
+			query = fmt.Sprintf("SELECT toStartOfInterval(timestamp, INTERVAL %d minute) as time, boolTagMap['%s'] as groupBy, %s FROM %s.%s WHERE timestamp >= @timestampL AND timestamp <= @timestampU", queryParams.StepSeconds/60, customStr[0], aggregation_query, r.TraceDB, r.indexTable)
 		} else {
 			// return error for unsupported group by
 			return nil, &model.ApiError{Typ: model.ErrorBadData, Err: fmt.Errorf("GroupBy: %s not supported", queryParams.GroupBy)}
 		}
-		args = append(args, clickhouse.Named("groupByVar", customStr[0]))
 	} else {
 		query = fmt.Sprintf("SELECT toStartOfInterval(timestamp, INTERVAL %d minute) as time, %s FROM %s.%s WHERE timestamp >= @timestampL AND timestamp <= @timestampU", queryParams.StepSeconds/60, aggregation_query, r.TraceDB, r.indexTable)
 	}
@@ -2066,15 +2068,15 @@ func (r *ClickHouseReader) GetFilteredSpansAggregates(ctx context.Context, query
 		return nil, errStatus
 	}
 
-	if queryParams.GroupBy != "" && len(customStr) == 0 {
-		query = query + " GROUP BY time, @groupByVar as groupBy ORDER BY time"
-	} else if queryParams.GroupBy != "" && len(customStr) != 0 {
+	if queryParams.GroupBy != "" && columnExists {
+		query = query + fmt.Sprintf(" GROUP BY time, %s as groupBy ORDER BY time", queryParams.GroupBy)
+	} else if queryParams.GroupBy != "" {
 		if customStr[1] == "string)" {
-			query = query + " GROUP BY time, stringTagMap[@groupByVar] as groupBy ORDER BY time"
+			query = query + fmt.Sprintf(" GROUP BY time, stringTagMap['%s'] as groupBy ORDER BY time", customStr[0])
 		} else if customStr[1] == "number)" {
-			query = query + " GROUP BY time, numberTagMap[@groupByVar] as groupBy ORDER BY time"
+			query = query + fmt.Sprintf(" GROUP BY time, numberTagMap['%s'] as groupBy ORDER BY time", customStr[0])
 		} else if customStr[1] == "bool)" {
-			query = query + " GROUP BY time, boolTagMap[@groupByVar] as groupBy ORDER BY time"
+			query = query + fmt.Sprintf(" GROUP BY time, boolTagMap['%s'] as groupBy ORDER BY time", customStr[0])
 		}
 	} else {
 		query = query + " GROUP BY time ORDER BY time"
