@@ -31,7 +31,8 @@ function SettingsPage(): JSX.Element {
 		// todo: add perms
 		if (
 			pathname === ROUTES.COST_OPTIMIZER ||
-			pathname === ROUTES.INGESTION_ANALYTICS
+			pathname === ROUTES.INGESTION_ANALYTICS ||
+			pathname === ROUTES.MANAGE_DROP_RULES
 		) {
 			return t('cost_optimizer');
 		}

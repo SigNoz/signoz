@@ -14,6 +14,7 @@ import {
 	ErrorDetails,
 	GettingStarted,
 	IngestionAnalytics,
+	ManageDropRules,
 	LicensePage,
 	ListAllALertsPage,
 	Login,
@@ -210,6 +211,13 @@ const routes: AppRoutes[] = [
 		component: IngestionAnalytics,
 		isPrivate: true,
 		key: 'INGESTION_ANALYTICS',
+	},
+	{
+		path: ROUTES.MANAGE_DROP_RULES,
+		exact: true,
+		component: ManageDropRules,
+		isPrivate: true,
+		key: 'MANAGE_DROP_RULES',
 	},
 	{
 		path: ROUTES.MY_SETTINGS,

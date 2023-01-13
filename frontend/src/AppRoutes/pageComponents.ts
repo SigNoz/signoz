@@ -131,3 +131,7 @@ export const CostOptimizerSettings = Loadable(
 export const IngestionAnalytics = Loadable(
 	() => import(/* webpackChunkName: "Ingestion Analytics" */ 'pages/Settings'),
 );
+
+export const ManageDropRules = Loadable(
+	() => import(/* webpackChunkName: "Manage Drop Rules" */ 'pages/Settings'),
+);

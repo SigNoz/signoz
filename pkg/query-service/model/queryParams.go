@@ -316,6 +316,7 @@ type GetErrorParams struct {
 }
 
 type FilterItem struct {
+	KeyType  string      `json:"keyType,omitempty"`
 	Key      string      `json:"key"`
 	Value    interface{} `json:"value"`
 	Operator string      `json:"op"`

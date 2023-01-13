@@ -1,5 +1,6 @@
 import ROUTES from 'constants/routes';
 import IngestionAnalytics from 'container/IngestionAnalytics';
+import { ManageDropRules } from 'container/ManageDropRules';
 import history from 'lib/history';
 import React from 'react';
 
@@ -8,7 +9,7 @@ import { MenuOptionTypes } from './Menu/options';
 
 function CostOpimizer(): JSX.Element {
 	const pathName = history.location.pathname;
-
+	console.log('pathName:', pathName)
 	// when user appears on this page for the first time a default menu
 	// is displayed. When user clicks on one of the menu items, the new url
 	// is pushed. here we look for the path name to decide which component to
@@ -18,10 +19,15 @@ function CostOpimizer(): JSX.Element {
 	if (pathName === ROUTES.INGESTION_ANALYTICS) {
 		return <IngestionAnalytics />;
 	}
-
+	if (pathName === ROUTES.MANAGE_DROP_RULES) {
+		return <ManageDropRules />;
+	}
 	const onSelect = (s: MenuOptionTypes): void => {
 		if (s === MenuOptionTypes.INGESTION_ANALYTICS) {
 			history.push(ROUTES.INGESTION_ANALYTICS);
+		}
+		if (s === MenuOptionTypes.MANAGE_DROP_RULES) {
+			history.push(ROUTES.MANAGE_DROP_RULES);
 		}
 	};
 

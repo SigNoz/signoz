@@ -25,6 +25,7 @@ const ROUTES = {
 	ORG_SETTINGS: '/settings/org-settings',
 	COST_OPTIMIZER: '/settings/cost-optimizer',
 	INGESTION_ANALYTICS: '/settings/cost-optimizer/ingestion-analytics',
+	MANAGE_DROP_RULES: '/settings/cost-optimizer/manage-drop-rules',
 	SOMETHING_WENT_WRONG: '/something-went-wrong',
 	UN_AUTHORIZED: '/un-authorized',
 	NOT_FOUND: '/not-found',
