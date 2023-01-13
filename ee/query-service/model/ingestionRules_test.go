@@ -1,7 +1,7 @@
 package model
 
 import (
-	"fmt"
+	"reflect"
 	"testing"
 
 	basemodel "go.signoz.io/signoz/pkg/query-service/model"
@@ -69,5 +69,16 @@ func TestDropRuleToExpr(t *testing.T) {
 		},
 	}
 	expr, err := PrepareDropExpressions([]IngestionRule{r1, r2})
-	fmt.Println("expr:", expr, err)
+	if err != nil {
+		t.Fail()
+	}
+
+	expectedExpr := []string{
+		"name == \"signoz_calls_total\" AND attributes[\"http_status_code\"] == \"301\" AND resource.attributes[\"service.name\"] == \"my_service_name\"",
+		"name == \"signoz_calls_total\" AND attributes[\"http_status_code\"] == \"401\"",
+	}
+	if !reflect.DeepEqual(expr, expectedExpr) {
+		t.Fail()
+	}
+
 }

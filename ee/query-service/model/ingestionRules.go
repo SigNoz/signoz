@@ -90,7 +90,7 @@ func (d *DropConfig) PrepareExpression() (result string, fnerr error) {
 			// https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/main/pkg/ottl/README.md#boolean-expressions
 			expr = fmt.Sprintf("name %s \"%s\"", i.Operator, i.Value)
 		case ResourceAttribute:
-			expr = fmt.Sprintf("resource.attributes[%s] %s %s", i.Key, i.Operator, i.Value)
+			expr = fmt.Sprintf("resource.attributes[\"%s\"] %s \"%s\"", i.Key, i.Operator, i.Value)
 		case Label:
 			expr = fmt.Sprintf("attributes[\"%s\"] %s \"%s\"", i.Key, i.Operator, i.Value)
 		}
