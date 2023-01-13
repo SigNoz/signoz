@@ -4,16 +4,16 @@ import React, { useState } from 'react';
 import { ResizeCallbackData } from 'react-resizable';
 
 function ResizeTableWrapper(props: {
-	columns: any;
-	children: any;
+	columns: ColumnsType;
+	children: JSX.Element;
 }): JSX.Element {
 	const { columns, children } = props;
 	const [columnsData, setColumns] = useState<ColumnsType>(columns);
 
-	const handleResize: Function = (index: number) => (
-		_: React.SyntheticEvent<Element>,
+	const handleResize = (index: number) => (
+		_e: React.SyntheticEvent<Element>,
 		{ size }: ResizeCallbackData,
-	) => {
+	): void => {
 		const newColumns = [...columnsData];
 		newColumns[index] = {
 			...newColumns[index],
@@ -24,9 +24,9 @@ function ResizeTableWrapper(props: {
 
 	const mergeColumns = columnsData.map((col, index) => ({
 		...col,
-		onHeaderCell: (column: ColumnsType<any>[number]) => ({
+		onHeaderCell: (column: ColumnsType<any>[number]): any => ({
 			width: column.width,
-			onResize: handleResize(index) as React.ReactEventHandler<any>,
+			onResize: handleResize(index),
 		}),
 	}));
 

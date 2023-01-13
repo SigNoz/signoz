@@ -1,4 +1,5 @@
-// # Global import
+/* eslint-disable @typescript-eslint/no-explicit-any */
+/* eslint-disable react/jsx-props-no-spreading */
 import React from 'react';
 import { Resizable, ResizeCallbackData } from 'react-resizable';
 
@@ -13,7 +14,7 @@ function ResizableHeader(
 		) => void;
 		width: number;
 	},
-) {
+): JSX.Element {
 	const { onResize, width, ...restProps } = props;
 	if (!width) {
 		return <th {...restProps} />;
@@ -25,9 +26,7 @@ function ResizableHeader(
 			handle={
 				<SpanStyle
 					className="react-resizable-handle"
-					onClick={(e) => {
-						e.stopPropagation();
-					}}
+					onClick={(e): void => e.stopPropagation()}
 				/>
 			}
 			onResize={onResize}
