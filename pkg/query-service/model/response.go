@@ -281,7 +281,9 @@ type TagFilters struct {
 }
 
 type TagValues struct {
-	StringTagValues string `json:"tagValues" ch:"stringTagValues"`
+	StringTagValues []string  `json:"stringTagValues" ch:"stringTagValues"`
+	BoolTagValues   []bool    `json:"boolTagValues" ch:"boolTagValues"`
+	NumberTagValues []float64 `json:"numberTagValues" ch:"numberTagValues"`
 }
 
 type ServiceMapDependencyResponseItem struct {

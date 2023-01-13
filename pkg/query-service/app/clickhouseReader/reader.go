@@ -1677,7 +1677,7 @@ func excludeTags(ctx context.Context, tags []string) []string {
 	return newTags
 }
 
-func (r *ClickHouseReader) GetTagValues(ctx context.Context, queryParams *model.TagFilterParams) (*[]model.TagValues, *model.ApiError) {
+func (r *ClickHouseReader) GetTagValues(ctx context.Context, queryParams *model.TagFilterParams) (*model.TagValues, *model.ApiError) {
 
 	excludeMap := make(map[string]struct{})
 	for _, e := range queryParams.Exclude {
@@ -1730,7 +1730,7 @@ func (r *ClickHouseReader) GetTagValues(ctx context.Context, queryParams *model.
 
 	tagValues := []model.TagValues{}
 
-	finalQuery := fmt.Sprintf(`SELECT DISTINCT stringTagMap[@key] as stringTagValues FROM %s.%s WHERE timestamp >= @timestampL AND timestamp <= @timestampU`, r.TraceDB, r.indexTable)
+	finalQuery := fmt.Sprintf(`SELECT groupArray(DISTINCT stringTagMap[@key]) as stringTagValues FROM %s.%s WHERE timestamp >= @timestampL AND timestamp <= @timestampU`, r.TraceDB, r.indexTable)
 	finalQuery += query
 	finalQuery += " LIMIT @limit"
 
@@ -1745,10 +1745,17 @@ func (r *ClickHouseReader) GetTagValues(ctx context.Context, queryParams *model.
 		return nil, &model.ApiError{Typ: model.ErrorExec, Err: fmt.Errorf("Error in processing sql query")}
 	}
 
-	cleanedTagValues := []model.TagValues{}
-	for _, e := range tagValues {
-		if e.StringTagValues != "" {
-			cleanedTagValues = append(cleanedTagValues, e)
+	cleanedTagValues := model.TagValues{
+		StringTagValues: []string{},
+		NumberTagValues: []float64{},
+		BoolTagValues:   []bool{},
+	}
+	if len(tagValues) == 0 {
+		return &cleanedTagValues, nil
+	}
+	for _, e := range tagValues[0].StringTagValues {
+		if e != "" {
+			cleanedTagValues.StringTagValues = append(cleanedTagValues.StringTagValues, e)
 		}
 	}
 	return &cleanedTagValues, nil
@@ -1980,42 +1987,26 @@ func (r *ClickHouseReader) GetFilteredSpansAggregates(ctx context.Context, query
 	args := []interface{}{clickhouse.Named("timestampL", strconv.FormatInt(queryParams.Start.UnixNano(), 10)), clickhouse.Named("timestampU", strconv.FormatInt(queryParams.End.UnixNano(), 10))}
 
 	var query string
-	if queryParams.GroupBy != "" {
-		switch queryParams.GroupBy {
-		case constants.ServiceName:
-			query = fmt.Sprintf("SELECT toStartOfInterval(timestamp, INTERVAL %d minute) as time, serviceName as groupBy, %s FROM %s.%s WHERE timestamp >= @timestampL AND timestamp <= @timestampU", queryParams.StepSeconds/60, aggregation_query, r.TraceDB, r.indexTable)
-		case constants.HttpCode:
-			query = fmt.Sprintf("SELECT toStartOfInterval(timestamp, INTERVAL %d minute) as time, httpCode as groupBy, %s FROM %s.%s WHERE timestamp >= @timestampL AND timestamp <= @timestampU", queryParams.StepSeconds/60, aggregation_query, r.TraceDB, r.indexTable)
-		case constants.HttpMethod:
-			query = fmt.Sprintf("SELECT toStartOfInterval(timestamp, INTERVAL %d minute) as time, httpMethod as groupBy, %s FROM %s.%s WHERE timestamp >= @timestampL AND timestamp <= @timestampU", queryParams.StepSeconds/60, aggregation_query, r.TraceDB, r.indexTable)
-		case constants.HttpUrl:
-			query = fmt.Sprintf("SELECT toStartOfInterval(timestamp, INTERVAL %d minute) as time, httpUrl as groupBy, %s FROM %s.%s WHERE timestamp >= @timestampL AND timestamp <= @timestampU", queryParams.StepSeconds/60, aggregation_query, r.TraceDB, r.indexTable)
-		case constants.HttpRoute:
-			query = fmt.Sprintf("SELECT toStartOfInterval(timestamp, INTERVAL %d minute) as time, httpRoute as groupBy, %s FROM %s.%s WHERE timestamp >= @timestampL AND timestamp <= @timestampU", queryParams.StepSeconds/60, aggregation_query, r.TraceDB, r.indexTable)
-		case constants.HttpHost:
-			query = fmt.Sprintf("SELECT toStartOfInterval(timestamp, INTERVAL %d minute) as time, httpHost as groupBy, %s FROM %s.%s WHERE timestamp >= @timestampL AND timestamp <= @timestampU", queryParams.StepSeconds/60, aggregation_query, r.TraceDB, r.indexTable)
-		case constants.DBName:
-			query = fmt.Sprintf("SELECT toStartOfInterval(timestamp, INTERVAL %d minute) as time, dbName as groupBy, %s FROM %s.%s WHERE timestamp >= @timestampL AND timestamp <= @timestampU", queryParams.StepSeconds/60, aggregation_query, r.TraceDB, r.indexTable)
-		case constants.DBOperation:
-			query = fmt.Sprintf("SELECT toStartOfInterval(timestamp, INTERVAL %d minute) as time, dbOperation as groupBy, %s FROM %s.%s WHERE timestamp >= @timestampL AND timestamp <= @timestampU", queryParams.StepSeconds/60, aggregation_query, r.TraceDB, r.indexTable)
-		case constants.OperationRequest:
-			query = fmt.Sprintf("SELECT toStartOfInterval(timestamp, INTERVAL %d minute) as time, name as groupBy, %s FROM %s.%s WHERE timestamp >= @timestampL AND timestamp <= @timestampU", queryParams.StepSeconds/60, aggregation_query, r.TraceDB, r.indexTable)
-		case constants.MsgSystem:
-			query = fmt.Sprintf("SELECT toStartOfInterval(timestamp, INTERVAL %d minute) as time, msgSystem as groupBy, %s FROM %s.%s WHERE timestamp >= @timestampL AND timestamp <= @timestampU", queryParams.StepSeconds/60, aggregation_query, r.TraceDB, r.indexTable)
-		case constants.MsgOperation:
-			query = fmt.Sprintf("SELECT toStartOfInterval(timestamp, INTERVAL %d minute) as time, msgOperation as groupBy, %s FROM %s.%s WHERE timestamp >= @timestampL AND timestamp <= @timestampU", queryParams.StepSeconds/60, aggregation_query, r.TraceDB, r.indexTable)
-		case constants.DBSystem:
-			query = fmt.Sprintf("SELECT toStartOfInterval(timestamp, INTERVAL %d minute) as time, dbSystem as groupBy, %s FROM %s.%s WHERE timestamp >= @timestampL AND timestamp <= @timestampU", queryParams.StepSeconds/60, aggregation_query, r.TraceDB, r.indexTable)
-		case constants.Component:
-			query = fmt.Sprintf("SELECT toStartOfInterval(timestamp, INTERVAL %d minute) as time, component as groupBy, %s FROM %s.%s WHERE timestamp >= @timestampL AND timestamp <= @timestampU", queryParams.StepSeconds/60, aggregation_query, r.TraceDB, r.indexTable)
-		case constants.RPCMethod:
-			query = fmt.Sprintf("SELECT toStartOfInterval(timestamp, INTERVAL %d minute) as time, rpcMethod as groupBy, %s FROM %s.%s WHERE timestamp >= @timestampL AND timestamp <= @timestampU", queryParams.StepSeconds/60, aggregation_query, r.TraceDB, r.indexTable)
-		case constants.ResponseStatusCode:
-			query = fmt.Sprintf("SELECT toStartOfInterval(timestamp, INTERVAL %d minute) as time, responseStatusCode as groupBy, %s FROM %s.%s WHERE timestamp >= @timestampL AND timestamp <= @timestampU", queryParams.StepSeconds/60, aggregation_query, r.TraceDB, r.indexTable)
-
-		default:
-			return nil, &model.ApiError{Typ: model.ErrorBadData, Err: fmt.Errorf("groupBy type: %s not supported", queryParams.GroupBy)}
+	var customStr []string
+	if queryParams.GroupBy != "" && constants.GroupByColMap[queryParams.GroupBy] == struct{}{} {
+		query = fmt.Sprintf("SELECT toStartOfInterval(timestamp, INTERVAL %d minute) as time, @groupByVar as groupBy, %s FROM %s.%s WHERE timestamp >= @timestampL AND timestamp <= @timestampU", queryParams.StepSeconds/60, aggregation_query, r.TraceDB, r.indexTable)
+		args = append(args, clickhouse.Named("groupByVar", queryParams.GroupBy))
+	} else if queryParams.GroupBy != "" {
+		customStr = strings.Split(queryParams.GroupBy, ".(")
+		if len(customStr) < 2 {
+			return nil, &model.ApiError{Typ: model.ErrorBadData, Err: fmt.Errorf("GroupBy: %s not supported", queryParams.GroupBy)}
 		}
+		if customStr[1] == "string)" {
+			query = fmt.Sprintf("SELECT toStartOfInterval(timestamp, INTERVAL %d minute) as time, stringTagMap[@groupByVar] as groupBy, %s FROM %s.%s WHERE timestamp >= @timestampL AND timestamp <= @timestampU", queryParams.StepSeconds/60, aggregation_query, r.TraceDB, r.indexTable)
+		} else if customStr[1] == "number)" {
+			query = fmt.Sprintf("SELECT toStartOfInterval(timestamp, INTERVAL %d minute) as time, numberTagMap[@groupByVar] as groupBy, %s FROM %s.%s WHERE timestamp >= @timestampL AND timestamp <= @timestampU", queryParams.StepSeconds/60, aggregation_query, r.TraceDB, r.indexTable)
+		} else if customStr[1] == "bool)" {
+			query = fmt.Sprintf("SELECT toStartOfInterval(timestamp, INTERVAL %d minute) as time, boolTagMap[@groupByVar] as groupBy, %s FROM %s.%s WHERE timestamp >= @timestampL AND timestamp <= @timestampU", queryParams.StepSeconds/60, aggregation_query, r.TraceDB, r.indexTable)
+		} else {
+			// return error for unsupported group by
+			return nil, &model.ApiError{Typ: model.ErrorBadData, Err: fmt.Errorf("GroupBy: %s not supported", queryParams.GroupBy)}
+		}
+		args = append(args, clickhouse.Named("groupByVar", customStr[0]))
 	} else {
 		query = fmt.Sprintf("SELECT toStartOfInterval(timestamp, INTERVAL %d minute) as time, %s FROM %s.%s WHERE timestamp >= @timestampL AND timestamp <= @timestampU", queryParams.StepSeconds/60, aggregation_query, r.TraceDB, r.indexTable)
 	}
@@ -2075,41 +2066,15 @@ func (r *ClickHouseReader) GetFilteredSpansAggregates(ctx context.Context, query
 		return nil, errStatus
 	}
 
-	if queryParams.GroupBy != "" {
-		switch queryParams.GroupBy {
-		case constants.ServiceName:
-			query = query + " GROUP BY time, serviceName as groupBy ORDER BY time"
-		case constants.HttpCode:
-			query = query + " GROUP BY time, httpCode as groupBy ORDER BY time"
-		case constants.HttpMethod:
-			query = query + " GROUP BY time, httpMethod as groupBy ORDER BY time"
-		case constants.HttpUrl:
-			query = query + " GROUP BY time, httpUrl as groupBy ORDER BY time"
-		case constants.HttpRoute:
-			query = query + " GROUP BY time, httpRoute as groupBy ORDER BY time"
-		case constants.HttpHost:
-			query = query + " GROUP BY time, httpHost as groupBy ORDER BY time"
-		case constants.DBName:
-			query = query + " GROUP BY time, dbName as groupBy ORDER BY time"
-		case constants.DBOperation:
-			query = query + " GROUP BY time, dbOperation as groupBy ORDER BY time"
-		case constants.OperationRequest:
-			query = query + " GROUP BY time, name as groupBy ORDER BY time"
-		case constants.MsgSystem:
-			query = query + " GROUP BY time, msgSystem as groupBy ORDER BY time"
-		case constants.MsgOperation:
-			query = query + " GROUP BY time, msgOperation as groupBy ORDER BY time"
-		case constants.DBSystem:
-			query = query + " GROUP BY time, dbSystem as groupBy ORDER BY time"
-		case constants.Component:
-			query = query + " GROUP BY time, component as groupBy ORDER BY time"
-		case constants.RPCMethod:
-			query = query + " GROUP BY time, rpcMethod as groupBy ORDER BY time"
-		case constants.ResponseStatusCode:
-			query = query + " GROUP BY time, responseStatusCode as groupBy ORDER BY time"
-
-		default:
-			return nil, &model.ApiError{Typ: model.ErrorBadData, Err: fmt.Errorf("groupBy type: %s not supported", queryParams.GroupBy)}
+	if queryParams.GroupBy != "" && len(customStr) == 0 {
+		query = query + " GROUP BY time, @groupByVar as groupBy ORDER BY time"
+	} else if queryParams.GroupBy != "" && len(customStr) != 0 {
+		if customStr[1] == "string)" {
+			query = query + " GROUP BY time, stringTagMap[@groupByVar] as groupBy ORDER BY time"
+		} else if customStr[1] == "number)" {
+			query = query + " GROUP BY time, numberTagMap[@groupByVar] as groupBy ORDER BY time"
+		} else if customStr[1] == "bool)" {
+			query = query + " GROUP BY time, boolTagMap[@groupByVar] as groupBy ORDER BY time"
 		}
 	} else {
 		query = query + " GROUP BY time ORDER BY time"

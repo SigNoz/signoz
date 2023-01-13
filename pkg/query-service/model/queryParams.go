@@ -186,10 +186,18 @@ type TagQueryParam struct {
 type Operator string
 
 const (
-	InOperator               Operator = "IN"
-	NotInOperator            Operator = "NotIN"
-	LessThanEqualOperator    Operator = "<="
-	GreaterThanEqualOperator Operator = ">="
+	InOperator               Operator = "In"
+	NotInOperator            Operator = "NotIn"
+	EqualOperator            Operator = "Equals"
+	NotEqualOperator         Operator = "NotEquals"
+	ExistsOperator           Operator = "Exists"
+	NotExistsOperator        Operator = "NotExists"
+	ContainsOperator         Operator = "Contains"
+	NotContainsOperator      Operator = "NotContains"
+	LessThanOperator         Operator = "LessThan"
+	GreaterThanOperator      Operator = "GreaterThan"
+	LessThanEqualOperator    Operator = "LessThanEquals"
+	GreaterThanEqualOperator Operator = "GreaterThanEquals"
 )
 
 type TagQuery interface {
