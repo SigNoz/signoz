@@ -1,5 +1,5 @@
 /* eslint-disable no-param-reassign */
-import { themeColors } from 'lib/theme';
+import { themeColors } from 'constants/theme';
 import { ITraceForest, ITraceTree } from 'types/api/trace/getTraceItem';
 /**
  * Traverses the Span Tree data and returns the relevant meta data.

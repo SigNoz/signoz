@@ -1,5 +1,5 @@
 import { Span } from 'types/api/trace/getTraceItem';
-import { themeColors } from './theme';
+import { themeColors } from '../constants/theme';
 
 export const colors = Object.values(themeColors.chartcolors);
 
