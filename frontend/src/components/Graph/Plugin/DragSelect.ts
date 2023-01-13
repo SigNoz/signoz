@@ -67,7 +67,7 @@ function createMousemoveHandler(
 	dragData: DragSelectData,
 ): ChartEventHandler {
 	return (ev): void => {
-		if (!dragData.isDragging) {
+		if (!dragData.isMouseDown) {
 			return;
 		}
 
@@ -136,6 +136,8 @@ function createMouseupHandler(
 class DragSelectData {
 	public isDragging = false;
 
+	public isMouseDown = false;
+
 	public startRelativePixelPositionX: number | null = null;
 
 	public startValuePositionX: number | null | undefined = null;
@@ -146,6 +148,7 @@ class DragSelectData {
 
 	public initialize(): void {
 		this.isDragging = false;
+		this.isMouseDown = false;
 		this.startRelativePixelPositionX = null;
 		this.startValuePositionX = null;
 		this.endRelativePixelPositionX = null;
@@ -156,7 +159,8 @@ class DragSelectData {
 		startRelativePixelPositionX: number,
 		startValuePositionX: number | undefined,
 	): void {
-		this.isDragging = true;
+		this.isDragging = false;
+		this.isMouseDown = true;
 		this.startRelativePixelPositionX = startRelativePixelPositionX;
 		this.startValuePositionX = startValuePositionX;
 		this.endRelativePixelPositionX = null;
@@ -164,6 +168,7 @@ class DragSelectData {
 	}
 
 	public onDrag(endRelativePixelPositionX: number): void {
+		this.isDragging = true;
 		this.endRelativePixelPositionX = endRelativePixelPositionX;
 	}
 
@@ -171,7 +176,13 @@ class DragSelectData {
 		endRelativePixelPositionX: number,
 		endValuePositionX: number | undefined,
 	): void {
+		if (!this.isDragging) {
+			this.initialize();
+			return;
+		}
+
 		this.isDragging = false;
+		this.isMouseDown = false;
 		this.endRelativePixelPositionX = endRelativePixelPositionX;
 		this.endValuePositionX = endValuePositionX;
 	}
@@ -224,7 +235,7 @@ export const createDragSelectPlugin = (): Plugin<
 			canvas.removeEventListener('mousemove', handlers.mousemove);
 			canvas.removeEventListener('mouseup', handlers.mouseup);
 		},
-		afterDatasetDraw: (chart: Chart, _, passedOptions) => {
+		afterDatasetsDraw: (chart: Chart, _, passedOptions) => {
 			const options = mergeDefaultOptions(passedOptions);
 
 			const {
