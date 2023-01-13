@@ -34,6 +34,11 @@ import {
 	DragSelectPluginOptions,
 } from './Plugin/DragSelect';
 import { emptyGraph } from './Plugin/EmptyGraph';
+import {
+	createIntersectionCursorPlugin,
+	intersectionCursorPluginId,
+	IntersectionCursorPluginOptions,
+} from './Plugin/IntersectionCursor';
 import { LegendsContainer } from './styles';
 import { useXAxisTimeUnit } from './xAxisConfig';
 import { getToolTipValue, getYAxisFormattedValue } from './yAxisConfig';
@@ -99,7 +104,10 @@ function Graph({
 
 		if (chartRef.current !== null) {
 			const options: ChartOptions & {
-				plugins: { [dragSelectPluginId]: DragSelectPluginOptions | false };
+				plugins: {
+					[dragSelectPluginId]: DragSelectPluginOptions | false;
+					[intersectionCursorPluginId]: IntersectionCursorPluginOptions | false;
+				};
 			} = {
 				animation: {
 					duration: animate ? 200 : 0,
@@ -161,6 +169,11 @@ function Graph({
 						? {
 								color: dragSelectColor,
 								onSelect: onDragSelect,
+						  }
+						: false,
+					[intersectionCursorPluginId]: onDragSelect
+						? {
+								color: currentTheme === 'dark' ? 'white' : 'black',
 						  }
 						: false,
 				},
@@ -227,6 +240,7 @@ function Graph({
 			const chartPlugins = [];
 
 			if (chartHasData) {
+				chartPlugins.push(createIntersectionCursorPlugin());
 				chartPlugins.push(createDragSelectPlugin());
 			} else {
 				chartPlugins.push(emptyGraph);
@@ -256,6 +270,7 @@ function Graph({
 		staticLine,
 		onDragSelect,
 		dragSelectColor,
+		currentTheme,
 	]);
 
 	useEffect(() => {
