@@ -11,7 +11,7 @@ import (
 )
 
 // NOTE: executable must be built with target OS and architecture set to linux/amd64
-// env GOOS=linux GOARCH=arm64 go build -o histogramQuantile histogramQuantile.go
+// env GOOS=linux GOARCH=amd64 go build -o histogramQuantile histogramQuantile.go
 
 // The following code is adapted from the following source:
 // https://github.com/prometheus/prometheus/blob/main/promql/quantile.go
