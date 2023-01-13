@@ -1,23 +1,23 @@
-import React, { useCallback, useEffect, useState } from 'react';
-import { map } from 'lodash-es';
-import { useLocation } from 'react-router-dom';
-import { Input, Popover, Select, Typography } from 'antd';
 import { orange } from '@ant-design/colors';
 import WarningOutlined from '@ant-design/icons';
-import { connect } from 'react-redux';
-import { ThunkDispatch } from 'redux-thunk';
-import { bindActionCreators, Dispatch } from 'redux';
-
+import { Input, Popover, Select, Typography } from 'antd';
 import query from 'api/dashboard/variables/query';
-import { commaValuesParser } from 'lib/dashbaordVariables/customCommaValuesParser';
-import sortValues from 'lib/dashbaordVariables/sortVariableValues';
-import { IDashboardVariable } from 'types/api/dashboard/getAll';
 import {
 	getDefaultOption,
 	Time,
 } from 'container/TopNav/DateTimeSelection/config';
-import AppActions from 'types/actions';
+import { commaValuesParser } from 'lib/dashbaordVariables/customCommaValuesParser';
+import sortValues from 'lib/dashbaordVariables/sortVariableValues';
+import { map } from 'lodash-es';
+import React, { useCallback, useEffect, useState } from 'react';
+import { connect } from 'react-redux';
+import { useLocation } from 'react-router-dom';
+import { bindActionCreators, Dispatch } from 'redux';
+import { ThunkDispatch } from 'redux-thunk';
 import { UpdateTimeInterval } from 'store/actions';
+import AppActions from 'types/actions';
+import { IDashboardVariable } from 'types/api/dashboard/getAll';
+
 import { VariableContainer, VariableName } from './styles';
 
 const { Option } = Select;
