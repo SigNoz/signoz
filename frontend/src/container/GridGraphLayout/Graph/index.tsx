@@ -213,13 +213,13 @@ function GridCardGraph({
 		);
 	};
 
-	function handleOnView(): void {
+	const handleOnView = (): void => {
 		onToggleModal(setModal);
-	}
+	};
 
-	function handleOnDelete(): void {
+	const handleOnDelete = (): void => {
 		onToggleModal(setDeleteModal);
-	}
+	};
 
 	const isEmptyLayout = widget?.id === 'empty' || isEmpty(widget);
 
