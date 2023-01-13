@@ -35,6 +35,7 @@ export interface IDashboardVariable {
 	// Internal use
 	modificationUUID?: string;
 	allSelected?: boolean;
+	change?: boolean;
 }
 export interface Dashboard {
 	id: number;

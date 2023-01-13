@@ -14,13 +14,23 @@ const { Option } = Select;
 
 const ALL_SELECT_VALUE = '__ALL__';
 
+const equalsCheck = (a: string[]|number[], b: string[]|number[]) : boolean => {
+	if (a.length !== b.length) return false;
+	for (let i = 0; i < a.length; i += 1) {
+		if (a[i] !== b[i]) return false;
+	}
+	return true;
+}
+
 interface VariableItemProps {
 	variableData: IDashboardVariable;
-	onValueUpdate: (name: string | undefined, arg1: string | string[]) => void;
+	existingVariables: Record<string, IDashboardVariable>;
+	onValueUpdate: (name: string | undefined, arg1: string | string[] | null | undefined) => void;
 	onAllSelectedUpdate: (name: string | undefined, arg1: boolean) => void;
 }
 function VariableItem({
 	variableData,
+	existingVariables,
 	onValueUpdate,
 	onAllSelectedUpdate,
 }: VariableItemProps): JSX.Element {
@@ -36,6 +46,7 @@ function VariableItem({
 
 				const response = await query({
 					query: variableData.queryValue || '',
+					variables: existingVariables
 				});
 
 				setIsLoading(false);
@@ -43,10 +54,16 @@ function VariableItem({
 					setErrorMessage(response.error);
 					return;
 				}
-				if (response.payload?.variableValues)
-					setOptionsData(
-						sortValues(response.payload?.variableValues, variableData.sort) as never,
-					);
+				if (response.payload?.variableValues) {
+					let newOptionsData = sortValues(response.payload?.variableValues, variableData.sort) as never;
+					let oldOptionsData = sortValues(optionsData, variableData.sort) as never;
+					if (!equalsCheck(newOptionsData, oldOptionsData)) {
+						onValueUpdate(variableData.name, null);
+						setOptionsData(
+							newOptionsData
+						);
+					}
+				}
 			} catch (e) {
 				console.error(e);
 			}
@@ -63,6 +80,7 @@ function VariableItem({
 		variableData.queryValue,
 		variableData.sort,
 		variableData.type,
+		variableData.change,
 	]);
 
 	useEffect(() => {

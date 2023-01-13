@@ -4,13 +4,21 @@ import { AxiosError } from 'axios';
 import { ErrorResponse, SuccessResponse } from 'types/api';
 import { PayloadProps, Props } from 'types/api/dashboard/variables/query';
 
+type PayloadVariables = Record<string, undefined | null | string| string[]>;
+
 const query = async (
 	props: Props,
 ): Promise<SuccessResponse<PayloadProps> | ErrorResponse> => {
 	try {
-		const response = await axios.get(
-			`/variables/query?query=${encodeURIComponent(props.query)}`,
-		);
+		let variables :PayloadVariables = {};
+		Object.entries(props.variables).forEach(([key, value]) => {
+			variables[key] = value?.selectedValue;
+		});
+		const payload = {
+			query: props.query,
+			variables: variables,
+		}
+		const response = await axios.post(`/variables/query`, payload);
 
 		return {
 			statusCode: 200,

@@ -32,6 +32,7 @@ const { Option } = Select;
 
 interface VariableItemProps {
 	variableData: IDashboardVariable;
+	existingVariables: Record<string, IDashboardVariable>;
 	onCancel: () => void;
 	onSave: (name: string, arg0: IDashboardVariable, arg1: string) => void;
 	validateName: (arg0: string) => boolean;
@@ -39,6 +40,7 @@ interface VariableItemProps {
 }
 function VariableItem({
 	variableData,
+	existingVariables,
 	onCancel,
 	onSave,
 	validateName,
@@ -134,6 +136,7 @@ function VariableItem({
 		try {
 			const variableQueryResponse = await query({
 				query: variableQueryValue,
+				variables: existingVariables,
 			});
 			setPreviewLoading(false);
 			if (variableQueryResponse.error) {
