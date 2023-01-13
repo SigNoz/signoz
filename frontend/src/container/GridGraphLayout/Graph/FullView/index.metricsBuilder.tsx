@@ -1,4 +1,4 @@
-import { Button, Typography } from 'antd';
+import { Button } from 'antd';
 import { GraphOnClickHandler } from 'components/Graph';
 import Spinner from 'components/Spinner';
 import TimePreference from 'components/TimePreferenceDropDown';
@@ -19,7 +19,7 @@ import { Widgets } from 'types/api/dashboard/getAll';
 import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
 import { GlobalReducer } from 'types/reducer/globalTime';
 
-import { NotFoundContainer, TimeContainer } from './styles';
+import { TimeContainer } from './styles';
 
 function FullView({
 	widget,
@@ -57,19 +57,10 @@ function FullView({
 			}),
 	);
 
-	const isError = response?.error;
 	const isLoading = response.isLoading === true;
-	const errorMessage = isError instanceof Error ? isError?.message : '';
 
 	if (isLoading) {
 		return <Spinner height="100%" size="large" tip="Loading..." />;
-	}
-	if (isError || !response?.data?.payload?.data?.result) {
-		return (
-			<NotFoundContainer>
-				<Typography>{errorMessage}</Typography>
-			</NotFoundContainer>
-		);
 	}
 
 	return (
