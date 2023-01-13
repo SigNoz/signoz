@@ -112,6 +112,7 @@ export const getTreeLevelsCount = (tree: ITraceTree): number => {
 	return levels;
 };
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const formUrlParams = (params: Record<string, any>): string => {
 	let urlParams = '';
 	Object.entries(params).forEach(([key, value], index) => {
