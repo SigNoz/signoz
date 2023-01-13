@@ -68,7 +68,7 @@ function SearchFilter({
 	);
 
 	const handleSearch = useCallback(
-		(customQuery) => {
+		(customQuery: string) => {
 			if (liveTail === 'PLAYING') {
 				dispatch({
 					type: TOGGLE_LIVE_TAIL,
