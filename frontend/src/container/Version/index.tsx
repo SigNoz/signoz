@@ -1,6 +1,6 @@
 import { WarningFilled } from '@ant-design/icons';
 import { Button, Card, Form, Space, Typography } from 'antd';
-import React, { useCallback } from 'react';
+import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
@@ -13,10 +13,6 @@ const { Title } = Typography;
 function Version(): JSX.Element {
 	const [form] = Form.useForm();
 	const { t } = useTranslation();
-
-	const onClickUpgradeHandler = useCallback((link: string) => {
-		window.open(link, '_blank');
-	}, []);
 
 	const {
 		currentVersion,
@@ -60,9 +56,8 @@ function Version(): JSX.Element {
 						placeholder={t('latest_version')}
 					/>
 					<Button
-						onClick={(): void =>
-							onClickUpgradeHandler('https://github.com/SigNoz/signoz/releases')
-						}
+						href="https://github.com/SigNoz/signoz/releases"
+						target="_blank"
 						type="link"
 					>
 						{t('release_notes')}
@@ -94,11 +89,8 @@ function Version(): JSX.Element {
 
 			{!isError && !isLatestVersion && (
 				<Button
-					onClick={(): void =>
-						onClickUpgradeHandler(
-							'https://signoz.io/docs/operate/docker-standalone/#upgrade',
-						)
-					}
+					href="https://signoz.io/docs/operate/docker-standalone/#upgrade"
+					target="_blank"
 				>
 					{t('read_how_to_upgrade')}
 				</Button>

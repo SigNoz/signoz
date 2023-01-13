@@ -1,10 +1,10 @@
 import { CaretDownFilled, CaretRightFilled } from '@ant-design/icons';
-import { Col } from 'antd';
+import { Col, Typography } from 'antd';
 import { StyledCol, StyledRow } from 'components/Styled';
 import { IIntervalUnit } from 'container/TraceDetail/utils';
-import useThemeMode from 'hooks/useThemeMode';
+import { useIsDarkMode } from 'hooks/useDarkMode';
 import { SPAN_DETAILS_LEFT_COL_WIDTH } from 'pages/TraceDetail/constants';
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { ITraceTree } from 'types/api/trace/getTraceItem';
 
 import { ITraceMetaData } from '..';
@@ -19,6 +19,7 @@ import {
 	styles,
 	Wrapper,
 } from './styles';
+import { getIconStyles } from './utils';
 
 function Trace(props: TraceProps): JSX.Element {
 	const {
@@ -42,7 +43,8 @@ function Trace(props: TraceProps): JSX.Element {
 		isMissing,
 	} = props;
 
-	const { isDarkMode } = useThemeMode();
+	const isDarkMode = useIsDarkMode();
+
 	const [isOpen, setOpen] = useState<boolean>(activeSpanPath[level] === id);
 
 	const localTreeExpandInteraction = useRef<boolean | 0>(0); // Boolean is for the state of the expansion whereas the number i.e. 0 is for skipping the user interaction.
@@ -111,6 +113,18 @@ function Trace(props: TraceProps): JSX.Element {
 	const width = (value * 1e2) / (globalSpread * 1e6);
 	const panelWidth = SPAN_DETAILS_LEFT_COL_WIDTH - level * (16 + 1) - 48;
 
+	const iconStyles = useMemo(() => getIconStyles(isDarkMode), [isDarkMode]);
+
+	const icon = useMemo(
+		() =>
+			isOpen ? (
+				<CaretDownFilled style={iconStyles} />
+			) : (
+				<CaretRightFilled style={iconStyles} />
+			),
+		[isOpen, iconStyles],
+	);
+
 	return (
 		<Wrapper
 			onMouseEnter={onMouseEnterHandler}
@@ -136,10 +150,8 @@ function Trace(props: TraceProps): JSX.Element {
 									isDarkMode={isDarkMode}
 									onClick={onClickTreeExpansion}
 								>
-									{totalSpans}
-									<CaretContainer>
-										{isOpen ? <CaretDownFilled /> : <CaretRightFilled />}
-									</CaretContainer>
+									<Typography>{totalSpans}</Typography>
+									<CaretContainer>{icon}</CaretContainer>
 								</CardComponent>
 							)}
 						</Col>

@@ -106,6 +106,11 @@ const (
 	RATE_AVG
 	RATE_MAX
 	RATE_MIN
+	HIST_QUANTILE_50
+	HIST_QUANTILE_75
+	HIST_QUANTILE_90
+	HIST_QUANTILE_95
+	HIST_QUANTILE_99
 )
 
 type DataSource int
@@ -296,17 +301,21 @@ type GetTTLParams struct {
 }
 
 type ListErrorsParams struct {
-	Start      *time.Time
-	End        *time.Time
-	Limit      int64
-	OrderParam string
-	Order      string
-	Offset     int64
+	Start         *time.Time
+	End           *time.Time
+	Limit         int64
+	OrderParam    string
+	Order         string
+	Offset        int64
+	ServiceName   string
+	ExceptionType string
 }
 
 type CountErrorsParams struct {
-	Start *time.Time
-	End   *time.Time
+	Start         *time.Time
+	End           *time.Time
+	ServiceName   string
+	ExceptionType string
 }
 
 type GetErrorParams struct {

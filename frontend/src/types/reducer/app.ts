@@ -15,7 +15,6 @@ export interface User {
 }
 
 export default interface AppReducer {
-	isDarkMode: boolean;
 	isLoggedIn: boolean;
 	isSideBarCollapsed: boolean;
 	currentVersion: string;

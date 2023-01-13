@@ -1,10 +1,11 @@
-import { Button, notification, Row } from 'antd';
+import { notification } from 'antd';
 import { flatten } from 'lodash-es';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
 import { ILogsReducer } from 'types/reducer/logs';
 
+import { SearchFieldsActionBar } from './ActionBar';
 import QueryBuilder from './QueryBuilder/QueryBuilder';
 import Suggestions from './Suggestions';
 import {
@@ -36,7 +37,14 @@ function SearchFields({
 	const keyPrefixRef = useRef(hashCode(JSON.stringify(fieldsQuery)));
 
 	useEffect(() => {
-		setFieldsQuery(createParsedQueryStructure([...parsedQuery] as never[]));
+		const updatedFieldsQuery = createParsedQueryStructure([
+			...parsedQuery,
+		] as never[]);
+		setFieldsQuery(updatedFieldsQuery);
+		const incomingHashCode = hashCode(JSON.stringify(updatedFieldsQuery));
+		if (incomingHashCode !== keyPrefixRef.current) {
+			keyPrefixRef.current = incomingHashCode;
+		}
 	}, [parsedQuery]);
 
 	const addSuggestedField = useCallback(
@@ -61,24 +69,26 @@ function SearchFields({
 		[fieldsQuery, setFieldsQuery],
 	);
 
-	const applyUpdate = useCallback(
-		(e): void => {
-			e.preventDefault();
-			const flatParsedQuery = flatten(fieldsQuery);
+	const applyUpdate = useCallback((): void => {
+		const flatParsedQuery = flatten(fieldsQuery);
 
-			if (!fieldsQueryIsvalid(flatParsedQuery)) {
-				notification.error({
-					message: 'Please enter a valid criteria for each of the selected fields',
-				});
-				return;
-			}
+		if (!fieldsQueryIsvalid(flatParsedQuery)) {
+			notification.error({
+				message: 'Please enter a valid criteria for each of the selected fields',
+			});
+			return;
+		}
 
-			keyPrefixRef.current = hashCode(JSON.stringify(flatParsedQuery));
-			updateParsedQuery(flatParsedQuery);
-			onDropDownToggleHandler(false)();
-		},
-		[onDropDownToggleHandler, fieldsQuery, updateParsedQuery],
-	);
+		keyPrefixRef.current = hashCode(JSON.stringify(flatParsedQuery));
+		updateParsedQuery(flatParsedQuery);
+		onDropDownToggleHandler(false)();
+	}, [onDropDownToggleHandler, fieldsQuery, updateParsedQuery]);
+
+	const clearFilters = useCallback((): void => {
+		keyPrefixRef.current = hashCode(JSON.stringify([]));
+		updateParsedQuery([]);
+		onDropDownToggleHandler(false)();
+	}, [onDropDownToggleHandler, updateParsedQuery]);
 
 	return (
 		<>
@@ -89,11 +99,11 @@ function SearchFields({
 				fieldsQuery={fieldsQuery}
 				setFieldsQuery={setFieldsQuery}
 			/>
-			<Row style={{ justifyContent: 'flex-end', paddingRight: '2.4rem' }}>
-				<Button type="primary" onClick={applyUpdate}>
-					Apply
-				</Button>
-			</Row>
+			<SearchFieldsActionBar
+				applyUpdate={applyUpdate}
+				clearFilters={clearFilters}
+				fieldsQuery={fieldsQuery}
+			/>
 			<Suggestions applySuggestion={addSuggestedField} />
 		</>
 	);
