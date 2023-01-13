@@ -1,9 +1,10 @@
-import { Chart, ChartEvent, ChartTypeRegistry, Plugin } from 'chart.js';
+import { Chart, ChartTypeRegistry, Plugin } from 'chart.js';
 import * as ChartHelpers from 'chart.js/helpers';
 
-export const dragSelectPluginId = 'drag-select-plugin';
+// utils
+import { ChartEventHandler, mergeDefaultOptions } from './utils';
 
-type ChartEventHandler = (ev: ChartEvent | MouseEvent) => void;
+export const dragSelectPluginId = 'drag-select-plugin';
 
 type ChartDragHandlers = {
 	mousedown: ChartEventHandler;
@@ -19,22 +20,6 @@ export type DragSelectPluginOptions = {
 const defaultDragSelectPluginOptions: Required<DragSelectPluginOptions> = {
 	color: 'rgba(0, 0, 0, 0.5)',
 	onSelect: () => {},
-};
-
-const mergeDefaultOptions = (
-	options: DragSelectPluginOptions,
-): Required<DragSelectPluginOptions> => {
-	const sanitizedOptions = { ...options };
-	Object.keys(options).forEach((key) => {
-		if (sanitizedOptions[key as keyof DragSelectPluginOptions] === undefined) {
-			delete sanitizedOptions[key as keyof DragSelectPluginOptions];
-		}
-	});
-
-	return {
-		...defaultDragSelectPluginOptions,
-		...sanitizedOptions,
-	};
 };
 
 function createMousedownHandler(
@@ -193,6 +178,7 @@ export const createDragSelectPlugin = (): Plugin<
 	DragSelectPluginOptions
 > => {
 	const dragData = new DragSelectData();
+	let pluginOptions: Required<DragSelectPluginOptions>;
 
 	const handlers: ChartDragHandlers = {
 		mousedown: () => {},
@@ -206,7 +192,10 @@ export const createDragSelectPlugin = (): Plugin<
 	> = {
 		id: dragSelectPluginId,
 		start: (chart: Chart, _, passedOptions) => {
-			const options = mergeDefaultOptions(passedOptions);
+			pluginOptions = mergeDefaultOptions(
+				passedOptions,
+				defaultDragSelectPluginOptions,
+			);
 
 			const { canvas } = chart;
 
@@ -214,7 +203,7 @@ export const createDragSelectPlugin = (): Plugin<
 
 			const mousedownHandler = createMousedownHandler(chart, dragData);
 			const mousemoveHandler = createMousemoveHandler(chart, dragData);
-			const mouseupHandler = createMouseupHandler(chart, options, dragData);
+			const mouseupHandler = createMouseupHandler(chart, pluginOptions, dragData);
 
 			canvas.addEventListener('mousedown', mousedownHandler);
 			canvas.addEventListener('mousemove', mousemoveHandler);
@@ -224,7 +213,7 @@ export const createDragSelectPlugin = (): Plugin<
 			handlers.mousemove = mousemoveHandler;
 			handlers.mouseup = mouseupHandler;
 		},
-		stop: (chart: Chart) => {
+		beforeDestroy: (chart: Chart) => {
 			const { canvas } = chart;
 
 			if (!canvas) {
@@ -235,9 +224,7 @@ export const createDragSelectPlugin = (): Plugin<
 			canvas.removeEventListener('mousemove', handlers.mousemove);
 			canvas.removeEventListener('mouseup', handlers.mouseup);
 		},
-		afterDatasetsDraw: (chart: Chart, _, passedOptions) => {
-			const options = mergeDefaultOptions(passedOptions);
-
+		afterDatasetsDraw: (chart: Chart) => {
 			const {
 				startRelativePixelPositionX,
 				endRelativePixelPositionX,
@@ -256,9 +243,8 @@ export const createDragSelectPlugin = (): Plugin<
 				const top = chart.chartArea.top - 5;
 				const bottom = chart.chartArea.bottom + 5;
 
-				/* eslint-disable no-param-reassign */
-				chart.ctx.fillStyle = options.color;
-				/* eslint-enable no-param-reassign */
+				/* eslint-disable-next-line no-param-reassign */
+				chart.ctx.fillStyle = pluginOptions.color;
 				chart.ctx.fillRect(left, top, right - left, bottom - top);
 			}
 		},

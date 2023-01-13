@@ -4,13 +4,13 @@ import * as ChartHelpers from 'chart.js/helpers';
 // utils
 import { ChartEventHandler, mergeDefaultOptions } from './utils';
 
+export const intersectionCursorPluginId = 'intersection-cursor-plugin';
+
 export type IntersectionCursorPluginOptions = {
 	color?: string;
 	dashSize?: number;
 	gapSize?: number;
 };
-
-export const intersectionCursorPluginId = 'intersection-cursor-plugin';
 
 export const defaultIntersectionCursorPluginOptions: Required<IntersectionCursorPluginOptions> = {
 	color: 'white',
