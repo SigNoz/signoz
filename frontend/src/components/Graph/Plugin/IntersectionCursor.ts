@@ -139,7 +139,6 @@ export const createIntersectionCursorPlugin = (): Plugin<
 				chart.ctx.moveTo(positionX, top);
 				chart.ctx.lineTo(positionX, bottom);
 				chart.ctx.stroke();
-				chart.update('none');
 			}
 		},
 	};
