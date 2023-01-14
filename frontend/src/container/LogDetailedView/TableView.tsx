@@ -45,7 +45,7 @@ function TableView({ logData }: TableViewProps): JSX.Element | null {
 	const columns = [
 		{
 			title: 'Action',
-			width: 75,
+			width: 100,
 			render: (fieldData: Record<string, string>): JSX.Element | null => {
 				const fieldKey = fieldData.field.split('.').slice(-1);
 				if (!RESTRICTED_FIELDS.includes(fieldKey[0])) {

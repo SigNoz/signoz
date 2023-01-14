@@ -51,9 +51,12 @@ function EditMembersDetails({
 		}
 	}, [state.error, state.value, t]);
 
-	const onPasswordChangeHandler = useCallback((event) => {
-		setPasswordLink(event.target.value);
-	}, []);
+	const onPasswordChangeHandler: React.ChangeEventHandler<HTMLInputElement> = useCallback(
+		(event) => {
+			setPasswordLink(event.target.value);
+		},
+		[],
+	);
 
 	const onGeneratePasswordHandler = async (): Promise<void> => {
 		try {
