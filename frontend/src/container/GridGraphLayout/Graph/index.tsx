@@ -26,7 +26,7 @@ import { LayoutProps } from '..';
 import EmptyWidget from '../EmptyWidget';
 import WidgetHeader from '../WidgetHeader';
 import FullView from './FullView/index.metricsBuilder';
-import { ErrorContainer, FullViewContainer, Modal } from './styles';
+import { ErrorContainer, FullViewContainer, Modal, HeaderLoading } from './styles';
 
 function GridCardGraph({
 	widget,
@@ -236,7 +236,14 @@ function GridCardGraph({
 		(state.loading === true || state.payload === undefined) &&
 		!isEmptyLayout
 	) {
-		return <Spinner height="20vh" tip="Loading..." />;
+		return (
+			<>
+				<HeaderLoading>
+					<Typography.Text ellipsis>{widget?.title}</Typography.Text>
+				</HeaderLoading>
+				<Spinner height="20vh" tip="Loading..." />
+			</>
+		);
 	}
 
 	return (
