@@ -71,22 +71,5 @@ func ValidatePassword(password string) error {
 	if len(password) < minimumPasswordLength {
 		return errors.Errorf("Password should be atleast %d characters.", minimumPasswordLength)
 	}
-
-	// num := `[0-9]{1}`
-	// lower := `[a-z]{1}`
-	// upper := `[A-Z]{1}`
-	// symbol := `[!@#$&*]{1}`
-	// if b, err := regexp.MatchString(num, password); !b || err != nil {
-	// 	return fmt.Errorf("password should have atleast one number")
-	// }
-	// if b, err := regexp.MatchString(lower, password); !b || err != nil {
-	// 	return fmt.Errorf("password should have atleast one lower case letter")
-	// }
-	// if b, err := regexp.MatchString(upper, password); !b || err != nil {
-	// 	return fmt.Errorf("password should have atleast one upper case letter")
-	// }
-	// if b, err := regexp.MatchString(symbol, password); !b || err != nil {
-	// 	return fmt.Errorf("password should have atleast one special character from !@#$&* ")
-	// }
 	return nil
 }
