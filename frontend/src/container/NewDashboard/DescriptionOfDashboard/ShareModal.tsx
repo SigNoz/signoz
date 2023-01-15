@@ -51,6 +51,16 @@ function ShareModal({
 		}
 	}, [state.error, state.value, t]);
 
+	const cleanedQueryData = selectedData = {...selectedData, widgets: selectedData.widgets?.map((widget) => ({
+				...widget,
+				queryData: {
+					...widget.queryData,
+					data: {
+						queryData: [],
+					},
+				},
+			}))}
+
 	const GetFooterComponent = useMemo(() => {
 		if (!isViewJSON) {
 			return (
@@ -66,7 +76,7 @@ function ShareModal({
 					<Button
 						type="primary"
 						onClick={(): void => {
-							downloadObjectAsJson(selectedData, selectedData.title);
+							downloadObjectAsJson(cleanedQueryData, selectedData.title);
 						}}
 					>
 						{t('download_json')}
