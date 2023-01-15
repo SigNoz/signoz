@@ -9,16 +9,12 @@ import LogsTable from 'container/LogsTable';
 import useMountedState from 'hooks/useMountedState';
 import useUrlQuery from 'hooks/useUrlQuery';
 import React, { memo, useEffect } from 'react';
-import { connect, useDispatch } from 'react-redux';
-import { bindActionCreators, Dispatch } from 'redux';
-import { ThunkDispatch } from 'redux-thunk';
-import { GetLogsFields } from 'store/actions/logs/getFields';
-import AppActions from 'types/actions';
+import { useDispatch } from 'react-redux';
 import { SET_SEARCH_QUERY_STRING } from 'types/actions/logs';
 
 import SpaceContainer from './styles';
 
-function Logs({ getLogsFields }: LogsProps): JSX.Element {
+function Logs(): JSX.Element {
 	const getMountedState = useMountedState();
 
 	const urlQuery = useUrlQuery();
@@ -34,10 +30,6 @@ function Logs({ getLogsFields }: LogsProps): JSX.Element {
 			});
 		}
 	}, [dispatch, getMountedState, urlQuery]);
-
-	useEffect(() => {
-		getLogsFields();
-	}, [getLogsFields]);
 
 	return (
 		<>
@@ -63,16 +55,4 @@ function Logs({ getLogsFields }: LogsProps): JSX.Element {
 	);
 }
 
-type LogsProps = DispatchProps;
-
-interface DispatchProps {
-	getLogsFields: () => (dispatch: Dispatch<AppActions>) => void;
-}
-
-const mapDispatchToProps = (
-	dispatch: ThunkDispatch<unknown, unknown, AppActions>,
-): DispatchProps => ({
-	getLogsFields: bindActionCreators(GetLogsFields, dispatch),
-});
-
-export default connect(null, mapDispatchToProps)(memo(Logs));
+export default memo(Logs);

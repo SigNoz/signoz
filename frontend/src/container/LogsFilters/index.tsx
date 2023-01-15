@@ -1,4 +1,3 @@
-/* eslint-disable react/no-array-index-key */
 import { red } from '@ant-design/colors';
 import { CloseOutlined, PlusCircleFilled } from '@ant-design/icons';
 import { Input } from 'antd';
@@ -7,21 +6,16 @@ import RemoveSelectedField from 'api/logs/RemoveFromSelectedField';
 import CategoryHeading from 'components/Logs/CategoryHeading';
 import { fieldSearchFilter } from 'lib/logs/fieldSearch';
 import React, { memo, useState } from 'react';
-import { connect, useSelector } from 'react-redux';
-import { bindActionCreators, Dispatch } from 'redux';
-import { ThunkDispatch } from 'redux-thunk';
-import { GetLogsFields } from 'store/actions/logs/getFields';
+import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
-import AppActions from 'types/actions';
 import { IInterestingFields, ISelectedFields } from 'types/api/logs/fields';
 import { ILogsReducer } from 'types/reducer/logs';
 
+import { RESTRICTED_SELECTED_FIELDS } from './config';
 import { FieldItem } from './FieldItem';
 import { CategoryContainer, Container, FieldContainer } from './styles';
 
-const RESTRICTED_SELECTED_FIELDS = ['timestamp', 'id'];
-
-function LogsFilters({ getLogsFields }: LogsFiltersProps): JSX.Element {
+function LogsFilters(): JSX.Element {
 	const {
 		fields: { interesting, selected },
 	} = useSelector<AppState, ILogsReducer>((state) => state.logs);
@@ -52,7 +46,7 @@ function LogsFilters({ getLogsFields }: LogsFiltersProps): JSX.Element {
 			...fieldData,
 			selected: true,
 		});
-		getLogsFields();
+		// getLogsFields();
 
 		setInterestingFieldLoading(
 			interestingFieldLoading.filter((e) => e !== fieldIndex),
@@ -75,7 +69,7 @@ function LogsFilters({ getLogsFields }: LogsFiltersProps): JSX.Element {
 			selected: false,
 		});
 
-		getLogsFields();
+		// getLogsFields();
 
 		setSelectedFieldLoading(
 			interestingFieldLoading.filter((e) => e !== fieldIndex),
@@ -98,7 +92,7 @@ function LogsFilters({ getLogsFields }: LogsFiltersProps): JSX.Element {
 						.filter((field) => fieldSearchFilter(field.name, filterValuesInput))
 						.map((field, idx) => (
 							<FieldItem
-								key={`${JSON.stringify(field)}-${idx}`}
+								key={`${JSON.stringify(field)}`}
 								name={field.name}
 								fieldData={field as never}
 								fieldIndex={idx}
@@ -120,7 +114,7 @@ function LogsFilters({ getLogsFields }: LogsFiltersProps): JSX.Element {
 						.filter((field) => fieldSearchFilter(field.name, filterValuesInput))
 						.map((field, idx) => (
 							<FieldItem
-								key={`${JSON.stringify(field)}-${idx}`}
+								key={`${JSON.stringify(field)}`}
 								name={field.name}
 								fieldData={field as never}
 								fieldIndex={idx}
@@ -132,21 +126,8 @@ function LogsFilters({ getLogsFields }: LogsFiltersProps): JSX.Element {
 						))}
 				</FieldContainer>
 			</CategoryContainer>
-			{/* <ExtractField>Extract Fields</ExtractField> */}
 		</Container>
 	);
 }
 
-interface DispatchProps {
-	getLogsFields: () => (dispatch: Dispatch<AppActions>) => void;
-}
-
-const mapDispatchToProps = (
-	dispatch: ThunkDispatch<unknown, unknown, AppActions>,
-): DispatchProps => ({
-	getLogsFields: bindActionCreators(GetLogsFields, dispatch),
-});
-
-type LogsFiltersProps = DispatchProps;
-
-export default connect(null, mapDispatchToProps)(memo(LogsFilters));
+export default memo(LogsFilters);

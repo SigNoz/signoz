@@ -12,6 +12,7 @@ import React, {
 import { connect, useDispatch, useSelector } from 'react-redux';
 import { bindActionCreators, Dispatch } from 'redux';
 import { ThunkDispatch } from 'redux-thunk';
+import { GetLogsFields } from 'store/actions/logs/getFields';
 import { getLogs } from 'store/actions/logs/getLogs';
 import { getLogsAggregate } from 'store/actions/logs/getLogsAggregate';
 import { AppState } from 'store/reducers';
@@ -32,6 +33,7 @@ import { useSearchParser } from './useSearchParser';
 function SearchFilter({
 	getLogs,
 	getLogsAggregate,
+	getLogsFields,
 }: SearchFilterProps): JSX.Element {
 	const {
 		updateParsedQuery,
@@ -69,6 +71,8 @@ function SearchFilter({
 
 	const handleSearch = useCallback(
 		(customQuery: string) => {
+			getLogsFields();
+
 			if (liveTail === 'PLAYING') {
 				dispatch({
 					type: TOGGLE_LIVE_TAIL,
@@ -120,6 +124,7 @@ function SearchFilter({
 			liveTail,
 			logLinesPerPage,
 			globalTime,
+			getLogsFields,
 		],
 	);
 
@@ -195,6 +200,7 @@ function SearchFilter({
 interface DispatchProps {
 	getLogs: typeof getLogs;
 	getLogsAggregate: typeof getLogsAggregate;
+	getLogsFields: typeof GetLogsFields;
 }
 
 type SearchFilterProps = DispatchProps;
@@ -204,6 +210,7 @@ const mapDispatchToProps = (
 ): DispatchProps => ({
 	getLogs: bindActionCreators(getLogs, dispatch),
 	getLogsAggregate: bindActionCreators(getLogsAggregate, dispatch),
+	getLogsFields: bindActionCreators(GetLogsFields, dispatch),
 });
 
 export default connect(null, mapDispatchToProps)(SearchFilter);
