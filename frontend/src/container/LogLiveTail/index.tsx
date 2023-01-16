@@ -55,22 +55,25 @@ function LogLiveTail(): JSX.Element {
 
 	const batchedEventsRef = useRef<Record<string, unknown>[]>([]);
 
-	// eslint-disable-next-line react-hooks/exhaustive-deps
-	const pushLiveLog = useCallback(
-		throttle(() => {
-			dispatch({
-				type: PUSH_LIVE_TAIL_EVENT,
-				payload: batchedEventsRef.current.reverse(),
-			});
-			batchedEventsRef.current = [];
-		}, 1500),
-		[],
-	);
+	const pushLiveLog = useCallback(() => {
+		dispatch({
+			type: PUSH_LIVE_TAIL_EVENT,
+			payload: batchedEventsRef.current.reverse(),
+		});
+		batchedEventsRef.current = [];
+	}, [dispatch]);
 
-	const batchLiveLog = (e: { data: string }): void => {
-		batchedEventsRef.current.push(JSON.parse(e.data as string) as never);
-		pushLiveLog();
-	};
+	const pushLiveLogThrottled = useMemo(() => throttle(pushLiveLog, 1000), [
+		pushLiveLog,
+	]);
+
+	const batchLiveLog = useCallback(
+		(e: { data: string }): void => {
+			batchedEventsRef.current.push(JSON.parse(e.data as string) as never);
+			pushLiveLogThrottled();
+		},
+		[pushLiveLogThrottled],
+	);
 
 	// This ref depicts thats whether the live tail is played from paused state or not.
 	const liveTailSourceRef = useRef<EventSource | null>(null);
