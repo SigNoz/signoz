@@ -1,6 +1,6 @@
 import { ColumnsType } from 'antd/lib/table';
 import React, { useState } from 'react';
-import { ResizeCallbackData } from 'components/ResizeTableWrapper/react-resizable';
+import { ResizeCallbackData } from 'react-resizable';
 
 function ResizeTableWrapper(props: ResizeTableWrapperProps): JSX.Element {
 	const { columns, children } = props;

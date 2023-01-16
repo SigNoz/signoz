@@ -1,8 +1,5 @@
 import React from 'react';
-import {
-	Resizable,
-	ResizeCallbackData,
-} from 'components/ResizeTableWrapper/react-resizable';
+import { Resizable, ResizeCallbackData } from 'react-resizable';
 
 // # Styles import
 import { SpanStyle } from './styles';
