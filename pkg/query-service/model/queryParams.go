@@ -131,6 +131,11 @@ type QueryRangeParamsV2 struct {
 	Variables            map[string]interface{} `json:"variables,omitempty"`
 }
 
+type DashboardVars struct {
+	Query     string                 `json:"query"`
+	Variables map[string]interface{} `json:"variables,omitempty"`
+}
+
 // Metric auto complete types
 type metricTags map[string]string
 
