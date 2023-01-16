@@ -203,16 +203,25 @@ function Application({ getWidgetQueryBuilder }: DashboardProps): JSX.Element {
 								onClickHandler={(event, element, chart, data): void => {
 									onClickHandler(event, element, chart, data, 'Rate');
 								}}
-								widget={getWidgetQueryBuilder({
-									queryType: 1,
-									promQL: [],
-									metricsBuilder: operationPerSec({
+								widget={useMemo(
+									() =>
+										getWidgetQueryBuilder({
+											queryType: 1,
+											promQL: [],
+											metricsBuilder: operationPerSec({
+												servicename,
+												tagFilterItems,
+												topLevelOperations,
+											}),
+											clickHouse: [],
+										}),
+									[
+										getWidgetQueryBuilder,
 										servicename,
-										tagFilterItems,
 										topLevelOperations,
-									}),
-									clickHouse: [],
-								})}
+										tagFilterItems,
+									],
+								)}
 								yAxisUnit="ops"
 							/>
 						</GraphContainer>
@@ -241,16 +250,25 @@ function Application({ getWidgetQueryBuilder }: DashboardProps): JSX.Element {
 								onClickHandler={(ChartEvent, activeElements, chart, data): void => {
 									onClickHandler(ChartEvent, activeElements, chart, data, 'Error');
 								}}
-								widget={getWidgetQueryBuilder({
-									queryType: 1,
-									promQL: [],
-									metricsBuilder: errorPercentage({
+								widget={useMemo(
+									() =>
+										getWidgetQueryBuilder({
+											queryType: 1,
+											promQL: [],
+											metricsBuilder: errorPercentage({
+												servicename,
+												topLevelOperations,
+												tagFilterItems,
+											}),
+											clickHouse: [],
+										}),
+									[
 										servicename,
 										topLevelOperations,
 										tagFilterItems,
-									}),
-									clickHouse: [],
-								})}
+										getWidgetQueryBuilder,
+									],
+								)}
 								yAxisUnit="%"
 							/>
 						</GraphContainer>
