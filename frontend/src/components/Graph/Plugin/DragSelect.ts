@@ -28,7 +28,7 @@ export function createDragSelectPluginOptions(
 	onSelect?: (start: number, end: number) => void,
 	color?: string,
 ): DragSelectPluginOptions | false {
-	if (isEnabled) {
+	if (!isEnabled) {
 		return false;
 	}
 

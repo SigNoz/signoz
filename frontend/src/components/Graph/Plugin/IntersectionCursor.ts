@@ -24,7 +24,7 @@ export function createIntersectionCursorPluginOptions(
 	dashSize?: number,
 	gapSize?: number,
 ): IntersectionCursorPluginOptions | false {
-	if (isEnabled) {
+	if (!isEnabled) {
 		return false;
 	}
 
