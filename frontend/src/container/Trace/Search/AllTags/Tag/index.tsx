@@ -20,7 +20,7 @@ interface AllMenuProps {
 	supportedTypes: string[];
 }
 
-const AllMenu: AllMenuProps[] = [
+export const AllMenu: AllMenuProps[] = [
 	{
 		key: 'In',
 		value: 'IN',

@@ -1,4 +1,7 @@
+import { AllMenu } from 'container/Trace/Search/AllTags/Tag';
 import { TraceReducer } from 'types/reducer/trace';
+
+import { extractTagType } from './AllTags/Tag/utils';
 
 type Tags = TraceReducer['selectedTags'];
 
@@ -7,57 +10,78 @@ interface PayloadProps<T> {
 	payload: T;
 }
 
+function extractValues(
+	tagType: string,
+	filters: string[],
+	isError: boolean,
+): [number[], boolean[], string[], boolean] {
+	const StringValues: string[] = [];
+	const NumberValues: number[] = [];
+	const BoolValues: boolean[] = [];
+	let isErr = isError;
+	if (tagType === 'string') {
+		StringValues.push(...filters);
+	} else if (tagType === 'number') {
+		filters.forEach((element) => {
+			const num = Number(element);
+			isErr = Number.isNaN(num) ? true : isError;
+			NumberValues.push(num);
+		});
+	} else if (tagType === 'bool') {
+		filters.forEach((element) => {
+			if (element === 'true') {
+				BoolValues.push(true);
+			} else if (element === 'false') {
+				BoolValues.push(false);
+			} else {
+				isErr = true;
+			}
+		});
+	}
+	return [NumberValues, BoolValues, StringValues, isErr];
+}
+
 export const parseQueryToTags = (query: string): PayloadProps<Tags> => {
 	let isError = false;
-
+	console.log(query);
 	const noOfTags = query.split(' AND ');
 
 	const tags: Tags = noOfTags.map((filter) => {
-		const isInPresent = filter.includes('in');
-		const isNotInPresent = filter.includes('not in');
+		const splitBy = AllMenu.find((e) => filter.includes(` ${e.key} `))?.key || '';
 
-		if (!isNotInPresent && !isInPresent) {
-			isError = true;
-		}
+		const filteredTags = filter.split(splitBy).map((e) => e.trim());
 
-		const isPresentSplit = isInPresent ? 'in' : '';
+		const filterForTags = filteredTags[1];
 
-		const splitBy = isNotInPresent ? 'not in' : isPresentSplit;
-
-		if (splitBy.length === 0) {
-			isError = true;
-		}
-
-		const filteredtags = filter.split(splitBy).map((e) => e.trim());
-
-		if (filteredtags.length !== 2) {
-			isError = true;
-		}
-
-		const filterForTags = filteredtags[1];
-
-		if (!filterForTags) {
-			isError = true;
-		}
+		isError =
+			splitBy.length === 0 || filteredTags.length !== 2 || !filterForTags
+				? true
+				: isError;
 
 		const removingFirstAndLastBrackets = `${filterForTags?.slice(1, -1)}`;
 
-		const noofFilters = removingFirstAndLastBrackets
+		const filters = removingFirstAndLastBrackets
 			.split(',')
 			.map((e) => e.replaceAll(/"/g, ''));
 
-		noofFilters.forEach((e) => {
+		filters.forEach((e) => {
 			const firstChar = e.charAt(0);
 			const lastChar = e.charAt(e.length - 1);
-
-			if (firstChar === '"' && lastChar === '"') {
-				isError = true;
-			}
+			isError = firstChar === '"' && lastChar === '"' ? true : isError;
 		});
 
+		const tagType = extractTagType(filteredTags[0]);
+		const [NumberValues, BoolValues, StringValues, isErr] = extractValues(
+			tagType,
+			filters,
+			isError,
+		);
+		isError = isErr;
 		return {
-			Key: [filteredtags[0]],
-			Values: noofFilters,
+			Key: [filteredTags[0]],
+			StringValues,
+			NumberValues,
+			BoolValues,
 			Operator: splitBy as FlatArray<Tags, 1>['Operator'],
 		};
 	});

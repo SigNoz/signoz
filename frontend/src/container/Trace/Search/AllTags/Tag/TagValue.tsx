@@ -102,7 +102,7 @@ function TagValue(props: TagValueProps): JSX.Element {
 		<SelectComponent
 			// set options to the return value of options(data) if data is not undefined
 			options={getOptions(data)}
-			allowClear
+			mode="tags"
 			defaultOpen
 			showSearch
 			filterOption={(inputValue, option): boolean =>
