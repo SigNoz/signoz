@@ -15,13 +15,28 @@ type ChartDragHandlers = {
 
 export type DragSelectPluginOptions = {
 	color?: string;
-	onSelect: (startValueX: number, endValueX: number) => void;
+	onSelect?: (startValueX: number, endValueX: number) => void;
 };
 
 const defaultDragSelectPluginOptions: Required<DragSelectPluginOptions> = {
 	color: 'rgba(0, 0, 0, 0.5)',
 	onSelect: () => {},
 };
+
+export function createDragSelectPluginOptions(
+	isEnabled: boolean,
+	onSelect?: (start: number, end: number) => void,
+	color?: string,
+): DragSelectPluginOptions | false {
+	if (isEnabled) {
+		return false;
+	}
+
+	return {
+		onSelect,
+		color,
+	};
+}
 
 function createMousedownHandler(
 	chart: Chart,

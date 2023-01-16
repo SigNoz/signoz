@@ -18,6 +18,23 @@ export const defaultIntersectionCursorPluginOptions: Required<IntersectionCursor
 	gapSize: 3,
 };
 
+export function createIntersectionCursorPluginOptions(
+	isEnabled: boolean,
+	color?: string,
+	dashSize?: number,
+	gapSize?: number,
+): IntersectionCursorPluginOptions | false {
+	if (isEnabled) {
+		return false;
+	}
+
+	return {
+		color,
+		dashSize,
+		gapSize,
+	};
+}
+
 function createMousemoveHandler(
 	chart: Chart,
 	cursorData: IntersectionCursorData,

@@ -30,12 +30,14 @@ import { hasData } from './hasData';
 import { legend } from './Plugin';
 import {
 	createDragSelectPlugin,
+	createDragSelectPluginOptions,
 	dragSelectPluginId,
 	DragSelectPluginOptions,
 } from './Plugin/DragSelect';
 import { emptyGraph } from './Plugin/EmptyGraph';
 import {
 	createIntersectionCursorPlugin,
+	createIntersectionCursorPluginOptions,
 	intersectionCursorPluginId,
 	IntersectionCursorPluginOptions,
 } from './Plugin/IntersectionCursor';
@@ -103,12 +105,7 @@ function Graph({
 		}
 
 		if (chartRef.current !== null) {
-			const options: ChartOptions & {
-				plugins: {
-					[dragSelectPluginId]: DragSelectPluginOptions | false;
-					[intersectionCursorPluginId]: IntersectionCursorPluginOptions | false;
-				};
-			} = {
+			const options: CustomChartOptions = {
 				animation: {
 					duration: animate ? 200 : 0,
 				},
@@ -165,17 +162,15 @@ function Graph({
 							},
 						},
 					},
-					[dragSelectPluginId]: onDragSelect
-						? {
-								color: dragSelectColor,
-								onSelect: onDragSelect,
-						  }
-						: false,
-					[intersectionCursorPluginId]: onDragSelect
-						? {
-								color: currentTheme === 'dark' ? 'white' : 'black',
-						  }
-						: false,
+					[dragSelectPluginId]: createDragSelectPluginOptions(
+						!!onDragSelect,
+						onDragSelect,
+						dragSelectColor,
+					),
+					[intersectionCursorPluginId]: createIntersectionCursorPluginOptions(
+						!!onDragSelect,
+						currentTheme === 'dark' ? 'white' : 'black',
+					),
 				},
 				layout: {
 					padding: 0,
@@ -284,6 +279,13 @@ function Graph({
 		</div>
 	);
 }
+
+type CustomChartOptions = ChartOptions & {
+	plugins: {
+		[dragSelectPluginId]: DragSelectPluginOptions | false;
+		[intersectionCursorPluginId]: IntersectionCursorPluginOptions | false;
+	};
+};
 
 interface GraphProps {
 	animate?: boolean;
