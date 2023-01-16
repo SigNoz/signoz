@@ -41,8 +41,10 @@ function AllTags({
 			...tags,
 			{
 				Key: [],
-				Operator: 'in',
-				Values: [],
+				Operator: 'In',
+				StringValues: [],
+				NumberValues: [],
+				BoolValues: [],
 			},
 		]);
 	};

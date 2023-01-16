@@ -8,6 +8,7 @@ import { TraceReducer } from 'types/reducer/trace';
 import { Container, IconContainer, SelectComponent } from './styles';
 import TagsKey from './TagKey';
 import TagValue from './TagValue';
+import { extractTagType } from './utils';
 
 const { Option } = Select;
 
@@ -16,16 +17,79 @@ type Tags = FlatArray<TraceReducer['selectedTags'], 1>['Operator'];
 interface AllMenuProps {
 	key: Tags | '';
 	value: string;
+	supportedTypes: string[];
 }
 
 const AllMenu: AllMenuProps[] = [
 	{
-		key: 'in',
+		key: 'In',
 		value: 'IN',
+		supportedTypes: ['string'],
 	},
 	{
-		key: 'not in',
+		key: 'NotIn',
 		value: 'NOT IN',
+		supportedTypes: ['string'],
+	},
+	{
+		key: 'Equals',
+		value: 'EQUALS',
+		supportedTypes: ['string', 'number', 'boolean'],
+	},
+	{
+		key: 'NotEquals',
+		value: 'NOT EQUALS',
+		supportedTypes: ['string', 'number', 'boolean'],
+	},
+	{
+		key: 'Exists',
+		value: 'EXISTS',
+		supportedTypes: ['string', 'number', 'boolean'],
+	},
+	{
+		key: 'NotExists',
+		value: 'NOT EXISTS',
+		supportedTypes: ['string', 'number', 'boolean'],
+	},
+	{
+		key: 'GreaterThan',
+		value: 'GREATER THAN',
+		supportedTypes: ['number'],
+	},
+	{
+		key: 'LessThan',
+		value: 'LESS THAN',
+		supportedTypes: ['number'],
+	},
+	{
+		key: 'GreaterThanEquals',
+		value: 'GREATER THAN OR EQUALS',
+		supportedTypes: ['number'],
+	},
+	{
+		key: 'LessThanEquals',
+		value: 'LESS THAN OR EQUALS',
+		supportedTypes: ['number'],
+	},
+	{
+		key: 'StartsWith',
+		value: 'STARTS WITH',
+		supportedTypes: ['string'],
+	},
+	{
+		key: 'NotStartsWith',
+		value: 'NOT STARTS WITH',
+		supportedTypes: ['string'],
+	},
+	{
+		key: 'Contains',
+		value: 'CONTAINS',
+		supportedTypes: ['string'],
+	},
+	{
+		key: 'NotContains',
+		value: 'NOT CONTAINS',
+		supportedTypes: ['string'],
 	},
 ];
 
@@ -36,7 +100,9 @@ function SingleTags(props: AllTagsProps): JSX.Element {
 	const {
 		Key: selectedKey,
 		Operator: selectedOperator,
-		Values: selectedValues,
+		StringValues: selectedStringValues,
+		NumberValues: selectedNumberValues,
+		BoolValues: selectedBoolValues,
 	} = tag;
 
 	const onDeleteTagHandler = (index: number): void => {
@@ -49,7 +115,9 @@ function SingleTags(props: AllTagsProps): JSX.Element {
 				...traces.selectedTags.slice(0, index),
 				{
 					Key: selectedKey,
-					Values: selectedValues,
+					StringValues: selectedStringValues,
+					NumberValues: selectedNumberValues,
+					BoolValues: selectedBoolValues,
 					Operator: key as Tags,
 				},
 				...traces.selectedTags.slice(index + 1, traces.selectedTags.length),
@@ -68,11 +136,16 @@ function SingleTags(props: AllTagsProps): JSX.Element {
 				onChange={onChangeOperatorHandler}
 				value={AllMenu.find((e) => e.key === selectedOperator)?.value || ''}
 			>
-				{AllMenu.map((e) => (
-					<Option key={e.value} value={e.key}>
-						{e.value}
-					</Option>
-				))}
+				{
+					// filter out the operator that does not include supported type of the selected key
+					AllMenu.filter((e) =>
+						e?.supportedTypes?.includes(extractTagType(selectedKey[0])),
+					).map((e) => (
+						<Option key={e.value} value={e.key}>
+							{e.value}
+						</Option>
+					))
+				}
 			</SelectComponent>
 
 			{selectedKey[0] ? (

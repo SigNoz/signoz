@@ -70,16 +70,27 @@ export const parseQueryToTags = (query: string): PayloadProps<Tags> => {
 
 export const parseTagsToQuery = (tags: Tags): PayloadProps<string> => {
 	let isError = false;
-
 	const payload = tags
-		.map(({ Values, Key, Operator }) => {
+		.map(({ StringValues, NumberValues, BoolValues, Key, Operator }) => {
 			if (Key[0] === undefined) {
 				isError = true;
 			}
-
-			return `${Key[0]} ${Operator} (${Values.map((e) => {
-				return `"${e.replaceAll(/"/g, '')}"`;
-			}).join(',')})`;
+			if (StringValues.length > 0) {
+				return `${Key[0]} ${Operator} (${StringValues.map((e) => {
+					return `"${e.replaceAll(/"/g, '')}"`;
+				}).join(',')})`;
+			}
+			if (NumberValues.length > 0) {
+				return `${Key[0]} ${Operator} (${NumberValues.map((e) => {
+					return `"${e.toString().replaceAll(/"/g, '')}"`;
+				}).join(',')})`;
+			}
+			if (BoolValues.length > 0) {
+				return `${Key[0]} ${Operator} (${BoolValues.map((e) => {
+					return `"${e.toString().replaceAll(/"/g, '')}"`;
+				}).join(',')})`;
+			}
+			return '';
 		})
 		.join(' AND ');
 

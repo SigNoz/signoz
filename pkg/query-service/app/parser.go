@@ -7,6 +7,7 @@ import (
 	"math"
 	"net/http"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/gorilla/mux"
@@ -314,7 +315,11 @@ func parseFilteredSpansRequest(r *http.Request, aH *APIHandler) (*model.GetFilte
 			return nil, model.ErrFeatureUnavailable{Key: constants.TimestampSort}
 		}
 	}
-
+	tags, err := extractTagKeys(postData.Tags)
+	if err != nil {
+		return nil, err
+	}
+	postData.Tags = tags
 	return postData, nil
 }
 
@@ -387,15 +392,29 @@ func parseFilteredSpanAggregatesRequest(r *http.Request) (*model.GetFilteredSpan
 
 	postData.AggregationOption = aggregationOption
 	postData.Dimension = dimension
-	// tags, err := parseTagsV2("tags", r)
-	// if err != nil {
-	// 	return nil, err
-	// }
-	// if len(*tags) != 0 {
-	// 	params.Tags = *tags
-	// }
+	tags, err := extractTagKeys(postData.Tags)
+	if err != nil {
+		return nil, err
+	}
+	postData.Tags = tags
 
 	return postData, nil
+}
+
+func extractTagKeys(tags []model.TagQueryParam) ([]model.TagQueryParam, error) {
+	newTags := make([]model.TagQueryParam, 0)
+	if len(tags) != 0 {
+		for _, tag := range tags {
+			customStr := strings.Split(tag.Key, ".(")
+			if len(customStr) < 2 {
+				return nil, fmt.Errorf("TagKey param missing in query")
+			} else {
+				tag.Key = customStr[0]
+			}
+			newTags = append(newTags, tag)
+		}
+	}
+	return newTags, nil
 }
 
 func parseTagFilterRequest(r *http.Request) (*model.TagFilterParams, error) {

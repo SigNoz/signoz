@@ -6,6 +6,8 @@ import { AppState } from 'store/reducers';
 import { GlobalReducer } from 'types/reducer/globalTime';
 import { TraceReducer } from 'types/reducer/trace';
 
+import { extractTagFilters } from './utils';
+
 function TagsKey(props: TagsKeysProps): JSX.Element {
 	const [selectLoading, setSelectLoading] = useState<boolean>(false);
 	const globalTime = useSelector<AppState, GlobalReducer>(
@@ -40,9 +42,9 @@ function TagsKey(props: TagsKeysProps): JSX.Element {
 					]);
 				} else {
 					setOptions(
-						response.payload.map((e) => ({
-							value: e.tagKeys,
-							label: e.tagKeys,
+						extractTagFilters(response.payload).map((e) => ({
+							value: e,
+							label: e,
 						})),
 					);
 				}
@@ -71,7 +73,7 @@ function TagsKey(props: TagsKeysProps): JSX.Element {
 
 	return (
 		<AutoComplete
-			dropdownClassName="certain-category-search-dropdown"
+			popupClassName="certain-category-search-dropdown"
 			dropdownMatchSelectWidth={500}
 			style={{ width: '100%' }}
 			value={selectedKey}
@@ -92,13 +94,14 @@ function TagsKey(props: TagsKeysProps): JSX.Element {
 					options.find((option) => option.value === value)
 				) {
 					setSelectedKey(value);
-
 					setLocalSelectedTags((tags) => [
 						...tags.slice(0, index),
 						{
 							Key: [value],
 							Operator: tag.Operator,
-							Values: tag.Values,
+							StringValues: tag.StringValues,
+							NumberValues: tag.NumberValues,
+							BoolValues: tag.BoolValues,
 						},
 						...tags.slice(index + 1, tags.length),
 					]);

@@ -16,27 +16,23 @@ export const groupBy: Dropdown[] = [
 
 	{
 		displayValue: 'Operation',
-		key: 'operation',
+		key: 'name',
 	},
 	{
-		displayValue: 'HTTP url',
+		displayValue: 'HTTP URL',
 		key: 'httpUrl',
 	},
 	{
-		displayValue: 'HTTP method',
+		displayValue: 'HTTP Method',
 		key: 'httpMethod',
 	},
 	{
-		displayValue: 'HTTP host',
+		displayValue: 'HTTP Host',
 		key: 'httpHost',
 	},
 	{
-		displayValue: 'HTTP route',
+		displayValue: 'HTTP Route',
 		key: 'httpRoute',
-	},
-	{
-		displayValue: 'HTTP status code',
-		key: 'httpCode',
 	},
 	{
 		displayValue: 'RPC Method',
@@ -47,12 +43,16 @@ export const groupBy: Dropdown[] = [
 		key: 'responseStatusCode',
 	},
 	{
-		displayValue: 'Database name',
+		displayValue: 'Database Name',
 		key: 'dbName',
 	},
 	{
-		displayValue: 'Database operation',
+		displayValue: 'Database System',
 		key: 'dbSystem',
+	},
+	{
+		displayValue: 'Database Operation',
+		key: 'dbOperation',
 	},
 	{
 		displayValue: 'Messaging System',
