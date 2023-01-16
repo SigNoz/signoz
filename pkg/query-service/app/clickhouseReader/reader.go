@@ -1479,49 +1479,55 @@ func buildQueryWithTagParams(ctx context.Context, tags []model.TagQuery, query *
 			// type not supported error
 			return nil, &model.ApiError{Typ: model.ErrorBadData, Err: fmt.Errorf("type not supported")}
 		}
-		if item.GetOperator() == model.InOperator {
-			args = addInOperator(item, query, tagMapType, args)
-		} else if item.GetOperator() == model.NotInOperator {
-			args = addNotInOperator(item, query, tagMapType, args)
-		} else if item.GetOperator() == model.LessThanEqualOperator {
-			args = addLessThanEqualOperator(item, query, tagMapType, args)
-		} else if item.GetOperator() == model.GreaterThanEqualOperator {
-			args = addGreaterThanEqualOperator(item, query, tagMapType, args)
-		} else {
+		switch item.GetOperator() {
+		case model.EqualOperator:
+			args = addArithmeticOperator(item, query, tagMapType, args, "=")
+		case model.NotEqualOperator:
+			args = addArithmeticOperator(item, query, tagMapType, args, "!=")
+		case model.LessThanOperator:
+			args = addArithmeticOperator(item, query, tagMapType, args, "<")
+		case model.GreaterThanOperator:
+			args = addArithmeticOperator(item, query, tagMapType, args, ">")
+		case model.InOperator:
+			args = addInOperator(item, query, tagMapType, args, false)
+		case model.NotInOperator:
+			args = addInOperator(item, query, tagMapType, args, true)
+		case model.LessThanEqualOperator:
+			args = addArithmeticOperator(item, query, tagMapType, args, "<=")
+		case model.GreaterThanEqualOperator:
+			args = addArithmeticOperator(item, query, tagMapType, args, ">=")
+		case model.ContainsOperator:
+			args = addContainsOperator(item, query, tagMapType, args, false)
+		case model.NotContainsOperator:
+			args = addContainsOperator(item, query, tagMapType, args, true)
+		case model.StartsWithOperator:
+			args = addStartsWithOperator(item, query, tagMapType, args, false)
+		case model.NotStartsWithOperator:
+			args = addStartsWithOperator(item, query, tagMapType, args, true)
+		case model.ExistsOperator:
+			args = addExistsOperator(item, query, tagMapType, args, false)
+		case model.NotExistsOperator:
+			args = addExistsOperator(item, query, tagMapType, args, true)
+		default:
 			return nil, &model.ApiError{Typ: model.ErrorExec, Err: fmt.Errorf("Tag Operator %s not supported", item.GetOperator())}
 		}
 	}
 	return args, nil
 }
 
-func addNotInOperator(item model.TagQuery, query *string, tagMapType string, args []interface{}) []interface{} {
-	for i, value := range item.GetValues() {
-		tagKey := "notinTagKey" + String(5)
-		tagValue := "notinTagValue" + String(5)
-		if i == 0 && i == len(item.GetValues())-1 {
-			*query += fmt.Sprintf(" AND NOT %s[@%s] = @%s", tagMapType, tagKey, tagValue)
-		} else if i == 0 && i != len(item.GetValues())-1 {
-			*query += fmt.Sprintf(" AND NOT (%s[@%s] = @%s", tagMapType, tagKey, tagValue)
-		} else if i != 0 && i == len(item.GetValues())-1 {
-			*query += fmt.Sprintf(" OR %s[@%s] = @%s)", tagMapType, tagKey, tagValue)
-		} else {
-			*query += fmt.Sprintf(" OR %s[@%s] = @%s", tagMapType, tagKey, tagValue)
-		}
-		args = append(args, clickhouse.Named(tagKey, item.GetKey()))
-		args = append(args, clickhouse.Named(tagValue, value))
-	}
-	return args
-}
-
-func addInOperator(item model.TagQuery, query *string, tagMapType string, args []interface{}) []interface{} {
+func addInOperator(item model.TagQuery, query *string, tagMapType string, args []interface{}, not bool) []interface{} {
 	values := item.GetValues()
+	notStr := ""
+	if not {
+		notStr = "NOT"
+	}
 	for i, value := range values {
 		tagKey := "inTagKey" + String(5)
 		tagValue := "inTagValue" + String(5)
 		if i == 0 && i == len(item.GetValues())-1 {
-			*query += fmt.Sprintf(" AND %s[@%s] = @%s", tagMapType, tagKey, tagValue)
+			*query += fmt.Sprintf(" AND %s %s[@%s] = @%s", notStr, tagMapType, tagKey, tagValue)
 		} else if i == 0 && i != len(item.GetValues())-1 {
-			*query += fmt.Sprintf(" AND (%s[@%s] = @%s", tagMapType, tagKey, tagValue)
+			*query += fmt.Sprintf(" AND %s (%s[@%s] = @%s", notStr, tagMapType, tagKey, tagValue)
 		} else if i != 0 && i == len(item.GetValues())-1 {
 			*query += fmt.Sprintf(" OR %s[@%s] = @%s)", tagMapType, tagKey, tagValue)
 		} else {
@@ -1530,23 +1536,70 @@ func addInOperator(item model.TagQuery, query *string, tagMapType string, args [
 		args = append(args, clickhouse.Named(tagKey, item.GetKey()))
 		args = append(args, clickhouse.Named(tagValue, value))
 	}
-	fmt.Println(*query)
 	return args
 }
 
-func addLessThanEqualOperator(item model.TagQuery, query *string, tagMapType string, args []interface{}) []interface{} {
+func addContainsOperator(item model.TagQuery, query *string, tagMapType string, args []interface{}, not bool) []interface{} {
+	values := item.GetValues()
+	notStr := ""
+	if not {
+		notStr = "NOT"
+	}
+	for i, value := range values {
+		tagKey := "containsTagKey" + String(5)
+		tagValue := "containsTagValue" + String(5)
+		if i == 0 && i == len(item.GetValues())-1 {
+			*query += fmt.Sprintf(" AND %s %s[@%s] ILIKE @%s", notStr, tagMapType, tagKey, tagValue)
+		} else if i == 0 && i != len(item.GetValues())-1 {
+			*query += fmt.Sprintf(" AND %s (%s[@%s] ILIKE @%s", notStr, tagMapType, tagKey, tagValue)
+		} else if i != 0 && i == len(item.GetValues())-1 {
+			*query += fmt.Sprintf(" OR %s[@%s] ILIKE @%s)", tagMapType, tagKey, tagValue)
+		} else {
+			*query += fmt.Sprintf(" OR %s[@%s] ILIKE @%s", tagMapType, tagKey, tagValue)
+		}
+		args = append(args, clickhouse.Named(tagKey, item.GetKey()))
+		args = append(args, clickhouse.Named(tagValue, "%"+fmt.Sprintf("%v", value)+"%"))
+	}
+	return args
+}
+
+func addStartsWithOperator(item model.TagQuery, query *string, tagMapType string, args []interface{}, not bool) []interface{} {
+	values := item.GetValues()
+	notStr := ""
+	if not {
+		notStr = "NOT"
+	}
+	for i, value := range values {
+		tagKey := "startsWithTagKey" + String(5)
+		tagValue := "startsWithTagValue" + String(5)
+		if i == 0 && i == len(item.GetValues())-1 {
+			*query += fmt.Sprintf(" AND %s %s[@%s] ILIKE @%s", notStr, tagMapType, tagKey, tagValue)
+		} else if i == 0 && i != len(item.GetValues())-1 {
+			*query += fmt.Sprintf(" AND %s (%s[@%s] ILIKE @%s", notStr, tagMapType, tagKey, tagValue)
+		} else if i != 0 && i == len(item.GetValues())-1 {
+			*query += fmt.Sprintf(" OR %s[@%s] ILIKE @%s)", tagMapType, tagKey, tagValue)
+		} else {
+			*query += fmt.Sprintf(" OR %s[@%s] ILIKE @%s", tagMapType, tagKey, tagValue)
+		}
+		args = append(args, clickhouse.Named(tagKey, item.GetKey()))
+		args = append(args, clickhouse.Named(tagValue, "%"+fmt.Sprintf("%v", value)+"%"))
+	}
+	return args
+}
+
+func addArithmeticOperator(item model.TagQuery, query *string, tagMapType string, args []interface{}, operator string) []interface{} {
 	values := item.GetValues()
 	for i, value := range values {
-		tagKey := "lessThanEqualTagKey" + String(5)
-		tagValue := "lessThanEqualTagValue" + String(5)
+		tagKey := "arithmeticTagKey" + String(5)
+		tagValue := "arithmeticTagValue" + String(5)
 		if i == 0 && i == len(item.GetValues())-1 {
-			*query += fmt.Sprintf(" AND %s[@%s] <= @%s", tagMapType, tagKey, tagValue)
+			*query += fmt.Sprintf(" AND %s[@%s] %s @%s", tagMapType, tagKey, operator, tagValue)
 		} else if i == 0 && i != len(item.GetValues())-1 {
-			*query += fmt.Sprintf(" AND (%s[@%s] <= @%s", tagMapType, tagKey, tagValue)
+			*query += fmt.Sprintf(" AND (%s[@%s] %s @%s", tagMapType, tagKey, operator, tagValue)
 		} else if i != 0 && i == len(item.GetValues())-1 {
-			*query += fmt.Sprintf(" OR %s[@%s] <= @%s)", tagMapType, tagKey, tagValue)
+			*query += fmt.Sprintf(" OR %s[@%s] %s @%s)", tagMapType, tagKey, operator, tagValue)
 		} else {
-			*query += fmt.Sprintf(" OR %s[@%s] <= @%s", tagMapType, tagKey, tagValue)
+			*query += fmt.Sprintf(" OR %s[@%s] %s @%s", tagMapType, tagKey, operator, tagValue)
 		}
 		args = append(args, clickhouse.Named(tagKey, item.GetKey()))
 		args = append(args, clickhouse.Named(tagValue, value))
@@ -1554,22 +1607,24 @@ func addLessThanEqualOperator(item model.TagQuery, query *string, tagMapType str
 	return args
 }
 
-func addGreaterThanEqualOperator(item model.TagQuery, query *string, tagMapType string, args []interface{}) []interface{} {
+func addExistsOperator(item model.TagQuery, query *string, tagMapType string, args []interface{}, not bool) []interface{} {
 	values := item.GetValues()
-	for i, value := range values {
-		tagKey := "greaterThanEqualTagKey" + String(5)
-		tagValue := "greaterThanEqualTagValue" + String(5)
+	notStr := ""
+	if not {
+		notStr = "NOT"
+	}
+	for i := range values {
+		tagKey := "existsTagKey" + String(5)
 		if i == 0 && i == len(item.GetValues())-1 {
-			*query += fmt.Sprintf(" AND %s[@%s] >= @%s", tagMapType, tagKey, tagValue)
+			*query += fmt.Sprintf(" AND %s mapContains(%s, @%s)", notStr, tagMapType, tagKey)
 		} else if i == 0 && i != len(item.GetValues())-1 {
-			*query += fmt.Sprintf(" AND (%s[@%s] >= @%s", tagMapType, tagKey, tagValue)
+			*query += fmt.Sprintf(" AND %s (mapContains(%s, @%s)", notStr, tagMapType, tagKey)
 		} else if i != 0 && i == len(item.GetValues())-1 {
-			*query += fmt.Sprintf(" OR %s[@%s] >= @%s)", tagMapType, tagKey, tagValue)
+			*query += fmt.Sprintf(" OR mapContains(%s, @%s))", tagMapType, tagKey)
 		} else {
-			*query += fmt.Sprintf(" OR %s[@%s] >= @%s", tagMapType, tagKey, tagValue)
+			*query += fmt.Sprintf(" OR mapContains(%s, @%s)", tagMapType, tagKey)
 		}
 		args = append(args, clickhouse.Named(tagKey, item.GetKey()))
-		args = append(args, clickhouse.Named(tagValue, value))
 	}
 	return args
 }

@@ -208,6 +208,8 @@ const (
 	GreaterThanOperator      Operator = "GreaterThan"
 	LessThanEqualOperator    Operator = "LessThanEquals"
 	GreaterThanEqualOperator Operator = "GreaterThanEquals"
+	StartsWithOperator       Operator = "StartsWith"
+	NotStartsWithOperator    Operator = "NotStartsWith"
 )
 
 type TagQuery interface {
