@@ -1,6 +1,6 @@
 import { blue, grey, orange } from '@ant-design/colors';
 import { CopyFilled, ExpandAltOutlined } from '@ant-design/icons';
-import { Button, Divider, Row, Typography } from 'antd';
+import { Button, Divider, notification, Row, Typography } from 'antd';
 import { map } from 'd3';
 import dayjs from 'dayjs';
 import { FlatLogData } from 'lib/logs/flatLogData';
@@ -89,6 +89,9 @@ function LogItem({ logData }: LogItemProps): JSX.Element {
 
 	const handleCopyJSON = (): void => {
 		setCopy(JSON.stringify(logData, null, 2));
+		notification.success({
+			message: 'Copied to clipboard',
+		});
 	};
 
 	return (
