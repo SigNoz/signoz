@@ -21,7 +21,3 @@ export const ErrorContainer = styled.div`
 	padding-left: 2rem;
 	padding-right: 2rem;
 `;
-
-export const HeaderLoading = styled.div`
-	text-align: center;
-`;

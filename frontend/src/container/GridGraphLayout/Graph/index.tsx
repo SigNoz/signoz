@@ -26,7 +26,7 @@ import { LayoutProps } from '..';
 import EmptyWidget from '../EmptyWidget';
 import WidgetHeader from '../WidgetHeader';
 import FullView from './FullView/index.metricsBuilder';
-import { ErrorContainer, FullViewContainer, Modal, HeaderLoading } from './styles';
+import { ErrorContainer, FullViewContainer, Modal } from './styles';
 
 function GridCardGraph({
 	widget,
@@ -248,9 +248,13 @@ function GridCardGraph({
 	) {
 		return (
 			<>
-				<HeaderLoading>
-					<Typography.Text ellipsis>{widget?.title}</Typography.Text>
-				</HeaderLoading>
+				<WidgetHeader
+						parentHover={hovered}
+						title={widget?.title}
+						widget={widget}
+						onView={(): void => onToggleModal(setModal)}
+						onDelete={(): void => onToggleModal(setDeleteModal)}
+					/>
 				<Spinner height="20vh" tip="Loading..." />
 			</>
 		);
