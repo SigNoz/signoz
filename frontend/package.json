@@ -44,7 +44,7 @@
 		"babel-plugin-named-asset-import": "^0.3.7",
 		"babel-preset-minify": "^0.5.1",
 		"babel-preset-react-app": "^10.0.0",
-		"chart.js": "^3.4.0",
+		"chart.js": "3.9.1",
 		"chartjs-adapter-date-fns": "^2.0.0",
 		"chartjs-plugin-annotation": "^1.4.0",
 		"color": "^4.2.1",

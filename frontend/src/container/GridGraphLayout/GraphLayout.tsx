@@ -72,6 +72,7 @@ function GraphLayout({
 				useCSSTransforms
 				allowOverlap={false}
 				onLayoutChange={onLayoutChangeHandler}
+				draggableHandle=".drag-handle"
 			>
 				{layouts.map(({ Component, ...rest }) => {
 					const currentWidget = (widgets || [])?.find((e) => e.id === rest.i);
