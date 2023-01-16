@@ -346,6 +346,7 @@ func (aH *APIHandler) RegisterRoutes(router *mux.Router) {
 	router.HandleFunc("/api/v1/dashboards/{uuid}", EditAccess(aH.updateDashboard)).Methods(http.MethodPut)
 	router.HandleFunc("/api/v1/dashboards/{uuid}", EditAccess(aH.deleteDashboard)).Methods(http.MethodDelete)
 	router.HandleFunc("/api/v1/variables/query", ViewAccess(aH.queryDashboardVars)).Methods(http.MethodGet)
+	router.HandleFunc("/api/v2/variables/query", ViewAccess(aH.queryDashboardVarsV2)).Methods(http.MethodPost)
 
 	router.HandleFunc("/api/v1/feedback", OpenAccess(aH.submitFeedback)).Methods(http.MethodPost)
 	// router.HandleFunc("/api/v1/get_percentiles", aH.getApplicationPercentiles).Methods(http.MethodGet)
@@ -785,6 +786,66 @@ func (aH *APIHandler) queryDashboardVars(w http.ResponseWriter, r *http.Request)
 		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: fmt.Errorf("query shouldn't alter data")}, nil)
 		return
 	}
+	dashboardVars, err := aH.reader.QueryDashboardVars(r.Context(), query)
+	if err != nil {
+		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
+		return
+	}
+	aH.Respond(w, dashboardVars)
+}
+
+func prepareQuery(r *http.Request) (string, error) {
+	var postData *model.DashboardVars
+
+	if err := json.NewDecoder(r.Body).Decode(&postData); err != nil {
+		return "", fmt.Errorf("failed to decode request body: %v", err)
+	}
+
+	query := strings.TrimSpace(postData.Query)
+
+	if query == "" {
+		return "", fmt.Errorf("query is required")
+	}
+
+	notAllowedOps := []string{
+		"alter table",
+		"drop table",
+		"truncate table",
+		"drop database",
+		"drop view",
+		"drop function",
+	}
+
+	for _, op := range notAllowedOps {
+		if strings.Contains(strings.ToLower(query), op) {
+			return "", fmt.Errorf("Operation %s is not allowed", op)
+		}
+	}
+
+	vars := make(map[string]string)
+	for k, v := range postData.Variables {
+		vars[k] = metrics.FormattedValue(v)
+	}
+	tmpl := template.New("dashboard-vars")
+	tmpl, tmplErr := tmpl.Parse(query)
+	if tmplErr != nil {
+		return "", tmplErr
+	}
+	var queryBuf bytes.Buffer
+	tmplErr = tmpl.Execute(&queryBuf, vars)
+	if tmplErr != nil {
+		return "", tmplErr
+	}
+	return queryBuf.String(), nil
+}
+
+func (aH *APIHandler) queryDashboardVarsV2(w http.ResponseWriter, r *http.Request) {
+	query, err := prepareQuery(r)
+	if err != nil {
+		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
+		return
+	}
+
 	dashboardVars, err := aH.reader.QueryDashboardVars(r.Context(), query)
 	if err != nil {
 		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
