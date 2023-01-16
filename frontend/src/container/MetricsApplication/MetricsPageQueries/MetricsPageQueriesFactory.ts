@@ -4,14 +4,11 @@ import {
 	IQueryBuilderTagFilterItems,
 } from 'types/api/dashboard/getAll';
 
-import { ExternalCallProps } from './ExternalQueries';
-
 export const getQueryBuilderQueries = ({
 	metricName,
 	groupBy,
-	servicename,
 	legend,
-	tagFilterItems,
+	itemsA,
 }: BuilderQueriesProps): {
 	formulas: IMetricsBuilderFormula[];
 	queryBuilder: IMetricsBuilderQuery[];
@@ -27,15 +24,7 @@ export const getQueryBuilderQueries = ({
 			name: 'A',
 			reduceTo: 1,
 			tagFilters: {
-				items: [
-					{
-						id: '',
-						key: 'service_name',
-						op: 'IN',
-						value: [`${servicename}`],
-					},
-					...tagFilterItems,
-				],
+				items: itemsA,
 				op: 'AND',
 			},
 		},
@@ -43,13 +32,13 @@ export const getQueryBuilderQueries = ({
 });
 
 export const getQueryBuilderQuerieswithFormula = ({
-	servicename,
-	legend,
-	disabled,
-	tagFilterItems,
 	metricNameA,
 	metricNameB,
+	additionalItemsA,
+	additionalItemsB,
+	legend,
 	groupBy,
+	disabled,
 	expression,
 	legendFormula,
 }: BuilderQuerieswithFormulaProps): {
@@ -75,16 +64,7 @@ export const getQueryBuilderQuerieswithFormula = ({
 				name: 'A',
 				reduceTo: 1,
 				tagFilters: {
-					items: [
-						{
-							id: '',
-							key: 'service_name',
-							op: 'IN',
-							value: [`${servicename}`],
-						},
-						...tagFilterItems,
-					],
-
+					items: additionalItemsA,
 					op: 'AND',
 				},
 			},
@@ -97,15 +77,7 @@ export const getQueryBuilderQuerieswithFormula = ({
 				name: 'B',
 				reduceTo: 1,
 				tagFilters: {
-					items: [
-						{
-							id: '',
-							key: 'service_name',
-							op: 'IN',
-							value: [`${servicename}`],
-						},
-						...tagFilterItems,
-					],
+					items: additionalItemsB,
 					op: 'AND',
 				},
 			},
@@ -113,84 +85,14 @@ export const getQueryBuilderQuerieswithFormula = ({
 	};
 };
 
-export const getQueryBuilderQuerieswithAdditionalItems = ({
-	servicename,
-	legend,
-	disabled,
-	tagFilterItems,
-	metricNameA,
-	metricNameB,
-	groupBy,
-	expression,
-	legendFormula,
-	additionalItems,
-}: BuilderQuerieswithAdditionalItems): {
-	formulas: IMetricsBuilderFormula[];
-	queryBuilder: IMetricsBuilderQuery[];
-} => ({
-	formulas: [
-		{
-			disabled: false,
-			expression,
-			name: 'F1',
-			legend: legendFormula,
-		},
-	],
-	queryBuilder: [
-		{
-			aggregateOperator: 18,
-			disabled,
-			groupBy,
-			legend,
-			metricName: metricNameA,
-			name: 'A',
-			reduceTo: 1,
-			tagFilters: {
-				items: [
-					{
-						id: '',
-						key: 'service_name',
-						op: 'IN',
-						value: [`${servicename}`],
-					},
-					additionalItems,
-					...tagFilterItems,
-				],
-
-				op: 'AND',
-			},
-		},
-		{
-			aggregateOperator: 18,
-			disabled,
-			groupBy,
-			legend,
-			metricName: metricNameB,
-			name: 'B',
-			reduceTo: 1,
-			tagFilters: {
-				items: [
-					{
-						id: '',
-						key: 'service_name',
-						op: 'IN',
-						value: [`${servicename}`],
-					},
-					...tagFilterItems,
-				],
-				op: 'AND',
-			},
-		},
-	],
-});
-
-interface BuilderQueriesProps extends ExternalCallProps {
+interface BuilderQueriesProps {
 	metricName: string;
 	groupBy?: string[];
 	legend: string;
+	itemsA: IQueryBuilderTagFilterItems[];
 }
 
-interface BuilderQuerieswithFormulaProps extends ExternalCallProps {
+interface BuilderQuerieswithFormulaProps {
 	metricNameA: string;
 	metricNameB: string;
 	legend: string;
@@ -198,9 +100,6 @@ interface BuilderQuerieswithFormulaProps extends ExternalCallProps {
 	groupBy?: string[];
 	expression: string;
 	legendFormula: string;
-}
-
-interface BuilderQuerieswithAdditionalItems
-	extends BuilderQuerieswithFormulaProps {
-	additionalItems: IQueryBuilderTagFilterItems;
+	additionalItemsA: IQueryBuilderTagFilterItems[];
+	additionalItemsB: IQueryBuilderTagFilterItems[];
 }
