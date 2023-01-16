@@ -1,24 +1,19 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-/* eslint-disable react/jsx-props-no-spreading */
 import React from 'react';
-import { Resizable, ResizeCallbackData } from 'react-resizable';
+import {
+	Resizable,
+	ResizeCallbackData,
+} from 'components/ResizeTableWrapper/react-resizable';
 
 // # Styles import
 import { SpanStyle } from './styles';
 
-function ResizableHeader(
-	props: React.HTMLAttributes<any> & {
-		onResize: (
-			e: React.SyntheticEvent<Element>,
-			data: ResizeCallbackData,
-		) => void;
-		width: number;
-	},
-): JSX.Element {
+function ResizableHeader(props: ResizableHeaderProps): JSX.Element {
 	const { onResize, width, ...restProps } = props;
+
 	if (!width) {
 		return <th {...restProps} />;
 	}
+
 	return (
 		<Resizable
 			width={width}
@@ -35,6 +30,11 @@ function ResizableHeader(
 			<th {...restProps} />
 		</Resizable>
 	);
+}
+
+interface ResizableHeaderProps {
+	onResize: (e: React.SyntheticEvent<Element>, data: ResizeCallbackData) => void;
+	width: number;
 }
 
 export default ResizableHeader;
