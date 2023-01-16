@@ -372,7 +372,7 @@ var generateSQLQueryTestCases = []struct {
 func TestGenerateSQLQuery(t *testing.T) {
 	for _, test := range generateSQLQueryTestCases {
 		Convey("testGenerateSQL", t, func() {
-			res, _ := GenerateSQLWhere(&generateSQLQueryFields, &test.Filter)
+			res, _, _ := GenerateSQLWhere(&generateSQLQueryFields, &test.Filter)
 			So(res, ShouldEqual, test.SqlFilter)
 		})
 	}
