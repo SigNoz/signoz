@@ -213,19 +213,29 @@ function GridCardGraph({
 		);
 	};
 
+	const handleOnView = (): void => {
+		onToggleModal(setModal);
+	};
+
+	const handleOnDelete = (): void => {
+		onToggleModal(setDeleteModal);
+	};
+
 	const isEmptyLayout = widget?.id === 'empty' || isEmpty(widget);
 
 	if (state.error && !isEmptyLayout) {
 		return (
 			<>
 				{getModals()}
-				<WidgetHeader
-					parentHover={hovered}
-					title={widget?.title}
-					widget={widget}
-					onView={(): void => onToggleModal(setModal)}
-					onDelete={(): void => onToggleModal(setDeleteModal)}
-				/>
+				<div className="drag-handle">
+					<WidgetHeader
+						parentHover={hovered}
+						title={widget?.title}
+						widget={widget}
+						onView={handleOnView}
+						onDelete={handleOnDelete}
+					/>
+				</div>
 
 				<ErrorContainer>{state.errorMessage}</ErrorContainer>
 			</>
@@ -255,13 +265,15 @@ function GridCardGraph({
 			}}
 		>
 			{!isEmptyLayout && (
-				<WidgetHeader
-					parentHover={hovered}
-					title={widget?.title}
-					widget={widget}
-					onView={(): void => onToggleModal(setModal)}
-					onDelete={(): void => onToggleModal(setDeleteModal)}
-				/>
+				<div className="drag-handle">
+					<WidgetHeader
+						parentHover={hovered}
+						title={widget?.title}
+						widget={widget}
+						onView={(): void => onToggleModal(setModal)}
+						onDelete={(): void => onToggleModal(setDeleteModal)}
+					/>
+				</div>
 			)}
 
 			{!isEmptyLayout && getModals()}
