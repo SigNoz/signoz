@@ -39,16 +39,20 @@ function External({ getWidgetQueryBuilder }: ExternalProps): JSX.Element {
 							<FullView
 								name="external_call_error_percentage"
 								fullViewOptions={false}
-								widget={getWidgetQueryBuilder({
-									queryType: 1,
-									promQL: [],
-									metricsBuilder: externalCallErrorPercent({
-										servicename,
-										legend,
-										tagFilterItems,
-									}),
-									clickHouse: [],
-								})}
+								widget={useMemo(
+									() =>
+										getWidgetQueryBuilder({
+											queryType: 1,
+											promQL: [],
+											metricsBuilder: externalCallErrorPercent({
+												servicename,
+												legend,
+												tagFilterItems,
+											}),
+											clickHouse: [],
+										}),
+									[getWidgetQueryBuilder, servicename, tagFilterItems],
+								)}
 								yAxisUnit="%"
 							/>
 						</GraphContainer>
@@ -62,12 +66,19 @@ function External({ getWidgetQueryBuilder }: ExternalProps): JSX.Element {
 							<FullView
 								name="external_call_duration"
 								fullViewOptions={false}
-								widget={getWidgetQueryBuilder({
-									queryType: 1,
-									promQL: [],
-									metricsBuilder: externalCallDuration({ servicename, tagFilterItems }),
-									clickHouse: [],
-								})}
+								widget={useMemo(
+									() =>
+										getWidgetQueryBuilder({
+											queryType: 1,
+											promQL: [],
+											metricsBuilder: externalCallDuration({
+												servicename,
+												tagFilterItems,
+											}),
+											clickHouse: [],
+										}),
+									[getWidgetQueryBuilder, servicename, tagFilterItems],
+								)}
 								yAxisUnit="ms"
 							/>
 						</GraphContainer>
@@ -83,16 +94,20 @@ function External({ getWidgetQueryBuilder }: ExternalProps): JSX.Element {
 							<FullView
 								name="external_call_rps_by_address"
 								fullViewOptions={false}
-								widget={getWidgetQueryBuilder({
-									queryType: 1,
-									promQL: [],
-									metricsBuilder: externalCallRpsByAddress({
-										servicename,
-										legend,
-										tagFilterItems,
-									}),
-									clickHouse: [],
-								})}
+								widget={useMemo(
+									() =>
+										getWidgetQueryBuilder({
+											queryType: 1,
+											promQL: [],
+											metricsBuilder: externalCallRpsByAddress({
+												servicename,
+												legend,
+												tagFilterItems,
+											}),
+											clickHouse: [],
+										}),
+									[getWidgetQueryBuilder, servicename, tagFilterItems],
+								)}
 								yAxisUnit="reqps"
 							/>
 						</GraphContainer>
@@ -106,16 +121,20 @@ function External({ getWidgetQueryBuilder }: ExternalProps): JSX.Element {
 							<FullView
 								name="external_call_duration_by_address"
 								fullViewOptions={false}
-								widget={getWidgetQueryBuilder({
-									queryType: 1,
-									promQL: [],
-									metricsBuilder: externalCallDurationByAddress({
-										servicename,
-										legend,
-										tagFilterItems,
-									}),
-									clickHouse: [],
-								})}
+								widget={useMemo(
+									() =>
+										getWidgetQueryBuilder({
+											queryType: 1,
+											promQL: [],
+											metricsBuilder: externalCallDurationByAddress({
+												servicename,
+												legend,
+												tagFilterItems,
+											}),
+											clickHouse: [],
+										}),
+									[getWidgetQueryBuilder, servicename, tagFilterItems],
+								)}
 								yAxisUnit="ms"
 							/>
 						</GraphContainer>
