@@ -20,6 +20,7 @@ function ResizeTableWrapper(props: ResizeTableWrapperProps): JSX.Element {
 
 	const mergeColumns = columnsData.map((col, index) => ({
 		...col,
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any
 		onHeaderCell: (column: ColumnsType<any>[number]): any => ({
 			width: column.width,
 			onResize: handleResize(index),
@@ -30,6 +31,7 @@ function ResizeTableWrapper(props: ResizeTableWrapperProps): JSX.Element {
 }
 
 interface ResizeTableWrapperProps {
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	columns: ColumnsType<any>;
 	children: JSX.Element;
 }

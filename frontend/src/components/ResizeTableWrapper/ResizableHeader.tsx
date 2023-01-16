@@ -8,6 +8,7 @@ function ResizableHeader(props: ResizableHeaderProps): JSX.Element {
 	const { onResize, width, ...restProps } = props;
 
 	if (!width) {
+		// eslint-disable-next-line react/jsx-props-no-spreading
 		return <th {...restProps} />;
 	}
 
@@ -24,6 +25,7 @@ function ResizableHeader(props: ResizableHeaderProps): JSX.Element {
 			onResize={onResize}
 			draggableOpts={{ enableUserSelectHack: false }}
 		>
+			{/* eslint-disable-next-line react/jsx-props-no-spreading */}
 			<th {...restProps} />
 		</Resizable>
 	);
