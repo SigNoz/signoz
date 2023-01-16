@@ -806,8 +806,20 @@ func prepareQuery(r *http.Request) (string, error) {
 	if query == "" {
 		return "", fmt.Errorf("query is required")
 	}
-	if strings.Contains(strings.ToLower(query), "alter table") {
-		return "", fmt.Errorf("query shouldn't alter data")
+
+	notAllowedOps := []string{
+		"alter table",
+		"drop table",
+		"truncate table",
+		"drop database",
+		"drop view",
+		"drop function",
+	}
+
+	for _, op := range notAllowedOps {
+		if strings.Contains(strings.ToLower(query), op) {
+			return "", fmt.Errorf("Operation %s is not allowed", op)
+		}
 	}
 
 	vars := make(map[string]string)
