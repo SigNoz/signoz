@@ -111,12 +111,16 @@ function TagValue(props: TagValueProps): JSX.Element {
 			disabled={isLoading}
 			value={localValue}
 			onChange={(values): void => {
-				if (
-					typeof values === 'string' ||
-					typeof values === 'number' ||
-					typeof values === 'boolean'
-				) {
+				if (typeof values === 'number' || typeof values === 'boolean') {
 					setLocalValue(values);
+				} else if (typeof values === 'string') {
+					if (values === 'true' || values === 'false') {
+						setLocalValue(values === 'true');
+					} else if (!Number.isNaN(Number(values))) {
+						setLocalValue(Number(values));
+					} else {
+						setLocalValue(values);
+					}
 				}
 			}}
 			onSelect={(value: unknown): void => {
