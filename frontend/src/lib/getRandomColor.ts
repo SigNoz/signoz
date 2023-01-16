@@ -1,16 +1,8 @@
 import { Span } from 'types/api/trace/getTraceItem';
 
-export const colors = [
-	'#2F80ED',
-	'#BB6BD9',
-	'#F2994A',
-	'#219653',
-	'#56CCF2',
-	'#F2C94C',
-	'#BDBDBD',
-];
+import { themeColors } from '../constants/theme';
 
-export const errorColor = '#d32f2f';
+export const colors = Object.values(themeColors.chartcolors);
 
 export function getRandomNumber(min: number, max: number): number {
 	return Math.random() * (max - min) + min;
