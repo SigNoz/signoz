@@ -23,7 +23,7 @@
 
 ##
 
-SigNoz helps developers monitor applications and troubleshoot problems in their deployed applications. SigNoz uses distributed tracing to gain visibility into your software stack.
+SigNoz helps developers monitor applications and troubleshoot problems in their deployed applications. With SigNoz, you can:
 
 👉 Visualise Metrics, Traces and Logs in a single pane of glass
 
