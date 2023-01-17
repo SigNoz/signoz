@@ -36,6 +36,7 @@ function GridCardGraph({
 	layout = [],
 	setLayout,
 }: GridCardGraphProps): JSX.Element {
+	const prevChartDataSetRef = React.useRef<ChartData | undefined>(undefined);
 	const [state, setState] = useState<GridCardGraphState>({
 		loading: true,
 		errorMessage: '',
@@ -138,7 +139,7 @@ function GridCardGraph({
 							},
 						],
 					});
-
+					prevChartDataSetRef.current = chartDataSet;
 					setState((state) => ({
 						...state,
 						loading: false,
@@ -255,7 +256,29 @@ function GridCardGraph({
 					onView={handleOnView}
 					onDelete={handleOnDelete}
 				/>
-				<Spinner height="20vh" tip="Loading..." />
+				{prevChartDataSetRef.current === undefined && (
+					<Spinner
+						height="12vh"
+						tip="Loading..."
+						customStyle={{
+							justifyContent: 'flex-end',
+							marginRight: '5px',
+						}}
+					/>
+				)}
+				{!isEmpty(widget) && prevChartDataSetRef.current && (
+					<GridGraphComponent
+						{...{
+							GRAPH_TYPES: widget.panelTypes,
+							data: prevChartDataSetRef.current,
+							isStacked: widget.isStacked,
+							opacity: widget.opacity,
+							title: ' ',
+							name,
+							yAxisUnit,
+						}}
+					/>
+				)}
 			</>
 		);
 	}
