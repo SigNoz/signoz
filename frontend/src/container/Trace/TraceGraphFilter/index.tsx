@@ -1,12 +1,7 @@
-import {
-	AutoComplete,
-	AutoCompleteProps,
-	Input,
-	notification,
-	Space,
-} from 'antd';
+import { AutoComplete, Input, Space } from 'antd';
 import getTagFilters from 'api/trace/getTagFilter';
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useMemo } from 'react';
+import { useQuery } from 'react-query';
 import { useDispatch, useSelector } from 'react-redux';
 import { Dispatch } from 'redux';
 import { AppState } from 'store/reducers';
@@ -18,9 +13,9 @@ import {
 import { GlobalReducer } from 'types/reducer/globalTime';
 import { TraceReducer } from 'types/reducer/trace';
 
-import { extractTagFilters } from '../Search/AllTags/Tag/utils';
 import { functions, groupBy } from './config';
 import { SelectComponent } from './styles';
+import { initOptions } from './utils';
 
 const { Option } = SelectComponent;
 
@@ -30,12 +25,10 @@ function TraceGraphFilter(): JSX.Element {
 		TraceReducer
 	>((state) => state.traces);
 	const dispatch = useDispatch<Dispatch<AppActions>>();
-	const [selectLoading, setSelectLoading] = useState<boolean>(false);
 	const globalTime = useSelector<AppState, GlobalReducer>(
 		(state) => state.globalTime,
 	);
 	const traces = useSelector<AppState, TraceReducer>((state) => state.traces);
-	const [options, setOptions] = useState<AutoCompleteProps['options']>([]);
 
 	const onClickSelectedFunctionHandler = (ev: unknown): void => {
 		if (typeof ev === 'string') {
@@ -52,6 +45,21 @@ function TraceGraphFilter(): JSX.Element {
 		}
 	};
 
+	const { isLoading, data } = useQuery(
+		['getTagKeys', globalTime.minTime, globalTime.maxTime, traces],
+		{
+			queryFn: () =>
+				getTagFilters({
+					start: globalTime.minTime,
+					end: globalTime.maxTime,
+					other: Object.fromEntries(traces.selectedFilter),
+					isFilterExclude: traces.isFilterExclude,
+				}),
+		},
+	);
+
+	const options = useMemo(() => initOptions(data), [data]);
+
 	const onClickSelectedGroupByHandler = (ev: unknown): void => {
 		if (typeof ev === 'string' && options) {
 			const selected = options.find((e) => e.value === ev);
@@ -65,74 +73,7 @@ function TraceGraphFilter(): JSX.Element {
 			}
 		}
 	};
-	function groupByValues(
-		tagFilters: {
-			value: string;
-			label: string;
-		}[],
-	): {
-		value: string;
-		label: string;
-	}[] {
-		const result: { value: string; label: string }[] = tagFilters;
-		groupBy.forEach((e) => {
-			result.push({
-				value: e.key,
-				label: e.displayValue,
-			});
-		});
-		return result;
-	}
-	const onSearchHandler = useCallback(async () => {
-		try {
-			setSelectLoading(true);
-			const response = await getTagFilters({
-				start: globalTime.minTime,
-				end: globalTime.maxTime,
-				other: Object.fromEntries(traces.selectedFilter),
-				isFilterExclude: traces.isFilterExclude,
-			});
 
-			if (response.statusCode === 200) {
-				if (response.payload === null) {
-					setOptions(
-						groupBy.map((e) => ({
-							value: e.key,
-							label: e.displayValue,
-						})),
-					);
-				} else {
-					setOptions(
-						groupByValues(
-							extractTagFilters(response.payload).map((e) => ({
-								value: e,
-								label: e,
-							})),
-						),
-					);
-				}
-			} else {
-				notification.error({
-					message: response.error || 'Something went wrong',
-				});
-			}
-			setSelectLoading(false);
-		} catch (error) {
-			notification.error({
-				message: 'Something went wrong',
-			});
-			setSelectLoading(false);
-		}
-	}, [globalTime, traces]);
-
-	const counter = useRef(0);
-
-	useEffect(() => {
-		if (counter.current === 0 && selectedGroupBy.length === 0) {
-			counter.current = 1;
-			onSearchHandler();
-		}
-	}, [onSearchHandler, selectedGroupBy]);
 	return (
 		<Space>
 			<label htmlFor="selectedFunction">Function</label>
@@ -157,10 +98,10 @@ function TraceGraphFilter(): JSX.Element {
 				id="selectedGroupBy"
 				data-testid="selectedGroupBy"
 				options={options}
-				value={groupBy.find((e) => selectedGroupBy === e.key)?.displayValue}
+				value={groupBy.find((e) => selectedGroupBy === e.value)?.label}
 				onChange={onClickSelectedGroupByHandler}
 			>
-				<Input disabled={selectLoading} placeholder="Please select" />
+				<Input disabled={isLoading} placeholder="Please select" />
 			</AutoComplete>
 		</Space>
 	);

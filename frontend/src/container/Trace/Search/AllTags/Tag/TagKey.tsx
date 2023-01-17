@@ -73,11 +73,10 @@ function TagsKey(props: TagsKeysProps): JSX.Element {
 
 	return (
 		<AutoComplete
-			popupClassName="certain-category-search-dropdown"
-			dropdownMatchSelectWidth={500}
 			style={{ width: '100%' }}
 			value={selectedKey}
 			allowClear
+			notFoundContent="No tags available"
 			showSearch
 			options={options?.map((e) => ({
 				label: e.label?.toString(),

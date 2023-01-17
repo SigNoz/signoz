@@ -41,7 +41,7 @@ function AllTags({
 			...tags,
 			{
 				Key: [],
-				Operator: 'In',
+				Operator: 'Equals',
 				StringValues: [],
 				NumberValues: [],
 				BoolValues: [],
@@ -111,7 +111,7 @@ function AllTags({
 					</Button>
 
 					<Text ellipsis>
-						Results will include spans with ALL the specified tags ( Rows are `anded`
+						Results will include spans with ALL the specified tags ( Rows are `ANDed`
 						)
 					</Text>
 				</Space>

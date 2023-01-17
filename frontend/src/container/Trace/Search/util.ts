@@ -43,7 +43,7 @@ function extractValues(
 
 export const parseQueryToTags = (query: string): PayloadProps<Tags> => {
 	let isError = false;
-	console.log(query);
+
 	const noOfTags = query.split(' AND ');
 
 	const tags: Tags = noOfTags.map((filter) => {

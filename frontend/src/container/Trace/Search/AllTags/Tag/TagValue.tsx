@@ -22,16 +22,16 @@ function TagValue(props: TagValueProps): JSX.Element {
 		BoolValues: selectedBoolValues,
 	} = tag;
 	function initialLocalValue(): string | number | boolean {
-		if (selectedStringValues) {
+		if (selectedStringValues && selectedStringValues.length > 0) {
 			return selectedStringValues[0];
 		}
-		if (selectedNumberValues) {
+		if (selectedNumberValues && selectedNumberValues.length > 0) {
 			return selectedNumberValues[0];
 		}
-		if (selectedBoolValues) {
+		if (selectedBoolValues && selectedBoolValues.length > 0) {
 			return selectedBoolValues[0];
 		}
-		return '';
+		return selectedStringValues[0];
 	}
 	const [localValue, setLocalValue] = useState<string | number | boolean>(
 		initialLocalValue(),
@@ -100,10 +100,10 @@ function TagValue(props: TagValueProps): JSX.Element {
 	);
 	return (
 		<SelectComponent
-			// set options to the return value of options(data) if data is not undefined
 			options={getOptions(data)}
 			mode="tags"
 			defaultOpen
+			allowClear
 			showSearch
 			filterOption={(inputValue, option): boolean =>
 				option?.label.toUpperCase().indexOf(inputValue.toUpperCase()) !== -1

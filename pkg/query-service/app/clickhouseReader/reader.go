@@ -1699,7 +1699,11 @@ func (r *ClickHouseReader) GetTagFilters(ctx context.Context, queryParams *model
 		zap.S().Debug("Error in processing sql query: ", err)
 		return nil, &model.ApiError{Typ: model.ErrorExec, Err: fmt.Errorf("Error in processing sql query")}
 	}
-	tagFiltersResult := model.TagFilters{}
+	tagFiltersResult := model.TagFilters{
+		StringTagKeys: make([]string, 0),
+		NumberTagKeys: make([]string, 0),
+		BoolTagKeys:   make([]string, 0),
+	}
 	if len(tagFilters) != 0 {
 		tagFiltersResult.StringTagKeys = excludeTags(ctx, tagFilters[0].StringTagKeys)
 		tagFiltersResult.NumberTagKeys = excludeTags(ctx, tagFilters[0].NumberTagKeys)
@@ -1722,7 +1726,7 @@ func excludeTags(ctx context.Context, tags []string) []string {
 		"error":               true,
 		"service.name":        true,
 	}
-	var newTags []string
+	newTags := make([]string, 0)
 	for _, tag := range tags {
 		_, ok := excludedTagsMap[tag]
 		if !ok {
@@ -1733,6 +1737,20 @@ func excludeTags(ctx context.Context, tags []string) []string {
 }
 
 func (r *ClickHouseReader) GetTagValues(ctx context.Context, queryParams *model.TagFilterParams) (*model.TagValues, *model.ApiError) {
+
+	if queryParams.TagKey.Type == model.TagTypeNumber {
+		return &model.TagValues{
+			NumberTagValues: make([]float64, 0),
+			StringTagValues: make([]string, 0),
+			BoolTagValues:   make([]bool, 0),
+		}, nil
+	} else if queryParams.TagKey.Type == model.TagTypeBool {
+		return &model.TagValues{
+			NumberTagValues: make([]float64, 0),
+			StringTagValues: make([]string, 0),
+			BoolTagValues:   []bool{true, false},
+		}, nil
+	}
 
 	excludeMap := make(map[string]struct{})
 	for _, e := range queryParams.Exclude {

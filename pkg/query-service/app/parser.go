@@ -449,9 +449,10 @@ func parseTagValueRequest(r *http.Request) (*model.TagFilterParams, error) {
 		return nil, fmt.Errorf("TagKey param missing in query")
 	}
 
-	if postData.TagKey.Type != model.TagTypeString {
+	if postData.TagKey.Type != model.TagTypeString && postData.TagKey.Type != model.TagTypeBool && postData.TagKey.Type != model.TagTypeNumber {
 		return nil, fmt.Errorf("tag keys type %s is not supported", postData.TagKey.Type)
 	}
+
 	if postData.Limit == 0 {
 		postData.Limit = 100
 	}
