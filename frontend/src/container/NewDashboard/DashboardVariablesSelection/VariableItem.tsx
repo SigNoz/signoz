@@ -1,3 +1,5 @@
+/* eslint-disable sonarjs/cognitive-complexity */
+
 import { orange } from '@ant-design/colors';
 import { WarningOutlined } from '@ant-design/icons';
 import { Input, Popover, Select, Typography } from 'antd';
@@ -14,25 +16,33 @@ const { Option } = Select;
 
 const ALL_SELECT_VALUE = '__ALL__';
 
-const equalsCheck = (a: string[]|number[], b: string[]|number[]) : boolean => {
+const equalsCheck = (
+	a: string[] | number[],
+	b: string[] | number[],
+): boolean => {
 	if (a.length !== b.length) return false;
 	for (let i = 0; i < a.length; i += 1) {
 		if (a[i] !== b[i]) return false;
 	}
 	return true;
-}
+};
 
 interface VariableItemProps {
 	variableData: IDashboardVariable;
 	existingVariables: Record<string, IDashboardVariable>;
-	onValueUpdate: (name: string | undefined, arg1: string | string[] | null | undefined) => void;
+	onValueUpdate: (
+		name: string | undefined,
+		arg1: string | string[] | null | undefined,
+	) => void;
 	onAllSelectedUpdate: (name: string | undefined, arg1: boolean) => void;
+	lastUpdatedVar: string;
 }
 function VariableItem({
 	variableData,
 	existingVariables,
 	onValueUpdate,
 	onAllSelectedUpdate,
+	lastUpdatedVar,
 }: VariableItemProps): JSX.Element {
 	const [optionsData, setOptionsData] = useState([]);
 	const [isLoading, setIsLoading] = useState<boolean>(false);
@@ -46,22 +56,39 @@ function VariableItem({
 
 				const response = await query({
 					query: variableData.queryValue || '',
-					variables: existingVariables
+					variables: existingVariables,
 				});
 
 				setIsLoading(false);
 				if (response.error) {
-					setErrorMessage(response.error);
+					let message = response.error;
+					if (response.error.includes('Syntax error:')) {
+						message =
+							'Please make sure query is valid and dependent variables are selected';
+					}
+					setErrorMessage(message);
 					return;
 				}
 				if (response.payload?.variableValues) {
-					let newOptionsData = sortValues(response.payload?.variableValues, variableData.sort) as never;
-					let oldOptionsData = sortValues(optionsData, variableData.sort) as never;
+					const newOptionsData = sortValues(
+						response.payload?.variableValues,
+						variableData.sort,
+					) as never;
+					const oldOptionsData = sortValues(optionsData, variableData.sort) as never;
 					if (!equalsCheck(newOptionsData, oldOptionsData)) {
-						onValueUpdate(variableData.name, null);
-						setOptionsData(
-							newOptionsData
-						);
+						if (
+							variableData.type === 'QUERY' &&
+							variableData.queryValue?.includes(lastUpdatedVar)
+						) {
+							let value = variableData.selectedValue;
+							if (variableData.multiSelect) {
+								value = ALL_SELECT_VALUE;
+							} else {
+								[value] = newOptionsData;
+							}
+							onValueUpdate(variableData.name, value);
+						}
+						setOptionsData(newOptionsData);
 					}
 				}
 			} catch (e) {
@@ -76,11 +103,11 @@ function VariableItem({
 			);
 		}
 	}, [
-		variableData.customValue,
-		variableData.queryValue,
-		variableData.sort,
-		variableData.type,
-		variableData.change,
+		variableData,
+		existingVariables,
+		onValueUpdate,
+		optionsData,
+		lastUpdatedVar,
 	]);
 
 	useEffect(() => {

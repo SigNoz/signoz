@@ -1,23 +1,23 @@
-import axios from 'api';
+import { ApiV2Instance as axios } from 'api';
 import { ErrorResponseHandler } from 'api/ErrorResponseHandler';
 import { AxiosError } from 'axios';
 import { ErrorResponse, SuccessResponse } from 'types/api';
 import { PayloadProps, Props } from 'types/api/dashboard/variables/query';
 
-type PayloadVariables = Record<string, undefined | null | string| string[]>;
+type PayloadVariables = Record<string, undefined | null | string | string[]>;
 
 const query = async (
 	props: Props,
 ): Promise<SuccessResponse<PayloadProps> | ErrorResponse> => {
 	try {
-		let variables :PayloadVariables = {};
+		const variables: PayloadVariables = {};
 		Object.entries(props.variables).forEach(([key, value]) => {
 			variables[key] = value?.selectedValue;
 		});
 		const payload = {
 			query: props.query,
-			variables: variables,
-		}
+			variables,
+		};
 		const response = await axios.post(`/variables/query`, payload);
 
 		return {

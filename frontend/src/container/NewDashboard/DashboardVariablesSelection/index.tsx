@@ -24,15 +24,12 @@ function DashboardVariableSelection({
 	} = selectedDashboard;
 
 	const [update, setUpdate] = useState<boolean>(false);
-	let last: Date = new Date();
+	const [lastUpdatedVar, setLastUpdatedVar] = useState<string>('');
 
-	const onVarChanged = (): void => {
-		const current: Date = new Date();
-		if (((current.getTime()-last.getTime())/1000) > 2) {
-			setUpdate((update) => !update);
-		}
-		last = current
-	}
+	const onVarChanged = (name: string): void => {
+		setLastUpdatedVar(name);
+		setUpdate(!update);
+	};
 
 	const onValueUpdate = (
 		name: string,
@@ -41,7 +38,7 @@ function DashboardVariableSelection({
 		const updatedVariablesData = { ...variables };
 		updatedVariablesData[name].selectedValue = value;
 		updateDashboardVariables(updatedVariablesData);
-		onVarChanged();
+		onVarChanged(name);
 	};
 	const onAllSelectedUpdate = (
 		name: string,
@@ -50,10 +47,8 @@ function DashboardVariableSelection({
 		const updatedVariablesData = { ...variables };
 		updatedVariablesData[name].allSelected = value;
 		updateDashboardVariables(updatedVariablesData);
-		onVarChanged();
+		onVarChanged(name);
 	};
-
-
 
 	return (
 		<Row style={{ gap: '1rem' }}>
@@ -61,9 +56,14 @@ function DashboardVariableSelection({
 				<VariableItem
 					key={`${variableName}${variables[variableName].modificationUUID}`}
 					existingVariables={variables}
-					variableData={{ name: variableName, ...variables[variableName], change:update  }}
+					variableData={{
+						name: variableName,
+						...variables[variableName],
+						change: update,
+					}}
 					onValueUpdate={onValueUpdate as never}
 					onAllSelectedUpdate={onAllSelectedUpdate as never}
+					lastUpdatedVar={lastUpdatedVar}
 				/>
 			))}
 		</Row>
