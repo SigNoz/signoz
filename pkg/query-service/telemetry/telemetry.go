@@ -2,7 +2,6 @@ package telemetry
 
 import (
 	"context"
-	"encoding/json"
 	"io/ioutil"
 	"math/rand"
 	"net/http"
@@ -73,21 +72,28 @@ func (a *Telemetry) IsSampled() bool {
 
 }
 
-func (telemetry *Telemetry) CheckSigNozMetrics(compositeMetricQueryMap map[string]interface{}) bool {
+func (telemetry *Telemetry) CheckSigNozMetricsV2(compositeQuery *model.CompositeMetricQuery) bool {
 
-	builderQueries, builderQueriesExists := compositeMetricQueryMap["builderQueries"]
-	if builderQueriesExists {
-		builderQueriesStr, _ := json.Marshal(builderQueries)
-		return strings.Contains(string(builderQueriesStr), "signoz_")
+	signozMetricsNotFound := false
+
+	if compositeQuery.BuilderQueries != nil && len(compositeQuery.BuilderQueries) > 0 {
+		if !strings.Contains(compositeQuery.BuilderQueries["A"].MetricName, "signoz_") && len(compositeQuery.BuilderQueries["A"].MetricName) > 0 {
+			signozMetricsNotFound = true
+		}
 	}
 
-	promQueries, promQueriesExists := compositeMetricQueryMap["promQueries"]
-	if promQueriesExists {
-		promQueriesStr, _ := json.Marshal(promQueries)
-		return strings.Contains(string(promQueriesStr), "signoz_")
+	if compositeQuery.PromQueries != nil && len(compositeQuery.PromQueries) > 0 {
+		if !strings.Contains(compositeQuery.PromQueries["A"].Query, "signoz_") && len(compositeQuery.PromQueries["A"].Query) > 0 {
+			signozMetricsNotFound = true
+		}
+	}
+	if compositeQuery.ClickHouseQueries != nil && len(compositeQuery.ClickHouseQueries) > 0 {
+		if !strings.Contains(compositeQuery.ClickHouseQueries["A"].Query, "signoz_") && len(compositeQuery.ClickHouseQueries["A"].Query) > 0 {
+			signozMetricsNotFound = true
+		}
 	}
 
-	return false
+	return signozMetricsNotFound
 }
 
 func (telemetry *Telemetry) AddActiveTracesUser() {

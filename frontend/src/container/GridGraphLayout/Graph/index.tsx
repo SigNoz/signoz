@@ -35,6 +35,7 @@ function GridCardGraph({
 	yAxisUnit,
 	layout = [],
 	setLayout,
+	onDragSelect,
 }: GridCardGraphProps): JSX.Element {
 	const [state, setState] = useState<GridCardGraphState>({
 		loading: true,
@@ -246,7 +247,18 @@ function GridCardGraph({
 		(state.loading === true || state.payload === undefined) &&
 		!isEmptyLayout
 	) {
-		return <Spinner height="20vh" tip="Loading..." />;
+		return (
+			<>
+				<WidgetHeader
+					parentHover={hovered}
+					title={widget?.title}
+					widget={widget}
+					onView={handleOnView}
+					onDelete={handleOnDelete}
+				/>
+				<Spinner height="20vh" tip="Loading..." />
+			</>
+		);
 	}
 
 	return (
@@ -288,6 +300,7 @@ function GridCardGraph({
 						title: ' ', // empty title to accommodate absolutely positioned widget header
 						name,
 						yAxisUnit,
+						onDragSelect,
 					}}
 				/>
 			)}
@@ -318,7 +331,12 @@ interface GridCardGraphProps extends DispatchProps {
 	layout?: Layout[];
 	// eslint-disable-next-line react/require-default-props
 	setLayout?: React.Dispatch<React.SetStateAction<LayoutProps[]>>;
+	onDragSelect?: (start: number, end: number) => void;
 }
+
+GridCardGraph.defaultProps = {
+	onDragSelect: undefined,
+};
 
 const mapDispatchToProps = (
 	dispatch: ThunkDispatch<unknown, unknown, AppActions>,

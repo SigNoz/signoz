@@ -12,7 +12,12 @@ import {
 } from 'lib/resourceAttributes';
 import React, { useMemo, useRef } from 'react';
 import { useSelector } from 'react-redux';
+import { convertRawQueriesToTraceSelectedTags } from 'lib/resourceAttributes';
+import { escapeRegExp } from 'lodash-es';
+import React, { useCallback, useMemo, useRef } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
 import { useParams } from 'react-router-dom';
+import { UpdateTimeInterval } from 'store/actions';
 import { AppState } from 'store/reducers';
 import { Widgets } from 'types/api/dashboard/getAll';
 import MetricReducer from 'types/reducer/metrics';
@@ -28,6 +33,7 @@ import { Button } from './styles';
 function Application({ getWidgetQueryBuilder }: DashboardProps): JSX.Element {
 	const { servicename } = useParams<{ servicename?: string }>();
 	const selectedTimeStamp = useRef(0);
+	const dispatch = useDispatch();
 
 	const {
 		topOperations,
@@ -127,6 +133,16 @@ function Application({ getWidgetQueryBuilder }: DashboardProps): JSX.Element {
 		}
 	};
 
+	const onDragSelect = useCallback(
+		(start: number, end: number) => {
+			const startTimestamp = Math.trunc(start);
+			const endTimestamp = Math.trunc(end);
+
+			dispatch(UpdateTimeInterval('custom', [startTimestamp, endTimestamp]));
+		},
+		[dispatch],
+	);
+
 	const onErrorTrackHandler = (timestamp: number): void => {
 		const currentTime = timestamp;
 		const tPlusOne = timestamp + 1 * 60 * 1000;
@@ -208,6 +224,7 @@ function Application({ getWidgetQueryBuilder }: DashboardProps): JSX.Element {
 									}),
 								}}
 								yAxisUnit="ms"
+								onDragSelect={onDragSelect}
 							/>
 						</GraphContainer>
 					</Card>
@@ -235,6 +252,7 @@ function Application({ getWidgetQueryBuilder }: DashboardProps): JSX.Element {
 								}}
 								widget={operationPerSecWidget}
 								yAxisUnit="ops"
+								onDragSelect={onDragSelect}
 							/>
 						</GraphContainer>
 					</Card>
@@ -264,6 +282,7 @@ function Application({ getWidgetQueryBuilder }: DashboardProps): JSX.Element {
 								}}
 								widget={errorPercentageWidget}
 								yAxisUnit="%"
+								onDragSelect={onDragSelect}
 							/>
 						</GraphContainer>
 					</Card>
