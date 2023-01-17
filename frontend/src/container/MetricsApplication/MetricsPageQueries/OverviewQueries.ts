@@ -5,8 +5,8 @@ import {
 } from 'types/api/dashboard/getAll';
 
 import {
-	getQueryBuilderQueriesOperation,
-	getQueryBuilderQueriesOperationWithFormula,
+	getQueryBuilderQueries,
+	getQueryBuilderQuerieswithFormula,
 } from './MetricsPageQueriesFactory';
 
 export const operationPerSec = ({
@@ -19,12 +19,26 @@ export const operationPerSec = ({
 } => {
 	const metricName = 'signoz_latency_count';
 	const legend = 'Operations';
-	return getQueryBuilderQueriesOperation({
-		servicename,
-		legend,
-		tagFilterItems,
+	const itemsA = [
+		{
+			id: '',
+			key: 'service_name',
+			op: 'IN',
+			value: [`${servicename}`],
+		},
+		{
+			id: '',
+			key: 'operation',
+			op: 'MATCH',
+			value: topLevelOperations,
+		},
+		...tagFilterItems,
+	];
+
+	return getQueryBuilderQueries({
 		metricName,
-		topLevelOperations,
+		legend,
+		itemsA,
 	});
 };
 
@@ -38,28 +52,57 @@ export const errorPercentage = ({
 } => {
 	const metricNameA = 'signoz_calls_total';
 	const metricNameB = 'signoz_calls_total';
-	const additionalItems = {
-		id: '',
-		key: 'status_code',
-		op: 'IN',
-		value: ['STATUS_CODE_ERROR'],
-	};
+	const additionalItemsA = [
+		{
+			id: '',
+			key: 'service_name',
+			op: 'IN',
+			value: [`${servicename}`],
+		},
+		{
+			id: '',
+			key: 'operation',
+			op: 'MATCH',
+			value: topLevelOperations,
+		},
+		{
+			id: '',
+			key: 'status_code',
+			op: 'IN',
+			value: ['STATUS_CODE_ERROR'],
+		},
+		...tagFilterItems,
+	];
+
+	const additionalItemsB = [
+		{
+			id: '',
+			key: 'service_name',
+			op: 'IN',
+			value: [`${servicename}`],
+		},
+		{
+			id: '',
+			key: 'operation',
+			op: 'MATCH',
+			value: topLevelOperations,
+		},
+		...tagFilterItems,
+	];
 
 	const legendFormula = 'Error Percentage';
 	const legend = legendFormula;
 	const expression = 'A*100/B';
 	const disabled = true;
-	return getQueryBuilderQueriesOperationWithFormula({
+	return getQueryBuilderQuerieswithFormula({
 		metricNameA,
 		metricNameB,
-		additionalItems,
-		servicename,
+		additionalItemsA,
+		additionalItemsB,
 		legend,
 		disabled,
-		tagFilterItems,
 		expression,
 		legendFormula,
-		topLevelOperations,
 	});
 };
 

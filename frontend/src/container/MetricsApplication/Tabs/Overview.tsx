@@ -45,6 +45,36 @@ function Application({ getWidgetQueryBuilder }: DashboardProps): JSX.Element {
 		[resourceAttributeQueries],
 	);
 
+	const operationPerSecWidget = useMemo(
+		() =>
+			getWidgetQueryBuilder({
+				queryType: 1,
+				promQL: [],
+				metricsBuilder: operationPerSec({
+					servicename,
+					tagFilterItems,
+					topLevelOperations,
+				}),
+				clickHouse: [],
+			}),
+		[getWidgetQueryBuilder, servicename, topLevelOperations, tagFilterItems],
+	);
+
+	const errorPercentageWidget = useMemo(
+		() =>
+			getWidgetQueryBuilder({
+				queryType: 1,
+				promQL: [],
+				metricsBuilder: errorPercentage({
+					servicename,
+					tagFilterItems,
+					topLevelOperations,
+				}),
+				clickHouse: [],
+			}),
+		[servicename, topLevelOperations, tagFilterItems, getWidgetQueryBuilder],
+	);
+
 	const onTracePopupClick = (timestamp: number): void => {
 		const currentTime = timestamp;
 		const tPlusOne = timestamp + 1 * 60 * 1000;
@@ -203,25 +233,7 @@ function Application({ getWidgetQueryBuilder }: DashboardProps): JSX.Element {
 								onClickHandler={(event, element, chart, data): void => {
 									onClickHandler(event, element, chart, data, 'Rate');
 								}}
-								widget={useMemo(
-									() =>
-										getWidgetQueryBuilder({
-											queryType: 1,
-											promQL: [],
-											metricsBuilder: operationPerSec({
-												servicename,
-												tagFilterItems,
-												topLevelOperations,
-											}),
-											clickHouse: [],
-										}),
-									[
-										getWidgetQueryBuilder,
-										servicename,
-										topLevelOperations,
-										tagFilterItems,
-									],
-								)}
+								widget={operationPerSecWidget}
 								yAxisUnit="ops"
 							/>
 						</GraphContainer>
@@ -250,25 +262,7 @@ function Application({ getWidgetQueryBuilder }: DashboardProps): JSX.Element {
 								onClickHandler={(ChartEvent, activeElements, chart, data): void => {
 									onClickHandler(ChartEvent, activeElements, chart, data, 'Error');
 								}}
-								widget={useMemo(
-									() =>
-										getWidgetQueryBuilder({
-											queryType: 1,
-											promQL: [],
-											metricsBuilder: errorPercentage({
-												servicename,
-												topLevelOperations,
-												tagFilterItems,
-											}),
-											clickHouse: [],
-										}),
-									[
-										servicename,
-										topLevelOperations,
-										tagFilterItems,
-										getWidgetQueryBuilder,
-									],
-								)}
+								widget={errorPercentageWidget}
 								yAxisUnit="%"
 							/>
 						</GraphContainer>

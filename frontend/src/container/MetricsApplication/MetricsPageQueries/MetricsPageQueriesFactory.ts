@@ -92,7 +92,6 @@ interface BuilderQueriesProps {
 	itemsA: IQueryBuilderTagFilterItems[];
 }
 
-
 interface BuilderQuerieswithFormulaProps {
 	metricNameA: string;
 	metricNameB: string;
@@ -103,9 +102,4 @@ interface BuilderQuerieswithFormulaProps {
 	legendFormula: string;
 	additionalItemsA: IQueryBuilderTagFilterItems[];
 	additionalItemsB: IQueryBuilderTagFilterItems[];
-}
-
-interface BuilderQueriesOperationWithFormulaProps
-	extends BuilderQuerieswithAdditionalItems {
-	topLevelOperations: string[];
 }
