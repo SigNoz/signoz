@@ -246,7 +246,18 @@ function GridCardGraph({
 		(state.loading === true || state.payload === undefined) &&
 		!isEmptyLayout
 	) {
-		return <Spinner height="20vh" tip="Loading..." />;
+		return (
+			<>
+				<WidgetHeader
+					parentHover={hovered}
+					title={widget?.title}
+					widget={widget}
+					onView={handleOnView}
+					onDelete={handleOnDelete}
+				/>
+				<Spinner height="20vh" tip="Loading..." />
+			</>
+		);
 	}
 
 	return (
