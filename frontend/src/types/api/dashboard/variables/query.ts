@@ -1,4 +1,4 @@
-import {IDashboardVariable} from 'types/api/dashboard/getAll';
+import { IDashboardVariable } from 'types/api/dashboard/getAll';
 
 export type Props = {
 	query: string;
