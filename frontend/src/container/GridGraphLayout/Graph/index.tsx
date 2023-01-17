@@ -249,12 +249,12 @@ function GridCardGraph({
 		return (
 			<>
 				<WidgetHeader
-						parentHover={hovered}
-						title={widget?.title}
-						widget={widget}
-						onView={(): void => onToggleModal(setModal)}
-						onDelete={(): void => onToggleModal(setDeleteModal)}
-					/>
+					parentHover={hovered}
+					title={widget?.title}
+					widget={widget}
+					onView={handleOnView}
+					onDelete={handleOnDelete}
+				/>
 				<Spinner height="20vh" tip="Loading..." />
 			</>
 		);
