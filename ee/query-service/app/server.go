@@ -296,9 +296,9 @@ func extractDashboardMetaData(path string, r *http.Request) (map[string]interfac
 
 	signozMetricNotFound := false
 
-	signozMetricNotFound = telemetry.GetInstance().CheckSigNozMetricsV2(postData.CompositeMetricQuery)
-
 	if postData != nil {
+		signozMetricNotFound = telemetry.GetInstance().CheckSigNozMetricsV2(postData.CompositeMetricQuery)
+
 		if postData.CompositeMetricQuery != nil {
 			data["queryType"] = postData.CompositeMetricQuery.QueryType
 			data["panelType"] = postData.CompositeMetricQuery.PanelType
