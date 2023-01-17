@@ -79,22 +79,20 @@ function VariableItem({
 					if (!equalsCheck(newOptionsData, oldOptionsData)) {
 						// If a variable is dependent on the current variable, update the dependent variable
 						const re = new RegExp(`\\{\\{\\s*?\\.${lastUpdatedVar}\\s*?\\}\\}`);
-						console.log(re, variableData.queryValue?.match(re));
 						if (
 							variableData.type === 'QUERY' &&
 							variableData.queryValue?.match(re)?.length > 0
 						) {
 							let value = variableData.selectedValue;
+							let allSelected = false;
 							if (variableData.multiSelect) {
-								if (variableData.showALLOption) {
-									value = ALL_SELECT_VALUE;
-								} else {
-									value = newOptionsData;
-								}
+								value = newOptionsData;
+								allSelected = true;
 							} else {
 								[value] = newOptionsData;
 							}
 							onValueUpdate(variableData.name, value);
+							onAllSelectedUpdate(variableData.name, allSelected);
 						}
 						setOptionsData(newOptionsData);
 					}
@@ -114,6 +112,7 @@ function VariableItem({
 		variableData,
 		existingVariables,
 		onValueUpdate,
+		onAllSelectedUpdate,
 		optionsData,
 		lastUpdatedVar,
 	]);
