@@ -1,4 +1,5 @@
 /* eslint-disable sonarjs/cognitive-complexity */
+/* eslint-disable no-useless-escape */
 
 import { orange } from '@ant-design/colors';
 import { WarningOutlined } from '@ant-design/icons';
@@ -76,13 +77,20 @@ function VariableItem({
 					) as never;
 					const oldOptionsData = sortValues(optionsData, variableData.sort) as never;
 					if (!equalsCheck(newOptionsData, oldOptionsData)) {
+						// If a variable is dependent on the current variable, update the dependent variable
+						const re = new RegExp(`\\{\\{\\s*?\\.${lastUpdatedVar}\\s*?\\}\\}`);
+						console.log(re, variableData.queryValue?.match(re));
 						if (
 							variableData.type === 'QUERY' &&
-							variableData.queryValue?.includes(lastUpdatedVar)
+							variableData.queryValue?.match(re)?.length > 0
 						) {
 							let value = variableData.selectedValue;
 							if (variableData.multiSelect) {
-								value = ALL_SELECT_VALUE;
+								if (variableData.showALLOption) {
+									value = ALL_SELECT_VALUE;
+								} else {
+									value = newOptionsData;
+								}
 							} else {
 								[value] = newOptionsData;
 							}
@@ -142,31 +150,33 @@ function VariableItem({
 					}}
 				/>
 			) : (
-				<Select
-					value={variableData.allSelected ? 'ALL' : variableData.selectedValue}
-					onChange={handleChange}
-					bordered={false}
-					placeholder="Select value"
-					mode={
-						(variableData.multiSelect && !variableData.allSelected
-							? 'multiple'
-							: null) as never
-					}
-					dropdownMatchSelectWidth={false}
-					style={{
-						minWidth: 120,
-						fontSize: '0.8rem',
-					}}
-					loading={isLoading}
-					showArrow
-				>
-					{variableData.multiSelect && variableData.showALLOption && (
-						<Option value={ALL_SELECT_VALUE}>ALL</Option>
-					)}
-					{map(optionsData, (option) => {
-						return <Option value={option}>{(option as string).toString()}</Option>;
-					})}
-				</Select>
+				!errorMessage && (
+					<Select
+						value={variableData.allSelected ? 'ALL' : variableData.selectedValue}
+						onChange={handleChange}
+						bordered={false}
+						placeholder="Select value"
+						mode={
+							(variableData.multiSelect && !variableData.allSelected
+								? 'multiple'
+								: null) as never
+						}
+						dropdownMatchSelectWidth={false}
+						style={{
+							minWidth: 120,
+							fontSize: '0.8rem',
+						}}
+						loading={isLoading}
+						showArrow
+					>
+						{variableData.multiSelect && variableData.showALLOption && (
+							<Option value={ALL_SELECT_VALUE}>ALL</Option>
+						)}
+						{map(optionsData, (option) => {
+							return <Option value={option}>{(option as string).toString()}</Option>;
+						})}
+					</Select>
+				)
 			)}
 			{errorMessage && (
 				<span style={{ margin: '0 0.5rem' }}>
