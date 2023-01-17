@@ -1,4 +1,4 @@
-package model
+package ingestionRules
 
 import (
 	"reflect"
@@ -13,7 +13,7 @@ func TestDropRuleToExpr(t *testing.T) {
 		Source:      IngestionSourceMetrics,
 		RuleType:    IngestionRuleTypeDrop,
 		RuleSubType: IngestionRuleSubTypeAO,
-		IngestionRuleConfig: IngestionRuleConfig{
+		Config: &IngestionRuleConfig{
 			DropConfig: DropConfig{
 				FilterSet: basemodel.FilterSet{
 					Operator: "AND",
@@ -47,7 +47,7 @@ func TestDropRuleToExpr(t *testing.T) {
 		Source:      IngestionSourceMetrics,
 		RuleType:    IngestionRuleTypeDrop,
 		RuleSubType: IngestionRuleSubTypeAO,
-		IngestionRuleConfig: IngestionRuleConfig{
+		Config: &IngestionRuleConfig{
 			DropConfig: DropConfig{
 				FilterSet: basemodel.FilterSet{
 					Operator: "AND",

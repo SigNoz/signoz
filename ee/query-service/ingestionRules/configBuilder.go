@@ -1,0 +1,52 @@
+package ingestionRules
+
+import (
+	"go.signoz.io/signoz/pkg/query-service/app/opamp/filterprocessor"
+)
+
+// this file contains methods to transform ingestion rules into
+// collector config components
+
+func PrepareDropFilter(rules []IngestionRule) (*filterprocessor.Config, error) {
+	metricRules := getMetricRules(rules)
+
+	metricExprs, err := PrepareDropExpressions(metricRules)
+	if len(err) > 0 {
+		return nil, err[0]
+	}
+	return &filterprocessor.Config{
+		Metrics: filterprocessor.MetricFilters{
+			DataPointConditions: metricExprs,
+		},
+	}, nil
+}
+
+// PrepareDropExpression creates the final OTTL expression for filter processor
+func PrepareDropExpressions(rules []IngestionRule) (result []string, fnerr []error) {
+	// result captures the final expression to be set in fitler processor
+	if len(rules) == 0 {
+		return result, nil
+	}
+
+	for _, r := range rules {
+		if r.RuleType == IngestionRuleTypeDrop {
+			expr, err := r.Config.DropConfig.PrepareExpression()
+			if err != nil {
+				fnerr = append(fnerr, err)
+			}
+			result = append(result, expr)
+		}
+	}
+
+	return result, nil
+}
+
+func getMetricRules(allRules []IngestionRule) []IngestionRule {
+	metricRules := make([]IngestionRule, 0)
+	for _, r := range allRules {
+		if r.RuleType == IngestionRuleTypeDrop && r.Source == IngestionSourceMetrics {
+			metricRules = append(metricRules, r)
+		}
+	}
+	return metricRules
+}
