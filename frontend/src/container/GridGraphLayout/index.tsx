@@ -8,6 +8,8 @@ import { useTranslation } from 'react-i18next';
 import { connect, useDispatch, useSelector } from 'react-redux';
 import { bindActionCreators, Dispatch } from 'redux';
 import { ThunkDispatch } from 'redux-thunk';
+import { AppDispatch } from 'store';
+import { UpdateTimeInterval } from 'store/actions';
 import {
 	ToggleAddWidget,
 	ToggleAddWidgetProps,
@@ -63,10 +65,20 @@ function GridGraph(props: Props): JSX.Element {
 	const [selectedDashboard] = dashboards;
 	const { data } = selectedDashboard;
 	const { widgets } = data;
-	const dispatch = useDispatch<Dispatch<AppActions>>();
+	const dispatch: AppDispatch = useDispatch<Dispatch<AppActions>>();
 
 	const [layouts, setLayout] = useState<LayoutProps[]>(
 		getPreLayouts(widgets, selectedDashboard.data.layout || []),
+	);
+
+	const onDragSelect = useCallback(
+		(start: number, end: number) => {
+			const startTimestamp = Math.trunc(start);
+			const endTimestamp = Math.trunc(end);
+
+			dispatch(UpdateTimeInterval('custom', [startTimestamp, endTimestamp]));
+		},
+		[dispatch],
 	);
 
 	useEffect(() => {
@@ -182,13 +194,14 @@ function GridGraph(props: Props): JSX.Element {
 								yAxisUnit={currentWidget?.yAxisUnit}
 								layout={layout}
 								setLayout={setLayout}
+								onDragSelect={onDragSelect}
 							/>
 						),
 					};
 				}),
 			);
 		},
-		[widgets],
+		[widgets, onDragSelect],
 	);
 
 	const onEmptyWidgetHandler = useCallback(async () => {
