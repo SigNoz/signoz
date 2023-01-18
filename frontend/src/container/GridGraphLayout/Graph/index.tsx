@@ -236,6 +236,8 @@ function GridCardGraph({
 						widget={widget}
 						onView={handleOnView}
 						onDelete={handleOnDelete}
+						state={state}
+						isEmptyLayout={isEmptyLayout}
 					/>
 				</div>
 
@@ -250,22 +252,19 @@ function GridCardGraph({
 	) {
 		return (
 			<>
-				<WidgetHeader
-					parentHover={hovered}
-					title={widget?.title}
-					widget={widget}
-					onView={handleOnView}
-					onDelete={handleOnDelete}
-				/>
-				{prevChartDataSetRef.current === undefined && (
-					<Spinner
-						height="12vh"
-						tip="Loading..."
-						customStyle={{
-							justifyContent: 'flex-end',
-							marginRight: '5px',
-						}}
+				<div className="drag-handle">
+					<WidgetHeader
+						parentHover={hovered}
+						title={widget?.title}
+						widget={widget}
+						onView={handleOnView}
+						onDelete={handleOnDelete}
+						state={state}
+						isEmptyLayout={isEmptyLayout}
 					/>
+				</div>
+				{prevChartDataSetRef.current === undefined && (
+					<Spinner height="20vh" tip="Loading..." />
 				)}
 				{!isEmpty(widget) && prevChartDataSetRef.current && (
 					<GridGraphComponent
@@ -307,6 +306,8 @@ function GridCardGraph({
 						widget={widget}
 						onView={(): void => onToggleModal(setModal)}
 						onDelete={(): void => onToggleModal(setDeleteModal)}
+						state={state}
+						isEmptyLayout={isEmptyLayout}
 					/>
 				</div>
 			)}
@@ -333,7 +334,7 @@ function GridCardGraph({
 	);
 }
 
-interface GridCardGraphState {
+export interface GridCardGraphState {
 	loading: boolean;
 	error: boolean;
 	errorMessage: string;

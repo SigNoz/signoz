@@ -5,6 +5,7 @@ import {
 	FullscreenOutlined,
 } from '@ant-design/icons';
 import { Dropdown, Menu, Typography } from 'antd';
+import Spinner from 'components/Spinner';
 import useComponentPermission from 'hooks/useComponentPermission';
 import history from 'lib/history';
 import React, { useState } from 'react';
@@ -13,6 +14,8 @@ import { AppState } from 'store/reducers';
 import { Widgets } from 'types/api/dashboard/getAll';
 import AppReducer from 'types/reducer/app';
 
+import { GridCardGraphState } from '../Graph';
+import { styles } from './config';
 import {
 	ArrowContainer,
 	HeaderContainer,
@@ -27,6 +30,8 @@ interface IWidgetHeaderProps {
 	onView: VoidFunction;
 	onDelete: VoidFunction;
 	parentHover: boolean;
+	state: GridCardGraphState;
+	isEmptyLayout: boolean;
 }
 function WidgetHeader({
 	title,
@@ -34,6 +39,8 @@ function WidgetHeader({
 	onView,
 	onDelete,
 	parentHover,
+	state,
+	isEmptyLayout,
 }: IWidgetHeaderProps): JSX.Element {
 	const [localHover, setLocalHover] = useState(false);
 
@@ -106,20 +113,24 @@ function WidgetHeader({
 			overlayStyle={{ minWidth: 100 }}
 			placement="bottom"
 		>
-			<HeaderContainer
-				onMouseOver={(): void => setLocalHover(true)}
-				onMouseOut={(): void => setLocalHover(false)}
-				hover={localHover}
-			>
-				<HeaderContentContainer onClick={(e): void => e.preventDefault()}>
-					<Typography.Text style={{ maxWidth: '80%' }} ellipsis>
-						{title}
-					</Typography.Text>
-					<ArrowContainer hover={parentHover}>
-						<DownOutlined />
-					</ArrowContainer>
-				</HeaderContentContainer>
-			</HeaderContainer>
+			<>
+				<HeaderContainer
+					onMouseOver={(): void => setLocalHover(true)}
+					onMouseOut={(): void => setLocalHover(false)}
+					hover={localHover}
+				>
+					<HeaderContentContainer onClick={(e): void => e.preventDefault()}>
+						<Typography.Text style={{ maxWidth: '80%' }} ellipsis>
+							{title}
+						</Typography.Text>
+						<ArrowContainer hover={parentHover}>
+							<DownOutlined />
+						</ArrowContainer>
+					</HeaderContentContainer>
+				</HeaderContainer>
+				{(state.loading === true || state.payload === undefined) &&
+					!isEmptyLayout && <Spinner height="5vh" customStyle={styles} />}
+			</>
 		</Dropdown>
 	);
 }
