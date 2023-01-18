@@ -23,6 +23,7 @@ import {
 } from 'chart.js';
 import * as chartjsAdapter from 'chartjs-adapter-date-fns';
 import annotationPlugin from 'chartjs-plugin-annotation';
+import { themeColors } from 'constants/theme';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import React, { useCallback, useEffect, useRef } from 'react';
 
@@ -96,6 +97,18 @@ function Graph({
 		}
 
 		return 'rgba(231,233,237,0.8)';
+	}, [currentTheme]);
+
+	const getAxisLabelColor = useCallback(() => {
+		if (currentTheme === undefined) {
+			return themeColors.whiteCream;
+		}
+
+		if (currentTheme === 'dark') {
+			return themeColors.whiteCream;
+		}
+
+		return themeColors.black;
 	}, [currentTheme]);
 
 	// eslint-disable-next-line sonarjs/cognitive-complexity
@@ -200,6 +213,7 @@ function Graph({
 							},
 						},
 						type: 'time',
+						ticks: { color: getAxisLabelColor() },
 					},
 					y: {
 						display: true,
@@ -208,6 +222,7 @@ function Graph({
 							color: getGridColor(),
 						},
 						ticks: {
+							color: getAxisLabelColor(),
 							// Include a dollar sign in the ticks
 							callback(value) {
 								return getYAxisFormattedValue(value.toString(), yAxisUnit);
