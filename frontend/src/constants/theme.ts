@@ -33,6 +33,8 @@ const themeColors = {
 		rust: '#B33300',
 	},
 	errorColor: '#d32f2f',
+	royalGrey: '#888888',
+	matterhornGrey: '#555555',
 	whiteCream: '#ffffffd5',
 	black: '#000000',
 };

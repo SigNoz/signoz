@@ -330,7 +330,7 @@ Graph.defaultProps = {
 	yAxisUnit: undefined,
 	forceReRender: undefined,
 	staticLine: undefined,
-	containerHeight: '85%',
+	containerHeight: '90%',
 	onDragSelect: undefined,
 	dragSelectColor: undefined,
 };
