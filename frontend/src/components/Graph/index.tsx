@@ -23,6 +23,7 @@ import {
 } from 'chart.js';
 import * as chartjsAdapter from 'chartjs-adapter-date-fns';
 import annotationPlugin from 'chartjs-plugin-annotation';
+import { themeColors } from 'constants/theme';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import React, { useCallback, useEffect, useRef } from 'react';
 
@@ -200,7 +201,7 @@ function Graph({
 							},
 						},
 						type: 'time',
-						ticks: { color: '#ffffffd5' },
+						ticks: { color: themeColors.whiteCream },
 					},
 					y: {
 						display: true,
@@ -209,7 +210,7 @@ function Graph({
 							color: getGridColor(),
 						},
 						ticks: {
-							color: '#ffffffd5',
+							color: themeColors.whiteCream,
 							// Include a dollar sign in the ticks
 							callback(value) {
 								return getYAxisFormattedValue(value.toString(), yAxisUnit);

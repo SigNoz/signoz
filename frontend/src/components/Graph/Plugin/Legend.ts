@@ -83,9 +83,9 @@ export const legend = (id: string, isLonger: boolean): Plugin<ChartType> => {
 				boxSpan.style.borderColor = `${item?.strokeStyle}`;
 				boxSpan.style.borderWidth = `${item.lineWidth}px`;
 				boxSpan.style.display = 'inline-block';
-				boxSpan.style.minHeight = '12px';
-				boxSpan.style.marginRight = '8px';
-				boxSpan.style.minWidth = '12px';
+				boxSpan.style.minHeight = '0.75rem';
+				boxSpan.style.marginRight = '0.5rem';
+				boxSpan.style.minWidth = '0.75rem';
 				boxSpan.style.borderRadius = '50%';
 
 				if (item.text) {

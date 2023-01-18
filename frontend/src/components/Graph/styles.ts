@@ -1,3 +1,4 @@
+import { themeColors } from 'constants/theme';
 import styled from 'styled-components';
 
 export const LegendsContainer = styled.div`
@@ -5,17 +6,17 @@ export const LegendsContainer = styled.div`
 
 	* {
 		::-webkit-scrollbar {
-			width: 8px;
+			width: 0.5rem;
 		}
 		::-webkit-scrollbar-track {
 			background: transparent;
 		}
 		::-webkit-scrollbar-thumb {
-			background: #888;
+			background: ${themeColors.royalGrey};
 			border-radius: 10px;
 		}
 		::-webkit-scrollbar-thumb:hover {
-			background: #555;
+			background: ${themeColors.matterhornGrey};
 		}
 	}
 `;
