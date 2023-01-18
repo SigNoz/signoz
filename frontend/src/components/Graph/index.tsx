@@ -23,7 +23,6 @@ import {
 } from 'chart.js';
 import * as chartjsAdapter from 'chartjs-adapter-date-fns';
 import annotationPlugin from 'chartjs-plugin-annotation';
-import { themeColors } from 'constants/theme';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import React, { useCallback, useEffect, useRef } from 'react';
 
