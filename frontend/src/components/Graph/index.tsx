@@ -200,6 +200,7 @@ function Graph({
 							},
 						},
 						type: 'time',
+						ticks: { color: '#ffffffd5' },
 					},
 					y: {
 						display: true,
@@ -208,6 +209,7 @@ function Graph({
 							color: getGridColor(),
 						},
 						ticks: {
+							color: '#ffffffd5',
 							// Include a dollar sign in the ticks
 							callback(value) {
 								return getYAxisFormattedValue(value.toString(), yAxisUnit);
