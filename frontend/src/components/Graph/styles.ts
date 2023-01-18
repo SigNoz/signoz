@@ -1,3 +1,4 @@
+import { themeColors } from 'constants/theme';
 import styled from 'styled-components';
 
 export const LegendsContainer = styled.div`
@@ -5,10 +6,17 @@ export const LegendsContainer = styled.div`
 
 	* {
 		::-webkit-scrollbar {
-			display: none !important;
+			width: 0.5rem;
 		}
-
-		-ms-overflow-style: none !important; /* IE and Edge */
-		scrollbar-width: none !important; /* Firefox */
+		::-webkit-scrollbar-track {
+			background: transparent;
+		}
+		::-webkit-scrollbar-thumb {
+			background: ${themeColors.royalGrey};
+			border-radius: 0.625rem;
+		}
+		::-webkit-scrollbar-thumb:hover {
+			background: ${themeColors.matterhornGrey};
+		}
 	}
 `;
