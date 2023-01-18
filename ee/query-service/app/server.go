@@ -30,6 +30,7 @@ import (
 	"go.signoz.io/signoz/pkg/query-service/healthcheck"
 	basealm "go.signoz.io/signoz/pkg/query-service/integrations/alertManager"
 	baseint "go.signoz.io/signoz/pkg/query-service/interfaces"
+	"go.signoz.io/signoz/pkg/query-service/model"
 	pqle "go.signoz.io/signoz/pkg/query-service/pqlEngine"
 	rules "go.signoz.io/signoz/pkg/query-service/rules"
 	"go.signoz.io/signoz/pkg/query-service/telemetry"
@@ -271,8 +272,9 @@ func (lrw *loggingResponseWriter) Flush() {
 
 func extractDashboardMetaData(path string, r *http.Request) (map[string]interface{}, bool) {
 	pathToExtractBodyFrom := "/api/v2/metrics/query_range"
-	var requestBody map[string]interface{}
+
 	data := map[string]interface{}{}
+	var postData *model.QueryRangeParamsV2
 
 	if path == pathToExtractBodyFrom && (r.Method == "POST") {
 		if r.Body != nil {
@@ -282,7 +284,8 @@ func extractDashboardMetaData(path string, r *http.Request) (map[string]interfac
 			}
 			r.Body.Close() //  must close
 			r.Body = ioutil.NopCloser(bytes.NewBuffer(bodyBytes))
-			json.Unmarshal(bodyBytes, &requestBody)
+			json.Unmarshal(bodyBytes, &postData)
+
 		} else {
 			return nil, false
 		}
@@ -291,31 +294,20 @@ func extractDashboardMetaData(path string, r *http.Request) (map[string]interfac
 		return nil, false
 	}
 
-	compositeMetricQuery, compositeMetricQueryExists := requestBody["compositeMetricQuery"]
+	signozMetricNotFound := false
 
-	signozMetricFound := false
+	if postData != nil {
+		signozMetricNotFound = telemetry.GetInstance().CheckSigNozMetricsV2(postData.CompositeMetricQuery)
 
-	if compositeMetricQueryExists {
-		compositeMetricQueryMap := compositeMetricQuery.(map[string]interface{})
-
-		signozMetricFound = telemetry.GetInstance().CheckSigNozMetrics(compositeMetricQueryMap)
-
-		queryType, queryTypeExists := compositeMetricQueryMap["queryType"]
-		if queryTypeExists {
-			data["queryType"] = queryType
+		if postData.CompositeMetricQuery != nil {
+			data["queryType"] = postData.CompositeMetricQuery.QueryType
+			data["panelType"] = postData.CompositeMetricQuery.PanelType
 		}
-		panelType, panelTypeExists := compositeMetricQueryMap["panelType"]
-		if panelTypeExists {
-			data["panelType"] = panelType
-		}
+
+		data["datasource"] = postData.DataSource
 	}
 
-	datasource, datasourceExists := requestBody["dataSource"]
-	if datasourceExists {
-		data["datasource"] = datasource
-	}
-
-	if !signozMetricFound {
+	if signozMetricNotFound {
 		telemetry.GetInstance().AddActiveMetricsUser()
 		telemetry.GetInstance().SendEvent(telemetry.TELEMETRY_EVENT_DASHBOARDS_METADATA, data, true)
 	}
