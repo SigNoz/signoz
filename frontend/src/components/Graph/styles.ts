@@ -2,7 +2,7 @@ import { themeColors } from 'constants/theme';
 import styled from 'styled-components';
 
 export const LegendsContainer = styled.div`
-	height: 17%;
+	height: 15%;
 
 	* {
 		::-webkit-scrollbar {
