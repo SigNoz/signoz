@@ -13,7 +13,7 @@ export const LegendsContainer = styled.div`
 		}
 		::-webkit-scrollbar-thumb {
 			background: ${themeColors.royalGrey};
-			border-radius: 10px;
+			border-radius: 0.625rem;
 		}
 		::-webkit-scrollbar-thumb:hover {
 			background: ${themeColors.matterhornGrey};
