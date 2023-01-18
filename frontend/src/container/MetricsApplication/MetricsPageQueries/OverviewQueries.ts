@@ -13,10 +13,7 @@ export const operationPerSec = ({
 	servicename,
 	tagFilterItems,
 	topLevelOperations,
-}: OperationPerSecProps): {
-	formulas: IMetricsBuilderFormula[];
-	queryBuilder: IMetricsBuilderQuery[];
-} => {
+}: OperationPerSecProps): IOverviewQueries => {
 	const metricName = 'signoz_latency_count';
 	const legend = 'Operations';
 	const itemsA = [
@@ -46,10 +43,7 @@ export const errorPercentage = ({
 	servicename,
 	tagFilterItems,
 	topLevelOperations,
-}: OperationPerSecProps): {
-	formulas: IMetricsBuilderFormula[];
-	queryBuilder: IMetricsBuilderQuery[];
-} => {
+}: OperationPerSecProps): IOverviewQueries => {
 	const metricNameA = 'signoz_calls_total';
 	const metricNameB = 'signoz_calls_total';
 	const additionalItemsA = [
@@ -110,4 +104,9 @@ export interface OperationPerSecProps {
 	servicename: string | undefined;
 	tagFilterItems: IQueryBuilderTagFilterItems[];
 	topLevelOperations: string[];
+}
+
+interface IOverviewQueries {
+	formulas: IMetricsBuilderFormula[];
+	queryBuilder: IMetricsBuilderQuery[];
 }

@@ -10,10 +10,6 @@ import {
 	convertRawQueriesToTraceSelectedTags,
 	resourceAttributesToTagFilterItems,
 } from 'lib/resourceAttributes';
-import React, { useMemo, useRef } from 'react';
-import { useSelector } from 'react-redux';
-import { convertRawQueriesToTraceSelectedTags } from 'lib/resourceAttributes';
-import { escapeRegExp } from 'lodash-es';
 import React, { useCallback, useMemo, useRef } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useParams } from 'react-router-dom';
