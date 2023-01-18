@@ -35,7 +35,6 @@ const themeColors = {
 	errorColor: '#d32f2f',
 	royalGrey: '#888888',
 	matterhornGrey: '#555555',
-	whiteCream: '#ffffffd5',
 };
 
 export { themeColors };
