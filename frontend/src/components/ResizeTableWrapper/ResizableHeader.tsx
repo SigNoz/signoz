@@ -1,8 +1,6 @@
 import React from 'react';
-import { Resizable, ResizeCallbackData } from 'react-resizable';
-
-// # Styles import
-import { SpanStyle } from './styles';
+import { NumberSize, Resizable } from 're-resizable';
+import { Direction } from 're-resizable/lib/resizer';
 
 function ResizableHeader(props: ResizableHeaderProps): JSX.Element {
 	const { onResize, width, ...restProps } = props;
@@ -14,16 +12,25 @@ function ResizableHeader(props: ResizableHeaderProps): JSX.Element {
 
 	return (
 		<Resizable
-			width={width}
-			height={0}
-			handle={
-				<SpanStyle
-					className="react-resizable-handle"
-					onClick={(e): void => e.stopPropagation()}
-				/>
-			}
+			style={{
+				display: 'flex',
+				flexDirection: 'row',
+				alignItems: 'center',
+				justifyContent: 'center',
+				borderRight: 'solid 1px #ddd',
+			}}
+			size={{ width: width, height: 60 }}
+			enable={{
+				top: false,
+				right: true,
+				bottom: false,
+				left: false,
+				topRight: false,
+				bottomRight: false,
+				bottomLeft: false,
+				topLeft: false,
+			}}
 			onResize={onResize}
-			draggableOpts={{ enableUserSelectHack: false }}
 		>
 			{/* eslint-disable-next-line react/jsx-props-no-spreading */}
 			<th {...restProps} />
@@ -32,7 +39,12 @@ function ResizableHeader(props: ResizableHeaderProps): JSX.Element {
 }
 
 interface ResizableHeaderProps {
-	onResize: (e: React.SyntheticEvent<Element>, data: ResizeCallbackData) => void;
+	onResize: (
+		event: MouseEvent | TouchEvent,
+		direction: Direction,
+		elementRef: HTMLElement,
+		delta: NumberSize,
+	) => void;
 	width: number;
 }
 
