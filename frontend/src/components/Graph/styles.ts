@@ -1,14 +1,21 @@
 import styled from 'styled-components';
 
 export const LegendsContainer = styled.div`
-	height: 15%;
+	height: 17%;
 
 	* {
 		::-webkit-scrollbar {
-			display: none !important;
+			width: 8px;
 		}
-
-		-ms-overflow-style: none !important; /* IE and Edge */
-		scrollbar-width: none !important; /* Firefox */
+		::-webkit-scrollbar-track {
+			background: transparent;
+		}
+		::-webkit-scrollbar-thumb {
+			background: #888;
+			border-radius: 10px;
+		}
+		::-webkit-scrollbar-thumb:hover {
+			background: #555;
+		}
 	}
 `;
