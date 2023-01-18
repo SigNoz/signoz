@@ -33,6 +33,8 @@ const themeColors = {
 		rust: '#B33300',
 	},
 	errorColor: '#d32f2f',
+	whiteCream: '#ffffffd5',
+	black: '#000000',
 };
 
 export { themeColors };

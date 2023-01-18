@@ -27,6 +27,7 @@ import { useIsDarkMode } from 'hooks/useDarkMode';
 import React, { useCallback, useEffect, useRef } from 'react';
 
 import { hasData } from './hasData';
+import { getAxisLabelColor } from './helpers';
 import { legend } from './Plugin';
 import {
 	createDragSelectPlugin,
@@ -200,6 +201,7 @@ function Graph({
 							},
 						},
 						type: 'time',
+						ticks: { color: getAxisLabelColor(currentTheme) },
 					},
 					y: {
 						display: true,
@@ -208,6 +210,7 @@ function Graph({
 							color: getGridColor(),
 						},
 						ticks: {
+							color: getAxisLabelColor(currentTheme),
 							// Include a dollar sign in the ticks
 							callback(value) {
 								return getYAxisFormattedValue(value.toString(), yAxisUnit);
