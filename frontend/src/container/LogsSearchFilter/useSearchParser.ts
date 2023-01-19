@@ -26,7 +26,7 @@ export function useSearchParser(): {
 		(updatedQueryString: string) => {
 			history.replace({
 				pathname: history.location.pathname,
-				search: updatedQueryString ? `?q=${updatedQueryString}` : '',
+				search: `?q=${updatedQueryString}`,
 			});
 
 			dispatch({
@@ -45,7 +45,7 @@ export function useSearchParser(): {
 	);
 
 	useEffect(() => {
-		if (queryString !== null) updateQueryString(queryString);
+		updateQueryString(queryString);
 	}, [queryString, updateQueryString]);
 
 	const updateParsedQuery = useCallback(

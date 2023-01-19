@@ -81,14 +81,10 @@ function SearchFilter({
 				dispatch({
 					type: FLUSH_LOGS,
 				});
-				setTimeout(
-					() =>
-						dispatch({
-							type: TOGGLE_LIVE_TAIL,
-							payload: liveTail,
-						}),
-					0,
-				);
+				dispatch({
+					type: TOGGLE_LIVE_TAIL,
+					payload: liveTail,
+				});
 			} else {
 				const { maxTime, minTime } = globalTime;
 

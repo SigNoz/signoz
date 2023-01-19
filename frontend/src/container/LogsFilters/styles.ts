@@ -1,11 +1,12 @@
 import { blue, grey } from '@ant-design/colors';
 import { Col, Typography } from 'antd';
+import { themeColors } from 'constants/theme';
 import styled from 'styled-components';
 
 export const Container = styled(Col)`
 	padding-top: 0.3rem;
-	min-width: 250px;
-	max-width: 350px;
+	min-width: 15.625rem;
+	max-width: 21.875rem;
 `;
 
 export const CategoryContainer = styled.div`
@@ -25,9 +26,8 @@ export const Field = styled.div<{ isDarkMode: boolean }>`
 	justify-content: space-between;
 	align-items: center;
 	&:hover {
-		background: ${({ isDarkMode }): string => {
-			return isDarkMode ? grey[7] : '#ddd';
-		}};
+		background: ${({ isDarkMode }): string =>
+			isDarkMode ? grey[7] : themeColors.lightgrey};
 	}
 `;
 

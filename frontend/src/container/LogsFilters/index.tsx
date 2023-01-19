@@ -1,19 +1,17 @@
-import { red } from '@ant-design/colors';
 import { CloseOutlined, PlusCircleFilled } from '@ant-design/icons';
 import { Input } from 'antd';
-import AddToSelectedFields from 'api/logs/AddToSelectedField';
-import RemoveSelectedField from 'api/logs/RemoveFromSelectedField';
 import CategoryHeading from 'components/Logs/CategoryHeading';
 import { fieldSearchFilter } from 'lib/logs/fieldSearch';
-import React, { memo, useState } from 'react';
+import React, { memo, useCallback, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
-import { IInterestingFields, ISelectedFields } from 'types/api/logs/fields';
 import { ILogsReducer } from 'types/reducer/logs';
 
-import { RESTRICTED_SELECTED_FIELDS } from './config';
-import { FieldItem } from './FieldItem';
+import { ICON_STYLE } from './config';
+import FieldItem from './FieldItem';
 import { CategoryContainer, Container, FieldContainer } from './styles';
+import { IHandleInterestProps, IHandleRemoveInterestProps } from './types';
+import { onHandleAddInterest, onHandleRemoveInterest } from './utils';
 
 function LogsFilters(): JSX.Element {
 	const {
@@ -30,57 +28,40 @@ function LogsFilters(): JSX.Element {
 		setFilterValuesInput((e.target as HTMLInputElement).value);
 	};
 
-	const handleAddInterestingToSelected = async ({
-		fieldData,
-		fieldIndex,
-	}: {
-		fieldData: IInterestingFields;
-		fieldIndex: number;
-	}): Promise<void> => {
-		setInterestingFieldLoading((prevState: number[]) => {
-			prevState.push(fieldIndex);
-			return [...prevState];
-		});
+	const onHandleAddSelectedToInteresting = useCallback(
+		({ fieldData, fieldIndex }: IHandleInterestProps) => (): Promise<void> =>
+			onHandleAddInterest({
+				fieldData,
+				fieldIndex,
+				interesting,
+				interestingFieldLoading,
+				setInterestingFieldLoading,
+				selected,
+			}),
+		[interesting, interestingFieldLoading, selected],
+	);
 
-		await AddToSelectedFields({
-			...fieldData,
-			selected: true,
-		});
-		// getLogsFields();
+	const onHandleRemoveSelected = useCallback(
+		({
+			fieldData,
+			fieldIndex,
+		}: IHandleRemoveInterestProps) => (): Promise<void> =>
+			onHandleRemoveInterest({
+				fieldData,
+				fieldIndex,
+				interesting,
+				interestingFieldLoading,
+				selected,
+				setSelectedFieldLoading,
+			}),
+		[interesting, interestingFieldLoading, selected, setSelectedFieldLoading],
+	);
 
-		setInterestingFieldLoading(
-			interestingFieldLoading.filter((e) => e !== fieldIndex),
-		);
-	};
-	const handleRemoveSelectedField = async ({
-		fieldData,
-		fieldIndex,
-	}: {
-		fieldData: ISelectedFields;
-		fieldIndex: number;
-	}): Promise<void> => {
-		setSelectedFieldLoading((prevState) => {
-			prevState.push(fieldIndex);
-			return [...prevState];
-		});
-
-		await RemoveSelectedField({
-			...fieldData,
-			selected: false,
-		});
-
-		// getLogsFields();
-
-		setSelectedFieldLoading(
-			interestingFieldLoading.filter((e) => e !== fieldIndex),
-		);
-	};
 	return (
 		<Container flex="450px">
 			<Input
 				placeholder="Filter Values"
 				onInput={handleSearch}
-				style={{ width: '100%' }}
 				value={filterValuesInput}
 				onChange={handleSearch}
 			/>
@@ -94,13 +75,13 @@ function LogsFilters(): JSX.Element {
 							<FieldItem
 								key={`${JSON.stringify(field)}`}
 								name={field.name}
-								fieldData={field as never}
+								fieldData={field}
 								fieldIndex={idx}
-								buttonIcon={<CloseOutlined style={{ color: red[5] }} />}
-								buttonOnClick={
-									(!RESTRICTED_SELECTED_FIELDS.includes(field.name) &&
-										handleRemoveSelectedField) as never
-								}
+								buttonIcon={<CloseOutlined style={ICON_STYLE.CLOSE} />}
+								buttonOnClick={onHandleRemoveSelected({
+									fieldData: field,
+									fieldIndex: idx,
+								})}
 								isLoading={selectedFieldLoading.includes(idx)}
 								iconHoverText="Remove from Selected Fields"
 							/>
@@ -116,10 +97,13 @@ function LogsFilters(): JSX.Element {
 							<FieldItem
 								key={`${JSON.stringify(field)}`}
 								name={field.name}
-								fieldData={field as never}
+								fieldData={field}
 								fieldIndex={idx}
-								buttonIcon={<PlusCircleFilled />}
-								buttonOnClick={handleAddInterestingToSelected as never}
+								buttonIcon={<PlusCircleFilled style={ICON_STYLE.PLUS} />}
+								buttonOnClick={onHandleAddSelectedToInteresting({
+									fieldData: field,
+									fieldIndex: idx,
+								})}
 								isLoading={interestingFieldLoading.includes(idx)}
 								iconHoverText="Add to Selected Fields"
 							/>
