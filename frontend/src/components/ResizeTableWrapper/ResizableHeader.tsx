@@ -1,6 +1,6 @@
-import React from 'react';
 import { NumberSize, Resizable } from 're-resizable';
 import { Direction } from 're-resizable/lib/resizer';
+import React from 'react';
 
 function ResizableHeader(props: ResizableHeaderProps): JSX.Element {
 	const { onResize, width, ...restProps } = props;
@@ -19,7 +19,7 @@ function ResizableHeader(props: ResizableHeaderProps): JSX.Element {
 				justifyContent: 'center',
 				borderRight: 'solid 1px #ddd',
 			}}
-			size={{ width: width, height: 60 }}
+			size={{ width, height: 60 }}
 			enable={{
 				top: false,
 				right: true,
