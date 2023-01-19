@@ -2,9 +2,10 @@ import {
 	DeleteOutlined,
 	DownOutlined,
 	EditFilled,
+	ExclamationCircleOutlined,
 	FullscreenOutlined,
 } from '@ant-design/icons';
-import { Dropdown, Menu, Typography } from 'antd';
+import { Dropdown, Menu, Tooltip, Typography } from 'antd';
 import Spinner from 'components/Spinner';
 import useComponentPermission from 'hooks/useComponentPermission';
 import history from 'lib/history';
@@ -15,7 +16,7 @@ import { Widgets } from 'types/api/dashboard/getAll';
 import AppReducer from 'types/reducer/app';
 
 import { GridCardGraphState } from '../Graph';
-import { styles } from './config';
+import { errorTooltipPosition, spinnerStyles, tooltipStyles } from './config';
 import {
 	ArrowContainer,
 	HeaderContainer,
@@ -129,7 +130,17 @@ function WidgetHeader({
 					</HeaderContentContainer>
 				</HeaderContainer>
 				{(state.loading === true || state.payload === undefined) &&
-					!isEmptyLayout && <Spinner height="5vh" customStyle={styles} />}
+					!state.error &&
+					!isEmptyLayout && <Spinner height="5vh" customStyle={spinnerStyles} />}
+				{state.error && state.errorMessage && !isEmptyLayout && (
+					<Tooltip
+						title={state.errorMessage}
+						placement={errorTooltipPosition}
+						zIndex={9999}
+					>
+						<ExclamationCircleOutlined style={tooltipStyles} />
+					</Tooltip>
+				)}
 			</>
 		</Dropdown>
 	);

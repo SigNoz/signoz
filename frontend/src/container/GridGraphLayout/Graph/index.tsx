@@ -26,7 +26,7 @@ import { LayoutProps } from '..';
 import EmptyWidget from '../EmptyWidget';
 import WidgetHeader from '../WidgetHeader';
 import FullView from './FullView/index.metricsBuilder';
-import { ErrorContainer, FullViewContainer, Modal } from './styles';
+import { FullViewContainer, Modal } from './styles';
 
 function GridCardGraph({
 	widget,
@@ -227,22 +227,35 @@ function GridCardGraph({
 
 	if (state.error && !isEmptyLayout) {
 		return (
-			<>
+			<span>
 				{getModals()}
-				<div className="drag-handle">
-					<WidgetHeader
-						parentHover={hovered}
-						title={widget?.title}
-						widget={widget}
-						onView={handleOnView}
-						onDelete={handleOnDelete}
-						state={state}
-						isEmptyLayout={isEmptyLayout}
-					/>
-				</div>
-
-				<ErrorContainer>{state.errorMessage}</ErrorContainer>
-			</>
+				{!isEmpty(widget) && prevChartDataSetRef.current && (
+					<>
+						<div className="drag-handle">
+							<WidgetHeader
+								parentHover={hovered}
+								title={widget?.title}
+								widget={widget}
+								onView={handleOnView}
+								onDelete={handleOnDelete}
+								state={state}
+								isEmptyLayout={isEmptyLayout}
+							/>
+						</div>
+						<GridGraphComponent
+							{...{
+								GRAPH_TYPES: widget.panelTypes,
+								data: prevChartDataSetRef.current,
+								isStacked: widget.isStacked,
+								opacity: widget.opacity,
+								title: ' ',
+								name,
+								yAxisUnit,
+							}}
+						/>
+					</>
+				)}
+			</span>
 		);
 	}
 
