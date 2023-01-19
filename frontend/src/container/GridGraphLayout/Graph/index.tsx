@@ -252,32 +252,33 @@ function GridCardGraph({
 	) {
 		return (
 			<>
-				<div className="drag-handle">
-					<WidgetHeader
-						parentHover={hovered}
-						title={widget?.title}
-						widget={widget}
-						onView={handleOnView}
-						onDelete={handleOnDelete}
-						state={state}
-						isEmptyLayout={isEmptyLayout}
-					/>
-				</div>
-				{prevChartDataSetRef.current === undefined && (
+				{!isEmpty(widget) && prevChartDataSetRef.current ? (
+					<>
+						<div className="drag-handle">
+							<WidgetHeader
+								parentHover={hovered}
+								title={widget?.title}
+								widget={widget}
+								onView={handleOnView}
+								onDelete={handleOnDelete}
+								state={state}
+								isEmptyLayout={isEmptyLayout}
+							/>
+						</div>
+						<GridGraphComponent
+							{...{
+								GRAPH_TYPES: widget.panelTypes,
+								data: prevChartDataSetRef.current,
+								isStacked: widget.isStacked,
+								opacity: widget.opacity,
+								title: ' ',
+								name,
+								yAxisUnit,
+							}}
+						/>
+					</>
+				) : (
 					<Spinner height="20vh" tip="Loading..." />
-				)}
-				{!isEmpty(widget) && prevChartDataSetRef.current && (
-					<GridGraphComponent
-						{...{
-							GRAPH_TYPES: widget.panelTypes,
-							data: prevChartDataSetRef.current,
-							isStacked: widget.isStacked,
-							opacity: widget.opacity,
-							title: ' ',
-							name,
-							yAxisUnit,
-						}}
-					/>
 				)}
 			</>
 		);
