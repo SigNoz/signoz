@@ -22,6 +22,7 @@ const getOrCreateLegendList = (
 		listContainer.style.height = '100%';
 		listContainer.style.flexWrap = 'wrap';
 		listContainer.style.justifyContent = 'center';
+		listContainer.style.fontSize = '0.75rem';
 		legendContainer?.appendChild(listContainer);
 	}
 
@@ -59,7 +60,7 @@ export const legend = (id: string, isLonger: boolean): Plugin<ChartType> => {
 				li.style.cursor = 'pointer';
 				li.style.display = 'flex';
 				li.style.marginLeft = '10px';
-				li.style.marginTop = '5px';
+				// li.style.marginTop = '5px';
 
 				li.onclick = (): void => {
 					// eslint-disable-next-line @typescript-eslint/ban-ts-comment
@@ -83,9 +84,9 @@ export const legend = (id: string, isLonger: boolean): Plugin<ChartType> => {
 				boxSpan.style.borderColor = `${item?.strokeStyle}`;
 				boxSpan.style.borderWidth = `${item.lineWidth}px`;
 				boxSpan.style.display = 'inline-block';
-				boxSpan.style.minHeight = '20px';
-				boxSpan.style.marginRight = '10px';
-				boxSpan.style.minWidth = '20px';
+				boxSpan.style.minHeight = '0.75rem';
+				boxSpan.style.marginRight = '0.5rem';
+				boxSpan.style.minWidth = '0.75rem';
 				boxSpan.style.borderRadius = '50%';
 
 				if (item.text) {
