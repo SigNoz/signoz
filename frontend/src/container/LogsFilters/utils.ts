@@ -6,6 +6,7 @@ import {
 	UPDATE_SELECTED_FIELDS,
 } from 'types/actions/logs';
 
+import { RESTRICTED_SELECTED_FIELDS } from './config';
 import { OnHandleAddInterestProps, OnHandleRemoveInterestProps } from './types';
 
 export const onHandleAddInterest = async ({
@@ -57,6 +58,8 @@ export const onHandleRemoveInterest = async ({
 	fieldData,
 	fieldIndex,
 }: OnHandleRemoveInterestProps): Promise<void> => {
+	if (RESTRICTED_SELECTED_FIELDS.includes(fieldData.name)) return;
+
 	const { dispatch } = store;
 
 	setSelectedFieldLoading((prevState) => {
