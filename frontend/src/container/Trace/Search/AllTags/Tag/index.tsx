@@ -8,13 +8,15 @@ import { TraceReducer } from 'types/reducer/trace';
 import { Container, IconContainer, SelectComponent } from './styles';
 import TagsKey from './TagKey';
 import TagValue from './TagValue';
-import { extractTagType } from './utils';
+import { mapOperators } from './utils';
 
 const { Option } = Select;
 
 type Tags = FlatArray<TraceReducer['selectedTags'], 1>['Operator'];
-
-interface AllMenuProps {
+const StringBoolNumber = ['string', 'number', 'bool'];
+const Number = ['number'];
+const String = ['string'];
+export interface AllMenuProps {
 	key: Tags | '';
 	value: string;
 	supportedTypes: string[];
@@ -24,72 +26,72 @@ export const AllMenu: AllMenuProps[] = [
 	{
 		key: 'In',
 		value: 'IN',
-		supportedTypes: ['string'],
+		supportedTypes: String,
 	},
 	{
 		key: 'NotIn',
 		value: 'NOT IN',
-		supportedTypes: ['string'],
+		supportedTypes: String,
 	},
 	{
 		key: 'Equals',
 		value: 'EQUALS',
-		supportedTypes: ['string', 'number', 'boolean'],
+		supportedTypes: StringBoolNumber,
 	},
 	{
 		key: 'NotEquals',
 		value: 'NOT EQUALS',
-		supportedTypes: ['string', 'number', 'boolean'],
+		supportedTypes: StringBoolNumber,
 	},
 	{
 		key: 'Exists',
 		value: 'EXISTS',
-		supportedTypes: ['string', 'number', 'boolean'],
+		supportedTypes: StringBoolNumber,
 	},
 	{
 		key: 'NotExists',
 		value: 'NOT EXISTS',
-		supportedTypes: ['string', 'number', 'boolean'],
+		supportedTypes: StringBoolNumber,
 	},
 	{
 		key: 'GreaterThan',
 		value: 'GREATER THAN',
-		supportedTypes: ['number'],
+		supportedTypes: Number,
 	},
 	{
 		key: 'LessThan',
 		value: 'LESS THAN',
-		supportedTypes: ['number'],
+		supportedTypes: Number,
 	},
 	{
 		key: 'GreaterThanEquals',
 		value: 'GREATER THAN OR EQUALS',
-		supportedTypes: ['number'],
+		supportedTypes: Number,
 	},
 	{
 		key: 'LessThanEquals',
 		value: 'LESS THAN OR EQUALS',
-		supportedTypes: ['number'],
+		supportedTypes: Number,
 	},
 	{
 		key: 'StartsWith',
 		value: 'STARTS WITH',
-		supportedTypes: ['string'],
+		supportedTypes: String,
 	},
 	{
 		key: 'NotStartsWith',
 		value: 'NOT STARTS WITH',
-		supportedTypes: ['string'],
+		supportedTypes: String,
 	},
 	{
 		key: 'Contains',
 		value: 'CONTAINS',
-		supportedTypes: ['string'],
+		supportedTypes: String,
 	},
 	{
 		key: 'NotContains',
 		value: 'NOT CONTAINS',
-		supportedTypes: ['string'],
+		supportedTypes: String,
 	},
 ];
 
@@ -138,9 +140,7 @@ function SingleTags(props: AllTagsProps): JSX.Element {
 			>
 				{
 					// filter out the operator that does not include supported type of the selected key
-					AllMenu.filter((e) =>
-						e?.supportedTypes?.includes(extractTagType(selectedKey[0])),
-					).map((e) => (
+					mapOperators(selectedKey).map((e) => (
 						<Option key={e.value} value={e.key}>
 							{e.value}
 						</Option>

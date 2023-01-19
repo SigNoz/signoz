@@ -6,16 +6,18 @@ import { useDispatch, useSelector } from 'react-redux';
 import { Dispatch } from 'redux';
 import { AppState } from 'store/reducers';
 import AppActions from 'types/actions';
-import {
-	UPDATE_SELECTED_FUNCTION,
-	UPDATE_SELECTED_GROUP_BY,
-} from 'types/actions/trace';
 import { GlobalReducer } from 'types/reducer/globalTime';
 import { TraceReducer } from 'types/reducer/trace';
 
-import { functions, groupBy } from './config';
+import { functions } from './config';
 import { SelectComponent } from './styles';
-import { initOptions } from './utils';
+import {
+	functionValue,
+	initOptions,
+	onClickSelectedFunctionHandler,
+	onClickSelectedGroupByHandler,
+	selectedGroupByValue,
+} from './utils';
 
 const { Option } = SelectComponent;
 
@@ -30,21 +32,6 @@ function TraceGraphFilter(): JSX.Element {
 	);
 	const traces = useSelector<AppState, TraceReducer>((state) => state.traces);
 
-	const onClickSelectedFunctionHandler = (ev: unknown): void => {
-		if (typeof ev === 'string') {
-			const selected = functions.find((e) => e.key === ev);
-			if (selected) {
-				dispatch({
-					type: UPDATE_SELECTED_FUNCTION,
-					payload: {
-						selectedFunction: selected.key,
-						yAxisUnit: selected.yAxisUnit,
-					},
-				});
-			}
-		}
-	};
-
 	const { isLoading, data } = useQuery(
 		['getTagKeys', globalTime.minTime, globalTime.maxTime, traces],
 		{
@@ -58,21 +45,7 @@ function TraceGraphFilter(): JSX.Element {
 		},
 	);
 
-	const options = useMemo(() => initOptions(data), [data]);
-
-	const onClickSelectedGroupByHandler = (ev: unknown): void => {
-		if (typeof ev === 'string' && options) {
-			const selected = options.find((e) => e.value === ev);
-			if (selected) {
-				dispatch({
-					type: UPDATE_SELECTED_GROUP_BY,
-					payload: {
-						selectedGroupBy: selected.value ? selected.value.toString() : '',
-					},
-				});
-			}
-		}
-	};
+	const options = useMemo(() => initOptions(data?.payload), [data?.payload]);
 
 	return (
 		<Space>
@@ -82,8 +55,8 @@ function TraceGraphFilter(): JSX.Element {
 				dropdownMatchSelectWidth
 				data-testid="selectedFunction"
 				id="selectedFunction"
-				value={functions.find((e) => selectedFunction === e.key)?.displayValue}
-				onChange={onClickSelectedFunctionHandler}
+				value={functionValue(selectedFunction)}
+				onChange={onClickSelectedFunctionHandler(dispatch)}
 			>
 				{functions.map((value) => (
 					<Option value={value.key} key={value.key}>
@@ -98,8 +71,8 @@ function TraceGraphFilter(): JSX.Element {
 				id="selectedGroupBy"
 				data-testid="selectedGroupBy"
 				options={options}
-				value={groupBy.find((e) => selectedGroupBy === e.value)?.label}
-				onChange={onClickSelectedGroupByHandler}
+				value={selectedGroupByValue(selectedGroupBy)}
+				onChange={onClickSelectedGroupByHandler(options, dispatch)}
 			>
 				<Input disabled={isLoading} placeholder="Please select" />
 			</AutoComplete>

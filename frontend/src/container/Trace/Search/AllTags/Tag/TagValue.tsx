@@ -4,13 +4,19 @@ import React, { useMemo, useState } from 'react';
 import { useQuery } from 'react-query';
 import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
-import { ErrorResponse, SuccessResponse } from 'types/api';
-import { PayloadProps } from 'types/api/trace/getTagValue';
 import { GlobalReducer } from 'types/reducer/globalTime';
 import { TraceReducer } from 'types/reducer/trace';
 
 import { SelectComponent } from './styles';
-import { extractTagKey, extractTagType } from './utils';
+import {
+	extractTagKey,
+	extractTagType,
+	getTagValueOptions,
+	initialLocalValue,
+	onTagValueChange,
+	selectOptions,
+	TagValueTypes,
+} from './utils';
 
 function TagValue(props: TagValueProps): JSX.Element {
 	const { tag, setLocalSelectedTags, index, tagKey } = props;
@@ -21,68 +27,20 @@ function TagValue(props: TagValueProps): JSX.Element {
 		NumberValues: selectedNumberValues,
 		BoolValues: selectedBoolValues,
 	} = tag;
-	function initialLocalValue(): string | number | boolean {
-		if (selectedStringValues && selectedStringValues.length > 0) {
-			return selectedStringValues[0];
-		}
-		if (selectedNumberValues && selectedNumberValues.length > 0) {
-			return selectedNumberValues[0];
-		}
-		if (selectedBoolValues && selectedBoolValues.length > 0) {
-			return selectedBoolValues[0];
-		}
-		return selectedStringValues[0];
-	}
-	const [localValue, setLocalValue] = useState<string | number | boolean>(
-		initialLocalValue(),
+
+	const [localValue, setLocalValue] = useState<TagValueTypes[]>(
+		initialLocalValue(
+			selectedNumberValues,
+			selectedBoolValues,
+			selectedStringValues,
+		),
 	);
 
 	const globalReducer = useSelector<AppState, GlobalReducer>(
 		(state) => state.globalTime,
 	);
 
-	const tagType = useMemo(() => {
-		return extractTagType(tagKey);
-	}, [tagKey]);
-
-	function getOptions(
-		data: SuccessResponse<PayloadProps> | ErrorResponse | undefined,
-	): Array<{ label: string; value: string | number | boolean }> | undefined {
-		if (tagType === 'string') {
-			return data?.payload?.stringTagValues?.map((e) => ({
-				label: e,
-				value: e,
-			}));
-		}
-		if (tagType === 'number') {
-			return data?.payload?.numberTagValues?.map((e) => ({
-				label: e.toString(),
-				value: e,
-			}));
-		}
-		if (tagType === 'bool') {
-			return data?.payload?.boolTagValues?.map((e) => ({
-				label: e.toString(),
-				value: e,
-			}));
-		}
-		return [];
-	}
-
-	function selectOptions(
-		data: SuccessResponse<PayloadProps> | ErrorResponse | undefined,
-	): string[] | boolean[] | number[] | undefined {
-		if (tagType === 'string') {
-			return data?.payload?.stringTagValues;
-		}
-		if (tagType === 'number') {
-			return data?.payload?.numberTagValues;
-		}
-		if (tagType === 'bool') {
-			return data?.payload?.boolTagValues;
-		}
-		return [];
-	}
+	const tagType = useMemo(() => extractTagType(tagKey), [tagKey]);
 
 	const { isLoading, data } = useQuery(
 		['tagKey', globalReducer.minTime, globalReducer.maxTime, tagKey, tagType],
@@ -100,32 +58,60 @@ function TagValue(props: TagValueProps): JSX.Element {
 	);
 	return (
 		<SelectComponent
-			options={getOptions(data)}
+			loading={isLoading}
+			options={getTagValueOptions(data?.payload, tagType)}
 			mode="tags"
-			defaultOpen
 			allowClear
 			showSearch
-			filterOption={(inputValue, option): boolean =>
-				option?.label.toUpperCase().indexOf(inputValue.toUpperCase()) !== -1
-			}
+			filterOption={(inputValue, option): boolean => {
+				if (typeof option?.label === 'string') {
+					return (
+						option?.label.toUpperCase().indexOf(inputValue.toUpperCase()) !== -1
+					);
+				}
+				return false;
+			}}
 			disabled={isLoading}
 			value={localValue}
 			onChange={(values): void => {
-				if (typeof values === 'number' || typeof values === 'boolean') {
-					setLocalValue(values);
-				} else if (typeof values === 'string') {
-					if (values === 'true' || values === 'false') {
-						setLocalValue(values === 'true');
-					} else if (!Number.isNaN(Number(values))) {
-						setLocalValue(Number(values));
-					} else {
-						setLocalValue(values);
-					}
-				}
+				onTagValueChange(values, setLocalValue);
 			}}
 			onSelect={(value: unknown): void => {
-				if (typeof value === 'string') {
-					setLocalValue(value);
+				if (
+					typeof value === 'number' ||
+					(typeof value === 'string' && !Number.isNaN(Number(value)))
+				) {
+					setLocalValue([value]);
+					setLocalSelectedTags((tags) => [
+						...tags.slice(0, index),
+						{
+							Key: selectedKey,
+							Operator: selectedOperator,
+							StringValues: [],
+							NumberValues: [Number(value)],
+							BoolValues: [],
+						},
+						...tags.slice(index + 1, tags.length),
+					]);
+				} else if (
+					typeof value === 'boolean' ||
+					value === 'true' ||
+					value === 'false'
+				) {
+					setLocalValue([value]);
+					setLocalSelectedTags((tags) => [
+						...tags.slice(0, index),
+						{
+							Key: selectedKey,
+							Operator: selectedOperator,
+							StringValues: [],
+							NumberValues: [],
+							BoolValues: [value === 'true' || value === true],
+						},
+						...tags.slice(index + 1, tags.length),
+					]);
+				} else if (typeof value === 'string') {
+					setLocalValue([value]);
 					setLocalSelectedTags((tags) => [
 						...tags.slice(0, index),
 						{
@@ -137,36 +123,10 @@ function TagValue(props: TagValueProps): JSX.Element {
 						},
 						...tags.slice(index + 1, tags.length),
 					]);
-				} else if (typeof value === 'number') {
-					setLocalValue(value);
-					setLocalSelectedTags((tags) => [
-						...tags.slice(0, index),
-						{
-							Key: selectedKey,
-							Operator: selectedOperator,
-							StringValues: [],
-							NumberValues: [value],
-							BoolValues: [],
-						},
-						...tags.slice(index + 1, tags.length),
-					]);
-				} else if (typeof value === 'boolean') {
-					setLocalValue(value);
-					setLocalSelectedTags((tags) => [
-						...tags.slice(0, index),
-						{
-							Key: selectedKey,
-							Operator: selectedOperator,
-							StringValues: [],
-							NumberValues: [],
-							BoolValues: [value],
-						},
-						...tags.slice(index + 1, tags.length),
-					]);
 				}
 			}}
 		>
-			{selectOptions(data)?.map((suggestion) => (
+			{selectOptions(data?.payload, tagType)?.map((suggestion) => (
 				<Select.Option key={suggestion.toString()} value={suggestion}>
 					{suggestion}
 				</Select.Option>

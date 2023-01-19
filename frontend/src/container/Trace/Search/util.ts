@@ -1,7 +1,7 @@
 import { AllMenu } from 'container/Trace/Search/AllTags/Tag';
 import { TraceReducer } from 'types/reducer/trace';
 
-import { extractTagType } from './AllTags/Tag/utils';
+import { extractTagType, TagValueTypes } from './AllTags/Tag/utils';
 
 type Tags = TraceReducer['selectedTags'];
 
@@ -44,45 +44,54 @@ function extractValues(
 export const parseQueryToTags = (query: string): PayloadProps<Tags> => {
 	let isError = false;
 
+	// Split the query string by ' AND '
 	const noOfTags = query.split(' AND ');
 
+	// Map over each tag
 	const tags: Tags = noOfTags.map((filter) => {
-		const splitBy = AllMenu.find((e) => filter.includes(` ${e.key} `))?.key || '';
+		// Find the operator used in the filter
+		const operator =
+			AllMenu.find((e) => filter.includes(` ${e.key} `))?.key || '';
 
-		const filteredTags = filter.split(splitBy).map((e) => e.trim());
+		// Split the filter by the operator
+		const [tagName, tagValues] = filter.split(operator).map((e) => e.trim());
 
-		const filterForTags = filteredTags[1];
+		// Check for errors in the filter
+		isError = operator.length === 0 || !tagName || !tagValues ? true : isError;
 
-		isError =
-			splitBy.length === 0 || filteredTags.length !== 2 || !filterForTags
-				? true
-				: isError;
+		// Remove the first and last brackets from the tagValues
+		const formattedTagValues = tagValues.slice(1, -1);
 
-		const removingFirstAndLastBrackets = `${filterForTags?.slice(1, -1)}`;
-
-		const filters = removingFirstAndLastBrackets
+		// Split the tagValues by ',' and remove any quotes
+		const filters = formattedTagValues
 			.split(',')
 			.map((e) => e.replaceAll(/"/g, ''));
 
+		// Check for errors in the filters
 		filters.forEach((e) => {
 			const firstChar = e.charAt(0);
 			const lastChar = e.charAt(e.length - 1);
 			isError = firstChar === '"' && lastChar === '"' ? true : isError;
 		});
 
-		const tagType = extractTagType(filteredTags[0]);
+		// Extract the tag type
+		const tagType = extractTagType(tagName);
+
+		// Extract the values for the tag
 		const [NumberValues, BoolValues, StringValues, isErr] = extractValues(
 			tagType,
 			filters,
 			isError,
 		);
 		isError = isErr;
+
+		// Return the tag object
 		return {
-			Key: [filteredTags[0]],
+			Key: [tagName],
 			StringValues,
 			NumberValues,
 			BoolValues,
-			Operator: splitBy as FlatArray<Tags, 1>['Operator'],
+			Operator: operator as FlatArray<Tags, 1>['Operator'],
 		};
 	});
 
@@ -92,28 +101,42 @@ export const parseQueryToTags = (query: string): PayloadProps<Tags> => {
 	};
 };
 
+const formatValues = (values: TagValueTypes[]): string => {
+	return values.map((e) => `"${e.toString().replaceAll(/"/g, '')}"`).join(',');
+};
+
 export const parseTagsToQuery = (tags: Tags): PayloadProps<string> => {
 	let isError = false;
+
+	// Map over each tag
 	const payload = tags
 		.map(({ StringValues, NumberValues, BoolValues, Key, Operator }) => {
-			if (Key[0] === undefined) {
+			// Check if the key of the tag is undefined
+			if (!Key[0]) {
 				isError = true;
 			}
+
+			// Check if the tag has string values
 			if (StringValues.length > 0) {
-				return `${Key[0]} ${Operator} (${StringValues.map((e) => {
-					return `"${e.replaceAll(/"/g, '')}"`;
-				}).join(',')})`;
+				// Format the string values and join them with a ','
+				const formattedStringValues = formatValues(StringValues);
+				return `${Key[0]} ${Operator} (${formattedStringValues})`;
 			}
+
+			// Check if the tag has number values
 			if (NumberValues.length > 0) {
-				return `${Key[0]} ${Operator} (${NumberValues.map((e) => {
-					return `"${e.toString().replaceAll(/"/g, '')}"`;
-				}).join(',')})`;
+				// Format the number values and join them with a ','
+				const formattedNumberValues = formatValues(NumberValues);
+				return `${Key[0]} ${Operator} (${formattedNumberValues})`;
 			}
+
+			// Check if the tag has boolean values
 			if (BoolValues.length > 0) {
-				return `${Key[0]} ${Operator} (${BoolValues.map((e) => {
-					return `"${e.toString().replaceAll(/"/g, '')}"`;
-				}).join(',')})`;
+				// Format the boolean values and join them with a ','
+				const formattedBoolValues = formatValues(BoolValues);
+				return `${Key[0]} ${Operator} (${formattedBoolValues})`;
 			}
+
 			return '';
 		})
 		.join(' AND ');
