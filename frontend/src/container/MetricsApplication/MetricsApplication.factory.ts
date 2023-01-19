@@ -17,5 +17,4 @@ export const getWidgetQueryBuilder = (query: Widgets['query']): Widgets => ({
 	},
 	timePreferance: 'GLOBAL_TIME',
 	title: '',
-	stepSize: 60,
 });
