@@ -251,7 +251,7 @@ function GridCardGraph({
 		!isEmptyLayout
 	) {
 		return (
-			<>
+			<span>
 				{!isEmpty(widget) && prevChartDataSetRef.current ? (
 					<>
 						<div className="drag-handle">
@@ -280,7 +280,7 @@ function GridCardGraph({
 				) : (
 					<Spinner height="20vh" tip="Loading..." />
 				)}
-			</>
+			</span>
 		);
 	}
 
