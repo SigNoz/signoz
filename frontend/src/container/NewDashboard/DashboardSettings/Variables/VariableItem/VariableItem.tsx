@@ -140,7 +140,12 @@ function VariableItem({
 			});
 			setPreviewLoading(false);
 			if (variableQueryResponse.error) {
-				setErrorPreview(variableQueryResponse.error);
+				let message = variableQueryResponse.error;
+				if (variableQueryResponse.error.includes('Syntax error:')) {
+					message =
+						'Please make sure query is valid and dependent variables are selected';
+				}
+				setErrorPreview(message);
 				return;
 			}
 			if (variableQueryResponse.payload?.variableValues)
