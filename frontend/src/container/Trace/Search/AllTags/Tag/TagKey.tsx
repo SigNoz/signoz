@@ -7,7 +7,7 @@ import { AppState } from 'store/reducers';
 import { GlobalReducer } from 'types/reducer/globalTime';
 import { TraceReducer } from 'types/reducer/trace';
 
-import { getTagKeyOptions, newFunction } from './utils';
+import { getTagKeyOptions, onTagKeySelect } from './utils';
 
 function TagsKey(props: TagsKeysProps): JSX.Element {
 	const globalTime = useSelector<AppState, GlobalReducer>(
@@ -21,7 +21,13 @@ function TagsKey(props: TagsKeysProps): JSX.Element {
 	const traces = useSelector<AppState, TraceReducer>((state) => state.traces);
 
 	const { isLoading, data } = useQuery(
-		['getTagKeys', globalTime.minTime, globalTime.maxTime, traces],
+		[
+			'getTagKeys',
+			globalTime.minTime,
+			globalTime.maxTime,
+			traces.selectedFilter,
+			traces.isFilterExclude,
+		],
 		{
 			queryFn: () =>
 				getTagFilters({
@@ -40,6 +46,7 @@ function TagsKey(props: TagsKeysProps): JSX.Element {
 			style={{ width: '100%' }}
 			value={selectedKey}
 			allowClear
+			disabled={isLoading}
 			notFoundContent="No tags available"
 			showSearch
 			options={options?.map((e) => ({
@@ -51,7 +58,7 @@ function TagsKey(props: TagsKeysProps): JSX.Element {
 			}
 			onChange={(e): void => setSelectedKey(e)}
 			onSelect={(value: unknown): void => {
-				newFunction(
+				onTagKeySelect(
 					value,
 					options,
 					setSelectedKey,
@@ -61,7 +68,7 @@ function TagsKey(props: TagsKeysProps): JSX.Element {
 				);
 			}}
 		>
-			<Input disabled={isLoading} placeholder="Please select" />
+			<Input placeholder="Please select" />
 		</AutoComplete>
 	);
 }

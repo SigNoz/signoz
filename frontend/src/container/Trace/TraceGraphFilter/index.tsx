@@ -33,7 +33,13 @@ function TraceGraphFilter(): JSX.Element {
 	const traces = useSelector<AppState, TraceReducer>((state) => state.traces);
 
 	const { isLoading, data } = useQuery(
-		['getTagKeys', globalTime.minTime, globalTime.maxTime, traces],
+		[
+			'getTagKeys',
+			globalTime.minTime,
+			globalTime.maxTime,
+			traces.selectedFilter,
+			traces.isFilterExclude,
+		],
 		{
 			queryFn: () =>
 				getTagFilters({

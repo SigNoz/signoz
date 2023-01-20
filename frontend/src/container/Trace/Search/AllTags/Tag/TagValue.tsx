@@ -62,6 +62,12 @@ function TagValue(props: TagValueProps): JSX.Element {
 			options={getTagValueOptions(data?.payload, tagType)}
 			mode="tags"
 			allowClear
+			onClear={(): void => {
+				setLocalValue([]);
+			}}
+			onDeselect={(): void => {
+				setLocalValue([]);
+			}}
 			showSearch
 			filterOption={(inputValue, option): boolean => {
 				if (typeof option?.label === 'string') {
@@ -79,7 +85,9 @@ function TagValue(props: TagValueProps): JSX.Element {
 			onSelect={(value: unknown): void => {
 				if (
 					typeof value === 'number' ||
-					(typeof value === 'string' && !Number.isNaN(Number(value)))
+					(typeof value === 'string' &&
+						!Number.isNaN(Number(value)) &&
+						value !== ' ')
 				) {
 					setLocalValue([value]);
 					setLocalSelectedTags((tags) => [

@@ -60,7 +60,7 @@ export function onTagValueChange(
 		} else if (typeof values[0] === 'string') {
 			if (values[0] === 'true' || values[0] === 'false') {
 				setLocalValue([values[0] === 'true']);
-			} else if (!Number.isNaN(Number(values[0]))) {
+			} else if (values[0] !== ' ' && !Number.isNaN(Number(values[0]))) {
 				setLocalValue([Number(values[0])]);
 			} else {
 				setLocalValue([values[0]]);
@@ -150,7 +150,7 @@ export function mapOperators(selectedKey: string[]): AllMenuProps[] {
 	);
 }
 
-export function newFunction(
+export function onTagKeySelect(
 	value: unknown,
 	options: AutoCompleteProps['options'],
 	setSelectedKey: React.Dispatch<React.SetStateAction<string>>,

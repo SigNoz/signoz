@@ -24,16 +24,6 @@ export interface AllMenuProps {
 
 export const AllMenu: AllMenuProps[] = [
 	{
-		key: 'In',
-		value: 'IN',
-		supportedTypes: String,
-	},
-	{
-		key: 'NotIn',
-		value: 'NOT IN',
-		supportedTypes: String,
-	},
-	{
 		key: 'Equals',
 		value: 'EQUALS',
 		supportedTypes: StringBoolNumber,
@@ -42,6 +32,16 @@ export const AllMenu: AllMenuProps[] = [
 		key: 'NotEquals',
 		value: 'NOT EQUALS',
 		supportedTypes: StringBoolNumber,
+	},
+	{
+		key: 'In',
+		value: 'IN',
+		supportedTypes: String,
+	},
+	{
+		key: 'NotIn',
+		value: 'NOT IN',
+		supportedTypes: String,
 	},
 	{
 		key: 'Exists',
