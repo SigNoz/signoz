@@ -114,7 +114,7 @@ services:
   #   volumes:
   #     - ./clickhouse-config.xml:/etc/clickhouse-server/config.xml
   #     - ./clickhouse-users.xml:/etc/clickhouse-server/users.xml
-  #    - ./custom-function.xml:/etc/clickhouse-server/custom-function.xml
+  #     - ./custom-function.xml:/etc/clickhouse-server/custom-function.xml
   #     - ./clickhouse-cluster.xml:/etc/clickhouse-server/config.d/cluster.xml
   #     # - ./clickhouse-storage.xml:/etc/clickhouse-server/config.d/storage.xml
   #     - ./data/clickhouse-2/:/var/lib/clickhouse/
@@ -132,7 +132,7 @@ services:
   #   volumes:
   #     - ./clickhouse-config.xml:/etc/clickhouse-server/config.xml
   #     - ./clickhouse-users.xml:/etc/clickhouse-server/users.xml
-  #    - ./custom-function.xml:/etc/clickhouse-server/custom-function.xml
+  #     - ./custom-function.xml:/etc/clickhouse-server/custom-function.xml
   #     - ./clickhouse-cluster.xml:/etc/clickhouse-server/config.d/cluster.xml
   #     # - ./clickhouse-storage.xml:/etc/clickhouse-server/config.d/storage.xml
   #     - ./data/clickhouse-3/:/var/lib/clickhouse/
