@@ -64,8 +64,11 @@ export function onClickSelectedFunctionHandler(dispatch: Dispatch<AppActions>) {
 		}
 	};
 }
-export function selectedGroupByValue(selectedGroupBy: string): unknown {
-	return groupBy.find((e) => selectedGroupBy === e.value)?.label;
+export function selectedGroupByValue(
+	selectedGroupBy: string,
+	options: DefaultOptionType[],
+): unknown {
+	return options.find((e) => selectedGroupBy === e.value)?.label;
 }
 
 export function functionValue(selectedFunction: string): unknown {

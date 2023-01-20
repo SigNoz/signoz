@@ -77,7 +77,7 @@ function TraceGraphFilter(): JSX.Element {
 				id="selectedGroupBy"
 				data-testid="selectedGroupBy"
 				options={options}
-				value={selectedGroupByValue(selectedGroupBy)}
+				value={selectedGroupByValue(selectedGroupBy, options)}
 				onChange={onClickSelectedGroupByHandler(options, dispatch)}
 			>
 				<Input disabled={isLoading} placeholder="Please select" />
