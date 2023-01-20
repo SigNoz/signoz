@@ -6,7 +6,6 @@ import {
 
 import {
 	getQueryBuilderQueries,
-	getQueryBuilderQuerieswithAdditionalItems,
 	getQueryBuilderQuerieswithFormula,
 } from './MetricsPageQueriesFactory';
 
@@ -22,25 +21,41 @@ export const externalCallErrorPercent = ({
 } => {
 	const metricNameA = 'signoz_external_call_latency_count';
 	const metricNameB = 'signoz_external_call_latency_count';
-	const additionalItems = {
-		id: '',
-		key: 'status_code',
-		op: 'IN',
-		value: ['STATUS_CODE_ERROR'],
-	};
-
+	const additionalItemsA = [
+		{
+			id: '',
+			key: 'service_name',
+			op: 'IN',
+			value: [`${servicename}`],
+		},
+		{
+			id: '',
+			key: 'status_code',
+			op: 'IN',
+			value: ['STATUS_CODE_ERROR'],
+		},
+		...tagFilterItems,
+	];
+	const additionalItemsB = [
+		{
+			id: '',
+			key: 'service_name',
+			op: 'IN',
+			value: [`${servicename}`],
+		},
+		...tagFilterItems,
+	];
 	const legendFormula = 'External Call Error Percentage';
 	const expression = 'A*100/B';
 	const disabled = true;
-	return getQueryBuilderQuerieswithAdditionalItems({
+	return getQueryBuilderQuerieswithFormula({
 		metricNameA,
 		metricNameB,
-		additionalItems,
-		servicename,
+		additionalItemsA,
+		additionalItemsB,
 		legend,
 		groupBy,
 		disabled,
-		tagFilterItems,
 		expression,
 		legendFormula,
 	});
@@ -59,14 +74,24 @@ export const externalCallDuration = ({
 	const legendFormula = 'Average Duration';
 	const legend = '';
 	const disabled = true;
+	const additionalItemsA = [
+		{
+			id: '',
+			key: 'service_name',
+			op: 'IN',
+			value: [`${servicename}`],
+		},
+		...tagFilterItems,
+	];
+	const additionalItemsB = additionalItemsA;
 
 	return getQueryBuilderQuerieswithFormula({
-		servicename,
-		legend,
-		disabled,
-		tagFilterItems,
 		metricNameA,
 		metricNameB,
+		additionalItemsA,
+		additionalItemsB,
+		legend,
+		disabled,
 		expression,
 		legendFormula,
 	});
@@ -81,12 +106,20 @@ export const externalCallRpsByAddress = ({
 	queryBuilder: IMetricsBuilderQuery[];
 } => {
 	const metricName = 'signoz_external_call_latency_count';
+	const itemsA = [
+		{
+			id: '',
+			key: 'service_name',
+			op: 'IN',
+			value: [`${servicename}`],
+		},
+		...tagFilterItems,
+	];
 	return getQueryBuilderQueries({
-		servicename,
-		legend,
-		tagFilterItems,
 		metricName,
 		groupBy,
+		legend,
+		itemsA,
 	});
 };
 
@@ -103,16 +136,27 @@ export const externalCallDurationByAddress = ({
 	const expression = 'A/B';
 	const legendFormula = legend;
 	const disabled = true;
+	const additionalItemsA = [
+		{
+			id: '',
+			key: 'service_name',
+			op: 'IN',
+			value: [`${servicename}`],
+		},
+		...tagFilterItems,
+	];
+	const additionalItemsB = additionalItemsA;
+
 	return getQueryBuilderQuerieswithFormula({
-		servicename,
-		legend,
-		disabled,
-		tagFilterItems,
 		metricNameA,
 		metricNameB,
+		additionalItemsA,
+		additionalItemsB,
+		legend,
+		groupBy,
+		disabled,
 		expression,
 		legendFormula,
-		groupBy,
 	});
 };
 
