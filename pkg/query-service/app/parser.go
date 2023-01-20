@@ -407,9 +407,20 @@ func extractTagKeys(tags []model.TagQueryParam) ([]model.TagQueryParam, error) {
 		for _, tag := range tags {
 			customStr := strings.Split(tag.Key, ".(")
 			if len(customStr) < 2 {
-				return nil, fmt.Errorf("TagKey param missing in query")
+				return nil, fmt.Errorf("TagKey param is not valid in query")
 			} else {
 				tag.Key = customStr[0]
+			}
+			if tag.Operator == model.ExistsOperator || tag.Operator == model.NotExistsOperator {
+				if customStr[1] == "string)" {
+					tag.StringValues = []string{" "}
+				} else if customStr[1] == "bool)" {
+					tag.BoolValues = []bool{true}
+				} else if customStr[1] == "number)" {
+					tag.NumberValues = []float64{0}
+				} else {
+					return nil, fmt.Errorf("TagKey param is not valid in query")
+				}
 			}
 			newTags = append(newTags, tag)
 		}

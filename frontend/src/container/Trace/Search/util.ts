@@ -51,11 +51,21 @@ export const parseQueryToTags = (query: string): PayloadProps<Tags> => {
 	const tags: Tags = noOfTags.map((filter) => {
 		// Find the operator used in the filter
 		const operator =
-			AllMenu.find((e) => filter.includes(` ${e.key} `))?.key || '';
+			AllMenu.find((e) => `${filter} `.includes(` ${e.key} `))?.key || '';
 
 		// Split the filter by the operator
 		const [tagName, tagValues] = filter.split(operator).map((e) => e.trim());
 
+		// If the operator is Exists or NotExists, then return the tag object without values
+		if (operator === 'Exists' || operator === 'NotExists') {
+			return {
+				Key: [tagName],
+				StringValues: [],
+				NumberValues: [],
+				BoolValues: [],
+				Operator: operator as FlatArray<Tags, 1>['Operator'],
+			};
+		}
 		// Check for errors in the filter
 		isError = operator.length === 0 || !tagName || !tagValues ? true : isError;
 
@@ -94,7 +104,6 @@ export const parseQueryToTags = (query: string): PayloadProps<Tags> => {
 			Operator: operator as FlatArray<Tags, 1>['Operator'],
 		};
 	});
-
 	return {
 		isError,
 		payload: tags,
@@ -115,7 +124,9 @@ export const parseTagsToQuery = (tags: Tags): PayloadProps<string> => {
 			if (!Key[0]) {
 				isError = true;
 			}
-
+			if (Operator === 'Exists' || Operator === 'NotExists') {
+				return `${Key[0]} ${Operator}`;
+			}
 			// Check if the tag has string values
 			if (StringValues.length > 0) {
 				// Format the string values and join them with a ','

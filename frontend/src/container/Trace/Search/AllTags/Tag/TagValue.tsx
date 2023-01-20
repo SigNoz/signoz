@@ -9,6 +9,7 @@ import { TraceReducer } from 'types/reducer/trace';
 
 import { SelectComponent } from './styles';
 import {
+	disableTagValue,
 	extractTagKey,
 	extractTagType,
 	getTagValueOptions,
@@ -56,6 +57,19 @@ function TagValue(props: TagValueProps): JSX.Element {
 				}),
 		},
 	);
+
+	const tagValueDisabled = useMemo(
+		() =>
+			disableTagValue(
+				selectedOperator,
+				setLocalValue,
+				selectedKey,
+				setLocalSelectedTags,
+				index,
+			),
+		[index, selectedKey, selectedOperator, setLocalSelectedTags],
+	);
+
 	return (
 		<SelectComponent
 			loading={isLoading}
@@ -77,7 +91,7 @@ function TagValue(props: TagValueProps): JSX.Element {
 				}
 				return false;
 			}}
-			disabled={isLoading}
+			disabled={isLoading || tagValueDisabled}
 			value={localValue}
 			onChange={(values): void => {
 				onTagValueChange(values, setLocalValue);

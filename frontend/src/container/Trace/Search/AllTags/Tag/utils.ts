@@ -2,7 +2,7 @@ import { AutoCompleteProps } from 'antd';
 import { DefaultOptionType } from 'antd/es/select';
 import { PayloadProps as TagKeyPayload } from 'types/api/trace/getTagFilters';
 import { PayloadProps as TagValuePayload } from 'types/api/trace/getTagValue';
-import { Tags } from 'types/reducer/trace';
+import { OperatorValues, Tags } from 'types/reducer/trace';
 
 import { AllMenu, AllMenuProps } from '.';
 
@@ -67,6 +67,31 @@ export function onTagValueChange(
 			}
 		}
 	}
+}
+
+export function disableTagValue(
+	selectedOperator: OperatorValues,
+	setLocalValue: React.Dispatch<React.SetStateAction<TagValueTypes[]>>,
+	selectedKeys: string[],
+	setLocalSelectedTags: React.Dispatch<React.SetStateAction<Tags[]>>,
+	index: number,
+): boolean {
+	if (selectedOperator === 'Exists' || selectedOperator === 'NotExists') {
+		setLocalValue([]);
+		setLocalSelectedTags((tags) => [
+			...tags.slice(0, index),
+			{
+				Key: selectedKeys,
+				Operator: selectedOperator,
+				StringValues: [],
+				NumberValues: [],
+				BoolValues: [],
+			},
+			...tags.slice(index + 1, tags.length),
+		]);
+		return true;
+	}
+	return false;
 }
 
 export function initialLocalValue(
