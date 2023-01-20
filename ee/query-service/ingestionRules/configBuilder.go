@@ -1,7 +1,7 @@
 package ingestionRules
 
 import (
-	"go.signoz.io/signoz/pkg/query-service/app/opamp/filterprocessor"
+	"github.com/open-telemetry/opentelemetry-collector-contrib/processor/filterprocessor"
 )
 
 // this file contains methods to transform ingestion rules into
