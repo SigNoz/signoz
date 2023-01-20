@@ -7,7 +7,6 @@ import { UserFlags } from 'types/api/user/setFlags';
 import AppReducer, { User } from 'types/reducer/app';
 import { ROLES } from 'types/roles';
 
-export const SWITCH_DARK_MODE = 'SWITCH_DARK_MODE';
 export const LOGGED_IN = 'LOGGED_IN';
 export const SIDEBAR_COLLAPSE = 'SIDEBAR_COLLAPSE';
 
@@ -26,10 +25,6 @@ export const UPDATE_ORG = 'UPDATE_ORG';
 export const UPDATE_FEATURE_FLAGS = 'UPDATE_FEATURE_FLAGS';
 export const UPDATE_CONFIGS = 'UPDATE_CONFIGS';
 export const UPDATE_USER_FLAG = 'UPDATE_USER_FLAG';
-
-export interface SwitchDarkMode {
-	type: typeof SWITCH_DARK_MODE;
-}
 
 export interface LoggedInUser {
 	type: typeof LOGGED_IN;
@@ -134,7 +129,6 @@ export interface UpdateConfigs {
 }
 
 export type AppAction =
-	| SwitchDarkMode
 	| LoggedInUser
 	| SideBarCollapse
 	| UpdateAppVersion

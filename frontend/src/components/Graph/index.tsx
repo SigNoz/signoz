@@ -23,14 +23,25 @@ import {
 } from 'chart.js';
 import * as chartjsAdapter from 'chartjs-adapter-date-fns';
 import annotationPlugin from 'chartjs-plugin-annotation';
+import { useIsDarkMode } from 'hooks/useDarkMode';
 import React, { useCallback, useEffect, useRef } from 'react';
-import { useSelector } from 'react-redux';
-import { AppState } from 'store/reducers';
-import AppReducer from 'types/reducer/app';
 
 import { hasData } from './hasData';
+import { getAxisLabelColor } from './helpers';
 import { legend } from './Plugin';
+import {
+	createDragSelectPlugin,
+	createDragSelectPluginOptions,
+	dragSelectPluginId,
+	DragSelectPluginOptions,
+} from './Plugin/DragSelect';
 import { emptyGraph } from './Plugin/EmptyGraph';
+import {
+	createIntersectionCursorPlugin,
+	createIntersectionCursorPluginOptions,
+	intersectionCursorPluginId,
+	IntersectionCursorPluginOptions,
+} from './Plugin/IntersectionCursor';
 import { LegendsContainer } from './styles';
 import { useXAxisTimeUnit } from './xAxisConfig';
 import { getToolTipValue, getYAxisFormattedValue } from './yAxisConfig';
@@ -66,9 +77,12 @@ function Graph({
 	forceReRender,
 	staticLine,
 	containerHeight,
+	onDragSelect,
+	dragSelectColor,
 }: GraphProps): JSX.Element {
-	const { isDarkMode } = useSelector<AppState, AppReducer>((state) => state.app);
 	const chartRef = useRef<HTMLCanvasElement>(null);
+	const isDarkMode = useIsDarkMode();
+
 	const currentTheme = isDarkMode ? 'dark' : 'light';
 	const xAxisTimeUnit = useXAxisTimeUnit(data); // Computes the relevant time unit for x axis by analyzing the time stamp data
 
@@ -92,7 +106,7 @@ function Graph({
 		}
 
 		if (chartRef.current !== null) {
-			const options: ChartOptions = {
+			const options: CustomChartOptions = {
 				animation: {
 					duration: animate ? 200 : 0,
 				},
@@ -149,6 +163,15 @@ function Graph({
 							},
 						},
 					},
+					[dragSelectPluginId]: createDragSelectPluginOptions(
+						!!onDragSelect,
+						onDragSelect,
+						dragSelectColor,
+					),
+					[intersectionCursorPluginId]: createIntersectionCursorPluginOptions(
+						!!onDragSelect,
+						currentTheme === 'dark' ? 'white' : 'black',
+					),
 				},
 				layout: {
 					padding: 0,
@@ -178,6 +201,7 @@ function Graph({
 							},
 						},
 						type: 'time',
+						ticks: { color: getAxisLabelColor(currentTheme) },
 					},
 					y: {
 						display: true,
@@ -186,6 +210,7 @@ function Graph({
 							color: getGridColor(),
 						},
 						ticks: {
+							color: getAxisLabelColor(currentTheme),
 							// Include a dollar sign in the ticks
 							callback(value) {
 								return getYAxisFormattedValue(value.toString(), yAxisUnit);
@@ -212,7 +237,13 @@ function Graph({
 			const chartHasData = hasData(data);
 			const chartPlugins = [];
 
-			if (!chartHasData) chartPlugins.push(emptyGraph);
+			if (chartHasData) {
+				chartPlugins.push(createIntersectionCursorPlugin());
+				chartPlugins.push(createDragSelectPlugin());
+			} else {
+				chartPlugins.push(emptyGraph);
+			}
+
 			chartPlugins.push(legend(name, data.datasets.length > 3));
 
 			lineChartRef.current = new Chart(chartRef.current, {
@@ -235,6 +266,9 @@ function Graph({
 		yAxisUnit,
 		onClickHandler,
 		staticLine,
+		onDragSelect,
+		dragSelectColor,
+		currentTheme,
 	]);
 
 	useEffect(() => {
@@ -249,6 +283,13 @@ function Graph({
 	);
 }
 
+type CustomChartOptions = ChartOptions & {
+	plugins: {
+		[dragSelectPluginId]: DragSelectPluginOptions | false;
+		[intersectionCursorPluginId]: IntersectionCursorPluginOptions | false;
+	};
+};
+
 interface GraphProps {
 	animate?: boolean;
 	type: ChartType;
@@ -261,6 +302,8 @@ interface GraphProps {
 	forceReRender?: boolean | null | number;
 	staticLine?: StaticLineProps | undefined;
 	containerHeight?: string | number;
+	onDragSelect?: (start: number, end: number) => void;
+	dragSelectColor?: string;
 }
 
 export interface StaticLineProps {
@@ -287,6 +330,8 @@ Graph.defaultProps = {
 	yAxisUnit: undefined,
 	forceReRender: undefined,
 	staticLine: undefined,
-	containerHeight: '85%',
+	containerHeight: '90%',
+	onDragSelect: undefined,
+	dragSelectColor: undefined,
 };
 export default Graph;

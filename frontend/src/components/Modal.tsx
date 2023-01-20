@@ -11,7 +11,7 @@ function CustomModal({
 	return (
 		<Modal
 			title={title}
-			visible={isModalVisible}
+			open={isModalVisible}
 			footer={footer}
 			closable={closable}
 		>

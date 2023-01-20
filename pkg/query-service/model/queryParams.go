@@ -106,6 +106,11 @@ const (
 	RATE_AVG
 	RATE_MAX
 	RATE_MIN
+	HIST_QUANTILE_50
+	HIST_QUANTILE_75
+	HIST_QUANTILE_90
+	HIST_QUANTILE_95
+	HIST_QUANTILE_99
 )
 
 type DataSource int
@@ -124,6 +129,11 @@ type QueryRangeParamsV2 struct {
 	Step                 int64                  `json:"step"`
 	CompositeMetricQuery *CompositeMetricQuery  `json:"compositeMetricQuery"`
 	Variables            map[string]interface{} `json:"variables,omitempty"`
+}
+
+type DashboardVars struct {
+	Query     string                 `json:"query"`
+	Variables map[string]interface{} `json:"variables,omitempty"`
 }
 
 // Metric auto complete types

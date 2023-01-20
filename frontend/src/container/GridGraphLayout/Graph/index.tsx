@@ -35,6 +35,7 @@ function GridCardGraph({
 	yAxisUnit,
 	layout = [],
 	setLayout,
+	onDragSelect,
 }: GridCardGraphProps): JSX.Element {
 	const [state, setState] = useState<GridCardGraphState>({
 		loading: true,
@@ -183,7 +184,7 @@ function GridCardGraph({
 				<Modal
 					destroyOnClose
 					onCancel={(): void => onToggleModal(setDeleteModal)}
-					visible={deleteModal}
+					open={deleteModal}
 					title="Delete"
 					height="10vh"
 					onOk={onDeleteHandler}
@@ -196,7 +197,7 @@ function GridCardGraph({
 					title="View"
 					footer={[]}
 					centered
-					visible={modal}
+					open={modal}
 					onCancel={(): void => onToggleModal(setModal)}
 					width="85%"
 					destroyOnClose
@@ -213,19 +214,29 @@ function GridCardGraph({
 		);
 	};
 
+	const handleOnView = (): void => {
+		onToggleModal(setModal);
+	};
+
+	const handleOnDelete = (): void => {
+		onToggleModal(setDeleteModal);
+	};
+
 	const isEmptyLayout = widget?.id === 'empty' || isEmpty(widget);
 
 	if (state.error && !isEmptyLayout) {
 		return (
 			<>
 				{getModals()}
-				<WidgetHeader
-					parentHover={hovered}
-					title={widget?.title}
-					widget={widget}
-					onView={(): void => onToggleModal(setModal)}
-					onDelete={(): void => onToggleModal(setDeleteModal)}
-				/>
+				<div className="drag-handle">
+					<WidgetHeader
+						parentHover={hovered}
+						title={widget?.title}
+						widget={widget}
+						onView={handleOnView}
+						onDelete={handleOnDelete}
+					/>
+				</div>
 
 				<ErrorContainer>{state.errorMessage}</ErrorContainer>
 			</>
@@ -236,7 +247,18 @@ function GridCardGraph({
 		(state.loading === true || state.payload === undefined) &&
 		!isEmptyLayout
 	) {
-		return <Spinner height="20vh" tip="Loading..." />;
+		return (
+			<>
+				<WidgetHeader
+					parentHover={hovered}
+					title={widget?.title}
+					widget={widget}
+					onView={handleOnView}
+					onDelete={handleOnDelete}
+				/>
+				<Spinner height="20vh" tip="Loading..." />
+			</>
+		);
 	}
 
 	return (
@@ -255,13 +277,15 @@ function GridCardGraph({
 			}}
 		>
 			{!isEmptyLayout && (
-				<WidgetHeader
-					parentHover={hovered}
-					title={widget?.title}
-					widget={widget}
-					onView={(): void => onToggleModal(setModal)}
-					onDelete={(): void => onToggleModal(setDeleteModal)}
-				/>
+				<div className="drag-handle">
+					<WidgetHeader
+						parentHover={hovered}
+						title={widget?.title}
+						widget={widget}
+						onView={(): void => onToggleModal(setModal)}
+						onDelete={(): void => onToggleModal(setDeleteModal)}
+					/>
+				</div>
 			)}
 
 			{!isEmptyLayout && getModals()}
@@ -276,6 +300,7 @@ function GridCardGraph({
 						title: ' ', // empty title to accommodate absolutely positioned widget header
 						name,
 						yAxisUnit,
+						onDragSelect,
 					}}
 				/>
 			)}
@@ -306,7 +331,12 @@ interface GridCardGraphProps extends DispatchProps {
 	layout?: Layout[];
 	// eslint-disable-next-line react/require-default-props
 	setLayout?: React.Dispatch<React.SetStateAction<LayoutProps[]>>;
+	onDragSelect?: (start: number, end: number) => void;
 }
+
+GridCardGraph.defaultProps = {
+	onDragSelect: undefined,
+};
 
 const mapDispatchToProps = (
 	dispatch: ThunkDispatch<unknown, unknown, AppActions>,
