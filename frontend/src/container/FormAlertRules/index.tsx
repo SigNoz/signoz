@@ -436,41 +436,35 @@ function FormAlertRules({
 		<BasicInfo alertDef={alertDef} setAlertDef={setAlertDef} />
 	);
 
-	const renderQBChartPreview = (): JSX.Element => {
-		return (
-			<ChartPreview
-				headline={<PlotTag queryType={queryCategory} />}
-				name=""
-				threshold={alertDef.condition?.target}
-				query={debouncedStagedQuery}
-				selectedInterval={toChartInterval(alertDef.evalWindow)}
-			/>
-		);
-	};
+	const renderQBChartPreview = (): JSX.Element => (
+		<ChartPreview
+			headline={<PlotTag queryType={queryCategory} />}
+			name=""
+			threshold={alertDef.condition?.target}
+			query={debouncedStagedQuery}
+			selectedInterval={toChartInterval(alertDef.evalWindow)}
+		/>
+	);
 
-	const renderPromChartPreview = (): JSX.Element => {
-		return (
-			<ChartPreview
-				headline={<PlotTag queryType={queryCategory} />}
-				name="Chart Preview"
-				threshold={alertDef.condition?.target}
-				query={debouncedStagedQuery}
-			/>
-		);
-	};
+	const renderPromChartPreview = (): JSX.Element => (
+		<ChartPreview
+			headline={<PlotTag queryType={queryCategory} />}
+			name="Chart Preview"
+			threshold={alertDef.condition?.target}
+			query={debouncedStagedQuery}
+		/>
+	);
 
-	const renderChQueryChartPreview = (): JSX.Element => {
-		return (
-			<ChartPreview
-				headline={<PlotTag queryType={queryCategory} />}
-				name="Chart Preview"
-				threshold={alertDef.condition?.target}
-				query={manualStagedQuery}
-				userQueryKey={runQueryId}
-				selectedInterval={toChartInterval(alertDef.evalWindow)}
-			/>
-		);
-	};
+	const renderChQueryChartPreview = (): JSX.Element => (
+		<ChartPreview
+			headline={<PlotTag queryType={queryCategory} />}
+			name="Chart Preview"
+			threshold={alertDef.condition?.target}
+			query={manualStagedQuery}
+			userQueryKey={runQueryId}
+			selectedInterval={toChartInterval(alertDef.evalWindow)}
+		/>
+	);
 	return (
 		<>
 			{Element}

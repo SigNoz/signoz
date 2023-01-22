@@ -20,11 +20,13 @@ function TraceGraph(): JSX.Element {
 
 	const { loading, error, errorMessage, payload } = spansGraph;
 
-	const ChartData = useMemo(() => {
-		return selectedGroupBy.length === 0
-			? getChartData(payload)
-			: getChartDataforGroupBy(payload);
-	}, [payload, selectedGroupBy]);
+	const ChartData = useMemo(
+		() =>
+			selectedGroupBy.length === 0
+				? getChartData(payload)
+				: getChartDataforGroupBy(payload),
+		[payload, selectedGroupBy],
+	);
 
 	if (error) {
 		return (

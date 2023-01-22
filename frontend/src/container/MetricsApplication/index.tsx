@@ -11,47 +11,43 @@ import DBCall from './Tabs/DBCall';
 import External from './Tabs/External';
 import Overview from './Tabs/Overview';
 
-const getWidget = (query: PromQLWidgets['query']): PromQLWidgets => {
-	return {
-		description: '',
-		id: '',
-		isStacked: false,
-		nullZeroValues: '',
-		opacity: '0',
-		panelTypes: 'TIME_SERIES',
-		query,
-		queryData: {
-			data: { queryData: [] },
-			error: false,
-			errorMessage: '',
-			loading: false,
-		},
-		timePreferance: 'GLOBAL_TIME',
-		title: '',
-		stepSize: 60,
-	};
-};
+const getWidget = (query: PromQLWidgets['query']): PromQLWidgets => ({
+	description: '',
+	id: '',
+	isStacked: false,
+	nullZeroValues: '',
+	opacity: '0',
+	panelTypes: 'TIME_SERIES',
+	query,
+	queryData: {
+		data: { queryData: [] },
+		error: false,
+		errorMessage: '',
+		loading: false,
+	},
+	timePreferance: 'GLOBAL_TIME',
+	title: '',
+	stepSize: 60,
+});
 
-const getWidgetQueryBuilder = (query: Widgets['query']): Widgets => {
-	return {
-		description: '',
-		id: v4(),
-		isStacked: false,
-		nullZeroValues: '',
-		opacity: '0',
-		panelTypes: 'TIME_SERIES',
-		query,
-		queryData: {
-			data: { queryData: [] },
-			error: false,
-			errorMessage: '',
-			loading: false,
-		},
-		timePreferance: 'GLOBAL_TIME',
-		title: '',
-		stepSize: 60,
-	};
-};
+const getWidgetQueryBuilder = (query: Widgets['query']): Widgets => ({
+	description: '',
+	id: v4(),
+	isStacked: false,
+	nullZeroValues: '',
+	opacity: '0',
+	panelTypes: 'TIME_SERIES',
+	query,
+	queryData: {
+		data: { queryData: [] },
+		error: false,
+		errorMessage: '',
+		loading: false,
+	},
+	timePreferance: 'GLOBAL_TIME',
+	title: '',
+	stepSize: 60,
+});
 
 function OverViewTab(): JSX.Element {
 	return <Overview getWidget={getWidget} />;

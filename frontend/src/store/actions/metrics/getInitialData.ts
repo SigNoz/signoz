@@ -17,115 +17,116 @@ import { Tags } from 'types/reducer/trace';
 
 export const GetInitialData = (
 	props: GetInitialDataProps,
-): ((dispatch: Dispatch<AppActions>, getState: () => AppState) => void) => {
-	return async (dispatch, getState): Promise<void> => {
-		try {
-			const { globalTime } = getState();
+): ((
+	dispatch: Dispatch<AppActions>,
+	getState: () => AppState,
+) => void) => async (dispatch, getState): Promise<void> => {
+	try {
+		const { globalTime } = getState();
 
-			/**
-			 * @description This is because we keeping the store as source of truth
-			 */
-			if (
-				props.maxTime !== globalTime.maxTime &&
-				props.minTime !== globalTime.minTime
-			) {
-				return;
-			}
+		/**
+		 * @description This is because we keeping the store as source of truth
+		 */
+		if (
+			props.maxTime !== globalTime.maxTime &&
+			props.minTime !== globalTime.minTime
+		) {
+			return;
+		}
 
+		dispatch({
+			type: 'GET_INITIAL_APPLICATION_LOADING',
+		});
+
+		const { maxTime, minTime } = GetMinMax(globalTime.selectedTime, [
+			globalTime.minTime / 1000000,
+			globalTime.maxTime / 1000000,
+		]);
+
+		const [
+			// getDBOverViewResponse,
+			// getExternalAverageDurationResponse,
+			// getExternalErrorResponse,
+			// getExternalServiceResponse,
+			getServiceOverviewResponse,
+			getTopOperationsResponse,
+			getTopLevelOperationsResponse,
+		] = await Promise.all([
+			// getDBOverView({
+			// 	...props,
+			// }),
+			// getExternalAverageDuration({
+			// 	...props,
+			// }),
+			// getExternalError({
+			// 	...props,
+			// }),
+			// getExternalService({
+			// 	...props,
+			// }),
+			getServiceOverview({
+				end: maxTime,
+				service: props.serviceName,
+				start: minTime,
+				step: getStep({ start: minTime, end: maxTime, inputFormat: 'ns' }),
+				selectedTags: props.selectedTags,
+			}),
+			getTopOperations({
+				end: maxTime,
+				service: props.serviceName,
+				start: minTime,
+				selectedTags: props.selectedTags,
+			}),
+			getTopLevelOperations({
+				service: props.serviceName,
+			}),
+		]);
+
+		if (
+			// getDBOverViewResponse.statusCode === 200 &&
+			// getExternalAverageDurationResponse.statusCode === 200 &&
+			// getExternalErrorResponse.statusCode === 200 &&
+			// getExternalServiceResponse.statusCode === 200 &&
+			getServiceOverviewResponse.statusCode === 200 &&
+			getTopOperationsResponse.statusCode === 200 &&
+			getTopLevelOperationsResponse.statusCode === 200
+		) {
 			dispatch({
-				type: 'GET_INITIAL_APPLICATION_LOADING',
+				type: 'GET_INTIAL_APPLICATION_DATA',
+				payload: {
+					// dbOverView: getDBOverViewResponse.payload,
+					// externalAverageDuration: getExternalAverageDurationResponse.payload,
+					// externalError: getExternalErrorResponse.payload,
+					// externalService: getExternalServiceResponse.payload,
+					serviceOverview: getServiceOverviewResponse.payload,
+					topOperations: getTopOperationsResponse.payload,
+					topLevelOperations: getTopLevelOperationsResponse.payload,
+				},
 			});
-
-			const { maxTime, minTime } = GetMinMax(globalTime.selectedTime, [
-				globalTime.minTime / 1000000,
-				globalTime.maxTime / 1000000,
-			]);
-
-			const [
-				// getDBOverViewResponse,
-				// getExternalAverageDurationResponse,
-				// getExternalErrorResponse,
-				// getExternalServiceResponse,
-				getServiceOverviewResponse,
-				getTopOperationsResponse,
-				getTopLevelOperationsResponse,
-			] = await Promise.all([
-				// getDBOverView({
-				// 	...props,
-				// }),
-				// getExternalAverageDuration({
-				// 	...props,
-				// }),
-				// getExternalError({
-				// 	...props,
-				// }),
-				// getExternalService({
-				// 	...props,
-				// }),
-				getServiceOverview({
-					end: maxTime,
-					service: props.serviceName,
-					start: minTime,
-					step: getStep({ start: minTime, end: maxTime, inputFormat: 'ns' }),
-					selectedTags: props.selectedTags,
-				}),
-				getTopOperations({
-					end: maxTime,
-					service: props.serviceName,
-					start: minTime,
-					selectedTags: props.selectedTags,
-				}),
-				getTopLevelOperations({
-					service: props.serviceName,
-				}),
-			]);
-
-			if (
-				// getDBOverViewResponse.statusCode === 200 &&
-				// getExternalAverageDurationResponse.statusCode === 200 &&
-				// getExternalErrorResponse.statusCode === 200 &&
-				// getExternalServiceResponse.statusCode === 200 &&
-				getServiceOverviewResponse.statusCode === 200 &&
-				getTopOperationsResponse.statusCode === 200 &&
-				getTopLevelOperationsResponse.statusCode === 200
-			) {
-				dispatch({
-					type: 'GET_INTIAL_APPLICATION_DATA',
-					payload: {
-						// dbOverView: getDBOverViewResponse.payload,
-						// externalAverageDuration: getExternalAverageDurationResponse.payload,
-						// externalError: getExternalErrorResponse.payload,
-						// externalService: getExternalServiceResponse.payload,
-						serviceOverview: getServiceOverviewResponse.payload,
-						topOperations: getTopOperationsResponse.payload,
-						topLevelOperations: getTopLevelOperationsResponse.payload,
-					},
-				});
-			} else {
-				dispatch({
-					type: 'GET_INITIAL_APPLICATION_ERROR',
-					payload: {
-						errorMessage:
-							getTopOperationsResponse.error ||
-							getServiceOverviewResponse.error ||
-							getTopLevelOperationsResponse.error ||
-							// getExternalServiceResponse.error ||
-							// getExternalErrorResponse.error ||
-							// getExternalAverageDurationResponse.error ||
-							// getDBOverViewResponse.error ||
-							'Something went wrong',
-					},
-				});
-			}
-		} catch (error) {
+		} else {
 			dispatch({
 				type: 'GET_INITIAL_APPLICATION_ERROR',
 				payload: {
-					errorMessage: (error as AxiosError).toString() || 'Something went wrong',
+					errorMessage:
+						getTopOperationsResponse.error ||
+						getServiceOverviewResponse.error ||
+						getTopLevelOperationsResponse.error ||
+						// getExternalServiceResponse.error ||
+						// getExternalErrorResponse.error ||
+						// getExternalAverageDurationResponse.error ||
+						// getDBOverViewResponse.error ||
+						'Something went wrong',
 				},
 			});
 		}
-	};
+	} catch (error) {
+		dispatch({
+			type: 'GET_INITIAL_APPLICATION_ERROR',
+			payload: {
+				errorMessage: (error as AxiosError).toString() || 'Something went wrong',
+			},
+		});
+	}
 };
 
 export interface GetInitialDataProps {

@@ -95,9 +95,10 @@ function TraceDetail({ response }: TraceDetailProps): JSX.Element {
 		}
 	}, [activeSelectedId, levelDown, levelUp]);
 
-	const getSelectedNode = useMemo(() => {
-		return getNodeById(activeSelectedId, treesData);
-	}, [activeSelectedId, treesData]);
+	const getSelectedNode = useMemo(
+		() => getNodeById(activeSelectedId, treesData),
+		[activeSelectedId, treesData],
+	);
 
 	// const onSearchHandler = (value: string) => {
 	// 	setSearchSpanString(value);
@@ -141,40 +142,36 @@ function TraceDetail({ response }: TraceDetailProps): JSX.Element {
 						{hasMissingSpans && <MissingSpansMessage />}
 					</StyledCol>
 					<Col flex="auto">
-						{map(tree.spanTree, (tree) => {
-							return (
-								<TraceFlameGraph
-									key={tree as never}
-									treeData={tree}
-									traceMetaData={traceMetaData}
-									hoveredSpanId={activeHoverId}
-									selectedSpanId={activeSelectedId}
-									onSpanHover={setActiveHoverId}
-									onSpanSelect={setActiveSelectedId}
-									missingSpanTree={false}
-								/>
-							);
-						})}
+						{map(tree.spanTree, (tree) => (
+							<TraceFlameGraph
+								key={tree as never}
+								treeData={tree}
+								traceMetaData={traceMetaData}
+								hoveredSpanId={activeHoverId}
+								selectedSpanId={activeSelectedId}
+								onSpanHover={setActiveHoverId}
+								onSpanSelect={setActiveSelectedId}
+								missingSpanTree={false}
+							/>
+						))}
 
 						{hasMissingSpans && (
 							<FlameGraphMissingSpansContainer>
-								{map(tree.missingSpanTree, (tree) => {
-									return (
-										<TraceFlameGraph
-											key={tree as never}
-											treeData={tree}
-											traceMetaData={{
-												...traceMetaData,
-												levels: getTreeLevelsCount(tree),
-											}}
-											hoveredSpanId={activeHoverId}
-											selectedSpanId={activeSelectedId}
-											onSpanHover={setActiveHoverId}
-											onSpanSelect={setActiveSelectedId}
-											missingSpanTree
-										/>
-									);
-								})}
+								{map(tree.missingSpanTree, (tree) => (
+									<TraceFlameGraph
+										key={tree as never}
+										treeData={tree}
+										traceMetaData={{
+											...traceMetaData,
+											levels: getTreeLevelsCount(tree),
+										}}
+										hoveredSpanId={activeHoverId}
+										selectedSpanId={activeSelectedId}
+										onSpanHover={setActiveHoverId}
+										onSpanSelect={setActiveSelectedId}
+										missingSpanTree
+									/>
+								))}
 							</FlameGraphMissingSpansContainer>
 						)}
 					</Col>

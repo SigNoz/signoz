@@ -118,9 +118,9 @@ function VariableItem({
 					{variableData.multiSelect && variableData.showALLOption && (
 						<Option value={ALL_SELECT_VALUE}>ALL</Option>
 					)}
-					{map(optionsData, (option) => {
-						return <Option value={option}>{(option as string).toString()}</Option>;
-					})}
+					{map(optionsData, (option) => (
+						<Option value={option}>{(option as string).toString()}</Option>
+					))}
 				</Select>
 			)}
 			{errorMessage && (

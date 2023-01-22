@@ -30,11 +30,11 @@ function Application({ getWidget }: DashboardProps): JSX.Element {
 		resourceAttributeQueries,
 		topLevelOperations,
 	} = useSelector<AppState, MetricReducer>((state) => state.metrics);
-	const operationsRegex = useMemo(() => {
-		return encodeURIComponent(
-			topLevelOperations.map((e) => escapeRegExp(e)).join('|'),
-		);
-	}, [topLevelOperations]);
+	const operationsRegex = useMemo(
+		() =>
+			encodeURIComponent(topLevelOperations.map((e) => escapeRegExp(e)).join('|')),
+		[topLevelOperations],
+	);
 
 	const selectedTraceTags: string = JSON.stringify(
 		convertRawQueriesToTraceSelectedTags(resourceAttributeQueries, 'array') || [],
@@ -166,11 +166,10 @@ function Application({ getWidget }: DashboardProps): JSX.Element {
 											pointRadius: 1.5,
 										},
 									],
-									labels: serviceOverview.map((e) => {
-										return new Date(
-											parseFloat(convertToNanoSecondsToSecond(e.timestamp)),
-										);
-									}),
+									labels: serviceOverview.map(
+										(e) =>
+											new Date(parseFloat(convertToNanoSecondsToSecond(e.timestamp))),
+									),
 								}}
 								yAxisUnit="ms"
 							/>
