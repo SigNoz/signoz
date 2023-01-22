@@ -1,4 +1,5 @@
 import { volcano } from '@ant-design/colors';
+import { Col } from 'antd';
 import styled, { css } from 'styled-components';
 
 /**
@@ -112,4 +113,10 @@ export const FlameGraphMissingSpansContainer = styled.div`
 	padding: 0.5rem 0;
 	margin-top: 1rem;
 	border-radius: 0.25rem;
+`;
+
+export const TimeStampContainer = styled(Col)`
+	display: flex;
+	align-items: center;
+	justify-content: center;
 `;
