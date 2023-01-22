@@ -1,8 +1,9 @@
 import { Input, InputRef, Popover } from 'antd';
 import useUrlQuery from 'hooks/useUrlQuery';
 import getStep from 'lib/getStep';
-import { debounce } from 'lodash-es';
+import debounce from 'lodash-es/debounce';
 import React, {
+	memo,
 	useCallback,
 	useEffect,
 	useMemo,
@@ -209,4 +210,4 @@ const mapDispatchToProps = (
 	getLogsFields: bindActionCreators(GetLogsFields, dispatch),
 });
 
-export default connect(null, mapDispatchToProps)(SearchFilter);
+export default connect(null, mapDispatchToProps)(memo(SearchFilter));

@@ -6,7 +6,7 @@ import LogsAggregate from 'container/LogsAggregate';
 import LogsFilters from 'container/LogsFilters';
 import LogsSearchFilter from 'container/LogsSearchFilter';
 import LogsTable from 'container/LogsTable';
-import React, { memo } from 'react';
+import React from 'react';
 
 import SpaceContainer from './styles';
 
@@ -35,4 +35,4 @@ function Logs(): JSX.Element {
 	);
 }
 
-export default memo(Logs);
+export default Logs;

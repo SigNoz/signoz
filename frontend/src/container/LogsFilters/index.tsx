@@ -2,7 +2,7 @@ import { CloseOutlined, PlusCircleFilled } from '@ant-design/icons';
 import { Input } from 'antd';
 import CategoryHeading from 'components/Logs/CategoryHeading';
 import { fieldSearchFilter } from 'lib/logs/fieldSearch';
-import React, { memo, useCallback, useState } from 'react';
+import React, { useCallback, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
 import { ILogsReducer } from 'types/reducer/logs';
@@ -114,4 +114,4 @@ function LogsFilters(): JSX.Element {
 	);
 }
 
-export default memo(LogsFilters);
+export default LogsFilters;

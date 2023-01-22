@@ -41,7 +41,10 @@ export interface SetFields {
 }
 export interface SetSearchQueryString {
 	type: typeof SET_SEARCH_QUERY_STRING;
-	payload: string;
+	payload: {
+		searchQueryString: string;
+		globalTime?: GlobalTime;
+	};
 }
 
 export interface SetSearchQueryParsedPayload {

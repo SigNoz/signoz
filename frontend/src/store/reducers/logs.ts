@@ -85,7 +85,7 @@ export const LogsReducer = (
 				...state,
 				searchFilter: {
 					...state.searchFilter,
-					queryString: action.payload,
+					queryString: action.payload.searchQueryString,
 				},
 			};
 		}
