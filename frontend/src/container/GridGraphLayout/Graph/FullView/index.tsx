@@ -30,6 +30,7 @@ function FullView({
 	onClickHandler,
 	name,
 	yAxisUnit,
+	onDragSelect,
 }: FullViewProps): JSX.Element {
 	const { minTime, maxTime, selectedTime: globalSelectedTime } = useSelector<
 		AppState,
@@ -163,6 +164,7 @@ function FullView({
 					onClickHandler,
 					name,
 					yAxisUnit,
+					onDragSelect,
 				}}
 			/>
 		</>
@@ -175,12 +177,14 @@ interface FullViewProps {
 	onClickHandler?: GraphOnClickHandler;
 	name: string;
 	yAxisUnit?: string;
+	onDragSelect?: (start: number, end: number) => void;
 }
 
 FullView.defaultProps = {
 	fullViewOptions: undefined,
 	onClickHandler: undefined,
 	yAxisUnit: undefined,
+	onDragSelect: undefined,
 };
 
 export default FullView;

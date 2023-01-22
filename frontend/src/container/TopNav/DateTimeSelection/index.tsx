@@ -60,9 +60,6 @@ function DateTimeSelection({
 		searchStartTime,
 	]);
 
-	const [startTime, setStartTime] = useState<Dayjs>();
-	const [endTime, setEndTime] = useState<Dayjs>();
-
 	const [options, setOptions] = useState(getOptions(location.pathname));
 	const [refreshButtonHidden, setRefreshButtonHidden] = useState<boolean>(false);
 	const [customDateTimeVisible, setCustomDTPickerVisible] = useState<boolean>(
@@ -108,10 +105,6 @@ function DateTimeSelection({
 		return defaultSelectedOption;
 	};
 
-	const [selectedTimeInterval, setSelectedTimeInterval] = useState<Time>(
-		getDefaultTime(location.pathname),
-	);
-
 	const updateLocalStorageForRoutes = (value: Time): void => {
 		const preRoutes = getLocalStorageKey(LOCALSTORAGE.METRICS_TIME_IN_DURATION);
 		if (preRoutes !== null) {
@@ -133,7 +126,7 @@ function DateTimeSelection({
 		const currentTime = dayjs();
 
 		const lastRefresh = dayjs(
-			selectedTimeInterval === 'custom' ? minTime / 1000000 : maxTime / 1000000,
+			selectedTime === 'custom' ? minTime / 1000000 : maxTime / 1000000,
 		);
 
 		const secondsDiff = currentTime.diff(lastRefresh, 'seconds');
@@ -160,13 +153,11 @@ function DateTimeSelection({
 		}
 
 		return `Last refresh - ${secondsDiff} sec ago`;
-	}, [maxTime, minTime, selectedTimeInterval]);
+	}, [maxTime, minTime, selectedTime]);
 
 	const onSelectHandler = (value: Time): void => {
 		if (value !== 'custom') {
 			updateTimeInterval(value);
-			const selectedLabel = getInputLabel(undefined, undefined, value);
-			setSelectedTimeInterval(selectedLabel as Time);
 			updateLocalStorageForRoutes(value);
 			if (refreshButtonHidden) {
 				setRefreshButtonHidden(false);
@@ -178,7 +169,7 @@ function DateTimeSelection({
 	};
 
 	const onRefreshHandler = (): void => {
-		onSelectHandler(selectedTimeInterval);
+		onSelectHandler(selectedTime);
 		onLastRefreshHandler();
 	};
 
@@ -186,9 +177,6 @@ function DateTimeSelection({
 		if (dateTimeRange !== null) {
 			const [startTimeMoment, endTimeMoment] = dateTimeRange;
 			if (startTimeMoment && endTimeMoment) {
-				setSelectedTimeInterval('custom');
-				setStartTime(startTimeMoment);
-				setEndTime(endTimeMoment);
 				setCustomDTPickerVisible(false);
 				updateTimeInterval('custom', [
 					startTimeMoment?.toDate().getTime() || 0,
@@ -239,9 +227,6 @@ function DateTimeSelection({
 
 		const [preStartTime = 0, preEndTime = 0] = getTime() || [];
 
-		setStartTime(dayjs(preStartTime));
-		setEndTime(dayjs(preEndTime));
-
 		setRefreshButtonHidden(updatedTime === 'custom');
 
 		updateTimeInterval(updatedTime, [preStartTime, preEndTime]);
@@ -266,7 +251,11 @@ function DateTimeSelection({
 				<FormContainer>
 					<DefaultSelect
 						onSelect={(value: unknown): void => onSelectHandler(value as Time)}
-						value={getInputLabel(startTime, endTime, selectedTime)}
+						value={getInputLabel(
+							dayjs(minTime / 1000000),
+							dayjs(maxTime / 1000000),
+							selectedTime,
+						)}
 						data-testid="dropDown"
 					>
 						{options.map(({ value, label }) => (

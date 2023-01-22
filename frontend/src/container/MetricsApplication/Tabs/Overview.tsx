@@ -8,9 +8,10 @@ import { colors } from 'lib/getRandomColor';
 import history from 'lib/history';
 import { convertRawQueriesToTraceSelectedTags } from 'lib/resourceAttributes';
 import { escapeRegExp } from 'lodash-es';
-import React, { useMemo, useRef } from 'react';
-import { useSelector } from 'react-redux';
+import React, { useCallback, useMemo, useRef } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
 import { useParams } from 'react-router-dom';
+import { UpdateTimeInterval } from 'store/actions';
 import { AppState } from 'store/reducers';
 import { PromQLWidgets } from 'types/api/dashboard/getAll';
 import MetricReducer from 'types/reducer/metrics';
@@ -22,6 +23,7 @@ import { Button } from './styles';
 function Application({ getWidget }: DashboardProps): JSX.Element {
 	const { servicename } = useParams<{ servicename?: string }>();
 	const selectedTimeStamp = useRef(0);
+	const dispatch = useDispatch();
 
 	const {
 		topOperations,
@@ -91,6 +93,16 @@ function Application({ getWidget }: DashboardProps): JSX.Element {
 			}
 		}
 	};
+
+	const onDragSelect = useCallback(
+		(start: number, end: number) => {
+			const startTimestamp = Math.trunc(start);
+			const endTimestamp = Math.trunc(end);
+
+			dispatch(UpdateTimeInterval('custom', [startTimestamp, endTimestamp]));
+		},
+		[dispatch],
+	);
 
 	const onErrorTrackHandler = (timestamp: number): void => {
 		const currentTime = timestamp;
@@ -172,6 +184,7 @@ function Application({ getWidget }: DashboardProps): JSX.Element {
 									),
 								}}
 								yAxisUnit="ms"
+								onDragSelect={onDragSelect}
 							/>
 						</GraphContainer>
 					</Card>
@@ -204,6 +217,7 @@ function Application({ getWidget }: DashboardProps): JSX.Element {
 									},
 								])}
 								yAxisUnit="ops"
+								onDragSelect={onDragSelect}
 							/>
 						</GraphContainer>
 					</Card>
@@ -238,6 +252,7 @@ function Application({ getWidget }: DashboardProps): JSX.Element {
 									},
 								])}
 								yAxisUnit="%"
+								onDragSelect={onDragSelect}
 							/>
 						</GraphContainer>
 					</Card>
