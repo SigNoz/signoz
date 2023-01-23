@@ -166,10 +166,7 @@ function GridCardGraph({
 		);
 	}
 
-	if (
-		(response.isLoading === true || !response.data?.payload?.data?.result) &&
-		!isEmptyLayout
-	) {
+	if (response.isFetching) {
 		return (
 			<>
 				<WidgetHeader
