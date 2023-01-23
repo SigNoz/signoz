@@ -37,7 +37,7 @@ function GridCardGraph({
 	setLayout,
 	onDragSelect,
 }: GridCardGraphProps): JSX.Element {
-	const prevChartDataSetRef = React.useRef<ChartData | undefined>(undefined);
+	const prevChartDataSetRef = React.useRef<ChartData | null>(null);
 	const [state, setState] = useState<GridCardGraphState>({
 		loading: true,
 		errorMessage: '',
@@ -243,15 +243,13 @@ function GridCardGraph({
 							/>
 						</div>
 						<GridGraphComponent
-							{...{
-								GRAPH_TYPES: widget.panelTypes,
-								data: prevChartDataSetRef.current,
-								isStacked: widget.isStacked,
-								opacity: widget.opacity,
-								title: ' ',
-								name,
-								yAxisUnit,
-							}}
+							GRAPH_TYPES={widget.panelTypes}
+							data={prevChartDataSetRef.current}
+							isStacked={widget.isStacked}
+							opacity={widget.opacity}
+							title={' '}
+							name={name}
+							yAxisUnit={yAxisUnit}
 						/>
 					</>
 				)}
@@ -279,15 +277,13 @@ function GridCardGraph({
 							/>
 						</div>
 						<GridGraphComponent
-							{...{
-								GRAPH_TYPES: widget.panelTypes,
-								data: prevChartDataSetRef.current,
-								isStacked: widget.isStacked,
-								opacity: widget.opacity,
-								title: ' ',
-								name,
-								yAxisUnit,
-							}}
+							GRAPH_TYPES={widget.panelTypes}
+							data={prevChartDataSetRef.current}
+							isStacked={widget.isStacked}
+							opacity={widget.opacity}
+							title={' '}
+							name={name}
+							yAxisUnit={yAxisUnit}
 						/>
 					</>
 				) : (
@@ -330,16 +326,13 @@ function GridCardGraph({
 
 			{!isEmpty(widget) && !!state.payload && (
 				<GridGraphComponent
-					{...{
-						GRAPH_TYPES: widget.panelTypes,
-						data: state.payload,
-						isStacked: widget.isStacked,
-						opacity: widget.opacity,
-						title: ' ', // empty title to accommodate absolutely positioned widget header
-						name,
-						yAxisUnit,
-						onDragSelect,
-					}}
+					GRAPH_TYPES={widget.panelTypes}
+					data={state.payload}
+					isStacked={widget.isStacked}
+					opacity={widget.opacity}
+					title={' '} // empty title to accommodate absolutely positioned widget heade
+					name={name}
+					yAxisUnit={yAxisUnit}
 				/>
 			)}
 

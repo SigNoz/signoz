@@ -131,13 +131,9 @@ function WidgetHeader({
 				</HeaderContainer>
 				{(state.loading === true || state.payload === undefined) &&
 					!state.error &&
-					!isEmptyLayout && <Spinner height="5vh" customStyle={spinnerStyles} />}
+					!isEmptyLayout && <Spinner height="5vh" style={spinnerStyles} />}
 				{state.error && state.errorMessage && !isEmptyLayout && (
-					<Tooltip
-						title={state.errorMessage}
-						placement={errorTooltipPosition}
-						zIndex={9999}
-					>
+					<Tooltip title={state.errorMessage} placement={errorTooltipPosition}>
 						<ExclamationCircleOutlined style={tooltipStyles} />
 					</Tooltip>
 				)}

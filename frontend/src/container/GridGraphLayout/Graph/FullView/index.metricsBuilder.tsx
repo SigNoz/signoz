@@ -58,6 +58,18 @@ function FullView({
 			}),
 	);
 
+	const chartDataSet = React.useMemo(() => {
+		return getChartData({
+			queryData: [
+				{
+					queryData: response?.data?.payload?.data?.result
+						? response?.data?.payload?.data?.result
+						: [],
+				},
+			],
+		});
+	}, [response]);
+
 	const isLoading = response.isLoading === true;
 
 	if (isLoading) {
@@ -86,25 +98,15 @@ function FullView({
 			)}
 
 			<GridGraphComponent
-				{...{
-					GRAPH_TYPES: widget.panelTypes,
-					data: getChartData({
-						queryData: [
-							{
-								queryData: response.data?.payload?.data?.result
-									? response.data?.payload?.data?.result
-									: [],
-							},
-						],
-					}),
-					isStacked: widget.isStacked,
-					opacity: widget.opacity,
-					title: widget.title,
-					onClickHandler,
-					name,
-					yAxisUnit,
-					onDragSelect,
-				}}
+				GRAPH_TYPES={widget.panelTypes}
+				data={chartDataSet}
+				isStacked={widget.isStacked}
+				opacity={widget.opacity}
+				title={widget.title}
+				onClickHandler={onClickHandler}
+				name={name}
+				yAxisUnit={yAxisUnit}
+				onDragSelect={onDragSelect}
 			/>
 		</>
 	);
