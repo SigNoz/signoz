@@ -1,6 +1,6 @@
 import { DefaultOptionType } from 'antd/es/select';
-import { Dispatch } from 'redux';
-import AppActions from 'types/actions';
+import { ReactNode } from 'react';
+import store from 'store';
 import {
 	UPDATE_SELECTED_FUNCTION,
 	UPDATE_SELECTED_GROUP_BY,
@@ -29,11 +29,9 @@ export function initOptions(
 	return groupBy;
 }
 
-export function onClickSelectedGroupByHandler(
-	options: DefaultOptionType[],
-	dispatch: Dispatch<AppActions>,
-) {
+export function onClickSelectedGroupByHandler(options: DefaultOptionType[]) {
 	return (ev: unknown): void => {
+		const { dispatch } = store;
 		if (typeof ev === 'string' && options) {
 			const selected = options.find((e) => e.value === ev);
 			if (selected) {
@@ -48,29 +46,28 @@ export function onClickSelectedGroupByHandler(
 	};
 }
 
-export function onClickSelectedFunctionHandler(dispatch: Dispatch<AppActions>) {
-	return (ev: unknown): void => {
-		if (typeof ev === 'string') {
-			const selected = functions.find((e) => e.key === ev);
-			if (selected) {
-				dispatch({
-					type: UPDATE_SELECTED_FUNCTION,
-					payload: {
-						selectedFunction: selected.key,
-						yAxisUnit: selected.yAxisUnit,
-					},
-				});
-			}
+export function onClickSelectedFunctionHandler(value: unknown): void {
+	const { dispatch } = store;
+	if (typeof value === 'string') {
+		const selected = functions.find((e) => e.key === value);
+		if (selected) {
+			dispatch({
+				type: UPDATE_SELECTED_FUNCTION,
+				payload: {
+					selectedFunction: selected.key,
+					yAxisUnit: selected.yAxisUnit,
+				},
+			});
 		}
-	};
+	}
 }
 export function selectedGroupByValue(
 	selectedGroupBy: string,
 	options: DefaultOptionType[],
-): unknown {
+): ReactNode {
 	return options.find((e) => selectedGroupBy === e.value)?.label;
 }
 
-export function functionValue(selectedFunction: string): unknown {
+export function getSelectedValue(selectedFunction: string): unknown {
 	return functions.find((e) => selectedFunction === e.key)?.displayValue;
 }

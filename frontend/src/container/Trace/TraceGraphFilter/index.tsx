@@ -2,17 +2,15 @@ import { AutoComplete, Input, Space } from 'antd';
 import getTagFilters from 'api/trace/getTagFilter';
 import React, { useMemo } from 'react';
 import { useQuery } from 'react-query';
-import { useDispatch, useSelector } from 'react-redux';
-import { Dispatch } from 'redux';
+import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
-import AppActions from 'types/actions';
 import { GlobalReducer } from 'types/reducer/globalTime';
 import { TraceReducer } from 'types/reducer/trace';
 
 import { functions } from './config';
 import { SelectComponent } from './styles';
 import {
-	functionValue,
+	getSelectedValue,
 	initOptions,
 	onClickSelectedFunctionHandler,
 	onClickSelectedGroupByHandler,
@@ -26,7 +24,6 @@ function TraceGraphFilter(): JSX.Element {
 		AppState,
 		TraceReducer
 	>((state) => state.traces);
-	const dispatch = useDispatch<Dispatch<AppActions>>();
 	const globalTime = useSelector<AppState, GlobalReducer>(
 		(state) => state.globalTime,
 	);
@@ -61,8 +58,8 @@ function TraceGraphFilter(): JSX.Element {
 				dropdownMatchSelectWidth
 				data-testid="selectedFunction"
 				id="selectedFunction"
-				value={functionValue(selectedFunction)}
-				onChange={onClickSelectedFunctionHandler(dispatch)}
+				value={getSelectedValue(selectedFunction)}
+				onChange={onClickSelectedFunctionHandler}
 			>
 				{functions.map((value) => (
 					<Option value={value.key} key={value.key}>
@@ -78,7 +75,7 @@ function TraceGraphFilter(): JSX.Element {
 				data-testid="selectedGroupBy"
 				options={options}
 				value={selectedGroupByValue(selectedGroupBy, options)}
-				onChange={onClickSelectedGroupByHandler(options, dispatch)}
+				onChange={onClickSelectedGroupByHandler(options)}
 			>
 				<Input disabled={isLoading} placeholder="Please select" />
 			</AutoComplete>

@@ -94,7 +94,7 @@ export function disableTagValue(
 	return false;
 }
 
-export function initialLocalValue(
+export function getInitialLocalValue(
 	selectedNumberValues: number[],
 	selectedBoolValues: boolean[],
 	selectedStringValues: string[],

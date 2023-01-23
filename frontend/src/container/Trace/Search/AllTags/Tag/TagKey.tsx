@@ -1,6 +1,6 @@
 import { AutoComplete, Input } from 'antd';
 import getTagFilters from 'api/trace/getTagFilter';
-import React, { useMemo, useState } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import { useQuery } from 'react-query';
 import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
@@ -41,6 +41,19 @@ function TagsKey(props: TagsKeysProps): JSX.Element {
 
 	const options = useMemo(() => getTagKeyOptions(data?.payload), [data]);
 
+	const onSelectHandler = useCallback(
+		(value: unknown) =>
+			onTagKeySelect(
+				value,
+				options,
+				setSelectedKey,
+				setLocalSelectedTags,
+				index,
+				tag,
+			),
+		[index, options, setLocalSelectedTags, tag],
+	);
+
 	return (
 		<AutoComplete
 			style={{ width: '100%' }}
@@ -57,16 +70,7 @@ function TagsKey(props: TagsKeysProps): JSX.Element {
 				option?.label?.toUpperCase().indexOf(inputValue.toUpperCase()) !== -1
 			}
 			onChange={(e): void => setSelectedKey(e)}
-			onSelect={(value: unknown): void => {
-				onTagKeySelect(
-					value,
-					options,
-					setSelectedKey,
-					setLocalSelectedTags,
-					index,
-					tag,
-				);
-			}}
+			onSelect={onSelectHandler}
 		>
 			<Input placeholder="Please select" />
 		</AutoComplete>
