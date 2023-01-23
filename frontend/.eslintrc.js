@@ -104,7 +104,6 @@ module.exports = {
 		'@typescript-eslint/no-unused-vars': 'error',
 
 		// eslint rules need to remove
-		'no-shadow': 'off',
 		'@typescript-eslint/no-shadow': 'off',
 		'import/no-cycle': 'off',
 
