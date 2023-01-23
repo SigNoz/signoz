@@ -71,15 +71,17 @@ function GridCardGraph({
 		},
 	);
 
-	const chartDataSet = getChartData({
-		queryData: [
-			{
-				queryData: response?.data?.payload?.data?.result
-					? response?.data?.payload?.data?.result
-					: [],
-			},
-		],
-	});
+	const chartDataSet = React.useMemo(() => {
+		return getChartData({
+			queryData: [
+				{
+					queryData: response?.data?.payload?.data?.result
+						? response?.data?.payload?.data?.result
+						: [],
+				},
+			],
+		});
+	}, [response]);
 
 	const onToggleModal = useCallback(
 		(func: React.Dispatch<React.SetStateAction<boolean>>) => {
