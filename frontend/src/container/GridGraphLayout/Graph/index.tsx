@@ -4,7 +4,7 @@ import GridGraphComponent from 'container/GridGraphComponent';
 import { getDashboardVariables } from 'lib/dashbaordVariables/getDashboardVariables';
 import getChartData from 'lib/getChartData';
 import isEmpty from 'lodash-es/isEmpty';
-import React, { memo, useCallback, useState } from 'react';
+import React, { memo, useCallback, useMemo, useState } from 'react';
 import { Layout } from 'react-grid-layout';
 import { useQuery } from 'react-query';
 import { connect, useSelector } from 'react-redux';
@@ -71,17 +71,19 @@ function GridCardGraph({
 		},
 	);
 
-	const chartDataSet = React.useMemo(() => {
-		return getChartData({
-			queryData: [
-				{
-					queryData: response?.data?.payload?.data?.result
-						? response?.data?.payload?.data?.result
-						: [],
-				},
-			],
-		});
-	}, [response]);
+	const chartData = useMemo(
+		() =>
+			getChartData({
+				queryData: [
+					{
+						queryData: response?.data?.payload?.data?.result
+							? response?.data?.payload?.data?.result
+							: [],
+					},
+				],
+			}),
+		[response?.data?.payload],
+	);
 
 	const onToggleModal = useCallback(
 		(func: React.Dispatch<React.SetStateAction<boolean>>) => {
@@ -212,16 +214,14 @@ function GridCardGraph({
 
 			{!isEmpty(widget) && !!response.data?.payload?.data?.result && (
 				<GridGraphComponent
-					{...{
-						GRAPH_TYPES: widget.panelTypes,
-						data: chartDataSet,
-						isStacked: widget.isStacked,
-						opacity: widget.opacity,
-						title: ' ', // empty title to accommodate absolutely positioned widget header
-						name,
-						yAxisUnit,
-						onDragSelect,
-					}}
+					GRAPH_TYPES={widget.panelTypes}
+					data={chartData}
+					isStacked={widget.isStacked}
+					opacity={widget.opacity}
+					title={' '} // empty title to accommodate absolutely positioned widget header
+					name={name}
+					yAxisUnit={yAxisUnit}
+					onDragSelect={onDragSelect}
 				/>
 			)}
 
