@@ -110,9 +110,8 @@ export const parseQueryToTags = (query: string): PayloadProps<Tags> => {
 	};
 };
 
-const formatValues = (values: TagValueTypes[]): string => {
-	return values.map((e) => `"${e.toString().replaceAll(/"/g, '')}"`).join(',');
-};
+const formatValues = (values: TagValueTypes[]): string =>
+	values.map((e) => `"${e.toString().replaceAll(/"/g, '')}"`).join(',');
 
 export const parseTagsToQuery = (tags: Tags): PayloadProps<string> => {
 	let isError = false;
