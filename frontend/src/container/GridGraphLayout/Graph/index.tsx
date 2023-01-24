@@ -40,6 +40,7 @@ function GridCardGraph({
 	onDragSelect,
 }: GridCardGraphProps): JSX.Element {
 	const prevChartDataSetRef = React.useRef<ChartData | null>(null);
+	const [errorMessage, setErrorMessage] = useState<string | undefined>('');
 	const [hovered, setHovered] = useState(false);
 	const [modal, setModal] = useState(false);
 	const [deleteModal, setDeleteModal] = useState(false);
@@ -70,6 +71,10 @@ function GridCardGraph({
 		{
 			keepPreviousData: true,
 			refetchOnMount: false,
+			// eslint-disable-next-line @typescript-eslint/no-explicit-any
+			onError: (error: any) => {
+				setErrorMessage(error.message);
+			},
 		},
 	);
 
@@ -162,7 +167,8 @@ function GridCardGraph({
 								widget={widget}
 								onView={handleOnView}
 								onDelete={handleOnDelete}
-								state={queryResponse}
+								queryResponse={queryResponse}
+								errorMessage={errorMessage}
 							/>
 						</div>
 						<GridGraphComponent
@@ -192,7 +198,8 @@ function GridCardGraph({
 								widget={widget}
 								onView={handleOnView}
 								onDelete={handleOnDelete}
-								state={queryResponse}
+								queryResponse={queryResponse}
+								errorMessage={errorMessage}
 							/>
 						</div>
 						<GridGraphComponent
@@ -235,7 +242,8 @@ function GridCardGraph({
 						widget={widget}
 						onView={handleOnView}
 						onDelete={handleOnDelete}
-						state={queryResponse}
+						queryResponse={queryResponse}
+						errorMessage={errorMessage}
 					/>
 				</div>
 			)}

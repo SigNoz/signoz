@@ -33,9 +33,10 @@ interface IWidgetHeaderProps {
 	onView: VoidFunction;
 	onDelete: VoidFunction;
 	parentHover: boolean;
-	state: UseQueryResult<
+	queryResponse: UseQueryResult<
 		SuccessResponse<MetricRangePayloadProps> | ErrorResponse
 	>;
+	errorMessage: string | undefined;
 }
 function WidgetHeader({
 	title,
@@ -43,7 +44,8 @@ function WidgetHeader({
 	onView,
 	onDelete,
 	parentHover,
-	state,
+	queryResponse,
+	errorMessage,
 }: IWidgetHeaderProps): JSX.Element {
 	const [localHover, setLocalHover] = useState(false);
 
@@ -131,11 +133,11 @@ function WidgetHeader({
 						</ArrowContainer>
 					</HeaderContentContainer>
 				</HeaderContainer>
-				{state.isLoading && !state.isError && (
+				{queryResponse.isLoading && !queryResponse.isError && (
 					<Spinner height="5vh" style={spinnerStyles} />
 				)}
-				{state.error && state.isError && (
-					<Tooltip title={state.data?.message} placement={errorTooltipPosition}>
+				{queryResponse.error && queryResponse.isError && (
+					<Tooltip title={errorMessage} placement={errorTooltipPosition}>
 						<ExclamationCircleOutlined style={tooltipStyles} />
 					</Tooltip>
 				)}
