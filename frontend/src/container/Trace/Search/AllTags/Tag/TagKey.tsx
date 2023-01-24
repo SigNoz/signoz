@@ -36,6 +36,7 @@ function TagsKey(props: TagsKeysProps): JSX.Element {
 					other: Object.fromEntries(traces.selectedFilter),
 					isFilterExclude: traces.isFilterExclude,
 				}),
+			cacheTime: 120000,
 		},
 	);
 

@@ -412,11 +412,11 @@ func extractTagKeys(tags []model.TagQueryParam) ([]model.TagQueryParam, error) {
 				tag.Key = customStr[0]
 			}
 			if tag.Operator == model.ExistsOperator || tag.Operator == model.NotExistsOperator {
-				if customStr[1] == "string)" {
+				if customStr[1] == string(model.TagTypeString) + ")" {
 					tag.StringValues = []string{" "}
-				} else if customStr[1] == "bool)" {
+				} else if customStr[1] ==string(model.TagTypeBool) + ")" {
 					tag.BoolValues = []bool{true}
-				} else if customStr[1] == "number)" {
+				} else if customStr[1] == string(model.TagTypeNumber) + ")" {
 					tag.NumberValues = []float64{0}
 				} else {
 					return nil, fmt.Errorf("TagKey param is not valid in query")

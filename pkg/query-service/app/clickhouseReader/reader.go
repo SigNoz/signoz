@@ -773,9 +773,10 @@ func (r *ClickHouseReader) GetServices(ctx context.Context, queryParams *model.G
 				clickhouse.Named("names", ops),
 			)
 			// create TagQuery from TagQueryParams
-			tags := []model.TagQuery{}
-			tags = createTagQueryFromTagQueryParams(queryParams.Tags, tags)
-			args, errStatus := buildQueryWithTagParams(ctx, tags, &query, args)
+			tags := createTagQueryFromTagQueryParams(queryParams.Tags)
+			subQuery, argsSubQuery, errStatus := buildQueryWithTagParams(ctx, tags)
+			query += subQuery
+			args = append(args, argsSubQuery...)
 			if errStatus != nil {
 				zap.S().Error("Error in processing sql query: ", errStatus)
 				return
@@ -794,7 +795,9 @@ func (r *ClickHouseReader) GetServices(ctx context.Context, queryParams *model.G
 				zap.S().Error("Error in processing sql query: ", err)
 				return
 			}
-			args, errStatus = buildQueryWithTagParams(ctx, tags, &errorQuery, args)
+			subQuery, argsSubQuery, errStatus = buildQueryWithTagParams(ctx, tags)
+			query += subQuery
+			args = append(args, argsSubQuery...)
 			err = r.db.QueryRow(ctx, errorQuery, args...).Scan(&numErrors)
 			if err != nil {
 				zap.S().Error("Error in processing sql query: ", err)
@@ -853,9 +856,10 @@ func (r *ClickHouseReader) GetServiceOverview(ctx context.Context, queryParams *
 	args = append(args, namedArgs...)
 
 	// create TagQuery from TagQueryParams
-	tags := []model.TagQuery{}
-	tags = createTagQueryFromTagQueryParams(queryParams.Tags, tags)
-	args, errStatus := buildQueryWithTagParams(ctx, tags, &query, args)
+	tags := createTagQueryFromTagQueryParams(queryParams.Tags)
+	subQuery, argsSubQuery, errStatus := buildQueryWithTagParams(ctx, tags)
+	query += subQuery
+	args = append(args, argsSubQuery...)
 	if errStatus != nil {
 		return nil, errStatus
 	}
@@ -881,7 +885,9 @@ func (r *ClickHouseReader) GetServiceOverview(ctx context.Context, queryParams *
 	)
 	args = []interface{}{}
 	args = append(args, namedArgs...)
-	args, errStatus = buildQueryWithTagParams(ctx, tags, &query, args)
+	subQuery, argsSubQuery, errStatus = buildQueryWithTagParams(ctx, tags)
+	query += subQuery
+	args = append(args, argsSubQuery...)
 	if errStatus != nil {
 		return nil, errStatus
 	}
@@ -1364,9 +1370,10 @@ func (r *ClickHouseReader) GetFilteredSpans(ctx context.Context, queryParams *mo
 	}
 
 	// create TagQuery from TagQueryParams
-	tags := []model.TagQuery{}
-	tags = createTagQueryFromTagQueryParams(queryParams.Tags, tags)
-	args, errStatus := buildQueryWithTagParams(ctx, tags, &query, args)
+	tags := createTagQueryFromTagQueryParams(queryParams.Tags)
+	subQuery, argsSubQuery, errStatus := buildQueryWithTagParams(ctx, tags)
+	query += subQuery
+	args = append(args, argsSubQuery...)
 	if errStatus != nil {
 		return nil, errStatus
 	}
@@ -1437,7 +1444,8 @@ func (r *ClickHouseReader) GetFilteredSpans(ctx context.Context, queryParams *mo
 	return &getFilterSpansResponse, nil
 }
 
-func createTagQueryFromTagQueryParams(queryParams []model.TagQueryParam, tags []model.TagQuery) []model.TagQuery {
+func createTagQueryFromTagQueryParams(queryParams []model.TagQueryParam) []model.TagQuery {
+	tags := []model.TagQuery{}
 	for _, tag := range queryParams {
 		if len(tag.StringValues) > 0 {
 			tags = append(tags, model.NewTagQueryString(tag.Key, tag.StringValues, tag.Operator))
@@ -1464,8 +1472,9 @@ func String(length int) string {
 	return StringWithCharset(length, charset)
 }
 
-func buildQueryWithTagParams(ctx context.Context, tags []model.TagQuery, query *string, args []interface{}) ([]interface{}, *model.ApiError) {
-
+func buildQueryWithTagParams(ctx context.Context, tags []model.TagQuery) (string, []interface{}, *model.ApiError) {
+	subQuery := ""
+	var args []interface{}
 	for _, item := range tags {
 		tagMapType := ""
 		switch item.(type) {
@@ -1477,156 +1486,126 @@ func buildQueryWithTagParams(ctx context.Context, tags []model.TagQuery, query *
 			tagMapType = constants.BoolTagMapCol
 		default:
 			// type not supported error
-			return nil, &model.ApiError{Typ: model.ErrorBadData, Err: fmt.Errorf("type not supported")}
+			return "", nil, &model.ApiError{Typ: model.ErrorBadData, Err: fmt.Errorf("type not supported")}
 		}
 		switch item.GetOperator() {
 		case model.EqualOperator:
-			args = addArithmeticOperator(item, query, tagMapType, args, "=")
+			subQuery, args = addArithmeticOperator(item, tagMapType, "=")
 		case model.NotEqualOperator:
-			args = addArithmeticOperator(item, query, tagMapType, args, "!=")
+			subQuery, args = addArithmeticOperator(item, tagMapType, "!=")
 		case model.LessThanOperator:
-			args = addArithmeticOperator(item, query, tagMapType, args, "<")
+			subQuery, args = addArithmeticOperator(item, tagMapType, "<")
 		case model.GreaterThanOperator:
-			args = addArithmeticOperator(item, query, tagMapType, args, ">")
+			subQuery, args = addArithmeticOperator(item, tagMapType, ">")
 		case model.InOperator:
-			args = addInOperator(item, query, tagMapType, args, false)
+			subQuery, args = addInOperator(item, tagMapType, false)
 		case model.NotInOperator:
-			args = addInOperator(item, query, tagMapType, args, true)
+			subQuery, args = addInOperator(item, tagMapType, true)
 		case model.LessThanEqualOperator:
-			args = addArithmeticOperator(item, query, tagMapType, args, "<=")
+			subQuery, args = addArithmeticOperator(item, tagMapType, "<=")
 		case model.GreaterThanEqualOperator:
-			args = addArithmeticOperator(item, query, tagMapType, args, ">=")
+			subQuery, args = addArithmeticOperator(item, tagMapType, ">=")
 		case model.ContainsOperator:
-			args = addContainsOperator(item, query, tagMapType, args, false)
+			subQuery, args = addContainsOperator(item, tagMapType, false)
 		case model.NotContainsOperator:
-			args = addContainsOperator(item, query, tagMapType, args, true)
+			subQuery, args = addContainsOperator(item, tagMapType, true)
 		case model.StartsWithOperator:
-			args = addStartsWithOperator(item, query, tagMapType, args, false)
+			subQuery, args = addStartsWithOperator(item, tagMapType, false)
 		case model.NotStartsWithOperator:
-			args = addStartsWithOperator(item, query, tagMapType, args, true)
+			subQuery, args = addStartsWithOperator(item, tagMapType, true)
 		case model.ExistsOperator:
-			args = addExistsOperator(item, query, tagMapType, args, false)
+			subQuery, args = addExistsOperator(item, tagMapType, false)
 		case model.NotExistsOperator:
-			args = addExistsOperator(item, query, tagMapType, args, true)
+			subQuery, args = addExistsOperator(item, tagMapType, true)
 		default:
-			return nil, &model.ApiError{Typ: model.ErrorExec, Err: fmt.Errorf("Tag Operator %s not supported", item.GetOperator())}
+			return "", nil, &model.ApiError{Typ: model.ErrorExec, Err: fmt.Errorf("Tag Operator %s not supported", item.GetOperator())}
 		}
 	}
-	return args, nil
+	return subQuery, args, nil
 }
 
-func addInOperator(item model.TagQuery, query *string, tagMapType string, args []interface{}, not bool) []interface{} {
+func addInOperator(item model.TagQuery, tagMapType string, not bool) (string, []interface{}) {
 	values := item.GetValues()
+	args := []interface{}{}
 	notStr := ""
 	if not {
 		notStr = "NOT"
 	}
-	for i, value := range values {
+	tagValuePair := []string{}
+	for _, value := range values {
 		tagKey := "inTagKey" + String(5)
 		tagValue := "inTagValue" + String(5)
-		if i == 0 && i == len(item.GetValues())-1 {
-			*query += fmt.Sprintf(" AND %s %s[@%s] = @%s", notStr, tagMapType, tagKey, tagValue)
-		} else if i == 0 && i != len(item.GetValues())-1 {
-			*query += fmt.Sprintf(" AND %s (%s[@%s] = @%s", notStr, tagMapType, tagKey, tagValue)
-		} else if i != 0 && i == len(item.GetValues())-1 {
-			*query += fmt.Sprintf(" OR %s[@%s] = @%s)", tagMapType, tagKey, tagValue)
-		} else {
-			*query += fmt.Sprintf(" OR %s[@%s] = @%s", tagMapType, tagKey, tagValue)
-		}
+		tagValuePair = append(tagValuePair, fmt.Sprintf("%s[@%s] = @%s", tagMapType, tagKey, tagValue))
 		args = append(args, clickhouse.Named(tagKey, item.GetKey()))
 		args = append(args, clickhouse.Named(tagValue, value))
 	}
-	return args
+	return fmt.Sprintf(" AND %s (%s)", notStr, strings.Join(tagValuePair, " OR ")), args
 }
 
-func addContainsOperator(item model.TagQuery, query *string, tagMapType string, args []interface{}, not bool) []interface{} {
+func addContainsOperator(item model.TagQuery, tagMapType string, not bool) (string, []interface{}) {
 	values := item.GetValues()
+	args := []interface{}{}
 	notStr := ""
 	if not {
 		notStr = "NOT"
 	}
-	for i, value := range values {
+	tagValuePair := []string{}
+	for _, value := range values {
 		tagKey := "containsTagKey" + String(5)
 		tagValue := "containsTagValue" + String(5)
-		if i == 0 && i == len(item.GetValues())-1 {
-			*query += fmt.Sprintf(" AND %s %s[@%s] ILIKE @%s", notStr, tagMapType, tagKey, tagValue)
-		} else if i == 0 && i != len(item.GetValues())-1 {
-			*query += fmt.Sprintf(" AND %s (%s[@%s] ILIKE @%s", notStr, tagMapType, tagKey, tagValue)
-		} else if i != 0 && i == len(item.GetValues())-1 {
-			*query += fmt.Sprintf(" OR %s[@%s] ILIKE @%s)", tagMapType, tagKey, tagValue)
-		} else {
-			*query += fmt.Sprintf(" OR %s[@%s] ILIKE @%s", tagMapType, tagKey, tagValue)
-		}
+		tagValuePair = append(tagValuePair, fmt.Sprintf("%s[@%s] ILIKE @%s", tagMapType, tagKey, tagValue))
 		args = append(args, clickhouse.Named(tagKey, item.GetKey()))
 		args = append(args, clickhouse.Named(tagValue, "%"+fmt.Sprintf("%v", value)+"%"))
 	}
-	return args
+	return fmt.Sprintf(" AND %s (%s)", notStr, strings.Join(tagValuePair, " OR ")), args
 }
 
-func addStartsWithOperator(item model.TagQuery, query *string, tagMapType string, args []interface{}, not bool) []interface{} {
+func addStartsWithOperator(item model.TagQuery, tagMapType string, not bool) (string, []interface{}) {
 	values := item.GetValues()
+	args := []interface{}{}
 	notStr := ""
 	if not {
 		notStr = "NOT"
 	}
-	for i, value := range values {
+	tagValuePair := []string{}
+	for _, value := range values {
 		tagKey := "startsWithTagKey" + String(5)
 		tagValue := "startsWithTagValue" + String(5)
-		if i == 0 && i == len(item.GetValues())-1 {
-			*query += fmt.Sprintf(" AND %s %s[@%s] ILIKE @%s", notStr, tagMapType, tagKey, tagValue)
-		} else if i == 0 && i != len(item.GetValues())-1 {
-			*query += fmt.Sprintf(" AND %s (%s[@%s] ILIKE @%s", notStr, tagMapType, tagKey, tagValue)
-		} else if i != 0 && i == len(item.GetValues())-1 {
-			*query += fmt.Sprintf(" OR %s[@%s] ILIKE @%s)", tagMapType, tagKey, tagValue)
-		} else {
-			*query += fmt.Sprintf(" OR %s[@%s] ILIKE @%s", tagMapType, tagKey, tagValue)
-		}
+		tagValuePair = append(tagValuePair, fmt.Sprintf("%s[@%s] ILIKE @%s", tagMapType, tagKey, tagValue))
 		args = append(args, clickhouse.Named(tagKey, item.GetKey()))
 		args = append(args, clickhouse.Named(tagValue, "%"+fmt.Sprintf("%v", value)+"%"))
 	}
-	return args
+	return fmt.Sprintf(" AND %s (%s)", notStr, strings.Join(tagValuePair, " OR ")), args
 }
 
-func addArithmeticOperator(item model.TagQuery, query *string, tagMapType string, args []interface{}, operator string) []interface{} {
+func addArithmeticOperator(item model.TagQuery, tagMapType string, operator string) (string, []interface{}) {
 	values := item.GetValues()
-	for i, value := range values {
+	args := []interface{}{}
+	tagValuePair := []string{}
+	for _, value := range values {
 		tagKey := "arithmeticTagKey" + String(5)
 		tagValue := "arithmeticTagValue" + String(5)
-		if i == 0 && i == len(item.GetValues())-1 {
-			*query += fmt.Sprintf(" AND %s[@%s] %s @%s", tagMapType, tagKey, operator, tagValue)
-		} else if i == 0 && i != len(item.GetValues())-1 {
-			*query += fmt.Sprintf(" AND (%s[@%s] %s @%s", tagMapType, tagKey, operator, tagValue)
-		} else if i != 0 && i == len(item.GetValues())-1 {
-			*query += fmt.Sprintf(" OR %s[@%s] %s @%s)", tagMapType, tagKey, operator, tagValue)
-		} else {
-			*query += fmt.Sprintf(" OR %s[@%s] %s @%s", tagMapType, tagKey, operator, tagValue)
-		}
+		tagValuePair = append(tagValuePair, fmt.Sprintf("%s[@%s] %s @%s", tagMapType, tagKey, operator, tagValue))
 		args = append(args, clickhouse.Named(tagKey, item.GetKey()))
 		args = append(args, clickhouse.Named(tagValue, value))
 	}
-	return args
+	return fmt.Sprintf(" AND (%s)", strings.Join(tagValuePair, " OR ")), args
 }
 
-func addExistsOperator(item model.TagQuery, query *string, tagMapType string, args []interface{}, not bool) []interface{} {
+func addExistsOperator(item model.TagQuery, tagMapType string, not bool) (string, []interface{}) {
 	values := item.GetValues()
 	notStr := ""
 	if not {
 		notStr = "NOT"
 	}
-	for i := range values {
+	args := []interface{}{}
+	tagOperatorPair := []string{}
+	for range values {
 		tagKey := "existsTagKey" + String(5)
-		if i == 0 && i == len(item.GetValues())-1 {
-			*query += fmt.Sprintf(" AND %s mapContains(%s, @%s)", notStr, tagMapType, tagKey)
-		} else if i == 0 && i != len(item.GetValues())-1 {
-			*query += fmt.Sprintf(" AND %s (mapContains(%s, @%s)", notStr, tagMapType, tagKey)
-		} else if i != 0 && i == len(item.GetValues())-1 {
-			*query += fmt.Sprintf(" OR mapContains(%s, @%s))", tagMapType, tagKey)
-		} else {
-			*query += fmt.Sprintf(" OR mapContains(%s, @%s)", tagMapType, tagKey)
-		}
+		tagOperatorPair = append(tagOperatorPair, fmt.Sprintf("mapContains(%s, @%s)", tagMapType, tagKey))
 		args = append(args, clickhouse.Named(tagKey, item.GetKey()))
 	}
-	return args
+	return fmt.Sprintf(" AND %s (%s)", notStr, strings.Join(tagOperatorPair, " OR ")), args
 }
 
 func (r *ClickHouseReader) GetTagFilters(ctx context.Context, queryParams *model.TagFilterParams) (*model.TagFilters, *model.ApiError) {
@@ -1858,9 +1837,10 @@ func (r *ClickHouseReader) GetTopOperations(ctx context.Context, queryParams *mo
 	args := []interface{}{}
 	args = append(args, namedArgs...)
 	// create TagQuery from TagQueryParams
-	tags := []model.TagQuery{}
-	tags = createTagQueryFromTagQueryParams(queryParams.Tags, tags)
-	args, errStatus := buildQueryWithTagParams(ctx, tags, &query, args)
+	tags := createTagQueryFromTagQueryParams(queryParams.Tags)
+	subQuery, argsSubQuery, errStatus := buildQueryWithTagParams(ctx, tags)
+	query += subQuery
+	args = append(args, argsSubQuery...)
 	if errStatus != nil {
 		return nil, errStatus
 	}
@@ -2072,11 +2052,11 @@ func (r *ClickHouseReader) GetFilteredSpansAggregates(ctx context.Context, query
 		if len(customStr) < 2 {
 			return nil, &model.ApiError{Typ: model.ErrorBadData, Err: fmt.Errorf("GroupBy: %s not supported", queryParams.GroupBy)}
 		}
-		if customStr[1] == "string)" {
+		if customStr[1] == string(model.TagTypeString)+")" {
 			query = fmt.Sprintf("SELECT toStartOfInterval(timestamp, INTERVAL %d minute) as time, stringTagMap['%s'] as groupBy, %s FROM %s.%s WHERE timestamp >= @timestampL AND timestamp <= @timestampU", queryParams.StepSeconds/60, customStr[0], aggregation_query, r.TraceDB, r.indexTable)
-		} else if customStr[1] == "number)" {
+		} else if customStr[1] == string(model.TagTypeNumber)+")" {
 			query = fmt.Sprintf("SELECT toStartOfInterval(timestamp, INTERVAL %d minute) as time, toString(numberTagMap['%s']) as groupBy, %s FROM %s.%s WHERE timestamp >= @timestampL AND timestamp <= @timestampU", queryParams.StepSeconds/60, customStr[0], aggregation_query, r.TraceDB, r.indexTable)
-		} else if customStr[1] == "bool)" {
+		} else if customStr[1] == string(model.TagTypeBool)+")" {
 			query = fmt.Sprintf("SELECT toStartOfInterval(timestamp, INTERVAL %d minute) as time, toString(boolTagMap['%s']) as groupBy, %s FROM %s.%s WHERE timestamp >= @timestampL AND timestamp <= @timestampU", queryParams.StepSeconds/60, customStr[0], aggregation_query, r.TraceDB, r.indexTable)
 		} else {
 			// return error for unsupported group by
@@ -2134,9 +2114,11 @@ func (r *ClickHouseReader) GetFilteredSpansAggregates(ctx context.Context, query
 		args = append(args, clickhouse.Named("kind", queryParams.Kind))
 	}
 	// create TagQuery from TagQueryParams
-	tags := []model.TagQuery{}
-	tags = createTagQueryFromTagQueryParams(queryParams.Tags, tags)
-	args, errStatus := buildQueryWithTagParams(ctx, tags, &query, args)
+	tags := createTagQueryFromTagQueryParams(queryParams.Tags)
+	subQuery, argsSubQuery, errStatus := buildQueryWithTagParams(ctx, tags)
+	query += subQuery
+	args = append(args, argsSubQuery...)
+
 	if errStatus != nil {
 		return nil, errStatus
 	}
@@ -2144,11 +2126,11 @@ func (r *ClickHouseReader) GetFilteredSpansAggregates(ctx context.Context, query
 	if queryParams.GroupBy != "" && columnExists {
 		query = query + fmt.Sprintf(" GROUP BY time, %s as groupBy ORDER BY time", queryParams.GroupBy)
 	} else if queryParams.GroupBy != "" {
-		if customStr[1] == "string)" {
+		if customStr[1] == string(model.TagTypeString)+")" {
 			query = query + fmt.Sprintf(" GROUP BY time, stringTagMap['%s'] as groupBy ORDER BY time", customStr[0])
-		} else if customStr[1] == "number)" {
+		} else if customStr[1] == string(model.TagTypeNumber)+")" {
 			query = query + fmt.Sprintf(" GROUP BY time, toString(numberTagMap['%s']) as groupBy ORDER BY time", customStr[0])
-		} else if customStr[1] == "bool)" {
+		} else if customStr[1] == string(model.TagTypeBool)+")" {
 			query = query + fmt.Sprintf(" GROUP BY time, toString(boolTagMap['%s']) as groupBy ORDER BY time", customStr[0])
 		}
 	} else {
