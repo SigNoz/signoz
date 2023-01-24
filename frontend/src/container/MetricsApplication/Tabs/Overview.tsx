@@ -213,11 +213,10 @@ function Application({ getWidgetQueryBuilder }: DashboardProps): JSX.Element {
 											pointRadius: 1.5,
 										},
 									],
-									labels: serviceOverview.map((e) => {
-										return new Date(
-											parseFloat(convertToNanoSecondsToSecond(e.timestamp)),
-										);
-									}),
+									labels: serviceOverview.map(
+										(e) =>
+											new Date(parseFloat(convertToNanoSecondsToSecond(e.timestamp))),
+									),
 								}}
 								yAxisUnit="ms"
 								onDragSelect={onDragSelect}

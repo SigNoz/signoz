@@ -101,13 +101,14 @@ function Trace({
 		isFilterExclude,
 	]);
 
-	useEffect(() => {
-		return (): void => {
+	useEffect(
+		() => (): void => {
 			dispatch({
 				type: RESET_TRACE_FILTER,
 			});
-		};
-	}, [dispatch]);
+		},
+		[dispatch],
+	);
 
 	const onClickHandler: React.MouseEventHandler<HTMLElement> = useCallback(
 		(e) => {
