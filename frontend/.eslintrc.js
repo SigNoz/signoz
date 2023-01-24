@@ -102,6 +102,8 @@ module.exports = {
 			},
 		],
 		'@typescript-eslint/no-unused-vars': 'error',
+		'func-style': ['error', 'declaration', { allowArrowFunctions: true }],
+		'arrow-body-style': ['error', 'as-needed'],
 
 		// eslint rules need to remove
 		'@typescript-eslint/no-shadow': 'off',
