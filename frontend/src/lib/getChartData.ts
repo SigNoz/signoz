@@ -17,8 +17,8 @@ const getChartData = ({ queryData }: GetChartDataProps): ChartData => {
 	const labels = Array.from(uniqueTimeLabels).sort((a, b) => a - b);
 
 	const response = queryData.map(
-		({ queryData, query: queryG, legend: legendG }) => {
-			return queryData.map((e) => {
+		({ queryData, query: queryG, legend: legendG }) =>
+			queryData.map((e) => {
 				const { values = [], metric, legend, queryName } = e || {};
 				const labelNames = getLabelName(
 					metric,
@@ -35,9 +35,7 @@ const getChartData = ({ queryData }: GetChartDataProps): ChartData => {
 				// Fill the missing data with null
 				const filledDataValues = Array.from(labels).map((e) => {
 					const td1 = new Date(parseInt(convertIntoEpoc(e * 1000), 10));
-					const data = dataValue.find((e1) => {
-						return e1.first.getTime() === td1.getTime();
-					});
+					const data = dataValue.find((e1) => e1.first.getTime() === td1.getTime());
 					return (
 						data || {
 							first: new Date(parseInt(convertIntoEpoc(e * 1000), 10)),
@@ -51,8 +49,7 @@ const getChartData = ({ queryData }: GetChartDataProps): ChartData => {
 					first: filledDataValues.map((e) => e.first),
 					second: filledDataValues.map((e) => e.second),
 				};
-			});
-		},
+			}),
 	);
 	const allLabels = response
 		.map((e) => e.map((e) => e.label))
@@ -63,18 +60,16 @@ const getChartData = ({ queryData }: GetChartDataProps): ChartData => {
 		.reduce((a, b) => [...a, ...b], []);
 
 	return {
-		datasets: alldata.map((e, index) => {
-			return {
-				data: e,
-				label: allLabels[index],
-				borderWidth: 1.5,
-				spanGaps: true,
-				animations: false,
-				borderColor: colors[index % colors.length] || 'red',
-				showLine: true,
-				pointRadius: 0,
-			};
-		}),
+		datasets: alldata.map((e, index) => ({
+			data: e,
+			label: allLabels[index],
+			borderWidth: 1.5,
+			spanGaps: true,
+			animations: false,
+			borderColor: colors[index % colors.length] || 'red',
+			showLine: true,
+			pointRadius: 0,
+		})),
 		labels: response
 			.map((e) => e.map((e) => e.first))
 			.reduce((a, b) => [...a, ...b], [])[0],

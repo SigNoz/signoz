@@ -184,16 +184,14 @@ function SearchFilter({
 					{optionsData.options &&
 						Array.isArray(optionsData.options) &&
 						optionsData.options.map(
-							(optionItem): JSX.Element => {
-								return (
-									<Select.Option
-										key={(optionItem.value as string) || (optionItem.name as string)}
-										value={optionItem.value || optionItem.name}
-									>
-										{optionItem.name}
-									</Select.Option>
-								);
-							},
+							(optionItem): JSX.Element => (
+								<Select.Option
+									key={(optionItem.value as string) || (optionItem.name as string)}
+									value={optionItem.value || optionItem.name}
+								>
+									{optionItem.name}
+								</Select.Option>
+							),
 						)}
 				</Select>
 			)}

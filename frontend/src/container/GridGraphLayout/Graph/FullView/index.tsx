@@ -81,25 +81,22 @@ function FullView({
 	const queryLength = widget.query.filter((e) => e.query.length !== 0);
 
 	const response = useQueries(
-		queryLength.map((query) => {
-			return {
-				// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
-				queryFn: () => {
-					return getQueryResult({
-						end: queryMinMax.max.toString(),
-						query: query.query,
-						start: queryMinMax.min.toString(),
-						step: `${getStep({
-							start: queryMinMax.min,
-							end: queryMinMax.max,
-							inputFormat: 's',
-						})}`,
-					});
-				},
-				queryHash: `${query.query}-${query.legend}-${selectedTime.enum}`,
-				retryOnMount: false,
-			};
-		}),
+		queryLength.map((query) => ({
+			// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
+			queryFn: () =>
+				getQueryResult({
+					end: queryMinMax.max.toString(),
+					query: query.query,
+					start: queryMinMax.min.toString(),
+					step: `${getStep({
+						start: queryMinMax.min,
+						end: queryMinMax.max,
+						inputFormat: 's',
+					})}`,
+				}),
+			queryHash: `${query.query}-${query.legend}-${selectedTime.enum}`,
+			retryOnMount: false,
+		})),
 	);
 
 	const isError =
