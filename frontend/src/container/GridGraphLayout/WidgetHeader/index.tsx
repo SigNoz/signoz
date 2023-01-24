@@ -10,12 +10,14 @@ import Spinner from 'components/Spinner';
 import useComponentPermission from 'hooks/useComponentPermission';
 import history from 'lib/history';
 import React, { useState } from 'react';
+import { UseQueryResult } from 'react-query';
 import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
+import { ErrorResponse, SuccessResponse } from 'types/api';
 import { Widgets } from 'types/api/dashboard/getAll';
+import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
 import AppReducer from 'types/reducer/app';
 
-import { GridCardGraphState } from '../Graph';
 import { errorTooltipPosition, spinnerStyles, tooltipStyles } from './config';
 import {
 	ArrowContainer,
@@ -31,8 +33,9 @@ interface IWidgetHeaderProps {
 	onView: VoidFunction;
 	onDelete: VoidFunction;
 	parentHover: boolean;
-	state: GridCardGraphState;
-	isEmptyLayout: boolean;
+	state: UseQueryResult<
+		SuccessResponse<MetricRangePayloadProps> | ErrorResponse
+	>;
 }
 function WidgetHeader({
 	title,
@@ -41,7 +44,6 @@ function WidgetHeader({
 	onDelete,
 	parentHover,
 	state,
-	isEmptyLayout,
 }: IWidgetHeaderProps): JSX.Element {
 	const [localHover, setLocalHover] = useState(false);
 
@@ -129,11 +131,11 @@ function WidgetHeader({
 						</ArrowContainer>
 					</HeaderContentContainer>
 				</HeaderContainer>
-				{(state.loading === true || state.payload === undefined) &&
-					!state.error &&
-					!isEmptyLayout && <Spinner height="5vh" style={spinnerStyles} />}
-				{state.error && state.errorMessage && !isEmptyLayout && (
-					<Tooltip title={state.errorMessage} placement={errorTooltipPosition}>
+				{state.isLoading && !state.isError && (
+					<Spinner height="5vh" style={spinnerStyles} />
+				)}
+				{state.error && state.isError && (
+					<Tooltip title={state.data?.message} placement={errorTooltipPosition}>
 						<ExclamationCircleOutlined style={tooltipStyles} />
 					</Tooltip>
 				)}
