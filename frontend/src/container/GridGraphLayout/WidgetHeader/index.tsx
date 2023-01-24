@@ -133,10 +133,10 @@ function WidgetHeader({
 						</ArrowContainer>
 					</HeaderContentContainer>
 				</HeaderContainer>
-				{queryResponse.isLoading && !queryResponse.isError && (
+				{queryResponse.isFetching && !queryResponse.isError && (
 					<Spinner height="5vh" style={spinnerStyles} />
 				)}
-				{queryResponse.error && queryResponse.isError && (
+				{queryResponse.isError && (
 					<Tooltip title={errorMessage} placement={errorTooltipPosition}>
 						<ExclamationCircleOutlined style={tooltipStyles} />
 					</Tooltip>

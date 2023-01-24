@@ -186,10 +186,10 @@ function GridCardGraph({
 		);
 	}
 
-	if (queryResponse.isFetching) {
+	if (prevChartDataSetRef.current?.labels === undefined) {
 		return (
 			<span>
-				{!isEmpty(widget) && prevChartDataSetRef.current ? (
+				{!isEmpty(widget) && prevChartDataSetRef.current?.labels ? (
 					<>
 						<div className="drag-handle">
 							<WidgetHeader
