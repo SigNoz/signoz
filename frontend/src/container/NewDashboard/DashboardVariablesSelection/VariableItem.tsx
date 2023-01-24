@@ -169,7 +169,7 @@ function VariableItem({
 					>
 						{enableSelectAll && <Option value={ALL_SELECT_VALUE}>ALL</Option>}
 						{map(optionsData, (option) => {
-							return <Option value={option}>{(option as string).toString()}</Option>;
+							return <Option value={option}>{option.toString()}</Option>;
 						})}
 					</Select>
 				)
