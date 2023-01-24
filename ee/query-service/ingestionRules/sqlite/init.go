@@ -28,9 +28,7 @@ func InitDB(db *sqlx.DB) error {
 		config_json TEXT,
 		deployment_status VARCHAR(40) NOT NULL DEFAULT 'DIRTY',
 		deployment_sequence INTEGER,
-		error_message TEXT,
-		FOREIGN KEY(created_by) REFERENCES users(id),
-		FOREIGN KEY(updated_by) REFERENCES users(id)
+		error_message TEXT
 	);
 	`
 

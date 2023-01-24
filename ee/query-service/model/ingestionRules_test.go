@@ -1,4 +1,4 @@
-package ingestionRules
+package model
 
 import (
 	"reflect"

@@ -2,12 +2,13 @@ package ingestionRules
 
 import (
 	"github.com/open-telemetry/opentelemetry-collector-contrib/processor/filterprocessor"
+	"go.signoz.io/signoz/ee/query-service/model"
 )
 
 // this file contains methods to transform ingestion rules into
 // collector config components
 
-func PrepareDropFilter(rules []IngestionRule) (*filterprocessor.Config, error) {
+func PrepareDropFilter(rules []model.*IngestionRule) (*filterprocessor.Config, error) {
 	metricRules := getMetricRules(rules)
 
 	metricExprs, err := PrepareDropExpressions(metricRules)
@@ -22,14 +23,14 @@ func PrepareDropFilter(rules []IngestionRule) (*filterprocessor.Config, error) {
 }
 
 // PrepareDropExpression creates the final OTTL expression for filter processor
-func PrepareDropExpressions(rules []IngestionRule) (result []string, fnerr []error) {
+func PrepareDropExpressions(rules []model.*IngestionRule) (result []string, fnerr []error) {
 	// result captures the final expression to be set in fitler processor
 	if len(rules) == 0 {
 		return result, nil
 	}
 
 	for _, r := range rules {
-		if r.RuleType == IngestionRuleTypeDrop {
+		if r.RuleType == model.IngestionRuleTypeDrop {
 			expr, err := r.Config.DropConfig.PrepareExpression()
 			if err != nil {
 				fnerr = append(fnerr, err)
@@ -41,10 +42,10 @@ func PrepareDropExpressions(rules []IngestionRule) (result []string, fnerr []err
 	return result, nil
 }
 
-func getMetricRules(allRules []IngestionRule) []IngestionRule {
-	metricRules := make([]IngestionRule, 0)
+func getMetricRules(allRules []model.IngestionRule) []model.IngestionRule {
+	metricRules := make([]model.IngestionRule, 0)
 	for _, r := range allRules {
-		if r.RuleType == IngestionRuleTypeDrop && r.Source == IngestionSourceMetrics {
+		if r.RuleType == model.IngestionRuleTypeDrop && r.Source == model.IngestionSourceMetrics {
 			metricRules = append(metricRules, r)
 		}
 	}

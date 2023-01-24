@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"time"
 
 	"github.com/google/uuid"
 	"github.com/jmoiron/sqlx"
@@ -36,7 +35,7 @@ func (r *Repo) InitDB(engine string) error {
 }
 
 // InsertRule stores a given postable rule to database
-func (r *Repo) InsertRule(ctx context.Context, postable *PostableIngestionRule) (*IngestionRule, error) {
+func (r *Repo) InsertRule(ctx context.Context, postable *PostableIngestionRule) (*model.IngestionRule, error) {
 	if err := postable.IsValid(); err != nil {
 		return nil, errors.Wrap(err, "failed to validate postable ingestion rule")
 	}
@@ -53,17 +52,15 @@ func (r *Repo) InsertRule(ctx context.Context, postable *PostableIngestionRule) 
 		return nil, errors.Wrap(err, "failed to unmarshal postable ingestion config")
 	}
 
-	insertRow := &IngestionRule{
-		Id:             uuid.New().String(),
-		Name:           postable.Name,
-		Source:         postable.Source,
-		RuleType:       postable.RuleType,
-		RuleSubType:    postable.RuleSubType,
-		Priority:       postable.Priority,
-		Config:         postable.Config,
-		RawConfig:      string(rawConfig),
-		DeployStatus:   PendingDeploy,
-		DeploySequence: -1,
+	insertRow := &model.IngestionRule{
+		Id:          uuid.New().String(),
+		Name:        postable.Name,
+		Source:      postable.Source,
+		RuleType:    postable.RuleType,
+		RuleSubType: postable.RuleSubType,
+		Priority:    postable.Priority,
+		Config:      postable.Config,
+		RawConfig:   string(rawConfig),
 	}
 
 	insertQuery := `INSERT INTO ingestion_rules 
@@ -112,8 +109,6 @@ func (r *Repo) EditRule(ctx context.Context, editParams *IngestionRule) error {
 	rule_subtype = $2,
 	priority = $3,
 	config_json = $4,
-	deployment_status = $5,
-	deployment_sequence = $6
 	WHERE id = $7`
 
 	_, err = r.db.ExecContext(ctx,
@@ -122,8 +117,6 @@ func (r *Repo) EditRule(ctx context.Context, editParams *IngestionRule) error {
 		editParams.RuleSubType,
 		editParams.Priority,
 		string(rawConfig),
-		PendingDeploy,
-		-2,
 		editParams.Id)
 
 	if err != nil {
@@ -136,9 +129,9 @@ func (r *Repo) EditRule(ctx context.Context, editParams *IngestionRule) error {
 }
 
 // GetDropRules returns drop rules and errors (if any)
-func (r *Repo) GetDropRules(ctx context.Context) ([]IngestionRule, []error) {
+func (r *Repo) GetDropRules(ctx context.Context) ([]model.IngestionRule, []error) {
 	var errors []error
-	dropRules := []IngestionRule{}
+	dropRules := []model.IngestionRule{}
 
 	dropRulesQuery := `SELECT id, 
 		source, 
@@ -152,13 +145,13 @@ func (r *Repo) GetDropRules(ctx context.Context) ([]IngestionRule, []error) {
 		FROM ingestion_rules 
 		WHERE rule_type=$1`
 
-	err := r.db.SelectContext(ctx, &dropRules, dropRulesQuery, IngestionRuleTypeDrop)
+	err := r.db.SelectContext(ctx, &dropRules, dropRulesQuery, model.IngestionRuleTypeDrop)
 	if err != nil {
 		return nil, []error{fmt.Errorf("failed to get drop rules from db: %v", err)}
 	}
 
 	for _, d := range dropRules {
-		if err := d.parseConfig(); err != nil {
+		if err := d.ParseRawConfig(); err != nil {
 			errors = append(errors, err)
 		}
 	}
@@ -166,11 +159,11 @@ func (r *Repo) GetDropRules(ctx context.Context) ([]IngestionRule, []error) {
 	return dropRules, errors
 }
 
-func (r *Repo) GetDropRulesByStatus(ctx context.Context, s DeployStatus) ([]IngestionRule, []error) {
+func (r *Repo) GetDropRulesByVersion(ctx context.Context, v float32) ([]model.IngestionRule, []error) {
 	var errors []error
-	dropRules := []IngestionRule{}
+	rules := []model.IngestionRule{}
 
-	dropRulesQuery := `SELECT id, 
+	versionQuery := `SELECT id, 
 		source, 
 		priority, 
 		rule_type, 
@@ -179,26 +172,35 @@ func (r *Repo) GetDropRulesByStatus(ctx context.Context, s DeployStatus) ([]Inge
 		config_json, 
 		deployment_status, 
 		deployment_sequence 
-		FROM ingestion_rules 
-		WHERE rule_type=$1 AND deployment_status=$2`
+		FROM ingestion_rules r,
+			 agent_config_elements e,
+			 agent_config_versions v
+		WHERE r.rule_type=e.element_type
+		AND r.id = e.element_id
+		AND v.id = e.version_id
+		AND v.version = $1`
 
-	err := r.db.SelectContext(ctx, &dropRules, dropRulesQuery, IngestionRuleTypeDrop, s)
+	err := r.db.SelectContext(ctx, &rules, versionQuery, v)
 	if err != nil {
 		return nil, []error{fmt.Errorf("failed to get drop rules from db: %v", err)}
 	}
 
-	for _, d := range dropRules {
-		if err := d.parseConfig(); err != nil {
+	if len(rules) == 0 {
+		return rules, nil
+	}
+
+	for _, d := range rules {
+		if err := d.ParseRawConfig(); err != nil {
 			errors = append(errors, err)
 		}
 	}
 
-	return dropRules, errors
+	return rules, errors
 }
 
 // GetDropRules returns drop rules and errors (if any)
-func (r *Repo) GetRule(ctx context.Context, id string) (*IngestionRule, *model.ApiError) {
-	rules := []IngestionRule{}
+func (r *Repo) GetRule(ctx context.Context, id string) (*model.IngestionRule, *model.ApiError) {
+	rules := []model.IngestionRule{}
 
 	ruleQuery := `SELECT id, 
 		source, 
@@ -224,7 +226,7 @@ func (r *Repo) GetRule(ctx context.Context, id string) (*IngestionRule, *model.A
 	}
 
 	if len(rules) == 1 {
-		err := rules[0].parseConfig()
+		err := rules[0].ParseRawConfig()
 		if err != nil {
 			zap.S().Errorf("invalid rule config found", id, err)
 			return &rules[0], model.InternalErrorStr("found an invalid rule config ")
@@ -244,42 +246,6 @@ func (r *Repo) DeleteRule(ctx context.Context, id string) *model.ApiError {
 	_, err := r.db.ExecContext(ctx, deleteQuery, id)
 	if err != nil {
 		return model.BadRequest(err)
-	}
-
-	return nil
-
-}
-
-func (r *Repo) MarkDeploying(ctx context.Context, seq int, ruleType IngestionRuleType) error {
-	// mark Dirty rules as deploying and return the result
-	// set sequence
-
-	updateQuery := `UPDATE ingestion_rules
-	set deployment_status = $1, 
-	deployment_sequence = $2  
-	WHERE rule_type=$3`
-
-	_, err := r.db.ExecContext(ctx, updateQuery, Deploying, seq, ruleType)
-	if err != nil {
-		zap.S().Errorf("failed to get ingestion rule from db", err)
-		return model.BadRequestStr("failed to get ingestion rule from db")
-	}
-
-	return nil
-}
-
-func (r *Repo) UpdateStatusBySeq(ctx context.Context, seq int, status DeployStatus, errorMessage string) error {
-	// marks deploying rules with given seq as FAILED and e
-	updateQuery := `UPDATE ingestion_rules
-	set deployment_status = $1, 
-	updated_at = $2,
-	error_message = $3
-	WHERE deployment_sequence=$3`
-
-	_, err := r.db.ExecContext(ctx, updateQuery, string(status), time.Now(), errorMessage, seq)
-	if err != nil {
-		zap.S().Errorf("failed to update ingestion rules by seq in db", err)
-		return model.BadRequestStr("failed to update ingestion rules by seq in db")
 	}
 
 	return nil

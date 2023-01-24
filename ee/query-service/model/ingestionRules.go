@@ -1,12 +1,10 @@
-package ingestionRules
+package model
 
 import (
 	"encoding/json"
 	"fmt"
-	"time"
 
 	"github.com/pkg/errors"
-	"go.signoz.io/signoz/ee/query-service/model"
 	basemodel "go.signoz.io/signoz/pkg/query-service/model"
 )
 
@@ -45,46 +43,6 @@ const (
 	IngestionRuleSubTypeCond IngestionRuleSubtype = "conditional"
 )
 
-// PostableIngestionRule captures user inputs in setting the ingestion rule
-type PostableIngestionRule struct {
-	Name        string               `json:"name"`
-	Source      IngestionSource      `json:"source"`
-	RuleType    IngestionRuleType    `json:"ruleType"`
-	RuleSubType IngestionRuleSubtype `json:"ruleSubType"`
-	Priority    int                  `json:"priority"`
-	Config      *IngestionRuleConfig `json:"config"`
-}
-
-// IsValid checks if postable rule has all the required params
-func (p *PostableIngestionRule) IsValid() *model.ApiError {
-	if p.Name == "" {
-		return model.BadRequestStr("ingestion rule name is required")
-	}
-	if p.RuleType == "" {
-		return model.BadRequestStr("ingestion rule type is required")
-	}
-
-	if p.RuleSubType == "" {
-		return model.BadRequestStr("ingestion rule subtype is required")
-	}
-
-	if p.Source == "" {
-		return model.BadRequestStr("ingestion source is required")
-	}
-
-	return nil
-}
-
-type Creator struct {
-	CreatedBy string
-	Created   time.Time
-}
-
-type Updater struct {
-	UpdatedBy string
-	Updated   time.Time
-}
-
 // IngestionRule is stored and also deployed finally to collector config
 type IngestionRule struct {
 	Id          string               `json:"id,omitempty" db:"id"`
@@ -99,16 +57,15 @@ type IngestionRule struct {
 
 	Config *IngestionRuleConfig `json:"config"`
 
-	// deployment status maintained by provisioner
-	DeployStatus   DeployStatus `json:"deployStatus,omitempty" db:"deployment_status"`
-	DeploySequence int          `json:"deploySequence,omitempty" db:"deployment_sequence"`
-
-	ErrorMessage string `json:"error_message" db:"error_message"`
 	Creator
 	Updater
 }
 
-func (i *IngestionRule) parseConfig() error {
+func (i *IngestionRule) ID() string {
+	return i.Id
+}
+
+func (i *IngestionRule) ParseRawConfig() error {
 	c := IngestionRuleConfig{}
 	err := json.Unmarshal([]byte(i.RawConfig), &c)
 	if err != nil {
@@ -117,15 +74,6 @@ func (i *IngestionRule) parseConfig() error {
 	i.Config = &c
 	return nil
 }
-
-type DeployStatus string
-
-const (
-	PendingDeploy DeployStatus = "DIRTY"
-	Deploying     DeployStatus = "DEPLOYING"
-	Deployed      DeployStatus = "DEPLOYED"
-	DeployFailed  DeployStatus = "FAILED"
-)
 
 // IngestionRuleConfig identifies a rule configuration that turns into
 // an input for  processor in collector config. An ingestion rule is
