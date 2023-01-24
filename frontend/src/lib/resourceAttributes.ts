@@ -23,25 +23,21 @@ export const convertTraceKeyToMetric = (key: string): string => {
 	return `resource_${splittedKey.join('_')}`;
 };
 
-export const convertOperatorLabelToMetricOperator = (label: string): string => {
-	return (
-		OperatorConversions.find((operator) => operator.label === label)
-			?.metricValue || ''
-	);
-};
+export const convertOperatorLabelToMetricOperator = (label: string): string =>
+	OperatorConversions.find((operator) => operator.label === label)
+		?.metricValue || '';
 
 export const convertOperatorLabelToTraceOperator = (
 	label: string,
-): OperatorValues => {
-	return OperatorConversions.find((operator) => operator.label === label)
+): OperatorValues =>
+	OperatorConversions.find((operator) => operator.label === label)
 		?.traceValue as OperatorValues;
-};
 
 export const convertRawQueriesToTraceSelectedTags = (
 	queries: IResourceAttributeQuery[],
 	keyType: 'string' | 'array' = 'string',
-): Tags[] | TagsAPI[] => {
-	return queries.map((query) => ({
+): Tags[] | TagsAPI[] =>
+	queries.map((query) => ({
 		Key:
 			keyType === 'array'
 				? [convertMetricKeyToTrace(query.tagKey)]
@@ -49,7 +45,6 @@ export const convertRawQueriesToTraceSelectedTags = (
 		Operator: convertOperatorLabelToTraceOperator(query.operator),
 		Values: query.tagValue,
 	}));
-};
 
 /**
  * Converts Resource Attribute Queries to PromQL query string
@@ -74,11 +69,10 @@ export const resourceAttributesQueryToPromQL = (
 /* Convert resource attributes to tagFilter items for queryBuilder */
 export const resourceAttributesToTagFilterItems = (
 	queries: IResourceAttributeQuery[],
-): IQueryBuilderTagFilterItems[] => {
-	return queries.map((res) => ({
+): IQueryBuilderTagFilterItems[] =>
+	queries.map((res) => ({
 		id: `${res.id}`,
 		key: `${res.tagKey}`,
 		op: `${res.operator}`,
 		value: `${res.tagValue}`.split(','),
 	}));
-};

@@ -93,9 +93,7 @@ function TopOperationsTable(props: TopOperationsTableProps): JSX.Element {
 	return (
 		<Table
 			showHeader
-			title={(): string => {
-				return 'Key Operations';
-			}}
+			title={(): string => 'Key Operations'}
 			tableLayout="fixed"
 			dataSource={data}
 			columns={columns}

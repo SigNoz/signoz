@@ -52,9 +52,9 @@ function NoFilterTable({
 
 				return (
 					<>
-						{withOutSeverityKeys.map((e) => {
-							return <Tag key={e} color="magenta">{`${e} : ${labels[e]}`}</Tag>;
-						})}
+						{withOutSeverityKeys.map((e) => (
+							<Tag key={e} color="magenta">{`${e} : ${labels[e]}`}</Tag>
+						))}
 					</>
 				);
 			},

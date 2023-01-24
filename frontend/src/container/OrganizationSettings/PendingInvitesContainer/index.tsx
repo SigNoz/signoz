@@ -63,15 +63,17 @@ function PendingInvitesContainer(): JSX.Element {
 
 	const { hash } = useLocation();
 
-	const getParsedInviteData = useCallback((payload: PayloadProps = []) => {
-		return payload?.map((data) => ({
-			key: data.createdAt,
-			name: data.name,
-			email: data.email,
-			accessLevel: data.role,
-			inviteLink: `${window.location.origin}${ROUTES.SIGN_UP}?token=${data.token}`,
-		}));
-	}, []);
+	const getParsedInviteData = useCallback(
+		(payload: PayloadProps = []) =>
+			payload?.map((data) => ({
+				key: data.createdAt,
+				name: data.name,
+				email: data.email,
+				accessLevel: data.role,
+				inviteLink: `${window.location.origin}${ROUTES.SIGN_UP}?token=${data.token}`,
+			})),
+		[],
+	);
 
 	useEffect(() => {
 		if (hash === INVITE_MEMBERS_HASH) {
