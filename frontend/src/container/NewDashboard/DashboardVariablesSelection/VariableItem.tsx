@@ -1,6 +1,3 @@
-/* eslint-disable sonarjs/cognitive-complexity */
-/* eslint-disable no-useless-escape */
-
 import { orange } from '@ant-design/colors';
 import { WarningOutlined } from '@ant-design/icons';
 import { Input, Popover, Select, Typography } from 'antd';
@@ -12,21 +9,11 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { IDashboardVariable } from 'types/api/dashboard/getAll';
 
 import { VariableContainer, VariableName } from './styles';
+import { areArraysEqual } from './util';
 
 const { Option } = Select;
 
 const ALL_SELECT_VALUE = '__ALL__';
-
-const equalsCheck = (
-	a: string[] | number[],
-	b: string[] | number[],
-): boolean => {
-	if (a.length !== b.length) return false;
-	for (let i = 0; i < a.length; i += 1) {
-		if (a[i] !== b[i]) return false;
-	}
-	return true;
-};
 
 interface VariableItemProps {
 	variableData: IDashboardVariable;
@@ -49,6 +36,8 @@ function VariableItem({
 	const [isLoading, setIsLoading] = useState<boolean>(false);
 
 	const [errorMessage, setErrorMessage] = useState<null | string>(null);
+
+	/* eslint-disable sonarjs/cognitive-complexity */
 	const getOptions = useCallback(async (): Promise<void> => {
 		if (variableData.type === 'QUERY') {
 			try {
@@ -75,16 +64,25 @@ function VariableItem({
 						response.payload?.variableValues,
 						variableData.sort,
 					) as never;
+					// Since there is a chance of a variable being dependent on other
+					// variables, we need to check if the optionsData has changed
+					// If it has changed, we need to update the dependent variable
+					// So we compare the new optionsData with the old optionsData
 					const oldOptionsData = sortValues(optionsData, variableData.sort) as never;
-					if (!equalsCheck(newOptionsData, oldOptionsData)) {
-						// If a variable is dependent on the current variable, update the dependent variable
-						const re = new RegExp(`\\{\\{\\s*?\\.${lastUpdatedVar}\\s*?\\}\\}`);
+					if (!areArraysEqual(newOptionsData, oldOptionsData)) {
+						/* eslint-disable no-useless-escape */
+						const re = new RegExp(`\\{\\{\\s*?\\.${lastUpdatedVar}\\s*?\\}\\}`); // regex for `{{.var}}`
+						// If the variable is dependent on the last updated variable
+						// and contains the last updated variable in its query (of the form `{{.var}}`)
+						// then we need to update the value of the variable
 						if (
 							variableData.type === 'QUERY' &&
 							variableData.queryValue?.match(re)?.length > 0
 						) {
 							let value = variableData.selectedValue;
 							let allSelected = false;
+							// The default value for multi-select is ALL and first value for
+							// single select
 							if (variableData.multiSelect) {
 								value = newOptionsData;
 								allSelected = true;
