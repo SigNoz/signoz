@@ -99,6 +99,7 @@ function AllTags({
 							index={index}
 							onCloseHandler={(): void => onCloseHandler(index)}
 							setLocalSelectedTags={setLocalSelectedTags}
+							localSelectedTags={localSelectedTags}
 						/>
 					))}
 				</CurrentTagsContainer>

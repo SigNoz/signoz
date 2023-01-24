@@ -1,8 +1,6 @@
 import { CloseOutlined } from '@ant-design/icons';
 import { Select } from 'antd';
 import React from 'react';
-import { useSelector } from 'react-redux';
-import { AppState } from 'store/reducers';
 import { TraceReducer } from 'types/reducer/trace';
 
 import { Container, IconContainer, SelectComponent } from './styles';
@@ -30,9 +28,13 @@ const AllMenu: AllMenuProps[] = [
 ];
 
 function SingleTags(props: AllTagsProps): JSX.Element {
-	const traces = useSelector<AppState, TraceReducer>((state) => state.traces);
-
-	const { tag, onCloseHandler, setLocalSelectedTags, index } = props;
+	const {
+		tag,
+		onCloseHandler,
+		setLocalSelectedTags,
+		index,
+		localSelectedTags,
+	} = props;
 	const {
 		Key: selectedKey,
 		Operator: selectedOperator,
@@ -46,13 +48,13 @@ function SingleTags(props: AllTagsProps): JSX.Element {
 	const onChangeOperatorHandler = (key: unknown): void => {
 		if (typeof key === 'string') {
 			setLocalSelectedTags([
-				...traces.selectedTags.slice(0, index),
+				...localSelectedTags.slice(0, index),
 				{
 					Key: selectedKey,
 					Values: selectedValues,
 					Operator: key as Tags,
 				},
-				...traces.selectedTags.slice(index + 1, traces.selectedTags.length),
+				...localSelectedTags.slice(index + 1, localSelectedTags.length),
 			]);
 		}
 	};
@@ -100,6 +102,7 @@ interface AllTagsProps {
 	setLocalSelectedTags: React.Dispatch<
 		React.SetStateAction<TraceReducer['selectedTags']>
 	>;
+	localSelectedTags: TraceReducer['selectedTags'];
 }
 
 export interface Value {
