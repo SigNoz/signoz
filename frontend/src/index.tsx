@@ -32,9 +32,7 @@ if (container) {
 		<ThemeProvider>
 			<QueryClientProvider client={queryClient}>
 				<Provider store={store}>
-					<React.StrictMode>
-						<AppRoutes />
-					</React.StrictMode>
+					<AppRoutes />
 				</Provider>
 				{process.env.NODE_ENV === 'development' && (
 					<ReactQueryDevtools initialIsOpen />
