@@ -1,8 +1,11 @@
-import { IDashboardVariable } from 'types/api/dashboard/getAll';
+export type PayloadVariables = Record<
+	string,
+	undefined | null | string | string[]
+>;
 
 export type Props = {
 	query: string;
-	variables: Record<string, IDashboardVariable>;
+	variables: PayloadVariables;
 };
 
 export type PayloadProps = {

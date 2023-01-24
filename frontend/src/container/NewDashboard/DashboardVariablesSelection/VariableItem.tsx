@@ -8,7 +8,8 @@ import { map } from 'lodash-es';
 import React, { useCallback, useEffect, useState } from 'react';
 import { IDashboardVariable } from 'types/api/dashboard/getAll';
 
-import { VariableContainer, VariableName } from './styles';
+import { variablePropsToPayloadVariables } from '../utils';
+import { SelectItemStyle, VariableContainer, VariableName } from './styles';
 import { areArraysEqual } from './util';
 
 const { Option } = Select;
@@ -46,7 +47,7 @@ function VariableItem({
 
 				const response = await query({
 					query: variableData.queryValue || '',
-					variables: existingVariables,
+					variables: variablePropsToPayloadVariables(existingVariables),
 				});
 
 				setIsLoading(false);
@@ -131,6 +132,13 @@ function VariableItem({
 			onAllSelectedUpdate(variableData.name, false);
 		}
 	};
+
+	const selectValue = variableData.allSelected
+		? 'ALL'
+		: variableData.selectedValue;
+	const mode =
+		variableData.multiSelect && !variableData.allSelected ? 'multiple' : null;
+	const enableSelectAll = variableData.multiSelect && variableData.showALLOption;
 	return (
 		<VariableContainer>
 			<VariableName>${variableData.name}</VariableName>
@@ -149,26 +157,17 @@ function VariableItem({
 			) : (
 				!errorMessage && (
 					<Select
-						value={variableData.allSelected ? 'ALL' : variableData.selectedValue}
+						value={selectValue}
 						onChange={handleChange}
 						bordered={false}
 						placeholder="Select value"
-						mode={
-							(variableData.multiSelect && !variableData.allSelected
-								? 'multiple'
-								: null) as never
-						}
+						mode={mode}
 						dropdownMatchSelectWidth={false}
-						style={{
-							minWidth: 120,
-							fontSize: '0.8rem',
-						}}
+						style={SelectItemStyle}
 						loading={isLoading}
 						showArrow
 					>
-						{variableData.multiSelect && variableData.showALLOption && (
-							<Option value={ALL_SELECT_VALUE}>ALL</Option>
-						)}
+						{enableSelectAll && <Option value={ALL_SELECT_VALUE}>ALL</Option>}
 						{map(optionsData, (option) => {
 							return <Option value={option}>{(option as string).toString()}</Option>;
 						})}

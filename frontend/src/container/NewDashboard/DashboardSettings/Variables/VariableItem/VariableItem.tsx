@@ -25,6 +25,7 @@ import {
 } from 'types/api/dashboard/getAll';
 import { v4 } from 'uuid';
 
+import { variablePropsToPayloadVariables } from '../../../utils';
 import { TVariableViewMode } from '../types';
 import { LabelContainer, VariableItemRow } from './styles';
 
@@ -136,7 +137,7 @@ function VariableItem({
 		try {
 			const variableQueryResponse = await query({
 				query: variableQueryValue,
-				variables: existingVariables,
+				variables: variablePropsToPayloadVariables(existingVariables),
 			});
 			setPreviewLoading(false);
 			if (variableQueryResponse.error) {
