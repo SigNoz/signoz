@@ -49,9 +49,7 @@ export const INTERVAL_UNITS: IIntervalUnit[] = [
 export const resolveTimeFromInterval = (
 	intervalTime: number,
 	intervalUnit: IIntervalUnit,
-): number => {
-	return intervalTime * intervalUnit.multiplier;
-};
+): number => intervalTime * intervalUnit.multiplier;
 
 export const convertTimeToRelevantUnit = (
 	intervalTime: number,
