@@ -100,6 +100,11 @@ function TraceDetail({ response }: TraceDetailProps): JSX.Element {
 		[activeSelectedId, treesData],
 	);
 
+	// const onSearchHandler = (value: string) => {
+	// 	setSearchSpanString(value);
+	// 	setTreeData(spanToTreeUtil(response[0].events));
+	// };
+
 	const onFocusSelectedSpanHandler = (): void => {
 		const treeNode = getNodeById(activeSelectedId, tree);
 

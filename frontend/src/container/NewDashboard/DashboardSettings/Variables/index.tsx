@@ -96,9 +96,7 @@ function VariablesSetting({
 		setDeleteVariableModal(false);
 	};
 
-	const validateVariableName = (name: string): boolean => {
-		return !variables[name];
-	};
+	const validateVariableName = (name: string): boolean => !variables[name];
 
 	const columns = [
 		{

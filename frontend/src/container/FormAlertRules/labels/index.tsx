@@ -119,17 +119,15 @@ function LabelSelect({
 				{queries.length > 0 &&
 					map(
 						queries,
-						(query): JSX.Element => {
-							return (
-								<QueryChip key={query.key} queryData={query} onRemove={handleClose} />
-							);
-						},
+						(query): JSX.Element => (
+							<QueryChip key={query.key} queryData={query} onRemove={handleClose} />
+						),
 					)}
 			</div>
 			<div>
-				{map(staging, (item) => {
-					return <QueryChipItem key={uuid()}>{item}</QueryChipItem>;
-				})}
+				{map(staging, (item) => (
+					<QueryChipItem key={uuid()}>{item}</QueryChipItem>
+				))}
 			</div>
 
 			<div style={{ display: 'flex', width: '100%' }}>

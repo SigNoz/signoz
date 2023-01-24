@@ -101,41 +101,35 @@ function GridCardGraph({
 		onToggleModal(setDeleteModal);
 	}, [deleteWidget, layout, onToggleModal, setLayout, widget]);
 
-	const getModals = (): JSX.Element => {
-		return (
-			<>
-				<Modal
-					destroyOnClose
-					onCancel={(): void => onToggleModal(setDeleteModal)}
-					open={deleteModal}
-					title="Delete"
-					height="10vh"
-					onOk={onDeleteHandler}
-					centered
-				>
-					<Typography>Are you sure you want to delete this widget</Typography>
-				</Modal>
+	const getModals = (): JSX.Element => (
+		<>
+			<Modal
+				destroyOnClose
+				onCancel={(): void => onToggleModal(setDeleteModal)}
+				open={deleteModal}
+				title="Delete"
+				height="10vh"
+				onOk={onDeleteHandler}
+				centered
+			>
+				<Typography>Are you sure you want to delete this widget</Typography>
+			</Modal>
 
-				<Modal
-					title="View"
-					footer={[]}
-					centered
-					open={modal}
-					onCancel={(): void => onToggleModal(setModal)}
-					width="85%"
-					destroyOnClose
-				>
-					<FullViewContainer>
-						<FullView
-							name={`${name}expanded`}
-							widget={widget}
-							yAxisUnit={yAxisUnit}
-						/>
-					</FullViewContainer>
-				</Modal>
-			</>
-		);
-	};
+			<Modal
+				title="View"
+				footer={[]}
+				centered
+				open={modal}
+				onCancel={(): void => onToggleModal(setModal)}
+				width="85%"
+				destroyOnClose
+			>
+				<FullViewContainer>
+					<FullView name={`${name}expanded`} widget={widget} yAxisUnit={yAxisUnit} />
+				</FullViewContainer>
+			</Modal>
+		</>
+	);
 
 	const handleOnView = (): void => {
 		onToggleModal(setModal);
