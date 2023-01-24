@@ -58,17 +58,19 @@ function FullView({
 			}),
 	);
 
-	const chartDataSet = React.useMemo(() => {
-		return getChartData({
-			queryData: [
-				{
-					queryData: response?.data?.payload?.data?.result
-						? response?.data?.payload?.data?.result
-						: [],
-				},
-			],
-		});
-	}, [response]);
+	const chartDataSet = React.useMemo(
+		() =>
+			getChartData({
+				queryData: [
+					{
+						queryData: response?.data?.payload?.data?.result
+							? response?.data?.payload?.data?.result
+							: [],
+					},
+				],
+			}),
+		[response],
+	);
 
 	const isLoading = response.isLoading === true;
 

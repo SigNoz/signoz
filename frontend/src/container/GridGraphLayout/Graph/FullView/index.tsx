@@ -115,15 +115,17 @@ function FullView({
 		})),
 	);
 
-	const chartDataSet = React.useMemo(() => {
-		return getChartData({
-			queryData: data.map((e) => ({
-				query: e?.map((e) => e.query).join(' ') || '',
-				queryData: e?.map((e) => e.queryData) || [],
-				legend: e?.map((e) => e.legend).join('') || '',
-			})),
-		});
-	}, [data]);
+	const chartDataSet = React.useMemo(
+		() =>
+			getChartData({
+				queryData: data.map((e) => ({
+					query: e?.map((e) => e.query).join(' ') || '',
+					queryData: e?.map((e) => e.queryData) || [],
+					legend: e?.map((e) => e.legend).join('') || '',
+				})),
+			}),
+		[data],
+	);
 
 	if (isLoading) {
 		return <Spinner height="100%" size="large" tip="Loading..." />;
