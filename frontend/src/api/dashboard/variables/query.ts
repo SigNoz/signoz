@@ -1,4 +1,4 @@
-import axios from 'api';
+import { ApiV2Instance as axios } from 'api';
 import { ErrorResponseHandler } from 'api/ErrorResponseHandler';
 import { AxiosError } from 'axios';
 import { ErrorResponse, SuccessResponse } from 'types/api';
@@ -8,9 +8,7 @@ const query = async (
 	props: Props,
 ): Promise<SuccessResponse<PayloadProps> | ErrorResponse> => {
 	try {
-		const response = await axios.get(
-			`/variables/query?query=${encodeURIComponent(props.query)}`,
-		);
+		const response = await axios.post(`/variables/query`, props);
 
 		return {
 			statusCode: 200,
