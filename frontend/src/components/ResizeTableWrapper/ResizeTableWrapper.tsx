@@ -1,5 +1,4 @@
 import { ColumnsType } from 'antd/lib/table';
-import { NumberSize } from 're-resizable';
 import { Direction } from 're-resizable/lib/resizer';
 import React, { useState } from 'react';
 
@@ -11,7 +10,6 @@ function ResizeTableWrapper(props: ResizeTableWrapperProps): JSX.Element {
 		_event: MouseEvent | TouchEvent,
 		_direction: Direction,
 		elementRef: HTMLElement,
-		_delta: NumberSize,
 	): void => {
 		const newColumns = [...columnsData];
 		newColumns[index] = {

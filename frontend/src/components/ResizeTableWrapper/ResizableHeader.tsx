@@ -12,23 +12,11 @@ function ResizableHeader(props: ResizableHeaderProps): JSX.Element {
 
 	return (
 		<Resizable
-			style={{
-				display: 'flex',
-				flexDirection: 'row',
-				alignItems: 'center',
-				justifyContent: 'center',
-				borderRight: 'solid 1px #ddd',
-			}}
-			size={{ width, height: 60 }}
+			size={{ width, height: '100%' }}
+			as="th"
 			enable={{
-				top: false,
 				right: true,
-				bottom: false,
 				left: false,
-				topRight: false,
-				bottomRight: false,
-				bottomLeft: false,
-				topLeft: false,
 			}}
 			onResize={onResize}
 		>
