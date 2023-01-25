@@ -193,7 +193,7 @@ function GridCardGraph({
 		);
 	}
 
-	if (prevChartDataSetRef.current?.labels === undefined) {
+	if (prevChartDataSetRef.current?.labels === undefined && queryResponse.isLoading) {
 		return (
 			<span>
 				{!isEmpty(widget) && prevChartDataSetRef.current?.labels ? (
