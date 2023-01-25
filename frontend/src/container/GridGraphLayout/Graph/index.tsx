@@ -21,6 +21,7 @@ import { GlobalTime } from 'types/actions/globalTime';
 import { ErrorResponse, SuccessResponse } from 'types/api';
 import { Widgets } from 'types/api/dashboard/getAll';
 import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
+import DashboardReducer from 'types/reducer/dashboards';
 import { GlobalReducer } from 'types/reducer/globalTime';
 
 import { LayoutProps } from '..';
@@ -49,13 +50,25 @@ function GridCardGraph({
 		AppState,
 		GlobalReducer
 	>((state) => state.globalTime);
+	const { dashboards } = useSelector<AppState, DashboardReducer>(
+		(state) => state.dashboards,
+	);
+	const [selectedDashboard] = dashboards;
+	const selectedData = selectedDashboard?.data;
+	const { variables } = selectedData;
 
 	const response = useQuery<
 		SuccessResponse<MetricRangePayloadProps> | ErrorResponse
 	>(
 		[
 			`GetMetricsQueryRange-${widget.timePreferance}-${globalSelectedInterval}-${widget.id}`,
-			{ widget, maxTime, minTime, globalSelectedInterval },
+			{
+				widget,
+				maxTime,
+				minTime,
+				globalSelectedInterval,
+				variables,
+			},
 		],
 		() =>
 			GetMetricQueryRange({
@@ -101,41 +114,35 @@ function GridCardGraph({
 		onToggleModal(setDeleteModal);
 	}, [deleteWidget, layout, onToggleModal, setLayout, widget]);
 
-	const getModals = (): JSX.Element => {
-		return (
-			<>
-				<Modal
-					destroyOnClose
-					onCancel={(): void => onToggleModal(setDeleteModal)}
-					open={deleteModal}
-					title="Delete"
-					height="10vh"
-					onOk={onDeleteHandler}
-					centered
-				>
-					<Typography>Are you sure you want to delete this widget</Typography>
-				</Modal>
+	const getModals = (): JSX.Element => (
+		<>
+			<Modal
+				destroyOnClose
+				onCancel={(): void => onToggleModal(setDeleteModal)}
+				open={deleteModal}
+				title="Delete"
+				height="10vh"
+				onOk={onDeleteHandler}
+				centered
+			>
+				<Typography>Are you sure you want to delete this widget</Typography>
+			</Modal>
 
-				<Modal
-					title="View"
-					footer={[]}
-					centered
-					open={modal}
-					onCancel={(): void => onToggleModal(setModal)}
-					width="85%"
-					destroyOnClose
-				>
-					<FullViewContainer>
-						<FullView
-							name={`${name}expanded`}
-							widget={widget}
-							yAxisUnit={yAxisUnit}
-						/>
-					</FullViewContainer>
-				</Modal>
-			</>
-		);
-	};
+			<Modal
+				title="View"
+				footer={[]}
+				centered
+				open={modal}
+				onCancel={(): void => onToggleModal(setModal)}
+				width="85%"
+				destroyOnClose
+			>
+				<FullViewContainer>
+					<FullView name={`${name}expanded`} widget={widget} yAxisUnit={yAxisUnit} />
+				</FullViewContainer>
+			</Modal>
+		</>
+	);
 
 	const handleOnView = (): void => {
 		onToggleModal(setModal);

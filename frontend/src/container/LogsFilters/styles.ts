@@ -26,8 +26,7 @@ export const Field = styled.div<{ isDarkMode: boolean }>`
 	justify-content: space-between;
 	align-items: center;
 	&:hover {
-		background: ${({ isDarkMode }): string =>
-			isDarkMode ? grey[7] : themeColors.lightgrey};
+		background: ${({ isDarkMode }): string => (isDarkMode ? grey[7] : '#ddd')};
 	}
 `;
 

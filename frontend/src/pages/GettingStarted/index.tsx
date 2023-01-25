@@ -11,9 +11,9 @@ function InstrumentationPage(): JSX.Element {
 				Congrats, you have successfully installed SigNoz! Now lets get some data in
 				and start deriving insights from them
 			</Typography>
-			{GetStartedContent().map((section) => {
-				return <DocSection key={section.heading} sectionData={section} />;
-			})}
+			{GetStartedContent().map((section) => (
+				<DocSection key={section.heading} sectionData={section} />
+			))}
 		</>
 	);
 }
