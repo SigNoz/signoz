@@ -102,9 +102,7 @@ function TopOperationsTable(props: TopOperationsTableProps): JSX.Element {
 		<ResizeTableWrapper columns={columns}>
 			<Table
 				showHeader
-				title={(): string => {
-					return 'Key Operations';
-				}}
+				title={(): string => 'Key Operations'}
 				tableLayout="fixed"
 				dataSource={data}
 				components={{ header: { cell: ResizableHeader } }}
