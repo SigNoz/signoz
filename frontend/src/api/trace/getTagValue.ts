@@ -11,9 +11,11 @@ const getTagValue = async (
 		const response = await axios.post<PayloadProps>(`/getTagValues`, {
 			start: props.start.toString(),
 			end: props.end.toString(),
-			tagKey: props.tagKey,
+			tagKey: {
+				Key: props.tagKey.Key,
+				Type: props.tagKey.Type,
+			},
 		});
-
 		return {
 			statusCode: 200,
 			error: null,
