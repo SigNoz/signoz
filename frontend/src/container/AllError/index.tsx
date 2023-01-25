@@ -184,36 +184,34 @@ function AllErrors(): JSX.Element {
 			confirm,
 			placeholder,
 			filterKey,
-		}: FilterDropdownExtendsProps) => {
-			return (
-				<Card size="small">
-					<Space align="start" direction="vertical">
-						<Input
-							placeholder={placeholder}
-							value={selectedKeys[0]}
-							onChange={(e): void =>
-								setSelectedKeys(e.target.value ? [e.target.value] : [])
-							}
-							allowClear
-							defaultValue={getDefaultFilterValue(
-								filterKey,
-								getUpdatedServiceName,
-								getUpdatedExceptionType,
-							)}
-							onPressEnter={handleSearch(confirm, String(selectedKeys[0]), filterKey)}
-						/>
-						<Button
-							type="primary"
-							onClick={handleSearch(confirm, String(selectedKeys[0]), filterKey)}
-							icon={<SearchOutlined />}
-							size="small"
-						>
-							Search
-						</Button>
-					</Space>
-				</Card>
-			);
-		},
+		}: FilterDropdownExtendsProps) => (
+			<Card size="small">
+				<Space align="start" direction="vertical">
+					<Input
+						placeholder={placeholder}
+						value={selectedKeys[0]}
+						onChange={(e): void =>
+							setSelectedKeys(e.target.value ? [e.target.value] : [])
+						}
+						allowClear
+						defaultValue={getDefaultFilterValue(
+							filterKey,
+							getUpdatedServiceName,
+							getUpdatedExceptionType,
+						)}
+						onPressEnter={handleSearch(confirm, String(selectedKeys[0]), filterKey)}
+					/>
+					<Button
+						type="primary"
+						onClick={handleSearch(confirm, String(selectedKeys[0]), filterKey)}
+						icon={<SearchOutlined />}
+						size="small"
+					>
+						Search
+					</Button>
+				</Space>
+			</Card>
+		),
 		[getUpdatedExceptionType, getUpdatedServiceName, handleSearch],
 	);
 
