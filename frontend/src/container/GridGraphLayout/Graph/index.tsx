@@ -21,6 +21,7 @@ import { GlobalTime } from 'types/actions/globalTime';
 import { ErrorResponse, SuccessResponse } from 'types/api';
 import { Widgets } from 'types/api/dashboard/getAll';
 import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
+import DashboardReducer from 'types/reducer/dashboards';
 import { GlobalReducer } from 'types/reducer/globalTime';
 
 import { LayoutProps } from '..';
@@ -49,13 +50,25 @@ function GridCardGraph({
 		AppState,
 		GlobalReducer
 	>((state) => state.globalTime);
+	const { dashboards } = useSelector<AppState, DashboardReducer>(
+		(state) => state.dashboards,
+	);
+	const [selectedDashboard] = dashboards;
+	const selectedData = selectedDashboard?.data;
+	const { variables } = selectedData;
 
 	const response = useQuery<
 		SuccessResponse<MetricRangePayloadProps> | ErrorResponse
 	>(
 		[
 			`GetMetricsQueryRange-${widget.timePreferance}-${globalSelectedInterval}-${widget.id}`,
-			{ widget, maxTime, minTime, globalSelectedInterval },
+			{
+				widget,
+				maxTime,
+				minTime,
+				globalSelectedInterval,
+				variables,
+			},
 		],
 		() =>
 			GetMetricQueryRange({
