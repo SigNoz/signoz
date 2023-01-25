@@ -30,13 +30,11 @@ function TableView({ logData }: TableViewProps): JSX.Element | null {
 		flattenLogData !== null &&
 		Object.keys(flattenLogData)
 			.filter((field) => fieldSearchFilter(field, fieldSearchInput))
-			.map((key) => {
-				return {
-					key,
-					field: key,
-					value: JSON.stringify(flattenLogData[key]),
-				};
-			});
+			.map((key) => ({
+				key,
+				field: key,
+				value: JSON.stringify(flattenLogData[key]),
+			}));
 
 	if (!dataSource) {
 		return null;
@@ -45,7 +43,7 @@ function TableView({ logData }: TableViewProps): JSX.Element | null {
 	const columns = [
 		{
 			title: 'Action',
-			width: 75,
+			width: 100,
 			render: (fieldData: Record<string, string>): JSX.Element | null => {
 				const fieldKey = fieldData.field.split('.').slice(-1);
 				if (!RESTRICTED_FIELDS.includes(fieldKey[0])) {

@@ -12,7 +12,9 @@ const getSpans = async (
 		const updatedSelectedTags = props.selectedTags.map((e) => ({
 			Key: e.Key[0],
 			Operator: e.Operator,
-			Values: e.Values,
+			StringValues: e.StringValues,
+			NumberValues: e.NumberValues,
+			BoolValues: e.BoolValues,
 		}));
 
 		const exclude: string[] = [];

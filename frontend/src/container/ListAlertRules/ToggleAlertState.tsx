@@ -40,8 +40,8 @@ function ToggleAlertState({
 			});
 
 			if (response.statusCode === 200) {
-				setData((state) => {
-					return state.map((alert) => {
+				setData((state) =>
+					state.map((alert) => {
 						if (alert.id === id) {
 							return {
 								...alert,
@@ -50,8 +50,8 @@ function ToggleAlertState({
 							};
 						}
 						return alert;
-					});
-				});
+					}),
+				);
 
 				setAPIStatus((state) => ({
 					...state,

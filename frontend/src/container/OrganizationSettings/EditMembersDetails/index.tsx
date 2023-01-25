@@ -26,9 +26,8 @@ function EditMembersDetails({
 	const [isLoading, setIsLoading] = useState<boolean>(false);
 	const [state, copyToClipboard] = useCopyToClipboard();
 
-	const getPasswordLink = (token: string): string => {
-		return `${window.location.origin}${ROUTES.PASSWORD_RESET}?token=${token}`;
-	};
+	const getPasswordLink = (token: string): string =>
+		`${window.location.origin}${ROUTES.PASSWORD_RESET}?token=${token}`;
 
 	const onChangeHandler = useCallback(
 		(setFunc: React.Dispatch<React.SetStateAction<string>>, value: string) => {
@@ -51,9 +50,12 @@ function EditMembersDetails({
 		}
 	}, [state.error, state.value, t]);
 
-	const onPasswordChangeHandler = useCallback((event) => {
-		setPasswordLink(event.target.value);
-	}, []);
+	const onPasswordChangeHandler: React.ChangeEventHandler<HTMLInputElement> = useCallback(
+		(event) => {
+			setPasswordLink(event.target.value);
+		},
+		[],
+	);
 
 	const onGeneratePasswordHandler = async (): Promise<void> => {
 		try {

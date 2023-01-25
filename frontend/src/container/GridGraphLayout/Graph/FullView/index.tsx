@@ -15,7 +15,7 @@ import GetMaxMinTime from 'lib/getMaxMinTime';
 import GetMinMax from 'lib/getMinMax';
 import getStartAndEndTime from 'lib/getStartAndEndTime';
 import getStep from 'lib/getStep';
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import { useQueries } from 'react-query';
 import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
@@ -30,6 +30,7 @@ function FullView({
 	onClickHandler,
 	name,
 	yAxisUnit,
+	onDragSelect,
 }: FullViewProps): JSX.Element {
 	const { minTime, maxTime, selectedTime: globalSelectedTime } = useSelector<
 		AppState,
@@ -80,25 +81,22 @@ function FullView({
 	const queryLength = widget.query.filter((e) => e.query.length !== 0);
 
 	const response = useQueries(
-		queryLength.map((query) => {
-			return {
-				// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
-				queryFn: () => {
-					return getQueryResult({
-						end: queryMinMax.max.toString(),
-						query: query.query,
-						start: queryMinMax.min.toString(),
-						step: `${getStep({
-							start: queryMinMax.min,
-							end: queryMinMax.max,
-							inputFormat: 's',
-						})}`,
-					});
-				},
-				queryHash: `${query.query}-${query.legend}-${selectedTime.enum}`,
-				retryOnMount: false,
-			};
-		}),
+		queryLength.map((query) => ({
+			// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
+			queryFn: () =>
+				getQueryResult({
+					end: queryMinMax.max.toString(),
+					query: query.query,
+					start: queryMinMax.min.toString(),
+					step: `${getStep({
+						start: queryMinMax.min,
+						end: queryMinMax.max,
+						inputFormat: 's',
+					})}`,
+				}),
+			queryHash: `${query.query}-${query.legend}-${selectedTime.enum}`,
+			retryOnMount: false,
+		})),
 	);
 
 	const isError =
@@ -115,6 +113,18 @@ function FullView({
 			queryData: e,
 			legend: queryLength[index]?.legend,
 		})),
+	);
+
+	const chartDataSet = useMemo(
+		() =>
+			getChartData({
+				queryData: data.map((e) => ({
+					query: e?.map((e) => e.query).join(' ') || '',
+					queryData: e?.map((e) => e.queryData) || [],
+					legend: e?.map((e) => e.legend).join('') || '',
+				})),
+			}),
+		[data],
 	);
 
 	if (isLoading) {
@@ -151,22 +161,15 @@ function FullView({
 			)}
 
 			<GridGraphComponent
-				{...{
-					GRAPH_TYPES: widget.panelTypes,
-					data: getChartData({
-						queryData: data.map((e) => ({
-							query: e?.map((e) => e.query).join(' ') || '',
-							queryData: e?.map((e) => e.queryData) || [],
-							legend: e?.map((e) => e.legend).join('') || '',
-						})),
-					}),
-					isStacked: widget.isStacked,
-					opacity: widget.opacity,
-					title: widget.title,
-					onClickHandler,
-					name,
-					yAxisUnit,
-				}}
+				GRAPH_TYPES={widget.panelTypes}
+				data={chartDataSet}
+				isStacked={widget.isStacked}
+				opacity={widget.opacity}
+				title={widget.title}
+				onClickHandler={onClickHandler}
+				name={name}
+				yAxisUnit={yAxisUnit}
+				onDragSelect={onDragSelect}
 			/>
 		</>
 	);
@@ -178,12 +181,14 @@ interface FullViewProps {
 	onClickHandler?: GraphOnClickHandler;
 	name: string;
 	yAxisUnit?: string;
+	onDragSelect?: (start: number, end: number) => void;
 }
 
 FullView.defaultProps = {
 	fullViewOptions: undefined,
 	onClickHandler: undefined,
 	yAxisUnit: undefined,
+	onDragSelect: undefined,
 };
 
 export default FullView;

@@ -1,5 +1,9 @@
-import { Avatar, Switch, Typography } from 'antd';
+import { Avatar, Layout, Switch, Typography } from 'antd';
 import styled from 'styled-components';
+
+export const Header = styled(Layout.Header)`
+	background: #1f1f1f !important;
+`;
 
 export const Container = styled.div`
 	display: flex;
