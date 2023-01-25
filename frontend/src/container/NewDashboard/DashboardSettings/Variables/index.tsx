@@ -147,6 +147,7 @@ function VariablesSetting({
 			{variableViewMode ? (
 				<VariableItem
 					variableData={{ ...variableEditData } as IDashboardVariable}
+					existingVariables={variables}
 					onSave={onVariableSaveHandler}
 					onCancel={onDoneVariableViewMode}
 					validateName={validateVariableName}

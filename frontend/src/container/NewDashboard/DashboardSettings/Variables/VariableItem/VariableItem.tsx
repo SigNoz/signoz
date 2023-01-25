@@ -25,6 +25,7 @@ import {
 } from 'types/api/dashboard/getAll';
 import { v4 } from 'uuid';
 
+import { variablePropsToPayloadVariables } from '../../../utils';
 import { TVariableViewMode } from '../types';
 import { LabelContainer, VariableItemRow } from './styles';
 
@@ -32,6 +33,7 @@ const { Option } = Select;
 
 interface VariableItemProps {
 	variableData: IDashboardVariable;
+	existingVariables: Record<string, IDashboardVariable>;
 	onCancel: () => void;
 	onSave: (name: string, arg0: IDashboardVariable, arg1: string) => void;
 	validateName: (arg0: string) => boolean;
@@ -39,6 +41,7 @@ interface VariableItemProps {
 }
 function VariableItem({
 	variableData,
+	existingVariables,
 	onCancel,
 	onSave,
 	validateName,
@@ -134,10 +137,16 @@ function VariableItem({
 		try {
 			const variableQueryResponse = await query({
 				query: variableQueryValue,
+				variables: variablePropsToPayloadVariables(existingVariables),
 			});
 			setPreviewLoading(false);
 			if (variableQueryResponse.error) {
-				setErrorPreview(variableQueryResponse.error);
+				let message = variableQueryResponse.error;
+				if (variableQueryResponse.error.includes('Syntax error:')) {
+					message =
+						'Please make sure query is valid and dependent variables are selected';
+				}
+				setErrorPreview(message);
 				return;
 			}
 			if (variableQueryResponse.payload?.variableValues)
