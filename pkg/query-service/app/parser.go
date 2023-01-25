@@ -7,6 +7,7 @@ import (
 	"math"
 	"net/http"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/gorilla/mux"
@@ -314,7 +315,11 @@ func parseFilteredSpansRequest(r *http.Request, aH *APIHandler) (*model.GetFilte
 			return nil, model.ErrFeatureUnavailable{Key: constants.TimestampSort}
 		}
 	}
-
+	tags, err := extractTagKeys(postData.Tags)
+	if err != nil {
+		return nil, err
+	}
+	postData.Tags = tags
 	return postData, nil
 }
 
@@ -387,15 +392,40 @@ func parseFilteredSpanAggregatesRequest(r *http.Request) (*model.GetFilteredSpan
 
 	postData.AggregationOption = aggregationOption
 	postData.Dimension = dimension
-	// tags, err := parseTagsV2("tags", r)
-	// if err != nil {
-	// 	return nil, err
-	// }
-	// if len(*tags) != 0 {
-	// 	params.Tags = *tags
-	// }
+	tags, err := extractTagKeys(postData.Tags)
+	if err != nil {
+		return nil, err
+	}
+	postData.Tags = tags
 
 	return postData, nil
+}
+
+func extractTagKeys(tags []model.TagQueryParam) ([]model.TagQueryParam, error) {
+	newTags := make([]model.TagQueryParam, 0)
+	if len(tags) != 0 {
+		for _, tag := range tags {
+			customStr := strings.Split(tag.Key, ".(")
+			if len(customStr) < 2 {
+				return nil, fmt.Errorf("TagKey param is not valid in query")
+			} else {
+				tag.Key = customStr[0]
+			}
+			if tag.Operator == model.ExistsOperator || tag.Operator == model.NotExistsOperator {
+				if customStr[1] == string(model.TagTypeString) + ")" {
+					tag.StringValues = []string{" "}
+				} else if customStr[1] ==string(model.TagTypeBool) + ")" {
+					tag.BoolValues = []bool{true}
+				} else if customStr[1] == string(model.TagTypeNumber) + ")" {
+					tag.NumberValues = []float64{0}
+				} else {
+					return nil, fmt.Errorf("TagKey param is not valid in query")
+				}
+			}
+			newTags = append(newTags, tag)
+		}
+	}
+	return newTags, nil
 }
 
 func parseTagFilterRequest(r *http.Request) (*model.TagFilterParams, error) {
@@ -426,8 +456,16 @@ func parseTagValueRequest(r *http.Request) (*model.TagFilterParams, error) {
 	if err != nil {
 		return nil, err
 	}
-	if postData.TagKey == "" {
-		return nil, fmt.Errorf("%s param missing in query", postData.TagKey)
+	if postData.TagKey == (model.TagKey{}) {
+		return nil, fmt.Errorf("TagKey param missing in query")
+	}
+
+	if postData.TagKey.Type != model.TagTypeString && postData.TagKey.Type != model.TagTypeBool && postData.TagKey.Type != model.TagTypeNumber {
+		return nil, fmt.Errorf("tag keys type %s is not supported", postData.TagKey.Type)
+	}
+
+	if postData.Limit == 0 {
+		postData.Limit = 100
 	}
 
 	postData.Start, err = parseTimeStr(postData.StartStr, "start")
