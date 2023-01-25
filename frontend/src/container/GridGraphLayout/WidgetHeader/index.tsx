@@ -2,17 +2,23 @@ import {
 	DeleteOutlined,
 	DownOutlined,
 	EditFilled,
+	ExclamationCircleOutlined,
 	FullscreenOutlined,
 } from '@ant-design/icons';
-import { Dropdown, Menu, Typography } from 'antd';
+import { Dropdown, Menu, Tooltip, Typography } from 'antd';
+import Spinner from 'components/Spinner';
 import useComponentPermission from 'hooks/useComponentPermission';
 import history from 'lib/history';
 import React, { useState } from 'react';
+import { UseQueryResult } from 'react-query';
 import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
+import { ErrorResponse, SuccessResponse } from 'types/api';
 import { Widgets } from 'types/api/dashboard/getAll';
+import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
 import AppReducer from 'types/reducer/app';
 
+import { errorTooltipPosition, spinnerStyles, tooltipStyles } from './config';
 import {
 	ArrowContainer,
 	HeaderContainer,
@@ -27,6 +33,10 @@ interface IWidgetHeaderProps {
 	onView: VoidFunction;
 	onDelete: VoidFunction;
 	parentHover: boolean;
+	queryResponse: UseQueryResult<
+		SuccessResponse<MetricRangePayloadProps> | ErrorResponse
+	>;
+	errorMessage: string | undefined;
 }
 function WidgetHeader({
 	title,
@@ -34,6 +44,8 @@ function WidgetHeader({
 	onView,
 	onDelete,
 	parentHover,
+	queryResponse,
+	errorMessage,
 }: IWidgetHeaderProps): JSX.Element {
 	const [localHover, setLocalHover] = useState(false);
 
@@ -106,20 +118,30 @@ function WidgetHeader({
 			overlayStyle={{ minWidth: 100 }}
 			placement="bottom"
 		>
-			<HeaderContainer
-				onMouseOver={(): void => setLocalHover(true)}
-				onMouseOut={(): void => setLocalHover(false)}
-				hover={localHover}
-			>
-				<HeaderContentContainer onClick={(e): void => e.preventDefault()}>
-					<Typography.Text style={{ maxWidth: '80%' }} ellipsis>
-						{title}
-					</Typography.Text>
-					<ArrowContainer hover={parentHover}>
-						<DownOutlined />
-					</ArrowContainer>
-				</HeaderContentContainer>
-			</HeaderContainer>
+			<>
+				<HeaderContainer
+					onMouseOver={(): void => setLocalHover(true)}
+					onMouseOut={(): void => setLocalHover(false)}
+					hover={localHover}
+				>
+					<HeaderContentContainer onClick={(e): void => e.preventDefault()}>
+						<Typography.Text style={{ maxWidth: '80%' }} ellipsis>
+							{title}
+						</Typography.Text>
+						<ArrowContainer hover={parentHover}>
+							<DownOutlined />
+						</ArrowContainer>
+					</HeaderContentContainer>
+				</HeaderContainer>
+				{queryResponse.isFetching && !queryResponse.isError && (
+					<Spinner height="5vh" style={spinnerStyles} />
+				)}
+				{queryResponse.isError && (
+					<Tooltip title={errorMessage} placement={errorTooltipPosition}>
+						<ExclamationCircleOutlined style={tooltipStyles} />
+					</Tooltip>
+				)}
+			</>
 		</Dropdown>
 	);
 }

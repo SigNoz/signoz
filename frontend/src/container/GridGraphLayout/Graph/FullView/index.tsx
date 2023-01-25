@@ -15,7 +15,7 @@ import GetMaxMinTime from 'lib/getMaxMinTime';
 import GetMinMax from 'lib/getMinMax';
 import getStartAndEndTime from 'lib/getStartAndEndTime';
 import getStep from 'lib/getStep';
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import { useQueries } from 'react-query';
 import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
@@ -115,6 +115,18 @@ function FullView({
 		})),
 	);
 
+	const chartDataSet = useMemo(
+		() =>
+			getChartData({
+				queryData: data.map((e) => ({
+					query: e?.map((e) => e.query).join(' ') || '',
+					queryData: e?.map((e) => e.queryData) || [],
+					legend: e?.map((e) => e.legend).join('') || '',
+				})),
+			}),
+		[data],
+	);
+
 	if (isLoading) {
 		return <Spinner height="100%" size="large" tip="Loading..." />;
 	}
@@ -149,23 +161,15 @@ function FullView({
 			)}
 
 			<GridGraphComponent
-				{...{
-					GRAPH_TYPES: widget.panelTypes,
-					data: getChartData({
-						queryData: data.map((e) => ({
-							query: e?.map((e) => e.query).join(' ') || '',
-							queryData: e?.map((e) => e.queryData) || [],
-							legend: e?.map((e) => e.legend).join('') || '',
-						})),
-					}),
-					isStacked: widget.isStacked,
-					opacity: widget.opacity,
-					title: widget.title,
-					onClickHandler,
-					name,
-					yAxisUnit,
-					onDragSelect,
-				}}
+				GRAPH_TYPES={widget.panelTypes}
+				data={chartDataSet}
+				isStacked={widget.isStacked}
+				opacity={widget.opacity}
+				title={widget.title}
+				onClickHandler={onClickHandler}
+				name={name}
+				yAxisUnit={yAxisUnit}
+				onDragSelect={onDragSelect}
 			/>
 		</>
 	);
