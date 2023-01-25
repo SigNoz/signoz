@@ -21,7 +21,13 @@ interface VariableItemProps {
 	existingVariables: Record<string, IDashboardVariable>;
 	onValueUpdate: (
 		name: string | undefined,
-		arg1: string | string[] | null | undefined,
+		arg1:
+			| string
+			| number
+			| boolean
+			| (string | number | boolean)[]
+			| null
+			| undefined,
 	) => void;
 	onAllSelectedUpdate: (name: string | undefined, arg1: boolean) => void;
 	lastUpdatedVar: string;
@@ -33,7 +39,9 @@ function VariableItem({
 	onAllSelectedUpdate,
 	lastUpdatedVar,
 }: VariableItemProps): JSX.Element {
-	const [optionsData, setOptionsData] = useState([]);
+	const [optionsData, setOptionsData] = useState<(string | number | boolean)[]>(
+		[],
+	);
 	const [isLoading, setIsLoading] = useState<boolean>(false);
 
 	const [errorMessage, setErrorMessage] = useState<null | string>(null);
@@ -64,7 +72,7 @@ function VariableItem({
 					const newOptionsData = sortValues(
 						response.payload?.variableValues,
 						variableData.sort,
-					) as never;
+					);
 					// Since there is a chance of a variable being dependent on other
 					// variables, we need to check if the optionsData has changed
 					// If it has changed, we need to update the dependent variable
@@ -76,9 +84,12 @@ function VariableItem({
 						// If the variable is dependent on the last updated variable
 						// and contains the last updated variable in its query (of the form `{{.var}}`)
 						// then we need to update the value of the variable
+						const queryValue = variableData.queryValue || '';
+						const dependVarReMatch = queryValue.match(re);
 						if (
 							variableData.type === 'QUERY' &&
-							variableData.queryValue?.match(re)?.length > 0
+							dependVarReMatch !== null &&
+							dependVarReMatch.length > 0
 						) {
 							let value = variableData.selectedValue;
 							let allSelected = false;
@@ -135,9 +146,11 @@ function VariableItem({
 
 	const selectValue = variableData.allSelected
 		? 'ALL'
-		: variableData.selectedValue;
+		: variableData.selectedValue?.toString() || '';
 	const mode =
-		variableData.multiSelect && !variableData.allSelected ? 'multiple' : null;
+		variableData.multiSelect && !variableData.allSelected
+			? 'multiple'
+			: undefined;
 	const enableSelectAll = variableData.multiSelect && variableData.showALLOption;
 	return (
 		<VariableContainer>
@@ -151,7 +164,8 @@ function VariableItem({
 						handleChange(e.target.value || '');
 					}}
 					style={{
-						width: 50 + ((variableData.selectedValue?.length || 0) * 7 || 50),
+						width:
+							50 + ((variableData.selectedValue?.toString()?.length || 0) * 7 || 50),
 					}}
 				/>
 			) : (

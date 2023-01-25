@@ -33,7 +33,15 @@ function DashboardVariableSelection({
 
 	const onValueUpdate = (
 		name: string,
-		value: IDashboardVariable['selectedValue'],
+		value:
+			| string
+			| string[]
+			| number
+			| number[]
+			| boolean
+			| boolean[]
+			| null
+			| undefined,
 	): void => {
 		const updatedVariablesData = { ...variables };
 		updatedVariablesData[name].selectedValue = value;

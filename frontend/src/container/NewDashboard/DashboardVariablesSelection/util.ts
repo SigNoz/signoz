@@ -1,6 +1,6 @@
 export function areArraysEqual(
-	a: (string | number)[],
-	b: (string | number)[],
+	a: (string | number | boolean)[],
+	b: (string | number | boolean)[],
 ): boolean {
 	if (a.length !== b.length) {
 		return false;
