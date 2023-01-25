@@ -1,6 +1,6 @@
 import RouteTab from 'components/RouteTab';
 import ROUTES from 'constants/routes';
-import React from 'react';
+import React, { memo } from 'react';
 import { generatePath, useParams } from 'react-router-dom';
 import { useLocation } from 'react-use';
 
@@ -85,4 +85,4 @@ function ServiceMetrics(): JSX.Element {
 	);
 }
 
-export default React.memo(ServiceMetrics);
+export default memo(ServiceMetrics);

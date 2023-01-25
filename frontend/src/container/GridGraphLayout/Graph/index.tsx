@@ -1,4 +1,5 @@
 import { Typography } from 'antd';
+import { ChartData } from 'chart.js';
 import Spinner from 'components/Spinner';
 import GridGraphComponent from 'container/GridGraphComponent';
 import usePreviousValue from 'hooks/usePreviousValue';
@@ -19,9 +20,7 @@ import { GetMetricQueryRange } from 'store/actions/dashboard/getQueryResults';
 import { AppState } from 'store/reducers';
 import AppActions from 'types/actions';
 import { GlobalTime } from 'types/actions/globalTime';
-import { ErrorResponse, SuccessResponse } from 'types/api';
 import { Widgets } from 'types/api/dashboard/getAll';
-import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
 import DashboardReducer from 'types/reducer/dashboards';
 import { GlobalReducer } from 'types/reducer/globalTime';
 
@@ -59,9 +58,7 @@ function GridCardGraph({
 	const selectedData = selectedDashboard?.data;
 	const { variables } = selectedData;
 
-	const queryResponse = useQuery<
-		SuccessResponse<MetricRangePayloadProps> | ErrorResponse
-	>(
+	const queryResponse = useQuery(
 		[
 			`GetMetricsQueryRange-${widget.timePreferance}-${globalSelectedInterval}-${widget.id}`,
 			{
@@ -95,18 +92,14 @@ function GridCardGraph({
 			getChartData({
 				queryData: [
 					{
-						queryData: queryResponse?.data?.payload?.data?.result
-							? queryResponse?.data?.payload?.data?.result
-							: [],
+						queryData: queryResponse?.data?.payload?.data?.result || [],
 					},
 				],
 			}),
 		[queryResponse],
 	);
 
-	const prevChartDataSetRef = React.useMemo(() => usePreviousValue(chartData), [
-		chartData,
-	]);
+	const prevChartDataSetRef = usePreviousValue<ChartData>(chartData);
 
 	const onToggleModal = useCallback(
 		(func: React.Dispatch<React.SetStateAction<boolean>>) => {
