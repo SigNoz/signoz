@@ -13,7 +13,6 @@ import { ThunkDispatch } from 'redux-thunk';
 import { GlobalTimeLoading, UpdateTimeInterval } from 'store/actions';
 import { AppState } from 'store/reducers';
 import AppActions from 'types/actions';
-import DashboardReducer from 'types/reducer/dashboards';
 import { GlobalReducer } from 'types/reducer/globalTime';
 
 import AutoRefresh from '../AutoRefresh';
@@ -71,12 +70,6 @@ function DateTimeSelection({
 		AppState,
 		GlobalReducer
 	>((state) => state.globalTime);
-
-	const { dashboards } = useSelector<AppState, DashboardReducer>(
-		(state) => state.dashboards,
-	);
-	const [selectedDashboard] = dashboards;
-	const selectedData = selectedDashboard?.data;
 
 	const getInputLabel = (
 		startTime?: Dayjs,
@@ -246,7 +239,6 @@ function DateTimeSelection({
 		searchStartTime,
 		updateTimeInterval,
 		globalTimeLoading,
-		selectedData?.variables,
 	]);
 
 	return (
