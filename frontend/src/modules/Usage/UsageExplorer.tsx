@@ -1,7 +1,7 @@
 /* eslint-disable */
 //@ts-nocheck
 
-import { Select, Space } from 'antd';
+import { Select, Space, Typography } from 'antd';
 import Graph from 'components/Graph';
 import React, { useEffect, useState } from 'react';
 import { connect, useSelector } from 'react-redux';
@@ -84,7 +84,7 @@ function _UsageExplorer(props: UsageExplorerProps): JSX.Element {
 		if (selectedTime && selectedInterval) {
 			const maxTime = new Date().getTime() * 1000000;
 			const minTime = maxTime - selectedTime.value * 24 * 3600000 * 1000000;
-			
+
 			getUsageData(minTime, maxTime, selectedInterval.value, selectedService);
 		}
 	}, [selectedTime, selectedInterval, selectedService, getUsageData]);
@@ -184,7 +184,7 @@ function _UsageExplorer(props: UsageExplorerProps): JSX.Element {
 					</Space>
 				) : (
 					<Space style={{ display: 'block', marginLeft: 20, width: 200 }}>
-						{`Total count is ${totalCount}`}
+						<Typography>{`Total count is ${totalCount}`}</Typography>
 					</Space>
 				)}
 			</Space>
