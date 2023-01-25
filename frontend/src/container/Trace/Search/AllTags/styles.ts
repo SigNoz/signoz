@@ -4,7 +4,7 @@ import styled from 'styled-components';
 export const Container = styled(Card)`
 	min-height: 20vh;
 	width: 100%;
-	min-width: 81.5vw;
+	min-width: 87vw;
 `;
 
 export const ErrorContainer = styled(Card)`

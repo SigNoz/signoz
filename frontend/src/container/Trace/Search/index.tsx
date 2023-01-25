@@ -13,6 +13,7 @@ import { UPDATE_ALL_FILTERS } from 'types/actions/trace';
 import { TraceReducer } from 'types/reducer/trace';
 
 import Tags from './AllTags';
+import { contentStyle } from './config';
 import { Container, SearchComponent } from './styles';
 import { parseQueryToTags, parseTagsToQuery } from './util';
 
@@ -90,6 +91,8 @@ function Search({
 				open={traces.isTagModalOpen}
 				trigger="click"
 				onOpenChange={setIsTagsModalHandler}
+				showArrow={false}
+				overlayInnerStyle={contentStyle}
 				content={
 					<Tags updateFilters={updateFilters} onChangeHandler={onChangeHandler} />
 				}
