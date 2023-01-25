@@ -31,10 +31,16 @@ export interface IDashboardVariable {
 	sort: TSortVariableValuesType;
 	multiSelect: boolean;
 	showALLOption: boolean;
-	selectedValue?: null | string | string[];
+	selectedValue?:
+		| null
+		| string
+		| number
+		| boolean
+		| (string | number | boolean)[];
 	// Internal use
 	modificationUUID?: string;
 	allSelected?: boolean;
+	change?: boolean;
 }
 export interface Dashboard {
 	id: number;

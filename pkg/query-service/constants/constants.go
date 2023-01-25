@@ -109,6 +109,24 @@ const (
 	DefaultLogSkipIndexType        = "bloom_filter(0.01)"
 	DefaultLogSkipIndexGranularity = 64
 )
+
+var GroupByColMap = map[string]struct{}{
+	ServiceName:        {},
+	HttpHost:           {},
+	HttpRoute:          {},
+	HttpUrl:            {},
+	HttpMethod:         {},
+	Component:          {},
+	OperationDB:        {},
+	DBName:             {},
+	DBOperation:        {},
+	DBSystem:           {},
+	MsgOperation:       {},
+	MsgSystem:          {},
+	RPCMethod:          {},
+	ResponseStatusCode: {},
+}
+
 const (
 	SIGNOZ_METRIC_DBNAME        = "signoz_metrics"
 	SIGNOZ_SAMPLES_TABLENAME    = "distributed_samples_v2"
@@ -195,3 +213,9 @@ const (
 // written clickhouse query. The column alias indcate which value is
 // to be considered as final result (or target)
 var ReservedColumnTargetAliases = map[string]bool{"result": true, "res": true, "value": true}
+
+const (
+	StringTagMapCol = "stringTagMap"
+	NumberTagMapCol = "numberTagMap"
+	BoolTagMapCol   = "boolTagMap"
+)
