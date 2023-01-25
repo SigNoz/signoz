@@ -1,7 +1,7 @@
 import { Typography } from 'antd';
-import { ChartData } from 'chart.js';
 import Spinner from 'components/Spinner';
 import GridGraphComponent from 'container/GridGraphComponent';
+import usePreviousValue from 'hooks/usePreviousValue';
 import { getDashboardVariables } from 'lib/dashbaordVariables/getDashboardVariables';
 import getChartData from 'lib/getChartData';
 import isEmpty from 'lodash-es/isEmpty';
@@ -40,7 +40,6 @@ function GridCardGraph({
 	setLayout,
 	onDragSelect,
 }: GridCardGraphProps): JSX.Element {
-	const prevChartDataSetRef = React.useRef<ChartData | null>(null);
 	const [errorMessage, setErrorMessage] = useState<string | undefined>('');
 	const [hovered, setHovered] = useState(false);
 	const [modal, setModal] = useState(false);
@@ -91,19 +90,23 @@ function GridCardGraph({
 		},
 	);
 
-	const chartData = useMemo(() => {
-		const data = getChartData({
-			queryData: [
-				{
-					queryData: queryResponse?.data?.payload?.data?.result
-						? queryResponse?.data?.payload?.data?.result
-						: [],
-				},
-			],
-		});
-		prevChartDataSetRef.current = data;
-		return data;
-	}, [queryResponse]);
+	const chartData = useMemo(
+		() =>
+			getChartData({
+				queryData: [
+					{
+						queryData: queryResponse?.data?.payload?.data?.result
+							? queryResponse?.data?.payload?.data?.result
+							: [],
+					},
+				],
+			}),
+		[queryResponse],
+	);
+
+	const prevChartDataSetRef = React.useMemo(() => usePreviousValue(chartData), [
+		chartData,
+	]);
 
 	const onToggleModal = useCallback(
 		(func: React.Dispatch<React.SetStateAction<boolean>>) => {
@@ -165,7 +168,7 @@ function GridCardGraph({
 		return (
 			<span>
 				{getModals()}
-				{!isEmpty(widget) && prevChartDataSetRef.current && (
+				{!isEmpty(widget) && prevChartDataSetRef && (
 					<>
 						<div className="drag-handle">
 							<WidgetHeader
@@ -180,7 +183,7 @@ function GridCardGraph({
 						</div>
 						<GridGraphComponent
 							GRAPH_TYPES={widget.panelTypes}
-							data={prevChartDataSetRef.current}
+							data={prevChartDataSetRef}
 							isStacked={widget.isStacked}
 							opacity={widget.opacity}
 							title={' '}
@@ -193,10 +196,10 @@ function GridCardGraph({
 		);
 	}
 
-	if (prevChartDataSetRef.current?.labels === undefined && queryResponse.isLoading) {
+	if (prevChartDataSetRef?.labels === undefined && queryResponse.isLoading) {
 		return (
 			<span>
-				{!isEmpty(widget) && prevChartDataSetRef.current?.labels ? (
+				{!isEmpty(widget) && prevChartDataSetRef?.labels ? (
 					<>
 						<div className="drag-handle">
 							<WidgetHeader
@@ -211,7 +214,7 @@ function GridCardGraph({
 						</div>
 						<GridGraphComponent
 							GRAPH_TYPES={widget.panelTypes}
-							data={prevChartDataSetRef.current}
+							data={prevChartDataSetRef}
 							isStacked={widget.isStacked}
 							opacity={widget.opacity}
 							title={' '}
