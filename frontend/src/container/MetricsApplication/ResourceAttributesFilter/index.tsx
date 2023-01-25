@@ -164,24 +164,20 @@ function ResourceAttributesFilter(): JSX.Element | null {
 			>
 				{map(
 					queries,
-					(query): JSX.Element => {
-						return (
-							<QueryChip
-								disabled={disabled}
-								key={query.id}
-								queryData={query}
-								onClose={handleClose}
-							/>
-						);
-					},
+					(query): JSX.Element => (
+						<QueryChip
+							disabled={disabled}
+							key={query.id}
+							queryData={query}
+							onClose={handleClose}
+						/>
+					),
 				)}
-				{map(staging, (item, idx) => {
-					return (
-						<QueryChipItem key={uuid()}>
-							{idx === 0 ? convertMetricKeyToTrace(item) : item}
-						</QueryChipItem>
-					);
-				})}
+				{map(staging, (item, idx) => (
+					<QueryChipItem key={uuid()}>
+						{idx === 0 ? convertMetricKeyToTrace(item) : item}
+					</QueryChipItem>
+				))}
 			</div>
 			{!disabled && (
 				<Select
