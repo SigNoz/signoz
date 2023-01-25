@@ -171,16 +171,18 @@ function _UsageExplorer(props: UsageExplorerProps): JSX.Element {
 							justifyContent: 'center',
 						}}
 					>
-						No spans found. Please add instrumentation (follow this
-						<a
-							href="https://signoz.io/docs/instrumentation/overview"
-							target="_blank"
-							style={{ marginLeft: 3 }}
-							rel="noreferrer"
-						>
-							guide
-						</a>
-						)
+						<Typography>
+							No spans found. Please add instrumentation (follow this
+							<a
+								href="https://signoz.io/docs/instrumentation/overview"
+								target="_blank"
+								style={{ marginLeft: 3 }}
+								rel="noreferrer"
+							>
+								guide
+							</a>
+							)
+						</Typography>
 					</Space>
 				) : (
 					<Space style={{ display: 'block', marginLeft: 20, width: 200 }}>
