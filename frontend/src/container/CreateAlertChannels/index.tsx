@@ -78,16 +78,17 @@ function CreateAlertChannels({
 		[type, selectedConfig],
 	);
 
-	const prepareSlackRequest = useCallback(() => {
-		return {
+	const prepareSlackRequest = useCallback(
+		() => ({
 			api_url: selectedConfig?.api_url || '',
 			channel: selectedConfig?.channel || '',
 			name: selectedConfig?.name || '',
 			send_resolved: true,
 			text: selectedConfig?.text || '',
 			title: selectedConfig?.title || '',
-		};
-	}, [selectedConfig]);
+		}),
+		[selectedConfig],
+	);
 
 	const onSlackHandler = useCallback(async () => {
 		setSavingState(true);

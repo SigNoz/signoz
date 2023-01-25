@@ -8,11 +8,11 @@ export const OperatorConversions: Array<{
 	{
 		label: 'IN',
 		metricValue: '=~',
-		traceValue: 'in',
+		traceValue: 'In',
 	},
 	{
 		label: 'Not IN',
 		metricValue: '!~',
-		traceValue: 'not in',
+		traceValue: 'NotIn',
 	},
 ];

@@ -41,8 +41,10 @@ function AllTags({
 			...tags,
 			{
 				Key: [],
-				Operator: 'in',
-				Values: [],
+				Operator: 'Equals',
+				StringValues: [],
+				NumberValues: [],
+				BoolValues: [],
 			},
 		]);
 	};
@@ -99,6 +101,7 @@ function AllTags({
 							index={index}
 							onCloseHandler={(): void => onCloseHandler(index)}
 							setLocalSelectedTags={setLocalSelectedTags}
+							localSelectedTags={localSelectedTags}
 						/>
 					))}
 				</CurrentTagsContainer>
@@ -109,7 +112,7 @@ function AllTags({
 					</Button>
 
 					<Text ellipsis>
-						Results will include spans with ALL the specified tags ( Rows are `anded`
+						Results will include spans with ALL the specified tags ( Rows are `ANDed`
 						)
 					</Text>
 				</Space>
