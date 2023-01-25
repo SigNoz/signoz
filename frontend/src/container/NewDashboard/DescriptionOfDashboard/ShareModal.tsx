@@ -68,7 +68,6 @@ function ShareModal({
 						type="primary"
 						onClick={(): void => {
 							downloadObjectAsJson(selectedDataCleaned, selectedData.title);
-							console.log(selectedDataCleaned, 'SDC');
 						}}
 					>
 						{t('download_json')}
