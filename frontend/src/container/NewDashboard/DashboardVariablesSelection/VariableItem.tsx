@@ -134,7 +134,8 @@ function VariableItem({
 	const handleChange = (value: string | string[]): void => {
 		if (
 			value === ALL_SELECT_VALUE ||
-			(Array.isArray(value) && value.includes(ALL_SELECT_VALUE))
+			(Array.isArray(value) && value.includes(ALL_SELECT_VALUE)) ||
+			(Array.isArray(value) && value.length === 0)
 		) {
 			onValueUpdate(variableData.name, optionsData);
 			onAllSelectedUpdate(variableData.name, true);
