@@ -9,7 +9,7 @@ import {
 } from 'container/NewWidget/RightContainer/timeItems';
 import { getDashboardVariables } from 'lib/dashbaordVariables/getDashboardVariables';
 import getChartData from 'lib/getChartData';
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import { useQuery } from 'react-query';
 import { useSelector } from 'react-redux';
 import { GetMetricQueryRange } from 'store/actions/dashboard/getQueryResults';
@@ -58,14 +58,12 @@ function FullView({
 			}),
 	);
 
-	const chartDataSet = React.useMemo(
+	const chartDataSet = useMemo(
 		() =>
 			getChartData({
 				queryData: [
 					{
-						queryData: response?.data?.payload?.data?.result
-							? response?.data?.payload?.data?.result
-							: [],
+						queryData: response?.data?.payload?.data?.result || [],
 					},
 				],
 			}),
