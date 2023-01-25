@@ -15,7 +15,7 @@ import GetMaxMinTime from 'lib/getMaxMinTime';
 import GetMinMax from 'lib/getMinMax';
 import getStartAndEndTime from 'lib/getStartAndEndTime';
 import getStep from 'lib/getStep';
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import { useQueries } from 'react-query';
 import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
@@ -115,7 +115,7 @@ function FullView({
 		})),
 	);
 
-	const chartDataSet = React.useMemo(
+	const chartDataSet = useMemo(
 		() =>
 			getChartData({
 				queryData: data.map((e) => ({

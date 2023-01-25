@@ -80,9 +80,10 @@ function GridCardGraph({
 		{
 			keepPreviousData: true,
 			refetchOnMount: false,
-			// eslint-disable-next-line @typescript-eslint/no-explicit-any
-			onError: (error: any) => {
-				setErrorMessage(error.message);
+			onError: (error) => {
+				if (error instanceof Error) {
+					setErrorMessage(error.message);
+				}
 			},
 		},
 	);
