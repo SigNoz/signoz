@@ -182,9 +182,9 @@ function VariableItem({
 						showArrow
 					>
 						{enableSelectAll && <Option value={ALL_SELECT_VALUE}>ALL</Option>}
-						{map(optionsData, (option) => {
-							return <Option value={option}>{option.toString()}</Option>;
-						})}
+						{map(optionsData, (option) => (
+							<Option value={option}>{option.toString()}</Option>
+						))}
 					</Select>
 				)
 			)}

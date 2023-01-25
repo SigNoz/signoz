@@ -154,17 +154,15 @@ function MetricTagKeyFilter({
 				{queries.length > 0 &&
 					map(
 						queries,
-						(query): JSX.Element => {
-							return (
-								<QueryChip key={query.id} queryData={query} onClose={handleClose} />
-							);
-						},
+						(query): JSX.Element => (
+							<QueryChip key={query.id} queryData={query} onClose={handleClose} />
+						),
 					)}
 			</div>
 			<div>
-				{map(staging, (item) => {
-					return <QueryChipItem key={uuid()}>{item}</QueryChipItem>;
-				})}
+				{map(staging, (item) => (
+					<QueryChipItem key={uuid()}>{item}</QueryChipItem>
+				))}
 			</div>
 
 			<div style={{ display: 'flex', width: '100%' }}>
