@@ -43,7 +43,9 @@ export const convertRawQueriesToTraceSelectedTags = (
 				? [convertMetricKeyToTrace(query.tagKey)]
 				: (convertMetricKeyToTrace(query.tagKey) as never),
 		Operator: convertOperatorLabelToTraceOperator(query.operator),
-		Values: query.tagValue,
+		StringValues: query.tagValue,
+		NumberValues: [],
+		BoolValues: [],
 	}));
 
 /**
