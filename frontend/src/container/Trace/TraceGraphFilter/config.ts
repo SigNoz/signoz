@@ -1,70 +1,72 @@
+import { DefaultOptionType } from 'antd/es/select';
+
 interface Dropdown {
 	key: string;
 	displayValue: string;
 	yAxisUnit?: string;
 }
 
-export const groupBy: Dropdown[] = [
+export const groupBy: DefaultOptionType[] = [
 	{
-		key: '',
-		displayValue: 'None',
+		label: 'None',
+		value: '',
 	},
 	{
-		key: 'serviceName',
-		displayValue: 'Service Name',
+		label: 'Service Name',
+		value: 'serviceName',
 	},
 
 	{
-		displayValue: 'Operation',
-		key: 'operation',
+		label: 'Operation',
+		value: 'name',
 	},
 	{
-		displayValue: 'HTTP url',
-		key: 'httpUrl',
+		label: 'HTTP URL',
+		value: 'httpUrl',
 	},
 	{
-		displayValue: 'HTTP method',
-		key: 'httpMethod',
+		label: 'HTTP Method',
+		value: 'httpMethod',
 	},
 	{
-		displayValue: 'HTTP host',
-		key: 'httpHost',
+		label: 'HTTP Host',
+		value: 'httpHost',
 	},
 	{
-		displayValue: 'HTTP route',
-		key: 'httpRoute',
+		label: 'HTTP Route',
+		value: 'httpRoute',
 	},
 	{
-		displayValue: 'HTTP status code',
-		key: 'httpCode',
+		label: 'RPC Method',
+		value: 'rpcMethod',
 	},
 	{
-		displayValue: 'RPC Method',
-		key: 'rpcMethod',
+		label: 'Status Code',
+		value: 'responseStatusCode',
 	},
 	{
-		displayValue: 'Status Code',
-		key: 'responseStatusCode',
+		label: 'Database Name',
+		value: 'dbName',
 	},
 	{
-		displayValue: 'Database name',
-		key: 'dbName',
+		label: 'Database System',
+		value: 'dbSystem',
 	},
 	{
-		displayValue: 'Database operation',
-		key: 'dbSystem',
+		label: 'Database Operation',
+		value: 'dbOperation',
 	},
 	{
-		displayValue: 'Messaging System',
-		key: 'msgSystem',
+		label: 'Messaging System',
+		value: 'msgSystem',
 	},
 	{
-		displayValue: 'Messaging Operation',
-		key: 'msgOperation',
+		label: 'Messaging Operation',
+		value: 'msgOperation',
 	},
 	{
-		displayValue: 'Component',
-		key: 'component',
+		label: 'Component',
+		value: 'component',
 	},
 ];
 
