@@ -47,6 +47,11 @@ function SearchFields({
 		}
 	}, [parsedQuery]);
 
+	const updateFieldsQuery = (updated: QueryFields[][]): void => {
+		setFieldsQuery(updated);
+		keyPrefixRef.current = hashCode(JSON.stringify(updated));
+	};
+
 	const addSuggestedField = useCallback(
 		(name: string): void => {
 			if (!name) {
@@ -97,7 +102,7 @@ function SearchFields({
 				keyPrefix={keyPrefixRef.current}
 				onDropDownToggleHandler={onDropDownToggleHandler}
 				fieldsQuery={fieldsQuery}
-				setFieldsQuery={setFieldsQuery}
+				setFieldsQuery={updateFieldsQuery}
 			/>
 			<SearchFieldsActionBar
 				applyUpdate={applyUpdate}
