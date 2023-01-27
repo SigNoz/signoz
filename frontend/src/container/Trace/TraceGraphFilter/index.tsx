@@ -1,17 +1,21 @@
-import { Space } from 'antd';
-import React from 'react';
-import { useDispatch, useSelector } from 'react-redux';
-import { Dispatch } from 'redux';
+import { AutoComplete, Input, Space } from 'antd';
+import getTagFilters from 'api/trace/getTagFilter';
+import React, { useMemo } from 'react';
+import { useQuery } from 'react-query';
+import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
-import AppActions from 'types/actions';
-import {
-	UPDATE_SELECTED_FUNCTION,
-	UPDATE_SELECTED_GROUP_BY,
-} from 'types/actions/trace';
+import { GlobalReducer } from 'types/reducer/globalTime';
 import { TraceReducer } from 'types/reducer/trace';
 
-import { functions, groupBy } from './config';
+import { functions } from './config';
 import { SelectComponent } from './styles';
+import {
+	getSelectedValue,
+	initOptions,
+	onClickSelectedFunctionHandler,
+	onClickSelectedGroupByHandler,
+	selectedGroupByValue,
+} from './utils';
 
 const { Option } = SelectComponent;
 
@@ -20,36 +24,32 @@ function TraceGraphFilter(): JSX.Element {
 		AppState,
 		TraceReducer
 	>((state) => state.traces);
-	const dispatch = useDispatch<Dispatch<AppActions>>();
+	const globalTime = useSelector<AppState, GlobalReducer>(
+		(state) => state.globalTime,
+	);
+	const traces = useSelector<AppState, TraceReducer>((state) => state.traces);
 
-	const onClickSelectedFunctionHandler = (ev: unknown): void => {
-		if (typeof ev === 'string') {
-			const selected = functions.find((e) => e.key === ev);
-			if (selected) {
-				dispatch({
-					type: UPDATE_SELECTED_FUNCTION,
-					payload: {
-						selectedFunction: selected.key,
-						yAxisUnit: selected.yAxisUnit,
-					},
-				});
-			}
-		}
-	};
+	const { isLoading, data } = useQuery(
+		[
+			'getTagKeys',
+			globalTime.minTime,
+			globalTime.maxTime,
+			traces.selectedFilter,
+			traces.isFilterExclude,
+		],
+		{
+			queryFn: () =>
+				getTagFilters({
+					start: globalTime.minTime,
+					end: globalTime.maxTime,
+					other: Object.fromEntries(traces.selectedFilter),
+					isFilterExclude: traces.isFilterExclude,
+				}),
+			cacheTime: 120000,
+		},
+	);
 
-	const onClickSelectedGroupByHandler = (ev: unknown): void => {
-		if (typeof ev === 'string') {
-			const selected = groupBy.find((e) => e.key === ev);
-			if (selected) {
-				dispatch({
-					type: UPDATE_SELECTED_GROUP_BY,
-					payload: {
-						selectedGroupBy: selected.key,
-					},
-				});
-			}
-		}
-	};
+	const options = useMemo(() => initOptions(data?.payload), [data?.payload]);
 
 	return (
 		<Space>
@@ -59,7 +59,7 @@ function TraceGraphFilter(): JSX.Element {
 				dropdownMatchSelectWidth
 				data-testid="selectedFunction"
 				id="selectedFunction"
-				value={functions.find((e) => selectedFunction === e.key)?.displayValue}
+				value={getSelectedValue(selectedFunction)}
 				onChange={onClickSelectedFunctionHandler}
 			>
 				{functions.map((value) => (
@@ -70,21 +70,16 @@ function TraceGraphFilter(): JSX.Element {
 			</SelectComponent>
 
 			<label htmlFor="selectedGroupBy">Group By</label>
-			<SelectComponent
+			<AutoComplete
 				dropdownMatchSelectWidth
 				id="selectedGroupBy"
 				data-testid="selectedGroupBy"
-				value={groupBy.find((e) => selectedGroupBy === e.key)?.displayValue}
-				onChange={onClickSelectedGroupByHandler}
+				options={options}
+				value={selectedGroupByValue(selectedGroupBy, options)}
+				onChange={onClickSelectedGroupByHandler(options)}
 			>
-				{groupBy.map(
-					(value): JSX.Element => (
-						<Option value={value.key} key={value.key}>
-							{value.displayValue}
-						</Option>
-					),
-				)}
-			</SelectComponent>
+				<Input disabled={isLoading} placeholder="Please select" />
+			</AutoComplete>
 		</Space>
 	);
 }

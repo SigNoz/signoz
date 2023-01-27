@@ -6,18 +6,16 @@ import React from 'react';
 function TextToolTip({ text, url }: TextToolTipProps): JSX.Element {
 	return (
 		<Tooltip
-			overlay={(): JSX.Element => {
-				return (
-					<div>
-						{`${text} `}
-						{url && (
-							<a href={url} rel="noopener noreferrer" target="_blank">
-								here
-							</a>
-						)}
-					</div>
-				);
-			}}
+			overlay={(): JSX.Element => (
+				<div>
+					{`${text} `}
+					{url && (
+						<a href={url} rel="noopener noreferrer" target="_blank">
+							here
+						</a>
+					)}
+				</div>
+			)}
 		>
 			<QuestionCircleFilled style={{ fontSize: '1.3125rem' }} />
 		</Tooltip>

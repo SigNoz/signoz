@@ -6,29 +6,29 @@ import { Props } from 'types/api/logs/getLogs';
 
 export const getLogs = (
 	props: Props,
-): ((dispatch: Dispatch<AppActions>) => void) => {
-	return async (dispatch): Promise<void> => {
+): ((dispatch: Dispatch<AppActions>) => void) => async (
+	dispatch,
+): Promise<void> => {
+	dispatch({
+		type: SET_LOADING,
+		payload: true,
+	});
+
+	const response = await GetLogs(props);
+
+	if (response.payload)
 		dispatch({
-			type: SET_LOADING,
-			payload: true,
+			type: SET_LOGS,
+			payload: response.payload,
+		});
+	else
+		dispatch({
+			type: SET_LOGS,
+			payload: [],
 		});
 
-		const response = await GetLogs(props);
-
-		if (response.payload)
-			dispatch({
-				type: SET_LOGS,
-				payload: response.payload,
-			});
-		else
-			dispatch({
-				type: SET_LOGS,
-				payload: [],
-			});
-
-		dispatch({
-			type: SET_LOADING,
-			payload: false,
-		});
-	};
+	dispatch({
+		type: SET_LOADING,
+		payload: false,
+	});
 };

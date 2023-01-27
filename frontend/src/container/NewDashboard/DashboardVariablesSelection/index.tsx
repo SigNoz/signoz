@@ -1,6 +1,6 @@
 import { Row } from 'antd';
 import { map, sortBy } from 'lodash-es';
-import React from 'react';
+import React, { useState } from 'react';
 import { connect, useSelector } from 'react-redux';
 import { bindActionCreators, Dispatch } from 'redux';
 import { ThunkDispatch } from 'redux-thunk';
@@ -23,13 +23,30 @@ function DashboardVariableSelection({
 		data: { variables = {} },
 	} = selectedDashboard;
 
+	const [update, setUpdate] = useState<boolean>(false);
+	const [lastUpdatedVar, setLastUpdatedVar] = useState<string>('');
+
+	const onVarChanged = (name: string): void => {
+		setLastUpdatedVar(name);
+		setUpdate(!update);
+	};
+
 	const onValueUpdate = (
 		name: string,
-		value: IDashboardVariable['selectedValue'],
+		value:
+			| string
+			| string[]
+			| number
+			| number[]
+			| boolean
+			| boolean[]
+			| null
+			| undefined,
 	): void => {
 		const updatedVariablesData = { ...variables };
 		updatedVariablesData[name].selectedValue = value;
 		updateDashboardVariables(updatedVariablesData);
+		onVarChanged(name);
 	};
 	const onAllSelectedUpdate = (
 		name: string,
@@ -38,6 +55,7 @@ function DashboardVariableSelection({
 		const updatedVariablesData = { ...variables };
 		updatedVariablesData[name].allSelected = value;
 		updateDashboardVariables(updatedVariablesData);
+		onVarChanged(name);
 	};
 
 	return (
@@ -45,9 +63,15 @@ function DashboardVariableSelection({
 			{map(sortBy(Object.keys(variables)), (variableName) => (
 				<VariableItem
 					key={`${variableName}${variables[variableName].modificationUUID}`}
-					variableData={{ name: variableName, ...variables[variableName] }}
+					existingVariables={variables}
+					variableData={{
+						name: variableName,
+						...variables[variableName],
+						change: update,
+					}}
 					onValueUpdate={onValueUpdate as never}
 					onAllSelectedUpdate={onAllSelectedUpdate as never}
+					lastUpdatedVar={lastUpdatedVar}
 				/>
 			))}
 		</Row>
