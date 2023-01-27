@@ -82,6 +82,7 @@
 		"react-use": "^17.3.2",
 		"react-virtuoso": "4.0.3",
 		"react-vis": "^1.11.7",
+		"react-visibility-sensor": "^5.1.1",
 		"redux": "^4.0.5",
 		"redux-thunk": "^2.3.0",
 		"stream": "^0.0.2",
