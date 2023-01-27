@@ -1,0 +1,16 @@
+receivers:
+  otlp:
+    protocols:
+      grpc:
+      http:
+exporters:
+  jaeger:
+    endpoint: "http://localhost:14250"
+  otlp:
+    endpoint: "http://localhost:4317"
+service:
+  pipelines:
+    traces:
+      receivers: [otlp]
+      processors: []
+      exporters: [jaeger, otlp]

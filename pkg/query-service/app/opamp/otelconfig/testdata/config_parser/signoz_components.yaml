@@ -1,0 +1,25 @@
+receivers:
+  otlp:
+    protocols:
+      grpc:
+      http:
+processors:
+  signozspanmetrics/name:
+    metrics_exporter: prometheus
+    latency_histogram_buckets: [100us, 1ms, 2ms, 6ms, 10ms, 50ms, 100ms, 250ms, 500ms, 1000ms, 1400ms, 2000ms, 5s, 10s, 20s, 40s, 60s ]
+    dimensions_cache_size: 100000
+exporters:
+  jaeger:
+    endpoint: "http://localhost:14250"
+  otlp:
+    endpoint: "http://localhost:4317"
+service:
+  pipelines:
+    traces:
+      receivers: [otlp]
+      processors: []
+      exporters: [jaeger, otlp]
+    traces/1:
+      receivers: [jaeger, otlp]
+      processors: [signozspanmetrics/prometheus, batch]
+      exporters: [clickhousetraces]
