@@ -1473,9 +1473,11 @@ func String(length int) string {
 }
 
 func buildQueryWithTagParams(ctx context.Context, tags []model.TagQuery) (string, []interface{}, *model.ApiError) {
-	subQuery := ""
+	query := ""
 	var args []interface{}
 	for _, item := range tags {
+		var subQuery string
+		var argsSubQuery []interface{}
 		tagMapType := ""
 		switch item.(type) {
 		case model.TagQueryString:
@@ -1490,38 +1492,40 @@ func buildQueryWithTagParams(ctx context.Context, tags []model.TagQuery) (string
 		}
 		switch item.GetOperator() {
 		case model.EqualOperator:
-			subQuery, args = addArithmeticOperator(item, tagMapType, "=")
+			subQuery, argsSubQuery = addArithmeticOperator(item, tagMapType, "=")
 		case model.NotEqualOperator:
-			subQuery, args = addArithmeticOperator(item, tagMapType, "!=")
+			subQuery, argsSubQuery = addArithmeticOperator(item, tagMapType, "!=")
 		case model.LessThanOperator:
-			subQuery, args = addArithmeticOperator(item, tagMapType, "<")
+			subQuery, argsSubQuery = addArithmeticOperator(item, tagMapType, "<")
 		case model.GreaterThanOperator:
-			subQuery, args = addArithmeticOperator(item, tagMapType, ">")
+			subQuery, argsSubQuery = addArithmeticOperator(item, tagMapType, ">")
 		case model.InOperator:
-			subQuery, args = addInOperator(item, tagMapType, false)
+			subQuery, argsSubQuery = addInOperator(item, tagMapType, false)
 		case model.NotInOperator:
-			subQuery, args = addInOperator(item, tagMapType, true)
+			subQuery, argsSubQuery = addInOperator(item, tagMapType, true)
 		case model.LessThanEqualOperator:
-			subQuery, args = addArithmeticOperator(item, tagMapType, "<=")
+			subQuery, argsSubQuery = addArithmeticOperator(item, tagMapType, "<=")
 		case model.GreaterThanEqualOperator:
-			subQuery, args = addArithmeticOperator(item, tagMapType, ">=")
+			subQuery, argsSubQuery = addArithmeticOperator(item, tagMapType, ">=")
 		case model.ContainsOperator:
-			subQuery, args = addContainsOperator(item, tagMapType, false)
+			subQuery, argsSubQuery = addContainsOperator(item, tagMapType, false)
 		case model.NotContainsOperator:
-			subQuery, args = addContainsOperator(item, tagMapType, true)
+			subQuery, argsSubQuery = addContainsOperator(item, tagMapType, true)
 		case model.StartsWithOperator:
-			subQuery, args = addStartsWithOperator(item, tagMapType, false)
+			subQuery, argsSubQuery = addStartsWithOperator(item, tagMapType, false)
 		case model.NotStartsWithOperator:
-			subQuery, args = addStartsWithOperator(item, tagMapType, true)
+			subQuery, argsSubQuery = addStartsWithOperator(item, tagMapType, true)
 		case model.ExistsOperator:
-			subQuery, args = addExistsOperator(item, tagMapType, false)
+			subQuery, argsSubQuery = addExistsOperator(item, tagMapType, false)
 		case model.NotExistsOperator:
-			subQuery, args = addExistsOperator(item, tagMapType, true)
+			subQuery, argsSubQuery = addExistsOperator(item, tagMapType, true)
 		default:
 			return "", nil, &model.ApiError{Typ: model.ErrorExec, Err: fmt.Errorf("Tag Operator %s not supported", item.GetOperator())}
 		}
+		query += subQuery
+		args = append(args, argsSubQuery...)
 	}
-	return subQuery, args, nil
+	return query, args, nil
 }
 
 func addInOperator(item model.TagQuery, tagMapType string, not bool) (string, []interface{}) {
