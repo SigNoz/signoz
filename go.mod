@@ -3,7 +3,7 @@ module go.signoz.io/signoz
 go 1.18
 
 require (
-	github.com/ClickHouse/clickhouse-go/v2 v2.5.0
+	github.com/ClickHouse/clickhouse-go/v2 v2.5.1
 	github.com/SigNoz/govaluate v0.0.0-20220522085550-d19c08c206cb
 	github.com/coreos/go-oidc/v3 v3.4.0
 	github.com/go-kit/log v0.2.1
@@ -135,4 +135,4 @@ require (
 	gopkg.in/yaml.v2 v2.4.0
 )
 
-replace github.com/prometheus/prometheus => github.com/SigNoz/prometheus v1.9.77-0.1
+replace github.com/prometheus/prometheus => github.com/SigNoz/prometheus v1.9.77-0.2
