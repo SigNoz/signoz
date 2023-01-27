@@ -193,7 +193,7 @@ services:
       - ../common/nginx-config.conf:/etc/nginx/conf.d/default.conf
 
   otel-collector:
-    image: signoz/signoz-otel-collector:${OTELCOL_TAG:-0.66.1}
+    image: signoz/signoz-otel-collector:${OTELCOL_TAG:-0.66.3}
     command: ["--config=/etc/otel-collector-config.yaml"]
     user: root # required for reading docker container logs
     volumes:
@@ -218,7 +218,7 @@ services:
     <<: *clickhouse-depend
 
   otel-collector-metrics:
-    image: signoz/signoz-otel-collector:${OTELCOL_TAG:-0.66.1}
+    image: signoz/signoz-otel-collector:${OTELCOL_TAG:-0.66.3}
     command: ["--config=/etc/otel-collector-metrics-config.yaml"]
     volumes:
       - ./otel-collector-metrics-config.yaml:/etc/otel-collector-metrics-config.yaml
