@@ -60,16 +60,25 @@ function DateTimeSelection({
 		searchStartTime,
 	]);
 
-	const [options, setOptions] = useState(getOptions(location.pathname));
-	const [refreshButtonHidden, setRefreshButtonHidden] = useState<boolean>(false);
-	const [customDateTimeVisible, setCustomDTPickerVisible] = useState<boolean>(
-		false,
-	);
-
 	const { maxTime, minTime, selectedTime } = useSelector<
 		AppState,
 		GlobalReducer
 	>((state) => state.globalTime);
+
+	const [options, setOptions] = useState(getOptions(location.pathname));
+	const [refreshButtonHidden, setRefreshButtonHidden] = useState<boolean>(
+		selectedTime === 'custom',
+	);
+
+	useEffect(() => {
+		if (selectedTime === 'custom') {
+			setRefreshButtonHidden(true);
+		}
+	}, [selectedTime]);
+
+	const [customDateTimeVisible, setCustomDTPickerVisible] = useState<boolean>(
+		false,
+	);
 
 	const getInputLabel = (
 		startTime?: Dayjs,
