@@ -110,13 +110,11 @@ function ListAlert({ allAlertRules, refetch }: ListAlertProps): JSX.Element {
 
 				return (
 					<>
-						{withOutSeverityKeys.map((e) => {
-							return (
-								<StyledTag key={e} color="magenta">
-									{e}: {value[e]}
-								</StyledTag>
-							);
-						})}
+						{withOutSeverityKeys.map((e) => (
+							<StyledTag key={e} color="magenta">
+								{e}: {value[e]}
+							</StyledTag>
+						))}
 					</>
 				);
 			},
@@ -128,22 +126,20 @@ function ListAlert({ allAlertRules, refetch }: ListAlertProps): JSX.Element {
 			title: 'Action',
 			dataIndex: 'id',
 			key: 'action',
-			render: (id: GettableAlert['id'], record): JSX.Element => {
-				return (
-					<>
-						<ToggleAlertState disabled={record.disabled} setData={setData} id={id} />
+			render: (id: GettableAlert['id'], record): JSX.Element => (
+				<>
+					<ToggleAlertState disabled={record.disabled} setData={setData} id={id} />
 
-						<ColumnButton
-							onClick={(): void => onEditHandler(id.toString())}
-							type="link"
-						>
-							Edit
-						</ColumnButton>
+					<ColumnButton
+						onClick={(): void => onEditHandler(id.toString())}
+						type="link"
+					>
+						Edit
+					</ColumnButton>
 
-						<DeleteAlert notifications={notifications} setData={setData} id={id} />
-					</>
-				);
-			},
+					<DeleteAlert notifications={notifications} setData={setData} id={id} />
+				</>
+			),
 		});
 	}
 

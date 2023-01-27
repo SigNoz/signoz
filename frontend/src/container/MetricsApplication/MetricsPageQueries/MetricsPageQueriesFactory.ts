@@ -44,46 +44,44 @@ export const getQueryBuilderQuerieswithFormula = ({
 }: BuilderQuerieswithFormulaProps): {
 	formulas: IMetricsBuilderFormula[];
 	queryBuilder: IMetricsBuilderQuery[];
-} => {
-	return {
-		formulas: [
-			{
-				disabled: false,
-				expression,
-				name: 'F1',
-				legend: legendFormula,
+} => ({
+	formulas: [
+		{
+			disabled: false,
+			expression,
+			name: 'F1',
+			legend: legendFormula,
+		},
+	],
+	queryBuilder: [
+		{
+			aggregateOperator: 18,
+			disabled,
+			groupBy,
+			legend,
+			metricName: metricNameA,
+			name: 'A',
+			reduceTo: 1,
+			tagFilters: {
+				items: additionalItemsA,
+				op: 'AND',
 			},
-		],
-		queryBuilder: [
-			{
-				aggregateOperator: 18,
-				disabled,
-				groupBy,
-				legend,
-				metricName: metricNameA,
-				name: 'A',
-				reduceTo: 1,
-				tagFilters: {
-					items: additionalItemsA,
-					op: 'AND',
-				},
+		},
+		{
+			aggregateOperator: 18,
+			disabled,
+			groupBy,
+			legend,
+			metricName: metricNameB,
+			name: 'B',
+			reduceTo: 1,
+			tagFilters: {
+				items: additionalItemsB,
+				op: 'AND',
 			},
-			{
-				aggregateOperator: 18,
-				disabled,
-				groupBy,
-				legend,
-				metricName: metricNameB,
-				name: 'B',
-				reduceTo: 1,
-				tagFilters: {
-					items: additionalItemsB,
-					op: 'AND',
-				},
-			},
-		],
-	};
-};
+		},
+	],
+});
 
 interface BuilderQueriesProps {
 	metricName: string;

@@ -9,55 +9,56 @@ import { Tags } from 'types/reducer/trace';
 
 export const GetService = (
 	props: GetServiceProps,
-): ((dispatch: Dispatch<AppActions>, getState: () => AppState) => void) => {
-	return async (dispatch, getState): Promise<void> => {
-		try {
-			const { globalTime } = getState();
+): ((
+	dispatch: Dispatch<AppActions>,
+	getState: () => AppState,
+) => void) => async (dispatch, getState): Promise<void> => {
+	try {
+		const { globalTime } = getState();
 
-			if (
-				props.maxTime !== globalTime.maxTime &&
-				props.minTime !== globalTime.minTime
-			) {
-				return;
-			}
+		if (
+			props.maxTime !== globalTime.maxTime &&
+			props.minTime !== globalTime.minTime
+		) {
+			return;
+		}
 
-			const { maxTime, minTime } = GetMinMax(globalTime.selectedTime, [
-				globalTime.minTime / 1000000,
-				globalTime.maxTime / 1000000,
-			]);
+		const { maxTime, minTime } = GetMinMax(globalTime.selectedTime, [
+			globalTime.minTime / 1000000,
+			globalTime.maxTime / 1000000,
+		]);
 
+		dispatch({
+			type: 'GET_SERVICE_LIST_LOADING_START',
+		});
+
+		const response = await getService({
+			end: maxTime,
+			start: minTime,
+			selectedTags: props.selectedTags,
+		});
+
+		if (response.statusCode === 200) {
 			dispatch({
-				type: 'GET_SERVICE_LIST_LOADING_START',
+				type: 'GET_SERVICE_LIST_SUCCESS',
+				payload: response.payload,
 			});
-
-			const response = await getService({
-				end: maxTime,
-				start: minTime,
-				selectedTags: props.selectedTags,
-			});
-
-			if (response.statusCode === 200) {
-				dispatch({
-					type: 'GET_SERVICE_LIST_SUCCESS',
-					payload: response.payload,
-				});
-			} else {
-				dispatch({
-					type: 'GET_SERVICE_LIST_ERROR',
-					payload: {
-						errorMessage: response.error || 'Something went wrong',
-					},
-				});
-			}
-		} catch (error) {
+		} else {
 			dispatch({
 				type: 'GET_SERVICE_LIST_ERROR',
 				payload: {
-					errorMessage: (error as AxiosError).toString() || 'Something went wrong',
+					errorMessage: response.error || 'Something went wrong',
 				},
 			});
 		}
-	};
+	} catch (error) {
+		dispatch({
+			type: 'GET_SERVICE_LIST_ERROR',
+			payload: {
+				errorMessage: (error as AxiosError).toString() || 'Something went wrong',
+			},
+		});
+	}
 };
 
 export type GetServiceProps = {
