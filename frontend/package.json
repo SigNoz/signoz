@@ -19,7 +19,9 @@
 		"playwright:codegen:local": "playwright codegen http://localhost:3301",
 		"playwright:codegen:local:auth": "yarn playwright:codegen:local --load-storage=tests/auth.json",
 		"husky:configure": "cd .. && husky install frontend/.husky && cd frontend && chmod ug+x .husky/*",
-		"commitlint": "commitlint --edit $1"
+		"commitlint": "commitlint --edit $1",
+		"predeploy": "yarn run build",
+        "deploy": "gh-pages -d build"
 	},
 	"engines": {
 		"node": ">=16.15.0"
@@ -166,6 +168,7 @@
 		"eslint-plugin-react-hooks": "^4.3.0",
 		"eslint-plugin-simple-import-sort": "^7.0.0",
 		"eslint-plugin-sonarjs": "^0.12.0",
+		"gh-pages": "^5.0.0",
 		"husky": "^7.0.4",
 		"is-ci": "^3.0.1",
 		"jest-playwright-preset": "^1.7.0",
