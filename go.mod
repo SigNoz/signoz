@@ -1,6 +1,6 @@
 module go.signoz.io/signoz
 
-go 1.17
+go 1.18
 
 require (
 	github.com/ClickHouse/clickhouse-go/v2 v2.5.0
@@ -73,7 +73,7 @@ require (
 	github.com/minio/md5-simd v1.1.0 // indirect
 	github.com/minio/sha256-simd v0.1.1 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
-	github.com/prometheus/client_golang v1.14.0
+	github.com/prometheus/client_golang v1.14.0 // indirect
 	gopkg.in/ini.v1 v1.67.0 // indirect
 	gopkg.in/square/go-jose.v2 v2.6.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
