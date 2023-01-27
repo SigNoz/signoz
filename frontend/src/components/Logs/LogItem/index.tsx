@@ -120,15 +120,15 @@ function LogItem({ logData }: LogItemProps): JSX.Element {
 					{'}'}
 				</div>
 				<div>
-					{map(selected, (field) => {
-						return isValidLogField(flattenLogData[field.name] as never) ? (
+					{map(selected, (field) =>
+						isValidLogField(flattenLogData[field.name] as never) ? (
 							<LogSelectedField
 								key={field.name}
 								fieldKey={field.name}
 								fieldValue={flattenLogData[field.name] as never}
 							/>
-						) : null;
-					})}
+						) : null,
+					)}
 				</div>
 			</div>
 			<Divider style={{ padding: 0, margin: '0.4rem 0', opacity: 0.5 }} />

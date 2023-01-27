@@ -231,18 +231,16 @@ function AuthDomains(): JSX.Element {
 			title: 'Action',
 			dataIndex: 'action',
 			key: 'action',
-			render: (_, record): JSX.Element => {
-				return (
-					<Button
-						disabled={!SSOFlag}
-						onClick={onDeleteHandler(record)}
-						danger
-						type="link"
-					>
-						Delete
-					</Button>
-				);
-			},
+			render: (_, record): JSX.Element => (
+				<Button
+					disabled={!SSOFlag}
+					onClick={onDeleteHandler(record)}
+					danger
+					type="link"
+				>
+					Delete
+				</Button>
+			),
 		},
 	];
 

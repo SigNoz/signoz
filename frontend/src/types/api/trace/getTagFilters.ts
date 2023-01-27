@@ -9,8 +9,8 @@ export interface Props {
 	isFilterExclude: TraceReducer['isFilterExclude'];
 }
 
-interface TagsKeys {
-	tagKeys: string;
+export interface PayloadProps {
+	stringTagKeys: string[];
+	numberTagKeys: string[];
+	boolTagKeys: string[];
 }
-
-export type PayloadProps = TagsKeys[];
