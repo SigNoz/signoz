@@ -1,5 +1,5 @@
-import { TableProps, Tag, Typography } from 'antd';
-import Table, { ColumnsType } from 'antd/lib/table';
+import { Table, TableProps, Tag, Typography } from 'antd';
+import { ColumnsType } from 'antd/lib/table';
 import ROUTES from 'constants/routes';
 import {
 	getSpanOrder,
@@ -48,17 +48,16 @@ function TraceTable(): JSX.Element {
 
 	type TableType = FlatArray<TraceReducer['spansAggregate']['data'], 1>;
 
-	const getLink = (record: TableType): string => {
-		return `${ROUTES.TRACE}/${record.traceID}${formUrlParams({
+	const getLink = (record: TableType): string =>
+		`${ROUTES.TRACE}/${record.traceID}${formUrlParams({
 			spanId: record.spanID,
 			levelUp: 0,
 			levelDown: 0,
 		})}`;
-	};
 
-	const getValue = (value: string): JSX.Element => {
-		return <Typography>{value}</Typography>;
-	};
+	const getValue = (value: string): JSX.Element => (
+		<Typography>{value}</Typography>
+	);
 
 	const getHttpMethodOrStatus = (
 		value: TableType['statusCode'],

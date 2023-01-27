@@ -1,9 +1,7 @@
 import { LoadingOutlined } from '@ant-design/icons';
 import { Button, Popover, Spin } from 'antd';
+import { useIsDarkMode } from 'hooks/useDarkMode';
 import React, { useState } from 'react';
-import { useSelector } from 'react-redux';
-import { AppState } from 'store/reducers';
-import AppReducer from 'types/reducer/app';
 
 import { Field } from './styles';
 
@@ -26,7 +24,7 @@ export function FieldItem({
 	iconHoverText,
 }: FieldItemProps): JSX.Element {
 	const [isHovered, setIsHovered] = useState(false);
-	const { isDarkMode } = useSelector<AppState, AppReducer>((state) => state.app);
+	const isDarkMode = useIsDarkMode();
 	return (
 		<Field
 			onMouseEnter={(): void => {

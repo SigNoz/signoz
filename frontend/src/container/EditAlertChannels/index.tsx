@@ -47,8 +47,8 @@ function EditAlertChannels({
 		setType(value as ChannelType);
 	}, []);
 
-	const prepareSlackRequest = useCallback(() => {
-		return {
+	const prepareSlackRequest = useCallback(
+		() => ({
 			api_url: selectedConfig?.api_url || '',
 			channel: selectedConfig?.channel || '',
 			name: selectedConfig?.name || '',
@@ -56,8 +56,9 @@ function EditAlertChannels({
 			text: selectedConfig?.text || '',
 			title: selectedConfig?.title || '',
 			id,
-		};
-	}, [id, selectedConfig]);
+		}),
+		[id, selectedConfig],
+	);
 
 	const onSlackEditHandler = useCallback(async () => {
 		setSavingState(true);
@@ -143,8 +144,8 @@ function EditAlertChannels({
 		setSavingState(false);
 	}, [prepareWebhookRequest, t, notifications, selectedConfig]);
 
-	const preparePagerRequest = useCallback(() => {
-		return {
+	const preparePagerRequest = useCallback(
+		() => ({
 			name: selectedConfig.name || '',
 			routing_key: selectedConfig.routing_key,
 			client: selectedConfig.client,
@@ -157,8 +158,9 @@ function EditAlertChannels({
 			details: selectedConfig.details,
 			detailsArray: JSON.parse(selectedConfig.details || '{}'),
 			id,
-		};
-	}, [id, selectedConfig]);
+		}),
+		[id, selectedConfig],
+	);
 
 	const onPagerEditHandler = useCallback(async () => {
 		setSavingState(true);

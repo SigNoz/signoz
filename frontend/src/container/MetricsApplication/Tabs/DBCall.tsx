@@ -25,6 +25,35 @@ function DBCall({ getWidgetQueryBuilder }: DBCallProps): JSX.Element {
 	);
 	const legend = '{{db_system}}';
 
+	const databaseCallsRPSWidget = useMemo(
+		() =>
+			getWidgetQueryBuilder({
+				queryType: 1,
+				promQL: [],
+				metricsBuilder: databaseCallsRPS({
+					servicename,
+					legend,
+					tagFilterItems,
+				}),
+				clickHouse: [],
+			}),
+		[getWidgetQueryBuilder, servicename, tagFilterItems],
+	);
+
+	const databaseCallsAverageDurationWidget = useMemo(
+		() =>
+			getWidgetQueryBuilder({
+				queryType: 1,
+				promQL: [],
+				metricsBuilder: databaseCallsAvgDuration({
+					servicename,
+					tagFilterItems,
+				}),
+				clickHouse: [],
+			}),
+		[getWidgetQueryBuilder, servicename, tagFilterItems],
+	);
+
 	return (
 		<Row gutter={24}>
 			<Col span={12}>
@@ -34,16 +63,7 @@ function DBCall({ getWidgetQueryBuilder }: DBCallProps): JSX.Element {
 						<FullView
 							name="database_call_rps"
 							fullViewOptions={false}
-							widget={getWidgetQueryBuilder({
-								queryType: 1,
-								promQL: [],
-								metricsBuilder: databaseCallsRPS({
-									servicename,
-									legend,
-									tagFilterItems,
-								}),
-								clickHouse: [],
-							})}
+							widget={databaseCallsRPSWidget}
 							yAxisUnit="reqps"
 						/>
 					</GraphContainer>
@@ -57,15 +77,7 @@ function DBCall({ getWidgetQueryBuilder }: DBCallProps): JSX.Element {
 						<FullView
 							name="database_call_avg_duration"
 							fullViewOptions={false}
-							widget={getWidgetQueryBuilder({
-								queryType: 1,
-								promQL: [],
-								metricsBuilder: databaseCallsAvgDuration({
-									servicename,
-									tagFilterItems,
-								}),
-								clickHouse: [],
-							})}
+							widget={databaseCallsAverageDurationWidget}
 							yAxisUnit="ms"
 						/>
 					</GraphContainer>

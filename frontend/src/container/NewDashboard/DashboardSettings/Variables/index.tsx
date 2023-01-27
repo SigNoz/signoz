@@ -96,9 +96,7 @@ function VariablesSetting({
 		setDeleteVariableModal(false);
 	};
 
-	const validateVariableName = (name: string): boolean => {
-		return !variables[name];
-	};
+	const validateVariableName = (name: string): boolean => !variables[name];
 
 	const columns = [
 		{
@@ -142,6 +140,7 @@ function VariablesSetting({
 			{variableViewMode ? (
 				<VariableItem
 					variableData={{ ...variableEditData } as IDashboardVariable}
+					existingVariables={variables}
 					onSave={onVariableSaveHandler}
 					onCancel={onDoneVariableViewMode}
 					validateName={validateVariableName}
@@ -165,7 +164,7 @@ function VariablesSetting({
 			<Modal
 				title="Delete variable"
 				centered
-				visible={deleteVariableModal}
+				open={deleteVariableModal}
 				onOk={handleDeleteConfirm}
 				onCancel={handleDeleteCancel}
 			>

@@ -231,18 +231,16 @@ function AuthDomains(): JSX.Element {
 			title: 'Action',
 			dataIndex: 'action',
 			key: 'action',
-			render: (_, record): JSX.Element => {
-				return (
-					<Button
-						disabled={!SSOFlag}
-						onClick={onDeleteHandler(record)}
-						danger
-						type="link"
-					>
-						Delete
-					</Button>
-				);
-			},
+			render: (_, record): JSX.Element => (
+				<Button
+					disabled={!SSOFlag}
+					onClick={onDeleteHandler(record)}
+					danger
+					type="link"
+				>
+					Delete
+				</Button>
+			),
 		},
 	];
 
@@ -256,7 +254,7 @@ function AuthDomains(): JSX.Element {
 					title="Configure Authentication Method"
 					onCancel={onCloseHandler(setIsSettingsOpen)}
 					destroyOnClose
-					visible={isSettingsOpen}
+					open={isSettingsOpen}
 					footer={null}
 				>
 					<Create
@@ -285,7 +283,7 @@ function AuthDomains(): JSX.Element {
 				title="Configure Authentication Method"
 				onCancel={onCloseHandler(setIsSettingsOpen)}
 				destroyOnClose
-				visible={isSettingsOpen}
+				open={isSettingsOpen}
 				footer={null}
 			>
 				<Create
@@ -297,7 +295,7 @@ function AuthDomains(): JSX.Element {
 			</Modal>
 
 			<Modal
-				visible={isEditModalOpen}
+				open={isEditModalOpen}
 				centered
 				title={EditModalTitleText(currentDomain?.ssoType)}
 				onCancel={onCloseHandler(setIsEditModalOpen)}

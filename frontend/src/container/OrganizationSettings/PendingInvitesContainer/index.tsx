@@ -1,6 +1,6 @@
 import { PlusOutlined } from '@ant-design/icons';
-import { Button, Modal, notification, Space, Typography } from 'antd';
-import Table, { ColumnsType } from 'antd/lib/table';
+import { Button, Modal, notification, Space, Table, Typography } from 'antd';
+import { ColumnsType } from 'antd/lib/table';
 import deleteInvite from 'api/user/deleteInvite';
 import getPendingInvites from 'api/user/getPendingInvites';
 import sendInvite from 'api/user/sendInvite';
@@ -63,15 +63,17 @@ function PendingInvitesContainer(): JSX.Element {
 
 	const { hash } = useLocation();
 
-	const getParsedInviteData = useCallback((payload: PayloadProps = []) => {
-		return payload?.map((data) => ({
-			key: data.createdAt,
-			name: data.name,
-			email: data.email,
-			accessLevel: data.role,
-			inviteLink: `${window.location.origin}${ROUTES.SIGN_UP}?token=${data.token}`,
-		}));
-	}, []);
+	const getParsedInviteData = useCallback(
+		(payload: PayloadProps = []) =>
+			payload?.map((data) => ({
+				key: data.createdAt,
+				name: data.name,
+				email: data.email,
+				accessLevel: data.role,
+				inviteLink: `${window.location.origin}${ROUTES.SIGN_UP}?token=${data.token}`,
+			})),
+		[],
+	);
 
 	useEffect(() => {
 		if (hash === INVITE_MEMBERS_HASH) {
@@ -222,7 +224,7 @@ function PendingInvitesContainer(): JSX.Element {
 		<div>
 			<Modal
 				title={t('invite_team_members')}
-				visible={isInviteTeamMemberModalOpen}
+				open={isInviteTeamMemberModalOpen}
 				onCancel={(): void => toggleModal(false)}
 				centered
 				destroyOnClose

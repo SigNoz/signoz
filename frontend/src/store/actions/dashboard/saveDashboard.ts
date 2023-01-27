@@ -21,9 +21,9 @@ export const SaveDashboard = ({
 	widgetId,
 	dashboardId,
 	yAxisUnit,
-}: SaveDashboardProps): ((dispatch: Dispatch<AppActions>) => void) => {
+}: SaveDashboardProps): ((dispatch: Dispatch<AppActions>) => void) =>
 	// eslint-disable-next-line sonarjs/cognitive-complexity
-	return async (dispatch: Dispatch<AppActions>): Promise<void> => {
+	async (dispatch: Dispatch<AppActions>): Promise<void> => {
 		try {
 			const dashboard = store.getState();
 			const search = new URLSearchParams(history.location.search);
@@ -139,7 +139,6 @@ export const SaveDashboard = ({
 			});
 		}
 	};
-};
 
 export interface SaveDashboardProps {
 	uuid: Dashboard['uuid'];

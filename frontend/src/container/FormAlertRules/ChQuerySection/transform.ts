@@ -32,6 +32,8 @@ export const rawQueryToIChQuery = (
 // ClickHouseQueryBuilder format. The main difference is
 // use of rawQuery (in ClickHouseQueryBuilder)
 // and query (in alert builder)
-export const toIClickHouseQuery = (src: IChQuery): IClickHouseQuery => {
-	return { ...src, name: 'A', rawQuery: src.query };
-};
+export const toIClickHouseQuery = (src: IChQuery): IClickHouseQuery => ({
+	...src,
+	name: 'A',
+	rawQuery: src.query,
+});
