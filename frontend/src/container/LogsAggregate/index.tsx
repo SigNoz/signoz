@@ -15,7 +15,9 @@ import { ILogsReducer } from 'types/reducer/logs';
 
 import { Container } from './styles';
 
-function LogsAggregate({ getLogsAggregate }: LogsAggregateProps): JSX.Element {
+function LogsAggregate({
+	getLogsAggregateProp,
+}: LogsAggregateProps): JSX.Element {
 	const {
 		searchFilter: { queryString },
 		idEnd,
@@ -47,7 +49,7 @@ function LogsAggregate({ getLogsAggregate }: LogsAggregateProps): JSX.Element {
 					const startTime =
 						dayjs().subtract(liveTailStartRange, 'minute').valueOf() * 1e6;
 					const endTime = dayjs().valueOf() * 1e6;
-					getLogsAggregate({
+					getLogsAggregateProp({
 						timestampStart: startTime,
 						timestampEnd: endTime,
 						step: getStep({
@@ -108,11 +110,11 @@ function LogsAggregate({ getLogsAggregate }: LogsAggregateProps): JSX.Element {
 }
 
 interface LogsAggregateProps {
-	getLogsAggregate: (arg0: Parameters<typeof getLogsAggregate>[0]) => void;
+	getLogsAggregateProp: (arg0: Parameters<typeof getLogsAggregate>[0]) => void;
 }
 
 interface DispatchProps {
-	getLogsAggregate: (
+	getLogsAggregateProp: (
 		props: Parameters<typeof getLogsAggregate>[0],
 	) => (dispatch: Dispatch<AppActions>) => void;
 }
@@ -120,7 +122,7 @@ interface DispatchProps {
 const mapDispatchToProps = (
 	dispatch: ThunkDispatch<unknown, unknown, AppActions>,
 ): DispatchProps => ({
-	getLogsAggregate: bindActionCreators(getLogsAggregate, dispatch),
+	getLogsAggregateProp: bindActionCreators(getLogsAggregate, dispatch),
 });
 
 export default connect(null, mapDispatchToProps)(memo(LogsAggregate));

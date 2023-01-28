@@ -28,16 +28,18 @@ const removeJSONStringifyQuotes = (s: string): string => {
 interface ActionItemProps {
 	fieldKey: string;
 	fieldValue: string;
-	getLogs: (props: Parameters<typeof getLogs>[0]) => ReturnType<typeof getLogs>;
-	getLogsAggregate: (
+	getLogsProp: (
+		props: Parameters<typeof getLogs>[0],
+	) => ReturnType<typeof getLogs>;
+	getLogsAggregateProp: (
 		props: Parameters<typeof getLogsAggregate>[0],
 	) => ReturnType<typeof getLogsAggregate>;
 }
 function ActionItem({
 	fieldKey,
 	fieldValue,
-	getLogs,
-	getLogsAggregate,
+	getLogsProp,
+	getLogsAggregateProp,
 }: ActionItemProps): JSX.Element | unknown {
 	const {
 		searchFilter: { queryString },
@@ -66,7 +68,7 @@ function ActionItem({
 		});
 
 		if (liveTail === 'STOPPED') {
-			getLogs({
+			getLogsProp({
 				q: updatedQueryString,
 				limit: logLinesPerPage,
 				orderBy: 'timestamp',
@@ -76,7 +78,7 @@ function ActionItem({
 				...(idStart ? { idGt: idStart } : {}),
 				...(idEnd ? { idLt: idEnd } : {}),
 			});
-			getLogsAggregate({
+			getLogsAggregateProp({
 				timestampStart: minTime,
 				timestampEnd: maxTime,
 				step: getStep({

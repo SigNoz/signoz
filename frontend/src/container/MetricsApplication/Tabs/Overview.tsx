@@ -172,8 +172,19 @@ function Application({ getWidgetQueryBuilder }: DashboardProps): JSX.Element {
 						<GraphTitle>Latency</GraphTitle>
 						<GraphContainer>
 							<Graph
-								onClickHandler={(ChartEvent, activeElements, chart, data): void => {
-									onClickHandler(ChartEvent, activeElements, chart, data, 'Service');
+								onClickHandler={(
+									ChartEventParam,
+									activeElements,
+									chart,
+									data,
+								): void => {
+									onClickHandler(
+										ChartEventParam,
+										activeElements,
+										chart,
+										data,
+										'Service',
+									);
 								}}
 								name="service_latency"
 								type="line"
@@ -272,8 +283,13 @@ function Application({ getWidgetQueryBuilder }: DashboardProps): JSX.Element {
 							<FullView
 								name="error_percentage_%"
 								fullViewOptions={false}
-								onClickHandler={(ChartEvent, activeElements, chart, data): void => {
-									onClickHandler(ChartEvent, activeElements, chart, data, 'Error');
+								onClickHandler={(
+									ChartEventParam,
+									activeElements,
+									chart,
+									data,
+								): void => {
+									onClickHandler(ChartEventParam, activeElements, chart, data, 'Error');
 								}}
 								widget={errorPercentageWidget}
 								yAxisUnit="%"

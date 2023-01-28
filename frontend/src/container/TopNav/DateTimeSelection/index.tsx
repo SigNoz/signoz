@@ -95,10 +95,10 @@ function DateTimeSelection({
 
 		if (routes !== null) {
 			const routesObject = JSON.parse(routes || '{}');
-			const selectedTime = routesObject[pathName];
+			const routesSelectedTime = routesObject[pathName];
 
-			if (selectedTime) {
-				return selectedTime;
+			if (routesSelectedTime) {
+				return routesSelectedTime;
 			}
 		}
 
@@ -208,19 +208,19 @@ function DateTimeSelection({
 		const currentOptions = getOptions(currentRoute);
 		setOptions(currentOptions);
 
-		const getCustomOrIntervalTime = (time: Time): Time => {
+		const getCustomOrIntervalTime = (timeParam: Time): Time => {
 			if (searchEndTime !== null && searchStartTime !== null) {
 				return 'custom';
 			}
 
 			if (
 				(localstorageEndTime === null || localstorageStartTime === null) &&
-				time === 'custom'
+				timeParam === 'custom'
 			) {
 				return getDefaultOption(currentRoute);
 			}
 
-			return time;
+			return timeParam;
 		};
 
 		const updatedTime = getCustomOrIntervalTime(time);

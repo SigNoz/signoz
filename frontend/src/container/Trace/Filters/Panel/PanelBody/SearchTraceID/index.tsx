@@ -55,8 +55,8 @@ function TraceID(): JSX.Element {
 			if (response.statusCode === 200) {
 				const preFilter = getFilter(response.payload);
 				preFilter.set('traceID', { traceID: value });
-				preFilter.forEach((value, key) => {
-					const values = Object.keys(value);
+				preFilter.forEach((filterValue, key) => {
+					const values = Object.keys(filterValue);
 					if (key !== 'duration' && values.length) {
 						preUserSelected.set(key, values);
 					}

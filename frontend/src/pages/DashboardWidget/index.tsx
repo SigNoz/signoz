@@ -33,8 +33,8 @@ function DashboardWidget({ getDashboard }: NewDashboardProps): JSX.Element {
 	const selectedWidget = widgets?.find((e) => e.id === widgetId);
 
 	useEffect(() => {
-		const params = new URLSearchParams(search);
-		const graphType = params.get('graphType') as GRAPH_TYPES | null;
+		const searchParams = new URLSearchParams(search);
+		const graphType = searchParams.get('graphType') as GRAPH_TYPES | null;
 
 		if (graphType === null) {
 			history.push(generatePath(ROUTES.DASHBOARD, { dashboardId }));

@@ -24,7 +24,7 @@ function DeleteAlert({
 
 	const defaultErrorMessage = 'Something went wrong';
 
-	const onDeleteHandler = async (id: number): Promise<void> => {
+	const onDeleteHandler = async (alertId: number): Promise<void> => {
 		try {
 			setDeleteAlertState((state) => ({
 				...state,
@@ -32,7 +32,7 @@ function DeleteAlert({
 			}));
 
 			const response = await deleteAlerts({
-				id,
+				id: alertId,
 			});
 
 			if (response.statusCode === 200) {

@@ -142,12 +142,7 @@ export const isSpanPresent = (
 	searchedKey: string,
 ): ITraceTree[] => {
 	const foundNode: ITraceTree[] = [];
-
-	const traverse = (
-		treeNode: ITraceTree,
-		level = 0,
-		foundNode: ITraceTree[],
-	): void => {
+	const traverse = (treeNode: ITraceTree, level = 0): void => {
 		if (!treeNode) {
 			return;
 		}
@@ -159,10 +154,10 @@ export const isSpanPresent = (
 		}
 
 		treeNode.children.forEach((childNode) => {
-			traverse(childNode, level + 1, foundNode);
+			traverse(childNode, level + 1);
 		});
 	};
-	traverse(tree, 1, foundNode);
+	traverse(tree, 1);
 
 	return foundNode;
 };

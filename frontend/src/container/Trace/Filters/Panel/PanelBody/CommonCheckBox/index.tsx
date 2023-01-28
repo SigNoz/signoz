@@ -66,11 +66,11 @@ function CommonCheckBox(props: CommonCheckBoxProps): JSX.Element {
 					}
 					return countA - countB;
 				})
-				.filter((filter) => {
+				.filter((filterParam) => {
 					if (searchFilter.length === 0) {
 						return true;
 					}
-					return filter
+					return filterParam
 						.toLocaleLowerCase()
 						.includes(searchFilter.toLocaleLowerCase());
 				})

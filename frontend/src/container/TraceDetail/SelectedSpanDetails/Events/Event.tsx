@@ -13,7 +13,7 @@ import RelativeStartTime from './RelativeStartTime';
 const { Panel } = Collapse;
 
 function ErrorTag({
-	event,
+	traceEvent,
 	onToggleHandler,
 	setText,
 	firstSpanStartTime,
@@ -22,7 +22,7 @@ function ErrorTag({
 
 	return (
 		<>
-			{map(event, ({ attributeMap, name, timeUnixNano }) => {
+			{map(traceEvent, ({ attributeMap, name, timeUnixNano }) => {
 				const attributes = keys(attributeMap);
 
 				return (
@@ -82,7 +82,7 @@ function ErrorTag({
 }
 
 interface ErrorTagProps {
-	event: ITraceTree['event'];
+	traceEvent: ITraceTree['event'];
 	onToggleHandler: (isOpen: boolean) => void;
 	setText: (text: { subText: string; text: string }) => void;
 	firstSpanStartTime?: number;

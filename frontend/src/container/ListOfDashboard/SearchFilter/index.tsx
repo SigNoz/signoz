@@ -106,8 +106,11 @@ function SearchFilter({
 	};
 
 	const removeQueryById = (queryId: string): void => {
-		setQueries((queries) => {
-			const updatedQueries = filter(queries, ({ id }) => id !== queryId);
+		setQueries((setQueriesParameter) => {
+			const updatedQueries = filter(
+				setQueriesParameter,
+				({ id }) => id !== queryId,
+			);
 			updateURLWithQuery(updatedQueries);
 			return updatedQueries;
 		});

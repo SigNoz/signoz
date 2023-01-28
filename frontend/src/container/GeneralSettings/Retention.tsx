@@ -46,8 +46,9 @@ function Retention({
 	));
 
 	const currentSelectedOption = (option: SettingPeriod): void => {
-		const selectedValue = find(TimeUnits, (e) => e.value === option)?.value;
-		if (selectedValue) setSelectTimeUnit(selectedValue);
+		const currentSelectedValue = find(TimeUnits, (e) => e.value === option)
+			?.value;
+		if (currentSelectedValue) setSelectTimeUnit(currentSelectedValue);
 	};
 
 	useEffect(() => {

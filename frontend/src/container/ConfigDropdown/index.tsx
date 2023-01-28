@@ -20,7 +20,7 @@ function DynamicConfigDropdown({
 	const isDarkMode = useIsDarkMode();
 	const [isHelpDropDownOpen, setIsHelpDropDownOpen] = useState<boolean>(false);
 
-	const config = useMemo(
+	const currentConfig = useMemo(
 		() =>
 			Object.values(configs).find(
 				(config) => config.frontendPositionId === frontendId,
@@ -32,7 +32,7 @@ function DynamicConfigDropdown({
 		setIsHelpDropDownOpen(!isHelpDropDownOpen);
 	};
 
-	if (!config) {
+	if (!currentConfig) {
 		return <div />;
 	}
 
@@ -45,7 +45,7 @@ function DynamicConfigDropdown({
 			trigger={['click']}
 			overlay={
 				<Menu>
-					<HelpToolTip config={config} />
+					<HelpToolTip config={currentConfig} />
 				</Menu>
 			}
 			visible={isHelpDropDownOpen}

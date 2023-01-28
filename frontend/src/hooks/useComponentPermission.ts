@@ -7,8 +7,8 @@ const useComponentPermission = (
 	role: ROLES | null,
 ): boolean[] => {
 	const getComponentPermission = useCallback(
-		(component: ComponentTypes): boolean =>
-			!!componentPermission[component].find((roles) => role === roles),
+		(componentParam: ComponentTypes): boolean =>
+			!!componentPermission[componentParam].find((roles) => role === roles),
 		[role],
 	);
 

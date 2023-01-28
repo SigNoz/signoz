@@ -24,8 +24,8 @@ function PanelBody(props: PanelBodyProps): JSX.Element {
 			</Card>
 		);
 	}
-	const renderBody = (type: TraceFilterEnum): JSX.Element => {
-		switch (type) {
+	const renderBody = (renderType: TraceFilterEnum): JSX.Element => {
+		switch (renderType) {
 			case 'traceID':
 				return <TraceID />;
 			case 'duration':

@@ -23,7 +23,7 @@ function ErrorDetails(props: ErrorDetailsProps): JSX.Element {
 	const errorId = params.get(urlKey.errorId);
 	const serviceName = params.get(urlKey.serviceName);
 	const errorType = params.get(urlKey.exceptionType);
-	const timestamp = params.get(urlKey.timestamp);
+	const errorTimestamp = params.get(urlKey.timestamp);
 
 	const { data: nextPrevData, status: nextPrevStatus } = useQuery(
 		[
@@ -33,14 +33,14 @@ function ErrorDetails(props: ErrorDetailsProps): JSX.Element {
 			errorId,
 			serviceName,
 			errorType,
-			timestamp,
+			errorTimestamp,
 		],
 		{
 			queryFn: () =>
 				getNextPrevId({
 					errorID: errorId || idPayload.errorId,
 					groupID: idPayload.groupID,
-					timestamp: timestamp || getNanoSeconds(idPayload.timestamp),
+					timestamp: errorTimestamp || getNanoSeconds(idPayload.timestamp),
 				}),
 		},
 	);

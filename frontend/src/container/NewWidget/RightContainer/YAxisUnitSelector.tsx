@@ -25,7 +25,7 @@ function YAxisUnitSelector({
 	const onSelectHandler = (selectedValue: string): void => {
 		onSelect(findCategoryByName(selectedValue)?.id || '');
 	};
-	const options = flattenedCategories.map((options) => ({
+	const stringOptions = flattenedCategories.map((options) => ({
 		value: options.name,
 	}));
 	return (
@@ -35,7 +35,7 @@ function YAxisUnitSelector({
 			</div>
 			<AutoComplete
 				style={{ width: '100%' }}
-				options={options}
+				options={stringOptions}
 				defaultValue={findCategoryById(defaultValue)?.name}
 				onSelect={onSelectHandler}
 				filterOption={(inputValue, option): boolean => {

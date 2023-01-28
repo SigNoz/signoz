@@ -38,7 +38,7 @@ describe('Error utils', () => {
 	});
 
 	test('Default Order', () => {
-		const OrderBy: OrderBy[] = [
+		const defaultOrderBy: OrderBy[] = [
 			'exceptionCount',
 			'exceptionType',
 			'firstSeen',
@@ -46,12 +46,12 @@ describe('Error utils', () => {
 			'serviceName',
 		];
 
-		const order: Order[] = ['ascending', 'descending'];
+		const orderGrowth: Order[] = ['ascending', 'descending'];
 
-		const ascOrd = order[0];
-		const desOrd = order[1];
+		const ascOrd = orderGrowth[0];
+		const desOrd = orderGrowth[1];
 
-		OrderBy.forEach((order) => {
+		defaultOrderBy.forEach((order) => {
 			expect(getDefaultOrder(order, ascOrd, order)).toBe('ascend');
 			expect(getDefaultOrder(order, desOrd, order)).toBe('descend');
 		});

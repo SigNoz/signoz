@@ -84,8 +84,8 @@ function Trace(props: TraceProps): JSX.Element {
 	const onMouseEnterHandler = (): void => {
 		setActiveHoverId(id);
 		if (ref.current) {
-			const { top } = getTopLeftFromBody(ref.current);
-			setTop(top);
+			const { top: newTop } = getTopLeftFromBody(ref.current);
+			setTop(newTop);
 		}
 	};
 

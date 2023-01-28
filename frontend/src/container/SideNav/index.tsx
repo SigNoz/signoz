@@ -26,7 +26,7 @@ import {
 
 function SideNav(): JSX.Element {
 	const dispatch = useDispatch();
-	const [collapsed, setCollapsed] = useState<boolean>(
+	const [boolCollapsed, setCollapsed] = useState<boolean>(
 		getLocalStorageKey(IS_SIDEBAR_COLLAPSED) === 'true',
 	);
 	const { currentVersion, latestVersion, isCurrentVersionError } = useSelector<
@@ -38,12 +38,12 @@ function SideNav(): JSX.Element {
 	const { t } = useTranslation('');
 
 	const onCollapse = useCallback(() => {
-		setCollapsed((collapsed) => !collapsed);
+		setCollapsed((isCollapsed) => !isCollapsed);
 	}, []);
 
 	useLayoutEffect(() => {
-		dispatch(SideBarCollapse(collapsed));
-	}, [collapsed, dispatch]);
+		dispatch(SideBarCollapse(boolCollapsed));
+	}, [boolCollapsed, dispatch]);
 
 	const onClickHandler = useCallback(
 		(to: string) => {
@@ -96,7 +96,12 @@ function SideNav(): JSX.Element {
 	);
 
 	return (
-		<Sider collapsible collapsed={collapsed} onCollapse={onCollapse} width={200}>
+		<Sider
+			collapsible
+			collapsed={boolCollapsed}
+			onCollapse={onCollapse}
+			width={200}
+		>
 			<Menu
 				theme="dark"
 				defaultSelectedKeys={[ROUTES.APPLICATION]}
@@ -125,7 +130,7 @@ function SideNav(): JSX.Element {
 					<SlackMenuItemContainer
 						index={index + 1}
 						key={`${index + 1}`}
-						collapsed={collapsed}
+						collapsed={boolCollapsed}
 					>
 						<Menu.Item
 							eventKey={index.toString()}

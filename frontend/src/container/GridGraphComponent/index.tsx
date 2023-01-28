@@ -10,7 +10,7 @@ import React from 'react';
 import { TitleContainer, ValueContainer } from './styles';
 
 function GridGraphComponent({
-	GRAPH_TYPES,
+	GRAPH_TYPES: graphType,
 	data,
 	title,
 	opacity,
@@ -25,7 +25,7 @@ function GridGraphComponent({
 
 	const isDashboardPage = location.split('/').length === 3;
 
-	if (GRAPH_TYPES === 'TIME_SERIES') {
+	if (graphType === 'TIME_SERIES') {
 		return (
 			<Graph
 				{...{
@@ -45,7 +45,7 @@ function GridGraphComponent({
 		);
 	}
 
-	if (GRAPH_TYPES === 'VALUE') {
+	if (graphType === 'VALUE') {
 		const value = (((data.datasets[0] || []).data || [])[0] || 0) as number;
 
 		if (data.datasets.length === 0) {

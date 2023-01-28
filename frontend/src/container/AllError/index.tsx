@@ -357,15 +357,15 @@ function AllErrors(): JSX.Element {
 			if (!Array.isArray(sorter)) {
 				const { pageSize = 0, current = 0 } = paginations;
 				const { columnKey = '', order } = sorter;
-				const updatedOrder = order === 'ascend' ? 'ascending' : 'descending';
-				const params = new URLSearchParams(window.location.search);
+				const updatedOrderAorD = order === 'ascend' ? 'ascending' : 'descending';
+				const searchParams = new URLSearchParams(window.location.search);
 				const { exceptionType, serviceName } = extractFilterValues(filters, {
-					serviceName: getFilterString(params.get(urlKey.serviceName)),
-					exceptionType: getFilterString(params.get(urlKey.exceptionType)),
+					serviceName: getFilterString(searchParams.get(urlKey.serviceName)),
+					exceptionType: getFilterString(searchParams.get(urlKey.exceptionType)),
 				});
 				history.replace(
 					`${pathname}?${createQueryParams({
-						order: updatedOrder,
+						order: updatedOrderAorD,
 						offset: (current - 1) * pageSize,
 						orderParam: columnKey,
 						pageSize,

@@ -201,7 +201,7 @@ function GeneralSettings({
 		[availableDisks],
 	);
 
-	const [
+	let [
 		isMetricsSaveDisabled,
 		isTracesSaveDisabled,
 		isLogsSaveDisabled,
@@ -222,10 +222,10 @@ function GeneralSettings({
 		};
 
 		// Defaults to button not disabled and empty error message text.
-		let isMetricsSaveDisabled = false;
-		let isTracesSaveDisabled = false;
-		let isLogsSaveDisabled = false;
-		let errorText = '';
+		// let isMetricsSaveDisabled = false;
+		// let isTracesSaveDisabled = false;
+		// let isLogsSaveDisabled = false;
+		// let errorText = '';
 
 		if (s3Enabled) {
 			if (
