@@ -9,7 +9,7 @@ import { Dropdown, Menu, Tooltip, Typography } from 'antd';
 import Spinner from 'components/Spinner';
 import useComponentPermission from 'hooks/useComponentPermission';
 import history from 'lib/history';
-import React, { useState } from 'react';
+import React, { useCallback, useState } from 'react';
 import { UseQueryResult } from 'react-query';
 import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
@@ -48,6 +48,7 @@ function WidgetHeader({
 	errorMessage,
 }: IWidgetHeaderProps): JSX.Element {
 	const [localHover, setLocalHover] = useState(false);
+	const [isOpen, setIsOpen] = useState<boolean>(false);
 
 	const onEditHandler = (): void => {
 		const widgetId = widget.id;
@@ -111,11 +112,17 @@ function WidgetHeader({
 		</Menu>
 	);
 
+	const onClickHandler = useCallback(() => {
+		setIsOpen((open) => !open);
+	}, []);
+
 	return (
 		<Dropdown
+			destroyPopupOnHide
+			open={isOpen}
+			onOpenChange={setIsOpen}
 			overlay={menu}
 			trigger={['click']}
-			overlayStyle={{ minWidth: 100 }}
 			placement="bottom"
 		>
 			<>
@@ -123,6 +130,7 @@ function WidgetHeader({
 					onMouseOver={(): void => setLocalHover(true)}
 					onMouseOut={(): void => setLocalHover(false)}
 					hover={localHover}
+					onClick={onClickHandler}
 				>
 					<HeaderContentContainer onClick={(e): void => e.preventDefault()}>
 						<Typography.Text style={{ maxWidth: '80%' }} ellipsis>
