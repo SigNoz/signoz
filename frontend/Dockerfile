@@ -9,8 +9,9 @@ ARG TARGETARCH
 
 WORKDIR /frontend
 
-# Copy the package.json to install dependencies
+# Copy the package.json and .yarnrc files prior to install dependencies
 COPY package.json ./
+COPY .yarnrc ./
 
 # Install the dependencies and make the folder
 RUN CI=1 yarn install

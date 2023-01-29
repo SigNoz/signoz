@@ -6,9 +6,7 @@ function GetQueryName(queries: { name: string }[] = []): string | null {
 	if (queries.length === MAX_QUERIES) {
 		return null;
 	}
-	const sortedQueries = sortBy(queries, (q) => {
-		return q.name;
-	});
+	const sortedQueries = sortBy(queries, (q) => q.name);
 
 	let queryIteratorIdx = 0;
 
