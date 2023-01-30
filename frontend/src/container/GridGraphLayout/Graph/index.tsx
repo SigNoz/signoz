@@ -40,7 +40,7 @@ function GridCardGraph({
 	setLayout,
 	onDragSelect,
 }: GridCardGraphProps): JSX.Element {
-	const { ref: myRef, inView: myElementIsVisible } = useInView({
+	const { ref: graphRef, inView: isGraphVisible } = useInView({
 		threshold: 0,
 		triggerOnce: true,
 	});
@@ -85,7 +85,7 @@ function GridCardGraph({
 			}),
 		{
 			keepPreviousData: true,
-			enabled: myElementIsVisible,
+			enabled: isGraphVisible,
 			refetchOnMount: false,
 			onError: (error) => {
 				if (error instanceof Error) {
@@ -167,7 +167,7 @@ function GridCardGraph({
 
 	if (queryResponse.isError && !isEmptyLayout) {
 		return (
-			<span ref={myRef}>
+			<span ref={graphRef}>
 				{getModals()}
 				{!isEmpty(widget) && prevChartDataSetRef && (
 					<>
@@ -199,7 +199,7 @@ function GridCardGraph({
 
 	if (prevChartDataSetRef?.labels === undefined && queryResponse.isLoading) {
 		return (
-			<span ref={myRef}>
+			<span ref={graphRef}>
 				{!isEmpty(widget) && prevChartDataSetRef?.labels ? (
 					<>
 						<div className="drag-handle">
@@ -232,7 +232,7 @@ function GridCardGraph({
 
 	return (
 		<span
-			ref={myRef}
+			ref={graphRef}
 			onMouseOver={(): void => {
 				setHovered(true);
 			}}
@@ -268,7 +268,7 @@ function GridCardGraph({
 					data={chartData}
 					isStacked={widget.isStacked}
 					opacity={widget.opacity}
-					title={' '} // empty title to accommodate absolutely positioned widget header
+					title={' '} // `empty title to accommodate absolutely positioned widget header
 					name={name}
 					yAxisUnit={yAxisUnit}
 					onDragSelect={onDragSelect}
