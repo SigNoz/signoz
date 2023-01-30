@@ -1,16 +1,14 @@
 import { PlusOutlined, SaveFilled } from '@ant-design/icons';
-import Spinner from 'components/Spinner';
 import useComponentPermission from 'hooks/useComponentPermission';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import React from 'react';
 import { Layout } from 'react-grid-layout';
 import { useSelector } from 'react-redux';
-import VisibilitySensor from 'react-visibility-sensor';
 import { AppState } from 'store/reducers';
 import { Widgets } from 'types/api/dashboard/getAll';
 import AppReducer from 'types/reducer/app';
 
-import { ComponentProps, LayoutProps, State } from '.';
+import { LayoutProps, State } from '.';
 import {
 	Button,
 	ButtonContainer,
@@ -36,16 +34,6 @@ function GraphLayout({
 		['save_layout', 'add_panel'],
 		role,
 	);
-
-	const getReactElementNode = (
-		isVisible: boolean,
-		Component: (props: ComponentProps) => JSX.Element,
-	): React.ReactNode =>
-		isVisible ? (
-			<Component setLayout={setLayout} />
-		) : (
-			<Spinner height="20vh" tip="Loading..." />
-		);
 
 	return (
 		<>
@@ -96,11 +84,7 @@ function GraphLayout({
 							data-grid={rest}
 						>
 							<Card>
-								<VisibilitySensor partialVisibility>
-									{(args: { isVisible: boolean }): React.ReactNode =>
-										getReactElementNode(args.isVisible, Component)
-									}
-								</VisibilitySensor>
+								<Component setLayout={setLayout} />
 							</Card>
 						</CardContainer>
 					);
