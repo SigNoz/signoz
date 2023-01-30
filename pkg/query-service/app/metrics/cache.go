@@ -1,47 +1,49 @@
 package metrics
 
 import (
-	"context"
 	"fmt"
-	"time"
+	"sort"
+	"strings"
 
-	"go.signoz.io/signoz/pkg/query-service/cache/status"
+	"go.signoz.io/signoz/pkg/query-service/model"
 )
 
-type cacheMiddleware struct {
-	cache Cache
-	next  Service
+type metricsKeyGenerator struct {
 }
 
-func NewCacheMiddleware(cache Cache, next Service) Service {
-	return &cacheMiddleware{cache: cache, next: next}
+func NewMetricsKeyGenerator() *metricsKeyGenerator {
+	return &metricsKeyGenerator{}
 }
 
-func (c *cacheMiddleware) GetMetrics(ctx context.Context, req *GetMetricsRequest) (*GetMetricsResponse, error) {
-	cacheKey := c.getCacheKey(req)
-	data, retrieveStatus, err := c.cache.Retrieve(cacheKey, false)
-	if err != nil {
-		return nil, err
-	}
-	if retrieveStatus == status.RetrieveStatusHit {
-		return &GetMetricsResponse{
-			Data: data,
-		}, nil
-	}
+func (m *metricsKeyGenerator) GenerateKeys(params *model.QueryRangeParamsV2) map[string]string {
+	var cacheKeys map[string]string
 
-	resp, err := c.next.GetMetrics(ctx, req)
-	if err != nil {
-		return nil, err
+	if params.CompositeMetricQuery != nil {
+		step := params.Step
+		switch params.CompositeMetricQuery.QueryType {
+		case model.QUERY_BUILDER:
+			for queryName, builderQuery := range params.CompositeMetricQuery.BuilderQueries {
+				metricName := builderQuery.MetricName
+				operator := builderQuery.AggregateOperator
+				filterString := ""
+				if builderQuery.TagFilters != nil {
+					for _, item := range builderQuery.TagFilters.Items {
+						filterString += fmt.Sprintf("%s+%s+%v", item.Key, item.Operator, item.Value)
+					}
+				}
+				sort.Strings(builderQuery.GroupingTags)
+				groupBy := strings.Join(builderQuery.GroupingTags, "+")
+				cacheKey := fmt.Sprintf("step:%d-metricName:%s-operator:%d-filters:%s-groupBy:%s", step, metricName, operator, filterString, groupBy)
+				cacheKeys[queryName] = cacheKey
+			}
+		case model.PROM:
+			for queryName, promQuery := range params.CompositeMetricQuery.PromQueries {
+				cacheKey := fmt.Sprintf("step:%d-promQuery:%s", step, promQuery.Query)
+				cacheKeys[queryName] = cacheKey
+			}
+		case model.CLICKHOUSE:
+			// TODO
+		}
 	}
-
-	err = c.cache.Store(cacheKey, resp.Data, time.Duration(req.TTL)*time.Second)
-	if err != nil {
-		return nil, err
-	}
-
-	return resp, nil
-}
-
-func (c *cacheMiddleware) getCacheKey(req *GetMetricsRequest) string {
-	return fmt.Sprintf("%s:%s:%s", req.ServiceName, req.OperationName, req.StartTime)
+	return cacheKeys
 }

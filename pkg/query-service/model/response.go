@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"math"
+	"sort"
 	"strconv"
 	"time"
 
@@ -461,6 +462,12 @@ type Series struct {
 	QueryName string            `json:"queryName"`
 	Labels    map[string]string `json:"metric"`
 	Points    []MetricPoint     `json:"values"`
+}
+
+func (s *Series) SortPoints() {
+	sort.Slice(s.Points, func(i, j int) bool {
+		return s.Points[i].Timestamp < s.Points[j].Timestamp
+	})
 }
 
 type MetricPoint struct {

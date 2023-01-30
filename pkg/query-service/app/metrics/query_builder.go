@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"reflect"
 	"strings"
+	"time"
 
 	"github.com/SigNoz/govaluate"
 	"go.signoz.io/signoz/pkg/query-service/constants"
@@ -152,18 +153,14 @@ func BuildMetricsTimeSeriesFilterQuery(fs *model.FilterSet, groupTags []string, 
 	return filterSubQuery, nil
 }
 
-func BuildMetricQuery(qp *model.QueryRangeParamsV2, mq *model.MetricQuery, tableName string) (string, error) {
-
-	if qp.CompositeMetricQuery.PanelType == model.QUERY_VALUE && len(mq.GroupingTags) != 0 {
-		return "", fmt.Errorf("reduce operator cannot be applied for the query")
-	}
+func BuildMetricQuery(mq *model.MetricQuery, step, start, end int64, tableName string) (string, error) {
 
 	filterSubQuery, err := BuildMetricsTimeSeriesFilterQuery(mq.TagFilters, mq.GroupingTags, mq.MetricName, mq.AggregateOperator)
 	if err != nil {
 		return "", err
 	}
 
-	samplesTableTimeFilter := fmt.Sprintf("metric_name = %s AND timestamp_ms >= %d AND timestamp_ms <= %d", FormattedValue(mq.MetricName), qp.Start, qp.End)
+	samplesTableTimeFilter := fmt.Sprintf("metric_name = %s AND timestamp_ms >= %d AND timestamp_ms <= %d", FormattedValue(mq.MetricName), start, end)
 
 	// Select the aggregate value for interval
 	queryTmpl :=
@@ -198,7 +195,7 @@ func BuildMetricQuery(qp *model.QueryRangeParamsV2, mq *model.MetricQuery, table
 		groupTags = "fingerprint,"
 		op := "max(value)" // max value should be the closest value for point in time
 		subQuery := fmt.Sprintf(
-			queryTmpl, "any(labels) as labels, "+groupTags, qp.Step, op, filterSubQuery, groupBy, groupTags,
+			queryTmpl, "any(labels) as labels, "+groupTags, step, op, filterSubQuery, groupBy, groupTags,
 		) // labels will be same so any should be fine
 		query := `SELECT %s ts, runningDifference(value)/runningDifference(ts) as value FROM(%s)`
 
@@ -209,7 +206,7 @@ func BuildMetricQuery(qp *model.QueryRangeParamsV2, mq *model.MetricQuery, table
 		rateGroupTags := "fingerprint, " + groupTags
 		op := "max(value)"
 		subQuery := fmt.Sprintf(
-			queryTmpl, rateGroupTags, qp.Step, op, filterSubQuery, rateGroupBy, rateGroupTags,
+			queryTmpl, rateGroupTags, step, op, filterSubQuery, rateGroupBy, rateGroupTags,
 		) // labels will be same so any should be fine
 		query := `SELECT %s ts, runningDifference(value)/runningDifference(ts) as value FROM(%s) OFFSET 1`
 		query = fmt.Sprintf(query, groupTags, subQuery)
@@ -217,20 +214,20 @@ func BuildMetricQuery(qp *model.QueryRangeParamsV2, mq *model.MetricQuery, table
 		return query, nil
 	case model.RATE_SUM, model.RATE_MAX, model.RATE_AVG, model.RATE_MIN:
 		op := fmt.Sprintf("%s(value)", AggregateOperatorToSQLFunc[mq.AggregateOperator])
-		subQuery := fmt.Sprintf(queryTmpl, groupTags, qp.Step, op, filterSubQuery, groupBy, groupTags)
+		subQuery := fmt.Sprintf(queryTmpl, groupTags, step, op, filterSubQuery, groupBy, groupTags)
 		query := `SELECT %s ts, runningDifference(value)/runningDifference(ts) as value FROM(%s) OFFSET 1`
 		query = fmt.Sprintf(query, groupTags, subQuery)
 		return query, nil
 	case model.P05, model.P10, model.P20, model.P25, model.P50, model.P75, model.P90, model.P95, model.P99:
 		op := fmt.Sprintf("quantile(%v)(value)", AggregateOperatorToPercentile[mq.AggregateOperator])
-		query := fmt.Sprintf(queryTmpl, groupTags, qp.Step, op, filterSubQuery, groupBy, groupTags)
+		query := fmt.Sprintf(queryTmpl, groupTags, step, op, filterSubQuery, groupBy, groupTags)
 		return query, nil
 	case model.HIST_QUANTILE_50, model.HIST_QUANTILE_75, model.HIST_QUANTILE_90, model.HIST_QUANTILE_95, model.HIST_QUANTILE_99:
 		rateGroupBy := "fingerprint, " + groupBy
 		rateGroupTags := "fingerprint, " + groupTags
 		op := "max(value)"
 		subQuery := fmt.Sprintf(
-			queryTmpl, rateGroupTags, qp.Step, op, filterSubQuery, rateGroupBy, rateGroupTags,
+			queryTmpl, rateGroupTags, step, op, filterSubQuery, rateGroupBy, rateGroupTags,
 		) // labels will be same so any should be fine
 		query := `SELECT %s ts, runningDifference(value)/runningDifference(ts) as value FROM(%s) OFFSET 1`
 		query = fmt.Sprintf(query, groupTags, subQuery)
@@ -241,15 +238,15 @@ func BuildMetricQuery(qp *model.QueryRangeParamsV2, mq *model.MetricQuery, table
 		return query, nil
 	case model.AVG, model.SUM, model.MIN, model.MAX:
 		op := fmt.Sprintf("%s(value)", AggregateOperatorToSQLFunc[mq.AggregateOperator])
-		query := fmt.Sprintf(queryTmpl, groupTags, qp.Step, op, filterSubQuery, groupBy, groupTags)
+		query := fmt.Sprintf(queryTmpl, groupTags, step, op, filterSubQuery, groupBy, groupTags)
 		return query, nil
 	case model.COUNT:
 		op := "toFloat64(count(*))"
-		query := fmt.Sprintf(queryTmpl, groupTags, qp.Step, op, filterSubQuery, groupBy, groupTags)
+		query := fmt.Sprintf(queryTmpl, groupTags, step, op, filterSubQuery, groupBy, groupTags)
 		return query, nil
 	case model.COUNT_DISTINCT:
 		op := "toFloat64(count(distinct(value)))"
-		query := fmt.Sprintf(queryTmpl, groupTags, qp.Step, op, filterSubQuery, groupBy, groupTags)
+		query := fmt.Sprintf(queryTmpl, groupTags, step, op, filterSubQuery, groupBy, groupTags)
 		return query, nil
 	case model.NOOP:
 		queryTmpl :=
@@ -263,10 +260,19 @@ func BuildMetricQuery(qp *model.QueryRangeParamsV2, mq *model.MetricQuery, table
 				" WHERE " + samplesTableTimeFilter +
 				" GROUP BY fingerprint, labels, ts" +
 				" ORDER BY fingerprint, labels, ts"
-		query := fmt.Sprintf(queryTmpl, qp.Step, filterSubQuery)
+		query := fmt.Sprintf(queryTmpl, step, filterSubQuery)
 		return query, nil
 	default:
 		return "", fmt.Errorf("unsupported aggregate operator")
+	}
+}
+
+func BuildPromQuery(promQuery *model.PromQuery, step, start, end int64) *model.QueryRangeParams {
+	return &model.QueryRangeParams{
+		Query: promQuery.Query,
+		Start: time.UnixMilli(start),
+		End:   time.UnixMilli(end),
+		Step:  time.Duration(step * int64(time.Second)),
 	}
 }
 
@@ -353,7 +359,7 @@ func varToQuery(qp *model.QueryRangeParamsV2, tableName string) (map[string]stri
 					errs = append(errs, fmt.Errorf("variable %s not found in builder queries", _var))
 					continue
 				}
-				query, err := BuildMetricQuery(qp, mq, tableName)
+				query, err := BuildMetricQuery(mq, qp.Step, qp.Start, qp.End, tableName)
 				if err != nil {
 					errs = append(errs, err)
 				} else {

@@ -78,3 +78,7 @@ type Reader interface {
 
 	QueryDashboardVars(ctx context.Context, query string) (*model.DashboardVar, error)
 }
+
+type Querier interface {
+	QueryRange(context.Context, *model.QueryRangeParamsV2) ([]*model.Series, error, map[string]string)
+}

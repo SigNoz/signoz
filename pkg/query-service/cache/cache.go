@@ -7,6 +7,7 @@ import (
 	inmemory "go.signoz.io/signoz/pkg/query-service/cache/inmemory"
 	redis "go.signoz.io/signoz/pkg/query-service/cache/redis"
 	"go.signoz.io/signoz/pkg/query-service/cache/status"
+	"go.signoz.io/signoz/pkg/query-service/model"
 )
 
 type Options struct {
@@ -26,5 +27,9 @@ type Cache interface {
 	Remove(cacheKey string)
 	BulkRemove(cacheKeys []string)
 	Close() error
-	Configuration() *Options
+	// Configuration() *Options
+}
+
+type KeyGenerator interface {
+	GenerateKeys(*model.QueryRangeParamsV2) map[string]string
 }

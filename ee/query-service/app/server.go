@@ -134,12 +134,14 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 
 	telemetry.GetInstance().SetReader(reader)
 
+	// cache := inmemory.New()
 	apiOpts := api.APIHandlerOptions{
 		DataConnector:  reader,
 		AppDao:         modelDao,
 		RulesManager:   rm,
 		FeatureFlags:   lm,
 		LicenseManager: lm,
+		// cache:          cache,
 	}
 
 	apiHandler, err := api.NewAPIHandler(apiOpts)
