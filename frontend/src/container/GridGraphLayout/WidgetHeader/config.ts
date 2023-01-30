@@ -10,4 +10,13 @@ export const tooltipStyles = {
 	right: '0.313rem',
 	color: themeColors.errorColor,
 };
+
 export const errorTooltipPosition = 'top';
+
+export const overlayStyles: React.CSSProperties = {
+	display: 'flex',
+	flexDirection: 'column',
+	alignItems: 'center',
+	justifyContent: 'center',
+	position: 'absolute',
+};
