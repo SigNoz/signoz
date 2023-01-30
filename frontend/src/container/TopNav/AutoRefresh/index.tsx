@@ -81,7 +81,11 @@ function AutoRefresh({ disabled = false }: AutoRefreshProps): JSX.Element {
 	useInterval(() => {
 		const selectedValue = getOption?.value;
 
-		if (isDisabled || !isAutoRefreshEnabled) {
+		if (
+			isDisabled ||
+			!isAutoRefreshEnabled ||
+			globalTime.selectedTime === 'custom'
+		) {
 			return;
 		}
 
