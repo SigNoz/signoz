@@ -286,7 +286,7 @@ function GridGraph(props: Props): JSX.Element {
 	);
 }
 
-interface ComponentProps {
+export interface ComponentProps {
 	setLayout: React.Dispatch<React.SetStateAction<LayoutProps[]>>;
 }
 

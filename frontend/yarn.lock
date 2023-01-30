@@ -11252,7 +11252,7 @@ react-vis@^1.11.7:
     prop-types "^15.5.8"
     react-motion "^0.5.2"
 
-react-visibility-sensor@^5.1.1:
+react-visibility-sensor@5.1.1:
   version "5.1.1"
   resolved "https://registry.yarnpkg.com/react-visibility-sensor/-/react-visibility-sensor-5.1.1.tgz#5238380960d3a0b2be0b7faddff38541e337f5a9"
   integrity sha512-cTUHqIK+zDYpeK19rzW6zF9YfT4486TIgizZW53wEZ+/GPBbK7cNS0EHyJVyHYacwFEvvHLEKfgJndbemWhB/w==

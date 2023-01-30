@@ -10,7 +10,7 @@ import { AppState } from 'store/reducers';
 import { Widgets } from 'types/api/dashboard/getAll';
 import AppReducer from 'types/reducer/app';
 
-import { LayoutProps, State } from '.';
+import { ComponentProps, LayoutProps, State } from '.';
 import {
 	Button,
 	ButtonContainer,
@@ -36,6 +36,16 @@ function GraphLayout({
 		['save_layout', 'add_panel'],
 		role,
 	);
+
+	const getReactElementNode = (
+		isVisible: boolean,
+		Component: (props: ComponentProps) => JSX.Element,
+	): React.ReactNode =>
+		isVisible ? (
+			<Component setLayout={setLayout} />
+		) : (
+			<Spinner height="20vh" tip="Loading..." />
+		);
 
 	return (
 		<>
@@ -88,11 +98,7 @@ function GraphLayout({
 							<Card>
 								<VisibilitySensor partialVisibility>
 									{(args: { isVisible: boolean }): React.ReactNode =>
-										args.isVisible ? (
-											<Component setLayout={setLayout} />
-										) : (
-											<Spinner height="20vh" tip="Loading..." />
-										)
+										getReactElementNode(args.isVisible, Component)
 									}
 								</VisibilitySensor>
 							</Card>
