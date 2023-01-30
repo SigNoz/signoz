@@ -8,7 +8,7 @@ import (
 // this file contains methods to transform ingestion rules into
 // collector config components
 
-func PrepareDropFilter(rules []model.*IngestionRule) (*filterprocessor.Config, error) {
+func PrepareDropFilter(rules []model.IngestionRule) (*filterprocessor.Config, error) {
 	metricRules := getMetricRules(rules)
 
 	metricExprs, err := PrepareDropExpressions(metricRules)

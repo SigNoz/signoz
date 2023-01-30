@@ -22,13 +22,6 @@ type Repo struct {
 	db *sqlx.DB
 }
 
-// NewRepo initiates a new ingestion repo
-func NewRepo(db *sqlx.DB) Repo {
-	return Repo{
-		db: db,
-	}
-}
-
 func (r *Repo) InitDB(engine string) error {
 	switch engine {
 	case "sqlite3", "sqlite":
@@ -38,12 +31,63 @@ func (r *Repo) InitDB(engine string) error {
 	}
 }
 
-func (r *Repo) GetLatestVersion(typ ElementTypeDef) (float32, error) {
-	var c ConfigVersion
-	err := r.db.Get(&c, `SELECT MAX(version) AS version FROM agent_config_versions 
-	WHERE element_type=$1`, typ)
+func (r *Repo) GetConfigHistory(ctx context.Context, typ ElementTypeDef) ([]ConfigVersion, error) {
+	var c []ConfigVersion
+	err := r.db.SelectContext(ctx, &c, `SELECT 
+		id, 
+		version, 
+		element_type, 
+		created_by, 
+		active, 
+		is_valid, 
+		disabled, 
+		deploy_status, 
+		deploy_result 
+		FROM agent_config_versions 
+		WHERE element_type = $1`, typ)
 
-	return c.Version, err
+	return c, err
+}
+
+func (r *Repo) GetConfigVersion(ctx context.Context, typ ElementTypeDef, v float32) (*ConfigVersion, error) {
+	var c ConfigVersion
+	err := r.db.GetContext(ctx, &c, `SELECT 
+		id, 
+		version, 
+		element_type, 
+		created_by, 
+		active, 
+		is_valid, 
+		disabled, 
+		deploy_status, 
+		deploy_result 
+		FROM agent_config_versions 
+		WHERE element_type = $1 
+		AND version = $2`, typ, v)
+
+	return &c, err
+
+}
+func (r *Repo) GetLatestVersion(ctx context.Context, typ ElementTypeDef) (*ConfigVersion, error) {
+	var c ConfigVersion
+	err := r.db.GetContext(ctx, &c, `SELECT 
+		id, 
+		version, 
+		element_type, 
+		created_by, 
+		active, 
+		is_valid, 
+		disabled, 
+		deploy_status, 
+		deploy_result 
+		FROM agent_config_versions 
+		WHERE element_type = $1 
+		AND version = ( 
+			SELECT MAX(version) 
+			FROM agent_config_versions 
+			WHERE element_type=$2)`, typ, typ)
+
+	return &c, err
 
 }
 
@@ -51,6 +95,11 @@ func (r *Repo) InsertConfig(ctx context.Context, c *ConfigVersion, elements []st
 
 	if string(c.ElementType) == "" {
 		return fmt.Errorf("element type is required for creating agent config version")
+	}
+
+	if len(elements) == 0 {
+		zap.S().Errorf("insert config called with no elements", c.ElementType)
+		return fmt.Errorf("config must have atleast one element")
 	}
 
 	if c.Version != 0 {

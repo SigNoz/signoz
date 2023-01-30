@@ -128,38 +128,8 @@ func (r *Repo) EditRule(ctx context.Context, editParams *IngestionRule) error {
 	return nil
 }
 
-// GetDropRules returns drop rules and errors (if any)
-func (r *Repo) GetDropRules(ctx context.Context) ([]model.IngestionRule, []error) {
-	var errors []error
-	dropRules := []model.IngestionRule{}
-
-	dropRulesQuery := `SELECT id, 
-		source, 
-		priority, 
-		rule_type, 
-		rule_subtype, 
-		name, 
-		config_json, 
-		deployment_status, 
-		deployment_sequence 
-		FROM ingestion_rules 
-		WHERE rule_type=$1`
-
-	err := r.db.SelectContext(ctx, &dropRules, dropRulesQuery, model.IngestionRuleTypeDrop)
-	if err != nil {
-		return nil, []error{fmt.Errorf("failed to get drop rules from db: %v", err)}
-	}
-
-	for _, d := range dropRules {
-		if err := d.ParseRawConfig(); err != nil {
-			errors = append(errors, err)
-		}
-	}
-
-	return dropRules, errors
-}
-
-func (r *Repo) GetDropRulesByVersion(ctx context.Context, v float32) ([]model.IngestionRule, []error) {
+// GetDropRules returns drop rules associated with a given version
+func (r *Repo) GetDropRules(ctx context.Context, version float32) ([]model.IngestionRule, []error) {
 	var errors []error
 	rules := []model.IngestionRule{}
 
@@ -180,7 +150,7 @@ func (r *Repo) GetDropRulesByVersion(ctx context.Context, v float32) ([]model.In
 		AND v.id = e.version_id
 		AND v.version = $1`
 
-	err := r.db.SelectContext(ctx, &rules, versionQuery, v)
+	err := r.db.SelectContext(ctx, &rules, versionQuery, version)
 	if err != nil {
 		return nil, []error{fmt.Errorf("failed to get drop rules from db: %v", err)}
 	}

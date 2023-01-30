@@ -10,10 +10,6 @@ const (
 	ElementTypeLogPipelines  ElementTypeDef = "log_pipelines"
 )
 
-type Element interface {
-	ID() string
-}
-
 type DeployStatus string
 
 const (
@@ -27,7 +23,7 @@ type ConfigVersion struct {
 	ID          string         `json:"id" db:"id"`
 	Version     float32        `json:"version" db:"version"`
 	ElementType ElementTypeDef `json:"elementType" db:"element_type"`
-	CreatedBy   string         `json:"createdBy" db:"id"`
+	CreatedBy   string         `json:"createdBy" db:"created_by"`
 
 	Active   bool `json:"active" db:"active"`
 	IsValid  bool `json:"is_valid" db:"is_valid"`
