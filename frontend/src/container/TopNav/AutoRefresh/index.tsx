@@ -37,8 +37,11 @@ function AutoRefresh({ disabled = false }: AutoRefreshProps): JSX.Element {
 	const { pathname } = useLocation();
 
 	const isDisabled = useMemo(
-		() => disabled || globalTime.isAutoRefreshDisabled,
-		[globalTime.isAutoRefreshDisabled, disabled],
+		() =>
+			disabled ||
+			globalTime.isAutoRefreshDisabled ||
+			globalTime.selectedTime === 'custom',
+		[globalTime.isAutoRefreshDisabled, disabled, globalTime.selectedTime],
 	);
 
 	const localStorageData = JSON.parse(get(DASHBOARD_TIME_IN_DURATION) || '{}');
@@ -131,6 +134,11 @@ function AutoRefresh({ disabled = false }: AutoRefreshProps): JSX.Element {
 		},
 		[localStorageData, pathname],
 	);
+
+	if (globalTime.selectedTime === 'custom') {
+		// eslint-disable-next-line react/jsx-no-useless-fragment
+		return <></>;
+	}
 
 	return (
 		<Popover

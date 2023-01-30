@@ -88,6 +88,14 @@ function DateTimeSelection({
 		return timeInterval;
 	};
 
+	useEffect(() => {
+		if (selectedTime === 'custom') {
+			setRefreshButtonHidden(true);
+		} else {
+			setRefreshButtonHidden(false);
+		}
+	}, [selectedTime]);
+
 	const getDefaultTime = (pathName: string): Time => {
 		const defaultSelectedOption = getDefaultOption(pathName);
 
