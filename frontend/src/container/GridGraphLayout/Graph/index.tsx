@@ -8,6 +8,7 @@ import getChartData from 'lib/getChartData';
 import isEmpty from 'lodash-es/isEmpty';
 import React, { memo, useCallback, useMemo, useState } from 'react';
 import { Layout } from 'react-grid-layout';
+import { useInView } from 'react-intersection-observer';
 import { useQuery } from 'react-query';
 import { connect, useSelector } from 'react-redux';
 import { bindActionCreators, Dispatch } from 'redux';
@@ -39,6 +40,11 @@ function GridCardGraph({
 	setLayout,
 	onDragSelect,
 }: GridCardGraphProps): JSX.Element {
+	const { ref: graphRef, inView: isGraphVisible } = useInView({
+		threshold: 0,
+		triggerOnce: true,
+	});
+
 	const [errorMessage, setErrorMessage] = useState<string | undefined>('');
 	const [hovered, setHovered] = useState(false);
 	const [modal, setModal] = useState(false);
@@ -79,6 +85,7 @@ function GridCardGraph({
 			}),
 		{
 			keepPreviousData: true,
+			enabled: isGraphVisible,
 			refetchOnMount: false,
 			onError: (error) => {
 				if (error instanceof Error) {
@@ -160,7 +167,7 @@ function GridCardGraph({
 
 	if (queryResponse.isError && !isEmptyLayout) {
 		return (
-			<span>
+			<span ref={graphRef}>
 				{getModals()}
 				{!isEmpty(widget) && prevChartDataSetRef && (
 					<>
@@ -192,7 +199,7 @@ function GridCardGraph({
 
 	if (prevChartDataSetRef?.labels === undefined && queryResponse.isLoading) {
 		return (
-			<span>
+			<span ref={graphRef}>
 				{!isEmpty(widget) && prevChartDataSetRef?.labels ? (
 					<>
 						<div className="drag-handle">
@@ -225,6 +232,7 @@ function GridCardGraph({
 
 	return (
 		<span
+			ref={graphRef}
 			onMouseOver={(): void => {
 				setHovered(true);
 			}}
@@ -260,7 +268,7 @@ function GridCardGraph({
 					data={chartData}
 					isStacked={widget.isStacked}
 					opacity={widget.opacity}
-					title={' '} // empty title to accommodate absolutely positioned widget header
+					title={' '} // `empty title to accommodate absolutely positioned widget header
 					name={name}
 					yAxisUnit={yAxisUnit}
 					onDragSelect={onDragSelect}
