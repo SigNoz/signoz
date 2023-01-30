@@ -17,28 +17,28 @@ const getChartData = ({ queryData }: GetChartDataProps): ChartData => {
 	const labels = Array.from(uniqueTimeLabels).sort((a, b) => a - b);
 
 	const response = queryData.map(
-		({ queryData, query: queryG, legend: legendG }) =>
-			queryData.map((e) => {
+		({ queryData: queryDataNested, query: queryG, legend: legendG }) =>
+			queryDataNested.map((e) => {
 				const { values = [], metric, legend, queryName } = e || {};
 				const labelNames = getLabelName(
 					metric,
 					queryName || queryG || '', // query
 					legend || legendG || '',
 				);
-				const dataValue = values?.map((e) => {
-					const [first = 0, second = ''] = e || [];
+				const dataValue = values?.map((eValue) => {
+					const [first = 0, second = ''] = eValue || [];
 					return {
 						first: new Date(parseInt(convertIntoEpoc(first * 1000), 10)), // converting in ms
 						second: Number(parseFloat(second)),
 					};
 				});
 				// Fill the missing data with null
-				const filledDataValues = Array.from(labels).map((e) => {
-					const td1 = new Date(parseInt(convertIntoEpoc(e * 1000), 10));
+				const filledDataValues = Array.from(labels).map((eParam4) => {
+					const td1 = new Date(parseInt(convertIntoEpoc(eParam4 * 1000), 10));
 					const data = dataValue.find((e1) => e1.first.getTime() === td1.getTime());
 					return (
 						data || {
-							first: new Date(parseInt(convertIntoEpoc(e * 1000), 10)),
+							first: new Date(parseInt(convertIntoEpoc(eParam4 * 1000), 10)),
 							second: null,
 						}
 					);
@@ -46,17 +46,17 @@ const getChartData = ({ queryData }: GetChartDataProps): ChartData => {
 
 				return {
 					label: labelNames !== 'undefined' ? labelNames : '',
-					first: filledDataValues.map((e) => e.first),
-					second: filledDataValues.map((e) => e.second),
+					first: filledDataValues.map((eParam1) => eParam1.first),
+					second: filledDataValues.map((eParam2) => eParam2.second),
 				};
 			}),
 	);
 	const allLabels = response
-		.map((e) => e.map((e) => e.label))
+		.map((eParam3) => eParam3.map((e) => e.label))
 		.reduce((a, b) => [...a, ...b], []);
 
 	const alldata = response
-		.map((e) => e.map((e) => e.second))
+		.map((eParam5) => eParam5.map((e) => e.second))
 		.reduce((a, b) => [...a, ...b], []);
 
 	return {
@@ -71,7 +71,7 @@ const getChartData = ({ queryData }: GetChartDataProps): ChartData => {
 			pointRadius: 0,
 		})),
 		labels: response
-			.map((e) => e.map((e) => e.first))
+			.map((eParam6) => eParam6.map((e) => e.first))
 			.reduce((a, b) => [...a, ...b], [])[0],
 	};
 };

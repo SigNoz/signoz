@@ -107,18 +107,18 @@ function TraceFlameGraph(props: {
 		level = 0,
 		spanData,
 		parentLeftOffset = 0,
-		onSpanHover,
-		onSpanSelect,
-		hoveredSpanId,
-		selectedSpanId,
+		onSpanHoverParam,
+		onSpanSelectParam,
+		hoveredSpanIdParam,
+		selectedSpanIdParam,
 	}: {
 		spanData: ITraceTree;
 		level: number;
 		parentLeftOffset: number;
-		onSpanHover: SpanItemProps['onSpanHover'];
-		onSpanSelect: SpanItemProps['onSpanSelect'];
-		hoveredSpanId: string;
-		selectedSpanId: string;
+		onSpanHoverParam: SpanItemProps['onSpanHover'];
+		onSpanSelectParam: SpanItemProps['onSpanSelect'];
+		hoveredSpanIdParam: string;
+		selectedSpanIdParam: string;
 	}): JSX.Element {
 		if (!spanData) {
 			return <div />;
@@ -136,10 +136,10 @@ function TraceFlameGraph(props: {
 					width={width}
 					spanData={spanData}
 					tooltipText={toolTipText}
-					onSpanHover={onSpanHover}
-					onSpanSelect={onSpanSelect}
-					hoveredSpanId={hoveredSpanId}
-					selectedSpanId={selectedSpanId}
+					onSpanHover={onSpanHoverParam}
+					onSpanSelect={onSpanSelectParam}
+					hoveredSpanId={hoveredSpanIdParam}
+					selectedSpanId={selectedSpanIdParam}
 				/>
 
 				{spanData.children.map((childData) => (
@@ -148,10 +148,10 @@ function TraceFlameGraph(props: {
 						spanData={childData}
 						key={childData.id}
 						parentLeftOffset={leftOffset + parentLeftOffset}
-						onSpanHover={onSpanHover}
-						onSpanSelect={onSpanSelect}
-						hoveredSpanId={hoveredSpanId}
-						selectedSpanId={selectedSpanId}
+						onSpanHoverParam={onSpanHover}
+						onSpanSelectParam={onSpanSelect}
+						hoveredSpanIdParam={hoveredSpanId}
+						selectedSpanIdParam={selectedSpanId}
 					/>
 				))}
 			</>
@@ -162,10 +162,10 @@ function TraceFlameGraph(props: {
 		<TraceFlameGraphContainer height={TOTAL_SPAN_HEIGHT * levels}>
 			<RenderSpanRecursive
 				spanData={treeData}
-				onSpanHover={onSpanHover}
-				onSpanSelect={onSpanSelect}
-				hoveredSpanId={hoveredSpanId}
-				selectedSpanId={selectedSpanId}
+				onSpanHoverParam={onSpanHover}
+				onSpanSelectParam={onSpanSelect}
+				hoveredSpanIdParam={hoveredSpanId}
+				selectedSpanIdParam={selectedSpanId}
 				level={missingSpanTree ? -1 : 0}
 				parentLeftOffset={0}
 			/>

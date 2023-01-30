@@ -10,13 +10,12 @@ import { Container } from './styles';
 
 function Tag({ tags, onToggleHandler, setText }: TagProps): JSX.Element {
 	const isDarkMode = useIsDarkMode();
-
 	const { value, isEllipsed } = useMemo(() => {
-		const value = tags.key === 'error' ? 'true' : tags.value;
+		const tagValue = tags.key === 'error' ? 'true' : tags.value;
 
 		return {
-			value,
-			isEllipsed: value.length > 24,
+			value: tagValue,
+			isEllipsed: tagValue.length > 24,
 		};
 	}, [tags]);
 

@@ -64,10 +64,10 @@ function TraceDetail({ response }: TraceDetailProps): JSX.Element {
 
 	const { treesData: tree, ...traceMetaData } = useMemo(() => {
 		const sortedTreesData: ITraceForest = {
-			spanTree: map(treesData.spanTree, (tree) => getSortedData(tree)),
+			spanTree: map(treesData.spanTree, (treeParam) => getSortedData(treeParam)),
 			missingSpanTree: map(
 				treesData.missingSpanTree,
-				(tree) => getSortedData(tree) || [],
+				(treeParam2) => getSortedData(treeParam2) || [],
 			),
 		};
 		// Note: Handle undefined
@@ -144,10 +144,10 @@ function TraceDetail({ response }: TraceDetailProps): JSX.Element {
 						{hasMissingSpans && <MissingSpansMessage />}
 					</StyledCol>
 					<Col flex="auto">
-						{map(tree.spanTree, (tree) => (
+						{map(tree.spanTree, (treeParam4) => (
 							<TraceFlameGraph
-								key={tree.id}
-								treeData={tree}
+								key={treeParam4.id}
+								treeData={treeParam4}
 								traceMetaData={traceMetaData}
 								hoveredSpanId={activeHoverId}
 								selectedSpanId={activeSelectedId}
@@ -159,13 +159,13 @@ function TraceDetail({ response }: TraceDetailProps): JSX.Element {
 
 						{hasMissingSpans && (
 							<FlameGraphMissingSpansContainer>
-								{map(tree.missingSpanTree, (tree) => (
+								{map(tree.missingSpanTree, (treeParam5) => (
 									<TraceFlameGraph
-										key={tree.id}
-										treeData={tree}
+										key={treeParam5.id}
+										treeData={treeParam5}
 										traceMetaData={{
 											...traceMetaData,
-											levels: getTreeLevelsCount(tree),
+											levels: getTreeLevelsCount(treeParam5),
 										}}
 										hoveredSpanId={activeHoverId}
 										selectedSpanId={activeSelectedId}
@@ -218,11 +218,11 @@ function TraceDetail({ response }: TraceDetailProps): JSX.Element {
 				</StyledRow>
 				<StyledDiv styledclass={[styles.ganttChartContainer]}>
 					<GanttChartWrapper>
-						{map([...tree.spanTree, ...tree.missingSpanTree], (tree) => (
+						{map([...tree.spanTree, ...tree.missingSpanTree], (treeParam6) => (
 							<GanttChart
 								key={tree as never}
 								traceMetaData={traceMetaData}
-								data={tree}
+								data={treeParam6}
 								activeSelectedId={activeSelectedId}
 								activeHoverId={activeHoverId}
 								setActiveHoverId={setActiveHoverId}
@@ -247,7 +247,7 @@ function TraceDetail({ response }: TraceDetailProps): JSX.Element {
 							: []),
 					]
 						.filter(Boolean)
-						.find((tree) => tree)}
+						.find((treeParam7) => treeParam7)}
 				/>
 			</StyledCol>
 		</StyledRow>

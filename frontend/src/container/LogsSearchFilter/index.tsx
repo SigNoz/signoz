@@ -30,8 +30,8 @@ import { Container, DropDownContainer } from './styles';
 import { useSearchParser } from './useSearchParser';
 
 function SearchFilter({
-	getLogs,
-	getLogsAggregate,
+	getLogsLocal,
+	getLogsAggregateLocal,
 }: SearchFilterProps): JSX.Element {
 	const {
 		updateParsedQuery,
@@ -86,7 +86,7 @@ function SearchFilter({
 					0,
 				);
 			} else {
-				getLogs({
+				getLogsLocal({
 					q: customQuery,
 					limit: logLinesPerPage,
 					orderBy: 'timestamp',
@@ -97,7 +97,7 @@ function SearchFilter({
 					...(idEnd ? { idLt: idEnd } : {}),
 				});
 
-				getLogsAggregate({
+				getLogsAggregateLocal({
 					timestampStart: minTime,
 					timestampEnd: maxTime,
 					step: getStep({
@@ -111,8 +111,8 @@ function SearchFilter({
 		},
 		[
 			dispatch,
-			getLogs,
-			getLogsAggregate,
+			getLogsLocal,
+			getLogsAggregateLocal,
 			idEnd,
 			idStart,
 			liveTail,
@@ -192,8 +192,8 @@ function SearchFilter({
 }
 
 interface DispatchProps {
-	getLogs: typeof getLogs;
-	getLogsAggregate: typeof getLogsAggregate;
+	getLogsLocal: typeof getLogs;
+	getLogsAggregateLocal: typeof getLogsAggregate;
 }
 
 type SearchFilterProps = DispatchProps;
@@ -201,8 +201,8 @@ type SearchFilterProps = DispatchProps;
 const mapDispatchToProps = (
 	dispatch: ThunkDispatch<unknown, unknown, AppActions>,
 ): DispatchProps => ({
-	getLogs: bindActionCreators(getLogs, dispatch),
-	getLogsAggregate: bindActionCreators(getLogsAggregate, dispatch),
+	getLogsLocal: bindActionCreators(getLogs, dispatch),
+	getLogsAggregateLocal: bindActionCreators(getLogsAggregate, dispatch),
 });
 
 export default connect(null, mapDispatchToProps)(SearchFilter);
