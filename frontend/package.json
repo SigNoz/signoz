@@ -76,6 +76,7 @@
 		"react-graph-vis": "^1.0.5",
 		"react-grid-layout": "^1.3.4",
 		"react-i18next": "^11.16.1",
+		"react-intersection-observer": "9.4.1",
 		"react-query": "^3.34.19",
 		"react-redux": "^7.2.2",
 		"react-router-dom": "^5.2.0",
