@@ -18,7 +18,12 @@ import { Widgets } from 'types/api/dashboard/getAll';
 import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
 import AppReducer from 'types/reducer/app';
 
-import { errorTooltipPosition, spinnerStyles, tooltipStyles } from './config';
+import {
+	errorTooltipPosition,
+	overlayStyles,
+	spinnerStyles,
+	tooltipStyles,
+} from './config';
 import {
 	ArrowContainer,
 	HeaderContainer,
@@ -75,6 +80,7 @@ function WidgetHeader({
 	};
 	const onMenuItemSelectHandler = ({ key }: { key: TWidgetOptions }): void => {
 		keyMethodMapping[key]?.method();
+		setIsOpen(false);
 	};
 	const { role } = useSelector<AppState, AppReducer>((state) => state.app);
 
@@ -117,22 +123,23 @@ function WidgetHeader({
 	}, []);
 
 	return (
-		<Dropdown
-			destroyPopupOnHide
-			open={isOpen}
-			onOpenChange={setIsOpen}
-			overlay={menu}
-			trigger={['click']}
-			placement="bottom"
-		>
-			<>
+		<div>
+			<Dropdown
+				destroyPopupOnHide
+				open={isOpen}
+				onOpenChange={setIsOpen}
+				overlay={menu}
+				placement="bottomCenter"
+				trigger={['click']}
+				overlayStyle={overlayStyles}
+			>
 				<HeaderContainer
 					onMouseOver={(): void => setLocalHover(true)}
 					onMouseOut={(): void => setLocalHover(false)}
 					hover={localHover}
 					onClick={onClickHandler}
 				>
-					<HeaderContentContainer onClick={(e): void => e.preventDefault()}>
+					<HeaderContentContainer>
 						<Typography.Text style={{ maxWidth: '80%' }} ellipsis>
 							{title}
 						</Typography.Text>
@@ -141,16 +148,16 @@ function WidgetHeader({
 						</ArrowContainer>
 					</HeaderContentContainer>
 				</HeaderContainer>
-				{queryResponse.isFetching && !queryResponse.isError && (
-					<Spinner height="5vh" style={spinnerStyles} />
-				)}
-				{queryResponse.isError && (
-					<Tooltip title={errorMessage} placement={errorTooltipPosition}>
-						<ExclamationCircleOutlined style={tooltipStyles} />
-					</Tooltip>
-				)}
-			</>
-		</Dropdown>
+			</Dropdown>
+			{queryResponse.isFetching && !queryResponse.isError && (
+				<Spinner height="5vh" style={spinnerStyles} />
+			)}
+			{queryResponse.isError && (
+				<Tooltip title={errorMessage} placement={errorTooltipPosition}>
+					<ExclamationCircleOutlined style={tooltipStyles} />
+				</Tooltip>
+			)}
+		</div>
 	);
 }
 
