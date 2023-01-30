@@ -42,6 +42,7 @@ function GridCardGraph({
 }: GridCardGraphProps): JSX.Element {
 	const { ref: myRef, inView: myElementIsVisible } = useInView({
 		threshold: 0,
+		triggerOnce: true,
 	});
 
 	const [errorMessage, setErrorMessage] = useState<string | undefined>('');
