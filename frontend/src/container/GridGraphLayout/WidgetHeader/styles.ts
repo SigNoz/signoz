@@ -1,12 +1,6 @@
 import { grey } from '@ant-design/colors';
 import styled from 'styled-components';
 
-export const MenuItemContainer = styled.div`
-	display: flex;
-	justify-content: space-between;
-	align-items: center;
-`;
-
 export const HeaderContainer = styled.div<{ hover: boolean }>`
 	width: 100%;
 	text-align: center;
