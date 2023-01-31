@@ -1,13 +1,15 @@
 import { Typography } from 'antd';
-import { AxiosError } from 'axios';
 import { ChartData } from 'chart.js';
 import Spinner from 'components/Spinner';
 import GridGraphComponent from 'container/GridGraphComponent';
+import usePreviousValue from 'hooks/usePreviousValue';
 import { getDashboardVariables } from 'lib/dashbaordVariables/getDashboardVariables';
 import getChartData from 'lib/getChartData';
 import isEmpty from 'lodash-es/isEmpty';
-import React, { memo, useCallback, useEffect, useState } from 'react';
+import React, { memo, useCallback, useMemo, useState } from 'react';
 import { Layout } from 'react-grid-layout';
+import { useInView } from 'react-intersection-observer';
+import { useQuery } from 'react-query';
 import { connect, useSelector } from 'react-redux';
 import { bindActionCreators, Dispatch } from 'redux';
 import { ThunkDispatch } from 'redux-thunk';
@@ -20,13 +22,14 @@ import { AppState } from 'store/reducers';
 import AppActions from 'types/actions';
 import { GlobalTime } from 'types/actions/globalTime';
 import { Widgets } from 'types/api/dashboard/getAll';
+import DashboardReducer from 'types/reducer/dashboards';
 import { GlobalReducer } from 'types/reducer/globalTime';
 
 import { LayoutProps } from '..';
 import EmptyWidget from '../EmptyWidget';
 import WidgetHeader from '../WidgetHeader';
 import FullView from './FullView/index.metricsBuilder';
-import { ErrorContainer, FullViewContainer, Modal } from './styles';
+import { FullViewContainer, Modal } from './styles';
 
 function GridCardGraph({
 	widget,
@@ -35,13 +38,14 @@ function GridCardGraph({
 	yAxisUnit,
 	layout = [],
 	setLayout,
+	onDragSelect,
 }: GridCardGraphProps): JSX.Element {
-	const [state, setState] = useState<GridCardGraphState>({
-		loading: true,
-		errorMessage: '',
-		error: false,
-		payload: undefined,
+	const { ref: graphRef, inView: isGraphVisible } = useInView({
+		threshold: 0,
+		triggerOnce: true,
 	});
+
+	const [errorMessage, setErrorMessage] = useState<string | undefined>('');
 	const [hovered, setHovered] = useState(false);
 	const [modal, setModal] = useState(false);
 	const [deleteModal, setDeleteModal] = useState(false);
@@ -53,113 +57,57 @@ function GridCardGraph({
 		AppState,
 		GlobalReducer
 	>((state) => state.globalTime);
+	const { dashboards } = useSelector<AppState, DashboardReducer>(
+		(state) => state.dashboards,
+	);
+	const [selectedDashboard] = dashboards;
+	const selectedData = selectedDashboard?.data;
+	const { variables } = selectedData;
 
-	// const getMaxMinTime = GetMaxMinTime({
-	// 	graphType: widget?.panelTypes,
-	// 	maxTime,
-	// 	minTime,
-	// });
-
-	// const { start, end } = GetStartAndEndTime({
-	// 	type: widget?.timePreferance,
-	// 	maxTime: getMaxMinTime.maxTime,
-	// 	minTime: getMaxMinTime.minTime,
-	// });
-
-	// const queryLength = widget?.query?.filter((e) => e.query.length !== 0) || [];
-
-	// const response = useQueries(
-	// 	queryLength?.map((query) => {
-	// 		return {
-	// 			// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
-	// 			queryFn: () => {
-	// 				return getQueryResult({
-	// 					end,
-	// 					query: query?.query,
-	// 					start,
-	// 					step: '60',
-	// 				});
-	// 			},
-	// 			queryHash: `${query?.query}-${query?.legend}-${start}-${end}`,
-	// 			retryOnMount: false,
-	// 		};
-	// 	}),
-	// );
-
-	// const isError =
-	// 	response.find((e) => e?.data?.statusCode !== 200) !== undefined ||
-	// 	response.some((e) => e.isError === true);
-
-	// const isLoading = response.some((e) => e.isLoading === true);
-
-	// const errorMessage = response.find((e) => e.data?.error !== null)?.data?.error;
-
-	// const data = response.map((responseOfQuery) =>
-	// 	responseOfQuery?.data?.payload?.result.map((e, index) => ({
-	// 		query: queryLength[index]?.query,
-	// 		queryData: e,
-	// 		legend: queryLength[index]?.legend,
-	// 	})),
-	// );
-
-	useEffect(() => {
-		(async (): Promise<void> => {
-			try {
-				setState((state) => ({
-					...state,
-					error: false,
-					errorMessage: '',
-					loading: true,
-				}));
-				const response = await GetMetricQueryRange({
-					selectedTime: widget.timePreferance,
-					graphType: widget.panelTypes,
-					query: widget.query,
-					globalSelectedInterval,
-					variables: getDashboardVariables(),
-				});
-
-				const isError = response.error;
-
-				if (isError != null) {
-					setState((state) => ({
-						...state,
-						error: true,
-						errorMessage: isError || 'Something went wrong',
-						loading: false,
-					}));
-				} else {
-					const chartDataSet = getChartData({
-						queryData: [
-							{
-								queryData: response.payload?.data?.result
-									? response.payload?.data?.result
-									: [],
-							},
-						],
-					});
-
-					setState((state) => ({
-						...state,
-						loading: false,
-						payload: chartDataSet,
-					}));
+	const queryResponse = useQuery(
+		[
+			`GetMetricsQueryRange-${widget.timePreferance}-${globalSelectedInterval}-${widget.id}`,
+			{
+				widget,
+				maxTime,
+				minTime,
+				globalSelectedInterval,
+				variables,
+			},
+		],
+		() =>
+			GetMetricQueryRange({
+				selectedTime: widget.timePreferance,
+				graphType: widget.panelTypes,
+				query: widget.query,
+				globalSelectedInterval,
+				variables: getDashboardVariables(),
+			}),
+		{
+			keepPreviousData: true,
+			enabled: isGraphVisible,
+			refetchOnMount: false,
+			onError: (error) => {
+				if (error instanceof Error) {
+					setErrorMessage(error.message);
 				}
-			} catch (error) {
-				setState((state) => ({
-					...state,
-					error: true,
-					errorMessage: (error as AxiosError).toString(),
-					loading: false,
-				}));
-			} finally {
-				setState((state) => ({
-					...state,
-					loading: false,
-				}));
-			}
-		})();
-	}, [widget, maxTime, minTime, globalSelectedInterval]);
+			},
+		},
+	);
+
+	const chartData = useMemo(
+		() =>
+			getChartData({
+				queryData: [
+					{
+						queryData: queryResponse?.data?.payload?.data?.result || [],
+					},
+				],
+			}),
+		[queryResponse],
+	);
+
+	const prevChartDataSetRef = usePreviousValue<ChartData>(chartData);
 
 	const onToggleModal = useCallback(
 		(func: React.Dispatch<React.SetStateAction<boolean>>) => {
@@ -177,70 +125,114 @@ function GridCardGraph({
 		onToggleModal(setDeleteModal);
 	}, [deleteWidget, layout, onToggleModal, setLayout, widget]);
 
-	const getModals = (): JSX.Element => {
-		return (
-			<>
-				<Modal
-					destroyOnClose
-					onCancel={(): void => onToggleModal(setDeleteModal)}
-					open={deleteModal}
-					title="Delete"
-					height="10vh"
-					onOk={onDeleteHandler}
-					centered
-				>
-					<Typography>Are you sure you want to delete this widget</Typography>
-				</Modal>
+	const getModals = (): JSX.Element => (
+		<>
+			<Modal
+				destroyOnClose
+				onCancel={(): void => onToggleModal(setDeleteModal)}
+				open={deleteModal}
+				title="Delete"
+				height="10vh"
+				onOk={onDeleteHandler}
+				centered
+			>
+				<Typography>Are you sure you want to delete this widget</Typography>
+			</Modal>
 
-				<Modal
-					title="View"
-					footer={[]}
-					centered
-					open={modal}
-					onCancel={(): void => onToggleModal(setModal)}
-					width="85%"
-					destroyOnClose
-				>
-					<FullViewContainer>
-						<FullView
-							name={`${name}expanded`}
-							widget={widget}
-							yAxisUnit={yAxisUnit}
-						/>
-					</FullViewContainer>
-				</Modal>
-			</>
-		);
+			<Modal
+				title="View"
+				footer={[]}
+				centered
+				open={modal}
+				onCancel={(): void => onToggleModal(setModal)}
+				width="85%"
+				destroyOnClose
+			>
+				<FullViewContainer>
+					<FullView name={`${name}expanded`} widget={widget} yAxisUnit={yAxisUnit} />
+				</FullViewContainer>
+			</Modal>
+		</>
+	);
+
+	const handleOnView = (): void => {
+		onToggleModal(setModal);
+	};
+
+	const handleOnDelete = (): void => {
+		onToggleModal(setDeleteModal);
 	};
 
 	const isEmptyLayout = widget?.id === 'empty' || isEmpty(widget);
 
-	if (state.error && !isEmptyLayout) {
+	if (queryResponse.isError && !isEmptyLayout) {
 		return (
-			<>
+			<span ref={graphRef}>
 				{getModals()}
-				<WidgetHeader
-					parentHover={hovered}
-					title={widget?.title}
-					widget={widget}
-					onView={(): void => onToggleModal(setModal)}
-					onDelete={(): void => onToggleModal(setDeleteModal)}
-				/>
-
-				<ErrorContainer>{state.errorMessage}</ErrorContainer>
-			</>
+				{!isEmpty(widget) && prevChartDataSetRef && (
+					<>
+						<div className="drag-handle">
+							<WidgetHeader
+								parentHover={hovered}
+								title={widget?.title}
+								widget={widget}
+								onView={handleOnView}
+								onDelete={handleOnDelete}
+								queryResponse={queryResponse}
+								errorMessage={errorMessage}
+							/>
+						</div>
+						<GridGraphComponent
+							GRAPH_TYPES={widget.panelTypes}
+							data={prevChartDataSetRef}
+							isStacked={widget.isStacked}
+							opacity={widget.opacity}
+							title={' '}
+							name={name}
+							yAxisUnit={yAxisUnit}
+						/>
+					</>
+				)}
+			</span>
 		);
 	}
 
-	if (
-		(state.loading === true || state.payload === undefined) &&
-		!isEmptyLayout
-	) {
-		return <Spinner height="20vh" tip="Loading..." />;
+	if (prevChartDataSetRef?.labels === undefined && queryResponse.isLoading) {
+		return (
+			<span ref={graphRef}>
+				{!isEmpty(widget) && prevChartDataSetRef?.labels ? (
+					<>
+						<div className="drag-handle">
+							<WidgetHeader
+								parentHover={hovered}
+								title={widget?.title}
+								widget={widget}
+								onView={handleOnView}
+								onDelete={handleOnDelete}
+								queryResponse={queryResponse}
+								errorMessage={errorMessage}
+							/>
+						</div>
+						<GridGraphComponent
+							GRAPH_TYPES={widget.panelTypes}
+							data={prevChartDataSetRef}
+							isStacked={widget.isStacked}
+							opacity={widget.opacity}
+							title={' '}
+							name={name}
+							yAxisUnit={yAxisUnit}
+						/>
+					</>
+				) : (
+					<Spinner height="20vh" tip="Loading..." />
+				)}
+			</span>
+		);
 	}
 
 	return (
 		<span
+			ref={graphRef}
 			onMouseOver={(): void => {
 				setHovered(true);
 			}}
@@ -255,41 +247,37 @@ function GridCardGraph({
 			}}
 		>
 			{!isEmptyLayout && (
-				<WidgetHeader
-					parentHover={hovered}
-					title={widget?.title}
-					widget={widget}
-					onView={(): void => onToggleModal(setModal)}
-					onDelete={(): void => onToggleModal(setDeleteModal)}
-				/>
+				<div className="drag-handle">
+					<WidgetHeader
+						parentHover={hovered}
+						title={widget?.title}
+						widget={widget}
+						onView={handleOnView}
+						onDelete={handleOnDelete}
+						queryResponse={queryResponse}
+						errorMessage={errorMessage}
+					/>
+				</div>
 			)}
 
 			{!isEmptyLayout && getModals()}
 
-			{!isEmpty(widget) && !!state.payload && (
+			{!isEmpty(widget) && !!queryResponse.data?.payload && (
 				<GridGraphComponent
-					{...{
-						GRAPH_TYPES: widget.panelTypes,
-						data: state.payload,
-						isStacked: widget.isStacked,
-						opacity: widget.opacity,
-						title: ' ', // empty title to accommodate absolutely positioned widget header
-						name,
-						yAxisUnit,
-					}}
+					GRAPH_TYPES={widget.panelTypes}
+					data={chartData}
+					isStacked={widget.isStacked}
+					opacity={widget.opacity}
+					title={' '} // `empty title to accommodate absolutely positioned widget header
+					name={name}
+					yAxisUnit={yAxisUnit}
+					onDragSelect={onDragSelect}
 				/>
 			)}
 
 			{isEmptyLayout && <EmptyWidget />}
 		</span>
 	);
-}
-
-interface GridCardGraphState {
-	loading: boolean;
-	error: boolean;
-	errorMessage: string;
-	payload: ChartData | undefined;
 }
 
 interface DispatchProps {
@@ -306,7 +294,12 @@ interface GridCardGraphProps extends DispatchProps {
 	layout?: Layout[];
 	// eslint-disable-next-line react/require-default-props
 	setLayout?: React.Dispatch<React.SetStateAction<LayoutProps[]>>;
+	onDragSelect?: (start: number, end: number) => void;
 }
+
+GridCardGraph.defaultProps = {
+	onDragSelect: undefined,
+};
 
 const mapDispatchToProps = (
 	dispatch: ThunkDispatch<unknown, unknown, AppActions>,

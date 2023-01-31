@@ -1,10 +1,9 @@
-/* eslint-disable no-nested-ternary */
 import { Typography } from 'antd';
 import LogItem from 'components/Logs/LogItem';
 import Spinner from 'components/Spinner';
-import map from 'lodash-es/map';
-import React, { memo } from 'react';
+import React, { memo, useCallback, useMemo } from 'react';
 import { useSelector } from 'react-redux';
+import { Virtuoso } from 'react-virtuoso';
 import { AppState } from 'store/reducers';
 import { ILogsReducer } from 'types/reducer/logs';
 
@@ -13,6 +12,24 @@ import { Container, Heading } from './styles';
 function LogsTable(): JSX.Element {
 	const { logs, isLoading, liveTail } = useSelector<AppState, ILogsReducer>(
 		(state) => state.logs,
+	);
+
+	const isLiveTail = useMemo(() => logs.length === 0 && liveTail === 'PLAYING', [
+		logs?.length,
+		liveTail,
+	]);
+
+	const isNoLogs = useMemo(() => logs.length === 0 && liveTail === 'STOPPED', [
+		logs?.length,
+		liveTail,
+	]);
+
+	const getItemContent = useCallback(
+		(index: number): JSX.Element => {
+			const log = logs[index];
+			return <LogItem key={log.id} logData={log} />;
+		},
+		[logs],
 	);
 
 	if (isLoading) {
@@ -24,13 +41,15 @@ function LogsTable(): JSX.Element {
 			<Heading>
 				<Typography.Text>Event</Typography.Text>
 			</Heading>
-			{Array.isArray(logs) && logs.length > 0 ? (
-				map(logs, (log) => <LogItem key={log.id} logData={log} />)
-			) : liveTail === 'PLAYING' ? (
-				<span>Getting live logs...</span>
-			) : (
-				<span>No log lines found</span>
-			)}
+			{isLiveTail && <Typography>Getting live logs...</Typography>}
+
+			{isNoLogs && <Typography>No log lines found</Typography>}
+
+			<Virtuoso
+				useWindowScroll
+				totalCount={logs.length}
+				itemContent={getItemContent}
+			/>
 		</Container>
 	);
 }

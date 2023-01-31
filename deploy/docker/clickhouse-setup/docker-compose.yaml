@@ -114,7 +114,7 @@ services:
   #   volumes:
   #     - ./clickhouse-config.xml:/etc/clickhouse-server/config.xml
   #     - ./clickhouse-users.xml:/etc/clickhouse-server/users.xml
-  #    - ./custom-function.xml:/etc/clickhouse-server/custom-function.xml
+  #     - ./custom-function.xml:/etc/clickhouse-server/custom-function.xml
   #     - ./clickhouse-cluster.xml:/etc/clickhouse-server/config.d/cluster.xml
   #     # - ./clickhouse-storage.xml:/etc/clickhouse-server/config.d/storage.xml
   #     - ./data/clickhouse-2/:/var/lib/clickhouse/
@@ -132,7 +132,7 @@ services:
   #   volumes:
   #     - ./clickhouse-config.xml:/etc/clickhouse-server/config.xml
   #     - ./clickhouse-users.xml:/etc/clickhouse-server/users.xml
-  #    - ./custom-function.xml:/etc/clickhouse-server/custom-function.xml
+  #     - ./custom-function.xml:/etc/clickhouse-server/custom-function.xml
   #     - ./clickhouse-cluster.xml:/etc/clickhouse-server/config.d/cluster.xml
   #     # - ./clickhouse-storage.xml:/etc/clickhouse-server/config.d/storage.xml
   #     - ./data/clickhouse-3/:/var/lib/clickhouse/
@@ -153,7 +153,7 @@ services:
 # Notes for Maintainers/Contributors who will change Line Numbers of Frontend & Query-Section. Please Update Line Numbers in `./scripts/commentLinesForSetup.sh` & `./CONTRIBUTING.md`
 
   query-service:
-    image: signoz/query-service:${DOCKER_TAG:-0.14.0}
+    image: signoz/query-service:${DOCKER_TAG:-0.15.0}
     container_name: query-service
     command: ["-config=/root/config/prometheus.yml"]
     # ports:
@@ -181,7 +181,7 @@ services:
     <<: *clickhouse-depend
 
   frontend:
-    image: signoz/frontend:${DOCKER_TAG:-0.14.0}
+    image: signoz/frontend:${DOCKER_TAG:-0.15.0}
     container_name: frontend
     restart: on-failure
     depends_on:
@@ -193,7 +193,7 @@ services:
       - ../common/nginx-config.conf:/etc/nginx/conf.d/default.conf
 
   otel-collector:
-    image: signoz/signoz-otel-collector:${OTELCOL_TAG:-0.66.2}
+    image: signoz/signoz-otel-collector:${OTELCOL_TAG:-0.66.3}
     command: ["--config=/etc/otel-collector-config.yaml"]
     user: root # required for reading docker container logs
     volumes:
@@ -218,7 +218,7 @@ services:
     <<: *clickhouse-depend
 
   otel-collector-metrics:
-    image: signoz/signoz-otel-collector:${OTELCOL_TAG:-0.66.2}
+    image: signoz/signoz-otel-collector:${OTELCOL_TAG:-0.66.3}
     command: ["--config=/etc/otel-collector-metrics-config.yaml"]
     volumes:
       - ./otel-collector-metrics-config.yaml:/etc/otel-collector-metrics-config.yaml

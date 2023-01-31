@@ -29,7 +29,7 @@ function Tag({ tags, onToggleHandler, setText }: TagProps): JSX.Element {
 						<Tooltip overlay={(): string => value}>
 							<CustomSubText
 								ellipsis={{
-									rows: isEllipsed ? 1 : 0,
+									rows: isEllipsed ? 2 : 0,
 								}}
 								isDarkMode={isDarkMode}
 							>

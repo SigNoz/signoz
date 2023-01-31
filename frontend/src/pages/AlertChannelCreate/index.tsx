@@ -20,9 +20,7 @@ function SettingsPage(): JSX.Element {
 						route: ROUTES.SETTINGS,
 					},
 					{
-						Component: (): JSX.Element => {
-							return <CreateAlertChannels preType="slack" />;
-						},
+						Component: (): JSX.Element => <CreateAlertChannels preType="slack" />,
 						name: t('routes.alert_channels'),
 						route: ROUTES.ALL_CHANNELS,
 					},
