@@ -9,40 +9,8 @@ import (
 	tsp "github.com/open-telemetry/opentelemetry-collector-contrib/processor/tailsamplingprocessor"
 )
 
-func prepareProbabilistic(id string, percent int) tsp.PolicyCfg {
-	
-	return tsp.PolicyCfg{
-		Name: id,
-		Type: tsp.Probabilistic,
-		ProbabilisticCfg: tsp.ProbabilisticCfg{
-			SamplingPercentage: percent,
-		},
-	}
-}
-
-func prepareAndPolicy(id string, subPolicies []tsp.PolicyCfg) tsp.PolicyCfg {
-	return tsp.PolicyCfg{
-		Name: id,
-		Type: tsp.And,
-		AndCfg: subPolicies,
-	}
-}
-
-func prepareStringPolicy(id string, key string, vals []string) tsp.PolicyCfg{
-	return tsp.PolicyCfg{
-		Name: id,
-		Type: tsp.StringAttribute,
-		StringAttributeCfg: tsp.StringAttributeCfg{
-			Key: key,
-			values: vals,
-			// todo
-			// EnabledRegexMatching: use key.Ope for this
-			// InvertMatch: use key.Op for this
-		},
-	}
-}
-
-func PrepareSamplingParams(rules []model.IngestionRule) (*tsp.Config, error) {
+// PrepareTailSamplingParams transforms sampling rules into tail sampler processor config 
+func PrepareTailSamplingParams(rules []model.IngestionRule) (*tsp.Config, error) {
 
 	if len(rules) == 0 {
 		// no rules setup, configure always sample policy
@@ -154,4 +122,38 @@ func PrepareSamplingParams(rules []model.IngestionRule) (*tsp.Config, error) {
 	return &tsp.Config{
 		PolicyCfgs: finalPolicy,
 	}, nil
+}
+
+
+func prepareProbabilistic(id string, percent int) tsp.PolicyCfg {
+	
+	return tsp.PolicyCfg{
+		Name: id,
+		Type: tsp.Probabilistic,
+		ProbabilisticCfg: tsp.ProbabilisticCfg{
+			SamplingPercentage: percent,
+		},
+	}
+}
+
+func prepareAndPolicy(id string, subPolicies []tsp.PolicyCfg) tsp.PolicyCfg {
+	return tsp.PolicyCfg{
+		Name: id,
+		Type: tsp.And,
+		AndCfg: subPolicies,
+	}
+}
+
+func prepareStringPolicy(id string, key string, vals []string) tsp.PolicyCfg{
+	return tsp.PolicyCfg{
+		Name: id,
+		Type: tsp.StringAttribute,
+		StringAttributeCfg: tsp.StringAttributeCfg{
+			Key: key,
+			values: vals,
+			// todo
+			// EnabledRegexMatching: use key.Ope for this
+			// InvertMatch: use key.Op for this
+		},
+	}
 }

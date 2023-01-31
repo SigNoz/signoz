@@ -1,4 +1,4 @@
-package agenConf
+package agentConf
 
 import (
 	"context"
@@ -22,7 +22,7 @@ type Repo struct {
 	db *sqlx.DB
 }
 
-func (r *Repo) InitDB(engine string) error {
+func (r *Repo) initDB(engine string) error {
 	switch engine {
 	case "sqlite3", "sqlite":
 		return sqlite.InitDB(r.db)
@@ -91,7 +91,7 @@ func (r *Repo) GetLatestVersion(ctx context.Context, typ ElementTypeDef) (*Confi
 
 }
 
-func (r *Repo) InsertConfig(ctx context.Context, c *ConfigVersion, elements []string) (fnerr error) {
+func (r *Repo) insertConfig(ctx context.Context, c *ConfigVersion, elements []string) (fnerr error) {
 
 	if string(c.ElementType) == "" {
 		return fmt.Errorf("element type is required for creating agent config version")
@@ -176,7 +176,7 @@ func (r *Repo) InsertConfig(ctx context.Context, c *ConfigVersion, elements []st
 	return nil
 }
 
-func (r *Repo) UpdateDeployStatus(ctx context.Context, version float32, status string, result string) error {
+func (r *Repo) updateDeployStatus(ctx context.Context, version float32, status string, result string) error {
 
 	updateQuery := `UPDATE agent_config_versions
 	set deployment_status = $1, 

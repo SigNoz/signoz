@@ -1,4 +1,4 @@
-package agenConf
+package agentConf
 
 import (
 	"context"
@@ -7,6 +7,7 @@ import (
 
 	"github.com/jmoiron/sqlx"
 	"github.com/open-telemetry/opentelemetry-collector-contrib/processor/filterprocessor"
+	tsp "github.com/open-telemetry/opentelemetry-collector-contrib/processor/tailsamplingprocessor"
 )
 
 var m *Manager
@@ -16,7 +17,7 @@ func init() {
 }
 
 type Manager struct {
-	repo *Repo
+	Repo
 	// lock to make sure only one update is sent to remote agents at a time
 	lock uint32
 }
@@ -27,8 +28,8 @@ func (mgr *Manager) Ready() bool {
 }
 
 func Initiate(db *sqlx.DB, path string) error {
-	m.repo = &Repo{db}
-	return m.repo.InitDB(path)
+	m.Repo = Repo{db}
+	return m.initDB(path)
 }
 
 // Ready indicates if Manager can accept new config update requests
@@ -37,15 +38,15 @@ func Ready() bool {
 }
 
 func GetLatestVersion(ctx context.Context, elementType ElementTypeDef) (*ConfigVersion, error) {
-	return m.repo.GetLatestVersion(ctx, elementType)
+	return m.GetLatestVersion(ctx, elementType)
 }
 
 func GetConfigVersion(ctx context.Context, elementType ElementTypeDef, version float32) (*ConfigVersion, error) {
-	return m.repo.GetConfigVersion(ctx, elementType, version)
+	return m.GetConfigVersion(ctx, elementType, version)
 }
 
 func GetConfigHistory(ctx context.Context, typ ElementTypeDef) ([]ConfigVersion, error) {
-	return m.repo.GetConfigHistory(ctx, typ)
+	return m.GetConfigHistory(ctx, typ)
 }
 
 // StartNewVersion launches a new config version for given set of elements
@@ -60,7 +61,7 @@ func StartNewVersion(ctx context.Context, eleType ElementTypeDef, elementIds []s
 	cfg := NewConfigversion(ElementTypeDropRules)
 
 	// insert new config and elements into database
-	err := m.repo.InsertConfig(ctx, cfg, elementIds)
+	err := m.insertConfig(ctx, cfg, elementIds)
 	if err != nil {
 		return nil, err
 	}
@@ -70,6 +71,17 @@ func StartNewVersion(ctx context.Context, eleType ElementTypeDef, elementIds []s
 
 // UpsertFilterProcessor updates the agent config with new filter processor params
 func UpsertFilterProcessor(key string, config *filterprocessor.Config) error {
+	if !atomic.CompareAndSwapUint32(&m.lock, 0, 1) {
+		return fmt.Errorf("agent updater is busy")
+	}
+	defer atomic.StoreUint32(&m.lock, 0)
+
+	// merge current config with new filter params
+	return nil
+}
+
+// UpsertSamplingProcessor updates the agent config with new filter processor params
+func UpsertSamplingProcessor(key string, config *tsp.Config) error {
 	if !atomic.CompareAndSwapUint32(&m.lock, 0, 1) {
 		return fmt.Errorf("agent updater is busy")
 	}

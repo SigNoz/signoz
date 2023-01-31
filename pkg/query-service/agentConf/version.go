@@ -1,4 +1,4 @@
-package agenConf
+package agentConf
 
 import "github.com/google/uuid"
 

@@ -11,12 +11,12 @@ import (
 
 // Controller takes care of deployment cycle of ingestion rules.
 type IngestionController struct {
-	repo Repo
+	Repo
 }
 
 func NewIngestionController(db *sqlx.DB) (*IngestionController, error) {
 	repo := NewRepo(db)
-	return &IngestionController{repo: repo}, nil
+	return &IngestionController{Repo: repo}, nil
 }
 
 // IngestionRulesResponse is used to prepare http response for rule config related requests
@@ -40,7 +40,7 @@ func (ic *IngestionController) ApplyDropRules(ctx context.Context, postable []Po
 
 		if r.Id == "" {
 			// looks like a new or changed rule, store it first
-			inserted, err := ic.repo.InsertRule(ctx, &r)
+			inserted, err := ic.insertRule(ctx, &r)
 			if err != nil || inserted == nil {
 				zap.S().Errorf("failed to insert edited ingestion rule", err)
 				return nil, model.BadRequestStr("failed to insert edited rule")
@@ -48,7 +48,7 @@ func (ic *IngestionController) ApplyDropRules(ctx context.Context, postable []Po
 				dropRules = append(dropRules, *inserted)
 			}
 		} else {
-			selected, err := ic.repo.GetRule(ctx, r.Id)
+			selected, err := ic.GetRule(ctx, r.Id)
 			if err != nil || selected == nil {
 				zap.S().Errorf("failed to find edited ingestion rule", err)
 				return nil, model.BadRequestStr("failed to find edited rule, invalid request")
@@ -90,21 +90,21 @@ func (ic *IngestionController) ApplyDropRules(ctx context.Context, postable []Po
 	response := &IngestionRulesResponse{
 		ConfigVersion: cfg,
 		Rules:         dropRules,
-		History:       history
+		History:       history,
 	}
 
 	if err != nil {
-		zap.S().Errorf("failed to insert drop rules into agent config", zap.String("filterConfig", filterConfig), err)
+		zap.S().Errorf("failed to insert drop rules into agent config", filterConfig, err)
 		return response, model.InternalErrorStr("failed to apply drop rules ")
 	}
 	return response, nil
 }
 
-// GetDropRules responds with version info and associated drop rules
-func (ic *IngestionController) GetDropRules(ctx context.Context, version float32) (*IngestionRulesResponse, *model.ApiError) {
-	dropRules, errs := ic.repo.GetDropRules(ctx, version)
-	if len(errs) != 0 {
-		zap.S().Errorf("failed to get drop rules for version", version, errs)
+// GetRulesByVersion responds with version info and associated drop rules
+func (ic *IngestionController) GetRulesByVersion(ctx context.Context, version float32) (*IngestionRulesResponse, *model.ApiError) {
+	rules, apierr := ic.getRulesByVersion(ctx, version)
+	if apierr != nil {
+		zap.S().Errorf("failed to get drop rules for version", version, apierr)
 		return nil, model.InternalErrorStr("failed to get drop rules for given version")
 	}
 	configVersion, err := agentConf.GetConfigVersion(ctx, agentConf.ElementTypeDropRules, version)
@@ -115,7 +115,7 @@ func (ic *IngestionController) GetDropRules(ctx context.Context, version float32
 
 	return &IngestionRulesResponse{
 		ConfigVersion: configVersion,
-		Rules:         dropRules,
+		Rules:         rules,
 	}, nil
 }
 
@@ -132,7 +132,7 @@ func (ic *IngestionController) ApplySamplingRules(ctx context.Context, postable 
 
 		if r.Id == "" {
 			// looks like a new or changed rule, store it first
-			inserted, err := ic.repo.InsertRule(ctx, &r)
+			inserted, err := ic.insertRule(ctx, &r)
 			if err != nil || inserted == nil {
 				zap.S().Errorf("failed to insert edited ingestion rule", err)
 				return nil, model.BadRequestStr("failed to insert edited rule")
@@ -140,7 +140,7 @@ func (ic *IngestionController) ApplySamplingRules(ctx context.Context, postable 
 				smplRules = append(smplRules, *inserted)
 			}
 		} else {
-			selected, err := ic.repo.GetRule(ctx, r.Id)
+			selected, err := ic.GetRule(ctx, r.Id)
 			if err != nil || selected == nil {
 				zap.S().Errorf("failed to find edited ingestion rule", err)
 				return nil, model.BadRequestStr("failed to find edited rule, invalid request")
@@ -151,7 +151,7 @@ func (ic *IngestionController) ApplySamplingRules(ctx context.Context, postable 
 	}
 
 	// prepare params for sampling processor from the rules
-	params, err := PrepareSamplingParams(smplRules)
+	params, err := PrepareTailSamplingParams(smplRules)
 	if err != nil {
 		zap.S().Errorf("failed to generate processor config from ingestion rules for deployment", err)
 		return nil, model.BadRequest(err)
@@ -182,7 +182,7 @@ func (ic *IngestionController) ApplySamplingRules(ctx context.Context, postable 
 	response := &IngestionRulesResponse{
 		ConfigVersion: cfg,
 		Rules:         smplRules,
-		History:       history
+		History:       history,
 	}
 
 	if err != nil {
@@ -190,46 +190,4 @@ func (ic *IngestionController) ApplySamplingRules(ctx context.Context, postable 
 		return response, model.InternalErrorStr("failed to apply sampling rules ")
 	}
 	return response, nil
-}
-
-// GetSamplingRules responds with version info and associated sampling rules
-func (ic *IngestionController) GetSamplingRules(ctx context.Context, version float32) (*IngestionRulesResponse, *model.ApiError) {
-	samplingRules, errs := ic.repo.GetSamplingRules(ctx, version)
-	if len(errs) != 0 {
-		zap.S().Errorf("failed to get drop rules for version", version, errs)
-		return nil, model.InternalErrorStr("failed to get drop rules for given version")
-	}
-	configVersion, err := agentConf.GetConfigVersion(ctx, agentConf.ElementTypeSamplingRules, version)
-	if err != nil || configVersion == nil {
-		zap.S().Errorf("failed to get drop rules for version", version, err)
-		return nil, model.InternalErrorStr("failed to get drop rules for given version")
-	}
-
-	return &IngestionRulesResponse{
-		ConfigVersion: configVersion,
-		Rules:         samplingRules,
-	}, nil
-}
-
-
-// GetConfigHistory returns agent config version history for a given element type (e.g. Drop Rules, Sampling Rules)
-func (ic *IngestionController) GetConfigHistory(ctx context.Context, elementType string) (*IngestionRulesResponse, *model.ApiError) {
-	var typ agentConf.ElementTypeDef
-	if elementType == string(agentConf.ElementTypeDropRules) {
-		typ = agentConf.ElementTypeDropRules
-	} else if elementType == string(agentConf.ElementTypeSamplingRules) {
-		typ = agentConf.ElementTypeSamplingRules
-	} else {
-		return nil, model.BadRequestStr("invalid request for agent config history")
-	}
-
-	history, err := agentConf.GetConfigHistory(ctx, typ)
-	if err != nil {
-		zap.S().Errorf("failed to fetch agent config history for type", typ, err)
-		return nil, model.InternalErrorStr("failed to get agent config history")
-	}
-
-	return &IngestionRulesResponse{
-		History: history,
-	}, nil
 }

@@ -35,7 +35,7 @@ func (r *Repo) InitDB(engine string) error {
 }
 
 // InsertRule stores a given postable rule to database
-func (r *Repo) InsertRule(ctx context.Context, postable *PostableIngestionRule) (*model.IngestionRule, error) {
+func (r *Repo) insertRule(ctx context.Context, postable *PostableIngestionRule) (*model.IngestionRule, error) {
 	if err := postable.IsValid(); err != nil {
 		return nil, errors.Wrap(err, "failed to validate postable ingestion rule")
 	}
@@ -85,51 +85,8 @@ func (r *Repo) InsertRule(ctx context.Context, postable *PostableIngestionRule) 
 	return insertRow, nil
 }
 
-// EditRule allows user initiated changes (from UI) in the rules
-func (r *Repo) EditRule(ctx context.Context, editParams *IngestionRule) error {
-
-	// 1. update edited rule and
-	// 2. mark deploy status to Deploying
-	// 3. reset deploy seq to -2 so this rule is picked up in next deploy cycle
-
-	if editParams.Priority == 0 {
-		// default priority of all rules is set to same number 1. so,
-		// all rules will have same priority to start with.
-		// user can chagne the priority to higher integer value to execute them first
-		editParams.Priority = 1
-	}
-
-	rawConfig, err := json.Marshal(editParams.Config)
-	if err != nil {
-		return errors.Wrap(err, "failed to unmarshal edited ingestion rule config")
-	}
-
-	editQuery := `UPDATE ingestion_rules 
-	SET name = $1,
-	rule_subtype = $2,
-	priority = $3,
-	config_json = $4,
-	WHERE id = $7`
-
-	_, err = r.db.ExecContext(ctx,
-		editQuery,
-		editParams.Name,
-		editParams.RuleSubType,
-		editParams.Priority,
-		string(rawConfig),
-		editParams.Id)
-
-	if err != nil {
-		zap.S().Errorf("error in updating ingestion rule: ", zap.Error(err))
-		return errors.Wrap(err, "failed to updated edit ingestion rule")
-	}
-
-	editParams.RawConfig = string(rawConfig)
-	return nil
-}
-
-// GetDropRules returns drop rules associated with a given version
-func (r *Repo) GetDropRules(ctx context.Context, version float32) ([]model.IngestionRule, []error) {
+// getRulesByVersion returns rules associated with a given version
+func (r *Repo) getRulesByVersion(ctx context.Context, version float32) ([]model.IngestionRule, []error) {
 	var errors []error
 	rules := []model.IngestionRule{}
 
@@ -168,7 +125,7 @@ func (r *Repo) GetDropRules(ctx context.Context, version float32) ([]model.Inges
 	return rules, errors
 }
 
-// GetDropRules returns drop rules and errors (if any)
+// GetRule returns rules and errors (if any)
 func (r *Repo) GetRule(ctx context.Context, id string) (*model.IngestionRule, *model.ApiError) {
 	rules := []model.IngestionRule{}
 
