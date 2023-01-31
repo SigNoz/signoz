@@ -36,8 +36,8 @@ function FieldItem({
 			return (
 				<Popover content={<Typography>{iconHoverText}</Typography>}>
 					<Button
-						type="text"
 						size="small"
+						type="text"
 						icon={buttonIcon}
 						onClick={onClickHandler}
 					/>

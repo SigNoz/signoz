@@ -1,6 +1,5 @@
 import { blue, grey } from '@ant-design/colors';
 import { Col, Typography } from 'antd';
-import { themeColors } from 'constants/theme';
 import styled from 'styled-components';
 
 export const Container = styled(Col)`
@@ -22,6 +21,7 @@ export const FieldContainer = styled(Typography.Text)`
 export const Field = styled.div<{ isDarkMode: boolean }>`
 	border-radius: 0.5rem;
 	padding: 0.3rem 0.5rem;
+	height: 2rem;
 	display: flex;
 	justify-content: space-between;
 	align-items: center;
