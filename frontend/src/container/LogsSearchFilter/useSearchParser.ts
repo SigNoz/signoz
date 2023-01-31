@@ -15,6 +15,8 @@ import {
 import { GlobalReducer } from 'types/reducer/globalTime';
 import { ILogsReducer } from 'types/reducer/logs';
 
+import { getGlobalTime } from './utils';
+
 export function useSearchParser(): {
 	queryString: string;
 	parsedQuery: unknown;
@@ -43,10 +45,7 @@ export function useSearchParser(): {
 				type: SET_SEARCH_QUERY_STRING,
 				payload: {
 					searchQueryString: updatedQueryString,
-					globalTime: {
-						minTime: globalTime.minTime,
-						maxTime: globalTime.maxTime,
-					},
+					globalTime: getGlobalTime(selectedTime, globalTime),
 				},
 			});
 

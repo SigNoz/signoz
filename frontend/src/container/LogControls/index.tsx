@@ -4,6 +4,7 @@ import {
 	RightOutlined,
 } from '@ant-design/icons';
 import { Button, Divider, Select } from 'antd';
+import { getGlobalTime } from 'container/LogsSearchFilter/utils';
 import { getMinMax } from 'container/TopNav/AutoRefresh/config';
 import React, { memo, useMemo } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
@@ -53,10 +54,10 @@ function LogControls(): JSX.Element | null {
 
 		dispatch({
 			type: RESET_ID_START_AND_END,
-			payload: {
+			payload: getGlobalTime(globalTime.selectedTime, {
 				maxTime,
 				minTime,
-			},
+			}),
 		});
 	};
 

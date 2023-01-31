@@ -8,6 +8,7 @@ import {
 	ISelectedFields,
 } from 'types/api/logs/fields';
 
+import { ICON_STYLE } from './config';
 import { Field } from './styles';
 
 function FieldItem({
@@ -60,7 +61,7 @@ function FieldItem({
 			onMouseLeave={onMouseHoverHandler(false)}
 			isDarkMode={isDarkMode}
 		>
-			<Typography>{name}</Typography>
+			<Typography style={ICON_STYLE.PLUS}>{name}</Typography>
 
 			{renderContent}
 		</Field>
