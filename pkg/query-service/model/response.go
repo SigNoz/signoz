@@ -481,6 +481,17 @@ func (p *MetricPoint) MarshalJSON() ([]byte, error) {
 	return json.Marshal([...]interface{}{float64(p.Timestamp) / 1000, v})
 }
 
+// UnmarshalJSON implements json.Unmarshaler.
+func (p *MetricPoint) UnmarshalJSON(b []byte) error {
+	var a [2]interface{}
+	if err := json.Unmarshal(b, &a); err != nil {
+		return err
+	}
+	p.Timestamp = int64(a[0].(float64) * 1000)
+	p.Value, _ = strconv.ParseFloat(a[1].(string), 64)
+	return nil
+}
+
 type ShowCreateTableStatement struct {
 	Statement string `json:"statement" ch:"statement"`
 }

@@ -4,13 +4,18 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"math"
+	"sort"
+	"strings"
 	"time"
 
 	"go.signoz.io/signoz/pkg/query-service/app/metrics"
 	"go.signoz.io/signoz/pkg/query-service/cache"
+	"go.signoz.io/signoz/pkg/query-service/cache/status"
 	"go.signoz.io/signoz/pkg/query-service/constants"
 	"go.signoz.io/signoz/pkg/query-service/interfaces"
 	"go.signoz.io/signoz/pkg/query-service/model"
+	"go.uber.org/zap"
 )
 
 type querier struct {
@@ -21,41 +26,131 @@ type querier struct {
 	// TODO: implement cache key generators
 	tracesKeyGenerator cache.KeyGenerator
 	logsKeyGenerator   cache.KeyGenerator
+
+	fluxInterval time.Duration
+
+	// used for testing
+	// TODO(srikanthccv): remove this once we have a reader mock
+	testingMode     bool
+	queriesExecuted []string
+	returnedSeries  []*model.Series
+	returnedErr     error
 }
 
-func NewQuerier(cache cache.Cache, reader interfaces.Reader) *querier {
+func NewQuerier(cache cache.Cache, reader interfaces.Reader, fluxInterval time.Duration) *querier {
 	return &querier{
 		cache:               cache,
 		reader:              reader,
 		metricsKeyGenerator: metrics.NewMetricsKeyGenerator(),
+		fluxInterval:        fluxInterval,
 	}
 }
 
 type miss struct {
-	start int64
-	end   int64
+	start int64 // in millis
+	end   int64 // in millis
 }
 
 func (q *querier) execClickHouseQuery(ctx context.Context, query string) ([]*model.Series, error) {
+	q.queriesExecuted = append(q.queriesExecuted, query)
+	if q.testingMode && q.reader == nil {
+		return q.returnedSeries, q.returnedErr
+	}
 	return q.reader.GetMetricResult(ctx, query)
 }
 
 func (q *querier) execPromQuery(ctx context.Context, params *model.QueryRangeParams) ([]*model.Series, error) {
+	q.queriesExecuted = append(q.queriesExecuted, params.Query)
+	if q.testingMode && q.reader == nil {
+		return q.returnedSeries, q.returnedErr
+	}
 	promResult, _, err := q.reader.GetQueryRangeResult(ctx, params)
 	if err != nil {
 		return nil, err
 	}
-	matrix, _ := promResult.Matrix()
+	matrix, promErr := promResult.Matrix()
+	if promErr != nil {
+		return nil, promErr
+	}
 	var seriesList []*model.Series
 	for _, v := range matrix {
 		var s model.Series
 		s.Labels = v.Metric.Copy().Map()
-		for _, p := range v.Points {
+		for idx := range v.Points {
+			p := v.Points[idx]
 			s.Points = append(s.Points, model.MetricPoint{Timestamp: p.T, Value: p.V})
 		}
 		seriesList = append(seriesList, &s)
 	}
 	return seriesList, nil
+}
+
+// findMissingTimeRanges finds the missing time ranges in the seriesList
+// and returns a list of miss structs, It takes the fluxInterval into
+// account to find the missing time ranges.
+//
+// The [End - fluxInterval, End] is always added to the list of misses, because
+// the data might still be in flux and not yet available in the database.
+func findMissingTimeRanges(start, end int64, seriesList []*model.Series, fluxInterval time.Duration) (misses []miss) {
+	var cachedStart, cachedEnd int64
+	for idx := range seriesList {
+		series := seriesList[idx]
+		for pointIdx := range series.Points {
+			point := series.Points[pointIdx]
+			if cachedStart == 0 || point.Timestamp < cachedStart {
+				cachedStart = point.Timestamp
+			}
+			if cachedEnd == 0 || point.Timestamp > cachedEnd {
+				cachedEnd = point.Timestamp
+			}
+		}
+	}
+
+	// Exclude the flux interval from the cached end time
+	cachedEnd = int64(
+		math.Min(
+			float64(cachedEnd),
+			float64(time.Now().UnixMilli()-fluxInterval.Milliseconds()),
+		),
+	)
+
+	// There are five cases to consider
+	// 1. Cached time range is a subset of the requested time range
+	// 2. Cached time range is a superset of the requested time range
+	// 3. Cached time range is a left overlap of the requested time range
+	// 4. Cached time range is a right overlap of the requested time range
+	// 5. Cached time range is a disjoint of the requested time range
+	if cachedStart >= start && cachedEnd <= end {
+		// Case 1: Cached time range is a subset of the requested time range
+		// Add misses for the left and right sides of the cached time range
+		misses = append(misses, miss{start: start, end: cachedStart - 1})
+		misses = append(misses, miss{start: cachedEnd + 1, end: end})
+	} else if cachedStart <= start && cachedEnd >= end {
+		// Case 2: Cached time range is a superset of the requested time range
+		// No misses
+	} else if cachedStart <= start && cachedEnd >= start {
+		// Case 3: Cached time range is a left overlap of the requested time range
+		// Add a miss for the left side of the cached time range
+		misses = append(misses, miss{start: cachedEnd + 1, end: end})
+	} else if cachedStart <= end && cachedEnd >= end {
+		// Case 4: Cached time range is a right overlap of the requested time range
+		// Add a miss for the right side of the cached time range
+		misses = append(misses, miss{start: start, end: cachedStart - 1})
+	} else {
+		// Case 5: Cached time range is a disjoint of the requested time range
+		// Add a miss for the entire requested time range
+		misses = append(misses, miss{start: start, end: end})
+	}
+
+	// remove the struts with start > end
+	var validMisses []miss
+	for idx := range misses {
+		miss := misses[idx]
+		if miss.start <= miss.end {
+			validMisses = append(validMisses, miss)
+		}
+	}
+	return validMisses
 }
 
 // findMissingTimeRanges finds the missing time ranges in the cached data
@@ -66,48 +161,48 @@ func (q *querier) findMissingTimeRanges(start, end, step int64, cachedData []byt
 		// In case of error, we return the entire range as a miss
 		return []miss{{start: start, end: end}}
 	}
-	var cachedStart, cachedEnd int64
-	for _, series := range cachedSeriesList {
-		for _, point := range series.Points {
-			if cachedStart == 0 || point.Timestamp < cachedStart {
-				cachedStart = point.Timestamp
-			}
-			if cachedEnd == 0 || point.Timestamp > cachedEnd {
-				cachedEnd = point.Timestamp
-			}
-		}
-	}
-	if cachedStart > start {
-		misses = append(misses, miss{start: start, end: cachedStart})
-	}
-	if cachedEnd < end {
-		misses = append(misses, miss{start: cachedEnd, end: end})
-	}
-	return misses
+	return findMissingTimeRanges(start, end, cachedSeriesList, q.fluxInterval)
 }
 
 func labelsToString(labels map[string]string) string {
-	var labelString string
-	for k, v := range labels {
-		labelString += fmt.Sprintf("%s=%s,", k, v)
+	type label struct {
+		Key   string
+		Value string
 	}
-	return labelString
+	var labelsList []label
+	for k, v := range labels {
+		labelsList = append(labelsList, label{Key: k, Value: v})
+	}
+	sort.Slice(labelsList, func(i, j int) bool {
+		return labelsList[i].Key < labelsList[j].Key
+	})
+	labelKVs := make([]string, len(labelsList))
+	for idx := range labelsList {
+		labelKVs[idx] = labelsList[idx].Key + "=" + labelsList[idx].Value
+	}
+	return fmt.Sprintf("{%s}", strings.Join(labelKVs, ","))
 }
 
 func mergeSerieses(cachedSeries, missedSeries []*model.Series) []*model.Series {
 	// Merge the missed series with the cached series by timestamp
-	// TODO: This is a naive implementation. We can improve this by using a map
-	var mergedSeries []*model.Series
-	var seriesesByLabels = make(map[string]*model.Series)
-	for _, series := range cachedSeries {
+	mergedSeries := make([]*model.Series, 0)
+	seriesesByLabels := make(map[string]*model.Series)
+	for idx := range cachedSeries {
+		series := cachedSeries[idx]
 		seriesesByLabels[labelsToString(series.Labels)] = series
 	}
 
-	for _, series := range missedSeries {
+	for idx := range missedSeries {
+		series := missedSeries[idx]
+		if _, ok := seriesesByLabels[labelsToString(series.Labels)]; !ok {
+			seriesesByLabels[labelsToString(series.Labels)] = series
+			continue
+		}
 		seriesesByLabels[labelsToString(series.Labels)].Points = append(seriesesByLabels[labelsToString(series.Labels)].Points, series.Points...)
 	}
 	// Sort the points in each series by timestamp
-	for _, series := range seriesesByLabels {
+	for idx := range seriesesByLabels {
+		series := seriesesByLabels[idx]
 		series.SortPoints()
 		mergedSeries = append(mergedSeries, series)
 	}
@@ -115,19 +210,25 @@ func mergeSerieses(cachedSeries, missedSeries []*model.Series) []*model.Series {
 }
 
 func (q *querier) runBuilderQueries(ctx context.Context, params *model.QueryRangeParamsV2) ([]*model.Series, error, map[string]string) {
-	var seriesList []*model.Series
+	seriesList := make([]*model.Series, 0)
+	errQueriesByName := make(map[string]string)
 	var err error
-	var errQuriesByName map[string]string
-	for queryName, builderQuery := range params.CompositeMetricQuery.BuilderQueries {
+
+	for queryName := range params.CompositeMetricQuery.BuilderQueries {
+		builderQuery := params.CompositeMetricQuery.BuilderQueries[queryName]
 		cacheKey := q.metricsKeyGenerator.GenerateKeys(params)[queryName]
 		var cachedData []byte
-		cachedData, _, err = q.cache.Retrieve(cacheKey, false)
-		if err != nil {
-			return nil, err, nil
+		if !params.NoCache {
+			var retrieveStatus status.RetrieveStatus
+			cachedData, retrieveStatus, err = q.cache.Retrieve(cacheKey, true)
+			zap.L().Debug("cache retrieve status", zap.String("status", retrieveStatus.String()))
+			if err != nil {
+				return nil, err, nil
+			}
 		}
 		misses := q.findMissingTimeRanges(params.Start, params.End, params.Step, cachedData)
-		var missedSeries []*model.Series
-		var cachedSeries []*model.Series
+		missedSeries := make([]*model.Series, 0)
+		cachedSeries := make([]*model.Series, 0)
 		for _, miss := range misses {
 			query, err := metrics.BuildMetricQuery(
 				builderQuery,
@@ -137,54 +238,63 @@ func (q *querier) runBuilderQueries(ctx context.Context, params *model.QueryRang
 				constants.SIGNOZ_TIMESERIES_TABLENAME,
 			)
 			if err != nil {
-				errQuriesByName[queryName] = err.Error()
+				errQueriesByName[queryName] = err.Error()
 				continue
 			}
 			series, err := q.execClickHouseQuery(ctx, query)
 			if err != nil {
-				errQuriesByName[queryName] = err.Error()
+				errQueriesByName[queryName] = err.Error()
 				continue
 			}
 			missedSeries = append(missedSeries, series...)
 		}
-		if err := json.Unmarshal(cachedData, &cachedSeries); err != nil {
-			errQuriesByName[queryName] = err.Error()
+		if err := json.Unmarshal(cachedData, &cachedSeries); err != nil && cachedData != nil {
+			errQueriesByName[queryName] = err.Error()
+			continue
 		}
-		seriesList = append(seriesList, mergeSerieses(cachedSeries, missedSeries)...)
+		mergedSeries := mergeSerieses(cachedSeries, missedSeries)
+
+		seriesList = append(seriesList, mergedSeries...)
 		// Cache the seriesList for future queries
 		if len(missedSeries) > 0 {
-			mergedSeries := mergeSerieses(cachedSeries, missedSeries)
 			mergedSeriesData, err := json.Marshal(mergedSeries)
 			if err != nil {
-				errQuriesByName[queryName] = err.Error()
+				errQueriesByName[queryName] = err.Error()
 				continue
 			}
 			err = q.cache.Store(cacheKey, mergedSeriesData, time.Hour)
 			if err != nil {
-				errQuriesByName[queryName] = err.Error()
+				errQueriesByName[queryName] = err.Error()
 				continue
 			}
 		}
-
 	}
-	return seriesList, err, errQuriesByName
+	if len(errQueriesByName) > 0 {
+		err = fmt.Errorf("error in builder queries")
+	}
+	return seriesList, err, errQueriesByName
 }
 
 func (q *querier) runPromQueries(ctx context.Context, params *model.QueryRangeParamsV2) ([]*model.Series, error, map[string]string) {
-	var seriesList []*model.Series
+	seriesList := make([]*model.Series, 0)
+	errQueriesByName := make(map[string]string)
 	var err error
-	var errQuriesByName map[string]string
-	for queryName, promQuery := range params.CompositeMetricQuery.PromQueries {
+	for queryName := range params.CompositeMetricQuery.PromQueries {
+		promQuery := params.CompositeMetricQuery.PromQueries[queryName]
 		cacheKey := q.metricsKeyGenerator.GenerateKeys(params)[queryName]
 		var cachedData []byte
-		cachedData, _, err = q.cache.Retrieve(cacheKey, false)
+		var retrieveStatus status.RetrieveStatus
+		if !params.NoCache {
+			cachedData, retrieveStatus, err = q.cache.Retrieve(cacheKey, true)
+			zap.L().Debug("cache retrieve status", zap.String("status", retrieveStatus.String()))
+		}
 		if err != nil {
-			errQuriesByName[queryName] = err.Error()
+			errQueriesByName[queryName] = err.Error()
 			continue
 		}
 		misses := q.findMissingTimeRanges(params.Start, params.End, params.Step, cachedData)
-		var missedSeries []*model.Series
-		var cachedSeries []*model.Series
+		missedSeries := make([]*model.Series, 0)
+		cachedSeries := make([]*model.Series, 0)
 		for _, miss := range misses {
 			query := metrics.BuildPromQuery(
 				promQuery,
@@ -194,63 +304,72 @@ func (q *querier) runPromQueries(ctx context.Context, params *model.QueryRangePa
 			)
 			series, err := q.execPromQuery(ctx, query)
 			if err != nil {
-				errQuriesByName[queryName] = err.Error()
+				errQueriesByName[queryName] = err.Error()
 				continue
 			}
 			missedSeries = append(missedSeries, series...)
 		}
-		if err := json.Unmarshal(cachedData, &cachedSeries); err != nil {
-			errQuriesByName[queryName] = err.Error()
+		if err := json.Unmarshal(cachedData, &cachedSeries); err != nil && cachedData != nil {
+			errQueriesByName[queryName] = err.Error()
+			continue
 		}
-		seriesList = append(seriesList, mergeSerieses(cachedSeries, missedSeries)...)
+		mergedSeries := mergeSerieses(cachedSeries, missedSeries)
+
+		seriesList = append(seriesList, mergedSeries...)
 		// Cache the seriesList for future queries
 		if len(missedSeries) > 0 {
-			mergedSeries := mergeSerieses(cachedSeries, missedSeries)
 			mergedSeriesData, err := json.Marshal(mergedSeries)
 			if err != nil {
-				errQuriesByName[queryName] = err.Error()
+				errQueriesByName[queryName] = err.Error()
 				continue
 			}
 			err = q.cache.Store(cacheKey, mergedSeriesData, time.Hour)
 			if err != nil {
-				errQuriesByName[queryName] = err.Error()
+				errQueriesByName[queryName] = err.Error()
 				continue
 			}
 		}
 	}
-	return seriesList, err, errQuriesByName
+	if len(errQueriesByName) > 0 {
+		err = fmt.Errorf("error in prom queries")
+	}
+	return seriesList, err, errQueriesByName
 }
 
 func (q *querier) runClickHouseQueries(ctx context.Context, params *model.QueryRangeParamsV2) ([]*model.Series, error, map[string]string) {
-	var seriesList []*model.Series
+	seriesList := make([]*model.Series, 0)
+	errQueriesByName := make(map[string]string)
 	var err error
-	var errQuriesByName map[string]string
-	for queryName, clickHouseQuery := range params.CompositeMetricQuery.ClickHouseQueries {
+	for queryName := range params.CompositeMetricQuery.ClickHouseQueries {
+		clickHouseQuery := params.CompositeMetricQuery.ClickHouseQueries[queryName]
 		series, err := q.execClickHouseQuery(ctx, clickHouseQuery.Query)
 		if err != nil {
-			errQuriesByName[queryName] = err.Error()
+			errQueriesByName[queryName] = err.Error()
 			continue
 		}
 		seriesList = append(seriesList, series...)
 	}
-	return seriesList, err, errQuriesByName
+	if len(errQueriesByName) > 0 {
+		err = fmt.Errorf("error in clickhouse queries")
+	}
+	return seriesList, err, errQueriesByName
 }
 
 func (q *querier) QueryRange(ctx context.Context, params *model.QueryRangeParamsV2) ([]*model.Series, error, map[string]string) {
 	var seriesList []*model.Series
 	var err error
-	var errQuriesByName map[string]string
+	var errQueriesByName map[string]string
 	if params.CompositeMetricQuery != nil {
 		switch params.CompositeMetricQuery.QueryType {
 		case model.QUERY_BUILDER:
-			seriesList, err, errQuriesByName = q.runBuilderQueries(ctx, params)
+			seriesList, err, errQueriesByName = q.runBuilderQueries(ctx, params)
 		case model.PROM:
-			seriesList, err, errQuriesByName = q.runPromQueries(ctx, params)
+			seriesList, err, errQueriesByName = q.runPromQueries(ctx, params)
 		case model.CLICKHOUSE:
-			seriesList, err, errQuriesByName = q.runClickHouseQueries(ctx, params)
+			seriesList, err, errQueriesByName = q.runClickHouseQueries(ctx, params)
 		default:
 			err = fmt.Errorf("invalid query type")
 		}
 	}
-	return seriesList, err, errQuriesByName
+	return seriesList, err, errQueriesByName
 }

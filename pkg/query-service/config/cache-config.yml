@@ -1,0 +1,4 @@
+provider: "inmemory"
+inmemory:
+  ttl: 5m
+  cleanupInterval: 10m

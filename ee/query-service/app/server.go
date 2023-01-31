@@ -26,6 +26,7 @@ import (
 	"go.signoz.io/signoz/ee/query-service/usage"
 
 	"go.signoz.io/signoz/pkg/query-service/app/dashboards"
+	"go.signoz.io/signoz/pkg/query-service/cache"
 	baseconst "go.signoz.io/signoz/pkg/query-service/constants"
 	"go.signoz.io/signoz/pkg/query-service/healthcheck"
 	basealm "go.signoz.io/signoz/pkg/query-service/integrations/alertManager"
@@ -43,8 +44,9 @@ type ServerOptions struct {
 	HTTPHostPort    string
 	PrivateHostPort string
 	// alert specific params
-	DisableRules bool
-	RuleRepoURL  string
+	DisableRules              bool
+	RuleRepoURL               string
+	QueryRangeCacheConfigPath string
 }
 
 // Server runs HTTP api service
@@ -134,14 +136,19 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 
 	telemetry.GetInstance().SetReader(reader)
 
-	// cache := inmemory.New()
+	cacheOpts, err := cache.LoadFromYAMLCacheConfigFile(serverOptions.QueryRangeCacheConfigPath)
+	if err != nil {
+		return nil, err
+	}
+	cache := cache.NewCache(cacheOpts)
+
 	apiOpts := api.APIHandlerOptions{
 		DataConnector:  reader,
 		AppDao:         modelDao,
 		RulesManager:   rm,
 		FeatureFlags:   lm,
 		LicenseManager: lm,
-		// cache:          cache,
+		Cache:          cache,
 	}
 
 	apiHandler, err := api.NewAPIHandler(apiOpts)

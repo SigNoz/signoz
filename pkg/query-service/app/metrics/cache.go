@@ -16,7 +16,7 @@ func NewMetricsKeyGenerator() *metricsKeyGenerator {
 }
 
 func (m *metricsKeyGenerator) GenerateKeys(params *model.QueryRangeParamsV2) map[string]string {
-	var cacheKeys map[string]string
+	cacheKeys := make(map[string]string)
 
 	if params.CompositeMetricQuery != nil {
 		step := params.Step

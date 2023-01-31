@@ -40,8 +40,9 @@ import (
 type status string
 
 const (
-	statusSuccess status = "success"
-	statusError   status = "error"
+	statusSuccess       status = "success"
+	statusError         status = "error"
+	defaultFluxInterval        = 5 * time.Minute
 )
 
 // NewRouter creates and configures a Gorilla Router.
@@ -80,6 +81,9 @@ type APIHandlerOpts struct {
 
 	// cache
 	Cache cache.Cache
+
+	// Querier Influx Interval
+	fluxInterval time.Duration
 }
 
 // NewAPIHandler returns an APIHandler
@@ -89,7 +93,10 @@ func NewAPIHandler(opts APIHandlerOpts) (*APIHandler, error) {
 	if err != nil {
 		return nil, err
 	}
-	querier := clickhouseReader.NewQuerier(opts.Cache, opts.Reader)
+	if opts.fluxInterval == 0 {
+		opts.fluxInterval = defaultFluxInterval
+	}
+	querier := clickhouseReader.NewQuerier(opts.Cache, opts.Reader, opts.fluxInterval)
 
 	aH := &APIHandler{
 		reader:       opts.Reader,

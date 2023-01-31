@@ -12,3 +12,22 @@ const (
 
 	RetrieveStatusError
 )
+
+func (s RetrieveStatus) String() string {
+	switch s {
+	case RetrieveStatusHit:
+		return "hit"
+	case RetrieveStatusPartialHit:
+		return "partial hit"
+	case RetrieveStatusRangeMiss:
+		return "range miss"
+	case RetrieveStatusKeyMiss:
+		return "key miss"
+	case RetrieveStatusRevalidated:
+		return "revalidated"
+	case RetrieveStatusError:
+		return "error"
+	default:
+		return "unknown"
+	}
+}

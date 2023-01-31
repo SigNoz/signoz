@@ -20,7 +20,7 @@ import (
 	"github.com/soheilhy/cmux"
 	"go.signoz.io/signoz/pkg/query-service/app/clickhouseReader"
 	"go.signoz.io/signoz/pkg/query-service/app/dashboards"
-	"go.signoz.io/signoz/pkg/query-service/cache/inmemory"
+	"go.signoz.io/signoz/pkg/query-service/cache"
 	"go.signoz.io/signoz/pkg/query-service/constants"
 	"go.signoz.io/signoz/pkg/query-service/dao"
 	"go.signoz.io/signoz/pkg/query-service/featureManager"
@@ -40,8 +40,9 @@ type ServerOptions struct {
 	HTTPHostPort    string
 	PrivateHostPort string
 	// alert specific params
-	DisableRules bool
-	RuleRepoURL  string
+	DisableRules              bool
+	RuleRepoURL               string
+	QueryRangeCacheConfigPath string
 }
 
 // Server runs HTTP, Mux and a grpc server
@@ -106,7 +107,11 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 		return nil, err
 	}
 
-	cache := inmemory.New()
+	cacheOpts, err := cache.LoadFromYAMLCacheConfigFile(serverOptions.QueryRangeCacheConfigPath)
+	if err != nil {
+		return nil, err
+	}
+	cache := cache.NewCache(cacheOpts)
 	telemetry.GetInstance().SetReader(reader)
 	apiHandler, err := NewAPIHandler(APIHandlerOpts{
 		Reader:       reader,

@@ -8,6 +8,7 @@ import (
 	"go.signoz.io/signoz/ee/query-service/interfaces"
 	"go.signoz.io/signoz/ee/query-service/license"
 	baseapp "go.signoz.io/signoz/pkg/query-service/app"
+	"go.signoz.io/signoz/pkg/query-service/cache"
 	baseint "go.signoz.io/signoz/pkg/query-service/interfaces"
 	rules "go.signoz.io/signoz/pkg/query-service/rules"
 	"go.signoz.io/signoz/pkg/query-service/version"
@@ -19,6 +20,7 @@ type APIHandlerOptions struct {
 	RulesManager   *rules.Manager
 	FeatureFlags   baseint.FeatureLookup
 	LicenseManager *license.Manager
+	Cache          cache.Cache
 }
 
 type APIHandler struct {
@@ -33,7 +35,9 @@ func NewAPIHandler(opts APIHandlerOptions) (*APIHandler, error) {
 		Reader:       opts.DataConnector,
 		AppDao:       opts.AppDao,
 		RuleManager:  opts.RulesManager,
-		FeatureFlags: opts.FeatureFlags})
+		FeatureFlags: opts.FeatureFlags,
+		Cache:        opts.Cache,
+	})
 
 	if err != nil {
 		return nil, err
@@ -96,7 +100,7 @@ func (ah *APIHandler) RegisterRoutes(router *mux.Router) {
 	router.HandleFunc("/api/v1/complete/google",
 		baseapp.OpenAccess(ah.receiveGoogleAuth)).
 		Methods(http.MethodGet)
-		
+
 	router.HandleFunc("/api/v1/orgs/{orgId}/domains",
 		baseapp.AdminAccess(ah.listDomainsByOrg)).
 		Methods(http.MethodGet)

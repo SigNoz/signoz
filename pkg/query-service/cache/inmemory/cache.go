@@ -9,12 +9,12 @@ import (
 
 // cache implements the Cache interface
 type cache struct {
-	*go_cache.Cache
+	c *go_cache.Cache
 }
 
 // New creates a new in-memory cache
-func New() *cache {
-	return &cache{}
+func New(opts *Options) *cache {
+	return &cache{c: go_cache.New(opts.TTL, opts.CleanupInterval)}
 }
 
 // Connect does nothing
@@ -24,13 +24,13 @@ func (c *cache) Connect() error {
 
 // Store stores the data in the cache
 func (c *cache) Store(cacheKey string, data []byte, ttl time.Duration) error {
-	c.Set(cacheKey, data, ttl)
+	c.c.Set(cacheKey, data, ttl)
 	return nil
 }
 
 // Retrieve retrieves the data from the cache
 func (c *cache) Retrieve(cacheKey string, allowExpired bool) ([]byte, status.RetrieveStatus, error) {
-	data, found := c.Get(cacheKey)
+	data, found := c.c.Get(cacheKey)
 	if !found {
 		return nil, status.RetrieveStatusKeyMiss, nil
 	}
@@ -45,13 +45,13 @@ func (c *cache) SetTTL(cacheKey string, ttl time.Duration) {
 
 // Remove removes the cache entry
 func (c *cache) Remove(cacheKey string) {
-	c.Delete(cacheKey)
+	c.c.Delete(cacheKey)
 }
 
 // BulkRemove removes the cache entries
 func (c *cache) BulkRemove(cacheKeys []string) {
 	for _, cacheKey := range cacheKeys {
-		c.Delete(cacheKey)
+		c.c.Delete(cacheKey)
 	}
 }
 
