@@ -15,12 +15,20 @@ type cache struct {
 	opts   *Options
 }
 
+// New creates a new cache
 func New(opts *Options) *cache {
-	return &cache{
-		opts: opts,
+	if opts == nil {
+		opts = defaultOptions()
 	}
+	return &cache{opts: opts}
 }
 
+// WithClient creates a new cache with the given client
+func WithClient(client *redis.Client) *cache {
+	return &cache{client: client}
+}
+
+// Connect connects to the redis server
 func (c *cache) Connect() error {
 	c.client = redis.NewClient(&redis.Options{
 		Addr:     fmt.Sprintf("%s:%d", c.opts.Host, c.opts.Port),
@@ -30,10 +38,12 @@ func (c *cache) Connect() error {
 	return nil
 }
 
+// Store stores the data in the cache
 func (c *cache) Store(cacheKey string, data []byte, ttl time.Duration) error {
 	return c.client.Set(context.Background(), cacheKey, data, ttl).Err()
 }
 
+// Retrieve retrieves the data from the cache
 func (c *cache) Retrieve(cacheKey string, allowExpired bool) ([]byte, status.RetrieveStatus, error) {
 	data, err := c.client.Get(context.Background(), cacheKey).Bytes()
 	if err != nil {
@@ -45,10 +55,15 @@ func (c *cache) Retrieve(cacheKey string, allowExpired bool) ([]byte, status.Ret
 	return data, status.RetrieveStatusHit, nil
 }
 
+// SetTTL sets the TTL for the cache entry
 func (c *cache) SetTTL(cacheKey string, ttl time.Duration) {
-	// noop
+	err := c.client.Expire(context.Background(), cacheKey, ttl).Err()
+	if err != nil {
+		zap.S().Error("error setting TTL for cache key", zap.String("cacheKey", cacheKey), zap.Duration("ttl", ttl), zap.Error(err))
+	}
 }
 
+// Remove removes the cache entry
 func (c *cache) Remove(cacheKey string) {
 	err := c.client.Del(context.Background(), cacheKey).Err()
 	if err != nil {
@@ -56,28 +71,34 @@ func (c *cache) Remove(cacheKey string) {
 	}
 }
 
+// BulkRemove removes the cache entries
 func (c *cache) BulkRemove(cacheKeys []string) {
 	for _, cacheKey := range cacheKeys {
 		c.Remove(cacheKey)
 	}
 }
 
+// Close closes the connection to the redis server
 func (c *cache) Close() error {
 	return c.client.Close()
 }
 
+// Ping pings the redis server
 func (c *cache) Ping() error {
 	return c.client.Ping(context.Background()).Err()
 }
 
+// GetClient returns the redis client
 func (c *cache) GetClient() *redis.Client {
 	return c.client
 }
 
+// GetOptions returns the options
 func (c *cache) GetOptions() *Options {
 	return c.opts
 }
 
+// GetTTL returns the TTL for the cache entry
 func (c *cache) GetTTL(cacheKey string) time.Duration {
 	ttl, err := c.client.TTL(context.Background(), cacheKey).Result()
 	if err != nil {
@@ -86,10 +107,12 @@ func (c *cache) GetTTL(cacheKey string) time.Duration {
 	return ttl
 }
 
+// GetKeys returns the keys matching the pattern
 func (c *cache) GetKeys(pattern string) ([]string, error) {
 	return c.client.Keys(context.Background(), pattern).Result()
 }
 
+// GetKeysWithTTL returns the keys matching the pattern with their TTL
 func (c *cache) GetKeysWithTTL(pattern string) (map[string]time.Duration, error) {
 	keys, err := c.GetKeys(pattern)
 	if err != nil {

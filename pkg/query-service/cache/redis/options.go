@@ -1,8 +1,10 @@
 package redis
 
 const (
-	DefaultHost = "localhost"
-	DefaultPort = 6379
+	defaultHost     = "localhost"
+	defaultPort     = 6379
+	defaultPassword = ""
+	defaultDB       = 0
 )
 
 type Options struct {
@@ -12,9 +14,11 @@ type Options struct {
 	DB       int    `yaml:"db,omitempty"`
 }
 
-func NewOptions() *Options {
+func defaultOptions() *Options {
 	return &Options{
-		Host: DefaultHost,
-		Port: DefaultPort,
+		Host:     defaultHost,
+		Port:     defaultPort,
+		Password: defaultPassword,
+		DB:       defaultDB,
 	}
 }
