@@ -47,9 +47,12 @@ function SearchFields({
 		}
 	}, [parsedQuery]);
 
-	const updateFieldsQuery = (updated: QueryFields[][]): void => {
-		setFieldsQuery(updated);
-		keyPrefixRef.current = hashCode(JSON.stringify(updated));
+	// syncKeyPrefix initiates re-render. useful in situations like
+	// delete field (in search panel). this method allows condiitonally
+	// setting keyPrefix as doing it on every update of query initiates
+	// a re-render. this is a problem for text fields where input focus goes away.
+	const syncKeyPrefix = (): void => {
+		keyPrefixRef.current = hashCode(JSON.stringify(fieldsQuery));
 	};
 
 	const addSuggestedField = useCallback(
@@ -102,7 +105,8 @@ function SearchFields({
 				keyPrefix={keyPrefixRef.current}
 				onDropDownToggleHandler={onDropDownToggleHandler}
 				fieldsQuery={fieldsQuery}
-				setFieldsQuery={updateFieldsQuery}
+				setFieldsQuery={setFieldsQuery}
+				syncKeyPrefix={syncKeyPrefix}
 			/>
 			<SearchFieldsActionBar
 				applyUpdate={applyUpdate}
