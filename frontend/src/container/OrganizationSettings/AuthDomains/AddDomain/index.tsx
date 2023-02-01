@@ -21,6 +21,8 @@ function AddDomain({ refetch }: Props): JSX.Element {
 
 	const { org } = useSelector<AppState, AppReducer>((state) => state.app);
 
+	const [notifications, NotificationElement] = notification.useNotification();
+
 	const onCreateHandler = async (): Promise<void> => {
 		try {
 			const response = await createDomainApi({
@@ -29,19 +31,19 @@ function AddDomain({ refetch }: Props): JSX.Element {
 			});
 
 			if (response.statusCode === 200) {
-				notification.success({
+				notifications.success({
 					message: 'Your domain has been added successfully.',
 					duration: 15,
 				});
 				setIsDomain(false);
 				refetch();
 			} else {
-				notification.error({
+				notifications.error({
 					message: t('common:something_went_wrong'),
 				});
 			}
 		} catch (error) {
-			notification.error({
+			notifications.error({
 				message: t('common:something_went_wrong'),
 			});
 		}
@@ -49,6 +51,7 @@ function AddDomain({ refetch }: Props): JSX.Element {
 
 	return (
 		<>
+			{NotificationElement}
 			<Container>
 				<Typography.Title level={3}>
 					{t('authenticated_domains', {

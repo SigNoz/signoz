@@ -1,4 +1,4 @@
-import { notification } from 'antd';
+import { NotificationInstance } from 'antd/es/notification/interface';
 import getFiltersApi from 'api/trace/getFilters';
 import xor from 'lodash-es/xor';
 import { Dispatch, Store } from 'redux';
@@ -29,6 +29,7 @@ import {
 export const GetInitialTraceFilter = (
 	minTime: GlobalReducer['minTime'],
 	maxTime: GlobalReducer['maxTime'],
+	notify: NotificationInstance,
 ): ((
 	dispatch: Dispatch<AppActions>,
 	getState: Store<AppState>['getState'],
@@ -166,7 +167,7 @@ export const GetInitialTraceFilter = (
 				},
 			});
 		} else {
-			notification.error({
+			notify.error({
 				message: response.error || 'Something went wrong',
 			});
 		}

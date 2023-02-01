@@ -91,6 +91,8 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 	const latestVersionCounter = useRef(0);
 	const latestConfigCounter = useRef(0);
 
+	const [notifications, NotificationElement] = notification.useNotification();
+
 	useEffect(() => {
 		if (
 			getUserLatestVersionResponse.isFetched &&
@@ -105,7 +107,7 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 					isError: true,
 				},
 			});
-			notification.error({
+			notifications.error({
 				message: t('oops_something_went_wrong_version'),
 			});
 		}
@@ -123,7 +125,7 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 					isError: true,
 				},
 			});
-			notification.error({
+			notifications.error({
 				message: t('oops_something_went_wrong_version'),
 			});
 		}
@@ -219,12 +221,14 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 		getDynamicConfigsResponse.data,
 		getDynamicConfigsResponse.isFetched,
 		getDynamicConfigsResponse.isSuccess,
+		notifications,
 	]);
 
 	const isToDisplayLayout = isLoggedIn;
 
 	return (
 		<Layout>
+			{NotificationElement}
 			{isToDisplayLayout && <Header />}
 			<Layout>
 				{isToDisplayLayout && <SideNav />}
