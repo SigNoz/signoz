@@ -175,6 +175,7 @@ export interface QueryBuilderProps {
 	onDropDownToggleHandler: (value: boolean) => VoidFunction;
 	fieldsQuery: QueryFields[][];
 	setFieldsQuery: (q: QueryFields[][]) => void;
+	syncKeyPrefix: () => void;
 }
 
 function QueryBuilder({
@@ -182,6 +183,7 @@ function QueryBuilder({
 	fieldsQuery,
 	setFieldsQuery,
 	onDropDownToggleHandler,
+	syncKeyPrefix,
 }: QueryBuilderProps): JSX.Element {
 	const handleUpdate = (query: Query, queryIndex: number): void => {
 		const updated = [...fieldsQuery];
@@ -195,6 +197,9 @@ function QueryBuilder({
 		else updated.splice(queryIndex, 2);
 
 		setFieldsQuery(updated);
+
+		// initiate re-render query panel
+		syncKeyPrefix();
 	};
 
 	const QueryUI = (
