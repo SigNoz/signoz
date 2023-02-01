@@ -23,6 +23,7 @@ import {
 } from 'chart.js';
 import * as chartjsAdapter from 'chartjs-adapter-date-fns';
 import annotationPlugin from 'chartjs-plugin-annotation';
+import dayjs from 'dayjs';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import React, { useCallback, useEffect, useRef } from 'react';
 
@@ -150,6 +151,10 @@ function Graph({
 					},
 					tooltip: {
 						callbacks: {
+							title(context) {
+								const date = dayjs(context[0].parsed.x);
+								return date.format('MMM DD, YYYY, HH:mm:ss');
+							},
 							label(context) {
 								let label = context.dataset.label || '';
 
