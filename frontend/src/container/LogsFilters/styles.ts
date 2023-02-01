@@ -3,7 +3,6 @@ import { Col, Typography } from 'antd';
 import styled from 'styled-components';
 
 export const Container = styled(Col)`
-	padding-top: 0.3rem;
 	min-width: 250px;
 	max-width: 350px;
 `;

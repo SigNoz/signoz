@@ -3,17 +3,21 @@ import { CopyFilled, ExpandAltOutlined } from '@ant-design/icons';
 import { Button, Divider, notification, Row, Typography } from 'antd';
 import { map } from 'd3';
 import dayjs from 'dayjs';
+// utils
 import { FlatLogData } from 'lib/logs/flatLogData';
 import React, { useCallback, useMemo } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useCopyToClipboard } from 'react-use';
+// interfaces
 import { AppState } from 'store/reducers';
 import { SET_DETAILED_LOG_DATA } from 'types/actions/logs';
 import { ILog } from 'types/api/logs/log';
 import { ILogsReducer } from 'types/reducer/logs';
 
+// components
 import AddToQueryHOC from '../AddToQueryHOC';
 import CopyClipboardHOC from '../CopyClipboardHOC';
+// styles
 import { Container, LogContainer, Text, TextContainer } from './styles';
 import { isValidLogField } from './util';
 
@@ -69,15 +73,17 @@ function LogSelectedField({
 	);
 }
 
-interface LogItemProps {
+interface ListLogViewProps {
 	logData: ILog;
 }
-function LogItem({ logData }: LogItemProps): JSX.Element {
+function ListLogView({ logData }: ListLogViewProps): JSX.Element {
 	const {
 		fields: { selected },
 	} = useSelector<AppState, ILogsReducer>((state) => state.logs);
+
 	const dispatch = useDispatch();
 	const flattenLogData = useMemo(() => FlatLogData(logData), [logData]);
+
 	const [, setCopy] = useCopyToClipboard();
 
 	const handleDetailedView = useCallback(() => {
@@ -156,4 +162,4 @@ function LogItem({ logData }: LogItemProps): JSX.Element {
 	);
 }
 
-export default LogItem;
+export default ListLogView;

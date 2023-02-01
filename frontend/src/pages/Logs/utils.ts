@@ -1,0 +1,2 @@
+export const LOGS_VIEW_MODE = 'LOGS_VIEW_MODE';
+export const LOGS_LINES_PER_ROW = 'LOGS_LINES_PER_ROW';
