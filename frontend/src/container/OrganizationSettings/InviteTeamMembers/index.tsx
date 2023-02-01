@@ -11,8 +11,8 @@ const { Option } = Select;
 function InviteTeamMembers({ allMembers, setAllMembers }: Props): JSX.Element {
 	const { t } = useTranslation('organizationsettings');
 
-	useEffect(() => {
-		return (): void => {
+	useEffect(
+		() => (): void => {
 			setAllMembers([
 				{
 					email: '',
@@ -20,8 +20,9 @@ function InviteTeamMembers({ allMembers, setAllMembers }: Props): JSX.Element {
 					role: 'VIEWER',
 				},
 			]);
-		};
-	}, [setAllMembers]);
+		},
+		[setAllMembers],
+	);
 
 	const onAddHandler = (): void => {
 		setAllMembers((state) => [
@@ -36,16 +37,14 @@ function InviteTeamMembers({ allMembers, setAllMembers }: Props): JSX.Element {
 
 	const onChangeHandler = useCallback(
 		(value: string, index: number, type: string): void => {
-			setAllMembers((prev) => {
-				return [
-					...prev.slice(0, index),
-					{
-						...prev[index],
-						[type]: value,
-					},
-					...prev.slice(index, prev.length - 1),
-				];
-			});
+			setAllMembers((prev) => [
+				...prev.slice(0, index),
+				{
+					...prev[index],
+					[type]: value,
+				},
+				...prev.slice(index, prev.length - 1),
+			]);
 		},
 		[setAllMembers],
 	);

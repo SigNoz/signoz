@@ -157,18 +157,16 @@ function Login({
 		}
 	};
 
-	const renderSAMLAction = (): JSX.Element => {
-		return (
-			<Button
-				type="primary"
-				loading={isLoading}
-				disabled={isLoading}
-				href={precheckResult.ssoUrl}
-			>
-				{t('login_with_sso')}
-			</Button>
-		);
-	};
+	const renderSAMLAction = (): JSX.Element => (
+		<Button
+			type="primary"
+			loading={isLoading}
+			disabled={isLoading}
+			href={precheckResult.ssoUrl}
+		>
+			{t('login_with_sso')}
+		</Button>
+	);
 
 	const renderOnSsoError = (): JSX.Element | null => {
 		if (!ssoerror) {

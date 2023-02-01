@@ -20,15 +20,14 @@ export const urlKey = {
 	serviceName: 'serviceName',
 };
 
-export const isOrderParams = (orderBy: string | null): orderBy is OrderBy => {
-	return !!(
+export const isOrderParams = (orderBy: string | null): orderBy is OrderBy =>
+	!!(
 		orderBy === 'serviceName' ||
 		orderBy === 'exceptionCount' ||
 		orderBy === 'lastSeen' ||
 		orderBy === 'firstSeen' ||
 		orderBy === 'exceptionType'
 	);
-};
 
 export const getOrder = (order: string | null): Order => {
 	if (isOrder(order)) {
@@ -82,12 +81,9 @@ export const getDefaultOrder = (
 	return undefined;
 };
 
-export const getNanoSeconds = (date: string): string => {
-	return (
-		Math.floor(new Date(date).getTime() / 1e3).toString() +
-		String(Timestamp.fromString(date).getNano().toString()).padStart(9, '0')
-	);
-};
+export const getNanoSeconds = (date: string): string =>
+	Math.floor(new Date(date).getTime() / 1e3).toString() +
+	String(Timestamp.fromString(date).getNano().toString()).padStart(9, '0');
 
 export const getUpdatePageSize = (pageSize: string | null): number => {
 	if (pageSize) {
