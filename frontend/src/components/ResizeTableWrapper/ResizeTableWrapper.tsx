@@ -12,7 +12,6 @@ function ResizeTableWrapper(props: ResizeTableWrapperProps): JSX.Element {
 			{ size }: ResizeCallbackData,
 		): void => {
 			const newColumns = [...columnsData];
-			console.log(size.width, 'size.width');
 			newColumns[index] = {
 				...newColumns[index],
 				width: size.width,
