@@ -23,7 +23,7 @@ func PrepareDropFilter(rules []model.IngestionRule) (*filterprocessor.Config, er
 }
 
 // PrepareDropExpression creates the final OTTL expression for filter processor
-func PrepareDropExpressions(rules []model.*IngestionRule) (result []string, fnerr []error) {
+func PrepareDropExpressions(rules []model.IngestionRule) (result []string, fnerr []error) {
 	// result captures the final expression to be set in fitler processor
 	if len(rules) == 0 {
 		return result, nil

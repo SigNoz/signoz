@@ -119,9 +119,17 @@ func (ah *APIHandler) RegisterRoutes(router *mux.Router) {
 		baseapp.AdminAccess(ah.listDropRules)).
 		Methods(http.MethodGet)
 
+	router.HandleFunc("/api/v1/dropRules",
+		baseapp.AdminAccess(ah.createDropRule)).
+		Methods(http.MethodPost)
+
 	router.HandleFunc("/api/v1/samplingRules/{version}",
 		baseapp.AdminAccess(ah.listSamplingRules)).
 		Methods(http.MethodGet)
+
+	router.HandleFunc("/api/v1/samplingRules",
+		baseapp.AdminAccess(ah.createSamplingRule)).
+		Methods(http.MethodPost)
 
 	// base overrides
 	router.HandleFunc("/api/v1/version", baseapp.OpenAccess(ah.getVersion)).Methods(http.MethodGet)

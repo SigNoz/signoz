@@ -2,6 +2,11 @@ package ingestionRules
 
 import "go.signoz.io/signoz/ee/query-service/model"
 
+// PostableIngestionRules are a list of user defined ingestion rules
+type PostableIngestionRules struct {
+	Rules []PostableIngestionRule `json:"rules"`
+}
+
 // PostableIngestionRule captures user inputs in setting the ingestion rule
 type PostableIngestionRule struct {
 	Id          string                     `json:"id"`

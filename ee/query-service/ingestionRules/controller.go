@@ -27,6 +27,17 @@ type IngestionRulesResponse struct {
 	History []agentConf.ConfigVersion `json:"history"`
 }
 
+// ApplyRules conditionally calls applyDropRules or applySampling rules
+func (ic *IngestionController) ApplyRules(ctx context.Context, elementType agentConf.ElementTypeDef, postable []PostableIngestionRule) (*IngestionRulesResponse, *model.ApiError) {
+	switch elementType {
+	case agentConf.ElementTypeDropRules:
+		return ic.ApplyDropRules(ctx, postable)
+	case agentConf.ElementTypeSamplingRules:
+		return ic.ApplySamplingRules(ctx, postable)
+	}
+	return nil, model.BadRequestStr("unexpected element type")
+}
+
 // ApplyDropRules stores new or changed drop rules and initiates a new config update
 func (ic *IngestionController) ApplyDropRules(ctx context.Context, postable []PostableIngestionRule) (*IngestionRulesResponse, *model.ApiError) {
 	var dropRules []model.IngestionRule
@@ -186,7 +197,7 @@ func (ic *IngestionController) ApplySamplingRules(ctx context.Context, postable 
 	}
 
 	if err != nil {
-		zap.S().Errorf("failed to insert sampling rules into agent config", zap.String("params", params), err)
+		zap.S().Errorf("failed to insert sampling rules into agent config: ", params, err)
 		return response, model.InternalErrorStr("failed to apply sampling rules ")
 	}
 	return response, nil

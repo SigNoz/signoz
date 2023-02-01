@@ -107,7 +107,7 @@ func (r *Repo) insertConfig(ctx context.Context, c *ConfigVersion, elements []st
 		return fmt.Errorf("user defined versions are not supported in the agent config")
 	}
 
-	latestVersion, err := r.GetLatestVersion(c.ElementType)
+	configVersion, err := r.GetLatestVersion(ctx, c.ElementType)
 	if err != nil {
 		if err != sql.ErrNoRows {
 			zap.S().Errorf("failed to fetch latest config version", err)
@@ -115,7 +115,7 @@ func (r *Repo) insertConfig(ctx context.Context, c *ConfigVersion, elements []st
 		}
 	}
 
-	c.Version = updateVersion(latestVersion)
+	c.Version = updateVersion(configVersion.Version)
 
 	defer func() {
 		if fnerr != nil {

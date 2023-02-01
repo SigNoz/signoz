@@ -2,6 +2,7 @@ package api
 
 import (
 	"context"
+	"encoding/json"
 	"net/http"
 	"strconv"
 
@@ -54,7 +55,7 @@ func (ah *APIHandler) listIngestionRulesHandler(w http.ResponseWriter, r *http.R
 }
 
 // listIngestionRules lists rules for latest version
-func (ah *APIHandler) listIngestionRules(ctx context.Context, elementType agentConf.ElementType) (*ingestionRules.IngestionRulesResponse, *model.ApiError) {
+func (ah *APIHandler) listIngestionRules(ctx context.Context, elementType agentConf.ElementTypeDef) (*ingestionRules.IngestionRulesResponse, *model.ApiError) {
 
 	// get lateset agent config
 	lastestConfig, err := agentConf.GetLatestVersion(ctx, elementType)
@@ -77,7 +78,7 @@ func (ah *APIHandler) listIngestionRules(ctx context.Context, elementType agentC
 }
 
 // listIngestionRulesByVersion lists rules along with config version history
-func (ah *APIHandler) listIngestionRulesByVersion(ctx context.Context, version float32, elementType agentConf.ElementType) (*ingestionRules.IngestionRulesResponse, *model.ApiError) {
+func (ah *APIHandler) listIngestionRulesByVersion(ctx context.Context, version float32, elementType agentConf.ElementTypeDef) (*ingestionRules.IngestionRulesResponse, *model.ApiError) {
 
 	payload, apierr := ah.opts.IngestionController.GetRulesByVersion(ctx, version)
 	if apierr != nil {
@@ -92,4 +93,38 @@ func (ah *APIHandler) listIngestionRulesByVersion(ctx context.Context, version f
 
 	payload.History = history
 	return payload, nil
+}
+
+func (ah *APIHandler) createIngestionRule(w http.ResponseWriter, r *http.Request, elementType agentConf.ElementTypeDef) {
+
+	ctx := context.Background()
+	req := ingestionRules.PostableIngestionRules{}
+
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		RespondError(w, model.BadRequest(err), nil)
+		return
+	}
+
+	createRule := func(ctx context.Context, postable []ingestionRules.PostableIngestionRule) (*ingestionRules.IngestionRulesResponse, *model.ApiError) {
+		if len(postable) == 0 {
+			zap.S().Warnf("found no rules in the http request, this will delete all the rules")
+		}
+
+		for _, p := range postable {
+			if apierr := p.IsValid(); apierr != nil {
+				zap.S().Debugf("received invalid dropping rule in the POST request", apierr)
+				return nil, apierr
+			}
+		}
+
+		return ah.opts.IngestionController.ApplyRules(ctx, elementType, postable)
+	}
+
+	ingestionRuleResponse, apierr := createRule(ctx, req.Rules)
+	if apierr != nil {
+		RespondError(w, apierr, nil)
+		return
+	}
+
+	ah.Respond(w, ingestionRuleResponse)
 }

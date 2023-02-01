@@ -58,7 +58,7 @@ func StartNewVersion(ctx context.Context, eleType ElementTypeDef, elementIds []s
 	}
 
 	// create a new version
-	cfg := NewConfigversion(ElementTypeDropRules)
+	cfg := NewConfigversion(eleType)
 
 	// insert new config and elements into database
 	err := m.insertConfig(ctx, cfg, elementIds)

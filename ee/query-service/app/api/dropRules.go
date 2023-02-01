@@ -9,3 +9,7 @@ import (
 func (ah *APIHandler) listDropRules(w http.ResponseWriter, r *http.Request) {
 	ah.listIngestionRulesHandler(w, r, agentConf.ElementTypeSamplingRules)
 }
+
+func (ah *APIHandler) createDropRule(w http.ResponseWriter, r *http.Request) {
+	ah.createIngestionRule(w, r, agentConf.ElementTypeDropRules)
+}
