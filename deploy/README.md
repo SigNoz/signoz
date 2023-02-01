@@ -27,12 +27,6 @@ For x86 chip (amd):
 docker-compose -f docker/clickhouse-setup/docker-compose.yaml up -d
 ```
 
-For Mac with Apple chip (arm):
-
-```sh
-docker-compose -f docker/clickhouse-setup/docker-compose.arm.yaml up -d
-```
-
 Open http://localhost:3301 in your favourite browser. In couple of minutes, you should see
 the data generated from hotrod in SigNoz UI.
 
