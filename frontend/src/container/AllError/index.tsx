@@ -16,6 +16,10 @@ import { ColumnsType } from 'antd/lib/table';
 import { FilterConfirmProps } from 'antd/lib/table/interface';
 import getAll from 'api/errors/getAll';
 import getErrorCounts from 'api/errors/getErrorCounts';
+import {
+	ResizableHeader,
+	ResizeTableWrapper,
+} from 'components/ResizeTableWrapper';
 import ROUTES from 'constants/routes';
 import dayjs from 'dayjs';
 import useUrlQuery from 'hooks/useUrlQuery';
@@ -259,6 +263,7 @@ function AllErrors(): JSX.Element {
 	const columns: ColumnsType<Exception> = [
 		{
 			title: 'Exception Type',
+			width: 100,
 			dataIndex: 'exceptionType',
 			key: 'exceptionType',
 			...getFilter(onExceptionTypeFilter, 'Search By Exception', 'exceptionType'),
@@ -284,6 +289,7 @@ function AllErrors(): JSX.Element {
 			title: 'Error Message',
 			dataIndex: 'exceptionMessage',
 			key: 'exceptionMessage',
+			width: 100,
 			render: (value): JSX.Element => (
 				<Tooltip overlay={(): JSX.Element => value}>
 					<Typography.Paragraph
@@ -298,6 +304,7 @@ function AllErrors(): JSX.Element {
 		},
 		{
 			title: 'Count',
+			width: 50,
 			dataIndex: 'exceptionCount',
 			key: 'exceptionCount',
 			sorter: true,
@@ -310,6 +317,7 @@ function AllErrors(): JSX.Element {
 		{
 			title: 'Last Seen',
 			dataIndex: 'lastSeen',
+			width: 80,
 			key: 'lastSeen',
 			render: getDateValue,
 			sorter: true,
@@ -322,6 +330,7 @@ function AllErrors(): JSX.Element {
 		{
 			title: 'First Seen',
 			dataIndex: 'firstSeen',
+			width: 80,
 			key: 'firstSeen',
 			render: getDateValue,
 			sorter: true,
@@ -334,6 +343,7 @@ function AllErrors(): JSX.Element {
 		{
 			title: 'Application',
 			dataIndex: 'serviceName',
+			width: 100,
 			key: 'serviceName',
 			sorter: true,
 			defaultSortOrder: getDefaultOrder(
@@ -382,21 +392,23 @@ function AllErrors(): JSX.Element {
 	return (
 		<>
 			{NotificationElement}
-			<Table
-				tableLayout="fixed"
-				dataSource={data?.payload as Exception[]}
-				columns={columns}
-				rowKey="firstSeen"
-				loading={isLoading || false || errorCountResponse.status === 'loading'}
-				pagination={{
-					pageSize: getUpdatedPageSize,
-					responsive: true,
-					current: getUpdatedOffset / 10 + 1,
-					position: ['bottomLeft'],
-					total: errorCountResponse.data?.payload || 0,
-				}}
-				onChange={onChangeHandler}
-			/>
+			<ResizeTableWrapper columns={columns}>
+				<Table
+					tableLayout="fixed"
+					dataSource={data?.payload as Exception[]}
+					components={{ header: { cell: ResizableHeader } }}
+					rowKey="firstSeen"
+					loading={isLoading || false || errorCountResponse.status === 'loading'}
+					pagination={{
+						pageSize: getUpdatedPageSize,
+						responsive: true,
+						current: getUpdatedOffset / 10 + 1,
+						position: ['bottomLeft'],
+						total: errorCountResponse.data?.payload || 0,
+					}}
+					onChange={onChangeHandler}
+				/>
+			</ResizeTableWrapper>
 		</>
 	);
 }

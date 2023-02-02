@@ -4,6 +4,10 @@ import { ColumnsType } from 'antd/lib/table';
 import deleteInvite from 'api/user/deleteInvite';
 import getPendingInvites from 'api/user/getPendingInvites';
 import sendInvite from 'api/user/sendInvite';
+import {
+	ResizableHeader,
+	ResizeTableWrapper,
+} from 'components/ResizeTableWrapper';
 import { INVITE_MEMBERS_HASH } from 'constants/app';
 import ROUTES from 'constants/routes';
 import React, { useCallback, useEffect, useState } from 'react';
@@ -141,26 +145,31 @@ function PendingInvitesContainer(): JSX.Element {
 			title: 'Name',
 			dataIndex: 'name',
 			key: 'name',
+			width: 100,
 		},
 		{
 			title: 'Emails',
 			dataIndex: 'email',
 			key: 'email',
+			width: 80,
 		},
 		{
 			title: 'Access Level',
 			dataIndex: 'accessLevel',
 			key: 'accessLevel',
+			width: 50,
 		},
 		{
 			title: 'Invite Link',
 			dataIndex: 'inviteLink',
 			key: 'Invite Link',
 			ellipsis: true,
+			width: 100,
 		},
 		{
 			title: 'Action',
 			dataIndex: 'action',
+			width: 80,
 			key: 'Action',
 			render: (_, record): JSX.Element => (
 				<Space direction="horizontal">
@@ -263,13 +272,15 @@ function PendingInvitesContainer(): JSX.Element {
 						{t('invite_members')}
 					</Button>
 				</TitleWrapper>
-				<Table
-					tableLayout="fixed"
-					dataSource={dataSource}
-					columns={columns}
-					pagination={false}
-					loading={getPendingInvitesResponse.status === 'loading'}
-				/>
+				<ResizeTableWrapper columns={columns}>
+					<Table
+						tableLayout="fixed"
+						dataSource={dataSource}
+						components={{ header: { cell: ResizableHeader } }}
+						pagination={false}
+						loading={getPendingInvitesResponse.status === 'loading'}
+					/>
+				</ResizeTableWrapper>
 			</Space>
 		</div>
 	);

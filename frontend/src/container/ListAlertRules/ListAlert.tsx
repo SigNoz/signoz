@@ -2,6 +2,10 @@
 import { PlusOutlined } from '@ant-design/icons';
 import { notification, Table, Typography } from 'antd';
 import { ColumnsType } from 'antd/lib/table';
+import {
+	ResizableHeader,
+	ResizeTableWrapper,
+} from 'components/ResizeTableWrapper';
 import TextToolTip from 'components/TextToolTip';
 import ROUTES from 'constants/routes';
 import useComponentPermission from 'hooks/useComponentPermission';
@@ -60,6 +64,7 @@ function ListAlert({ allAlertRules, refetch }: ListAlertProps): JSX.Element {
 		{
 			title: 'Status',
 			dataIndex: 'state',
+			width: 80,
 			key: 'state',
 			sorter: (a, b): number =>
 				(b.state ? b.state.charCodeAt(0) : 1000) -
@@ -69,6 +74,7 @@ function ListAlert({ allAlertRules, refetch }: ListAlertProps): JSX.Element {
 		{
 			title: 'Alert Name',
 			dataIndex: 'alert',
+			width: 100,
 			key: 'name',
 			sorter: (a, b): number =>
 				(a.alert ? a.alert.charCodeAt(0) : 1000) -
@@ -84,6 +90,7 @@ function ListAlert({ allAlertRules, refetch }: ListAlertProps): JSX.Element {
 		{
 			title: 'Severity',
 			dataIndex: 'labels',
+			width: 80,
 			key: 'severity',
 			sorter: (a, b): number =>
 				(a.labels ? a.labels.severity.length : 0) -
@@ -101,7 +108,7 @@ function ListAlert({ allAlertRules, refetch }: ListAlertProps): JSX.Element {
 			dataIndex: 'labels',
 			key: 'tags',
 			align: 'center',
-			width: 350,
+			width: 100,
 			render: (value): JSX.Element => {
 				const objectKeys = Object.keys(value);
 				const withOutSeverityKeys = objectKeys.filter((e) => e !== 'severity');
@@ -128,6 +135,7 @@ function ListAlert({ allAlertRules, refetch }: ListAlertProps): JSX.Element {
 			title: 'Action',
 			dataIndex: 'id',
 			key: 'action',
+			width: 120,
 			render: (id: GettableAlert['id'], record): JSX.Element => (
 				<>
 					<ToggleAlertState disabled={record.disabled} setData={setData} id={id} />
@@ -164,8 +172,13 @@ function ListAlert({ allAlertRules, refetch }: ListAlertProps): JSX.Element {
 					</Button>
 				)}
 			</ButtonContainer>
-
-			<Table rowKey="id" columns={columns} dataSource={data} />
+			<ResizeTableWrapper columns={columns}>
+				<Table
+					rowKey="id"
+					components={{ header: { cell: ResizableHeader } }}
+					dataSource={data}
+				/>
+			</ResizeTableWrapper>
 		</>
 	);
 }
