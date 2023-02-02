@@ -32,6 +32,7 @@ const ROUTES = {
 	PASSWORD_RESET: '/password-reset',
 	LIST_LICENSES: '/licenses',
 	TRACE_EXPLORER: '/trace-explorer',
+	PIPELINES: '/pipelines',
 };
 
 export default ROUTES;
