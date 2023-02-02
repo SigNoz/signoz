@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { Resizable, ResizeCallbackData } from 'react-resizable';
 
 import { enableUserSelectHack } from './config';
@@ -6,6 +6,23 @@ import { SpanStyle } from './styles';
 
 function ResizableHeader(props: ResizableHeaderProps): JSX.Element {
 	const { onResize, width, ...restProps } = props;
+
+	const handle = useMemo(
+		() => (
+			<SpanStyle
+				className="react-resizable-handle"
+				onClick={(e): void => e.stopPropagation()}
+			/>
+		),
+		[],
+	);
+
+	const draggableOpts = useMemo(
+		() => ({
+			enableUserSelectHack,
+		}),
+		[],
+	);
 
 	if (!width) {
 		// eslint-disable-next-line react/jsx-props-no-spreading
@@ -16,14 +33,9 @@ function ResizableHeader(props: ResizableHeaderProps): JSX.Element {
 		<Resizable
 			width={width}
 			height={0}
-			handle={
-				<SpanStyle
-					className="react-resizable-handle"
-					onClick={(e): void => e.stopPropagation()}
-				/>
-			}
+			handle={handle}
 			onResize={onResize}
-			draggableOpts={{ ...enableUserSelectHack }}
+			draggableOpts={draggableOpts}
 		>
 			{/* eslint-disable-next-line react/jsx-props-no-spreading */}
 			<th {...restProps} />

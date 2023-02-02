@@ -1,12 +1,14 @@
 import { ColumnsType } from 'antd/lib/table';
-import React, { useState } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import { ResizeCallbackData } from 'react-resizable';
 
-function ResizeTableWrapper(props: ResizeTableWrapperProps): JSX.Element {
-	const { columns, children } = props;
+function ResizeTableWrapper({
+	children,
+	columns,
+}: ResizeTableWrapperProps): JSX.Element {
 	const [columnsData, setColumns] = useState<ColumnsType>(columns);
 
-	const handleResize = React.useCallback(
+	const handleResize = useCallback(
 		(index: number) => (
 			_e: React.SyntheticEvent<Element>,
 			{ size }: ResizeCallbackData,
@@ -21,12 +23,11 @@ function ResizeTableWrapper(props: ResizeTableWrapperProps): JSX.Element {
 		[columnsData],
 	);
 
-	const mergeColumns = React.useMemo(
+	const mergeColumns = useMemo(
 		() =>
 			columnsData.map((col, index) => ({
 				...col,
-				// eslint-disable-next-line @typescript-eslint/no-explicit-any
-				onHeaderCell: (column: ColumnsType<any>[number]): any => ({
+				onHeaderCell: (column: ColumnsType<unknown>[number]): unknown => ({
 					width: column.width,
 					onResize: handleResize(index),
 				}),
