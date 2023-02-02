@@ -1,7 +1,0 @@
-.ant-table-wrapper table {
-	width: auto !important;
-}
-:where(.css-dev-only-do-not-override-7ll4ls).ant-layout,
-:where(.css-dev-only-do-not-override-7ll4ls).ant-layout * {
-	display: flex !important;
-}

@@ -1,6 +1,5 @@
 import './wdyr';
 import './ReactI18';
-import './style.css';
 
 import AppRoutes from 'AppRoutes';
 import { ThemeProvider } from 'hooks/useDarkMode';
