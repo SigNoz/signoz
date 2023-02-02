@@ -29,7 +29,7 @@ function DraggableBodyRow({
 	...restProps
 }: DraggableBodyRowProps): JSX.Element {
 	const ref = useRef<HTMLTableRowElement>(null);
-	const [{ isOver, dropClassName }, drop] = useDrop({
+	const [, drop] = useDrop({
 		accept: type,
 		collect: (monitor) => {
 			const { index: dragIndex } = monitor.getItem() || {};
@@ -38,8 +38,6 @@ function DraggableBodyRow({
 			}
 			return {
 				isOver: monitor.isOver(),
-				dropClassName:
-					dragIndex < index ? ' drop-over-downward' : ' drop-over-upward',
 			};
 		},
 		drop: (item: { index: number }) => {
@@ -58,7 +56,7 @@ function DraggableBodyRow({
 	return (
 		<tr
 			ref={ref}
-			className={`${className}${isOver ? dropClassName : ''}`}
+			className={className}
 			style={{ cursor: 'move', ...style }}
 			// eslint-disable-next-line react/jsx-props-no-spreading
 			{...restProps}
@@ -248,7 +246,7 @@ function ListOfPipelines(): JSX.Element {
 						components={components}
 						dataSource={dataSource}
 						// eslint-disable-next-line @typescript-eslint/no-explicit-any
-						onRow={(_, index): React.HTMLAttributes<any> => {
+						onRow={(_record, index): React.HTMLAttributes<any> => {
 							const attr = {
 								index,
 								moveRow,
