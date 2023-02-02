@@ -1,7 +1,7 @@
 import { Input } from 'antd';
 import React from 'react';
 
-function PiplinesSearchBar() {
+function PiplinesSearchBar(): JSX.Element {
 	return <Input.Search placeholder="Filter Pipelines" allowClear />;
 }
 

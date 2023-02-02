@@ -4,7 +4,7 @@ import React from 'react';
 
 import { Button, ButtonContainer } from './styles';
 
-function AddNewPipline() {
+function AddNewPipline(): JSX.Element {
 	return (
 		<ButtonContainer>
 			<TextToolTip
@@ -14,7 +14,7 @@ function AddNewPipline() {
 			/>
 			<Button
 				icon={<PlusOutlined />}
-				onClick={() => alert('Working')}
+				onClick={(): void => console.log('New Pipeline')}
 				type="primary"
 			>
 				New Pipeline

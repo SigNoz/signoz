@@ -4,7 +4,7 @@ import PipelinePage from 'container/PipelinePage';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 
-function Pipelines() {
+function Pipelines(): JSX.Element {
 	const { t } = useTranslation();
 	return (
 		<RouteTab

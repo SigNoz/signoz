@@ -4,7 +4,7 @@ import AddNewPipline from './AddNewPipline';
 import ListOfPipelines from './ListOfPipelines';
 import PiplinesSearchBar from './SearchBar';
 
-function PipelinePage() {
+function PipelinePage(): JSX.Element {
 	return (
 		<>
 			<AddNewPipline />

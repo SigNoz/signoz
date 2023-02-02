@@ -6,8 +6,8 @@ import {
 } from '@ant-design/icons';
 import { Avatar, List, Space, Switch, Table, Tag } from 'antd';
 import useComponentPermission from 'hooks/useComponentPermission';
-import update from 'immutability-helper';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
+import update from 'react-addons-update';
 import { DndProvider, useDrag, useDrop } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
 import { useSelector } from 'react-redux';
@@ -25,7 +25,7 @@ function DraggableBodyRow({
 	className,
 	style,
 	...restProps
-}: DraggableBodyRowProps) {
+}: DraggableBodyRowProps): JSX.Element {
 	const ref = useRef<HTMLTableRowElement>(null);
 	const [{ isOver, dropClassName }, drop] = useDrop({
 		accept: type,
@@ -58,12 +58,14 @@ function DraggableBodyRow({
 			ref={ref}
 			className={`${className}${isOver ? dropClassName : ''}`}
 			style={{ cursor: 'move', ...style }}
+			// eslint-disable-next-line react/jsx-props-no-spreading
 			{...restProps}
 		/>
 	);
 }
 
-function ListOfPipelines() {
+function ListOfPipelines(): JSX.Element {
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	const [dataSource, setDataSource] = useState<any>([]);
 	const { role } = useSelector<AppState, AppReducer>((state) => state.app);
 
@@ -81,9 +83,10 @@ function ListOfPipelines() {
 			description: e.description,
 		}));
 		setDataSource(updatedData);
-	}, [pipelineData]);
+	}, []);
 
-	const columns = [
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+	const columns: any = [
 		{
 			title: '',
 			dataIndex: 'id',
@@ -103,15 +106,14 @@ function ListOfPipelines() {
 			title: 'Tags',
 			dataIndex: 'tags',
 			key: 'tags',
-			render: (tags: any) => (
-				<>
-					{tags?.map((tag: any) => (
-						<Tag color="blue" key={tag}>
-							{tag}
-						</Tag>
-					))}
-				</>
-			),
+			// eslint-disable-next-line @typescript-eslint/no-explicit-any
+			render: (tags: any): void =>
+				// eslint-disable-next-line @typescript-eslint/no-explicit-any
+				tags?.map((tag: any) => (
+					<Tag color="blue" key={tag}>
+						{tag}
+					</Tag>
+				)),
 		},
 		{
 			title: 'Last Edited',
@@ -124,6 +126,7 @@ function ListOfPipelines() {
 			key: 'editedBy',
 		},
 	];
+
 	if (action) {
 		columns.push({
 			title: 'Action',
@@ -131,31 +134,32 @@ function ListOfPipelines() {
 			key: 'action',
 			render: (): JSX.Element => (
 				<Space size="middle">
-					<a style={{ height: '24px', width: '24px' }}>
+					<span style={{ height: '24px', width: '24px' }}>
 						<EditOutlined />
-					</a>
-					<a>
+					</span>
+					<span>
 						<EyeOutlined />
-					</a>
-					<a>
+					</span>
+					<span>
 						<DeleteOutlined />
-					</a>
+					</span>
 				</Space>
 			),
 		});
 	}
+
 	columns.push({
 		title: '',
 		dataIndex: 'action',
 		key: 'action',
 		render: (): JSX.Element => (
 			<div style={{ display: 'flex', justifyContent: 'center', gap: '20px' }}>
-				<a>
+				<span>
 					<Switch />
-				</a>
-				<a style={{ cursor: 'move' }}>
+				</span>
+				<span style={{ cursor: 'move' }}>
 					<HolderOutlined />
-				</a>
+				</span>
 			</div>
 		),
 	});
@@ -188,32 +192,37 @@ function ListOfPipelines() {
 					<Table
 						columns={columns}
 						expandable={{
-							expandedRowRender: (record) => (
+							// eslint-disable-next-line react/no-unstable-nested-components
+							expandedRowRender: (record): JSX.Element => (
 								<p style={{ margin: 0 }}>
 									<List
 										size="small"
 										itemLayout="horizontal"
 										dataSource={record.description}
 										style={{ gap: '20px' }}
-										renderItem={(item: any, i) => (
+										// eslint-disable-next-line @typescript-eslint/no-explicit-any
+										renderItem={(item: any, index: number): JSX.Element => (
 											<List.Item
+												key={index}
 												actions={[
-													<a key="list-loadmore-edit">
+													<span key="list-loadmore-edit">
 														<EditOutlined />
-													</a>,
-													<a key="list-loadmore-more">
+													</span>,
+													<span key="list-loadmore-more">
 														<EyeOutlined />
-													</a>,
-													<a key="list-loadmore-more">
+													</span>,
+													<span key="list-loadmore-more">
 														<DeleteOutlined />
-													</a>,
-													<Space size="middle">
-														<a>
-															<Switch />
-														</a>
-														<a style={{ cursor: 'move' }}>
-															<HolderOutlined />
-														</a>
+													</span>,
+													<Space size="middle" key={index + Math.random()}>
+														<>
+															<span>
+																<Switch />
+															</span>
+															<span style={{ cursor: 'move' }}>
+																<HolderOutlined />
+															</span>
+														</>
 													</Space>,
 												]}
 											>
@@ -223,7 +232,7 @@ function ListOfPipelines() {
 														shape="square"
 														size="small"
 													>
-														{i + 1}
+														{index + 1}
 													</Avatar>
 												</div>
 												<List.Item.Meta title={<p style={{ display: 'flex' }}>{item}</p>} />
@@ -232,14 +241,17 @@ function ListOfPipelines() {
 									/>
 								</p>
 							),
-							rowExpandable: (record) => record.pname !== 'Not Expandable',
+							rowExpandable: (record): boolean => record.pname !== 'Not Expandable',
 						}}
+						components={components}
 						dataSource={dataSource}
+						// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
 						onRow={(_, index) => {
 							const attr = {
 								index,
 								moveRow,
 							};
+							// eslint-disable-next-line @typescript-eslint/no-explicit-any
 							return attr as React.HTMLAttributes<any>;
 						}}
 					/>
