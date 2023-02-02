@@ -10,6 +10,10 @@ import {
 } from 'antd';
 import createDashboard from 'api/dashboard/create';
 import { AxiosError } from 'axios';
+import {
+	ResizableHeader,
+	ResizeTableWrapper,
+} from 'components/ResizeTableWrapper';
 import TextToolTip from 'components/TextToolTip';
 import ROUTES from 'constants/routes';
 import SearchFilter from 'container/ListOfDashboard/SearchFilter';
@@ -74,20 +78,24 @@ function ListOfAllDashboard(): JSX.Element {
 		{
 			title: 'Name',
 			dataIndex: 'name',
+			width: 100,
 			render: Name,
 		},
 		{
 			title: 'Description',
+			width: 100,
 			dataIndex: 'description',
 		},
 		{
 			title: 'Tags (can be multiple)',
 			dataIndex: 'tags',
+			width: 80,
 			render: Tags,
 		},
 		{
 			title: 'Created At',
 			dataIndex: 'createdBy',
+			width: 80,
 			sorter: (a: Data, b: Data): number => {
 				const prev = new Date(a.createdBy).getTime();
 				const next = new Date(b.createdBy).getTime();
@@ -98,6 +106,7 @@ function ListOfAllDashboard(): JSX.Element {
 		},
 		{
 			title: 'Last Updated Time',
+			width: 90,
 			dataIndex: 'lastUpdatedTime',
 			sorter: (a: Data, b: Data): number => {
 				const prev = new Date(a.lastUpdatedTime).getTime();
@@ -114,6 +123,7 @@ function ListOfAllDashboard(): JSX.Element {
 			title: 'Action',
 			dataIndex: '',
 			key: 'x',
+			width: 40,
 			render: DeleteButton,
 		});
 	}
@@ -271,19 +281,21 @@ function ListOfAllDashboard(): JSX.Element {
 					uploadedGrafana={uploadedGrafana}
 					onModalHandler={(): void => onModalHandler(false)}
 				/>
-				<Table
-					pagination={{
-						pageSize: 9,
-						defaultPageSize: 9,
-					}}
-					showHeader
-					bordered
-					sticky
-					loading={loading}
-					columns={columns}
-					dataSource={data}
-					showSorterTooltip
-				/>
+				<ResizeTableWrapper columns={columns}>
+					<Table
+						pagination={{
+							pageSize: 9,
+							defaultPageSize: 9,
+						}}
+						showHeader
+						bordered
+						sticky
+						loading={loading}
+						components={{ header: { cell: ResizableHeader } }}
+						dataSource={data}
+						showSorterTooltip
+					/>
+				</ResizeTableWrapper>
 			</TableContainer>
 		</Card>
 	);

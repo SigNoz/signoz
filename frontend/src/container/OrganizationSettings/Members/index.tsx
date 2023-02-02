@@ -4,6 +4,10 @@ import deleteUser from 'api/user/deleteUser';
 import editUserApi from 'api/user/editUser';
 import getOrgUser from 'api/user/getOrgUser';
 import updateRole from 'api/user/updateRole';
+import {
+	ResizableHeader,
+	ResizeTableWrapper,
+} from 'components/ResizeTableWrapper';
 import dayjs from 'dayjs';
 import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -39,6 +43,7 @@ function UserFunction({
 	const { t } = useTranslation(['common']);
 	const [isDeleteLoading, setIsDeleteLoading] = useState<boolean>(false);
 	const [isUpdateLoading, setIsUpdateLoading] = useState<boolean>(false);
+	const [notifications, NotificationElement] = notification.useNotification();
 
 	const onUpdateDetailsHandler = (): void => {
 		setDataSource((data) => {
@@ -88,14 +93,14 @@ function UserFunction({
 
 			if (response.statusCode === 200) {
 				onDelete();
-				notification.success({
+				notifications.success({
 					message: t('success', {
 						ns: 'common',
 					}),
 				});
 				setIsDeleteModalVisible(false);
 			} else {
-				notification.error({
+				notifications.error({
 					message:
 						response.error ||
 						t('something_went_wrong', {
@@ -107,7 +112,7 @@ function UserFunction({
 		} catch (error) {
 			setIsDeleteLoading(false);
 
-			notification.error({
+			notifications.error({
 				message: t('something_went_wrong', {
 					ns: 'common',
 				}),
@@ -134,13 +139,13 @@ function UserFunction({
 				updateRoleResponse.statusCode === 200
 			) {
 				onUpdateDetailsHandler();
-				notification.success({
+				notifications.success({
 					message: t('success', {
 						ns: 'common',
 					}),
 				});
 			} else {
-				notification.error({
+				notifications.error({
 					message:
 						editUserResponse.error ||
 						updateRoleResponse.error ||
@@ -151,7 +156,7 @@ function UserFunction({
 			}
 			setIsUpdateLoading(false);
 		} catch (error) {
-			notification.error({
+			notifications.error({
 				message: t('something_went_wrong', {
 					ns: 'common',
 				}),
@@ -162,6 +167,7 @@ function UserFunction({
 
 	return (
 		<>
+			{NotificationElement}
 			<Space direction="horizontal">
 				<Typography.Link
 					onClick={(): void => onModalToggleHandler(setIsModalVisible, true)}
@@ -256,21 +262,25 @@ function Members(): JSX.Element {
 			title: 'Name',
 			dataIndex: 'name',
 			key: 'name',
+			width: 100,
 		},
 		{
 			title: 'Emails',
 			dataIndex: 'email',
 			key: 'email',
+			width: 100,
 		},
 		{
 			title: 'Access Level',
 			dataIndex: 'accessLevel',
 			key: 'accessLevel',
+			width: 50,
 		},
 		{
 			title: 'Joined On',
 			dataIndex: 'joinedOn',
 			key: 'joinedOn',
+			width: 60,
 			render: (_, record): JSX.Element => {
 				const { joinedOn } = record;
 				return (
@@ -283,6 +293,7 @@ function Members(): JSX.Element {
 		{
 			title: 'Action',
 			dataIndex: 'action',
+			width: 80,
 			render: (_, record): JSX.Element => (
 				<UserFunction
 					{...{
@@ -301,13 +312,15 @@ function Members(): JSX.Element {
 	return (
 		<Space direction="vertical" size="middle">
 			<Typography.Title level={3}>Members</Typography.Title>
-			<Table
-				tableLayout="fixed"
-				dataSource={dataSource}
-				columns={columns}
-				pagination={false}
-				loading={status === 'loading'}
-			/>
+			<ResizeTableWrapper columns={columns}>
+				<Table
+					tableLayout="fixed"
+					dataSource={dataSource}
+					components={{ header: { cell: ResizableHeader } }}
+					pagination={false}
+					loading={status === 'loading'}
+				/>
+			</ResizeTableWrapper>
 		</Space>
 	);
 }

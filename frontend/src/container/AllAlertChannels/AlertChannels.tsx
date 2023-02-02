@@ -1,6 +1,10 @@
 /* eslint-disable react/display-name */
 import { Button, notification, Table } from 'antd';
 import { ColumnsType } from 'antd/lib/table';
+import {
+	ResizableHeader,
+	ResizeTableWrapper,
+} from 'components/ResizeTableWrapper';
 import ROUTES from 'constants/routes';
 import useComponentPermission from 'hooks/useComponentPermission';
 import history from 'lib/history';
@@ -34,11 +38,13 @@ function AlertChannels({ allChannels }: AlertChannelsProps): JSX.Element {
 			title: t('column_channel_name'),
 			dataIndex: 'name',
 			key: 'name',
+			width: 100,
 		},
 		{
 			title: t('column_channel_type'),
 			dataIndex: 'type',
 			key: 'type',
+			width: 80,
 		},
 	];
 
@@ -48,6 +54,7 @@ function AlertChannels({ allChannels }: AlertChannelsProps): JSX.Element {
 			dataIndex: 'id',
 			key: 'action',
 			align: 'center',
+			width: 80,
 			render: (id: string): JSX.Element => (
 				<>
 					<Button onClick={(): void => onClickEditHandler(id)} type="link">
@@ -62,8 +69,13 @@ function AlertChannels({ allChannels }: AlertChannelsProps): JSX.Element {
 	return (
 		<>
 			{Element}
-
-			<Table rowKey="id" dataSource={channels} columns={columns} />
+			<ResizeTableWrapper columns={columns}>
+				<Table
+					components={{ header: { cell: ResizableHeader } }}
+					dataSource={channels}
+					rowKey="id"
+				/>
+			</ResizeTableWrapper>
 		</>
 	);
 }

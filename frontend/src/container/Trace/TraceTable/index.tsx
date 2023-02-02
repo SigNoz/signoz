@@ -1,5 +1,9 @@
 import { Table, TableProps, Tag, Typography } from 'antd';
 import { ColumnsType } from 'antd/lib/table';
+import {
+	ResizableHeader,
+	ResizeTableWrapper,
+} from 'components/ResizeTableWrapper';
 import ROUTES from 'constants/routes';
 import {
 	getSpanOrder,
@@ -73,6 +77,7 @@ function TraceTable(): JSX.Element {
 			title: 'Date',
 			dataIndex: 'timestamp',
 			key: 'timestamp',
+			width: 120,
 			sorter: true,
 			render: (value: TableType['timestamp']): JSX.Element => {
 				const day = dayjs(value);
@@ -83,18 +88,21 @@ function TraceTable(): JSX.Element {
 			title: 'Service',
 			dataIndex: 'serviceName',
 			key: 'serviceName',
+			width: 50,
 			render: getValue,
 		},
 		{
 			title: 'Operation',
 			dataIndex: 'operation',
 			key: 'operation',
+			width: 110,
 			render: getValue,
 		},
 		{
 			title: 'Duration',
 			dataIndex: 'durationNano',
 			key: 'durationNano',
+			width: 50,
 			sorter: true,
 			render: (value: TableType['durationNano']): JSX.Element => (
 				<Typography>
@@ -109,12 +117,14 @@ function TraceTable(): JSX.Element {
 			title: 'Method',
 			dataIndex: 'method',
 			key: 'method',
+			width: 50,
 			render: getHttpMethodOrStatus,
 		},
 		{
 			title: 'Status Code',
 			dataIndex: 'statusCode',
 			key: 'statusCode',
+			width: 50,
 			render: getHttpMethodOrStatus,
 		},
 	];
@@ -180,34 +190,36 @@ function TraceTable(): JSX.Element {
 	) as number;
 
 	return (
-		<Table
-			onChange={onChangeHandler}
-			dataSource={spansAggregate.data}
-			loading={loading || filterLoading}
-			columns={columns}
-			rowKey={(record): string => `${record.traceID}-${record.spanID}-${v4()}`}
-			style={{
-				cursor: 'pointer',
-			}}
-			onRow={(record): React.HTMLAttributes<TableType> => ({
-				onClick: (event): void => {
-					event.preventDefault();
-					event.stopPropagation();
-					if (event.metaKey || event.ctrlKey) {
-						window.open(getLink(record), '_blank');
-					} else {
-						history.push(getLink(record));
-					}
-				},
-			})}
-			pagination={{
-				current: spansAggregate.currentPage,
-				pageSize: spansAggregate.pageSize,
-				responsive: true,
-				position: ['bottomLeft'],
-				total: totalCount,
-			}}
-		/>
+		<ResizeTableWrapper columns={columns}>
+			<Table
+				onChange={onChangeHandler}
+				dataSource={spansAggregate.data}
+				loading={loading || filterLoading}
+				components={{ header: { cell: ResizableHeader } }}
+				rowKey={(record): string => `${record.traceID}-${record.spanID}-${v4()}`}
+				style={{
+					cursor: 'pointer',
+				}}
+				onRow={(record): React.HTMLAttributes<TableType> => ({
+					onClick: (event): void => {
+						event.preventDefault();
+						event.stopPropagation();
+						if (event.metaKey || event.ctrlKey) {
+							window.open(getLink(record), '_blank');
+						} else {
+							history.push(getLink(record));
+						}
+					},
+				})}
+				pagination={{
+					current: spansAggregate.currentPage,
+					pageSize: spansAggregate.pageSize,
+					responsive: true,
+					position: ['bottomLeft'],
+					total: totalCount,
+				}}
+			/>
+		</ResizeTableWrapper>
 	);
 }
 

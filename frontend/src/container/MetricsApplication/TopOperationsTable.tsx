@@ -1,5 +1,9 @@
 import { Table, Tooltip, Typography } from 'antd';
 import { ColumnsType } from 'antd/lib/table';
+import {
+	ResizableHeader,
+	ResizeTableWrapper,
+} from 'components/ResizeTableWrapper';
 import { METRICS_PAGE_QUERY_PARAM } from 'constants/query';
 import ROUTES from 'constants/routes';
 import history from 'lib/history';
@@ -51,7 +55,7 @@ function TopOperationsTable(props: TopOperationsTableProps): JSX.Element {
 			title: 'Name',
 			dataIndex: 'name',
 			key: 'name',
-			ellipsis: true,
+			width: 100,
 			render: (text: string): JSX.Element => (
 				<Tooltip placement="topLeft" title={text}>
 					<Typography.Link onClick={(): void => handleOnClick(text)}>
@@ -64,6 +68,7 @@ function TopOperationsTable(props: TopOperationsTableProps): JSX.Element {
 			title: 'P50  (in ms)',
 			dataIndex: 'p50',
 			key: 'p50',
+			width: 50,
 			sorter: (a: DataProps, b: DataProps): number => a.p50 - b.p50,
 			render: (value: number): string => (value / 1000000).toFixed(2),
 		},
@@ -71,6 +76,7 @@ function TopOperationsTable(props: TopOperationsTableProps): JSX.Element {
 			title: 'P95  (in ms)',
 			dataIndex: 'p95',
 			key: 'p95',
+			width: 50,
 			sorter: (a: DataProps, b: DataProps): number => a.p95 - b.p95,
 			render: (value: number): string => (value / 1000000).toFixed(2),
 		},
@@ -78,6 +84,7 @@ function TopOperationsTable(props: TopOperationsTableProps): JSX.Element {
 			title: 'P99  (in ms)',
 			dataIndex: 'p99',
 			key: 'p99',
+			width: 50,
 			sorter: (a: DataProps, b: DataProps): number => a.p99 - b.p99,
 			render: (value: number): string => (value / 1000000).toFixed(2),
 		},
@@ -85,20 +92,23 @@ function TopOperationsTable(props: TopOperationsTableProps): JSX.Element {
 			title: 'Number of Calls',
 			dataIndex: 'numCalls',
 			key: 'numCalls',
+			width: 50,
 			sorter: (a: TopOperationListItem, b: TopOperationListItem): number =>
 				a.numCalls - b.numCalls,
 		},
 	];
 
 	return (
-		<Table
-			showHeader
-			title={(): string => 'Key Operations'}
-			tableLayout="fixed"
-			dataSource={data}
-			columns={columns}
-			rowKey="name"
-		/>
+		<ResizeTableWrapper columns={columns}>
+			<Table
+				showHeader
+				title={(): string => 'Key Operations'}
+				tableLayout="fixed"
+				dataSource={data}
+				components={{ header: { cell: ResizableHeader } }}
+				rowKey="name"
+			/>
+		</ResizeTableWrapper>
 	);
 }
 
