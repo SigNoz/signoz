@@ -4,6 +4,10 @@ import { ColumnsType } from 'antd/lib/table';
 import deleteDomain from 'api/SAML/deleteDomain';
 import listAllDomain from 'api/SAML/listAllDomain';
 import updateDomain from 'api/SAML/updateDomain';
+import {
+	ResizableHeader,
+	ResizeTableWrapper,
+} from 'components/ResizeTableWrapper';
 import TextToolTip from 'components/TextToolTip';
 import { SIGNOZ_UPGRADE_PLAN_URL } from 'constants/app';
 import { FeatureKeys } from 'constants/featureKeys';
@@ -168,6 +172,7 @@ function AuthDomains(): JSX.Element {
 			title: 'Domain',
 			dataIndex: 'name',
 			key: 'name',
+			width: 100,
 		},
 		{
 			title: (
@@ -183,6 +188,7 @@ function AuthDomains(): JSX.Element {
 			),
 			dataIndex: 'ssoEnabled',
 			key: 'ssoEnabled',
+			width: 80,
 			render: (value: boolean, record: AuthDomain): JSX.Element => {
 				if (!SSOFlag) {
 					return (
@@ -209,6 +215,7 @@ function AuthDomains(): JSX.Element {
 			title: '',
 			dataIndex: 'description',
 			key: 'description',
+			width: 100,
 			render: (_, record: AuthDomain): JSX.Element => {
 				if (!SSOFlag) {
 					return (
@@ -233,6 +240,7 @@ function AuthDomains(): JSX.Element {
 			title: 'Action',
 			dataIndex: 'action',
 			key: 'action',
+			width: 50,
 			render: (_, record): JSX.Element => (
 				<Button
 					disabled={!SSOFlag}
@@ -267,12 +275,14 @@ function AuthDomains(): JSX.Element {
 						setIsSettingsOpen={setIsSettingsOpen}
 					/>
 				</Modal>
-				<Table
-					rowKey={(record: AuthDomain): string => record.name + v4()}
-					dataSource={!SSOFlag ? notEntripriseData : []}
-					columns={columns}
-					tableLayout="fixed"
-				/>
+				<ResizeTableWrapper columns={columns}>
+					<Table
+						rowKey={(record: AuthDomain): string => record.name + v4()}
+						dataSource={!SSOFlag ? notEntripriseData : []}
+						components={{ header: { cell: ResizableHeader } }}
+						tableLayout="fixed"
+					/>
+				</ResizeTableWrapper>
 			</Space>
 		);
 	}
@@ -317,13 +327,15 @@ function AuthDomains(): JSX.Element {
 			<Space direction="vertical" size="middle">
 				<AddDomain refetch={refetch} />
 
-				<Table
-					dataSource={tableData}
-					loading={isLoading}
-					columns={columns}
-					tableLayout="fixed"
-					rowKey={(record: AuthDomain): string => record.name + v4()}
-				/>
+				<ResizeTableWrapper columns={columns}>
+					<Table
+						dataSource={tableData}
+						loading={isLoading}
+						components={{ header: { cell: ResizableHeader } }}
+						tableLayout="fixed"
+						rowKey={(record: AuthDomain): string => record.name + v4()}
+					/>
+				</ResizeTableWrapper>
 			</Space>
 		</>
 	);

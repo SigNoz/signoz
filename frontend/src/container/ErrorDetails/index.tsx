@@ -1,6 +1,10 @@
 import { Button, Divider, notification, Space, Table, Typography } from 'antd';
 import getNextPrevId from 'api/errors/getNextPrevId';
 import Editor from 'components/Editor';
+import {
+	ResizableHeader,
+	ResizeTableWrapper,
+} from 'components/ResizeTableWrapper';
 import { getNanoSeconds } from 'container/AllError/utils';
 import dayjs from 'dayjs';
 import history from 'lib/history';
@@ -53,12 +57,14 @@ function ErrorDetails(props: ErrorDetailsProps): JSX.Element {
 		() => [
 			{
 				title: 'Key',
+				width: 100,
 				dataIndex: 'key',
 				key: 'key',
 			},
 			{
 				title: 'Value',
 				dataIndex: 'value',
+				width: 100,
 				key: 'value',
 			},
 		],
@@ -170,7 +176,13 @@ function ErrorDetails(props: ErrorDetailsProps): JSX.Element {
 
 			<EditorContainer>
 				<Space direction="vertical">
-					<Table tableLayout="fixed" columns={columns} dataSource={data} />
+					<ResizeTableWrapper columns={columns}>
+						<Table
+							components={{ header: { cell: ResizableHeader } }}
+							tableLayout="fixed"
+							dataSource={data}
+						/>
+					</ResizeTableWrapper>
 				</Space>
 			</EditorContainer>
 		</>
