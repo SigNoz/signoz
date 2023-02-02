@@ -36,6 +36,8 @@ function SearchFields({
 
 	const keyPrefixRef = useRef(hashCode(JSON.stringify(fieldsQuery)));
 
+	const [notifications, NotificationElement] = notification.useNotification();
+
 	useEffect(() => {
 		const updatedFieldsQuery = createParsedQueryStructure([
 			...parsedQuery,
@@ -47,9 +49,12 @@ function SearchFields({
 		}
 	}, [parsedQuery]);
 
-	const updateFieldsQuery = (updated: QueryFields[][]): void => {
-		setFieldsQuery(updated);
-		keyPrefixRef.current = hashCode(JSON.stringify(updated));
+	// syncKeyPrefix initiates re-render. useful in situations like
+	// delete field (in search panel). this method allows condiitonally
+	// setting keyPrefix as doing it on every update of query initiates
+	// a re-render. this is a problem for text fields where input focus goes away.
+	const syncKeyPrefix = (): void => {
+		keyPrefixRef.current = hashCode(JSON.stringify(fieldsQuery));
 	};
 
 	const addSuggestedField = useCallback(
@@ -78,7 +83,7 @@ function SearchFields({
 		const flatParsedQuery = flatten(fieldsQuery);
 
 		if (!fieldsQueryIsvalid(flatParsedQuery)) {
-			notification.error({
+			notifications.error({
 				message: 'Please enter a valid criteria for each of the selected fields',
 			});
 			return;
@@ -87,7 +92,7 @@ function SearchFields({
 		keyPrefixRef.current = hashCode(JSON.stringify(flatParsedQuery));
 		updateParsedQuery(flatParsedQuery);
 		onDropDownToggleHandler(false)();
-	}, [onDropDownToggleHandler, fieldsQuery, updateParsedQuery]);
+	}, [onDropDownToggleHandler, fieldsQuery, updateParsedQuery, notifications]);
 
 	const clearFilters = useCallback((): void => {
 		keyPrefixRef.current = hashCode(JSON.stringify([]));
@@ -97,12 +102,14 @@ function SearchFields({
 
 	return (
 		<>
+			{NotificationElement}
 			<QueryBuilder
 				key={keyPrefixRef.current}
 				keyPrefix={keyPrefixRef.current}
 				onDropDownToggleHandler={onDropDownToggleHandler}
 				fieldsQuery={fieldsQuery}
-				setFieldsQuery={updateFieldsQuery}
+				setFieldsQuery={setFieldsQuery}
+				syncKeyPrefix={syncKeyPrefix}
 			/>
 			<SearchFieldsActionBar
 				applyUpdate={applyUpdate}

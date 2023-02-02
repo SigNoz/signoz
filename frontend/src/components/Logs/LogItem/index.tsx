@@ -79,6 +79,7 @@ function LogItem({ logData }: LogItemProps): JSX.Element {
 	const dispatch = useDispatch();
 	const flattenLogData = useMemo(() => FlatLogData(logData), [logData]);
 	const [, setCopy] = useCopyToClipboard();
+	const [notifications, NotificationElement] = notification.useNotification();
 
 	const handleDetailedView = useCallback(() => {
 		dispatch({
@@ -89,27 +90,22 @@ function LogItem({ logData }: LogItemProps): JSX.Element {
 
 	const handleCopyJSON = (): void => {
 		setCopy(JSON.stringify(logData, null, 2));
-		notification.success({
+		notifications.success({
 			message: 'Copied to clipboard',
 		});
 	};
 
 	return (
 		<Container>
+			{NotificationElement}
 			<div>
 				<div>
 					{'{'}
 					<LogContainer>
 						<>
-							<LogGeneralField
-								fieldKey="log"
-								fieldValue={flattenLogData.body as never}
-							/>
+							<LogGeneralField fieldKey="log" fieldValue={flattenLogData.body} />
 							{flattenLogData.stream && (
-								<LogGeneralField
-									fieldKey="stream"
-									fieldValue={flattenLogData.stream as never}
-								/>
+								<LogGeneralField fieldKey="stream" fieldValue={flattenLogData.stream} />
 							)}
 							<LogGeneralField
 								fieldKey="timestamp"
