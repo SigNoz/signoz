@@ -1,8 +1,10 @@
 import {
 	DeleteFilled,
+	DownOutlined,
 	EditOutlined,
 	EyeFilled,
 	HolderOutlined,
+	RightOutlined,
 } from '@ant-design/icons';
 import { Avatar, List, Space, Switch, Table, Tag } from 'antd';
 import { themeColors } from 'constants/theme';
@@ -57,7 +59,7 @@ function DraggableBodyRow({
 		<tr
 			ref={ref}
 			className={className}
-			style={{ cursor: 'move', ...style }}
+			style={{ ...style }}
 			// eslint-disable-next-line react/jsx-props-no-spreading
 			{...restProps}
 		/>
@@ -134,7 +136,7 @@ function ListOfPipelines(): JSX.Element {
 			key: 'action',
 			render: (): JSX.Element => (
 				<Space size="middle">
-					<span style={{ height: '24px', width: '24px' }}>
+					<span>
 						<EditOutlined style={iconStyle} />
 					</span>
 					<span>
@@ -205,13 +207,13 @@ function ListOfPipelines(): JSX.Element {
 											<List.Item
 												key={index}
 												actions={[
-													<span key="list-loadmore-edit">
+													<span key="list-edit">
 														<EditOutlined style={iconStyle} />
 													</span>,
-													<span key="list-loadmore-more">
+													<span key="list-view">
 														<EyeFilled style={iconStyle} />
 													</span>,
-													<span key="list-loadmore-more">
+													<span key="list-delete">
 														<DeleteFilled style={iconStyle} />
 													</span>,
 													<Space size="middle" key={index + Math.random()}>
@@ -242,6 +244,13 @@ function ListOfPipelines(): JSX.Element {
 								</p>
 							),
 							rowExpandable: (record): boolean => record.pname !== 'Not Expandable',
+							// eslint-disable-next-line react/no-unstable-nested-components
+							expandIcon: ({ expanded, onExpand, record }): JSX.Element =>
+								expanded ? (
+									<DownOutlined onClick={(e): void => onExpand(record, e)} />
+								) : (
+									<RightOutlined onClick={(e): void => onExpand(record, e)} />
+								),
 						}}
 						components={components}
 						dataSource={dataSource}
