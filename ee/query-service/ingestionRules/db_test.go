@@ -13,6 +13,7 @@ import (
 	_ "github.com/mattn/go-sqlite3"
 
 	"go.signoz.io/signoz/ee/query-service/ingestionRules/sqlite"
+	"go.signoz.io/signoz/ee/query-service/model"
 	basemodel "go.signoz.io/signoz/pkg/query-service/model"
 )
 
@@ -53,10 +54,10 @@ func TestInsertRule(t *testing.T) {
 
 	p1 := PostableIngestionRule{
 		Name:        "p1",
-		Source:      IngestionSourceMetrics,
-		RuleType:    IngestionRuleTypeDrop,
-		RuleSubType: IngestionRuleSubTypeAO,
-		Config: &IngestionRuleConfig{
+		Source:      model.IngestionSourceMetrics,
+		RuleType:    model.IngestionRuleTypeDrop,
+		RuleSubType: model.IngestionRuleSubTypeAO,
+		Config: &model.IngestionRuleConfig{
 			DropConfig: DropConfig{
 				FilterSet: basemodel.FilterSet{
 					Operator: "AND",

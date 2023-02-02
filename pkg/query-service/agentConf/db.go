@@ -49,7 +49,7 @@ func (r *Repo) GetConfigHistory(ctx context.Context, typ ElementTypeDef) ([]Conf
 	return c, err
 }
 
-func (r *Repo) GetConfigVersion(ctx context.Context, typ ElementTypeDef, v float32) (*ConfigVersion, error) {
+func (r *Repo) GetConfigVersion(ctx context.Context, typ ElementTypeDef, v int) (*ConfigVersion, error) {
 	var c ConfigVersion
 	err := r.db.GetContext(ctx, &c, `SELECT 
 		id, 
@@ -74,7 +74,7 @@ func (r *Repo) GetLatestVersion(ctx context.Context, typ ElementTypeDef) (*Confi
 		id, 
 		version, 
 		element_type, 
-		created_by, 
+		COALESCE(created_by,0) as created_by, 
 		active, 
 		is_valid, 
 		disabled, 
@@ -111,7 +111,7 @@ func (r *Repo) insertConfig(ctx context.Context, c *ConfigVersion, elements []st
 	if err != nil {
 		if err != sql.ErrNoRows {
 			zap.S().Errorf("failed to fetch latest config version", err)
-			return fmt.Errorf("failed to find latest config version")
+			return fmt.Errorf("failed to fetch latest config version")
 		}
 	}
 
@@ -176,7 +176,7 @@ func (r *Repo) insertConfig(ctx context.Context, c *ConfigVersion, elements []st
 	return nil
 }
 
-func (r *Repo) updateDeployStatus(ctx context.Context, version float32, status string, result string) error {
+func (r *Repo) updateDeployStatus(ctx context.Context, version int, status string, result string) error {
 
 	updateQuery := `UPDATE agent_config_versions
 	set deployment_status = $1, 

@@ -21,7 +21,7 @@ const (
 
 type ConfigVersion struct {
 	ID          string         `json:"id" db:"id"`
-	Version     float32        `json:"version" db:"version"`
+	Version     int            `json:"version" db:"version"`
 	ElementType ElementTypeDef `json:"elementType" db:"element_type"`
 	CreatedBy   string         `json:"createdBy" db:"created_by"`
 
@@ -46,13 +46,13 @@ func NewConfigversion(typeDef ElementTypeDef) *ConfigVersion {
 	}
 }
 
-func updateVersion(v float32) float32 {
-	return v + 0.1
+func updateVersion(v int) int {
+	return v + 1
 }
 
 type ConfigElements struct {
 	VersionID   string
-	Version     float32
+	Version     int
 	ElementType ElementTypeDef
 	ElementId   string
 }

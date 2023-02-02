@@ -20,7 +20,7 @@ func InitDB(db *sqlx.DB) error {
 		created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, 
 		updated_by TEXT,
 		updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, 
-		version float32,
+		version INTEGER DEFAULT 1,
 		active int,
 		is_valid int,
 		disabled int,
@@ -31,8 +31,9 @@ func InitDB(db *sqlx.DB) error {
 		UNIQUE(element_type, version)
 	);
 
-	CREATE UNIQUE INDEX agent_config_versions_u1 
-	ON agent_config_elements(element_type, version);
+
+	CREATE UNIQUE INDEX IF NOT EXISTS agent_config_versions_u1 
+	ON agent_config_versions(element_type, version);
 
 	CREATE TABLE IF NOT EXISTS agent_config_elements(
 		id TEXT PRIMARY KEY,
@@ -45,14 +46,14 @@ func InitDB(db *sqlx.DB) error {
 		version_id TEXT NOT NULL
 	);
 
-	CREATE UNIQUE INDEX agent_config_elements_u1 
+	CREATE UNIQUE INDEX IF NOT EXISTS agent_config_elements_u1 
 	ON agent_config_elements(version_id, element_id, element_type);
 
 	`
 
 	_, err = db.Exec(table_schema)
 	if err != nil {
-		return errors.Wrap(err, "Error in creating ingestion rules table")
+		return errors.Wrap(err, "Error in creating agent config versions table")
 	}
 	return nil
 }

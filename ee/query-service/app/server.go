@@ -18,10 +18,12 @@ import (
 	"go.signoz.io/signoz/ee/query-service/app/api"
 	"go.signoz.io/signoz/ee/query-service/app/db"
 	"go.signoz.io/signoz/ee/query-service/dao"
+	"go.signoz.io/signoz/ee/query-service/ingestionRules"
 	"go.signoz.io/signoz/ee/query-service/interfaces"
 	licensepkg "go.signoz.io/signoz/ee/query-service/license"
 	"go.signoz.io/signoz/ee/query-service/usage"
 
+	"go.signoz.io/signoz/pkg/query-service/agentConf"
 	"go.signoz.io/signoz/pkg/query-service/app/dashboards"
 	baseconst "go.signoz.io/signoz/pkg/query-service/constants"
 	"go.signoz.io/signoz/pkg/query-service/healthcheck"
@@ -33,6 +35,8 @@ import (
 	"go.signoz.io/signoz/pkg/query-service/utils"
 	"go.uber.org/zap"
 )
+
+const AppDbEngine = "sqlite"
 
 type ServerOptions struct {
 	PromConfigPath  string
@@ -72,7 +76,7 @@ func (s Server) HealthCheckStatus() chan healthcheck.Status {
 // NewServer creates and initializes Server
 func NewServer(serverOptions *ServerOptions) (*Server, error) {
 
-	modelDao, err := dao.InitDao("sqlite", baseconst.RELATIONAL_DATASOURCE_PATH)
+	modelDao, err := dao.InitDao(AppDbEngine, baseconst.RELATIONAL_DATASOURCE_PATH)
 	if err != nil {
 		return nil, err
 	}
@@ -118,8 +122,19 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 		return nil, err
 	}
 
+	// ingestion rules manager
+	ingestionController, err := ingestionRules.NewIngestionController(localDB, AppDbEngine)
+	if err != nil {
+		return nil, err
+	}
+
+	// initiate agent config handler
+	if err := agentConf.Initiate(localDB, AppDbEngine); err != nil {
+		return nil, err
+	}
+
 	// start the usagemanager
-	usageManager, err := usage.New("sqlite", localDB, lm.GetRepo(), reader.GetConn())
+	usageManager, err := usage.New(AppDbEngine, localDB, lm.GetRepo(), reader.GetConn())
 	if err != nil {
 		return nil, err
 	}
@@ -131,11 +146,12 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 	telemetry.GetInstance().SetReader(reader)
 
 	apiOpts := api.APIHandlerOptions{
-		DataConnector:  reader,
-		AppDao:         modelDao,
-		RulesManager:   rm,
-		FeatureFlags:   lm,
-		LicenseManager: lm,
+		DataConnector:       reader,
+		AppDao:              modelDao,
+		RulesManager:        rm,
+		FeatureFlags:        lm,
+		LicenseManager:      lm,
+		IngestionController: ingestionController,
 	}
 
 	apiHandler, err := api.NewAPIHandler(apiOpts)

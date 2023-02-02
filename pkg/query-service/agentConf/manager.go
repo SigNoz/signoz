@@ -24,24 +24,24 @@ type Manager struct {
 
 // Ready indicates if Manager can accept new config update requests
 func (mgr *Manager) Ready() bool {
-	return mgr.lock == 1
+	return mgr.lock == 0
 }
 
-func Initiate(db *sqlx.DB, path string) error {
+func Initiate(db *sqlx.DB, engine string) error {
 	m.Repo = Repo{db}
-	return m.initDB(path)
+	return m.initDB(engine)
 }
 
 // Ready indicates if Manager can accept new config update requests
 func Ready() bool {
-	return m.lock == 1
+	return m.Ready()
 }
 
 func GetLatestVersion(ctx context.Context, elementType ElementTypeDef) (*ConfigVersion, error) {
 	return m.GetLatestVersion(ctx, elementType)
 }
 
-func GetConfigVersion(ctx context.Context, elementType ElementTypeDef, version float32) (*ConfigVersion, error) {
+func GetConfigVersion(ctx context.Context, elementType ElementTypeDef, version int) (*ConfigVersion, error) {
 	return m.GetConfigVersion(ctx, elementType, version)
 }
 
@@ -71,6 +71,7 @@ func StartNewVersion(ctx context.Context, eleType ElementTypeDef, elementIds []s
 
 // UpsertFilterProcessor updates the agent config with new filter processor params
 func UpsertFilterProcessor(key string, config *filterprocessor.Config) error {
+	fmt.Println("config:", config)
 	if !atomic.CompareAndSwapUint32(&m.lock, 0, 1) {
 		return fmt.Errorf("agent updater is busy")
 	}

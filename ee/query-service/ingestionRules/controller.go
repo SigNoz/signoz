@@ -14,9 +14,10 @@ type IngestionController struct {
 	Repo
 }
 
-func NewIngestionController(db *sqlx.DB) (*IngestionController, error) {
+func NewIngestionController(db *sqlx.DB, engine string) (*IngestionController, error) {
 	repo := NewRepo(db)
-	return &IngestionController{Repo: repo}, nil
+	err := repo.InitDB(engine)
+	return &IngestionController{Repo: repo}, err
 }
 
 // IngestionRulesResponse is used to prepare http response for rule config related requests
@@ -59,9 +60,13 @@ func (ic *IngestionController) ApplyDropRules(ctx context.Context, postable []Po
 				dropRules = append(dropRules, *inserted)
 			}
 		} else {
+			// we pick the latest rule instead of one sent from client (browser)
+			// to make sure the ID is valid and relates to an ingestion rule.
+			// since rules are immutable, we can also use stored version from DB
+			// instead of picking the update from client (browser) request
 			selected, err := ic.GetRule(ctx, r.Id)
 			if err != nil || selected == nil {
-				zap.S().Errorf("failed to find edited ingestion rule", err)
+				zap.S().Errorf("failed to find edited ingestion rule", err, r.Id)
 				return nil, model.BadRequestStr("failed to find edited rule, invalid request")
 			}
 			dropRules = append(dropRules, *selected)
@@ -77,6 +82,7 @@ func (ic *IngestionController) ApplyDropRules(ctx context.Context, postable []Po
 	}
 
 	if !agentConf.Ready() {
+		// todo(amol): may be good idea to new ingestion rules created in this request?
 		return nil, model.InternalErrorStr("Agent updater unavailable at the moment. Please try in sometime")
 	}
 
@@ -89,6 +95,7 @@ func (ic *IngestionController) ApplyDropRules(ctx context.Context, postable []Po
 	// prepare config by calling gen func
 	cfg, err := agentConf.StartNewVersion(ctx, agentConf.ElementTypeDropRules, elements)
 	if err != nil || cfg == nil {
+		zap.S().Errorf("failed to start a new config version for drop rules", err)
 		return nil, model.InternalError(err)
 	}
 
@@ -112,7 +119,7 @@ func (ic *IngestionController) ApplyDropRules(ctx context.Context, postable []Po
 }
 
 // GetRulesByVersion responds with version info and associated drop rules
-func (ic *IngestionController) GetRulesByVersion(ctx context.Context, version float32) (*IngestionRulesResponse, *model.ApiError) {
+func (ic *IngestionController) GetRulesByVersion(ctx context.Context, version int) (*IngestionRulesResponse, *model.ApiError) {
 	rules, apierr := ic.getRulesByVersion(ctx, version)
 	if apierr != nil {
 		zap.S().Errorf("failed to get drop rules for version", version, apierr)

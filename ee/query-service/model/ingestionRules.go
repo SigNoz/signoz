@@ -84,7 +84,7 @@ type IngestionRuleConfig struct {
 // DropConfig configuration for dropping metrics, logs or traces record
 type DropConfig struct {
 	// identifies filters for this drop rule
-	FilterSet basemodel.FilterSet `json:"filterSet"`
+	DropFilter basemodel.FilterSet `json:"dropFilter"`
 }
 
 // PrepareExpression prepares an OTTL expression that can be passed to
@@ -94,7 +94,7 @@ func (d *DropConfig) PrepareExpression() (result string, fnerr error) {
 	// holds a list of expressions
 	var exprs []string
 
-	for _, i := range d.FilterSet.Items {
+	for _, i := range d.DropFilter.Items {
 		var expr string
 		switch i.KeyType {
 		case MetricName:
@@ -118,7 +118,7 @@ func (d *DropConfig) PrepareExpression() (result string, fnerr error) {
 	result = exprs[0]
 
 	for _, e := range exprs[1:] {
-		result += fmt.Sprintf(" %s %s", d.FilterSet.Operator, e)
+		result += fmt.Sprintf(" %s %s", d.DropFilter.Operator, e)
 	}
 	return
 }

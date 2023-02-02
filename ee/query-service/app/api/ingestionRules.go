@@ -3,6 +3,7 @@ package api
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"strconv"
 
@@ -15,19 +16,20 @@ import (
 
 // ingestion rules handler - combines common methods for drop and sampling rules
 
-func parseAgentConfigVersion(r *http.Request) (float32, *model.ApiError) {
+func parseAgentConfigVersion(r *http.Request) (int, *model.ApiError) {
 	versionString := mux.Vars(r)["version"]
 
 	if versionString == "latest" {
 		return 0, nil
 	}
 
-	version64, err := strconv.ParseFloat(versionString, 32)
+	version64, err := strconv.ParseInt(versionString, 0, 8)
+
 	if err != nil {
 		return 0, model.BadRequestStr("invalid version number")
 	}
 
-	return float32(version64), nil
+	return int(version64), nil
 }
 
 func (ah *APIHandler) listIngestionRulesHandler(w http.ResponseWriter, r *http.Request, elementType agentConf.ElementTypeDef) {
@@ -78,7 +80,7 @@ func (ah *APIHandler) listIngestionRules(ctx context.Context, elementType agentC
 }
 
 // listIngestionRulesByVersion lists rules along with config version history
-func (ah *APIHandler) listIngestionRulesByVersion(ctx context.Context, version float32, elementType agentConf.ElementTypeDef) (*ingestionRules.IngestionRulesResponse, *model.ApiError) {
+func (ah *APIHandler) listIngestionRulesByVersion(ctx context.Context, version int, elementType agentConf.ElementTypeDef) (*ingestionRules.IngestionRulesResponse, *model.ApiError) {
 
 	payload, apierr := ah.opts.IngestionController.GetRulesByVersion(ctx, version)
 	if apierr != nil {
@@ -104,7 +106,7 @@ func (ah *APIHandler) createIngestionRule(w http.ResponseWriter, r *http.Request
 		RespondError(w, model.BadRequest(err), nil)
 		return
 	}
-
+	fmt.Println("req:", req)
 	createRule := func(ctx context.Context, postable []ingestionRules.PostableIngestionRule) (*ingestionRules.IngestionRulesResponse, *model.ApiError) {
 		if len(postable) == 0 {
 			zap.S().Warnf("found no rules in the http request, this will delete all the rules")

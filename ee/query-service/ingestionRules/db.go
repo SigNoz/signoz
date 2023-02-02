@@ -86,7 +86,7 @@ func (r *Repo) insertRule(ctx context.Context, postable *PostableIngestionRule) 
 }
 
 // getRulesByVersion returns rules associated with a given version
-func (r *Repo) getRulesByVersion(ctx context.Context, version float32) ([]model.IngestionRule, []error) {
+func (r *Repo) getRulesByVersion(ctx context.Context, version int) ([]model.IngestionRule, []error) {
 	var errors []error
 	rules := []model.IngestionRule{}
 
@@ -135,9 +135,7 @@ func (r *Repo) GetRule(ctx context.Context, id string) (*model.IngestionRule, *m
 		rule_type, 
 		rule_subtype, 
 		name, 
-		config_json, 
-		deployment_status, 
-		deployment_sequence  
+		config_json
 		FROM ingestion_rules 
 		WHERE id = $1`
 
