@@ -64,7 +64,6 @@ function TableView({ logData }: TableViewProps): JSX.Element | null {
 				if (!RESTRICTED_FIELDS.includes(fieldKey[0])) {
 					return (
 						<AddToQueryHOC fieldKey={fieldKey[0]} fieldValue={flattenLogData[field]}>
-							{' '}
 							{renderedField}
 						</AddToQueryHOC>
 					);
