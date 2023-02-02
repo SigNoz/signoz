@@ -6,6 +6,10 @@ import {
 	UPDATE_AUTO_REFRESH_INTERVAL,
 	UPDATE_TIME_INTERVAL,
 } from 'types/actions/globalTime';
+import {
+	RESET_ID_START_AND_END,
+	SET_SEARCH_QUERY_STRING,
+} from 'types/actions/logs';
 import { GlobalReducer } from 'types/reducer/globalTime';
 
 const intitalState: GlobalReducer = {
@@ -50,6 +54,29 @@ const globalTimeReducer = (
 			return {
 				...state,
 				selectedAutoRefreshInterval: action.payload,
+			};
+		}
+
+		case RESET_ID_START_AND_END: {
+			return {
+				...state,
+				maxTime: action.payload.maxTime,
+				minTime: action.payload.minTime,
+			};
+		}
+
+		case SET_SEARCH_QUERY_STRING: {
+			const { globalTime } = action.payload;
+			if (globalTime) {
+				return {
+					...state,
+					maxTime: globalTime.maxTime,
+					minTime: globalTime.minTime,
+				};
+			}
+
+			return {
+				...state,
 			};
 		}
 

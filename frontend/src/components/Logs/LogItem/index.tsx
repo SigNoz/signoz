@@ -101,15 +101,9 @@ function LogItem({ logData }: LogItemProps): JSX.Element {
 					{'{'}
 					<LogContainer>
 						<>
-							<LogGeneralField
-								fieldKey="log"
-								fieldValue={flattenLogData.body as never}
-							/>
+							<LogGeneralField fieldKey="log" fieldValue={flattenLogData.body} />
 							{flattenLogData.stream && (
-								<LogGeneralField
-									fieldKey="stream"
-									fieldValue={flattenLogData.stream as never}
-								/>
+								<LogGeneralField fieldKey="stream" fieldValue={flattenLogData.stream} />
 							)}
 							<LogGeneralField
 								fieldKey="timestamp"
