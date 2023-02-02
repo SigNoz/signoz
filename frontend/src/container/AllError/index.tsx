@@ -127,14 +127,15 @@ function AllErrors(): JSX.Element {
 			enabled: !loading,
 		},
 	]);
+	const [notifications, NotificationElement] = notification.useNotification();
 
 	useEffect(() => {
 		if (data?.error) {
-			notification.error({
+			notifications.error({
 				message: data.error || t('something_went_wrong'),
 			});
 		}
-	}, [data?.error, data?.payload, t]);
+	}, [data?.error, data?.payload, t, notifications]);
 
 	const getDateValue = (value: string): JSX.Element => (
 		<Typography>{dayjs(value).format('DD/MM/YYYY HH:mm:ss A')}</Typography>
@@ -379,21 +380,24 @@ function AllErrors(): JSX.Element {
 	);
 
 	return (
-		<Table
-			tableLayout="fixed"
-			dataSource={data?.payload as Exception[]}
-			columns={columns}
-			rowKey="firstSeen"
-			loading={isLoading || false || errorCountResponse.status === 'loading'}
-			pagination={{
-				pageSize: getUpdatedPageSize,
-				responsive: true,
-				current: getUpdatedOffset / 10 + 1,
-				position: ['bottomLeft'],
-				total: errorCountResponse.data?.payload || 0,
-			}}
-			onChange={onChangeHandler}
-		/>
+		<>
+			{NotificationElement}
+			<Table
+				tableLayout="fixed"
+				dataSource={data?.payload as Exception[]}
+				columns={columns}
+				rowKey="firstSeen"
+				loading={isLoading || false || errorCountResponse.status === 'loading'}
+				pagination={{
+					pageSize: getUpdatedPageSize,
+					responsive: true,
+					current: getUpdatedOffset / 10 + 1,
+					position: ['bottomLeft'],
+					total: errorCountResponse.data?.payload || 0,
+				}}
+				onChange={onChangeHandler}
+			/>
+		</>
 	);
 }
 

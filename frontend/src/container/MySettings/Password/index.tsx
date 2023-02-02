@@ -23,6 +23,8 @@ function PasswordContainer(): JSX.Element {
 		ns: 'settings',
 	});
 
+	const [notifications, NotificationElement] = notification.useNotification();
+
 	useEffect(() => {
 		if (currentPassword && !isPasswordValid(currentPassword)) {
 			setIsPasswordPolicyError(true);
@@ -52,13 +54,13 @@ function PasswordContainer(): JSX.Element {
 			});
 
 			if (statusCode === 200) {
-				notification.success({
+				notifications.success({
 					message: t('success', {
 						ns: 'common',
 					}),
 				});
 			} else {
-				notification.error({
+				notifications.error({
 					message:
 						error ||
 						t('something_went_wrong', {
@@ -70,7 +72,7 @@ function PasswordContainer(): JSX.Element {
 		} catch (error) {
 			setIsLoading(false);
 
-			notification.error({
+			notifications.error({
 				message: t('something_went_wrong', {
 					ns: 'common',
 				}),
@@ -80,6 +82,7 @@ function PasswordContainer(): JSX.Element {
 
 	return (
 		<Space direction="vertical" size="large">
+			{NotificationElement}
 			<Typography.Title level={3}>
 				{t('change_password', {
 					ns: 'settings',

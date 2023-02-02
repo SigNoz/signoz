@@ -1,26 +1,11 @@
-// import { DBOverView } from 'types/api/metrics/getDBOverview';
-// import { ExternalAverageDuration } from 'types/api/metrics/getExternalAverageDuration';
-// import { ExternalError } from 'types/api/metrics/getExternalError';
-// import { ExternalService } from 'types/api/metrics/getExternalService';
-// import { IResourceAttributeQuery } from 'container/MetricsApplication/ResourceAttributesFilter/types';
-// import { ServicesList } from 'types/api/metrics/getService';
-// import { ServiceOverview } from 'types/api/metrics/getServiceOverview';
-// import { TopEndPoints } from 'types/api/metrics/getTopEndPoints';
-
 import { ILogQLParsedQueryItem } from 'lib/logql/types';
-import { IFieldMoveToSelected, IFields } from 'types/api/logs/fields';
+import { IField, IFieldMoveToSelected, IFields } from 'types/api/logs/fields';
 import { TLogsLiveTailState } from 'types/api/logs/liveTail';
 import { ILog } from 'types/api/logs/log';
 import { ILogsAggregate } from 'types/api/logs/logAggregate';
 
-// export const GET_SERVICE_LIST_SUCCESS = 'GET_SERVICE_LIST_SUCCESS';
-// export const GET_SERVICE_LIST_LOADING_START = 'GET_SERVICE_LIST_LOADING_START';
-// export const GET_SERVICE_LIST_ERROR = 'GET_SERVICE_LIST_ERROR';
-// export const GET_INITIAL_APPLICATION_LOADING =
-// 	'GET_INITIAL_APPLICATION_LOADING';
-// export const GET_INITIAL_APPLICATION_ERROR = 'GET_INITIAL_APPLICATION_ERROR';
-// export const GET_INTIAL_APPLICATION_DATA = 'GET_INTIAL_APPLICATION_DATA';
-// export const RESET_INITIAL_APPLICATION_DATA = 'RESET_INITIAL_APPLICATION_DATA';
+import { GlobalTime } from './globalTime';
+
 export const GET_FIELDS = 'LOGS_GET_FIELDS';
 export const SET_FIELDS = 'LOGS_SET_FIELDS';
 export const SET_SEARCH_QUERY_STRING = 'LOGS_SET_SEARCH_QUERY_STRING';
@@ -43,6 +28,9 @@ export const PUSH_LIVE_TAIL_EVENT = 'LOGS_PUSH_LIVE_TAIL_EVENT';
 export const STOP_LIVE_TAIL = 'LOGS_STOP_LIVE_TAIL';
 export const FLUSH_LOGS = 'LOGS_FLUSH_LOGS';
 export const SET_LIVE_TAIL_START_TIME = 'LOGS_SET_LIVE_TAIL_START_TIME';
+export const UPDATE_SELECTED_FIELDS = 'LOGS_UPDATE_SELECTED_FIELDS';
+export const UPDATE_INTERESTING_FIELDS = 'LOGS_UPDATE_INTERESTING_FIELDS';
+
 export interface GetFields {
 	type: typeof GET_FIELDS;
 }
@@ -53,7 +41,10 @@ export interface SetFields {
 }
 export interface SetSearchQueryString {
 	type: typeof SET_SEARCH_QUERY_STRING;
-	payload: string;
+	payload: {
+		searchQueryString: string;
+		globalTime?: GlobalTime;
+	};
 }
 
 export interface SetSearchQueryParsedPayload {
@@ -75,7 +66,9 @@ export interface UpdateLogs {
 }
 export interface SetLogsLinesPerPage {
 	type: typeof SET_LOG_LINES_PER_PAGE;
-	payload: number;
+	payload: {
+		logsLinesPerPage: number;
+	};
 }
 
 export interface PreviousLogsLines {
@@ -86,6 +79,7 @@ export interface NextLogsLines {
 }
 export interface ResetIdStartAndEnd {
 	type: typeof RESET_ID_START_AND_END;
+	payload: GlobalTime;
 }
 export interface SetLoading {
 	type: typeof SET_LOADING;
@@ -124,6 +118,16 @@ export interface SetLiveTailStartTime {
 	payload: number;
 }
 
+type IFieldType = 'interesting' | 'selected';
+
+export interface UpdateSelectedInterestFields {
+	type: typeof UPDATE_INTERESTING_FIELDS | typeof UPDATE_SELECTED_FIELDS;
+	payload: {
+		field: IField[];
+		type: IFieldType;
+	};
+}
+
 export type LogsActions =
 	| GetFields
 	| SetFields
@@ -144,4 +148,5 @@ export type LogsActions =
 	| PushLiveTailEvent
 	| StopLiveTail
 	| FlushLogs
-	| SetLiveTailStartTime;
+	| SetLiveTailStartTime
+	| UpdateSelectedInterestFields;

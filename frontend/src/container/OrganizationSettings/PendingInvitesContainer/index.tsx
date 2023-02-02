@@ -25,22 +25,23 @@ function PendingInvitesContainer(): JSX.Element {
 	const [isInvitingMembers, setIsInvitingMembers] = useState<boolean>(false);
 	const { t } = useTranslation(['organizationsettings', 'common']);
 	const [state, setText] = useCopyToClipboard();
+	const [notifications, NotificationElement] = notification.useNotification();
 
 	useEffect(() => {
 		if (state.error) {
-			notification.error({
+			notifications.error({
 				message: state.error.message,
 			});
 		}
 
 		if (state.value) {
-			notification.success({
+			notifications.success({
 				message: t('success', {
 					ns: 'common',
 				}),
 			});
 		}
-	}, [state.error, state.value, t]);
+	}, [state.error, state.value, t, notifications]);
 
 	const getPendingInvitesResponse = useQuery({
 		queryFn: () => getPendingInvites(),
@@ -112,13 +113,13 @@ function PendingInvitesContainer(): JSX.Element {
 						...dataSource.slice(index + 1, dataSource.length),
 					]);
 				}
-				notification.success({
+				notifications.success({
 					message: t('success', {
 						ns: 'common',
 					}),
 				});
 			} else {
-				notification.error({
+				notifications.error({
 					message:
 						response.error ||
 						t('something_went_wrong', {
@@ -127,7 +128,7 @@ function PendingInvitesContainer(): JSX.Element {
 				});
 			}
 		} catch (error) {
-			notification.error({
+			notifications.error({
 				message: t('something_went_wrong', {
 					ns: 'common',
 				}),
@@ -192,7 +193,7 @@ function PendingInvitesContainer(): JSX.Element {
 					});
 
 					if (statusCode !== 200) {
-						notification.error({
+						notifications.error({
 							message:
 								error ||
 								t('something_went_wrong', {
@@ -212,7 +213,7 @@ function PendingInvitesContainer(): JSX.Element {
 				toggleModal(false);
 			}, 2000);
 		} catch (error) {
-			notification.error({
+			notifications.error({
 				message: t('something_went_wrong', {
 					ns: 'common',
 				}),
@@ -222,6 +223,7 @@ function PendingInvitesContainer(): JSX.Element {
 
 	return (
 		<div>
+			{NotificationElement}
 			<Modal
 				title={t('invite_team_members')}
 				open={isInviteTeamMemberModalOpen}
