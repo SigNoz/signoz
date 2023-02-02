@@ -1,6 +1,7 @@
 import { blue, red } from '@ant-design/colors';
 import { PlusOutlined } from '@ant-design/icons';
-import { Button, Modal, Row, Space, Table, Tag } from 'antd';
+import { Button, Modal, notification, Row, Space, Table, Tag } from 'antd';
+import { NotificationInstance } from 'antd/es/notification/interface';
 import React, { useRef, useState } from 'react';
 import { connect, useSelector } from 'react-redux';
 import { bindActionCreators, Dispatch } from 'redux';
@@ -23,6 +24,8 @@ function VariablesSetting({
 	const { dashboards } = useSelector<AppState, DashboardReducer>(
 		(state) => state.dashboards,
 	);
+
+	const [notifications, NotificationElement] = notification.useNotification();
 
 	const [selectedDashboard] = dashboards;
 
@@ -74,8 +77,7 @@ function VariablesSetting({
 		if (oldName) {
 			delete newVariables[oldName];
 		}
-
-		updateDashboardVariables(newVariables);
+		updateDashboardVariables(newVariables, notifications);
 		onDoneVariableViewMode();
 	};
 
@@ -87,7 +89,7 @@ function VariablesSetting({
 	const handleDeleteConfirm = (): void => {
 		const newVariables = { ...variables };
 		if (variableToDelete?.current) delete newVariables[variableToDelete?.current];
-		updateDashboardVariables(newVariables);
+		updateDashboardVariables(newVariables, notifications);
 		variableToDelete.current = null;
 		setDeleteVariableModal(false);
 	};
@@ -137,6 +139,7 @@ function VariablesSetting({
 
 	return (
 		<>
+			{NotificationElement}
 			{variableViewMode ? (
 				<VariableItem
 					variableData={{ ...variableEditData } as IDashboardVariable}
@@ -178,6 +181,7 @@ function VariablesSetting({
 interface DispatchProps {
 	updateDashboardVariables: (
 		props: Record<string, IDashboardVariable>,
+		notify: NotificationInstance,
 	) => (dispatch: Dispatch<AppActions>) => void;
 }
 
