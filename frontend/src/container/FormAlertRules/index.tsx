@@ -190,12 +190,14 @@ function FormAlertRules({
 			});
 		}
 	};
+	const [notifications, NotificationElement] = notification.useNotification();
+
 	const validatePromParams = useCallback((): boolean => {
 		let retval = true;
 		if (queryCategory !== EQueryType.PROM) return retval;
 
 		if (!promQueries || Object.keys(promQueries).length === 0) {
-			notification.error({
+			notifications.error({
 				message: 'Error',
 				description: t('promql_required'),
 			});
@@ -204,7 +206,7 @@ function FormAlertRules({
 
 		Object.keys(promQueries).forEach((key) => {
 			if (promQueries[key].query === '') {
-				notification.error({
+				notifications.error({
 					message: 'Error',
 					description: t('promql_required'),
 				});
@@ -213,14 +215,14 @@ function FormAlertRules({
 		});
 
 		return retval;
-	}, [t, promQueries, queryCategory]);
+	}, [t, promQueries, queryCategory, notifications]);
 
 	const validateChQueryParams = useCallback((): boolean => {
 		let retval = true;
 		if (queryCategory !== EQueryType.CLICKHOUSE) return retval;
 
 		if (!chQueries || Object.keys(chQueries).length === 0) {
-			notification.error({
+			notifications.error({
 				message: 'Error',
 				description: t('chquery_required'),
 			});
@@ -229,7 +231,7 @@ function FormAlertRules({
 
 		Object.keys(chQueries).forEach((key) => {
 			if (chQueries[key].rawQuery === '') {
-				notification.error({
+				notifications.error({
 					message: 'Error',
 					description: t('chquery_required'),
 				});
@@ -238,14 +240,14 @@ function FormAlertRules({
 		});
 
 		return retval;
-	}, [t, chQueries, queryCategory]);
+	}, [t, chQueries, queryCategory, notifications]);
 
 	const validateQBParams = useCallback((): boolean => {
 		let retval = true;
 		if (queryCategory !== EQueryType.QUERY_BUILDER) return true;
 
 		if (!metricQueries || Object.keys(metricQueries).length === 0) {
-			notification.error({
+			notifications.error({
 				message: 'Error',
 				description: t('condition_required'),
 			});
@@ -253,7 +255,7 @@ function FormAlertRules({
 		}
 
 		if (!alertDef.condition?.target) {
-			notification.error({
+			notifications.error({
 				message: 'Error',
 				description: t('target_missing'),
 			});
@@ -262,7 +264,7 @@ function FormAlertRules({
 
 		Object.keys(metricQueries).forEach((key) => {
 			if (metricQueries[key].metricName === '') {
-				notification.error({
+				notifications.error({
 					message: 'Error',
 					description: t('metricname_missing', { where: metricQueries[key].name }),
 				});
@@ -272,7 +274,7 @@ function FormAlertRules({
 
 		Object.keys(formulaQueries).forEach((key) => {
 			if (formulaQueries[key].expression === '') {
-				notification.error({
+				notifications.error({
 					message: 'Error',
 					description: t('expression_missing', formulaQueries[key].name),
 				});
@@ -280,11 +282,11 @@ function FormAlertRules({
 			}
 		});
 		return retval;
-	}, [t, alertDef, queryCategory, metricQueries, formulaQueries]);
+	}, [t, alertDef, queryCategory, metricQueries, formulaQueries, notifications]);
 
 	const isFormValid = useCallback((): boolean => {
 		if (!alertDef.alert || alertDef.alert === '') {
-			notification.error({
+			notifications.error({
 				message: 'Error',
 				description: t('alertname_required'),
 			});
@@ -300,7 +302,14 @@ function FormAlertRules({
 		}
 
 		return validateQBParams();
-	}, [t, validateQBParams, validateChQueryParams, alertDef, validatePromParams]);
+	}, [
+		t,
+		validateQBParams,
+		validateChQueryParams,
+		alertDef,
+		validatePromParams,
+		notifications,
+	]);
 
 	const preparePostData = (): AlertDef => {
 		const postableAlert: AlertDef = {
@@ -348,7 +357,7 @@ function FormAlertRules({
 			const response = await saveAlertApi(apiReq);
 
 			if (response.statusCode === 200) {
-				notification.success({
+				notifications.success({
 					message: 'Success',
 					description:
 						!ruleId || ruleId === 0 ? t('rule_created') : t('rule_edited'),
@@ -361,19 +370,26 @@ function FormAlertRules({
 					history.replace(ROUTES.LIST_ALL_ALERT);
 				}, 2000);
 			} else {
-				notification.error({
+				notifications.error({
 					message: 'Error',
 					description: response.error || t('unexpected_error'),
 				});
 			}
 		} catch (e) {
-			notification.error({
+			notifications.error({
 				message: 'Error',
 				description: t('unexpected_error'),
 			});
 		}
 		setLoading(false);
-	}, [t, isFormValid, ruleId, ruleCache, memoizedPreparePostData]);
+	}, [
+		t,
+		isFormValid,
+		ruleId,
+		ruleCache,
+		memoizedPreparePostData,
+		notifications,
+	]);
 
 	const onSaveHandler = useCallback(async () => {
 		const content = (
@@ -407,30 +423,30 @@ function FormAlertRules({
 			if (response.statusCode === 200) {
 				const { payload } = response;
 				if (payload?.alertCount === 0) {
-					notification.error({
+					notifications.error({
 						message: 'Error',
 						description: t('no_alerts_found'),
 					});
 				} else {
-					notification.success({
+					notifications.success({
 						message: 'Success',
 						description: t('rule_test_fired'),
 					});
 				}
 			} else {
-				notification.error({
+				notifications.error({
 					message: 'Error',
 					description: response.error || t('unexpected_error'),
 				});
 			}
 		} catch (e) {
-			notification.error({
+			notifications.error({
 				message: 'Error',
 				description: t('unexpected_error'),
 			});
 		}
 		setLoading(false);
-	}, [t, isFormValid, memoizedPreparePostData]);
+	}, [t, isFormValid, memoizedPreparePostData, notifications]);
 
 	const renderBasicInfo = (): JSX.Element => (
 		<BasicInfo alertDef={alertDef} setAlertDef={setAlertDef} />
@@ -467,6 +483,7 @@ function FormAlertRules({
 	);
 	return (
 		<>
+			{NotificationElement}
 			{Element}
 			<PanelContainer>
 				<StyledLeftContainer flex="5 1 600px">

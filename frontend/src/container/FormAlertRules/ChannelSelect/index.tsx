@@ -20,12 +20,14 @@ function ChannelSelect({
 
 	const { loading, payload, error, errorMessage } = useFetch(getChannels);
 
+	const [notifications, NotificationElement] = notification.useNotification();
+
 	const handleChange = (value: string[]): void => {
 		onSelectChannels(value);
 	};
 
 	if (error && errorMessage !== '') {
-		notification.error({
+		notifications.error({
 			message: 'Error',
 			description: errorMessage,
 		});
@@ -48,19 +50,22 @@ function ChannelSelect({
 		return children;
 	};
 	return (
-		<StyledSelect
-			status={error ? 'error' : ''}
-			mode="multiple"
-			style={{ width: '100%' }}
-			placeholder={t('placeholder_channel_select')}
-			value={currentValue}
-			onChange={(value): void => {
-				handleChange(value as string[]);
-			}}
-			optionLabelProp="label"
-		>
-			{renderOptions()}
-		</StyledSelect>
+		<>
+			{NotificationElement}
+			<StyledSelect
+				status={error ? 'error' : ''}
+				mode="multiple"
+				style={{ width: '100%' }}
+				placeholder={t('placeholder_channel_select')}
+				value={currentValue}
+				onChange={(value): void => {
+					handleChange(value as string[]);
+				}}
+				optionLabelProp="label"
+			>
+				{renderOptions()}
+			</StyledSelect>
+		</>
 	);
 }
 
