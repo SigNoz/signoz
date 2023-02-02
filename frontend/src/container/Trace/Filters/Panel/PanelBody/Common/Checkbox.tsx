@@ -38,6 +38,8 @@ function CheckBoxComponent(props: CheckBoxProps): JSX.Element {
 		(userSelectedFilter.get(name) || []).find((e) => e === keyValue) !==
 		undefined;
 
+	const [notifications, NotificationElement] = notification.useNotification();
+
 	// eslint-disable-next-line sonarjs/cognitive-complexity
 	const onCheckHandler = async (): Promise<void> => {
 		try {
@@ -141,12 +143,12 @@ function CheckBoxComponent(props: CheckBoxProps): JSX.Element {
 			} else {
 				setIsLoading(false);
 
-				notification.error({
+				notifications.error({
 					message: response.error || 'Something went wrong',
 				});
 			}
 		} catch (error) {
-			notification.error({
+			notifications.error({
 				message: (error as AxiosError).toString() || 'Something went wrong',
 			});
 			setIsLoading(false);
@@ -161,6 +163,7 @@ function CheckBoxComponent(props: CheckBoxProps): JSX.Element {
 
 	return (
 		<CheckBoxContainer>
+			{NotificationElement}
 			<Checkbox
 				disabled={isLoading || filterLoading}
 				onClick={onCheckHandler}

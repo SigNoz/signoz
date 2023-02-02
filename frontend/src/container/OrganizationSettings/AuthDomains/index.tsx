@@ -60,6 +60,8 @@ function AuthDomains(): JSX.Element {
 		enabled: org !== null,
 	});
 
+	const [notifications, NotificationElement] = notification.useNotification();
+
 	const assignSsoMethod = useCallback(
 		(typ: AuthDomain['ssoType']): void => {
 			setCurrentDomain({ ...currentDomain, ssoType: typ } as AuthDomain);
@@ -80,7 +82,7 @@ function AuthDomains(): JSX.Element {
 				const response = await updateDomain(record);
 
 				if (response.statusCode === 200) {
-					notification.success({
+					notifications.success({
 						message: t('saml_settings', {
 							ns: 'organizationsettings',
 						}),
@@ -91,7 +93,7 @@ function AuthDomains(): JSX.Element {
 					return true;
 				}
 
-				notification.error({
+				notifications.error({
 					message: t('something_went_wrong', {
 						ns: 'common',
 					}),
@@ -99,7 +101,7 @@ function AuthDomains(): JSX.Element {
 
 				return false;
 			} catch (error) {
-				notification.error({
+				notifications.error({
 					message: t('something_went_wrong', {
 						ns: 'common',
 					}),
@@ -107,7 +109,7 @@ function AuthDomains(): JSX.Element {
 				return false;
 			}
 		},
-		[refetch, t, onCloseHandler],
+		[refetch, t, onCloseHandler, notifications],
 	);
 
 	const onOpenHandler = useCallback(
@@ -146,19 +148,19 @@ function AuthDomains(): JSX.Element {
 					});
 
 					if (response.statusCode === 200) {
-						notification.success({
+						notifications.success({
 							message: t('common:success'),
 						});
 						refetch();
 					} else {
-						notification.error({
+						notifications.error({
 							message: t('common:something_went_wrong'),
 						});
 					}
 				},
 			});
 		},
-		[refetch, t],
+		[refetch, t, notifications],
 	);
 
 	const onClickLicenseHandler = useCallback(() => {
@@ -255,6 +257,7 @@ function AuthDomains(): JSX.Element {
 	if (!isLoading && data?.payload?.length === 0) {
 		return (
 			<Space direction="vertical" size="middle">
+				{NotificationElement}
 				<AddDomain refetch={refetch} />
 
 				<Modal
@@ -288,6 +291,7 @@ function AuthDomains(): JSX.Element {
 
 	return (
 		<>
+			{NotificationElement}
 			<Modal
 				centered
 				title="Configure Authentication Method"

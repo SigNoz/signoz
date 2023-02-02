@@ -34,6 +34,8 @@ function ListAlert({ allAlertRules, refetch }: ListAlertProps): JSX.Element {
 		role,
 	);
 
+	const [notificationsApi, NotificationElement] = notification.useNotification();
+
 	useInterval(() => {
 		(async (): Promise<void> => {
 			const { data: refetchData, status } = await refetch();
@@ -41,7 +43,7 @@ function ListAlert({ allAlertRules, refetch }: ListAlertProps): JSX.Element {
 				setData(refetchData?.payload || []);
 			}
 			if (status === 'error') {
-				notification.error({
+				notificationsApi.error({
 					message: t('something_went_wrong'),
 				});
 			}
@@ -153,6 +155,7 @@ function ListAlert({ allAlertRules, refetch }: ListAlertProps): JSX.Element {
 
 	return (
 		<>
+			{NotificationElement}
 			{Element}
 
 			<ButtonContainer>

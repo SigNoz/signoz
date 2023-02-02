@@ -83,13 +83,15 @@ function ErrorDetails(props: ErrorDetailsProps): JSX.Element {
 		[],
 	);
 
+	const [notifications, NotificationElement] = notification.useNotification();
+
 	const onClickErrorIdHandler = async (
 		id: string,
 		timestamp: string,
 	): Promise<void> => {
 		try {
 			if (id.length === 0) {
-				notification.error({
+				notifications.error({
 					message: 'Error Id cannot be empty',
 				});
 				return;
@@ -101,7 +103,7 @@ function ErrorDetails(props: ErrorDetailsProps): JSX.Element {
 				}&timestamp=${getNanoSeconds(timestamp)}&errorId=${id}`,
 			);
 		} catch (error) {
-			notification.error({
+			notifications.error({
 				message: t('something_went_wrong'),
 			});
 		}
@@ -122,6 +124,7 @@ function ErrorDetails(props: ErrorDetailsProps): JSX.Element {
 
 	return (
 		<>
+			{NotificationElement}
 			<Typography>{errorDetail.exceptionType}</Typography>
 			<Typography>{errorDetail.exceptionMessage}</Typography>
 			<Divider />

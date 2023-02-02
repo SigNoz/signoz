@@ -43,6 +43,7 @@ function UserFunction({
 	const { t } = useTranslation(['common']);
 	const [isDeleteLoading, setIsDeleteLoading] = useState<boolean>(false);
 	const [isUpdateLoading, setIsUpdateLoading] = useState<boolean>(false);
+	const [notifications, NotificationElement] = notification.useNotification();
 
 	const onUpdateDetailsHandler = (): void => {
 		setDataSource((data) => {
@@ -92,14 +93,14 @@ function UserFunction({
 
 			if (response.statusCode === 200) {
 				onDelete();
-				notification.success({
+				notifications.success({
 					message: t('success', {
 						ns: 'common',
 					}),
 				});
 				setIsDeleteModalVisible(false);
 			} else {
-				notification.error({
+				notifications.error({
 					message:
 						response.error ||
 						t('something_went_wrong', {
@@ -111,7 +112,7 @@ function UserFunction({
 		} catch (error) {
 			setIsDeleteLoading(false);
 
-			notification.error({
+			notifications.error({
 				message: t('something_went_wrong', {
 					ns: 'common',
 				}),
@@ -138,13 +139,13 @@ function UserFunction({
 				updateRoleResponse.statusCode === 200
 			) {
 				onUpdateDetailsHandler();
-				notification.success({
+				notifications.success({
 					message: t('success', {
 						ns: 'common',
 					}),
 				});
 			} else {
-				notification.error({
+				notifications.error({
 					message:
 						editUserResponse.error ||
 						updateRoleResponse.error ||
@@ -155,7 +156,7 @@ function UserFunction({
 			}
 			setIsUpdateLoading(false);
 		} catch (error) {
-			notification.error({
+			notifications.error({
 				message: t('something_went_wrong', {
 					ns: 'common',
 				}),
@@ -166,6 +167,7 @@ function UserFunction({
 
 	return (
 		<>
+			{NotificationElement}
 			<Space direction="horizontal">
 				<Typography.Link
 					onClick={(): void => onModalToggleHandler(setIsModalVisible, true)}

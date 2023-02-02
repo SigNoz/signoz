@@ -1,4 +1,4 @@
-import { notification } from 'antd';
+import { NotificationInstance } from 'antd/es/notification/interface';
 import getSpansAggregate from 'api/trace/getSpansAggregate';
 import { Dispatch, Store } from 'redux';
 import { AppState } from 'store/reducers';
@@ -12,6 +12,7 @@ import { updateURL } from './util';
 
 export const GetSpansAggregate = (
 	props: GetSpansAggregateProps,
+	notify: NotificationInstance,
 ): ((
 	dispatch: Dispatch<AppActions>,
 	getState: Store<AppState>['getState'],
@@ -91,7 +92,7 @@ export const GetSpansAggregate = (
 				spansAggregate.orderParam,
 			);
 		} else {
-			notification.error({
+			notify.error({
 				message: response.error || 'Something went wrong',
 			});
 
