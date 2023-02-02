@@ -43,6 +43,8 @@ const themeColors = {
 	lightWhite: '#ffffffd9',
 	borderLightGrey: '#d9d9d9',
 	borderDarkGrey: '#424242',
+	gainsboro: '#DBDBDB',
+	navyBlue: '#1668DC',
 };
 
 export { themeColors };

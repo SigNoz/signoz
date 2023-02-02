@@ -1,10 +1,11 @@
 import {
-	DeleteOutlined,
+	DeleteFilled,
 	EditOutlined,
-	EyeOutlined,
+	EyeFilled,
 	HolderOutlined,
 } from '@ant-design/icons';
 import { Avatar, List, Space, Switch, Table, Tag } from 'antd';
+import { themeColors } from 'constants/theme';
 import useComponentPermission from 'hooks/useComponentPermission';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import update from 'react-addons-update';
@@ -14,6 +15,7 @@ import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
 import AppReducer from 'types/reducer/app';
 
+import { iconStyle } from './config';
 import { Container } from './styles';
 import { pipelineData } from './utils';
 
@@ -135,13 +137,13 @@ function ListOfPipelines(): JSX.Element {
 			render: (): JSX.Element => (
 				<Space size="middle">
 					<span style={{ height: '24px', width: '24px' }}>
-						<EditOutlined />
+						<EditOutlined style={iconStyle} />
 					</span>
 					<span>
-						<EyeOutlined />
+						<EyeFilled style={iconStyle} />
 					</span>
 					<span>
-						<DeleteOutlined />
+						<DeleteFilled style={iconStyle} />
 					</span>
 				</Space>
 			),
@@ -158,7 +160,7 @@ function ListOfPipelines(): JSX.Element {
 					<Switch />
 				</span>
 				<span style={{ cursor: 'move' }}>
-					<HolderOutlined />
+					<HolderOutlined style={iconStyle} />
 				</span>
 			</div>
 		),
@@ -206,13 +208,13 @@ function ListOfPipelines(): JSX.Element {
 												key={index}
 												actions={[
 													<span key="list-loadmore-edit">
-														<EditOutlined />
+														<EditOutlined style={iconStyle} />
 													</span>,
 													<span key="list-loadmore-more">
-														<EyeOutlined />
+														<EyeFilled style={iconStyle} />
 													</span>,
 													<span key="list-loadmore-more">
-														<DeleteOutlined />
+														<DeleteFilled style={iconStyle} />
 													</span>,
 													<Space size="middle" key={index + Math.random()}>
 														<>
@@ -228,7 +230,7 @@ function ListOfPipelines(): JSX.Element {
 											>
 												<div style={{ margin: '5px', padding: '5px' }}>
 													<Avatar
-														style={{ backgroundColor: '#1668dc' }}
+														style={{ backgroundColor: themeColors.navyBlue }}
 														shape="square"
 														size="small"
 													>
@@ -245,8 +247,8 @@ function ListOfPipelines(): JSX.Element {
 						}}
 						components={components}
 						dataSource={dataSource}
-						// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
-						onRow={(_, index) => {
+						// eslint-disable-next-line @typescript-eslint/no-explicit-any
+						onRow={(_, index): React.HTMLAttributes<any> => {
 							const attr = {
 								index,
 								moveRow,
