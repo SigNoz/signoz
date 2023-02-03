@@ -1,12 +1,14 @@
+import { Table } from 'antd';
+import type { TableProps } from 'antd/es/table';
 import { ColumnsType } from 'antd/lib/table';
 import React, { useCallback, useMemo, useState } from 'react';
 import { ResizeCallbackData } from 'react-resizable';
 
-function ResizeTableWrapper({
-	children,
-	columns,
-}: ResizeTableWrapperProps): JSX.Element {
-	const [columnsData, setColumns] = useState<ColumnsType>(columns);
+import ResizableHeader from './ResizableHeader';
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function ResizeTable({ columns, ...restprops }: TableProps<any>): JSX.Element {
+	const [columnsData, setColumns] = useState<ColumnsType>(columns || []);
 
 	const handleResize = useCallback(
 		(index: number) => (
@@ -35,13 +37,15 @@ function ResizeTableWrapper({
 		[columnsData, handleResize],
 	);
 
-	return <> {React.cloneElement(children, { columns: mergeColumns })}</>;
+	return (
+		<Table
+			// eslint-disable-next-line react/jsx-props-no-spreading
+			{...restprops}
+			components={{ header: { cell: ResizableHeader } }}
+			// eslint-disable-next-line @typescript-eslint/no-explicit-any
+			columns={mergeColumns as ColumnsType<any>}
+		/>
+	);
 }
 
-interface ResizeTableWrapperProps {
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	columns: ColumnsType<any>;
-	children: JSX.Element;
-}
-
-export default ResizeTableWrapper;
+export default ResizeTable;

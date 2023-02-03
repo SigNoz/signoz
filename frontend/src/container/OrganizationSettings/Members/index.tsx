@@ -1,13 +1,10 @@
-import { Button, Modal, notification, Space, Table, Typography } from 'antd';
+import { Button, Modal, notification, Space, Typography } from 'antd';
 import { ColumnsType } from 'antd/lib/table';
 import deleteUser from 'api/user/deleteUser';
 import editUserApi from 'api/user/editUser';
 import getOrgUser from 'api/user/getOrgUser';
 import updateRole from 'api/user/updateRole';
-import {
-	ResizableHeader,
-	ResizeTableWrapper,
-} from 'components/ResizeTableWrapper';
+import { ResizeTable } from 'components/ResizeTable';
 import dayjs from 'dayjs';
 import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -312,15 +309,13 @@ function Members(): JSX.Element {
 	return (
 		<Space direction="vertical" size="middle">
 			<Typography.Title level={3}>Members</Typography.Title>
-			<ResizeTableWrapper columns={columns}>
-				<Table
-					tableLayout="fixed"
-					dataSource={dataSource}
-					components={{ header: { cell: ResizableHeader } }}
-					pagination={false}
-					loading={status === 'loading'}
-				/>
-			</ResizeTableWrapper>
+			<ResizeTable
+				columns={columns}
+				tableLayout="fixed"
+				dataSource={dataSource}
+				pagination={false}
+				loading={status === 'loading'}
+			/>
 		</Space>
 	);
 }

@@ -1,11 +1,8 @@
 import { blue, orange } from '@ant-design/colors';
-import { Input, Table } from 'antd';
+import { Input } from 'antd';
 import AddToQueryHOC from 'components/Logs/AddToQueryHOC';
 import CopyClipboardHOC from 'components/Logs/CopyClipboardHOC';
-import {
-	ResizableHeader,
-	ResizeTableWrapper,
-} from 'components/ResizeTableWrapper';
+import { ResizeTable } from 'components/ResizeTable';
 import flatten from 'flat';
 import { fieldSearchFilter } from 'lib/logs/fieldSearch';
 import React, { useMemo, useState } from 'react';
@@ -97,15 +94,12 @@ function TableView({ logData }: TableViewProps): JSX.Element | null {
 				value={fieldSearchInput}
 				onChange={(e): void => setFieldSearchInput(e.target.value)}
 			/>
-			<ResizeTableWrapper columns={columns as never}>
-				<Table
-					// scroll={{ x: true }}
-					tableLayout="fixed"
-					dataSource={dataSource}
-					components={{ header: { cell: ResizableHeader } }}
-					pagination={false}
-				/>
-			</ResizeTableWrapper>
+			<ResizeTable
+				columns={columns as never}
+				tableLayout="fixed"
+				dataSource={dataSource}
+				pagination={false}
+			/>
 		</div>
 	);
 }

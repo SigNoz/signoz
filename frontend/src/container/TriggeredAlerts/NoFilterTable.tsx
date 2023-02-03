@@ -1,10 +1,7 @@
 /* eslint-disable react/display-name */
-import { Table, Tag, Typography } from 'antd';
+import { Tag, Typography } from 'antd';
 import { ColumnsType } from 'antd/lib/table';
-import {
-	ResizableHeader,
-	ResizeTableWrapper,
-} from 'components/ResizeTableWrapper';
+import { ResizeTable } from 'components/ResizeTable';
 import AlertStatus from 'container/TriggeredAlerts/TableComponents/AlertStatus';
 import convertDateToAmAndPm from 'lib/convertDateToAmAndPm';
 import getFormattedDate from 'lib/getFormatedDate';
@@ -103,13 +100,11 @@ function NoFilterTable({
 	];
 
 	return (
-		<ResizeTableWrapper columns={columns}>
-			<Table
-				rowKey="startsAt"
-				dataSource={filteredAlerts}
-				components={{ header: { cell: ResizableHeader } }}
-			/>
-		</ResizeTableWrapper>
+		<ResizeTable
+			columns={columns}
+			rowKey="startsAt"
+			dataSource={filteredAlerts}
+		/>
 	);
 }
 
