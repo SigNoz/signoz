@@ -37,7 +37,8 @@ import AppReducer from 'types/reducer/app';
 import {
 	deleteModalDescriptionStyle,
 	iconStyle,
-	ListiconStyle,
+	listIconStyle,
+	listItemTitleStyle,
 	modalFooterStyle,
 	modalFooterTitle,
 	modalTitleStyle,
@@ -113,7 +114,7 @@ function ListOfPipelines(): JSX.Element {
 			key: 'id',
 			render: (i: number): JSX.Element => (
 				<div>
-					<Avatar style={ListiconStyle} size="small">
+					<Avatar style={listIconStyle} size="small">
 						{i}
 					</Avatar>
 				</div>
@@ -158,7 +159,7 @@ function ListOfPipelines(): JSX.Element {
 			dataIndex: 'action',
 			key: 'action',
 			align: 'center',
-			render: (): JSX.Element => (
+			render: (_value, record): JSX.Element => (
 				<Space size="middle">
 					<span>
 						<EditOutlined style={iconStyle} />
@@ -170,7 +171,7 @@ function ListOfPipelines(): JSX.Element {
 						<DeleteFilled
 							onClick={(): void =>
 								WarningMessageModal({
-									title: 'Do you want to delete pipeline : Pipeline Name?',
+									title: `Do you want to delete pipeline : ${record.pipelineName}?`,
 									descrition:
 										'Logs are processed sequentially in processors and pipelines. Deleting a pipeline may change content of data processed by other pipelines & processors',
 									buttontext: 'Delete',
@@ -266,11 +267,7 @@ function ListOfPipelines(): JSX.Element {
 						columns={columns}
 						expandable={{
 							expandedRowRender: (record: ValueType): React.ReactNode => (
-								<div
-									style={{
-										margin: '0 60px',
-									}}
-								>
+								<>
 									<List
 										size="small"
 										itemLayout="horizontal"
@@ -286,18 +283,13 @@ function ListOfPipelines(): JSX.Element {
 													<span key="list-view">
 														<EyeFilled style={iconStyle} />
 													</span>,
-													<span key="list-delete">
+													<span key="list-copy">
 														<CopyFilled style={iconStyle} />
 													</span>,
 													<Space size="middle" key={index + Math.random()}>
-														<>
-															<span>
-																<Switch />
-															</span>
-															<span style={{ cursor: 'move' }}>
-																<HolderOutlined />
-															</span>
-														</>
+														<span style={{ cursor: 'move' }}>
+															<HolderOutlined />
+														</span>
 													</Space>,
 												]}
 											>
@@ -306,35 +298,19 @@ function ListOfPipelines(): JSX.Element {
 														{index + 1}
 													</Avatar>
 												</div>
-												<List.Item.Meta
-													title={
-														<p
-															style={{
-																display: 'flex',
-																fontStyle: 'normal',
-																fontWeight: 400,
-																fontSize: '13px',
-																lineHeight: '20px',
-															}}
-														>
-															{item}
-														</p>
-													}
-												/>
+												<List.Item.Meta title={<p style={listItemTitleStyle}>{item}</p>} />
 											</List.Item>
 										)}
 									/>
-									<div>
-										<Button
-											type="link"
-											style={modalFooterStyle}
-											onClick={(): void => setNewAddProcessor(true)}
-										>
-											<PlusCircleOutlined />
-											<span style={modalFooterTitle}>Add Processor</span>
-										</Button>
-									</div>
-								</div>
+									<Button
+										type="link"
+										style={modalFooterStyle}
+										onClick={(): void => setNewAddProcessor(true)}
+									>
+										<PlusCircleOutlined />
+										<span style={modalFooterTitle}>Add Processor</span>
+									</Button>
+								</>
 							),
 							rowExpandable: (record): boolean =>
 								record.pipelineName !== 'Not Expandable',
