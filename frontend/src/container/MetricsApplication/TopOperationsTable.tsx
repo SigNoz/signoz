@@ -1,9 +1,6 @@
-import { Table, Tooltip, Typography } from 'antd';
+import { Tooltip, Typography } from 'antd';
 import { ColumnsType } from 'antd/lib/table';
-import {
-	ResizableHeader,
-	ResizeTableWrapper,
-} from 'components/ResizeTableWrapper';
+import { ResizeTable } from 'components/ResizeTable';
 import { METRICS_PAGE_QUERY_PARAM } from 'constants/query';
 import ROUTES from 'constants/routes';
 import history from 'lib/history';
@@ -99,16 +96,14 @@ function TopOperationsTable(props: TopOperationsTableProps): JSX.Element {
 	];
 
 	return (
-		<ResizeTableWrapper columns={columns}>
-			<Table
-				showHeader
-				title={(): string => 'Key Operations'}
-				tableLayout="fixed"
-				dataSource={data}
-				components={{ header: { cell: ResizableHeader } }}
-				rowKey="name"
-			/>
-		</ResizeTableWrapper>
+		<ResizeTable
+			columns={columns}
+			showHeader
+			title={(): string => 'Key Operations'}
+			tableLayout="fixed"
+			dataSource={data}
+			rowKey="name"
+		/>
 	);
 }
 

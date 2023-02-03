@@ -1,10 +1,7 @@
 /* eslint-disable react/display-name */
-import { Button, notification, Table } from 'antd';
+import { Button, notification } from 'antd';
 import { ColumnsType } from 'antd/lib/table';
-import {
-	ResizableHeader,
-	ResizeTableWrapper,
-} from 'components/ResizeTableWrapper';
+import { ResizeTable } from 'components/ResizeTable';
 import ROUTES from 'constants/routes';
 import useComponentPermission from 'hooks/useComponentPermission';
 import history from 'lib/history';
@@ -69,13 +66,7 @@ function AlertChannels({ allChannels }: AlertChannelsProps): JSX.Element {
 	return (
 		<>
 			{Element}
-			<ResizeTableWrapper columns={columns}>
-				<Table
-					components={{ header: { cell: ResizableHeader } }}
-					dataSource={channels}
-					rowKey="id"
-				/>
-			</ResizeTableWrapper>
+			<ResizeTable columns={columns} dataSource={channels} rowKey="id" />
 		</>
 	);
 }

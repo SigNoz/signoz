@@ -5,7 +5,6 @@ import {
 	Input,
 	notification,
 	Space,
-	Table,
 	TableProps,
 	Tooltip,
 	Typography,
@@ -16,10 +15,7 @@ import { ColumnsType } from 'antd/lib/table';
 import { FilterConfirmProps } from 'antd/lib/table/interface';
 import getAll from 'api/errors/getAll';
 import getErrorCounts from 'api/errors/getErrorCounts';
-import {
-	ResizableHeader,
-	ResizeTableWrapper,
-} from 'components/ResizeTableWrapper';
+import { ResizeTable } from 'components/ResizeTable';
 import ROUTES from 'constants/routes';
 import dayjs from 'dayjs';
 import useUrlQuery from 'hooks/useUrlQuery';
@@ -392,23 +388,21 @@ function AllErrors(): JSX.Element {
 	return (
 		<>
 			{NotificationElement}
-			<ResizeTableWrapper columns={columns}>
-				<Table
-					tableLayout="fixed"
-					dataSource={data?.payload as Exception[]}
-					components={{ header: { cell: ResizableHeader } }}
-					rowKey="firstSeen"
-					loading={isLoading || false || errorCountResponse.status === 'loading'}
-					pagination={{
-						pageSize: getUpdatedPageSize,
-						responsive: true,
-						current: getUpdatedOffset / 10 + 1,
-						position: ['bottomLeft'],
-						total: errorCountResponse.data?.payload || 0,
-					}}
-					onChange={onChangeHandler}
-				/>
-			</ResizeTableWrapper>
+			<ResizeTable
+				columns={columns}
+				tableLayout="fixed"
+				dataSource={data?.payload as Exception[]}
+				rowKey="firstSeen"
+				loading={isLoading || false || errorCountResponse.status === 'loading'}
+				pagination={{
+					pageSize: getUpdatedPageSize,
+					responsive: true,
+					current: getUpdatedOffset / 10 + 1,
+					position: ['bottomLeft'],
+					total: errorCountResponse.data?.payload || 0,
+				}}
+				onChange={onChangeHandler}
+			/>
 		</>
 	);
 }

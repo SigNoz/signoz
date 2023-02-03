@@ -1,9 +1,6 @@
-import { Table, TableProps, Tag, Typography } from 'antd';
+import { TableProps, Tag, Typography } from 'antd';
 import { ColumnsType } from 'antd/lib/table';
-import {
-	ResizableHeader,
-	ResizeTableWrapper,
-} from 'components/ResizeTableWrapper';
+import { ResizeTable } from 'components/ResizeTable';
 import ROUTES from 'constants/routes';
 import {
 	getSpanOrder,
@@ -190,36 +187,36 @@ function TraceTable(): JSX.Element {
 	) as number;
 
 	return (
-		<ResizeTableWrapper columns={columns}>
-			<Table
-				onChange={onChangeHandler}
-				dataSource={spansAggregate.data}
-				loading={loading || filterLoading}
-				components={{ header: { cell: ResizableHeader } }}
-				rowKey={(record): string => `${record.traceID}-${record.spanID}-${v4()}`}
-				style={{
-					cursor: 'pointer',
-				}}
-				onRow={(record): React.HTMLAttributes<TableType> => ({
-					onClick: (event): void => {
-						event.preventDefault();
-						event.stopPropagation();
-						if (event.metaKey || event.ctrlKey) {
-							window.open(getLink(record), '_blank');
-						} else {
-							history.push(getLink(record));
-						}
-					},
-				})}
-				pagination={{
-					current: spansAggregate.currentPage,
-					pageSize: spansAggregate.pageSize,
-					responsive: true,
-					position: ['bottomLeft'],
-					total: totalCount,
-				}}
-			/>
-		</ResizeTableWrapper>
+		<ResizeTable
+			columns={columns}
+			onChange={onChangeHandler}
+			dataSource={spansAggregate.data}
+			loading={loading || filterLoading}
+			rowKey={(record: { traceID: string; spanID: string }): string =>
+				`${record.traceID}-${record.spanID}-${v4()}`
+			}
+			style={{
+				cursor: 'pointer',
+			}}
+			onRow={(record: TableType): React.HTMLAttributes<TableType> => ({
+				onClick: (event): void => {
+					event.preventDefault();
+					event.stopPropagation();
+					if (event.metaKey || event.ctrlKey) {
+						window.open(getLink(record), '_blank');
+					} else {
+						history.push(getLink(record));
+					}
+				},
+			})}
+			pagination={{
+				current: spansAggregate.currentPage,
+				pageSize: spansAggregate.pageSize,
+				responsive: true,
+				position: ['bottomLeft'],
+				total: totalCount,
+			}}
+		/>
 	);
 }
 
