@@ -2,7 +2,9 @@ import { Button, Popover } from 'antd';
 import { generateFilterQuery } from 'lib/logs/generateFilterQuery';
 import React, { memo, useCallback, useMemo } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
+import { Dispatch } from 'redux';
 import { AppState } from 'store/reducers';
+import AppActions from 'types/actions';
 import { SET_SEARCH_QUERY_STRING } from 'types/actions/logs';
 import { ILogsReducer } from 'types/reducer/logs';
 
@@ -14,7 +16,7 @@ function AddToQueryHOC({
 	const {
 		searchFilter: { queryString },
 	} = useSelector<AppState, ILogsReducer>((store) => store.logs);
-	const dispatch = useDispatch();
+	const dispatch = useDispatch<Dispatch<AppActions>>();
 
 	const generatedQuery = useMemo(
 		() => generateFilterQuery({ fieldKey, fieldValue, type: 'IN' }),
@@ -31,7 +33,9 @@ function AddToQueryHOC({
 		}
 		dispatch({
 			type: SET_SEARCH_QUERY_STRING,
-			payload: updatedQueryString,
+			payload: {
+				searchQueryString: updatedQueryString,
+			},
 		});
 	}, [dispatch, generatedQuery, queryString]);
 

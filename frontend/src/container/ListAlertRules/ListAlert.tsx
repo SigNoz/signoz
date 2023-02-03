@@ -1,7 +1,8 @@
 /* eslint-disable react/display-name */
 import { PlusOutlined } from '@ant-design/icons';
-import { notification, Table, Typography } from 'antd';
+import { notification, Typography } from 'antd';
 import { ColumnsType } from 'antd/lib/table';
+import { ResizeTable } from 'components/ResizeTable';
 import TextToolTip from 'components/TextToolTip';
 import ROUTES from 'constants/routes';
 import useComponentPermission from 'hooks/useComponentPermission';
@@ -30,6 +31,8 @@ function ListAlert({ allAlertRules, refetch }: ListAlertProps): JSX.Element {
 		role,
 	);
 
+	const [notificationsApi, NotificationElement] = notification.useNotification();
+
 	useInterval(() => {
 		(async (): Promise<void> => {
 			const { data: refetchData, status } = await refetch();
@@ -37,7 +40,7 @@ function ListAlert({ allAlertRules, refetch }: ListAlertProps): JSX.Element {
 				setData(refetchData?.payload || []);
 			}
 			if (status === 'error') {
-				notification.error({
+				notificationsApi.error({
 					message: t('something_went_wrong'),
 				});
 			}
@@ -58,6 +61,7 @@ function ListAlert({ allAlertRules, refetch }: ListAlertProps): JSX.Element {
 		{
 			title: 'Status',
 			dataIndex: 'state',
+			width: 80,
 			key: 'state',
 			sorter: (a, b): number =>
 				(b.state ? b.state.charCodeAt(0) : 1000) -
@@ -67,6 +71,7 @@ function ListAlert({ allAlertRules, refetch }: ListAlertProps): JSX.Element {
 		{
 			title: 'Alert Name',
 			dataIndex: 'alert',
+			width: 100,
 			key: 'name',
 			sorter: (a, b): number =>
 				(a.alert ? a.alert.charCodeAt(0) : 1000) -
@@ -82,6 +87,7 @@ function ListAlert({ allAlertRules, refetch }: ListAlertProps): JSX.Element {
 		{
 			title: 'Severity',
 			dataIndex: 'labels',
+			width: 80,
 			key: 'severity',
 			sorter: (a, b): number =>
 				(a.labels ? a.labels.severity.length : 0) -
@@ -99,7 +105,7 @@ function ListAlert({ allAlertRules, refetch }: ListAlertProps): JSX.Element {
 			dataIndex: 'labels',
 			key: 'tags',
 			align: 'center',
-			width: 350,
+			width: 100,
 			render: (value): JSX.Element => {
 				const objectKeys = Object.keys(value);
 				const withOutSeverityKeys = objectKeys.filter((e) => e !== 'severity');
@@ -126,6 +132,7 @@ function ListAlert({ allAlertRules, refetch }: ListAlertProps): JSX.Element {
 			title: 'Action',
 			dataIndex: 'id',
 			key: 'action',
+			width: 120,
 			render: (id: GettableAlert['id'], record): JSX.Element => (
 				<>
 					<ToggleAlertState disabled={record.disabled} setData={setData} id={id} />
@@ -145,6 +152,7 @@ function ListAlert({ allAlertRules, refetch }: ListAlertProps): JSX.Element {
 
 	return (
 		<>
+			{NotificationElement}
 			{Element}
 
 			<ButtonContainer>
@@ -161,8 +169,7 @@ function ListAlert({ allAlertRules, refetch }: ListAlertProps): JSX.Element {
 					</Button>
 				)}
 			</ButtonContainer>
-
-			<Table rowKey="id" columns={columns} dataSource={data} />
+			<ResizeTable columns={columns} rowKey="id" dataSource={data} />
 		</>
 	);
 }

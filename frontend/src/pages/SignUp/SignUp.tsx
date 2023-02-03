@@ -56,6 +56,8 @@ function SignUp({ version }: SignUpProps): JSX.Element {
 		enabled: token !== null,
 	});
 
+	const [notifications, NotificationElement] = notification.useNotification();
+
 	useEffect(() => {
 		if (
 			getInviteDetailsResponse.status === 'success' &&
@@ -73,7 +75,7 @@ function SignUp({ version }: SignUpProps): JSX.Element {
 			getInviteDetailsResponse.data?.error
 		) {
 			const { error } = getInviteDetailsResponse.data;
-			notification.error({
+			notifications.error({
 				message: error,
 			});
 		}
@@ -82,6 +84,7 @@ function SignUp({ version }: SignUpProps): JSX.Element {
 		getInviteDetailsResponse.data?.error,
 		getInviteDetailsResponse.status,
 		getInviteDetailsResponse,
+		notifications,
 	]);
 
 	const setState = (
@@ -122,17 +125,17 @@ function SignUp({ version }: SignUpProps): JSX.Element {
 						callback(userResponse);
 					}
 				} else {
-					notification.error({
+					notifications.error({
 						message: loginResponse.error || t('unexpected_error'),
 					});
 				}
 			} else {
-				notification.error({
+				notifications.error({
 					message: response.error || t('unexpected_error'),
 				});
 			}
 		} catch (error) {
-			notification.error({
+			notifications.error({
 				message: t('unexpected_error'),
 			});
 		}
@@ -150,7 +153,7 @@ function SignUp({ version }: SignUpProps): JSX.Element {
 		if (editResponse.statusCode === 200) {
 			history.push(ROUTES.APPLICATION);
 		} else {
-			notification.error({
+			notifications.error({
 				message: editResponse.error || t('unexpected_error'),
 			});
 		}
@@ -159,7 +162,7 @@ function SignUp({ version }: SignUpProps): JSX.Element {
 		e: React.FormEvent<HTMLFormElement>,
 	): Promise<void> => {
 		if (!params.get('token')) {
-			notification.error({
+			notifications.error({
 				message: t('token_required'),
 			});
 			return;
@@ -182,7 +185,7 @@ function SignUp({ version }: SignUpProps): JSX.Element {
 					if (response.payload?.ssoUrl) {
 						window.location.href = response.payload?.ssoUrl;
 					} else {
-						notification.error({
+						notifications.error({
 							message: t('failed_to_initiate_login'),
 						});
 						// take user to login page as there is nothing to do here
@@ -190,12 +193,12 @@ function SignUp({ version }: SignUpProps): JSX.Element {
 					}
 				}
 			} else {
-				notification.error({
+				notifications.error({
 					message: response.error || t('unexpected_error'),
 				});
 			}
 		} catch (error) {
-			notification.error({
+			notifications.error({
 				message: t('unexpected_error'),
 			});
 		}
@@ -227,7 +230,7 @@ function SignUp({ version }: SignUpProps): JSX.Element {
 
 				setLoading(false);
 			} catch (error) {
-				notification.error({
+				notifications.error({
 					message: t('unexpected_error'),
 				});
 				setLoading(false);
@@ -263,164 +266,169 @@ function SignUp({ version }: SignUpProps): JSX.Element {
 
 	return (
 		<WelcomeLeftContainer version={version}>
-			<FormWrapper>
-				<form onSubmit={!precheck.sso ? handleSubmit : handleSubmitSSO}>
-					<Title level={4}>Create your account</Title>
-					<div>
-						<Label htmlFor="signupEmail">{t('label_email')}</Label>
-						<Input
-							placeholder={t('placeholder_email')}
-							type="email"
-							autoFocus
-							value={email}
-							onChange={(e): void => {
-								setState(e.target.value, setEmail);
-							}}
-							required
-							id="signupEmail"
-							disabled={isDetailsDisable}
-						/>
-					</div>
-
-					{isNameVisible && (
+			<>
+				{NotificationElement}
+				<FormWrapper>
+					<form onSubmit={!precheck.sso ? handleSubmit : handleSubmitSSO}>
+						<Title level={4}>Create your account</Title>
 						<div>
-							<Label htmlFor="signupFirstName">{t('label_firstname')}</Label>
+							<Label htmlFor="signupEmail">{t('label_email')}</Label>
 							<Input
-								placeholder={t('placeholder_firstname')}
-								value={firstName}
+								placeholder={t('placeholder_email')}
+								type="email"
+								autoFocus
+								value={email}
 								onChange={(e): void => {
-									setState(e.target.value, setFirstName);
+									setState(e.target.value, setEmail);
 								}}
 								required
-								id="signupFirstName"
+								id="signupEmail"
 								disabled={isDetailsDisable}
 							/>
 						</div>
-					)}
 
-					<div>
-						<Label htmlFor="organizationName">{t('label_orgname')}</Label>
-						<Input
-							placeholder={t('placeholder_orgname')}
-							value={organizationName}
-							onChange={(e): void => {
-								setState(e.target.value, setOrganizationName);
-							}}
-							required
-							id="organizationName"
-							disabled={isDetailsDisable}
-						/>
-					</div>
-					{!precheck.sso && (
+						{isNameVisible && (
+							<div>
+								<Label htmlFor="signupFirstName">{t('label_firstname')}</Label>
+								<Input
+									placeholder={t('placeholder_firstname')}
+									value={firstName}
+									onChange={(e): void => {
+										setState(e.target.value, setFirstName);
+									}}
+									required
+									id="signupFirstName"
+									disabled={isDetailsDisable}
+								/>
+							</div>
+						)}
+
 						<div>
-							<Label htmlFor="Password">{t('label_password')}</Label>
-							<Input.Password
-								value={password}
+							<Label htmlFor="organizationName">{t('label_orgname')}</Label>
+							<Input
+								placeholder={t('placeholder_orgname')}
+								value={organizationName}
 								onChange={(e): void => {
-									setState(e.target.value, setPassword);
+									setState(e.target.value, setOrganizationName);
 								}}
 								required
-								id="currentPassword"
+								id="organizationName"
+								disabled={isDetailsDisable}
 							/>
 						</div>
-					)}
-					{!precheck.sso && (
-						<div>
-							<Label htmlFor="ConfirmPassword">{t('label_confirm_password')}</Label>
-							<Input.Password
-								value={confirmPassword}
-								onChange={(e): void => {
-									const updateValue = e.target.value;
-									setState(updateValue, setConfirmPassword);
+						{!precheck.sso && (
+							<div>
+								<Label htmlFor="Password">{t('label_password')}</Label>
+								<Input.Password
+									value={password}
+									onChange={(e): void => {
+										setState(e.target.value, setPassword);
+									}}
+									required
+									id="currentPassword"
+								/>
+							</div>
+						)}
+						{!precheck.sso && (
+							<div>
+								<Label htmlFor="ConfirmPassword">{t('label_confirm_password')}</Label>
+								<Input.Password
+									value={confirmPassword}
+									onChange={(e): void => {
+										const updateValue = e.target.value;
+										setState(updateValue, setConfirmPassword);
+									}}
+									required
+									id="confirmPassword"
+								/>
+
+								{confirmPasswordError && (
+									<Typography.Paragraph
+										italic
+										id="password-confirm-error"
+										style={{
+											color: '#D89614',
+											marginTop: '0.50rem',
+										}}
+									>
+										{t('failed_confirm_password')}
+									</Typography.Paragraph>
+								)}
+								{isPasswordPolicyError && (
+									<Typography.Paragraph
+										italic
+										style={{
+											color: '#D89614',
+											marginTop: '0.50rem',
+										}}
+									>
+										{isPasswordNotValidMessage}
+									</Typography.Paragraph>
+								)}
+							</div>
+						)}
+
+						{isPreferenceVisible && (
+							<>
+								<MarginTop marginTop="2.4375rem">
+									<Space>
+										<Switch
+											onChange={(value): void =>
+												onSwitchHandler(value, setHasOptedUpdates)
+											}
+											checked={hasOptedUpdates}
+										/>
+										<Typography>{t('prompt_keepme_posted')} </Typography>
+									</Space>
+								</MarginTop>
+
+								<MarginTop marginTop="0.5rem">
+									<Space>
+										<Switch
+											onChange={(value): void => onSwitchHandler(value, setIsAnonymous)}
+											checked={isAnonymous}
+										/>
+										<Typography>{t('prompt_anonymise')}</Typography>
+									</Space>
+								</MarginTop>
+							</>
+						)}
+
+						{isPreferenceVisible && (
+							<Typography.Paragraph
+								italic
+								style={{
+									color: '#D89614',
+									marginTop: '0.50rem',
 								}}
-								required
-								id="confirmPassword"
-							/>
+							>
+								This will create an admin account. If you are not an admin, please ask
+								your admin for an invite link
+							</Typography.Paragraph>
+						)}
 
-							{confirmPasswordError && (
-								<Typography.Paragraph
-									italic
-									id="password-confirm-error"
-									style={{
-										color: '#D89614',
-										marginTop: '0.50rem',
-									}}
-								>
-									{t('failed_confirm_password')}
-								</Typography.Paragraph>
-							)}
-							{isPasswordPolicyError && (
-								<Typography.Paragraph
-									italic
-									style={{
-										color: '#D89614',
-										marginTop: '0.50rem',
-									}}
-								>
-									{isPasswordNotValidMessage}
-								</Typography.Paragraph>
-							)}
-						</div>
-					)}
-
-					{isPreferenceVisible && (
-						<>
-							<MarginTop marginTop="2.4375rem">
-								<Space>
-									<Switch
-										onChange={(value): void => onSwitchHandler(value, setHasOptedUpdates)}
-										checked={hasOptedUpdates}
-									/>
-									<Typography>{t('prompt_keepme_posted')} </Typography>
-								</Space>
-							</MarginTop>
-
-							<MarginTop marginTop="0.5rem">
-								<Space>
-									<Switch
-										onChange={(value): void => onSwitchHandler(value, setIsAnonymous)}
-										checked={isAnonymous}
-									/>
-									<Typography>{t('prompt_anonymise')}</Typography>
-								</Space>
-							</MarginTop>
-						</>
-					)}
-
-					{isPreferenceVisible && (
-						<Typography.Paragraph
-							italic
-							style={{
-								color: '#D89614',
-								marginTop: '0.50rem',
-							}}
-						>
-							This will create an admin account. If you are not an admin, please ask
-							your admin for an invite link
-						</Typography.Paragraph>
-					)}
-
-					<ButtonContainer>
-						<Button
-							type="primary"
-							htmlType="submit"
-							data-attr="signup"
-							loading={loading}
-							disabled={
-								loading ||
-								!email ||
-								!organizationName ||
-								(!precheck.sso && (!password || !confirmPassword)) ||
-								(!isDetailsDisable && !firstName) ||
-								confirmPasswordError ||
-								isPasswordPolicyError
-							}
-						>
-							{t('button_get_started')}
-						</Button>
-					</ButtonContainer>
-				</form>
-			</FormWrapper>
+						<ButtonContainer>
+							<Button
+								type="primary"
+								htmlType="submit"
+								data-attr="signup"
+								loading={loading}
+								disabled={
+									loading ||
+									!email ||
+									!organizationName ||
+									(!precheck.sso && (!password || !confirmPassword)) ||
+									(!isDetailsDisable && !firstName) ||
+									confirmPasswordError ||
+									isPasswordPolicyError
+								}
+							>
+								{t('button_get_started')}
+							</Button>
+						</ButtonContainer>
+					</form>
+				</FormWrapper>
+			</>
 		</WelcomeLeftContainer>
 	);
 }

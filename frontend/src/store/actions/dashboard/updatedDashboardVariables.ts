@@ -1,4 +1,4 @@
-import { notification } from 'antd';
+import { NotificationInstance } from 'antd/es/notification/interface';
 import update from 'api/dashboard/update';
 import { Dispatch } from 'redux';
 import store from 'store/index';
@@ -8,6 +8,7 @@ import { IDashboardVariable } from 'types/api/dashboard/getAll';
 
 export const UpdateDashboardVariables = (
 	variables: Record<string, IDashboardVariable>,
+	notify: NotificationInstance,
 ): ((dispatch: Dispatch<AppActions>) => void) => async (
 	dispatch: Dispatch<AppActions>,
 ): Promise<void> => {
@@ -28,7 +29,7 @@ export const UpdateDashboardVariables = (
 		});
 
 		if (response.statusCode !== 200) {
-			notification.error({
+			notify.error({
 				message: response.error,
 			});
 		}

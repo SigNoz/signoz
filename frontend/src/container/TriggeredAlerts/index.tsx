@@ -17,6 +17,7 @@ function TriggeredAlerts(): JSX.Element {
 		payload: [],
 	});
 	const { t } = useTranslation(['common']);
+	const [notifications, NotificationElement] = notification.useNotification();
 
 	const fetchData = useCallback(async () => {
 		try {
@@ -61,18 +62,28 @@ function TriggeredAlerts(): JSX.Element {
 
 	useEffect(() => {
 		if (groupState.error) {
-			notification.error({
+			notifications.error({
 				message: groupState.errorMessage || t('something_went_wrong'),
 			});
 		}
-	}, [groupState.error, groupState.errorMessage, t]);
+	}, [groupState.error, groupState.errorMessage, t, notifications]);
 
 	if (groupState.error) {
-		return <TriggerComponent allAlerts={[]} />;
+		return (
+			<>
+				{NotificationElement}
+				<TriggerComponent allAlerts={[]} />
+			</>
+		);
 	}
 
 	if (groupState.loading || groupState.payload === undefined) {
-		return <Spinner height="75vh" tip="Loading Alerts..." />;
+		return (
+			<>
+				{NotificationElement}
+				<Spinner height="75vh" tip="Loading Alerts..." />
+			</>
+		);
 	}
 
 	// commented the reduce() call as we no longer use /alerts/groups
@@ -84,7 +95,12 @@ function TriggeredAlerts(): JSX.Element {
 	//	return [...acc, ...curr.alerts];
 	// }, initialAlerts);
 
-	return <TriggerComponent allAlerts={groupState.payload} />;
+	return (
+		<>
+			{NotificationElement}
+			<TriggerComponent allAlerts={groupState.payload} />
+		</>
+	);
 }
 
 export default TriggeredAlerts;

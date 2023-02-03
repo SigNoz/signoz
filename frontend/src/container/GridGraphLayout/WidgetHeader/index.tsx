@@ -5,11 +5,12 @@ import {
 	ExclamationCircleOutlined,
 	FullscreenOutlined,
 } from '@ant-design/icons';
-import { Dropdown, Menu, Tooltip, Typography } from 'antd';
+import { Dropdown, MenuProps, Tooltip, Typography } from 'antd';
+import { MenuItemType } from 'antd/es/menu/hooks/useItems';
 import Spinner from 'components/Spinner';
 import useComponentPermission from 'hooks/useComponentPermission';
 import history from 'lib/history';
-import React, { useState } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import { UseQueryResult } from 'react-query';
 import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
@@ -18,12 +19,16 @@ import { Widgets } from 'types/api/dashboard/getAll';
 import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
 import AppReducer from 'types/reducer/app';
 
-import { errorTooltipPosition, spinnerStyles, tooltipStyles } from './config';
+import {
+	errorTooltipPosition,
+	overlayStyles,
+	spinnerStyles,
+	tooltipStyles,
+} from './config';
 import {
 	ArrowContainer,
 	HeaderContainer,
 	HeaderContentContainer,
-	MenuItemContainer,
 } from './styles';
 
 type TWidgetOptions = 'view' | 'edit' | 'delete' | string;
@@ -48,33 +53,45 @@ function WidgetHeader({
 	errorMessage,
 }: IWidgetHeaderProps): JSX.Element {
 	const [localHover, setLocalHover] = useState(false);
+	const [isOpen, setIsOpen] = useState<boolean>(false);
 
-	const onEditHandler = (): void => {
+	const onEditHandler = useCallback((): void => {
 		const widgetId = widget.id;
 		history.push(
 			`${window.location.pathname}/new?widgetId=${widgetId}&graphType=${widget.panelTypes}`,
 		);
-	};
+	}, [widget.id, widget.panelTypes]);
 
 	const keyMethodMapping: {
 		[K in TWidgetOptions]: { key: TWidgetOptions; method: VoidFunction };
-	} = {
-		view: {
-			key: 'view',
-			method: onView,
+	} = useMemo(
+		() => ({
+			view: {
+				key: 'view',
+				method: onView,
+			},
+			edit: {
+				key: 'edit',
+				method: onEditHandler,
+			},
+			delete: {
+				key: 'delete',
+				method: onDelete,
+			},
+		}),
+		[onDelete, onEditHandler, onView],
+	);
+
+	const onMenuItemSelectHandler: MenuProps['onClick'] = useCallback(
+		({ key }: { key: TWidgetOptions }): void => {
+			const functionToCall = keyMethodMapping[key]?.method;
+			if (functionToCall) {
+				functionToCall();
+				setIsOpen(false);
+			}
 		},
-		edit: {
-			key: 'edit',
-			method: onEditHandler,
-		},
-		delete: {
-			key: 'delete',
-			method: onDelete,
-		},
-	};
-	const onMenuItemSelectHandler = ({ key }: { key: TWidgetOptions }): void => {
-		keyMethodMapping[key]?.method();
-	};
+		[keyMethodMapping],
+	);
 	const { role } = useSelector<AppState, AppReducer>((state) => state.app);
 
 	const [deleteWidget, editWidget] = useComponentPermission(
@@ -82,49 +99,67 @@ function WidgetHeader({
 		role,
 	);
 
-	const menu = (
-		<Menu onClick={onMenuItemSelectHandler}>
-			<Menu.Item key={keyMethodMapping.view.key}>
-				<MenuItemContainer>
-					<span>View</span> <FullscreenOutlined />
-				</MenuItemContainer>
-			</Menu.Item>
+	const menuList: MenuItemType[] = useMemo(
+		() => [
+			{
+				key: keyMethodMapping.view.key,
+				icon: <FullscreenOutlined />,
+				disabled: queryResponse.isLoading,
+				label: 'View',
+			},
+			{
+				key: keyMethodMapping.edit.key,
+				icon: <EditFilled />,
+				disabled: !editWidget,
+				label: 'Edit',
+			},
+			{
+				key: keyMethodMapping.delete.key,
+				icon: <DeleteOutlined />,
+				disabled: !deleteWidget,
+				danger: true,
+				label: 'Delete',
+			},
+		],
+		[
+			deleteWidget,
+			editWidget,
+			keyMethodMapping.delete.key,
+			keyMethodMapping.edit.key,
+			keyMethodMapping.view.key,
+			queryResponse.isLoading,
+		],
+	);
 
-			{editWidget && (
-				<Menu.Item key={keyMethodMapping.edit.key}>
-					<MenuItemContainer>
-						<span>Edit</span> <EditFilled />
-					</MenuItemContainer>
-				</Menu.Item>
-			)}
+	const onClickHandler = useCallback(() => {
+		setIsOpen((open) => !open);
+	}, []);
 
-			{deleteWidget && (
-				<>
-					<Menu.Divider />
-					<Menu.Item key={keyMethodMapping.delete.key} danger>
-						<MenuItemContainer>
-							<span>Delete</span> <DeleteOutlined />
-						</MenuItemContainer>
-					</Menu.Item>
-				</>
-			)}
-		</Menu>
+	const menu = useMemo(
+		() => ({
+			items: menuList,
+			onClick: onMenuItemSelectHandler,
+		}),
+		[menuList, onMenuItemSelectHandler],
 	);
 
 	return (
-		<Dropdown
-			overlay={menu}
-			trigger={['click']}
-			overlayStyle={{ minWidth: 100 }}
-			placement="bottom"
-		>
-			<>
+		<div>
+			<Dropdown
+				destroyPopupOnHide
+				open={isOpen}
+				onOpenChange={setIsOpen}
+				menu={menu}
+				trigger={['click']}
+				overlayStyle={overlayStyles}
+			>
 				<HeaderContainer
 					onMouseOver={(): void => setLocalHover(true)}
 					onMouseOut={(): void => setLocalHover(false)}
 					hover={localHover}
+					onClick={onClickHandler}
 				>
-					<HeaderContentContainer onClick={(e): void => e.preventDefault()}>
+					<HeaderContentContainer>
 						<Typography.Text style={{ maxWidth: '80%' }} ellipsis>
 							{title}
 						</Typography.Text>
@@ -133,16 +168,16 @@ function WidgetHeader({
 						</ArrowContainer>
 					</HeaderContentContainer>
 				</HeaderContainer>
-				{queryResponse.isFetching && !queryResponse.isError && (
-					<Spinner height="5vh" style={spinnerStyles} />
-				)}
-				{queryResponse.isError && (
-					<Tooltip title={errorMessage} placement={errorTooltipPosition}>
-						<ExclamationCircleOutlined style={tooltipStyles} />
-					</Tooltip>
-				)}
-			</>
-		</Dropdown>
+			</Dropdown>
+			{queryResponse.isFetching && !queryResponse.isError && (
+				<Spinner height="5vh" style={spinnerStyles} />
+			)}
+			{queryResponse.isError && (
+				<Tooltip title={errorMessage} placement={errorTooltipPosition}>
+					<ExclamationCircleOutlined style={tooltipStyles} />
+				</Tooltip>
+			)}
+		</div>
 	);
 }
 

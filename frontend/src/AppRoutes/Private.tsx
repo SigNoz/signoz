@@ -47,6 +47,8 @@ function PrivateRoute({ children }: PrivateRouteProps): JSX.Element {
 
 	const dispatch = useDispatch<Dispatch<AppActions>>();
 
+	const [notifications, NotificationElement] = notification.useNotification();
+
 	const currentRoute = mapRoutes.get('current');
 
 	const navigateToLoginIfNotLoggedIn = (isLoggedIn = isLoggedInState): void => {
@@ -106,7 +108,7 @@ function PrivateRoute({ children }: PrivateRouteProps): JSX.Element {
 							} else {
 								Logout();
 
-								notification.error({
+								notifications.error({
 									message: response.error || t('something_went_wrong'),
 								});
 							}
@@ -155,7 +157,12 @@ function PrivateRoute({ children }: PrivateRouteProps): JSX.Element {
 
 	// NOTE: disabling this rule as there is no need to have div
 	// eslint-disable-next-line react/jsx-no-useless-fragment
-	return <>{children}</>;
+	return (
+		<>
+			{NotificationElement}
+			{children}
+		</>
+	);
 }
 
 interface PrivateRouteProps {
