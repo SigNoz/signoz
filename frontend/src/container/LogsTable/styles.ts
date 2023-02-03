@@ -5,6 +5,7 @@ export const Container = styled.div`
 	overflow-x: hidden;
 	width: 100%;
 	margin-bottom: 1rem;
+	margin-top: 0.5rem;
 `;
 
 export const Heading = styled(Card)`

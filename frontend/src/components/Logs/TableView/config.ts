@@ -1,0 +1,6 @@
+export const defaultCellStyle: React.CSSProperties = {
+	paddingTop: 4,
+	paddingBottom: 6,
+	paddingRight: 8,
+	paddingLeft: 8,
+};

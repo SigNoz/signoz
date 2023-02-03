@@ -1,4 +1,4 @@
-import { InputNumber, Row, Typography } from 'antd';
+import { InputNumber, Row, Space, Typography } from 'antd';
 import React from 'react';
 
 interface PopoverContentProps {
@@ -6,19 +6,21 @@ interface PopoverContentProps {
 	handleLinesPerRowChange: (l: unknown) => void;
 }
 
-function PopoverContent(props: PopoverContentProps): JSX.Element {
-	const { linesPerRow, handleLinesPerRowChange } = props;
-
+function PopoverContent({
+	linesPerRow,
+	handleLinesPerRowChange,
+}: PopoverContentProps): JSX.Element {
 	return (
 		<Row align="middle">
-			<Typography>Max lines per Row </Typography>
-			<InputNumber
-				min={1}
-				max={10}
-				value={linesPerRow}
-				onChange={handleLinesPerRowChange}
-				style={{ width: '60px' }}
-			/>
+			<Space align="center">
+				<Typography>Max lines per Row </Typography>
+				<InputNumber
+					min={1}
+					max={10}
+					value={linesPerRow}
+					onChange={handleLinesPerRowChange}
+				/>
+			</Space>
 		</Row>
 	);
 }

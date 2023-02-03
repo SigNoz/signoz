@@ -40,6 +40,7 @@ function LogGeneralField({ fieldKey, fieldValue }: LogFieldProps): JSX.Element {
 		</TextContainer>
 	);
 }
+
 function LogSelectedField({
 	fieldKey = '',
 	fieldValue = '',

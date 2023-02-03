@@ -9,6 +9,8 @@ import { IField } from 'types/api/logs/fields';
 // interfaces
 import { ILog } from 'types/api/logs/log';
 
+// config
+import { defaultCellStyle } from './config';
 // styles
 import { ExpandIconWrapper } from './styles';
 
@@ -31,36 +33,22 @@ function LogsTableView(props: LogsTableViewProps): JSX.Element {
 	]);
 
 	const columns: ColumnsType<Record<string, unknown>> = useMemo(() => {
-		const defaultCellStyle: React.CSSProperties = {
-			paddingTop: 4,
-			paddingBottom: 6,
-			paddingRight: 8,
-			paddingLeft: 8,
-		};
-
 		const fieldColumns: ColumnsType<Record<string, unknown>> = fields.map(
-			({ name }) => {
-				return {
-					title: name,
-					dataIndex: name,
-					key: name,
-					render: (field): ColumnTypeRender<Record<string, unknown>> => {
-						return {
-							props: {
-								style: defaultCellStyle,
-							},
-							children: (
-								<Typography.Paragraph
-									style={{ marginBottom: 0 }}
-									ellipsis={{ rows: linesPerRow, tooltip: true }}
-								>
-									{field}
-								</Typography.Paragraph>
-							),
-						};
+			({ name }) => ({
+				title: name,
+				dataIndex: name,
+				key: name,
+				render: (field): ColumnTypeRender<Record<string, unknown>> => ({
+					props: {
+						style: defaultCellStyle,
 					},
-				};
-			},
+					children: (
+						<Typography.Paragraph ellipsis={{ rows: linesPerRow, tooltip: true }}>
+							{field}
+						</Typography.Paragraph>
+					),
+				}),
+			}),
 		);
 
 		return [
@@ -69,22 +57,20 @@ function LogsTableView(props: LogsTableViewProps): JSX.Element {
 				dataIndex: 'id',
 				key: 'expand',
 				width: 30,
-				render: (_, item): ColumnTypeRender<Record<string, unknown>> => {
-					return {
-						props: {
-							style: defaultCellStyle,
-						},
-						children: (
-							<ExpandIconWrapper
-								onClick={(): void => {
-									onClickExpand((item as unknown) as ILog);
-								}}
-							>
-								<ExpandAltOutlined />
-							</ExpandIconWrapper>
-						),
-					};
-				},
+				render: (_, item): ColumnTypeRender<Record<string, unknown>> => ({
+					props: {
+						style: defaultCellStyle,
+					},
+					children: (
+						<ExpandIconWrapper
+							onClick={(): void => {
+								onClickExpand((item as unknown) as ILog);
+							}}
+						>
+							<ExpandAltOutlined />
+						</ExpandIconWrapper>
+					),
+				}),
 			},
 			{
 				title: 'Timestamp',

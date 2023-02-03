@@ -63,15 +63,38 @@ function LogsTable(props: LogsTableProps): JSX.Element {
 		[logs, linesPerRow, viewMode, onClickExpand],
 	);
 
+	const renderContent = useMemo(() => {
+		if (viewMode === 'table') {
+			return (
+				<LogsTableView
+					logs={logs}
+					fields={selected}
+					linesPerRow={linesPerRow}
+					onClickExpand={onClickExpand}
+				/>
+			);
+		}
+
+		return (
+			<Card bodyStyle={{ padding: 0 }}>
+				<Virtuoso
+					useWindowScroll
+					totalCount={logs.length}
+					itemContent={getItemContent}
+				/>
+			</Card>
+		);
+	}, [getItemContent, linesPerRow, logs, onClickExpand, selected, viewMode]);
+
 	if (isLoading) {
 		return <Spinner height={20} tip="Getting Logs" />;
 	}
 
 	return (
 		<Container>
-			{viewMode !== 'table' && (
+			{viewMode === 'list' && (
 				<Heading>
-					<Typography.Text>{viewMode === 'list' ? 'Event' : ''}</Typography.Text>
+					<Typography.Text>Event</Typography.Text>
 				</Heading>
 			)}
 
@@ -79,22 +102,7 @@ function LogsTable(props: LogsTableProps): JSX.Element {
 
 			{isNoLogs && <Typography>No log linesPerRow found</Typography>}
 
-			{viewMode === 'table' ? (
-				<LogsTableView
-					logs={logs}
-					fields={selected}
-					linesPerRow={linesPerRow}
-					onClickExpand={onClickExpand}
-				/>
-			) : (
-				<Card bodyStyle={{ padding: 0 }}>
-					<Virtuoso
-						useWindowScroll
-						totalCount={logs.length}
-						itemContent={getItemContent}
-					/>
-				</Card>
-			)}
+			{renderContent}
 		</Container>
 	);
 }
