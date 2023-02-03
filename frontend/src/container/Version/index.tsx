@@ -1,14 +1,13 @@
 import { WarningFilled } from '@ant-design/icons';
 import { Button, Card, Form, Space, Typography } from 'antd';
-import React from 'react';
+import React, { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
 import AppReducer from 'types/reducer/app';
 
+import { githubReleaseURL } from './constant';
 import { InputComponent } from './styles';
-
-const { Title } = Typography;
 
 function Version(): JSX.Element {
 	const [form] = Form.useForm();
@@ -24,11 +23,19 @@ function Version(): JSX.Element {
 	const isLatestVersion = currentVersion === latestVersion;
 	const isError = isCurrentVersionError || isLatestVersionError;
 
+	const latestVersionUrl = useMemo(
+		() =>
+			isLatestVersionError
+				? githubReleaseURL
+				: `${githubReleaseURL}/tag/${latestVersion}`,
+		[isLatestVersionError, latestVersion],
+	);
+
 	return (
 		<Card>
-			<Title ellipsis level={4}>
+			<Typography.Title ellipsis level={4}>
 				{t('version')}
-			</Title>
+			</Typography.Title>
 
 			<Form
 				wrapperCol={{
@@ -55,11 +62,7 @@ function Version(): JSX.Element {
 						value={isLatestVersionError ? t('n_a').toString() : latestVersion}
 						placeholder={t('latest_version')}
 					/>
-					<Button
-						href="https://github.com/SigNoz/signoz/releases"
-						target="_blank"
-						type="link"
-					>
+					<Button href={latestVersionUrl} target="_blank" type="link">
 						{t('release_notes')}
 					</Button>
 				</Form.Item>
