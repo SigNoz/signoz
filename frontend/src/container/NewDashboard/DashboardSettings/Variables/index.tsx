@@ -1,11 +1,8 @@
 import { blue, red } from '@ant-design/colors';
 import { PlusOutlined } from '@ant-design/icons';
-import { Button, Modal, notification, Row, Space, Table, Tag } from 'antd';
+import { Button, Modal, notification, Row, Space, Tag } from 'antd';
 import { NotificationInstance } from 'antd/es/notification/interface';
-import {
-	ResizableHeader,
-	ResizeTableWrapper,
-} from 'components/ResizeTableWrapper';
+import { ResizeTable } from 'components/ResizeTable';
 import React, { useRef, useState } from 'react';
 import { connect, useSelector } from 'react-redux';
 import { bindActionCreators, Dispatch } from 'redux';
@@ -168,12 +165,7 @@ function VariablesSetting({
 							<PlusOutlined /> New Variables
 						</Button>
 					</Row>
-					<ResizeTableWrapper columns={columns}>
-						<Table
-							components={{ header: { cell: ResizableHeader } }}
-							dataSource={variablesTableData}
-						/>
-					</ResizeTableWrapper>
+					<ResizeTable columns={columns} dataSource={variablesTableData} />
 				</>
 			)}
 			<Modal

@@ -1,19 +1,8 @@
 import { PlusOutlined } from '@ant-design/icons';
-import {
-	Card,
-	Dropdown,
-	Menu,
-	Row,
-	Table,
-	TableColumnProps,
-	Typography,
-} from 'antd';
+import { Card, Dropdown, Menu, Row, TableColumnProps, Typography } from 'antd';
 import createDashboard from 'api/dashboard/create';
 import { AxiosError } from 'axios';
-import {
-	ResizableHeader,
-	ResizeTableWrapper,
-} from 'components/ResizeTableWrapper';
+import { ResizeTable } from 'components/ResizeTable';
 import TextToolTip from 'components/TextToolTip';
 import ROUTES from 'constants/routes';
 import SearchFilter from 'container/ListOfDashboard/SearchFilter';
@@ -281,21 +270,19 @@ function ListOfAllDashboard(): JSX.Element {
 					uploadedGrafana={uploadedGrafana}
 					onModalHandler={(): void => onModalHandler(false)}
 				/>
-				<ResizeTableWrapper columns={columns}>
-					<Table
-						pagination={{
-							pageSize: 9,
-							defaultPageSize: 9,
-						}}
-						showHeader
-						bordered
-						sticky
-						loading={loading}
-						components={{ header: { cell: ResizableHeader } }}
-						dataSource={data}
-						showSorterTooltip
-					/>
-				</ResizeTableWrapper>
+				<ResizeTable
+					columns={columns}
+					pagination={{
+						pageSize: 9,
+						defaultPageSize: 9,
+					}}
+					showHeader
+					bordered
+					sticky
+					loading={loading}
+					dataSource={data}
+					showSorterTooltip
+				/>
 			</TableContainer>
 		</Card>
 	);
