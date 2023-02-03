@@ -21,6 +21,7 @@ function DisplayName({
 	const { name } = (org || [])[index];
 	const [isLoading, setIsLoading] = useState<boolean>(false);
 	const dispatch = useDispatch<Dispatch<AppActions>>();
+	const [notifications, NotificationElement] = notification.useNotification();
 
 	const onSubmit = async ({ name: orgName }: OnSubmitProps): Promise<void> => {
 		try {
@@ -31,7 +32,7 @@ function DisplayName({
 				orgId,
 			});
 			if (statusCode === 200) {
-				notification.success({
+				notifications.success({
 					message: t('success', {
 						ns: 'common',
 					}),
@@ -44,7 +45,7 @@ function DisplayName({
 					},
 				});
 			} else {
-				notification.error({
+				notifications.error({
 					message:
 						error ||
 						t('something_went_wrong', {
@@ -55,7 +56,7 @@ function DisplayName({
 			setIsLoading(false);
 		} catch (error) {
 			setIsLoading(false);
-			notification.error({
+			notifications.error({
 				message: t('something_went_wrong', {
 					ns: 'common',
 				}),
@@ -75,6 +76,7 @@ function DisplayName({
 			onFinish={onSubmit}
 			autoComplete="off"
 		>
+			{NotificationElement}
 			<Form.Item name="name" label="Display name" rules={[{ required: true }]}>
 				<Input size="large" placeholder={t('signoz')} disabled={isLoading} />
 			</Form.Item>

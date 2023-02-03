@@ -20,6 +20,8 @@ function ToggleAlertState({
 		payload: undefined,
 	});
 
+	const [notifications, NotificationElement] = notification.useNotification();
+
 	const defaultErrorMessage = 'Something went wrong';
 
 	const onToggleHandler = async (
@@ -58,7 +60,7 @@ function ToggleAlertState({
 					loading: false,
 					payload: response.payload,
 				}));
-				notification.success({
+				notifications.success({
 					message: 'Success',
 				});
 			} else {
@@ -69,7 +71,7 @@ function ToggleAlertState({
 					errorMessage: response.error || defaultErrorMessage,
 				}));
 
-				notification.error({
+				notifications.error({
 					message: response.error || defaultErrorMessage,
 				});
 			}
@@ -81,21 +83,24 @@ function ToggleAlertState({
 				errorMessage: defaultErrorMessage,
 			}));
 
-			notification.error({
+			notifications.error({
 				message: defaultErrorMessage,
 			});
 		}
 	};
 
 	return (
-		<ColumnButton
-			disabled={apiStatus.loading || false}
-			loading={apiStatus.loading || false}
-			onClick={(): Promise<void> => onToggleHandler(id, !disabled)}
-			type="link"
-		>
-			{disabled ? 'Enable' : 'Disable'}
-		</ColumnButton>
+		<>
+			{NotificationElement}
+			<ColumnButton
+				disabled={apiStatus.loading || false}
+				loading={apiStatus.loading || false}
+				onClick={(): Promise<void> => onToggleHandler(id, !disabled)}
+				type="link"
+			>
+				{disabled ? 'Enable' : 'Disable'}
+			</ColumnButton>
+		</>
 	);
 }
 

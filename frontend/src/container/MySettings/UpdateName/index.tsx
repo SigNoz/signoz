@@ -21,6 +21,8 @@ function UpdateName(): JSX.Element {
 	const [changedName, setChangedName] = useState<string>(user?.name || '');
 	const [loading, setLoading] = useState<boolean>(false);
 
+	const [notifications, NotificationElement] = notification.useNotification();
+
 	if (!user || !org) {
 		return <div />;
 	}
@@ -34,7 +36,7 @@ function UpdateName(): JSX.Element {
 			});
 
 			if (statusCode === 200) {
-				notification.success({
+				notifications.success({
 					message: t('success', {
 						ns: 'common',
 					}),
@@ -51,7 +53,7 @@ function UpdateName(): JSX.Element {
 					},
 				});
 			} else {
-				notification.error({
+				notifications.error({
 					message: t('something_went_wrong', {
 						ns: 'common',
 					}),
@@ -59,7 +61,7 @@ function UpdateName(): JSX.Element {
 			}
 			setLoading(false);
 		} catch (error) {
-			notification.error({
+			notifications.error({
 				message: t('something_went_wrong', {
 					ns: 'common',
 				}),
@@ -70,6 +72,7 @@ function UpdateName(): JSX.Element {
 
 	return (
 		<div>
+			{NotificationElement}
 			<Space direction="vertical" size="middle">
 				<Typography>Name</Typography>
 				<NameInput
