@@ -24,10 +24,11 @@ import {
 } from 'antd';
 import { ColumnProps } from 'antd/es/table';
 import { ColumnsType } from 'antd/lib/table';
+import DraggableTableRow from 'components/DraggableTableRow';
 import useComponentPermission from 'hooks/useComponentPermission';
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import update from 'react-addons-update';
-import { DndProvider, useDrag, useDrop } from 'react-dnd';
+import { DndProvider } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
 import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
@@ -46,51 +47,6 @@ import NewPipline from './NewPipeline';
 import NewProcessor from './NewProcessor';
 import { Container } from './styles';
 import { pipelineData } from './utils';
-
-const type = 'DraggableBodyRow';
-
-function DraggableBodyRow({
-	index,
-	moveRow,
-	className,
-	style,
-	...restProps
-}: DraggableBodyRowProps): JSX.Element {
-	const ref = useRef<HTMLTableRowElement>(null);
-	const [, drop] = useDrop({
-		accept: type,
-		collect: (monitor) => {
-			const { index: dragIndex } = monitor.getItem() || {};
-			if (dragIndex === index) {
-				return {};
-			}
-			return {
-				isOver: monitor.isOver(),
-			};
-		},
-		drop: (item: { index: number }) => {
-			moveRow(item.index, index);
-		},
-	});
-	const [, drag] = useDrag({
-		type,
-		item: { index },
-		collect: (monitor) => ({
-			isDragging: monitor.isDragging(),
-		}),
-	});
-	drop(drag(ref));
-
-	return (
-		<tr
-			ref={ref}
-			className={className}
-			style={{ ...style }}
-			// eslint-disable-next-line react/jsx-props-no-spreading
-			{...restProps}
-		/>
-	);
-}
 
 function ListOfPipelines(): JSX.Element {
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -247,7 +203,7 @@ function ListOfPipelines(): JSX.Element {
 
 	const components = {
 		body: {
-			row: DraggableBodyRow,
+			row: DraggableTableRow,
 		},
 	};
 
@@ -408,12 +364,6 @@ function ListOfPipelines(): JSX.Element {
 			</Container>
 		</div>
 	);
-}
-
-interface DraggableBodyRowProps
-	extends React.HTMLAttributes<HTMLTableRowElement> {
-	index: number;
-	moveRow: (dragIndex: number, hoverIndex: number) => void;
 }
 
 interface PipelineColumn extends ColumnProps<PipelineColumn> {
