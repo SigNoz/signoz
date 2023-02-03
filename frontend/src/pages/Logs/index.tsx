@@ -1,12 +1,4 @@
-import {
-	Button,
-	Col,
-	Divider,
-	Dropdown,
-	InputNumber,
-	Popover,
-	Row,
-} from 'antd';
+import { Button, Col, Divider, Dropdown, Popover, Row } from 'antd';
 import LogControls from 'container/LogControls';
 import LogDetailedView from 'container/LogDetailedView';
 import LogLiveTail from 'container/LogLiveTail';
@@ -14,59 +6,20 @@ import LogsAggregate from 'container/LogsAggregate';
 import LogsFilters from 'container/LogsFilters';
 import LogsSearchFilter from 'container/LogsSearchFilter';
 import LogsTable from 'container/LogsTable';
-import useMountedState from 'hooks/useMountedState';
-import useUrlQuery from 'hooks/useUrlQuery';
-import React, { memo, useCallback, useEffect } from 'react';
-import { connect, useDispatch } from 'react-redux';
-import { bindActionCreators, Dispatch } from 'redux';
-import { ThunkDispatch } from 'redux-thunk';
-import { GetLogsFields } from 'store/actions/logs/getFields';
+import React, { useCallback, useMemo } from 'react';
+import { useDispatch } from 'react-redux';
+import { Dispatch } from 'redux';
 import AppActions from 'types/actions';
-import {
-	SET_DETAILED_LOG_DATA,
-	SET_SEARCH_QUERY_STRING,
-} from 'types/actions/logs';
+import { SET_DETAILED_LOG_DATA } from 'types/actions/logs';
 import { ILog } from 'types/api/logs/log';
 
+import { logsOptions } from './config';
 import { useSelectedLogView } from './hooks';
+import PopoverContent from './PopoverContent';
 import SpaceContainer from './styles';
 
-type PopoverContentProps = {
-	linesPerRow: number;
-	handleLinesPerRowChange: (l: unknown) => void;
-};
-
-function PopoverContent(props: PopoverContentProps): JSX.Element {
-	const { linesPerRow, handleLinesPerRowChange } = props;
-
-	return (
-		<Row align="middle">
-			<span style={{ marginRight: 10 }}>Max lines per Row </span>
-			<InputNumber
-				min={1}
-				max={10}
-				value={linesPerRow}
-				onChange={handleLinesPerRowChange}
-				style={{ width: '60px' }}
-			/>
-		</Row>
-	);
-}
-
-function Logs({ getLogsFields }: LogsProps): JSX.Element {
-	const getMountedState = useMountedState();
-
-	const urlQuery = useUrlQuery();
-	const dispatch = useDispatch();
-
-	const {
-		viewModeOptionList,
-		viewModeOption,
-		viewMode,
-		handleViewModeOptionChange,
-		linesPerRow,
-		handleLinesPerRowChange,
-	} = useSelectedLogView();
+function Logs(): JSX.Element {
+	const dispatch = useDispatch<Dispatch<AppActions>>();
 
 	const showExpandedLog = useCallback(
 		(logData: ILog) => {
@@ -78,29 +31,36 @@ function Logs({ getLogsFields }: LogsProps): JSX.Element {
 		[dispatch],
 	);
 
-	const renderPopoverContent = useCallback(() => {
-		return (
+	const {
+		viewModeOptionList,
+		viewModeOption,
+		viewMode,
+		handleViewModeOptionChange,
+		linesPerRow,
+		handleLinesPerRowChange,
+	} = useSelectedLogView();
+
+	const renderPopoverContent = useCallback(
+		() => (
 			<PopoverContent
 				linesPerRow={linesPerRow}
 				handleLinesPerRowChange={handleLinesPerRowChange}
 			/>
-		);
-	}, [linesPerRow, handleLinesPerRowChange]);
+		),
+		[linesPerRow, handleLinesPerRowChange],
+	);
 
-	useEffect(() => {
-		const hasMounted = getMountedState();
+	const dropdownMenu = useMemo(
+		() => ({
+			items: viewModeOptionList,
+			onClick: handleViewModeOptionChange,
+		}),
+		[handleViewModeOptionChange, viewModeOptionList],
+	);
 
-		if (!hasMounted) {
-			dispatch({
-				type: SET_SEARCH_QUERY_STRING,
-				payload: urlQuery.get('q'),
-			});
-		}
-	}, [dispatch, getMountedState, urlQuery]);
-
-	useEffect(() => {
-		getLogsFields();
-	}, [getLogsFields]);
+	const isFormatButtonVisible = useMemo(() => logsOptions.includes(viewMode), [
+		viewMode,
+	]);
 
 	return (
 		<>
@@ -117,28 +77,14 @@ function Logs({ getLogsFields }: LogsProps): JSX.Element {
 			<LogControls />
 
 			<Row gutter={20} wrap={false}>
-				<Col style={{ minWidth: 180 }}>
-					<div style={{ height: 58 }} />
-					<LogsFilters />
-				</Col>
-				<Col style={{ width: '100%' }}>
-					<Row style={{ paddingTop: 13, paddingBottom: 13 }}>
-						<Dropdown
-							menu={{
-								items: viewModeOptionList,
-								onClick: handleViewModeOptionChange,
-							}}
-						>
-							<Button
-								style={{
-									marginRight: 16,
-								}}
-							>
-								{viewModeOption.label}
-							</Button>
+				<LogsFilters />
+				<Col flex={1}>
+					<Row>
+						<Dropdown menu={dropdownMenu}>
+							<Button>{viewModeOption.label}</Button>
 						</Dropdown>
 
-						{['raw', 'table'].includes(viewMode) && (
+						{isFormatButtonVisible && (
 							<Popover placement="right" content={renderPopoverContent}>
 								<Button>Format</Button>
 							</Popover>
@@ -158,16 +104,4 @@ function Logs({ getLogsFields }: LogsProps): JSX.Element {
 	);
 }
 
-type LogsProps = DispatchProps;
-
-interface DispatchProps {
-	getLogsFields: () => (dispatch: Dispatch<AppActions>) => void;
-}
-
-const mapDispatchToProps = (
-	dispatch: ThunkDispatch<unknown, unknown, AppActions>,
-): DispatchProps => ({
-	getLogsFields: bindActionCreators(GetLogsFields, dispatch),
-});
-
-export default connect(null, mapDispatchToProps)(memo(Logs));
+export default Logs;

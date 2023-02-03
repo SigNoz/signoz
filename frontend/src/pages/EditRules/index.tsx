@@ -26,21 +26,28 @@ function EditRules(): JSX.Element {
 		enabled: isValidRuleId,
 	});
 
+	const [notifications, NotificationElement] = notification.useNotification();
+
 	useEffect(() => {
 		if (!isValidRuleId) {
-			notification.error({
+			notifications.error({
 				message: 'Rule Id is required',
 			});
 			history.replace(ROUTES.LIST_ALL_ALERT);
 		}
-	}, [isValidRuleId, ruleId]);
+	}, [isValidRuleId, ruleId, notifications]);
 
 	if (
 		(isError && !isValidRuleId) ||
 		ruleId == null ||
 		(data?.payload?.data === undefined && !isLoading)
 	) {
-		return <div>{data?.error || t('something_went_wrong')}</div>;
+		return (
+			<div>
+				{NotificationElement}
+				{data?.error || t('something_went_wrong')}
+			</div>
+		);
 	}
 
 	if (isLoading || !data?.payload) {
@@ -48,10 +55,13 @@ function EditRules(): JSX.Element {
 	}
 
 	return (
-		<EditRulesContainer
-			ruleId={parseInt(ruleId, 10)}
-			initialValue={data.payload.data}
-		/>
+		<>
+			{NotificationElement}
+			<EditRulesContainer
+				ruleId={parseInt(ruleId, 10)}
+				initialValue={data.payload.data}
+			/>
+		</>
 	);
 }
 

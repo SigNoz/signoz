@@ -7,14 +7,14 @@ function CopyClipboardHOC({
 	children,
 }: CopyClipboardHOCProps): JSX.Element {
 	const [value, setCopy] = useCopyToClipboard();
-
+	const [notifications, NotificationElement] = notification.useNotification();
 	useEffect(() => {
 		if (value.value) {
-			notification.success({
+			notifications.success({
 				message: 'Copied to clipboard',
 			});
 		}
-	}, [value]);
+	}, [value, notifications]);
 
 	const onClick = useCallback((): void => {
 		setCopy(textToCopy);
@@ -22,6 +22,7 @@ function CopyClipboardHOC({
 
 	return (
 		<span onClick={onClick} onKeyDown={onClick} role="button" tabIndex={0}>
+			{NotificationElement}
 			<Popover
 				placement="top"
 				content={<span style={{ fontSize: '0.9rem' }}>Copy to clipboard</span>}

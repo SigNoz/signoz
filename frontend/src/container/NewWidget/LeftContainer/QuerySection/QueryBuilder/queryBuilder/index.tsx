@@ -37,6 +37,7 @@ function QueryBuilderQueryContainer({
 	metricsBuilderQueries,
 	selectedGraph,
 }: IQueryBuilderQueryContainerProps): JSX.Element | null {
+	const [notifications, NotificationElement] = notification.useNotification();
 	const handleQueryBuilderQueryChange = ({
 		queryIndex,
 		aggregateFunction,
@@ -113,7 +114,7 @@ function QueryBuilderQueryContainer({
 	};
 	const addQueryHandler = (): void => {
 		if (!canCreateQueryAndFormula(queryData)) {
-			notification.error({
+			notifications.error({
 				message:
 					'Unable to create query. You can create at max 10 queries and formulae.',
 			});
@@ -130,7 +131,7 @@ function QueryBuilderQueryContainer({
 
 	const addFormulaHandler = (): void => {
 		if (!canCreateQueryAndFormula(queryData)) {
-			notification.error({
+			notifications.error({
 				message:
 					'Unable to create formula. You can create at max 10 queries and formulae.',
 			});
@@ -155,6 +156,7 @@ function QueryBuilderQueryContainer({
 	}
 	return (
 		<>
+			{NotificationElement}
 			{metricsBuilderQueries.queryBuilder.map((q, idx) => (
 				<MetricsBuilder
 					key={q.name}

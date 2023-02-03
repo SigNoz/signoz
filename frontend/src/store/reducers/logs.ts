@@ -22,6 +22,8 @@ import {
 	SET_VIEW_MODE,
 	STOP_LIVE_TAIL,
 	TOGGLE_LIVE_TAIL,
+	UPDATE_INTERESTING_FIELDS,
+	UPDATE_SELECTED_FIELDS,
 } from 'types/actions/logs';
 import { ILogsReducer } from 'types/reducer/logs';
 
@@ -87,7 +89,7 @@ export const LogsReducer = (
 				...state,
 				searchFilter: {
 					...state.searchFilter,
-					queryString: action.payload,
+					queryString: action.payload.searchQueryString,
 				},
 			};
 		}
@@ -130,7 +132,7 @@ export const LogsReducer = (
 		case SET_LOG_LINES_PER_PAGE: {
 			return {
 				...state,
-				logLinesPerPage: action.payload,
+				logLinesPerPage: action.payload.logsLinesPerPage,
 			};
 		}
 
@@ -218,6 +220,26 @@ export const LogsReducer = (
 			return {
 				...state,
 				viewMode: action.payload,
+			};
+		}
+
+		case UPDATE_INTERESTING_FIELDS: {
+			return {
+				...state,
+				fields: {
+					...state.fields,
+					interesting: action.payload.field,
+				},
+			};
+		}
+
+		case UPDATE_SELECTED_FIELDS: {
+			return {
+				...state,
+				fields: {
+					...state.fields,
+					selected: action.payload.field,
+				},
 			};
 		}
 

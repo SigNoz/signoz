@@ -1,4 +1,3 @@
-import { ItemType } from 'antd/es/menu/hooks/useItems';
 // utils
 import get from 'api/browser/localstorage/get';
 // interfaces
@@ -10,40 +9,9 @@ import { setLinesPerRow } from 'store/actions/logs/setLInesPerRow';
 import { setViewMode } from 'store/actions/logs/setViewMode';
 import { AppState } from 'store/reducers';
 
-import { LOGS_LINES_PER_ROW, LOGS_VIEW_MODE } from './utils';
-
-type ViewModeOption = ItemType & {
-	label: string;
-	value: LogViewMode;
-};
-
-const viewModeOptionList: ViewModeOption[] = [
-	{
-		key: 'raw',
-		label: 'Raw',
-		value: 'raw',
-	},
-	{
-		key: 'table',
-		label: 'Table',
-		value: 'table',
-	},
-	{
-		key: 'list',
-		label: 'List',
-		value: 'list',
-	},
-];
-
-type SelectedLogViewData = {
-	viewModeOptionList: ViewModeOption[];
-	viewModeOption: ViewModeOption;
-	viewMode: LogViewMode;
-	handleViewModeChange: (s: LogViewMode) => void;
-	handleViewModeOptionChange: ({ key }: { key: string }) => void;
-	linesPerRow: number;
-	handleLinesPerRowChange: (l: unknown) => void;
-};
+import { viewModeOptionList } from './config';
+import { SelectedLogViewData } from './types';
+import { isLogViewMode, LOGS_LINES_PER_ROW, LOGS_VIEW_MODE } from './utils';
 
 export const useSelectedLogView = (): SelectedLogViewData => {
 	const dispatch = useDispatch();
@@ -54,13 +22,13 @@ export const useSelectedLogView = (): SelectedLogViewData => {
 		(state) => state.logs.linesPerRow,
 	);
 
-	const viewModeOption = useMemo(() => {
-		return (
+	const viewModeOption = useMemo(
+		() =>
 			viewModeOptionList.find(
 				(viewModeOption) => viewModeOption.value === viewMode,
-			) ?? viewModeOptionList[0]
-		);
-	}, [viewMode]);
+			) ?? viewModeOptionList[0],
+		[viewMode],
+	);
 
 	const handleViewModeChange = useCallback(
 		(selectedViewMode: LogViewMode) => {
@@ -71,7 +39,7 @@ export const useSelectedLogView = (): SelectedLogViewData => {
 
 	const handleViewModeOptionChange = useCallback(
 		({ key }: { key: string }) => {
-			handleViewModeChange(key as LogViewMode);
+			if (isLogViewMode(key)) handleViewModeChange(key);
 		},
 		[handleViewModeChange],
 	);
