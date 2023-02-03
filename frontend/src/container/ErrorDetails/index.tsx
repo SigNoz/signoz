@@ -1,10 +1,7 @@
-import { Button, Divider, notification, Space, Table, Typography } from 'antd';
+import { Button, Divider, notification, Space, Typography } from 'antd';
 import getNextPrevId from 'api/errors/getNextPrevId';
 import Editor from 'components/Editor';
-import {
-	ResizableHeader,
-	ResizeTableWrapper,
-} from 'components/ResizeTableWrapper';
+import { ResizeTable } from 'components/ResizeTable';
 import { getNanoSeconds } from 'container/AllError/utils';
 import dayjs from 'dayjs';
 import history from 'lib/history';
@@ -176,13 +173,7 @@ function ErrorDetails(props: ErrorDetailsProps): JSX.Element {
 
 			<EditorContainer>
 				<Space direction="vertical">
-					<ResizeTableWrapper columns={columns}>
-						<Table
-							components={{ header: { cell: ResizableHeader } }}
-							tableLayout="fixed"
-							dataSource={data}
-						/>
-					</ResizeTableWrapper>
+					<ResizeTable columns={columns} tableLayout="fixed" dataSource={data} />
 				</Space>
 			</EditorContainer>
 		</>

@@ -1,11 +1,8 @@
 /* eslint-disable react/display-name */
 import { PlusOutlined } from '@ant-design/icons';
-import { notification, Table, Typography } from 'antd';
+import { notification, Typography } from 'antd';
 import { ColumnsType } from 'antd/lib/table';
-import {
-	ResizableHeader,
-	ResizeTableWrapper,
-} from 'components/ResizeTableWrapper';
+import { ResizeTable } from 'components/ResizeTable';
 import TextToolTip from 'components/TextToolTip';
 import ROUTES from 'constants/routes';
 import useComponentPermission from 'hooks/useComponentPermission';
@@ -172,13 +169,7 @@ function ListAlert({ allAlertRules, refetch }: ListAlertProps): JSX.Element {
 					</Button>
 				)}
 			</ButtonContainer>
-			<ResizeTableWrapper columns={columns}>
-				<Table
-					rowKey="id"
-					components={{ header: { cell: ResizableHeader } }}
-					dataSource={data}
-				/>
-			</ResizeTableWrapper>
+			<ResizeTable columns={columns} rowKey="id" dataSource={data} />
 		</>
 	);
 }
