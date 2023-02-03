@@ -1,13 +1,10 @@
 import { PlusOutlined } from '@ant-design/icons';
-import { Button, Modal, notification, Space, Table, Typography } from 'antd';
+import { Button, Modal, notification, Space, Typography } from 'antd';
 import { ColumnsType } from 'antd/lib/table';
 import deleteInvite from 'api/user/deleteInvite';
 import getPendingInvites from 'api/user/getPendingInvites';
 import sendInvite from 'api/user/sendInvite';
-import {
-	ResizableHeader,
-	ResizeTableWrapper,
-} from 'components/ResizeTableWrapper';
+import { ResizeTable } from 'components/ResizeTable';
 import { INVITE_MEMBERS_HASH } from 'constants/app';
 import ROUTES from 'constants/routes';
 import React, { useCallback, useEffect, useState } from 'react';
@@ -272,15 +269,13 @@ function PendingInvitesContainer(): JSX.Element {
 						{t('invite_members')}
 					</Button>
 				</TitleWrapper>
-				<ResizeTableWrapper columns={columns}>
-					<Table
-						tableLayout="fixed"
-						dataSource={dataSource}
-						components={{ header: { cell: ResizableHeader } }}
-						pagination={false}
-						loading={getPendingInvitesResponse.status === 'loading'}
-					/>
-				</ResizeTableWrapper>
+				<ResizeTable
+					columns={columns}
+					tableLayout="fixed"
+					dataSource={dataSource}
+					pagination={false}
+					loading={getPendingInvitesResponse.status === 'loading'}
+				/>
 			</Space>
 		</div>
 	);

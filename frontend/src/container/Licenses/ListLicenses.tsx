@@ -1,9 +1,5 @@
-import { Table } from 'antd';
 import { ColumnsType } from 'antd/lib/table';
-import {
-	ResizableHeader,
-	ResizeTableWrapper,
-} from 'components/ResizeTableWrapper';
+import { ResizeTable } from 'components/ResizeTable';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { License } from 'types/api/licenses/def';
@@ -39,15 +35,7 @@ function ListLicenses({ licenses }: ListLicensesProps): JSX.Element {
 		},
 	];
 
-	return (
-		<ResizeTableWrapper columns={columns}>
-			<Table
-				rowKey="id"
-				dataSource={licenses}
-				components={{ header: { cell: ResizableHeader } }}
-			/>
-		</ResizeTableWrapper>
-	);
+	return <ResizeTable columns={columns} rowKey="id" dataSource={licenses} />;
 }
 
 interface ListLicensesProps {

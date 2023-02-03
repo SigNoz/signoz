@@ -1,13 +1,10 @@
 import { LockTwoTone } from '@ant-design/icons';
-import { Button, Modal, notification, Space, Table, Typography } from 'antd';
+import { Button, Modal, notification, Space, Typography } from 'antd';
 import { ColumnsType } from 'antd/lib/table';
 import deleteDomain from 'api/SAML/deleteDomain';
 import listAllDomain from 'api/SAML/listAllDomain';
 import updateDomain from 'api/SAML/updateDomain';
-import {
-	ResizableHeader,
-	ResizeTableWrapper,
-} from 'components/ResizeTableWrapper';
+import { ResizeTable } from 'components/ResizeTable';
 import TextToolTip from 'components/TextToolTip';
 import { SIGNOZ_UPGRADE_PLAN_URL } from 'constants/app';
 import { FeatureKeys } from 'constants/featureKeys';
@@ -275,14 +272,12 @@ function AuthDomains(): JSX.Element {
 						setIsSettingsOpen={setIsSettingsOpen}
 					/>
 				</Modal>
-				<ResizeTableWrapper columns={columns}>
-					<Table
-						rowKey={(record: AuthDomain): string => record.name + v4()}
-						dataSource={!SSOFlag ? notEntripriseData : []}
-						components={{ header: { cell: ResizableHeader } }}
-						tableLayout="fixed"
-					/>
-				</ResizeTableWrapper>
+				<ResizeTable
+					columns={columns}
+					rowKey={(record: AuthDomain): string => record.name + v4()}
+					dataSource={!SSOFlag ? notEntripriseData : []}
+					tableLayout="fixed"
+				/>
 			</Space>
 		);
 	}
@@ -327,15 +322,13 @@ function AuthDomains(): JSX.Element {
 			<Space direction="vertical" size="middle">
 				<AddDomain refetch={refetch} />
 
-				<ResizeTableWrapper columns={columns}>
-					<Table
-						dataSource={tableData}
-						loading={isLoading}
-						components={{ header: { cell: ResizableHeader } }}
-						tableLayout="fixed"
-						rowKey={(record: AuthDomain): string => record.name + v4()}
-					/>
-				</ResizeTableWrapper>
+				<ResizeTable
+					columns={columns}
+					dataSource={tableData}
+					loading={isLoading}
+					tableLayout="fixed"
+					rowKey={(record: AuthDomain): string => record.name + v4()}
+				/>
 			</Space>
 		</>
 	);
