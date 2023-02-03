@@ -58,7 +58,7 @@ function LogsTable(props: LogsTableProps): JSX.Element {
 				);
 			}
 
-			return <ListLogView key={`${log.id}`} logData={log} />;
+			return <ListLogView key={log.id} logData={log} />;
 		},
 		[logs, linesPerRow, viewMode, onClickExpand],
 	);
@@ -92,9 +92,9 @@ function LogsTable(props: LogsTableProps): JSX.Element {
 
 	return (
 		<Container>
-			{viewMode === 'list' && (
+			{viewMode !== 'table' && (
 				<Heading>
-					<Typography.Text>Event</Typography.Text>
+					<Typography.Text>{viewMode === 'list' ? 'Event' : ''}</Typography.Text>
 				</Heading>
 			)}
 

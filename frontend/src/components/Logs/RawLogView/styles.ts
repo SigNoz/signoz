@@ -4,9 +4,11 @@ import styled from 'styled-components';
 export const RawLogViewContainer = styled(Row)<{ $isDarkMode: boolean }>`
 	width: 100%;
 	padding: 3px 20px 3px 0;
+
 	font-weight: 700;
 	font-size: 12px;
 	line-height: 20px;
+
 	transition: background-color 0.2s ease-in;
 
 	&:hover {
