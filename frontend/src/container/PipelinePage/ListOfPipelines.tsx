@@ -56,7 +56,6 @@ function ListOfPipelines(): JSX.Element {
 	const [action] = useComponentPermission(['action'], role);
 	const [newAddProcessor, setNewAddProcessor] = useState<boolean>(false);
 	const [addNewPipline, setAddNewPipline] = useState<boolean>(false);
-	const [isReorder, setReorder] = useState<boolean>(false);
 
 	const [modal, contextHolder] = Modal.useModal();
 	const { Text } = Typography;
@@ -216,7 +215,6 @@ function ListOfPipelines(): JSX.Element {
 					[hoverIndex, 0, dragRow],
 				],
 			});
-			setDataSource(isReorder ? updatedRow : dataSource);
 
 			if (dragRow) {
 				WarningMessageModal({
@@ -224,12 +222,12 @@ function ListOfPipelines(): JSX.Element {
 					descrition:
 						'Logs are processed sequentially in processors and pipelines. Reordering it may change how data is processed by them.',
 					buttontext: 'Reorder',
-					onOkClick: (): void => setReorder(true),
-					onCancelClick: (): void => setReorder(false),
+					onOkClick: (): void => setDataSource(updatedRow),
+					onCancelClick: (): void => setDataSource(dataSource),
 				});
 			}
 		},
-		[WarningMessageModal, dataSource, isReorder, setReorder, setDataSource],
+		[WarningMessageModal, dataSource, setDataSource],
 	);
 
 	function FooterData(): React.ReactElement {
