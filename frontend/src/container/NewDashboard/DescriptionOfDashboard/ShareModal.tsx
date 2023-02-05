@@ -5,7 +5,7 @@ import { useTranslation } from 'react-i18next';
 import { useCopyToClipboard } from 'react-use';
 import { DashboardData } from 'types/api/dashboard/getAll';
 
-import { downloadObjectAsJson } from './util';
+import { cleardQueryData, downloadObjectAsJson } from './util';
 
 function ShareModal({
 	isJSONModalVisible,
@@ -32,10 +32,11 @@ function ShareModal({
 	const [isViewJSON, setIsViewJSON] = useState<boolean>(false);
 	const { t } = useTranslation(['dashboard', 'common']);
 	const [state, setCopy] = useCopyToClipboard();
+	const [notifications, NotificationElement] = notification.useNotification();
 
 	useEffect(() => {
 		if (state.error) {
-			notification.error({
+			notifications.error({
 				message: t('something_went_wrong', {
 					ns: 'common',
 				}),
@@ -43,14 +44,15 @@ function ShareModal({
 		}
 
 		if (state.value) {
-			notification.success({
+			notifications.success({
 				message: t('success', {
 					ns: 'common',
 				}),
 			});
 		}
-	}, [state.error, state.value, t]);
+	}, [state.error, state.value, t, notifications]);
 
+	const selectedDataCleaned = cleardQueryData(selectedData);
 	const GetFooterComponent = useMemo(() => {
 		if (!isViewJSON) {
 			return (
@@ -66,7 +68,7 @@ function ShareModal({
 					<Button
 						type="primary"
 						onClick={(): void => {
-							downloadObjectAsJson(selectedData, selectedData.title);
+							downloadObjectAsJson(selectedDataCleaned, selectedData.title);
 						}}
 					>
 						{t('download_json')}
@@ -79,31 +81,37 @@ function ShareModal({
 				{t('copy_to_clipboard')}
 			</Button>
 		);
-	}, [isViewJSON, jsonValue, selectedData, setCopy, t]);
+	}, [isViewJSON, jsonValue, selectedData, selectedDataCleaned, setCopy, t]);
 
 	return (
-		<Modal
-			visible={isJSONModalVisible}
-			onCancel={(): void => {
-				onToggleHandler();
-				setIsViewJSON(false);
-			}}
-			width="70vw"
-			centered
-			title={t('share', {
-				ns: 'common',
-			})}
-			okText={t('download_json')}
-			cancelText={t('cancel')}
-			destroyOnClose
-			footer={GetFooterComponent}
-		>
-			{!isViewJSON ? (
-				<Typography>{t('export_dashboard')}</Typography>
-			) : (
-				<Editor onChange={(value): void => setJSONValue(value)} value={jsonValue} />
-			)}
-		</Modal>
+		<>
+			{NotificationElement}
+			<Modal
+				open={isJSONModalVisible}
+				onCancel={(): void => {
+					onToggleHandler();
+					setIsViewJSON(false);
+				}}
+				width="70vw"
+				centered
+				title={t('share', {
+					ns: 'common',
+				})}
+				okText={t('download_json')}
+				cancelText={t('cancel')}
+				destroyOnClose
+				footer={GetFooterComponent}
+			>
+				{!isViewJSON ? (
+					<Typography>{t('export_dashboard')}</Typography>
+				) : (
+					<Editor
+						onChange={(value): void => setJSONValue(value)}
+						value={jsonValue}
+					/>
+				)}
+			</Modal>
+		</>
 	);
 }
 

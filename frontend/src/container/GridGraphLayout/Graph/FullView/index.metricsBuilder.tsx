@@ -1,4 +1,4 @@
-import { Button, Typography } from 'antd';
+import { Button } from 'antd';
 import { GraphOnClickHandler } from 'components/Graph';
 import Spinner from 'components/Spinner';
 import TimePreference from 'components/TimePreferenceDropDown';
@@ -9,7 +9,7 @@ import {
 } from 'container/NewWidget/RightContainer/timeItems';
 import { getDashboardVariables } from 'lib/dashbaordVariables/getDashboardVariables';
 import getChartData from 'lib/getChartData';
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import { useQuery } from 'react-query';
 import { useSelector } from 'react-redux';
 import { GetMetricQueryRange } from 'store/actions/dashboard/getQueryResults';
@@ -19,7 +19,7 @@ import { Widgets } from 'types/api/dashboard/getAll';
 import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
 import { GlobalReducer } from 'types/reducer/globalTime';
 
-import { NotFoundContainer, TimeContainer } from './styles';
+import { TimeContainer } from './styles';
 
 function FullView({
 	widget,
@@ -27,6 +27,7 @@ function FullView({
 	onClickHandler,
 	name,
 	yAxisUnit,
+	onDragSelect,
 }: FullViewProps): JSX.Element {
 	const { selectedTime: globalSelectedTime } = useSelector<
 		AppState,
@@ -57,19 +58,22 @@ function FullView({
 			}),
 	);
 
-	const isError = response?.error;
+	const chartDataSet = useMemo(
+		() =>
+			getChartData({
+				queryData: [
+					{
+						queryData: response?.data?.payload?.data?.result || [],
+					},
+				],
+			}),
+		[response],
+	);
+
 	const isLoading = response.isLoading === true;
-	const errorMessage = isError instanceof Error ? isError?.message : '';
 
 	if (isLoading) {
 		return <Spinner height="100%" size="large" tip="Loading..." />;
-	}
-	if (isError || !response?.data?.payload?.data?.result) {
-		return (
-			<NotFoundContainer>
-				<Typography>{errorMessage}</Typography>
-			</NotFoundContainer>
-		);
 	}
 
 	return (
@@ -94,24 +98,15 @@ function FullView({
 			)}
 
 			<GridGraphComponent
-				{...{
-					GRAPH_TYPES: widget.panelTypes,
-					data: getChartData({
-						queryData: [
-							{
-								queryData: response.data?.payload?.data?.result
-									? response.data?.payload?.data?.result
-									: [],
-							},
-						],
-					}),
-					isStacked: widget.isStacked,
-					opacity: widget.opacity,
-					title: widget.title,
-					onClickHandler,
-					name,
-					yAxisUnit,
-				}}
+				GRAPH_TYPES={widget.panelTypes}
+				data={chartDataSet}
+				isStacked={widget.isStacked}
+				opacity={widget.opacity}
+				title={widget.title}
+				onClickHandler={onClickHandler}
+				name={name}
+				yAxisUnit={yAxisUnit}
+				onDragSelect={onDragSelect}
 			/>
 		</>
 	);
@@ -123,12 +118,14 @@ interface FullViewProps {
 	onClickHandler?: GraphOnClickHandler;
 	name: string;
 	yAxisUnit?: string;
+	onDragSelect?: (start: number, end: number) => void;
 }
 
 FullView.defaultProps = {
 	fullViewOptions: undefined,
 	onClickHandler: undefined,
 	yAxisUnit: undefined,
+	onDragSelect: undefined,
 };
 
 export default FullView;

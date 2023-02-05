@@ -3,11 +3,14 @@ import { GlobalReducer } from 'types/reducer/globalTime';
 export interface Props {
 	start: GlobalReducer['minTime'];
 	end: GlobalReducer['maxTime'];
-	tagKey: string;
+	tagKey: {
+		Key: string;
+		Type: string;
+	};
 }
 
-interface Value {
-	tagValues: string;
+export interface PayloadProps {
+	stringTagValues: string[];
+	numberTagValues: number[];
+	boolTagValues: boolean[];
 }
-
-export type PayloadProps = Value[];

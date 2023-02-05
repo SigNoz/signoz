@@ -1,12 +1,12 @@
 import { Popover } from 'antd';
 import dayjs from 'dayjs';
-import useThemeMode from 'hooks/useThemeMode';
+import { useIsDarkMode } from 'hooks/useDarkMode';
 import React from 'react';
 
 import { CustomSubText, CustomSubTitle } from '../styles';
 
 function EventStartTime({ timeUnixNano }: EventStartTimeProps): JSX.Element {
-	const { isDarkMode } = useThemeMode();
+	const isDarkMode = useIsDarkMode();
 
 	const humanReadableTimeInDayJs = dayjs(timeUnixNano / 1e6).format(
 		'YYYY-MM-DD hh:mm:ss.SSS A',

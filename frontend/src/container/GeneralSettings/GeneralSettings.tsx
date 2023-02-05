@@ -172,6 +172,8 @@ function GeneralSettings({
 		logsTtlValuesPayload.status === 'pending' ? 1000 : null,
 	);
 
+	const [notifications, NotificationElement] = notification.useNotification();
+
 	const onModalToggleHandler = (type: TTTLType): void => {
 		if (type === 'metrics') setModalMetrics((modal) => !modal);
 		if (type === 'traces') setModalTraces((modal) => !modal);
@@ -186,14 +188,14 @@ function GeneralSettings({
 	const onClickSaveHandler = useCallback(
 		(type: TTTLType) => {
 			if (!setRetentionPermission) {
-				notification.error({
+				notifications.error({
 					message: `Sorry you don't have permission to make these changes`,
 				});
 				return;
 			}
 			onModalToggleHandler(type);
 		},
-		[setRetentionPermission],
+		[setRetentionPermission, notifications],
 	);
 
 	const s3Enabled = useMemo(
@@ -352,7 +354,7 @@ function GeneralSettings({
 			let hasSetTTLFailed = false;
 			if (setTTLResponse.statusCode === 409) {
 				hasSetTTLFailed = true;
-				notification.error({
+				notifications.error({
 					message: 'Error',
 					description: t('retention_request_race_condition'),
 					placement: 'topRight',
@@ -390,7 +392,7 @@ function GeneralSettings({
 					});
 			}
 		} catch (error) {
-			notification.error({
+			notifications.error({
 				message: 'Error',
 				description: t('retention_failed_message'),
 				placement: 'topRight',
@@ -572,7 +574,7 @@ function GeneralSettings({
 									onOkHandler(category.name.toLowerCase() as TTTLType)
 								}
 								centered
-								visible={category.save.modal}
+								open={category.save.modal}
 								confirmLoading={category.save.apiLoading}
 							>
 								<Typography>
@@ -590,20 +592,23 @@ function GeneralSettings({
 	});
 
 	return (
-		<Col xs={24} md={22} xl={20} xxl={18} style={{ margin: 'auto' }}>
+		<>
+			{NotificationElement}
 			{Element}
-			<ErrorTextContainer>
-				<TextToolTip
-					{...{
-						text: `More details on how to set retention period`,
-						url: 'https://signoz.io/docs/userguide/retention-period/',
-					}}
-				/>
-				{errorText && <ErrorText>{errorText}</ErrorText>}
-			</ErrorTextContainer>
+			<Col xs={24} md={22} xl={20} xxl={18} style={{ margin: 'auto' }}>
+				<ErrorTextContainer>
+					<TextToolTip
+						{...{
+							text: `More details on how to set retention period`,
+							url: 'https://signoz.io/docs/userguide/retention-period/',
+						}}
+					/>
+					{errorText && <ErrorText>{errorText}</ErrorText>}
+				</ErrorTextContainer>
 
-			<Row justify="start">{renderConfig}</Row>
-		</Col>
+				<Row justify="start">{renderConfig}</Row>
+			</Col>
+		</>
 	);
 }
 

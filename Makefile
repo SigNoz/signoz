@@ -54,7 +54,7 @@ build-push-frontend:
 	@echo "--> Building and pushing frontend docker image"
 	@echo "------------------"
 	@cd $(FRONTEND_DIRECTORY) && \
-	docker buildx build --file Dockerfile --progress plane --push --platform linux/amd64 \
+	docker buildx build --file Dockerfile --progress plane --push --platform linux/arm64,linux/amd64 \
 	--tag $(REPONAME)/$(FRONTEND_DOCKER_IMAGE):$(DOCKER_TAG) .
 
 # Steps to build and push docker image of query service
@@ -135,3 +135,6 @@ clear-standalone-data:
 clear-swarm-data:
 	@docker run --rm -v "$(PWD)/$(SWARM_DIRECTORY)/data:/pwd" busybox \
 	sh -c "cd /pwd && rm -rf alertmanager/* clickhouse*/* signoz/* zookeeper-*/*"
+
+test:
+	go test ./pkg/query-service/app/metrics/...

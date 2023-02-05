@@ -1,4 +1,5 @@
-import { Card } from 'antd';
+import { Card, notification } from 'antd';
+import { NotificationInstance } from 'antd/es/notification/interface';
 import ROUTES from 'constants/routes';
 import Filters from 'container/Trace/Filters';
 import TraceGraph from 'container/Trace/Graph';
@@ -52,21 +53,26 @@ function Trace({
 		isFilterExclude,
 	} = useSelector<AppState, TraceReducer>((state) => state.traces);
 
-	useEffect(() => {
-		getInitialFilter(minTime, maxTime);
-	}, [maxTime, minTime, getInitialFilter, isChanged]);
+	const [notifications, NotificationElement] = notification.useNotification();
 
 	useEffect(() => {
-		getSpansAggregate({
-			maxTime,
-			minTime,
-			selectedFilter,
-			current: spansAggregate.currentPage,
-			pageSize: spansAggregate.pageSize,
-			selectedTags,
-			order: spansAggregate.order,
-			orderParam: spansAggregate.orderParam,
-		});
+		getInitialFilter(minTime, maxTime, notifications);
+	}, [maxTime, minTime, getInitialFilter, isChanged, notifications]);
+
+	useEffect(() => {
+		getSpansAggregate(
+			{
+				maxTime,
+				minTime,
+				selectedFilter,
+				current: spansAggregate.currentPage,
+				pageSize: spansAggregate.pageSize,
+				selectedTags,
+				order: spansAggregate.order,
+				orderParam: spansAggregate.orderParam,
+			},
+			notifications,
+		);
 	}, [
 		selectedTags,
 		selectedFilter,
@@ -77,19 +83,23 @@ function Trace({
 		spansAggregate.pageSize,
 		spansAggregate.order,
 		spansAggregate.orderParam,
+		notifications,
 	]);
 
 	useEffect(() => {
-		getSpans({
-			end: maxTime,
-			function: selectedFunction,
-			groupBy: selectedGroupBy,
-			selectedFilter,
-			selectedTags,
-			start: minTime,
-			step: getStep({ start: minTime, end: maxTime, inputFormat: 'ns' }),
-			isFilterExclude,
-		});
+		getSpans(
+			{
+				end: maxTime,
+				function: selectedFunction,
+				groupBy: selectedGroupBy,
+				selectedFilter,
+				selectedTags,
+				start: minTime,
+				step: getStep({ start: minTime, end: maxTime, inputFormat: 'ns' }),
+				isFilterExclude,
+			},
+			notifications,
+		);
 	}, [
 		selectedFunction,
 		selectedGroupBy,
@@ -99,17 +109,19 @@ function Trace({
 		minTime,
 		getSpans,
 		isFilterExclude,
+		notifications,
 	]);
 
-	useEffect(() => {
-		return (): void => {
+	useEffect(
+		() => (): void => {
 			dispatch({
 				type: RESET_TRACE_FILTER,
 			});
-		};
-	}, [dispatch]);
+		},
+		[dispatch],
+	);
 
-	const onClickHandler = useCallback(
+	const onClickHandler: React.MouseEventHandler<HTMLElement> = useCallback(
 		(e) => {
 			e.preventDefault();
 			e.stopPropagation();
@@ -127,6 +139,7 @@ function Trace({
 
 	return (
 		<>
+			{NotificationElement}
 			<Search />
 			<Container>
 				<div>
@@ -154,11 +167,15 @@ function Trace({
 }
 
 interface DispatchProps {
-	getSpansAggregate: (props: GetSpansAggregateProps) => void;
-	getSpans: (props: GetSpansProps) => void;
+	getSpansAggregate: (
+		props: GetSpansAggregateProps,
+		notify: NotificationInstance,
+	) => void;
+	getSpans: (props: GetSpansProps, notify: NotificationInstance) => void;
 	getInitialFilter: (
 		minTime: GlobalReducer['minTime'],
 		maxTime: GlobalReducer['maxTime'],
+		notify: NotificationInstance,
 	) => void;
 }
 

@@ -1,9 +1,10 @@
 import { LockTwoTone } from '@ant-design/icons';
-import { Button, Modal, notification, Space, Table, Typography } from 'antd';
+import { Button, Modal, notification, Space, Typography } from 'antd';
 import { ColumnsType } from 'antd/lib/table';
 import deleteDomain from 'api/SAML/deleteDomain';
 import listAllDomain from 'api/SAML/listAllDomain';
 import updateDomain from 'api/SAML/updateDomain';
+import { ResizeTable } from 'components/ResizeTable';
 import TextToolTip from 'components/TextToolTip';
 import { SIGNOZ_UPGRADE_PLAN_URL } from 'constants/app';
 import { FeatureKeys } from 'constants/featureKeys';
@@ -56,6 +57,8 @@ function AuthDomains(): JSX.Element {
 		enabled: org !== null,
 	});
 
+	const [notifications, NotificationElement] = notification.useNotification();
+
 	const assignSsoMethod = useCallback(
 		(typ: AuthDomain['ssoType']): void => {
 			setCurrentDomain({ ...currentDomain, ssoType: typ } as AuthDomain);
@@ -76,7 +79,7 @@ function AuthDomains(): JSX.Element {
 				const response = await updateDomain(record);
 
 				if (response.statusCode === 200) {
-					notification.success({
+					notifications.success({
 						message: t('saml_settings', {
 							ns: 'organizationsettings',
 						}),
@@ -87,7 +90,7 @@ function AuthDomains(): JSX.Element {
 					return true;
 				}
 
-				notification.error({
+				notifications.error({
 					message: t('something_went_wrong', {
 						ns: 'common',
 					}),
@@ -95,7 +98,7 @@ function AuthDomains(): JSX.Element {
 
 				return false;
 			} catch (error) {
-				notification.error({
+				notifications.error({
 					message: t('something_went_wrong', {
 						ns: 'common',
 					}),
@@ -103,7 +106,7 @@ function AuthDomains(): JSX.Element {
 				return false;
 			}
 		},
-		[refetch, t, onCloseHandler],
+		[refetch, t, onCloseHandler, notifications],
 	);
 
 	const onOpenHandler = useCallback(
@@ -142,19 +145,19 @@ function AuthDomains(): JSX.Element {
 					});
 
 					if (response.statusCode === 200) {
-						notification.success({
+						notifications.success({
 							message: t('common:success'),
 						});
 						refetch();
 					} else {
-						notification.error({
+						notifications.error({
 							message: t('common:something_went_wrong'),
 						});
 					}
 				},
 			});
 		},
-		[refetch, t],
+		[refetch, t, notifications],
 	);
 
 	const onClickLicenseHandler = useCallback(() => {
@@ -166,6 +169,7 @@ function AuthDomains(): JSX.Element {
 			title: 'Domain',
 			dataIndex: 'name',
 			key: 'name',
+			width: 100,
 		},
 		{
 			title: (
@@ -181,6 +185,7 @@ function AuthDomains(): JSX.Element {
 			),
 			dataIndex: 'ssoEnabled',
 			key: 'ssoEnabled',
+			width: 80,
 			render: (value: boolean, record: AuthDomain): JSX.Element => {
 				if (!SSOFlag) {
 					return (
@@ -207,6 +212,7 @@ function AuthDomains(): JSX.Element {
 			title: '',
 			dataIndex: 'description',
 			key: 'description',
+			width: 100,
 			render: (_, record: AuthDomain): JSX.Element => {
 				if (!SSOFlag) {
 					return (
@@ -231,24 +237,24 @@ function AuthDomains(): JSX.Element {
 			title: 'Action',
 			dataIndex: 'action',
 			key: 'action',
-			render: (_, record): JSX.Element => {
-				return (
-					<Button
-						disabled={!SSOFlag}
-						onClick={onDeleteHandler(record)}
-						danger
-						type="link"
-					>
-						Delete
-					</Button>
-				);
-			},
+			width: 50,
+			render: (_, record): JSX.Element => (
+				<Button
+					disabled={!SSOFlag}
+					onClick={onDeleteHandler(record)}
+					danger
+					type="link"
+				>
+					Delete
+				</Button>
+			),
 		},
 	];
 
 	if (!isLoading && data?.payload?.length === 0) {
 		return (
 			<Space direction="vertical" size="middle">
+				{NotificationElement}
 				<AddDomain refetch={refetch} />
 
 				<Modal
@@ -256,7 +262,7 @@ function AuthDomains(): JSX.Element {
 					title="Configure Authentication Method"
 					onCancel={onCloseHandler(setIsSettingsOpen)}
 					destroyOnClose
-					visible={isSettingsOpen}
+					open={isSettingsOpen}
 					footer={null}
 				>
 					<Create
@@ -266,10 +272,10 @@ function AuthDomains(): JSX.Element {
 						setIsSettingsOpen={setIsSettingsOpen}
 					/>
 				</Modal>
-				<Table
+				<ResizeTable
+					columns={columns}
 					rowKey={(record: AuthDomain): string => record.name + v4()}
 					dataSource={!SSOFlag ? notEntripriseData : []}
-					columns={columns}
 					tableLayout="fixed"
 				/>
 			</Space>
@@ -280,12 +286,13 @@ function AuthDomains(): JSX.Element {
 
 	return (
 		<>
+			{NotificationElement}
 			<Modal
 				centered
 				title="Configure Authentication Method"
 				onCancel={onCloseHandler(setIsSettingsOpen)}
 				destroyOnClose
-				visible={isSettingsOpen}
+				open={isSettingsOpen}
 				footer={null}
 			>
 				<Create
@@ -297,7 +304,7 @@ function AuthDomains(): JSX.Element {
 			</Modal>
 
 			<Modal
-				visible={isEditModalOpen}
+				open={isEditModalOpen}
 				centered
 				title={EditModalTitleText(currentDomain?.ssoType)}
 				onCancel={onCloseHandler(setIsEditModalOpen)}
@@ -315,10 +322,10 @@ function AuthDomains(): JSX.Element {
 			<Space direction="vertical" size="middle">
 				<AddDomain refetch={refetch} />
 
-				<Table
+				<ResizeTable
+					columns={columns}
 					dataSource={tableData}
 					loading={isLoading}
-					columns={columns}
 					tableLayout="fixed"
 					rowKey={(record: AuthDomain): string => record.name + v4()}
 				/>

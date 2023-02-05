@@ -77,8 +77,8 @@ function LogsAggregate({ getLogsAggregate }: LogsAggregateProps): JSX.Element {
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [getLogsAggregate, maxTime, minTime, liveTail]);
 
-	const graphData = useMemo(() => {
-		return {
+	const graphData = useMemo(
+		() => ({
 			labels: logsAggregate.map((s) => new Date(s.timestamp / 1000000)),
 			datasets: [
 				{
@@ -86,8 +86,9 @@ function LogsAggregate({ getLogsAggregate }: LogsAggregateProps): JSX.Element {
 					backgroundColor: blue[4],
 				},
 			],
-		};
-	}, [logsAggregate]);
+		}),
+		[logsAggregate],
+	);
 
 	return (
 		<Container>

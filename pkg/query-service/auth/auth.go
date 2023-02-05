@@ -12,6 +12,7 @@ import (
 	"go.signoz.io/signoz/pkg/query-service/constants"
 	"go.signoz.io/signoz/pkg/query-service/dao"
 	"go.signoz.io/signoz/pkg/query-service/model"
+	"go.signoz.io/signoz/pkg/query-service/telemetry"
 	"go.signoz.io/signoz/pkg/query-service/utils"
 	"go.uber.org/zap"
 	"golang.org/x/crypto/bcrypt"
@@ -385,6 +386,8 @@ func Login(ctx context.Context, request *model.LoginRequest) (*model.LoginRespon
 		zap.S().Debugf("Failed to generate JWT against login creds, %v", err)
 		return nil, err
 	}
+
+	telemetry.GetInstance().IdentifyUser(&user.User)
 
 	return &model.LoginResponse{
 		UserJwtObject: userjwt,

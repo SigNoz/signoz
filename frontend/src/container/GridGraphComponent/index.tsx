@@ -19,6 +19,7 @@ function GridGraphComponent({
 	name,
 	yAxisUnit,
 	staticLine,
+	onDragSelect,
 }: GridGraphComponentProps): JSX.Element | null {
 	const location = history.location.pathname;
 
@@ -38,6 +39,7 @@ function GridGraphComponent({
 					name,
 					yAxisUnit,
 					staticLine,
+					onDragSelect,
 				}}
 			/>
 		);
@@ -85,6 +87,7 @@ export interface GridGraphComponentProps {
 	name: string;
 	yAxisUnit?: string;
 	staticLine?: StaticLineProps;
+	onDragSelect?: (start: number, end: number) => void;
 }
 
 GridGraphComponent.defaultProps = {
@@ -94,6 +97,7 @@ GridGraphComponent.defaultProps = {
 	onClickHandler: undefined,
 	yAxisUnit: undefined,
 	staticLine: undefined,
+	onDragSelect: undefined,
 };
 
 export default GridGraphComponent;
