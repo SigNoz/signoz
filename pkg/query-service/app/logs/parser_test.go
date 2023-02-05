@@ -103,9 +103,7 @@ func TestParseLogQueryCorrect(t *testing.T) {
 	for _, test := range correctQueriesTest {
 		Convey(test.Name, t, func() {
 			query, err := parseLogQuery(test.InputQuery)
-			if err != nil {
-				t.Fatalf("Could not parse log query: %v", err)
-			}
+			So(err, ShouldBeNil)
 			So(query, ShouldResemble, test.WantSqlTokens)
 		})
 	}
@@ -209,9 +207,7 @@ func TestParseColumn(t *testing.T) {
 	for _, test := range parseCorrectColumns {
 		Convey(test.Name, t, func() {
 			column, err := parseColumn(test.Filter)
-			if err != nil {
-				t.Fatalf("Could not parse column: %v", err)
-			}
+			So(err, ShouldBeNil)
 			So(*column, ShouldEqual, test.Column)
 		})
 	}
@@ -239,9 +235,7 @@ func TestReplaceInterestingFields(t *testing.T) {
 	expectedTokens := []string{"attributes_int64_value[indexOf(attributes_int64_key, 'id.userid')] IN (100) ", "and id_key >= 50 ", `AND body ILIKE '%searchstring%'`}
 	Convey("testInterestingFields", t, func() {
 		tokens, err := replaceInterestingFields(&allFields, queryTokens)
-		if err != nil {
-			t.Fatalf("Could not replace interesting fields: %v", err)
-		}
+		So(err, ShouldBeNil)
 		So(tokens, ShouldResemble, expectedTokens)
 	})
 }
@@ -380,7 +374,8 @@ var generateSQLQueryTestCases = []struct {
 func TestGenerateSQLQuery(t *testing.T) {
 	for _, test := range generateSQLQueryTestCases {
 		Convey("testGenerateSQL", t, func() {
-			res, _, _ := GenerateSQLWhere(&generateSQLQueryFields, &test.Filter)
+			res, _, err := GenerateSQLWhere(&generateSQLQueryFields, &test.Filter)
+			So(err, ShouldBeNil)
 			So(res, ShouldEqual, test.SqlFilter)
 		})
 	}
