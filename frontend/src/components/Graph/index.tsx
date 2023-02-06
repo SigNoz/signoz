@@ -81,6 +81,7 @@ function Graph({
 	onDragSelect,
 	dragSelectColor,
 }: GraphProps): JSX.Element {
+	const nearestDatasetIndex = useRef<null | number>(null);
 	const chartRef = useRef<HTMLCanvasElement>(null);
 	const isDarkMode = useIsDarkMode();
 
@@ -164,7 +165,15 @@ function Graph({
 								if (context.parsed.y !== null) {
 									label += getToolTipValue(context.parsed.y.toString(), yAxisUnit);
 								}
+
 								return label;
+							},
+							labelTextColor(labelData) {
+								if (labelData.datasetIndex === nearestDatasetIndex.current) {
+									return 'rgba(255, 255, 255, 1)';
+								}
+
+								return 'rgba(255, 255, 255, 0.75)';
 							},
 						},
 					},
@@ -235,6 +244,22 @@ function Graph({
 				onClick: (event, element, chart) => {
 					if (onClickHandler) {
 						onClickHandler(event, element, chart, data);
+					}
+				},
+				onHover: (event, _, chart) => {
+					if (event.native) {
+						const interactions = chart.getElementsAtEventForMode(
+							event.native,
+							'nearest',
+							{
+								intersect: false,
+							},
+							true,
+						);
+
+						if (interactions[0]) {
+							nearestDatasetIndex.current = interactions[0].datasetIndex;
+						}
 					}
 				},
 			};
