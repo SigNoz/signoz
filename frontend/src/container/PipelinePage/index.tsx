@@ -1,15 +1,16 @@
-import React from 'react';
+import React, { useState } from 'react';
 
 import AddNewPipline from './AddNewPipline';
 import ListOfPipelines from './ListOfPipelines';
 import PiplinesSearchBar from './SearchBar';
 
 function PipelinePage(): JSX.Element {
+	const [isActionType, setActionType] = useState<string | undefined>(undefined);
 	return (
 		<>
-			<AddNewPipline />
+			<AddNewPipline setActionType={setActionType} />
 			<PiplinesSearchBar />
-			<ListOfPipelines />
+			<ListOfPipelines isActionType={isActionType} setActionType={setActionType} />
 		</>
 	);
 }

@@ -44,19 +44,23 @@ import {
 	modalTitleStyle,
 	sublistDataStyle,
 } from './config';
-import NewPipline from './NewPipeline';
-import NewProcessor from './NewProcessor';
+import Pipline from './Pipeline';
+import Processor from './Processor';
 import { Container } from './styles';
 import { pipelineData } from './utils';
 
-function ListOfPipelines(): JSX.Element {
+function ListOfPipelines({
+	isActionType,
+	setActionType,
+}: {
+	isActionType: string | undefined;
+	setActionType: (b: string | undefined) => void;
+}): JSX.Element {
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	const [dataSource, setDataSource] = useState<any>([]);
 	const { role } = useSelector<AppState, AppReducer>((state) => state.app);
 
 	const [action] = useComponentPermission(['action'], role);
-	const [newAddProcessor, setNewAddProcessor] = useState<boolean>(false);
-	const [addNewPipline, setAddNewPipline] = useState<boolean>(false);
 
 	const [modal, contextHolder] = Modal.useModal();
 	const { Text } = Typography;
@@ -73,7 +77,7 @@ function ListOfPipelines(): JSX.Element {
 			description: e.description,
 		}));
 		setDataSource(updatedData);
-	}, [newAddProcessor]);
+	}, []);
 
 	const WarningMessageModal = useCallback(
 		({
@@ -153,6 +157,10 @@ function ListOfPipelines(): JSX.Element {
 		},
 	];
 
+	const handlePipelineEditAction = (): void => {
+		setActionType('edit');
+	};
+
 	if (action) {
 		columns.push({
 			title: 'Action',
@@ -162,7 +170,10 @@ function ListOfPipelines(): JSX.Element {
 			render: (_value, record): JSX.Element => (
 				<Space size="middle">
 					<span>
-						<EditOutlined style={iconStyle} />
+						<EditOutlined
+							style={iconStyle}
+							onClick={(): void => handlePipelineEditAction()}
+						/>
 					</span>
 					<span>
 						<EyeFilled style={iconStyle} />
@@ -236,7 +247,7 @@ function ListOfPipelines(): JSX.Element {
 			<div>
 				<Button
 					type="link"
-					onClick={(): void => setAddNewPipline(true)}
+					onClick={(): void => setActionType('add')}
 					style={modalFooterStyle}
 					icon={<PlusOutlined />}
 				>
@@ -246,21 +257,15 @@ function ListOfPipelines(): JSX.Element {
 		);
 	}
 
+	const handleProcessorEditAction = (): void => {
+		setActionType('edit');
+	};
+
 	return (
 		<div>
 			{contextHolder}
-			{newAddProcessor && (
-				<NewProcessor
-					newAddProcessor={newAddProcessor}
-					setNewAddProcessor={setNewAddProcessor}
-				/>
-			)}
-			{addNewPipline && (
-				<NewPipline
-					addPipeline={addNewPipline}
-					setNewAddPiplines={setAddNewPipline}
-				/>
-			)}
+			<Pipline isActionType={isActionType} setActionType={setActionType} />
+			<Processor isActionType={isActionType} setActionType={setActionType} />
 			<Container>
 				<DndProvider backend={HTML5Backend}>
 					<Table
@@ -278,7 +283,10 @@ function ListOfPipelines(): JSX.Element {
 												key={index}
 												actions={[
 													<span key="list-edit">
-														<EditOutlined style={iconStyle} />
+														<EditOutlined
+															style={iconStyle}
+															onClick={(): void => handleProcessorEditAction()}
+														/>
 													</span>,
 													<span key="list-view">
 														<EyeFilled style={iconStyle} />
@@ -305,7 +313,7 @@ function ListOfPipelines(): JSX.Element {
 									<Button
 										type="link"
 										style={modalFooterStyle}
-										onClick={(): void => setNewAddProcessor(true)}
+										onClick={(): void => setActionType('add')}
 									>
 										<PlusCircleOutlined />
 										<span style={modalFooterTitle}>Add Processor</span>

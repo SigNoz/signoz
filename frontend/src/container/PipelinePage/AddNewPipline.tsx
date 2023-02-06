@@ -1,25 +1,20 @@
 import { PlusOutlined } from '@ant-design/icons';
 import TextToolTip from 'components/TextToolTip';
-import React, { useState } from 'react';
+import React from 'react';
 
-import NewPipline from './NewPipeline';
 import { Button, ButtonContainer } from './styles';
 
-function AddNewPipline(): JSX.Element {
-	const [addPipeline, setNewAddPiplines] = useState<boolean>(false);
-
+function AddNewPipline({
+	setActionType,
+}: {
+	setActionType: (b: string | undefined) => void;
+}): JSX.Element {
 	return (
 		<ButtonContainer>
-			<TextToolTip text="add Piplines" />
-			{addPipeline && (
-				<NewPipline
-					addPipeline={addPipeline}
-					setNewAddPiplines={setNewAddPiplines}
-				/>
-			)}
+			<TextToolTip text="Add Piplines" />
 			<Button
 				icon={<PlusOutlined />}
-				onClick={(): void => setNewAddPiplines(true)}
+				onClick={(): void => setActionType('add')}
 				type="primary"
 			>
 				New Pipeline
