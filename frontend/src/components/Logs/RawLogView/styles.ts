@@ -3,11 +3,11 @@ import styled from 'styled-components';
 
 export const RawLogViewContainer = styled(Row)<{ $isDarkMode: boolean }>`
 	width: 100%;
-	padding: 3px 20px 3px 0;
+	padding: 0.188rem 1.25rem 0.188rem 0;
 
 	font-weight: 700;
-	font-size: 12px;
-	line-height: 20px;
+	font-size: 0.625rem;
+	line-height: 1.25rem;
 
 	transition: background-color 0.2s ease-in;
 
