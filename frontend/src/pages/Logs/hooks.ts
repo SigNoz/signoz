@@ -1,5 +1,6 @@
 // utils
 import get from 'api/browser/localstorage/get';
+import { LOCALSTORAGE } from 'constants/localStorage';
 // interfaces
 import { LogViewMode } from 'container/LogsTable';
 import { useCallback, useLayoutEffect, useMemo } from 'react';
@@ -11,7 +12,7 @@ import { AppState } from 'store/reducers';
 
 import { viewModeOptionList } from './config';
 import { SelectedLogViewData } from './types';
-import { isLogViewMode, LOGS_LINES_PER_ROW, LOGS_VIEW_MODE } from './utils';
+import { isLogViewMode } from './utils';
 
 export const useSelectedLogView = (): SelectedLogViewData => {
 	const dispatch = useDispatch();
@@ -54,12 +55,12 @@ export const useSelectedLogView = (): SelectedLogViewData => {
 	);
 
 	useLayoutEffect(() => {
-		const storedViewMode = get(LOGS_VIEW_MODE);
+		const storedViewMode = get(LOCALSTORAGE.LOGS_VIEW_MODE);
 		if (storedViewMode) {
 			handleViewModeChange(storedViewMode as LogViewMode);
 		}
 
-		const storedLinesPerRow = get(LOGS_LINES_PER_ROW);
+		const storedLinesPerRow = get(LOCALSTORAGE.LOGS_LINES_PER_ROW);
 		if (storedLinesPerRow) {
 			handleLinesPerRowChange(+storedLinesPerRow);
 		}
