@@ -8,6 +8,7 @@ import (
 	"github.com/jmoiron/sqlx"
 	"github.com/open-telemetry/opentelemetry-collector-contrib/processor/filterprocessor"
 	tsp "github.com/open-telemetry/opentelemetry-collector-contrib/processor/tailsamplingprocessor"
+	"go.signoz.io/signoz/ee/query-service/model"
 )
 
 var m *Manager
@@ -89,5 +90,16 @@ func UpsertSamplingProcessor(key string, config *tsp.Config) error {
 	defer atomic.StoreUint32(&m.lock, 0)
 
 	// merge current config with new filter params
+	return nil
+}
+
+// UpsertPipelineProcessor updates the agent config with new filter processor params
+func UpsertPipelineProcessors(config []model.Pipeline) error {
+	if !atomic.CompareAndSwapUint32(&m.lock, 0, 1) {
+		return fmt.Errorf("agent updater is busy")
+	}
+	defer atomic.StoreUint32(&m.lock, 0)
+
+	// merge current config with new processors
 	return nil
 }

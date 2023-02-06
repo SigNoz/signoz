@@ -8,6 +8,7 @@ import (
 	"go.signoz.io/signoz/ee/query-service/ingestionRules"
 	"go.signoz.io/signoz/ee/query-service/interfaces"
 	"go.signoz.io/signoz/ee/query-service/license"
+	pipeline "go.signoz.io/signoz/ee/query-service/pipelines"
 	baseapp "go.signoz.io/signoz/pkg/query-service/app"
 	baseint "go.signoz.io/signoz/pkg/query-service/interfaces"
 	rules "go.signoz.io/signoz/pkg/query-service/rules"
@@ -21,6 +22,7 @@ type APIHandlerOptions struct {
 	FeatureFlags        baseint.FeatureLookup
 	LicenseManager      *license.Manager
 	IngestionController *ingestionRules.IngestionController
+	PipelinesController *pipeline.PipelinesController
 }
 
 type APIHandler struct {
@@ -132,6 +134,16 @@ func (ah *APIHandler) RegisterRoutes(router *mux.Router) {
 		// todo(amol): commented for testing
 		// baseapp.AdminAccess(ah.createSamplingRule)).
 		ah.createSamplingRule).
+		Methods(http.MethodPost)
+
+	router.HandleFunc("/api/v1/pipelines/{version}",
+		baseapp.AdminAccess(ah.listPipelinesHandler)).
+		Methods(http.MethodGet)
+
+	router.HandleFunc("/api/v1/pipelines",
+		// todo(nitya): commented for testing
+		// baseapp.AdminAccess(ah.createPipeline)).
+		ah.createPipeline).
 		Methods(http.MethodPost)
 
 	// base overrides

@@ -21,6 +21,7 @@ import (
 	"go.signoz.io/signoz/ee/query-service/ingestionRules"
 	"go.signoz.io/signoz/ee/query-service/interfaces"
 	licensepkg "go.signoz.io/signoz/ee/query-service/license"
+	"go.signoz.io/signoz/ee/query-service/pipelines"
 	"go.signoz.io/signoz/ee/query-service/usage"
 
 	"go.signoz.io/signoz/pkg/query-service/agentConf"
@@ -128,6 +129,12 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 		return nil, err
 	}
 
+	// ingestion rules manager
+	pipelinesController, err := pipelines.NewPipelinesController(localDB, AppDbEngine)
+	if err != nil {
+		return nil, err
+	}
+
 	// initiate agent config handler
 	if err := agentConf.Initiate(localDB, AppDbEngine); err != nil {
 		return nil, err
@@ -152,6 +159,7 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 		FeatureFlags:        lm,
 		LicenseManager:      lm,
 		IngestionController: ingestionController,
+		PipelinesController: pipelinesController,
 	}
 
 	apiHandler, err := api.NewAPIHandler(apiOpts)
