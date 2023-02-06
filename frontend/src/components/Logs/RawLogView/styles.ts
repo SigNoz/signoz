@@ -1,3 +1,4 @@
+import { blue } from '@ant-design/colors';
 import { Col, Row } from 'antd';
 import styled from 'styled-components';
 
@@ -18,8 +19,8 @@ export const RawLogViewContainer = styled(Row)<{ $isDarkMode: boolean }>`
 `;
 
 export const ExpandIconWrapper = styled(Col)`
-	color: #177ddc;
-	padding: 4px 6px;
+	color: ${blue[6]};
+	padding: 0.25rem 0.375rem;
 	cursor: pointer;
 	font-size: 12px;
 `;

@@ -4,6 +4,7 @@ import ListLogView from 'components/Logs/ListLogView';
 import RawLogView from 'components/Logs/RawLogView';
 import LogsTableView from 'components/Logs/TableView';
 import Spinner from 'components/Spinner';
+import { contentStyle } from 'container/Trace/Search/config';
 import React, { memo, useCallback, useMemo } from 'react';
 import { useSelector } from 'react-redux';
 import { Virtuoso } from 'react-virtuoso';
@@ -76,7 +77,7 @@ function LogsTable(props: LogsTableProps): JSX.Element {
 		}
 
 		return (
-			<Card bodyStyle={{ padding: 0 }}>
+			<Card bodyStyle={contentStyle}>
 				<Virtuoso
 					useWindowScroll
 					totalCount={logs.length}
