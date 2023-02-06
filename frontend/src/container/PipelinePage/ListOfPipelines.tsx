@@ -1,4 +1,3 @@
-/* eslint-disable react/no-unstable-nested-components */
 import {
 	CopyFilled,
 	DeleteFilled,
@@ -22,11 +21,10 @@ import {
 	Tag,
 	Typography,
 } from 'antd';
-import { ColumnProps } from 'antd/es/table';
 import { ColumnsType } from 'antd/lib/table';
 import DraggableTableRow from 'components/DraggableTableRow';
 import useComponentPermission from 'hooks/useComponentPermission';
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useState } from 'react';
 import update from 'react-addons-update';
 import { DndProvider } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
@@ -56,8 +54,9 @@ function ListOfPipelines({
 	isActionType: string | undefined;
 	setActionType: (b: string | undefined) => void;
 }): JSX.Element {
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	const [dataSource, setDataSource] = useState<any>([]);
+	const [dataSource, setDataSource] = useState<Array<PipelineColumnType>>(
+		pipelineData,
+	);
 	const [selectedRecord, setSelectedRecord] = useState<string>('');
 	const { role } = useSelector<AppState, AppReducer>((state) => state.app);
 
@@ -65,20 +64,6 @@ function ListOfPipelines({
 
 	const [modal, contextHolder] = Modal.useModal();
 	const { Text } = Typography;
-
-	useEffect(() => {
-		const updatedData = pipelineData?.map((e) => ({
-			id: String(e.id),
-			key: e.key,
-			pipelineName: e.pname,
-			filter: e.filter,
-			tags: e.Tags,
-			lastEdited: e.last_edited,
-			editedBy: e.EditedBy,
-			description: e.description,
-		}));
-		setDataSource(updatedData);
-	}, []);
 
 	const handleAlert = useCallback(
 		({
@@ -106,13 +91,12 @@ function ListOfPipelines({
 				cancelText: <Text>Cancel</Text>,
 				onOk: onOkClick,
 				onCancel: onCancelClick,
-				// centered: true,
 			});
 		},
 		[Text, modal],
 	);
 
-	const columns: ColumnsType<PipelineColumn> = [
+	const columns: ColumnsType<PipelineColumnType> = [
 		{
 			title: '',
 			dataIndex: 'id',
@@ -158,7 +142,7 @@ function ListOfPipelines({
 		},
 	];
 
-	const handlePipelineEditAction = (record: PipelineColumn): void => {
+	const handlePipelineEditAction = (record: PipelineColumnType): void => {
 		setActionType('edit-pipeline');
 		setSelectedRecord(record.pipelineName);
 	};
@@ -244,6 +228,7 @@ function ListOfPipelines({
 		[handleAlert, dataSource, setDataSource],
 	);
 
+	// eslint-disable-next-line react/no-unstable-nested-components
 	function FooterData(): React.ReactElement {
 		return (
 			<div>
@@ -282,7 +267,8 @@ function ListOfPipelines({
 					<Table
 						columns={columns}
 						expandable={{
-							expandedRowRender: (record: ValueType): React.ReactNode => (
+							// eslint-disable-next-line react/no-unstable-nested-components
+							expandedRowRender: (record: PipelineColumnType): React.ReactNode => (
 								<>
 									<List
 										size="small"
@@ -333,6 +319,7 @@ function ListOfPipelines({
 							),
 							rowExpandable: (record): boolean =>
 								record.pipelineName !== 'Not Expandable',
+							// eslint-disable-next-line react/no-unstable-nested-components
 							expandIcon: ({ expanded, onExpand, record }): JSX.Element =>
 								expanded ? (
 									<DownOutlined onClick={(e): void => onExpand(record, e)} />
@@ -351,6 +338,7 @@ function ListOfPipelines({
 							// eslint-disable-next-line @typescript-eslint/no-explicit-any
 							return attr as React.HTMLAttributes<any>;
 						}}
+						// eslint-disable-next-line react/no-unstable-nested-components
 						footer={(): React.ReactElement => <FooterData />}
 					/>
 				</DndProvider>
@@ -359,20 +347,12 @@ function ListOfPipelines({
 	);
 }
 
-interface PipelineColumn extends ColumnProps<PipelineColumn> {
+export interface PipelineColumnType {
 	id: string;
+	key: number;
 	pipelineName: string;
-	filter: number;
-	address: string;
-	tags: () => React.ReactElement;
-	lastEdited: string;
-	editedBy: string;
-	description: Array<string>;
-}
-
-interface ValueType {
-	id: string;
-	pipelineName: string;
+	filter: string;
+	tags: Array<string>;
 	lastEdited: string;
 	editedBy: string;
 	description: Array<string>;

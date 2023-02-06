@@ -1,12 +1,14 @@
-export const pipelineData = [
+import { PipelineColumnType } from './ListOfPipelines';
+
+export const pipelineData: Array<PipelineColumnType> = [
 	{
-		id: 1,
+		id: '1',
 		key: 1,
-		pname: 'Nginx',
+		pipelineName: 'Nginx',
 		filter: 'nginx:true',
-		Tags: ['server', 'app'],
-		last_edited: 'Dec 23, 2022',
-		EditedBy: '',
+		tags: ['server', 'app'],
+		lastEdited: 'Dec 23, 2022',
+		editedBy: '',
 		description: [
 			'Grok Parser: Parsing Nginx logs',
 			'Remapper: Map `client` to `network.client.ip`',
@@ -15,13 +17,13 @@ export const pipelineData = [
 		],
 	},
 	{
-		id: 2,
+		id: '2',
 		key: 2,
-		pname: 'flog',
+		pipelineName: 'flog',
 		filter: 'flog:true',
-		Tags: ['server', 'app'],
-		last_edited: 'Dec 23, 2022',
-		EditedBy: '',
+		tags: ['server', 'app'],
+		lastEdited: 'Dec 23, 2022',
+		editedBy: '',
 		description: [
 			'Data Parser: Parsing Nginx logs',
 			'Remap: Map `client` to `network.client.ip`',
