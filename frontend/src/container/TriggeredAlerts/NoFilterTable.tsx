@@ -1,6 +1,7 @@
 /* eslint-disable react/display-name */
-import { Table, Tag, Typography } from 'antd';
+import { Tag, Typography } from 'antd';
 import { ColumnsType } from 'antd/lib/table';
+import { ResizeTable } from 'components/ResizeTable';
 import AlertStatus from 'container/TriggeredAlerts/TableComponents/AlertStatus';
 import convertDateToAmAndPm from 'lib/convertDateToAmAndPm';
 import getFormattedDate from 'lib/getFormatedDate';
@@ -21,6 +22,7 @@ function NoFilterTable({
 		{
 			title: 'Status',
 			dataIndex: 'status',
+			width: 80,
 			key: 'status',
 			sorter: (a, b): number =>
 				b.labels.severity.length - a.labels.severity.length,
@@ -30,6 +32,7 @@ function NoFilterTable({
 			title: 'Alert Name',
 			dataIndex: 'labels',
 			key: 'alertName',
+			width: 100,
 			sorter: (a, b): number =>
 				(a.labels?.alertname?.charCodeAt(0) || 0) -
 				(b.labels?.alertname?.charCodeAt(0) || 0),
@@ -42,6 +45,7 @@ function NoFilterTable({
 			title: 'Tags',
 			dataIndex: 'labels',
 			key: 'tags',
+			width: 100,
 			render: (labels): JSX.Element => {
 				const objectKeys = Object.keys(labels);
 				const withOutSeverityKeys = objectKeys.filter((e) => e !== 'severity');
@@ -63,6 +67,7 @@ function NoFilterTable({
 			title: 'Severity',
 			dataIndex: 'labels',
 			key: 'severity',
+			width: 100,
 			sorter: (a, b): number => {
 				const severityValueA = a.labels.severity;
 				const severityValueB = b.labels.severity;
@@ -79,6 +84,7 @@ function NoFilterTable({
 		{
 			title: 'Firing Since',
 			dataIndex: 'startsAt',
+			width: 100,
 			sorter: (a, b): number =>
 				new Date(a.startsAt).getTime() - new Date(b.startsAt).getTime(),
 			render: (date): JSX.Element => {
@@ -94,7 +100,11 @@ function NoFilterTable({
 	];
 
 	return (
-		<Table rowKey="startsAt" dataSource={filteredAlerts} columns={columns} />
+		<ResizeTable
+			columns={columns}
+			rowKey="startsAt"
+			dataSource={filteredAlerts}
+		/>
 	);
 }
 

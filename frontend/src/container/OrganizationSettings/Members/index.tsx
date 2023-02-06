@@ -1,9 +1,10 @@
-import { Button, Modal, notification, Space, Table, Typography } from 'antd';
+import { Button, Modal, notification, Space, Typography } from 'antd';
 import { ColumnsType } from 'antd/lib/table';
 import deleteUser from 'api/user/deleteUser';
 import editUserApi from 'api/user/editUser';
 import getOrgUser from 'api/user/getOrgUser';
 import updateRole from 'api/user/updateRole';
+import { ResizeTable } from 'components/ResizeTable';
 import dayjs from 'dayjs';
 import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -258,21 +259,25 @@ function Members(): JSX.Element {
 			title: 'Name',
 			dataIndex: 'name',
 			key: 'name',
+			width: 100,
 		},
 		{
 			title: 'Emails',
 			dataIndex: 'email',
 			key: 'email',
+			width: 100,
 		},
 		{
 			title: 'Access Level',
 			dataIndex: 'accessLevel',
 			key: 'accessLevel',
+			width: 50,
 		},
 		{
 			title: 'Joined On',
 			dataIndex: 'joinedOn',
 			key: 'joinedOn',
+			width: 60,
 			render: (_, record): JSX.Element => {
 				const { joinedOn } = record;
 				return (
@@ -285,6 +290,7 @@ function Members(): JSX.Element {
 		{
 			title: 'Action',
 			dataIndex: 'action',
+			width: 80,
 			render: (_, record): JSX.Element => (
 				<UserFunction
 					{...{
@@ -303,10 +309,10 @@ function Members(): JSX.Element {
 	return (
 		<Space direction="vertical" size="middle">
 			<Typography.Title level={3}>Members</Typography.Title>
-			<Table
+			<ResizeTable
+				columns={columns}
 				tableLayout="fixed"
 				dataSource={dataSource}
-				columns={columns}
 				pagination={false}
 				loading={status === 'loading'}
 			/>
