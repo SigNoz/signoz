@@ -1,17 +1,17 @@
-export const inputfiledName = [
+export const inputfieldName = [
 	{
 		id: 1,
-		fildName: 'Name',
+		fieldName: 'Name',
 		placeholder: 'Name',
 	},
 	{
 		id: 2,
-		fildName: 'Tags',
+		fieldName: 'Tags',
 		placeholder: 'Tags',
 	},
 	{
 		id: 3,
-		fildName: 'Description',
+		fieldName: 'Description',
 		placeholder: 'Enter description for your pipeline',
 	},
 ];

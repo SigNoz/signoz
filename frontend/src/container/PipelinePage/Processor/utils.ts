@@ -5,15 +5,15 @@ export const items: Array<{ value: string; label: string }> = [
 	{ value: 'Status Remapper', label: 'Status Remapper' },
 ];
 
-export const grokProcessorInputFild = [
+export const processorInputField = [
 	{
 		id: 1,
-		fildName: 'Name the Processor',
+		fieldName: 'Name the Processor',
 		placeholder: 'Name',
 	},
 	{
 		id: 2,
-		fildName: 'Define Parsing Rules',
+		fieldName: 'Define Parsing Rules',
 		placeholder: 'example rule: %{word:first}',
 	},
 ];

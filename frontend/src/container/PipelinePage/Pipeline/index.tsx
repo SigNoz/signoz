@@ -2,7 +2,7 @@ import { Button, Divider, Form, Input, Modal, Typography } from 'antd';
 import React, { useMemo } from 'react';
 
 import PiplinesSearchBar from '../SearchBar';
-import { inputfiledName } from './utils';
+import { inputfieldName } from './utils';
 
 function NewPipline({
 	isActionType,
@@ -57,13 +57,13 @@ function NewPipline({
 				style={{ marginTop: '20px' }}
 				onFinish={onFinish}
 			>
-				{inputfiledName.map((i) => {
+				{inputfieldName.map((i) => {
 					if (i.id === 3) {
 						return (
-							<Form.Item name={i.fildName} label={i.fildName} key={i.id}>
+							<Form.Item name={i.fieldName} label={i.fieldName} key={i.id}>
 								<Input.TextArea
 									rows={3}
-									name={i.fildName}
+									name={i.fieldName}
 									placeholder={
 										isEdit ? 'This is a pipeline to edit wifi logs' : i.placeholder
 									}
@@ -83,7 +83,7 @@ function NewPipline({
 										lineHeight: '20px',
 									}}
 								>
-									{i.fildName}
+									{i.fieldName}
 								</span>
 							}
 							key={i.id}
@@ -92,9 +92,9 @@ function NewPipline({
 									required: true,
 								},
 							]}
-							name={i.fildName}
+							name={i.fieldName}
 						>
-							<Input name={i.fildName} placeholder={i.placeholder} />
+							<Input name={i.fieldName} placeholder={i.placeholder} />
 						</Form.Item>
 					);
 				})}

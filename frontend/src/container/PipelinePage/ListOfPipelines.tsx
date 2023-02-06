@@ -23,6 +23,7 @@ import {
 } from 'antd';
 import { ColumnsType } from 'antd/lib/table';
 import DraggableTableRow from 'components/DraggableTableRow';
+import { themeColors } from 'constants/theme';
 import useComponentPermission from 'hooks/useComponentPermission';
 import React, { useCallback, useState } from 'react';
 import update from 'react-addons-update';
@@ -33,18 +34,19 @@ import { AppState } from 'store/reducers';
 import AppReducer from 'types/reducer/app';
 
 import {
-	deleteModalDescriptionStyle,
 	iconStyle,
-	listIconStyle,
-	listItemTitleStyle,
 	modalFooterStyle,
-	modalFooterTitle,
 	modalTitleStyle,
 	sublistDataStyle,
 } from './config';
 import Pipline from './Pipeline';
 import Processor from './Processor';
-import { Container } from './styles';
+import {
+	AlertContentWrapper,
+	Container,
+	ListItemTitleWrapper,
+	ModalFooterTitle,
+} from './styles';
 import { pipelineData } from './utils';
 
 function ListOfPipelines({
@@ -86,7 +88,7 @@ function ListOfPipelines({
 					</Typography.Title>
 				),
 				icon: <ExclamationCircleOutlined />,
-				content: <Text style={deleteModalDescriptionStyle}>{descrition}</Text>,
+				content: <AlertContentWrapper>{descrition}</AlertContentWrapper>,
 				okText: <Text>{buttontext}</Text>,
 				cancelText: <Text>Cancel</Text>,
 				onOk: onOkClick,
@@ -102,11 +104,9 @@ function ListOfPipelines({
 			dataIndex: 'id',
 			key: 'id',
 			render: (i: number): JSX.Element => (
-				<div>
-					<Avatar style={listIconStyle} size="small">
-						{i}
-					</Avatar>
-				</div>
+				<Avatar style={{ background: themeColors.navyBlue }} size="small">
+					{i}
+				</Avatar>
 			),
 		},
 		{
@@ -303,7 +303,9 @@ function ListOfPipelines({
 														{index + 1}
 													</Avatar>
 												</div>
-												<List.Item.Meta title={<p style={listItemTitleStyle}>{item}</p>} />
+												<List.Item.Meta
+													title={<ListItemTitleWrapper>{item}</ListItemTitleWrapper>}
+												/>
 											</List.Item>
 										)}
 									/>
@@ -313,7 +315,7 @@ function ListOfPipelines({
 										onClick={(): void => setActionType('add-processor')}
 									>
 										<PlusCircleOutlined />
-										<span style={modalFooterTitle}>Add Processor</span>
+										<ModalFooterTitle>Add Processor</ModalFooterTitle>
 									</Button>
 								</>
 							),

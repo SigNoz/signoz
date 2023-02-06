@@ -8,11 +8,13 @@ import {
 	Select as DefaultSelect,
 	Typography,
 } from 'antd';
+import { themeColors } from 'constants/theme';
 import React, { useMemo } from 'react';
 
-import { modalIcon, modalIconStyle } from '../config';
+import { modalIcon } from '../config';
+import { ModalFooterTitle } from '../styles';
 import { wrapperStyle } from './config';
-import { grokProcessorInputFild, items } from './utils';
+import { items, processorInputField } from './utils';
 
 function NewProcessor({
 	isActionType,
@@ -91,29 +93,18 @@ function NewProcessor({
 					style={{ marginTop: '20px' }}
 					onFinish={onFinish}
 				>
-					{grokProcessorInputFild.map((i, index) => {
+					{processorInputField.map((i, index) => {
 						if (i.id === 1) {
 							return (
 								<div key={i.id + Math.random()} style={wrapperStyle}>
-									<Avatar size="small" style={modalIconStyle}>
+									<Avatar size="small" style={{ background: themeColors.navyBlue }}>
 										{index + 2}
 									</Avatar>
 									<div style={{ width: '100%' }}>
 										<Form.Item
 											required={false}
-											label={
-												<span
-													style={{
-														fontStyle: 'normal',
-														fontWeight: 400,
-														fontSize: '12px',
-														lineHeight: '20px',
-													}}
-												>
-													{i.fildName}
-												</span>
-											}
-											name={i.fildName}
+											label={<ModalFooterTitle>{i.fieldName}</ModalFooterTitle>}
+											name={i.fieldName}
 											key={i.id}
 											rules={[
 												{
@@ -121,7 +112,7 @@ function NewProcessor({
 												},
 											]}
 										>
-											<Input placeholder={i.placeholder} name={i.fildName} />
+											<Input placeholder={i.placeholder} name={i.fieldName} />
 										</Form.Item>
 									</div>
 								</div>
@@ -129,24 +120,11 @@ function NewProcessor({
 						}
 						return (
 							<div key={i.id + Math.random()} style={wrapperStyle}>
-								<Avatar size="small" style={modalIconStyle}>
+								<Avatar size="small" style={{ background: themeColors.navyBlue }}>
 									{index + 2}
 								</Avatar>
 								<div style={{ width: '100%' }}>
-									<Form.Item
-										label={
-											<span
-												style={{
-													fontStyle: 'normal',
-													fontWeight: 400,
-													fontSize: '12px',
-													lineHeight: '20px',
-												}}
-											>
-												{i.fildName}
-											</span>
-										}
-									>
+									<Form.Item label={<ModalFooterTitle>{i.fieldName}</ModalFooterTitle>}>
 										<Input.TextArea rows={4} placeholder={i.placeholder} />
 									</Form.Item>
 								</div>
