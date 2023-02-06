@@ -231,6 +231,20 @@ function Graph({
 						tension: 0,
 						cubicInterpolationMode: 'monotone',
 					},
+					point: {
+						hoverBackgroundColor: (ctx) => {
+							// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+							// @ts-ignore
+							if (ctx?.element?.options?.borderColor) {
+								// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+								// @ts-ignore
+								return ctx.element.options.borderColor;
+							}
+
+							return 'rgba(0,0,0,0.1)';
+						},
+						hoverRadius: 5,
+					},
 				},
 				onClick: (event, element, chart) => {
 					if (onClickHandler) {
