@@ -1,6 +1,7 @@
 import { ExpandAltOutlined } from '@ant-design/icons';
-import { Table, Typography } from 'antd';
+import { Typography } from 'antd';
 import { ColumnsType, ColumnType } from 'antd/es/table';
+import { ResizeTable } from 'components/ResizeTable';
 import dayjs from 'dayjs';
 // utils
 import { FlatLogData } from 'lib/logs/flatLogData';
@@ -10,7 +11,7 @@ import { IField } from 'types/api/logs/fields';
 import { ILog } from 'types/api/logs/log';
 
 // config
-import { defaultCellStyle } from './config';
+import { defaultCellStyle, tableScroll } from './config';
 // styles
 import { ExpandIconWrapper } from './styles';
 
@@ -38,6 +39,7 @@ function LogsTableView(props: LogsTableViewProps): JSX.Element {
 				title: name,
 				dataIndex: name,
 				key: name,
+				width: 200,
 				render: (field): ColumnTypeRender<Record<string, unknown>> => ({
 					props: {
 						style: defaultCellStyle,
@@ -76,6 +78,7 @@ function LogsTableView(props: LogsTableViewProps): JSX.Element {
 				title: 'Timestamp',
 				dataIndex: 'timestamp',
 				key: 'timestamp',
+				width: 200,
 				render: (field): ColumnTypeRender<Record<string, unknown>> => {
 					const date = dayjs(field / 1e6).format();
 
@@ -92,13 +95,13 @@ function LogsTableView(props: LogsTableViewProps): JSX.Element {
 	}, [fields, linesPerRow, onClickExpand]);
 
 	return (
-		<Table
+		<ResizeTable
 			columns={columns}
 			dataSource={flattenLogData}
 			pagination={false}
 			rowKey="id"
 			bordered
-			scroll={{ x: true }}
+			scroll={tableScroll}
 		/>
 	);
 }
