@@ -8,7 +8,7 @@ import {
 	Select as DefaultSelect,
 	Typography,
 } from 'antd';
-import React from 'react';
+import React, { useMemo } from 'react';
 
 import { modalIcon, modalIconStyle } from '../config';
 import { wrapperStyle } from './config';
@@ -17,12 +17,19 @@ import { grokProcessorInputFild, items } from './utils';
 function NewProcessor({
 	isActionType,
 	setActionType,
+	selectedRecord,
 }: {
 	isActionType: string | undefined;
 	setActionType: (b: string | undefined) => void;
+	selectedRecord: string;
 }): JSX.Element {
 	const { Option } = DefaultSelect;
 	const [form] = Form.useForm();
+
+	const isEdit = useMemo(() => isActionType === 'edit-processor', [
+		isActionType,
+	]);
+	const isAdd = useMemo(() => isActionType === 'add-processor', [isActionType]);
 
 	const onFinish = (values: unknown): void => {
 		console.log('onFinish-values:', values);
@@ -41,13 +48,11 @@ function NewProcessor({
 						lineHeight: '24px',
 					}}
 				>
-					{isActionType === 'edit'
-						? `Edit <Add something>`
-						: 'Create Grok Processor'}
+					{isEdit ? `Edit Processor ${selectedRecord}` : 'Create New Processor'}
 				</Typography.Title>
 			}
 			centered
-			open={isActionType === 'edit' || isActionType === 'add'}
+			open={isEdit || isAdd}
 			width={800}
 			footer={null}
 			onCancel={(): void => setActionType(undefined)}
@@ -154,9 +159,9 @@ function NewProcessor({
 							style={{ display: 'flex', flexDirection: 'row-reverse', gap: '10px' }}
 						>
 							<Button key="submit" type="primary" htmlType="submit">
-								{isActionType === 'edit' ? 'Update' : 'Create'}
+								{isEdit ? 'Update' : 'Create'}
 							</Button>
-							<Button key="back" onClick={(): void => setActionType('')}>
+							<Button key="back" onClick={(): void => setActionType(undefined)}>
 								Cancel
 							</Button>
 						</div>

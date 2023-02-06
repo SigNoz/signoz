@@ -1,6 +1,5 @@
-/* eslint-disable no-template-curly-in-string */
 import { Button, Divider, Form, Input, Modal, Typography } from 'antd';
-import React from 'react';
+import React, { useMemo } from 'react';
 
 import PiplinesSearchBar from '../SearchBar';
 import { inputfiledName } from './utils';
@@ -8,11 +7,16 @@ import { inputfiledName } from './utils';
 function NewPipline({
 	isActionType,
 	setActionType,
+	selectedRecord,
 }: {
 	isActionType: string | undefined;
 	setActionType: (b: string | undefined) => void;
+	selectedRecord: string;
 }): JSX.Element {
 	const [form] = Form.useForm();
+
+	const isEdit = useMemo(() => isActionType === 'edit-pipeline', [isActionType]);
+	const isAdd = useMemo(() => isActionType === 'add-pipeline', [isActionType]);
 
 	const onFinish = (values: unknown): void => {
 		console.log('onFinish-values:', values);
@@ -31,13 +35,11 @@ function NewPipline({
 						lineHeight: '24px',
 					}}
 				>
-					{isActionType === 'edit'
-						? `Edit Pipeline : <something>`
-						: 'Create Pipeline'}
+					{isEdit ? `Edit Pipeline : ${selectedRecord}` : 'Create New Pipeline'}
 				</Typography.Title>
 			}
 			centered
-			open={isActionType === 'edit' || isActionType === 'add'}
+			open={isEdit || isAdd}
 			width={800}
 			footer={null}
 			onCancel={(): void => setActionType(undefined)}
@@ -63,9 +65,7 @@ function NewPipline({
 									rows={3}
 									name={i.fildName}
 									placeholder={
-										isActionType === 'edit'
-											? 'This is a pipeline to edit wifi logs'
-											: i.placeholder
+										isEdit ? 'This is a pipeline to edit wifi logs' : i.placeholder
 									}
 								/>
 							</Form.Item>
@@ -104,7 +104,7 @@ function NewPipline({
 						style={{ display: 'flex', flexDirection: 'row-reverse', gap: '10px' }}
 					>
 						<Button key="submit" type="primary" htmlType="submit">
-							{isActionType === 'edit' ? 'Update' : 'Create'}
+							{isEdit ? 'Update' : 'Create'}
 						</Button>
 						<Button key="back" onClick={(): void => setActionType(undefined)}>
 							Cancel

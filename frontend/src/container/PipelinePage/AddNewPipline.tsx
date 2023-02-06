@@ -14,7 +14,7 @@ function AddNewPipline({
 			<TextToolTip text="Add Piplines" />
 			<Button
 				icon={<PlusOutlined />}
-				onClick={(): void => setActionType('add')}
+				onClick={(): void => setActionType('add-pipeline')}
 				type="primary"
 			>
 				New Pipeline

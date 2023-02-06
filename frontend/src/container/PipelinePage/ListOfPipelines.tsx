@@ -58,6 +58,7 @@ function ListOfPipelines({
 }): JSX.Element {
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	const [dataSource, setDataSource] = useState<any>([]);
+	const [selectedRecord, setSelectedRecord] = useState<string>('');
 	const { role } = useSelector<AppState, AppReducer>((state) => state.app);
 
 	const [action] = useComponentPermission(['action'], role);
@@ -79,7 +80,7 @@ function ListOfPipelines({
 		setDataSource(updatedData);
 	}, []);
 
-	const WarningMessageModal = useCallback(
+	const handleAlert = useCallback(
 		({
 			title,
 			descrition,
@@ -157,8 +158,9 @@ function ListOfPipelines({
 		},
 	];
 
-	const handlePipelineEditAction = (): void => {
-		setActionType('edit');
+	const handlePipelineEditAction = (record: PipelineColumn): void => {
+		setActionType('edit-pipeline');
+		setSelectedRecord(record.pipelineName);
 	};
 
 	if (action) {
@@ -172,7 +174,7 @@ function ListOfPipelines({
 					<span>
 						<EditOutlined
 							style={iconStyle}
-							onClick={(): void => handlePipelineEditAction()}
+							onClick={(): void => handlePipelineEditAction(record)}
 						/>
 					</span>
 					<span>
@@ -181,7 +183,7 @@ function ListOfPipelines({
 					<span>
 						<DeleteFilled
 							onClick={(): void =>
-								WarningMessageModal({
+								handleAlert({
 									title: `Do you want to delete pipeline : ${record.pipelineName}?`,
 									descrition:
 										'Logs are processed sequentially in processors and pipelines. Deleting a pipeline may change content of data processed by other pipelines & processors',
@@ -229,7 +231,7 @@ function ListOfPipelines({
 			});
 
 			if (dragRow) {
-				WarningMessageModal({
+				handleAlert({
 					title: 'Do you want to reorder pipeline?',
 					descrition:
 						'Logs are processed sequentially in processors and pipelines. Reordering it may change how data is processed by them.',
@@ -239,7 +241,7 @@ function ListOfPipelines({
 				});
 			}
 		},
-		[WarningMessageModal, dataSource, setDataSource],
+		[handleAlert, dataSource, setDataSource],
 	);
 
 	function FooterData(): React.ReactElement {
@@ -247,7 +249,7 @@ function ListOfPipelines({
 			<div>
 				<Button
 					type="link"
-					onClick={(): void => setActionType('add')}
+					onClick={(): void => setActionType('add-pipeline')}
 					style={modalFooterStyle}
 					icon={<PlusOutlined />}
 				>
@@ -257,15 +259,24 @@ function ListOfPipelines({
 		);
 	}
 
-	const handleProcessorEditAction = (): void => {
-		setActionType('edit');
+	const handleProcessorEditAction = (record: string): void => {
+		setActionType('edit-processor');
+		setSelectedRecord(record);
 	};
 
 	return (
 		<div>
 			{contextHolder}
-			<Pipline isActionType={isActionType} setActionType={setActionType} />
-			<Processor isActionType={isActionType} setActionType={setActionType} />
+			<Pipline
+				isActionType={isActionType}
+				setActionType={setActionType}
+				selectedRecord={selectedRecord}
+			/>
+			<Processor
+				isActionType={isActionType}
+				setActionType={setActionType}
+				selectedRecord={selectedRecord}
+			/>
 			<Container>
 				<DndProvider backend={HTML5Backend}>
 					<Table
@@ -285,7 +296,7 @@ function ListOfPipelines({
 													<span key="list-edit">
 														<EditOutlined
 															style={iconStyle}
-															onClick={(): void => handleProcessorEditAction()}
+															onClick={(): void => handleProcessorEditAction(item)}
 														/>
 													</span>,
 													<span key="list-view">
@@ -313,7 +324,7 @@ function ListOfPipelines({
 									<Button
 										type="link"
 										style={modalFooterStyle}
-										onClick={(): void => setActionType('add')}
+										onClick={(): void => setActionType('add-processor')}
 									>
 										<PlusCircleOutlined />
 										<span style={modalFooterTitle}>Add Processor</span>

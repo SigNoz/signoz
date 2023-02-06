@@ -109,9 +109,10 @@ module.exports = {
 		// eslint rules need to remove
 		'@typescript-eslint/no-shadow': 'off',
 		'import/no-cycle': 'off',
+
 		'prettier/prettier': [
 			'error',
-			{ endOfLine: 'auto' },
+			{},
 			{
 				usePrettierrc: true,
 			},
