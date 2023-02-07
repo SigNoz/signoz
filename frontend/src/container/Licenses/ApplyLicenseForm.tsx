@@ -26,10 +26,12 @@ function ApplyLicenseForm({
 		enabled: false,
 	});
 
+	const [notifications, NotificationElement] = notification.useNotification();
+
 	const onFinish = async (values: unknown | { key: string }): Promise<void> => {
 		const params = values as { key: string };
 		if (params.key === '' || !params.key) {
-			notification.error({
+			notifications.error({
 				message: 'Error',
 				description: t('enter_license_key'),
 			});
@@ -53,18 +55,18 @@ function ApplyLicenseForm({
 						payload: featureFlagsResponse.data.payload,
 					});
 				}
-				notification.success({
+				notifications.success({
 					message: 'Success',
 					description: t('license_applied'),
 				});
 			} else {
-				notification.error({
+				notifications.error({
 					message: 'Error',
 					description: response.error || t('unexpected_error'),
 				});
 			}
 		} catch (e) {
-			notification.error({
+			notifications.error({
 				message: 'Error',
 				description: t('unexpected_error'),
 			});
@@ -74,6 +76,7 @@ function ApplyLicenseForm({
 
 	return (
 		<ApplyFormContainer>
+			{NotificationElement}
 			<ApplyForm layout="inline" onFinish={onFinish}>
 				<LicenseInput labelAlign="left" name="key">
 					<Input

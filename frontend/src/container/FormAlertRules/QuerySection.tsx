@@ -163,10 +163,11 @@ function QuerySection({
 			...allQueries,
 		});
 	};
+	const [notifications, NotificationElement] = notification.useNotification();
 
 	const addMetricQuery = useCallback(() => {
 		if (Object.keys(metricQueries).length > 5) {
-			notification.error({
+			notifications.error({
 				message: t('metric_query_max_limit'),
 			});
 			return;
@@ -191,7 +192,7 @@ function QuerySection({
 			expression: queryLabel,
 		};
 		setMetricQueries({ ...queries });
-	}, [t, getNextQueryLabel, metricQueries, setMetricQueries]);
+	}, [t, getNextQueryLabel, metricQueries, setMetricQueries, notifications]);
 
 	const addFormula = useCallback(() => {
 		// defaulting to F1 as only one formula is supported
@@ -350,6 +351,7 @@ function QuerySection({
 	};
 	return (
 		<>
+			{NotificationElement}
 			<StepHeading> {t('alert_form_step1')}</StepHeading>
 			<FormContainer>
 				<div style={{ display: 'flex' }}>{renderTabs(alertType)}</div>

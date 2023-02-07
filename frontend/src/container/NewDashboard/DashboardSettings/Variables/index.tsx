@@ -1,6 +1,8 @@
 import { blue, red } from '@ant-design/colors';
 import { PlusOutlined } from '@ant-design/icons';
-import { Button, Modal, Row, Space, Table, Tag } from 'antd';
+import { Button, Modal, notification, Row, Space, Tag } from 'antd';
+import { NotificationInstance } from 'antd/es/notification/interface';
+import { ResizeTable } from 'components/ResizeTable';
 import React, { useRef, useState } from 'react';
 import { connect, useSelector } from 'react-redux';
 import { bindActionCreators, Dispatch } from 'redux';
@@ -23,6 +25,8 @@ function VariablesSetting({
 	const { dashboards } = useSelector<AppState, DashboardReducer>(
 		(state) => state.dashboards,
 	);
+
+	const [notifications, NotificationElement] = notification.useNotification();
 
 	const [selectedDashboard] = dashboards;
 
@@ -74,8 +78,7 @@ function VariablesSetting({
 		if (oldName) {
 			delete newVariables[oldName];
 		}
-
-		updateDashboardVariables(newVariables);
+		updateDashboardVariables(newVariables, notifications);
 		onDoneVariableViewMode();
 	};
 
@@ -87,7 +90,7 @@ function VariablesSetting({
 	const handleDeleteConfirm = (): void => {
 		const newVariables = { ...variables };
 		if (variableToDelete?.current) delete newVariables[variableToDelete?.current];
-		updateDashboardVariables(newVariables);
+		updateDashboardVariables(newVariables, notifications);
 		variableToDelete.current = null;
 		setDeleteVariableModal(false);
 	};
@@ -102,15 +105,18 @@ function VariablesSetting({
 		{
 			title: 'Variable',
 			dataIndex: 'name',
+			width: 100,
 			key: 'name',
 		},
 		{
 			title: 'Definition',
 			dataIndex: 'description',
+			width: 100,
 			key: 'description',
 		},
 		{
 			title: 'Actions',
+			width: 50,
 			key: 'action',
 			render: (_: IDashboardVariable): JSX.Element => (
 				<Space>
@@ -137,6 +143,7 @@ function VariablesSetting({
 
 	return (
 		<>
+			{NotificationElement}
 			{variableViewMode ? (
 				<VariableItem
 					variableData={{ ...variableEditData } as IDashboardVariable}
@@ -158,7 +165,7 @@ function VariablesSetting({
 							<PlusOutlined /> New Variables
 						</Button>
 					</Row>
-					<Table columns={columns} dataSource={variablesTableData} />
+					<ResizeTable columns={columns} dataSource={variablesTableData} />
 				</>
 			)}
 			<Modal
@@ -178,6 +185,7 @@ function VariablesSetting({
 interface DispatchProps {
 	updateDashboardVariables: (
 		props: Record<string, IDashboardVariable>,
+		notify: NotificationInstance,
 	) => (dispatch: Dispatch<AppActions>) => void;
 }
 

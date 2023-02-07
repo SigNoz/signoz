@@ -4,7 +4,7 @@ import getStep from 'lib/getStep';
 import { generateFilterQuery } from 'lib/logs/generateFilterQuery';
 import React, { memo, useMemo } from 'react';
 import { connect, useDispatch, useSelector } from 'react-redux';
-import { bindActionCreators } from 'redux';
+import { bindActionCreators, Dispatch } from 'redux';
 import { ThunkDispatch } from 'redux-thunk';
 import { getLogs } from 'store/actions/logs/getLogs';
 import { getLogsAggregate } from 'store/actions/logs/getLogsAggregate';
@@ -46,7 +46,7 @@ function ActionItem({
 		liveTail,
 		idEnd,
 	} = useSelector<AppState, ILogsReducer>((store) => store.logs);
-	const dispatch = useDispatch();
+	const dispatch = useDispatch<Dispatch<AppActions>>();
 
 	const { maxTime, minTime } = useSelector<AppState, GlobalReducer>(
 		(state) => state.globalTime,
@@ -62,7 +62,9 @@ function ActionItem({
 		}
 		dispatch({
 			type: SET_SEARCH_QUERY_STRING,
-			payload: updatedQueryString,
+			payload: {
+				searchQueryString: updatedQueryString,
+			},
 		});
 
 		if (liveTail === 'STOPPED') {
