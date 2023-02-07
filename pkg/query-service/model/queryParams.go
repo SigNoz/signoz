@@ -131,6 +131,11 @@ type QueryRangeParamsV2 struct {
 	Variables            map[string]interface{} `json:"variables,omitempty"`
 }
 
+type ExplorerQuery struct {
+	DataSource           DataSource            `json:"dataSource" `
+	CompositeMetricQuery *CompositeMetricQuery `json:"compositeMetricQuery"`
+}
+
 type DashboardVars struct {
 	Query     string                 `json:"query"`
 	Variables map[string]interface{} `json:"variables,omitempty"`
