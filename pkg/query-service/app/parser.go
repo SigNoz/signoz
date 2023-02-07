@@ -355,11 +355,6 @@ func parseFilteredSpanAggregatesRequest(r *http.Request) (*model.GetFilteredSpan
 		}
 	}
 
-	groupBy := postData.GroupBy
-	if groupBy == "none" {
-		postData.GroupBy = ""
-	}
-
 	var dimension, aggregationOption string
 
 	switch function {
