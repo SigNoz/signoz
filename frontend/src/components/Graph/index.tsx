@@ -241,15 +241,11 @@ function Graph({
 						cubicInterpolationMode: 'monotone',
 					},
 					point: {
-						hoverBackgroundColor: (ctx) => {
-							// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-							// @ts-ignore
+						// eslint-disable-next-line @typescript-eslint/no-explicit-any
+						hoverBackgroundColor: (ctx: any) => {
 							if (ctx?.element?.options?.borderColor) {
-								// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-								// @ts-ignore
 								return ctx.element.options.borderColor;
 							}
-
 							return 'rgba(0,0,0,0.1)';
 						},
 						hoverRadius: 5,
