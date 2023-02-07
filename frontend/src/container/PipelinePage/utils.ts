@@ -2,7 +2,7 @@ import { PipelineColumnType } from './ListOfPipelines';
 
 export const pipelineData: Array<PipelineColumnType> = [
 	{
-		id: '0',
+		id: '1',
 		key: 0,
 		pipelineName: 'Nginx',
 		filter: 'nginx:true',
@@ -17,7 +17,7 @@ export const pipelineData: Array<PipelineColumnType> = [
 		],
 	},
 	{
-		id: '1',
+		id: '2',
 		key: 1,
 		pipelineName: 'flog',
 		filter: 'flog:true',
@@ -31,13 +31,13 @@ export const pipelineData: Array<PipelineColumnType> = [
 		],
 	},
 	{
-		id: '2',
+		id: '3',
 		key: 2,
-		pipelineName: 'datadog',
-		filter: 'datadog:true',
-		tags: ['datadog'],
+		pipelineName: 'host',
+		filter: 'host:1234-',
+		tags: ['host'],
 		lastEdited: 'Feb 23, 2022',
-		editedBy: 'Palash',
+		editedBy: '',
 		description: [
 			'Data Parser: Parsing Nginx logs',
 			'Revoke: Map `server` to `network.server.ip`',
