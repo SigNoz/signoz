@@ -21,6 +21,10 @@ export const Container = styled.div`
 	margin-top: 3rem;
 `;
 
+export const ContainerHead = styled.div`
+	margin-top: 0;
+`;
+
 export const AlertContentWrapper = styled.div`
 	font-weight: 400;
 	font-style: normal;

@@ -13,7 +13,6 @@ import {
 import {
 	Avatar,
 	Button,
-	List,
 	Modal,
 	Space,
 	Switch,
@@ -24,15 +23,11 @@ import {
 import { ColumnsType } from 'antd/lib/table';
 import DraggableTableRow from 'components/DraggableTableRow';
 import { themeColors } from 'constants/theme';
-import useComponentPermission from 'hooks/useComponentPermission';
 import React, { useCallback, useState } from 'react';
 import update from 'react-addons-update';
 import { DndProvider } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
 import { useTranslation } from 'react-i18next';
-import { useSelector } from 'react-redux';
-import { AppState } from 'store/reducers';
-import AppReducer from 'types/reducer/app';
 
 import {
 	iconStyle,
@@ -45,7 +40,7 @@ import Processor from './Processor';
 import {
 	AlertContentWrapper,
 	Container,
-	ListItemTitleWrapper,
+	ContainerHead,
 	ModalFooterTitle,
 } from './styles';
 import { pipelineData } from './utils';
@@ -60,10 +55,12 @@ function ListOfPipelines({
 	const [dataSource, setDataSource] = useState<Array<PipelineColumnType>>(
 		pipelineData,
 	);
+	const [childDataSource, setChildDataSource] = useState<
+		Array<SubPiplineColumsType>
+	>();
+	const [activeExpRow, setActiveExpRow] = React.useState<Array<string>>();
 	const [selectedRecord, setSelectedRecord] = useState<string>('');
-	const { role } = useSelector<AppState, AppReducer>((state) => state.app);
 	const { t } = useTranslation(['common']);
-	const [action] = useComponentPermission(['action'], role);
 
 	const [modal, contextHolder] = Modal.useModal();
 	const { Text } = Typography;
@@ -98,6 +95,11 @@ function ListOfPipelines({
 		},
 		[Text, modal, t],
 	);
+
+	const handlePipelineEditAction = (record: PipelineColumnType): void => {
+		setActionType('edit-pipeline');
+		setSelectedRecord(record.pipelineName);
+	};
 
 	const columns: ColumnsType<PipelineColumnType> = [
 		{
@@ -141,15 +143,7 @@ function ListOfPipelines({
 			dataIndex: 'editedBy',
 			key: 'editedBy',
 		},
-	];
-
-	const handlePipelineEditAction = (record: PipelineColumnType): void => {
-		setActionType('edit-pipeline');
-		setSelectedRecord(record.pipelineName);
-	};
-
-	if (action) {
-		columns.push({
+		{
 			title: 'Action',
 			dataIndex: 'action',
 			key: 'action',
@@ -179,24 +173,23 @@ function ListOfPipelines({
 					</span>
 				</Space>
 			),
-		});
-	}
-
-	columns.push({
-		title: '',
-		dataIndex: 'action',
-		key: 'action',
-		render: (): JSX.Element => (
-			<div style={{ display: 'flex', justifyContent: 'center', gap: '20px' }}>
-				<span>
-					<Switch />
-				</span>
-				<span style={{ cursor: 'move' }}>
-					<HolderOutlined style={iconStyle} />
-				</span>
-			</div>
-		),
-	});
+		},
+		{
+			title: '',
+			dataIndex: 'action',
+			key: 'action',
+			render: (): JSX.Element => (
+				<div style={{ display: 'flex', justifyContent: 'center', gap: '20px' }}>
+					<span>
+						<Switch />
+					</span>
+					<span style={{ cursor: 'move' }}>
+						<HolderOutlined style={iconStyle} />
+					</span>
+				</div>
+			),
+		},
+	];
 
 	const components = {
 		body: {
@@ -224,7 +217,31 @@ function ListOfPipelines({
 				});
 			}
 		},
-		[handleAlert, dataSource, setDataSource, t],
+		[dataSource, handleAlert, t],
+	);
+
+	const moveProcessorRow = useCallback(
+		(dragIndex: number, hoverIndex: number) => {
+			const dragRows = childDataSource?.[dragIndex];
+			if (childDataSource) {
+				const updatedRows = update(childDataSource, {
+					$splice: [
+						[dragIndex, 1],
+						[hoverIndex, 0, dragRows],
+					],
+				});
+				if (dragRows) {
+					handleAlert({
+						title: t('reorder_pipeline'),
+						descrition: t('reorder_pipeline_description'),
+						buttontext: t('reorder'),
+						onOkClick: (): void => setChildDataSource(updatedRows),
+						onCancelClick: (): void => setChildDataSource(childDataSource),
+					});
+				}
+			}
+		},
+		[childDataSource, handleAlert, t],
 	);
 
 	// eslint-disable-next-line react/no-unstable-nested-components
@@ -248,6 +265,97 @@ function ListOfPipelines({
 		setSelectedRecord(record);
 	};
 
+	const subcolumns: ColumnsType<SubPiplineColumsType> = [
+		{
+			title: '',
+			dataIndex: 'id',
+			key: 'id',
+			render: (index: number): JSX.Element => (
+				<Avatar style={sublistDataStyle} size="small">
+					{index}
+				</Avatar>
+			),
+		},
+		{
+			title: '',
+			dataIndex: 'text',
+			key: 'list',
+			// eslint-disable-next-line sonarjs/no-identical-functions, @typescript-eslint/no-explicit-any
+			render: (item: any): JSX.Element => (
+				<div style={{ margin: '5px', padding: '5px' }}>{item}</div>
+			),
+		},
+		{
+			title: '',
+			dataIndex: 'action',
+			key: 'action',
+			render: (_value, record): JSX.Element => (
+				<div style={{ display: 'flex', gap: '16px' }}>
+					<span key="list-edit">
+						<EditOutlined
+							style={iconStyle}
+							onClick={(): void => handleProcessorEditAction(record.text)}
+						/>
+					</span>
+					<span key="list-view">
+						<DeleteFilled style={iconStyle} />
+					</span>
+					<span key="list-copy">
+						<CopyFilled style={iconStyle} />
+					</span>
+				</div>
+			),
+		},
+		{
+			title: '',
+			dataIndex: 'action',
+			key: 'action',
+			// eslint-disable-next-line sonarjs/no-identical-functions
+			render: (): JSX.Element => (
+				<div style={{ display: 'flex', justifyContent: 'center', gap: '20px' }}>
+					<span>
+						<Switch />
+					</span>
+					<span style={{ cursor: 'move' }}>
+						<HolderOutlined style={iconStyle} />
+					</span>
+				</div>
+			),
+		},
+	];
+
+	// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
+	const expandedRow = (): JSX.Element => (
+		<ContainerHead>
+			<DndProvider backend={HTML5Backend}>
+				<Table
+					showHeader={false}
+					columns={subcolumns}
+					components={components}
+					dataSource={childDataSource}
+					pagination={false}
+					// eslint-disable-next-line @typescript-eslint/no-explicit-any
+					onRow={(_record, index): React.HTMLAttributes<any> => {
+						const attr = {
+							index,
+							moveRow: moveProcessorRow,
+						};
+						// eslint-disable-next-line @typescript-eslint/no-explicit-any
+						return attr as React.HTMLAttributes<any>;
+					}}
+				/>
+				<Button
+					type="link"
+					style={modalFooterStyle}
+					onClick={(): void => setActionType('add-processor')}
+				>
+					<PlusCircleOutlined />
+					<ModalFooterTitle>{t('add_new_processor')}</ModalFooterTitle>
+				</Button>
+			</DndProvider>
+		</ContainerHead>
+	);
+
 	return (
 		<div>
 			{contextHolder}
@@ -265,61 +373,8 @@ function ListOfPipelines({
 				<DndProvider backend={HTML5Backend}>
 					<Table
 						columns={columns}
+						expandedRowRender={expandedRow}
 						expandable={{
-							// eslint-disable-next-line react/no-unstable-nested-components
-							expandedRowRender: (record: PipelineColumnType): React.ReactNode => (
-								<>
-									<List
-										size="small"
-										itemLayout="horizontal"
-										dataSource={record.description}
-										// eslint-disable-next-line @typescript-eslint/no-explicit-any
-										renderItem={(item: any, index: number): JSX.Element => (
-											<List.Item
-												key={index}
-												actions={[
-													<span key="list-edit">
-														<EditOutlined
-															style={iconStyle}
-															onClick={(): void => handleProcessorEditAction(item)}
-														/>
-													</span>,
-													<span key="list-view">
-														<EyeFilled style={iconStyle} />
-													</span>,
-													<span key="list-copy">
-														<CopyFilled style={iconStyle} />
-													</span>,
-													<Space size="middle" key={index + Math.random()}>
-														<span style={{ cursor: 'move' }}>
-															<HolderOutlined />
-														</span>
-													</Space>,
-												]}
-											>
-												<div style={{ margin: '5px', padding: '5px' }}>
-													<Avatar style={sublistDataStyle} size="small">
-														{index + 1}
-													</Avatar>
-												</div>
-												<List.Item.Meta
-													title={<ListItemTitleWrapper>{item}</ListItemTitleWrapper>}
-												/>
-											</List.Item>
-										)}
-									/>
-									<Button
-										type="link"
-										style={modalFooterStyle}
-										onClick={(): void => setActionType('add-processor')}
-									>
-										<PlusCircleOutlined />
-										<ModalFooterTitle>{t('add_new_processor')}</ModalFooterTitle>
-									</Button>
-								</>
-							),
-							rowExpandable: (record): boolean =>
-								record.pipelineName !== 'Not Expandable',
 							// eslint-disable-next-line react/no-unstable-nested-components
 							expandIcon: ({ expanded, onExpand, record }): JSX.Element =>
 								expanded ? (
@@ -327,9 +382,28 @@ function ListOfPipelines({
 								) : (
 									<RightOutlined onClick={(e): void => onExpand(record, e)} />
 								),
+							expandedRowKeys: activeExpRow,
+							onExpand: (expanded, record): void => {
+								const keys = [];
+								if (expanded) {
+									keys.push(record.id);
+								}
+								setActiveExpRow(keys);
+								const processorData = record.description.map((item, index): {
+									id: number;
+									text: string;
+								} => ({
+									id: index,
+									text: item,
+								}));
+								setChildDataSource(processorData);
+							},
 						}}
 						components={components}
-						dataSource={dataSource}
+						dataSource={dataSource.map((item) => ({
+							...item,
+							key: item.id,
+						}))}
 						// eslint-disable-next-line @typescript-eslint/no-explicit-any
 						onRow={(_record, index): React.HTMLAttributes<any> => {
 							const attr = {
@@ -350,12 +424,17 @@ function ListOfPipelines({
 
 export interface PipelineColumnType {
 	id: string;
-	key: number;
+	key: number | string;
 	pipelineName: string;
 	filter: string;
 	tags: Array<string>;
 	lastEdited: string;
 	editedBy: string;
 	description: Array<string>;
+}
+
+export interface SubPiplineColumsType {
+	id: number;
+	text: string;
 }
 export default ListOfPipelines;
