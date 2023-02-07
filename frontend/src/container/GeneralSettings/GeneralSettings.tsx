@@ -172,6 +172,8 @@ function GeneralSettings({
 		logsTtlValuesPayload.status === 'pending' ? 1000 : null,
 	);
 
+	const [notifications, NotificationElement] = notification.useNotification();
+
 	const onModalToggleHandler = (type: TTTLType): void => {
 		if (type === 'metrics') setModalMetrics((modal) => !modal);
 		if (type === 'traces') setModalTraces((modal) => !modal);
@@ -186,14 +188,14 @@ function GeneralSettings({
 	const onClickSaveHandler = useCallback(
 		(type: TTTLType) => {
 			if (!setRetentionPermission) {
-				notification.error({
+				notifications.error({
 					message: `Sorry you don't have permission to make these changes`,
 				});
 				return;
 			}
 			onModalToggleHandler(type);
 		},
-		[setRetentionPermission],
+		[setRetentionPermission, notifications],
 	);
 
 	const s3Enabled = useMemo(
@@ -352,7 +354,7 @@ function GeneralSettings({
 			let hasSetTTLFailed = false;
 			if (setTTLResponse.statusCode === 409) {
 				hasSetTTLFailed = true;
-				notification.error({
+				notifications.error({
 					message: 'Error',
 					description: t('retention_request_race_condition'),
 					placement: 'topRight',
@@ -390,7 +392,7 @@ function GeneralSettings({
 					});
 			}
 		} catch (error) {
-			notification.error({
+			notifications.error({
 				message: 'Error',
 				description: t('retention_failed_message'),
 				placement: 'topRight',
@@ -591,6 +593,7 @@ function GeneralSettings({
 
 	return (
 		<>
+			{NotificationElement}
 			{Element}
 			<Col xs={24} md={22} xl={20} xxl={18} style={{ margin: 'auto' }}>
 				<ErrorTextContainer>

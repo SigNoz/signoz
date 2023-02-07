@@ -1,8 +1,9 @@
 import { Input, InputRef, Popover } from 'antd';
 import useUrlQuery from 'hooks/useUrlQuery';
 import getStep from 'lib/getStep';
-import { debounce } from 'lodash-es';
+import debounce from 'lodash-es/debounce';
 import React, {
+	memo,
 	useCallback,
 	useEffect,
 	useMemo,
@@ -12,6 +13,7 @@ import React, {
 import { connect, useDispatch, useSelector } from 'react-redux';
 import { bindActionCreators, Dispatch } from 'redux';
 import { ThunkDispatch } from 'redux-thunk';
+import { GetLogsFields } from 'store/actions/logs/getFields';
 import { getLogs } from 'store/actions/logs/getLogs';
 import { getLogsAggregate } from 'store/actions/logs/getLogsAggregate';
 import { AppState } from 'store/reducers';
@@ -32,6 +34,7 @@ import { useSearchParser } from './useSearchParser';
 function SearchFilter({
 	getLogs,
 	getLogsAggregate,
+	getLogsFields,
 }: SearchFilterProps): JSX.Element {
 	const {
 		updateParsedQuery,
@@ -45,7 +48,7 @@ function SearchFilter({
 		AppState,
 		ILogsReducer
 	>((state) => state.logs);
-	const { maxTime, minTime } = useSelector<AppState, GlobalReducer>(
+	const globalTime = useSelector<AppState, GlobalReducer>(
 		(state) => state.globalTime,
 	);
 	const dispatch = useDispatch<Dispatch<AppActions>>();
@@ -69,6 +72,8 @@ function SearchFilter({
 
 	const handleSearch = useCallback(
 		(customQuery: string) => {
+			getLogsFields();
+
 			if (liveTail === 'PLAYING') {
 				dispatch({
 					type: TOGGLE_LIVE_TAIL,
@@ -77,15 +82,13 @@ function SearchFilter({
 				dispatch({
 					type: FLUSH_LOGS,
 				});
-				setTimeout(
-					() =>
-						dispatch({
-							type: TOGGLE_LIVE_TAIL,
-							payload: liveTail,
-						}),
-					0,
-				);
+				dispatch({
+					type: TOGGLE_LIVE_TAIL,
+					payload: liveTail,
+				});
 			} else {
+				const { maxTime, minTime } = globalTime;
+
 				getLogs({
 					q: customQuery,
 					limit: logLinesPerPage,
@@ -117,8 +120,8 @@ function SearchFilter({
 			idStart,
 			liveTail,
 			logLinesPerPage,
-			maxTime,
-			minTime,
+			globalTime,
+			getLogsFields,
 		],
 	);
 
@@ -145,12 +148,12 @@ function SearchFilter({
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [
 		urlQueryString,
-		maxTime,
-		minTime,
 		idEnd,
 		idStart,
 		logLinesPerPage,
 		dispatch,
+		globalTime.maxTime,
+		globalTime.minTime,
 	]);
 
 	return (
@@ -194,6 +197,7 @@ function SearchFilter({
 interface DispatchProps {
 	getLogs: typeof getLogs;
 	getLogsAggregate: typeof getLogsAggregate;
+	getLogsFields: typeof GetLogsFields;
 }
 
 type SearchFilterProps = DispatchProps;
@@ -203,6 +207,7 @@ const mapDispatchToProps = (
 ): DispatchProps => ({
 	getLogs: bindActionCreators(getLogs, dispatch),
 	getLogsAggregate: bindActionCreators(getLogsAggregate, dispatch),
+	getLogsFields: bindActionCreators(GetLogsFields, dispatch),
 });
 
-export default connect(null, mapDispatchToProps)(SearchFilter);
+export default connect(null, mapDispatchToProps)(memo(SearchFilter));

@@ -17,28 +17,38 @@ function ListAlertRules(): JSX.Element {
 		cacheTime: 0,
 	});
 
+	const [notifications, NotificationElement] = notification.useNotification();
+
 	useEffect(() => {
 		if (status === 'error' || (status === 'success' && data.statusCode >= 400)) {
-			notification.error({
+			notifications.error({
 				message: data?.error || t('something_went_wrong'),
 			});
 		}
-	}, [data?.error, data?.statusCode, status, t]);
+	}, [data?.error, data?.statusCode, status, t, notifications]);
 
 	// api failed to load the data
 	if (isError) {
-		return <div>{data?.error || t('something_went_wrong')}</div>;
+		return (
+			<div>
+				{NotificationElement}
+				{data?.error || t('something_went_wrong')}
+			</div>
+		);
 	}
 
 	// api is successful but error is present
 	if (status === 'success' && data.statusCode >= 400) {
 		return (
-			<ListAlert
-				{...{
-					allAlertRules: [],
-					refetch,
-				}}
-			/>
+			<>
+				{NotificationElement}
+				<ListAlert
+					{...{
+						allAlertRules: [],
+						refetch,
+					}}
+				/>
+			</>
 		);
 	}
 
@@ -49,6 +59,7 @@ function ListAlertRules(): JSX.Element {
 
 	return (
 		<Space direction="vertical" size="large" style={{ width: '100%' }}>
+			{NotificationElement}
 			<ReleaseNote path={location.pathname} />
 			<ListAlert
 				{...{

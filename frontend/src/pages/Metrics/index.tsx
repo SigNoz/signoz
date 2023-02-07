@@ -30,14 +30,15 @@ function Metrics({ getService }: MetricsProps): JSX.Element {
 		error,
 		errorMessage,
 	} = useSelector<AppState, MetricReducer>((state) => state.metrics);
+	const [notifications, NotificationElement] = notification.useNotification();
 
 	useEffect(() => {
 		if (error) {
-			notification.error({
+			notifications.error({
 				message: errorMessage,
 			});
 		}
-	}, [error, errorMessage]);
+	}, [error, errorMessage, notifications]);
 
 	const selectedTags = useMemo(
 		() =>
@@ -90,6 +91,7 @@ function Metrics({ getService }: MetricsProps): JSX.Element {
 
 	return (
 		<Space direction="vertical" style={{ width: '100%' }}>
+			{NotificationElement}
 			<ReleaseNote path={location.pathname} />
 
 			<ResourceAttributesFilter />

@@ -31,6 +31,8 @@ function EditSSO({
 
 	const { t } = useTranslation(['common']);
 
+	const [notifications, NotificationElement] = notification.useNotification();
+
 	const onFinishHandler = useCallback(() => {
 		form
 			.validateFields()
@@ -44,11 +46,11 @@ function EditSSO({
 				});
 			})
 			.catch(() => {
-				notification.error({
+				notifications.error({
 					message: t('something_went_wrong', { ns: 'common' }),
 				});
 			});
-	}, [form, onRecordUpdateHandler, record, t]);
+	}, [form, onRecordUpdateHandler, record, t, notifications]);
 
 	const onResetHandler = useCallback(() => {
 		form.resetFields();
@@ -61,7 +63,7 @@ function EditSSO({
 			initialValues={record}
 			onFinishFailed={(error): void => {
 				error.errorFields.forEach(({ errors }) => {
-					notification.error({
+					notifications.error({
 						message:
 							errors[0].toString() || t('something_went_wrong', { ns: 'common' }),
 					});
@@ -73,6 +75,7 @@ function EditSSO({
 			autoComplete="off"
 			form={form}
 		>
+			{NotificationElement}
 			{renderFormInputs(record)}
 			<Space
 				style={{ width: '100%', justifyContent: 'flex-end' }}

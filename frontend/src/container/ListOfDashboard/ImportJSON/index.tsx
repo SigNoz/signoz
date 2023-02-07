@@ -41,6 +41,8 @@ function ImportJSON({
 
 	const [editorValue, setEditorValue] = useState<string>('');
 
+	const [notifications, NotificationElement] = notification.useNotification();
+
 	const onChangeHandler: UploadProps['onChange'] = (info) => {
 		const { fileList } = info;
 		const reader = new FileReader();
@@ -106,7 +108,7 @@ function ImportJSON({
 				}, 10);
 			} else {
 				setIsCreateDashboardError(true);
-				notification.error({
+				notifications.error({
 					message:
 						response.error ||
 						t('something_went_wrong', {
@@ -130,58 +132,61 @@ function ImportJSON({
 	);
 
 	return (
-		<Modal
-			open={isImportJSONModalVisible}
-			centered
-			maskClosable
-			destroyOnClose
-			width="70vw"
-			onCancel={onModalHandler}
-			title={
-				<>
-					<Typography.Title level={4}>{t('import_json')}</Typography.Title>
-					<Typography>{t('import_dashboard_by_pasting')}</Typography>
-				</>
-			}
-			footer={
-				<FooterContainer>
-					<Button
-						disabled={editorValue.length === 0}
-						onClick={onClickLoadJsonHandler}
-						loading={dashboardCreating}
-					>
-						{t('load_json')}
-					</Button>
-					{isCreateDashboardError && getErrorNode(t('error_loading_json'))}
-				</FooterContainer>
-			}
-		>
-			<div>
-				<Space direction="horizontal">
-					<Upload
-						accept=".json"
-						showUploadList={false}
-						multiple={false}
-						onChange={onChangeHandler}
-						beforeUpload={(): boolean => false}
-						action="none"
-						data={jsonData}
-					>
-						<Button type="primary">{t('upload_json_file')}</Button>
-					</Upload>
-					{isUploadJSONError && <>{getErrorNode(t('error_upload_json'))}</>}
-				</Space>
+		<>
+			{NotificationElement}
+			<Modal
+				open={isImportJSONModalVisible}
+				centered
+				maskClosable
+				destroyOnClose
+				width="70vw"
+				onCancel={onModalHandler}
+				title={
+					<>
+						<Typography.Title level={4}>{t('import_json')}</Typography.Title>
+						<Typography>{t('import_dashboard_by_pasting')}</Typography>
+					</>
+				}
+				footer={
+					<FooterContainer>
+						<Button
+							disabled={editorValue.length === 0}
+							onClick={onClickLoadJsonHandler}
+							loading={dashboardCreating}
+						>
+							{t('load_json')}
+						</Button>
+						{isCreateDashboardError && getErrorNode(t('error_loading_json'))}
+					</FooterContainer>
+				}
+			>
+				<div>
+					<Space direction="horizontal">
+						<Upload
+							accept=".json"
+							showUploadList={false}
+							multiple={false}
+							onChange={onChangeHandler}
+							beforeUpload={(): boolean => false}
+							action="none"
+							data={jsonData}
+						>
+							<Button type="primary">{t('upload_json_file')}</Button>
+						</Upload>
+						{isUploadJSONError && <>{getErrorNode(t('error_upload_json'))}</>}
+					</Space>
 
-				<EditorContainer>
-					<Typography.Paragraph>{t('paste_json_below')}</Typography.Paragraph>
-					<Editor
-						onChange={(newValue): void => setEditorValue(newValue)}
-						value={editorValue}
-						language="json"
-					/>
-				</EditorContainer>
-			</div>
-		</Modal>
+					<EditorContainer>
+						<Typography.Paragraph>{t('paste_json_below')}</Typography.Paragraph>
+						<Editor
+							onChange={(newValue): void => setEditorValue(newValue)}
+							value={editorValue}
+							language="json"
+						/>
+					</EditorContainer>
+				</div>
+			</Modal>
+		</>
 	);
 }
 

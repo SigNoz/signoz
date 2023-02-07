@@ -4,6 +4,8 @@ import {
 	RightOutlined,
 } from '@ant-design/icons';
 import { Button, Divider, Select } from 'antd';
+import { getGlobalTime } from 'container/LogsSearchFilter/utils';
+import { getMinMax } from 'container/TopNav/AutoRefresh/config';
 import React, { memo, useMemo } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
@@ -13,6 +15,7 @@ import {
 	RESET_ID_START_AND_END,
 	SET_LOG_LINES_PER_PAGE,
 } from 'types/actions/logs';
+import { GlobalReducer } from 'types/reducer/globalTime';
 import { ILogsReducer } from 'types/reducer/logs';
 
 import { ITEMS_PER_PAGE_OPTIONS } from './config';
@@ -28,18 +31,33 @@ function LogControls(): JSX.Element | null {
 		isLoadingAggregate,
 		logs,
 	} = useSelector<AppState, ILogsReducer>((state) => state.logs);
+	const globalTime = useSelector<AppState, GlobalReducer>(
+		(state) => state.globalTime,
+	);
 	const dispatch = useDispatch();
 
 	const handleLogLinesPerPageChange = (e: number): void => {
 		dispatch({
 			type: SET_LOG_LINES_PER_PAGE,
-			payload: e,
+			payload: {
+				logLinesPerPage: e,
+			},
 		});
 	};
 
 	const handleGoToLatest = (): void => {
+		const { maxTime, minTime } = getMinMax(
+			globalTime.selectedTime,
+			globalTime.minTime,
+			globalTime.maxTime,
+		);
+
 		dispatch({
 			type: RESET_ID_START_AND_END,
+			payload: getGlobalTime(globalTime.selectedTime, {
+				maxTime,
+				minTime,
+			}),
 		});
 	};
 
