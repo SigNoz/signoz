@@ -1,7 +1,7 @@
 import { OperatorConversions } from 'constants/resourceAttributes';
 import { IResourceAttributeQuery } from 'container/MetricsApplication/ResourceAttributesFilter/types';
 import { IQueryBuilderTagFilterItems } from 'types/api/dashboard/getAll';
-import { OperatorValues, Tags, TagsAPI } from 'types/reducer/trace';
+import { OperatorValues, Tags } from 'types/reducer/trace';
 
 /**
  * resource_x_y -> x.y
@@ -35,13 +35,9 @@ export const convertOperatorLabelToTraceOperator = (
 
 export const convertRawQueriesToTraceSelectedTags = (
 	queries: IResourceAttributeQuery[],
-	keyType: 'string' | 'array' = 'string',
-): Tags[] | TagsAPI[] =>
+): Tags[] =>
 	queries.map((query) => ({
-		Key:
-			keyType === 'array'
-				? [convertMetricKeyToTrace(query.tagKey)]
-				: (convertMetricKeyToTrace(query.tagKey) as never),
+		Key: [convertMetricKeyToTrace(query.tagKey)],
 		Operator: convertOperatorLabelToTraceOperator(query.operator),
 		StringValues: query.tagValue,
 		NumberValues: [],
