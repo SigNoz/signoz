@@ -10,7 +10,7 @@ import {
 	convertRawQueriesToTraceSelectedTags,
 	resourceAttributesToTagFilterItems,
 } from 'lib/resourceAttributes';
-import React, { useMemo, useRef } from 'react';
+import React, { useMemo, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { useParams } from 'react-router-dom';
 import { AppState } from 'store/reducers';
@@ -26,7 +26,7 @@ function External({ getWidgetQueryBuilder }: ExternalProps): JSX.Element {
 	const { resourceAttributeQueries } = useSelector<AppState, MetricReducer>(
 		(state) => state.metrics,
 	);
-	const selectedTimeStamp = useRef(0);
+	const [selectedTimeStamp, setSelectedTimeStamp] = useState<number>(0);
 
 	const tagFilterItems = useMemo(
 		() => resourceAttributesToTagFilterItems(resourceAttributeQueries) || [],
@@ -106,13 +106,11 @@ function External({ getWidgetQueryBuilder }: ExternalProps): JSX.Element {
 						type="default"
 						size="small"
 						id="external_call_error_percentage_button"
-						onClick={(): void =>
-							onViewTracePopupClick(
-								servicename,
-								selectedTraceTags,
-								selectedTimeStamp.current,
-							)
-						}
+						onClick={onViewTracePopupClick(
+							servicename,
+							selectedTraceTags,
+							selectedTimeStamp,
+						)}
 					>
 						View Traces
 					</Button>
@@ -125,7 +123,7 @@ function External({ getWidgetQueryBuilder }: ExternalProps): JSX.Element {
 								widget={externalCallErrorWidget}
 								yAxisUnit="%"
 								onClickHandler={(ChartEvent, activeElements, chart, data): void => {
-									onGraphClickHandler(selectedTimeStamp)(
+									onGraphClickHandler(setSelectedTimeStamp)(
 										ChartEvent,
 										activeElements,
 										chart,
@@ -143,13 +141,11 @@ function External({ getWidgetQueryBuilder }: ExternalProps): JSX.Element {
 						type="default"
 						size="small"
 						id="external_call_duration_button"
-						onClick={(): void =>
-							onViewTracePopupClick(
-								servicename,
-								selectedTraceTags,
-								selectedTimeStamp.current,
-							)
-						}
+						onClick={onViewTracePopupClick(
+							servicename,
+							selectedTraceTags,
+							selectedTimeStamp,
+						)}
 					>
 						View Traces
 					</Button>
@@ -162,7 +158,7 @@ function External({ getWidgetQueryBuilder }: ExternalProps): JSX.Element {
 								widget={externalCallDurationWidget}
 								yAxisUnit="ms"
 								onClickHandler={(ChartEvent, activeElements, chart, data): void => {
-									onGraphClickHandler(selectedTimeStamp)(
+									onGraphClickHandler(setSelectedTimeStamp)(
 										ChartEvent,
 										activeElements,
 										chart,
@@ -182,13 +178,11 @@ function External({ getWidgetQueryBuilder }: ExternalProps): JSX.Element {
 						type="default"
 						size="small"
 						id="external_call_rps_by_address_button"
-						onClick={(): void =>
-							onViewTracePopupClick(
-								servicename,
-								selectedTraceTags,
-								selectedTimeStamp.current,
-							)
-						}
+						onClick={onViewTracePopupClick(
+							servicename,
+							selectedTraceTags,
+							selectedTimeStamp,
+						)}
 					>
 						View Traces
 					</Button>
@@ -201,7 +195,7 @@ function External({ getWidgetQueryBuilder }: ExternalProps): JSX.Element {
 								widget={externalCallRPSWidget}
 								yAxisUnit="reqps"
 								onClickHandler={(ChartEvent, activeElements, chart, data): void => {
-									onGraphClickHandler(selectedTimeStamp)(
+									onGraphClickHandler(setSelectedTimeStamp)(
 										ChartEvent,
 										activeElements,
 										chart,
@@ -219,13 +213,11 @@ function External({ getWidgetQueryBuilder }: ExternalProps): JSX.Element {
 						type="default"
 						size="small"
 						id="external_call_duration_by_address_button"
-						onClick={(): void =>
-							onViewTracePopupClick(
-								servicename,
-								selectedTraceTags,
-								selectedTimeStamp.current,
-							)
-						}
+						onClick={onViewTracePopupClick(
+							servicename,
+							selectedTraceTags,
+							selectedTimeStamp,
+						)}
 					>
 						View Traces
 					</Button>
@@ -238,7 +230,7 @@ function External({ getWidgetQueryBuilder }: ExternalProps): JSX.Element {
 								widget={externalCallDurationAddressWidget}
 								yAxisUnit="ms"
 								onClickHandler={(ChartEvent, activeElements, chart, data): void => {
-									onGraphClickHandler(selectedTimeStamp)(
+									onGraphClickHandler(setSelectedTimeStamp)(
 										ChartEvent,
 										activeElements,
 										chart,

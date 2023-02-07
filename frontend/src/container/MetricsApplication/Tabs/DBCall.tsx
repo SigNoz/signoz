@@ -8,7 +8,7 @@ import {
 	convertRawQueriesToTraceSelectedTags,
 	resourceAttributesToTagFilterItems,
 } from 'lib/resourceAttributes';
-import React, { useMemo, useRef } from 'react';
+import React, { useMemo, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { useParams } from 'react-router-dom';
 import { AppState } from 'store/reducers';
@@ -22,7 +22,7 @@ import { onGraphClickHandler, onViewTracePopupClick } from './util';
 
 function DBCall({ getWidgetQueryBuilder }: DBCallProps): JSX.Element {
 	const { servicename } = useParams<{ servicename?: string }>();
-	const selectedTimeStamp = useRef(0);
+	const [selectedTimeStamp, setSelectedTimeStamp] = useState<number>(0);
 	const { resourceAttributeQueries } = useSelector<AppState, MetricReducer>(
 		(state) => state.metrics,
 	);
@@ -81,13 +81,11 @@ function DBCall({ getWidgetQueryBuilder }: DBCallProps): JSX.Element {
 					type="default"
 					size="small"
 					id="database_call_rps_button"
-					onClick={(): void =>
-						onViewTracePopupClick(
-							servicename,
-							selectedTraceTags,
-							selectedTimeStamp.current,
-						)
-					}
+					onClick={onViewTracePopupClick(
+						servicename,
+						selectedTraceTags,
+						selectedTimeStamp,
+					)}
 				>
 					View Traces
 				</Button>
@@ -100,7 +98,7 @@ function DBCall({ getWidgetQueryBuilder }: DBCallProps): JSX.Element {
 							widget={databaseCallsRPSWidget}
 							yAxisUnit="reqps"
 							onClickHandler={(ChartEvent, activeElements, chart, data): void => {
-								onGraphClickHandler(selectedTimeStamp)(
+								onGraphClickHandler(setSelectedTimeStamp)(
 									ChartEvent,
 									activeElements,
 									chart,
@@ -118,13 +116,11 @@ function DBCall({ getWidgetQueryBuilder }: DBCallProps): JSX.Element {
 					type="default"
 					size="small"
 					id="database_call_avg_duration_button"
-					onClick={(): void =>
-						onViewTracePopupClick(
-							servicename,
-							selectedTraceTags,
-							selectedTimeStamp.current,
-						)
-					}
+					onClick={onViewTracePopupClick(
+						servicename,
+						selectedTraceTags,
+						selectedTimeStamp,
+					)}
 				>
 					View Traces
 				</Button>
@@ -137,7 +133,7 @@ function DBCall({ getWidgetQueryBuilder }: DBCallProps): JSX.Element {
 							widget={databaseCallsAverageDurationWidget}
 							yAxisUnit="ms"
 							onClickHandler={(ChartEvent, activeElements, chart, data): void => {
-								onGraphClickHandler(selectedTimeStamp)(
+								onGraphClickHandler(setSelectedTimeStamp)(
 									ChartEvent,
 									activeElements,
 									chart,

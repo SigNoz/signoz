@@ -9,7 +9,7 @@ import {
 	convertRawQueriesToTraceSelectedTags,
 	resourceAttributesToTagFilterItems,
 } from 'lib/resourceAttributes';
-import React, { useCallback, useMemo, useRef } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useParams } from 'react-router-dom';
 import { UpdateTimeInterval } from 'store/actions';
@@ -28,7 +28,7 @@ import { onGraphClickHandler, onViewTracePopupClick } from './util';
 
 function Application({ getWidgetQueryBuilder }: DashboardProps): JSX.Element {
 	const { servicename } = useParams<{ servicename?: string }>();
-	const selectedTimeStamp = useRef(0);
+	const [selectedTimeStamp, setSelectedTimeStamp] = useState<number>(0);
 	const dispatch = useDispatch();
 
 	const {
@@ -110,13 +110,11 @@ function Application({ getWidgetQueryBuilder }: DashboardProps): JSX.Element {
 						type="default"
 						size="small"
 						id="Service_button"
-						onClick={(): void =>
-							onViewTracePopupClick(
-								servicename,
-								selectedTraceTags,
-								selectedTimeStamp.current,
-							)
-						}
+						onClick={onViewTracePopupClick(
+							servicename,
+							selectedTraceTags,
+							selectedTimeStamp,
+						)}
 					>
 						View Traces
 					</Button>
@@ -125,7 +123,7 @@ function Application({ getWidgetQueryBuilder }: DashboardProps): JSX.Element {
 						<GraphContainer>
 							<Graph
 								onClickHandler={(ChartEvent, activeElements, chart, data): void => {
-									onGraphClickHandler(selectedTimeStamp)(
+									onGraphClickHandler(setSelectedTimeStamp)(
 										ChartEvent,
 										activeElements,
 										chart,
@@ -188,13 +186,11 @@ function Application({ getWidgetQueryBuilder }: DashboardProps): JSX.Element {
 						type="default"
 						size="small"
 						id="Rate_button"
-						onClick={(): void =>
-							onViewTracePopupClick(
-								servicename,
-								selectedTraceTags,
-								selectedTimeStamp.current,
-							)
-						}
+						onClick={onViewTracePopupClick(
+							servicename,
+							selectedTraceTags,
+							selectedTimeStamp,
+						)}
 					>
 						View Traces
 					</Button>
@@ -205,7 +201,7 @@ function Application({ getWidgetQueryBuilder }: DashboardProps): JSX.Element {
 								name="operations_per_sec"
 								fullViewOptions={false}
 								onClickHandler={(event, element, chart, data): void => {
-									onGraphClickHandler(selectedTimeStamp)(
+									onGraphClickHandler(setSelectedTimeStamp)(
 										event,
 										element,
 										chart,
@@ -228,7 +224,7 @@ function Application({ getWidgetQueryBuilder }: DashboardProps): JSX.Element {
 						size="small"
 						id="Error_button"
 						onClick={(): void => {
-							onErrorTrackHandler(selectedTimeStamp.current);
+							onErrorTrackHandler(selectedTimeStamp);
 						}}
 					>
 						View Traces
@@ -241,7 +237,7 @@ function Application({ getWidgetQueryBuilder }: DashboardProps): JSX.Element {
 								name="error_percentage_%"
 								fullViewOptions={false}
 								onClickHandler={(ChartEvent, activeElements, chart, data): void => {
-									onGraphClickHandler(selectedTimeStamp)(
+									onGraphClickHandler(setSelectedTimeStamp)(
 										ChartEvent,
 										activeElements,
 										chart,

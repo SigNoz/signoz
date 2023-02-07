@@ -13,6 +13,7 @@ module.exports = {
 		'plugin:@typescript-eslint/recommended',
 		'plugin:@typescript-eslint/eslint-recommended',
 		'plugin:prettier/recommended',
+		'plugin:sonarjs/recommended',
 		'plugin:import/errors',
 		'plugin:import/warnings',
 	],

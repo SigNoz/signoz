@@ -7,23 +7,25 @@ export function onViewTracePopupClick(
 	servicename: string | undefined,
 	selectedTraceTags: string,
 	timestamp: number,
-): void {
-	const currentTime = timestamp;
-	const tPlusOne = timestamp + 1 * 60 * 1000;
+): VoidFunction {
+	return (): void => {
+		const currentTime = timestamp;
+		const tPlusOne = timestamp + 1 * 60 * 1000;
 
-	const urlParams = new URLSearchParams();
-	urlParams.set(METRICS_PAGE_QUERY_PARAM.startTime, currentTime.toString());
-	urlParams.set(METRICS_PAGE_QUERY_PARAM.endTime, tPlusOne.toString());
+		const urlParams = new URLSearchParams();
+		urlParams.set(METRICS_PAGE_QUERY_PARAM.startTime, currentTime.toString());
+		urlParams.set(METRICS_PAGE_QUERY_PARAM.endTime, tPlusOne.toString());
 
-	history.replace(
-		`${
-			ROUTES.TRACE
-		}?${urlParams.toString()}&selected={"serviceName":["${servicename}"]}&filterToFetchData=["duration","status","serviceName"]&spanAggregateCurrentPage=1&selectedTags=${selectedTraceTags}&&isFilterExclude={"serviceName":false}&userSelectedFilter={"status":["error","ok"],"serviceName":["${servicename}"]}&spanAggregateCurrentPage=1`,
-	);
+		history.replace(
+			`${
+				ROUTES.TRACE
+			}?${urlParams.toString()}&selected={"serviceName":["${servicename}"]}&filterToFetchData=["duration","status","serviceName"]&spanAggregateCurrentPage=1&selectedTags=${selectedTraceTags}&&isFilterExclude={"serviceName":false}&userSelectedFilter={"status":["error","ok"],"serviceName":["${servicename}"]}&spanAggregateCurrentPage=1`,
+		);
+	};
 }
 
 export function onGraphClickHandler(
-	selectedTimeStamp: React.MutableRefObject<number>,
+	setSelectedTimeStamp: React.Dispatch<React.SetStateAction<number>>,
 ) {
 	return async (
 		event: ChartEvent,
@@ -47,12 +49,11 @@ export function onGraphClickHandler(
 
 				if (data.labels) {
 					const time = data?.labels[firstPoint.index] as Date;
-					const selectedTime = selectedTimeStamp;
 					if (buttonElement) {
 						buttonElement.style.display = 'block';
 						buttonElement.style.left = `${firstPoint.element.x}px`;
 						buttonElement.style.top = `${firstPoint.element.y}px`;
-						selectedTime.current = time.getTime();
+						setSelectedTimeStamp(time.getTime());
 					}
 				}
 			} else if (buttonElement && buttonElement.style.display === 'block') {
