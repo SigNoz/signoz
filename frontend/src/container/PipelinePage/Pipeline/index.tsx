@@ -1,5 +1,6 @@
 import { Button, Divider, Form, Input, Modal, Typography } from 'antd';
 import React, { useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 
 import PiplinesSearchBar from '../SearchBar';
 import { inputfieldName } from './utils';
@@ -14,7 +15,7 @@ function NewPipline({
 	selectedRecord: string;
 }): JSX.Element {
 	const [form] = Form.useForm();
-
+	const { t } = useTranslation(['common']);
 	const isEdit = useMemo(() => isActionType === 'edit-pipeline', [isActionType]);
 	const isAdd = useMemo(() => isActionType === 'add-pipeline', [isActionType]);
 
@@ -35,7 +36,9 @@ function NewPipline({
 						lineHeight: '24px',
 					}}
 				>
-					{isEdit ? `Edit Pipeline : ${selectedRecord}` : 'Create New Pipeline'}
+					{isEdit
+						? `${t('edit_pipeline')} : ${selectedRecord}`
+						: t('create_pipeline')}
 				</Typography.Title>
 			}
 			centered
@@ -46,7 +49,7 @@ function NewPipline({
 		>
 			<Divider plain />
 			<div style={{ marginTop: '25px' }}>
-				<span>Filter</span>
+				<span>{t('filter')}</span>
 				<div style={{ marginTop: '5px' }}>
 					<PiplinesSearchBar />
 				</div>
@@ -65,7 +68,9 @@ function NewPipline({
 									rows={3}
 									name={i.fieldName}
 									placeholder={
-										isEdit ? 'This is a pipeline to edit wifi logs' : i.placeholder
+										isEdit
+											? `This is a pipeline to edit ${selectedRecord}`
+											: i.placeholder
 									}
 								/>
 							</Form.Item>
@@ -104,10 +109,10 @@ function NewPipline({
 						style={{ display: 'flex', flexDirection: 'row-reverse', gap: '10px' }}
 					>
 						<Button key="submit" type="primary" htmlType="submit">
-							{isEdit ? 'Update' : 'Create'}
+							{isEdit ? t('update') : t('create')}
 						</Button>
 						<Button key="back" onClick={(): void => setActionType(undefined)}>
-							Cancel
+							{t('cancel')}
 						</Button>
 					</div>
 				</Form.Item>

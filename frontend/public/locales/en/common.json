@@ -6,5 +6,22 @@
 	"share": "Share",
 	"save": "Save",
 	"edit": "Edit",
-	"logged_in": "Logged In"
+	"delete": "Delete",
+	"filter": "Filter",
+	"update": "Update",
+	"create": "Create",
+	"logged_in": "Logged In",
+	"reorder": "Reorder",
+	"reorder_pipeline": "Do you want to reorder pipeline?",
+	"reorder_pipeline_description": "Logs are processed sequentially in processors and pipelines. Reordering it may change how data is processed by them.",
+	"delete_pipeline": "Do you want to delete pipeline",
+	"delete_pipeline_description": "Logs are processed sequentially in processors and pipelines. Deleting a pipeline may change content of data processed by other pipelines & processors",
+	"add_new_pipeline": "Add a New Pipeline",
+	"new_pipeline": "New Pipeline",
+	"edit_pipeline": "Edit Pipeline",
+	"create_pipeline": "Create New Pipeline",
+	"add_new_processor": "Add Processor",
+	"edit_processor": "Edit Processor",
+	"create_processor": "Create New Processor",
+	"processor_type": "Select Processor Type"
 }

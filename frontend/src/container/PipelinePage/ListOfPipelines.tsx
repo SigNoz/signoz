@@ -29,6 +29,7 @@ import React, { useCallback, useState } from 'react';
 import update from 'react-addons-update';
 import { DndProvider } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
+import { useTranslation } from 'react-i18next';
 import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
 import AppReducer from 'types/reducer/app';
@@ -61,7 +62,7 @@ function ListOfPipelines({
 	);
 	const [selectedRecord, setSelectedRecord] = useState<string>('');
 	const { role } = useSelector<AppState, AppReducer>((state) => state.app);
-
+	const { t } = useTranslation(['common']);
 	const [action] = useComponentPermission(['action'], role);
 
 	const [modal, contextHolder] = Modal.useModal();
@@ -90,12 +91,12 @@ function ListOfPipelines({
 				icon: <ExclamationCircleOutlined />,
 				content: <AlertContentWrapper>{descrition}</AlertContentWrapper>,
 				okText: <Text>{buttontext}</Text>,
-				cancelText: <Text>Cancel</Text>,
+				cancelText: <Text>{t('cancel')}</Text>,
 				onOk: onOkClick,
 				onCancel: onCancelClick,
 			});
 		},
-		[Text, modal],
+		[Text, modal, t],
 	);
 
 	const columns: ColumnsType<PipelineColumnType> = [
@@ -168,10 +169,9 @@ function ListOfPipelines({
 						<DeleteFilled
 							onClick={(): void =>
 								handleAlert({
-									title: `Do you want to delete pipeline : ${record.pipelineName}?`,
-									descrition:
-										'Logs are processed sequentially in processors and pipelines. Deleting a pipeline may change content of data processed by other pipelines & processors',
-									buttontext: 'Delete',
+									title: `${t('delete_pipeline')} : ${record.pipelineName}?`,
+									descrition: t('delete_pipeline_description'),
+									buttontext: t('delete'),
 								})
 							}
 							style={iconStyle}
@@ -216,16 +216,15 @@ function ListOfPipelines({
 
 			if (dragRow) {
 				handleAlert({
-					title: 'Do you want to reorder pipeline?',
-					descrition:
-						'Logs are processed sequentially in processors and pipelines. Reordering it may change how data is processed by them.',
-					buttontext: 'Reorder',
+					title: t('reorder_pipeline'),
+					descrition: t('reorder_pipeline_description'),
+					buttontext: t('reorder'),
 					onOkClick: (): void => setDataSource(updatedRow),
 					onCancelClick: (): void => setDataSource(dataSource),
 				});
 			}
 		},
-		[handleAlert, dataSource, setDataSource],
+		[handleAlert, dataSource, setDataSource, t],
 	);
 
 	// eslint-disable-next-line react/no-unstable-nested-components
@@ -238,7 +237,7 @@ function ListOfPipelines({
 					style={modalFooterStyle}
 					icon={<PlusOutlined />}
 				>
-					Add a New Pipeline
+					{t('add_new_pipeline')}
 				</Button>
 			</div>
 		);
@@ -315,7 +314,7 @@ function ListOfPipelines({
 										onClick={(): void => setActionType('add-processor')}
 									>
 										<PlusCircleOutlined />
-										<ModalFooterTitle>Add Processor</ModalFooterTitle>
+										<ModalFooterTitle>{t('add_new_processor')}</ModalFooterTitle>
 									</Button>
 								</>
 							),
