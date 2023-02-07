@@ -22,7 +22,7 @@ function TraceGraph(): JSX.Element {
 
 	const ChartData = useMemo(
 		() =>
-			selectedGroupBy.length === 0
+			selectedGroupBy.length === 0 || selectedGroupBy === 'none'
 				? getChartData(payload)
 				: getChartDataforGroupBy(payload),
 		[payload, selectedGroupBy],
