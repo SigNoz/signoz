@@ -2,6 +2,17 @@ import { ActiveElement, Chart, ChartData, ChartEvent } from 'chart.js';
 import { METRICS_PAGE_QUERY_PARAM } from 'constants/query';
 import ROUTES from 'constants/routes';
 import history from 'lib/history';
+import { Tags } from 'types/reducer/trace';
+
+export const dbSystemTags: Tags[] = [
+	{
+		Key: ['db.system.(string)'],
+		StringValues: [''],
+		NumberValues: [],
+		BoolValues: [],
+		Operator: 'Exists',
+	},
+];
 
 export function onViewTracePopupClick(
 	servicename: string | undefined,

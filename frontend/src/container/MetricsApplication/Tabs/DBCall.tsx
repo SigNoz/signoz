@@ -14,11 +14,14 @@ import { useParams } from 'react-router-dom';
 import { AppState } from 'store/reducers';
 import { Widgets } from 'types/api/dashboard/getAll';
 import MetricReducer from 'types/reducer/metrics';
-import { Tags } from 'types/reducer/trace';
 
 import { Card, GraphContainer, GraphTitle, Row } from '../styles';
 import { Button } from './styles';
-import { onGraphClickHandler, onViewTracePopupClick } from './util';
+import {
+	dbSystemTags,
+	onGraphClickHandler,
+	onViewTracePopupClick,
+} from './util';
 
 function DBCall({ getWidgetQueryBuilder }: DBCallProps): JSX.Element {
 	const { servicename } = useParams<{ servicename?: string }>();
@@ -30,19 +33,14 @@ function DBCall({ getWidgetQueryBuilder }: DBCallProps): JSX.Element {
 		() => resourceAttributesToTagFilterItems(resourceAttributeQueries) || [],
 		[resourceAttributeQueries],
 	);
-	const dbSystemTags: Tags[] = [
-		{
-			Key: ['db.system.(string)'],
-			StringValues: [''],
-			NumberValues: [],
-			BoolValues: [],
-			Operator: 'Exists',
-		},
-	];
-	const selectedTraceTags: string = JSON.stringify(
-		convertRawQueriesToTraceSelectedTags(resourceAttributeQueries).concat(
-			...dbSystemTags,
-		) || [],
+	const selectedTraceTags: string = useMemo(
+		() =>
+			JSON.stringify(
+				convertRawQueriesToTraceSelectedTags(resourceAttributeQueries).concat(
+					...dbSystemTags,
+				) || [],
+			),
+		[resourceAttributeQueries],
 	);
 	const legend = '{{db_system}}';
 
