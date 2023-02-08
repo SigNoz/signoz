@@ -1,12 +1,13 @@
 package model
 
 import (
+	"database/sql"
 	"encoding/json"
 
 	"github.com/pkg/errors"
 )
 
-// IngestionRule is stored and also deployed finally to collector config
+// Pipeline is stored and also deployed finally to collector config
 type Pipeline struct {
 	Id      string `json:"id,omitempty" db:"id"`
 	OrderId string `json:"orderId" db:"order_id"`
@@ -22,8 +23,8 @@ type Pipeline struct {
 	Creator
 	Updater
 
-	DeploymentStatus   string `db:"deployment_status"`
-	DeploymentSequence string `db:"deployment_sequence"`
+	DeploymentStatus   sql.NullString `db:"deployment_status"`
+	DeploymentSequence sql.NullString `db:"deployment_sequence"`
 }
 
 type PipelineOperatos struct {

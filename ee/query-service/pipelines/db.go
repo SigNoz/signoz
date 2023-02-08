@@ -13,10 +13,12 @@ import (
 	"go.uber.org/zap"
 )
 
-// Repo handles DDL and DML ops on ingestion rules
+// Repo handles DDL and DML ops on ingestion pipeline
 type Repo struct {
 	db *sqlx.DB
 }
+
+const logPipelines = "log_pipelines"
 
 // NewRepo initiates a new ingestion repo
 func NewRepo(db *sqlx.DB) Repo {
@@ -34,10 +36,10 @@ func (r *Repo) InitDB(engine string) error {
 	}
 }
 
-// InsertRule stores a given postable rule to database
+// insertPipeline stores a given postable pipeline to database
 func (r *Repo) insertPipeline(ctx context.Context, postable *PostablePipeline) (*model.Pipeline, error) {
 	if err := postable.IsValid(); err != nil {
-		return nil, errors.Wrap(err, "failed to validate postable ingestion rule")
+		return nil, errors.Wrap(err, "failed to validate postable ingestion pipeline")
 	}
 
 	rawConfig, err := json.Marshal(postable.Config)
@@ -58,7 +60,7 @@ func (r *Repo) insertPipeline(ctx context.Context, postable *PostablePipeline) (
 
 	insertQuery := `INSERT INTO pipelines 
 	(id, order_id, enabled, name, alias, filter, config_json) 
-	VALUES ($1, $2, $3, $4, $5, %6, $7)`
+	VALUES ($1, $2, $3, $4, $5, $6, $7)`
 
 	_, err = r.db.ExecContext(ctx,
 		insertQuery,
@@ -71,8 +73,8 @@ func (r *Repo) insertPipeline(ctx context.Context, postable *PostablePipeline) (
 		insertRow.RawConfig)
 
 	if err != nil {
-		zap.S().Errorf("error in inserting ingestion rule data: ", zap.Error(err))
-		return insertRow, errors.Wrap(err, "failed to insert ingestion rule")
+		zap.S().Errorf("error in inserting pipeline data: ", zap.Error(err))
+		return insertRow, errors.Wrap(err, "failed to insert pipeline")
 	}
 
 	return insertRow, nil
@@ -81,44 +83,44 @@ func (r *Repo) insertPipeline(ctx context.Context, postable *PostablePipeline) (
 // getPipelinesByVersion returns pipelines associated with a given version
 func (r *Repo) getPipelinesByVersion(ctx context.Context, version int) ([]model.Pipeline, []error) {
 	var errors []error
-	rules := []model.Pipeline{}
+	pipelines := []model.Pipeline{}
 
 	versionQuery := `SELECT r.id, 
-		name, 
-		config_json, 
-		deployment_status, 
-		deployment_sequence 
+		r.name, 
+		r.config_json, 
+		r.deployment_status, 
+		r.deployment_sequence 
 		FROM pipelines r,
 			 agent_config_elements e,
 			 agent_config_versions v
 		WHERE r.id = e.element_id
 		AND v.id = e.version_id
-		AND e.element_type = 'pipeline'
-		AND v.version = $1`
+		AND e.element_type = $1
+		AND v.version = $2`
 
-	err := r.db.SelectContext(ctx, &rules, versionQuery, version)
+	err := r.db.SelectContext(ctx, &pipelines, versionQuery, logPipelines, version)
 	if err != nil {
-		return nil, []error{fmt.Errorf("failed to get drop rules from db: %v", err)}
+		return nil, []error{fmt.Errorf("failed to get drop pipelines from db: %v", err)}
 	}
 
-	if len(rules) == 0 {
-		return rules, nil
+	if len(pipelines) == 0 {
+		return pipelines, nil
 	}
 
-	for _, d := range rules {
+	for _, d := range pipelines {
 		if err := d.ParseRawConfig(); err != nil {
 			errors = append(errors, err)
 		}
 	}
 
-	return rules, errors
+	return pipelines, errors
 }
 
-// GetRule returns rules and errors (if any)
+// GetPipelines returns pipeline and errors (if any)
 func (r *Repo) GetPipeline(ctx context.Context, id string) (*model.Pipeline, *model.ApiError) {
-	rules := []model.Pipeline{}
+	pipelines := []model.Pipeline{}
 
-	ruleQuery := `SELECT id, 
+	pipelineQuery := `SELECT id, 
 		name, 
 		config_json, 
 		deployment_status, 
@@ -126,33 +128,33 @@ func (r *Repo) GetPipeline(ctx context.Context, id string) (*model.Pipeline, *mo
 		FROM pipelines 
 		WHERE id = $1`
 
-	err := r.db.SelectContext(ctx, &rules, ruleQuery, id)
+	err := r.db.SelectContext(ctx, &pipelines, pipelineQuery, id)
 	if err != nil {
-		zap.S().Errorf("failed to get ingestion rule from db", err)
-		return nil, model.BadRequestStr("failed to get ingestion rule from db")
+		zap.S().Errorf("failed to get ingestion pipeline from db", err)
+		return nil, model.BadRequestStr("failed to get ingestion pipeline from db")
 	}
 
-	if len(rules) == 0 {
-		zap.S().Warnf("No row found for ingestion rule id", id)
+	if len(pipelines) == 0 {
+		zap.S().Warnf("No row found for ingestion pipeline id", id)
 		return nil, nil
 	}
 
-	// if len(rules) == 1 {
-	// 	err := rules[0].ParseRawConfig()
-	// 	if err != nil {
-	// 		zap.S().Errorf("invalid rule config found", id, err)
-	// 		return &rules[0], model.InternalErrorStr("found an invalid rule config ")
-	// 	}
-	// 	return &rules[0], nil
-	// }
+	if len(pipelines) == 1 {
+		err := pipelines[0].ParseRawConfig()
+		if err != nil {
+			zap.S().Errorf("invalid pipeline config found", id, err)
+			return &pipelines[0], model.InternalErrorStr("found an invalid pipeline config ")
+		}
+		return &pipelines[0], nil
+	}
 
-	return nil, model.InternalErrorStr("mutliple rules with same id")
+	return nil, model.InternalErrorStr("mutliple pipelines with same id")
 
 }
 
 func (r *Repo) DeletePipeline(ctx context.Context, id string) *model.ApiError {
 	deleteQuery := `DELETE
-		FROM ingestion_rules 
+		FROM pipelines 
 		WHERE id = $1`
 
 	_, err := r.db.ExecContext(ctx, deleteQuery, id)

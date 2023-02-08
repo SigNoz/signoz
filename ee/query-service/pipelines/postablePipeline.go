@@ -4,12 +4,12 @@ import (
 	"go.signoz.io/signoz/ee/query-service/model"
 )
 
-// PostableIngestionRules are a list of user defined ingestion rules
+// PostablePipelines are a list of user defined pielines
 type PostablePipelines struct {
 	Pipelines []PostablePipeline `json:"pipelines"`
 }
 
-// PostableIngestionRule captures user inputs in setting the ingestion rule
+// PostablePipeline captures user inputs in setting the pipeline
 
 type PostablePipeline struct {
 	Id      string                   `json:"id"`
@@ -21,7 +21,7 @@ type PostablePipeline struct {
 	Config  []model.PipelineOperatos `json:"config"`
 }
 
-// // IsValid checks if postable rule has all the required params
+// // IsValid checks if postable pipeline has all the required params
 func (p *PostablePipeline) IsValid() *model.ApiError {
 	if p.Name == "" {
 		return model.BadRequestStr("pipeline name is required")

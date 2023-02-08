@@ -1,6 +1,10 @@
 package agentConf
 
-import "github.com/google/uuid"
+import (
+	"database/sql"
+
+	"github.com/google/uuid"
+)
 
 type ElementTypeDef string
 
@@ -23,14 +27,14 @@ type ConfigVersion struct {
 	ID          string         `json:"id" db:"id"`
 	Version     int            `json:"version" db:"version"`
 	ElementType ElementTypeDef `json:"elementType" db:"element_type"`
-	CreatedBy   string         `json:"createdBy" db:"created_by"`
+	CreatedBy   sql.NullString `json:"createdBy" db:"created_by"`
 
 	Active   bool `json:"active" db:"active"`
 	IsValid  bool `json:"is_valid" db:"is_valid"`
 	Disabled bool `json:"disabled" db:"disabled"`
 
-	DeployStatus DeployStatus `json:"deployStatus" db:"deploy_status"`
-	DeployResult string       `json:"deployResult" db:"deploy_result"`
+	DeployStatus DeployStatus   `json:"deployStatus" db:"deploy_status"`
+	DeployResult sql.NullString `json:"deployResult" db:"deploy_result"`
 }
 
 func NewConfigversion(typeDef ElementTypeDef) *ConfigVersion {

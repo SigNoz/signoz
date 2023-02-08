@@ -34,7 +34,7 @@ func InitDB(db *sqlx.DB) error {
 
 	_, err = db.Exec(table_schema)
 	if err != nil {
-		return errors.Wrap(err, "Error in creating ingestion rules table")
+		return errors.Wrap(err, "Error in creating pipelines table")
 	}
 	return nil
 }
