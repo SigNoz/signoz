@@ -1,8 +1,15 @@
+import DraggableTableRow from 'components/DraggableTableRow';
 import { themeColors } from 'constants/theme';
 
 const positionCss: React.CSSProperties['position'] = 'relative';
 
-export const iconStyle = { color: themeColors.gainsboro, fontSize: '1.12rem' };
+export const tableComponents = {
+	body: {
+		row: DraggableTableRow,
+	},
+};
+
+export const iconStyle = { color: themeColors.gainsboro, fontSize: '1.5rem' };
 
 export const modalIcon = {
 	backgroundColor: themeColors.navyBlue,
@@ -13,12 +20,14 @@ export const modalIcon = {
 export const modalFooterStyle = {
 	display: 'flex',
 	gap: '0.5rem',
-	marginLeft: '0.875rem',
+	marginLeft: '5.875rem',
 	alignItems: 'center',
+	fontWeight: 400,
+	fontSize: '14px',
+	lineHeight: '20px',
 };
 
 export const modalTitleStyle = {
-	fontStyle: 'normal',
 	fontWeight: 600,
 	fontSize: '0.875rem',
 	lineHeight: '1rem',
@@ -30,4 +39,5 @@ export const sublistDataStyle = {
 	width: '1rem',
 	fontSize: '0.75rem',
 	lineHeight: '0.813rem',
+	fontWeight: 400,
 };

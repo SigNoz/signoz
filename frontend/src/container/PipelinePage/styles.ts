@@ -1,6 +1,13 @@
-import { Button as ButtonComponent } from 'antd';
+import { Button as ButtonComponent, Table } from 'antd';
+import { TableProps } from 'antd/lib/table';
 import { themeColors } from 'constants/theme';
-import styled from 'styled-components';
+import styled, { DefaultTheme, ThemedCssFunction } from 'styled-components';
+
+export type StyledCSS =
+	| ReturnType<ThemedCssFunction<DefaultTheme>>
+	| string
+	| false
+	| undefined;
 
 export const ButtonContainer = styled.div`
 	&&& {
@@ -21,10 +28,6 @@ export const Container = styled.div`
 	margin-top: 3rem;
 `;
 
-export const ContainerHead = styled.div`
-	margin-top: 0;
-`;
-
 export const AlertContentWrapper = styled.div`
 	font-weight: 400;
 	font-style: normal;
@@ -43,6 +46,46 @@ export const ListItemTitleWrapper = styled.p`
 export const ModalFooterTitle = styled.span`
 	font-style: normal;
 	font-weight: 400;
-	font-size: 0.75rem;
+	font-size: 14px;
 	line-height: 1.25rem;
+`;
+
+export const ListDataStyle = styled.div`
+	margin: 2px;
+	padding: 5px;
+	border: none;
+	font-style: normal;
+	font-weight: 400;
+	font-size: 12px;
+	line-height: 20px;
+`;
+
+export const LastActionColumnStyle = styled.div`
+	display: flex;
+	justify-content: center;
+	gap: 20px;
+	align-items: center;
+`;
+
+export const IconListStyle = styled.div`
+	display: flex;
+	gap: 16px;
+	justify-content: flex-end;
+`;
+
+export const StyledTable: React.FC<
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+	TableProps<any> & { isDarkMode: boolean }
+> = styled(Table)`
+	.ant-table-tbody > tr > td {
+		border: none;
+	}
+
+	.ant-table-tbody > tr:last-child > td {
+		border: none;
+	}
+	.ant-table-content {
+		background: ${({ isDarkMode }: { isDarkMode: boolean }): StyledCSS =>
+			isDarkMode ? themeColors.neroBlack : themeColors.snowWhite};
+	}
 `;
