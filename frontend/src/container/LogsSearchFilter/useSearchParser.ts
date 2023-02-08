@@ -27,10 +27,13 @@ export function useSearchParser(): {
 	const {
 		searchFilter: { parsedQuery, queryString },
 	} = useSelector<AppState, ILogsReducer>((store) => store.logs);
+
 	const { minTime, maxTime, selectedTime } = useSelector<
 		AppState,
 		GlobalReducer
 	>((store) => store.globalTime);
+
+	console.log(queryString, '-----query string');
 
 	const updateQueryString = useCallback(
 		(updatedQueryString: string) => {
@@ -63,7 +66,9 @@ export function useSearchParser(): {
 	);
 
 	useEffect(() => {
-		updateQueryString(queryString);
+		if (queryString) {
+			updateQueryString(queryString);
+		}
 	}, [queryString, updateQueryString]);
 
 	const updateParsedQuery = useCallback(
