@@ -203,6 +203,7 @@ function ListOfPipelines({
 
 	const moveRow = useCallback(
 		(dragIndex: number, hoverIndex: number) => {
+			const rawData = dataSource;
 			const dragRow = dataSource[dragIndex];
 			const updatedRow = update(dataSource, {
 				$splice: [
@@ -217,7 +218,7 @@ function ListOfPipelines({
 					descrition: t('reorder_pipeline_description'),
 					buttontext: t('reorder'),
 					onOkClick: (): void => setDataSource(updatedRow),
-					onCancelClick: (): void => setDataSource(dataSource),
+					onCancelClick: (): void => setDataSource(rawData),
 				});
 			}
 		},
@@ -292,6 +293,7 @@ function ListOfPipelines({
 
 	const moveProcessorRow = useCallback(
 		(dragIndex: number, hoverIndex: number) => {
+			const rawData = childDataSource;
 			const dragRows = childDataSource?.[dragIndex];
 			if (childDataSource) {
 				const updatedRows = update(childDataSource, {
@@ -306,7 +308,7 @@ function ListOfPipelines({
 						descrition: t('reorder_processor_description'),
 						buttontext: t('reorder'),
 						onOkClick: (): void => setChildDataSource(updatedRows),
-						onCancelClick: (): void => setChildDataSource(childDataSource),
+						onCancelClick: (): void => setChildDataSource(rawData),
 					});
 				}
 			}

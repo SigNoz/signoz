@@ -99,7 +99,7 @@ function NewProcessor({
 					{processorInputField.map((i, index) => {
 						if (i.id === 1) {
 							return (
-								<div key={i.id + Math.random()} style={wrapperStyle}>
+								<div key={i.id} style={wrapperStyle}>
 									<Avatar size="small" style={{ background: themeColors.navyBlue }}>
 										{index + 2}
 									</Avatar>
@@ -122,7 +122,7 @@ function NewProcessor({
 							);
 						}
 						return (
-							<div key={i.id + Math.random()} style={wrapperStyle}>
+							<div key={i.id} style={wrapperStyle}>
 								<Avatar size="small" style={{ background: themeColors.navyBlue }}>
 									{index + 2}
 								</Avatar>
