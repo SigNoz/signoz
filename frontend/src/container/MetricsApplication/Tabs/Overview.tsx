@@ -79,7 +79,7 @@ function Application({ getWidgetQueryBuilder }: DashboardProps): JSX.Element {
 
 	const onTracePopupClick = (timestamp: number): void => {
 		const currentTime = timestamp;
-		const tPlusOne = timestamp + 1 * 60 * 1000;
+		const tPlusOne = timestamp + 60 * 1000;
 
 		const urlParams = new URLSearchParams();
 		urlParams.set(METRICS_PAGE_QUERY_PARAM.startTime, currentTime.toString());
@@ -103,10 +103,9 @@ function Application({ getWidgetQueryBuilder }: DashboardProps): JSX.Element {
 			const points = chart.getElementsAtEventForMode(
 				event.native,
 				'nearest',
-				{ intersect: true },
+				{ intersect: false },
 				true,
 			);
-
 			const id = `${from}_button`;
 			const buttonElement = document.getElementById(id);
 
@@ -141,7 +140,7 @@ function Application({ getWidgetQueryBuilder }: DashboardProps): JSX.Element {
 
 	const onErrorTrackHandler = (timestamp: number): void => {
 		const currentTime = timestamp;
-		const tPlusOne = timestamp + 1 * 60 * 1000;
+		const tPlusOne = timestamp + 60 * 1000;
 
 		const urlParams = new URLSearchParams();
 		urlParams.set(METRICS_PAGE_QUERY_PARAM.startTime, currentTime.toString());
@@ -153,6 +152,43 @@ function Application({ getWidgetQueryBuilder }: DashboardProps): JSX.Element {
 			}?${urlParams.toString()}&selected={"serviceName":["${servicename}"],"status":["error"]}&filterToFetchData=["duration","status","serviceName"]&spanAggregateCurrentPage=1&selectedTags=${selectedTraceTags}&isFilterExclude={"serviceName":false,"status":false}&userSelectedFilter={"serviceName":["${servicename}"],"status":["error"]}&spanAggregateCurrentPage=1`,
 		);
 	};
+
+	const generalChartDataProperties = useCallback(
+		(title: string, colorIndex: number) => ({
+			borderColor: colors[colorIndex],
+			label: title,
+			showLine: true,
+			borderWidth: 1.5,
+			spanGaps: true,
+			pointRadius: 2,
+			pointHoverRadius: 8,
+		}),
+		[],
+	);
+
+	const dataSets = useMemo(
+		() => [
+			{
+				data: serviceOverview.map((e) =>
+					parseFloat(convertToNanoSecondsToSecond(e.p99)),
+				),
+				...generalChartDataProperties('p99 Latency', 0),
+			},
+			{
+				data: serviceOverview.map((e) =>
+					parseFloat(convertToNanoSecondsToSecond(e.p95)),
+				),
+				...generalChartDataProperties('p95 Latency', 1),
+			},
+			{
+				data: serviceOverview.map((e) =>
+					parseFloat(convertToNanoSecondsToSecond(e.p50)),
+				),
+				...generalChartDataProperties('p50 Latency', 2),
+			},
+		],
+		[generalChartDataProperties, serviceOverview],
+	);
 
 	return (
 		<>
@@ -178,41 +214,7 @@ function Application({ getWidgetQueryBuilder }: DashboardProps): JSX.Element {
 								name="service_latency"
 								type="line"
 								data={{
-									datasets: [
-										{
-											data: serviceOverview.map((e) =>
-												parseFloat(convertToNanoSecondsToSecond(e.p99)),
-											),
-											borderColor: colors[0],
-											label: 'p99 Latency',
-											showLine: true,
-											borderWidth: 1.5,
-											spanGaps: true,
-											pointRadius: 1.5,
-										},
-										{
-											data: serviceOverview.map((e) =>
-												parseFloat(convertToNanoSecondsToSecond(e.p95)),
-											),
-											borderColor: colors[1],
-											label: 'p95 Latency',
-											showLine: true,
-											borderWidth: 1.5,
-											spanGaps: true,
-											pointRadius: 1.5,
-										},
-										{
-											data: serviceOverview.map((e) =>
-												parseFloat(convertToNanoSecondsToSecond(e.p50)),
-											),
-											borderColor: colors[2],
-											label: 'p50 Latency',
-											showLine: true,
-											borderWidth: 1.5,
-											spanGaps: true,
-											pointRadius: 1.5,
-										},
-									],
+									datasets: dataSets,
 									labels: serviceOverview.map(
 										(e) =>
 											new Date(parseFloat(convertToNanoSecondsToSecond(e.timestamp))),
