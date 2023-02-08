@@ -1,7 +1,6 @@
 import { ExpandAltOutlined } from '@ant-design/icons';
-import { Typography } from 'antd';
+import { Table, Typography } from 'antd';
 import { ColumnsType, ColumnType } from 'antd/es/table';
-import { ResizeTable } from 'components/ResizeTable';
 import dayjs from 'dayjs';
 // utils
 import { FlatLogData } from 'lib/logs/flatLogData';
@@ -10,10 +9,10 @@ import { IField } from 'types/api/logs/fields';
 // interfaces
 import { ILog } from 'types/api/logs/log';
 
+// styles
+import { ExpandIconWrapper } from '../RawLogView/styles';
 // config
 import { defaultCellStyle, tableScroll } from './config';
-// styles
-import { ExpandIconWrapper } from './styles';
 
 type ColumnTypeRender<T = unknown> = ReturnType<
 	NonNullable<ColumnType<T>['render']>
@@ -39,13 +38,12 @@ function LogsTableView(props: LogsTableViewProps): JSX.Element {
 				title: name,
 				dataIndex: name,
 				key: name,
-				width: 90,
 				render: (field): ColumnTypeRender<Record<string, unknown>> => ({
 					props: {
 						style: defaultCellStyle,
 					},
 					children: (
-						<Typography.Paragraph ellipsis={{ rows: linesPerRow, tooltip: true }}>
+						<Typography.Paragraph ellipsis={{ rows: linesPerRow }}>
 							{field}
 						</Typography.Paragraph>
 					),
@@ -58,7 +56,7 @@ function LogsTableView(props: LogsTableViewProps): JSX.Element {
 				title: '',
 				dataIndex: 'id',
 				key: 'expand',
-				width: 30,
+				// https://github.com/ant-design/ant-design/discussions/36886
 				render: (_, item): ColumnTypeRender<Record<string, unknown>> => ({
 					props: {
 						style: defaultCellStyle,
@@ -78,10 +76,9 @@ function LogsTableView(props: LogsTableViewProps): JSX.Element {
 				title: 'Timestamp',
 				dataIndex: 'timestamp',
 				key: 'timestamp',
-				width: 80,
+				// https://github.com/ant-design/ant-design/discussions/36886
 				render: (field): ColumnTypeRender<Record<string, unknown>> => {
 					const date = dayjs(field / 1e6).format();
-
 					return {
 						props: {
 							style: defaultCellStyle,
@@ -95,7 +92,7 @@ function LogsTableView(props: LogsTableViewProps): JSX.Element {
 	}, [fields, linesPerRow, onClickExpand]);
 
 	return (
-		<ResizeTable
+		<Table
 			columns={columns}
 			dataSource={flattenLogData}
 			pagination={false}

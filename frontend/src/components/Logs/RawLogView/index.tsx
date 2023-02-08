@@ -27,9 +27,7 @@ function RawLogView(props: RawLogViewProps): JSX.Element {
 		[data.timestamp, data.body],
 	);
 
-	const ellipsis = useMemo(() => ({ rows: linesPerRow, tooltip: true }), [
-		linesPerRow,
-	]);
+	const ellipsis = useMemo(() => ({ rows: linesPerRow }), [linesPerRow]);
 
 	const handleClickExpand = useCallback(() => {
 		onClickExpand(data);

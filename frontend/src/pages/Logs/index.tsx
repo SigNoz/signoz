@@ -1,4 +1,4 @@
-import { Button, Col, Divider, Dropdown, Popover, Row } from 'antd';
+import { Button, Col, Divider, Popover, Row, Select } from 'antd';
 import LogControls from 'container/LogControls';
 import LogDetailedView from 'container/LogDetailedView';
 import LogLiveTail from 'container/LogLiveTail';
@@ -50,17 +50,22 @@ function Logs(): JSX.Element {
 		[linesPerRow, handleLinesPerRowChange],
 	);
 
-	const dropdownMenu = useMemo(
-		() => ({
-			items: viewModeOptionList,
-			onClick: handleViewModeOptionChange,
-		}),
-		[handleViewModeOptionChange, viewModeOptionList],
-	);
-
 	const isFormatButtonVisible = useMemo(() => logsOptions.includes(viewMode), [
 		viewMode,
 	]);
+
+	const selectedViewModeOption = useMemo(() => viewModeOption.value.toString(), [
+		viewModeOption.value,
+	]);
+
+	const onChangeVeiwMode = useCallback(
+		(key: string) => {
+			handleViewModeOptionChange({
+				key,
+			});
+		},
+		[handleViewModeOptionChange],
+	);
 
 	return (
 		<>
@@ -80,9 +85,11 @@ function Logs(): JSX.Element {
 				<LogsFilters />
 				<Col flex={1}>
 					<Row>
-						<Dropdown menu={dropdownMenu}>
-							<Button>{viewModeOption.label}</Button>
-						</Dropdown>
+						<Select value={selectedViewModeOption} onChange={onChangeVeiwMode}>
+							{viewModeOptionList.map((option) => (
+								<Select.Option key={option.value}>{option.label}</Select.Option>
+							))}
+						</Select>
 
 						{isFormatButtonVisible && (
 							<Popover placement="right" content={renderPopoverContent}>

@@ -1,1 +1,4 @@
-export const rawLineStyle = { marginBottom: 0, fontFamily: 'Courier New' };
+export const rawLineStyle: React.CSSProperties = {
+	marginBottom: 0,
+	fontFamily: "'Fira Code', monospace",
+};

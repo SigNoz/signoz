@@ -18,10 +18,8 @@ import {
 import { GlobalReducer } from 'types/reducer/globalTime';
 import { ILogsReducer } from 'types/reducer/logs';
 
-import { ITEMS_PER_PAGE_OPTIONS } from './config';
+import { DEFAULT_SELECT, ITEMS_PER_PAGE_OPTIONS } from './config';
 import { Container } from './styles';
-
-const { Option } = Select;
 
 function LogControls(): JSX.Element | null {
 	const {
@@ -117,12 +115,16 @@ function LogControls(): JSX.Element | null {
 				Next <RightOutlined />
 			</Button>
 			<Select
+				style={DEFAULT_SELECT}
 				loading={isLoading}
 				value={logLinesPerPage}
 				onChange={handleLogLinesPerPageChange}
 			>
 				{ITEMS_PER_PAGE_OPTIONS.map((count) => (
-					<Option key={count} value={count}>{`${count} / page`}</Option>
+					<Select.Option
+						key={count}
+						value={count}
+					>{`${count} / page`}</Select.Option>
 				))}
 			</Select>
 		</Container>
