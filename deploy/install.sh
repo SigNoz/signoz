@@ -81,6 +81,11 @@ check_os() {
             os="centos"
             package_manager="yum"
             ;;
+        Rocky*)
+            desired_os=1
+            os="centos"
+            package_manager="yum"
+            ;;
         SLES*)
             desired_os=1
             os="sles"
