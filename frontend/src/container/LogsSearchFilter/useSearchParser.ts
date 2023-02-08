@@ -33,8 +33,6 @@ export function useSearchParser(): {
 		GlobalReducer
 	>((store) => store.globalTime);
 
-	console.log(queryString, '-----query string');
-
 	const updateQueryString = useCallback(
 		(updatedQueryString: string) => {
 			history.replace({
