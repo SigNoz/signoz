@@ -37,7 +37,7 @@ const getSpans = async (
 				start: String(props.start),
 				end: String(props.end),
 				function: props.function,
-				groupBy: props.groupBy,
+				groupBy: props.groupBy === 'none' ? '' : props.groupBy,
 				step: props.step,
 				tags: updatedSelectedTags,
 				...nonDuration,
