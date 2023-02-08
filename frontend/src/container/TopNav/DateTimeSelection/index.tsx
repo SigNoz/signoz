@@ -15,6 +15,8 @@ import { AppState } from 'store/reducers';
 import AppActions from 'types/actions';
 import { GlobalReducer } from 'types/reducer/globalTime';
 
+import GetMinMax from '../../../lib/getMinMax';
+import history from '../../../lib/history';
 import AutoRefresh from '../AutoRefresh';
 import CustomDateTimeModal, { DateTimeRangeType } from '../CustomDateTimeModal';
 import { getDefaultOption, getOptions, Time } from './config';
@@ -70,6 +72,15 @@ function DateTimeSelection({
 		AppState,
 		GlobalReducer
 	>((state) => state.globalTime);
+
+	useEffect(() => {
+		if (searchStartTime || searchEndTime) {
+			setCustomDTPickerVisible(false);
+			const startTime = searchStartTime ? +searchStartTime : 0;
+			const endTime = searchEndTime ? +searchEndTime : 0;
+			updateTimeInterval('custom', [startTime, endTime]);
+		}
+	}, [searchEndTime, searchStartTime, updateTimeInterval]);
 
 	const getInputLabel = (
 		startTime?: Dayjs,
@@ -167,6 +178,16 @@ function DateTimeSelection({
 		if (value !== 'custom') {
 			updateTimeInterval(value);
 			updateLocalStorageForRoutes(value);
+			const { maxTime, minTime } = GetMinMax(value);
+			const params = new URLSearchParams({
+				startTime: minTime.toString(),
+				endTime: maxTime.toString(),
+			});
+
+			history.push({
+				search: params.toString(),
+			});
+
 			if (refreshButtonHidden) {
 				setRefreshButtonHidden(false);
 			}
@@ -272,7 +293,6 @@ function DateTimeSelection({
 							</Option>
 						))}
 					</DefaultSelect>
-
 					<FormItem hidden={refreshButtonHidden}>
 						<Button
 							icon={<SyncOutlined />}
@@ -280,7 +300,6 @@ function DateTimeSelection({
 							onClick={onRefreshHandler}
 						/>
 					</FormItem>
-
 					<FormItem>
 						<AutoRefresh disabled={refreshButtonHidden} />
 					</FormItem>
