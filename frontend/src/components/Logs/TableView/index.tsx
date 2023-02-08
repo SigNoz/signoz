@@ -39,7 +39,7 @@ function LogsTableView(props: LogsTableViewProps): JSX.Element {
 				title: name,
 				dataIndex: name,
 				key: name,
-				width: 200,
+				width: 90,
 				render: (field): ColumnTypeRender<Record<string, unknown>> => ({
 					props: {
 						style: defaultCellStyle,
@@ -78,7 +78,7 @@ function LogsTableView(props: LogsTableViewProps): JSX.Element {
 				title: 'Timestamp',
 				dataIndex: 'timestamp',
 				key: 'timestamp',
-				width: 200,
+				width: 80,
 				render: (field): ColumnTypeRender<Record<string, unknown>> => {
 					const date = dayjs(field / 1e6).format();
 
