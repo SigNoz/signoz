@@ -6,11 +6,8 @@ import {
 	externalCallErrorPercent,
 	externalCallRpsByAddress,
 } from 'container/MetricsApplication/MetricsPageQueries/ExternalQueries';
-import {
-	convertRawQueriesToTraceSelectedTags,
-	resourceAttributesToTagFilterItems,
-} from 'lib/resourceAttributes';
-import React, { useMemo, useState } from 'react';
+import { resourceAttributesToTagFilterItems } from 'lib/resourceAttributes';
+import React, { useMemo } from 'react';
 import { useSelector } from 'react-redux';
 import { useParams } from 'react-router-dom';
 import { AppState } from 'store/reducers';
@@ -18,23 +15,16 @@ import { Widgets } from 'types/api/dashboard/getAll';
 import MetricReducer from 'types/reducer/metrics';
 
 import { Card, GraphContainer, GraphTitle, Row } from '../styles';
-import { Button } from './styles';
-import { onGraphClickHandler, onViewTracePopupClick } from './util';
 
 function External({ getWidgetQueryBuilder }: ExternalProps): JSX.Element {
 	const { servicename } = useParams<{ servicename?: string }>();
 	const { resourceAttributeQueries } = useSelector<AppState, MetricReducer>(
 		(state) => state.metrics,
 	);
-	const [selectedTimeStamp, setSelectedTimeStamp] = useState<number>(0);
 
 	const tagFilterItems = useMemo(
 		() => resourceAttributesToTagFilterItems(resourceAttributeQueries) || [],
 		[resourceAttributeQueries],
-	);
-
-	const selectedTraceTags: string = JSON.stringify(
-		convertRawQueriesToTraceSelectedTags(resourceAttributeQueries) || [],
 	);
 
 	const legend = '{{address}}';
@@ -102,18 +92,6 @@ function External({ getWidgetQueryBuilder }: ExternalProps): JSX.Element {
 		<>
 			<Row gutter={24}>
 				<Col span={12}>
-					<Button
-						type="default"
-						size="small"
-						id="external_call_error_percentage_button"
-						onClick={onViewTracePopupClick(
-							servicename,
-							selectedTraceTags,
-							selectedTimeStamp,
-						)}
-					>
-						View Traces
-					</Button>
 					<Card>
 						<GraphTitle>External Call Error Percentage</GraphTitle>
 						<GraphContainer>
@@ -122,33 +100,12 @@ function External({ getWidgetQueryBuilder }: ExternalProps): JSX.Element {
 								fullViewOptions={false}
 								widget={externalCallErrorWidget}
 								yAxisUnit="%"
-								onClickHandler={(ChartEvent, activeElements, chart, data): void => {
-									onGraphClickHandler(setSelectedTimeStamp)(
-										ChartEvent,
-										activeElements,
-										chart,
-										data,
-										'external_call_error_percentage',
-									);
-								}}
 							/>
 						</GraphContainer>
 					</Card>
 				</Col>
 
 				<Col span={12}>
-					<Button
-						type="default"
-						size="small"
-						id="external_call_duration_button"
-						onClick={onViewTracePopupClick(
-							servicename,
-							selectedTraceTags,
-							selectedTimeStamp,
-						)}
-					>
-						View Traces
-					</Button>
 					<Card>
 						<GraphTitle>External Call duration</GraphTitle>
 						<GraphContainer>
@@ -157,15 +114,6 @@ function External({ getWidgetQueryBuilder }: ExternalProps): JSX.Element {
 								fullViewOptions={false}
 								widget={externalCallDurationWidget}
 								yAxisUnit="ms"
-								onClickHandler={(ChartEvent, activeElements, chart, data): void => {
-									onGraphClickHandler(setSelectedTimeStamp)(
-										ChartEvent,
-										activeElements,
-										chart,
-										data,
-										'external_call_duration',
-									);
-								}}
 							/>
 						</GraphContainer>
 					</Card>
@@ -174,18 +122,6 @@ function External({ getWidgetQueryBuilder }: ExternalProps): JSX.Element {
 
 			<Row gutter={24}>
 				<Col span={12}>
-					<Button
-						type="default"
-						size="small"
-						id="external_call_rps_by_address_button"
-						onClick={onViewTracePopupClick(
-							servicename,
-							selectedTraceTags,
-							selectedTimeStamp,
-						)}
-					>
-						View Traces
-					</Button>
 					<Card>
 						<GraphTitle>External Call RPS(by Address)</GraphTitle>
 						<GraphContainer>
@@ -194,33 +130,12 @@ function External({ getWidgetQueryBuilder }: ExternalProps): JSX.Element {
 								fullViewOptions={false}
 								widget={externalCallRPSWidget}
 								yAxisUnit="reqps"
-								onClickHandler={(ChartEvent, activeElements, chart, data): void => {
-									onGraphClickHandler(setSelectedTimeStamp)(
-										ChartEvent,
-										activeElements,
-										chart,
-										data,
-										'external_call_rps_by_address',
-									);
-								}}
 							/>
 						</GraphContainer>
 					</Card>
 				</Col>
 
 				<Col span={12}>
-					<Button
-						type="default"
-						size="small"
-						id="external_call_duration_by_address_button"
-						onClick={onViewTracePopupClick(
-							servicename,
-							selectedTraceTags,
-							selectedTimeStamp,
-						)}
-					>
-						View Traces
-					</Button>
 					<Card>
 						<GraphTitle>External Call duration(by Address)</GraphTitle>
 						<GraphContainer>
@@ -229,15 +144,6 @@ function External({ getWidgetQueryBuilder }: ExternalProps): JSX.Element {
 								fullViewOptions={false}
 								widget={externalCallDurationAddressWidget}
 								yAxisUnit="ms"
-								onClickHandler={(ChartEvent, activeElements, chart, data): void => {
-									onGraphClickHandler(setSelectedTimeStamp)(
-										ChartEvent,
-										activeElements,
-										chart,
-										data,
-										'external_call_duration_by_address',
-									);
-								}}
 							/>
 						</GraphContainer>
 					</Card>
