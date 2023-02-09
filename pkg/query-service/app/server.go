@@ -1,8 +1,11 @@
 package app
 
 import (
+	"bytes"
 	"context"
+	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"net"
 	"net/http"
 	_ "net/http/pprof" // http profiler
@@ -17,6 +20,9 @@ import (
 	"github.com/soheilhy/cmux"
 	"go.signoz.io/signoz/pkg/query-service/app/clickhouseReader"
 	"go.signoz.io/signoz/pkg/query-service/app/dashboards"
+	opamp "go.signoz.io/signoz/pkg/query-service/app/opamp"
+	opAmpModel "go.signoz.io/signoz/pkg/query-service/app/opamp/model"
+
 	"go.signoz.io/signoz/pkg/query-service/constants"
 	"go.signoz.io/signoz/pkg/query-service/dao"
 	"go.signoz.io/signoz/pkg/query-service/featureManager"
@@ -57,6 +63,9 @@ type Server struct {
 	privateHTTP *http.Server
 
 	unavailableChannel chan healthcheck.Status
+
+	// opamp server
+	opampServer *opamp.Server
 }
 
 // HealthCheckStatus returns health check status channel a client can subscribe to
@@ -135,7 +144,22 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 
 	s.privateHTTP = privateServer
 
+	localDB, err = opAmpModel.InitDB(constants.RELATIONAL_DATASOURCE_PATH)
+	if err != nil {
+		return nil, err
+	}
+
+	opampServer, err := s.createOpampServer()
+	if err != nil {
+		return nil, err
+	}
+	s.opampServer = opampServer
+
 	return s, nil
+}
+
+func (s *Server) createOpampServer() (*opamp.Server, error) {
+	return opamp.NewServer(&opAmpModel.AllAgents), nil
 }
 
 func (s *Server) createPrivateServer(api *APIHandler) (*http.Server, error) {
@@ -235,15 +259,84 @@ func (lrw *loggingResponseWriter) Flush() {
 	lrw.ResponseWriter.(http.Flusher).Flush()
 }
 
+func extractDashboardMetaData(path string, r *http.Request) (map[string]interface{}, bool) {
+	pathToExtractBodyFrom := "/api/v2/metrics/query_range"
+	var requestBody map[string]interface{}
+	data := map[string]interface{}{}
+
+	if path == pathToExtractBodyFrom && (r.Method == "POST") {
+		bodyBytes, _ := ioutil.ReadAll(r.Body)
+		r.Body.Close() //  must close
+		r.Body = ioutil.NopCloser(bytes.NewBuffer(bodyBytes))
+
+		json.Unmarshal(bodyBytes, &requestBody)
+
+	} else {
+		return nil, false
+	}
+
+	compositeMetricQuery, compositeMetricQueryExists := requestBody["compositeMetricQuery"]
+	compositeMetricQueryMap := compositeMetricQuery.(map[string]interface{})
+	signozMetricFound := false
+
+	if compositeMetricQueryExists {
+		signozMetricFound = telemetry.GetInstance().CheckSigNozMetrics(compositeMetricQueryMap)
+		queryType, queryTypeExists := compositeMetricQueryMap["queryType"]
+		if queryTypeExists {
+			data["queryType"] = queryType
+
+		}
+		panelType, panelTypeExists := compositeMetricQueryMap["panelType"]
+		if panelTypeExists {
+			data["panelType"] = panelType
+		}
+	}
+
+	datasource, datasourceExists := requestBody["dataSource"]
+	if datasourceExists {
+		data["datasource"] = datasource
+	}
+
+	if !signozMetricFound {
+		telemetry.GetInstance().AddActiveMetricsUser()
+		telemetry.GetInstance().SendEvent(telemetry.TELEMETRY_EVENT_DASHBOARDS_METADATA, data, false)
+	}
+
+	return data, true
+}
+
+func getActiveLogs(path string, r *http.Request) {
+	// if path == "/api/v1/dashboards/{uuid}" {
+	// 	telemetry.GetInstance().AddActiveMetricsUser()
+	// }
+	if path == "/api/v1/logs" {
+		hasFilters := len(r.URL.Query().Get("q"))
+		if hasFilters > 0 {
+			telemetry.GetInstance().AddActiveLogsUser()
+		}
+
+	}
+
+}
+
 func (s *Server) analyticsMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		route := mux.CurrentRoute(r)
 		path, _ := route.GetPathTemplate()
 
+		dashboardMetadata, metadataExists := extractDashboardMetaData(path, r)
+		getActiveLogs(path, r)
+
 		lrw := NewLoggingResponseWriter(w)
 		next.ServeHTTP(lrw, r)
 
 		data := map[string]interface{}{"path": path, "statusCode": lrw.statusCode}
+		if metadataExists {
+			for key, value := range dashboardMetadata {
+				data[key] = value
+			}
+		}
+
 		if telemetry.GetInstance().IsSampled() {
 			if _, ok := telemetry.IgnoredPaths()[path]; !ok {
 				telemetry.GetInstance().SendEvent(telemetry.TELEMETRY_EVENT_PATH, data)
@@ -361,6 +454,8 @@ func (s *Server) Start() error {
 		s.unavailableChannel <- healthcheck.Unavailable
 
 	}()
+
+	s.opampServer.Start()
 
 	return nil
 }
