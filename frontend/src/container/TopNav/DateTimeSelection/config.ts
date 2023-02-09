@@ -11,6 +11,7 @@ type FourHour = '4hr';
 type OneDay = '1day';
 type OneWeek = '1week';
 type Custom = 'custom';
+type Queried = 'queried';
 
 export type Time =
 	| FiveMin
@@ -23,7 +24,8 @@ export type Time =
 	| OneHour
 	| Custom
 	| OneWeek
-	| OneDay;
+	| OneDay
+	| Queried;
 
 export const Options: Option[] = [
 	{ value: '5min', label: 'Last 5 min' },
