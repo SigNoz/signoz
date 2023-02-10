@@ -1,5 +1,4 @@
-import { Input } from 'antd';
-import FormItem from 'antd/lib/form/FormItem';
+import { Form, Input } from 'antd';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -11,7 +10,7 @@ function PagerForm({ setSelectedConfig }: PagerFormProps): JSX.Element {
 	const { t } = useTranslation('channels');
 	return (
 		<>
-			<FormItem name="routing_key" label={t('field_pager_routing_key')} required>
+			<Form.Item name="routing_key" label={t('field_pager_routing_key')} required>
 				<Input
 					onChange={(event): void => {
 						setSelectedConfig((value) => ({
@@ -20,9 +19,9 @@ function PagerForm({ setSelectedConfig }: PagerFormProps): JSX.Element {
 						}));
 					}}
 				/>
-			</FormItem>
+			</Form.Item>
 
-			<FormItem
+			<Form.Item
 				name="description"
 				help={t('help_pager_description')}
 				label={t('field_pager_description')}
@@ -38,9 +37,9 @@ function PagerForm({ setSelectedConfig }: PagerFormProps): JSX.Element {
 					}
 					placeholder={t('placeholder_pager_description')}
 				/>
-			</FormItem>
+			</Form.Item>
 
-			<FormItem
+			<Form.Item
 				name="severity"
 				help={t('help_pager_severity')}
 				label={t('field_pager_severity')}
@@ -53,9 +52,9 @@ function PagerForm({ setSelectedConfig }: PagerFormProps): JSX.Element {
 						}))
 					}
 				/>
-			</FormItem>
+			</Form.Item>
 
-			<FormItem
+			<Form.Item
 				name="details"
 				help={t('help_pager_details')}
 				label={t('field_pager_details')}
@@ -69,9 +68,9 @@ function PagerForm({ setSelectedConfig }: PagerFormProps): JSX.Element {
 						}))
 					}
 				/>
-			</FormItem>
+			</Form.Item>
 
-			<FormItem
+			<Form.Item
 				name="component"
 				help={t('help_pager_component')}
 				label={t('field_pager_component')}
@@ -84,9 +83,9 @@ function PagerForm({ setSelectedConfig }: PagerFormProps): JSX.Element {
 						}))
 					}
 				/>
-			</FormItem>
+			</Form.Item>
 
-			<FormItem
+			<Form.Item
 				name="group"
 				help={t('help_pager_group')}
 				label={t('field_pager_group')}
@@ -99,9 +98,9 @@ function PagerForm({ setSelectedConfig }: PagerFormProps): JSX.Element {
 						}))
 					}
 				/>
-			</FormItem>
+			</Form.Item>
 
-			<FormItem
+			<Form.Item
 				name="class"
 				help={t('help_pager_class')}
 				label={t('field_pager_class')}
@@ -114,8 +113,8 @@ function PagerForm({ setSelectedConfig }: PagerFormProps): JSX.Element {
 						}))
 					}
 				/>
-			</FormItem>
-			<FormItem
+			</Form.Item>
+			<Form.Item
 				name="client"
 				help={t('help_pager_client')}
 				label={t('field_pager_client')}
@@ -128,9 +127,9 @@ function PagerForm({ setSelectedConfig }: PagerFormProps): JSX.Element {
 						}))
 					}
 				/>
-			</FormItem>
+			</Form.Item>
 
-			<FormItem
+			<Form.Item
 				name="client_url"
 				help={t('help_pager_client_url')}
 				label={t('field_pager_client_url')}
@@ -143,7 +142,7 @@ function PagerForm({ setSelectedConfig }: PagerFormProps): JSX.Element {
 						}))
 					}
 				/>
-			</FormItem>
+			</Form.Item>
 		</>
 	);
 }
