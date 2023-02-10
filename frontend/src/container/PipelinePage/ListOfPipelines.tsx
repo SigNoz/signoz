@@ -18,9 +18,10 @@ import {
 	Tag,
 	Typography,
 } from 'antd';
+import type { FormInstance } from 'antd/es/form';
 import { ColumnsType } from 'antd/lib/table';
 import { themeColors } from 'constants/theme';
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useRef, useState } from 'react';
 import update from 'react-addons-update';
 import { DndProvider } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
@@ -46,15 +47,16 @@ function ListOfPipelines({
 	isActionType,
 	setActionType,
 }: ListOfPipelinesProps): JSX.Element {
+	const { t } = useTranslation(['common']);
+	const formRef = useRef<FormInstance>(null);
 	const [dataSource, setDataSource] = useState<Array<PipelineColumnType>>(
 		pipelineData,
 	);
 	const [childDataSource, setChildDataSource] = useState<
 		Array<SubPiplineColumsType>
 	>();
-	const [activeExpRow, setActiveExpRow] = React.useState<Array<string>>();
+	const [activeExpRow, setActiveExpRow] = useState<Array<number>>();
 	const [selectedRecord, setSelectedRecord] = useState<string>('');
-	const { t } = useTranslation(['common']);
 
 	const [modal, contextHolder] = Modal.useModal();
 	const { Text } = Typography;
@@ -86,7 +88,7 @@ function ListOfPipelines({
 
 	const handlePipelineEditAction = (record: PipelineColumnType): void => {
 		setActionType('edit-pipeline');
-		setSelectedRecord(record.pipelineName);
+		setSelectedRecord(record.name);
 	};
 
 	const handleProcessorEditAction = (record: string): void => {
@@ -110,11 +112,18 @@ function ListOfPipelines({
 		</LastActionColumnStyle>
 	);
 
+	const handleDelete = (record: PipelineColumnType): void => {
+		const findElement = dataSource?.filter(
+			(data) => data.orderid !== record.orderid,
+		);
+		setDataSource(findElement);
+	};
+
 	const pipelineColumns: ColumnsType<PipelineColumnType> = [
 		{
 			title: '',
-			dataIndex: 'id',
-			key: 'id',
+			dataIndex: 'orderid',
+			key: 'orderid',
 			width: 10,
 			render: (i: number): JSX.Element => (
 				<Avatar style={{ background: themeColors.navyBlue }} size="small">
@@ -124,8 +133,8 @@ function ListOfPipelines({
 		},
 		{
 			title: 'Pipeline Name',
-			dataIndex: 'pipelineName',
-			key: 'pipelineName',
+			dataIndex: 'name',
+			key: 'name',
 			width: 80,
 		},
 		{
@@ -138,25 +147,26 @@ function ListOfPipelines({
 			title: 'Tags',
 			dataIndex: 'tags',
 			key: 'tags',
-			width: 80,
+			width: 20,
 			render: (value): React.ReactNode =>
 				value?.map((tag: string) => (
-					<Tag color="blue" key={tag}>
+					<Tag color="magenta" key={tag}>
 						{tag}
 					</Tag>
 				)),
 		},
 		{
 			title: 'Last Edited',
-			dataIndex: 'lastEdited',
-			key: 'lastEdited',
+			dataIndex: 'updatedAt',
+			key: 'updatedAt',
 			width: 50,
 		},
 		{
 			title: 'Edited By',
-			dataIndex: 'editedBy',
-			key: 'editedBy',
+			dataIndex: 'updatedBy',
+			key: 'updatedBy',
 			width: 50,
+			render: (value): JSX.Element => <span>{value?.username}</span>,
 		},
 		{
 			title: 'Actions',
@@ -179,9 +189,10 @@ function ListOfPipelines({
 						<DeleteFilled
 							onClick={(): void =>
 								handleAlert({
-									title: `${t('delete_pipeline')} : ${record.pipelineName}?`,
+									title: `${t('delete_pipeline')} : ${record.name}?`,
 									descrition: t('delete_pipeline_description'),
 									buttontext: t('delete'),
+									onOkClick: (): void => handleDelete(record),
 								})
 							}
 							style={iconStyle}
@@ -240,16 +251,21 @@ function ListOfPipelines({
 	): void => {
 		const keys = [];
 		if (expanded) {
-			keys.push(record.id);
+			keys.push(record.orderid);
 		}
 		setActiveExpRow(keys);
-		const processorData = record.description.map((item, index): {
-			id: number;
-			text: string;
-		} => ({
-			id: index,
-			text: item,
-		}));
+		const processorData = record.operators.map(
+			(
+				item: PipelineOperatorsType,
+				index: number,
+			): {
+				id: number;
+				text: string;
+			} => ({
+				id: index,
+				text: item.name,
+			}),
+		);
 		setChildDataSource(processorData);
 	};
 
@@ -278,6 +294,11 @@ function ListOfPipelines({
 		</Button>
 	);
 
+	const handleModalCancelAction = (): void => {
+		setActionType(undefined);
+		formRef?.current?.resetFields();
+	};
+
 	return (
 		<div>
 			{contextHolder}
@@ -285,11 +306,17 @@ function ListOfPipelines({
 				isActionType={isActionType}
 				setActionType={setActionType}
 				selectedRecord={selectedRecord}
+				setDataSource={setDataSource}
+				formRef={formRef}
+				handleModalCancelAction={handleModalCancelAction}
 			/>
 			<Processor
 				isActionType={isActionType}
 				setActionType={setActionType}
 				selectedRecord={selectedRecord}
+				setChildDataSource={setChildDataSource}
+				formRef={formRef}
+				handleModalCancelAction={handleModalCancelAction}
 			/>
 			<Container>
 				<DndProvider backend={HTML5Backend}>
@@ -305,7 +332,7 @@ function ListOfPipelines({
 						components={tableComponents}
 						dataSource={dataSource.map((item) => ({
 							...item,
-							key: item.id,
+							key: item.orderid,
 						}))}
 						// eslint-disable-next-line @typescript-eslint/no-explicit-any
 						onRow={(_record, index): React.HTMLAttributes<any> => {
@@ -329,15 +356,40 @@ interface ListOfPipelinesProps {
 	setActionType: (b: string | undefined) => void;
 }
 
-export interface PipelineColumnType {
+export interface PipelineOperatorsType {
+	type: string;
+	name: string;
 	id: string;
-	key: number | string;
-	pipelineName: string;
+	field?: string;
+	parse_from?: string;
+	parse_to?: string;
+	output?: string;
+	pattern?: string;
+	trace_id?: { parse_from: string };
+	span_id?: { parse_from: string };
+	trace_flags?: { parse_from: string };
+}
+
+export interface PipelineColumnType {
+	orderid: number;
+	uuid: string;
+	createdAt: string;
+	createdBy: {
+		username: string;
+		email: string;
+	};
+	updatedAt: string;
+	updatedBy: {
+		username: string;
+		email: string;
+	};
+	version: string;
+	name: string;
+	alias: string;
+	enabled: boolean;
 	filter: string;
 	tags: Array<string>;
-	lastEdited: string;
-	editedBy: string;
-	description: Array<string>;
+	operators: Array<PipelineOperatorsType>;
 }
 
 export interface SubPiplineColumsType {

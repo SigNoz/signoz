@@ -89,3 +89,9 @@ export const StyledTable: React.FC<
 			isDarkMode ? themeColors.neroBlack : themeColors.snowWhite};
 	}
 `;
+
+export const SpanStyle = styled.span`
+	font-size: 12px;
+	font-weight: 400;
+	line-height: 20px;
+`;

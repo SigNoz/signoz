@@ -8,23 +8,35 @@ import {
 	Select as DefaultSelect,
 	Typography,
 } from 'antd';
+import type { FormInstance } from 'antd/es/form';
 import { themeColors } from 'constants/theme';
-import React, { useMemo } from 'react';
+import React, { RefObject, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { modalIcon } from '../config';
+import { SubPiplineColumsType } from '../ListOfPipelines';
 import { ModalFooterTitle } from '../styles';
 import { wrapperStyle } from './config';
 import { items, processorInputField } from './utils';
+
+type ExtraType = (
+	setChildDataSource: (value: Array<SubPiplineColumsType>) => void,
+) => void;
 
 function NewProcessor({
 	isActionType,
 	setActionType,
 	selectedRecord,
+	setChildDataSource,
+	formRef,
+	handleModalCancelAction,
 }: {
 	isActionType: string | undefined;
 	setActionType: (b: string | undefined) => void;
 	selectedRecord: string;
+	setChildDataSource: (value: Array<SubPiplineColumsType>) => void;
+	formRef: RefObject<FormInstance>;
+	handleModalCancelAction: () => void;
 }): JSX.Element {
 	const { Option } = DefaultSelect;
 	const [form] = Form.useForm();
@@ -34,8 +46,17 @@ function NewProcessor({
 	]);
 	const isAdd = useMemo(() => isActionType === 'add-processor', [isActionType]);
 
-	const onFinish = (values: unknown): void => {
-		console.log('onFinish-values:', values);
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+	const onFinish = (values: any): void => {
+		const newProcessorData: SubPiplineColumsType = {
+			id: Math.random(),
+			text: values.name,
+		};
+		setChildDataSource((prevState: Array<SubPiplineColumsType>) => [
+			...prevState,
+			newProcessorData,
+		]);
+		formRef?.current?.resetFields();
 		setActionType(undefined);
 	};
 
@@ -95,6 +116,7 @@ function NewProcessor({
 					layout="vertical"
 					style={{ marginTop: '20px' }}
 					onFinish={onFinish}
+					ref={formRef}
 				>
 					{processorInputField.map((i, index) => {
 						if (i.id === 1) {
@@ -107,7 +129,7 @@ function NewProcessor({
 										<Form.Item
 											required={false}
 											label={<ModalFooterTitle>{i.fieldName}</ModalFooterTitle>}
-											name={i.fieldName}
+											name={i.name}
 											key={i.id}
 											rules={[
 												{
@@ -127,7 +149,10 @@ function NewProcessor({
 									{index + 2}
 								</Avatar>
 								<div style={{ width: '100%' }}>
-									<Form.Item label={<ModalFooterTitle>{i.fieldName}</ModalFooterTitle>}>
+									<Form.Item
+										name={i.name}
+										label={<ModalFooterTitle>{i.fieldName}</ModalFooterTitle>}
+									>
 										<Input.TextArea rows={4} placeholder={i.placeholder} />
 									</Form.Item>
 								</div>
@@ -142,7 +167,7 @@ function NewProcessor({
 							<Button key="submit" type="primary" htmlType="submit">
 								{isEdit ? t('update') : t('create')}
 							</Button>
-							<Button key="back" onClick={(): void => setActionType(undefined)}>
+							<Button key="cancel" onClick={handleModalCancelAction}>
 								{t('cancel')}
 							</Button>
 						</div>

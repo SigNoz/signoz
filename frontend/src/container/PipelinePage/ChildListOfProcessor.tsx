@@ -34,6 +34,11 @@ function ChildListOfProcessor({
 	const { t } = useTranslation(['common']);
 	const isDarkMode = useIsDarkMode();
 
+	const handleDelete = (record: SubPiplineColumsType): void => {
+		const findElement = childDataSource?.filter((data) => data.id !== record.id);
+		setChildDataSource(findElement);
+	};
+
 	const subcolumns: ColumnsType<SubPiplineColumsType> = [
 		{
 			title: '',
@@ -74,6 +79,7 @@ function ChildListOfProcessor({
 									title: `${t('delete_processor')} : ${record.text}?`,
 									descrition: t('delete_processor_description'),
 									buttontext: t('delete'),
+									onOkClick: (): void => handleDelete(record),
 								})
 							}
 							style={{ color: themeColors.gainsboro, fontSize: '1rem' }}
@@ -158,11 +164,9 @@ function ChildListOfProcessor({
 interface ChildListOfProcessorTypes {
 	getCommonAction: () => JSX.Element;
 	handleAlert: (props: AlertMessageType) => void;
-	childDataSource: SubPiplineColumsType[] | undefined;
+	childDataSource: Array<SubPiplineColumsType> | undefined;
 	setActionType: (b: string | undefined) => void;
-	setChildDataSource: React.Dispatch<
-		React.SetStateAction<SubPiplineColumsType[] | undefined>
-	>;
+	setChildDataSource: (value: Array<SubPiplineColumsType> | undefined) => void;
 	handleProcessorEditAction: (record: string) => void;
 }
 

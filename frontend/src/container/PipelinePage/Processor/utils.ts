@@ -10,10 +10,12 @@ export const processorInputField = [
 		id: 1,
 		fieldName: 'Name the Processor',
 		placeholder: 'Name',
+		name: 'name',
 	},
 	{
 		id: 2,
 		fieldName: 'Define Parsing Rules',
 		placeholder: 'example rule: %{word:first}',
+		name: 'description',
 	},
 ];
