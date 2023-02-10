@@ -7,7 +7,7 @@ import {
 } from 'types/api/alerts/def';
 
 const defaultAlertDescription =
-	'This alert is fired when the defined metric (current value: {{$value}}) exceeds the threshold ({{$threshold}})';
+	'This alert is fired when the defined metric (current value: {{$value}}) crosses the threshold ({{$threshold}})';
 const defaultAlertSummary =
 	'The rule threshold is set to {{$threshold}}, and the observed metric value is {{$value}}';
 
