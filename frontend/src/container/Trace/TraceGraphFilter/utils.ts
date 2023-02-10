@@ -61,13 +61,28 @@ export function onClickSelectedFunctionHandler(value: unknown): void {
 		}
 	}
 }
+
 export function selectedGroupByValue(
 	selectedGroupBy: string,
 	options: DefaultOptionType[],
 ): ReactNode {
-	return options.find((e) => selectedGroupBy === e.value)?.label;
+	const optionValue = options.find((e) => selectedGroupBy === e.value)?.label;
+	if (optionValue) {
+		return optionValue;
+	}
+	return selectedGroupBy;
 }
 
 export function getSelectedValue(selectedFunction: string): unknown {
 	return functions.find((e) => selectedFunction === e.key)?.displayValue;
+}
+
+export function filterGroupBy(
+	inputValue: string,
+	option: DefaultOptionType | undefined,
+): boolean {
+	return (
+		option?.label?.toString().toUpperCase().indexOf(inputValue.toUpperCase()) !==
+		-1
+	);
 }

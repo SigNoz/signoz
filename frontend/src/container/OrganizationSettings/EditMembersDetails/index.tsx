@@ -36,19 +36,21 @@ function EditMembersDetails({
 		[],
 	);
 
+	const [notifications, NotificationElement] = notification.useNotification();
+
 	useEffect(() => {
 		if (state.error) {
-			notification.error({
+			notifications.error({
 				message: t('something_went_wrong'),
 			});
 		}
 
 		if (state.value) {
-			notification.success({
+			notifications.success({
 				message: t('success'),
 			});
 		}
-	}, [state.error, state.value, t]);
+	}, [state.error, state.value, t, notifications]);
 
 	const onPasswordChangeHandler: React.ChangeEventHandler<HTMLInputElement> = useCallback(
 		(event) => {
@@ -67,7 +69,7 @@ function EditMembersDetails({
 			if (response.statusCode === 200) {
 				setPasswordLink(getPasswordLink(response.payload.token));
 			} else {
-				notification.error({
+				notifications.error({
 					message:
 						response.error ||
 						t('something_went_wrong', {
@@ -79,7 +81,7 @@ function EditMembersDetails({
 		} catch (error) {
 			setIsLoading(false);
 
-			notification.error({
+			notifications.error({
 				message: t('something_went_wrong', {
 					ns: 'common',
 				}),
@@ -89,6 +91,7 @@ function EditMembersDetails({
 
 	return (
 		<Space direction="vertical" size="large">
+			{NotificationElement}
 			<Space direction="horizontal">
 				<Title>Email address</Title>
 				<Input

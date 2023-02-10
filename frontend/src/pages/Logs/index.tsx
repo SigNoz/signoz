@@ -6,39 +6,11 @@ import LogsAggregate from 'container/LogsAggregate';
 import LogsFilters from 'container/LogsFilters';
 import LogsSearchFilter from 'container/LogsSearchFilter';
 import LogsTable from 'container/LogsTable';
-import useMountedState from 'hooks/useMountedState';
-import useUrlQuery from 'hooks/useUrlQuery';
-import React, { memo, useEffect } from 'react';
-import { connect, useDispatch } from 'react-redux';
-import { bindActionCreators, Dispatch } from 'redux';
-import { ThunkDispatch } from 'redux-thunk';
-import { GetLogsFields } from 'store/actions/logs/getFields';
-import AppActions from 'types/actions';
-import { SET_SEARCH_QUERY_STRING } from 'types/actions/logs';
+import React from 'react';
 
 import SpaceContainer from './styles';
 
-function Logs({ getLogsFields }: LogsProps): JSX.Element {
-	const getMountedState = useMountedState();
-
-	const urlQuery = useUrlQuery();
-	const dispatch = useDispatch();
-
-	useEffect(() => {
-		const hasMounted = getMountedState();
-
-		if (!hasMounted) {
-			dispatch({
-				type: SET_SEARCH_QUERY_STRING,
-				payload: urlQuery.get('q'),
-			});
-		}
-	}, [dispatch, getMountedState, urlQuery]);
-
-	useEffect(() => {
-		getLogsFields();
-	}, [getLogsFields]);
-
+function Logs(): JSX.Element {
 	return (
 		<>
 			<SpaceContainer
@@ -63,16 +35,4 @@ function Logs({ getLogsFields }: LogsProps): JSX.Element {
 	);
 }
 
-type LogsProps = DispatchProps;
-
-interface DispatchProps {
-	getLogsFields: () => (dispatch: Dispatch<AppActions>) => void;
-}
-
-const mapDispatchToProps = (
-	dispatch: ThunkDispatch<unknown, unknown, AppActions>,
-): DispatchProps => ({
-	getLogsFields: bindActionCreators(GetLogsFields, dispatch),
-});
-
-export default connect(null, mapDispatchToProps)(memo(Logs));
+export default Logs;
