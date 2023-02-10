@@ -6,6 +6,16 @@ import {
 	defaultMatchType,
 } from 'types/api/alerts/def';
 
+const defaultAlertDescription =
+	'This alert is fired when the defined metric (current value: {{$value}}) crosses the threshold ({{$threshold}})';
+const defaultAlertSummary =
+	'The rule threshold is set to {{$threshold}}, and the observed metric value is {{$value}}';
+
+const defaultAnnotations = {
+	description: defaultAlertDescription,
+	summary: defaultAlertSummary,
+};
+
 export const alertDefaults: AlertDef = {
 	alertType: AlertTypes.METRICS_BASED_ALERT,
 	condition: {
@@ -38,9 +48,7 @@ export const alertDefaults: AlertDef = {
 	labels: {
 		severity: 'warning',
 	},
-	annotations: {
-		description: 'A new alert',
-	},
+	annotations: defaultAnnotations,
 	evalWindow: defaultEvalWindow,
 };
 
@@ -85,9 +93,7 @@ export const logAlertDefaults: AlertDef = {
 		severity: 'warning',
 		details: `${window.location.protocol}//${window.location.host}/logs`,
 	},
-	annotations: {
-		description: 'A new log-based alert',
-	},
+	annotations: defaultAnnotations,
 	evalWindow: defaultEvalWindow,
 };
 
@@ -132,9 +138,7 @@ export const traceAlertDefaults: AlertDef = {
 		severity: 'warning',
 		details: `${window.location.protocol}//${window.location.host}/traces`,
 	},
-	annotations: {
-		description: 'A new trace-based alert',
-	},
+	annotations: defaultAnnotations,
 	evalWindow: defaultEvalWindow,
 };
 
@@ -179,8 +183,6 @@ export const exceptionAlertDefaults: AlertDef = {
 		severity: 'warning',
 		details: `${window.location.protocol}//${window.location.host}/exceptions`,
 	},
-	annotations: {
-		description: 'A new exceptions-based alert',
-	},
+	annotations: defaultAnnotations,
 	evalWindow: defaultEvalWindow,
 };
