@@ -1,6 +1,7 @@
-import { Button, Divider, notification, Space, Table, Typography } from 'antd';
+import { Button, Divider, notification, Space, Typography } from 'antd';
 import getNextPrevId from 'api/errors/getNextPrevId';
 import Editor from 'components/Editor';
+import { ResizeTable } from 'components/ResizeTable';
 import { getNanoSeconds } from 'container/AllError/utils';
 import dayjs from 'dayjs';
 import history from 'lib/history';
@@ -53,12 +54,14 @@ function ErrorDetails(props: ErrorDetailsProps): JSX.Element {
 		() => [
 			{
 				title: 'Key',
+				width: 100,
 				dataIndex: 'key',
 				key: 'key',
 			},
 			{
 				title: 'Value',
 				dataIndex: 'value',
+				width: 100,
 				key: 'value',
 			},
 		],
@@ -77,13 +80,15 @@ function ErrorDetails(props: ErrorDetailsProps): JSX.Element {
 		[],
 	);
 
+	const [notifications, NotificationElement] = notification.useNotification();
+
 	const onClickErrorIdHandler = async (
 		id: string,
 		timestamp: string,
 	): Promise<void> => {
 		try {
 			if (id.length === 0) {
-				notification.error({
+				notifications.error({
 					message: 'Error Id cannot be empty',
 				});
 				return;
@@ -95,7 +100,7 @@ function ErrorDetails(props: ErrorDetailsProps): JSX.Element {
 				}&timestamp=${getNanoSeconds(timestamp)}&errorId=${id}`,
 			);
 		} catch (error) {
-			notification.error({
+			notifications.error({
 				message: t('something_went_wrong'),
 			});
 		}
@@ -116,6 +121,7 @@ function ErrorDetails(props: ErrorDetailsProps): JSX.Element {
 
 	return (
 		<>
+			{NotificationElement}
 			<Typography>{errorDetail.exceptionType}</Typography>
 			<Typography>{errorDetail.exceptionMessage}</Typography>
 			<Divider />
@@ -167,7 +173,7 @@ function ErrorDetails(props: ErrorDetailsProps): JSX.Element {
 
 			<EditorContainer>
 				<Space direction="vertical">
-					<Table tableLayout="fixed" columns={columns} dataSource={data} />
+					<ResizeTable columns={columns} tableLayout="fixed" dataSource={data} />
 				</Space>
 			</EditorContainer>
 		</>

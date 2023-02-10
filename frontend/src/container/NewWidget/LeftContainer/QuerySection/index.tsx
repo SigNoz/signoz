@@ -141,7 +141,7 @@ function QuerySection({
 	const handleLocalQueryUpdate = ({
 		updatedQuery,
 	}: IHandleUpdatedQuery): void => {
-		setLocalQueryChanges(updatedQuery);
+		setLocalQueryChanges(cloneDeep(updatedQuery));
 	};
 
 	return (

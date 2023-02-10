@@ -1,4 +1,5 @@
-import { Row } from 'antd';
+import { notification, Row } from 'antd';
+import { NotificationInstance } from 'antd/es/notification/interface';
 import { map, sortBy } from 'lodash-es';
 import React, { useState } from 'react';
 import { connect, useSelector } from 'react-redux';
@@ -25,6 +26,7 @@ function DashboardVariableSelection({
 
 	const [update, setUpdate] = useState<boolean>(false);
 	const [lastUpdatedVar, setLastUpdatedVar] = useState<string>('');
+	const [notifications, NotificationElement] = notification.useNotification();
 
 	const onVarChanged = (name: string): void => {
 		setLastUpdatedVar(name);
@@ -45,7 +47,7 @@ function DashboardVariableSelection({
 	): void => {
 		const updatedVariablesData = { ...variables };
 		updatedVariablesData[name].selectedValue = value;
-		updateDashboardVariables(updatedVariablesData);
+		updateDashboardVariables(updatedVariablesData, notifications);
 		onVarChanged(name);
 	};
 	const onAllSelectedUpdate = (
@@ -54,12 +56,13 @@ function DashboardVariableSelection({
 	): void => {
 		const updatedVariablesData = { ...variables };
 		updatedVariablesData[name].allSelected = value;
-		updateDashboardVariables(updatedVariablesData);
+		updateDashboardVariables(updatedVariablesData, notifications);
 		onVarChanged(name);
 	};
 
 	return (
 		<Row style={{ gap: '1rem' }}>
+			{NotificationElement}
 			{map(sortBy(Object.keys(variables)), (variableName) => (
 				<VariableItem
 					key={`${variableName}${variables[variableName].modificationUUID}`}
@@ -81,6 +84,7 @@ function DashboardVariableSelection({
 interface DispatchProps {
 	updateDashboardVariables: (
 		props: Parameters<typeof UpdateDashboardVariables>[0],
+		notify: NotificationInstance,
 	) => (dispatch: Dispatch<AppActions>) => void;
 }
 

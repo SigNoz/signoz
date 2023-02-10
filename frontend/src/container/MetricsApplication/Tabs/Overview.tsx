@@ -1,4 +1,3 @@
-import { ActiveElement, Chart, ChartData, ChartEvent } from 'chart.js';
 import Graph from 'components/Graph';
 import { METRICS_PAGE_QUERY_PARAM } from 'constants/query';
 import ROUTES from 'constants/routes';
@@ -10,7 +9,7 @@ import {
 	convertRawQueriesToTraceSelectedTags,
 	resourceAttributesToTagFilterItems,
 } from 'lib/resourceAttributes';
-import React, { useCallback, useMemo, useRef } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useParams } from 'react-router-dom';
 import { UpdateTimeInterval } from 'store/actions';
@@ -25,10 +24,11 @@ import {
 import { Card, Col, GraphContainer, GraphTitle, Row } from '../styles';
 import TopOperationsTable from '../TopOperationsTable';
 import { Button } from './styles';
+import { onGraphClickHandler, onViewTracePopupClick } from './util';
 
 function Application({ getWidgetQueryBuilder }: DashboardProps): JSX.Element {
 	const { servicename } = useParams<{ servicename?: string }>();
-	const selectedTimeStamp = useRef(0);
+	const [selectedTimeStamp, setSelectedTimeStamp] = useState<number>(0);
 	const dispatch = useDispatch();
 
 	const {
@@ -39,7 +39,7 @@ function Application({ getWidgetQueryBuilder }: DashboardProps): JSX.Element {
 	} = useSelector<AppState, MetricReducer>((state) => state.metrics);
 
 	const selectedTraceTags: string = JSON.stringify(
-		convertRawQueriesToTraceSelectedTags(resourceAttributeQueries, 'array') || [],
+		convertRawQueriesToTraceSelectedTags(resourceAttributeQueries) || [],
 	);
 
 	const tagFilterItems = useMemo(
@@ -77,58 +77,6 @@ function Application({ getWidgetQueryBuilder }: DashboardProps): JSX.Element {
 		[servicename, topLevelOperations, tagFilterItems, getWidgetQueryBuilder],
 	);
 
-	const onTracePopupClick = (timestamp: number): void => {
-		const currentTime = timestamp;
-		const tPlusOne = timestamp + 1 * 60 * 1000;
-
-		const urlParams = new URLSearchParams();
-		urlParams.set(METRICS_PAGE_QUERY_PARAM.startTime, currentTime.toString());
-		urlParams.set(METRICS_PAGE_QUERY_PARAM.endTime, tPlusOne.toString());
-
-		history.replace(
-			`${
-				ROUTES.TRACE
-			}?${urlParams.toString()}&selected={"serviceName":["${servicename}"]}&filterToFetchData=["duration","status","serviceName"]&spanAggregateCurrentPage=1&selectedTags=${selectedTraceTags}&&isFilterExclude={"serviceName":false}&userSelectedFilter={"status":["error","ok"],"serviceName":["${servicename}"]}&spanAggregateCurrentPage=1`,
-		);
-	};
-
-	const onClickHandler = async (
-		event: ChartEvent,
-		elements: ActiveElement[],
-		chart: Chart,
-		data: ChartData,
-		from: string,
-	): Promise<void> => {
-		if (event.native) {
-			const points = chart.getElementsAtEventForMode(
-				event.native,
-				'nearest',
-				{ intersect: true },
-				true,
-			);
-
-			const id = `${from}_button`;
-			const buttonElement = document.getElementById(id);
-
-			if (points.length !== 0) {
-				const firstPoint = points[0];
-
-				if (data.labels) {
-					const time = data?.labels[firstPoint.index] as Date;
-
-					if (buttonElement) {
-						buttonElement.style.display = 'block';
-						buttonElement.style.left = `${firstPoint.element.x}px`;
-						buttonElement.style.top = `${firstPoint.element.y}px`;
-						selectedTimeStamp.current = time.getTime();
-					}
-				}
-			} else if (buttonElement && buttonElement.style.display === 'block') {
-				buttonElement.style.display = 'none';
-			}
-		}
-	};
-
 	const onDragSelect = useCallback(
 		(start: number, end: number) => {
 			const startTimestamp = Math.trunc(start);
@@ -162,9 +110,11 @@ function Application({ getWidgetQueryBuilder }: DashboardProps): JSX.Element {
 						type="default"
 						size="small"
 						id="Service_button"
-						onClick={(): void => {
-							onTracePopupClick(selectedTimeStamp.current);
-						}}
+						onClick={onViewTracePopupClick(
+							servicename,
+							selectedTraceTags,
+							selectedTimeStamp,
+						)}
 					>
 						View Traces
 					</Button>
@@ -172,14 +122,9 @@ function Application({ getWidgetQueryBuilder }: DashboardProps): JSX.Element {
 						<GraphTitle>Latency</GraphTitle>
 						<GraphContainer>
 							<Graph
-								onClickHandler={(
-									ChartEventParam,
-									activeElements,
-									chart,
-									data,
-								): void => {
-									onClickHandler(
-										ChartEventParam,
+								onClickHandler={(ChartEvent, activeElements, chart, data): void => {
+									onGraphClickHandler(setSelectedTimeStamp)(
+										ChartEvent,
 										activeElements,
 										chart,
 										data,
@@ -241,9 +186,11 @@ function Application({ getWidgetQueryBuilder }: DashboardProps): JSX.Element {
 						type="default"
 						size="small"
 						id="Rate_button"
-						onClick={(): void => {
-							onTracePopupClick(selectedTimeStamp.current);
-						}}
+						onClick={onViewTracePopupClick(
+							servicename,
+							selectedTraceTags,
+							selectedTimeStamp,
+						)}
 					>
 						View Traces
 					</Button>
@@ -254,7 +201,13 @@ function Application({ getWidgetQueryBuilder }: DashboardProps): JSX.Element {
 								name="operations_per_sec"
 								fullViewOptions={false}
 								onClickHandler={(event, element, chart, data): void => {
-									onClickHandler(event, element, chart, data, 'Rate');
+									onGraphClickHandler(setSelectedTimeStamp)(
+										event,
+										element,
+										chart,
+										data,
+										'Rate',
+									);
 								}}
 								widget={operationPerSecWidget}
 								yAxisUnit="ops"
@@ -271,7 +224,7 @@ function Application({ getWidgetQueryBuilder }: DashboardProps): JSX.Element {
 						size="small"
 						id="Error_button"
 						onClick={(): void => {
-							onErrorTrackHandler(selectedTimeStamp.current);
+							onErrorTrackHandler(selectedTimeStamp);
 						}}
 					>
 						View Traces
@@ -283,13 +236,14 @@ function Application({ getWidgetQueryBuilder }: DashboardProps): JSX.Element {
 							<FullView
 								name="error_percentage_%"
 								fullViewOptions={false}
-								onClickHandler={(
-									ChartEventParam,
-									activeElements,
-									chart,
-									data,
-								): void => {
-									onClickHandler(ChartEventParam, activeElements, chart, data, 'Error');
+								onClickHandler={(ChartEvent, activeElements, chart, data): void => {
+									onGraphClickHandler(setSelectedTimeStamp)(
+										ChartEvent,
+										activeElements,
+										chart,
+										data,
+										'Error',
+									);
 								}}
 								widget={errorPercentageWidget}
 								yAxisUnit="%"

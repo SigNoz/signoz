@@ -23,6 +23,7 @@ import {
 } from 'chart.js';
 import * as chartjsAdapter from 'chartjs-adapter-date-fns';
 import annotationPlugin from 'chartjs-plugin-annotation';
+import dayjs from 'dayjs';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import React, { useCallback, useEffect, useRef } from 'react';
 
@@ -80,6 +81,7 @@ function Graph({
 	onDragSelect,
 	dragSelectColor,
 }: GraphProps): JSX.Element {
+	const nearestDatasetIndex = useRef<null | number>(null);
 	const chartRef = useRef<HTMLCanvasElement>(null);
 	const isDarkMode = useIsDarkMode();
 
@@ -150,6 +152,10 @@ function Graph({
 					},
 					tooltip: {
 						callbacks: {
+							title(context) {
+								const date = dayjs(context[0].parsed.x);
+								return date.format('MMM DD, YYYY, HH:mm:ss');
+							},
 							label(context) {
 								let label = context.dataset.label || '';
 
@@ -159,7 +165,15 @@ function Graph({
 								if (context.parsed.y !== null) {
 									label += getToolTipValue(context.parsed.y.toString(), yAxisUnit);
 								}
+
 								return label;
+							},
+							labelTextColor(labelData) {
+								if (labelData.datasetIndex === nearestDatasetIndex.current) {
+									return 'rgba(255, 255, 255, 1)';
+								}
+
+								return 'rgba(255, 255, 255, 0.75)';
 							},
 						},
 					},
@@ -226,10 +240,36 @@ function Graph({
 						tension: 0,
 						cubicInterpolationMode: 'monotone',
 					},
+					point: {
+						// eslint-disable-next-line @typescript-eslint/no-explicit-any
+						hoverBackgroundColor: (ctx: any) => {
+							if (ctx?.element?.options?.borderColor) {
+								return ctx.element.options.borderColor;
+							}
+							return 'rgba(0,0,0,0.1)';
+						},
+						hoverRadius: 5,
+					},
 				},
 				onClick: (event, element, chart) => {
 					if (onClickHandler) {
 						onClickHandler(event, element, chart, data);
+					}
+				},
+				onHover: (event, _, chart) => {
+					if (event.native) {
+						const interactions = chart.getElementsAtEventForMode(
+							event.native,
+							'nearest',
+							{
+								intersect: false,
+							},
+							true,
+						);
+
+						if (interactions[0]) {
+							nearestDatasetIndex.current = interactions[0].datasetIndex;
+						}
 					}
 				},
 			};

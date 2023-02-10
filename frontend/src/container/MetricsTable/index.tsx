@@ -1,6 +1,6 @@
 import { blue } from '@ant-design/colors';
 import { SearchOutlined } from '@ant-design/icons';
-import { Button, Card, Input, Space, Table } from 'antd';
+import { Button, Card, Input, Space } from 'antd';
 import type { ColumnsType, ColumnType } from 'antd/es/table';
 import type {
 	FilterConfirmProps,
@@ -8,6 +8,7 @@ import type {
 } from 'antd/es/table/interface';
 import localStorageGet from 'api/browser/localstorage/get';
 import localStorageSet from 'api/browser/localstorage/set';
+import { ResizeTable } from 'components/ResizeTable';
 import { SKIP_ONBOARDING } from 'constants/onboarding';
 import ROUTES from 'constants/routes';
 import React, { useCallback, useMemo, useState } from 'react';
@@ -101,6 +102,7 @@ function Metrics(): JSX.Element {
 			{
 				title: 'Application',
 				dataIndex: 'serviceName',
+				width: 200,
 				key: 'serviceName',
 				...getColumnSearchProps('serviceName'),
 			},
@@ -108,6 +110,7 @@ function Metrics(): JSX.Element {
 				title: 'P99 latency (in ms)',
 				dataIndex: 'p99',
 				key: 'p99',
+				width: 150,
 				defaultSortOrder: 'descend',
 				sorter: (a: DataProps, b: DataProps): number => a.p99 - b.p99,
 				render: (value: number): string => (value / 1000000).toFixed(2),
@@ -116,6 +119,7 @@ function Metrics(): JSX.Element {
 				title: 'Error Rate (% of total)',
 				dataIndex: 'errorRate',
 				key: 'errorRate',
+				width: 150,
 				sorter: (a: DataProps, b: DataProps): number => a.errorRate - b.errorRate,
 				render: (value: number): string => value.toFixed(2),
 			},
@@ -123,6 +127,7 @@ function Metrics(): JSX.Element {
 				title: 'Operations Per Second',
 				dataIndex: 'callRate',
 				key: 'callRate',
+				width: 150,
 				sorter: (a: DataProps, b: DataProps): number => a.callRate - b.callRate,
 				render: (value: number): string => value.toFixed(2),
 			},
@@ -141,10 +146,10 @@ function Metrics(): JSX.Element {
 
 	return (
 		<Container>
-			<Table
+			<ResizeTable
+				columns={columns}
 				loading={loading}
 				dataSource={services}
-				columns={columns}
 				rowKey="serviceName"
 			/>
 		</Container>

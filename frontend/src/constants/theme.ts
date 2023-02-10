@@ -37,6 +37,7 @@ const themeColors = {
 	matterhornGrey: '#555555',
 	whiteCream: '#ffffffd5',
 	black: '#000000',
+	lightgrey: '#ddd',
 };
 
 export { themeColors };

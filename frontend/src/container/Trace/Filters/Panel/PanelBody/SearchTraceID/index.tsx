@@ -28,6 +28,7 @@ function TraceID(): JSX.Element {
 	);
 	const [isLoading, setIsLoading] = useState(false);
 	const [userEnteredValue, setUserEnteredValue] = useState<string>('');
+	const [notifications, NotificationElement] = notification.useNotification();
 	useEffect(() => {
 		setUserEnteredValue(selectedFilter.get('traceID')?.[0] || '');
 	}, [selectedFilter]);
@@ -91,7 +92,7 @@ function TraceID(): JSX.Element {
 				);
 			}
 		} catch (error) {
-			notification.error({
+			notifications.error({
 				message: (error as AxiosError).toString() || 'Something went wrong',
 			});
 		} finally {
@@ -108,6 +109,7 @@ function TraceID(): JSX.Element {
 	};
 	return (
 		<div>
+			{NotificationElement}
 			<Search
 				placeholder="Filter by Trace ID"
 				onSearch={onSearch}

@@ -42,6 +42,8 @@ function Login({
 	const [precheckInProcess, setPrecheckInProcess] = useState(false);
 	const [precheckComplete, setPrecheckComplete] = useState(false);
 
+	const [notifications, NotificationElement] = notification.useNotification();
+
 	useEffect(() => {
 		if (withPassword === 'Y') {
 			setPrecheckComplete(true);
@@ -62,15 +64,15 @@ function Login({
 
 	useEffect(() => {
 		if (ssoerror !== '') {
-			notification.error({
+			notifications.error({
 				message: t('failed_to_login'),
 			});
 		}
-	}, [ssoerror, t]);
+	}, [ssoerror, t, notifications]);
 
 	const onNextHandler = async (): Promise<void> => {
 		if (!email) {
-			notification.error({
+			notifications.error({
 				message: t('invalid_email'),
 			});
 			return;
@@ -88,18 +90,18 @@ function Login({
 				if (isUser) {
 					setPrecheckComplete(true);
 				} else {
-					notification.error({
+					notifications.error({
 						message: t('invalid_account'),
 					});
 				}
 			} else {
-				notification.error({
+				notifications.error({
 					message: t('invalid_config'),
 				});
 			}
 		} catch (e) {
 			console.log('failed to call precheck Api', e);
-			notification.error({ message: t('unexpected_error') });
+			notifications.error({ message: t('unexpected_error') });
 		}
 		setPrecheckInProcess(false);
 	};
@@ -144,14 +146,14 @@ function Login({
 				);
 				history.push(ROUTES.APPLICATION);
 			} else {
-				notification.error({
+				notifications.error({
 					message: response.error || t('unexpected_error'),
 				});
 			}
 			setIsLoading(false);
 		} catch (error) {
 			setIsLoading(false);
-			notification.error({
+			notifications.error({
 				message: t('unexpected_error'),
 			});
 		}
@@ -183,6 +185,7 @@ function Login({
 
 	return (
 		<FormWrapper>
+			{NotificationElement}
 			<FormContainer onSubmit={onSubmitHandler}>
 				<Title level={4}>{t('login_page_title')}</Title>
 				<ParentContainer>

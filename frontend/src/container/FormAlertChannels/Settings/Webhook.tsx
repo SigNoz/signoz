@@ -1,5 +1,4 @@
-import { Input } from 'antd';
-import FormItem from 'antd/lib/form/FormItem';
+import { Form, Input } from 'antd';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -10,7 +9,7 @@ function WebhookSettings({ setSelectedConfig }: WebhookProps): JSX.Element {
 
 	return (
 		<>
-			<FormItem name="api_url" label={t('field_webhook_url')}>
+			<Form.Item name="api_url" label={t('field_webhook_url')}>
 				<Input
 					onChange={(event): void => {
 						setSelectedConfig((value) => ({
@@ -19,8 +18,8 @@ function WebhookSettings({ setSelectedConfig }: WebhookProps): JSX.Element {
 						}));
 					}}
 				/>
-			</FormItem>
-			<FormItem
+			</Form.Item>
+			<Form.Item
 				name="username"
 				label={t('field_webhook_username')}
 				help={t('help_webhook_username')}
@@ -33,8 +32,8 @@ function WebhookSettings({ setSelectedConfig }: WebhookProps): JSX.Element {
 						}));
 					}}
 				/>
-			</FormItem>
-			<FormItem
+			</Form.Item>
+			<Form.Item
 				name="password"
 				label="Password (optional)"
 				help={t('help_webhook_password')}
@@ -48,7 +47,7 @@ function WebhookSettings({ setSelectedConfig }: WebhookProps): JSX.Element {
 						}));
 					}}
 				/>
-			</FormItem>
+			</Form.Item>
 		</>
 	);
 }
