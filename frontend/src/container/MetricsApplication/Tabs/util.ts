@@ -36,7 +36,9 @@ export function onViewTracePopupClick(
 }
 
 export function onGraphClickHandler(
-	setSelectedTimeStamp: React.Dispatch<React.SetStateAction<number>>,
+	setSelectedTimeStamp: (
+		n: number,
+	) => void | React.Dispatch<React.SetStateAction<number>>,
 ) {
 	return async (
 		event: ChartEvent,

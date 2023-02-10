@@ -374,4 +374,4 @@ Graph.defaultProps = {
 	onDragSelect: undefined,
 	dragSelectColor: undefined,
 };
-export default Graph;
+export default React.memo(Graph);
