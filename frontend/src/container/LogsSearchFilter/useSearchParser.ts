@@ -3,8 +3,9 @@ import history from 'lib/history';
 import { parseQuery, reverseParser } from 'lib/logql';
 import { ILogQLParsedQueryItem } from 'lib/logql/types';
 import isEqual from 'lodash-es/isEqual';
-import { useCallback, useEffect } from 'react';
+import { useCallback, useEffect, useMemo } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
+import { useLocation } from 'react-router-dom';
 import { Dispatch } from 'redux';
 import { AppState } from 'store/reducers';
 import AppActions from 'types/actions';
@@ -27,6 +28,10 @@ export function useSearchParser(): {
 	const {
 		searchFilter: { parsedQuery, queryString },
 	} = useSelector<AppState, ILogsReducer>((store) => store.logs);
+
+	const { search } = useLocation();
+
+	const parsedSearch = useMemo(() => search.replace('?q=', ''), [search]);
 
 	const { minTime, maxTime, selectedTime } = useSelector<
 		AppState,
@@ -64,10 +69,12 @@ export function useSearchParser(): {
 	);
 
 	useEffect(() => {
-		if (queryString) {
+		if (!queryString && parsedSearch) {
+			updateQueryString(parsedSearch);
+		} else if (queryString) {
 			updateQueryString(queryString);
 		}
-	}, [queryString, updateQueryString]);
+	}, [queryString, updateQueryString, parsedSearch]);
 
 	const updateParsedQuery = useCallback(
 		(updatedParsedPayload: ILogQLParsedQueryItem[]) => {
