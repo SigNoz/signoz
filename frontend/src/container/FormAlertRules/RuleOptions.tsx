@@ -1,5 +1,4 @@
-import { Select, Typography } from 'antd';
-import FormItem from 'antd/lib/form/FormItem';
+import { Form, Select, Typography } from 'antd';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import {
@@ -18,6 +17,7 @@ import {
 } from './styles';
 
 const { Option } = Select;
+const FormItem = Form.Item;
 
 function RuleOptions({
 	alertDef,

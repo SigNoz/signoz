@@ -1,5 +1,4 @@
-import { Button, Input, notification } from 'antd';
-import FormItem from 'antd/lib/form/FormItem';
+import { Button, Form, Input, notification } from 'antd';
 import getFeaturesFlags from 'api/features/getFeatureFlags';
 import apply from 'api/licenses/apply';
 import React, { useState } from 'react';
@@ -12,6 +11,8 @@ import { ErrorResponse, SuccessResponse } from 'types/api';
 import { PayloadProps } from 'types/api/licenses/getAll';
 
 import { ApplyForm, ApplyFormContainer, LicenseInput } from './styles';
+
+const FormItem = Form.Item;
 
 function ApplyLicenseForm({
 	licenseRefetch,
