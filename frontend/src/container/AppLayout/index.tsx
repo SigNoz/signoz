@@ -154,7 +154,7 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 				payload: {
 					currentVersion: getUserVersionResponse.data.payload.version,
 					ee: getUserVersionResponse.data.payload.ee,
-					isSetupComplete: getUserVersionResponse.data.payload.isSetupComplete,  
+					setupCompleted: getUserVersionResponse.data.payload.setupCompleted,
 				},
 			});
 		}

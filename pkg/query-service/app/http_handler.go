@@ -62,11 +62,9 @@ type APIHandler struct {
 	featureFlags interfaces.FeatureLookup
 	ready        func(http.HandlerFunc) http.HandlerFunc
 
-	// SetupCompleted enables a link in the login screen to allow
-	// self registration of a new account. We want to allow the link
-	// only prior to the first user creation. once first user is created,
-	// we want to disable the link. this flag will support the function
-	// and work as a cache.
+	// SetupCompleted indicates if SigNoz is ready for general use.
+	// at the moment, we mark the app ready when the first user
+	// is registers.
 	SetupCompleted bool
 }
 
@@ -108,13 +106,16 @@ func NewAPIHandler(opts APIHandlerOpts) (*APIHandler, error) {
 	// 	return nil, errReadingDashboards
 	// }
 
-	// fetch the user count, if it is more than 0 then disable self-registration
+	// check if at least one user is created
 	hasUsers, err := aH.appDao.GetUsersWithOpts(context.Background(), 1)
 	if err.Error() != "" {
 		// raise warning but no panic as this is a recoverable condition
 		zap.S().Warnf("unexpected error while fetch user count while initializing base api handler", err.Error())
 	}
-	if len(hasUsers) == 0 {
+	if len(hasUsers) != 0 {
+		// first user is already created, we can mark the app ready for general use.
+		// this means, we disable self-registration and expect new users
+		// to signup signoz through invite link only.
 		aH.SetupCompleted = true
 	}
 	return aH, nil
@@ -1661,7 +1662,13 @@ func (aH *APIHandler) getDisks(w http.ResponseWriter, r *http.Request) {
 
 func (aH *APIHandler) getVersion(w http.ResponseWriter, r *http.Request) {
 	version := version.GetVersion()
-	aH.WriteJSON(w, r, map[string]string{"version": version, "ee": "N", "SetupCompleted": fmt.Sprintf("%v", aH.SetupCompleted)})
+	versionResponse := model.GetVersionResponse{
+		Version:        version,
+		EE:             "Y",
+		SetupCompleted: aH.SetupCompleted,
+	}
+
+	aH.WriteJSON(w, r, versionResponse)
 }
 
 func (aH *APIHandler) getFeatureFlags(w http.ResponseWriter, r *http.Request) {
@@ -1777,10 +1784,10 @@ func (aH *APIHandler) registerUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if aH.SetupCompleted {
+	if !aH.SetupCompleted {
 		// since the first user is now created, we can disable self-registration as
 		// from here onwards, we expect admin (owner) to invite other users.
-		aH.SetupCompleted = false
+		aH.SetupCompleted = true
 	}
 
 	aH.Respond(w, nil)

@@ -1,5 +1,5 @@
 export interface PayloadProps {
 	version: string;
-	ee: string;
-	isSetupComplete: boolean;
+	ee: 'Y' | 'N';
+	setupCompleted: boolean;
 }
