@@ -165,7 +165,7 @@ func (r *ClickHouseReader) Start(readerReady chan bool) {
 	// 	Format: &allowedFormat,
 	// }
 
-	logger := promlog.New(&promlog.Config{Level: &logLevel})
+	logger := promlog.New(logLevel)
 
 	startTime := func() (int64, error) {
 		return int64(promModel.Latest), nil
