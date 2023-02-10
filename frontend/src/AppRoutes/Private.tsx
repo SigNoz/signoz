@@ -41,6 +41,7 @@ function PrivateRoute({ children }: PrivateRouteProps): JSX.Element {
 		isUserFetching,
 		isUserFetchingError,
 		isLoggedIn: isLoggedInState,
+		currentVersion,
 	} = useSelector<AppState, AppReducer>((state) => state.app);
 
 	const { t } = useTranslation(['common']);

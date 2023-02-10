@@ -1,6 +1,7 @@
 package api
 
 import (
+	"fmt"
 	"net/http"
 
 	"github.com/gorilla/mux"
@@ -96,7 +97,7 @@ func (ah *APIHandler) RegisterRoutes(router *mux.Router) {
 	router.HandleFunc("/api/v1/complete/google",
 		baseapp.OpenAccess(ah.receiveGoogleAuth)).
 		Methods(http.MethodGet)
-		
+
 	router.HandleFunc("/api/v1/orgs/{orgId}/domains",
 		baseapp.AdminAccess(ah.listDomainsByOrg)).
 		Methods(http.MethodGet)
@@ -127,5 +128,5 @@ func (ah *APIHandler) RegisterRoutes(router *mux.Router) {
 
 func (ah *APIHandler) getVersion(w http.ResponseWriter, r *http.Request) {
 	version := version.GetVersion()
-	ah.WriteJSON(w, r, map[string]string{"version": version, "ee": "Y"})
+	ah.WriteJSON(w, r, map[string]string{"version": version, "ee": "Y", "allowSelfRegister": fmt.Sprintf("%v", ah.AllowSelfRegister)})
 }

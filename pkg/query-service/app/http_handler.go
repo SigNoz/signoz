@@ -61,6 +61,13 @@ type APIHandler struct {
 	ruleManager  *rules.Manager
 	featureFlags interfaces.FeatureLookup
 	ready        func(http.HandlerFunc) http.HandlerFunc
+
+	// SetupCompleted enables a link in the login screen to allow
+	// self registration of a new account. We want to allow the link
+	// only prior to the first user creation. once first user is created,
+	// we want to disable the link. this flag will support the function
+	// and work as a cache.
+	SetupCompleted bool
 }
 
 type APIHandlerOpts struct {
@@ -100,6 +107,16 @@ func NewAPIHandler(opts APIHandlerOpts) (*APIHandler, error) {
 	// if errReadingDashboards != nil {
 	// 	return nil, errReadingDashboards
 	// }
+
+	// fetch the user count, if it is more than 0 then disable self-registration
+	hasUsers, err := aH.appDao.GetUsersWithOpts(context.Background(), 1)
+	if err.Error() != "" {
+		// raise warning but no panic as this is a recoverable condition
+		zap.S().Warnf("unexpected error while fetch user count while initializing base api handler", err.Error())
+	}
+	if len(hasUsers) == 0 {
+		aH.SetupCompleted = true
+	}
 	return aH, nil
 }
 
@@ -1644,7 +1661,7 @@ func (aH *APIHandler) getDisks(w http.ResponseWriter, r *http.Request) {
 
 func (aH *APIHandler) getVersion(w http.ResponseWriter, r *http.Request) {
 	version := version.GetVersion()
-	aH.WriteJSON(w, r, map[string]string{"version": version, "ee": "N"})
+	aH.WriteJSON(w, r, map[string]string{"version": version, "ee": "N", "SetupCompleted": fmt.Sprintf("%v", aH.SetupCompleted)})
 }
 
 func (aH *APIHandler) getFeatureFlags(w http.ResponseWriter, r *http.Request) {
@@ -1758,6 +1775,12 @@ func (aH *APIHandler) registerUser(w http.ResponseWriter, r *http.Request) {
 	if apiErr != nil {
 		RespondError(w, apiErr, nil)
 		return
+	}
+
+	if aH.SetupCompleted {
+		// since the first user is now created, we can disable self-registration as
+		// from here onwards, we expect admin (owner) to invite other users.
+		aH.SetupCompleted = false
 	}
 
 	aH.Respond(w, nil)

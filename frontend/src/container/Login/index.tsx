@@ -255,20 +255,6 @@ function Login({
 						</Typography.Paragraph>
 					)}
 
-					{!canSelfRegister && (
-						<Typography.Paragraph italic style={{ color: '#ACACAC' }}>
-							{t('prompt_create_account')}{' '}
-							<Typography.Link
-								onClick={(): void => {
-									history.push(ROUTES.SIGN_UP);
-								}}
-								style={{ fontWeight: 700 }}
-							>
-								{t('create_an_account')}
-							</Typography.Link>
-						</Typography.Paragraph>
-					)}
-
 					{canSelfRegister && (
 						<Typography.Paragraph italic style={{ color: '#ACACAC' }}>
 							{t('prompt_if_admin')}{' '}
