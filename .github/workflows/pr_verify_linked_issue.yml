@@ -17,4 +17,3 @@ jobs:
         uses: hattan/verify-linked-issue-action@v1.1.0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      

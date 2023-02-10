@@ -25,7 +25,8 @@ import * as chartjsAdapter from 'chartjs-adapter-date-fns';
 import annotationPlugin from 'chartjs-plugin-annotation';
 import dayjs from 'dayjs';
 import { useIsDarkMode } from 'hooks/useDarkMode';
-import React, { useCallback, useEffect, useRef } from 'react';
+import isEqual from 'lodash-es/isEqual';
+import React, { memo, useCallback, useEffect, useRef } from 'react';
 
 import { hasData } from './hasData';
 import { getAxisLabelColor } from './helpers';
@@ -374,4 +375,7 @@ Graph.defaultProps = {
 	onDragSelect: undefined,
 	dragSelectColor: undefined,
 };
-export default Graph;
+
+export default memo(Graph, (prevProps, nextProps) =>
+	isEqual(prevProps.data, nextProps.data),
+);
