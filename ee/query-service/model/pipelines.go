@@ -27,19 +27,23 @@ type Pipeline struct {
 	DeploymentSequence sql.NullString `db:"deployment_sequence"`
 }
 
+type Processor struct {
+	Operators []PipelineOperatos `json:"operators" yaml:"operators"`
+}
+
 type PipelineOperatos struct {
-	Type      string           `json:"type" yaml:"type"`
-	ParseTo   string           `json:"parse_to,omitempty" yaml:"parse_to,omitempty"`
-	Pattern   string           `json:"pattern,omitempty" yaml:"pattern,omitempty"`
-	Output    string           `json:"output,omitempty" yaml:"output,omitempty"`
-	Regex     string           `json:"regex,omitempty" yaml:"regex,omitempty"`
-	ID        string           `json:"id,omitempty" yaml:"id,omitempty"`
-	ParseFrom string           `json:"parse_from,omitempty" yaml:"parse_from,omitempty"`
-	Timestamp *TimestampParser `json:"timestamp,omitempty" yaml:"timestamp,omitempty"`
-	Field     string           `json:"field,omitempty" yaml:"field,omitempty"`
-	Value     string           `json:"value,omitempty" yaml:"value,omitempty"`
-	From      string           `json:"from,omitempty"`
-	To        string           `json:"to,omitempty"`
+	Type      string           `json:"type" yaml:"type" mapstructure:"type"`
+	ParseTo   string           `json:"parse_to,omitempty" yaml:"parse_to,omitempty" mapstructure:"parse_to"`
+	Pattern   string           `json:"pattern,omitempty" yaml:"pattern,omitempty" mapstructure:"pattern"`
+	Output    string           `json:"output,omitempty" yaml:"output,omitempty" mapstructure:"output"`
+	Regex     string           `json:"regex,omitempty" yaml:"regex,omitempty" mapstructure:"regex"`
+	ID        string           `json:"id,omitempty" yaml:"id,omitempty" mapstructure:"id"`
+	ParseFrom string           `json:"parse_from,omitempty" yaml:"parse_from,omitempty" mapstructure:"parse_from"`
+	Timestamp *TimestampParser `json:"timestamp,omitempty" yaml:"timestamp,omitempty" mapstructure:"timestamp"`
+	Field     string           `json:"field,omitempty" yaml:"field,omitempty" mapstructure:"field"`
+	Value     string           `json:"value,omitempty" yaml:"value,omitempty" mapstructure:"vlaue"`
+	From      string           `json:"from,omitempty" yaml:"from,omitempty" mapstructure:"from"`
+	To        string           `json:"to,omitempty"  yaml:"to,omitempty" mapstructure:"to"`
 }
 
 type TimestampParser struct {

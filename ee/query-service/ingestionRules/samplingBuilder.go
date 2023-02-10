@@ -116,58 +116,61 @@ func PrepareTailSamplingParams(rules []model.IngestionRule) (*tsp.Config, error)
 }
 
 func prepareProbabilistic(id string, percent int) tsp.PolicyCfg {
-
-	return tsp.PolicyCfg{
-		SharedPolicyCfg: tsp.SharedPolicyCfg{
-			Name: id,
-			Type: tsp.Probabilistic,
-			ProbabilisticCfg: tsp.ProbabilisticCfg{
-				SamplingPercentage: float64(percent),
-			},
-		},
-	}
+	return tsp.PolicyCfg{}
+	// return tsp.PolicyCfg{
+	// 	SharedPolicyCfg: tsp.SharedPolicyCfg{
+	// 		Name: id,
+	// 		Type: tsp.Probabilistic,
+	// 		ProbabilisticCfg: tsp.ProbabilisticCfg{
+	// 			SamplingPercentage: float64(percent),
+	// 		},
+	// 	},
+	// }
 }
 
 func prepareDefaultPolicy() []tsp.PolicyCfg {
-	return []tsp.PolicyCfg{
-		tsp.PolicyCfg{
-			SharedPolicyCfg: tsp.SharedPolicyCfg{
-				Name: "default",
-				Type: tsp.AlwaysSample,
-			},
-		},
-	}
+	return []tsp.PolicyCfg{}
+	// return []tsp.PolicyCfg{
+	// 	tsp.PolicyCfg{
+	// 		SharedPolicyCfg: tsp.SharedPolicyCfg{
+	// 			Name: "default",
+	// 			Type: tsp.AlwaysSample,
+	// 		},
+	// 	},
+	// }
 }
 
 func prepareAndPolicy(id string, subPolicies []tsp.PolicyCfg) tsp.PolicyCfg {
-	var andSubPolicies []tsp.AndSubPolicyCfg
-	for _, sp := range subPolicies {
-		andSubPolicies = append(andSubPolicies, tsp.AndSubPolicyCfg{
-			SharedPolicyCfg: sp.SharedPolicyCfg,
-		})
-	}
+	return tsp.PolicyCfg{}
+	// var andSubPolicies []tsp.AndSubPolicyCfg
+	// for _, sp := range subPolicies {
+	// 	andSubPolicies = append(andSubPolicies, tsp.AndSubPolicyCfg{
+	// 		SharedPolicyCfg: sp.SharedPolicyCfg,
+	// 	})
+	// }
 
-	return tsp.PolicyCfg{
-		SharedPolicyCfg: tsp.SharedPolicyCfg{
-			Name: id,
-			Type: tsp.And,
-		},
-		AndCfg: tsp.AndCfg{SubPolicyCfg: andSubPolicies},
-	}
+	// return tsp.PolicyCfg{
+	// 	SharedPolicyCfg: tsp.SharedPolicyCfg{
+	// 		Name: id,
+	// 		Type: tsp.And,
+	// 	},
+	// 	AndCfg: tsp.AndCfg{SubPolicyCfg: andSubPolicies},
+	// }
 }
 
 func prepareStringPolicy(id string, key string, vals []string) tsp.PolicyCfg {
-	return tsp.PolicyCfg{
-		SharedPolicyCfg: tsp.SharedPolicyCfg{
-			Name: id,
-			Type: tsp.StringAttribute,
-			StringAttributeCfg: tsp.StringAttributeCfg{
-				Key:    key,
-				Values: vals,
-				// todo
-				// EnabledRegexMatching: use key.Ope for this
-				// InvertMatch: use key.Op for this
-			},
-		},
-	}
+	return tsp.PolicyCfg{}
+	// return tsp.PolicyCfg{
+	// 	SharedPolicyCfg: tsp.SharedPolicyCfg{
+	// 		Name: id,
+	// 		Type: tsp.StringAttribute,
+	// 		StringAttributeCfg: tsp.StringAttributeCfg{
+	// 			Key:    key,
+	// 			Values: vals,
+	// 			// todo
+	// 			// EnabledRegexMatching: use key.Ope for this
+	// 			// InvertMatch: use key.Op for this
+	// 		},
+	// 	},
+	// }
 }

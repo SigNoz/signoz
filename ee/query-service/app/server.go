@@ -26,6 +26,9 @@ import (
 
 	"go.signoz.io/signoz/pkg/query-service/agentConf"
 	"go.signoz.io/signoz/pkg/query-service/app/dashboards"
+	opamp "go.signoz.io/signoz/pkg/query-service/app/opamp"
+	opAmpModel "go.signoz.io/signoz/pkg/query-service/app/opamp/model"
+	"go.signoz.io/signoz/pkg/query-service/constants"
 	baseconst "go.signoz.io/signoz/pkg/query-service/constants"
 	"go.signoz.io/signoz/pkg/query-service/healthcheck"
 	basealm "go.signoz.io/signoz/pkg/query-service/integrations/alertManager"
@@ -190,7 +193,21 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 
 	s.privateHTTP = privateServer
 
+	_, err = opAmpModel.InitDB(constants.RELATIONAL_DATASOURCE_PATH)
+	if err != nil {
+		return nil, err
+	}
+
+	err = s.createOpampServer()
+	if err != nil {
+		return nil, err
+	}
+
 	return s, nil
+}
+
+func (s *Server) createOpampServer() error {
+	return opamp.InitalizeServer(&opAmpModel.AllAgents)
 }
 
 func (s *Server) createPrivateServer(apiHandler *api.APIHandler) (*http.Server, error) {

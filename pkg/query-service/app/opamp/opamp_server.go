@@ -4,8 +4,6 @@ import (
 	"context"
 	"crypto/sha256"
 	"fmt"
-	"math/rand"
-	"time"
 
 	"github.com/knadh/koanf/parsers/yaml"
 	"github.com/open-telemetry/opamp-go/protobufs"
@@ -15,6 +13,8 @@ import (
 	model "go.signoz.io/signoz/pkg/query-service/app/opamp/model"
 	"go.uber.org/zap"
 )
+
+var opAmpServer *Server
 
 type Server struct {
 	server       server.OpAMPServer
@@ -27,16 +27,15 @@ const capabilities = protobufs.ServerCapabilities_ServerCapabilities_AcceptsEffe
 	protobufs.ServerCapabilities_ServerCapabilities_OffersRemoteConfig |
 	protobufs.ServerCapabilities_ServerCapabilities_AcceptsStatus
 
-func NewServer(agents *model.Agents) *Server {
-	srv := &Server{
+func InitalizeServer(agents *model.Agents) error {
+	opAmpServer = &Server{
 		agents: agents,
 	}
-
-	srv.server = server.New(zap.S())
-	return srv
+	opAmpServer.server = server.New(zap.S())
+	return opAmpServer.Start()
 }
 
-func (srv *Server) Start() {
+func (srv *Server) Start() error {
 	settings := server.StartSettings{
 		Settings: server.Settings{
 			Callbacks: server.CallbacksStruct{
@@ -47,9 +46,7 @@ func (srv *Server) Start() {
 		ListenEndpoint: "127.0.0.1:4320",
 	}
 
-	srv.server.Start(settings)
-	// TODO: remove this
-	go srv.dummy()
+	return srv.server.Start(settings)
 }
 
 func (srv *Server) Stop() {
@@ -79,54 +76,51 @@ func (srv *Server) onMessage(conn types.Connection, msg *protobufs.AgentToServer
 	return response
 }
 
-func (srv *Server) dummy() {
-	ticker := time.NewTicker(60 * time.Second)
-	for range ticker.C {
-		agent := srv.agents.FindAgent("00000000000000000000000000")
-		if agent == nil {
-			continue
-		}
-		config := agent.EffectiveConfig
-		c, err := yaml.Parser().Unmarshal([]byte(config))
-		agentConf := confmap.NewFromStringMap(c)
+func UpsertProcessor(ctx context.Context, processors map[string]interface{}) error {
 
-		configs := []string{
-			`
-processors:
-  batch:
-    timeout: 2s
-`,
-			`processors:
-   batch:
-     timeout: 1s`,
-		}
+	x := map[string]interface{}{
+		"processors": processors,
+	}
+	agent := opAmpServer.agents.FindAgent("00000000000000000000000000")
+	if agent == nil {
+		return fmt.Errorf("agent not found")
+	}
+	config := agent.EffectiveConfig
+	c, err := yaml.Parser().Unmarshal([]byte(config))
+	if err != nil {
+		return err
+	}
+	agentConf := confmap.NewFromStringMap(c)
 
-		// random choice between 2 configs
-		config2 := configs[rand.Intn(len(configs))]
-		c2, err := yaml.Parser().Unmarshal([]byte(config2))
-		fmt.Println("config2 err", err)
-		conf2 := confmap.NewFromStringMap(c2)
+	conf2 := confmap.NewFromStringMap(x)
 
-		err = agentConf.Merge(conf2)
-		fmt.Println("merging", err)
-		configR, err := yaml.Parser().Marshal(agentConf.ToStringMap())
-		fmt.Println(conf2.ToStringMap())
-		fmt.Println("sending new config", string(configR), err)
-		// hash of configR
-		hash := sha256.New()
-		hash.Write(configR)
-		agent.SendToAgent(&protobufs.ServerToAgent{
-			RemoteConfig: &protobufs.AgentRemoteConfig{
-				Config: &protobufs.AgentConfigMap{
-					ConfigMap: map[string]*protobufs.AgentConfigFile{
-						"collector.yaml": {
-							Body:        configR,
-							ContentType: "application/x-yaml",
-						},
+	err = agentConf.Merge(conf2)
+	if err != nil {
+		return err
+	}
+	configR, err := yaml.Parser().Marshal(agentConf.ToStringMap())
+	if err != nil {
+		return err
+	}
+
+	fmt.Println("sending new config", string(configR))
+	hash := sha256.New()
+	hash.Write(configR)
+
+	agent.EffectiveConfig = string(configR)
+	agent.Upsert()
+	agent.SendToAgent(&protobufs.ServerToAgent{
+		RemoteConfig: &protobufs.AgentRemoteConfig{
+			Config: &protobufs.AgentConfigMap{
+				ConfigMap: map[string]*protobufs.AgentConfigFile{
+					"collector.yaml": {
+						Body:        configR,
+						ContentType: "application/x-yaml",
 					},
 				},
-				ConfigHash: hash.Sum(nil),
 			},
-		})
-	}
+			ConfigHash: hash.Sum(nil),
+		},
+	})
+	return nil
 }

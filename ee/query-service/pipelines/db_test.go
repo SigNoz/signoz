@@ -12,8 +12,8 @@ import (
 
 	_ "github.com/mattn/go-sqlite3"
 
-	"go.signoz.io/signoz/ee/query-service/ingestionRules/sqlite"
 	"go.signoz.io/signoz/ee/query-service/model"
+	"go.signoz.io/signoz/ee/query-service/pipelines/sqlite"
 )
 
 var TestDBPath string
@@ -42,7 +42,7 @@ func GetTestDB() (*sqlx.DB, error) {
 	return db, nil
 }
 
-func TestInsertRule(t *testing.T) {
+func TestInsertPipeline(t *testing.T) {
 	db, err := GetTestDB()
 
 	if err != nil {
@@ -78,12 +78,12 @@ func TestInsertRule(t *testing.T) {
 	}
 
 	if selected.Id != inserted.Id {
-		t.Logf("failed to insert rule")
+		t.Logf("failed to insert pipeline")
 		t.Fail()
 	}
 
 	if !reflect.DeepEqual(selected.Config, inserted.Config) {
-		t.Logf("failed to insert rule config correctly")
+		t.Logf("failed to insert pipeline config correctly")
 		t.Fail()
 	}
 
