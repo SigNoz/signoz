@@ -51,7 +51,8 @@ function NewPipline({
 		};
 		setCount(count + 1);
 		setDataSource(
-			(pre: PipelineColumnType[]) => [...pre, newData] as PipelineColumnType[],
+			(prevState: Array<PipelineColumnType>) =>
+				[...prevState, newData] as Array<PipelineColumnType>,
 		);
 		formRef?.current?.resetFields();
 		setActionType(undefined);

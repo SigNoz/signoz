@@ -19,10 +19,6 @@ import { ModalFooterTitle } from '../styles';
 import { wrapperStyle } from './config';
 import { items, processorInputField } from './utils';
 
-type ExtraType = (
-	setChildDataSource: (value: Array<SubPiplineColumsType>) => void,
-) => void;
-
 function NewProcessor({
 	isActionType,
 	setActionType,
@@ -34,7 +30,11 @@ function NewProcessor({
 	isActionType: string | undefined;
 	setActionType: (b: string | undefined) => void;
 	selectedRecord: string;
-	setChildDataSource: (value: Array<SubPiplineColumsType>) => void;
+	setChildDataSource: (
+		value:
+			| React.SetStateAction<Array<SubPiplineColumsType>>
+			| (() => Array<SubPiplineColumsType>),
+	) => void;
 	formRef: RefObject<FormInstance>;
 	handleModalCancelAction: () => void;
 }): JSX.Element {
@@ -48,7 +48,7 @@ function NewProcessor({
 
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	const onFinish = (values: any): void => {
-		const newProcessorData: SubPiplineColumsType = {
+		const newProcessorData = {
 			id: Math.random(),
 			text: values.name,
 		};

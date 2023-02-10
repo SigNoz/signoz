@@ -314,7 +314,7 @@ function ListOfPipelines({
 				isActionType={isActionType}
 				setActionType={setActionType}
 				selectedRecord={selectedRecord}
-				setChildDataSource={setChildDataSource}
+				setChildDataSource={setChildDataSource as () => Array<SubPiplineColumsType>}
 				formRef={formRef}
 				handleModalCancelAction={handleModalCancelAction}
 			/>
