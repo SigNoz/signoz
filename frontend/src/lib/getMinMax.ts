@@ -6,7 +6,6 @@ import getMinAgo from './getStartAndEndTime/getMinAgo';
 const GetMinMax = (
 	interval: Time,
 	dateTimeRange?: [number, number],
-	// eslint-disable-next-line sonarjs/cognitive-complexity
 ): GetMinMaxPayload => {
 	let maxTime = new Date().getTime();
 	let minTime = 0;

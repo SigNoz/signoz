@@ -4,7 +4,8 @@ import getLocalStorageKey from 'api/browser/localstorage/get';
 import setLocalStorageKey from 'api/browser/localstorage/set';
 import { LOCALSTORAGE } from 'constants/localStorage';
 import dayjs, { Dayjs } from 'dayjs';
-import getTimeString from 'lib/getTimeString';
+import GetMinMax from 'lib/getMinMax';
+import history from 'lib/history';
 import React, { useCallback, useEffect, useState } from 'react';
 import { connect, useSelector } from 'react-redux';
 import { RouteComponentProps, withRouter } from 'react-router-dom';
@@ -15,8 +16,8 @@ import { AppState } from 'store/reducers';
 import AppActions from 'types/actions';
 import { GlobalReducer } from 'types/reducer/globalTime';
 
-import GetMinMax from '../../../lib/getMinMax';
-import history from '../../../lib/history';
+import { useIntervalRange } from '../../../hooks/useIntervalRange';
+import { getDiffs } from '../../../utils/getDiffs';
 import AutoRefresh from '../AutoRefresh';
 import CustomDateTimeModal, { DateTimeRangeType } from '../CustomDateTimeModal';
 import { getDefaultOption, getOptions, Time } from './config';
@@ -31,36 +32,6 @@ function DateTimeSelection({
 	globalTimeLoading,
 }: Props): JSX.Element {
 	const [formSelector] = Form.useForm();
-
-	const params = new URLSearchParams(location.search);
-	const searchStartTime = params.get('startTime');
-	const searchEndTime = params.get('endTime');
-
-	const localstorageStartTime = getLocalStorageKey('startTime');
-	const localstorageEndTime = getLocalStorageKey('endTime');
-
-	const getTime = useCallback((): [number, number] | undefined => {
-		if (searchEndTime && searchStartTime) {
-			const startDate = dayjs(
-				new Date(parseInt(getTimeString(searchStartTime), 10)),
-			);
-			const endDate = dayjs(new Date(parseInt(getTimeString(searchEndTime), 10)));
-
-			return [startDate.toDate().getTime() || 0, endDate.toDate().getTime() || 0];
-		}
-		if (localstorageStartTime && localstorageEndTime) {
-			const startDate = dayjs(localstorageStartTime);
-			const endDate = dayjs(localstorageEndTime);
-
-			return [startDate.toDate().getTime() || 0, endDate.toDate().getTime() || 0];
-		}
-		return undefined;
-	}, [
-		localstorageEndTime,
-		localstorageStartTime,
-		searchEndTime,
-		searchStartTime,
-	]);
 
 	const [options, setOptions] = useState(getOptions(location.pathname));
 	const [refreshButtonHidden, setRefreshButtonHidden] = useState<boolean>(false);
@@ -133,16 +104,6 @@ function DateTimeSelection({
 		}
 	};
 
-	const getDiffs = useCallback((lastRefresh: Dayjs) => {
-		const currentTime = dayjs();
-		const secondsDiff = currentTime.diff(lastRefresh, 'seconds');
-		const minutedDiff = currentTime.diff(lastRefresh, 'minutes');
-		const hoursDiff = currentTime.diff(lastRefresh, 'hours');
-		const daysDiff = currentTime.diff(lastRefresh, 'days');
-		const monthsDiff = currentTime.diff(lastRefresh, 'months');
-		return { secondsDiff, minutedDiff, hoursDiff, daysDiff, monthsDiff };
-	}, []);
-
 	const onLastRefreshHandler = useCallback(() => {
 		const lastRefresh = dayjs(
 			selectedTime === 'custom' ? minTime / 1000000 : maxTime / 1000000,
@@ -173,7 +134,7 @@ function DateTimeSelection({
 		}
 
 		return `Last refresh - ${secondsDiff} sec ago`;
-	}, [getDiffs, maxTime, minTime, selectedTime]);
+	}, [maxTime, minTime, selectedTime]);
 
 	const onSelectHandler = (value: Time): void => {
 		if (value !== 'custom') {
@@ -220,62 +181,7 @@ function DateTimeSelection({
 	};
 
 	// this is triggred when we change the routes and based on that we are changing the default options
-	const getQueryInterval = useCallback(
-		(searchStartTime: string) => {
-			const lastRefresh = dayjs(
-				new Date(parseInt(getTimeString(searchStartTime), 10)),
-			);
-			const { minutedDiff, hoursDiff, daysDiff } = getDiffs(lastRefresh);
-
-			if (daysDiff > 1) {
-				return '1week';
-			}
-
-			if (hoursDiff > 6) {
-				return '1day';
-			}
-			if (hoursDiff > 1) {
-				return '6hr';
-			}
-			if (hoursDiff > 0) {
-				return '1hr';
-			}
-			if (minutedDiff > 15) {
-				return '30min';
-			}
-			if (minutedDiff > 5) {
-				return '15min';
-			}
-			if (minutedDiff > 1) {
-				return '5min';
-			}
-			return 'custom';
-		},
-		[getDiffs],
-	);
-
-	const getCustomOrIntervalTime = useCallback(
-		(time: Time, currentRoute: string): Time => {
-			if (searchEndTime !== null && searchStartTime !== null) {
-				return getQueryInterval(searchStartTime);
-			}
-
-			if (
-				(localstorageEndTime === null || localstorageStartTime === null) &&
-				time === 'custom'
-			) {
-				return getDefaultOption(currentRoute);
-			}
-			return time;
-		},
-		[
-			getQueryInterval,
-			localstorageEndTime,
-			localstorageStartTime,
-			searchEndTime,
-			searchStartTime,
-		],
-	);
+	const { getTime, getCustomOrIntervalTime } = useIntervalRange();
 
 	useEffect(() => {
 		const metricsTimeDuration = getLocalStorageKey(
@@ -306,10 +212,6 @@ function DateTimeSelection({
 	}, [
 		location.pathname,
 		getTime,
-		localstorageEndTime,
-		localstorageStartTime,
-		searchEndTime,
-		searchStartTime,
 		updateTimeInterval,
 		globalTimeLoading,
 		getCustomOrIntervalTime,
