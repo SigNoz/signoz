@@ -32,8 +32,8 @@ import { Container, DropDownContainer } from './styles';
 import { useSearchParser } from './useSearchParser';
 
 function SearchFilter({
-	getLogs,
-	getLogsAggregate,
+	getLogsLocal,
+	getLogsAggregateLocal,
 	getLogsFields,
 }: SearchFilterProps): JSX.Element {
 	const {
@@ -89,7 +89,7 @@ function SearchFilter({
 			} else {
 				const { maxTime, minTime } = globalTime;
 
-				getLogs({
+				getLogsLocal({
 					q: customQuery,
 					limit: logLinesPerPage,
 					orderBy: 'timestamp',
@@ -195,8 +195,8 @@ function SearchFilter({
 }
 
 interface DispatchProps {
-	getLogs: typeof getLogs;
-	getLogsAggregate: typeof getLogsAggregate;
+	getLogsLocal: typeof getLogs;
+	getLogsAggregateLocal: typeof getLogsAggregate;
 	getLogsFields: typeof GetLogsFields;
 }
 
@@ -205,8 +205,8 @@ type SearchFilterProps = DispatchProps;
 const mapDispatchToProps = (
 	dispatch: ThunkDispatch<unknown, unknown, AppActions>,
 ): DispatchProps => ({
-	getLogs: bindActionCreators(getLogs, dispatch),
-	getLogsAggregate: bindActionCreators(getLogsAggregate, dispatch),
+	getLogsLocal: bindActionCreators(getLogs, dispatch),
+	getLogsAggregateLocal: bindActionCreators(getLogsAggregate, dispatch),
 	getLogsFields: bindActionCreators(GetLogsFields, dispatch),
 });
 
