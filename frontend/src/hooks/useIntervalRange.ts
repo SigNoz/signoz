@@ -5,6 +5,7 @@ import { useCallback } from 'react';
 import { useLocation } from 'react-router-dom';
 import { getDiffs } from 'utils/getDiffs';
 
+import ROUTES from '../constants/routes';
 import {
 	getDefaultOption,
 	Time,
@@ -16,46 +17,50 @@ interface UseIntervalRangeI {
 }
 
 export function useIntervalRange(): UseIntervalRangeI {
-	const { search } = useLocation();
+	const { search, pathname } = useLocation();
 	const params = new URLSearchParams(search);
 	const searchStartTime = params.get('startTime');
 	const searchEndTime = params.get('endTime');
 
 	const localstorageStartTime = getLocalStorageKey('startTime');
 	const localstorageEndTime = getLocalStorageKey('endTime');
-	const getQueryInterval = useCallback((searchStartTime: string) => {
-		const lastRefresh = dayjs(
-			new Date(parseInt(getTimeString(searchStartTime), 10)),
-		);
-		const { minutedDiff, hoursDiff, daysDiff } = getDiffs(lastRefresh);
+	const getQueryInterval = useCallback(
+		(searchStartTime: string) => {
+			const lastRefresh = dayjs(
+				new Date(parseInt(getTimeString(searchStartTime), 10)),
+			);
+			const { minutedDiff, hoursDiff, daysDiff } = getDiffs(lastRefresh);
 
-		if (daysDiff > 1) {
-			return '1week';
-		}
-		if (hoursDiff > 6) {
-			return '1day';
-		}
-		if (hoursDiff > 1) {
-			return '6hr';
-		}
-		if (hoursDiff > 0) {
-			return '1hr';
-		}
-		if (minutedDiff > 15) {
-			return '30min';
-		}
-		if (minutedDiff > 5) {
-			return '15min';
-		}
-		if (minutedDiff > 1) {
-			return '5min';
-		}
-		return 'custom';
-	}, []);
+			if (daysDiff > 1) {
+				return '1week';
+			}
+			if (hoursDiff > 6) {
+				return '1day';
+			}
+			if (hoursDiff > 1) {
+				return '6hr';
+			}
+			if (hoursDiff > 0) {
+				return '1hr';
+			}
+			if (minutedDiff > 15) {
+				return '30min';
+			}
+			if (minutedDiff > 5) {
+				return '15min';
+			}
+			if (minutedDiff > 1) {
+				return '5min';
+			}
+
+			return ROUTES.SERVICE_MAP === pathname ? '1week' : 'custom';
+		},
+		[pathname],
+	);
 
 	const getCustomOrIntervalTime = useCallback(
 		(time: Time, currentRoute: string): Time => {
-			if (searchEndTime !== null && searchStartTime !== null) {
+			if (searchEndTime && searchStartTime) {
 				return getQueryInterval(searchStartTime);
 			}
 

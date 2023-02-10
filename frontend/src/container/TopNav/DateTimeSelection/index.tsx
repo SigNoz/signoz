@@ -4,6 +4,7 @@ import getLocalStorageKey from 'api/browser/localstorage/get';
 import setLocalStorageKey from 'api/browser/localstorage/set';
 import { LOCALSTORAGE } from 'constants/localStorage';
 import dayjs, { Dayjs } from 'dayjs';
+import { useIntervalRange } from 'hooks/useIntervalRange';
 import GetMinMax from 'lib/getMinMax';
 import history from 'lib/history';
 import React, { useCallback, useEffect, useState } from 'react';
@@ -15,9 +16,8 @@ import { GlobalTimeLoading, UpdateTimeInterval } from 'store/actions';
 import { AppState } from 'store/reducers';
 import AppActions from 'types/actions';
 import { GlobalReducer } from 'types/reducer/globalTime';
+import { getDiffs } from 'utils/getDiffs';
 
-import { useIntervalRange } from '../../../hooks/useIntervalRange';
-import { getDiffs } from '../../../utils/getDiffs';
 import AutoRefresh from '../AutoRefresh';
 import CustomDateTimeModal, { DateTimeRangeType } from '../CustomDateTimeModal';
 import { getDefaultOption, getOptions, Time } from './config';
