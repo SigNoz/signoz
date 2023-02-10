@@ -1,6 +1,7 @@
-import { Row } from 'antd';
+import { notification, Row } from 'antd';
+import { NotificationInstance } from 'antd/es/notification/interface';
 import { map, sortBy } from 'lodash-es';
-import React from 'react';
+import React, { useState } from 'react';
 import { connect, useSelector } from 'react-redux';
 import { bindActionCreators, Dispatch } from 'redux';
 import { ThunkDispatch } from 'redux-thunk';
@@ -23,13 +24,31 @@ function DashboardVariableSelection({
 		data: { variables = {} },
 	} = selectedDashboard;
 
+	const [update, setUpdate] = useState<boolean>(false);
+	const [lastUpdatedVar, setLastUpdatedVar] = useState<string>('');
+	const [notifications, NotificationElement] = notification.useNotification();
+
+	const onVarChanged = (name: string): void => {
+		setLastUpdatedVar(name);
+		setUpdate(!update);
+	};
+
 	const onValueUpdate = (
 		name: string,
-		value: IDashboardVariable['selectedValue'],
+		value:
+			| string
+			| string[]
+			| number
+			| number[]
+			| boolean
+			| boolean[]
+			| null
+			| undefined,
 	): void => {
 		const updatedVariablesData = { ...variables };
 		updatedVariablesData[name].selectedValue = value;
-		updateDashboardVariables(updatedVariablesData);
+		updateDashboardVariables(updatedVariablesData, notifications);
+		onVarChanged(name);
 	};
 	const onAllSelectedUpdate = (
 		name: string,
@@ -37,17 +56,25 @@ function DashboardVariableSelection({
 	): void => {
 		const updatedVariablesData = { ...variables };
 		updatedVariablesData[name].allSelected = value;
-		updateDashboardVariables(updatedVariablesData);
+		updateDashboardVariables(updatedVariablesData, notifications);
+		onVarChanged(name);
 	};
 
 	return (
 		<Row style={{ gap: '1rem' }}>
+			{NotificationElement}
 			{map(sortBy(Object.keys(variables)), (variableName) => (
 				<VariableItem
 					key={`${variableName}${variables[variableName].modificationUUID}`}
-					variableData={{ name: variableName, ...variables[variableName] }}
+					existingVariables={variables}
+					variableData={{
+						name: variableName,
+						...variables[variableName],
+						change: update,
+					}}
 					onValueUpdate={onValueUpdate as never}
 					onAllSelectedUpdate={onAllSelectedUpdate as never}
+					lastUpdatedVar={lastUpdatedVar}
 				/>
 			))}
 		</Row>
@@ -57,6 +84,7 @@ function DashboardVariableSelection({
 interface DispatchProps {
 	updateDashboardVariables: (
 		props: Parameters<typeof UpdateDashboardVariables>[0],
+		notify: NotificationInstance,
 	) => (dispatch: Dispatch<AppActions>) => void;
 }
 

@@ -3,10 +3,10 @@ import {
 	Organization,
 	PayloadProps as OrgPayload,
 } from 'types/api/user/getOrganization';
+import { UserFlags } from 'types/api/user/setFlags';
 import AppReducer, { User } from 'types/reducer/app';
 import { ROLES } from 'types/roles';
 
-export const SWITCH_DARK_MODE = 'SWITCH_DARK_MODE';
 export const LOGGED_IN = 'LOGGED_IN';
 export const SIDEBAR_COLLAPSE = 'SIDEBAR_COLLAPSE';
 
@@ -24,10 +24,7 @@ export const UPDATE_ORG_NAME = 'UPDATE_ORG_NAME';
 export const UPDATE_ORG = 'UPDATE_ORG';
 export const UPDATE_FEATURE_FLAGS = 'UPDATE_FEATURE_FLAGS';
 export const UPDATE_CONFIGS = 'UPDATE_CONFIGS';
-
-export interface SwitchDarkMode {
-	type: typeof SWITCH_DARK_MODE;
-}
+export const UPDATE_USER_FLAG = 'UPDATE_USER_FLAG';
 
 export interface LoggedInUser {
 	type: typeof LOGGED_IN;
@@ -92,6 +89,7 @@ export interface UpdateUser {
 		orgName: Organization['name'];
 		ROLE: ROLES;
 		orgId: Organization['id'];
+		userFlags: UserFlags;
 	};
 }
 
@@ -110,6 +108,13 @@ export interface UpdateOrgName {
 	};
 }
 
+export interface UpdateUserFlag {
+	type: typeof UPDATE_USER_FLAG;
+	payload: {
+		flags: UserFlags | null;
+	};
+}
+
 export interface UpdateOrg {
 	type: typeof UPDATE_ORG;
 	payload: {
@@ -124,7 +129,6 @@ export interface UpdateConfigs {
 }
 
 export type AppAction =
-	| SwitchDarkMode
 	| LoggedInUser
 	| SideBarCollapse
 	| UpdateAppVersion
@@ -137,4 +141,5 @@ export type AppAction =
 	| UpdateOrgName
 	| UpdateOrg
 	| UpdateFeatureFlags
-	| UpdateConfigs;
+	| UpdateConfigs
+	| UpdateUserFlag;

@@ -10,6 +10,8 @@ const (
 
 var LicenseSignozIo = "https://license.signoz.io/api/v1"
 
+var SpanLimitStr = GetOrDefaultEnv("SPAN_LIMIT", "5000")
+
 func GetOrDefaultEnv(key string, fallback string) string {
 	v := os.Getenv(key)
 	if len(v) == 0 {

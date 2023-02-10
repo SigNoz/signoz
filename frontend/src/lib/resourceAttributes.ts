@@ -1,7 +1,7 @@
 import { OperatorConversions } from 'constants/resourceAttributes';
 import { IResourceAttributeQuery } from 'container/MetricsApplication/ResourceAttributesFilter/types';
 import { IQueryBuilderTagFilterItems } from 'types/api/dashboard/getAll';
-import { OperatorValues, Tags, TagsAPI } from 'types/reducer/trace';
+import { OperatorValues, Tags } from 'types/reducer/trace';
 
 /**
  * resource_x_y -> x.y
@@ -23,33 +23,26 @@ export const convertTraceKeyToMetric = (key: string): string => {
 	return `resource_${splittedKey.join('_')}`;
 };
 
-export const convertOperatorLabelToMetricOperator = (label: string): string => {
-	return (
-		OperatorConversions.find((operator) => operator.label === label)
-			?.metricValue || ''
-	);
-};
+export const convertOperatorLabelToMetricOperator = (label: string): string =>
+	OperatorConversions.find((operator) => operator.label === label)
+		?.metricValue || '';
 
 export const convertOperatorLabelToTraceOperator = (
 	label: string,
-): OperatorValues => {
-	return OperatorConversions.find((operator) => operator.label === label)
+): OperatorValues =>
+	OperatorConversions.find((operator) => operator.label === label)
 		?.traceValue as OperatorValues;
-};
 
 export const convertRawQueriesToTraceSelectedTags = (
 	queries: IResourceAttributeQuery[],
-	keyType: 'string' | 'array' = 'string',
-): Tags[] | TagsAPI[] => {
-	return queries.map((query) => ({
-		Key:
-			keyType === 'array'
-				? [convertMetricKeyToTrace(query.tagKey)]
-				: (convertMetricKeyToTrace(query.tagKey) as never),
+): Tags[] =>
+	queries.map((query) => ({
+		Key: [convertMetricKeyToTrace(query.tagKey)],
 		Operator: convertOperatorLabelToTraceOperator(query.operator),
-		Values: query.tagValue,
+		StringValues: query.tagValue,
+		NumberValues: [],
+		BoolValues: [],
 	}));
-};
 
 /**
  * Converts Resource Attribute Queries to PromQL query string
@@ -74,11 +67,10 @@ export const resourceAttributesQueryToPromQL = (
 /* Convert resource attributes to tagFilter items for queryBuilder */
 export const resourceAttributesToTagFilterItems = (
 	queries: IResourceAttributeQuery[],
-): IQueryBuilderTagFilterItems[] => {
-	return queries.map((res) => ({
+): IQueryBuilderTagFilterItems[] =>
+	queries.map((res) => ({
 		id: `${res.id}`,
 		key: `${res.tagKey}`,
 		op: `${res.operator}`,
 		value: `${res.tagValue}`.split(','),
 	}));
-};

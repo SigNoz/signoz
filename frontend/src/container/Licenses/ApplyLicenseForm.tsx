@@ -1,20 +1,38 @@
-import { Button, Input, notification } from 'antd';
-import FormItem from 'antd/lib/form/FormItem';
+import { Button, Form, Input, notification } from 'antd';
+import getFeaturesFlags from 'api/features/getFeatureFlags';
 import apply from 'api/licenses/apply';
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { QueryObserverResult, RefetchOptions, useQuery } from 'react-query';
+import { useDispatch } from 'react-redux';
+import { Dispatch } from 'redux';
+import { AppAction, UPDATE_FEATURE_FLAGS } from 'types/actions/app';
+import { ErrorResponse, SuccessResponse } from 'types/api';
+import { PayloadProps } from 'types/api/licenses/getAll';
 
-import { ApplyForm, ApplyFormContainer, LicenseInput } from './applyFormStyles';
+import { ApplyForm, ApplyFormContainer, LicenseInput } from './styles';
 
-function ApplyLicenseForm(): JSX.Element {
+const FormItem = Form.Item;
+
+function ApplyLicenseForm({
+	licenseRefetch,
+}: ApplyLicenseFormProps): JSX.Element {
 	const { t } = useTranslation(['licenses']);
 	const [key, setKey] = useState('');
 	const [loading, setLoading] = useState(false);
+	const dispatch = useDispatch<Dispatch<AppAction>>();
+	const { refetch } = useQuery({
+		queryFn: getFeaturesFlags,
+		queryKey: 'getFeatureFlags',
+		enabled: false,
+	});
+
+	const [notifications, NotificationElement] = notification.useNotification();
 
 	const onFinish = async (values: unknown | { key: string }): Promise<void> => {
 		const params = values as { key: string };
 		if (params.key === '' || !params.key) {
-			notification.error({
+			notifications.error({
 				message: 'Error',
 				description: t('enter_license_key'),
 			});
@@ -28,18 +46,28 @@ function ApplyLicenseForm(): JSX.Element {
 			});
 
 			if (response.statusCode === 200) {
-				notification.success({
+				const [featureFlagsResponse] = await Promise.all([
+					refetch(),
+					licenseRefetch(),
+				]);
+				if (featureFlagsResponse.data?.payload) {
+					dispatch({
+						type: UPDATE_FEATURE_FLAGS,
+						payload: featureFlagsResponse.data.payload,
+					});
+				}
+				notifications.success({
 					message: 'Success',
 					description: t('license_applied'),
 				});
 			} else {
-				notification.error({
+				notifications.error({
 					message: 'Error',
 					description: response.error || t('unexpected_error'),
 				});
 			}
 		} catch (e) {
-			notification.error({
+			notifications.error({
 				message: 'Error',
 				description: t('unexpected_error'),
 			});
@@ -49,6 +77,7 @@ function ApplyLicenseForm(): JSX.Element {
 
 	return (
 		<ApplyFormContainer>
+			{NotificationElement}
 			<ApplyForm layout="inline" onFinish={onFinish}>
 				<LicenseInput labelAlign="left" name="key">
 					<Input
@@ -72,6 +101,14 @@ function ApplyLicenseForm(): JSX.Element {
 			{key && <div style={{ paddingLeft: '0.5em', color: '#666' }}> {key}</div>}
 		</ApplyFormContainer>
 	);
+}
+
+interface ApplyLicenseFormProps {
+	licenseRefetch: (
+		options?: RefetchOptions,
+	) => Promise<
+		QueryObserverResult<SuccessResponse<PayloadProps> | ErrorResponse, unknown>
+	>;
 }
 
 export default ApplyLicenseForm;

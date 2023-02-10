@@ -1,5 +1,4 @@
-import { Input, Select } from 'antd';
-import FormItem from 'antd/lib/form/FormItem';
+import { Form, Input, Select } from 'antd';
 import { LabelFilterStatement } from 'container/CreateAlertChannels/config';
 import React from 'react';
 
@@ -10,7 +9,7 @@ const { Option } = Select;
 // point
 function LabelFilterForm({ setFilter }: LabelFilterProps): JSX.Element {
 	return (
-		<FormItem name="label_filter" label="Notify When (Optional)">
+		<Form.Item name="label_filter" label="Notify When (Optional)">
 			<Input.Group compact>
 				<Select
 					defaultValue="Severity"
@@ -51,7 +50,7 @@ function LabelFilterForm({ setFilter }: LabelFilterProps): JSX.Element {
 					}}
 				/>
 			</Input.Group>
-		</FormItem>
+		</Form.Item>
 	);
 }
 

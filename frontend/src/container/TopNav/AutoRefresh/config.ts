@@ -1,3 +1,7 @@
+import GetMinMax, { GetMinMaxPayload } from 'lib/getMinMax';
+
+import { Time } from '../DateTimeSelection/config';
+
 export const options: IOptions[] = [
 	{
 		label: 'off',
@@ -61,3 +65,12 @@ export interface IOptions {
 	key: string;
 	value: number;
 }
+
+export const getMinMax = (
+	selectedTime: Time,
+	minTime: number,
+	maxTime: number,
+): GetMinMaxPayload =>
+	selectedTime !== 'custom'
+		? GetMinMax(selectedTime)
+		: GetMinMax(selectedTime, [minTime, maxTime]);

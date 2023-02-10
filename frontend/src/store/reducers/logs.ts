@@ -20,6 +20,8 @@ import {
 	SET_SEARCH_QUERY_STRING,
 	STOP_LIVE_TAIL,
 	TOGGLE_LIVE_TAIL,
+	UPDATE_INTERESTING_FIELDS,
+	UPDATE_SELECTED_FIELDS,
 } from 'types/actions/logs';
 import { ILogsReducer } from 'types/reducer/logs';
 
@@ -83,7 +85,7 @@ export const LogsReducer = (
 				...state,
 				searchFilter: {
 					...state.searchFilter,
-					queryString: action.payload,
+					queryString: action.payload.searchQueryString,
 				},
 			};
 		}
@@ -99,13 +101,11 @@ export const LogsReducer = (
 		}
 
 		case ADD_SEARCH_FIELD_QUERY_STRING: {
-			const updatedQueryString =
-				state.searchFilter.queryString ||
-				`${
-					state.searchFilter.queryString && state.searchFilter.queryString.length > 0
-						? ' and '
-						: ''
-				}${action.payload}`;
+			const updatedQueryString = `${state?.searchFilter?.queryString || ''}${
+				state.searchFilter.queryString && state.searchFilter.queryString.length > 0
+					? ' and '
+					: ''
+			}${action.payload}`;
 
 			const updatedParsedQuery = parseQuery(updatedQueryString);
 			return {
@@ -128,7 +128,7 @@ export const LogsReducer = (
 		case SET_LOG_LINES_PER_PAGE: {
 			return {
 				...state,
-				logLinesPerPage: action.payload,
+				logLinesPerPage: action.payload.logsLinesPerPage,
 			};
 		}
 
@@ -202,6 +202,26 @@ export const LogsReducer = (
 			return {
 				...state,
 				logs: [],
+			};
+		}
+
+		case UPDATE_INTERESTING_FIELDS: {
+			return {
+				...state,
+				fields: {
+					...state.fields,
+					interesting: action.payload.field,
+				},
+			};
+		}
+
+		case UPDATE_SELECTED_FIELDS: {
+			return {
+				...state,
+				fields: {
+					...state.fields,
+					selected: action.payload.field,
+				},
 			};
 		}
 

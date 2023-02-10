@@ -48,7 +48,7 @@ function ErrorDetails(): JSX.Element {
 		},
 	);
 
-	const { data, status } = useQuery([maxTime, minTime, groupId], {
+	const { data, status } = useQuery([maxTime, minTime, groupId, errorId], {
 		queryFn: () =>
 			getByErrorType({
 				groupID: groupId || '',

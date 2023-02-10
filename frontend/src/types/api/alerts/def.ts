@@ -11,6 +11,7 @@ export const defaultCompareOp = '1';
 
 export interface AlertDef {
 	id?: number;
+	alertType?: string;
 	alert?: string;
 	ruleType?: string;
 	condition: RuleCondition;

@@ -12,6 +12,7 @@ import (
 	"go.signoz.io/signoz/pkg/query-service/constants"
 	"go.signoz.io/signoz/pkg/query-service/dao"
 	"go.signoz.io/signoz/pkg/query-service/model"
+	"go.signoz.io/signoz/pkg/query-service/telemetry"
 	"go.signoz.io/signoz/pkg/query-service/utils"
 	"go.uber.org/zap"
 	"golang.org/x/crypto/bcrypt"
@@ -259,7 +260,7 @@ func RegisterFirstUser(ctx context.Context, req *RegisterRequest) (*model.User, 
 		OrgId:              org.Id,
 	}
 
-	return dao.DB().CreateUser(ctx, user)
+	return dao.DB().CreateUser(ctx, user, true)
 }
 
 // RegisterInvitedUser handles registering a invited user
@@ -338,7 +339,7 @@ func RegisterInvitedUser(ctx context.Context, req *RegisterRequest, nopassword b
 	}
 
 	// TODO(Ahsan): Ideally create user and delete invitation should happen in a txn.
-	user, apiErr = dao.DB().CreateUser(ctx, user)
+	user, apiErr = dao.DB().CreateUser(ctx, user, false)
 	if apiErr != nil {
 		zap.S().Debugf("CreateUser failed, err: %v\n", apiErr.Err)
 		return nil, apiErr
@@ -385,6 +386,8 @@ func Login(ctx context.Context, request *model.LoginRequest) (*model.LoginRespon
 		zap.S().Debugf("Failed to generate JWT against login creds, %v", err)
 		return nil, err
 	}
+
+	telemetry.GetInstance().IdentifyUser(&user.User)
 
 	return &model.LoginResponse{
 		UserJwtObject: userjwt,

@@ -1,8 +1,11 @@
 package app
 
 import (
+	"bytes"
 	"context"
+	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"net"
 	"net/http"
 	_ "net/http/pprof" // http profiler
@@ -20,12 +23,14 @@ import (
 	"go.signoz.io/signoz/ee/query-service/dao"
 	"go.signoz.io/signoz/ee/query-service/interfaces"
 	licensepkg "go.signoz.io/signoz/ee/query-service/license"
+	"go.signoz.io/signoz/ee/query-service/usage"
 
 	"go.signoz.io/signoz/pkg/query-service/app/dashboards"
 	baseconst "go.signoz.io/signoz/pkg/query-service/constants"
 	"go.signoz.io/signoz/pkg/query-service/healthcheck"
 	basealm "go.signoz.io/signoz/pkg/query-service/integrations/alertManager"
 	baseint "go.signoz.io/signoz/pkg/query-service/interfaces"
+	"go.signoz.io/signoz/pkg/query-service/model"
 	pqle "go.signoz.io/signoz/pkg/query-service/pqlEngine"
 	rules "go.signoz.io/signoz/pkg/query-service/rules"
 	"go.signoz.io/signoz/pkg/query-service/telemetry"
@@ -98,7 +103,7 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 	storage := os.Getenv("STORAGE")
 	if storage == "clickhouse" {
 		zap.S().Info("Using ClickHouse as datastore ...")
-		qb := db.NewDataConnector(localDB, serverOptions.PromConfigPath)
+		qb := db.NewDataConnector(localDB, serverOptions.PromConfigPath, lm)
 		go qb.Start(readerReady)
 		reader = qb
 	} else {
@@ -113,6 +118,16 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 		reader,
 		serverOptions.DisableRules)
 
+	if err != nil {
+		return nil, err
+	}
+
+	// start the usagemanager
+	usageManager, err := usage.New("sqlite", localDB, lm.GetRepo(), reader.GetConn())
+	if err != nil {
+		return nil, err
+	}
+	err = usageManager.Start()
 	if err != nil {
 		return nil, err
 	}
@@ -255,15 +270,82 @@ func (lrw *loggingResponseWriter) Flush() {
 	lrw.ResponseWriter.(http.Flusher).Flush()
 }
 
+func extractDashboardMetaData(path string, r *http.Request) (map[string]interface{}, bool) {
+	pathToExtractBodyFrom := "/api/v2/metrics/query_range"
+
+	data := map[string]interface{}{}
+	var postData *model.QueryRangeParamsV2
+
+	if path == pathToExtractBodyFrom && (r.Method == "POST") {
+		if r.Body != nil {
+			bodyBytes, err := ioutil.ReadAll(r.Body)
+			if err != nil {
+				return nil, false
+			}
+			r.Body.Close() //  must close
+			r.Body = ioutil.NopCloser(bytes.NewBuffer(bodyBytes))
+			json.Unmarshal(bodyBytes, &postData)
+
+		} else {
+			return nil, false
+		}
+
+	} else {
+		return nil, false
+	}
+
+	signozMetricNotFound := false
+
+	if postData != nil {
+		signozMetricNotFound = telemetry.GetInstance().CheckSigNozMetricsV2(postData.CompositeMetricQuery)
+
+		if postData.CompositeMetricQuery != nil {
+			data["queryType"] = postData.CompositeMetricQuery.QueryType
+			data["panelType"] = postData.CompositeMetricQuery.PanelType
+		}
+
+		data["datasource"] = postData.DataSource
+	}
+
+	if signozMetricNotFound {
+		telemetry.GetInstance().AddActiveMetricsUser()
+		telemetry.GetInstance().SendEvent(telemetry.TELEMETRY_EVENT_DASHBOARDS_METADATA, data, true)
+	}
+
+	return data, true
+}
+
+func getActiveLogs(path string, r *http.Request) {
+	// if path == "/api/v1/dashboards/{uuid}" {
+	// 	telemetry.GetInstance().AddActiveMetricsUser()
+	// }
+	if path == "/api/v1/logs" {
+		hasFilters := len(r.URL.Query().Get("q"))
+		if hasFilters > 0 {
+			telemetry.GetInstance().AddActiveLogsUser()
+		}
+
+	}
+
+}
+
 func (s *Server) analyticsMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		route := mux.CurrentRoute(r)
 		path, _ := route.GetPathTemplate()
 
+		dashboardMetadata, metadataExists := extractDashboardMetaData(path, r)
+		getActiveLogs(path, r)
+
 		lrw := NewLoggingResponseWriter(w)
 		next.ServeHTTP(lrw, r)
 
 		data := map[string]interface{}{"path": path, "statusCode": lrw.statusCode}
+		if metadataExists {
+			for key, value := range dashboardMetadata {
+				data[key] = value
+			}
+		}
 
 		if _, ok := telemetry.IgnoredPaths()[path]; !ok {
 			telemetry.GetInstance().SendEvent(telemetry.TELEMETRY_EVENT_PATH, data)

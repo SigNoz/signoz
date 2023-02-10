@@ -109,10 +109,28 @@ const (
 	DefaultLogSkipIndexType        = "bloom_filter(0.01)"
 	DefaultLogSkipIndexGranularity = 64
 )
+
+var GroupByColMap = map[string]struct{}{
+	ServiceName:        {},
+	HttpHost:           {},
+	HttpRoute:          {},
+	HttpUrl:            {},
+	HttpMethod:         {},
+	Component:          {},
+	OperationDB:        {},
+	DBName:             {},
+	DBOperation:        {},
+	DBSystem:           {},
+	MsgOperation:       {},
+	MsgSystem:          {},
+	RPCMethod:          {},
+	ResponseStatusCode: {},
+}
+
 const (
 	SIGNOZ_METRIC_DBNAME        = "signoz_metrics"
-	SIGNOZ_SAMPLES_TABLENAME    = "samples_v2"
-	SIGNOZ_TIMESERIES_TABLENAME = "time_series_v2"
+	SIGNOZ_SAMPLES_TABLENAME    = "distributed_samples_v2"
+	SIGNOZ_TIMESERIES_TABLENAME = "distributed_time_series_v2"
 )
 
 var TimeoutExcludedRoutes = map[string]bool{
@@ -189,4 +207,15 @@ const (
 		"CAST((attributes_int64_key, attributes_int64_value), 'Map(String, Int64)') as  attributes_int64," +
 		"CAST((attributes_float64_key, attributes_float64_value), 'Map(String, Float64)') as  attributes_float64," +
 		"CAST((resources_string_key, resources_string_value), 'Map(String, String)') as resources_string "
+)
+
+// ReservedColumnTargetAliases identifies result value from a user
+// written clickhouse query. The column alias indcate which value is
+// to be considered as final result (or target)
+var ReservedColumnTargetAliases = map[string]bool{"result": true, "res": true, "value": true}
+
+const (
+	StringTagMapCol = "stringTagMap"
+	NumberTagMapCol = "numberTagMap"
+	BoolTagMapCol   = "boolTagMap"
 )

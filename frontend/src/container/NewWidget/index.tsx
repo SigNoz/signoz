@@ -57,9 +57,7 @@ function NewWidget({
 
 	const { search } = useLocation();
 
-	const query = useMemo(() => {
-		return new URLSearchParams(search);
-	}, [search]);
+	const query = useMemo(() => new URLSearchParams(search), [search]);
 
 	const { dashboardId } = useParams<DashboardWidgetPageParams>();
 
@@ -213,7 +211,7 @@ function NewWidget({
 					onClickSaveHandler();
 				}}
 				centered
-				visible={saveModal}
+				open={saveModal}
 				width={600}
 			>
 				{hasUnstagedChanges ? (

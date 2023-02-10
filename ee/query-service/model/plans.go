@@ -17,11 +17,15 @@ var BasicPlan = basemodel.FeatureSet{
 }
 
 var ProPlan = basemodel.FeatureSet{
-	Pro: true,
-	SSO: true,
+	Pro:                             true,
+	SSO:                             true,
+	basemodel.SmartTraceDetail:      true,
+	basemodel.CustomMetricsFunction: true,
 }
 
 var EnterprisePlan = basemodel.FeatureSet{
-	Enterprise: true,
-	SSO:        true,
+	Enterprise:                      true,
+	SSO:                             true,
+	basemodel.SmartTraceDetail:      true,
+	basemodel.CustomMetricsFunction: true,
 }

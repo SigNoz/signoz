@@ -34,8 +34,8 @@ type Reader interface {
 	// clickhouse only.
 	GetDisks(ctx context.Context) (*[]model.DiskItem, *model.ApiError)
 	GetSpanFilters(ctx context.Context, query *model.SpanFilterParams) (*model.SpanFiltersResponse, *model.ApiError)
-	GetTagFilters(ctx context.Context, query *model.TagFilterParams) (*[]model.TagFilters, *model.ApiError)
-	GetTagValues(ctx context.Context, query *model.TagFilterParams) (*[]model.TagValues, *model.ApiError)
+	GetTagFilters(ctx context.Context, query *model.TagFilterParams) (*model.TagFilters, *model.ApiError)
+	GetTagValues(ctx context.Context, query *model.TagFilterParams) (*model.TagValues, *model.ApiError)
 	GetFilteredSpans(ctx context.Context, query *model.GetFilteredSpansParams) (*model.GetFilterSpansResponse, *model.ApiError)
 	GetFilteredSpansAggregates(ctx context.Context, query *model.GetFilteredSpanAggregatesParams) (*model.GetFilteredSpansAggregatesResponse, *model.ApiError)
 
@@ -46,7 +46,7 @@ type Reader interface {
 	GetNextPrevErrorIDs(ctx context.Context, params *model.GetErrorParams) (*model.NextPrevErrorIDs, *model.ApiError)
 
 	// Search Interfaces
-	SearchTraces(ctx context.Context, traceID string) (*[]model.SearchSpansResult, error)
+	SearchTraces(ctx context.Context, traceID string, spanId string, levelUp int, levelDown int, spanLimit int, smartTraceAlgorithm func(payload []model.SearchSpanResponseItem, targetSpanId string, levelUp int, levelDown int, spanLimit int) ([]model.SearchSpansResult, error)) (*[]model.SearchSpansResult, error)
 
 	// Setter Interfaces
 	SetTTL(ctx context.Context, ttlParams *model.TTLParams) (*model.SetTTLResponseItem, *model.ApiError)
@@ -55,6 +55,7 @@ type Reader interface {
 	GetMetricAutocompleteTagKey(ctx context.Context, params *model.MetricAutocompleteTagParams) (*[]string, *model.ApiError)
 	GetMetricAutocompleteTagValue(ctx context.Context, params *model.MetricAutocompleteTagParams) (*[]string, *model.ApiError)
 	GetMetricResult(ctx context.Context, query string) ([]*model.Series, error)
+	GetMetricResultEE(ctx context.Context, query string) ([]*model.Series, string, error)
 
 	GetTotalSpans(ctx context.Context) (uint64, error)
 	GetSpansInLastHeartBeatInterval(ctx context.Context) (uint64, error)
@@ -62,6 +63,7 @@ type Reader interface {
 	GetSamplesInfoInLastHeartBeatInterval(ctx context.Context) (uint64, error)
 	GetLogsInfoInLastHeartBeatInterval(ctx context.Context) (uint64, error)
 	GetTagsInfoInLastHeartBeatInterval(ctx context.Context) (*model.TagsInfo, error)
+	GetDistributedInfoInLastHeartBeatInterval(ctx context.Context) (map[string]interface{}, error)
 	// Logs
 	GetLogFields(ctx context.Context) (*model.GetFieldsResponse, *model.ApiError)
 	UpdateLogField(ctx context.Context, field *model.UpdateField) *model.ApiError

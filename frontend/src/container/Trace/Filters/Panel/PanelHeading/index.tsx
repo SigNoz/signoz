@@ -53,6 +53,8 @@ function PanelHeading(props: PanelHeadingProps): JSX.Element {
 
 	const defaultErrorMessage = 'Something went wrong';
 
+	const [notifications, NotificationElement] = notification.useNotification();
+
 	// eslint-disable-next-line sonarjs/cognitive-complexity
 	const onExpandHandler: React.MouseEventHandler<HTMLDivElement> = async (e) => {
 		try {
@@ -119,14 +121,14 @@ function PanelHeading(props: PanelHeadingProps): JSX.Element {
 					spansAggregate.orderParam,
 				);
 			} else {
-				notification.error({
+				notifications.error({
 					message: response.error || defaultErrorMessage,
 				});
 			}
 
 			setIsLoading(false);
 		} catch (error) {
-			notification.error({
+			notifications.error({
 				message: (error as AxiosError).toString() || defaultErrorMessage,
 			});
 		}
@@ -225,13 +227,13 @@ function PanelHeading(props: PanelHeadingProps): JSX.Element {
 					spansAggregate.orderParam,
 				);
 			} else {
-				notification.error({
+				notifications.error({
 					message: response.error || 'Something went wrong',
 				});
 			}
 			setIsLoading(false);
 		} catch (error) {
-			notification.error({
+			notifications.error({
 				message: (error as AxiosError).toString(),
 			});
 			setIsLoading(false);
@@ -295,6 +297,7 @@ function PanelHeading(props: PanelHeadingProps): JSX.Element {
 
 	return (
 		<>
+			{NotificationElement}
 			{PanelName !== 'duration' && <Divider plain style={{ margin: 0 }} />}
 
 			<Card bordered={false}>

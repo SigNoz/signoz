@@ -2,6 +2,13 @@ export interface Props {
 	id: string;
 }
 
+export interface GetTraceItemProps {
+	id: string;
+	spanId: string | null;
+	levelUp: string | null;
+	levelDown: string | null;
+}
+
 export interface PayloadProps {
 	[id: string]: {
 		events: Span[];
@@ -49,9 +56,10 @@ export interface ITraceTag {
 	value: string;
 }
 
-interface ITraceEvents {
+export interface ITraceEvents {
 	attributeMap: { event: string; [key: string]: string };
 	name?: string;
+	timeUnixNano: number;
 }
 
 export interface ITraceForest {

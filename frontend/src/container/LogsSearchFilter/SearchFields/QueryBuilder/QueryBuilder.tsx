@@ -1,10 +1,4 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-/* eslint-disable no-bitwise */
-/* eslint-disable sonarjs/no-identical-functions */
-/* eslint-disable no-param-reassign */
-/* eslint-disable react/no-array-index-key */
-/* eslint-disable react-hooks/exhaustive-deps */
-import { CloseOutlined } from '@ant-design/icons';
+import { CloseOutlined, CloseSquareOutlined } from '@ant-design/icons';
 import { Button, Input, Select } from 'antd';
 import CategoryHeading from 'components/Logs/CategoryHeading';
 import {
@@ -12,23 +6,47 @@ import {
 	QueryOperatorsMultiVal,
 	QueryOperatorsSingleVal,
 } from 'lib/logql/tokens';
-import { flatten } from 'lodash-es';
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useMemo } from 'react';
 import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
 import { ILogsReducer } from 'types/reducer/logs';
-import { v4 } from 'uuid';
 
 import FieldKey from '../FieldKey';
-import { QueryConditionContainer, QueryFieldContainer } from '../styles';
-import { createParsedQueryStructure } from '../utils';
-import { hashCode, parseQuery } from './utils';
+import { QueryFieldContainer } from '../styles';
+import { QueryFields } from '../utils';
+import { Container, QueryWrapper } from './styles';
 
 const { Option } = Select;
+
+function QueryConditionField({
+	query,
+	queryIndex,
+	onUpdate,
+}: QueryConditionFieldProps): JSX.Element {
+	const allOptions = Object.values(ConditionalOperators);
+	return (
+		<Select
+			defaultValue={
+				(query as any).value &&
+				(((query as any)?.value as any) as string).toUpperCase()
+			}
+			onChange={(e): void => {
+				onUpdate({ ...query, value: e }, queryIndex);
+			}}
+		>
+			{allOptions.map((cond) => (
+				<Option key={cond} value={cond} label={cond}>
+					{cond}
+				</Option>
+			))}
+		</Select>
+	);
+}
+
 interface QueryFieldProps {
 	query: Query;
 	queryIndex: number;
-	onUpdate: (query: unknown, queryIndex: number) => void;
+	onUpdate: (query: Query, queryIndex: number) => void;
 	onDelete: (queryIndex: number) => void;
 }
 function QueryField({
@@ -40,35 +58,39 @@ function QueryField({
 	const {
 		fields: { selected },
 	} = useSelector<AppState, ILogsReducer>((store) => store.logs);
-
-	const getFieldType = (inputKey: string): string => {
-		// eslint-disable-next-line no-restricted-syntax
-		for (const selectedField of selected) {
-			if (inputKey === selectedField.name) {
+	const getFieldType = useCallback(
+		(inputKey: string): string => {
+			const selectedField = selected.find((field) => inputKey === field.name);
+			if (selectedField) {
 				return selectedField.type;
 			}
-		}
-		return '';
-	};
+			return '';
+		},
+		[selected],
+	);
 
 	const fieldType = useMemo(() => getFieldType(query[0].value as string), [
+		getFieldType,
 		query,
 	]);
+
 	const handleChange = (qIdx: number, value: string): void => {
-		query[qIdx].value = value || '';
+		const updatedQuery = [...query];
+		updatedQuery[qIdx].value = value || '';
+
 		if (qIdx === 1) {
 			if (Object.values(QueryOperatorsMultiVal).includes(value)) {
-				if (!Array.isArray(query[2].value)) {
-					query[2].value = [];
+				if (!Array.isArray(updatedQuery[2].value)) {
+					updatedQuery[2].value = [];
 				}
 			} else if (
 				Object.values(QueryOperatorsSingleVal).includes(value) &&
-				Array.isArray(query[2].value)
+				Array.isArray(updatedQuery[2].value)
 			) {
-				query[2].value = '';
+				updatedQuery[2].value = '';
 			}
 		}
-		onUpdate(query, queryIndex);
+		onUpdate(updatedQuery, queryIndex);
 	};
 
 	const handleClear = (): void => {
@@ -119,9 +141,12 @@ function QueryField({
 					/>
 				) : (
 					<Input
-						onChange={(e): void => handleChange(2, e.target.value)}
+						onChange={(e): void => {
+							handleChange(2, e.target.value);
+						}}
 						style={{ width: '100%' }}
 						defaultValue={query[2] && query[2].value}
+						value={query[2] && query[2].value}
 					/>
 				)}
 			</div>
@@ -137,115 +162,84 @@ function QueryField({
 }
 
 interface QueryConditionFieldProps {
-	query: { value: string | string[]; type: string }[];
+	query: QueryFields;
 	queryIndex: number;
 	onUpdate: (arg0: unknown, arg1: number) => void;
-}
-function QueryConditionField({
-	query,
-	queryIndex,
-	onUpdate,
-}: QueryConditionFieldProps): JSX.Element {
-	return (
-		<QueryConditionContainer>
-			<Select
-				defaultValue={
-					(query as any).value &&
-					(((query as any)?.value as any) as string).toUpperCase()
-				}
-				onChange={(e): void => {
-					onUpdate({ ...query, value: e }, queryIndex);
-				}}
-				style={{ width: '100%' }}
-			>
-				{Object.values(ConditionalOperators).map((cond) => (
-					<Option key={cond} value={cond} label={cond}>
-						{cond}
-					</Option>
-				))}
-			</Select>
-		</QueryConditionContainer>
-	);
 }
 
 export type Query = { value: string | string[]; type: string }[];
 
+export interface QueryBuilderProps {
+	keyPrefix: string;
+	onDropDownToggleHandler: (value: boolean) => VoidFunction;
+	fieldsQuery: QueryFields[][];
+	setFieldsQuery: (q: QueryFields[][]) => void;
+	syncKeyPrefix: () => void;
+}
+
 function QueryBuilder({
-	updateParsedQuery,
-}: {
-	updateParsedQuery: (arg0: unknown) => void;
-}): JSX.Element {
-	const {
-		searchFilter: { parsedQuery },
-	} = useSelector<AppState, ILogsReducer>((store) => store.logs);
-
-	const keyPrefixRef = useRef(hashCode(JSON.stringify(parsedQuery)));
-	const [keyPrefix, setKeyPrefix] = useState(keyPrefixRef.current);
-	const generatedQueryStructure = createParsedQueryStructure(
-		parsedQuery as never[],
-	);
-
-	useEffect(() => {
-		const incomingHashCode = hashCode(JSON.stringify(parsedQuery));
-		if (incomingHashCode !== keyPrefixRef.current) {
-			keyPrefixRef.current = incomingHashCode;
-			setKeyPrefix(incomingHashCode);
-		}
-	}, [parsedQuery]);
-
+	keyPrefix,
+	fieldsQuery,
+	setFieldsQuery,
+	onDropDownToggleHandler,
+	syncKeyPrefix,
+}: QueryBuilderProps): JSX.Element {
 	const handleUpdate = (query: Query, queryIndex: number): void => {
-		const updatedParsedQuery = generatedQueryStructure;
-		updatedParsedQuery[queryIndex] = parseQuery(query) as never;
-
-		const flatParsedQuery = flatten(updatedParsedQuery).filter((q) => q.value);
-		keyPrefixRef.current = hashCode(JSON.stringify(flatParsedQuery));
-		updateParsedQuery(flatParsedQuery);
+		const updated = [...fieldsQuery];
+		updated[queryIndex] = query as never; // parseQuery(query) as never;
+		setFieldsQuery(updated);
 	};
 
 	const handleDelete = (queryIndex: number): void => {
-		const updatedParsedQuery = generatedQueryStructure;
-		updatedParsedQuery.splice(queryIndex - 1, 2);
+		const updated = [...fieldsQuery];
+		if (queryIndex !== 0) updated.splice(queryIndex - 1, 2);
+		else updated.splice(queryIndex, 2);
 
-		const flatParsedQuery = flatten(updatedParsedQuery).filter((q) => q.value);
-		keyPrefixRef.current = v4();
-		updateParsedQuery(flatParsedQuery);
+		setFieldsQuery(updated);
+
+		// initiate re-render query panel
+		syncKeyPrefix();
 	};
 
-	const QueryUI = (): JSX.Element | JSX.Element[] =>
-		generatedQueryStructure.map((query, idx) => {
-			if (Array.isArray(query))
-				return (
+	const QueryUI = (
+		fieldsQuery: QueryFields[][],
+	): JSX.Element | JSX.Element[] => {
+		const result: JSX.Element[] = [];
+		fieldsQuery.forEach((query, idx) => {
+			if (Array.isArray(query) && query.length > 1) {
+				result.push(
 					<QueryField
-						key={keyPrefix + idx}
-						query={query as never}
+						key={keyPrefix}
+						query={query}
 						queryIndex={idx}
-						onUpdate={handleUpdate as never}
+						onUpdate={handleUpdate}
 						onDelete={handleDelete}
-					/>
+					/>,
 				);
-
-			return (
-				<QueryConditionField
-					key={keyPrefix + idx}
-					query={query}
-					queryIndex={idx}
-					onUpdate={handleUpdate as never}
-				/>
-			);
+			} else {
+				result.push(
+					<div key={keyPrefix}>
+						<QueryConditionField
+							query={Array.isArray(query) ? query[0] : query}
+							queryIndex={idx}
+							onUpdate={handleUpdate as never}
+						/>
+					</div>,
+				);
+			}
 		});
+		return result;
+	};
+
 	return (
-		<div>
-			<CategoryHeading>LOG QUERY BUILDER</CategoryHeading>
-			<div
-				style={{
-					display: 'grid',
-					gridTemplateColumns: '80px 1fr',
-					margin: '0.5rem 0',
-				}}
-			>
-				{QueryUI()}
-			</div>
-		</div>
+		<>
+			<Container isMargin={fieldsQuery.length === 0}>
+				<CategoryHeading>LOG QUERY BUILDER</CategoryHeading>
+				<CloseSquareOutlined onClick={onDropDownToggleHandler(false)} />
+			</Container>
+
+			<QueryWrapper key={keyPrefix}>{QueryUI(fieldsQuery)}</QueryWrapper>
+		</>
 	);
 }
 

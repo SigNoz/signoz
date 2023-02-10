@@ -1,15 +1,20 @@
 import axios from 'api';
 import { ErrorResponseHandler } from 'api/ErrorResponseHandler';
 import { AxiosError } from 'axios';
+import { formUrlParams } from 'container/TraceDetail/utils';
 import { ErrorResponse, SuccessResponse } from 'types/api';
-import { PayloadProps, Props } from 'types/api/trace/getTraceItem';
+import { GetTraceItemProps, PayloadProps } from 'types/api/trace/getTraceItem';
 
 const getTraceItem = async (
-	props: Props,
+	props: GetTraceItemProps,
 ): Promise<SuccessResponse<PayloadProps> | ErrorResponse> => {
 	try {
 		const response = await axios.request<PayloadProps>({
-			url: `/traces/${props.id}`,
+			url: `/traces/${props.id}${formUrlParams({
+				spanId: props.spanId,
+				levelUp: props.levelUp,
+				levelDown: props.levelDown,
+			})}`,
 			method: 'get',
 		});
 

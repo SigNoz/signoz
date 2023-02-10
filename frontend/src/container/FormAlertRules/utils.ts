@@ -1,6 +1,8 @@
 import { Time } from 'container/TopNav/DateTimeSelection/config';
 import {
 	IBuilderQueries,
+	IChQueries,
+	IChQuery,
 	IFormulaQueries,
 	IFormulaQuery,
 	IMetricQueries,
@@ -40,17 +42,15 @@ export const toMetricQueries = (b: IBuilderQueries): IMetricQueries => {
 
 export const toIMetricsBuilderQuery = (
 	q: IMetricQuery,
-): IMetricsBuilderQuery => {
-	return {
-		name: q.name,
-		metricName: q.metricName,
-		tagFilters: q.tagFilters,
-		groupBy: q.groupBy,
-		aggregateOperator: q.aggregateOperator,
-		disabled: q.disabled,
-		legend: q.legend,
-	};
-};
+): IMetricsBuilderQuery => ({
+	name: q.name,
+	metricName: q.metricName,
+	tagFilters: q.tagFilters,
+	groupBy: q.groupBy,
+	aggregateOperator: q.aggregateOperator,
+	disabled: q.disabled,
+	legend: q.legend,
+});
 
 export const prepareBuilderQueries = (
 	m: IMetricQueries,
@@ -76,10 +76,12 @@ export const prepareStagedQuery = (
 	m: IMetricQueries,
 	f: IFormulaQueries,
 	p: IPromQueries,
+	c: IChQueries,
 ): IStagedQuery => {
 	const qbList: IMetricQuery[] = [];
 	const formulaList: IFormulaQuery[] = [];
 	const promList: IPromQuery[] = [];
+	const chQueryList: IChQuery[] = [];
 
 	// convert map[string]IMetricQuery to IMetricQuery[]
 	if (m) {
@@ -101,6 +103,12 @@ export const prepareStagedQuery = (
 			promList.push({ ...p[key], name: key });
 		});
 	}
+	// convert map[string]IChQuery to IChQuery[]
+	if (c) {
+		Object.keys(c).forEach((key) => {
+			chQueryList.push({ ...c[key], name: key, rawQuery: c[key].query });
+		});
+	}
 
 	return {
 		queryType: t,
@@ -109,7 +117,7 @@ export const prepareStagedQuery = (
 			formulas: formulaList,
 			queryBuilder: qbList,
 		},
-		clickHouse: [],
+		clickHouse: chQueryList,
 	};
 };
 
@@ -125,7 +133,7 @@ export const toChartInterval = (evalWindow: string | undefined): Time => {
 		case '30m0s':
 			return '30min';
 		case '60m0s':
-			return '30min';
+			return '1hr';
 		case '4h0m0s':
 			return '4hr';
 		case '24h0m0s':

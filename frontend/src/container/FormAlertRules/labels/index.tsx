@@ -4,13 +4,11 @@ import {
 } from '@ant-design/icons';
 import { useMachine } from '@xstate/react';
 import { Button, Input, message, Modal } from 'antd';
+import { useIsDarkMode } from 'hooks/useDarkMode';
 import { map } from 'lodash-es';
 import React, { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useSelector } from 'react-redux';
-import { AppState } from 'store/reducers';
 import { Labels } from 'types/api/alerts/def';
-import AppReducer from 'types/reducer/app';
 import { v4 as uuid } from 'uuid';
 
 import { ResourceAttributesFilterMachine } from './Labels.machine';
@@ -29,7 +27,8 @@ function LabelSelect({
 	initialValues,
 }: LabelSelectProps): JSX.Element | null {
 	const { t } = useTranslation('alerts');
-	const { isDarkMode } = useSelector<AppState, AppReducer>((state) => state.app);
+	const isDarkMode = useIsDarkMode();
+
 	const [currentVal, setCurrentVal] = useState('');
 	const [staging, setStaging] = useState<string[]>([]);
 	const [queries, setQueries] = useState<ILabelRecord[]>(
@@ -120,17 +119,15 @@ function LabelSelect({
 				{queries.length > 0 &&
 					map(
 						queries,
-						(query): JSX.Element => {
-							return (
-								<QueryChip key={query.key} queryData={query} onRemove={handleClose} />
-							);
-						},
+						(query): JSX.Element => (
+							<QueryChip key={query.key} queryData={query} onRemove={handleClose} />
+						),
 					)}
 			</div>
 			<div>
-				{map(staging, (item) => {
-					return <QueryChipItem key={uuid()}>{item}</QueryChipItem>;
-				})}
+				{map(staging, (item) => (
+					<QueryChipItem key={uuid()}>{item}</QueryChipItem>
+				))}
 			</div>
 
 			<div style={{ display: 'flex', width: '100%' }}>

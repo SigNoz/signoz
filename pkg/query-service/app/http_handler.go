@@ -24,6 +24,7 @@ import (
 	"go.signoz.io/signoz/pkg/query-service/app/parser"
 	"go.signoz.io/signoz/pkg/query-service/auth"
 	"go.signoz.io/signoz/pkg/query-service/constants"
+	querytemplate "go.signoz.io/signoz/pkg/query-service/utils/queryTemplate"
 
 	"go.signoz.io/signoz/pkg/query-service/dao"
 	am "go.signoz.io/signoz/pkg/query-service/integrations/alertManager"
@@ -212,7 +213,7 @@ func writeHttpResponse(w http.ResponseWriter, data interface{}) {
 
 func (aH *APIHandler) RegisterMetricsRoutes(router *mux.Router) {
 	subRouter := router.PathPrefix("/api/v2/metrics").Subrouter()
-	subRouter.HandleFunc("/query_range", ViewAccess(aH.queryRangeMetricsV2)).Methods(http.MethodPost)
+	subRouter.HandleFunc("/query_range", ViewAccess(aH.QueryRangeMetricsV2)).Methods(http.MethodPost)
 	subRouter.HandleFunc("/autocomplete/list", ViewAccess(aH.metricAutocompleteMetricName)).Methods(http.MethodGet)
 	subRouter.HandleFunc("/autocomplete/tagKey", ViewAccess(aH.metricAutocompleteTagKey)).Methods(http.MethodGet)
 	subRouter.HandleFunc("/autocomplete/tagValue", ViewAccess(aH.metricAutocompleteTagValue)).Methods(http.MethodGet)
@@ -345,6 +346,7 @@ func (aH *APIHandler) RegisterRoutes(router *mux.Router) {
 	router.HandleFunc("/api/v1/dashboards/{uuid}", EditAccess(aH.updateDashboard)).Methods(http.MethodPut)
 	router.HandleFunc("/api/v1/dashboards/{uuid}", EditAccess(aH.deleteDashboard)).Methods(http.MethodDelete)
 	router.HandleFunc("/api/v1/variables/query", ViewAccess(aH.queryDashboardVars)).Methods(http.MethodGet)
+	router.HandleFunc("/api/v2/variables/query", ViewAccess(aH.queryDashboardVarsV2)).Methods(http.MethodPost)
 
 	router.HandleFunc("/api/v1/feedback", OpenAccess(aH.submitFeedback)).Methods(http.MethodPost)
 	// router.HandleFunc("/api/v1/get_percentiles", aH.getApplicationPercentiles).Methods(http.MethodGet)
@@ -353,7 +355,7 @@ func (aH *APIHandler) RegisterRoutes(router *mux.Router) {
 	router.HandleFunc("/api/v1/service/overview", ViewAccess(aH.getServiceOverview)).Methods(http.MethodPost)
 	router.HandleFunc("/api/v1/service/top_operations", ViewAccess(aH.getTopOperations)).Methods(http.MethodPost)
 	router.HandleFunc("/api/v1/service/top_level_operations", ViewAccess(aH.getServicesTopLevelOps)).Methods(http.MethodPost)
-	router.HandleFunc("/api/v1/traces/{traceId}", ViewAccess(aH.searchTraces)).Methods(http.MethodGet)
+	router.HandleFunc("/api/v1/traces/{traceId}", ViewAccess(aH.SearchTraces)).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/usage", ViewAccess(aH.getUsage)).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/dependency_graph", ViewAccess(aH.dependencyGraph)).Methods(http.MethodPost)
 	router.HandleFunc("/api/v1/settings/ttl", AdminAccess(aH.setTTL)).Methods(http.MethodPost)
@@ -390,6 +392,8 @@ func (aH *APIHandler) RegisterRoutes(router *mux.Router) {
 	router.HandleFunc("/api/v1/user/{id}", SelfAccess(aH.getUser)).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/user/{id}", SelfAccess(aH.editUser)).Methods(http.MethodPut)
 	router.HandleFunc("/api/v1/user/{id}", AdminAccess(aH.deleteUser)).Methods(http.MethodDelete)
+
+	router.HandleFunc("/api/v1/user/{id}/flags", SelfAccess(aH.patchUserFlag)).Methods(http.MethodPatch)
 
 	router.HandleFunc("/api/v1/rbac/role/{id}", SelfAccess(aH.getRole)).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/rbac/role/{id}", AdminAccess(aH.editRole)).Methods(http.MethodPut)
@@ -485,7 +489,7 @@ func (aH *APIHandler) metricAutocompleteTagValue(w http.ResponseWriter, r *http.
 	aH.Respond(w, tagValueList)
 }
 
-func (aH *APIHandler) queryRangeMetricsV2(w http.ResponseWriter, r *http.Request) {
+func (aH *APIHandler) QueryRangeMetricsV2(w http.ResponseWriter, r *http.Request) {
 	metricsQueryRangeParams, apiErrorObj := parser.ParseMetricQueryRangeParams(r)
 
 	if apiErrorObj != nil {
@@ -652,11 +656,16 @@ func (aH *APIHandler) queryRangeMetricsV2(w http.ResponseWriter, r *http.Request
 				return
 			}
 			var query bytes.Buffer
+
+			// replace go template variables
+			querytemplate.AssignReservedVars(metricsQueryRangeParams)
+
 			err = tmpl.Execute(&query, metricsQueryRangeParams.Variables)
 			if err != nil {
 				RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
 				return
 			}
+
 			queries[name] = query.String()
 		}
 		seriesList, err, errQuriesByName = execClickHouseQueries(queries)
@@ -777,6 +786,66 @@ func (aH *APIHandler) queryDashboardVars(w http.ResponseWriter, r *http.Request)
 		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: fmt.Errorf("query shouldn't alter data")}, nil)
 		return
 	}
+	dashboardVars, err := aH.reader.QueryDashboardVars(r.Context(), query)
+	if err != nil {
+		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
+		return
+	}
+	aH.Respond(w, dashboardVars)
+}
+
+func prepareQuery(r *http.Request) (string, error) {
+	var postData *model.DashboardVars
+
+	if err := json.NewDecoder(r.Body).Decode(&postData); err != nil {
+		return "", fmt.Errorf("failed to decode request body: %v", err)
+	}
+
+	query := strings.TrimSpace(postData.Query)
+
+	if query == "" {
+		return "", fmt.Errorf("query is required")
+	}
+
+	notAllowedOps := []string{
+		"alter table",
+		"drop table",
+		"truncate table",
+		"drop database",
+		"drop view",
+		"drop function",
+	}
+
+	for _, op := range notAllowedOps {
+		if strings.Contains(strings.ToLower(query), op) {
+			return "", fmt.Errorf("Operation %s is not allowed", op)
+		}
+	}
+
+	vars := make(map[string]string)
+	for k, v := range postData.Variables {
+		vars[k] = metrics.FormattedValue(v)
+	}
+	tmpl := template.New("dashboard-vars")
+	tmpl, tmplErr := tmpl.Parse(query)
+	if tmplErr != nil {
+		return "", tmplErr
+	}
+	var queryBuf bytes.Buffer
+	tmplErr = tmpl.Execute(&queryBuf, vars)
+	if tmplErr != nil {
+		return "", tmplErr
+	}
+	return queryBuf.String(), nil
+}
+
+func (aH *APIHandler) queryDashboardVarsV2(w http.ResponseWriter, r *http.Request) {
+	query, err := prepareQuery(r)
+	if err != nil {
+		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
+		return
+	}
+
 	dashboardVars, err := aH.reader.QueryDashboardVars(r.Context(), query)
 	if err != nil {
 		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
@@ -1151,6 +1220,7 @@ func (aH *APIHandler) queryRangeMetrics(w http.ResponseWriter, r *http.Request) 
 			RespondError(w, &model.ApiError{model.ErrorTimeout, res.Err}, nil)
 		}
 		RespondError(w, &model.ApiError{model.ErrorExec, res.Err}, nil)
+		return
 	}
 
 	response_data := &model.QueryData{
@@ -1324,6 +1394,9 @@ func (aH *APIHandler) getServices(w http.ResponseWriter, r *http.Request) {
 	}
 
 	telemetry.GetInstance().SendEvent(telemetry.TELEMETRY_EVENT_NUMBER_OF_SERVICES, data)
+	if (data["number"] != 0) && (data["number"] != telemetry.DEFAULT_NUMBER_OF_SERVICES) {
+		telemetry.GetInstance().AddActiveTracesUser()
+	}
 
 	aH.WriteJSON(w, r, result)
 }
@@ -1354,12 +1427,15 @@ func (aH *APIHandler) getServicesList(w http.ResponseWriter, r *http.Request) {
 
 }
 
-func (aH *APIHandler) searchTraces(w http.ResponseWriter, r *http.Request) {
+func (aH *APIHandler) SearchTraces(w http.ResponseWriter, r *http.Request) {
 
-	vars := mux.Vars(r)
-	traceId := vars["traceId"]
+	traceId, spanId, levelUpInt, levelDownInt, err := ParseSearchTracesParams(r)
+	if err != nil {
+		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, "Error reading params")
+		return
+	}
 
-	result, err := aH.reader.SearchTraces(r.Context(), traceId)
+	result, err := aH.reader.SearchTraces(r.Context(), traceId, spanId, levelUpInt, levelDownInt, 0, nil)
 	if aH.HandleError(w, err, http.StatusBadRequest) {
 		return
 	}
@@ -1845,6 +1921,37 @@ func (aH *APIHandler) deleteUser(w http.ResponseWriter, r *http.Request) {
 	aH.WriteJSON(w, r, map[string]string{"data": "user deleted successfully"})
 }
 
+// addUserFlag patches a user flags with the changes
+func (aH *APIHandler) patchUserFlag(w http.ResponseWriter, r *http.Request) {
+	// read user id from path var
+	userId := mux.Vars(r)["id"]
+
+	// read input into user flag
+	defer r.Body.Close()
+	b, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		zap.S().Errorf("failed read user flags from http request for userId ", userId, "with error: ", err)
+		RespondError(w, model.BadRequestStr("received user flags in invalid format"), nil)
+		return
+	}
+	flags := make(map[string]string, 0)
+
+	err = json.Unmarshal(b, &flags)
+	if err != nil {
+		zap.S().Errorf("failed parsing user flags for userId ", userId, "with error: ", err)
+		RespondError(w, model.BadRequestStr("received user flags in invalid format"), nil)
+		return
+	}
+
+	newflags, apiError := dao.DB().UpdateUserFlags(r.Context(), userId, flags)
+	if !apiError.IsNil() {
+		RespondError(w, apiError, nil)
+		return
+	}
+
+	aH.Respond(w, newflags)
+}
+
 func (aH *APIHandler) getRole(w http.ResponseWriter, r *http.Request) {
 	id := mux.Vars(r)["id"]
 
@@ -2148,6 +2255,8 @@ func (aH *APIHandler) tailLogs(w http.ResponseWriter, r *http.Request) {
 		RespondError(w, &err, "streaming is not supported")
 		return
 	}
+	// flush the headers
+	flusher.Flush()
 
 	for {
 		select {

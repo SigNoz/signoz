@@ -1,6 +1,6 @@
 import { blue, grey, orange } from '@ant-design/colors';
 import { CopyFilled, ExpandAltOutlined } from '@ant-design/icons';
-import { Button, Divider, Row, Typography } from 'antd';
+import { Button, Divider, notification, Row, Typography } from 'antd';
 import { map } from 'd3';
 import dayjs from 'dayjs';
 import { FlatLogData } from 'lib/logs/flatLogData';
@@ -14,7 +14,7 @@ import { ILogsReducer } from 'types/reducer/logs';
 
 import AddToQueryHOC from '../AddToQueryHOC';
 import CopyClipboardHOC from '../CopyClipboardHOC';
-import { Container } from './styles';
+import { Container, LogContainer, Text, TextContainer } from './styles';
 import { isValidLogField } from './util';
 
 interface LogFieldProps {
@@ -23,21 +23,17 @@ interface LogFieldProps {
 }
 function LogGeneralField({ fieldKey, fieldValue }: LogFieldProps): JSX.Element {
 	return (
-		<div
-			style={{
-				display: 'flex',
-				overflow: 'hidden',
-				width: '100%',
-			}}
-		>
-			<Typography.Text type="secondary">{fieldKey}</Typography.Text>
+		<TextContainer>
+			<Text ellipsis type="secondary">
+				{fieldKey}
+			</Text>
 			<CopyClipboardHOC textToCopy={fieldValue}>
 				<Typography.Text ellipsis>
 					{': '}
 					{fieldValue}
 				</Typography.Text>
 			</CopyClipboardHOC>
-		</div>
+		</TextContainer>
 	);
 }
 function LogSelectedField({
@@ -83,6 +79,7 @@ function LogItem({ logData }: LogItemProps): JSX.Element {
 	const dispatch = useDispatch();
 	const flattenLogData = useMemo(() => FlatLogData(logData), [logData]);
 	const [, setCopy] = useCopyToClipboard();
+	const [notifications, NotificationElement] = notification.useNotification();
 
 	const handleDetailedView = useCallback(() => {
 		dispatch({
@@ -93,40 +90,41 @@ function LogItem({ logData }: LogItemProps): JSX.Element {
 
 	const handleCopyJSON = (): void => {
 		setCopy(JSON.stringify(logData, null, 2));
+		notifications.success({
+			message: 'Copied to clipboard',
+		});
 	};
+
 	return (
 		<Container>
-			<div style={{ maxWidth: '100%' }}>
+			{NotificationElement}
+			<div>
 				<div>
 					{'{'}
-					<div style={{ marginLeft: '0.5rem' }}>
-						<LogGeneralField
-							fieldKey="log"
-							fieldValue={flattenLogData.body as never}
-						/>
-						{flattenLogData.stream && (
+					<LogContainer>
+						<>
+							<LogGeneralField fieldKey="log" fieldValue={flattenLogData.body} />
+							{flattenLogData.stream && (
+								<LogGeneralField fieldKey="stream" fieldValue={flattenLogData.stream} />
+							)}
 							<LogGeneralField
-								fieldKey="stream"
-								fieldValue={flattenLogData.stream as never}
+								fieldKey="timestamp"
+								fieldValue={dayjs((flattenLogData.timestamp as never) / 1e6).format()}
 							/>
-						)}
-						<LogGeneralField
-							fieldKey="timestamp"
-							fieldValue={dayjs((flattenLogData.timestamp as never) / 1e6).format()}
-						/>
-					</div>
+						</>
+					</LogContainer>
 					{'}'}
 				</div>
 				<div>
-					{map(selected, (field) => {
-						return isValidLogField(flattenLogData[field.name] as never) ? (
+					{map(selected, (field) =>
+						isValidLogField(flattenLogData[field.name] as never) ? (
 							<LogSelectedField
 								key={field.name}
 								fieldKey={field.name}
 								fieldValue={flattenLogData[field.name] as never}
 							/>
-						) : null;
-					})}
+						) : null,
+					)}
 				</div>
 			</div>
 			<Divider style={{ padding: 0, margin: '0.4rem 0', opacity: 0.5 }} />

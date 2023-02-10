@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/naming-convention */
 import { notification } from 'antd';
+import { useIsDarkMode } from 'hooks/useDarkMode';
 import history from 'lib/history';
 import React, { useCallback } from 'react';
 import { connect, useSelector } from 'react-redux';
@@ -11,7 +12,6 @@ import {
 } from 'store/actions/dashboard/toggleAddWidget';
 import { AppState } from 'store/reducers';
 import AppActions from 'types/actions';
-import AppReducer from 'types/reducer/app';
 import DashboardReducer from 'types/reducer/dashboards';
 
 import menuItems, { ITEMS } from './menuItems';
@@ -22,6 +22,8 @@ function DashboardGraphSlider({ toggleAddWidget }: Props): JSX.Element {
 		(state) => state.dashboards,
 	);
 
+	const [notifications, NotificationElement] = notification.useNotification();
+
 	const [selectedDashboard] = dashboards;
 	const { data } = selectedDashboard;
 
@@ -31,7 +33,7 @@ function DashboardGraphSlider({ toggleAddWidget }: Props): JSX.Element {
 				const emptyLayout = data.layout?.find((e) => e.i === 'empty');
 
 				if (emptyLayout === undefined) {
-					notification.error({
+					notifications.error({
 						message: 'Please click on Add Panel Button',
 					});
 					return;
@@ -43,18 +45,19 @@ function DashboardGraphSlider({ toggleAddWidget }: Props): JSX.Element {
 					`${history.location.pathname}/new?graphType=${name}&widgetId=${emptyLayout.i}`,
 				);
 			} catch (error) {
-				notification.error({
+				notifications.error({
 					message: 'Something went wrong',
 				});
 			}
 		},
-		[data, toggleAddWidget],
+		[data, toggleAddWidget, notifications],
 	);
-	const { isDarkMode } = useSelector<AppState, AppReducer>((state) => state.app);
+	const isDarkMode = useIsDarkMode();
 	const fillColor: React.CSSProperties['color'] = isDarkMode ? 'white' : 'black';
 
 	return (
 		<Container>
+			{NotificationElement}
 			{menuItems.map(({ name, Icon, display }) => (
 				<Card
 					onClick={(event): void => {
