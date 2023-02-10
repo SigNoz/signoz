@@ -56,10 +56,10 @@ module.exports = {
 		'@typescript-eslint/explicit-function-return-type': 'error',
 		'@typescript-eslint/no-var-requires': 'error',
 		'react/no-array-index-key': 'error',
-		// 'linebreak-style': [
-		// 	'error',
-		// 	process.platform === 'win32' ? 'windows' : 'unix',
-		// ],
+		'linebreak-style': [
+			'error',
+			process.platform === 'win32' ? 'windows' : 'unix',
+		],
 		'@typescript-eslint/default-param-last': 'off',
 
 		// simple sort error
