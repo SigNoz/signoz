@@ -31,7 +31,10 @@ export function useSearchParser(): {
 
 	const { search } = useLocation();
 
-	const parsedSearch = useMemo(() => search.replace('?q=', ''), [search]);
+	const parsedSearch = useMemo(() => {
+		const searchParams = new URLSearchParams(search);
+		return searchParams.get('q');
+	}, [search]);
 
 	const { minTime, maxTime, selectedTime } = useSelector<
 		AppState,
