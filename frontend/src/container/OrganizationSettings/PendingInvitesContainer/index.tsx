@@ -1,9 +1,10 @@
 import { PlusOutlined } from '@ant-design/icons';
-import { Button, Modal, notification, Space, Table, Typography } from 'antd';
+import { Button, Modal, notification, Space, Typography } from 'antd';
 import { ColumnsType } from 'antd/lib/table';
 import deleteInvite from 'api/user/deleteInvite';
 import getPendingInvites from 'api/user/getPendingInvites';
 import sendInvite from 'api/user/sendInvite';
+import { ResizeTable } from 'components/ResizeTable';
 import { INVITE_MEMBERS_HASH } from 'constants/app';
 import ROUTES from 'constants/routes';
 import React, { useCallback, useEffect, useState } from 'react';
@@ -25,22 +26,23 @@ function PendingInvitesContainer(): JSX.Element {
 	const [isInvitingMembers, setIsInvitingMembers] = useState<boolean>(false);
 	const { t } = useTranslation(['organizationsettings', 'common']);
 	const [state, setText] = useCopyToClipboard();
+	const [notifications, NotificationElement] = notification.useNotification();
 
 	useEffect(() => {
 		if (state.error) {
-			notification.error({
+			notifications.error({
 				message: state.error.message,
 			});
 		}
 
 		if (state.value) {
-			notification.success({
+			notifications.success({
 				message: t('success', {
 					ns: 'common',
 				}),
 			});
 		}
-	}, [state.error, state.value, t]);
+	}, [state.error, state.value, t, notifications]);
 
 	const getPendingInvitesResponse = useQuery({
 		queryFn: () => getPendingInvites(),
@@ -112,13 +114,13 @@ function PendingInvitesContainer(): JSX.Element {
 						...dataSource.slice(index + 1, dataSource.length),
 					]);
 				}
-				notification.success({
+				notifications.success({
 					message: t('success', {
 						ns: 'common',
 					}),
 				});
 			} else {
-				notification.error({
+				notifications.error({
 					message:
 						response.error ||
 						t('something_went_wrong', {
@@ -127,7 +129,7 @@ function PendingInvitesContainer(): JSX.Element {
 				});
 			}
 		} catch (error) {
-			notification.error({
+			notifications.error({
 				message: t('something_went_wrong', {
 					ns: 'common',
 				}),
@@ -140,26 +142,31 @@ function PendingInvitesContainer(): JSX.Element {
 			title: 'Name',
 			dataIndex: 'name',
 			key: 'name',
+			width: 100,
 		},
 		{
 			title: 'Emails',
 			dataIndex: 'email',
 			key: 'email',
+			width: 80,
 		},
 		{
 			title: 'Access Level',
 			dataIndex: 'accessLevel',
 			key: 'accessLevel',
+			width: 50,
 		},
 		{
 			title: 'Invite Link',
 			dataIndex: 'inviteLink',
 			key: 'Invite Link',
 			ellipsis: true,
+			width: 100,
 		},
 		{
 			title: 'Action',
 			dataIndex: 'action',
+			width: 80,
 			key: 'Action',
 			render: (_, record): JSX.Element => (
 				<Space direction="horizontal">
@@ -192,7 +199,7 @@ function PendingInvitesContainer(): JSX.Element {
 					});
 
 					if (statusCode !== 200) {
-						notification.error({
+						notifications.error({
 							message:
 								error ||
 								t('something_went_wrong', {
@@ -212,7 +219,7 @@ function PendingInvitesContainer(): JSX.Element {
 				toggleModal(false);
 			}, 2000);
 		} catch (error) {
-			notification.error({
+			notifications.error({
 				message: t('something_went_wrong', {
 					ns: 'common',
 				}),
@@ -222,6 +229,7 @@ function PendingInvitesContainer(): JSX.Element {
 
 	return (
 		<div>
+			{NotificationElement}
 			<Modal
 				title={t('invite_team_members')}
 				open={isInviteTeamMemberModalOpen}
@@ -261,10 +269,10 @@ function PendingInvitesContainer(): JSX.Element {
 						{t('invite_members')}
 					</Button>
 				</TitleWrapper>
-				<Table
+				<ResizeTable
+					columns={columns}
 					tableLayout="fixed"
 					dataSource={dataSource}
-					columns={columns}
 					pagination={false}
 					loading={getPendingInvitesResponse.status === 'loading'}
 				/>

@@ -24,6 +24,7 @@ function ResetPassword({ version }: ResetPasswordProps): JSX.Element {
 	const { search } = useLocation();
 	const params = new URLSearchParams(search);
 	const token = params.get('token');
+	const [notifications, NotificationElement] = notification.useNotification();
 
 	useEffect(() => {
 		if (!token) {
@@ -53,14 +54,14 @@ function ResetPassword({ version }: ResetPasswordProps): JSX.Element {
 			});
 
 			if (response.statusCode === 200) {
-				notification.success({
+				notifications.success({
 					message: t('success', {
 						ns: 'common',
 					}),
 				});
 				history.push(ROUTES.LOGIN);
 			} else {
-				notification.error({
+				notifications.error({
 					message:
 						response.error ||
 						t('something_went_wrong', {
@@ -72,7 +73,7 @@ function ResetPassword({ version }: ResetPasswordProps): JSX.Element {
 			setLoading(false);
 		} catch (error) {
 			setLoading(false);
-			notification.error({
+			notifications.error({
 				message: t('something_went_wrong', {
 					ns: 'common',
 				}),
@@ -82,70 +83,73 @@ function ResetPassword({ version }: ResetPasswordProps): JSX.Element {
 
 	return (
 		<WelcomeLeftContainer version={version}>
-			<FormWrapper>
-				<form onSubmit={handleSubmit}>
-					<Title level={4}>Reset Your Password</Title>
+			<>
+				{NotificationElement}
+				<FormWrapper>
+					<form onSubmit={handleSubmit}>
+						<Title level={4}>Reset Your Password</Title>
 
-					<div>
-						<Label htmlFor="Password">Password</Label>
-						<Input.Password
-							value={password}
-							onChange={(e): void => {
-								setState(e.target.value, setPassword);
-							}}
-							required
-							id="currentPassword"
-						/>
-					</div>
-					<div>
-						<Label htmlFor="ConfirmPassword">Confirm Password</Label>
-						<Input.Password
-							value={confirmPassword}
-							onChange={(e): void => {
-								const updateValue = e.target.value;
-								setState(updateValue, setConfirmPassword);
-								if (password !== updateValue) {
-									setConfirmPasswordError(true);
-								} else {
-									setConfirmPasswordError(false);
-								}
-							}}
-							required
-							id="UpdatePassword"
-						/>
-
-						{confirmPasswordError && (
-							<Typography.Paragraph
-								italic
-								style={{
-									color: '#D89614',
-									marginTop: '0.50rem',
+						<div>
+							<Label htmlFor="Password">Password</Label>
+							<Input.Password
+								value={password}
+								onChange={(e): void => {
+									setState(e.target.value, setPassword);
 								}}
-							>
-								Passwords don’t match. Please try again
-							</Typography.Paragraph>
-						)}
-					</div>
+								required
+								id="currentPassword"
+							/>
+						</div>
+						<div>
+							<Label htmlFor="ConfirmPassword">Confirm Password</Label>
+							<Input.Password
+								value={confirmPassword}
+								onChange={(e): void => {
+									const updateValue = e.target.value;
+									setState(updateValue, setConfirmPassword);
+									if (password !== updateValue) {
+										setConfirmPasswordError(true);
+									} else {
+										setConfirmPasswordError(false);
+									}
+								}}
+								required
+								id="UpdatePassword"
+							/>
 
-					<ButtonContainer>
-						<Button
-							type="primary"
-							htmlType="submit"
-							data-attr="signup"
-							loading={loading}
-							disabled={
-								loading ||
-								!password ||
-								!confirmPassword ||
-								confirmPasswordError ||
-								token === null
-							}
-						>
-							Get Started
-						</Button>
-					</ButtonContainer>
-				</form>
-			</FormWrapper>
+							{confirmPasswordError && (
+								<Typography.Paragraph
+									italic
+									style={{
+										color: '#D89614',
+										marginTop: '0.50rem',
+									}}
+								>
+									Passwords don’t match. Please try again
+								</Typography.Paragraph>
+							)}
+						</div>
+
+						<ButtonContainer>
+							<Button
+								type="primary"
+								htmlType="submit"
+								data-attr="signup"
+								loading={loading}
+								disabled={
+									loading ||
+									!password ||
+									!confirmPassword ||
+									confirmPasswordError ||
+									token === null
+								}
+							>
+								Get Started
+							</Button>
+						</ButtonContainer>
+					</form>
+				</FormWrapper>
+			</>
 		</WelcomeLeftContainer>
 	);
 }

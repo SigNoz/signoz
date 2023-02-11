@@ -153,7 +153,7 @@ services:
 # Notes for Maintainers/Contributors who will change Line Numbers of Frontend & Query-Section. Please Update Line Numbers in `./scripts/commentLinesForSetup.sh` & `./CONTRIBUTING.md`
 
   query-service:
-    image: signoz/query-service:${DOCKER_TAG:-0.15.0}
+    image: signoz/query-service:${DOCKER_TAG:-0.16.0}
     container_name: query-service
     command: ["-config=/root/config/prometheus.yml"]
     # ports:
@@ -181,7 +181,7 @@ services:
     <<: *clickhouse-depend
 
   frontend:
-    image: signoz/frontend:${DOCKER_TAG:-0.15.0}
+    image: signoz/frontend:${DOCKER_TAG:-0.16.0}
     container_name: frontend
     restart: on-failure
     depends_on:
@@ -193,7 +193,7 @@ services:
       - ../common/nginx-config.conf:/etc/nginx/conf.d/default.conf
 
   otel-collector:
-    image: signoz/signoz-otel-collector:${OTELCOL_TAG:-0.66.3}
+    image: signoz/signoz-otel-collector:${OTELCOL_TAG:-0.66.4}
     command: ["--config=/etc/otel-collector-config.yaml"]
     user: root # required for reading docker container logs
     volumes:
@@ -202,6 +202,7 @@ services:
     environment:
       - OTEL_RESOURCE_ATTRIBUTES=host.name=signoz-host,os.type=linux
       - DOCKER_MULTI_NODE_CLUSTER=false
+      - LOW_CARDINAL_EXCEPTION_GROUPING=false
     ports:
       # - "1777:1777"     # pprof extension
       - "4317:4317"     # OTLP gRPC receiver
@@ -218,7 +219,7 @@ services:
     <<: *clickhouse-depend
 
   otel-collector-metrics:
-    image: signoz/signoz-otel-collector:${OTELCOL_TAG:-0.66.3}
+    image: signoz/signoz-otel-collector:${OTELCOL_TAG:-0.66.4}
     command: ["--config=/etc/otel-collector-metrics-config.yaml"]
     volumes:
       - ./otel-collector-metrics-config.yaml:/etc/otel-collector-metrics-config.yaml
@@ -231,15 +232,15 @@ services:
     <<: *clickhouse-depend
 
   hotrod:
-   image: jaegertracing/example-hotrod:1.30
-   container_name: hotrod
-   logging:
-     options:
-       max-size: 50m
-       max-file: "3"
-   command: ["all"]
-   environment:
-     - JAEGER_ENDPOINT=http://otel-collector:14268/api/traces
+    image: jaegertracing/example-hotrod:1.30
+    container_name: hotrod
+    logging:
+      options:
+        max-size: 50m
+        max-file: "3"
+    command: ["all"]
+    environment:
+      - JAEGER_ENDPOINT=http://otel-collector:14268/api/traces
 
   load-hotrod:
     image: "grubykarol/locust:1.2.3-python3.9-alpine3.12"

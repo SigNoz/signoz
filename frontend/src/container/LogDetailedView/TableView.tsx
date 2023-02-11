@@ -1,7 +1,8 @@
 import { blue, orange } from '@ant-design/colors';
-import { Input, Table } from 'antd';
+import { Input } from 'antd';
 import AddToQueryHOC from 'components/Logs/AddToQueryHOC';
 import CopyClipboardHOC from 'components/Logs/CopyClipboardHOC';
+import { ResizeTable } from 'components/ResizeTable';
 import flatten from 'flat';
 import { fieldSearchFilter } from 'lib/logs/fieldSearch';
 import React, { useMemo, useState } from 'react';
@@ -56,7 +57,7 @@ function TableView({ logData }: TableViewProps): JSX.Element | null {
 			title: 'Field',
 			dataIndex: 'field',
 			key: 'field',
-			width: '35%',
+			width: 100,
 			render: (field: string): JSX.Element => {
 				const fieldKey = field.split('.').slice(-1);
 				const renderedField = <span style={{ color: blue[4] }}>{field}</span>;
@@ -64,7 +65,6 @@ function TableView({ logData }: TableViewProps): JSX.Element | null {
 				if (!RESTRICTED_FIELDS.includes(fieldKey[0])) {
 					return (
 						<AddToQueryHOC fieldKey={fieldKey[0]} fieldValue={flattenLogData[field]}>
-							{' '}
 							{renderedField}
 						</AddToQueryHOC>
 					);
@@ -76,15 +76,16 @@ function TableView({ logData }: TableViewProps): JSX.Element | null {
 			title: 'Value',
 			dataIndex: 'value',
 			key: 'value',
+			width: 80,
 			ellipsis: false,
 			render: (field: never): JSX.Element => (
 				<CopyClipboardHOC textToCopy={field}>
 					<span style={{ color: orange[6] }}>{field}</span>
 				</CopyClipboardHOC>
 			),
-			width: '60%',
 		},
 	];
+
 	return (
 		<div style={{ position: 'relative' }}>
 			<Input
@@ -93,11 +94,10 @@ function TableView({ logData }: TableViewProps): JSX.Element | null {
 				value={fieldSearchInput}
 				onChange={(e): void => setFieldSearchInput(e.target.value)}
 			/>
-			<Table
-				// scroll={{ x: true }}
+			<ResizeTable
+				columns={columns as never}
 				tableLayout="fixed"
 				dataSource={dataSource}
-				columns={columns as never}
 				pagination={false}
 			/>
 		</div>

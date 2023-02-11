@@ -54,13 +54,6 @@ export interface Tags {
 	BoolValues: boolean[];
 }
 
-export interface TagsAPI {
-	Key: string;
-	Operator: OperatorValues;
-	StringValues: string[];
-	NumberValues: number[];
-	BoolValues: boolean[];
-}
 export type OperatorValues =
 	| 'NotIn'
 	| 'In'

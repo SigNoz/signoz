@@ -36,6 +36,8 @@ function SearchFields({
 
 	const keyPrefixRef = useRef(hashCode(JSON.stringify(fieldsQuery)));
 
+	const [notifications, NotificationElement] = notification.useNotification();
+
 	useEffect(() => {
 		const updatedFieldsQuery = createParsedQueryStructure([
 			...parsedQuery,
@@ -81,7 +83,7 @@ function SearchFields({
 		const flatParsedQuery = flatten(fieldsQuery);
 
 		if (!fieldsQueryIsvalid(flatParsedQuery)) {
-			notification.error({
+			notifications.error({
 				message: 'Please enter a valid criteria for each of the selected fields',
 			});
 			return;
@@ -90,7 +92,7 @@ function SearchFields({
 		keyPrefixRef.current = hashCode(JSON.stringify(flatParsedQuery));
 		updateParsedQuery(flatParsedQuery);
 		onDropDownToggleHandler(false)();
-	}, [onDropDownToggleHandler, fieldsQuery, updateParsedQuery]);
+	}, [onDropDownToggleHandler, fieldsQuery, updateParsedQuery, notifications]);
 
 	const clearFilters = useCallback((): void => {
 		keyPrefixRef.current = hashCode(JSON.stringify([]));
@@ -100,6 +102,7 @@ function SearchFields({
 
 	return (
 		<>
+			{NotificationElement}
 			<QueryBuilder
 				key={keyPrefixRef.current}
 				keyPrefix={keyPrefixRef.current}
