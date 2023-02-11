@@ -7,6 +7,7 @@ import history from 'lib/history';
 import React, { Suspense } from 'react';
 import { Route, Router, Switch } from 'react-router-dom';
 
+import { NotificationProvider } from '../hooks/useNotifications';
 import PrivateRoute from './Private';
 import routes from './routes';
 
@@ -15,26 +16,28 @@ function App(): JSX.Element {
 
 	return (
 		<ConfigProvider theme={themeConfig}>
-			<Router history={history}>
-				<PrivateRoute>
-					<AppLayout>
-						<Suspense fallback={<Spinner size="large" tip="Loading..." />}>
-							<Switch>
-								{routes.map(({ path, component, exact }) => (
-									<Route
-										key={`${path}`}
-										exact={exact}
-										path={path}
-										component={component}
-									/>
-								))}
+			<NotificationProvider>
+				<Router history={history}>
+					<PrivateRoute>
+						<AppLayout>
+							<Suspense fallback={<Spinner size="large" tip="Loading..." />}>
+								<Switch>
+									{routes.map(({ path, component, exact }) => (
+										<Route
+											key={`${path}`}
+											exact={exact}
+											path={path}
+											component={component}
+										/>
+									))}
 
-								<Route path="*" component={NotFound} />
-							</Switch>
-						</Suspense>
-					</AppLayout>
-				</PrivateRoute>
-			</Router>
+									<Route path="*" component={NotFound} />
+								</Switch>
+							</Suspense>
+						</AppLayout>
+					</PrivateRoute>
+				</Router>
+			</NotificationProvider>
 		</ConfigProvider>
 	);
 }

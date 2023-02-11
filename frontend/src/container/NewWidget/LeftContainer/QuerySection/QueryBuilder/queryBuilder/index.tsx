@@ -1,10 +1,10 @@
 import { PlusOutlined } from '@ant-design/icons';
-import { notification } from 'antd';
 import {
 	QueryBuilderFormulaTemplate,
 	QueryBuilderQueryTemplate,
 } from 'constants/dashboard';
 import { GRAPH_TYPES } from 'container/NewDashboard/ComponentsSlider';
+import { useNotifications } from 'hooks/useNotifications';
 import GetFormulaName from 'lib/query/GetFormulaName';
 import GetQueryName from 'lib/query/GetQueryName';
 import React from 'react';
@@ -37,7 +37,7 @@ function QueryBuilderQueryContainer({
 	metricsBuilderQueries,
 	selectedGraph,
 }: IQueryBuilderQueryContainerProps): JSX.Element | null {
-	const [notifications, NotificationElement] = notification.useNotification();
+	const { notifications } = useNotifications();
 	const handleQueryBuilderQueryChange = ({
 		queryIndex,
 		aggregateFunction,
@@ -156,7 +156,6 @@ function QueryBuilderQueryContainer({
 	}
 	return (
 		<>
-			{NotificationElement}
 			{metricsBuilderQueries.queryBuilder.map((q, idx) => (
 				<MetricsBuilder
 					key={q.name}

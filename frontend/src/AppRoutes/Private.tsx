@@ -1,5 +1,4 @@
 /* eslint-disable react-hooks/exhaustive-deps */
-import { notification } from 'antd';
 import getLocalStorageApi from 'api/browser/localstorage/get';
 import loginApi from 'api/user/login';
 import { Logout } from 'api/utils';
@@ -19,6 +18,7 @@ import { UPDATE_USER_IS_FETCH } from 'types/actions/app';
 import AppReducer from 'types/reducer/app';
 import { routePermission } from 'utils/permission';
 
+import { useNotifications } from '../hooks/useNotifications';
 import routes from './routes';
 import afterLogin from './utils';
 
@@ -47,7 +47,7 @@ function PrivateRoute({ children }: PrivateRouteProps): JSX.Element {
 
 	const dispatch = useDispatch<Dispatch<AppActions>>();
 
-	const [notifications, NotificationElement] = notification.useNotification();
+	const { notifications } = useNotifications();
 
 	const currentRoute = mapRoutes.get('current');
 
@@ -157,12 +157,7 @@ function PrivateRoute({ children }: PrivateRouteProps): JSX.Element {
 
 	// NOTE: disabling this rule as there is no need to have div
 	// eslint-disable-next-line react/jsx-no-useless-fragment
-	return (
-		<>
-			{NotificationElement}
-			{children}
-		</>
-	);
+	return <>{children}</>;
 }
 
 interface PrivateRouteProps {
