@@ -21,8 +21,9 @@ import (
 // related to go templating in rule labels and annotations
 
 type tmplQueryRecord struct {
-	Labels map[string]string
-	Value  float64
+	Labels    map[string]string
+	Value     float64
+	Threshold float64
 }
 type tmplQueryResults []*tmplQueryRecord
 
@@ -200,13 +201,15 @@ func NewTemplateExpander(
 }
 
 // AlertTemplateData returns the interface to be used in expanding the template.
-func AlertTemplateData(labels map[string]string, value float64) interface{} {
+func AlertTemplateData(labels map[string]string, value float64, threshold float64) interface{} {
 	return struct {
-		Labels map[string]string
-		Value  float64
+		Labels    map[string]string
+		Value     float64
+		Threshold float64
 	}{
-		Labels: labels,
-		Value:  value,
+		Labels:    labels,
+		Value:     value,
+		Threshold: threshold,
 	}
 }
 
