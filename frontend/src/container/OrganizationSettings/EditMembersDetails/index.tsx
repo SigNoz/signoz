@@ -1,7 +1,8 @@
 import { CopyOutlined } from '@ant-design/icons';
-import { Button, Input, notification, Select, Space, Tooltip } from 'antd';
+import { Button, Input, Select, Space, Tooltip } from 'antd';
 import getResetPasswordToken from 'api/user/getResetPasswordToken';
 import ROUTES from 'constants/routes';
+import { useNotifications } from 'hooks/useNotifications';
 import React, { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useCopyToClipboard } from 'react-use';
@@ -36,7 +37,7 @@ function EditMembersDetails({
 		[],
 	);
 
-	const [notifications, NotificationElement] = notification.useNotification();
+	const { notifications } = useNotifications();
 
 	useEffect(() => {
 		if (state.error) {
@@ -91,7 +92,6 @@ function EditMembersDetails({
 
 	return (
 		<Space direction="vertical" size="large">
-			{NotificationElement}
 			<Space direction="horizontal">
 				<Title>Email address</Title>
 				<Input

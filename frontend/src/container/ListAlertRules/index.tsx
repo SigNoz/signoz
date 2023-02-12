@@ -1,7 +1,8 @@
-import { notification, Space } from 'antd';
+import { Space } from 'antd';
 import getAll from 'api/alerts/getAll';
 import ReleaseNote from 'components/ReleaseNote';
 import Spinner from 'components/Spinner';
+import { useNotifications } from 'hooks/useNotifications';
 import React, { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useQuery } from 'react-query';
@@ -17,7 +18,7 @@ function ListAlertRules(): JSX.Element {
 		cacheTime: 0,
 	});
 
-	const [notifications, NotificationElement] = notification.useNotification();
+	const { notifications } = useNotifications();
 
 	useEffect(() => {
 		if (status === 'error' || (status === 'success' && data.statusCode >= 400)) {
@@ -29,26 +30,18 @@ function ListAlertRules(): JSX.Element {
 
 	// api failed to load the data
 	if (isError) {
-		return (
-			<div>
-				{NotificationElement}
-				{data?.error || t('something_went_wrong')}
-			</div>
-		);
+		return <div>{data?.error || t('something_went_wrong')}</div>;
 	}
 
 	// api is successful but error is present
 	if (status === 'success' && data.statusCode >= 400) {
 		return (
-			<>
-				{NotificationElement}
-				<ListAlert
-					{...{
-						allAlertRules: [],
-						refetch,
-					}}
-				/>
-			</>
+			<ListAlert
+				{...{
+					allAlertRules: [],
+					refetch,
+				}}
+			/>
 		);
 	}
 
@@ -59,7 +52,6 @@ function ListAlertRules(): JSX.Element {
 
 	return (
 		<Space direction="vertical" size="large" style={{ width: '100%' }}>
-			{NotificationElement}
 			<ReleaseNote path={location.pathname} />
 			<ListAlert
 				{...{
