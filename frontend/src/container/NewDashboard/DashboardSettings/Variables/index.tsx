@@ -1,8 +1,9 @@
 import { blue, red } from '@ant-design/colors';
 import { PlusOutlined } from '@ant-design/icons';
-import { Button, Modal, notification, Row, Space, Tag } from 'antd';
+import { Button, Modal, Row, Space, Tag } from 'antd';
 import { NotificationInstance } from 'antd/es/notification/interface';
 import { ResizeTable } from 'components/ResizeTable';
+import { useNotifications } from 'hooks/useNotifications';
 import React, { useRef, useState } from 'react';
 import { connect, useSelector } from 'react-redux';
 import { bindActionCreators, Dispatch } from 'redux';
@@ -26,7 +27,7 @@ function VariablesSetting({
 		(state) => state.dashboards,
 	);
 
-	const [notifications, NotificationElement] = notification.useNotification();
+	const { notifications } = useNotifications();
 
 	const [selectedDashboard] = dashboards;
 
@@ -143,7 +144,6 @@ function VariablesSetting({
 
 	return (
 		<>
-			{NotificationElement}
 			{variableViewMode ? (
 				<VariableItem
 					variableData={{ ...variableEditData } as IDashboardVariable}

@@ -31,7 +31,6 @@ function FormAlertChannels({
 	onSaveHandler,
 	savingState,
 	testingState,
-	NotificationElement,
 	title,
 	initialValue,
 	editing = false,
@@ -53,8 +52,6 @@ function FormAlertChannels({
 	};
 	return (
 		<>
-			{NotificationElement}
-
 			<Title level={3}>{title}</Title>
 
 			<Form initialValues={initialValue} layout="vertical" form={formInstance}>
@@ -126,10 +123,6 @@ interface FormAlertChannelsProps {
 	onTestHandler: (props: ChannelType) => void;
 	testingState: boolean;
 	savingState: boolean;
-	NotificationElement: React.ReactElement<
-		unknown,
-		string | React.JSXElementConstructor<unknown>
-	>;
 	title: string;
 	initialValue: Store;
 	// editing indicates if the form is opened in edit mode
