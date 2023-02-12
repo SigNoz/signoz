@@ -46,13 +46,14 @@ const IP_NOT_FOUND_PLACEHOLDER = "NA"
 const DEFAULT_NUMBER_OF_SERVICES = 6
 
 const HEART_BEAT_DURATION = 6 * time.Hour
+
 const ACTIVE_USER_DURATION = 30 * time.Minute
 
 // const HEART_BEAT_DURATION = 30 * time.Second
 // const ACTIVE_USER_DURATION = 30 * time.Second
 
 const RATE_LIMIT_CHECK_DURATION = 1 * time.Minute
-const RATE_LIMIT_VALUE = 2
+const RATE_LIMIT_VALUE = 1
 
 // const RATE_LIMIT_CHECK_DURATION = 20 * time.Second
 // const RATE_LIMIT_VALUE = 5
@@ -298,6 +299,11 @@ func (a *Telemetry) SendEvent(event string, data map[string]interface{}, opts ..
 
 	ok := a.checkEvents(event)
 	if !ok {
+		return
+	}
+
+	// drop events with properties matching
+	if ignoreEvents(event, data) {
 		return
 	}
 
