@@ -3,11 +3,11 @@ import NotFound from 'components/NotFound';
 import Spinner from 'components/Spinner';
 import AppLayout from 'container/AppLayout';
 import { useThemeConfig } from 'hooks/useDarkMode';
+import { NotificationProvider } from 'hooks/useNotifications';
 import history from 'lib/history';
 import React, { Suspense } from 'react';
 import { Route, Router, Switch } from 'react-router-dom';
 
-import { NotificationProvider } from '../hooks/useNotifications';
 import PrivateRoute from './Private';
 import routes from './routes';
 

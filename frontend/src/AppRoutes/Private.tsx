@@ -5,6 +5,7 @@ import { Logout } from 'api/utils';
 import Spinner from 'components/Spinner';
 import { LOCALSTORAGE } from 'constants/localStorage';
 import ROUTES from 'constants/routes';
+import { useNotifications } from 'hooks/useNotifications';
 import history from 'lib/history';
 import React, { useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -18,7 +19,6 @@ import { UPDATE_USER_IS_FETCH } from 'types/actions/app';
 import AppReducer from 'types/reducer/app';
 import { routePermission } from 'utils/permission';
 
-import { useNotifications } from '../hooks/useNotifications';
 import routes from './routes';
 import afterLogin from './utils';
 
