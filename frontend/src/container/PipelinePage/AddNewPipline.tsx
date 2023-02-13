@@ -10,7 +10,7 @@ function AddNewPipline({
 }: {
 	setActionType: (b: string | undefined) => void;
 }): JSX.Element {
-	const { t } = useTranslation(['common']);
+	const { t } = useTranslation(['pipeline']);
 
 	return (
 		<ButtonContainer>

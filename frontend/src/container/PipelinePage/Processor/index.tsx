@@ -42,7 +42,7 @@ function NewProcessor({
 }): JSX.Element {
 	const { Option } = DefaultSelect;
 	const [form] = Form.useForm();
-	const { t } = useTranslation(['common']);
+	const { t } = useTranslation(['common', 'pipeline']);
 	const isEdit = useMemo(() => isActionType === 'edit-processor', [
 		isActionType,
 	]);

@@ -29,7 +29,7 @@ function NewPipline({
 	dataSource: Array<PipelineColumnType>;
 }): JSX.Element {
 	const [form] = Form.useForm();
-	const { t } = useTranslation(['common']);
+	const { t } = useTranslation(['common', 'pipeline']);
 	const [count, setCount] = useState(3);
 	const [tagsListData, setTagsListData] = useState<PipelineColumnType['tags']>();
 

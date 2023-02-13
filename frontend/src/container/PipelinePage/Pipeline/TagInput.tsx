@@ -20,7 +20,7 @@ function TagInput({
 	const [editInputValue, setEditInputValue] = useState('');
 	const inputRef = useRef<InputRef>(null);
 	const editInputRef = useRef<InputRef>(null);
-	const { t } = useTranslation('alerts');
+	const { t } = useTranslation(['alerts']);
 
 	useEffect(() => {
 		if (inputVisible) {

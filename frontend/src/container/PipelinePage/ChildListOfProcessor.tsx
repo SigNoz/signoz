@@ -31,7 +31,7 @@ function ChildListOfProcessor({
 	setActionType,
 	handleProcessorEditAction,
 }: ChildListOfProcessorTypes): JSX.Element {
-	const { t } = useTranslation(['common']);
+	const { t } = useTranslation(['pipeline']);
 	const isDarkMode = useIsDarkMode();
 
 	const handleDelete = (record: SubPiplineColumsType): void => {
