@@ -1,8 +1,9 @@
 import { blue, grey, orange } from '@ant-design/colors';
 import { CopyFilled, ExpandAltOutlined } from '@ant-design/icons';
-import { Button, Divider, notification, Row, Typography } from 'antd';
+import { Button, Divider, Row, Typography } from 'antd';
 import { map } from 'd3';
 import dayjs from 'dayjs';
+import { useNotifications } from 'hooks/useNotifications';
 import { FlatLogData } from 'lib/logs/flatLogData';
 import React, { useCallback, useMemo } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
@@ -79,7 +80,7 @@ function LogItem({ logData }: LogItemProps): JSX.Element {
 	const dispatch = useDispatch();
 	const flattenLogData = useMemo(() => FlatLogData(logData), [logData]);
 	const [, setCopy] = useCopyToClipboard();
-	const [notifications, NotificationElement] = notification.useNotification();
+	const { notifications } = useNotifications();
 
 	const handleDetailedView = useCallback(() => {
 		dispatch({
@@ -97,7 +98,6 @@ function LogItem({ logData }: LogItemProps): JSX.Element {
 
 	return (
 		<Container>
-			{NotificationElement}
 			<div>
 				<div>
 					{'{'}
