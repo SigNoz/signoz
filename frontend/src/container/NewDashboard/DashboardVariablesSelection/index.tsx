@@ -1,5 +1,6 @@
-import { notification, Row } from 'antd';
+import { Row } from 'antd';
 import { NotificationInstance } from 'antd/es/notification/interface';
+import { useNotifications } from 'hooks/useNotifications';
 import { map, sortBy } from 'lodash-es';
 import React, { useState } from 'react';
 import { connect, useSelector } from 'react-redux';
@@ -26,7 +27,7 @@ function DashboardVariableSelection({
 
 	const [update, setUpdate] = useState<boolean>(false);
 	const [lastUpdatedVar, setLastUpdatedVar] = useState<string>('');
-	const [notifications, NotificationElement] = notification.useNotification();
+	const { notifications } = useNotifications();
 
 	const onVarChanged = (name: string): void => {
 		setLastUpdatedVar(name);
@@ -62,7 +63,6 @@ function DashboardVariableSelection({
 
 	return (
 		<Row style={{ gap: '1rem' }}>
-			{NotificationElement}
 			{map(sortBy(Object.keys(variables)), (variableName) => (
 				<VariableItem
 					key={`${variableName}${variables[variableName].modificationUUID}`}

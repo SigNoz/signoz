@@ -1,4 +1,4 @@
-import { Button, Input, notification, Space, Switch, Typography } from 'antd';
+import { Button, Input, Space, Switch, Typography } from 'antd';
 import editOrg from 'api/user/editOrg';
 import getInviteDetails from 'api/user/getInviteDetails';
 import loginApi from 'api/user/login';
@@ -6,6 +6,7 @@ import signUpApi from 'api/user/signup';
 import afterLogin from 'AppRoutes/utils';
 import WelcomeLeftContainer from 'components/WelcomeLeftContainer';
 import ROUTES from 'constants/routes';
+import { useNotifications } from 'hooks/useNotifications';
 import history from 'lib/history';
 import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -56,7 +57,7 @@ function SignUp({ version }: SignUpProps): JSX.Element {
 		enabled: token !== null,
 	});
 
-	const [notifications, NotificationElement] = notification.useNotification();
+	const { notifications } = useNotifications();
 
 	useEffect(() => {
 		if (
@@ -266,169 +267,164 @@ function SignUp({ version }: SignUpProps): JSX.Element {
 
 	return (
 		<WelcomeLeftContainer version={version}>
-			<>
-				{NotificationElement}
-				<FormWrapper>
-					<form onSubmit={!precheck.sso ? handleSubmit : handleSubmitSSO}>
-						<Title level={4}>Create your account</Title>
+			<FormWrapper>
+				<form onSubmit={!precheck.sso ? handleSubmit : handleSubmitSSO}>
+					<Title level={4}>Create your account</Title>
+					<div>
+						<Label htmlFor="signupEmail">{t('label_email')}</Label>
+						<Input
+							placeholder={t('placeholder_email')}
+							type="email"
+							autoFocus
+							value={email}
+							onChange={(e): void => {
+								setState(e.target.value, setEmail);
+							}}
+							required
+							id="signupEmail"
+							disabled={isDetailsDisable}
+						/>
+					</div>
+
+					{isNameVisible && (
 						<div>
-							<Label htmlFor="signupEmail">{t('label_email')}</Label>
+							<Label htmlFor="signupFirstName">{t('label_firstname')}</Label>
 							<Input
-								placeholder={t('placeholder_email')}
-								type="email"
-								autoFocus
-								value={email}
+								placeholder={t('placeholder_firstname')}
+								value={firstName}
 								onChange={(e): void => {
-									setState(e.target.value, setEmail);
+									setState(e.target.value, setFirstName);
 								}}
 								required
-								id="signupEmail"
+								id="signupFirstName"
 								disabled={isDetailsDisable}
 							/>
 						</div>
+					)}
 
-						{isNameVisible && (
-							<div>
-								<Label htmlFor="signupFirstName">{t('label_firstname')}</Label>
-								<Input
-									placeholder={t('placeholder_firstname')}
-									value={firstName}
-									onChange={(e): void => {
-										setState(e.target.value, setFirstName);
-									}}
-									required
-									id="signupFirstName"
-									disabled={isDetailsDisable}
-								/>
-							</div>
-						)}
-
+					<div>
+						<Label htmlFor="organizationName">{t('label_orgname')}</Label>
+						<Input
+							placeholder={t('placeholder_orgname')}
+							value={organizationName}
+							onChange={(e): void => {
+								setState(e.target.value, setOrganizationName);
+							}}
+							required
+							id="organizationName"
+							disabled={isDetailsDisable}
+						/>
+					</div>
+					{!precheck.sso && (
 						<div>
-							<Label htmlFor="organizationName">{t('label_orgname')}</Label>
-							<Input
-								placeholder={t('placeholder_orgname')}
-								value={organizationName}
+							<Label htmlFor="Password">{t('label_password')}</Label>
+							<Input.Password
+								value={password}
 								onChange={(e): void => {
-									setState(e.target.value, setOrganizationName);
+									setState(e.target.value, setPassword);
 								}}
 								required
-								id="organizationName"
-								disabled={isDetailsDisable}
+								id="currentPassword"
 							/>
 						</div>
-						{!precheck.sso && (
-							<div>
-								<Label htmlFor="Password">{t('label_password')}</Label>
-								<Input.Password
-									value={password}
-									onChange={(e): void => {
-										setState(e.target.value, setPassword);
-									}}
-									required
-									id="currentPassword"
-								/>
-							</div>
-						)}
-						{!precheck.sso && (
-							<div>
-								<Label htmlFor="ConfirmPassword">{t('label_confirm_password')}</Label>
-								<Input.Password
-									value={confirmPassword}
-									onChange={(e): void => {
-										const updateValue = e.target.value;
-										setState(updateValue, setConfirmPassword);
-									}}
-									required
-									id="confirmPassword"
-								/>
-
-								{confirmPasswordError && (
-									<Typography.Paragraph
-										italic
-										id="password-confirm-error"
-										style={{
-											color: '#D89614',
-											marginTop: '0.50rem',
-										}}
-									>
-										{t('failed_confirm_password')}
-									</Typography.Paragraph>
-								)}
-								{isPasswordPolicyError && (
-									<Typography.Paragraph
-										italic
-										style={{
-											color: '#D89614',
-											marginTop: '0.50rem',
-										}}
-									>
-										{isPasswordNotValidMessage}
-									</Typography.Paragraph>
-								)}
-							</div>
-						)}
-
-						{isPreferenceVisible && (
-							<>
-								<MarginTop marginTop="2.4375rem">
-									<Space>
-										<Switch
-											onChange={(value): void =>
-												onSwitchHandler(value, setHasOptedUpdates)
-											}
-											checked={hasOptedUpdates}
-										/>
-										<Typography>{t('prompt_keepme_posted')} </Typography>
-									</Space>
-								</MarginTop>
-
-								<MarginTop marginTop="0.5rem">
-									<Space>
-										<Switch
-											onChange={(value): void => onSwitchHandler(value, setIsAnonymous)}
-											checked={isAnonymous}
-										/>
-										<Typography>{t('prompt_anonymise')}</Typography>
-									</Space>
-								</MarginTop>
-							</>
-						)}
-
-						{isPreferenceVisible && (
-							<Typography.Paragraph
-								italic
-								style={{
-									color: '#D89614',
-									marginTop: '0.50rem',
+					)}
+					{!precheck.sso && (
+						<div>
+							<Label htmlFor="ConfirmPassword">{t('label_confirm_password')}</Label>
+							<Input.Password
+								value={confirmPassword}
+								onChange={(e): void => {
+									const updateValue = e.target.value;
+									setState(updateValue, setConfirmPassword);
 								}}
-							>
-								This will create an admin account. If you are not an admin, please ask
-								your admin for an invite link
-							</Typography.Paragraph>
-						)}
+								required
+								id="confirmPassword"
+							/>
 
-						<ButtonContainer>
-							<Button
-								type="primary"
-								htmlType="submit"
-								data-attr="signup"
-								loading={loading}
-								disabled={
-									loading ||
-									!email ||
-									!organizationName ||
-									(!precheck.sso && (!password || !confirmPassword)) ||
-									(!isDetailsDisable && !firstName) ||
-									confirmPasswordError ||
-									isPasswordPolicyError
-								}
-							>
-								{t('button_get_started')}
-							</Button>
-						</ButtonContainer>
-					</form>
-				</FormWrapper>
-			</>
+							{confirmPasswordError && (
+								<Typography.Paragraph
+									italic
+									id="password-confirm-error"
+									style={{
+										color: '#D89614',
+										marginTop: '0.50rem',
+									}}
+								>
+									{t('failed_confirm_password')}
+								</Typography.Paragraph>
+							)}
+							{isPasswordPolicyError && (
+								<Typography.Paragraph
+									italic
+									style={{
+										color: '#D89614',
+										marginTop: '0.50rem',
+									}}
+								>
+									{isPasswordNotValidMessage}
+								</Typography.Paragraph>
+							)}
+						</div>
+					)}
+
+					{isPreferenceVisible && (
+						<>
+							<MarginTop marginTop="2.4375rem">
+								<Space>
+									<Switch
+										onChange={(value): void => onSwitchHandler(value, setHasOptedUpdates)}
+										checked={hasOptedUpdates}
+									/>
+									<Typography>{t('prompt_keepme_posted')} </Typography>
+								</Space>
+							</MarginTop>
+
+							<MarginTop marginTop="0.5rem">
+								<Space>
+									<Switch
+										onChange={(value): void => onSwitchHandler(value, setIsAnonymous)}
+										checked={isAnonymous}
+									/>
+									<Typography>{t('prompt_anonymise')}</Typography>
+								</Space>
+							</MarginTop>
+						</>
+					)}
+
+					{isPreferenceVisible && (
+						<Typography.Paragraph
+							italic
+							style={{
+								color: '#D89614',
+								marginTop: '0.50rem',
+							}}
+						>
+							This will create an admin account. If you are not an admin, please ask
+							your admin for an invite link
+						</Typography.Paragraph>
+					)}
+
+					<ButtonContainer>
+						<Button
+							type="primary"
+							htmlType="submit"
+							data-attr="signup"
+							loading={loading}
+							disabled={
+								loading ||
+								!email ||
+								!organizationName ||
+								(!precheck.sso && (!password || !confirmPassword)) ||
+								(!isDetailsDisable && !firstName) ||
+								confirmPasswordError ||
+								isPasswordPolicyError
+							}
+						>
+							{t('button_get_started')}
+						</Button>
+					</ButtonContainer>
+				</form>
+			</FormWrapper>
 		</WelcomeLeftContainer>
 	);
 }

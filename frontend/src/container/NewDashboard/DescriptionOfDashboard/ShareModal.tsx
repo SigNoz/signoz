@@ -1,5 +1,6 @@
-import { Button, Modal, notification, Typography } from 'antd';
+import { Button, Modal, Typography } from 'antd';
 import Editor from 'components/Editor';
+import { useNotifications } from 'hooks/useNotifications';
 import React, { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useCopyToClipboard } from 'react-use';
@@ -32,7 +33,7 @@ function ShareModal({
 	const [isViewJSON, setIsViewJSON] = useState<boolean>(false);
 	const { t } = useTranslation(['dashboard', 'common']);
 	const [state, setCopy] = useCopyToClipboard();
-	const [notifications, NotificationElement] = notification.useNotification();
+	const { notifications } = useNotifications();
 
 	useEffect(() => {
 		if (state.error) {
@@ -84,34 +85,28 @@ function ShareModal({
 	}, [isViewJSON, jsonValue, selectedData, selectedDataCleaned, setCopy, t]);
 
 	return (
-		<>
-			{NotificationElement}
-			<Modal
-				open={isJSONModalVisible}
-				onCancel={(): void => {
-					onToggleHandler();
-					setIsViewJSON(false);
-				}}
-				width="70vw"
-				centered
-				title={t('share', {
-					ns: 'common',
-				})}
-				okText={t('download_json')}
-				cancelText={t('cancel')}
-				destroyOnClose
-				footer={GetFooterComponent}
-			>
-				{!isViewJSON ? (
-					<Typography>{t('export_dashboard')}</Typography>
-				) : (
-					<Editor
-						onChange={(value): void => setJSONValue(value)}
-						value={jsonValue}
-					/>
-				)}
-			</Modal>
-		</>
+		<Modal
+			open={isJSONModalVisible}
+			onCancel={(): void => {
+				onToggleHandler();
+				setIsViewJSON(false);
+			}}
+			width="70vw"
+			centered
+			title={t('share', {
+				ns: 'common',
+			})}
+			okText={t('download_json')}
+			cancelText={t('cancel')}
+			destroyOnClose
+			footer={GetFooterComponent}
+		>
+			{!isViewJSON ? (
+				<Typography>{t('export_dashboard')}</Typography>
+			) : (
+				<Editor onChange={(value): void => setJSONValue(value)} value={jsonValue} />
+			)}
+		</Modal>
 	);
 }
 
