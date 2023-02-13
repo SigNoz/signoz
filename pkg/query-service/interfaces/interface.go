@@ -56,6 +56,9 @@ type Reader interface {
 	GetMetricAutocompleteTagValue(ctx context.Context, params *model.MetricAutocompleteTagParams) (*[]string, *model.ApiError)
 	GetMetricResult(ctx context.Context, query string) ([]*model.Series, error)
 	GetMetricResultEE(ctx context.Context, query string) ([]*model.Series, string, error)
+	GetMetricAggregateAttributes(ctx context.Context, req *model.AggregateAttributeRequest) ([]string, error)
+	GetMetricAttributeKeys(ctx context.Context, req *model.FilterAttributeKeyRequest) ([]string, error)
+	GetMetricAttributeValues(ctx context.Context, req *model.FilterAttributeValueRequest) ([]string, error)
 
 	GetTotalSpans(ctx context.Context) (uint64, error)
 	GetSpansInLastHeartBeatInterval(ctx context.Context) (uint64, error)

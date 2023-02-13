@@ -13,9 +13,11 @@ import (
 	"github.com/gorilla/mux"
 	promModel "github.com/prometheus/common/model"
 
+	"go.signoz.io/signoz/pkg/query-service/app/metrics"
 	"go.signoz.io/signoz/pkg/query-service/auth"
 	"go.signoz.io/signoz/pkg/query-service/constants"
 	"go.signoz.io/signoz/pkg/query-service/model"
+	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
 )
 
 var allowedFunctions = []string{"count", "ratePerSec", "sum", "avg", "min", "max", "p50", "p90", "p95", "p99"}
@@ -412,11 +414,11 @@ func extractTagKeys(tags []model.TagQueryParam) ([]model.TagQueryParam, error) {
 				tag.Key = customStr[0]
 			}
 			if tag.Operator == model.ExistsOperator || tag.Operator == model.NotExistsOperator {
-				if customStr[1] == string(model.TagTypeString) + ")" {
+				if customStr[1] == string(model.TagTypeString)+")" {
 					tag.StringValues = []string{" "}
-				} else if customStr[1] ==string(model.TagTypeBool) + ")" {
+				} else if customStr[1] == string(model.TagTypeBool)+")" {
 					tag.BoolValues = []bool{true}
-				} else if customStr[1] == string(model.TagTypeNumber) + ")" {
+				} else if customStr[1] == string(model.TagTypeNumber)+")" {
 					tag.NumberValues = []float64{0}
 				} else {
 					return nil, fmt.Errorf("TagKey param is not valid in query")
@@ -810,4 +812,166 @@ func parseFilterSet(r *http.Request) (*model.FilterSet, error) {
 		return nil, err
 	}
 	return &filterSet, nil
+}
+
+func parseAggregateAttributeRequest(r *http.Request) (*model.AggregateAttributeRequest, error) {
+	var req model.AggregateAttributeRequest
+
+	aggregateOperator, err := strconv.Atoi(r.URL.Query().Get("aggregateOperator"))
+
+	if err != nil {
+		return nil, err
+	}
+
+	aggregateAttribute := r.URL.Query().Get("searchText")
+	limit, err := strconv.Atoi(r.URL.Query().Get("limit"))
+	if err != nil {
+		limit = 50
+	}
+
+	dataSource, err := strconv.Atoi(r.URL.Query().Get("dataSource"))
+	if err != nil {
+		return nil, err
+	}
+
+	req = model.AggregateAttributeRequest{
+		Operator:   model.AggregateOperator(aggregateOperator),
+		SearchText: aggregateAttribute,
+		Limit:      limit,
+		DataSource: model.DataSource(dataSource),
+	}
+	return &req, nil
+}
+
+func parseFilterAttributeKeyRequest(r *http.Request) (*model.FilterAttributeKeyRequest, error) {
+	var req model.FilterAttributeKeyRequest
+
+	dataSource, err := strconv.Atoi(r.URL.Query().Get("dataSource"))
+	if err != nil {
+		return nil, err
+	}
+
+	aggregateOperator, err := strconv.Atoi(r.URL.Query().Get("aggregateOperator"))
+
+	if err != nil {
+		return nil, err
+	}
+
+	aggregateAttribute := r.URL.Query().Get("aggregateAttribute")
+
+	limit, err := strconv.Atoi(r.URL.Query().Get("limit"))
+	if err != nil {
+		limit = 50
+	}
+
+	req = model.FilterAttributeKeyRequest{
+		DataSource:         model.DataSource(dataSource),
+		AggregareOperator:  model.AggregateOperator(aggregateOperator),
+		AggregateAttribute: aggregateAttribute,
+		Limit:              limit,
+		SearchText:         r.URL.Query().Get("searchText"),
+	}
+	return &req, nil
+}
+
+func parseFilterAttributeValueRequest(r *http.Request) (*model.FilterAttributeValueRequest, error) {
+
+	var req model.FilterAttributeValueRequest
+
+	dataSource, err := strconv.Atoi(r.URL.Query().Get("dataSource"))
+	if err != nil {
+		return nil, err
+	}
+
+	aggregateOperator, err := strconv.Atoi(r.URL.Query().Get("aggregateOperator"))
+
+	if err != nil {
+		return nil, err
+	}
+
+	aggregateAttribute := r.URL.Query().Get("aggregateAttribute")
+
+	limit, err := strconv.Atoi(r.URL.Query().Get("limit"))
+	if err != nil {
+		limit = 50
+	}
+
+	req = model.FilterAttributeValueRequest{
+		DataSource:         model.DataSource(dataSource),
+		AggregareOperator:  model.AggregateOperator(aggregateOperator),
+		AggregateAttribute: aggregateAttribute,
+		Limit:              limit,
+		SearchText:         r.URL.Query().Get("searchText"),
+		FilterAttributeKey: r.URL.Query().Get("attributeKey"),
+	}
+	return &req, nil
+}
+
+func validateQueryRangeParamsV2(qp *v3.QueryRangeParamsV3) error {
+	var errs []error
+	if !(qp.CompositeQuery.QueryType >= model.QUERY_BUILDER && qp.CompositeQuery.QueryType <= model.PROM) {
+		errs = append(errs, fmt.Errorf("unsupported query type"))
+	}
+	if !(qp.CompositeQuery.PanelType >= model.TIME_SERIES && qp.CompositeQuery.PanelType <= model.QUERY_LIST) {
+		errs = append(errs, fmt.Errorf("unsupported panel type"))
+	}
+	if len(errs) != 0 {
+		return fmt.Errorf("one or more errors found : %s", metrics.FormatErrs(errs, ","))
+	}
+	return nil
+}
+
+func ParseQueryRangeParams(r *http.Request) (*v3.QueryRangeParamsV3, *model.ApiError) {
+
+	var postData *v3.QueryRangeParamsV3
+
+	if err := json.NewDecoder(r.Body).Decode(&postData); err != nil {
+		return nil, &model.ApiError{Typ: model.ErrorBadData, Err: err}
+	}
+	if err := validateQueryRangeParamsV2(postData); err != nil {
+		return nil, &model.ApiError{Typ: model.ErrorBadData, Err: err}
+	}
+	// prepare the variables for the corrspnding query type
+	formattedVars := make(map[string]interface{})
+	for name, value := range postData.Variables {
+		if postData.CompositeQuery.QueryType == model.PROM {
+			formattedVars[name] = metrics.PromFormattedValue(value)
+		} else if postData.CompositeQuery.QueryType == model.CLICKHOUSE {
+			formattedVars[name] = metrics.FormattedValue(value)
+		}
+	}
+	// replace the variables in metrics builder filter item with actual value
+	if postData.CompositeQuery.QueryType == model.QUERY_BUILDER {
+		for _, query := range postData.CompositeQuery.BuilderQueries {
+			if query.Filters == nil || len(query.Filters.Items) == 0 {
+				continue
+			}
+			for idx := range query.Filters.Items {
+				item := &query.Filters.Items[idx]
+				value := item.Value
+				if value != nil {
+					switch x := value.(type) {
+					case string:
+						variableName := strings.Trim(x, "{{ . }}")
+						if _, ok := postData.Variables[variableName]; ok {
+							item.Value = postData.Variables[variableName]
+						}
+					case []interface{}:
+						if len(x) > 0 {
+							switch x[0].(type) {
+							case string:
+								variableName := strings.Trim(x[0].(string), "{{ . }}")
+								if _, ok := postData.Variables[variableName]; ok {
+									item.Value = postData.Variables[variableName]
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+	postData.Variables = formattedVars
+
+	return postData, nil
 }

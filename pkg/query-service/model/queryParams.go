@@ -66,6 +66,8 @@ const (
 	_ PanelType = iota
 	TIME_SERIES
 	QUERY_VALUE
+	QUERY_TABLE
+	QUERY_LIST
 )
 
 type CompositeMetricQuery struct {
@@ -498,4 +500,39 @@ type LogsAggregateParams struct {
 	GroupBy        string `json:"groupBy"`
 	Function       string `json:"function"`
 	StepSeconds    int    `json:"step"`
+}
+
+// AggregateAttributeRequest is a request to fetch possible attribute keys
+// for a selected aggregate operator and search text.
+// The context of the selected aggregate operator is used to becase the
+// type of the attribute key is different for different aggregate operators.
+// For example, for the aggregate operator "avg" the attribute value type must be
+// a number
+type AggregateAttributeRequest struct {
+	DataSource DataSource
+	Operator   AggregateOperator
+	SearchText string
+	Limit      int
+}
+
+// FilterAttributeKeyRequest is a request to fetch possible attribute keys
+// for a selected aggregate operator and aggregate attribute and search text.
+type FilterAttributeKeyRequest struct {
+	DataSource         DataSource
+	AggregareOperator  AggregateOperator
+	AggregateAttribute string
+	SearchText         string
+	Limit              int
+}
+
+// FilterAttributeValueRequest is a request to fetch possible attribute values
+// for a selected aggregate operator, aggregate attribute, filter attribute key
+// and search text.
+type FilterAttributeValueRequest struct {
+	DataSource         DataSource
+	AggregareOperator  AggregateOperator
+	AggregateAttribute string
+	FilterAttributeKey string
+	SearchText         string
+	Limit              int
 }

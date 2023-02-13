@@ -3058,6 +3058,99 @@ func (r *ClickHouseReader) GetMetricAutocompleteMetricNames(ctx context.Context,
 
 }
 
+func (r *ClickHouseReader) GetMetricAggregateAttributes(ctx context.Context, req *model.AggregateAttributeRequest) ([]string, error) {
+
+	var query string
+	var err error
+	var metricNameList []string
+	var rows driver.Rows
+
+	query = fmt.Sprintf("SELECT DISTINCT(metric_name) from %s.%s WHERE metric_name ILIKE $1", signozMetricDBName, signozTSTableName)
+	if req.Limit != 0 {
+		query = query + fmt.Sprintf(" LIMIT %d;", req.Limit)
+	}
+	rows, err = r.db.Query(ctx, query, fmt.Sprintf("%%%s%%", req.SearchText))
+	defer rows.Close()
+
+	if err != nil {
+		zap.S().Error(err)
+		return nil, fmt.Errorf("error while executing query: %s", err.Error())
+	}
+
+	var metricName string
+	for rows.Next() {
+		if err := rows.Scan(&metricName); err != nil {
+			return nil, fmt.Errorf("error while scanning rows: %s", err.Error())
+		}
+		metricNameList = append(metricNameList, metricName)
+	}
+
+	return metricNameList, nil
+}
+
+func (r *ClickHouseReader) GetMetricAttributeKeys(ctx context.Context, req *model.FilterAttributeKeyRequest) ([]string, error) {
+
+	var query string
+	var err error
+	var attributeKeys []string
+	var rows driver.Rows
+	defer rows.Close()
+
+	if len(req.SearchText) != 0 {
+		query = fmt.Sprintf("select distinctTagKeys from (SELECT DISTINCT arrayJoin(tagKeys) distinctTagKeys from (SELECT DISTINCT(JSONExtractKeys(labels)) tagKeys from %s.%s WHERE metric_name=$1 )) WHERE distinctTagKeys ILIKE $2;", signozMetricDBName, signozTSTableName)
+		rows, err = r.db.Query(ctx, query, req.AggregateAttribute, fmt.Sprintf("%%%s%%", req.SearchText))
+	} else {
+		query = fmt.Sprintf("select distinctTagKeys from (SELECT DISTINCT arrayJoin(tagKeys) distinctTagKeys from (SELECT DISTINCT(JSONExtractKeys(labels)) tagKeys from %s.%s WHERE metric_name=$1 ));", signozMetricDBName, signozTSTableName)
+		rows, err = r.db.Query(ctx, query, req.SearchText)
+	}
+
+	if err != nil {
+		zap.S().Error(err)
+		return attributeKeys, fmt.Errorf("error while executing query: %s", err.Error())
+	}
+
+	var attributeKey string
+	for rows.Next() {
+		if err := rows.Scan(&attributeKey); err != nil {
+			return attributeKeys, fmt.Errorf("error while scanning rows: %s", err.Error())
+		}
+		attributeKeys = append(attributeKeys, attributeKey)
+	}
+	return attributeKeys, nil
+}
+
+func (r *ClickHouseReader) GetMetricAttributeValues(ctx context.Context, req *model.FilterAttributeValueRequest) ([]string, error) {
+
+	var query string
+	var err error
+	var attributeValues []string
+	var rows driver.Rows
+	defer rows.Close()
+
+	if len(req.SearchText) != 0 {
+		query = fmt.Sprintf("SELECT DISTINCT(JSONExtractString(labels, '%s')) from %s.%s WHERE metric_name=$1 AND JSONExtractString(labels, '%s') ILIKE $2;", req.FilterAttributeKey, signozMetricDBName, signozTSTableName, req.FilterAttributeKey)
+		rows, err = r.db.Query(ctx, query, req.FilterAttributeKey, req.AggregateAttribute, fmt.Sprintf("%%%s%%", req.SearchText))
+	} else {
+		query = fmt.Sprintf("SELECT DISTINCT(JSONExtractString(labels, '%s')) FROM %s.%s WHERE metric_name=$2;", req.FilterAttributeKey, signozMetricDBName, signozTSTableName)
+		rows, err = r.db.Query(ctx, query, req.FilterAttributeKey, req.AggregateAttribute)
+	}
+
+	if err != nil {
+		zap.S().Error(err)
+		return attributeValues, fmt.Errorf("error while executing query: %s", err.Error())
+	}
+
+	var atrributeValue string
+	for rows.Next() {
+		if err := rows.Scan(&atrributeValue); err != nil {
+			return nil, fmt.Errorf("error while scanning rows: %s", err.Error())
+		}
+		attributeValues = append(attributeValues, atrributeValue)
+	}
+
+	return attributeValues, nil
+}
+
 func (r *ClickHouseReader) GetMetricResultEE(ctx context.Context, query string) ([]*model.Series, string, error) {
 	zap.S().Error("GetMetricResultEE is not implemented for opensource version")
 	return nil, "", fmt.Errorf("GetMetricResultEE is not implemented for opensource version")
