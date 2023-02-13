@@ -69,7 +69,7 @@ function ChildListOfProcessor({
 					<span key="list-edit">
 						<EditOutlined
 							style={{ color: themeColors.gainsboro, fontSize: '1rem' }}
-							onClick={(): void => handleProcessorEditAction(record.text)}
+							onClick={(): void => handleProcessorEditAction(record)}
 						/>
 					</span>
 					<span key="list-view">
@@ -167,7 +167,7 @@ interface ChildListOfProcessorTypes {
 	childDataSource: Array<SubPiplineColumsType> | undefined;
 	setActionType: (b: string | undefined) => void;
 	setChildDataSource: (value: Array<SubPiplineColumsType> | undefined) => void;
-	handleProcessorEditAction: (record: string) => void;
+	handleProcessorEditAction: (record: SubPiplineColumsType) => void;
 }
 
 export default ChildListOfProcessor;

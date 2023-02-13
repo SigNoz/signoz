@@ -8,10 +8,12 @@ import { useTranslation } from 'react-i18next';
 
 function TagInput({
 	setTagsListData,
+	initialvalues,
 }: {
 	setTagsListData: (tags: Array<string>) => void;
+	initialvalues: Array<string> | undefined;
 }): JSX.Element | null {
-	const [tags, setTags] = useState<Array<string>>([]);
+	const [tags, setTags] = useState<Array<string>>(initialvalues ?? []);
 	const [inputVisible, setInputVisible] = useState(false);
 	const [inputValue, setInputValue] = useState<string>('');
 	const [editInputIndex, setEditInputIndex] = useState(-1);
@@ -43,6 +45,7 @@ function TagInput({
 		if (inputValue && tags.indexOf(inputValue as never) === -1) {
 			setTags([...tags, inputValue] as never);
 		}
+		setTagsListData(tags);
 		setInputVisible(false);
 		setInputValue('');
 	};
@@ -85,7 +88,7 @@ function TagInput({
 
 	const showAllData: JSX.Element = (
 		<>
-			{tags.map((tag, index) => {
+			{tags.map((tag: string, index: number) => {
 				if (editInputIndex === index) {
 					return (
 						<Input
@@ -138,7 +141,10 @@ function TagInput({
 				value={inputValue}
 				onChange={handleInputChange}
 				onBlur={handleInputConfirm}
-				onPressEnter={handleInputConfirm}
+				onPressEnter={(e): void => {
+					e.preventDefault();
+					handleInputConfirm();
+				}}
 				prefix={showAllData}
 			/>
 

@@ -10,7 +10,7 @@ import {
 } from 'antd';
 import type { FormInstance } from 'antd/es/form';
 import { themeColors } from 'constants/theme';
-import React, { RefObject, useMemo } from 'react';
+import React, { RefObject, useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { modalIcon } from '../config';
@@ -22,14 +22,14 @@ import { items, processorInputField } from './utils';
 function NewProcessor({
 	isActionType,
 	setActionType,
-	selectedRecord,
+	selectedProcessorData,
 	setChildDataSource,
 	formRef,
 	handleModalCancelAction,
+	childDataSource,
 }: {
 	isActionType: string | undefined;
 	setActionType: (b: string | undefined) => void;
-	selectedRecord: string;
 	setChildDataSource: (
 		value:
 			| React.SetStateAction<Array<SubPiplineColumsType>>
@@ -37,6 +37,8 @@ function NewProcessor({
 	) => void;
 	formRef: RefObject<FormInstance>;
 	handleModalCancelAction: () => void;
+	childDataSource: Array<SubPiplineColumsType>;
+	selectedProcessorData: SubPiplineColumsType | undefined;
 }): JSX.Element {
 	const { Option } = DefaultSelect;
 	const [form] = Form.useForm();
@@ -46,17 +48,42 @@ function NewProcessor({
 	]);
 	const isAdd = useMemo(() => isActionType === 'add-processor', [isActionType]);
 
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	const onFinish = (values: any): void => {
-		const newProcessorData = {
-			id: Math.random(),
+	useEffect(() => {
+		if (isEdit === true) {
+			form.setFieldsValue({
+				name: selectedProcessorData?.text,
+			});
+		}
+	}, [form, isEdit, selectedProcessorData]);
+
+	const onFinish = (values: OnFinishValueType): void => {
+		const newProcessorData: SubPiplineColumsType = {
+			id: isEdit === true ? isEdit : Math.random(),
 			text: values.name,
 		};
-		setChildDataSource((prevState: Array<SubPiplineColumsType>) => [
-			...prevState,
-			newProcessorData,
-		]);
-		formRef?.current?.resetFields();
+
+		if (isEdit) {
+			const findRecordIndex = childDataSource?.findIndex(
+				(i) => i.text === selectedProcessorData?.text,
+			);
+
+			const updatedProcessorData = {
+				...childDataSource?.[findRecordIndex],
+				text: values.name,
+			};
+
+			const editedData = childDataSource?.map((data) =>
+				data.text === selectedProcessorData?.text ? updatedProcessorData : data,
+			);
+
+			setChildDataSource(editedData);
+		} else {
+			setChildDataSource(
+				(prevState: SubPiplineColumsType[]) =>
+					[...prevState, newProcessorData] as SubPiplineColumsType[],
+			);
+			formRef?.current?.resetFields();
+		}
 		setActionType(undefined);
 	};
 
@@ -73,7 +100,7 @@ function NewProcessor({
 					}}
 				>
 					{isEdit
-						? `${t('edit_processor')} ${selectedRecord}`
+						? `${t('edit_processor')} ${selectedProcessorData?.text}`
 						: t('create_processor')}
 				</Typography.Title>
 			}
@@ -137,7 +164,7 @@ function NewProcessor({
 												},
 											]}
 										>
-											<Input placeholder={i.placeholder} name={i.fieldName} />
+											<Input placeholder={i.placeholder} name={i.name} />
 										</Form.Item>
 									</div>
 								</div>
@@ -176,6 +203,12 @@ function NewProcessor({
 			</div>
 		</Modal>
 	);
+}
+
+export interface OnFinishValueType {
+	name: string;
+	id: number | boolean;
+	text: string;
 }
 
 export default NewProcessor;

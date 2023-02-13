@@ -1,6 +1,6 @@
 import { Button, Divider, Form, Input, Modal, Typography } from 'antd';
 import type { FormInstance } from 'antd/es/form';
-import React, { RefObject, useMemo, useState } from 'react';
+import React, { RefObject, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { PipelineColumnType } from '../ListOfPipelines';
@@ -16,15 +16,17 @@ function NewPipline({
 	setDataSource,
 	formRef,
 	handleModalCancelAction,
+	dataSource,
 }: {
 	isActionType: string | undefined;
 	setActionType: (b: string | undefined) => void;
-	selectedRecord: string;
+	selectedRecord: PipelineColumnType | undefined;
 	setDataSource: (
 		value: React.SetStateAction<Array<PipelineColumnType>>,
 	) => void;
 	formRef: RefObject<FormInstance>;
 	handleModalCancelAction: () => void;
+	dataSource: Array<PipelineColumnType>;
 }): JSX.Element {
 	const [form] = Form.useForm();
 	const { t } = useTranslation(['common']);
@@ -34,13 +36,26 @@ function NewPipline({
 	const isEdit = useMemo(() => isActionType === 'edit-pipeline', [isActionType]);
 	const isAdd = useMemo(() => isActionType === 'add-pipeline', [isActionType]);
 
+	useEffect(() => {
+		if (isEdit === true) {
+			form.setFieldsValue({
+				name: selectedRecord?.name,
+				tags: tagsListData,
+			});
+		}
+	}, [form, formRef, isEdit, selectedRecord?.name, tagsListData]);
+
+	useEffect(() => {
+		setTagsListData(selectedRecord?.tags);
+	}, [selectedRecord?.tags]);
+
 	const onFinish = (values: PipelineColumnType): void => {
 		const operatorsData = Array({
 			name: values.operators,
 		});
 
 		const newData = {
-			orderid: count.toString(),
+			orderid: isEdit === true ? isEdit : count.toString(),
 			key: Math.random(),
 			editedBy: '',
 			filter: '',
@@ -49,11 +64,32 @@ function NewPipline({
 			tags: tagsListData,
 			operators: operatorsData,
 		};
-		setCount(count + 1);
-		setDataSource(
-			(prevState: Array<PipelineColumnType>) =>
-				[...prevState, newData] as Array<PipelineColumnType>,
-		);
+
+		if (isEdit) {
+			const findRecordIndex = dataSource.findIndex(
+				(i) => i.name === selectedRecord?.name,
+			);
+			const updatedPipelineData = {
+				...dataSource[findRecordIndex],
+				name: values.name,
+				tags: tagsListData,
+			};
+
+			const tempData = dataSource?.map((data) =>
+				data.name === selectedRecord?.name ? updatedPipelineData : data,
+			);
+
+			setDataSource(tempData);
+		} else {
+			setCount((prevState: number) => (prevState + 1) as number);
+			setDataSource(
+				(pre: PipelineColumnType[]) => [...pre, newData] as PipelineColumnType[],
+			);
+			formRef?.current?.resetFields();
+			if (tagsListData) {
+				formRef?.current?.resetFields();
+			}
+		}
 		formRef?.current?.resetFields();
 		setActionType(undefined);
 	};
@@ -71,7 +107,7 @@ function NewPipline({
 					}}
 				>
 					{isEdit
-						? `${t('edit_pipeline')} : ${selectedRecord}`
+						? `${t('edit_pipeline')} : ${selectedRecord?.name}`
 						: t('create_pipeline')}
 				</Typography.Title>
 			}
@@ -114,7 +150,7 @@ function NewPipline({
 									name={i.fieldName}
 									placeholder={
 										isEdit
-											? `This is a pipeline to edit ${selectedRecord}`
+											? `This is a pipeline to edit ${selectedRecord?.name}`
 											: i.placeholder
 									}
 								/>
@@ -129,7 +165,10 @@ function NewPipline({
 								key={i.id}
 								name={i.name}
 							>
-								<TagSelect setTagsListData={setTagsListData} />
+								<TagSelect
+									setTagsListData={setTagsListData}
+									initialvalues={selectedRecord?.tags}
+								/>
 							</Form.Item>
 						);
 					}

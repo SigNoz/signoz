@@ -57,7 +57,7 @@ export const pipelineData: Array<PipelineColumnType> = [
 		alias: 'myservicetraceparser',
 		enabled: true,
 		filter: 'attributes.source == myservice',
-		tags: ['server', 'app'],
+		tags: ['server', 'app', 'host', 'realse'],
 		operators: [
 			{
 				type: 'trace_parser',

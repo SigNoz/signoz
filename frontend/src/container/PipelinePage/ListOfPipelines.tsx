@@ -56,7 +56,11 @@ function ListOfPipelines({
 		Array<SubPiplineColumsType>
 	>();
 	const [activeExpRow, setActiveExpRow] = useState<Array<number>>();
-	const [selectedRecord, setSelectedRecord] = useState<string>('');
+	const [selectedRecord, setSelectedRecord] = useState<PipelineColumnType>();
+	const [
+		selectedProcessorData,
+		setSelectedProcessorData,
+	] = useState<SubPiplineColumsType>();
 
 	const [modal, contextHolder] = Modal.useModal();
 	const { Text } = Typography;
@@ -88,12 +92,12 @@ function ListOfPipelines({
 
 	const handlePipelineEditAction = (record: PipelineColumnType): void => {
 		setActionType('edit-pipeline');
-		setSelectedRecord(record.name);
+		setSelectedRecord(record);
 	};
 
-	const handleProcessorEditAction = (record: string): void => {
+	const handleProcessorEditAction = (record: SubPiplineColumsType): void => {
 		setActionType('edit-processor');
-		setSelectedRecord(record);
+		setSelectedProcessorData(record);
 	};
 
 	const getCommonAction = (): JSX.Element => (
@@ -309,14 +313,16 @@ function ListOfPipelines({
 				setDataSource={setDataSource}
 				formRef={formRef}
 				handleModalCancelAction={handleModalCancelAction}
+				dataSource={dataSource}
 			/>
 			<Processor
 				isActionType={isActionType}
 				setActionType={setActionType}
-				selectedRecord={selectedRecord}
+				selectedProcessorData={selectedProcessorData}
 				setChildDataSource={setChildDataSource as () => Array<SubPiplineColumsType>}
 				formRef={formRef}
 				handleModalCancelAction={handleModalCancelAction}
+				childDataSource={childDataSource as []}
 			/>
 			<Container>
 				<DndProvider backend={HTML5Backend}>
@@ -388,12 +394,12 @@ export interface PipelineColumnType {
 	alias: string;
 	enabled: boolean;
 	filter: string;
-	tags: Array<string>;
+	tags: Array<string> | undefined;
 	operators: Array<PipelineOperatorsType>;
 }
 
 export interface SubPiplineColumsType {
-	id: number;
+	id: number | boolean;
 	text: string;
 }
 
