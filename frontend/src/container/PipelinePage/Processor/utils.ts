@@ -1,4 +1,4 @@
-export const items: Array<{ value: string; label: string }> = [
+export const processorTypes: Array<{ value: string; label: string }> = [
 	{ value: 'Grok Processor', label: 'Grok Processor' },
 	{ value: 'Remapper', label: 'Remapper' },
 	{ value: 'User-Agent Parser', label: 'User-Agent Parser' },

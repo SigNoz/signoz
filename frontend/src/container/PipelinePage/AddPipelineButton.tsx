@@ -5,12 +5,14 @@ import { useTranslation } from 'react-i18next';
 
 import { Button, ButtonContainer } from './styles';
 
-function AddNewPipline({ setActionType }: AddNewPiplineType): JSX.Element {
+function AddPipelineButton({
+	setActionType,
+}: AddPipelineButtonType): JSX.Element {
 	const { t } = useTranslation(['pipeline']);
 
 	return (
 		<ButtonContainer>
-			<TextToolTip text="Add Piplines" />
+			<TextToolTip text="Add Pipeline" />
 			<Button
 				icon={<PlusOutlined />}
 				onClick={(): void => setActionType('add-pipeline')}
@@ -22,8 +24,8 @@ function AddNewPipline({ setActionType }: AddNewPiplineType): JSX.Element {
 	);
 }
 
-interface AddNewPiplineType {
+interface AddPipelineButtonType {
 	setActionType: (b?: string) => void;
 }
 
-export default AddNewPipline;
+export default AddPipelineButton;

@@ -18,7 +18,7 @@ import { modalIcon } from '../config';
 import { SubPiplineColumsType } from '../ListOfPipelines';
 import { ModalFooterTitle } from '../styles';
 import { wrapperStyle } from './config';
-import { items, processorInputField } from './utils';
+import { processorInputField, processorTypes } from './utils';
 
 function NewProcessor({
 	isActionType,
@@ -119,7 +119,7 @@ function NewProcessor({
 							style={{ width: 200 }}
 							defaultValue={{ value: 'Grok Processor', label: 'Grok Processor' }}
 						>
-							{items.map(({ value, label }) => (
+							{processorTypes.map(({ value, label }) => (
 								<Option key={value + label} value={value}>
 									{label}
 								</Option>

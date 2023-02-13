@@ -42,7 +42,7 @@ import {
 	LastActionColumnStyle,
 } from './styles';
 
-const pipelineData: Array<PipelineColumnType> = [
+export const pipelineData: Array<PipelineColumnType> = [
 	{
 		orderid: 1,
 		uuid: '22a588b8-cccc-4a49-94f1-2caa28271315',
