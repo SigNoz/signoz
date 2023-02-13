@@ -40,7 +40,6 @@ function Application({ getWidgetQueryBuilder }: DashboardProps): JSX.Element {
 	const [selectedTimeStamp, setSelectedTimeStamp] = useState<number>(0);
 
 	const handleSetTimeStamp = useCallback((selectTime: number) => {
-		console.log(selectTime, '----select time');
 		setSelectedTimeStamp(selectTime);
 	}, []);
 
