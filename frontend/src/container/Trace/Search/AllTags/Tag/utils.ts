@@ -72,7 +72,7 @@ export function onTagValueChange(
 export function disableTagValue(
 	selectedOperator: OperatorValues,
 	setLocalValue: React.Dispatch<React.SetStateAction<TagValueTypes[]>>,
-	selectedKeys: string[],
+	selectedKeys: string,
 	setLocalSelectedTags: React.Dispatch<React.SetStateAction<Tags[]>>,
 	index: number,
 ): boolean {
@@ -192,7 +192,7 @@ export function onTagKeySelect(
 		setLocalSelectedTags((tags) => [
 			...tags.slice(0, index),
 			{
-				Key: [value],
+				Key: value,
 				Operator: tag.Operator,
 				StringValues: tag.StringValues,
 				NumberValues: tag.NumberValues,
