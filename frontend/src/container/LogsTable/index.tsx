@@ -111,7 +111,7 @@ function LogsTable(props: LogsTableProps): JSX.Element {
 
 			{isLiveTail && <Typography>Getting live logs...</Typography>}
 
-			{isNoLogs && <Typography>No log linesPerRow found</Typography>}
+			{isNoLogs && <Typography>No logs found</Typography>}
 
 			{renderContent}
 		</Container>
