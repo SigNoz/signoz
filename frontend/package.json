@@ -55,6 +55,7 @@
 		"event-source-polyfill": "1.0.31",
 		"file-loader": "6.1.1",
 		"flat": "^5.0.2",
+		"fontfaceobserver": "2.3.0",
 		"history": "4.10.1",
 		"html-webpack-plugin": "5.1.0",
 		"i18next": "^21.6.12",

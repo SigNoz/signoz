@@ -1,4 +1,4 @@
-import { Button, Col, Divider, Popover, Row, Select } from 'antd';
+import { Button, Col, Divider, Popover, Row, Select, Space } from 'antd';
 import LogControls from 'container/LogControls';
 import LogDetailedView from 'container/LogDetailedView';
 import LogLiveTail from 'container/LogLiveTail';
@@ -79,23 +79,30 @@ function Logs(): JSX.Element {
 			</SpaceContainer>
 
 			<LogsAggregate />
-			<LogControls />
 
 			<Row gutter={20} wrap={false}>
 				<LogsFilters />
 				<Col flex={1}>
 					<Row>
-						<Select value={selectedViewModeOption} onChange={onChangeVeiwMode}>
-							{viewModeOptionList.map((option) => (
-								<Select.Option key={option.value}>{option.label}</Select.Option>
-							))}
-						</Select>
+						<Col flex={1}>
+							<Space align="baseline" direction="horizontal">
+								<Select value={selectedViewModeOption} onChange={onChangeVeiwMode}>
+									{viewModeOptionList.map((option) => (
+										<Select.Option key={option.value}>{option.label}</Select.Option>
+									))}
+								</Select>
 
-						{isFormatButtonVisible && (
-							<Popover placement="right" content={renderPopoverContent}>
-								<Button>Format</Button>
-							</Popover>
-						)}
+								{isFormatButtonVisible && (
+									<Popover placement="right" content={renderPopoverContent}>
+										<Button>Format</Button>
+									</Popover>
+								)}
+							</Space>
+						</Col>
+
+						<Col>
+							<LogControls />
+						</Col>
 					</Row>
 
 					<LogsTable

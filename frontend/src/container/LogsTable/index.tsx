@@ -5,6 +5,7 @@ import RawLogView from 'components/Logs/RawLogView';
 import LogsTableView from 'components/Logs/TableView';
 import Spinner from 'components/Spinner';
 import { contentStyle } from 'container/Trace/Search/config';
+import useFontFaceObserver from 'hooks/useFontObserver';
 import React, { memo, useCallback, useMemo } from 'react';
 import { useSelector } from 'react-redux';
 import { Virtuoso } from 'react-virtuoso';
@@ -26,6 +27,15 @@ type LogsTableProps = {
 
 function LogsTable(props: LogsTableProps): JSX.Element {
 	const { viewMode, onClickExpand, linesPerRow } = props;
+
+	useFontFaceObserver(
+		[
+			{
+				family: 'Fira Code',
+			},
+		],
+		viewMode === 'raw',
+	);
 
 	const {
 		logs,
@@ -95,7 +105,7 @@ function LogsTable(props: LogsTableProps): JSX.Element {
 		<Container>
 			{viewMode !== 'table' && (
 				<Heading>
-					<Typography.Text>{viewMode === 'list' ? 'Event' : ''}</Typography.Text>
+					<Typography.Text>Event</Typography.Text>
 				</Heading>
 			)}
 
