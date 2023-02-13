@@ -37,7 +37,6 @@ func readCurrentDir(dir string) error {
 			continue
 		}
 
-		zap.S().Infof("Dashboard: file: %s\t uuid: %s", filename, data["uuid"].(string))
 
 		if dashboardUuid, ok := data["uuid"]; ok {
 			_, apiErr := GetDashboard(dashboardUuid.(string))
@@ -45,7 +44,10 @@ func readCurrentDir(dir string) error {
 				zap.S().Infof("Creating Dashboards: skipping file: %s\t%s", filename, "Dashboard already present in database")
 				continue
 			}
+
 		}
+
+		zap.S().Infof("Creating Dashboards: file: %s\t uuid: %s", filename, dashboardUuid.(string))
 
 		_, apiErr := CreateDashboard(data)
 		if apiErr != nil {
