@@ -2,6 +2,7 @@ import { Button, Divider, Form, Input, Modal, Typography } from 'antd';
 import type { FormInstance } from 'antd/es/form';
 import React, { RefObject, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { v4 as uuid } from 'uuid';
 
 import { PipelineColumnType } from '../ListOfPipelines';
 import PiplinesSearchBar from '../SearchBar';
@@ -17,17 +18,7 @@ function NewPipline({
 	formRef,
 	handleModalCancelAction,
 	dataSource,
-}: {
-	isActionType: string | undefined;
-	setActionType: (b: string | undefined) => void;
-	selectedRecord: PipelineColumnType | undefined;
-	setDataSource: (
-		value: React.SetStateAction<Array<PipelineColumnType>>,
-	) => void;
-	formRef: RefObject<FormInstance>;
-	handleModalCancelAction: () => void;
-	dataSource: Array<PipelineColumnType>;
-}): JSX.Element {
+}: NewPiplinePropsType): JSX.Element {
 	const [form] = Form.useForm();
 	const { t } = useTranslation(['common', 'pipeline']);
 	const [count, setCount] = useState(3);
@@ -56,7 +47,7 @@ function NewPipline({
 
 		const newData = {
 			orderid: isEdit === true ? isEdit : count.toString(),
-			key: Math.random(),
+			key: uuid(),
 			editedBy: '',
 			filter: '',
 			lastEdited: new Date().toDateString(),
@@ -206,4 +197,15 @@ function NewPipline({
 	);
 }
 
+interface NewPiplinePropsType {
+	isActionType: string | undefined;
+	setActionType: (b?: string) => void;
+	selectedRecord: PipelineColumnType | undefined;
+	setDataSource: (
+		value: React.SetStateAction<Array<PipelineColumnType>>,
+	) => void;
+	formRef: RefObject<FormInstance>;
+	handleModalCancelAction: VoidFunction;
+	dataSource: Array<PipelineColumnType>;
+}
 export default NewPipline;

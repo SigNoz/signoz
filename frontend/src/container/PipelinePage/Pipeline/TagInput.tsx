@@ -6,6 +6,8 @@ import { Button, Input, InputRef, message, Modal, Tag, Tooltip } from 'antd';
 import React, { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { tagInputStyle } from './utils';
+
 function TagInput({
 	setTagsListData,
 	initialvalues,
@@ -62,12 +64,6 @@ function TagInput({
 		setTags(newTags);
 		setEditInputIndex(-1);
 		setInputValue('');
-	};
-
-	const tagInputStyle: React.CSSProperties = {
-		width: 78,
-		verticalAlign: 'top',
-		flex: 1,
 	};
 
 	const handleClearAll = (): void => {

@@ -20,7 +20,7 @@ export const ButtonContainer = styled.div`
 
 export const Button = styled(ButtonComponent)`
 	&&& {
-		margin-left: 1em;
+		margin-left: 1rem;
 	}
 `;
 
@@ -46,30 +46,30 @@ export const ListItemTitleWrapper = styled.p`
 export const ModalFooterTitle = styled.span`
 	font-style: normal;
 	font-weight: 400;
-	font-size: 14px;
+	font-size: 0.875rem;
 	line-height: 1.25rem;
 `;
 
 export const ListDataStyle = styled.div`
-	margin: 2px;
-	padding: 5px;
+	margin: 0.125rem;
+	padding: 0.313rem;
 	border: none;
 	font-style: normal;
 	font-weight: 400;
-	font-size: 12px;
-	line-height: 20px;
+	font-size: 0.75rem;
+	line-height: 1.25rem;
 `;
 
 export const LastActionColumnStyle = styled.div`
 	display: flex;
 	justify-content: center;
-	gap: 20px;
+	gap: 1.25rem;
 	align-items: center;
 `;
 
 export const IconListStyle = styled.div`
 	display: flex;
-	gap: 16px;
+	gap: 1rem;
 	justify-content: flex-end;
 `;
 
@@ -91,7 +91,7 @@ export const StyledTable: React.FC<
 `;
 
 export const SpanStyle = styled.span`
-	font-size: 12px;
+	font-size: 0.75rem;
 	font-weight: 400;
-	line-height: 20px;
+	line-height: 1.25rem;
 `;

@@ -165,7 +165,7 @@ interface ChildListOfProcessorTypes {
 	getCommonAction: () => JSX.Element;
 	handleAlert: (props: AlertMessageType) => void;
 	childDataSource: Array<SubPiplineColumsType> | undefined;
-	setActionType: (b: string | undefined) => void;
+	setActionType: (b?: string) => void;
 	setChildDataSource: (value: Array<SubPiplineColumsType> | undefined) => void;
 	handleProcessorEditAction: (record: SubPiplineColumsType) => void;
 }

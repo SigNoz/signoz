@@ -12,6 +12,7 @@ import type { FormInstance } from 'antd/es/form';
 import { themeColors } from 'constants/theme';
 import React, { RefObject, useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
+import { v4 as uuid } from 'uuid';
 
 import { modalIcon } from '../config';
 import { SubPiplineColumsType } from '../ListOfPipelines';
@@ -27,19 +28,7 @@ function NewProcessor({
 	formRef,
 	handleModalCancelAction,
 	childDataSource,
-}: {
-	isActionType: string | undefined;
-	setActionType: (b: string | undefined) => void;
-	setChildDataSource: (
-		value:
-			| React.SetStateAction<Array<SubPiplineColumsType>>
-			| (() => Array<SubPiplineColumsType>),
-	) => void;
-	formRef: RefObject<FormInstance>;
-	handleModalCancelAction: () => void;
-	childDataSource: Array<SubPiplineColumsType>;
-	selectedProcessorData: SubPiplineColumsType | undefined;
-}): JSX.Element {
+}: NewProcessorPropsType): JSX.Element {
 	const { Option } = DefaultSelect;
 	const [form] = Form.useForm();
 	const { t } = useTranslation(['common', 'pipeline']);
@@ -58,7 +47,7 @@ function NewProcessor({
 
 	const onFinish = (values: OnFinishValueType): void => {
 		const newProcessorData: SubPiplineColumsType = {
-			id: isEdit === true ? isEdit : Math.random(),
+			id: isEdit === true ? selectedProcessorData?.id : uuid(),
 			text: values.name,
 		};
 
@@ -211,4 +200,15 @@ export interface OnFinishValueType {
 	text: string;
 }
 
+interface NewProcessorPropsType {
+	isActionType: string | undefined;
+	setActionType: (b?: string) => void;
+	setChildDataSource: React.Dispatch<
+		React.SetStateAction<Array<SubPiplineColumsType>>
+	>;
+	formRef: RefObject<FormInstance>;
+	handleModalCancelAction: VoidFunction;
+	childDataSource: Array<SubPiplineColumsType>;
+	selectedProcessorData: SubPiplineColumsType | undefined;
+}
 export default NewProcessor;

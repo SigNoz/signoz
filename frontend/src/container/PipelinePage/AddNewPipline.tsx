@@ -5,11 +5,7 @@ import { useTranslation } from 'react-i18next';
 
 import { Button, ButtonContainer } from './styles';
 
-function AddNewPipline({
-	setActionType,
-}: {
-	setActionType: (b: string | undefined) => void;
-}): JSX.Element {
+function AddNewPipline({ setActionType }: AddNewPiplineType): JSX.Element {
 	const { t } = useTranslation(['pipeline']);
 
 	return (
@@ -24,6 +20,10 @@ function AddNewPipline({
 			</Button>
 		</ButtonContainer>
 	);
+}
+
+interface AddNewPiplineType {
+	setActionType: (b?: string) => void;
 }
 
 export default AddNewPipline;

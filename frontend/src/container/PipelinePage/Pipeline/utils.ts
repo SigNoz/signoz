@@ -18,3 +18,9 @@ export const inputfieldName = [
 		name: 'operators',
 	},
 ];
+
+export const tagInputStyle: React.CSSProperties = {
+	width: 78,
+	verticalAlign: 'top',
+	flex: 1,
+};
