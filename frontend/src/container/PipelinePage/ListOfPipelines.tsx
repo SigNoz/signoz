@@ -147,7 +147,7 @@ function ListOfPipelines({
 	isActionType,
 	setActionType,
 }: ListOfPipelinesProps): JSX.Element {
-	const { t } = useTranslation(['common', 'pipeline']);
+	const { t } = useTranslation(['pipeline', 'common']);
 	const formRef = useRef<FormInstance>(null);
 	const [dataSource, setDataSource] = useState<Array<PipelineColumnType>>(
 		pipelineData,
