@@ -11,6 +11,7 @@ import { tagInputStyle } from './utils';
 function TagInput({
 	setTagsListData,
 	initialvalues,
+	placeHolder,
 }: TagInputType): JSX.Element {
 	const [tags, setTags] = useState<Array<string>>(initialvalues ?? []);
 	const [inputVisible, setInputVisible] = useState(false);
@@ -138,6 +139,7 @@ function TagInput({
 					e.preventDefault();
 					handleInputConfirm();
 				}}
+				placeholder={placeHolder}
 				prefix={showAllData}
 			/>
 
@@ -151,6 +153,7 @@ function TagInput({
 interface TagInputType {
 	setTagsListData: (tags: Array<string>) => void;
 	initialvalues: Array<string> | undefined;
+	placeHolder: string;
 }
 
 export default TagInput;

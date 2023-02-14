@@ -28,13 +28,13 @@ function NewPipline({
 	const isAdd = useMemo(() => isActionType === 'add-pipeline', [isActionType]);
 
 	useEffect(() => {
-		if (isEdit === true) {
+		if (isEdit) {
 			form.setFieldsValue({
 				name: selectedRecord?.name,
 				tags: tagsListData,
 			});
 		}
-	}, [form, formRef, isEdit, selectedRecord?.name, tagsListData]);
+	}, [form, isEdit, selectedRecord?.name, tagsListData]);
 
 	useEffect(() => {
 		setTagsListData(selectedRecord?.tags);
@@ -46,13 +46,13 @@ function NewPipline({
 		});
 
 		const newData = {
-			orderid: isEdit === true ? isEdit : count.toString(),
+			orderid: count.toString(),
 			key: uuid(),
 			editedBy: '',
 			filter: '',
 			lastEdited: new Date().toDateString(),
 			name: values.name,
-			tags: tagsListData,
+			tags: isEdit ? [] : tagsListData,
 			operators: operatorsData,
 		};
 
@@ -63,7 +63,7 @@ function NewPipline({
 			const updatedPipelineData = {
 				...dataSource[findRecordIndex],
 				name: values.name,
-				tags: tagsListData,
+				tags: isEdit ? tagsListData : [],
 			};
 
 			const tempData = dataSource?.map((data) =>
@@ -154,7 +154,8 @@ function NewPipline({
 							>
 								<TagInput
 									setTagsListData={setTagsListData}
-									initialvalues={selectedRecord?.tags}
+									initialvalues={isEdit ? selectedRecord?.tags : []}
+									placeHolder={i.fieldName}
 								/>
 							</Form.Item>
 						);

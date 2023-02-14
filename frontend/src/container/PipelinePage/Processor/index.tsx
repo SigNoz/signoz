@@ -38,7 +38,7 @@ function NewProcessor({
 	const isAdd = useMemo(() => isActionType === 'add-processor', [isActionType]);
 
 	useEffect(() => {
-		if (isEdit === true) {
+		if (isEdit) {
 			form.setFieldsValue({
 				name: selectedProcessorData?.text,
 			});
@@ -47,7 +47,7 @@ function NewProcessor({
 
 	const onFinish = (values: OnFinishValueType): void => {
 		const newProcessorData: SubPiplineColumsType = {
-			id: isEdit === true ? selectedProcessorData?.id : uuid(),
+			id: isEdit ? selectedProcessorData?.id : uuid(),
 			text: values.name,
 		};
 
