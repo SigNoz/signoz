@@ -77,4 +77,5 @@ type Reader interface {
 	GetFanoutStorage() *storage.Storage
 
 	QueryDashboardVars(ctx context.Context, query string) (*model.DashboardVar, error)
+	CheckClickHouse(ctx context.Context) error
 }
