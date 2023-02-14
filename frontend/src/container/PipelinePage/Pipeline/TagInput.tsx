@@ -11,10 +11,7 @@ import { tagInputStyle } from './utils';
 function TagInput({
 	setTagsListData,
 	initialvalues,
-}: {
-	setTagsListData: (tags: Array<string>) => void;
-	initialvalues: Array<string> | undefined;
-}): JSX.Element | null {
+}: TagInputType): JSX.Element {
 	const [tags, setTags] = useState<Array<string>>(initialvalues ?? []);
 	const [inputVisible, setInputVisible] = useState(false);
 	const [inputValue, setInputValue] = useState<string>('');
@@ -149,6 +146,11 @@ function TagInput({
 			) : null}
 		</div>
 	);
+}
+
+interface TagInputType {
+	setTagsListData: (tags: Array<string>) => void;
+	initialvalues: Array<string> | undefined;
 }
 
 export default TagInput;

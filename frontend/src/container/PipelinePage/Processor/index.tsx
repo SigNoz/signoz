@@ -84,8 +84,8 @@ function NewProcessor({
 					style={{
 						fontStyle: 'normal',
 						fontWeight: 600,
-						fontSize: '18px',
-						lineHeight: '24px',
+						fontSize: '1.125rem',
+						lineHeight: '1.5rem',
 					}}
 				>
 					{isEdit
@@ -100,8 +100,8 @@ function NewProcessor({
 			onCancel={(): void => setActionType(undefined)}
 		>
 			<Divider plain />
-			<div style={{ marginTop: '20px' }}>
-				<div style={{ display: 'flex', gap: '20px' }}>
+			<div style={{ marginTop: '1.25rem' }}>
+				<div style={{ display: 'flex', gap: '1.25rem' }}>
 					<Avatar size="small" style={modalIcon}>
 						1
 					</Avatar>
@@ -109,15 +109,15 @@ function NewProcessor({
 						style={{
 							display: 'flex',
 							flexDirection: 'column',
-							gap: '10px',
-							marginTop: '10px',
+							gap: '0.625rem',
+							marginTop: '0.625rem',
 						}}
 					>
 						<span>{t('processor_type')}</span>
 						<DefaultSelect
 							labelInValue
 							style={{ width: 200 }}
-							defaultValue={{ value: 'Grok Processor', label: 'Grok Processor' }}
+							defaultValue={processorTypes[0]}
 						>
 							{processorTypes.map(({ value, label }) => (
 								<Option key={value + label} value={value}>
@@ -130,7 +130,7 @@ function NewProcessor({
 				<Form
 					form={form}
 					layout="vertical"
-					style={{ marginTop: '20px' }}
+					style={{ marginTop: '1.25rem' }}
 					onFinish={onFinish}
 					ref={formRef}
 				>
@@ -178,7 +178,11 @@ function NewProcessor({
 					<Divider plain />
 					<Form.Item>
 						<div
-							style={{ display: 'flex', flexDirection: 'row-reverse', gap: '10px' }}
+							style={{
+								display: 'flex',
+								flexDirection: 'row-reverse',
+								gap: '0.625rem',
+							}}
 						>
 							<Button key="submit" type="primary" htmlType="submit">
 								{isEdit ? t('update') : t('create')}

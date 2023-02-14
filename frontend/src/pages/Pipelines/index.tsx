@@ -5,7 +5,7 @@ import React from 'react';
 import { useTranslation } from 'react-i18next';
 
 function Pipelines(): JSX.Element {
-	const { t } = useTranslation();
+	const { t } = useTranslation('translation');
 	return (
 		<RouteTab
 			{...{

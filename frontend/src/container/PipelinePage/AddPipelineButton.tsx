@@ -12,7 +12,7 @@ function AddPipelineButton({
 
 	return (
 		<ButtonContainer>
-			<TextToolTip text="Add Pipeline" />
+			<TextToolTip text={t('add_new_pipeline')} />
 			<Button
 				icon={<PlusOutlined />}
 				onClick={(): void => setActionType('add-pipeline')}

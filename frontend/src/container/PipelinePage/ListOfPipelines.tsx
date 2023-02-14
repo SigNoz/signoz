@@ -359,13 +359,7 @@ function ListOfPipelines({
 		}
 		setActiveExpRow(keys);
 		const processorData = record.operators.map(
-			(
-				item: PipelineOperatorsType,
-				index: number,
-			): {
-				id: number;
-				text: string;
-			} => ({
+			(item: PipelineOperatorsType, index: number): SubPiplineColumsType => ({
 				id: index,
 				text: item.name,
 			}),

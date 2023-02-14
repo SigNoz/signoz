@@ -7,7 +7,7 @@ import { v4 as uuid } from 'uuid';
 import { PipelineColumnType } from '../ListOfPipelines';
 import PiplinesSearchBar from '../SearchBar';
 import { SpanStyle } from '../styles';
-import TagSelect from './TagInput';
+import TagInput from './TagInput';
 import { inputfieldName } from './utils';
 
 function NewPipline({
@@ -77,11 +77,7 @@ function NewPipline({
 				(pre: PipelineColumnType[]) => [...pre, newData] as PipelineColumnType[],
 			);
 			formRef?.current?.resetFields();
-			if (tagsListData) {
-				formRef?.current?.resetFields();
-			}
 		}
-		formRef?.current?.resetFields();
 		setActionType(undefined);
 	};
 
@@ -93,8 +89,8 @@ function NewPipline({
 					style={{
 						fontStyle: 'normal',
 						fontWeight: 600,
-						fontSize: '18px',
-						lineHeight: '24px',
+						fontSize: '1.125rem',
+						lineHeight: '1.5rem',
 					}}
 				>
 					{isEdit
@@ -109,16 +105,16 @@ function NewPipline({
 			onCancel={(): void => setActionType(undefined)}
 		>
 			<Divider plain />
-			<div style={{ marginTop: '25px' }}>
+			<div style={{ marginTop: '1.563rem' }}>
 				<span>{t('filter')}</span>
-				<div style={{ marginTop: '5px' }}>
+				<div style={{ marginTop: '0.313rem' }}>
 					<PiplinesSearchBar />
 				</div>
 			</div>
 			<Form
 				form={form}
 				layout="vertical"
-				style={{ marginTop: '20px' }}
+				style={{ marginTop: '1.25rem' }}
 				onFinish={onFinish}
 				ref={formRef}
 			>
@@ -156,7 +152,7 @@ function NewPipline({
 								key={i.id}
 								name={i.name}
 							>
-								<TagSelect
+								<TagInput
 									setTagsListData={setTagsListData}
 									initialvalues={selectedRecord?.tags}
 								/>
@@ -182,7 +178,7 @@ function NewPipline({
 				<Divider plain />
 				<Form.Item>
 					<div
-						style={{ display: 'flex', flexDirection: 'row-reverse', gap: '10px' }}
+						style={{ display: 'flex', flexDirection: 'row-reverse', gap: '0.625rem' }}
 					>
 						<Button key="submit" type="primary" htmlType="submit">
 							{isEdit ? t('update') : t('create')}
@@ -208,4 +204,5 @@ interface NewPiplinePropsType {
 	handleModalCancelAction: VoidFunction;
 	dataSource: Array<PipelineColumnType>;
 }
+
 export default NewPipline;

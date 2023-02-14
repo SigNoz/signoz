@@ -23,8 +23,8 @@ export const modalFooterStyle = {
 	marginLeft: '5.875rem',
 	alignItems: 'center',
 	fontWeight: 400,
-	fontSize: '14px',
-	lineHeight: '20px',
+	fontSize: '0.875rem',
+	lineHeight: '1.25rem',
 };
 
 export const modalTitleStyle = {
