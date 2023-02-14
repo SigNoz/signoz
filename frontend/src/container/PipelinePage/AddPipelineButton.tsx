@@ -10,14 +10,14 @@ function AddPipelineButton({
 }: AddPipelineButtonType): JSX.Element {
 	const { t } = useTranslation(['pipeline']);
 
+	const onClickHandler = (): void => {
+		setActionType('add-pipeline');
+	};
+
 	return (
 		<ButtonContainer>
 			<TextToolTip text={t('add_new_pipeline')} />
-			<Button
-				icon={<PlusOutlined />}
-				onClick={(): void => setActionType('add-pipeline')}
-				type="primary"
-			>
+			<Button icon={<PlusOutlined />} onClick={onClickHandler} type="primary">
 				{t('new_pipeline')}
 			</Button>
 		</ButtonContainer>

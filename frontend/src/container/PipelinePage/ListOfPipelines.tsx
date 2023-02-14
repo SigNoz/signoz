@@ -195,6 +195,22 @@ function ListOfPipelines({
 		setSelectedRecord(record);
 	};
 
+	const handleDelete = (record: PipelineColumnType): void => {
+		const findElement = dataSource?.filter(
+			(data) => data.orderid !== record.orderid,
+		);
+		setDataSource(findElement);
+	};
+
+	const handlePipelineDeleteAction = (record: PipelineColumnType): void => {
+		handleAlert({
+			title: `${t('delete_pipeline')} : ${record.name}?`,
+			descrition: t('delete_pipeline_description'),
+			buttontext: t('delete'),
+			onOkClick: (): void => handleDelete(record),
+		});
+	};
+
 	const handleProcessorEditAction = (record: SubPiplineColumsType): void => {
 		setActionType('edit-processor');
 		setSelectedProcessorData(record);
@@ -215,13 +231,6 @@ function ListOfPipelines({
 			</span>
 		</LastActionColumnStyle>
 	);
-
-	const handleDelete = (record: PipelineColumnType): void => {
-		const findElement = dataSource?.filter(
-			(data) => data.orderid !== record.orderid,
-		);
-		setDataSource(findElement);
-	};
 
 	const pipelineColumns: ColumnsType<PipelineColumnType> = [
 		{
@@ -291,14 +300,7 @@ function ListOfPipelines({
 					</span>
 					<span>
 						<DeleteFilled
-							onClick={(): void =>
-								handleAlert({
-									title: `${t('delete_pipeline')} : ${record.name}?`,
-									descrition: t('delete_pipeline_description'),
-									buttontext: t('delete'),
-									onOkClick: (): void => handleDelete(record),
-								})
-							}
+							onClick={(): void => handlePipelineDeleteAction(record)}
 							style={iconStyle}
 						/>
 					</span>
@@ -381,10 +383,14 @@ function ListOfPipelines({
 		return <RightOutlined onClick={(e): void => onExpand(record, e)} />;
 	};
 
+	const onClickHandler = (): void => {
+		setActionType('add-pipeline');
+	};
+
 	const getFooterElement = (): JSX.Element => (
 		<Button
 			type="link"
-			onClick={(): void => setActionType('add-pipeline')}
+			onClick={onClickHandler}
 			style={modalFooterStyle}
 			icon={<PlusOutlined />}
 		>

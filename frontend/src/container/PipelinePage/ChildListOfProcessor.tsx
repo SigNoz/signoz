@@ -39,6 +39,15 @@ function ChildListOfProcessor({
 		setChildDataSource(findElement);
 	};
 
+	const handleProcessorDeleteAction = (record: SubPiplineColumsType): void => {
+		handleAlert({
+			title: `${t('delete_processor')} : ${record.text}?`,
+			descrition: t('delete_processor_description'),
+			buttontext: t('delete'),
+			onOkClick: (): void => handleDelete(record),
+		});
+	};
+
 	const subcolumns: ColumnsType<SubPiplineColumsType> = [
 		{
 			title: '',
@@ -74,14 +83,7 @@ function ChildListOfProcessor({
 					</span>
 					<span key="list-view">
 						<DeleteFilled
-							onClick={(): void =>
-								handleAlert({
-									title: `${t('delete_processor')} : ${record.text}?`,
-									descrition: t('delete_processor_description'),
-									buttontext: t('delete'),
-									onOkClick: (): void => handleDelete(record),
-								})
-							}
+							onClick={(): void => handleProcessorDeleteAction(record)}
 							style={{ color: themeColors.gainsboro, fontSize: '1rem' }}
 						/>
 					</span>
@@ -125,12 +127,12 @@ function ChildListOfProcessor({
 		[childDataSource, handleAlert, setChildDataSource, t],
 	);
 
+	const onClickHandler = (): void => {
+		setActionType('add-processor');
+	};
+
 	const getFooterElement = (): JSX.Element => (
-		<Button
-			type="link"
-			style={modalFooterStyle}
-			onClick={(): void => setActionType('add-processor')}
-		>
+		<Button type="link" style={modalFooterStyle} onClick={onClickHandler}>
 			<PlusCircleOutlined />
 			<ModalFooterTitle>{t('add_new_processor')}</ModalFooterTitle>
 		</Button>

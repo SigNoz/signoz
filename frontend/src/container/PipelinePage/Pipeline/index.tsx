@@ -81,6 +81,11 @@ function NewPipline({
 		setActionType(undefined);
 	};
 
+	const onCancelHandler = (): void => {
+		setActionType(undefined);
+		formRef?.current?.resetFields();
+	};
+
 	return (
 		<Modal
 			title={
@@ -102,10 +107,7 @@ function NewPipline({
 			open={isEdit || isAdd}
 			width={800}
 			footer={null}
-			onCancel={(): void => {
-				setActionType(undefined);
-				formRef?.current?.resetFields();
-			}}
+			onCancel={onCancelHandler}
 		>
 			<Divider plain />
 			<div style={{ marginTop: '1.563rem' }}>
