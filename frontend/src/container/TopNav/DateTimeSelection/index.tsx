@@ -173,6 +173,21 @@ function DateTimeSelection({
 					startTimeMoment?.toDate().getTime() || 0,
 					endTimeMoment?.toDate().getTime() || 0,
 				]);
+
+				const queryStart = (
+					startTimeMoment.toDate().getTime() * 1000000
+				).toString();
+
+				const queryEnd = (endTimeMoment.toDate().getTime() * 1000000).toString();
+				const params = new URLSearchParams({
+					startTime: queryStart,
+					endTime: queryEnd,
+				});
+
+				history.push({
+					search: params.toString(),
+				});
+
 				setLocalStorageKey('startTime', startTimeMoment.toString());
 				setLocalStorageKey('endTime', endTimeMoment.toString());
 				updateLocalStorageForRoutes('custom');
@@ -184,6 +199,7 @@ function DateTimeSelection({
 	const { getTime, getCustomOrIntervalTime } = useIntervalRange();
 
 	useEffect(() => {
+		console.log('USE EFFECT');
 		const metricsTimeDuration = getLocalStorageKey(
 			LOCALSTORAGE.METRICS_TIME_IN_DURATION,
 		);

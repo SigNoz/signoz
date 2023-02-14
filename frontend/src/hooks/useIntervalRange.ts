@@ -1,13 +1,15 @@
 import getLocalStorageKey from 'api/browser/localstorage/get';
 import dayjs from 'dayjs';
 import getTimeString from 'lib/getTimeString';
-import { useCallback } from 'react';
+import { useCallback, useMemo, useRef } from 'react';
 import { useLocation } from 'react-router-dom';
 import { getDiffs } from 'utils/getDiffs';
 
 import ROUTES from '../constants/routes';
 import {
 	getDefaultOption,
+	Options,
+	ServiceMapOptions,
 	Time,
 } from '../container/TopNav/DateTimeSelection/config';
 
@@ -15,6 +17,8 @@ interface UseIntervalRangeI {
 	getTime: () => [number, number] | undefined;
 	getCustomOrIntervalTime: (time: Time, currentRoute: string) => Time;
 }
+
+type IntervalTimeStampsT = 'week' | 'hr' | 'day' | 'min';
 
 export function useIntervalRange(): UseIntervalRangeI {
 	const { search, pathname } = useLocation();
@@ -24,38 +28,74 @@ export function useIntervalRange(): UseIntervalRangeI {
 
 	const localstorageStartTime = getLocalStorageKey('startTime');
 	const localstorageEndTime = getLocalStorageKey('endTime');
+
+	const options = useMemo(
+		() =>
+			ROUTES.SERVICE_MAP === pathname
+				? Object.values(ServiceMapOptions)
+				: Object.values(Options),
+		[pathname],
+	);
+
+	const getOptionValue = useCallback(
+		(count: number, type: IntervalTimeStampsT): Time => {
+			const filtered = options.map((m) => m.value).filter((o) => o.includes(type));
+			const value = filtered.find((f) => +f.replace(type, '') >= count);
+			return value || filtered[filtered.length - 1];
+		},
+		[options],
+	);
+
+	const getMaxValue = useCallback(
+		(count: number, type: IntervalTimeStampsT): number => {
+			const optionCounts = options
+				.map((o) => o.value)
+				.filter((f) => f.includes(type))
+				.map((s) => +s.replace(type, ''));
+			return Math.max(...optionCounts);
+		},
+		[options],
+	);
+
+	const getOption = useCallback(
+		(count: number, type: IntervalTimeStampsT, alt: Time): Time => {
+			const maxDays = getMaxValue(count, type);
+			if (count > maxDays) {
+				return alt;
+			}
+			return getOptionValue(count, type);
+		},
+		[getMaxValue, getOptionValue],
+	);
+
 	const getQueryInterval = useCallback(
 		(searchStartTime: string) => {
 			const lastRefresh = dayjs(
 				new Date(parseInt(getTimeString(searchStartTime), 10)),
 			);
-			const { minutedDiff, hoursDiff, daysDiff } = getDiffs(lastRefresh);
+			const { minutedDiff, hoursDiff, daysDiff, weekDiffFloat } = getDiffs(
+				lastRefresh,
+			);
 
-			if (daysDiff > 1) {
-				return '1week';
-			}
-			if (hoursDiff > 6) {
-				return '1day';
-			}
-			if (hoursDiff > 1) {
-				return '6hr';
-			}
-			if (hoursDiff > 0) {
-				return '1hr';
-			}
-			if (minutedDiff > 15) {
-				return '30min';
-			}
-			if (minutedDiff > 5) {
-				return '15min';
-			}
-			if (minutedDiff > 1) {
-				return '5min';
+			if (weekDiffFloat >= 1) {
+				return getOption(Math.round(weekDiffFloat), 'week', 'custom');
 			}
 
-			return ROUTES.SERVICE_MAP === pathname ? '1week' : 'custom';
+			if (daysDiff) {
+				return getOption(daysDiff, 'day', '1week');
+			}
+
+			if (hoursDiff) {
+				return getOption(hoursDiff, 'hr', '1day');
+			}
+
+			if (minutedDiff) {
+				return getOption(minutedDiff, 'min', '1hr');
+			}
+
+			return ROUTES.SERVICE_MAP === pathname ? 'custom' : '1week';
 		},
-		[pathname],
+		[getOption, pathname],
 	);
 
 	const getCustomOrIntervalTime = useCallback(
@@ -104,5 +144,7 @@ export function useIntervalRange(): UseIntervalRangeI {
 		searchStartTime,
 	]);
 
-	return { getCustomOrIntervalTime, getTime };
+	const { current } = useRef({ getCustomOrIntervalTime, getTime });
+
+	return current;
 }
