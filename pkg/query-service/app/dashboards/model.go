@@ -151,7 +151,6 @@ func CreateDashboard(data map[string]interface{}) (*Dashboard, *model.ApiError) 
 		return nil, &model.ApiError{Typ: model.ErrorExec, Err: err}
 	}
 
-	// db.Prepare("Insert into dashboards where")
 	result, err := db.Exec("INSERT INTO dashboards (uuid, created_at, updated_at, data) VALUES ($1, $2, $3, $4)", dash.Uuid, dash.CreatedAt, dash.UpdatedAt, map_data)
 
 	if err != nil {
