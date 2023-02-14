@@ -47,7 +47,7 @@ interface SpansAggregateData {
 }
 
 export interface Tags {
-	Key: string[];
+	Key: string;
 	Operator: OperatorValues;
 	StringValues: string[];
 	NumberValues: number[];
