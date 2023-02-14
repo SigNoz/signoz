@@ -1,8 +1,9 @@
-import { Button, Input, notification, Space, Tooltip, Typography } from 'antd';
+import { Button, Input, Space, Tooltip, Typography } from 'antd';
 import loginApi from 'api/user/login';
 import loginPrecheckApi from 'api/user/loginPrecheck';
 import afterLogin from 'AppRoutes/utils';
 import ROUTES from 'constants/routes';
+import { useNotifications } from 'hooks/useNotifications';
 import history from 'lib/history';
 import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -42,7 +43,7 @@ function Login({
 	const [precheckInProcess, setPrecheckInProcess] = useState(false);
 	const [precheckComplete, setPrecheckComplete] = useState(false);
 
-	const [notifications, NotificationElement] = notification.useNotification();
+	const { notifications } = useNotifications();
 
 	useEffect(() => {
 		if (withPassword === 'Y') {
@@ -185,7 +186,6 @@ function Login({
 
 	return (
 		<FormWrapper>
-			{NotificationElement}
 			<FormContainer onSubmit={onSubmitHandler}>
 				<Title level={4}>{t('login_page_title')}</Title>
 				<ParentContainer>

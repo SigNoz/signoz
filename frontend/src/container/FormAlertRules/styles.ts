@@ -95,6 +95,8 @@ export const ThresholdInput = styled(InputNumber)`
 		align-items: center;
 		& > .ant-input-number-group-addon {
 			width: 130px;
+			border: 0;
+			background: transparent;
 		}
 		& > .ant-input-number {
 			width: 50%;

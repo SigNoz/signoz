@@ -57,7 +57,7 @@ jobs:
             --set frontend.service.type=LoadBalancer \
             --set queryService.image.tag=$DOCKER_TAG \
             --set frontend.image.tag=$DOCKER_TAG
-          
+
           # get pods, services and the container images
           kubectl get pods -n platform
           kubectl get svc -n platform

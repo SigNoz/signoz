@@ -1,9 +1,10 @@
 import { getMinMax } from 'container/TopNav/AutoRefresh/config';
+import useUrlQuery from 'hooks/useUrlQuery';
 import history from 'lib/history';
 import { parseQuery, reverseParser } from 'lib/logql';
 import { ILogQLParsedQueryItem } from 'lib/logql/types';
 import isEqual from 'lodash-es/isEqual';
-import { useCallback, useEffect } from 'react';
+import { useCallback, useEffect, useMemo } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { Dispatch } from 'redux';
 import { AppState } from 'store/reducers';
@@ -27,6 +28,10 @@ export function useSearchParser(): {
 	const {
 		searchFilter: { parsedQuery, queryString },
 	} = useSelector<AppState, ILogsReducer>((store) => store.logs);
+
+	const urlQuery = useUrlQuery();
+	const parsedFilters = useMemo(() => urlQuery.get('q'), [urlQuery]);
+
 	const { minTime, maxTime, selectedTime } = useSelector<
 		AppState,
 		GlobalReducer
@@ -63,8 +68,12 @@ export function useSearchParser(): {
 	);
 
 	useEffect(() => {
-		updateQueryString(queryString);
-	}, [queryString, updateQueryString]);
+		if (!queryString && parsedFilters) {
+			updateQueryString(parsedFilters);
+		} else if (queryString) {
+			updateQueryString(queryString);
+		}
+	}, [queryString, updateQueryString, parsedFilters]);
 
 	const updateParsedQuery = useCallback(
 		(updatedParsedPayload: ILogQLParsedQueryItem[]) => {

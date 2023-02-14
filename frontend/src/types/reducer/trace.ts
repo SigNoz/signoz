@@ -47,20 +47,13 @@ interface SpansAggregateData {
 }
 
 export interface Tags {
-	Key: string[];
-	Operator: OperatorValues;
-	StringValues: string[];
-	NumberValues: number[];
-	BoolValues: boolean[];
-}
-
-export interface TagsAPI {
 	Key: string;
 	Operator: OperatorValues;
 	StringValues: string[];
 	NumberValues: number[];
 	BoolValues: boolean[];
 }
+
 export type OperatorValues =
 	| 'NotIn'
 	| 'In'
