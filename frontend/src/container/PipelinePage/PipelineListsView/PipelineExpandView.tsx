@@ -1,11 +1,5 @@
-import {
-	CopyFilled,
-	DeleteFilled,
-	EditOutlined,
-	PlusCircleOutlined,
-} from '@ant-design/icons';
+import { PlusCircleOutlined } from '@ant-design/icons';
 import { ColumnsType } from 'antd/lib/table';
-import { themeColors } from 'constants/theme';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import React, { useCallback } from 'react';
 import update from 'react-addons-update';
@@ -15,15 +9,18 @@ import { useTranslation } from 'react-i18next';
 
 import { tableComponents } from '../config';
 import { ActionType } from '../Layouts';
+import { ModalFooterTitle } from '../styles';
+import { AlertMessage, SubPiplineColums } from '.';
 import {
+	CopyFilledIcon,
 	FooterButton,
 	IconListStyle,
 	ListDataStyle,
-	ModalFooterTitle,
 	ProcessorIndexIcon,
+	SmallDeleteFilledIcon,
+	SmallEditOutlinedIcon,
 	StyledTable,
-} from '../styles';
-import { AlertMessage, SubPiplineColums } from '.';
+} from './styles';
 
 function PipelineExpandView({
 	dragActionHandler,
@@ -76,19 +73,13 @@ function PipelineExpandView({
 			render: (_value, record): JSX.Element => (
 				<IconListStyle>
 					<span key="list-edit">
-						<EditOutlined
-							style={{ color: themeColors.gainsboro, fontSize: '1rem' }}
-							onClick={handleProcessorEditAction(record)}
-						/>
+						<SmallEditOutlinedIcon onClick={handleProcessorEditAction(record)} />
 					</span>
 					<span key="list-view">
-						<DeleteFilled
-							onClick={handleProcessorDeleteAction(record)}
-							style={{ color: themeColors.gainsboro, fontSize: '1rem' }}
-						/>
+						<SmallDeleteFilledIcon onClick={handleProcessorDeleteAction(record)} />
 					</span>
 					<span key="list-copy">
-						<CopyFilled style={{ color: themeColors.gainsboro, fontSize: '1rem' }} />
+						<CopyFilledIcon />
 					</span>
 				</IconListStyle>
 			),

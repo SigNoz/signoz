@@ -1,4 +1,4 @@
-import { Button, Divider, Form, Input, Modal, Typography } from 'antd';
+import { Button, Divider, Form, Input, Modal } from 'antd';
 import type { FormInstance } from 'antd/es/form';
 import React, { RefObject, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -9,7 +9,7 @@ import { ActionType } from '../Layouts';
 import PiplinesSearchSection from '../Layouts/PiplinesSearchSection';
 import { PipelineColumn } from '.';
 import { addPipelinefieldLists } from './config';
-import { FormLabelStyle } from './styles';
+import { FormLabelStyle, ModalButtonWrapper, ModalTitle } from './styles';
 
 function AddNewPipline({
 	isActionType,
@@ -90,19 +90,11 @@ function AddNewPipline({
 	return (
 		<Modal
 			title={
-				<Typography.Title
-					level={4}
-					style={{
-						fontStyle: 'normal',
-						fontWeight: 600,
-						fontSize: '1.125rem',
-						lineHeight: '1.5rem',
-					}}
-				>
+				<ModalTitle level={4}>
 					{isEdit
 						? `${t('edit_pipeline')} : ${selectedRecord?.name}`
 						: t('create_pipeline')}
-				</Typography.Title>
+				</ModalTitle>
 			}
 			centered
 			open={isEdit || isAdd}
@@ -184,16 +176,14 @@ function AddNewPipline({
 				})}
 				<Divider plain />
 				<Form.Item>
-					<div
-						style={{ display: 'flex', flexDirection: 'row-reverse', gap: '0.625rem' }}
-					>
+					<ModalButtonWrapper>
 						<Button key="submit" type="primary" htmlType="submit">
 							{isEdit ? t('update') : t('create')}
 						</Button>
 						<Button key="cancel" onClick={handleModalCancelAction}>
 							{t('cancel')}
 						</Button>
-					</div>
+					</ModalButtonWrapper>
 				</Form.Item>
 			</Form>
 		</Modal>

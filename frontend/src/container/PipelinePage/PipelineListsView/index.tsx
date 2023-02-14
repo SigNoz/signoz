@@ -18,17 +18,19 @@ import { useTranslation } from 'react-i18next';
 import { tableComponents } from '../config';
 import { ActionType } from '../Layouts';
 import { pipelineData } from '../mocks/pipeline';
-import {
-	ActionIcon,
-	AlertContentWrapper,
-	AlertModalTitle,
-	Container,
-	FooterButton,
-	LastActionColumnStyle,
-} from '../styles';
 import AddNewPipline from './AddNewPipline';
 import AddNewProcessor from './AddNewProcessor';
 import PipelineExpanView from './PipelineExpandView';
+import {
+	AlertContentWrapper,
+	AlertModalTitle,
+	Container,
+	DeleteFilledIcon,
+	EditOutlinedIcon,
+	EyeFilledIcon,
+	FooterButton,
+	LastActionColumn,
+} from './styles';
 
 function PipelineListsView({
 	isActionType,
@@ -99,7 +101,7 @@ function PipelineListsView({
 	};
 
 	const dragActionHandler = (): JSX.Element => (
-		<LastActionColumnStyle>
+		<LastActionColumn>
 			<span>
 				<Switch />
 			</span>
@@ -111,7 +113,7 @@ function PipelineListsView({
 					}}
 				/>
 			</span>
-		</LastActionColumnStyle>
+		</LastActionColumn>
 	);
 
 	const pipelineColumns: ColumnsType<PipelineColumn> = [
@@ -172,13 +174,13 @@ function PipelineListsView({
 			render: (_value, record): JSX.Element => (
 				<Space size="middle">
 					<span>
-						<ActionIcon onClick={handlePipelineEditAction(record)} />
+						<EditOutlinedIcon onClick={handlePipelineEditAction(record)} />
 					</span>
 					<span>
-						<ActionIcon />
+						<EyeFilledIcon />
 					</span>
 					<span>
-						<ActionIcon onClick={handlePipelineDeleteAction(record)} />
+						<DeleteFilledIcon onClick={handlePipelineDeleteAction(record)} />
 					</span>
 				</Space>
 			),

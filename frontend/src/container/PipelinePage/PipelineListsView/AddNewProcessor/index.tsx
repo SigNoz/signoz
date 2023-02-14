@@ -6,18 +6,19 @@ import {
 	Input,
 	Modal,
 	Select as DefaultSelect,
-	Typography,
 } from 'antd';
 import type { FormInstance } from 'antd/es/form';
 import { themeColors } from 'constants/theme';
+import { ModalFooterTitle } from 'container/PipelinePage/styles';
 import React, { RefObject, useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { v4 as uuid } from 'uuid';
 
 import { ActionType } from '../../Layouts';
 import { SubPiplineColums } from '..';
+import { ModalButtonWrapper, ModalTitle } from '../styles';
 import { processorInputField, processorTypes, wrapperStyle } from './config';
-import { ModalFooterTitle, PipelineIndexIcon } from './styles';
+import { PipelineIndexIcon, ProcessorTypeWrapper } from './styles';
 
 function AddNewProcessor({
 	isActionType,
@@ -83,19 +84,11 @@ function AddNewProcessor({
 	return (
 		<Modal
 			title={
-				<Typography.Title
-					level={4}
-					style={{
-						fontStyle: 'normal',
-						fontWeight: 600,
-						fontSize: '1.125rem',
-						lineHeight: '1.5rem',
-					}}
-				>
+				<ModalTitle level={4}>
 					{isEdit
 						? `${t('edit_processor')} ${selectedProcessorData?.text}`
 						: t('create_processor')}
-				</Typography.Title>
+				</ModalTitle>
 			}
 			centered
 			open={isEdit || isAdd}
@@ -107,14 +100,7 @@ function AddNewProcessor({
 			<div style={{ marginTop: '1.25rem' }}>
 				<div style={{ display: 'flex', gap: '1.25rem' }}>
 					<PipelineIndexIcon size="small">1</PipelineIndexIcon>
-					<div
-						style={{
-							display: 'flex',
-							flexDirection: 'column',
-							gap: '0.625rem',
-							marginTop: '0.625rem',
-						}}
-					>
+					<ProcessorTypeWrapper>
 						<span>{t('processor_type')}</span>
 						<DefaultSelect
 							labelInValue
@@ -127,7 +113,7 @@ function AddNewProcessor({
 								</Option>
 							))}
 						</DefaultSelect>
-					</div>
+					</ProcessorTypeWrapper>
 				</div>
 				<Form
 					form={form}
@@ -179,20 +165,14 @@ function AddNewProcessor({
 					})}
 					<Divider plain />
 					<Form.Item>
-						<div
-							style={{
-								display: 'flex',
-								flexDirection: 'row-reverse',
-								gap: '0.625rem',
-							}}
-						>
+						<ModalButtonWrapper>
 							<Button key="submit" type="primary" htmlType="submit">
 								{isEdit ? t('update') : t('create')}
 							</Button>
 							<Button key="cancel" onClick={handleModalCancelAction}>
 								{t('cancel')}
 							</Button>
-						</div>
+						</ModalButtonWrapper>
 					</Form.Item>
 				</Form>
 			</div>
