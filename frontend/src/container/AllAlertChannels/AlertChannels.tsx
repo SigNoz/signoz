@@ -1,9 +1,10 @@
 /* eslint-disable react/display-name */
-import { Button, notification } from 'antd';
+import { Button } from 'antd';
 import { ColumnsType } from 'antd/lib/table';
 import { ResizeTable } from 'components/ResizeTable';
 import ROUTES from 'constants/routes';
 import useComponentPermission from 'hooks/useComponentPermission';
+import { useNotifications } from 'hooks/useNotifications';
 import history from 'lib/history';
 import React, { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -17,7 +18,7 @@ import Delete from './Delete';
 
 function AlertChannels({ allChannels }: AlertChannelsProps): JSX.Element {
 	const { t } = useTranslation(['channels']);
-	const [notifications, Element] = notification.useNotification();
+	const { notifications } = useNotifications();
 	const [channels, setChannels] = useState<Channels[]>(allChannels);
 	const { role } = useSelector<AppState, AppReducer>((state) => state.app);
 	const [action] = useComponentPermission(['new_alert_action'], role);
@@ -63,12 +64,7 @@ function AlertChannels({ allChannels }: AlertChannelsProps): JSX.Element {
 		});
 	}
 
-	return (
-		<>
-			{Element}
-			<ResizeTable columns={columns} dataSource={channels} rowKey="id" />
-		</>
-	);
+	return <ResizeTable columns={columns} dataSource={channels} rowKey="id" />;
 }
 
 interface AlertChannelsProps {

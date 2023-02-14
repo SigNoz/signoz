@@ -1,10 +1,11 @@
 import { ExclamationCircleOutlined, SaveOutlined } from '@ant-design/icons';
-import { Col, FormInstance, Modal, notification, Typography } from 'antd';
+import { Col, FormInstance, Modal, Typography } from 'antd';
 import saveAlertApi from 'api/alerts/save';
 import testAlertApi from 'api/alerts/testAlert';
 import ROUTES from 'constants/routes';
 import QueryTypeTag from 'container/NewWidget/LeftContainer/QueryTypeTag';
 import PlotTag from 'container/NewWidget/LeftContainer/WidgetGraph/PlotTag';
+import { useNotifications } from 'hooks/useNotifications';
 import history from 'lib/history';
 import React, { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -190,7 +191,7 @@ function FormAlertRules({
 			});
 		}
 	};
-	const [notifications, NotificationElement] = notification.useNotification();
+	const { notifications } = useNotifications();
 
 	const validatePromParams = useCallback((): boolean => {
 		let retval = true;
@@ -483,7 +484,6 @@ function FormAlertRules({
 	);
 	return (
 		<>
-			{NotificationElement}
 			{Element}
 			<PanelContainer>
 				<StyledLeftContainer flex="5 1 600px">

@@ -1,5 +1,6 @@
-import { Button, notification, Space, Typography } from 'antd';
+import { Button, Space, Typography } from 'antd';
 import editUser from 'api/user/editUser';
+import { useNotifications } from 'hooks/useNotifications';
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useDispatch, useSelector } from 'react-redux';
@@ -21,7 +22,7 @@ function UpdateName(): JSX.Element {
 	const [changedName, setChangedName] = useState<string>(user?.name || '');
 	const [loading, setLoading] = useState<boolean>(false);
 
-	const [notifications, NotificationElement] = notification.useNotification();
+	const { notifications } = useNotifications();
 
 	if (!user || !org) {
 		return <div />;
@@ -72,7 +73,6 @@ function UpdateName(): JSX.Element {
 
 	return (
 		<div>
-			{NotificationElement}
 			<Space direction="vertical" size="middle">
 				<Typography>Name</Typography>
 				<NameInput
