@@ -47,7 +47,7 @@ export function useIntervalRange(): UseIntervalRangeI {
 	);
 
 	const getMaxValue = useCallback(
-		(count: number, type: IntervalTimeStampsT): number => {
+		(type: IntervalTimeStampsT): number => {
 			const optionCounts = options
 				.map((o) => o.value)
 				.filter((f) => f.includes(type))
@@ -59,7 +59,7 @@ export function useIntervalRange(): UseIntervalRangeI {
 
 	const getOption = useCallback(
 		(count: number, type: IntervalTimeStampsT, alt: Time): Time => {
-			const maxDays = getMaxValue(count, type);
+			const maxDays = getMaxValue(type);
 			if (count > maxDays) {
 				return alt;
 			}
