@@ -1,19 +1,10 @@
 /* eslint-disable sonarjs/no-duplicate-string */
 import { LoadingOutlined } from '@ant-design/icons';
-import {
-	Button,
-	Card,
-	Col,
-	Divider,
-	Modal,
-	notification,
-	Row,
-	Spin,
-	Typography,
-} from 'antd';
+import { Button, Card, Col, Divider, Modal, Row, Spin, Typography } from 'antd';
 import setRetentionApi from 'api/settings/setRetention';
 import TextToolTip from 'components/TextToolTip';
 import useComponentPermission from 'hooks/useComponentPermission';
+import { useNotifications } from 'hooks/useNotifications';
 import find from 'lodash-es/find';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -172,7 +163,7 @@ function GeneralSettings({
 		logsTtlValuesPayload.status === 'pending' ? 1000 : null,
 	);
 
-	const [notifications, NotificationElement] = notification.useNotification();
+	const { notifications } = useNotifications();
 
 	const onModalToggleHandler = (type: TTTLType): void => {
 		if (type === 'metrics') setModalMetrics((modal) => !modal);
@@ -593,7 +584,6 @@ function GeneralSettings({
 
 	return (
 		<>
-			{NotificationElement}
 			{Element}
 			<Col xs={24} md={22} xl={20} xxl={18} style={{ margin: 'auto' }}>
 				<ErrorTextContainer>

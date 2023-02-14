@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/naming-convention */
-import { notification } from 'antd';
+
 import { useIsDarkMode } from 'hooks/useDarkMode';
+import { useNotifications } from 'hooks/useNotifications';
 import history from 'lib/history';
 import React, { useCallback } from 'react';
 import { connect, useSelector } from 'react-redux';
@@ -22,7 +23,7 @@ function DashboardGraphSlider({ toggleAddWidget }: Props): JSX.Element {
 		(state) => state.dashboards,
 	);
 
-	const [notifications, NotificationElement] = notification.useNotification();
+	const { notifications } = useNotifications();
 
 	const [selectedDashboard] = dashboards;
 	const { data } = selectedDashboard;
@@ -57,7 +58,6 @@ function DashboardGraphSlider({ toggleAddWidget }: Props): JSX.Element {
 
 	return (
 		<Container>
-			{NotificationElement}
 			{menuItems.map(({ name, Icon, display }) => (
 				<Card
 					onClick={(event): void => {

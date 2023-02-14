@@ -1,6 +1,6 @@
-import { notification } from 'antd';
 import patchAlert from 'api/alerts/patch';
 import { State } from 'hooks/useFetch';
+import { useNotifications } from 'hooks/useNotifications';
 import React, { useState } from 'react';
 import { GettableAlert } from 'types/api/alerts/get';
 import { PayloadProps as PatchPayloadProps } from 'types/api/alerts/patch';
@@ -20,7 +20,7 @@ function ToggleAlertState({
 		payload: undefined,
 	});
 
-	const [notifications, NotificationElement] = notification.useNotification();
+	const { notifications } = useNotifications();
 
 	const defaultErrorMessage = 'Something went wrong';
 
@@ -90,17 +90,14 @@ function ToggleAlertState({
 	};
 
 	return (
-		<>
-			{NotificationElement}
-			<ColumnButton
-				disabled={apiStatus.loading || false}
-				loading={apiStatus.loading || false}
-				onClick={(): Promise<void> => onToggleHandler(id, !disabled)}
-				type="link"
-			>
-				{disabled ? 'Enable' : 'Disable'}
-			</ColumnButton>
-		</>
+		<ColumnButton
+			disabled={apiStatus.loading || false}
+			loading={apiStatus.loading || false}
+			onClick={(): Promise<void> => onToggleHandler(id, !disabled)}
+			type="link"
+		>
+			{disabled ? 'Enable' : 'Disable'}
+		</ColumnButton>
 	);
 }
 

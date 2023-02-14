@@ -3,7 +3,6 @@ import {
 	Button,
 	Card,
 	Input,
-	notification,
 	Space,
 	TableProps,
 	Tooltip,
@@ -18,6 +17,7 @@ import getErrorCounts from 'api/errors/getErrorCounts';
 import { ResizeTable } from 'components/ResizeTable';
 import ROUTES from 'constants/routes';
 import dayjs from 'dayjs';
+import { useNotifications } from 'hooks/useNotifications';
 import useUrlQuery from 'hooks/useUrlQuery';
 import createQueryParams from 'lib/createQueryParams';
 import history from 'lib/history';
@@ -127,7 +127,7 @@ function AllErrors(): JSX.Element {
 			enabled: !loading,
 		},
 	]);
-	const [notifications, NotificationElement] = notification.useNotification();
+	const { notifications } = useNotifications();
 
 	useEffect(() => {
 		if (data?.error) {
@@ -386,24 +386,21 @@ function AllErrors(): JSX.Element {
 	);
 
 	return (
-		<>
-			{NotificationElement}
-			<ResizeTable
-				columns={columns}
-				tableLayout="fixed"
-				dataSource={data?.payload as Exception[]}
-				rowKey="firstSeen"
-				loading={isLoading || false || errorCountResponse.status === 'loading'}
-				pagination={{
-					pageSize: getUpdatedPageSize,
-					responsive: true,
-					current: getUpdatedOffset / 10 + 1,
-					position: ['bottomLeft'],
-					total: errorCountResponse.data?.payload || 0,
-				}}
-				onChange={onChangeHandler}
-			/>
-		</>
+		<ResizeTable
+			columns={columns}
+			tableLayout="fixed"
+			dataSource={data?.payload as Exception[]}
+			rowKey="firstSeen"
+			loading={isLoading || false || errorCountResponse.status === 'loading'}
+			pagination={{
+				pageSize: getUpdatedPageSize,
+				responsive: true,
+				current: getUpdatedOffset / 10 + 1,
+				position: ['bottomLeft'],
+				total: errorCountResponse.data?.payload || 0,
+			}}
+			onChange={onChangeHandler}
+		/>
 	);
 }
 

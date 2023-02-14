@@ -1,9 +1,10 @@
-import { Button, Divider, notification, Space, Typography } from 'antd';
+import { Button, Divider, Space, Typography } from 'antd';
 import getNextPrevId from 'api/errors/getNextPrevId';
 import Editor from 'components/Editor';
 import { ResizeTable } from 'components/ResizeTable';
 import { getNanoSeconds } from 'container/AllError/utils';
 import dayjs from 'dayjs';
+import { useNotifications } from 'hooks/useNotifications';
 import history from 'lib/history';
 import { urlKey } from 'pages/ErrorDetails/utils';
 import React, { useMemo, useState } from 'react';
@@ -80,7 +81,7 @@ function ErrorDetails(props: ErrorDetailsProps): JSX.Element {
 		[],
 	);
 
-	const [notifications, NotificationElement] = notification.useNotification();
+	const { notifications } = useNotifications();
 
 	const onClickErrorIdHandler = async (
 		id: string,
@@ -121,7 +122,6 @@ function ErrorDetails(props: ErrorDetailsProps): JSX.Element {
 
 	return (
 		<>
-			{NotificationElement}
 			<Typography>{errorDetail.exceptionType}</Typography>
 			<Typography>{errorDetail.exceptionMessage}</Typography>
 			<Divider />

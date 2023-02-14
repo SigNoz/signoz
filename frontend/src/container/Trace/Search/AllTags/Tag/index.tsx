@@ -150,12 +150,12 @@ function SingleTags(props: AllTagsProps): JSX.Element {
 				}
 			</SelectComponent>
 
-			{selectedKey[0] ? (
+			{selectedKey ? (
 				<TagValue
 					index={index}
 					tag={tag}
 					setLocalSelectedTags={setLocalSelectedTags}
-					tagKey={selectedKey[0]}
+					tagKey={selectedKey}
 				/>
 			) : (
 				<SelectComponent />
