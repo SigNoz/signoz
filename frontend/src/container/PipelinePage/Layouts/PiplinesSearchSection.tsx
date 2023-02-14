@@ -2,7 +2,7 @@ import { Input } from 'antd';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 
-function PiplinesSearchBar(): JSX.Element {
+function PiplinesSearchSection(): JSX.Element {
 	const { t } = useTranslation(['pipeline']);
 
 	return (
@@ -10,4 +10,4 @@ function PiplinesSearchBar(): JSX.Element {
 	);
 }
 
-export default PiplinesSearchBar;
+export default PiplinesSearchSection;

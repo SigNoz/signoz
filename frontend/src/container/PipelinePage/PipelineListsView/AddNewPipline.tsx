@@ -4,14 +4,14 @@ import React, { RefObject, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { v4 as uuid } from 'uuid';
 
-import { ActionType } from '..';
-import { PipelineColumnType } from '../ListOfPipelines';
-import PiplinesSearchBar from '../SearchBar';
-import { SpanStyle } from '../styles';
-import { inputfieldName } from './config';
-import TagInput from './TagInput';
+import TagInput from '../components/TagInput';
+import { ActionType } from '../Layouts';
+import PiplinesSearchSection from '../Layouts/PiplinesSearchSection';
+import { PipelineColumn } from '.';
+import { addPipelinefieldLists } from './config';
+import { FormLabelStyle } from './styles';
 
-function NewPipline({
+function AddNewPipline({
 	isActionType,
 	setActionType,
 	selectedRecord,
@@ -19,11 +19,11 @@ function NewPipline({
 	formRef,
 	handleModalCancelAction,
 	dataSource,
-}: NewPiplinePropsType): JSX.Element {
+}: AddNewPiplineProps): JSX.Element {
 	const [form] = Form.useForm();
 	const { t } = useTranslation(['pipeline', 'common']);
 	const [count, setCount] = useState(3);
-	const [tagsListData, setTagsListData] = useState<PipelineColumnType['tags']>();
+	const [tagsListData, setTagsListData] = useState<PipelineColumn['tags']>();
 
 	const isEdit = useMemo(() => isActionType === 'edit-pipeline', [isActionType]);
 	const isAdd = useMemo(() => isActionType === 'add-pipeline', [isActionType]);
@@ -40,7 +40,7 @@ function NewPipline({
 		}
 	}, [form, isEdit, selectedRecord?.name, selectedRecord?.tags]);
 
-	const onFinish = (values: PipelineColumnType): void => {
+	const onFinish = (values: PipelineColumn): void => {
 		const operatorsData = Array({
 			name: values.operators,
 		});
@@ -69,13 +69,13 @@ function NewPipline({
 			const tempData = dataSource?.map((data) =>
 				data.name === selectedRecord?.name ? updatedPipelineData : data,
 			);
-			setDataSource(tempData as Array<PipelineColumnType>);
+			setDataSource(tempData as Array<PipelineColumn>);
 			formRef?.current?.resetFields();
 		} else {
 			setTagsListData([]);
 			setCount((prevState: number) => (prevState + 1) as number);
 			setDataSource(
-				(pre: PipelineColumnType[]) => [...pre, newData] as PipelineColumnType[],
+				(pre: PipelineColumn[]) => [...pre, newData] as PipelineColumn[],
 			);
 			formRef?.current?.resetFields();
 		}
@@ -114,7 +114,7 @@ function NewPipline({
 			<div style={{ marginTop: '1.563rem' }}>
 				<span>{t('filter')}</span>
 				<div style={{ marginTop: '0.313rem' }}>
-					<PiplinesSearchBar />
+					<PiplinesSearchSection />
 				</div>
 			</div>
 			<Form
@@ -124,7 +124,7 @@ function NewPipline({
 				onFinish={onFinish}
 				ref={formRef}
 			>
-				{inputfieldName.map((i) => {
+				{addPipelinefieldLists.map((i) => {
 					if (i.id === 3) {
 						return (
 							<Form.Item
@@ -154,7 +154,7 @@ function NewPipline({
 						return (
 							<Form.Item
 								required={false}
-								label={<SpanStyle>{i.fieldName}</SpanStyle>}
+								label={<FormLabelStyle>{i.fieldName}</FormLabelStyle>}
 								key={i.id}
 								name={i.name}
 							>
@@ -169,7 +169,7 @@ function NewPipline({
 					return (
 						<Form.Item
 							required={false}
-							label={<SpanStyle>{i.fieldName}</SpanStyle>}
+							label={<FormLabelStyle>{i.fieldName}</FormLabelStyle>}
 							key={i.id}
 							rules={[
 								{
@@ -200,16 +200,14 @@ function NewPipline({
 	);
 }
 
-interface NewPiplinePropsType {
+interface AddNewPiplineProps {
 	isActionType: string;
 	setActionType: (actionType?: ActionType) => void;
-	selectedRecord: PipelineColumnType | undefined;
-	setDataSource: (
-		value: React.SetStateAction<Array<PipelineColumnType>>,
-	) => void;
+	selectedRecord: PipelineColumn | undefined;
+	setDataSource: (value: React.SetStateAction<Array<PipelineColumn>>) => void;
 	formRef: RefObject<FormInstance>;
 	handleModalCancelAction: VoidFunction;
-	dataSource: Array<PipelineColumnType>;
+	dataSource: Array<PipelineColumn>;
 }
 
-export default NewPipline;
+export default AddNewPipline;

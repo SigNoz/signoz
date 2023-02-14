@@ -1,4 +1,5 @@
-import { Button as ButtonComponent, Table } from 'antd';
+import { DeleteFilled, EditOutlined, EyeFilled } from '@ant-design/icons';
+import { Avatar, Button, Table, Typography } from 'antd';
 import { TableProps } from 'antd/lib/table';
 import { themeColors } from 'constants/theme';
 import styled, { DefaultTheme, ThemedCssFunction } from 'styled-components';
@@ -18,7 +19,7 @@ export const ButtonContainer = styled.div`
 	}
 `;
 
-export const Button = styled(ButtonComponent)`
+export const AddPipelineButton = styled(Button)`
 	&&& {
 		margin-left: 1rem;
 	}
@@ -90,8 +91,38 @@ export const StyledTable: React.FC<
 	}
 `;
 
-export const SpanStyle = styled.span`
-	font-size: 0.75rem;
+export const PipelineIndexIcon = styled(Avatar)`
+	background-color: ${themeColors.navyBlue};
+	position: relative;
+	top: 0.625rem;
+`;
+
+export const FooterButton = styled(Button)`
+	display: flex;
+	gap: 0.5rem;
+	margin-left: 5.875rem;
+	align-items: center;
 	font-weight: 400;
+	font-size: 0.875rem;
 	line-height: 1.25rem;
+`;
+
+export const AlertModalTitle = styled(Typography.Title)`
+	font-weight: 600;
+	font-size: 0.875rem;
+	line-height: 1rem;
+`;
+
+export const ProcessorIndexIcon = styled(Avatar)`
+	background-color: ${themeColors.navyBlue};
+	height: 1rem;
+	width: 1rem;
+	font-size: 0.75rem;
+	line-height: 0.813rem;
+	font-weight: 400;
+`;
+
+export const ActionIcon = styled(EditOutlined || EyeFilled || DeleteFilled)`
+	color: ${themeColors.gainsboro};
+	fontsize: 1.5rem;
 `;

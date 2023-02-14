@@ -4,7 +4,6 @@ import {
 	EditOutlined,
 	PlusCircleOutlined,
 } from '@ant-design/icons';
-import { Avatar, Button } from 'antd';
 import { ColumnsType } from 'antd/lib/table';
 import { themeColors } from 'constants/theme';
 import { useIsDarkMode } from 'hooks/useDarkMode';
@@ -14,35 +13,35 @@ import { DndProvider } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
 import { useTranslation } from 'react-i18next';
 
-import { ActionType } from '.';
-import { modalFooterStyle, sublistDataStyle, tableComponents } from './config';
-import { AlertMessageType, SubPiplineColumsType } from './ListOfPipelines';
+import { tableComponents } from '../config';
+import { ActionType } from '../Layouts';
 import {
+	FooterButton,
 	IconListStyle,
 	ListDataStyle,
 	ModalFooterTitle,
+	ProcessorIndexIcon,
 	StyledTable,
-} from './styles';
+} from '../styles';
+import { AlertMessage, SubPiplineColums } from '.';
 
-function ChildListOfProcessor({
+function PipelineExpandView({
 	dragActionHandler,
 	handleAlert,
 	childDataSource,
 	setChildDataSource,
 	setActionType,
 	handleProcessorEditAction,
-}: ChildListOfProcessorTypes): JSX.Element {
+}: PipelineExpandViewProps): JSX.Element {
 	const { t } = useTranslation(['pipeline']);
 	const isDarkMode = useIsDarkMode();
 
-	const handleDelete = (record: SubPiplineColumsType) => (): void => {
+	const handleDelete = (record: SubPiplineColums) => (): void => {
 		const findElement = childDataSource?.filter((data) => data.id !== record.id);
 		setChildDataSource(findElement);
 	};
 
-	const handleProcessorDeleteAction = (
-		record: SubPiplineColumsType,
-	) => (): void => {
+	const handleProcessorDeleteAction = (record: SubPiplineColums) => (): void => {
 		handleAlert({
 			title: `${t('delete_processor')} : ${record.text}?`,
 			descrition: t('delete_processor_description'),
@@ -51,7 +50,7 @@ function ChildListOfProcessor({
 		});
 	};
 
-	const subcolumns: ColumnsType<SubPiplineColumsType> = [
+	const subcolumns: ColumnsType<SubPiplineColums> = [
 		{
 			title: '',
 			dataIndex: 'id',
@@ -59,9 +58,7 @@ function ChildListOfProcessor({
 			width: 30,
 			align: 'right',
 			render: (index: number): JSX.Element => (
-				<Avatar style={sublistDataStyle} size="small">
-					{index + 1}
-				</Avatar>
+				<ProcessorIndexIcon size="small">{index + 1}</ProcessorIndexIcon>
 			),
 		},
 		{
@@ -135,10 +132,10 @@ function ChildListOfProcessor({
 	};
 
 	const footer = (): JSX.Element => (
-		<Button type="link" style={modalFooterStyle} onClick={onClickHandler}>
+		<FooterButton type="link" onClick={onClickHandler}>
 			<PlusCircleOutlined />
 			<ModalFooterTitle>{t('add_new_processor')}</ModalFooterTitle>
-		</Button>
+		</FooterButton>
 	);
 
 	return (
@@ -152,7 +149,7 @@ function ChildListOfProcessor({
 				dataSource={childDataSource}
 				pagination={false}
 				onRow={(
-					_record: SubPiplineColumsType,
+					_record: SubPiplineColums,
 					index?: number,
 				): React.HTMLAttributes<unknown> => {
 					const attr = {
@@ -167,13 +164,13 @@ function ChildListOfProcessor({
 	);
 }
 
-interface ChildListOfProcessorTypes {
+interface PipelineExpandViewProps {
 	dragActionHandler: () => JSX.Element;
-	handleAlert: (props: AlertMessageType) => void;
-	childDataSource: Array<SubPiplineColumsType> | undefined;
+	handleAlert: (props: AlertMessage) => void;
+	childDataSource: Array<SubPiplineColums> | undefined;
 	setActionType: (actionType?: ActionType) => void;
-	setChildDataSource: (value: Array<SubPiplineColumsType> | undefined) => void;
-	handleProcessorEditAction: (record: SubPiplineColumsType) => () => void;
+	setChildDataSource: (value: Array<SubPiplineColums> | undefined) => void;
+	handleProcessorEditAction: (record: SubPiplineColums) => () => void;
 }
 
-export default ChildListOfProcessor;
+export default PipelineExpandView;

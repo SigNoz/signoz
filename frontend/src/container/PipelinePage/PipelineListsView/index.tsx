@@ -1,23 +1,11 @@
 import {
-	DeleteFilled,
 	DownOutlined,
-	EditOutlined,
 	ExclamationCircleOutlined,
-	EyeFilled,
 	HolderOutlined,
 	PlusOutlined,
 	RightOutlined,
 } from '@ant-design/icons';
-import {
-	Avatar,
-	Button,
-	Modal,
-	Space,
-	Switch,
-	Table,
-	Tag,
-	Typography,
-} from 'antd';
+import { Avatar, Modal, Space, Switch, Table, Tag, Typography } from 'antd';
 import type { FormInstance } from 'antd/es/form';
 import { ColumnsType } from 'antd/lib/table';
 import { themeColors } from 'constants/theme';
@@ -27,41 +15,39 @@ import { DndProvider } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
 import { useTranslation } from 'react-i18next';
 
-import { ActionType } from '.';
-import ChildListOfProcessor from './ChildListOfProcessor';
+import { tableComponents } from '../config';
+import { ActionType } from '../Layouts';
+import { pipelineData } from '../mocks/pipeline';
 import {
-	iconStyle,
-	modalFooterStyle,
-	modalTitleStyle,
-	tableComponents,
-} from './config';
-import { pipelineData } from './mocks/pipeline';
-import Pipline from './Pipeline';
-import Processor from './Processor';
-import {
+	ActionIcon,
 	AlertContentWrapper,
+	AlertModalTitle,
 	Container,
+	FooterButton,
 	LastActionColumnStyle,
-} from './styles';
+} from '../styles';
+import AddNewPipline from './AddNewPipline';
+import AddNewProcessor from './AddNewProcessor';
+import PipelineExpanView from './PipelineExpandView';
 
-function ListOfPipelines({
+function PipelineListsView({
 	isActionType,
 	setActionType,
-}: ListOfPipelinesProps): JSX.Element {
+}: PipelineListsViewProps): JSX.Element {
 	const { t } = useTranslation(['pipeline', 'common']);
 	const formRef = useRef<FormInstance>(null);
-	const [dataSource, setDataSource] = useState<Array<PipelineColumnType>>(
+	const [dataSource, setDataSource] = useState<Array<PipelineColumn>>(
 		pipelineData,
 	);
 	const [childDataSource, setChildDataSource] = useState<
-		Array<SubPiplineColumsType>
+		Array<SubPiplineColums>
 	>();
 	const [activeExpRow, setActiveExpRow] = useState<Array<number>>();
-	const [selectedRecord, setSelectedRecord] = useState<PipelineColumnType>();
+	const [selectedRecord, setSelectedRecord] = useState<PipelineColumn>();
 	const [
 		selectedProcessorData,
 		setSelectedProcessorData,
-	] = useState<SubPiplineColumsType>();
+	] = useState<SubPiplineColums>();
 
 	const [modal, contextHolder] = Modal.useModal();
 
@@ -72,13 +58,9 @@ function ListOfPipelines({
 			buttontext,
 			onCancelClick,
 			onOkClick,
-		}: AlertMessageType) => {
+		}: AlertMessage) => {
 			modal.confirm({
-				title: (
-					<Typography.Title level={1} style={modalTitleStyle}>
-						{title}
-					</Typography.Title>
-				),
+				title: <AlertModalTitle level={1}>{title}</AlertModalTitle>,
 				icon: <ExclamationCircleOutlined />,
 				content: <AlertContentWrapper>{descrition}</AlertContentWrapper>,
 				okText: <Typography.Text>{buttontext}</Typography.Text>,
@@ -90,21 +72,19 @@ function ListOfPipelines({
 		[modal, t],
 	);
 
-	const handlePipelineEditAction = (record: PipelineColumnType) => (): void => {
+	const handlePipelineEditAction = (record: PipelineColumn) => (): void => {
 		setActionType(ActionType.EditPipeline);
 		setSelectedRecord(record);
 	};
 
-	const handleDelete = (record: PipelineColumnType) => (): void => {
+	const handleDelete = (record: PipelineColumn) => (): void => {
 		const findElement = dataSource?.filter(
 			(data) => data.orderid !== record.orderid,
 		);
 		setDataSource(findElement);
 	};
 
-	const handlePipelineDeleteAction = (
-		record: PipelineColumnType,
-	) => (): void => {
+	const handlePipelineDeleteAction = (record: PipelineColumn) => (): void => {
 		handleAlert({
 			title: `${t('delete_pipeline')} : ${record.name}?`,
 			descrition: t('delete_pipeline_description'),
@@ -113,9 +93,7 @@ function ListOfPipelines({
 		});
 	};
 
-	const handleProcessorEditAction = (
-		record: SubPiplineColumsType,
-	) => (): void => {
+	const handleProcessorEditAction = (record: SubPiplineColums) => (): void => {
 		setActionType(ActionType.EditProcessor);
 		setSelectedProcessorData(record);
 	};
@@ -136,7 +114,7 @@ function ListOfPipelines({
 		</LastActionColumnStyle>
 	);
 
-	const pipelineColumns: ColumnsType<PipelineColumnType> = [
+	const pipelineColumns: ColumnsType<PipelineColumn> = [
 		{
 			title: '',
 			dataIndex: 'orderid',
@@ -194,19 +172,13 @@ function ListOfPipelines({
 			render: (_value, record): JSX.Element => (
 				<Space size="middle">
 					<span>
-						<EditOutlined
-							style={iconStyle}
-							onClick={handlePipelineEditAction(record)}
-						/>
+						<ActionIcon onClick={handlePipelineEditAction(record)} />
 					</span>
 					<span>
-						<EyeFilled style={iconStyle} />
+						<ActionIcon />
 					</span>
 					<span>
-						<DeleteFilled
-							onClick={handlePipelineDeleteAction(record)}
-							style={iconStyle}
-						/>
+						<ActionIcon onClick={handlePipelineDeleteAction(record)} />
 					</span>
 				</Space>
 			),
@@ -245,7 +217,7 @@ function ListOfPipelines({
 	);
 
 	const expandedRow = (): JSX.Element => (
-		<ChildListOfProcessor
+		<PipelineExpanView
 			dragActionHandler={dragActionHandler}
 			handleAlert={handleAlert}
 			setChildDataSource={setChildDataSource}
@@ -255,17 +227,14 @@ function ListOfPipelines({
 		/>
 	);
 
-	const getDataOnExpand = (
-		expanded: boolean,
-		record: PipelineColumnType,
-	): void => {
+	const getDataOnExpand = (expanded: boolean, record: PipelineColumn): void => {
 		const keys = [];
 		if (expanded) {
 			keys.push(record.orderid);
 		}
 		setActiveExpRow(keys);
 		const processorData = record.operators.map(
-			(item: PipelineOperatorsType, index: number): SubPiplineColumsType => ({
+			(item: PipelineOperators, index: number): SubPiplineColums => ({
 				id: index,
 				text: item.name,
 			}),
@@ -275,11 +244,8 @@ function ListOfPipelines({
 
 	const getExpandIcon = (
 		expanded: boolean,
-		onExpand: (
-			record: PipelineColumnType,
-			e: React.MouseEvent<HTMLElement>,
-		) => void,
-		record: PipelineColumnType,
+		onExpand: (record: PipelineColumn, e: React.MouseEvent<HTMLElement>) => void,
+		record: PipelineColumn,
 	): JSX.Element => {
 		if (expanded) {
 			return <DownOutlined onClick={(e): void => onExpand(record, e)} />;
@@ -292,14 +258,9 @@ function ListOfPipelines({
 	};
 
 	const footer = (): JSX.Element => (
-		<Button
-			type="link"
-			onClick={onClickHandler}
-			style={modalFooterStyle}
-			icon={<PlusOutlined />}
-		>
+		<FooterButton type="link" onClick={onClickHandler} icon={<PlusOutlined />}>
 			{t('add_new_pipeline')}
-		</Button>
+		</FooterButton>
 	);
 
 	const handleModalCancelAction = (): void => {
@@ -310,7 +271,7 @@ function ListOfPipelines({
 	return (
 		<div>
 			{contextHolder}
-			<Pipline
+			<AddNewPipline
 				isActionType={isActionType}
 				setActionType={setActionType}
 				selectedRecord={selectedRecord}
@@ -319,11 +280,11 @@ function ListOfPipelines({
 				handleModalCancelAction={handleModalCancelAction}
 				dataSource={dataSource}
 			/>
-			<Processor
+			<AddNewProcessor
 				isActionType={isActionType}
 				setActionType={setActionType}
 				selectedProcessorData={selectedProcessorData}
-				setChildDataSource={setChildDataSource as () => Array<SubPiplineColumsType>}
+				setChildDataSource={setChildDataSource as () => Array<SubPiplineColums>}
 				formRef={formRef}
 				handleModalCancelAction={handleModalCancelAction}
 				childDataSource={childDataSource as []}
@@ -345,7 +306,7 @@ function ListOfPipelines({
 							key: item.orderid,
 						}))}
 						onRow={(
-							_record: PipelineColumnType,
+							_record: PipelineColumn,
 							index?: number,
 						): React.HTMLAttributes<unknown> => {
 							const attr = {
@@ -362,7 +323,7 @@ function ListOfPipelines({
 	);
 }
 
-interface ListOfPipelinesProps {
+interface PipelineListsViewProps {
 	isActionType: string;
 	setActionType: (actionType?: ActionType) => void;
 }
@@ -376,7 +337,7 @@ interface ParseType {
 	parse_from: string;
 }
 
-export interface PipelineOperatorsType {
+export interface PipelineOperators {
 	type: string;
 	name: string;
 	id: string;
@@ -390,7 +351,7 @@ export interface PipelineOperatorsType {
 	trace_flags?: ParseType;
 }
 
-export interface PipelineColumnType {
+export interface PipelineColumn {
 	orderid: number;
 	uuid: string;
 	createdAt: string;
@@ -403,15 +364,15 @@ export interface PipelineColumnType {
 	enabled: boolean;
 	filter: string;
 	tags: Array<string>;
-	operators: Array<PipelineOperatorsType>;
+	operators: Array<PipelineOperators>;
 }
 
-export interface SubPiplineColumsType {
+export interface SubPiplineColums {
 	id?: number | string;
 	text: string;
 }
 
-export interface AlertMessageType {
+export interface AlertMessage {
 	title: string;
 	descrition: string;
 	buttontext: string;
@@ -419,4 +380,4 @@ export interface AlertMessageType {
 	onOkClick?: VoidFunction;
 }
 
-export default ListOfPipelines;
+export default PipelineListsView;

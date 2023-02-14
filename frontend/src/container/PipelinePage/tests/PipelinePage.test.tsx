@@ -1,6 +1,6 @@
 import { beforeAll } from '@jest/globals';
 import { render } from '@testing-library/react';
-import PipelinePage from 'container/PipelinePage';
+import PipelinePage from 'container/PipelinePage/Layouts';
 import React from 'react';
 import { I18nextProvider } from 'react-i18next';
 import { Provider } from 'react-redux';

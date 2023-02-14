@@ -1,6 +1,6 @@
-import { PipelineColumnType } from '../ListOfPipelines';
+import { PipelineColumn } from '../PipelineListsView';
 
-export const pipelineData: Array<PipelineColumnType> = [
+export const pipelineData: Array<PipelineColumn> = [
 	{
 		orderid: 1,
 		uuid: '22a588b8-cccc-4a49-94f1-2caa28271315',

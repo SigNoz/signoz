@@ -1,16 +1,16 @@
 import React, { useState } from 'react';
 
-import AddPipelineButton from './AddPipelineButton';
-import ListOfPipelines from './ListOfPipelines';
-import PiplinesSearchBar from './SearchBar';
+import PipelineListsView from '../PipelineListsView';
+import CreatePipelineButton from './CreatePipelineButton';
+import PiplinesSearchSection from './PiplinesSearchSection';
 
-function PipelinePage(): JSX.Element {
+function PipelinePageLayout(): JSX.Element {
 	const [isActionType, setActionType] = useState<string>();
 	return (
 		<>
-			<AddPipelineButton setActionType={setActionType} />
-			<PiplinesSearchBar />
-			<ListOfPipelines
+			<CreatePipelineButton setActionType={setActionType} />
+			<PiplinesSearchSection />
+			<PipelineListsView
 				isActionType={isActionType as string}
 				setActionType={setActionType}
 			/>
@@ -24,4 +24,4 @@ export enum ActionType {
 	AddProcessor = 'add-processor',
 	EditProcessor = 'edit-processor',
 }
-export default PipelinePage;
+export default PipelinePageLayout;

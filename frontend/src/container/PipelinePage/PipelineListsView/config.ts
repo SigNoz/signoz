@@ -1,4 +1,4 @@
-export const inputfieldName = [
+export const addPipelinefieldLists = [
 	{
 		id: 1,
 		fieldName: 'Name',

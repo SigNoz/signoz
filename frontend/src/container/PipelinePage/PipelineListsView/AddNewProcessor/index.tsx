@@ -14,13 +14,12 @@ import React, { RefObject, useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { v4 as uuid } from 'uuid';
 
-import { ActionType } from '..';
-import { modalIcon } from '../config';
-import { SubPiplineColumsType } from '../ListOfPipelines';
-import { ModalFooterTitle } from '../styles';
+import { ActionType } from '../../Layouts';
+import { SubPiplineColums } from '..';
 import { processorInputField, processorTypes, wrapperStyle } from './config';
+import { ModalFooterTitle, PipelineIndexIcon } from './styles';
 
-function NewProcessor({
+function AddNewProcessor({
 	isActionType,
 	setActionType,
 	selectedProcessorData,
@@ -28,7 +27,7 @@ function NewProcessor({
 	formRef,
 	handleModalCancelAction,
 	childDataSource,
-}: NewProcessorPropsType): JSX.Element {
+}: AddNewProcessorProps): JSX.Element {
 	const { Option } = DefaultSelect;
 	const [form] = Form.useForm();
 	const { t } = useTranslation(['pipeline', 'common']);
@@ -45,8 +44,8 @@ function NewProcessor({
 		}
 	}, [form, isEdit, selectedProcessorData]);
 
-	const onFinish = (values: OnFinishValueType): void => {
-		const newProcessorData: SubPiplineColumsType = {
+	const onFinish = (values: OnFinishValue): void => {
+		const newProcessorData: SubPiplineColums = {
 			id: isEdit ? selectedProcessorData?.id : uuid(),
 			text: values.name,
 		};
@@ -68,8 +67,8 @@ function NewProcessor({
 			setChildDataSource(editedData);
 		} else {
 			setChildDataSource(
-				(prevState: SubPiplineColumsType[]) =>
-					[...prevState, newProcessorData] as SubPiplineColumsType[],
+				(prevState: SubPiplineColums[]) =>
+					[...prevState, newProcessorData] as SubPiplineColums[],
 			);
 			formRef?.current?.resetFields();
 		}
@@ -107,9 +106,7 @@ function NewProcessor({
 			<Divider plain />
 			<div style={{ marginTop: '1.25rem' }}>
 				<div style={{ display: 'flex', gap: '1.25rem' }}>
-					<Avatar size="small" style={modalIcon}>
-						1
-					</Avatar>
+					<PipelineIndexIcon size="small">1</PipelineIndexIcon>
 					<div
 						style={{
 							display: 'flex',
@@ -203,21 +200,21 @@ function NewProcessor({
 	);
 }
 
-export interface OnFinishValueType {
+export interface OnFinishValue {
 	name: string;
 	id: number | boolean;
 	text: string;
 }
 
-interface NewProcessorPropsType {
+interface AddNewProcessorProps {
 	isActionType: string;
 	setActionType: (actionType?: ActionType) => void;
 	setChildDataSource: React.Dispatch<
-		React.SetStateAction<Array<SubPiplineColumsType>>
+		React.SetStateAction<Array<SubPiplineColums>>
 	>;
 	formRef: RefObject<FormInstance>;
 	handleModalCancelAction: VoidFunction;
-	childDataSource: Array<SubPiplineColumsType>;
-	selectedProcessorData: SubPiplineColumsType | undefined;
+	childDataSource: Array<SubPiplineColums>;
+	selectedProcessorData: SubPiplineColums | undefined;
 }
-export default NewProcessor;
+export default AddNewProcessor;

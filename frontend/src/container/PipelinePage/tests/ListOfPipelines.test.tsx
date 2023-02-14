@@ -6,7 +6,7 @@ import { MemoryRouter } from 'react-router-dom';
 import i18n from 'ReactI18';
 import store from 'store';
 
-import ListOfPipelines from '../ListOfPipelines';
+import PipelineListsView from '../PipelineListsView';
 
 beforeAll(() => {
 	Object.defineProperty(window, 'matchMedia', {
@@ -30,7 +30,10 @@ describe('PipelinePage test', () => {
 			<MemoryRouter>
 				<Provider store={store}>
 					<I18nextProvider i18n={i18n}>
-						<ListOfPipelines isActionType="add-pipeline" setActionType={jest.fn()} />
+						<PipelineListsView
+							isActionType="add-pipeline"
+							setActionType={jest.fn()}
+						/>
 					</I18nextProvider>
 				</Provider>
 			</MemoryRouter>,

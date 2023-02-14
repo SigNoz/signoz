@@ -6,7 +6,7 @@ import { MemoryRouter } from 'react-router-dom';
 import i18n from 'ReactI18';
 import store from 'store';
 
-import PiplinesSearchBar from '../SearchBar';
+import PiplinesSearchSection from '../Layouts/PiplinesSearchSection';
 
 describe('PipelinePage test', () => {
 	it('should render PipelinePage', () => {
@@ -14,7 +14,7 @@ describe('PipelinePage test', () => {
 			<MemoryRouter>
 				<Provider store={store}>
 					<I18nextProvider i18n={i18n}>
-						<PiplinesSearchBar />
+						<PiplinesSearchSection />
 					</I18nextProvider>
 				</Provider>
 			</MemoryRouter>,

@@ -1,11 +1,14 @@
 import { pipelineData } from '../mocks/pipeline';
-import { inputfieldName } from '../Pipeline/config';
-import { processorInputField, processorTypes } from '../Processor/config';
+import {
+	processorInputField,
+	processorTypes,
+} from '../PipelineListsView/AddNewProcessor/config';
+import { addPipelinefieldLists } from '../PipelineListsView/config';
 
 describe('Pipeline Page', () => {
 	test('Total Input Field count should be 3', () => {
-		expect(inputfieldName.length).toBe(3);
-		expect(inputfieldName.length).toBeGreaterThan(1);
+		expect(addPipelinefieldLists.length).toBe(3);
+		expect(addPipelinefieldLists.length).toBeGreaterThan(1);
 	});
 
 	test('Processor Types length should be more than 1', () => {

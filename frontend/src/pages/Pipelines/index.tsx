@@ -1,6 +1,6 @@
 import RouteTab from 'components/RouteTab';
 import ROUTES from 'constants/routes';
-import PipelinePage from 'container/PipelinePage';
+import PipelinePage from 'container/PipelinePage/Layouts';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 

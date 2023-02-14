@@ -6,14 +6,14 @@ import { Button, Input, InputRef, message, Modal, Tag, Tooltip } from 'antd';
 import React, { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { PipelineColumnType } from '../ListOfPipelines';
-import { tagInputStyle } from './config';
+import { PipelineColumn } from '../PipelineListsView';
+import { tagInputStyle } from '../PipelineListsView/config';
 
 function TagInput({
 	setTagsListData,
 	tagsListData,
 	placeHolder,
-}: TagInputType): JSX.Element {
+}: TagInputProps): JSX.Element {
 	const [inputVisible, setInputVisible] = useState(false);
 	const [inputValue, setInputValue] = useState<string>('');
 	const [editInputIndex, setEditInputIndex] = useState(-1);
@@ -33,7 +33,7 @@ function TagInput({
 	}, [inputValue]);
 
 	const handleClose = (removedTag: string) => (): void => {
-		const newTags = tagsListData.filter((tag) => tag !== removedTag);
+		const newTags = tagsListData?.filter((tag) => tag !== removedTag);
 		setTagsListData(newTags);
 	};
 
@@ -42,7 +42,7 @@ function TagInput({
 	};
 
 	const handleInputConfirm = (): void => {
-		if (inputValue && tagsListData.indexOf(inputValue as never) === -1) {
+		if (inputValue && tagsListData?.indexOf(inputValue as never) === -1) {
 			setTagsListData([...tagsListData, inputValue] as never);
 		}
 		setInputVisible(false);
@@ -77,51 +77,47 @@ function TagInput({
 		});
 	};
 
-	const showAllData: JSX.Element = (
-		<>
-			{tagsListData.map((tag: string, index: number) => {
-				if (editInputIndex === index) {
-					return (
-						<Input
-							ref={editInputRef}
-							key={tag}
-							style={tagInputStyle}
-							value={editInputValue}
-							onChange={handleEditInputChange}
-							onBlur={handleEditInputConfirm}
-							onPressEnter={handleEditInputConfirm}
-						/>
-					);
-				}
-				const isLongTag = tag.length > 20;
-				const tagElem = (
-					<Tag
-						key={tag}
-						closable
-						style={{ userSelect: 'none' }}
-						onClose={handleClose(tag)}
-					>
-						<span
-							onDoubleClick={(e): void => {
-								setEditInputIndex(index);
-								setEditInputValue(tag);
-								e.preventDefault();
-							}}
-						>
-							{isLongTag ? `${tag.slice(0, 20)}...` : tag}
-						</span>
-					</Tag>
-				);
-				return isLongTag ? (
-					<Tooltip title={tag} key={tag}>
-						{tagElem}
-					</Tooltip>
-				) : (
-					tagElem
-				);
-			})}
-		</>
-	);
+	const showAllData = tagsListData?.map((tag: string, index: number) => {
+		if (editInputIndex === index) {
+			return (
+				<Input
+					ref={editInputRef}
+					key={tag}
+					style={tagInputStyle}
+					value={editInputValue}
+					onChange={handleEditInputChange}
+					onBlur={handleEditInputConfirm}
+					onPressEnter={handleEditInputConfirm}
+				/>
+			);
+		}
+		const isLongTag = tag.length > 20;
+		const tagElem = (
+			<Tag
+				key={tag}
+				closable
+				style={{ userSelect: 'none' }}
+				onClose={handleClose(tag)}
+			>
+				<span
+					onDoubleClick={(e): void => {
+						setEditInputIndex(index);
+						setEditInputValue(tag);
+						e.preventDefault();
+					}}
+				>
+					{isLongTag ? `${tag.slice(0, 20)}...` : tag}
+				</span>
+			</Tag>
+		);
+		return isLongTag ? (
+			<Tooltip title={tag} key={tag}>
+				{tagElem}
+			</Tooltip>
+		) : (
+			tagElem
+		);
+	});
 
 	return (
 		<div style={{ display: 'flex', width: '100%' }}>
@@ -140,16 +136,16 @@ function TagInput({
 				prefix={showAllData}
 			/>
 
-			{tagsListData.length || inputValue.length || inputValue ? (
+			{tagsListData?.length || inputValue.length || inputValue ? (
 				<Button onClick={handleClearAll} icon={<CloseCircleFilled />} type="text" />
 			) : null}
 		</div>
 	);
 }
 
-interface TagInputType {
+interface TagInputProps {
 	setTagsListData: (tags: Array<string>) => void;
-	tagsListData: PipelineColumnType['tags'];
+	tagsListData: PipelineColumn['tags'];
 	placeHolder: string;
 }
 
