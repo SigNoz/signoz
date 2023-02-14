@@ -1,6 +1,6 @@
-import { pipelineData } from '../ListOfPipelines';
-import { inputfieldName } from '../Pipeline/utils';
-import { processorInputField, processorTypes } from '../Processor/utils';
+import { pipelineData } from '../mocks/pipeline';
+import { inputfieldName } from '../Pipeline/config';
+import { processorInputField, processorTypes } from '../Processor/config';
 
 describe('Pipeline Page', () => {
 	test('Total Input Field count should be 3', () => {

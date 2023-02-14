@@ -5,14 +5,23 @@ import ListOfPipelines from './ListOfPipelines';
 import PiplinesSearchBar from './SearchBar';
 
 function PipelinePage(): JSX.Element {
-	const [isActionType, setActionType] = useState<string | undefined>(undefined);
+	const [isActionType, setActionType] = useState<string>();
 	return (
 		<>
 			<AddPipelineButton setActionType={setActionType} />
 			<PiplinesSearchBar />
-			<ListOfPipelines isActionType={isActionType} setActionType={setActionType} />
+			<ListOfPipelines
+				isActionType={isActionType as string}
+				setActionType={setActionType}
+			/>
 		</>
 	);
 }
 
+export enum ActionType {
+	AddPipeline = 'add-pipeline',
+	EditPipeline = 'edit-pipeline',
+	AddProcessor = 'add-processor',
+	EditProcessor = 'edit-processor',
+}
 export default PipelinePage;

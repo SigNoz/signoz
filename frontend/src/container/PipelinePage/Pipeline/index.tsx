@@ -4,11 +4,12 @@ import React, { RefObject, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { v4 as uuid } from 'uuid';
 
+import { ActionType } from '..';
 import { PipelineColumnType } from '../ListOfPipelines';
 import PiplinesSearchBar from '../SearchBar';
 import { SpanStyle } from '../styles';
+import { inputfieldName } from './config';
 import TagInput from './TagInput';
-import { inputfieldName } from './utils';
 
 function NewPipline({
 	isActionType,
@@ -200,8 +201,8 @@ function NewPipline({
 }
 
 interface NewPiplinePropsType {
-	isActionType: string | undefined;
-	setActionType: (b?: string) => void;
+	isActionType: string;
+	setActionType: (actionType?: ActionType) => void;
 	selectedRecord: PipelineColumnType | undefined;
 	setDataSource: (
 		value: React.SetStateAction<Array<PipelineColumnType>>,

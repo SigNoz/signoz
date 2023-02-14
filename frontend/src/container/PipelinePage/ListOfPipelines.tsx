@@ -27,6 +27,7 @@ import { DndProvider } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
 import { useTranslation } from 'react-i18next';
 
+import { ActionType } from '.';
 import ChildListOfProcessor from './ChildListOfProcessor';
 import {
 	iconStyle,
@@ -34,6 +35,7 @@ import {
 	modalTitleStyle,
 	tableComponents,
 } from './config';
+import { pipelineData } from './mocks/pipeline';
 import Pipline from './Pipeline';
 import Processor from './Processor';
 import {
@@ -41,107 +43,6 @@ import {
 	Container,
 	LastActionColumnStyle,
 } from './styles';
-
-export const pipelineData: Array<PipelineColumnType> = [
-	{
-		orderid: 1,
-		uuid: '22a588b8-cccc-4a49-94f1-2caa28271315',
-		createdAt: '1674205513092137500',
-		createdBy: {
-			username: 'nitya',
-			email: 'nityananda@signoz.io',
-		},
-		updatedAt: 'Mon Feb 06 2023',
-		updatedBy: {
-			username: 'nitya',
-			email: '',
-		},
-		version: 'myversion1',
-		name: 'Apache common parser',
-		alias: 'apachecommonparser',
-		enabled: true,
-		filter: 'attributes.source == nginx',
-		tags: ['server', 'app'],
-		operators: [
-			{
-				type: 'grok',
-				name: 'grok use common',
-				id: 'grokusecommon',
-				output: 'renameauth',
-				pattern: '%{COMMONAPACHELOG}',
-				parse_from: 'body',
-				parse_to: 'attributes',
-			},
-			{
-				type: 'move',
-				name: 'rename auth',
-				id: 'renameauth',
-				parse_from: 'attributes.auth',
-				parse_to: 'attributes.username',
-			},
-		],
-	},
-	{
-		orderid: 2,
-		uuid: 'f58ce70c-5f41-48bc-949d-a822e2409257',
-		version: 'myversion1',
-		createdAt: '1674205513092137500',
-		createdBy: {
-			username: 'nitya',
-			email: 'nityananda@signoz.io',
-		},
-		updatedAt: 'Sun Feb 05 2023',
-		updatedBy: {
-			username: 'nityananda',
-			email: '',
-		},
-		name: 'myservice trace parser',
-		alias: 'myservicetraceparser',
-		enabled: true,
-		filter: 'attributes.source == myservice',
-		tags: ['server', 'app', 'host', 'realse'],
-		operators: [
-			{
-				type: 'trace_parser',
-				name: 'Parse trace details',
-				id: 'parsetracedetails',
-				output: 'removeoldxtrace_id',
-				trace_id: {
-					// Remove the keys if the user left them empty
-					parse_from: 'attributes.xtrace_id',
-				},
-				span_id: {
-					// Remove the keys if the user left them empty
-					parse_from: 'attributes.xspan_id',
-				},
-				trace_flags: {
-					// Remove the keys if the user left them empty
-					parse_from: 'attributes.xtrace_flag',
-				},
-			},
-			{
-				type: 'remove',
-				name: 'remove old xtrace_id',
-				id: 'removeoldxtrace_id',
-				field: 'attributes.xtrace_id',
-				output: 'removeoldxspan_id',
-			},
-			{
-				type: 'remove',
-				name: 'remove old xspan_id',
-				id: 'removeoldxspan_id',
-				field: 'attributes.xspan_id',
-				output: 'removeoldxtrace_flag',
-			},
-			{
-				type: 'remove',
-				name: 'remove old xtrace_flag',
-				id: 'removeoldxtrace_flag',
-				field: 'attributes.xtrace_flag',
-			},
-		],
-	},
-];
 
 function ListOfPipelines({
 	isActionType,
@@ -163,7 +64,6 @@ function ListOfPipelines({
 	] = useState<SubPiplineColumsType>();
 
 	const [modal, contextHolder] = Modal.useModal();
-	const { Text } = Typography;
 
 	const handleAlert = useCallback(
 		({
@@ -181,42 +81,46 @@ function ListOfPipelines({
 				),
 				icon: <ExclamationCircleOutlined />,
 				content: <AlertContentWrapper>{descrition}</AlertContentWrapper>,
-				okText: <Text>{buttontext}</Text>,
-				cancelText: <Text>{t('cancel')}</Text>,
+				okText: <Typography.Text>{buttontext}</Typography.Text>,
+				cancelText: <Typography.Text>{t('cancel')}</Typography.Text>,
 				onOk: onOkClick,
 				onCancel: onCancelClick,
 			});
 		},
-		[Text, modal, t],
+		[modal, t],
 	);
 
-	const handlePipelineEditAction = (record: PipelineColumnType): void => {
-		setActionType('edit-pipeline');
+	const handlePipelineEditAction = (record: PipelineColumnType) => (): void => {
+		setActionType(ActionType.EditPipeline);
 		setSelectedRecord(record);
 	};
 
-	const handleDelete = (record: PipelineColumnType): void => {
+	const handleDelete = (record: PipelineColumnType) => (): void => {
 		const findElement = dataSource?.filter(
 			(data) => data.orderid !== record.orderid,
 		);
 		setDataSource(findElement);
 	};
 
-	const handlePipelineDeleteAction = (record: PipelineColumnType): void => {
+	const handlePipelineDeleteAction = (
+		record: PipelineColumnType,
+	) => (): void => {
 		handleAlert({
 			title: `${t('delete_pipeline')} : ${record.name}?`,
 			descrition: t('delete_pipeline_description'),
 			buttontext: t('delete'),
-			onOkClick: (): void => handleDelete(record),
+			onOkClick: handleDelete(record),
 		});
 	};
 
-	const handleProcessorEditAction = (record: SubPiplineColumsType): void => {
-		setActionType('edit-processor');
+	const handleProcessorEditAction = (
+		record: SubPiplineColumsType,
+	) => (): void => {
+		setActionType(ActionType.EditProcessor);
 		setSelectedProcessorData(record);
 	};
 
-	const getCommonAction = (): JSX.Element => (
+	const dragActionHandler = (): JSX.Element => (
 		<LastActionColumnStyle>
 			<span>
 				<Switch />
@@ -292,7 +196,7 @@ function ListOfPipelines({
 					<span>
 						<EditOutlined
 							style={iconStyle}
-							onClick={(): void => handlePipelineEditAction(record)}
+							onClick={handlePipelineEditAction(record)}
 						/>
 					</span>
 					<span>
@@ -300,7 +204,7 @@ function ListOfPipelines({
 					</span>
 					<span>
 						<DeleteFilled
-							onClick={(): void => handlePipelineDeleteAction(record)}
+							onClick={handlePipelineDeleteAction(record)}
 							style={iconStyle}
 						/>
 					</span>
@@ -312,7 +216,7 @@ function ListOfPipelines({
 			dataIndex: 'action',
 			key: 'action',
 			width: 80,
-			render: (): JSX.Element => getCommonAction(),
+			render: dragActionHandler,
 		},
 	];
 
@@ -342,7 +246,7 @@ function ListOfPipelines({
 
 	const expandedRow = (): JSX.Element => (
 		<ChildListOfProcessor
-			getCommonAction={getCommonAction}
+			dragActionHandler={dragActionHandler}
 			handleAlert={handleAlert}
 			setChildDataSource={setChildDataSource}
 			childDataSource={childDataSource}
@@ -384,10 +288,10 @@ function ListOfPipelines({
 	};
 
 	const onClickHandler = (): void => {
-		setActionType('add-pipeline');
+		setActionType(ActionType.AddPipeline);
 	};
 
-	const getFooterElement = (): JSX.Element => (
+	const footer = (): JSX.Element => (
 		<Button
 			type="link"
 			onClick={onClickHandler}
@@ -440,16 +344,17 @@ function ListOfPipelines({
 							...item,
 							key: item.orderid,
 						}))}
-						// eslint-disable-next-line @typescript-eslint/no-explicit-any
-						onRow={(_record, index): React.HTMLAttributes<any> => {
+						onRow={(
+							_record: PipelineColumnType,
+							index?: number,
+						): React.HTMLAttributes<unknown> => {
 							const attr = {
 								index,
 								moveRow: movePipelineRow,
 							};
-							// eslint-disable-next-line @typescript-eslint/no-explicit-any
-							return attr as React.HTMLAttributes<any>;
+							return attr as React.HTMLAttributes<unknown>;
 						}}
-						footer={(): React.ReactElement => getFooterElement()}
+						footer={footer}
 					/>
 				</DndProvider>
 			</Container>
@@ -458,8 +363,8 @@ function ListOfPipelines({
 }
 
 interface ListOfPipelinesProps {
-	isActionType: string | undefined;
-	setActionType: (b?: string) => void;
+	isActionType: string;
+	setActionType: (actionType?: ActionType) => void;
 }
 
 interface ActionBy {

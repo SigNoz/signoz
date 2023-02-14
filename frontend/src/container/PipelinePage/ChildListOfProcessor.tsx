@@ -14,6 +14,7 @@ import { DndProvider } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
 import { useTranslation } from 'react-i18next';
 
+import { ActionType } from '.';
 import { modalFooterStyle, sublistDataStyle, tableComponents } from './config';
 import { AlertMessageType, SubPiplineColumsType } from './ListOfPipelines';
 import {
@@ -24,7 +25,7 @@ import {
 } from './styles';
 
 function ChildListOfProcessor({
-	getCommonAction,
+	dragActionHandler,
 	handleAlert,
 	childDataSource,
 	setChildDataSource,
@@ -34,17 +35,19 @@ function ChildListOfProcessor({
 	const { t } = useTranslation(['pipeline']);
 	const isDarkMode = useIsDarkMode();
 
-	const handleDelete = (record: SubPiplineColumsType): void => {
+	const handleDelete = (record: SubPiplineColumsType) => (): void => {
 		const findElement = childDataSource?.filter((data) => data.id !== record.id);
 		setChildDataSource(findElement);
 	};
 
-	const handleProcessorDeleteAction = (record: SubPiplineColumsType): void => {
+	const handleProcessorDeleteAction = (
+		record: SubPiplineColumsType,
+	) => (): void => {
 		handleAlert({
 			title: `${t('delete_processor')} : ${record.text}?`,
 			descrition: t('delete_processor_description'),
 			buttontext: t('delete'),
-			onOkClick: (): void => handleDelete(record),
+			onOkClick: handleDelete(record),
 		});
 	};
 
@@ -78,12 +81,12 @@ function ChildListOfProcessor({
 					<span key="list-edit">
 						<EditOutlined
 							style={{ color: themeColors.gainsboro, fontSize: '1rem' }}
-							onClick={(): void => handleProcessorEditAction(record)}
+							onClick={handleProcessorEditAction(record)}
 						/>
 					</span>
 					<span key="list-view">
 						<DeleteFilled
-							onClick={(): void => handleProcessorDeleteAction(record)}
+							onClick={handleProcessorDeleteAction(record)}
 							style={{ color: themeColors.gainsboro, fontSize: '1rem' }}
 						/>
 					</span>
@@ -98,7 +101,7 @@ function ChildListOfProcessor({
 			dataIndex: 'dragAction',
 			key: 'drag-action',
 			width: 10,
-			render: (): JSX.Element => getCommonAction(),
+			render: dragActionHandler,
 		},
 	];
 
@@ -128,10 +131,10 @@ function ChildListOfProcessor({
 	);
 
 	const onClickHandler = (): void => {
-		setActionType('add-processor');
+		setActionType(ActionType.AddProcessor);
 	};
 
-	const getFooterElement = (): JSX.Element => (
+	const footer = (): JSX.Element => (
 		<Button type="link" style={modalFooterStyle} onClick={onClickHandler}>
 			<PlusCircleOutlined />
 			<ModalFooterTitle>{t('add_new_processor')}</ModalFooterTitle>
@@ -148,28 +151,29 @@ function ChildListOfProcessor({
 				components={tableComponents}
 				dataSource={childDataSource}
 				pagination={false}
-				// eslint-disable-next-line @typescript-eslint/no-explicit-any
-				onRow={(_record: any, index: any): React.HTMLAttributes<any> => {
+				onRow={(
+					_record: SubPiplineColumsType,
+					index?: number,
+				): React.HTMLAttributes<unknown> => {
 					const attr = {
 						index,
 						moveRow: moveProcessorRow,
 					};
-					// eslint-disable-next-line @typescript-eslint/no-explicit-any
-					return attr as React.HTMLAttributes<any>;
+					return attr as React.HTMLAttributes<unknown>;
 				}}
-				footer={(): React.ReactElement => getFooterElement()}
+				footer={footer}
 			/>
 		</DndProvider>
 	);
 }
 
 interface ChildListOfProcessorTypes {
-	getCommonAction: () => JSX.Element;
+	dragActionHandler: () => JSX.Element;
 	handleAlert: (props: AlertMessageType) => void;
 	childDataSource: Array<SubPiplineColumsType> | undefined;
-	setActionType: (b?: string) => void;
+	setActionType: (actionType?: ActionType) => void;
 	setChildDataSource: (value: Array<SubPiplineColumsType> | undefined) => void;
-	handleProcessorEditAction: (record: SubPiplineColumsType) => void;
+	handleProcessorEditAction: (record: SubPiplineColumsType) => () => void;
 }
 
 export default ChildListOfProcessor;

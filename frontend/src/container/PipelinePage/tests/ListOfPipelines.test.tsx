@@ -30,7 +30,7 @@ describe('PipelinePage test', () => {
 			<MemoryRouter>
 				<Provider store={store}>
 					<I18nextProvider i18n={i18n}>
-						<ListOfPipelines isActionType={undefined} setActionType={jest.fn()} />
+						<ListOfPipelines isActionType="add-pipeline" setActionType={jest.fn()} />
 					</I18nextProvider>
 				</Provider>
 			</MemoryRouter>,

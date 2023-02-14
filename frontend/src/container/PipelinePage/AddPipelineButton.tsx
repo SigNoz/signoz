@@ -3,6 +3,7 @@ import TextToolTip from 'components/TextToolTip';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { ActionType } from '.';
 import { Button, ButtonContainer } from './styles';
 
 function AddPipelineButton({
@@ -11,7 +12,7 @@ function AddPipelineButton({
 	const { t } = useTranslation(['pipeline']);
 
 	const onClickHandler = (): void => {
-		setActionType('add-pipeline');
+		setActionType(ActionType.AddPipeline);
 	};
 
 	return (
@@ -25,7 +26,7 @@ function AddPipelineButton({
 }
 
 interface AddPipelineButtonType {
-	setActionType: (b?: string) => void;
+	setActionType: (actionType?: ActionType) => void;
 }
 
 export default AddPipelineButton;

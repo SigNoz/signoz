@@ -14,11 +14,11 @@ import React, { RefObject, useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { v4 as uuid } from 'uuid';
 
+import { ActionType } from '..';
 import { modalIcon } from '../config';
 import { SubPiplineColumsType } from '../ListOfPipelines';
 import { ModalFooterTitle } from '../styles';
-import { wrapperStyle } from './config';
-import { processorInputField, processorTypes } from './utils';
+import { processorInputField, processorTypes, wrapperStyle } from './config';
 
 function NewProcessor({
 	isActionType,
@@ -210,8 +210,8 @@ export interface OnFinishValueType {
 }
 
 interface NewProcessorPropsType {
-	isActionType: string | undefined;
-	setActionType: (b?: string) => void;
+	isActionType: string;
+	setActionType: (actionType?: ActionType) => void;
 	setChildDataSource: React.Dispatch<
 		React.SetStateAction<Array<SubPiplineColumsType>>
 	>;

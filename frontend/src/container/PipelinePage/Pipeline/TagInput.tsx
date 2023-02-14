@@ -7,7 +7,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { PipelineColumnType } from '../ListOfPipelines';
-import { tagInputStyle } from './utils';
+import { tagInputStyle } from './config';
 
 function TagInput({
 	setTagsListData,
@@ -32,7 +32,7 @@ function TagInput({
 		editInputRef.current?.focus();
 	}, [inputValue]);
 
-	const handleClose = (removedTag: string): void => {
+	const handleClose = (removedTag: string) => (): void => {
 		const newTags = tagsListData.filter((tag) => tag !== removedTag);
 		setTagsListData(newTags);
 	};
@@ -99,7 +99,7 @@ function TagInput({
 						key={tag}
 						closable
 						style={{ userSelect: 'none' }}
-						onClose={(): void => handleClose(tag)}
+						onClose={handleClose(tag)}
 					>
 						<span
 							onDoubleClick={(e): void => {
