@@ -6,14 +6,14 @@ import { Button, Input, InputRef, message, Modal, Tag, Tooltip } from 'antd';
 import React, { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { PipelineColumnType } from '../ListOfPipelines';
 import { tagInputStyle } from './utils';
 
 function TagInput({
 	setTagsListData,
-	initialvalues,
+	tagsListData,
 	placeHolder,
 }: TagInputType): JSX.Element {
-	const [tags, setTags] = useState<Array<string>>(initialvalues ?? []);
 	const [inputVisible, setInputVisible] = useState(false);
 	const [inputValue, setInputValue] = useState<string>('');
 	const [editInputIndex, setEditInputIndex] = useState(-1);
@@ -33,8 +33,8 @@ function TagInput({
 	}, [inputValue]);
 
 	const handleClose = (removedTag: string): void => {
-		const newTags = tags.filter((tag) => tag !== removedTag);
-		setTags(newTags);
+		const newTags = tagsListData.filter((tag) => tag !== removedTag);
+		setTagsListData(newTags);
 	};
 
 	const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>): void => {
@@ -42,10 +42,9 @@ function TagInput({
 	};
 
 	const handleInputConfirm = (): void => {
-		if (inputValue && tags.indexOf(inputValue as never) === -1) {
-			setTags([...tags, inputValue] as never);
+		if (inputValue && tagsListData.indexOf(inputValue as never) === -1) {
+			setTagsListData([...tagsListData, inputValue] as never);
 		}
-		setTagsListData(tags);
 		setInputVisible(false);
 		setInputValue('');
 	};
@@ -57,9 +56,9 @@ function TagInput({
 	};
 
 	const handleEditInputConfirm = (): void => {
-		const newTags = [...tags];
+		const newTags = [...tagsListData];
 		newTags[editInputIndex] = editInputValue;
-		setTags(newTags);
+		setTagsListData(newTags);
 		setEditInputIndex(-1);
 		setInputValue('');
 	};
@@ -70,7 +69,7 @@ function TagInput({
 			icon: <ExclamationCircleOutlined />,
 			content: t('remove_label_confirm'),
 			onOk() {
-				setTags([]);
+				setTagsListData([]);
 				message.success(t('remove_label_success'));
 			},
 			okText: t('button_yes'),
@@ -78,11 +77,9 @@ function TagInput({
 		});
 	};
 
-	useEffect((): void => setTagsListData(tags), [setTagsListData, tags]);
-
 	const showAllData: JSX.Element = (
 		<>
-			{tags.map((tag: string, index: number) => {
+			{tagsListData.map((tag: string, index: number) => {
 				if (editInputIndex === index) {
 					return (
 						<Input
@@ -143,7 +140,7 @@ function TagInput({
 				prefix={showAllData}
 			/>
 
-			{tags.length || inputValue.length || inputValue ? (
+			{tagsListData.length || inputValue.length || inputValue ? (
 				<Button onClick={handleClearAll} icon={<CloseCircleFilled />} type="text" />
 			) : null}
 		</div>
@@ -152,7 +149,7 @@ function TagInput({
 
 interface TagInputType {
 	setTagsListData: (tags: Array<string>) => void;
-	initialvalues: Array<string> | undefined;
+	tagsListData: PipelineColumnType['tags'];
 	placeHolder: string;
 }
 

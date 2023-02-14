@@ -31,14 +31,13 @@ function NewPipline({
 		if (isEdit) {
 			form.setFieldsValue({
 				name: selectedRecord?.name,
-				tags: tagsListData,
+				tags: selectedRecord?.tags,
 			});
+			setTagsListData(selectedRecord?.tags);
+		} else {
+			setTagsListData([]);
 		}
-	}, [form, isEdit, selectedRecord?.name, tagsListData]);
-
-	useEffect(() => {
-		setTagsListData(selectedRecord?.tags);
-	}, [selectedRecord?.tags]);
+	}, [form, isEdit, selectedRecord?.name, selectedRecord?.tags]);
 
 	const onFinish = (values: PipelineColumnType): void => {
 		const operatorsData = Array({
@@ -52,7 +51,7 @@ function NewPipline({
 			filter: '',
 			lastEdited: new Date().toDateString(),
 			name: values.name,
-			tags: isEdit ? [] : tagsListData,
+			tags: tagsListData,
 			operators: operatorsData,
 		};
 
@@ -63,15 +62,16 @@ function NewPipline({
 			const updatedPipelineData = {
 				...dataSource[findRecordIndex],
 				name: values.name,
-				tags: isEdit ? tagsListData : [],
+				tags: tagsListData,
 			};
 
 			const tempData = dataSource?.map((data) =>
 				data.name === selectedRecord?.name ? updatedPipelineData : data,
 			);
-
-			setDataSource(tempData);
+			setDataSource(tempData as Array<PipelineColumnType>);
+			formRef?.current?.resetFields();
 		} else {
+			setTagsListData([]);
 			setCount((prevState: number) => (prevState + 1) as number);
 			setDataSource(
 				(pre: PipelineColumnType[]) => [...pre, newData] as PipelineColumnType[],
@@ -102,7 +102,10 @@ function NewPipline({
 			open={isEdit || isAdd}
 			width={800}
 			footer={null}
-			onCancel={(): void => setActionType(undefined)}
+			onCancel={(): void => {
+				setActionType(undefined);
+				formRef?.current?.resetFields();
+			}}
 		>
 			<Divider plain />
 			<div style={{ marginTop: '1.563rem' }}>
@@ -154,7 +157,7 @@ function NewPipline({
 							>
 								<TagInput
 									setTagsListData={setTagsListData}
-									initialvalues={isEdit ? selectedRecord?.tags : []}
+									tagsListData={tagsListData as []}
 									placeHolder={i.fieldName}
 								/>
 							</Form.Item>

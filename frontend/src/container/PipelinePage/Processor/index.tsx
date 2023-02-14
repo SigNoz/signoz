@@ -97,7 +97,10 @@ function NewProcessor({
 			open={isEdit || isAdd}
 			width={800}
 			footer={null}
-			onCancel={(): void => setActionType(undefined)}
+			onCancel={(): void => {
+				setActionType(undefined);
+				formRef?.current?.resetFields();
+			}}
 		>
 			<Divider plain />
 			<div style={{ marginTop: '1.25rem' }}>

@@ -491,7 +491,7 @@ export interface PipelineColumnType {
 	alias: string;
 	enabled: boolean;
 	filter: string;
-	tags: Array<string> | undefined;
+	tags: Array<string>;
 	operators: Array<PipelineOperatorsType>;
 }
 
