@@ -169,9 +169,9 @@ export function selectOptions(
 	return [];
 }
 
-export function mapOperators(selectedKey: string[]): AllMenuProps[] {
+export function mapOperators(selectedKey: string): AllMenuProps[] {
 	return AllMenu.filter((e) =>
-		e?.supportedTypes?.includes(extractTagType(selectedKey[0])),
+		e?.supportedTypes?.includes(extractTagType(selectedKey)),
 	);
 }
 

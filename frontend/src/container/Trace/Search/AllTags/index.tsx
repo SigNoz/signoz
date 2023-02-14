@@ -39,7 +39,7 @@ function AllTags({
 		setLocalSelectedTags((tags) => [
 			...tags,
 			{
-				Key: [],
+				Key: '',
 				Operator: 'Equals',
 				StringValues: [],
 				NumberValues: [],
@@ -94,7 +94,7 @@ function AllTags({
 			<CurrentTagsContainer>
 				{localSelectedTags.map((tags, index) => (
 					<Tags
-						key={tags.Key.join(',')}
+						key={tags.Key}
 						tag={tags}
 						index={index}
 						onCloseHandler={(): void => onCloseHandler(index)}
