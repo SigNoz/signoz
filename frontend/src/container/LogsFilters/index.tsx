@@ -58,7 +58,7 @@ function LogsFilters(): JSX.Element {
 	);
 
 	return (
-		<Col flex="350px">
+		<Col flex="250px">
 			<Input
 				placeholder="Filter Values"
 				onInput={handleSearch}

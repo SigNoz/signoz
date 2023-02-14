@@ -13,7 +13,7 @@ import AppActions from 'types/actions';
 import { SET_DETAILED_LOG_DATA } from 'types/actions/logs';
 import { ILog } from 'types/api/logs/log';
 
-import { logsOptions } from './config';
+import { defaultSelectStyle, logsOptions } from './config';
 import { useSelectedLogView } from './hooks';
 import PopoverContent from './PopoverContent';
 import SpaceContainer from './styles';
@@ -86,7 +86,11 @@ function Logs(): JSX.Element {
 					<Row>
 						<Col flex={1}>
 							<Space align="baseline" direction="horizontal">
-								<Select value={selectedViewModeOption} onChange={onChangeVeiwMode}>
+								<Select
+									style={defaultSelectStyle}
+									value={selectedViewModeOption}
+									onChange={onChangeVeiwMode}
+								>
 									{viewModeOptionList.map((option) => (
 										<Select.Option key={option.value}>{option.label}</Select.Option>
 									))}

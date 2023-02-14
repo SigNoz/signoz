@@ -4,8 +4,6 @@ import styled from 'styled-components';
 
 export const RawLogViewContainer = styled(Row)<{ $isDarkMode: boolean }>`
 	width: 100%;
-	padding: 0.188rem 1.25rem 0.188rem 0;
-
 	font-weight: 700;
 	font-size: 0.625rem;
 	line-height: 1.25rem;

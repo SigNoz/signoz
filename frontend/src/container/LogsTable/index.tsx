@@ -32,9 +32,13 @@ function LogsTable(props: LogsTableProps): JSX.Element {
 		[
 			{
 				family: 'Fira Code',
+				weight: '300',
 			},
 		],
 		viewMode === 'raw',
+		{
+			timeout: 5000,
+		},
 	);
 
 	const {

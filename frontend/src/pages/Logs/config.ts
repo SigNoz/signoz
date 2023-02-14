@@ -19,3 +19,7 @@ export const viewModeOptionList: ViewModeOption[] = [
 ];
 
 export const logsOptions = ['raw', 'table'];
+
+export const defaultSelectStyle: React.CSSProperties = {
+	minWidth: '6rem',
+};

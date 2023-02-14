@@ -6,9 +6,12 @@ import {
 import { Button, Divider, Select } from 'antd';
 import { getGlobalTime } from 'container/LogsSearchFilter/utils';
 import { getMinMax } from 'container/TopNav/AutoRefresh/config';
+import { defaultSelectStyle } from 'pages/Logs/config';
 import React, { memo, useMemo } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
+import { Dispatch } from 'redux';
 import { AppState } from 'store/reducers';
+import AppActions from 'types/actions';
 import {
 	GET_NEXT_LOG_LINES,
 	GET_PREVIOUS_LOG_LINES,
@@ -18,7 +21,7 @@ import {
 import { GlobalReducer } from 'types/reducer/globalTime';
 import { ILogsReducer } from 'types/reducer/logs';
 
-import { DEFAULT_SELECT, ITEMS_PER_PAGE_OPTIONS } from './config';
+import { ITEMS_PER_PAGE_OPTIONS } from './config';
 import { Container } from './styles';
 
 function LogControls(): JSX.Element | null {
@@ -32,13 +35,14 @@ function LogControls(): JSX.Element | null {
 	const globalTime = useSelector<AppState, GlobalReducer>(
 		(state) => state.globalTime,
 	);
-	const dispatch = useDispatch();
+
+	const dispatch = useDispatch<Dispatch<AppActions>>();
 
 	const handleLogLinesPerPageChange = (e: number): void => {
 		dispatch({
 			type: SET_LOG_LINES_PER_PAGE,
 			payload: {
-				logLinesPerPage: e,
+				logsLinesPerPage: e,
 			},
 		});
 	};
@@ -50,13 +54,17 @@ function LogControls(): JSX.Element | null {
 			globalTime.maxTime,
 		);
 
-		dispatch({
-			type: RESET_ID_START_AND_END,
-			payload: getGlobalTime(globalTime.selectedTime, {
-				maxTime,
-				minTime,
-			}),
+		const updatedGlobalTime = getGlobalTime(globalTime.selectedTime, {
+			maxTime,
+			minTime,
 		});
+
+		if (updatedGlobalTime) {
+			dispatch({
+				type: RESET_ID_START_AND_END,
+				payload: updatedGlobalTime,
+			});
+		}
 	};
 
 	const handleNavigatePrevious = (): void => {
@@ -115,7 +123,7 @@ function LogControls(): JSX.Element | null {
 				Next <RightOutlined />
 			</Button>
 			<Select
-				style={DEFAULT_SELECT}
+				style={defaultSelectStyle}
 				loading={isLoading}
 				value={logLinesPerPage}
 				onChange={handleLogLinesPerPageChange}
