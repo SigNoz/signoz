@@ -19,6 +19,6 @@ describe('Pipeline Page', () => {
 
 	test('pipeline page Data should not be less than 0', () => {
 		expect(pipelineData.length).toBe(2);
-		expect(pipelineData.length).toBeLessThan(0);
+		expect(pipelineData.length).toBeGreaterThan(0);
 	});
 });
