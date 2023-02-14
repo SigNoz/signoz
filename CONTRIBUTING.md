@@ -215,9 +215,26 @@ Please ping us in the [`#contributing`](https://signoz-community.slack.com/archi
 
 # 4. Contribute to Backend (Query-Service) 🌑
 
-[**https://github.com/SigNoz/signoz/tree/develop/pkg/query-service**](https://github.com/SigNoz/signoz/tree/develop/pkg/query-service)
+**Need to Update: [https://github.com/SigNoz/signoz/tree/develop/pkg/query-service](https://github.com/SigNoz/signoz/tree/develop/pkg/query-service)**
 
-## 4.1 To run ClickHouse setup (recommended for local development)
+## 4.1 Prerequisites
+
+### 4.1.1 Install SQLite3
+
+- Run `sqlite3` command to check if you already have SQLite3 installed on your machine.
+
+- If not installed already, Install using below command
+  - on Linux
+    - on Debian / Ubuntu
+      ```
+        sudo apt install sqlite3
+      ```
+    - on CentOS / Fedora / RedHat
+      ```
+        sudo yum install sqlite3
+      ```
+
+## 4.2 To run ClickHouse setup (recommended for local development)
 
 - Clone the SigNoz repository and cd into signoz directory,
     ```

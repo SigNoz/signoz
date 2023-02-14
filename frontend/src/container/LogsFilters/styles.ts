@@ -4,8 +4,8 @@ import styled from 'styled-components';
 
 export const Container = styled(Col)`
 	padding-top: 0.3rem;
-	min-width: 250px;
-	max-width: 350px;
+	min-width: 15.625rem;
+	max-width: 21.875rem;
 `;
 
 export const CategoryContainer = styled.div`
@@ -21,13 +21,12 @@ export const FieldContainer = styled(Typography.Text)`
 export const Field = styled.div<{ isDarkMode: boolean }>`
 	border-radius: 0.5rem;
 	padding: 0.3rem 0.5rem;
+	height: 2rem;
 	display: flex;
 	justify-content: space-between;
 	align-items: center;
 	&:hover {
-		background: ${({ isDarkMode }): string => {
-			return isDarkMode ? grey[7] : '#ddd';
-		}};
+		background: ${({ isDarkMode }): string => (isDarkMode ? grey[7] : '#ddd')};
 	}
 `;
 

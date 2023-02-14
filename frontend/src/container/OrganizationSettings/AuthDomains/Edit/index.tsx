@@ -1,5 +1,6 @@
-import { Button, Form, notification, Space } from 'antd';
+import { Button, Form, Space } from 'antd';
 import { useForm } from 'antd/lib/form/Form';
+import { useNotifications } from 'hooks/useNotifications';
 import React, { useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { AuthDomain, GOOGLE_AUTH, SAML } from 'types/api/SAML/listDomain';
@@ -31,6 +32,8 @@ function EditSSO({
 
 	const { t } = useTranslation(['common']);
 
+	const { notifications } = useNotifications();
+
 	const onFinishHandler = useCallback(() => {
 		form
 			.validateFields()
@@ -44,11 +47,11 @@ function EditSSO({
 				});
 			})
 			.catch(() => {
-				notification.error({
+				notifications.error({
 					message: t('something_went_wrong', { ns: 'common' }),
 				});
 			});
-	}, [form, onRecordUpdateHandler, record, t]);
+	}, [form, onRecordUpdateHandler, record, t, notifications]);
 
 	const onResetHandler = useCallback(() => {
 		form.resetFields();
@@ -61,7 +64,7 @@ function EditSSO({
 			initialValues={record}
 			onFinishFailed={(error): void => {
 				error.errorFields.forEach(({ errors }) => {
-					notification.error({
+					notifications.error({
 						message:
 							errors[0].toString() || t('something_went_wrong', { ns: 'common' }),
 					});

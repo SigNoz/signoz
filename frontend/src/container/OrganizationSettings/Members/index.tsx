@@ -1,10 +1,12 @@
-import { Button, Modal, notification, Space, Typography } from 'antd';
-import Table, { ColumnsType } from 'antd/lib/table';
+import { Button, Modal, Space, Typography } from 'antd';
+import { ColumnsType } from 'antd/lib/table';
 import deleteUser from 'api/user/deleteUser';
 import editUserApi from 'api/user/editUser';
 import getOrgUser from 'api/user/getOrgUser';
 import updateRole from 'api/user/updateRole';
+import { ResizeTable } from 'components/ResizeTable';
 import dayjs from 'dayjs';
+import { useNotifications } from 'hooks/useNotifications';
 import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useQuery } from 'react-query';
@@ -39,6 +41,7 @@ function UserFunction({
 	const { t } = useTranslation(['common']);
 	const [isDeleteLoading, setIsDeleteLoading] = useState<boolean>(false);
 	const [isUpdateLoading, setIsUpdateLoading] = useState<boolean>(false);
+	const { notifications } = useNotifications();
 
 	const onUpdateDetailsHandler = (): void => {
 		setDataSource((data) => {
@@ -88,14 +91,14 @@ function UserFunction({
 
 			if (response.statusCode === 200) {
 				onDelete();
-				notification.success({
+				notifications.success({
 					message: t('success', {
 						ns: 'common',
 					}),
 				});
 				setIsDeleteModalVisible(false);
 			} else {
-				notification.error({
+				notifications.error({
 					message:
 						response.error ||
 						t('something_went_wrong', {
@@ -107,7 +110,7 @@ function UserFunction({
 		} catch (error) {
 			setIsDeleteLoading(false);
 
-			notification.error({
+			notifications.error({
 				message: t('something_went_wrong', {
 					ns: 'common',
 				}),
@@ -134,13 +137,13 @@ function UserFunction({
 				updateRoleResponse.statusCode === 200
 			) {
 				onUpdateDetailsHandler();
-				notification.success({
+				notifications.success({
 					message: t('success', {
 						ns: 'common',
 					}),
 				});
 			} else {
-				notification.error({
+				notifications.error({
 					message:
 						editUserResponse.error ||
 						updateRoleResponse.error ||
@@ -151,7 +154,7 @@ function UserFunction({
 			}
 			setIsUpdateLoading(false);
 		} catch (error) {
-			notification.error({
+			notifications.error({
 				message: t('something_went_wrong', {
 					ns: 'common',
 				}),
@@ -176,7 +179,7 @@ function UserFunction({
 			</Space>
 			<Modal
 				title="Edit member details"
-				visible={isModalVisible}
+				open={isModalVisible}
 				onOk={(): void => onModalToggleHandler(setIsModalVisible, false)}
 				onCancel={(): void => onModalToggleHandler(setIsModalVisible, false)}
 				centered
@@ -214,7 +217,7 @@ function UserFunction({
 			</Modal>
 			<Modal
 				title="Edit member details"
-				visible={isDeleteModalVisible}
+				open={isDeleteModalVisible}
 				onOk={onDeleteHandler}
 				onCancel={(): void => onModalToggleHandler(setIsDeleteModalVisible, false)}
 				centered
@@ -256,21 +259,25 @@ function Members(): JSX.Element {
 			title: 'Name',
 			dataIndex: 'name',
 			key: 'name',
+			width: 100,
 		},
 		{
 			title: 'Emails',
 			dataIndex: 'email',
 			key: 'email',
+			width: 100,
 		},
 		{
 			title: 'Access Level',
 			dataIndex: 'accessLevel',
 			key: 'accessLevel',
+			width: 50,
 		},
 		{
 			title: 'Joined On',
 			dataIndex: 'joinedOn',
 			key: 'joinedOn',
+			width: 60,
 			render: (_, record): JSX.Element => {
 				const { joinedOn } = record;
 				return (
@@ -283,6 +290,7 @@ function Members(): JSX.Element {
 		{
 			title: 'Action',
 			dataIndex: 'action',
+			width: 80,
 			render: (_, record): JSX.Element => (
 				<UserFunction
 					{...{
@@ -301,10 +309,10 @@ function Members(): JSX.Element {
 	return (
 		<Space direction="vertical" size="middle">
 			<Typography.Title level={3}>Members</Typography.Title>
-			<Table
+			<ResizeTable
+				columns={columns}
 				tableLayout="fixed"
 				dataSource={dataSource}
-				columns={columns}
 				pagination={false}
 				loading={status === 'loading'}
 			/>

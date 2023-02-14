@@ -1,11 +1,13 @@
 /* eslint-disable react/display-name */
 import { PlusOutlined } from '@ant-design/icons';
-import { notification, Typography } from 'antd';
-import Table, { ColumnsType } from 'antd/lib/table';
+import { Typography } from 'antd';
+import { ColumnsType } from 'antd/lib/table';
+import { ResizeTable } from 'components/ResizeTable';
 import TextToolTip from 'components/TextToolTip';
 import ROUTES from 'constants/routes';
 import useComponentPermission from 'hooks/useComponentPermission';
 import useInterval from 'hooks/useInterval';
+import { useNotifications } from 'hooks/useNotifications';
 import history from 'lib/history';
 import React, { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -30,6 +32,8 @@ function ListAlert({ allAlertRules, refetch }: ListAlertProps): JSX.Element {
 		role,
 	);
 
+	const { notifications: notificationsApi } = useNotifications();
+
 	useInterval(() => {
 		(async (): Promise<void> => {
 			const { data: refetchData, status } = await refetch();
@@ -37,7 +41,7 @@ function ListAlert({ allAlertRules, refetch }: ListAlertProps): JSX.Element {
 				setData(refetchData?.payload || []);
 			}
 			if (status === 'error') {
-				notification.error({
+				notificationsApi.error({
 					message: t('something_went_wrong'),
 				});
 			}
@@ -48,8 +52,6 @@ function ListAlert({ allAlertRules, refetch }: ListAlertProps): JSX.Element {
 		history.push(ROUTES.ALERTS_NEW);
 	}, []);
 
-	const [notifications, Element] = notification.useNotification();
-
 	const onEditHandler = (id: string): void => {
 		history.push(`${ROUTES.EDIT_ALERTS}?ruleId=${id}`);
 	};
@@ -58,6 +60,7 @@ function ListAlert({ allAlertRules, refetch }: ListAlertProps): JSX.Element {
 		{
 			title: 'Status',
 			dataIndex: 'state',
+			width: 80,
 			key: 'state',
 			sorter: (a, b): number =>
 				(b.state ? b.state.charCodeAt(0) : 1000) -
@@ -67,6 +70,7 @@ function ListAlert({ allAlertRules, refetch }: ListAlertProps): JSX.Element {
 		{
 			title: 'Alert Name',
 			dataIndex: 'alert',
+			width: 100,
 			key: 'name',
 			sorter: (a, b): number =>
 				(a.alert ? a.alert.charCodeAt(0) : 1000) -
@@ -82,6 +86,7 @@ function ListAlert({ allAlertRules, refetch }: ListAlertProps): JSX.Element {
 		{
 			title: 'Severity',
 			dataIndex: 'labels',
+			width: 80,
 			key: 'severity',
 			sorter: (a, b): number =>
 				(a.labels ? a.labels.severity.length : 0) -
@@ -99,7 +104,7 @@ function ListAlert({ allAlertRules, refetch }: ListAlertProps): JSX.Element {
 			dataIndex: 'labels',
 			key: 'tags',
 			align: 'center',
-			width: 350,
+			width: 100,
 			render: (value): JSX.Element => {
 				const objectKeys = Object.keys(value);
 				const withOutSeverityKeys = objectKeys.filter((e) => e !== 'severity');
@@ -110,13 +115,11 @@ function ListAlert({ allAlertRules, refetch }: ListAlertProps): JSX.Element {
 
 				return (
 					<>
-						{withOutSeverityKeys.map((e) => {
-							return (
-								<StyledTag key={e} color="magenta">
-									{e}: {value[e]}
-								</StyledTag>
-							);
-						})}
+						{withOutSeverityKeys.map((e) => (
+							<StyledTag key={e} color="magenta">
+								{e}: {value[e]}
+							</StyledTag>
+						))}
 					</>
 				);
 			},
@@ -128,29 +131,26 @@ function ListAlert({ allAlertRules, refetch }: ListAlertProps): JSX.Element {
 			title: 'Action',
 			dataIndex: 'id',
 			key: 'action',
-			render: (id: GettableAlert['id'], record): JSX.Element => {
-				return (
-					<>
-						<ToggleAlertState disabled={record.disabled} setData={setData} id={id} />
+			width: 120,
+			render: (id: GettableAlert['id'], record): JSX.Element => (
+				<>
+					<ToggleAlertState disabled={record.disabled} setData={setData} id={id} />
 
-						<ColumnButton
-							onClick={(): void => onEditHandler(id.toString())}
-							type="link"
-						>
-							Edit
-						</ColumnButton>
+					<ColumnButton
+						onClick={(): void => onEditHandler(id.toString())}
+						type="link"
+					>
+						Edit
+					</ColumnButton>
 
-						<DeleteAlert notifications={notifications} setData={setData} id={id} />
-					</>
-				);
-			},
+					<DeleteAlert notifications={notificationsApi} setData={setData} id={id} />
+				</>
+			),
 		});
 	}
 
 	return (
 		<>
-			{Element}
-
 			<ButtonContainer>
 				<TextToolTip
 					{...{
@@ -165,8 +165,7 @@ function ListAlert({ allAlertRules, refetch }: ListAlertProps): JSX.Element {
 					</Button>
 				)}
 			</ButtonContainer>
-
-			<Table rowKey="id" columns={columns} dataSource={data} />
+			<ResizeTable columns={columns} rowKey="id" dataSource={data} />
 		</>
 	);
 }

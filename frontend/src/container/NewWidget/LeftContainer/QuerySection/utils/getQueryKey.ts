@@ -4,8 +4,7 @@ import { EQueryTypeToQueryKeyMapping } from '../types';
 
 export const getQueryKey = (
 	queryCategory: EQueryType,
-): EQueryTypeToQueryKeyMapping => {
-	return EQueryTypeToQueryKeyMapping[
+): EQueryTypeToQueryKeyMapping =>
+	EQueryTypeToQueryKeyMapping[
 		EQueryType[queryCategory] as keyof typeof EQueryTypeToQueryKeyMapping
 	];
-};

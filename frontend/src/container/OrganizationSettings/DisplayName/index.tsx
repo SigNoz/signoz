@@ -1,5 +1,6 @@
-import { Button, Input, notification, Space, Typography } from 'antd';
+import { Button, Form, Input } from 'antd';
 import editOrg from 'api/user/editOrg';
+import { useNotifications } from 'hooks/useNotifications';
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useDispatch, useSelector } from 'react-redux';
@@ -14,14 +15,16 @@ function DisplayName({
 	id: orgId,
 	isAnonymous,
 }: DisplayNameProps): JSX.Element {
+	const [form] = Form.useForm();
+
 	const { t } = useTranslation(['organizationsettings', 'common']);
 	const { org } = useSelector<AppState, AppReducer>((state) => state.app);
 	const { name } = (org || [])[index];
-	const [orgName, setOrgName] = useState<string>(name);
 	const [isLoading, setIsLoading] = useState<boolean>(false);
 	const dispatch = useDispatch<Dispatch<AppActions>>();
+	const { notifications } = useNotifications();
 
-	const onClickHandler = async (): Promise<void> => {
+	const onSubmit = async ({ name: orgName }: OnSubmitProps): Promise<void> => {
 		try {
 			setIsLoading(true);
 			const { statusCode, error } = await editOrg({
@@ -30,7 +33,7 @@ function DisplayName({
 				orgId,
 			});
 			if (statusCode === 200) {
-				notification.success({
+				notifications.success({
 					message: t('success', {
 						ns: 'common',
 					}),
@@ -43,7 +46,7 @@ function DisplayName({
 					},
 				});
 			} else {
-				notification.error({
+				notifications.error({
 					message:
 						error ||
 						t('something_went_wrong', {
@@ -54,7 +57,7 @@ function DisplayName({
 			setIsLoading(false);
 		} catch (error) {
 			setIsLoading(false);
-			notification.error({
+			notifications.error({
 				message: t('something_went_wrong', {
 					ns: 'common',
 				}),
@@ -67,26 +70,22 @@ function DisplayName({
 	}
 
 	return (
-		<Space direction="vertical">
-			<Typography.Title level={3}>{t('display_name')}</Typography.Title>
-			<Space direction="vertical" size="middle">
-				<Input
-					value={orgName}
-					onChange={(e): void => setOrgName(e.target.value)}
-					size="large"
-					placeholder={t('signoz')}
-					disabled={isLoading}
-				/>
-				<Button
-					onClick={onClickHandler}
-					disabled={isLoading}
-					loading={isLoading}
-					type="primary"
-				>
-					Change Org Name
+		<Form
+			initialValues={{ name }}
+			form={form}
+			layout="vertical"
+			onFinish={onSubmit}
+			autoComplete="off"
+		>
+			<Form.Item name="name" label="Display name" rules={[{ required: true }]}>
+				<Input size="large" placeholder={t('signoz')} disabled={isLoading} />
+			</Form.Item>
+			<Form.Item>
+				<Button loading={isLoading} type="primary" htmlType="submit">
+					Submit
 				</Button>
-			</Space>
-		</Space>
+			</Form.Item>
+		</Form>
 	);
 }
 
@@ -94,6 +93,10 @@ interface DisplayNameProps {
 	index: number;
 	id: User['userId'];
 	isAnonymous: boolean;
+}
+
+interface OnSubmitProps {
+	name: string;
 }
 
 export default DisplayName;

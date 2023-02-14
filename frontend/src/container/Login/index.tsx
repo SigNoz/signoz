@@ -1,8 +1,9 @@
-import { Button, Input, notification, Space, Tooltip, Typography } from 'antd';
+import { Button, Input, Space, Tooltip, Typography } from 'antd';
 import loginApi from 'api/user/login';
 import loginPrecheckApi from 'api/user/loginPrecheck';
 import afterLogin from 'AppRoutes/utils';
 import ROUTES from 'constants/routes';
+import { useNotifications } from 'hooks/useNotifications';
 import history from 'lib/history';
 import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -42,6 +43,8 @@ function Login({
 	const [precheckInProcess, setPrecheckInProcess] = useState(false);
 	const [precheckComplete, setPrecheckComplete] = useState(false);
 
+	const { notifications } = useNotifications();
+
 	useEffect(() => {
 		if (withPassword === 'Y') {
 			setPrecheckComplete(true);
@@ -62,15 +65,15 @@ function Login({
 
 	useEffect(() => {
 		if (ssoerror !== '') {
-			notification.error({
+			notifications.error({
 				message: t('failed_to_login'),
 			});
 		}
-	}, [ssoerror, t]);
+	}, [ssoerror, t, notifications]);
 
 	const onNextHandler = async (): Promise<void> => {
 		if (!email) {
-			notification.error({
+			notifications.error({
 				message: t('invalid_email'),
 			});
 			return;
@@ -88,18 +91,18 @@ function Login({
 				if (isUser) {
 					setPrecheckComplete(true);
 				} else {
-					notification.error({
+					notifications.error({
 						message: t('invalid_account'),
 					});
 				}
 			} else {
-				notification.error({
+				notifications.error({
 					message: t('invalid_config'),
 				});
 			}
 		} catch (e) {
 			console.log('failed to call precheck Api', e);
-			notification.error({ message: t('unexpected_error') });
+			notifications.error({ message: t('unexpected_error') });
 		}
 		setPrecheckInProcess(false);
 	};
@@ -144,31 +147,29 @@ function Login({
 				);
 				history.push(ROUTES.APPLICATION);
 			} else {
-				notification.error({
+				notifications.error({
 					message: response.error || t('unexpected_error'),
 				});
 			}
 			setIsLoading(false);
 		} catch (error) {
 			setIsLoading(false);
-			notification.error({
+			notifications.error({
 				message: t('unexpected_error'),
 			});
 		}
 	};
 
-	const renderSAMLAction = (): JSX.Element => {
-		return (
-			<Button
-				type="primary"
-				loading={isLoading}
-				disabled={isLoading}
-				href={precheckResult.ssoUrl}
-			>
-				{t('login_with_sso')}
-			</Button>
-		);
-	};
+	const renderSAMLAction = (): JSX.Element => (
+		<Button
+			type="primary"
+			loading={isLoading}
+			disabled={isLoading}
+			href={precheckResult.ssoUrl}
+		>
+			{t('login_with_sso')}
+		</Button>
+	);
 
 	const renderOnSsoError = (): JSX.Element | null => {
 		if (!ssoerror) {

@@ -4,8 +4,8 @@ import { ITraceForest, ITraceTree, Span } from 'types/api/trace/getTraceItem';
 
 const getSpanReferences = (
 	rawReferences: string[] = [],
-): Record<string, string>[] => {
-	return rawReferences.map((rawRef) => {
+): Record<string, string>[] =>
+	rawReferences.map((rawRef) => {
 		const refObject: Record<string, string> = {};
 		rawRef
 			.replaceAll('{', '')
@@ -19,7 +19,6 @@ const getSpanReferences = (
 
 		return refObject;
 	});
-};
 
 // This getSpanTags is migrated from the previous implementation.
 const getSpanTags = (spanData: Span): { key: string; value: string }[] => {

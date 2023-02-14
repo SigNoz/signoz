@@ -1,11 +1,12 @@
 import { PlusOutlined } from '@ant-design/icons';
-import { Button, notification, Tabs } from 'antd';
+import { Button, Tabs } from 'antd';
 import MetricsBuilderFormula from 'container/NewWidget/LeftContainer/QuerySection/QueryBuilder/queryBuilder/formula';
 import MetricsBuilder from 'container/NewWidget/LeftContainer/QuerySection/QueryBuilder/queryBuilder/query';
 import {
 	IQueryBuilderFormulaHandleChange,
 	IQueryBuilderQueryHandleChange,
 } from 'container/NewWidget/LeftContainer/QuerySection/QueryBuilder/queryBuilder/types';
+import { useNotifications } from 'hooks/useNotifications';
 import React, { useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { AlertTypes } from 'types/api/alerts/alertTypes';
@@ -163,10 +164,11 @@ function QuerySection({
 			...allQueries,
 		});
 	};
+	const { notifications } = useNotifications();
 
 	const addMetricQuery = useCallback(() => {
 		if (Object.keys(metricQueries).length > 5) {
-			notification.error({
+			notifications.error({
 				message: t('metric_query_max_limit'),
 			});
 			return;
@@ -191,7 +193,7 @@ function QuerySection({
 			expression: queryLabel,
 		};
 		setMetricQueries({ ...queries });
-	}, [t, getNextQueryLabel, metricQueries, setMetricQueries]);
+	}, [t, getNextQueryLabel, metricQueries, setMetricQueries, notifications]);
 
 	const addFormula = useCallback(() => {
 		// defaulting to F1 as only one formula is supported
@@ -211,78 +213,70 @@ function QuerySection({
 		setFormulaQueries({ ...formulas });
 	}, [formulaQueries, setFormulaQueries]);
 
-	const renderPromqlUI = (): JSX.Element => {
-		return (
-			<PromqlSection promQueries={promQueries} setPromQueries={setPromQueries} />
-		);
-	};
+	const renderPromqlUI = (): JSX.Element => (
+		<PromqlSection promQueries={promQueries} setPromQueries={setPromQueries} />
+	);
 
-	const renderChQueryUI = (): JSX.Element => {
-		return <ChQuerySection chQueries={chQueries} setChQueries={setChQueries} />;
-	};
+	const renderChQueryUI = (): JSX.Element => (
+		<ChQuerySection chQueries={chQueries} setChQueries={setChQueries} />
+	);
 
-	const renderFormulaButton = (): JSX.Element => {
-		return (
-			<QueryButton onClick={addFormula} icon={<PlusOutlined />}>
-				{t('button_formula')}
-			</QueryButton>
-		);
-	};
+	const renderFormulaButton = (): JSX.Element => (
+		<QueryButton onClick={addFormula} icon={<PlusOutlined />}>
+			{t('button_formula')}
+		</QueryButton>
+	);
 
-	const renderQueryButton = (): JSX.Element => {
-		return (
-			<QueryButton onClick={addMetricQuery} icon={<PlusOutlined />}>
-				{t('button_query')}
-			</QueryButton>
-		);
-	};
+	const renderQueryButton = (): JSX.Element => (
+		<QueryButton onClick={addMetricQuery} icon={<PlusOutlined />}>
+			{t('button_query')}
+		</QueryButton>
+	);
 
-	const renderMetricUI = (): JSX.Element => {
-		return (
-			<div>
-				{metricQueries &&
-					Object.keys(metricQueries).map((key: string) => {
+	const renderMetricUI = (): JSX.Element => (
+		<div>
+			{metricQueries &&
+				Object.keys(metricQueries).map((key: string) => {
+					// todo(amol): need to handle this in fetch
+					const current = metricQueries[key];
+					current.name = key;
+
+					return (
+						<MetricsBuilder
+							key={key}
+							queryIndex={key}
+							queryData={toIMetricsBuilderQuery(current)}
+							selectedGraph="TIME_SERIES"
+							handleQueryChange={handleMetricQueryChange}
+						/>
+					);
+				})}
+
+			{queryCategory !== EQueryType.PROM && renderQueryButton()}
+			<div style={{ marginTop: '1rem' }}>
+				{formulaQueries &&
+					Object.keys(formulaQueries).map((key: string) => {
 						// todo(amol): need to handle this in fetch
-						const current = metricQueries[key];
+						const current = formulaQueries[key];
 						current.name = key;
 
 						return (
-							<MetricsBuilder
+							<MetricsBuilderFormula
 								key={key}
-								queryIndex={key}
-								queryData={toIMetricsBuilderQuery(current)}
-								selectedGraph="TIME_SERIES"
-								handleQueryChange={handleMetricQueryChange}
+								formulaIndex={key}
+								formulaData={current}
+								handleFormulaChange={handleFormulaChange}
 							/>
 						);
 					})}
-
-				{queryCategory !== EQueryType.PROM && renderQueryButton()}
-				<div style={{ marginTop: '1rem' }}>
-					{formulaQueries &&
-						Object.keys(formulaQueries).map((key: string) => {
-							// todo(amol): need to handle this in fetch
-							const current = formulaQueries[key];
-							current.name = key;
-
-							return (
-								<MetricsBuilderFormula
-									key={key}
-									formulaIndex={key}
-									formulaData={current}
-									handleFormulaChange={handleFormulaChange}
-								/>
-							);
-						})}
-					{queryCategory === EQueryType.QUERY_BUILDER &&
-						(!formulaQueries || Object.keys(formulaQueries).length === 0) &&
-						metricQueries &&
-						Object.keys(metricQueries).length > 0 &&
-						renderFormulaButton()}
-				</div>
+				{queryCategory === EQueryType.QUERY_BUILDER &&
+					(!formulaQueries || Object.keys(formulaQueries).length === 0) &&
+					metricQueries &&
+					Object.keys(metricQueries).length > 0 &&
+					renderFormulaButton()}
 			</div>
-		);
-	};
+		</div>
+	);
 
 	const handleRunQuery = (): void => {
 		runQuery();

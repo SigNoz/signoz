@@ -180,13 +180,9 @@ type GetFilterSpansResponseItem struct {
 	ServiceName        string    `ch:"serviceName" json:"serviceName"`
 	Operation          string    `ch:"name" json:"operation"`
 	DurationNano       uint64    `ch:"durationNano" json:"durationNano"`
-	HttpCode           string    `ch:"httpCode"`
 	HttpMethod         string    `ch:"httpMethod"`
-	GRPCode            string    `ch:"gRPCCode"`
-	GRPMethod          string    `ch:"gRPCMethod"`
-	StatusCode         string    `json:"statusCode"`
 	Method             string    `json:"method"`
-	ResponseStatusCode string    `ch:"responseStatusCode"`
+	ResponseStatusCode string    `ch:"responseStatusCode" json:"statusCode"`
 	RPCMethod          string    `ch:"rpcMethod"`
 }
 
@@ -279,11 +275,15 @@ type TopOperationsItem struct {
 }
 
 type TagFilters struct {
-	TagKeys string `json:"tagKeys" ch:"tagKeys"`
+	StringTagKeys []string `json:"stringTagKeys" ch:"stringTagKeys"`
+	NumberTagKeys []string `json:"numberTagKeys" ch:"numberTagKeys"`
+	BoolTagKeys   []string `json:"boolTagKeys" ch:"boolTagKeys"`
 }
 
 type TagValues struct {
-	TagValues string `json:"tagValues" ch:"tagValues"`
+	StringTagValues []string  `json:"stringTagValues" ch:"stringTagValues"`
+	BoolTagValues   []bool    `json:"boolTagValues" ch:"boolTagValues"`
+	NumberTagValues []float64 `json:"numberTagValues" ch:"numberTagValues"`
 }
 
 type ServiceMapDependencyResponseItem struct {
@@ -397,6 +397,11 @@ type DBResponseComponent struct {
 
 type DBResponseTotal struct {
 	NumTotal uint64 `ch:"numTotal"`
+}
+
+type DBResponseMinMax struct {
+	Min uint64 `ch:"min"`
+	Max uint64 `ch:"max"`
 }
 
 type SpanFiltersResponse struct {
@@ -563,4 +568,20 @@ type TagTelemetryData struct {
 	ServiceName string `json:"serviceName" ch:"serviceName"`
 	Env         string `json:"env" ch:"env"`
 	Language    string `json:"language" ch:"language"`
+}
+
+type ClusterInfo struct {
+	ShardNum              uint32 `json:"shard_num" ch:"shard_num"`
+	ShardWeight           uint32 `json:"shard_weight" ch:"shard_weight"`
+	ReplicaNum            uint32 `json:"replica_num" ch:"replica_num"`
+	ErrorsCount           uint32 `json:"errors_count" ch:"errors_count"`
+	SlowdownsCount        uint32 `json:"slowdowns_count" ch:"slowdowns_count"`
+	EstimatedRecoveryTime uint32 `json:"estimated_recovery_time" ch:"estimated_recovery_time"`
+}
+
+func (ci *ClusterInfo) GetMapFromStruct() map[string]interface{} {
+	var clusterInfoMap map[string]interface{}
+	data, _ := json.Marshal(*ci)
+	json.Unmarshal(data, &clusterInfoMap)
+	return clusterInfoMap
 }

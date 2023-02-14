@@ -19,13 +19,21 @@ export const databaseCallsRPS = ({
 } => {
 	const metricName = 'signoz_db_latency_count';
 	const groupBy = ['db_system'];
+	const itemsA = [
+		{
+			id: '',
+			key: 'service_name',
+			op: 'IN',
+			value: [`${servicename}`],
+		},
+		...tagFilterItems,
+	];
 
 	return getQueryBuilderQueries({
 		metricName,
-		legend,
 		groupBy,
-		servicename,
-		tagFilterItems,
+		legend,
+		itemsA,
 	});
 };
 
@@ -39,17 +47,27 @@ export const databaseCallsAvgDuration = ({
 	const metricNameA = 'signoz_db_latency_sum';
 	const metricNameB = 'signoz_db_latency_count';
 	const expression = 'A/B';
-	const legendFormula = '';
+	const legendFormula = 'Average Duration';
 	const legend = '';
 	const disabled = true;
+	const additionalItemsA = [
+		{
+			id: '',
+			key: 'service_name',
+			op: 'IN',
+			value: [`${servicename}`],
+		},
+		...tagFilterItems,
+	];
+	const additionalItemsB = additionalItemsA;
 
 	return getQueryBuilderQuerieswithFormula({
-		servicename,
-		legend,
-		disabled,
-		tagFilterItems,
 		metricNameA,
 		metricNameB,
+		additionalItemsA,
+		additionalItemsB,
+		legend,
+		disabled,
 		expression,
 		legendFormula,
 	});
