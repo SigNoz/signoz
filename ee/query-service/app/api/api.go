@@ -122,6 +122,11 @@ func (ah *APIHandler) RegisterRoutes(router *mux.Router) {
 	router.HandleFunc("/api/v1/traces/{traceId}", baseapp.ViewAccess(ah.searchTraces)).Methods(http.MethodGet)
 	router.HandleFunc("/api/v2/metrics/query_range", baseapp.ViewAccess(ah.queryRangeMetricsV2)).Methods(http.MethodPost)
 
+	// PAT APIs
+	router.HandleFunc("/api/v1/pat", baseapp.SelfAccess(ah.createPAT)).Methods(http.MethodPost)
+	router.HandleFunc("/api/v1/pat", baseapp.SelfAccess(ah.getPATs)).Methods(http.MethodGet)
+	router.HandleFunc("/api/v1/pat/{id}", baseapp.SelfAccess(ah.deletePAT)).Methods(http.MethodDelete)
+
 	ah.APIHandler.RegisterRoutes(router)
 
 }
