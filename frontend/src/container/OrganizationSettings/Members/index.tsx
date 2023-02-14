@@ -1,4 +1,4 @@
-import { Button, Modal, notification, Space, Typography } from 'antd';
+import { Button, Modal, Space, Typography } from 'antd';
 import { ColumnsType } from 'antd/lib/table';
 import deleteUser from 'api/user/deleteUser';
 import editUserApi from 'api/user/editUser';
@@ -6,6 +6,7 @@ import getOrgUser from 'api/user/getOrgUser';
 import updateRole from 'api/user/updateRole';
 import { ResizeTable } from 'components/ResizeTable';
 import dayjs from 'dayjs';
+import { useNotifications } from 'hooks/useNotifications';
 import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useQuery } from 'react-query';
@@ -40,7 +41,7 @@ function UserFunction({
 	const { t } = useTranslation(['common']);
 	const [isDeleteLoading, setIsDeleteLoading] = useState<boolean>(false);
 	const [isUpdateLoading, setIsUpdateLoading] = useState<boolean>(false);
-	const [notifications, NotificationElement] = notification.useNotification();
+	const { notifications } = useNotifications();
 
 	const onUpdateDetailsHandler = (): void => {
 		setDataSource((data) => {
@@ -164,7 +165,6 @@ function UserFunction({
 
 	return (
 		<>
-			{NotificationElement}
 			<Space direction="horizontal">
 				<Typography.Link
 					onClick={(): void => onModalToggleHandler(setIsModalVisible, true)}
