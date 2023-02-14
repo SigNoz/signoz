@@ -3640,3 +3640,13 @@ func (r *ClickHouseReader) QueryDashboardVars(ctx context.Context, query string)
 	}
 	return &result, nil
 }
+
+func (r *ClickHouseReader) CheckClickHouse(ctx context.Context) error {
+	rows, err := r.db.Query(ctx, "SELECT 1")
+	if err != nil {
+		return err
+	}
+	defer rows.Close()
+
+	return nil
+}

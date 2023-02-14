@@ -28,7 +28,7 @@ const getSpanAggregate = async (
 		});
 
 		const updatedSelectedTags = props.selectedTags.map((e) => ({
-			Key: e.Key[0],
+			Key: e.Key,
 			Operator: e.Operator,
 			StringValues: e.StringValues,
 			NumberValues: e.NumberValues,

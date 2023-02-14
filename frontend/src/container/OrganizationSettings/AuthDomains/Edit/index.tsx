@@ -1,5 +1,6 @@
-import { Button, Form, notification, Space } from 'antd';
+import { Button, Form, Space } from 'antd';
 import { useForm } from 'antd/lib/form/Form';
+import { useNotifications } from 'hooks/useNotifications';
 import React, { useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { AuthDomain, GOOGLE_AUTH, SAML } from 'types/api/SAML/listDomain';
@@ -31,7 +32,7 @@ function EditSSO({
 
 	const { t } = useTranslation(['common']);
 
-	const [notifications, NotificationElement] = notification.useNotification();
+	const { notifications } = useNotifications();
 
 	const onFinishHandler = useCallback(() => {
 		form
@@ -75,7 +76,6 @@ function EditSSO({
 			autoComplete="off"
 			form={form}
 		>
-			{NotificationElement}
 			{renderFormInputs(record)}
 			<Space
 				style={{ width: '100%', justifyContent: 'flex-end' }}

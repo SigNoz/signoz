@@ -1,5 +1,4 @@
 import { Form, FormInstance, Input, Select, Typography } from 'antd';
-import FormItem from 'antd/lib/form/FormItem';
 import { Store } from 'antd/lib/form/interface';
 import ROUTES from 'constants/routes';
 import {
@@ -32,7 +31,6 @@ function FormAlertChannels({
 	onSaveHandler,
 	savingState,
 	testingState,
-	NotificationElement,
 	title,
 	initialValue,
 	editing = false,
@@ -54,12 +52,10 @@ function FormAlertChannels({
 	};
 	return (
 		<>
-			{NotificationElement}
-
 			<Title level={3}>{title}</Title>
 
 			<Form initialValues={initialValue} layout="vertical" form={formInstance}>
-				<FormItem label={t('field_channel_name')} labelAlign="left" name="name">
+				<Form.Item label={t('field_channel_name')} labelAlign="left" name="name">
 					<Input
 						disabled={editing}
 						onChange={(event): void => {
@@ -69,9 +65,9 @@ function FormAlertChannels({
 							}));
 						}}
 					/>
-				</FormItem>
+				</Form.Item>
 
-				<FormItem label={t('field_channel_type')} labelAlign="left" name="type">
+				<Form.Item label={t('field_channel_type')} labelAlign="left" name="type">
 					<Select disabled={editing} onChange={onTypeChangeHandler} value={type}>
 						<Option value="slack" key="slack">
 							Slack
@@ -83,11 +79,11 @@ function FormAlertChannels({
 							Pagerduty
 						</Option>
 					</Select>
-				</FormItem>
+				</Form.Item>
 
-				<FormItem>{renderSettings()}</FormItem>
+				<Form.Item>{renderSettings()}</Form.Item>
 
-				<FormItem>
+				<Form.Item>
 					<Button
 						disabled={savingState}
 						loading={savingState}
@@ -110,7 +106,7 @@ function FormAlertChannels({
 					>
 						{t('button_return')}
 					</Button>
-				</FormItem>
+				</Form.Item>
 			</Form>
 		</>
 	);
@@ -127,10 +123,6 @@ interface FormAlertChannelsProps {
 	onTestHandler: (props: ChannelType) => void;
 	testingState: boolean;
 	savingState: boolean;
-	NotificationElement: React.ReactElement<
-		unknown,
-		string | React.JSXElementConstructor<unknown>
-	>;
 	title: string;
 	initialValue: Store;
 	// editing indicates if the form is opened in edit mode
