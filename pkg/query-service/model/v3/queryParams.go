@@ -1,11 +1,17 @@
 package v3
 
-import "go.signoz.io/signoz/pkg/query-service/model"
+import (
+	"encoding/json"
+	"strconv"
+	"time"
+
+	"go.signoz.io/signoz/pkg/query-service/model"
+)
 
 type QueryRangeParamsV3 struct {
 	Start          int64                  `json:"start"`
 	End            int64                  `json:"end"`
-	Step           int64                  `json:"step,omitempty"`
+	Step           int64                  `json:"step"`
 	CompositeQuery *CompositeQuery        `json:"compositeQuery"`
 	Variables      map[string]interface{} `json:"variables,omitempty"`
 }
@@ -32,7 +38,6 @@ type BuilderQuery struct {
 	Offset             uint64                  `json:"offset"`
 	PageSize           uint64                  `json:"pageSize"`
 	OrderBy            []OrderBy               `json:"orderBy"`
-	Step               int64                   `json:"step,omitempty"`
 	ReduceTo           model.ReduceToOperator  `json:"reduceTo,omitempty"`
 	SelectColumns      []string                `json:"selectColumns,omitempty"`
 }
@@ -57,4 +62,36 @@ type Having struct {
 	Operator   string
 	Value      interface{}
 	ColumnName string
+}
+
+type QueryRangeResponse struct {
+	ResultType string    `json:"resultType"`
+	Result     []*Result `json:"result"`
+}
+
+type Result struct {
+	QueryName string  `json:"queryName"`
+	Series    *Series `json:"series"`
+	List      []*Row  `json:"list"`
+}
+
+type Series struct {
+	Labels map[string]string `json:"labels"`
+	Points []Point           `json:"values"`
+}
+
+type Row struct {
+	Timestamp time.Time         `json:"timestamp"`
+	Data      map[string]string `json:"data"`
+}
+
+type Point struct {
+	Timestamp int64
+	Value     float64
+}
+
+// MarshalJSON implements json.Marshaler.
+func (p *Point) MarshalJSON() ([]byte, error) {
+	v := strconv.FormatFloat(p.Value, 'f', -1, 64)
+	return json.Marshal([...]interface{}{float64(p.Timestamp) / 1000, v})
 }

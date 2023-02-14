@@ -188,9 +188,14 @@ func BuildMetricQuery(qp *v3.QueryRangeParamsV3, mq *v3.BuilderQuery, tableName 
 
 	groupByWithoutLe := groupBy(tagsWithoutLe...)
 	groupTagsWithoutLe := groupSelect(tagsWithoutLe...)
+	orderWithoutLe := orderBy(mq.OrderBy, tagsWithoutLe)
 
 	groupBy := groupBy(mq.GroupBy...)
 	groupTags := groupSelect(mq.GroupBy...)
+	orderBy := orderBy(mq.OrderBy, mq.GroupBy)
+	if len(orderBy) != 0 {
+		orderBy += ","
+	}
 
 	switch mq.AggregateOperator {
 	case model.RATE:
@@ -199,7 +204,7 @@ func BuildMetricQuery(qp *v3.QueryRangeParamsV3, mq *v3.BuilderQuery, tableName 
 		groupTags = "fingerprint,"
 		op := "max(value)" // max value should be the closest value for point in time
 		subQuery := fmt.Sprintf(
-			queryTmpl, "any(labels) as labels, "+groupTags, mq.Step, op, filterSubQuery, groupBy, groupTags,
+			queryTmpl, "any(labels) as labels, "+groupTags, qp.Step, op, filterSubQuery, groupBy, orderBy,
 		) // labels will be same so any should be fine
 		query := `SELECT %s ts, runningDifference(value)/runningDifference(ts) as value FROM(%s)`
 
@@ -208,49 +213,51 @@ func BuildMetricQuery(qp *v3.QueryRangeParamsV3, mq *v3.BuilderQuery, tableName 
 	case model.SUM_RATE:
 		rateGroupBy := "fingerprint, " + groupBy
 		rateGroupTags := "fingerprint, " + groupTags
+		rateOrderBy := "fingerprint, " + orderBy
 		op := "max(value)"
 		subQuery := fmt.Sprintf(
-			queryTmpl, rateGroupTags, mq.Step, op, filterSubQuery, rateGroupBy, rateGroupTags,
+			queryTmpl, rateGroupTags, qp.Step, op, filterSubQuery, rateGroupBy, rateOrderBy,
 		) // labels will be same so any should be fine
 		query := `SELECT %s ts, runningDifference(value)/runningDifference(ts) as value FROM(%s) OFFSET 1`
 		query = fmt.Sprintf(query, groupTags, subQuery)
-		query = fmt.Sprintf(`SELECT %s ts, sum(value) as value FROM (%s) GROUP BY %s ORDER BY %s ts`, groupTags, query, groupBy, groupTags)
+		query = fmt.Sprintf(`SELECT %s ts, sum(value) as value FROM (%s) GROUP BY %s ORDER BY %s ts`, groupTags, query, groupBy, orderBy)
 		return query, nil
 	case model.RATE_SUM, model.RATE_MAX, model.RATE_AVG, model.RATE_MIN:
 		op := fmt.Sprintf("%s(value)", AggregateOperatorToSQLFunc[mq.AggregateOperator])
-		subQuery := fmt.Sprintf(queryTmpl, groupTags, mq.Step, op, filterSubQuery, groupBy, groupTags)
+		subQuery := fmt.Sprintf(queryTmpl, groupTags, qp.Step, op, filterSubQuery, groupBy, orderBy)
 		query := `SELECT %s ts, runningDifference(value)/runningDifference(ts) as value FROM(%s) OFFSET 1`
 		query = fmt.Sprintf(query, groupTags, subQuery)
 		return query, nil
 	case model.P05, model.P10, model.P20, model.P25, model.P50, model.P75, model.P90, model.P95, model.P99:
 		op := fmt.Sprintf("quantile(%v)(value)", AggregateOperatorToPercentile[mq.AggregateOperator])
-		query := fmt.Sprintf(queryTmpl, groupTags, mq.Step, op, filterSubQuery, groupBy, groupTags)
+		query := fmt.Sprintf(queryTmpl, groupTags, qp.Step, op, filterSubQuery, groupBy, orderBy)
 		return query, nil
 	case model.HIST_QUANTILE_50, model.HIST_QUANTILE_75, model.HIST_QUANTILE_90, model.HIST_QUANTILE_95, model.HIST_QUANTILE_99:
 		rateGroupBy := "fingerprint, " + groupBy
 		rateGroupTags := "fingerprint, " + groupTags
+		rateOrderBy := "fingerprint, " + orderBy
 		op := "max(value)"
 		subQuery := fmt.Sprintf(
-			queryTmpl, rateGroupTags, mq.Step, op, filterSubQuery, rateGroupBy, rateGroupTags,
+			queryTmpl, rateGroupTags, qp.Step, op, filterSubQuery, rateGroupBy, rateOrderBy,
 		) // labels will be same so any should be fine
 		query := `SELECT %s ts, runningDifference(value)/runningDifference(ts) as value FROM(%s) OFFSET 1`
 		query = fmt.Sprintf(query, groupTags, subQuery)
-		query = fmt.Sprintf(`SELECT %s ts, sum(value) as value FROM (%s) GROUP BY %s ORDER BY %s ts`, groupTags, query, groupBy, groupTags)
+		query = fmt.Sprintf(`SELECT %s ts, sum(value) as value FROM (%s) GROUP BY %s ORDER BY %s ts`, groupTags, query, groupBy, orderBy)
 		value := AggregateOperatorToPercentile[mq.AggregateOperator]
 
-		query = fmt.Sprintf(`SELECT %s ts, histogramQuantile(arrayMap(x -> toFloat64(x), groupArray(le)), groupArray(value), %.3f) as value FROM (%s) GROUP BY %s ORDER BY %s ts`, groupTagsWithoutLe, value, query, groupByWithoutLe, groupTagsWithoutLe)
+		query = fmt.Sprintf(`SELECT %s ts, histogramQuantile(arrayMap(x -> toFloat64(x), groupArray(le)), groupArray(value), %.3f) as value FROM (%s) GROUP BY %s ORDER BY %s ts`, groupTagsWithoutLe, value, query, groupByWithoutLe, orderWithoutLe)
 		return query, nil
 	case model.AVG, model.SUM, model.MIN, model.MAX:
 		op := fmt.Sprintf("%s(value)", AggregateOperatorToSQLFunc[mq.AggregateOperator])
-		query := fmt.Sprintf(queryTmpl, groupTags, mq.Step, op, filterSubQuery, groupBy, groupTags)
+		query := fmt.Sprintf(queryTmpl, groupTags, qp.Step, op, filterSubQuery, groupBy, orderBy)
 		return query, nil
 	case model.COUNT:
 		op := "toFloat64(count(*))"
-		query := fmt.Sprintf(queryTmpl, groupTags, mq.Step, op, filterSubQuery, groupBy, groupTags)
+		query := fmt.Sprintf(queryTmpl, groupTags, qp.Step, op, filterSubQuery, groupBy, orderBy)
 		return query, nil
 	case model.COUNT_DISTINCT:
 		op := "toFloat64(count(distinct(value)))"
-		query := fmt.Sprintf(queryTmpl, groupTags, mq.Step, op, filterSubQuery, groupBy, groupTags)
+		query := fmt.Sprintf(queryTmpl, groupTags, qp.Step, op, filterSubQuery, groupBy, orderBy)
 		return query, nil
 	case model.NOOP:
 		queryTmpl :=
@@ -264,7 +271,7 @@ func BuildMetricQuery(qp *v3.QueryRangeParamsV3, mq *v3.BuilderQuery, tableName 
 				" WHERE " + samplesTableTimeFilter +
 				" GROUP BY fingerprint, labels, ts" +
 				" ORDER BY fingerprint, labels, ts"
-		query := fmt.Sprintf(queryTmpl, mq.Step, filterSubQuery)
+		query := fmt.Sprintf(queryTmpl, qp.Step, filterSubQuery)
 		return query, nil
 	default:
 		return "", fmt.Errorf("unsupported aggregate operator")
@@ -282,6 +289,32 @@ func groupSelect(tags ...string) string {
 		groupTags += ", "
 	}
 	return groupTags
+}
+
+func orderBy(items []v3.OrderBy, tags []string) string {
+	var orderBy []string
+	for _, tag := range tags {
+		found := false
+		for _, item := range items {
+			if item.ColumnName == tag {
+				found = true
+				orderBy = append(orderBy, fmt.Sprintf("%s %s", item.ColumnName, item.Order))
+				break
+			}
+		}
+		if !found {
+			orderBy = append(orderBy, fmt.Sprintf("%s ASC", tag))
+		}
+	}
+	return strings.Join(orderBy, ",")
+}
+
+func having(items []v3.Having) string {
+	var having []string
+	for _, item := range items {
+		having = append(having, fmt.Sprintf("%s %s %v", item.ColumnName, item.Operator, FormattedValue(item.Value)))
+	}
+	return strings.Join(having, " AND ")
 }
 
 // validateExpressions validates the math expressions using the list of
@@ -341,6 +374,9 @@ func varToQuery(qp *v3.QueryRangeParamsV3, tableName string) (map[string]string,
 	evalFuncs := GoValuateFuncs()
 	varToQuery := make(map[string]string)
 	for _, builderQuery := range qp.CompositeQuery.BuilderQueries {
+		if builderQuery.DataSource != model.METRICS {
+			continue
+		}
 		// err should be nil here since the expression is already validated
 		expression, _ := govaluate.NewEvaluableExpressionWithFunctions(builderQuery.Expression, evalFuncs)
 
@@ -355,6 +391,10 @@ func varToQuery(qp *v3.QueryRangeParamsV3, tableName string) (map[string]string,
 					continue
 				}
 				query, err := BuildMetricQuery(qp, mq, tableName)
+				having := having(mq.Having)
+				if len(having) != 0 {
+					query = fmt.Sprintf("%s HAVING %s", query, having)
+				}
 				if err != nil {
 					errs = append(errs, err)
 				} else {

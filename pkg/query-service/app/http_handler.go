@@ -223,10 +223,10 @@ func (aH *APIHandler) RegisterMetricsRoutes(router *mux.Router) {
 
 func (aH *APIHandler) RegisterQueryRangeV3Routes(router *mux.Router) {
 	subRouter := router.PathPrefix("/api/v3").Subrouter()
-	subRouter.HandleFunc("/query_range", ViewAccess(aH.QueryRangeV3)).Methods(http.MethodPost)
-	subRouter.HandleFunc("/autocomplete/aggregate_attributes", ViewAccess(aH.autocompleteAggregateAttributes)).Methods(http.MethodGet)
-	subRouter.HandleFunc("/autocomplete/attribute_keys", ViewAccess(aH.autoCompleteAttributeKeys)).Methods(http.MethodGet)
-	subRouter.HandleFunc("/autocomplete/attribute_values", ViewAccess(aH.autoCompleteAttributeValues)).Methods(http.MethodGet)
+	subRouter.HandleFunc("/query_range", OpenAccess(aH.QueryRangeV3)).Methods(http.MethodPost)
+	subRouter.HandleFunc("/autocomplete/aggregate_attributes", OpenAccess(aH.autocompleteAggregateAttributes)).Methods(http.MethodGet)
+	subRouter.HandleFunc("/autocomplete/attribute_keys", OpenAccess(aH.autoCompleteAttributeKeys)).Methods(http.MethodGet)
+	subRouter.HandleFunc("/autocomplete/attribute_values", OpenAccess(aH.autoCompleteAttributeValues)).Methods(http.MethodGet)
 }
 
 func (aH *APIHandler) Respond(w http.ResponseWriter, data interface{}) {
@@ -2325,14 +2325,14 @@ func (aH *APIHandler) QueryRangeV3(w http.ResponseWriter, r *http.Request) {
 	}
 
 	type channelResult struct {
-		Series []*model.Series
+		Series []*v3.Series
 		Err    error
 		Name   string
 		Query  string
 	}
 
-	execClickHouseQueries := func(queries map[string]string) ([]*model.Series, error, map[string]string) {
-		var seriesList []*model.Series
+	execClickHouseQueries := func(queries map[string]string) ([]*v3.Result, error, map[string]string) {
+		// var seriesList []*v3.Series
 		ch := make(chan channelResult, len(queries))
 		var wg sync.WaitGroup
 
@@ -2340,16 +2340,13 @@ func (aH *APIHandler) QueryRangeV3(w http.ResponseWriter, r *http.Request) {
 			wg.Add(1)
 			go func(name, query string) {
 				defer wg.Done()
-				seriesList, err := aH.reader.GetMetricResult(r.Context(), query)
-				for _, series := range seriesList {
-					series.QueryName = name
-				}
+				seriesList, err := aH.reader.GetMetricResultV3(r.Context(), query)
 
 				if err != nil {
 					ch <- channelResult{Err: fmt.Errorf("error in query-%s: %v", name, err), Name: name, Query: query}
 					return
 				}
-				ch <- channelResult{Series: seriesList}
+				ch <- channelResult{Series: seriesList, Name: name, Query: query}
 			}(name, query)
 		}
 
@@ -2359,22 +2356,28 @@ func (aH *APIHandler) QueryRangeV3(w http.ResponseWriter, r *http.Request) {
 		var errs []error
 		errQuriesByName := make(map[string]string)
 		// read values from the channel
+		res := make([]*v3.Result, 0)
 		for r := range ch {
 			if r.Err != nil {
 				errs = append(errs, r.Err)
 				errQuriesByName[r.Name] = r.Query
 				continue
 			}
-			seriesList = append(seriesList, r.Series...)
+			for _, series := range r.Series {
+				res = append(res, &v3.Result{
+					QueryName: r.Name,
+					Series:    series,
+				})
+			}
 		}
 		if len(errs) != 0 {
 			return nil, fmt.Errorf("encountered multiple errors: %s", metrics.FormatErrs(errs, "\n")), errQuriesByName
 		}
-		return seriesList, nil, nil
+		return res, nil, nil
 	}
 
-	execPromQueries := func(metricsQueryRangeParams *v3.QueryRangeParamsV3) ([]*model.Series, error, map[string]string) {
-		var seriesList []*model.Series
+	execPromQueries := func(metricsQueryRangeParams *v3.QueryRangeParamsV3) ([]*v3.Result, error, map[string]string) {
+		var seriesList []*v3.Series
 		ch := make(chan channelResult, len(metricsQueryRangeParams.CompositeQuery.PromQueries))
 		var wg sync.WaitGroup
 
@@ -2384,7 +2387,7 @@ func (aH *APIHandler) QueryRangeV3(w http.ResponseWriter, r *http.Request) {
 			}
 			wg.Add(1)
 			go func(name string, query *model.PromQuery) {
-				var seriesList []*model.Series
+				var seriesList []*v3.Series
 				defer wg.Done()
 				tmpl := template.New("promql-query")
 				tmpl, tmplErr := tmpl.Parse(query.Query)
@@ -2412,15 +2415,14 @@ func (aH *APIHandler) QueryRangeV3(w http.ResponseWriter, r *http.Request) {
 				}
 				matrix, _ := promResult.Matrix()
 				for _, v := range matrix {
-					var s model.Series
-					s.QueryName = name
+					var s v3.Series
 					s.Labels = v.Metric.Copy().Map()
 					for _, p := range v.Points {
-						s.Points = append(s.Points, model.MetricPoint{Timestamp: p.T, Value: p.V})
+						s.Points = append(s.Points, v3.Point{Timestamp: p.T, Value: p.V})
 					}
 					seriesList = append(seriesList, &s)
 				}
-				ch <- channelResult{Series: seriesList}
+				ch <- channelResult{Series: seriesList, Name: name, Query: query.Query}
 			}(name, query)
 		}
 
@@ -2430,21 +2432,29 @@ func (aH *APIHandler) QueryRangeV3(w http.ResponseWriter, r *http.Request) {
 		var errs []error
 		errQuriesByName := make(map[string]string)
 		// read values from the channel
+		res := make([]*v3.Result, 0)
 		for r := range ch {
 			if r.Err != nil {
 				errs = append(errs, r.Err)
 				errQuriesByName[r.Name] = r.Query
 				continue
 			}
+			for _, series := range r.Series {
+				res = append(res, &v3.Result{
+					QueryName: r.Name,
+					Series:    series,
+				})
+			}
 			seriesList = append(seriesList, r.Series...)
 		}
 		if len(errs) != 0 {
 			return nil, fmt.Errorf("encountered multiple errors: %s", metrics.FormatErrs(errs, "\n")), errQuriesByName
 		}
-		return seriesList, nil, nil
+		return res, nil, nil
 	}
 
-	var seriesList []*model.Series
+	var seriesList []*v3.Series
+	var res []*v3.Result
 	var err error
 	var errQuriesByName map[string]string
 	switch metricsQueryRangeParams.CompositeQuery.QueryType {
@@ -2454,7 +2464,7 @@ func (aH *APIHandler) QueryRangeV3(w http.ResponseWriter, r *http.Request) {
 			RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: runQueries.Err}, nil)
 			return
 		}
-		seriesList, err, errQuriesByName = execClickHouseQueries(runQueries.Queries)
+		res, err, errQuriesByName = execClickHouseQueries(runQueries.Queries)
 
 	case model.CLICKHOUSE:
 		queries := make(map[string]string)
@@ -2481,9 +2491,9 @@ func (aH *APIHandler) QueryRangeV3(w http.ResponseWriter, r *http.Request) {
 
 			queries[name] = query.String()
 		}
-		seriesList, err, errQuriesByName = execClickHouseQueries(queries)
+		res, err, errQuriesByName = execClickHouseQueries(queries)
 	case model.PROM:
-		seriesList, err, errQuriesByName = execPromQueries(metricsQueryRangeParams)
+		res, err, errQuriesByName = execPromQueries(metricsQueryRangeParams)
 	default:
 		err = fmt.Errorf("invalid query type")
 		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, errQuriesByName)
@@ -2503,11 +2513,9 @@ func (aH *APIHandler) QueryRangeV3(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	type ResponseFormat struct {
-		ResultType string          `json:"resultType"`
-		Result     []*model.Series `json:"result"`
+	resp := v3.QueryRangeResponse{
+		Result: res,
 	}
-	resp := ResponseFormat{ResultType: "matrix", Result: seriesList}
 	aH.Respond(w, resp)
 }
 

@@ -45,6 +45,7 @@ import (
 	am "go.signoz.io/signoz/pkg/query-service/integrations/alertManager"
 	"go.signoz.io/signoz/pkg/query-service/interfaces"
 	"go.signoz.io/signoz/pkg/query-service/model"
+	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
 	"go.signoz.io/signoz/pkg/query-service/telemetry"
 	"go.signoz.io/signoz/pkg/query-service/utils"
 	"go.uber.org/zap"
@@ -3070,12 +3071,12 @@ func (r *ClickHouseReader) GetMetricAggregateAttributes(ctx context.Context, req
 		query = query + fmt.Sprintf(" LIMIT %d;", req.Limit)
 	}
 	rows, err = r.db.Query(ctx, query, fmt.Sprintf("%%%s%%", req.SearchText))
-	defer rows.Close()
 
 	if err != nil {
 		zap.S().Error(err)
 		return nil, fmt.Errorf("error while executing query: %s", err.Error())
 	}
+	defer rows.Close()
 
 	var metricName string
 	for rows.Next() {
@@ -3094,7 +3095,6 @@ func (r *ClickHouseReader) GetMetricAttributeKeys(ctx context.Context, req *mode
 	var err error
 	var attributeKeys []string
 	var rows driver.Rows
-	defer rows.Close()
 
 	if len(req.SearchText) != 0 {
 		query = fmt.Sprintf("select distinctTagKeys from (SELECT DISTINCT arrayJoin(tagKeys) distinctTagKeys from (SELECT DISTINCT(JSONExtractKeys(labels)) tagKeys from %s.%s WHERE metric_name=$1 )) WHERE distinctTagKeys ILIKE $2;", signozMetricDBName, signozTSTableName)
@@ -3108,6 +3108,7 @@ func (r *ClickHouseReader) GetMetricAttributeKeys(ctx context.Context, req *mode
 		zap.S().Error(err)
 		return attributeKeys, fmt.Errorf("error while executing query: %s", err.Error())
 	}
+	defer rows.Close()
 
 	var attributeKey string
 	for rows.Next() {
@@ -3125,7 +3126,6 @@ func (r *ClickHouseReader) GetMetricAttributeValues(ctx context.Context, req *mo
 	var err error
 	var attributeValues []string
 	var rows driver.Rows
-	defer rows.Close()
 
 	if len(req.SearchText) != 0 {
 		query = fmt.Sprintf("SELECT DISTINCT(JSONExtractString(labels, '%s')) from %s.%s WHERE metric_name=$1 AND JSONExtractString(labels, '%s') ILIKE $2;", req.FilterAttributeKey, signozMetricDBName, signozTSTableName, req.FilterAttributeKey)
@@ -3139,6 +3139,7 @@ func (r *ClickHouseReader) GetMetricAttributeValues(ctx context.Context, req *mo
 		zap.S().Error(err)
 		return attributeValues, fmt.Errorf("error while executing query: %s", err.Error())
 	}
+	defer rows.Close()
 
 	var atrributeValue string
 	for rows.Next() {
@@ -3262,6 +3263,117 @@ func (r *ClickHouseReader) GetMetricResult(ctx context.Context, query string) ([
 		}
 		attributes := attributesMap[key]
 		series := model.Series{Labels: attributes, Points: points}
+		seriesList = append(seriesList, &series)
+	}
+	return seriesList, nil
+}
+
+// GetMetricResult runs the query and returns list of time series
+func (r *ClickHouseReader) GetMetricResultV3(ctx context.Context, query string) ([]*v3.Series, error) {
+
+	defer utils.Elapsed("GetMetricResult")()
+
+	zap.S().Infof("Executing metric result query: %s", query)
+
+	rows, err := r.db.Query(ctx, query)
+
+	if err != nil {
+		zap.S().Debug("Error in processing query: ", err)
+		return nil, err
+	}
+
+	var (
+		columnTypes = rows.ColumnTypes()
+		columnNames = rows.Columns()
+		vars        = make([]interface{}, len(columnTypes))
+	)
+	for i := range columnTypes {
+		vars[i] = reflect.New(columnTypes[i].ScanType()).Interface()
+	}
+	// when group by is applied, each combination of cartesian product
+	// of attributes is separate series. each item in metricPointsMap
+	// represent a unique series.
+	metricPointsMap := make(map[string][]v3.Point)
+	// attribute key-value pairs for each group selection
+	attributesMap := make(map[string]map[string]string)
+
+	defer rows.Close()
+	for rows.Next() {
+		if err := rows.Scan(vars...); err != nil {
+			return nil, err
+		}
+		var groupBy []string
+		var metricPoint v3.Point
+		groupAttributes := make(map[string]string)
+		// Assuming that the end result row contains a timestamp, value and option labels
+		// Label key and value are both strings.
+		for idx, v := range vars {
+			colName := columnNames[idx]
+			switch v := v.(type) {
+			case *string:
+				// special case for returning all labels
+				if colName == "fullLabels" {
+					var metric map[string]string
+					err := json.Unmarshal([]byte(*v), &metric)
+					if err != nil {
+						return nil, err
+					}
+					for key, val := range metric {
+						groupBy = append(groupBy, val)
+						groupAttributes[key] = val
+					}
+				} else {
+					groupBy = append(groupBy, *v)
+					groupAttributes[colName] = *v
+				}
+			case *time.Time:
+				metricPoint.Timestamp = v.UnixMilli()
+			case *float64:
+				metricPoint.Value = *v
+			case **float64:
+				// ch seems to return this type when column is derived from
+				// SELECT count(*)/ SELECT count(*)
+				floatVal := *v
+				if floatVal != nil {
+					metricPoint.Value = *floatVal
+				}
+			case *float32:
+				float32Val := float32(*v)
+				metricPoint.Value = float64(float32Val)
+			case *uint8, *uint64, *uint16, *uint32:
+				if _, ok := constants.ReservedColumnTargetAliases[colName]; ok {
+					metricPoint.Value = float64(reflect.ValueOf(v).Elem().Uint())
+				} else {
+					groupBy = append(groupBy, fmt.Sprintf("%v", reflect.ValueOf(v).Elem().Uint()))
+					groupAttributes[colName] = fmt.Sprintf("%v", reflect.ValueOf(v).Elem().Uint())
+				}
+			case *int8, *int16, *int32, *int64:
+				if _, ok := constants.ReservedColumnTargetAliases[colName]; ok {
+					metricPoint.Value = float64(reflect.ValueOf(v).Elem().Int())
+				} else {
+					groupBy = append(groupBy, fmt.Sprintf("%v", reflect.ValueOf(v).Elem().Int()))
+					groupAttributes[colName] = fmt.Sprintf("%v", reflect.ValueOf(v).Elem().Int())
+				}
+			default:
+				zap.S().Errorf("invalid var found in metric builder query result", v, colName)
+			}
+		}
+		sort.Strings(groupBy)
+		key := strings.Join(groupBy, "")
+		attributesMap[key] = groupAttributes
+		metricPointsMap[key] = append(metricPointsMap[key], metricPoint)
+	}
+
+	var seriesList []*v3.Series
+	for key := range metricPointsMap {
+		points := metricPointsMap[key]
+		// first point in each series could be invalid since the
+		// aggregations are applied with point from prev series
+		if len(points) != 0 && len(points) > 1 {
+			points = points[1:]
+		}
+		attributes := attributesMap[key]
+		series := v3.Series{Labels: attributes, Points: points}
 		seriesList = append(seriesList, &series)
 	}
 	return seriesList, nil

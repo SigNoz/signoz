@@ -209,6 +209,7 @@ func (s *Server) createPublicServer(apiHandler *api.APIHandler) (*http.Server, e
 
 	apiHandler.RegisterRoutes(r)
 	apiHandler.RegisterMetricsRoutes(r)
+	apiHandler.RegisterQueryRangeV3Routes(r)
 	apiHandler.RegisterLogsRoutes(r)
 
 	c := cors.New(cors.Options{
