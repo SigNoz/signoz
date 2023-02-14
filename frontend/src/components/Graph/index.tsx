@@ -375,6 +375,7 @@ Graph.defaultProps = {
 	onDragSelect: undefined,
 	dragSelectColor: undefined,
 };
+
 export default memo(Graph, (prevProps, nextProps) =>
 	isEqual(prevProps.data, nextProps.data),
 );

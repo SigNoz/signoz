@@ -1,8 +1,9 @@
-import { Button, Input, notification, Typography } from 'antd';
+import { Button, Input, Typography } from 'antd';
 import resetPasswordApi from 'api/user/resetPassword';
 import { Logout } from 'api/utils';
 import WelcomeLeftContainer from 'components/WelcomeLeftContainer';
 import ROUTES from 'constants/routes';
+import { useNotifications } from 'hooks/useNotifications';
 import history from 'lib/history';
 import { Label } from 'pages/SignUp/styles';
 import React, { useEffect, useState } from 'react';
@@ -24,7 +25,7 @@ function ResetPassword({ version }: ResetPasswordProps): JSX.Element {
 	const { search } = useLocation();
 	const params = new URLSearchParams(search);
 	const token = params.get('token');
-	const [notifications, NotificationElement] = notification.useNotification();
+	const { notifications } = useNotifications();
 
 	useEffect(() => {
 		if (!token) {
@@ -83,73 +84,70 @@ function ResetPassword({ version }: ResetPasswordProps): JSX.Element {
 
 	return (
 		<WelcomeLeftContainer version={version}>
-			<>
-				{NotificationElement}
-				<FormWrapper>
-					<form onSubmit={handleSubmit}>
-						<Title level={4}>Reset Your Password</Title>
+			<FormWrapper>
+				<form onSubmit={handleSubmit}>
+					<Title level={4}>Reset Your Password</Title>
 
-						<div>
-							<Label htmlFor="Password">Password</Label>
-							<Input.Password
-								value={password}
-								onChange={(e): void => {
-									setState(e.target.value, setPassword);
-								}}
-								required
-								id="currentPassword"
-							/>
-						</div>
-						<div>
-							<Label htmlFor="ConfirmPassword">Confirm Password</Label>
-							<Input.Password
-								value={confirmPassword}
-								onChange={(e): void => {
-									const updateValue = e.target.value;
-									setState(updateValue, setConfirmPassword);
-									if (password !== updateValue) {
-										setConfirmPasswordError(true);
-									} else {
-										setConfirmPasswordError(false);
-									}
-								}}
-								required
-								id="UpdatePassword"
-							/>
-
-							{confirmPasswordError && (
-								<Typography.Paragraph
-									italic
-									style={{
-										color: '#D89614',
-										marginTop: '0.50rem',
-									}}
-								>
-									Passwords don’t match. Please try again
-								</Typography.Paragraph>
-							)}
-						</div>
-
-						<ButtonContainer>
-							<Button
-								type="primary"
-								htmlType="submit"
-								data-attr="signup"
-								loading={loading}
-								disabled={
-									loading ||
-									!password ||
-									!confirmPassword ||
-									confirmPasswordError ||
-									token === null
+					<div>
+						<Label htmlFor="Password">Password</Label>
+						<Input.Password
+							value={password}
+							onChange={(e): void => {
+								setState(e.target.value, setPassword);
+							}}
+							required
+							id="currentPassword"
+						/>
+					</div>
+					<div>
+						<Label htmlFor="ConfirmPassword">Confirm Password</Label>
+						<Input.Password
+							value={confirmPassword}
+							onChange={(e): void => {
+								const updateValue = e.target.value;
+								setState(updateValue, setConfirmPassword);
+								if (password !== updateValue) {
+									setConfirmPasswordError(true);
+								} else {
+									setConfirmPasswordError(false);
 								}
+							}}
+							required
+							id="UpdatePassword"
+						/>
+
+						{confirmPasswordError && (
+							<Typography.Paragraph
+								italic
+								style={{
+									color: '#D89614',
+									marginTop: '0.50rem',
+								}}
 							>
-								Get Started
-							</Button>
-						</ButtonContainer>
-					</form>
-				</FormWrapper>
-			</>
+								Passwords don’t match. Please try again
+							</Typography.Paragraph>
+						)}
+					</div>
+
+					<ButtonContainer>
+						<Button
+							type="primary"
+							htmlType="submit"
+							data-attr="signup"
+							loading={loading}
+							disabled={
+								loading ||
+								!password ||
+								!confirmPassword ||
+								confirmPasswordError ||
+								token === null
+							}
+						>
+							Get Started
+						</Button>
+					</ButtonContainer>
+				</form>
+			</FormWrapper>
 		</WelcomeLeftContainer>
 	);
 }

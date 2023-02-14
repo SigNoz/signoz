@@ -144,6 +144,8 @@ Moreover, SigNoz has few more advanced features wrt Jaeger:
 - SigNoz Logs management are based on ClickHouse, a columnar OLAP datastore which makes aggregate log analytics queries much more efficient
 - 50% lower resource requirement compared to Elastic during ingestion
 
+We have published benchmarks comparing Elastic with SigNoz. Check it out [here](https://signoz.io/blog/logs-performance-benchmark/?utm_source=github-readme&utm_medium=logs-benchmark)
+
 <p>&nbsp  </p>
 
 ### SigNoz vs Loki
@@ -151,6 +153,8 @@ Moreover, SigNoz has few more advanced features wrt Jaeger:
 - SigNoz supports aggregations on high-cardinality data over a huge volume while loki doesn’t.
 - SigNoz supports indexes over high cardinality data and has no limitations on the number of indexes, while Loki reaches max streams with a few indexes added to it.
 - Searching over a huge volume of data is difficult and slow in Loki compared to SigNoz
+
+We have published benchmarks comparing Loki with SigNoz. Check it out [here](https://signoz.io/blog/logs-performance-benchmark/?utm_source=github-readme&utm_medium=logs-benchmark)
 
 <br /><br />
 
