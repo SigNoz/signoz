@@ -1,12 +1,6 @@
 import { blue, grey } from '@ant-design/colors';
-import { Col, Typography } from 'antd';
+import { Typography } from 'antd';
 import styled from 'styled-components';
-
-export const Container = styled(Col)`
-	padding-top: 0.3rem;
-	min-width: 15.625rem;
-	max-width: 21.875rem;
-`;
 
 export const CategoryContainer = styled.div`
 	margin: 1rem 0;
