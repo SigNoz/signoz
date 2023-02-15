@@ -48,6 +48,7 @@ function SearchFilter({
 		AppState,
 		ILogsReducer
 	>((state) => state.logs);
+
 	const globalTime = useSelector<AppState, GlobalReducer>(
 		(state) => state.globalTime,
 	);
