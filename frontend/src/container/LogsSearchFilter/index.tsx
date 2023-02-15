@@ -48,6 +48,7 @@ function SearchFilter({
 		AppState,
 		ILogsReducer
 	>((state) => state.logs);
+
 	const globalTime = useSelector<AppState, GlobalReducer>(
 		(state) => state.globalTime,
 	);
@@ -185,8 +186,8 @@ function SearchFilter({
 					onChange={(e): void => {
 						const { value } = e.target;
 						setSearchText(value);
-						debouncedupdateQueryString(value);
 					}}
+					onSearch={debouncedupdateQueryString}
 					allowClear
 				/>
 			</Popover>
