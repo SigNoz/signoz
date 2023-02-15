@@ -77,7 +77,9 @@ function GridGraph(props: Props): JSX.Element {
 			const startTimestamp = Math.trunc(start);
 			const endTimestamp = Math.trunc(end);
 
-			dispatch(UpdateTimeInterval('custom', [startTimestamp, endTimestamp]));
+			if (startTimestamp !== endTimestamp) {
+				dispatch(UpdateTimeInterval('custom', [startTimestamp, endTimestamp]));
+			}
 		},
 		[dispatch],
 	);

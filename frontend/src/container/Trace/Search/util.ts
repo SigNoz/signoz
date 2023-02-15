@@ -59,7 +59,7 @@ export const parseQueryToTags = (query: string): PayloadProps<Tags> => {
 		// If the operator is Exists or NotExists, then return the tag object without values
 		if (operator === 'Exists' || operator === 'NotExists') {
 			return {
-				Key: [tagName],
+				Key: tagName,
 				StringValues: [],
 				NumberValues: [],
 				BoolValues: [],
@@ -97,7 +97,7 @@ export const parseQueryToTags = (query: string): PayloadProps<Tags> => {
 
 		// Return the tag object
 		return {
-			Key: [tagName],
+			Key: tagName,
 			StringValues,
 			NumberValues,
 			BoolValues,
@@ -120,31 +120,31 @@ export const parseTagsToQuery = (tags: Tags): PayloadProps<string> => {
 	const payload = tags
 		.map(({ StringValues, NumberValues, BoolValues, Key, Operator }) => {
 			// Check if the key of the tag is undefined
-			if (!Key[0]) {
+			if (!Key) {
 				isError = true;
 			}
 			if (Operator === 'Exists' || Operator === 'NotExists') {
-				return `${Key[0]} ${Operator}`;
+				return `${Key} ${Operator}`;
 			}
 			// Check if the tag has string values
 			if (StringValues.length > 0) {
 				// Format the string values and join them with a ','
 				const formattedStringValues = formatValues(StringValues);
-				return `${Key[0]} ${Operator} (${formattedStringValues})`;
+				return `${Key} ${Operator} (${formattedStringValues})`;
 			}
 
 			// Check if the tag has number values
 			if (NumberValues.length > 0) {
 				// Format the number values and join them with a ','
 				const formattedNumberValues = formatValues(NumberValues);
-				return `${Key[0]} ${Operator} (${formattedNumberValues})`;
+				return `${Key} ${Operator} (${formattedNumberValues})`;
 			}
 
 			// Check if the tag has boolean values
 			if (BoolValues.length > 0) {
 				// Format the boolean values and join them with a ','
 				const formattedBoolValues = formatValues(BoolValues);
-				return `${Key[0]} ${Operator} (${formattedBoolValues})`;
+				return `${Key} ${Operator} (${formattedBoolValues})`;
 			}
 
 			return '';
