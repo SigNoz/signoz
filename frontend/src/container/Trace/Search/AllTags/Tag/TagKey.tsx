@@ -16,7 +16,7 @@ function TagsKey(props: TagsKeysProps): JSX.Element {
 
 	const { index, setLocalSelectedTags, tag } = props;
 
-	const [selectedKey, setSelectedKey] = useState<string>(tag.Key[0] || '');
+	const [selectedKey, setSelectedKey] = useState<string>(tag.Key || '');
 
 	const traces = useSelector<AppState, TraceReducer>((state) => state.traces);
 
