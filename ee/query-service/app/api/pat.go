@@ -5,6 +5,7 @@ import (
 	"crypto/rand"
 	"encoding/base64"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"time"
 
@@ -55,7 +56,14 @@ func (ah *APIHandler) createPAT(w http.ResponseWriter, r *http.Request) {
 
 func (ah *APIHandler) getPATs(w http.ResponseWriter, r *http.Request) {
 	ctx := context.Background()
-	user, _ := auth.GetUserFromRequest(r)
+	user, err := auth.GetUserFromRequest(r)
+	if err != nil {
+		RespondError(w, &model.ApiError{
+			Typ: model.ErrorUnauthorized,
+			Err: err,
+		}, nil)
+		return
+	}
 	zap.S().Infof("Get PATs for user: %+v", user.Id)
 	pats, apierr := ah.AppDao().ListPATs(ctx, user.Id)
 	if apierr != nil {
@@ -68,6 +76,26 @@ func (ah *APIHandler) getPATs(w http.ResponseWriter, r *http.Request) {
 func (ah *APIHandler) deletePAT(w http.ResponseWriter, r *http.Request) {
 	ctx := context.Background()
 	id := mux.Vars(r)["id"]
+	user, err := auth.GetUserFromRequest(r)
+	if err != nil {
+		RespondError(w, &model.ApiError{
+			Typ: model.ErrorUnauthorized,
+			Err: err,
+		}, nil)
+		return
+	}
+	pat, apierr := ah.AppDao().GetPAT(ctx, id)
+	if apierr != nil {
+		RespondError(w, apierr, nil)
+		return
+	}
+	if pat.UserID != user.Id {
+		RespondError(w, &model.ApiError{
+			Typ: model.ErrorUnauthorized,
+			Err: fmt.Errorf("unauthorized PAT delete request"),
+		}, nil)
+		return
+	}
 	zap.S().Infof("Delete PAT with id: %+v", id)
 	if apierr := ah.AppDao().DeletePAT(ctx, id); apierr != nil {
 		RespondError(w, apierr, nil)

@@ -43,18 +43,17 @@ func (m *modelDao) DeletePAT(ctx context.Context, id string) basemodel.BaseApiEr
 	return nil
 }
 
-func (m *modelDao) GetPAT(ctx context.Context, patID string) (*model.PAT, basemodel.BaseApiError) {
+func (m *modelDao) GetPAT(ctx context.Context, token string) (*model.PAT, basemodel.BaseApiError) {
 	pats := []model.PAT{}
 
-	if err := m.DB().Select(&pats, `SELECT * FROM personal_access_tokens WHERE id=?;`, patID); err != nil {
-		zap.S().Errorf("Failed to fetch PAT with ID: %s, err: %v", patID, zap.Error(err))
+	if err := m.DB().Select(&pats, `SELECT * FROM personal_access_tokens WHERE token=?;`, token); err != nil {
 		return nil, model.InternalError(fmt.Errorf("failed to fetch PAT"))
 	}
 
 	if len(pats) != 1 {
 		return nil, &model.ApiError{
 			Typ: model.ErrorInternal,
-			Err: fmt.Errorf("found zero or multiple PATS with same ID"),
+			Err: fmt.Errorf("found zero or multiple PATs with same token, %s", token),
 		}
 	}
 

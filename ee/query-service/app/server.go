@@ -10,6 +10,7 @@ import (
 	"net/http"
 	_ "net/http/pprof" // http profiler
 	"os"
+	"strings"
 	"time"
 
 	"github.com/gorilla/handlers"
@@ -25,7 +26,9 @@ import (
 	licensepkg "go.signoz.io/signoz/ee/query-service/license"
 	"go.signoz.io/signoz/ee/query-service/usage"
 
+	baseapp "go.signoz.io/signoz/pkg/query-service/app"
 	"go.signoz.io/signoz/pkg/query-service/app/dashboards"
+	baseauth "go.signoz.io/signoz/pkg/query-service/auth"
 	baseconst "go.signoz.io/signoz/pkg/query-service/constants"
 	"go.signoz.io/signoz/pkg/query-service/healthcheck"
 	basealm "go.signoz.io/signoz/pkg/query-service/integrations/alertManager"
@@ -199,17 +202,61 @@ func (s *Server) createPrivateServer(apiHandler *api.APIHandler) (*http.Server, 
 	}, nil
 }
 
+func getPATToken(r *http.Request) (string, error) {
+	authHeader := r.Header.Get("Authorization")
+	if authHeader == "" {
+		return "", nil
+	}
+
+	authHeaderParts := strings.Fields(authHeader)
+	if len(authHeaderParts) != 2 || strings.ToLower(authHeaderParts[0]) != "bearer" {
+		return "", fmt.Errorf("authorization header format must be Bearer {token}")
+	}
+
+	return authHeaderParts[1], nil
+}
+
 func (s *Server) createPublicServer(apiHandler *api.APIHandler) (*http.Server, error) {
 
 	r := mux.NewRouter()
 
+	getUserFromPAT := func(r *http.Request) (*model.UserPayload, error) {
+		patToken, err := getPATToken(r)
+		if err != nil {
+			return nil, fmt.Errorf("failed to get PAT token in request headers, err: %v", err)
+		}
+		ctx := context.Background()
+		dao := apiHandler.AppDao()
+		pat, err := dao.GetPAT(ctx, patToken)
+		if err != nil {
+			return nil, fmt.Errorf("failed to fetch PAT token from DB, err %v", err)
+		}
+		user, apierr := dao.GetUser(ctx, pat.UserID)
+		if apierr != nil {
+			return nil, fmt.Errorf("failed to fetch user for PAT from DB, err: %v", apierr)
+		}
+		return user, nil
+	}
+
+	getUserFromRequest := func(r *http.Request) (*model.UserPayload, error) {
+		user, err := getUserFromPAT(r)
+		if err == nil && user != nil {
+			zap.S().Debugf("Found valid PAT user: %+v", user)
+			return user, nil
+		}
+		if err != nil {
+			zap.S().Debugf("Error while getting user for PAT: %+v", err)
+		}
+		return baseauth.GetUserFromRequest(r)
+	}
+	am := baseapp.NewAuthMiddleware(getUserFromRequest)
 	r.Use(setTimeoutMiddleware)
 	r.Use(s.analyticsMiddleware)
 	r.Use(loggingMiddleware)
 
-	apiHandler.RegisterRoutes(r)
-	apiHandler.RegisterMetricsRoutes(r)
-	apiHandler.RegisterLogsRoutes(r)
+	apiHandler.RegisterRoutes(r, am)
+	apiHandler.RegisterMetricsRoutes(r, am)
+	apiHandler.RegisterLogsRoutes(r, am)
 
 	c := cors.New(cors.Options{
 		AllowedOrigins: []string{"*"},
