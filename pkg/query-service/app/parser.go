@@ -13,6 +13,7 @@ import (
 	"github.com/gorilla/mux"
 	promModel "github.com/prometheus/common/model"
 
+	"go.signoz.io/signoz/pkg/query-service/app/metrics"
 	"go.signoz.io/signoz/pkg/query-service/auth"
 	"go.signoz.io/signoz/pkg/query-service/constants"
 	"go.signoz.io/signoz/pkg/query-service/model"
@@ -901,4 +902,73 @@ func parseFilterAttributeValueRequest(r *http.Request) (*v3.FilterAttributeValue
 		FilterAttributeKey: r.URL.Query().Get("attributeKey"),
 	}
 	return &req, nil
+}
+
+func validateQueryRangeParamsV2(qp *v3.QueryRangeParamsV3) error {
+	var errs []error
+	if err := qp.CompositeQuery.QueryType.Validate(); err != nil {
+		errs = append(errs, fmt.Errorf("unsupported query type"))
+	}
+	if err := qp.CompositeQuery.PanelType.Validate(); err != nil {
+		errs = append(errs, fmt.Errorf("unsupported panel type"))
+	}
+	if len(errs) != 0 {
+		return fmt.Errorf("one or more errors found : %s", metrics.FormatErrs(errs, ","))
+	}
+	return nil
+}
+
+func ParseQueryRangeParams(r *http.Request) (*v3.QueryRangeParamsV3, *model.ApiError) {
+
+	var postData *v3.QueryRangeParamsV3
+
+	if err := json.NewDecoder(r.Body).Decode(&postData); err != nil {
+		return nil, &model.ApiError{Typ: model.ErrorBadData, Err: err}
+	}
+	if err := validateQueryRangeParamsV2(postData); err != nil {
+		return nil, &model.ApiError{Typ: model.ErrorBadData, Err: err}
+	}
+	// prepare the variables for the corrspnding query type
+	formattedVars := make(map[string]interface{})
+	for name, value := range postData.Variables {
+		if postData.CompositeQuery.QueryType == v3.QueryTypePromQL {
+			formattedVars[name] = metrics.PromFormattedValue(value)
+		} else if postData.CompositeQuery.QueryType == v3.QueryTypeClickHouseSQL {
+			formattedVars[name] = metrics.FormattedValue(value)
+		}
+	}
+	// replace the variables in metrics builder filter item with actual value
+	if postData.CompositeQuery.QueryType == v3.QueryTypeBuilder {
+		for _, query := range postData.CompositeQuery.BuilderQueries {
+			if query.Filters == nil || len(query.Filters.Items) == 0 {
+				continue
+			}
+			for idx := range query.Filters.Items {
+				item := &query.Filters.Items[idx]
+				value := item.Value
+				if value != nil {
+					switch x := value.(type) {
+					case string:
+						variableName := strings.Trim(x, "{{ . }}")
+						if _, ok := postData.Variables[variableName]; ok {
+							item.Value = postData.Variables[variableName]
+						}
+					case []interface{}:
+						if len(x) > 0 {
+							switch x[0].(type) {
+							case string:
+								variableName := strings.Trim(x[0].(string), "{{ . }}")
+								if _, ok := postData.Variables[variableName]; ok {
+									item.Value = postData.Variables[variableName]
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+	postData.Variables = formattedVars
+
+	return postData, nil
 }
