@@ -3,7 +3,6 @@ package auth
 import (
 	"context"
 	"net/http"
-	"strings"
 
 	"github.com/pkg/errors"
 	"go.signoz.io/signoz/pkg/query-service/constants"
@@ -47,19 +46,6 @@ func InitAuthCache(ctx context.Context) error {
 	}
 
 	return nil
-}
-
-func GetAuthorizationToken(r *http.Request) string {
-	authHeader := r.Header.Get("Authorization")
-	if authHeader == "" {
-		return ""
-	}
-
-	authHeaderParts := strings.Fields(authHeader)
-	if len(authHeaderParts) != 2 || strings.ToLower(authHeaderParts[0]) != "bearer" {
-		return ""
-	}
-	return authHeaderParts[1]
 }
 
 func GetUserFromRequest(r *http.Request) (*model.UserPayload, error) {
