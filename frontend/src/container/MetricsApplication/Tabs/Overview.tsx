@@ -27,14 +27,6 @@ import TopOperationsTable from '../TopOperationsTable';
 import { Button } from './styles';
 import { onGraphClickHandler, onViewTracePopupClick } from './util';
 
-type ClickHandlerType = (
-	ChartEvent: ChartEvent,
-	activeElements: ActiveElement[],
-	chart: Chart,
-	data: ChartData,
-	type?: string,
-) => void;
-
 function Application({ getWidgetQueryBuilder }: DashboardProps): JSX.Element {
 	const { servicename } = useParams<{ servicename?: string }>();
 	const [selectedTimeStamp, setSelectedTimeStamp] = useState<number>(0);
@@ -282,5 +274,13 @@ function Application({ getWidgetQueryBuilder }: DashboardProps): JSX.Element {
 interface DashboardProps {
 	getWidgetQueryBuilder: (query: Widgets['query']) => Widgets;
 }
+
+type ClickHandlerType = (
+	ChartEvent: ChartEvent,
+	activeElements: ActiveElement[],
+	chart: Chart,
+	data: ChartData,
+	type?: string,
+) => void;
 
 export default Application;
