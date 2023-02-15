@@ -60,7 +60,7 @@ func (ic *PipelinesController) ApplyPipelines(ctx context.Context, postable []Po
 	}
 
 	// prepare filter config (processor) from the pipelines
-	filterConfig, err := PreparePipelineProcessor(pipelines)
+	filterConfig, names, err := PreparePipelineProcessor(pipelines)
 	if err != nil {
 		zap.S().Errorf("failed to generate processor config from pipelines for deployment", err)
 		return nil, model.BadRequest(err)
@@ -85,7 +85,7 @@ func (ic *PipelinesController) ApplyPipelines(ctx context.Context, postable []Po
 	zap.S().Info("applying drop pipeline config", cfg)
 
 	// queue up the config to push to opamp
-	err = agentConf.UpsertPipelineProcessors(filterConfig)
+	err = agentConf.UpsertPipelineProcessors(filterConfig, names)
 	history, _ := agentConf.GetConfigHistory(ctx, agentConf.ElementTypeLogPipelines)
 
 	response := &PipelinesResponse{

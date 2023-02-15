@@ -99,3 +99,14 @@ func (agents *Agents) FindOrCreateAgent(agentID string, conn types.Connection) (
 	}
 	return agent, nil
 }
+
+func (agents *Agents) GetAllAgents() []*Agent {
+	agents.mux.RLock()
+	defer agents.mux.RUnlock()
+
+	allAgents := []*Agent{}
+	for _, v := range agents.agentsById {
+		allAgents = append(allAgents, v)
+	}
+	return allAgents
+}

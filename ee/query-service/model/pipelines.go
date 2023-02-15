@@ -18,7 +18,7 @@ type Pipeline struct {
 	// configuration for pipeline
 	RawConfig string `db:"config_json"`
 
-	Config []PipelineOperatos `json:"config"`
+	Config []PipelineOperator `json:"config"`
 
 	Creator
 	Updater
@@ -28,10 +28,10 @@ type Pipeline struct {
 }
 
 type Processor struct {
-	Operators []PipelineOperatos `json:"operators" yaml:"operators"`
+	Operators []PipelineOperator `json:"operators" yaml:"operators"`
 }
 
-type PipelineOperatos struct {
+type PipelineOperator struct {
 	Type      string           `json:"type" yaml:"type" mapstructure:"type"`
 	ParseTo   string           `json:"parse_to,omitempty" yaml:"parse_to,omitempty" mapstructure:"parse_to"`
 	Pattern   string           `json:"pattern,omitempty" yaml:"pattern,omitempty" mapstructure:"pattern"`
@@ -44,6 +44,7 @@ type PipelineOperatos struct {
 	Value     string           `json:"value,omitempty" yaml:"value,omitempty" mapstructure:"vlaue"`
 	From      string           `json:"from,omitempty" yaml:"from,omitempty" mapstructure:"from"`
 	To        string           `json:"to,omitempty"  yaml:"to,omitempty" mapstructure:"to"`
+	Expr      string           `json:"expr,omitempty" yaml:"expr,omitempty" mapstructure:"expr"`
 }
 
 type TimestampParser struct {
@@ -53,7 +54,7 @@ type TimestampParser struct {
 }
 
 func (i *Pipeline) ParseRawConfig() error {
-	c := []PipelineOperatos{}
+	c := []PipelineOperator{}
 	err := json.Unmarshal([]byte(i.RawConfig), &c)
 	if err != nil {
 		return errors.Wrap(err, "failed to parse ingestion rule config")

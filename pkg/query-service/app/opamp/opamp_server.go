@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/sha256"
 	"fmt"
+	"strings"
 
 	"github.com/knadh/koanf/parsers/yaml"
 	"github.com/open-telemetry/opamp-go/protobufs"
@@ -75,52 +76,92 @@ func (srv *Server) onMessage(conn types.Connection, msg *protobufs.AgentToServer
 
 	return response
 }
-
-func UpsertProcessor(ctx context.Context, processors map[string]interface{}) error {
-
+func UpsertProcessor(ctx context.Context, processors map[string]interface{}, names []interface{}) error {
 	x := map[string]interface{}{
 		"processors": processors,
 	}
-	agent := opAmpServer.agents.FindAgent("00000000000000000000000000")
-	if agent == nil {
-		return fmt.Errorf("agent not found")
-	}
-	config := agent.EffectiveConfig
-	c, err := yaml.Parser().Unmarshal([]byte(config))
-	if err != nil {
-		return err
-	}
-	agentConf := confmap.NewFromStringMap(c)
 
-	conf2 := confmap.NewFromStringMap(x)
+	newConf := confmap.NewFromStringMap(x)
 
-	err = agentConf.Merge(conf2)
-	if err != nil {
-		return err
-	}
-	configR, err := yaml.Parser().Marshal(agentConf.ToStringMap())
-	if err != nil {
-		return err
-	}
+	agents := opAmpServer.agents.GetAllAgents()
+	for _, agent := range agents {
+		config := agent.EffectiveConfig
+		c, err := yaml.Parser().Unmarshal([]byte(config))
+		if err != nil {
+			return err
+		}
+		agentConf := confmap.NewFromStringMap(c)
 
-	fmt.Println("sending new config", string(configR))
-	hash := sha256.New()
-	hash.Write(configR)
+		err = agentConf.Merge(newConf)
+		if err != nil {
+			return err
+		}
 
-	agent.EffectiveConfig = string(configR)
-	agent.Upsert()
-	agent.SendToAgent(&protobufs.ServerToAgent{
-		RemoteConfig: &protobufs.AgentRemoteConfig{
-			Config: &protobufs.AgentConfigMap{
-				ConfigMap: map[string]*protobufs.AgentConfigFile{
-					"collector.yaml": {
-						Body:        configR,
-						ContentType: "application/x-yaml",
+		service := agentConf.Get("service")
+
+		logs := service.(map[string]interface{})["pipelines"].(map[string]interface{})["logs"]
+		processors := logs.(map[string]interface{})["processors"].([]interface{})
+		userProcessors := []interface{}{}
+		// remove old ones
+		for _, v := range processors {
+			if !strings.HasPrefix(v.(string), "logstransform/pipeline_") {
+				userProcessors = append(userProcessors, v)
+			}
+		}
+		// all user processors are pushed after pipelines
+		processors = append(names, userProcessors...)
+
+		service.(map[string]interface{})["pipelines"].(map[string]interface{})["logs"].(map[string]interface{})["processors"] = processors
+
+		s := map[string]interface{}{
+			"service": map[string]interface{}{
+				"pipelines": map[string]interface{}{
+					"logs": map[string]interface{}{
+						"processors": processors,
 					},
 				},
 			},
-			ConfigHash: hash.Sum(nil),
-		},
-	})
+		}
+
+		serviceC := confmap.NewFromStringMap(s)
+
+		err = agentConf.Merge(serviceC)
+		if err != nil {
+			return err
+		}
+
+		// ------ complete adding processor
+		configR, err := yaml.Parser().Marshal(agentConf.ToStringMap())
+		if err != nil {
+			return err
+		}
+
+		fmt.Println("sending new config", string(configR))
+		hash := sha256.New()
+		_, err = hash.Write(configR)
+		if err != nil {
+			return err
+		}
+		agent.EffectiveConfig = string(configR)
+		err = agent.Upsert()
+		if err != nil {
+			return err
+		}
+
+		agent.SendToAgent(&protobufs.ServerToAgent{
+			RemoteConfig: &protobufs.AgentRemoteConfig{
+				Config: &protobufs.AgentConfigMap{
+					ConfigMap: map[string]*protobufs.AgentConfigFile{
+						"collector.yaml": {
+							Body:        configR,
+							ContentType: "application/x-yaml",
+						},
+					},
+				},
+				ConfigHash: hash.Sum(nil),
+			},
+		})
+	}
+
 	return nil
 }

@@ -18,7 +18,7 @@ type PostablePipeline struct {
 	Alias   string                   `json:"alias"`
 	Enabled bool                     `json:"enabled"`
 	Filter  string                   `json:"filter"`
-	Config  []model.PipelineOperatos `json:"config"`
+	Config  []model.PipelineOperator `json:"config"`
 }
 
 // // IsValid checks if postable pipeline has all the required params

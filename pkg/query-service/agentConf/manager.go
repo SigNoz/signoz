@@ -94,13 +94,13 @@ func UpsertSamplingProcessor(key string, config *tsp.Config) error {
 }
 
 // UpsertPipelineProcessor updates the agent config with new filter processor params
-func UpsertPipelineProcessors(config map[string]interface{}) error {
+func UpsertPipelineProcessors(config map[string]interface{}, names []interface{}) error {
 	if !atomic.CompareAndSwapUint32(&m.lock, 0, 1) {
 		return fmt.Errorf("agent updater is busy")
 	}
 	defer atomic.StoreUint32(&m.lock, 0)
 
 	// send the changes to opamp.
-	opamp.UpsertProcessor(context.Background(), config)
+	opamp.UpsertProcessor(context.Background(), config, names)
 	return nil
 }
