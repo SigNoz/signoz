@@ -499,38 +499,3 @@ type LogsAggregateParams struct {
 	Function       string `json:"function"`
 	StepSeconds    int    `json:"step"`
 }
-
-// AggregateAttributeRequest is a request to fetch possible attribute keys
-// for a selected aggregate operator and search text.
-// The context of the selected aggregate operator is used as the
-// type of the attribute key is different for different aggregate operators.
-// For example, for the aggregate operator "avg" the attribute value type must be
-// a number
-type AggregateAttributeRequest struct {
-	DataSource DataSource        `json:"dataSource"`
-	Operator   AggregateOperator `json:"aggregateOperator"`
-	SearchText string            `json:"searchText"`
-	Limit      int               `json:"limit"`
-}
-
-// FilterAttributeKeyRequest is a request to fetch possible attribute keys
-// for a selected aggregate operator and aggregate attribute and search text.
-type FilterAttributeKeyRequest struct {
-	DataSource         DataSource        `json:"dataSource"`
-	AggregateOperator  AggregateOperator `json:"aggregateOperator"`
-	AggregateAttribute string            `json:"aggregateAttribute"`
-	SearchText         string            `json:"searchText"`
-	Limit              int               `json:"limit"`
-}
-
-// FilterAttributeValueRequest is a request to fetch possible attribute values
-// for a selected aggregate operator, aggregate attribute, filter attribute key
-// and search text.
-type FilterAttributeValueRequest struct {
-	DataSource         DataSource        `json:"dataSource"`
-	AggregateOperator  AggregateOperator `json:"aggregateOperator"`
-	AggregateAttribute string            `json:"aggregateAttribute"`
-	FilterAttributeKey string            `json:"filterAttributeKey"`
-	SearchText         string            `json:"searchText"`
-	Limit              int               `json:"limit"`
-}
