@@ -154,7 +154,7 @@ exports[`PipelinePage test should render PipelinePage 1`] = `
       </span>
     </span>
   </span>
-  .c5 {
+  .c6 {
   display: -webkit-box;
   display: -webkit-flex;
   display: -ms-flexbox;
@@ -183,6 +183,11 @@ exports[`PipelinePage test should render PipelinePage 1`] = `
 .c3 {
   color: #DBDBDB;
   font-size: 1.5rem;
+}
+
+.c5 {
+  color: #8DCFF8;
+  font-size: 1.12rem;
 }
 
 .c0 {
@@ -509,9 +514,8 @@ exports[`PipelinePage test should render PipelinePage 1`] = `
                             >
                               <span
                                 aria-label="holder"
-                                class="anticon anticon-holder"
+                                class="anticon anticon-holder c5"
                                 role="img"
-                                style="color: rgb(141, 207, 248); font-size: 1.12rem;"
                               >
                                 <svg
                                   aria-hidden="true"
@@ -742,9 +746,8 @@ exports[`PipelinePage test should render PipelinePage 1`] = `
                             >
                               <span
                                 aria-label="holder"
-                                class="anticon anticon-holder"
+                                class="anticon anticon-holder c5"
                                 role="img"
-                                style="color: rgb(141, 207, 248); font-size: 1.12rem;"
                               >
                                 <svg
                                   aria-hidden="true"
@@ -772,7 +775,7 @@ exports[`PipelinePage test should render PipelinePage 1`] = `
                 class="ant-table-footer"
               >
                 <button
-                  class="ant-btn css-dev-only-do-not-override-1i536d8 ant-btn-link c5"
+                  class="ant-btn css-dev-only-do-not-override-1i536d8 ant-btn-link c6"
                   type="button"
                 >
                   <span
