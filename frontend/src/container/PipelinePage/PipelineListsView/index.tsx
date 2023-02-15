@@ -31,6 +31,7 @@ import {
 	FooterButton,
 	LastActionColumn,
 } from './styles';
+import { getElementFromArray } from './utils';
 
 function PipelineListsView({
 	isActionType,
@@ -38,10 +39,10 @@ function PipelineListsView({
 }: PipelineListsViewProps): JSX.Element {
 	const { t } = useTranslation(['pipeline', 'common']);
 	const formRef = useRef<FormInstance>(null);
-	const [dataSource, setDataSource] = useState<Array<PipelineColumn>>(
-		pipelineData,
-	);
-	const [childDataSource, setChildDataSource] = useState<
+	const [pipelineDataSource, setPipelineDataSource] = useState<
+		Array<PipelineColumn>
+	>(pipelineData);
+	const [processorDataSource, setProcessorDataSource] = useState<
 		Array<SubPiplineColums>
 	>();
 	const [activeExpRow, setActiveExpRow] = useState<Array<number>>();
@@ -80,10 +81,12 @@ function PipelineListsView({
 	};
 
 	const handleDelete = (record: PipelineColumn) => (): void => {
-		const findElement = dataSource?.filter(
-			(data) => data.orderid !== record.orderid,
+		const findElement = getElementFromArray(
+			pipelineDataSource,
+			record,
+			'orderid',
 		);
-		setDataSource(findElement);
+		setPipelineDataSource(findElement);
 	};
 
 	const handlePipelineDeleteAction = (record: PipelineColumn) => (): void => {
@@ -196,9 +199,9 @@ function PipelineListsView({
 
 	const movePipelineRow = useCallback(
 		(dragIndex: number, hoverIndex: number) => {
-			const rawData = dataSource;
-			const dragRow = dataSource[dragIndex];
-			const updatedRow = update(dataSource, {
+			const rawData = pipelineDataSource;
+			const dragRow = pipelineDataSource[dragIndex];
+			const updatedRow = update(pipelineDataSource, {
 				$splice: [
 					[dragIndex, 1],
 					[hoverIndex, 0, dragRow],
@@ -210,20 +213,20 @@ function PipelineListsView({
 					title: t('reorder_pipeline'),
 					descrition: t('reorder_pipeline_description'),
 					buttontext: t('reorder'),
-					onOkClick: (): void => setDataSource(updatedRow),
-					onCancelClick: (): void => setDataSource(rawData),
+					onOkClick: (): void => setPipelineDataSource(updatedRow),
+					onCancelClick: (): void => setPipelineDataSource(rawData),
 				});
 			}
 		},
-		[dataSource, handleAlert, t],
+		[pipelineDataSource, handleAlert, t],
 	);
 
 	const expandedRow = (): JSX.Element => (
 		<PipelineExpanView
 			dragActionHandler={dragActionHandler}
 			handleAlert={handleAlert}
-			setChildDataSource={setChildDataSource}
-			childDataSource={childDataSource}
+			setProcessorDataSource={setProcessorDataSource}
+			processorDataSource={processorDataSource as []}
 			setActionType={setActionType}
 			handleProcessorEditAction={handleProcessorEditAction}
 		/>
@@ -241,7 +244,7 @@ function PipelineListsView({
 				text: item.name,
 			}),
 		);
-		setChildDataSource(processorData);
+		setProcessorDataSource(processorData);
 	};
 
 	const getExpandIcon = (
@@ -277,19 +280,21 @@ function PipelineListsView({
 				isActionType={isActionType}
 				setActionType={setActionType}
 				selectedRecord={selectedRecord}
-				setDataSource={setDataSource}
+				pipelineDataSource={pipelineDataSource}
+				setPipelineDataSource={setPipelineDataSource}
 				formRef={formRef}
 				handleModalCancelAction={handleModalCancelAction}
-				dataSource={dataSource}
 			/>
 			<AddNewProcessor
 				isActionType={isActionType}
 				setActionType={setActionType}
 				selectedProcessorData={selectedProcessorData}
-				setChildDataSource={setChildDataSource as () => Array<SubPiplineColums>}
+				processorDataSource={processorDataSource as []}
+				setProcessorDataSource={
+					setProcessorDataSource as () => Array<SubPiplineColums>
+				}
 				formRef={formRef}
 				handleModalCancelAction={handleModalCancelAction}
-				childDataSource={childDataSource as []}
 			/>
 			<Container>
 				<DndProvider backend={HTML5Backend}>
@@ -303,7 +308,7 @@ function PipelineListsView({
 							onExpand: (expanded, record): void => getDataOnExpand(expanded, record),
 						}}
 						components={tableComponents}
-						dataSource={dataSource.map((item) => ({
+						dataSource={pipelineDataSource.map((item) => ({
 							...item,
 							key: item.orderid,
 						}))}

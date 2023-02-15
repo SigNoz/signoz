@@ -1,6 +1,6 @@
 import { PlusOutlined } from '@ant-design/icons';
 import TextToolTip from 'components/TextToolTip';
-import React from 'react';
+import React, { useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { AddPipelineButton, ButtonContainer } from '../styles';
@@ -11,9 +11,9 @@ function CreatePipelineButton({
 }: CreatePipelineButtonProps): JSX.Element {
 	const { t } = useTranslation(['pipeline']);
 
-	const onClickHandler = (): void => {
+	const onClickHandler = useCallback(() => {
 		setActionType(ActionType.AddPipeline);
-	};
+	}, [setActionType]);
 
 	return (
 		<ButtonContainer>

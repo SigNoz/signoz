@@ -10,15 +10,16 @@ import PiplinesSearchSection from '../Layouts/PiplinesSearchSection';
 import { PipelineColumn } from '.';
 import { addPipelinefieldLists } from './config';
 import { FormLabelStyle, ModalButtonWrapper, ModalTitle } from './styles';
+import { getRecordIndex } from './utils';
 
 function AddNewPipline({
 	isActionType,
 	setActionType,
 	selectedRecord,
-	setDataSource,
+	pipelineDataSource,
+	setPipelineDataSource,
 	formRef,
 	handleModalCancelAction,
-	dataSource,
 }: AddNewPiplineProps): JSX.Element {
 	const [form] = Form.useForm();
 	const { t } = useTranslation(['pipeline', 'common']);
@@ -57,24 +58,26 @@ function AddNewPipline({
 		};
 
 		if (isEdit) {
-			const findRecordIndex = dataSource.findIndex(
-				(i) => i.name === selectedRecord?.name,
+			const findRecordIndex = getRecordIndex(
+				pipelineDataSource,
+				selectedRecord,
+				'name' as never,
 			);
 			const updatedPipelineData = {
-				...dataSource[findRecordIndex],
+				...pipelineDataSource[findRecordIndex],
 				name: values.name,
 				tags: tagsListData,
 			};
 
-			const tempData = dataSource?.map((data) =>
+			const tempData = pipelineDataSource?.map((data) =>
 				data.name === selectedRecord?.name ? updatedPipelineData : data,
 			);
-			setDataSource(tempData as Array<PipelineColumn>);
+			setPipelineDataSource(tempData as Array<PipelineColumn>);
 			formRef?.current?.resetFields();
 		} else {
 			setTagsListData([]);
 			setCount((prevState: number) => (prevState + 1) as number);
-			setDataSource(
+			setPipelineDataSource(
 				(pre: PipelineColumn[]) => [...pre, newData] as PipelineColumn[],
 			);
 			formRef?.current?.resetFields();
@@ -194,10 +197,12 @@ interface AddNewPiplineProps {
 	isActionType: string;
 	setActionType: (actionType?: ActionType) => void;
 	selectedRecord: PipelineColumn | undefined;
-	setDataSource: (value: React.SetStateAction<Array<PipelineColumn>>) => void;
+	pipelineDataSource: Array<PipelineColumn>;
+	setPipelineDataSource: (
+		value: React.SetStateAction<Array<PipelineColumn>>,
+	) => void;
 	formRef: RefObject<FormInstance>;
 	handleModalCancelAction: VoidFunction;
-	dataSource: Array<PipelineColumn>;
 }
 
 export default AddNewPipline;

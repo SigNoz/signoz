@@ -17,6 +17,7 @@ import { v4 as uuid } from 'uuid';
 import { ActionType } from '../../Layouts';
 import { SubPiplineColums } from '..';
 import { ModalButtonWrapper, ModalTitle } from '../styles';
+import { getRecordIndex } from '../utils';
 import { processorInputField, processorTypes, wrapperStyle } from './config';
 import { PipelineIndexIcon, ProcessorTypeWrapper } from './styles';
 
@@ -24,10 +25,10 @@ function AddNewProcessor({
 	isActionType,
 	setActionType,
 	selectedProcessorData,
-	setChildDataSource,
+	processorDataSource,
+	setProcessorDataSource,
 	formRef,
 	handleModalCancelAction,
-	childDataSource,
 }: AddNewProcessorProps): JSX.Element {
 	const { Option } = DefaultSelect;
 	const [form] = Form.useForm();
@@ -52,22 +53,24 @@ function AddNewProcessor({
 		};
 
 		if (isEdit) {
-			const findRecordIndex = childDataSource?.findIndex(
-				(i) => i.text === selectedProcessorData?.text,
+			const findRecordIndex = getRecordIndex(
+				processorDataSource,
+				selectedProcessorData,
+				'text' as never,
 			);
 
 			const updatedProcessorData = {
-				...childDataSource?.[findRecordIndex],
+				...processorDataSource?.[findRecordIndex],
 				text: values.name,
 			};
 
-			const editedData = childDataSource?.map((data) =>
+			const editedData = processorDataSource?.map((data) =>
 				data.text === selectedProcessorData?.text ? updatedProcessorData : data,
 			);
 
-			setChildDataSource(editedData);
+			setProcessorDataSource(editedData);
 		} else {
-			setChildDataSource(
+			setProcessorDataSource(
 				(prevState: SubPiplineColums[]) =>
 					[...prevState, newProcessorData] as SubPiplineColums[],
 			);
@@ -189,12 +192,12 @@ export interface OnFinishValue {
 interface AddNewProcessorProps {
 	isActionType: string;
 	setActionType: (actionType?: ActionType) => void;
-	setChildDataSource: React.Dispatch<
+	processorDataSource: Array<SubPiplineColums>;
+	setProcessorDataSource: React.Dispatch<
 		React.SetStateAction<Array<SubPiplineColums>>
 	>;
 	formRef: RefObject<FormInstance>;
 	handleModalCancelAction: VoidFunction;
-	childDataSource: Array<SubPiplineColums>;
 	selectedProcessorData: SubPiplineColums | undefined;
 }
 export default AddNewProcessor;

@@ -21,12 +21,13 @@ import {
 	SmallEditOutlinedIcon,
 	StyledTable,
 } from './styles';
+import { getElementFromArray } from './utils';
 
 function PipelineExpandView({
 	dragActionHandler,
 	handleAlert,
-	childDataSource,
-	setChildDataSource,
+	processorDataSource,
+	setProcessorDataSource,
 	setActionType,
 	handleProcessorEditAction,
 }: PipelineExpandViewProps): JSX.Element {
@@ -34,8 +35,8 @@ function PipelineExpandView({
 	const isDarkMode = useIsDarkMode();
 
 	const handleDelete = (record: SubPiplineColums) => (): void => {
-		const findElement = childDataSource?.filter((data) => data.id !== record.id);
-		setChildDataSource(findElement);
+		const findElement = getElementFromArray(processorDataSource, record, 'id');
+		setProcessorDataSource(findElement);
 	};
 
 	const handleProcessorDeleteAction = (record: SubPiplineColums) => (): void => {
@@ -95,10 +96,10 @@ function PipelineExpandView({
 
 	const moveProcessorRow = useCallback(
 		(dragIndex: number, hoverIndex: number) => {
-			const rawData = childDataSource;
-			const dragRows = childDataSource?.[dragIndex];
-			if (childDataSource) {
-				const updatedRows = update(childDataSource, {
+			const rawData = processorDataSource;
+			const dragRows = processorDataSource?.[dragIndex];
+			if (processorDataSource) {
+				const updatedRows = update(processorDataSource, {
 					$splice: [
 						[dragIndex, 1],
 						[hoverIndex, 0, dragRows],
@@ -109,13 +110,13 @@ function PipelineExpandView({
 						title: t('reorder_processor'),
 						descrition: t('reorder_processor_description'),
 						buttontext: t('reorder'),
-						onOkClick: (): void => setChildDataSource(updatedRows),
-						onCancelClick: (): void => setChildDataSource(rawData),
+						onOkClick: (): void => setProcessorDataSource(updatedRows),
+						onCancelClick: (): void => setProcessorDataSource(rawData),
 					});
 				}
 			}
 		},
-		[childDataSource, handleAlert, setChildDataSource, t],
+		[processorDataSource, handleAlert, setProcessorDataSource, t],
 	);
 
 	const onClickHandler = (): void => {
@@ -137,7 +138,7 @@ function PipelineExpandView({
 				columns={subcolumns}
 				size="small"
 				components={tableComponents}
-				dataSource={childDataSource}
+				dataSource={processorDataSource}
 				pagination={false}
 				onRow={(
 					_record: SubPiplineColums,
@@ -158,9 +159,9 @@ function PipelineExpandView({
 interface PipelineExpandViewProps {
 	dragActionHandler: () => JSX.Element;
 	handleAlert: (props: AlertMessage) => void;
-	childDataSource: Array<SubPiplineColums> | undefined;
+	processorDataSource: Array<SubPiplineColums>;
+	setProcessorDataSource: (value: Array<SubPiplineColums> | undefined) => void;
 	setActionType: (actionType?: ActionType) => void;
-	setChildDataSource: (value: Array<SubPiplineColums> | undefined) => void;
 	handleProcessorEditAction: (record: SubPiplineColums) => () => void;
 }
 
