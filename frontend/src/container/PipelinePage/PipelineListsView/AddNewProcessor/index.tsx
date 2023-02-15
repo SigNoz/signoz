@@ -15,7 +15,7 @@ import { useTranslation } from 'react-i18next';
 import { v4 as uuid } from 'uuid';
 
 import { ActionType } from '../../Layouts';
-import { SubPiplineColums } from '..';
+import { ProcessorColumn } from '..';
 import { ModalButtonWrapper, ModalTitle } from '../styles';
 import { getRecordIndex } from '../utils';
 import { processorInputField, processorTypes, wrapperStyle } from './config';
@@ -32,7 +32,7 @@ function AddNewProcessor({
 }: AddNewProcessorProps): JSX.Element {
 	const { Option } = DefaultSelect;
 	const [form] = Form.useForm();
-	const { t } = useTranslation(['pipeline', 'common']);
+	const { t } = useTranslation('pipeline');
 	const isEdit = useMemo(() => isActionType === 'edit-processor', [
 		isActionType,
 	]);
@@ -47,7 +47,7 @@ function AddNewProcessor({
 	}, [form, isEdit, selectedProcessorData]);
 
 	const onFinish = (values: OnFinishValue): void => {
-		const newProcessorData: SubPiplineColums = {
+		const newProcessorData: ProcessorColumn = {
 			id: isEdit ? selectedProcessorData?.id : uuid(),
 			text: values.name,
 		};
@@ -71,8 +71,8 @@ function AddNewProcessor({
 			setProcessorDataSource(editedData);
 		} else {
 			setProcessorDataSource(
-				(prevState: SubPiplineColums[]) =>
-					[...prevState, newProcessorData] as SubPiplineColums[],
+				(prevState: ProcessorColumn[]) =>
+					[...prevState, newProcessorData] as ProcessorColumn[],
 			);
 			formRef?.current?.resetFields();
 		}
@@ -192,12 +192,12 @@ export interface OnFinishValue {
 interface AddNewProcessorProps {
 	isActionType: string;
 	setActionType: (actionType?: ActionType) => void;
-	processorDataSource: Array<SubPiplineColums>;
+	processorDataSource: Array<ProcessorColumn>;
 	setProcessorDataSource: React.Dispatch<
-		React.SetStateAction<Array<SubPiplineColums>>
+		React.SetStateAction<Array<ProcessorColumn>>
 	>;
 	formRef: RefObject<FormInstance>;
 	handleModalCancelAction: VoidFunction;
-	selectedProcessorData: SubPiplineColums | undefined;
+	selectedProcessorData: ProcessorColumn | undefined;
 }
 export default AddNewProcessor;

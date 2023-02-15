@@ -22,7 +22,7 @@ function AddNewPipline({
 	handleModalCancelAction,
 }: AddNewPiplineProps): JSX.Element {
 	const [form] = Form.useForm();
-	const { t } = useTranslation(['pipeline', 'common']);
+	const { t } = useTranslation('pipeline');
 	const [count, setCount] = useState(3);
 	const [tagsListData, setTagsListData] = useState<PipelineColumn['tags']>();
 

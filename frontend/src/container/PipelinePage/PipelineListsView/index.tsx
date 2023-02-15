@@ -1,7 +1,6 @@
 import {
 	DownOutlined,
 	ExclamationCircleOutlined,
-	HolderOutlined,
 	PlusOutlined,
 	RightOutlined,
 } from '@ant-design/icons';
@@ -10,7 +9,6 @@ import type { FormInstance } from 'antd/es/form';
 import { ColumnsType } from 'antd/lib/table';
 import { themeColors } from 'constants/theme';
 import React, { useCallback, useRef, useState } from 'react';
-import update from 'react-addons-update';
 import { DndProvider } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
 import { useTranslation } from 'react-i18next';
@@ -29,47 +27,42 @@ import {
 	EditOutlinedIcon,
 	EyeFilledIcon,
 	FooterButton,
+	HolderOutlinedIcon,
 	LastActionColumn,
 } from './styles';
-import { getElementFromArray } from './utils';
+import { getElementFromArray, getUpdatedRow } from './utils';
 
 function PipelineListsView({
 	isActionType,
 	setActionType,
 }: PipelineListsViewProps): JSX.Element {
-	const { t } = useTranslation(['pipeline', 'common']);
+	const { t } = useTranslation('pipeline');
 	const formRef = useRef<FormInstance>(null);
 	const [pipelineDataSource, setPipelineDataSource] = useState<
 		Array<PipelineColumn>
 	>(pipelineData);
 	const [processorDataSource, setProcessorDataSource] = useState<
-		Array<SubPiplineColums>
+		Array<ProcessorColumn>
 	>();
 	const [activeExpRow, setActiveExpRow] = useState<Array<number>>();
 	const [selectedRecord, setSelectedRecord] = useState<PipelineColumn>();
 	const [
 		selectedProcessorData,
 		setSelectedProcessorData,
-	] = useState<SubPiplineColums>();
+	] = useState<ProcessorColumn>();
 
 	const [modal, contextHolder] = Modal.useModal();
 
 	const handleAlert = useCallback(
-		({
-			title,
-			descrition,
-			buttontext,
-			onCancelClick,
-			onOkClick,
-		}: AlertMessage) => {
+		({ title, descrition, buttontext, onCancel, onOk }: AlertMessage) => {
 			modal.confirm({
-				title: <AlertModalTitle level={1}>{title}</AlertModalTitle>,
+				title: <AlertModalTitle>{title}</AlertModalTitle>,
 				icon: <ExclamationCircleOutlined />,
 				content: <AlertContentWrapper>{descrition}</AlertContentWrapper>,
 				okText: <Typography.Text>{buttontext}</Typography.Text>,
 				cancelText: <Typography.Text>{t('cancel')}</Typography.Text>,
-				onOk: onOkClick,
-				onCancel: onCancelClick,
+				onOk,
+				onCancel,
 			});
 		},
 		[modal, t],
@@ -80,25 +73,28 @@ function PipelineListsView({
 		setSelectedRecord(record);
 	};
 
-	const handleDelete = (record: PipelineColumn) => (): void => {
-		const findElement = getElementFromArray(
-			pipelineDataSource,
-			record,
-			'orderid',
-		);
-		setPipelineDataSource(findElement);
-	};
+	const pipelineDeleteHandler = useCallback(
+		(record: PipelineColumn) => (): void => {
+			const findElement = getElementFromArray(
+				pipelineDataSource,
+				record,
+				'orderid',
+			);
+			setPipelineDataSource(findElement);
+		},
+		[pipelineDataSource],
+	);
 
 	const handlePipelineDeleteAction = (record: PipelineColumn) => (): void => {
 		handleAlert({
 			title: `${t('delete_pipeline')} : ${record.name}?`,
 			descrition: t('delete_pipeline_description'),
 			buttontext: t('delete'),
-			onOkClick: handleDelete(record),
+			onOk: pipelineDeleteHandler(record),
 		});
 	};
 
-	const handleProcessorEditAction = (record: SubPiplineColums) => (): void => {
+	const handleProcessorEditAction = (record: ProcessorColumn) => (): void => {
 		setActionType(ActionType.EditProcessor);
 		setSelectedProcessorData(record);
 	};
@@ -109,12 +105,7 @@ function PipelineListsView({
 				<Switch />
 			</span>
 			<span style={{ cursor: 'move' }}>
-				<HolderOutlined
-					style={{
-						color: themeColors.lightSkyBlue,
-						fontSize: '1.12rem',
-					}}
-				/>
+				<HolderOutlinedIcon />
 			</span>
 		</LastActionColumn>
 	);
@@ -199,22 +190,16 @@ function PipelineListsView({
 
 	const movePipelineRow = useCallback(
 		(dragIndex: number, hoverIndex: number) => {
-			const rawData = pipelineDataSource;
-			const dragRow = pipelineDataSource[dragIndex];
-			const updatedRow = update(pipelineDataSource, {
-				$splice: [
-					[dragIndex, 1],
-					[hoverIndex, 0, dragRow],
-				],
-			});
+			if (pipelineDataSource) {
+				const rawData = pipelineDataSource;
+				const updatedRow = getUpdatedRow(pipelineDataSource, dragIndex, hoverIndex);
 
-			if (dragRow) {
 				handleAlert({
 					title: t('reorder_pipeline'),
 					descrition: t('reorder_pipeline_description'),
 					buttontext: t('reorder'),
-					onOkClick: (): void => setPipelineDataSource(updatedRow),
-					onCancelClick: (): void => setPipelineDataSource(rawData),
+					onOk: (): void => setPipelineDataSource(updatedRow),
+					onCancel: (): void => setPipelineDataSource(rawData),
 				});
 			}
 		},
@@ -239,7 +224,7 @@ function PipelineListsView({
 		}
 		setActiveExpRow(keys);
 		const processorData = record.operators.map(
-			(item: PipelineOperators, index: number): SubPiplineColums => ({
+			(item: PipelineOperators, index: number): ProcessorColumn => ({
 				id: index,
 				text: item.name,
 			}),
@@ -258,14 +243,17 @@ function PipelineListsView({
 		return <RightOutlined onClick={(e): void => onExpand(record, e)} />;
 	};
 
-	const onClickHandler = (): void => {
+	const onClickHandler = useCallback((): void => {
 		setActionType(ActionType.AddPipeline);
-	};
+	}, [setActionType]);
 
-	const footer = (): JSX.Element => (
-		<FooterButton type="link" onClick={onClickHandler} icon={<PlusOutlined />}>
-			{t('add_new_pipeline')}
-		</FooterButton>
+	const footer = useCallback(
+		(): JSX.Element => (
+			<FooterButton type="link" onClick={onClickHandler} icon={<PlusOutlined />}>
+				{t('add_new_pipeline')}
+			</FooterButton>
+		),
+		[onClickHandler, t],
 	);
 
 	const handleModalCancelAction = (): void => {
@@ -291,7 +279,7 @@ function PipelineListsView({
 				selectedProcessorData={selectedProcessorData}
 				processorDataSource={processorDataSource as []}
 				setProcessorDataSource={
-					setProcessorDataSource as () => Array<SubPiplineColums>
+					setProcessorDataSource as () => Array<ProcessorColumn>
 				}
 				formRef={formRef}
 				handleModalCancelAction={handleModalCancelAction}
@@ -374,7 +362,7 @@ export interface PipelineColumn {
 	operators: Array<PipelineOperators>;
 }
 
-export interface SubPiplineColums {
+export interface ProcessorColumn {
 	id?: number | string;
 	text: string;
 }
@@ -383,8 +371,8 @@ export interface AlertMessage {
 	title: string;
 	descrition: string;
 	buttontext: string;
-	onCancelClick?: VoidFunction;
-	onOkClick?: VoidFunction;
+	onOk: VoidFunction;
+	onCancel?: VoidFunction;
 }
 
 export default PipelineListsView;

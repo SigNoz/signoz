@@ -2,7 +2,6 @@ import { PlusCircleOutlined } from '@ant-design/icons';
 import { ColumnsType } from 'antd/lib/table';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import React, { useCallback } from 'react';
-import update from 'react-addons-update';
 import { DndProvider } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
 import { useTranslation } from 'react-i18next';
@@ -10,7 +9,7 @@ import { useTranslation } from 'react-i18next';
 import { tableComponents } from '../config';
 import { ActionType } from '../Layouts';
 import { ModalFooterTitle } from '../styles';
-import { AlertMessage, SubPiplineColums } from '.';
+import { AlertMessage, ProcessorColumn } from '.';
 import {
 	CopyFilledIcon,
 	FooterButton,
@@ -21,7 +20,7 @@ import {
 	SmallEditOutlinedIcon,
 	StyledTable,
 } from './styles';
-import { getElementFromArray } from './utils';
+import { getElementFromArray, getUpdatedRow } from './utils';
 
 function PipelineExpandView({
 	dragActionHandler,
@@ -34,21 +33,24 @@ function PipelineExpandView({
 	const { t } = useTranslation(['pipeline']);
 	const isDarkMode = useIsDarkMode();
 
-	const handleDelete = (record: SubPiplineColums) => (): void => {
-		const findElement = getElementFromArray(processorDataSource, record, 'id');
-		setProcessorDataSource(findElement);
-	};
+	const processorDeleteHandler = useCallback(
+		(record: ProcessorColumn) => (): void => {
+			const findElement = getElementFromArray(processorDataSource, record, 'id');
+			setProcessorDataSource(findElement);
+		},
+		[processorDataSource, setProcessorDataSource],
+	);
 
-	const handleProcessorDeleteAction = (record: SubPiplineColums) => (): void => {
+	const handleProcessorDeleteAction = (record: ProcessorColumn) => (): void => {
 		handleAlert({
 			title: `${t('delete_processor')} : ${record.text}?`,
 			descrition: t('delete_processor_description'),
 			buttontext: t('delete'),
-			onOkClick: handleDelete(record),
+			onOk: processorDeleteHandler(record),
 		});
 	};
 
-	const subcolumns: ColumnsType<SubPiplineColums> = [
+	const processorColumns: ColumnsType<ProcessorColumn> = [
 		{
 			title: '',
 			dataIndex: 'id',
@@ -96,38 +98,38 @@ function PipelineExpandView({
 
 	const moveProcessorRow = useCallback(
 		(dragIndex: number, hoverIndex: number) => {
-			const rawData = processorDataSource;
-			const dragRows = processorDataSource?.[dragIndex];
 			if (processorDataSource) {
-				const updatedRows = update(processorDataSource, {
-					$splice: [
-						[dragIndex, 1],
-						[hoverIndex, 0, dragRows],
-					],
+				const rawData = processorDataSource;
+				const updatedRow = getUpdatedRow(
+					processorDataSource,
+					dragIndex,
+					hoverIndex,
+				);
+
+				handleAlert({
+					title: t('reorder_processor'),
+					descrition: t('reorder_processor_description'),
+					buttontext: t('reorder'),
+					onOk: (): void => setProcessorDataSource(updatedRow),
+					onCancel: (): void => setProcessorDataSource(rawData),
 				});
-				if (dragRows) {
-					handleAlert({
-						title: t('reorder_processor'),
-						descrition: t('reorder_processor_description'),
-						buttontext: t('reorder'),
-						onOkClick: (): void => setProcessorDataSource(updatedRows),
-						onCancelClick: (): void => setProcessorDataSource(rawData),
-					});
-				}
 			}
 		},
 		[processorDataSource, handleAlert, setProcessorDataSource, t],
 	);
 
-	const onClickHandler = (): void => {
+	const onClickHandler = useCallback((): void => {
 		setActionType(ActionType.AddProcessor);
-	};
+	}, [setActionType]);
 
-	const footer = (): JSX.Element => (
-		<FooterButton type="link" onClick={onClickHandler}>
-			<PlusCircleOutlined />
-			<ModalFooterTitle>{t('add_new_processor')}</ModalFooterTitle>
-		</FooterButton>
+	const footer = useCallback(
+		(): JSX.Element => (
+			<FooterButton type="link" onClick={onClickHandler}>
+				<PlusCircleOutlined />
+				<ModalFooterTitle>{t('add_new_processor')}</ModalFooterTitle>
+			</FooterButton>
+		),
+		[onClickHandler, t],
 	);
 
 	return (
@@ -135,13 +137,13 @@ function PipelineExpandView({
 			<StyledTable
 				isDarkMode={isDarkMode}
 				showHeader={false}
-				columns={subcolumns}
+				columns={processorColumns}
 				size="small"
 				components={tableComponents}
 				dataSource={processorDataSource}
 				pagination={false}
 				onRow={(
-					_record: SubPiplineColums,
+					_record: ProcessorColumn,
 					index?: number,
 				): React.HTMLAttributes<unknown> => {
 					const attr = {
@@ -159,10 +161,10 @@ function PipelineExpandView({
 interface PipelineExpandViewProps {
 	dragActionHandler: () => JSX.Element;
 	handleAlert: (props: AlertMessage) => void;
-	processorDataSource: Array<SubPiplineColums>;
-	setProcessorDataSource: (value: Array<SubPiplineColums> | undefined) => void;
+	processorDataSource: Array<ProcessorColumn>;
+	setProcessorDataSource: (value: Array<ProcessorColumn> | undefined) => void;
 	setActionType: (actionType?: ActionType) => void;
-	handleProcessorEditAction: (record: SubPiplineColums) => () => void;
+	handleProcessorEditAction: (record: ProcessorColumn) => () => void;
 }
 
 export default PipelineExpandView;

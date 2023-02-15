@@ -3,6 +3,7 @@ import {
 	DeleteFilled,
 	EditOutlined,
 	EyeFilled,
+	HolderOutlined,
 } from '@ant-design/icons';
 import { Avatar, Button, Table, Typography } from 'antd';
 import { TableProps } from 'antd/lib/table';
@@ -103,13 +104,19 @@ export const CopyFilledIcon = styled(CopyFilled)`
 	font-size: 1rem;
 `;
 
+export const HolderOutlinedIcon = styled(HolderOutlined)`
+	color: ${themeColors.lightSkyBlue};
+	font-size: 1.12rem;
+`;
+
 export const AlertContentWrapper = styled.div`
 	font-weight: 400;
 	font-style: normal;
 	font-size: 0.75rem;
+	margin-bottom: 0.5rem;
 `;
 
-export const AlertModalTitle = styled(Typography.Title)`
+export const AlertModalTitle = styled.h1`
 	font-weight: 600;
 	font-size: 0.875rem;
 	line-height: 1rem;
