@@ -4,7 +4,7 @@ import getLocalStorageKey from 'api/browser/localstorage/get';
 import setLocalStorageKey from 'api/browser/localstorage/set';
 import { LOCALSTORAGE } from 'constants/localStorage';
 import dayjs, { Dayjs } from 'dayjs';
-import { useIntervalRange } from 'hooks/useIntervalRange';
+import { useIntervalRange } from 'hooks/useIntervalRange/useIntervalRange';
 import GetMinMax from 'lib/getMinMax';
 import history from 'lib/history';
 import React, { useCallback, useEffect, useState } from 'react';
@@ -199,7 +199,6 @@ function DateTimeSelection({
 	const { getTime, getCustomOrIntervalTime } = useIntervalRange();
 
 	useEffect(() => {
-		console.log('USE EFFECT');
 		const metricsTimeDuration = getLocalStorageKey(
 			LOCALSTORAGE.METRICS_TIME_IN_DURATION,
 		);

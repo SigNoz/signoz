@@ -5,17 +5,18 @@ import { useCallback, useMemo, useRef } from 'react';
 import { useLocation } from 'react-router-dom';
 import { getDiffs } from 'utils/getDiffs';
 
-import ROUTES from '../constants/routes';
+import ROUTES from '../../constants/routes';
 import {
 	getDefaultOption,
 	Options,
 	ServiceMapOptions,
 	Time,
-} from '../container/TopNav/DateTimeSelection/config';
+} from '../../container/TopNav/DateTimeSelection/config';
 
 interface UseIntervalRangeI {
 	getTime: () => [number, number] | undefined;
 	getCustomOrIntervalTime: (time: Time, currentRoute: string) => Time;
+	getQueryInterval: (searchStartTime: string) => Time;
 }
 
 type IntervalTimeStampsT = 'week' | 'hr' | 'day' | 'min';
@@ -73,12 +74,20 @@ export function useIntervalRange(): UseIntervalRangeI {
 			const lastRefresh = dayjs(
 				new Date(parseInt(getTimeString(searchStartTime), 10)),
 			);
-			const { minutedDiff, hoursDiff, daysDiff, weekDiffFloat } = getDiffs(
-				lastRefresh,
-			);
+			const {
+				minutedDiff,
+				hoursDiff,
+				daysDiff,
+				weekDiffFloat,
+				daysDiffFloat,
+			} = getDiffs(lastRefresh);
 
-			if (weekDiffFloat >= 1) {
-				return getOption(Math.round(weekDiffFloat), 'week', 'custom');
+			if (Math.round(daysDiffFloat) > 7) {
+				return getOption(Math.ceil(weekDiffFloat), 'week', 'custom');
+			}
+
+			if (Math.round(daysDiffFloat) <= 7 && daysDiff > 1) {
+				return '1week';
 			}
 
 			if (daysDiff) {
@@ -144,7 +153,11 @@ export function useIntervalRange(): UseIntervalRangeI {
 		searchStartTime,
 	]);
 
-	const { current } = useRef({ getCustomOrIntervalTime, getTime });
+	const { current } = useRef({
+		getCustomOrIntervalTime,
+		getTime,
+		getQueryInterval,
+	});
 
 	return current;
 }
