@@ -3676,3 +3676,72 @@ func (r *ClickHouseReader) GetMetricAggregateAttributes(ctx context.Context, req
 
 	return &response, nil
 }
+
+func (r *ClickHouseReader) GetMetricAttributeKeys(ctx context.Context, req *v3.FilterAttributeKeyRequest) (*v3.FilterAttributeKeyResponse, error) {
+
+	var query string
+	var err error
+	var rows driver.Rows
+	var response v3.FilterAttributeKeyResponse
+
+	if len(req.SearchText) != 0 {
+		query = fmt.Sprintf("select distinctTagKeys from (SELECT DISTINCT arrayJoin(tagKeys) distinctTagKeys from (SELECT DISTINCT(JSONExtractKeys(labels)) tagKeys from %s.%s WHERE metric_name=$1 )) WHERE distinctTagKeys ILIKE $2;", signozMetricDBName, signozTSTableName)
+		rows, err = r.db.Query(ctx, query, req.AggregateAttribute, fmt.Sprintf("%%%s%%", req.SearchText))
+	} else {
+		query = fmt.Sprintf("select distinctTagKeys from (SELECT DISTINCT arrayJoin(tagKeys) distinctTagKeys from (SELECT DISTINCT(JSONExtractKeys(labels)) tagKeys from %s.%s WHERE metric_name=$1 ));", signozMetricDBName, signozTSTableName)
+		rows, err = r.db.Query(ctx, query, req.SearchText)
+	}
+
+	if err != nil {
+		zap.S().Error(err)
+		return nil, fmt.Errorf("error while executing query: %s", err.Error())
+	}
+	defer rows.Close()
+
+	var attributeKey string
+	for rows.Next() {
+		if err := rows.Scan(&attributeKey); err != nil {
+			return nil, fmt.Errorf("error while scanning rows: %s", err.Error())
+		}
+		key := v3.AttributeKey{
+			Key:      attributeKey,
+			DataType: "STRING",
+			Type:     "ATTRIBUTE",
+		}
+		response.AttributeKeys = append(response.AttributeKeys, key)
+	}
+
+	return &response, nil
+}
+
+func (r *ClickHouseReader) GetMetricAttributeValues(ctx context.Context, req *v3.FilterAttributeValueRequest) (*v3.FilterAttributeValueResponse, error) {
+
+	var query string
+	var err error
+	var rows driver.Rows
+	var attributeValues v3.FilterAttributeValueResponse
+
+	if len(req.SearchText) != 0 {
+		query = fmt.Sprintf("SELECT DISTINCT(JSONExtractString(labels, '%s')) from %s.%s WHERE metric_name=$1 AND JSONExtractString(labels, '%s') ILIKE $2;", req.FilterAttributeKey, signozMetricDBName, signozTSTableName, req.FilterAttributeKey)
+		rows, err = r.db.Query(ctx, query, req.FilterAttributeKey, req.AggregateAttribute, fmt.Sprintf("%%%s%%", req.SearchText))
+	} else {
+		query = fmt.Sprintf("SELECT DISTINCT(JSONExtractString(labels, '%s')) FROM %s.%s WHERE metric_name=$2;", req.FilterAttributeKey, signozMetricDBName, signozTSTableName)
+		rows, err = r.db.Query(ctx, query, req.FilterAttributeKey, req.AggregateAttribute)
+	}
+
+	if err != nil {
+		zap.S().Error(err)
+		return nil, fmt.Errorf("error while executing query: %s", err.Error())
+	}
+	defer rows.Close()
+
+	var atrributeValue string
+	for rows.Next() {
+		if err := rows.Scan(&atrributeValue); err != nil {
+			return nil, fmt.Errorf("error while scanning rows: %s", err.Error())
+		}
+		attributeValues.AttributeValues = append(attributeValues.AttributeValues, atrributeValue)
+	}
+
+	return &attributeValues, nil
+}
