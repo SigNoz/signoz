@@ -1,6 +1,9 @@
 package v3
 
-import "time"
+import (
+	"fmt"
+	"time"
+)
 
 type DataSource string
 
@@ -9,6 +12,15 @@ const (
 	DataSourceLogs    DataSource = "logs"
 	DataSourceMetrics DataSource = "metrics"
 )
+
+func (d DataSource) Validate() error {
+	switch d {
+	case DataSourceTraces, DataSourceLogs, DataSourceMetrics:
+		return nil
+	default:
+		return fmt.Errorf("invalid data source: %s", d)
+	}
+}
 
 type AggregateOperator string
 
@@ -45,6 +57,44 @@ const (
 	AggregateOperatorHistQuant99   AggregateOperator = "hist_quantile_99"
 )
 
+func (a AggregateOperator) Validate() error {
+	switch a {
+	case AggregateOperatorNoOp,
+		AggregateOpeatorCount,
+		AggregateOperatorCountDistinct,
+		AggregateOperatorSum,
+		AggregateOperatorAvg,
+		AggregateOperatorMin,
+		AggregateOperatorMax,
+		AggregateOperatorP05,
+		AggregateOperatorP10,
+		AggregateOperatorP20,
+		AggregateOperatorP25,
+		AggregateOperatorP50,
+		AggregateOperatorP75,
+		AggregateOperatorP90,
+		AggregateOperatorP95,
+		AggregateOperatorP99,
+		AggregateOperatorRate,
+		AggregateOperatorSumRate,
+		AggregateOperatorAvgRate,
+		AggregateOperatorMinRate,
+		AggregateOperatorMaxRate,
+		AggregateOperatorRateSum,
+		AggregateOperatorRateAvg,
+		AggregateOperatorRateMin,
+		AggregateOperatorRateMax,
+		AggregateOperatorHistQuant50,
+		AggregateOperatorHistQuant75,
+		AggregateOperatorHistQuant90,
+		AggregateOperatorHistQuant95,
+		AggregateOperatorHistQuant99:
+		return nil
+	default:
+		return fmt.Errorf("invalid operator: %s", a)
+	}
+}
+
 type ReduceToOperator string
 
 const (
@@ -55,6 +105,15 @@ const (
 	ReduceToOperatorMax  ReduceToOperator = "max"
 )
 
+func (r ReduceToOperator) Validate() error {
+	switch r {
+	case ReduceToOperatorLast, ReduceToOperatorSum, ReduceToOperatorAvg, ReduceToOperatorMin, ReduceToOperatorMax:
+		return nil
+	default:
+		return fmt.Errorf("invalid reduce to operator: %s", r)
+	}
+}
+
 type QueryType string
 
 const (
@@ -62,6 +121,15 @@ const (
 	QueryTypeClickHouseSQL QueryType = "clickhouse_sql"
 	QueryTypePromQL        QueryType = "promql"
 )
+
+func (q QueryType) Validate() error {
+	switch q {
+	case QueryTypeBuilder, QueryTypeClickHouseSQL, QueryTypePromQL:
+		return nil
+	default:
+		return fmt.Errorf("invalid query type: %s", q)
+	}
+}
 
 type PanelType string
 
@@ -71,6 +139,15 @@ const (
 	PanelTypeTable PanelType = "table"
 	PanelTypeList  PanelType = "list"
 )
+
+func (p PanelType) Validate() error {
+	switch p {
+	case PanelTypeValue, PanelTypeGraph, PanelTypeTable, PanelTypeList:
+		return nil
+	default:
+		return fmt.Errorf("invalid panel type: %s", p)
+	}
+}
 
 // AggregateAttributeRequest is a request to fetch possible attribute keys
 // for a selected aggregate operator and search text.
