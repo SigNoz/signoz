@@ -6,7 +6,7 @@ import { Tags } from 'types/reducer/trace';
 
 export const dbSystemTags: Tags[] = [
 	{
-		Key: ['db.system.(string)'],
+		Key: 'db.system.(string)',
 		StringValues: [''],
 		NumberValues: [],
 		BoolValues: [],
