@@ -21,7 +21,7 @@ export function onViewTracePopupClick(
 ): VoidFunction {
 	return (): void => {
 		const currentTime = timestamp;
-		const tPlusOne = timestamp + 1 * 60 * 1000;
+		const tPlusOne = timestamp + 60 * 1000;
 
 		const urlParams = new URLSearchParams();
 		urlParams.set(METRICS_PAGE_QUERY_PARAM.startTime, currentTime.toString());
@@ -36,7 +36,9 @@ export function onViewTracePopupClick(
 }
 
 export function onGraphClickHandler(
-	setSelectedTimeStamp: React.Dispatch<React.SetStateAction<number>>,
+	setSelectedTimeStamp: (
+		n: number,
+	) => void | React.Dispatch<React.SetStateAction<number>>,
 ) {
 	return async (
 		event: ChartEvent,
@@ -49,7 +51,7 @@ export function onGraphClickHandler(
 			const points = chart.getElementsAtEventForMode(
 				event.native,
 				'nearest',
-				{ intersect: true },
+				{ intersect: false },
 				true,
 			);
 			const id = `${from}_button`;
