@@ -185,9 +185,9 @@ function SearchFilter({
 					onChange={(e): void => {
 						const { value } = e.target;
 						setSearchText(value);
-						debouncedupdateQueryString(value);
 					}}
 					allowClear
+					onSearch={debouncedupdateQueryString}
 				/>
 			</Popover>
 		</Container>
