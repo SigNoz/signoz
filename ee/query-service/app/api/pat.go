@@ -45,7 +45,6 @@ func (ah *APIHandler) createPAT(w http.ResponseWriter, r *http.Request) {
 	req.Token = generatePATToken()
 
 	zap.S().Infof("Got PAT request: %+v", req)
-
 	if apierr := ah.AppDao().CreatePAT(ctx, &req); apierr != nil {
 		RespondError(w, apierr, nil)
 		return
