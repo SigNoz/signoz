@@ -107,8 +107,6 @@ function PipelineListsView({
 		[setActionType],
 	);
 
-	const dragActionHandler = (): JSX.Element => <DragAction />;
-
 	const getRenderMethod = useCallback(
 		// eslint-disable-next-line @typescript-eslint/no-explicit-any
 		(key?: string | number, record?: any): React.ReactElement => {
@@ -179,7 +177,6 @@ function PipelineListsView({
 	const expandedRow = useCallback(
 		(): JSX.Element => (
 			<PipelineExpanView
-				dragActionHandler={dragActionHandler}
 				handleAlert={handleAlert}
 				setProcessorDataSource={setProcessorDataSource}
 				processorDataSource={processorDataSource as []}

@@ -69,16 +69,17 @@ function AddNewPipline({
 				tags: tagsListData,
 			};
 
-			const tempData = pipelineDataSource?.map((data) =>
+			const finalData = pipelineDataSource?.map((data) =>
 				data.name === selectedRecord?.name ? updatedPipelineData : data,
 			);
-			setPipelineDataSource(tempData as Array<PipelineColumn>);
+			setPipelineDataSource(finalData as Array<PipelineColumn>);
 			formRef?.current?.resetFields();
 		} else {
 			setTagsListData([]);
 			setCount((prevState: number) => (prevState + 1) as number);
 			setPipelineDataSource(
-				(pre: PipelineColumn[]) => [...pre, newData] as PipelineColumn[],
+				(prevState: PipelineColumn[]) =>
+					[...prevState, newData] as PipelineColumn[],
 			);
 			formRef?.current?.resetFields();
 		}

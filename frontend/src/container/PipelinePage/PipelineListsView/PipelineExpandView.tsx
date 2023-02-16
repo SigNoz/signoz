@@ -20,10 +20,10 @@ import {
 	SmallEditOutlinedIcon,
 	StyledTable,
 } from './styles';
+import DragAction from './TableComponents/DragAction';
 import { getElementFromArray, getUpdatedRow } from './utils';
 
 function PipelineExpandView({
-	dragActionHandler,
 	handleAlert,
 	processorDataSource,
 	setProcessorDataSource,
@@ -92,7 +92,7 @@ function PipelineExpandView({
 			dataIndex: 'dragAction',
 			key: 'drag-action',
 			width: 10,
-			render: dragActionHandler,
+			render: (): JSX.Element => <DragAction />,
 		},
 	];
 
@@ -159,7 +159,6 @@ function PipelineExpandView({
 }
 
 interface PipelineExpandViewProps {
-	dragActionHandler: () => JSX.Element;
 	handleAlert: (props: AlertMessage) => void;
 	processorDataSource: Array<ProcessorColumn>;
 	setProcessorDataSource: (value: Array<ProcessorColumn> | undefined) => void;
