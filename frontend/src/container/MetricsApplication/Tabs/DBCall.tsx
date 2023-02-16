@@ -79,11 +79,11 @@ function DBCall({ getWidgetQueryBuilder }: DBCallProps): JSX.Element {
 					type="default"
 					size="small"
 					id="database_call_rps_button"
-					onClick={onViewTracePopupClick(
+					onClick={onViewTracePopupClick({
 						servicename,
 						selectedTraceTags,
-						selectedTimeStamp,
-					)}
+						timestamp: selectedTimeStamp,
+					})}
 				>
 					View Traces
 				</Button>
@@ -114,11 +114,11 @@ function DBCall({ getWidgetQueryBuilder }: DBCallProps): JSX.Element {
 					type="default"
 					size="small"
 					id="database_call_avg_duration_button"
-					onClick={onViewTracePopupClick(
+					onClick={onViewTracePopupClick({
 						servicename,
 						selectedTraceTags,
-						selectedTimeStamp,
-					)}
+						timestamp: selectedTimeStamp,
+					})}
 				>
 					View Traces
 				</Button>
