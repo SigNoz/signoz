@@ -15,7 +15,7 @@ const config: Config.InitialOptions = {
 			useESM: true,
 		},
 	},
-	testMatch: ['<rootDir>/src/**/?(*.)(test).(ts|js)?(x)'],
+	testMatch: ['<rootDir>/src/**/*?(*.)(test).(ts|js)?(x)'],
 	preset: 'ts-jest/presets/js-with-ts-esm',
 	transform: {
 		'^.+\\.(ts|tsx)?$': 'ts-jest',
