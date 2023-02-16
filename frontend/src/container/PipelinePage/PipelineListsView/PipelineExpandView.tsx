@@ -1,7 +1,7 @@
 import { PlusCircleOutlined } from '@ant-design/icons';
 import { ColumnsType } from 'antd/lib/table';
 import { useIsDarkMode } from 'hooks/useDarkMode';
-import React, { useCallback } from 'react';
+import React, { useCallback, useMemo } from 'react';
 import { DndProvider } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
 import { useTranslation } from 'react-i18next';
@@ -10,17 +10,15 @@ import { tableComponents } from '../config';
 import { ActionType } from '../Layouts';
 import { ModalFooterTitle } from '../styles';
 import { AlertMessage, ProcessorColumn } from '.';
+import { processorColumns } from './config';
 import {
-	CopyFilledIcon,
 	FooterButton,
-	IconListStyle,
 	ListDataStyle,
 	ProcessorIndexIcon,
-	SmallDeleteFilledIcon,
-	SmallEditOutlinedIcon,
 	StyledTable,
 } from './styles';
 import DragAction from './TableComponents/DragAction';
+import PipelineActions from './TableComponents/PipelineActions';
 import { getElementFromArray, getUpdatedRow } from './utils';
 
 function PipelineExpandView({
@@ -41,60 +39,68 @@ function PipelineExpandView({
 		[processorDataSource, setProcessorDataSource],
 	);
 
-	const handleProcessorDeleteAction = (record: ProcessorColumn) => (): void => {
-		handleAlert({
-			title: `${t('delete_processor')} : ${record.text}?`,
-			descrition: t('delete_processor_description'),
-			buttontext: t('delete'),
-			onOk: processorDeleteHandler(record),
-		});
-	};
+	const handleProcessorDeleteAction = useCallback(
+		(record: ProcessorColumn) => (): void => {
+			handleAlert({
+				title: `${t('delete_processor')} : ${record.text}?`,
+				descrition: t('delete_processor_description'),
+				buttontext: t('delete'),
+				onOk: processorDeleteHandler(record),
+			});
+		},
+		[handleAlert, processorDeleteHandler, t],
+	);
 
-	const processorColumns: ColumnsType<ProcessorColumn> = [
-		{
-			title: '',
-			dataIndex: 'id',
-			key: 'id',
-			width: 30,
-			align: 'right',
-			render: (index: number): JSX.Element => (
-				<ProcessorIndexIcon size="small">{index + 1}</ProcessorIndexIcon>
-			),
+	const getRenderMethod = useCallback(
+		(
+			key?: string | number,
+			record?: string | number | undefined,
+		): React.ReactElement => {
+			if (key === 'id') {
+				return (
+					<ProcessorIndexIcon size="small">{Number(record) + 1}</ProcessorIndexIcon>
+				);
+			}
+			if (key === 'text') {
+				return <ListDataStyle>{record}</ListDataStyle>;
+			}
+			return <span>{record}</span>;
 		},
-		{
-			title: '',
-			dataIndex: 'text',
-			key: 'list',
-			width: 10,
-			render: (item: string): JSX.Element => <ListDataStyle>{item}</ListDataStyle>,
-		},
-		{
-			title: '',
-			dataIndex: 'action',
-			key: 'action',
-			width: 10,
-			render: (_value, record): JSX.Element => (
-				<IconListStyle>
-					<span key="list-edit">
-						<SmallEditOutlinedIcon onClick={handleProcessorEditAction(record)} />
-					</span>
-					<span key="list-view">
-						<SmallDeleteFilledIcon onClick={handleProcessorDeleteAction(record)} />
-					</span>
-					<span key="list-copy">
-						<CopyFilledIcon />
-					</span>
-				</IconListStyle>
-			),
-		},
-		{
-			title: '',
-			dataIndex: 'dragAction',
-			key: 'drag-action',
-			width: 10,
-			render: (): JSX.Element => <DragAction />,
-		},
-	];
+		[],
+	);
+
+	const columns = useMemo(() => {
+		const fieldColumns: ColumnsType<ProcessorColumn> = processorColumns.map(
+			({ title, key }) => ({
+				title,
+				dataIndex: key,
+				key,
+				align: key === 'id' ? 'right' : 'left',
+				render: (record): React.ReactNode => getRenderMethod(key, record),
+			}),
+		);
+		fieldColumns.push(
+			{
+				title: '',
+				dataIndex: 'action',
+				key: 'action',
+				render: (_value, record): JSX.Element => (
+					<PipelineActions
+						isPipelineAction={false}
+						editAction={handleProcessorEditAction(record)}
+						deleteAction={handleProcessorDeleteAction(record)}
+					/>
+				),
+			},
+			{
+				title: '',
+				dataIndex: 'dragAction',
+				key: 'dragAction',
+				render: () => <DragAction />,
+			},
+		);
+		return fieldColumns;
+	}, [getRenderMethod, handleProcessorDeleteAction, handleProcessorEditAction]);
 
 	const moveProcessorRow = useCallback(
 		(dragIndex: number, hoverIndex: number) => {
@@ -137,7 +143,7 @@ function PipelineExpandView({
 			<StyledTable
 				isDarkMode={isDarkMode}
 				showHeader={false}
-				columns={processorColumns}
+				columns={columns}
 				size="small"
 				components={tableComponents}
 				dataSource={processorDataSource}

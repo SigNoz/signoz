@@ -17,7 +17,7 @@ import { ActionType } from '../Layouts';
 import { pipelineData } from '../mocks/pipeline';
 import AddNewPipline from './AddNewPipline';
 import AddNewProcessor from './AddNewProcessor';
-import { columns } from './config';
+import { pipelineColumns } from './config';
 import PipelineExpanView from './PipelineExpandView';
 import {
 	AlertContentWrapper,
@@ -124,8 +124,8 @@ function PipelineListsView({
 		[],
 	);
 
-	const pipelineColumns = useMemo(() => {
-		const fieldColumns: ColumnsType<PipelineColumn> = columns.map(
+	const columns = useMemo(() => {
+		const fieldColumns: ColumnsType<PipelineColumn> = pipelineColumns.map(
 			({ title, key }) => ({
 				title,
 				dataIndex: key,
@@ -141,6 +141,7 @@ function PipelineListsView({
 				align: 'center',
 				render: (_value, record): JSX.Element => (
 					<PipelineActions
+						isPipelineAction
 						editAction={handlePipelineEditAction(record)}
 						deleteAction={handlePipelineDeleteAction(record)}
 					/>
@@ -257,7 +258,7 @@ function PipelineListsView({
 			<Container>
 				<DndProvider backend={HTML5Backend}>
 					<Table
-						columns={pipelineColumns}
+						columns={columns}
 						expandedRowRender={expandedRow}
 						expandable={{
 							expandedRowKeys: activeExpRow,

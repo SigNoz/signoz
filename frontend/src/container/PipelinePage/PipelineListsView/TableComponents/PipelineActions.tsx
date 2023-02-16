@@ -1,28 +1,29 @@
-import { Space } from 'antd';
 import React from 'react';
 
-import { DeleteFilledIcon, EditOutlinedIcon, EyeFilledIcon } from '../styles';
+import { IconListStyle } from '../styles';
+import DeleteAction from './TableActions/DeleteAction';
+import EditAction from './TableActions/EditAction';
+import ViewAction from './TableActions/ViewAction';
 
 function PipelineActions({
+	isPipelineAction,
 	editAction,
 	deleteAction,
 }: PipelineActionsProps): React.ReactElement {
 	return (
-		<Space size="middle">
-			<span>
-				<EditOutlinedIcon onClick={editAction} />
-			</span>
-			<span>
-				<EyeFilledIcon />
-			</span>
-			<span>
-				<DeleteFilledIcon onClick={deleteAction} />
-			</span>
-		</Space>
+		<IconListStyle>
+			<EditAction editAction={editAction} isPipelineAction={isPipelineAction} />
+			<ViewAction isPipelineAction={isPipelineAction} />
+			<DeleteAction
+				deleteAction={deleteAction}
+				isPipelineAction={isPipelineAction}
+			/>
+		</IconListStyle>
 	);
 }
 
-interface PipelineActionsProps {
+export interface PipelineActionsProps {
+	isPipelineAction: boolean;
 	editAction: VoidFunction;
 	deleteAction: VoidFunction;
 }
