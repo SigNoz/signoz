@@ -1,6 +1,6 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`PipelinePage test should render PipelinePage 1`] = `
+exports[`PipelinePage test should render PiplinesSearchSection 1`] = `
 <DocumentFragment>
   <span
     class="ant-input-group-wrapper ant-input-search css-dev-only-do-not-override-1i536d8"

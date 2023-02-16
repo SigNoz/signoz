@@ -1,3 +1,3 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`PipelinePage test should render PipelinePage 1`] = `<DocumentFragment />`;
+exports[`PipelinePage should render AddNewProcessor 1`] = `<DocumentFragment />`;

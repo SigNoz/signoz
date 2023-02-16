@@ -1,3 +1,7 @@
+import { ColumnsType } from 'antd/es/table';
+
+import { PipelineColumn } from '.';
+
 export const addPipelinefieldLists = [
 	{
 		id: 1,
@@ -24,3 +28,30 @@ export const tagInputStyle: React.CSSProperties = {
 	verticalAlign: 'top',
 	flex: 1,
 };
+
+export const columns: ColumnsType<PipelineColumn> = [
+	{
+		title: '',
+		key: 'orderid',
+	},
+	{
+		title: 'Pipeline Name',
+		key: 'name',
+	},
+	{
+		title: 'Filters',
+		key: 'filter',
+	},
+	{
+		title: 'Tags',
+		key: 'tags',
+	},
+	{
+		title: 'Last Edited',
+		key: 'updatedAt',
+	},
+	{
+		title: 'Edited By',
+		key: 'updatedBy',
+	},
+];

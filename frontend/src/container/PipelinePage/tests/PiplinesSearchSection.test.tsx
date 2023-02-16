@@ -9,7 +9,7 @@ import store from 'store';
 import PiplinesSearchSection from '../Layouts/PiplinesSearchSection';
 
 describe('PipelinePage test', () => {
-	it('should render PipelinePage', () => {
+	it('should render PiplinesSearchSection', () => {
 		const { asFragment } = render(
 			<MemoryRouter>
 				<Provider store={store}>

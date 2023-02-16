@@ -239,30 +239,6 @@ exports[`PipelinePage test should render PipelinePage 1`] = `
                       <col
                         class="ant-table-expand-icon-col"
                       />
-                      <col
-                        style="width: 10px;"
-                      />
-                      <col
-                        style="width: 80px;"
-                      />
-                      <col
-                        style="width: 50px;"
-                      />
-                      <col
-                        style="width: 20px;"
-                      />
-                      <col
-                        style="width: 50px;"
-                      />
-                      <col
-                        style="width: 50px;"
-                      />
-                      <col
-                        style="width: 100px;"
-                      />
-                      <col
-                        style="width: 80px;"
-                      />
                     </colgroup>
                     <thead
                       class="ant-table-thead"
@@ -360,31 +336,39 @@ exports[`PipelinePage test should render PipelinePage 1`] = `
                         <td
                           class="ant-table-cell"
                         >
-                          Apache common parser
-                        </td>
-                        <td
-                          class="ant-table-cell"
-                        >
-                          attributes.source == nginx
-                        </td>
-                        <td
-                          class="ant-table-cell"
-                        >
-                          <span
-                            class="ant-tag ant-tag-magenta css-dev-only-do-not-override-1i536d8"
-                          >
-                            server
-                          </span>
-                          <span
-                            class="ant-tag ant-tag-magenta css-dev-only-do-not-override-1i536d8"
-                          >
-                            app
+                          <span>
+                            Apache common parser
                           </span>
                         </td>
                         <td
                           class="ant-table-cell"
                         >
-                          Mon Feb 06 2023
+                          <span>
+                            attributes.source == nginx
+                          </span>
+                        </td>
+                        <td
+                          class="ant-table-cell"
+                        >
+                          <span>
+                            <span
+                              class="ant-tag ant-tag-magenta css-dev-only-do-not-override-1i536d8"
+                            >
+                              server
+                            </span>
+                            <span
+                              class="ant-tag ant-tag-magenta css-dev-only-do-not-override-1i536d8"
+                            >
+                              app
+                            </span>
+                          </span>
+                        </td>
+                        <td
+                          class="ant-table-cell"
+                        >
+                          <span>
+                            Mon Feb 06 2023
+                          </span>
                         </td>
                         <td
                           class="ant-table-cell"
@@ -582,41 +566,49 @@ exports[`PipelinePage test should render PipelinePage 1`] = `
                         <td
                           class="ant-table-cell"
                         >
-                          myservice trace parser
-                        </td>
-                        <td
-                          class="ant-table-cell"
-                        >
-                          attributes.source == myservice
-                        </td>
-                        <td
-                          class="ant-table-cell"
-                        >
-                          <span
-                            class="ant-tag ant-tag-magenta css-dev-only-do-not-override-1i536d8"
-                          >
-                            server
-                          </span>
-                          <span
-                            class="ant-tag ant-tag-magenta css-dev-only-do-not-override-1i536d8"
-                          >
-                            app
-                          </span>
-                          <span
-                            class="ant-tag ant-tag-magenta css-dev-only-do-not-override-1i536d8"
-                          >
-                            host
-                          </span>
-                          <span
-                            class="ant-tag ant-tag-magenta css-dev-only-do-not-override-1i536d8"
-                          >
-                            realse
+                          <span>
+                            myservice trace parser
                           </span>
                         </td>
                         <td
                           class="ant-table-cell"
                         >
-                          Sun Feb 05 2023
+                          <span>
+                            attributes.source == myservice
+                          </span>
+                        </td>
+                        <td
+                          class="ant-table-cell"
+                        >
+                          <span>
+                            <span
+                              class="ant-tag ant-tag-magenta css-dev-only-do-not-override-1i536d8"
+                            >
+                              server
+                            </span>
+                            <span
+                              class="ant-tag ant-tag-magenta css-dev-only-do-not-override-1i536d8"
+                            >
+                              app
+                            </span>
+                            <span
+                              class="ant-tag ant-tag-magenta css-dev-only-do-not-override-1i536d8"
+                            >
+                              host
+                            </span>
+                            <span
+                              class="ant-tag ant-tag-magenta css-dev-only-do-not-override-1i536d8"
+                            >
+                              realse
+                            </span>
+                          </span>
+                        </td>
+                        <td
+                          class="ant-table-cell"
+                        >
+                          <span>
+                            Sun Feb 05 2023
+                          </span>
                         </td>
                         <td
                           class="ant-table-cell"

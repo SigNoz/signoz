@@ -4,11 +4,10 @@ import {
 	PlusOutlined,
 	RightOutlined,
 } from '@ant-design/icons';
-import { Avatar, Modal, Space, Switch, Table, Tag, Typography } from 'antd';
+import { Modal, Table, Typography } from 'antd';
 import type { FormInstance } from 'antd/es/form';
 import { ColumnsType } from 'antd/lib/table';
-import { themeColors } from 'constants/theme';
-import React, { useCallback, useRef, useState } from 'react';
+import React, { useCallback, useMemo, useRef, useState } from 'react';
 import { DndProvider } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
 import { useTranslation } from 'react-i18next';
@@ -18,18 +17,18 @@ import { ActionType } from '../Layouts';
 import { pipelineData } from '../mocks/pipeline';
 import AddNewPipline from './AddNewPipline';
 import AddNewProcessor from './AddNewProcessor';
+import { columns } from './config';
 import PipelineExpanView from './PipelineExpandView';
 import {
 	AlertContentWrapper,
 	AlertModalTitle,
 	Container,
-	DeleteFilledIcon,
-	EditOutlinedIcon,
-	EyeFilledIcon,
 	FooterButton,
-	HolderOutlinedIcon,
-	LastActionColumn,
 } from './styles';
+import DragAction from './TableComponents/DragAction';
+import PipelineActions from './TableComponents/PipelineActions';
+import PipelineSequence from './TableComponents/PipelineSequence';
+import CustomTags from './TableComponents/Tags';
 import { getElementFromArray, getUpdatedRow } from './utils';
 
 function PipelineListsView({
@@ -68,10 +67,13 @@ function PipelineListsView({
 		[modal, t],
 	);
 
-	const handlePipelineEditAction = (record: PipelineColumn) => (): void => {
-		setActionType(ActionType.EditPipeline);
-		setSelectedRecord(record);
-	};
+	const handlePipelineEditAction = useCallback(
+		(record: PipelineColumn) => (): void => {
+			setActionType(ActionType.EditPipeline);
+			setSelectedRecord(record);
+		},
+		[setActionType],
+	);
 
 	const pipelineDeleteHandler = useCallback(
 		(record: PipelineColumn) => (): void => {
@@ -85,108 +87,76 @@ function PipelineListsView({
 		[pipelineDataSource],
 	);
 
-	const handlePipelineDeleteAction = (record: PipelineColumn) => (): void => {
-		handleAlert({
-			title: `${t('delete_pipeline')} : ${record.name}?`,
-			descrition: t('delete_pipeline_description'),
-			buttontext: t('delete'),
-			onOk: pipelineDeleteHandler(record),
-		});
-	};
-
-	const handleProcessorEditAction = (record: ProcessorColumn) => (): void => {
-		setActionType(ActionType.EditProcessor);
-		setSelectedProcessorData(record);
-	};
-
-	const dragActionHandler = (): JSX.Element => (
-		<LastActionColumn>
-			<span>
-				<Switch />
-			</span>
-			<span style={{ cursor: 'move' }}>
-				<HolderOutlinedIcon />
-			</span>
-		</LastActionColumn>
+	const handlePipelineDeleteAction = useCallback(
+		(record: PipelineColumn) => (): void => {
+			handleAlert({
+				title: `${t('delete_pipeline')} : ${record.name}?`,
+				descrition: t('delete_pipeline_description'),
+				buttontext: t('delete'),
+				onOk: pipelineDeleteHandler(record),
+			});
+		},
+		[handleAlert, pipelineDeleteHandler, t],
 	);
 
-	const pipelineColumns: ColumnsType<PipelineColumn> = [
-		{
-			title: '',
-			dataIndex: 'orderid',
-			key: 'orderid',
-			width: 10,
-			render: (i: number): JSX.Element => (
-				<Avatar style={{ background: themeColors.navyBlue }} size="small">
-					{i}
-				</Avatar>
-			),
+	const handleProcessorEditAction = useCallback(
+		(record: ProcessorColumn) => (): void => {
+			setActionType(ActionType.EditProcessor);
+			setSelectedProcessorData(record);
 		},
-		{
-			title: 'Pipeline Name',
-			dataIndex: 'name',
-			key: 'name',
-			width: 80,
+		[setActionType],
+	);
+
+	const dragActionHandler = (): JSX.Element => <DragAction />;
+
+	const getRenderMethod = useCallback(
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any
+		(key?: string | number, record?: any): React.ReactElement => {
+			if (key === 'orderid') {
+				return <PipelineSequence value={record} />;
+			}
+			if (key === 'tags') {
+				return <CustomTags tags={record} />;
+			}
+			if (key === 'updatedBy') {
+				return <span>{record?.username}</span>;
+			}
+			return <span>{record}</span>;
 		},
-		{
-			title: 'Filters',
-			dataIndex: 'filter',
-			key: 'filter',
-			width: 50,
-		},
-		{
-			title: 'Tags',
-			dataIndex: 'tags',
-			key: 'tags',
-			width: 20,
-			render: (value): React.ReactNode =>
-				value?.map((tag: string) => (
-					<Tag color="magenta" key={tag}>
-						{tag}
-					</Tag>
-				)),
-		},
-		{
-			title: 'Last Edited',
-			dataIndex: 'updatedAt',
-			key: 'updatedAt',
-			width: 50,
-		},
-		{
-			title: 'Edited By',
-			dataIndex: 'updatedBy',
-			key: 'updatedBy',
-			width: 50,
-			render: (value): JSX.Element => <span>{value?.username}</span>,
-		},
-		{
-			title: 'Actions',
-			dataIndex: 'smartAction',
-			key: 'smart-action',
-			align: 'center',
-			width: 100,
-			render: (_value, record): JSX.Element => (
-				<Space size="middle">
-					<span>
-						<EditOutlinedIcon onClick={handlePipelineEditAction(record)} />
-					</span>
-					<span>
-						<EyeFilledIcon />
-					</span>
-					<span>
-						<DeleteFilledIcon onClick={handlePipelineDeleteAction(record)} />
-					</span>
-				</Space>
-			),
-		},
-		{
-			title: '',
-			dataIndex: 'action',
-			key: 'action',
-			width: 80,
-			render: dragActionHandler,
-		},
-	];
+		[],
+	);
+
+	const pipelineColumns = useMemo(() => {
+		const fieldColumns: ColumnsType<PipelineColumn> = columns.map(
+			({ title, key }) => ({
+				title,
+				dataIndex: key,
+				key,
+				render: (record): React.ReactNode => getRenderMethod(key, record),
+			}),
+		);
+		fieldColumns.push(
+			{
+				title: 'Actions',
+				dataIndex: 'smartAction',
+				key: 'smartAction',
+				align: 'center',
+				render: (_value, record): JSX.Element => (
+					<PipelineActions
+						editAction={handlePipelineEditAction(record)}
+						deleteAction={handlePipelineDeleteAction(record)}
+					/>
+				),
+			},
+			{
+				title: '',
+				dataIndex: 'action',
+				key: 'action',
+				render: () => <DragAction />,
+			},
+		);
+		return fieldColumns;
+	}, [getRenderMethod, handlePipelineDeleteAction, handlePipelineEditAction]);
 
 	const movePipelineRow = useCallback(
 		(dragIndex: number, hoverIndex: number) => {
@@ -206,15 +176,18 @@ function PipelineListsView({
 		[pipelineDataSource, handleAlert, t],
 	);
 
-	const expandedRow = (): JSX.Element => (
-		<PipelineExpanView
-			dragActionHandler={dragActionHandler}
-			handleAlert={handleAlert}
-			setProcessorDataSource={setProcessorDataSource}
-			processorDataSource={processorDataSource as []}
-			setActionType={setActionType}
-			handleProcessorEditAction={handleProcessorEditAction}
-		/>
+	const expandedRow = useCallback(
+		(): JSX.Element => (
+			<PipelineExpanView
+				dragActionHandler={dragActionHandler}
+				handleAlert={handleAlert}
+				setProcessorDataSource={setProcessorDataSource}
+				processorDataSource={processorDataSource as []}
+				setActionType={setActionType}
+				handleProcessorEditAction={handleProcessorEditAction}
+			/>
+		),
+		[handleAlert, handleProcessorEditAction, processorDataSource, setActionType],
 	);
 
 	const getDataOnExpand = (expanded: boolean, record: PipelineColumn): void => {
