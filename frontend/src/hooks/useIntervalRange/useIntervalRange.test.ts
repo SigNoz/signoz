@@ -51,7 +51,7 @@ const checkTimeStamp = (date: number, expectation: string): void => {
 
 describe('Test useIntervalRange hook', () => {
 	testDataGeneral.forEach((d) => {
-		test(`GetQueryInterval for 1 ${d.title}`, () => {
+		test(`GetQueryInterval for ${d.title}`, () => {
 			checkTimeStamp(d.date, d.expect);
 		});
 	});
