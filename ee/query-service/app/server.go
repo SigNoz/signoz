@@ -26,6 +26,8 @@ import (
 	"go.signoz.io/signoz/ee/query-service/usage"
 
 	"go.signoz.io/signoz/pkg/query-service/app/dashboards"
+	"go.signoz.io/signoz/pkg/query-service/app/explorer"
+	"go.signoz.io/signoz/pkg/query-service/constants"
 	baseconst "go.signoz.io/signoz/pkg/query-service/constants"
 	"go.signoz.io/signoz/pkg/query-service/healthcheck"
 	basealm "go.signoz.io/signoz/pkg/query-service/integrations/alertManager"
@@ -82,6 +84,7 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 	}
 
 	localDB, err := dashboards.InitDB(baseconst.RELATIONAL_DATASOURCE_PATH)
+	explorer.InitWithDSN(constants.RELATIONAL_DATASOURCE_PATH)
 
 	if err != nil {
 		return nil, err

@@ -217,3 +217,15 @@ type Point struct {
 	Timestamp int64   `json:"timestamp"`
 	Value     float64 `json:"value"`
 }
+
+// ExploreQuery is a query for the explore page
+// It is a composite query with a source page name
+// The source page name is used to identify the page that initiated the query
+// The source page could be "traces", "logs", "metrics" or "dashboards", "alerts" etc.
+type ExplorerQuery struct {
+	UUID           string          `json:"uuid,omitempty"`
+	SourcePage     string          `json:"sourcePage"`
+	CompositeQuery *CompositeQuery `json:"compositeQuery"`
+	// 0 - false, 1 - true
+	IsView int8 `json:"isView"`
+}
