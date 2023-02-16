@@ -140,7 +140,7 @@ exports[`PipelinePage test should render PipelineListsView 1`] = `
                       <tr
                         class="ant-table-row ant-table-row-level-0"
                         data-row-key="1"
-                        draggable="true"
+                        index="0"
                       >
                         <td
                           class="ant-table-cell ant-table-row-expand-icon-cell"
@@ -370,7 +370,7 @@ exports[`PipelinePage test should render PipelineListsView 1`] = `
                       <tr
                         class="ant-table-row ant-table-row-level-0"
                         data-row-key="2"
-                        draggable="true"
+                        index="1"
                       >
                         <td
                           class="ant-table-cell ant-table-row-expand-icon-cell"

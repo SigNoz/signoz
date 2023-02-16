@@ -26,7 +26,6 @@ beforeAll(() => {
 
 describe('PipelinePage', () => {
 	it('should render PipelineExpandView', () => {
-		const dragActionHandler = jest.fn();
 		const handleAlert = jest.fn();
 		const setProcessorDataSource = jest.fn();
 		const setActionType = jest.fn();
@@ -36,7 +35,6 @@ describe('PipelinePage', () => {
 				<Provider store={store}>
 					<I18nextProvider i18n={i18n}>
 						<PipelineExpandView
-							dragActionHandler={dragActionHandler}
 							handleAlert={handleAlert}
 							processorDataSource={[]}
 							setProcessorDataSource={setProcessorDataSource}
