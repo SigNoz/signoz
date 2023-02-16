@@ -15,7 +15,7 @@ function DraggableTableRow({
 	const ref = useRef<HTMLTableRowElement>(null);
 	const [, drop] = useDrop({
 		accept: type,
-		collect: (monitor) => dropHandler(monitor, index),
+		collect: (monitor) => dropHandler(monitor),
 		drop: (item: { index: number }) => moveRow(item.index, index),
 	});
 	const [, drag] = useDrag({

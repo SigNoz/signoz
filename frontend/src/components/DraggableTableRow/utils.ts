@@ -1,14 +1,6 @@
 import { DragSourceMonitor, DropTargetMonitor } from 'react-dnd';
 
-export function dropHandler(
-	monitor: DropTargetMonitor,
-	index: number,
-): { isOver: boolean } | Record<string, unknown> {
-	const { index: draggedId }: never = monitor.getItem();
-
-	if (draggedId === index) {
-		return {};
-	}
+export function dropHandler(monitor: DropTargetMonitor): { isOver: boolean } {
 	return {
 		isOver: monitor.isOver(),
 	};
