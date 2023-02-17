@@ -4,15 +4,16 @@ import React, { RefObject, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { v4 as uuid } from 'uuid';
 
-import TagInput from '../components/TagInput';
-import { ActionType } from '../Layouts';
-import PiplinesSearchSection from '../Layouts/PiplinesSearchSection';
-import { PipelineColumn } from '.';
-import { addPipelinefieldLists } from './config';
-import { FormLabelStyle, ModalButtonWrapper, ModalTitle } from './styles';
-import { getRecordIndex } from './utils';
+import TagInput from '../../components/TagInput';
+import { ActionType } from '../../Layouts';
+import PipelinesSearchSection from '../../Layouts/PipelinesSearchSection';
+import { PipelineColumn } from '..';
+import { addPipelinefieldLists } from '../config';
+import { ModalButtonWrapper, ModalTitle } from '../styles';
+import { getRecordIndex } from '../utils';
+import { FormLabelStyle } from './styles';
 
-function AddNewPipline({
+function AddNewPipeline({
 	isActionType,
 	setActionType,
 	selectedRecord,
@@ -20,7 +21,7 @@ function AddNewPipline({
 	setPipelineDataSource,
 	formRef,
 	handleModalCancelAction,
-}: AddNewPiplineProps): JSX.Element {
+}: AddNewPipelineProps): JSX.Element {
 	const [form] = Form.useForm();
 	const { t } = useTranslation('pipeline');
 	const [count, setCount] = useState(3);
@@ -110,7 +111,7 @@ function AddNewPipline({
 			<div style={{ marginTop: '1.563rem' }}>
 				<span>{t('filter')}</span>
 				<div style={{ marginTop: '0.313rem' }}>
-					<PiplinesSearchSection />
+					<PipelinesSearchSection />
 				</div>
 			</div>
 			<Form
@@ -194,7 +195,7 @@ function AddNewPipline({
 	);
 }
 
-interface AddNewPiplineProps {
+interface AddNewPipelineProps {
 	isActionType: string;
 	setActionType: (actionType?: ActionType) => void;
 	selectedRecord: PipelineColumn | undefined;
@@ -206,4 +207,4 @@ interface AddNewPiplineProps {
 	handleModalCancelAction: VoidFunction;
 }
 
-export default AddNewPipline;
+export default AddNewPipeline;

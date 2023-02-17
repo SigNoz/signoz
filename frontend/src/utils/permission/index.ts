@@ -18,7 +18,7 @@ export type ComponentTypes =
 	| 'new_alert_action'
 	| 'edit_widget'
 	| 'add_panel'
-	| 'page_piplines';
+	| 'page_pipelines';
 
 export const componentPermission: Record<ComponentTypes, ROLES[]> = {
 	current_org_settings: ['ADMIN'],
@@ -37,7 +37,7 @@ export const componentPermission: Record<ComponentTypes, ROLES[]> = {
 	new_alert_action: ['ADMIN'],
 	edit_widget: ['ADMIN', 'EDITOR'],
 	add_panel: ['ADMIN', 'EDITOR'],
-	page_piplines: ['ADMIN', 'EDITOR'],
+	page_pipelines: ['ADMIN', 'EDITOR'],
 };
 
 export const routePermission: Record<keyof typeof ROUTES, ROLES[]> = {

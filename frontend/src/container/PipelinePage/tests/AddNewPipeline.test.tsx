@@ -8,7 +8,7 @@ import i18n from 'ReactI18';
 import store from 'store';
 
 import { pipelineData } from '../mocks/pipeline';
-import AddNewPipline from '../PipelineListsView/AddNewPipline';
+import AddNewPipeline from '../PipelineListsView/AddNewPipeline';
 
 beforeAll(() => {
 	Object.defineProperty(window, 'matchMedia', {
@@ -27,7 +27,7 @@ beforeAll(() => {
 });
 
 describe('PipelinePage test', () => {
-	it('should render AddNewPipline', () => {
+	it('should render AddNewPipeline', () => {
 		const ref = React.createRef<FormInstance>();
 		const setActionType = jest.fn();
 		const handleModalCancelAction = jest.fn();
@@ -38,7 +38,7 @@ describe('PipelinePage test', () => {
 			<MemoryRouter>
 				<Provider store={store}>
 					<I18nextProvider i18n={i18n}>
-						<AddNewPipline
+						<AddNewPipeline
 							isActionType={isActionType}
 							setActionType={setActionType}
 							selectedRecord={selectedRecord}

@@ -30,7 +30,7 @@ describe('Pipeline Page', () => {
 		expect(pipelineData.length).toBeGreaterThan(0);
 	});
 
-	test('pipline and processor data delete', () => {
+	test('pipeline and processor data delete', () => {
 		const filterData = getElementFromArray(
 			pipelineData,
 			pipelineData[0],
@@ -41,14 +41,14 @@ describe('Pipeline Page', () => {
 		expect('id' as never).not.toEqual(filterData);
 	});
 
-	test('pipline and processor data index', () => {
+	test('pipeline and processor data index', () => {
 		const IndexData = getRecordIndex(pipelineData, pipelineData[0], '' as never);
 		expect(pipelineData).not.toEqual(IndexData);
 		expect(pipelineData[0]).not.toEqual(IndexData);
 		expect('' as never).not.toEqual(IndexData);
 	});
 
-	test('pipline and processor update record', () => {
+	test('pipeline and processor update record', () => {
 		const updateData = getUpdatedRow(pipelineData, 1, 1);
 		expect(pipelineData).toEqual(updateData);
 	});

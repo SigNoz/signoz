@@ -16,12 +16,6 @@ export type StyledCSS =
 	| false
 	| undefined;
 
-export const FormLabelStyle = styled.span`
-	font-size: 0.75rem;
-	font-weight: 400;
-	line-height: 1.25rem;
-`;
-
 export const FooterButton = styled(Button)`
 	display: flex;
 	gap: 0.5rem;

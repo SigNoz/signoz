@@ -2,14 +2,14 @@ import React, { useState } from 'react';
 
 import PipelineListsView from '../PipelineListsView';
 import CreatePipelineButton from './CreatePipelineButton';
-import PiplinesSearchSection from './PiplinesSearchSection';
+import PipelinesSearchSection from './PipelinesSearchSection';
 
 function PipelinePageLayout(): JSX.Element {
 	const [isActionType, setActionType] = useState<string>();
 	return (
 		<>
 			<CreatePipelineButton setActionType={setActionType} />
-			<PiplinesSearchSection />
+			<PipelinesSearchSection />
 			<PipelineListsView
 				isActionType={isActionType as string}
 				setActionType={setActionType}

@@ -6,15 +6,15 @@ import { MemoryRouter } from 'react-router-dom';
 import i18n from 'ReactI18';
 import store from 'store';
 
-import PiplinesSearchSection from '../Layouts/PiplinesSearchSection';
+import PipelinesSearchSection from '../Layouts/PipelinesSearchSection';
 
 describe('PipelinePage test', () => {
-	it('should render PiplinesSearchSection', () => {
+	it('should render PipelinesSearchSection', () => {
 		const { asFragment } = render(
 			<MemoryRouter>
 				<Provider store={store}>
 					<I18nextProvider i18n={i18n}>
-						<PiplinesSearchSection />
+						<PipelinesSearchSection />
 					</I18nextProvider>
 				</Provider>
 			</MemoryRouter>,

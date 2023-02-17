@@ -10,7 +10,7 @@ import { useTranslation } from 'react-i18next';
 import { tableComponents } from '../config';
 import { ActionType } from '../Layouts';
 import { pipelineData } from '../mocks/pipeline';
-import AddNewPipline from './AddNewPipline';
+import AddNewPipeline from './AddNewPipeline';
 import AddNewProcessor from './AddNewProcessor';
 import { pipelineColumns } from './config';
 import PipelineExpanView from './PipelineExpandView';
@@ -211,7 +211,7 @@ function PipelineListsView({
 	return (
 		<div>
 			{contextHolder}
-			<AddNewPipline
+			<AddNewPipeline
 				isActionType={isActionType}
 				setActionType={setActionType}
 				selectedRecord={selectedRecord}
