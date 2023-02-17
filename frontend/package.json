@@ -139,7 +139,6 @@
 		"@types/react-redux": "^7.1.11",
 		"@types/react-resizable": "3.0.3",
 		"@types/react-router-dom": "^5.1.6",
-		"@types/redux": "^3.6.0",
 		"@types/styled-components": "^5.1.4",
 		"@types/uuid": "^8.3.1",
 		"@types/vis": "^4.21.21",
