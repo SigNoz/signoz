@@ -31,38 +31,38 @@ export const tagInputStyle: React.CSSProperties = {
 
 export const pipelineColumns: ColumnsType<PipelineColumn> = [
 	{
-		title: '',
 		key: 'orderid',
+		title: '',
 	},
 	{
-		title: 'Pipeline Name',
 		key: 'name',
+		title: 'Pipeline Name',
 	},
 	{
-		title: 'Filters',
 		key: 'filter',
+		title: 'Filters',
 	},
 	{
-		title: 'Tags',
 		key: 'tags',
+		title: 'Tags',
 	},
 	{
-		title: 'Last Edited',
 		key: 'updatedAt',
+		title: 'Last Edited',
 	},
 	{
-		title: 'Edited By',
 		key: 'updatedBy',
+		title: 'Edited By',
 	},
 ];
 
 export const processorColumns: ColumnsType<ProcessorColumn> = [
 	{
-		title: '',
 		key: 'id',
+		title: '',
 	},
 	{
-		title: '',
 		key: 'text',
+		title: '',
 	},
 ];

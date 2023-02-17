@@ -11,12 +11,8 @@ import { ActionType } from '../Layouts';
 import { ModalFooterTitle } from '../styles';
 import { AlertMessage, ProcessorColumn } from '.';
 import { processorColumns } from './config';
-import {
-	FooterButton,
-	ListDataStyle,
-	ProcessorIndexIcon,
-	StyledTable,
-} from './styles';
+import { FooterButton, StyledTable } from './styles';
+import TableComponents from './TableComponents';
 import DragAction from './TableComponents/DragAction';
 import PipelineActions from './TableComponents/PipelineActions';
 import { getElementFromArray, getUpdatedRow } from './utils';
@@ -51,24 +47,6 @@ function PipelineExpandView({
 		[handleAlert, processorDeleteHandler, t],
 	);
 
-	const getRenderMethod = useCallback(
-		(
-			key?: string | number,
-			record?: string | number | undefined,
-		): React.ReactElement => {
-			if (key === 'id') {
-				return (
-					<ProcessorIndexIcon size="small">{Number(record) + 1}</ProcessorIndexIcon>
-				);
-			}
-			if (key === 'text') {
-				return <ListDataStyle>{record}</ListDataStyle>;
-			}
-			return <span>{record}</span>;
-		},
-		[],
-	);
-
 	const columns = useMemo(() => {
 		const fieldColumns: ColumnsType<ProcessorColumn> = processorColumns.map(
 			({ title, key }) => ({
@@ -76,7 +54,9 @@ function PipelineExpandView({
 				dataIndex: key,
 				key,
 				align: key === 'id' ? 'right' : 'left',
-				render: (record): React.ReactNode => getRenderMethod(key, record),
+				render: (record): JSX.Element => (
+					<TableComponents columnKey={key as string} record={record} />
+				),
 			}),
 		);
 		fieldColumns.push(
@@ -100,7 +80,7 @@ function PipelineExpandView({
 			},
 		);
 		return fieldColumns;
-	}, [getRenderMethod, handleProcessorDeleteAction, handleProcessorEditAction]);
+	}, [handleProcessorDeleteAction, handleProcessorEditAction]);
 
 	const moveProcessorRow = useCallback(
 		(dragIndex: number, hoverIndex: number) => {

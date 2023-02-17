@@ -1,9 +1,4 @@
-import {
-	DownOutlined,
-	ExclamationCircleOutlined,
-	PlusOutlined,
-	RightOutlined,
-} from '@ant-design/icons';
+import { ExclamationCircleOutlined, PlusOutlined } from '@ant-design/icons';
 import { Modal, Table, Typography } from 'antd';
 import type { FormInstance } from 'antd/es/form';
 import { ColumnsType } from 'antd/lib/table';
@@ -25,10 +20,10 @@ import {
 	Container,
 	FooterButton,
 } from './styles';
+import TableComponents from './TableComponents';
 import DragAction from './TableComponents/DragAction';
 import PipelineActions from './TableComponents/PipelineActions';
-import PipelineSequence from './TableComponents/PipelineSequence';
-import CustomTags from './TableComponents/Tags';
+import TableExpandIcon from './TableComponents/TableExpandIcon';
 import { getElementFromArray, getUpdatedRow } from './utils';
 
 function PipelineListsView({
@@ -107,30 +102,15 @@ function PipelineListsView({
 		[setActionType],
 	);
 
-	const getRenderMethod = useCallback(
-		// eslint-disable-next-line @typescript-eslint/no-explicit-any
-		(key?: string | number, record?: any): React.ReactElement => {
-			if (key === 'orderid') {
-				return <PipelineSequence value={record} />;
-			}
-			if (key === 'tags') {
-				return <CustomTags tags={record} />;
-			}
-			if (key === 'updatedBy') {
-				return <span>{record?.username}</span>;
-			}
-			return <span>{record}</span>;
-		},
-		[],
-	);
-
 	const columns = useMemo(() => {
 		const fieldColumns: ColumnsType<PipelineColumn> = pipelineColumns.map(
 			({ title, key }) => ({
 				title,
 				dataIndex: key,
 				key,
-				render: (record): React.ReactNode => getRenderMethod(key, record),
+				render: (record): JSX.Element => (
+					<TableComponents columnKey={key as string} record={record} />
+				),
 			}),
 		);
 		fieldColumns.push(
@@ -155,14 +135,13 @@ function PipelineListsView({
 			},
 		);
 		return fieldColumns;
-	}, [getRenderMethod, handlePipelineDeleteAction, handlePipelineEditAction]);
+	}, [handlePipelineDeleteAction, handlePipelineEditAction]);
 
 	const movePipelineRow = useCallback(
 		(dragIndex: number, hoverIndex: number) => {
 			if (pipelineDataSource) {
 				const rawData = pipelineDataSource;
 				const updatedRow = getUpdatedRow(pipelineDataSource, dragIndex, hoverIndex);
-
 				handleAlert({
 					title: t('reorder_pipeline'),
 					descrition: t('reorder_pipeline_description'),
@@ -207,12 +186,9 @@ function PipelineListsView({
 		expanded: boolean,
 		onExpand: (record: PipelineColumn, e: React.MouseEvent<HTMLElement>) => void,
 		record: PipelineColumn,
-	): JSX.Element => {
-		if (expanded) {
-			return <DownOutlined onClick={(e): void => onExpand(record, e)} />;
-		}
-		return <RightOutlined onClick={(e): void => onExpand(record, e)} />;
-	};
+	): JSX.Element => (
+		<TableExpandIcon expanded={expanded} onExpand={onExpand} record={record} />
+	);
 
 	const onClickHandler = useCallback((): void => {
 		setActionType(ActionType.AddPipeline);
@@ -294,14 +270,14 @@ interface PipelineListsViewProps {
 	setActionType: (actionType?: ActionType) => void;
 }
 
-interface ActionBy {
+export type ActionBy = {
 	username: string;
 	email: string;
-}
+};
 
-interface ParseType {
+type ParseType = {
 	parse_from: string;
-}
+};
 
 export interface PipelineOperators {
 	type: string;
