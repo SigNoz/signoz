@@ -1,8 +1,7 @@
 import { ExclamationCircleOutlined, PlusOutlined } from '@ant-design/icons';
 import { Modal, Table, Typography } from 'antd';
-import type { FormInstance } from 'antd/es/form';
-import { ColumnsType } from 'antd/lib/table';
-import React, { useCallback, useMemo, useRef, useState } from 'react';
+import { FormInstance } from 'antd/lib/form/Form';
+import React, { useCallback, useMemo, useState } from 'react';
 import { DndProvider } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
 import { useTranslation } from 'react-i18next';
@@ -20,18 +19,17 @@ import {
 	Container,
 	FooterButton,
 } from './styles';
-import TableComponents from './TableComponents';
 import DragAction from './TableComponents/DragAction';
 import PipelineActions from './TableComponents/PipelineActions';
 import TableExpandIcon from './TableComponents/TableExpandIcon';
-import { getElementFromArray, getUpdatedRow } from './utils';
+import { getElementFromArray, getTableColumn, getUpdatedRow } from './utils';
 
 function PipelineListsView({
 	isActionType,
 	setActionType,
+	addPipelineForm,
 }: PipelineListsViewProps): JSX.Element {
 	const { t } = useTranslation('pipeline');
-	const formRef = useRef<FormInstance>(null);
 	const [pipelineDataSource, setPipelineDataSource] = useState<
 		Array<PipelineColumn>
 	>(pipelineData);
@@ -103,16 +101,7 @@ function PipelineListsView({
 	);
 
 	const columns = useMemo(() => {
-		const fieldColumns: ColumnsType<PipelineColumn> = pipelineColumns.map(
-			({ title, key }) => ({
-				title,
-				dataIndex: key,
-				key,
-				render: (record): JSX.Element => (
-					<TableComponents columnKey={key as string} record={record} />
-				),
-			}),
-		);
+		const fieldColumns = getTableColumn(pipelineColumns);
 		fieldColumns.push(
 			{
 				title: 'Actions',
@@ -129,8 +118,8 @@ function PipelineListsView({
 			},
 			{
 				title: '',
-				dataIndex: 'action',
-				key: 'action',
+				dataIndex: 'dragAction',
+				key: 'dragAction',
 				render: () => <DragAction />,
 			},
 		);
@@ -192,7 +181,8 @@ function PipelineListsView({
 
 	const onClickHandler = useCallback((): void => {
 		setActionType(ActionType.AddPipeline);
-	}, [setActionType]);
+		addPipelineForm.resetFields();
+	}, [setActionType, addPipelineForm]);
 
 	const footer = useCallback(
 		(): JSX.Element => (
@@ -203,11 +193,6 @@ function PipelineListsView({
 		[onClickHandler, t],
 	);
 
-	const handleModalCancelAction = (): void => {
-		setActionType(undefined);
-		formRef?.current?.resetFields();
-	};
-
 	return (
 		<div>
 			{contextHolder}
@@ -217,8 +202,7 @@ function PipelineListsView({
 				selectedRecord={selectedRecord}
 				pipelineDataSource={pipelineDataSource}
 				setPipelineDataSource={setPipelineDataSource}
-				formRef={formRef}
-				handleModalCancelAction={handleModalCancelAction}
+				addPipelineForm={addPipelineForm}
 			/>
 			<AddNewProcessor
 				isActionType={isActionType}
@@ -228,8 +212,6 @@ function PipelineListsView({
 				setProcessorDataSource={
 					setProcessorDataSource as () => Array<ProcessorColumn>
 				}
-				formRef={formRef}
-				handleModalCancelAction={handleModalCancelAction}
 			/>
 			<Container>
 				<DndProvider backend={HTML5Backend}>
@@ -268,6 +250,7 @@ function PipelineListsView({
 interface PipelineListsViewProps {
 	isActionType: string;
 	setActionType: (actionType?: ActionType) => void;
+	addPipelineForm: FormInstance;
 }
 
 export type ActionBy = {

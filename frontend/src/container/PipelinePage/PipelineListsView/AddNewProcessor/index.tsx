@@ -7,10 +7,9 @@ import {
 	Modal,
 	Select as DefaultSelect,
 } from 'antd';
-import type { FormInstance } from 'antd/es/form';
 import { themeColors } from 'constants/theme';
 import { ModalFooterTitle } from 'container/PipelinePage/styles';
-import React, { RefObject, useEffect, useMemo } from 'react';
+import React, { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { v4 as uuid } from 'uuid';
 
@@ -27,24 +26,13 @@ function AddNewProcessor({
 	selectedProcessorData,
 	processorDataSource,
 	setProcessorDataSource,
-	formRef,
-	handleModalCancelAction,
 }: AddNewProcessorProps): JSX.Element {
-	const { Option } = DefaultSelect;
 	const [form] = Form.useForm();
 	const { t } = useTranslation('pipeline');
 	const isEdit = useMemo(() => isActionType === 'edit-processor', [
 		isActionType,
 	]);
 	const isAdd = useMemo(() => isActionType === 'add-processor', [isActionType]);
-
-	useEffect(() => {
-		if (isEdit) {
-			form.setFieldsValue({
-				name: selectedProcessorData?.text,
-			});
-		}
-	}, [form, isEdit, selectedProcessorData]);
 
 	const onFinish = (values: OnFinishValue): void => {
 		const newProcessorData: ProcessorColumn = {
@@ -74,14 +62,14 @@ function AddNewProcessor({
 				(prevState: ProcessorColumn[]) =>
 					[...prevState, newProcessorData] as ProcessorColumn[],
 			);
-			formRef?.current?.resetFields();
+			form.resetFields();
 		}
 		setActionType(undefined);
 	};
 
 	const onCancelHandler = (): void => {
 		setActionType(undefined);
-		formRef?.current?.resetFields();
+		form.resetFields();
 	};
 
 	return (
@@ -100,8 +88,16 @@ function AddNewProcessor({
 			onCancel={onCancelHandler}
 		>
 			<Divider plain />
-			<div style={{ marginTop: '1.25rem' }}>
-				<div style={{ display: 'flex', gap: '1.25rem' }}>
+			<Form
+				name="addNewProcessor"
+				initialValues={selectedProcessorData}
+				layout="vertical"
+				style={{ marginTop: '1.25rem' }}
+				onFinish={onFinish}
+				autoComplete="off"
+				form={form}
+			>
+				<div style={{ display: 'flex', gap: '1rem', marginBottom: '1.5rem' }}>
 					<PipelineIndexIcon size="small">1</PipelineIndexIcon>
 					<ProcessorTypeWrapper>
 						<span>{t('processor_type')}</span>
@@ -111,45 +107,15 @@ function AddNewProcessor({
 							defaultValue={processorTypes[0]}
 						>
 							{processorTypes.map(({ value, label }) => (
-								<Option key={value + label} value={value}>
+								<DefaultSelect.Option key={value + label} value={value}>
 									{label}
-								</Option>
+								</DefaultSelect.Option>
 							))}
 						</DefaultSelect>
 					</ProcessorTypeWrapper>
 				</div>
-				<Form
-					form={form}
-					layout="vertical"
-					style={{ marginTop: '1.25rem' }}
-					onFinish={onFinish}
-					ref={formRef}
-				>
-					{processorInputField.map((i, index) => {
-						if (i.id === 1) {
-							return (
-								<div key={i.id} style={wrapperStyle}>
-									<Avatar size="small" style={{ background: themeColors.navyBlue }}>
-										{index + 2}
-									</Avatar>
-									<div style={{ width: '100%' }}>
-										<Form.Item
-											required={false}
-											label={<ModalFooterTitle>{i.fieldName}</ModalFooterTitle>}
-											name={i.name}
-											key={i.id}
-											rules={[
-												{
-													required: true,
-												},
-											]}
-										>
-											<Input placeholder={i.placeholder} name={i.name} />
-										</Form.Item>
-									</div>
-								</div>
-							);
-						}
+				{processorInputField.map((i, index) => {
+					if (i.id === 1) {
 						return (
 							<div key={i.id} style={wrapperStyle}>
 								<Avatar size="small" style={{ background: themeColors.navyBlue }}>
@@ -157,28 +123,50 @@ function AddNewProcessor({
 								</Avatar>
 								<div style={{ width: '100%' }}>
 									<Form.Item
-										name={i.name}
+										required={false}
 										label={<ModalFooterTitle>{i.fieldName}</ModalFooterTitle>}
+										name={i.name}
+										key={i.id}
+										rules={[
+											{
+												required: true,
+											},
+										]}
 									>
-										<Input.TextArea rows={4} placeholder={i.placeholder} />
+										<Input placeholder={i.placeholder} name={i.name} />
 									</Form.Item>
 								</div>
 							</div>
 						);
-					})}
-					<Divider plain />
-					<Form.Item>
-						<ModalButtonWrapper>
-							<Button key="submit" type="primary" htmlType="submit">
-								{isEdit ? t('update') : t('create')}
-							</Button>
-							<Button key="cancel" onClick={handleModalCancelAction}>
-								{t('cancel')}
-							</Button>
-						</ModalButtonWrapper>
-					</Form.Item>
-				</Form>
-			</div>
+					}
+					return (
+						<div key={i.id} style={wrapperStyle}>
+							<Avatar size="small" style={{ background: themeColors.navyBlue }}>
+								{index + 2}
+							</Avatar>
+							<div style={{ width: '100%' }}>
+								<Form.Item
+									name={i.name}
+									label={<ModalFooterTitle>{i.fieldName}</ModalFooterTitle>}
+								>
+									<Input.TextArea rows={4} placeholder={i.placeholder} />
+								</Form.Item>
+							</div>
+						</div>
+					);
+				})}
+				<Divider plain />
+				<Form.Item>
+					<ModalButtonWrapper>
+						<Button key="submit" type="primary" htmlType="submit">
+							{isEdit ? t('update') : t('create')}
+						</Button>
+						<Button key="cancel" onClick={onCancelHandler}>
+							{t('cancel')}
+						</Button>
+					</ModalButtonWrapper>
+				</Form.Item>
+			</Form>
 		</Modal>
 	);
 }
@@ -196,8 +184,6 @@ interface AddNewProcessorProps {
 	setProcessorDataSource: React.Dispatch<
 		React.SetStateAction<Array<ProcessorColumn>>
 	>;
-	formRef: RefObject<FormInstance>;
-	handleModalCancelAction: VoidFunction;
 	selectedProcessorData: ProcessorColumn | undefined;
 }
 export default AddNewProcessor;

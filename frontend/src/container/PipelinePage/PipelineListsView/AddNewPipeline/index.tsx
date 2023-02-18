@@ -1,12 +1,13 @@
-import { Button, Divider, Form, Input, Modal } from 'antd';
-import type { FormInstance } from 'antd/es/form';
-import React, { RefObject, useEffect, useMemo, useState } from 'react';
+import { Button, Divider, Form, FormInstance, Input, Modal } from 'antd';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useSelector } from 'react-redux';
+import { AppState } from 'store/reducers';
+import AppReducer from 'types/reducer/app';
 import { v4 as uuid } from 'uuid';
 
 import TagInput from '../../components/TagInput';
 import { ActionType } from '../../Layouts';
-import PipelinesSearchSection from '../../Layouts/PipelinesSearchSection';
 import { PipelineColumn } from '..';
 import { addPipelinefieldLists } from '../config';
 import { ModalButtonWrapper, ModalTitle } from '../styles';
@@ -19,11 +20,10 @@ function AddNewPipeline({
 	selectedRecord,
 	pipelineDataSource,
 	setPipelineDataSource,
-	formRef,
-	handleModalCancelAction,
+	addPipelineForm,
 }: AddNewPipelineProps): JSX.Element {
-	const [form] = Form.useForm();
 	const { t } = useTranslation('pipeline');
+	const { user } = useSelector<AppState, AppReducer>((state) => state.app);
 	const [count, setCount] = useState(3);
 	const [tagsListData, setTagsListData] = useState<PipelineColumn['tags']>();
 
@@ -32,30 +32,31 @@ function AddNewPipeline({
 
 	useEffect(() => {
 		if (isEdit) {
-			form.setFieldsValue({
-				name: selectedRecord?.name,
-				tags: selectedRecord?.tags,
-			});
 			setTagsListData(selectedRecord?.tags);
 		} else {
 			setTagsListData([]);
 		}
-	}, [form, isEdit, selectedRecord?.name, selectedRecord?.tags]);
+	}, [isEdit, selectedRecord?.tags]);
 
 	const onFinish = (values: PipelineColumn): void => {
-		const operatorsData = Array({
-			name: values.operators,
-		});
-
-		const newData = {
-			orderid: count.toString(),
-			key: uuid(),
-			editedBy: '',
-			filter: '',
-			lastEdited: new Date().toDateString(),
+		const newPipeLineData = {
+			orderid: count,
+			uuid: uuid(),
+			createdAt: new Date().toISOString(),
+			createdBy: {
+				username: user?.name,
+				email: user?.email,
+			},
+			updatedAt: new Date().toISOString(),
+			updatedBy: {
+				username: user?.name,
+				email: user?.email,
+			},
 			name: values.name,
+			alias: values.alias,
+			filter: values.filter,
 			tags: tagsListData,
-			operators: operatorsData,
+			operators: [],
 		};
 
 		if (isEdit) {
@@ -67,6 +68,8 @@ function AddNewPipeline({
 			const updatedPipelineData = {
 				...pipelineDataSource[findRecordIndex],
 				name: values.name,
+				alias: values.alias,
+				filter: values.filter,
 				tags: tagsListData,
 			};
 
@@ -74,22 +77,20 @@ function AddNewPipeline({
 				data.name === selectedRecord?.name ? updatedPipelineData : data,
 			);
 			setPipelineDataSource(finalData as Array<PipelineColumn>);
-			formRef?.current?.resetFields();
 		} else {
-			setTagsListData([]);
 			setCount((prevState: number) => (prevState + 1) as number);
 			setPipelineDataSource(
 				(prevState: PipelineColumn[]) =>
-					[...prevState, newData] as PipelineColumn[],
+					[...prevState, newPipeLineData] as PipelineColumn[],
 			);
-			formRef?.current?.resetFields();
+			addPipelineForm.resetFields();
 		}
 		setActionType(undefined);
 	};
 
 	const onCancelHandler = (): void => {
 		setActionType(undefined);
-		formRef?.current?.resetFields();
+		addPipelineForm.resetFields();
 	};
 
 	return (
@@ -108,27 +109,78 @@ function AddNewPipeline({
 			onCancel={onCancelHandler}
 		>
 			<Divider plain />
-			<div style={{ marginTop: '1.563rem' }}>
-				<span>{t('filter')}</span>
-				<div style={{ marginTop: '0.313rem' }}>
-					<PipelinesSearchSection />
-				</div>
-			</div>
 			<Form
-				form={form}
+				name="addNewPipeline"
+				initialValues={selectedRecord}
 				layout="vertical"
 				style={{ marginTop: '1.25rem' }}
 				onFinish={onFinish}
-				ref={formRef}
+				autoComplete="off"
+				form={addPipelineForm}
 			>
-				{addPipelinefieldLists.map((i) => {
-					if (i.id === 3) {
+				{addPipelinefieldLists.map((item) => {
+					if (item.id === '1') {
 						return (
 							<Form.Item
 								required={false}
-								name={i.name}
-								label={i.fieldName}
-								key={i.id}
+								label={<FormLabelStyle>{item.fieldName}</FormLabelStyle>}
+								key={item.id}
+								rules={[
+									{
+										required: true,
+									},
+								]}
+								name={item.name}
+							>
+								<Input.Search
+									id={item.id}
+									name={item.name}
+									placeholder={t(t(item.placeholder))}
+									allowClear
+								/>
+							</Form.Item>
+						);
+					}
+					if (item.id === '2') {
+						return (
+							<Form.Item
+								required={false}
+								label={<FormLabelStyle>{item.fieldName}</FormLabelStyle>}
+								key={item.id}
+								rules={[
+									{
+										required: true,
+									},
+								]}
+								name={item.name}
+							>
+								<Input name={item.name} placeholder={t(item.placeholder)} />
+							</Form.Item>
+						);
+					}
+					if (item.id === '3') {
+						return (
+							<Form.Item
+								required={false}
+								label={<FormLabelStyle>{item.fieldName}</FormLabelStyle>}
+								key={item.id}
+								name={item.name}
+							>
+								<TagInput
+									setTagsListData={setTagsListData}
+									tagsListData={tagsListData as []}
+									placeHolder={t(item.placeholder)}
+								/>
+							</Form.Item>
+						);
+					}
+					if (item.id === '4') {
+						return (
+							<Form.Item
+								required={false}
+								name={item.name}
+								label={item.fieldName}
+								key={item.id}
 								rules={[
 									{
 										required: true,
@@ -137,47 +189,13 @@ function AddNewPipeline({
 							>
 								<Input.TextArea
 									rows={3}
-									name={i.fieldName}
-									placeholder={
-										isEdit
-											? `This is a pipeline to edit ${selectedRecord?.name}`
-											: i.placeholder
-									}
+									name={item.name}
+									placeholder={t(item.placeholder)}
 								/>
 							</Form.Item>
 						);
 					}
-					if (i.id === 2) {
-						return (
-							<Form.Item
-								required={false}
-								label={<FormLabelStyle>{i.fieldName}</FormLabelStyle>}
-								key={i.id}
-								name={i.name}
-							>
-								<TagInput
-									setTagsListData={setTagsListData}
-									tagsListData={tagsListData as []}
-									placeHolder={i.fieldName}
-								/>
-							</Form.Item>
-						);
-					}
-					return (
-						<Form.Item
-							required={false}
-							label={<FormLabelStyle>{i.fieldName}</FormLabelStyle>}
-							key={i.id}
-							rules={[
-								{
-									required: true,
-								},
-							]}
-							name={i.name}
-						>
-							<Input name={i.fieldName} placeholder={i.placeholder} />
-						</Form.Item>
-					);
+					return <span key={item.id}>No Data</span>;
 				})}
 				<Divider plain />
 				<Form.Item>
@@ -185,7 +203,7 @@ function AddNewPipeline({
 						<Button key="submit" type="primary" htmlType="submit">
 							{isEdit ? t('update') : t('create')}
 						</Button>
-						<Button key="cancel" onClick={handleModalCancelAction}>
+						<Button key="cancel" onClick={onCancelHandler}>
 							{t('cancel')}
 						</Button>
 					</ModalButtonWrapper>
@@ -203,8 +221,7 @@ interface AddNewPipelineProps {
 	setPipelineDataSource: (
 		value: React.SetStateAction<Array<PipelineColumn>>,
 	) => void;
-	formRef: RefObject<FormInstance>;
-	handleModalCancelAction: VoidFunction;
+	addPipelineForm: FormInstance;
 }
 
 export default AddNewPipeline;

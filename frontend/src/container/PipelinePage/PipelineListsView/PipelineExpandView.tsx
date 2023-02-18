@@ -1,5 +1,4 @@
 import { PlusCircleOutlined } from '@ant-design/icons';
-import { ColumnsType } from 'antd/lib/table';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import React, { useCallback, useMemo } from 'react';
 import { DndProvider } from 'react-dnd';
@@ -12,10 +11,9 @@ import { ModalFooterTitle } from '../styles';
 import { AlertMessage, ProcessorColumn } from '.';
 import { processorColumns } from './config';
 import { FooterButton, StyledTable } from './styles';
-import TableComponents from './TableComponents';
 import DragAction from './TableComponents/DragAction';
 import PipelineActions from './TableComponents/PipelineActions';
-import { getElementFromArray, getUpdatedRow } from './utils';
+import { getElementFromArray, getTableColumn, getUpdatedRow } from './utils';
 
 function PipelineExpandView({
 	handleAlert,
@@ -48,17 +46,7 @@ function PipelineExpandView({
 	);
 
 	const columns = useMemo(() => {
-		const fieldColumns: ColumnsType<ProcessorColumn> = processorColumns.map(
-			({ title, key }) => ({
-				title,
-				dataIndex: key,
-				key,
-				align: key === 'id' ? 'right' : 'left',
-				render: (record): JSX.Element => (
-					<TableComponents columnKey={key as string} record={record} />
-				),
-			}),
-		);
+		const fieldColumns = getTableColumn(processorColumns);
 		fieldColumns.push(
 			{
 				title: '',

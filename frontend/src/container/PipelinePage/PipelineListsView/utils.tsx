@@ -1,4 +1,8 @@
+import { ColumnsType } from 'antd/es/table';
+import React from 'react';
 import update from 'react-addons-update';
+
+import TableComponents, { Record } from './TableComponents';
 
 export function getElementFromArray<T>(
 	arr: Array<T>,
@@ -27,4 +31,16 @@ export function getUpdatedRow<T>(
 			[hoverIndex, 0, data[dragIndex]],
 		],
 	});
+}
+
+export function getTableColumn<T>(columnData: ColumnsType<T>): ColumnsType<T> {
+	return columnData.map(({ title, key }) => ({
+		title,
+		dataIndex: key,
+		key,
+		align: key === 'id' ? 'right' : 'left',
+		render: (record: Record): JSX.Element => (
+			<TableComponents columnKey={key as string} record={record} />
+		),
+	}));
 }

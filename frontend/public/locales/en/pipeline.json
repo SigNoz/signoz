@@ -21,5 +21,8 @@
 	"reorder_processor_description": "Logs are processed sequentially in processors. Reordering it may change how data is processed by them.",
 	"delete_processor": "Do you want to delete processor",
 	"delete_processor_description": "Logs are processed sequentially in processors. Deleting a processor may change content of data processed by other processors",
-	"search_pipeline_placeholder": "Filter Pipelines"
+	"search_pipeline_placeholder": "Filter Pipelines",
+	"pipeline_name_placeholder": "Name",
+	"pipeline_tags_placeholder": "Tags",
+	"pipeline_description_placeholder": "Enter description for your pipeline"
 }

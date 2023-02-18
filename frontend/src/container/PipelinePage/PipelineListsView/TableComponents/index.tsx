@@ -1,6 +1,6 @@
 import React from 'react';
 
-import { ActionBy, PipelineColumn } from '..';
+import { ActionBy, PipelineColumn, ProcessorColumn } from '..';
 import { ListDataStyle, ProcessorIndexIcon } from '../styles';
 import PipelineSequence from './PipelineSequence';
 import Tags from './Tags';
@@ -29,9 +29,14 @@ function TableComponents({
 	return <span>{record}</span>;
 }
 
+export type Record = ActionBy &
+	PipelineColumn['orderid'] &
+	PipelineColumn['tags'] &
+	ProcessorColumn;
+
 interface TableComponentsProps {
 	columnKey: string;
-	record: ActionBy & PipelineColumn['orderid'] & PipelineColumn['tags'];
+	record: Record;
 }
 
 export default TableComponents;
