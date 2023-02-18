@@ -1,6 +1,6 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`Pipeline Page should render TagInput 1`] = `
+exports[`Pipeline Page should render TagInput section 1`] = `
 <DocumentFragment>
   <div
     style="display: flex; width: 100%;"

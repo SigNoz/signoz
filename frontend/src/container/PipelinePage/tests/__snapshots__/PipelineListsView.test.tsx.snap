@@ -1,6 +1,6 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`PipelinePage test should render PipelineListsView 1`] = `
+exports[`PipelinePage container test should render PipelineListsView section 1`] = `
 <DocumentFragment>
   .c7 {
   display: -webkit-box;

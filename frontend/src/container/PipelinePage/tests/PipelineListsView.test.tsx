@@ -24,8 +24,8 @@ beforeAll(() => {
 	});
 });
 
-describe('PipelinePage test', () => {
-	it('should render PipelineListsView', () => {
+describe('PipelinePage container test', () => {
+	it('should render PipelineListsView section', () => {
 		const { asFragment } = render(
 			<MemoryRouter>
 				<Provider store={store}>

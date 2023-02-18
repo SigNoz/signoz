@@ -1,0 +1,17 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`PipelinePage container test should render PipelineSequence section 1`] = `
+<DocumentFragment>
+  <span
+    class="ant-avatar ant-avatar-sm ant-avatar-circle css-dev-only-do-not-override-1i536d8"
+    style="background: rgb(22, 104, 220);"
+  >
+    <span
+      class="ant-avatar-string"
+      style="transform: scale(1) translateX(-50%);"
+    >
+      123
+    </span>
+  </span>
+</DocumentFragment>
+`;

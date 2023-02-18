@@ -1,5 +1,5 @@
 import { render } from '@testing-library/react';
-import { FormInstance } from 'antd';
+import { pipelineData } from 'container/PipelinePage/mocks/pipeline';
 import React from 'react';
 import { I18nextProvider } from 'react-i18next';
 import { Provider } from 'react-redux';
@@ -7,7 +7,7 @@ import { MemoryRouter } from 'react-router-dom';
 import i18n from 'ReactI18';
 import store from 'store';
 
-import AddNewProcessor from '../PipelineListsView/AddNewProcessor';
+import TableComponents from '../PipelineListsView/TableComponents';
 
 beforeAll(() => {
 	Object.defineProperty(window, 'matchMedia', {
@@ -25,33 +25,13 @@ beforeAll(() => {
 	});
 });
 
-const data = {
-	id: 1,
-	text: 'some text',
-};
-
-describe('PipelinePage', () => {
-	it('should render AddNewProcessor', () => {
-		const ref = React.createRef<FormInstance>();
-		const setActionType = jest.fn();
-		const setProcessorDataSource = jest.fn();
-		const handleModalCancelAction = jest.fn();
-		const selectedProcessorData = data;
-		const isActionType = 'add-processor';
-
+describe('PipelinePage container test', () => {
+	it('should render TableComponents section', () => {
 		const { asFragment } = render(
 			<MemoryRouter>
 				<Provider store={store}>
 					<I18nextProvider i18n={i18n}>
-						<AddNewProcessor
-							isActionType={isActionType}
-							setActionType={setActionType}
-							selectedProcessorData={selectedProcessorData}
-							processorDataSource={[]}
-							setProcessorDataSource={setProcessorDataSource}
-							formRef={ref}
-							handleModalCancelAction={handleModalCancelAction}
-						/>
+						<TableComponents columnKey="id" record={pipelineData[0] as never} />
 					</I18nextProvider>
 				</Provider>
 			</MemoryRouter>,

@@ -10,27 +10,27 @@ import {
 	getUpdatedRow,
 } from '../PipelineListsView/utils';
 
-describe('Pipeline Page', () => {
-	test('Total Input Field count should be 3', () => {
+describe('Utils testing of Pipeline Page', () => {
+	test('it should be check form field of add pipeline', () => {
 		expect(addPipelinefieldLists.length).toBe(3);
 		expect(addPipelinefieldLists.length).toBeGreaterThan(1);
 	});
 
-	test('Processor Types length should be more than 1', () => {
+	test('it should be check processor types field of add pipeline', () => {
 		expect(processorTypes.length).toBeGreaterThan(1);
 	});
 
-	test('Processor InputField count should be 2', () => {
+	test('it should be check form field of add processor', () => {
 		expect(processorInputField.length).toBe(2);
 		expect(processorInputField.length).toBeGreaterThan(1);
 	});
 
-	test('pipeline page Data should not be less than 0', () => {
+	test('it should be check data length of pipeline', () => {
 		expect(pipelineData.length).toBe(2);
 		expect(pipelineData.length).toBeGreaterThan(0);
 	});
 
-	test('pipeline and processor data delete', () => {
+	test('it should be return filtered data and perform deletion', () => {
 		const filterData = getElementFromArray(
 			pipelineData,
 			pipelineData[0],
@@ -38,17 +38,19 @@ describe('Pipeline Page', () => {
 		);
 		expect(pipelineData).not.toEqual(filterData);
 		expect(pipelineData[0]).not.toEqual(filterData);
-		expect('id' as never).not.toEqual(filterData);
 	});
 
-	test('pipeline and processor data index', () => {
-		const IndexData = getRecordIndex(pipelineData, pipelineData[0], '' as never);
-		expect(pipelineData).not.toEqual(IndexData);
-		expect(pipelineData[0]).not.toEqual(IndexData);
-		expect('' as never).not.toEqual(IndexData);
+	test('it should be return index data and perform deletion', () => {
+		const findRecordIndex = getRecordIndex(
+			pipelineData,
+			pipelineData[0],
+			'' as never,
+		);
+		expect(pipelineData).not.toEqual(findRecordIndex);
+		expect(pipelineData[0]).not.toEqual(findRecordIndex);
 	});
 
-	test('pipeline and processor update record', () => {
+	test('it should be return shuffle data', () => {
 		const updateData = getUpdatedRow(pipelineData, 1, 1);
 		expect(pipelineData).toEqual(updateData);
 	});

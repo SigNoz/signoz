@@ -1,12 +1,13 @@
-import { beforeAll } from '@jest/globals';
 import { render } from '@testing-library/react';
-import PipelinePage from 'container/PipelinePage/Layouts';
+import { FormInstance } from 'antd';
 import React from 'react';
 import { I18nextProvider } from 'react-i18next';
 import { Provider } from 'react-redux';
 import { MemoryRouter } from 'react-router-dom';
 import i18n from 'ReactI18';
 import store from 'store';
+
+import AddNewProcessor from '../PipelineListsView/AddNewProcessor';
 
 beforeAll(() => {
 	Object.defineProperty(window, 'matchMedia', {
@@ -24,13 +25,32 @@ beforeAll(() => {
 	});
 });
 
-describe('PipelinePage test', () => {
-	it('should render PipelinePage', () => {
+const selectedProcessorData = {
+	id: 1,
+	text: 'some text',
+};
+
+describe('PipelinePage container test', () => {
+	it('should render AddNewProcessor section', () => {
+		const ref = React.createRef<FormInstance>();
+		const setActionType = jest.fn();
+		const setProcessorDataSource = jest.fn();
+		const handleModalCancelAction = jest.fn();
+		const isActionType = 'add-processor';
+
 		const { asFragment } = render(
 			<MemoryRouter>
 				<Provider store={store}>
 					<I18nextProvider i18n={i18n}>
-						<PipelinePage />
+						<AddNewProcessor
+							isActionType={isActionType}
+							setActionType={setActionType}
+							selectedProcessorData={selectedProcessorData}
+							processorDataSource={[]}
+							setProcessorDataSource={setProcessorDataSource}
+							formRef={ref}
+							handleModalCancelAction={handleModalCancelAction}
+						/>
 					</I18nextProvider>
 				</Provider>
 			</MemoryRouter>,

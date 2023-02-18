@@ -8,8 +8,8 @@ import store from 'store';
 
 import PipelinesSearchSection from '../Layouts/PipelinesSearchSection';
 
-describe('PipelinePage test', () => {
-	it('should render PipelinesSearchSection', () => {
+describe('PipelinePage container test', () => {
+	it('should render PipelinesSearchSection section', () => {
 		const { asFragment } = render(
 			<MemoryRouter>
 				<Provider store={store}>

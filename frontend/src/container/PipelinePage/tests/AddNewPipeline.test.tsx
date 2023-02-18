@@ -26,8 +26,8 @@ beforeAll(() => {
 	});
 });
 
-describe('PipelinePage test', () => {
-	it('should render AddNewPipeline', () => {
+describe('PipelinePage container test', () => {
+	it('should render AddNewPipeline section', () => {
 		const ref = React.createRef<FormInstance>();
 		const setActionType = jest.fn();
 		const handleModalCancelAction = jest.fn();
