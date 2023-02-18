@@ -19,11 +19,12 @@ type ExplorerQuery struct {
 	UpdatedAt  time.Time `json:"updated_at" db:"updated_at"`
 	SourcePage string    `json:"source_page" db:"source_page"`
 	// 0 - false, 1 - true
-	IsView int8   `json:"is_view" db:"is_view"`
-	Data   string `json:"data" db:"data"`
+	IsView    int8   `json:"is_view" db:"is_view"`
+	Data      string `json:"data" db:"data"`
+	ExtraData string `json:"extra_data" db:"extra_data"`
 }
 
-// InitDB sets up setting up the connection pool global variable.
+// InitWithDSN sets up setting up the connection pool global variable.
 func InitWithDSN(dataSourceName string) (*sqlx.DB, error) {
 	var err error
 
@@ -39,7 +40,8 @@ func InitWithDSN(dataSourceName string) (*sqlx.DB, error) {
 		updated_at datetime NOT NULL,
 		source_page TEXT NOT NULL,
 		is_view INTEGER NOT NULL,
-		data TEXT NOT NULL
+		data TEXT NOT NULL,
+		extra_data TEXT
 	);`
 
 	_, err = db.Exec(tableSchema)
@@ -73,6 +75,7 @@ func GetQueries() ([]*v3.ExplorerQuery, error) {
 			SourcePage:     query.SourcePage,
 			CompositeQuery: &compositeQuery,
 			IsView:         query.IsView,
+			ExtraData:      query.ExtraData,
 		})
 	}
 	return explorerQueries, nil
@@ -93,13 +96,14 @@ func CreateQuery(query v3.ExplorerQuery) (string, error) {
 	updatedAt := time.Now()
 
 	_, err = db.Exec(
-		"INSERT INTO explorer_queries (uuid, created_at, updated_at, source_page, is_view, data) VALUES (?, ?, ?, ?, ?, ?)",
+		"INSERT INTO explorer_queries (uuid, created_at, updated_at, source_page, is_view, data, extra_data) VALUES (?, ?, ?, ?, ?, ?, ?)",
 		uuid_,
 		createdAt,
 		updatedAt,
 		query.SourcePage,
 		query.IsView,
 		data,
+		query.ExtraData,
 	)
 	if err != nil {
 		return "", fmt.Errorf("Error in creating explorer query: %s", err.Error())
@@ -124,6 +128,7 @@ func GetQuery(uuid_ string) (*v3.ExplorerQuery, error) {
 		SourcePage:     query.SourcePage,
 		CompositeQuery: &compositeQuery,
 		IsView:         query.IsView,
+		ExtraData:      query.ExtraData,
 	}, nil
 }
 
@@ -135,8 +140,8 @@ func UpdateQuery(uuid_ string, query v3.ExplorerQuery) error {
 
 	updatedAt := time.Now()
 
-	_, err = db.Exec("UPDATE explorer_queries SET updated_at = ?, source_page = ?, is_view = ?, data = ? WHERE uuid = ?",
-		updatedAt, query.SourcePage, query.IsView, data, uuid_)
+	_, err = db.Exec("UPDATE explorer_queries SET updated_at = ?, source_page = ?, is_view = ?, data = ?, extra_data = ? WHERE uuid = ?",
+		updatedAt, query.SourcePage, query.IsView, data, query.ExtraData, uuid_)
 	if err != nil {
 		return fmt.Errorf("Error in updating explorer query: %s", err.Error())
 	}

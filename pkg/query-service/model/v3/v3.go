@@ -226,6 +226,8 @@ type ExplorerQuery struct {
 	UUID           string          `json:"uuid,omitempty"`
 	SourcePage     string          `json:"sourcePage"`
 	CompositeQuery *CompositeQuery `json:"compositeQuery"`
+	// ExtraData is JSON encoded data used by frontend to store additional data
+	ExtraData string `json:"extraData"`
 	// 0 - false, 1 - true
 	IsView int8 `json:"isView"`
 }
