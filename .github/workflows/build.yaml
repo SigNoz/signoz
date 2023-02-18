@@ -32,6 +32,11 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
+      - name: Install Dependencies
+        shell: bash
+        run: |
+          sudo apt install -y sqlite3
+          make run-dependencies
       - name: Run tests
         shell: bash
         run: |

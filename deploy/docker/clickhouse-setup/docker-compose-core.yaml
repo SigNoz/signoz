@@ -30,9 +30,9 @@ services:
     image: signoz/alertmanager:0.23.0-0.2
     volumes:
       - ./data/alertmanager:/data
-    depends_on:
-      query-service:
-        condition: service_healthy
+    # depends_on:
+    #   query-service:
+    #     condition: service_healthy
     restart: on-failure
     command:
       - --queryService.url=http://query-service:8085

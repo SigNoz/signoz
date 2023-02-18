@@ -119,6 +119,16 @@ down-local:
 	$(STANDALONE_DIRECTORY)/docker-compose-core.yaml -f $(STANDALONE_DIRECTORY)/docker-compose-local.yaml \
 	down -v
 
+run-dependency:
+	@LOCAL_GOOS=$(LOCAL_GOOS) LOCAL_GOARCH=$(LOCAL_GOARCH) docker-compose -f \
+	$(STANDALONE_DIRECTORY)/docker-compose-core.yaml \
+	up --build -d
+
+down-dependency:
+	@docker-compose -f \
+	$(STANDALONE_DIRECTORY)/docker-compose-core.yaml \
+	down -v
+
 pull-signoz:
 	@docker-compose -f $(STANDALONE_DIRECTORY)/docker-compose.yaml pull
 
@@ -137,4 +147,4 @@ clear-swarm-data:
 	sh -c "cd /pwd && rm -rf alertmanager/* clickhouse*/* signoz/* zookeeper-*/*"
 
 test:
-	go test ./pkg/query-service/app/metrics/...
+	@SIGNOZ_LOCAL_DB_PATH="./signoz.db" go test -cover $(shell go list ./pkg/query-service/... | grep -v tests)
