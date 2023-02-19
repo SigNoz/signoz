@@ -24,5 +24,7 @@
 	"search_pipeline_placeholder": "Filter Pipelines",
 	"pipeline_name_placeholder": "Name",
 	"pipeline_tags_placeholder": "Tags",
-	"pipeline_description_placeholder": "Enter description for your pipeline"
+	"pipeline_description_placeholder": "Enter description for your pipeline",
+	"processor_name_placeholder": "Name",
+	"processor_description_placeholder": "example rule: %{word:first}"
 }

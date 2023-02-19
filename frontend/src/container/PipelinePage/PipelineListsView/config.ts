@@ -68,7 +68,7 @@ export const processorColumns: ColumnsType<ProcessorColumn> = [
 		title: '',
 	},
 	{
-		key: 'text',
+		key: 'processorName',
 		title: '',
 	},
 ];

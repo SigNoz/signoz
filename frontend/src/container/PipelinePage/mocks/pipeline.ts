@@ -22,18 +22,18 @@ export const pipelineData: Array<PipelineColumn> = [
 		tags: ['server', 'app'],
 		operators: [
 			{
+				id: '1',
 				type: 'grok',
 				name: 'grok use common',
-				id: 'grokusecommon',
 				output: 'renameauth',
 				pattern: '%{COMMONAPACHELOG}',
 				parse_from: 'body',
 				parse_to: 'attributes',
 			},
 			{
+				id: '2',
 				type: 'move',
 				name: 'rename auth',
-				id: 'renameauth',
 				parse_from: 'attributes.auth',
 				parse_to: 'attributes.username',
 			},
@@ -60,41 +60,38 @@ export const pipelineData: Array<PipelineColumn> = [
 		tags: ['server', 'app', 'host', 'realse'],
 		operators: [
 			{
+				id: '1',
 				type: 'trace_parser',
 				name: 'Parse trace details',
-				id: 'parsetracedetails',
 				output: 'removeoldxtrace_id',
 				trace_id: {
-					// Remove the keys if the user left them empty
 					parse_from: 'attributes.xtrace_id',
 				},
 				span_id: {
-					// Remove the keys if the user left them empty
 					parse_from: 'attributes.xspan_id',
 				},
 				trace_flags: {
-					// Remove the keys if the user left them empty
 					parse_from: 'attributes.xtrace_flag',
 				},
 			},
 			{
+				id: '2',
 				type: 'remove',
 				name: 'remove old xtrace_id',
-				id: 'removeoldxtrace_id',
 				field: 'attributes.xtrace_id',
 				output: 'removeoldxspan_id',
 			},
 			{
+				id: '3',
 				type: 'remove',
 				name: 'remove old xspan_id',
-				id: 'removeoldxspan_id',
 				field: 'attributes.xspan_id',
 				output: 'removeoldxtrace_flag',
 			},
 			{
+				id: '4',
 				type: 'remove',
 				name: 'remove old xtrace_flag',
-				id: 'removeoldxtrace_flag',
 				field: 'attributes.xtrace_flag',
 			},
 		],

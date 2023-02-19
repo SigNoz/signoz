@@ -9,15 +9,19 @@ import {
 } from 'antd';
 import { themeColors } from 'constants/theme';
 import { ModalFooterTitle } from 'container/PipelinePage/styles';
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { v4 as uuid } from 'uuid';
 
 import { ActionType } from '../../Layouts';
 import { ProcessorColumn } from '..';
 import { ModalButtonWrapper, ModalTitle } from '../styles';
 import { getRecordIndex } from '../utils';
-import { processorInputField, processorTypes, wrapperStyle } from './config';
+import {
+	processorInputField,
+	ProcessorType,
+	processorTypes,
+	wrapperStyle,
+} from './config';
 import { PipelineIndexIcon, ProcessorTypeWrapper } from './styles';
 
 function AddNewProcessor({
@@ -29,15 +33,23 @@ function AddNewProcessor({
 }: AddNewProcessorProps): JSX.Element {
 	const [form] = Form.useForm();
 	const { t } = useTranslation('pipeline');
+	const [processorType, setProcessorType] = useState<string>('');
+
 	const isEdit = useMemo(() => isActionType === 'edit-processor', [
 		isActionType,
 	]);
 	const isAdd = useMemo(() => isActionType === 'add-processor', [isActionType]);
 
+	const handleProcessorType = (type: ProcessorType): void => {
+		setProcessorType(type.value);
+	};
+
 	const onFinish = (values: OnFinishValue): void => {
 		const newProcessorData: ProcessorColumn = {
-			id: isEdit ? selectedProcessorData?.id : uuid(),
-			text: values.name,
+			id: processorDataSource.length + 1,
+			type: processorType,
+			processorName: values.processorName,
+			description: values.description,
 		};
 
 		if (isEdit) {
@@ -49,11 +61,15 @@ function AddNewProcessor({
 
 			const updatedProcessorData = {
 				...processorDataSource?.[findRecordIndex],
-				text: values.name,
+				type: processorType,
+				processorName: values.processorName,
+				description: values.description,
 			};
 
 			const editedData = processorDataSource?.map((data) =>
-				data.text === selectedProcessorData?.text ? updatedProcessorData : data,
+				data.processorName === selectedProcessorData?.processorName
+					? updatedProcessorData
+					: data,
 			);
 
 			setProcessorDataSource(editedData);
@@ -77,7 +93,7 @@ function AddNewProcessor({
 			title={
 				<ModalTitle level={4}>
 					{isEdit
-						? `${t('edit_processor')} ${selectedProcessorData?.text}`
+						? `${t('edit_processor')} ${selectedProcessorData?.processorName}`
 						: t('create_processor')}
 				</ModalTitle>
 			}
@@ -90,7 +106,7 @@ function AddNewProcessor({
 			<Divider plain />
 			<Form
 				name="addNewProcessor"
-				initialValues={selectedProcessorData}
+				initialValues={isEdit ? selectedProcessorData : {}}
 				layout="vertical"
 				style={{ marginTop: '1.25rem' }}
 				onFinish={onFinish}
@@ -104,6 +120,7 @@ function AddNewProcessor({
 						<DefaultSelect
 							labelInValue
 							style={{ width: 200 }}
+							onChange={handleProcessorType}
 							defaultValue={processorTypes[0]}
 						>
 							{processorTypes.map(({ value, label }) => (
@@ -114,42 +131,46 @@ function AddNewProcessor({
 						</DefaultSelect>
 					</ProcessorTypeWrapper>
 				</div>
-				{processorInputField.map((i, index) => {
-					if (i.id === 1) {
+				{processorInputField.map((item, index) => {
+					if (item.id === '1') {
 						return (
-							<div key={i.id} style={wrapperStyle}>
+							<div key={item.id} style={wrapperStyle}>
 								<Avatar size="small" style={{ background: themeColors.navyBlue }}>
 									{index + 2}
 								</Avatar>
 								<div style={{ width: '100%' }}>
 									<Form.Item
 										required={false}
-										label={<ModalFooterTitle>{i.fieldName}</ModalFooterTitle>}
-										name={i.name}
-										key={i.id}
+										label={<ModalFooterTitle>{item.fieldName}</ModalFooterTitle>}
+										key={item.id}
+										name={item.name}
 										rules={[
 											{
 												required: true,
 											},
 										]}
 									>
-										<Input placeholder={i.placeholder} name={i.name} />
+										<Input placeholder={t(t(item.placeholder))} name={item.name} />
 									</Form.Item>
 								</div>
 							</div>
 						);
 					}
 					return (
-						<div key={i.id} style={wrapperStyle}>
+						<div key={item.id} style={wrapperStyle}>
 							<Avatar size="small" style={{ background: themeColors.navyBlue }}>
 								{index + 2}
 							</Avatar>
 							<div style={{ width: '100%' }}>
 								<Form.Item
-									name={i.name}
-									label={<ModalFooterTitle>{i.fieldName}</ModalFooterTitle>}
+									name={item.name}
+									label={<ModalFooterTitle>{item.fieldName}</ModalFooterTitle>}
 								>
-									<Input.TextArea rows={4} placeholder={i.placeholder} />
+									<Input.TextArea
+										rows={4}
+										name={item.name}
+										placeholder={t(t(item.placeholder))}
+									/>
 								</Form.Item>
 							</div>
 						</div>
@@ -172,9 +193,8 @@ function AddNewProcessor({
 }
 
 export interface OnFinishValue {
-	name: string;
-	id: number | boolean;
-	text: string;
+	processorName: string;
+	description: string;
 }
 
 interface AddNewProcessorProps {

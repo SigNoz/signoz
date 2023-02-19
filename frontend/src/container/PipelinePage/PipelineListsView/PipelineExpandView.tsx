@@ -36,7 +36,7 @@ function PipelineExpandView({
 	const handleProcessorDeleteAction = useCallback(
 		(record: ProcessorColumn) => (): void => {
 			handleAlert({
-				title: `${t('delete_processor')} : ${record.text}?`,
+				title: `${t('delete_processor')} : ${record.processorName}?`,
 				descrition: t('delete_processor_description'),
 				buttontext: t('delete'),
 				onOk: processorDeleteHandler(record),

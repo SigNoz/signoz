@@ -1,4 +1,4 @@
-import { Button, Divider, Form, FormInstance, Input, Modal } from 'antd';
+import { Button, Divider, Form, Input, Modal } from 'antd';
 import React, { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useSelector } from 'react-redux';
@@ -20,8 +20,8 @@ function AddNewPipeline({
 	selectedRecord,
 	pipelineDataSource,
 	setPipelineDataSource,
-	addPipelineForm,
 }: AddNewPipelineProps): JSX.Element {
+	const [form] = Form.useForm();
 	const { t } = useTranslation('pipeline');
 	const { user } = useSelector<AppState, AppReducer>((state) => state.app);
 	const [count, setCount] = useState(3);
@@ -83,14 +83,14 @@ function AddNewPipeline({
 				(prevState: PipelineColumn[]) =>
 					[...prevState, newPipeLineData] as PipelineColumn[],
 			);
-			addPipelineForm.resetFields();
+			form.resetFields();
 		}
 		setActionType(undefined);
 	};
 
 	const onCancelHandler = (): void => {
 		setActionType(undefined);
-		addPipelineForm.resetFields();
+		form.resetFields();
 	};
 
 	return (
@@ -111,12 +111,12 @@ function AddNewPipeline({
 			<Divider plain />
 			<Form
 				name="addNewPipeline"
-				initialValues={selectedRecord}
+				initialValues={isEdit ? selectedRecord : {}}
 				layout="vertical"
 				style={{ marginTop: '1.25rem' }}
 				onFinish={onFinish}
 				autoComplete="off"
-				form={addPipelineForm}
+				form={form}
 			>
 				{addPipelinefieldLists.map((item) => {
 					if (item.id === '1') {
@@ -221,7 +221,6 @@ interface AddNewPipelineProps {
 	setPipelineDataSource: (
 		value: React.SetStateAction<Array<PipelineColumn>>,
 	) => void;
-	addPipelineForm: FormInstance;
 }
 
 export default AddNewPipeline;

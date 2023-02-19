@@ -1,6 +1,5 @@
 import { ExclamationCircleOutlined, PlusOutlined } from '@ant-design/icons';
 import { Modal, Table, Typography } from 'antd';
-import { FormInstance } from 'antd/lib/form/Form';
 import React, { useCallback, useMemo, useState } from 'react';
 import { DndProvider } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
@@ -27,7 +26,6 @@ import { getElementFromArray, getTableColumn, getUpdatedRow } from './utils';
 function PipelineListsView({
 	isActionType,
 	setActionType,
-	addPipelineForm,
 }: PipelineListsViewProps): JSX.Element {
 	const { t } = useTranslation('pipeline');
 	const [pipelineDataSource, setPipelineDataSource] = useState<
@@ -163,9 +161,11 @@ function PipelineListsView({
 		}
 		setActiveExpRow(keys);
 		const processorData = record.operators.map(
-			(item: PipelineOperators, index: number): ProcessorColumn => ({
-				id: index,
-				text: item.name,
+			(item: PipelineOperators): ProcessorColumn => ({
+				id: item.id,
+				type: item.type,
+				processorName: item.name,
+				description: item.output,
 			}),
 		);
 		setProcessorDataSource(processorData);
@@ -181,8 +181,7 @@ function PipelineListsView({
 
 	const onClickHandler = useCallback((): void => {
 		setActionType(ActionType.AddPipeline);
-		addPipelineForm.resetFields();
-	}, [setActionType, addPipelineForm]);
+	}, [setActionType]);
 
 	const footer = useCallback(
 		(): JSX.Element => (
@@ -202,7 +201,6 @@ function PipelineListsView({
 				selectedRecord={selectedRecord}
 				pipelineDataSource={pipelineDataSource}
 				setPipelineDataSource={setPipelineDataSource}
-				addPipelineForm={addPipelineForm}
 			/>
 			<AddNewProcessor
 				isActionType={isActionType}
@@ -250,7 +248,6 @@ function PipelineListsView({
 interface PipelineListsViewProps {
 	isActionType: string;
 	setActionType: (actionType?: ActionType) => void;
-	addPipelineForm: FormInstance;
 }
 
 export type ActionBy = {
@@ -293,8 +290,10 @@ export interface PipelineColumn {
 }
 
 export interface ProcessorColumn {
-	id?: number | string;
-	text: string;
+	id: string | number;
+	type: string;
+	processorName: string;
+	description?: string;
 }
 
 export interface AlertMessage {

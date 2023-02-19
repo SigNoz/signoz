@@ -19,11 +19,9 @@ function TableComponents({
 		return <span>{record.username}</span>;
 	}
 	if (columnKey === 'id') {
-		return (
-			<ProcessorIndexIcon size="small">{Number(record) + 1}</ProcessorIndexIcon>
-		);
+		return <ProcessorIndexIcon size="small">{Number(record)}</ProcessorIndexIcon>;
 	}
-	if (columnKey === 'text') {
+	if (columnKey === 'processorName') {
 		return <ListDataStyle>{record}</ListDataStyle>;
 	}
 	return <span>{record}</span>;

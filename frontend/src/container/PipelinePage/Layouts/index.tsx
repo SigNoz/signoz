@@ -1,4 +1,3 @@
-import { Form } from 'antd';
 import React, { useState } from 'react';
 
 import PipelineListsView from '../PipelineListsView';
@@ -7,18 +6,13 @@ import PipelinesSearchSection from './PipelinesSearchSection';
 
 function PipelinePageLayout(): JSX.Element {
 	const [isActionType, setActionType] = useState<string>();
-	const [addPipelineForm] = Form.useForm();
 	return (
 		<>
-			<CreatePipelineButton
-				setActionType={setActionType}
-				addPipelineForm={addPipelineForm}
-			/>
+			<CreatePipelineButton setActionType={setActionType} />
 			<PipelinesSearchSection />
 			<PipelineListsView
 				isActionType={isActionType as string}
 				setActionType={setActionType}
-				addPipelineForm={addPipelineForm}
 			/>
 		</>
 	);
