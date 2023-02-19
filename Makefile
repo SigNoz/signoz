@@ -147,4 +147,4 @@ clear-swarm-data:
 	sh -c "cd /pwd && rm -rf alertmanager/* clickhouse*/* signoz/* zookeeper-*/*"
 
 test:
-	@SIGNOZ_LOCAL_DB_PATH="./signoz.db" go test -cover $(shell go list ./pkg/query-service/... | grep -v tests)
+	@SIGNOZ_LOCAL_DB_PATH="$(CURDIR)/pkg/query-service/signoz.db" go test -cover $(shell go list ./pkg/query-service/... | grep -v tests)
