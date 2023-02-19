@@ -2389,15 +2389,142 @@ func (aH *APIHandler) autoCompleteAttributeValues(w http.ResponseWriter, r *http
 	aH.Respond(w, response)
 }
 
-func (aH *APIHandler) QueryRangeV3(w http.ResponseWriter, r *http.Request) {
-	metricsQueryRangeParams, apiErrorObj := ParseQueryRangeParams(r)
-
-	if apiErrorObj != nil {
-		zap.S().Errorf(apiErrorObj.Err.Error())
-		RespondError(w, apiErrorObj, nil)
-		return
+func (aH *APIHandler) execClickHouseQueries(ctx context.Context, queries map[string]string) ([]*v3.Result, error, map[string]string) {
+	type channelResult struct {
+		Series []*v3.Series
+		Err    error
+		Name   string
+		Query  string
 	}
 
+	ch := make(chan channelResult, len(queries))
+	var wg sync.WaitGroup
+
+	for name, query := range queries {
+		wg.Add(1)
+		go func(name, query string) {
+			defer wg.Done()
+			seriesList, err := aH.reader.GetMetricResultV3(ctx, query)
+
+			if err != nil {
+				ch <- channelResult{Err: fmt.Errorf("error in query-%s: %v", name, err), Name: name, Query: query}
+				return
+			}
+			ch <- channelResult{Series: seriesList, Name: name, Query: query}
+		}(name, query)
+	}
+
+	wg.Wait()
+	close(ch)
+
+	var errs []error
+	errQuriesByName := make(map[string]string)
+	// read values from the channel
+	res := make([]*v3.Result, 0)
+	for r := range ch {
+		if r.Err != nil {
+			errs = append(errs, r.Err)
+			errQuriesByName[r.Name] = r.Query
+			continue
+		}
+		for _, series := range r.Series {
+			res = append(res, &v3.Result{
+				QueryName: r.Name,
+				Series:    series,
+			})
+		}
+	}
+	if len(errs) != 0 {
+		return nil, fmt.Errorf("encountered multiple errors: %s", metrics.FormatErrs(errs, "\n")), errQuriesByName
+	}
+	return res, nil, nil
+}
+
+func (aH *APIHandler) execPromQueries(ctx context.Context, metricsQueryRangeParams *v3.QueryRangeParamsV3) ([]*v3.Result, error, map[string]string) {
+	type channelResult struct {
+		Series []*v3.Series
+		Err    error
+		Name   string
+		Query  string
+	}
+
+	var seriesList []*v3.Series
+	ch := make(chan channelResult, len(metricsQueryRangeParams.CompositeQuery.PromQueries))
+	var wg sync.WaitGroup
+
+	for name, query := range metricsQueryRangeParams.CompositeQuery.PromQueries {
+		if query.Disabled {
+			continue
+		}
+		wg.Add(1)
+		go func(name string, query *v3.PromQuery) {
+			var seriesList []*v3.Series
+			defer wg.Done()
+			tmpl := template.New("promql-query")
+			tmpl, tmplErr := tmpl.Parse(query.Query)
+			if tmplErr != nil {
+				ch <- channelResult{Err: fmt.Errorf("error in parsing query-%s: %v", name, tmplErr), Name: name, Query: query.Query}
+				return
+			}
+			var queryBuf bytes.Buffer
+			tmplErr = tmpl.Execute(&queryBuf, metricsQueryRangeParams.Variables)
+			if tmplErr != nil {
+				ch <- channelResult{Err: fmt.Errorf("error in parsing query-%s: %v", name, tmplErr), Name: name, Query: query.Query}
+				return
+			}
+			query.Query = queryBuf.String()
+			queryModel := model.QueryRangeParams{
+				Start: time.UnixMilli(metricsQueryRangeParams.Start),
+				End:   time.UnixMilli(metricsQueryRangeParams.End),
+				Step:  time.Duration(metricsQueryRangeParams.Step * int64(time.Second)),
+				Query: query.Query,
+			}
+			promResult, _, err := aH.reader.GetQueryRangeResult(ctx, &queryModel)
+			if err != nil {
+				ch <- channelResult{Err: fmt.Errorf("error in query-%s: %v", name, err), Name: name, Query: query.Query}
+				return
+			}
+			matrix, _ := promResult.Matrix()
+			for _, v := range matrix {
+				var s v3.Series
+				s.Labels = v.Metric.Copy().Map()
+				for _, p := range v.Points {
+					s.Points = append(s.Points, v3.Point{Timestamp: p.T, Value: p.V})
+				}
+				seriesList = append(seriesList, &s)
+			}
+			ch <- channelResult{Series: seriesList, Name: name, Query: query.Query}
+		}(name, query)
+	}
+
+	wg.Wait()
+	close(ch)
+
+	var errs []error
+	errQuriesByName := make(map[string]string)
+	// read values from the channel
+	res := make([]*v3.Result, 0)
+	for r := range ch {
+		if r.Err != nil {
+			errs = append(errs, r.Err)
+			errQuriesByName[r.Name] = r.Query
+			continue
+		}
+		for _, series := range r.Series {
+			res = append(res, &v3.Result{
+				QueryName: r.Name,
+				Series:    series,
+			})
+		}
+		seriesList = append(seriesList, r.Series...)
+	}
+	if len(errs) != 0 {
+		return nil, fmt.Errorf("encountered multiple errors: %s", metrics.FormatErrs(errs, "\n")), errQuriesByName
+	}
+	return res, nil, nil
+}
+
+func (aH *APIHandler) metricQueryRangeV3(metricsQueryRangeParams *v3.QueryRangeParamsV3, w http.ResponseWriter, r *http.Request) {
 	// prometheus instant query needs same timestamp
 	if metricsQueryRangeParams.CompositeQuery.PanelType == v3.PanelTypeValue &&
 		metricsQueryRangeParams.CompositeQuery.QueryType == v3.QueryTypePromQL {
@@ -2411,135 +2538,6 @@ func (aH *APIHandler) QueryRangeV3(w http.ResponseWriter, r *http.Request) {
 		metricsQueryRangeParams.End = (end / step * step) * 1000
 	}
 
-	type channelResult struct {
-		Series []*v3.Series
-		Err    error
-		Name   string
-		Query  string
-	}
-
-	execClickHouseQueries := func(queries map[string]string) ([]*v3.Result, error, map[string]string) {
-		// var seriesList []*v3.Series
-		ch := make(chan channelResult, len(queries))
-		var wg sync.WaitGroup
-
-		for name, query := range queries {
-			wg.Add(1)
-			go func(name, query string) {
-				defer wg.Done()
-				seriesList, err := aH.reader.GetMetricResultV3(r.Context(), query)
-
-				if err != nil {
-					ch <- channelResult{Err: fmt.Errorf("error in query-%s: %v", name, err), Name: name, Query: query}
-					return
-				}
-				ch <- channelResult{Series: seriesList, Name: name, Query: query}
-			}(name, query)
-		}
-
-		wg.Wait()
-		close(ch)
-
-		var errs []error
-		errQuriesByName := make(map[string]string)
-		// read values from the channel
-		res := make([]*v3.Result, 0)
-		for r := range ch {
-			if r.Err != nil {
-				errs = append(errs, r.Err)
-				errQuriesByName[r.Name] = r.Query
-				continue
-			}
-			for _, series := range r.Series {
-				res = append(res, &v3.Result{
-					QueryName: r.Name,
-					Series:    series,
-				})
-			}
-		}
-		if len(errs) != 0 {
-			return nil, fmt.Errorf("encountered multiple errors: %s", metrics.FormatErrs(errs, "\n")), errQuriesByName
-		}
-		return res, nil, nil
-	}
-
-	execPromQueries := func(metricsQueryRangeParams *v3.QueryRangeParamsV3) ([]*v3.Result, error, map[string]string) {
-		var seriesList []*v3.Series
-		ch := make(chan channelResult, len(metricsQueryRangeParams.CompositeQuery.PromQueries))
-		var wg sync.WaitGroup
-
-		for name, query := range metricsQueryRangeParams.CompositeQuery.PromQueries {
-			if query.Disabled {
-				continue
-			}
-			wg.Add(1)
-			go func(name string, query *v3.PromQuery) {
-				var seriesList []*v3.Series
-				defer wg.Done()
-				tmpl := template.New("promql-query")
-				tmpl, tmplErr := tmpl.Parse(query.Query)
-				if tmplErr != nil {
-					ch <- channelResult{Err: fmt.Errorf("error in parsing query-%s: %v", name, tmplErr), Name: name, Query: query.Query}
-					return
-				}
-				var queryBuf bytes.Buffer
-				tmplErr = tmpl.Execute(&queryBuf, metricsQueryRangeParams.Variables)
-				if tmplErr != nil {
-					ch <- channelResult{Err: fmt.Errorf("error in parsing query-%s: %v", name, tmplErr), Name: name, Query: query.Query}
-					return
-				}
-				query.Query = queryBuf.String()
-				queryModel := model.QueryRangeParams{
-					Start: time.UnixMilli(metricsQueryRangeParams.Start),
-					End:   time.UnixMilli(metricsQueryRangeParams.End),
-					Step:  time.Duration(metricsQueryRangeParams.Step * int64(time.Second)),
-					Query: query.Query,
-				}
-				promResult, _, err := aH.reader.GetQueryRangeResult(r.Context(), &queryModel)
-				if err != nil {
-					ch <- channelResult{Err: fmt.Errorf("error in query-%s: %v", name, err), Name: name, Query: query.Query}
-					return
-				}
-				matrix, _ := promResult.Matrix()
-				for _, v := range matrix {
-					var s v3.Series
-					s.Labels = v.Metric.Copy().Map()
-					for _, p := range v.Points {
-						s.Points = append(s.Points, v3.Point{Timestamp: p.T, Value: p.V})
-					}
-					seriesList = append(seriesList, &s)
-				}
-				ch <- channelResult{Series: seriesList, Name: name, Query: query.Query}
-			}(name, query)
-		}
-
-		wg.Wait()
-		close(ch)
-
-		var errs []error
-		errQuriesByName := make(map[string]string)
-		// read values from the channel
-		res := make([]*v3.Result, 0)
-		for r := range ch {
-			if r.Err != nil {
-				errs = append(errs, r.Err)
-				errQuriesByName[r.Name] = r.Query
-				continue
-			}
-			for _, series := range r.Series {
-				res = append(res, &v3.Result{
-					QueryName: r.Name,
-					Series:    series,
-				})
-			}
-			seriesList = append(seriesList, r.Series...)
-		}
-		if len(errs) != 0 {
-			return nil, fmt.Errorf("encountered multiple errors: %s", metrics.FormatErrs(errs, "\n")), errQuriesByName
-		}
-		return res, nil, nil
-	}
-
 	var seriesList []*v3.Series
 	var res []*v3.Result
 	var err error
@@ -2551,7 +2549,7 @@ func (aH *APIHandler) QueryRangeV3(w http.ResponseWriter, r *http.Request) {
 			RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: runQueries.Err}, nil)
 			return
 		}
-		res, err, errQuriesByName = execClickHouseQueries(runQueries.Queries)
+		res, err, errQuriesByName = aH.execClickHouseQueries(r.Context(), runQueries.Queries)
 
 	case v3.QueryTypeClickHouseSQL:
 		queries := make(map[string]string)
@@ -2578,9 +2576,9 @@ func (aH *APIHandler) QueryRangeV3(w http.ResponseWriter, r *http.Request) {
 
 			queries[name] = query.String()
 		}
-		res, err, errQuriesByName = execClickHouseQueries(queries)
+		res, err, errQuriesByName = aH.execClickHouseQueries(r.Context(), queries)
 	case v3.QueryTypePromQL:
-		res, err, errQuriesByName = execPromQueries(metricsQueryRangeParams)
+		res, err, errQuriesByName = aH.execPromQueries(r.Context(), metricsQueryRangeParams)
 	default:
 		err = fmt.Errorf("invalid query type")
 		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, errQuriesByName)
@@ -2604,4 +2602,17 @@ func (aH *APIHandler) QueryRangeV3(w http.ResponseWriter, r *http.Request) {
 		Result: res,
 	}
 	aH.Respond(w, resp)
+}
+
+func (aH *APIHandler) QueryRangeV3(w http.ResponseWriter, r *http.Request) {
+	queryRangeParams, apiErrorObj := ParseQueryRangeParams(r)
+
+	if apiErrorObj != nil {
+		zap.S().Errorf(apiErrorObj.Err.Error())
+		RespondError(w, apiErrorObj, nil)
+		return
+	}
+
+	// TODO: handle three signals
+	aH.metricQueryRangeV3(queryRangeParams, w, r)
 }
