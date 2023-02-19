@@ -1,12 +1,4 @@
-import {
-	Avatar,
-	Button,
-	Divider,
-	Form,
-	Input,
-	Modal,
-	Select as DefaultSelect,
-} from 'antd';
+import { Avatar, Button, Divider, Form, Input, Modal, Select } from 'antd';
 import { themeColors } from 'constants/theme';
 import { ModalFooterTitle } from 'container/PipelinePage/styles';
 import React, { useMemo, useState } from 'react';
@@ -17,8 +9,8 @@ import { ProcessorColumn } from '..';
 import { ModalButtonWrapper, ModalTitle } from '../styles';
 import { getRecordIndex } from '../utils';
 import {
+	DEFAULT_PROCESSOR_TYPE,
 	processorInputField,
-	ProcessorType,
 	processorTypes,
 	wrapperStyle,
 } from './config';
@@ -33,15 +25,17 @@ function AddNewProcessor({
 }: AddNewProcessorProps): JSX.Element {
 	const [form] = Form.useForm();
 	const { t } = useTranslation('pipeline');
-	const [processorType, setProcessorType] = useState<string>('');
+	const [processorType, setProcessorType] = useState<string>(
+		DEFAULT_PROCESSOR_TYPE,
+	);
 
 	const isEdit = useMemo(() => isActionType === 'edit-processor', [
 		isActionType,
 	]);
 	const isAdd = useMemo(() => isActionType === 'add-processor', [isActionType]);
 
-	const handleProcessorType = (type: ProcessorType): void => {
-		setProcessorType(type.value);
+	const handleProcessorType = (type: string): void => {
+		setProcessorType(type);
 	};
 
 	const onFinish = (values: OnFinishValue): void => {
@@ -113,22 +107,21 @@ function AddNewProcessor({
 				autoComplete="off"
 				form={form}
 			>
-				<div style={{ display: 'flex', gap: '1rem', marginBottom: '1.5rem' }}>
+				<div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
 					<PipelineIndexIcon size="small">1</PipelineIndexIcon>
 					<ProcessorTypeWrapper>
 						<span>{t('processor_type')}</span>
-						<DefaultSelect
-							labelInValue
+						<Select
 							style={{ width: 200 }}
 							onChange={handleProcessorType}
-							defaultValue={processorTypes[0]}
+							defaultValue={isEdit ? selectedProcessorData?.type : processorType}
 						>
 							{processorTypes.map(({ value, label }) => (
-								<DefaultSelect.Option key={value + label} value={value}>
+								<Select.Option key={value + label} value={value}>
 									{label}
-								</DefaultSelect.Option>
+								</Select.Option>
 							))}
-						</DefaultSelect>
+						</Select>
 					</ProcessorTypeWrapper>
 				</div>
 				{processorInputField.map((item, index) => {

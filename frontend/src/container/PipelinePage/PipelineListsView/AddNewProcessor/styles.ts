@@ -4,13 +4,10 @@ import styled from 'styled-components';
 
 export const PipelineIndexIcon = styled(Avatar)`
 	background-color: ${themeColors.navyBlue};
-	position: relative;
-	top: 0.625rem;
 `;
 
 export const ProcessorTypeWrapper = styled.div`
 	display: flex;
 	flex-direction: column;
-	gap: 0.625rem;
-	margin-top: 0.625rem;
+	padding-bottom: 0.5rem;
 `;
