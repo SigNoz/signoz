@@ -1,14 +1,69 @@
 package ingestionRules
 
 import (
-	"fmt"
 	"sort"
+	"strings"
 
 	"go.signoz.io/signoz/ee/query-service/model"
 	"go.uber.org/zap"
 
 	tsp "github.com/open-telemetry/opentelemetry-collector-contrib/processor/tailsamplingprocessor"
 )
+
+func preparePolicycfg(config model.SamplingConfig) tsp.PolicyCfg {
+	policy := tsp.PolicyCfg{
+		Root:       true,
+		Name:       config.Name,
+		Priority:   config.Priority,
+		PolicyType: tsp.PolicyGroup,
+		PolicyFilterCfg: tsp.PolicyFilterCfg{
+			StringAttributeCfgs:  []tsp.StringAttributeCfg{},
+			NumericAttributeCfgs: []tsp.NumericAttributeCfg{},
+		},
+	}
+
+	// assign root filter operator
+	if strings.ToLower(config.FilterSet.Operator) == "and" {
+		policy.FilterOp = "AND"
+	}
+	if strings.ToLower(config.FilterSet.Operator) == "or" {
+		policy.FilterOp = "OR"
+	}
+
+	// assign root filter conditions
+	for _, f := range config.FilterSet.Items {
+
+		switch v := f.Value.(type) {
+		case string:
+			value := f.Value.(string)
+			policy.StringAttributeCfgs = append(policy.StringAttributeCfgs, tsp.StringAttributeCfg{Key: f.Key, Values: value})
+		case []string:
+			values := f.Value.([]string)
+			policy.StringAttributeCfgs = append(policy.StringAttributeCfgs, tsp.StringAttributeCfg{Key: f.Key, Values: values})
+		case int:
+			value := f.Value.(int)
+			policy.NumericAttributeCfgs = append(policy.NumericAttributeCfgs, tsp.NumericAttributeCfg{Key: f.Key, Values: value})
+		case float64:
+			value := f.Value.(float64)
+			policy.NumericAttributeCfgs = append(policy.NumericAttributeCfgs, tsp.NumericAttributeCfg{Key: f.Key, Values: value})
+		case float32:
+			value := f.Value.(float32)
+			policy.NumericAttributeCfgs = append(policy.NumericAttributeCfgs, tsp.NumericAttributeCfg{Key: f.Key, Values: value})
+		}
+	}
+
+	policy.ProbabilisticCfg = tsp.ProbabilisticCfg{
+		// HashSalt: //
+		SamplingPercentage: config.SamplingPercent,
+	}
+
+	return policy
+}
+
+func isPolicyCfgOk(p tsp.PolicyCfg) bool {
+	// todo: added more validations for policy config
+	return true
+}
 
 // PrepareTailSamplingParams transforms sampling rules into tail sampler processor config
 func PrepareTailSamplingParams(rules []model.IngestionRule) (*tsp.Config, error) {
@@ -19,13 +74,8 @@ func PrepareTailSamplingParams(rules []model.IngestionRule) (*tsp.Config, error)
 		return &tsp.Config{PolicyCfgs: prepareDefaultPolicy()}, nil
 	}
 
-	// keep root level policies  [condition.ID] = policy cnfg
-	// this will be useful in debugging. we can not use this for final
-	// config construction as we need sorting of policies the order of priority
-	policies := make(map[string][]tsp.PolicyCfg, 0)
-
 	// we want the order to be maintained, so a list
-	var finalPolicy []tsp.PolicyCfg
+	var finalPolicies []tsp.PolicyCfg
 
 	sort.Sort(model.IngestionRulesByPriority(rules))
 
@@ -36,138 +86,41 @@ func PrepareTailSamplingParams(rules []model.IngestionRule) (*tsp.Config, error)
 		rootConfig := root.Config.SamplingConfig
 		conditions := rootConfig.Conditions
 
-		if len(rootConfig.FilterSet.Items) != 1 {
-			// we do not support, roots with more than on one condition
-			continue
-		}
-
-		// root would only support on filter item. here we only
-		// construct root policy but it will be added to the final config
-		// only if a default condition exists. this is because root policy
-		// does not sampling method or percent
-		rootFilter := rootConfig.FilterSet.Items[0]
-		rootFilterVals := rootFilter.Value.([]string)
-		rootPolicy := prepareStringPolicy(fmt.Sprintf("root-%s", root.Id), rootFilter.Key, rootFilterVals)
+		rootPolicy := preparePolicyCfg(rootConfig)
 
 		if len(conditions) == 0 {
-			zap.S().Warnf("found a sampling rule with empty condtion, skipping the condition", rootConfig.Name)
+			zap.S().Warnf("found a sampling rule with no default condtion, skipping the policy", rootConfig.Name)
 			continue
 		}
 
-		// sort conditions to order by priority and move default to the end
+		// build sub-policies for conditions
+
+		// first, sort conditions to order by priority and move default to the end
 		sort.Sort(model.SamplingConfigByPriority(conditions))
 
 		for _, condition := range conditions {
+
 			if condition.Default {
-				// default will usually have the last priority, it is else case
-				defaultPolicies := []tsp.PolicyCfg{}
-
-				// use root policy for default condition
-				defaultPolicies = append(defaultPolicies, rootPolicy)
-
-				defaultPolicies = append(defaultPolicies, prepareProbabilistic(condition.ID, condition.SamplingPercent))
-				policies[condition.ID] = defaultPolicies
-
-				finalPolicy = append(finalPolicy, defaultPolicies...)
-
-			} else {
-
-				// list of policy for each filter item in a condition
-				// e.g. conditions may have multiple filters like
-				// service = 'ABC' AND host = 'server-1'
-				// currently, support only AND conditions
-
-				filterSetPolicies := make([]tsp.PolicyCfg, len(condition.FilterSet.Items))
-
-				if len(condition.FilterSet.Items) != 0 {
-
-					// make policy for each filter in the condition
-					for i, filter := range condition.FilterSet.Items {
-						vals := filter.Value.([]string)
-						filterPolicy := prepareStringPolicy(fmt.Sprintf("filter-%s-%d", condition.ID, i), filter.Key, vals)
-
-						filterSetPolicies = append(filterSetPolicies, filterPolicy)
-					}
-
-					conditionPolicy := []tsp.PolicyCfg{}
-
-					// use root policy for default condition
-					conditionPolicy = append(conditionPolicy, rootPolicy)
-
-					conditionPolicy = append(conditionPolicy, filterSetPolicies...)
-
-					if condition.SamplingMethod == model.SamplingMethodProbabilistic {
-						conditionPolicy = append(conditionPolicy, prepareProbabilistic(fmt.Sprintf("filter-%s-percent", condition.ID), condition.SamplingPercent))
-					}
-
-					policies[condition.ID] = conditionPolicy
-					finalPolicy = append(finalPolicy, conditionPolicy...)
+				rootPolicy.ProbabilisticCfg = tsp.ProbabilisticCfg{
+					// HashSalt: //
+					SamplingPercentage: condition.SamplingPercent,
 				}
-			} // end if condition.Default
+				continue
+			}
+
+			// prepare subpolicy for this condition
+			rootPolicy.subPolicies = append(rootPolicy.subPolicies, preparePolicycfg(condition))
+
 		} // end for loop conditions
+
+		if isPolicyCfgOk(rootPolicy) {
+			finalPolicies = append(finalPolicies, rootPolicy)
+		}
 	}
 
-	zap.S().Debugf("generated sampling policies:", policies)
-	zap.S().Debugf("sorted sampling policies:", finalPolicy)
+	zap.S().Debugf("sorted sampling policies:", finalPolicies)
 
 	return &tsp.Config{
-		PolicyCfgs: finalPolicy,
+		PolicyCfgs: finalPolicies,
 	}, nil
-}
-
-func prepareProbabilistic(id string, percent int) tsp.PolicyCfg {
-
-	return tsp.PolicyCfg{
-		SharedPolicyCfg: tsp.SharedPolicyCfg{
-			Name: id,
-			Type: tsp.Probabilistic,
-			ProbabilisticCfg: tsp.ProbabilisticCfg{
-				SamplingPercentage: float64(percent),
-			},
-		},
-	}
-}
-
-func prepareDefaultPolicy() []tsp.PolicyCfg {
-	return []tsp.PolicyCfg{
-		tsp.PolicyCfg{
-			SharedPolicyCfg: tsp.SharedPolicyCfg{
-				Name: "default",
-				Type: tsp.AlwaysSample,
-			},
-		},
-	}
-}
-
-func prepareAndPolicy(id string, subPolicies []tsp.PolicyCfg) tsp.PolicyCfg {
-	var andSubPolicies []tsp.AndSubPolicyCfg
-	for _, sp := range subPolicies {
-		andSubPolicies = append(andSubPolicies, tsp.AndSubPolicyCfg{
-			SharedPolicyCfg: sp.SharedPolicyCfg,
-		})
-	}
-
-	return tsp.PolicyCfg{
-		SharedPolicyCfg: tsp.SharedPolicyCfg{
-			Name: id,
-			Type: tsp.And,
-		},
-		AndCfg: tsp.AndCfg{SubPolicyCfg: andSubPolicies},
-	}
-}
-
-func prepareStringPolicy(id string, key string, vals []string) tsp.PolicyCfg {
-	return tsp.PolicyCfg{
-		SharedPolicyCfg: tsp.SharedPolicyCfg{
-			Name: id,
-			Type: tsp.StringAttribute,
-			StringAttributeCfg: tsp.StringAttributeCfg{
-				Key:    key,
-				Values: vals,
-				// todo
-				// EnabledRegexMatching: use key.Ope for this
-				// InvertMatch: use key.Op for this
-			},
-		},
-	}
 }

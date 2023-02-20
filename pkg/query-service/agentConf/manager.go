@@ -71,7 +71,6 @@ func StartNewVersion(ctx context.Context, eleType ElementTypeDef, elementIds []s
 
 // UpsertFilterProcessor updates the agent config with new filter processor params
 func UpsertFilterProcessor(key string, config *filterprocessor.Config) error {
-	fmt.Println("config:", config)
 	if !atomic.CompareAndSwapUint32(&m.lock, 0, 1) {
 		return fmt.Errorf("agent updater is busy")
 	}

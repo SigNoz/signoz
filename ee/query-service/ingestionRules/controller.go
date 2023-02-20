@@ -190,7 +190,7 @@ func (ic *IngestionController) ApplySamplingRules(ctx context.Context, postable 
 	if err != nil || cfg == nil {
 		return nil, model.InternalError(err)
 	}
-
+	params.Version = cfg.Version
 	zap.S().Info("applying sampling rule config", cfg)
 
 	// queue up the config to push to opamp
