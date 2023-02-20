@@ -350,11 +350,11 @@ func (aH *APIHandler) RegisterRoutes(router *mux.Router) {
 	router.HandleFunc("/api/v1/variables/query", ViewAccess(aH.queryDashboardVars)).Methods(http.MethodGet)
 	router.HandleFunc("/api/v2/variables/query", ViewAccess(aH.queryDashboardVarsV2)).Methods(http.MethodPost)
 
-	router.HandleFunc("/api/v1/explorer/queries", ViewAccess(aH.getExplorerQueries)).Methods(http.MethodGet)
-	router.HandleFunc("/api/v1/explorer/queries", ViewAccess(aH.createExplorerQueries)).Methods(http.MethodPost)
-	router.HandleFunc("/api/v1/explorer/queries/{queryId}", ViewAccess(aH.getExplorerQuery)).Methods(http.MethodGet)
-	router.HandleFunc("/api/v1/explorer/queries/{queryId}", EditAccess(aH.updateExplorerQuery)).Methods(http.MethodPut)
-	router.HandleFunc("/api/v1/explorer/queries/{queryId}", EditAccess(aH.deleteExplorerQuery)).Methods(http.MethodDelete)
+	router.HandleFunc("/api/v1/explorer/queries", OpenAccess(aH.getExplorerQueries)).Methods(http.MethodGet)
+	router.HandleFunc("/api/v1/explorer/queries", OpenAccess(aH.createExplorerQueries)).Methods(http.MethodPost)
+	router.HandleFunc("/api/v1/explorer/queries/{queryId}", OpenAccess(aH.getExplorerQuery)).Methods(http.MethodGet)
+	router.HandleFunc("/api/v1/explorer/queries/{queryId}", OpenAccess(aH.updateExplorerQuery)).Methods(http.MethodPut)
+	router.HandleFunc("/api/v1/explorer/queries/{queryId}", OpenAccess(aH.deleteExplorerQuery)).Methods(http.MethodDelete)
 
 	router.HandleFunc("/api/v1/feedback", OpenAccess(aH.submitFeedback)).Methods(http.MethodPost)
 	// router.HandleFunc("/api/v1/get_percentiles", aH.getApplicationPercentiles).Methods(http.MethodGet)
