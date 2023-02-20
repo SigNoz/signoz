@@ -1,5 +1,5 @@
 import { CloseOutlined, PlusCircleFilled } from '@ant-design/icons';
-import { Input } from 'antd';
+import { Col, Input } from 'antd';
 import CategoryHeading from 'components/Logs/CategoryHeading';
 import { fieldSearchFilter } from 'lib/logs/fieldSearch';
 import React, { useCallback, useState } from 'react';
@@ -9,7 +9,7 @@ import { ILogsReducer } from 'types/reducer/logs';
 
 import { ICON_STYLE } from './config';
 import FieldItem from './FieldItem';
-import { CategoryContainer, Container, FieldContainer } from './styles';
+import { CategoryContainer, FieldContainer } from './styles';
 import { IHandleInterestProps, IHandleRemoveInterestProps } from './types';
 import { onHandleAddInterest, onHandleRemoveInterest } from './utils';
 
@@ -58,7 +58,7 @@ function LogsFilters(): JSX.Element {
 	);
 
 	return (
-		<Container flex="450px">
+		<Col flex="250px">
 			<Input
 				placeholder="Filter Values"
 				onInput={handleSearch}
@@ -110,7 +110,7 @@ function LogsFilters(): JSX.Element {
 						))}
 				</FieldContainer>
 			</CategoryContainer>
-		</Container>
+		</Col>
 	);
 }
 
