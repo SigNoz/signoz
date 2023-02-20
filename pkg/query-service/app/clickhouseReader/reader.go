@@ -1001,6 +1001,11 @@ func (r *ClickHouseReader) GetSpanFilters(ctx context.Context, queryParams *mode
 		args = append(args, clickhouse.Named("durationNanoMax", queryParams.MaxDuration))
 	}
 
+	if len(queryParams.SpanKind) != 0 {
+		query = query + " AND kind = @kind"
+		args = append(args, clickhouse.Named("kind", queryParams.SpanKind))
+	}
+
 	query = getStatusFilters(query, queryParams.Status, excludeMap)
 
 	traceFilterReponse := model.SpanFiltersResponse{
@@ -1364,9 +1369,9 @@ func (r *ClickHouseReader) GetFilteredSpans(ctx context.Context, queryParams *mo
 	}
 	query = getStatusFilters(query, queryParams.Status, excludeMap)
 
-	if len(queryParams.Kind) != 0 {
+	if len(queryParams.SpanKind) != 0 {
 		query = query + " AND kind = @kind"
-		args = append(args, clickhouse.Named("kind", queryParams.Kind))
+		args = append(args, clickhouse.Named("kind", queryParams.SpanKind))
 	}
 
 	// create TagQuery from TagQueryParams
@@ -1665,6 +1670,10 @@ func (r *ClickHouseReader) GetTagFilters(ctx context.Context, queryParams *model
 	if len(queryParams.MaxDuration) != 0 {
 		query = query + " AND durationNano <= @durationNanoMax"
 		args = append(args, clickhouse.Named("durationNanoMax", queryParams.MaxDuration))
+	}
+	if len(queryParams.SpanKind) != 0 {
+		query = query + " AND kind = @kind"
+		args = append(args, clickhouse.Named("kind", queryParams.SpanKind))
 	}
 
 	query = getStatusFilters(query, queryParams.Status, excludeMap)
@@ -2113,9 +2122,9 @@ func (r *ClickHouseReader) GetFilteredSpansAggregates(ctx context.Context, query
 	}
 	query = getStatusFilters(query, queryParams.Status, excludeMap)
 
-	if len(queryParams.Kind) != 0 {
+	if len(queryParams.SpanKind) != 0 {
 		query = query + " AND kind = @kind"
-		args = append(args, clickhouse.Named("kind", queryParams.Kind))
+		args = append(args, clickhouse.Named("kind", queryParams.SpanKind))
 	}
 	// create TagQuery from TagQueryParams
 	tags := createTagQueryFromTagQueryParams(queryParams.Tags)
