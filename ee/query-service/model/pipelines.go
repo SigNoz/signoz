@@ -45,12 +45,19 @@ type PipelineOperator struct {
 	From      string           `json:"from,omitempty" yaml:"from,omitempty" mapstructure:"from"`
 	To        string           `json:"to,omitempty"  yaml:"to,omitempty" mapstructure:"to"`
 	Expr      string           `json:"expr,omitempty" yaml:"expr,omitempty" mapstructure:"expr"`
+	Routes    *[]Route         `json:"routes,omitempty" yaml:"routes,omitempty"`
+	Default   string           `json:"default,omitempty" yaml:"default,omitempty"`
 }
 
 type TimestampParser struct {
 	Layout     string `json:"layout"`
 	LayoutType string `json:"layout_type"`
 	ParseFrom  string `json:"parse_from"`
+}
+
+type Route struct {
+	Output string `json:"output" yaml:"output"`
+	Expr   string `json:"expr" yaml:"expr"`
 }
 
 func (i *Pipeline) ParseRawConfig() error {

@@ -157,7 +157,6 @@ require (
 )
 
 require (
-	github.com/open-telemetry/opentelemetry-collector-contrib/pkg/stanza v0.71.0
 	github.com/open-telemetry/opentelemetry-collector-contrib/processor/filterprocessor v0.71.0
 	github.com/open-telemetry/opentelemetry-collector-contrib/processor/tailsamplingprocessor v0.71.0
 )
@@ -172,7 +171,6 @@ require (
 	github.com/gobwas/glob v0.2.3 // indirect
 	github.com/gorilla/websocket v1.4.2 // indirect
 	github.com/iancoleman/strcase v0.2.0 // indirect
-	github.com/observiq/ctimefmt v1.0.0 // indirect
 )
 
 replace github.com/prometheus/prometheus => github.com/SigNoz/prometheus v1.9.77

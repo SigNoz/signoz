@@ -70,7 +70,6 @@ github.com/BurntSushi/xgb v0.0.0-20160522181843-27f122750802/go.mod h1:IVnqGOEym
 github.com/ClickHouse/clickhouse-go v1.5.3/go.mod h1:EaI/sW7Azgz9UATzd5ZdZHRUhHgv5+JMS9NSr2smCJI=
 github.com/ClickHouse/clickhouse-go/v2 v2.0.12 h1:Nbl/NZwoM6LGJm7smNBgvtdr/rxjlIssSW3eG/Nmb9E=
 github.com/ClickHouse/clickhouse-go/v2 v2.0.12/go.mod h1:u4RoNQLLM2W6hNSPYrIESLJqaWSInZVmfM+MlaAhXcg=
-github.com/Mottl/ctimefmt v0.0.0-20190803144728-fd2ac23a585a/go.mod h1:eyj2WSIdoPMPs2eNTLpSmM6Nzqo4V80/d6jHpnJ1SAI=
 github.com/OneOfOne/xxhash v1.2.2/go.mod h1:HSdplMjZKSmBqAxg5vPj2TmRDmfkzw+cTzAElWljhcU=
 github.com/OneOfOne/xxhash v1.2.8 h1:31czK/TI9sNkxIKfaUfGlU47BAxQ0ztGgd9vPyqimf8=
 github.com/OneOfOne/xxhash v1.2.8/go.mod h1:eZbhyaAYD41SGSSsnmcpxVoRiQ/MPUTjUdIIOT9Um7Q=
@@ -519,8 +518,6 @@ github.com/mwitkow/go-conntrack v0.0.0-20161129095857-cc309e4a2223/go.mod h1:qRW
 github.com/mwitkow/go-conntrack v0.0.0-20190716064945-2f068394615f h1:KUppIJq7/+SVif2QVs3tOP0zanoHgBEVAwHxUSIzRqU=
 github.com/mwitkow/go-conntrack v0.0.0-20190716064945-2f068394615f/go.mod h1:qRWi+5nqEBWmkhHvq77mSJWrCKwh8bxhgT7d/eI7P4U=
 github.com/npillmayer/nestext v0.1.3/go.mod h1:h2lrijH8jpicr25dFY+oAJLyzlya6jhnuG+zWp9L0Uk=
-github.com/observiq/ctimefmt v1.0.0 h1:r7vTJ+Slkrt9fZ67mkf+mA6zAdR5nGIJRMTzkUyvilk=
-github.com/observiq/ctimefmt v1.0.0/go.mod h1:mxi62//WbSpG/roCO1c6MqZ7zQTvjVtYheqHN3eOjvc=
 github.com/oklog/oklog v0.2.3-0.20170918173356-f857583a70c3/go.mod h1:FCV+B7mhrz4o+ueLpx+KqkyXRGMWOYEvfiXtdGtbWGs=
 github.com/oklog/oklog v0.3.2 h1:wVfs8F+in6nTBMkA7CbRw+zZMIB7nNM825cM1wuzoTk=
 github.com/oklog/oklog v0.3.2/go.mod h1:FCV+B7mhrz4o+ueLpx+KqkyXRGMWOYEvfiXtdGtbWGs=
@@ -539,8 +536,6 @@ github.com/open-telemetry/opentelemetry-collector-contrib/pkg/ottl v0.71.0 h1:hA
 github.com/open-telemetry/opentelemetry-collector-contrib/pkg/ottl v0.71.0/go.mod h1:1qnoovScVPp5wkTXxE8Xbw1KeeIFg9ru9R1D6xf2QQ8=
 github.com/open-telemetry/opentelemetry-collector-contrib/pkg/pdatautil v0.71.0 h1:E2BfofDZtV7Mm5SXN/AqWAD0Xrke29+/lCqVwPLPgOc=
 github.com/open-telemetry/opentelemetry-collector-contrib/pkg/pdatautil v0.71.0/go.mod h1:y1rvHuUQS4exMpaA8isg1YXuMTHK4cio7Mj/aUbGLns=
-github.com/open-telemetry/opentelemetry-collector-contrib/pkg/stanza v0.71.0 h1:alIHXoQuLkNrXMI7ibnI6K0vcryIABe/u7Oxn6+2kgk=
-github.com/open-telemetry/opentelemetry-collector-contrib/pkg/stanza v0.71.0/go.mod h1:H24PGcdoor7/Wza05dU95BdZ5a31P+CpakmVu+L8BEQ=
 github.com/open-telemetry/opentelemetry-collector-contrib/processor/filterprocessor v0.71.0 h1:l2/2r1SVYkVTBbEVK2nccmJtZr+IiB0rX5AJQyxx3Rs=
 github.com/open-telemetry/opentelemetry-collector-contrib/processor/filterprocessor v0.71.0/go.mod h1:nVEeZB4m1OzF7WBiOE/5IR/8QAaljp4tnsw3/k+4Ap8=
 github.com/open-telemetry/opentelemetry-collector-contrib/processor/tailsamplingprocessor v0.71.0 h1:fW45SMjQEz+9x4I1zkNpPE+CQ/FY+MPhKW12uzvdT5g=
@@ -660,7 +655,6 @@ github.com/spf13/pflag v1.0.5/go.mod h1:McXfInJRrz4CZXVZOBLb0bTZqETkiAhM9Iw0y3An
 github.com/stretchr/objx v0.1.0/go.mod h1:HFkY916IF+rwdDfMAkV7OtwuqBVzrE8GR6GFx+wExME=
 github.com/stretchr/objx v0.1.1/go.mod h1:HFkY916IF+rwdDfMAkV7OtwuqBVzrE8GR6GFx+wExME=
 github.com/stretchr/objx v0.4.0/go.mod h1:YvHI0jy2hoMjB+UWwv71VJQ9isScKT/TqJzVSSt89Yw=
-github.com/stretchr/objx v0.5.0 h1:1zr/of2m5FGMsad5YfcqgdqdWrIhu+EBEJRhR1U7z/c=
 github.com/stretchr/objx v0.5.0/go.mod h1:Yh+to48EsGEfYuaHDzXPcE3xhTkx73EhmCGUpEOglKo=
 github.com/stretchr/testify v1.2.2/go.mod h1:a8OnRcib4nhh0OaRAV+Yts87kKdq0PP7pXfy6kDkUVs=
 github.com/stretchr/testify v1.3.0/go.mod h1:M5WIy9Dh21IEIfnGCwXGc5bZfKNJtfHm1UVUgZn+9EI=
