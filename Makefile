@@ -120,9 +120,7 @@ down-local:
 	down -v
 
 run-dependencies:
-	@LOCAL_GOOS=$(LOCAL_GOOS) LOCAL_GOARCH=$(LOCAL_GOARCH) docker-compose -f \
-	$(STANDALONE_DIRECTORY)/docker-compose-core.yaml \
-	up --build -d
+	@docker-compose -f $(STANDALONE_DIRECTORY)/docker-compose-core.yaml up -d
 
 down-dependencies:
 	@docker-compose -f \
