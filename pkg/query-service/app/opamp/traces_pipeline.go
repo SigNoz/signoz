@@ -88,7 +88,6 @@ func buildTracesPipeline(pipeline []interface{}) ([]interface{}, error) {
 	// go through plan again in the increasing order
 	for i := 0; i < len(tracesPipelinePlan); i++ {
 		m := tracesPipelinePlan[i]
-		lastMatched = lastMatched
 
 		if loc, ok := plannedVsExistingMap[i]; ok {
 			// element from plan already exists in current effective config.

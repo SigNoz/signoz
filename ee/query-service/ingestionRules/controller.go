@@ -190,11 +190,12 @@ func (ic *IngestionController) ApplySamplingRules(ctx context.Context, postable 
 	if err != nil || cfg == nil {
 		return nil, model.InternalError(err)
 	}
+
 	params.Version = cfg.Version
 	zap.S().Info("applying sampling rule config", cfg)
 
 	// queue up the config to push to opamp
-	err = agentConf.UpsertSamplingProcessor("tail_sampling/1000", params)
+	err = agentConf.UpsertSamplingProcessor(ctx, cfg.Version, "tail_sampling/1000", params)
 	history, _ := agentConf.GetConfigHistory(ctx, agentConf.ElementTypeSamplingRules)
 
 	response := &IngestionRulesResponse{

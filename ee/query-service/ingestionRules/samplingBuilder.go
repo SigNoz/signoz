@@ -12,10 +12,10 @@ import (
 
 func preparePolicycfg(config model.SamplingConfig) tsp.PolicyCfg {
 	policy := tsp.PolicyCfg{
-		Root:       true,
-		Name:       config.Name,
-		Priority:   config.Priority,
-		PolicyType: tsp.PolicyGroup,
+		Root:     true,
+		Name:     config.Name,
+		Priority: config.Priority,
+		Type:     tsp.PolicyGroup,
 		PolicyFilterCfg: tsp.PolicyFilterCfg{
 			StringAttributeCfgs:  []tsp.StringAttributeCfg{},
 			NumericAttributeCfgs: []tsp.NumericAttributeCfg{},
@@ -33,28 +33,30 @@ func preparePolicycfg(config model.SamplingConfig) tsp.PolicyCfg {
 	// assign root filter conditions
 	for _, f := range config.FilterSet.Items {
 
-		switch v := f.Value.(type) {
+		switch f.Value.(type) {
 		case string:
 			value := f.Value.(string)
-			policy.StringAttributeCfgs = append(policy.StringAttributeCfgs, tsp.StringAttributeCfg{Key: f.Key, Values: value})
+			policy.StringAttributeCfgs = append(policy.StringAttributeCfgs, tsp.StringAttributeCfg{Key: f.Key, Values: []string{value}})
 		case []string:
 			values := f.Value.([]string)
 			policy.StringAttributeCfgs = append(policy.StringAttributeCfgs, tsp.StringAttributeCfg{Key: f.Key, Values: values})
-		case int:
+		case int, int32, int64:
 			value := f.Value.(int)
-			policy.NumericAttributeCfgs = append(policy.NumericAttributeCfgs, tsp.NumericAttributeCfg{Key: f.Key, Values: value})
+			policy.NumericAttributeCfgs = append(policy.NumericAttributeCfgs, tsp.NumericAttributeCfg{Key: f.Key, MinValue: int64(value), MaxValue: int64(value)})
 		case float64:
+			// improvement: currrently only int64 is supported by tail based sampler, add float64 support
 			value := f.Value.(float64)
-			policy.NumericAttributeCfgs = append(policy.NumericAttributeCfgs, tsp.NumericAttributeCfg{Key: f.Key, Values: value})
+			policy.NumericAttributeCfgs = append(policy.NumericAttributeCfgs, tsp.NumericAttributeCfg{Key: f.Key, MinValue: int64(value), MaxValue: int64(value)})
 		case float32:
+			// improvement: currrently only int64 is supported by tail based sampler, add float32 support
 			value := f.Value.(float32)
-			policy.NumericAttributeCfgs = append(policy.NumericAttributeCfgs, tsp.NumericAttributeCfg{Key: f.Key, Values: value})
+			policy.NumericAttributeCfgs = append(policy.NumericAttributeCfgs, tsp.NumericAttributeCfg{Key: f.Key, MinValue: int64(value), MaxValue: int64(value)})
 		}
 	}
 
 	policy.ProbabilisticCfg = tsp.ProbabilisticCfg{
 		// HashSalt: //
-		SamplingPercentage: config.SamplingPercent,
+		SamplingPercentage: float64(config.SamplingPercent),
 	}
 
 	return policy
@@ -71,7 +73,7 @@ func PrepareTailSamplingParams(rules []model.IngestionRule) (*tsp.Config, error)
 	if len(rules) == 0 {
 		// no rules setup, configure always sample policy
 		// which allows all records to pass-through and no dropouts
-		return &tsp.Config{PolicyCfgs: prepareDefaultPolicy()}, nil
+		return &tsp.Config{}, nil
 	}
 
 	// we want the order to be maintained, so a list
@@ -86,7 +88,7 @@ func PrepareTailSamplingParams(rules []model.IngestionRule) (*tsp.Config, error)
 		rootConfig := root.Config.SamplingConfig
 		conditions := rootConfig.Conditions
 
-		rootPolicy := preparePolicyCfg(rootConfig)
+		rootPolicy := preparePolicycfg(rootConfig)
 
 		if len(conditions) == 0 {
 			zap.S().Warnf("found a sampling rule with no default condtion, skipping the policy", rootConfig.Name)
@@ -103,13 +105,13 @@ func PrepareTailSamplingParams(rules []model.IngestionRule) (*tsp.Config, error)
 			if condition.Default {
 				rootPolicy.ProbabilisticCfg = tsp.ProbabilisticCfg{
 					// HashSalt: //
-					SamplingPercentage: condition.SamplingPercent,
+					SamplingPercentage: float64(condition.SamplingPercent),
 				}
 				continue
 			}
 
 			// prepare subpolicy for this condition
-			rootPolicy.subPolicies = append(rootPolicy.subPolicies, preparePolicycfg(condition))
+			rootPolicy.SubPolicies = append(rootPolicy.SubPolicies, preparePolicycfg(condition))
 
 		} // end for loop conditions
 

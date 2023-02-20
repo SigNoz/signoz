@@ -23,8 +23,6 @@ type Server struct {
 	agents       *model.Agents
 	logger       *zap.Logger
 	capabilities int32
-	// config change subscribers
-	coordinator Coordinator
 }
 
 const capabilities = protobufs.ServerCapabilities_ServerCapabilities_AcceptsEffectiveConfig |
@@ -70,8 +68,6 @@ func (srv *Server) onMessage(conn types.Connection, msg *protobufs.AgentToServer
 		// TODO: handle error
 	}
 
-	agent.Status
-
 	var response *protobufs.ServerToAgent
 	response = &protobufs.ServerToAgent{
 		InstanceUid:  agentID,
@@ -81,6 +77,10 @@ func (srv *Server) onMessage(conn types.Connection, msg *protobufs.AgentToServer
 	agent.UpdateStatus(msg, response)
 
 	return response
+}
+
+func Subscribe(hash string, f func(hash string, err error)) {
+	model.ListenToConfigUpdate(hash, f)
 }
 
 func UpsertTraceProcessors(ctx context.Context, processors []interface{}) (hash string, fnerr error) {

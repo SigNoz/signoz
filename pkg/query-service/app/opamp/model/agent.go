@@ -1,4 +1,4 @@
-package data
+package model
 
 import (
 	"bytes"
@@ -103,6 +103,16 @@ func (agent *Agent) updateAgentDescription(newStatus *protobufs.AgentToServer) (
 		if newStatus.RemoteConfigStatus != nil &&
 			!proto.Equal(agent.Status.RemoteConfigStatus, newStatus.RemoteConfigStatus) {
 			agent.Status.RemoteConfigStatus = newStatus.RemoteConfigStatus
+
+			// todo: need to address multiple agent scenario here
+			// for now, the first response will be sent back to the UI
+			if agent.Status.RemoteConfigStatus.Status == protobufs.RemoteConfigStatuses_RemoteConfigStatuses_APPLIED {
+				onConfigSuccess(string(agent.Status.RemoteConfigStatus.LastRemoteConfigHash))
+			}
+
+			if agent.Status.RemoteConfigStatus.Status == protobufs.RemoteConfigStatuses_RemoteConfigStatuses_FAILED {
+				onConfigFailure(string(agent.Status.RemoteConfigStatus.LastRemoteConfigHash), agent.Status.RemoteConfigStatus.ErrorMessage)
+			}
 		}
 	}
 	return agentDescrChanged
