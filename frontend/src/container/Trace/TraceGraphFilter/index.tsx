@@ -52,7 +52,7 @@ function TraceGraphFilter(): JSX.Element {
 					spanKind: traces.spanKind,
 				}),
 			cacheTime: 120000,
-			enabled: traces.isTagModalOpen,
+			enabled: traces.filter.size > 0,
 		},
 	);
 
