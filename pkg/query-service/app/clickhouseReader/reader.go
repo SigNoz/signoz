@@ -1790,6 +1790,10 @@ func (r *ClickHouseReader) GetTagValues(ctx context.Context, queryParams *model.
 		query = query + " AND durationNano <= @durationNanoMax"
 		args = append(args, clickhouse.Named("durationNanoMax", queryParams.MaxDuration))
 	}
+	if len(queryParams.SpanKind) != 0 {
+		query = query + " AND kind = @kind"
+		args = append(args, clickhouse.Named("kind", queryParams.SpanKind))
+	}
 
 	query = getStatusFilters(query, queryParams.Status, excludeMap)
 
