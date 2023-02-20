@@ -1,14 +1,3 @@
-const flexDirectionCss: React.CSSProperties['flexDirection'] = 'row';
-
-export const wrapperStyle = {
-	display: 'flex',
-	flexDirection: flexDirectionCss,
-	alignItems: 'flex-start',
-	padding: '0rem',
-	gap: '1rem',
-	width: '100%',
-};
-
 type ProcessorType = {
 	key: string;
 	value: string;
@@ -30,7 +19,14 @@ export const processorTypes: Array<ProcessorType> = [
 
 export const DEFAULT_PROCESSOR_TYPE = processorTypes[0].value;
 
-export const processorInputField = [
+export type ProcessorFormField = {
+	id: string;
+	fieldName: string;
+	placeholder: string;
+	name: string;
+};
+
+export const processorFields: Array<ProcessorFormField> = [
 	{
 		id: '1',
 		fieldName: 'Name the Processor',

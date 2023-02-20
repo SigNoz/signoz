@@ -1,6 +1,4 @@
-import { Avatar, Button, Divider, Form, Input, Modal, Select } from 'antd';
-import { themeColors } from 'constants/theme';
-import { ModalFooterTitle } from 'container/PipelinePage/styles';
+import { Button, Divider, Form, Modal } from 'antd';
 import React, { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -8,13 +6,9 @@ import { ActionType } from '../../Layouts';
 import { ProcessorColumn } from '..';
 import { ModalButtonWrapper, ModalTitle } from '../styles';
 import { getRecordIndex } from '../utils';
-import {
-	DEFAULT_PROCESSOR_TYPE,
-	processorInputField,
-	processorTypes,
-	wrapperStyle,
-} from './config';
-import { PipelineIndexIcon, ProcessorTypeWrapper } from './styles';
+import { DEFAULT_PROCESSOR_TYPE } from './config';
+import TypeSelect from './FormFields/TypeSelect';
+import { renderProcessorForm } from './utils';
 
 function AddNewProcessor({
 	isActionType,
@@ -82,15 +76,17 @@ function AddNewProcessor({
 		form.resetFields();
 	};
 
+	const modalTitle = useMemo(
+		(): string =>
+			isEdit
+				? `${t('edit_processor')} ${selectedProcessorData?.processorName}`
+				: t('create_processor'),
+		[isEdit, selectedProcessorData?.processorName, t],
+	);
+
 	return (
 		<Modal
-			title={
-				<ModalTitle level={4}>
-					{isEdit
-						? `${t('edit_processor')} ${selectedProcessorData?.processorName}`
-						: t('create_processor')}
-				</ModalTitle>
-			}
+			title={<ModalTitle level={4}>{modalTitle}</ModalTitle>}
 			centered
 			open={isEdit || isAdd}
 			width={800}
@@ -107,68 +103,11 @@ function AddNewProcessor({
 				autoComplete="off"
 				form={form}
 			>
-				<div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
-					<PipelineIndexIcon size="small">1</PipelineIndexIcon>
-					<ProcessorTypeWrapper>
-						<span>{t('processor_type')}</span>
-						<Select
-							style={{ width: 200 }}
-							onChange={handleProcessorType}
-							defaultValue={isEdit ? selectedProcessorData?.type : processorType}
-						>
-							{processorTypes.map(({ value, label }) => (
-								<Select.Option key={value + label} value={value}>
-									{label}
-								</Select.Option>
-							))}
-						</Select>
-					</ProcessorTypeWrapper>
-				</div>
-				{processorInputField.map((item, index) => {
-					if (item.id === '1') {
-						return (
-							<div key={item.id} style={wrapperStyle}>
-								<Avatar size="small" style={{ background: themeColors.navyBlue }}>
-									{index + 2}
-								</Avatar>
-								<div style={{ width: '100%' }}>
-									<Form.Item
-										required={false}
-										label={<ModalFooterTitle>{item.fieldName}</ModalFooterTitle>}
-										key={item.id}
-										name={item.name}
-										rules={[
-											{
-												required: true,
-											},
-										]}
-									>
-										<Input placeholder={t(t(item.placeholder))} name={item.name} />
-									</Form.Item>
-								</div>
-							</div>
-						);
-					}
-					return (
-						<div key={item.id} style={wrapperStyle}>
-							<Avatar size="small" style={{ background: themeColors.navyBlue }}>
-								{index + 2}
-							</Avatar>
-							<div style={{ width: '100%' }}>
-								<Form.Item
-									name={item.name}
-									label={<ModalFooterTitle>{item.fieldName}</ModalFooterTitle>}
-								>
-									<Input.TextArea
-										rows={4}
-										name={item.name}
-										placeholder={t(t(item.placeholder))}
-									/>
-								</Form.Item>
-							</div>
-						</div>
-					);
-				})}
+				<TypeSelect
+					value={isEdit ? selectedProcessorData?.type : processorType}
+					onChange={handleProcessorType}
+				/>
+				{renderProcessorForm()}
 				<Divider plain />
 				<Form.Item>
 					<ModalButtonWrapper>

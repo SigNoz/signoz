@@ -1,5 +1,4 @@
 import { render } from '@testing-library/react';
-import { FormInstance } from 'antd';
 import React from 'react';
 import { I18nextProvider } from 'react-i18next';
 import { Provider } from 'react-redux';
@@ -28,9 +27,7 @@ beforeAll(() => {
 
 describe('PipelinePage container test', () => {
 	it('should render AddNewPipeline section', () => {
-		const ref = React.createRef<FormInstance>();
 		const setActionType = jest.fn();
-		const handleModalCancelAction = jest.fn();
 		const setPipelineDataSource = jest.fn();
 		const selectedRecord = pipelineData[0];
 		const isActionType = 'add-pipeline';
@@ -44,8 +41,6 @@ describe('PipelinePage container test', () => {
 							selectedRecord={selectedRecord}
 							pipelineDataSource={pipelineData}
 							setPipelineDataSource={setPipelineDataSource}
-							formRef={ref}
-							handleModalCancelAction={handleModalCancelAction}
 						/>
 					</I18nextProvider>
 				</Provider>

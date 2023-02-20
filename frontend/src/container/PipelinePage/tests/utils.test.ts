@@ -1,9 +1,9 @@
 import { pipelineData } from '../mocks/pipeline';
 import {
-	processorInputField,
+	processorFields,
 	processorTypes,
 } from '../PipelineListsView/AddNewProcessor/config';
-import { addPipelinefieldLists } from '../PipelineListsView/config';
+import { pipelineFields } from '../PipelineListsView/config';
 import {
 	getElementFromArray,
 	getRecordIndex,
@@ -12,8 +12,8 @@ import {
 
 describe('Utils testing of Pipeline Page', () => {
 	test('it should be check form field of add pipeline', () => {
-		expect(addPipelinefieldLists.length).toBe(3);
-		expect(addPipelinefieldLists.length).toBeGreaterThan(1);
+		expect(pipelineFields.length).toBe(4);
+		expect(pipelineFields.length).toBeGreaterThan(1);
 	});
 
 	test('it should be check processor types field of add pipeline', () => {
@@ -21,8 +21,8 @@ describe('Utils testing of Pipeline Page', () => {
 	});
 
 	test('it should be check form field of add processor', () => {
-		expect(processorInputField.length).toBe(2);
-		expect(processorInputField.length).toBeGreaterThan(1);
+		expect(processorFields.length).toBe(2);
+		expect(processorFields.length).toBeGreaterThan(1);
 	});
 
 	test('it should be check data length of pipeline', () => {

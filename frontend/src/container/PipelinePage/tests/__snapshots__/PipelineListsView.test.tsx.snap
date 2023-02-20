@@ -109,29 +109,35 @@ exports[`PipelinePage container test should render PipelineListsView section 1`]
                         />
                         <th
                           class="ant-table-cell"
+                          style="text-align: left;"
                         />
                         <th
                           class="ant-table-cell"
+                          style="text-align: left;"
                         >
                           Pipeline Name
                         </th>
                         <th
                           class="ant-table-cell"
+                          style="text-align: left;"
                         >
                           Filters
                         </th>
                         <th
                           class="ant-table-cell"
+                          style="text-align: left;"
                         >
                           Tags
                         </th>
                         <th
                           class="ant-table-cell"
+                          style="text-align: left;"
                         >
                           Last Edited
                         </th>
                         <th
                           class="ant-table-cell"
+                          style="text-align: left;"
                         >
                           Edited By
                         </th>
@@ -180,6 +186,7 @@ exports[`PipelinePage container test should render PipelineListsView section 1`]
                         </td>
                         <td
                           class="ant-table-cell"
+                          style="text-align: left;"
                         >
                           <span
                             class="ant-avatar ant-avatar-sm ant-avatar-circle css-dev-only-do-not-override-1i536d8"
@@ -195,6 +202,7 @@ exports[`PipelinePage container test should render PipelineListsView section 1`]
                         </td>
                         <td
                           class="ant-table-cell"
+                          style="text-align: left;"
                         >
                           <span>
                             Apache common parser
@@ -202,6 +210,7 @@ exports[`PipelinePage container test should render PipelineListsView section 1`]
                         </td>
                         <td
                           class="ant-table-cell"
+                          style="text-align: left;"
                         >
                           <span>
                             attributes.source == nginx
@@ -209,6 +218,7 @@ exports[`PipelinePage container test should render PipelineListsView section 1`]
                         </td>
                         <td
                           class="ant-table-cell"
+                          style="text-align: left;"
                         >
                           <span>
                             <span
@@ -225,6 +235,7 @@ exports[`PipelinePage container test should render PipelineListsView section 1`]
                         </td>
                         <td
                           class="ant-table-cell"
+                          style="text-align: left;"
                         >
                           <span>
                             Mon Feb 06 2023
@@ -232,6 +243,7 @@ exports[`PipelinePage container test should render PipelineListsView section 1`]
                         </td>
                         <td
                           class="ant-table-cell"
+                          style="text-align: left;"
                         >
                           <span>
                             nitya
@@ -396,6 +408,7 @@ exports[`PipelinePage container test should render PipelineListsView section 1`]
                         </td>
                         <td
                           class="ant-table-cell"
+                          style="text-align: left;"
                         >
                           <span
                             class="ant-avatar ant-avatar-sm ant-avatar-circle css-dev-only-do-not-override-1i536d8"
@@ -411,6 +424,7 @@ exports[`PipelinePage container test should render PipelineListsView section 1`]
                         </td>
                         <td
                           class="ant-table-cell"
+                          style="text-align: left;"
                         >
                           <span>
                             myservice trace parser
@@ -418,6 +432,7 @@ exports[`PipelinePage container test should render PipelineListsView section 1`]
                         </td>
                         <td
                           class="ant-table-cell"
+                          style="text-align: left;"
                         >
                           <span>
                             attributes.source == myservice
@@ -425,6 +440,7 @@ exports[`PipelinePage container test should render PipelineListsView section 1`]
                         </td>
                         <td
                           class="ant-table-cell"
+                          style="text-align: left;"
                         >
                           <span>
                             <span
@@ -451,6 +467,7 @@ exports[`PipelinePage container test should render PipelineListsView section 1`]
                         </td>
                         <td
                           class="ant-table-cell"
+                          style="text-align: left;"
                         >
                           <span>
                             Sun Feb 05 2023
@@ -458,6 +475,7 @@ exports[`PipelinePage container test should render PipelineListsView section 1`]
                         </td>
                         <td
                           class="ant-table-cell"
+                          style="text-align: left;"
                         >
                           <span>
                             nityananda

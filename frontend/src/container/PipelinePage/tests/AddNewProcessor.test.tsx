@@ -1,5 +1,4 @@
 import { render } from '@testing-library/react';
-import { FormInstance } from 'antd';
 import React from 'react';
 import { I18nextProvider } from 'react-i18next';
 import { Provider } from 'react-redux';
@@ -27,15 +26,14 @@ beforeAll(() => {
 
 const selectedProcessorData = {
 	id: 1,
-	text: 'some text',
+	key: 'grokusecommon',
+	type: 'grok',
+	processorName: 'grok use common',
 };
-
 describe('PipelinePage container test', () => {
 	it('should render AddNewProcessor section', () => {
-		const ref = React.createRef<FormInstance>();
 		const setActionType = jest.fn();
 		const setProcessorDataSource = jest.fn();
-		const handleModalCancelAction = jest.fn();
 		const isActionType = 'add-processor';
 
 		const { asFragment } = render(
@@ -48,8 +46,6 @@ describe('PipelinePage container test', () => {
 							selectedProcessorData={selectedProcessorData}
 							processorDataSource={[]}
 							setProcessorDataSource={setProcessorDataSource}
-							formRef={ref}
-							handleModalCancelAction={handleModalCancelAction}
 						/>
 					</I18nextProvider>
 				</Provider>

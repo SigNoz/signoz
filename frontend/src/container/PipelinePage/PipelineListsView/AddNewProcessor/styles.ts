@@ -8,6 +8,22 @@ export const PipelineIndexIcon = styled(Avatar)`
 
 export const ProcessorTypeWrapper = styled.div`
 	display: flex;
+	gap: 1rem;
+	align-items: flex-start;
+	margin-bottom: 1.5rem;
+`;
+
+export const ProcessorTypeContainer = styled.div`
+	display: flex;
 	flex-direction: column;
 	padding-bottom: 0.5rem;
+`;
+
+export const Container = styled.div`
+	display: flex;
+	flex-direction: row;
+	align-items: flex-start;
+	padding: 0rem;
+	gap: 1rem;
+	width: 100%;
 `;

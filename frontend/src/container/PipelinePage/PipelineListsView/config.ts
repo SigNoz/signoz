@@ -2,7 +2,7 @@ import { ColumnsType } from 'antd/es/table';
 
 import { PipelineColumn, ProcessorColumn } from '.';
 
-export const addPipelinefieldLists = [
+export const pipelineFields = [
 	{
 		id: '1',
 		fieldName: 'Filter',

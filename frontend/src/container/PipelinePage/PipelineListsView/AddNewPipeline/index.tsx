@@ -1,4 +1,4 @@
-import { Button, Divider, Form, Input, Modal } from 'antd';
+import { Button, Divider, Form, Modal } from 'antd';
 import React, { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useSelector } from 'react-redux';
@@ -6,13 +6,11 @@ import { AppState } from 'store/reducers';
 import AppReducer from 'types/reducer/app';
 import { v4 as uuid } from 'uuid';
 
-import TagInput from '../../components/TagInput';
 import { ActionType } from '../../Layouts';
 import { PipelineColumn } from '..';
-import { addPipelinefieldLists } from '../config';
 import { ModalButtonWrapper, ModalTitle } from '../styles';
 import { getRecordIndex } from '../utils';
-import { FormLabelStyle } from './styles';
+import { renderPipelineForm } from './utils';
 
 function AddNewPipeline({
 	isActionType,
@@ -93,15 +91,17 @@ function AddNewPipeline({
 		form.resetFields();
 	};
 
+	const modalTitle = useMemo(
+		(): string =>
+			isEdit
+				? `${t('edit_pipeline')} : ${selectedRecord?.name}`
+				: t('create_pipeline'),
+		[isEdit, selectedRecord?.name, t],
+	);
+
 	return (
 		<Modal
-			title={
-				<ModalTitle level={4}>
-					{isEdit
-						? `${t('edit_pipeline')} : ${selectedRecord?.name}`
-						: t('create_pipeline')}
-				</ModalTitle>
-			}
+			title={<ModalTitle level={4}>{modalTitle}</ModalTitle>}
 			centered
 			open={isEdit || isAdd}
 			width={800}
@@ -118,85 +118,7 @@ function AddNewPipeline({
 				autoComplete="off"
 				form={form}
 			>
-				{addPipelinefieldLists.map((item) => {
-					if (item.id === '1') {
-						return (
-							<Form.Item
-								required={false}
-								label={<FormLabelStyle>{item.fieldName}</FormLabelStyle>}
-								key={item.id}
-								rules={[
-									{
-										required: true,
-									},
-								]}
-								name={item.name}
-							>
-								<Input.Search
-									id={item.id}
-									name={item.name}
-									placeholder={t(t(item.placeholder))}
-									allowClear
-								/>
-							</Form.Item>
-						);
-					}
-					if (item.id === '2') {
-						return (
-							<Form.Item
-								required={false}
-								label={<FormLabelStyle>{item.fieldName}</FormLabelStyle>}
-								key={item.id}
-								rules={[
-									{
-										required: true,
-									},
-								]}
-								name={item.name}
-							>
-								<Input name={item.name} placeholder={t(item.placeholder)} />
-							</Form.Item>
-						);
-					}
-					if (item.id === '3') {
-						return (
-							<Form.Item
-								required={false}
-								label={<FormLabelStyle>{item.fieldName}</FormLabelStyle>}
-								key={item.id}
-								name={item.name}
-							>
-								<TagInput
-									setTagsListData={setTagsListData}
-									tagsListData={tagsListData as []}
-									placeHolder={t(item.placeholder)}
-								/>
-							</Form.Item>
-						);
-					}
-					if (item.id === '4') {
-						return (
-							<Form.Item
-								required={false}
-								name={item.name}
-								label={item.fieldName}
-								key={item.id}
-								rules={[
-									{
-										required: true,
-									},
-								]}
-							>
-								<Input.TextArea
-									rows={3}
-									name={item.name}
-									placeholder={t(item.placeholder)}
-								/>
-							</Form.Item>
-						);
-					}
-					return <span key={item.id}>No Data</span>;
-				})}
+				{renderPipelineForm(setTagsListData, tagsListData)}
 				<Divider plain />
 				<Form.Item>
 					<ModalButtonWrapper>
