@@ -27,6 +27,7 @@ function TagsKey(props: TagsKeysProps): JSX.Element {
 			globalTime.maxTime,
 			traces.selectedFilter,
 			traces.isFilterExclude,
+			traces.spanKind,
 		],
 		{
 			queryFn: () =>
@@ -35,6 +36,7 @@ function TagsKey(props: TagsKeysProps): JSX.Element {
 					end: globalTime.maxTime,
 					other: Object.fromEntries(traces.selectedFilter),
 					isFilterExclude: traces.isFilterExclude,
+					spanKind: traces.spanKind,
 				}),
 			cacheTime: 120000,
 		},

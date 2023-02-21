@@ -30,6 +30,8 @@ function TagValue(props: TagValueProps): JSX.Element {
 		BoolValues: selectedBoolValues,
 	} = tag;
 
+	const traces = useSelector<AppState, TraceReducer>((state) => state.traces);
+
 	const [localTagValue, setLocalTagValue] = useState<TagValueTypes[]>(
 		getInitialLocalValue(
 			selectedNumberValues,
@@ -45,7 +47,14 @@ function TagValue(props: TagValueProps): JSX.Element {
 	const tagType = useMemo(() => extractTagType(tagKey), [tagKey]);
 
 	const { isLoading, data } = useQuery(
-		['tagKey', globalReducer.minTime, globalReducer.maxTime, tagKey, tagType],
+		[
+			'tagKey',
+			globalReducer.minTime,
+			globalReducer.maxTime,
+			tagKey,
+			tagType,
+			traces.spanKind,
+		],
 		{
 			queryFn: () =>
 				getTagValue({
@@ -55,6 +64,7 @@ function TagValue(props: TagValueProps): JSX.Element {
 						Key: extractTagKey(tagKey),
 						Type: tagType,
 					},
+					spanKind: traces.spanKind,
 				}),
 		},
 	);
