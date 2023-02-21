@@ -13,10 +13,11 @@ const (
 type DeployStatus string
 
 const (
-	PendingDeploy DeployStatus = "DIRTY"
-	Deploying     DeployStatus = "DEPLOYING"
-	Deployed      DeployStatus = "DEPLOYED"
-	DeployFailed  DeployStatus = "FAILED"
+	PendingDeploy   DeployStatus = "DIRTY"
+	Deploying       DeployStatus = "DEPLOYING"
+	Deployed        DeployStatus = "DEPLOYED"
+	DeployInitiated DeployStatus = "IN_PROGRESS"
+	DeployFailed    DeployStatus = "FAILED"
 )
 
 type ConfigVersion struct {

@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"sync/atomic"
-	"time"
 
 	"github.com/jmoiron/sqlx"
 	"github.com/open-telemetry/opentelemetry-collector-contrib/processor/filterprocessor"
@@ -83,6 +82,24 @@ func UpsertFilterProcessor(key string, config *filterprocessor.Config) error {
 	return nil
 }
 
+// OnConfigUpdate is a callback function passed to opamp server.
+// It receives a config hash with error status.  We assume
+// successful deployment if no error is received.
+// this method is currently expected to be called only once in the lifecycle
+// but can be improved in future to accept continuous request status updates from opamp
+func (m *Manager) OnConfigUpdate(hash string, err error) {
+
+	status := string(Deployed)
+	message := "deploy successful"
+	if err != nil {
+		status = string(DeployFailed)
+		message = err.Error()
+	}
+
+	m.updateDeployStatusByHash(context.Background(), hash, status, message)
+
+}
+
 // UpsertSamplingProcessor updates the agent config with new filter processor params
 func UpsertSamplingProcessor(ctx context.Context, version int, key string, config *tsp.Config) error {
 	if !atomic.CompareAndSwapUint32(&m.lock, 0, 1) {
@@ -95,36 +112,12 @@ func UpsertSamplingProcessor(ctx context.Context, version int, key string, confi
 		"tail_sampling": config,
 	}
 
-	configHash, err := opamp.UpsertTraceProcessors(ctx, []interface{}{processorConf})
+	configHash, err := opamp.UpsertTraceProcessors(ctx, []interface{}{processorConf}, m.OnConfigUpdate)
 	if err != nil {
 		zap.S().Errorf("failed to call agent config update for trace processor:", err)
 		return err
 	}
 
-	// we wait for a minute or exit as UI will be waiting
-	done := make(chan int, 1)
-	ticker := time.NewTicker(1 * time.Second)
-
-	onUpdate := func(hash string, err error) {
-		if hash == configHash {
-			if err != nil {
-				m.updateDeployStatus(ctx, version, string(DeployFailed), err.Error())
-			} else {
-				m.updateDeployStatus(ctx, version, string(Deployed), "deploy successful")
-			}
-			close(done)
-		}
-	}
-
-	go opamp.Subscribe(configHash, onUpdate)
-
-	for {
-		select {
-		case <-done:
-			return nil
-		case <-ticker.C:
-			return fmt.Errorf("operation timed out")
-		}
-	}
-
+	m.updateDeployStatus(ctx, ElementTypeSamplingRules, version, string(DeployInitiated), "Deployment started", configHash)
+	return nil
 }

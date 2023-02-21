@@ -176,15 +176,32 @@ func (r *Repo) insertConfig(ctx context.Context, c *ConfigVersion, elements []st
 	return nil
 }
 
-func (r *Repo) updateDeployStatus(ctx context.Context, version int, status string, result string) error {
+func (r *Repo) updateDeployStatus(ctx context.Context, elementType ElementTypeDef, version int, status string, result string, lastHash string) error {
 
 	updateQuery := `UPDATE agent_config_versions
 	set deployment_status = $1, 
-	deployment_sequence = $2,
-	deploy_result = $3
-	WHERE version=$4`
+	deploy_result = $2,
+	last_hash = COALESCE($3, last_hash)
+	WHERE version=$4
+	AND elementType = $5`
 
-	_, err := r.db.ExecContext(ctx, updateQuery, status, rand.Int(), result, version)
+	_, err := r.db.ExecContext(ctx, updateQuery, status, result, version, string(elementType))
+	if err != nil {
+		zap.S().Errorf("failed to get ingestion rule from db", err)
+		return model.BadRequestStr("failed to get ingestion rule from db")
+	}
+
+	return nil
+}
+
+func (r *Repo) updateDeployStatusByHash(ctx context.Context, confighash string, status string, result string) error {
+
+	updateQuery := `UPDATE agent_config_versions
+	set deployment_status = $1, 
+	deploy_result = $2
+	WHERE last_hash=$4`
+
+	_, err := r.db.ExecContext(ctx, updateQuery, status, result, confighash)
 	if err != nil {
 		zap.S().Errorf("failed to get ingestion rule from db", err)
 		return model.BadRequestStr("failed to get ingestion rule from db")

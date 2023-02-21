@@ -14,14 +14,10 @@ var tracesPipelinePlan = map[int]struct {
 	Enabled bool
 }{
 	0: {
-		Name:    "signozspanmetrics/prometheus",
-		Enabled: false,
-	},
-	1: {
 		Name:    "tail_sampling",
 		Enabled: false,
 	},
-	2: {
+	1: {
 		Name:    "batch",
 		Enabled: true,
 	},
@@ -128,7 +124,7 @@ func buildTracesPipeline(pipeline []interface{}) ([]interface{}, error) {
 	if checkDuplicates(pipeline) {
 		// duplicates are most likely because the processor sequence in effective config conflicts
 		// with the planned sequence as per tracesPipelinePlan
-		return pipeline, fmt.Errorf("the effective config has an unexpected processor sequence", pipeline)
+		return pipeline, fmt.Errorf("the effective config has an unexpected processor sequence: %v", pipeline)
 	}
 	return pipeline, nil
 }

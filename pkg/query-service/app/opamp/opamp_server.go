@@ -83,11 +83,14 @@ func Subscribe(hash string, f func(hash string, err error)) {
 	model.ListenToConfigUpdate(hash, f)
 }
 
-func UpsertTraceProcessors(ctx context.Context, processors []interface{}) (hash string, fnerr error) {
+func UpsertTraceProcessors(ctx context.Context, processors []interface{}, callback func(string, error)) (hash string, fnerr error) {
 	// note: only processors enabled through tracesPipelinePlan will be added
 	// to pipeline. To enable or disable processors from pipeline, call
 	// AddToTracePipeline() or RemoveFromTracesPipeline() prior to calling
 	// this method
+
+	fmt.Println("processors:", processors)
+	fmt.Println("trace pipeline:", tracesPipelinePlan)
 
 	confHash := ""
 	x := map[string]interface{}{
@@ -103,6 +106,7 @@ func UpsertTraceProcessors(ctx context.Context, processors []interface{}) (hash 
 		if err != nil {
 			return confHash, err
 		}
+
 		agentConf := confmap.NewFromStringMap(c)
 
 		// upsert changed processor parameters in config
@@ -174,6 +178,16 @@ func UpsertTraceProcessors(ctx context.Context, processors []interface{}) (hash 
 				ConfigHash: hash.Sum(nil),
 			},
 		})
+
+		if confHash != "" {
+			// here we return the first agent hash as we don't have multi-agent support
+			// in downstream yet
+			confHash = string(hash.Sum(nil))
+		}
+	}
+	if confHash != "" {
+		// subscribe callback
+		model.ListenToConfigUpdate(confHash, callback)
 	}
 	return confHash, nil
 }

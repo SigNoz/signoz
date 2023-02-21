@@ -28,12 +28,17 @@ func InitDB(db *sqlx.DB) error {
 		deploy_status VARCHAR(80) NOT NULL DEFAULT 'DIRTY',
 		deploy_sequence INTEGER,
 		deploy_result TEXT,
+		last_hash TEXT,
 		UNIQUE(element_type, version)
 	);
 
 
 	CREATE UNIQUE INDEX IF NOT EXISTS agent_config_versions_u1 
 	ON agent_config_versions(element_type, version);
+
+	CREATE INDEX IF NOT EXISTS agent_config_versions_nu1 
+	ON agent_config_versions(last_hash);
+	
 
 	CREATE TABLE IF NOT EXISTS agent_config_elements(
 		id TEXT PRIMARY KEY,

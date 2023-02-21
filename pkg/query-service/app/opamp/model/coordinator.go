@@ -12,12 +12,14 @@ func init() {
 	coordinator = &Coordinator{}
 }
 
+type OnChangeCallback func(hash string, err error)
+
 // responsible for managing subscribers on config change
 type Coordinator struct {
 	mutex sync.Mutex
 
 	// hash wise list of subscribers
-	subscribers map[string][]func(hash string, err error)
+	subscribers map[string][]OnChangeCallback
 }
 
 func onConfigSuccess(hash string) {
@@ -48,7 +50,7 @@ func notifySubscribers(hash string, err error) {
 }
 
 // callers subscribe to this function to listen on config change requests
-func ListenToConfigUpdate(hash string, ss func(hash string, err error)) {
+func ListenToConfigUpdate(hash string, ss OnChangeCallback) {
 	coordinator.mutex.Lock()
 	defer coordinator.mutex.Unlock()
 
@@ -56,6 +58,6 @@ func ListenToConfigUpdate(hash string, ss func(hash string, err error)) {
 		subs = append(subs, ss)
 		coordinator.subscribers[hash] = subs
 	} else {
-		coordinator.subscribers[hash] = []func(hash string, err error){ss}
+		coordinator.subscribers[hash] = []OnChangeCallback{ss}
 	}
 }
