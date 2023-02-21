@@ -26,7 +26,7 @@ export const operationPerSec = ({
 		{
 			id: '',
 			key: 'operation',
-			op: 'In',
+			op: 'IN',
 			value: topLevelOperations,
 		},
 		...tagFilterItems,
