@@ -3,10 +3,12 @@ import {
 	processorFields,
 	processorTypes,
 } from '../PipelineListsView/AddNewProcessor/config';
-import { pipelineFields } from '../PipelineListsView/config';
+import { pipelineFields, processorColumns } from '../PipelineListsView/config';
 import {
+	getEditedDataSource,
 	getElementFromArray,
 	getRecordIndex,
+	getTableColumn,
 	getUpdatedRow,
 } from '../PipelineListsView/utils';
 
@@ -53,5 +55,38 @@ describe('Utils testing of Pipeline Page', () => {
 	test('it should be return shuffle data', () => {
 		const updateData = getUpdatedRow(pipelineData, 1, 1);
 		expect(pipelineData).toEqual(updateData);
+	});
+
+	test('it should be return modified column data', () => {
+		const columnData = getTableColumn(processorColumns);
+		expect(processorColumns).not.toEqual(columnData);
+		expect(processorColumns.length).toEqual(columnData.length);
+	});
+
+	test('it should be return modified column data', () => {
+		const findRecordIndex = getRecordIndex(
+			pipelineData,
+			pipelineData[0],
+			'name' as never,
+		);
+		const updatedPipelineData = {
+			...pipelineData[findRecordIndex],
+			name: 'updated name',
+			alias: 'changed alias',
+			filter: 'value == test',
+			tags: ['test'],
+		};
+		const editedData = getEditedDataSource(
+			pipelineData,
+			pipelineData[0],
+			'name' as never,
+			updatedPipelineData,
+		);
+		expect(pipelineData).not.toEqual(editedData);
+		expect(pipelineData.length).toEqual(editedData.length);
+		expect(pipelineData[0].name).not.toEqual(editedData[0].name);
+		expect(pipelineData[0].alias).not.toEqual(editedData[0].alias);
+		expect(pipelineData[0].alias).not.toEqual(editedData[0].alias);
+		expect(pipelineData[0].tags).not.toEqual(editedData[0].tags);
 	});
 });
