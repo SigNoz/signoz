@@ -203,14 +203,14 @@ func (s *Server) createPrivateServer(apiHandler *api.APIHandler) (*http.Server, 
 }
 
 func getPATToken(r *http.Request) (string, error) {
-	authHeader := r.Header.Get("Authorization")
-	if authHeader == "" {
+	patHeader := r.Header.Get("SIGNOZ-API-KEY")
+	if patHeader == "" {
 		return "", nil
 	}
 
-	authHeaderParts := strings.Fields(authHeader)
+	authHeaderParts := strings.Fields(patHeader)
 	if len(authHeaderParts) != 2 || strings.ToLower(authHeaderParts[0]) != "bearer" {
-		return "", fmt.Errorf("authorization header format must be Bearer {token}")
+		return "", fmt.Errorf("PAT authorization header format must be bearer {token}")
 	}
 
 	return authHeaderParts[1], nil

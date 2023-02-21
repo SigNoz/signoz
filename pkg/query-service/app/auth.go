@@ -19,10 +19,6 @@ func NewAuthMiddleware(f func(r *http.Request) (*model.UserPayload, error)) *Aut
 	}
 }
 
-// func (am *AuthMiddleware) GetUserFromRequest(r *http.Request) (*model.UserPayload, error) {
-// 	return auth.GetUserFromRequest(r)
-// }
-
 func (am *AuthMiddleware) OpenAccess(f func(http.ResponseWriter, *http.Request)) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		f(w, r)
