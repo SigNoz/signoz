@@ -93,5 +93,7 @@ type AttributeKey struct {
 }
 
 type FilterAttributeValueResponse struct {
-	AttributeValues []interface{} `json:"attributeValues"`
+	StringAttributeValues []string      `json:"stringAttributeValues"`
+	NumberAttributeValues []interface{} `json:"numberAttributeValues"`
+	BoolAttributeValues   []bool        `json:"boolAttributeValues"`
 }
