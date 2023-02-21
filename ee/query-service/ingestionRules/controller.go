@@ -2,6 +2,7 @@ package ingestionRules
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/jmoiron/sqlx"
 	"go.signoz.io/signoz/ee/query-service/model"
@@ -113,8 +114,9 @@ func (ic *IngestionController) ApplyDropRules(ctx context.Context, postable []Po
 
 	if err != nil {
 		zap.S().Errorf("failed to insert drop rules into agent config", filterConfig, err)
-		return response, model.InternalErrorStr("failed to apply drop rules ")
+		return response, model.InternalErrorStr(fmt.Sprintf("failed to apply drop rules:  %s", err.Error()))
 	}
+
 	return response, nil
 }
 
@@ -143,6 +145,13 @@ func (ic *IngestionController) ApplySamplingRules(ctx context.Context, postable 
 
 	// scan through postable rules, to select the existing rules or insert missing ones
 	for _, r := range postable {
+		if apierr := r.IsValid(); apierr != nil {
+			return nil, apierr
+		}
+
+		if err := r.Config.SamplingConfig.Valid(); err != nil {
+			return nil, model.BadRequest(err)
+		}
 
 		// note: we process only new and changed rules here, deleted rules are not expected
 		// from client. if user deletes a rule, the client should not send that rule in the update.
@@ -206,7 +215,7 @@ func (ic *IngestionController) ApplySamplingRules(ctx context.Context, postable 
 
 	if err != nil {
 		zap.S().Errorf("failed to insert sampling rules into agent config: ", params, err)
-		return response, model.InternalErrorStr("failed to apply sampling rules ")
+		return response, model.InternalErrorStr(fmt.Sprintf("failed to apply drop rules:  %s", err.Error()))
 	}
 	return response, nil
 }

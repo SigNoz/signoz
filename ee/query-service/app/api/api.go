@@ -125,7 +125,9 @@ func (ah *APIHandler) RegisterRoutes(router *mux.Router) {
 		Methods(http.MethodPost)
 
 	router.HandleFunc("/api/v1/samplingRules/{version}",
-		baseapp.AdminAccess(ah.listSamplingRules)).
+		// todo(amol): commented for testing
+		//baseapp.AdminAccess(ah.listSamplingRules)).
+		ah.listSamplingRules).
 		Methods(http.MethodGet)
 
 	router.HandleFunc("/api/v1/samplingRules",

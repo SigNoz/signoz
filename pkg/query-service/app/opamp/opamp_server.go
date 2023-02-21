@@ -30,6 +30,7 @@ const capabilities = protobufs.ServerCapabilities_ServerCapabilities_AcceptsEffe
 	protobufs.ServerCapabilities_ServerCapabilities_AcceptsStatus
 
 func InitalizeServer(agents *model.Agents) error {
+	zap.S().Info("initiated opamp server....")
 	opAmpServer = &Server{
 		agents: agents,
 	}
@@ -91,15 +92,24 @@ func UpsertTraceProcessors(ctx context.Context, processors []interface{}, callba
 
 	fmt.Println("processors:", processors)
 	fmt.Println("trace pipeline:", tracesPipelinePlan)
-
 	confHash := ""
+
+	if opAmpServer == nil {
+		if err := InitalizeServer(&model.AllAgents); err != nil {
+			return confHash, fmt.Errorf("opamp server is down, unable to push config to agent at this moment")
+		}
+	}
+
+	agents := opAmpServer.agents.GetAllAgents()
+	if len(agents) == 0 {
+		return confHash, fmt.Errorf("no agents available at the moment")
+	}
 	x := map[string]interface{}{
 		"processors": processors,
 	}
 
 	updatedProcessors := confmap.NewFromStringMap(x)
 
-	agents := opAmpServer.agents.GetAllAgents()
 	for _, agent := range agents {
 		config := agent.EffectiveConfig
 		c, err := yaml.Parser().Unmarshal([]byte(config))

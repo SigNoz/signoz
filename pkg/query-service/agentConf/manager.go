@@ -112,6 +112,7 @@ func UpsertSamplingProcessor(ctx context.Context, version int, key string, confi
 		"tail_sampling": config,
 	}
 
+	opamp.AddToTracePipeline("tail_sampling")
 	configHash, err := opamp.UpsertTraceProcessors(ctx, []interface{}{processorConf}, m.OnConfigUpdate)
 	if err != nil {
 		zap.S().Errorf("failed to call agent config update for trace processor:", err)

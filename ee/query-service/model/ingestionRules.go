@@ -168,12 +168,12 @@ type SamplingConfig struct {
 }
 
 // Valid checks the validity of a sampling rule and its conditions
-func (sc *SamplingConfig) Valid() error {
-	if sc.Root {
-		if sc.Name == "" {
-			return fmt.Errorf("name is required for all sampling rules")
-		}
+func (sc SamplingConfig) Valid() error {
+	if sc.Name == "" {
+		return fmt.Errorf("name is required for all sampling rules")
+	}
 
+	if sc.Root {
 		if !sc.Default && len(sc.FilterSet.Items) != 1 {
 			// non-default rule has no filter set, raise an error
 			return fmt.Errorf(fmt.Sprintf("invalid filter for sampling rule (%s)", sc.Name))
@@ -189,6 +189,7 @@ func (sc *SamplingConfig) Valid() error {
 		}
 
 	}
+
 	return nil
 }
 

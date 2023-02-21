@@ -1,6 +1,10 @@
 package ingestionRules
 
-import "go.signoz.io/signoz/ee/query-service/model"
+import (
+	"fmt"
+
+	"go.signoz.io/signoz/ee/query-service/model"
+)
 
 // PostableIngestionRules are a list of user defined ingestion rules
 type PostableIngestionRules struct {
@@ -33,6 +37,10 @@ func (p *PostableIngestionRule) IsValid() *model.ApiError {
 
 	if p.Source == "" {
 		return model.BadRequestStr("ingestion source is required")
+	}
+
+	if p.Config == nil {
+		return model.BadRequestStr(fmt.Sprintf("invalid config found on rule: %s", p.Name))
 	}
 
 	return nil
