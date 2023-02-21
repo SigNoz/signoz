@@ -1,10 +1,10 @@
 import { PlusOutlined } from '@ant-design/icons';
-import { notification } from 'antd';
 import {
 	QueryBuilderFormulaTemplate,
 	QueryBuilderQueryTemplate,
 } from 'constants/dashboard';
 import { GRAPH_TYPES } from 'container/NewDashboard/ComponentsSlider';
+import { useNotifications } from 'hooks/useNotifications';
 import GetFormulaName from 'lib/query/GetFormulaName';
 import GetQueryName from 'lib/query/GetQueryName';
 import React from 'react';
@@ -37,6 +37,7 @@ function QueryBuilderQueryContainer({
 	metricsBuilderQueries,
 	selectedGraph,
 }: IQueryBuilderQueryContainerProps): JSX.Element | null {
+	const { notifications } = useNotifications();
 	const handleQueryBuilderQueryChange = ({
 		queryIndex,
 		aggregateFunction,
@@ -113,7 +114,7 @@ function QueryBuilderQueryContainer({
 	};
 	const addQueryHandler = (): void => {
 		if (!canCreateQueryAndFormula(queryData)) {
-			notification.error({
+			notifications.error({
 				message:
 					'Unable to create query. You can create at max 10 queries and formulae.',
 			});
@@ -130,7 +131,7 @@ function QueryBuilderQueryContainer({
 
 	const addFormulaHandler = (): void => {
 		if (!canCreateQueryAndFormula(queryData)) {
-			notification.error({
+			notifications.error({
 				message:
 					'Unable to create formula. You can create at max 10 queries and formulae.',
 			});

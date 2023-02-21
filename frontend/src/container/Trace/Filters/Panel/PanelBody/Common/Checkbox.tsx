@@ -1,6 +1,7 @@
-import { Checkbox, notification, Tooltip, Typography } from 'antd';
+import { Checkbox, Tooltip, Typography } from 'antd';
 import getFilters from 'api/trace/getFilters';
 import { AxiosError } from 'axios';
+import { useNotifications } from 'hooks/useNotifications';
 import React, { useMemo, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { Dispatch } from 'redux';
@@ -37,6 +38,8 @@ function CheckBoxComponent(props: CheckBoxProps): JSX.Element {
 	const isUserSelected =
 		(userSelectedFilter.get(name) || []).find((e) => e === keyValue) !==
 		undefined;
+
+	const { notifications } = useNotifications();
 
 	// eslint-disable-next-line sonarjs/cognitive-complexity
 	const onCheckHandler = async (): Promise<void> => {
@@ -141,12 +144,12 @@ function CheckBoxComponent(props: CheckBoxProps): JSX.Element {
 			} else {
 				setIsLoading(false);
 
-				notification.error({
+				notifications.error({
 					message: response.error || 'Something went wrong',
 				});
 			}
 		} catch (error) {
-			notification.error({
+			notifications.error({
 				message: (error as AxiosError).toString() || 'Something went wrong',
 			});
 			setIsLoading(false);

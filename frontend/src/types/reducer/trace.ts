@@ -47,17 +47,28 @@ interface SpansAggregateData {
 }
 
 export interface Tags {
-	Key: string[];
-	Operator: OperatorValues;
-	Values: string[];
-}
-
-export interface TagsAPI {
 	Key: string;
 	Operator: OperatorValues;
-	Values: string[];
+	StringValues: string[];
+	NumberValues: number[];
+	BoolValues: boolean[];
 }
-export type OperatorValues = 'not in' | 'in';
+
+export type OperatorValues =
+	| 'NotIn'
+	| 'In'
+	| 'Equals'
+	| 'NotEquals'
+	| 'Contains'
+	| 'NotContains'
+	| 'GreaterThan'
+	| 'Exists'
+	| 'NotExists'
+	| 'LessThan'
+	| 'GreaterThanEquals'
+	| 'LessThanEquals'
+	| 'StartsWith'
+	| 'NotStartsWith';
 
 export type TraceFilterEnum =
 	| 'component'

@@ -7,6 +7,7 @@ import {
 import { Button, Popover, Select, Space } from 'antd';
 import { LiveTail } from 'api/logs/livetail';
 import dayjs from 'dayjs';
+import { useIsDarkMode } from 'hooks/useDarkMode';
 import { throttle } from 'lodash-es';
 import React, { useCallback, useEffect, useMemo, useRef } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
@@ -19,7 +20,6 @@ import {
 	TOGGLE_LIVE_TAIL,
 } from 'types/actions/logs';
 import { TLogsLiveTailState } from 'types/api/logs/liveTail';
-import AppReducer from 'types/reducer/app';
 import { GlobalReducer } from 'types/reducer/globalTime';
 import { ILogsReducer } from 'types/reducer/logs';
 
@@ -35,7 +35,8 @@ function LogLiveTail(): JSX.Element {
 		liveTailStartRange,
 		logs,
 	} = useSelector<AppState, ILogsReducer>((state) => state.logs);
-	const { isDarkMode } = useSelector<AppState, AppReducer>((state) => state.app);
+	const isDarkMode = useIsDarkMode();
+
 	const { selectedAutoRefreshInterval } = useSelector<AppState, GlobalReducer>(
 		(state) => state.globalTime,
 	);
@@ -54,22 +55,25 @@ function LogLiveTail(): JSX.Element {
 
 	const batchedEventsRef = useRef<Record<string, unknown>[]>([]);
 
-	// eslint-disable-next-line react-hooks/exhaustive-deps
-	const pushLiveLog = useCallback(
-		throttle(() => {
-			dispatch({
-				type: PUSH_LIVE_TAIL_EVENT,
-				payload: batchedEventsRef.current.reverse(),
-			});
-			batchedEventsRef.current = [];
-		}, 1500),
-		[],
-	);
+	const pushLiveLog = useCallback(() => {
+		dispatch({
+			type: PUSH_LIVE_TAIL_EVENT,
+			payload: batchedEventsRef.current.reverse(),
+		});
+		batchedEventsRef.current = [];
+	}, [dispatch]);
 
-	const batchLiveLog = (e: { data: string }): void => {
-		batchedEventsRef.current.push(JSON.parse(e.data as string) as never);
-		pushLiveLog();
-	};
+	const pushLiveLogThrottled = useMemo(() => throttle(pushLiveLog, 1000), [
+		pushLiveLog,
+	]);
+
+	const batchLiveLog = useCallback(
+		(e: { data: string }): void => {
+			batchedEventsRef.current.push(JSON.parse(e.data as string) as never);
+			pushLiveLogThrottled();
+		},
+		[pushLiveLogThrottled],
+	);
 
 	// This ref depicts thats whether the live tail is played from paused state or not.
 	const liveTailSourceRef = useRef<EventSource | null>(null);

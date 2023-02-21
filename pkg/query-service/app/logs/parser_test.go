@@ -80,7 +80,17 @@ var correctQueriesTest = []struct {
 	{
 		`filters with extra spaces`,
 		`service IN ('name > 100')    AND   length gt 100`,
-		[]string{`service IN ('name > 100') `, `AND   length > 100 `},
+		[]string{`service IN ('name > 100') `, `AND length > 100 `},
+	},
+	{
+		`Extra space within a filter expression`,
+		`service  IN  ('name > 100')`,
+		[]string{`service IN ('name > 100') `},
+	},
+	{
+		`Extra space between a query filter`,
+		`data  contains  'hello    world    .'`,
+		[]string{`data ILIKE '%hello    world    .%' `},
 	},
 	{
 		`filters with special characters in key name`,
@@ -92,8 +102,8 @@ var correctQueriesTest = []struct {
 func TestParseLogQueryCorrect(t *testing.T) {
 	for _, test := range correctQueriesTest {
 		Convey(test.Name, t, func() {
-			query, _ := parseLogQuery(test.InputQuery)
-
+			query, err := parseLogQuery(test.InputQuery)
+			So(err, ShouldBeNil)
 			So(query, ShouldResemble, test.WantSqlTokens)
 		})
 	}
@@ -196,7 +206,8 @@ var parseCorrectColumns = []struct {
 func TestParseColumn(t *testing.T) {
 	for _, test := range parseCorrectColumns {
 		Convey(test.Name, t, func() {
-			column, _ := parseColumn(test.Filter)
+			column, err := parseColumn(test.Filter)
+			So(err, ShouldBeNil)
 			So(*column, ShouldEqual, test.Column)
 		})
 	}
@@ -206,14 +217,14 @@ func TestReplaceInterestingFields(t *testing.T) {
 	queryTokens := []string{"id.userid IN (100) ", "and id_key >= 50 ", `AND body ILIKE '%searchstring%'`}
 	allFields := model.GetFieldsResponse{
 		Selected: []model.LogField{
-			model.LogField{
+			{
 				Name:     "id_key",
 				DataType: "int64",
 				Type:     "attributes",
 			},
 		},
 		Interesting: []model.LogField{
-			model.LogField{
+			{
 				Name:     "id.userid",
 				DataType: "int64",
 				Type:     "attributes",
@@ -223,7 +234,8 @@ func TestReplaceInterestingFields(t *testing.T) {
 
 	expectedTokens := []string{"attributes_int64_value[indexOf(attributes_int64_key, 'id.userid')] IN (100) ", "and id_key >= 50 ", `AND body ILIKE '%searchstring%'`}
 	Convey("testInterestingFields", t, func() {
-		tokens, _ := replaceInterestingFields(&allFields, queryTokens)
+		tokens, err := replaceInterestingFields(&allFields, queryTokens)
+		So(err, ShouldBeNil)
 		So(tokens, ShouldResemble, expectedTokens)
 	})
 }
@@ -362,7 +374,8 @@ var generateSQLQueryTestCases = []struct {
 func TestGenerateSQLQuery(t *testing.T) {
 	for _, test := range generateSQLQueryTestCases {
 		Convey("testGenerateSQL", t, func() {
-			res, _ := GenerateSQLWhere(&generateSQLQueryFields, &test.Filter)
+			res, _, err := GenerateSQLWhere(&generateSQLQueryFields, &test.Filter)
+			So(err, ShouldBeNil)
 			So(res, ShouldEqual, test.SqlFilter)
 		})
 	}

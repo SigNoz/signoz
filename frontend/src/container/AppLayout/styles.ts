@@ -3,9 +3,10 @@ import styled from 'styled-components';
 
 export const Layout = styled(LayoutComponent)`
 	&&& {
-		min-height: 92vh;
 		display: flex;
 		position: relative;
+		min-height: calc(100vh - 4rem);
+		overflow: hidden;
 	}
 `;
 

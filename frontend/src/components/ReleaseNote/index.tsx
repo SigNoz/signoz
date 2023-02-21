@@ -48,9 +48,9 @@ function ReleaseNote({ path }: ReleaseNoteProps): JSX.Element | null {
 		(state) => state.app,
 	);
 
-	const c = allComponentMap.find((item) => {
-		return item.match(path, currentVersion, userFlags);
-	});
+	const c = allComponentMap.find((item) =>
+		item.match(path, currentVersion, userFlags),
+	);
 
 	if (!c) {
 		return null;

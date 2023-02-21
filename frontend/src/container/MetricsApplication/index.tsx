@@ -1,60 +1,17 @@
 import RouteTab from 'components/RouteTab';
 import ROUTES from 'constants/routes';
-import React from 'react';
+import React, { memo } from 'react';
 import { generatePath, useParams } from 'react-router-dom';
 import { useLocation } from 'react-use';
-import { PromQLWidgets, Widgets } from 'types/api/dashboard/getAll';
-import { v4 } from 'uuid';
 
+import { getWidgetQueryBuilder } from './MetricsApplication.factory';
 import ResourceAttributesFilter from './ResourceAttributesFilter';
 import DBCall from './Tabs/DBCall';
 import External from './Tabs/External';
 import Overview from './Tabs/Overview';
 
-const getWidget = (query: PromQLWidgets['query']): PromQLWidgets => {
-	return {
-		description: '',
-		id: '',
-		isStacked: false,
-		nullZeroValues: '',
-		opacity: '0',
-		panelTypes: 'TIME_SERIES',
-		query,
-		queryData: {
-			data: { queryData: [] },
-			error: false,
-			errorMessage: '',
-			loading: false,
-		},
-		timePreferance: 'GLOBAL_TIME',
-		title: '',
-		stepSize: 60,
-	};
-};
-
-const getWidgetQueryBuilder = (query: Widgets['query']): Widgets => {
-	return {
-		description: '',
-		id: v4(),
-		isStacked: false,
-		nullZeroValues: '',
-		opacity: '0',
-		panelTypes: 'TIME_SERIES',
-		query,
-		queryData: {
-			data: { queryData: [] },
-			error: false,
-			errorMessage: '',
-			loading: false,
-		},
-		timePreferance: 'GLOBAL_TIME',
-		title: '',
-		stepSize: 60,
-	};
-};
-
 function OverViewTab(): JSX.Element {
-	return <Overview getWidget={getWidget} />;
+	return <Overview getWidgetQueryBuilder={getWidgetQueryBuilder} />;
 }
 
 function DbCallTab(): JSX.Element {
@@ -128,4 +85,4 @@ function ServiceMetrics(): JSX.Element {
 	);
 }
 
-export default React.memo(ServiceMetrics);
+export default memo(ServiceMetrics);
