@@ -15,6 +15,7 @@ const getTagValue = async (
 				Key: props.tagKey.Key,
 				Type: props.tagKey.Type,
 			},
+			spanKind: props.spanKind,
 		});
 		return {
 			statusCode: 200,

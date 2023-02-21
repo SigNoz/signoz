@@ -52,6 +52,7 @@ function Trace({
 		selectedFunction,
 		selectedGroupBy,
 		isFilterExclude,
+		spanKind,
 	} = useSelector<AppState, TraceReducer>((state) => state.traces);
 
 	const { notifications } = useNotifications();
@@ -71,6 +72,7 @@ function Trace({
 				selectedTags,
 				order: spansAggregate.order,
 				orderParam: spansAggregate.orderParam,
+				spanKind,
 			},
 			notifications,
 		);
@@ -85,6 +87,7 @@ function Trace({
 		spansAggregate.order,
 		spansAggregate.orderParam,
 		notifications,
+		spanKind,
 	]);
 
 	useEffect(() => {
@@ -98,6 +101,7 @@ function Trace({
 				start: minTime,
 				step: getStep({ start: minTime, end: maxTime, inputFormat: 'ns' }),
 				isFilterExclude,
+				spanKind,
 			},
 			notifications,
 		);
@@ -111,6 +115,7 @@ function Trace({
 		getSpans,
 		isFilterExclude,
 		notifications,
+		spanKind,
 	]);
 
 	useEffect(
