@@ -5,6 +5,7 @@ import (
 
 	"github.com/gorilla/mux"
 	"go.signoz.io/signoz/ee/query-service/dao"
+	"go.signoz.io/signoz/ee/query-service/ingestionRules"
 	"go.signoz.io/signoz/ee/query-service/interfaces"
 	"go.signoz.io/signoz/ee/query-service/license"
 	baseapp "go.signoz.io/signoz/pkg/query-service/app"
@@ -14,11 +15,12 @@ import (
 )
 
 type APIHandlerOptions struct {
-	DataConnector  interfaces.DataConnector
-	AppDao         dao.ModelDao
-	RulesManager   *rules.Manager
-	FeatureFlags   baseint.FeatureLookup
-	LicenseManager *license.Manager
+	DataConnector       interfaces.DataConnector
+	AppDao              dao.ModelDao
+	RulesManager        *rules.Manager
+	FeatureFlags        baseint.FeatureLookup
+	LicenseManager      *license.Manager
+	IngestionController *ingestionRules.IngestionController
 }
 
 type APIHandler struct {
@@ -96,7 +98,7 @@ func (ah *APIHandler) RegisterRoutes(router *mux.Router) {
 	router.HandleFunc("/api/v1/complete/google",
 		baseapp.OpenAccess(ah.receiveGoogleAuth)).
 		Methods(http.MethodGet)
-		
+
 	router.HandleFunc("/api/v1/orgs/{orgId}/domains",
 		baseapp.AdminAccess(ah.listDomainsByOrg)).
 		Methods(http.MethodGet)
@@ -112,6 +114,27 @@ func (ah *APIHandler) RegisterRoutes(router *mux.Router) {
 	router.HandleFunc("/api/v1/domains/{id}",
 		baseapp.AdminAccess(ah.deleteDomain)).
 		Methods(http.MethodDelete)
+
+	router.HandleFunc("/api/v1/dropRules/{version}",
+		baseapp.AdminAccess(ah.listDropRules)).
+		Methods(http.MethodGet)
+
+	router.HandleFunc("/api/v1/dropRules",
+		// baseapp.AdminAccess(ah.createDropRule)).
+		ah.createDropRule).
+		Methods(http.MethodPost)
+
+	router.HandleFunc("/api/v1/samplingRules/{version}",
+		// todo(amol): commented for testing
+		//baseapp.AdminAccess(ah.listSamplingRules)).
+		ah.listSamplingRules).
+		Methods(http.MethodGet)
+
+	router.HandleFunc("/api/v1/samplingRules",
+		// todo(amol): commented for testing
+		// baseapp.AdminAccess(ah.createSamplingRule)).
+		ah.createSamplingRule).
+		Methods(http.MethodPost)
 
 	// base overrides
 	router.HandleFunc("/api/v1/version", baseapp.OpenAccess(ah.getVersion)).Methods(http.MethodGet)
