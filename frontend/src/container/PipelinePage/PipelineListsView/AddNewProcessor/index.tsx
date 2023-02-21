@@ -5,7 +5,7 @@ import { useTranslation } from 'react-i18next';
 import { ActionType } from '../../Layouts';
 import { ProcessorColumn } from '..';
 import { ModalButtonWrapper, ModalTitle } from '../styles';
-import { getRecordIndex } from '../utils';
+import { getEditedDataSource, getRecordIndex } from '../utils';
 import { DEFAULT_PROCESSOR_TYPE } from './config';
 import TypeSelect from './FormFields/TypeSelect';
 import { renderProcessorForm } from './utils';
@@ -32,7 +32,7 @@ function AddNewProcessor({
 		setProcessorType(type);
 	};
 
-	const onFinish = (values: OnFinishValue): void => {
+	const onFinish = (values: ProcessorColumn): void => {
 		const newProcessorData: ProcessorColumn = {
 			id: processorDataSource.length + 1,
 			type: processorType,
@@ -54,26 +54,25 @@ function AddNewProcessor({
 				description: values.description,
 			};
 
-			const editedData = processorDataSource?.map((data) =>
-				data.processorName === selectedProcessorData?.processorName
-					? updatedProcessorData
-					: data,
+			const editedData = getEditedDataSource(
+				processorDataSource,
+				selectedProcessorData,
+				'processorName' as never,
+				updatedProcessorData,
 			);
 
-			setProcessorDataSource(editedData);
+			setProcessorDataSource(editedData as Array<ProcessorColumn>);
 		} else {
 			setProcessorDataSource(
 				(prevState: ProcessorColumn[]) =>
 					[...prevState, newProcessorData] as ProcessorColumn[],
 			);
-			form.resetFields();
 		}
 		setActionType(undefined);
 	};
 
 	const onCancelHandler = (): void => {
 		setActionType(undefined);
-		form.resetFields();
 	};
 
 	const modalTitle = useMemo(
@@ -124,11 +123,6 @@ function AddNewProcessor({
 	);
 }
 
-export interface OnFinishValue {
-	processorName: string;
-	description: string;
-}
-
 interface AddNewProcessorProps {
 	isActionType: string;
 	setActionType: (actionType?: ActionType) => void;
@@ -138,4 +132,5 @@ interface AddNewProcessorProps {
 	>;
 	selectedProcessorData: ProcessorColumn | undefined;
 }
+
 export default AddNewProcessor;

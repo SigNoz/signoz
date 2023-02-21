@@ -9,7 +9,7 @@ import { v4 as uuid } from 'uuid';
 import { ActionType } from '../../Layouts';
 import { PipelineColumn } from '..';
 import { ModalButtonWrapper, ModalTitle } from '../styles';
-import { getRecordIndex } from '../utils';
+import { getEditedDataSource, getRecordIndex } from '../utils';
 import { renderPipelineForm } from './utils';
 
 function AddNewPipeline({
@@ -71,24 +71,25 @@ function AddNewPipeline({
 				tags: tagsListData,
 			};
 
-			const finalData = pipelineDataSource?.map((data) =>
-				data.name === selectedRecord?.name ? updatedPipelineData : data,
+			const editedData = getEditedDataSource(
+				pipelineDataSource,
+				selectedRecord,
+				'name' as never,
+				updatedPipelineData,
 			);
-			setPipelineDataSource(finalData as Array<PipelineColumn>);
+			setPipelineDataSource(editedData as Array<PipelineColumn>);
 		} else {
 			setCount((prevState: number) => (prevState + 1) as number);
 			setPipelineDataSource(
 				(prevState: PipelineColumn[]) =>
 					[...prevState, newPipeLineData] as PipelineColumn[],
 			);
-			form.resetFields();
 		}
 		setActionType(undefined);
 	};
 
 	const onCancelHandler = (): void => {
 		setActionType(undefined);
-		form.resetFields();
 	};
 
 	const modalTitle = useMemo(

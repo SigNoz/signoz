@@ -44,3 +44,12 @@ export function getTableColumn<T>(columnData: ColumnsType<T>): ColumnsType<T> {
 		),
 	}));
 }
+
+export function getEditedDataSource<T>(
+	arr: Array<T>,
+	target: T,
+	key: keyof T,
+	editedArr: T,
+): Array<T> {
+	return arr?.map((data) => (data[key] === target?.[key] ? editedArr : data));
+}
