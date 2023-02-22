@@ -33,6 +33,7 @@ export interface TraceReducer {
 	};
 	yAxisUnit: string | undefined;
 	filterDisplayValue: Map<TraceFilterEnum, number>;
+	spanKind?: string;
 }
 
 interface SpansAggregateData {
