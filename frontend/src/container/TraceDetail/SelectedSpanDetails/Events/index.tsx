@@ -18,7 +18,7 @@ function Events({
 		<ErrorTag
 			onToggleHandler={onToggleHandler}
 			setText={setText}
-			event={events}
+			traceEvent={events}
 			firstSpanStartTime={firstSpanStartTime}
 		/>
 	);
