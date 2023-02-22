@@ -3,11 +3,11 @@ import { ChartData } from 'chart.js';
 
 export const hasData = (data: ChartData): boolean => {
 	const { datasets = [] } = data;
-	let hasDataBool = false;
+	let isDataPresent = false;
 	try {
 		for (const dataset of datasets) {
 			if (dataset.data.length > 0) {
-				hasDataBool = true;
+				isDataPresent = true;
 				break;
 			}
 		}
@@ -15,5 +15,5 @@ export const hasData = (data: ChartData): boolean => {
 		console.error(error);
 	}
 
-	return hasDataBool;
+	return isDataPresent;
 };

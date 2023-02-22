@@ -23,7 +23,7 @@ export const useSelectedLogView = (): SelectedLogViewData => {
 		(state) => state.logs.linesPerRow,
 	);
 
-	const viewModeOption = useMemo(
+	const selectedViewModeOption = useMemo(
 		() =>
 			viewModeOptionList.find(
 				(viewModeOption) => viewModeOption.value === viewMode,
@@ -68,7 +68,7 @@ export const useSelectedLogView = (): SelectedLogViewData => {
 
 	return {
 		viewModeOptionList,
-		viewModeOption,
+		viewModeOption: selectedViewModeOption,
 		viewMode,
 		handleViewModeChange,
 		handleViewModeOptionChange,

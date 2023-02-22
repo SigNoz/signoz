@@ -183,9 +183,9 @@ function ListOfAllDashboard(): JSX.Element {
 		newDashboardState.loading,
 	]);
 
-	const onModalHandler = (uploadedGrafanaParam: boolean): void => {
+	const onModalHandler = (isGrafanaJsonUpload: boolean): void => {
 		setIsImportJSONModalVisible((state) => !state);
-		setUploadedGrafana(uploadedGrafanaParam);
+		setUploadedGrafana(isGrafanaJsonUpload);
 	};
 
 	const menu = useMemo(

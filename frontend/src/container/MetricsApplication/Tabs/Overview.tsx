@@ -38,13 +38,13 @@ function Application({ getWidgetQueryBuilder }: DashboardProps): JSX.Element {
 	const dispatch = useDispatch();
 	const handleGraphClick = useCallback(
 		(type: string): ClickHandlerType => (
-			ChartEvent: ChartEvent,
+			chartEvent: ChartEvent,
 			activeElements: ActiveElement[],
 			chart: Chart,
 			data: ChartData,
 		): void => {
 			onGraphClickHandler(handleSetTimeStamp)(
-				ChartEvent,
+				chartEvent,
 				activeElements,
 				chart,
 				data,

@@ -119,9 +119,9 @@ function FullView({
 		() =>
 			getChartData({
 				queryData: data.map((e) => ({
-					query: e?.map((eParam1) => eParam1.query).join(' ') || '',
-					queryData: e?.map((eParam2) => eParam2.queryData) || [],
-					legend: e?.map((eParam3) => eParam3.legend).join('') || '',
+					query: e?.map((query) => query.query).join(' ') || '',
+					queryData: e?.map((query) => query.queryData) || [],
+					legend: e?.map((query) => query.legend).join('') || '',
 				})),
 			}),
 		[data],

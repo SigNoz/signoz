@@ -13,9 +13,9 @@ function TimePreference({
 }: TimePreferenceDropDownProps): JSX.Element {
 	const timeMenuItemOnChangeHandler = useCallback(
 		(event: TimeMenuItemOnChangeHandlerEvent) => {
-			const selectedTimeCheck = TimeItems.find((e) => e.enum === event.key);
-			if (selectedTimeCheck !== undefined) {
-				setSelectedTime(selectedTimeCheck);
+			const isSelectedTimePresent = TimeItems.find((e) => e.enum === event.key);
+			if (isSelectedTimePresent !== undefined) {
+				setSelectedTime(isSelectedTimePresent);
 			}
 		},
 		[setSelectedTime],
