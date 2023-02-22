@@ -1,4 +1,5 @@
 import { GlobalReducer } from 'types/reducer/globalTime';
+import { TraceReducer } from 'types/reducer/trace';
 
 export interface Props {
 	start: GlobalReducer['minTime'];
@@ -7,6 +8,7 @@ export interface Props {
 		Key: string;
 		Type: string;
 	};
+	spanKind?: TraceReducer['spanKind'];
 }
 
 export interface PayloadProps {

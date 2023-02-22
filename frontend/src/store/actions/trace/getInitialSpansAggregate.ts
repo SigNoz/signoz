@@ -61,6 +61,7 @@ export const GetSpansAggregate = (
 			isFilterExclude: traces.isFilterExclude,
 			order,
 			orderParam: props.orderParam,
+			spanKind: props.spanKind,
 		});
 
 		if (response.statusCode === 200) {
@@ -140,4 +141,5 @@ export interface GetSpansAggregateProps {
 	selectedTags: TraceReducer['selectedTags'];
 	order: GetSpanAggregateProps['order'];
 	orderParam: GetSpanAggregateProps['orderParam'];
+	spanKind: TraceReducer['spanKind'];
 }
