@@ -351,7 +351,7 @@ func (aH *APIHandler) RegisterRoutes(router *mux.Router) {
 	router.HandleFunc("/api/v1/feedback", OpenAccess(aH.submitFeedback)).Methods(http.MethodPost)
 	// router.HandleFunc("/api/v1/get_percentiles", aH.getApplicationPercentiles).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/services", ViewAccess(aH.getServices)).Methods(http.MethodPost)
-	router.HandleFunc("/api/v1/services/list", aH.getServicesList).Methods(http.MethodGet)
+	router.HandleFunc("/api/v1/services/list", ViewAccess(aH.getServicesList)).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/service/overview", ViewAccess(aH.getServiceOverview)).Methods(http.MethodPost)
 	router.HandleFunc("/api/v1/service/top_operations", ViewAccess(aH.getTopOperations)).Methods(http.MethodPost)
 	router.HandleFunc("/api/v1/service/top_level_operations", ViewAccess(aH.getServicesTopLevelOps)).Methods(http.MethodPost)
@@ -364,6 +364,7 @@ func (aH *APIHandler) RegisterRoutes(router *mux.Router) {
 	router.HandleFunc("/api/v1/version", OpenAccess(aH.getVersion)).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/featureFlags", OpenAccess(aH.getFeatureFlags)).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/configs", OpenAccess(aH.getConfigs)).Methods(http.MethodGet)
+	router.HandleFunc("/api/v1/health", OpenAccess(aH.getHealth)).Methods(http.MethodGet)
 
 	router.HandleFunc("/api/v1/getSpanFilters", ViewAccess(aH.getSpanFilters)).Methods(http.MethodPost)
 	router.HandleFunc("/api/v1/getTagFilters", ViewAccess(aH.getTagFilters)).Methods(http.MethodPost)
@@ -1669,6 +1670,22 @@ func (aH *APIHandler) getConfigs(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	aH.Respond(w, configs)
+}
+
+// getHealth is used to check the health of the service.
+// 'live' query param can be used to check liveliness of
+// the service by checking the database connection.
+func (aH *APIHandler) getHealth(w http.ResponseWriter, r *http.Request) {
+	_, ok := r.URL.Query()["live"]
+	if ok {
+		err := aH.reader.CheckClickHouse(r.Context())
+		if err != nil {
+			aH.HandleError(w, err, http.StatusServiceUnavailable)
+			return
+		}
+	}
+
+	aH.WriteJSON(w, r, map[string]string{"status": "ok"})
 }
 
 // inviteUser is used to invite a user. It is used by an admin api.

@@ -10,6 +10,7 @@ import {
 	RESET_ID_START_AND_END,
 	SET_DETAILED_LOG_DATA,
 	SET_FIELDS,
+	SET_LINES_PER_ROW,
 	SET_LIVE_TAIL_START_TIME,
 	SET_LOADING,
 	SET_LOADING_AGGREGATE,
@@ -18,8 +19,11 @@ import {
 	SET_LOGS_AGGREGATE_SERIES,
 	SET_SEARCH_QUERY_PARSED_PAYLOAD,
 	SET_SEARCH_QUERY_STRING,
+	SET_VIEW_MODE,
 	STOP_LIVE_TAIL,
 	TOGGLE_LIVE_TAIL,
+	UPDATE_INTERESTING_FIELDS,
+	UPDATE_SELECTED_FIELDS,
 } from 'types/actions/logs';
 import { ILogsReducer } from 'types/reducer/logs';
 
@@ -34,6 +38,8 @@ const initialState: ILogsReducer = {
 	},
 	logs: [],
 	logLinesPerPage: 25,
+	linesPerRow: 2,
+	viewMode: 'raw',
 	idEnd: '',
 	idStart: '',
 	isLoading: false,
@@ -83,7 +89,7 @@ export const LogsReducer = (
 				...state,
 				searchFilter: {
 					...state.searchFilter,
-					queryString: action.payload,
+					queryString: action.payload.searchQueryString,
 				},
 			};
 		}
@@ -126,7 +132,7 @@ export const LogsReducer = (
 		case SET_LOG_LINES_PER_PAGE: {
 			return {
 				...state,
-				logLinesPerPage: action.payload,
+				logLinesPerPage: action.payload.logsLinesPerPage,
 			};
 		}
 
@@ -200,6 +206,40 @@ export const LogsReducer = (
 			return {
 				...state,
 				logs: [],
+			};
+		}
+
+		case SET_LINES_PER_ROW: {
+			return {
+				...state,
+				linesPerRow: action.payload,
+			};
+		}
+
+		case SET_VIEW_MODE: {
+			return {
+				...state,
+				viewMode: action.payload,
+			};
+		}
+
+		case UPDATE_INTERESTING_FIELDS: {
+			return {
+				...state,
+				fields: {
+					...state.fields,
+					interesting: action.payload.field,
+				},
+			};
+		}
+
+		case UPDATE_SELECTED_FIELDS: {
+			return {
+				...state,
+				fields: {
+					...state.fields,
+					selected: action.payload.field,
+				},
 			};
 		}
 

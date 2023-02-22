@@ -1,17 +1,10 @@
 import { red } from '@ant-design/colors';
 import { ExclamationCircleTwoTone } from '@ant-design/icons';
-import {
-	Button,
-	Modal,
-	notification,
-	Space,
-	Typography,
-	Upload,
-	UploadProps,
-} from 'antd';
+import { Button, Modal, Space, Typography, Upload, UploadProps } from 'antd';
 import createDashboard from 'api/dashboard/create';
 import Editor from 'components/Editor';
 import ROUTES from 'constants/routes';
+import { useNotifications } from 'hooks/useNotifications';
 import history from 'lib/history';
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -40,6 +33,8 @@ function ImportJSON({
 	const [dashboardCreating, setDashboardCreating] = useState<boolean>(false);
 
 	const [editorValue, setEditorValue] = useState<string>('');
+
+	const { notifications } = useNotifications();
 
 	const onChangeHandler: UploadProps['onChange'] = (info) => {
 		const { fileList } = info;
@@ -106,7 +101,7 @@ function ImportJSON({
 				}, 10);
 			} else {
 				setIsCreateDashboardError(true);
-				notification.error({
+				notifications.error({
 					message:
 						response.error ||
 						t('something_went_wrong', {

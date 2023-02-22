@@ -1,6 +1,6 @@
-import { notification } from 'antd';
 import patchAlert from 'api/alerts/patch';
 import { State } from 'hooks/useFetch';
+import { useNotifications } from 'hooks/useNotifications';
 import React, { useState } from 'react';
 import { GettableAlert } from 'types/api/alerts/get';
 import { PayloadProps as PatchPayloadProps } from 'types/api/alerts/patch';
@@ -19,6 +19,8 @@ function ToggleAlertState({
 		success: false,
 		payload: undefined,
 	});
+
+	const { notifications } = useNotifications();
 
 	const defaultErrorMessage = 'Something went wrong';
 
@@ -58,7 +60,7 @@ function ToggleAlertState({
 					loading: false,
 					payload: response.payload,
 				}));
-				notification.success({
+				notifications.success({
 					message: 'Success',
 				});
 			} else {
@@ -69,7 +71,7 @@ function ToggleAlertState({
 					errorMessage: response.error || defaultErrorMessage,
 				}));
 
-				notification.error({
+				notifications.error({
 					message: response.error || defaultErrorMessage,
 				});
 			}
@@ -81,7 +83,7 @@ function ToggleAlertState({
 				errorMessage: defaultErrorMessage,
 			}));
 
-			notification.error({
+			notifications.error({
 				message: defaultErrorMessage,
 			});
 		}

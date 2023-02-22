@@ -169,7 +169,7 @@ services:
     <<: *clickhouse-depends
 
   otel-collector:
-    image: signoz/signoz-otel-collector:0.66.1
+    image: signoz/signoz-otel-collector:0.66.4
     command: ["--config=/etc/otel-collector-config.yaml"]
     user: root # required for reading docker container logs
     volumes:
@@ -178,6 +178,7 @@ services:
     environment:
       - OTEL_RESOURCE_ATTRIBUTES=host.name=signoz-host,os.type=linux
       - DOCKER_MULTI_NODE_CLUSTER=false
+      - LOW_CARDINAL_EXCEPTION_GROUPING=false
     ports:
       # - "1777:1777"     # pprof extension
       - "4317:4317"     # OTLP gRPC receiver
@@ -194,7 +195,7 @@ services:
     <<: *clickhouse-depends
 
   otel-collector-metrics:
-    image: signoz/signoz-otel-collector:0.66.1
+    image: signoz/signoz-otel-collector:0.66.4
     command: ["--config=/etc/otel-collector-metrics-config.yaml"]
     volumes:
       - ./otel-collector-metrics-config.yaml:/etc/otel-collector-metrics-config.yaml

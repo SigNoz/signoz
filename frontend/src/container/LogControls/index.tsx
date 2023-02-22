@@ -4,21 +4,25 @@ import {
 	RightOutlined,
 } from '@ant-design/icons';
 import { Button, Divider, Select } from 'antd';
+import { getGlobalTime } from 'container/LogsSearchFilter/utils';
+import { getMinMax } from 'container/TopNav/AutoRefresh/config';
+import { defaultSelectStyle } from 'pages/Logs/config';
 import React, { memo, useMemo } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
+import { Dispatch } from 'redux';
 import { AppState } from 'store/reducers';
+import AppActions from 'types/actions';
 import {
 	GET_NEXT_LOG_LINES,
 	GET_PREVIOUS_LOG_LINES,
 	RESET_ID_START_AND_END,
 	SET_LOG_LINES_PER_PAGE,
 } from 'types/actions/logs';
+import { GlobalReducer } from 'types/reducer/globalTime';
 import { ILogsReducer } from 'types/reducer/logs';
 
 import { ITEMS_PER_PAGE_OPTIONS } from './config';
 import { Container } from './styles';
-
-const { Option } = Select;
 
 function LogControls(): JSX.Element | null {
 	const {
@@ -28,19 +32,39 @@ function LogControls(): JSX.Element | null {
 		isLoadingAggregate,
 		logs,
 	} = useSelector<AppState, ILogsReducer>((state) => state.logs);
-	const dispatch = useDispatch();
+	const globalTime = useSelector<AppState, GlobalReducer>(
+		(state) => state.globalTime,
+	);
+
+	const dispatch = useDispatch<Dispatch<AppActions>>();
 
 	const handleLogLinesPerPageChange = (e: number): void => {
 		dispatch({
 			type: SET_LOG_LINES_PER_PAGE,
-			payload: e,
+			payload: {
+				logsLinesPerPage: e,
+			},
 		});
 	};
 
 	const handleGoToLatest = (): void => {
-		dispatch({
-			type: RESET_ID_START_AND_END,
+		const { maxTime, minTime } = getMinMax(
+			globalTime.selectedTime,
+			globalTime.minTime,
+			globalTime.maxTime,
+		);
+
+		const updatedGlobalTime = getGlobalTime(globalTime.selectedTime, {
+			maxTime,
+			minTime,
 		});
+
+		if (updatedGlobalTime) {
+			dispatch({
+				type: RESET_ID_START_AND_END,
+				payload: updatedGlobalTime,
+			});
+		}
 	};
 
 	const handleNavigatePrevious = (): void => {
@@ -99,12 +123,16 @@ function LogControls(): JSX.Element | null {
 				Next <RightOutlined />
 			</Button>
 			<Select
+				style={defaultSelectStyle}
 				loading={isLoading}
 				value={logLinesPerPage}
 				onChange={handleLogLinesPerPageChange}
 			>
 				{ITEMS_PER_PAGE_OPTIONS.map((count) => (
-					<Option key={count} value={count}>{`${count} / page`}</Option>
+					<Select.Option
+						key={count}
+						value={count}
+					>{`${count} / page`}</Select.Option>
 				))}
 			</Select>
 		</Container>

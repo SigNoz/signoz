@@ -1,6 +1,6 @@
 import { AutoComplete, Input, Space } from 'antd';
 import getTagFilters from 'api/trace/getTagFilter';
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import { useQuery } from 'react-query';
 import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
@@ -10,6 +10,7 @@ import { TraceReducer } from 'types/reducer/trace';
 import { functions } from './config';
 import { SelectComponent } from './styles';
 import {
+	filterGroupBy,
 	getSelectedValue,
 	initOptions,
 	onClickSelectedFunctionHandler,
@@ -24,6 +25,9 @@ function TraceGraphFilter(): JSX.Element {
 		AppState,
 		TraceReducer
 	>((state) => state.traces);
+	const [selectedGroupByLocal, setSelectedGroupByLocal] = useState<string>(
+		selectedGroupBy,
+	);
 	const globalTime = useSelector<AppState, GlobalReducer>(
 		(state) => state.globalTime,
 	);
@@ -36,6 +40,7 @@ function TraceGraphFilter(): JSX.Element {
 			globalTime.maxTime,
 			traces.selectedFilter,
 			traces.isFilterExclude,
+			traces.spanKind,
 		],
 		{
 			queryFn: () =>
@@ -44,8 +49,10 @@ function TraceGraphFilter(): JSX.Element {
 					end: globalTime.maxTime,
 					other: Object.fromEntries(traces.selectedFilter),
 					isFilterExclude: traces.isFilterExclude,
+					spanKind: traces.spanKind,
 				}),
 			cacheTime: 120000,
+			enabled: traces.filter.size > 0,
 		},
 	);
 
@@ -75,8 +82,12 @@ function TraceGraphFilter(): JSX.Element {
 				id="selectedGroupBy"
 				data-testid="selectedGroupBy"
 				options={options}
-				value={selectedGroupByValue(selectedGroupBy, options)}
-				onChange={onClickSelectedGroupByHandler(options)}
+				value={selectedGroupByValue(selectedGroupByLocal, options)}
+				onChange={(e): void => setSelectedGroupByLocal(e.toString())}
+				onSelect={onClickSelectedGroupByHandler(options)}
+				filterOption={(inputValue, option): boolean =>
+					filterGroupBy(inputValue, option)
+				}
 			>
 				<Input disabled={isLoading} placeholder="Please select" />
 			</AutoComplete>
