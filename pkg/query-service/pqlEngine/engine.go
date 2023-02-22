@@ -60,6 +60,11 @@ func NewPqlEngine(config *pconfig.Config) (*PqlEngine, error) {
 		Reg:        nil,
 		MaxSamples: 50000000,
 		Timeout:    time.Duration(2 * time.Minute),
+		ActiveQueryTracker: pql.NewActiveQueryTracker(
+			"",
+			20,
+			logger,
+		),
 	}
 
 	e := pql.NewEngine(opts)

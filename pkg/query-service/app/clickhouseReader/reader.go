@@ -211,6 +211,11 @@ func (r *ClickHouseReader) Start(readerReady chan bool) {
 		Reg:        nil,
 		MaxSamples: 50000000,
 		Timeout:    time.Duration(2 * time.Minute),
+		ActiveQueryTracker: promql.NewActiveQueryTracker(
+			"",
+			20,
+			log.With(logger, "component", "activeQueryTracker"),
+		),
 	}
 
 	queryEngine := promql.NewEngine(opts)
