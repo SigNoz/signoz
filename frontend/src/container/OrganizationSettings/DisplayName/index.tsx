@@ -1,5 +1,6 @@
-import { Button, Form, Input, notification } from 'antd';
+import { Button, Form, Input } from 'antd';
 import editOrg from 'api/user/editOrg';
+import { useNotifications } from 'hooks/useNotifications';
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useDispatch, useSelector } from 'react-redux';
@@ -21,7 +22,7 @@ function DisplayName({
 	const { name } = (org || [])[index];
 	const [isLoading, setIsLoading] = useState<boolean>(false);
 	const dispatch = useDispatch<Dispatch<AppActions>>();
-	const [notifications, NotificationElement] = notification.useNotification();
+	const { notifications } = useNotifications();
 
 	const onSubmit = async ({ name: orgName }: OnSubmitProps): Promise<void> => {
 		try {
@@ -76,7 +77,6 @@ function DisplayName({
 			onFinish={onSubmit}
 			autoComplete="off"
 		>
-			{NotificationElement}
 			<Form.Item name="name" label="Display name" rules={[{ required: true }]}>
 				<Input size="large" placeholder={t('signoz')} disabled={isLoading} />
 			</Form.Item>

@@ -1,6 +1,7 @@
-import { notification, Select } from 'antd';
+import { Select } from 'antd';
 import getChannels from 'api/channels/getAll';
 import useFetch from 'hooks/useFetch';
+import { useNotifications } from 'hooks/useNotifications';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -20,7 +21,7 @@ function ChannelSelect({
 
 	const { loading, payload, error, errorMessage } = useFetch(getChannels);
 
-	const [notifications, NotificationElement] = notification.useNotification();
+	const { notifications } = useNotifications();
 
 	const handleChange = (value: string[]): void => {
 		onSelectChannels(value);
@@ -50,22 +51,19 @@ function ChannelSelect({
 		return children;
 	};
 	return (
-		<>
-			{NotificationElement}
-			<StyledSelect
-				status={error ? 'error' : ''}
-				mode="multiple"
-				style={{ width: '100%' }}
-				placeholder={t('placeholder_channel_select')}
-				value={currentValue}
-				onChange={(value): void => {
-					handleChange(value as string[]);
-				}}
-				optionLabelProp="label"
-			>
-				{renderOptions()}
-			</StyledSelect>
-		</>
+		<StyledSelect
+			status={error ? 'error' : ''}
+			mode="multiple"
+			style={{ width: '100%' }}
+			placeholder={t('placeholder_channel_select')}
+			value={currentValue}
+			onChange={(value): void => {
+				handleChange(value as string[]);
+			}}
+			optionLabelProp="label"
+		>
+			{renderOptions()}
+		</StyledSelect>
 	);
 }
 

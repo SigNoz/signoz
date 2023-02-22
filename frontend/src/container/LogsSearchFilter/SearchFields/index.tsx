@@ -1,4 +1,4 @@
-import { notification } from 'antd';
+import { useNotifications } from 'hooks/useNotifications';
 import { flatten } from 'lodash-es';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useSelector } from 'react-redux';
@@ -36,7 +36,7 @@ function SearchFields({
 
 	const keyPrefixRef = useRef(hashCode(JSON.stringify(fieldsQuery)));
 
-	const [notifications, NotificationElement] = notification.useNotification();
+	const { notifications } = useNotifications();
 
 	useEffect(() => {
 		const updatedFieldsQuery = createParsedQueryStructure([
@@ -102,7 +102,6 @@ function SearchFields({
 
 	return (
 		<>
-			{NotificationElement}
 			<QueryBuilder
 				key={keyPrefixRef.current}
 				keyPrefix={keyPrefixRef.current}

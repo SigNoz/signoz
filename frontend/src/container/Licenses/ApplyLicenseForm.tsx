@@ -1,7 +1,7 @@
-import { Button, Input, notification } from 'antd';
-import FormItem from 'antd/lib/form/FormItem';
+import { Button, Form, Input } from 'antd';
 import getFeaturesFlags from 'api/features/getFeatureFlags';
 import apply from 'api/licenses/apply';
+import { useNotifications } from 'hooks/useNotifications';
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { QueryObserverResult, RefetchOptions, useQuery } from 'react-query';
@@ -12,6 +12,8 @@ import { ErrorResponse, SuccessResponse } from 'types/api';
 import { PayloadProps } from 'types/api/licenses/getAll';
 
 import { ApplyForm, ApplyFormContainer, LicenseInput } from './styles';
+
+const FormItem = Form.Item;
 
 function ApplyLicenseForm({
 	licenseRefetch,
@@ -26,7 +28,7 @@ function ApplyLicenseForm({
 		enabled: false,
 	});
 
-	const [notifications, NotificationElement] = notification.useNotification();
+	const { notifications } = useNotifications();
 
 	const onFinish = async (values: unknown | { key: string }): Promise<void> => {
 		const params = values as { key: string };
@@ -76,7 +78,6 @@ function ApplyLicenseForm({
 
 	return (
 		<ApplyFormContainer>
-			{NotificationElement}
 			<ApplyForm layout="inline" onFinish={onFinish}>
 				<LicenseInput labelAlign="left" name="key">
 					<Input

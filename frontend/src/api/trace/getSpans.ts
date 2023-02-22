@@ -10,7 +10,7 @@ const getSpans = async (
 ): Promise<SuccessResponse<PayloadProps> | ErrorResponse> => {
 	try {
 		const updatedSelectedTags = props.selectedTags.map((e) => ({
-			Key: e.Key[0],
+			Key: e.Key,
 			Operator: e.Operator,
 			StringValues: e.StringValues,
 			NumberValues: e.NumberValues,
@@ -37,13 +37,14 @@ const getSpans = async (
 				start: String(props.start),
 				end: String(props.end),
 				function: props.function,
-				groupBy: props.groupBy,
+				groupBy: props.groupBy === 'none' ? '' : props.groupBy,
 				step: props.step,
 				tags: updatedSelectedTags,
 				...nonDuration,
 				maxDuration: String((duration.duration || [])[0] || ''),
 				minDuration: String((duration.duration || [])[1] || ''),
 				exclude,
+				spanKind: props.spanKind,
 			},
 		);
 

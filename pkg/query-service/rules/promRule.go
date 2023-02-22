@@ -108,6 +108,14 @@ func (r *PromRule) Condition() *RuleCondition {
 	return r.ruleCondition
 }
 
+func (r *PromRule) targetVal() float64 {
+	if r.ruleCondition == nil || r.ruleCondition.Target == nil {
+		return 0
+	}
+
+	return *r.ruleCondition.Target
+}
+
 func (r *PromRule) Type() RuleType {
 	return RuleTypeProm
 }
@@ -327,10 +335,10 @@ func (r *PromRule) Eval(ctx context.Context, ts time.Time, queriers *Queriers) (
 			l[lbl.Name] = lbl.Value
 		}
 
-		tmplData := AlertTemplateData(l, smpl.V)
+		tmplData := AlertTemplateData(l, smpl.V, r.targetVal())
 		// Inject some convenience variables that are easier to remember for users
 		// who are not used to Go's templating system.
-		defs := "{{$labels := .Labels}}{{$value := .Value}}"
+		defs := "{{$labels := .Labels}}{{$value := .Value}}{{$threshold := .Threshold}}"
 
 		expand := func(text string) string {
 

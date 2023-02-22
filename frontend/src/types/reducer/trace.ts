@@ -33,6 +33,7 @@ export interface TraceReducer {
 	};
 	yAxisUnit: string | undefined;
 	filterDisplayValue: Map<TraceFilterEnum, number>;
+	spanKind?: string;
 }
 
 interface SpansAggregateData {
@@ -47,20 +48,13 @@ interface SpansAggregateData {
 }
 
 export interface Tags {
-	Key: string[];
-	Operator: OperatorValues;
-	StringValues: string[];
-	NumberValues: number[];
-	BoolValues: boolean[];
-}
-
-export interface TagsAPI {
 	Key: string;
 	Operator: OperatorValues;
 	StringValues: string[];
 	NumberValues: number[];
 	BoolValues: boolean[];
 }
+
 export type OperatorValues =
 	| 'NotIn'
 	| 'In'

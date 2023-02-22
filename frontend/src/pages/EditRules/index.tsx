@@ -1,8 +1,8 @@
-import { notification } from 'antd';
 import get from 'api/alerts/get';
 import Spinner from 'components/Spinner';
 import ROUTES from 'constants/routes';
 import EditRulesContainer from 'container/EditRules';
+import { useNotifications } from 'hooks/useNotifications';
 import history from 'lib/history';
 import React, { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -26,7 +26,7 @@ function EditRules(): JSX.Element {
 		enabled: isValidRuleId,
 	});
 
-	const [notifications, NotificationElement] = notification.useNotification();
+	const { notifications } = useNotifications();
 
 	useEffect(() => {
 		if (!isValidRuleId) {
@@ -42,12 +42,7 @@ function EditRules(): JSX.Element {
 		ruleId == null ||
 		(data?.payload?.data === undefined && !isLoading)
 	) {
-		return (
-			<div>
-				{NotificationElement}
-				{data?.error || t('something_went_wrong')}
-			</div>
-		);
+		return <div>{data?.error || t('something_went_wrong')}</div>;
 	}
 
 	if (isLoading || !data?.payload) {
@@ -55,13 +50,10 @@ function EditRules(): JSX.Element {
 	}
 
 	return (
-		<>
-			{NotificationElement}
-			<EditRulesContainer
-				ruleId={parseInt(ruleId, 10)}
-				initialValue={data.payload.data}
-			/>
-		</>
+		<EditRulesContainer
+			ruleId={parseInt(ruleId, 10)}
+			initialValue={data.payload.data}
+		/>
 	);
 }
 

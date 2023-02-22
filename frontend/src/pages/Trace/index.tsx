@@ -1,4 +1,4 @@
-import { Card, notification } from 'antd';
+import { Card } from 'antd';
 import { NotificationInstance } from 'antd/es/notification/interface';
 import ROUTES from 'constants/routes';
 import Filters from 'container/Trace/Filters';
@@ -6,6 +6,7 @@ import TraceGraph from 'container/Trace/Graph';
 import Search from 'container/Trace/Search';
 import TraceGraphFilter from 'container/Trace/TraceGraphFilter';
 import TraceTable from 'container/Trace/TraceTable';
+import { useNotifications } from 'hooks/useNotifications';
 import getStep from 'lib/getStep';
 import history from 'lib/history';
 import React, { useCallback, useEffect, useState } from 'react';
@@ -51,9 +52,10 @@ function Trace({
 		selectedFunction,
 		selectedGroupBy,
 		isFilterExclude,
+		spanKind,
 	} = useSelector<AppState, TraceReducer>((state) => state.traces);
 
-	const [notifications, NotificationElement] = notification.useNotification();
+	const { notifications } = useNotifications();
 
 	useEffect(() => {
 		getInitialFilter(minTime, maxTime, notifications);
@@ -70,6 +72,7 @@ function Trace({
 				selectedTags,
 				order: spansAggregate.order,
 				orderParam: spansAggregate.orderParam,
+				spanKind,
 			},
 			notifications,
 		);
@@ -84,6 +87,7 @@ function Trace({
 		spansAggregate.order,
 		spansAggregate.orderParam,
 		notifications,
+		spanKind,
 	]);
 
 	useEffect(() => {
@@ -97,6 +101,7 @@ function Trace({
 				start: minTime,
 				step: getStep({ start: minTime, end: maxTime, inputFormat: 'ns' }),
 				isFilterExclude,
+				spanKind,
 			},
 			notifications,
 		);
@@ -110,6 +115,7 @@ function Trace({
 		getSpans,
 		isFilterExclude,
 		notifications,
+		spanKind,
 	]);
 
 	useEffect(
@@ -139,7 +145,6 @@ function Trace({
 
 	return (
 		<>
-			{NotificationElement}
 			<Search />
 			<Container>
 				<div>

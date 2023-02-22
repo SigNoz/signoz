@@ -1,6 +1,7 @@
-import { Input, notification } from 'antd';
+import { Input } from 'antd';
 import getFilters from 'api/trace/getFilters';
 import { AxiosError } from 'axios';
+import { useNotifications } from 'hooks/useNotifications';
 import React, { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { Dispatch } from 'redux';
@@ -21,6 +22,7 @@ function TraceID(): JSX.Element {
 		selectedTags,
 		userSelectedFilter,
 		isFilterExclude,
+		spanKind,
 	} = useSelector<AppState, TraceReducer>((state) => state.traces);
 	const dispatch = useDispatch<Dispatch<AppActions>>();
 	const globalTime = useSelector<AppState, GlobalReducer>(
@@ -28,7 +30,7 @@ function TraceID(): JSX.Element {
 	);
 	const [isLoading, setIsLoading] = useState(false);
 	const [userEnteredValue, setUserEnteredValue] = useState<string>('');
-	const [notifications, NotificationElement] = notification.useNotification();
+	const { notifications } = useNotifications();
 	useEffect(() => {
 		setUserEnteredValue(selectedFilter.get('traceID')?.[0] || '');
 	}, [selectedFilter]);
@@ -51,6 +53,7 @@ function TraceID(): JSX.Element {
 				start: String(globalTime.minTime),
 				getFilters: filterToFetchData,
 				isFilterExclude,
+				spanKind,
 			});
 
 			if (response.statusCode === 200) {
@@ -76,6 +79,7 @@ function TraceID(): JSX.Element {
 						order: spansAggregate.order,
 						pageSize: spansAggregate.pageSize,
 						orderParam: spansAggregate.orderParam,
+						spanKind,
 					},
 				});
 
@@ -109,7 +113,6 @@ function TraceID(): JSX.Element {
 	};
 	return (
 		<div>
-			{NotificationElement}
 			<Search
 				placeholder="Filter by Trace ID"
 				onSearch={onSearch}

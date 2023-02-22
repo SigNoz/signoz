@@ -1,12 +1,13 @@
 /* eslint-disable react/display-name */
 import { PlusOutlined } from '@ant-design/icons';
-import { notification, Typography } from 'antd';
+import { Typography } from 'antd';
 import { ColumnsType } from 'antd/lib/table';
 import { ResizeTable } from 'components/ResizeTable';
 import TextToolTip from 'components/TextToolTip';
 import ROUTES from 'constants/routes';
 import useComponentPermission from 'hooks/useComponentPermission';
 import useInterval from 'hooks/useInterval';
+import { useNotifications } from 'hooks/useNotifications';
 import history from 'lib/history';
 import React, { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -31,7 +32,7 @@ function ListAlert({ allAlertRules, refetch }: ListAlertProps): JSX.Element {
 		role,
 	);
 
-	const [notificationsApi, NotificationElement] = notification.useNotification();
+	const { notifications: notificationsApi } = useNotifications();
 
 	useInterval(() => {
 		(async (): Promise<void> => {
@@ -50,8 +51,6 @@ function ListAlert({ allAlertRules, refetch }: ListAlertProps): JSX.Element {
 	const onClickNewAlertHandler = useCallback(() => {
 		history.push(ROUTES.ALERTS_NEW);
 	}, []);
-
-	const [notifications, Element] = notification.useNotification();
 
 	const onEditHandler = (id: string): void => {
 		history.push(`${ROUTES.EDIT_ALERTS}?ruleId=${id}`);
@@ -144,7 +143,7 @@ function ListAlert({ allAlertRules, refetch }: ListAlertProps): JSX.Element {
 						Edit
 					</ColumnButton>
 
-					<DeleteAlert notifications={notifications} setData={setData} id={id} />
+					<DeleteAlert notifications={notificationsApi} setData={setData} id={id} />
 				</>
 			),
 		});
@@ -152,9 +151,6 @@ function ListAlert({ allAlertRules, refetch }: ListAlertProps): JSX.Element {
 
 	return (
 		<>
-			{NotificationElement}
-			{Element}
-
 			<ButtonContainer>
 				<TextToolTip
 					{...{
