@@ -31,7 +31,7 @@ const (
 	defaultLogsDB                  string        = "signoz_logs"
 	defaultLogsTable               string        = "distributed_logs"
 	defaultLogsLocalTable          string        = "logs"
-	defaultLogAttributeKeysTable   string        = "distributed_logs_atrribute_keys"
+	defaultLogAttributeKeysTable   string        = "distributed_logs_attribute_keys"
 	defaultLogResourceKeysTable    string        = "distributed_logs_resource_keys"
 	defaultLiveTailRefreshSeconds  int           = 10
 	defaultWriteBatchDelay         time.Duration = 5 * time.Second
