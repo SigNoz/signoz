@@ -22,6 +22,7 @@ function TraceID(): JSX.Element {
 		selectedTags,
 		userSelectedFilter,
 		isFilterExclude,
+		spanKind,
 	} = useSelector<AppState, TraceReducer>((state) => state.traces);
 	const dispatch = useDispatch<Dispatch<AppActions>>();
 	const globalTime = useSelector<AppState, GlobalReducer>(
@@ -52,6 +53,7 @@ function TraceID(): JSX.Element {
 				start: String(globalTime.minTime),
 				getFilters: filterToFetchData,
 				isFilterExclude,
+				spanKind,
 			});
 
 			if (response.statusCode === 200) {
@@ -77,6 +79,7 @@ function TraceID(): JSX.Element {
 						order: spansAggregate.order,
 						pageSize: spansAggregate.pageSize,
 						orderParam: spansAggregate.orderParam,
+						spanKind,
 					},
 				});
 

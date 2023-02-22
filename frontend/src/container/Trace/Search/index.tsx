@@ -67,6 +67,7 @@ function Search({
 				order: traces.spansAggregate.order,
 				pageSize: traces.spansAggregate.pageSize,
 				orderParam: traces.spansAggregate.orderParam,
+				spanKind: traces.spanKind,
 			},
 		});
 
