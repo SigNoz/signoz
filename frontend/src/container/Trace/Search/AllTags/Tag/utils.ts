@@ -59,11 +59,19 @@ export function onTagValueChange(
 			setLocalValue(values);
 		} else if (typeof values[0] === 'string') {
 			if (values[0] === 'true' || values[0] === 'false') {
-				setLocalValue([values[0] === 'true']);
+				const boolValues: boolean[] = [];
+				values.forEach((value) => {
+					boolValues.push(Boolean(value));
+				});
+				setLocalValue(boolValues);
 			} else if (values[0] !== ' ' && !Number.isNaN(Number(values[0]))) {
-				setLocalValue([Number(values[0])]);
+				const numberValues: number[] = [];
+				values.forEach((value) => {
+					numberValues.push(Number(value));
+				});
+				setLocalValue(numberValues);
 			} else {
-				setLocalValue([values[0]]);
+				setLocalValue(values);
 			}
 		}
 	}

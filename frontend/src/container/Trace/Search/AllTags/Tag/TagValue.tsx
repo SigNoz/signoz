@@ -85,20 +85,39 @@ function TagValue(props: TagValueProps): JSX.Element {
 		setLocalTagValue([]);
 	}, []);
 
+	const onDeselectValue = useCallback(
+		(value: unknown) => {
+			const values = localTagValue;
+			for (let i = 0; i < values.length; i += 1) {
+				if (values[i] === value) {
+					values.splice(i, 1);
+				}
+			}
+			setLocalTagValue(values);
+		},
+		[localTagValue],
+	);
+
 	const onSelectedHandler = useCallback(
 		(value: unknown) => {
 			if (
 				typeof value === 'number' ||
 				(typeof value === 'string' && !Number.isNaN(Number(value)) && value !== ' ')
 			) {
-				setLocalTagValue([value]);
+				const values = localTagValue;
+				values.push(value);
+				setLocalTagValue(values);
+				const numberValues: number[] = [];
+				values.forEach((element) => {
+					numberValues.push(Number(element));
+				});
 				setLocalSelectedTags((tags) => [
 					...tags.slice(0, index),
 					{
 						Key: selectedKey,
 						Operator: selectedOperator,
 						StringValues: [],
-						NumberValues: [Number(value)],
+						NumberValues: numberValues,
 						BoolValues: [],
 					},
 					...tags.slice(index + 1, tags.length),
@@ -108,7 +127,13 @@ function TagValue(props: TagValueProps): JSX.Element {
 				value === 'true' ||
 				value === 'false'
 			) {
-				setLocalTagValue([value]);
+				const values = localTagValue;
+				values.push(value);
+				setLocalTagValue(values);
+				let booleanValues: boolean[];
+				values.forEach((element) => {
+					booleanValues.push(Boolean(element));
+				});
 				setLocalSelectedTags((tags) => [
 					...tags.slice(0, index),
 					{
@@ -116,18 +141,24 @@ function TagValue(props: TagValueProps): JSX.Element {
 						Operator: selectedOperator,
 						StringValues: [],
 						NumberValues: [],
-						BoolValues: [value === 'true' || value === true],
+						BoolValues: booleanValues,
 					},
 					...tags.slice(index + 1, tags.length),
 				]);
 			} else if (typeof value === 'string') {
-				setLocalTagValue([value]);
+				const values = localTagValue;
+				values.push(value);
+				setLocalTagValue(values);
+				let stringValues: string[];
+				values.forEach((element) => {
+					stringValues.push(String(element));
+				});
 				setLocalSelectedTags((tags) => [
 					...tags.slice(0, index),
 					{
 						Key: selectedKey,
 						Operator: selectedOperator,
-						StringValues: [value],
+						StringValues: stringValues,
 						NumberValues: [],
 						BoolValues: [],
 					},
@@ -135,12 +166,12 @@ function TagValue(props: TagValueProps): JSX.Element {
 				]);
 			}
 		},
-		[index, selectedKey, selectedOperator, setLocalSelectedTags],
+		[index, localTagValue, selectedKey, selectedOperator, setLocalSelectedTags],
 	);
 
 	const onChangeHandler = useCallback(
 		(value: unknown) => onTagValueChange(value, setLocalTagValue),
-		[],
+		[setLocalTagValue],
 	);
 
 	const getFilterOptions = useCallback(
@@ -160,7 +191,7 @@ function TagValue(props: TagValueProps): JSX.Element {
 			mode="tags"
 			allowClear
 			onClear={onSetLocalValue}
-			onDeselect={onSetLocalValue}
+			onDeselect={(value: unknown): void => onDeselectValue(value)}
 			showSearch
 			filterOption={getFilterOptions}
 			disabled={isLoading || tagValueDisabled}
