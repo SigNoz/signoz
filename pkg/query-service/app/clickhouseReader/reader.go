@@ -1994,7 +1994,7 @@ func (r *ClickHouseReader) GetDependencyGraph(ctx context.Context, queryParams *
 			result[5] AS p99,
 			sum(total_count) as callCount,
 			sum(total_count)/ @duration AS callRate,
-			sum(error_count)/sum(total_count) as errorRate
+			sum(error_count)/sum(total_count) * 100 as errorRate
 		FROM %s.%s
 		WHERE toUInt64(toDateTime(timestamp)) >= @start AND toUInt64(toDateTime(timestamp)) <= @end
 		GROUP BY
