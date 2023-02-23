@@ -88,6 +88,7 @@ function TagValue(props: TagValueProps): JSX.Element {
 			setLocalTagValue(updatedValues);
 			const { boolValues, numberValues, stringValues } = separateTagValues(
 				updatedValues,
+				selectedKey,
 			);
 
 			setLocalSelectedTags((tags) => [
@@ -101,7 +102,7 @@ function TagValue(props: TagValueProps): JSX.Element {
 				...tags.slice(index + 1),
 			]);
 		},
-		[index, setLocalSelectedTags],
+		[index, setLocalSelectedTags, selectedKey],
 	);
 
 	const getFilterOptions = useCallback(

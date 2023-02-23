@@ -70,20 +70,43 @@ export function onTagValueChange(values: unknown): TagValueTypes[] {
 
 export function separateTagValues(
 	values: TagValueTypes[],
+	selectedKey: string,
 ): { boolValues: boolean[]; numberValues: number[]; stringValues: string[] } {
-	const boolValues = values.filter(
-		(value) => typeof value === 'boolean',
-	) as boolean[];
-	const numberValues = values.filter(
-		(value) => typeof value === 'number',
-	) as number[];
+	if (selectedKey.includes('.(bool)')) {
+		const boolValues = values.filter(
+			(value) => typeof value === 'boolean',
+		) as boolean[];
+
+		return {
+			boolValues,
+			numberValues: [],
+			stringValues: [],
+		};
+	}
+
+	if (selectedKey.includes('.(number)')) {
+		const numberValues = values.filter(
+			(value) => typeof value === 'number',
+		) as number[];
+
+		return {
+			boolValues: [],
+			numberValues,
+			stringValues: [],
+		};
+	}
+
 	const stringValues = values.filter(
-		(value) => typeof value === 'string' && value !== 'true' && value !== 'false',
+		(value) =>
+			typeof value === 'string' &&
+			value !== 'true' &&
+			value !== 'false' &&
+			Number.isNaN(Number(value)),
 	) as string[];
 
 	return {
-		boolValues,
-		numberValues,
+		boolValues: [],
+		numberValues: [],
 		stringValues,
 	};
 }
