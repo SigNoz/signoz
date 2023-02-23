@@ -33,6 +33,8 @@ describe('PipelinePage container test', () => {
 						<PipelineListsView
 							isActionType="add-pipeline"
 							setActionType={jest.fn()}
+							isActionMode="viewing-mode"
+							setActionMode={jest.fn()}
 						/>
 					</I18nextProvider>
 				</Provider>

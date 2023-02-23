@@ -77,7 +77,7 @@ function PipelineExpandView({
 	}, [handleProcessorDeleteAction, handleProcessorEditAction, isActionMode]);
 
 	const updateProcessorRowData = useCallback(
-		(updatedRow: any) => (): void => {
+		(updatedRow: ProcessorColumn[]) => (): void => {
 			setIsVisibleSaveButton(ActionMode.Editing);
 			setProcessorDataSource(updatedRow);
 		},
@@ -119,10 +119,12 @@ function PipelineExpandView({
 
 	const footer = useCallback((): JSX.Element | undefined => {
 		if (isActionMode === ActionMode.Editing) {
-			<FooterButton type="link" onClick={onClickHandler}>
-				<PlusCircleOutlined />
-				<ModalFooterTitle>{t('add_new_processor')}</ModalFooterTitle>
-			</FooterButton>;
+			return (
+				<FooterButton type="link" onClick={onClickHandler}>
+					<PlusCircleOutlined />
+					<ModalFooterTitle>{t('add_new_processor')}</ModalFooterTitle>
+				</FooterButton>
+			);
 		}
 		return undefined;
 	}, [onClickHandler, t, isActionMode]);

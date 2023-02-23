@@ -14,7 +14,11 @@ describe('PipelinePage container test', () => {
 			<MemoryRouter>
 				<Provider store={store}>
 					<I18nextProvider i18n={i18n}>
-						<CreatePipelineButton setActionType={jest.fn()} />
+						<CreatePipelineButton
+							setActionType={jest.fn()}
+							isActionMode="viewing-mode"
+							setActionMode={jest.fn()}
+						/>
 					</I18nextProvider>
 				</Provider>
 			</MemoryRouter>,

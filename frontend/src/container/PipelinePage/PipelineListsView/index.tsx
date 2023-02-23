@@ -216,9 +216,11 @@ function PipelineListsView({
 
 	const footer = useCallback((): JSX.Element | undefined => {
 		if (isActionMode === ActionMode.Editing) {
-			<FooterButton type="link" onClick={onClickHandler} icon={<PlusOutlined />}>
-				{t('add_new_pipeline')}
-			</FooterButton>;
+			return (
+				<FooterButton type="link" onClick={onClickHandler} icon={<PlusOutlined />}>
+					{t('add_new_pipeline')}
+				</FooterButton>
+			);
 		}
 		return undefined;
 	}, [isActionMode, onClickHandler, t]);

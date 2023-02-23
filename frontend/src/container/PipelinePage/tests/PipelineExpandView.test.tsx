@@ -40,6 +40,9 @@ describe('PipelinePage', () => {
 							setProcessorDataSource={setProcessorDataSource}
 							setActionType={setActionType}
 							handleProcessorEditAction={handleProcessorEditAction}
+							isActionMode="viewing-mode"
+							onDeleteClickHandler={jest.fn()}
+							setIsVisibleSaveButton={jest.fn()}
 						/>
 					</I18nextProvider>
 				</Provider>

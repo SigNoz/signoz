@@ -46,6 +46,7 @@ describe('PipelinePage container test', () => {
 							selectedProcessorData={selectedProcessorData}
 							processorDataSource={[]}
 							setProcessorDataSource={setProcessorDataSource}
+							setIsVisibleSaveButton={jest.fn()}
 						/>
 					</I18nextProvider>
 				</Provider>

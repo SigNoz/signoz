@@ -41,6 +41,7 @@ describe('PipelinePage container test', () => {
 							selectedRecord={selectedRecord}
 							pipelineDataSource={pipelineData}
 							setPipelineDataSource={setPipelineDataSource}
+							setIsVisibleSaveButton={jest.fn()}
 						/>
 					</I18nextProvider>
 				</Provider>
