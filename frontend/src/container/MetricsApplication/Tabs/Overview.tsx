@@ -181,11 +181,11 @@ function Application({ getWidgetQueryBuilder }: DashboardProps): JSX.Element {
 						type="default"
 						size="small"
 						id="Service_button"
-						onClick={onViewTracePopupClick(
+						onClick={onViewTracePopupClick({
 							servicename,
 							selectedTraceTags,
-							selectedTimeStamp,
-						)}
+							timestamp: selectedTimeStamp,
+						})}
 					>
 						View Traces
 					</Button>
@@ -210,11 +210,11 @@ function Application({ getWidgetQueryBuilder }: DashboardProps): JSX.Element {
 						type="default"
 						size="small"
 						id="Rate_button"
-						onClick={onViewTracePopupClick(
+						onClick={onViewTracePopupClick({
 							servicename,
 							selectedTraceTags,
-							selectedTimeStamp,
-						)}
+							timestamp: selectedTimeStamp,
+						})}
 					>
 						View Traces
 					</Button>

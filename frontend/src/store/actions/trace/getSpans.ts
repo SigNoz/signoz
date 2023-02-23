@@ -63,6 +63,7 @@ export const GetSpans = (
 				start,
 				step: props.step,
 				isFilterExclude: props.isFilterExclude,
+				spanKind: props.spanKind,
 			});
 
 			if (response.statusCode === 200) {
