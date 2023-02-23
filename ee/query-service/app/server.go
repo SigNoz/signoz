@@ -28,6 +28,8 @@ import (
 
 	"go.signoz.io/signoz/pkg/query-service/agentConf"
 	"go.signoz.io/signoz/pkg/query-service/app/dashboards"
+	"go.signoz.io/signoz/pkg/query-service/app/opamp"
+	opAmpModel "go.signoz.io/signoz/pkg/query-service/app/opamp/model"
 	baseconst "go.signoz.io/signoz/pkg/query-service/constants"
 	"go.signoz.io/signoz/pkg/query-service/healthcheck"
 	basealm "go.signoz.io/signoz/pkg/query-service/integrations/alertManager"
@@ -128,6 +130,12 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 
 	// ingestion rules manager
 	ingestionController, err := ingestionRules.NewIngestionController(localDB, AppDbEngine)
+	if err != nil {
+		return nil, err
+	}
+
+	// initiate opamp
+	_, err = opAmpModel.InitDB(baseconst.RELATIONAL_DATASOURCE_PATH)
 	if err != nil {
 		return nil, err
 	}
@@ -463,7 +471,7 @@ func (s *Server) Start() error {
 	if port, err := utils.GetPort(s.privateConn.Addr()); err == nil {
 		privatePort = port
 	}
-	fmt.Println("starting private http")
+
 	go func() {
 		zap.S().Info("Starting Private HTTP server", zap.Int("port", privatePort), zap.String("addr", s.serverOptions.PrivateHostPort))
 
@@ -477,6 +485,15 @@ func (s *Server) Start() error {
 
 		s.unavailableChannel <- healthcheck.Unavailable
 
+	}()
+
+	go func() {
+		zap.S().Info("Starting OpAmp Websocket server", zap.String("addr", baseconst.OpAmpWsEndpoint))
+		err := opamp.InitalizeServer(baseconst.OpAmpWsEndpoint, &opAmpModel.AllAgents)
+		if err != nil {
+			zap.S().Info("opamp ws server failed to start", err)
+			s.unavailableChannel <- healthcheck.Unavailable
+		}
 	}()
 
 	return nil

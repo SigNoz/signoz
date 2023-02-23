@@ -47,6 +47,7 @@ func RemoveFromTracePipeline(name string) {
 
 func checkDuplicates(pipeline []interface{}) bool {
 	exists := make(map[string]bool, len(pipeline))
+	zap.S().Debugf("checking duplicate processors in the pipeline:", pipeline)
 	for _, processor := range pipeline {
 		name := processor.(string)
 		if _, ok := exists[name]; ok {
@@ -95,7 +96,7 @@ func buildTracesPipeline(pipeline []interface{}) ([]interface{}, error) {
 				if currentPos-1 <= 0 {
 					pipeline = pipeline[currentPos+1:]
 				} else {
-					pipeline = append(pipeline[:currentPos-1], pipeline[currentPos+1:])
+					pipeline = append(pipeline[:currentPos-1], pipeline[currentPos+1:]...)
 				}
 			}
 
@@ -113,10 +114,14 @@ func buildTracesPipeline(pipeline []interface{}) ([]interface{}, error) {
 
 				if lastMatched <= 0 {
 					zap.S().Debugf("build_pipeline: found a new item to be inserted, inserting at position 0:", m.Name)
-					pipeline = append([]interface{}{m.Name}, pipeline[lastMatched+1:])
+					pipeline = append([]interface{}{m.Name}, pipeline[lastMatched+1:]...)
 				} else {
 					zap.S().Debugf("build_pipeline: found a new item to be inserted, inserting at position :", lastMatched, " ", m.Name)
-					pipeline = append(pipeline[:lastMatched], []interface{}{m.Name}, pipeline[lastMatched+1:])
+					prior := pipeline[:lastMatched]
+					next := pipeline[lastMatched+1:]
+
+					pipeline = append(prior, []interface{}{m.Name})
+					pipeline = append(pipeline, next...)
 				}
 			}
 		}

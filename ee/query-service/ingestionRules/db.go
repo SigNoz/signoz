@@ -97,8 +97,8 @@ func (r *Repo) getRulesByVersion(ctx context.Context, version int) ([]model.Inge
 		rule_subtype, 
 		name, 
 		config_json, 
-		deployment_status, 
-		deployment_sequence 
+		v.deployment_status, 
+		v.deployment_sequence 
 		FROM ingestion_rules r,
 			 agent_config_elements e,
 			 agent_config_versions v

@@ -5,6 +5,8 @@ go 1.17
 require (
 	github.com/ClickHouse/clickhouse-go/v2 v2.0.12
 	github.com/SigNoz/govaluate v0.0.0-20220522085550-d19c08c206cb
+	github.com/SigNoz/signoz-tail-sampler v0.0.0-00010101000000-000000000000
+	github.com/open-telemetry/opentelemetry-collector-contrib/processor/filterprocessor v0.66.0
 	github.com/coreos/go-oidc/v3 v3.4.0
 	github.com/go-kit/log v0.2.1
 	github.com/google/uuid v1.3.0
@@ -20,8 +22,6 @@ require (
 	github.com/mitchellh/mapstructure v1.5.0
 	github.com/oklog/oklog v0.3.2
 	github.com/open-telemetry/opamp-go v0.6.0
-	github.com/open-telemetry/opentelemetry-collector-contrib/processor/filterprocessor v0.71.0
-	github.com/open-telemetry/opentelemetry-collector-contrib/processor/tailsamplingprocessor v0.71.0
 	github.com/pkg/errors v0.9.1
 	github.com/posthog/posthog-go v0.0.0-20220817142604-0b0bbf0f9c0f
 	github.com/prometheus/common v0.39.0
@@ -32,7 +32,6 @@ require (
 	github.com/sethvargo/go-password v0.2.0
 	github.com/smartystreets/goconvey v1.6.4
 	github.com/soheilhy/cmux v0.1.4
-	go.opentelemetry.io/collector/confmap v0.71.0
 	go.uber.org/zap v1.24.0
 	gopkg.in/segmentio/analytics-go.v3 v3.1.0
 	k8s.io/apimachinery v0.0.0-20180621070125-103fd098999d
@@ -66,17 +65,13 @@ require (
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/prometheus/client_golang v1.14.0 // indirect
 	github.com/prometheus/tsdb v0.0.0-20181003080831-0ce41118ed20 // indirect
-	go.opentelemetry.io/collector v0.71.0 // indirect
-	go.opentelemetry.io/collector/component v0.71.0 // indirect
-	go.opentelemetry.io/collector/consumer v0.71.0 // indirect
-	go.opentelemetry.io/collector/featuregate v0.71.0 // indirect
-	go.opentelemetry.io/collector/pdata v1.0.0-rc5 // indirect
-	go.opentelemetry.io/collector/semconv v0.71.0 // indirect
+
 	go.opentelemetry.io/otel/metric v0.36.0 // indirect
 	golang.org/x/exp v0.0.0-20221205204356-47842c84f3db // indirect
 	gopkg.in/ini.v1 v1.42.0 // indirect
 	gopkg.in/square/go-jose.v2 v2.6.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
+
 )
 
 require (
@@ -171,4 +166,11 @@ require (
 )
 
 replace github.com/prometheus/prometheus => github.com/SigNoz/prometheus v1.9.77
-replace github.com/open-telemetry/opentelemetry-collector-contrib/processor/tailsamplingprocessor => /Users/mindhash/github.com/open-telemetry/opentelemetry-collector-contrib/processor/tailsamplingprocessor 
+
+replace github.com/SigNoz/signoz-tail-sampler => /Users/mindhash/github.com/SigNoz/signoz-tail-sampler
+
+replace github.com/open-telemetry/opentelemetry-collector-contrib/processor/filterprocessor => github.com/open-telemetry/opentelemetry-collector-contrib/processor/filterprocessor v0.66.0
+
+replace go.opentelemetry.io/collector => go.opentelemetry.io/collector v0.66.0
+
+replace github.com/SigNoz/signoz-otel-collector => /Users/mindhash/github.com/SigNoz/signoz-otel-collector

@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"sync/atomic"
 
+	tsp "github.com/SigNoz/signoz-otel-collector/processor/signoztailsamplingprocessor"
 	"github.com/jmoiron/sqlx"
 	"github.com/open-telemetry/opentelemetry-collector-contrib/processor/filterprocessor"
-	tsp "github.com/open-telemetry/opentelemetry-collector-contrib/processor/tailsamplingprocessor"
 	"go.signoz.io/signoz/pkg/query-service/app/opamp"
 	"go.uber.org/zap"
 )
@@ -97,7 +97,6 @@ func (m *Manager) OnConfigUpdate(hash string, err error) {
 	}
 
 	m.updateDeployStatusByHash(context.Background(), hash, status, message)
-
 }
 
 // UpsertSamplingProcessor updates the agent config with new filter processor params
@@ -118,7 +117,6 @@ func UpsertSamplingProcessor(ctx context.Context, version int, key string, confi
 		zap.S().Errorf("failed to call agent config update for trace processor:", err)
 		return err
 	}
-
 	m.updateDeployStatus(ctx, ElementTypeSamplingRules, version, string(DeployInitiated), "Deployment started", configHash)
 	return nil
 }

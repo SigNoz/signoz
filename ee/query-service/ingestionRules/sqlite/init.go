@@ -26,8 +26,6 @@ func InitDB(db *sqlx.DB) error {
 		rule_subtype VARCHAR(100),
 		name VARCHAR(400) NOT NULL,
 		config_json TEXT,
-		deployment_status VARCHAR(40) NOT NULL DEFAULT 'DIRTY',
-		deployment_sequence INTEGER,
 		error_message TEXT
 	);
 	`

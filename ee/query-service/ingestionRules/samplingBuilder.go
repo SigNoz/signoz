@@ -7,7 +7,7 @@ import (
 	"go.signoz.io/signoz/ee/query-service/model"
 	"go.uber.org/zap"
 
-	tsp "github.com/open-telemetry/opentelemetry-collector-contrib/processor/tailsamplingprocessor"
+	tsp "github.com/SigNoz/signoz-otel-collector/processor/signoztailsamplingprocessor"
 )
 
 func preparePolicycfg(config model.SamplingConfig) tsp.PolicyCfg {

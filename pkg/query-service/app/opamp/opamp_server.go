@@ -12,7 +12,6 @@ import (
 	"github.com/open-telemetry/opamp-go/server/types"
 	"go.opentelemetry.io/collector/confmap"
 	model "go.signoz.io/signoz/pkg/query-service/app/opamp/model"
-
 	"go.uber.org/zap"
 )
 
@@ -29,16 +28,21 @@ const capabilities = protobufs.ServerCapabilities_ServerCapabilities_AcceptsEffe
 	protobufs.ServerCapabilities_ServerCapabilities_OffersRemoteConfig |
 	protobufs.ServerCapabilities_ServerCapabilities_AcceptsStatus
 
-func InitalizeServer(agents *model.Agents) error {
-	zap.S().Info("initiated opamp server....")
+func InitalizeServer(listener string, agents *model.Agents) error {
+
+	if agents == nil {
+		agents = &model.AllAgents
+	}
+
 	opAmpServer = &Server{
 		agents: agents,
 	}
 	opAmpServer.server = server.New(zap.S())
-	return opAmpServer.Start()
+
+	return opAmpServer.Start(listener)
 }
 
-func (srv *Server) Start() error {
+func (srv *Server) Start(listener string) error {
 	settings := server.StartSettings{
 		Settings: server.Settings{
 			Callbacks: server.CallbacksStruct{
@@ -46,7 +50,7 @@ func (srv *Server) Start() error {
 				OnConnectionCloseFunc: srv.onDisconnect,
 			},
 		},
-		ListenEndpoint: "127.0.0.1:4320",
+		ListenEndpoint: listener,
 	}
 
 	return srv.server.Start(settings)
@@ -95,15 +99,14 @@ func UpsertTraceProcessors(ctx context.Context, processors []interface{}, callba
 	confHash := ""
 
 	if opAmpServer == nil {
-		if err := InitalizeServer(&model.AllAgents); err != nil {
-			return confHash, fmt.Errorf("opamp server is down, unable to push config to agent at this moment")
-		}
+		return confHash, fmt.Errorf("opamp server is down, unable to push config to agent at this moment")
 	}
 
 	agents := opAmpServer.agents.GetAllAgents()
 	if len(agents) == 0 {
 		return confHash, fmt.Errorf("no agents available at the moment")
 	}
+
 	x := map[string]interface{}{
 		"processors": processors,
 	}
