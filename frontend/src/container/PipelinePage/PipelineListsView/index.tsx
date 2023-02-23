@@ -6,12 +6,14 @@ import { HTML5Backend } from 'react-dnd-html5-backend';
 import { useTranslation } from 'react-i18next';
 
 import { tableComponents } from '../config';
-import { ActionType } from '../Layouts';
-import { pipelineData } from '../mocks/pipeline';
+import { ActionMode, ActionType } from '../Layouts';
+import { configurationVerison, pipelineData } from '../mocks/pipeline';
 import AddNewPipeline from './AddNewPipeline';
 import AddNewProcessor from './AddNewProcessor';
 import { pipelineColumns } from './config';
+import ModeAndConfiguration from './ModeAndConfiguration';
 import PipelineExpanView from './PipelineExpandView';
+import SaveConfigButton from './SaveConfigButton';
 import {
 	AlertContentWrapper,
 	AlertModalTitle,
@@ -26,6 +28,8 @@ import { getElementFromArray, getTableColumn, getUpdatedRow } from './utils';
 function PipelineListsView({
 	isActionType,
 	setActionType,
+	isActionMode,
+	setActionMode,
 }: PipelineListsViewProps): JSX.Element {
 	const { t } = useTranslation('pipeline');
 	const [pipelineDataSource, setPipelineDataSource] = useState<
@@ -40,6 +44,7 @@ function PipelineListsView({
 		selectedProcessorData,
 		setSelectedProcessorData,
 	] = useState<ProcessorColumn>();
+	const [isVisibleSaveButton, setIsVisibleSaveButton] = useState<string>();
 
 	const [modal, contextHolder] = Modal.useModal();
 
@@ -58,6 +63,11 @@ function PipelineListsView({
 		[modal, t],
 	);
 
+	const onDeleteClickHandler = useCallback(
+		() => setIsVisibleSaveButton(ActionMode.Editing),
+		[setIsVisibleSaveButton],
+	);
+
 	const handlePipelineEditAction = useCallback(
 		(record: PipelineColumn) => (): void => {
 			setActionType(ActionType.EditPipeline);
@@ -73,9 +83,10 @@ function PipelineListsView({
 				record,
 				'orderid',
 			);
+			onDeleteClickHandler();
 			setPipelineDataSource(findElement);
 		},
-		[pipelineDataSource],
+		[onDeleteClickHandler, pipelineDataSource],
 	);
 
 	const handlePipelineDeleteAction = useCallback(
@@ -100,45 +111,55 @@ function PipelineListsView({
 
 	const columns = useMemo(() => {
 		const fieldColumns = getTableColumn(pipelineColumns);
-		fieldColumns.push(
-			{
-				title: 'Actions',
-				dataIndex: 'smartAction',
-				key: 'smartAction',
-				align: 'center',
-				render: (_value, record): JSX.Element => (
-					<PipelineActions
-						isPipelineAction
-						editAction={handlePipelineEditAction(record)}
-						deleteAction={handlePipelineDeleteAction(record)}
-					/>
-				),
-			},
-			{
-				title: '',
-				dataIndex: 'dragAction',
-				key: 'dragAction',
-				render: () => <DragAction />,
-			},
-		);
+		if (isActionMode === ActionMode.Editing) {
+			fieldColumns.push(
+				{
+					title: 'Actions',
+					dataIndex: 'smartAction',
+					key: 'smartAction',
+					align: 'center',
+					render: (_value, record): JSX.Element => (
+						<PipelineActions
+							isPipelineAction
+							editAction={handlePipelineEditAction(record)}
+							deleteAction={handlePipelineDeleteAction(record)}
+						/>
+					),
+				},
+				{
+					title: '',
+					dataIndex: 'dragAction',
+					key: 'dragAction',
+					render: () => <DragAction />,
+				},
+			);
+		}
 		return fieldColumns;
-	}, [handlePipelineDeleteAction, handlePipelineEditAction]);
+	}, [handlePipelineDeleteAction, handlePipelineEditAction, isActionMode]);
+
+	const updatePiplineRowData = useCallback(
+		(updatedRow: PipelineColumn[]) => (): void => {
+			setIsVisibleSaveButton(ActionMode.Editing);
+			setPipelineDataSource(updatedRow);
+		},
+		[setIsVisibleSaveButton, setPipelineDataSource],
+	);
 
 	const movePipelineRow = useCallback(
 		(dragIndex: number, hoverIndex: number) => {
-			if (pipelineDataSource) {
+			if (pipelineDataSource && isActionMode === ActionMode.Editing) {
 				const rawData = pipelineDataSource;
 				const updatedRow = getUpdatedRow(pipelineDataSource, dragIndex, hoverIndex);
 				handleAlert({
 					title: t('reorder_pipeline'),
 					descrition: t('reorder_pipeline_description'),
 					buttontext: t('reorder'),
-					onOk: (): void => setPipelineDataSource(updatedRow),
+					onOk: updatePiplineRowData(updatedRow),
 					onCancel: (): void => setPipelineDataSource(rawData),
 				});
 			}
 		},
-		[pipelineDataSource, handleAlert, t],
+		[pipelineDataSource, isActionMode, handleAlert, t, updatePiplineRowData],
 	);
 
 	const expandedRow = useCallback(
@@ -149,9 +170,19 @@ function PipelineListsView({
 				processorDataSource={processorDataSource as []}
 				setActionType={setActionType}
 				handleProcessorEditAction={handleProcessorEditAction}
+				isActionMode={isActionMode}
+				onDeleteClickHandler={onDeleteClickHandler}
+				setIsVisibleSaveButton={setIsVisibleSaveButton}
 			/>
 		),
-		[handleAlert, handleProcessorEditAction, processorDataSource, setActionType],
+		[
+			handleAlert,
+			handleProcessorEditAction,
+			isActionMode,
+			onDeleteClickHandler,
+			processorDataSource,
+			setActionType,
+		],
 	);
 
 	const getDataOnExpand = (expanded: boolean, record: PipelineColumn): void => {
@@ -183,14 +214,14 @@ function PipelineListsView({
 		setActionType(ActionType.AddPipeline);
 	}, [setActionType]);
 
-	const footer = useCallback(
-		(): JSX.Element => (
+	const footer = useCallback((): JSX.Element | undefined => {
+		if (isActionMode === ActionMode.Editing) {
 			<FooterButton type="link" onClick={onClickHandler} icon={<PlusOutlined />}>
 				{t('add_new_pipeline')}
-			</FooterButton>
-		),
-		[onClickHandler, t],
-	);
+			</FooterButton>;
+		}
+		return undefined;
+	}, [isActionMode, onClickHandler, t]);
 
 	return (
 		<div>
@@ -201,6 +232,7 @@ function PipelineListsView({
 				selectedRecord={selectedRecord}
 				pipelineDataSource={pipelineDataSource}
 				setPipelineDataSource={setPipelineDataSource}
+				setIsVisibleSaveButton={setIsVisibleSaveButton}
 			/>
 			<AddNewProcessor
 				isActionType={isActionType}
@@ -210,8 +242,13 @@ function PipelineListsView({
 				setProcessorDataSource={
 					setProcessorDataSource as () => Array<ProcessorColumn>
 				}
+				setIsVisibleSaveButton={setIsVisibleSaveButton}
 			/>
 			<Container>
+				<ModeAndConfiguration
+					isActionMode={isActionMode}
+					verison={configurationVerison}
+				/>
 				<DndProvider backend={HTML5Backend}>
 					<Table
 						columns={columns}
@@ -238,8 +275,16 @@ function PipelineListsView({
 							return attr as React.HTMLAttributes<unknown>;
 						}}
 						footer={footer}
+						pagination={false}
 					/>
 				</DndProvider>
+				{isVisibleSaveButton && (
+					<SaveConfigButton
+						setActionMode={setActionMode}
+						setPipelineDataSource={setPipelineDataSource}
+						setIsVisibleSaveButton={setIsVisibleSaveButton}
+					/>
+				)}
 			</Container>
 		</div>
 	);
@@ -248,6 +293,8 @@ function PipelineListsView({
 interface PipelineListsViewProps {
 	isActionType: string;
 	setActionType: (actionType?: ActionType) => void;
+	isActionMode: string;
+	setActionMode: (actionMode: ActionMode) => void;
 }
 
 export type ActionBy = {

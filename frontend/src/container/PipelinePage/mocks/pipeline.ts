@@ -1,5 +1,7 @@
 import { PipelineColumn } from '../PipelineListsView';
 
+export const configurationVerison = '1.0';
+
 export const pipelineData: Array<PipelineColumn> = [
 	{
 		orderid: 1,

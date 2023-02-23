@@ -1,12 +1,12 @@
 import { Button, Divider, Form, Modal } from 'antd';
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
 import AppReducer from 'types/reducer/app';
 import { v4 as uuid } from 'uuid';
 
-import { ActionType } from '../../Layouts';
+import { ActionMode, ActionType } from '../../Layouts';
 import { PipelineColumn } from '..';
 import { ModalButtonWrapper, ModalTitle } from '../styles';
 import { getEditedDataSource, getRecordIndex } from '../utils';
@@ -18,6 +18,7 @@ function AddNewPipeline({
 	selectedRecord,
 	pipelineDataSource,
 	setPipelineDataSource,
+	setIsVisibleSaveButton,
 }: AddNewPipelineProps): JSX.Element {
 	const [form] = Form.useForm();
 	const { t } = useTranslation('pipeline');
@@ -100,6 +101,11 @@ function AddNewPipeline({
 		[isEdit, selectedRecord?.name, t],
 	);
 
+	const onClickHandler = useCallback(
+		() => setIsVisibleSaveButton(ActionMode.Editing),
+		[setIsVisibleSaveButton],
+	);
+
 	return (
 		<Modal
 			title={<ModalTitle level={4}>{modalTitle}</ModalTitle>}
@@ -123,7 +129,12 @@ function AddNewPipeline({
 				<Divider plain />
 				<Form.Item>
 					<ModalButtonWrapper>
-						<Button key="submit" type="primary" htmlType="submit">
+						<Button
+							key="submit"
+							type="primary"
+							htmlType="submit"
+							onClick={onClickHandler}
+						>
 							{isEdit ? t('update') : t('create')}
 						</Button>
 						<Button key="cancel" onClick={onCancelHandler}>
@@ -144,6 +155,7 @@ interface AddNewPipelineProps {
 	setPipelineDataSource: (
 		value: React.SetStateAction<Array<PipelineColumn>>,
 	) => void;
+	setIsVisibleSaveButton: (actionMode: ActionMode) => void;
 }
 
 export default AddNewPipeline;

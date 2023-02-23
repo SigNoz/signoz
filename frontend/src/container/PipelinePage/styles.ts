@@ -10,7 +10,7 @@ export const ButtonContainer = styled.div`
 	}
 `;
 
-export const AddPipelineButton = styled(Button)`
+export const CustomButton = styled(Button)`
 	&&& {
 		margin-left: 1rem;
 	}

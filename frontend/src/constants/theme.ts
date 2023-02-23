@@ -48,6 +48,7 @@ const themeColors = {
 	lightSkyBlue: '#8DCFF8',
 	neroBlack: '#1d1d1d',
 	snowWhite: '#fafafa',
+	gamboge: '#D89614',
 };
 
 export { themeColors };

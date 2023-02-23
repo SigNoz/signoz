@@ -17,6 +17,7 @@ export const ProcessorTypeContainer = styled.div`
 	display: flex;
 	flex-direction: column;
 	padding-bottom: 0.5rem;
+	gap: 0.313rem;
 `;
 
 export const Container = styled.div`

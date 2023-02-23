@@ -139,3 +139,18 @@ export const ModalButtonWrapper = styled.div`
 	flex-direction: row-reverse;
 	gap: 0.625rem;
 `;
+
+export const ModeAndConfigWrapper = styled.div`
+	display: flex;
+	gap: 0.938rem;
+	justify-content: flex-end;
+	color: ${themeColors.gamboge};
+	margin: 0.125rem;
+	padding: 0.313rem;
+`;
+
+export const SaveConfigWrapper = styled.div`
+	display: flex;
+	gap: 0.938rem;
+	margin-top: 1.25rem;
+`;

@@ -6,7 +6,7 @@ import { HTML5Backend } from 'react-dnd-html5-backend';
 import { useTranslation } from 'react-i18next';
 
 import { tableComponents } from '../config';
-import { ActionType } from '../Layouts';
+import { ActionMode, ActionType } from '../Layouts';
 import { ModalFooterTitle } from '../styles';
 import { AlertMessage, ProcessorColumn } from '.';
 import { processorColumns } from './config';
@@ -21,6 +21,9 @@ function PipelineExpandView({
 	setProcessorDataSource,
 	setActionType,
 	handleProcessorEditAction,
+	isActionMode,
+	onDeleteClickHandler,
+	setIsVisibleSaveButton,
 }: PipelineExpandViewProps): JSX.Element {
 	const { t } = useTranslation(['pipeline']);
 	const isDarkMode = useIsDarkMode();
@@ -28,9 +31,10 @@ function PipelineExpandView({
 	const processorDeleteHandler = useCallback(
 		(record: ProcessorColumn) => (): void => {
 			const findElement = getElementFromArray(processorDataSource, record, 'id');
+			onDeleteClickHandler();
 			setProcessorDataSource(findElement);
 		},
-		[processorDataSource, setProcessorDataSource],
+		[onDeleteClickHandler, processorDataSource, setProcessorDataSource],
 	);
 
 	const handleProcessorDeleteAction = useCallback(
@@ -47,32 +51,42 @@ function PipelineExpandView({
 
 	const columns = useMemo(() => {
 		const fieldColumns = getTableColumn(processorColumns);
-		fieldColumns.push(
-			{
-				title: '',
-				dataIndex: 'action',
-				key: 'action',
-				render: (_value, record): JSX.Element => (
-					<PipelineActions
-						isPipelineAction={false}
-						editAction={handleProcessorEditAction(record)}
-						deleteAction={handleProcessorDeleteAction(record)}
-					/>
-				),
-			},
-			{
-				title: '',
-				dataIndex: 'dragAction',
-				key: 'dragAction',
-				render: () => <DragAction />,
-			},
-		);
+		if (isActionMode === ActionMode.Editing) {
+			fieldColumns.push(
+				{
+					title: '',
+					dataIndex: 'action',
+					key: 'action',
+					render: (_value, record): JSX.Element => (
+						<PipelineActions
+							isPipelineAction={false}
+							editAction={handleProcessorEditAction(record)}
+							deleteAction={handleProcessorDeleteAction(record)}
+						/>
+					),
+				},
+				{
+					title: '',
+					dataIndex: 'dragAction',
+					key: 'dragAction',
+					render: () => <DragAction />,
+				},
+			);
+		}
 		return fieldColumns;
-	}, [handleProcessorDeleteAction, handleProcessorEditAction]);
+	}, [handleProcessorDeleteAction, handleProcessorEditAction, isActionMode]);
+
+	const updateProcessorRowData = useCallback(
+		(updatedRow: any) => (): void => {
+			setIsVisibleSaveButton(ActionMode.Editing);
+			setProcessorDataSource(updatedRow);
+		},
+		[setIsVisibleSaveButton, setProcessorDataSource],
+	);
 
 	const moveProcessorRow = useCallback(
 		(dragIndex: number, hoverIndex: number) => {
-			if (processorDataSource) {
+			if (processorDataSource && isActionMode === ActionMode.Editing) {
 				const rawData = processorDataSource;
 				const updatedRow = getUpdatedRow(
 					processorDataSource,
@@ -84,27 +98,34 @@ function PipelineExpandView({
 					title: t('reorder_processor'),
 					descrition: t('reorder_processor_description'),
 					buttontext: t('reorder'),
-					onOk: (): void => setProcessorDataSource(updatedRow),
+					onOk: updateProcessorRowData(updatedRow),
 					onCancel: (): void => setProcessorDataSource(rawData),
 				});
 			}
 		},
-		[processorDataSource, handleAlert, setProcessorDataSource, t],
+		[
+			processorDataSource,
+			isActionMode,
+			handleAlert,
+			t,
+			updateProcessorRowData,
+			setProcessorDataSource,
+		],
 	);
 
 	const onClickHandler = useCallback((): void => {
 		setActionType(ActionType.AddProcessor);
 	}, [setActionType]);
 
-	const footer = useCallback(
-		(): JSX.Element => (
+	const footer = useCallback((): JSX.Element | undefined => {
+		if (isActionMode === ActionMode.Editing) {
 			<FooterButton type="link" onClick={onClickHandler}>
 				<PlusCircleOutlined />
 				<ModalFooterTitle>{t('add_new_processor')}</ModalFooterTitle>
-			</FooterButton>
-		),
-		[onClickHandler, t],
-	);
+			</FooterButton>;
+		}
+		return undefined;
+	}, [onClickHandler, t, isActionMode]);
 
 	return (
 		<DndProvider backend={HTML5Backend}>
@@ -138,6 +159,9 @@ interface PipelineExpandViewProps {
 	setProcessorDataSource: (value: Array<ProcessorColumn> | undefined) => void;
 	setActionType: (actionType?: ActionType) => void;
 	handleProcessorEditAction: (record: ProcessorColumn) => () => void;
+	isActionMode: string;
+	onDeleteClickHandler: VoidFunction;
+	setIsVisibleSaveButton: (actionMode: ActionMode) => void;
 }
 
 export default PipelineExpandView;

@@ -1,8 +1,8 @@
 import { Button, Divider, Form, Modal } from 'antd';
-import React, { useMemo, useState } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { ActionType } from '../../Layouts';
+import { ActionMode, ActionType } from '../../Layouts';
 import { ProcessorColumn } from '..';
 import { ModalButtonWrapper, ModalTitle } from '../styles';
 import { getEditedDataSource, getRecordIndex } from '../utils';
@@ -16,6 +16,7 @@ function AddNewProcessor({
 	selectedProcessorData,
 	processorDataSource,
 	setProcessorDataSource,
+	setIsVisibleSaveButton,
 }: AddNewProcessorProps): JSX.Element {
 	const [form] = Form.useForm();
 	const { t } = useTranslation('pipeline');
@@ -83,6 +84,11 @@ function AddNewProcessor({
 		[isEdit, selectedProcessorData?.processorName, t],
 	);
 
+	const onClickHandler = useCallback(
+		() => setIsVisibleSaveButton(ActionMode.Editing),
+		[setIsVisibleSaveButton],
+	);
+
 	return (
 		<Modal
 			title={<ModalTitle level={4}>{modalTitle}</ModalTitle>}
@@ -110,7 +116,12 @@ function AddNewProcessor({
 				<Divider plain />
 				<Form.Item>
 					<ModalButtonWrapper>
-						<Button key="submit" type="primary" htmlType="submit">
+						<Button
+							key="submit"
+							type="primary"
+							htmlType="submit"
+							onClick={onClickHandler}
+						>
 							{isEdit ? t('update') : t('create')}
 						</Button>
 						<Button key="cancel" onClick={onCancelHandler}>
@@ -131,6 +142,7 @@ interface AddNewProcessorProps {
 		React.SetStateAction<Array<ProcessorColumn>>
 	>;
 	selectedProcessorData: ProcessorColumn | undefined;
+	setIsVisibleSaveButton: (actionMode: ActionMode) => void;
 }
 
 export default AddNewProcessor;

@@ -11,6 +11,8 @@
 	"delete_pipeline_description": "Logs are processed sequentially in processors and pipelines. Deleting a pipeline may change content of data processed by other pipelines & processors",
 	"add_new_pipeline": "Add a New Pipeline",
 	"new_pipeline": "New Pipeline",
+	"enter_edit_mode": "Enter Edit Mode",
+	"save_configuration": "Save Configuration",
 	"edit_pipeline": "Edit Pipeline",
 	"create_pipeline": "Create New Pipeline",
 	"add_new_processor": "Add Processor",
