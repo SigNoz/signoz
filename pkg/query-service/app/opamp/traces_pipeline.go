@@ -14,7 +14,7 @@ var tracesPipelinePlan = map[int]struct {
 	Enabled bool
 }{
 	0: {
-		Name:    "tail_sampling",
+		Name:    "signoz_tail_sampling",
 		Enabled: false,
 	},
 	1: {

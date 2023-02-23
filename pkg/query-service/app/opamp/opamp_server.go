@@ -84,11 +84,23 @@ func (srv *Server) onMessage(conn types.Connection, msg *protobufs.AgentToServer
 	return response
 }
 
+// global var methods to support singleton pattern. we want to discourage
+// allow multiple servers in one installation
+func Ready() bool {
+	if opAmpServer == nil {
+		return false
+	}
+	if opAmpServer.agents.Count() == 0 {
+		zap.S().Warnf("no agents available, all agent config requests will be rejected")
+		return false
+	}
+	return true
+}
 func Subscribe(hash string, f func(hash string, err error)) {
 	model.ListenToConfigUpdate(hash, f)
 }
 
-func UpsertTraceProcessors(ctx context.Context, processors []interface{}, callback func(string, error)) (hash string, fnerr error) {
+func UpsertTraceProcessors(ctx context.Context, processors map[string]interface{}, callback func(string, error)) (hash string, fnerr error) {
 	// note: only processors enabled through tracesPipelinePlan will be added
 	// to pipeline. To enable or disable processors from pipeline, call
 	// AddToTracePipeline() or RemoveFromTracesPipeline() prior to calling
@@ -107,12 +119,6 @@ func UpsertTraceProcessors(ctx context.Context, processors []interface{}, callba
 		return confHash, fmt.Errorf("no agents available at the moment")
 	}
 
-	x := map[string]interface{}{
-		"processors": processors,
-	}
-
-	updatedProcessors := confmap.NewFromStringMap(x)
-
 	for _, agent := range agents {
 		config := agent.EffectiveConfig
 		c, err := yaml.Parser().Unmarshal([]byte(config))
@@ -120,16 +126,31 @@ func UpsertTraceProcessors(ctx context.Context, processors []interface{}, callba
 			return confHash, err
 		}
 
-		agentConf := confmap.NewFromStringMap(c)
+		agentConfig := confmap.NewFromStringMap(c)
+		fmt.Println("agentConfig:", agentConfig.Get("processors"))
+
+		agentProcessors := agentConfig.Get("processors").(map[string]interface{})
+
+		for key, params := range processors {
+			agentProcessors[key] = params
+		}
+
+		fmt.Println("agentProcessors", agentProcessors)
+		updatedProcessors := map[string]interface{}{
+			"processors": agentProcessors,
+		}
+
+		updatedProcessorConf := confmap.NewFromStringMap(updatedProcessors)
+		fmt.Println("updatedProcessors", updatedProcessorConf)
 
 		// upsert changed processor parameters in config
-		err = agentConf.Merge(updatedProcessors)
+		err = agentConfig.Merge(updatedProcessorConf)
 		if err != nil {
 			return confHash, err
 		}
-
+		fmt.Println("agentConfig after:", agentConfig.Get("processors"))
 		// edit pipeline if processor is missing
-		service := agentConf.Get("service")
+		service := agentConfig.Get("service")
 
 		traces := service.(map[string]interface{})["pipelines"].(map[string]interface{})["traces"]
 		currentPipeline := traces.(map[string]interface{})["processors"].([]interface{})
@@ -155,13 +176,13 @@ func UpsertTraceProcessors(ctx context.Context, processors []interface{}, callba
 
 		serviceC := confmap.NewFromStringMap(s)
 
-		err = agentConf.Merge(serviceC)
+		err = agentConfig.Merge(serviceC)
 		if err != nil {
 			return confHash, err
 		}
 
 		// ------ complete adding processor
-		configR, err := yaml.Parser().Marshal(agentConf.ToStringMap())
+		configR, err := yaml.Parser().Marshal(agentConfig.ToStringMap())
 		if err != nil {
 			return confHash, err
 		}

@@ -26,7 +26,10 @@ type Manager struct {
 
 // Ready indicates if Manager can accept new config update requests
 func (mgr *Manager) Ready() bool {
-	return mgr.lock == 0
+	if mgr.lock != 0 {
+		return false
+	}
+	return opamp.Ready()
 }
 
 func Initiate(db *sqlx.DB, engine string) error {
@@ -108,11 +111,11 @@ func UpsertSamplingProcessor(ctx context.Context, version int, key string, confi
 
 	// merge current config with new filter params
 	processorConf := map[string]interface{}{
-		"tail_sampling": config,
+		"signoz_tail_sampling": config,
 	}
 
-	opamp.AddToTracePipeline("tail_sampling")
-	configHash, err := opamp.UpsertTraceProcessors(ctx, []interface{}{processorConf}, m.OnConfigUpdate)
+	opamp.AddToTracePipeline("signoz_tail_sampling")
+	configHash, err := opamp.UpsertTraceProcessors(ctx, processorConf, m.OnConfigUpdate)
 	if err != nil {
 		zap.S().Errorf("failed to call agent config update for trace processor:", err)
 		return err

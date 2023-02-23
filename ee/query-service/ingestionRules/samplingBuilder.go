@@ -3,6 +3,7 @@ package ingestionRules
 import (
 	"sort"
 	"strings"
+	"time"
 
 	"go.signoz.io/signoz/ee/query-service/model"
 	"go.uber.org/zap"
@@ -123,6 +124,8 @@ func PrepareTailSamplingParams(rules []model.IngestionRule) (*tsp.Config, error)
 	zap.S().Debugf("sorted sampling policies:", finalPolicies)
 
 	return &tsp.Config{
-		PolicyCfgs: finalPolicies,
+		DecisionWait: 30 * time.Second,
+		NumTraces:    50000,
+		PolicyCfgs:   finalPolicies,
 	}, nil
 }

@@ -188,9 +188,9 @@ func (r *Repo) updateDeployStatus(ctx context.Context,
 	deploy_result = $2,
 	last_hash = COALESCE($3, last_hash)
 	WHERE version=$4
-	AND elementType = $5`
+	AND element_type = $5`
 
-	_, err := r.db.ExecContext(ctx, updateQuery, status, result, version, string(elementType))
+	_, err := r.db.ExecContext(ctx, updateQuery, status, result, lastHash, version, string(elementType))
 	if err != nil {
 		zap.S().Errorf("failed to get ingestion rule from db", err)
 		return model.BadRequestStr("failed to get ingestion rule from db")

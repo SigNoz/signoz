@@ -22,6 +22,10 @@ type Agents struct {
 	connections map[types.Connection]map[string]bool
 }
 
+func (a *Agents) Count() int {
+	return len(a.connections)
+}
+
 // InitDB initializes the database and creates the agents table.
 func InitDB(dataSourceName string) (*sqlx.DB, error) {
 	var err error
