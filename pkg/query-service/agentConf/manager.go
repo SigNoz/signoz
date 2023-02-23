@@ -5,10 +5,10 @@ import (
 	"fmt"
 	"sync/atomic"
 
-	filterprocessor "github.com/SigNoz/signoz-otel-collector/processor/signozfilterprocessor"
-	tsp "github.com/SigNoz/signoz-otel-collector/processor/signoztailsampler"
 	"github.com/jmoiron/sqlx"
 	"go.signoz.io/signoz/pkg/query-service/app/opamp"
+	filterprocessor "go.signoz.io/signoz/pkg/query-service/app/opamp/otelconfig/filterprocessor"
+	tsp "go.signoz.io/signoz/pkg/query-service/app/opamp/otelconfig/tailsampler"
 	"go.uber.org/zap"
 )
 

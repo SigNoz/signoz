@@ -4,12 +4,8 @@ import (
 	"context"
 	"crypto/sha256"
 	"fmt"
-<<<<<<< HEAD
+
 	"strings"
-=======
-	"math/rand"
-	"time"
->>>>>>> origin/opamp
 
 	"github.com/knadh/koanf/parsers/yaml"
 	"github.com/open-telemetry/opamp-go/protobufs"

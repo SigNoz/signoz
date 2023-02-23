@@ -1,8 +1,8 @@
 package ingestionRules
 
 import (
-	filterprocessor "github.com/SigNoz/signoz-otel-collector/processor/signozfilterprocessor"
 	"go.signoz.io/signoz/ee/query-service/model"
+	filterprocessor "go.signoz.io/signoz/pkg/query-service/app/opamp/otelconfig/filterprocessor"
 )
 
 // this file contains methods to transform ingestion rules into

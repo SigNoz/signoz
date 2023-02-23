@@ -7,7 +7,7 @@ import (
 	"go.signoz.io/signoz/ee/query-service/model"
 	"go.uber.org/zap"
 
-	tsp "github.com/SigNoz/signoz-otel-collector/processor/signoztailsampler"
+	tsp "go.signoz.io/signoz/pkg/query-service/app/opamp/otelconfig/tailsampler"
 )
 
 func preparePolicycfg(config model.SamplingConfig) tsp.PolicyCfg {
@@ -15,7 +15,7 @@ func preparePolicycfg(config model.SamplingConfig) tsp.PolicyCfg {
 		Root:     true,
 		Name:     config.Name,
 		Priority: config.Priority,
-		Type:     tsp.PolicyGroup,
+		Type:     "policy_group",
 		PolicyFilterCfg: tsp.PolicyFilterCfg{
 			StringAttributeCfgs:  []tsp.StringAttributeCfg{},
 			NumericAttributeCfgs: []tsp.NumericAttributeCfg{},

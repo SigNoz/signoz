@@ -64,9 +64,6 @@ type Server struct {
 	privateHTTP *http.Server
 
 	unavailableChannel chan healthcheck.Status
-
-	// opamp server
-	opampServer *opamp.Server
 }
 
 // HealthCheckStatus returns health check status channel a client can subscribe to
@@ -145,22 +142,12 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 
 	s.privateHTTP = privateServer
 
-	localDB, err = opAmpModel.InitDB(constants.RELATIONAL_DATASOURCE_PATH)
+	_, err = opAmpModel.InitDB(constants.RELATIONAL_DATASOURCE_PATH)
 	if err != nil {
 		return nil, err
 	}
-
-	opampServer, err := s.createOpampServer()
-	if err != nil {
-		return nil, err
-	}
-	s.opampServer = opampServer
 
 	return s, nil
-}
-
-func (s *Server) createOpampServer() (*opamp.Server, error) {
-	return opamp.NewServer(&opAmpModel.AllAgents), nil
 }
 
 func (s *Server) createPrivateServer(api *APIHandler) (*http.Server, error) {
@@ -454,7 +441,14 @@ func (s *Server) Start() error {
 
 	}()
 
-	s.opampServer.Start()
+	go func() {
+		zap.S().Info("Starting OpAmp Websocket server", zap.String("addr", constants.OpAmpWsEndpoint))
+		err := opamp.InitalizeServer(constants.OpAmpWsEndpoint, &opAmpModel.AllAgents)
+		if err != nil {
+			zap.S().Info("opamp ws server failed to start", err)
+			s.unavailableChannel <- healthcheck.Unavailable
+		}
+	}()
 
 	return nil
 }

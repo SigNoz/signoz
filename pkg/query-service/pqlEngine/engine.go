@@ -44,7 +44,6 @@ func NewPqlEngine(config *pconfig.Config) (*PqlEngine, error) {
 
 	logLevel := plog.AllowedLevel{}
 	logLevel.Set("debug")
-<<<<<<< HEAD
 
 	allowedFormat := promlog.AllowedFormat{}
 	allowedFormat.Set("logfmt")
@@ -55,9 +54,6 @@ func NewPqlEngine(config *pconfig.Config) (*PqlEngine, error) {
 	}
 
 	logger := plog.New(&promlogConfig)
-=======
-	logger := plog.New(&plog.Config{})
->>>>>>> origin/opamp
 
 	opts := pql.EngineOpts{
 		Logger:     log.With(logger, "component", "promql evaluator"),
