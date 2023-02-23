@@ -50,23 +50,42 @@ export const extractTagKey = (tagKey: string): string => {
 	return '';
 };
 
-export function onTagValueChange(
-	values: unknown,
-	setLocalValue: React.Dispatch<React.SetStateAction<TagValueTypes[]>>,
-): void {
-	if (Array.isArray(values) && values.length > 0) {
-		if (typeof values[0] === 'number' || typeof values[0] === 'boolean') {
-			setLocalValue(values);
-		} else if (typeof values[0] === 'string') {
-			if (values[0] === 'true' || values[0] === 'false') {
-				setLocalValue([values[0] === 'true']);
-			} else if (values[0] !== ' ' && !Number.isNaN(Number(values[0]))) {
-				setLocalValue([Number(values[0])]);
-			} else {
-				setLocalValue([values[0]]);
-			}
-		}
+function convertToTagValues(values: string[]): TagValueTypes[] {
+	if (values.some((value) => value === 'true' || value === 'false')) {
+		return values.map((value) => value === 'true') as TagValueTypes[];
 	}
+
+	return values as TagValueTypes[];
+}
+
+export function onTagValueChange(values: unknown): TagValueTypes[] {
+	const stringValues = values as string[];
+
+	if (!Array.isArray(stringValues) || stringValues.length === 0) {
+		return [];
+	}
+
+	return convertToTagValues(values as string[]);
+}
+
+export function separateTagValues(
+	values: TagValueTypes[],
+): { boolValues: boolean[]; numberValues: number[]; stringValues: string[] } {
+	const boolValues = values.filter(
+		(value) => typeof value === 'boolean',
+	) as boolean[];
+	const numberValues = values.filter(
+		(value) => typeof value === 'number',
+	) as number[];
+	const stringValues = values.filter(
+		(value) => typeof value === 'string' && value !== 'true' && value !== 'false',
+	) as string[];
+
+	return {
+		boolValues,
+		numberValues,
+		stringValues,
+	};
 }
 
 export function disableTagValue(
@@ -93,22 +112,16 @@ export function disableTagValue(
 	}
 	return false;
 }
-
 export function getInitialLocalValue(
 	selectedNumberValues: number[],
 	selectedBoolValues: boolean[],
 	selectedStringValues: string[],
 ): TagValueTypes[] {
-	if (selectedStringValues && selectedStringValues.length > 0) {
-		return selectedStringValues;
-	}
-	if (selectedNumberValues && selectedNumberValues.length > 0) {
-		return selectedNumberValues;
-	}
-	if (selectedBoolValues && selectedBoolValues.length > 0) {
-		return selectedBoolValues;
-	}
-	return selectedStringValues;
+	return [
+		...selectedBoolValues,
+		...selectedNumberValues,
+		...selectedStringValues,
+	];
 }
 
 export function getTagValueOptions(
