@@ -1,7 +1,7 @@
 package ingestionRules
 
 import (
-	"github.com/open-telemetry/opentelemetry-collector-contrib/processor/filterprocessor"
+	filterprocessor "github.com/SigNoz/signoz-otel-collector/processor/signozfilterprocessor"
 	"go.signoz.io/signoz/ee/query-service/model"
 )
 

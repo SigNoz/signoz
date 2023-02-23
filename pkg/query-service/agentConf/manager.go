@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"sync/atomic"
 
-	tsp "github.com/SigNoz/signoz-otel-collector/processor/signoztailsamplingprocessor"
+	filterprocessor "github.com/SigNoz/signoz-otel-collector/processor/signozfilterprocessor"
+	tsp "github.com/SigNoz/signoz-otel-collector/processor/signoztailsampler"
 	"github.com/jmoiron/sqlx"
-	"github.com/open-telemetry/opentelemetry-collector-contrib/processor/filterprocessor"
 	"go.signoz.io/signoz/pkg/query-service/app/opamp"
 	"go.uber.org/zap"
 )

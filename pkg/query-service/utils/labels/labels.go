@@ -92,8 +92,7 @@ func (ls Labels) Hash() uint64 {
 }
 
 // HashForLabels returns a hash value for the labels matching the provided names.
-func (ls Labels) HashForLabels(names ...string) uint64 {
-	b := make([]byte, 0, 1024)
+func (ls Labels) HashForLabels(b []byte, names ...string) (uint64, []byte) {
 
 	for _, v := range ls {
 		for _, n := range names {
@@ -106,7 +105,7 @@ func (ls Labels) HashForLabels(names ...string) uint64 {
 			}
 		}
 	}
-	return xxhash.Sum64(b)
+	return xxhash.Sum64(b), b
 }
 
 // HashWithoutLabels returns a hash value for all labels except those matching
