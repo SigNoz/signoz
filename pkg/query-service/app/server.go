@@ -20,6 +20,9 @@ import (
 	"github.com/soheilhy/cmux"
 	"go.signoz.io/signoz/pkg/query-service/app/clickhouseReader"
 	"go.signoz.io/signoz/pkg/query-service/app/dashboards"
+	opamp "go.signoz.io/signoz/pkg/query-service/app/opamp"
+	opAmpModel "go.signoz.io/signoz/pkg/query-service/app/opamp/model"
+
 	"go.signoz.io/signoz/pkg/query-service/constants"
 	"go.signoz.io/signoz/pkg/query-service/dao"
 	"go.signoz.io/signoz/pkg/query-service/featureManager"
@@ -61,6 +64,9 @@ type Server struct {
 	privateHTTP *http.Server
 
 	unavailableChannel chan healthcheck.Status
+
+	// opamp server
+	opampServer *opamp.Server
 }
 
 // HealthCheckStatus returns health check status channel a client can subscribe to
@@ -139,7 +145,22 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 
 	s.privateHTTP = privateServer
 
+	localDB, err = opAmpModel.InitDB(constants.RELATIONAL_DATASOURCE_PATH)
+	if err != nil {
+		return nil, err
+	}
+
+	opampServer, err := s.createOpampServer()
+	if err != nil {
+		return nil, err
+	}
+	s.opampServer = opampServer
+
 	return s, nil
+}
+
+func (s *Server) createOpampServer() (*opamp.Server, error) {
+	return opamp.NewServer(&opAmpModel.AllAgents), nil
 }
 
 func (s *Server) createPrivateServer(api *APIHandler) (*http.Server, error) {
@@ -432,6 +453,8 @@ func (s *Server) Start() error {
 		s.unavailableChannel <- healthcheck.Unavailable
 
 	}()
+
+	s.opampServer.Start()
 
 	return nil
 }

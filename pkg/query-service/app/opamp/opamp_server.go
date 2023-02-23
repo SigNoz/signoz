@@ -4,7 +4,12 @@ import (
 	"context"
 	"crypto/sha256"
 	"fmt"
+<<<<<<< HEAD
 	"strings"
+=======
+	"math/rand"
+	"time"
+>>>>>>> origin/opamp
 
 	"github.com/knadh/koanf/parsers/yaml"
 	"github.com/open-telemetry/opamp-go/protobufs"
@@ -72,7 +77,6 @@ func (srv *Server) onMessage(conn types.Connection, msg *protobufs.AgentToServer
 		zap.S().Errorf("Failed to find or create agent %q: %v", agentID, err)
 		// TODO: handle error
 	}
-
 	var response *protobufs.ServerToAgent
 	response = &protobufs.ServerToAgent{
 		InstanceUid:  agentID,
