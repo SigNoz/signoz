@@ -7,12 +7,15 @@ import (
 	"go.uber.org/zap"
 )
 
-var lockTracesPipelinePlan sync.RWMutex
+var lockTracesPipelineSpec sync.RWMutex
+var lockMetricsPipelineSpec sync.RWMutex
 
-var tracesPipelinePlan = map[int]struct {
+type pipelineStatus struct {
 	Name    string
 	Enabled bool
-}{
+}
+
+var tracesPipelineSpec = map[int]pipelineStatus{
 	0: {
 		Name:    "signoz_tail_sampling",
 		Enabled: false,
@@ -23,26 +26,65 @@ var tracesPipelinePlan = map[int]struct {
 	},
 }
 
-func updateTracePlan(name string, enabled bool) {
-	lockTracesPipelinePlan.Lock()
-	defer lockTracesPipelinePlan.Unlock()
-	for i := 0; i < len(tracesPipelinePlan); i++ {
-		p := tracesPipelinePlan[i]
-		if p.Name == name {
-			p.Enabled = enabled
-			tracesPipelinePlan[i] = p
+var metricsPipelineSpec = map[int]pipelineStatus{
+	0: {
+		Name:    "signoz_tail_sampling",
+		Enabled: false,
+	},
+	1: {
+		Name:    "batch",
+		Enabled: true,
+	},
+}
+
+func updatePipelineSpec(signal string, name string, enabled bool) {
+	switch signal {
+	case "metrics":
+		lockMetricsPipelineSpec.Lock()
+		defer lockMetricsPipelineSpec.Unlock()
+
+		for i := 0; i < len(metricsPipelineSpec); i++ {
+			p := metricsPipelineSpec[i]
+			if p.Name == name {
+				p.Enabled = enabled
+				metricsPipelineSpec[i] = p
+			}
 		}
+	case "traces":
+		lockTracesPipelineSpec.Lock()
+		defer lockTracesPipelineSpec.Unlock()
+
+		for i := 0; i < len(tracesPipelineSpec); i++ {
+			p := tracesPipelineSpec[i]
+			if p.Name == name {
+				p.Enabled = enabled
+				tracesPipelineSpec[i] = p
+			}
+		}
+	default:
+		return
 	}
+
 }
 
 // AddToTracePipeline to enable processor in traces pipeline
-func AddToTracePipeline(processor string) {
-	updateTracePlan(processor, true)
+func AddToTracePipelineSpec(processor string) {
+	updatePipelineSpec("traces", processor, true)
 }
 
 // RemoveFromTracePipeline to remove processor from traces pipeline
-func RemoveFromTracePipeline(name string) {
-	updateTracePlan(name, false)
+func RemoveFromTracePipelineSpec(name string) {
+	updatePipelineSpec("traces", name, false)
+}
+
+// AddToMetricsPipeline to enable processor in traces pipeline
+func AddToMetricsPipelineSpec(processor string) {
+	updatePipelineSpec("metrics", processor, true)
+}
+
+// RemoveFromMetricsPipeline to remove processor from traces pipeline
+func RemoveFromMetricsPipelineSpec(name string) {
+	updatePipelineSpec("metrics", name, false)
 }
 
 func checkDuplicates(pipeline []interface{}) bool {
@@ -59,23 +101,38 @@ func checkDuplicates(pipeline []interface{}) bool {
 	return false
 }
 
-func buildTracesPipeline(pipeline []interface{}) ([]interface{}, error) {
+func buildPipeline(signal string, current []interface{}) ([]interface{}, error) {
+	var spec map[int]pipelineStatus
 
+	switch signal {
+	case "metrics":
+		spec = metricsPipelineSpec
+		lockMetricsPipelineSpec.Lock()
+		defer lockMetricsPipelineSpec.Unlock()
+	case "traces":
+		spec = tracesPipelineSpec
+		lockTracesPipelineSpec.Lock()
+		defer lockTracesPipelineSpec.Unlock()
+	default:
+		return nil, fmt.Errorf("invalid signal")
+	}
+
+	pipeline := current
 	// create a reverse map of existing config processors and their position
 	existing := map[string]int{}
-	for i, p := range pipeline {
+	for i, p := range current {
 		name := p.(string)
 		existing[name] = i
 	}
 
 	// create mapping from our tracesPipelinePlan (processors managed by us) to position in existing processors (from current config)
 	// this means, if "batch" holds position 3 in the current effective config, and 2 in our config, the map will be [2]: 3
-	plannedVsExistingMap := map[int]int{}
+	specVsExistingMap := map[int]int{}
 
 	// go through plan and map its elements to current positions in effective config
-	for i, m := range tracesPipelinePlan {
+	for i, m := range spec {
 		if loc, ok := existing[m.Name]; ok {
-			plannedVsExistingMap[i] = loc
+			specVsExistingMap[i] = loc
 		}
 	}
 
@@ -83,10 +140,10 @@ func buildTracesPipeline(pipeline []interface{}) ([]interface{}, error) {
 	inserts := 0
 
 	// go through plan again in the increasing order
-	for i := 0; i < len(tracesPipelinePlan); i++ {
-		m := tracesPipelinePlan[i]
+	for i := 0; i < len(spec); i++ {
+		m := spec[i]
 
-		if loc, ok := plannedVsExistingMap[i]; ok {
+		if loc, ok := specVsExistingMap[i]; ok {
 			// element from plan already exists in current effective config.
 
 			currentPos := loc + inserts
@@ -126,10 +183,12 @@ func buildTracesPipeline(pipeline []interface{}) ([]interface{}, error) {
 			}
 		}
 	}
+
 	if checkDuplicates(pipeline) {
 		// duplicates are most likely because the processor sequence in effective config conflicts
-		// with the planned sequence as per tracesPipelinePlan
+		// with the planned sequence as per planned pipeline
 		return pipeline, fmt.Errorf("the effective config has an unexpected processor sequence: %v", pipeline)
 	}
+
 	return pipeline, nil
 }

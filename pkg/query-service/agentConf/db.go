@@ -60,7 +60,9 @@ func (r *Repo) GetConfigVersion(ctx context.Context, typ ElementTypeDef, v int) 
 		is_valid, 
 		disabled, 
 		deploy_status, 
-		deploy_result 
+		deploy_result,
+		last_hash,
+		last_config
 		FROM agent_config_versions 
 		WHERE element_type = $1 
 		AND version = $2`, typ, v)
@@ -68,6 +70,7 @@ func (r *Repo) GetConfigVersion(ctx context.Context, typ ElementTypeDef, v int) 
 	return &c, err
 
 }
+
 func (r *Repo) GetLatestVersion(ctx context.Context, typ ElementTypeDef) (*ConfigVersion, error) {
 	var c ConfigVersion
 	err := r.db.GetContext(ctx, &c, `SELECT 
@@ -88,7 +91,6 @@ func (r *Repo) GetLatestVersion(ctx context.Context, typ ElementTypeDef) (*Confi
 			WHERE element_type=$2)`, typ, typ)
 
 	return &c, err
-
 }
 
 func (r *Repo) insertConfig(ctx context.Context, c *ConfigVersion, elements []string) (fnerr error) {
@@ -181,16 +183,18 @@ func (r *Repo) updateDeployStatus(ctx context.Context,
 	version int,
 	status string,
 	result string,
-	lastHash string) error {
+	lastHash string,
+	lastconf string) error {
 
 	updateQuery := `UPDATE agent_config_versions
 	set deploy_status = $1, 
 	deploy_result = $2,
-	last_hash = COALESCE($3, last_hash)
-	WHERE version=$4
-	AND element_type = $5`
+	last_hash = COALESCE($3, last_hash),
+	last_config = $4
+	WHERE version=$5
+	AND element_type = $6`
 
-	_, err := r.db.ExecContext(ctx, updateQuery, status, result, lastHash, version, string(elementType))
+	_, err := r.db.ExecContext(ctx, updateQuery, status, result, lastHash, lastconf, version, string(elementType))
 	if err != nil {
 		zap.S().Errorf("failed to get ingestion rule from db", err)
 		return model.BadRequestStr("failed to get ingestion rule from db")

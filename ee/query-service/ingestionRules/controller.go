@@ -103,7 +103,7 @@ func (ic *IngestionController) ApplyDropRules(ctx context.Context, postable []Po
 	zap.S().Info("applying drop rule config", cfg)
 
 	// queue up the config to push to opamp
-	err = agentConf.UpsertFilterProcessor("filter/1000", filterConfig)
+	err = agentConf.UpsertFilterProcessor(ctx, cfg.Version, filterConfig)
 	history, _ := agentConf.GetConfigHistory(ctx, agentConf.ElementTypeDropRules)
 
 	response := &IngestionRulesResponse{
@@ -204,7 +204,7 @@ func (ic *IngestionController) ApplySamplingRules(ctx context.Context, postable 
 	zap.S().Info("applying sampling rule config", cfg)
 
 	// queue up the config to push to opamp
-	err = agentConf.UpsertSamplingProcessor(ctx, cfg.Version, "tail_sampling/1000", params)
+	err = agentConf.UpsertSamplingProcessor(ctx, cfg.Version, params)
 	history, _ := agentConf.GetConfigHistory(ctx, agentConf.ElementTypeSamplingRules)
 
 	response := &IngestionRulesResponse{

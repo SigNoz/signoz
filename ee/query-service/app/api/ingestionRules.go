@@ -3,7 +3,6 @@ package api
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"net/http"
 	"strconv"
 
@@ -106,7 +105,7 @@ func (ah *APIHandler) createIngestionRule(w http.ResponseWriter, r *http.Request
 		RespondError(w, model.BadRequest(err), nil)
 		return
 	}
-	fmt.Println("req:", req)
+
 	createRule := func(ctx context.Context, postable []ingestionRules.PostableIngestionRule) (*ingestionRules.IngestionRulesResponse, *model.ApiError) {
 		if len(postable) == 0 {
 			zap.S().Warnf("found no rules in the http request, this will delete all the rules")
@@ -129,4 +128,23 @@ func (ah *APIHandler) createIngestionRule(w http.ResponseWriter, r *http.Request
 	}
 
 	ah.Respond(w, ingestionRuleResponse)
+}
+
+func (ah *APIHandler) redeployIngestionRule(w http.ResponseWriter, r *http.Request, elementType agentConf.ElementTypeDef) {
+	version, apierr := parseAgentConfigVersion(r)
+	if apierr != nil {
+		RespondError(w, apierr, nil)
+		return
+	}
+	if version == 0 {
+		RespondError(w, model.BadRequestStr("config version required"), nil)
+		return
+	}
+
+	if err := agentConf.Redeploy(context.Background(), elementType, version); err != nil {
+		RespondError(w, model.InternalError(err), nil)
+		return
+	}
+
+	ah.Respond(w, "deployment started")
 }

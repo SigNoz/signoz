@@ -100,15 +100,19 @@ func Subscribe(hash string, f func(hash string, err error)) {
 	model.ListenToConfigUpdate(hash, f)
 }
 
-func UpsertTraceProcessors(ctx context.Context, processors map[string]interface{}, callback func(string, error)) (hash string, fnerr error) {
+// inserts or updates ingestion controller processors depending
+// on the signal (metrics or traces)
+func UpsertControlProcessors(ctx context.Context, signal string, processors map[string]interface{}, callback func(string, error)) (hash string, fnerr error) {
 	// note: only processors enabled through tracesPipelinePlan will be added
 	// to pipeline. To enable or disable processors from pipeline, call
 	// AddToTracePipeline() or RemoveFromTracesPipeline() prior to calling
 	// this method
-
-	fmt.Println("processors:", processors)
-	fmt.Println("trace pipeline:", tracesPipelinePlan)
+	zap.S().Debugf("initiating deployment config", signal, processors)
 	confHash := ""
+
+	if signal != "metrics" && signal != "traces" {
+		return confHash, fmt.Errorf("invalid kind of target to deploy processor")
+	}
 
 	if opAmpServer == nil {
 		return confHash, fmt.Errorf("opamp server is down, unable to push config to agent at this moment")
@@ -127,47 +131,44 @@ func UpsertTraceProcessors(ctx context.Context, processors map[string]interface{
 		}
 
 		agentConfig := confmap.NewFromStringMap(c)
-		fmt.Println("agentConfig:", agentConfig.Get("processors"))
-
 		agentProcessors := agentConfig.Get("processors").(map[string]interface{})
 
 		for key, params := range processors {
 			agentProcessors[key] = params
 		}
 
-		fmt.Println("agentProcessors", agentProcessors)
 		updatedProcessors := map[string]interface{}{
 			"processors": agentProcessors,
 		}
 
 		updatedProcessorConf := confmap.NewFromStringMap(updatedProcessors)
-		fmt.Println("updatedProcessors", updatedProcessorConf)
 
 		// upsert changed processor parameters in config
 		err = agentConfig.Merge(updatedProcessorConf)
 		if err != nil {
 			return confHash, err
 		}
-		fmt.Println("agentConfig after:", agentConfig.Get("processors"))
+
 		// edit pipeline if processor is missing
 		service := agentConfig.Get("service")
 
-		traces := service.(map[string]interface{})["pipelines"].(map[string]interface{})["traces"]
-		currentPipeline := traces.(map[string]interface{})["processors"].([]interface{})
+		targetSpec := service.(map[string]interface{})["pipelines"].(map[string]interface{})[signal]
+		currentPipeline := targetSpec.(map[string]interface{})["processors"].([]interface{})
 
 		// merge tracesPipelinePlan with current pipeline
-		mergedPipeline, err := buildTracesPipeline(currentPipeline)
+		mergedPipeline, err := buildPipeline(signal, currentPipeline)
 		if err != nil {
-			zap.S().Errorf("failed to build traces pipeline", err)
+			zap.S().Errorf("failed to build pipeline", signal, err)
 			// improvement: should we continue for other agents?
 			return confHash, err
 		}
 
 		// add merged pipeline to the service
+
 		s := map[string]interface{}{
 			"service": map[string]interface{}{
 				"pipelines": map[string]interface{}{
-					"traces": map[string]interface{}{
+					signal: map[string]interface{}{
 						"processors": mergedPipeline,
 					},
 				},
@@ -286,7 +287,7 @@ func UpsertProcessor(ctx context.Context, processors map[string]interface{}, nam
 			return err
 		}
 
-		fmt.Println("sending new config", string(configR))
+		zap.S().Infof("sending new config", string(configR))
 		hash := sha256.New()
 		_, err = hash.Write(configR)
 		if err != nil {

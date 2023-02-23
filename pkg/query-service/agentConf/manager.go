@@ -10,6 +10,7 @@ import (
 	filterprocessor "go.signoz.io/signoz/pkg/query-service/app/opamp/otelconfig/filterprocessor"
 	tsp "go.signoz.io/signoz/pkg/query-service/app/opamp/otelconfig/tailsampler"
 	"go.uber.org/zap"
+	yaml "gopkg.in/yaml.v3"
 )
 
 var m *Manager
@@ -74,14 +75,92 @@ func StartNewVersion(ctx context.Context, eleType ElementTypeDef, elementIds []s
 	return cfg, nil
 }
 
+func Redeploy(ctx context.Context, typ ElementTypeDef, version int) error {
+	if !atomic.CompareAndSwapUint32(&m.lock, 0, 1) {
+		return fmt.Errorf("agent updater is busy")
+	}
+	defer atomic.StoreUint32(&m.lock, 0)
+
+	configVersion, err := GetConfigVersion(ctx, typ, version)
+	if err != nil {
+		zap.S().Debugf("failed to fetch config version during redeploy", err)
+		return fmt.Errorf("failed to fetch details of the config version")
+	}
+
+	if configVersion == nil || (configVersion != nil && configVersion.LastConf == "") {
+		zap.S().Debugf("config version has no conf yaml", configVersion)
+		return fmt.Errorf("the config version can not be redeployed")
+	}
+	switch typ {
+	case ElementTypeSamplingRules:
+		var config *tsp.Config
+		if err := yaml.Unmarshal([]byte(configVersion.LastConf), &config); err != nil {
+			zap.S().Errorf("failed to read last conf correctly", err)
+			return fmt.Errorf("failed to read the stored config correctly")
+		}
+
+		// merge current config with new filter params
+		processorConf := map[string]interface{}{
+			"signoz_tail_sampling": config,
+		}
+
+		opamp.AddToTracePipelineSpec("signoz_tail_sampling")
+		configHash, err := opamp.UpsertControlProcessors(ctx, "traces", processorConf, m.OnConfigUpdate)
+		if err != nil {
+			zap.S().Errorf("failed to call agent config update for trace processor:", err)
+			return fmt.Errorf("failed to deploy the config")
+		}
+
+		m.updateDeployStatus(ctx, ElementTypeSamplingRules, version, string(DeployInitiated), "Deployment started", configHash, configVersion.LastConf)
+	case ElementTypeDropRules:
+		var filterConfig *filterprocessor.Config
+		if err := yaml.Unmarshal([]byte(configVersion.LastConf), &filterConfig); err != nil {
+			zap.S().Errorf("failed to read last conf correctly", err)
+			return fmt.Errorf("failed to read the stored config correctly")
+		}
+		processorConf := map[string]interface{}{
+			"filter": filterConfig,
+		}
+
+		opamp.AddToMetricsPipelineSpec("filter")
+		configHash, err := opamp.UpsertControlProcessors(ctx, "metrics", processorConf, m.OnConfigUpdate)
+		if err != nil {
+			zap.S().Errorf("failed to call agent config update for trace processor:", err)
+			return err
+		}
+
+		m.updateDeployStatus(ctx, ElementTypeSamplingRules, version, string(DeployInitiated), "Deployment started", configHash, configVersion.LastConf)
+	}
+
+	return nil
+}
+
 // UpsertFilterProcessor updates the agent config with new filter processor params
-func UpsertFilterProcessor(key string, config *filterprocessor.Config) error {
+func UpsertFilterProcessor(ctx context.Context, version int, config *filterprocessor.Config) error {
 	if !atomic.CompareAndSwapUint32(&m.lock, 0, 1) {
 		return fmt.Errorf("agent updater is busy")
 	}
 	defer atomic.StoreUint32(&m.lock, 0)
 
 	// merge current config with new filter params
+	// merge current config with new filter params
+	processorConf := map[string]interface{}{
+		"filter": config,
+	}
+
+	opamp.AddToMetricsPipelineSpec("filter")
+	configHash, err := opamp.UpsertControlProcessors(ctx, "metrics", processorConf, m.OnConfigUpdate)
+	if err != nil {
+		zap.S().Errorf("failed to call agent config update for trace processor:", err)
+		return err
+	}
+
+	processorConfYaml, err := yaml.Marshal(config)
+	if err != nil {
+		zap.S().Warnf("unexpected error while transforming processor config to yaml", err)
+	}
+
+	m.updateDeployStatus(ctx, ElementTypeSamplingRules, version, string(DeployInitiated), "Deployment started", configHash, string(processorConfYaml))
 	return nil
 }
 
@@ -103,7 +182,7 @@ func (m *Manager) OnConfigUpdate(hash string, err error) {
 }
 
 // UpsertSamplingProcessor updates the agent config with new filter processor params
-func UpsertSamplingProcessor(ctx context.Context, version int, key string, config *tsp.Config) error {
+func UpsertSamplingProcessor(ctx context.Context, version int, config *tsp.Config) error {
 	if !atomic.CompareAndSwapUint32(&m.lock, 0, 1) {
 		return fmt.Errorf("agent updater is busy")
 	}
@@ -114,12 +193,18 @@ func UpsertSamplingProcessor(ctx context.Context, version int, key string, confi
 		"signoz_tail_sampling": config,
 	}
 
-	opamp.AddToTracePipeline("signoz_tail_sampling")
-	configHash, err := opamp.UpsertTraceProcessors(ctx, processorConf, m.OnConfigUpdate)
+	opamp.AddToTracePipelineSpec("signoz_tail_sampling")
+	configHash, err := opamp.UpsertControlProcessors(ctx, "traces", processorConf, m.OnConfigUpdate)
 	if err != nil {
 		zap.S().Errorf("failed to call agent config update for trace processor:", err)
 		return err
 	}
-	m.updateDeployStatus(ctx, ElementTypeSamplingRules, version, string(DeployInitiated), "Deployment started", configHash)
+
+	processorConfYaml, err := yaml.Marshal(config)
+	if err != nil {
+		zap.S().Warnf("unexpected error while transforming processor config to yaml", err)
+	}
+
+	m.updateDeployStatus(ctx, ElementTypeSamplingRules, version, string(DeployInitiated), "Deployment started", configHash, string(processorConfYaml))
 	return nil
 }

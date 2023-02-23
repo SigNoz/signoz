@@ -29,6 +29,7 @@ func InitDB(db *sqlx.DB) error {
 		deploy_sequence INTEGER,
 		deploy_result TEXT,
 		last_hash TEXT,
+		last_config TEXT,
 		UNIQUE(element_type, version)
 	);
 

@@ -32,6 +32,9 @@ type ConfigVersion struct {
 
 	DeployStatus DeployStatus `json:"deployStatus" db:"deploy_status"`
 	DeployResult string       `json:"deployResult" db:"deploy_result"`
+
+	LastHash string `json:"lastHash" db:"last_hash"`
+	LastConf string `json:"lastConf" db:"last_config"`
 }
 
 func NewConfigversion(typeDef ElementTypeDef) *ConfigVersion {
