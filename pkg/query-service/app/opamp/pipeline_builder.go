@@ -28,7 +28,7 @@ var tracesPipelineSpec = map[int]pipelineStatus{
 
 var metricsPipelineSpec = map[int]pipelineStatus{
 	0: {
-		Name:    "signoz_tail_sampling",
+		Name:    "filter",
 		Enabled: false,
 	},
 	1: {
