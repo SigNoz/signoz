@@ -50,14 +50,6 @@ export const extractTagKey = (tagKey: string): string => {
 	return '';
 };
 
-function convertToTagValues(values: string[]): TagValueTypes[] {
-	if (values.some((value) => value === 'true' || value === 'false')) {
-		return values.map((value) => value === 'true') as TagValueTypes[];
-	}
-
-	return values as TagValueTypes[];
-}
-
 export function onTagValueChange(values: unknown): TagValueTypes[] {
 	const stringValues = values as string[];
 
@@ -65,7 +57,7 @@ export function onTagValueChange(values: unknown): TagValueTypes[] {
 		return [];
 	}
 
-	return convertToTagValues(values as string[]);
+	return values as TagValueTypes[];
 }
 
 export function separateTagValues(
@@ -85,10 +77,9 @@ export function separateTagValues(
 	}
 
 	if (selectedKey.includes('.(number)')) {
-		const numberValues = values.filter(
-			(value) => typeof value === 'number',
-		) as number[];
-
+		const numberValues = values
+			.filter((value) => typeof value === 'number' || !Number.isNaN(Number(value)))
+			.map((value) => Number(value)) as number[];
 		return {
 			boolValues: [],
 			numberValues,
