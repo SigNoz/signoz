@@ -59,3 +59,48 @@ func (m *modelDao) GetPAT(ctx context.Context, token string) (*model.PAT, basemo
 
 	return &pats[0], nil
 }
+
+func (m *modelDao) GetPATByID(ctx context.Context, id string) (*model.PAT, basemodel.BaseApiError) {
+	pats := []model.PAT{}
+
+	if err := m.DB().Select(&pats, `SELECT * FROM personal_access_tokens WHERE id=?;`, id); err != nil {
+		return nil, model.InternalError(fmt.Errorf("failed to fetch PAT"))
+	}
+
+	if len(pats) != 1 {
+		return nil, &model.ApiError{
+			Typ: model.ErrorInternal,
+			Err: fmt.Errorf("found zero or multiple PATs with same token"),
+		}
+	}
+
+	return &pats[0], nil
+}
+
+func (m *modelDao) GetUserByPAT(ctx context.Context, token string) (*basemodel.UserPayload, basemodel.BaseApiError) {
+	users := []basemodel.UserPayload{}
+
+	query := `SELECT
+				u.id,
+				u.name,
+				u.email,
+				u.password,
+				u.created_at,
+				u.profile_picture_url,
+				u.org_id,
+				u.group_id
+			  FROM users u, personal_access_tokens p
+			  WHERE u.id = p.user_id and p.token=?;`
+
+	if err := m.DB().Select(&users, query, token); err != nil {
+		return nil, model.InternalError(fmt.Errorf("failed to fetch user from PAT, err: %v", err))
+	}
+
+	if len(users) != 1 {
+		return nil, &model.ApiError{
+			Typ: model.ErrorInternal,
+			Err: fmt.Errorf("found zero or multiple users with same PAT token"),
+		}
+	}
+	return &users[0], nil
+}

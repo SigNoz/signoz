@@ -10,7 +10,6 @@ import (
 	"net/http"
 	_ "net/http/pprof" // http profiler
 	"os"
-	"strings"
 	"time"
 
 	"github.com/gorilla/handlers"
@@ -191,7 +190,7 @@ func (s *Server) createPrivateServer(apiHandler *api.APIHandler) (*http.Server, 
 		// ip here for alert manager
 		AllowedOrigins: []string{"*"},
 		AllowedMethods: []string{"GET", "DELETE", "POST", "PUT", "PATCH"},
-		AllowedHeaders: []string{"Accept", "Authorization", "Content-Type"},
+		AllowedHeaders: []string{"Accept", "Authorization", "Content-Type", "SIGNOZ-API-KEY"},
 	})
 
 	handler := c.Handler(r)
@@ -202,50 +201,25 @@ func (s *Server) createPrivateServer(apiHandler *api.APIHandler) (*http.Server, 
 	}, nil
 }
 
-func getPATToken(r *http.Request) (string, error) {
-	patHeader := r.Header.Get("SIGNOZ-API-KEY")
-	if patHeader == "" {
-		return "", nil
-	}
-
-	authHeaderParts := strings.Fields(patHeader)
-	if len(authHeaderParts) != 2 || strings.ToLower(authHeaderParts[0]) != "bearer" {
-		return "", fmt.Errorf("PAT authorization header format must be bearer {token}")
-	}
-
-	return authHeaderParts[1], nil
-}
-
 func (s *Server) createPublicServer(apiHandler *api.APIHandler) (*http.Server, error) {
 
 	r := mux.NewRouter()
 
-	getUserFromPAT := func(r *http.Request) (*model.UserPayload, error) {
-		patToken, err := getPATToken(r)
-		if err != nil {
-			return nil, fmt.Errorf("failed to get PAT token in request headers, err: %v", err)
-		}
-		ctx := context.Background()
-		dao := apiHandler.AppDao()
-		pat, err := dao.GetPAT(ctx, patToken)
-		if err != nil {
-			return nil, fmt.Errorf("failed to fetch PAT token from DB, err %v", err)
-		}
-		user, apierr := dao.GetUser(ctx, pat.UserID)
-		if apierr != nil {
-			return nil, fmt.Errorf("failed to fetch user for PAT from DB, err: %v", apierr)
-		}
-		return user, nil
-	}
-
 	getUserFromRequest := func(r *http.Request) (*model.UserPayload, error) {
-		user, err := getUserFromPAT(r)
-		if err == nil && user != nil {
-			zap.S().Debugf("Found valid PAT user: %+v", user)
-			return user, nil
-		}
-		if err != nil {
-			zap.S().Debugf("Error while getting user for PAT: %+v", err)
+		patToken := r.Header.Get("SIGNOZ-API-KEY")
+		if len(patToken) > 0 {
+			zap.S().Debugf("Received a non-zero length PAT token")
+			ctx := context.Background()
+			dao := apiHandler.AppDao()
+
+			user, err := dao.GetUserByPAT(ctx, patToken)
+			if err == nil && user != nil {
+				zap.S().Debugf("Found valid PAT user: %+v", user)
+				return user, nil
+			}
+			if err != nil {
+				zap.S().Debugf("Error while getting user for PAT: %+v", err)
+			}
 		}
 		return baseauth.GetUserFromRequest(r)
 	}

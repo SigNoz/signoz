@@ -6,5 +6,5 @@ type PAT struct {
 	Token     string `json:"token" db:"token"`
 	Name      string `json:"name" db:"name"`
 	CreatedAt int64  `json:"createdAt" db:"created_at"`
-	ExpiresAt int64  `json:"expiresAt" db:"expires_at"`
+	ExpiresAt int64  `json:"expiresAt" db:"expires_at"` // unused as of now
 }

@@ -41,11 +41,13 @@ func (ah *APIHandler) createPAT(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// All the PATs are associated with the user creating the PAT. Hence, the permissions
+	// associated with the PAT is also equivalent to that of the user.
 	req.UserID = user.Id
 	req.CreatedAt = time.Now().Unix()
 	req.Token = generatePATToken()
 
-	zap.S().Infof("Got PAT request: %+v", req)
+	zap.S().Debugf("Got PAT request: %+v", req)
 	if apierr := ah.AppDao().CreatePAT(ctx, &req); apierr != nil {
 		RespondError(w, apierr, nil)
 		return
@@ -70,7 +72,7 @@ func (ah *APIHandler) getPATs(w http.ResponseWriter, r *http.Request) {
 		RespondError(w, apierr, nil)
 		return
 	}
-	ah.WriteJSON(w, r, pats)
+	ah.Respond(w, pats)
 }
 
 func (ah *APIHandler) deletePAT(w http.ResponseWriter, r *http.Request) {
@@ -84,7 +86,7 @@ func (ah *APIHandler) deletePAT(w http.ResponseWriter, r *http.Request) {
 		}, nil)
 		return
 	}
-	pat, apierr := ah.AppDao().GetPAT(ctx, id)
+	pat, apierr := ah.AppDao().GetPATByID(ctx, id)
 	if apierr != nil {
 		RespondError(w, apierr, nil)
 		return
@@ -96,10 +98,10 @@ func (ah *APIHandler) deletePAT(w http.ResponseWriter, r *http.Request) {
 		}, nil)
 		return
 	}
-	zap.S().Infof("Delete PAT with id: %+v", id)
+	zap.S().Debugf("Delete PAT with id: %+v", id)
 	if apierr := ah.AppDao().DeletePAT(ctx, id); apierr != nil {
 		RespondError(w, apierr, nil)
 		return
 	}
-	ah.WriteJSON(w, r, map[string]string{"data": "pat deleted successfully"})
+	ah.Respond(w, map[string]string{"data": "pat deleted successfully"})
 }
