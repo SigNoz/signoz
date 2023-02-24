@@ -373,7 +373,6 @@ func (mds *ModelDaoSqlite) GetUsersWithOpts(ctx context.Context, limit int) ([]m
 	if limit > 0 {
 		query = fmt.Sprintf("%s LIMIT %d", query, limit)
 	}
-	fmt.Println("query:", query)
 	err := mds.db.Select(&users, query)
 
 	if err != nil {
