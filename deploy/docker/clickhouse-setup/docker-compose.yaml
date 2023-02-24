@@ -33,6 +33,9 @@ x-clickhouse-depend: &clickhouse-depend
     # clickhouse-3:
     #   condition: service_healthy
 
+volumes:
+  data_clickhouse:
+  
 services:
   
   zookeeper-1:
@@ -102,6 +105,7 @@ services:
       # - ./clickhouse-storage.xml:/etc/clickhouse-server/config.d/storage.xml
       - ./data/clickhouse/:/var/lib/clickhouse/
       - ./user_scripts:/var/lib/clickhouse/user_scripts/
+
 
   # clickhouse-2:
   #   <<: *clickhouse-defaults
