@@ -110,7 +110,6 @@ function LogLiveTail({ getLogsAggregate }: Props): JSX.Element {
 			const source = LiveTail(queryParams.toString());
 			liveTailSourceRef.current = source;
 			source.onmessage = function connectionMessage(e): void {
-				console.log({ e });
 				batchLiveLog(e);
 			};
 			source.onerror = function connectionError(event: unknown): void {
@@ -124,11 +123,9 @@ function LogLiveTail({ getLogsAggregate }: Props): JSX.Element {
 					type: SET_LOADING,
 					payload: false,
 				});
-				if (event instanceof Error) {
-					notifications.error({
-						message: event.message || 'Live tail stopped due to some error.',
-					});
-				}
+				notifications.error({
+					message: 'Live tail stopped due to some error.',
+				});
 			};
 		}
 
