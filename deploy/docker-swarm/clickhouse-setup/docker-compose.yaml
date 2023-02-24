@@ -137,7 +137,7 @@ services:
         condition: on-failure
 
   query-service:
-    image: signoz/query-service:0.16.1
+    image: signoz/query-service:0.16.2
     command: ["-config=/root/config/prometheus.yml"]
     # ports:
     #   - "6060:6060"     # pprof port
@@ -166,7 +166,7 @@ services:
     <<: *clickhouse-depend
 
   frontend:
-    image: signoz/frontend:0.16.1
+    image: signoz/frontend:0.16.2
     deploy:
       restart_policy:
         condition: on-failure
