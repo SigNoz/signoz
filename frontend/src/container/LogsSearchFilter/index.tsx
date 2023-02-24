@@ -87,6 +87,10 @@ function SearchFilter({
 					type: TOGGLE_LIVE_TAIL,
 					payload: liveTail,
 				});
+				dispatch({
+					type: SET_LOADING,
+					payload: false,
+				});
 			} else {
 				const { maxTime, minTime } = globalTime;
 

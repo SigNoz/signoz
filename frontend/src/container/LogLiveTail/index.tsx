@@ -9,10 +9,13 @@ import { LiveTail } from 'api/logs/livetail';
 import dayjs from 'dayjs';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { useNotifications } from 'hooks/useNotifications';
+import getStep from 'lib/getStep';
 import { throttle } from 'lodash-es';
 import React, { useCallback, useEffect, useMemo, useRef } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
-import { Dispatch } from 'redux';
+import { connect, useDispatch, useSelector } from 'react-redux';
+import { bindActionCreators, Dispatch } from 'redux';
+import { ThunkDispatch } from 'redux-thunk';
+import { getLogsAggregate } from 'store/actions/logs/getLogsAggregate';
 import { AppState } from 'store/reducers';
 import AppActions from 'types/actions';
 import { UPDATE_AUTO_REFRESH_DISABLED } from 'types/actions/globalTime';
@@ -31,13 +34,16 @@ import { ILogsReducer } from 'types/reducer/logs';
 import { TIME_PICKER_OPTIONS } from './config';
 import { StopContainer, TimePickerCard, TimePickerSelect } from './styles';
 
-function LogLiveTail(): JSX.Element {
+function LogLiveTail({ getLogsAggregate }: Props): JSX.Element {
 	const {
 		liveTail,
 		searchFilter: { queryString },
 		liveTailStartRange,
 		logs,
+		idEnd,
+		idStart,
 	} = useSelector<AppState, ILogsReducer>((state) => state.logs);
+
 	const isDarkMode = useIsDarkMode();
 
 	const { selectedAutoRefreshInterval } = useSelector<AppState, GlobalReducer>(
@@ -58,8 +64,6 @@ function LogLiveTail(): JSX.Element {
 	};
 
 	const batchedEventsRef = useRef<ILog[]>([]);
-
-	console.log(batchedEventsRef.current);
 
 	const pushLiveLog = useCallback(() => {
 		dispatch({
@@ -98,6 +102,7 @@ function LogLiveTail(): JSX.Element {
 					  }
 					: {}),
 			});
+
 			if (liveTailSourceRef.current) {
 				liveTailSourceRef.current.close();
 			}
@@ -130,10 +135,29 @@ function LogLiveTail(): JSX.Element {
 		if (liveTail === 'STOPPED') {
 			liveTailSourceRef.current = undefined;
 		}
+		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [liveTail, queryString, notifications, dispatch]);
 
 	const handleLiveTailStart = (): void => {
 		handleLiveTail('PLAYING');
+		const startTime =
+			dayjs().subtract(liveTailStartRange, 'minute').valueOf() * 1e6;
+
+		const endTime = dayjs().valueOf() * 1e6;
+
+		getLogsAggregate({
+			timestampStart: startTime,
+			timestampEnd: endTime,
+			step: getStep({
+				start: startTime,
+				end: endTime,
+				inputFormat: 'ns',
+			}),
+			q: queryString,
+			...(idStart ? { idGt: idStart } : {}),
+			...(idEnd ? { idLt: idEnd } : {}),
+		});
+
 		if (!liveTailSourceRef.current) {
 			dispatch({
 				type: FLUSH_LOGS,
@@ -175,13 +199,28 @@ function LogLiveTail(): JSX.Element {
 		selectedAutoRefreshInterval,
 	]);
 
+	const onLiveTailStop = (): void => {
+		handleLiveTail('STOPPED');
+		dispatch({
+			type: UPDATE_AUTO_REFRESH_DISABLED,
+			payload: false,
+		});
+		dispatch({
+			type: SET_LOADING,
+			payload: false,
+		});
+		if (liveTailSourceRef.current) {
+			liveTailSourceRef.current.close();
+		}
+	};
+
 	return (
 		<TimePickerCard>
 			<Space size={0} align="center">
 				{liveTail === 'PLAYING' ? (
 					<Button
 						type="primary"
-						onClick={(): void => handleLiveTail('PAUSED')}
+						onClick={onLiveTailStop}
 						title="Pause live tail"
 						style={{ background: green[6] }}
 					>
@@ -200,11 +239,7 @@ function LogLiveTail(): JSX.Element {
 				)}
 
 				{liveTail !== 'STOPPED' && (
-					<Button
-						type="dashed"
-						onClick={(): void => handleLiveTail('STOPPED')}
-						title="Exit live tail"
-					>
+					<Button type="dashed" onClick={onLiveTailStop} title="Exit live tail">
 						<StopContainer isDarkMode={isDarkMode} />
 					</Button>
 				)}
@@ -222,4 +257,16 @@ function LogLiveTail(): JSX.Element {
 	);
 }
 
-export default LogLiveTail;
+interface DispatchProps {
+	getLogsAggregate: typeof getLogsAggregate;
+}
+
+type Props = DispatchProps;
+
+const mapDispatchToProps = (
+	dispatch: ThunkDispatch<unknown, unknown, AppActions>,
+): DispatchProps => ({
+	getLogsAggregate: bindActionCreators(getLogsAggregate, dispatch),
+});
+
+export default connect(null, mapDispatchToProps)(LogLiveTail);
