@@ -1,7 +1,8 @@
 import { DownOutlined, RightOutlined } from '@ant-design/icons';
-import { Card, Divider, notification, Typography } from 'antd';
+import { Card, Divider, Typography } from 'antd';
 import getFilters from 'api/trace/getFilters';
 import { AxiosError } from 'axios';
+import { useNotifications } from 'hooks/useNotifications';
 import React, { useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { Dispatch } from 'redux';
@@ -36,6 +37,7 @@ function PanelHeading(props: PanelHeadingProps): JSX.Element {
 		filter,
 		isFilterExclude,
 		userSelectedFilter,
+		spanKind,
 	} = useSelector<AppState, TraceReducer>((state) => state.traces);
 
 	const { name: PanelName, isOpen: IsPanelOpen } = props;
@@ -53,7 +55,7 @@ function PanelHeading(props: PanelHeadingProps): JSX.Element {
 
 	const defaultErrorMessage = 'Something went wrong';
 
-	const [notifications, NotificationElement] = notification.useNotification();
+	const { notifications } = useNotifications();
 
 	// eslint-disable-next-line sonarjs/cognitive-complexity
 	const onExpandHandler: React.MouseEventHandler<HTMLDivElement> = async (e) => {
@@ -74,6 +76,7 @@ function PanelHeading(props: PanelHeadingProps): JSX.Element {
 				getFilters: updatedFilterData,
 				other: Object.fromEntries(getprepdatedSelectedFilter),
 				isFilterExclude,
+				spanKind,
 			});
 
 			if (response.statusCode === 200) {
@@ -106,6 +109,7 @@ function PanelHeading(props: PanelHeadingProps): JSX.Element {
 						order: spansAggregate.order,
 						pageSize: spansAggregate.pageSize,
 						orderParam: spansAggregate.orderParam,
+						spanKind,
 					},
 				});
 
@@ -159,6 +163,7 @@ function PanelHeading(props: PanelHeadingProps): JSX.Element {
 				order: spansAggregate.order,
 				pageSize: spansAggregate.pageSize,
 				orderParam: spansAggregate.orderParam,
+				spanKind,
 			},
 		});
 
@@ -194,6 +199,7 @@ function PanelHeading(props: PanelHeadingProps): JSX.Element {
 				getFilters: filterToFetchData,
 				other: Object.fromEntries(updatedFilter),
 				isFilterExclude: postIsFilterExclude,
+				spanKind,
 			});
 
 			if (response.statusCode === 200 && response.payload) {
@@ -212,6 +218,7 @@ function PanelHeading(props: PanelHeadingProps): JSX.Element {
 						order: spansAggregate.order,
 						pageSize: spansAggregate.pageSize,
 						orderParam: spansAggregate.orderParam,
+						spanKind,
 					},
 				});
 
@@ -297,7 +304,6 @@ function PanelHeading(props: PanelHeadingProps): JSX.Element {
 
 	return (
 		<>
-			{NotificationElement}
 			{PanelName !== 'duration' && <Divider plain style={{ margin: 0 }} />}
 
 			<Card bordered={false}>

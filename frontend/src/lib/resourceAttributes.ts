@@ -37,7 +37,7 @@ export const convertRawQueriesToTraceSelectedTags = (
 	queries: IResourceAttributeQuery[],
 ): Tags[] =>
 	queries.map((query) => ({
-		Key: [convertMetricKeyToTrace(query.tagKey)],
+		Key: convertMetricKeyToTrace(query.tagKey),
 		Operator: convertOperatorLabelToTraceOperator(query.operator),
 		StringValues: query.tagValue,
 		NumberValues: [],

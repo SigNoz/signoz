@@ -1,4 +1,4 @@
-import { Form, notification } from 'antd';
+import { Form } from 'antd';
 import editPagerApi from 'api/channels/editPager';
 import editSlackApi from 'api/channels/editSlack';
 import editWebhookApi from 'api/channels/editWebhook';
@@ -17,6 +17,7 @@ import {
 	WebhookType,
 } from 'container/CreateAlertChannels/config';
 import FormAlertChannels from 'container/FormAlertChannels';
+import { useNotifications } from 'hooks/useNotifications';
 import history from 'lib/history';
 import React, { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -36,7 +37,7 @@ function EditAlertChannels({
 	});
 	const [savingState, setSavingState] = useState<boolean>(false);
 	const [testingState, setTestingState] = useState<boolean>(false);
-	const [notifications, NotificationElement] = notification.useNotification();
+	const { notifications } = useNotifications();
 	const { id } = useParams<{ id: string }>();
 
 	const [type, setType] = useState<ChannelType>(
@@ -281,7 +282,6 @@ function EditAlertChannels({
 				onSaveHandler,
 				testingState,
 				savingState,
-				NotificationElement,
 				title: t('page_title_edit'),
 				initialValue,
 				editing: true,

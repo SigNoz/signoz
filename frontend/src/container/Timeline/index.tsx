@@ -76,7 +76,11 @@ function Timeline({
 							},0)`}
 							key={`${interval.label + interval.percentage + index}`}
 						>
-							<text y={13} fill={isDarkMode ? 'white' : 'black'}>
+							<text
+								y={13}
+								x={index === intervals.length - 1 ? -10 : 0}
+								fill={isDarkMode ? 'white' : 'black'}
+							>
 								{interval.label}
 							</text>
 							<line

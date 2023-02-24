@@ -1,7 +1,8 @@
 /* eslint-disable react/no-unstable-nested-components */
-import { notification } from 'antd';
+
 import updateDashboardApi from 'api/dashboard/update';
 import useComponentPermission from 'hooks/useComponentPermission';
+import { useNotifications } from 'hooks/useNotifications';
 import React, { useCallback, useEffect, useState } from 'react';
 import { Layout } from 'react-grid-layout';
 import { useTranslation } from 'react-i18next';
@@ -76,7 +77,9 @@ function GridGraph(props: Props): JSX.Element {
 			const startTimestamp = Math.trunc(start);
 			const endTimestamp = Math.trunc(end);
 
-			dispatch(UpdateTimeInterval('custom', [startTimestamp, endTimestamp]));
+			if (startTimestamp !== endTimestamp) {
+				dispatch(UpdateTimeInterval('custom', [startTimestamp, endTimestamp]));
+			}
 		},
 		[dispatch],
 	);
@@ -204,7 +207,7 @@ function GridGraph(props: Props): JSX.Element {
 		[widgets, onDragSelect],
 	);
 
-	const [notifications, NotificationElement] = notification.useNotification();
+	const { notifications } = useNotifications();
 
 	const onEmptyWidgetHandler = useCallback(async () => {
 		try {
@@ -276,21 +279,18 @@ function GridGraph(props: Props): JSX.Element {
 	}, [layouts, onEmptyWidgetHandler, t, toggleAddWidget, notifications]);
 
 	return (
-		<>
-			{NotificationElement}
-			<GraphLayoutContainer
-				{...{
-					addPanelLoading,
-					layouts,
-					onAddPanelHandler,
-					onLayoutChangeHandler,
-					onLayoutSaveHandler,
-					saveLayoutState,
-					widgets,
-					setLayout,
-				}}
-			/>
-		</>
+		<GraphLayoutContainer
+			{...{
+				addPanelLoading,
+				layouts,
+				onAddPanelHandler,
+				onLayoutChangeHandler,
+				onLayoutSaveHandler,
+				saveLayoutState,
+				widgets,
+				setLayout,
+			}}
+		/>
 	);
 }
 

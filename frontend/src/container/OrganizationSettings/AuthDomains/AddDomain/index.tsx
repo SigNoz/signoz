@@ -1,10 +1,11 @@
 /* eslint-disable prefer-regex-literals */
 import { PlusOutlined } from '@ant-design/icons';
-import { Button, Form, Input, Modal, notification, Typography } from 'antd';
+import { Button, Form, Input, Modal, Typography } from 'antd';
 import { useForm } from 'antd/es/form/Form';
 import createDomainApi from 'api/SAML/postDomain';
 import { FeatureKeys } from 'constants/featureKeys';
 import useFeatureFlag from 'hooks/useFeatureFlag';
+import { useNotifications } from 'hooks/useNotifications';
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useSelector } from 'react-redux';
@@ -21,7 +22,7 @@ function AddDomain({ refetch }: Props): JSX.Element {
 
 	const { org } = useSelector<AppState, AppReducer>((state) => state.app);
 
-	const [notifications, NotificationElement] = notification.useNotification();
+	const { notifications } = useNotifications();
 
 	const onCreateHandler = async (): Promise<void> => {
 		try {
@@ -51,7 +52,6 @@ function AddDomain({ refetch }: Props): JSX.Element {
 
 	return (
 		<>
-			{NotificationElement}
 			<Container>
 				<Typography.Title level={3}>
 					{t('authenticated_domains', {

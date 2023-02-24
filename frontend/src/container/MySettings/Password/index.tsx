@@ -1,5 +1,6 @@
-import { Button, notification, Space, Typography } from 'antd';
+import { Button, Space, Typography } from 'antd';
 import changeMyPassword from 'api/user/changeMyPassword';
+import { useNotifications } from 'hooks/useNotifications';
 import { isPasswordNotValidMessage, isPasswordValid } from 'pages/SignUp/utils';
 import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -23,7 +24,7 @@ function PasswordContainer(): JSX.Element {
 		ns: 'settings',
 	});
 
-	const [notifications, NotificationElement] = notification.useNotification();
+	const { notifications } = useNotifications();
 
 	useEffect(() => {
 		if (currentPassword && !isPasswordValid(currentPassword)) {
@@ -82,7 +83,6 @@ function PasswordContainer(): JSX.Element {
 
 	return (
 		<Space direction="vertical" size="large">
-			{NotificationElement}
 			<Typography.Title level={3}>
 				{t('change_password', {
 					ns: 'settings',

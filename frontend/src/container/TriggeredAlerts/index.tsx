@@ -1,7 +1,7 @@
-import { notification } from 'antd';
 import getTriggeredApi from 'api/alerts/getTriggered';
 import Spinner from 'components/Spinner';
 import { State } from 'hooks/useFetch';
+import { useNotifications } from 'hooks/useNotifications';
 import React, { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { PayloadProps } from 'types/api/alerts/getTriggered';
@@ -17,7 +17,7 @@ function TriggeredAlerts(): JSX.Element {
 		payload: [],
 	});
 	const { t } = useTranslation(['common']);
-	const [notifications, NotificationElement] = notification.useNotification();
+	const { notifications } = useNotifications();
 
 	const fetchData = useCallback(async () => {
 		try {
@@ -69,21 +69,11 @@ function TriggeredAlerts(): JSX.Element {
 	}, [groupState.error, groupState.errorMessage, t, notifications]);
 
 	if (groupState.error) {
-		return (
-			<>
-				{NotificationElement}
-				<TriggerComponent allAlerts={[]} />
-			</>
-		);
+		return <TriggerComponent allAlerts={[]} />;
 	}
 
 	if (groupState.loading || groupState.payload === undefined) {
-		return (
-			<>
-				{NotificationElement}
-				<Spinner height="75vh" tip="Loading Alerts..." />
-			</>
-		);
+		return <Spinner height="75vh" tip="Loading Alerts..." />;
 	}
 
 	// commented the reduce() call as we no longer use /alerts/groups
@@ -95,12 +85,7 @@ function TriggeredAlerts(): JSX.Element {
 	//	return [...acc, ...curr.alerts];
 	// }, initialAlerts);
 
-	return (
-		<>
-			{NotificationElement}
-			<TriggerComponent allAlerts={groupState.payload} />
-		</>
-	);
+	return <TriggerComponent allAlerts={groupState.payload} />;
 }
 
 export default TriggeredAlerts;
