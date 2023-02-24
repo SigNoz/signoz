@@ -74,8 +74,16 @@ function LogsAggregate({ getLogsAggregate }: LogsAggregateProps): JSX.Element {
 				break;
 			}
 		}
-		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [getLogsAggregate, maxTime, minTime, liveTail]);
+	}, [
+		getLogsAggregate,
+		maxTime,
+		minTime,
+		liveTail,
+		liveTailStartRange,
+		queryString,
+		idStart,
+		idEnd,
+	]);
 
 	const graphData = useMemo(
 		() => ({
