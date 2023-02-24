@@ -27,7 +27,6 @@ beforeAll(() => {
 describe('PipelinePage', () => {
 	it('should render PipelineExpandView section', () => {
 		const handleAlert = jest.fn();
-		const setProcessorDataSource = jest.fn();
 		const setActionType = jest.fn();
 		const handleProcessorEditAction = jest.fn();
 		const { asFragment } = render(
@@ -36,8 +35,6 @@ describe('PipelinePage', () => {
 					<I18nextProvider i18n={i18n}>
 						<PipelineExpandView
 							handleAlert={handleAlert}
-							processorDataSource={[]}
-							setProcessorDataSource={setProcessorDataSource}
 							setActionType={setActionType}
 							handleProcessorEditAction={handleProcessorEditAction}
 							isActionMode="viewing-mode"

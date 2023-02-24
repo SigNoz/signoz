@@ -1,4 +1,4 @@
-import { pipelineData } from '../mocks/pipeline';
+import { pipelineMockData } from '../mocks/pipeline';
 import {
 	processorFields,
 	processorTypes,
@@ -28,33 +28,33 @@ describe('Utils testing of Pipeline Page', () => {
 	});
 
 	test('it should be check data length of pipeline', () => {
-		expect(pipelineData.length).toBe(2);
-		expect(pipelineData.length).toBeGreaterThan(0);
+		expect(pipelineMockData.length).toBe(2);
+		expect(pipelineMockData.length).toBeGreaterThan(0);
 	});
 
 	test('it should be return filtered data and perform deletion', () => {
 		const filterData = getElementFromArray(
-			pipelineData,
-			pipelineData[0],
+			pipelineMockData,
+			pipelineMockData[0],
 			'id' as never,
 		);
-		expect(pipelineData).not.toEqual(filterData);
-		expect(pipelineData[0]).not.toEqual(filterData);
+		expect(pipelineMockData).not.toEqual(filterData);
+		expect(pipelineMockData[0]).not.toEqual(filterData);
 	});
 
 	test('it should be return index data and perform deletion', () => {
 		const findRecordIndex = getRecordIndex(
-			pipelineData,
-			pipelineData[0],
+			pipelineMockData,
+			pipelineMockData[0],
 			'' as never,
 		);
-		expect(pipelineData).not.toEqual(findRecordIndex);
-		expect(pipelineData[0]).not.toEqual(findRecordIndex);
+		expect(pipelineMockData).not.toEqual(findRecordIndex);
+		expect(pipelineMockData[0]).not.toEqual(findRecordIndex);
 	});
 
 	test('it should be return shuffle data', () => {
-		const updateData = getUpdatedRow(pipelineData, 1, 1);
-		expect(pipelineData).toEqual(updateData);
+		const updateData = getUpdatedRow(pipelineMockData, 1, 1);
+		expect(pipelineMockData).toEqual(updateData);
 	});
 
 	test('it should be return modified column data', () => {
@@ -65,28 +65,28 @@ describe('Utils testing of Pipeline Page', () => {
 
 	test('it should be return modified column data', () => {
 		const findRecordIndex = getRecordIndex(
-			pipelineData,
-			pipelineData[0],
+			pipelineMockData,
+			pipelineMockData[0],
 			'name' as never,
 		);
 		const updatedPipelineData = {
-			...pipelineData[findRecordIndex],
+			...pipelineMockData[findRecordIndex],
 			name: 'updated name',
 			alias: 'changed alias',
 			filter: 'value == test',
 			tags: ['test'],
 		};
 		const editedData = getEditedDataSource(
-			pipelineData,
-			pipelineData[0],
+			pipelineMockData,
+			pipelineMockData[0],
 			'name' as never,
 			updatedPipelineData,
 		);
-		expect(pipelineData).not.toEqual(editedData);
-		expect(pipelineData.length).toEqual(editedData.length);
-		expect(pipelineData[0].name).not.toEqual(editedData[0].name);
-		expect(pipelineData[0].alias).not.toEqual(editedData[0].alias);
-		expect(pipelineData[0].alias).not.toEqual(editedData[0].alias);
-		expect(pipelineData[0].tags).not.toEqual(editedData[0].tags);
+		expect(pipelineMockData).not.toEqual(editedData);
+		expect(pipelineMockData.length).toEqual(editedData.length);
+		expect(pipelineMockData[0].name).not.toEqual(editedData[0].name);
+		expect(pipelineMockData[0].alias).not.toEqual(editedData[0].alias);
+		expect(pipelineMockData[0].alias).not.toEqual(editedData[0].alias);
+		expect(pipelineMockData[0].tags).not.toEqual(editedData[0].tags);
 	});
 });

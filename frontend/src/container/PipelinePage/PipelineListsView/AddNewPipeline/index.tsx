@@ -1,26 +1,26 @@
 import { Button, Divider, Form, Modal } from 'antd';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useSelector } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
+import { NewAddPiplineData, UpdatePipelineData } from 'store/actions';
 import { AppState } from 'store/reducers';
+import { PiplineReducerType } from 'store/reducers/pipeline';
 import AppReducer from 'types/reducer/app';
 import { v4 as uuid } from 'uuid';
 
 import { ActionMode, ActionType } from '../../Layouts';
 import { PipelineColumn } from '..';
 import { ModalButtonWrapper, ModalTitle } from '../styles';
-import { getEditedDataSource, getRecordIndex } from '../utils';
 import { renderPipelineForm } from './utils';
 
 function AddNewPipeline({
 	isActionType,
 	setActionType,
 	selectedRecord,
-	pipelineDataSource,
-	setPipelineDataSource,
 	setIsVisibleSaveButton,
 }: AddNewPipelineProps): JSX.Element {
 	const [form] = Form.useForm();
+	const dispatch = useDispatch();
 	const { t } = useTranslation('pipeline');
 	const { user } = useSelector<AppState, AppReducer>((state) => state.app);
 	const [count, setCount] = useState(3);
@@ -29,13 +29,18 @@ function AddNewPipeline({
 	const isEdit = useMemo(() => isActionType === 'edit-pipeline', [isActionType]);
 	const isAdd = useMemo(() => isActionType === 'add-pipeline', [isActionType]);
 
+	const { pipelineData } = useSelector<AppState, PiplineReducerType>(
+		(state) => state.pipeline,
+	);
+
 	useEffect(() => {
 		if (isEdit) {
 			setTagsListData(selectedRecord?.tags);
+			form.setFieldsValue(selectedRecord);
 		} else {
 			setTagsListData([]);
 		}
-	}, [isEdit, selectedRecord?.tags]);
+	}, [form, isEdit, selectedRecord, selectedRecord?.tags]);
 
 	const onFinish = (values: PipelineColumn): void => {
 		const newPipeLineData = {
@@ -59,32 +64,13 @@ function AddNewPipeline({
 		};
 
 		if (isEdit) {
-			const findRecordIndex = getRecordIndex(
-				pipelineDataSource,
-				selectedRecord,
-				'name' as never,
+			dispatch(
+				UpdatePipelineData(pipelineData, selectedRecord, values, tagsListData),
 			);
-			const updatedPipelineData = {
-				...pipelineDataSource[findRecordIndex],
-				name: values.name,
-				alias: values.alias,
-				filter: values.filter,
-				tags: tagsListData,
-			};
-
-			const editedData = getEditedDataSource(
-				pipelineDataSource,
-				selectedRecord,
-				'name' as never,
-				updatedPipelineData,
-			);
-			setPipelineDataSource(editedData as Array<PipelineColumn>);
 		} else {
+			setTagsListData([]);
 			setCount((prevState: number) => (prevState + 1) as number);
-			setPipelineDataSource(
-				(prevState: PipelineColumn[]) =>
-					[...prevState, newPipeLineData] as PipelineColumn[],
-			);
+			dispatch(NewAddPiplineData((newPipeLineData as unknown) as PipelineColumn));
 		}
 		setActionType(undefined);
 	};
@@ -118,7 +104,6 @@ function AddNewPipeline({
 			<Divider plain />
 			<Form
 				name="addNewPipeline"
-				initialValues={isEdit ? selectedRecord : {}}
 				layout="vertical"
 				style={{ marginTop: '1.25rem' }}
 				onFinish={onFinish}
@@ -151,10 +136,6 @@ interface AddNewPipelineProps {
 	isActionType: string;
 	setActionType: (actionType?: ActionType) => void;
 	selectedRecord: PipelineColumn | undefined;
-	pipelineDataSource: Array<PipelineColumn>;
-	setPipelineDataSource: (
-		value: React.SetStateAction<Array<PipelineColumn>>,
-	) => void;
 	setIsVisibleSaveButton: (actionMode: ActionMode) => void;
 }
 

@@ -6,7 +6,7 @@ import { MemoryRouter } from 'react-router-dom';
 import i18n from 'ReactI18';
 import store from 'store';
 
-import { pipelineData } from '../mocks/pipeline';
+import { pipelineMockData } from '../mocks/pipeline';
 import AddNewPipeline from '../PipelineListsView/AddNewPipeline';
 
 beforeAll(() => {
@@ -28,8 +28,7 @@ beforeAll(() => {
 describe('PipelinePage container test', () => {
 	it('should render AddNewPipeline section', () => {
 		const setActionType = jest.fn();
-		const setPipelineDataSource = jest.fn();
-		const selectedRecord = pipelineData[0];
+		const selectedRecord = pipelineMockData[0];
 		const isActionType = 'add-pipeline';
 		const { asFragment } = render(
 			<MemoryRouter>
@@ -39,8 +38,6 @@ describe('PipelinePage container test', () => {
 							isActionType={isActionType}
 							setActionType={setActionType}
 							selectedRecord={selectedRecord}
-							pipelineDataSource={pipelineData}
-							setPipelineDataSource={setPipelineDataSource}
 							setIsVisibleSaveButton={jest.fn()}
 						/>
 					</I18nextProvider>

@@ -3,7 +3,7 @@ import TextToolTip from 'components/TextToolTip';
 import React, { useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { pipelineData } from '../mocks/pipeline';
+import { pipelineMockData } from '../mocks/pipeline';
 import { ButtonContainer, CustomButton } from '../styles';
 import { ActionMode, ActionType } from '.';
 
@@ -14,7 +14,7 @@ function CreatePipelineButton({
 }: CreatePipelineButtonProps): JSX.Element {
 	const { t } = useTranslation(['pipeline']);
 
-	const isAddNewPipelineVisible = useMemo(() => pipelineData.length > 0, []);
+	const isAddNewPipelineVisible = useMemo(() => pipelineMockData.length > 0, []);
 
 	const onClickHandler = useCallback(() => {
 		setActionType(ActionType.AddPipeline);

@@ -3,13 +3,10 @@ import React from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { ActionMode } from '../Layouts';
-import { pipelineData } from '../mocks/pipeline';
-import { PipelineColumn } from '.';
 import { SaveConfigWrapper } from './styles';
 
 function SaveConfigButton({
 	setActionMode,
-	setPipelineDataSource,
 	setIsVisibleSaveButton,
 }: SaveConfigButtonTypes): JSX.Element {
 	const { t } = useTranslation('pipeline');
@@ -20,7 +17,6 @@ function SaveConfigButton({
 	};
 
 	const onCancel = (): void => {
-		setPipelineDataSource(pipelineData);
 		setActionMode(ActionMode.Viewing);
 		setIsVisibleSaveButton(undefined);
 	};
@@ -45,9 +41,6 @@ function SaveConfigButton({
 export interface SaveConfigButtonTypes {
 	setActionMode: (actionMode: ActionMode) => void;
 	setIsVisibleSaveButton: (actionMode?: ActionMode) => void;
-	setPipelineDataSource: (
-		value: React.SetStateAction<Array<PipelineColumn>>,
-	) => void;
 }
 
 export default SaveConfigButton;

@@ -33,7 +33,6 @@ const selectedProcessorData = {
 describe('PipelinePage container test', () => {
 	it('should render AddNewProcessor section', () => {
 		const setActionType = jest.fn();
-		const setProcessorDataSource = jest.fn();
 		const isActionType = 'add-processor';
 
 		const { asFragment } = render(
@@ -44,8 +43,6 @@ describe('PipelinePage container test', () => {
 							isActionType={isActionType}
 							setActionType={setActionType}
 							selectedProcessorData={selectedProcessorData}
-							processorDataSource={[]}
-							setProcessorDataSource={setProcessorDataSource}
 							setIsVisibleSaveButton={jest.fn()}
 						/>
 					</I18nextProvider>

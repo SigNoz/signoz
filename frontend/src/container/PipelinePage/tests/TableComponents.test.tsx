@@ -1,5 +1,5 @@
 import { render } from '@testing-library/react';
-import { pipelineData } from 'container/PipelinePage/mocks/pipeline';
+import { pipelineMockData } from 'container/PipelinePage/mocks/pipeline';
 import React from 'react';
 import { I18nextProvider } from 'react-i18next';
 import { Provider } from 'react-redux';
@@ -31,7 +31,7 @@ describe('PipelinePage container test', () => {
 			<MemoryRouter>
 				<Provider store={store}>
 					<I18nextProvider i18n={i18n}>
-						<TableComponents columnKey="id" record={pipelineData[0] as never} />
+						<TableComponents columnKey="id" record={pipelineMockData[0] as never} />
 					</I18nextProvider>
 				</Provider>
 			</MemoryRouter>,

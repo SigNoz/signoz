@@ -4,10 +4,18 @@ import React, { useCallback, useMemo, useState } from 'react';
 import { DndProvider } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
 import { useTranslation } from 'react-i18next';
+import { useDispatch, useSelector } from 'react-redux';
+import {
+	AddDataPipline,
+	DeletePipelineData,
+	ProcessorDataAdd,
+} from 'store/actions/pipeline';
+import { AppState } from 'store/reducers';
+import { PiplineReducerType } from 'store/reducers/pipeline';
 
 import { tableComponents } from '../config';
 import { ActionMode, ActionType } from '../Layouts';
-import { configurationVerison, pipelineData } from '../mocks/pipeline';
+import { configurationVerison } from '../mocks/pipeline';
 import AddNewPipeline from './AddNewPipeline';
 import AddNewProcessor from './AddNewProcessor';
 import { pipelineColumns } from './config';
@@ -23,7 +31,7 @@ import {
 import DragAction from './TableComponents/DragAction';
 import PipelineActions from './TableComponents/PipelineActions';
 import TableExpandIcon from './TableComponents/TableExpandIcon';
-import { getElementFromArray, getTableColumn, getUpdatedRow } from './utils';
+import { getTableColumn, getUpdatedRow } from './utils';
 
 function PipelineListsView({
 	isActionType,
@@ -31,13 +39,11 @@ function PipelineListsView({
 	isActionMode,
 	setActionMode,
 }: PipelineListsViewProps): JSX.Element {
+	const dispatch = useDispatch();
 	const { t } = useTranslation('pipeline');
-	const [pipelineDataSource, setPipelineDataSource] = useState<
-		Array<PipelineColumn>
-	>(pipelineData);
-	const [processorDataSource, setProcessorDataSource] = useState<
-		Array<ProcessorColumn>
-	>();
+	const { pipelineData } = useSelector<AppState, PiplineReducerType>(
+		(state) => state.pipeline,
+	);
 	const [activeExpRow, setActiveExpRow] = useState<Array<number>>();
 	const [selectedRecord, setSelectedRecord] = useState<PipelineColumn>();
 	const [
@@ -78,15 +84,10 @@ function PipelineListsView({
 
 	const pipelineDeleteHandler = useCallback(
 		(record: PipelineColumn) => (): void => {
-			const findElement = getElementFromArray(
-				pipelineDataSource,
-				record,
-				'orderid',
-			);
 			onDeleteClickHandler();
-			setPipelineDataSource(findElement);
+			dispatch(DeletePipelineData(pipelineData, record));
 		},
-		[onDeleteClickHandler, pipelineDataSource],
+		[pipelineData, dispatch, onDeleteClickHandler],
 	);
 
 	const handlePipelineDeleteAction = useCallback(
@@ -140,34 +141,46 @@ function PipelineListsView({
 	const updatePiplineRowData = useCallback(
 		(updatedRow: PipelineColumn[]) => (): void => {
 			setIsVisibleSaveButton(ActionMode.Editing);
-			setPipelineDataSource(updatedRow);
+			dispatch(AddDataPipline(updatedRow));
 		},
-		[setIsVisibleSaveButton, setPipelineDataSource],
+		[dispatch],
+	);
+
+	const onCancelPiplineRowData = useCallback(
+		(rawData: PipelineColumn[]) => (): void => {
+			dispatch(AddDataPipline(rawData));
+		},
+		[dispatch],
 	);
 
 	const movePipelineRow = useCallback(
 		(dragIndex: number, hoverIndex: number) => {
-			if (pipelineDataSource && isActionMode === ActionMode.Editing) {
-				const rawData = pipelineDataSource;
-				const updatedRow = getUpdatedRow(pipelineDataSource, dragIndex, hoverIndex);
+			if (pipelineData && isActionMode === ActionMode.Editing) {
+				const rawData = pipelineData;
+				const updatedRow = getUpdatedRow(pipelineData, dragIndex, hoverIndex);
 				handleAlert({
 					title: t('reorder_pipeline'),
 					descrition: t('reorder_pipeline_description'),
 					buttontext: t('reorder'),
 					onOk: updatePiplineRowData(updatedRow),
-					onCancel: (): void => setPipelineDataSource(rawData),
+					onCancel: onCancelPiplineRowData(rawData),
 				});
 			}
 		},
-		[pipelineDataSource, isActionMode, handleAlert, t, updatePiplineRowData],
+		[
+			pipelineData,
+			isActionMode,
+			handleAlert,
+			t,
+			updatePiplineRowData,
+			onCancelPiplineRowData,
+		],
 	);
 
 	const expandedRow = useCallback(
 		(): JSX.Element => (
 			<PipelineExpanView
 				handleAlert={handleAlert}
-				setProcessorDataSource={setProcessorDataSource}
-				processorDataSource={processorDataSource as []}
 				setActionType={setActionType}
 				handleProcessorEditAction={handleProcessorEditAction}
 				isActionMode={isActionMode}
@@ -180,7 +193,6 @@ function PipelineListsView({
 			handleProcessorEditAction,
 			isActionMode,
 			onDeleteClickHandler,
-			processorDataSource,
 			setActionType,
 		],
 	);
@@ -199,7 +211,7 @@ function PipelineListsView({
 				description: item.output,
 			}),
 		);
-		setProcessorDataSource(processorData);
+		dispatch(ProcessorDataAdd(processorData));
 	};
 
 	const getExpandIcon = (
@@ -232,18 +244,12 @@ function PipelineListsView({
 				isActionType={isActionType}
 				setActionType={setActionType}
 				selectedRecord={selectedRecord}
-				pipelineDataSource={pipelineDataSource}
-				setPipelineDataSource={setPipelineDataSource}
 				setIsVisibleSaveButton={setIsVisibleSaveButton}
 			/>
 			<AddNewProcessor
 				isActionType={isActionType}
 				setActionType={setActionType}
 				selectedProcessorData={selectedProcessorData}
-				processorDataSource={processorDataSource as []}
-				setProcessorDataSource={
-					setProcessorDataSource as () => Array<ProcessorColumn>
-				}
 				setIsVisibleSaveButton={setIsVisibleSaveButton}
 			/>
 			<Container>
@@ -262,7 +268,7 @@ function PipelineListsView({
 							onExpand: (expanded, record): void => getDataOnExpand(expanded, record),
 						}}
 						components={tableComponents}
-						dataSource={pipelineDataSource.map((item) => ({
+						dataSource={pipelineData.map((item) => ({
 							...item,
 							key: item.orderid,
 						}))}
@@ -283,7 +289,6 @@ function PipelineListsView({
 				{isVisibleSaveButton && (
 					<SaveConfigButton
 						setActionMode={setActionMode}
-						setPipelineDataSource={setPipelineDataSource}
 						setIsVisibleSaveButton={setIsVisibleSaveButton}
 					/>
 				)}

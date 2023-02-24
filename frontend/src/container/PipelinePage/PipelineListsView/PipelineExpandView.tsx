@@ -4,6 +4,10 @@ import React, { useCallback, useMemo } from 'react';
 import { DndProvider } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
 import { useTranslation } from 'react-i18next';
+import { useDispatch, useSelector } from 'react-redux';
+import { DeleteProcessorData, ProcessorDataAdd } from 'store/actions';
+import { AppState } from 'store/reducers';
+import { PiplineReducerType } from 'store/reducers/pipeline';
 
 import { tableComponents } from '../config';
 import { ActionMode, ActionType } from '../Layouts';
@@ -13,12 +17,10 @@ import { processorColumns } from './config';
 import { FooterButton, StyledTable } from './styles';
 import DragAction from './TableComponents/DragAction';
 import PipelineActions from './TableComponents/PipelineActions';
-import { getElementFromArray, getTableColumn, getUpdatedRow } from './utils';
+import { getTableColumn, getUpdatedRow } from './utils';
 
 function PipelineExpandView({
 	handleAlert,
-	processorDataSource,
-	setProcessorDataSource,
 	setActionType,
 	handleProcessorEditAction,
 	isActionMode,
@@ -27,14 +29,18 @@ function PipelineExpandView({
 }: PipelineExpandViewProps): JSX.Element {
 	const { t } = useTranslation(['pipeline']);
 	const isDarkMode = useIsDarkMode();
+	const dispatch = useDispatch();
+
+	const { processorData } = useSelector<AppState, PiplineReducerType>(
+		(state) => state.pipeline,
+	);
 
 	const processorDeleteHandler = useCallback(
 		(record: ProcessorColumn) => (): void => {
-			const findElement = getElementFromArray(processorDataSource, record, 'id');
 			onDeleteClickHandler();
-			setProcessorDataSource(findElement);
+			dispatch(DeleteProcessorData(processorData, record));
 		},
-		[onDeleteClickHandler, processorDataSource, setProcessorDataSource],
+		[dispatch, onDeleteClickHandler, processorData],
 	);
 
 	const handleProcessorDeleteAction = useCallback(
@@ -77,39 +83,42 @@ function PipelineExpandView({
 	}, [handleProcessorDeleteAction, handleProcessorEditAction, isActionMode]);
 
 	const updateProcessorRowData = useCallback(
-		(updatedRow: ProcessorColumn[]) => (): void => {
+		(updatedRow: Array<ProcessorColumn>) => (): void => {
 			setIsVisibleSaveButton(ActionMode.Editing);
-			setProcessorDataSource(updatedRow);
+			dispatch(ProcessorDataAdd(updatedRow));
 		},
-		[setIsVisibleSaveButton, setProcessorDataSource],
+		[dispatch, setIsVisibleSaveButton],
+	);
+
+	const onCancelPiplineExpand = useCallback(
+		(rawData: Array<ProcessorColumn>) => (): void => {
+			dispatch(ProcessorDataAdd(rawData));
+		},
+		[dispatch],
 	);
 
 	const moveProcessorRow = useCallback(
 		(dragIndex: number, hoverIndex: number) => {
-			if (processorDataSource && isActionMode === ActionMode.Editing) {
-				const rawData = processorDataSource;
-				const updatedRow = getUpdatedRow(
-					processorDataSource,
-					dragIndex,
-					hoverIndex,
-				);
+			if (processorData && isActionMode === ActionMode.Editing) {
+				const rawData = processorData;
+				const updatedRow = getUpdatedRow(processorData, dragIndex, hoverIndex);
 
 				handleAlert({
 					title: t('reorder_processor'),
 					descrition: t('reorder_processor_description'),
 					buttontext: t('reorder'),
 					onOk: updateProcessorRowData(updatedRow),
-					onCancel: (): void => setProcessorDataSource(rawData),
+					onCancel: onCancelPiplineExpand(rawData),
 				});
 			}
 		},
 		[
-			processorDataSource,
-			isActionMode,
 			handleAlert,
+			isActionMode,
+			onCancelPiplineExpand,
+			processorData,
 			t,
 			updateProcessorRowData,
-			setProcessorDataSource,
 		],
 	);
 
@@ -137,7 +146,7 @@ function PipelineExpandView({
 				columns={columns}
 				size="small"
 				components={tableComponents}
-				dataSource={processorDataSource}
+				dataSource={processorData}
 				pagination={false}
 				onRow={(
 					_record: ProcessorColumn,
@@ -157,8 +166,6 @@ function PipelineExpandView({
 
 interface PipelineExpandViewProps {
 	handleAlert: (props: AlertMessage) => void;
-	processorDataSource: Array<ProcessorColumn>;
-	setProcessorDataSource: (value: Array<ProcessorColumn> | undefined) => void;
 	setActionType: (actionType?: ActionType) => void;
 	handleProcessorEditAction: (record: ProcessorColumn) => () => void;
 	isActionMode: string;

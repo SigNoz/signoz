@@ -2,7 +2,7 @@ import { PipelineColumn } from '../PipelineListsView';
 
 export const configurationVerison = '1.0';
 
-export const pipelineData: Array<PipelineColumn> = [
+export const pipelineMockData: Array<PipelineColumn> = [
 	{
 		orderid: 1,
 		uuid: '22a588b8-cccc-4a49-94f1-2caa28271315',

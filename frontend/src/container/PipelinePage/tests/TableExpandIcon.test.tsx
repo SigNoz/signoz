@@ -1,5 +1,5 @@
 import { render } from '@testing-library/react';
-import { pipelineData } from 'container/PipelinePage/mocks/pipeline';
+import { pipelineMockData } from 'container/PipelinePage/mocks/pipeline';
 import TableExpandIcon from 'container/PipelinePage/PipelineListsView/TableComponents/TableExpandIcon';
 import React from 'react';
 import { I18nextProvider } from 'react-i18next';
@@ -14,7 +14,11 @@ describe('PipelinePage container test', () => {
 			<MemoryRouter>
 				<Provider store={store}>
 					<I18nextProvider i18n={i18n}>
-						<TableExpandIcon expanded onExpand={jest.fn()} record={pipelineData[0]} />
+						<TableExpandIcon
+							expanded
+							onExpand={jest.fn()}
+							record={pipelineMockData[0]}
+						/>
 					</I18nextProvider>
 				</Provider>
 			</MemoryRouter>,
