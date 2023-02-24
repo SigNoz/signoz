@@ -1,4 +1,4 @@
-import { Button, Input, notification, Space, Tooltip, Typography } from 'antd';
+import { Button, Input, Space, Tooltip, Typography } from 'antd';
 import getUserVersion from 'api/user/getVersion';
 import loginApi from 'api/user/login';
 import loginPrecheckApi from 'api/user/loginPrecheck';
