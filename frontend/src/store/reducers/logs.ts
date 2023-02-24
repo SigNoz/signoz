@@ -193,7 +193,7 @@ export const LogsReducer = (
 		case PUSH_LIVE_TAIL_EVENT: {
 			return {
 				...state,
-				logs: action.payload.concat(state.logs),
+				logs: action.payload.concat(state.logs).slice(0, 100),
 			};
 		}
 		case SET_LIVE_TAIL_START_TIME: {
