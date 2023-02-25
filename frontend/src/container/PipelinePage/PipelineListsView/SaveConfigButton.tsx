@@ -16,11 +16,6 @@ function SaveConfigButton({
 		setIsVisibleSaveButton(undefined);
 	};
 
-	const onCancel = (): void => {
-		setActionMode(ActionMode.Viewing);
-		setIsVisibleSaveButton(undefined);
-	};
-
 	return (
 		<SaveConfigWrapper>
 			<Button
@@ -32,7 +27,11 @@ function SaveConfigButton({
 			>
 				{t('save_configuration')}
 			</Button>
-			<Button key="cancel" style={{ borderRadius: '0.375rem' }} onClick={onCancel}>
+			<Button
+				key="cancel"
+				style={{ borderRadius: '0.375rem' }}
+				onClick={onClickHandler}
+			>
 				{t('cancel')}
 			</Button>
 		</SaveConfigWrapper>

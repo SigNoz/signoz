@@ -2,9 +2,9 @@ import { Button, Divider, Form, Modal } from 'antd';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useDispatch, useSelector } from 'react-redux';
-import { NewAddProcessorData, UpdateProcessorData } from 'store/actions';
+import { AddProcessorData, UpdateProcessorData } from 'store/actions';
 import { AppState } from 'store/reducers';
-import { PiplineReducerType } from 'store/reducers/pipeline';
+import { PipelineReducerType } from 'store/reducers/pipeline';
 
 import { ActionMode, ActionType } from '../../Layouts';
 import { ProcessorColumn } from '..';
@@ -25,7 +25,7 @@ function AddNewProcessor({
 	const [processorType, setProcessorType] = useState<string>(
 		DEFAULT_PROCESSOR_TYPE,
 	);
-	const { processorData } = useSelector<AppState, PiplineReducerType>(
+	const { processorData } = useSelector<AppState, PipelineReducerType>(
 		(state) => state.pipeline,
 	);
 
@@ -63,7 +63,7 @@ function AddNewProcessor({
 				),
 			);
 		} else {
-			dispatch(NewAddProcessorData(newProcessorData as ProcessorColumn));
+			dispatch(AddProcessorData(newProcessorData as ProcessorColumn));
 		}
 		setActionType(undefined);
 	};

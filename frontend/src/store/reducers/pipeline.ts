@@ -4,18 +4,16 @@ import {
 	ProcessorColumn,
 } from 'container/PipelinePage/PipelineListsView';
 import {
+	ADD_PIPELINE_DATA,
+	ADD_PROCESSOR_DATA,
 	DELETE_PIPELINE_DATA,
 	DELETE_PROCESSOR_DATA,
-	NEW_ADD_PIPELINE_DATA,
-	NEW_ADD_PROCESSOR_DATA,
-	Pipeline,
-	PIPELINE_DATA_ADD,
-	PROCESSOR_DATA_ADD,
+	PipelineActions,
 	UPDATE_PIPELINE_DATA,
 	UPDATE_PROCESSOR_DATA,
 } from 'types/actions/pipeline';
 
-export interface PiplineReducerType {
+export interface PipelineReducerType {
 	pipelineData: Array<PipelineColumn>;
 	processorData: Array<ProcessorColumn>;
 }
@@ -27,18 +25,16 @@ const initialState = {
 
 export const PipelineReducer = (
 	state = initialState,
-	action: Pipeline,
-): PiplineReducerType => {
+	action: PipelineActions,
+): PipelineReducerType => {
 	switch (action.type) {
-		case NEW_ADD_PIPELINE_DATA: {
-			const NewPiplineData = [...state.pipelineData, action.payload];
+		case ADD_PIPELINE_DATA: {
 			return {
 				...state,
-				pipelineData: NewPiplineData,
+				pipelineData: [...state.pipelineData, action.payload],
 			};
 		}
 
-		case PIPELINE_DATA_ADD:
 		case UPDATE_PIPELINE_DATA:
 		case DELETE_PIPELINE_DATA:
 			return {
@@ -46,15 +42,13 @@ export const PipelineReducer = (
 				pipelineData: action.payload,
 			};
 
-		case NEW_ADD_PROCESSOR_DATA: {
-			const NewProcessorData = [...state.processorData, action.payload];
+		case ADD_PROCESSOR_DATA: {
 			return {
 				...state,
-				processorData: NewProcessorData,
+				processorData: [...state.processorData, action.payload],
 			};
 		}
 
-		case PROCESSOR_DATA_ADD:
 		case UPDATE_PROCESSOR_DATA:
 		case DELETE_PROCESSOR_DATA:
 			return {

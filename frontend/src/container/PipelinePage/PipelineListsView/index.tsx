@@ -6,12 +6,12 @@ import { HTML5Backend } from 'react-dnd-html5-backend';
 import { useTranslation } from 'react-i18next';
 import { useDispatch, useSelector } from 'react-redux';
 import {
-	AddDataPipline,
 	DeletePipelineData,
-	ProcessorDataAdd,
+	UpdatePipelineData,
+	UpdateProcessorData,
 } from 'store/actions/pipeline';
 import { AppState } from 'store/reducers';
-import { PiplineReducerType } from 'store/reducers/pipeline';
+import { PipelineReducerType } from 'store/reducers/pipeline';
 
 import { tableComponents } from '../config';
 import { ActionMode, ActionType } from '../Layouts';
@@ -41,7 +41,7 @@ function PipelineListsView({
 }: PipelineListsViewProps): JSX.Element {
 	const dispatch = useDispatch();
 	const { t } = useTranslation('pipeline');
-	const { pipelineData } = useSelector<AppState, PiplineReducerType>(
+	const { pipelineData } = useSelector<AppState, PipelineReducerType>(
 		(state) => state.pipeline,
 	);
 	const [activeExpRow, setActiveExpRow] = useState<Array<number>>();
@@ -138,17 +138,18 @@ function PipelineListsView({
 		return fieldColumns;
 	}, [handlePipelineDeleteAction, handlePipelineEditAction, isActionMode]);
 
-	const updatePiplineRowData = useCallback(
+	const updatePipelineSequence = useCallback(
 		(updatedRow: PipelineColumn[]) => (): void => {
 			setIsVisibleSaveButton(ActionMode.Editing);
-			dispatch(AddDataPipline(updatedRow));
+			dispatch(UpdatePipelineData(updatedRow));
 		},
 		[dispatch],
 	);
 
-	const onCancelPiplineRowData = useCallback(
+	const onCancelPipelineRowData = useCallback(
 		(rawData: PipelineColumn[]) => (): void => {
-			dispatch(AddDataPipline(rawData));
+			console.log(rawData, 'rawData');
+			dispatch(UpdatePipelineData(rawData));
 		},
 		[dispatch],
 	);
@@ -162,18 +163,18 @@ function PipelineListsView({
 					title: t('reorder_pipeline'),
 					descrition: t('reorder_pipeline_description'),
 					buttontext: t('reorder'),
-					onOk: updatePiplineRowData(updatedRow),
-					onCancel: onCancelPiplineRowData(rawData),
+					onOk: updatePipelineSequence(updatedRow),
+					onCancel: onCancelPipelineRowData(rawData),
 				});
 			}
 		},
 		[
+			t,
 			pipelineData,
 			isActionMode,
 			handleAlert,
-			t,
-			updatePiplineRowData,
-			onCancelPiplineRowData,
+			updatePipelineSequence,
+			onCancelPipelineRowData,
 		],
 	);
 
@@ -211,7 +212,7 @@ function PipelineListsView({
 				description: item.output,
 			}),
 		);
-		dispatch(ProcessorDataAdd(processorData));
+		dispatch(UpdateProcessorData(processorData));
 	};
 
 	const getExpandIcon = (
@@ -345,8 +346,8 @@ export interface PipelineColumn {
 
 export interface ProcessorColumn {
 	id: string | number;
-	type: string;
-	processorName: string;
+	type?: string;
+	processorName?: string;
 	description?: string;
 }
 

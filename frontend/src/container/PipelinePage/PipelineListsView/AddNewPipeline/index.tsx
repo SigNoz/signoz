@@ -2,9 +2,9 @@ import { Button, Divider, Form, Modal } from 'antd';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useDispatch, useSelector } from 'react-redux';
-import { NewAddPiplineData, UpdatePipelineData } from 'store/actions';
+import { AddPipelineData, UpdatePipelineData } from 'store/actions';
 import { AppState } from 'store/reducers';
-import { PiplineReducerType } from 'store/reducers/pipeline';
+import { PipelineReducerType } from 'store/reducers/pipeline';
 import AppReducer from 'types/reducer/app';
 import { v4 as uuid } from 'uuid';
 
@@ -29,7 +29,7 @@ function AddNewPipeline({
 	const isEdit = useMemo(() => isActionType === 'edit-pipeline', [isActionType]);
 	const isAdd = useMemo(() => isActionType === 'add-pipeline', [isActionType]);
 
-	const { pipelineData } = useSelector<AppState, PiplineReducerType>(
+	const { pipelineData } = useSelector<AppState, PipelineReducerType>(
 		(state) => state.pipeline,
 	);
 
@@ -70,7 +70,7 @@ function AddNewPipeline({
 		} else {
 			setTagsListData([]);
 			setCount((prevState: number) => (prevState + 1) as number);
-			dispatch(NewAddPiplineData((newPipeLineData as unknown) as PipelineColumn));
+			dispatch(AddPipelineData((newPipeLineData as unknown) as PipelineColumn));
 		}
 		setActionType(undefined);
 	};

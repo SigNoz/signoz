@@ -10,43 +10,30 @@ import {
 import { Dispatch } from 'react';
 import AppActions from 'types/actions';
 import {
+	ADD_PIPELINE_DATA,
+	ADD_PROCESSOR_DATA,
 	DELETE_PIPELINE_DATA,
 	DELETE_PROCESSOR_DATA,
-	NEW_ADD_PIPELINE_DATA,
-	NEW_ADD_PROCESSOR_DATA,
-	PIPELINE_DATA_ADD,
-	PROCESSOR_DATA_ADD,
 	UPDATE_PIPELINE_DATA,
 	UPDATE_PROCESSOR_DATA,
 } from 'types/actions/pipeline';
 
-export const AddDataPipline = (
-	pipelineDataAdd: Array<PipelineColumn>,
+export const AddPipelineData = (
+	newAddPipelineData: PipelineColumn,
 ): ((dispatch: Dispatch<AppActions>) => void) => (
 	dispatch: Dispatch<AppActions>,
 ): void => {
 	dispatch({
-		type: PIPELINE_DATA_ADD,
-		payload: pipelineDataAdd,
-	});
-};
-
-export const NewAddPiplineData = (
-	newAddPiplineData: PipelineColumn,
-): ((dispatch: Dispatch<AppActions>) => void) => (
-	dispatch: Dispatch<AppActions>,
-): void => {
-	dispatch({
-		type: NEW_ADD_PIPELINE_DATA,
-		payload: newAddPiplineData,
+		type: ADD_PIPELINE_DATA,
+		payload: newAddPipelineData,
 	});
 };
 
 export const UpdatePipelineData = (
 	pipelineData: Array<PipelineColumn>,
-	selectedRecord: PipelineColumn | undefined,
-	values: PipelineColumn,
-	tagsListData: string[] | undefined,
+	selectedRecord?: PipelineColumn,
+	values?: PipelineColumn,
+	tagsListData?: string[],
 ): ((dispatch: Dispatch<AppActions>) => void) => (
 	dispatch: Dispatch<AppActions>,
 ): void => {
@@ -57,9 +44,9 @@ export const UpdatePipelineData = (
 	);
 	const updatedPipelineData = {
 		...pipelineData[findRecordIndex],
-		name: values.name,
-		alias: values.alias,
-		filter: values.filter,
+		name: values?.name,
+		alias: values?.alias,
+		filter: values?.filter,
 		tags: tagsListData,
 	};
 
@@ -90,33 +77,22 @@ export const DeletePipelineData = (
 	});
 };
 
-export const ProcessorDataAdd = (
-	processorData: Array<ProcessorColumn>,
-): ((dispatch: Dispatch<AppActions>) => void) => (
-	dispatch: Dispatch<AppActions>,
-): void => {
-	dispatch({
-		type: PROCESSOR_DATA_ADD,
-		payload: processorData,
-	});
-};
-
-export const NewAddProcessorData = (
+export const AddProcessorData = (
 	processorData: ProcessorColumn,
 ): ((dispatch: Dispatch<AppActions>) => void) => (
 	dispatch: Dispatch<AppActions>,
 ): void => {
 	dispatch({
-		type: NEW_ADD_PROCESSOR_DATA,
+		type: ADD_PROCESSOR_DATA,
 		payload: processorData,
 	});
 };
 
 export const UpdateProcessorData = (
 	processorData: Array<ProcessorColumn>,
-	selectedProcessorData: ProcessorColumn | undefined,
-	values: ProcessorColumn,
-	processorType: string,
+	selectedProcessorData?: ProcessorColumn,
+	values?: ProcessorColumn,
+	processorType?: string,
 ): ((dispatch: Dispatch<AppActions>) => void) => (
 	dispatch: Dispatch<AppActions>,
 ): void => {
@@ -129,9 +105,9 @@ export const UpdateProcessorData = (
 	const updatedProcessorData = {
 		...processorData[findRecordIndex],
 		type: processorType,
-		processorName: values.processorName,
-		description: values.description,
-		name: values.processorName,
+		processorName: values?.processorName,
+		description: values?.description,
+		name: values?.processorName,
 	};
 
 	const editedProcessorData = getEditedDataSource(

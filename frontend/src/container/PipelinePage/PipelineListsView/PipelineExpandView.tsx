@@ -5,9 +5,9 @@ import { DndProvider } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
 import { useTranslation } from 'react-i18next';
 import { useDispatch, useSelector } from 'react-redux';
-import { DeleteProcessorData, ProcessorDataAdd } from 'store/actions';
+import { DeleteProcessorData, UpdateProcessorData } from 'store/actions';
 import { AppState } from 'store/reducers';
-import { PiplineReducerType } from 'store/reducers/pipeline';
+import { PipelineReducerType } from 'store/reducers/pipeline';
 
 import { tableComponents } from '../config';
 import { ActionMode, ActionType } from '../Layouts';
@@ -31,7 +31,7 @@ function PipelineExpandView({
 	const isDarkMode = useIsDarkMode();
 	const dispatch = useDispatch();
 
-	const { processorData } = useSelector<AppState, PiplineReducerType>(
+	const { processorData } = useSelector<AppState, PipelineReducerType>(
 		(state) => state.pipeline,
 	);
 
@@ -85,14 +85,14 @@ function PipelineExpandView({
 	const updateProcessorRowData = useCallback(
 		(updatedRow: Array<ProcessorColumn>) => (): void => {
 			setIsVisibleSaveButton(ActionMode.Editing);
-			dispatch(ProcessorDataAdd(updatedRow));
+			dispatch(UpdateProcessorData(updatedRow));
 		},
 		[dispatch, setIsVisibleSaveButton],
 	);
 
-	const onCancelPiplineExpand = useCallback(
+	const onCancelPipelineExpand = useCallback(
 		(rawData: Array<ProcessorColumn>) => (): void => {
-			dispatch(ProcessorDataAdd(rawData));
+			dispatch(UpdateProcessorData(rawData));
 		},
 		[dispatch],
 	);
@@ -108,14 +108,14 @@ function PipelineExpandView({
 					descrition: t('reorder_processor_description'),
 					buttontext: t('reorder'),
 					onOk: updateProcessorRowData(updatedRow),
-					onCancel: onCancelPiplineExpand(rawData),
+					onCancel: onCancelPipelineExpand(rawData),
 				});
 			}
 		},
 		[
 			handleAlert,
 			isActionMode,
-			onCancelPiplineExpand,
+			onCancelPipelineExpand,
 			processorData,
 			t,
 			updateProcessorRowData,
