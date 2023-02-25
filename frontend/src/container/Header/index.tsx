@@ -98,10 +98,10 @@ function HeaderContainer(): JSX.Element {
 					/>
 
 					<Dropdown
-						onVisibleChange={onToggleHandler(setIsUserDropDownOpen)}
+						onOpenChange={onToggleHandler(setIsUserDropDownOpen)}
 						trigger={['click']}
 						overlay={menu}
-						visible={isUserDropDownOpen}
+						open={isUserDropDownOpen}
 					>
 						<Space>
 							<AvatarWrapper shape="circle">{user?.name[0]}</AvatarWrapper>

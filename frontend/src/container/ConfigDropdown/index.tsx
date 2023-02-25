@@ -41,14 +41,14 @@ function DynamicConfigDropdown({
 
 	return (
 		<Dropdown
-			onVisibleChange={onToggleHandler}
+			onOpenChange={onToggleHandler}
 			trigger={['click']}
 			overlay={
 				<Menu>
 					<HelpToolTip config={config} />
 				</Menu>
 			}
-			visible={isHelpDropDownOpen}
+			open={isHelpDropDownOpen}
 		>
 			<Space align="center">
 				<Icon
