@@ -162,12 +162,6 @@ function LogLiveTail({ getLogsAggregate }: Props): JSX.Element {
 		}
 	};
 
-	useEffect(() => {
-		if (liveTail === 'STOPPED') {
-			liveTailSourceRef.current?.close();
-		}
-	}, [liveTail]);
-
 	const OptionsPopOverContent = useMemo(
 		() => (
 			<TimePickerSelect
