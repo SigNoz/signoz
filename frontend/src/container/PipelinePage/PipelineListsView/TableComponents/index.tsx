@@ -21,7 +21,7 @@ function TableComponents({
 	if (columnKey === 'id') {
 		return <ProcessorIndexIcon size="small">{Number(record)}</ProcessorIndexIcon>;
 	}
-	if (columnKey === 'processorName') {
+	if (columnKey === 'name') {
 		return <ListDataStyle>{record}</ListDataStyle>;
 	}
 	return <span>{record}</span>;

@@ -1,14 +1,11 @@
 import { Button, Divider, Form, Modal } from 'antd';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useDispatch, useSelector } from 'react-redux';
-import { AddProcessorData, UpdateProcessorData } from 'store/actions';
-import { AppState } from 'store/reducers';
-import { PipelineReducerType } from 'store/reducers/pipeline';
 
 import { ActionMode, ActionType } from '../../Layouts';
-import { ProcessorColumn } from '..';
+import { PipelineColumn, PipelineOperators, ProcessorColumn } from '..';
 import { ModalButtonWrapper, ModalTitle } from '../styles';
+import { getEditedDataSource, getRecordIndex } from '../utils';
 import { DEFAULT_PROCESSOR_TYPE } from './config';
 import TypeSelect from './FormFields/TypeSelect';
 import { renderProcessorForm } from './utils';
@@ -18,15 +15,13 @@ function AddNewProcessor({
 	setActionType,
 	selectedProcessorData,
 	setIsVisibleSaveButton,
+	selectedPipelineDataState,
+	setSelectedPipelineDataState,
 }: AddNewProcessorProps): JSX.Element {
 	const [form] = Form.useForm();
 	const { t } = useTranslation('pipeline');
-	const dispatch = useDispatch();
 	const [processorType, setProcessorType] = useState<string>(
 		DEFAULT_PROCESSOR_TYPE,
-	);
-	const { processorData } = useSelector<AppState, PipelineReducerType>(
-		(state) => state.pipeline,
 	);
 
 	const isEdit = useMemo(() => isActionType === 'edit-processor', [
@@ -46,24 +41,39 @@ function AddNewProcessor({
 
 	const onFinish = (values: ProcessorColumn): void => {
 		const newProcessorData = {
-			id: processorData.length + 1,
+			id: (selectedPipelineDataState.operators.length + 1).toString(),
 			type: processorType,
-			processorName: values.processorName,
-			description: values.description,
-			name: values.processorName,
+			name: values.name,
+			output: values.output,
 		};
 
 		if (isEdit) {
-			dispatch(
-				UpdateProcessorData(
-					processorData,
-					selectedProcessorData,
-					values,
-					processorType,
-				),
+			const findRecordIndex = getRecordIndex(
+				selectedPipelineDataState.operators,
+				selectedProcessorData,
+				'id' as never,
 			);
+
+			const updatedProcessorData = {
+				...selectedPipelineDataState?.operators?.[findRecordIndex],
+				type: processorType,
+				name: values.name,
+				output: values.output,
+			};
+
+			const editedData = getEditedDataSource(
+				selectedPipelineDataState.operators,
+				selectedProcessorData,
+				'name' as never,
+				updatedProcessorData,
+			);
+			const modifiedProcessorData = { ...selectedPipelineDataState };
+			modifiedProcessorData.operators = editedData as PipelineOperators[];
+			setSelectedPipelineDataState(modifiedProcessorData);
 		} else {
-			dispatch(AddProcessorData(newProcessorData as ProcessorColumn));
+			const modifiedProcessorData = { ...selectedPipelineDataState };
+			modifiedProcessorData.operators.push(newProcessorData);
+			setSelectedPipelineDataState(modifiedProcessorData);
 		}
 		setActionType(undefined);
 	};
@@ -75,9 +85,9 @@ function AddNewProcessor({
 	const modalTitle = useMemo(
 		(): string =>
 			isEdit
-				? `${t('edit_processor')} ${selectedProcessorData?.processorName}`
+				? `${t('edit_processor')} ${selectedProcessorData?.name}`
 				: t('create_processor'),
-		[isEdit, selectedProcessorData?.processorName, t],
+		[isEdit, selectedProcessorData?.name, t],
 	);
 
 	const onClickHandler = useCallback(
@@ -134,6 +144,8 @@ interface AddNewProcessorProps {
 	setActionType: (actionType?: ActionType) => void;
 	selectedProcessorData: ProcessorColumn | undefined;
 	setIsVisibleSaveButton: (actionMode: ActionMode) => void;
+	selectedPipelineDataState: PipelineColumn;
+	setSelectedPipelineDataState: (data: PipelineColumn) => void;
 }
 
 export default AddNewProcessor;

@@ -28,7 +28,7 @@ const selectedProcessorData = {
 	id: 1,
 	key: 'grokusecommon',
 	type: 'grok',
-	processorName: 'grok use common',
+	name: 'grok use common',
 };
 describe('PipelinePage container test', () => {
 	it('should render AddNewProcessor section', () => {

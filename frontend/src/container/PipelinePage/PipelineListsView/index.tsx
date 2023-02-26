@@ -4,12 +4,7 @@ import React, { useCallback, useMemo, useState } from 'react';
 import { DndProvider } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
 import { useTranslation } from 'react-i18next';
-import { useDispatch, useSelector } from 'react-redux';
-import {
-	DeletePipelineData,
-	UpdatePipelineData,
-	UpdateProcessorData,
-} from 'store/actions/pipeline';
+import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
 import { PipelineReducerType } from 'store/reducers/pipeline';
 
@@ -31,7 +26,7 @@ import {
 import DragAction from './TableComponents/DragAction';
 import PipelineActions from './TableComponents/PipelineActions';
 import TableExpandIcon from './TableComponents/TableExpandIcon';
-import { getTableColumn, getUpdatedRow } from './utils';
+import { getElementFromArray, getTableColumn, getUpdatedRow } from './utils';
 
 function PipelineListsView({
 	isActionType,
@@ -39,11 +34,17 @@ function PipelineListsView({
 	isActionMode,
 	setActionMode,
 }: PipelineListsViewProps): JSX.Element {
-	const dispatch = useDispatch();
 	const { t } = useTranslation('pipeline');
 	const { pipelineData } = useSelector<AppState, PipelineReducerType>(
 		(state) => state.pipeline,
 	);
+	const [pipelineDataState, setPipelineDataState] = useState<
+		Array<PipelineColumn>
+	>(pipelineData);
+	const [
+		selectedPipelineDataState,
+		setSelectedPipelineDataState,
+	] = useState<PipelineColumn>();
 	const [activeExpRow, setActiveExpRow] = useState<Array<number>>();
 	const [selectedRecord, setSelectedRecord] = useState<PipelineColumn>();
 	const [
@@ -85,9 +86,14 @@ function PipelineListsView({
 	const pipelineDeleteHandler = useCallback(
 		(record: PipelineColumn) => (): void => {
 			onDeleteClickHandler();
-			dispatch(DeletePipelineData(pipelineData, record));
+			const filteredData = getElementFromArray(
+				pipelineDataState,
+				record,
+				'orderid',
+			);
+			setPipelineDataState(filteredData);
 		},
-		[pipelineData, dispatch, onDeleteClickHandler],
+		[pipelineDataState, onDeleteClickHandler],
 	);
 
 	const handlePipelineDeleteAction = useCallback(
@@ -141,24 +147,23 @@ function PipelineListsView({
 	const updatePipelineSequence = useCallback(
 		(updatedRow: PipelineColumn[]) => (): void => {
 			setIsVisibleSaveButton(ActionMode.Editing);
-			dispatch(UpdatePipelineData(updatedRow));
+			setPipelineDataState(updatedRow);
 		},
-		[dispatch],
+		[],
 	);
 
 	const onCancelPipelineRowData = useCallback(
 		(rawData: PipelineColumn[]) => (): void => {
-			console.log(rawData, 'rawData');
-			dispatch(UpdatePipelineData(rawData));
+			setPipelineDataState(rawData);
 		},
-		[dispatch],
+		[],
 	);
 
 	const movePipelineRow = useCallback(
 		(dragIndex: number, hoverIndex: number) => {
-			if (pipelineData && isActionMode === ActionMode.Editing) {
-				const rawData = pipelineData;
-				const updatedRow = getUpdatedRow(pipelineData, dragIndex, hoverIndex);
+			if (pipelineDataState && isActionMode === ActionMode.Editing) {
+				const rawData = pipelineDataState;
+				const updatedRow = getUpdatedRow(pipelineDataState, dragIndex, hoverIndex);
 				handleAlert({
 					title: t('reorder_pipeline'),
 					descrition: t('reorder_pipeline_description'),
@@ -170,7 +175,7 @@ function PipelineListsView({
 		},
 		[
 			t,
-			pipelineData,
+			pipelineDataState,
 			isActionMode,
 			handleAlert,
 			updatePipelineSequence,
@@ -187,6 +192,8 @@ function PipelineListsView({
 				isActionMode={isActionMode}
 				onDeleteClickHandler={onDeleteClickHandler}
 				setIsVisibleSaveButton={setIsVisibleSaveButton}
+				selectedPipelineDataState={selectedPipelineDataState as PipelineColumn}
+				setSelectedPipelineDataState={setSelectedPipelineDataState}
 			/>
 		),
 		[
@@ -194,6 +201,7 @@ function PipelineListsView({
 			handleProcessorEditAction,
 			isActionMode,
 			onDeleteClickHandler,
+			selectedPipelineDataState,
 			setActionType,
 		],
 	);
@@ -204,15 +212,7 @@ function PipelineListsView({
 			keys.push(record.orderid);
 		}
 		setActiveExpRow(keys);
-		const processorData = record.operators.map(
-			(item: PipelineOperators): ProcessorColumn => ({
-				id: item.id,
-				type: item.type,
-				processorName: item.name,
-				description: item.output,
-			}),
-		);
-		dispatch(UpdateProcessorData(processorData));
+		setSelectedPipelineDataState(record);
 	};
 
 	const getExpandIcon = (
@@ -246,12 +246,16 @@ function PipelineListsView({
 				setActionType={setActionType}
 				selectedRecord={selectedRecord}
 				setIsVisibleSaveButton={setIsVisibleSaveButton}
+				setPipelineDataState={setPipelineDataState}
+				pipelineDataState={pipelineDataState}
 			/>
 			<AddNewProcessor
 				isActionType={isActionType}
 				setActionType={setActionType}
 				selectedProcessorData={selectedProcessorData}
 				setIsVisibleSaveButton={setIsVisibleSaveButton}
+				selectedPipelineDataState={selectedPipelineDataState as PipelineColumn}
+				setSelectedPipelineDataState={setSelectedPipelineDataState}
 			/>
 			<Container>
 				<ModeAndConfiguration
@@ -269,7 +273,7 @@ function PipelineListsView({
 							onExpand: (expanded, record): void => getDataOnExpand(expanded, record),
 						}}
 						components={tableComponents}
-						dataSource={pipelineData.map((item) => ({
+						dataSource={pipelineDataState.map((item) => ({
 							...item,
 							key: item.orderid,
 						}))}
@@ -291,6 +295,8 @@ function PipelineListsView({
 					<SaveConfigButton
 						setActionMode={setActionMode}
 						setIsVisibleSaveButton={setIsVisibleSaveButton}
+						pipelineDataState={pipelineDataState}
+						setPipelineDataState={setPipelineDataState}
 					/>
 				)}
 			</Container>
@@ -318,10 +324,10 @@ export interface PipelineOperators {
 	type: string;
 	name: string;
 	id: string;
+	output: string;
 	field?: string;
 	parse_from?: string;
 	parse_to?: string;
-	output?: string;
 	pattern?: string;
 	trace_id?: ParseType;
 	span_id?: ParseType;
@@ -346,9 +352,9 @@ export interface PipelineColumn {
 
 export interface ProcessorColumn {
 	id: string | number;
-	type?: string;
-	processorName?: string;
-	description?: string;
+	type: string;
+	name: string;
+	output: string;
 }
 
 export interface AlertMessage {

@@ -31,12 +31,12 @@ export const processorFields: Array<ProcessorFormField> = [
 		id: '1',
 		fieldName: 'Name the Processor',
 		placeholder: 'processor_name_placeholder',
-		name: 'processorName',
+		name: 'name',
 	},
 	{
 		id: '2',
 		fieldName: 'Define Parsing Rules',
 		placeholder: 'processor_description_placeholder',
-		name: 'description',
+		name: 'output',
 	},
 ];

@@ -4,15 +4,16 @@ import React, { useCallback, useMemo } from 'react';
 import { DndProvider } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
 import { useTranslation } from 'react-i18next';
-import { useDispatch, useSelector } from 'react-redux';
-import { DeleteProcessorData, UpdateProcessorData } from 'store/actions';
-import { AppState } from 'store/reducers';
-import { PipelineReducerType } from 'store/reducers/pipeline';
 
 import { tableComponents } from '../config';
 import { ActionMode, ActionType } from '../Layouts';
 import { ModalFooterTitle } from '../styles';
-import { AlertMessage, ProcessorColumn } from '.';
+import {
+	AlertMessage,
+	PipelineColumn,
+	PipelineOperators,
+	ProcessorColumn,
+} from '.';
 import { processorColumns } from './config';
 import { FooterButton, StyledTable } from './styles';
 import DragAction from './TableComponents/DragAction';
@@ -26,27 +27,33 @@ function PipelineExpandView({
 	isActionMode,
 	onDeleteClickHandler,
 	setIsVisibleSaveButton,
+	selectedPipelineDataState,
+	setSelectedPipelineDataState,
 }: PipelineExpandViewProps): JSX.Element {
 	const { t } = useTranslation(['pipeline']);
 	const isDarkMode = useIsDarkMode();
-	const dispatch = useDispatch();
-
-	const { processorData } = useSelector<AppState, PipelineReducerType>(
-		(state) => state.pipeline,
-	);
 
 	const processorDeleteHandler = useCallback(
 		(record: ProcessorColumn) => (): void => {
 			onDeleteClickHandler();
-			dispatch(DeleteProcessorData(processorData, record));
+			const filteredProcessorData = selectedPipelineDataState.operators.filter(
+				(item: PipelineOperators) => item.id !== record.id,
+			);
+			const modifiedProcessorData = { ...selectedPipelineDataState };
+			modifiedProcessorData.operators = filteredProcessorData;
+			setSelectedPipelineDataState(modifiedProcessorData);
 		},
-		[dispatch, onDeleteClickHandler, processorData],
+		[
+			onDeleteClickHandler,
+			selectedPipelineDataState,
+			setSelectedPipelineDataState,
+		],
 	);
 
 	const handleProcessorDeleteAction = useCallback(
 		(record: ProcessorColumn) => (): void => {
 			handleAlert({
-				title: `${t('delete_processor')} : ${record.processorName}?`,
+				title: `${t('delete_processor')} : ${record.name}?`,
 				descrition: t('delete_processor_description'),
 				buttontext: t('delete'),
 				onOk: processorDeleteHandler(record),
@@ -82,43 +89,55 @@ function PipelineExpandView({
 		return fieldColumns;
 	}, [handleProcessorDeleteAction, handleProcessorEditAction, isActionMode]);
 
-	const updateProcessorRowData = useCallback(
-		(updatedRow: Array<ProcessorColumn>) => (): void => {
+	const reorderProcessorRowData = useCallback(
+		(updatedRow: PipelineOperators[]) => (): void => {
 			setIsVisibleSaveButton(ActionMode.Editing);
-			dispatch(UpdateProcessorData(updatedRow));
+			const modifiedProcessorData = { ...selectedPipelineDataState };
+			modifiedProcessorData.operators = updatedRow;
+			setSelectedPipelineDataState(modifiedProcessorData);
 		},
-		[dispatch, setIsVisibleSaveButton],
+		[
+			selectedPipelineDataState,
+			setIsVisibleSaveButton,
+			setSelectedPipelineDataState,
+		],
 	);
 
-	const onCancelPipelineExpand = useCallback(
-		(rawData: Array<ProcessorColumn>) => (): void => {
-			dispatch(UpdateProcessorData(rawData));
+	const onCancelProcessorReorder = useCallback(
+		() => (): void => {
+			setSelectedPipelineDataState(selectedPipelineDataState);
 		},
-		[dispatch],
+		[selectedPipelineDataState, setSelectedPipelineDataState],
 	);
 
 	const moveProcessorRow = useCallback(
 		(dragIndex: number, hoverIndex: number) => {
-			if (processorData && isActionMode === ActionMode.Editing) {
-				const rawData = processorData;
-				const updatedRow = getUpdatedRow(processorData, dragIndex, hoverIndex);
+			if (
+				selectedPipelineDataState.operators &&
+				isActionMode === ActionMode.Editing
+			) {
+				const updatedRow = getUpdatedRow(
+					selectedPipelineDataState.operators,
+					dragIndex,
+					hoverIndex,
+				);
 
 				handleAlert({
 					title: t('reorder_processor'),
 					descrition: t('reorder_processor_description'),
 					buttontext: t('reorder'),
-					onOk: updateProcessorRowData(updatedRow),
-					onCancel: onCancelPipelineExpand(rawData),
+					onOk: reorderProcessorRowData(updatedRow as PipelineOperators[]),
+					onCancel: onCancelProcessorReorder(),
 				});
 			}
 		},
 		[
+			t,
 			handleAlert,
 			isActionMode,
-			onCancelPipelineExpand,
-			processorData,
-			t,
-			updateProcessorRowData,
+			onCancelProcessorReorder,
+			selectedPipelineDataState.operators,
+			reorderProcessorRowData,
 		],
 	);
 
@@ -137,6 +156,19 @@ function PipelineExpandView({
 		}
 		return undefined;
 	}, [onClickHandler, t, isActionMode]);
+
+	const processorData = useMemo(
+		() =>
+			selectedPipelineDataState.operators.map(
+				(item: PipelineOperators): ProcessorColumn => ({
+					id: item.id,
+					type: item.type,
+					name: item.name,
+					output: item.output,
+				}),
+			),
+		[selectedPipelineDataState],
+	);
 
 	return (
 		<DndProvider backend={HTML5Backend}>
@@ -171,6 +203,8 @@ interface PipelineExpandViewProps {
 	isActionMode: string;
 	onDeleteClickHandler: VoidFunction;
 	setIsVisibleSaveButton: (actionMode: ActionMode) => void;
+	selectedPipelineDataState: PipelineColumn;
+	setSelectedPipelineDataState: (data: PipelineColumn) => void;
 }
 
 export default PipelineExpandView;
