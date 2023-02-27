@@ -1,4 +1,6 @@
 import { ExpandAltOutlined } from '@ant-design/icons';
+// const Convert = require('ansi-to-html');
+import Convert from 'ansi-to-html';
 import dayjs from 'dayjs';
 import dompurify from 'dompurify';
 // hooks
@@ -13,6 +15,8 @@ import {
 	RawLogContent,
 	RawLogViewContainer,
 } from './styles';
+
+const convert = new Convert();
 
 interface RawLogViewProps {
 	data: ILog;
@@ -34,6 +38,13 @@ function RawLogView(props: RawLogViewProps): JSX.Element {
 		onClickExpand(data);
 	}, [onClickExpand, data]);
 
+	const html = useMemo(
+		() => ({
+			__html: convert.toHtml(dompurify.sanitize(text)),
+		}),
+		[text],
+	);
+
 	return (
 		<RawLogViewContainer
 			onClick={handleClickExpand}
@@ -44,12 +55,7 @@ function RawLogView(props: RawLogViewProps): JSX.Element {
 			<ExpandIconWrapper flex="30px">
 				<ExpandAltOutlined />
 			</ExpandIconWrapper>
-			<RawLogContent
-				linesPerRow={linesPerRow}
-				dangerouslySetInnerHTML={{
-					__html: dompurify.sanitize(text),
-				}}
-			/>
+			<RawLogContent linesPerRow={linesPerRow} dangerouslySetInnerHTML={html} />
 		</RawLogViewContainer>
 	);
 }
