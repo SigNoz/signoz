@@ -26,7 +26,7 @@ export const operationPerSec = ({
 		{
 			id: '',
 			key: 'operation',
-			op: 'MATCH',
+			op: 'IN',
 			value: topLevelOperations,
 		},
 		...tagFilterItems,
@@ -56,7 +56,7 @@ export const errorPercentage = ({
 		{
 			id: '',
 			key: 'operation',
-			op: 'MATCH',
+			op: 'IN',
 			value: topLevelOperations,
 		},
 		{
@@ -78,7 +78,7 @@ export const errorPercentage = ({
 		{
 			id: '',
 			key: 'operation',
-			op: 'MATCH',
+			op: 'IN',
 			value: topLevelOperations,
 		},
 		...tagFilterItems,
