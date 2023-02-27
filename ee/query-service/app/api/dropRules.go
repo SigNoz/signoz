@@ -14,6 +14,6 @@ func (ah *APIHandler) createDropRule(w http.ResponseWriter, r *http.Request) {
 	ah.createIngestionRule(w, r, agentConf.ElementTypeDropRules)
 }
 
-func (ah *APIHandler) reployDropRules(w http.ResponseWriter, r *http.Request) {
+func (ah *APIHandler) deployDropRules(w http.ResponseWriter, r *http.Request) {
 	ah.redeployIngestionRule(w, r, agentConf.ElementTypeDropRules)
 }
