@@ -2,7 +2,26 @@
 
 exports[`PipelinePage should render PipelineExpandView section 1`] = `
 <DocumentFragment>
-  .c0 .ant-table-tbody > tr > td {
+  .c2 {
+  margin: 0.125rem;
+  padding: 0.313rem;
+  border: none;
+  font-style: normal;
+  font-weight: 400;
+  font-size: 0.75rem;
+  line-height: 1.25rem;
+}
+
+.c1 {
+  background-color: #1668DC;
+  height: 1rem;
+  width: 1rem;
+  font-size: 0.75rem;
+  line-height: 0.813rem;
+  font-weight: 400;
+}
+
+.c0 .ant-table-tbody > tr > td {
   border: none;
 }
 
@@ -24,7 +43,7 @@ exports[`PipelinePage should render PipelineExpandView section 1`] = `
         class="ant-spin-container"
       >
         <div
-          class="ant-table ant-table-small ant-table-empty"
+          class="ant-table ant-table-small"
         >
           <div
             class="ant-table-container"
@@ -40,57 +59,62 @@ exports[`PipelinePage should render PipelineExpandView section 1`] = `
                   class="ant-table-tbody"
                 >
                   <tr
-                    class="ant-table-placeholder"
+                    class="ant-table-row ant-table-row-level-0"
                     draggable="true"
                   >
                     <td
                       class="ant-table-cell"
-                      colspan="2"
+                      style="text-align: right;"
+                    >
+                      <span
+                        class="ant-avatar ant-avatar-sm ant-avatar-circle c1 css-dev-only-do-not-override-1i536d8"
+                      >
+                        <span
+                          class="ant-avatar-string"
+                          style="transform: scale(1) translateX(-50%);"
+                        >
+                          1
+                        </span>
+                      </span>
+                    </td>
+                    <td
+                      class="ant-table-cell"
+                      style="text-align: left;"
                     >
                       <div
-                        class="css-dev-only-do-not-override-1i536d8 ant-empty ant-empty-normal"
+                        class="c2"
                       >
-                        <div
-                          class="ant-empty-image"
+                        grok use common
+                      </div>
+                    </td>
+                  </tr>
+                  <tr
+                    class="ant-table-row ant-table-row-level-0"
+                    draggable="true"
+                  >
+                    <td
+                      class="ant-table-cell"
+                      style="text-align: right;"
+                    >
+                      <span
+                        class="ant-avatar ant-avatar-sm ant-avatar-circle c1 css-dev-only-do-not-override-1i536d8"
+                      >
+                        <span
+                          class="ant-avatar-string"
+                          style="transform: scale(1) translateX(-50%);"
                         >
-                          <svg
-                            height="41"
-                            viewBox="0 0 64 41"
-                            width="64"
-                            xmlns="http://www.w3.org/2000/svg"
-                          >
-                            <g
-                              fill="none"
-                              fill-rule="evenodd"
-                              transform="translate(0 1)"
-                            >
-                              <ellipse
-                                cx="32"
-                                cy="33"
-                                fill="#f5f5f5"
-                                rx="32"
-                                ry="7"
-                              />
-                              <g
-                                fill-rule="nonzero"
-                                stroke="#d9d9d9"
-                              >
-                                <path
-                                  d="M55 12.76L44.854 1.258C44.367.474 43.656 0 42.907 0H21.093c-.749 0-1.46.474-1.947 1.257L9 12.761V22h46v-9.24z"
-                                />
-                                <path
-                                  d="M41.613 15.931c0-1.605.994-2.93 2.227-2.931H55v18.137C55 33.26 53.68 35 52.05 35h-40.1C10.32 35 9 33.259 9 31.137V13h11.16c1.233 0 2.227 1.323 2.227 2.928v.022c0 1.605 1.005 2.901 2.237 2.901h14.752c1.232 0 2.237-1.308 2.237-2.913v-.007z"
-                                  fill="#fafafa"
-                                />
-                              </g>
-                            </g>
-                          </svg>
-                        </div>
-                        <div
-                          class="ant-empty-description"
-                        >
-                          No data
-                        </div>
+                          2
+                        </span>
+                      </span>
+                    </td>
+                    <td
+                      class="ant-table-cell"
+                      style="text-align: left;"
+                    >
+                      <div
+                        class="c2"
+                      >
+                        rename auth
                       </div>
                     </td>
                   </tr>

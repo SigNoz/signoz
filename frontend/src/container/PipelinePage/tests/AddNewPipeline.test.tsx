@@ -39,6 +39,8 @@ describe('PipelinePage container test', () => {
 							setActionType={setActionType}
 							selectedRecord={selectedRecord}
 							setIsVisibleSaveButton={jest.fn()}
+							setCurrPipelineData={jest.fn()}
+							currPipelineData={pipelineMockData}
 						/>
 					</I18nextProvider>
 				</Provider>

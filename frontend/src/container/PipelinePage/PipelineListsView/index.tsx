@@ -67,11 +67,6 @@ function PipelineListsView({
 		[modal, t],
 	);
 
-	const onDeleteClickHandler = useCallback(
-		() => setIsVisibleSaveButton(ActionMode.Editing),
-		[setIsVisibleSaveButton],
-	);
-
 	const handlePipelineEditAction = useCallback(
 		(record: PipelineColumn) => (): void => {
 			setActionType(ActionType.EditPipeline);
@@ -82,11 +77,11 @@ function PipelineListsView({
 
 	const pipelineDeleteHandler = useCallback(
 		(record: PipelineColumn) => (): void => {
-			onDeleteClickHandler();
+			setIsVisibleSaveButton(ActionMode.Editing);
 			const filteredData = getElementFromArray(currPipelineData, record, 'uuid');
 			setCurrPipelineData(filteredData);
 		},
-		[currPipelineData, onDeleteClickHandler],
+		[currPipelineData],
 	);
 
 	const handlePipelineDeleteAction = useCallback(
@@ -196,21 +191,16 @@ function PipelineListsView({
 				setActionType={setActionType}
 				handleProcessorEditAction={handleProcessorEditAction}
 				isActionMode={isActionMode}
-				onDeleteClickHandler={onDeleteClickHandler}
 				setIsVisibleSaveButton={setIsVisibleSaveButton}
 				selectedPipelineDataState={selectedPipelineDataState as PipelineColumn}
 				setSelectedPipelineDataState={setSelectedPipelineDataState}
 				processorData={processorData}
-				setCurrPipelineData={setCurrPipelineData}
-				currPipelineData={currPipelineData}
 			/>
 		),
 		[
 			handleAlert,
 			handleProcessorEditAction,
 			isActionMode,
-			onDeleteClickHandler,
-			currPipelineData,
 			processorData,
 			selectedPipelineDataState,
 			setActionType,
@@ -252,8 +242,16 @@ function PipelineListsView({
 	const onSaveHandler = useCallback((): void => {
 		setActionMode(ActionMode.Viewing);
 		setIsVisibleSaveButton(undefined);
-		setPrevPipelineData(currPipelineData);
-	}, [currPipelineData, setActionMode]);
+		const modifiedPipelineData = currPipelineData.map((item: PipelineColumn) => {
+			const pipelineData = item as PipelineColumn;
+			if (item.uuid === selectedPipelineDataState?.uuid) {
+				pipelineData.operators = selectedPipelineDataState.operators;
+			}
+			return pipelineData;
+		});
+		setCurrPipelineData(modifiedPipelineData);
+		setPrevPipelineData(modifiedPipelineData);
+	}, [currPipelineData, selectedPipelineDataState, setActionMode]);
 
 	const onCancelHandler = useCallback((): void => {
 		setActionMode(ActionMode.Viewing);
@@ -280,8 +278,6 @@ function PipelineListsView({
 				setIsVisibleSaveButton={setIsVisibleSaveButton}
 				selectedPipelineDataState={selectedPipelineDataState as PipelineColumn}
 				setSelectedPipelineDataState={setSelectedPipelineDataState}
-				setCurrPipelineData={setCurrPipelineData}
-				currPipelineData={currPipelineData}
 			/>
 			<Container>
 				<ModeAndConfiguration

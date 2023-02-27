@@ -17,8 +17,6 @@ function AddNewProcessor({
 	setIsVisibleSaveButton,
 	selectedPipelineDataState,
 	setSelectedPipelineDataState,
-	setCurrPipelineData,
-	currPipelineData,
 }: AddNewProcessorProps): JSX.Element {
 	const [form] = Form.useForm();
 	const { t } = useTranslation('pipeline');
@@ -69,29 +67,13 @@ function AddNewProcessor({
 				'name' as never,
 				updatedProcessorData,
 			);
-			const modifiedPipelineData = currPipelineData.map((item) => {
-				const pipelineData = item;
-				if (item.uuid === selectedPipelineDataState.uuid) {
-					pipelineData.operators = editedData as PipelineOperators[];
-				}
-				return pipelineData;
-			});
 			const modifiedProcessorData = { ...selectedPipelineDataState };
 			modifiedProcessorData.operators = editedData as PipelineOperators[];
 			setSelectedPipelineDataState(modifiedProcessorData);
-			setCurrPipelineData(modifiedPipelineData);
 		} else {
-			const modifiedPipelineData = currPipelineData.map((item: PipelineColumn) => {
-				const pipelineData = item;
-				if (item.uuid === selectedPipelineDataState.uuid) {
-					pipelineData.operators.push(newProcessorData);
-				}
-				return pipelineData;
-			});
 			const modifiedProcessorData = { ...selectedPipelineDataState };
 			modifiedProcessorData.operators.push(newProcessorData);
 			setSelectedPipelineDataState(modifiedProcessorData);
-			setCurrPipelineData(modifiedPipelineData);
 		}
 		setActionType(undefined);
 	};
@@ -164,10 +146,6 @@ interface AddNewProcessorProps {
 	setIsVisibleSaveButton: (actionMode: ActionMode) => void;
 	selectedPipelineDataState: PipelineColumn;
 	setSelectedPipelineDataState: (data: PipelineColumn) => void;
-	setCurrPipelineData: (
-		value: React.SetStateAction<Array<PipelineColumn>>,
-	) => void;
-	currPipelineData: Array<PipelineColumn>;
 }
 
 export default AddNewProcessor;

@@ -6,6 +6,7 @@ import { MemoryRouter } from 'react-router-dom';
 import i18n from 'ReactI18';
 import store from 'store';
 
+import { pipelineMockData } from '../mocks/pipeline';
 import PipelineExpandView from '../PipelineListsView/PipelineExpandView';
 
 beforeAll(() => {
@@ -38,8 +39,10 @@ describe('PipelinePage', () => {
 							setActionType={setActionType}
 							handleProcessorEditAction={handleProcessorEditAction}
 							isActionMode="viewing-mode"
-							onDeleteClickHandler={jest.fn()}
 							setIsVisibleSaveButton={jest.fn()}
+							selectedPipelineDataState={pipelineMockData[0]}
+							setSelectedPipelineDataState={jest.fn()}
+							processorData={pipelineMockData[0].operators}
 						/>
 					</I18nextProvider>
 				</Provider>

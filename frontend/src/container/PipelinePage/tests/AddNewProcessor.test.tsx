@@ -6,6 +6,7 @@ import { MemoryRouter } from 'react-router-dom';
 import i18n from 'ReactI18';
 import store from 'store';
 
+import { pipelineMockData } from '../mocks/pipeline';
 import AddNewProcessor from '../PipelineListsView/AddNewProcessor';
 
 beforeAll(() => {
@@ -26,9 +27,9 @@ beforeAll(() => {
 
 const selectedProcessorData = {
 	id: 1,
-	key: 'grokusecommon',
 	type: 'grok',
 	name: 'grok use common',
+	output: 'grokusecommon',
 };
 describe('PipelinePage container test', () => {
 	it('should render AddNewProcessor section', () => {
@@ -44,6 +45,8 @@ describe('PipelinePage container test', () => {
 							setActionType={setActionType}
 							selectedProcessorData={selectedProcessorData}
 							setIsVisibleSaveButton={jest.fn()}
+							selectedPipelineDataState={pipelineMockData[0]}
+							setSelectedPipelineDataState={jest.fn()}
 						/>
 					</I18nextProvider>
 				</Provider>

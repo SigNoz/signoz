@@ -2,7 +2,17 @@
 
 exports[`PipelinePage container test should render PipelineListsView section 1`] = `
 <DocumentFragment>
-  .c0 {
+  .c2 {
+  margin: 0.125rem;
+  padding: 0.313rem;
+  border: none;
+  font-style: normal;
+  font-weight: 400;
+  font-size: 0.75rem;
+  line-height: 1.25rem;
+}
+
+.c0 {
   margin-top: 3rem;
 }
 
@@ -112,7 +122,7 @@ exports[`PipelinePage container test should render PipelineListsView section 1`]
                     >
                       <tr
                         class="ant-table-row ant-table-row-level-0"
-                        data-row-key="1"
+                        data-row-key="22a588b8-cccc-4a49-94f1-2caa28271315"
                         draggable="true"
                       >
                         <td
@@ -159,9 +169,11 @@ exports[`PipelinePage container test should render PipelineListsView section 1`]
                           class="ant-table-cell"
                           style="text-align: left;"
                         >
-                          <span>
+                          <div
+                            class="c2"
+                          >
                             Apache common parser
-                          </span>
+                          </div>
                         </td>
                         <td
                           class="ant-table-cell"
@@ -207,7 +219,7 @@ exports[`PipelinePage container test should render PipelineListsView section 1`]
                       </tr>
                       <tr
                         class="ant-table-row ant-table-row-level-0"
-                        data-row-key="2"
+                        data-row-key="f58ce70c-5f41-48bc-949d-a822e2409257"
                         draggable="true"
                       >
                         <td
@@ -254,9 +266,11 @@ exports[`PipelinePage container test should render PipelineListsView section 1`]
                           class="ant-table-cell"
                           style="text-align: left;"
                         >
-                          <span>
+                          <div
+                            class="c2"
+                          >
                             myservice trace parser
-                          </span>
+                          </div>
                         </td>
                         <td
                           class="ant-table-cell"
