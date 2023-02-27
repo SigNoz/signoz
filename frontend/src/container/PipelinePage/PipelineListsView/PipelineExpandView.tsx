@@ -29,8 +29,8 @@ function PipelineExpandView({
 	setIsVisibleSaveButton,
 	selectedPipelineDataState,
 	setSelectedPipelineDataState,
-	pipelineDataState,
-	setPipelineDataState,
+	currPipelineData,
+	setCurrPipelineData,
 	processorData,
 }: PipelineExpandViewProps): JSX.Element {
 	const { t } = useTranslation(['pipeline']);
@@ -42,25 +42,23 @@ function PipelineExpandView({
 			const filteredProcessorData = selectedPipelineDataState.operators.filter(
 				(item: PipelineOperators) => item.id !== record.id,
 			);
-			const modifiedPipelineData = pipelineDataState.map(
-				(item: PipelineColumn) => {
-					const pipelineData = item;
-					if (item.orderid === selectedPipelineDataState.orderid) {
-						pipelineData.operators = filteredProcessorData;
-					}
-					return pipelineData;
-				},
-			);
+			const modifiedPipelineData = currPipelineData.map((item: PipelineColumn) => {
+				const pipelineData = item;
+				if (item.uuid === selectedPipelineDataState.uuid) {
+					pipelineData.operators = filteredProcessorData;
+				}
+				return pipelineData;
+			});
 			const modifiedProcessorData = { ...selectedPipelineDataState };
 			modifiedProcessorData.operators = filteredProcessorData;
 			setSelectedPipelineDataState(modifiedProcessorData);
-			setPipelineDataState(modifiedPipelineData);
+			setCurrPipelineData(modifiedPipelineData);
 		},
 		[
 			onDeleteClickHandler,
-			pipelineDataState,
+			currPipelineData,
 			selectedPipelineDataState,
-			setPipelineDataState,
+			setCurrPipelineData,
 			setSelectedPipelineDataState,
 		],
 	);
@@ -107,25 +105,23 @@ function PipelineExpandView({
 	const reorderProcessorRowData = useCallback(
 		(updatedRow: PipelineOperators[]) => (): void => {
 			setIsVisibleSaveButton(ActionMode.Editing);
-			const modifiedPipelineData = pipelineDataState.map(
-				(item: PipelineColumn) => {
-					const pipelineData = item;
-					if (item.orderid === selectedPipelineDataState.orderid) {
-						pipelineData.operators = updatedRow;
-					}
-					return pipelineData;
-				},
-			);
+			const modifiedPipelineData = currPipelineData.map((item: PipelineColumn) => {
+				const pipelineData = item;
+				if (item.uuid === selectedPipelineDataState.uuid) {
+					pipelineData.operators = updatedRow;
+				}
+				return pipelineData;
+			});
 			const modifiedProcessorData = { ...selectedPipelineDataState };
 			modifiedProcessorData.operators = updatedRow;
 			setSelectedPipelineDataState(modifiedProcessorData);
-			setPipelineDataState(modifiedPipelineData);
+			setCurrPipelineData(modifiedPipelineData);
 		},
 		[
-			pipelineDataState,
+			currPipelineData,
 			selectedPipelineDataState,
 			setIsVisibleSaveButton,
-			setPipelineDataState,
+			setCurrPipelineData,
 			setSelectedPipelineDataState,
 		],
 	);
@@ -133,12 +129,12 @@ function PipelineExpandView({
 	const onCancelProcessorReorder = useCallback(
 		() => (): void => {
 			setSelectedPipelineDataState(selectedPipelineDataState);
-			setPipelineDataState(pipelineDataState);
+			setCurrPipelineData(currPipelineData);
 		},
 		[
-			pipelineDataState,
+			currPipelineData,
 			selectedPipelineDataState,
-			setPipelineDataState,
+			setCurrPipelineData,
 			setSelectedPipelineDataState,
 		],
 	);
@@ -225,8 +221,8 @@ interface PipelineExpandViewProps {
 	setIsVisibleSaveButton: (actionMode: ActionMode) => void;
 	selectedPipelineDataState: PipelineColumn;
 	setSelectedPipelineDataState: (data: PipelineColumn) => void;
-	pipelineDataState: Array<PipelineColumn>;
-	setPipelineDataState: (data: Array<PipelineColumn>) => void;
+	currPipelineData: Array<PipelineColumn>;
+	setCurrPipelineData: (data: Array<PipelineColumn>) => void;
 	processorData: Array<ProcessorColumn> | undefined;
 }
 

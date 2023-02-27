@@ -3,7 +3,6 @@ import { DashboardActions } from './dashboard';
 import { GlobalTimeAction } from './globalTime';
 import { LogsActions } from './logs';
 import { MetricsActions } from './metrics';
-import { PipelineActions } from './pipeline';
 import { TraceActions } from './trace';
 
 type AppActions =
@@ -12,7 +11,6 @@ type AppActions =
 	| GlobalTimeAction
 	| MetricsActions
 	| TraceActions
-	| LogsActions
-	| PipelineActions;
+	| LogsActions;
 
 export default AppActions;

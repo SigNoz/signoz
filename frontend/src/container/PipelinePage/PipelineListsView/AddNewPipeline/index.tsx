@@ -17,8 +17,8 @@ function AddNewPipeline({
 	setActionType,
 	selectedRecord,
 	setIsVisibleSaveButton,
-	setPipelineDataState,
-	pipelineDataState,
+	setCurrPipelineData,
+	currPipelineData,
 }: AddNewPipelineProps): JSX.Element {
 	const [form] = Form.useForm();
 	const { t } = useTranslation('pipeline');
@@ -61,12 +61,12 @@ function AddNewPipeline({
 
 		if (isEdit) {
 			const findRecordIndex = getRecordIndex(
-				pipelineDataState,
+				currPipelineData,
 				selectedRecord,
 				'name' as never,
 			);
 			const updatedPipelineData = {
-				...pipelineDataState[findRecordIndex],
+				...currPipelineData[findRecordIndex],
 				name: values.name,
 				alias: values.alias,
 				filter: values.filter,
@@ -74,16 +74,16 @@ function AddNewPipeline({
 			};
 
 			const editedPipelineData = getEditedDataSource(
-				pipelineDataState,
+				currPipelineData,
 				selectedRecord,
 				'name' as never,
 				updatedPipelineData,
 			);
-			setPipelineDataState(editedPipelineData as Array<PipelineColumn>);
+			setCurrPipelineData(editedPipelineData as Array<PipelineColumn>);
 		} else {
 			setTagsListData([]);
 			setCount((prevState: number) => (prevState + 1) as number);
-			setPipelineDataState(
+			setCurrPipelineData(
 				(prevState: PipelineColumn[]) =>
 					[...prevState, newPipeLineData] as PipelineColumn[],
 			);
@@ -153,10 +153,10 @@ interface AddNewPipelineProps {
 	setActionType: (actionType?: ActionType) => void;
 	selectedRecord: PipelineColumn | undefined;
 	setIsVisibleSaveButton: (actionMode: ActionMode) => void;
-	setPipelineDataState: (
+	setCurrPipelineData: (
 		value: React.SetStateAction<Array<PipelineColumn>>,
 	) => void;
-	pipelineDataState: Array<PipelineColumn>;
+	currPipelineData: Array<PipelineColumn>;
 }
 
 export default AddNewPipeline;

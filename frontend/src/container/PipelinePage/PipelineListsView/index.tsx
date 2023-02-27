@@ -4,14 +4,10 @@ import React, { useCallback, useMemo, useState } from 'react';
 import { DndProvider } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
 import { useTranslation } from 'react-i18next';
-import { useDispatch, useSelector } from 'react-redux';
-import { SavePipelineData } from 'store/actions';
-import { AppState } from 'store/reducers';
-import { PipelineReducerType } from 'store/reducers/pipeline';
 
 import { tableComponents } from '../config';
 import { ActionMode, ActionType } from '../Layouts';
-import { configurationVerison } from '../mocks/pipeline';
+import { configurationVerison, pipelineMockData } from '../mocks/pipeline';
 import AddNewPipeline from './AddNewPipeline';
 import AddNewProcessor from './AddNewProcessor';
 import { pipelineColumns } from './config';
@@ -36,26 +32,25 @@ function PipelineListsView({
 	setActionMode,
 }: PipelineListsViewProps): JSX.Element {
 	const { t } = useTranslation('pipeline');
-	const dispatch = useDispatch();
-	const { pipelineData } = useSelector<AppState, PipelineReducerType>(
-		(state) => state.pipeline,
-	);
-	const [pipelineDataState, setPipelineDataState] = useState<
+	const [modal, contextHolder] = Modal.useModal();
+
+	const [prevPipelineData, setPrevPipelineData] = useState<
 		Array<PipelineColumn>
-	>(pipelineData);
+	>(pipelineMockData);
+	const [currPipelineData, setCurrPipelineData] = useState<
+		Array<PipelineColumn>
+	>(pipelineMockData);
 	const [
 		selectedPipelineDataState,
 		setSelectedPipelineDataState,
 	] = useState<PipelineColumn>();
-	const [activeExpRow, setActiveExpRow] = useState<Array<number>>();
+	const [activeExpRow, setActiveExpRow] = useState<Array<string>>();
 	const [selectedRecord, setSelectedRecord] = useState<PipelineColumn>();
 	const [
 		selectedProcessorData,
 		setSelectedProcessorData,
 	] = useState<ProcessorColumn>();
 	const [isVisibleSaveButton, setIsVisibleSaveButton] = useState<string>();
-
-	const [modal, contextHolder] = Modal.useModal();
 
 	const handleAlert = useCallback(
 		({ title, descrition, buttontext, onCancel, onOk }: AlertMessage) => {
@@ -88,14 +83,10 @@ function PipelineListsView({
 	const pipelineDeleteHandler = useCallback(
 		(record: PipelineColumn) => (): void => {
 			onDeleteClickHandler();
-			const filteredData = getElementFromArray(
-				pipelineDataState,
-				record,
-				'orderid',
-			);
-			setPipelineDataState(filteredData);
+			const filteredData = getElementFromArray(currPipelineData, record, 'uuid');
+			setCurrPipelineData(filteredData);
 		},
-		[pipelineDataState, onDeleteClickHandler],
+		[currPipelineData, onDeleteClickHandler],
 	);
 
 	const handlePipelineDeleteAction = useCallback(
@@ -149,23 +140,23 @@ function PipelineListsView({
 	const updatePipelineSequence = useCallback(
 		(updatedRow: PipelineColumn[]) => (): void => {
 			setIsVisibleSaveButton(ActionMode.Editing);
-			setPipelineDataState(updatedRow);
+			setCurrPipelineData(updatedRow);
 		},
 		[],
 	);
 
 	const onCancelPipelineRowData = useCallback(
 		(rawData: PipelineColumn[]) => (): void => {
-			setPipelineDataState(rawData);
+			setCurrPipelineData(rawData);
 		},
 		[],
 	);
 
 	const movePipelineRow = useCallback(
 		(dragIndex: number, hoverIndex: number) => {
-			if (pipelineDataState && isActionMode === ActionMode.Editing) {
-				const rawData = pipelineDataState;
-				const updatedRow = getUpdatedRow(pipelineDataState, dragIndex, hoverIndex);
+			if (currPipelineData && isActionMode === ActionMode.Editing) {
+				const rawData = currPipelineData;
+				const updatedRow = getUpdatedRow(currPipelineData, dragIndex, hoverIndex);
 				handleAlert({
 					title: t('reorder_pipeline'),
 					descrition: t('reorder_pipeline_description'),
@@ -177,7 +168,7 @@ function PipelineListsView({
 		},
 		[
 			t,
-			pipelineDataState,
+			currPipelineData,
 			isActionMode,
 			handleAlert,
 			updatePipelineSequence,
@@ -210,8 +201,8 @@ function PipelineListsView({
 				selectedPipelineDataState={selectedPipelineDataState as PipelineColumn}
 				setSelectedPipelineDataState={setSelectedPipelineDataState}
 				processorData={processorData}
-				setPipelineDataState={setPipelineDataState}
-				pipelineDataState={pipelineDataState}
+				setCurrPipelineData={setCurrPipelineData}
+				currPipelineData={currPipelineData}
 			/>
 		),
 		[
@@ -219,7 +210,7 @@ function PipelineListsView({
 			handleProcessorEditAction,
 			isActionMode,
 			onDeleteClickHandler,
-			pipelineDataState,
+			currPipelineData,
 			processorData,
 			selectedPipelineDataState,
 			setActionType,
@@ -229,7 +220,7 @@ function PipelineListsView({
 	const getDataOnExpand = (expanded: boolean, record: PipelineColumn): void => {
 		const keys = [];
 		if (expanded) {
-			keys.push(record.orderid);
+			keys.push(record.uuid);
 		}
 		setActiveExpRow(keys);
 		setSelectedPipelineDataState(record);
@@ -261,16 +252,15 @@ function PipelineListsView({
 	const onSaveHandler = useCallback((): void => {
 		setActionMode(ActionMode.Viewing);
 		setIsVisibleSaveButton(undefined);
-		setPipelineDataState(pipelineDataState);
-		dispatch(SavePipelineData(pipelineDataState));
-	}, [dispatch, pipelineDataState, setActionMode]);
+		setPrevPipelineData(currPipelineData);
+	}, [currPipelineData, setActionMode]);
 
 	const onCancelHandler = useCallback((): void => {
 		setActionMode(ActionMode.Viewing);
 		setIsVisibleSaveButton(undefined);
-		setPipelineDataState(pipelineData);
+		setCurrPipelineData(prevPipelineData);
 		setActiveExpRow([]);
-	}, [pipelineData, setActionMode]);
+	}, [prevPipelineData, setActionMode]);
 
 	return (
 		<div>
@@ -280,8 +270,8 @@ function PipelineListsView({
 				setActionType={setActionType}
 				selectedRecord={selectedRecord}
 				setIsVisibleSaveButton={setIsVisibleSaveButton}
-				setPipelineDataState={setPipelineDataState}
-				pipelineDataState={pipelineDataState}
+				setCurrPipelineData={setCurrPipelineData}
+				currPipelineData={currPipelineData}
 			/>
 			<AddNewProcessor
 				isActionType={isActionType}
@@ -290,8 +280,8 @@ function PipelineListsView({
 				setIsVisibleSaveButton={setIsVisibleSaveButton}
 				selectedPipelineDataState={selectedPipelineDataState as PipelineColumn}
 				setSelectedPipelineDataState={setSelectedPipelineDataState}
-				setPipelineDataState={setPipelineDataState}
-				pipelineDataState={pipelineDataState}
+				setCurrPipelineData={setCurrPipelineData}
+				currPipelineData={currPipelineData}
 			/>
 			<Container>
 				<ModeAndConfiguration
@@ -309,9 +299,9 @@ function PipelineListsView({
 							onExpand: (expanded, record): void => getDataOnExpand(expanded, record),
 						}}
 						components={tableComponents}
-						dataSource={pipelineDataState.map((item) => ({
+						dataSource={currPipelineData.map((item) => ({
 							...item,
-							key: item.orderid,
+							key: item.uuid,
 						}))}
 						onRow={(
 							_record: PipelineColumn,
