@@ -1,4 +1,4 @@
-import { Card } from 'antd';
+import { Card, Form } from 'antd';
 import styled from 'styled-components';
 
 export const FormWrapper = styled(Card)`
@@ -13,4 +13,10 @@ export const ButtonContainer = styled.div`
 	display: flex;
 	justify-content: center;
 	align-items: center;
+`;
+
+export const FormContainer = styled(Form)`
+	& .ant-form-item {
+		margin-bottom: 0px;
+	}
 `;
