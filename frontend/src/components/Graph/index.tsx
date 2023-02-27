@@ -76,22 +76,22 @@ Tooltip.positioners.customPositioner = function (
 		scales: { x, y },
 	} = this.chart;
 
-	const rightmostWidth =
-		this.width +
-		x.getPixelForValue(Number(x.getValueForPixel(eventPosition.x))) +
-		20;
+	const valueForPixelOnX = Number(x.getValueForPixel(eventPosition.x));
+	const valueForPixelonY = Number(y.getValueForPixel(eventPosition.y));
+
+	const rightmostWidth = this.width + x.getPixelForValue(valueForPixelOnX) + 20;
 
 	if (rightmostWidth > width) {
 		return {
-			x: x.getPixelForValue(Number(x.getValueForPixel(eventPosition.x))) - 20,
-			y: y.getPixelForValue(Number(y.getValueForPixel(eventPosition.y))) + 10,
+			x: x.getPixelForValue(valueForPixelOnX) - 20,
+			y: y.getPixelForValue(valueForPixelonY) + 10,
 			xAlign: 'right',
 			yAlign: 'top',
 		};
 	}
 	return {
-		x: x.getPixelForValue(Number(x.getValueForPixel(eventPosition.x))) + 20,
-		y: y.getPixelForValue(Number(y.getValueForPixel(eventPosition.y))) + 10,
+		x: x.getPixelForValue(valueForPixelOnX) + 20,
+		y: y.getPixelForValue(valueForPixelonY) + 10,
 		xAlign: 'left',
 		yAlign: 'top',
 	};
