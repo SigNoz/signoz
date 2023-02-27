@@ -10,6 +10,7 @@ import (
 	"go.signoz.io/signoz/ee/query-service/license"
 	baseapp "go.signoz.io/signoz/pkg/query-service/app"
 	baseint "go.signoz.io/signoz/pkg/query-service/interfaces"
+	basemodel "go.signoz.io/signoz/pkg/query-service/model"
 	rules "go.signoz.io/signoz/pkg/query-service/rules"
 	"go.signoz.io/signoz/pkg/query-service/version"
 )
@@ -150,5 +151,11 @@ func (ah *APIHandler) RegisterRoutes(router *mux.Router) {
 
 func (ah *APIHandler) getVersion(w http.ResponseWriter, r *http.Request) {
 	version := version.GetVersion()
-	ah.WriteJSON(w, r, map[string]string{"version": version, "ee": "Y"})
+	versionResponse := basemodel.GetVersionResponse{
+		Version:        version,
+		EE:             "Y",
+		SetupCompleted: ah.SetupCompleted,
+	}
+
+	ah.WriteJSON(w, r, versionResponse)
 }

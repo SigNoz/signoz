@@ -19,6 +19,7 @@ type Queries interface {
 	GetUser(ctx context.Context, id string) (*model.UserPayload, *model.ApiError)
 	GetUserByEmail(ctx context.Context, email string) (*model.UserPayload, *model.ApiError)
 	GetUsers(ctx context.Context) ([]model.UserPayload, *model.ApiError)
+	GetUsersWithOpts(ctx context.Context, limit int) ([]model.UserPayload, *model.ApiError)
 
 	GetGroup(ctx context.Context, id string) (*model.Group, *model.ApiError)
 	GetGroupByName(ctx context.Context, name string) (*model.Group, *model.ApiError)
