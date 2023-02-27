@@ -4,7 +4,8 @@ import React, { useCallback, useMemo, useState } from 'react';
 import { DndProvider } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
 import { useTranslation } from 'react-i18next';
-import { useSelector } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
+import { SavePipelineData } from 'store/actions';
 import { AppState } from 'store/reducers';
 import { PipelineReducerType } from 'store/reducers/pipeline';
 
@@ -35,6 +36,7 @@ function PipelineListsView({
 	setActionMode,
 }: PipelineListsViewProps): JSX.Element {
 	const { t } = useTranslation('pipeline');
+	const dispatch = useDispatch();
 	const { pipelineData } = useSelector<AppState, PipelineReducerType>(
 		(state) => state.pipeline,
 	);
@@ -183,6 +185,19 @@ function PipelineListsView({
 		],
 	);
 
+	const processorData = useMemo(
+		() =>
+			selectedPipelineDataState?.operators.map(
+				(item: PipelineOperators): ProcessorColumn => ({
+					id: item.id,
+					type: item.type,
+					name: item.name,
+					output: item.output,
+				}),
+			),
+		[selectedPipelineDataState],
+	);
+
 	const expandedRow = useCallback(
 		(): JSX.Element => (
 			<PipelineExpanView
@@ -194,6 +209,9 @@ function PipelineListsView({
 				setIsVisibleSaveButton={setIsVisibleSaveButton}
 				selectedPipelineDataState={selectedPipelineDataState as PipelineColumn}
 				setSelectedPipelineDataState={setSelectedPipelineDataState}
+				processorData={processorData}
+				setPipelineDataState={setPipelineDataState}
+				pipelineDataState={pipelineDataState}
 			/>
 		),
 		[
@@ -201,6 +219,8 @@ function PipelineListsView({
 			handleProcessorEditAction,
 			isActionMode,
 			onDeleteClickHandler,
+			pipelineDataState,
+			processorData,
 			selectedPipelineDataState,
 			setActionType,
 		],
@@ -238,6 +258,20 @@ function PipelineListsView({
 		return undefined;
 	}, [isActionMode, onClickHandler, t]);
 
+	const onSaveHandler = useCallback((): void => {
+		setActionMode(ActionMode.Viewing);
+		setIsVisibleSaveButton(undefined);
+		setPipelineDataState(pipelineDataState);
+		dispatch(SavePipelineData(pipelineDataState));
+	}, [dispatch, pipelineDataState, setActionMode]);
+
+	const onCancelHandler = useCallback((): void => {
+		setActionMode(ActionMode.Viewing);
+		setIsVisibleSaveButton(undefined);
+		setPipelineDataState(pipelineData);
+		setActiveExpRow([]);
+	}, [pipelineData, setActionMode]);
+
 	return (
 		<div>
 			{contextHolder}
@@ -256,6 +290,8 @@ function PipelineListsView({
 				setIsVisibleSaveButton={setIsVisibleSaveButton}
 				selectedPipelineDataState={selectedPipelineDataState as PipelineColumn}
 				setSelectedPipelineDataState={setSelectedPipelineDataState}
+				setPipelineDataState={setPipelineDataState}
+				pipelineDataState={pipelineDataState}
 			/>
 			<Container>
 				<ModeAndConfiguration
@@ -293,10 +329,8 @@ function PipelineListsView({
 				</DndProvider>
 				{isVisibleSaveButton && (
 					<SaveConfigButton
-						setActionMode={setActionMode}
-						setIsVisibleSaveButton={setIsVisibleSaveButton}
-						pipelineDataState={pipelineDataState}
-						setPipelineDataState={setPipelineDataState}
+						onSaveHandler={onSaveHandler}
+						onCancelHandler={onCancelHandler}
 					/>
 				)}
 			</Container>
