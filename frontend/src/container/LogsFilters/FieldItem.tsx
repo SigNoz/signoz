@@ -35,18 +35,13 @@ function FieldItem({
 		if (isHovered) {
 			return (
 				<Popover content={<Typography>{iconHoverText}</Typography>}>
-					<Button
-						size="small"
-						type="text"
-						icon={buttonIcon}
-						onClick={onClickHandler}
-					/>
+					<Button size="small" type="text" icon={buttonIcon} />
 				</Popover>
 			);
 		}
 
 		return null;
-	}, [buttonIcon, iconHoverText, isHovered, isLoading, onClickHandler]);
+	}, [buttonIcon, iconHoverText, isHovered, isLoading]);
 
 	const onMouseHoverHandler = useCallback(
 		(value: boolean) => (): void => {
@@ -60,6 +55,7 @@ function FieldItem({
 			onMouseEnter={onMouseHoverHandler(true)}
 			onMouseLeave={onMouseHoverHandler(false)}
 			isDarkMode={isDarkMode}
+			onClick={onClickHandler}
 		>
 			<Typography style={ICON_STYLE.PLUS}>{name}</Typography>
 

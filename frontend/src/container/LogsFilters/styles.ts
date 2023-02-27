@@ -21,6 +21,7 @@ export const Field = styled.div<{ isDarkMode: boolean }>`
 	align-items: center;
 	&:hover {
 		background: ${({ isDarkMode }): string => (isDarkMode ? grey[7] : '#ddd')};
+		cursor: pointer;
 	}
 `;
 
