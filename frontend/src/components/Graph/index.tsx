@@ -67,6 +67,36 @@ Chart.register(
 	annotationPlugin,
 );
 
+Tooltip.positioners.customPositioner = function (
+	elements,
+	eventPosition,
+): false | any {
+	const {
+		chartArea: { width },
+		scales: { x, y },
+	} = this.chart;
+
+	const rightmostWidth =
+		this.width +
+		x.getPixelForValue(Number(x.getValueForPixel(eventPosition.x))) +
+		20;
+
+	if (rightmostWidth > width) {
+		return {
+			x: x.getPixelForValue(Number(x.getValueForPixel(eventPosition.x))) - 20,
+			y: y.getPixelForValue(Number(y.getValueForPixel(eventPosition.y))) + 10,
+			xAlign: 'right',
+			yAlign: 'top',
+		};
+	}
+	return {
+		x: x.getPixelForValue(Number(x.getValueForPixel(eventPosition.x))) + 20,
+		y: y.getPixelForValue(Number(y.getValueForPixel(eventPosition.y))) + 10,
+		xAlign: 'left',
+		yAlign: 'top',
+	};
+};
+
 function Graph({
 	animate = true,
 	data,
@@ -177,6 +207,7 @@ function Graph({
 								return 'rgba(255, 255, 255, 0.75)';
 							},
 						},
+						position: 'customPositioner',
 					},
 					[dragSelectPluginId]: createDragSelectPluginOptions(
 						!!onDragSelect,
@@ -322,6 +353,12 @@ function Graph({
 			<LegendsContainer id={name} />
 		</div>
 	);
+}
+
+declare module 'chart.js' {
+	interface TooltipPositionerMap {
+		customPositioner: TooltipPositionerFunction<ChartType>;
+	}
 }
 
 type CustomChartOptions = ChartOptions & {
