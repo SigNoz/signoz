@@ -159,9 +159,9 @@ function NewWidget({
 	]);
 
 	const setGraphHandler = (type: ITEMS): void => {
-		const url = new URL(window.location.href);
-		url.searchParams.set('graphType', type);
-		window.history.replaceState({}, '', url);
+		const params = new URLSearchParams(search);
+		params.set('graphType', type);
+		history.push({ search: params.toString() });
 		setGraphType(type);
 	};
 

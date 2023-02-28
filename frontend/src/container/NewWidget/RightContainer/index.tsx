@@ -42,10 +42,13 @@ function RightContainer({
 			<Select
 				onChange={(value: ITEMS): void => setGraphHandler(value)}
 				value={selectedGraph}
-				style={{ width: '100%' }}
+				style={{ width: '100%', marginBottom: 24 }}
 			>
-				<Option value="VALUE">Value</Option>
-				<Option value="TIME_SERIES">Time Series</Option>
+				{GraphTypes.map((item) => (
+					<Option key={item.name} value={item.name}>
+						{item.display}
+					</Option>
+				))}
 			</Select>
 			<Title>Panel Attributes</Title>
 
