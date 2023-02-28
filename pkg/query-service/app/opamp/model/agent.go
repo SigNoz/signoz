@@ -21,6 +21,10 @@ const (
 	AgentStatusDisconnected
 )
 
+// set in agent description when agent is capable of supporting
+// lb exporter configuration. values: 1 (true) or 0 (false)
+const lbExporterFlag = "capabilities.lbexporter"
+
 type Agent struct {
 	ID              string      `json:"agentId" yaml:"agentId" db:"agent_id"`
 	StartedAt       time.Time   `json:"startedAt" yaml:"startedAt" db:"started_at"`
@@ -29,6 +33,12 @@ type Agent struct {
 	CurrentStatus   AgentStatus `json:"currentStatus" yaml:"currentStatus" db:"current_status"`
 	remoteConfig    *protobufs.AgentRemoteConfig
 	Status          *protobufs.AgentToServer
+
+	// can this agent be load balancer
+	CanLB bool
+
+	// is this agent setup as load balancer
+	IsLb bool
 
 	conn      types.Connection
 	connMutex sync.Mutex
@@ -66,6 +76,29 @@ func (agent *Agent) UpdateStatus(statusMsg *protobufs.AgentToServer, response *p
 	agent.mux.Lock()
 	defer agent.mux.Unlock()
 	agent.processStatusUpdate(statusMsg, response)
+}
+
+// extracts lb exporter support flag from agent description. the flag
+// is used to decide if lb exporter can be enabled on the agent.
+func extractLbFlag(agentDescr *protobufs.AgentDescription) bool {
+
+	if agentDescr == nil {
+		return false
+	}
+
+	if len(agentDescr.NonIdentifyingAttributes) > 0 {
+		for _, kv := range agentDescr.NonIdentifyingAttributes {
+			anyvalue, ok := kv.Value.Value.(*protobufs.AnyValue_StringValue)
+			if !ok {
+				continue
+			}
+			if kv.Key == lbExporterFlag && anyvalue.StringValue == "1" {
+				// agent can support load balancer config
+				return true
+			}
+		}
+	}
+	return false
 }
 
 func (agent *Agent) updateAgentDescription(newStatus *protobufs.AgentToServer) (agentDescrChanged bool) {
@@ -115,6 +148,11 @@ func (agent *Agent) updateAgentDescription(newStatus *protobufs.AgentToServer) (
 			}
 		}
 	}
+
+	if agentDescrChanged {
+		agent.CanLB = extractLbFlag(newStatus.AgentDescription)
+	}
+
 	return agentDescrChanged
 }
 

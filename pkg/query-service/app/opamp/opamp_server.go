@@ -73,6 +73,7 @@ func (srv *Server) onMessage(conn types.Connection, msg *protobufs.AgentToServer
 		zap.S().Errorf("Failed to find or create agent %q: %v", agentID, err)
 		// TODO: handle error
 	}
+	zap.S().Debugf("received a message from agent:", zap.String("ID", agent.ID), zap.Any("status", agent.CurrentStatus))
 	var response *protobufs.ServerToAgent
 	response = &protobufs.ServerToAgent{
 		InstanceUid:  agentID,
@@ -314,5 +315,107 @@ func UpsertProcessor(ctx context.Context, processors map[string]interface{}, nam
 		})
 	}
 
+	return nil
+}
+
+func EnableLbForAgents() error {
+	// acquire lock on config updater
+	agents := opAmpServer.agents.GetAllAgents()
+	var lbAgents []*model.Agent
+	var nonLbreceivers []*model.Agent
+
+	for _, agent := range agents {
+		if agent.CanLB {
+			lbAgents = append(lbAgents, agent)
+		} else {
+			nonLbreceivers = append(nonLbreceivers, agent)
+		}
+	}
+
+	if len(lbAgents) == 0 {
+		return fmt.Errorf("at least one agent with LB exporter support required")
+	}
+
+	process := func(dryRun bool) error {
+		// todo: build a worker gorup and call agent updates in parallel
+		for _, agent := range lbAgents {
+			EnableLbExporter(agent, dryRun)
+		}
+
+		for _, agent := range nonLbreceivers {
+			EnableLbReceivers(agent, dryRun)
+		}
+		return nil
+	}
+	if err := process(true); err != nil {
+		return err
+	}
+
+	process(false)
+
+	// if any of theagents fail, do not apply the config
+	return nil
+}
+
+// EnableLbReceivers will create internal receivers to
+// disable direct traces traffic from outside world.
+// only applicable when atleast one lb exporters is enabled
+func EnableLbReceivers(agent *model.Agent, dryRun bool) error {
+	// fetch agent config
+
+	// add otlp internal receiver to receive traces from lb exporter
+	// at 0.0.0.0:4949
+
+	// remove [jaegar, otlp] from pipelines >> traces
+	// pipelines
+	//	traces:
+	//		receivers: [otlp_internal]
+	//		....
+
+	// in above update, the non-lb collectors will start
+	// listening on internal port to avoid receiving
+	// traces traffic directly
+
+}
+
+// EnableLbExporter enables lb exporter in agents which support
+// the lb config (canLB == true)
+func EnableLbExporter(agent *model.Agent, dryRun bool) error {
+
+	if !agent.CanLB {
+		return nil
+	}
+
+	// fetch effective config from the agent
+
+	// add a new otlp receiver otlp_internal at 0.0.0.0:4949
+	// this receiver will enable collecting traces re-routed by lb exporter
+
+	// add a new pipeline
+	//  traces/lb:
+	// 		receivers: [otlp, jaeger]
+	// 		processors: []
+	// 		exporters: [lbExporter]
+
+	// update receiver in service > pipelines > traces
+	// traces:
+	//		receivers: [otlp_internal]
+	//		processors: [signoz_tail_sampling, batch]
+	//		exporters: [clickhousetraceexporter]
+
+	// apply updated config
+
+	// perform above in dry-run mode and then final mode
+	// if all agents succeed exit success else fail
+
+	return nil
+}
+
+// DisableLbExporter in a given agent
+func DisableLbExporter(agent *model.Agent, dryRun bool) error {
+	// reverse the steps from EnableLbExporter
+	// remove otlp_internal from pipelines >> traces
+	// move receivers from pipelines>>traces/lb to pipelines >> traces
+	// remove pipeline traces/lb
 	return nil
 }

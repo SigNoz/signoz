@@ -8,6 +8,7 @@ const (
 	ElementTypeSamplingRules ElementTypeDef = "sampling_rules"
 	ElementTypeDropRules     ElementTypeDef = "drop_rules"
 	ElementTypeLogPipelines  ElementTypeDef = "log_pipelines"
+	ElementTypeLbExporter    ElementTypeDef = "lb_exporter"
 )
 
 type DeployStatus string
