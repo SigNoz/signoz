@@ -32,6 +32,8 @@ function AddNewProcessor({
 	useEffect(() => {
 		if (isEdit) {
 			form.setFieldsValue(selectedProcessorData);
+		} else {
+			form.resetFields();
 		}
 	}, [form, isEdit, selectedProcessorData]);
 

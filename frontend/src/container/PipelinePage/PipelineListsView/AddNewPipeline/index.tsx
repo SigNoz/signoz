@@ -34,6 +34,7 @@ function AddNewPipeline({
 			setTagsListData(selectedRecord?.tags);
 			form.setFieldsValue(selectedRecord);
 		} else {
+			form.resetFields();
 			setTagsListData([]);
 		}
 	}, [form, isEdit, selectedRecord, selectedRecord?.tags]);
