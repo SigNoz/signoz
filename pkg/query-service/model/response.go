@@ -585,3 +585,9 @@ func (ci *ClusterInfo) GetMapFromStruct() map[string]interface{} {
 	json.Unmarshal(data, &clusterInfoMap)
 	return clusterInfoMap
 }
+
+type GetVersionResponse struct {
+	Version        string `json:"version"`
+	EE             string `json:"ee"`
+	SetupCompleted bool   `json:"setupCompleted"`
+}

@@ -10,7 +10,7 @@ const getSpans = async (
 ): Promise<SuccessResponse<PayloadProps> | ErrorResponse> => {
 	try {
 		const updatedSelectedTags = props.selectedTags.map((e) => ({
-			Key: e.Key[0],
+			Key: e.Key,
 			Operator: e.Operator,
 			StringValues: e.StringValues,
 			NumberValues: e.NumberValues,
@@ -44,6 +44,7 @@ const getSpans = async (
 				maxDuration: String((duration.duration || [])[0] || ''),
 				minDuration: String((duration.duration || [])[1] || ''),
 				exclude,
+				spanKind: props.spanKind,
 			},
 		);
 

@@ -17,13 +17,6 @@ function ResizableHeader(props: ResizableHeaderProps): JSX.Element {
 		[],
 	);
 
-	const draggableOpts = useMemo(
-		() => ({
-			enableUserSelectHack,
-		}),
-		[],
-	);
-
 	if (!width) {
 		// eslint-disable-next-line react/jsx-props-no-spreading
 		return <th {...restProps} />;
@@ -35,7 +28,7 @@ function ResizableHeader(props: ResizableHeaderProps): JSX.Element {
 			height={0}
 			handle={handle}
 			onResize={onResize}
-			draggableOpts={draggableOpts}
+			draggableOpts={enableUserSelectHack}
 		>
 			{/* eslint-disable-next-line react/jsx-props-no-spreading */}
 			<th {...restProps} />
