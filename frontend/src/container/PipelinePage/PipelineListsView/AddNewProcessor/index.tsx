@@ -32,10 +32,11 @@ function AddNewProcessor({
 	useEffect(() => {
 		if (isEdit) {
 			form.setFieldsValue(selectedProcessorData);
-		} else {
+		}
+		if (isAdd) {
 			form.resetFields();
 		}
-	}, [form, isEdit, selectedProcessorData]);
+	}, [form, isEdit, isAdd, selectedProcessorData]);
 
 	const handleProcessorType = (type: string): void => {
 		setProcessorType(type);

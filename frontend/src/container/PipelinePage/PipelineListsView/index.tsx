@@ -96,7 +96,7 @@ function PipelineListsView({
 		[handleAlert, pipelineDeleteHandler, t],
 	);
 
-	const handleProcessorEditAction = useCallback(
+	const processorEditAction = useCallback(
 		(record: ProcessorColumn) => (): void => {
 			setActionType(ActionType.EditProcessor);
 			setSelectedProcessorData(record);
@@ -188,9 +188,9 @@ function PipelineListsView({
 		(): JSX.Element => (
 			<PipelineExpanView
 				handleAlert={handleAlert}
-				setActionType={setActionType}
-				handleProcessorEditAction={handleProcessorEditAction}
 				isActionMode={isActionMode}
+				setActionType={setActionType}
+				processorEditAction={processorEditAction}
 				setIsVisibleSaveButton={setIsVisibleSaveButton}
 				selectedPipelineDataState={selectedPipelineDataState as PipelineColumn}
 				setSelectedPipelineDataState={setSelectedPipelineDataState}
@@ -199,7 +199,7 @@ function PipelineListsView({
 		),
 		[
 			handleAlert,
-			handleProcessorEditAction,
+			processorEditAction,
 			isActionMode,
 			processorData,
 			selectedPipelineDataState,
@@ -243,7 +243,7 @@ function PipelineListsView({
 		setActionMode(ActionMode.Viewing);
 		setIsVisibleSaveButton(undefined);
 		const modifiedPipelineData = currPipelineData.map((item: PipelineColumn) => {
-			const pipelineData = item as PipelineColumn;
+			const pipelineData = item;
 			if (item.uuid === selectedPipelineDataState?.uuid) {
 				pipelineData.operators = selectedPipelineDataState.operators;
 			}

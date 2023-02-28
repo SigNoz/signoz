@@ -23,7 +23,7 @@ import { getTableColumn, getUpdatedRow } from './utils';
 function PipelineExpandView({
 	handleAlert,
 	setActionType,
-	handleProcessorEditAction,
+	processorEditAction,
 	isActionMode,
 	setIsVisibleSaveButton,
 	selectedPipelineDataState,
@@ -33,7 +33,7 @@ function PipelineExpandView({
 	const { t } = useTranslation(['pipeline']);
 	const isDarkMode = useIsDarkMode();
 
-	const processorDeleteHandler = useCallback(
+	const deleteProcessorHandler = useCallback(
 		(record: ProcessorColumn) => (): void => {
 			setIsVisibleSaveButton(ActionMode.Editing);
 			const filteredProcessorData = selectedPipelineDataState.operators.filter(
@@ -50,16 +50,16 @@ function PipelineExpandView({
 		],
 	);
 
-	const handleProcessorDeleteAction = useCallback(
+	const processorDeleteAction = useCallback(
 		(record: ProcessorColumn) => (): void => {
 			handleAlert({
 				title: `${t('delete_processor')} : ${record.name}?`,
 				descrition: t('delete_processor_description'),
 				buttontext: t('delete'),
-				onOk: processorDeleteHandler(record),
+				onOk: deleteProcessorHandler(record),
 			});
 		},
-		[handleAlert, processorDeleteHandler, t],
+		[handleAlert, deleteProcessorHandler, t],
 	);
 
 	const columns = useMemo(() => {
@@ -73,8 +73,8 @@ function PipelineExpandView({
 					render: (_value, record): JSX.Element => (
 						<PipelineActions
 							isPipelineAction={false}
-							editAction={handleProcessorEditAction(record)}
-							deleteAction={handleProcessorDeleteAction(record)}
+							editAction={processorEditAction(record)}
+							deleteAction={processorDeleteAction(record)}
 						/>
 					),
 				},
@@ -87,9 +87,9 @@ function PipelineExpandView({
 			);
 		}
 		return fieldColumns;
-	}, [handleProcessorDeleteAction, handleProcessorEditAction, isActionMode]);
+	}, [processorDeleteAction, processorEditAction, isActionMode]);
 
-	const reorderProcessorRowData = useCallback(
+	const reorderProcessorRow = useCallback(
 		(updatedRow: PipelineOperators[]) => (): void => {
 			setIsVisibleSaveButton(ActionMode.Editing);
 			const modifiedProcessorData = { ...selectedPipelineDataState };
@@ -103,7 +103,7 @@ function PipelineExpandView({
 		],
 	);
 
-	const onCancelProcessorReorder = useCallback(
+	const onCancel = useCallback(
 		() => (): void => {
 			setSelectedPipelineDataState(selectedPipelineDataState);
 		},
@@ -126,36 +126,36 @@ function PipelineExpandView({
 					title: t('reorder_processor'),
 					descrition: t('reorder_processor_description'),
 					buttontext: t('reorder'),
-					onOk: reorderProcessorRowData(updatedRow as PipelineOperators[]),
-					onCancel: onCancelProcessorReorder(),
+					onOk: reorderProcessorRow(updatedRow),
+					onCancel,
 				});
 			}
 		},
 		[
 			t,
+			onCancel,
 			handleAlert,
 			isActionMode,
-			onCancelProcessorReorder,
 			selectedPipelineDataState.operators,
-			reorderProcessorRowData,
+			reorderProcessorRow,
 		],
 	);
 
-	const onClickHandler = useCallback((): void => {
+	const addNewProcessorHandler = useCallback((): void => {
 		setActionType(ActionType.AddProcessor);
 	}, [setActionType]);
 
 	const footer = useCallback((): JSX.Element | undefined => {
 		if (isActionMode === ActionMode.Editing) {
 			return (
-				<FooterButton type="link" onClick={onClickHandler}>
+				<FooterButton type="link" onClick={addNewProcessorHandler}>
 					<PlusCircleOutlined />
 					<ModalFooterTitle>{t('add_new_processor')}</ModalFooterTitle>
 				</FooterButton>
 			);
 		}
 		return undefined;
-	}, [onClickHandler, t, isActionMode]);
+	}, [addNewProcessorHandler, t, isActionMode]);
 
 	return (
 		<DndProvider backend={HTML5Backend}>
@@ -186,7 +186,7 @@ function PipelineExpandView({
 interface PipelineExpandViewProps {
 	handleAlert: (props: AlertMessage) => void;
 	setActionType: (actionType?: ActionType) => void;
-	handleProcessorEditAction: (record: ProcessorColumn) => () => void;
+	processorEditAction: (record: ProcessorColumn) => () => void;
 	isActionMode: string;
 	setIsVisibleSaveButton: (actionMode: ActionMode) => void;
 	selectedPipelineDataState: PipelineColumn;

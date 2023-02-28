@@ -29,7 +29,7 @@ describe('PipelinePage', () => {
 	it('should render PipelineExpandView section', () => {
 		const handleAlert = jest.fn();
 		const setActionType = jest.fn();
-		const handleProcessorEditAction = jest.fn();
+		const processorEditAction = jest.fn();
 		const { asFragment } = render(
 			<MemoryRouter>
 				<Provider store={store}>
@@ -37,7 +37,7 @@ describe('PipelinePage', () => {
 						<PipelineExpandView
 							handleAlert={handleAlert}
 							setActionType={setActionType}
-							handleProcessorEditAction={handleProcessorEditAction}
+							processorEditAction={processorEditAction}
 							isActionMode="viewing-mode"
 							setIsVisibleSaveButton={jest.fn()}
 							selectedPipelineDataState={pipelineMockData[0]}

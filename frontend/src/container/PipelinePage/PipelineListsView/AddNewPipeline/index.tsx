@@ -33,11 +33,12 @@ function AddNewPipeline({
 		if (isEdit) {
 			setTagsListData(selectedRecord?.tags);
 			form.setFieldsValue(selectedRecord);
-		} else {
+		}
+		if (isAdd) {
 			form.resetFields();
 			setTagsListData([]);
 		}
-	}, [form, isEdit, selectedRecord, selectedRecord?.tags]);
+	}, [form, isEdit, isAdd, selectedRecord]);
 
 	const onFinish = (values: PipelineColumn): void => {
 		const newPipeLineData = {
@@ -83,7 +84,7 @@ function AddNewPipeline({
 			setCurrPipelineData(editedPipelineData as Array<PipelineColumn>);
 		} else {
 			setTagsListData([]);
-			setCount((prevState: number) => (prevState + 1) as number);
+			setCount((prevState: number) => prevState + 1);
 			setCurrPipelineData(
 				(prevState: PipelineColumn[]) =>
 					[...prevState, newPipeLineData] as PipelineColumn[],
