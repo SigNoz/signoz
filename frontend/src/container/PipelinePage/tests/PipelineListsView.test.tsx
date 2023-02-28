@@ -7,21 +7,10 @@ import i18n from 'ReactI18';
 import store from 'store';
 
 import PipelineListsView from '../PipelineListsView';
+import { matchMedia } from './AddNewPipeline.test';
 
 beforeAll(() => {
-	Object.defineProperty(window, 'matchMedia', {
-		writable: true,
-		value: jest.fn().mockImplementation((query) => ({
-			matches: false,
-			media: query,
-			onchange: null,
-			addListener: jest.fn(),
-			removeListener: jest.fn(),
-			addEventListener: jest.fn(),
-			removeEventListener: jest.fn(),
-			dispatchEvent: jest.fn(),
-		})),
-	});
+	matchMedia();
 });
 
 describe('PipelinePage container test', () => {

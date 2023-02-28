@@ -8,21 +8,10 @@ import store from 'store';
 
 import { pipelineMockData } from '../mocks/pipeline';
 import AddNewProcessor from '../PipelineListsView/AddNewProcessor';
+import { matchMedia } from './AddNewPipeline.test';
 
 beforeAll(() => {
-	Object.defineProperty(window, 'matchMedia', {
-		writable: true,
-		value: jest.fn().mockImplementation((query) => ({
-			matches: false,
-			media: query,
-			onchange: null,
-			addListener: jest.fn(),
-			removeListener: jest.fn(),
-			addEventListener: jest.fn(),
-			removeEventListener: jest.fn(),
-			dispatchEvent: jest.fn(),
-		})),
-	});
+	matchMedia();
 });
 
 const selectedProcessorData = {

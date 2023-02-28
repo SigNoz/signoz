@@ -9,7 +9,7 @@ import store from 'store';
 import { pipelineMockData } from '../mocks/pipeline';
 import AddNewPipeline from '../PipelineListsView/AddNewPipeline';
 
-beforeAll(() => {
+export function matchMedia(): void {
 	Object.defineProperty(window, 'matchMedia', {
 		writable: true,
 		value: jest.fn().mockImplementation((query) => ({
@@ -23,6 +23,9 @@ beforeAll(() => {
 			dispatchEvent: jest.fn(),
 		})),
 	});
+}
+beforeAll(() => {
+	matchMedia();
 });
 
 describe('PipelinePage container test', () => {
