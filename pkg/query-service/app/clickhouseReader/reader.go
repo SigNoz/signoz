@@ -100,6 +100,7 @@ type ClickHouseReader struct {
 	logsLocalTable          string
 	logsAttributeKeys       string
 	logsResourceKeys        string
+	logsTagAttributeTable   string
 	queryEngine             *promql.Engine
 	remoteStorage           *remote.Storage
 	fanoutStorage           *storage.Storage
@@ -149,6 +150,7 @@ func NewReader(localDB *sqlx.DB, configFile string, featureFlag interfaces.Featu
 		logsLocalTable:          options.primary.LogsLocalTable,
 		logsAttributeKeys:       options.primary.LogsAttributeKeysTable,
 		logsResourceKeys:        options.primary.LogsResourceKeysTable,
+		logsTagAttributeTable:   options.primary.LogsTagAttributeTable,
 		liveTailRefreshSeconds:  options.primary.LiveTailRefreshSeconds,
 		promConfigFile:          configFile,
 		featureFlags:            featureFlag,
@@ -3741,6 +3743,78 @@ func (r *ClickHouseReader) GetMetricAttributeValues(ctx context.Context, req *v3
 			return nil, fmt.Errorf("error while scanning rows: %s", err.Error())
 		}
 		attributeValues.AttributeValues = append(attributeValues.AttributeValues, atrributeValue)
+	}
+
+	return &attributeValues, nil
+}
+
+func (r *ClickHouseReader) GetLogAttributeKeys(ctx context.Context, req *v3.FilterAttributeKeyRequest) (*v3.FilterAttributeKeyResponse, error) {
+	var query string
+	var err error
+	var rows driver.Rows
+	var response v3.FilterAttributeKeyResponse
+
+	if len(req.SearchText) != 0 {
+		query = fmt.Sprintf("select distinct tagKey, tagDataType from  %s.%s where tagKey ILIKE $1 and tagType=$2 limit $3", r.logsDB, r.logsTagAttributeTable)
+		rows, err = r.db.Query(ctx, query, fmt.Sprintf("%%%s%%", req.SearchText), req.TagType, req.Limit)
+	} else {
+		query = fmt.Sprintf("select distinct tagKey, tagDataType from  %s.%s where tagType=$1 limit $2", r.logsDB, r.logsTagAttributeTable)
+		rows, err = r.db.Query(ctx, query, req.TagType, req.Limit)
+	}
+
+	if err != nil {
+		zap.S().Error(err)
+		return nil, fmt.Errorf("error while executing query: %s", err.Error())
+	}
+	defer rows.Close()
+
+	var attributeKey string
+	var attributeDataType string
+	for rows.Next() {
+		if err := rows.Scan(&attributeKey, &attributeDataType); err != nil {
+			return nil, fmt.Errorf("error while scanning rows: %s", err.Error())
+		}
+		key := v3.AttributeKey{
+			Key:      attributeKey,
+			DataType: attributeDataType,
+			Type:     string(req.TagType),
+		}
+		response.AttributeKeys = append(response.AttributeKeys, key)
+	}
+
+	return &response, nil
+}
+
+func (r *ClickHouseReader) GetLogAttributeValues(ctx context.Context, req *v3.FilterAttributeValueRequest) (*v3.FilterAttributeValueResponse, error) {
+
+	var query string
+	var err error
+	var rows driver.Rows
+	var attributeValues v3.FilterAttributeValueResponse
+	// (todo nitya): add support for other tag data types
+
+	if len(req.SearchText) != 0 {
+		query = fmt.Sprintf("select distinct stringTagValue  from  %s.%s where tagKey ILIKE $1 and stringTagValue ILIKE $2  and tagType=$3 limit $4", r.logsDB, r.logsTagAttributeTable)
+		rows, err = r.db.Query(ctx, query, req.FilterAttributeKey, fmt.Sprintf("%%%s%%", req.SearchText), req.TagType, req.Limit)
+	} else {
+		query = fmt.Sprintf("select distinct stringTagValue from  %s.%s where tagKey ILIKE $1 and tagType=$2 limit $3", r.logsDB, r.logsTagAttributeTable)
+		rows, err = r.db.Query(ctx, query, req.FilterAttributeKey, req.TagType, req.Limit)
+	}
+
+	if err != nil {
+		zap.S().Error(err)
+		return nil, fmt.Errorf("error while executing query: %s", err.Error())
+	}
+	defer rows.Close()
+
+	var strAttributeValue string
+	for rows.Next() {
+		if err := rows.Scan(&strAttributeValue); err != nil {
+			return nil, fmt.Errorf("error while scanning rows: %s", err.Error())
+		}
+		if strAttributeValue != "" {
+			attributeValues.AttributeValues = append(attributeValues.AttributeValues, strAttributeValue)
+		}
 	}
 
 	return &attributeValues, nil

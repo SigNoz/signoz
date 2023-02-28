@@ -74,6 +74,8 @@ type Reader interface {
 	GetLogs(ctx context.Context, params *model.LogsFilterParams) (*[]model.GetLogsResponse, *model.ApiError)
 	TailLogs(ctx context.Context, client *model.LogsTailClient)
 	AggregateLogs(ctx context.Context, params *model.LogsAggregateParams) (*model.GetLogsAggregatesResponse, *model.ApiError)
+	GetLogAttributeKeys(ctx context.Context, req *v3.FilterAttributeKeyRequest) (*v3.FilterAttributeKeyResponse, error)
+	GetLogAttributeValues(ctx context.Context, req *v3.FilterAttributeValueRequest) (*v3.FilterAttributeValueResponse, error)
 
 	// Connection needed for rules, not ideal but required
 	GetConn() clickhouse.Conn

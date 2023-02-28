@@ -2342,7 +2342,7 @@ func (aH *APIHandler) autoCompleteAttributeKeys(w http.ResponseWriter, r *http.R
 	case v3.DataSourceMetrics:
 		response, err = aH.reader.GetMetricAttributeKeys(r.Context(), req)
 	case v3.DataSourceLogs:
-		// TODO: implement
+		response, err = aH.reader.GetLogAttributeKeys(r.Context(), req)
 	case v3.DataSourceTraces:
 		// TODO: implement
 	default:
@@ -2371,7 +2371,7 @@ func (aH *APIHandler) autoCompleteAttributeValues(w http.ResponseWriter, r *http
 	case v3.DataSourceMetrics:
 		response, err = aH.reader.GetMetricAttributeValues(r.Context(), req)
 	case v3.DataSourceLogs:
-		// TODO: implement
+		response, err = aH.reader.GetLogAttributeValues(r.Context(), req)
 	case v3.DataSourceTraces:
 		// TODO: implement
 	default:

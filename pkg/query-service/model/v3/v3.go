@@ -131,6 +131,22 @@ func (q QueryType) Validate() error {
 	}
 }
 
+type TagType string
+
+const (
+	TagTypeAttribute TagType = "attribute"
+	TagTypeResource  TagType = "resource"
+)
+
+func (q TagType) Validate() error {
+	switch q {
+	case TagTypeAttribute, TagTypeResource:
+		return nil
+	default:
+		return fmt.Errorf("invalid tag type: %s", q)
+	}
+}
+
 type PanelType string
 
 const (
@@ -168,6 +184,7 @@ type FilterAttributeKeyRequest struct {
 	DataSource         DataSource        `json:"dataSource"`
 	AggregateOperator  AggregateOperator `json:"aggregateOperator"`
 	AggregateAttribute string            `json:"aggregateAttribute"`
+	TagType            TagType           `json:"tagType"`
 	SearchText         string            `json:"searchText"`
 	Limit              int               `json:"limit"`
 }
@@ -180,6 +197,7 @@ type FilterAttributeValueRequest struct {
 	AggregateOperator  AggregateOperator `json:"aggregateOperator"`
 	AggregateAttribute string            `json:"aggregateAttribute"`
 	FilterAttributeKey string            `json:"filterAttributeKey"`
+	TagType            TagType           `json:"tagType"`
 	SearchText         string            `json:"searchText"`
 	Limit              int               `json:"limit"`
 }
