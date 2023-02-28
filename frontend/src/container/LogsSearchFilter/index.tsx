@@ -74,6 +74,7 @@ function SearchFilter({
 	const handleSearch = useCallback(
 		(customQuery: string) => {
 			getLogsFields();
+			const { maxTime, minTime } = globalTime;
 
 			if (liveTail === 'PLAYING') {
 				dispatch({
@@ -91,9 +92,20 @@ function SearchFilter({
 					type: SET_LOADING,
 					payload: false,
 				});
-			} else {
-				const { maxTime, minTime } = globalTime;
 
+				getLogsAggregate({
+					timestampStart: minTime,
+					timestampEnd: maxTime,
+					step: getStep({
+						start: minTime,
+						end: maxTime,
+						inputFormat: 'ns',
+					}),
+					q: customQuery,
+					...(idStart ? { idGt: idStart } : {}),
+					...(idEnd ? { idLt: idEnd } : {}),
+				});
+			} else {
 				getLogs({
 					q: customQuery,
 					limit: logLinesPerPage,
