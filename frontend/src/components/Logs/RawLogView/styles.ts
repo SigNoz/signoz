@@ -22,3 +22,25 @@ export const ExpandIconWrapper = styled(Col)`
 	cursor: pointer;
 	font-size: 12px;
 `;
+
+interface RawLogContentProps {
+	linesPerRow: number;
+}
+
+export const RawLogContent = styled.div<RawLogContentProps>`
+	margin-bottom: 0;
+	font-family: Fira Code, monospace;
+	font-weight: 300;
+
+	overflow: hidden;
+	text-overflow: ellipsis;
+	display: -webkit-box;
+	-webkit-line-clamp: ${(props): number => props.linesPerRow};
+	line-clamp: ${(props): number => props.linesPerRow};
+	-webkit-box-orient: vertical;
+
+	font-size: 1rem;
+	line-height: 2rem;
+
+	cursor: pointer;
+`;
