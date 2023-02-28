@@ -44,6 +44,7 @@ import {
 	intersectionCursorPluginId,
 	IntersectionCursorPluginOptions,
 } from './Plugin/IntersectionCursor';
+import { TooltipPosition as TooltipPositionHandler } from './Plugin/Tooltip';
 import { LegendsContainer } from './styles';
 import { useXAxisTimeUnit } from './xAxisConfig';
 import { getToolTipValue, getYAxisFormattedValue } from './yAxisConfig';
@@ -67,35 +68,7 @@ Chart.register(
 	annotationPlugin,
 );
 
-Tooltip.positioners.customPositioner = function (
-	elements,
-	eventPosition,
-): false | any {
-	const {
-		chartArea: { width },
-		scales: { x, y },
-	} = this.chart;
-
-	const valueForPixelOnX = Number(x.getValueForPixel(eventPosition.x));
-	const valueForPixelonY = Number(y.getValueForPixel(eventPosition.y));
-
-	const rightmostWidth = this.width + x.getPixelForValue(valueForPixelOnX) + 20;
-
-	if (rightmostWidth > width) {
-		return {
-			x: x.getPixelForValue(valueForPixelOnX) - 20,
-			y: y.getPixelForValue(valueForPixelonY) + 10,
-			xAlign: 'right',
-			yAlign: 'top',
-		};
-	}
-	return {
-		x: x.getPixelForValue(valueForPixelOnX) + 20,
-		y: y.getPixelForValue(valueForPixelonY) + 10,
-		xAlign: 'left',
-		yAlign: 'top',
-	};
-};
+Tooltip.positioners.custom = TooltipPositionHandler;
 
 function Graph({
 	animate = true,
@@ -207,7 +180,7 @@ function Graph({
 								return 'rgba(255, 255, 255, 0.75)';
 							},
 						},
-						position: 'customPositioner',
+						position: 'custom',
 					},
 					[dragSelectPluginId]: createDragSelectPluginOptions(
 						!!onDragSelect,
@@ -357,7 +330,7 @@ function Graph({
 
 declare module 'chart.js' {
 	interface TooltipPositionerMap {
-		customPositioner: TooltipPositionerFunction<ChartType>;
+		custom: TooltipPositionerFunction<ChartType>;
 	}
 }
 
