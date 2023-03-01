@@ -8,6 +8,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"net/url"
+
 	"github.com/gorilla/mux"
 	"go.signoz.io/signoz/ee/query-service/constants"
 	"go.signoz.io/signoz/ee/query-service/model"
@@ -87,9 +88,16 @@ func (ah *APIHandler) registerUser(w http.ResponseWriter, r *http.Request) {
 
 	// get invite object
 	invite, err := baseauth.ValidateInvite(ctx, req)
-	if err != nil || invite == nil {
+	if err != nil {
 		zap.S().Errorf("failed to validate invite token", err)
+		RespondError(w, model.BadRequest(err), nil)
+		return
+	}
+
+	if invite == nil {
+		zap.S().Errorf("failed to validate invite token: it is either empty or invalid", err)
 		RespondError(w, model.BadRequest(basemodel.ErrSignupFailed{}), nil)
+		return
 	}
 
 	// get auth domain from email domain
@@ -190,7 +198,7 @@ func handleSsoError(w http.ResponseWriter, r *http.Request, redirectURL string) 
 }
 
 // receiveGoogleAuth completes google OAuth response and forwards a request
-// to front-end to sign user in 
+// to front-end to sign user in
 func (ah *APIHandler) receiveGoogleAuth(w http.ResponseWriter, r *http.Request) {
 	redirectUri := constants.GetDefaultSiteURL()
 	ctx := context.Background()
@@ -221,15 +229,15 @@ func (ah *APIHandler) receiveGoogleAuth(w http.ResponseWriter, r *http.Request) 
 	// upgrade redirect url from the relay state for better accuracy
 	redirectUri = fmt.Sprintf("%s://%s%s", parsedState.Scheme, parsedState.Host, "/login")
 
-	// fetch domain by parsing relay state. 
+	// fetch domain by parsing relay state.
 	domain, err := ah.AppDao().GetDomainFromSsoResponse(ctx, parsedState)
 	if err != nil {
 		handleSsoError(w, r, redirectUri)
 		return
 	}
 
-	// now that we have domain, use domain to fetch sso settings. 
-	// prepare google callback handler using parsedState - 
+	// now that we have domain, use domain to fetch sso settings.
+	// prepare google callback handler using parsedState -
 	// which contains redirect URL (front-end endpoint)
 	callbackHandler, err := domain.PrepareGoogleOAuthProvider(parsedState)
 
@@ -239,7 +247,7 @@ func (ah *APIHandler) receiveGoogleAuth(w http.ResponseWriter, r *http.Request) 
 		handleSsoError(w, r, redirectUri)
 		return
 	}
-	
+
 	nextPage, err := ah.AppDao().PrepareSsoRedirect(ctx, redirectUri, identity.Email)
 	if err != nil {
 		zap.S().Errorf("[receiveGoogleAuth] failed to generate redirect URI after successful login ", domain.String(), zap.Error(err))
@@ -250,14 +258,11 @@ func (ah *APIHandler) receiveGoogleAuth(w http.ResponseWriter, r *http.Request) 
 	http.Redirect(w, r, nextPage, http.StatusSeeOther)
 }
 
-
-
 // receiveSAML completes a SAML request and gets user logged in
 func (ah *APIHandler) receiveSAML(w http.ResponseWriter, r *http.Request) {
 	// this is the source url that initiated the login request
 	redirectUri := constants.GetDefaultSiteURL()
 	ctx := context.Background()
-
 
 	if !ah.CheckFeature(model.SSO) {
 		zap.S().Errorf("[receiveSAML] sso requested but feature unavailable %s in org domain %s", model.SSO)
@@ -287,13 +292,13 @@ func (ah *APIHandler) receiveSAML(w http.ResponseWriter, r *http.Request) {
 	// upgrade redirect url from the relay state for better accuracy
 	redirectUri = fmt.Sprintf("%s://%s%s", parsedState.Scheme, parsedState.Host, "/login")
 
-	// fetch domain by parsing relay state. 
+	// fetch domain by parsing relay state.
 	domain, err := ah.AppDao().GetDomainFromSsoResponse(ctx, parsedState)
 	if err != nil {
 		handleSsoError(w, r, redirectUri)
 		return
 	}
-	
+
 	sp, err := domain.PrepareSamlRequest(parsedState)
 	if err != nil {
 		zap.S().Errorf("[receiveSAML] failed to prepare saml request for domain (%s): %v", domain.String(), err)
@@ -327,6 +332,6 @@ func (ah *APIHandler) receiveSAML(w http.ResponseWriter, r *http.Request) {
 		handleSsoError(w, r, redirectUri)
 		return
 	}
-	
+
 	http.Redirect(w, r, nextPage, http.StatusSeeOther)
 }

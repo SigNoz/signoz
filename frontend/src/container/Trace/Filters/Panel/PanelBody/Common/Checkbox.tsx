@@ -24,6 +24,7 @@ function CheckBoxComponent(props: CheckBoxProps): JSX.Element {
 		filter,
 		userSelectedFilter,
 		isFilterExclude,
+		spanKind,
 	} = useSelector<AppState, TraceReducer>((state) => state.traces);
 
 	const globalTime = useSelector<AppState, GlobalReducer>(
@@ -91,6 +92,7 @@ function CheckBoxComponent(props: CheckBoxProps): JSX.Element {
 				start: String(globalTime.minTime),
 				getFilters: filterToFetchData.filter((e) => e !== name),
 				isFilterExclude: preIsFilterExclude,
+				spanKind,
 			});
 
 			if (response.statusCode === 200) {
@@ -125,6 +127,7 @@ function CheckBoxComponent(props: CheckBoxProps): JSX.Element {
 						order: spansAggregate.order,
 						orderParam: spansAggregate.orderParam,
 						pageSize: spansAggregate.pageSize,
+						spanKind,
 					},
 				});
 

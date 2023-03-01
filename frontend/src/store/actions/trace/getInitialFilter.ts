@@ -12,6 +12,7 @@ import {
 import { GlobalReducer } from 'types/reducer/globalTime';
 import { TraceFilterEnum, TraceReducer } from 'types/reducer/trace';
 
+import { parseQueryIntoSpanKind } from './parseFilter/parseSpanKind';
 import {
 	isTraceFilterEnum,
 	parseAggregateOrderParams,
@@ -54,6 +55,8 @@ export const GetInitialTraceFilter = (
 			query,
 			traces.filterToFetchData,
 		);
+
+		const parsedSpanKind = parseQueryIntoSpanKind(query, traces.spanKind);
 
 		const getUserSelected = parseSelectedFilter(query, traces.userSelectedFilter);
 
@@ -102,6 +105,7 @@ export const GetInitialTraceFilter = (
 			start: String(minTime),
 			other: Object.fromEntries(getSelectedFilter.currentValue),
 			isFilterExclude: getIsFilterExcluded.currentValue,
+			spanKind: parsedSpanKind.currentValue,
 		});
 
 		const preSelectedFilter: Map<TraceFilterEnum, string[]> = new Map(
@@ -164,6 +168,7 @@ export const GetInitialTraceFilter = (
 					order: parsedQueryOrder.currentValue,
 					pageSize: parsedPageSize.currentValue,
 					orderParam: parsedOrderParams.currentValue,
+					spanKind: parsedSpanKind.currentValue,
 				},
 			});
 		} else {

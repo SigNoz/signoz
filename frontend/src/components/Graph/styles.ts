@@ -6,7 +6,10 @@ export const LegendsContainer = styled.div`
 
 	* {
 		::-webkit-scrollbar {
-			width: 0.5rem;
+			width: 0.3rem;
+		}
+		::-webkit-scrollbar:horizontal {
+			height: 0.3rem;
 		}
 		::-webkit-scrollbar-track {
 			background: transparent;
@@ -17,6 +20,9 @@ export const LegendsContainer = styled.div`
 		}
 		::-webkit-scrollbar-thumb:hover {
 			background: ${themeColors.matterhornGrey};
+		}
+		::-webkit-scrollbar-corner {
+			background: transparent;
 		}
 	}
 `;

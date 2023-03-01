@@ -1,3 +1,4 @@
+import { LogViewMode } from 'container/LogsTable';
 import { ILogQLParsedQueryItem } from 'lib/logql/types';
 import { IFields } from 'types/api/logs/fields';
 import { TLogsLiveTailState } from 'types/api/logs/liveTail';
@@ -12,6 +13,8 @@ export interface ILogsReducer {
 	};
 	logs: ILog[];
 	logLinesPerPage: number;
+	linesPerRow: number;
+	viewMode: LogViewMode;
 	idEnd: string;
 	idStart: string;
 	isLoading: boolean;

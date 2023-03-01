@@ -63,6 +63,11 @@ type APIHandler struct {
 	ruleManager  *rules.Manager
 	featureFlags interfaces.FeatureLookup
 	ready        func(http.HandlerFunc) http.HandlerFunc
+
+	// SetupCompleted indicates if SigNoz is ready for general use.
+	// at the moment, we mark the app ready when the first user
+	// is registers.
+	SetupCompleted bool
 }
 
 type APIHandlerOpts struct {
@@ -102,6 +107,19 @@ func NewAPIHandler(opts APIHandlerOpts) (*APIHandler, error) {
 	// if errReadingDashboards != nil {
 	// 	return nil, errReadingDashboards
 	// }
+
+	// check if at least one user is created
+	hasUsers, err := aH.appDao.GetUsersWithOpts(context.Background(), 1)
+	if err.Error() != "" {
+		// raise warning but no panic as this is a recoverable condition
+		zap.S().Warnf("unexpected error while fetch user count while initializing base api handler", err.Error())
+	}
+	if len(hasUsers) != 0 {
+		// first user is already created, we can mark the app ready for general use.
+		// this means, we disable self-registration and expect new users
+		// to signup signoz through invite link only.
+		aH.SetupCompleted = true
+	}
 	return aH, nil
 }
 
@@ -359,7 +377,7 @@ func (aH *APIHandler) RegisterRoutes(router *mux.Router) {
 	router.HandleFunc("/api/v1/feedback", OpenAccess(aH.submitFeedback)).Methods(http.MethodPost)
 	// router.HandleFunc("/api/v1/get_percentiles", aH.getApplicationPercentiles).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/services", ViewAccess(aH.getServices)).Methods(http.MethodPost)
-	router.HandleFunc("/api/v1/services/list", aH.getServicesList).Methods(http.MethodGet)
+	router.HandleFunc("/api/v1/services/list", ViewAccess(aH.getServicesList)).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/service/overview", ViewAccess(aH.getServiceOverview)).Methods(http.MethodPost)
 	router.HandleFunc("/api/v1/service/top_operations", ViewAccess(aH.getTopOperations)).Methods(http.MethodPost)
 	router.HandleFunc("/api/v1/service/top_level_operations", ViewAccess(aH.getServicesTopLevelOps)).Methods(http.MethodPost)
@@ -372,6 +390,7 @@ func (aH *APIHandler) RegisterRoutes(router *mux.Router) {
 	router.HandleFunc("/api/v1/version", OpenAccess(aH.getVersion)).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/featureFlags", OpenAccess(aH.getFeatureFlags)).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/configs", OpenAccess(aH.getConfigs)).Methods(http.MethodGet)
+	router.HandleFunc("/api/v1/health", OpenAccess(aH.getHealth)).Methods(http.MethodGet)
 
 	router.HandleFunc("/api/v1/getSpanFilters", ViewAccess(aH.getSpanFilters)).Methods(http.MethodPost)
 	router.HandleFunc("/api/v1/getTagFilters", ViewAccess(aH.getTagFilters)).Methods(http.MethodPost)
@@ -1652,7 +1671,13 @@ func (aH *APIHandler) getDisks(w http.ResponseWriter, r *http.Request) {
 
 func (aH *APIHandler) getVersion(w http.ResponseWriter, r *http.Request) {
 	version := version.GetVersion()
-	aH.WriteJSON(w, r, map[string]string{"version": version, "ee": "N"})
+	versionResponse := model.GetVersionResponse{
+		Version:        version,
+		EE:             "Y",
+		SetupCompleted: aH.SetupCompleted,
+	}
+
+	aH.WriteJSON(w, r, versionResponse)
 }
 
 func (aH *APIHandler) getFeatureFlags(w http.ResponseWriter, r *http.Request) {
@@ -1677,6 +1702,22 @@ func (aH *APIHandler) getConfigs(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	aH.Respond(w, configs)
+}
+
+// getHealth is used to check the health of the service.
+// 'live' query param can be used to check liveliness of
+// the service by checking the database connection.
+func (aH *APIHandler) getHealth(w http.ResponseWriter, r *http.Request) {
+	_, ok := r.URL.Query()["live"]
+	if ok {
+		err := aH.reader.CheckClickHouse(r.Context())
+		if err != nil {
+			RespondError(w, &model.ApiError{Err: err, Typ: model.ErrorStatusServiceUnavailable}, nil)
+			return
+		}
+	}
+
+	aH.WriteJSON(w, r, map[string]string{"status": "ok"})
 }
 
 // inviteUser is used to invite a user. It is used by an admin api.
@@ -1766,6 +1807,12 @@ func (aH *APIHandler) registerUser(w http.ResponseWriter, r *http.Request) {
 	if apiErr != nil {
 		RespondError(w, apiErr, nil)
 		return
+	}
+
+	if !aH.SetupCompleted {
+		// since the first user is now created, we can disable self-registration as
+		// from here onwards, we expect admin (owner) to invite other users.
+		aH.SetupCompleted = true
 	}
 
 	aH.Respond(w, nil)
