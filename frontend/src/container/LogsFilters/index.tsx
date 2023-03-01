@@ -7,7 +7,7 @@ import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
 import { ILogsReducer } from 'types/reducer/logs';
 
-import { ICON_STYLE } from './config';
+import { ICON_STYLE, RESTRICTED_SELECTED_FIELDS } from './config';
 import FieldItem from './FieldItem';
 import { CategoryContainer, FieldContainer } from './styles';
 import { IHandleInterestProps, IHandleRemoveInterestProps } from './types';
@@ -71,6 +71,7 @@ function LogsFilters(): JSX.Element {
 				<FieldContainer>
 					{selected
 						.filter((field) => fieldSearchFilter(field.name, filterValuesInput))
+						.filter((field) => RESTRICTED_SELECTED_FIELDS.indexOf(field.name) === -1)
 						.map((field, idx) => (
 							<FieldItem
 								key={`${JSON.stringify(field)}`}
