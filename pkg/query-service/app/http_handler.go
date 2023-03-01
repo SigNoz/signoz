@@ -1712,7 +1712,7 @@ func (aH *APIHandler) getHealth(w http.ResponseWriter, r *http.Request) {
 	if ok {
 		err := aH.reader.CheckClickHouse(r.Context())
 		if err != nil {
-			aH.HandleError(w, err, http.StatusServiceUnavailable)
+			RespondError(w, &model.ApiError{Err: err, Typ: model.ErrorStatusServiceUnavailable}, nil)
 			return
 		}
 	}
