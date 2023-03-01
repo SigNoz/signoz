@@ -14,11 +14,18 @@ export const dbSystemTags: Tags[] = [
 	},
 ];
 
-export function onViewTracePopupClick(
-	servicename: string | undefined,
-	selectedTraceTags: string,
-	timestamp: number,
-): VoidFunction {
+interface OnViewTracePopupClickProps {
+	servicename: string | undefined;
+	selectedTraceTags: string;
+	timestamp: number;
+	isExternalCall?: boolean;
+}
+export function onViewTracePopupClick({
+	selectedTraceTags,
+	servicename,
+	timestamp,
+	isExternalCall,
+}: OnViewTracePopupClickProps): VoidFunction {
 	return (): void => {
 		const currentTime = timestamp;
 		const tPlusOne = timestamp + 60 * 1000;
@@ -30,7 +37,9 @@ export function onViewTracePopupClick(
 		history.replace(
 			`${
 				ROUTES.TRACE
-			}?${urlParams.toString()}&selected={"serviceName":["${servicename}"]}&filterToFetchData=["duration","status","serviceName"]&spanAggregateCurrentPage=1&selectedTags=${selectedTraceTags}&&isFilterExclude={"serviceName":false}&userSelectedFilter={"status":["error","ok"],"serviceName":["${servicename}"]}&spanAggregateCurrentPage=1`,
+			}?${urlParams.toString()}&selected={"serviceName":["${servicename}"]}&filterToFetchData=["duration","status","serviceName"]&spanAggregateCurrentPage=1&selectedTags=${selectedTraceTags}&&isFilterExclude={"serviceName":false}&userSelectedFilter={"status":["error","ok"],"serviceName":["${servicename}"]}&spanAggregateCurrentPage=1${
+				isExternalCall ? '&spanKind=3' : ''
+			}`,
 		);
 	};
 }

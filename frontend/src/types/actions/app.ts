@@ -46,6 +46,8 @@ export interface UpdateAppVersion {
 	type: typeof UPDATE_CURRENT_VERSION;
 	payload: {
 		currentVersion: AppReducer['currentVersion'];
+		ee: AppReducer['ee'];
+		setupCompleted: AppReducer['setupCompleted'];
 	};
 }
 

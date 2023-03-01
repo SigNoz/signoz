@@ -1,15 +1,22 @@
 import { ExpandAltOutlined } from '@ant-design/icons';
-import { Typography } from 'antd';
+// const Convert = require('ansi-to-html');
+import Convert from 'ansi-to-html';
 import dayjs from 'dayjs';
+import dompurify from 'dompurify';
 // hooks
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import React, { useCallback, useMemo } from 'react';
 // interfaces
 import { ILog } from 'types/api/logs/log';
 
-import { rawLineStyle } from './config';
 // styles
-import { ExpandIconWrapper, RawLogViewContainer } from './styles';
+import {
+	ExpandIconWrapper,
+	RawLogContent,
+	RawLogViewContainer,
+} from './styles';
+
+const convert = new Convert();
 
 interface RawLogViewProps {
 	data: ILog;
@@ -27,20 +34,28 @@ function RawLogView(props: RawLogViewProps): JSX.Element {
 		[data.timestamp, data.body],
 	);
 
-	const ellipsis = useMemo(() => ({ rows: linesPerRow }), [linesPerRow]);
-
 	const handleClickExpand = useCallback(() => {
 		onClickExpand(data);
 	}, [onClickExpand, data]);
 
+	const html = useMemo(
+		() => ({
+			__html: convert.toHtml(dompurify.sanitize(text)),
+		}),
+		[text],
+	);
+
 	return (
-		<RawLogViewContainer wrap={false} align="middle" $isDarkMode={isDarkMode}>
-			<ExpandIconWrapper flex="30px" onClick={handleClickExpand}>
+		<RawLogViewContainer
+			onClick={handleClickExpand}
+			wrap={false}
+			align="middle"
+			$isDarkMode={isDarkMode}
+		>
+			<ExpandIconWrapper flex="30px">
 				<ExpandAltOutlined />
 			</ExpandIconWrapper>
-			<Typography.Paragraph style={rawLineStyle} ellipsis={ellipsis}>
-				{text}
-			</Typography.Paragraph>
+			<RawLogContent linesPerRow={linesPerRow} dangerouslySetInnerHTML={html} />
 		</RawLogViewContainer>
 	);
 }
