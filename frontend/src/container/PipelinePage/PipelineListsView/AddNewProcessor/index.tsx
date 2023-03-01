@@ -76,7 +76,10 @@ function AddNewProcessor({
 		}
 		if (isAdd) {
 			const modifiedProcessorData = { ...selectedPipelineDataState };
-			modifiedProcessorData.operators.push(newProcessorData);
+			modifiedProcessorData.operators = [
+				...modifiedProcessorData.operators,
+				newProcessorData,
+			];
 			setSelectedPipelineDataState(modifiedProcessorData);
 		}
 		setActionType(undefined);
