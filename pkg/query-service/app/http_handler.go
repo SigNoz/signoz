@@ -2315,7 +2315,7 @@ func (aH *APIHandler) autocompleteAggregateAttributes(w http.ResponseWriter, r *
 	case v3.DataSourceLogs:
 		// TODO: implement
 	case v3.DataSourceTraces:
-		// TODO: implement
+		response, err = aH.reader.GetTraceAggregateAttributes(r.Context(), req)
 	default:
 		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: fmt.Errorf("invalid data source")}, nil)
 		return
@@ -2344,7 +2344,7 @@ func (aH *APIHandler) autoCompleteAttributeKeys(w http.ResponseWriter, r *http.R
 	case v3.DataSourceLogs:
 		// TODO: implement
 	case v3.DataSourceTraces:
-		// TODO: implement
+		response, err = aH.reader.GetTraceAttributeKeys(r.Context(), req)
 	default:
 		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: fmt.Errorf("invalid data source")}, nil)
 		return
@@ -2373,7 +2373,7 @@ func (aH *APIHandler) autoCompleteAttributeValues(w http.ResponseWriter, r *http
 	case v3.DataSourceLogs:
 		// TODO: implement
 	case v3.DataSourceTraces:
-		// TODO: implement
+		response, err = aH.reader.GetTraceAttributeValues(r.Context(), req)
 	default:
 		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: fmt.Errorf("invalid data source")}, nil)
 		return

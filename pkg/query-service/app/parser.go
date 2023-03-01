@@ -848,6 +848,8 @@ func parseFilterAttributeKeyRequest(r *http.Request) (*v3.FilterAttributeKeyRequ
 	dataSource := v3.DataSource(r.URL.Query().Get("dataSource"))
 	aggregateOperator := v3.AggregateOperator(r.URL.Query().Get("aggregateOperator"))
 	aggregateAttribute := r.URL.Query().Get("aggregateAttribute")
+	tagType := v3.TagType(r.URL.Query().Get("tagType"))
+
 	limit, err := strconv.Atoi(r.URL.Query().Get("limit"))
 	if err != nil {
 		limit = 50
@@ -861,10 +863,15 @@ func parseFilterAttributeKeyRequest(r *http.Request) (*v3.FilterAttributeKeyRequ
 		return nil, err
 	}
 
+	if err := tagType.Validate(); err != nil {
+		return nil, err
+	}
+
 	req = v3.FilterAttributeKeyRequest{
 		DataSource:         dataSource,
 		AggregateOperator:  aggregateOperator,
 		AggregateAttribute: aggregateAttribute,
+		TagType:            tagType,
 		Limit:              limit,
 		SearchText:         r.URL.Query().Get("searchText"),
 	}
@@ -878,6 +885,8 @@ func parseFilterAttributeValueRequest(r *http.Request) (*v3.FilterAttributeValue
 	dataSource := v3.DataSource(r.URL.Query().Get("dataSource"))
 	aggregateOperator := v3.AggregateOperator(r.URL.Query().Get("aggregateOperator"))
 	aggregateAttribute := r.URL.Query().Get("aggregateAttribute")
+	tagType := v3.TagType(r.URL.Query().Get("tagType"))
+	filterAttributeKeyDataType := v3.FilterAttributeKeyDataType(r.URL.Query().Get("filterAttributeKeyDataType"))
 
 	limit, err := strconv.Atoi(r.URL.Query().Get("limit"))
 	if err != nil {
@@ -892,13 +901,23 @@ func parseFilterAttributeValueRequest(r *http.Request) (*v3.FilterAttributeValue
 		return nil, err
 	}
 
+	if err := tagType.Validate(); err != nil {
+		return nil, err
+	}
+
+	if err := filterAttributeKeyDataType.Validate(); err != nil {
+		return nil, err
+	}
+
 	req = v3.FilterAttributeValueRequest{
-		DataSource:         dataSource,
-		AggregateOperator:  aggregateOperator,
-		AggregateAttribute: aggregateAttribute,
-		Limit:              limit,
-		SearchText:         r.URL.Query().Get("searchText"),
-		FilterAttributeKey: r.URL.Query().Get("attributeKey"),
+		DataSource:                 dataSource,
+		AggregateOperator:          aggregateOperator,
+		AggregateAttribute:         aggregateAttribute,
+		FilterAttributeKeyDataType: filterAttributeKeyDataType,
+		TagType:                    tagType,
+		Limit:                      limit,
+		SearchText:                 r.URL.Query().Get("searchText"),
+		FilterAttributeKey:         r.URL.Query().Get("attributeKey"),
 	}
 	return &req, nil
 }

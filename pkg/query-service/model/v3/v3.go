@@ -131,6 +131,22 @@ func (q QueryType) Validate() error {
 	}
 }
 
+type TagType string
+
+const (
+	TagTypeAttribute TagType = "attribute"
+	TagTypeResource  TagType = "resource"
+)
+
+func (q TagType) Validate() error {
+	switch q {
+	case TagTypeAttribute, TagTypeResource:
+		return nil
+	default:
+		return fmt.Errorf("invalid tag type: %s", q)
+	}
+}
+
 type PanelType string
 
 const (
@@ -168,20 +184,40 @@ type FilterAttributeKeyRequest struct {
 	DataSource         DataSource        `json:"dataSource"`
 	AggregateOperator  AggregateOperator `json:"aggregateOperator"`
 	AggregateAttribute string            `json:"aggregateAttribute"`
+	TagType            TagType           `json:"tagType"`
 	SearchText         string            `json:"searchText"`
 	Limit              int               `json:"limit"`
+}
+
+type FilterAttributeKeyDataType string
+
+const (
+	FilterAttributeKeyDataTypeString FilterAttributeKeyDataType = "string"
+	FilterAttributeKeyDataTypeNumber FilterAttributeKeyDataType = "number"
+	FilterAttributeKeyDataTypeBool   FilterAttributeKeyDataType = "bool"
+)
+
+func (d FilterAttributeKeyDataType) Validate() error {
+	switch d {
+	case FilterAttributeKeyDataTypeString, FilterAttributeKeyDataTypeNumber, FilterAttributeKeyDataTypeBool:
+		return nil
+	default:
+		return fmt.Errorf("invalid filterAttributeKeyDataType type: %s", d)
+	}
 }
 
 // FilterAttributeValueRequest is a request to fetch possible attribute values
 // for a selected aggregate operator, aggregate attribute, filter attribute key
 // and search text.
 type FilterAttributeValueRequest struct {
-	DataSource         DataSource        `json:"dataSource"`
-	AggregateOperator  AggregateOperator `json:"aggregateOperator"`
-	AggregateAttribute string            `json:"aggregateAttribute"`
-	FilterAttributeKey string            `json:"filterAttributeKey"`
-	SearchText         string            `json:"searchText"`
-	Limit              int               `json:"limit"`
+	DataSource                 DataSource                 `json:"dataSource"`
+	AggregateOperator          AggregateOperator          `json:"aggregateOperator"`
+	AggregateAttribute         string                     `json:"aggregateAttribute"`
+	FilterAttributeKey         string                     `json:"filterAttributeKey"`
+	FilterAttributeKeyDataType FilterAttributeKeyDataType `json:"filterAttributeKeyDataType"`
+	TagType                    TagType                    `json:"tagType"`
+	SearchText                 string                     `json:"searchText"`
+	Limit                      int                        `json:"limit"`
 }
 
 type AggregateAttributeResponse struct {
@@ -199,7 +235,9 @@ type AttributeKey struct {
 }
 
 type FilterAttributeValueResponse struct {
-	AttributeValues []interface{} `json:"attributeValues"`
+	StringAttributeValues []string      `json:"stringAttributeValues"`
+	NumberAttributeValues []interface{} `json:"numberAttributeValues"`
+	BoolAttributeValues   []bool        `json:"boolAttributeValues"`
 }
 
 type QueryRangeParamsV3 struct {
