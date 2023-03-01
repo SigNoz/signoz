@@ -103,6 +103,11 @@ function ListLogView({ logData }: ListLogViewProps): JSX.Element {
 		});
 	};
 
+	const updatedSelecedFields = useMemo(
+		() => selected.filter((e) => e.name !== 'id'),
+		[selected],
+	);
+
 	return (
 		<Container>
 			<div>
@@ -123,7 +128,7 @@ function ListLogView({ logData }: ListLogViewProps): JSX.Element {
 					{'}'}
 				</div>
 				<div>
-					{map(selected, (field) =>
+					{map(updatedSelecedFields, (field) =>
 						isValidLogField(flattenLogData[field.name] as never) ? (
 							<LogSelectedField
 								key={field.name}
