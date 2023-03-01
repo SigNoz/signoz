@@ -5,8 +5,8 @@ import { useTranslation } from 'react-i18next';
 import { SaveConfigWrapper } from './styles';
 
 function SaveConfigButton({
-	onSaveHandler,
-	onCancelHandler,
+	onSaveConfigurationHandler,
+	onCancelConfigurationHandler,
 }: SaveConfigButtonTypes): JSX.Element {
 	const { t } = useTranslation('pipeline');
 
@@ -17,14 +17,14 @@ function SaveConfigButton({
 				type="primary"
 				htmlType="submit"
 				style={{ borderRadius: '0.375rem' }}
-				onClick={onSaveHandler}
+				onClick={onSaveConfigurationHandler}
 			>
 				{t('save_configuration')}
 			</Button>
 			<Button
 				key="cancel"
 				style={{ borderRadius: '0.375rem' }}
-				onClick={onCancelHandler}
+				onClick={onCancelConfigurationHandler}
 			>
 				{t('cancel')}
 			</Button>
@@ -32,8 +32,8 @@ function SaveConfigButton({
 	);
 }
 export interface SaveConfigButtonTypes {
-	onSaveHandler: VoidFunction;
-	onCancelHandler: VoidFunction;
+	onSaveConfigurationHandler: VoidFunction;
+	onCancelConfigurationHandler: VoidFunction;
 }
 
 export default SaveConfigButton;

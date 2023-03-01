@@ -67,7 +67,7 @@ function PipelineListsView({
 		[modal, t],
 	);
 
-	const handlePipelineEditAction = useCallback(
+	const pipelineEditAction = useCallback(
 		(record: PipelineColumn) => (): void => {
 			setActionType(ActionType.EditPipeline);
 			setSelectedRecord(record);
@@ -84,7 +84,7 @@ function PipelineListsView({
 		[currPipelineData],
 	);
 
-	const handlePipelineDeleteAction = useCallback(
+	const pipelineDeleteAction = useCallback(
 		(record: PipelineColumn) => (): void => {
 			handleAlert({
 				title: `${t('delete_pipeline')} : ${record.name}?`,
@@ -116,8 +116,8 @@ function PipelineListsView({
 					render: (_value, record): JSX.Element => (
 						<PipelineActions
 							isPipelineAction
-							editAction={handlePipelineEditAction(record)}
-							deleteAction={handlePipelineDeleteAction(record)}
+							editAction={pipelineEditAction(record)}
+							deleteAction={pipelineDeleteAction(record)}
 						/>
 					),
 				},
@@ -130,7 +130,7 @@ function PipelineListsView({
 			);
 		}
 		return fieldColumns;
-	}, [handlePipelineDeleteAction, handlePipelineEditAction, isActionMode]);
+	}, [pipelineDeleteAction, pipelineEditAction, isActionMode]);
 
 	const updatePipelineSequence = useCallback(
 		(updatedRow: PipelineColumn[]) => (): void => {
@@ -140,7 +140,7 @@ function PipelineListsView({
 		[],
 	);
 
-	const onCancelPipelineRowData = useCallback(
+	const onCancelPipelineSequence = useCallback(
 		(rawData: PipelineColumn[]) => (): void => {
 			setCurrPipelineData(rawData);
 		},
@@ -157,7 +157,7 @@ function PipelineListsView({
 					descrition: t('reorder_pipeline_description'),
 					buttontext: t('reorder'),
 					onOk: updatePipelineSequence(updatedRow),
-					onCancel: onCancelPipelineRowData(rawData),
+					onCancel: onCancelPipelineSequence(rawData),
 				});
 			}
 		},
@@ -167,7 +167,7 @@ function PipelineListsView({
 			isActionMode,
 			handleAlert,
 			updatePipelineSequence,
-			onCancelPipelineRowData,
+			onCancelPipelineSequence,
 		],
 	);
 
@@ -207,14 +207,17 @@ function PipelineListsView({
 		],
 	);
 
-	const getDataOnExpand = (expanded: boolean, record: PipelineColumn): void => {
-		const keys = [];
-		if (expanded) {
-			keys.push(record.uuid);
-		}
-		setActiveExpRow(keys);
-		setSelectedPipelineDataState(record);
-	};
+	const getDataOnExpand = useCallback(
+		(expanded: boolean, record: PipelineColumn): void => {
+			const keys = [];
+			if (expanded) {
+				keys.push(record.uuid);
+			}
+			setActiveExpRow(keys);
+			setSelectedPipelineDataState(record);
+		},
+		[],
+	);
 
 	const getExpandIcon = (
 		expanded: boolean,
@@ -224,28 +227,32 @@ function PipelineListsView({
 		<TableExpandIcon expanded={expanded} onExpand={onExpand} record={record} />
 	);
 
-	const onClickHandler = useCallback((): void => {
+	const addNewPipelineHandler = useCallback((): void => {
 		setActionType(ActionType.AddPipeline);
 	}, [setActionType]);
 
 	const footer = useCallback((): JSX.Element | undefined => {
 		if (isActionMode === ActionMode.Editing) {
 			return (
-				<FooterButton type="link" onClick={onClickHandler} icon={<PlusOutlined />}>
+				<FooterButton
+					type="link"
+					onClick={addNewPipelineHandler}
+					icon={<PlusOutlined />}
+				>
 					{t('add_new_pipeline')}
 				</FooterButton>
 			);
 		}
 		return undefined;
-	}, [isActionMode, onClickHandler, t]);
+	}, [isActionMode, addNewPipelineHandler, t]);
 
-	const onSaveHandler = useCallback((): void => {
+	const onSaveConfigurationHandler = useCallback((): void => {
 		setActionMode(ActionMode.Viewing);
 		setIsVisibleSaveButton(undefined);
 		const modifiedPipelineData = currPipelineData.map((item: PipelineColumn) => {
 			const pipelineData = item;
 			if (item.uuid === selectedPipelineDataState?.uuid) {
-				pipelineData.operators = selectedPipelineDataState.operators;
+				pipelineData.operators = selectedPipelineDataState?.operators;
 			}
 			return pipelineData;
 		});
@@ -253,7 +260,7 @@ function PipelineListsView({
 		setPrevPipelineData(modifiedPipelineData);
 	}, [currPipelineData, selectedPipelineDataState, setActionMode]);
 
-	const onCancelHandler = useCallback((): void => {
+	const onCancelConfigurationHandler = useCallback((): void => {
 		setActionMode(ActionMode.Viewing);
 		setIsVisibleSaveButton(undefined);
 		setCurrPipelineData(prevPipelineData);
@@ -315,8 +322,8 @@ function PipelineListsView({
 				</DndProvider>
 				{isVisibleSaveButton && (
 					<SaveConfigButton
-						onSaveHandler={onSaveHandler}
-						onCancelHandler={onCancelHandler}
+						onSaveConfigurationHandler={onSaveConfigurationHandler}
+						onCancelConfigurationHandler={onCancelConfigurationHandler}
 					/>
 				)}
 			</Container>

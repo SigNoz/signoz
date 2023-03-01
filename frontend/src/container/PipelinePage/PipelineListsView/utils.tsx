@@ -17,7 +17,7 @@ export function getRecordIndex<T>(
 	target: T,
 	key: keyof T,
 ): number {
-	return arr.findIndex((item) => item[key] === target?.[key]);
+	return arr?.findIndex((item) => item[key] === target?.[key]);
 }
 
 export function getUpdatedRow<T>(

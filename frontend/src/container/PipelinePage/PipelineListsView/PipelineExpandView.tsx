@@ -103,7 +103,7 @@ function PipelineExpandView({
 		],
 	);
 
-	const onCancel = useCallback(
+	const onCancelReorderProcessorRow = useCallback(
 		() => (): void => {
 			setSelectedPipelineDataState(selectedPipelineDataState);
 		},
@@ -127,17 +127,17 @@ function PipelineExpandView({
 					descrition: t('reorder_processor_description'),
 					buttontext: t('reorder'),
 					onOk: reorderProcessorRow(updatedRow),
-					onCancel,
+					onCancel: onCancelReorderProcessorRow(),
 				});
 			}
 		},
 		[
 			t,
-			onCancel,
 			handleAlert,
 			isActionMode,
-			selectedPipelineDataState.operators,
 			reorderProcessorRow,
+			onCancelReorderProcessorRow,
+			selectedPipelineDataState.operators,
 		],
 	);
 

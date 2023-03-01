@@ -82,7 +82,8 @@ function AddNewPipeline({
 				updatedPipelineData,
 			);
 			setCurrPipelineData(editedPipelineData as Array<PipelineColumn>);
-		} else {
+		}
+		if (isAdd) {
 			setTagsListData([]);
 			setCount((prevState: number) => prevState + 1);
 			setCurrPipelineData(
@@ -93,7 +94,7 @@ function AddNewPipeline({
 		setActionType(undefined);
 	};
 
-	const onCancelHandler = (): void => {
+	const onCancelModalHandler = (): void => {
 		setActionType(undefined);
 	};
 
@@ -105,7 +106,7 @@ function AddNewPipeline({
 		[isEdit, selectedRecord?.name, t],
 	);
 
-	const onClickHandler = useCallback(
+	const onOkModalHandler = useCallback(
 		() => setIsVisibleSaveButton(ActionMode.Editing),
 		[setIsVisibleSaveButton],
 	);
@@ -117,7 +118,7 @@ function AddNewPipeline({
 			open={isEdit || isAdd}
 			width={800}
 			footer={null}
-			onCancel={onCancelHandler}
+			onCancel={onCancelModalHandler}
 		>
 			<Divider plain />
 			<Form
@@ -136,11 +137,11 @@ function AddNewPipeline({
 							key="submit"
 							type="primary"
 							htmlType="submit"
-							onClick={onClickHandler}
+							onClick={onOkModalHandler}
 						>
 							{isEdit ? t('update') : t('create')}
 						</Button>
-						<Button key="cancel" onClick={onCancelHandler}>
+						<Button key="cancel" onClick={onCancelModalHandler}>
 							{t('cancel')}
 						</Button>
 					</ModalButtonWrapper>

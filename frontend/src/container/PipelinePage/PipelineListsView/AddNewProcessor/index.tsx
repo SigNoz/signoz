@@ -73,7 +73,8 @@ function AddNewProcessor({
 			const modifiedProcessorData = { ...selectedPipelineDataState };
 			modifiedProcessorData.operators = editedData as PipelineOperators[];
 			setSelectedPipelineDataState(modifiedProcessorData);
-		} else {
+		}
+		if (isAdd) {
 			const modifiedProcessorData = { ...selectedPipelineDataState };
 			modifiedProcessorData.operators.push(newProcessorData);
 			setSelectedPipelineDataState(modifiedProcessorData);
@@ -81,7 +82,7 @@ function AddNewProcessor({
 		setActionType(undefined);
 	};
 
-	const onCancelHandler = (): void => {
+	const onCancelModal = (): void => {
 		setActionType(undefined);
 	};
 
@@ -93,7 +94,7 @@ function AddNewProcessor({
 		[isEdit, selectedProcessorData?.name, t],
 	);
 
-	const onClickHandler = useCallback(
+	const onOkModalHandler = useCallback(
 		() => setIsVisibleSaveButton(ActionMode.Editing),
 		[setIsVisibleSaveButton],
 	);
@@ -105,7 +106,7 @@ function AddNewProcessor({
 			open={isEdit || isAdd}
 			width={800}
 			footer={null}
-			onCancel={onCancelHandler}
+			onCancel={onCancelModal}
 		>
 			<Divider plain />
 			<Form
@@ -128,11 +129,11 @@ function AddNewProcessor({
 							key="submit"
 							type="primary"
 							htmlType="submit"
-							onClick={onClickHandler}
+							onClick={onOkModalHandler}
 						>
 							{isEdit ? t('update') : t('create')}
 						</Button>
-						<Button key="cancel" onClick={onCancelHandler}>
+						<Button key="cancel" onClick={onCancelModal}>
 							{t('cancel')}
 						</Button>
 					</ModalButtonWrapper>
