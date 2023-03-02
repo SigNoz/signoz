@@ -16,7 +16,7 @@ function TagsKey(props: TagsKeysProps): JSX.Element {
 
 	const { index, setLocalSelectedTags, tag } = props;
 
-	const [selectedKey, setSelectedKey] = useState<string>(tag.Key[0] || '');
+	const [selectedKey, setSelectedKey] = useState<string>(tag.Key || '');
 
 	const traces = useSelector<AppState, TraceReducer>((state) => state.traces);
 
@@ -27,6 +27,7 @@ function TagsKey(props: TagsKeysProps): JSX.Element {
 			globalTime.maxTime,
 			traces.selectedFilter,
 			traces.isFilterExclude,
+			traces.spanKind,
 		],
 		{
 			queryFn: () =>
@@ -35,6 +36,7 @@ function TagsKey(props: TagsKeysProps): JSX.Element {
 					end: globalTime.maxTime,
 					other: Object.fromEntries(traces.selectedFilter),
 					isFilterExclude: traces.isFilterExclude,
+					spanKind: traces.spanKind,
 				}),
 			cacheTime: 120000,
 		},

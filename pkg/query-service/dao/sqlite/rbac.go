@@ -345,7 +345,13 @@ func (mds *ModelDaoSqlite) GetUserByEmail(ctx context.Context,
 	return &users[0], nil
 }
 
+// GetUsers fetches total user count
 func (mds *ModelDaoSqlite) GetUsers(ctx context.Context) ([]model.UserPayload, *model.ApiError) {
+	return mds.GetUsersWithOpts(ctx, 0)
+}
+
+// GetUsersWithOpts fetches users and supports additional search options
+func (mds *ModelDaoSqlite) GetUsersWithOpts(ctx context.Context, limit int) ([]model.UserPayload, *model.ApiError) {
 	users := []model.UserPayload{}
 
 	query := `select
@@ -364,6 +370,9 @@ func (mds *ModelDaoSqlite) GetUsers(ctx context.Context) ([]model.UserPayload, *
 				g.id = u.group_id and
 				o.id = u.org_id`
 
+	if limit > 0 {
+		query = fmt.Sprintf("%s LIMIT %d", query, limit)
+	}
 	err := mds.db.Select(&users, query)
 
 	if err != nil {

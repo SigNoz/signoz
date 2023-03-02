@@ -29,4 +29,6 @@ export default interface AppReducer {
 	featureFlags: null | FeatureFlagPayload;
 	configs: ConfigPayload;
 	userFlags: null | UserFlags;
+	ee: 'Y' | 'N';
+	setupCompleted: boolean;
 }

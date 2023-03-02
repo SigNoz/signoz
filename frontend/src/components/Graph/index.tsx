@@ -44,6 +44,7 @@ import {
 	intersectionCursorPluginId,
 	IntersectionCursorPluginOptions,
 } from './Plugin/IntersectionCursor';
+import { TooltipPosition as TooltipPositionHandler } from './Plugin/Tooltip';
 import { LegendsContainer } from './styles';
 import { useXAxisTimeUnit } from './xAxisConfig';
 import { getToolTipValue, getYAxisFormattedValue } from './yAxisConfig';
@@ -66,6 +67,8 @@ Chart.register(
 	BarElement,
 	annotationPlugin,
 );
+
+Tooltip.positioners.custom = TooltipPositionHandler;
 
 function Graph({
 	animate = true,
@@ -177,6 +180,7 @@ function Graph({
 								return 'rgba(255, 255, 255, 0.75)';
 							},
 						},
+						position: 'custom',
 					},
 					[dragSelectPluginId]: createDragSelectPluginOptions(
 						!!onDragSelect,
@@ -322,6 +326,12 @@ function Graph({
 			<LegendsContainer id={name} />
 		</div>
 	);
+}
+
+declare module 'chart.js' {
+	interface TooltipPositionerMap {
+		custom: TooltipPositionerFunction<ChartType>;
+	}
 }
 
 type CustomChartOptions = ChartOptions & {

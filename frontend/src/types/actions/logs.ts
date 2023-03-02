@@ -1,3 +1,4 @@
+import { LogViewMode } from 'container/LogsTable';
 import { ILogQLParsedQueryItem } from 'lib/logql/types';
 import { IField, IFieldMoveToSelected, IFields } from 'types/api/logs/fields';
 import { TLogsLiveTailState } from 'types/api/logs/liveTail';
@@ -28,6 +29,8 @@ export const PUSH_LIVE_TAIL_EVENT = 'LOGS_PUSH_LIVE_TAIL_EVENT';
 export const STOP_LIVE_TAIL = 'LOGS_STOP_LIVE_TAIL';
 export const FLUSH_LOGS = 'LOGS_FLUSH_LOGS';
 export const SET_LIVE_TAIL_START_TIME = 'LOGS_SET_LIVE_TAIL_START_TIME';
+export const SET_LINES_PER_ROW = 'SET_LINES_PER_ROW';
+export const SET_VIEW_MODE = 'SET_VIEW_MODE';
 export const UPDATE_SELECTED_FIELDS = 'LOGS_UPDATE_SELECTED_FIELDS';
 export const UPDATE_INTERESTING_FIELDS = 'LOGS_UPDATE_INTERESTING_FIELDS';
 
@@ -118,6 +121,15 @@ export interface SetLiveTailStartTime {
 	payload: number;
 }
 
+export interface SetLinesPerRow {
+	type: typeof SET_LINES_PER_ROW;
+	payload: number;
+}
+
+export interface SetViewMode {
+	type: typeof SET_VIEW_MODE;
+	payload: LogViewMode;
+}
 type IFieldType = 'interesting' | 'selected';
 
 export interface UpdateSelectedInterestFields {
@@ -149,4 +161,6 @@ export type LogsActions =
 	| StopLiveTail
 	| FlushLogs
 	| SetLiveTailStartTime
+	| SetLinesPerRow
+	| SetViewMode
 	| UpdateSelectedInterestFields;
