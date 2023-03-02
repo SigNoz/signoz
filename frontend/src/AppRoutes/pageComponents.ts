@@ -123,3 +123,15 @@ export const SomethingWentWrong = Loadable(
 export const LicensePage = Loadable(
 	() => import(/* webpackChunkName: "All Channels" */ 'pages/License'),
 );
+
+export const CostOptimizerSettings = Loadable(
+	() => import(/* webpackChunkName: "Cost Optimizer" */ 'pages/Settings'),
+);
+
+export const IngestionAnalytics = Loadable(
+	() => import(/* webpackChunkName: "Ingestion Analytics" */ 'pages/Settings'),
+);
+
+export const ManageDropRules = Loadable(
+	() => import(/* webpackChunkName: "Manage Drop Rules" */ 'pages/Settings'),
+);
