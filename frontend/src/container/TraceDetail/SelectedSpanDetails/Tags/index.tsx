@@ -25,8 +25,6 @@ function Tags({
 	const { t } = useTranslation(['traceDetails']);
 	const [allRenderedTags, setAllRenderedTags] = useState(tags);
 	const isSearchVisible = useMemo(() => tags.length > 5, [tags]);
-	const linkedNonChildSpans =
-		linkedSpans?.filter((span) => span.RefType !== 'CHILD_OF') || [];
 
 	useEffect(() => {
 		setAllRenderedTags(tags);
@@ -70,10 +68,10 @@ function Tags({
 					}}
 				/>
 			))}
-			{linkedNonChildSpans?.length > 0 && (
+			{linkedSpans && linkedSpans.length > 0 && (
 				<List
 					header={<Typography.Title level={5}>Linked Spans</Typography.Title>}
-					dataSource={linkedNonChildSpans}
+					dataSource={linkedSpans}
 					renderItem={(item): ReactNode => (
 						<List.Item>
 							<Link href={getLink(item)} target="_blank">

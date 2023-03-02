@@ -42,7 +42,7 @@ function SelectedSpanDetails(props: SelectedSpanDetailsProps): JSX.Element {
 		return <div />;
 	}
 
-	const { tags, references } = tree;
+	const { tags, nonChildReferences } = tree;
 
 	return (
 		<CardContainer>
@@ -87,7 +87,7 @@ function SelectedSpanDetails(props: SelectedSpanDetailsProps): JSX.Element {
 						onToggleHandler={onToggleHandler}
 						setText={setText}
 						tags={tags}
-						linkedSpans={references}
+						linkedSpans={nonChildReferences}
 					/>
 				</TabPane>
 				<TabPane tab="Events" key="2">
