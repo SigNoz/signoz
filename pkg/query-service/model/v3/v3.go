@@ -181,26 +181,26 @@ type FilterAttributeKeyRequest struct {
 	Limit              int               `json:"limit"`
 }
 
-type FilterAttributeKeyDataType string
+type AttributeKeyDataType string
 
 const (
-	FilterAttributeKeyDataTypeString FilterAttributeKeyDataType = "string"
-	FilterAttributeKeyDataTypeNumber FilterAttributeKeyDataType = "number"
-	FilterAttributeKeyDataTypeBool   FilterAttributeKeyDataType = "bool"
+	AttributeKeyDataTypeString AttributeKeyDataType = "string"
+	AttributeKeyDataTypeNumber AttributeKeyDataType = "number"
+	AttributeKeyDataTypeBool   AttributeKeyDataType = "bool"
 )
 
 // FilterAttributeValueRequest is a request to fetch possible attribute values
 // for a selected aggregate operator, aggregate attribute, filter attribute key
 // and search text.
 type FilterAttributeValueRequest struct {
-	DataSource                 DataSource                 `json:"dataSource"`
-	AggregateOperator          AggregateOperator          `json:"aggregateOperator"`
-	AggregateAttribute         string                     `json:"aggregateAttribute"`
-	FilterAttributeKey         string                     `json:"filterAttributeKey"`
-	FilterAttributeKeyDataType FilterAttributeKeyDataType `json:"filterAttributeKeyDataType"`
-	TagType                    TagType                    `json:"tagType"`
-	SearchText                 string                     `json:"searchText"`
-	Limit                      int                        `json:"limit"`
+	DataSource                 DataSource           `json:"dataSource"`
+	AggregateOperator          AggregateOperator    `json:"aggregateOperator"`
+	AggregateAttribute         string               `json:"aggregateAttribute"`
+	FilterAttributeKey         string               `json:"filterAttributeKey"`
+	FilterAttributeKeyDataType AttributeKeyDataType `json:"filterAttributeKeyDataType"`
+	TagType                    TagType              `json:"tagType"`
+	SearchText                 string               `json:"searchText"`
+	Limit                      int                  `json:"limit"`
 }
 
 type AggregateAttributeResponse struct {
@@ -211,10 +211,18 @@ type FilterAttributeKeyResponse struct {
 	AttributeKeys []AttributeKey `json:"attributeKeys"`
 }
 
+type AttributeKeyType string
+
+const (
+	AttributeKeyTypeColumn   AttributeKeyType = "column"
+	AttributeKeyTypeTag      AttributeKeyType = "tag"
+	AttributeKeyTypeResource AttributeKeyType = "resource"
+)
+
 type AttributeKey struct {
-	Key      string `json:"key"`
-	DataType string `json:"dataType"`
-	Type     string `json:"type"` // "column" or "tag"/"attr"/"attribute" or "resource"?
+	Key      string               `json:"key"`
+	DataType AttributeKeyDataType `json:"dataType"`
+	Type     AttributeKeyType     `json:"type"`
 }
 
 type FilterAttributeValueResponse struct {
