@@ -267,7 +267,7 @@ func RegisterFirstUser(ctx context.Context, req *RegisterRequest) (*model.User, 
 func RegisterInvitedUser(ctx context.Context, req *RegisterRequest, nopassword bool) (*model.User, *model.ApiError) {
 
 	if req.InviteToken == "" {
-		return nil, model.BadRequest(fmt.Errorf("invite token is required"))
+		return nil, model.BadRequest(ErrorAskAdmin)
 	}
 
 	if !nopassword && req.Password == "" {

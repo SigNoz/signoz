@@ -1002,6 +1002,11 @@ func (r *ClickHouseReader) GetSpanFilters(ctx context.Context, queryParams *mode
 		args = append(args, clickhouse.Named("durationNanoMax", queryParams.MaxDuration))
 	}
 
+	if len(queryParams.SpanKind) != 0 {
+		query = query + " AND kind = @kind"
+		args = append(args, clickhouse.Named("kind", queryParams.SpanKind))
+	}
+
 	query = getStatusFilters(query, queryParams.Status, excludeMap)
 
 	traceFilterReponse := model.SpanFiltersResponse{
@@ -1365,9 +1370,9 @@ func (r *ClickHouseReader) GetFilteredSpans(ctx context.Context, queryParams *mo
 	}
 	query = getStatusFilters(query, queryParams.Status, excludeMap)
 
-	if len(queryParams.Kind) != 0 {
+	if len(queryParams.SpanKind) != 0 {
 		query = query + " AND kind = @kind"
-		args = append(args, clickhouse.Named("kind", queryParams.Kind))
+		args = append(args, clickhouse.Named("kind", queryParams.SpanKind))
 	}
 
 	// create TagQuery from TagQueryParams
@@ -1667,6 +1672,10 @@ func (r *ClickHouseReader) GetTagFilters(ctx context.Context, queryParams *model
 		query = query + " AND durationNano <= @durationNanoMax"
 		args = append(args, clickhouse.Named("durationNanoMax", queryParams.MaxDuration))
 	}
+	if len(queryParams.SpanKind) != 0 {
+		query = query + " AND kind = @kind"
+		args = append(args, clickhouse.Named("kind", queryParams.SpanKind))
+	}
 
 	query = getStatusFilters(query, queryParams.Status, excludeMap)
 
@@ -1781,6 +1790,10 @@ func (r *ClickHouseReader) GetTagValues(ctx context.Context, queryParams *model.
 	if len(queryParams.MaxDuration) != 0 {
 		query = query + " AND durationNano <= @durationNanoMax"
 		args = append(args, clickhouse.Named("durationNanoMax", queryParams.MaxDuration))
+	}
+	if len(queryParams.SpanKind) != 0 {
+		query = query + " AND kind = @kind"
+		args = append(args, clickhouse.Named("kind", queryParams.SpanKind))
 	}
 
 	query = getStatusFilters(query, queryParams.Status, excludeMap)
@@ -1982,7 +1995,7 @@ func (r *ClickHouseReader) GetDependencyGraph(ctx context.Context, queryParams *
 			result[5] AS p99,
 			sum(total_count) as callCount,
 			sum(total_count)/ @duration AS callRate,
-			sum(error_count)/sum(total_count) as errorRate
+			sum(error_count)/sum(total_count) * 100 as errorRate
 		FROM %s.%s
 		WHERE toUInt64(toDateTime(timestamp)) >= @start AND toUInt64(toDateTime(timestamp)) <= @end
 		GROUP BY
@@ -2114,9 +2127,9 @@ func (r *ClickHouseReader) GetFilteredSpansAggregates(ctx context.Context, query
 	}
 	query = getStatusFilters(query, queryParams.Status, excludeMap)
 
-	if len(queryParams.Kind) != 0 {
+	if len(queryParams.SpanKind) != 0 {
 		query = query + " AND kind = @kind"
-		args = append(args, clickhouse.Named("kind", queryParams.Kind))
+		args = append(args, clickhouse.Named("kind", queryParams.SpanKind))
 	}
 	// create TagQuery from TagQueryParams
 	tags := createTagQueryFromTagQueryParams(queryParams.Tags)
@@ -3668,8 +3681,8 @@ func (r *ClickHouseReader) GetMetricAggregateAttributes(ctx context.Context, req
 		}
 		key := v3.AttributeKey{
 			Key:      metricName,
-			DataType: "STRING",
-			Type:     "ATTRIBUTE",
+			DataType: "Float",
+			Type:     "tag",
 		}
 		response.AttributeKeys = append(response.AttributeKeys, key)
 	}
@@ -3705,8 +3718,8 @@ func (r *ClickHouseReader) GetMetricAttributeKeys(ctx context.Context, req *v3.F
 		}
 		key := v3.AttributeKey{
 			Key:      attributeKey,
-			DataType: "STRING",
-			Type:     "ATTRIBUTE",
+			DataType: "String",
+			Type:     "tag",
 		}
 		response.AttributeKeys = append(response.AttributeKeys, key)
 	}
@@ -3740,8 +3753,18 @@ func (r *ClickHouseReader) GetMetricAttributeValues(ctx context.Context, req *v3
 		if err := rows.Scan(&atrributeValue); err != nil {
 			return nil, fmt.Errorf("error while scanning rows: %s", err.Error())
 		}
-		attributeValues.AttributeValues = append(attributeValues.AttributeValues, atrributeValue)
+		attributeValues.StringAttributeValues = append(attributeValues.StringAttributeValues, atrributeValue)
 	}
 
 	return &attributeValues, nil
+}
+
+func (r *ClickHouseReader) CheckClickHouse(ctx context.Context) error {
+	rows, err := r.db.Query(ctx, "SELECT 1")
+	if err != nil {
+		return err
+	}
+	defer rows.Close()
+
+	return nil
 }

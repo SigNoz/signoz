@@ -57,6 +57,8 @@ const InitialValue: InitialValueTypes = {
 	role: null,
 	configs: {},
 	userFlags: {},
+	ee: 'Y',
+	setupCompleted: true,
 };
 
 const appReducer = (
@@ -89,6 +91,8 @@ const appReducer = (
 			return {
 				...state,
 				currentVersion: action.payload.currentVersion,
+				ee: action.payload.ee,
+				setupCompleted: action.payload.setupCompleted,
 			};
 		}
 

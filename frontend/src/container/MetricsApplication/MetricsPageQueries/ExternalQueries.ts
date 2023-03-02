@@ -161,7 +161,7 @@ export const externalCallDurationByAddress = ({
 };
 
 interface ExternalCallDurationByAddressProps extends ExternalCallProps {
-	legend: '{{address}}';
+	legend: string;
 }
 
 export interface ExternalCallProps {
