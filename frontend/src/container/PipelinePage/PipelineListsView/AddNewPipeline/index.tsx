@@ -15,8 +15,8 @@ import { renderPipelineForm } from './utils';
 function AddNewPipeline({
 	isActionType,
 	setActionType,
-	selectedRecord,
-	setIsVisibleSaveButton,
+	selectedPipelineData,
+	setShowSaveButton,
 	setCurrPipelineData,
 	currPipelineData,
 }: AddNewPipelineProps): JSX.Element {
@@ -31,14 +31,14 @@ function AddNewPipeline({
 
 	useEffect(() => {
 		if (isEdit) {
-			setTagsListData(selectedRecord?.tags);
-			form.setFieldsValue(selectedRecord);
+			setTagsListData(selectedPipelineData?.tags);
+			form.setFieldsValue(selectedPipelineData);
 		}
 		if (isAdd) {
 			form.resetFields();
 			setTagsListData([]);
 		}
-	}, [form, isEdit, isAdd, selectedRecord]);
+	}, [form, isEdit, isAdd, selectedPipelineData]);
 
 	const onFinish = (values: PipelineColumn): void => {
 		const newPipeLineData = {
@@ -64,7 +64,7 @@ function AddNewPipeline({
 		if (isEdit) {
 			const findRecordIndex = getRecordIndex(
 				currPipelineData,
-				selectedRecord,
+				selectedPipelineData,
 				'name' as never,
 			);
 			const updatedPipelineData = {
@@ -77,7 +77,7 @@ function AddNewPipeline({
 
 			const editedPipelineData = getEditedDataSource(
 				currPipelineData,
-				selectedRecord,
+				selectedPipelineData,
 				'name' as never,
 				updatedPipelineData,
 			);
@@ -101,14 +101,14 @@ function AddNewPipeline({
 	const modalTitle = useMemo(
 		(): string =>
 			isEdit
-				? `${t('edit_pipeline')} : ${selectedRecord?.name}`
+				? `${t('edit_pipeline')} : ${selectedPipelineData?.name}`
 				: t('create_pipeline'),
-		[isEdit, selectedRecord?.name, t],
+		[isEdit, selectedPipelineData?.name, t],
 	);
 
 	const onOkModalHandler = useCallback(
-		() => setIsVisibleSaveButton(ActionMode.Editing),
-		[setIsVisibleSaveButton],
+		() => setShowSaveButton(ActionMode.Editing),
+		[setShowSaveButton],
 	);
 
 	return (
@@ -154,8 +154,8 @@ function AddNewPipeline({
 interface AddNewPipelineProps {
 	isActionType: string;
 	setActionType: (actionType?: ActionType) => void;
-	selectedRecord: PipelineColumn | undefined;
-	setIsVisibleSaveButton: (actionMode: ActionMode) => void;
+	selectedPipelineData: PipelineColumn | undefined;
+	setShowSaveButton: (actionMode: ActionMode) => void;
 	setCurrPipelineData: (
 		value: React.SetStateAction<Array<PipelineColumn>>,
 	) => void;

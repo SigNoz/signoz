@@ -33,9 +33,9 @@ describe('PipelinePage container test', () => {
 							isActionType={isActionType}
 							setActionType={setActionType}
 							selectedProcessorData={selectedProcessorData}
-							setIsVisibleSaveButton={jest.fn()}
-							selectedPipelineDataState={pipelineMockData[0]}
-							setSelectedPipelineDataState={jest.fn()}
+							setShowSaveButton={jest.fn()}
+							expandedPipelineData={pipelineMockData[0]}
+							setExpandedPipelineData={jest.fn()}
 						/>
 					</I18nextProvider>
 				</Provider>

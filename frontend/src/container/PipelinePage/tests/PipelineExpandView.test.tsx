@@ -28,9 +28,9 @@ describe('PipelinePage', () => {
 							setActionType={setActionType}
 							processorEditAction={processorEditAction}
 							isActionMode="viewing-mode"
-							setIsVisibleSaveButton={jest.fn()}
-							selectedPipelineDataState={pipelineMockData[0]}
-							setSelectedPipelineDataState={jest.fn()}
+							setShowSaveButton={jest.fn()}
+							expandedPipelineData={pipelineMockData[0]}
+							setExpandedPipelineData={jest.fn()}
 							processorData={pipelineMockData[0].operators}
 						/>
 					</I18nextProvider>

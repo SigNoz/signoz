@@ -14,9 +14,9 @@ function AddNewProcessor({
 	isActionType,
 	setActionType,
 	selectedProcessorData,
-	setIsVisibleSaveButton,
-	selectedPipelineDataState,
-	setSelectedPipelineDataState,
+	setShowSaveButton,
+	expandedPipelineData,
+	setExpandedPipelineData,
 }: AddNewProcessorProps): JSX.Element {
 	const [form] = Form.useForm();
 	const { t } = useTranslation('pipeline');
@@ -44,7 +44,7 @@ function AddNewProcessor({
 
 	const onFinish = (values: ProcessorColumn): void => {
 		const newProcessorData = {
-			id: (selectedPipelineDataState.operators.length + 1).toString(),
+			id: (expandedPipelineData.operators.length + 1).toString(),
 			type: processorType,
 			name: values.name,
 			output: values.output,
@@ -52,35 +52,35 @@ function AddNewProcessor({
 
 		if (isEdit) {
 			const findRecordIndex = getRecordIndex(
-				selectedPipelineDataState.operators,
+				expandedPipelineData.operators,
 				selectedProcessorData,
 				'id' as never,
 			);
 
 			const updatedProcessorData = {
-				...selectedPipelineDataState?.operators?.[findRecordIndex],
+				...expandedPipelineData?.operators?.[findRecordIndex],
 				type: processorType,
 				name: values.name,
 				output: values.output,
 			};
 
 			const editedData = getEditedDataSource(
-				selectedPipelineDataState.operators,
+				expandedPipelineData.operators,
 				selectedProcessorData,
 				'name' as never,
 				updatedProcessorData,
 			);
-			const modifiedProcessorData = { ...selectedPipelineDataState };
+			const modifiedProcessorData = { ...expandedPipelineData };
 			modifiedProcessorData.operators = editedData as PipelineOperators[];
-			setSelectedPipelineDataState(modifiedProcessorData);
+			setExpandedPipelineData(modifiedProcessorData);
 		}
 		if (isAdd) {
-			const modifiedProcessorData = { ...selectedPipelineDataState };
+			const modifiedProcessorData = { ...expandedPipelineData };
 			modifiedProcessorData.operators = [
 				...modifiedProcessorData.operators,
 				newProcessorData,
 			];
-			setSelectedPipelineDataState(modifiedProcessorData);
+			setExpandedPipelineData(modifiedProcessorData);
 		}
 		setActionType(undefined);
 	};
@@ -98,8 +98,8 @@ function AddNewProcessor({
 	);
 
 	const onOkModalHandler = useCallback(
-		() => setIsVisibleSaveButton(ActionMode.Editing),
-		[setIsVisibleSaveButton],
+		() => setShowSaveButton(ActionMode.Editing),
+		[setShowSaveButton],
 	);
 
 	return (
@@ -150,9 +150,9 @@ interface AddNewProcessorProps {
 	isActionType: string;
 	setActionType: (actionType?: ActionType) => void;
 	selectedProcessorData: ProcessorColumn | undefined;
-	setIsVisibleSaveButton: (actionMode: ActionMode) => void;
-	selectedPipelineDataState: PipelineColumn;
-	setSelectedPipelineDataState: (data: PipelineColumn) => void;
+	setShowSaveButton: (actionMode: ActionMode) => void;
+	expandedPipelineData: PipelineColumn;
+	setExpandedPipelineData: (data: PipelineColumn) => void;
 }
 
 export default AddNewProcessor;

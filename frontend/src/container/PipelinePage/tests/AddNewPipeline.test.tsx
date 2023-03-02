@@ -31,7 +31,7 @@ beforeAll(() => {
 describe('PipelinePage container test', () => {
 	it('should render AddNewPipeline section', () => {
 		const setActionType = jest.fn();
-		const selectedRecord = pipelineMockData[0];
+		const selectedPipelineData = pipelineMockData[0];
 		const isActionType = 'add-pipeline';
 		const { asFragment } = render(
 			<MemoryRouter>
@@ -40,8 +40,8 @@ describe('PipelinePage container test', () => {
 						<AddNewPipeline
 							isActionType={isActionType}
 							setActionType={setActionType}
-							selectedRecord={selectedRecord}
-							setIsVisibleSaveButton={jest.fn()}
+							selectedPipelineData={selectedPipelineData}
+							setShowSaveButton={jest.fn()}
 							setCurrPipelineData={jest.fn()}
 							currPipelineData={pipelineMockData}
 						/>

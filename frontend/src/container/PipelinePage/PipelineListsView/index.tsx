@@ -33,7 +33,6 @@ function PipelineListsView({
 }: PipelineListsViewProps): JSX.Element {
 	const { t } = useTranslation('pipeline');
 	const [modal, contextHolder] = Modal.useModal();
-
 	const [prevPipelineData, setPrevPipelineData] = useState<
 		Array<PipelineColumn>
 	>(pipelineMockData);
@@ -41,16 +40,19 @@ function PipelineListsView({
 		Array<PipelineColumn>
 	>(pipelineMockData);
 	const [
-		selectedPipelineDataState,
-		setSelectedPipelineDataState,
+		expandedPipelineData,
+		setExpandedPipelineData,
 	] = useState<PipelineColumn>();
-	const [activeExpRow, setActiveExpRow] = useState<Array<string>>();
-	const [selectedRecord, setSelectedRecord] = useState<PipelineColumn>();
 	const [
 		selectedProcessorData,
 		setSelectedProcessorData,
 	] = useState<ProcessorColumn>();
-	const [isVisibleSaveButton, setIsVisibleSaveButton] = useState<string>();
+	const [
+		selectedPipelineData,
+		setSelectedPipelineData,
+	] = useState<PipelineColumn>();
+	const [expandedRow, setExpandedRow] = useState<Array<string>>();
+	const [showSaveButton, setShowSaveButton] = useState<string>();
 
 	const handleAlert = useCallback(
 		({ title, descrition, buttontext, onCancel, onOk }: AlertMessage) => {
@@ -70,14 +72,14 @@ function PipelineListsView({
 	const pipelineEditAction = useCallback(
 		(record: PipelineColumn) => (): void => {
 			setActionType(ActionType.EditPipeline);
-			setSelectedRecord(record);
+			setSelectedPipelineData(record);
 		},
 		[setActionType],
 	);
 
 	const pipelineDeleteHandler = useCallback(
 		(record: PipelineColumn) => (): void => {
-			setIsVisibleSaveButton(ActionMode.Editing);
+			setShowSaveButton(ActionMode.Editing);
 			const filteredData = getElementFromArray(currPipelineData, record, 'uuid');
 			setCurrPipelineData(filteredData);
 		},
@@ -134,7 +136,7 @@ function PipelineListsView({
 
 	const updatePipelineSequence = useCallback(
 		(updatedRow: PipelineColumn[]) => (): void => {
-			setIsVisibleSaveButton(ActionMode.Editing);
+			setShowSaveButton(ActionMode.Editing);
 			setCurrPipelineData(updatedRow);
 		},
 		[],
@@ -173,7 +175,7 @@ function PipelineListsView({
 
 	const processorData = useMemo(
 		() =>
-			selectedPipelineDataState?.operators.map(
+			expandedPipelineData?.operators.map(
 				(item: PipelineOperators): ProcessorColumn => ({
 					id: item.id,
 					type: item.type,
@@ -181,19 +183,19 @@ function PipelineListsView({
 					output: item.output,
 				}),
 			),
-		[selectedPipelineDataState],
+		[expandedPipelineData],
 	);
 
-	const expandedRow = useCallback(
+	const expandedRowView = useCallback(
 		(): JSX.Element => (
 			<PipelineExpanView
 				handleAlert={handleAlert}
 				isActionMode={isActionMode}
 				setActionType={setActionType}
 				processorEditAction={processorEditAction}
-				setIsVisibleSaveButton={setIsVisibleSaveButton}
-				selectedPipelineDataState={selectedPipelineDataState as PipelineColumn}
-				setSelectedPipelineDataState={setSelectedPipelineDataState}
+				setShowSaveButton={setShowSaveButton}
+				expandedPipelineData={expandedPipelineData as PipelineColumn}
+				setExpandedPipelineData={setExpandedPipelineData}
 				processorData={processorData}
 			/>
 		),
@@ -202,7 +204,7 @@ function PipelineListsView({
 			processorEditAction,
 			isActionMode,
 			processorData,
-			selectedPipelineDataState,
+			expandedPipelineData,
 			setActionType,
 		],
 	);
@@ -213,8 +215,8 @@ function PipelineListsView({
 			if (expanded) {
 				keys.push(record.uuid);
 			}
-			setActiveExpRow(keys);
-			setSelectedPipelineDataState(record);
+			setExpandedRow(keys);
+			setExpandedPipelineData(record);
 		},
 		[],
 	);
@@ -248,23 +250,23 @@ function PipelineListsView({
 
 	const onSaveConfigurationHandler = useCallback((): void => {
 		setActionMode(ActionMode.Viewing);
-		setIsVisibleSaveButton(undefined);
+		setShowSaveButton(undefined);
 		const modifiedPipelineData = currPipelineData.map((item: PipelineColumn) => {
 			const pipelineData = item;
-			if (item.uuid === selectedPipelineDataState?.uuid) {
-				pipelineData.operators = selectedPipelineDataState?.operators;
+			if (item.uuid === expandedPipelineData?.uuid) {
+				pipelineData.operators = expandedPipelineData?.operators;
 			}
 			return pipelineData;
 		});
 		setCurrPipelineData(modifiedPipelineData);
 		setPrevPipelineData(modifiedPipelineData);
-	}, [currPipelineData, selectedPipelineDataState, setActionMode]);
+	}, [currPipelineData, expandedPipelineData, setActionMode]);
 
 	const onCancelConfigurationHandler = useCallback((): void => {
 		setActionMode(ActionMode.Viewing);
-		setIsVisibleSaveButton(undefined);
+		setShowSaveButton(undefined);
 		setCurrPipelineData(prevPipelineData);
-		setActiveExpRow([]);
+		setExpandedRow([]);
 	}, [prevPipelineData, setActionMode]);
 
 	return (
@@ -273,8 +275,8 @@ function PipelineListsView({
 			<AddNewPipeline
 				isActionType={isActionType}
 				setActionType={setActionType}
-				selectedRecord={selectedRecord}
-				setIsVisibleSaveButton={setIsVisibleSaveButton}
+				selectedPipelineData={selectedPipelineData}
+				setShowSaveButton={setShowSaveButton}
 				setCurrPipelineData={setCurrPipelineData}
 				currPipelineData={currPipelineData}
 			/>
@@ -282,9 +284,9 @@ function PipelineListsView({
 				isActionType={isActionType}
 				setActionType={setActionType}
 				selectedProcessorData={selectedProcessorData}
-				setIsVisibleSaveButton={setIsVisibleSaveButton}
-				selectedPipelineDataState={selectedPipelineDataState as PipelineColumn}
-				setSelectedPipelineDataState={setSelectedPipelineDataState}
+				setShowSaveButton={setShowSaveButton}
+				expandedPipelineData={expandedPipelineData as PipelineColumn}
+				setExpandedPipelineData={setExpandedPipelineData}
 			/>
 			<Container>
 				<ModeAndConfiguration
@@ -294,9 +296,9 @@ function PipelineListsView({
 				<DndProvider backend={HTML5Backend}>
 					<Table
 						columns={columns}
-						expandedRowRender={expandedRow}
+						expandedRowRender={expandedRowView}
 						expandable={{
-							expandedRowKeys: activeExpRow,
+							expandedRowKeys: expandedRow,
 							expandIcon: ({ expanded, onExpand, record }): JSX.Element =>
 								getExpandIcon(expanded, onExpand, record),
 							onExpand: (expanded, record): void => getDataOnExpand(expanded, record),
@@ -320,7 +322,7 @@ function PipelineListsView({
 						pagination={false}
 					/>
 				</DndProvider>
-				{isVisibleSaveButton && (
+				{showSaveButton && (
 					<SaveConfigButton
 						onSaveConfigurationHandler={onSaveConfigurationHandler}
 						onCancelConfigurationHandler={onCancelConfigurationHandler}
