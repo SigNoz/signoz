@@ -3681,8 +3681,8 @@ func (r *ClickHouseReader) GetMetricAggregateAttributes(ctx context.Context, req
 		}
 		key := v3.AttributeKey{
 			Key:      metricName,
-			DataType: "Float",
-			Type:     "tag",
+			DataType: v3.AttributeKeyDataTypeNumber,
+			Type:     v3.AttributeKeyTypeTag,
 		}
 		response.AttributeKeys = append(response.AttributeKeys, key)
 	}
