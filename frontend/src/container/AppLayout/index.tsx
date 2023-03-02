@@ -1,4 +1,3 @@
-import { notification } from 'antd';
 import getDynamicConfigs from 'api/dynamicConfigs/getDynamicConfigs';
 import getFeaturesFlags from 'api/features/getFeatureFlags';
 import getUserLatestVersion from 'api/user/getLatestVersion';
@@ -6,6 +5,7 @@ import getUserVersion from 'api/user/getVersion';
 import Header from 'container/Header';
 import SideNav from 'container/SideNav';
 import TopNav from 'container/TopNav';
+import { useNotifications } from 'hooks/useNotifications';
 import React, { ReactNode, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useQueries } from 'react-query';
@@ -91,7 +91,7 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 	const latestVersionCounter = useRef(0);
 	const latestConfigCounter = useRef(0);
 
-	const [notifications, NotificationElement] = notification.useNotification();
+	const { notifications } = useNotifications();
 
 	useEffect(() => {
 		if (
@@ -153,6 +153,8 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 				type: UPDATE_CURRENT_VERSION,
 				payload: {
 					currentVersion: getUserVersionResponse.data.payload.version,
+					ee: getUserVersionResponse.data.payload.ee,
+					setupCompleted: getUserVersionResponse.data.payload.setupCompleted,
 				},
 			});
 		}
@@ -228,7 +230,6 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 
 	return (
 		<Layout>
-			{NotificationElement}
 			{isToDisplayLayout && <Header />}
 			<Layout>
 				{isToDisplayLayout && <SideNav />}

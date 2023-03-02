@@ -18,26 +18,22 @@ import { Widgets } from 'types/api/dashboard/getAll';
 import MetricReducer from 'types/reducer/metrics';
 
 import { Card, GraphContainer, GraphTitle, Row } from '../styles';
+import { legend } from './constant';
 import { Button } from './styles';
 import { onGraphClickHandler, onViewTracePopupClick } from './util';
 
 function External({ getWidgetQueryBuilder }: ExternalProps): JSX.Element {
+	const [selectedTimeStamp, setSelectedTimeStamp] = useState<number>(0);
+
 	const { servicename } = useParams<{ servicename?: string }>();
 	const { resourceAttributeQueries } = useSelector<AppState, MetricReducer>(
 		(state) => state.metrics,
 	);
-	const [selectedTimeStamp, setSelectedTimeStamp] = useState<number>(0);
 
 	const tagFilterItems = useMemo(
 		() => resourceAttributesToTagFilterItems(resourceAttributeQueries) || [],
 		[resourceAttributeQueries],
 	);
-
-	const selectedTraceTags: string = JSON.stringify(
-		convertRawQueriesToTraceSelectedTags(resourceAttributeQueries) || [],
-	);
-
-	const legend = '{{address}}';
 
 	const externalCallErrorWidget = useMemo(
 		() =>
@@ -46,12 +42,20 @@ function External({ getWidgetQueryBuilder }: ExternalProps): JSX.Element {
 				promQL: [],
 				metricsBuilder: externalCallErrorPercent({
 					servicename,
-					legend,
+					legend: legend.address,
 					tagFilterItems,
 				}),
 				clickHouse: [],
 			}),
 		[getWidgetQueryBuilder, servicename, tagFilterItems],
+	);
+
+	const selectedTraceTags = useMemo(
+		() =>
+			JSON.stringify(
+				convertRawQueriesToTraceSelectedTags(resourceAttributeQueries) || [],
+			),
+		[resourceAttributeQueries],
 	);
 
 	const externalCallDurationWidget = useMemo(
@@ -75,7 +79,7 @@ function External({ getWidgetQueryBuilder }: ExternalProps): JSX.Element {
 				promQL: [],
 				metricsBuilder: externalCallRpsByAddress({
 					servicename,
-					legend,
+					legend: legend.address,
 					tagFilterItems,
 				}),
 				clickHouse: [],
@@ -90,7 +94,7 @@ function External({ getWidgetQueryBuilder }: ExternalProps): JSX.Element {
 				promQL: [],
 				metricsBuilder: externalCallDurationByAddress({
 					servicename,
-					legend,
+					legend: legend.address,
 					tagFilterItems,
 				}),
 				clickHouse: [],
@@ -106,11 +110,12 @@ function External({ getWidgetQueryBuilder }: ExternalProps): JSX.Element {
 						type="default"
 						size="small"
 						id="external_call_error_percentage_button"
-						onClick={onViewTracePopupClick(
+						onClick={onViewTracePopupClick({
 							servicename,
 							selectedTraceTags,
-							selectedTimeStamp,
-						)}
+							timestamp: selectedTimeStamp,
+							isExternalCall: true,
+						})}
 					>
 						View Traces
 					</Button>
@@ -141,14 +146,16 @@ function External({ getWidgetQueryBuilder }: ExternalProps): JSX.Element {
 						type="default"
 						size="small"
 						id="external_call_duration_button"
-						onClick={onViewTracePopupClick(
+						onClick={onViewTracePopupClick({
 							servicename,
 							selectedTraceTags,
-							selectedTimeStamp,
-						)}
+							timestamp: selectedTimeStamp,
+							isExternalCall: true,
+						})}
 					>
 						View Traces
 					</Button>
+
 					<Card>
 						<GraphTitle>External Call duration</GraphTitle>
 						<GraphContainer>
@@ -178,11 +185,12 @@ function External({ getWidgetQueryBuilder }: ExternalProps): JSX.Element {
 						type="default"
 						size="small"
 						id="external_call_rps_by_address_button"
-						onClick={onViewTracePopupClick(
+						onClick={onViewTracePopupClick({
 							servicename,
 							selectedTraceTags,
-							selectedTimeStamp,
-						)}
+							timestamp: selectedTimeStamp,
+							isExternalCall: true,
+						})}
 					>
 						View Traces
 					</Button>
@@ -213,14 +221,16 @@ function External({ getWidgetQueryBuilder }: ExternalProps): JSX.Element {
 						type="default"
 						size="small"
 						id="external_call_duration_by_address_button"
-						onClick={onViewTracePopupClick(
+						onClick={onViewTracePopupClick({
 							servicename,
 							selectedTraceTags,
-							selectedTimeStamp,
-						)}
+							timestamp: selectedTimeStamp,
+							isExternalCall: true,
+						})}
 					>
 						View Traces
 					</Button>
+
 					<Card>
 						<GraphTitle>External Call duration(by Address)</GraphTitle>
 						<GraphContainer>

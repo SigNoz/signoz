@@ -9,6 +9,7 @@ export interface Props {
 	selectedFilter: TraceReducer['selectedFilter'];
 	selectedTags: TraceReducer['selectedTags'];
 	isFilterExclude: TraceReducer['isFilterExclude'];
+	spanKind?: TraceReducer['spanKind'];
 }
 
 export interface PayloadProps {

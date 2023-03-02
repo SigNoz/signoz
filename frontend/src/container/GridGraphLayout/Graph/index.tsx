@@ -67,7 +67,7 @@ function GridCardGraph({
 
 	const queryResponse = useQuery(
 		[
-			`GetMetricsQueryRange-${widget.timePreferance}-${globalSelectedInterval}-${widget.id}`,
+			`GetMetricsQueryRange-${widget?.timePreferance}-${globalSelectedInterval}-${widget.id}`,
 			{
 				widget,
 				maxTime,
@@ -78,7 +78,7 @@ function GridCardGraph({
 		],
 		() =>
 			GetMetricQueryRange({
-				selectedTime: widget.timePreferance,
+				selectedTime: widget?.timePreferance,
 				graphType: widget.panelTypes,
 				query: widget.query,
 				globalSelectedInterval,

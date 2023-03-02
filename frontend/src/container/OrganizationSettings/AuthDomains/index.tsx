@@ -1,5 +1,5 @@
 import { LockTwoTone } from '@ant-design/icons';
-import { Button, Modal, notification, Space, Typography } from 'antd';
+import { Button, Modal, Space, Typography } from 'antd';
 import { ColumnsType } from 'antd/lib/table';
 import deleteDomain from 'api/SAML/deleteDomain';
 import listAllDomain from 'api/SAML/listAllDomain';
@@ -9,6 +9,7 @@ import TextToolTip from 'components/TextToolTip';
 import { SIGNOZ_UPGRADE_PLAN_URL } from 'constants/app';
 import { FeatureKeys } from 'constants/featureKeys';
 import useFeatureFlag from 'hooks/useFeatureFlag';
+import { useNotifications } from 'hooks/useNotifications';
 import React, { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useQuery } from 'react-query';
@@ -57,7 +58,7 @@ function AuthDomains(): JSX.Element {
 		enabled: org !== null,
 	});
 
-	const [notifications, NotificationElement] = notification.useNotification();
+	const { notifications } = useNotifications();
 
 	const assignSsoMethod = useCallback(
 		(typ: AuthDomain['ssoType']): void => {
@@ -254,7 +255,6 @@ function AuthDomains(): JSX.Element {
 	if (!isLoading && data?.payload?.length === 0) {
 		return (
 			<Space direction="vertical" size="middle">
-				{NotificationElement}
 				<AddDomain refetch={refetch} />
 
 				<Modal
@@ -286,7 +286,6 @@ function AuthDomains(): JSX.Element {
 
 	return (
 		<>
-			{NotificationElement}
 			<Modal
 				centered
 				title="Configure Authentication Method"
