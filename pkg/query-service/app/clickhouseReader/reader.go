@@ -3697,14 +3697,11 @@ func (r *ClickHouseReader) GetMetricAttributeKeys(ctx context.Context, req *v3.F
 	var rows driver.Rows
 	var response v3.FilterAttributeKeyResponse
 
-	if len(req.SearchText) != 0 {
-		query = fmt.Sprintf("select distinctTagKeys from (SELECT DISTINCT arrayJoin(tagKeys) distinctTagKeys from (SELECT DISTINCT(JSONExtractKeys(labels)) tagKeys from %s.%s WHERE metric_name=$1 )) WHERE distinctTagKeys ILIKE $2;", signozMetricDBName, signozTSTableName)
-		rows, err = r.db.Query(ctx, query, req.AggregateAttribute, fmt.Sprintf("%%%s%%", req.SearchText))
-	} else {
-		query = fmt.Sprintf("select distinctTagKeys from (SELECT DISTINCT arrayJoin(tagKeys) distinctTagKeys from (SELECT DISTINCT(JSONExtractKeys(labels)) tagKeys from %s.%s WHERE metric_name=$1 ));", signozMetricDBName, signozTSTableName)
-		rows, err = r.db.Query(ctx, query, req.SearchText)
+	query = fmt.Sprintf("SELECT DISTINCT arrayJoin(tagKeys) as distinctTagKeys from (SELECT DISTINCT(JSONExtractKeys(labels)) tagKeys from %s.%s WHERE metric_name=$1) WHERE distinctTagKeys ILIKE $2", signozMetricDBName, signozTSTableName)
+	if req.Limit != 0 {
+		query = query + fmt.Sprintf(" LIMIT %d;", req.Limit)
 	}
-
+	rows, err = r.db.Query(ctx, query, req.AggregateAttribute, fmt.Sprintf("%%%s%%", req.SearchText))
 	if err != nil {
 		zap.S().Error(err)
 		return nil, fmt.Errorf("error while executing query: %s", err.Error())
@@ -3716,9 +3713,13 @@ func (r *ClickHouseReader) GetMetricAttributeKeys(ctx context.Context, req *v3.F
 		if err := rows.Scan(&attributeKey); err != nil {
 			return nil, fmt.Errorf("error while scanning rows: %s", err.Error())
 		}
+		// skip internal attributes
+		if strings.HasPrefix(attributeKey, "__") {
+			continue
+		}
 		key := v3.AttributeKey{
 			Key:      attributeKey,
-			DataType: "String",
+			DataType: "String", // https://github.com/OpenObservability/OpenMetrics/blob/main/proto/openmetrics_data_model.proto#L64-L72.
 			Type:     "tag",
 		}
 		response.AttributeKeys = append(response.AttributeKeys, key)
@@ -3734,13 +3735,11 @@ func (r *ClickHouseReader) GetMetricAttributeValues(ctx context.Context, req *v3
 	var rows driver.Rows
 	var attributeValues v3.FilterAttributeValueResponse
 
-	if len(req.SearchText) != 0 {
-		query = fmt.Sprintf("SELECT DISTINCT(JSONExtractString(labels, '%s')) from %s.%s WHERE metric_name=$1 AND JSONExtractString(labels, '%s') ILIKE $2;", req.FilterAttributeKey, signozMetricDBName, signozTSTableName, req.FilterAttributeKey)
-		rows, err = r.db.Query(ctx, query, req.FilterAttributeKey, req.AggregateAttribute, fmt.Sprintf("%%%s%%", req.SearchText))
-	} else {
-		query = fmt.Sprintf("SELECT DISTINCT(JSONExtractString(labels, '%s')) FROM %s.%s WHERE metric_name=$2;", req.FilterAttributeKey, signozMetricDBName, signozTSTableName)
-		rows, err = r.db.Query(ctx, query, req.FilterAttributeKey, req.AggregateAttribute)
+	query = fmt.Sprintf("SELECT DISTINCT(JSONExtractString(labels, '%s')) from %s.%s WHERE metric_name=$1 AND JSONExtractString(labels, '%s') ILIKE $2", req.FilterAttributeKey, signozMetricDBName, signozTSTableName, req.FilterAttributeKey)
+	if req.Limit != 0 {
+		query = query + fmt.Sprintf(" LIMIT %d;", req.Limit)
 	}
+	rows, err = r.db.Query(ctx, query, req.FilterAttributeKey, req.AggregateAttribute, fmt.Sprintf("%%%s%%", req.SearchText))
 
 	if err != nil {
 		zap.S().Error(err)
@@ -3753,6 +3752,8 @@ func (r *ClickHouseReader) GetMetricAttributeValues(ctx context.Context, req *v3
 		if err := rows.Scan(&atrributeValue); err != nil {
 			return nil, fmt.Errorf("error while scanning rows: %s", err.Error())
 		}
+		// https://github.com/OpenObservability/OpenMetrics/blob/main/proto/openmetrics_data_model.proto#L64-L72
+		// this may change in future if we use OTLP as the data model
 		attributeValues.StringAttributeValues = append(attributeValues.StringAttributeValues, atrributeValue)
 	}
 
