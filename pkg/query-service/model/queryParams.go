@@ -312,7 +312,7 @@ type GetFilteredSpansParams struct {
 	TraceID            []string        `json:"traceID"`
 	ServiceName        []string        `json:"serviceName"`
 	Operation          []string        `json:"operation"`
-	Kind               string          `json:"kind"`
+	SpanKind           string          `json:"spanKind"`
 	Status             []string        `json:"status"`
 	HttpRoute          []string        `json:"httpRoute"`
 	HttpCode           []string        `json:"httpCode"`
@@ -340,7 +340,7 @@ type GetFilteredSpanAggregatesParams struct {
 	TraceID            []string        `json:"traceID"`
 	ServiceName        []string        `json:"serviceName"`
 	Operation          []string        `json:"operation"`
-	Kind               string          `json:"kind"`
+	SpanKind           string          `json:"spanKind"`
 	Status             []string        `json:"status"`
 	HttpRoute          []string        `json:"httpRoute"`
 	HttpCode           []string        `json:"httpCode"`
@@ -369,6 +369,7 @@ type SpanFilterParams struct {
 	TraceID            []string `json:"traceID"`
 	Status             []string `json:"status"`
 	ServiceName        []string `json:"serviceName"`
+	SpanKind           string   `json:"spanKind"`
 	HttpRoute          []string `json:"httpRoute"`
 	HttpCode           []string `json:"httpCode"`
 	HttpUrl            []string `json:"httpUrl"`
@@ -394,6 +395,7 @@ type TagFilterParams struct {
 	ServiceName        []string `json:"serviceName"`
 	HttpRoute          []string `json:"httpRoute"`
 	HttpCode           []string `json:"httpCode"`
+	SpanKind           string   `json:"spanKind"`
 	HttpUrl            []string `json:"httpUrl"`
 	HttpHost           []string `json:"httpHost"`
 	HttpMethod         []string `json:"httpMethod"`
