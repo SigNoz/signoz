@@ -3719,8 +3719,8 @@ func (r *ClickHouseReader) GetMetricAttributeKeys(ctx context.Context, req *v3.F
 		}
 		key := v3.AttributeKey{
 			Key:      attributeKey,
-			DataType: "String", // https://github.com/OpenObservability/OpenMetrics/blob/main/proto/openmetrics_data_model.proto#L64-L72.
-			Type:     "tag",
+			DataType: v3.AttributeKeyDataTypeString, // https://github.com/OpenObservability/OpenMetrics/blob/main/proto/openmetrics_data_model.proto#L64-L72.
+			Type:     v3.AttributeKeyTypeTag,
 		}
 		response.AttributeKeys = append(response.AttributeKeys, key)
 	}
