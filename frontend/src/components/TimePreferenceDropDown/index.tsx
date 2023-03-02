@@ -21,18 +21,15 @@ function TimePreference({
 		[setSelectedTime],
 	);
 
+	const items = TimeItems.map((item) => ({
+		key: item.enum,
+		label: <Typography>{item.name}</Typography>,
+	}));
+
 	return (
 		<TextContainer noButtonMargin>
 			<Dropdown
-				overlay={
-					<Menu>
-						{TimeItems.map((item) => (
-							<Menu.Item onClick={timeMenuItemOnChangeHandler} key={item.enum}>
-								<Typography>{item.name}</Typography>
-							</Menu.Item>
-						))}
-					</Menu>
-				}
+				overlay={<Menu onClick={timeMenuItemOnChangeHandler} items={items} />}
 			>
 				<Button>{selectedTime.name}</Button>
 			</Dropdown>

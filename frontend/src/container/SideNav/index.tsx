@@ -24,6 +24,12 @@ import {
 	VersionContainer,
 } from './styles';
 
+interface SidebarItem {
+	onClick: () => void;
+	icon: React.ReactNode;
+	text: React.ReactNode;
+}
+
 function SideNav(): JSX.Element {
 	const dispatch = useDispatch();
 	const [collapsed, setCollapsed] = useState<boolean>(
@@ -95,6 +101,40 @@ function SideNav(): JSX.Element {
 		[pathname],
 	);
 
+	const items = [
+		...menus.map(({ to, Icon, name, tags }) => ({
+			key: to,
+			icon: <Icon />,
+			onClick: (): void => onClickHandler(to),
+			label: (
+				<Space>
+					<div>{name}</div>
+					{tags &&
+						tags.map((e) => (
+							<Tags style={{ lineHeight: '1rem' }} color="#177DDC" key={e}>
+								<Typography.Text style={{ fontWeight: '300' }}>{e}</Typography.Text>
+							</Tags>
+						))}
+				</Space>
+			),
+		})),
+	];
+
+	const sidebarItems = (
+		props: SidebarItem,
+		index: number,
+	): {
+		key: string;
+		icon: React.ReactNode;
+		onClick: () => void;
+		label: React.ReactNode;
+	} => ({
+		key: `${index}`,
+		icon: props.icon,
+		onClick: props.onClick,
+		label: props.text,
+	});
+
 	return (
 		<Sider collapsible collapsed={collapsed} onCollapse={onCollapse} width={200}>
 			<Menu
@@ -103,40 +143,24 @@ function SideNav(): JSX.Element {
 				selectedKeys={currentMenu ? [currentMenu?.to] : []}
 				mode="inline"
 				style={styles}
-			>
-				{menus.map(({ to, Icon, name, tags }) => (
-					<Menu.Item
-						key={to}
-						icon={<Icon />}
-						onClick={(): void => onClickHandler(to)}
-					>
-						<Space>
-							<div>{name}</div>
-							{tags &&
-								tags.map((e) => (
-									<Tags style={{ lineHeight: '1rem' }} color="#177DDC" key={e}>
-										<Typography.Text style={{ fontWeight: '300' }}>{e}</Typography.Text>
-									</Tags>
-								))}
-						</Space>
-					</Menu.Item>
-				))}
-				{sidebar.map((props, index) => (
-					<SlackMenuItemContainer
-						index={index + 1}
-						key={`${index + 1}`}
-						collapsed={collapsed}
-					>
-						<Menu.Item
-							eventKey={index.toString()}
-							onClick={props.onClick}
-							icon={props.icon}
-						>
-							{props.text}
-						</Menu.Item>
-					</SlackMenuItemContainer>
-				))}
-			</Menu>
+				items={items}
+			/>
+			{sidebar.map((props, index) => (
+				<SlackMenuItemContainer
+					index={index + 1}
+					key={`${index + 1}`}
+					collapsed={collapsed}
+				>
+					<Menu
+						theme="dark"
+						defaultSelectedKeys={[ROUTES.APPLICATION]}
+						selectedKeys={currentMenu ? [currentMenu?.to] : []}
+						mode="inline"
+						style={styles}
+						items={[sidebarItems(props, index)]}
+					/>
+				</SlackMenuItemContainer>
+			))}
 		</Sider>
 	);
 }

@@ -190,29 +190,30 @@ function ListOfAllDashboard(): JSX.Element {
 
 	const menu = useMemo(
 		() => (
-			<Menu>
-				{createNewDashboard && (
-					<Menu.Item
-						onClick={onNewDashboardHandler}
-						disabled={loading}
-						key={t('create_dashboard').toString()}
-					>
-						{t('create_dashboard')}
-					</Menu.Item>
-				)}
-				<Menu.Item
-					onClick={(): void => onModalHandler(false)}
-					key={t('import_json').toString()}
-				>
-					{t('import_json')}
-				</Menu.Item>
-				<Menu.Item
-					onClick={(): void => onModalHandler(true)}
-					key={t('import_grafana_json').toString()}
-				>
-					{t('import_grafana_json')}
-				</Menu.Item>
-			</Menu>
+			<Menu
+				items={[
+					...(createNewDashboard
+						? [
+								{
+									key: t('create_dashboard').toString(),
+									label: t('create_dashboard'),
+									disabled: loading,
+									onClick: onNewDashboardHandler,
+								},
+						  ]
+						: []),
+					{
+						key: t('import_json').toString(),
+						label: t('import_json'),
+						onClick: (): void => onModalHandler(false),
+					},
+					{
+						key: t('import_grafana_json').toString(),
+						label: t('import_grafana_json'),
+						onClick: (): void => onModalHandler(true),
+					},
+				]}
+			/>
 		),
 		[createNewDashboard, loading, onNewDashboardHandler, t],
 	);
