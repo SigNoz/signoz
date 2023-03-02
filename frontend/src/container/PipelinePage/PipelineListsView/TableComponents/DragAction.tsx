@@ -3,7 +3,7 @@ import React from 'react';
 
 import { HolderOutlinedIcon, LastActionColumn } from '../styles';
 
-function DragAction(): React.ReactElement {
+function DragAction(): JSX.Element {
 	return (
 		<LastActionColumn>
 			<span>

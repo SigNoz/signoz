@@ -1,7 +1,7 @@
 import React from 'react';
 
-import { PipelineColumn } from '..';
 import { pipelineFields } from '../config';
+import { PipelineColumn } from '../types';
 import DescriptionTextArea from './FormFields/DescriptionTextArea';
 import FilterSearch from './FormFields/FilterSearch';
 import NameInput from './FormFields/NameInput';

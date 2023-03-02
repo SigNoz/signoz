@@ -1,7 +1,7 @@
 import React from 'react';
 
-import { ActionBy, PipelineColumn, ProcessorColumn } from '..';
 import { ListDataStyle, ProcessorIndexIcon } from '../styles';
+import { ActionBy, PipelineColumn, ProcessorColumn } from '../types';
 import PipelineSequence from './PipelineSequence';
 import Tags from './Tags';
 

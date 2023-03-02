@@ -23,6 +23,12 @@ import {
 import DragAction from './TableComponents/DragAction';
 import PipelineActions from './TableComponents/PipelineActions';
 import TableExpandIcon from './TableComponents/TableExpandIcon';
+import {
+	AlertMessage,
+	PipelineColumn,
+	PipelineOperators,
+	ProcessorColumn,
+} from './types';
 import { getElementFromArray, getTableColumn, getUpdatedRow } from './utils';
 
 function PipelineListsView({
@@ -177,7 +183,7 @@ function PipelineListsView({
 		() =>
 			expandedPipelineData?.operators.map(
 				(item: PipelineOperators): ProcessorColumn => ({
-					id: item.id,
+					id: String(item.id),
 					type: item.type,
 					name: item.name,
 					output: item.output,
@@ -338,60 +344,6 @@ interface PipelineListsViewProps {
 	setActionType: (actionType?: ActionType) => void;
 	isActionMode: string;
 	setActionMode: (actionMode: ActionMode) => void;
-}
-
-export type ActionBy = {
-	username: string;
-	email: string;
-};
-
-type ParseType = {
-	parse_from: string;
-};
-
-export interface PipelineOperators {
-	type: string;
-	name: string;
-	id: string;
-	output: string;
-	field?: string;
-	parse_from?: string;
-	parse_to?: string;
-	pattern?: string;
-	trace_id?: ParseType;
-	span_id?: ParseType;
-	trace_flags?: ParseType;
-}
-
-export interface PipelineColumn {
-	orderid: number;
-	uuid: string;
-	createdAt: string;
-	createdBy: ActionBy;
-	updatedAt: string;
-	updatedBy: ActionBy;
-	version: string;
-	name: string;
-	alias: string;
-	enabled: boolean;
-	filter: string;
-	tags: Array<string>;
-	operators: Array<PipelineOperators>;
-}
-
-export interface ProcessorColumn {
-	id: string | number;
-	type: string;
-	name: string;
-	output: string;
-}
-
-export interface AlertMessage {
-	title: string;
-	descrition: string;
-	buttontext: string;
-	onOk: VoidFunction;
-	onCancel?: VoidFunction;
 }
 
 export default PipelineListsView;

@@ -1,7 +1,7 @@
 import { DownOutlined, RightOutlined } from '@ant-design/icons';
 import React from 'react';
 
-import { PipelineColumn } from '..';
+import { PipelineColumn } from '../types';
 
 function TableExpandIcon({
 	expanded,

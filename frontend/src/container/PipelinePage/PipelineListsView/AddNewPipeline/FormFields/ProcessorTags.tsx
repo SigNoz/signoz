@@ -3,8 +3,8 @@ import TagInput from 'container/PipelinePage/components/TagInput';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { PipelineColumn } from '../..';
 import { ProcessorFormField } from '../../AddNewProcessor/config';
+import { PipelineColumn } from '../../types';
 import { FormLabelStyle } from '../styles';
 
 function ProcessorTags({
@@ -23,7 +23,7 @@ function ProcessorTags({
 		>
 			<TagInput
 				setTagsListData={setTagsListData}
-				tagsListData={tagsListData as []}
+				tagsListData={tagsListData}
 				placeHolder={t(fieldData.placeholder)}
 			/>
 		</Form.Item>

@@ -1,6 +1,6 @@
 import { ColumnsType } from 'antd/es/table';
 
-import { PipelineColumn, ProcessorColumn } from '.';
+import { PipelineColumn, ProcessorColumn } from './types';
 
 export const pipelineFields = [
 	{

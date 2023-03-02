@@ -7,8 +7,8 @@ import AppReducer from 'types/reducer/app';
 import { v4 as uuid } from 'uuid';
 
 import { ActionMode, ActionType } from '../../Layouts';
-import { PipelineColumn } from '..';
 import { ModalButtonWrapper, ModalTitle } from '../styles';
+import { PipelineColumn } from '../types';
 import { getEditedDataSource, getRecordIndex } from '../utils';
 import { renderPipelineForm } from './utils';
 
@@ -41,55 +41,55 @@ function AddNewPipeline({
 	}, [form, isEdit, isAdd, selectedPipelineData]);
 
 	const onFinish = (values: PipelineColumn): void => {
-		const newPipeLineData = {
+		const newPipeLineData: PipelineColumn = {
 			orderid: count,
 			uuid: uuid(),
 			createdAt: new Date().toISOString(),
 			createdBy: {
-				username: user?.name,
-				email: user?.email,
+				username: user?.name || '',
+				email: user?.email || '',
 			},
 			updatedAt: new Date().toISOString(),
 			updatedBy: {
-				username: user?.name,
-				email: user?.email,
+				username: user?.name || '',
+				email: user?.email || '',
 			},
 			name: values.name,
 			alias: values.alias,
 			filter: values.filter,
-			tags: tagsListData,
+			tags: tagsListData || [],
 			operators: [],
+			enabled: false,
+			version: '1',
 		};
 
-		if (isEdit) {
+		if (isEdit && selectedPipelineData) {
 			const findRecordIndex = getRecordIndex(
 				currPipelineData,
 				selectedPipelineData,
-				'name' as never,
+				'name',
 			);
-			const updatedPipelineData = {
+			const updatedPipelineData: PipelineColumn = {
 				...currPipelineData[findRecordIndex],
 				name: values.name,
 				alias: values.alias,
 				filter: values.filter,
-				tags: tagsListData,
+				tags: tagsListData || [],
 			};
 
 			const editedPipelineData = getEditedDataSource(
 				currPipelineData,
 				selectedPipelineData,
-				'name' as never,
+				'name',
 				updatedPipelineData,
 			);
-			setCurrPipelineData(editedPipelineData as Array<PipelineColumn>);
+
+			setCurrPipelineData(editedPipelineData);
 		}
 		if (isAdd) {
 			setTagsListData([]);
-			setCount((prevState: number) => prevState + 1);
-			setCurrPipelineData(
-				(prevState: PipelineColumn[]) =>
-					[...prevState, newPipeLineData] as PipelineColumn[],
-			);
+			setCount((prevState) => prevState + 1);
+			setCurrPipelineData((prevState) => [...prevState, newPipeLineData]);
 		}
 		setActionType(undefined);
 	};
@@ -111,11 +111,13 @@ function AddNewPipeline({
 		[setShowSaveButton],
 	);
 
+	const isOpen = useMemo(() => isEdit || isAdd, [isAdd, isEdit]);
+
 	return (
 		<Modal
 			title={<ModalTitle level={4}>{modalTitle}</ModalTitle>}
 			centered
-			open={isEdit || isAdd}
+			open={isOpen}
 			width={800}
 			footer={null}
 			onCancel={onCancelModalHandler}
@@ -124,7 +126,6 @@ function AddNewPipeline({
 			<Form
 				name="addNewPipeline"
 				layout="vertical"
-				style={{ marginTop: '1.25rem' }}
 				onFinish={onFinish}
 				autoComplete="off"
 				form={form}

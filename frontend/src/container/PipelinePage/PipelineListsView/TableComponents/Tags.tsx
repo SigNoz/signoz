@@ -1,18 +1,22 @@
 import { Tag } from 'antd';
 import React from 'react';
 
-import { PipelineColumn } from '..';
+import { PipelineColumn } from '../types';
 
-function Tags({ tags }: { tags: PipelineColumn['tags'] }): React.ReactElement {
+function Tags({ tags }: TagsProps): React.ReactElement {
 	return (
 		<span>
-			{tags?.map((tag: string) => (
+			{tags?.map((tag) => (
 				<Tag color="magenta" key={tag}>
 					{tag}
 				</Tag>
 			))}
 		</span>
 	);
+}
+
+interface TagsProps {
+	tags: PipelineColumn['tags'];
 }
 
 export default Tags;

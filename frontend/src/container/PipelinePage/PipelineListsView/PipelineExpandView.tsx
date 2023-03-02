@@ -8,16 +8,16 @@ import { useTranslation } from 'react-i18next';
 import { tableComponents } from '../config';
 import { ActionMode, ActionType } from '../Layouts';
 import { ModalFooterTitle } from '../styles';
+import { processorColumns } from './config';
+import { FooterButton, StyledTable } from './styles';
+import DragAction from './TableComponents/DragAction';
+import PipelineActions from './TableComponents/PipelineActions';
 import {
 	AlertMessage,
 	PipelineColumn,
 	PipelineOperators,
 	ProcessorColumn,
-} from '.';
-import { processorColumns } from './config';
-import { FooterButton, StyledTable } from './styles';
-import DragAction from './TableComponents/DragAction';
-import PipelineActions from './TableComponents/PipelineActions';
+} from './types';
 import { getTableColumn, getUpdatedRow } from './utils';
 
 function PipelineExpandView({

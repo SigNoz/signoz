@@ -16,16 +16,11 @@ function SaveConfigButton({
 				key="submit"
 				type="primary"
 				htmlType="submit"
-				style={{ borderRadius: '0.375rem' }}
 				onClick={onSaveConfigurationHandler}
 			>
 				{t('save_configuration')}
 			</Button>
-			<Button
-				key="cancel"
-				style={{ borderRadius: '0.375rem' }}
-				onClick={onCancelConfigurationHandler}
-			>
+			<Button key="cancel" onClick={onCancelConfigurationHandler}>
 				{t('cancel')}
 			</Button>
 		</SaveConfigWrapper>

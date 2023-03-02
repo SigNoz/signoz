@@ -1,4 +1,4 @@
-import { PipelineColumn } from '../PipelineListsView';
+import { PipelineColumn } from '../PipelineListsView/types';
 
 export const configurationVerison = '1.0';
 

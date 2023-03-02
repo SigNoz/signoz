@@ -3,8 +3,8 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { ActionMode, ActionType } from '../../Layouts';
-import { PipelineColumn, PipelineOperators, ProcessorColumn } from '..';
 import { ModalButtonWrapper, ModalTitle } from '../styles';
+import { PipelineColumn, ProcessorColumn } from '../types';
 import { getEditedDataSource, getRecordIndex } from '../utils';
 import { DEFAULT_PROCESSOR_TYPE } from './config';
 import TypeSelect from './FormFields/TypeSelect';
@@ -43,18 +43,18 @@ function AddNewProcessor({
 	};
 
 	const onFinish = (values: ProcessorColumn): void => {
-		const newProcessorData = {
+		const newProcessorData: ProcessorColumn = {
 			id: (expandedPipelineData.operators.length + 1).toString(),
 			type: processorType,
 			name: values.name,
 			output: values.output,
 		};
 
-		if (isEdit) {
+		if (isEdit && selectedProcessorData) {
 			const findRecordIndex = getRecordIndex(
 				expandedPipelineData.operators,
 				selectedProcessorData,
-				'id' as never,
+				'id',
 			);
 
 			const updatedProcessorData = {
@@ -67,11 +67,14 @@ function AddNewProcessor({
 			const editedData = getEditedDataSource(
 				expandedPipelineData.operators,
 				selectedProcessorData,
-				'name' as never,
+				'name',
 				updatedProcessorData,
 			);
+
 			const modifiedProcessorData = { ...expandedPipelineData };
-			modifiedProcessorData.operators = editedData as PipelineOperators[];
+
+			modifiedProcessorData.operators = editedData;
+
 			setExpandedPipelineData(modifiedProcessorData);
 		}
 		if (isAdd) {
@@ -149,10 +152,14 @@ function AddNewProcessor({
 interface AddNewProcessorProps {
 	isActionType: string;
 	setActionType: (actionType?: ActionType) => void;
-	selectedProcessorData: ProcessorColumn | undefined;
+	selectedProcessorData?: ProcessorColumn;
 	setShowSaveButton: (actionMode: ActionMode) => void;
 	expandedPipelineData: PipelineColumn;
 	setExpandedPipelineData: (data: PipelineColumn) => void;
 }
+
+AddNewProcessor.defaultProps = {
+	selectedProcessorData: undefined,
+};
 
 export default AddNewProcessor;
