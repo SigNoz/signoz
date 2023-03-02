@@ -1,5 +1,14 @@
-import { Input, Typography } from 'antd';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { Input, List, Typography } from 'antd';
+import Link from 'antd/es/typography/Link';
+import ROUTES from 'constants/routes';
+import { formUrlParams } from 'container/TraceDetail/utils';
+import React, {
+	ReactNode,
+	useCallback,
+	useEffect,
+	useMemo,
+	useState,
+} from 'react';
 import { useTranslation } from 'react-i18next';
 import { ITraceTag } from 'types/api/trace/getTraceItem';
 
@@ -7,15 +16,27 @@ import { ModalText } from '..';
 import { Container } from './styles';
 import Tag from './Tag';
 
-function Tags({ tags, onToggleHandler, setText }: TagsProps): JSX.Element {
+function Tags({
+	tags,
+	linkedSpans,
+	onToggleHandler,
+	setText,
+}: TagsProps): JSX.Element {
 	const { t } = useTranslation(['traceDetails']);
 	const [allRenderedTags, setAllRenderedTags] = useState(tags);
 	const isSearchVisible = useMemo(() => tags.length > 5, [tags]);
+	const linkedNonChildSpans =
+		linkedSpans?.filter((span) => span.RefType !== 'CHILD_OF') || [];
 
 	useEffect(() => {
 		setAllRenderedTags(tags);
 	}, [tags]);
-
+	const getLink = (item: Record<string, string>): string =>
+		`${ROUTES.TRACE}/${item.TraceId}${formUrlParams({
+			spanId: item.SpanId,
+			levelUp: 0,
+			levelDown: 0,
+		})}`;
 	const onChangeHandler = useCallback(
 		(e: React.ChangeEvent<HTMLInputElement>): void => {
 			const { value } = e.target;
@@ -49,12 +70,26 @@ function Tags({ tags, onToggleHandler, setText }: TagsProps): JSX.Element {
 					}}
 				/>
 			))}
+			{linkedNonChildSpans?.length > 0 && (
+				<List
+					header={<Typography.Title level={5}>Linked Spans</Typography.Title>}
+					dataSource={linkedNonChildSpans}
+					renderItem={(item): ReactNode => (
+						<List.Item>
+							<Link href={getLink(item)} target="_blank">
+								{item.SpanId}
+							</Link>
+						</List.Item>
+					)}
+				/>
+			)}
 		</Container>
 	);
 }
 
 interface TagsProps extends CommonTagsProps {
 	tags: ITraceTag[];
+	linkedSpans: Record<string, string>[] | undefined;
 }
 
 export interface CommonTagsProps {
