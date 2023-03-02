@@ -104,7 +104,7 @@ function RuleOptions({
 			<Option value="5m0s">{t('option_5min')}</Option>
 			<Option value="10m0s">{t('option_10min')}</Option>
 			<Option value="15m0s">{t('option_15min')}</Option>
-			<Option value="60m0s">{t('option_60min')}</Option>
+			<Option value="1h0m0s">{t('option_60min')}</Option>
 			<Option value="4h0m0s">{t('option_4hours')}</Option>
 			<Option value="24h0m0s">{t('option_24hours')}</Option>
 		</InlineSelect>
