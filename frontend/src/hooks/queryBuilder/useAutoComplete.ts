@@ -99,7 +99,11 @@ export const useAutoComplete = (): ReturnT => {
 	}, []);
 
 	useEffect(() => {
-		getKeysAutoComplete().then((response) => console.log(response));
+		getKeysAutoComplete().then(({ payload }) => {
+			if (payload) {
+				setKeys(payload);
+			}
+		});
 	}, []);
 
 	// FETCH OPTIONS
