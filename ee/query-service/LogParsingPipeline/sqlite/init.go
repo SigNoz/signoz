@@ -26,12 +26,9 @@ func InitDB(db *sqlx.DB) error {
 		alias VARCHAR(20) NOT NULL,
 		filter TEXT NOT NULL,
 		config_json TEXT,
-		deployment_status VARCHAR(40) NOT NULL DEFAULT 'DIRTY',
-		deployment_sequence INTEGER,
 		error_message TEXT
 	);
 	`
-
 	_, err = db.Exec(table_schema)
 	if err != nil {
 		return errors.Wrap(err, "Error in creating pipelines table")

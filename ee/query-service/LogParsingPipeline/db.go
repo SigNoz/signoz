@@ -87,9 +87,7 @@ func (r *Repo) getPipelinesByVersion(ctx context.Context, version int) ([]model.
 
 	versionQuery := `SELECT r.id, 
 		r.name, 
-		r.config_json, 
-		r.deployment_status, 
-		r.deployment_sequence 
+		r.config_json,
 		FROM pipelines r,
 			 agent_config_elements e,
 			 agent_config_versions v
@@ -122,9 +120,7 @@ func (r *Repo) GetPipeline(ctx context.Context, id string) (*model.Pipeline, *mo
 
 	pipelineQuery := `SELECT id, 
 		name, 
-		config_json, 
-		deployment_status, 
-		deployment_sequence  
+		config_json,
 		FROM pipelines 
 		WHERE id = $1`
 

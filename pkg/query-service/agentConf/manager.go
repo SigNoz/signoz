@@ -210,27 +210,24 @@ func UpsertSamplingProcessor(ctx context.Context, version int, config *tsp.Confi
 }
 
 // UpsertPipelineProcessor updates the agent config with new filter processor params
-func UpsertPipelineProcessors(config map[string]interface{}, names []interface{}) error {
+func UpsertPipelineProcessors(ctx context.Context, version int, config map[string]interface{}, names []interface{}) error {
 	if !atomic.CompareAndSwapUint32(&m.lock, 0, 1) {
 		return fmt.Errorf("agent updater is busy")
 	}
 	defer atomic.StoreUint32(&m.lock, 0)
 
 	// send the changes to opamp.
-	opamp.UpsertProcessor(context.Background(), config, names)
+	configHash, err := opamp.UpsertParsingProcessor(context.Background(), config, names, m.OnConfigUpdate)
+	if err != nil {
+		zap.S().Errorf("failed to call agent config update for trace processor:", err)
+		return err
+	}
 
-	// configHash, err := opamp.UpsertControlProcessors(ctx, "traces", processorConf, m.OnConfigUpdate)
-	// if err != nil {
-	// 	zap.S().Errorf("failed to call agent config update for trace processor:", err)
-	// 	return err
-	// }
+	processorConfYaml, err := yaml.Marshal(config)
+	if err != nil {
+		zap.S().Warnf("unexpected error while transforming processor config to yaml", err)
+	}
 
-	// processorConfYaml, err := yaml.Marshal(config)
-	// if err != nil {
-	// 	zap.S().Warnf("unexpected error while transforming processor config to yaml", err)
-	// }
-
-	// m.updateDeployStatus(ctx, ElementTypeSamplingRules, version, string(DeployInitiated), "Deployment started", configHash, string(processorConfYaml))
-	// return nil
+	m.updateDeployStatus(ctx, ElementTypeLogPipelines, version, string(DeployInitiated), "Deployment started", configHash, string(processorConfYaml))
 	return nil
 }

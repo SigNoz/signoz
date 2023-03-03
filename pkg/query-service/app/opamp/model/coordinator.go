@@ -9,7 +9,9 @@ import (
 var coordinator *Coordinator
 
 func init() {
-	coordinator = &Coordinator{}
+	coordinator = &Coordinator{
+		subscribers: make(map[string][]OnChangeCallback),
+	}
 }
 
 type OnChangeCallback func(hash string, err error)

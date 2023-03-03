@@ -85,7 +85,7 @@ func (ic *PipelineController) ApplyPipelines(ctx context.Context, postable []Pos
 	zap.S().Info("applying drop pipeline config", cfg)
 
 	// queue up the config to push to opamp
-	err = agentConf.UpsertPipelineProcessors(filterConfig, names)
+	err = agentConf.UpsertPipelineProcessors(ctx, cfg.Version, filterConfig, names)
 	history, _ := agentConf.GetConfigHistory(ctx, agentConf.ElementTypeLogPipelines)
 
 	response := &PipelinesResponse{

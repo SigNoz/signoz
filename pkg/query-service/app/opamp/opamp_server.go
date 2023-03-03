@@ -5,8 +5,6 @@ import (
 	"crypto/sha256"
 	"fmt"
 
-	"strings"
-
 	"github.com/knadh/koanf/parsers/yaml"
 	"github.com/open-telemetry/opamp-go/protobufs"
 	"github.com/open-telemetry/opamp-go/server"
@@ -227,76 +225,50 @@ func UpsertControlProcessors(ctx context.Context, signal string, processors map[
 	return confHash, nil
 }
 
-func UpsertProcessor(ctx context.Context, processors map[string]interface{}, names []interface{}) error {
-	x := map[string]interface{}{
-		"processors": processors,
+func UpsertParsingProcessor(ctx context.Context, parsingProcessors map[string]interface{}, parsingProcessorsNames []interface{}, callback func(string, error)) (string, error) {
+	confHash := ""
+	if opAmpServer == nil {
+		return confHash, fmt.Errorf("opamp server is down, unable to push config to agent at this moment")
 	}
 
-	newConf := confmap.NewFromStringMap(x)
-
 	agents := opAmpServer.agents.GetAllAgents()
+	if len(agents) == 0 {
+		return confHash, fmt.Errorf("no agents available at the moment")
+	}
+
 	for _, agent := range agents {
 		config := agent.EffectiveConfig
 		c, err := yaml.Parser().Unmarshal([]byte(config))
 		if err != nil {
-			return err
-		}
-		agentConf := confmap.NewFromStringMap(c)
-
-		err = agentConf.Merge(newConf)
-		if err != nil {
-			return err
+			return confHash, err
 		}
 
-		service := agentConf.Get("service")
+		BuildLogParsingProcessors(c, parsingProcessors)
 
-		logs := service.(map[string]interface{})["pipelines"].(map[string]interface{})["logs"]
+		// buildLogsPipeline()
+		logs := c["service"].(map[string]interface{})["pipelines"].(map[string]interface{})["logs"]
 		processors := logs.(map[string]interface{})["processors"].([]interface{})
-		userProcessors := []interface{}{}
-		// remove old ones
-		for _, v := range processors {
-			if !strings.HasPrefix(v.(string), "logstransform/pipeline_") {
-				userProcessors = append(userProcessors, v)
-			}
-		}
-		// all user processors are pushed after pipelines
-		processors = append(names, userProcessors...)
+		updatedProcessorList, _ := buildLogsPipeline(processors, parsingProcessorsNames)
+		processors = updatedProcessorList
+		c["service"].(map[string]interface{})["pipelines"].(map[string]interface{})["logs"].(map[string]interface{})["processors"] = processors
 
-		service.(map[string]interface{})["pipelines"].(map[string]interface{})["logs"].(map[string]interface{})["processors"] = processors
-
-		s := map[string]interface{}{
-			"service": map[string]interface{}{
-				"pipelines": map[string]interface{}{
-					"logs": map[string]interface{}{
-						"processors": processors,
-					},
-				},
-			},
-		}
-
-		serviceC := confmap.NewFromStringMap(s)
-
-		err = agentConf.Merge(serviceC)
+		updatedConf, err := yaml.Parser().Marshal(c)
 		if err != nil {
-			return err
+			return confHash, err
 		}
 
-		// ------ complete adding processor
-		configR, err := yaml.Parser().Marshal(agentConf.ToStringMap())
-		if err != nil {
-			return err
-		}
+		fmt.Println(string(updatedConf))
 
-		zap.S().Infof("sending new config", string(configR))
+		zap.S().Infof("sending new config", string(updatedConf))
 		hash := sha256.New()
-		_, err = hash.Write(configR)
+		_, err = hash.Write(updatedConf)
 		if err != nil {
-			return err
+			return confHash, err
 		}
-		agent.EffectiveConfig = string(configR)
+		agent.EffectiveConfig = string(updatedConf)
 		err = agent.Upsert()
 		if err != nil {
-			return err
+			return confHash, err
 		}
 
 		agent.SendToAgent(&protobufs.ServerToAgent{
@@ -304,7 +276,7 @@ func UpsertProcessor(ctx context.Context, processors map[string]interface{}, nam
 				Config: &protobufs.AgentConfigMap{
 					ConfigMap: map[string]*protobufs.AgentConfigFile{
 						"collector.yaml": {
-							Body:        configR,
+							Body:        updatedConf,
 							ContentType: "application/x-yaml",
 						},
 					},
@@ -312,7 +284,17 @@ func UpsertProcessor(ctx context.Context, processors map[string]interface{}, nam
 				ConfigHash: hash.Sum(nil),
 			},
 		})
+
+		if confHash == "" {
+			// here we return the first agent hash as we don't have multi-agent support
+			// in downstream yet
+			confHash = string(hash.Sum(nil))
+		}
+	}
+	if confHash != "" {
+		// subscribe callback
+		model.ListenToConfigUpdate(confHash, callback)
 	}
 
-	return nil
+	return confHash, nil
 }
