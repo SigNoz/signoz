@@ -5,12 +5,14 @@ import { ErrorResponse, SuccessResponse } from 'types/api';
 import { PayloadProps } from 'types/api/queryBuilder/getKeysAutoComplete';
 
 const getKeysAutoComplete = async (
-	searchText: string,
+	searchText?: string,
 ): Promise<SuccessResponse<PayloadProps[]> | ErrorResponse> => {
 	try {
 		const data = await axios({
 			method: 'get',
-			url: `/api/v3/autocomplete/attribute_keys?aggregateOperator=sum&dataSource=metrics&aggregateAttribute=signoz_calls_total&searchText=${searchText}`,
+			url: `/api/v3/autocomplete/attribute_keys?aggregateOperator=sum&dataSource=metrics&aggregateAttribute=signoz_calls_total&searchText=${
+				searchText || ''
+			}`,
 			baseURL: 'http://34.229.125.174:3301',
 		});
 

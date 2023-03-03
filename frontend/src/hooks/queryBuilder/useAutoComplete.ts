@@ -1,15 +1,10 @@
 import getKeysAutoComplete from 'api/queryBuilder/getKeysAutoComplete';
 import getValuesAutoComplete from 'api/queryBuilder/getValuesAutoComplete';
-import {
-	EXISTS,
-	NOT_EXISTS,
-	QUERY_BUILDER_OPERATORS,
-} from 'constants/queryBuilder';
-import ROUTES from 'constants/routes';
+import { QUERY_BUILDER_OPERATORS_BY_TYPES } from 'constants/queryBuilder';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { useLocation } from 'react-router-dom';
 
-import { useSeparateSearchString } from './useSeparateSearchString';
+import { useSetCurrentKeyAndOperator } from './useSetCurrentKeyAndOperator';
+import { useValidTag } from './useValidTag';
 
 type OptionType = {
 	value: string;
@@ -19,6 +14,7 @@ type ReturnT = {
 	handleSearch: (value: string) => void;
 	handleClear: (value: string) => void;
 	handleAddTags: (value: string) => void;
+	handleSelect: (value: string) => void;
 	handleFetchOption: (value: string) => void;
 	handleKeyDown: (e: React.KeyboardEvent) => void;
 	options: OptionType[];
@@ -26,23 +22,17 @@ type ReturnT = {
 	searchValue: string;
 };
 
-export const useAutoComplete = (): ReturnT => {
-	const { pathname } = useLocation();
-	const operators = useMemo(() => {
-		switch (pathname) {
-			case ROUTES.TRACE:
-				return QUERY_BUILDER_OPERATORS.TRACES;
-			case ROUTES.LOGS:
-				return QUERY_BUILDER_OPERATORS.LOGS;
-			default:
-				return QUERY_BUILDER_OPERATORS.UNIVERSAL;
-		}
-	}, [pathname]);
+export type KeyType = {
+	key: string;
+	dataType: 'STRING' | 'BOOLEAN' | 'NUMBER';
+	type: string;
+};
 
+export const useAutoComplete = (): ReturnT => {
 	const [searchValue, setSearchValue] = useState('');
 
 	// FOUND KEYS
-	const [keys, setKeys] = useState<string[]>([]);
+	const [keys, setKeys] = useState<KeyType[]>([]);
 	// FOUND VALUES
 	const [results, setResults] = useState([]);
 	// OPTIONS
@@ -50,24 +40,33 @@ export const useAutoComplete = (): ReturnT => {
 	// SELECTED OPTIONS
 	const [tags, setTags] = useState<string[]>([]);
 
-	const [key, operator] = useSeparateSearchString(searchValue, keys, operators);
+	const [key, operator, result] = useSetCurrentKeyAndOperator(searchValue, keys);
+
+	const { isValidTag, isExist, isValidOperator } = useValidTag(operator, result);
+
+	const operators = useMemo(() => {
+		const currentKey = keys.find((el) => el.key === key);
+		return currentKey
+			? QUERY_BUILDER_OPERATORS_BY_TYPES[currentKey.dataType]
+			: QUERY_BUILDER_OPERATORS_BY_TYPES.UNIVERSAL;
+	}, [keys, key]);
 
 	const handleAddTags = (value: string): void => {
-		if (value) {
-			if (key && operator) {
-				setTags((prev) => [...prev, value]);
-				setSearchValue('');
-			} else {
-				setSearchValue(value);
-			}
+		if (value && key && isValidTag) {
+			setTags((prev) => [...prev, value]);
+			setSearchValue('');
 		}
+	};
+
+	const handleSelect = (value: string): void => {
+		setSearchValue(value);
 	};
 
 	// SET OPTIONS
 	useEffect(() => {
 		if (searchValue) {
 			if (!key) {
-				setOptions(keys.map((k) => ({ value: k })));
+				setOptions(keys.map((k) => ({ value: k.key })));
 			} else if (key && !operator) {
 				setOptions(
 					operators.map((o) => ({
@@ -75,22 +74,32 @@ export const useAutoComplete = (): ReturnT => {
 						label: `${key} ${o.replace('_', ' ')}`,
 					})),
 				);
-			} else if (
-				key &&
-				operator &&
-				operator !== EXISTS &&
-				operator !== NOT_EXISTS
-			) {
+			} else if (key && operator && !isExist && isValidOperator) {
 				setOptions(results.map((r) => ({ value: `${key} ${operator} ${r}` })));
+			} else if (key && operator && isExist) {
+				setOptions([]);
 			}
 		} else {
 			setOptions([]);
 		}
-	}, [key, keys, operator, operators, results, searchValue]);
+	}, [
+		isExist,
+		isValidOperator,
+		key,
+		keys,
+		operator,
+		operators,
+		results,
+		searchValue,
+	]);
 
 	// HANDLE INPUT SEARCH
 	const handleSearch = useCallback((value: string) => {
 		setSearchValue(value);
+	}, []);
+
+	useEffect(() => {
+		getKeysAutoComplete().then((response) => console.log(response));
 	}, []);
 
 	// FETCH OPTIONS
@@ -110,7 +119,7 @@ export const useAutoComplete = (): ReturnT => {
 				if (!key) {
 					const { payload } = await getKeysAutoComplete(value);
 					if (payload) {
-						setKeys(payload.map((p) => p.key) as []);
+						setKeys(payload);
 					} else {
 						setKeys([]);
 					}
@@ -131,6 +140,15 @@ export const useAutoComplete = (): ReturnT => {
 
 	// HANDLE BACKSPACE
 	const handleKeyDown = (e: React.KeyboardEvent): void => {
+		if (e.key === ' ' && searchValue.endsWith(' ')) {
+			e.preventDefault();
+		}
+
+		if (e.key === 'Enter' && searchValue) {
+			e.preventDefault();
+			handleAddTags(searchValue);
+		}
+
 		if (e.key === 'Backspace' && !searchValue) {
 			e.stopPropagation();
 			const last = tags[tags.length - 1];
@@ -144,6 +162,7 @@ export const useAutoComplete = (): ReturnT => {
 		handleSearch,
 		handleClear,
 		handleAddTags,
+		handleSelect,
 		handleKeyDown,
 		options,
 		tags,

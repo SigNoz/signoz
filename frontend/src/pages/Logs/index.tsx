@@ -13,6 +13,8 @@ import AppActions from 'types/actions';
 import { SET_DETAILED_LOG_DATA } from 'types/actions/logs';
 import { ILog } from 'types/api/logs/log';
 
+import QueryBuilderSearch from '../../components/QueryBuilder/Search';
+import { QueryBuilderContainer } from '../../container/QueryBuilder';
 import { defaultSelectStyle, logsOptions } from './config';
 import { useSelectedLogView } from './hooks';
 import PopoverContent from './PopoverContent';
@@ -69,6 +71,9 @@ function Logs(): JSX.Element {
 
 	return (
 		<>
+			<QueryBuilderContainer>
+				<QueryBuilderSearch />
+			</QueryBuilderContainer>
 			<SpaceContainer
 				split={<Divider type="vertical" />}
 				align="center"

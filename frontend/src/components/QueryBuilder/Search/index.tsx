@@ -12,7 +12,7 @@ function QueryBuilderSearch(): JSX.Element {
 		handleClear,
 		handleKeyDown,
 		handleSearch,
-		handleAddTags,
+		handleSelect,
 		tags,
 		options,
 		searchValue,
@@ -26,12 +26,13 @@ function QueryBuilderSearch(): JSX.Element {
 		<Space.Compact block>
 			<Select
 				showSearch
+				autoClearSearchValue={false}
 				mode="multiple"
 				options={options}
 				placeholder="Search Filter"
 				value={tags}
 				onDeselect={handleClear}
-				onSelect={handleAddTags}
+				onSelect={handleSelect}
 				onInputKeyDown={handleKeyDown}
 				onSearch={handleSearch}
 				searchValue={searchValue}
