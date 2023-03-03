@@ -25,7 +25,9 @@ import (
 	licensepkg "go.signoz.io/signoz/ee/query-service/license"
 	"go.signoz.io/signoz/ee/query-service/usage"
 
+	baseapp "go.signoz.io/signoz/pkg/query-service/app"
 	"go.signoz.io/signoz/pkg/query-service/app/dashboards"
+	baseauth "go.signoz.io/signoz/pkg/query-service/auth"
 	baseconst "go.signoz.io/signoz/pkg/query-service/constants"
 	"go.signoz.io/signoz/pkg/query-service/healthcheck"
 	basealm "go.signoz.io/signoz/pkg/query-service/integrations/alertManager"
@@ -188,7 +190,7 @@ func (s *Server) createPrivateServer(apiHandler *api.APIHandler) (*http.Server, 
 		// ip here for alert manager
 		AllowedOrigins: []string{"*"},
 		AllowedMethods: []string{"GET", "DELETE", "POST", "PUT", "PATCH"},
-		AllowedHeaders: []string{"Accept", "Authorization", "Content-Type"},
+		AllowedHeaders: []string{"Accept", "Authorization", "Content-Type", "SIGNOZ-API-KEY"},
 	})
 
 	handler := c.Handler(r)
@@ -203,13 +205,32 @@ func (s *Server) createPublicServer(apiHandler *api.APIHandler) (*http.Server, e
 
 	r := mux.NewRouter()
 
+	getUserFromRequest := func(r *http.Request) (*model.UserPayload, error) {
+		patToken := r.Header.Get("SIGNOZ-API-KEY")
+		if len(patToken) > 0 {
+			zap.S().Debugf("Received a non-zero length PAT token")
+			ctx := context.Background()
+			dao := apiHandler.AppDao()
+
+			user, err := dao.GetUserByPAT(ctx, patToken)
+			if err == nil && user != nil {
+				zap.S().Debugf("Found valid PAT user: %+v", user)
+				return user, nil
+			}
+			if err != nil {
+				zap.S().Debugf("Error while getting user for PAT: %+v", err)
+			}
+		}
+		return baseauth.GetUserFromRequest(r)
+	}
+	am := baseapp.NewAuthMiddleware(getUserFromRequest)
 	r.Use(setTimeoutMiddleware)
 	r.Use(s.analyticsMiddleware)
 	r.Use(loggingMiddleware)
 
-	apiHandler.RegisterRoutes(r)
-	apiHandler.RegisterMetricsRoutes(r)
-	apiHandler.RegisterLogsRoutes(r)
+	apiHandler.RegisterRoutes(r, am)
+	apiHandler.RegisterMetricsRoutes(r, am)
+	apiHandler.RegisterLogsRoutes(r, am)
 
 	c := cors.New(cors.Options{
 		AllowedOrigins: []string{"*"},
