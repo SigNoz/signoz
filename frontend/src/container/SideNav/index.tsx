@@ -24,12 +24,6 @@ import {
 	VersionContainer,
 } from './styles';
 
-interface SidebarItem {
-	onClick: () => void;
-	icon: React.ReactNode;
-	text: React.ReactNode;
-}
-
 function SideNav(): JSX.Element {
 	const dispatch = useDispatch();
 	const [collapsed, setCollapsed] = useState<boolean>(
@@ -70,14 +64,16 @@ function SideNav(): JSX.Element {
 
 	const isNotCurrentVersion = currentVersion !== latestVersion;
 
-	const sidebar = [
+	const sidebar: SidebarItem[] = [
 		{
 			onClick: onClickSlackHandler,
 			icon: <Slack />,
 			text: <SlackButton>Support</SlackButton>,
+			key: 'slack',
 		},
 		{
 			onClick: onClickVersionHandler,
+			key: 'version',
 			icon: isNotCurrentVersion ? (
 				<WarningOutlined style={{ color: '#E87040' }} />
 			) : (
@@ -111,8 +107,8 @@ function SideNav(): JSX.Element {
 					<div>{name}</div>
 					{tags &&
 						tags.map((e) => (
-							<Tags style={{ lineHeight: '1rem' }} color="#177DDC" key={e}>
-								<Typography.Text style={{ fontWeight: '300' }}>{e}</Typography.Text>
+							<Tags key={e}>
+								<Typography.Text>{e}</Typography.Text>
 							</Tags>
 						))}
 				</Space>
@@ -120,15 +116,7 @@ function SideNav(): JSX.Element {
 		})),
 	];
 
-	const sidebarItems = (
-		props: SidebarItem,
-		index: number,
-	): {
-		key: string;
-		icon: React.ReactNode;
-		onClick: () => void;
-		label: React.ReactNode;
-	} => ({
+	const sidebarItems = (props: SidebarItem, index: number): SidebarItem => ({
 		key: `${index}`,
 		icon: props.icon,
 		onClick: props.onClick,
@@ -163,6 +151,14 @@ function SideNav(): JSX.Element {
 			))}
 		</Sider>
 	);
+}
+
+interface SidebarItem {
+	onClick: VoidFunction;
+	icon?: React.ReactNode;
+	text?: React.ReactNode;
+	key: string;
+	label?: React.ReactNode;
 }
 
 export default SideNav;

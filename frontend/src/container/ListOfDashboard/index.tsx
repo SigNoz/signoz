@@ -1,5 +1,6 @@
 import { PlusOutlined } from '@ant-design/icons';
 import { Card, Dropdown, Menu, Row, TableColumnProps, Typography } from 'antd';
+import { ItemType } from 'antd/es/menu/hooks/useItems';
 import createDashboard from 'api/dashboard/create';
 import { AxiosError } from 'axios';
 import { ResizeTable } from 'components/ResizeTable';
@@ -188,35 +189,33 @@ function ListOfAllDashboard(): JSX.Element {
 		setUploadedGrafana(uploadedGrafana);
 	};
 
-	const menu = useMemo(
-		() => (
-			<Menu
-				items={[
-					...(createNewDashboard
-						? [
-								{
-									key: t('create_dashboard').toString(),
-									label: t('create_dashboard'),
-									disabled: loading,
-									onClick: onNewDashboardHandler,
-								},
-						  ]
-						: []),
-					{
-						key: t('import_json').toString(),
-						label: t('import_json'),
-						onClick: (): void => onModalHandler(false),
-					},
-					{
-						key: t('import_grafana_json').toString(),
-						label: t('import_grafana_json'),
-						onClick: (): void => onModalHandler(true),
-					},
-				]}
-			/>
-		),
-		[createNewDashboard, loading, onNewDashboardHandler, t],
-	);
+	const getMenuItems = useCallback(() => {
+		const menuItems: ItemType[] = [];
+		if (createNewDashboard) {
+			menuItems.push({
+				key: t('create_dashboard').toString(),
+				label: t('create_dashboard'),
+				disabled: loading,
+				onClick: onNewDashboardHandler,
+			});
+		}
+
+		menuItems.push({
+			key: t('import_json').toString(),
+			label: t('import_json'),
+			onClick: (): void => onModalHandler(false),
+		});
+
+		menuItems.push({
+			key: t('import_grafana_json').toString(),
+			label: t('import_grafana_json'),
+			onClick: (): void => onModalHandler(true),
+		});
+
+		return menuItems;
+	}, [createNewDashboard, loading, onNewDashboardHandler, t]);
+
+	const menuItems = getMenuItems();
 
 	const GetHeader = useMemo(
 		() => (
@@ -231,7 +230,7 @@ function ListOfAllDashboard(): JSX.Element {
 						}}
 					/>
 					{newDashboard && (
-						<Dropdown trigger={['click']} overlay={menu}>
+						<Dropdown trigger={['click']} overlay={<Menu items={menuItems} />}>
 							<NewDashboardButton
 								icon={<PlusOutlined />}
 								type="primary"
@@ -247,10 +246,10 @@ function ListOfAllDashboard(): JSX.Element {
 		),
 		[
 			getText,
-			menu,
 			newDashboard,
 			newDashboardState.error,
 			newDashboardState.loading,
+			menuItems,
 		],
 	);
 
