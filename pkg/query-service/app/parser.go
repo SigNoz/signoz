@@ -904,14 +904,30 @@ func parseFilterAttributeValueRequest(r *http.Request) (*v3.FilterAttributeValue
 	return &req, nil
 }
 
-func validateQueryRangeParamsV2(qp *v3.QueryRangeParamsV3) error {
+func validateQueryRangeParamsV3(qp *v3.QueryRangeParamsV3) error {
 	var errs []error
+
+	// validate the query type
 	if err := qp.CompositeQuery.QueryType.Validate(); err != nil {
-		errs = append(errs, fmt.Errorf("unsupported query type"))
+		errs = append(errs, err)
 	}
+
+	// validate the panel type
 	if err := qp.CompositeQuery.PanelType.Validate(); err != nil {
-		errs = append(errs, fmt.Errorf("unsupported panel type"))
+		errs = append(errs, err)
 	}
+
+	if qp.CompositeQuery.BuilderQueries != nil {
+		for _, bq := range qp.CompositeQuery.BuilderQueries {
+			if err := bq.DataSource.Validate(); err != nil {
+				errs = append(errs, err)
+			}
+			if err := bq.AggregateOperator.Validate(); err != nil {
+				errs = append(errs, err)
+			}
+		}
+	}
+
 	if len(errs) != 0 {
 		return fmt.Errorf("one or more errors found : %s", metrics.FormatErrs(errs, ","))
 	}
@@ -922,12 +938,16 @@ func ParseQueryRangeParams(r *http.Request) (*v3.QueryRangeParamsV3, *model.ApiE
 
 	var postData *v3.QueryRangeParamsV3
 
+	// parse the request body
 	if err := json.NewDecoder(r.Body).Decode(&postData); err != nil {
 		return nil, &model.ApiError{Typ: model.ErrorBadData, Err: err}
 	}
-	if err := validateQueryRangeParamsV2(postData); err != nil {
+
+	// validate the request body
+	if err := validateQueryRangeParamsV3(postData); err != nil {
 		return nil, &model.ApiError{Typ: model.ErrorBadData, Err: err}
 	}
+
 	// prepare the variables for the corrspnding query type
 	formattedVars := make(map[string]interface{})
 	for name, value := range postData.Variables {
@@ -937,7 +957,11 @@ func ParseQueryRangeParams(r *http.Request) (*v3.QueryRangeParamsV3, *model.ApiE
 			formattedVars[name] = metrics.FormattedValue(value)
 		}
 	}
+
 	// replace the variables in metrics builder filter item with actual value
+	// example: {"key": "host", "value": "{{ .host }}", "operator": "equals"} with
+	// variables {"host": "test"} will be replaced with {"key": "host", "value": "test", "operator": "equals"}
+
 	if postData.CompositeQuery.QueryType == v3.QueryTypeBuilder {
 		for _, query := range postData.CompositeQuery.BuilderQueries {
 			if query.Filters == nil || len(query.Filters.Items) == 0 {

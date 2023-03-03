@@ -3761,13 +3761,13 @@ func (r *ClickHouseReader) GetMetricAttributeValues(ctx context.Context, req *v3
 }
 
 func readRowsForMetricResult(rows driver.Rows, vars []interface{}, columnNames []string) (map[string][]v3.Point, map[string]map[string]string, error) {
-	// when group by is applied, each combination of cartesian product
-	// of attribute values is a separate series. Each item in metricPointsMap
+	// when groupBy is applied, each combination of cartesian product
+	// of attribute values is a separate series. Each item in seriesToPoints
 	// represent a unique series where the key is sorted attribute values joined
 	// by "," and the value is the list of points for that series
 
 	// For instance, group by (serviceName, operation)
-	// with 2 services and three operations in each will result in 6 series
+	// with 2 services and three operations in each will result in (maximum of) 6 series
 	// ("frontend", "order") x ("/fetch", "/fetch/{Id}", "/order")
 	//
 	// ("frontend", "/fetch")
@@ -3776,11 +3776,11 @@ func readRowsForMetricResult(rows driver.Rows, vars []interface{}, columnNames [
 	// ("order", "/fetch")
 	// ("order", "/fetch/{Id}")
 	// ("order", "/order")
-	metricPointsMap := make(map[string][]v3.Point)
+	seriesToPoints := make(map[string][]v3.Point)
 
 	// attributesMap is a reverse mapping of key to attributes
 	// this is used to populate the series object
-	attributesMap := make(map[string]map[string]string)
+	seriesToAttrs := make(map[string]map[string]string)
 
 	for rows.Next() {
 		if err := rows.Scan(vars...); err != nil {
@@ -3850,16 +3850,16 @@ func readRowsForMetricResult(rows driver.Rows, vars []interface{}, columnNames [
 		}
 		sort.Strings(groupBy)
 		key := strings.Join(groupBy, "")
-		attributesMap[key] = groupAttributes
-		metricPointsMap[key] = append(metricPointsMap[key], metricPoint)
+		seriesToAttrs[key] = groupAttributes
+		seriesToPoints[key] = append(seriesToPoints[key], metricPoint)
 	}
-	return metricPointsMap, attributesMap, nil
+	return seriesToPoints, seriesToAttrs, nil
 }
 
 // GetMetricResultV3 runs the query and returns list of time series
 func (r *ClickHouseReader) GetMetricResultV3(ctx context.Context, query string) ([]*v3.Series, error) {
 
-	defer utils.Elapsed("GetMetricResult")()
+	defer utils.Elapsed("GetMetricResultV3")()
 
 	zap.S().Infof("Executing metric result query: %s", query)
 
@@ -3880,17 +3880,17 @@ func (r *ClickHouseReader) GetMetricResultV3(ctx context.Context, query string) 
 		vars[i] = reflect.New(columnTypes[i].ScanType()).Interface()
 	}
 
-	metricPointsMap, attributesMap, err := readRowsForMetricResult(rows, vars, columnNames)
+	seriesToPoints, seriesToAttrs, err := readRowsForMetricResult(rows, vars, columnNames)
 	var seriesList []*v3.Series
-	for key := range metricPointsMap {
-		points := metricPointsMap[key]
+	for key := range seriesToPoints {
+		points := seriesToPoints[key]
 		// TODO(srikanthccv): first point in each series could be invalid since the
 		// aggregations are applied with point from prev series, this is
 		// mainly an issue in rate as we use `runningDifference`
 		if len(points) != 0 && len(points) > 1 {
 			points = points[1:]
 		}
-		attributes := attributesMap[key]
+		attributes := seriesToAttrs[key]
 		series := v3.Series{Labels: attributes, Points: points}
 		seriesList = append(seriesList, &series)
 	}

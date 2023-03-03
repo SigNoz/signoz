@@ -47,16 +47,16 @@ var AggregateOperatorToSQLFunc = map[v3.AggregateOperator]string{
 var SupportedFunctions = []string{"exp", "log", "ln", "exp2", "log2", "exp10", "log10", "sqrt", "cbrt", "erf", "erfc", "lgamma", "tgamma", "sin", "cos", "tan", "asin", "acos", "atan", "degrees", "radians"}
 
 func GoValuateFuncs() map[string]govaluate.ExpressionFunction {
-	var GoValuateFuncs = map[string]govaluate.ExpressionFunction{}
+	var funcs = map[string]govaluate.ExpressionFunction{}
 	for _, fn := range SupportedFunctions {
-		GoValuateFuncs[fn] = func(args ...interface{}) (interface{}, error) {
+		funcs[fn] = func(args ...interface{}) (interface{}, error) {
 			return nil, nil
 		}
 	}
-	return GoValuateFuncs
+	return funcs
 }
 
-// FormattedValue formats the value to be used in clickhouse query
+// FormattedValue formats the value based on the type for the use in query
 func FormattedValue(v interface{}) string {
 	switch x := v.(type) {
 	case int:
@@ -99,6 +99,7 @@ func FormattedValue(v interface{}) string {
 func BuildMetricsTimeSeriesFilterQuery(fs *v3.FilterSet, groupTags []string, metricName string, aggregateOperator v3.AggregateOperator) (string, error) {
 	var conditions []string
 	conditions = append(conditions, fmt.Sprintf("metric_name = %s", FormattedValue(metricName)))
+
 	if fs != nil && len(fs.Items) != 0 {
 		for _, item := range fs.Items {
 			toFormat := item.Value
@@ -131,6 +132,22 @@ func BuildMetricsTimeSeriesFilterQuery(fs *v3.FilterSet, groupTags []string, met
 				conditions = append(conditions, fmt.Sprintf("match(JSONExtractString(labels, '%s'), %s)", item.Key, fmtVal))
 			case "nmatch":
 				conditions = append(conditions, fmt.Sprintf("not match(JSONExtractString(labels, '%s'), %s)", item.Key, fmtVal))
+			case "gt":
+				conditions = append(conditions, fmt.Sprintf("JSONExtractString(labels, '%s') > %s", item.Key, fmtVal))
+			case "gte":
+				conditions = append(conditions, fmt.Sprintf("JSONExtractString(labels, '%s') >= %s", item.Key, fmtVal))
+			case "lt":
+				conditions = append(conditions, fmt.Sprintf("JSONExtractString(labels, '%s') < %s", item.Key, fmtVal))
+			case "lte":
+				conditions = append(conditions, fmt.Sprintf("JSONExtractString(labels, '%s') <= %s", item.Key, fmtVal))
+			case "contains":
+				conditions = append(conditions, fmt.Sprintf("like(JSONExtractString(labels, '%s'), %s)", item.Key, fmtVal))
+			case "ncontains":
+				conditions = append(conditions, fmt.Sprintf("notLike(JSONExtractString(labels, '%s'), %s)", item.Key, fmtVal))
+			case "exists":
+				conditions = append(conditions, fmt.Sprintf("has(JSONExtractKeys(labels), %s)", item.Key))
+			case "nexists":
+				conditions = append(conditions, fmt.Sprintf("not has(JSONExtractKeys(labels), %s)", item.Key))
 			default:
 				return "", fmt.Errorf("unsupported operation")
 			}
@@ -178,6 +195,9 @@ func BuildMetricQuery(qp *v3.QueryRangeParamsV3, mq *v3.BuilderQuery, tableName 
 			" GROUP BY %s" +
 			" ORDER BY %s ts"
 
+	// tagsWithoutLe is used to group by all tags except le
+	// This is done because we want to group by le only when we are calculating quantile
+	// Otherwise, we want to group by all tags except le
 	tagsWithoutLe := []string{}
 	for _, tag := range mq.GroupBy {
 		if tag != "le" {
@@ -192,6 +212,7 @@ func BuildMetricQuery(qp *v3.QueryRangeParamsV3, mq *v3.BuilderQuery, tableName 
 	groupBy := groupBy(mq.GroupBy...)
 	groupTags := groupSelect(mq.GroupBy...)
 	orderBy := orderBy(mq.OrderBy, mq.GroupBy)
+
 	if len(orderBy) != 0 {
 		orderBy += ","
 	}
@@ -290,11 +311,14 @@ func BuildMetricQuery(qp *v3.QueryRangeParamsV3, mq *v3.BuilderQuery, tableName 
 	}
 }
 
+// groupBy returns a string of comma separated tags for group by clause
+// `ts` is always added to the group by clause
 func groupBy(tags ...string) string {
 	tags = append(tags, "ts")
 	return strings.Join(tags, ",")
 }
 
+// groupSelect returns a string of comma separated tags for select clause
 func groupSelect(tags ...string) string {
 	groupTags := strings.Join(tags, ",")
 	if len(tags) != 0 {
@@ -303,6 +327,8 @@ func groupSelect(tags ...string) string {
 	return groupTags
 }
 
+// orderBy returns a string of comma separated tags for order by clause
+// if the order is not specified, it defaults to ASC
 func orderBy(items []v3.OrderBy, tags []string) string {
 	var orderBy []string
 	for _, tag := range tags {
