@@ -1,4 +1,5 @@
 import { Button, Input, Space, Tooltip, Typography } from 'antd';
+import getUserVersion from 'api/user/getVersion';
 import loginApi from 'api/user/login';
 import loginPrecheckApi from 'api/user/loginPrecheck';
 import afterLogin from 'AppRoutes/utils';
@@ -7,6 +8,7 @@ import { useNotifications } from 'hooks/useNotifications';
 import history from 'lib/history';
 import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useQuery } from 'react-query';
 import { PayloadProps as PrecheckResultType } from 'types/api/user/loginPrecheck';
 
 import { FormContainer, FormWrapper, Label, ParentContainer } from './styles';
@@ -44,6 +46,26 @@ function Login({
 	const [precheckComplete, setPrecheckComplete] = useState(false);
 
 	const { notifications } = useNotifications();
+
+	const getUserVersionResponse = useQuery({
+		queryFn: getUserVersion,
+		queryKey: 'getUserVersion',
+		enabled: true,
+	});
+
+	useEffect(() => {
+		if (
+			getUserVersionResponse.isFetched &&
+			getUserVersionResponse.data &&
+			getUserVersionResponse.data.payload
+		) {
+			const { setupCompleted } = getUserVersionResponse.data.payload;
+			if (!setupCompleted) {
+				// no org account registered yet, re-route user to sign up first
+				history.push(ROUTES.SIGN_UP);
+			}
+		}
+	}, [getUserVersionResponse]);
 
 	useEffect(() => {
 		if (withPassword === 'Y') {
@@ -252,20 +274,6 @@ function Login({
 					{!canSelfRegister && (
 						<Typography.Paragraph italic style={{ color: '#ACACAC' }}>
 							{t('prompt_no_account')}
-						</Typography.Paragraph>
-					)}
-
-					{!canSelfRegister && (
-						<Typography.Paragraph italic style={{ color: '#ACACAC' }}>
-							{t('prompt_create_account')}{' '}
-							<Typography.Link
-								onClick={(): void => {
-									history.push(ROUTES.SIGN_UP);
-								}}
-								style={{ fontWeight: 700 }}
-							>
-								{t('create_an_account')}
-							</Typography.Link>
 						</Typography.Paragraph>
 					)}
 
