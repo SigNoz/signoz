@@ -1,6 +1,6 @@
 import getKeysAutoComplete from 'api/queryBuilder/getKeysAutoComplete';
 import getValuesAutoComplete from 'api/queryBuilder/getValuesAutoComplete';
-import { useCallback, useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { separateSearchValue } from 'utils/separateSearchValue';
 
 import { getCountOfSpace } from '../../utils/getCountOfSpace';
@@ -25,37 +25,38 @@ export const useFetchKeysAndValues = (searchValue: string): ReturnT => {
 	}, []);
 
 	// FETCH OPTIONS
-	const handleFetchOption = useCallback(
-		async (value: string) => {
-			if (value) {
-				const [tKey, , tResult] = separateSearchValue(value);
-				const isSuggestKey = keys.some((el) => el.key === tKey);
+	const handleFetchOption = async (value: string): Promise<void> => {
+		if (value) {
+			const [tKey, , tResult] = separateSearchValue(value);
+			const isSuggestKey = keys.some((el) => el.key === tKey);
 
-				if (getCountOfSpace(value) >= 2 && isSuggestKey) {
-					const { payload } = await getValuesAutoComplete(tKey, tResult.join(' '));
-					if (payload) {
-						setResults(payload as []);
-					} else {
-						setResults([]);
-					}
-				}
-
-				if (getCountOfSpace(value) === 0 && tKey) {
-					const { payload } = await getKeysAutoComplete(value);
-					if (payload) {
-						setKeys(payload);
-					} else {
-						setKeys([]);
-					}
+			if (getCountOfSpace(value) >= 2 && isSuggestKey) {
+				const { payload } = await getValuesAutoComplete(tKey, tResult.join(' '));
+				if (payload) {
+					setResults(payload as []);
+				} else {
+					setResults([]);
 				}
 			}
-		},
-		[keys],
-	);
 
+			if (getCountOfSpace(value) === 0 && tKey) {
+				const { payload } = await getKeysAutoComplete(value);
+				if (payload) {
+					setKeys(payload);
+				} else {
+					setKeys([]);
+				}
+			}
+		}
+	};
+
+	const clearFetcher = useRef(handleFetchOption).current;
 	useEffect(() => {
-		handleFetchOption(searchValue).then();
-	}, [handleFetchOption, searchValue]);
+		const timer = setTimeout(() => clearFetcher(searchValue).then(), 300);
+		return (): void => {
+			clearTimeout(timer);
+		};
+	}, [clearFetcher, searchValue]);
 
 	return {
 		keys,
