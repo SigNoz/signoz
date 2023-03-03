@@ -1,4 +1,6 @@
-import { Input, Typography } from 'antd';
+import { Input, List, Typography } from 'antd';
+import ROUTES from 'constants/routes';
+import { formUrlParams } from 'container/TraceDetail/utils';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ITraceTag } from 'types/api/trace/getTraceItem';
@@ -7,7 +9,12 @@ import { ModalText } from '..';
 import { Container } from './styles';
 import Tag from './Tag';
 
-function Tags({ tags, onToggleHandler, setText }: TagsProps): JSX.Element {
+function Tags({
+	tags,
+	linkedSpans,
+	onToggleHandler,
+	setText,
+}: TagsProps): JSX.Element {
 	const { t } = useTranslation(['traceDetails']);
 	const [allRenderedTags, setAllRenderedTags] = useState(tags);
 	const isSearchVisible = useMemo(() => tags.length > 5, [tags]);
@@ -15,6 +22,16 @@ function Tags({ tags, onToggleHandler, setText }: TagsProps): JSX.Element {
 	useEffect(() => {
 		setAllRenderedTags(tags);
 	}, [tags]);
+
+	const getLink = useCallback(
+		(item: Record<string, string>) =>
+			`${ROUTES.TRACE}/${item.TraceId}${formUrlParams({
+				spanId: item.SpanId,
+				levelUp: 0,
+				levelDown: 0,
+			})}`,
+		[],
+	);
 
 	const onChangeHandler = useCallback(
 		(e: React.ChangeEvent<HTMLInputElement>): void => {
@@ -38,7 +55,6 @@ function Tags({ tags, onToggleHandler, setText }: TagsProps): JSX.Element {
 					onChange={onChangeHandler}
 				/>
 			)}
-
 			{allRenderedTags.map((tag) => (
 				<Tag
 					key={JSON.stringify(tag)}
@@ -49,17 +65,33 @@ function Tags({ tags, onToggleHandler, setText }: TagsProps): JSX.Element {
 					}}
 				/>
 			))}
+			{linkedSpans && linkedSpans.length > 0 && (
+				<List
+					header={<Typography.Title level={5}>Linked Spans</Typography.Title>}
+					dataSource={linkedSpans}
+					renderItem={(item): JSX.Element => (
+						<List.Item>
+							<Typography.Link href={getLink(item)}>{item.SpanId}</Typography.Link>
+						</List.Item>
+					)}
+				/>
+			)}
 		</Container>
 	);
 }
 
 interface TagsProps extends CommonTagsProps {
 	tags: ITraceTag[];
+	linkedSpans?: Record<string, string>[];
 }
 
 export interface CommonTagsProps {
 	onToggleHandler: (state: boolean) => void;
 	setText: React.Dispatch<React.SetStateAction<ModalText>>;
 }
+
+Tags.defaultProps = {
+	linkedSpans: [],
+};
 
 export default Tags;
