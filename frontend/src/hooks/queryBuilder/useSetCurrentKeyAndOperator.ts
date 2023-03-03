@@ -1,5 +1,6 @@
 import { useMemo } from 'react';
 import { getCountOfSpace } from 'utils/getCountOfSpace';
+import { separateSearchValue } from 'utils/separateSearchValue';
 
 import { KeyType } from './useAutoComplete';
 
@@ -14,8 +15,7 @@ export const useSetCurrentKeyAndOperator = (
 		let operator = '';
 		let result: string[] = [];
 		if (value) {
-			const separatedString = value.split(' ');
-			const [tKey, tOperator, ...tResult] = separatedString;
+			const [tKey, tOperator, tResult] = separateSearchValue(value);
 			const isSuggestKey = keys.some((el) => el.key === tKey);
 
 			if (getCountOfSpace(value) >= 1 || isSuggestKey) {

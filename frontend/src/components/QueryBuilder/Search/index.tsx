@@ -6,10 +6,10 @@ import { useAutoComplete } from 'hooks/queryBuilder/useAutoComplete';
 import React, { useEffect } from 'react';
 
 function QueryBuilderSearch(): JSX.Element {
-	const { handleChangeValue, handleSubmit } = useQueryBuilderContext();
+	const { onChangeHandler, onSubmitHandler } = useQueryBuilderContext();
 
 	const {
-		handleClear,
+		handleClearTag,
 		handleKeyDown,
 		handleSearch,
 		handleSelect,
@@ -19,8 +19,8 @@ function QueryBuilderSearch(): JSX.Element {
 	} = useAutoComplete();
 
 	useEffect(() => {
-		handleChangeValue(QUERY_BUILDER_STATE_KEYS.SEARCH)(tags.join('AND'));
-	}, [handleChangeValue, tags]);
+		onChangeHandler(QUERY_BUILDER_STATE_KEYS.SEARCH)(tags.join('AND'));
+	}, [onChangeHandler, tags]);
 
 	return (
 		<Space.Compact block>
@@ -31,14 +31,14 @@ function QueryBuilderSearch(): JSX.Element {
 				options={options}
 				placeholder="Search Filter"
 				value={tags}
-				onDeselect={handleClear}
+				onDeselect={handleClearTag}
 				onSelect={handleSelect}
 				onInputKeyDown={handleKeyDown}
 				onSearch={handleSearch}
 				searchValue={searchValue}
 				style={{ width: '100%' }}
 			/>
-			<Button icon={<SearchOutlined />} onClick={handleSubmit} />
+			<Button icon={<SearchOutlined />} onClick={onSubmitHandler} />
 		</Space.Compact>
 	);
 }

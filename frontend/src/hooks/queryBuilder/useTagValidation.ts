@@ -7,7 +7,10 @@ type ReturnT = {
 	isValidOperator: boolean;
 };
 
-export const useValidTag = (operator: string, result: string[]): ReturnT => {
+export const useTagValidation = (
+	operator: string,
+	result: string[],
+): ReturnT => {
 	const operatorType = useMemo(() => {
 		switch (operator) {
 			case OPERATORS.IN:

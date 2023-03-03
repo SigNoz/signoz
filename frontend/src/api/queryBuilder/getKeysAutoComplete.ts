@@ -6,14 +6,17 @@ import { PayloadProps } from 'types/api/queryBuilder/getKeysAutoComplete';
 
 const getKeysAutoComplete = async (
 	searchText?: string,
+	aggregateOperator: undefined | string = 'sum',
+	dataSource: undefined | string = 'metrics',
+	aggregateAttribute: undefined | string = 'signoz_calls_total',
 ): Promise<SuccessResponse<PayloadProps[]> | ErrorResponse> => {
 	try {
 		const data = await axios({
 			method: 'get',
-			url: `/api/v3/autocomplete/attribute_keys?aggregateOperator=sum&dataSource=metrics&aggregateAttribute=signoz_calls_total&searchText=${
+			url: `/api/v3/autocomplete/attribute_keys?aggregateOperator=${aggregateOperator}&dataSource=${dataSource}&aggregateAttribute=${aggregateAttribute}&searchText=${
 				searchText || ''
 			}`,
-			baseURL: 'http://34.229.125.174:3301',
+			baseURL: process.env.QUERY_BUILDER_ENDPOINT,
 		});
 
 		return {
