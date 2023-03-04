@@ -3,7 +3,8 @@ import {
 	CaretUpFilled,
 	LogoutOutlined,
 } from '@ant-design/icons';
-import { Divider, Dropdown, Menu, Space, Typography } from 'antd';
+import type { MenuProps } from 'antd';
+import { Divider, Dropdown, Space, Typography } from 'antd';
 import { Logout } from 'api/utils';
 import ROUTES from 'constants/routes';
 import Config from 'container/ConfigDropdown';
@@ -43,33 +44,36 @@ function HeaderContainer(): JSX.Element {
 		[],
 	);
 
-	const menu = (
-		<Menu style={{ padding: '1rem' }}>
-			<Menu.ItemGroup>
-				<SignedInAS />
-				<Divider />
-				<CurrentOrganization onToggle={onToggleHandler(setIsUserDropDownOpen)} />
-				<Divider />
-				<ManageLicense onToggle={onToggleHandler(setIsUserDropDownOpen)} />
-				<Divider />
-				<LogoutContainer>
-					<LogoutOutlined />
-					<div
-						tabIndex={0}
-						onKeyDown={(e): void => {
-							if (e.key === 'Enter' || e.key === 'Space') {
-								Logout();
-							}
-						}}
-						role="button"
-						onClick={Logout}
-					>
-						<Typography.Link>Logout</Typography.Link>
-					</div>
-				</LogoutContainer>
-			</Menu.ItemGroup>
-		</Menu>
-	);
+	const menuItems: MenuProps['items'] = [
+		{
+			key: 'main-menu',
+			label: (
+				<div style={{ padding: '1rem', cursor: 'auto' }}>
+					<SignedInAS onToggle={onToggleHandler(setIsUserDropDownOpen)} />
+					<Divider />
+					<CurrentOrganization onToggle={onToggleHandler(setIsUserDropDownOpen)} />
+					<Divider />
+					<ManageLicense onToggle={onToggleHandler(setIsUserDropDownOpen)} />
+					<Divider />
+					<LogoutContainer>
+						<LogoutOutlined />
+						<div
+							tabIndex={0}
+							onKeyDown={(e): void => {
+								if (e.key === 'Enter' || e.key === 'Space') {
+									Logout();
+								}
+							}}
+							role="button"
+							onClick={Logout}
+						>
+							<Typography.Link>Logout</Typography.Link>
+						</div>
+					</LogoutContainer>
+				</div>
+			),
+		},
+	];
 
 	return (
 		<Header>
@@ -100,7 +104,7 @@ function HeaderContainer(): JSX.Element {
 					<Dropdown
 						onOpenChange={onToggleHandler(setIsUserDropDownOpen)}
 						trigger={['click']}
-						overlay={menu}
+						menu={{ items: menuItems }}
 						open={isUserDropDownOpen}
 					>
 						<Space>

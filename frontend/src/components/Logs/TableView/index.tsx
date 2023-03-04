@@ -33,8 +33,9 @@ function LogsTableView(props: LogsTableViewProps): JSX.Element {
 	]);
 
 	const columns: ColumnsType<Record<string, unknown>> = useMemo(() => {
-		const fieldColumns: ColumnsType<Record<string, unknown>> = fields.map(
-			({ name }) => ({
+		const fieldColumns: ColumnsType<Record<string, unknown>> = fields
+			.filter((e) => e.name !== 'id')
+			.map(({ name }) => ({
 				title: name,
 				dataIndex: name,
 				key: name,
@@ -48,8 +49,7 @@ function LogsTableView(props: LogsTableViewProps): JSX.Element {
 						</Typography.Paragraph>
 					),
 				}),
-			}),
-		);
+			}));
 
 		return [
 			{

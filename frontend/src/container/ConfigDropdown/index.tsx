@@ -4,11 +4,12 @@ import {
 	QuestionCircleFilled,
 	QuestionCircleOutlined,
 } from '@ant-design/icons';
-import { Dropdown, Menu, Space } from 'antd';
+import { Dropdown, Space } from 'antd';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import React, { useMemo, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
+import { ConfigProps } from 'types/api/dynamicConfigs/getDynamicConfigs';
 import AppReducer from 'types/reducer/app';
 
 import HelpToolTip from './Config';
@@ -32,6 +33,16 @@ function DynamicConfigDropdown({
 		setIsHelpDropDownOpen(!isHelpDropDownOpen);
 	};
 
+	const menuItems = useMemo(
+		() => [
+			{
+				key: '1',
+				label: <HelpToolTip config={config as ConfigProps} />,
+			},
+		],
+		[config],
+	);
+
 	if (!config) {
 		return <div />;
 	}
@@ -43,11 +54,7 @@ function DynamicConfigDropdown({
 		<Dropdown
 			onOpenChange={onToggleHandler}
 			trigger={['click']}
-			overlay={
-				<Menu>
-					<HelpToolTip config={config} />
-				</Menu>
-			}
+			menu={{ items: menuItems }}
 			open={isHelpDropDownOpen}
 		>
 			<Space align="center">
