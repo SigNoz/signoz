@@ -15,7 +15,7 @@ import { ILogsReducer } from 'types/reducer/logs';
 
 import { Container } from './styles';
 
-function LogsAggregate({ getLogsAggregate }: DispatchProps): JSX.Element {
+function LogsAggregate({ getLogsAggregateProp }: DispatchProps): JSX.Element {
 	const {
 		searchFilter: { queryString },
 		idEnd,
@@ -30,10 +30,8 @@ function LogsAggregate({ getLogsAggregate }: DispatchProps): JSX.Element {
 		() => {
 			const startTime =
 				dayjs().subtract(liveTailStartRange, 'minute').valueOf() * 1e6;
-
 			const endTime = dayjs().valueOf() * 1e6;
-      
-			getLogsAggregate({
+			getLogsAggregateProp({
 				timestampStart: startTime,
 				timestampEnd: endTime,
 				step: getStep({
@@ -81,7 +79,7 @@ function LogsAggregate({ getLogsAggregate }: DispatchProps): JSX.Element {
 }
 
 interface DispatchProps {
-	getLogsAggregate: typeof getLogsAggregate;
+	getLogsAggregateProp: typeof getLogsAggregate;
 }
 
 const mapDispatchToProps = (

@@ -34,7 +34,7 @@ import { ILogsReducer } from 'types/reducer/logs';
 import { TIME_PICKER_OPTIONS } from './config';
 import { StopContainer, TimePickerCard, TimePickerSelect } from './styles';
 
-function LogLiveTail({ getLogsAggregate }: Props): JSX.Element {
+function LogLiveTail({ getLogsAggregateProp }: Props): JSX.Element {
 	const {
 		liveTail,
 		searchFilter: { queryString },
@@ -142,7 +142,7 @@ function LogLiveTail({ getLogsAggregate }: Props): JSX.Element {
 
 		const endTime = dayjs().valueOf() * 1e6;
 
-		getLogsAggregate({
+		getLogsAggregateProp({
 			timestampStart: startTime,
 			timestampEnd: endTime,
 			step: getStep({
@@ -249,7 +249,7 @@ function LogLiveTail({ getLogsAggregate }: Props): JSX.Element {
 }
 
 interface DispatchProps {
-	getLogsAggregate: typeof getLogsAggregate;
+	getLogsAggregateProp: typeof getLogsAggregate;
 }
 
 type Props = DispatchProps;
@@ -257,7 +257,7 @@ type Props = DispatchProps;
 const mapDispatchToProps = (
 	dispatch: ThunkDispatch<unknown, unknown, AppActions>,
 ): DispatchProps => ({
-	getLogsAggregate: bindActionCreators(getLogsAggregate, dispatch),
+	getLogsAggregateProp: bindActionCreators(getLogsAggregate, dispatch),
 });
 
 export default connect(null, mapDispatchToProps)(LogLiveTail);

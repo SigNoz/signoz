@@ -142,7 +142,7 @@ function SideNav(): JSX.Element {
 				<SlackMenuItemContainer
 					index={index + 1}
 					key={`${index + 1}`}
-					collapsed={collapsed}
+					collapsed={boolCollapsed}
 				>
 					<Menu
 						theme="dark"

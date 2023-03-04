@@ -33,17 +33,18 @@ function DynamicConfigDropdown({
 	const onToggleHandler = (): void => {
 		setIsHelpDropDownOpen(!isHelpDropDownOpen);
 	};
+
 	const menuItems = useMemo(
 		() => [
 			{
 				key: '1',
-				label: <HelpToolTip config={config as ConfigProps} />,
+				label: <HelpToolTip config={currentConfig as ConfigProps} />,
 			},
 		],
-		[config],
+		[currentConfig],
 	);
 
-	if (!config) {
+	if (!currentConfig) {
 		return <div />;
 	}
 

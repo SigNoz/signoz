@@ -106,7 +106,7 @@ function SearchFilter({
 					...(idEnd ? { idLt: idEnd } : {}),
 				});
 			} else {
-				getLogs({
+				getLogsLocal({
 					q: customQuery,
 					limit: logLinesPerPage,
 					orderBy: 'timestamp',
