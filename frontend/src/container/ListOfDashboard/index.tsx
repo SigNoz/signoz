@@ -1,5 +1,5 @@
 import { PlusOutlined } from '@ant-design/icons';
-import { Card, Dropdown, Menu, Row, TableColumnProps, Typography } from 'antd';
+import { Card, Dropdown, Row, TableColumnProps, Typography } from 'antd';
 import { ItemType } from 'antd/es/menu/hooks/useItems';
 import createDashboard from 'api/dashboard/create';
 import { AxiosError } from 'axios';
@@ -230,7 +230,7 @@ function ListOfAllDashboard(): JSX.Element {
 						}}
 					/>
 					{newDashboard && (
-						<Dropdown trigger={['click']} overlay={<Menu items={menuItems} />}>
+						<Dropdown trigger={['click']} menu={{ items: menuItems }}>
 							<NewDashboardButton
 								icon={<PlusOutlined />}
 								type="primary"

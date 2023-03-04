@@ -189,9 +189,9 @@ function SearchFilter({
 				overlayInnerStyle={{
 					width: `${searchRef?.current?.input?.offsetWidth || 0}px`,
 				}}
-				visible={showDropDown}
+				open={showDropDown}
 				destroyTooltipOnHide
-				onVisibleChange={(value): void => {
+				onOpenChange={(value): void => {
 					onDropDownToggleHandler(value)();
 				}}
 			>

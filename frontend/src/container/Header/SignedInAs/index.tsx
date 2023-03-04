@@ -8,7 +8,7 @@ import AppReducer from 'types/reducer/app';
 
 import { AvatarContainer, ManageAccountLink, Wrapper } from '../styles';
 
-function SignedInAS(): JSX.Element {
+function SignedInAS({ onToggle }: SignedInASProps): JSX.Element {
 	const { user } = useSelector<AppState, AppReducer>((state) => state.app);
 
 	if (!user) {
@@ -32,6 +32,7 @@ function SignedInAS(): JSX.Element {
 				</AvatarContainer>
 				<ManageAccountLink
 					onClick={(): void => {
+						onToggle();
 						history.push(ROUTES.MY_SETTINGS);
 					}}
 				>
@@ -40,6 +41,10 @@ function SignedInAS(): JSX.Element {
 			</Wrapper>
 		</div>
 	);
+}
+
+interface SignedInASProps {
+	onToggle: VoidFunction;
 }
 
 export default SignedInAS;

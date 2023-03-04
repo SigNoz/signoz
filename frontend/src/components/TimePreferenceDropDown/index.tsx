@@ -1,4 +1,4 @@
-import { Button, Dropdown, Menu } from 'antd';
+import { Button, Dropdown } from 'antd';
 import TimeItems, {
 	timePreferance,
 	timePreferenceType,
@@ -24,9 +24,7 @@ function TimePreference({
 
 	return (
 		<TextContainer noButtonMargin>
-			<Dropdown
-				overlay={<Menu onClick={timeMenuItemOnChangeHandler} items={menuItems} />}
-			>
+			<Dropdown menu={{ items: menuItems, onClick: timeMenuItemOnChangeHandler }}>
 				<Button>{selectedTime.name}</Button>
 			</Dropdown>
 		</TextContainer>
