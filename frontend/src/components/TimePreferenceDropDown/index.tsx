@@ -1,10 +1,11 @@
-import { Button, Dropdown, Menu, Typography } from 'antd';
+import { Button, Dropdown, Menu } from 'antd';
 import TimeItems, {
 	timePreferance,
 	timePreferenceType,
 } from 'container/NewWidget/RightContainer/timeItems';
 import React, { useCallback } from 'react';
 
+import { menuItems } from './config';
 import { TextContainer } from './styles';
 
 function TimePreference({
@@ -24,15 +25,7 @@ function TimePreference({
 	return (
 		<TextContainer noButtonMargin>
 			<Dropdown
-				overlay={
-					<Menu>
-						{TimeItems.map((item) => (
-							<Menu.Item onClick={timeMenuItemOnChangeHandler} key={item.enum}>
-								<Typography>{item.name}</Typography>
-							</Menu.Item>
-						))}
-					</Menu>
-				}
+				overlay={<Menu onClick={timeMenuItemOnChangeHandler} items={menuItems} />}
 			>
 				<Button>{selectedTime.name}</Button>
 			</Dropdown>
