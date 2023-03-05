@@ -2302,7 +2302,12 @@ func (aH *APIHandler) createExplorerQueries(w http.ResponseWriter, r *http.Reque
 	var query v3.ExplorerQuery
 	err := json.NewDecoder(r.Body).Decode(&query)
 	if err != nil {
-		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, nil)
+		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
+		return
+	}
+	// validate the query
+	if err := query.Validate(); err != nil {
+		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
 		return
 	}
 	uuid, err := explorer.CreateQuery(query)
@@ -2330,7 +2335,12 @@ func (aH *APIHandler) updateExplorerQuery(w http.ResponseWriter, r *http.Request
 	var query v3.ExplorerQuery
 	err := json.NewDecoder(r.Body).Decode(&query)
 	if err != nil {
-		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, nil)
+		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
+		return
+	}
+	// validate the query
+	if err := query.Validate(); err != nil {
+		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
 		return
 	}
 

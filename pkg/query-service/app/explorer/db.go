@@ -34,8 +34,7 @@ func InitWithDSN(dataSourceName string) (*sqlx.DB, error) {
 	}
 
 	tableSchema := `CREATE TABLE IF NOT EXISTS explorer_queries (
-		id INTEGER PRIMARY KEY AUTOINCREMENT,
-		uuid TEXT NOT NULL UNIQUE,
+		uuid TEXT PRIMARY KEY,
 		created_at datetime NOT NULL,
 		updated_at datetime NOT NULL,
 		source_page TEXT NOT NULL,
