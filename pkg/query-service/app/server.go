@@ -20,6 +20,7 @@ import (
 	"github.com/soheilhy/cmux"
 	"go.signoz.io/signoz/pkg/query-service/app/clickhouseReader"
 	"go.signoz.io/signoz/pkg/query-service/app/dashboards"
+	"go.signoz.io/signoz/pkg/query-service/app/explorer"
 	"go.signoz.io/signoz/pkg/query-service/auth"
 	"go.signoz.io/signoz/pkg/query-service/constants"
 	"go.signoz.io/signoz/pkg/query-service/dao"
@@ -77,6 +78,7 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 	}
 
 	localDB, err := dashboards.InitDB(constants.RELATIONAL_DATASOURCE_PATH)
+	explorer.InitWithDSN(constants.RELATIONAL_DATASOURCE_PATH)
 
 	if err != nil {
 		return nil, err

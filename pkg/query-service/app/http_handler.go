@@ -19,6 +19,7 @@ import (
 	_ "github.com/mattn/go-sqlite3"
 	"github.com/prometheus/prometheus/promql"
 	"go.signoz.io/signoz/pkg/query-service/app/dashboards"
+	"go.signoz.io/signoz/pkg/query-service/app/explorer"
 	"go.signoz.io/signoz/pkg/query-service/app/logs"
 	"go.signoz.io/signoz/pkg/query-service/app/metrics"
 	metricsv3 "go.signoz.io/signoz/pkg/query-service/app/metrics/v3"
@@ -284,6 +285,12 @@ func (aH *APIHandler) RegisterRoutes(router *mux.Router, am *AuthMiddleware) {
 	router.HandleFunc("/api/v1/variables/query", am.ViewAccess(aH.queryDashboardVars)).Methods(http.MethodGet)
 	router.HandleFunc("/api/v2/variables/query", am.ViewAccess(aH.queryDashboardVarsV2)).Methods(http.MethodPost)
 
+	router.HandleFunc("/api/v1/explorer/queries", am.ViewAccess(aH.getExplorerQueries)).Methods(http.MethodGet)
+	router.HandleFunc("/api/v1/explorer/queries", am.EditAccess(aH.createExplorerQueries)).Methods(http.MethodPost)
+	router.HandleFunc("/api/v1/explorer/queries/{queryId}", am.ViewAccess(aH.getExplorerQuery)).Methods(http.MethodGet)
+	router.HandleFunc("/api/v1/explorer/queries/{queryId}", am.EditAccess(aH.updateExplorerQuery)).Methods(http.MethodPut)
+	router.HandleFunc("/api/v1/explorer/queries/{queryId}", am.EditAccess(aH.deleteExplorerQuery)).Methods(http.MethodDelete)
+
 	router.HandleFunc("/api/v1/feedback", am.OpenAccess(aH.submitFeedback)).Methods(http.MethodPost)
 	// router.HandleFunc("/api/v1/get_percentiles", aH.getApplicationPercentiles).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/services", am.ViewAccess(aH.getServices)).Methods(http.MethodPost)
@@ -300,6 +307,7 @@ func (aH *APIHandler) RegisterRoutes(router *mux.Router, am *AuthMiddleware) {
 	router.HandleFunc("/api/v1/version", am.OpenAccess(aH.getVersion)).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/featureFlags", am.OpenAccess(aH.getFeatureFlags)).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/configs", am.OpenAccess(aH.getConfigs)).Methods(http.MethodGet)
+	router.HandleFunc("/api/v1/health", am.OpenAccess(aH.getHealth)).Methods(http.MethodGet)
 
 	router.HandleFunc("/api/v1/getSpanFilters", am.ViewAccess(aH.getSpanFilters)).Methods(http.MethodPost)
 	router.HandleFunc("/api/v1/getTagFilters", am.ViewAccess(aH.getTagFilters)).Methods(http.MethodPost)
@@ -2254,6 +2262,82 @@ func (aH *APIHandler) logAggregate(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	aH.WriteJSON(w, r, res)
+}
+
+func (aH *APIHandler) getExplorerQueries(w http.ResponseWriter, r *http.Request) {
+	queries, err := explorer.GetQueries()
+	if err != nil {
+		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, nil)
+		return
+	}
+	aH.Respond(w, queries)
+}
+
+func (aH *APIHandler) createExplorerQueries(w http.ResponseWriter, r *http.Request) {
+	var query v3.ExplorerQuery
+	err := json.NewDecoder(r.Body).Decode(&query)
+	if err != nil {
+		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
+		return
+	}
+	// validate the query
+	if err := query.Validate(); err != nil {
+		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
+		return
+	}
+	uuid, err := explorer.CreateQuery(query)
+	if err != nil {
+		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, nil)
+		return
+	}
+
+	aH.Respond(w, uuid)
+}
+
+func (aH *APIHandler) getExplorerQuery(w http.ResponseWriter, r *http.Request) {
+	queryID := mux.Vars(r)["queryId"]
+	query, err := explorer.GetQuery(queryID)
+	if err != nil {
+		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, nil)
+		return
+	}
+
+	aH.Respond(w, query)
+}
+
+func (aH *APIHandler) updateExplorerQuery(w http.ResponseWriter, r *http.Request) {
+	queryID := mux.Vars(r)["queryId"]
+	var query v3.ExplorerQuery
+	err := json.NewDecoder(r.Body).Decode(&query)
+	if err != nil {
+		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
+		return
+	}
+	// validate the query
+	if err := query.Validate(); err != nil {
+		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
+		return
+	}
+
+	err = explorer.UpdateQuery(queryID, query)
+	if err != nil {
+		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, nil)
+		return
+	}
+
+	aH.Respond(w, query)
+}
+
+func (aH *APIHandler) deleteExplorerQuery(w http.ResponseWriter, r *http.Request) {
+
+	queryID := mux.Vars(r)["queryId"]
+	err := explorer.DeleteQuery(queryID)
+	if err != nil {
+		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, nil)
+		return
+	}
+
+	aH.Respond(w, nil)
 }
 
 func (aH *APIHandler) autocompleteAggregateAttributes(w http.ResponseWriter, r *http.Request) {
