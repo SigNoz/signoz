@@ -2260,35 +2260,6 @@ func (aH *APIHandler) logAggregate(w http.ResponseWriter, r *http.Request) {
 	aH.WriteJSON(w, r, res)
 }
 
-func (aH *APIHandler) autocompleteAggregateAttributes(w http.ResponseWriter, r *http.Request) {
-	var response *v3.AggregateAttributeResponse
-	req, err := parseAggregateAttributeRequest(r)
-
-	if err != nil {
-		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
-		return
-	}
-
-	switch req.DataSource {
-	case v3.DataSourceMetrics:
-		response, err = aH.reader.GetMetricAggregateAttributes(r.Context(), req)
-	case v3.DataSourceLogs:
-		// TODO: implement
-	case v3.DataSourceTraces:
-		// TODO: implement
-	default:
-		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: fmt.Errorf("invalid data source")}, nil)
-		return
-	}
-
-	if err != nil {
-		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
-		return
-	}
-
-	aH.Respond(w, response)
-}
-
 func (aH *APIHandler) getExplorerQueries(w http.ResponseWriter, r *http.Request) {
 	queries, err := explorer.GetQueries()
 	if err != nil {
@@ -2363,4 +2334,33 @@ func (aH *APIHandler) deleteExplorerQuery(w http.ResponseWriter, r *http.Request
 	}
 
 	aH.Respond(w, nil)
+}
+
+func (aH *APIHandler) autocompleteAggregateAttributes(w http.ResponseWriter, r *http.Request) {
+	var response *v3.AggregateAttributeResponse
+	req, err := parseAggregateAttributeRequest(r)
+
+	if err != nil {
+		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
+		return
+	}
+
+	switch req.DataSource {
+	case v3.DataSourceMetrics:
+		response, err = aH.reader.GetMetricAggregateAttributes(r.Context(), req)
+	case v3.DataSourceLogs:
+		// TODO: implement
+	case v3.DataSourceTraces:
+		// TODO: implement
+	default:
+		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: fmt.Errorf("invalid data source")}, nil)
+		return
+	}
+
+	if err != nil {
+		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
+		return
+	}
+
+	aH.Respond(w, response)
 }
