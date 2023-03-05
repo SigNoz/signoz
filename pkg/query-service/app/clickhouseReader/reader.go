@@ -3735,11 +3735,11 @@ func (r *ClickHouseReader) GetMetricAttributeValues(ctx context.Context, req *v3
 	var rows driver.Rows
 	var attributeValues v3.FilterAttributeValueResponse
 
-	query = fmt.Sprintf("SELECT DISTINCT(JSONExtractString(labels, '%s')) from %s.%s WHERE metric_name=$1 AND JSONExtractString(labels, '%s') ILIKE $2", req.FilterAttributeKey, signozMetricDBName, signozTSTableName, req.FilterAttributeKey)
+	query = fmt.Sprintf("SELECT DISTINCT(JSONExtractString(labels, $1)) from %s.%s WHERE metric_name=$2 AND JSONExtractString(labels, $3) ILIKE $4", signozMetricDBName, signozTSTableName)
 	if req.Limit != 0 {
 		query = query + fmt.Sprintf(" LIMIT %d;", req.Limit)
 	}
-	rows, err = r.db.Query(ctx, query, req.FilterAttributeKey, req.AggregateAttribute, fmt.Sprintf("%%%s%%", req.SearchText))
+	rows, err = r.db.Query(ctx, query, req.FilterAttributeKey, req.AggregateAttribute, req.FilterAttributeKey, fmt.Sprintf("%%%s%%", req.SearchText))
 
 	if err != nil {
 		zap.S().Error(err)
