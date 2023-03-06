@@ -1,4 +1,4 @@
-import { notification } from 'antd';
+import { NotificationInstance } from 'antd/es/notification/interface';
 import getSpans from 'api/trace/getSpans';
 import { Dispatch, Store } from 'redux';
 import { AppState } from 'store/reducers';
@@ -12,6 +12,7 @@ import { Props } from 'types/api/trace/getSpans';
 
 export const GetSpans = (
 	props: GetSpansProps,
+	notify: NotificationInstance,
 ): ((
 	dispatch: Dispatch<AppActions>,
 	getState: Store<AppState>['getState'],
@@ -62,6 +63,7 @@ export const GetSpans = (
 				start,
 				step: props.step,
 				isFilterExclude: props.isFilterExclude,
+				spanKind: props.spanKind,
 			});
 
 			if (response.statusCode === 200) {
@@ -72,7 +74,7 @@ export const GetSpans = (
 					},
 				});
 			} else {
-				notification.error({
+				notify.error({
 					message: response.error || defaultMessage,
 				});
 				dispatch({

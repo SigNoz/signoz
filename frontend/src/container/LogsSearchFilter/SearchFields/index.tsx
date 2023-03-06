@@ -1,4 +1,4 @@
-import { notification } from 'antd';
+import { useNotifications } from 'hooks/useNotifications';
 import { flatten } from 'lodash-es';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useSelector } from 'react-redux';
@@ -35,6 +35,8 @@ function SearchFields({
 	);
 
 	const keyPrefixRef = useRef(hashCode(JSON.stringify(fieldsQuery)));
+
+	const { notifications } = useNotifications();
 
 	useEffect(() => {
 		const updatedFieldsQuery = createParsedQueryStructure([
@@ -81,7 +83,7 @@ function SearchFields({
 		const flatParsedQuery = flatten(fieldsQuery);
 
 		if (!fieldsQueryIsvalid(flatParsedQuery)) {
-			notification.error({
+			notifications.error({
 				message: 'Please enter a valid criteria for each of the selected fields',
 			});
 			return;
@@ -90,7 +92,7 @@ function SearchFields({
 		keyPrefixRef.current = hashCode(JSON.stringify(flatParsedQuery));
 		updateParsedQuery(flatParsedQuery);
 		onDropDownToggleHandler(false)();
-	}, [onDropDownToggleHandler, fieldsQuery, updateParsedQuery]);
+	}, [onDropDownToggleHandler, fieldsQuery, updateParsedQuery, notifications]);
 
 	const clearFilters = useCallback((): void => {
 		keyPrefixRef.current = hashCode(JSON.stringify([]));

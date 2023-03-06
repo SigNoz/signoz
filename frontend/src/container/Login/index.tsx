@@ -1,11 +1,14 @@
-import { Button, Input, notification, Space, Tooltip, Typography } from 'antd';
+import { Button, Input, Space, Tooltip, Typography } from 'antd';
+import getUserVersion from 'api/user/getVersion';
 import loginApi from 'api/user/login';
 import loginPrecheckApi from 'api/user/loginPrecheck';
 import afterLogin from 'AppRoutes/utils';
 import ROUTES from 'constants/routes';
+import { useNotifications } from 'hooks/useNotifications';
 import history from 'lib/history';
 import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useQuery } from 'react-query';
 import { PayloadProps as PrecheckResultType } from 'types/api/user/loginPrecheck';
 
 import { FormContainer, FormWrapper, Label, ParentContainer } from './styles';
@@ -42,6 +45,28 @@ function Login({
 	const [precheckInProcess, setPrecheckInProcess] = useState(false);
 	const [precheckComplete, setPrecheckComplete] = useState(false);
 
+	const { notifications } = useNotifications();
+
+	const getUserVersionResponse = useQuery({
+		queryFn: getUserVersion,
+		queryKey: 'getUserVersion',
+		enabled: true,
+	});
+
+	useEffect(() => {
+		if (
+			getUserVersionResponse.isFetched &&
+			getUserVersionResponse.data &&
+			getUserVersionResponse.data.payload
+		) {
+			const { setupCompleted } = getUserVersionResponse.data.payload;
+			if (!setupCompleted) {
+				// no org account registered yet, re-route user to sign up first
+				history.push(ROUTES.SIGN_UP);
+			}
+		}
+	}, [getUserVersionResponse]);
+
 	useEffect(() => {
 		if (withPassword === 'Y') {
 			setPrecheckComplete(true);
@@ -62,15 +87,15 @@ function Login({
 
 	useEffect(() => {
 		if (ssoerror !== '') {
-			notification.error({
+			notifications.error({
 				message: t('failed_to_login'),
 			});
 		}
-	}, [ssoerror, t]);
+	}, [ssoerror, t, notifications]);
 
 	const onNextHandler = async (): Promise<void> => {
 		if (!email) {
-			notification.error({
+			notifications.error({
 				message: t('invalid_email'),
 			});
 			return;
@@ -88,18 +113,18 @@ function Login({
 				if (isUser) {
 					setPrecheckComplete(true);
 				} else {
-					notification.error({
+					notifications.error({
 						message: t('invalid_account'),
 					});
 				}
 			} else {
-				notification.error({
+				notifications.error({
 					message: t('invalid_config'),
 				});
 			}
 		} catch (e) {
 			console.log('failed to call precheck Api', e);
-			notification.error({ message: t('unexpected_error') });
+			notifications.error({ message: t('unexpected_error') });
 		}
 		setPrecheckInProcess(false);
 	};
@@ -144,14 +169,14 @@ function Login({
 				);
 				history.push(ROUTES.APPLICATION);
 			} else {
-				notification.error({
+				notifications.error({
 					message: response.error || t('unexpected_error'),
 				});
 			}
 			setIsLoading(false);
 		} catch (error) {
 			setIsLoading(false);
-			notification.error({
+			notifications.error({
 				message: t('unexpected_error'),
 			});
 		}
@@ -249,20 +274,6 @@ function Login({
 					{!canSelfRegister && (
 						<Typography.Paragraph italic style={{ color: '#ACACAC' }}>
 							{t('prompt_no_account')}
-						</Typography.Paragraph>
-					)}
-
-					{!canSelfRegister && (
-						<Typography.Paragraph italic style={{ color: '#ACACAC' }}>
-							{t('prompt_create_account')}{' '}
-							<Typography.Link
-								onClick={(): void => {
-									history.push(ROUTES.SIGN_UP);
-								}}
-								style={{ fontWeight: 700 }}
-							>
-								{t('create_an_account')}
-							</Typography.Link>
 						</Typography.Paragraph>
 					)}
 

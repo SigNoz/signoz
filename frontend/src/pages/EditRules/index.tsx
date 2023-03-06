@@ -1,8 +1,8 @@
-import { notification } from 'antd';
 import get from 'api/alerts/get';
 import Spinner from 'components/Spinner';
 import ROUTES from 'constants/routes';
 import EditRulesContainer from 'container/EditRules';
+import { useNotifications } from 'hooks/useNotifications';
 import history from 'lib/history';
 import React, { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -26,14 +26,16 @@ function EditRules(): JSX.Element {
 		enabled: isValidRuleId,
 	});
 
+	const { notifications } = useNotifications();
+
 	useEffect(() => {
 		if (!isValidRuleId) {
-			notification.error({
+			notifications.error({
 				message: 'Rule Id is required',
 			});
 			history.replace(ROUTES.LIST_ALL_ALERT);
 		}
-	}, [isValidRuleId, ruleId]);
+	}, [isValidRuleId, ruleId, notifications]);
 
 	if (
 		(isError && !isValidRuleId) ||

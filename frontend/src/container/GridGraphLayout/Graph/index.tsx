@@ -43,6 +43,7 @@ function GridCardGraph({
 	const { ref: graphRef, inView: isGraphVisible } = useInView({
 		threshold: 0,
 		triggerOnce: true,
+		initialInView: true,
 	});
 
 	const [errorMessage, setErrorMessage] = useState<string | undefined>('');
@@ -66,7 +67,7 @@ function GridCardGraph({
 
 	const queryResponse = useQuery(
 		[
-			`GetMetricsQueryRange-${widget.timePreferance}-${globalSelectedInterval}-${widget.id}`,
+			`GetMetricsQueryRange-${widget?.timePreferance}-${globalSelectedInterval}-${widget.id}`,
 			{
 				widget,
 				maxTime,
@@ -77,7 +78,7 @@ function GridCardGraph({
 		],
 		() =>
 			GetMetricQueryRange({
-				selectedTime: widget.timePreferance,
+				selectedTime: widget?.timePreferance,
 				graphType: widget.panelTypes,
 				query: widget.query,
 				globalSelectedInterval,

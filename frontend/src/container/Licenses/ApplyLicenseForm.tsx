@@ -1,7 +1,7 @@
-import { Button, Input, notification } from 'antd';
-import FormItem from 'antd/lib/form/FormItem';
+import { Button, Form, Input } from 'antd';
 import getFeaturesFlags from 'api/features/getFeatureFlags';
 import apply from 'api/licenses/apply';
+import { useNotifications } from 'hooks/useNotifications';
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { QueryObserverResult, RefetchOptions, useQuery } from 'react-query';
@@ -12,6 +12,8 @@ import { ErrorResponse, SuccessResponse } from 'types/api';
 import { PayloadProps } from 'types/api/licenses/getAll';
 
 import { ApplyForm, ApplyFormContainer, LicenseInput } from './styles';
+
+const FormItem = Form.Item;
 
 function ApplyLicenseForm({
 	licenseRefetch,
@@ -26,10 +28,12 @@ function ApplyLicenseForm({
 		enabled: false,
 	});
 
+	const { notifications } = useNotifications();
+
 	const onFinish = async (values: unknown | { key: string }): Promise<void> => {
 		const params = values as { key: string };
 		if (params.key === '' || !params.key) {
-			notification.error({
+			notifications.error({
 				message: 'Error',
 				description: t('enter_license_key'),
 			});
@@ -53,18 +57,18 @@ function ApplyLicenseForm({
 						payload: featureFlagsResponse.data.payload,
 					});
 				}
-				notification.success({
+				notifications.success({
 					message: 'Success',
 					description: t('license_applied'),
 				});
 			} else {
-				notification.error({
+				notifications.error({
 					message: 'Error',
 					description: response.error || t('unexpected_error'),
 				});
 			}
 		} catch (e) {
-			notification.error({
+			notifications.error({
 				message: 'Error',
 				description: t('unexpected_error'),
 			});

@@ -1,4 +1,4 @@
-import { notification } from 'antd';
+import { NotificationInstance } from 'antd/es/notification/interface';
 import getSpansAggregate from 'api/trace/getSpansAggregate';
 import { Dispatch, Store } from 'redux';
 import { AppState } from 'store/reducers';
@@ -12,6 +12,7 @@ import { updateURL } from './util';
 
 export const GetSpansAggregate = (
 	props: GetSpansAggregateProps,
+	notify: NotificationInstance,
 ): ((
 	dispatch: Dispatch<AppActions>,
 	getState: Store<AppState>['getState'],
@@ -60,6 +61,7 @@ export const GetSpansAggregate = (
 			isFilterExclude: traces.isFilterExclude,
 			order,
 			orderParam: props.orderParam,
+			spanKind: props.spanKind,
 		});
 
 		if (response.statusCode === 200) {
@@ -91,7 +93,7 @@ export const GetSpansAggregate = (
 				spansAggregate.orderParam,
 			);
 		} else {
-			notification.error({
+			notify.error({
 				message: response.error || 'Something went wrong',
 			});
 
@@ -139,4 +141,5 @@ export interface GetSpansAggregateProps {
 	selectedTags: TraceReducer['selectedTags'];
 	order: GetSpanAggregateProps['order'];
 	orderParam: GetSpanAggregateProps['orderParam'];
+	spanKind: TraceReducer['spanKind'];
 }

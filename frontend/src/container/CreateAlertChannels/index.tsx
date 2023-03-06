@@ -1,4 +1,4 @@
-import { Form, notification } from 'antd';
+import { Form } from 'antd';
 import createPagerApi from 'api/channels/createPager';
 import createSlackApi from 'api/channels/createSlack';
 import createWebhookApi from 'api/channels/createWebhook';
@@ -7,6 +7,7 @@ import testSlackApi from 'api/channels/testSlack';
 import testWebhookApi from 'api/channels/testWebhook';
 import ROUTES from 'constants/routes';
 import FormAlertChannels from 'container/FormAlertChannels';
+import { useNotifications } from 'hooks/useNotifications';
 import history from 'lib/history';
 import React, { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -58,7 +59,7 @@ function CreateAlertChannels({
 	});
 	const [savingState, setSavingState] = useState<boolean>(false);
 	const [testingState, setTestingState] = useState<boolean>(false);
-	const [notifications, NotificationElement] = notification.useNotification();
+	const { notifications } = useNotifications();
 
 	const [type, setType] = useState<ChannelType>(preType);
 	const onTypeChangeHandler = useCallback(
@@ -336,7 +337,6 @@ function CreateAlertChannels({
 				onSaveHandler,
 				savingState,
 				testingState,
-				NotificationElement,
 				title: t('page_title_create'),
 				initialValue: {
 					type,

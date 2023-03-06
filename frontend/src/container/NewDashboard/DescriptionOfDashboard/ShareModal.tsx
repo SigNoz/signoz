@@ -1,5 +1,6 @@
-import { Button, Modal, notification, Typography } from 'antd';
+import { Button, Modal, Typography } from 'antd';
 import Editor from 'components/Editor';
+import { useNotifications } from 'hooks/useNotifications';
 import React, { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useCopyToClipboard } from 'react-use';
@@ -32,10 +33,11 @@ function ShareModal({
 	const [isViewJSON, setIsViewJSON] = useState<boolean>(false);
 	const { t } = useTranslation(['dashboard', 'common']);
 	const [state, setCopy] = useCopyToClipboard();
+	const { notifications } = useNotifications();
 
 	useEffect(() => {
 		if (state.error) {
-			notification.error({
+			notifications.error({
 				message: t('something_went_wrong', {
 					ns: 'common',
 				}),
@@ -43,13 +45,13 @@ function ShareModal({
 		}
 
 		if (state.value) {
-			notification.success({
+			notifications.success({
 				message: t('success', {
 					ns: 'common',
 				}),
 			});
 		}
-	}, [state.error, state.value, t]);
+	}, [state.error, state.value, t, notifications]);
 
 	const selectedDataCleaned = cleardQueryData(selectedData);
 	const GetFooterComponent = useMemo(() => {

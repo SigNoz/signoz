@@ -1,4 +1,4 @@
-import { Button, Input, notification, Space, Switch, Typography } from 'antd';
+import { Button, Input, Space, Switch, Typography } from 'antd';
 import editOrg from 'api/user/editOrg';
 import getInviteDetails from 'api/user/getInviteDetails';
 import loginApi from 'api/user/login';
@@ -6,6 +6,7 @@ import signUpApi from 'api/user/signup';
 import afterLogin from 'AppRoutes/utils';
 import WelcomeLeftContainer from 'components/WelcomeLeftContainer';
 import ROUTES from 'constants/routes';
+import { useNotifications } from 'hooks/useNotifications';
 import history from 'lib/history';
 import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -56,6 +57,8 @@ function SignUp({ version }: SignUpProps): JSX.Element {
 		enabled: token !== null,
 	});
 
+	const { notifications } = useNotifications();
+
 	useEffect(() => {
 		if (
 			getInviteDetailsResponse.status === 'success' &&
@@ -73,7 +76,7 @@ function SignUp({ version }: SignUpProps): JSX.Element {
 			getInviteDetailsResponse.data?.error
 		) {
 			const { error } = getInviteDetailsResponse.data;
-			notification.error({
+			notifications.error({
 				message: error,
 			});
 		}
@@ -82,6 +85,7 @@ function SignUp({ version }: SignUpProps): JSX.Element {
 		getInviteDetailsResponse.data?.error,
 		getInviteDetailsResponse.status,
 		getInviteDetailsResponse,
+		notifications,
 	]);
 
 	const setState = (
@@ -122,17 +126,17 @@ function SignUp({ version }: SignUpProps): JSX.Element {
 						callback(userResponse);
 					}
 				} else {
-					notification.error({
+					notifications.error({
 						message: loginResponse.error || t('unexpected_error'),
 					});
 				}
 			} else {
-				notification.error({
+				notifications.error({
 					message: response.error || t('unexpected_error'),
 				});
 			}
 		} catch (error) {
-			notification.error({
+			notifications.error({
 				message: t('unexpected_error'),
 			});
 		}
@@ -150,7 +154,7 @@ function SignUp({ version }: SignUpProps): JSX.Element {
 		if (editResponse.statusCode === 200) {
 			history.push(ROUTES.APPLICATION);
 		} else {
-			notification.error({
+			notifications.error({
 				message: editResponse.error || t('unexpected_error'),
 			});
 		}
@@ -159,7 +163,7 @@ function SignUp({ version }: SignUpProps): JSX.Element {
 		e: React.FormEvent<HTMLFormElement>,
 	): Promise<void> => {
 		if (!params.get('token')) {
-			notification.error({
+			notifications.error({
 				message: t('token_required'),
 			});
 			return;
@@ -182,7 +186,7 @@ function SignUp({ version }: SignUpProps): JSX.Element {
 					if (response.payload?.ssoUrl) {
 						window.location.href = response.payload?.ssoUrl;
 					} else {
-						notification.error({
+						notifications.error({
 							message: t('failed_to_initiate_login'),
 						});
 						// take user to login page as there is nothing to do here
@@ -190,12 +194,12 @@ function SignUp({ version }: SignUpProps): JSX.Element {
 					}
 				}
 			} else {
-				notification.error({
+				notifications.error({
 					message: response.error || t('unexpected_error'),
 				});
 			}
 		} catch (error) {
-			notification.error({
+			notifications.error({
 				message: t('unexpected_error'),
 			});
 		}
@@ -227,7 +231,7 @@ function SignUp({ version }: SignUpProps): JSX.Element {
 
 				setLoading(false);
 			} catch (error) {
-				notification.error({
+				notifications.error({
 					message: t('unexpected_error'),
 				});
 				setLoading(false);

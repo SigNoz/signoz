@@ -1,10 +1,11 @@
 /* eslint-disable prefer-regex-literals */
 import { PlusOutlined } from '@ant-design/icons';
-import { Button, Form, Input, Modal, notification, Typography } from 'antd';
+import { Button, Form, Input, Modal, Typography } from 'antd';
 import { useForm } from 'antd/es/form/Form';
 import createDomainApi from 'api/SAML/postDomain';
 import { FeatureKeys } from 'constants/featureKeys';
 import useFeatureFlag from 'hooks/useFeatureFlag';
+import { useNotifications } from 'hooks/useNotifications';
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useSelector } from 'react-redux';
@@ -21,6 +22,8 @@ function AddDomain({ refetch }: Props): JSX.Element {
 
 	const { org } = useSelector<AppState, AppReducer>((state) => state.app);
 
+	const { notifications } = useNotifications();
+
 	const onCreateHandler = async (): Promise<void> => {
 		try {
 			const response = await createDomainApi({
@@ -29,19 +32,19 @@ function AddDomain({ refetch }: Props): JSX.Element {
 			});
 
 			if (response.statusCode === 200) {
-				notification.success({
+				notifications.success({
 					message: 'Your domain has been added successfully.',
 					duration: 15,
 				});
 				setIsDomain(false);
 				refetch();
 			} else {
-				notification.error({
+				notifications.error({
 					message: t('common:something_went_wrong'),
 				});
 			}
 		} catch (error) {
-			notification.error({
+			notifications.error({
 				message: t('common:something_went_wrong'),
 			});
 		}

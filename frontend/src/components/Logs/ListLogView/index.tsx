@@ -1,19 +1,24 @@
 import { blue, grey, orange } from '@ant-design/colors';
 import { CopyFilled, ExpandAltOutlined } from '@ant-design/icons';
-import { Button, Divider, notification, Row, Typography } from 'antd';
+import { Button, Divider, Row, Typography } from 'antd';
 import { map } from 'd3';
 import dayjs from 'dayjs';
+import { useNotifications } from 'hooks/useNotifications';
+// utils
 import { FlatLogData } from 'lib/logs/flatLogData';
 import React, { useCallback, useMemo } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useCopyToClipboard } from 'react-use';
+// interfaces
 import { AppState } from 'store/reducers';
 import { SET_DETAILED_LOG_DATA } from 'types/actions/logs';
 import { ILog } from 'types/api/logs/log';
 import { ILogsReducer } from 'types/reducer/logs';
 
+// components
 import AddToQueryHOC from '../AddToQueryHOC';
 import CopyClipboardHOC from '../CopyClipboardHOC';
+// styles
 import { Container, LogContainer, Text, TextContainer } from './styles';
 import { isValidLogField } from './util';
 
@@ -36,6 +41,7 @@ function LogGeneralField({ fieldKey, fieldValue }: LogFieldProps): JSX.Element {
 		</TextContainer>
 	);
 }
+
 function LogSelectedField({
 	fieldKey = '',
 	fieldValue = '',
@@ -69,16 +75,19 @@ function LogSelectedField({
 	);
 }
 
-interface LogItemProps {
+interface ListLogViewProps {
 	logData: ILog;
 }
-function LogItem({ logData }: LogItemProps): JSX.Element {
+function ListLogView({ logData }: ListLogViewProps): JSX.Element {
 	const {
 		fields: { selected },
 	} = useSelector<AppState, ILogsReducer>((state) => state.logs);
+
 	const dispatch = useDispatch();
 	const flattenLogData = useMemo(() => FlatLogData(logData), [logData]);
+
 	const [, setCopy] = useCopyToClipboard();
+	const { notifications } = useNotifications();
 
 	const handleDetailedView = useCallback(() => {
 		dispatch({
@@ -89,10 +98,15 @@ function LogItem({ logData }: LogItemProps): JSX.Element {
 
 	const handleCopyJSON = (): void => {
 		setCopy(JSON.stringify(logData, null, 2));
-		notification.success({
+		notifications.success({
 			message: 'Copied to clipboard',
 		});
 	};
+
+	const updatedSelecedFields = useMemo(
+		() => selected.filter((e) => e.name !== 'id'),
+		[selected],
+	);
 
 	return (
 		<Container>
@@ -101,15 +115,9 @@ function LogItem({ logData }: LogItemProps): JSX.Element {
 					{'{'}
 					<LogContainer>
 						<>
-							<LogGeneralField
-								fieldKey="log"
-								fieldValue={flattenLogData.body as never}
-							/>
+							<LogGeneralField fieldKey="log" fieldValue={flattenLogData.body} />
 							{flattenLogData.stream && (
-								<LogGeneralField
-									fieldKey="stream"
-									fieldValue={flattenLogData.stream as never}
-								/>
+								<LogGeneralField fieldKey="stream" fieldValue={flattenLogData.stream} />
 							)}
 							<LogGeneralField
 								fieldKey="timestamp"
@@ -120,7 +128,7 @@ function LogItem({ logData }: LogItemProps): JSX.Element {
 					{'}'}
 				</div>
 				<div>
-					{map(selected, (field) =>
+					{map(updatedSelecedFields, (field) =>
 						isValidLogField(flattenLogData[field.name] as never) ? (
 							<LogSelectedField
 								key={field.name}
@@ -156,4 +164,4 @@ function LogItem({ logData }: LogItemProps): JSX.Element {
 	);
 }
 
-export default LogItem;
+export default ListLogView;

@@ -1,5 +1,6 @@
-import { Button, Form, Input, notification } from 'antd';
+import { Button, Form, Input } from 'antd';
 import editOrg from 'api/user/editOrg';
+import { useNotifications } from 'hooks/useNotifications';
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useDispatch, useSelector } from 'react-redux';
@@ -21,6 +22,7 @@ function DisplayName({
 	const { name } = (org || [])[index];
 	const [isLoading, setIsLoading] = useState<boolean>(false);
 	const dispatch = useDispatch<Dispatch<AppActions>>();
+	const { notifications } = useNotifications();
 
 	const onSubmit = async ({ name: orgName }: OnSubmitProps): Promise<void> => {
 		try {
@@ -31,7 +33,7 @@ function DisplayName({
 				orgId,
 			});
 			if (statusCode === 200) {
-				notification.success({
+				notifications.success({
 					message: t('success', {
 						ns: 'common',
 					}),
@@ -44,7 +46,7 @@ function DisplayName({
 					},
 				});
 			} else {
-				notification.error({
+				notifications.error({
 					message:
 						error ||
 						t('something_went_wrong', {
@@ -55,7 +57,7 @@ function DisplayName({
 			setIsLoading(false);
 		} catch (error) {
 			setIsLoading(false);
-			notification.error({
+			notifications.error({
 				message: t('something_went_wrong', {
 					ns: 'common',
 				}),

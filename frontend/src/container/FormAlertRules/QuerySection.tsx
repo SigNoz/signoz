@@ -1,11 +1,12 @@
 import { PlusOutlined } from '@ant-design/icons';
-import { Button, notification, Tabs } from 'antd';
+import { Button, Tabs } from 'antd';
 import MetricsBuilderFormula from 'container/NewWidget/LeftContainer/QuerySection/QueryBuilder/queryBuilder/formula';
 import MetricsBuilder from 'container/NewWidget/LeftContainer/QuerySection/QueryBuilder/queryBuilder/query';
 import {
 	IQueryBuilderFormulaHandleChange,
 	IQueryBuilderQueryHandleChange,
 } from 'container/NewWidget/LeftContainer/QuerySection/QueryBuilder/queryBuilder/types';
+import { useNotifications } from 'hooks/useNotifications';
 import React, { useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { AlertTypes } from 'types/api/alerts/alertTypes';
@@ -163,10 +164,11 @@ function QuerySection({
 			...allQueries,
 		});
 	};
+	const { notifications } = useNotifications();
 
 	const addMetricQuery = useCallback(() => {
 		if (Object.keys(metricQueries).length > 5) {
-			notification.error({
+			notifications.error({
 				message: t('metric_query_max_limit'),
 			});
 			return;
@@ -191,7 +193,7 @@ function QuerySection({
 			expression: queryLabel,
 		};
 		setMetricQueries({ ...queries });
-	}, [t, getNextQueryLabel, metricQueries, setMetricQueries]);
+	}, [t, getNextQueryLabel, metricQueries, setMetricQueries, notifications]);
 
 	const addFormula = useCallback(() => {
 		// defaulting to F1 as only one formula is supported
