@@ -2,6 +2,7 @@ package v3
 
 import (
 	"fmt"
+	"sort"
 	"time"
 
 	"github.com/google/uuid"
@@ -252,6 +253,7 @@ type QueryRangeParamsV3 struct {
 	Step           int64                  `json:"step"`
 	CompositeQuery *CompositeQuery        `json:"compositeQuery"`
 	Variables      map[string]interface{} `json:"variables,omitempty"`
+	NoCache        bool                   `json:"noCache"`
 }
 
 type PromQuery struct {
@@ -437,14 +439,20 @@ type QueryRangeResponse struct {
 }
 
 type Result struct {
-	QueryName string  `json:"queryName"`
-	Series    *Series `json:"series"`
-	List      []*Row  `json:"list"`
+	QueryName string    `json:"queryName"`
+	Series    []*Series `json:"series"`
+	List      []*Row    `json:"list"`
 }
 
 type Series struct {
 	Labels map[string]string `json:"labels"`
 	Points []Point           `json:"values"`
+}
+
+func (s *Series) SortPoints() {
+	sort.Slice(s.Points, func(i, j int) bool {
+		return s.Points[i].Timestamp < s.Points[j].Timestamp
+	})
 }
 
 type Row struct {

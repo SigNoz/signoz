@@ -8,7 +8,7 @@ import (
 	"time"
 
 	"go.signoz.io/signoz/pkg/query-service/cache/inmemory"
-	"go.signoz.io/signoz/pkg/query-service/model"
+	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
 )
 
 func TestFindMissingTimeRangesZeroFreshNess(t *testing.T) {
@@ -26,19 +26,19 @@ func TestFindMissingTimeRangesZeroFreshNess(t *testing.T) {
 		name           string
 		requestedStart int64 // in milliseconds
 		requestedEnd   int64 // in milliseconds
-		cachedSeries   []*model.Series
+		cachedSeries   []*v3.Series
 		expectedMiss   []miss
 	}{
 		{
 			name:           "cached time range is a subset of the requested time range",
 			requestedStart: 1675115596722,
 			requestedEnd:   1675115596722 + 180*60*1000,
-			cachedSeries: []*model.Series{
+			cachedSeries: []*v3.Series{
 				{
 					Labels: map[string]string{
 						"__name__": "http_server_requests_seconds_count",
 					},
-					Points: []model.MetricPoint{
+					Points: []v3.Point{
 						{
 							Timestamp: 1675115596722 + 60*60*1000,
 							Value:     1,
@@ -65,12 +65,12 @@ func TestFindMissingTimeRangesZeroFreshNess(t *testing.T) {
 			name:           "cached time range is a superset of the requested time range",
 			requestedStart: 1675115596722,
 			requestedEnd:   1675115596722 + 180*60*1000,
-			cachedSeries: []*model.Series{
+			cachedSeries: []*v3.Series{
 				{
 					Labels: map[string]string{
 						"__name__": "http_server_requests_seconds_count",
 					},
-					Points: []model.MetricPoint{
+					Points: []v3.Point{
 						{
 							Timestamp: 1675115596722,
 							Value:     1,
@@ -96,12 +96,12 @@ func TestFindMissingTimeRangesZeroFreshNess(t *testing.T) {
 			name:           "cached time range is a left overlap of the requested time range",
 			requestedStart: 1675115596722,
 			requestedEnd:   1675115596722 + 180*60*1000,
-			cachedSeries: []*model.Series{
+			cachedSeries: []*v3.Series{
 				{
 					Labels: map[string]string{
 						"__name__": "http_server_requests_seconds_count",
 					},
-					Points: []model.MetricPoint{
+					Points: []v3.Point{
 						{
 							Timestamp: 1675115596722,
 							Value:     1,
@@ -128,12 +128,12 @@ func TestFindMissingTimeRangesZeroFreshNess(t *testing.T) {
 			name:           "cached time range is a right overlap of the requested time range",
 			requestedStart: 1675115596722,
 			requestedEnd:   1675115596722 + 180*60*1000,
-			cachedSeries: []*model.Series{
+			cachedSeries: []*v3.Series{
 				{
 					Labels: map[string]string{
 						"__name__": "http_server_requests_seconds_count",
 					},
-					Points: []model.MetricPoint{
+					Points: []v3.Point{
 						{
 							Timestamp: 1675115596722 + 60*60*1000,
 							Value:     1,
@@ -160,12 +160,12 @@ func TestFindMissingTimeRangesZeroFreshNess(t *testing.T) {
 			name:           "cached time range is a disjoint of the requested time range",
 			requestedStart: 1675115596722,
 			requestedEnd:   1675115596722 + 180*60*1000,
-			cachedSeries: []*model.Series{
+			cachedSeries: []*v3.Series{
 				{
 					Labels: map[string]string{
 						"__name__": "http_server_requests_seconds_count",
 					},
-					Points: []model.MetricPoint{
+					Points: []v3.Point{
 						{
 							Timestamp: 1675115596722 + 240*60*1000,
 							Value:     1,
@@ -219,7 +219,7 @@ func TestFindMissingTimeRangesWithFluxInterval(t *testing.T) {
 		name           string
 		requestedStart int64
 		requestedEnd   int64
-		cachedSeries   []*model.Series
+		cachedSeries   []*v3.Series
 		fluxInterval   time.Duration
 		expectedMiss   []miss
 	}{
@@ -227,12 +227,12 @@ func TestFindMissingTimeRangesWithFluxInterval(t *testing.T) {
 			name:           "cached time range is a subset of the requested time range",
 			requestedStart: 1675115596722,
 			requestedEnd:   1675115596722 + 180*60*1000,
-			cachedSeries: []*model.Series{
+			cachedSeries: []*v3.Series{
 				{
 					Labels: map[string]string{
 						"__name__": "http_server_requests_seconds_count",
 					},
-					Points: []model.MetricPoint{
+					Points: []v3.Point{
 						{
 							Timestamp: 1675115596722 + 60*60*1000,
 							Value:     1,
@@ -260,12 +260,12 @@ func TestFindMissingTimeRangesWithFluxInterval(t *testing.T) {
 			name:           "cached time range is a superset of the requested time range",
 			requestedStart: 1675115596722,
 			requestedEnd:   1675115596722 + 180*60*1000,
-			cachedSeries: []*model.Series{
+			cachedSeries: []*v3.Series{
 				{
 					Labels: map[string]string{
 						"__name__": "http_server_requests_seconds_count",
 					},
-					Points: []model.MetricPoint{
+					Points: []v3.Point{
 						{
 							Timestamp: 1675115596722,
 							Value:     1,
@@ -292,12 +292,12 @@ func TestFindMissingTimeRangesWithFluxInterval(t *testing.T) {
 			name:           "cache time range is a left overlap of the requested time range",
 			requestedStart: 1675115596722,
 			requestedEnd:   1675115596722 + 180*60*1000,
-			cachedSeries: []*model.Series{
+			cachedSeries: []*v3.Series{
 				{
 					Labels: map[string]string{
 						"__name__": "http_server_requests_seconds_count",
 					},
-					Points: []model.MetricPoint{
+					Points: []v3.Point{
 						{
 							Timestamp: 1675115596722,
 							Value:     1,
@@ -325,12 +325,12 @@ func TestFindMissingTimeRangesWithFluxInterval(t *testing.T) {
 			name:           "cache time range is a right overlap of the requested time range",
 			requestedStart: 1675115596722,
 			requestedEnd:   1675115596722 + 180*60*1000,
-			cachedSeries: []*model.Series{
+			cachedSeries: []*v3.Series{
 				{
 					Labels: map[string]string{
 						"__name__": "http_server_requests_seconds_count",
 					},
-					Points: []model.MetricPoint{
+					Points: []v3.Point{
 						{
 							Timestamp: 1675115596722 + 60*60*1000,
 							Value:     1,
@@ -358,12 +358,12 @@ func TestFindMissingTimeRangesWithFluxInterval(t *testing.T) {
 			name:           "cache time range is a disjoint of the requested time range",
 			requestedStart: 1675115596722,
 			requestedEnd:   1675115596722 + 180*60*1000,
-			cachedSeries: []*model.Series{
+			cachedSeries: []*v3.Series{
 				{
 					Labels: map[string]string{
 						"__name__": "http_server_requests_seconds_count",
 					},
-					Points: []model.MetricPoint{
+					Points: []v3.Point{
 						{
 							Timestamp: 1675115596722 + 240*60*1000,
 							Value:     1,
@@ -409,21 +409,20 @@ func TestFindMissingTimeRangesWithFluxInterval(t *testing.T) {
 }
 
 func TestQueryRange(t *testing.T) {
-	params := []*model.QueryRangeParamsV2{
+	params := []*v3.QueryRangeParamsV3{
 		{
-			DataSource: model.METRICS,
-			Start:      1675115596722,
-			End:        1675115596722 + 120*60*1000,
-			Step:       5 * time.Minute.Microseconds(),
-			CompositeMetricQuery: &model.CompositeMetricQuery{
-				QueryType: model.QUERY_BUILDER,
-				BuilderQueries: map[string]*model.MetricQuery{
+			Start: 1675115596722,
+			End:   1675115596722 + 120*60*1000,
+			Step:  5 * time.Minute.Microseconds(),
+			CompositeQuery: &v3.CompositeQuery{
+				QueryType: v3.QueryTypeBuilder,
+				BuilderQueries: map[string]*v3.BuilderQuery{
 					"A": {
-						QueryName:  "A",
-						MetricName: "http_server_requests_seconds_count",
-						TagFilters: &model.FilterSet{
+						QueryName:          "A",
+						AggregateAttribute: "http_server_requests_seconds_count",
+						Filters: &v3.FilterSet{
 							Operator: "AND",
-							Items: []model.FilterItem{
+							Items: []v3.FilterItem{
 								{
 									Key:      "method",
 									Operator: "EQ",
@@ -431,26 +430,25 @@ func TestQueryRange(t *testing.T) {
 								},
 							},
 						},
-						GroupingTags:      []string{"service_name", "method"},
-						AggregateOperator: model.SUM_RATE,
+						GroupBy:           []string{"service_name", "method"},
+						AggregateOperator: v3.AggregateOperatorSumRate,
 					},
 				},
 			},
 		},
 		{
-			DataSource: model.METRICS,
-			Start:      1675115596722 + 60*60*1000,
-			End:        1675115596722 + 180*60*1000,
-			Step:       5 * time.Minute.Microseconds(),
-			CompositeMetricQuery: &model.CompositeMetricQuery{
-				QueryType: model.QUERY_BUILDER,
-				BuilderQueries: map[string]*model.MetricQuery{
+			Start: 1675115596722 + 60*60*1000,
+			End:   1675115596722 + 180*60*1000,
+			Step:  5 * time.Minute.Microseconds(),
+			CompositeQuery: &v3.CompositeQuery{
+				QueryType: v3.QueryTypeBuilder,
+				BuilderQueries: map[string]*v3.BuilderQuery{
 					"A": {
-						QueryName:  "A",
-						MetricName: "http_server_requests_seconds_count",
-						TagFilters: &model.FilterSet{
+						QueryName:          "A",
+						AggregateAttribute: "http_server_requests_seconds_count",
+						Filters: &v3.FilterSet{
 							Operator: "AND",
-							Items: []model.FilterItem{
+							Items: []v3.FilterItem{
 								{
 									Key:      "method",
 									Operator: "EQ",
@@ -458,8 +456,8 @@ func TestQueryRange(t *testing.T) {
 								},
 							},
 						},
-						GroupingTags:      []string{"service_name", "method"},
-						AggregateOperator: model.SUM_RATE,
+						GroupBy:           []string{"service_name", "method"},
+						AggregateOperator: v3.AggregateOperatorSumRate,
 					},
 				},
 			},
@@ -473,15 +471,14 @@ func TestQueryRange(t *testing.T) {
 		fmt.Sprintf("timestamp_ms >= %d AND timestamp_ms <= %d", 1675115596722+120*60*1000+1, 1675115596722+180*60*1000),
 	}
 
-	q.returnedSeries = []*model.Series{
+	q.returnedSeries = []*v3.Series{
 		{
-			QueryName: "http_server_requests_seconds_count",
 			Labels: map[string]string{
 				"method":       "GET",
 				"service_name": "test",
 				"__name__":     "http_server_requests_seconds_count",
 			},
-			Points: []model.MetricPoint{
+			Points: []v3.Point{
 				{Timestamp: 1675115596722, Value: 1},
 				{Timestamp: 1675115596722 + 60*60*1000, Value: 2},
 				{Timestamp: 1675115596722 + 120*60*1000, Value: 3},

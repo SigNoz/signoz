@@ -86,5 +86,5 @@ type Reader interface {
 }
 
 type Querier interface {
-	QueryRange(context.Context, *model.QueryRangeParamsV2) ([]*model.Series, error, map[string]string)
+	QueryRange(context.Context, *v3.QueryRangeParamsV3) ([]*v3.Series, error, map[string]string)
 }
