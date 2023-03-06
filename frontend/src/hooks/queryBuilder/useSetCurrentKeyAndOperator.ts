@@ -21,7 +21,7 @@ export const useSetCurrentKeyAndOperator = (
 			if (getCountOfSpace(value) >= 1 || isSuggestKey) {
 				key = tKey || '';
 				operator = tOperator || '';
-				result = tResult;
+				result = tResult.filter((el) => el);
 			}
 		}
 

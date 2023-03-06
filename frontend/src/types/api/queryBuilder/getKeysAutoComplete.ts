@@ -1,5 +1,5 @@
 export interface PayloadProps {
 	key: string;
-	dataType: 'STRING' | 'BOOLEAN' | 'NUMBER';
+	dataType: 'string' | 'boolean' | 'number';
 	type: string;
 }

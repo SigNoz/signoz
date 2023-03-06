@@ -1,6 +1,7 @@
 import { QUERY_BUILDER_OPERATORS_BY_TYPES } from 'constants/queryBuilder';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
+import { checkStringEndWIthSpace } from '../../utils/checkStringEndWIthSpace';
 import { useFetchKeysAndValues } from './useFetchKeysAndValues';
 import { useSetCurrentKeyAndOperator } from './useSetCurrentKeyAndOperator';
 import { useTag } from './useTag';
@@ -18,16 +19,19 @@ type ReturnT = {
 	options: Option[];
 	tags: string[];
 	searchValue: string;
+	isFilter: boolean;
 };
 
 export type KeyType = {
 	key: string;
-	dataType: 'STRING' | 'BOOLEAN' | 'NUMBER';
+	dataType: 'string' | 'boolean' | 'number';
 	type: string;
 };
 
 export const useAutoComplete = (): ReturnT => {
 	const [searchValue, setSearchValue] = useState('');
+
+	console.log(searchValue, '----search value');
 
 	// HANDLE INPUT SEARCH
 	const handleSearch = useCallback((value: string) => {
@@ -36,17 +40,23 @@ export const useAutoComplete = (): ReturnT => {
 
 	const [options, setOptions] = useState<Option[]>([]);
 
+	console.log(options, '---options');
+
 	// GET SUGGESTION KEYS AND VALUES
 	const { keys, results } = useFetchKeysAndValues(searchValue);
 
 	// SELECT KEY, OPERATOR AND RESULT
 	const [key, operator, result] = useSetCurrentKeyAndOperator(searchValue, keys);
+	console.log(key);
+	console.log(operator);
+	console.log(result);
 
 	// VALIDATION OF TAG AND OPERATOR
-	const { isValidTag, isExist, isValidOperator } = useTagValidation(
+	const { isValidTag, isExist, isValidOperator, isMulti } = useTagValidation(
 		operator,
 		result,
 	);
+	console.log(isMulti, '---is multi');
 
 	// SET AND CLEAR TAGS
 	const { handleAddTag, handleClearTag, tags } = useTag(
@@ -60,13 +70,13 @@ export const useAutoComplete = (): ReturnT => {
 		const currentKey = keys.find((el) => el.key === key);
 		return currentKey
 			? QUERY_BUILDER_OPERATORS_BY_TYPES[currentKey.dataType]
-			: QUERY_BUILDER_OPERATORS_BY_TYPES.UNIVERSAL;
+			: QUERY_BUILDER_OPERATORS_BY_TYPES.universal;
 	}, [keys, key]);
 
 	// SET OPTIONS
 	useEffect(() => {
 		if (searchValue) {
-			if (!key) {
+			if (!key && keys.length) {
 				setOptions(keys.map((k) => ({ value: k.key })));
 			} else if (key && !operator) {
 				setOptions(
@@ -75,9 +85,11 @@ export const useAutoComplete = (): ReturnT => {
 						label: `${key} ${o.replace('_', ' ')}`,
 					})),
 				);
-			} else if (key && operator && !isExist && isValidOperator) {
+			} else if (key && operator && isMulti) {
+				setOptions(results.map((r) => ({ value: `${r}` })));
+			} else if (key && operator && !isMulti && !isExist && isValidOperator) {
 				setOptions(results.map((r) => ({ value: `${key} ${operator} ${r}` })));
-			} else if (key && operator && isExist) {
+			} else if (key && operator && isExist && !isMulti) {
 				setOptions([]);
 			}
 		} else {
@@ -85,6 +97,7 @@ export const useAutoComplete = (): ReturnT => {
 		}
 	}, [
 		isExist,
+		isMulti,
 		isValidOperator,
 		key,
 		keys,
@@ -96,7 +109,13 @@ export const useAutoComplete = (): ReturnT => {
 
 	// HANDLE OPTION SELECT
 	const handleSelect = (value: string): void => {
-		setSearchValue(value);
+		if (isMulti) {
+			setSearchValue((prev) =>
+				checkStringEndWIthSpace(prev) ? `${prev}${value}` : `${prev} ${value}`,
+			);
+		} else if (!result.length) {
+			setSearchValue(value);
+		}
 	};
 
 	// HANDLE KEY DOWN. PREVENT DOUBLE SPACE, ADD TAG ON ENTER CLICK, EDIT MODE FOR TAG ON CLICK BACKSPACE
@@ -109,6 +128,9 @@ export const useAutoComplete = (): ReturnT => {
 		}
 
 		if (e.key === 'Enter' && searchValue) {
+			if (isMulti) {
+				e.stopPropagation();
+			}
 			e.preventDefault();
 			handleAddTag(searchValue);
 		}
@@ -121,6 +143,8 @@ export const useAutoComplete = (): ReturnT => {
 		}
 	};
 
+	const isFilter = useMemo(() => !isMulti, [isMulti]);
+
 	return {
 		handleSearch,
 		handleClearTag,
@@ -129,5 +153,6 @@ export const useAutoComplete = (): ReturnT => {
 		options,
 		tags,
 		searchValue,
+		isFilter,
 	};
 };

@@ -16,6 +16,7 @@ function QueryBuilderSearch(): JSX.Element {
 		tags,
 		options,
 		searchValue,
+		isFilter,
 	} = useAutoComplete();
 
 	useEffect(() => {
@@ -26,6 +27,7 @@ function QueryBuilderSearch(): JSX.Element {
 		<Space.Compact block>
 			<Select
 				showSearch
+				filterOption={isFilter}
 				autoClearSearchValue={false}
 				mode="multiple"
 				options={options}

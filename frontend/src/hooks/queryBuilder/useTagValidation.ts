@@ -5,6 +5,7 @@ type ReturnT = {
 	isValidTag: boolean;
 	isExist: boolean;
 	isValidOperator: boolean;
+	isMulti: boolean;
 };
 
 export const useTagValidation = (
@@ -48,13 +49,14 @@ export const useTagValidation = (
 		return false;
 	}, [operatorType, result.length]);
 
-	const { isExist, isValidOperator } = useMemo(
+	const { isExist, isValidOperator, isMulti } = useMemo(
 		() => ({
 			isExist: operatorType === QUERY_BUILDER_SEARCH_VALUES.NON,
 			isValidOperator: operatorType !== QUERY_BUILDER_SEARCH_VALUES.NOT_VALID,
+			isMulti: operatorType === QUERY_BUILDER_SEARCH_VALUES.MULTIPLY,
 		}),
 		[operatorType],
 	);
 
-	return { isValidTag, isExist, isValidOperator };
+	return { isValidTag, isExist, isValidOperator, isMulti };
 };
