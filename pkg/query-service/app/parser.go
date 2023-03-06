@@ -10,9 +10,12 @@ import (
 	"strings"
 	"time"
 
+	"github.com/SigNoz/govaluate"
 	"github.com/gorilla/mux"
 	promModel "github.com/prometheus/common/model"
+	"go.uber.org/multierr"
 
+	"go.signoz.io/signoz/pkg/query-service/app/metrics"
 	"go.signoz.io/signoz/pkg/query-service/auth"
 	"go.signoz.io/signoz/pkg/query-service/constants"
 	"go.signoz.io/signoz/pkg/query-service/model"
@@ -840,4 +843,158 @@ func parseAggregateAttributeRequest(r *http.Request) (*v3.AggregateAttributeRequ
 		DataSource: dataSource,
 	}
 	return &req, nil
+}
+
+func parseFilterAttributeKeyRequest(r *http.Request) (*v3.FilterAttributeKeyRequest, error) {
+	var req v3.FilterAttributeKeyRequest
+
+	dataSource := v3.DataSource(r.URL.Query().Get("dataSource"))
+	aggregateOperator := v3.AggregateOperator(r.URL.Query().Get("aggregateOperator"))
+	aggregateAttribute := r.URL.Query().Get("aggregateAttribute")
+	limit, err := strconv.Atoi(r.URL.Query().Get("limit"))
+	if err != nil {
+		limit = 50
+	}
+
+	if err := dataSource.Validate(); err != nil {
+		return nil, err
+	}
+
+	if err := aggregateOperator.Validate(); err != nil {
+		return nil, err
+	}
+
+	req = v3.FilterAttributeKeyRequest{
+		DataSource:         dataSource,
+		AggregateOperator:  aggregateOperator,
+		AggregateAttribute: aggregateAttribute,
+		Limit:              limit,
+		SearchText:         r.URL.Query().Get("searchText"),
+	}
+	return &req, nil
+}
+
+func parseFilterAttributeValueRequest(r *http.Request) (*v3.FilterAttributeValueRequest, error) {
+
+	var req v3.FilterAttributeValueRequest
+
+	dataSource := v3.DataSource(r.URL.Query().Get("dataSource"))
+	aggregateOperator := v3.AggregateOperator(r.URL.Query().Get("aggregateOperator"))
+	aggregateAttribute := r.URL.Query().Get("aggregateAttribute")
+
+	limit, err := strconv.Atoi(r.URL.Query().Get("limit"))
+	if err != nil {
+		limit = 50
+	}
+
+	if err := dataSource.Validate(); err != nil {
+		return nil, err
+	}
+
+	if err := aggregateOperator.Validate(); err != nil {
+		return nil, err
+	}
+
+	req = v3.FilterAttributeValueRequest{
+		DataSource:         dataSource,
+		AggregateOperator:  aggregateOperator,
+		AggregateAttribute: aggregateAttribute,
+		Limit:              limit,
+		SearchText:         r.URL.Query().Get("searchText"),
+		FilterAttributeKey: r.URL.Query().Get("attributeKey"),
+	}
+	return &req, nil
+}
+
+func validateQueryRangeParamsV3(qp *v3.QueryRangeParamsV3) error {
+	err := qp.CompositeQuery.Validate()
+	if err != nil {
+		return err
+	}
+
+	var expressions []string
+	for _, q := range qp.CompositeQuery.BuilderQueries {
+		expressions = append(expressions, q.Expression)
+	}
+	errs := validateExpressions(expressions, evalFuncs)
+	if len(errs) > 0 {
+		return multierr.Combine(errs...)
+	}
+	return nil
+}
+
+// validateExpressions validates the math expressions using the list of
+// allowed functions.
+func validateExpressions(expressions []string, funcs map[string]govaluate.ExpressionFunction) []error {
+	var errs []error
+	for _, exp := range expressions {
+		_, err := govaluate.NewEvaluableExpressionWithFunctions(exp, funcs)
+		if err != nil {
+			errs = append(errs, err)
+		}
+	}
+	return errs
+}
+
+func ParseQueryRangeParams(r *http.Request) (*v3.QueryRangeParamsV3, *model.ApiError) {
+
+	var postData *v3.QueryRangeParamsV3
+
+	// parse the request body
+	if err := json.NewDecoder(r.Body).Decode(&postData); err != nil {
+		return nil, &model.ApiError{Typ: model.ErrorBadData, Err: err}
+	}
+
+	// validate the request body
+	if err := validateQueryRangeParamsV3(postData); err != nil {
+		return nil, &model.ApiError{Typ: model.ErrorBadData, Err: err}
+	}
+
+	// prepare the variables for the corrspnding query type
+	formattedVars := make(map[string]interface{})
+	for name, value := range postData.Variables {
+		if postData.CompositeQuery.QueryType == v3.QueryTypePromQL {
+			formattedVars[name] = metrics.PromFormattedValue(value)
+		} else if postData.CompositeQuery.QueryType == v3.QueryTypeClickHouseSQL {
+			formattedVars[name] = ClickHouseFormattedValue(value)
+		}
+	}
+
+	// replace the variables in metrics builder filter item with actual value
+	// example: {"key": "host", "value": "{{ .host }}", "operator": "equals"} with
+	// variables {"host": "test"} will be replaced with {"key": "host", "value": "test", "operator": "equals"}
+
+	if postData.CompositeQuery.QueryType == v3.QueryTypeBuilder {
+		for _, query := range postData.CompositeQuery.BuilderQueries {
+			if query.Filters == nil || len(query.Filters.Items) == 0 {
+				continue
+			}
+			for idx := range query.Filters.Items {
+				item := &query.Filters.Items[idx]
+				value := item.Value
+				if value != nil {
+					switch x := value.(type) {
+					case string:
+						variableName := strings.Trim(x, "{{ . }}")
+						if _, ok := postData.Variables[variableName]; ok {
+							item.Value = postData.Variables[variableName]
+						}
+					case []interface{}:
+						if len(x) > 0 {
+							switch x[0].(type) {
+							case string:
+								variableName := strings.Trim(x[0].(string), "{{ . }}")
+								if _, ok := postData.Variables[variableName]; ok {
+									item.Value = postData.Variables[variableName]
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+	postData.Variables = formattedVars
+
+	return postData, nil
 }
