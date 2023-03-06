@@ -3,6 +3,8 @@ package v3
 import (
 	"fmt"
 	"time"
+
+	"github.com/google/uuid"
 )
 
 type DataSource string
@@ -92,6 +94,19 @@ func (a AggregateOperator) Validate() error {
 		return nil
 	default:
 		return fmt.Errorf("invalid operator: %s", a)
+	}
+}
+
+// RequireAttribute returns true if the aggregate operator requires an attribute
+// to be specified.
+func (a AggregateOperator) RequireAttribute() bool {
+	switch a {
+	case AggregateOperatorNoOp,
+		AggregateOpeatorCount,
+		AggregateOperatorCountDistinct:
+		return false
+	default:
+		return true
 	}
 }
 
@@ -245,9 +260,33 @@ type PromQuery struct {
 	Disabled bool   `json:"disabled"`
 }
 
+func (p *PromQuery) Validate() error {
+	if p == nil {
+		return nil
+	}
+
+	if p.Query == "" {
+		return fmt.Errorf("query is empty")
+	}
+
+	return nil
+}
+
 type ClickHouseQuery struct {
 	Query    string `json:"query"`
 	Disabled bool   `json:"disabled"`
+}
+
+func (c *ClickHouseQuery) Validate() error {
+	if c == nil {
+		return nil
+	}
+
+	if c.Query == "" {
+		return fmt.Errorf("query is empty")
+	}
+
+	return nil
 }
 
 type CompositeQuery struct {
@@ -256,6 +295,50 @@ type CompositeQuery struct {
 	PromQueries       map[string]*PromQuery       `json:"promQueries,omitempty"`
 	PanelType         PanelType                   `json:"panelType"`
 	QueryType         QueryType                   `json:"queryType"`
+}
+
+func (c *CompositeQuery) Validate() error {
+	if c == nil {
+		return nil
+	}
+
+	if c.BuilderQueries == nil && c.ClickHouseQueries == nil && c.PromQueries == nil {
+		return fmt.Errorf("composite query must contain at least one query")
+	}
+
+	if c.BuilderQueries != nil {
+		for name, query := range c.BuilderQueries {
+			if err := query.Validate(); err != nil {
+				return fmt.Errorf("builder query %s is invalid: %w", name, err)
+			}
+		}
+	}
+
+	if c.ClickHouseQueries != nil {
+		for name, query := range c.ClickHouseQueries {
+			if err := query.Validate(); err != nil {
+				return fmt.Errorf("clickhouse query %s is invalid: %w", name, err)
+			}
+		}
+	}
+
+	if c.PromQueries != nil {
+		for name, query := range c.PromQueries {
+			if err := query.Validate(); err != nil {
+				return fmt.Errorf("prom query %s is invalid: %w", name, err)
+			}
+		}
+	}
+
+	if err := c.PanelType.Validate(); err != nil {
+		return fmt.Errorf("panel type is invalid: %w", err)
+	}
+
+	if err := c.QueryType.Validate(); err != nil {
+		return fmt.Errorf("query type is invalid: %w", err)
+	}
+
+	return nil
 }
 
 type BuilderQuery struct {
@@ -276,9 +359,59 @@ type BuilderQuery struct {
 	SelectColumns      []string          `json:"selectColumns,omitempty"`
 }
 
+func (b *BuilderQuery) Validate() error {
+	if b == nil {
+		return nil
+	}
+	if b.QueryName == "" {
+		return fmt.Errorf("query name is required")
+	}
+
+	// if expression is same as query name, it's a simple builder query and not a formula
+	// formula involves more than one data source, aggregate operator, etc.
+	if b.QueryName == b.Expression {
+		if err := b.DataSource.Validate(); err != nil {
+			return fmt.Errorf("data source is invalid: %w", err)
+		}
+		if err := b.AggregateOperator.Validate(); err != nil {
+			return fmt.Errorf("aggregate operator is invalid: %w", err)
+		}
+		if b.AggregateAttribute == "" && b.AggregateOperator.RequireAttribute() {
+			return fmt.Errorf("aggregate attribute is required")
+		}
+	}
+
+	if b.Filters != nil {
+		if err := b.Filters.Validate(); err != nil {
+			return fmt.Errorf("filters are invalid: %w", err)
+		}
+	}
+	if b.GroupBy != nil {
+		for _, groupBy := range b.GroupBy {
+			if groupBy == "" {
+				return fmt.Errorf("group by cannot be empty")
+			}
+		}
+	}
+	if b.Expression == "" {
+		return fmt.Errorf("expression is required")
+	}
+	return nil
+}
+
 type FilterSet struct {
 	Operator string       `json:"op,omitempty"`
 	Items    []FilterItem `json:"items"`
+}
+
+func (f *FilterSet) Validate() error {
+	if f == nil {
+		return nil
+	}
+	if f.Operator != "" && f.Operator != "AND" && f.Operator != "OR" {
+		return fmt.Errorf("operator must be AND or OR")
+	}
+	return nil
 }
 
 type FilterItem struct {
@@ -322,4 +455,33 @@ type Row struct {
 type Point struct {
 	Timestamp int64   `json:"timestamp"`
 	Value     float64 `json:"value"`
+}
+
+// ExploreQuery is a query for the explore page
+// It is a composite query with a source page name
+// The source page name is used to identify the page that initiated the query
+// The source page could be "traces", "logs", "metrics" or "dashboards", "alerts" etc.
+type ExplorerQuery struct {
+	UUID           string          `json:"uuid,omitempty"`
+	SourcePage     string          `json:"sourcePage"`
+	CompositeQuery *CompositeQuery `json:"compositeQuery"`
+	// ExtraData is JSON encoded data used by frontend to store additional data
+	ExtraData string `json:"extraData"`
+	// 0 - false, 1 - true; this is int8 because sqlite doesn't support bool
+	IsView int8 `json:"isView"`
+}
+
+func (eq *ExplorerQuery) Validate() error {
+	if eq.IsView != 0 && eq.IsView != 1 {
+		return fmt.Errorf("isView must be 0 or 1")
+	}
+
+	if eq.CompositeQuery == nil {
+		return fmt.Errorf("composite query is required")
+	}
+
+	if eq.UUID == "" {
+		eq.UUID = uuid.New().String()
+	}
+	return eq.CompositeQuery.Validate()
 }
