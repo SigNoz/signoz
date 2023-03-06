@@ -198,6 +198,15 @@ const (
 	AttributeKeyDataTypeBool   AttributeKeyDataType = "bool"
 )
 
+func (q AttributeKeyDataType) Validate() error {
+	switch q {
+	case AttributeKeyDataTypeString, AttributeKeyDataTypeNumber, AttributeKeyDataTypeBool:
+		return nil
+	default:
+		return fmt.Errorf("invalid tag type: %s", q)
+	}
+}
+
 // FilterAttributeValueRequest is a request to fetch possible attribute values
 // for a selected aggregate operator, aggregate attribute, filter attribute key
 // and search text.

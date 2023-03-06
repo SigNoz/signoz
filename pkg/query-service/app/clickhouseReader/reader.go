@@ -3755,7 +3755,9 @@ func (r *ClickHouseReader) GetMetricAttributeValues(ctx context.Context, req *v3
 		if err := rows.Scan(&atrributeValue); err != nil {
 			return nil, fmt.Errorf("error while scanning rows: %s", err.Error())
 		}
-		attributeValues.AttributeValues = append(attributeValues.AttributeValues, atrributeValue)
+		// https://github.com/OpenObservability/OpenMetrics/blob/main/proto/openmetrics_data_model.proto#L64-L72
+		// this may change in future if we use OTLP as the data model
+		attributeValues.StringAttributeValues = append(attributeValues.StringAttributeValues, atrributeValue)
 	}
 
 	return &attributeValues, nil
@@ -3800,7 +3802,7 @@ func (r *ClickHouseReader) GetLogAttributeKeys(ctx context.Context, req *v3.Filt
 
 func (r *ClickHouseReader) GetLogAttributeValues(ctx context.Context, req *v3.FilterAttributeValueRequest) (*v3.FilterAttributeValueResponse, error) {
 	var err error
-	// var filterValueColumn string
+	var filterValueColumn string
 	var rows driver.Rows
 	var attributeValues v3.FilterAttributeValueResponse
 	if req.FilterAttributeKeyDataType == v3.AttributeKeyDataTypeBool {
@@ -3808,21 +3810,20 @@ func (r *ClickHouseReader) GetLogAttributeValues(ctx context.Context, req *v3.Fi
 			BoolAttributeValues: []bool{true, false},
 		}, nil
 	}
-	// filterValueColumn := ""
 
 	query := "select distinct"
 	switch req.FilterAttributeKeyDataType {
 	case v3.AttributeKeyDataTypeNumber:
-		query = fmt.Sprintf("%s numberTagValue from %s.%s where stringTagValue ILIKE $1", query)
+		filterValueColumn = "numberTagValue"
 	case v3.AttributeKeyDataTypeString:
-		query = fmt.Sprintf("%s stringTagValue from %s.%s where stringTagValue ILIKE $1", query)
+		filterValueColumn = "stringTagValue"
 	}
 
 	if len(req.SearchText) != 0 {
-		query = fmt.Sprintf("tagKey ILIKE $1 and stringTagValue ILIKE $2  and tagType=$3 limit $4", r.logsDB, r.logsTagAttributeTable)
+		query = fmt.Sprintf("select distinct %s  from  %s.%s where tagKey ILIKE $1 and %s ILIKE $2  and tagType=$3 limit $4", filterValueColumn, r.logsDB, r.logsTagAttributeTable, filterValueColumn)
 		rows, err = r.db.Query(ctx, query, req.FilterAttributeKey, fmt.Sprintf("%%%s%%", req.SearchText), req.TagType, req.Limit)
 	} else {
-		query = fmt.Sprintf("tagKey ILIKE $1 and tagType=$2 limit $3", r.logsDB, r.logsTagAttributeTable)
+		query = fmt.Sprintf("select distinct %s from  %s.%s where tagKey ILIKE $1 and tagType=$2 limit $3", filterValueColumn, r.logsDB, r.logsTagAttributeTable)
 		rows, err = r.db.Query(ctx, query, req.FilterAttributeKey, req.TagType, req.Limit)
 	}
 
@@ -3833,12 +3834,21 @@ func (r *ClickHouseReader) GetLogAttributeValues(ctx context.Context, req *v3.Fi
 	defer rows.Close()
 
 	var strAttributeValue string
+	var numAttributeValue float64
 	for rows.Next() {
-		if err := rows.Scan(&strAttributeValue); err != nil {
-			return nil, fmt.Errorf("error while scanning rows: %s", err.Error())
-		}
-		if strAttributeValue != "" {
-			attributeValues.AttributeValues = append(attributeValues.AttributeValues, strAttributeValue)
+		switch req.FilterAttributeKeyDataType {
+		case v3.AttributeKeyDataTypeNumber:
+			if err := rows.Scan(&numAttributeValue); err != nil {
+				return nil, fmt.Errorf("error while scanning rows: %s", err.Error())
+			}
+			attributeValues.NumberAttributeValues = append(attributeValues.NumberAttributeValues, numAttributeValue)
+		case v3.AttributeKeyDataTypeString:
+			if err := rows.Scan(&strAttributeValue); err != nil {
+				return nil, fmt.Errorf("error while scanning rows: %s", err.Error())
+			}
+			if strAttributeValue != "" {
+				attributeValues.StringAttributeValues = append(attributeValues.StringAttributeValues, strAttributeValue)
+			}
 		}
 	}
 
