@@ -3683,8 +3683,8 @@ func (r *ClickHouseReader) GetMetricAggregateAttributes(ctx context.Context, req
 		}
 		key := v3.AttributeKey{
 			Key:      metricName,
-			DataType: "STRING",
-			Type:     "ATTRIBUTE",
+			DataType: v3.AttributeKeyDataTypeNumber,
+			Type:     v3.AttributeKeyTypeTag,
 		}
 		response.AttributeKeys = append(response.AttributeKeys, key)
 	}
@@ -3789,8 +3789,8 @@ func (r *ClickHouseReader) GetLogAttributeKeys(ctx context.Context, req *v3.Filt
 		}
 		key := v3.AttributeKey{
 			Key:      attributeKey,
-			DataType: attributeDataType,
-			Type:     string(req.TagType),
+			DataType: v3.AttributeKeyDataType(attributeDataType),
+			Type:     v3.AttributeKeyType(req.TagType),
 		}
 		response.AttributeKeys = append(response.AttributeKeys, key)
 	}
@@ -3799,18 +3799,30 @@ func (r *ClickHouseReader) GetLogAttributeKeys(ctx context.Context, req *v3.Filt
 }
 
 func (r *ClickHouseReader) GetLogAttributeValues(ctx context.Context, req *v3.FilterAttributeValueRequest) (*v3.FilterAttributeValueResponse, error) {
-
-	var query string
 	var err error
+	// var filterValueColumn string
 	var rows driver.Rows
 	var attributeValues v3.FilterAttributeValueResponse
-	// (todo nitya): add support for other tag data types
+	if req.FilterAttributeKeyDataType == v3.AttributeKeyDataTypeBool {
+		return &v3.FilterAttributeValueResponse{
+			BoolAttributeValues: []bool{true, false},
+		}, nil
+	}
+	// filterValueColumn := ""
+
+	query := "select distinct"
+	switch req.FilterAttributeKeyDataType {
+	case v3.AttributeKeyDataTypeNumber:
+		query = fmt.Sprintf("%s numberTagValue from %s.%s where stringTagValue ILIKE $1", query)
+	case v3.AttributeKeyDataTypeString:
+		query = fmt.Sprintf("%s stringTagValue from %s.%s where stringTagValue ILIKE $1", query)
+	}
 
 	if len(req.SearchText) != 0 {
-		query = fmt.Sprintf("select distinct stringTagValue  from  %s.%s where tagKey ILIKE $1 and stringTagValue ILIKE $2  and tagType=$3 limit $4", r.logsDB, r.logsTagAttributeTable)
+		query = fmt.Sprintf("tagKey ILIKE $1 and stringTagValue ILIKE $2  and tagType=$3 limit $4", r.logsDB, r.logsTagAttributeTable)
 		rows, err = r.db.Query(ctx, query, req.FilterAttributeKey, fmt.Sprintf("%%%s%%", req.SearchText), req.TagType, req.Limit)
 	} else {
-		query = fmt.Sprintf("select distinct stringTagValue from  %s.%s where tagKey ILIKE $1 and tagType=$2 limit $3", r.logsDB, r.logsTagAttributeTable)
+		query = fmt.Sprintf("tagKey ILIKE $1 and tagType=$2 limit $3", r.logsDB, r.logsTagAttributeTable)
 		rows, err = r.db.Query(ctx, query, req.FilterAttributeKey, req.TagType, req.Limit)
 	}
 
