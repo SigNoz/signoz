@@ -48,7 +48,17 @@ func InitDB(dataSourceName string) (*modelDao, error) {
 		updated_at INTEGER,
 		data TEXT  NOT NULL,
 		FOREIGN KEY(org_id) REFERENCES organizations(id)
-	);`
+	);
+	CREATE TABLE IF NOT EXISTS personal_access_tokens (
+		id INTEGER PRIMARY KEY AUTOINCREMENT,
+		user_id TEXT NOT NULL,
+		token TEXT NOT NULL UNIQUE,
+		name TEXT NOT NULL,
+		created_at INTEGER NOT NULL,
+		expires_at INTEGER NOT NULL,
+		FOREIGN KEY(user_id) REFERENCES users(id)
+	);
+	`
 
 	_, err = m.DB().Exec(table_schema)
 	if err != nil {
