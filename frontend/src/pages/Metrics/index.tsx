@@ -1,10 +1,11 @@
-import { notification, Space } from 'antd';
+import { Space } from 'antd';
 import getLocalStorageKey from 'api/browser/localstorage/get';
 import ReleaseNote from 'components/ReleaseNote';
 import Spinner from 'components/Spinner';
 import { SKIP_ONBOARDING } from 'constants/onboarding';
 import ResourceAttributesFilter from 'container/MetricsApplication/ResourceAttributesFilter';
 import MetricTable from 'container/MetricsTable';
+import { useNotifications } from 'hooks/useNotifications';
 import { convertRawQueriesToTraceSelectedTags } from 'lib/resourceAttributes';
 import React, { useEffect, useMemo } from 'react';
 import { connect, useSelector } from 'react-redux';
@@ -30,14 +31,15 @@ function Metrics({ getService }: MetricsProps): JSX.Element {
 		error,
 		errorMessage,
 	} = useSelector<AppState, MetricReducer>((state) => state.metrics);
+	const { notifications } = useNotifications();
 
 	useEffect(() => {
 		if (error) {
-			notification.error({
+			notifications.error({
 				message: errorMessage,
 			});
 		}
-	}, [error, errorMessage]);
+	}, [error, errorMessage, notifications]);
 
 	const selectedTags = useMemo(
 		() =>

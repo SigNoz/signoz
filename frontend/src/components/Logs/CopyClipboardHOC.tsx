@@ -1,4 +1,5 @@
-import { notification, Popover } from 'antd';
+import { Popover } from 'antd';
+import { useNotifications } from 'hooks/useNotifications';
 import React, { useCallback, useEffect } from 'react';
 import { useCopyToClipboard } from 'react-use';
 
@@ -7,14 +8,14 @@ function CopyClipboardHOC({
 	children,
 }: CopyClipboardHOCProps): JSX.Element {
 	const [value, setCopy] = useCopyToClipboard();
-
+	const { notifications } = useNotifications();
 	useEffect(() => {
 		if (value.value) {
-			notification.success({
+			notifications.success({
 				message: 'Copied to clipboard',
 			});
 		}
-	}, [value]);
+	}, [value, notifications]);
 
 	const onClick = useCallback((): void => {
 		setCopy(textToCopy);

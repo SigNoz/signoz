@@ -1,8 +1,9 @@
-import { Button, Input, notification, Typography } from 'antd';
+import { Button, Input, Typography } from 'antd';
 import resetPasswordApi from 'api/user/resetPassword';
 import { Logout } from 'api/utils';
 import WelcomeLeftContainer from 'components/WelcomeLeftContainer';
 import ROUTES from 'constants/routes';
+import { useNotifications } from 'hooks/useNotifications';
 import history from 'lib/history';
 import { Label } from 'pages/SignUp/styles';
 import React, { useEffect, useState } from 'react';
@@ -24,6 +25,7 @@ function ResetPassword({ version }: ResetPasswordProps): JSX.Element {
 	const { search } = useLocation();
 	const params = new URLSearchParams(search);
 	const token = params.get('token');
+	const { notifications } = useNotifications();
 
 	useEffect(() => {
 		if (!token) {
@@ -53,14 +55,14 @@ function ResetPassword({ version }: ResetPasswordProps): JSX.Element {
 			});
 
 			if (response.statusCode === 200) {
-				notification.success({
+				notifications.success({
 					message: t('success', {
 						ns: 'common',
 					}),
 				});
 				history.push(ROUTES.LOGIN);
 			} else {
-				notification.error({
+				notifications.error({
 					message:
 						response.error ||
 						t('something_went_wrong', {
@@ -72,7 +74,7 @@ function ResetPassword({ version }: ResetPasswordProps): JSX.Element {
 			setLoading(false);
 		} catch (error) {
 			setLoading(false);
-			notification.error({
+			notifications.error({
 				message: t('something_went_wrong', {
 					ns: 'common',
 				}),

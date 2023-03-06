@@ -1,6 +1,7 @@
-import { notification, Select } from 'antd';
+import { Select } from 'antd';
 import getChannels from 'api/channels/getAll';
 import useFetch from 'hooks/useFetch';
+import { useNotifications } from 'hooks/useNotifications';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -20,12 +21,14 @@ function ChannelSelect({
 
 	const { loading, payload, error, errorMessage } = useFetch(getChannels);
 
+	const { notifications } = useNotifications();
+
 	const handleChange = (value: string[]): void => {
 		onSelectChannels(value);
 	};
 
 	if (error && errorMessage !== '') {
-		notification.error({
+		notifications.error({
 			message: 'Error',
 			description: errorMessage,
 		});

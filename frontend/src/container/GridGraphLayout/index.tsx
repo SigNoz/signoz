@@ -1,7 +1,8 @@
 /* eslint-disable react/no-unstable-nested-components */
-import { notification } from 'antd';
+
 import updateDashboardApi from 'api/dashboard/update';
 import useComponentPermission from 'hooks/useComponentPermission';
+import { useNotifications } from 'hooks/useNotifications';
 import React, { useCallback, useEffect, useState } from 'react';
 import { Layout } from 'react-grid-layout';
 import { useTranslation } from 'react-i18next';
@@ -76,7 +77,9 @@ function GridGraph(props: Props): JSX.Element {
 			const startTimestamp = Math.trunc(start);
 			const endTimestamp = Math.trunc(end);
 
-			dispatch(UpdateTimeInterval('custom', [startTimestamp, endTimestamp]));
+			if (startTimestamp !== endTimestamp) {
+				dispatch(UpdateTimeInterval('custom', [startTimestamp, endTimestamp]));
+			}
 		},
 		[dispatch],
 	);
@@ -204,6 +207,8 @@ function GridGraph(props: Props): JSX.Element {
 		[widgets, onDragSelect],
 	);
 
+	const { notifications } = useNotifications();
+
 	const onEmptyWidgetHandler = useCallback(async () => {
 		try {
 			const id = 'empty';
@@ -219,22 +224,25 @@ function GridGraph(props: Props): JSX.Element {
 				...(data.layout || []),
 			];
 
-			await UpdateDashboard({
-				data,
-				generateWidgetId: id,
-				graphType: 'EMPTY_WIDGET',
-				selectedDashboard,
-				layout,
-				isRedirected: false,
-			});
+			await UpdateDashboard(
+				{
+					data,
+					generateWidgetId: id,
+					graphType: 'EMPTY_WIDGET',
+					selectedDashboard,
+					layout,
+					isRedirected: false,
+				},
+				notifications,
+			);
 
 			setLayoutFunction(layout);
 		} catch (error) {
-			notification.error({
+			notifications.error({
 				message: error instanceof Error ? error.toString() : 'Something went wrong',
 			});
 		}
-	}, [data, selectedDashboard, setLayoutFunction]);
+	}, [data, selectedDashboard, setLayoutFunction, notifications]);
 
 	const onLayoutChangeHandler = async (layout: Layout[]): Promise<void> => {
 		setLayoutFunction(layout);
@@ -255,7 +263,7 @@ function GridGraph(props: Props): JSX.Element {
 						toggleAddWidget(true);
 					})
 					.catch(() => {
-						notification.error(t('something_went_wrong'));
+						notifications.error(t('something_went_wrong'));
 					});
 			} else {
 				toggleAddWidget(true);
@@ -263,12 +271,12 @@ function GridGraph(props: Props): JSX.Element {
 			}
 		} catch (error) {
 			if (typeof error === 'string') {
-				notification.error({
+				notifications.error({
 					message: error || t('something_went_wrong'),
 				});
 			}
 		}
-	}, [layouts, onEmptyWidgetHandler, t, toggleAddWidget]);
+	}, [layouts, onEmptyWidgetHandler, t, toggleAddWidget, notifications]);
 
 	return (
 		<GraphLayoutContainer

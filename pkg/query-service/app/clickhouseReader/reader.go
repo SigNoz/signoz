@@ -45,6 +45,7 @@ import (
 	am "go.signoz.io/signoz/pkg/query-service/integrations/alertManager"
 	"go.signoz.io/signoz/pkg/query-service/interfaces"
 	"go.signoz.io/signoz/pkg/query-service/model"
+	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
 	"go.signoz.io/signoz/pkg/query-service/telemetry"
 	"go.signoz.io/signoz/pkg/query-service/utils"
 	"go.uber.org/zap"
@@ -1001,6 +1002,11 @@ func (r *ClickHouseReader) GetSpanFilters(ctx context.Context, queryParams *mode
 		args = append(args, clickhouse.Named("durationNanoMax", queryParams.MaxDuration))
 	}
 
+	if len(queryParams.SpanKind) != 0 {
+		query = query + " AND kind = @kind"
+		args = append(args, clickhouse.Named("kind", queryParams.SpanKind))
+	}
+
 	query = getStatusFilters(query, queryParams.Status, excludeMap)
 
 	traceFilterReponse := model.SpanFiltersResponse{
@@ -1364,9 +1370,9 @@ func (r *ClickHouseReader) GetFilteredSpans(ctx context.Context, queryParams *mo
 	}
 	query = getStatusFilters(query, queryParams.Status, excludeMap)
 
-	if len(queryParams.Kind) != 0 {
+	if len(queryParams.SpanKind) != 0 {
 		query = query + " AND kind = @kind"
-		args = append(args, clickhouse.Named("kind", queryParams.Kind))
+		args = append(args, clickhouse.Named("kind", queryParams.SpanKind))
 	}
 
 	// create TagQuery from TagQueryParams
@@ -1666,6 +1672,10 @@ func (r *ClickHouseReader) GetTagFilters(ctx context.Context, queryParams *model
 		query = query + " AND durationNano <= @durationNanoMax"
 		args = append(args, clickhouse.Named("durationNanoMax", queryParams.MaxDuration))
 	}
+	if len(queryParams.SpanKind) != 0 {
+		query = query + " AND kind = @kind"
+		args = append(args, clickhouse.Named("kind", queryParams.SpanKind))
+	}
 
 	query = getStatusFilters(query, queryParams.Status, excludeMap)
 
@@ -1780,6 +1790,10 @@ func (r *ClickHouseReader) GetTagValues(ctx context.Context, queryParams *model.
 	if len(queryParams.MaxDuration) != 0 {
 		query = query + " AND durationNano <= @durationNanoMax"
 		args = append(args, clickhouse.Named("durationNanoMax", queryParams.MaxDuration))
+	}
+	if len(queryParams.SpanKind) != 0 {
+		query = query + " AND kind = @kind"
+		args = append(args, clickhouse.Named("kind", queryParams.SpanKind))
 	}
 
 	query = getStatusFilters(query, queryParams.Status, excludeMap)
@@ -1981,7 +1995,7 @@ func (r *ClickHouseReader) GetDependencyGraph(ctx context.Context, queryParams *
 			result[5] AS p99,
 			sum(total_count) as callCount,
 			sum(total_count)/ @duration AS callRate,
-			sum(error_count)/sum(total_count) as errorRate
+			sum(error_count)/sum(total_count) * 100 as errorRate
 		FROM %s.%s
 		WHERE toUInt64(toDateTime(timestamp)) >= @start AND toUInt64(toDateTime(timestamp)) <= @end
 		GROUP BY
@@ -2113,9 +2127,9 @@ func (r *ClickHouseReader) GetFilteredSpansAggregates(ctx context.Context, query
 	}
 	query = getStatusFilters(query, queryParams.Status, excludeMap)
 
-	if len(queryParams.Kind) != 0 {
+	if len(queryParams.SpanKind) != 0 {
 		query = query + " AND kind = @kind"
-		args = append(args, clickhouse.Named("kind", queryParams.Kind))
+		args = append(args, clickhouse.Named("kind", queryParams.SpanKind))
 	}
 	// create TagQuery from TagQueryParams
 	tags := createTagQueryFromTagQueryParams(queryParams.Tags)
@@ -3639,4 +3653,49 @@ func (r *ClickHouseReader) QueryDashboardVars(ctx context.Context, query string)
 		}
 	}
 	return &result, nil
+}
+
+func (r *ClickHouseReader) GetMetricAggregateAttributes(ctx context.Context, req *v3.AggregateAttributeRequest) (*v3.AggregateAttributeResponse, error) {
+
+	var query string
+	var err error
+	var rows driver.Rows
+	var response v3.AggregateAttributeResponse
+
+	query = fmt.Sprintf("SELECT DISTINCT(metric_name) from %s.%s WHERE metric_name ILIKE $1", signozMetricDBName, signozTSTableName)
+	if req.Limit != 0 {
+		query = query + fmt.Sprintf(" LIMIT %d;", req.Limit)
+	}
+	rows, err = r.db.Query(ctx, query, fmt.Sprintf("%%%s%%", req.SearchText))
+
+	if err != nil {
+		zap.S().Error(err)
+		return nil, fmt.Errorf("error while executing query: %s", err.Error())
+	}
+	defer rows.Close()
+
+	var metricName string
+	for rows.Next() {
+		if err := rows.Scan(&metricName); err != nil {
+			return nil, fmt.Errorf("error while scanning rows: %s", err.Error())
+		}
+		key := v3.AttributeKey{
+			Key:      metricName,
+			DataType: v3.AttributeKeyDataTypeNumber,
+			Type:     v3.AttributeKeyTypeTag,
+		}
+		response.AttributeKeys = append(response.AttributeKeys, key)
+	}
+
+	return &response, nil
+}
+
+func (r *ClickHouseReader) CheckClickHouse(ctx context.Context) error {
+	rows, err := r.db.Query(ctx, "SELECT 1")
+	if err != nil {
+		return err
+	}
+	defer rows.Close()
+
+	return nil
 }

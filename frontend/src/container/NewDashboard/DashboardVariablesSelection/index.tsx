@@ -1,4 +1,6 @@
 import { Row } from 'antd';
+import { NotificationInstance } from 'antd/es/notification/interface';
+import { useNotifications } from 'hooks/useNotifications';
 import { map, sortBy } from 'lodash-es';
 import React, { useState } from 'react';
 import { connect, useSelector } from 'react-redux';
@@ -25,6 +27,7 @@ function DashboardVariableSelection({
 
 	const [update, setUpdate] = useState<boolean>(false);
 	const [lastUpdatedVar, setLastUpdatedVar] = useState<string>('');
+	const { notifications } = useNotifications();
 
 	const onVarChanged = (name: string): void => {
 		setLastUpdatedVar(name);
@@ -45,7 +48,7 @@ function DashboardVariableSelection({
 	): void => {
 		const updatedVariablesData = { ...variables };
 		updatedVariablesData[name].selectedValue = value;
-		updateDashboardVariables(updatedVariablesData);
+		updateDashboardVariables(updatedVariablesData, notifications);
 		onVarChanged(name);
 	};
 	const onAllSelectedUpdate = (
@@ -54,7 +57,7 @@ function DashboardVariableSelection({
 	): void => {
 		const updatedVariablesData = { ...variables };
 		updatedVariablesData[name].allSelected = value;
-		updateDashboardVariables(updatedVariablesData);
+		updateDashboardVariables(updatedVariablesData, notifications);
 		onVarChanged(name);
 	};
 
@@ -81,6 +84,7 @@ function DashboardVariableSelection({
 interface DispatchProps {
 	updateDashboardVariables: (
 		props: Parameters<typeof UpdateDashboardVariables>[0],
+		notify: NotificationInstance,
 	) => (dispatch: Dispatch<AppActions>) => void;
 }
 

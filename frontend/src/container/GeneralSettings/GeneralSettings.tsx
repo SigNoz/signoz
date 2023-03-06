@@ -1,19 +1,10 @@
 /* eslint-disable sonarjs/no-duplicate-string */
 import { LoadingOutlined } from '@ant-design/icons';
-import {
-	Button,
-	Card,
-	Col,
-	Divider,
-	Modal,
-	notification,
-	Row,
-	Spin,
-	Typography,
-} from 'antd';
+import { Button, Card, Col, Divider, Modal, Row, Spin, Typography } from 'antd';
 import setRetentionApi from 'api/settings/setRetention';
 import TextToolTip from 'components/TextToolTip';
 import useComponentPermission from 'hooks/useComponentPermission';
+import { useNotifications } from 'hooks/useNotifications';
 import find from 'lodash-es/find';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -172,6 +163,8 @@ function GeneralSettings({
 		logsTtlValuesPayload.status === 'pending' ? 1000 : null,
 	);
 
+	const { notifications } = useNotifications();
+
 	const onModalToggleHandler = (type: TTTLType): void => {
 		if (type === 'metrics') setModalMetrics((modal) => !modal);
 		if (type === 'traces') setModalTraces((modal) => !modal);
@@ -186,14 +179,14 @@ function GeneralSettings({
 	const onClickSaveHandler = useCallback(
 		(type: TTTLType) => {
 			if (!setRetentionPermission) {
-				notification.error({
+				notifications.error({
 					message: `Sorry you don't have permission to make these changes`,
 				});
 				return;
 			}
 			onModalToggleHandler(type);
 		},
-		[setRetentionPermission],
+		[setRetentionPermission, notifications],
 	);
 
 	const s3Enabled = useMemo(
@@ -352,7 +345,7 @@ function GeneralSettings({
 			let hasSetTTLFailed = false;
 			if (setTTLResponse.statusCode === 409) {
 				hasSetTTLFailed = true;
-				notification.error({
+				notifications.error({
 					message: 'Error',
 					description: t('retention_request_race_condition'),
 					placement: 'topRight',
@@ -390,7 +383,7 @@ function GeneralSettings({
 					});
 			}
 		} catch (error) {
-			notification.error({
+			notifications.error({
 				message: 'Error',
 				description: t('retention_failed_message'),
 				placement: 'topRight',

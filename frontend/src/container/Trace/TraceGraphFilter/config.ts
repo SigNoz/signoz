@@ -9,13 +9,12 @@ interface Dropdown {
 export const groupBy: DefaultOptionType[] = [
 	{
 		label: 'None',
-		value: '',
+		value: 'none',
 	},
 	{
 		label: 'Service Name',
 		value: 'serviceName',
 	},
-
 	{
 		label: 'Operation',
 		value: 'name',

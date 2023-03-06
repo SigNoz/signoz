@@ -1,4 +1,4 @@
-import { notification } from 'antd';
+import { NotificationInstance } from 'antd/es/notification/interface';
 import getFiltersApi from 'api/trace/getFilters';
 import xor from 'lodash-es/xor';
 import { Dispatch, Store } from 'redux';
@@ -12,6 +12,7 @@ import {
 import { GlobalReducer } from 'types/reducer/globalTime';
 import { TraceFilterEnum, TraceReducer } from 'types/reducer/trace';
 
+import { parseQueryIntoSpanKind } from './parseFilter/parseSpanKind';
 import {
 	isTraceFilterEnum,
 	parseAggregateOrderParams,
@@ -29,6 +30,7 @@ import {
 export const GetInitialTraceFilter = (
 	minTime: GlobalReducer['minTime'],
 	maxTime: GlobalReducer['maxTime'],
+	notify: NotificationInstance,
 ): ((
 	dispatch: Dispatch<AppActions>,
 	getState: Store<AppState>['getState'],
@@ -53,6 +55,8 @@ export const GetInitialTraceFilter = (
 			query,
 			traces.filterToFetchData,
 		);
+
+		const parsedSpanKind = parseQueryIntoSpanKind(query, traces.spanKind);
 
 		const getUserSelected = parseSelectedFilter(query, traces.userSelectedFilter);
 
@@ -101,6 +105,7 @@ export const GetInitialTraceFilter = (
 			start: String(minTime),
 			other: Object.fromEntries(getSelectedFilter.currentValue),
 			isFilterExclude: getIsFilterExcluded.currentValue,
+			spanKind: parsedSpanKind.currentValue,
 		});
 
 		const preSelectedFilter: Map<TraceFilterEnum, string[]> = new Map(
@@ -163,10 +168,11 @@ export const GetInitialTraceFilter = (
 					order: parsedQueryOrder.currentValue,
 					pageSize: parsedPageSize.currentValue,
 					orderParam: parsedOrderParams.currentValue,
+					spanKind: parsedSpanKind.currentValue,
 				},
 			});
 		} else {
-			notification.error({
+			notify.error({
 				message: response.error || 'Something went wrong',
 			});
 		}
