@@ -10,8 +10,10 @@ import (
 	"strings"
 	"time"
 
+	"github.com/SigNoz/govaluate"
 	"github.com/gorilla/mux"
 	promModel "github.com/prometheus/common/model"
+	"go.uber.org/multierr"
 
 	"go.signoz.io/signoz/pkg/query-service/app/metrics"
 	"go.signoz.io/signoz/pkg/query-service/auth"
@@ -905,33 +907,33 @@ func parseFilterAttributeValueRequest(r *http.Request) (*v3.FilterAttributeValue
 }
 
 func validateQueryRangeParamsV3(qp *v3.QueryRangeParamsV3) error {
-	var errs []error
-
-	// validate the query type
-	if err := qp.CompositeQuery.QueryType.Validate(); err != nil {
-		errs = append(errs, err)
+	err := qp.CompositeQuery.Validate()
+	if err != nil {
+		return err
 	}
 
-	// validate the panel type
-	if err := qp.CompositeQuery.PanelType.Validate(); err != nil {
-		errs = append(errs, err)
+	var expressions []string
+	for _, q := range qp.CompositeQuery.BuilderQueries {
+		expressions = append(expressions, q.Expression)
 	}
-
-	if qp.CompositeQuery.BuilderQueries != nil {
-		for _, bq := range qp.CompositeQuery.BuilderQueries {
-			if err := bq.DataSource.Validate(); err != nil {
-				errs = append(errs, err)
-			}
-			if err := bq.AggregateOperator.Validate(); err != nil {
-				errs = append(errs, err)
-			}
-		}
-	}
-
-	if len(errs) != 0 {
-		return fmt.Errorf("one or more errors found : %s", metrics.FormatErrs(errs, ","))
+	errs := validateExpressions(expressions, evalFuncs)
+	if len(errs) > 0 {
+		return multierr.Combine(errs...)
 	}
 	return nil
+}
+
+// validateExpressions validates the math expressions using the list of
+// allowed functions.
+func validateExpressions(expressions []string, funcs map[string]govaluate.ExpressionFunction) []error {
+	var errs []error
+	for _, exp := range expressions {
+		_, err := govaluate.NewEvaluableExpressionWithFunctions(exp, funcs)
+		if err != nil {
+			errs = append(errs, err)
+		}
+	}
+	return errs
 }
 
 func ParseQueryRangeParams(r *http.Request) (*v3.QueryRangeParamsV3, *model.ApiError) {
@@ -954,7 +956,7 @@ func ParseQueryRangeParams(r *http.Request) (*v3.QueryRangeParamsV3, *model.ApiE
 		if postData.CompositeQuery.QueryType == v3.QueryTypePromQL {
 			formattedVars[name] = metrics.PromFormattedValue(value)
 		} else if postData.CompositeQuery.QueryType == v3.QueryTypeClickHouseSQL {
-			formattedVars[name] = metrics.FormattedValue(value)
+			formattedVars[name] = ClickHouseFormattedValue(value)
 		}
 	}
 

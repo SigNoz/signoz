@@ -2562,36 +2562,40 @@ func (aH *APIHandler) execPromQueries(ctx context.Context, metricsQueryRangePara
 	return res, nil, nil
 }
 
-func (aH *APIHandler) metricQueryRangeV3(metricsQueryRangeParams *v3.QueryRangeParamsV3, w http.ResponseWriter, r *http.Request) {
+func (aH *APIHandler) queryRangeV3(queryRangeParams *v3.QueryRangeParamsV3, w http.ResponseWriter, r *http.Request) {
 	// prometheus instant query needs same timestamp
-	if metricsQueryRangeParams.CompositeQuery.PanelType == v3.PanelTypeValue &&
-		metricsQueryRangeParams.CompositeQuery.QueryType == v3.QueryTypePromQL {
-		metricsQueryRangeParams.Start = metricsQueryRangeParams.End
+	if queryRangeParams.CompositeQuery.PanelType == v3.PanelTypeValue &&
+		queryRangeParams.CompositeQuery.QueryType == v3.QueryTypePromQL {
+		queryRangeParams.Start = queryRangeParams.End
 	}
 
 	// round up the end to neaerest multiple
-	if metricsQueryRangeParams.CompositeQuery.QueryType == v3.QueryTypeBuilder {
-		end := (metricsQueryRangeParams.End) / 1000
-		step := metricsQueryRangeParams.Step
-		metricsQueryRangeParams.End = (end / step * step) * 1000
+	if queryRangeParams.CompositeQuery.QueryType == v3.QueryTypeBuilder {
+		end := (queryRangeParams.End) / 1000
+		step := queryRangeParams.Step
+		queryRangeParams.End = (end / step * step) * 1000
 	}
 
 	var seriesList []*v3.Series
 	var res []*v3.Result
 	var err error
 	var errQuriesByName map[string]string
-	switch metricsQueryRangeParams.CompositeQuery.QueryType {
+	switch queryRangeParams.CompositeQuery.QueryType {
 	case v3.QueryTypeBuilder:
-		runQueries := metricsv3.PrepareBuilderMetricQueries(metricsQueryRangeParams, constants.SIGNOZ_TIMESERIES_TABLENAME)
-		if runQueries.Err != nil {
-			RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: runQueries.Err}, nil)
+		builderOpts := queryBuilderOptions{
+			BuildMetricQuery: metricsv3.PrepareMetricQuery,
+		}
+		builder := NewQueryBuilder(builderOpts)
+		queries, err := builder.prepareQueries(queryRangeParams)
+		if err != nil {
+			RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
 			return
 		}
-		res, err, errQuriesByName = aH.execClickHouseQueries(r.Context(), runQueries.Queries)
+		res, err, errQuriesByName = aH.execClickHouseQueries(r.Context(), queries)
 
 	case v3.QueryTypeClickHouseSQL:
 		queries := make(map[string]string)
-		for name, chQuery := range metricsQueryRangeParams.CompositeQuery.ClickHouseQueries {
+		for name, chQuery := range queryRangeParams.CompositeQuery.ClickHouseQueries {
 			if chQuery.Disabled {
 				continue
 			}
@@ -2604,9 +2608,9 @@ func (aH *APIHandler) metricQueryRangeV3(metricsQueryRangeParams *v3.QueryRangeP
 			var query bytes.Buffer
 
 			// replace go template variables
-			querytemplate.AssignReservedVarsV3(metricsQueryRangeParams)
+			querytemplate.AssignReservedVarsV3(queryRangeParams)
 
-			err = tmpl.Execute(&query, metricsQueryRangeParams.Variables)
+			err = tmpl.Execute(&query, queryRangeParams.Variables)
 			if err != nil {
 				RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
 				return
@@ -2616,7 +2620,7 @@ func (aH *APIHandler) metricQueryRangeV3(metricsQueryRangeParams *v3.QueryRangeP
 		}
 		res, err, errQuriesByName = aH.execClickHouseQueries(r.Context(), queries)
 	case v3.QueryTypePromQL:
-		res, err, errQuriesByName = aH.execPromQueries(r.Context(), metricsQueryRangeParams)
+		res, err, errQuriesByName = aH.execPromQueries(r.Context(), queryRangeParams)
 	default:
 		err = fmt.Errorf("invalid query type")
 		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, errQuriesByName)
@@ -2628,10 +2632,10 @@ func (aH *APIHandler) metricQueryRangeV3(metricsQueryRangeParams *v3.QueryRangeP
 		RespondError(w, apiErrObj, errQuriesByName)
 		return
 	}
-	if metricsQueryRangeParams.CompositeQuery.PanelType == v3.PanelTypeValue &&
+	if queryRangeParams.CompositeQuery.PanelType == v3.PanelTypeValue &&
 		len(seriesList) > 1 &&
-		(metricsQueryRangeParams.CompositeQuery.QueryType == v3.QueryTypeBuilder ||
-			metricsQueryRangeParams.CompositeQuery.QueryType == v3.QueryTypeClickHouseSQL) {
+		(queryRangeParams.CompositeQuery.QueryType == v3.QueryTypeBuilder ||
+			queryRangeParams.CompositeQuery.QueryType == v3.QueryTypeClickHouseSQL) {
 		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: fmt.Errorf("invalid: query resulted in more than one series for value type")}, nil)
 		return
 	}
@@ -2651,6 +2655,5 @@ func (aH *APIHandler) QueryRangeV3(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// TODO: handle three signals
-	aH.metricQueryRangeV3(queryRangeParams, w, r)
+	aH.queryRangeV3(queryRangeParams, w, r)
 }
