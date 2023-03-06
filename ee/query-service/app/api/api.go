@@ -144,9 +144,7 @@ func (ah *APIHandler) RegisterRoutes(router *mux.Router) {
 		Methods(http.MethodGet)
 
 	router.HandleFunc("/api/v1/pipelines",
-		// todo(nitya): commented for testing
-		// baseapp.AdminAccess(ah.createPipeline)).
-		ah.createPipeline).
+		baseapp.AdminAccess(ah.createPipeline)).
 		Methods(http.MethodPost)
 
 	// base overrides

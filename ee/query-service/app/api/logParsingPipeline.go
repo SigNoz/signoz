@@ -3,7 +3,6 @@ package api
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"net/http"
 
 	"go.signoz.io/signoz/ee/query-service/logparsingpipeline"
@@ -88,7 +87,7 @@ func (ah *APIHandler) createPipeline(w http.ResponseWriter, r *http.Request) {
 		RespondError(w, model.BadRequest(err), nil)
 		return
 	}
-	fmt.Println("req:", req)
+
 	createPipeline := func(ctx context.Context, postable []logparsingpipeline.PostablePipeline) (*logparsingpipeline.PipelinesResponse, *model.ApiError) {
 		if len(postable) == 0 {
 			zap.S().Warnf("found no pipelines in the http request, this will delete all the pipelines")
