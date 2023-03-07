@@ -11,22 +11,22 @@ export const renderPipelineForm = (
 	setTagsListData: (tags: Array<string>) => void,
 	tagsListData?: PipelineColumn['tags'],
 ): Array<JSX.Element> =>
-	pipelineFields.map((item) => {
-		if (item.id === '1') {
-			return <FilterSearch key={item.id} fieldData={item} />;
+	pipelineFields.map((fieldName) => {
+		if (fieldName.id === '1') {
+			return <FilterSearch key={fieldName.id} fieldData={fieldName} />;
 		}
-		if (item.id === '2') {
-			return <NameInput key={item.id} fieldData={item} />;
+		if (fieldName.id === '2') {
+			return <NameInput key={fieldName.id} fieldData={fieldName} />;
 		}
-		if (item.id === '3') {
+		if (fieldName.id === '3') {
 			return (
 				<ProcessorTags
-					key={item.id}
-					fieldData={item}
+					key={fieldName.id}
+					fieldData={fieldName}
 					setTagsListData={setTagsListData}
 					tagsListData={tagsListData as []}
 				/>
 			);
 		}
-		return <DescriptionTextArea key={item.id} fieldData={item} />;
+		return <DescriptionTextArea key={fieldName.id} fieldData={fieldName} />;
 	});

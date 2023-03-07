@@ -57,7 +57,7 @@ export const pipelineColumns: ColumnsType<PipelineColumn> = [
 		title: 'Last Edited',
 	},
 	{
-		key: 'updatedBy',
+		key: 'updatedBy.username',
 		title: 'Edited By',
 	},
 ];
