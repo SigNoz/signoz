@@ -1,6 +1,7 @@
 import updateDashboardApi from 'api/dashboard/update';
 import { AxiosError } from 'axios';
 import ROUTES from 'constants/routes';
+import { ITEMS } from 'container/NewDashboard/ComponentsSlider/menuItems';
 import history from 'lib/history';
 import { Layout } from 'react-grid-layout';
 import { generatePath } from 'react-router-dom';
@@ -21,12 +22,12 @@ export const SaveDashboard = ({
 	widgetId,
 	dashboardId,
 	yAxisUnit,
+	graphType,
 }: SaveDashboardProps): ((dispatch: Dispatch<AppActions>) => void) =>
 	// eslint-disable-next-line sonarjs/cognitive-complexity
 	async (dispatch: Dispatch<AppActions>): Promise<void> => {
 		try {
 			const dashboard = store.getState();
-			const search = new URLSearchParams(history.location.search);
 
 			const selectedDashboard = dashboard.dashboards.dashboards.find(
 				(e) => e.uuid === uuid,
@@ -105,7 +106,7 @@ export const SaveDashboard = ({
 							title: updatedTitle,
 							timePreferance: updatedtimePreferance,
 							yAxisUnit: updatedYAxisUnit,
-							panelTypes: search.get('graphType') as Widgets['panelTypes'],
+							panelTypes: graphType,
 							queryData: {
 								...selectedWidget.queryData,
 							},
@@ -151,4 +152,5 @@ export interface SaveDashboardProps {
 	widgetId: Widgets['id'];
 	dashboardId: string;
 	yAxisUnit: Widgets['yAxisUnit'];
+	graphType: ITEMS;
 }

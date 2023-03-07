@@ -1,6 +1,7 @@
 import { Button, Modal, Typography } from 'antd';
 import ROUTES from 'constants/routes';
 import { GRAPH_TYPES } from 'container/NewDashboard/ComponentsSlider';
+import { ITEMS } from 'container/NewDashboard/ComponentsSlider/menuItems';
 import { getDashboardVariables } from 'lib/dashbaordVariables/getDashboardVariables';
 import history from 'lib/history';
 import { DashboardWidgetPageParams } from 'pages/DashboardWidget';
@@ -86,6 +87,7 @@ function NewWidget({
 	const [saveModal, setSaveModal] = useState(false);
 	const [hasUnstagedChanges, setHasUnstagedChanges] = useState(false);
 
+	const [graphType, setGraphType] = useState(selectedGraph);
 	const getSelectedTime = useCallback(
 		() =>
 			TimeItems.find(
@@ -112,6 +114,7 @@ function NewWidget({
 			yAxisUnit,
 			widgetId: query.get('widgetId') || '',
 			dashboardId,
+			graphType,
 		});
 	}, [
 		saveSettingOfPanel,
@@ -125,6 +128,7 @@ function NewWidget({
 		yAxisUnit,
 		query,
 		dashboardId,
+		graphType,
 	]);
 
 	const onClickDiscardHandler = useCallback(() => {
@@ -140,7 +144,7 @@ function NewWidget({
 				query: selectedWidget?.query,
 				selectedTime: selectedTime.enum,
 				widgetId: selectedWidget?.id || '',
-				graphType: selectedGraph,
+				graphType,
 				globalSelectedInterval,
 				variables: getDashboardVariables(),
 			});
@@ -149,10 +153,17 @@ function NewWidget({
 		selectedWidget?.query,
 		selectedTime.enum,
 		selectedWidget?.id,
-		selectedGraph,
 		getQueryResults,
 		globalSelectedInterval,
+		graphType,
 	]);
+
+	const setGraphHandler = (type: ITEMS): void => {
+		const params = new URLSearchParams(search);
+		params.set('graphType', type);
+		history.push({ search: params.toString() });
+		setGraphType(type);
+	};
 
 	useEffect(() => {
 		getQueryResult();
@@ -173,13 +184,14 @@ function NewWidget({
 					<LeftContainer
 						handleUnstagedChanges={setHasUnstagedChanges}
 						selectedTime={selectedTime}
-						selectedGraph={selectedGraph}
+						selectedGraph={graphType}
 						yAxisUnit={yAxisUnit}
 					/>
 				</LeftContainerWrapper>
 
 				<RightContainerWrapper flex={1}>
 					<RightContainer
+						setGraphHandler={setGraphHandler}
 						{...{
 							title,
 							setTitle,
@@ -192,7 +204,7 @@ function NewWidget({
 							setOpacity,
 							selectedNullZeroValue,
 							setSelectedNullZeroValue,
-							selectedGraph,
+							selectedGraph: graphType,
 							setSelectedTime,
 							selectedTime,
 							setYAxisUnit,
