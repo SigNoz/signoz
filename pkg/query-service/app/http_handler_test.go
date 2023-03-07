@@ -67,7 +67,7 @@ func TestPrepareQuery(t *testing.T) {
 				Query: "ALTER TABLE signoz_table DELETE where true",
 			},
 			expectedErr: true,
-			errMsg:      "query shouldn't alter data",
+			errMsg:      "Operation alter table is not allowed",
 		},
 		{
 			name: "query text produces template exec error",
