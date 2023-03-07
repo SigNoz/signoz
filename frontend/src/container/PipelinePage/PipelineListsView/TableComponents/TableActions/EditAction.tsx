@@ -6,13 +6,12 @@ function EditAction({
 	isPipelineAction,
 	editAction,
 }: EditActionProps): JSX.Element {
+	if (isPipelineAction) {
+		return <EditOutlinedIcon onClick={editAction} />;
+	}
 	return (
-		<span key="edit-action">
-			{isPipelineAction ? (
-				<EditOutlinedIcon onClick={editAction} />
-			) : (
-				<SmallEditOutlinedIcon onClick={editAction} />
-			)}
+		<span key="delete-action">
+			<SmallEditOutlinedIcon onClick={editAction} />
 		</span>
 	);
 }

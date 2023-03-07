@@ -6,13 +6,12 @@ function DeleteAction({
 	isPipelineAction,
 	deleteAction,
 }: DeleteActionProps): JSX.Element {
+	if (isPipelineAction) {
+		return <DeleteFilledIcon onClick={deleteAction} />;
+	}
 	return (
 		<span key="delete-action">
-			{isPipelineAction ? (
-				<DeleteFilledIcon onClick={deleteAction} />
-			) : (
-				<SmallDeleteFilledIcon onClick={deleteAction} />
-			)}
+			<SmallDeleteFilledIcon onClick={deleteAction} />
 		</span>
 	);
 }

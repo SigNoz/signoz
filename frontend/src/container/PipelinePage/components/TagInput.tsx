@@ -3,7 +3,7 @@ import {
 	ExclamationCircleOutlined,
 } from '@ant-design/icons';
 import { Button, Input, InputRef, message, Modal, Tag, Tooltip } from 'antd';
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { tagInputStyle } from '../PipelineListsView/config';
@@ -120,6 +120,11 @@ function TagInput({
 		);
 	});
 
+	const isButtonVisible = useMemo(
+		() => tagsListData?.length || inputValue.length || inputValue,
+		[inputValue, tagsListData?.length],
+	);
+
 	return (
 		<TagInputWrapper>
 			<Input
@@ -137,7 +142,7 @@ function TagInput({
 				prefix={showAllData}
 			/>
 
-			{tagsListData?.length || inputValue.length || inputValue ? (
+			{isButtonVisible ? (
 				<Button onClick={handleClearAll} icon={<CloseCircleFilled />} type="text" />
 			) : null}
 		</TagInputWrapper>

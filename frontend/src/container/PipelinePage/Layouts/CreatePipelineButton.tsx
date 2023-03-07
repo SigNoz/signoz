@@ -15,6 +15,9 @@ function CreatePipelineButton({
 	const { t } = useTranslation(['pipeline']);
 
 	const isAddNewPipelineVisible = useMemo(() => pipelineMockData.length > 0, []);
+	const isDisabled = useMemo(() => isActionMode === ActionMode.Editing, [
+		isActionMode,
+	]);
 
 	const actionHandler = useCallback(
 		(functionToExecute: Dispatch<SetStateAction<string>>) => (): void => {
@@ -29,7 +32,7 @@ function CreatePipelineButton({
 			<CustomButton
 				icon={<EditFilled />}
 				onClick={actionHandler(() => setActionMode(ActionMode.Editing))}
-				disabled={isActionMode === ActionMode.Editing}
+				disabled={isDisabled}
 			>
 				{t('enter_edit_mode')}
 			</CustomButton>

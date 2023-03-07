@@ -150,6 +150,12 @@ function PipelineExpandView({
 		return undefined;
 	}, [addNewProcessorHandler, t, isActionMode]);
 
+	const onRowHandler = (index?: number): React.HTMLAttributes<unknown> =>
+		({
+			index,
+			moveRow: moveProcessorRow,
+		} as React.HTMLAttributes<unknown>);
+
 	return (
 		<DndProvider backend={HTML5Backend}>
 			<StyledTable
@@ -163,13 +169,7 @@ function PipelineExpandView({
 				onRow={(
 					_record: ProcessorColumn,
 					index?: number,
-				): React.HTMLAttributes<unknown> => {
-					const attr = {
-						index,
-						moveRow: moveProcessorRow,
-					};
-					return attr as React.HTMLAttributes<unknown>;
-				}}
+				): React.HTMLAttributes<unknown> => onRowHandler(index)}
 				footer={footer}
 			/>
 		</DndProvider>

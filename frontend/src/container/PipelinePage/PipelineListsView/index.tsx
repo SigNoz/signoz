@@ -275,6 +275,12 @@ function PipelineListsView({
 		setExpandedRow([]);
 	}, [prevPipelineData, setActionMode]);
 
+	const onRowHandler = (index?: number): React.HTMLAttributes<unknown> =>
+		({
+			index,
+			moveRow: movePipelineRow,
+		} as React.HTMLAttributes<unknown>);
+
 	return (
 		<div>
 			{contextHolder}
@@ -317,13 +323,7 @@ function PipelineListsView({
 						onRow={(
 							_record: PipelineColumn,
 							index?: number,
-						): React.HTMLAttributes<unknown> => {
-							const attr = {
-								index,
-								moveRow: movePipelineRow,
-							};
-							return attr as React.HTMLAttributes<unknown>;
-						}}
+						): React.HTMLAttributes<unknown> => onRowHandler(index)}
 						footer={footer}
 						pagination={false}
 					/>

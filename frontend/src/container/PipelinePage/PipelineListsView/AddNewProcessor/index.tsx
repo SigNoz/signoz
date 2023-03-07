@@ -107,11 +107,13 @@ function AddNewProcessor({
 		[setShowSaveButton],
 	);
 
+	const isOpen = useMemo(() => isEdit || isAdd, [isAdd, isEdit]);
+
 	return (
 		<Modal
 			title={<ModalTitle level={4}>{modalTitle}</ModalTitle>}
 			centered
-			open={isEdit || isAdd}
+			open={isOpen}
 			width={800}
 			footer={null}
 			onCancel={onCancelModal}
