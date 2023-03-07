@@ -2,9 +2,7 @@ import React from 'react';
 
 import { PipelineIndexIcon } from '../AddNewProcessor/styles';
 
-function PipelineSequence({
-	value,
-}: PipelineSequenceProps): React.ReactElement {
+function PipelineSequence({ value }: PipelineSequenceProps): JSX.Element {
 	return <PipelineIndexIcon>{value}</PipelineIndexIcon>;
 }
 

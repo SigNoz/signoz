@@ -7,7 +7,7 @@ function TableExpandIcon({
 	expanded,
 	onExpand,
 	record,
-}: TableExpandIconProps): React.ReactElement {
+}: TableExpandIconProps): JSX.Element {
 	if (expanded) {
 		return <DownOutlined onClick={(e): void => onExpand(record, e)} />;
 	}

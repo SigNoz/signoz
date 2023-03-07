@@ -1,4 +1,4 @@
-import { Avatar } from 'antd';
+import { Avatar, Select } from 'antd';
 import { themeColors } from 'constants/theme';
 import styled from 'styled-components';
 
@@ -35,4 +35,8 @@ export const FormWrapper = styled.div`
 
 export const ProcessorType = styled.span`
 	padding-bottom: 0.5rem;
+`;
+
+export const StyledSelect = styled(Select)`
+	width: 12.5rem;
 `;

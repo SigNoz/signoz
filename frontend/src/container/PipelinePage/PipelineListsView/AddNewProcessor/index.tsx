@@ -38,8 +38,9 @@ function AddNewProcessor({
 		}
 	}, [form, isEdit, isAdd, selectedProcessorData]);
 
-	const handleProcessorType = (type: string): void => {
-		setProcessorType(type);
+	const handleProcessorType = (value: string | unknown): void => {
+		const typedValue = (value as string) || DEFAULT_PROCESSOR_TYPE;
+		setProcessorType(typedValue);
 	};
 
 	const onFinish = (values: ProcessorColumn): void => {

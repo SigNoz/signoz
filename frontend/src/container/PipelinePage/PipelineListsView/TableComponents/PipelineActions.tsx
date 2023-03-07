@@ -9,7 +9,7 @@ function PipelineActions({
 	isPipelineAction,
 	editAction,
 	deleteAction,
-}: PipelineActionsProps): React.ReactElement {
+}: PipelineActionsProps): JSX.Element {
 	return (
 		<IconListStyle>
 			<EditAction editAction={editAction} isPipelineAction={isPipelineAction} />

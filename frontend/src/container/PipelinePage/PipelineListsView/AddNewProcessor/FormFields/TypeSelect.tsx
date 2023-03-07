@@ -8,6 +8,7 @@ import {
 	ProcessorType,
 	ProcessorTypeContainer,
 	ProcessorTypeWrapper,
+	StyledSelect,
 } from '../styles';
 
 function TypeSelect({ onChange, value }: TypeSelectProps): JSX.Element {
@@ -18,13 +19,16 @@ function TypeSelect({ onChange, value }: TypeSelectProps): JSX.Element {
 			<PipelineIndexIcon size="small">1</PipelineIndexIcon>
 			<ProcessorTypeContainer>
 				<ProcessorType>{t('processor_type')}</ProcessorType>
-				<Select style={{ width: 200 }} onChange={onChange} defaultValue={value}>
+				<StyledSelect
+					onChange={(value: string | unknown): void => onChange(value)}
+					defaultValue={value}
+				>
 					{processorTypes.map(({ value, label }) => (
 						<Select.Option key={value + label} value={value}>
 							{label}
 						</Select.Option>
 					))}
-				</Select>
+				</StyledSelect>
 			</ProcessorTypeContainer>
 		</ProcessorTypeWrapper>
 	);
@@ -35,7 +39,7 @@ TypeSelect.defaultProps = {
 };
 
 interface TypeSelectProps {
-	onChange: (type: string) => void;
+	onChange: (value: string | unknown) => void;
 	value?: string;
 }
 export default TypeSelect;

@@ -3,7 +3,7 @@ import React from 'react';
 
 import { PipelineColumn } from '../types';
 
-function Tags({ tags }: TagsProps): React.ReactElement {
+function Tags({ tags }: TagsProps): JSX.Element {
 	return (
 		<span>
 			{tags?.map((tag) => (
