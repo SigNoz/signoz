@@ -9,6 +9,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/jmoiron/sqlx"
 	"go.signoz.io/signoz/pkg/query-service/agentConf/sqlite"
+	"go.signoz.io/signoz/pkg/query-service/auth"
 	"go.signoz.io/signoz/pkg/query-service/model"
 	"go.uber.org/zap"
 )
@@ -127,22 +128,35 @@ func (r *Repo) insertConfig(ctx context.Context, c *ConfigVersion, elements []st
 		}
 	}()
 
+	// get user info from context
+	jwt, err := auth.ExtractJwtFromContext(ctx)
+	if err != nil {
+		return fmt.Errorf("failed to extract jwt from context", err)
+	}
+
+	claims, err := auth.ParseJWT(jwt)
+	if err != nil {
+		return fmt.Errorf("failed get claims from jwt", err)
+	}
+
 	// insert config
 	configQuery := `INSERT INTO agent_config_versions(	
 		id, 
-		version, 
+		version,
+		created_by, 
 		element_type, 
 		active, 
 		is_valid, 
 		disabled,
 		deploy_status, 
 		deploy_result) 
-	VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`
+	VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`
 
 	_, err = r.db.ExecContext(ctx,
 		configQuery,
 		c.ID,
 		c.Version,
+		claims["email"],
 		c.ElementType,
 		false,
 		false,
