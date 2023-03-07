@@ -210,7 +210,7 @@ func UpsertSamplingProcessor(ctx context.Context, version int, config *tsp.Confi
 }
 
 // UpsertPipelineProcessor updates the agent config with new filter processor params
-func UpsertPipelineProcessors(ctx context.Context, version int, config map[string]interface{}, names []interface{}) error {
+func UpsertPipelineProcessors(ctx context.Context, version int, rawPipelineData []byte, config map[string]interface{}, names []interface{}) error {
 	if !atomic.CompareAndSwapUint32(&m.lock, 0, 1) {
 		return fmt.Errorf("agent updater is busy")
 	}
@@ -223,11 +223,6 @@ func UpsertPipelineProcessors(ctx context.Context, version int, config map[strin
 		return err
 	}
 
-	processorConfYaml, err := yaml.Marshal(config)
-	if err != nil {
-		zap.S().Warnf("unexpected error while transforming processor config to yaml", err)
-	}
-
-	m.updateDeployStatus(ctx, ElementTypeLogPipelines, version, string(DeployInitiated), "Deployment started", configHash, string(processorConfYaml))
+	m.updateDeployStatus(ctx, ElementTypeLogPipelines, version, string(DeployInitiated), "Deployment started", configHash, string(rawPipelineData))
 	return nil
 }

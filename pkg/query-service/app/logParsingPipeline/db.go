@@ -4,12 +4,14 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/jmoiron/sqlx"
 	"github.com/pkg/errors"
-	"go.signoz.io/signoz/ee/query-service/logparsingpipeline/sqlite"
-	"go.signoz.io/signoz/ee/query-service/model"
+	"go.signoz.io/signoz/pkg/query-service/app/logparsingpipeline/sqlite"
+	"go.signoz.io/signoz/pkg/query-service/auth"
+	"go.signoz.io/signoz/pkg/query-service/model"
 	"go.uber.org/zap"
 )
 
@@ -47,6 +49,16 @@ func (r *Repo) insertPipeline(ctx context.Context, postable *PostablePipeline) (
 		return nil, errors.Wrap(err, "failed to unmarshal postable ingestion config")
 	}
 
+	jwt, err := auth.ExtractJwtFromContext(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	claims, err := auth.ParseJWT(jwt)
+	if err != nil {
+		return nil, err
+	}
+
 	insertRow := &model.Pipeline{
 		Id:        uuid.New().String(),
 		OrderId:   postable.OrderId,
@@ -56,6 +68,10 @@ func (r *Repo) insertPipeline(ctx context.Context, postable *PostablePipeline) (
 		Filter:    postable.Filter,
 		Config:    postable.Config,
 		RawConfig: string(rawConfig),
+		Creator: model.Creator{
+			CreatedBy: claims["email"].(string),
+			CreatedAt: time.Now(),
+		},
 	}
 
 	insertQuery := `INSERT INTO pipelines 
@@ -83,11 +99,15 @@ func (r *Repo) insertPipeline(ctx context.Context, postable *PostablePipeline) (
 // getPipelinesByVersion returns pipelines associated with a given version
 func (r *Repo) getPipelinesByVersion(ctx context.Context, version int) ([]model.Pipeline, []error) {
 	var errors []error
-	pipelines := []model.Pipeline{}
+	pipelines := []*model.Pipeline{}
+	res := []model.Pipeline{}
 
 	versionQuery := `SELECT r.id, 
 		r.name, 
 		r.config_json,
+		r.alias,
+		r.filter,
+		r.order_id
 		FROM pipelines r,
 			 agent_config_elements e,
 			 agent_config_versions v
@@ -102,16 +122,17 @@ func (r *Repo) getPipelinesByVersion(ctx context.Context, version int) ([]model.
 	}
 
 	if len(pipelines) == 0 {
-		return pipelines, nil
+		return res, nil
 	}
 
 	for _, d := range pipelines {
 		if err := d.ParseRawConfig(); err != nil {
 			errors = append(errors, err)
 		}
+		res = append(res, *d)
 	}
 
-	return pipelines, errors
+	return res, errors
 }
 
 // GetPipelines returns pipeline and errors (if any)
@@ -120,7 +141,7 @@ func (r *Repo) GetPipeline(ctx context.Context, id string) (*model.Pipeline, *mo
 
 	pipelineQuery := `SELECT id, 
 		name, 
-		config_json,
+		config_json
 		FROM pipelines 
 		WHERE id = $1`
 
@@ -139,12 +160,12 @@ func (r *Repo) GetPipeline(ctx context.Context, id string) (*model.Pipeline, *mo
 		err := pipelines[0].ParseRawConfig()
 		if err != nil {
 			zap.S().Errorf("invalid pipeline config found", id, err)
-			return &pipelines[0], model.InternalErrorStr("found an invalid pipeline config ")
+			return &pipelines[0], model.InternalError(fmt.Errorf("found an invalid pipeline config "))
 		}
 		return &pipelines[0], nil
 	}
 
-	return nil, model.InternalErrorStr("mutliple pipelines with same id")
+	return nil, model.InternalError(fmt.Errorf("mutliple pipelines with same id"))
 
 }
 

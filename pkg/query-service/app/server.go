@@ -18,8 +18,10 @@ import (
 
 	"github.com/rs/cors"
 	"github.com/soheilhy/cmux"
+	"go.signoz.io/signoz/pkg/query-service/agentConf"
 	"go.signoz.io/signoz/pkg/query-service/app/clickhouseReader"
 	"go.signoz.io/signoz/pkg/query-service/app/dashboards"
+	logparsingpipeline "go.signoz.io/signoz/pkg/query-service/app/logParsingPipeline"
 	opamp "go.signoz.io/signoz/pkg/query-service/app/opamp"
 	opAmpModel "go.signoz.io/signoz/pkg/query-service/app/opamp/model"
 
@@ -108,12 +110,30 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 		return nil, err
 	}
 
+	// ingestion pipelines manager
+	pipelinesController, err := logparsingpipeline.NewPipelinesController(localDB, "sqlite")
+	if err != nil {
+		return nil, err
+	}
+
+	// initiate opamp
+	_, err = opAmpModel.InitDB(constants.RELATIONAL_DATASOURCE_PATH)
+	if err != nil {
+		return nil, err
+	}
+
+	// initiate agent config handler
+	if err := agentConf.Initiate(localDB, "sqlite"); err != nil {
+		return nil, err
+	}
+
 	telemetry.GetInstance().SetReader(reader)
 	apiHandler, err := NewAPIHandler(APIHandlerOpts{
-		Reader:       reader,
-		AppDao:       dao.DB(),
-		RuleManager:  rm,
-		FeatureFlags: fm,
+		Reader:                        reader,
+		AppDao:                        dao.DB(),
+		RuleManager:                   rm,
+		FeatureFlags:                  fm,
+		LogsParsingPipelineController: pipelinesController,
 	})
 	if err != nil {
 		return nil, err
@@ -187,6 +207,7 @@ func (s *Server) createPublicServer(api *APIHandler) (*http.Server, error) {
 	api.RegisterRoutes(r)
 	api.RegisterMetricsRoutes(r)
 	api.RegisterLogsRoutes(r)
+	api.RegisterLogParsingPipelineRoutes(r)
 
 	c := cors.New(cors.Options{
 		AllowedOrigins: []string{"*"},

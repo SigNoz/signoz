@@ -8,7 +8,6 @@ import (
 	"go.signoz.io/signoz/ee/query-service/ingestionRules"
 	"go.signoz.io/signoz/ee/query-service/interfaces"
 	"go.signoz.io/signoz/ee/query-service/license"
-	"go.signoz.io/signoz/ee/query-service/logparsingpipeline"
 	baseapp "go.signoz.io/signoz/pkg/query-service/app"
 	baseint "go.signoz.io/signoz/pkg/query-service/interfaces"
 	basemodel "go.signoz.io/signoz/pkg/query-service/model"
@@ -17,13 +16,12 @@ import (
 )
 
 type APIHandlerOptions struct {
-	DataConnector                 interfaces.DataConnector
-	AppDao                        dao.ModelDao
-	RulesManager                  *rules.Manager
-	FeatureFlags                  baseint.FeatureLookup
-	LicenseManager                *license.Manager
-	IngestionController           *ingestionRules.IngestionController
-	LogsParsingPipelineController *logparsingpipeline.PipelineController
+	DataConnector       interfaces.DataConnector
+	AppDao              dao.ModelDao
+	RulesManager        *rules.Manager
+	FeatureFlags        baseint.FeatureLookup
+	LicenseManager      *license.Manager
+	IngestionController *ingestionRules.IngestionController
 }
 
 type APIHandler struct {
@@ -137,14 +135,6 @@ func (ah *APIHandler) RegisterRoutes(router *mux.Router) {
 		// todo(amol): commented for testing
 		// baseapp.AdminAccess(ah.createSamplingRule)).
 		ah.createSamplingRule).
-		Methods(http.MethodPost)
-
-	router.HandleFunc("/api/v1/pipelines/{version}",
-		baseapp.AdminAccess(ah.listPipelinesHandler)).
-		Methods(http.MethodGet)
-
-	router.HandleFunc("/api/v1/pipelines",
-		baseapp.AdminAccess(ah.createPipeline)).
 		Methods(http.MethodPost)
 
 	// base overrides

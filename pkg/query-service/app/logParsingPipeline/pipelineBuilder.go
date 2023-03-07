@@ -1,7 +1,7 @@
 package logparsingpipeline
 
 import (
-	"go.signoz.io/signoz/ee/query-service/model"
+	"go.signoz.io/signoz/pkg/query-service/model"
 )
 
 const (

@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	. "github.com/smartystreets/goconvey/convey"
-	"go.signoz.io/signoz/ee/query-service/model"
+	"go.signoz.io/signoz/pkg/query-service/model"
 )
 
 var correctQueriesTest = []struct {

@@ -3,7 +3,7 @@ package logparsingpipeline
 import (
 	"fmt"
 
-	"go.signoz.io/signoz/ee/query-service/model"
+	"go.signoz.io/signoz/pkg/query-service/model"
 )
 
 // PostablePipelines are a list of user defined pielines

@@ -24,7 +24,6 @@ import (
 	"go.signoz.io/signoz/ee/query-service/ingestionRules"
 	"go.signoz.io/signoz/ee/query-service/interfaces"
 	licensepkg "go.signoz.io/signoz/ee/query-service/license"
-	"go.signoz.io/signoz/ee/query-service/logparsingpipeline"
 	"go.signoz.io/signoz/ee/query-service/usage"
 
 	"go.signoz.io/signoz/pkg/query-service/agentConf"
@@ -135,12 +134,6 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 		return nil, err
 	}
 
-	// ingestion pipelines manager
-	pipelinesController, err := logparsingpipeline.NewPipelinesController(localDB, AppDbEngine)
-	if err != nil {
-		return nil, err
-	}
-
 	// initiate opamp
 	_, err = opAmpModel.InitDB(baseconst.RELATIONAL_DATASOURCE_PATH)
 	if err != nil {
@@ -165,13 +158,12 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 	telemetry.GetInstance().SetReader(reader)
 
 	apiOpts := api.APIHandlerOptions{
-		DataConnector:                 reader,
-		AppDao:                        modelDao,
-		RulesManager:                  rm,
-		FeatureFlags:                  lm,
-		LicenseManager:                lm,
-		IngestionController:           ingestionController,
-		LogsParsingPipelineController: pipelinesController,
+		DataConnector:       reader,
+		AppDao:              modelDao,
+		RulesManager:        rm,
+		FeatureFlags:        lm,
+		LicenseManager:      lm,
+		IngestionController: ingestionController,
 	}
 
 	apiHandler, err := api.NewAPIHandler(apiOpts)
