@@ -67,7 +67,7 @@ describe('Utils testing of Pipeline Page', () => {
 		const findRecordIndex = getRecordIndex(
 			pipelineMockData,
 			pipelineMockData[0],
-			'name' as never,
+			'name',
 		);
 		const updatedPipelineData = {
 			...pipelineMockData[findRecordIndex],
@@ -79,7 +79,7 @@ describe('Utils testing of Pipeline Page', () => {
 		const editedData = getEditedDataSource(
 			pipelineMockData,
 			pipelineMockData[0],
-			'name' as never,
+			'name',
 			updatedPipelineData,
 		);
 		expect(pipelineMockData).not.toEqual(editedData);

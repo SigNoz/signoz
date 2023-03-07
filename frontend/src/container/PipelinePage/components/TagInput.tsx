@@ -8,6 +8,7 @@ import { useTranslation } from 'react-i18next';
 
 import { tagInputStyle } from '../PipelineListsView/config';
 import { PipelineColumn } from '../PipelineListsView/types';
+import { TagInputWrapper } from './styles';
 
 function TagInput({
 	setTagsListData,
@@ -120,7 +121,7 @@ function TagInput({
 	});
 
 	return (
-		<div style={{ display: 'flex', width: '100%' }}>
+		<TagInputWrapper>
 			<Input
 				ref={inputRef}
 				type="text"
@@ -139,7 +140,7 @@ function TagInput({
 			{tagsListData?.length || inputValue.length || inputValue ? (
 				<Button onClick={handleClearAll} icon={<CloseCircleFilled />} type="text" />
 			) : null}
-		</div>
+		</TagInputWrapper>
 	);
 }
 

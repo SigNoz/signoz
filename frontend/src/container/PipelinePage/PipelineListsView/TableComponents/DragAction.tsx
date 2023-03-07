@@ -1,7 +1,11 @@
 import { Switch } from 'antd';
 import React from 'react';
 
-import { HolderOutlinedIcon, LastActionColumn } from '../styles';
+import {
+	HolderIconWrapper,
+	HolderOutlinedIcon,
+	LastActionColumn,
+} from '../styles';
 
 function DragAction(): JSX.Element {
 	return (
@@ -9,9 +13,9 @@ function DragAction(): JSX.Element {
 			<span>
 				<Switch />
 			</span>
-			<span style={{ cursor: 'move' }}>
+			<HolderIconWrapper>
 				<HolderOutlinedIcon />
-			</span>
+			</HolderIconWrapper>
 		</LastActionColumn>
 	);
 }

@@ -116,7 +116,7 @@ function AddNewProcessor({
 		>
 			<Divider plain />
 			<Form
-				name="addNewProcessor"
+				name="add-new-processor"
 				layout="vertical"
 				style={{ marginTop: '1.25rem' }}
 				onFinish={onFinish}

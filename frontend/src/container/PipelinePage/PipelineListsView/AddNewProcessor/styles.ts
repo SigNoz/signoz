@@ -28,3 +28,11 @@ export const Container = styled.div`
 	gap: 1rem;
 	width: 100%;
 `;
+
+export const FormWrapper = styled.div`
+	width: 100%;
+`;
+
+export const ProcessorType = styled.span`
+	padding-bottom: 0.5rem;
+`;

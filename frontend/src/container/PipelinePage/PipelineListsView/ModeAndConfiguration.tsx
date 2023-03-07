@@ -9,10 +9,8 @@ function ModeAndConfiguration({
 }: ModeAndConfigurationType): JSX.Element {
 	return (
 		<ModeAndConfigWrapper>
-			<div>
-				Mode:{' '}
-				<span>{isActionMode === ActionMode.Editing ? 'Editing' : 'Viewing'}</span>
-			</div>
+			Mode:{' '}
+			<span>{isActionMode === ActionMode.Editing ? 'Editing' : 'Viewing'}</span>
 			<div>Configuration Version {verison}</div>
 		</ModeAndConfigWrapper>
 	);

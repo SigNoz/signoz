@@ -124,7 +124,7 @@ function AddNewPipeline({
 		>
 			<Divider plain />
 			<Form
-				name="addNewPipeline"
+				name="add-new-pipeline"
 				layout="vertical"
 				onFinish={onFinish}
 				autoComplete="off"

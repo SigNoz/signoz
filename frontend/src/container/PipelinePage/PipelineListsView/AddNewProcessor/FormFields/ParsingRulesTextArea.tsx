@@ -4,7 +4,7 @@ import React from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { ProcessorFormField } from '../config';
-import { Container, PipelineIndexIcon } from '../styles';
+import { Container, FormWrapper, PipelineIndexIcon } from '../styles';
 
 function ParsingRulesTextArea({
 	fieldData,
@@ -16,7 +16,7 @@ function ParsingRulesTextArea({
 			<PipelineIndexIcon size="small">
 				{Number(fieldData.id) + 1}
 			</PipelineIndexIcon>
-			<div style={{ width: '100%' }}>
+			<FormWrapper>
 				<Form.Item
 					name={fieldData.name}
 					label={<ModalFooterTitle>{fieldData.fieldName}</ModalFooterTitle>}
@@ -27,7 +27,7 @@ function ParsingRulesTextArea({
 						placeholder={t(fieldData.placeholder)}
 					/>
 				</Form.Item>
-			</div>
+			</FormWrapper>
 		</Container>
 	);
 }

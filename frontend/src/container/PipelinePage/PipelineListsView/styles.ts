@@ -154,3 +154,7 @@ export const SaveConfigWrapper = styled.div`
 	gap: 0.938rem;
 	margin-top: 1.25rem;
 `;
+
+export const HolderIconWrapper = styled.span`
+	cursor: move;
+`;

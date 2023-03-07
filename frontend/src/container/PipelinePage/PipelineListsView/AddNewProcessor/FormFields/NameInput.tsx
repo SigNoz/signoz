@@ -4,7 +4,7 @@ import React from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { ProcessorFormField } from '../config';
-import { Container, PipelineIndexIcon } from '../styles';
+import { Container, FormWrapper, PipelineIndexIcon } from '../styles';
 
 function NameInput({ fieldData }: NameInputProps): JSX.Element {
 	const { t } = useTranslation('pipeline');
@@ -14,7 +14,7 @@ function NameInput({ fieldData }: NameInputProps): JSX.Element {
 			<PipelineIndexIcon size="small">
 				{Number(fieldData.id) + 1}
 			</PipelineIndexIcon>
-			<div style={{ width: '100%' }}>
+			<FormWrapper>
 				<Form.Item
 					required={false}
 					label={<ModalFooterTitle>{fieldData.fieldName}</ModalFooterTitle>}
@@ -28,7 +28,7 @@ function NameInput({ fieldData }: NameInputProps): JSX.Element {
 				>
 					<Input placeholder={t(fieldData.placeholder)} name={fieldData.name} />
 				</Form.Item>
-			</div>
+			</FormWrapper>
 		</Container>
 	);
 }
