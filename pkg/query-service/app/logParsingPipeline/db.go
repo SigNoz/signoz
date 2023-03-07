@@ -99,8 +99,7 @@ func (r *Repo) insertPipeline(ctx context.Context, postable *PostablePipeline) (
 // getPipelinesByVersion returns pipelines associated with a given version
 func (r *Repo) getPipelinesByVersion(ctx context.Context, version int) ([]model.Pipeline, []error) {
 	var errors []error
-	pipelines := []*model.Pipeline{}
-	res := []model.Pipeline{}
+	pipelines := []model.Pipeline{}
 
 	versionQuery := `SELECT r.id, 
 		r.name, 
@@ -122,17 +121,16 @@ func (r *Repo) getPipelinesByVersion(ctx context.Context, version int) ([]model.
 	}
 
 	if len(pipelines) == 0 {
-		return res, nil
+		return pipelines, nil
 	}
 
-	for _, d := range pipelines {
-		if err := d.ParseRawConfig(); err != nil {
+	for i := range pipelines {
+		if err := pipelines[i].ParseRawConfig(); err != nil {
 			errors = append(errors, err)
 		}
-		res = append(res, *d)
 	}
 
-	return res, errors
+	return pipelines, errors
 }
 
 // GetPipelines returns pipeline and errors (if any)
@@ -165,7 +163,7 @@ func (r *Repo) GetPipeline(ctx context.Context, id string) (*model.Pipeline, *mo
 		return &pipelines[0], nil
 	}
 
-	return nil, model.InternalError(fmt.Errorf("mutliple pipelines with same id"))
+	return nil, model.InternalError(fmt.Errorf("multiple pipelines with same id"))
 
 }
 
