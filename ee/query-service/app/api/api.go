@@ -9,6 +9,7 @@ import (
 	"go.signoz.io/signoz/ee/query-service/interfaces"
 	"go.signoz.io/signoz/ee/query-service/license"
 	baseapp "go.signoz.io/signoz/pkg/query-service/app"
+	"go.signoz.io/signoz/pkg/query-service/app/logparsingpipeline"
 	baseint "go.signoz.io/signoz/pkg/query-service/interfaces"
 	basemodel "go.signoz.io/signoz/pkg/query-service/model"
 	rules "go.signoz.io/signoz/pkg/query-service/rules"
@@ -16,12 +17,13 @@ import (
 )
 
 type APIHandlerOptions struct {
-	DataConnector       interfaces.DataConnector
-	AppDao              dao.ModelDao
-	RulesManager        *rules.Manager
-	FeatureFlags        baseint.FeatureLookup
-	LicenseManager      *license.Manager
-	IngestionController *ingestionRules.IngestionController
+	DataConnector                 interfaces.DataConnector
+	AppDao                        dao.ModelDao
+	RulesManager                  *rules.Manager
+	FeatureFlags                  baseint.FeatureLookup
+	LicenseManager                *license.Manager
+	IngestionController           *ingestionRules.IngestionController
+	LogsParsingPipelineController *logparsingpipeline.PipelineController
 }
 
 type APIHandler struct {
@@ -33,10 +35,12 @@ type APIHandler struct {
 func NewAPIHandler(opts APIHandlerOptions) (*APIHandler, error) {
 
 	baseHandler, err := baseapp.NewAPIHandler(baseapp.APIHandlerOpts{
-		Reader:       opts.DataConnector,
-		AppDao:       opts.AppDao,
-		RuleManager:  opts.RulesManager,
-		FeatureFlags: opts.FeatureFlags})
+		Reader:                        opts.DataConnector,
+		AppDao:                        opts.AppDao,
+		RuleManager:                   opts.RulesManager,
+		FeatureFlags:                  opts.FeatureFlags,
+		LogsParsingPipelineController: opts.LogsParsingPipelineController,
+	})
 
 	if err != nil {
 		return nil, err

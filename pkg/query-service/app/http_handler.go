@@ -3,6 +3,7 @@ package app
 import (
 	"bytes"
 	"context"
+	"database/sql"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -20,7 +21,7 @@ import (
 	"github.com/prometheus/prometheus/promql"
 	"go.signoz.io/signoz/pkg/query-service/agentConf"
 	"go.signoz.io/signoz/pkg/query-service/app/dashboards"
-	logparsingpipeline "go.signoz.io/signoz/pkg/query-service/app/logParsingPipeline"
+	logparsingpipeline "go.signoz.io/signoz/pkg/query-service/app/logparsingpipeline"
 	"go.signoz.io/signoz/pkg/query-service/app/logs"
 	"go.signoz.io/signoz/pkg/query-service/app/metrics"
 	"go.signoz.io/signoz/pkg/query-service/app/parser"
@@ -2236,6 +2237,10 @@ func (aH *APIHandler) RegisterLogsRoutes(router *mux.Router) {
 	subRouter.HandleFunc("/fields", ViewAccess(aH.logFields)).Methods(http.MethodGet)
 	subRouter.HandleFunc("/fields", EditAccess(aH.logFieldUpdate)).Methods(http.MethodPost)
 	subRouter.HandleFunc("/aggregate", ViewAccess(aH.logAggregate)).Methods(http.MethodGet)
+
+	// log pipelines
+	subRouter.HandleFunc("/pipelines/{version}", EditAccess(aH.listPipelinesHandler)).Methods(http.MethodGet)
+	subRouter.HandleFunc("/pipelines", EditAccess(aH.createPipeline)).Methods(http.MethodPost)
 }
 
 func (aH *APIHandler) logFields(w http.ResponseWriter, r *http.Request) {
@@ -2347,12 +2352,6 @@ func (aH *APIHandler) logAggregate(w http.ResponseWriter, r *http.Request) {
 	aH.WriteJSON(w, r, res)
 }
 
-// pipelines
-func (aH *APIHandler) RegisterLogParsingPipelineRoutes(router *mux.Router) {
-	router.HandleFunc("/api/v1/pipelines/{version}", EditAccess(aH.listPipelinesHandler)).Methods(http.MethodGet)
-	router.HandleFunc("/api/v1/pipelines", EditAccess(aH.createPipeline)).Methods(http.MethodPost)
-}
-
 const logPipelines = "log_pipelines"
 
 func parseAgentConfigVersion(r *http.Request) (int, *model.ApiError) {
@@ -2399,9 +2398,13 @@ func (ah *APIHandler) listPipelinesHandler(w http.ResponseWriter, r *http.Reques
 func (ah *APIHandler) listPipelines(ctx context.Context) (*logparsingpipeline.PipelinesResponse, *model.ApiError) {
 	// get lateset agent config
 	lastestConfig, err := agentConf.GetLatestVersion(ctx, logPipelines)
-	if err != nil || lastestConfig == nil {
-		zap.S().Errorf("failed to get latest agent config version ", err)
-		return nil, model.InternalError(fmt.Errorf("Failed to get latest agent config version"))
+	if err != nil {
+		if err != sql.ErrNoRows {
+			zap.S().Errorf("failed to get latest agent config version ", err)
+			return nil, model.InternalError(fmt.Errorf("Failed to get latest agent config version"))
+		} else {
+			return nil, nil
+		}
 	}
 
 	payload, apierr := ah.LogsParsingPipelineController.GetPipelinesByVersion(ctx, lastestConfig.Version)

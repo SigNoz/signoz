@@ -21,7 +21,7 @@ import (
 	"go.signoz.io/signoz/pkg/query-service/agentConf"
 	"go.signoz.io/signoz/pkg/query-service/app/clickhouseReader"
 	"go.signoz.io/signoz/pkg/query-service/app/dashboards"
-	logparsingpipeline "go.signoz.io/signoz/pkg/query-service/app/logParsingPipeline"
+	logparsingpipeline "go.signoz.io/signoz/pkg/query-service/app/logparsingpipeline"
 	opamp "go.signoz.io/signoz/pkg/query-service/app/opamp"
 	opAmpModel "go.signoz.io/signoz/pkg/query-service/app/opamp/model"
 
@@ -207,7 +207,6 @@ func (s *Server) createPublicServer(api *APIHandler) (*http.Server, error) {
 	api.RegisterRoutes(r)
 	api.RegisterMetricsRoutes(r)
 	api.RegisterLogsRoutes(r)
-	api.RegisterLogParsingPipelineRoutes(r)
 
 	c := cors.New(cors.Options{
 		AllowedOrigins: []string{"*"},
