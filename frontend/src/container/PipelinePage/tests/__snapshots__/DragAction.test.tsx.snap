@@ -2,7 +2,7 @@
 
 exports[`PipelinePage container test should render DragAction section 1`] = `
 <DocumentFragment>
-  .c1 {
+  .c2 {
   color: #8DCFF8;
   font-size: 1.12rem;
 }
@@ -21,6 +21,10 @@ exports[`PipelinePage container test should render DragAction section 1`] = `
   -webkit-box-align: center;
   -ms-flex-align: center;
   align-items: center;
+}
+
+.c1 {
+  cursor: move;
 }
 
 <div
@@ -49,11 +53,11 @@ exports[`PipelinePage container test should render DragAction section 1`] = `
       </button>
     </span>
     <span
-      style="cursor: move;"
+      class="c1"
     >
       <span
         aria-label="holder"
-        class="anticon anticon-holder c1"
+        class="anticon anticon-holder c2"
         role="img"
       >
         <svg

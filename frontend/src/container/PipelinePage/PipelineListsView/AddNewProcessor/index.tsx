@@ -39,21 +39,22 @@ function AddNewProcessor({
 	}, [form, isEdit, isAdd, selectedProcessorData]);
 
 	const handleProcessorType = (value: string | unknown): void => {
-		const typedValue = (value as string) || DEFAULT_PROCESSOR_TYPE;
+		const typedValue = String(value) || DEFAULT_PROCESSOR_TYPE;
 		setProcessorType(typedValue);
 	};
 
 	const onFinish = (values: ProcessorColumn): void => {
+		const totalDataLength = expandedPipelineData?.operators.length;
 		const newProcessorData: ProcessorColumn = {
-			id: (expandedPipelineData.operators.length + 1).toString(),
+			id: (Number(totalDataLength || 0) + 1).toString(),
 			type: processorType,
 			name: values.name,
 			output: values.output,
 		};
 
-		if (isEdit && selectedProcessorData) {
+		if (isEdit && selectedProcessorData && expandedPipelineData?.operators) {
 			const findRecordIndex = getRecordIndex(
-				expandedPipelineData.operators,
+				expandedPipelineData?.operators,
 				selectedProcessorData,
 				'id',
 			);
@@ -78,7 +79,7 @@ function AddNewProcessor({
 
 			setExpandedPipelineData(modifiedProcessorData);
 		}
-		if (isAdd) {
+		if (isAdd && expandedPipelineData) {
 			const modifiedProcessorData = { ...expandedPipelineData };
 			modifiedProcessorData.operators = [
 				...modifiedProcessorData.operators,
@@ -155,7 +156,7 @@ interface AddNewProcessorProps {
 	setActionType: (actionType?: ActionType) => void;
 	selectedProcessorData?: ProcessorColumn;
 	setShowSaveButton: (actionMode: ActionMode) => void;
-	expandedPipelineData: PipelineColumn;
+	expandedPipelineData: PipelineColumn | undefined;
 	setExpandedPipelineData: (data: PipelineColumn) => void;
 }
 

@@ -17,7 +17,7 @@ function PipelinePageLayout(): JSX.Element {
 			/>
 			<PipelinesSearchSection />
 			<PipelineListsView
-				isActionType={isActionType as string}
+				isActionType={String(isActionType)}
 				setActionType={setActionType}
 				setActionMode={setActionMode}
 				isActionMode={isActionMode}

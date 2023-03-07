@@ -200,7 +200,7 @@ function PipelineListsView({
 				setActionType={setActionType}
 				processorEditAction={processorEditAction}
 				setShowSaveButton={setShowSaveButton}
-				expandedPipelineData={expandedPipelineData as PipelineColumn}
+				expandedPipelineData={expandedPipelineData}
 				setExpandedPipelineData={setExpandedPipelineData}
 				processorData={processorData}
 			/>
@@ -291,7 +291,7 @@ function PipelineListsView({
 				setActionType={setActionType}
 				selectedProcessorData={selectedProcessorData}
 				setShowSaveButton={setShowSaveButton}
-				expandedPipelineData={expandedPipelineData as PipelineColumn}
+				expandedPipelineData={expandedPipelineData}
 				setExpandedPipelineData={setExpandedPipelineData}
 			/>
 			<Container>

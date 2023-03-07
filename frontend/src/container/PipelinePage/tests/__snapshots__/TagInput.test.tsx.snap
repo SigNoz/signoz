@@ -2,8 +2,16 @@
 
 exports[`Pipeline Page should render TagInput section 1`] = `
 <DocumentFragment>
-  <div
-    style="display: flex; width: 100%;"
+  .c0 {
+  display: -webkit-box;
+  display: -webkit-flex;
+  display: -ms-flexbox;
+  display: flex;
+  width: 100%;
+}
+
+<div
+    class="c0"
   >
     <span
       class="ant-input-affix-wrapper css-dev-only-do-not-override-1i536d8"

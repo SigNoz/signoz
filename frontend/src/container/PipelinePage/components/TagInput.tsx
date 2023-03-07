@@ -43,8 +43,8 @@ function TagInput({
 	};
 
 	const handleInputConfirm = (): void => {
-		if (inputValue && tagsListData?.indexOf(inputValue as never) === -1) {
-			setTagsListData([...tagsListData, inputValue] as never);
+		if (inputValue && tagsListData?.indexOf(inputValue) === -1) {
+			setTagsListData([...tagsListData, inputValue]);
 		}
 		setInputVisible(false);
 		setInputValue('');

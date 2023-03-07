@@ -36,12 +36,14 @@ function PipelineExpandView({
 	const deleteProcessorHandler = useCallback(
 		(record: ProcessorColumn) => (): void => {
 			setShowSaveButton(ActionMode.Editing);
-			const filteredProcessorData = expandedPipelineData.operators.filter(
-				(item: PipelineOperators) => item.id !== record.id,
-			);
-			const modifiedProcessorData = { ...expandedPipelineData };
-			modifiedProcessorData.operators = filteredProcessorData;
-			setExpandedPipelineData(modifiedProcessorData);
+			if (expandedPipelineData) {
+				const filteredProcessorData = expandedPipelineData?.operators.filter(
+					(item: PipelineOperators) => item.id !== record.id,
+				);
+				const modifiedProcessorData = { ...expandedPipelineData };
+				modifiedProcessorData.operators = filteredProcessorData;
+				setExpandedPipelineData(modifiedProcessorData);
+			}
 		},
 		[expandedPipelineData, setShowSaveButton, setExpandedPipelineData],
 	);
@@ -88,25 +90,27 @@ function PipelineExpandView({
 	const reorderProcessorRow = useCallback(
 		(updatedRow: PipelineOperators[]) => (): void => {
 			setShowSaveButton(ActionMode.Editing);
-			const modifiedProcessorData = { ...expandedPipelineData };
-			modifiedProcessorData.operators = updatedRow;
-			setExpandedPipelineData(modifiedProcessorData);
+			if (expandedPipelineData) {
+				const modifiedProcessorData = { ...expandedPipelineData };
+				modifiedProcessorData.operators = updatedRow;
+				setExpandedPipelineData(modifiedProcessorData);
+			}
 		},
 		[expandedPipelineData, setShowSaveButton, setExpandedPipelineData],
 	);
 
 	const onCancelReorderProcessorRow = useCallback(
 		() => (): void => {
-			setExpandedPipelineData(expandedPipelineData);
+			if (expandedPipelineData) setExpandedPipelineData(expandedPipelineData);
 		},
 		[expandedPipelineData, setExpandedPipelineData],
 	);
 
 	const moveProcessorRow = useCallback(
 		(dragIndex: number, hoverIndex: number) => {
-			if (expandedPipelineData.operators && isActionMode === ActionMode.Editing) {
+			if (expandedPipelineData?.operators && isActionMode === ActionMode.Editing) {
 				const updatedRow = getUpdatedRow(
-					expandedPipelineData.operators,
+					expandedPipelineData?.operators,
 					dragIndex,
 					hoverIndex,
 				);
@@ -126,7 +130,7 @@ function PipelineExpandView({
 			isActionMode,
 			reorderProcessorRow,
 			onCancelReorderProcessorRow,
-			expandedPipelineData.operators,
+			expandedPipelineData?.operators,
 		],
 	);
 
@@ -178,7 +182,7 @@ interface PipelineExpandViewProps {
 	processorEditAction: (record: ProcessorColumn) => () => void;
 	isActionMode: string;
 	setShowSaveButton: (actionMode: ActionMode) => void;
-	expandedPipelineData: PipelineColumn;
+	expandedPipelineData: PipelineColumn | undefined;
 	setExpandedPipelineData: (data: PipelineColumn) => void;
 	processorData: Array<ProcessorColumn> | undefined;
 }

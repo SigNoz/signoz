@@ -24,7 +24,7 @@ export const renderPipelineForm = (
 					key={fieldName.id}
 					fieldData={fieldName}
 					setTagsListData={setTagsListData}
-					tagsListData={tagsListData as []}
+					tagsListData={tagsListData || []}
 				/>
 			);
 		}

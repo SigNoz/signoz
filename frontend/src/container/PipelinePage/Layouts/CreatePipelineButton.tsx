@@ -1,6 +1,6 @@
 import { EditFilled, PlusOutlined } from '@ant-design/icons';
 import TextToolTip from 'components/TextToolTip';
-import React, { useCallback, useMemo } from 'react';
+import React, { Dispatch, SetStateAction, useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { pipelineMockData } from '../mocks/pipeline';
@@ -16,20 +16,19 @@ function CreatePipelineButton({
 
 	const isAddNewPipelineVisible = useMemo(() => pipelineMockData.length > 0, []);
 
-	const onClickHandler = useCallback(() => {
-		setActionType(ActionType.AddPipeline);
-	}, [setActionType]);
-
-	const onEditModeHandler = useCallback(() => {
-		setActionMode(ActionMode.Editing);
-	}, [setActionMode]);
+	const actionHandler = useCallback(
+		(functionToExecute: Dispatch<SetStateAction<string>>) => (): void => {
+			functionToExecute((state) => state);
+		},
+		[],
+	);
 
 	return (
 		<ButtonContainer>
 			<TextToolTip text={t('add_new_pipeline')} />
 			<CustomButton
 				icon={<EditFilled />}
-				onClick={onEditModeHandler}
+				onClick={actionHandler(() => setActionMode(ActionMode.Editing))}
 				disabled={isActionMode === ActionMode.Editing}
 			>
 				{t('enter_edit_mode')}
@@ -37,7 +36,7 @@ function CreatePipelineButton({
 			{!isAddNewPipelineVisible && (
 				<CustomButton
 					icon={<PlusOutlined />}
-					onClick={onClickHandler}
+					onClick={actionHandler(() => setActionType(ActionType.AddPipeline))}
 					type="primary"
 				>
 					{t('new_pipeline')}
