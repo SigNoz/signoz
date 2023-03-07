@@ -280,23 +280,7 @@ func buildLogsPipeline(current []interface{}, logsParserPipeline []interface{}) 
 		m := logsParserPipeline[i]
 
 		if loc, ok := specVsExistingMap[i]; ok {
-			// 	// element from plan already exists in current effective config.
 			lastMatched = loc + 1
-			// 	currentPos := loc + inserts
-			// 	// if disabled then remove from the pipeline
-			// 	// if !m.Enabled {
-			// 	// 	zap.S().Debugf("build_pipeline: found a disabled item, removing from pipeline at position", currentPos-1, " ", m.Name)
-			// 	// 	if currentPos-1 <= 0 {
-			// 	// 		pipeline = pipeline[currentPos+1:]
-			// 	// 	} else {
-			// 	// 		pipeline = append(pipeline[:currentPos-1], pipeline[currentPos+1:]...)
-			// 	// 	}
-			// 	// }
-
-			// 	// capture last position where match was found,  this will be used
-			// 	// to insert missing elements next to it
-			// 	lastMatched = currentPos
-
 		} else {
 			if lastMatched <= 0 {
 				zap.S().Debugf("build_pipeline: found a new item to be inserted, inserting at position 0:", m)

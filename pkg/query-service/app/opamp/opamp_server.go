@@ -257,9 +257,8 @@ func UpsertParsingProcessor(ctx context.Context, parsingProcessors map[string]in
 			return confHash, err
 		}
 
-		fmt.Println(string(updatedConf))
-
-		zap.S().Infof("sending new config", string(updatedConf))
+		// zap.S().Infof("sending new config", string(updatedConf))
+		zap.S().Info("sending new config")
 		hash := sha256.New()
 		_, err = hash.Write(updatedConf)
 		if err != nil {

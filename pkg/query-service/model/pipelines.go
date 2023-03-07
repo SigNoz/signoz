@@ -25,8 +25,8 @@ type Pipeline struct {
 }
 
 type Creator struct {
-	CreatedBy string    `json:"createdBy"`
-	CreatedAt time.Time `json:"createdAt"`
+	CreatedBy string    `json:"createdBy" db:"created_by"`
+	CreatedAt time.Time `json:"createdAt" db:"created_at"`
 }
 
 type Updater struct {

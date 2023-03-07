@@ -20,13 +20,10 @@ func InitDB(db *sqlx.DB) error {
 		enabled BOOLEAN,
 		created_by TEXT,
 		created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, 
-		updated_by TEXT,
-		updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, 
 		name VARCHAR(400) NOT NULL,
 		alias VARCHAR(20) NOT NULL,
 		filter TEXT NOT NULL,
-		config_json TEXT,
-		error_message TEXT
+		config_json TEXT
 	);
 	`
 	_, err = db.Exec(table_schema)
