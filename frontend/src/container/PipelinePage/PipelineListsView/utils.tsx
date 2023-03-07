@@ -40,7 +40,7 @@ export function getTableColumn<T>(columnData: ColumnsType<T>): ColumnsType<T> {
 		key,
 		align: key === 'id' ? 'right' : 'left',
 		render: (record: Record): JSX.Element => (
-			<TableComponents columnKey={String(title)} record={record} />
+			<TableComponents columnKey={String(key)} record={record} />
 		),
 	}));
 }
