@@ -40,8 +40,9 @@ function RightContainer({
 		<Container>
 			<Title>Panel Type</Title>
 			<Select
-				onChange={(value: ITEMS): void => setGraphHandler(value)}
+				onChange={setGraphHandler}
 				value={selectedGraph}
+				disabled
 				style={{ width: '100%', marginBottom: 24 }}
 			>
 				{GraphTypes.map((item) => (
