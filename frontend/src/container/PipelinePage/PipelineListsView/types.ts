@@ -51,3 +51,9 @@ export interface AlertMessage {
 	onOk: VoidFunction;
 	onCancel?: VoidFunction;
 }
+
+export interface ExpandRowConfig {
+	expanded: boolean;
+	onExpand: (record: PipelineColumn, e: React.MouseEvent<HTMLElement>) => void;
+	record: PipelineColumn;
+}

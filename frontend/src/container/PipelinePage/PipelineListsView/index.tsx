@@ -25,6 +25,7 @@ import PipelineActions from './TableComponents/PipelineActions';
 import TableExpandIcon from './TableComponents/TableExpandIcon';
 import {
 	AlertMessage,
+	ExpandRowConfig,
 	PipelineColumn,
 	PipelineOperators,
 	ProcessorColumn,
@@ -281,6 +282,23 @@ function PipelineListsView({
 			moveRow: movePipelineRow,
 		} as React.HTMLAttributes<unknown>);
 
+	const expandableConfig = {
+		expandedRowKeys: expandedRow,
+		expandIcon: ({ expanded, onExpand, record }: ExpandRowConfig): JSX.Element =>
+			getExpandIcon(expanded, onExpand, record),
+		onExpand: (expanded: boolean, record: PipelineColumn): void =>
+			getDataOnExpand(expanded, record),
+	};
+
+	const pipelineDataSource = useMemo(
+		() =>
+			currPipelineData.map((item) => ({
+				...item,
+				key: item.uuid,
+			})),
+		[currPipelineData],
+	);
+
 	return (
 		<div>
 			{contextHolder}
@@ -309,17 +327,9 @@ function PipelineListsView({
 					<Table
 						columns={columns}
 						expandedRowRender={expandedRowView}
-						expandable={{
-							expandedRowKeys: expandedRow,
-							expandIcon: ({ expanded, onExpand, record }): JSX.Element =>
-								getExpandIcon(expanded, onExpand, record),
-							onExpand: (expanded, record): void => getDataOnExpand(expanded, record),
-						}}
+						expandable={expandableConfig}
 						components={tableComponents}
-						dataSource={currPipelineData.map((item) => ({
-							...item,
-							key: item.uuid,
-						}))}
+						dataSource={pipelineDataSource}
 						onRow={(
 							_record: PipelineColumn,
 							index?: number,
