@@ -31,8 +31,6 @@ export type KeyType = {
 export const useAutoComplete = (): ReturnT => {
 	const [searchValue, setSearchValue] = useState('');
 
-	console.log(searchValue, '----search value');
-
 	// HANDLE INPUT SEARCH
 	const handleSearch = useCallback((value: string) => {
 		setSearchValue(value);
@@ -40,28 +38,26 @@ export const useAutoComplete = (): ReturnT => {
 
 	const [options, setOptions] = useState<Option[]>([]);
 
-	console.log(options, '---options');
-
 	// GET SUGGESTION KEYS AND VALUES
 	const { keys, results } = useFetchKeysAndValues(searchValue);
 
 	// SELECT KEY, OPERATOR AND RESULT
 	const [key, operator, result] = useSetCurrentKeyAndOperator(searchValue, keys);
-	console.log(key);
-	console.log(operator);
-	console.log(result);
 
 	// VALIDATION OF TAG AND OPERATOR
-	const { isValidTag, isExist, isValidOperator, isMulti } = useTagValidation(
-		operator,
-		result,
-	);
-	console.log(isMulti, '---is multi');
+	const {
+		isValidTag,
+		isExist,
+		isValidOperator,
+		isMulti,
+		isFreeText,
+	} = useTagValidation(searchValue, operator, result);
 
 	// SET AND CLEAR TAGS
 	const { handleAddTag, handleClearTag, tags } = useTag(
 		key,
 		isValidTag,
+		isFreeText,
 		handleSearch,
 	);
 
@@ -76,8 +72,11 @@ export const useAutoComplete = (): ReturnT => {
 	// SET OPTIONS
 	useEffect(() => {
 		if (searchValue) {
-			if (!key && keys.length) {
-				setOptions(keys.map((k) => ({ value: k.key })));
+			if (!key) {
+				setOptions([
+					{ value: searchValue },
+					...keys.map((k) => ({ value: k.key })),
+				]);
 			} else if (key && !operator) {
 				setOptions(
 					operators.map((o) => ({
@@ -128,7 +127,7 @@ export const useAutoComplete = (): ReturnT => {
 		}
 
 		if (e.key === 'Enter' && searchValue) {
-			if (isMulti) {
+			if (isMulti || isFreeText) {
 				e.stopPropagation();
 			}
 			e.preventDefault();

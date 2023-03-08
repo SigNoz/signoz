@@ -1,14 +1,18 @@
 import { OPERATORS, QUERY_BUILDER_SEARCH_VALUES } from 'constants/queryBuilder';
 import { useMemo } from 'react';
 
+import { checkStringEndWIthSpace } from '../../utils/checkStringEndWIthSpace';
+
 type ReturnT = {
 	isValidTag: boolean;
 	isExist: boolean;
 	isValidOperator: boolean;
 	isMulti: boolean;
+	isFreeText: boolean;
 };
 
 export const useTagValidation = (
+	value: string,
 	operator: string,
 	result: string[],
 ): ReturnT => {
@@ -49,14 +53,15 @@ export const useTagValidation = (
 		return false;
 	}, [operatorType, result.length]);
 
-	const { isExist, isValidOperator, isMulti } = useMemo(
+	const { isExist, isValidOperator, isMulti, isFreeText } = useMemo(
 		() => ({
 			isExist: operatorType === QUERY_BUILDER_SEARCH_VALUES.NON,
 			isValidOperator: operatorType !== QUERY_BUILDER_SEARCH_VALUES.NOT_VALID,
 			isMulti: operatorType === QUERY_BUILDER_SEARCH_VALUES.MULTIPLY,
+			isFreeText: operator === '' && !checkStringEndWIthSpace(value),
 		}),
-		[operatorType],
+		[operator, operatorType, value],
 	);
 
-	return { isValidTag, isExist, isValidOperator, isMulti };
+	return { isValidTag, isExist, isValidOperator, isMulti, isFreeText };
 };

@@ -9,18 +9,19 @@ type ReturnT = {
 export const useTag = (
 	key: string,
 	isValidTag: boolean,
+	isFreeText: boolean,
 	handleSearch: (value: string) => void,
 ): ReturnT => {
 	const [tags, setTags] = useState<string[]>([]);
 
 	const handleAddTag = useCallback(
 		(value: string): void => {
-			if (value && key && isValidTag) {
+			if ((value && key && isValidTag) || isFreeText) {
 				setTags((prev) => [...prev, value]);
 				handleSearch('');
 			}
 		},
-		[isValidTag, key, handleSearch],
+		[key, isValidTag, isFreeText, handleSearch],
 	);
 
 	// REMOVE TAGS
