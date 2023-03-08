@@ -6,7 +6,7 @@ type BaseLabels interface {
 	Less(i, j int) bool
 	String() string
 	Hash() uint64
-	HashForLabels(names ...string) uint64
+	HashForLabels(b []byte, names ...string) (uint64, []byte)
 	Get(name string) string
 	Has(name string) bool
 	Map() map[string]string
