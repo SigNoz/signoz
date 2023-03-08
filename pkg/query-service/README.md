@@ -23,7 +23,7 @@ alertmanager:
     # depends_on:
     #   query-service:
     #     condition: service_healthy
-    restart: on-failure
+    restart: unless-stopped
     command:
       - --queryService.url=http://172.17.0.1:8085
       - --storage.path=/data
