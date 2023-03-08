@@ -12,12 +12,12 @@ export interface ProcessorData {
 
 export interface PipelineData {
 	alias: string;
-	config: Array<ProcessorData>;
+	config?: Array<ProcessorData>;
 	createdAt: string;
 	createdBy: string;
 	enabled: boolean;
 	filter: string;
-	id: string;
+	id?: string;
 	name: string;
 	orderId: string;
 	tags?: Array<string>; // Tags data is missing in API response

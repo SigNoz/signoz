@@ -32,7 +32,7 @@ function PipelineExpandView({
 	const deleteProcessorHandler = useCallback(
 		(record: ProcessorData) => (): void => {
 			setShowSaveButton(ActionMode.Editing);
-			if (expandedPipelineData) {
+			if (expandedPipelineData && expandedPipelineData?.config) {
 				const filteredProcessorData = expandedPipelineData?.config.filter(
 					(item: ProcessorData) => item.id !== record.id,
 				);

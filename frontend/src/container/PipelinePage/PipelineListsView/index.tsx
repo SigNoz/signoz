@@ -1,5 +1,6 @@
 import { ExclamationCircleOutlined, PlusOutlined } from '@ant-design/icons';
 import { Modal, Table, Typography } from 'antd';
+import saveConfig from 'api/pipeline/post';
 import React, { useCallback, useMemo, useState } from 'react';
 import { DndProvider } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
@@ -180,6 +181,7 @@ function PipelineListsView({
 
 	const processorData = useMemo(
 		() =>
+			expandedPipelineData?.config &&
 			expandedPipelineData?.config.map(
 				(item: ProcessorData): ProcessorData => ({
 					id: String(item.id),
@@ -220,7 +222,8 @@ function PipelineListsView({
 			if (expanded) {
 				keys.push(record.id);
 			}
-			setExpandedRow(keys);
+			// eslint-disable-next-line @typescript-eslint/no-explicit-any
+			setExpandedRow(keys as any);
 			setExpandedPipelineData(record);
 		},
 		[],
@@ -253,7 +256,7 @@ function PipelineListsView({
 		return undefined;
 	}, [isActionMode, addNewPipelineHandler, t]);
 
-	const onSaveConfigurationHandler = useCallback((): void => {
+	const onSaveConfigurationHandler = useCallback(async () => {
 		setActionMode(ActionMode.Viewing);
 		setShowSaveButton(undefined);
 		const modifiedPipelineData = currPipelineData.map((item: PipelineData) => {
@@ -263,9 +266,25 @@ function PipelineListsView({
 			}
 			return pipelineData;
 		});
+		const payload = { ...piplineData };
+		modifiedPipelineData.forEach((item: PipelineData) => {
+			const pipelineData = item;
+			delete pipelineData.id;
+			return pipelineData;
+		});
+		payload.pipelines = modifiedPipelineData;
+		await saveConfig({
+			data: payload,
+		});
 		setCurrPipelineData(modifiedPipelineData);
 		setPrevPipelineData(modifiedPipelineData);
-	}, [currPipelineData, expandedPipelineData, setActionMode]);
+	}, [
+		currPipelineData,
+		expandedPipelineData?.config,
+		expandedPipelineData?.id,
+		piplineData,
+		setActionMode,
+	]);
 
 	const onCancelConfigurationHandler = useCallback((): void => {
 		setActionMode(ActionMode.Viewing);
