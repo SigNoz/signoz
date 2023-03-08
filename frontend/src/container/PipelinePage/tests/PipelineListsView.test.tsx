@@ -6,6 +6,7 @@ import { MemoryRouter } from 'react-router-dom';
 import i18n from 'ReactI18';
 import store from 'store';
 
+import { pipelineApiResponseMockData } from '../mocks/pipeline';
 import PipelineListsView from '../PipelineListsView';
 import { matchMedia } from './AddNewPipeline.test';
 
@@ -24,6 +25,7 @@ describe('PipelinePage container test', () => {
 							setActionType={jest.fn()}
 							isActionMode="viewing-mode"
 							setActionMode={jest.fn()}
+							piplineData={pipelineApiResponseMockData}
 						/>
 					</I18nextProvider>
 				</Provider>

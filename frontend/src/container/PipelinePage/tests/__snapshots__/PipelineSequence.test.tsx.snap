@@ -15,7 +15,7 @@ exports[`PipelinePage container test should render PipelineSequence section 1`] 
       class="ant-avatar-string"
       style="transform: scale(1) translateX(-50%);"
     >
-      123
+      3
     </span>
   </span>
 </DocumentFragment>

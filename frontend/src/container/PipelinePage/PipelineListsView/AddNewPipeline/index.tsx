@@ -3,12 +3,12 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
+import { PipelineData } from 'types/api/pipeline/def';
 import AppReducer from 'types/reducer/app';
 import { v4 as uuid } from 'uuid';
 
 import { ActionMode, ActionType } from '../../Layouts';
 import { ModalButtonWrapper, ModalTitle } from '../styles';
-import { PipelineColumn } from '../types';
 import { getEditedDataSource, getRecordIndex } from '../utils';
 import { renderPipelineForm } from './utils';
 
@@ -24,7 +24,7 @@ function AddNewPipeline({
 	const { t } = useTranslation('pipeline');
 	const { user } = useSelector<AppState, AppReducer>((state) => state.app);
 	const [count, setCount] = useState(3);
-	const [tagsListData, setTagsListData] = useState<PipelineColumn['tags']>();
+	const [tagsListData, setTagsListData] = useState<Array<string>>();
 
 	const isEdit = useMemo(() => isActionType === 'edit-pipeline', [isActionType]);
 	const isAdd = useMemo(() => isActionType === 'add-pipeline', [isActionType]);
@@ -40,27 +40,18 @@ function AddNewPipeline({
 		}
 	}, [form, isEdit, isAdd, selectedPipelineData]);
 
-	const onFinish = (values: PipelineColumn): void => {
-		const newPipeLineData: PipelineColumn = {
-			orderid: count,
-			uuid: uuid(),
+	const onFinish = (values: PipelineData): void => {
+		const newPipeLineData: PipelineData = {
+			orderId: count.toString(),
+			id: uuid(),
 			createdAt: new Date().toISOString(),
-			createdBy: {
-				username: user?.name || '',
-				email: user?.email || '',
-			},
-			updatedAt: new Date().toISOString(),
-			updatedBy: {
-				username: user?.name || '',
-				email: user?.email || '',
-			},
+			createdBy: user?.name || '',
 			name: values.name,
 			alias: values.alias,
 			filter: values.filter,
 			tags: tagsListData || [],
-			operators: [],
+			config: [],
 			enabled: false,
-			version: '1',
 		};
 
 		if (isEdit && selectedPipelineData) {
@@ -69,7 +60,7 @@ function AddNewPipeline({
 				selectedPipelineData,
 				'name',
 			);
-			const updatedPipelineData: PipelineColumn = {
+			const updatedPipelineData: PipelineData = {
 				...currPipelineData[findRecordIndex],
 				name: values.name,
 				alias: values.alias,
@@ -155,12 +146,12 @@ function AddNewPipeline({
 interface AddNewPipelineProps {
 	isActionType: string;
 	setActionType: (actionType?: ActionType) => void;
-	selectedPipelineData: PipelineColumn | undefined;
+	selectedPipelineData: PipelineData | undefined;
 	setShowSaveButton: (actionMode: ActionMode) => void;
 	setCurrPipelineData: (
-		value: React.SetStateAction<Array<PipelineColumn>>,
+		value: React.SetStateAction<Array<PipelineData>>,
 	) => void;
-	currPipelineData: Array<PipelineColumn>;
+	currPipelineData: Array<PipelineData>;
 }
 
 export default AddNewPipeline;

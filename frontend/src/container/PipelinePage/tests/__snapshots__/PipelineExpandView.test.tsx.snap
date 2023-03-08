@@ -75,7 +75,7 @@ exports[`PipelinePage should render PipelineExpandView section 1`] = `
                           class="ant-avatar-string"
                           style="transform: scale(1) translateX(-50%);"
                         >
-                          1
+                          NaN
                         </span>
                       </span>
                     </td>
@@ -86,7 +86,7 @@ exports[`PipelinePage should render PipelineExpandView section 1`] = `
                       <div
                         class="c2"
                       >
-                        grok use common
+                        grok use common asd
                       </div>
                     </td>
                   </tr>
@@ -105,7 +105,7 @@ exports[`PipelinePage should render PipelineExpandView section 1`] = `
                           class="ant-avatar-string"
                           style="transform: scale(1) translateX(-50%);"
                         >
-                          2
+                          NaN
                         </span>
                       </span>
                     </td>

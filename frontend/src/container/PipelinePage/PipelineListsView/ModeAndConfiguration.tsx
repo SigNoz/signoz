@@ -14,14 +14,14 @@ function ModeAndConfiguration({
 	return (
 		<ModeAndConfigWrapper>
 			Mode: <span>{actionMode ? 'Editing' : 'Viewing'}</span>
-			<div>Configuration Version {verison}</div>
+			<div>Configuration Version: {verison}</div>
 		</ModeAndConfigWrapper>
 	);
 }
 
 export interface ModeAndConfigurationType {
 	isActionMode: string;
-	verison: string;
+	verison: string | number;
 }
 
 export default ModeAndConfiguration;

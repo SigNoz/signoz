@@ -4,20 +4,16 @@ import React, { useCallback, useMemo } from 'react';
 import { DndProvider } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
 import { useTranslation } from 'react-i18next';
+import { PipelineData, ProcessorData } from 'types/api/pipeline/def';
 
 import { tableComponents } from '../config';
 import { ActionMode, ActionType } from '../Layouts';
 import { ModalFooterTitle } from '../styles';
+import { AlertMessage } from '.';
 import { processorColumns } from './config';
 import { FooterButton, StyledTable } from './styles';
 import DragAction from './TableComponents/DragAction';
 import PipelineActions from './TableComponents/PipelineActions';
-import {
-	AlertMessage,
-	PipelineColumn,
-	PipelineOperators,
-	ProcessorColumn,
-} from './types';
 import { getTableColumn, getUpdatedRow } from './utils';
 
 function PipelineExpandView({
@@ -34,14 +30,14 @@ function PipelineExpandView({
 	const isDarkMode = useIsDarkMode();
 
 	const deleteProcessorHandler = useCallback(
-		(record: ProcessorColumn) => (): void => {
+		(record: ProcessorData) => (): void => {
 			setShowSaveButton(ActionMode.Editing);
 			if (expandedPipelineData) {
-				const filteredProcessorData = expandedPipelineData?.operators.filter(
-					(item: PipelineOperators) => item.id !== record.id,
+				const filteredProcessorData = expandedPipelineData?.config.filter(
+					(item: ProcessorData) => item.id !== record.id,
 				);
 				const modifiedProcessorData = { ...expandedPipelineData };
-				modifiedProcessorData.operators = filteredProcessorData;
+				modifiedProcessorData.config = filteredProcessorData;
 				setExpandedPipelineData(modifiedProcessorData);
 			}
 		},
@@ -49,7 +45,7 @@ function PipelineExpandView({
 	);
 
 	const processorDeleteAction = useCallback(
-		(record: ProcessorColumn) => (): void => {
+		(record: ProcessorData) => (): void => {
 			handleAlert({
 				title: `${t('delete_processor')} : ${record.name}?`,
 				descrition: t('delete_processor_description'),
@@ -88,11 +84,11 @@ function PipelineExpandView({
 	}, [processorDeleteAction, processorEditAction, isActionMode]);
 
 	const reorderProcessorRow = useCallback(
-		(updatedRow: PipelineOperators[]) => (): void => {
+		(updatedRow: ProcessorData[]) => (): void => {
 			setShowSaveButton(ActionMode.Editing);
 			if (expandedPipelineData) {
 				const modifiedProcessorData = { ...expandedPipelineData };
-				modifiedProcessorData.operators = updatedRow;
+				modifiedProcessorData.config = updatedRow;
 				setExpandedPipelineData(modifiedProcessorData);
 			}
 		},
@@ -108,9 +104,9 @@ function PipelineExpandView({
 
 	const moveProcessorRow = useCallback(
 		(dragIndex: number, hoverIndex: number) => {
-			if (expandedPipelineData?.operators && isActionMode === ActionMode.Editing) {
+			if (expandedPipelineData?.config && isActionMode === ActionMode.Editing) {
 				const updatedRow = getUpdatedRow(
-					expandedPipelineData?.operators,
+					expandedPipelineData?.config,
 					dragIndex,
 					hoverIndex,
 				);
@@ -130,7 +126,7 @@ function PipelineExpandView({
 			isActionMode,
 			reorderProcessorRow,
 			onCancelReorderProcessorRow,
-			expandedPipelineData?.operators,
+			expandedPipelineData?.config,
 		],
 	);
 
@@ -167,7 +163,7 @@ function PipelineExpandView({
 				dataSource={processorData}
 				pagination={false}
 				onRow={(
-					_record: ProcessorColumn,
+					_record: ProcessorData,
 					index?: number,
 				): React.HTMLAttributes<unknown> => onRowHandler(index)}
 				footer={footer}
@@ -179,12 +175,12 @@ function PipelineExpandView({
 interface PipelineExpandViewProps {
 	handleAlert: (props: AlertMessage) => void;
 	setActionType: (actionType?: ActionType) => void;
-	processorEditAction: (record: ProcessorColumn) => () => void;
+	processorEditAction: (record: ProcessorData) => () => void;
 	isActionMode: string;
 	setShowSaveButton: (actionMode: ActionMode) => void;
-	expandedPipelineData: PipelineColumn | undefined;
-	setExpandedPipelineData: (data: PipelineColumn) => void;
-	processorData: Array<ProcessorColumn> | undefined;
+	expandedPipelineData: PipelineData | undefined;
+	setExpandedPipelineData: (data: PipelineData) => void;
+	processorData: Array<ProcessorData> | undefined;
 }
 
 export default PipelineExpandView;

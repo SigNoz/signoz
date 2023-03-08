@@ -1,8 +1,6 @@
 import { Tag } from 'antd';
 import React from 'react';
 
-import { PipelineColumn } from '../types';
-
 function Tags({ tags }: TagsProps): JSX.Element {
 	return (
 		<span>
@@ -16,7 +14,7 @@ function Tags({ tags }: TagsProps): JSX.Element {
 }
 
 interface TagsProps {
-	tags: PipelineColumn['tags'];
+	tags: Array<string>;
 }
 
 export default Tags;

@@ -4,10 +4,14 @@ import React, { useCallback, useMemo, useState } from 'react';
 import { DndProvider } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
 import { useTranslation } from 'react-i18next';
+import {
+	PipelineData,
+	PipelineResponse,
+	ProcessorData,
+} from 'types/api/pipeline/def';
 
 import { tableComponents } from '../config';
 import { ActionMode, ActionType } from '../Layouts';
-import { configurationVerison, pipelineMockData } from '../mocks/pipeline';
 import AddNewPipeline from './AddNewPipeline';
 import AddNewProcessor from './AddNewProcessor';
 import { pipelineColumns } from './config';
@@ -23,13 +27,6 @@ import {
 import DragAction from './TableComponents/DragAction';
 import PipelineActions from './TableComponents/PipelineActions';
 import TableExpandIcon from './TableComponents/TableExpandIcon';
-import {
-	AlertMessage,
-	ExpandRowConfig,
-	PipelineColumn,
-	PipelineOperators,
-	ProcessorColumn,
-} from './types';
 import { getElementFromArray, getTableColumn, getUpdatedRow } from './utils';
 
 function PipelineListsView({
@@ -37,27 +34,28 @@ function PipelineListsView({
 	setActionType,
 	isActionMode,
 	setActionMode,
+	piplineData,
 }: PipelineListsViewProps): JSX.Element {
 	const { t } = useTranslation('pipeline');
 	const [modal, contextHolder] = Modal.useModal();
-	const [prevPipelineData, setPrevPipelineData] = useState<
-		Array<PipelineColumn>
-	>(pipelineMockData);
-	const [currPipelineData, setCurrPipelineData] = useState<
-		Array<PipelineColumn>
-	>(pipelineMockData);
+	const [prevPipelineData, setPrevPipelineData] = useState<Array<PipelineData>>(
+		piplineData.pipelines,
+	);
+	const [currPipelineData, setCurrPipelineData] = useState<Array<PipelineData>>(
+		piplineData.pipelines,
+	);
 	const [
 		expandedPipelineData,
 		setExpandedPipelineData,
-	] = useState<PipelineColumn>();
+	] = useState<PipelineData>();
 	const [
 		selectedProcessorData,
 		setSelectedProcessorData,
-	] = useState<ProcessorColumn>();
+	] = useState<ProcessorData>();
 	const [
 		selectedPipelineData,
 		setSelectedPipelineData,
-	] = useState<PipelineColumn>();
+	] = useState<PipelineData>();
 	const [expandedRow, setExpandedRow] = useState<Array<string>>();
 	const [showSaveButton, setShowSaveButton] = useState<string>();
 
@@ -77,7 +75,7 @@ function PipelineListsView({
 	);
 
 	const pipelineEditAction = useCallback(
-		(record: PipelineColumn) => (): void => {
+		(record: PipelineData) => (): void => {
 			setActionType(ActionType.EditPipeline);
 			setSelectedPipelineData(record);
 		},
@@ -85,16 +83,16 @@ function PipelineListsView({
 	);
 
 	const pipelineDeleteHandler = useCallback(
-		(record: PipelineColumn) => (): void => {
+		(record: PipelineData) => (): void => {
 			setShowSaveButton(ActionMode.Editing);
-			const filteredData = getElementFromArray(currPipelineData, record, 'uuid');
+			const filteredData = getElementFromArray(currPipelineData, record, 'id');
 			setCurrPipelineData(filteredData);
 		},
 		[currPipelineData],
 	);
 
 	const pipelineDeleteAction = useCallback(
-		(record: PipelineColumn) => (): void => {
+		(record: PipelineData) => (): void => {
 			handleAlert({
 				title: `${t('delete_pipeline')} : ${record.name}?`,
 				descrition: t('delete_pipeline_description'),
@@ -106,7 +104,7 @@ function PipelineListsView({
 	);
 
 	const processorEditAction = useCallback(
-		(record: ProcessorColumn) => (): void => {
+		(record: ProcessorData) => (): void => {
 			setActionType(ActionType.EditProcessor);
 			setSelectedProcessorData(record);
 		},
@@ -142,7 +140,7 @@ function PipelineListsView({
 	}, [pipelineDeleteAction, pipelineEditAction, isActionMode]);
 
 	const updatePipelineSequence = useCallback(
-		(updatedRow: PipelineColumn[]) => (): void => {
+		(updatedRow: PipelineData[]) => (): void => {
 			setShowSaveButton(ActionMode.Editing);
 			setCurrPipelineData(updatedRow);
 		},
@@ -150,7 +148,7 @@ function PipelineListsView({
 	);
 
 	const onCancelPipelineSequence = useCallback(
-		(rawData: PipelineColumn[]) => (): void => {
+		(rawData: PipelineData[]) => (): void => {
 			setCurrPipelineData(rawData);
 		},
 		[],
@@ -182,8 +180,8 @@ function PipelineListsView({
 
 	const processorData = useMemo(
 		() =>
-			expandedPipelineData?.operators.map(
-				(item: PipelineOperators): ProcessorColumn => ({
+			expandedPipelineData?.config.map(
+				(item: ProcessorData): ProcessorData => ({
 					id: String(item.id),
 					type: item.type,
 					name: item.name,
@@ -217,10 +215,10 @@ function PipelineListsView({
 	);
 
 	const getDataOnExpand = useCallback(
-		(expanded: boolean, record: PipelineColumn): void => {
+		(expanded: boolean, record: PipelineData): void => {
 			const keys = [];
 			if (expanded) {
-				keys.push(record.uuid);
+				keys.push(record.id);
 			}
 			setExpandedRow(keys);
 			setExpandedPipelineData(record);
@@ -230,8 +228,8 @@ function PipelineListsView({
 
 	const getExpandIcon = (
 		expanded: boolean,
-		onExpand: (record: PipelineColumn, e: React.MouseEvent<HTMLElement>) => void,
-		record: PipelineColumn,
+		onExpand: (record: PipelineData, e: React.MouseEvent<HTMLElement>) => void,
+		record: PipelineData,
 	): JSX.Element => (
 		<TableExpandIcon expanded={expanded} onExpand={onExpand} record={record} />
 	);
@@ -258,10 +256,10 @@ function PipelineListsView({
 	const onSaveConfigurationHandler = useCallback((): void => {
 		setActionMode(ActionMode.Viewing);
 		setShowSaveButton(undefined);
-		const modifiedPipelineData = currPipelineData.map((item: PipelineColumn) => {
+		const modifiedPipelineData = currPipelineData.map((item: PipelineData) => {
 			const pipelineData = item;
-			if (item.uuid === expandedPipelineData?.uuid) {
-				pipelineData.operators = expandedPipelineData?.operators;
+			if (item.id === expandedPipelineData?.id) {
+				pipelineData.config = expandedPipelineData?.config;
 			}
 			return pipelineData;
 		});
@@ -286,7 +284,7 @@ function PipelineListsView({
 		expandedRowKeys: expandedRow,
 		expandIcon: ({ expanded, onExpand, record }: ExpandRowConfig): JSX.Element =>
 			getExpandIcon(expanded, onExpand, record),
-		onExpand: (expanded: boolean, record: PipelineColumn): void =>
+		onExpand: (expanded: boolean, record: PipelineData): void =>
 			getDataOnExpand(expanded, record),
 	};
 
@@ -294,7 +292,7 @@ function PipelineListsView({
 		() =>
 			currPipelineData.map((item) => ({
 				...item,
-				key: item.uuid,
+				key: item.id,
 			})),
 		[currPipelineData],
 	);
@@ -321,7 +319,7 @@ function PipelineListsView({
 			<Container>
 				<ModeAndConfiguration
 					isActionMode={isActionMode}
-					verison={configurationVerison}
+					verison={piplineData.version}
 				/>
 				<DndProvider backend={HTML5Backend}>
 					<Table
@@ -331,7 +329,7 @@ function PipelineListsView({
 						components={tableComponents}
 						dataSource={pipelineDataSource}
 						onRow={(
-							_record: PipelineColumn,
+							_record: PipelineData,
 							index?: number,
 						): React.HTMLAttributes<unknown> => onRowHandler(index)}
 						footer={footer}
@@ -354,6 +352,21 @@ interface PipelineListsViewProps {
 	setActionType: (actionType?: ActionType) => void;
 	isActionMode: string;
 	setActionMode: (actionMode: ActionMode) => void;
+	piplineData: PipelineResponse;
+}
+
+interface ExpandRowConfig {
+	expanded: boolean;
+	onExpand: (record: PipelineData, e: React.MouseEvent<HTMLElement>) => void;
+	record: PipelineData;
+}
+
+export interface AlertMessage {
+	title: string;
+	descrition: string;
+	buttontext: string;
+	onOk: VoidFunction;
+	onCancel?: VoidFunction;
 }
 
 export default PipelineListsView;

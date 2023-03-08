@@ -1,6 +1,5 @@
 import { ColumnsType } from 'antd/es/table';
-
-import { PipelineColumn, ProcessorColumn } from './types';
+import { PipelineData, ProcessorData } from 'types/api/pipeline/def';
 
 export const pipelineFields = [
 	{
@@ -35,9 +34,9 @@ export const tagInputStyle: React.CSSProperties = {
 	flex: 1,
 };
 
-export const pipelineColumns: ColumnsType<PipelineColumn> = [
+export const pipelineColumns: ColumnsType<PipelineData> = [
 	{
-		key: 'orderid',
+		key: 'orderId',
 		title: '',
 	},
 	{
@@ -53,16 +52,16 @@ export const pipelineColumns: ColumnsType<PipelineColumn> = [
 		title: 'Tags',
 	},
 	{
-		key: 'updatedAt',
+		key: 'createdAt',
 		title: 'Last Edited',
 	},
 	{
-		key: 'updatedBy',
+		key: 'createdBy',
 		title: 'Edited By',
 	},
 ];
 
-export const processorColumns: ColumnsType<ProcessorColumn> = [
+export const processorColumns: ColumnsType<ProcessorData> = [
 	{
 		key: 'id',
 		title: '',

@@ -1,10 +1,10 @@
 import { Button, Divider, Form, Modal } from 'antd';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { PipelineData, ProcessorData } from 'types/api/pipeline/def';
 
 import { ActionMode, ActionType } from '../../Layouts';
 import { ModalButtonWrapper, ModalTitle } from '../styles';
-import { PipelineColumn, ProcessorColumn } from '../types';
 import { getEditedDataSource, getRecordIndex } from '../utils';
 import { DEFAULT_PROCESSOR_TYPE } from './config';
 import TypeSelect from './FormFields/TypeSelect';
@@ -43,31 +43,31 @@ function AddNewProcessor({
 		setProcessorType(typedValue);
 	};
 
-	const onFinish = (values: ProcessorColumn): void => {
-		const totalDataLength = expandedPipelineData?.operators.length;
-		const newProcessorData: ProcessorColumn = {
+	const onFinish = (values: ProcessorData): void => {
+		const totalDataLength = expandedPipelineData?.config.length;
+		const newProcessorData: ProcessorData = {
 			id: (Number(totalDataLength || 0) + 1).toString(),
 			type: processorType,
 			name: values.name,
 			output: values.output,
 		};
 
-		if (isEdit && selectedProcessorData && expandedPipelineData?.operators) {
+		if (isEdit && selectedProcessorData && expandedPipelineData?.config) {
 			const findRecordIndex = getRecordIndex(
-				expandedPipelineData?.operators,
+				expandedPipelineData?.config,
 				selectedProcessorData,
 				'id',
 			);
 
 			const updatedProcessorData = {
-				...expandedPipelineData?.operators?.[findRecordIndex],
+				...expandedPipelineData?.config?.[findRecordIndex],
 				type: processorType,
 				name: values.name,
 				output: values.output,
 			};
 
 			const editedData = getEditedDataSource(
-				expandedPipelineData.operators,
+				expandedPipelineData.config,
 				selectedProcessorData,
 				'name',
 				updatedProcessorData,
@@ -75,14 +75,14 @@ function AddNewProcessor({
 
 			const modifiedProcessorData = { ...expandedPipelineData };
 
-			modifiedProcessorData.operators = editedData;
+			modifiedProcessorData.config = editedData;
 
 			setExpandedPipelineData(modifiedProcessorData);
 		}
 		if (isAdd && expandedPipelineData) {
 			const modifiedProcessorData = { ...expandedPipelineData };
-			modifiedProcessorData.operators = [
-				...modifiedProcessorData.operators,
+			modifiedProcessorData.config = [
+				...modifiedProcessorData.config,
 				newProcessorData,
 			];
 			setExpandedPipelineData(modifiedProcessorData);
@@ -156,10 +156,10 @@ function AddNewProcessor({
 interface AddNewProcessorProps {
 	isActionType: string;
 	setActionType: (actionType?: ActionType) => void;
-	selectedProcessorData?: ProcessorColumn;
+	selectedProcessorData?: ProcessorData;
 	setShowSaveButton: (actionMode: ActionMode) => void;
-	expandedPipelineData: PipelineColumn | undefined;
-	setExpandedPipelineData: (data: PipelineColumn) => void;
+	expandedPipelineData: PipelineData | undefined;
+	setExpandedPipelineData: (data: PipelineData) => void;
 }
 
 AddNewProcessor.defaultProps = {

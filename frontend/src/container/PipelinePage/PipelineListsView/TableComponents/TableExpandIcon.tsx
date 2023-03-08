@@ -1,7 +1,6 @@
 import { DownOutlined, RightOutlined } from '@ant-design/icons';
 import React from 'react';
-
-import { PipelineColumn } from '../types';
+import { PipelineData } from 'types/api/pipeline/def';
 
 function TableExpandIcon({
 	expanded,
@@ -16,8 +15,8 @@ function TableExpandIcon({
 
 interface TableExpandIconProps {
 	expanded: boolean;
-	onExpand: (record: PipelineColumn, e: React.MouseEvent<HTMLElement>) => void;
-	record: PipelineColumn;
+	onExpand: (record: PipelineData, e: React.MouseEvent<HTMLElement>) => void;
+	record: PipelineData;
 }
 
 export default TableExpandIcon;

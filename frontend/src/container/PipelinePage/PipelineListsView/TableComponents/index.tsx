@@ -1,7 +1,7 @@
 import React from 'react';
+import { PipelineData, ProcessorData } from 'types/api/pipeline/def';
 
 import { ListDataStyle, ProcessorIndexIcon } from '../styles';
-import { ActionBy, PipelineColumn, ProcessorColumn } from '../types';
 import PipelineSequence from './PipelineSequence';
 import Tags from './Tags';
 
@@ -9,14 +9,28 @@ function TableComponents({
 	columnKey,
 	record,
 }: TableComponentsProps): JSX.Element {
-	if (columnKey === 'orderid') {
+	if (columnKey === 'orderId') {
 		return <PipelineSequence value={record} />;
 	}
 	if (columnKey === 'tags') {
 		return <Tags tags={record} />;
 	}
-	if (columnKey === 'updatedBy') {
-		return <span>{record.username}</span>;
+	if (columnKey === 'createdBy') {
+		return <span>{record}</span>;
+	}
+	if (columnKey === 'createdAt') {
+		return (
+			<span>
+				{new Date(record).toLocaleString(undefined, {
+					year: 'numeric',
+					month: 'long',
+					day: '2-digit',
+					hour: 'numeric',
+					minute: 'numeric',
+					hour12: true,
+				})}
+			</span>
+		);
 	}
 	if (columnKey === 'id') {
 		return <ProcessorIndexIcon size="small">{Number(record)}</ProcessorIndexIcon>;
@@ -27,10 +41,9 @@ function TableComponents({
 	return <span>{record}</span>;
 }
 
-export type Record = ActionBy &
-	PipelineColumn['orderid'] &
-	PipelineColumn['tags'] &
-	ProcessorColumn;
+export type Record = PipelineData['orderId'] &
+	PipelineData['tags'] &
+	ProcessorData;
 
 interface TableComponentsProps {
 	columnKey: string;

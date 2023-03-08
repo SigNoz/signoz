@@ -31,7 +31,7 @@ describe('PipelinePage', () => {
 							setShowSaveButton={jest.fn()}
 							expandedPipelineData={pipelineMockData[0]}
 							setExpandedPipelineData={jest.fn()}
-							processorData={pipelineMockData[0].operators}
+							processorData={pipelineMockData[0].config}
 						/>
 					</I18nextProvider>
 				</Provider>

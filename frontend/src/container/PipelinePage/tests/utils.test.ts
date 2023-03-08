@@ -36,7 +36,7 @@ describe('Utils testing of Pipeline Page', () => {
 		const filterData = getElementFromArray(
 			pipelineMockData,
 			pipelineMockData[0],
-			'uuid',
+			'id',
 		);
 		expect(pipelineMockData).not.toEqual(filterData);
 		expect(pipelineMockData[0]).not.toEqual(filterData);
@@ -46,7 +46,7 @@ describe('Utils testing of Pipeline Page', () => {
 		const findRecordIndex = getRecordIndex(
 			pipelineMockData,
 			pipelineMockData[0],
-			'uuid',
+			'id',
 		);
 		expect(pipelineMockData).not.toEqual(findRecordIndex);
 		expect(pipelineMockData[0]).not.toEqual(findRecordIndex);

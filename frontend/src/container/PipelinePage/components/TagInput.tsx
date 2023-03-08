@@ -7,7 +7,6 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { tagInputStyle } from '../PipelineListsView/config';
-import { PipelineColumn } from '../PipelineListsView/types';
 import { TagInputWrapper } from './styles';
 
 function TagInput({
@@ -151,7 +150,7 @@ function TagInput({
 
 interface TagInputProps {
 	setTagsListData: (tags: Array<string>) => void;
-	tagsListData: PipelineColumn['tags'];
+	tagsListData: Array<string>;
 	placeHolder: string;
 }
 

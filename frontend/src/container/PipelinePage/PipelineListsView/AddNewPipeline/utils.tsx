@@ -1,7 +1,6 @@
 import React from 'react';
 
 import { pipelineFields } from '../config';
-import { PipelineColumn } from '../types';
 import DescriptionTextArea from './FormFields/DescriptionTextArea';
 import FilterSearch from './FormFields/FilterSearch';
 import NameInput from './FormFields/NameInput';
@@ -9,7 +8,7 @@ import ProcessorTags from './FormFields/ProcessorTags';
 
 export const renderPipelineForm = (
 	setTagsListData: (tags: Array<string>) => void,
-	tagsListData?: PipelineColumn['tags'],
+	tagsListData?: Array<string>,
 ): Array<JSX.Element> =>
 	pipelineFields.map((fieldName) => {
 		if (fieldName.id === '1') {

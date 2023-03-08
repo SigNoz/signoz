@@ -4,484 +4,57 @@ exports[`PipelinePage container test should render AddNewPipeline section 1`] = 
 
 exports[`PipelinePage container test should render PipelinePageLayout section 1`] = `
 <DocumentFragment>
-  .c0.c0.c0 {
+  .c0 {
+  z-index: 999;
+  overflow: visible;
+  margin: auto;
   display: -webkit-box;
   display: -webkit-flex;
   display: -ms-flexbox;
   display: flex;
-  -webkit-box-pack: end;
-  -webkit-justify-content: flex-end;
-  -ms-flex-pack: end;
-  justify-content: flex-end;
-  margin-bottom: 2rem;
+  -webkit-box-pack: center;
+  -webkit-justify-content: center;
+  -ms-flex-pack: center;
+  justify-content: center;
   -webkit-align-items: center;
   -webkit-box-align: center;
   -ms-flex-align: center;
   align-items: center;
-}
-
-.c1.c1.c1 {
-  margin-left: 1rem;
+  height: 75vh;
 }
 
 <div
     class="c0"
+    height="75vh"
   >
-    <span
-      aria-label="question-circle"
-      class="anticon anticon-question-circle"
-      role="img"
-      style="font-size: 1.3125rem;"
-    >
-      <svg
-        aria-hidden="true"
-        data-icon="question-circle"
-        fill="currentColor"
-        focusable="false"
-        height="1em"
-        viewBox="64 64 896 896"
-        width="1em"
-      >
-        <path
-          d="M512 64C264.6 64 64 264.6 64 512s200.6 448 448 448 448-200.6 448-448S759.4 64 512 64zm0 708c-22.1 0-40-17.9-40-40s17.9-40 40-40 40 17.9 40 40-17.9 40-40 40zm62.9-219.5a48.3 48.3 0 00-30.9 44.8V620c0 4.4-3.6 8-8 8h-48c-4.4 0-8-3.6-8-8v-21.5c0-23.1 6.7-45.9 19.9-64.9 12.9-18.6 30.9-32.8 52.1-40.9 34-13.1 56-41.6 56-72.7 0-44.1-43.1-80-96-80s-96 35.9-96 80v7.6c0 4.4-3.6 8-8 8h-48c-4.4 0-8-3.6-8-8V420c0-39.3 17.2-76 48.4-103.3C430.4 290.4 470 276 512 276s81.6 14.5 111.6 40.7C654.8 344 672 380.7 672 420c0 57.8-38.1 109.8-97.1 132.5z"
-        />
-      </svg>
-    </span>
-    <button
-      class="ant-btn css-dev-only-do-not-override-1i536d8 ant-btn-default c1"
-      type="button"
+    <div
+      aria-busy="true"
+      aria-live="polite"
+      class="ant-spin ant-spin-spinning ant-spin-show-text css-dev-only-do-not-override-1i536d8"
     >
       <span
-        aria-label="edit"
-        class="anticon anticon-edit"
+        aria-label="loading"
+        class="anticon anticon-loading anticon-spin ant-spin-dot"
         role="img"
       >
         <svg
           aria-hidden="true"
-          data-icon="edit"
+          data-icon="loading"
           fill="currentColor"
           focusable="false"
           height="1em"
-          viewBox="64 64 896 896"
+          viewBox="0 0 1024 1024"
           width="1em"
         >
           <path
-            d="M880 836H144c-17.7 0-32 14.3-32 32v36c0 4.4 3.6 8 8 8h784c4.4 0 8-3.6 8-8v-36c0-17.7-14.3-32-32-32zm-622.3-84c2 0 4-.2 6-.5L431.9 722c2-.4 3.9-1.3 5.3-2.8l423.9-423.9a9.96 9.96 0 000-14.1L694.9 114.9c-1.9-1.9-4.4-2.9-7.1-2.9s-5.2 1-7.1 2.9L256.8 538.8c-1.5 1.5-2.4 3.3-2.8 5.3l-29.5 168.2a33.5 33.5 0 009.4 29.8c6.6 6.4 14.9 9.9 23.8 9.9z"
+            d="M988 548c-19.9 0-36-16.1-36-36 0-59.4-11.6-117-34.6-171.3a440.45 440.45 0 00-94.3-139.9 437.71 437.71 0 00-139.9-94.3C629 83.6 571.4 72 512 72c-19.9 0-36-16.1-36-36s16.1-36 36-36c69.1 0 136.2 13.5 199.3 40.3C772.3 66 827 103 874 150c47 47 83.9 101.8 109.7 162.7 26.7 63.1 40.2 130.2 40.2 199.3.1 19.9-16 36-35.9 36z"
           />
         </svg>
       </span>
-      <span>
-        enter_edit_mode
-      </span>
-    </button>
-  </div>
-  <span
-    class="ant-input-group-wrapper ant-input-search css-dev-only-do-not-override-1i536d8"
-  >
-    <span
-      class="ant-input-wrapper ant-input-group css-dev-only-do-not-override-1i536d8"
-    >
-      <span
-        class="ant-input-affix-wrapper css-dev-only-do-not-override-1i536d8"
-      >
-        <input
-          class="ant-input css-dev-only-do-not-override-1i536d8"
-          placeholder="search_pipeline_placeholder"
-          type="text"
-          value=""
-        />
-        <span
-          class="ant-input-suffix"
-        >
-          <span
-            class="ant-input-clear-icon ant-input-clear-icon-hidden"
-            role="button"
-            tabindex="-1"
-          >
-            <span
-              aria-label="close-circle"
-              class="anticon anticon-close-circle"
-              role="img"
-            >
-              <svg
-                aria-hidden="true"
-                data-icon="close-circle"
-                fill="currentColor"
-                focusable="false"
-                height="1em"
-                viewBox="64 64 896 896"
-                width="1em"
-              >
-                <path
-                  d="M512 64C264.6 64 64 264.6 64 512s200.6 448 448 448 448-200.6 448-448S759.4 64 512 64zm165.4 618.2l-66-.3L512 563.4l-99.3 118.4-66.1.3c-4.4 0-8-3.5-8-8 0-1.9.7-3.7 1.9-5.2l130.1-155L340.5 359a8.32 8.32 0 01-1.9-5.2c0-4.4 3.6-8 8-8l66.1.3L512 464.6l99.3-118.4 66-.3c4.4 0 8 3.5 8 8 0 1.9-.7 3.7-1.9 5.2L553.5 514l130 155c1.2 1.5 1.9 3.3 1.9 5.2 0 4.4-3.6 8-8 8z"
-                />
-              </svg>
-            </span>
-          </span>
-        </span>
-      </span>
-      <span
-        class="ant-input-group-addon"
-      >
-        <button
-          class="ant-btn css-dev-only-do-not-override-1i536d8 ant-btn-default ant-btn-icon-only ant-input-search-button"
-          type="button"
-        >
-          <span
-            aria-label="search"
-            class="anticon anticon-search"
-            role="img"
-          >
-            <svg
-              aria-hidden="true"
-              data-icon="search"
-              fill="currentColor"
-              focusable="false"
-              height="1em"
-              viewBox="64 64 896 896"
-              width="1em"
-            >
-              <path
-                d="M909.6 854.5L649.9 594.8C690.2 542.7 712 479 712 412c0-80.2-31.3-155.4-87.9-212.1-56.6-56.7-132-87.9-212.1-87.9s-155.5 31.3-212.1 87.9C143.2 256.5 112 331.8 112 412c0 80.1 31.3 155.5 87.9 212.1C256.5 680.8 331.8 712 412 712c67 0 130.6-21.8 182.7-62l259.7 259.6a8.2 8.2 0 0011.6 0l43.6-43.5a8.2 8.2 0 000-11.6zM570.4 570.4C528 612.7 471.8 636 412 636s-116-23.3-158.4-65.6C211.3 528 188 471.8 188 412s23.3-116.1 65.6-158.4C296 211.3 352.2 188 412 188s116.1 23.2 158.4 65.6S636 352.2 636 412s-23.3 116.1-65.6 158.4z"
-              />
-            </svg>
-          </span>
-        </button>
-      </span>
-    </span>
-  </span>
-  .c3 {
-  margin: 0.125rem;
-  padding: 0.313rem;
-  border: none;
-  font-style: normal;
-  font-weight: 400;
-  font-size: 0.75rem;
-  line-height: 1.25rem;
-}
-
-.c0 {
-  margin-top: 3rem;
-}
-
-.c1 {
-  display: -webkit-box;
-  display: -webkit-flex;
-  display: -ms-flexbox;
-  display: flex;
-  gap: 0.938rem;
-  -webkit-box-pack: end;
-  -webkit-justify-content: flex-end;
-  -ms-flex-pack: end;
-  justify-content: flex-end;
-  color: #D89614;
-  margin: 0.125rem;
-  padding: 0.313rem;
-}
-
-.c2 {
-  background-color: #1668DC;
-}
-
-<div>
-    <div
-      class="c0"
-    >
       <div
-        class="c1"
+        class="ant-spin-text"
       >
-        Mode: 
-        <span>
-          Viewing
-        </span>
-        <div>
-          Configuration Version 1.0
-        </div>
-      </div>
-      <div
-        class="ant-table-wrapper css-dev-only-do-not-override-1i536d8"
-      >
-        <div
-          class="ant-spin-nested-loading css-dev-only-do-not-override-1i536d8"
-        >
-          <div
-            class="ant-spin-container"
-          >
-            <div
-              class="ant-table"
-            >
-              <div
-                class="ant-table-container"
-              >
-                <div
-                  class="ant-table-content"
-                >
-                  <table
-                    style="table-layout: auto;"
-                  >
-                    <colgroup>
-                      <col
-                        class="ant-table-expand-icon-col"
-                      />
-                    </colgroup>
-                    <thead
-                      class="ant-table-thead"
-                    >
-                      <tr>
-                        <th
-                          class="ant-table-cell ant-table-row-expand-icon-cell"
-                        />
-                        <th
-                          class="ant-table-cell"
-                          style="text-align: left;"
-                        />
-                        <th
-                          class="ant-table-cell"
-                          style="text-align: left;"
-                        >
-                          Pipeline Name
-                        </th>
-                        <th
-                          class="ant-table-cell"
-                          style="text-align: left;"
-                        >
-                          Filters
-                        </th>
-                        <th
-                          class="ant-table-cell"
-                          style="text-align: left;"
-                        >
-                          Tags
-                        </th>
-                        <th
-                          class="ant-table-cell"
-                          style="text-align: left;"
-                        >
-                          Last Edited
-                        </th>
-                        <th
-                          class="ant-table-cell"
-                          style="text-align: left;"
-                        >
-                          Edited By
-                        </th>
-                      </tr>
-                    </thead>
-                    <tbody
-                      class="ant-table-tbody"
-                    >
-                      <tr
-                        class="ant-table-row ant-table-row-level-0"
-                        data-row-key="22a588b8-cccc-4a49-94f1-2caa28271315"
-                        draggable="true"
-                      >
-                        <td
-                          class="ant-table-cell ant-table-row-expand-icon-cell"
-                        >
-                          <span
-                            aria-label="right"
-                            class="anticon anticon-right"
-                            role="img"
-                            tabindex="-1"
-                          >
-                            <svg
-                              aria-hidden="true"
-                              data-icon="right"
-                              fill="currentColor"
-                              focusable="false"
-                              height="1em"
-                              viewBox="64 64 896 896"
-                              width="1em"
-                            >
-                              <path
-                                d="M765.7 486.8L314.9 134.7A7.97 7.97 0 00302 141v77.3c0 4.9 2.3 9.6 6.1 12.6l360 281.1-360 281.1c-3.9 3-6.1 7.7-6.1 12.6V883c0 6.7 7.7 10.4 12.9 6.3l450.8-352.1a31.96 31.96 0 000-50.4z"
-                              />
-                            </svg>
-                          </span>
-                        </td>
-                        <td
-                          class="ant-table-cell"
-                          style="text-align: left;"
-                        >
-                          <span
-                            class="ant-avatar ant-avatar-circle c2 css-dev-only-do-not-override-1i536d8"
-                          >
-                            <span
-                              class="ant-avatar-string"
-                              style="transform: scale(1) translateX(-50%);"
-                            >
-                              1
-                            </span>
-                          </span>
-                        </td>
-                        <td
-                          class="ant-table-cell"
-                          style="text-align: left;"
-                        >
-                          <div
-                            class="c3"
-                          >
-                            Apache common parser
-                          </div>
-                        </td>
-                        <td
-                          class="ant-table-cell"
-                          style="text-align: left;"
-                        >
-                          <span>
-                            attributes.source == nginx
-                          </span>
-                        </td>
-                        <td
-                          class="ant-table-cell"
-                          style="text-align: left;"
-                        >
-                          <span>
-                            <span
-                              class="ant-tag ant-tag-magenta css-dev-only-do-not-override-1i536d8"
-                            >
-                              server
-                            </span>
-                            <span
-                              class="ant-tag ant-tag-magenta css-dev-only-do-not-override-1i536d8"
-                            >
-                              app
-                            </span>
-                          </span>
-                        </td>
-                        <td
-                          class="ant-table-cell"
-                          style="text-align: left;"
-                        >
-                          <span>
-                            Mon Feb 06 2023
-                          </span>
-                        </td>
-                        <td
-                          class="ant-table-cell"
-                          style="text-align: left;"
-                        >
-                          <span>
-                            nitya
-                          </span>
-                        </td>
-                      </tr>
-                      <tr
-                        class="ant-table-row ant-table-row-level-0"
-                        data-row-key="f58ce70c-5f41-48bc-949d-a822e2409257"
-                        draggable="true"
-                      >
-                        <td
-                          class="ant-table-cell ant-table-row-expand-icon-cell"
-                        >
-                          <span
-                            aria-label="right"
-                            class="anticon anticon-right"
-                            role="img"
-                            tabindex="-1"
-                          >
-                            <svg
-                              aria-hidden="true"
-                              data-icon="right"
-                              fill="currentColor"
-                              focusable="false"
-                              height="1em"
-                              viewBox="64 64 896 896"
-                              width="1em"
-                            >
-                              <path
-                                d="M765.7 486.8L314.9 134.7A7.97 7.97 0 00302 141v77.3c0 4.9 2.3 9.6 6.1 12.6l360 281.1-360 281.1c-3.9 3-6.1 7.7-6.1 12.6V883c0 6.7 7.7 10.4 12.9 6.3l450.8-352.1a31.96 31.96 0 000-50.4z"
-                              />
-                            </svg>
-                          </span>
-                        </td>
-                        <td
-                          class="ant-table-cell"
-                          style="text-align: left;"
-                        >
-                          <span
-                            class="ant-avatar ant-avatar-circle c2 css-dev-only-do-not-override-1i536d8"
-                          >
-                            <span
-                              class="ant-avatar-string"
-                              style="transform: scale(1) translateX(-50%);"
-                            >
-                              2
-                            </span>
-                          </span>
-                        </td>
-                        <td
-                          class="ant-table-cell"
-                          style="text-align: left;"
-                        >
-                          <div
-                            class="c3"
-                          >
-                            myservice trace parser
-                          </div>
-                        </td>
-                        <td
-                          class="ant-table-cell"
-                          style="text-align: left;"
-                        >
-                          <span>
-                            attributes.source == myservice
-                          </span>
-                        </td>
-                        <td
-                          class="ant-table-cell"
-                          style="text-align: left;"
-                        >
-                          <span>
-                            <span
-                              class="ant-tag ant-tag-magenta css-dev-only-do-not-override-1i536d8"
-                            >
-                              server
-                            </span>
-                            <span
-                              class="ant-tag ant-tag-magenta css-dev-only-do-not-override-1i536d8"
-                            >
-                              app
-                            </span>
-                            <span
-                              class="ant-tag ant-tag-magenta css-dev-only-do-not-override-1i536d8"
-                            >
-                              host
-                            </span>
-                            <span
-                              class="ant-tag ant-tag-magenta css-dev-only-do-not-override-1i536d8"
-                            >
-                              realse
-                            </span>
-                          </span>
-                        </td>
-                        <td
-                          class="ant-table-cell"
-                          style="text-align: left;"
-                        >
-                          <span>
-                            Sun Feb 05 2023
-                          </span>
-                        </td>
-                        <td
-                          class="ant-table-cell"
-                          style="text-align: left;"
-                        >
-                          <span>
-                            nityananda
-                          </span>
-                        </td>
-                      </tr>
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-              <div
-                class="ant-table-footer"
-              />
-            </div>
-          </div>
-        </div>
+        Loading Pipelines...
       </div>
     </div>
   </div>

@@ -7,6 +7,7 @@ import i18n from 'ReactI18';
 import store from 'store';
 
 import CreatePipelineButton from '../Layouts/CreatePipelineButton';
+import { pipelineApiResponseMockData } from '../mocks/pipeline';
 
 describe('PipelinePage container test', () => {
 	it('should render CreatePipelineButton section', () => {
@@ -18,6 +19,7 @@ describe('PipelinePage container test', () => {
 							setActionType={jest.fn()}
 							isActionMode="viewing-mode"
 							setActionMode={jest.fn()}
+							piplineData={pipelineApiResponseMockData}
 						/>
 					</I18nextProvider>
 				</Provider>

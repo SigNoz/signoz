@@ -4,7 +4,6 @@ import React from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { ProcessorFormField } from '../../AddNewProcessor/config';
-import { PipelineColumn } from '../../types';
 import { FormLabelStyle } from '../styles';
 
 function ProcessorTags({
@@ -33,6 +32,6 @@ function ProcessorTags({
 interface ProcessorTagsProps {
 	fieldData: ProcessorFormField;
 	setTagsListData: (tags: Array<string>) => void;
-	tagsListData: PipelineColumn['tags'];
+	tagsListData: Array<string>;
 }
 export default ProcessorTags;
