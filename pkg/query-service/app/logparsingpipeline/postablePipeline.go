@@ -60,7 +60,7 @@ func (p *PostablePipeline) IsValid() *model.ApiError {
 
 func isValidOperator(op model.PipelineOperator) *model.ApiError {
 	switch op.Type {
-	case "grok":
+	case "grok_parser":
 		if op.Pattern == "" {
 			return model.BadRequestStr(fmt.Sprintf("pattern of %s grok operator cannot be empty", op.ID))
 		}
@@ -97,7 +97,7 @@ func isValidOperator(op model.PipelineOperator) *model.ApiError {
 			return model.BadRequestStr(fmt.Sprintf("fields of %s retain operator cannot be empty", op.ID))
 		}
 	default:
-		return model.BadRequestStr(fmt.Sprintf("operator type %s not supported for %s", op.Type, op.ID))
+		return model.BadRequestStr(fmt.Sprintf("operator type %s not supported for %s, use one of (grok_parser, regex_parser, copy, move, add, remove, traceParser, retain)", op.Type, op.ID))
 	}
 	return nil
 }

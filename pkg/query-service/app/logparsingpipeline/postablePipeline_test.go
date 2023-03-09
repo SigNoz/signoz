@@ -22,7 +22,7 @@ var correctQueriesTest = []struct {
 			Filter:  "attributes.method == \"GET\"",
 			Config: []model.PipelineOperator{
 				{
-					Type:    "grok",
+					Type:    "grok_parser",
 					ID:      "Id",
 					Pattern: "%{COMMONAPACHELOG}",
 					Output:  "attributes",
@@ -41,7 +41,7 @@ var correctQueriesTest = []struct {
 			Filter:  "attributes.method == \"GET\"",
 			Config: []model.PipelineOperator{
 				{
-					Type:    "grok",
+					Type:    "grok_parser",
 					Pattern: "%{COMMONAPACHELOG}",
 					Output:  "attributes",
 				},
@@ -78,7 +78,7 @@ var correctQueriesTest = []struct {
 			Config: []model.PipelineOperator{
 				{
 					ID:     "mygrok",
-					Type:   "grok",
+					Type:   "grok_parser",
 					Output: "attributes",
 				},
 			},
