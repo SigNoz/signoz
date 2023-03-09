@@ -38,14 +38,17 @@ func (r *Repo) GetConfigHistory(ctx context.Context, typ ElementTypeDef) ([]Conf
 		id, 
 		version, 
 		element_type, 
-		created_by, 
+		created_by,
+		created_at, 
 		active, 
 		is_valid, 
 		disabled, 
 		deploy_status, 
 		deploy_result 
 		FROM agent_config_versions 
-		WHERE element_type = $1`, typ)
+		WHERE element_type = $1
+		ORDER BY created_at desc, version desc
+		limit 10`, typ)
 
 	return c, err
 }
