@@ -22,7 +22,7 @@ func UpsertControlProcessors(ctx context.Context, signal string, processors map[
 	zap.S().Debugf("initiating deployment config", signal, processors)
 
 	if signal != string(Metrics) && signal != string(Traces) {
-		zap.S().Errorf("received invalid signal int UpsertControllProcessors", signal)
+		zap.S().Error("received invalid signal int UpsertControllProcessors", signal)
 		fnerr = fmt.Errorf("invalid kind of target to deploy processor")
 		return
 	}
@@ -48,7 +48,7 @@ func UpsertControlProcessors(ctx context.Context, signal string, processors map[
 
 		agenthash, err := addIngestionControlToAgent(agent, signal, processors, withLB)
 		if err != nil {
-			zap.S().Errorf("failed to push ingestion rules config to agent", agent.ID, err)
+			zap.S().Error("failed to push ingestion rules config to agent", agent.ID, err)
 			continue
 		}
 
@@ -107,11 +107,11 @@ func addIngestionControlToAgent(agent *model.Agent, signal string, processors ma
 			zap.S().Debugf("LB not configured for agent. Preparing the lb exporter spec", agent.ID)
 			serviceConf, err := prepareLbAgentSpec(agentConf)
 			if err != nil {
-				zap.S().Errorf("failed to prepare lb exporter spec for agent", agent.ID, err)
+				zap.S().Error("failed to prepare lb exporter spec for agent", agent.ID, err)
 				return confHash, err
 			}
 			if err := agentConf.Merge(serviceConf); err != nil {
-				zap.S().Errorf("failed to merge lb exporter spec for agent", agent.ID, err)
+				zap.S().Error("failed to merge lb exporter spec for agent", agent.ID, err)
 				return confHash, err
 			}
 		}
@@ -121,11 +121,11 @@ func addIngestionControlToAgent(agent *model.Agent, signal string, processors ma
 			zap.S().Debugf("OTLP internal not configured for agent. Preparing the lb exporter spec", agent.ID)
 			serviceConf, err := prepareNonLbAgentSpec(agentConf)
 			if err != nil {
-				zap.S().Errorf("failed to prepare OTLP internal receiver spec for agent", agent.ID, err)
+				zap.S().Error("failed to prepare OTLP internal receiver spec for agent", agent.ID, err)
 				return confHash, err
 			}
 			if err := agentConf.Merge(serviceConf); err != nil {
-				zap.S().Errorf("failed to merge OTLP internal receiver spec for agent", agent.ID, err)
+				zap.S().Error("failed to merge OTLP internal receiver spec for agent", agent.ID, err)
 				return confHash, err
 			}
 		}
@@ -134,7 +134,7 @@ func addIngestionControlToAgent(agent *model.Agent, signal string, processors ma
 	// add ingestion control
 	serviceConf, err := prepareControlProcesorsSpec(agentConf, Signal(signal), processors)
 	if err != nil {
-		zap.S().Errorf("failed to prepare ingestion control processors for agent ", agent.ID, err)
+		zap.S().Error("failed to prepare ingestion control processors for agent ", agent.ID, err)
 		return confHash, err
 	}
 
@@ -208,7 +208,7 @@ func prepareControlProcesorsSpec(agentConf *confmap.Conf, signal Signal, process
 	// merge tracesPipelinePlan with current pipeline
 	mergedPipeline, err := buildPipeline(signal, currentPipeline)
 	if err != nil {
-		zap.S().Errorf("failed to build pipeline", signal, err)
+		zap.S().Error("failed to build pipeline", signal, err)
 		return agentConf, err
 	}
 

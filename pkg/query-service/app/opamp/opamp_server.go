@@ -76,7 +76,7 @@ func (srv *Server) onMessage(conn types.Connection, msg *protobufs.AgentToServer
 
 	agent, created, err := srv.agents.FindOrCreateAgent(agentID, conn)
 	if err != nil {
-		zap.S().Errorf("Failed to find or create agent %q: %v", agentID, err)
+		zap.S().Error("Failed to find or create agent %q: %v", agentID, err)
 		// TODO: handle error
 	}
 
