@@ -12,7 +12,7 @@ import { ILog } from 'types/api/logs/log';
 // styles
 import { ExpandIconWrapper } from '../RawLogView/styles';
 // config
-import { defaultCellStyle, tableScroll } from './config';
+import { defaultCellStyle, defaultTableStyle, tableScroll } from './config';
 
 type ColumnTypeRender<T = unknown> = ReturnType<
 	NonNullable<ColumnType<T>['render']>
@@ -73,26 +73,39 @@ function LogsTableView(props: LogsTableViewProps): JSX.Element {
 				}),
 			},
 			{
-				title: 'Timestamp',
+				title: 'timestamp',
 				dataIndex: 'timestamp',
 				key: 'timestamp',
 				// https://github.com/ant-design/ant-design/discussions/36886
 				render: (field): ColumnTypeRender<Record<string, unknown>> => {
 					const date = dayjs(field / 1e6).format();
 					return {
-						props: {
-							style: defaultCellStyle,
-						},
-						children: <span>{date}</span>,
+						children: <Typography.Paragraph ellipsis>{date}</Typography.Paragraph>,
 					};
 				},
 			},
 			...fieldColumns,
+			{
+				title: 'body',
+				dataIndex: 'body',
+				key: 'body',
+				render: (field): ColumnTypeRender<Record<string, unknown>> => ({
+					props: {
+						style: defaultTableStyle,
+					},
+					children: (
+						<Typography.Paragraph ellipsis={{ rows: linesPerRow }}>
+							{field}
+						</Typography.Paragraph>
+					),
+				}),
+			},
 		];
 	}, [fields, linesPerRow, onClickExpand]);
 
 	return (
 		<Table
+			size="small"
 			columns={columns}
 			dataSource={flattenLogData}
 			pagination={false}
