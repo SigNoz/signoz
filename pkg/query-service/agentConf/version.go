@@ -28,7 +28,7 @@ type ConfigVersion struct {
 	CreatedAt   string         `json:"createdAt" db:"created_at"`
 
 	Active   bool `json:"active" db:"active"`
-	IsValid  bool `json:"is_valid" db:"is_valid"`
+	IsValid  bool `json:"isValid" db:"is_valid"`
 	Disabled bool `json:"disabled" db:"disabled"`
 
 	DeployStatus DeployStatus `json:"deployStatus" db:"deploy_status"`
