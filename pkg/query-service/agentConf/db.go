@@ -109,6 +109,9 @@ func (r *Repo) insertConfig(ctx context.Context, c *ConfigVersion, elements []st
 	}
 
 	if c.Version != 0 {
+		// the version can not be set by the user, we want to auto-assign the versions
+		// in a monotonically increasing order starting with 1. hence, we reject insert
+		// requests with version anything other than 0. here, 0 indicates un-assigned
 		zap.S().Error("invalid version assignment while inserting agent config", c.Version, c.ElementType)
 		return fmt.Errorf("user defined versions are not supported in the agent config")
 	}
