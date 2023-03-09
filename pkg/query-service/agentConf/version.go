@@ -21,11 +21,12 @@ const (
 )
 
 type ConfigVersion struct {
-	ID          string         `json:"id" db:"id"`
-	Version     int            `json:"version" db:"version"`
-	ElementType ElementTypeDef `json:"elementType" db:"element_type"`
-	CreatedBy   string         `json:"createdBy" db:"created_by"`
-	CreatedAt   string         `json:"createdAt" db:"created_at"`
+	ID            string         `json:"id" db:"id"`
+	Version       int            `json:"version" db:"version"`
+	ElementType   ElementTypeDef `json:"elementType" db:"element_type"`
+	CreatedBy     string         `json:"createdBy" db:"created_by"`
+	CreatedAt     string         `json:"createdAt" db:"created_at"`
+	CreatedByName string         `json:"createdByName" db:"created_by_name"`
 
 	Active   bool `json:"active" db:"active"`
 	IsValid  bool `json:"isValid" db:"is_valid"`

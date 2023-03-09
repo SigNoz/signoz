@@ -39,6 +39,8 @@ func (r *Repo) GetConfigHistory(ctx context.Context, typ ElementTypeDef) ([]Conf
 		version, 
 		element_type, 
 		COALESCE(created_by, -1) as created_by,
+		COALESCE((SELECT NAME FROM users 
+		WHERE id = v.created_by), "unknown") created_by_name,
 		created_at,
 		active, 
 		is_valid, 
@@ -47,7 +49,7 @@ func (r *Repo) GetConfigHistory(ctx context.Context, typ ElementTypeDef) ([]Conf
 		deploy_result,
 		last_hash,
 		last_config 
-		FROM agent_config_versions 
+		FROM agent_config_versions v
 		WHERE element_type = $1
 		ORDER BY created_at desc, version desc
 		limit 10`, typ)
@@ -60,8 +62,11 @@ func (r *Repo) GetConfigVersion(ctx context.Context, typ ElementTypeDef, v int) 
 	err := r.db.GetContext(ctx, &c, `SELECT 
 		id, 
 		version, 
-		element_type, 
-		created_by, 
+		element_type,
+		created_at, 
+		COALESCE(created_by, -1) as created_by, 
+ 		COALESCE((SELECT NAME FROM users 
+ 		WHERE id = v.created_by), "unknown") created_by_name,
 		active, 
 		is_valid, 
 		disabled, 
@@ -82,14 +87,17 @@ func (r *Repo) GetLatestVersion(ctx context.Context, typ ElementTypeDef) (*Confi
 	err := r.db.GetContext(ctx, &c, `SELECT 
 		id, 
 		version, 
-		element_type, 
-		COALESCE(created_by, -1) as created_by, 
+		element_type,
+		created_at, 
+		COALESCE(created_by, -1) as created_by,
+		COALESCE((SELECT NAME FROM users 
+ 		WHERE id = v.created_by), "unknown") created_by_name, 
 		active, 
 		is_valid, 
 		disabled, 
 		deploy_status, 
 		deploy_result 
-		FROM agent_config_versions 
+		FROM agent_config_versions v
 		WHERE element_type = $1 
 		AND version = ( 
 			SELECT MAX(version) 
@@ -163,7 +171,7 @@ func (r *Repo) insertConfig(ctx context.Context, c *ConfigVersion, elements []st
 		configQuery,
 		c.ID,
 		c.Version,
-		claims["email"],
+		claims["id"],
 		c.ElementType,
 		false,
 		false,

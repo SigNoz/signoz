@@ -91,9 +91,10 @@ func (ic *PipelineController) ApplyPipelines(ctx context.Context, postable []Pos
 	// queue up the config to push to opamp
 	err = agentConf.UpsertPipelineProcessors(ctx, cfg.Version, rawPipelineData, filterConfig, names)
 	history, _ := agentConf.GetConfigHistory(ctx, agentConf.ElementTypeLogPipelines)
+	insertedCfg, _ := agentConf.GetConfigVersion(ctx, agentConf.ElementTypeLogPipelines, cfg.Version)
 
 	response := &PipelinesResponse{
-		ConfigVersion: cfg,
+		ConfigVersion: insertedCfg,
 		Pipelines:     pipelines,
 		History:       history,
 	}
