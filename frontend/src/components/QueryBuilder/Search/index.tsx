@@ -7,6 +7,7 @@ import React, { useEffect } from 'react';
 
 function QueryBuilderSearch(): JSX.Element {
 	const { onChangeHandler, onSubmitHandler } = useQueryBuilderContext();
+	const { Option } = Select;
 
 	const {
 		handleClearTag,
@@ -30,7 +31,7 @@ function QueryBuilderSearch(): JSX.Element {
 				filterOption={isFilter}
 				autoClearSearchValue={false}
 				mode="multiple"
-				options={options}
+				// options={options}
 				placeholder="Search Filter"
 				value={tags}
 				onDeselect={handleClearTag}
@@ -39,7 +40,21 @@ function QueryBuilderSearch(): JSX.Element {
 				onSearch={handleSearch}
 				searchValue={searchValue}
 				style={{ width: '100%' }}
-			/>
+			>
+				{options.map((o) => (
+					<Option
+						key={o.value}
+						value={o.value}
+						className={
+							o.selected
+								? 'ant-select-item-option-selected select-item-option-state'
+								: ''
+						}
+					>
+						{o.value}
+					</Option>
+				))}
+			</Select>
 			<Button icon={<SearchOutlined />} onClick={onSubmitHandler} />
 		</Space.Compact>
 	);

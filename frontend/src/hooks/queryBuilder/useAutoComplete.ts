@@ -9,6 +9,7 @@ import { useTagValidation } from './useTagValidation';
 
 type Option = {
 	value: string;
+	selected?: boolean;
 };
 
 type ReturnT = {
@@ -109,9 +110,14 @@ export const useAutoComplete = (): ReturnT => {
 	// HANDLE OPTION SELECT
 	const handleSelect = (value: string): void => {
 		if (isMulti) {
-			setSearchValue((prev) =>
-				checkStringEndWIthSpace(prev) ? `${prev}${value}` : `${prev} ${value}`,
-			);
+			setSearchValue((prev) => {
+				if (prev.includes(value)) {
+					return prev.replace(` ${value}`, '');
+				}
+				return checkStringEndWIthSpace(prev)
+					? `${prev}${value}`
+					: `${prev} ${value}`;
+			});
 		} else if (!result.length) {
 			setSearchValue(value);
 		}
@@ -144,12 +150,23 @@ export const useAutoComplete = (): ReturnT => {
 
 	const isFilter = useMemo(() => !isMulti, [isMulti]);
 
+	const optionsUpdated = useMemo(
+		() =>
+			options.map((o) => {
+				if (isMulti) {
+					return { ...o, selected: searchValue.includes(o.value) };
+				}
+				return o;
+			}),
+		[isMulti, options, searchValue],
+	);
+
 	return {
 		handleSearch,
 		handleClearTag,
 		handleSelect,
 		handleKeyDown,
-		options,
+		options: optionsUpdated,
 		tags,
 		searchValue,
 		isFilter,
