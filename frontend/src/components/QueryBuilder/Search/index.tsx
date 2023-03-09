@@ -5,6 +5,8 @@ import { useQueryBuilderContext } from 'container/QueryBuilder';
 import { useAutoComplete } from 'hooks/queryBuilder/useAutoComplete';
 import React, { useEffect } from 'react';
 
+import { Tag } from './tag';
+
 function QueryBuilderSearch(): JSX.Element {
 	const { onChangeHandler, onSubmitHandler } = useQueryBuilderContext();
 	const { Option } = Select;
@@ -24,14 +26,18 @@ function QueryBuilderSearch(): JSX.Element {
 		onChangeHandler(QUERY_BUILDER_STATE_KEYS.SEARCH)(tags.join('AND'));
 	}, [onChangeHandler, tags]);
 
+	const onTagRender = ({ value }: { value: string }): React.ReactElement => (
+		<Tag closable>{value}</Tag>
+	);
+
 	return (
 		<Space.Compact block>
 			<Select
 				showSearch
+				tagRender={onTagRender}
 				filterOption={isFilter}
 				autoClearSearchValue={false}
 				mode="multiple"
-				// options={options}
 				placeholder="Search Filter"
 				value={tags}
 				onDeselect={handleClearTag}
