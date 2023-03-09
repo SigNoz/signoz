@@ -3697,7 +3697,8 @@ func (r *ClickHouseReader) GetMetricAttributeKeys(ctx context.Context, req *v3.F
 	var rows driver.Rows
 	var response v3.FilterAttributeKeyResponse
 
-	query = fmt.Sprintf("SELECT DISTINCT arrayJoin(tagKeys) as distinctTagKeys from (SELECT DISTINCT(JSONExtractKeys(labels)) tagKeys from %s.%s WHERE metric_name=$1) WHERE distinctTagKeys ILIKE $2", signozMetricDBName, signozTSTableName)
+	// skips the internal attributes i.e attributes starting with __
+	query = fmt.Sprintf("SELECT DISTINCT arrayJoin(tagKeys) as distinctTagKey from (SELECT DISTINCT(JSONExtractKeys(labels)) tagKeys from %s.%s WHERE metric_name=$1) WHERE distinctTagKey ILIKE $2 AND distinctTagKey NOT LIKE '\\_\\_%%'", signozMetricDBName, signozTSTableName)
 	if req.Limit != 0 {
 		query = query + fmt.Sprintf(" LIMIT %d;", req.Limit)
 	}
@@ -3712,10 +3713,6 @@ func (r *ClickHouseReader) GetMetricAttributeKeys(ctx context.Context, req *v3.F
 	for rows.Next() {
 		if err := rows.Scan(&attributeKey); err != nil {
 			return nil, fmt.Errorf("error while scanning rows: %s", err.Error())
-		}
-		// skip internal attributes
-		if strings.HasPrefix(attributeKey, "__") {
-			continue
 		}
 		key := v3.AttributeKey{
 			Key:      attributeKey,
