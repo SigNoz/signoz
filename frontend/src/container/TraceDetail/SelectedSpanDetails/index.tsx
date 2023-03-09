@@ -1,7 +1,7 @@
-import { Modal, Tabs, Tooltip } from 'antd';
+import { Modal, Tabs, Tooltip, Typography } from 'antd';
 import Editor from 'components/Editor';
 import { StyledSpace } from 'components/Styled';
-import useThemeMode from 'hooks/useThemeMode';
+import { useIsDarkMode } from 'hooks/useDarkMode';
 import React, { useMemo, useState } from 'react';
 import { ITraceTree } from 'types/api/trace/getTraceItem';
 
@@ -20,7 +20,7 @@ const { TabPane } = Tabs;
 function SelectedSpanDetails(props: SelectedSpanDetailsProps): JSX.Element {
 	const { tree, firstSpanStartTime } = props;
 
-	const { isDarkMode } = useThemeMode();
+	const isDarkMode = useIsDarkMode();
 
 	const OverLayComponentName = useMemo(() => tree?.name, [tree?.name]);
 	const OverLayComponentServiceName = useMemo(() => tree?.serviceName, [
@@ -42,16 +42,15 @@ function SelectedSpanDetails(props: SelectedSpanDetailsProps): JSX.Element {
 		return <div />;
 	}
 
-	const { tags } = tree;
+	const { tags, nonChildReferences } = tree;
 
 	return (
 		<CardContainer>
 			<StyledSpace
 				styledclass={[styles.selectedSpanDetailsContainer, styles.overflow]}
 				direction="vertical"
-				style={{ marginLeft: '0.5rem' }}
 			>
-				<strong> Details for selected Span </strong>
+				<Typography.Text strong> Details for selected Span </Typography.Text>
 
 				<CustomTitle>Service</CustomTitle>
 				<Tooltip overlay={OverLayComponentServiceName}>
@@ -67,7 +66,7 @@ function SelectedSpanDetails(props: SelectedSpanDetailsProps): JSX.Element {
 			<Modal
 				onCancel={(): void => onToggleHandler(false)}
 				title={text.text}
-				visible={isOpen}
+				open={isOpen}
 				destroyOnClose
 				footer={[]}
 				width="70vw"
@@ -84,7 +83,12 @@ function SelectedSpanDetails(props: SelectedSpanDetailsProps): JSX.Element {
 
 			<Tabs defaultActiveKey="1">
 				<TabPane tab="Tags" key="1">
-					<Tags onToggleHandler={onToggleHandler} setText={setText} tags={tags} />
+					<Tags
+						onToggleHandler={onToggleHandler}
+						setText={setText}
+						tags={tags}
+						linkedSpans={nonChildReferences}
+					/>
 				</TabPane>
 				<TabPane tab="Events" key="2">
 					<Events

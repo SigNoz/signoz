@@ -15,7 +15,6 @@ export interface User {
 }
 
 export default interface AppReducer {
-	isDarkMode: boolean;
 	isLoggedIn: boolean;
 	isSideBarCollapsed: boolean;
 	currentVersion: string;
@@ -30,4 +29,6 @@ export default interface AppReducer {
 	featureFlags: null | FeatureFlagPayload;
 	configs: ConfigPayload;
 	userFlags: null | UserFlags;
+	ee: 'Y' | 'N';
+	setupCompleted: boolean;
 }

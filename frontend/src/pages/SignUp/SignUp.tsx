@@ -1,4 +1,4 @@
-import { Button, Input, notification, Space, Switch, Typography } from 'antd';
+import { Button, Form, Input, Space, Switch, Typography } from 'antd';
 import editOrg from 'api/user/editOrg';
 import getInviteDetails from 'api/user/getInviteDetails';
 import loginApi from 'api/user/login';
@@ -6,6 +6,7 @@ import signUpApi from 'api/user/signup';
 import afterLogin from 'AppRoutes/utils';
 import WelcomeLeftContainer from 'components/WelcomeLeftContainer';
 import ROUTES from 'constants/routes';
+import { useNotifications } from 'hooks/useNotifications';
 import history from 'lib/history';
 import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -15,10 +16,26 @@ import { SuccessResponse } from 'types/api';
 import { PayloadProps } from 'types/api/user/getUser';
 import * as loginPrecheck from 'types/api/user/loginPrecheck';
 
-import { ButtonContainer, FormWrapper, Label, MarginTop } from './styles';
+import {
+	ButtonContainer,
+	FormContainer,
+	FormWrapper,
+	Label,
+	MarginTop,
+} from './styles';
 import { isPasswordNotValidMessage, isPasswordValid } from './utils';
 
 const { Title } = Typography;
+
+type FormValues = {
+	firstName: string;
+	email: string;
+	organizationName: string;
+	password: string;
+	confirmPassword: string;
+	hasOptedUpdates: boolean;
+	isAnonymous: boolean;
+};
 
 function SignUp({ version }: SignUpProps): JSX.Element {
 	const { t } = useTranslation(['signup']);
@@ -29,13 +46,6 @@ function SignUp({ version }: SignUpProps): JSX.Element {
 		isUser: false,
 	});
 
-	const [firstName, setFirstName] = useState<string>('');
-	const [email, setEmail] = useState<string>('');
-	const [organizationName, setOrganizationName] = useState<string>('');
-	const [hasOptedUpdates, setHasOptedUpdates] = useState<boolean>(true);
-	const [isAnonymous, setIsAnonymous] = useState<boolean>(false);
-	const [password, setPassword] = useState<string>('');
-	const [confirmPassword, setConfirmPassword] = useState<string>('');
 	const [confirmPasswordError, setConfirmPasswordError] = useState<boolean>(
 		false,
 	);
@@ -56,6 +66,9 @@ function SignUp({ version }: SignUpProps): JSX.Element {
 		enabled: token !== null,
 	});
 
+	const { notifications } = useNotifications();
+	const [form] = Form.useForm<FormValues>();
+
 	useEffect(() => {
 		if (
 			getInviteDetailsResponse.status === 'success' &&
@@ -63,9 +76,9 @@ function SignUp({ version }: SignUpProps): JSX.Element {
 		) {
 			const responseDetails = getInviteDetailsResponse.data.payload;
 			if (responseDetails.precheck) setPrecheck(responseDetails.precheck);
-			setFirstName(responseDetails.name);
-			setEmail(responseDetails.email);
-			setOrganizationName(responseDetails.organization);
+			form.setFieldValue('firstName', responseDetails.name);
+			form.setFieldValue('email', responseDetails.email);
+			form.setFieldValue('organizationName', responseDetails.organization);
 			setIsDetailsDisable(true);
 		}
 		if (
@@ -73,7 +86,7 @@ function SignUp({ version }: SignUpProps): JSX.Element {
 			getInviteDetailsResponse.data?.error
 		) {
 			const { error } = getInviteDetailsResponse.data;
-			notification.error({
+			notifications.error({
 				message: error,
 			});
 		}
@@ -82,21 +95,18 @@ function SignUp({ version }: SignUpProps): JSX.Element {
 		getInviteDetailsResponse.data?.error,
 		getInviteDetailsResponse.status,
 		getInviteDetailsResponse,
+		notifications,
+		form,
 	]);
-
-	const setState = (
-		value: string,
-		setFunction: React.Dispatch<React.SetStateAction<string>>,
-	): void => {
-		setFunction(value);
-	};
 
 	const isPreferenceVisible = token === null;
 
 	const commonHandler = async (
+		values: FormValues,
 		callback: (e: SuccessResponse<PayloadProps>) => Promise<void> | VoidFunction,
 	): Promise<void> => {
 		try {
+			const { organizationName, password, firstName, email } = values;
 			const response = await signUpApi({
 				email,
 				name: firstName,
@@ -122,17 +132,17 @@ function SignUp({ version }: SignUpProps): JSX.Element {
 						callback(userResponse);
 					}
 				} else {
-					notification.error({
+					notifications.error({
 						message: loginResponse.error || t('unexpected_error'),
 					});
 				}
 			} else {
-				notification.error({
+				notifications.error({
 					message: response.error || t('unexpected_error'),
 				});
 			}
 		} catch (error) {
-			notification.error({
+			notifications.error({
 				message: t('unexpected_error'),
 			});
 		}
@@ -141,6 +151,11 @@ function SignUp({ version }: SignUpProps): JSX.Element {
 	const onAdminAfterLogin = async (
 		userResponse: SuccessResponse<PayloadProps>,
 	): Promise<void> => {
+		const {
+			organizationName,
+			isAnonymous,
+			hasOptedUpdates,
+		} = form.getFieldsValue();
 		const editResponse = await editOrg({
 			isAnonymous,
 			name: organizationName,
@@ -150,16 +165,14 @@ function SignUp({ version }: SignUpProps): JSX.Element {
 		if (editResponse.statusCode === 200) {
 			history.push(ROUTES.APPLICATION);
 		} else {
-			notification.error({
+			notifications.error({
 				message: editResponse.error || t('unexpected_error'),
 			});
 		}
 	};
-	const handleSubmitSSO = async (
-		e: React.FormEvent<HTMLFormElement>,
-	): Promise<void> => {
+	const handleSubmitSSO = async (): Promise<void> => {
 		if (!params.get('token')) {
-			notification.error({
+			notifications.error({
 				message: t('token_required'),
 			});
 			return;
@@ -167,12 +180,12 @@ function SignUp({ version }: SignUpProps): JSX.Element {
 		setLoading(true);
 
 		try {
-			e.preventDefault();
+			const values = form.getFieldsValue();
 			const response = await signUpApi({
-				email,
-				name: firstName,
-				orgName: organizationName,
-				password,
+				email: values.email,
+				name: values.firstName,
+				orgName: values.organizationName,
+				password: values.password,
 				token: params.get('token') || undefined,
 				sourceUrl: encodeURIComponent(window.location.href),
 			});
@@ -182,7 +195,7 @@ function SignUp({ version }: SignUpProps): JSX.Element {
 					if (response.payload?.ssoUrl) {
 						window.location.href = response.payload?.ssoUrl;
 					} else {
-						notification.error({
+						notifications.error({
 							message: t('failed_to_initiate_login'),
 						});
 						// take user to login page as there is nothing to do here
@@ -190,12 +203,12 @@ function SignUp({ version }: SignUpProps): JSX.Element {
 					}
 				}
 			} else {
-				notification.error({
+				notifications.error({
 					message: response.error || t('unexpected_error'),
 				});
 			}
 		} catch (error) {
-			notification.error({
+			notifications.error({
 				message: t('unexpected_error'),
 			});
 		}
@@ -203,22 +216,23 @@ function SignUp({ version }: SignUpProps): JSX.Element {
 		setLoading(false);
 	};
 
-	const handleSubmit = (e: React.FormEvent<HTMLFormElement>): void => {
+	const handleSubmit = (): void => {
 		(async (): Promise<void> => {
 			try {
-				e.preventDefault();
+				const values = form.getFieldsValue();
 				setLoading(true);
 
-				if (!isPasswordValid(password)) {
+				if (!isPasswordValid(values.password)) {
 					setIsPasswordPolicyError(true);
 					setLoading(false);
 					return;
 				}
 
 				if (isPreferenceVisible) {
-					await commonHandler(onAdminAfterLogin);
+					await commonHandler(values, onAdminAfterLogin);
 				} else {
 					await commonHandler(
+						values,
 						async (): Promise<void> => {
 							history.push(ROUTES.APPLICATION);
 						},
@@ -227,7 +241,7 @@ function SignUp({ version }: SignUpProps): JSX.Element {
 
 				setLoading(false);
 			} catch (error) {
-				notification.error({
+				notifications.error({
 					message: t('unexpected_error'),
 				});
 				setLoading(false);
@@ -235,108 +249,101 @@ function SignUp({ version }: SignUpProps): JSX.Element {
 		})();
 	};
 
-	const onSwitchHandler = (
-		value: boolean,
-		setFunction: React.Dispatch<React.SetStateAction<boolean>>,
-	): void => {
-		setFunction(value);
-	};
-
 	const getIsNameVisible = (): boolean =>
-		!(firstName.length === 0 && !isPreferenceVisible);
+		!(form.getFieldValue('firstName') === 0 && !isPreferenceVisible);
 
 	const isNameVisible = getIsNameVisible();
 
-	useEffect(() => {
-		if (!isPasswordValid(password) && password.length) {
-			setIsPasswordPolicyError(true);
-		} else {
-			setIsPasswordPolicyError(false);
-		}
+	const handleValuesChange: (changedValues: Partial<FormValues>) => void = (
+		changedValues,
+	) => {
+		if ('password' in changedValues || 'confirmPassword' in changedValues) {
+			const { password, confirmPassword } = form.getFieldsValue();
 
-		if (password !== confirmPassword) {
-			setConfirmPasswordError(true);
-		} else {
-			setConfirmPasswordError(false);
+			const isInvalidPassword = !isPasswordValid(password) && password.length > 0;
+			setIsPasswordPolicyError(isInvalidPassword);
+
+			const isSamePassword = password === confirmPassword;
+			setConfirmPasswordError(!isSamePassword);
 		}
-	}, [password, confirmPassword]);
+	};
+
+	const isValidForm: () => boolean = () => {
+		const values = form.getFieldsValue();
+		return (
+			loading ||
+			!values.email ||
+			!values.organizationName ||
+			(!precheck.sso && (!values.password || !values.confirmPassword)) ||
+			(!isDetailsDisable && !values.firstName) ||
+			confirmPasswordError ||
+			isPasswordPolicyError
+		);
+	};
 
 	return (
 		<WelcomeLeftContainer version={version}>
 			<FormWrapper>
-				<form onSubmit={!precheck.sso ? handleSubmit : handleSubmitSSO}>
+				<FormContainer
+					onFinish={!precheck.sso ? handleSubmit : handleSubmitSSO}
+					onValuesChange={handleValuesChange}
+					initialValues={{ hasOptedUpdates: true, isAnonymous: false }}
+					form={form}
+				>
 					<Title level={4}>Create your account</Title>
 					<div>
 						<Label htmlFor="signupEmail">{t('label_email')}</Label>
-						<Input
-							placeholder={t('placeholder_email')}
-							type="email"
-							autoFocus
-							value={email}
-							onChange={(e): void => {
-								setState(e.target.value, setEmail);
-							}}
-							required
-							id="signupEmail"
-							disabled={isDetailsDisable}
-						/>
+						<FormContainer.Item noStyle name="email">
+							<Input
+								placeholder={t('placeholder_email')}
+								type="email"
+								autoFocus
+								required
+								id="signupEmail"
+								disabled={isDetailsDisable}
+							/>
+						</FormContainer.Item>
 					</div>
 
 					{isNameVisible && (
 						<div>
-							<Label htmlFor="signupFirstName">{t('label_firstname')}</Label>
-							<Input
-								placeholder={t('placeholder_firstname')}
-								value={firstName}
-								onChange={(e): void => {
-									setState(e.target.value, setFirstName);
-								}}
-								required
-								id="signupFirstName"
-								disabled={isDetailsDisable}
-							/>
+							<Label htmlFor="signupFirstName">{t('label_firstname')}</Label>{' '}
+							<FormContainer.Item noStyle name="firstName">
+								<Input
+									placeholder={t('placeholder_firstname')}
+									required
+									id="signupFirstName"
+									disabled={isDetailsDisable}
+								/>
+							</FormContainer.Item>
 						</div>
 					)}
 
 					<div>
-						<Label htmlFor="organizationName">{t('label_orgname')}</Label>
-						<Input
-							placeholder={t('placeholder_orgname')}
-							value={organizationName}
-							onChange={(e): void => {
-								setState(e.target.value, setOrganizationName);
-							}}
-							required
-							id="organizationName"
-							disabled={isDetailsDisable}
-						/>
+						<Label htmlFor="organizationName">{t('label_orgname')}</Label>{' '}
+						<FormContainer.Item noStyle name="organizationName">
+							<Input
+								placeholder={t('placeholder_orgname')}
+								required
+								id="organizationName"
+								disabled={isDetailsDisable}
+							/>
+						</FormContainer.Item>
 					</div>
 					{!precheck.sso && (
 						<div>
-							<Label htmlFor="Password">{t('label_password')}</Label>
-							<Input.Password
-								value={password}
-								onChange={(e): void => {
-									setState(e.target.value, setPassword);
-								}}
-								required
-								id="currentPassword"
-							/>
+							<Label htmlFor="Password">{t('label_password')}</Label>{' '}
+							<FormContainer.Item noStyle name="password">
+								<Input.Password required id="currentPassword" />
+							</FormContainer.Item>
 						</div>
 					)}
 					{!precheck.sso && (
 						<div>
-							<Label htmlFor="ConfirmPassword">{t('label_confirm_password')}</Label>
-							<Input.Password
-								value={confirmPassword}
-								onChange={(e): void => {
-									const updateValue = e.target.value;
-									setState(updateValue, setConfirmPassword);
-								}}
-								required
-								id="confirmPassword"
-							/>
-
+							<Label htmlFor="ConfirmPassword">{t('label_confirm_password')}</Label>{' '}
+							<FormContainer.Item noStyle name="confirmPassword">
+								<Input.Password required id="confirmPassword" />
+							</FormContainer.Item>
 							{confirmPasswordError && (
 								<Typography.Paragraph
 									italic
@@ -367,20 +374,23 @@ function SignUp({ version }: SignUpProps): JSX.Element {
 						<>
 							<MarginTop marginTop="2.4375rem">
 								<Space>
-									<Switch
-										onChange={(value): void => onSwitchHandler(value, setHasOptedUpdates)}
-										checked={hasOptedUpdates}
-									/>
+									<FormContainer.Item
+										noStyle
+										name="hasOptedUpdates"
+										valuePropName="checked"
+									>
+										<Switch />
+									</FormContainer.Item>
+
 									<Typography>{t('prompt_keepme_posted')} </Typography>
 								</Space>
 							</MarginTop>
 
 							<MarginTop marginTop="0.5rem">
 								<Space>
-									<Switch
-										onChange={(value): void => onSwitchHandler(value, setIsAnonymous)}
-										checked={isAnonymous}
-									/>
+									<FormContainer.Item noStyle name="isAnonymous" valuePropName="checked">
+										<Switch />
+									</FormContainer.Item>
 									<Typography>{t('prompt_anonymise')}</Typography>
 								</Space>
 							</MarginTop>
@@ -406,20 +416,12 @@ function SignUp({ version }: SignUpProps): JSX.Element {
 							htmlType="submit"
 							data-attr="signup"
 							loading={loading}
-							disabled={
-								loading ||
-								!email ||
-								!organizationName ||
-								(!precheck.sso && (!password || !confirmPassword)) ||
-								!firstName ||
-								confirmPasswordError ||
-								isPasswordPolicyError
-							}
+							disabled={isValidForm()}
 						>
 							{t('button_get_started')}
 						</Button>
 					</ButtonContainer>
-				</form>
+				</FormContainer>
 			</FormWrapper>
 		</WelcomeLeftContainer>
 	);

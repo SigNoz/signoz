@@ -42,17 +42,15 @@ export const toMetricQueries = (b: IBuilderQueries): IMetricQueries => {
 
 export const toIMetricsBuilderQuery = (
 	q: IMetricQuery,
-): IMetricsBuilderQuery => {
-	return {
-		name: q.name,
-		metricName: q.metricName,
-		tagFilters: q.tagFilters,
-		groupBy: q.groupBy,
-		aggregateOperator: q.aggregateOperator,
-		disabled: q.disabled,
-		legend: q.legend,
-	};
-};
+): IMetricsBuilderQuery => ({
+	name: q.name,
+	metricName: q.metricName,
+	tagFilters: q.tagFilters,
+	groupBy: q.groupBy,
+	aggregateOperator: q.aggregateOperator,
+	disabled: q.disabled,
+	legend: q.legend,
+});
 
 export const prepareBuilderQueries = (
 	m: IMetricQueries,
@@ -134,7 +132,7 @@ export const toChartInterval = (evalWindow: string | undefined): Time => {
 			return '15min';
 		case '30m0s':
 			return '30min';
-		case '60m0s':
+		case '1h0m0s':
 			return '1hr';
 		case '4h0m0s':
 			return '4hr';

@@ -1,14 +1,28 @@
+import { themeColors } from 'constants/theme';
 import styled from 'styled-components';
 
 export const LegendsContainer = styled.div`
-	height: 15%;
+	height: 10%;
 
 	* {
 		::-webkit-scrollbar {
-			display: none !important;
+			width: 0.3rem;
 		}
-
-		-ms-overflow-style: none !important; /* IE and Edge */
-		scrollbar-width: none !important; /* Firefox */
+		::-webkit-scrollbar:horizontal {
+			height: 0.3rem;
+		}
+		::-webkit-scrollbar-track {
+			background: transparent;
+		}
+		::-webkit-scrollbar-thumb {
+			background: ${themeColors.royalGrey};
+			border-radius: 0.625rem;
+		}
+		::-webkit-scrollbar-thumb:hover {
+			background: ${themeColors.matterhornGrey};
+		}
+		::-webkit-scrollbar-corner {
+			background: transparent;
+		}
 	}
 `;

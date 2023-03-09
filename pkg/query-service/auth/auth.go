@@ -12,6 +12,7 @@ import (
 	"go.signoz.io/signoz/pkg/query-service/constants"
 	"go.signoz.io/signoz/pkg/query-service/dao"
 	"go.signoz.io/signoz/pkg/query-service/model"
+	"go.signoz.io/signoz/pkg/query-service/telemetry"
 	"go.signoz.io/signoz/pkg/query-service/utils"
 	"go.uber.org/zap"
 	"golang.org/x/crypto/bcrypt"
@@ -266,7 +267,7 @@ func RegisterFirstUser(ctx context.Context, req *RegisterRequest) (*model.User, 
 func RegisterInvitedUser(ctx context.Context, req *RegisterRequest, nopassword bool) (*model.User, *model.ApiError) {
 
 	if req.InviteToken == "" {
-		return nil, model.BadRequest(fmt.Errorf("invite token is required"))
+		return nil, model.BadRequest(ErrorAskAdmin)
 	}
 
 	if !nopassword && req.Password == "" {
@@ -385,6 +386,8 @@ func Login(ctx context.Context, request *model.LoginRequest) (*model.LoginRespon
 		zap.S().Debugf("Failed to generate JWT against login creds, %v", err)
 		return nil, err
 	}
+
+	telemetry.GetInstance().IdentifyUser(&user.User)
 
 	return &model.LoginResponse{
 		UserJwtObject: userjwt,

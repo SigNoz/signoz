@@ -1,8 +1,9 @@
 import { Input, InputRef, Popover } from 'antd';
 import useUrlQuery from 'hooks/useUrlQuery';
 import getStep from 'lib/getStep';
-import { debounce } from 'lodash-es';
+import debounce from 'lodash-es/debounce';
 import React, {
+	memo,
 	useCallback,
 	useEffect,
 	useMemo,
@@ -12,11 +13,17 @@ import React, {
 import { connect, useDispatch, useSelector } from 'react-redux';
 import { bindActionCreators, Dispatch } from 'redux';
 import { ThunkDispatch } from 'redux-thunk';
+import { GetLogsFields } from 'store/actions/logs/getFields';
 import { getLogs } from 'store/actions/logs/getLogs';
 import { getLogsAggregate } from 'store/actions/logs/getLogsAggregate';
 import { AppState } from 'store/reducers';
 import AppActions from 'types/actions';
-import { FLUSH_LOGS, TOGGLE_LIVE_TAIL } from 'types/actions/logs';
+import {
+	FLUSH_LOGS,
+	SET_LOADING,
+	SET_LOADING_AGGREGATE,
+	TOGGLE_LIVE_TAIL,
+} from 'types/actions/logs';
 import { GlobalReducer } from 'types/reducer/globalTime';
 import { ILogsReducer } from 'types/reducer/logs';
 
@@ -27,6 +34,7 @@ import { useSearchParser } from './useSearchParser';
 function SearchFilter({
 	getLogs,
 	getLogsAggregate,
+	getLogsFields,
 }: SearchFilterProps): JSX.Element {
 	const {
 		updateParsedQuery,
@@ -40,7 +48,8 @@ function SearchFilter({
 		AppState,
 		ILogsReducer
 	>((state) => state.logs);
-	const { maxTime, minTime } = useSelector<AppState, GlobalReducer>(
+
+	const globalTime = useSelector<AppState, GlobalReducer>(
 		(state) => state.globalTime,
 	);
 	const dispatch = useDispatch<Dispatch<AppActions>>();
@@ -63,7 +72,10 @@ function SearchFilter({
 	);
 
 	const handleSearch = useCallback(
-		(customQuery) => {
+		(customQuery: string) => {
+			getLogsFields();
+			const { maxTime, minTime } = globalTime;
+
 			if (liveTail === 'PLAYING') {
 				dispatch({
 					type: TOGGLE_LIVE_TAIL,
@@ -72,14 +84,27 @@ function SearchFilter({
 				dispatch({
 					type: FLUSH_LOGS,
 				});
-				setTimeout(
-					() =>
-						dispatch({
-							type: TOGGLE_LIVE_TAIL,
-							payload: liveTail,
-						}),
-					0,
-				);
+				dispatch({
+					type: TOGGLE_LIVE_TAIL,
+					payload: liveTail,
+				});
+				dispatch({
+					type: SET_LOADING,
+					payload: false,
+				});
+
+				getLogsAggregate({
+					timestampStart: minTime,
+					timestampEnd: maxTime,
+					step: getStep({
+						start: minTime,
+						end: maxTime,
+						inputFormat: 'ns',
+					}),
+					q: customQuery,
+					...(idStart ? { idGt: idStart } : {}),
+					...(idEnd ? { idLt: idEnd } : {}),
+				});
 			} else {
 				getLogs({
 					q: customQuery,
@@ -112,22 +137,41 @@ function SearchFilter({
 			idStart,
 			liveTail,
 			logLinesPerPage,
-			maxTime,
-			minTime,
+			globalTime,
+			getLogsFields,
 		],
 	);
 
 	const urlQuery = useUrlQuery();
 	const urlQueryString = urlQuery.get('q');
 
-	const debouncedHandleSearch = useMemo(() => debounce(handleSearch, 600), [
-		handleSearch,
-	]);
-
 	useEffect(() => {
+		dispatch({
+			type: SET_LOADING,
+			payload: true,
+		});
+		dispatch({
+			type: SET_LOADING_AGGREGATE,
+			payload: true,
+		});
+
+		const debouncedHandleSearch = debounce(handleSearch, 600);
+
 		debouncedHandleSearch(urlQueryString || '');
+
+		return (): void => {
+			debouncedHandleSearch.cancel();
+		};
 		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [urlQueryString, maxTime, minTime, idEnd, idStart, logLinesPerPage]);
+	}, [
+		urlQueryString,
+		idEnd,
+		idStart,
+		logLinesPerPage,
+		dispatch,
+		globalTime.maxTime,
+		globalTime.minTime,
+	]);
 
 	return (
 		<Container>
@@ -158,10 +202,9 @@ function SearchFilter({
 					onChange={(e): void => {
 						const { value } = e.target;
 						setSearchText(value);
-						debouncedupdateQueryString(value);
 					}}
+					onSearch={debouncedupdateQueryString}
 					allowClear
-					onSearch={handleSearch}
 				/>
 			</Popover>
 		</Container>
@@ -169,12 +212,9 @@ function SearchFilter({
 }
 
 interface DispatchProps {
-	getLogs: (
-		props: Parameters<typeof getLogs>[0],
-	) => (dispatch: Dispatch<AppActions>) => void;
-	getLogsAggregate: (
-		props: Parameters<typeof getLogsAggregate>[0],
-	) => (dispatch: Dispatch<AppActions>) => void;
+	getLogs: typeof getLogs;
+	getLogsAggregate: typeof getLogsAggregate;
+	getLogsFields: typeof GetLogsFields;
 }
 
 type SearchFilterProps = DispatchProps;
@@ -184,6 +224,7 @@ const mapDispatchToProps = (
 ): DispatchProps => ({
 	getLogs: bindActionCreators(getLogs, dispatch),
 	getLogsAggregate: bindActionCreators(getLogsAggregate, dispatch),
+	getLogsFields: bindActionCreators(GetLogsFields, dispatch),
 });
 
-export default connect(null, mapDispatchToProps)(SearchFilter);
+export default connect(null, mapDispatchToProps)(memo(SearchFilter));

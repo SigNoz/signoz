@@ -10,7 +10,7 @@ import (
 	"github.com/go-kit/log/level"
 	"go.uber.org/zap"
 
-	plabels "github.com/prometheus/prometheus/pkg/labels"
+	plabels "github.com/prometheus/prometheus/model/labels"
 	pql "github.com/prometheus/prometheus/promql"
 	"go.signoz.io/signoz/pkg/query-service/model"
 	qslabels "go.signoz.io/signoz/pkg/query-service/utils/labels"
@@ -108,6 +108,14 @@ func (r *PromRule) Condition() *RuleCondition {
 	return r.ruleCondition
 }
 
+func (r *PromRule) targetVal() float64 {
+	if r.ruleCondition == nil || r.ruleCondition.Target == nil {
+		return 0
+	}
+
+	return *r.ruleCondition.Target
+}
+
 func (r *PromRule) Type() RuleType {
 	return RuleTypeProm
 }
@@ -182,7 +190,7 @@ func (r *PromRule) sample(alert *Alert, ts time.Time) pql.Sample {
 	lb.Set(qslabels.AlertStateLabel, alert.State.String())
 
 	s := pql.Sample{
-		Metric: lb.Labels(),
+		Metric: lb.Labels(nil),
 		Point:  pql.Point{T: timestamp.FromTime(ts), V: 1},
 	}
 	return s
@@ -327,10 +335,10 @@ func (r *PromRule) Eval(ctx context.Context, ts time.Time, queriers *Queriers) (
 			l[lbl.Name] = lbl.Value
 		}
 
-		tmplData := AlertTemplateData(l, smpl.V)
+		tmplData := AlertTemplateData(l, smpl.V, r.targetVal())
 		// Inject some convenience variables that are easier to remember for users
 		// who are not used to Go's templating system.
-		defs := "{{$labels := .Labels}}{{$value := .Value}}"
+		defs := "{{$labels := .Labels}}{{$value := .Value}}{{$threshold := .Threshold}}"
 
 		expand := func(text string) string {
 
@@ -365,7 +373,7 @@ func (r *PromRule) Eval(ctx context.Context, ts time.Time, queriers *Queriers) (
 			annotations = append(annotations, plabels.Label{Name: a.Name, Value: expand(a.Value)})
 		}
 
-		lbs := lb.Labels()
+		lbs := lb.Labels(nil)
 		h := lbs.Hash()
 		resultFPs[h] = struct{}{}
 

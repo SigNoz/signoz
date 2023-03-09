@@ -1,7 +1,8 @@
 import { CopyOutlined } from '@ant-design/icons';
-import { Button, Input, notification, Select, Space, Tooltip } from 'antd';
+import { Button, Input, Select, Space, Tooltip } from 'antd';
 import getResetPasswordToken from 'api/user/getResetPasswordToken';
 import ROUTES from 'constants/routes';
+import { useNotifications } from 'hooks/useNotifications';
 import React, { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useCopyToClipboard } from 'react-use';
@@ -26,9 +27,8 @@ function EditMembersDetails({
 	const [isLoading, setIsLoading] = useState<boolean>(false);
 	const [state, copyToClipboard] = useCopyToClipboard();
 
-	const getPasswordLink = (token: string): string => {
-		return `${window.location.origin}${ROUTES.PASSWORD_RESET}?token=${token}`;
-	};
+	const getPasswordLink = (token: string): string =>
+		`${window.location.origin}${ROUTES.PASSWORD_RESET}?token=${token}`;
 
 	const onChangeHandler = useCallback(
 		(setFunc: React.Dispatch<React.SetStateAction<string>>, value: string) => {
@@ -37,23 +37,28 @@ function EditMembersDetails({
 		[],
 	);
 
+	const { notifications } = useNotifications();
+
 	useEffect(() => {
 		if (state.error) {
-			notification.error({
+			notifications.error({
 				message: t('something_went_wrong'),
 			});
 		}
 
 		if (state.value) {
-			notification.success({
+			notifications.success({
 				message: t('success'),
 			});
 		}
-	}, [state.error, state.value, t]);
+	}, [state.error, state.value, t, notifications]);
 
-	const onPasswordChangeHandler = useCallback((event) => {
-		setPasswordLink(event.target.value);
-	}, []);
+	const onPasswordChangeHandler: React.ChangeEventHandler<HTMLInputElement> = useCallback(
+		(event) => {
+			setPasswordLink(event.target.value);
+		},
+		[],
+	);
 
 	const onGeneratePasswordHandler = async (): Promise<void> => {
 		try {
@@ -65,7 +70,7 @@ function EditMembersDetails({
 			if (response.statusCode === 200) {
 				setPasswordLink(getPasswordLink(response.payload.token));
 			} else {
-				notification.error({
+				notifications.error({
 					message:
 						response.error ||
 						t('something_went_wrong', {
@@ -77,7 +82,7 @@ function EditMembersDetails({
 		} catch (error) {
 			setIsLoading(false);
 
-			notification.error({
+			notifications.error({
 				message: t('something_went_wrong', {
 					ns: 'common',
 				}),

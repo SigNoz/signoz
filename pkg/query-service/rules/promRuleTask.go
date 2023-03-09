@@ -3,13 +3,14 @@ package rules
 import (
 	"context"
 	"fmt"
-	"github.com/go-kit/log"
-	opentracing "github.com/opentracing/opentracing-go"
-	plabels "github.com/prometheus/prometheus/pkg/labels"
-	"go.uber.org/zap"
 	"sort"
 	"sync"
 	"time"
+
+	"github.com/go-kit/log"
+	opentracing "github.com/opentracing/opentracing-go"
+	plabels "github.com/prometheus/prometheus/model/labels"
+	"go.uber.org/zap"
 )
 
 // PromRuleTask is a promql rule executor

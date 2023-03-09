@@ -17,15 +17,20 @@ type RunQueries struct {
 }
 
 var AggregateOperatorToPercentile = map[model.AggregateOperator]float64{
-	model.P05: 0.5,
-	model.P10: 0.10,
-	model.P20: 0.20,
-	model.P25: 0.25,
-	model.P50: 0.50,
-	model.P75: 0.75,
-	model.P90: 0.90,
-	model.P95: 0.95,
-	model.P99: 0.99,
+	model.P05:              0.5,
+	model.P10:              0.10,
+	model.P20:              0.20,
+	model.P25:              0.25,
+	model.P50:              0.50,
+	model.P75:              0.75,
+	model.P90:              0.90,
+	model.P95:              0.95,
+	model.P99:              0.99,
+	model.HIST_QUANTILE_50: 0.50,
+	model.HIST_QUANTILE_75: 0.75,
+	model.HIST_QUANTILE_90: 0.90,
+	model.HIST_QUANTILE_95: 0.95,
+	model.HIST_QUANTILE_99: 0.99,
 }
 
 var AggregateOperatorToSQLFunc = map[model.AggregateOperator]string{
@@ -173,6 +178,16 @@ func BuildMetricQuery(qp *model.QueryRangeParamsV2, mq *model.MetricQuery, table
 			" GROUP BY %s" +
 			" ORDER BY %s ts"
 
+	tagsWithoutLe := []string{}
+	for _, tag := range mq.GroupingTags {
+		if tag != "le" {
+			tagsWithoutLe = append(tagsWithoutLe, tag)
+		}
+	}
+
+	groupByWithoutLe := groupBy(tagsWithoutLe...)
+	groupTagsWithoutLe := groupSelect(tagsWithoutLe...)
+
 	groupBy := groupBy(mq.GroupingTags...)
 	groupTags := groupSelect(mq.GroupingTags...)
 
@@ -209,6 +224,20 @@ func BuildMetricQuery(qp *model.QueryRangeParamsV2, mq *model.MetricQuery, table
 	case model.P05, model.P10, model.P20, model.P25, model.P50, model.P75, model.P90, model.P95, model.P99:
 		op := fmt.Sprintf("quantile(%v)(value)", AggregateOperatorToPercentile[mq.AggregateOperator])
 		query := fmt.Sprintf(queryTmpl, groupTags, qp.Step, op, filterSubQuery, groupBy, groupTags)
+		return query, nil
+	case model.HIST_QUANTILE_50, model.HIST_QUANTILE_75, model.HIST_QUANTILE_90, model.HIST_QUANTILE_95, model.HIST_QUANTILE_99:
+		rateGroupBy := "fingerprint, " + groupBy
+		rateGroupTags := "fingerprint, " + groupTags
+		op := "max(value)"
+		subQuery := fmt.Sprintf(
+			queryTmpl, rateGroupTags, qp.Step, op, filterSubQuery, rateGroupBy, rateGroupTags,
+		) // labels will be same so any should be fine
+		query := `SELECT %s ts, runningDifference(value)/runningDifference(ts) as value FROM(%s) OFFSET 1`
+		query = fmt.Sprintf(query, groupTags, subQuery)
+		query = fmt.Sprintf(`SELECT %s ts, sum(value) as value FROM (%s) GROUP BY %s ORDER BY %s ts`, groupTags, query, groupBy, groupTags)
+		value := AggregateOperatorToPercentile[mq.AggregateOperator]
+
+		query = fmt.Sprintf(`SELECT %s ts, histogramQuantile(arrayMap(x -> toFloat64(x), groupArray(le)), groupArray(value), %.3f) as value FROM (%s) GROUP BY %s ORDER BY %s ts`, groupTagsWithoutLe, value, query, groupByWithoutLe, groupTagsWithoutLe)
 		return query, nil
 	case model.AVG, model.SUM, model.MIN, model.MAX:
 		op := fmt.Sprintf("%s(value)", AggregateOperatorToSQLFunc[mq.AggregateOperator])
@@ -311,6 +340,7 @@ func varToQuery(qp *model.QueryRangeParamsV2, tableName string) (map[string]stri
 	evalFuncs := GoValuateFuncs()
 	varToQuery := make(map[string]string)
 	for _, builderQuery := range qp.CompositeMetricQuery.BuilderQueries {
+		// err should be nil here since the expression is already validated
 		expression, _ := govaluate.NewEvaluableExpressionWithFunctions(builderQuery.Expression, evalFuncs)
 
 		// Use the parsed expression and build the query for each variable
@@ -318,7 +348,11 @@ func varToQuery(qp *model.QueryRangeParamsV2, tableName string) (map[string]stri
 		var errs []error
 		for _, _var := range expression.Vars() {
 			if _, ok := varToQuery[_var]; !ok {
-				mq := qp.CompositeMetricQuery.BuilderQueries[_var]
+				mq, varExists := qp.CompositeMetricQuery.BuilderQueries[_var]
+				if !varExists {
+					errs = append(errs, fmt.Errorf("variable %s not found in builder queries", _var))
+					continue
+				}
 				query, err := BuildMetricQuery(qp, mq, tableName)
 				if err != nil {
 					errs = append(errs, err)
@@ -340,10 +374,22 @@ func varToQuery(qp *model.QueryRangeParamsV2, tableName string) (map[string]stri
 	return varToQuery, nil
 }
 
+func unique(slice []string) []string {
+	keys := make(map[string]struct{})
+	list := []string{}
+	for _, entry := range slice {
+		if _, value := keys[entry]; !value {
+			keys[entry] = struct{}{}
+			list = append(list, entry)
+		}
+	}
+	return list
+}
+
 // expressionToQuery constructs the query for the expression
 func expressionToQuery(qp *model.QueryRangeParamsV2, varToQuery map[string]string, expression *govaluate.EvaluableExpression) (string, error) {
 	var formulaQuery string
-	vars := expression.Vars()
+	vars := unique(expression.Vars())
 	for idx, var_ := range vars[1:] {
 		x, y := vars[idx], var_
 		if !reflect.DeepEqual(qp.CompositeMetricQuery.BuilderQueries[x].GroupingTags, qp.CompositeMetricQuery.BuilderQueries[y].GroupingTags) {
@@ -360,21 +406,34 @@ func expressionToQuery(qp *model.QueryRangeParamsV2, varToQuery map[string]strin
 		}
 		modified = append(modified, token)
 	}
+	// err should be nil here since the expression is already validated
 	formula, _ := govaluate.NewEvaluableExpressionFromTokens(modified)
 
 	var formulaSubQuery string
 	var joinUsing string
+	var prevVar string
 	for idx, var_ := range vars {
 		query := varToQuery[var_]
 		groupTags := qp.CompositeMetricQuery.BuilderQueries[var_].GroupingTags
 		groupTags = append(groupTags, "ts")
-		joinUsing = strings.Join(groupTags, ",")
-		formulaSubQuery += fmt.Sprintf("(%s) as %s ", query, var_)
-		if idx < len(vars)-1 {
-			formulaSubQuery += "GLOBAL INNER JOIN"
-		} else if len(vars) > 1 {
-			formulaSubQuery += fmt.Sprintf("USING (%s)", joinUsing)
+		if joinUsing == "" {
+			for _, tag := range groupTags {
+				joinUsing += fmt.Sprintf("%s.%s as %s, ", var_, tag, tag)
+			}
+			joinUsing = strings.TrimSuffix(joinUsing, ", ")
 		}
+		formulaSubQuery += fmt.Sprintf("(%s) as %s ", query, var_)
+		if idx > 0 {
+			formulaSubQuery += " ON "
+			for _, tag := range groupTags {
+				formulaSubQuery += fmt.Sprintf("%s.%s = %s.%s AND ", prevVar, tag, var_, tag)
+			}
+			formulaSubQuery = strings.TrimSuffix(formulaSubQuery, " AND ")
+		}
+		if idx < len(vars)-1 {
+			formulaSubQuery += " GLOBAL INNER JOIN"
+		}
+		prevVar = var_
 	}
 	formulaQuery = fmt.Sprintf("SELECT %s, %s as value FROM ", joinUsing, formula.ExpressionString()) + formulaSubQuery
 	return formulaQuery, nil

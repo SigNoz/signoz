@@ -7,6 +7,7 @@ import (
 	"math"
 	"net/http"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/gorilla/mux"
@@ -15,6 +16,7 @@ import (
 	"go.signoz.io/signoz/pkg/query-service/auth"
 	"go.signoz.io/signoz/pkg/query-service/constants"
 	"go.signoz.io/signoz/pkg/query-service/model"
+	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
 )
 
 var allowedFunctions = []string{"count", "ratePerSec", "sum", "avg", "min", "max", "p50", "p90", "p95", "p99"}
@@ -314,7 +316,11 @@ func parseFilteredSpansRequest(r *http.Request, aH *APIHandler) (*model.GetFilte
 			return nil, model.ErrFeatureUnavailable{Key: constants.TimestampSort}
 		}
 	}
-
+	tags, err := extractTagKeys(postData.Tags)
+	if err != nil {
+		return nil, err
+	}
+	postData.Tags = tags
 	return postData, nil
 }
 
@@ -387,15 +393,40 @@ func parseFilteredSpanAggregatesRequest(r *http.Request) (*model.GetFilteredSpan
 
 	postData.AggregationOption = aggregationOption
 	postData.Dimension = dimension
-	// tags, err := parseTagsV2("tags", r)
-	// if err != nil {
-	// 	return nil, err
-	// }
-	// if len(*tags) != 0 {
-	// 	params.Tags = *tags
-	// }
+	tags, err := extractTagKeys(postData.Tags)
+	if err != nil {
+		return nil, err
+	}
+	postData.Tags = tags
 
 	return postData, nil
+}
+
+func extractTagKeys(tags []model.TagQueryParam) ([]model.TagQueryParam, error) {
+	newTags := make([]model.TagQueryParam, 0)
+	if len(tags) != 0 {
+		for _, tag := range tags {
+			customStr := strings.Split(tag.Key, ".(")
+			if len(customStr) < 2 {
+				return nil, fmt.Errorf("TagKey param is not valid in query")
+			} else {
+				tag.Key = customStr[0]
+			}
+			if tag.Operator == model.ExistsOperator || tag.Operator == model.NotExistsOperator {
+				if customStr[1] == string(model.TagTypeString)+")" {
+					tag.StringValues = []string{" "}
+				} else if customStr[1] == string(model.TagTypeBool)+")" {
+					tag.BoolValues = []bool{true}
+				} else if customStr[1] == string(model.TagTypeNumber)+")" {
+					tag.NumberValues = []float64{0}
+				} else {
+					return nil, fmt.Errorf("TagKey param is not valid in query")
+				}
+			}
+			newTags = append(newTags, tag)
+		}
+	}
+	return newTags, nil
 }
 
 func parseTagFilterRequest(r *http.Request) (*model.TagFilterParams, error) {
@@ -426,8 +457,16 @@ func parseTagValueRequest(r *http.Request) (*model.TagFilterParams, error) {
 	if err != nil {
 		return nil, err
 	}
-	if postData.TagKey == "" {
-		return nil, fmt.Errorf("%s param missing in query", postData.TagKey)
+	if postData.TagKey == (model.TagKey{}) {
+		return nil, fmt.Errorf("TagKey param missing in query")
+	}
+
+	if postData.TagKey.Type != model.TagTypeString && postData.TagKey.Type != model.TagTypeBool && postData.TagKey.Type != model.TagTypeNumber {
+		return nil, fmt.Errorf("tag keys type %s is not supported", postData.TagKey.Type)
+	}
+
+	if postData.Limit == 0 {
+		postData.Limit = 100
 	}
 
 	postData.Start, err = parseTimeStr(postData.StartStr, "start")
@@ -480,14 +519,18 @@ func parseListErrorsRequest(r *http.Request) (*model.ListErrorsParams, error) {
 	if err != nil {
 		return nil, errors.New("offset param is not in correct format")
 	}
+	serviceName := r.URL.Query().Get("serviceName")
+	exceptionType := r.URL.Query().Get("exceptionType")
 
 	params := &model.ListErrorsParams{
-		Start:      startTime,
-		End:        endTime,
-		OrderParam: orderParam,
-		Order:      order,
-		Limit:      int64(limitInt),
-		Offset:     int64(offsetInt),
+		Start:         startTime,
+		End:           endTime,
+		OrderParam:    orderParam,
+		Order:         order,
+		Limit:         int64(limitInt),
+		Offset:        int64(offsetInt),
+		ServiceName:   serviceName,
+		ExceptionType: exceptionType,
 	}
 
 	return params, nil
@@ -503,10 +546,14 @@ func parseCountErrorsRequest(r *http.Request) (*model.CountErrorsParams, error) 
 	if err != nil {
 		return nil, err
 	}
+	serviceName := r.URL.Query().Get("serviceName")
+	exceptionType := r.URL.Query().Get("exceptionType")
 
 	params := &model.CountErrorsParams{
-		Start: startTime,
-		End:   endTime,
+		Start:         startTime,
+		End:           endTime,
+		ServiceName:   serviceName,
+		ExceptionType: exceptionType,
 	}
 
 	return params, nil
@@ -764,4 +811,33 @@ func parseFilterSet(r *http.Request) (*model.FilterSet, error) {
 		return nil, err
 	}
 	return &filterSet, nil
+}
+
+func parseAggregateAttributeRequest(r *http.Request) (*v3.AggregateAttributeRequest, error) {
+	var req v3.AggregateAttributeRequest
+
+	aggregateOperator := v3.AggregateOperator(r.URL.Query().Get("aggregateOperator"))
+	dataSource := v3.DataSource(r.URL.Query().Get("dataSource"))
+	aggregateAttribute := r.URL.Query().Get("searchText")
+
+	limit, err := strconv.Atoi(r.URL.Query().Get("limit"))
+	if err != nil {
+		limit = 50
+	}
+
+	if err := aggregateOperator.Validate(); err != nil {
+		return nil, err
+	}
+
+	if err := dataSource.Validate(); err != nil {
+		return nil, err
+	}
+
+	req = v3.AggregateAttributeRequest{
+		Operator:   aggregateOperator,
+		SearchText: aggregateAttribute,
+		Limit:      limit,
+		DataSource: dataSource,
+	}
+	return &req, nil
 }
