@@ -1,4 +1,4 @@
-import { Card } from 'antd';
+import { Card, Form } from 'antd';
 import React from 'react';
 import styled from 'styled-components';
 
@@ -30,4 +30,10 @@ interface Props {
 
 export const MarginTop = styled.div<Props>`
 	margin-top: ${({ marginTop = 0 }): number | string => marginTop};
+`;
+
+export const FormContainer = styled(Form)`
+	& .ant-form-item {
+		margin-bottom: 0px;
+	}
 `;
