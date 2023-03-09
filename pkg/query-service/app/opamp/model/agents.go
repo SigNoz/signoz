@@ -1,4 +1,4 @@
-package data
+package model
 
 import (
 	"fmt"
@@ -20,6 +20,10 @@ type Agents struct {
 	mux         sync.RWMutex
 	agentsById  map[string]*Agent
 	connections map[types.Connection]map[string]bool
+}
+
+func (a *Agents) Count() int {
+	return len(a.connections)
 }
 
 // InitDB initializes the database and creates the agents table.
@@ -78,17 +82,17 @@ func (agents *Agents) FindAgent(agentID string) *Agent {
 // FindOrCreateAgent returns the Agent instance associated with the given agentID.
 // If the Agent instance does not exist, it is created and added to the list of
 // Agent instances.
-func (agents *Agents) FindOrCreateAgent(agentID string, conn types.Connection) (*Agent, error) {
+func (agents *Agents) FindOrCreateAgent(agentID string, conn types.Connection) (*Agent, bool, error) {
 	agents.mux.Lock()
 	defer agents.mux.Unlock()
-
+	var created bool
 	agent, ok := agents.agentsById[agentID]
 	var err error
 	if !ok || agent == nil {
 		agent = New(agentID, conn)
 		err = agent.Upsert()
 		if err != nil {
-			return nil, err
+			return nil, created, err
 		}
 		agents.agentsById[agentID] = agent
 
@@ -96,6 +100,18 @@ func (agents *Agents) FindOrCreateAgent(agentID string, conn types.Connection) (
 			agents.connections[conn] = map[string]bool{}
 		}
 		agents.connections[conn][agentID] = true
+		created = true
 	}
-	return agent, nil
+	return agent, created, nil
+}
+
+func (agents *Agents) GetAllAgents() []*Agent {
+	agents.mux.RLock()
+	defer agents.mux.RUnlock()
+
+	allAgents := []*Agent{}
+	for _, v := range agents.agentsById {
+		allAgents = append(allAgents, v)
+	}
+	return allAgents
 }

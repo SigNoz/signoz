@@ -3,9 +3,8 @@ package opamp
 import (
 	"context"
 	"crypto/sha256"
-	"fmt"
-	"math/rand"
-	"time"
+
+	"strings"
 
 	"github.com/knadh/koanf/parsers/yaml"
 	"github.com/open-telemetry/opamp-go/protobufs"
@@ -13,8 +12,11 @@ import (
 	"github.com/open-telemetry/opamp-go/server/types"
 	"go.opentelemetry.io/collector/confmap"
 	model "go.signoz.io/signoz/pkg/query-service/app/opamp/model"
+
 	"go.uber.org/zap"
 )
+
+var opAmpServer *Server
 
 type Server struct {
 	server       server.OpAMPServer
@@ -27,16 +29,27 @@ const capabilities = protobufs.ServerCapabilities_ServerCapabilities_AcceptsEffe
 	protobufs.ServerCapabilities_ServerCapabilities_OffersRemoteConfig |
 	protobufs.ServerCapabilities_ServerCapabilities_AcceptsStatus
 
-func NewServer(agents *model.Agents) *Server {
-	srv := &Server{
-		agents: agents,
+func InitalizeServer(listener string, agents *model.Agents) error {
+
+	if agents == nil {
+		agents = &model.AllAgents
 	}
 
-	srv.server = server.New(zap.S())
-	return srv
+	opAmpServer = &Server{
+		agents: agents,
+	}
+	opAmpServer.server = server.New(zap.S())
+
+	return opAmpServer.Start(listener)
 }
 
-func (srv *Server) Start() {
+func StopServer() {
+	if opAmpServer != nil {
+		opAmpServer.Stop()
+	}
+}
+
+func (srv *Server) Start(listener string) error {
 	settings := server.StartSettings{
 		Settings: server.Settings{
 			Callbacks: server.CallbacksStruct{
@@ -44,12 +57,10 @@ func (srv *Server) Start() {
 				OnConnectionCloseFunc: srv.onDisconnect,
 			},
 		},
-		ListenEndpoint: "127.0.0.1:4320",
+		ListenEndpoint: listener,
 	}
 
-	srv.server.Start(settings)
-	// TODO: remove this
-	go srv.dummy()
+	return srv.server.Start(settings)
 }
 
 func (srv *Server) Stop() {
@@ -63,11 +74,17 @@ func (srv *Server) onDisconnect(conn types.Connection) {
 func (srv *Server) onMessage(conn types.Connection, msg *protobufs.AgentToServer) *protobufs.ServerToAgent {
 	agentID := msg.InstanceUid
 
-	agent, err := srv.agents.FindOrCreateAgent(agentID, conn)
+	agent, created, err := srv.agents.FindOrCreateAgent(agentID, conn)
 	if err != nil {
 		zap.S().Errorf("Failed to find or create agent %q: %v", agentID, err)
 		// TODO: handle error
 	}
+
+	if created {
+		agent.CanLB = model.ExtractLbFlag(msg.AgentDescription)
+		zap.S().Debugf("New agent added:", zap.Bool("canLb", agent.CanLB), zap.String("ID", agent.ID), zap.Any("status", agent.CurrentStatus))
+	}
+
 	var response *protobufs.ServerToAgent
 	response = &protobufs.ServerToAgent{
 		InstanceUid:  agentID,
@@ -79,42 +96,95 @@ func (srv *Server) onMessage(conn types.Connection, msg *protobufs.AgentToServer
 	return response
 }
 
-func (srv *Server) dummy() {
-	ticker := time.NewTicker(60 * time.Second)
-	for range ticker.C {
-		agent := srv.agents.FindAgent("00000000000000000000000000")
-		if agent == nil {
-			continue
-		}
+// global var methods to support singleton pattern. we want to discourage
+// allow multiple servers in one installation
+func Ready() bool {
+	if opAmpServer == nil {
+		return false
+	}
+	if opAmpServer.agents.Count() == 0 {
+		zap.S().Warnf("no agents available, all agent config requests will be rejected")
+		return false
+	}
+	return true
+}
+
+func Subscribe(agentId string, hash string, f model.OnChangeCallback) {
+	model.ListenToConfigUpdate(agentId, hash, f)
+}
+
+func UpsertProcessor(ctx context.Context, processors map[string]interface{}, names []interface{}) error {
+	x := map[string]interface{}{
+		"processors": processors,
+	}
+
+	newConf := confmap.NewFromStringMap(x)
+
+	agents := opAmpServer.agents.GetAllAgents()
+	for _, agent := range agents {
 		config := agent.EffectiveConfig
 		c, err := yaml.Parser().Unmarshal([]byte(config))
+		if err != nil {
+			return err
+		}
 		agentConf := confmap.NewFromStringMap(c)
 
-		configs := []string{
-			`
-processors:
-  batch:
-    timeout: 2s
-`,
-			`processors:
-   batch:
-     timeout: 1s`,
+		err = agentConf.Merge(newConf)
+		if err != nil {
+			return err
 		}
 
-		// random choice between 2 configs
-		config2 := configs[rand.Intn(len(configs))]
-		c2, err := yaml.Parser().Unmarshal([]byte(config2))
-		fmt.Println("config2 err", err)
-		conf2 := confmap.NewFromStringMap(c2)
+		service := agentConf.Get("service")
 
-		err = agentConf.Merge(conf2)
-		fmt.Println("merging", err)
+		logs := service.(map[string]interface{})["pipelines"].(map[string]interface{})["logs"]
+		processors := logs.(map[string]interface{})["processors"].([]interface{})
+		userProcessors := []interface{}{}
+		// remove old ones
+		for _, v := range processors {
+			if !strings.HasPrefix(v.(string), "logstransform/pipeline_") {
+				userProcessors = append(userProcessors, v)
+			}
+		}
+		// all user processors are pushed after pipelines
+		processors = append(names, userProcessors...)
+
+		service.(map[string]interface{})["pipelines"].(map[string]interface{})["logs"].(map[string]interface{})["processors"] = processors
+
+		s := map[string]interface{}{
+			"service": map[string]interface{}{
+				"pipelines": map[string]interface{}{
+					"logs": map[string]interface{}{
+						"processors": processors,
+					},
+				},
+			},
+		}
+
+		serviceC := confmap.NewFromStringMap(s)
+
+		err = agentConf.Merge(serviceC)
+		if err != nil {
+			return err
+		}
+
+		// ------ complete adding processor
 		configR, err := yaml.Parser().Marshal(agentConf.ToStringMap())
-		fmt.Println(conf2.ToStringMap())
-		fmt.Println("sending new config", string(configR), err)
-		// hash of configR
+		if err != nil {
+			return err
+		}
+
+		zap.S().Infof("sending new config", string(configR))
 		hash := sha256.New()
-		hash.Write(configR)
+		_, err = hash.Write(configR)
+		if err != nil {
+			return err
+		}
+		agent.EffectiveConfig = string(configR)
+		err = agent.Upsert()
+		if err != nil {
+			return err
+		}
+
 		agent.SendToAgent(&protobufs.ServerToAgent{
 			RemoteConfig: &protobufs.AgentRemoteConfig{
 				Config: &protobufs.AgentConfigMap{
@@ -129,4 +199,6 @@ processors:
 			},
 		})
 	}
+
+	return nil
 }
