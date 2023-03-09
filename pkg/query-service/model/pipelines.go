@@ -10,7 +10,7 @@ import (
 // Pipeline is stored and also deployed finally to collector config
 type Pipeline struct {
 	Id      string `json:"id,omitempty" db:"id"`
-	OrderId string `json:"orderId" db:"order_id"`
+	OrderId int    `json:"orderId" db:"order_id"`
 	Name    string `json:"name,omitempty" db:"name"`
 	Alias   string `json:"alias" db:"alias"`
 	Enabled bool   `json:"enabled" db:"enabled"`

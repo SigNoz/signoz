@@ -15,7 +15,7 @@ type PostablePipelines struct {
 
 type PostablePipeline struct {
 	Id      string                   `json:"id"`
-	OrderId string                   `json:"orderId"`
+	OrderId int                      `json:"orderId"`
 	Name    string                   `json:"name"`
 	Alias   string                   `json:"alias"`
 	Enabled bool                     `json:"enabled"`

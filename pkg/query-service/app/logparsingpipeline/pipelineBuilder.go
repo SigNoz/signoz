@@ -16,6 +16,10 @@ func PreparePipelineProcessor(pipelines []model.Pipeline) (map[string]interface{
 			continue
 		}
 
+		if !v.Enabled {
+			continue
+		}
+
 		filter := []model.PipelineOperator{
 			{
 				ID:   "router_signoz",
