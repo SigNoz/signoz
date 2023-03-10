@@ -5,6 +5,7 @@ go 1.18
 require (
 	github.com/ClickHouse/clickhouse-go/v2 v2.5.1
 	github.com/SigNoz/govaluate v0.0.0-20220522085550-d19c08c206cb
+	github.com/barkimedes/go-deepcopy v0.0.0-20220514131651-17c30cfc62df
 	github.com/coreos/go-oidc/v3 v3.4.0
 	github.com/go-kit/log v0.2.1
 	github.com/google/uuid v1.3.0
@@ -30,14 +31,18 @@ require (
 	github.com/sethvargo/go-password v0.2.0
 	github.com/smartystreets/goconvey v1.6.4
 	github.com/soheilhy/cmux v0.1.5
-	go.opentelemetry.io/collector/confmap v0.70.0
+	go.opentelemetry.io/collector/confmap v0.73.0
 	go.uber.org/zap v1.24.0
 	gopkg.in/segmentio/analytics-go.v3 v3.1.0
+	gopkg.in/yaml.v3 v3.0.1
 	k8s.io/apimachinery v0.26.1
 )
 
 require (
+	github.com/benbjohnson/clock v1.3.0 // indirect
+	github.com/bmizerany/assert v0.0.0-20160611221934-b7ed37b82869 // indirect
 	github.com/dennwc/varint v1.0.0 // indirect
+	github.com/docker/go-connections v0.4.1-0.20210727194412-58542c764a11 // indirect
 	github.com/edsrzf/mmap-go v1.1.0 // indirect
 	github.com/go-faster/city v1.0.1 // indirect
 	github.com/go-faster/errors v0.6.1 // indirect
@@ -64,11 +69,8 @@ require (
 	github.com/andybalholm/brotli v1.0.4 // indirect
 	github.com/armon/go-metrics v0.4.0 // indirect
 	github.com/beevik/etree v1.1.0 // indirect
-	github.com/benbjohnson/clock v1.3.0 // indirect
-	github.com/bmizerany/assert v0.0.0-20160611221934-b7ed37b82869 // indirect
 	github.com/cespare/xxhash/v2 v2.2.0 // indirect
 	github.com/docker/docker v20.10.23+incompatible // indirect
-	github.com/docker/go-connections v0.4.1-0.20210727194412-58542c764a11 // indirect
 	github.com/form3tech-oss/jwt-go v3.2.5+incompatible // indirect
 	github.com/gorilla/websocket v1.5.0 // indirect
 	github.com/hashicorp/go-hclog v1.4.0 // indirect
@@ -86,11 +88,10 @@ require (
 	github.com/pelletier/go-toml v1.9.5 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/prometheus/client_golang v1.14.0 // indirect
-	go.opentelemetry.io/collector/featuregate v0.70.0 // indirect
+	go.opentelemetry.io/collector/featuregate v0.73.0 // indirect
 	google.golang.org/genproto v0.0.0-20221227171554-f9683d7f8bef // indirect
 	gopkg.in/ini.v1 v1.67.0 // indirect
 	gopkg.in/square/go-jose.v2 v2.6.0 // indirect
-	gopkg.in/yaml.v3 v3.0.1 // indirect
 	k8s.io/api v0.26.1 // indirect
 	k8s.io/client-go v0.26.1 // indirect
 )
@@ -130,7 +131,7 @@ require (
 	github.com/sirupsen/logrus v1.9.0 // indirect
 	github.com/smartystreets/assertions v1.1.0
 	github.com/spaolacci/murmur3 v1.1.0 // indirect
-	github.com/stretchr/testify v1.8.1
+	github.com/stretchr/testify v1.8.2
 	github.com/xtgo/uuid v0.0.0-20140804021211-a0b114877d4c // indirect
 	go.opentelemetry.io/otel v1.11.2 // indirect
 	go.opentelemetry.io/otel/trace v1.11.2 // indirect

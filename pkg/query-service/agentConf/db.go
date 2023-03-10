@@ -104,7 +104,7 @@ func (r *Repo) GetLatestVersion(ctx context.Context, typ ElementTypeDef) (*Confi
 			FROM agent_config_versions 
 			WHERE element_type=$2)`, typ, typ)
 	if err != nil {
-		zap.S().Errorf("failed get latest config version for element:", typ, err)
+		zap.S().Error("failed get latest config version for element:", typ, err)
 	}
 	return &c, err
 }
@@ -116,19 +116,22 @@ func (r *Repo) insertConfig(ctx context.Context, c *ConfigVersion, elements []st
 	}
 
 	if len(elements) == 0 {
-		zap.S().Errorf("insert config called with no elements", c.ElementType)
+		zap.S().Error("insert config called with no elements", c.ElementType)
 		return fmt.Errorf("config must have atleast one element")
 	}
 
 	if c.Version != 0 {
-		zap.S().Errorf("invalid version assignment while inserting agent config", c.Version, c.ElementType)
+		// the version can not be set by the user, we want to auto-assign the versions
+		// in a monotonically increasing order starting with 1. hence, we reject insert
+		// requests with version anything other than 0. here, 0 indicates un-assigned
+		zap.S().Error("invalid version assignment while inserting agent config", c.Version, c.ElementType)
 		return fmt.Errorf("user defined versions are not supported in the agent config")
 	}
 
 	configVersion, err := r.GetLatestVersion(ctx, c.ElementType)
 	if err != nil {
 		if err != sql.ErrNoRows {
-			zap.S().Errorf("failed to fetch latest config version", err)
+			zap.S().Error("failed to fetch latest config version", err)
 			return fmt.Errorf("failed to fetch latest config version")
 		}
 	}
@@ -180,7 +183,7 @@ func (r *Repo) insertConfig(ctx context.Context, c *ConfigVersion, elements []st
 		c.DeployResult)
 
 	if err != nil {
-		zap.S().Errorf("error in inserting config version: ", zap.Error(err))
+		zap.S().Error("error in inserting config version: ", zap.Error(err))
 		return fmt.Errorf("failed to insert ingestion rule")
 	}
 
@@ -225,7 +228,7 @@ func (r *Repo) updateDeployStatus(ctx context.Context,
 
 	_, err := r.db.ExecContext(ctx, updateQuery, status, result, lastHash, lastconf, version, string(elementType))
 	if err != nil {
-		zap.S().Errorf("failed to get ingestion rule from db", err)
+		zap.S().Error("failed to get ingestion rule from db", err)
 		return model.BadRequestStr("failed to get ingestion rule from db")
 	}
 
@@ -241,7 +244,7 @@ func (r *Repo) updateDeployStatusByHash(ctx context.Context, confighash string, 
 
 	_, err := r.db.ExecContext(ctx, updateQuery, status, result, confighash)
 	if err != nil {
-		zap.S().Errorf("failed to get ingestion rule from db", err)
+		zap.S().Error("failed to get ingestion rule from db", err)
 		return model.BadRequestStr("failed to get ingestion rule from db")
 	}
 

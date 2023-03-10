@@ -27,15 +27,17 @@ import (
 	"go.signoz.io/signoz/ee/query-service/usage"
 
 	"go.signoz.io/signoz/pkg/query-service/agentConf"
+	baseapp "go.signoz.io/signoz/pkg/query-service/app"
 	"go.signoz.io/signoz/pkg/query-service/app/dashboards"
-	"go.signoz.io/signoz/pkg/query-service/app/logparsingpipeline"
+	baseexplorer "go.signoz.io/signoz/pkg/query-service/app/explorer"
 	"go.signoz.io/signoz/pkg/query-service/app/opamp"
 	opAmpModel "go.signoz.io/signoz/pkg/query-service/app/opamp/model"
+	baseauth "go.signoz.io/signoz/pkg/query-service/auth"
 	baseconst "go.signoz.io/signoz/pkg/query-service/constants"
 	"go.signoz.io/signoz/pkg/query-service/healthcheck"
 	basealm "go.signoz.io/signoz/pkg/query-service/integrations/alertManager"
 	baseint "go.signoz.io/signoz/pkg/query-service/interfaces"
-	"go.signoz.io/signoz/pkg/query-service/model"
+	basemodel "go.signoz.io/signoz/pkg/query-service/model"
 	pqle "go.signoz.io/signoz/pkg/query-service/pqlEngine"
 	rules "go.signoz.io/signoz/pkg/query-service/rules"
 	"go.signoz.io/signoz/pkg/query-service/telemetry"
@@ -87,6 +89,8 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 	if err != nil {
 		return nil, err
 	}
+
+	baseexplorer.InitWithDSN(baseconst.RELATIONAL_DATASOURCE_PATH)
 
 	localDB, err := dashboards.InitDB(baseconst.RELATIONAL_DATASOURCE_PATH)
 
@@ -235,13 +239,33 @@ func (s *Server) createPublicServer(apiHandler *api.APIHandler) (*http.Server, e
 
 	r := mux.NewRouter()
 
+	getUserFromRequest := func(r *http.Request) (*basemodel.UserPayload, error) {
+		patToken := r.Header.Get("SIGNOZ-API-KEY")
+		if len(patToken) > 0 {
+			zap.S().Debugf("Received a non-zero length PAT token")
+			ctx := context.Background()
+			dao := apiHandler.AppDao()
+
+			user, err := dao.GetUserByPAT(ctx, patToken)
+			if err == nil && user != nil {
+				zap.S().Debugf("Found valid PAT user: %+v", user)
+				return user, nil
+			}
+			if err != nil {
+				zap.S().Debugf("Error while getting user for PAT: %+v", err)
+			}
+		}
+		return baseauth.GetUserFromRequest(r)
+	}
+
+	am := baseapp.NewAuthMiddleware(getUserFromRequest)
 	r.Use(setTimeoutMiddleware)
 	r.Use(s.analyticsMiddleware)
 	r.Use(loggingMiddleware)
 
-	apiHandler.RegisterRoutes(r)
-	apiHandler.RegisterMetricsRoutes(r)
-	apiHandler.RegisterLogsRoutes(r)
+	apiHandler.RegisterRoutes(r, am)
+	apiHandler.RegisterMetricsRoutes(r, am)
+	apiHandler.RegisterLogsRoutes(r, am)
 
 	c := cors.New(cors.Options{
 		AllowedOrigins: []string{"*"},
@@ -306,7 +330,7 @@ func extractDashboardMetaData(path string, r *http.Request) (map[string]interfac
 	pathToExtractBodyFrom := "/api/v2/metrics/query_range"
 
 	data := map[string]interface{}{}
-	var postData *model.QueryRangeParamsV2
+	var postData *basemodel.QueryRangeParamsV2
 
 	if path == pathToExtractBodyFrom && (r.Method == "POST") {
 		if r.Body != nil {
@@ -503,6 +527,28 @@ func (s *Server) Start() error {
 			s.unavailableChannel <- healthcheck.Unavailable
 		}
 	}()
+
+	return nil
+}
+
+func (s *Server) Stop() error {
+	if s.httpServer != nil {
+		if err := s.httpServer.Shutdown(context.Background()); err != nil {
+			return err
+		}
+	}
+
+	if s.privateHTTP != nil {
+		if err := s.privateHTTP.Shutdown(context.Background()); err != nil {
+			return err
+		}
+	}
+
+	opamp.StopServer()
+
+	if s.ruleManager != nil {
+		s.ruleManager.Stop()
+	}
 
 	return nil
 }

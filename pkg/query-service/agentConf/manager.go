@@ -27,7 +27,7 @@ type Manager struct {
 
 // Ready indicates if Manager can accept new config update requests
 func (mgr *Manager) Ready() bool {
-	if mgr.lock != 0 {
+	if atomic.LoadUint32(&mgr.lock) != 0 {
 		return false
 	}
 	return opamp.Ready()
@@ -95,7 +95,7 @@ func Redeploy(ctx context.Context, typ ElementTypeDef, version int) error {
 	case ElementTypeSamplingRules:
 		var config *tsp.Config
 		if err := yaml.Unmarshal([]byte(configVersion.LastConf), &config); err != nil {
-			zap.S().Errorf("failed to read last conf correctly", err)
+			zap.S().Error("failed to read last conf correctly", err)
 			return fmt.Errorf("failed to read the stored config correctly")
 		}
 
@@ -107,7 +107,7 @@ func Redeploy(ctx context.Context, typ ElementTypeDef, version int) error {
 		opamp.AddToTracePipelineSpec("signoz_tail_sampling")
 		configHash, err := opamp.UpsertControlProcessors(ctx, "traces", processorConf, m.OnConfigUpdate)
 		if err != nil {
-			zap.S().Errorf("failed to call agent config update for trace processor:", err)
+			zap.S().Error("failed to call agent config update for trace processor:", err)
 			return fmt.Errorf("failed to deploy the config")
 		}
 
@@ -115,7 +115,7 @@ func Redeploy(ctx context.Context, typ ElementTypeDef, version int) error {
 	case ElementTypeDropRules:
 		var filterConfig *filterprocessor.Config
 		if err := yaml.Unmarshal([]byte(configVersion.LastConf), &filterConfig); err != nil {
-			zap.S().Errorf("failed to read last conf correctly", err)
+			zap.S().Error("failed to read last conf correctly", err)
 			return fmt.Errorf("failed to read the stored config correctly")
 		}
 		processorConf := map[string]interface{}{
@@ -125,7 +125,7 @@ func Redeploy(ctx context.Context, typ ElementTypeDef, version int) error {
 		opamp.AddToMetricsPipelineSpec("filter")
 		configHash, err := opamp.UpsertControlProcessors(ctx, "metrics", processorConf, m.OnConfigUpdate)
 		if err != nil {
-			zap.S().Errorf("failed to call agent config update for trace processor:", err)
+			zap.S().Error("failed to call agent config update for trace processor:", err)
 			return err
 		}
 
@@ -151,7 +151,7 @@ func UpsertFilterProcessor(ctx context.Context, version int, config *filterproce
 	opamp.AddToMetricsPipelineSpec("filter")
 	configHash, err := opamp.UpsertControlProcessors(ctx, "metrics", processorConf, m.OnConfigUpdate)
 	if err != nil {
-		zap.S().Errorf("failed to call agent config update for trace processor:", err)
+		zap.S().Error("failed to call agent config update for trace processor:", err)
 		return err
 	}
 
@@ -160,7 +160,7 @@ func UpsertFilterProcessor(ctx context.Context, version int, config *filterproce
 		zap.S().Warnf("unexpected error while transforming processor config to yaml", err)
 	}
 
-	m.updateDeployStatus(ctx, ElementTypeSamplingRules, version, string(DeployInitiated), "Deployment started", configHash, string(processorConfYaml))
+	m.updateDeployStatus(ctx, ElementTypeDropRules, version, string(DeployInitiated), "Deployment started", configHash, string(processorConfYaml))
 	return nil
 }
 
@@ -169,13 +169,19 @@ func UpsertFilterProcessor(ctx context.Context, version int, config *filterproce
 // successful deployment if no error is received.
 // this method is currently expected to be called only once in the lifecycle
 // but can be improved in future to accept continuous request status updates from opamp
-func (m *Manager) OnConfigUpdate(hash string, err error) {
+func (m *Manager) OnConfigUpdate(agentId string, hash string, err error) {
 
 	status := string(Deployed)
+
 	message := "deploy successful"
+
+	defer func() {
+		zap.S().Error(status, zap.String("agentId", agentId), zap.String("agentResponse", message))
+	}()
+
 	if err != nil {
 		status = string(DeployFailed)
-		message = err.Error()
+		message = fmt.Sprintf("%s: %s", agentId, err.Error())
 	}
 
 	m.updateDeployStatusByHash(context.Background(), hash, status, message)
@@ -196,7 +202,7 @@ func UpsertSamplingProcessor(ctx context.Context, version int, config *tsp.Confi
 	opamp.AddToTracePipelineSpec("signoz_tail_sampling")
 	configHash, err := opamp.UpsertControlProcessors(ctx, "traces", processorConf, m.OnConfigUpdate)
 	if err != nil {
-		zap.S().Errorf("failed to call agent config update for trace processor:", err)
+		zap.S().Error("failed to call agent config update for trace processor:", err)
 		return err
 	}
 

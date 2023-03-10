@@ -25,6 +25,8 @@ import (
 	opamp "go.signoz.io/signoz/pkg/query-service/app/opamp"
 	opAmpModel "go.signoz.io/signoz/pkg/query-service/app/opamp/model"
 
+	"go.signoz.io/signoz/pkg/query-service/app/explorer"
+	"go.signoz.io/signoz/pkg/query-service/auth"
 	"go.signoz.io/signoz/pkg/query-service/constants"
 	"go.signoz.io/signoz/pkg/query-service/dao"
 	"go.signoz.io/signoz/pkg/query-service/featureManager"
@@ -81,6 +83,7 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 	}
 
 	localDB, err := dashboards.InitDB(constants.RELATIONAL_DATASOURCE_PATH)
+	explorer.InitWithDSN(constants.RELATIONAL_DATASOURCE_PATH)
 
 	if err != nil {
 		return nil, err
@@ -204,9 +207,12 @@ func (s *Server) createPublicServer(api *APIHandler) (*http.Server, error) {
 	r.Use(s.analyticsMiddleware)
 	r.Use(loggingMiddleware)
 
-	api.RegisterRoutes(r)
-	api.RegisterMetricsRoutes(r)
-	api.RegisterLogsRoutes(r)
+	am := NewAuthMiddleware(auth.GetUserFromRequest)
+
+	api.RegisterRoutes(r, am)
+	api.RegisterMetricsRoutes(r, am)
+	api.RegisterLogsRoutes(r, am)
+	api.RegisterQueryRangeV3Routes(r, am)
 
 	c := cors.New(cors.Options{
 		AllowedOrigins: []string{"*"},
@@ -469,6 +475,28 @@ func (s *Server) Start() error {
 			s.unavailableChannel <- healthcheck.Unavailable
 		}
 	}()
+
+	return nil
+}
+
+func (s *Server) Stop() error {
+	if s.httpServer != nil {
+		if err := s.httpServer.Shutdown(context.Background()); err != nil {
+			return err
+		}
+	}
+
+	if s.privateHTTP != nil {
+		if err := s.privateHTTP.Shutdown(context.Background()); err != nil {
+			return err
+		}
+	}
+
+	opamp.StopServer()
+
+	if s.ruleManager != nil {
+		s.ruleManager.Stop()
+	}
 
 	return nil
 }

@@ -6,6 +6,6 @@ type Config struct {
 
 // MetricFilters filters by Metric properties.
 type MetricFilters struct {
-	MetricConditions    []string `mapstructure:"metric"`
-	DataPointConditions []string `mapstructure:"datapoint"`
+	MetricConditions    []string `mapstructure:"metric" yaml:"metric,omitempty"`
+	DataPointConditions []string `mapstructure:"datapoint" yaml:"datapoint,omitempty"`
 }

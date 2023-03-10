@@ -84,7 +84,13 @@ func main() {
 		case status := <-server.HealthCheckStatus():
 			logger.Info("Received HealthCheck status: ", zap.Int("status", int(status)))
 		case <-signalsChannel:
-			logger.Fatal("Received OS Interrupt Signal ... ")
+			logger.Info("Received OS Interrupt Signal ... ")
+			err := server.Stop()
+			if err != nil {
+				logger.Fatal("Failed to stop server", zap.Error(err))
+			}
+			logger.Info("Server stopped")
+			return
 		}
 	}
 

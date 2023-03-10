@@ -113,15 +113,15 @@ func checkDuplicates(pipeline []interface{}) bool {
 	return false
 }
 
-func buildPipeline(signal string, current []interface{}) ([]interface{}, error) {
+func buildPipeline(signal Signal, current []interface{}) ([]interface{}, error) {
 	var spec map[int]pipelineStatus
 
 	switch signal {
-	case "metrics":
+	case Metrics:
 		spec = metricsPipelineSpec
 		lockMetricsPipelineSpec.Lock()
 		defer lockMetricsPipelineSpec.Unlock()
-	case "traces":
+	case Traces:
 		spec = tracesPipelineSpec
 		lockTracesPipelineSpec.Lock()
 		defer lockTracesPipelineSpec.Unlock()
@@ -186,10 +186,12 @@ func buildPipeline(signal string, current []interface{}) ([]interface{}, error) 
 					pipeline = append([]interface{}{m.Name}, pipeline[lastMatched+1:]...)
 				} else {
 					zap.S().Debugf("build_pipeline: found a new item to be inserted, inserting at position :", lastMatched, " ", m.Name)
-					prior := pipeline[:lastMatched]
-					next := pipeline[lastMatched+1:]
+					prior := make([]interface{}, len(pipeline[:lastMatched]))
+					next := make([]interface{}, len(pipeline[lastMatched:]))
+					copy(prior, pipeline[:lastMatched])
+					copy(next, pipeline[lastMatched:])
 
-					pipeline = append(prior, []interface{}{m.Name})
+					pipeline = append(prior, m.Name)
 					pipeline = append(pipeline, next...)
 				}
 			}

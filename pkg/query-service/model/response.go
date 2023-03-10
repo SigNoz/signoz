@@ -49,19 +49,20 @@ func (a *ApiError) IsNil() bool {
 type ErrorType string
 
 const (
-	ErrorNone                  ErrorType = ""
-	ErrorTimeout               ErrorType = "timeout"
-	ErrorCanceled              ErrorType = "canceled"
-	ErrorExec                  ErrorType = "execution"
-	ErrorBadData               ErrorType = "bad_data"
-	ErrorInternal              ErrorType = "internal"
-	ErrorUnavailable           ErrorType = "unavailable"
-	ErrorNotFound              ErrorType = "not_found"
-	ErrorNotImplemented        ErrorType = "not_implemented"
-	ErrorUnauthorized          ErrorType = "unauthorized"
-	ErrorForbidden             ErrorType = "forbidden"
-	ErrorConflict              ErrorType = "conflict"
-	ErrorStreamingNotSupported ErrorType = "streaming is not supported"
+	ErrorNone                     ErrorType = ""
+	ErrorTimeout                  ErrorType = "timeout"
+	ErrorCanceled                 ErrorType = "canceled"
+	ErrorExec                     ErrorType = "execution"
+	ErrorBadData                  ErrorType = "bad_data"
+	ErrorInternal                 ErrorType = "internal"
+	ErrorUnavailable              ErrorType = "unavailable"
+	ErrorNotFound                 ErrorType = "not_found"
+	ErrorNotImplemented           ErrorType = "not_implemented"
+	ErrorUnauthorized             ErrorType = "unauthorized"
+	ErrorForbidden                ErrorType = "forbidden"
+	ErrorConflict                 ErrorType = "conflict"
+	ErrorStreamingNotSupported    ErrorType = "streaming is not supported"
+	ErrorStatusServiceUnavailable ErrorType = "service unavailable"
 )
 
 // BadRequest returns a ApiError object of bad request
