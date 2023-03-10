@@ -110,14 +110,16 @@ func (r *Repo) getPipelinesByVersion(ctx context.Context, version int) ([]model.
 		r.filter,
 		r.order_id,
 		r.created_by,
-		r.created_at
+		r.created_at,
+		r.enabled
 		FROM pipelines r,
 			 agent_config_elements e,
 			 agent_config_versions v
 		WHERE r.id = e.element_id
 		AND v.id = e.version_id
 		AND e.element_type = $1
-		AND v.version = $2`
+		AND v.version = $2
+		ORDER BY order_id asc`
 
 	err := r.db.SelectContext(ctx, &pipelines, versionQuery, logPipelines, version)
 	if err != nil {
@@ -148,7 +150,8 @@ func (r *Repo) GetPipeline(ctx context.Context, id string) (*model.Pipeline, *mo
 		filter,
 		order_id,
 		created_by,
-		created_at
+		created_at,
+		enabled
 		FROM pipelines 
 		WHERE id = $1`
 
