@@ -1,0 +1,31 @@
+name: Cypress Tests
+'on':
+ - pull_request
+jobs:
+ cypress-tests:
+  runs-on: ubuntu-latest
+  steps:
+   - name: Checkout code
+     uses: actions/checkout@v3
+   - name: Use Node.js
+     uses: actions/setup-node@v3
+     with:
+      node-version: 16
+      cache: yarn
+      cache-dependency-path: frontend
+   - name: Install dependencies
+     run: cd ./frontend; yarn install
+   - name: Start project
+     run: |
+      cd deploy/docker/clickhouse-setup &&
+      docker-compose run --publish 8080:8080 -d query-service &&
+      docker-compose up -d --no-deps alertmanager && 
+      docker-compose up -d --no-recreate --no-build --scale frontend=0 --scale query-service=0 --scale alertmanager=0
+   - name: Run cypress tests
+     uses: cypress-io/github-action@v5.1.0
+     with:
+      start: yarn dev
+      wait-on: 'http://localhost:3301'
+      working-directory: ./frontend
+     env:
+      FRONTEND_API_ENDPOINT: 'http://localhost:8080'
