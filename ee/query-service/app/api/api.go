@@ -121,7 +121,7 @@ func (ah *APIHandler) RegisterRoutes(router *mux.Router, am *baseapp.AuthMiddlew
 		Methods(http.MethodDelete)
 
 	router.HandleFunc("/api/v1/dropRules/{version}",
-		baseapp.AdminAccess(ah.listDropRules)).
+		am.AdminAccess(ah.listDropRules)).
 		Methods(http.MethodGet)
 
 	router.HandleFunc("/api/v1/dropRules",

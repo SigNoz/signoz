@@ -13,9 +13,44 @@ var correctQueriesTest = []struct {
 	IsValid  bool
 }{
 	{
+		Name: "No orderId",
+		Pipeline: PostablePipeline{
+			Name:    "pipeline 1",
+			Alias:   "pipeline1",
+			Enabled: true,
+			Filter:  "attributes.method == \"GET\"",
+			Config:  []model.PipelineOperator{},
+		},
+		IsValid: false,
+	},
+	{
+		Name: "Invalid orderId",
+		Pipeline: PostablePipeline{
+			OrderId: 0,
+			Name:    "pipeline 1",
+			Alias:   "pipeline1",
+			Enabled: true,
+			Filter:  "attributes.method == \"GET\"",
+			Config:  []model.PipelineOperator{},
+		},
+		IsValid: false,
+	},
+	{
+		Name: "Valid orderId",
+		Pipeline: PostablePipeline{
+			OrderId: 1,
+			Name:    "pipeline 1",
+			Alias:   "pipeline1",
+			Enabled: true,
+			Filter:  "attributes.method == \"GET\"",
+			Config:  []model.PipelineOperator{},
+		},
+		IsValid: false,
+	},
+	{
 		Name: "Valid grok",
 		Pipeline: PostablePipeline{
-			OrderId: "0",
+			OrderId: 1,
 			Name:    "pipeline 1",
 			Alias:   "pipeline1",
 			Enabled: true,
@@ -34,7 +69,7 @@ var correctQueriesTest = []struct {
 	{
 		Name: "Operator without id",
 		Pipeline: PostablePipeline{
-			OrderId: "0",
+			OrderId: 1,
 			Name:    "pipeline 1",
 			Alias:   "pipeline1",
 			Enabled: true,
@@ -52,7 +87,7 @@ var correctQueriesTest = []struct {
 	{
 		Name: "Operator without type",
 		Pipeline: PostablePipeline{
-			OrderId: "0",
+			OrderId: 1,
 			Name:    "pipeline 1",
 			Alias:   "pipeline1",
 			Enabled: true,
@@ -70,7 +105,7 @@ var correctQueriesTest = []struct {
 	{
 		Name: "Grok operator without pattern",
 		Pipeline: PostablePipeline{
-			OrderId: "0",
+			OrderId: 1,
 			Name:    "pipeline 1",
 			Alias:   "pipeline1",
 			Enabled: true,
@@ -88,7 +123,7 @@ var correctQueriesTest = []struct {
 	{
 		Name: "Unknown operator",
 		Pipeline: PostablePipeline{
-			OrderId: "0",
+			OrderId: 1,
 			Name:    "pipeline 1",
 			Alias:   "pipeline1",
 			Enabled: true,

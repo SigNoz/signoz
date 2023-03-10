@@ -3,14 +3,12 @@ package opamp
 import (
 	"context"
 	"crypto/sha256"
-
-	"strings"
+	"fmt"
 
 	"github.com/knadh/koanf/parsers/yaml"
 	"github.com/open-telemetry/opamp-go/protobufs"
 	"github.com/open-telemetry/opamp-go/server"
 	"github.com/open-telemetry/opamp-go/server/types"
-	"go.opentelemetry.io/collector/confmap"
 	model "go.signoz.io/signoz/pkg/query-service/app/opamp/model"
 
 	"go.uber.org/zap"
@@ -113,7 +111,7 @@ func Subscribe(agentId string, hash string, f model.OnChangeCallback) {
 	model.ListenToConfigUpdate(agentId, hash, f)
 }
 
-func UpsertLogsParsingProcessor(ctx context.Context, parsingProcessors map[string]interface{}, parsingProcessorsNames []interface{}, callback func(string, error)) (string, error) {
+func UpsertLogsParsingProcessor(ctx context.Context, parsingProcessors map[string]interface{}, parsingProcessorsNames []interface{}, callback func(string, string, error)) (string, error) {
 	confHash := ""
 	if opAmpServer == nil {
 		return confHash, fmt.Errorf("opamp server is down, unable to push config to agent at this moment")
@@ -180,7 +178,7 @@ func UpsertLogsParsingProcessor(ctx context.Context, parsingProcessors map[strin
 	}
 	if confHash != "" {
 		// subscribe callback
-		model.ListenToConfigUpdate(confHash, callback)
+		model.ListenToConfigUpdate("", confHash, callback)
 	}
 
 	return confHash, nil

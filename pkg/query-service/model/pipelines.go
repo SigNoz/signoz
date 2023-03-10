@@ -41,9 +41,13 @@ type Processor struct {
 type PipelineOperator struct {
 	Type    string `json:"type" yaml:"type"`
 	ID      string `json:"id,omitempty" yaml:"id,omitempty"`
-	Name    string `json:"name,omitempty" yaml:"-"` // don't need it in the config
 	Output  string `json:"output,omitempty" yaml:"output,omitempty"`
 	OnError string `json:"on_error,omitempty" yaml:"on_error,omitempty"`
+
+	// don't need the following in the final config
+	OrderId int    `json:"orderId" yaml:"-"`
+	Enabled bool   `json:"enabled" yaml:"-"`
+	Name    string `json:"name,omitempty" yaml:"-"`
 
 	// optional keys depending on the type
 	ParseTo     string           `json:"parse_to,omitempty" yaml:"parse_to,omitempty"`

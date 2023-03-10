@@ -25,6 +25,9 @@ type PostablePipeline struct {
 
 // // IsValid checks if postable pipeline has all the required params
 func (p *PostablePipeline) IsValid() *model.ApiError {
+	if p.OrderId == 0 {
+		return model.BadRequestStr("orderId with value > 1 is required")
+	}
 	if p.Name == "" {
 		return model.BadRequestStr("pipeline name is required")
 	}
@@ -39,6 +42,9 @@ func (p *PostablePipeline) IsValid() *model.ApiError {
 
 	l := len(p.Config)
 	for i, op := range p.Config {
+		if op.OrderId == 0 {
+			return model.BadRequestStr("orderId with value > 1 is required in operator")
+		}
 		if op.ID == "" {
 			return model.BadRequestStr("id of an operator cannot be empty")
 		}

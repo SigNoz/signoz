@@ -223,7 +223,7 @@ func UpsertPipelineProcessors(ctx context.Context, version int, rawPipelineData 
 	defer atomic.StoreUint32(&m.lock, 0)
 
 	// send the changes to opamp.
-	configHash, err := opamp.UpsertParsingProcessor(context.Background(), config, names, m.OnConfigUpdate)
+	configHash, err := opamp.UpsertLogsParsingProcessor(context.Background(), config, names, m.OnConfigUpdate)
 	if err != nil {
 		zap.S().Errorf("failed to call agent config update for trace processor:", err)
 		return err

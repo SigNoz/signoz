@@ -21,8 +21,8 @@ import (
 	"github.com/prometheus/prometheus/promql"
 	"go.signoz.io/signoz/pkg/query-service/agentConf"
 	"go.signoz.io/signoz/pkg/query-service/app/dashboards"
-	logparsingpipeline "go.signoz.io/signoz/pkg/query-service/app/logparsingpipeline"
 	"go.signoz.io/signoz/pkg/query-service/app/explorer"
+	logparsingpipeline "go.signoz.io/signoz/pkg/query-service/app/logparsingpipeline"
 	"go.signoz.io/signoz/pkg/query-service/app/logs"
 	"go.signoz.io/signoz/pkg/query-service/app/metrics"
 	"go.signoz.io/signoz/pkg/query-service/app/parser"
@@ -2153,15 +2153,15 @@ func (aH *APIHandler) WriteJSON(w http.ResponseWriter, r *http.Request, response
 // logs
 func (aH *APIHandler) RegisterLogsRoutes(router *mux.Router, am *AuthMiddleware) {
 	subRouter := router.PathPrefix("/api/v1/logs").Subrouter()
-	subRouter.HandleFunc("", ViewAccess(aH.getLogs)).Methods(http.MethodGet)
-	subRouter.HandleFunc("/tail", ViewAccess(aH.tailLogs)).Methods(http.MethodGet)
-	subRouter.HandleFunc("/fields", ViewAccess(aH.logFields)).Methods(http.MethodGet)
-	subRouter.HandleFunc("/fields", EditAccess(aH.logFieldUpdate)).Methods(http.MethodPost)
-	subRouter.HandleFunc("/aggregate", ViewAccess(aH.logAggregate)).Methods(http.MethodGet)
+	subRouter.HandleFunc("", am.ViewAccess(aH.getLogs)).Methods(http.MethodGet)
+	subRouter.HandleFunc("/tail", am.ViewAccess(aH.tailLogs)).Methods(http.MethodGet)
+	subRouter.HandleFunc("/fields", am.ViewAccess(aH.logFields)).Methods(http.MethodGet)
+	subRouter.HandleFunc("/fields", am.EditAccess(aH.logFieldUpdate)).Methods(http.MethodPost)
+	subRouter.HandleFunc("/aggregate", am.ViewAccess(aH.logAggregate)).Methods(http.MethodGet)
 
 	// log pipelines
-	subRouter.HandleFunc("/pipelines/{version}", EditAccess(aH.listPipelinesHandler)).Methods(http.MethodGet)
-	subRouter.HandleFunc("/pipelines", EditAccess(aH.createPipeline)).Methods(http.MethodPost)
+	subRouter.HandleFunc("/pipelines/{version}", am.ViewAccess(aH.listLogsPipelinesHandler)).Methods(http.MethodGet)
+	subRouter.HandleFunc("/pipelines", am.EditAccess(aH.createLogsPipeline)).Methods(http.MethodPost)
 }
 
 func (aH *APIHandler) logFields(w http.ResponseWriter, r *http.Request) {
@@ -2291,7 +2291,7 @@ func parseAgentConfigVersion(r *http.Request) (int, *model.ApiError) {
 	return int(version64), nil
 }
 
-func (ah *APIHandler) listPipelinesHandler(w http.ResponseWriter, r *http.Request) {
+func (ah *APIHandler) listLogsPipelinesHandler(w http.ResponseWriter, r *http.Request) {
 
 	version, err := parseAgentConfigVersion(r)
 	if err != nil {
@@ -2303,9 +2303,9 @@ func (ah *APIHandler) listPipelinesHandler(w http.ResponseWriter, r *http.Reques
 	var apierr *model.ApiError
 
 	if version != 0 {
-		payload, apierr = ah.listPipelinesByVersion(context.Background(), version)
+		payload, apierr = ah.listLogsPipelinesByVersion(context.Background(), version)
 	} else {
-		payload, apierr = ah.listPipelines(context.Background())
+		payload, apierr = ah.listLogsPipelines(context.Background())
 	}
 
 	if apierr != nil {
@@ -2316,7 +2316,7 @@ func (ah *APIHandler) listPipelinesHandler(w http.ResponseWriter, r *http.Reques
 }
 
 // listIngestionRules lists rules for latest version
-func (ah *APIHandler) listPipelines(ctx context.Context) (*logparsingpipeline.PipelinesResponse, *model.ApiError) {
+func (ah *APIHandler) listLogsPipelines(ctx context.Context) (*logparsingpipeline.PipelinesResponse, *model.ApiError) {
 	// get lateset agent config
 	lastestConfig, err := agentConf.GetLatestVersion(ctx, logPipelines)
 	if err != nil {
@@ -2342,7 +2342,7 @@ func (ah *APIHandler) listPipelines(ctx context.Context) (*logparsingpipeline.Pi
 }
 
 // listIngestionRulesByVersion lists rules along with config version history
-func (ah *APIHandler) listPipelinesByVersion(ctx context.Context, version int) (*logparsingpipeline.PipelinesResponse, *model.ApiError) {
+func (ah *APIHandler) listLogsPipelinesByVersion(ctx context.Context, version int) (*logparsingpipeline.PipelinesResponse, *model.ApiError) {
 	payload, apierr := ah.LogsParsingPipelineController.GetPipelinesByVersion(ctx, version)
 	if apierr != nil {
 		return payload, apierr
@@ -2358,7 +2358,7 @@ func (ah *APIHandler) listPipelinesByVersion(ctx context.Context, version int) (
 	return payload, nil
 }
 
-func (ah *APIHandler) createPipeline(w http.ResponseWriter, r *http.Request) {
+func (ah *APIHandler) createLogsPipeline(w http.ResponseWriter, r *http.Request) {
 
 	req := logparsingpipeline.PostablePipelines{}
 
@@ -2391,6 +2391,8 @@ func (ah *APIHandler) createPipeline(w http.ResponseWriter, r *http.Request) {
 	}
 
 	ah.Respond(w, res)
+}
+
 func (aH *APIHandler) getExplorerQueries(w http.ResponseWriter, r *http.Request) {
 	queries, err := explorer.GetQueries()
 	if err != nil {
