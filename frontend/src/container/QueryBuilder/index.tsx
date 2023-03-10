@@ -7,21 +7,13 @@ import React, {
 	useState,
 } from 'react';
 
-interface QueryBuilderContainerPropsI {
-	children: React.ReactElement | React.ReactNode;
-}
-
-interface InitialStateI {
-	search: string;
-}
-
-type VoidFunction = (value: string) => void;
-
-interface ContextValueI {
-	values: InitialStateI;
-	onChangeHandler: (type: QueryBuilderStateT) => VoidFunction;
-	onSubmitHandler: () => void;
-}
+import {
+	ContextValueI,
+	InitialStateI,
+	QueryBuilderContainerPropsI,
+	VoidFunction,
+	VoidFunctionWithValue,
+} from './type';
 
 const initialState: InitialStateI = {
 	search: '',
@@ -43,7 +35,9 @@ function QueryBuilderContainer({
 	const [values, setValues] = useState<InitialStateI>(initialState);
 
 	const onChangeHandler = useCallback(
-		(type: QueryBuilderStateT): VoidFunction => (value: string): void => {
+		(type: QueryBuilderStateT): VoidFunctionWithValue => (
+			value: string,
+		): void => {
 			setValues((prev) => ({ ...prev, [type]: value }));
 		},
 		[],

@@ -15,7 +15,7 @@ const getValuesAutoComplete = async (
 		const data = await axios({
 			method: 'get',
 			url: `api/v3/autocomplete/attribute_values?aggregateOperator=${aggregateOperator}&dataSource=${dataSource}&aggregateAttribute=${aggregateAttribute}&attributeKey=${attributeKey}&searchText=${searchText}`,
-			baseURL: process.env.QUERY_BUILDER_ENDPOINT,
+			baseURL: process.env.FRONTEND_API_ENDPOINT,
 		});
 
 		return {

@@ -169,7 +169,7 @@ function MetricTagKeyFilter({
 				<Select
 					disabled={!metricName}
 					placeholder={`Select ${
-						state.value === 'Idle' ? 'Tag Key Pair' : state.value
+						state.value === 'Idle' ? 'Styles Key Pair' : state.value
 					}`}
 					onChange={handleChange}
 					bordered={false}

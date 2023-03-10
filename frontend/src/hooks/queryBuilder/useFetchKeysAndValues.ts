@@ -15,7 +15,6 @@ type ReturnT = {
 
 export const useFetchKeysAndValues = (searchValue: string): ReturnT => {
 	const [keys, setKeys] = useState<KeyType[]>([]);
-	// FOUND VALUES
 	const [results, setResults] = useState([]);
 
 	useEffect(() => {
@@ -28,7 +27,7 @@ export const useFetchKeysAndValues = (searchValue: string): ReturnT => {
 
 	const handleSetKey = (payload: PayloadProps[] | null): void => {
 		if (payload) {
-			setKeys(payload as []);
+			setKeys(payload);
 		} else {
 			setKeys([]);
 		}
@@ -39,7 +38,6 @@ export const useFetchKeysAndValues = (searchValue: string): ReturnT => {
 	const getResultPayload = (isMulti: boolean, tResult: string[]): string =>
 		isMulti ? '' : tResult.join(' ');
 
-	// FETCH OPTIONS
 	const handleFetchOption = async (value: string): Promise<void> => {
 		if (value) {
 			const [tKey, operator, tResult] = separateSearchValue(value);
@@ -56,7 +54,7 @@ export const useFetchKeysAndValues = (searchValue: string): ReturnT => {
 				if (payload) {
 					const values = Object.values(payload).find((el) => !!el);
 					if (values) {
-						setResults(values as []);
+						setResults(values);
 					} else {
 						setResults([]);
 					}

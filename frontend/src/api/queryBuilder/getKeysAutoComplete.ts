@@ -16,7 +16,7 @@ const getKeysAutoComplete = async (
 			url: `/api/v3/autocomplete/attribute_keys?aggregateOperator=${aggregateOperator}&dataSource=${dataSource}&aggregateAttribute=${aggregateAttribute}&searchText=${
 				searchText || ''
 			}`,
-			baseURL: process.env.QUERY_BUILDER_ENDPOINT,
+			baseURL: process.env.FRONTEND_API_ENDPOINT,
 		});
 
 		return {
