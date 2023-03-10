@@ -12,15 +12,23 @@ func PreparePipelineProcessor(pipelines []model.Pipeline) (map[string]interface{
 	processors := map[string]interface{}{}
 	names := []interface{}{}
 	for _, v := range pipelines {
-		if len(v.Config) == 0 {
-			continue
-		}
-
 		if !v.Enabled {
 			continue
 		}
 
-		filter := []model.PipelineOperator{
+		operators := []model.PipelineOperator{}
+		// remove disabled operators
+		for _, operator := range v.Config {
+			if operator.Enabled {
+				operators = append(operators, operator)
+			}
+		}
+
+		if len(operators) == 0 {
+			continue
+		}
+
+		router := []model.PipelineOperator{
 			{
 				ID:   "router_signoz",
 				Type: "router",
@@ -33,7 +41,8 @@ func PreparePipelineProcessor(pipelines []model.Pipeline) (map[string]interface{
 				Default: NOOP,
 			},
 		}
-		v.Config = append(filter, v.Config...)
+
+		v.Config = append(router, operators...)
 
 		// noop operator is needed as the default operator so that logs are not dropped
 		noop := model.PipelineOperator{
