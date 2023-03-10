@@ -19,7 +19,9 @@
 		"playwright:codegen:local": "playwright codegen http://localhost:3301",
 		"playwright:codegen:local:auth": "yarn playwright:codegen:local --load-storage=tests/auth.json",
 		"husky:configure": "cd .. && husky install frontend/.husky && cd frontend && chmod ug+x .husky/*",
-		"commitlint": "commitlint --edit $1"
+		"commitlint": "commitlint --edit $1",
+    "cypress:open": "cypress open",
+		"cypress:run": "cypress run"
 	},
 	"engines": {
 		"node": ">=16.15.0"
@@ -48,6 +50,7 @@
 		"cross-env": "^7.0.3",
 		"css-loader": "4.3.0",
 		"css-minimizer-webpack-plugin": "^3.2.0",
+    "cypress": "^12.7.0",
 		"d3": "^6.2.0",
 		"d3-flame-graph": "^3.1.1",
 		"d3-tip": "^0.9.1",
