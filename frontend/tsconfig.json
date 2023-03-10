@@ -20,7 +20,7 @@
 		"baseUrl": "./src",
 		"downlevelIteration": true,
 		"plugins": [{ "name": "typescript-plugin-css-modules" }],
-		"types": ["node", "jest"]
+		"types": ["node", "jest", "cypress"]
 	},
 	"exclude": ["node_modules"],
 	"include": [
@@ -38,5 +38,7 @@
 		"./webpack.config.prod.js",
 		"./jest.setup.ts",
 		"./tests/**.ts",
+		"./cypress",
+		"./cypress.config.ts"
 	]
 }
