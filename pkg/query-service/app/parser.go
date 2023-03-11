@@ -16,6 +16,7 @@ import (
 	"go.signoz.io/signoz/pkg/query-service/auth"
 	"go.signoz.io/signoz/pkg/query-service/constants"
 	"go.signoz.io/signoz/pkg/query-service/model"
+	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
 )
 
 var allowedFunctions = []string{"count", "ratePerSec", "sum", "avg", "min", "max", "p50", "p90", "p95", "p99"}
@@ -412,11 +413,11 @@ func extractTagKeys(tags []model.TagQueryParam) ([]model.TagQueryParam, error) {
 				tag.Key = customStr[0]
 			}
 			if tag.Operator == model.ExistsOperator || tag.Operator == model.NotExistsOperator {
-				if customStr[1] == string(model.TagTypeString) + ")" {
+				if customStr[1] == string(model.TagTypeString)+")" {
 					tag.StringValues = []string{" "}
-				} else if customStr[1] ==string(model.TagTypeBool) + ")" {
+				} else if customStr[1] == string(model.TagTypeBool)+")" {
 					tag.BoolValues = []bool{true}
-				} else if customStr[1] == string(model.TagTypeNumber) + ")" {
+				} else if customStr[1] == string(model.TagTypeNumber)+")" {
 					tag.NumberValues = []float64{0}
 				} else {
 					return nil, fmt.Errorf("TagKey param is not valid in query")
@@ -810,4 +811,94 @@ func parseFilterSet(r *http.Request) (*model.FilterSet, error) {
 		return nil, err
 	}
 	return &filterSet, nil
+}
+
+func parseAggregateAttributeRequest(r *http.Request) (*v3.AggregateAttributeRequest, error) {
+	var req v3.AggregateAttributeRequest
+
+	aggregateOperator := v3.AggregateOperator(r.URL.Query().Get("aggregateOperator"))
+	dataSource := v3.DataSource(r.URL.Query().Get("dataSource"))
+	aggregateAttribute := r.URL.Query().Get("searchText")
+
+	limit, err := strconv.Atoi(r.URL.Query().Get("limit"))
+	if err != nil {
+		limit = 50
+	}
+
+	if err := aggregateOperator.Validate(); err != nil {
+		return nil, err
+	}
+
+	if err := dataSource.Validate(); err != nil {
+		return nil, err
+	}
+
+	req = v3.AggregateAttributeRequest{
+		Operator:   aggregateOperator,
+		SearchText: aggregateAttribute,
+		Limit:      limit,
+		DataSource: dataSource,
+	}
+	return &req, nil
+}
+
+func parseFilterAttributeKeyRequest(r *http.Request) (*v3.FilterAttributeKeyRequest, error) {
+	var req v3.FilterAttributeKeyRequest
+
+	dataSource := v3.DataSource(r.URL.Query().Get("dataSource"))
+	aggregateOperator := v3.AggregateOperator(r.URL.Query().Get("aggregateOperator"))
+	aggregateAttribute := r.URL.Query().Get("aggregateAttribute")
+	limit, err := strconv.Atoi(r.URL.Query().Get("limit"))
+	if err != nil {
+		limit = 50
+	}
+
+	if err := dataSource.Validate(); err != nil {
+		return nil, err
+	}
+
+	if err := aggregateOperator.Validate(); err != nil {
+		return nil, err
+	}
+
+	req = v3.FilterAttributeKeyRequest{
+		DataSource:         dataSource,
+		AggregateOperator:  aggregateOperator,
+		AggregateAttribute: aggregateAttribute,
+		Limit:              limit,
+		SearchText:         r.URL.Query().Get("searchText"),
+	}
+	return &req, nil
+}
+
+func parseFilterAttributeValueRequest(r *http.Request) (*v3.FilterAttributeValueRequest, error) {
+
+	var req v3.FilterAttributeValueRequest
+
+	dataSource := v3.DataSource(r.URL.Query().Get("dataSource"))
+	aggregateOperator := v3.AggregateOperator(r.URL.Query().Get("aggregateOperator"))
+	aggregateAttribute := r.URL.Query().Get("aggregateAttribute")
+
+	limit, err := strconv.Atoi(r.URL.Query().Get("limit"))
+	if err != nil {
+		limit = 50
+	}
+
+	if err := dataSource.Validate(); err != nil {
+		return nil, err
+	}
+
+	if err := aggregateOperator.Validate(); err != nil {
+		return nil, err
+	}
+
+	req = v3.FilterAttributeValueRequest{
+		DataSource:         dataSource,
+		AggregateOperator:  aggregateOperator,
+		AggregateAttribute: aggregateAttribute,
+		Limit:              limit,
+		SearchText:         r.URL.Query().Get("searchText"),
+		FilterAttributeKey: r.URL.Query().Get("attributeKey"),
+	}
+	return &req, nil
 }
