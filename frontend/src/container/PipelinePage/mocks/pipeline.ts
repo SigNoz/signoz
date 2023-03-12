@@ -5,13 +5,14 @@ export const configurationVerison = '1.0';
 export const pipelineMockData: Array<PipelineData> = [
 	{
 		id: '4453c8b0-c0fd-42bf-bf09-7cc1b04ccdc9',
-		orderId: '2',
+		orderId: 1,
 		name: 'Apache common parser',
 		alias: 'apachecommonparser',
 		enabled: false,
 		filter: 'attributes.source == nginx',
 		config: [
 			{
+				orderId: 1,
 				type: 'grok',
 				id: 'grokusecommon',
 				name: 'grok use common asd',
@@ -21,6 +22,7 @@ export const pipelineMockData: Array<PipelineData> = [
 				parse_from: 'body',
 			},
 			{
+				orderId: 2,
 				type: 'move',
 				id: 'renameauth',
 				name: 'rename auth',
@@ -33,13 +35,14 @@ export const pipelineMockData: Array<PipelineData> = [
 	},
 	{
 		id: 'a3675a0c-ff73-4ddb-be39-4351ace69231',
-		orderId: '1',
+		orderId: 2,
 		name: 'Moving pipeline new',
 		alias: 'movingpipelinenew',
 		enabled: false,
 		filter: 'attributes.method == POST',
 		config: [
 			{
+				orderId: 1,
 				type: 'copy',
 				id: 'mv1',
 				name: 'mymove',

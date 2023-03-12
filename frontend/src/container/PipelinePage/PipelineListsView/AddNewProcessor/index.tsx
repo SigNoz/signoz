@@ -44,9 +44,9 @@ function AddNewProcessor({
 	};
 
 	const onFinish = (values: ProcessorData): void => {
-		const totalDataLength = expandedPipelineData?.config.length;
+		const totalDataLength = expandedPipelineData?.config?.length;
 		const newProcessorData: ProcessorData = {
-			id: (Number(totalDataLength || 0) + 1).toString(),
+			orderId: Number(totalDataLength || 0) + 1,
 			type: processorType,
 			name: values.name,
 			output: values.output,
@@ -80,11 +80,15 @@ function AddNewProcessor({
 			setExpandedPipelineData(modifiedProcessorData);
 		}
 		if (isAdd && expandedPipelineData) {
-			const modifiedProcessorData = { ...expandedPipelineData };
-			modifiedProcessorData.config = [
-				...modifiedProcessorData.config,
-				newProcessorData,
-			];
+			const modifiedProcessorData = {
+				...expandedPipelineData,
+			};
+			if (modifiedProcessorData.config !== undefined) {
+				modifiedProcessorData.config = [
+					...modifiedProcessorData.config,
+					newProcessorData,
+				];
+			}
 			setExpandedPipelineData(modifiedProcessorData);
 		}
 		setActionType(undefined);

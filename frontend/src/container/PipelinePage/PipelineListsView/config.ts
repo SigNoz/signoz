@@ -14,12 +14,12 @@ export const pipelineFields = [
 		placeholder: 'pipeline_name_placeholder',
 		name: 'name',
 	},
-	{
+	/* {
 		id: '3',
 		fieldName: 'Tags',
 		placeholder: 'pipeline_tags_placeholder',
 		name: 'tags',
-	},
+	}, */
 	{
 		id: '4',
 		fieldName: 'Description',
@@ -47,10 +47,10 @@ export const pipelineColumns: ColumnsType<PipelineData> = [
 		key: 'filter',
 		title: 'Filters',
 	},
-	{
+	/* {
 		key: 'tags',
 		title: 'Tags',
-	},
+	}, */
 	{
 		key: 'createdAt',
 		title: 'Last Edited',
@@ -63,7 +63,7 @@ export const pipelineColumns: ColumnsType<PipelineData> = [
 
 export const processorColumns: ColumnsType<ProcessorData> = [
 	{
-		key: 'id',
+		key: 'orderId',
 		title: '',
 	},
 	{

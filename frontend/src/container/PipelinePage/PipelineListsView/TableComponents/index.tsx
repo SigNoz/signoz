@@ -3,7 +3,7 @@ import { PipelineData, ProcessorData } from 'types/api/pipeline/def';
 
 import { ListDataStyle, ProcessorIndexIcon } from '../styles';
 import PipelineSequence from './PipelineSequence';
-import Tags from './Tags';
+// import Tags from './Tags';
 
 function TableComponents({
 	columnKey,
@@ -12,9 +12,9 @@ function TableComponents({
 	if (columnKey === 'orderId') {
 		return <PipelineSequence value={record} />;
 	}
-	if (columnKey === 'tags') {
+	/* if (columnKey === 'tags') {
 		return <Tags tags={record} />;
-	}
+	} */
 	if (columnKey === 'createdBy') {
 		return <span>{record}</span>;
 	}
@@ -42,7 +42,7 @@ function TableComponents({
 }
 
 export type Record = PipelineData['orderId'] &
-	PipelineData['tags'] &
+	// PipelineData['tags'] &
 	ProcessorData;
 
 interface TableComponentsProps {

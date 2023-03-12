@@ -16,6 +16,7 @@ beforeAll(() => {
 
 const selectedProcessorData = {
 	id: '1',
+	orderId: 1,
 	type: 'grok',
 	name: 'grok use common',
 	output: 'grokusecommon',

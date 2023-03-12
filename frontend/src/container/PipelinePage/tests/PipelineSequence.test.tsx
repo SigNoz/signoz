@@ -19,7 +19,7 @@ describe('PipelinePage container test', () => {
 			<MemoryRouter>
 				<Provider store={store}>
 					<I18nextProvider i18n={i18n}>
-						<PipelineSequence value="3" />
+						<PipelineSequence value={3} />
 					</I18nextProvider>
 				</Provider>
 			</MemoryRouter>,

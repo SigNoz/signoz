@@ -5,7 +5,6 @@ import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
 import { PipelineData } from 'types/api/pipeline/def';
 import AppReducer from 'types/reducer/app';
-import { v4 as uuid } from 'uuid';
 
 import { ActionMode, ActionType } from '../../Layouts';
 import { ModalButtonWrapper, ModalTitle } from '../styles';
@@ -24,32 +23,31 @@ function AddNewPipeline({
 	const { t } = useTranslation('pipeline');
 	const { user } = useSelector<AppState, AppReducer>((state) => state.app);
 	const [count, setCount] = useState(3);
-	const [tagsListData, setTagsListData] = useState<Array<string>>();
+	// const [tagsListData, setTagsListData] = useState<Array<string>>();
 
 	const isEdit = useMemo(() => isActionType === 'edit-pipeline', [isActionType]);
 	const isAdd = useMemo(() => isActionType === 'add-pipeline', [isActionType]);
 
 	useEffect(() => {
 		if (isEdit) {
-			setTagsListData(selectedPipelineData?.tags);
+			// setTagsListData(selectedPipelineData?.tags);
 			form.setFieldsValue(selectedPipelineData);
 		}
 		if (isAdd) {
 			form.resetFields();
-			setTagsListData([]);
+			// setTagsListData([]);
 		}
 	}, [form, isEdit, isAdd, selectedPipelineData]);
 
 	const onFinish = (values: PipelineData): void => {
 		const newPipeLineData: PipelineData = {
-			orderId: count.toString(),
-			id: uuid(),
+			orderId: count,
 			createdAt: new Date().toISOString(),
 			createdBy: user?.name || '',
 			name: values.name,
 			alias: values.alias,
 			filter: values.filter,
-			tags: tagsListData || [],
+			// tags: tagsListData || [],
 			config: [],
 			enabled: false,
 		};
@@ -65,7 +63,7 @@ function AddNewPipeline({
 				name: values.name,
 				alias: values.alias,
 				filter: values.filter,
-				tags: tagsListData || [],
+				// tags: tagsListData || [],
 			};
 
 			const editedPipelineData = getEditedDataSource(
@@ -78,7 +76,7 @@ function AddNewPipeline({
 			setCurrPipelineData(editedPipelineData);
 		}
 		if (isAdd) {
-			setTagsListData([]);
+			// setTagsListData([]);
 			setCount((prevState) => prevState + 1);
 			setCurrPipelineData((prevState) => [...prevState, newPipeLineData]);
 		}
@@ -121,7 +119,8 @@ function AddNewPipeline({
 				autoComplete="off"
 				form={form}
 			>
-				{renderPipelineForm(setTagsListData, tagsListData)}
+				{/* {renderPipelineForm(setTagsListData, tagsListData)} */}
+				{renderPipelineForm()}
 				<Divider plain />
 				<Form.Item>
 					<ModalButtonWrapper>

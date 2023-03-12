@@ -1,6 +1,7 @@
 export interface ProcessorData {
 	type: string;
-	id: string;
+	id?: string;
+	orderId: number;
 	name: string;
 	output?: string;
 	parse_to?: string;
@@ -19,7 +20,7 @@ export interface PipelineData {
 	filter: string;
 	id?: string;
 	name: string;
-	orderId: string;
+	orderId: number;
 	tags?: Array<string>; // Tags data is missing in API response
 }
 

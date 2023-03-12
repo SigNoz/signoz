@@ -1,6 +1,7 @@
 import { ExclamationCircleOutlined, PlusOutlined } from '@ant-design/icons';
 import { Modal, Table, Typography } from 'antd';
-import saveConfig from 'api/pipeline/post';
+import savePipelineConfig from 'api/pipeline/post';
+import { useNotifications } from 'hooks/useNotifications';
 import React, { useCallback, useMemo, useState } from 'react';
 import { DndProvider } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
@@ -36,9 +37,11 @@ function PipelineListsView({
 	isActionMode,
 	setActionMode,
 	piplineData,
+	refetchPipelineLists,
 }: PipelineListsViewProps): JSX.Element {
-	const { t } = useTranslation('pipeline');
+	const { t } = useTranslation(['pipeline', 'common']);
 	const [modal, contextHolder] = Modal.useModal();
+	const { notifications } = useNotifications();
 	const [prevPipelineData, setPrevPipelineData] = useState<Array<PipelineData>>(
 		piplineData.pipelines,
 	);
@@ -184,7 +187,8 @@ function PipelineListsView({
 			expandedPipelineData?.config &&
 			expandedPipelineData?.config.map(
 				(item: ProcessorData): ProcessorData => ({
-					id: String(item.id),
+					id: item.id,
+					orderId: item.orderId,
 					type: item.type,
 					name: item.name,
 					output: item.output,
@@ -218,12 +222,11 @@ function PipelineListsView({
 
 	const getDataOnExpand = useCallback(
 		(expanded: boolean, record: PipelineData): void => {
-			const keys = [];
-			if (expanded) {
-				keys.push(record.id);
+			const keys: Array<string> = [];
+			if (expanded && record.id) {
+				keys.push(record?.id);
 			}
-			// eslint-disable-next-line @typescript-eslint/no-explicit-any
-			setExpandedRow(keys as any);
+			setExpandedRow(keys);
 			setExpandedPipelineData(record);
 		},
 		[],
@@ -256,7 +259,7 @@ function PipelineListsView({
 		return undefined;
 	}, [isActionMode, addNewPipelineHandler, t]);
 
-	const onSaveConfigurationHandler = useCallback(async () => {
+	const onSaveConfigurationHandler = useCallback(() => {
 		setActionMode(ActionMode.Viewing);
 		setShowSaveButton(undefined);
 		const modifiedPipelineData = currPipelineData.map((item: PipelineData) => {
@@ -266,24 +269,27 @@ function PipelineListsView({
 			}
 			return pipelineData;
 		});
-		const payload = { ...piplineData };
 		modifiedPipelineData.forEach((item: PipelineData) => {
 			const pipelineData = item;
 			delete pipelineData.id;
 			return pipelineData;
 		});
-		payload.pipelines = modifiedPipelineData;
-		await saveConfig({
-			data: payload,
-		});
+		savePipelineConfig({
+			data: modifiedPipelineData,
+		})
+			.then(() => refetchPipelineLists())
+			.catch(() => notifications.error(t('something_went_wrong')));
+
 		setCurrPipelineData(modifiedPipelineData);
 		setPrevPipelineData(modifiedPipelineData);
 	}, [
 		currPipelineData,
 		expandedPipelineData?.config,
 		expandedPipelineData?.id,
-		piplineData,
+		notifications,
+		refetchPipelineLists,
 		setActionMode,
+		t,
 	]);
 
 	const onCancelConfigurationHandler = useCallback((): void => {
@@ -372,6 +378,7 @@ interface PipelineListsViewProps {
 	isActionMode: string;
 	setActionMode: (actionMode: ActionMode) => void;
 	piplineData: PipelineResponse;
+	refetchPipelineLists: VoidFunction;
 }
 
 interface ExpandRowConfig {

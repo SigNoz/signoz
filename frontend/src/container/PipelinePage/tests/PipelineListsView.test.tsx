@@ -26,6 +26,7 @@ describe('PipelinePage container test', () => {
 							isActionMode="viewing-mode"
 							setActionMode={jest.fn()}
 							piplineData={pipelineApiResponseMockData}
+							refetchPipelineLists={jest.fn()}
 						/>
 					</I18nextProvider>
 				</Provider>

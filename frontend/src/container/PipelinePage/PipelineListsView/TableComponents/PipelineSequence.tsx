@@ -7,6 +7,6 @@ function PipelineSequence({ value }: PipelineSequenceProps): JSX.Element {
 }
 
 interface PipelineSequenceProps {
-	value: string;
+	value: number;
 }
 export default PipelineSequence;

@@ -12,21 +12,22 @@ function PipelinePageLayout(): JSX.Element {
 	const { t } = useTranslation('common');
 	const [isActionType, setActionType] = useState<string>();
 	const [isActionMode, setActionMode] = useState<string>('viewing-mode');
-	const { isLoading, data: piplineData, isError } = useQuery(
-		['version', 'latest'],
-		{
-			queryFn: () =>
-				getPipeline({
-					version: 'latest',
-				}),
-		},
-	);
+	const {
+		isLoading,
+		data: piplineData,
+		isError,
+		refetch: refetchPipelineLists,
+	} = useQuery(['version', 'latest'], {
+		queryFn: () =>
+			getPipeline({
+				version: 'latest',
+			}),
+	});
 
 	if (isError) {
 		return <div>{piplineData?.error || t('something_went_wrong')}</div>;
 	}
 
-	// in case of loading
 	if (isLoading || !piplineData?.payload) {
 		return <Spinner height="75vh" tip="Loading Pipelines..." />;
 	}
@@ -46,6 +47,7 @@ function PipelinePageLayout(): JSX.Element {
 				setActionMode={setActionMode}
 				isActionMode={isActionMode}
 				piplineData={piplineData.payload}
+				refetchPipelineLists={refetchPipelineLists}
 			/>
 		</>
 	);
