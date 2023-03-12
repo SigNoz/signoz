@@ -48,7 +48,17 @@ function AddNewPipeline({
 			alias: values.alias,
 			filter: values.filter,
 			// tags: tagsListData || [],
-			config: [],
+			config: [
+				{
+					orderId: 1,
+					enabled: true,
+					type: 'copy',
+					name: 'mymove',
+					id: 'mv1',
+					from: 'attributes.method',
+					to: 'attributes.method11',
+				},
+			],
 			enabled: false,
 		};
 

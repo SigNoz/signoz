@@ -13,6 +13,7 @@ export const pipelineMockData: Array<PipelineData> = [
 		config: [
 			{
 				orderId: 1,
+				enabled: true,
 				type: 'grok',
 				id: 'grokusecommon',
 				name: 'grok use common asd',
@@ -23,6 +24,7 @@ export const pipelineMockData: Array<PipelineData> = [
 			},
 			{
 				orderId: 2,
+				enabled: true,
 				type: 'move',
 				id: 'renameauth',
 				name: 'rename auth',
@@ -43,6 +45,7 @@ export const pipelineMockData: Array<PipelineData> = [
 		config: [
 			{
 				orderId: 1,
+				enabled: true,
 				type: 'copy',
 				id: 'mv1',
 				name: 'mymove',

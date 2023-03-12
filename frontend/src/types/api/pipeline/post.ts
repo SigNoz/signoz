@@ -1,5 +1,5 @@
 import { PipelineResponse } from './def';
 
 export interface Props {
-	data: PipelineResponse['pipelines'];
+	data: { pipelines: PipelineResponse['pipelines'] };
 }

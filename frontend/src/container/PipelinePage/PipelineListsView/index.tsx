@@ -264,18 +264,22 @@ function PipelineListsView({
 		setShowSaveButton(undefined);
 		const modifiedPipelineData = currPipelineData.map((item: PipelineData) => {
 			const pipelineData = item;
-			if (item.id === expandedPipelineData?.id) {
+			if (
+				expandedPipelineData !== undefined &&
+				item.id === expandedPipelineData?.id
+			) {
 				pipelineData.config = expandedPipelineData?.config;
 			}
+			pipelineData.config = item.config;
 			return pipelineData;
 		});
 		modifiedPipelineData.forEach((item: PipelineData) => {
 			const pipelineData = item;
-			delete pipelineData.id;
+			delete pipelineData?.id;
 			return pipelineData;
 		});
 		savePipelineConfig({
-			data: modifiedPipelineData,
+			data: { pipelines: modifiedPipelineData },
 		})
 			.then(() => refetchPipelineLists())
 			.catch(() => notifications.error(t('something_went_wrong')));
@@ -284,8 +288,7 @@ function PipelineListsView({
 		setPrevPipelineData(modifiedPipelineData);
 	}, [
 		currPipelineData,
-		expandedPipelineData?.config,
-		expandedPipelineData?.id,
+		expandedPipelineData,
 		notifications,
 		refetchPipelineLists,
 		setActionMode,

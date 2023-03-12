@@ -3,6 +3,7 @@ export interface ProcessorData {
 	id?: string;
 	orderId: number;
 	name: string;
+	enabled?: boolean;
 	output?: string;
 	parse_to?: string;
 	pattern?: string;
