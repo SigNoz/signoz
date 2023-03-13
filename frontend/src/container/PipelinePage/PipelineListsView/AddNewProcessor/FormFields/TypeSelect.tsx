@@ -21,7 +21,7 @@ function TypeSelect({ onChange, value }: TypeSelectProps): JSX.Element {
 				<ProcessorType>{t('processor_type')}</ProcessorType>
 				<StyledSelect
 					onChange={(value: string | unknown): void => onChange(value)}
-					defaultValue={value}
+					value={value}
 				>
 					{processorTypes.map(({ value, label }) => (
 						<Select.Option key={value + label} value={value}>

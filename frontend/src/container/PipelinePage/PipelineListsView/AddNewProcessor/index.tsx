@@ -105,10 +105,12 @@ function AddNewProcessor({
 			setExpandedPipelineData(modifiedProcessorData);
 		}
 		setActionType(undefined);
+		handleProcessorType(DEFAULT_PROCESSOR_TYPE);
 	};
 
 	const onCancelModal = (): void => {
 		setActionType(undefined);
+		handleProcessorType(DEFAULT_PROCESSOR_TYPE);
 	};
 
 	const modalTitle = useMemo(
@@ -144,10 +146,7 @@ function AddNewProcessor({
 				autoComplete="off"
 				form={form}
 			>
-				<TypeSelect
-					value={isEdit ? selectedProcessorData?.type : processorType}
-					onChange={handleProcessorType}
-				/>
+				<TypeSelect value={processorType} onChange={handleProcessorType} />
 				{renderProcessorForm(processorType)}
 				<Divider plain />
 				<Form.Item>
