@@ -135,8 +135,8 @@ func (r *Repo) insertConfig(ctx context.Context, c *ConfigVersion, elements []st
 		}
 	}()
 
-	userPayload, err := auth.ExtractUserFromContext(ctx)
-	if err != nil || userPayload == nil {
+	userId, err := auth.UserIdFromContext(ctx)
+	if err != nil || userId == "" {
 		zap.S().Error("failed to find user in the context", err)
 		return fmt.Errorf("failed to identify user of the request")
 	}
@@ -158,7 +158,7 @@ func (r *Repo) insertConfig(ctx context.Context, c *ConfigVersion, elements []st
 		configQuery,
 		c.ID,
 		c.Version,
-		userPayload.User.Id,
+		userId,
 		c.ElementType,
 		false,
 		false,

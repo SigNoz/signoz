@@ -48,7 +48,7 @@ func UpsertControlProcessors(ctx context.Context, signal string, processors map[
 
 	for _, agent := range agents {
 
-		agenthash, err := addIngestionControlToAgent(agent, signal, processors, withLB)
+		agenthash, err := addIngestionControlToAgent(agent, signal, processors, false)
 		if err != nil {
 			zap.S().Error("failed to push ingestion rules config to agent", agent.ID, err)
 			continue

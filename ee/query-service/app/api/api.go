@@ -5,6 +5,7 @@ import (
 
 	"github.com/gorilla/mux"
 	"go.signoz.io/signoz/ee/query-service/dao"
+	"go.signoz.io/signoz/ee/query-service/ingestionRules"
 	"go.signoz.io/signoz/ee/query-service/interfaces"
 	"go.signoz.io/signoz/ee/query-service/license"
 	baseapp "go.signoz.io/signoz/pkg/query-service/app"
@@ -15,11 +16,12 @@ import (
 )
 
 type APIHandlerOptions struct {
-	DataConnector  interfaces.DataConnector
-	AppDao         dao.ModelDao
-	RulesManager   *rules.Manager
-	FeatureFlags   baseint.FeatureLookup
-	LicenseManager *license.Manager
+	DataConnector       interfaces.DataConnector
+	AppDao              dao.ModelDao
+	RulesManager        *rules.Manager
+	FeatureFlags        baseint.FeatureLookup
+	LicenseManager      *license.Manager
+	IngestionController *ingestionRules.IngestionController
 }
 
 type APIHandler struct {
@@ -113,6 +115,30 @@ func (ah *APIHandler) RegisterRoutes(router *mux.Router, am *baseapp.AuthMiddlew
 	router.HandleFunc("/api/v1/domains/{id}",
 		am.AdminAccess(ah.deleteDomain)).
 		Methods(http.MethodDelete)
+
+	router.HandleFunc("/api/v1/dropRules/{version}",
+		am.AdminAccess(ah.listDropRules)).
+		Methods(http.MethodGet)
+
+	router.HandleFunc("/api/v1/dropRules/{version}/deploy",
+		am.AdminAccess(ah.deployDropRules)).
+		Methods(http.MethodPost)
+
+	router.HandleFunc("/api/v1/dropRules",
+		am.AdminAccess(ah.createDropRule)).
+		Methods(http.MethodPost)
+
+	router.HandleFunc("/api/v1/samplingRules/{version}/deploy",
+		am.AdminAccess(ah.deploySamplingRules)).
+		Methods(http.MethodPost)
+
+	router.HandleFunc("/api/v1/samplingRules/{version}",
+		am.AdminAccess(ah.listSamplingRules)).
+		Methods(http.MethodGet)
+
+	router.HandleFunc("/api/v1/samplingRules",
+		am.AdminAccess(ah.createSamplingRule)).
+		Methods(http.MethodPost)
 
 	// base overrides
 	router.HandleFunc("/api/v1/version", am.OpenAccess(ah.getVersion)).Methods(http.MethodGet)

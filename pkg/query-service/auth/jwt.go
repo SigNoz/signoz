@@ -92,15 +92,3 @@ func ExtractJwtFromContext(ctx context.Context) (string, error) {
 func ExtractJwtFromRequest(r *http.Request) (string, error) {
 	return jwtmiddleware.FromAuthHeader(r)
 }
-
-// ExtractUserFromContext extracts user from context.Context using accssJwt. here,
-// we do not validate if user exists as it would be done so while adding
-// user to the context
-func ExtractUserFromContext(ctx context.Context) (*model.UserPayload, error) {
-	jwt, err := ExtractJwtFromContext(ctx)
-	if err != nil {
-		return nil, err
-	}
-
-	return validateUser(jwt)
-}

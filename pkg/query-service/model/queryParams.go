@@ -464,6 +464,7 @@ type GetErrorParams struct {
 
 type FilterItem struct {
 	Key      string      `json:"key"`
+	KeyType  string      `json:"keyType"`
 	Value    interface{} `json:"value"`
 	Operator string      `json:"op"`
 }
