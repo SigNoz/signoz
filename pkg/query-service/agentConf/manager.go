@@ -84,12 +84,12 @@ func Redeploy(ctx context.Context, typ ElementTypeDef, version int) error {
 
 	configVersion, err := GetConfigVersion(ctx, typ, version)
 	if err != nil {
-		zap.S().Debugf("failed to fetch config version during redeploy", err)
+		zap.S().Debug("failed to fetch config version during redeploy", err)
 		return fmt.Errorf("failed to fetch details of the config version")
 	}
 
 	if configVersion == nil || (configVersion != nil && configVersion.LastConf == "") {
-		zap.S().Debugf("config version has no conf yaml", configVersion)
+		zap.S().Debug("config version has no conf yaml", configVersion)
 		return fmt.Errorf("the config version can not be redeployed")
 	}
 	switch typ {
@@ -177,7 +177,7 @@ func (m *Manager) OnConfigUpdate(agentId string, hash string, err error) {
 	message := "deploy successful"
 
 	defer func() {
-		zap.S().Error(status, zap.String("agentId", agentId), zap.String("agentResponse", message))
+		zap.S().Info(status, zap.String("agentId", agentId), zap.String("agentResponse", message))
 	}()
 
 	if err != nil {
