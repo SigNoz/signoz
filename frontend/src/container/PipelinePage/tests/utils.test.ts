@@ -14,7 +14,7 @@ import {
 
 describe('Utils testing of Pipeline Page', () => {
 	test('it should be check form field of add pipeline', () => {
-		expect(pipelineFields.length).toBe(4);
+		expect(pipelineFields.length).toBe(3);
 		expect(pipelineFields.length).toBeGreaterThan(1);
 	});
 

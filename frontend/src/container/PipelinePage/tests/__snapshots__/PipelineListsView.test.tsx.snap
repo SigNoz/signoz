@@ -105,12 +105,6 @@ exports[`PipelinePage container test should render PipelineListsView section 1`]
                           class="ant-table-cell"
                           style="text-align: left;"
                         >
-                          Tags
-                        </th>
-                        <th
-                          class="ant-table-cell"
-                          style="text-align: left;"
-                        >
                           Last Edited
                         </th>
                         <th
@@ -164,7 +158,7 @@ exports[`PipelinePage container test should render PipelineListsView section 1`]
                               class="ant-avatar-string"
                               style="transform: scale(1) translateX(-50%);"
                             >
-                              2
+                              1
                             </span>
                           </span>
                         </td>
@@ -185,12 +179,6 @@ exports[`PipelinePage container test should render PipelineListsView section 1`]
                           <span>
                             attributes.source == nginx
                           </span>
-                        </td>
-                        <td
-                          class="ant-table-cell"
-                          style="text-align: left;"
-                        >
-                          <span />
                         </td>
                         <td
                           class="ant-table-cell"
@@ -249,7 +237,7 @@ exports[`PipelinePage container test should render PipelineListsView section 1`]
                               class="ant-avatar-string"
                               style="transform: scale(1) translateX(-50%);"
                             >
-                              1
+                              2
                             </span>
                           </span>
                         </td>
@@ -270,12 +258,6 @@ exports[`PipelinePage container test should render PipelineListsView section 1`]
                           <span>
                             attributes.method == POST
                           </span>
-                        </td>
-                        <td
-                          class="ant-table-cell"
-                          style="text-align: left;"
-                        >
-                          <span />
                         </td>
                         <td
                           class="ant-table-cell"
