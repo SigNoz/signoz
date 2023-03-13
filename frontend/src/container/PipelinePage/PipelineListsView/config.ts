@@ -1,4 +1,4 @@
-import { ColumnsType } from 'antd/es/table';
+import { ColumnGroupType, ColumnType } from 'antd/lib/table/interface';
 import { PipelineData, ProcessorData } from 'types/api/pipeline/def';
 
 export const pipelineFields = [
@@ -34,40 +34,52 @@ export const tagInputStyle: React.CSSProperties = {
 	flex: 1,
 };
 
-export const pipelineColumns: ColumnsType<PipelineData> = [
+export const pipelineColumns: Array<
+	ColumnType<PipelineData> | ColumnGroupType<PipelineData>
+> = [
 	{
 		key: 'orderId',
 		title: '',
+		dataIndex: 'orderId',
 	},
 	{
 		key: 'name',
 		title: 'Pipeline Name',
+		dataIndex: 'name',
 	},
 	{
 		key: 'filter',
 		title: 'Filters',
+		dataIndex: 'filter',
 	},
 	/* {
 		key: 'tags',
 		title: 'Tags',
+		dataIndex: 'tags',
 	}, */
 	{
 		key: 'createdAt',
 		title: 'Last Edited',
+		dataIndex: 'createdAt',
 	},
 	{
 		key: 'createdBy',
 		title: 'Edited By',
+		dataIndex: 'createdBy',
 	},
 ];
 
-export const processorColumns: ColumnsType<ProcessorData> = [
+export const processorColumns: Array<
+	ColumnType<ProcessorData> | ColumnGroupType<ProcessorData>
+> = [
 	{
-		key: 'orderId',
+		key: 'id',
 		title: '',
+		dataIndex: 'orderId',
 	},
 	{
 		key: 'name',
 		title: '',
+		dataIndex: 'name',
 	},
 ];

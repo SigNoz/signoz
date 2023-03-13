@@ -33,7 +33,7 @@ function TableComponents({
 		);
 	}
 	if (columnKey === 'id') {
-		return <ProcessorIndexIcon size="small">{Number(record)}</ProcessorIndexIcon>;
+		return <ProcessorIndexIcon>{record}</ProcessorIndexIcon>;
 	}
 	if (columnKey === 'name') {
 		return <ListDataStyle>{record}</ListDataStyle>;

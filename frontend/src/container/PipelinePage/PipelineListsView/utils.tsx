@@ -1,4 +1,4 @@
-import { ColumnsType } from 'antd/es/table';
+import { ColumnType } from 'antd/lib/table/interface';
 import React from 'react';
 import update from 'react-addons-update';
 
@@ -33,10 +33,12 @@ export function getUpdatedRow<T>(
 	});
 }
 
-export function getTableColumn<T>(columnData: ColumnsType<T>): ColumnsType<T> {
-	return columnData.map(({ title, key }) => ({
+export function getTableColumn<T>(
+	columnData: Array<ColumnType<T>>,
+): Array<ColumnType<T>> {
+	return columnData.map(({ title, key, dataIndex }) => ({
 		title,
-		dataIndex: key,
+		dataIndex,
 		key,
 		align: key === 'id' ? 'right' : 'left',
 		render: (record: Record): JSX.Element => (

@@ -14,6 +14,15 @@ exports[`PipelinePage should render PipelineExpandView section 1`] = `
   line-height: 1.25rem;
 }
 
+.c1 {
+  background-color: #1668DC;
+  height: 1rem;
+  width: 1rem;
+  font-size: 0.75rem;
+  line-height: 0.813rem;
+  font-weight: 400;
+}
+
 .c0 .ant-table-tbody > tr > td {
   border: none;
 }
@@ -24,10 +33,6 @@ exports[`PipelinePage should render PipelineExpandView section 1`] = `
 
 .c0 .ant-table-content {
   background: #1d1d1d;
-}
-
-.c1 {
-  background-color: #1668DC;
 }
 
 <div
@@ -61,7 +66,7 @@ exports[`PipelinePage should render PipelineExpandView section 1`] = `
                   >
                     <td
                       class="ant-table-cell"
-                      style="text-align: left;"
+                      style="text-align: right;"
                     >
                       <span
                         class="ant-avatar ant-avatar-circle c1 css-dev-only-do-not-override-1i536d8"
@@ -91,7 +96,7 @@ exports[`PipelinePage should render PipelineExpandView section 1`] = `
                   >
                     <td
                       class="ant-table-cell"
-                      style="text-align: left;"
+                      style="text-align: right;"
                     >
                       <span
                         class="ant-avatar ant-avatar-circle c1 css-dev-only-do-not-override-1i536d8"

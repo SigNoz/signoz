@@ -1,27 +1,3 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
 exports[`PipelinePage container test should render AddNewPipeline section 1`] = `<DocumentFragment />`;
-
-exports[`PipelinePage container test should render TableComponents section 1`] = `
-<DocumentFragment>
-  .c0 {
-  background-color: #1668DC;
-  height: 1rem;
-  width: 1rem;
-  font-size: 0.75rem;
-  line-height: 0.813rem;
-  font-weight: 400;
-}
-
-<span
-    class="ant-avatar ant-avatar-sm ant-avatar-circle c0 css-dev-only-do-not-override-1i536d8"
-  >
-    <span
-      class="ant-avatar-string"
-      style="transform: scale(1) translateX(-50%);"
-    >
-      NaN
-    </span>
-  </span>
-</DocumentFragment>
-`;
