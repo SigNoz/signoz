@@ -10,10 +10,10 @@ export const renderPipelineForm = (): // setTagsListData: (tags: Array<string>) 
 // tagsListData?: Array<string>,
 Array<JSX.Element> =>
 	pipelineFields.map((fieldName) => {
-		if (fieldName.id === '1') {
+		if (fieldName.id === 1) {
 			return <FilterSearch key={fieldName.id} fieldData={fieldName} />;
 		}
-		if (fieldName.id === '2') {
+		if (fieldName.id === 2) {
 			return <NameInput key={fieldName.id} fieldData={fieldName} />;
 		}
 		/* if (fieldName.id === '3') {

@@ -43,14 +43,15 @@ function AddNewProcessor({
 		setProcessorType(typedValue);
 	};
 
-	const onFinish = (values: ProcessorData): void => {
-		const totalDataLength = expandedPipelineData?.config?.length;
-		const newProcessorData: ProcessorData = {
+	const onFinish = (values: { name: string }): void => {
+		const totalDataLength = expandedPipelineData?.config?.length || 0;
+
+		const newProcessorData = {
+			id: values.name.replace(/\s/g, ''),
 			orderId: Number(totalDataLength || 0) + 1,
 			type: processorType,
-			name: values.name,
-			output: values.output,
 			enabled: true,
+			...values,
 		};
 
 		if (isEdit && selectedProcessorData && expandedPipelineData?.config) {
@@ -64,7 +65,6 @@ function AddNewProcessor({
 				...expandedPipelineData?.config?.[findRecordIndex],
 				type: processorType,
 				name: values.name,
-				output: values.output,
 			};
 
 			const editedData = getEditedDataSource(
@@ -89,6 +89,8 @@ function AddNewProcessor({
 					...modifiedProcessorData.config,
 					newProcessorData,
 				];
+				modifiedProcessorData.config[totalDataLength - 1].output =
+					newProcessorData.id;
 			}
 			setExpandedPipelineData(modifiedProcessorData);
 		}
@@ -136,7 +138,7 @@ function AddNewProcessor({
 					value={isEdit ? selectedProcessorData?.type : processorType}
 					onChange={handleProcessorType}
 				/>
-				{renderProcessorForm()}
+				{renderProcessorForm(processorType)}
 				<Divider plain />
 				<Form.Item>
 					<ModalButtonWrapper>

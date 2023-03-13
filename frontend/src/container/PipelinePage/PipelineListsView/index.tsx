@@ -191,7 +191,6 @@ function PipelineListsView({
 					orderId: item.orderId,
 					type: item.type,
 					name: item.name,
-					output: item.output,
 				}),
 			),
 		[expandedPipelineData],

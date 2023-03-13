@@ -28,5 +28,12 @@
 	"pipeline_tags_placeholder": "Tags",
 	"pipeline_description_placeholder": "Enter description for your pipeline",
 	"processor_name_placeholder": "Name",
+	"processor_regex_placeholder": "Regex",
+	"processor_parsefrom_placeholder": "Parse From",
+	"processor_parseto_placeholder": "Parse From",
+	"processor_onerror_placeholder": "on Error",
+	"processor_pattern_placeholder": "Pattern",
+	"processor_field_placeholder": "Field",
+	"processor_value_placeholder": "Value",
 	"processor_description_placeholder": "example rule: %{word:first}"
 }

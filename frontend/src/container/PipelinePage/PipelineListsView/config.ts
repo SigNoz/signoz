@@ -3,25 +3,25 @@ import { PipelineData, ProcessorData } from 'types/api/pipeline/def';
 
 export const pipelineFields = [
 	{
-		id: '1',
+		id: 1,
 		fieldName: 'Filter',
 		placeholder: 'search_pipeline_placeholder',
 		name: 'filter',
 	},
 	{
-		id: '2',
+		id: 2,
 		fieldName: 'Name',
 		placeholder: 'pipeline_name_placeholder',
 		name: 'name',
 	},
 	/* {
-		id: '3',
+		id: 3,
 		fieldName: 'Tags',
 		placeholder: 'pipeline_tags_placeholder',
 		name: 'tags',
 	}, */
 	{
-		id: '4',
+		id: 4,
 		fieldName: 'Description',
 		placeholder: 'pipeline_description_placeholder',
 		name: 'alias', // This is temporary as description is not present in mock

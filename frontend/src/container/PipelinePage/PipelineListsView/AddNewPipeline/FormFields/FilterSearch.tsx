@@ -21,7 +21,7 @@ function FilterSearch({ fieldData }: FilterSearchProps): JSX.Element {
 			name={fieldData.name}
 		>
 			<Input.Search
-				id={fieldData.id}
+				id={fieldData.id.toString()}
 				name={fieldData.name}
 				placeholder={t(fieldData.placeholder)}
 				allowClear

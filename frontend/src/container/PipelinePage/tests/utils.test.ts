@@ -1,6 +1,6 @@
 import { pipelineMockData } from '../mocks/pipeline';
 import {
-	processorFields,
+	grokProcessorFields,
 	processorTypes,
 } from '../PipelineListsView/AddNewProcessor/config';
 import { pipelineFields, processorColumns } from '../PipelineListsView/config';
@@ -23,8 +23,8 @@ describe('Utils testing of Pipeline Page', () => {
 	});
 
 	test('it should be check form field of add processor', () => {
-		expect(processorFields.length).toBe(2);
-		expect(processorFields.length).toBeGreaterThan(1);
+		expect(grokProcessorFields.length).toBe(2);
+		expect(grokProcessorFields.length).toBeGreaterThan(1);
 	});
 
 	test('it should be check data length of pipeline', () => {

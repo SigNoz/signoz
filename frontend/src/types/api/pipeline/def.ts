@@ -10,6 +10,10 @@ export interface ProcessorData {
 	parse_from?: string;
 	from?: string;
 	to?: string;
+	regex?: string;
+	on_error?: string;
+	field?: string;
+	value?: string;
 }
 
 export interface PipelineData {
