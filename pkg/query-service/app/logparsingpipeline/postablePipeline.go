@@ -14,13 +14,14 @@ type PostablePipelines struct {
 // PostablePipeline captures user inputs in setting the pipeline
 
 type PostablePipeline struct {
-	Id      string                   `json:"id"`
-	OrderId int                      `json:"orderId"`
-	Name    string                   `json:"name"`
-	Alias   string                   `json:"alias"`
-	Enabled bool                     `json:"enabled"`
-	Filter  string                   `json:"filter"`
-	Config  []model.PipelineOperator `json:"config"`
+	Id          string                   `json:"id"`
+	OrderId     int                      `json:"orderId"`
+	Name        string                   `json:"name"`
+	Alias       string                   `json:"alias"`
+	Description string                   `json:"description"`
+	Enabled     bool                     `json:"enabled"`
+	Filter      string                   `json:"filter"`
+	Config      []model.PipelineOperator `json:"config"`
 }
 
 // // IsValid checks if postable pipeline has all the required params

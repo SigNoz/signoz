@@ -22,6 +22,7 @@ func InitDB(db *sqlx.DB) error {
 		created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, 
 		name VARCHAR(400) NOT NULL,
 		alias VARCHAR(20) NOT NULL,
+		description TEXT,
 		filter TEXT NOT NULL,
 		config_json TEXT
 	);

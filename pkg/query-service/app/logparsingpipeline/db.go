@@ -60,14 +60,15 @@ func (r *Repo) insertPipeline(ctx context.Context, postable *PostablePipeline) (
 	}
 
 	insertRow := &model.Pipeline{
-		Id:        uuid.New().String(),
-		OrderId:   postable.OrderId,
-		Enabled:   postable.Enabled,
-		Name:      postable.Name,
-		Alias:     postable.Alias,
-		Filter:    postable.Filter,
-		Config:    postable.Config,
-		RawConfig: string(rawConfig),
+		Id:          uuid.New().String(),
+		OrderId:     postable.OrderId,
+		Enabled:     postable.Enabled,
+		Name:        postable.Name,
+		Alias:       postable.Alias,
+		Description: postable.Description,
+		Filter:      postable.Filter,
+		Config:      postable.Config,
+		RawConfig:   string(rawConfig),
 		Creator: model.Creator{
 			CreatedBy: claims["email"].(string),
 			CreatedAt: time.Now(),
@@ -75,8 +76,8 @@ func (r *Repo) insertPipeline(ctx context.Context, postable *PostablePipeline) (
 	}
 
 	insertQuery := `INSERT INTO pipelines 
-	(id, order_id, enabled, created_by, created_at, name, alias, filter, config_json) 
-	VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`
+	(id, order_id, enabled, created_by, created_at, name, alias, description, filter, config_json) 
+	VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)`
 
 	_, err = r.db.ExecContext(ctx,
 		insertQuery,
@@ -87,6 +88,7 @@ func (r *Repo) insertPipeline(ctx context.Context, postable *PostablePipeline) (
 		insertRow.Creator.CreatedAt,
 		insertRow.Name,
 		insertRow.Alias,
+		insertRow.Description,
 		insertRow.Filter,
 		insertRow.RawConfig)
 
@@ -107,6 +109,7 @@ func (r *Repo) getPipelinesByVersion(ctx context.Context, version int) ([]model.
 		r.name, 
 		r.config_json,
 		r.alias,
+		r.description,
 		r.filter,
 		r.order_id,
 		r.created_by,
@@ -147,6 +150,7 @@ func (r *Repo) GetPipeline(ctx context.Context, id string) (*model.Pipeline, *mo
 		name, 
 		config_json,
 		alias,
+		description,
 		filter,
 		order_id,
 		created_by,
