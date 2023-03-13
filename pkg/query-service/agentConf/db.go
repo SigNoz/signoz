@@ -9,7 +9,6 @@ import (
 	"github.com/google/uuid"
 	"github.com/jmoiron/sqlx"
 	"go.signoz.io/signoz/pkg/query-service/agentConf/sqlite"
-	"go.signoz.io/signoz/pkg/query-service/auth"
 	"go.signoz.io/signoz/pkg/query-service/model"
 	"go.uber.org/zap"
 )
@@ -98,7 +97,7 @@ func (r *Repo) GetLatestVersion(ctx context.Context, typ ElementTypeDef) (*Confi
 	return &c, err
 }
 
-func (r *Repo) insertConfig(ctx context.Context, c *ConfigVersion, elements []string) (fnerr error) {
+func (r *Repo) insertConfig(ctx context.Context, userId string, c *ConfigVersion, elements []string) (fnerr error) {
 
 	if string(c.ElementType) == "" {
 		return fmt.Errorf("element type is required for creating agent config version")
@@ -135,12 +134,6 @@ func (r *Repo) insertConfig(ctx context.Context, c *ConfigVersion, elements []st
 		}
 	}()
 
-	userPayload, err := auth.ExtractUserFromContext(ctx)
-	if err != nil || userPayload == nil {
-		zap.S().Error("failed to find user in the context", err)
-		return fmt.Errorf("failed to identify user of the request")
-	}
-
 	// insert config
 	configQuery := `INSERT INTO agent_config_versions(	
 		id, 
@@ -158,7 +151,7 @@ func (r *Repo) insertConfig(ctx context.Context, c *ConfigVersion, elements []st
 		configQuery,
 		c.ID,
 		c.Version,
-		userPayload.User.Id,
+		userId,
 		c.ElementType,
 		false,
 		false,
