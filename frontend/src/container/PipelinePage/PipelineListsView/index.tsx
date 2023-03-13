@@ -283,8 +283,8 @@ function PipelineListsView({
 			.then(() => refetchPipelineLists())
 			.catch(() => notifications.error(t('something_went_wrong')));
 
-		setCurrPipelineData(modifiedPipelineData);
-		setPrevPipelineData(modifiedPipelineData);
+		setCurrPipelineData(currPipelineData);
+		setPrevPipelineData(currPipelineData);
 	}, [
 		currPipelineData,
 		expandedPipelineData,

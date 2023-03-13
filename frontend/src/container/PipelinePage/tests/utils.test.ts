@@ -1,6 +1,6 @@
 import { pipelineMockData } from '../mocks/pipeline';
 import {
-	grokProcessorFields,
+	processorFields,
 	processorTypes,
 } from '../PipelineListsView/AddNewProcessor/config';
 import { pipelineFields, processorColumns } from '../PipelineListsView/config';
@@ -23,8 +23,8 @@ describe('Utils testing of Pipeline Page', () => {
 	});
 
 	test('it should be check form field of add processor', () => {
-		expect(grokProcessorFields.length).toBe(2);
-		expect(grokProcessorFields.length).toBeGreaterThan(1);
+		expect(processorFields.grok.length).toBe(2);
+		expect(processorFields.grok.length).toBeGreaterThan(1);
 	});
 
 	test('it should be check data length of pipeline', () => {
@@ -72,7 +72,7 @@ describe('Utils testing of Pipeline Page', () => {
 		const updatedPipelineData = {
 			...pipelineMockData[findRecordIndex],
 			name: 'updated name',
-			alias: 'changed alias',
+			description: 'changed description',
 			filter: 'value == test',
 			tags: ['test'],
 		};
@@ -85,8 +85,9 @@ describe('Utils testing of Pipeline Page', () => {
 		expect(pipelineMockData).not.toEqual(editedData);
 		expect(pipelineMockData.length).toEqual(editedData.length);
 		expect(pipelineMockData[0].name).not.toEqual(editedData[0].name);
-		expect(pipelineMockData[0].alias).not.toEqual(editedData[0].alias);
-		expect(pipelineMockData[0].alias).not.toEqual(editedData[0].alias);
+		expect(pipelineMockData[0].description).not.toEqual(
+			editedData[0].description,
+		);
 		expect(pipelineMockData[0].tags).not.toEqual(editedData[0].tags);
 	});
 });

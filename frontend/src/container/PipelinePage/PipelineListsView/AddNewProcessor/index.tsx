@@ -30,13 +30,23 @@ function AddNewProcessor({
 	const isAdd = useMemo(() => isActionType === 'add-processor', [isActionType]);
 
 	useEffect(() => {
-		if (isEdit) {
-			form.setFieldsValue(selectedProcessorData);
+		if (isEdit && selectedProcessorData && expandedPipelineData?.config) {
+			const findRecordIndex = getRecordIndex(
+				expandedPipelineData?.config,
+				selectedProcessorData,
+				'id',
+			);
+
+			const updatedProcessorData = {
+				...expandedPipelineData?.config?.[findRecordIndex],
+			};
+			setProcessorType(updatedProcessorData.type);
+			form.setFieldsValue(updatedProcessorData);
 		}
 		if (isAdd) {
 			form.resetFields();
 		}
-	}, [form, isEdit, isAdd, selectedProcessorData]);
+	}, [form, isEdit, isAdd, selectedProcessorData, expandedPipelineData?.config]);
 
 	const handleProcessorType = (value: string | unknown): void => {
 		const typedValue = String(value) || DEFAULT_PROCESSOR_TYPE;

@@ -20,6 +20,7 @@ export interface PipelineData {
 	alias: string;
 	config?: Array<ProcessorData>;
 	createdAt: string;
+	description?: string;
 	createdBy: string;
 	enabled: boolean;
 	filter: string;

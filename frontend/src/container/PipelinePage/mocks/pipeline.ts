@@ -8,6 +8,7 @@ export const pipelineMockData: Array<PipelineData> = [
 		orderId: 1,
 		name: 'Apache common parser',
 		alias: 'apachecommonparser',
+		description: 'This is a desc',
 		enabled: false,
 		filter: 'attributes.source == nginx',
 		config: [
@@ -40,6 +41,7 @@ export const pipelineMockData: Array<PipelineData> = [
 		orderId: 2,
 		name: 'Moving pipeline new',
 		alias: 'movingpipelinenew',
+		description: 'This is a desc of move',
 		enabled: false,
 		filter: 'attributes.method == POST',
 		config: [

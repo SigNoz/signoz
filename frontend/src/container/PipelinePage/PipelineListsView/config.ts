@@ -24,7 +24,7 @@ export const pipelineFields = [
 		id: 4,
 		fieldName: 'Description',
 		placeholder: 'pipeline_description_placeholder',
-		name: 'alias', // This is temporary as description is not present in mock
+		name: 'description',
 	},
 ];
 

@@ -44,7 +44,8 @@ function AddNewPipeline({
 			createdAt: new Date().toISOString(),
 			createdBy: user?.name || '',
 			name: values.name,
-			alias: values.alias,
+			alias: values.name.replace(/\s/g, ''),
+			description: values.description,
 			filter: values.filter,
 			// tags: tagsListData || [],
 			config: [],
@@ -60,7 +61,7 @@ function AddNewPipeline({
 			const updatedPipelineData: PipelineData = {
 				...currPipelineData[findRecordIndex],
 				name: values.name,
-				alias: values.alias,
+				description: values.description,
 				filter: values.filter,
 				// tags: tagsListData || [],
 			};
