@@ -161,7 +161,24 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 	}
 
 	telemetry.GetInstance().SetReader(reader)
+	getUserFromRequest := func(r *http.Request) (*basemodel.UserPayload, error) {
+		patToken := r.Header.Get("SIGNOZ-API-KEY")
+		if len(patToken) > 0 {
+			zap.S().Debugf("Received a non-zero length PAT token")
+			ctx := context.Background()
+			user, err := modelDao.GetUserByPAT(ctx, patToken)
+			if err == nil && user != nil {
+				zap.S().Debugf("Found valid PAT user: %+v", user)
+				return user, nil
+			}
+			if err != nil {
+				zap.S().Debugf("Error while getting user for PAT: %+v", err)
+			}
+		}
+		return baseauth.GetUserFromRequest(r)
+	}
 
+	authMiddleware := baseapp.NewAuthMiddleware(getUserFromRequest)
 	apiOpts := api.APIHandlerOptions{
 		DataConnector:       reader,
 		AppDao:              modelDao,
@@ -169,6 +186,7 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 		FeatureFlags:        lm,
 		LicenseManager:      lm,
 		IngestionController: ingestionController,
+		Authenticator:       authMiddleware,
 	}
 
 	apiHandler, err := api.NewAPIHandler(apiOpts)
@@ -232,33 +250,13 @@ func (s *Server) createPublicServer(apiHandler *api.APIHandler) (*http.Server, e
 
 	r := mux.NewRouter()
 
-	getUserFromRequest := func(r *http.Request) (*basemodel.UserPayload, error) {
-		patToken := r.Header.Get("SIGNOZ-API-KEY")
-		if len(patToken) > 0 {
-			zap.S().Debugf("Received a non-zero length PAT token")
-			ctx := context.Background()
-			dao := apiHandler.AppDao()
-
-			user, err := dao.GetUserByPAT(ctx, patToken)
-			if err == nil && user != nil {
-				zap.S().Debugf("Found valid PAT user: %+v", user)
-				return user, nil
-			}
-			if err != nil {
-				zap.S().Debugf("Error while getting user for PAT: %+v", err)
-			}
-		}
-		return baseauth.GetUserFromRequest(r)
-	}
-
-	am := baseapp.NewAuthMiddleware(getUserFromRequest)
 	r.Use(setTimeoutMiddleware)
 	r.Use(s.analyticsMiddleware)
 	r.Use(loggingMiddleware)
 
-	apiHandler.RegisterRoutes(r, am)
-	apiHandler.RegisterMetricsRoutes(r, am)
-	apiHandler.RegisterLogsRoutes(r, am)
+	apiHandler.RegisterRoutes(r)
+	apiHandler.RegisterMetricsRoutes(r)
+	apiHandler.RegisterLogsRoutes(r)
 
 	c := cors.New(cors.Options{
 		AllowedOrigins: []string{"*"},

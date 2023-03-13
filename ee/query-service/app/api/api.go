@@ -1,6 +1,7 @@
 package api
 
 import (
+	"context"
 	"net/http"
 
 	"github.com/gorilla/mux"
@@ -13,6 +14,7 @@ import (
 	basemodel "go.signoz.io/signoz/pkg/query-service/model"
 	rules "go.signoz.io/signoz/pkg/query-service/rules"
 	"go.signoz.io/signoz/pkg/query-service/version"
+	"google.golang.org/grpc/metadata"
 )
 
 type APIHandlerOptions struct {
@@ -22,6 +24,7 @@ type APIHandlerOptions struct {
 	FeatureFlags        baseint.FeatureLookup
 	LicenseManager      *license.Manager
 	IngestionController *ingestionRules.IngestionController
+	Authenticator       *baseapp.AuthMiddleware
 }
 
 type APIHandler struct {
@@ -33,10 +36,11 @@ type APIHandler struct {
 func NewAPIHandler(opts APIHandlerOptions) (*APIHandler, error) {
 
 	baseHandler, err := baseapp.NewAPIHandler(baseapp.APIHandlerOpts{
-		Reader:       opts.DataConnector,
-		AppDao:       opts.AppDao,
-		RuleManager:  opts.RulesManager,
-		FeatureFlags: opts.FeatureFlags})
+		Reader:        opts.DataConnector,
+		AppDao:        opts.AppDao,
+		RuleManager:   opts.RulesManager,
+		FeatureFlags:  opts.FeatureFlags,
+		Authenticator: opts.Authenticator})
 
 	if err != nil {
 		return nil, err
@@ -47,6 +51,10 @@ func NewAPIHandler(opts APIHandlerOptions) (*APIHandler, error) {
 		APIHandler: *baseHandler,
 	}
 	return ah, nil
+}
+
+func (ah *APIHandler) Auth() *baseapp.AuthMiddleware {
+	return ah.opts.Authenticator
 }
 
 func (ah *APIHandler) FF() baseint.FeatureLookup {
@@ -71,89 +79,89 @@ func (ah *APIHandler) CheckFeature(f string) bool {
 }
 
 // RegisterRoutes registers routes for this handler on the given router
-func (ah *APIHandler) RegisterRoutes(router *mux.Router, am *baseapp.AuthMiddleware) {
+func (ah *APIHandler) RegisterRoutes(router *mux.Router) {
 	// note: add ee override methods first
 
 	// routes available only in ee version
 	router.HandleFunc("/api/v1/licenses",
-		am.AdminAccess(ah.listLicenses)).
+		ah.Auth().AdminAccess(ah.listLicenses)).
 		Methods(http.MethodGet)
 
 	router.HandleFunc("/api/v1/licenses",
-		am.AdminAccess(ah.applyLicense)).
+		ah.Auth().AdminAccess(ah.applyLicense)).
 		Methods(http.MethodPost)
 
 	router.HandleFunc("/api/v1/featureFlags",
-		am.OpenAccess(ah.getFeatureFlags)).
+		ah.Auth().OpenAccess(ah.getFeatureFlags)).
 		Methods(http.MethodGet)
 
 	router.HandleFunc("/api/v1/loginPrecheck",
-		am.OpenAccess(ah.precheckLogin)).
+		ah.Auth().OpenAccess(ah.precheckLogin)).
 		Methods(http.MethodGet)
 
 	// paid plans specific routes
 	router.HandleFunc("/api/v1/complete/saml",
-		am.OpenAccess(ah.receiveSAML)).
+		ah.Auth().OpenAccess(ah.receiveSAML)).
 		Methods(http.MethodPost)
 
 	router.HandleFunc("/api/v1/complete/google",
-		am.OpenAccess(ah.receiveGoogleAuth)).
+		ah.Auth().OpenAccess(ah.receiveGoogleAuth)).
 		Methods(http.MethodGet)
 
 	router.HandleFunc("/api/v1/orgs/{orgId}/domains",
-		am.AdminAccess(ah.listDomainsByOrg)).
+		ah.Auth().AdminAccess(ah.listDomainsByOrg)).
 		Methods(http.MethodGet)
 
 	router.HandleFunc("/api/v1/domains",
-		am.AdminAccess(ah.postDomain)).
+		ah.Auth().AdminAccess(ah.postDomain)).
 		Methods(http.MethodPost)
 
 	router.HandleFunc("/api/v1/domains/{id}",
-		am.AdminAccess(ah.putDomain)).
+		ah.Auth().AdminAccess(ah.putDomain)).
 		Methods(http.MethodPut)
 
 	router.HandleFunc("/api/v1/domains/{id}",
-		am.AdminAccess(ah.deleteDomain)).
+		ah.Auth().AdminAccess(ah.deleteDomain)).
 		Methods(http.MethodDelete)
 
 	router.HandleFunc("/api/v1/dropRules/{version}",
-		am.AdminAccess(ah.listDropRules)).
+		ah.Auth().AdminAccess(ah.listDropRules)).
 		Methods(http.MethodGet)
 
 	router.HandleFunc("/api/v1/dropRules/{version}/deploy",
-		am.AdminAccess(ah.deployDropRules)).
+		ah.Auth().AdminAccess(ah.deployDropRules)).
 		Methods(http.MethodPost)
 
 	router.HandleFunc("/api/v1/dropRules",
-		am.AdminAccess(ah.createDropRule)).
+		ah.Auth().AdminAccess(ah.createDropRule)).
 		Methods(http.MethodPost)
 
 	router.HandleFunc("/api/v1/samplingRules/{version}/deploy",
-		am.AdminAccess(ah.deploySamplingRules)).
+		ah.Auth().AdminAccess(ah.deploySamplingRules)).
 		Methods(http.MethodPost)
 
 	router.HandleFunc("/api/v1/samplingRules/{version}",
-		am.AdminAccess(ah.listSamplingRules)).
+		ah.Auth().AdminAccess(ah.listSamplingRules)).
 		Methods(http.MethodGet)
 
 	router.HandleFunc("/api/v1/samplingRules",
-		am.AdminAccess(ah.createSamplingRule)).
+		ah.Auth().AdminAccess(ah.createSamplingRule)).
 		Methods(http.MethodPost)
 
 	// base overrides
-	router.HandleFunc("/api/v1/version", am.OpenAccess(ah.getVersion)).Methods(http.MethodGet)
-	router.HandleFunc("/api/v1/invite/{token}", am.OpenAccess(ah.getInvite)).Methods(http.MethodGet)
-	router.HandleFunc("/api/v1/register", am.OpenAccess(ah.registerUser)).Methods(http.MethodPost)
-	router.HandleFunc("/api/v1/login", am.OpenAccess(ah.loginUser)).Methods(http.MethodPost)
-	router.HandleFunc("/api/v1/traces/{traceId}", am.ViewAccess(ah.searchTraces)).Methods(http.MethodGet)
-	router.HandleFunc("/api/v2/metrics/query_range", am.ViewAccess(ah.queryRangeMetricsV2)).Methods(http.MethodPost)
+	router.HandleFunc("/api/v1/version", ah.Auth().OpenAccess(ah.getVersion)).Methods(http.MethodGet)
+	router.HandleFunc("/api/v1/invite/{token}", ah.Auth().OpenAccess(ah.getInvite)).Methods(http.MethodGet)
+	router.HandleFunc("/api/v1/register", ah.Auth().OpenAccess(ah.registerUser)).Methods(http.MethodPost)
+	router.HandleFunc("/api/v1/login", ah.Auth().OpenAccess(ah.loginUser)).Methods(http.MethodPost)
+	router.HandleFunc("/api/v1/traces/{traceId}", ah.Auth().ViewAccess(ah.searchTraces)).Methods(http.MethodGet)
+	router.HandleFunc("/api/v2/metrics/query_range", ah.Auth().ViewAccess(ah.queryRangeMetricsV2)).Methods(http.MethodPost)
 
 	// PAT APIs
-	router.HandleFunc("/api/v1/pat", am.OpenAccess(ah.createPAT)).Methods(http.MethodPost)
-	router.HandleFunc("/api/v1/pat", am.OpenAccess(ah.getPATs)).Methods(http.MethodGet)
-	router.HandleFunc("/api/v1/pat/{id}", am.OpenAccess(ah.deletePAT)).Methods(http.MethodDelete)
+	router.HandleFunc("/api/v1/pat", ah.Auth().OpenAccess(ah.createPAT)).Methods(http.MethodPost)
+	router.HandleFunc("/api/v1/pat", ah.Auth().OpenAccess(ah.getPATs)).Methods(http.MethodGet)
+	router.HandleFunc("/api/v1/pat/{id}", ah.Auth().OpenAccess(ah.deletePAT)).Methods(http.MethodDelete)
 
-	ah.APIHandler.RegisterRoutes(router, am)
+	ah.APIHandler.RegisterRoutes(router)
 
 }
 
@@ -166,4 +174,22 @@ func (ah *APIHandler) getVersion(w http.ResponseWriter, r *http.Request) {
 	}
 
 	ah.WriteJSON(w, r, versionResponse)
+}
+
+// AttachUserToContext extracts user from request and adds it to
+// context
+func (api *APIHandler) AttachUserToContext(ctx context.Context, r *http.Request) (context.Context, error) {
+	userPayload, err := api.Auth().GetUserFromRequest(r)
+	if err != nil {
+		return ctx, err
+	}
+	md, ok := metadata.FromIncomingContext(ctx)
+	if !ok {
+		md = metadata.New(nil)
+	}
+
+	md.Append("userId", userPayload.User.Id)
+	ctx = metadata.NewIncomingContext(ctx, md)
+
+	return ctx, nil
 }

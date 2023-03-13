@@ -10,7 +10,6 @@ import (
 	"go.signoz.io/signoz/ee/query-service/ingestionRules"
 	"go.signoz.io/signoz/ee/query-service/model"
 	"go.signoz.io/signoz/pkg/query-service/agentConf"
-	baseauth "go.signoz.io/signoz/pkg/query-service/auth"
 	"go.uber.org/zap"
 )
 
@@ -99,7 +98,7 @@ func (ah *APIHandler) listIngestionRulesByVersion(ctx context.Context, version i
 
 func (ah *APIHandler) createIngestionRule(w http.ResponseWriter, r *http.Request, elementType agentConf.ElementTypeDef) {
 
-	ctx, err := baseauth.AttachUserToContext(context.Background(), r)
+	ctx, err := ah.AttachUserToContext(context.Background(), r)
 	if err != nil {
 		RespondError(w, model.BadRequestStr("failed to find or attach user to the context"), nil)
 		return
