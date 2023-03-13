@@ -4,12 +4,12 @@
 import getLocalStorageApi from 'api/browser/localstorage/get';
 import loginApi from 'api/user/login';
 import afterLogin from 'AppRoutes/utils';
-import axios, { AxiosRequestConfig, AxiosResponse } from 'axios';
+import axios, { AxiosInstance, AxiosRequestConfig, AxiosResponse } from 'axios';
 import { ENVIRONMENT } from 'constants/env';
 import { LOCALSTORAGE } from 'constants/localStorage';
 import store from 'store';
 
-import apiV1, { apiAlertManager, apiV2 } from './apiV1';
+import apiV1, { apiAlertManager, apiV2, apiV3 } from './apiV1';
 import { Logout } from './utils';
 
 const interceptorsResponse = (
@@ -89,31 +89,22 @@ const interceptorRejected = async (
 	}
 };
 
-const instance = axios.create({
-	baseURL: `${ENVIRONMENT.baseURL}${apiV1}`,
-});
+const createInstance = (baseURL: string): AxiosInstance => {
+	const instance = axios.create({
+		baseURL,
+	});
+	instance.interceptors.response.use(interceptorsResponse, interceptorRejected);
+	instance.interceptors.request.use(interceptorsRequestResponse);
+	return instance;
+};
 
-instance.interceptors.response.use(interceptorsResponse, interceptorRejected);
-instance.interceptors.request.use(interceptorsRequestResponse);
-
-export const AxiosAlertManagerInstance = axios.create({
-	baseURL: `${ENVIRONMENT.baseURL}${apiAlertManager}`,
-});
-
-export const ApiV2Instance = axios.create({
-	baseURL: `${ENVIRONMENT.baseURL}${apiV2}`,
-});
-ApiV2Instance.interceptors.response.use(
-	interceptorsResponse,
-	interceptorRejected,
+const instance = createInstance(`${ENVIRONMENT.baseURL}${apiV1}`);
+const AxiosAlertManagerInstance = createInstance(
+	`${ENVIRONMENT.baseURL}${apiAlertManager}`,
 );
-ApiV2Instance.interceptors.request.use(interceptorsRequestResponse);
+const ApiV2Instance = createInstance(`${ENVIRONMENT.baseURL}${apiV2}`);
+const ApiV3Instance = createInstance(`${ENVIRONMENT.baseURL}${apiV3}`);
 
-AxiosAlertManagerInstance.interceptors.response.use(
-	interceptorsResponse,
-	interceptorRejected,
-);
-AxiosAlertManagerInstance.interceptors.request.use(interceptorsRequestResponse);
+export { apiV1, ApiV2Instance, ApiV3Instance, AxiosAlertManagerInstance };
 
-export { apiV1 };
 export default instance;

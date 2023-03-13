@@ -1,6 +1,6 @@
 import { useCallback, useState } from 'react';
 
-type ReturnT = {
+type UseTagReturnT = {
 	handleAddTag: (value: string) => void;
 	handleClearTag: (value: string) => void;
 	tags: string[];
@@ -11,7 +11,7 @@ export const useTag = (
 	isValidTag: boolean,
 	isFreeText: boolean,
 	handleSearch: (value: string) => void,
-): ReturnT => {
+): UseTagReturnT => {
 	const [tags, setTags] = useState<string[]>([]);
 
 	const handleAddTag = useCallback(

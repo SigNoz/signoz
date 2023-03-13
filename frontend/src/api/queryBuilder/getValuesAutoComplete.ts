@@ -1,4 +1,4 @@
-import axios from 'api';
+import { ApiV3Instance } from 'api';
 import { ErrorResponseHandler } from 'api/ErrorResponseHandler';
 import { AxiosError } from 'axios';
 import { ErrorResponse, SuccessResponse } from 'types/api';
@@ -12,11 +12,9 @@ const getValuesAutoComplete = async (
 	aggregateAttribute: undefined | string = 'signoz_calls_total',
 ): Promise<SuccessResponse<PayloadProps> | ErrorResponse> => {
 	try {
-		const data = await axios({
-			method: 'get',
-			url: `api/v3/autocomplete/attribute_values?aggregateOperator=${aggregateOperator}&dataSource=${dataSource}&aggregateAttribute=${aggregateAttribute}&attributeKey=${attributeKey}&searchText=${searchText}`,
-			baseURL: process.env.FRONTEND_API_ENDPOINT,
-		});
+		const data = await ApiV3Instance.get(
+			`/autocomplete/attribute_values?aggregateOperator=${aggregateOperator}&dataSource=${dataSource}&aggregateAttribute=${aggregateAttribute}&attributeKey=${attributeKey}&searchText=${searchText}`,
+		);
 
 		return {
 			statusCode: 200,
