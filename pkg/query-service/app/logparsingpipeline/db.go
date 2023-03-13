@@ -65,7 +65,7 @@ func (r *Repo) insertPipeline(ctx context.Context, postable *PostablePipeline) (
 		Enabled:     postable.Enabled,
 		Name:        postable.Name,
 		Alias:       postable.Alias,
-		Description: postable.Description,
+		Description: &postable.Description,
 		Filter:      postable.Filter,
 		Config:      postable.Config,
 		RawConfig:   string(rawConfig),
