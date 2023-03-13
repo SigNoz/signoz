@@ -2,7 +2,6 @@ package app
 
 import (
 	"fmt"
-	"reflect"
 	"strings"
 
 	"github.com/SigNoz/govaluate"
@@ -64,44 +63,6 @@ func init() {
 	}
 }
 
-// ClickHouseFormattedValue formats the value to be used in clickhouse query
-func ClickHouseFormattedValue(v interface{}) string {
-	switch x := v.(type) {
-	case int:
-		return fmt.Sprintf("%d", x)
-	case float32, float64:
-		return fmt.Sprintf("%f", x)
-	case string:
-		return fmt.Sprintf("'%s'", x)
-	case bool:
-		return fmt.Sprintf("%v", x)
-	case []interface{}:
-		if len(x) == 0 {
-			return ""
-		}
-		switch x[0].(type) {
-		case string:
-			str := "["
-			for idx, sVal := range x {
-				str += fmt.Sprintf("'%s'", sVal)
-				if idx != len(x)-1 {
-					str += ","
-				}
-			}
-			str += "]"
-			return str
-		case int, float32, float64, bool:
-			return strings.Join(strings.Fields(fmt.Sprint(x)), ",")
-		default:
-			zap.L().Error("invalid type for formatted value", zap.Any("type", reflect.TypeOf(x[0])))
-			return ""
-		}
-	default:
-		zap.L().Error("invalid type for formatted value", zap.Any("type", reflect.TypeOf(x)))
-		return ""
-	}
-}
-
 // unique returns the unique values in the slice
 func unique(slice []string) []string {
 	keys := make(map[string]struct{})
@@ -118,13 +79,8 @@ func unique(slice []string) []string {
 // expressionToQuery constructs the query for the expression
 func expressionToQuery(qp *v3.QueryRangeParamsV3, varToQuery map[string]string, expression *govaluate.EvaluableExpression) (string, error) {
 	var formulaQuery string
-	vars := unique(expression.Vars())
-	for idx, var_ := range vars[1:] {
-		x, y := vars[idx], var_
-		if !reflect.DeepEqual(qp.CompositeQuery.BuilderQueries[x].GroupBy, qp.CompositeQuery.BuilderQueries[y].GroupBy) {
-			return "", fmt.Errorf("group by must be same")
-		}
-	}
+	variables := unique(expression.Vars())
+
 	var modified []govaluate.ExpressionToken
 	tokens := expression.Tokens()
 	for idx := range tokens {
@@ -141,28 +97,28 @@ func expressionToQuery(qp *v3.QueryRangeParamsV3, varToQuery map[string]string, 
 	var formulaSubQuery string
 	var joinUsing string
 	var prevVar string
-	for idx, var_ := range vars {
-		query := varToQuery[var_]
-		groupTags := qp.CompositeQuery.BuilderQueries[var_].GroupBy
+	for idx, variable := range variables {
+		query := varToQuery[variable]
+		groupTags := qp.CompositeQuery.BuilderQueries[variable].GroupBy
 		groupTags = append(groupTags, "ts")
 		if joinUsing == "" {
 			for _, tag := range groupTags {
-				joinUsing += fmt.Sprintf("%s.%s as %s, ", var_, tag, tag)
+				joinUsing += fmt.Sprintf("%s.%s as %s, ", variable, tag, tag)
 			}
 			joinUsing = strings.TrimSuffix(joinUsing, ", ")
 		}
-		formulaSubQuery += fmt.Sprintf("(%s) as %s ", query, var_)
+		formulaSubQuery += fmt.Sprintf("(%s) as %s ", query, variable)
 		if idx > 0 {
 			formulaSubQuery += " ON "
 			for _, tag := range groupTags {
-				formulaSubQuery += fmt.Sprintf("%s.%s = %s.%s AND ", prevVar, tag, var_, tag)
+				formulaSubQuery += fmt.Sprintf("%s.%s = %s.%s AND ", prevVar, tag, variable, tag)
 			}
 			formulaSubQuery = strings.TrimSuffix(formulaSubQuery, " AND ")
 		}
-		if idx < len(vars)-1 {
+		if idx < len(variables)-1 {
 			formulaSubQuery += " GLOBAL INNER JOIN"
 		}
-		prevVar = var_
+		prevVar = variable
 	}
 	formulaQuery = fmt.Sprintf("SELECT %s, %s as value FROM ", joinUsing, formula.ExpressionString()) + formulaSubQuery
 	return formulaQuery, nil
@@ -175,6 +131,7 @@ func (qb *queryBuilder) prepareQueries(params *v3.QueryRangeParamsV3) (map[strin
 
 	if compositeQuery != nil {
 
+		// Build queries for each builder query
 		for queryName, query := range compositeQuery.BuilderQueries {
 			if query.Expression == queryName {
 				switch query.DataSource {
@@ -197,11 +154,12 @@ func (qb *queryBuilder) prepareQueries(params *v3.QueryRangeParamsV3) (map[strin
 					}
 					queries[queryName] = queryString
 				default:
-					return nil, query.DataSource.Validate()
+					zap.S().Errorf("Unknown data source %s", query.DataSource)
 				}
 			}
 		}
 
+		// Build queries for each expression
 		for _, query := range compositeQuery.BuilderQueries {
 			if query.Expression != query.QueryName {
 				expression, _ := govaluate.NewEvaluableExpressionWithFunctions(query.Expression, evalFuncs)

@@ -437,9 +437,9 @@ type QueryRangeResponse struct {
 }
 
 type Result struct {
-	QueryName string  `json:"queryName"`
-	Series    *Series `json:"series"`
-	List      []*Row  `json:"list"`
+	QueryName string    `json:"queryName"`
+	Series    []*Series `json:"series"`
+	List      []*Row    `json:"list"`
 }
 
 type Series struct {

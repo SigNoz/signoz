@@ -2,12 +2,11 @@ package v3
 
 import (
 	"fmt"
-	"reflect"
 	"strings"
 
 	"go.signoz.io/signoz/pkg/query-service/constants"
 	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
-	"go.uber.org/zap"
+	"go.signoz.io/signoz/pkg/query-service/utils"
 )
 
 var aggregateOperatorToPercentile = map[v3.AggregateOperator]float64{
@@ -38,49 +37,11 @@ var aggregateOperatorToSQLFunc = map[v3.AggregateOperator]string{
 	v3.AggregateOperatorRateMin: "min",
 }
 
-// formattedValue formats the value based on the type for the use in query
-func formattedValue(v interface{}) string {
-	switch x := v.(type) {
-	case int:
-		return fmt.Sprintf("%d", x)
-	case float32, float64:
-		return fmt.Sprintf("%f", x)
-	case string:
-		return fmt.Sprintf("'%s'", x)
-	case bool:
-		return fmt.Sprintf("%v", x)
-	case []interface{}:
-		if len(x) == 0 {
-			return ""
-		}
-		switch x[0].(type) {
-		case string:
-			str := "["
-			for idx, sVal := range x {
-				str += fmt.Sprintf("'%s'", sVal)
-				if idx != len(x)-1 {
-					str += ","
-				}
-			}
-			str += "]"
-			return str
-		case int, float32, float64, bool:
-			return strings.Join(strings.Fields(fmt.Sprint(x)), ",")
-		default:
-			zap.L().Error("invalid type for formatted value", zap.Any("type", reflect.TypeOf(x[0])))
-			return ""
-		}
-	default:
-		zap.L().Error("invalid type for formatted value", zap.Any("type", reflect.TypeOf(x)))
-		return ""
-	}
-}
-
 // buildMetricsTimeSeriesFilterQuery builds the sub-query to be used for filtering
 // timeseries based on search criteria
 func buildMetricsTimeSeriesFilterQuery(fs *v3.FilterSet, groupTags []string, metricName string, aggregateOperator v3.AggregateOperator) (string, error) {
 	var conditions []string
-	conditions = append(conditions, fmt.Sprintf("metric_name = %s", formattedValue(metricName)))
+	conditions = append(conditions, fmt.Sprintf("metric_name = %s", utils.ClickHouseFormattedValue(metricName)))
 
 	if fs != nil && len(fs.Items) != 0 {
 		for _, item := range fs.Items {
@@ -96,7 +57,7 @@ func buildMetricsTimeSeriesFilterQuery(fs *v3.FilterSet, groupTags []string, met
 					toFormat = x[0]
 				}
 			}
-			fmtVal := formattedValue(toFormat)
+			fmtVal := utils.ClickHouseFormattedValue(toFormat)
 			switch op {
 			case "eq":
 				conditions = append(conditions, fmt.Sprintf("JSONExtractString(labels, '%s') = %s", item.Key, fmtVal))
@@ -158,7 +119,7 @@ func buildMetricQuery(start, end, step int64, mq *v3.BuilderQuery, tableName str
 		return "", err
 	}
 
-	samplesTableTimeFilter := fmt.Sprintf("metric_name = %s AND timestamp_ms >= %d AND timestamp_ms <= %d", formattedValue(mq.AggregateAttribute), start, end)
+	samplesTableTimeFilter := fmt.Sprintf("metric_name = %s AND timestamp_ms >= %d AND timestamp_ms <= %d", utils.ClickHouseFormattedValue(mq.AggregateAttribute), start, end)
 
 	// Select the aggregate value for interval
 	queryTmpl :=
@@ -328,7 +289,7 @@ func orderBy(items []v3.OrderBy, tags []string) string {
 func having(items []v3.Having) string {
 	var having []string
 	for _, item := range items {
-		having = append(having, fmt.Sprintf("%s %s %v", item.ColumnName, item.Operator, formattedValue(item.Value)))
+		having = append(having, fmt.Sprintf("%s %s %v", item.ColumnName, item.Operator, utils.ClickHouseFormattedValue(item.Value)))
 	}
 	return strings.Join(having, " AND ")
 }

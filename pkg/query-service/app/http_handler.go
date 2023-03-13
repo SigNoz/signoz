@@ -37,6 +37,7 @@ import (
 	"go.signoz.io/signoz/pkg/query-service/rules"
 	"go.signoz.io/signoz/pkg/query-service/telemetry"
 	"go.signoz.io/signoz/pkg/query-service/version"
+	"go.uber.org/multierr"
 	"go.uber.org/zap"
 )
 
@@ -64,6 +65,7 @@ type APIHandler struct {
 	ruleManager  *rules.Manager
 	featureFlags interfaces.FeatureLookup
 	ready        func(http.HandlerFunc) http.HandlerFunc
+	queryBuilder *queryBuilder
 
 	// SetupCompleted indicates if SigNoz is ready for general use.
 	// at the moment, we mark the app ready when the first user
@@ -101,6 +103,17 @@ func NewAPIHandler(opts APIHandlerOpts) (*APIHandler, error) {
 		ruleManager:  opts.RuleManager,
 		featureFlags: opts.FeatureFlags,
 	}
+
+	builderOpts := queryBuilderOptions{
+		BuildMetricQuery: metricsv3.PrepareMetricQuery,
+		BuildTraceQuery: func(start, end, step int64, queryType v3.QueryType, panelType v3.PanelType, bq *v3.BuilderQuery) (string, error) {
+			return "", errors.New("not implemented")
+		},
+		BuildLogQuery: func(start, end, step int64, queryType v3.QueryType, panelType v3.PanelType, bq *v3.BuilderQuery) (string, error) {
+			return "", errors.New("not implemented")
+		},
+	}
+	aH.queryBuilder = NewQueryBuilder(builderOpts)
 
 	aH.ready = aH.testReady
 
@@ -2442,7 +2455,7 @@ func (aH *APIHandler) execClickHouseQueries(ctx context.Context, queries map[str
 		wg.Add(1)
 		go func(name, query string) {
 			defer wg.Done()
-			seriesList, err := aH.reader.GetMetricResultV3(ctx, query)
+			seriesList, err := aH.reader.GetTimeSeriesResultV3(ctx, query)
 
 			if err != nil {
 				ch <- channelResult{Err: fmt.Errorf("error in query-%s: %v", name, err), Name: name, Query: query}
@@ -2457,23 +2470,21 @@ func (aH *APIHandler) execClickHouseQueries(ctx context.Context, queries map[str
 
 	var errs []error
 	errQuriesByName := make(map[string]string)
-	// read values from the channel
 	res := make([]*v3.Result, 0)
+	// read values from the channel
 	for r := range ch {
 		if r.Err != nil {
 			errs = append(errs, r.Err)
 			errQuriesByName[r.Name] = r.Query
 			continue
 		}
-		for _, series := range r.Series {
-			res = append(res, &v3.Result{
-				QueryName: r.Name,
-				Series:    series,
-			})
-		}
+		res = append(res, &v3.Result{
+			QueryName: r.Name,
+			Series:    r.Series,
+		})
 	}
 	if len(errs) != 0 {
-		return nil, fmt.Errorf("encountered multiple errors: %s", metrics.FormatErrs(errs, "\n")), errQuriesByName
+		return nil, fmt.Errorf("encountered multiple errors: %s", multierr.Combine(errs...)), errQuriesByName
 	}
 	return res, nil, nil
 }
@@ -2486,7 +2497,6 @@ func (aH *APIHandler) execPromQueries(ctx context.Context, metricsQueryRangePara
 		Query  string
 	}
 
-	var seriesList []*v3.Series
 	ch := make(chan channelResult, len(metricsQueryRangeParams.CompositeQuery.PromQueries))
 	var wg sync.WaitGroup
 
@@ -2540,87 +2550,49 @@ func (aH *APIHandler) execPromQueries(ctx context.Context, metricsQueryRangePara
 
 	var errs []error
 	errQuriesByName := make(map[string]string)
-	// read values from the channel
 	res := make([]*v3.Result, 0)
+	// read values from the channel
 	for r := range ch {
 		if r.Err != nil {
 			errs = append(errs, r.Err)
 			errQuriesByName[r.Name] = r.Query
 			continue
 		}
-		for _, series := range r.Series {
-			res = append(res, &v3.Result{
-				QueryName: r.Name,
-				Series:    series,
-			})
-		}
-		seriesList = append(seriesList, r.Series...)
+		res = append(res, &v3.Result{
+			QueryName: r.Name,
+			Series:    r.Series,
+		})
 	}
 	if len(errs) != 0 {
-		return nil, fmt.Errorf("encountered multiple errors: %s", metrics.FormatErrs(errs, "\n")), errQuriesByName
+		return nil, fmt.Errorf("encountered multiple errors: %s", multierr.Combine(errs...)), errQuriesByName
 	}
 	return res, nil, nil
 }
 
 func (aH *APIHandler) queryRangeV3(queryRangeParams *v3.QueryRangeParamsV3, w http.ResponseWriter, r *http.Request) {
-	// prometheus instant query needs same timestamp
-	if queryRangeParams.CompositeQuery.PanelType == v3.PanelTypeValue &&
-		queryRangeParams.CompositeQuery.QueryType == v3.QueryTypePromQL {
-		queryRangeParams.Start = queryRangeParams.End
-	}
 
-	// round up the end to neaerest multiple
-	if queryRangeParams.CompositeQuery.QueryType == v3.QueryTypeBuilder {
-		end := (queryRangeParams.End) / 1000
-		step := queryRangeParams.Step
-		queryRangeParams.End = (end / step * step) * 1000
-	}
-
-	var seriesList []*v3.Series
-	var res []*v3.Result
+	var result []*v3.Result
 	var err error
 	var errQuriesByName map[string]string
 	switch queryRangeParams.CompositeQuery.QueryType {
 	case v3.QueryTypeBuilder:
-		builderOpts := queryBuilderOptions{
-			BuildMetricQuery: metricsv3.PrepareMetricQuery,
-		}
-		builder := NewQueryBuilder(builderOpts)
-		queries, err := builder.prepareQueries(queryRangeParams)
+		queries, err := aH.queryBuilder.prepareQueries(queryRangeParams)
 		if err != nil {
 			RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
 			return
 		}
-		res, err, errQuriesByName = aH.execClickHouseQueries(r.Context(), queries)
-
+		result, err, errQuriesByName = aH.execClickHouseQueries(r.Context(), queries)
 	case v3.QueryTypeClickHouseSQL:
 		queries := make(map[string]string)
-		for name, chQuery := range queryRangeParams.CompositeQuery.ClickHouseQueries {
-			if chQuery.Disabled {
+		for name, query := range queryRangeParams.CompositeQuery.ClickHouseQueries {
+			if query.Disabled {
 				continue
 			}
-			tmpl := template.New("clickhouse-query")
-			tmpl, err := tmpl.Parse(chQuery.Query)
-			if err != nil {
-				RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
-				return
-			}
-			var query bytes.Buffer
-
-			// replace go template variables
-			querytemplate.AssignReservedVarsV3(queryRangeParams)
-
-			err = tmpl.Execute(&query, queryRangeParams.Variables)
-			if err != nil {
-				RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
-				return
-			}
-
-			queries[name] = query.String()
+			queries[name] = query.Query
 		}
-		res, err, errQuriesByName = aH.execClickHouseQueries(r.Context(), queries)
+		result, err, errQuriesByName = aH.execClickHouseQueries(r.Context(), queries)
 	case v3.QueryTypePromQL:
-		res, err, errQuriesByName = aH.execPromQueries(r.Context(), queryRangeParams)
+		result, err, errQuriesByName = aH.execPromQueries(r.Context(), queryRangeParams)
 	default:
 		err = fmt.Errorf("invalid query type")
 		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, errQuriesByName)
@@ -2632,16 +2604,9 @@ func (aH *APIHandler) queryRangeV3(queryRangeParams *v3.QueryRangeParamsV3, w ht
 		RespondError(w, apiErrObj, errQuriesByName)
 		return
 	}
-	if queryRangeParams.CompositeQuery.PanelType == v3.PanelTypeValue &&
-		len(seriesList) > 1 &&
-		(queryRangeParams.CompositeQuery.QueryType == v3.QueryTypeBuilder ||
-			queryRangeParams.CompositeQuery.QueryType == v3.QueryTypeClickHouseSQL) {
-		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: fmt.Errorf("invalid: query resulted in more than one series for value type")}, nil)
-		return
-	}
 
 	resp := v3.QueryRangeResponse{
-		Result: res,
+		Result: result,
 	}
 	aH.Respond(w, resp)
 }
