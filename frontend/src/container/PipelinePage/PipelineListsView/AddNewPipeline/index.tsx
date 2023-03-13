@@ -1,5 +1,5 @@
 import { Button, Divider, Form, Modal } from 'antd';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
@@ -22,7 +22,6 @@ function AddNewPipeline({
 	const [form] = Form.useForm();
 	const { t } = useTranslation('pipeline');
 	const { user } = useSelector<AppState, AppReducer>((state) => state.app);
-	const [count, setCount] = useState(3);
 	// const [tagsListData, setTagsListData] = useState<Array<string>>();
 
 	const isEdit = useMemo(() => isActionType === 'edit-pipeline', [isActionType]);
@@ -34,32 +33,22 @@ function AddNewPipeline({
 			form.setFieldsValue(selectedPipelineData);
 		}
 		if (isAdd) {
-			form.resetFields();
 			// setTagsListData([]);
+			form.resetFields();
 		}
 	}, [form, isEdit, isAdd, selectedPipelineData]);
 
 	const onFinish = (values: PipelineData): void => {
 		const newPipeLineData: PipelineData = {
-			orderId: count,
+			orderId: currPipelineData.length + 1,
 			createdAt: new Date().toISOString(),
 			createdBy: user?.name || '',
 			name: values.name,
 			alias: values.alias,
 			filter: values.filter,
 			// tags: tagsListData || [],
-			config: [
-				{
-					orderId: 1,
-					enabled: true,
-					type: 'copy',
-					name: 'mymove',
-					id: 'mv1',
-					from: 'attributes.method',
-					to: 'attributes.method11',
-				},
-			],
-			enabled: false,
+			config: [],
+			enabled: true,
 		};
 
 		if (isEdit && selectedPipelineData) {
@@ -87,7 +76,6 @@ function AddNewPipeline({
 		}
 		if (isAdd) {
 			// setTagsListData([]);
-			setCount((prevState) => prevState + 1);
 			setCurrPipelineData((prevState) => [...prevState, newPipeLineData]);
 		}
 		setActionType(undefined);

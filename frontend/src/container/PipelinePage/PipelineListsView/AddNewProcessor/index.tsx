@@ -50,6 +50,7 @@ function AddNewProcessor({
 			type: processorType,
 			name: values.name,
 			output: values.output,
+			enabled: true,
 		};
 
 		if (isEdit && selectedProcessorData && expandedPipelineData?.config) {

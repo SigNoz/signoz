@@ -222,7 +222,7 @@ function PipelineListsView({
 
 	const getDataOnExpand = useCallback(
 		(expanded: boolean, record: PipelineData): void => {
-			const keys: Array<string> = [];
+			const keys = [];
 			if (expanded && record.id) {
 				keys.push(record?.id);
 			}
