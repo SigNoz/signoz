@@ -20,6 +20,8 @@ import (
 	"github.com/soheilhy/cmux"
 	"go.signoz.io/signoz/pkg/query-service/app/clickhouseReader"
 	"go.signoz.io/signoz/pkg/query-service/app/dashboards"
+	"go.signoz.io/signoz/pkg/query-service/app/explorer"
+	"go.signoz.io/signoz/pkg/query-service/auth"
 	"go.signoz.io/signoz/pkg/query-service/constants"
 	"go.signoz.io/signoz/pkg/query-service/dao"
 	"go.signoz.io/signoz/pkg/query-service/featureManager"
@@ -76,6 +78,7 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 	}
 
 	localDB, err := dashboards.InitDB(constants.RELATIONAL_DATASOURCE_PATH)
+	explorer.InitWithDSN(constants.RELATIONAL_DATASOURCE_PATH)
 
 	if err != nil {
 		return nil, err
@@ -176,9 +179,12 @@ func (s *Server) createPublicServer(api *APIHandler) (*http.Server, error) {
 	r.Use(s.analyticsMiddleware)
 	r.Use(loggingMiddleware)
 
-	api.RegisterRoutes(r)
-	api.RegisterMetricsRoutes(r)
-	api.RegisterLogsRoutes(r)
+	am := NewAuthMiddleware(auth.GetUserFromRequest)
+
+	api.RegisterRoutes(r, am)
+	api.RegisterMetricsRoutes(r, am)
+	api.RegisterLogsRoutes(r, am)
+	api.RegisterQueryRangeV3Routes(r, am)
 
 	c := cors.New(cors.Options{
 		AllowedOrigins: []string{"*"},

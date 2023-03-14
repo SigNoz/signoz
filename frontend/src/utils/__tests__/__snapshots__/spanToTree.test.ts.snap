@@ -5,10 +5,31 @@ Object {
   "missingSpanTree": Array [],
   "spanTree": Array [
     Object {
+      "childReferences": Array [
+        Object {
+          "RefType": "CHILD_OF",
+          "SpanId": "",
+          "TraceId": "0000000000000000span_1",
+        },
+      ],
       "children": Array [
         Object {
+          "childReferences": Array [
+            Object {
+              "RefType": "CHILD_OF",
+              "SpanId": "span_1",
+              "TraceId": "0000000000000000span_1",
+            },
+          ],
           "children": Array [
             Object {
+              "childReferences": Array [
+                Object {
+                  "RefType": "CHILD_OF",
+                  "SpanId": "span_2",
+                  "TraceId": "0000000000000000span_1",
+                },
+              ],
               "children": Array [],
               "event": Array [
                 Object {
@@ -25,13 +46,7 @@ Object {
               "id": "span_3",
               "isProcessed": true,
               "name": "HTTP GET SPAN 3",
-              "references": Array [
-                Object {
-                  "RefType": "CHILD_OF",
-                  "SpanId": "span_2",
-                  "TraceId": "0000000000000000span_1",
-                },
-              ],
+              "nonChildReferences": Array [],
               "serviceColour": "",
               "serviceName": "frontend",
               "startTime": 1657275433246,
@@ -60,13 +75,7 @@ Object {
           "id": "span_2",
           "isProcessed": true,
           "name": "HTTP GET SPAN 2",
-          "references": Array [
-            Object {
-              "RefType": "CHILD_OF",
-              "SpanId": "span_1",
-              "TraceId": "0000000000000000span_1",
-            },
-          ],
+          "nonChildReferences": Array [],
           "serviceColour": "",
           "serviceName": "frontend",
           "startTime": 1657275433246,
@@ -94,13 +103,7 @@ Object {
       "hasError": false,
       "id": "span_1",
       "name": "HTTP GET SPAN 1",
-      "references": Array [
-        Object {
-          "RefType": "CHILD_OF",
-          "SpanId": "",
-          "TraceId": "0000000000000000span_1",
-        },
-      ],
+      "nonChildReferences": Array [],
       "serviceColour": "",
       "serviceName": "frontend",
       "startTime": 1657275433246,
@@ -123,6 +126,13 @@ Object {
     Object {
       "children": Array [
         Object {
+          "childReferences": Array [
+            Object {
+              "RefType": "CHILD_OF",
+              "SpanId": "span_2",
+              "TraceId": "0000000000000000span_1",
+            },
+          ],
           "children": Array [],
           "event": Array [
             Object {
@@ -139,13 +149,7 @@ Object {
           "id": "span_3",
           "isProcessed": true,
           "name": "HTTP GET SPAN 3",
-          "references": Array [
-            Object {
-              "RefType": "CHILD_OF",
-              "SpanId": "span_2",
-              "TraceId": "0000000000000000span_1",
-            },
-          ],
+          "nonChildReferences": Array [],
           "serviceColour": "",
           "serviceName": "frontend",
           "startTime": 1657275433246,
@@ -172,6 +176,13 @@ Object {
   ],
   "spanTree": Array [
     Object {
+      "childReferences": Array [
+        Object {
+          "RefType": "CHILD_OF",
+          "SpanId": "",
+          "TraceId": "0000000000000000span_1",
+        },
+      ],
       "children": Array [],
       "event": Array [
         Object {
@@ -187,13 +198,7 @@ Object {
       "hasError": false,
       "id": "span_1",
       "name": "HTTP GET SPAN 1",
-      "references": Array [
-        Object {
-          "RefType": "CHILD_OF",
-          "SpanId": "",
-          "TraceId": "0000000000000000span_1",
-        },
-      ],
+      "nonChildReferences": Array [],
       "serviceColour": "",
       "serviceName": "frontend",
       "startTime": 1657275433246,

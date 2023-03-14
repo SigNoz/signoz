@@ -1,8 +1,10 @@
 import { blue, grey, orange } from '@ant-design/colors';
 import { CopyFilled, ExpandAltOutlined } from '@ant-design/icons';
+import Convert from 'ansi-to-html';
 import { Button, Divider, Row, Typography } from 'antd';
 import { map } from 'd3';
 import dayjs from 'dayjs';
+import dompurify from 'dompurify';
 import { useNotifications } from 'hooks/useNotifications';
 // utils
 import { FlatLogData } from 'lib/logs/flatLogData';
@@ -19,24 +21,37 @@ import { ILogsReducer } from 'types/reducer/logs';
 import AddToQueryHOC from '../AddToQueryHOC';
 import CopyClipboardHOC from '../CopyClipboardHOC';
 // styles
-import { Container, LogContainer, Text, TextContainer } from './styles';
+import {
+	Container,
+	LogContainer,
+	LogText,
+	SelectedLog,
+	Text,
+	TextContainer,
+} from './styles';
 import { isValidLogField } from './util';
+
+const convert = new Convert();
 
 interface LogFieldProps {
 	fieldKey: string;
 	fieldValue: string;
 }
 function LogGeneralField({ fieldKey, fieldValue }: LogFieldProps): JSX.Element {
+	const html = useMemo(
+		() => ({
+			__html: convert.toHtml(dompurify.sanitize(fieldValue)),
+		}),
+		[fieldValue],
+	);
+
 	return (
 		<TextContainer>
 			<Text ellipsis type="secondary">
-				{fieldKey}
+				{`${fieldKey}: `}
 			</Text>
 			<CopyClipboardHOC textToCopy={fieldValue}>
-				<Typography.Text ellipsis>
-					{': '}
-					{fieldValue}
-				</Typography.Text>
+				<LogText dangerouslySetInnerHTML={html} />
 			</CopyClipboardHOC>
 		</TextContainer>
 	);
@@ -47,31 +62,19 @@ function LogSelectedField({
 	fieldValue = '',
 }: LogFieldProps): JSX.Element {
 	return (
-		<div
-			style={{
-				display: 'flex',
-				overflow: 'hidden',
-				width: '100%',
-			}}
-		>
+		<SelectedLog>
 			<AddToQueryHOC fieldKey={fieldKey} fieldValue={fieldValue}>
 				<Typography.Text>
-					{`"`}
 					<span style={{ color: blue[4] }}>{fieldKey}</span>
-					{`"`}
 				</Typography.Text>
 			</AddToQueryHOC>
 			<CopyClipboardHOC textToCopy={fieldValue}>
 				<Typography.Text ellipsis>
-					<span>
-						{': '}
-						{typeof fieldValue === 'string' && `"`}
-					</span>
-					<span style={{ color: orange[6] }}>{fieldValue}</span>
-					{typeof fieldValue === 'string' && `"`}
+					<span>{': '}</span>
+					<span style={{ color: orange[6] }}>{fieldValue || "''"}</span>
 				</Typography.Text>
 			</CopyClipboardHOC>
-		</div>
+		</SelectedLog>
 	);
 }
 
@@ -103,27 +106,28 @@ function ListLogView({ logData }: ListLogViewProps): JSX.Element {
 		});
 	};
 
+	const updatedSelecedFields = useMemo(
+		() => selected.filter((e) => e.name !== 'id'),
+		[selected],
+	);
+
 	return (
 		<Container>
 			<div>
+				<LogContainer>
+					<>
+						<LogGeneralField fieldKey="log" fieldValue={flattenLogData.body} />
+						{flattenLogData.stream && (
+							<LogGeneralField fieldKey="stream" fieldValue={flattenLogData.stream} />
+						)}
+						<LogGeneralField
+							fieldKey="timestamp"
+							fieldValue={dayjs((flattenLogData.timestamp as never) / 1e6).format()}
+						/>
+					</>
+				</LogContainer>
 				<div>
-					{'{'}
-					<LogContainer>
-						<>
-							<LogGeneralField fieldKey="log" fieldValue={flattenLogData.body} />
-							{flattenLogData.stream && (
-								<LogGeneralField fieldKey="stream" fieldValue={flattenLogData.stream} />
-							)}
-							<LogGeneralField
-								fieldKey="timestamp"
-								fieldValue={dayjs((flattenLogData.timestamp as never) / 1e6).format()}
-							/>
-						</>
-					</LogContainer>
-					{'}'}
-				</div>
-				<div>
-					{map(selected, (field) =>
+					{map(updatedSelecedFields, (field) =>
 						isValidLogField(flattenLogData[field.name] as never) ? (
 							<LogSelectedField
 								key={field.name}
@@ -140,19 +144,19 @@ function ListLogView({ logData }: ListLogViewProps): JSX.Element {
 					size="small"
 					type="text"
 					onClick={handleDetailedView}
-					style={{ color: blue[5], padding: 0, margin: 0 }}
+					style={{ color: blue[5] }}
+					icon={<ExpandAltOutlined />}
 				>
-					{' '}
-					<ExpandAltOutlined /> View Details
+					View Details
 				</Button>
 				<Button
 					size="small"
 					type="text"
 					onClick={handleCopyJSON}
-					style={{ padding: 0, margin: 0, color: grey[1] }}
+					style={{ color: grey[1] }}
+					icon={<CopyFilled />}
 				>
-					{' '}
-					<CopyFilled /> Copy JSON
+					Copy JSON
 				</Button>
 			</Row>
 		</Container>
