@@ -7,10 +7,16 @@ function TableExpandIcon({
 	onExpand,
 	record,
 }: TableExpandIconProps): JSX.Element {
+	const handleOnExpand = (
+		e: React.MouseEvent<HTMLElement, MouseEvent>,
+	): void => {
+		onExpand(record, e);
+	};
+
 	if (expanded) {
-		return <DownOutlined onClick={(e): void => onExpand(record, e)} />;
+		return <DownOutlined onClick={handleOnExpand} />;
 	}
-	return <RightOutlined onClick={(e): void => onExpand(record, e)} />;
+	return <RightOutlined onClick={handleOnExpand} />;
 }
 
 interface TableExpandIconProps {
