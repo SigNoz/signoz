@@ -56,7 +56,7 @@ func GetConfigHistory(ctx context.Context, typ ElementTypeDef) ([]ConfigVersion,
 }
 
 // StartNewVersion launches a new config version for given set of elements
-func StartNewVersion(ctx context.Context, eleType ElementTypeDef, elementIds []string) (*ConfigVersion, error) {
+func StartNewVersion(ctx context.Context, userId string, eleType ElementTypeDef, elementIds []string) (*ConfigVersion, error) {
 
 	if !m.Ready() {
 		// agent is already being updated, ask caller to wait and re-try after sometime
@@ -67,7 +67,7 @@ func StartNewVersion(ctx context.Context, eleType ElementTypeDef, elementIds []s
 	cfg := NewConfigversion(eleType)
 
 	// insert new config and elements into database
-	err := m.insertConfig(ctx, cfg, elementIds)
+	err := m.insertConfig(ctx, userId, cfg, elementIds)
 	if err != nil {
 		return nil, err
 	}

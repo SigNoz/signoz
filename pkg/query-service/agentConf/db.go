@@ -38,6 +38,9 @@ func (r *Repo) GetConfigHistory(ctx context.Context, typ ElementTypeDef) ([]Conf
 		version, 
 		element_type, 
 		COALESCE(created_by, -1) as created_by, 
+		created_at,
+		COALESCE((SELECT NAME FROM users 
+ 		WHERE id = v.created_by), "unknown") created_by_name, 
 		active, 
 		is_valid, 
 		disabled, 
@@ -56,6 +59,7 @@ func (r *Repo) GetConfigVersion(ctx context.Context, typ ElementTypeDef, v int) 
 		version, 
 		element_type, 
 		COALESCE(created_by, -1) as created_by, 
+		created_at,
 		COALESCE((SELECT NAME FROM users 
 		WHERE id = v.created_by), "unknown") created_by_name,
 		active, 
@@ -80,6 +84,9 @@ func (r *Repo) GetLatestVersion(ctx context.Context, typ ElementTypeDef) (*Confi
 		version, 
 		element_type, 
 		COALESCE(created_by, -1) as created_by, 
+		created_at,
+		COALESCE((SELECT NAME FROM users 
+ 		WHERE id = v.created_by), "unknown") created_by_name, 
 		active, 
 		is_valid, 
 		disabled, 
