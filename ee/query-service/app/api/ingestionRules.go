@@ -100,7 +100,7 @@ func (ah *APIHandler) createIngestionRule(w http.ResponseWriter, r *http.Request
 	ctx := context.Background()
 	userPayload, err := ah.Auth().GetUserFromRequest(r)
 	if err != nil {
-		RespondError(w, model.BadRequestStr("failed to identify user from the request"))
+		RespondError(w, model.BadRequestStr("failed to identify user from the request"), nil)
 	}
 
 	req := ingestionRules.PostableIngestionRules{}

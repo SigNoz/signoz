@@ -2146,12 +2146,12 @@ func (aH *APIHandler) WriteJSON(w http.ResponseWriter, r *http.Request, response
 }
 
 // logs
-func (aH *APIHandler) RegisterLogsRoutes(router *mux.Router, am *AuthMiddleware) {
+func (aH *APIHandler) RegisterLogsRoutes(router *mux.Router) {
 	subRouter := router.PathPrefix("/api/v1/logs").Subrouter()
 	subRouter.HandleFunc("", aH.authenticator.ViewAccess(aH.getLogs)).Methods(http.MethodGet)
 	subRouter.HandleFunc("/tail", aH.authenticator.ViewAccess(aH.tailLogs)).Methods(http.MethodGet)
 	subRouter.HandleFunc("/fields", aH.authenticator.ViewAccess(aH.logFields)).Methods(http.MethodGet)
-	subRouter.HandleFunc("/fields", am.EditAccess(aH.logFieldUpdate)).Methods(http.MethodPost)
+	subRouter.HandleFunc("/fields", aH.authenticator.EditAccess(aH.logFieldUpdate)).Methods(http.MethodPost)
 	subRouter.HandleFunc("/aggregate", aH.authenticator.ViewAccess(aH.logAggregate)).Methods(http.MethodGet)
 }
 
