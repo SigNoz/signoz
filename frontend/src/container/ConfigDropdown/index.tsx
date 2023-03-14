@@ -33,13 +33,15 @@ function DynamicConfigDropdown({
 		setIsHelpDropDownOpen(!isHelpDropDownOpen);
 	};
 
-	const menuItems = useMemo(
-		() => [
-			{
-				key: '1',
-				label: <HelpToolTip config={config as ConfigProps} />,
-			},
-		],
+	const menu = useMemo(
+		() => ({
+			items: [
+				{
+					key: '1',
+					label: <HelpToolTip config={config as ConfigProps} />,
+				},
+			],
+		}),
 		[config],
 	);
 
@@ -54,7 +56,7 @@ function DynamicConfigDropdown({
 		<Dropdown
 			onOpenChange={onToggleHandler}
 			trigger={['click']}
-			menu={{ items: menuItems }}
+			menu={menu}
 			open={isHelpDropDownOpen}
 		>
 			<Space align="center">

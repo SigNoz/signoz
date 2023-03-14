@@ -3,7 +3,7 @@ import TimeItems, {
 	timePreferance,
 	timePreferenceType,
 } from 'container/NewWidget/RightContainer/timeItems';
-import React, { useCallback } from 'react';
+import React, { useCallback, useMemo } from 'react';
 
 import { menuItems } from './config';
 import { TextContainer } from './styles';
@@ -22,11 +22,17 @@ function TimePreference({
 		[setSelectedTime],
 	);
 
+	const menu = useMemo(
+		() => ({
+			items: menuItems,
+			onClick: timeMenuItemOnChangeHandler,
+		}),
+		[timeMenuItemOnChangeHandler],
+	);
+
 	return (
 		<TextContainer noButtonMargin>
-			<Dropdown
-				menu={{ items: menuItems, onClick: timeMenuItemOnChangeHandler }}
-			/>
+			<Dropdown menu={menu} />
 			<Button>{selectedTime.name}</Button>
 		</TextContainer>
 	);
