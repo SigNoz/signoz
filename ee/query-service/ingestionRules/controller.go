@@ -30,18 +30,18 @@ type IngestionRulesResponse struct {
 }
 
 // ApplyRules conditionally calls applyDropRules or applySampling rules
-func (ic *IngestionController) ApplyRules(ctx context.Context, elementType agentConf.ElementTypeDef, postable []PostableIngestionRule) (*IngestionRulesResponse, *model.ApiError) {
+func (ic *IngestionController) ApplyRules(ctx context.Context, userId string, elementType agentConf.ElementTypeDef, postable []PostableIngestionRule) (*IngestionRulesResponse, *model.ApiError) {
 	switch elementType {
 	case agentConf.ElementTypeDropRules:
-		return ic.ApplyDropRules(ctx, postable)
+		return ic.ApplyDropRules(ctx, userId, postable)
 	case agentConf.ElementTypeSamplingRules:
-		return ic.ApplySamplingRules(ctx, postable)
+		return ic.ApplySamplingRules(ctx, userId, postable)
 	}
 	return nil, model.BadRequestStr("unexpected element type")
 }
 
 // ApplyDropRules stores new or changed drop rules and initiates a new config update
-func (ic *IngestionController) ApplyDropRules(ctx context.Context, postable []PostableIngestionRule) (*IngestionRulesResponse, *model.ApiError) {
+func (ic *IngestionController) ApplyDropRules(ctx context.Context, userId string, postable []PostableIngestionRule) (*IngestionRulesResponse, *model.ApiError) {
 	var dropRules []model.IngestionRule
 
 	// scan through postable rules, to select the existing rules or insert missing ones
@@ -94,7 +94,7 @@ func (ic *IngestionController) ApplyDropRules(ctx context.Context, postable []Po
 	}
 
 	// prepare config by calling gen func
-	cfg, err := agentConf.StartNewVersion(ctx, agentConf.ElementTypeDropRules, elements)
+	cfg, err := agentConf.StartNewVersion(ctx, userId, agentConf.ElementTypeDropRules, elements)
 	if err != nil || cfg == nil {
 		zap.S().Errorf("failed to start a new config version for drop rules", err)
 		return nil, model.InternalError(err)
@@ -141,7 +141,7 @@ func (ic *IngestionController) GetRulesByVersion(ctx context.Context, version in
 }
 
 // ApplySamplingRules stores new or changed sampling rules and initiates a new config update
-func (ic *IngestionController) ApplySamplingRules(ctx context.Context, postable []PostableIngestionRule) (*IngestionRulesResponse, *model.ApiError) {
+func (ic *IngestionController) ApplySamplingRules(ctx context.Context, userId string, postable []PostableIngestionRule) (*IngestionRulesResponse, *model.ApiError) {
 	var smplRules []model.IngestionRule
 
 	// scan through postable rules, to select the existing rules or insert missing ones
@@ -196,7 +196,7 @@ func (ic *IngestionController) ApplySamplingRules(ctx context.Context, postable 
 	}
 
 	// prepare config by calling gen func
-	cfg, err := agentConf.StartNewVersion(ctx, agentConf.ElementTypeSamplingRules, elements)
+	cfg, err := agentConf.StartNewVersion(ctx, userId, agentConf.ElementTypeSamplingRules, elements)
 	if err != nil || cfg == nil {
 		return nil, model.InternalError(err)
 	}

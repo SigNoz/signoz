@@ -97,11 +97,10 @@ func (ah *APIHandler) listIngestionRulesByVersion(ctx context.Context, version i
 }
 
 func (ah *APIHandler) createIngestionRule(w http.ResponseWriter, r *http.Request, elementType agentConf.ElementTypeDef) {
-
-	ctx, err := ah.AttachUserToContext(context.Background(), r)
+	ctx := context.Background()
+	userPayload, err := ah.Auth().GetUserFromRequest(r)
 	if err != nil {
-		RespondError(w, model.BadRequestStr("failed to find or attach user to the context"), nil)
-		return
+		RespondError(w, model.BadRequestStr("failed to identify user from the request"))
 	}
 
 	req := ingestionRules.PostableIngestionRules{}
@@ -111,7 +110,7 @@ func (ah *APIHandler) createIngestionRule(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	createRule := func(ctx context.Context, postable []ingestionRules.PostableIngestionRule) (*ingestionRules.IngestionRulesResponse, *model.ApiError) {
+	createRule := func(ctx context.Context, userId string, postable []ingestionRules.PostableIngestionRule) (*ingestionRules.IngestionRulesResponse, *model.ApiError) {
 		if len(postable) == 0 {
 			zap.S().Warnf("found no rules in the http request, this will delete all the rules")
 		}
@@ -123,10 +122,10 @@ func (ah *APIHandler) createIngestionRule(w http.ResponseWriter, r *http.Request
 			}
 		}
 
-		return ah.opts.IngestionController.ApplyRules(ctx, elementType, postable)
+		return ah.opts.IngestionController.ApplyRules(ctx, userId, elementType, postable)
 	}
 
-	ingestionRuleResponse, apierr := createRule(ctx, req.Rules)
+	ingestionRuleResponse, apierr := createRule(ctx, userPayload.User.Id, req.Rules)
 	if apierr != nil {
 		RespondError(w, apierr, nil)
 		return
