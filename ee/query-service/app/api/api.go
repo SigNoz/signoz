@@ -1,7 +1,6 @@
 package api
 
 import (
-	"context"
 	"net/http"
 
 	"github.com/gorilla/mux"
@@ -14,7 +13,6 @@ import (
 	basemodel "go.signoz.io/signoz/pkg/query-service/model"
 	rules "go.signoz.io/signoz/pkg/query-service/rules"
 	"go.signoz.io/signoz/pkg/query-service/version"
-	"google.golang.org/grpc/metadata"
 )
 
 type APIHandlerOptions struct {
@@ -174,22 +172,4 @@ func (ah *APIHandler) getVersion(w http.ResponseWriter, r *http.Request) {
 	}
 
 	ah.WriteJSON(w, r, versionResponse)
-}
-
-// AttachUserToContext extracts user from request and adds it to
-// context
-func (api *APIHandler) AttachUserToContext(ctx context.Context, r *http.Request) (context.Context, error) {
-	userPayload, err := api.Auth().GetUserFromRequest(r)
-	if err != nil {
-		return ctx, err
-	}
-	md, ok := metadata.FromIncomingContext(ctx)
-	if !ok {
-		md = metadata.New(nil)
-	}
-
-	md.Append("userId", userPayload.User.Id)
-	ctx = metadata.NewIncomingContext(ctx, md)
-
-	return ctx, nil
 }
