@@ -46,7 +46,7 @@ func (r *Repo) GetConfigHistory(ctx context.Context, typ ElementTypeDef) ([]Conf
 		disabled, 
 		deploy_status, 
 		deploy_result 
-		FROM agent_config_versions 
+		FROM agent_config_versions AS v
 		WHERE element_type = $1`, typ)
 
 	return c, err
@@ -92,7 +92,7 @@ func (r *Repo) GetLatestVersion(ctx context.Context, typ ElementTypeDef) (*Confi
 		disabled, 
 		deploy_status, 
 		deploy_result 
-		FROM agent_config_versions 
+		FROM agent_config_versions AS v
 		WHERE element_type = $1 
 		AND version = ( 
 			SELECT MAX(version) 

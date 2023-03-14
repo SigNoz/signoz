@@ -11,7 +11,6 @@ import (
 	"github.com/pkg/errors"
 	"go.signoz.io/signoz/ee/query-service/ingestionRules/sqlite"
 	"go.signoz.io/signoz/ee/query-service/model"
-	baseauth "go.signoz.io/signoz/pkg/query-service/auth"
 	"go.uber.org/zap"
 )
 
@@ -37,11 +36,7 @@ func (r *Repo) InitDB(engine string) error {
 }
 
 // InsertRule stores a given postable rule to database
-func (r *Repo) insertRule(ctx context.Context, postable *PostableIngestionRule) (*model.IngestionRule, error) {
-	userId, err := baseauth.UserIdFromContext(ctx)
-	if err != nil {
-		return nil, err
-	}
+func (r *Repo) insertRule(ctx context.Context, userId string, postable *PostableIngestionRule) (*model.IngestionRule, error) {
 
 	if err := postable.IsValid(); err != nil {
 		return nil, errors.Wrap(err, "failed to validate postable ingestion rule")
@@ -150,19 +145,19 @@ func (r *Repo) GetRule(ctx context.Context, id string) (*model.IngestionRule, *m
 
 	err := r.db.SelectContext(ctx, &rules, ruleQuery, id)
 	if err != nil {
-		zap.S().Errorf("failed to get ingestion rule from db", err)
+		zap.S().Error("failed to get ingestion rule from db", err)
 		return nil, model.BadRequestStr("failed to get ingestion rule from db")
 	}
 
 	if len(rules) == 0 {
-		zap.S().Warnf("No row found for ingestion rule id", id)
+		zap.S().Warn("No row found for ingestion rule id", id)
 		return nil, nil
 	}
 
 	if len(rules) == 1 {
 		err := rules[0].ParseRawConfig()
 		if err != nil {
-			zap.S().Errorf("invalid rule config found", id, err)
+			zap.S().Error("invalid rule config found", id, err)
 			return &rules[0], model.InternalErrorStr("found an invalid rule config ")
 		}
 		return &rules[0], nil

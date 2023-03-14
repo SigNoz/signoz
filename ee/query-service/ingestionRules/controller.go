@@ -53,10 +53,10 @@ func (ic *IngestionController) ApplyDropRules(ctx context.Context, userId string
 
 		if r.Id == "" {
 			// looks like a new or changed rule, store it first
-			inserted, err := ic.insertRule(ctx, &r)
+			inserted, err := ic.insertRule(ctx, userId, &r)
 			if err != nil || inserted == nil {
-				zap.S().Errorf("failed to insert edited ingestion rule", err)
-				return nil, model.BadRequestStr("failed to insert edited rule")
+				zap.S().Error("failed to insert ingestion rule", err)
+				return nil, model.BadRequestStr("failed to insert rule")
 			} else {
 				dropRules = append(dropRules, *inserted)
 			}
@@ -67,7 +67,7 @@ func (ic *IngestionController) ApplyDropRules(ctx context.Context, userId string
 			// instead of picking the update from client (browser) request
 			selected, err := ic.GetRule(ctx, r.Id)
 			if err != nil || selected == nil {
-				zap.S().Errorf("failed to find edited ingestion rule", err, r.Id)
+				zap.S().Error("failed to find edited ingestion rule", err, r.Id)
 				return nil, model.BadRequestStr("failed to find edited rule, invalid request")
 			}
 			dropRules = append(dropRules, *selected)
@@ -78,7 +78,7 @@ func (ic *IngestionController) ApplyDropRules(ctx context.Context, userId string
 	// prepare filter config (processor) from the drop rules
 	filterConfig, err := PrepareDropFilter(dropRules)
 	if err != nil {
-		zap.S().Errorf("failed to generate processor config from ingestion rules for deployment", err)
+		zap.S().Error("failed to generate processor config from ingestion rules for deployment", err)
 		return nil, model.BadRequest(err)
 	}
 
@@ -96,7 +96,7 @@ func (ic *IngestionController) ApplyDropRules(ctx context.Context, userId string
 	// prepare config by calling gen func
 	cfg, err := agentConf.StartNewVersion(ctx, userId, agentConf.ElementTypeDropRules, elements)
 	if err != nil || cfg == nil {
-		zap.S().Errorf("failed to start a new config version for drop rules", err)
+		zap.S().Error("failed to start a new config version for drop rules", err)
 		return nil, model.InternalError(err)
 	}
 
@@ -113,7 +113,7 @@ func (ic *IngestionController) ApplyDropRules(ctx context.Context, userId string
 	}
 
 	if err != nil {
-		zap.S().Errorf("failed to insert drop rules into agent config", filterConfig, err)
+		zap.S().Error("failed to insert drop rules into agent config", filterConfig, err)
 		return response, model.InternalErrorStr(fmt.Sprintf("failed to apply drop rules:  %s", err.Error()))
 	}
 
@@ -124,13 +124,13 @@ func (ic *IngestionController) ApplyDropRules(ctx context.Context, userId string
 func (ic *IngestionController) GetRulesByVersion(ctx context.Context, version int, typ agentConf.ElementTypeDef) (*IngestionRulesResponse, *model.ApiError) {
 	rules, apierr := ic.getRulesByVersion(ctx, version)
 	if apierr != nil {
-		zap.S().Errorf("failed to get ingestion rules for version", version, apierr)
+		zap.S().Error("failed to get ingestion rules for version", version, apierr)
 		return nil, model.InternalErrorStr("failed to get drop rules for given version")
 	}
 
 	configVersion, err := agentConf.GetConfigVersion(ctx, typ, version)
 	if err != nil || configVersion == nil {
-		zap.S().Errorf("failed to get version info", version, err)
+		zap.S().Error("failed to get version info", version, err)
 		return nil, model.InternalErrorStr("failed to get info on the given version")
 	}
 
@@ -160,9 +160,9 @@ func (ic *IngestionController) ApplySamplingRules(ctx context.Context, userId st
 
 		if r.Id == "" {
 			// looks like a new or changed rule, store it first
-			inserted, err := ic.insertRule(ctx, &r)
+			inserted, err := ic.insertRule(ctx, userId, &r)
 			if err != nil || inserted == nil {
-				zap.S().Errorf("failed to insert edited ingestion rule", err)
+				zap.S().Error("failed to insert edited ingestion rule", err)
 				return nil, model.BadRequestStr("failed to insert edited rule")
 			} else {
 				smplRules = append(smplRules, *inserted)
@@ -170,7 +170,7 @@ func (ic *IngestionController) ApplySamplingRules(ctx context.Context, userId st
 		} else {
 			selected, err := ic.GetRule(ctx, r.Id)
 			if err != nil || selected == nil {
-				zap.S().Errorf("failed to find edited ingestion rule", err)
+				zap.S().Error("failed to find edited ingestion rule", err)
 				return nil, model.BadRequestStr("failed to find edited rule, invalid request")
 			}
 			smplRules = append(smplRules, *selected)
@@ -181,7 +181,7 @@ func (ic *IngestionController) ApplySamplingRules(ctx context.Context, userId st
 	// prepare params for sampling processor from the rules
 	params, err := PrepareTailSamplingParams(smplRules)
 	if err != nil {
-		zap.S().Errorf("failed to generate processor config from ingestion rules for deployment", err)
+		zap.S().Error("failed to generate processor config from ingestion rules for deployment", err)
 		return nil, model.BadRequest(err)
 	}
 
@@ -215,7 +215,7 @@ func (ic *IngestionController) ApplySamplingRules(ctx context.Context, userId st
 	}
 
 	if err != nil {
-		zap.S().Errorf("failed to insert sampling rules into agent config: ", params, err)
+		zap.S().Error("failed to insert sampling rules into agent config: ", params, err)
 		return response, model.InternalErrorStr(fmt.Sprintf("failed to apply drop rules:  %s", err.Error()))
 	}
 	return response, nil
