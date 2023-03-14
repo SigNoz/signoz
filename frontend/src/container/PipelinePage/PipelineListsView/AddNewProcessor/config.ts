@@ -12,7 +12,7 @@ export const processorTypes: Array<ProcessorType> = [
 	{ key: 'add', value: 'add', label: 'Add' },
 	{ key: 'remove', value: 'remove', label: 'Remove' },
 	{ key: 'trace_parser', value: 'trace_parser', label: 'Trace Parser' },
-	{ key: 'retain', value: 'retain', label: 'Retain' },
+	// { key: 'retain', value: 'retain', label: 'Retain' }, @Chintan - Commented as per Nitya's suggestion
 	{ key: 'move', value: 'move', label: 'Move' },
 	{ key: 'copy', value: 'copy', label: 'Copy' },
 ];
@@ -135,19 +135,19 @@ export const processorFields: { [key: string]: Array<ProcessorFormField> } = {
 		{
 			id: 2,
 			fieldName: 'Trace Id Parce From',
-			placeholder: 'processor_traceId_placeholder',
+			placeholder: 'processor_trace_id_placeholder',
 			name: 'traceId',
 		},
 		{
 			id: 3,
 			fieldName: 'Span id Parse From',
-			placeholder: 'processor_spanId_placeholder',
+			placeholder: 'processor_span_id_placeholder',
 			name: 'spanId',
 		},
 		{
 			id: 4,
 			fieldName: 'Trace flags parse from',
-			placeholder: 'processor_traceFlags_placeholder',
+			placeholder: 'processor_trace_flags_placeholder',
 			name: 'traceFlags',
 		},
 	],
@@ -195,13 +195,13 @@ export const processorFields: { [key: string]: Array<ProcessorFormField> } = {
 		{
 			id: 2,
 			fieldName: 'From',
-			placeholder: 'from',
+			placeholder: 'processor_from_placeholder',
 			name: 'from',
 		},
 		{
 			id: 3,
 			fieldName: 'To',
-			placeholder: 'to',
+			placeholder: 'processor_to_placeholder',
 			name: 'to',
 		},
 	],

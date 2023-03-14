@@ -35,5 +35,10 @@
 	"processor_pattern_placeholder": "Pattern",
 	"processor_field_placeholder": "Field",
 	"processor_value_placeholder": "Value",
-	"processor_description_placeholder": "example rule: %{word:first}"
+	"processor_description_placeholder": "example rule: %{word:first}",
+	"processor_trace_id_placeholder": "Trace Id Parce From",
+	"processor_span_id_placeholder": "Span id Parse From",
+	"processor_trace_flags_placeholder": "Trace flags parse from",
+	"processor_from_placeholder": "From",
+	"processor_to_placeholder": "To"
 }
