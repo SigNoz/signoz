@@ -75,6 +75,9 @@ func StartNewVersion(ctx context.Context, userId string, eleType ElementTypeDef,
 	return cfg, nil
 }
 
+// Redeploy picks up a config for a version from config_agent_versions
+// and re-sends it to collector for deployment. This method is useful
+// in enabling previous configs from history
 func Redeploy(ctx context.Context, typ ElementTypeDef, version int) error {
 	if !atomic.CompareAndSwapUint32(&m.lock, 0, 1) {
 		return fmt.Errorf("agent updater is busy")
@@ -92,45 +95,24 @@ func Redeploy(ctx context.Context, typ ElementTypeDef, version int) error {
 		zap.S().Debug("config version has no conf yaml", configVersion)
 		return fmt.Errorf("the config version can not be redeployed")
 	}
+
 	switch typ {
 	case ElementTypeSamplingRules:
 		var config *tsp.Config
+
 		if err := yaml.Unmarshal([]byte(configVersion.LastConf), &config); err != nil {
-			zap.S().Error("failed to read last conf correctly", err)
+			zap.S().Error("sampling rule re-deployment failures: failed to read last conf correctly", err)
 			return fmt.Errorf("failed to read the stored config correctly")
 		}
 
-		// merge current config with new filter params
-		processorConf := map[string]interface{}{
-			"signoz_tail_sampling": config,
-		}
-
-		opamp.AddToTracePipelineSpec("signoz_tail_sampling")
-		configHash, err := opamp.UpsertControlProcessors(ctx, "traces", processorConf, m.OnConfigUpdate)
-		if err != nil {
-			zap.S().Error("failed to call agent config update for trace processor:", err)
-			return fmt.Errorf("failed to deploy the config")
-		}
-
-		m.updateDeployStatus(ctx, ElementTypeSamplingRules, version, string(DeployInitiated), "Deployment started", configHash, configVersion.LastConf)
+		return UpsertSamplingProcessor(ctx, configVersion.Version, config)
 	case ElementTypeDropRules:
 		var filterConfig *filterprocessor.Config
 		if err := yaml.Unmarshal([]byte(configVersion.LastConf), &filterConfig); err != nil {
-			zap.S().Error("failed to read last conf correctly", err)
+			zap.S().Error("drop rule re-deployment failures: failed to read last conf correctly", err)
 			return fmt.Errorf("failed to read the stored config correctly")
 		}
-		processorConf := map[string]interface{}{
-			"filter": filterConfig,
-		}
-
-		opamp.AddToMetricsPipelineSpec("filter")
-		configHash, err := opamp.UpsertControlProcessors(ctx, "metrics", processorConf, m.OnConfigUpdate)
-		if err != nil {
-			zap.S().Error("failed to call agent config update for trace processor:", err)
-			return err
-		}
-
-		m.updateDeployStatus(ctx, ElementTypeSamplingRules, version, string(DeployInitiated), "Deployment started", configHash, configVersion.LastConf)
+		return UpsertFilterProcessor(ctx, configVersion.Version, filterConfig)
 	}
 
 	return nil
@@ -143,7 +125,6 @@ func UpsertFilterProcessor(ctx context.Context, version int, config *filterproce
 	}
 	defer atomic.StoreUint32(&m.lock, 0)
 
-	// merge current config with new filter params
 	// merge current config with new filter params
 	processorConf := map[string]interface{}{
 		"filter": config,
