@@ -9,7 +9,6 @@ import (
 	"github.com/google/uuid"
 	"github.com/jmoiron/sqlx"
 	"go.signoz.io/signoz/pkg/query-service/agentConf/sqlite"
-	"go.signoz.io/signoz/pkg/query-service/auth"
 	"go.signoz.io/signoz/pkg/query-service/model"
 	"go.uber.org/zap"
 )
@@ -39,6 +38,9 @@ func (r *Repo) GetConfigHistory(ctx context.Context, typ ElementTypeDef) ([]Conf
 		version, 
 		element_type, 
 		COALESCE(created_by, -1) as created_by, 
+		created_at,
+		COALESCE((SELECT NAME FROM users 
+ 		WHERE id = v.created_by), "unknown") created_by_name, 
 		active, 
 		is_valid, 
 		disabled, 
@@ -57,6 +59,7 @@ func (r *Repo) GetConfigVersion(ctx context.Context, typ ElementTypeDef, v int) 
 		version, 
 		element_type, 
 		COALESCE(created_by, -1) as created_by, 
+		created_at,
 		COALESCE((SELECT NAME FROM users 
 		WHERE id = v.created_by), "unknown") created_by_name,
 		active, 
@@ -81,6 +84,9 @@ func (r *Repo) GetLatestVersion(ctx context.Context, typ ElementTypeDef) (*Confi
 		version, 
 		element_type, 
 		COALESCE(created_by, -1) as created_by, 
+		created_at,
+		COALESCE((SELECT NAME FROM users 
+ 		WHERE id = v.created_by), "unknown") created_by_name, 
 		active, 
 		is_valid, 
 		disabled, 
@@ -98,7 +104,7 @@ func (r *Repo) GetLatestVersion(ctx context.Context, typ ElementTypeDef) (*Confi
 	return &c, err
 }
 
-func (r *Repo) insertConfig(ctx context.Context, c *ConfigVersion, elements []string) (fnerr error) {
+func (r *Repo) insertConfig(ctx context.Context, userId string, c *ConfigVersion, elements []string) (fnerr error) {
 
 	if string(c.ElementType) == "" {
 		return fmt.Errorf("element type is required for creating agent config version")
@@ -134,12 +140,6 @@ func (r *Repo) insertConfig(ctx context.Context, c *ConfigVersion, elements []st
 			r.db.Exec("DELETE FROM agent_config_elements WHERE version_id=$1", c.ID)
 		}
 	}()
-
-	userId, err := auth.UserIdFromContext(ctx)
-	if err != nil || userId == "" {
-		zap.S().Error("failed to find user in the context", err)
-		return fmt.Errorf("failed to identify user of the request")
-	}
 
 	// insert config
 	configQuery := `INSERT INTO agent_config_versions(	

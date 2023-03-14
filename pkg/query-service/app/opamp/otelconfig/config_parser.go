@@ -6,10 +6,6 @@ import (
 	"go.opentelemetry.io/collector/confmap"
 )
 
-type ConfigPart map[string]interface{}
-
-type ConfigList []interface{}
-
 type ConfigParser struct {
 	lock      sync.Mutex
 	agentConf *confmap.Conf
@@ -21,93 +17,110 @@ func NewConfigParser(agentConf *confmap.Conf) ConfigParser {
 	}
 }
 
-func (cp *ConfigParser) Service() ConfigPart {
+func toMap(i interface{}) map[string]interface{} {
+	return i.(map[string]interface{})
+}
+
+func toList(i interface{}) []interface{} {
+	return i.([]interface{})
+}
+
+// sent when key is not found in config
+func emptyMap() map[string]interface{} {
+	return map[string]interface{}{}
+}
+
+func emptyList() []interface{} {
+	return []interface{}{}
+}
+
+func (cp *ConfigParser) Service() map[string]interface{} {
 	service := cp.agentConf.Get("service")
 	if service == nil {
-		return ConfigPart{}
+		return emptyMap()
 	}
-	return service.(ConfigPart)
+	return toMap(service)
 }
 
 // components gets the high level parts like receivers, exporters, processors etc
-func (cp *ConfigParser) components(partName, nameOptional string) ConfigPart {
+func (cp *ConfigParser) components(partName, nameOptional string) map[string]interface{} {
 	parts := cp.agentConf.Get(partName)
 	if parts == nil {
-		return ConfigPart{}
+		return emptyMap()
 	}
 
-	parsedParts := parts.(ConfigPart)
+	parsedParts := toMap(parts)
 	if nameOptional != "" {
 		if p, ok := parsedParts[nameOptional]; ok {
-			return p.(ConfigPart)
+			return p.(map[string]interface{})
 		} else {
-			return ConfigPart{}
+			return emptyMap()
 		}
 	}
 
 	return parsedParts
 }
 
-func (cp *ConfigParser) Processors() ConfigPart {
+func (cp *ConfigParser) Processors() map[string]interface{} {
 	return cp.components("processors", "")
 }
 
-func (cp *ConfigParser) Processor(name string) ConfigPart {
+func (cp *ConfigParser) Processor(name string) map[string]interface{} {
 	return cp.components("processors", name)
 }
 
-func (cp *ConfigParser) Exporters() ConfigPart {
+func (cp *ConfigParser) Exporters() map[string]interface{} {
 	return cp.components("exporters", "")
 }
 
-func (cp *ConfigParser) Exporter(name string) ConfigPart {
+func (cp *ConfigParser) Exporter(name string) map[string]interface{} {
 	return cp.components("exporters", name)
 }
 
-func (cp *ConfigParser) Receivers() ConfigPart {
+func (cp *ConfigParser) Receivers() map[string]interface{} {
 	return cp.components("receivers", "")
 }
 
-func (cp *ConfigParser) Receiver(name string) ConfigPart {
+func (cp *ConfigParser) Receiver(name string) map[string]interface{} {
 	return cp.components("receivers", name)
 }
 
-func (cp *ConfigParser) Pipelines(nameOptional string) ConfigPart {
+func (cp *ConfigParser) Pipelines(nameOptional string) map[string]interface{} {
 	services := cp.Service()
 	if p, ok := services["pipelines"]; ok {
-		pipelines := p.(ConfigPart)
+		pipelines := toMap(p)
 		if nameOptional != "" {
 			if namedPipeline, ok := pipelines[nameOptional]; ok {
-				return namedPipeline.(ConfigPart)
+				return toMap(namedPipeline)
 			} else {
-				return ConfigPart{}
+				return emptyMap()
 			}
 
 		}
 		return pipelines
 	}
-	return ConfigPart{}
+	return emptyMap()
 }
 
 // component can be "recevers", "exporter" or "processors"
-func (cp *ConfigParser) PipelineComponent(pipelineName, pipelineComponent string) ConfigList {
+func (cp *ConfigParser) PipelineComponent(pipelineName, pipelineComponent string) []interface{} {
 	pipeline := cp.Pipelines(pipelineName)
 	if exporters, ok := pipeline[pipelineComponent]; ok {
-		exporters := exporters.(ConfigList)
+		exporters := toList(exporters)
 		return exporters
 	}
-	return ConfigList{}
+	return emptyList()
 }
 
-func (cp *ConfigParser) PipelineExporters(pipelineName string) ConfigList {
+func (cp *ConfigParser) PipelineExporters(pipelineName string) []interface{} {
 	return cp.PipelineComponent(pipelineName, "exporters")
 }
 
-func (cp *ConfigParser) PipelineReceivers(pipelineName string) ConfigList {
+func (cp *ConfigParser) PipelineReceivers(pipelineName string) []interface{} {
 	return cp.PipelineComponent(pipelineName, "receivers")
 }
 
-func (cp *ConfigParser) PipelineProcessors(pipelineName string) ConfigList {
+func (cp *ConfigParser) PipelineProcessors(pipelineName string) []interface{} {
 	return cp.PipelineComponent(pipelineName, "processors")
 }
 
@@ -150,14 +163,14 @@ func (cp *ConfigParser) Merge(c *confmap.Conf) {
 	cp.agentConf.Merge(c)
 }
 
-func (cp *ConfigParser) UpdateProcessors(processors ConfigPart) {
+func (cp *ConfigParser) UpdateProcessors(processors map[string]interface{}) {
 	updates := cp.Processors()
 
 	for key, params := range processors {
 		updates[key] = params
 	}
 
-	updatedProcessors := ConfigPart{
+	updatedProcessors := map[string]interface{}{
 		"processors": updates,
 	}
 
@@ -166,12 +179,12 @@ func (cp *ConfigParser) UpdateProcessors(processors ConfigPart) {
 	cp.Merge(updatedProcessorConf)
 }
 
-func (cp *ConfigParser) UpdateProcsInPipeline(pipelineName string, list ConfigList) {
+func (cp *ConfigParser) UpdateProcsInPipeline(pipelineName string, list []interface{}) {
 
-	serviceConf := ConfigPart{
-		"service": ConfigPart{
-			"pipelines": ConfigPart{
-				pipelineName: ConfigPart{
+	serviceConf := map[string]interface{}{
+		"service": map[string]interface{}{
+			"pipelines": map[string]interface{}{
+				pipelineName: map[string]interface{}{
 					"processors": list,
 				},
 			},
