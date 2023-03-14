@@ -920,7 +920,7 @@ func validateQueryRangeParamsV3(qp *v3.QueryRangeParamsV3) error {
 	for _, q := range qp.CompositeQuery.BuilderQueries {
 		expressions = append(expressions, q.Expression)
 	}
-	errs := validateExpressions(expressions, evalFuncs)
+	errs := validateExpressions(expressions, evalFuncs, qp.CompositeQuery)
 	if len(errs) > 0 {
 		return multierr.Combine(errs...)
 	}
@@ -929,12 +929,26 @@ func validateQueryRangeParamsV3(qp *v3.QueryRangeParamsV3) error {
 
 // validateExpressions validates the math expressions using the list of
 // allowed functions.
-func validateExpressions(expressions []string, funcs map[string]govaluate.ExpressionFunction) []error {
+func validateExpressions(expressions []string, funcs map[string]govaluate.ExpressionFunction, cq *v3.CompositeQuery) []error {
 	var errs []error
 	for _, exp := range expressions {
-		_, err := govaluate.NewEvaluableExpressionWithFunctions(exp, funcs)
+		evalExp, err := govaluate.NewEvaluableExpressionWithFunctions(exp, funcs)
 		if err != nil {
 			errs = append(errs, err)
+			continue
+		}
+		variables := evalExp.Vars()
+		for _, v := range variables {
+			var hasVariable bool
+			for _, q := range cq.BuilderQueries {
+				if q.Expression == v {
+					hasVariable = true
+					break
+				}
+			}
+			if !hasVariable {
+				errs = append(errs, fmt.Errorf("unknown variable %s", v))
+			}
 		}
 	}
 	return errs
