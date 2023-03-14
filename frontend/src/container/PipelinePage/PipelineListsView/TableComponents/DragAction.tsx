@@ -7,17 +7,22 @@ import {
 	LastActionColumn,
 } from '../styles';
 
-function DragAction(): JSX.Element {
+function DragAction({ isEnabled, onChange }: DragActionProps): JSX.Element {
 	return (
 		<LastActionColumn>
 			<span>
-				<Switch />
+				<Switch defaultChecked={isEnabled} onChange={onChange} />
 			</span>
 			<HolderIconWrapper>
 				<HolderOutlinedIcon />
 			</HolderIconWrapper>
 		</LastActionColumn>
 	);
+}
+
+interface DragActionProps {
+	isEnabled: boolean;
+	onChange: (checked: boolean) => void;
 }
 
 export default DragAction;

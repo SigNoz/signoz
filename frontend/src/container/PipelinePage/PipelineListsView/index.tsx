@@ -29,7 +29,13 @@ import {
 import DragAction from './TableComponents/DragAction';
 import PipelineActions from './TableComponents/PipelineActions';
 import TableExpandIcon from './TableComponents/TableExpandIcon';
-import { getElementFromArray, getTableColumn, getUpdatedRow } from './utils';
+import {
+	getEditedDataSource,
+	getElementFromArray,
+	getRecordIndex,
+	getTableColumn,
+	getUpdatedRow,
+} from './utils';
 
 function PipelineListsView({
 	isActionType,
@@ -115,6 +121,25 @@ function PipelineListsView({
 		[setActionType],
 	);
 
+	const onSwitchPipelineChange = useCallback(
+		(checked: boolean, record: PipelineData): void => {
+			setShowSaveButton(ActionMode.Editing);
+			const findRecordIndex = getRecordIndex(currPipelineData, record, 'name');
+			const updateSwitch = {
+				...currPipelineData[findRecordIndex],
+				enabled: checked,
+			};
+			const editedPipelineData = getEditedDataSource(
+				currPipelineData,
+				record,
+				'name',
+				updateSwitch,
+			);
+			setCurrPipelineData(editedPipelineData);
+		},
+		[currPipelineData],
+	);
+
 	const columns = useMemo(() => {
 		const fieldColumns = getTableColumn(pipelineColumns);
 		if (isActionMode === ActionMode.Editing) {
@@ -134,14 +159,26 @@ function PipelineListsView({
 				},
 				{
 					title: '',
-					dataIndex: 'dragAction',
-					key: 'dragAction',
-					render: () => <DragAction />,
+					dataIndex: 'enabled',
+					key: 'enabled',
+					render: (value, record) => (
+						<DragAction
+							isEnabled={value}
+							onChange={(checked: boolean): void =>
+								onSwitchPipelineChange(checked, record)
+							}
+						/>
+					),
 				},
 			);
 		}
 		return fieldColumns;
-	}, [pipelineDeleteAction, pipelineEditAction, isActionMode]);
+	}, [
+		isActionMode,
+		pipelineEditAction,
+		pipelineDeleteAction,
+		onSwitchPipelineChange,
+	]);
 
 	const updatePipelineSequence = useCallback(
 		(updatedRow: PipelineData[]) => (): void => {
@@ -191,6 +228,7 @@ function PipelineListsView({
 					orderId: item.orderId,
 					type: item.type,
 					name: item.name,
+					enabled: item.enabled,
 				}),
 			),
 		[expandedPipelineData],

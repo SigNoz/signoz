@@ -14,7 +14,12 @@ import { processorColumns } from './config';
 import { FooterButton, StyledTable } from './styles';
 import DragAction from './TableComponents/DragAction';
 import PipelineActions from './TableComponents/PipelineActions';
-import { getTableColumn, getUpdatedRow } from './utils';
+import {
+	getEditedDataSource,
+	getRecordIndex,
+	getTableColumn,
+	getUpdatedRow,
+} from './utils';
 
 function PipelineExpandView({
 	handleAlert,
@@ -56,6 +61,34 @@ function PipelineExpandView({
 		[handleAlert, deleteProcessorHandler, t],
 	);
 
+	const onSwitchProcessorChange = useCallback(
+		(checked: boolean, record: ProcessorData): void => {
+			if (expandedPipelineData && expandedPipelineData?.config) {
+				setShowSaveButton(ActionMode.Editing);
+				const findRecordIndex = getRecordIndex(
+					expandedPipelineData?.config,
+					record,
+					'name',
+				);
+				const updateSwitch = {
+					...expandedPipelineData?.config[findRecordIndex],
+					enabled: checked,
+				};
+				const editedData = getEditedDataSource(
+					expandedPipelineData?.config,
+					record,
+					'name',
+					updateSwitch,
+				);
+				const modifiedProcessorData = { ...expandedPipelineData };
+				modifiedProcessorData.config = editedData;
+
+				setExpandedPipelineData(modifiedProcessorData);
+			}
+		},
+		[expandedPipelineData, setExpandedPipelineData, setShowSaveButton],
+	);
+
 	const columns = useMemo(() => {
 		const fieldColumns = getTableColumn(processorColumns);
 		if (isActionMode === ActionMode.Editing) {
@@ -74,14 +107,26 @@ function PipelineExpandView({
 				},
 				{
 					title: '',
-					dataIndex: 'dragAction',
-					key: 'dragAction',
-					render: () => <DragAction />,
+					dataIndex: 'enabled',
+					key: 'enabled',
+					render: (value, record) => (
+						<DragAction
+							isEnabled={value}
+							onChange={(checked: boolean): void =>
+								onSwitchProcessorChange(checked, record)
+							}
+						/>
+					),
 				},
 			);
 		}
 		return fieldColumns;
-	}, [processorDeleteAction, processorEditAction, isActionMode]);
+	}, [
+		isActionMode,
+		processorEditAction,
+		processorDeleteAction,
+		onSwitchProcessorChange,
+	]);
 
 	const reorderProcessorRow = useCallback(
 		(updatedRow: ProcessorData[]) => (): void => {

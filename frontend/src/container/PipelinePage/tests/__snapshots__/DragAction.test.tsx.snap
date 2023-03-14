@@ -32,8 +32,8 @@ exports[`PipelinePage container test should render DragAction section 1`] = `
   >
     <span>
       <button
-        aria-checked="false"
-        class="ant-switch css-dev-only-do-not-override-1i536d8"
+        aria-checked="true"
+        class="ant-switch css-dev-only-do-not-override-1i536d8 ant-switch-checked"
         role="switch"
         type="button"
       >
