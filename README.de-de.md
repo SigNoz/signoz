@@ -85,9 +85,9 @@ Hier findest du die vollständige Liste von unterstützten Programmiersprachen -
   
 ### Bereitstellung mit Docker
 
-Bitte folge den [hier](https://signoz.io/docs/deployment/docker/) aufgelisteten Schritten um deine Anwendung mit Docker bereitzustellen.
+Bitte folge den [hier](https://signoz.io/docs/install/docker/) aufgelisteten Schritten um deine Anwendung mit Docker bereitzustellen.
 
-Die [Anleitungen zur Fehlerbehebung](https://signoz.io/docs/deployment/troubleshooting) könnten hilfreich sein, falls du auf irgendwelche Schwierigkeiten stößt.
+Die [Anleitungen zur Fehlerbehebung](https://signoz.io/docs/install/troubleshooting/) könnten hilfreich sein, falls du auf irgendwelche Schwierigkeiten stößt.
 
 <p>&nbsp  </p>
   
