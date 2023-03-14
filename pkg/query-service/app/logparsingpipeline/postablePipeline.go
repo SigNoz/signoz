@@ -2,6 +2,7 @@ package logparsingpipeline
 
 import (
 	"fmt"
+	"strings"
 
 	"go.signoz.io/signoz/pkg/query-service/model"
 )
@@ -66,6 +67,7 @@ func (p *PostablePipeline) IsValid() *model.ApiError {
 }
 
 func isValidOperator(op model.PipelineOperator) *model.ApiError {
+	valueErrStr := "value should have prefix of body, attributes, resource"
 	switch op.Type {
 	case "grok_parser":
 		if op.Pattern == "" {
@@ -79,17 +81,29 @@ func isValidOperator(op model.PipelineOperator) *model.ApiError {
 		if op.From == "" || op.To == "" {
 			return model.BadRequestStr(fmt.Sprintf("from or to of %s copy operator cannot be empty", op.ID))
 		}
+		if !isValidOtelValue(op.From) || !isValidOtelValue(op.To) {
+			return model.BadRequestStr(fmt.Sprintf("%s  for operator Id %s", valueErrStr, op.ID))
+		}
 	case "move":
 		if op.From == "" || op.To == "" {
 			return model.BadRequestStr(fmt.Sprintf("from or to of %s move operator cannot be empty", op.ID))
+		}
+		if !isValidOtelValue(op.From) || !isValidOtelValue(op.To) {
+			return model.BadRequestStr(fmt.Sprintf("%s  for operator Id %s", valueErrStr, op.ID))
 		}
 	case "add":
 		if op.Field == "" || op.Value == "" {
 			return model.BadRequestStr(fmt.Sprintf("field or value of %s add operator cannot be empty", op.ID))
 		}
+		if !isValidOtelValue(op.Field) {
+			return model.BadRequestStr(fmt.Sprintf("%s  for operator Id %s", valueErrStr, op.ID))
+		}
 	case "remove":
 		if op.Field == "" {
 			return model.BadRequestStr(fmt.Sprintf("field of %s remove operator cannot be empty", op.ID))
+		}
+		if !isValidOtelValue(op.From) || !isValidOtelValue(op.To) {
+			return model.BadRequestStr(fmt.Sprintf("%s  for operator Id %s", valueErrStr, op.ID))
 		}
 	case "traceParser":
 		if op.TraceParser == nil {
@@ -107,4 +121,16 @@ func isValidOperator(op model.PipelineOperator) *model.ApiError {
 		return model.BadRequestStr(fmt.Sprintf("operator type %s not supported for %s, use one of (grok_parser, regex_parser, copy, move, add, remove, traceParser, retain)", op.Type, op.ID))
 	}
 	return nil
+}
+
+func isValidOtelValue(val string) bool {
+	if val == "" {
+		return true
+	}
+	if !strings.HasPrefix(val, "body") &&
+		!strings.HasPrefix(val, "attributes.") &&
+		!strings.HasPrefix(val, "resource.") {
+		return false
+	}
+	return true
 }
