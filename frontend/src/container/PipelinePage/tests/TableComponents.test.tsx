@@ -20,7 +20,10 @@ describe('PipelinePage container test', () => {
 			<MemoryRouter>
 				<Provider store={store}>
 					<I18nextProvider i18n={i18n}>
-						<TableComponents columnKey="id" record={pipelineMockData[0] as never} />
+						<TableComponents
+							columnKey="id"
+							record={pipelineMockData[0].config as never}
+						/>
 					</I18nextProvider>
 				</Provider>
 			</MemoryRouter>,

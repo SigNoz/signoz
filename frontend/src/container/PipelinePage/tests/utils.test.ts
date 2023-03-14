@@ -23,7 +23,7 @@ describe('Utils testing of Pipeline Page', () => {
 	});
 
 	test('it should be check form field of add processor', () => {
-		expect(processorFields.grok.length).toBe(2);
+		expect(processorFields.grok.length).toBe(5);
 		expect(processorFields.grok.length).toBeGreaterThan(1);
 	});
 

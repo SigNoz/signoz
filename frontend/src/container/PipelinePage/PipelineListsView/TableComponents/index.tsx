@@ -15,9 +15,6 @@ function TableComponents({
 	/* if (columnKey === 'tags') {
 		return <Tags tags={record} />;
 	} */
-	if (columnKey === 'createdBy') {
-		return <span>{record}</span>;
-	}
 	if (columnKey === 'createdAt') {
 		return (
 			<span>
