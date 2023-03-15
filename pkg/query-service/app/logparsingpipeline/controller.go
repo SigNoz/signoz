@@ -107,7 +107,7 @@ func (ic *LogParsingPipelineController) ApplyPipelines(ctx context.Context, post
 
 	// queue up the config to push to opamp
 	err = agentConf.UpsertLogParsingProcessor(ctx, cfg.Version, rawPipelineData, filterConfig, names)
-	history, _ := agentConf.GetConfigHistory(ctx, agentConf.ElementTypeLogPipelines)
+	history, _ := agentConf.GetConfigHistory(ctx, agentConf.ElementTypeLogPipelines, 10)
 	insertedCfg, _ := agentConf.GetConfigVersion(ctx, agentConf.ElementTypeLogPipelines, cfg.Version)
 
 	response := &PipelinesResponse{

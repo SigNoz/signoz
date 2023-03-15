@@ -2335,7 +2335,9 @@ func (ah *APIHandler) listLogsPipelines(ctx context.Context) (*logparsingpipelin
 		return payload, apierr
 	}
 
-	history, err := agentConf.GetConfigHistory(ctx, logPipelines)
+	// todo(Nitya): make a new API for history pagination
+	limit := 10
+	history, err := agentConf.GetConfigHistory(ctx, logPipelines, limit)
 	if err != nil {
 		return payload, apierr
 	}
@@ -2350,7 +2352,9 @@ func (ah *APIHandler) listLogsPipelinesByVersion(ctx context.Context, version in
 		return payload, apierr
 	}
 
-	history, err := agentConf.GetConfigHistory(ctx, logPipelines)
+	// todo(Nitya): make a new API for history pagination
+	limit := 10
+	history, err := agentConf.GetConfigHistory(ctx, logPipelines, limit)
 	if err != nil {
 		zap.S().Errorf("failed to retreive config history for element type", logPipelines, err)
 		return payload, model.InternalError(fmt.Errorf("failed to retrieve agent config history"))
