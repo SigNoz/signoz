@@ -210,3 +210,21 @@ func UpsertSamplingProcessor(ctx context.Context, version int, config *tsp.Confi
 	m.updateDeployStatus(ctx, ElementTypeSamplingRules, version, string(DeployInitiated), "Deployment started", configHash, string(processorConfYaml))
 	return nil
 }
+
+// UpsertLogParsingProcessors updates the agent with log parsing processors
+func UpsertLogParsingProcessor(ctx context.Context, version int, rawPipelineData []byte, config map[string]interface{}, names []interface{}) error {
+	if !atomic.CompareAndSwapUint32(&m.lock, 0, 1) {
+		return fmt.Errorf("agent updater is busy")
+	}
+	defer atomic.StoreUint32(&m.lock, 0)
+
+	// send the changes to opamp.
+	configHash, err := opamp.UpsertLogsParsingProcessor(context.Background(), config, names, m.OnConfigUpdate)
+	if err != nil {
+		zap.S().Errorf("failed to call agent config update for log parsing processor:", err)
+		return err
+	}
+
+	m.updateDeployStatus(ctx, ElementTypeLogPipelines, version, string(DeployInitiated), "Deployment started", configHash, string(rawPipelineData))
+	return nil
+}
