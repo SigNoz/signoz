@@ -18,6 +18,7 @@ import (
 
 	"github.com/rs/cors"
 	"github.com/soheilhy/cmux"
+	"go.signoz.io/signoz/pkg/query-service/agentConf"
 	"go.signoz.io/signoz/pkg/query-service/app/clickhouseReader"
 	"go.signoz.io/signoz/pkg/query-service/app/dashboards"
 	opamp "go.signoz.io/signoz/pkg/query-service/app/opamp"
@@ -149,7 +150,6 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 	if err != nil {
 		return nil, err
 	}
-
 
 	if err := agentConf.Initiate(localDB, "sqlite"); err != nil {
 		return nil, err
