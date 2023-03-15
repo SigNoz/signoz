@@ -51,8 +51,8 @@ func GetConfigVersion(ctx context.Context, elementType ElementTypeDef, version i
 	return m.GetConfigVersion(ctx, elementType, version)
 }
 
-func GetConfigHistory(ctx context.Context, typ ElementTypeDef) ([]ConfigVersion, error) {
-	return m.GetConfigHistory(ctx, typ)
+func GetConfigHistory(ctx context.Context, typ ElementTypeDef, limit int) ([]ConfigVersion, error) {
+	return m.GetConfigHistory(ctx, typ, limit)
 }
 
 // StartNewVersion launches a new config version for given set of elements
