@@ -30,6 +30,22 @@ export interface PipelineData {
 	tags?: Array<string>; // Tags data is missing in API response
 }
 
+export interface HistoryData {
+	active: boolean;
+	createdAt: string;
+	createdBy: string;
+	createdByName: string;
+	deployStatus: string;
+	deployResult: string;
+	disabled: boolean;
+	elementType: string;
+	id: string;
+	isValid: boolean;
+	lastConf: string;
+	lastHash: string;
+	version: number;
+}
+
 export interface PipelineResponse {
 	active: boolean;
 	createdBy: string;
@@ -37,6 +53,7 @@ export interface PipelineResponse {
 	deployStatus: string;
 	disabled: boolean;
 	elementType: string;
+	history: Array<HistoryData>;
 	id: string;
 	is_valid: boolean;
 	lastConf: string;

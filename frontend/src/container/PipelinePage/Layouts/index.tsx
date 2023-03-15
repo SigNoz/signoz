@@ -1,36 +1,17 @@
-import getPipeline from 'api/pipeline/get';
-import Spinner from 'components/Spinner';
 import React, { useState } from 'react';
-import { useTranslation } from 'react-i18next';
-import { useQuery } from 'react-query';
+import { SuccessResponse } from 'types/api';
+import { PipelineResponse } from 'types/api/pipeline/def';
 
 import PipelineListsView from '../PipelineListsView';
 import CreatePipelineButton from './CreatePipelineButton';
 import PipelinesSearchSection from './PipelinesSearchSection';
 
-function PipelinePageLayout(): JSX.Element {
-	const { t } = useTranslation('common');
+function PipelinePageLayout({
+	refetchPipelineLists,
+	piplineData,
+}: PipelinePageLayoutProps): JSX.Element {
 	const [isActionType, setActionType] = useState<string>();
 	const [isActionMode, setActionMode] = useState<string>('viewing-mode');
-	const {
-		isLoading,
-		data: piplineData,
-		isError,
-		refetch: refetchPipelineLists,
-	} = useQuery(['version', 'latest'], {
-		queryFn: () =>
-			getPipeline({
-				version: 'latest',
-			}),
-	});
-
-	if (isError) {
-		return <div>{piplineData?.error || t('something_went_wrong')}</div>;
-	}
-
-	if (isLoading || !piplineData?.payload) {
-		return <Spinner height="75vh" tip="Loading Pipelines..." />;
-	}
 
 	return (
 		<>
@@ -65,4 +46,10 @@ export enum ActionMode {
 	Editing = 'editing-mode',
 	Deploying = 'deploying-mode',
 }
+
+interface PipelinePageLayoutProps {
+	refetchPipelineLists: VoidFunction;
+	piplineData: SuccessResponse<PipelineResponse>;
+}
+
 export default PipelinePageLayout;

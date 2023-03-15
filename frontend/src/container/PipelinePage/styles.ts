@@ -22,3 +22,11 @@ export const ModalFooterTitle = styled.span`
 	font-size: 0.875rem;
 	line-height: 1.25rem;
 `;
+
+export const HistoryTableWarapper = styled.div`
+	margin-top: 3rem;
+`;
+
+export const IconDataSpan = styled.span`
+	padding: 0.625rem;
+`;

@@ -36,11 +36,12 @@ export function getUpdatedRow<T>(
 export function getTableColumn<T>(
 	columnData: Array<ColumnType<T>>,
 ): Array<ColumnType<T>> {
-	return columnData.map(({ title, key, dataIndex }) => ({
+	return columnData.map(({ title, key, dataIndex, ellipsis }) => ({
 		title,
 		dataIndex,
 		key,
 		align: key === 'id' ? 'right' : 'left',
+		ellipsis,
 		render: (record: Record): JSX.Element => (
 			<TableComponents columnKey={String(key)} record={record} />
 		),
