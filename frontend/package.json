@@ -10,7 +10,7 @@
 		"prettify": "prettier --write .",
 		"lint": "npm run i18n:generate-hash && eslint ./src",
 		"lint:fix": "npm run i18n:generate-hash && eslint ./src --fix",
-		"jest": "jest",
+		"jest": "jest --updateSnapshot",
 		"jest:coverage": "jest --coverage",
 		"jest:watch": "jest --watch",
 		"postinstall": "is-ci || yarn husky:configure",
