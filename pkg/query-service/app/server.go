@@ -150,6 +150,10 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 		return nil, err
 	}
 
+
+	if err := agentConf.Initiate(localDB, "sqlite"); err != nil {
+		return nil, err
+	}
 	return s, nil
 }
 
