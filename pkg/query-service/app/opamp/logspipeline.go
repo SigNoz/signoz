@@ -34,7 +34,7 @@ func UpsertLogsParsingProcessor(ctx context.Context, parsingProcessors map[strin
 			return confHash, err
 		}
 
-		BuildLogParsingProcessors(c, parsingProcessors)
+		buildLogParsingProcessors(c, parsingProcessors)
 
 		// get the processor list
 		logs := c["service"].(map[string]interface{})["pipelines"].(map[string]interface{})["logs"]
@@ -89,7 +89,7 @@ func UpsertLogsParsingProcessor(ctx context.Context, parsingProcessors map[strin
 // check if the processors already exist
 // if yes then update the processor.
 // if something doesn't exists then remove it.
-func BuildLogParsingProcessors(agentConf, parsingProcessors map[string]interface{}) error {
+func buildLogParsingProcessors(agentConf, parsingProcessors map[string]interface{}) error {
 	agentProcessors := agentConf["processors"].(map[string]interface{})
 	exists := map[string]struct{}{}
 	for key, params := range parsingProcessors {
@@ -131,7 +131,7 @@ func buildLogsProcessors(current []interface{}, logsParserPipeline []interface{}
 		existing[name] = i
 	}
 
-	// create mapping from our tracesPipelinePlan (processors managed by us) to position in existing processors (from current config)
+	// create mapping from our logsParserPipeline to position in existing processors (from current config)
 	// this means, if "batch" holds position 3 in the current effective config, and 2 in our config, the map will be [2]: 3
 	specVsExistingMap := map[int]int{}
 

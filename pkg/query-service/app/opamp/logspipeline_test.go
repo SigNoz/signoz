@@ -8,7 +8,7 @@ import (
 	"go.signoz.io/signoz/pkg/query-service/constants"
 )
 
-var BuildProcessorTestData = []struct {
+var buildProcessorTestData = []struct {
 	Name              string
 	agentConf         map[string]interface{}
 	pipelineProcessor map[string]interface{}
@@ -89,9 +89,9 @@ var BuildProcessorTestData = []struct {
 }
 
 func TestBuildLogParsingProcessors(t *testing.T) {
-	for _, test := range BuildProcessorTestData {
+	for _, test := range buildProcessorTestData {
 		Convey(test.Name, t, func() {
-			err := BuildLogParsingProcessors(test.agentConf, test.pipelineProcessor)
+			err := buildLogParsingProcessors(test.agentConf, test.pipelineProcessor)
 			So(err, ShouldBeNil)
 			So(test.agentConf, ShouldResemble, test.outputConf)
 		})
