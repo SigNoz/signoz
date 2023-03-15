@@ -25,22 +25,26 @@ import (
 	licensepkg "go.signoz.io/signoz/ee/query-service/license"
 	"go.signoz.io/signoz/ee/query-service/usage"
 
+	"go.signoz.io/signoz/pkg/query-service/agentConf"
 	baseapp "go.signoz.io/signoz/pkg/query-service/app"
 	"go.signoz.io/signoz/pkg/query-service/app/dashboards"
-	"go.signoz.io/signoz/pkg/query-service/app/explorer"
+	baseexplorer "go.signoz.io/signoz/pkg/query-service/app/explorer"
+	"go.signoz.io/signoz/pkg/query-service/app/opamp"
+	opAmpModel "go.signoz.io/signoz/pkg/query-service/app/opamp/model"
 	baseauth "go.signoz.io/signoz/pkg/query-service/auth"
-	"go.signoz.io/signoz/pkg/query-service/constants"
 	baseconst "go.signoz.io/signoz/pkg/query-service/constants"
 	"go.signoz.io/signoz/pkg/query-service/healthcheck"
 	basealm "go.signoz.io/signoz/pkg/query-service/integrations/alertManager"
 	baseint "go.signoz.io/signoz/pkg/query-service/interfaces"
-	"go.signoz.io/signoz/pkg/query-service/model"
+	basemodel "go.signoz.io/signoz/pkg/query-service/model"
 	pqle "go.signoz.io/signoz/pkg/query-service/pqlEngine"
 	rules "go.signoz.io/signoz/pkg/query-service/rules"
 	"go.signoz.io/signoz/pkg/query-service/telemetry"
 	"go.signoz.io/signoz/pkg/query-service/utils"
 	"go.uber.org/zap"
 )
+
+const AppDbEngine = "sqlite"
 
 type ServerOptions struct {
 	PromConfigPath  string
@@ -85,8 +89,9 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 		return nil, err
 	}
 
+	baseexplorer.InitWithDSN(baseconst.RELATIONAL_DATASOURCE_PATH)
+
 	localDB, err := dashboards.InitDB(baseconst.RELATIONAL_DATASOURCE_PATH)
-	explorer.InitWithDSN(constants.RELATIONAL_DATASOURCE_PATH)
 
 	if err != nil {
 		return nil, err
@@ -124,6 +129,17 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 		serverOptions.DisableRules)
 
 	if err != nil {
+		return nil, err
+	}
+
+	// initiate opamp
+	_, err = opAmpModel.InitDB(baseconst.RELATIONAL_DATASOURCE_PATH)
+	if err != nil {
+		return nil, err
+	}
+
+	// initiate agent config handler
+	if err := agentConf.Initiate(localDB, AppDbEngine); err != nil {
 		return nil, err
 	}
 
@@ -208,7 +224,7 @@ func (s *Server) createPublicServer(apiHandler *api.APIHandler) (*http.Server, e
 
 	r := mux.NewRouter()
 
-	getUserFromRequest := func(r *http.Request) (*model.UserPayload, error) {
+	getUserFromRequest := func(r *http.Request) (*basemodel.UserPayload, error) {
 		patToken := r.Header.Get("SIGNOZ-API-KEY")
 		if len(patToken) > 0 {
 			zap.S().Debugf("Received a non-zero length PAT token")
@@ -299,7 +315,7 @@ func extractDashboardMetaData(path string, r *http.Request) (map[string]interfac
 	pathToExtractBodyFrom := "/api/v2/metrics/query_range"
 
 	data := map[string]interface{}{}
-	var postData *model.QueryRangeParamsV2
+	var postData *basemodel.QueryRangeParamsV2
 
 	if path == pathToExtractBodyFrom && (r.Method == "POST") {
 		if r.Body != nil {
@@ -472,7 +488,7 @@ func (s *Server) Start() error {
 	if port, err := utils.GetPort(s.privateConn.Addr()); err == nil {
 		privatePort = port
 	}
-	fmt.Println("starting private http")
+
 	go func() {
 		zap.S().Info("Starting Private HTTP server", zap.Int("port", privatePort), zap.String("addr", s.serverOptions.PrivateHostPort))
 
@@ -487,6 +503,37 @@ func (s *Server) Start() error {
 		s.unavailableChannel <- healthcheck.Unavailable
 
 	}()
+
+	go func() {
+		zap.S().Info("Starting OpAmp Websocket server", zap.String("addr", baseconst.OpAmpWsEndpoint))
+		err := opamp.InitalizeServer(baseconst.OpAmpWsEndpoint, &opAmpModel.AllAgents)
+		if err != nil {
+			zap.S().Info("opamp ws server failed to start", err)
+			s.unavailableChannel <- healthcheck.Unavailable
+		}
+	}()
+
+	return nil
+}
+
+func (s *Server) Stop() error {
+	if s.httpServer != nil {
+		if err := s.httpServer.Shutdown(context.Background()); err != nil {
+			return err
+		}
+	}
+
+	if s.privateHTTP != nil {
+		if err := s.privateHTTP.Shutdown(context.Background()); err != nil {
+			return err
+		}
+	}
+
+	opamp.StopServer()
+
+	if s.ruleManager != nil {
+		s.ruleManager.Stop()
+	}
 
 	return nil
 }
