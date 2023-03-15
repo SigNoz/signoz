@@ -26,6 +26,9 @@ if (process.env.BUNDLE_ANALYSER === 'true') {
 	plugins.push(new BundleAnalyzerPlugin({ analyzerMode: 'server' }));
 }
 
+/**
+ * @type {import('webpack').Configuration}
+ */
 const config = {
 	mode: 'development',
 	devtool: 'source-map',
@@ -52,6 +55,10 @@ const config = {
 		extensions: ['.ts', '.tsx', '.js', '.jsx'],
 		plugins: [new TsconfigPathsPlugin({})],
 		fallback: { 'process/browser': require.resolve('process/browser') },
+		alias: {
+			'react/jsx-runtime': 'react/jsx-runtime.js',
+			'react/jsx-dev-runtime': 'react/jsx-dev-runtime.js',
+		},
 	},
 	module: {
 		rules: [
