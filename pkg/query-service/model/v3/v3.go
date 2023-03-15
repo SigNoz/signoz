@@ -229,7 +229,6 @@ type FilterAttributeKeyResponse struct {
 type AttributeKeyType string
 
 const (
-	AttributeKeyTypeColumn   AttributeKeyType = "column"
 	AttributeKeyTypeTag      AttributeKeyType = "tag"
 	AttributeKeyTypeResource AttributeKeyType = "resource"
 )
@@ -238,6 +237,7 @@ type AttributeKey struct {
 	Key      string               `json:"key"`
 	DataType AttributeKeyDataType `json:"dataType"`
 	Type     AttributeKeyType     `json:"type"`
+	IsColumn bool                 `json:"isColumn"`
 }
 
 type FilterAttributeValueResponse struct {
@@ -347,7 +347,7 @@ type BuilderQuery struct {
 	AggregateOperator  AggregateOperator `json:"aggregateOperator"`
 	AggregateAttribute string            `json:"aggregateAttribute,omitempty"`
 	Filters            *FilterSet        `json:"filters,omitempty"`
-	GroupBy            []string          `json:"groupBy,omitempty"`
+	GroupBy            []AttributeKey    `json:"groupBy,omitempty"`
 	Expression         string            `json:"expression"`
 	Disabled           bool              `json:"disabled"`
 	Having             []Having          `json:"having,omitempty"`
@@ -356,7 +356,7 @@ type BuilderQuery struct {
 	PageSize           uint64            `json:"pageSize"`
 	OrderBy            []OrderBy         `json:"orderBy,omitempty"`
 	ReduceTo           ReduceToOperator  `json:"reduceTo,omitempty"`
-	SelectColumns      []string          `json:"selectColumns,omitempty"`
+	SelectColumns      []AttributeKey    `json:"selectColumns,omitempty"`
 }
 
 func (b *BuilderQuery) Validate() error {
@@ -388,7 +388,7 @@ func (b *BuilderQuery) Validate() error {
 	}
 	if b.GroupBy != nil {
 		for _, groupBy := range b.GroupBy {
-			if groupBy == "" {
+			if groupBy == (AttributeKey{}) {
 				return fmt.Errorf("group by cannot be empty")
 			}
 		}
@@ -415,20 +415,20 @@ func (f *FilterSet) Validate() error {
 }
 
 type FilterItem struct {
-	Key      string      `json:"key"`
-	Value    interface{} `json:"value"`
-	Operator string      `json:"op"`
+	Key      AttributeKey `json:"key"`
+	Value    interface{}  `json:"value"`
+	Operator string       `json:"op"`
 }
 
 type OrderBy struct {
-	ColumnName string `json:"columnName"`
-	Order      string `json:"order"`
+	ColumnName AttributeKey `json:"columnName"`
+	Order      string       `json:"order"`
 }
 
 type Having struct {
-	ColumnName string      `json:"columnName"`
-	Operator   string      `json:"operator"`
-	Value      interface{} `json:"value"`
+	ColumnName AttributeKey `json:"columnName"`
+	Operator   string       `json:"operator"`
+	Value      interface{}  `json:"value"`
 }
 
 type QueryRangeResponse struct {
