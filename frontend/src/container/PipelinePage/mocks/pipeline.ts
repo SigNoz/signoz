@@ -1,4 +1,4 @@
-import { PipelineData } from 'types/api/pipeline/def';
+import { PipelineData, PipelineResponse } from 'types/api/pipeline/def';
 
 export const configurationVerison = '1.0';
 
@@ -60,7 +60,7 @@ export const pipelineMockData: Array<PipelineData> = [
 	},
 ];
 
-export const pipelineApiResponseMockData = {
+export const pipelineApiResponseMockData: PipelineResponse = {
 	id: '67ace08a-6b6c-4221-ab58-a5d3bd5eb6f2',
 	version: 5,
 	elementType: 'log_pipelines',
@@ -81,12 +81,15 @@ export const pipelineApiResponseMockData = {
 			elementType: 'log_pipelines',
 			createdBy: 'test2@signoz.io',
 			active: false,
-			is_valid: false,
+			isValid: false,
 			disabled: false,
 			deployStatus: 'DEPLOYED',
 			deployResult: 'deploy successful',
 			lastHash: '',
 			lastConf: '',
+			// eslint-disable-next-line sonarjs/no-duplicate-string
+			createdAt: '2021-03-07T16:56:53.36071141Z',
+			createdByName: 'test2',
 		},
 		{
 			id: '9a98673d-b5db-4281-89d3-d85ed9ffe311',
@@ -94,12 +97,14 @@ export const pipelineApiResponseMockData = {
 			elementType: 'log_pipelines',
 			createdBy: 'test3@signoz.io',
 			active: false,
-			is_valid: false,
+			isValid: false,
 			disabled: false,
 			deployStatus: 'DEPLOYED',
 			deployResult: 'deploy successful',
 			lastHash: '',
 			lastConf: '',
+			createdAt: '2021-03-07T16:56:53.36071141Z',
+			createdByName: 'test3',
 		},
 		{
 			id: '9fdb0813-f77f-4837-815e-bb6eedd64f68',
@@ -107,12 +112,14 @@ export const pipelineApiResponseMockData = {
 			elementType: 'log_pipelines',
 			createdBy: 'nityananda+1@signoz.io',
 			active: false,
-			is_valid: false,
+			isValid: false,
 			disabled: false,
 			deployStatus: 'IN_PROGRESS',
 			deployResult: '',
 			lastHash: '',
 			lastConf: '',
+			createdAt: '2021-03-07T16:56:53.36071141Z',
+			createdByName: 'nityananda+1',
 		},
 		{
 			id: '87efb1cf-85b0-4aa4-934e-62a118fa4ec7',
@@ -120,12 +127,14 @@ export const pipelineApiResponseMockData = {
 			elementType: 'log_pipelines',
 			createdBy: 'nityananda+2@signoz.io',
 			active: false,
-			is_valid: false,
+			isValid: false,
 			disabled: false,
 			deployStatus: 'IN_PROGRESS',
 			deployResult: '',
 			lastHash: '',
 			lastConf: '',
+			createdAt: '2021-03-07T16:56:53.36071141Z',
+			createdByName: 'nityananda+2',
 		},
 		{
 			id: '67ace08a-6b6c-4221-ab58-a5d3bd5eb6f2',
@@ -133,12 +142,14 @@ export const pipelineApiResponseMockData = {
 			elementType: 'log_pipelines',
 			createdBy: 'nityananda+4@signoz.io',
 			active: false,
-			is_valid: false,
+			isValid: false,
 			disabled: false,
 			deployStatus: 'IN_PROGRESS',
 			deployResult: '',
 			lastHash: '',
 			lastConf: '',
+			createdAt: '2021-03-07T16:56:53.36071141Z',
+			createdByName: 'nityananda+4',
 		},
 	],
 };

@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import { SuccessResponse } from 'types/api';
 import { PipelineResponse } from 'types/api/pipeline/def';
 
 import PipelineListsView from '../PipelineListsView';
@@ -19,7 +18,7 @@ function PipelinePageLayout({
 				setActionType={setActionType}
 				setActionMode={setActionMode}
 				isActionMode={isActionMode}
-				piplineData={piplineData.payload}
+				piplineData={piplineData}
 			/>
 			<PipelinesSearchSection />
 			<PipelineListsView
@@ -27,7 +26,7 @@ function PipelinePageLayout({
 				setActionType={setActionType}
 				setActionMode={setActionMode}
 				isActionMode={isActionMode}
-				piplineData={piplineData.payload}
+				piplineData={piplineData}
 				refetchPipelineLists={refetchPipelineLists}
 			/>
 		</>
@@ -49,7 +48,7 @@ export enum ActionMode {
 
 interface PipelinePageLayoutProps {
 	refetchPipelineLists: VoidFunction;
-	piplineData: SuccessResponse<PipelineResponse>;
+	piplineData: PipelineResponse;
 }
 
 export default PipelinePageLayout;

@@ -6,6 +6,8 @@ import { Provider } from 'react-redux';
 import { MemoryRouter } from 'react-router-dom';
 import i18n from 'ReactI18';
 import store from 'store';
+import { PipelineResponse } from 'types/api/pipeline/def';
+import { v4 } from 'uuid';
 
 import PipelinePageLayout from '../Layouts';
 import { matchMedia } from './AddNewPipeline.test';
@@ -24,12 +26,33 @@ const queryClient = new QueryClient({
 
 describe('PipelinePage container test', () => {
 	it('should render PipelinePageLayout section', () => {
+		const pipelinedata: PipelineResponse = {
+			active: true,
+			createdBy: 'admin',
+			deployResult: 'random_data',
+			deployStatus: 'random_data',
+			disabled: false,
+			elementType: 'random_data',
+			history: [],
+			id: v4(),
+			is_valid: true,
+			lastConf: 'random_data',
+			lastHash: 'random_data',
+			pipelines: [],
+			version: 1,
+		};
+
+		const refetchPipelineLists = jest.fn();
+
 		const { asFragment } = render(
 			<MemoryRouter>
 				<QueryClientProvider client={queryClient}>
 					<Provider store={store}>
 						<I18nextProvider i18n={i18n}>
-							<PipelinePageLayout />
+							<PipelinePageLayout
+								piplineData={pipelinedata}
+								refetchPipelineLists={refetchPipelineLists}
+							/>
 						</I18nextProvider>
 					</Provider>
 				</QueryClientProvider>

@@ -17,7 +17,7 @@ describe('DraggableTableRow Snapshot test', () => {
 		const { asFragment } = render(
 			<Provider store={store}>
 				<I18nextProvider i18n={i18n}>
-					<DraggableTableRow index={1} moveRow={jest.fn()} />
+					<DraggableTableRow index={2} moveRow={jest.fn()} />
 				</I18nextProvider>
 			</Provider>,
 		);
