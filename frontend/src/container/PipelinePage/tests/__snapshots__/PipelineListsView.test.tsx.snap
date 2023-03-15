@@ -2,7 +2,7 @@
 
 exports[`PipelinePage container test should render AddNewPipeline section 1`] = `<DocumentFragment />`;
 
-exports[`PipelinePage container test should render PipelineListsView section 1`] = `
+exports[`PipelinePage container test should render PipelineListsView section of Pipeline Page 1`] = `
 <DocumentFragment>
   .c3 {
   margin: 0.125rem;
