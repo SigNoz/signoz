@@ -55,10 +55,6 @@ const config = {
 		extensions: ['.ts', '.tsx', '.js', '.jsx'],
 		plugins: [new TsconfigPathsPlugin({})],
 		fallback: { 'process/browser': require.resolve('process/browser') },
-		alias: {
-			'react/jsx-runtime': 'react/jsx-runtime.js',
-			'react/jsx-dev-runtime': 'react/jsx-dev-runtime.js',
-		},
 	},
 	module: {
 		rules: [
