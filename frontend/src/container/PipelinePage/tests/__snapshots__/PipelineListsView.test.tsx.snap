@@ -185,7 +185,7 @@ exports[`PipelinePage container test should render PipelineListsView section of 
                           style="text-align: left;"
                         >
                           <span>
-                            07 March 2023 at 10:26 pm
+                            March 07, 2023 at 10:26 PM
                           </span>
                         </td>
                         <td
@@ -264,7 +264,7 @@ exports[`PipelinePage container test should render PipelineListsView section of 
                           style="text-align: left;"
                         >
                           <span>
-                            07 March 2023 at 10:25 pm
+                            March 07, 2023 at 10:25 PM
                           </span>
                         </td>
                         <td
