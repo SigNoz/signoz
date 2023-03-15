@@ -9,6 +9,7 @@ import (
 	"github.com/prometheus/prometheus/util/stats"
 	am "go.signoz.io/signoz/pkg/query-service/integrations/alertManager"
 	"go.signoz.io/signoz/pkg/query-service/model"
+	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
 )
 
 type Reader interface {
@@ -56,6 +57,9 @@ type Reader interface {
 	GetMetricAutocompleteTagValue(ctx context.Context, params *model.MetricAutocompleteTagParams) (*[]string, *model.ApiError)
 	GetMetricResult(ctx context.Context, query string) ([]*model.Series, error)
 	GetMetricResultEE(ctx context.Context, query string) ([]*model.Series, string, error)
+	GetMetricAggregateAttributes(ctx context.Context, req *v3.AggregateAttributeRequest) (*v3.AggregateAttributeResponse, error)
+	GetMetricAttributeKeys(ctx context.Context, req *v3.FilterAttributeKeyRequest) (*v3.FilterAttributeKeyResponse, error)
+	GetMetricAttributeValues(ctx context.Context, req *v3.FilterAttributeValueRequest) (*v3.FilterAttributeValueResponse, error)
 
 	GetTotalSpans(ctx context.Context) (uint64, error)
 	GetSpansInLastHeartBeatInterval(ctx context.Context) (uint64, error)

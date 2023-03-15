@@ -19,11 +19,13 @@ import (
 	_ "github.com/mattn/go-sqlite3"
 	"github.com/prometheus/prometheus/promql"
 	"go.signoz.io/signoz/pkg/query-service/app/dashboards"
+	"go.signoz.io/signoz/pkg/query-service/app/explorer"
 	"go.signoz.io/signoz/pkg/query-service/app/logs"
 	"go.signoz.io/signoz/pkg/query-service/app/metrics"
 	"go.signoz.io/signoz/pkg/query-service/app/parser"
 	"go.signoz.io/signoz/pkg/query-service/auth"
 	"go.signoz.io/signoz/pkg/query-service/constants"
+	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
 	querytemplate "go.signoz.io/signoz/pkg/query-service/utils/queryTemplate"
 
 	"go.signoz.io/signoz/pkg/query-service/dao"
@@ -229,108 +231,23 @@ func writeHttpResponse(w http.ResponseWriter, data interface{}) {
 	}
 }
 
-func (aH *APIHandler) RegisterMetricsRoutes(router *mux.Router) {
+func (aH *APIHandler) RegisterMetricsRoutes(router *mux.Router, am *AuthMiddleware) {
 	subRouter := router.PathPrefix("/api/v2/metrics").Subrouter()
-	subRouter.HandleFunc("/query_range", ViewAccess(aH.QueryRangeMetricsV2)).Methods(http.MethodPost)
-	subRouter.HandleFunc("/autocomplete/list", ViewAccess(aH.metricAutocompleteMetricName)).Methods(http.MethodGet)
-	subRouter.HandleFunc("/autocomplete/tagKey", ViewAccess(aH.metricAutocompleteTagKey)).Methods(http.MethodGet)
-	subRouter.HandleFunc("/autocomplete/tagValue", ViewAccess(aH.metricAutocompleteTagValue)).Methods(http.MethodGet)
+	subRouter.HandleFunc("/query_range", am.ViewAccess(aH.QueryRangeMetricsV2)).Methods(http.MethodPost)
+	subRouter.HandleFunc("/autocomplete/list", am.ViewAccess(aH.metricAutocompleteMetricName)).Methods(http.MethodGet)
+	subRouter.HandleFunc("/autocomplete/tagKey", am.ViewAccess(aH.metricAutocompleteTagKey)).Methods(http.MethodGet)
+	subRouter.HandleFunc("/autocomplete/tagValue", am.ViewAccess(aH.metricAutocompleteTagValue)).Methods(http.MethodGet)
+}
+
+func (aH *APIHandler) RegisterQueryRangeV3Routes(router *mux.Router, am *AuthMiddleware) {
+	subRouter := router.PathPrefix("/api/v3").Subrouter()
+	subRouter.HandleFunc("/autocomplete/aggregate_attributes", am.ViewAccess(aH.autocompleteAggregateAttributes)).Methods(http.MethodGet)
+	subRouter.HandleFunc("/autocomplete/attribute_keys", am.ViewAccess(aH.autoCompleteAttributeKeys)).Methods(http.MethodGet)
+	subRouter.HandleFunc("/autocomplete/attribute_values", am.ViewAccess(aH.autoCompleteAttributeValues)).Methods(http.MethodGet)
 }
 
 func (aH *APIHandler) Respond(w http.ResponseWriter, data interface{}) {
 	writeHttpResponse(w, data)
-}
-
-func OpenAccess(f func(http.ResponseWriter, *http.Request)) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		f(w, r)
-	}
-}
-
-func ViewAccess(f func(http.ResponseWriter, *http.Request)) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		user, err := auth.GetUserFromRequest(r)
-		if err != nil {
-			RespondError(w, &model.ApiError{
-				Typ: model.ErrorUnauthorized,
-				Err: err,
-			}, nil)
-			return
-		}
-
-		if !(auth.IsViewer(user) || auth.IsEditor(user) || auth.IsAdmin(user)) {
-			RespondError(w, &model.ApiError{
-				Typ: model.ErrorForbidden,
-				Err: errors.New("API is accessible to viewers/editors/admins."),
-			}, nil)
-			return
-		}
-		f(w, r)
-	}
-}
-
-func EditAccess(f func(http.ResponseWriter, *http.Request)) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		user, err := auth.GetUserFromRequest(r)
-		if err != nil {
-			RespondError(w, &model.ApiError{
-				Typ: model.ErrorUnauthorized,
-				Err: err,
-			}, nil)
-			return
-		}
-		if !(auth.IsEditor(user) || auth.IsAdmin(user)) {
-			RespondError(w, &model.ApiError{
-				Typ: model.ErrorForbidden,
-				Err: errors.New("API is accessible to editors/admins."),
-			}, nil)
-			return
-		}
-		f(w, r)
-	}
-}
-
-func SelfAccess(f func(http.ResponseWriter, *http.Request)) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		user, err := auth.GetUserFromRequest(r)
-		if err != nil {
-			RespondError(w, &model.ApiError{
-				Typ: model.ErrorUnauthorized,
-				Err: err,
-			}, nil)
-			return
-		}
-		id := mux.Vars(r)["id"]
-		if !(auth.IsSelfAccessRequest(user, id) || auth.IsAdmin(user)) {
-			RespondError(w, &model.ApiError{
-				Typ: model.ErrorForbidden,
-				Err: errors.New("API is accessible for self access or to the admins."),
-			}, nil)
-			return
-		}
-		f(w, r)
-	}
-}
-
-func AdminAccess(f func(http.ResponseWriter, *http.Request)) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		user, err := auth.GetUserFromRequest(r)
-		if err != nil {
-			RespondError(w, &model.ApiError{
-				Typ: model.ErrorUnauthorized,
-				Err: err,
-			}, nil)
-			return
-		}
-		if !auth.IsAdmin(user) {
-			RespondError(w, &model.ApiError{
-				Typ: model.ErrorForbidden,
-				Err: errors.New("API is accessible to admins only"),
-			}, nil)
-			return
-		}
-		f(w, r)
-	}
 }
 
 // RegisterPrivateRoutes registers routes for this handler on the given router
@@ -339,92 +256,98 @@ func (aH *APIHandler) RegisterPrivateRoutes(router *mux.Router) {
 }
 
 // RegisterRoutes registers routes for this handler on the given router
-func (aH *APIHandler) RegisterRoutes(router *mux.Router) {
-	router.HandleFunc("/api/v1/query_range", ViewAccess(aH.queryRangeMetrics)).Methods(http.MethodGet)
-	router.HandleFunc("/api/v1/query", ViewAccess(aH.queryMetrics)).Methods(http.MethodGet)
-	router.HandleFunc("/api/v1/channels", ViewAccess(aH.listChannels)).Methods(http.MethodGet)
-	router.HandleFunc("/api/v1/channels/{id}", ViewAccess(aH.getChannel)).Methods(http.MethodGet)
-	router.HandleFunc("/api/v1/channels/{id}", AdminAccess(aH.editChannel)).Methods(http.MethodPut)
-	router.HandleFunc("/api/v1/channels/{id}", AdminAccess(aH.deleteChannel)).Methods(http.MethodDelete)
-	router.HandleFunc("/api/v1/channels", EditAccess(aH.createChannel)).Methods(http.MethodPost)
-	router.HandleFunc("/api/v1/testChannel", EditAccess(aH.testChannel)).Methods(http.MethodPost)
+func (aH *APIHandler) RegisterRoutes(router *mux.Router, am *AuthMiddleware) {
+	router.HandleFunc("/api/v1/query_range", am.ViewAccess(aH.queryRangeMetrics)).Methods(http.MethodGet)
+	router.HandleFunc("/api/v1/query", am.ViewAccess(aH.queryMetrics)).Methods(http.MethodGet)
+	router.HandleFunc("/api/v1/channels", am.ViewAccess(aH.listChannels)).Methods(http.MethodGet)
+	router.HandleFunc("/api/v1/channels/{id}", am.ViewAccess(aH.getChannel)).Methods(http.MethodGet)
+	router.HandleFunc("/api/v1/channels/{id}", am.AdminAccess(aH.editChannel)).Methods(http.MethodPut)
+	router.HandleFunc("/api/v1/channels/{id}", am.AdminAccess(aH.deleteChannel)).Methods(http.MethodDelete)
+	router.HandleFunc("/api/v1/channels", am.EditAccess(aH.createChannel)).Methods(http.MethodPost)
+	router.HandleFunc("/api/v1/testChannel", am.EditAccess(aH.testChannel)).Methods(http.MethodPost)
 
-	router.HandleFunc("/api/v1/rules", ViewAccess(aH.listRules)).Methods(http.MethodGet)
-	router.HandleFunc("/api/v1/rules/{id}", ViewAccess(aH.getRule)).Methods(http.MethodGet)
-	router.HandleFunc("/api/v1/rules", EditAccess(aH.createRule)).Methods(http.MethodPost)
-	router.HandleFunc("/api/v1/rules/{id}", EditAccess(aH.editRule)).Methods(http.MethodPut)
-	router.HandleFunc("/api/v1/rules/{id}", EditAccess(aH.deleteRule)).Methods(http.MethodDelete)
-	router.HandleFunc("/api/v1/rules/{id}", EditAccess(aH.patchRule)).Methods(http.MethodPatch)
-	router.HandleFunc("/api/v1/testRule", EditAccess(aH.testRule)).Methods(http.MethodPost)
+	router.HandleFunc("/api/v1/rules", am.ViewAccess(aH.listRules)).Methods(http.MethodGet)
+	router.HandleFunc("/api/v1/rules/{id}", am.ViewAccess(aH.getRule)).Methods(http.MethodGet)
+	router.HandleFunc("/api/v1/rules", am.EditAccess(aH.createRule)).Methods(http.MethodPost)
+	router.HandleFunc("/api/v1/rules/{id}", am.EditAccess(aH.editRule)).Methods(http.MethodPut)
+	router.HandleFunc("/api/v1/rules/{id}", am.EditAccess(aH.deleteRule)).Methods(http.MethodDelete)
+	router.HandleFunc("/api/v1/rules/{id}", am.EditAccess(aH.patchRule)).Methods(http.MethodPatch)
+	router.HandleFunc("/api/v1/testRule", am.EditAccess(aH.testRule)).Methods(http.MethodPost)
 
-	router.HandleFunc("/api/v1/dashboards", ViewAccess(aH.getDashboards)).Methods(http.MethodGet)
-	router.HandleFunc("/api/v1/dashboards", EditAccess(aH.createDashboards)).Methods(http.MethodPost)
-	router.HandleFunc("/api/v1/dashboards/grafana", EditAccess(aH.createDashboardsTransform)).Methods(http.MethodPost)
-	router.HandleFunc("/api/v1/dashboards/{uuid}", ViewAccess(aH.getDashboard)).Methods(http.MethodGet)
-	router.HandleFunc("/api/v1/dashboards/{uuid}", EditAccess(aH.updateDashboard)).Methods(http.MethodPut)
-	router.HandleFunc("/api/v1/dashboards/{uuid}", EditAccess(aH.deleteDashboard)).Methods(http.MethodDelete)
-	router.HandleFunc("/api/v1/variables/query", ViewAccess(aH.queryDashboardVars)).Methods(http.MethodGet)
-	router.HandleFunc("/api/v2/variables/query", ViewAccess(aH.queryDashboardVarsV2)).Methods(http.MethodPost)
+	router.HandleFunc("/api/v1/dashboards", am.ViewAccess(aH.getDashboards)).Methods(http.MethodGet)
+	router.HandleFunc("/api/v1/dashboards", am.EditAccess(aH.createDashboards)).Methods(http.MethodPost)
+	router.HandleFunc("/api/v1/dashboards/grafana", am.EditAccess(aH.createDashboardsTransform)).Methods(http.MethodPost)
+	router.HandleFunc("/api/v1/dashboards/{uuid}", am.ViewAccess(aH.getDashboard)).Methods(http.MethodGet)
+	router.HandleFunc("/api/v1/dashboards/{uuid}", am.EditAccess(aH.updateDashboard)).Methods(http.MethodPut)
+	router.HandleFunc("/api/v1/dashboards/{uuid}", am.EditAccess(aH.deleteDashboard)).Methods(http.MethodDelete)
+	router.HandleFunc("/api/v1/variables/query", am.ViewAccess(aH.queryDashboardVars)).Methods(http.MethodGet)
+	router.HandleFunc("/api/v2/variables/query", am.ViewAccess(aH.queryDashboardVarsV2)).Methods(http.MethodPost)
 
-	router.HandleFunc("/api/v1/feedback", OpenAccess(aH.submitFeedback)).Methods(http.MethodPost)
+	router.HandleFunc("/api/v1/explorer/queries", am.ViewAccess(aH.getExplorerQueries)).Methods(http.MethodGet)
+	router.HandleFunc("/api/v1/explorer/queries", am.EditAccess(aH.createExplorerQueries)).Methods(http.MethodPost)
+	router.HandleFunc("/api/v1/explorer/queries/{queryId}", am.ViewAccess(aH.getExplorerQuery)).Methods(http.MethodGet)
+	router.HandleFunc("/api/v1/explorer/queries/{queryId}", am.EditAccess(aH.updateExplorerQuery)).Methods(http.MethodPut)
+	router.HandleFunc("/api/v1/explorer/queries/{queryId}", am.EditAccess(aH.deleteExplorerQuery)).Methods(http.MethodDelete)
+
+	router.HandleFunc("/api/v1/feedback", am.OpenAccess(aH.submitFeedback)).Methods(http.MethodPost)
 	// router.HandleFunc("/api/v1/get_percentiles", aH.getApplicationPercentiles).Methods(http.MethodGet)
-	router.HandleFunc("/api/v1/services", ViewAccess(aH.getServices)).Methods(http.MethodPost)
-	router.HandleFunc("/api/v1/services/list", ViewAccess(aH.getServicesList)).Methods(http.MethodGet)
-	router.HandleFunc("/api/v1/service/overview", ViewAccess(aH.getServiceOverview)).Methods(http.MethodPost)
-	router.HandleFunc("/api/v1/service/top_operations", ViewAccess(aH.getTopOperations)).Methods(http.MethodPost)
-	router.HandleFunc("/api/v1/service/top_level_operations", ViewAccess(aH.getServicesTopLevelOps)).Methods(http.MethodPost)
-	router.HandleFunc("/api/v1/traces/{traceId}", ViewAccess(aH.SearchTraces)).Methods(http.MethodGet)
-	router.HandleFunc("/api/v1/usage", ViewAccess(aH.getUsage)).Methods(http.MethodGet)
-	router.HandleFunc("/api/v1/dependency_graph", ViewAccess(aH.dependencyGraph)).Methods(http.MethodPost)
-	router.HandleFunc("/api/v1/settings/ttl", AdminAccess(aH.setTTL)).Methods(http.MethodPost)
-	router.HandleFunc("/api/v1/settings/ttl", ViewAccess(aH.getTTL)).Methods(http.MethodGet)
+	router.HandleFunc("/api/v1/services", am.ViewAccess(aH.getServices)).Methods(http.MethodPost)
+	router.HandleFunc("/api/v1/services/list", am.ViewAccess(aH.getServicesList)).Methods(http.MethodGet)
+	router.HandleFunc("/api/v1/service/overview", am.ViewAccess(aH.getServiceOverview)).Methods(http.MethodPost)
+	router.HandleFunc("/api/v1/service/top_operations", am.ViewAccess(aH.getTopOperations)).Methods(http.MethodPost)
+	router.HandleFunc("/api/v1/service/top_level_operations", am.ViewAccess(aH.getServicesTopLevelOps)).Methods(http.MethodPost)
+	router.HandleFunc("/api/v1/traces/{traceId}", am.ViewAccess(aH.SearchTraces)).Methods(http.MethodGet)
+	router.HandleFunc("/api/v1/usage", am.ViewAccess(aH.getUsage)).Methods(http.MethodGet)
+	router.HandleFunc("/api/v1/dependency_graph", am.ViewAccess(aH.dependencyGraph)).Methods(http.MethodPost)
+	router.HandleFunc("/api/v1/settings/ttl", am.AdminAccess(aH.setTTL)).Methods(http.MethodPost)
+	router.HandleFunc("/api/v1/settings/ttl", am.ViewAccess(aH.getTTL)).Methods(http.MethodGet)
 
-	router.HandleFunc("/api/v1/version", OpenAccess(aH.getVersion)).Methods(http.MethodGet)
-	router.HandleFunc("/api/v1/featureFlags", OpenAccess(aH.getFeatureFlags)).Methods(http.MethodGet)
-	router.HandleFunc("/api/v1/configs", OpenAccess(aH.getConfigs)).Methods(http.MethodGet)
-	router.HandleFunc("/api/v1/health", OpenAccess(aH.getHealth)).Methods(http.MethodGet)
+	router.HandleFunc("/api/v1/version", am.OpenAccess(aH.getVersion)).Methods(http.MethodGet)
+	router.HandleFunc("/api/v1/featureFlags", am.OpenAccess(aH.getFeatureFlags)).Methods(http.MethodGet)
+	router.HandleFunc("/api/v1/configs", am.OpenAccess(aH.getConfigs)).Methods(http.MethodGet)
+	router.HandleFunc("/api/v1/health", am.OpenAccess(aH.getHealth)).Methods(http.MethodGet)
 
-	router.HandleFunc("/api/v1/getSpanFilters", ViewAccess(aH.getSpanFilters)).Methods(http.MethodPost)
-	router.HandleFunc("/api/v1/getTagFilters", ViewAccess(aH.getTagFilters)).Methods(http.MethodPost)
-	router.HandleFunc("/api/v1/getFilteredSpans", ViewAccess(aH.getFilteredSpans)).Methods(http.MethodPost)
-	router.HandleFunc("/api/v1/getFilteredSpans/aggregates", ViewAccess(aH.getFilteredSpanAggregates)).Methods(http.MethodPost)
-	router.HandleFunc("/api/v1/getTagValues", ViewAccess(aH.getTagValues)).Methods(http.MethodPost)
+	router.HandleFunc("/api/v1/getSpanFilters", am.ViewAccess(aH.getSpanFilters)).Methods(http.MethodPost)
+	router.HandleFunc("/api/v1/getTagFilters", am.ViewAccess(aH.getTagFilters)).Methods(http.MethodPost)
+	router.HandleFunc("/api/v1/getFilteredSpans", am.ViewAccess(aH.getFilteredSpans)).Methods(http.MethodPost)
+	router.HandleFunc("/api/v1/getFilteredSpans/aggregates", am.ViewAccess(aH.getFilteredSpanAggregates)).Methods(http.MethodPost)
+	router.HandleFunc("/api/v1/getTagValues", am.ViewAccess(aH.getTagValues)).Methods(http.MethodPost)
 
-	router.HandleFunc("/api/v1/listErrors", ViewAccess(aH.listErrors)).Methods(http.MethodGet)
-	router.HandleFunc("/api/v1/countErrors", ViewAccess(aH.countErrors)).Methods(http.MethodGet)
-	router.HandleFunc("/api/v1/errorFromErrorID", ViewAccess(aH.getErrorFromErrorID)).Methods(http.MethodGet)
-	router.HandleFunc("/api/v1/errorFromGroupID", ViewAccess(aH.getErrorFromGroupID)).Methods(http.MethodGet)
-	router.HandleFunc("/api/v1/nextPrevErrorIDs", ViewAccess(aH.getNextPrevErrorIDs)).Methods(http.MethodGet)
+	router.HandleFunc("/api/v1/listErrors", am.ViewAccess(aH.listErrors)).Methods(http.MethodGet)
+	router.HandleFunc("/api/v1/countErrors", am.ViewAccess(aH.countErrors)).Methods(http.MethodGet)
+	router.HandleFunc("/api/v1/errorFromErrorID", am.ViewAccess(aH.getErrorFromErrorID)).Methods(http.MethodGet)
+	router.HandleFunc("/api/v1/errorFromGroupID", am.ViewAccess(aH.getErrorFromGroupID)).Methods(http.MethodGet)
+	router.HandleFunc("/api/v1/nextPrevErrorIDs", am.ViewAccess(aH.getNextPrevErrorIDs)).Methods(http.MethodGet)
 
-	router.HandleFunc("/api/v1/disks", ViewAccess(aH.getDisks)).Methods(http.MethodGet)
+	router.HandleFunc("/api/v1/disks", am.ViewAccess(aH.getDisks)).Methods(http.MethodGet)
 
 	// === Authentication APIs ===
-	router.HandleFunc("/api/v1/invite", AdminAccess(aH.inviteUser)).Methods(http.MethodPost)
-	router.HandleFunc("/api/v1/invite/{token}", OpenAccess(aH.getInvite)).Methods(http.MethodGet)
-	router.HandleFunc("/api/v1/invite/{email}", AdminAccess(aH.revokeInvite)).Methods(http.MethodDelete)
-	router.HandleFunc("/api/v1/invite", AdminAccess(aH.listPendingInvites)).Methods(http.MethodGet)
+	router.HandleFunc("/api/v1/invite", am.AdminAccess(aH.inviteUser)).Methods(http.MethodPost)
+	router.HandleFunc("/api/v1/invite/{token}", am.OpenAccess(aH.getInvite)).Methods(http.MethodGet)
+	router.HandleFunc("/api/v1/invite/{email}", am.AdminAccess(aH.revokeInvite)).Methods(http.MethodDelete)
+	router.HandleFunc("/api/v1/invite", am.AdminAccess(aH.listPendingInvites)).Methods(http.MethodGet)
 
-	router.HandleFunc("/api/v1/register", OpenAccess(aH.registerUser)).Methods(http.MethodPost)
-	router.HandleFunc("/api/v1/login", OpenAccess(aH.loginUser)).Methods(http.MethodPost)
+	router.HandleFunc("/api/v1/register", am.OpenAccess(aH.registerUser)).Methods(http.MethodPost)
+	router.HandleFunc("/api/v1/login", am.OpenAccess(aH.loginUser)).Methods(http.MethodPost)
 
-	router.HandleFunc("/api/v1/user", AdminAccess(aH.listUsers)).Methods(http.MethodGet)
-	router.HandleFunc("/api/v1/user/{id}", SelfAccess(aH.getUser)).Methods(http.MethodGet)
-	router.HandleFunc("/api/v1/user/{id}", SelfAccess(aH.editUser)).Methods(http.MethodPut)
-	router.HandleFunc("/api/v1/user/{id}", AdminAccess(aH.deleteUser)).Methods(http.MethodDelete)
+	router.HandleFunc("/api/v1/user", am.AdminAccess(aH.listUsers)).Methods(http.MethodGet)
+	router.HandleFunc("/api/v1/user/{id}", am.SelfAccess(aH.getUser)).Methods(http.MethodGet)
+	router.HandleFunc("/api/v1/user/{id}", am.SelfAccess(aH.editUser)).Methods(http.MethodPut)
+	router.HandleFunc("/api/v1/user/{id}", am.AdminAccess(aH.deleteUser)).Methods(http.MethodDelete)
 
-	router.HandleFunc("/api/v1/user/{id}/flags", SelfAccess(aH.patchUserFlag)).Methods(http.MethodPatch)
+	router.HandleFunc("/api/v1/user/{id}/flags", am.SelfAccess(aH.patchUserFlag)).Methods(http.MethodPatch)
 
-	router.HandleFunc("/api/v1/rbac/role/{id}", SelfAccess(aH.getRole)).Methods(http.MethodGet)
-	router.HandleFunc("/api/v1/rbac/role/{id}", AdminAccess(aH.editRole)).Methods(http.MethodPut)
+	router.HandleFunc("/api/v1/rbac/role/{id}", am.SelfAccess(aH.getRole)).Methods(http.MethodGet)
+	router.HandleFunc("/api/v1/rbac/role/{id}", am.AdminAccess(aH.editRole)).Methods(http.MethodPut)
 
-	router.HandleFunc("/api/v1/org", AdminAccess(aH.getOrgs)).Methods(http.MethodGet)
-	router.HandleFunc("/api/v1/org/{id}", AdminAccess(aH.getOrg)).Methods(http.MethodGet)
-	router.HandleFunc("/api/v1/org/{id}", AdminAccess(aH.editOrg)).Methods(http.MethodPut)
-	router.HandleFunc("/api/v1/orgUsers/{id}", AdminAccess(aH.getOrgUsers)).Methods(http.MethodGet)
+	router.HandleFunc("/api/v1/org", am.AdminAccess(aH.getOrgs)).Methods(http.MethodGet)
+	router.HandleFunc("/api/v1/org/{id}", am.AdminAccess(aH.getOrg)).Methods(http.MethodGet)
+	router.HandleFunc("/api/v1/org/{id}", am.AdminAccess(aH.editOrg)).Methods(http.MethodPut)
+	router.HandleFunc("/api/v1/orgUsers/{id}", am.AdminAccess(aH.getOrgUsers)).Methods(http.MethodGet)
 
-	router.HandleFunc("/api/v1/getResetPasswordToken/{id}", AdminAccess(aH.getResetPasswordToken)).Methods(http.MethodGet)
-	router.HandleFunc("/api/v1/resetPassword", OpenAccess(aH.resetPassword)).Methods(http.MethodPost)
-	router.HandleFunc("/api/v1/changePassword/{id}", SelfAccess(aH.changePassword)).Methods(http.MethodPost)
+	router.HandleFunc("/api/v1/getResetPasswordToken/{id}", am.AdminAccess(aH.getResetPasswordToken)).Methods(http.MethodGet)
+	router.HandleFunc("/api/v1/resetPassword", am.OpenAccess(aH.resetPassword)).Methods(http.MethodPost)
+	router.HandleFunc("/api/v1/changePassword/{id}", am.SelfAccess(aH.changePassword)).Methods(http.MethodPost)
 }
 
 func Intersection(a, b []int) (c []int) {
@@ -1704,7 +1627,7 @@ func (aH *APIHandler) getHealth(w http.ResponseWriter, r *http.Request) {
 	if ok {
 		err := aH.reader.CheckClickHouse(r.Context())
 		if err != nil {
-			aH.HandleError(w, err, http.StatusServiceUnavailable)
+			RespondError(w, &model.ApiError{Err: err, Typ: model.ErrorStatusServiceUnavailable}, nil)
 			return
 		}
 	}
@@ -2221,13 +2144,13 @@ func (aH *APIHandler) WriteJSON(w http.ResponseWriter, r *http.Request, response
 }
 
 // logs
-func (aH *APIHandler) RegisterLogsRoutes(router *mux.Router) {
+func (aH *APIHandler) RegisterLogsRoutes(router *mux.Router, am *AuthMiddleware) {
 	subRouter := router.PathPrefix("/api/v1/logs").Subrouter()
-	subRouter.HandleFunc("", ViewAccess(aH.getLogs)).Methods(http.MethodGet)
-	subRouter.HandleFunc("/tail", ViewAccess(aH.tailLogs)).Methods(http.MethodGet)
-	subRouter.HandleFunc("/fields", ViewAccess(aH.logFields)).Methods(http.MethodGet)
-	subRouter.HandleFunc("/fields", EditAccess(aH.logFieldUpdate)).Methods(http.MethodPost)
-	subRouter.HandleFunc("/aggregate", ViewAccess(aH.logAggregate)).Methods(http.MethodGet)
+	subRouter.HandleFunc("", am.ViewAccess(aH.getLogs)).Methods(http.MethodGet)
+	subRouter.HandleFunc("/tail", am.ViewAccess(aH.tailLogs)).Methods(http.MethodGet)
+	subRouter.HandleFunc("/fields", am.ViewAccess(aH.logFields)).Methods(http.MethodGet)
+	subRouter.HandleFunc("/fields", am.EditAccess(aH.logFieldUpdate)).Methods(http.MethodPost)
+	subRouter.HandleFunc("/aggregate", am.ViewAccess(aH.logAggregate)).Methods(http.MethodGet)
 }
 
 func (aH *APIHandler) logFields(w http.ResponseWriter, r *http.Request) {
@@ -2337,4 +2260,167 @@ func (aH *APIHandler) logAggregate(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	aH.WriteJSON(w, r, res)
+}
+
+func (aH *APIHandler) getExplorerQueries(w http.ResponseWriter, r *http.Request) {
+	queries, err := explorer.GetQueries()
+	if err != nil {
+		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, nil)
+		return
+	}
+	aH.Respond(w, queries)
+}
+
+func (aH *APIHandler) createExplorerQueries(w http.ResponseWriter, r *http.Request) {
+	var query v3.ExplorerQuery
+	err := json.NewDecoder(r.Body).Decode(&query)
+	if err != nil {
+		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
+		return
+	}
+	// validate the query
+	if err := query.Validate(); err != nil {
+		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
+		return
+	}
+	uuid, err := explorer.CreateQuery(query)
+	if err != nil {
+		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, nil)
+		return
+	}
+
+	aH.Respond(w, uuid)
+}
+
+func (aH *APIHandler) getExplorerQuery(w http.ResponseWriter, r *http.Request) {
+	queryID := mux.Vars(r)["queryId"]
+	query, err := explorer.GetQuery(queryID)
+	if err != nil {
+		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, nil)
+		return
+	}
+
+	aH.Respond(w, query)
+}
+
+func (aH *APIHandler) updateExplorerQuery(w http.ResponseWriter, r *http.Request) {
+	queryID := mux.Vars(r)["queryId"]
+	var query v3.ExplorerQuery
+	err := json.NewDecoder(r.Body).Decode(&query)
+	if err != nil {
+		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
+		return
+	}
+	// validate the query
+	if err := query.Validate(); err != nil {
+		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
+		return
+	}
+
+	err = explorer.UpdateQuery(queryID, query)
+	if err != nil {
+		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, nil)
+		return
+	}
+
+	aH.Respond(w, query)
+}
+
+func (aH *APIHandler) deleteExplorerQuery(w http.ResponseWriter, r *http.Request) {
+
+	queryID := mux.Vars(r)["queryId"]
+	err := explorer.DeleteQuery(queryID)
+	if err != nil {
+		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, nil)
+		return
+	}
+
+	aH.Respond(w, nil)
+}
+
+func (aH *APIHandler) autocompleteAggregateAttributes(w http.ResponseWriter, r *http.Request) {
+	var response *v3.AggregateAttributeResponse
+	req, err := parseAggregateAttributeRequest(r)
+
+	if err != nil {
+		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
+		return
+	}
+
+	switch req.DataSource {
+	case v3.DataSourceMetrics:
+		response, err = aH.reader.GetMetricAggregateAttributes(r.Context(), req)
+	case v3.DataSourceLogs:
+		// TODO: implement
+	case v3.DataSourceTraces:
+		// TODO: implement
+	default:
+		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: fmt.Errorf("invalid data source")}, nil)
+		return
+	}
+
+	if err != nil {
+		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
+		return
+	}
+
+	aH.Respond(w, response)
+}
+
+func (aH *APIHandler) autoCompleteAttributeKeys(w http.ResponseWriter, r *http.Request) {
+	var response *v3.FilterAttributeKeyResponse
+	req, err := parseFilterAttributeKeyRequest(r)
+
+	if err != nil {
+		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
+		return
+	}
+
+	switch req.DataSource {
+	case v3.DataSourceMetrics:
+		response, err = aH.reader.GetMetricAttributeKeys(r.Context(), req)
+	case v3.DataSourceLogs:
+		// TODO: implement
+	case v3.DataSourceTraces:
+		// TODO: implement
+	default:
+		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: fmt.Errorf("invalid data source")}, nil)
+		return
+	}
+
+	if err != nil {
+		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
+		return
+	}
+
+	aH.Respond(w, response)
+}
+
+func (aH *APIHandler) autoCompleteAttributeValues(w http.ResponseWriter, r *http.Request) {
+	var response *v3.FilterAttributeValueResponse
+	req, err := parseFilterAttributeValueRequest(r)
+
+	if err != nil {
+		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
+		return
+	}
+
+	switch req.DataSource {
+	case v3.DataSourceMetrics:
+		response, err = aH.reader.GetMetricAttributeValues(r.Context(), req)
+	case v3.DataSourceLogs:
+		// TODO: implement
+	case v3.DataSourceTraces:
+		// TODO: implement
+	default:
+		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: fmt.Errorf("invalid data source")}, nil)
+		return
+	}
+
+	if err != nil {
+		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
+		return
+	}
+
+	aH.Respond(w, response)
 }
