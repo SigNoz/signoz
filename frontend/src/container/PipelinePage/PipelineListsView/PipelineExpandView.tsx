@@ -5,6 +5,7 @@ import { DndProvider } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
 import { useTranslation } from 'react-i18next';
 import { PipelineData, ProcessorData } from 'types/api/pipeline/def';
+import { v4 } from 'uuid';
 
 import { tableComponents } from '../config';
 import { ActionMode, ActionType } from '../Layouts';
@@ -198,7 +199,7 @@ function PipelineExpandView({
 		} as React.HTMLAttributes<unknown>);
 
 	return (
-		<DndProvider backend={HTML5Backend}>
+		<DndProvider backend={HTML5Backend} key={v4()}>
 			<StyledTable
 				isDarkMode={isDarkMode}
 				showHeader={false}

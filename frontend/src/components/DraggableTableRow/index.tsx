@@ -1,5 +1,6 @@
 import React, { useRef } from 'react';
 import { useDrag, useDrop } from 'react-dnd';
+import { v4 } from 'uuid';
 
 import { dragHandler, dropHandler } from './utils';
 
@@ -27,6 +28,7 @@ function DraggableTableRow({
 
 	return (
 		<tr
+			key={v4()}
 			ref={ref}
 			className={className}
 			style={{ ...style }}

@@ -11,6 +11,7 @@ import {
 	PipelineResponse,
 	ProcessorData,
 } from 'types/api/pipeline/def';
+import { v4 } from 'uuid';
 
 import { tableComponents } from '../config';
 import { ActionMode, ActionType } from '../Layouts';
@@ -363,7 +364,7 @@ function PipelineListsView({
 	);
 
 	return (
-		<div>
+		<>
 			{contextHolder}
 			<AddNewPipeline
 				isActionType={isActionType}
@@ -386,7 +387,7 @@ function PipelineListsView({
 					isActionMode={isActionMode}
 					verison={piplineData.version}
 				/>
-				<DndProvider backend={HTML5Backend}>
+				<DndProvider key={v4()} backend={HTML5Backend}>
 					<Table
 						columns={columns}
 						expandedRowRender={expandedRowView}
@@ -408,7 +409,7 @@ function PipelineListsView({
 					/>
 				)}
 			</Container>
-		</div>
+		</>
 	);
 }
 
