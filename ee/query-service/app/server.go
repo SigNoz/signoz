@@ -86,7 +86,7 @@ func (s Server) HealthCheckStatus() chan healthcheck.Status {
 // NewServer creates and initializes Server
 func NewServer(serverOptions *ServerOptions) (*Server, error) {
 
-	modelDao, err := dao.InitDao(AppDbEngine, baseconst.RELATIONAL_DATASOURCE_PATH)
+	modelDao, err := dao.InitDao("sqlite", baseconst.RELATIONAL_DATASOURCE_PATH)
 	if err != nil {
 		return nil, err
 	}
@@ -158,7 +158,7 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 	}
 
 	// start the usagemanager
-	usageManager, err := usage.New(AppDbEngine, localDB, lm.GetRepo(), reader.GetConn())
+	usageManager, err := usage.New("sqlite", localDB, lm.GetRepo(), reader.GetConn())
 	if err != nil {
 		return nil, err
 	}
@@ -225,7 +225,7 @@ func (s *Server) createPrivateServer(apiHandler *api.APIHandler) (*http.Server, 
 		// ip here for alert manager
 		AllowedOrigins: []string{"*"},
 		AllowedMethods: []string{"GET", "DELETE", "POST", "PUT", "PATCH"},
-		AllowedHeaders: []string{"Accept", "Authorization", "Content-Type"},
+		AllowedHeaders: []string{"Accept", "Authorization", "Content-Type", "SIGNOZ-API-KEY"},
 	})
 
 	handler := c.Handler(r)
@@ -258,7 +258,6 @@ func (s *Server) createPublicServer(apiHandler *api.APIHandler) (*http.Server, e
 		}
 		return baseauth.GetUserFromRequest(r)
 	}
-
 	am := baseapp.NewAuthMiddleware(getUserFromRequest)
 	r.Use(setTimeoutMiddleware)
 	r.Use(s.analyticsMiddleware)
@@ -267,6 +266,7 @@ func (s *Server) createPublicServer(apiHandler *api.APIHandler) (*http.Server, e
 	apiHandler.RegisterRoutes(r, am)
 	apiHandler.RegisterMetricsRoutes(r, am)
 	apiHandler.RegisterLogsRoutes(r, am)
+	apiHandler.RegisterQueryRangeV3Routes(r, am)
 
 	c := cors.New(cors.Options{
 		AllowedOrigins: []string{"*"},

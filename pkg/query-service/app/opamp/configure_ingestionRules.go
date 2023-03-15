@@ -9,6 +9,7 @@ import (
 	"github.com/open-telemetry/opamp-go/protobufs"
 	"go.opentelemetry.io/collector/confmap"
 	model "go.signoz.io/signoz/pkg/query-service/app/opamp/model"
+	"go.signoz.io/signoz/pkg/query-service/app/opamp/otelconfig"
 	"go.uber.org/zap"
 )
 
@@ -19,11 +20,12 @@ func UpsertControlProcessors(ctx context.Context, signal string, processors map[
 	// to pipeline. To enable or disable processors from pipeline, call
 	// AddToTracePipeline() or RemoveFromTracesPipeline() prior to calling
 	// this method
-	zap.S().Debugf("initiating deployment config", signal, processors)
+
+	zap.S().Debug("initiating ingestion rules deployment config", signal, processors)
 
 	if signal != string(Metrics) && signal != string(Traces) {
-		zap.S().Error("received invalid signal int UpsertControllProcessors", signal)
-		fnerr = fmt.Errorf("invalid kind of target to deploy processor")
+		zap.S().Error("received invalid signal int UpsertControlProcessors", signal)
+		fnerr = fmt.Errorf("signal not supported in ingestion rules: %s", signal)
 		return
 	}
 
@@ -38,15 +40,15 @@ func UpsertControlProcessors(ctx context.Context, signal string, processors map[
 		return
 	}
 
-	// flag to indicate if LB needs to be setup
-	withLB := false
-	if len(agents) > 1 {
-		withLB = true
+	if len(agents) > 1 && signal == string(Traces) {
+		zap.S().Debug("found multiple agents. this feature is not supported for traces pipeline (sampling rules)")
+		fnerr = fmt.Errorf("multiple agents not supported in sampling rules")
+		return
 	}
 
 	for _, agent := range agents {
 
-		agenthash, err := addIngestionControlToAgent(agent, signal, processors, withLB)
+		agenthash, err := addIngestionControlToAgent(agent, signal, processors, false)
 		if err != nil {
 			zap.S().Error("failed to push ingestion rules config to agent", agent.ID, err)
 			continue
@@ -63,30 +65,6 @@ func UpsertControlProcessors(ctx context.Context, signal string, processors map[
 	return hash, nil
 }
 
-func checkPipelineExists(agentConf *confmap.Conf, name string) bool {
-	service := agentConf.Get("service")
-
-	pipeline := service.(map[string]interface{})["pipelines"].(map[string]interface{})
-	if _, ok := pipeline[name]; !ok {
-		return false
-	}
-	return true
-}
-
-func checkExporterExists(agentConf *confmap.Conf, signal string, name string) bool {
-	service := agentConf.Get("service")
-	signalSpec := service.(map[string]interface{})["pipelines"].(map[string]interface{})[signal]
-	exporters := signalSpec.(map[string]interface{})["exporters"].([]interface{})
-	var found bool
-	for _, e := range exporters {
-		if e == name {
-			found = true
-		}
-	}
-
-	return found
-}
-
 // addIngestionControlToAgent adds ingestion contorl rules to agent config
 func addIngestionControlToAgent(agent *model.Agent, signal string, processors map[string]interface{}, withLB bool) (string, error) {
 	confHash := ""
@@ -98,48 +76,10 @@ func addIngestionControlToAgent(agent *model.Agent, signal string, processors ma
 
 	agentConf := confmap.NewFromStringMap(c)
 
-	// check if LB needs to be configured
-	if signal == string(Traces) && withLB {
-
-		// check if lb pipeline is setup for lb agents, here we assume
-		// that otlp_internal will exist implicitly if traces/lb pipeline exists
-		if agent.CanLB && !checkPipelineExists(agentConf, TracesLbPipelineName) {
-			zap.S().Debugf("LB not configured for agent. Preparing the lb exporter spec", agent.ID)
-			serviceConf, err := prepareLbAgentSpec(agentConf)
-			if err != nil {
-				zap.S().Error("failed to prepare lb exporter spec for agent", agent.ID, err)
-				return confHash, err
-			}
-			if err := agentConf.Merge(serviceConf); err != nil {
-				zap.S().Error("failed to merge lb exporter spec for agent", agent.ID, err)
-				return confHash, err
-			}
-		}
-
-		// check if otlp_internal is setup for non-lb agents
-		if !agent.CanLB && !checkExporterExists(agentConf, string(Traces), OtlpInternalReceiver) {
-			zap.S().Debugf("OTLP internal not configured for agent. Preparing the lb exporter spec", agent.ID)
-			serviceConf, err := prepareNonLbAgentSpec(agentConf)
-			if err != nil {
-				zap.S().Error("failed to prepare OTLP internal receiver spec for agent", agent.ID, err)
-				return confHash, err
-			}
-			if err := agentConf.Merge(serviceConf); err != nil {
-				zap.S().Error("failed to merge OTLP internal receiver spec for agent", agent.ID, err)
-				return confHash, err
-			}
-		}
-	}
-
-	// add ingestion control
-	serviceConf, err := prepareControlProcesorsSpec(agentConf, Signal(signal), processors)
+	// add ingestion control spec
+	err = makeIngestionControlSpec(agentConf, Signal(signal), processors)
 	if err != nil {
 		zap.S().Error("failed to prepare ingestion control processors for agent ", agent.ID, err)
-		return confHash, err
-	}
-
-	err = agentConf.Merge(serviceConf)
-	if err != nil {
 		return confHash, err
 	}
 
@@ -180,49 +120,22 @@ func addIngestionControlToAgent(agent *model.Agent, signal string, processors ma
 }
 
 // prepare spec to introduce ingestion control in agent conf
-func prepareControlProcesorsSpec(agentConf *confmap.Conf, signal Signal, processors map[string]interface{}) (*confmap.Conf, error) {
-	agentProcessors := agentConf.Get("processors").(map[string]interface{})
-
-	for key, params := range processors {
-		agentProcessors[key] = params
-	}
-
-	updatedProcessors := map[string]interface{}{
-		"processors": agentProcessors,
-	}
-
-	updatedProcessorConf := confmap.NewFromStringMap(updatedProcessors)
-
-	// upsert changed processor parameters in config
-	err := agentConf.Merge(updatedProcessorConf)
-	if err != nil {
-		return agentConf, err
-	}
+func makeIngestionControlSpec(agentConf *confmap.Conf, signal Signal, processors map[string]interface{}) error {
+	configParser := otelconfig.NewConfigParser(agentConf)
+	configParser.UpdateProcessors(processors)
 
 	// edit pipeline if processor is missing
-	service := agentConf.Get("service")
-
-	signalSpec := service.(map[string]interface{})["pipelines"].(map[string]interface{})[string(signal)]
-	currentPipeline := signalSpec.(map[string]interface{})["processors"].([]interface{})
+	currentPipeline := configParser.PipelineProcessors(string(signal))
 
 	// merge tracesPipelinePlan with current pipeline
 	mergedPipeline, err := buildPipeline(signal, currentPipeline)
 	if err != nil {
 		zap.S().Error("failed to build pipeline", signal, err)
-		return agentConf, err
+		return err
 	}
 
 	// add merged pipeline to the service
-	// todo(): check if this overwrites other processors
-	serviceConf := map[string]interface{}{
-		"service": map[string]interface{}{
-			"pipelines": map[string]interface{}{
-				string(signal): map[string]interface{}{
-					"processors": mergedPipeline,
-				},
-			},
-		},
-	}
+	configParser.UpdateProcsInPipeline(string(signal), mergedPipeline)
 
-	return confmap.NewFromStringMap(serviceConf), nil
+	return nil
 }

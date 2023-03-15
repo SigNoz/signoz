@@ -9,7 +9,6 @@ import (
 	"github.com/google/uuid"
 	"github.com/jmoiron/sqlx"
 	"go.signoz.io/signoz/pkg/query-service/agentConf/sqlite"
-	"go.signoz.io/signoz/pkg/query-service/auth"
 	"go.signoz.io/signoz/pkg/query-service/model"
 	"go.uber.org/zap"
 )
@@ -38,10 +37,10 @@ func (r *Repo) GetConfigHistory(ctx context.Context, typ ElementTypeDef) ([]Conf
 		id, 
 		version, 
 		element_type, 
-		COALESCE(created_by, -1) as created_by,
-		COALESCE((SELECT NAME FROM users 
-		WHERE id = v.created_by), "unknown") created_by_name,
+		COALESCE(created_by, -1) as created_by, 
 		created_at,
+		COALESCE((SELECT NAME FROM users 
+ 		WHERE id = v.created_by), "unknown") created_by_name, 
 		active, 
 		is_valid, 
 		disabled, 
@@ -65,8 +64,9 @@ func (r *Repo) GetConfigVersion(ctx context.Context, typ ElementTypeDef, v int) 
 		element_type,
 		created_at, 
 		COALESCE(created_by, -1) as created_by, 
- 		COALESCE((SELECT NAME FROM users 
- 		WHERE id = v.created_by), "unknown") created_by_name,
+		created_at,
+		COALESCE((SELECT NAME FROM users 
+		WHERE id = v.created_by), "unknown") created_by_name,
 		active, 
 		is_valid, 
 		disabled, 
@@ -87,9 +87,9 @@ func (r *Repo) GetLatestVersion(ctx context.Context, typ ElementTypeDef) (*Confi
 	err := r.db.GetContext(ctx, &c, `SELECT 
 		id, 
 		version, 
-		element_type,
-		created_at, 
-		COALESCE(created_by, -1) as created_by,
+		element_type, 
+		COALESCE(created_by, -1) as created_by, 
+		created_at,
 		COALESCE((SELECT NAME FROM users 
  		WHERE id = v.created_by), "unknown") created_by_name, 
 		active, 
@@ -97,7 +97,7 @@ func (r *Repo) GetLatestVersion(ctx context.Context, typ ElementTypeDef) (*Confi
 		disabled, 
 		deploy_status, 
 		deploy_result 
-		FROM agent_config_versions v
+		FROM agent_config_versions AS v
 		WHERE element_type = $1 
 		AND version = ( 
 			SELECT MAX(version) 
@@ -109,7 +109,7 @@ func (r *Repo) GetLatestVersion(ctx context.Context, typ ElementTypeDef) (*Confi
 	return &c, err
 }
 
-func (r *Repo) insertConfig(ctx context.Context, c *ConfigVersion, elements []string) (fnerr error) {
+func (r *Repo) insertConfig(ctx context.Context, userId string, c *ConfigVersion, elements []string) (fnerr error) {
 
 	if string(c.ElementType) == "" {
 		return fmt.Errorf("element type is required for creating agent config version")
@@ -146,22 +146,11 @@ func (r *Repo) insertConfig(ctx context.Context, c *ConfigVersion, elements []st
 		}
 	}()
 
-	// get user info from context
-	jwt, err := auth.ExtractJwtFromContext(ctx)
-	if err != nil {
-		return fmt.Errorf("failed to extract jwt from context", err)
-	}
-
-	claims, err := auth.ParseJWT(jwt)
-	if err != nil {
-		return fmt.Errorf("failed get claims from jwt", err)
-	}
-
 	// insert config
 	configQuery := `INSERT INTO agent_config_versions(	
 		id, 
-		version,
-		created_by, 
+		version, 
+		created_by,
 		element_type, 
 		active, 
 		is_valid, 
@@ -174,7 +163,7 @@ func (r *Repo) insertConfig(ctx context.Context, c *ConfigVersion, elements []st
 		configQuery,
 		c.ID,
 		c.Version,
-		claims["id"],
+		userId,
 		c.ElementType,
 		false,
 		false,
@@ -228,8 +217,8 @@ func (r *Repo) updateDeployStatus(ctx context.Context,
 
 	_, err := r.db.ExecContext(ctx, updateQuery, status, result, lastHash, lastconf, version, string(elementType))
 	if err != nil {
-		zap.S().Error("failed to get ingestion rule from db", err)
-		return model.BadRequestStr("failed to get ingestion rule from db")
+		zap.S().Error("failed to update deploy status", err)
+		return model.BadRequestStr("failed to  update deploy status")
 	}
 
 	return nil
@@ -244,8 +233,8 @@ func (r *Repo) updateDeployStatusByHash(ctx context.Context, confighash string, 
 
 	_, err := r.db.ExecContext(ctx, updateQuery, status, result, confighash)
 	if err != nil {
-		zap.S().Error("failed to get ingestion rule from db", err)
-		return model.BadRequestStr("failed to get ingestion rule from db")
+		zap.S().Error("failed to update deploy status", err)
+		return model.BadRequestStr("failed to update deploy status")
 	}
 
 	return nil

@@ -119,12 +119,6 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 		return nil, err
 	}
 
-	// initiate opamp
-	_, err = opAmpModel.InitDB(constants.RELATIONAL_DATASOURCE_PATH)
-	if err != nil {
-		return nil, err
-	}
-
 	// initiate agent config handler
 	if err := agentConf.Initiate(localDB, "sqlite"); err != nil {
 		return nil, err

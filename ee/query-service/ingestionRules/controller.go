@@ -94,7 +94,7 @@ func (ic *IngestionController) ApplyDropRules(ctx context.Context, postable []Po
 	}
 
 	// prepare config by calling gen func
-	cfg, err := agentConf.StartNewVersion(ctx, agentConf.ElementTypeDropRules, elements)
+	cfg, err := agentConf.StartNewVersion(ctx, "", agentConf.ElementTypeDropRules, elements)
 	if err != nil || cfg == nil {
 		zap.S().Errorf("failed to start a new config version for drop rules", err)
 		return nil, model.InternalError(err)
@@ -195,7 +195,7 @@ func (ic *IngestionController) ApplySamplingRules(ctx context.Context, postable 
 	}
 
 	// prepare config by calling gen func
-	cfg, err := agentConf.StartNewVersion(ctx, agentConf.ElementTypeSamplingRules, elements)
+	cfg, err := agentConf.StartNewVersion(ctx, "", agentConf.ElementTypeSamplingRules, elements)
 	if err != nil || cfg == nil {
 		return nil, model.InternalError(err)
 	}

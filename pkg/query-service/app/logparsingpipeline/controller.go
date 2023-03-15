@@ -7,6 +7,7 @@ import (
 
 	"github.com/jmoiron/sqlx"
 	"go.signoz.io/signoz/pkg/query-service/agentConf"
+	"go.signoz.io/signoz/pkg/query-service/auth"
 	"go.signoz.io/signoz/pkg/query-service/model"
 	"go.uber.org/zap"
 )
@@ -78,8 +79,19 @@ func (ic *PipelineController) ApplyPipelines(ctx context.Context, postable []Pos
 		elements[i] = p.Id
 	}
 
+	// // get user info from context
+	jwt, err := auth.ExtractJwtFromContext(ctx)
+	if err != nil {
+		return nil, model.InternalError(fmt.Errorf("failed to extract jwt from context", err))
+	}
+
+	claims, err := auth.ParseJWT(jwt)
+	if err != nil {
+		return nil, model.InternalError(fmt.Errorf("failed get claims from jwt", err))
+	}
+
 	// prepare config by calling gen func
-	cfg, err := agentConf.StartNewVersion(ctx, agentConf.ElementTypeLogPipelines, elements)
+	cfg, err := agentConf.StartNewVersion(ctx, claims["id"].(string), agentConf.ElementTypeLogPipelines, elements)
 	if err != nil || cfg == nil {
 		return nil, model.InternalError(err)
 	}
