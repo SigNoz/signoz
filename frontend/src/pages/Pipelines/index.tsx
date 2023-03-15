@@ -14,7 +14,7 @@ function Pipelines(): JSX.Element {
 		data: piplineData,
 		isError,
 		refetch: refetchPipelineLists,
-	} = useQuery(['version', 'latest'], {
+	} = useQuery(['version', 'latest', 'pipeline'], {
 		queryFn: () =>
 			getPipeline({
 				version: 'latest',
@@ -34,7 +34,7 @@ function Pipelines(): JSX.Element {
 			<Tabs.TabPane tabKey="Pipelines" tab="Pipelines" key="Pipelines">
 				<PipelinePage
 					refetchPipelineLists={refetchPipelineLists}
-					piplineData={piplineData}
+					piplineData={piplineData.payload}
 				/>
 			</Tabs.TabPane>
 
@@ -43,7 +43,7 @@ function Pipelines(): JSX.Element {
 				tab="Change History"
 				key="Change History"
 			>
-				<ChangeHistory piplineData={piplineData} />
+				<ChangeHistory piplineData={piplineData.payload} />
 			</Tabs.TabPane>
 		</Tabs>
 	);

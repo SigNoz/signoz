@@ -1,7 +1,7 @@
 import { ColumnGroupType, ColumnType } from 'antd/lib/table/interface';
 import {
+	HistoryData,
 	PipelineData,
-	PipelineResponse,
 	ProcessorData,
 } from 'types/api/pipeline/def';
 
@@ -89,8 +89,7 @@ export const processorColumns: Array<
 ];
 
 export const changeHistoryColumns: Array<
-	| ColumnType<PipelineResponse['history']>
-	| ColumnGroupType<PipelineResponse['history']>
+	ColumnType<HistoryData> | ColumnGroupType<HistoryData>
 > = [
 	{
 		key: 'version',
