@@ -102,27 +102,24 @@ export const useAutoComplete = (): ReturnT => {
 	 * Set options based on the parameters
 	 */
 	useEffect(() => {
-		if (searchValue) {
-			if (!key) {
-				setOptions([
-					{ value: searchValue },
-					...keys.map((k) => ({ value: k.key })),
-				]);
-			} else if (key && !operator) {
-				setOptions(
-					operators.map((o) => ({
-						value: `${key} ${o}`,
-						label: `${key} ${o.replace('_', ' ')}`,
-					})),
-				);
-			} else if (key && operator && isMulti) {
-				setOptions(results.map((r) => ({ value: `${r}` })));
-			} else if (key && operator && !isMulti && !isExist && isValidOperator) {
-				setOptions(results.map((r) => ({ value: `${key} ${operator} ${r}` })));
-			} else if (key && operator && isExist && !isMulti) {
-				setOptions([]);
-			}
-		} else {
+		if (!key) {
+			setOptions(
+				searchValue
+					? [{ value: searchValue }, ...keys.map((k) => ({ value: k.key }))]
+					: keys.map((k) => ({ value: k.key })),
+			);
+		} else if (key && !operator) {
+			setOptions(
+				operators.map((o) => ({
+					value: `${key} ${o}`,
+					label: `${key} ${o.replace('_', ' ')}`,
+				})),
+			);
+		} else if (key && operator && isMulti) {
+			setOptions(results.map((r) => ({ value: `${r}` })));
+		} else if (key && operator && !isMulti && !isExist && isValidOperator) {
+			setOptions(results.map((r) => ({ value: `${key} ${operator} ${r}` })));
+		} else if (key && operator && isExist && !isMulti) {
 			setOptions([]);
 		}
 	}, [
@@ -186,15 +183,15 @@ export const useAutoComplete = (): ReturnT => {
 		}
 	};
 
-	const isFilter = useMemo(() => !isMulti, [isMulti]);
+	const isFilter = !isMulti;
 
 	const optionsUpdated = useMemo(
 		() =>
-			options.map((o) => {
+			options.map((option) => {
 				if (isMulti) {
-					return { ...o, selected: searchValue.includes(o.value) };
+					return { ...option, selected: searchValue.includes(option.value) };
 				}
-				return o;
+				return option;
 			}),
 		[isMulti, options, searchValue],
 	);

@@ -4,7 +4,7 @@ import styled from 'styled-components';
 const Tag = styled(AntTag)`
 	font-style: normal;
 	font-weight: 300;
-	font-size: 12px;
+	font-size: 0.75rem;
 	margin-inline-end: 4px;
 `;
 

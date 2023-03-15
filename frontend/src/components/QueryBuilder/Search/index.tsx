@@ -51,13 +51,13 @@ function QueryBuilderSearch(): JSX.Element {
 				onSearch={handleSearch}
 				searchValue={searchValue}
 			>
-				{options.map((o) => (
+				{options.map((option) => (
 					<SelectStyled.Option
-						key={o.value}
-						value={o.value}
-						className={getOptionClasses(o.selected)}
+						key={option.value}
+						value={option.value}
+						className={getOptionClasses(option.selected)}
 					>
-						{o.value}
+						{option.value}
 					</SelectStyled.Option>
 				))}
 			</SelectStyled>

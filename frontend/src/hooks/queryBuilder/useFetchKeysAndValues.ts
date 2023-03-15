@@ -1,6 +1,7 @@
 import getKeysAutoComplete from 'api/queryBuilder/getKeysAutoComplete';
 import getValuesAutoComplete from 'api/queryBuilder/getValuesAutoComplete';
-import { useEffect, useRef, useState } from 'react';
+import { useRef, useState } from 'react';
+import { useQuery } from 'react-query';
 import { useDebounce } from 'react-use';
 import { separateSearchValue } from 'utils/separateSearchValue';
 
@@ -20,13 +21,12 @@ export const useFetchKeysAndValues = (
 	const [keys, setKeys] = useState<KeyType[]>([]);
 	const [results, setResults] = useState([]);
 
-	useEffect(() => {
-		getKeysAutoComplete().then(({ payload }) => {
-			if (payload) {
-				setKeys(payload);
-			}
-		});
-	}, []);
+	useQuery('myKeys', async () => {
+		const { payload } = await getKeysAutoComplete();
+		if (payload) {
+			setKeys(payload);
+		}
+	});
 
 	const handleSetKey = (payload: PayloadProps[] | null): void => {
 		if (payload) {
