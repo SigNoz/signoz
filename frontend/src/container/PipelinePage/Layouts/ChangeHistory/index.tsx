@@ -1,12 +1,12 @@
-import { ReloadOutlined } from '@ant-design/icons';
 import { Table } from 'antd';
 import React, { useMemo } from 'react';
 import { Pipeline } from 'types/api/pipeline/def';
 
 import { changeHistoryColumns } from '../../PipelineListsView/config';
 import { getTableColumn } from '../../PipelineListsView/utils';
-import { HistoryTableWrapper, IconDataSpan } from '../../styles';
+import { HistoryTableWrapper } from '../../styles';
 import { historyPagination } from '../config';
+import DeploymentStage from './DeploymentStage';
 
 function ChangeHistory({ piplineData }: ChangeHistoryProps): JSX.Element {
 	const columns = useMemo(() => {
@@ -15,12 +15,7 @@ function ChangeHistory({ piplineData }: ChangeHistoryProps): JSX.Element {
 			title: 'Deployment Stage',
 			key: 'deployStatus',
 			dataIndex: 'deployStatus',
-			render: (value: string): JSX.Element => (
-				<>
-					<ReloadOutlined />
-					<IconDataSpan>{value}</IconDataSpan>
-				</>
-			),
+			render: DeploymentStage,
 		});
 		return fieldColumns;
 	}, []);
