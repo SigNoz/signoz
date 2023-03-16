@@ -27,7 +27,7 @@ var buildProcessorTestData = []struct {
 		outputConf: map[string]interface{}{
 			"processors": map[string]interface{}{
 				constants.LogsPPLPfx + "b": struct{}{},
-				"batch":                     struct{}{},
+				"batch":                    struct{}{},
 			},
 		},
 	},
@@ -36,7 +36,7 @@ var buildProcessorTestData = []struct {
 		agentConf: map[string]interface{}{
 			"processors": map[string]interface{}{
 				constants.LogsPPLPfx + "b": struct{}{},
-				"batch":                     struct{}{},
+				"batch":                    struct{}{},
 			},
 		},
 		pipelineProcessor: map[string]interface{}{},
@@ -52,7 +52,7 @@ var buildProcessorTestData = []struct {
 			"processors": map[string]interface{}{
 				constants.LogsPPLPfx + "a": struct{}{},
 				constants.LogsPPLPfx + "b": struct{}{},
-				"batch":                     struct{}{},
+				"batch":                    struct{}{},
 			},
 		},
 		pipelineProcessor: map[string]interface{}{
@@ -61,7 +61,7 @@ var buildProcessorTestData = []struct {
 		outputConf: map[string]interface{}{
 			"processors": map[string]interface{}{
 				constants.LogsPPLPfx + "b": struct{}{},
-				"batch":                     struct{}{},
+				"batch":                    struct{}{},
 			},
 		},
 	},
@@ -72,7 +72,7 @@ var buildProcessorTestData = []struct {
 				"memorylimiter":            struct{}{},
 				constants.LogsPPLPfx + "a": struct{}{},
 				constants.LogsPPLPfx + "b": struct{}{},
-				"batch":                     struct{}{},
+				"batch":                    struct{}{},
 			},
 		},
 		pipelineProcessor: map[string]interface{}{
@@ -82,14 +82,14 @@ var buildProcessorTestData = []struct {
 			"processors": map[string]interface{}{
 				"memorylimiter":            struct{}{},
 				constants.LogsPPLPfx + "b": struct{}{},
-				"batch":                     struct{}{},
+				"batch":                    struct{}{},
 			},
 		},
 	},
 }
 
 func TestBuildLogParsingProcessors(t *testing.T) {
-	for , test := range buildProcessorTestData {
+	for _, test := range buildProcessorTestData {
 		Convey(test.Name, t, func() {
 			err := buildLogParsingProcessors(test.agentConf, test.pipelineProcessor)
 			So(err, ShouldBeNil)
@@ -150,7 +150,7 @@ var BuildLogsPipelineTestData = []struct {
 }
 
 func TestBuildLogsPipeline(t *testing.T) {
-	for , test := range BuildLogsPipelineTestData {
+	for _, test := range BuildLogsPipelineTestData {
 		Convey(test.Name, t, func() {
 			v, err := buildLogsProcessors(test.currentPipeline, test.logsPipeline)
 			So(err, ShouldBeNil)
