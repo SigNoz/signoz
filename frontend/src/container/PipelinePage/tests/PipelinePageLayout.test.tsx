@@ -9,7 +9,7 @@ import store from 'store';
 import { Pipeline } from 'types/api/pipeline/def';
 import { v4 } from 'uuid';
 
-import PipelinePageLayout from '../Layouts';
+import PipelinePageLayout from '../Layouts/Pipeline';
 import { matchMedia } from './AddNewPipeline.test';
 
 beforeAll(() => {

@@ -6,7 +6,7 @@ import { MemoryRouter } from 'react-router-dom';
 import i18n from 'ReactI18';
 import store from 'store';
 
-import PipelinesSearchSection from '../Layouts/PipelinesSearchSection';
+import PipelinesSearchSection from '../Layouts/Pipeline/PipelinesSearchSection';
 
 describe('PipelinePage container test', () => {
 	it('should render PipelinesSearchSection section', () => {

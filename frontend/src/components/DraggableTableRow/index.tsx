@@ -1,4 +1,4 @@
-import React, { useRef } from 'react';
+import React, { useCallback, useRef } from 'react';
 import { useDrag, useDrop } from 'react-dnd';
 
 import { dragHandler, dropHandler } from './utils';
@@ -13,15 +13,24 @@ function DraggableTableRow({
 	...restProps
 }: DraggableTableRowProps): JSX.Element {
 	const ref = useRef<HTMLTableRowElement>(null);
+
+	const handleDrop = useCallback(
+		(item: { index: number }) => {
+			moveRow(item.index, index);
+		},
+		[moveRow, index],
+	);
+
 	const [, drop] = useDrop({
 		accept: type,
-		collect: (monitor) => dropHandler(monitor),
-		drop: (item: { index: number }) => moveRow(item.index, index),
+		collect: dropHandler,
+		drop: handleDrop,
 	});
+
 	const [, drag] = useDrag({
 		type,
 		item: { index },
-		collect: (monitor) => dragHandler(monitor),
+		collect: dragHandler,
 	});
 	drop(drag(ref));
 

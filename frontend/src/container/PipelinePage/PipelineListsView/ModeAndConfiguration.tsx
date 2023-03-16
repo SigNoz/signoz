@@ -1,6 +1,6 @@
 import React from 'react';
 
-import { ActionMode } from '../Layouts';
+import { ActionMode } from '../Layouts/Pipeline';
 import { ModeAndConfigWrapper } from './styles';
 
 function ModeAndConfiguration({

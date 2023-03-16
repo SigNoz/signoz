@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Pipeline } from 'types/api/pipeline/def';
 
-import PipelineListsView from '../PipelineListsView';
+import PipelineListsView from '../../PipelineListsView';
 import CreatePipelineButton from './CreatePipelineButton';
 import PipelinesSearchSection from './PipelinesSearchSection';
 

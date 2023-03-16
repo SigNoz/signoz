@@ -6,7 +6,7 @@ import { MemoryRouter } from 'react-router-dom';
 import i18n from 'ReactI18';
 import store from 'store';
 
-import CreatePipelineButton from '../Layouts/CreatePipelineButton';
+import CreatePipelineButton from '../Layouts/Pipeline/CreatePipelineButton';
 import { pipelineApiResponseMockData } from '../mocks/pipeline';
 
 describe('PipelinePage container test', () => {

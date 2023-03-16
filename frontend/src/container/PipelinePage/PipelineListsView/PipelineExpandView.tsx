@@ -7,7 +7,7 @@ import { useTranslation } from 'react-i18next';
 import { PipelineData, ProcessorData } from 'types/api/pipeline/def';
 
 import { tableComponents } from '../config';
-import { ActionMode, ActionType } from '../Layouts';
+import { ActionMode, ActionType } from '../Layouts/Pipeline';
 import { ModalFooterTitle } from '../styles';
 import { AlertMessage } from '.';
 import { processorColumns } from './config';
@@ -209,10 +209,7 @@ function PipelineExpandView({
 				components={tableComponents}
 				dataSource={processorData}
 				pagination={false}
-				onRow={(
-					_record: ProcessorData,
-					index?: number,
-				): React.HTMLAttributes<unknown> => onRowHandler(index)}
+				onRow={onRowHandler}
 				footer={footer}
 			/>
 		</DndProvider>

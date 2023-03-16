@@ -23,7 +23,7 @@ export const ModalFooterTitle = styled.span`
 	line-height: 1.25rem;
 `;
 
-export const HistoryTableWarapper = styled.div`
+export const HistoryTableWrapper = styled.div`
 	margin-top: 3rem;
 `;
 

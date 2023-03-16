@@ -1,5 +1,6 @@
 import { ExclamationCircleOutlined, PlusOutlined } from '@ant-design/icons';
 import { Modal, Table, Typography } from 'antd';
+import { ExpandableConfig } from 'antd/es/table/interface';
 import savePipelineConfig from 'api/pipeline/post';
 import { useNotifications } from 'hooks/useNotifications';
 import React, { useCallback, useMemo, useState } from 'react';
@@ -9,7 +10,7 @@ import { useTranslation } from 'react-i18next';
 import { Pipeline, PipelineData, ProcessorData } from 'types/api/pipeline/def';
 
 import { tableComponents } from '../config';
-import { ActionMode, ActionType } from '../Layouts';
+import { ActionMode, ActionType } from '../Layouts/Pipeline';
 import AddNewPipeline from './AddNewPipeline';
 import AddNewProcessor from './AddNewProcessor';
 import { pipelineColumns } from './config';
@@ -62,7 +63,7 @@ function PipelineListsView({
 		selectedPipelineData,
 		setSelectedPipelineData,
 	] = useState<PipelineData>();
-	const [expandedRow, setExpandedRow] = useState<Array<string>>();
+	const [expandedRowKeys, setExpandedRowKeys] = useState<Array<string>>();
 	const [showSaveButton, setShowSaveButton] = useState<string>();
 	const isEditingActionMode = isActionMode === ActionMode.Editing;
 
@@ -254,13 +255,13 @@ function PipelineListsView({
 		],
 	);
 
-	const getDataOnExpand = useCallback(
+	const onExpand = useCallback(
 		(expanded: boolean, record: PipelineData): void => {
 			const keys = [];
 			if (expanded && record.id) {
 				keys.push(record?.id);
 			}
-			setExpandedRow(keys);
+			setExpandedRowKeys(keys);
 			setExpandedPipelineData(record);
 		},
 		[],
@@ -333,21 +334,23 @@ function PipelineListsView({
 		setActionMode(ActionMode.Viewing);
 		setShowSaveButton(undefined);
 		setCurrPipelineData(prevPipelineData);
-		setExpandedRow([]);
+		setExpandedRowKeys([]);
 	}, [prevPipelineData, setActionMode]);
 
-	const onRowHandler = (index?: number): React.HTMLAttributes<unknown> =>
+	const onRowHandler = (
+		_data: PipelineData,
+		index?: number,
+	): React.HTMLAttributes<unknown> =>
 		({
 			index,
 			moveRow: movePipelineRow,
 		} as React.HTMLAttributes<unknown>);
 
-	const expandableConfig = {
-		expandedRowKeys: expandedRow,
-		expandIcon: ({ expanded, onExpand, record }: ExpandRowConfig): JSX.Element =>
+	const expandableConfig: ExpandableConfig<PipelineData> = {
+		expandedRowKeys,
+		onExpand,
+		expandIcon: ({ expanded, onExpand, record }: ExpandRowConfig) =>
 			getExpandIcon(expanded, onExpand, record),
-		onExpand: (expanded: boolean, record: PipelineData): void =>
-			getDataOnExpand(expanded, record),
 	};
 
 	const pipelineDataSource = useMemo(
@@ -390,10 +393,7 @@ function PipelineListsView({
 						expandable={expandableConfig}
 						components={tableComponents}
 						dataSource={pipelineDataSource}
-						onRow={(
-							_record: PipelineData,
-							index?: number,
-						): React.HTMLAttributes<unknown> => onRowHandler(index)}
+						onRow={onRowHandler}
 						footer={footer}
 						pagination={false}
 					/>

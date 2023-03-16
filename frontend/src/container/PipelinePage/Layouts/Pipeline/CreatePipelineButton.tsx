@@ -4,9 +4,9 @@ import React, { Dispatch, SetStateAction, useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Pipeline } from 'types/api/pipeline/def';
 
-import { ButtonContainer, CustomButton } from '../styles';
+import { ButtonContainer, CustomButton } from '../../styles';
+import { checkDataLength } from '../utils';
 import { ActionMode, ActionType } from '.';
-import { checkDataLength } from './utils';
 
 function CreatePipelineButton({
 	setActionType,
