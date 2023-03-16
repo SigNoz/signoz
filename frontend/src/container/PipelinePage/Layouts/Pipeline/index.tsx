@@ -33,19 +33,6 @@ function PipelinePageLayout({
 	);
 }
 
-export enum ActionType {
-	AddPipeline = 'add-pipeline',
-	EditPipeline = 'edit-pipeline',
-	AddProcessor = 'add-processor',
-	EditProcessor = 'edit-processor',
-}
-
-export enum ActionMode {
-	Viewing = 'viewing-mode',
-	Editing = 'editing-mode',
-	Deploying = 'deploying-mode',
-}
-
 interface PipelinePageLayoutProps {
 	refetchPipelineLists: VoidFunction;
 	piplineData: Pipeline;

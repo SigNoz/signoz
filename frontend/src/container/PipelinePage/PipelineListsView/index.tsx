@@ -7,10 +7,15 @@ import React, { useCallback, useMemo, useState } from 'react';
 import { DndProvider } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
 import { useTranslation } from 'react-i18next';
-import { Pipeline, PipelineData, ProcessorData } from 'types/api/pipeline/def';
+import {
+	ActionMode,
+	ActionType,
+	Pipeline,
+	PipelineData,
+	ProcessorData,
+} from 'types/api/pipeline/def';
 
 import { tableComponents } from '../config';
-import { ActionMode, ActionType } from '../Layouts/Pipeline';
 import AddNewPipeline from './AddNewPipeline';
 import AddNewProcessor from './AddNewProcessor';
 import { pipelineColumns } from './config';

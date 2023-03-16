@@ -4,10 +4,14 @@ import React, { useCallback, useMemo } from 'react';
 import { DndProvider } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
 import { useTranslation } from 'react-i18next';
-import { PipelineData, ProcessorData } from 'types/api/pipeline/def';
+import {
+	ActionMode,
+	ActionType,
+	PipelineData,
+	ProcessorData,
+} from 'types/api/pipeline/def';
 
 import { tableComponents } from '../config';
-import { ActionMode, ActionType } from '../Layouts/Pipeline';
 import { ModalFooterTitle } from '../styles';
 import { AlertMessage } from '.';
 import { processorColumns } from './config';

@@ -3,10 +3,9 @@ import React, { useCallback, useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
-import { PipelineData } from 'types/api/pipeline/def';
+import { ActionMode, ActionType, PipelineData } from 'types/api/pipeline/def';
 import AppReducer from 'types/reducer/app';
 
-import { ActionMode, ActionType } from '../../Layouts/Pipeline';
 import { ModalButtonWrapper, ModalTitle } from '../styles';
 import { getEditedDataSource, getRecordIndex } from '../utils';
 import { renderPipelineForm } from './utils';

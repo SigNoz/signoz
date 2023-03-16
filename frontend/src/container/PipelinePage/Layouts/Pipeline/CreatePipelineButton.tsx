@@ -2,11 +2,10 @@ import { EditFilled, PlusOutlined } from '@ant-design/icons';
 import TextToolTip from 'components/TextToolTip';
 import React, { useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Pipeline } from 'types/api/pipeline/def';
+import { ActionMode, ActionType, Pipeline } from 'types/api/pipeline/def';
 
 import { ButtonContainer, CustomButton } from '../../styles';
 import { checkDataLength } from '../utils';
-import { ActionMode, ActionType } from '.';
 
 function CreatePipelineButton({
 	setActionType,

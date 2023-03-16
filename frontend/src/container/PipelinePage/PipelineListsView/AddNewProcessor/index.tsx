@@ -1,9 +1,13 @@
 import { Button, Divider, Form, Modal } from 'antd';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { PipelineData, ProcessorData } from 'types/api/pipeline/def';
+import {
+	ActionMode,
+	ActionType,
+	PipelineData,
+	ProcessorData,
+} from 'types/api/pipeline/def';
 
-import { ActionMode, ActionType } from '../../Layouts/Pipeline';
 import { ModalButtonWrapper, ModalTitle } from '../styles';
 import { getEditedDataSource, getRecordIndex } from '../utils';
 import { DEFAULT_PROCESSOR_TYPE } from './config';

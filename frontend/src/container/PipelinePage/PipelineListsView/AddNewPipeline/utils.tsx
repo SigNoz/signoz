@@ -16,7 +16,7 @@ Array<JSX.Element> =>
 		if (fieldName.id === 2) {
 			return <NameInput key={fieldName.id} fieldData={fieldName} />;
 		}
-		/* if (fieldName.id === '3') {
+		/* if (fieldName.id === 3) {
 			return (
 				<ProcessorTags
 					key={fieldName.id}
