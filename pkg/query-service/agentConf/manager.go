@@ -212,7 +212,7 @@ func UpsertSamplingProcessor(ctx context.Context, version int, config *tsp.Confi
 }
 
 // UpsertLogParsingProcessors updates the agent with log parsing processors
-func UpsertLogParsingProcessor(ctx context.Context, version int, rawPipelineData []byte, config map[string]interface{}, names []interface{}) error {
+func UpsertLogParsingProcessor(ctx context.Context, version int, rawPipelineData []byte, config map[string]interface{}, names []string) error {
 	if !atomic.CompareAndSwapUint32(&m.lock, 0, 1) {
 		return fmt.Errorf("agent updater is busy")
 	}

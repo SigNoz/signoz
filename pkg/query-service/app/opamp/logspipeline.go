@@ -3,6 +3,7 @@ package opamp
 import (
 	"context"
 	"crypto/sha256"
+	"encoding/json"
 	"fmt"
 	"strings"
 	"sync"
@@ -16,7 +17,7 @@ import (
 
 var lockLogsPipelineSpec sync.RWMutex
 
-func UpsertLogsParsingProcessor(ctx context.Context, parsingProcessors map[string]interface{}, parsingProcessorsNames []interface{}, callback func(string, string, error)) (string, error) {
+func UpsertLogsParsingProcessor(ctx context.Context, parsingProcessors map[string]interface{}, parsingProcessorsNames []string, callback func(string, string, error)) (string, error) {
 	confHash := ""
 	if opAmpServer == nil {
 		return confHash, fmt.Errorf("opamp server is down, unable to push config to agent at this moment")
@@ -36,15 +37,20 @@ func UpsertLogsParsingProcessor(ctx context.Context, parsingProcessors map[strin
 
 		buildLogParsingProcessors(c, parsingProcessors)
 
-		// get the processor list
-		logs := c["service"].(map[string]interface{})["pipelines"].(map[string]interface{})["logs"]
-		processors := logs.(map[string]interface{})["processors"].([]interface{})
+		p, err := getOtelPipelinFromConfig(c)
+		if err != nil {
+			return confHash, err
+		}
+		if p.Pipelines.Logs == nil {
+			return confHash, fmt.Errorf("logs pipeline doesn't exist")
+		}
 
 		// build the new processor list
-		updatedProcessorList, _ := buildLogsProcessors(processors, parsingProcessorsNames)
+		updatedProcessorList, _ := buildLogsProcessors(p.Pipelines.Logs.Processors, parsingProcessorsNames)
+		p.Pipelines.Logs.Processors = updatedProcessorList
 
-		// add the new processor to the data
-		c["service"].(map[string]interface{})["pipelines"].(map[string]interface{})["logs"].(map[string]interface{})["processors"] = updatedProcessorList
+		// add the new processor to the data ( no checks required as the keys will exists)
+		c["service"].(map[string]interface{})["pipelines"].(map[string]interface{})["logs"] = p.Pipelines.Logs
 
 		updatedConf, err := yaml.Parser().Marshal(c)
 		if err != nil {
@@ -106,19 +112,44 @@ func buildLogParsingProcessors(agentConf, parsingProcessors map[string]interface
 	return nil
 }
 
-func buildLogsProcessors(current []interface{}, logsParserPipeline []interface{}) ([]interface{}, error) {
+type otelPipeline struct {
+	Pipelines struct {
+		Logs *struct {
+			Exporters  []string `json:"exporters" yaml:"exporters"`
+			Processors []string `json:"processors" yaml:"processors"`
+			Receivers  []string `json:"receivers" yaml:"receivers"`
+		} `json:"logs" yaml:"logs"`
+	} `json:"pipelines" yaml:"pipelines"`
+}
+
+func getOtelPipelinFromConfig(config map[string]interface{}) (*otelPipeline, error) {
+	if _, ok := config["service"]; !ok {
+		return nil, fmt.Errorf("service not found in OTEL config")
+	}
+	b, err := json.Marshal(config["service"])
+	if err != nil {
+		return nil, err
+	}
+	p := otelPipeline{}
+	if err := json.Unmarshal(b, &p); err != nil {
+		return nil, err
+	}
+	return &p, nil
+}
+
+func buildLogsProcessors(current []string, logsParserPipeline []string) ([]string, error) {
 	lockLogsPipelineSpec.Lock()
 	defer lockLogsPipelineSpec.Unlock()
 
 	exists := map[string]struct{}{}
 	for _, v := range logsParserPipeline {
-		exists[v.(string)] = struct{}{}
+		exists[v] = struct{}{}
 	}
 
 	// removed the old processors which are not used
-	var pipeline []interface{}
+	var pipeline []string
 	for _, v := range current {
-		k := v.(string)
+		k := v
 		if _, ok := exists[k]; ok || !strings.HasPrefix(k, constants.LogsPPLPfx) {
 			pipeline = append(pipeline, v)
 		}
@@ -127,7 +158,7 @@ func buildLogsProcessors(current []interface{}, logsParserPipeline []interface{}
 	// create a reverse map of existing config processors and their position
 	existing := map[string]int{}
 	for i, p := range current {
-		name := p.(string)
+		name := p
 		existing[name] = i
 	}
 
@@ -137,7 +168,7 @@ func buildLogsProcessors(current []interface{}, logsParserPipeline []interface{}
 
 	// go through plan and map its elements to current positions in effective config
 	for i, m := range logsParserPipeline {
-		if loc, ok := existing[m.(string)]; ok {
+		if loc, ok := existing[m]; ok {
 			specVsExistingMap[i] = loc
 		}
 	}
@@ -153,13 +184,13 @@ func buildLogsProcessors(current []interface{}, logsParserPipeline []interface{}
 		} else {
 			if lastMatched <= 0 {
 				zap.S().Debugf("build_pipeline: found a new item to be inserted, inserting at position 0:", m)
-				pipeline = append([]interface{}{m}, pipeline[lastMatched:]...)
+				pipeline = append([]string{m}, pipeline[lastMatched:]...)
 				lastMatched++
 			} else {
 				zap.S().Debugf("build_pipeline: found a new item to be inserted, inserting at position :", lastMatched, " ", m)
 
-				prior := make([]interface{}, len(pipeline[:lastMatched]))
-				next := make([]interface{}, len(pipeline[lastMatched:]))
+				prior := make([]string, len(pipeline[:lastMatched]))
+				next := make([]string, len(pipeline[lastMatched:]))
 
 				copy(prior, pipeline[:lastMatched])
 				copy(next, pipeline[lastMatched:])
@@ -170,11 +201,25 @@ func buildLogsProcessors(current []interface{}, logsParserPipeline []interface{}
 		}
 	}
 
-	if checkDuplicates(pipeline) {
+	if checkDuplicateString(pipeline) {
 		// duplicates are most likely because the processor sequence in effective config conflicts
 		// with the planned sequence as per planned pipeline
 		return pipeline, fmt.Errorf("the effective config has an unexpected processor sequence: %v", pipeline)
 	}
 
 	return pipeline, nil
+}
+
+func checkDuplicateString(pipeline []string) bool {
+	exists := make(map[string]bool, len(pipeline))
+	zap.S().Debugf("checking duplicate processors in the pipeline:", pipeline)
+	for _, processor := range pipeline {
+		name := processor
+		if _, ok := exists[name]; ok {
+			return true
+		}
+
+		exists[name] = true
+	}
+	return false
 }
