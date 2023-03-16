@@ -17,3 +17,14 @@ export interface ContextValueI {
 	onChangeHandler: (type: QueryBuilderStateT) => VoidFunctionWithValue;
 	onSubmitHandler: VoidFunction;
 }
+
+export type KeyType = {
+	key: string;
+	dataType: 'string' | 'boolean' | 'number';
+	type: string;
+};
+
+export type Option = {
+	value: string;
+	selected?: boolean;
+};

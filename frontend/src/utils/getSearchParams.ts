@@ -3,7 +3,6 @@ export const getSearchParams = (newParams: {
 }): URLSearchParams => {
 	const params = new URLSearchParams();
 	Object.entries(newParams).forEach(([key, value]) => {
-		console.log(key, value);
 		params.set(key, value);
 	});
 	return params;

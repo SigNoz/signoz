@@ -1,16 +1,12 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { Option } from 'container/QueryBuilder/type';
+import React, { useCallback, useState } from 'react';
 
 import { checkStringEndWIthSpace } from '../../utils/checkStringEndWIthSpace';
 import { useFetchKeysAndValues } from './useFetchKeysAndValues';
-import { useOperators } from './useOperators';
+import { useOptions } from './useOptions';
 import { useSetCurrentKeyAndOperator } from './useSetCurrentKeyAndOperator';
 import { useTag } from './useTag';
 import { useTagValidation } from './useTagValidation';
-
-type Option = {
-	value: string;
-	selected?: boolean;
-};
 
 type ReturnT = {
 	handleSearch: (value: string) => void;
@@ -23,12 +19,6 @@ type ReturnT = {
 	isFilter: boolean;
 };
 
-export type KeyType = {
-	key: string;
-	dataType: 'string' | 'boolean' | 'number';
-	type: string;
-};
-
 export const useAutoComplete = (): ReturnT => {
 	const [searchValue, setSearchValue] = useState('');
 
@@ -39,8 +29,6 @@ export const useAutoComplete = (): ReturnT => {
 	const handleSearch = useCallback((value: string) => {
 		setSearchValue(value);
 	}, []);
-
-	const [options, setOptions] = useState<Option[]>([]);
 
 	/**
 	 * Get suggestion keys and values from backend side.
@@ -96,44 +84,6 @@ export const useAutoComplete = (): ReturnT => {
 		handleSearch,
 	);
 
-	const operators = useOperators(key, keys);
-
-	/**
-	 * Set options based on the parameters
-	 */
-	useEffect(() => {
-		if (!key) {
-			setOptions(
-				searchValue
-					? [{ value: searchValue }, ...keys.map((k) => ({ value: k.key }))]
-					: keys.map((k) => ({ value: k.key })),
-			);
-		} else if (key && !operator) {
-			setOptions(
-				operators.map((o) => ({
-					value: `${key} ${o}`,
-					label: `${key} ${o.replace('_', ' ')}`,
-				})),
-			);
-		} else if (key && operator && isMulti) {
-			setOptions(results.map((r) => ({ value: `${r}` })));
-		} else if (key && operator && !isMulti && !isExist && isValidOperator) {
-			setOptions(results.map((r) => ({ value: `${key} ${operator} ${r}` })));
-		} else if (key && operator && isExist && !isMulti) {
-			setOptions([]);
-		}
-	}, [
-		isExist,
-		isMulti,
-		isValidOperator,
-		key,
-		keys,
-		operator,
-		operators,
-		results,
-		searchValue,
-	]);
-
 	/**
 	 * Handle select of options
 	 */
@@ -184,16 +134,18 @@ export const useAutoComplete = (): ReturnT => {
 	};
 
 	const isFilter = !isMulti;
-
-	const optionsUpdated = useMemo(
-		() =>
-			options.map((option) => {
-				if (isMulti) {
-					return { ...option, selected: searchValue.includes(option.value) };
-				}
-				return option;
-			}),
-		[isMulti, options, searchValue],
+	/**
+	 * Set and get options
+	 */
+	const options = useOptions(
+		key,
+		keys,
+		operator,
+		searchValue,
+		isMulti,
+		isValidOperator,
+		isExist,
+		results,
 	);
 
 	return {
@@ -201,7 +153,7 @@ export const useAutoComplete = (): ReturnT => {
 		handleClearTag,
 		handleSelect,
 		handleKeyDown,
-		options: optionsUpdated,
+		options,
 		tags,
 		searchValue,
 		isFilter,

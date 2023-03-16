@@ -1,8 +1,7 @@
+import { KeyType } from 'container/QueryBuilder/type';
 import { useMemo } from 'react';
 import { getCountOfSpace } from 'utils/getCountOfSpace';
 import { separateSearchValue } from 'utils/separateSearchValue';
-
-import { KeyType } from './useAutoComplete';
 
 type ReturnT = [string, string, string[]];
 

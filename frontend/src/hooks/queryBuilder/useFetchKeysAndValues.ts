@@ -1,14 +1,13 @@
 import getKeysAutoComplete from 'api/queryBuilder/getKeysAutoComplete';
 import getValuesAutoComplete from 'api/queryBuilder/getValuesAutoComplete';
+import { OPERATORS } from 'constants/queryBuilder';
+import { KeyType } from 'container/QueryBuilder/type';
 import { useRef, useState } from 'react';
 import { useQuery } from 'react-query';
 import { useDebounce } from 'react-use';
+import { PayloadProps } from 'types/api/queryBuilder/getKeysAutoComplete';
+import { getCountOfSpace } from 'utils/getCountOfSpace';
 import { separateSearchValue } from 'utils/separateSearchValue';
-
-import { OPERATORS } from '../../constants/queryBuilder';
-import { PayloadProps } from '../../types/api/queryBuilder/getKeysAutoComplete';
-import { getCountOfSpace } from '../../utils/getCountOfSpace';
-import { KeyType } from './useAutoComplete';
 
 type UseFetchKeysAndValuesReturnT = {
 	keys: KeyType[];
