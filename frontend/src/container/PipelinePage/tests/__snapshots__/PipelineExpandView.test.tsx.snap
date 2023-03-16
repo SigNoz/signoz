@@ -63,6 +63,7 @@ exports[`PipelinePage should render PipelineExpandView section 1`] = `
                   <tr
                     class="ant-table-row ant-table-row-level-0"
                     data-row-key="grok use common asd"
+                    draggable="true"
                   >
                     <td
                       class="ant-table-cell"
@@ -93,6 +94,7 @@ exports[`PipelinePage should render PipelineExpandView section 1`] = `
                   <tr
                     class="ant-table-row ant-table-row-level-0"
                     data-row-key="rename auth"
+                    draggable="true"
                   >
                     <td
                       class="ant-table-cell"

@@ -284,6 +284,7 @@ exports[`PipelinePage container test should render PipelinePageLayout section 1`
                   >
                     <tr
                       class="ant-table-placeholder"
+                      draggable="true"
                     >
                       <td
                         class="ant-table-cell"
