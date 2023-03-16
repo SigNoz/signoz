@@ -24,8 +24,8 @@ function AddNewPipeline({
 	const { user } = useSelector<AppState, AppReducer>((state) => state.app);
 	// const [tagsListData, setTagsListData] = useState<Array<string>>();
 
-	const isEdit = useMemo(() => isActionType === 'edit-pipeline', [isActionType]);
-	const isAdd = useMemo(() => isActionType === 'add-pipeline', [isActionType]);
+	const isEdit = isActionType === 'edit-pipeline';
+	const isAdd = isActionType === 'add-pipeline';
 
 	useEffect(() => {
 		if (isEdit) {

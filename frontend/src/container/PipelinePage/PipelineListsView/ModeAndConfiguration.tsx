@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React from 'react';
 
 import { ActionMode } from '../Layouts';
 import { ModeAndConfigWrapper } from './styles';
@@ -7,9 +7,7 @@ function ModeAndConfiguration({
 	isActionMode,
 	verison,
 }: ModeAndConfigurationType): JSX.Element {
-	const actionMode = useMemo(() => isActionMode === ActionMode.Editing, [
-		isActionMode,
-	]);
+	const actionMode = isActionMode === ActionMode.Editing;
 
 	return (
 		<ModeAndConfigWrapper>

@@ -1,11 +1,12 @@
 import { ReloadOutlined } from '@ant-design/icons';
 import { Table } from 'antd';
 import React, { useMemo } from 'react';
-import { PipelineResponse } from 'types/api/pipeline/def';
+import { Pipeline } from 'types/api/pipeline/def';
 
 import { changeHistoryColumns } from '../PipelineListsView/config';
 import { getTableColumn } from '../PipelineListsView/utils';
 import { HistoryTableWarapper, IconDataSpan } from '../styles';
+import { historyPagination } from './config';
 
 function ChangeHistory({ piplineData }: ChangeHistoryProps): JSX.Element {
 	const columns = useMemo(() => {
@@ -29,16 +30,14 @@ function ChangeHistory({ piplineData }: ChangeHistoryProps): JSX.Element {
 			<Table
 				columns={columns}
 				dataSource={piplineData.history}
-				pagination={{
-					defaultPageSize: 5,
-				}}
+				pagination={historyPagination}
 			/>
 		</HistoryTableWarapper>
 	);
 }
 
 interface ChangeHistoryProps {
-	piplineData: PipelineResponse;
+	piplineData: Pipeline;
 }
 
 export default ChangeHistory;

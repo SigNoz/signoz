@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { PipelineResponse } from 'types/api/pipeline/def';
+import { Pipeline } from 'types/api/pipeline/def';
 
 import PipelineListsView from '../PipelineListsView';
 import CreatePipelineButton from './CreatePipelineButton';
@@ -48,7 +48,7 @@ export enum ActionMode {
 
 interface PipelinePageLayoutProps {
 	refetchPipelineLists: VoidFunction;
-	piplineData: PipelineResponse;
+	piplineData: Pipeline;
 }
 
 export default PipelinePageLayout;

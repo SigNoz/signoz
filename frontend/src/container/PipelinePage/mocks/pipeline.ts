@@ -1,4 +1,4 @@
-import { PipelineData, PipelineResponse } from 'types/api/pipeline/def';
+import { Pipeline, PipelineData } from 'types/api/pipeline/def';
 
 export const configurationVerison = '1.0';
 
@@ -60,7 +60,7 @@ export const pipelineMockData: Array<PipelineData> = [
 	},
 ];
 
-export const pipelineApiResponseMockData: PipelineResponse = {
+export const pipelineApiResponseMockData: Pipeline = {
 	id: '67ace08a-6b6c-4221-ab58-a5d3bd5eb6f2',
 	version: 5,
 	elementType: 'log_pipelines',

@@ -3,6 +3,7 @@ import React from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { ProcessorFormField } from '../../AddNewProcessor/config';
+import { formValidationRules } from '../../config';
 import { FormLabelStyle } from '../styles';
 
 function NameInput({ fieldData }: NameInputProps): JSX.Element {
@@ -13,11 +14,7 @@ function NameInput({ fieldData }: NameInputProps): JSX.Element {
 			required={false}
 			label={<FormLabelStyle>{fieldData.fieldName}</FormLabelStyle>}
 			key={fieldData.id}
-			rules={[
-				{
-					required: true,
-				},
-			]}
+			rules={formValidationRules}
 			name={fieldData.name}
 		>
 			<Input name={fieldData.name} placeholder={t(fieldData.placeholder)} />

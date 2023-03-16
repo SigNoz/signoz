@@ -2,16 +2,14 @@ import axios from 'api';
 import { ErrorResponseHandler } from 'api/ErrorResponseHandler';
 import { AxiosError } from 'axios';
 import { ErrorResponse, SuccessResponse } from 'types/api';
-import { PipelineResponse } from 'types/api/pipeline/def';
+import { Pipeline } from 'types/api/pipeline/def';
 import { Props } from 'types/api/pipeline/post';
 
 const post = async (
 	props: Props,
-): Promise<SuccessResponse<PipelineResponse> | ErrorResponse> => {
+): Promise<SuccessResponse<Pipeline> | ErrorResponse> => {
 	try {
-		const response = await axios.post('/logs/pipelines', {
-			...props.data,
-		});
+		const response = await axios.post('/logs/pipelines', props.data);
 
 		return {
 			statusCode: 200,

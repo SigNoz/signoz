@@ -6,7 +6,7 @@ import { Provider } from 'react-redux';
 import { MemoryRouter } from 'react-router-dom';
 import i18n from 'ReactI18';
 import store from 'store';
-import { PipelineResponse } from 'types/api/pipeline/def';
+import { Pipeline } from 'types/api/pipeline/def';
 import { v4 } from 'uuid';
 
 import PipelinePageLayout from '../Layouts';
@@ -26,7 +26,7 @@ const queryClient = new QueryClient({
 
 describe('PipelinePage container test', () => {
 	it('should render PipelinePageLayout section', () => {
-		const pipelinedata: PipelineResponse = {
+		const pipelinedata: Pipeline = {
 			active: true,
 			createdBy: 'admin',
 			deployResult: 'random_data',

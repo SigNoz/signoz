@@ -2,10 +2,11 @@ import { EditFilled, PlusOutlined } from '@ant-design/icons';
 import TextToolTip from 'components/TextToolTip';
 import React, { Dispatch, SetStateAction, useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { PipelineResponse } from 'types/api/pipeline/def';
+import { Pipeline } from 'types/api/pipeline/def';
 
 import { ButtonContainer, CustomButton } from '../styles';
 import { ActionMode, ActionType } from '.';
+import { checkDataLength } from './utils';
 
 function CreatePipelineButton({
 	setActionType,
@@ -16,12 +17,10 @@ function CreatePipelineButton({
 	const { t } = useTranslation(['pipeline']);
 
 	const isAddNewPipelineVisible = useMemo(
-		() => piplineData.pipelines.length > 0,
-		[piplineData.pipelines.length],
+		() => checkDataLength(piplineData.pipelines),
+		[piplineData.pipelines],
 	);
-	const isDisabled = useMemo(() => isActionMode === ActionMode.Editing, [
-		isActionMode,
-	]);
+	const isDisabled = isActionMode === ActionMode.Editing;
 
 	const actionHandler = useCallback(
 		(functionToExecute: Dispatch<SetStateAction<string>>) => (): void => {
@@ -57,7 +56,7 @@ interface CreatePipelineButtonProps {
 	setActionType: (actionType?: ActionType) => void;
 	isActionMode: string;
 	setActionMode: (actionMode: ActionMode) => void;
-	piplineData: PipelineResponse;
+	piplineData: Pipeline;
 }
 
 export default CreatePipelineButton;

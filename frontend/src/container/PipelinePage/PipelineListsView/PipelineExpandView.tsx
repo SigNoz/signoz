@@ -5,7 +5,6 @@ import { DndProvider } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
 import { useTranslation } from 'react-i18next';
 import { PipelineData, ProcessorData } from 'types/api/pipeline/def';
-import { v4 } from 'uuid';
 
 import { tableComponents } from '../config';
 import { ActionMode, ActionType } from '../Layouts';
@@ -34,6 +33,7 @@ function PipelineExpandView({
 }: PipelineExpandViewProps): JSX.Element {
 	const { t } = useTranslation(['pipeline']);
 	const isDarkMode = useIsDarkMode();
+	const isEditingActionMode = isActionMode === ActionMode.Editing;
 
 	const deleteProcessorHandler = useCallback(
 		(record: ProcessorData) => (): void => {
@@ -92,7 +92,7 @@ function PipelineExpandView({
 
 	const columns = useMemo(() => {
 		const fieldColumns = getTableColumn(processorColumns);
-		if (isActionMode === ActionMode.Editing) {
+		if (isEditingActionMode) {
 			fieldColumns.push(
 				{
 					title: '',
@@ -123,7 +123,7 @@ function PipelineExpandView({
 		}
 		return fieldColumns;
 	}, [
-		isActionMode,
+		isEditingActionMode,
 		processorEditAction,
 		processorDeleteAction,
 		onSwitchProcessorChange,
@@ -150,7 +150,7 @@ function PipelineExpandView({
 
 	const moveProcessorRow = useCallback(
 		(dragIndex: number, hoverIndex: number) => {
-			if (expandedPipelineData?.config && isActionMode === ActionMode.Editing) {
+			if (expandedPipelineData?.config && isEditingActionMode) {
 				const updatedRow = getUpdatedRow(
 					expandedPipelineData?.config,
 					dragIndex,
@@ -167,12 +167,12 @@ function PipelineExpandView({
 			}
 		},
 		[
-			t,
+			expandedPipelineData?.config,
+			isEditingActionMode,
 			handleAlert,
-			isActionMode,
+			t,
 			reorderProcessorRow,
 			onCancelReorderProcessorRow,
-			expandedPipelineData?.config,
 		],
 	);
 
@@ -181,7 +181,7 @@ function PipelineExpandView({
 	}, [setActionType]);
 
 	const footer = useCallback((): JSX.Element | undefined => {
-		if (isActionMode === ActionMode.Editing) {
+		if (isEditingActionMode) {
 			return (
 				<FooterButton type="link" onClick={addNewProcessorHandler}>
 					<PlusCircleOutlined />
@@ -190,7 +190,7 @@ function PipelineExpandView({
 			);
 		}
 		return undefined;
-	}, [addNewProcessorHandler, t, isActionMode]);
+	}, [isEditingActionMode, addNewProcessorHandler, t]);
 
 	const onRowHandler = (index?: number): React.HTMLAttributes<unknown> =>
 		({
@@ -199,7 +199,7 @@ function PipelineExpandView({
 		} as React.HTMLAttributes<unknown>);
 
 	return (
-		<DndProvider backend={HTML5Backend} key={v4()}>
+		<DndProvider backend={HTML5Backend}>
 			<StyledTable
 				isDarkMode={isDarkMode}
 				showHeader={false}
@@ -219,15 +219,20 @@ function PipelineExpandView({
 	);
 }
 
+PipelineExpandView.defaultProps = {
+	expandedPipelineData: {},
+	processorData: {},
+};
+
 interface PipelineExpandViewProps {
 	handleAlert: (props: AlertMessage) => void;
 	setActionType: (actionType?: ActionType) => void;
 	processorEditAction: (record: ProcessorData) => () => void;
 	isActionMode: string;
 	setShowSaveButton: (actionMode: ActionMode) => void;
-	expandedPipelineData: PipelineData | undefined;
+	expandedPipelineData?: PipelineData;
 	setExpandedPipelineData: (data: PipelineData) => void;
-	processorData: Array<ProcessorData> | undefined;
+	processorData?: Array<ProcessorData>;
 }
 
 export default PipelineExpandView;

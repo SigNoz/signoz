@@ -24,10 +24,8 @@ function AddNewProcessor({
 		DEFAULT_PROCESSOR_TYPE,
 	);
 
-	const isEdit = useMemo(() => isActionType === 'edit-processor', [
-		isActionType,
-	]);
-	const isAdd = useMemo(() => isActionType === 'add-processor', [isActionType]);
+	const isEdit = isActionType === 'edit-processor';
+	const isAdd = isActionType === 'add-processor';
 
 	useEffect(() => {
 		if (isEdit && selectedProcessorData && expandedPipelineData?.config) {
@@ -141,7 +139,6 @@ function AddNewProcessor({
 			<Form
 				name="add-new-processor"
 				layout="vertical"
-				style={{ marginTop: '1.25rem' }}
 				onFinish={onFinish}
 				autoComplete="off"
 				form={form}
@@ -169,17 +166,18 @@ function AddNewProcessor({
 	);
 }
 
+AddNewProcessor.defaultProps = {
+	selectedProcessorData: undefined,
+	expandedPipelineData: {},
+};
+
 interface AddNewProcessorProps {
 	isActionType: string;
 	setActionType: (actionType?: ActionType) => void;
 	selectedProcessorData?: ProcessorData;
 	setShowSaveButton: (actionMode: ActionMode) => void;
-	expandedPipelineData: PipelineData | undefined;
+	expandedPipelineData?: PipelineData;
 	setExpandedPipelineData: (data: PipelineData) => void;
 }
-
-AddNewProcessor.defaultProps = {
-	selectedProcessorData: undefined,
-};
 
 export default AddNewProcessor;

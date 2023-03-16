@@ -3,6 +3,7 @@ import React from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { ProcessorFormField } from '../../AddNewProcessor/config';
+import { formValidationRules } from '../../config';
 
 function DescriptionTextArea({
 	fieldData,
@@ -15,11 +16,7 @@ function DescriptionTextArea({
 			name={fieldData.name}
 			label={fieldData.fieldName}
 			key={fieldData.id}
-			rules={[
-				{
-					required: true,
-				},
-			]}
+			rules={formValidationRules}
 		>
 			<Input.TextArea
 				rows={3}

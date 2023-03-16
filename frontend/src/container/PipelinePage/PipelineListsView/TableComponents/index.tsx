@@ -1,3 +1,4 @@
+import dayjs from 'dayjs';
 import React from 'react';
 import { PipelineData, ProcessorData } from 'types/api/pipeline/def';
 
@@ -17,16 +18,7 @@ function TableComponents({
 	} */
 	if (columnKey === 'createdAt') {
 		return (
-			<span>
-				{new Date(record).toLocaleString(undefined, {
-					year: 'numeric',
-					month: 'long',
-					day: '2-digit',
-					hour: 'numeric',
-					minute: 'numeric',
-					hour12: true,
-				})}
-			</span>
+			<span>{dayjs(record).locale('en').format('MMMM DD, YYYY hh:mm A')}</span>
 		);
 	}
 	if (columnKey === 'id') {

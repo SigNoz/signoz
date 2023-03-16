@@ -6,12 +6,7 @@ import React, { useCallback, useMemo, useState } from 'react';
 import { DndProvider } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
 import { useTranslation } from 'react-i18next';
-import {
-	PipelineData,
-	PipelineResponse,
-	ProcessorData,
-} from 'types/api/pipeline/def';
-import { v4 } from 'uuid';
+import { Pipeline, PipelineData, ProcessorData } from 'types/api/pipeline/def';
 
 import { tableComponents } from '../config';
 import { ActionMode, ActionType } from '../Layouts';
@@ -69,6 +64,7 @@ function PipelineListsView({
 	] = useState<PipelineData>();
 	const [expandedRow, setExpandedRow] = useState<Array<string>>();
 	const [showSaveButton, setShowSaveButton] = useState<string>();
+	const isEditingActionMode = isActionMode === ActionMode.Editing;
 
 	const handleAlert = useCallback(
 		({ title, descrition, buttontext, onCancel, onOk }: AlertMessage) => {
@@ -143,7 +139,7 @@ function PipelineListsView({
 
 	const columns = useMemo(() => {
 		const fieldColumns = getTableColumn(pipelineColumns);
-		if (isActionMode === ActionMode.Editing) {
+		if (isEditingActionMode) {
 			fieldColumns.push(
 				{
 					title: 'Actions',
@@ -175,7 +171,7 @@ function PipelineListsView({
 		}
 		return fieldColumns;
 	}, [
-		isActionMode,
+		isEditingActionMode,
 		pipelineEditAction,
 		pipelineDeleteAction,
 		onSwitchPipelineChange,
@@ -198,7 +194,7 @@ function PipelineListsView({
 
 	const movePipelineRow = useCallback(
 		(dragIndex: number, hoverIndex: number) => {
-			if (currPipelineData && isActionMode === ActionMode.Editing) {
+			if (currPipelineData && isEditingActionMode) {
 				const rawData = currPipelineData;
 				const updatedRow = getUpdatedRow(currPipelineData, dragIndex, hoverIndex);
 				handleAlert({
@@ -211,10 +207,10 @@ function PipelineListsView({
 			}
 		},
 		[
-			t,
 			currPipelineData,
-			isActionMode,
+			isEditingActionMode,
 			handleAlert,
+			t,
 			updatePipelineSequence,
 			onCancelPipelineSequence,
 		],
@@ -283,7 +279,7 @@ function PipelineListsView({
 	}, [setActionType]);
 
 	const footer = useCallback((): JSX.Element | undefined => {
-		if (isActionMode === ActionMode.Editing) {
+		if (isEditingActionMode) {
 			return (
 				<FooterButton
 					type="link"
@@ -295,7 +291,7 @@ function PipelineListsView({
 			);
 		}
 		return undefined;
-	}, [isActionMode, addNewPipelineHandler, t]);
+	}, [isEditingActionMode, addNewPipelineHandler, t]);
 
 	const onSaveConfigurationHandler = useCallback(() => {
 		setActionMode(ActionMode.Viewing);
@@ -387,7 +383,7 @@ function PipelineListsView({
 					isActionMode={isActionMode}
 					verison={piplineData.version}
 				/>
-				<DndProvider key={v4()} backend={HTML5Backend}>
+				<DndProvider backend={HTML5Backend}>
 					<Table
 						columns={columns}
 						expandedRowRender={expandedRowView}
@@ -418,7 +414,7 @@ interface PipelineListsViewProps {
 	setActionType: (actionType?: ActionType) => void;
 	isActionMode: string;
 	setActionMode: (actionMode: ActionMode) => void;
-	piplineData: PipelineResponse;
+	piplineData: Pipeline;
 	refetchPipelineLists: VoidFunction;
 }
 

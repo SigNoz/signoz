@@ -8,13 +8,8 @@ import {
 import { Avatar, Button, Table, Typography } from 'antd';
 import { TableProps } from 'antd/lib/table';
 import { themeColors } from 'constants/theme';
-import styled, { DefaultTheme, ThemedCssFunction } from 'styled-components';
-
-export type StyledCSS =
-	| ReturnType<ThemedCssFunction<DefaultTheme>>
-	| string
-	| false
-	| undefined;
+import { StyledCSS } from 'container/GantChart/Trace/styles';
+import styled from 'styled-components';
 
 export const FooterButton = styled(Button)`
 	display: flex;

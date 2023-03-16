@@ -46,7 +46,7 @@ export interface HistoryData {
 	version: number;
 }
 
-export interface PipelineResponse {
+export interface Pipeline {
 	active: boolean;
 	createdBy: string;
 	deployResult: string;

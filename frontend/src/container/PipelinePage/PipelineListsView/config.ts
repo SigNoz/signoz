@@ -108,3 +108,9 @@ export const changeHistoryColumns: Array<
 		dataIndex: 'createdByName',
 	},
 ];
+
+export const formValidationRules = [
+	{
+		required: true,
+	},
+];
