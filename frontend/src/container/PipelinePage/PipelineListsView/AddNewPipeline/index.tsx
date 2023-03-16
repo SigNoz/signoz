@@ -21,18 +21,15 @@ function AddNewPipeline({
 	const [form] = Form.useForm();
 	const { t } = useTranslation('pipeline');
 	const { user } = useSelector<AppState, AppReducer>((state) => state.app);
-	// const [tagsListData, setTagsListData] = useState<Array<string>>();
 
 	const isEdit = isActionType === 'edit-pipeline';
 	const isAdd = isActionType === 'add-pipeline';
 
 	useEffect(() => {
 		if (isEdit) {
-			// setTagsListData(selectedPipelineData?.tags);
 			form.setFieldsValue(selectedPipelineData);
 		}
 		if (isAdd) {
-			// setTagsListData([]);
 			form.resetFields();
 		}
 	}, [form, isEdit, isAdd, selectedPipelineData]);
@@ -46,7 +43,6 @@ function AddNewPipeline({
 			alias: values.name.replace(/\s/g, ''),
 			description: values.description,
 			filter: values.filter,
-			// tags: tagsListData || [],
 			config: [],
 			enabled: true,
 		};
@@ -62,7 +58,6 @@ function AddNewPipeline({
 				name: values.name,
 				description: values.description,
 				filter: values.filter,
-				// tags: tagsListData || [],
 			};
 
 			const editedPipelineData = getEditedDataSource(
@@ -75,7 +70,6 @@ function AddNewPipeline({
 			setCurrPipelineData(editedPipelineData);
 		}
 		if (isAdd) {
-			// setTagsListData([]);
 			setCurrPipelineData((prevState) => [...prevState, newPipeLineData]);
 		}
 		setActionType(undefined);

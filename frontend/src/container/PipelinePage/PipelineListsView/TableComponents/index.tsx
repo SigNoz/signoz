@@ -4,7 +4,6 @@ import { PipelineData, ProcessorData } from 'types/api/pipeline/def';
 
 import { ListDataStyle, ProcessorIndexIcon } from '../styles';
 import PipelineSequence from './PipelineSequence';
-// import Tags from './Tags';
 
 function TableComponents({
 	columnKey,
@@ -13,9 +12,6 @@ function TableComponents({
 	if (columnKey === 'orderId') {
 		return <PipelineSequence value={record} />;
 	}
-	/* if (columnKey === 'tags') {
-		return <Tags tags={record} />;
-	} */
 	if (columnKey === 'createdAt') {
 		return (
 			<span>{dayjs(record).locale('en').format('MMMM DD, YYYY hh:mm A')}</span>
@@ -30,9 +26,7 @@ function TableComponents({
 	return <span>{record}</span>;
 }
 
-export type Record = PipelineData['orderId'] &
-	// PipelineData['tags'] &
-	ProcessorData;
+export type Record = PipelineData['orderId'] & ProcessorData;
 
 interface TableComponentsProps {
 	columnKey: string;

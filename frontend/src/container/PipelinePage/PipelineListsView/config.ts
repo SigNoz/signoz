@@ -5,30 +5,31 @@ import {
 	ProcessorData,
 } from 'types/api/pipeline/def';
 
+import DescriptionTextArea from './AddNewPipeline/FormFields/DescriptionTextArea';
+import FilterSearch from './AddNewPipeline/FormFields/FilterSearch';
+import NameInput from './AddNewPipeline/FormFields/NameInput';
+
 export const pipelineFields = [
 	{
 		id: 1,
 		fieldName: 'Filter',
 		placeholder: 'search_pipeline_placeholder',
 		name: 'filter',
+		component: FilterSearch,
 	},
 	{
 		id: 2,
 		fieldName: 'Name',
 		placeholder: 'pipeline_name_placeholder',
 		name: 'name',
+		component: NameInput,
 	},
-	/* {
-		id: 3,
-		fieldName: 'Tags',
-		placeholder: 'pipeline_tags_placeholder',
-		name: 'tags',
-	}, */
 	{
 		id: 4,
 		fieldName: 'Description',
 		placeholder: 'pipeline_description_placeholder',
 		name: 'description',
+		component: DescriptionTextArea,
 	},
 ];
 
@@ -56,11 +57,7 @@ export const pipelineColumns: Array<
 		title: 'Filters',
 		dataIndex: 'filter',
 	},
-	/* {
-		key: 'tags',
-		title: 'Tags',
-		dataIndex: 'tags',
-	}, */
+
 	{
 		key: 'createdAt',
 		title: 'Last Edited',
