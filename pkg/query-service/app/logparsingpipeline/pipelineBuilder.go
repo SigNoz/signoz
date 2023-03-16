@@ -9,9 +9,9 @@ const (
 	NOOP = "noop"
 )
 
-func PreparePipelineProcessor(pipelines []model.Pipeline) (map[string]interface{}, []interface{}, error) {
+func PreparePipelineProcessor(pipelines []model.Pipeline) (map[string]interface{}, []string, error) {
 	processors := map[string]interface{}{}
-	names := []interface{}{}
+	names := []string{}
 	for _, v := range pipelines {
 		if !v.Enabled {
 			continue
