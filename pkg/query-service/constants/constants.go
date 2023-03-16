@@ -222,4 +222,4 @@ const (
 )
 
 // logsPPLPfx is a short constant for logsPipelinePrefix
-const LogsPPLPfx = "logstransform/pipeline"
+const LogsPPLPfx = "logstransform/pipeline_"
