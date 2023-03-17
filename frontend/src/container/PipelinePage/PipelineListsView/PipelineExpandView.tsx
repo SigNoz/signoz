@@ -160,7 +160,7 @@ function PipelineExpandView({
 					dragIndex,
 					hoverIndex,
 				);
-
+				delete updatedRow[updatedRow.length - 1].output;
 				handleAlert({
 					title: t('reorder_processor'),
 					descrition: t('reorder_processor_description'),

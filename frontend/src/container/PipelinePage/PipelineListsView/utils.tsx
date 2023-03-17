@@ -26,11 +26,22 @@ export function getUpdatedRow<T>(
 	dragIndex: number,
 	hoverIndex: number,
 ): Array<T> {
-	return update(data, {
+	const updatedRow = update(data, {
 		$splice: [
 			[dragIndex, 1],
 			[hoverIndex, 0, data[dragIndex]],
 		],
+	});
+	if (dragIndex === updatedRow.length - 1) {
+		updatedRow[hoverIndex].output = updatedRow[hoverIndex + 1].id;
+	}
+	if (hoverIndex === updatedRow.length - 1) {
+		updatedRow[hoverIndex - 1].output = updatedRow[hoverIndex].id;
+	}
+	return updatedRow.map((item, index) => {
+		const obj = item;
+		obj.orderId = index + 1;
+		return obj;
 	});
 }
 

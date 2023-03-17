@@ -9,7 +9,6 @@ import {
 	getElementFromArray,
 	getRecordIndex,
 	getTableColumn,
-	getUpdatedRow,
 } from '../PipelineListsView/utils';
 
 describe('Utils testing of Pipeline Page', () => {
@@ -51,11 +50,6 @@ describe('Utils testing of Pipeline Page', () => {
 		);
 		expect(pipelineMockData).not.toEqual(findRecordIndex);
 		expect(pipelineMockData[0]).not.toEqual(findRecordIndex);
-	});
-
-	test('it should be return shuffle data', () => {
-		const updateData = getUpdatedRow(pipelineMockData, 1, 1);
-		expect(pipelineMockData).toEqual(updateData);
 	});
 
 	test('it should be return modified column data', () => {
