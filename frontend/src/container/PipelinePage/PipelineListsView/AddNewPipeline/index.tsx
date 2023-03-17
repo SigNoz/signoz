@@ -111,7 +111,6 @@ function AddNewPipeline({
 				autoComplete="off"
 				form={form}
 			>
-				{/* {renderPipelineForm(setTagsListData, tagsListData)} */}
 				{renderPipelineForm()}
 				<Divider plain />
 				<Form.Item>
