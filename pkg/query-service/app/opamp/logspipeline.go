@@ -157,7 +157,7 @@ func buildLogsProcessors(current []string, logsParserPipeline []string) ([]strin
 
 	// create a reverse map of existing config processors and their position
 	existing := map[string]int{}
-	for i, p := range current {
+	for i, p := range pipeline {
 		name := p
 		existing[name] = i
 	}
@@ -165,49 +165,47 @@ func buildLogsProcessors(current []string, logsParserPipeline []string) ([]strin
 	// create mapping from our logsParserPipeline to position in existing processors (from current config)
 	// this means, if "batch" holds position 3 in the current effective config, and 2 in our config, the map will be [2]: 3
 	specVsExistingMap := map[int]int{}
+	existingVsSpec := map[int]int{}
 
 	// go through plan and map its elements to current positions in effective config
 	for i, m := range logsParserPipeline {
 		if loc, ok := existing[m]; ok {
 			specVsExistingMap[i] = loc
+			existingVsSpec[loc] = i
 		}
 	}
 
 	lastMatched := 0
+	newPipeline := []string{}
 
-	// go through plan again in the increasing order
 	for i := 0; i < len(logsParserPipeline); i++ {
 		m := logsParserPipeline[i]
-
 		if loc, ok := specVsExistingMap[i]; ok {
+			for j := lastMatched; j < loc; j++ {
+				if strings.HasPrefix(pipeline[j], constants.LogsPPLPfx) {
+					delete(specVsExistingMap, existingVsSpec[j])
+				} else {
+					newPipeline = append(newPipeline, pipeline[j])
+				}
+			}
+			newPipeline = append(newPipeline, pipeline[loc])
 			lastMatched = loc + 1
 		} else {
-			if lastMatched <= 0 {
-				zap.S().Debugf("build_pipeline: found a new item to be inserted, inserting at position 0:", m)
-				pipeline = append([]string{m}, pipeline[lastMatched:]...)
-				lastMatched++
-			} else {
-				zap.S().Debugf("build_pipeline: found a new item to be inserted, inserting at position :", lastMatched, " ", m)
-
-				prior := make([]string, len(pipeline[:lastMatched]))
-				next := make([]string, len(pipeline[lastMatched:]))
-
-				copy(prior, pipeline[:lastMatched])
-				copy(next, pipeline[lastMatched:])
-
-				pipeline = append(prior, m)
-				pipeline = append(pipeline, next...)
-			}
+			newPipeline = append(newPipeline, m)
 		}
+
+	}
+	if lastMatched < len(pipeline) {
+		newPipeline = append(newPipeline, pipeline[lastMatched:]...)
 	}
 
-	if checkDuplicateString(pipeline) {
+	if checkDuplicateString(newPipeline) {
 		// duplicates are most likely because the processor sequence in effective config conflicts
 		// with the planned sequence as per planned pipeline
 		return pipeline, fmt.Errorf("the effective config has an unexpected processor sequence: %v", pipeline)
 	}
 
-	return pipeline, nil
+	return newPipeline, nil
 }
 
 func checkDuplicateString(pipeline []string) bool {
