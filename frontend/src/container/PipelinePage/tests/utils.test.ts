@@ -22,9 +22,10 @@ describe('Utils testing of Pipeline Page', () => {
 		expect(processorTypes.length).toBeGreaterThan(1);
 	});
 
-	test('it should be check form field of add processor', () => {
-		expect(processorFields.grok.length).toBe(5);
-		expect(processorFields.grok.length).toBeGreaterThan(1);
+	test('it should check form field of add processor', () => {
+		Object.keys(processorFields).forEach((key) => {
+			expect(processorFields[key].length).toBeGreaterThan(1);
+		});
 	});
 
 	test('it should be check data length of pipeline', () => {
