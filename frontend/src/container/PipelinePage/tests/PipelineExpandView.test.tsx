@@ -32,7 +32,7 @@ describe('PipelinePage', () => {
 								{
 									orderId: 1,
 									enabled: true,
-									type: 'grok',
+									type: 'grok_parser',
 									id: 'grokusecommon',
 									name: 'grok use common asd',
 									output: 'renameauth',

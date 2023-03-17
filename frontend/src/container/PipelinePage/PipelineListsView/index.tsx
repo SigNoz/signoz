@@ -3,7 +3,7 @@ import { Modal, Table, Typography } from 'antd';
 import { ExpandableConfig } from 'antd/es/table/interface';
 import savePipeline from 'api/pipeline/post';
 import { useNotifications } from 'hooks/useNotifications';
-import React, { useCallback, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { DndProvider } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
 import { useTranslation } from 'react-i18next';
@@ -32,6 +32,7 @@ import DragAction from './TableComponents/DragAction';
 import PipelineActions from './TableComponents/PipelineActions';
 import TableExpandIcon from './TableComponents/TableExpandIcon';
 import {
+	getDataOnSearch,
 	getEditedDataSource,
 	getElementFromArray,
 	getRecordIndex,
@@ -46,6 +47,7 @@ function PipelineListsView({
 	setActionMode,
 	piplineData,
 	refetchPipelineLists,
+	pipelineSearchValue,
 }: PipelineListsViewProps): JSX.Element {
 	const { t } = useTranslation(['pipeline', 'common']);
 	const [modal, contextHolder] = Modal.useModal();
@@ -71,6 +73,15 @@ function PipelineListsView({
 	const [expandedRowKeys, setExpandedRowKeys] = useState<Array<string>>();
 	const [showSaveButton, setShowSaveButton] = useState<string>();
 	const isEditingActionMode = isActionMode === ActionMode.Editing;
+
+	useEffect(() => {
+		if (pipelineSearchValue) {
+			const filterData = piplineData.pipelines.filter((data: PipelineData) =>
+				getDataOnSearch(data as never, pipelineSearchValue),
+			);
+			setCurrPipelineData(filterData);
+		}
+	}, [pipelineSearchValue, piplineData.pipelines]);
 
 	const handleAlert = useCallback(
 		({ title, descrition, buttontext, onCancel, onOk }: AlertMessage) => {
@@ -422,6 +433,7 @@ interface PipelineListsViewProps {
 	setActionMode: (actionMode: ActionMode) => void;
 	piplineData: Pipeline;
 	refetchPipelineLists: VoidFunction;
+	pipelineSearchValue: string;
 }
 
 interface ExpandRowConfig {

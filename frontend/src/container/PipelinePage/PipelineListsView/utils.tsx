@@ -1,4 +1,5 @@
 import { ColumnType } from 'antd/lib/table/interface';
+import dayjs from 'dayjs';
 import React from 'react';
 import update from 'react-addons-update';
 
@@ -55,4 +56,20 @@ export function getEditedDataSource<T>(
 	editedArr: T,
 ): Array<T> {
 	return arr?.map((data) => (data[key] === target?.[key] ? editedArr : data));
+}
+
+export function getDataOnSearch(
+	data: {
+		[key: string]: never;
+	},
+	searchValue: string,
+): boolean {
+	return Object.keys(data).some((key) =>
+		key === 'createdAt'
+			? dayjs(data[key])
+					.locale('en')
+					.format('MMMM DD, YYYY hh:mm A')
+					.includes(searchValue)
+			: String(data[key]).toLowerCase().includes(searchValue.toLowerCase()),
+	);
 }

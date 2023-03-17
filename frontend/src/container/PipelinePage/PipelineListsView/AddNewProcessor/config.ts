@@ -1,5 +1,3 @@
-import { formValidationRules } from '../config';
-
 type ProcessorType = {
 	key: string;
 	value: string;
@@ -26,25 +24,23 @@ export type ProcessorFormField = {
 	fieldName: string;
 	placeholder: string;
 	name: string;
-	rules: Array<{ [key: string]: boolean }>;
+	rules?: Array<{ [key: string]: boolean }>;
 	initialValue?: string;
 };
 
 export const processorFields: { [key: string]: Array<ProcessorFormField> } = {
-	grok: [
+	grok_parser: [
 		{
 			id: 1,
 			fieldName: 'Name the Grok Processor',
 			placeholder: 'processor_name_placeholder',
 			name: 'name',
-			rules: formValidationRules,
 		},
 		{
 			id: 2,
 			fieldName: 'Pattern',
 			placeholder: 'processor_pattern_placeholder',
 			name: 'pattern',
-			rules: formValidationRules,
 		},
 		{
 			id: 3,
@@ -71,20 +67,18 @@ export const processorFields: { [key: string]: Array<ProcessorFormField> } = {
 			initialValue: 'send',
 		},
 	],
-	regex: [
+	regex_parser: [
 		{
 			id: 1,
 			fieldName: 'Name the Regex Processor',
 			placeholder: 'processor_name_placeholder',
 			name: 'name',
-			rules: formValidationRules,
 		},
 		{
 			id: 2,
 			fieldName: 'Define Regex',
 			placeholder: 'processor_regex_placeholder',
 			name: 'regex',
-			rules: formValidationRules,
 		},
 		{
 			id: 3,
@@ -117,21 +111,18 @@ export const processorFields: { [key: string]: Array<ProcessorFormField> } = {
 			fieldName: 'Name the Add Processor',
 			placeholder: 'processor_name_placeholder',
 			name: 'name',
-			rules: formValidationRules,
 		},
 		{
 			id: 2,
 			fieldName: 'Field',
 			placeholder: 'processor_field_placeholder',
 			name: 'field',
-			rules: formValidationRules,
 		},
 		{
 			id: 3,
 			fieldName: 'Value',
 			placeholder: 'processor_value_placeholder',
 			name: 'value',
-			rules: formValidationRules,
 		},
 	],
 	remove: [
@@ -140,14 +131,12 @@ export const processorFields: { [key: string]: Array<ProcessorFormField> } = {
 			fieldName: 'Name the Remove Processor',
 			placeholder: 'processor_name_placeholder',
 			name: 'name',
-			rules: formValidationRules,
 		},
 		{
 			id: 2,
 			fieldName: 'Field',
 			placeholder: 'processor_field_placeholder',
 			name: 'field',
-			rules: formValidationRules,
 		},
 	],
 	trace_parser: [
@@ -156,28 +145,24 @@ export const processorFields: { [key: string]: Array<ProcessorFormField> } = {
 			fieldName: 'Name the Trace Parser Processor',
 			placeholder: 'processor_name_placeholder',
 			name: 'name',
-			rules: formValidationRules,
 		},
 		{
 			id: 2,
 			fieldName: 'Trace Id Parce From',
 			placeholder: 'processor_trace_id_placeholder',
 			name: 'traceId',
-			rules: formValidationRules,
 		},
 		{
 			id: 3,
 			fieldName: 'Span id Parse From',
 			placeholder: 'processor_span_id_placeholder',
 			name: 'spanId',
-			rules: formValidationRules,
 		},
 		{
 			id: 4,
 			fieldName: 'Trace flags parse from',
 			placeholder: 'processor_trace_flags_placeholder',
 			name: 'traceFlags',
-			rules: formValidationRules,
 		},
 	],
 	retain: [
@@ -186,14 +171,12 @@ export const processorFields: { [key: string]: Array<ProcessorFormField> } = {
 			fieldName: 'Name the Retain Processor',
 			placeholder: 'processor_name_placeholder',
 			name: 'name',
-			rules: formValidationRules,
 		},
 		{
 			id: 2,
 			fieldName: 'Fields',
 			placeholder: 'processor_fields_placeholder',
 			name: 'fields',
-			rules: formValidationRules,
 		},
 	],
 	move: [
@@ -202,21 +185,18 @@ export const processorFields: { [key: string]: Array<ProcessorFormField> } = {
 			fieldName: 'Name the Move Processor',
 			placeholder: 'processor_name_placeholder',
 			name: 'name',
-			rules: formValidationRules,
 		},
 		{
 			id: 2,
 			fieldName: 'From',
 			placeholder: 'processor_from_placeholder',
 			name: 'from',
-			rules: formValidationRules,
 		},
 		{
 			id: 3,
 			fieldName: 'To',
 			placeholder: 'processor_to_placeholder',
 			name: 'to',
-			rules: formValidationRules,
 		},
 	],
 	copy: [
@@ -225,21 +205,18 @@ export const processorFields: { [key: string]: Array<ProcessorFormField> } = {
 			fieldName: 'Name the Copy Processor',
 			placeholder: 'processor_name_placeholder',
 			name: 'name',
-			rules: formValidationRules,
 		},
 		{
 			id: 2,
 			fieldName: 'From',
 			placeholder: 'processor_from_placeholder',
 			name: 'from',
-			rules: formValidationRules,
 		},
 		{
 			id: 3,
 			fieldName: 'To',
 			placeholder: 'processor_to_placeholder',
 			name: 'to',
-			rules: formValidationRules,
 		},
 	],
 };

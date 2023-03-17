@@ -11,6 +11,7 @@ function PipelinePageLayout({
 }: PipelinePageLayoutProps): JSX.Element {
 	const [isActionType, setActionType] = useState<string>();
 	const [isActionMode, setActionMode] = useState<string>('viewing-mode');
+	const [pipelineSearchValue, setPipelineSearchValue] = useState<string>('');
 
 	return (
 		<>
@@ -20,7 +21,7 @@ function PipelinePageLayout({
 				isActionMode={isActionMode}
 				piplineData={piplineData}
 			/>
-			<PipelinesSearchSection />
+			<PipelinesSearchSection setPipelineSearchValue={setPipelineSearchValue} />
 			<PipelineListsView
 				isActionType={String(isActionType)}
 				setActionType={setActionType}
@@ -28,6 +29,7 @@ function PipelinePageLayout({
 				isActionMode={isActionMode}
 				piplineData={piplineData}
 				refetchPipelineLists={refetchPipelineLists}
+				pipelineSearchValue={pipelineSearchValue}
 			/>
 		</>
 	);

@@ -3,6 +3,7 @@ import { ModalFooterTitle } from 'container/PipelinePage/styles';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { formValidationRules } from '../../config';
 import { ProcessorFormField } from '../config';
 import { Container, FormWrapper, PipelineIndexIcon } from '../styles';
 
@@ -21,7 +22,7 @@ function NameInput({ fieldData }: NameInputProps): JSX.Element {
 					key={fieldData.id}
 					name={fieldData.name}
 					initialValue={fieldData.initialValue}
-					rules={fieldData.rules}
+					rules={fieldData.rules ? fieldData.rules : formValidationRules}
 				>
 					<Input placeholder={t(fieldData.placeholder)} name={fieldData.name} />
 				</Form.Item>
