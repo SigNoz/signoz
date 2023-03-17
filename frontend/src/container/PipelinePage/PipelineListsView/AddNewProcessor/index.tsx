@@ -96,13 +96,18 @@ function AddNewProcessor({
 			const modifiedProcessorData = {
 				...expandedPipelineData,
 			};
-			if (modifiedProcessorData.config !== undefined) {
+			if (
+				modifiedProcessorData.config !== undefined &&
+				modifiedProcessorData.config
+			) {
 				modifiedProcessorData.config = [
 					...modifiedProcessorData.config,
 					newProcessorData,
 				];
-				modifiedProcessorData.config[totalDataLength - 1].output =
-					newProcessorData.id;
+				if (totalDataLength > 0) {
+					modifiedProcessorData.config[totalDataLength - 1].output =
+						newProcessorData.id;
+				}
 			}
 			setExpandedPipelineData(modifiedProcessorData);
 		}

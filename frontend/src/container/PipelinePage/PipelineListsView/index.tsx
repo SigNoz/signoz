@@ -1,7 +1,7 @@
 import { ExclamationCircleOutlined, PlusOutlined } from '@ant-design/icons';
 import { Modal, Table, Typography } from 'antd';
 import { ExpandableConfig } from 'antd/es/table/interface';
-import savePipelineConfig from 'api/pipeline/post';
+import savePipeline from 'api/pipeline/post';
 import { useNotifications } from 'hooks/useNotifications';
 import React, { useCallback, useMemo, useState } from 'react';
 import { DndProvider } from 'react-dnd';
@@ -299,9 +299,7 @@ function PipelineListsView({
 		return undefined;
 	}, [isEditingActionMode, addNewPipelineHandler, t]);
 
-	const onSaveConfigurationHandler = useCallback(() => {
-		setActionMode(ActionMode.Viewing);
-		setShowSaveButton(undefined);
+	const onSaveConfigurationHandler = useCallback(async () => {
 		const modifiedPipelineData = currPipelineData.map((item: PipelineData) => {
 			const pipelineData = item;
 			if (
@@ -318,11 +316,21 @@ function PipelineListsView({
 			delete pipelineData?.id;
 			return pipelineData;
 		});
-		savePipelineConfig({
+		const response = await savePipeline({
 			data: { pipelines: modifiedPipelineData },
-		})
-			.then(() => refetchPipelineLists())
-			.catch(() => notifications.error(t('something_went_wrong')));
+		});
+		if (response.statusCode === 200) {
+			refetchPipelineLists();
+			setActionMode(ActionMode.Viewing);
+			setShowSaveButton(undefined);
+		} else {
+			setActionMode(ActionMode.Editing);
+			setShowSaveButton(ActionMode.Editing);
+			notifications.error({
+				message: 'Error',
+				description: response.error || t('something_went_wrong'),
+			});
+		}
 
 		setCurrPipelineData(modifiedPipelineData);
 		setPrevPipelineData(modifiedPipelineData);

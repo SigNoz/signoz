@@ -4,13 +4,15 @@ import getPipeline from 'api/pipeline/get';
 import Spinner from 'components/Spinner';
 import ChangeHistory from 'container/PipelinePage/Layouts/ChangeHistory';
 import PipelinePage from 'container/PipelinePage/Layouts/Pipeline';
-import React, { useMemo } from 'react';
+import { useNotifications } from 'hooks/useNotifications';
+import React, { useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useQuery } from 'react-query';
 import { Pipeline } from 'types/api/pipeline/def';
 
 function Pipelines(): JSX.Element {
 	const { t } = useTranslation('common');
+	const { notifications } = useNotifications();
 	const {
 		isLoading,
 		data: piplineData,
@@ -44,9 +46,13 @@ function Pipelines(): JSX.Element {
 		[piplineData?.payload, refetchPipelineLists],
 	);
 
-	if (isError) {
-		return <div>{piplineData?.error || t('something_went_wrong')}</div>;
-	}
+	useEffect(() => {
+		if (piplineData?.error && isError) {
+			notifications.error({
+				message: piplineData?.error || t('something_went_wrong'),
+			});
+		}
+	}, [isError, notifications, piplineData?.error, t]);
 
 	if (isLoading || !piplineData?.payload) {
 		return <Spinner height="75vh" tip="Loading Pipelines..." />;
