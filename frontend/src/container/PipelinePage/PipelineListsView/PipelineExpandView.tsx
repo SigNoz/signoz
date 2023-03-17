@@ -196,7 +196,10 @@ function PipelineExpandView({
 		return undefined;
 	}, [isEditingActionMode, addNewProcessorHandler, t]);
 
-	const onRowHandler = (index?: number): React.HTMLAttributes<unknown> =>
+	const onRowHandler = (
+		_data: ProcessorData,
+		index?: number,
+	): React.HTMLAttributes<unknown> =>
 		({
 			index,
 			moveRow: moveProcessorRow,
