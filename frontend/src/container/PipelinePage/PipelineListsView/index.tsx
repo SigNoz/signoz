@@ -323,6 +323,8 @@ function PipelineListsView({
 			refetchPipelineLists();
 			setActionMode(ActionMode.Viewing);
 			setShowSaveButton(undefined);
+			setCurrPipelineData(response.payload?.pipelines);
+			setPrevPipelineData(response.payload?.pipelines);
 		} else {
 			setActionMode(ActionMode.Editing);
 			setShowSaveButton(ActionMode.Editing);
@@ -330,10 +332,9 @@ function PipelineListsView({
 				message: 'Error',
 				description: response.error || t('something_went_wrong'),
 			});
+			setCurrPipelineData(modifiedPipelineData);
+			setPrevPipelineData(modifiedPipelineData);
 		}
-
-		setCurrPipelineData(modifiedPipelineData);
-		setPrevPipelineData(modifiedPipelineData);
 	}, [
 		currPipelineData,
 		expandedPipelineData,
@@ -366,15 +367,6 @@ function PipelineListsView({
 			getExpandIcon(expanded, onExpand, record),
 	};
 
-	const pipelineDataSource = useMemo(
-		() =>
-			currPipelineData.map((item) => ({
-				...item,
-				key: item.id,
-			})),
-		[currPipelineData],
-	);
-
 	return (
 		<>
 			{contextHolder}
@@ -401,11 +393,12 @@ function PipelineListsView({
 				/>
 				<DndProvider backend={HTML5Backend}>
 					<Table
+						rowKey="id"
 						columns={columns}
 						expandedRowRender={expandedRowView}
 						expandable={expandableConfig}
 						components={tableComponents}
-						dataSource={pipelineDataSource}
+						dataSource={currPipelineData}
 						onRow={onRowHandler}
 						footer={footer}
 						pagination={false}
