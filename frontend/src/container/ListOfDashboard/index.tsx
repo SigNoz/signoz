@@ -1,12 +1,5 @@
 import { PlusOutlined } from '@ant-design/icons';
-import {
-	Card,
-	Dropdown,
-	MenuProps,
-	Row,
-	TableColumnProps,
-	Typography,
-} from 'antd';
+import { Card, Dropdown, Menu, Row, TableColumnProps, Typography } from 'antd';
 import { ItemType } from 'antd/es/menu/hooks/useItems';
 import createDashboard from 'api/dashboard/create';
 import { AxiosError } from 'axios';
@@ -54,12 +47,10 @@ function ListOfAllDashboard(): JSX.Element {
 	);
 
 	const { t } = useTranslation('dashboard');
-
 	const [
 		isImportJSONModalVisible,
 		setIsImportJSONModalVisible,
 	] = useState<boolean>(false);
-
 	const [uploadedGrafana, setUploadedGrafana] = useState<boolean>(false);
 
 	const [filteredDashboards, setFilteredDashboards] = useState<Dashboard[]>();
@@ -67,7 +58,6 @@ function ListOfAllDashboard(): JSX.Element {
 	useEffect(() => {
 		setFilteredDashboards(dashboards);
 	}, [dashboards]);
-
 	const [newDashboardState, setNewDashboardState] = useState({
 		loading: false,
 		error: false,
@@ -225,12 +215,7 @@ function ListOfAllDashboard(): JSX.Element {
 		return menuItems;
 	}, [createNewDashboard, loading, onNewDashboardHandler, t]);
 
-	const menu: MenuProps = useMemo(
-		() => ({
-			items: getMenuItems(),
-		}),
-		[getMenuItems],
-	);
+	const menuItems = getMenuItems();
 
 	const GetHeader = useMemo(
 		() => (
@@ -245,7 +230,7 @@ function ListOfAllDashboard(): JSX.Element {
 						}}
 					/>
 					{newDashboard && (
-						<Dropdown trigger={['click']} menu={menu}>
+						<Dropdown trigger={['click']} overlay={<Menu items={menuItems} />}>
 							<NewDashboardButton
 								icon={<PlusOutlined />}
 								type="primary"
@@ -264,7 +249,7 @@ function ListOfAllDashboard(): JSX.Element {
 			newDashboard,
 			newDashboardState.error,
 			newDashboardState.loading,
-			menu,
+			menuItems,
 		],
 	);
 

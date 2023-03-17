@@ -13,6 +13,7 @@ import { ConfigProps } from 'types/api/dynamicConfigs/getDynamicConfigs';
 import AppReducer from 'types/reducer/app';
 
 import HelpToolTip from './Config';
+import { MenuDropdown } from './Config/styles';
 
 function DynamicConfigDropdown({
 	frontendId,
@@ -33,15 +34,13 @@ function DynamicConfigDropdown({
 		setIsHelpDropDownOpen(!isHelpDropDownOpen);
 	};
 
-	const menu = useMemo(
-		() => ({
-			items: [
-				{
-					key: '1',
-					label: <HelpToolTip config={config as ConfigProps} />,
-				},
-			],
-		}),
+	const menuItems = useMemo(
+		() => [
+			{
+				key: '1',
+				label: <HelpToolTip config={config as ConfigProps} />,
+			},
+		],
 		[config],
 	);
 
@@ -54,10 +53,10 @@ function DynamicConfigDropdown({
 
 	return (
 		<Dropdown
-			onOpenChange={onToggleHandler}
+			onVisibleChange={onToggleHandler}
 			trigger={['click']}
-			menu={menu}
-			open={isHelpDropDownOpen}
+			overlay={<MenuDropdown items={menuItems} />}
+			visible={isHelpDropDownOpen}
 		>
 			<Space align="center">
 				<Icon

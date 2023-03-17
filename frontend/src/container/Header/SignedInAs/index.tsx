@@ -1,20 +1,15 @@
 import { Avatar, Typography } from 'antd';
 import ROUTES from 'constants/routes';
 import history from 'lib/history';
-import React, { useCallback } from 'react';
+import React from 'react';
 import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
 import AppReducer from 'types/reducer/app';
 
 import { AvatarContainer, ManageAccountLink, Wrapper } from '../styles';
 
-function SignedIn({ onToggle }: SignedInProps): JSX.Element {
+function SignedInAS(): JSX.Element {
 	const { user } = useSelector<AppState, AppReducer>((state) => state.app);
-
-	const onManageAccountClick = useCallback(() => {
-		onToggle();
-		history.push(ROUTES.MY_SETTINGS);
-	}, [onToggle]);
 
 	if (!user) {
 		return <div />;
@@ -35,7 +30,11 @@ function SignedIn({ onToggle }: SignedInProps): JSX.Element {
 						<Typography>{email}</Typography>
 					</div>
 				</AvatarContainer>
-				<ManageAccountLink onClick={onManageAccountClick}>
+				<ManageAccountLink
+					onClick={(): void => {
+						history.push(ROUTES.MY_SETTINGS);
+					}}
+				>
 					Manage Account
 				</ManageAccountLink>
 			</Wrapper>
@@ -43,8 +42,4 @@ function SignedIn({ onToggle }: SignedInProps): JSX.Element {
 	);
 }
 
-interface SignedInProps {
-	onToggle: VoidFunction;
-}
-
-export default SignedIn;
+export default SignedInAS;
