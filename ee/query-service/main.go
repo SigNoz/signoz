@@ -34,9 +34,13 @@ func main() {
 	// the url used to build link in the alert messages in slack and other systems
 	var ruleRepoURL string
 
-	flag.StringVar(&promConfigPath, "config", "./config/prometheus.yml", "(prometheus config to read metrics)")
+	// path of default otel config used by opamp
+	var defaultOtelConfig string
+
+	flag.StringVar(&promConfigPath, "config", "../../pkg/query-service/config/prometheus.yml", "(prometheus config to read metrics)")
 	flag.BoolVar(&disableRules, "rules.disable", false, "(disable rule evaluation)")
 	flag.StringVar(&ruleRepoURL, "rules.repo-url", baseconst.AlertHelpPage, "(host address used to build rule link in alert messages)")
+	flag.StringVar(&defaultOtelConfig, "opamp.defaultOtelConfig", "../../pkg/query-service/config/otel-default.yaml", "(default otel config used by opamp)")
 	flag.Parse()
 
 	loggerMgr := initZapLog()
@@ -47,11 +51,12 @@ func main() {
 	version.PrintVersion()
 
 	serverOptions := &app.ServerOptions{
-		HTTPHostPort:    baseconst.HTTPHostPort,
-		PromConfigPath:  promConfigPath,
-		PrivateHostPort: baseconst.PrivateHostPort,
-		DisableRules:    disableRules,
-		RuleRepoURL:     ruleRepoURL,
+		HTTPHostPort:      baseconst.HTTPHostPort,
+		PromConfigPath:    promConfigPath,
+		PrivateHostPort:   baseconst.PrivateHostPort,
+		DisableRules:      disableRules,
+		RuleRepoURL:       ruleRepoURL,
+		DefaultOtelConfig: defaultOtelConfig,
 	}
 
 	// Read the jwt secret key

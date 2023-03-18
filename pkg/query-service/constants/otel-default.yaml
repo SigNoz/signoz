@@ -1,0 +1,19 @@
+receivers:
+  otlp/worker:
+    protocols:
+      grpc:
+        endpoint: 0.0.0.0:4949
+        max_recv_msg_size_mib: 16
+      http:
+        endpoint: 0.0.0.0:4950
+exporters:
+  loadbalancing:
+    protocol:
+      otlp:
+        tls:
+          insecure: true
+        timeout: 1s
+    resolver:
+      dns:
+        hostname: amol-signoz-otel-collector-worker
+        port: 4949

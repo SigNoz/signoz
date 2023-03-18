@@ -71,7 +71,7 @@ func addIngestionControlToAgent(agent *model.Agent, signal string, processors ma
 
 	if withLB {
 		// add LB exporter pipeline and OTLP worker pipeline
-		makeLbExporterSpec(agentConf)
+		makeLbExporterSpec(agentConf, opAmpServer.defaultConfig)
 	}
 
 	// add ingestion control spec.

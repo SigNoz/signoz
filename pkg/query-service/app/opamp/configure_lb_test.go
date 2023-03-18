@@ -28,7 +28,15 @@ func TestMakeLBExporterSpec(t *testing.T) {
 	}
 
 	agentConf := confmap.NewFromStringMap(c)
-	makeLbExporterSpec(agentConf)
+
+	defaultConfig, err := otelconfig.LoadConfigParserFromFile("./config.yaml")
+	if err != nil {
+		log.Println("default config is needed for settting up load balancer")
+		t.Fail()
+		return
+	}
+
+	makeLbExporterSpec(agentConf, defaultConfig)
 	parser := otelconfig.NewConfigParser(agentConf)
 
 	require.Equal(t, true, parser.CheckExporterInPipeline(LoadBalancerPipeline, LoadBalancerExporter))
@@ -38,6 +46,7 @@ func TestMakeLBExporterSpec(t *testing.T) {
 	if _, ok := exporters[LoadBalancerExporter]; !ok {
 		t.Fail()
 	}
+
 	receivers := parser.Receivers()
 	if _, ok := receivers[OTLPWorker]; !ok {
 		t.Fail()

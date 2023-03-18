@@ -2,8 +2,10 @@ package otelconfig
 
 import (
 	"fmt"
+	"io/ioutil"
 	"sync"
 
+	"github.com/knadh/koanf/parsers/yaml"
 	"go.opentelemetry.io/collector/confmap"
 )
 
@@ -24,6 +26,21 @@ func NewConfigParser(agentConf *confmap.Conf) ConfigParser {
 	return ConfigParser{
 		agentConf: agentConf,
 	}
+}
+
+func LoadConfigParserFromFile(filename string) (*ConfigParser, error) {
+	yamlFile, err := ioutil.ReadFile(filename)
+	if err != nil {
+		return nil, fmt.Errorf("failed to load default collector config in opamp server: %v", err)
+	}
+
+	stringMap, err := yaml.Parser().Unmarshal([]byte(yamlFile))
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse default collector config in opamp server: %v", err)
+	}
+	agentConf := confmap.NewFromStringMap(stringMap)
+	parser := NewConfigParser(agentConf)
+	return &parser, err
 }
 
 func toMap(i interface{}) map[string]interface{} {

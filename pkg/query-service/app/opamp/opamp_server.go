@@ -12,6 +12,7 @@ import (
 	"github.com/open-telemetry/opamp-go/server/types"
 	"go.opentelemetry.io/collector/confmap"
 	model "go.signoz.io/signoz/pkg/query-service/app/opamp/model"
+	"go.signoz.io/signoz/pkg/query-service/app/opamp/otelconfig"
 
 	"go.uber.org/zap"
 )
@@ -23,20 +24,29 @@ type Server struct {
 	agents       *model.Agents
 	logger       *zap.Logger
 	capabilities int32
+
+	// default config used to initiate parts of otel config like otlp/worker receiver or lbexporter
+	defaultConfig *otelconfig.ConfigParser
 }
 
 const capabilities = protobufs.ServerCapabilities_ServerCapabilities_AcceptsEffectiveConfig |
 	protobufs.ServerCapabilities_ServerCapabilities_OffersRemoteConfig |
 	protobufs.ServerCapabilities_ServerCapabilities_AcceptsStatus
 
-func InitalizeServer(listener string, agents *model.Agents) error {
+func InitalizeServer(listener string, agents *model.Agents, defaultOtelConfig string) error {
 
 	if agents == nil {
 		agents = &model.AllAgents
 	}
 
+	defaultConfig, err := otelconfig.LoadConfigParserFromFile(defaultOtelConfig)
+	if err != nil {
+		return err
+	}
+
 	opAmpServer = &Server{
-		agents: agents,
+		agents:        agents,
+		defaultConfig: defaultConfig,
 	}
 	opAmpServer.server = server.New(zap.S())
 

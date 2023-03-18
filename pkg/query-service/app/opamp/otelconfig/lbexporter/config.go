@@ -5,42 +5,18 @@ package lbexporter
 import (
 	"time"
 
-	otelgrpc "go.opentelemetry.io/collector/config/configgrpc"
-	oteltls "go.opentelemetry.io/collector/config/configtls"
-	otelexporterhelper "go.opentelemetry.io/collector/exporter/exporterhelper"
 	"go.opentelemetry.io/collector/exporter/otlpexporter"
 )
+
+func MakeConfig(i interface{}) Config {
+	return i.(Config)
+}
 
 // config for lb exporter
 type Config struct {
 	Protocol   Protocol         `mapstructure:"protocol"`
 	Resolver   ResolverSettings `mapstructure:"resolver"`
 	RoutingKey string           `mapstructure:"routing_key"`
-}
-
-func NewDnsConfig(hostname string, port string) Config {
-	// needs improvement(amol): need a better way to set parameters outside of binary (query-service)
-	return Config{
-		Protocol: Protocol{
-			OTLP: otlpexporter.Config{
-				GRPCClientSettings: otelgrpc.GRPCClientSettings{
-					TLSSetting: oteltls.TLSClientSetting{
-						// needs improvement(amol): add tls
-						Insecure: true,
-					},
-				},
-				// default timeout is 5 seconds
-				TimeoutSettings: otelexporterhelper.NewDefaultTimeoutSettings(),
-			},
-		},
-		Resolver: ResolverSettings{
-			DNS: &DNSResolver{
-				Hostname: hostname,
-				Port:     port,
-			},
-		},
-	}
-
 }
 
 // Protocol holds the individual protocol-specific settings. Only OTLP is supported at the moment.

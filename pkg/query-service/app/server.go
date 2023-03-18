@@ -46,6 +46,8 @@ type ServerOptions struct {
 	// alert specific params
 	DisableRules bool
 	RuleRepoURL  string
+	// opamp related config
+	defaultOtelConfig string
 }
 
 // Server runs HTTP, Mux and a grpc server
@@ -450,7 +452,7 @@ func (s *Server) Start() error {
 
 	go func() {
 		zap.S().Info("Starting OpAmp Websocket server", zap.String("addr", constants.OpAmpWsEndpoint))
-		err := opamp.InitalizeServer(constants.OpAmpWsEndpoint, &opAmpModel.AllAgents)
+		err := opamp.InitalizeServer(constants.OpAmpWsEndpoint, &opAmpModel.AllAgents, s.serverOptions.defaultOtelConfig)
 		if err != nil {
 			zap.S().Info("opamp ws server failed to start", err)
 			s.unavailableChannel <- healthcheck.Unavailable
