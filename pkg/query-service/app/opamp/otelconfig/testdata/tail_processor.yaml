@@ -1,0 +1,6 @@
+processors:
+  batch:
+    send_batch_size: 1000
+    timeout: 10s
+  signoz_tail_sampling:
+    decision_wait: 1s

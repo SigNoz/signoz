@@ -2,11 +2,8 @@ package opamp
 
 import (
 	"context"
-	"crypto/sha256"
 	"fmt"
 
-	"github.com/knadh/koanf/parsers/yaml"
-	"github.com/open-telemetry/opamp-go/protobufs"
 	"go.opentelemetry.io/collector/confmap"
 	model "go.signoz.io/signoz/pkg/query-service/app/opamp/model"
 	"go.signoz.io/signoz/pkg/query-service/app/opamp/otelconfig"
@@ -40,15 +37,15 @@ func UpsertControlProcessors(ctx context.Context, signal string, processors map[
 		return
 	}
 
+	withLB := false
 	if len(agents) > 1 && signal == string(Traces) {
-		zap.S().Debug("found multiple agents. this feature is not supported for traces pipeline (sampling rules)")
-		fnerr = fmt.Errorf("multiple agents not supported in sampling rules")
-		return
+		// enable LB exporter config
+		withLB = true
 	}
 
 	for _, agent := range agents {
 
-		agenthash, err := addIngestionControlToAgent(agent, signal, processors, false)
+		agenthash, err := addIngestionControlToAgent(agent, signal, processors, withLB)
 		if err != nil {
 			zap.S().Error("failed to push ingestion rules config to agent", agent.ID, err)
 			continue
@@ -66,57 +63,25 @@ func UpsertControlProcessors(ctx context.Context, signal string, processors map[
 }
 
 // addIngestionControlToAgent adds ingestion contorl rules to agent config
-func addIngestionControlToAgent(agent *model.Agent, signal string, processors map[string]interface{}, withLB bool) (string, error) {
-	confHash := ""
-	config := agent.EffectiveConfig
-	c, err := yaml.Parser().Unmarshal([]byte(config))
+func addIngestionControlToAgent(agent *model.Agent, signal string, processors map[string]interface{}, withLB bool) (confhash string, err error) {
+	agentConf, err := agent.GetEffectiveConfMap()
 	if err != nil {
-		return confHash, err
+		return confhash, err
 	}
 
-	agentConf := confmap.NewFromStringMap(c)
+	if withLB {
+		// add LB exporter pipeline and OTLP worker pipeline
+		makeLbExporterSpec(agentConf)
+	}
 
-	// add ingestion control spec
+	// add ingestion control spec.
 	err = makeIngestionControlSpec(agentConf, Signal(signal), processors)
 	if err != nil {
 		zap.S().Error("failed to prepare ingestion control processors for agent ", agent.ID, err)
-		return confHash, err
+		return confhash, err
 	}
 
-	// ------ complete adding processor
-	configR, err := yaml.Parser().Marshal(agentConf.ToStringMap())
-	if err != nil {
-		return confHash, err
-	}
-
-	zap.S().Debugf("sending new config", string(configR))
-	hash := sha256.New()
-	_, err = hash.Write(configR)
-	if err != nil {
-		return confHash, err
-	}
-	confHash = string(hash.Sum(nil))
-	agent.EffectiveConfig = string(configR)
-	err = agent.Upsert()
-	if err != nil {
-		return confHash, err
-	}
-
-	agent.SendToAgent(&protobufs.ServerToAgent{
-		RemoteConfig: &protobufs.AgentRemoteConfig{
-			Config: &protobufs.AgentConfigMap{
-				ConfigMap: map[string]*protobufs.AgentConfigFile{
-					"collector.yaml": {
-						Body:        configR,
-						ContentType: "application/x-yaml",
-					},
-				},
-			},
-			ConfigHash: []byte(confHash),
-		},
-	})
-
-	return string(confHash), nil
+	return agent.SendConfMap(agentConf)
 }
 
 // prepare spec to introduce ingestion control in agent conf

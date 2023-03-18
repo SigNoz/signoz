@@ -74,19 +74,16 @@ func (srv *Server) onDisconnect(conn types.Connection) {
 func (srv *Server) onMessage(conn types.Connection, msg *protobufs.AgentToServer) *protobufs.ServerToAgent {
 	agentID := msg.InstanceUid
 
-	agent, created, err := srv.agents.FindOrCreateAgent(agentID, conn)
+	agent, _, err := srv.agents.FindOrCreateAgent(agentID, conn)
 	if err != nil {
 		zap.S().Error("Failed to find or create agent %q: %v", agentID, err)
 		// TODO: handle error
 	}
 
-	if created {
-		agent.CanLB = model.ExtractLbFlag(msg.AgentDescription)
-		zap.S().Debugf("New agent added:", zap.Bool("canLb", agent.CanLB), zap.String("ID", agent.ID), zap.Any("status", agent.CurrentStatus))
-	}
+	// todo(): when agent count goes to 2 and sampling rules on traces is enabled
+	// add lb
 
-	var response *protobufs.ServerToAgent
-	response = &protobufs.ServerToAgent{
+	response := &protobufs.ServerToAgent{
 		InstanceUid:  agentID,
 		Capabilities: uint64(capabilities),
 	}

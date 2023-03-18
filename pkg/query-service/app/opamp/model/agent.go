@@ -7,8 +7,11 @@ import (
 	"sync"
 	"time"
 
+	"go.opentelemetry.io/collector/confmap"
+	"go.uber.org/zap"
 	"google.golang.org/protobuf/proto"
 
+	"github.com/knadh/koanf/parsers/yaml"
 	"github.com/open-telemetry/opamp-go/protobufs"
 	"github.com/open-telemetry/opamp-go/server/types"
 )
@@ -21,10 +24,6 @@ const (
 	AgentStatusDisconnected
 )
 
-// set in agent description when agent is capable of supporting
-// lb exporter configuration. values: 1 (true) or 0 (false)
-const lbExporterFlag = "capabilities.lbexporter"
-
 type Agent struct {
 	ID              string      `json:"agentId" yaml:"agentId" db:"agent_id"`
 	StartedAt       time.Time   `json:"startedAt" yaml:"startedAt" db:"started_at"`
@@ -34,12 +33,6 @@ type Agent struct {
 	remoteConfig    *protobufs.AgentRemoteConfig
 	Status          *protobufs.AgentToServer
 
-	// can this agent be load balancer
-	CanLB bool
-
-	// is this agent setup as load balancer
-	IsLb bool
-
 	conn      types.Connection
 	connMutex sync.Mutex
 	mux       sync.RWMutex
@@ -47,6 +40,16 @@ type Agent struct {
 
 func New(ID string, conn types.Connection) *Agent {
 	return &Agent{ID: ID, StartedAt: time.Now(), CurrentStatus: AgentStatusConnected, conn: conn}
+}
+
+func (agent *Agent) GetEffectiveConfMap() (*confmap.Conf, error) {
+	config := agent.EffectiveConfig
+	c, err := yaml.Parser().Unmarshal([]byte(config))
+	if err != nil {
+		return nil, nil
+	}
+
+	return confmap.NewFromStringMap(c), nil
 }
 
 // Upsert inserts or updates the agent in the database.
@@ -76,29 +79,6 @@ func (agent *Agent) UpdateStatus(statusMsg *protobufs.AgentToServer, response *p
 	agent.mux.Lock()
 	defer agent.mux.Unlock()
 	agent.processStatusUpdate(statusMsg, response)
-}
-
-// extracts lb exporter support flag from agent description. the flag
-// is used to decide if lb exporter can be enabled on the agent.
-func ExtractLbFlag(agentDescr *protobufs.AgentDescription) bool {
-
-	if agentDescr == nil {
-		return false
-	}
-
-	if len(agentDescr.NonIdentifyingAttributes) > 0 {
-		for _, kv := range agentDescr.NonIdentifyingAttributes {
-			anyvalue, ok := kv.Value.Value.(*protobufs.AnyValue_StringValue)
-			if !ok {
-				continue
-			}
-			if kv.Key == lbExporterFlag && anyvalue.StringValue == "1" {
-				// agent can support load balancer config
-				return true
-			}
-		}
-	}
-	return false
 }
 
 func (agent *Agent) updateAgentDescription(newStatus *protobufs.AgentToServer) (agentDescrChanged bool) {
@@ -147,10 +127,6 @@ func (agent *Agent) updateAgentDescription(newStatus *protobufs.AgentToServer) (
 				onConfigFailure(agent.ID, string(agent.Status.RemoteConfigStatus.LastRemoteConfigHash), agent.Status.RemoteConfigStatus.ErrorMessage)
 			}
 		}
-	}
-
-	if agentDescrChanged {
-		agent.CanLB = ExtractLbFlag(newStatus.AgentDescription)
 	}
 
 	return agentDescrChanged
@@ -331,4 +307,42 @@ func (agent *Agent) SendToAgent(msg *protobufs.ServerToAgent) {
 	defer agent.connMutex.Unlock()
 
 	agent.conn.Send(context.Background(), msg)
+}
+
+func (agent *Agent) SendConfMap(agentConf *confmap.Conf) (confhash string, sendErr error) {
+
+	configR, err := yaml.Parser().Marshal(agentConf.ToStringMap())
+	if err != nil {
+		return confhash, err
+	}
+
+	zap.S().Debug("sending new config to agent", agent.ID, string(configR))
+
+	hash := sha256.New()
+	_, err = hash.Write(configR)
+	if err != nil {
+		return confhash, err
+	}
+
+	confhash = string(hash.Sum(nil))
+	agent.EffectiveConfig = string(configR)
+	err = agent.Upsert()
+	if err != nil {
+		return confhash, err
+	}
+
+	agent.SendToAgent(&protobufs.ServerToAgent{
+		RemoteConfig: &protobufs.AgentRemoteConfig{
+			Config: &protobufs.AgentConfigMap{
+				ConfigMap: map[string]*protobufs.AgentConfigFile{
+					"collector.yaml": {
+						Body:        configR,
+						ContentType: "application/x-yaml",
+					},
+				},
+			},
+			ConfigHash: []byte(confhash),
+		},
+	})
+	return confhash, nil
 }

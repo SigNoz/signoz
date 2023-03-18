@@ -1,0 +1,4 @@
+processors:
+  batch:
+    send_batch_size: 1000
+    timeout: 10s
