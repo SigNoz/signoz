@@ -18,9 +18,18 @@ type QueryRangeParams struct {
 	Stats string
 }
 
+type Temporality int
+
+const (
+	_ Temporality = iota
+	DELTA
+	CUMULATIVE
+)
+
 type MetricQuery struct {
 	QueryName         string            `json:"queryName"`
 	MetricName        string            `json:"metricName"`
+	Temporaltiy       Temporality       `json:"temporality"`
 	TagFilters        *FilterSet        `json:"tagFilters,omitempty"`
 	GroupingTags      []string          `json:"groupBy,omitempty"`
 	AggregateOperator AggregateOperator `json:"aggregateOperator"`

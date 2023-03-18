@@ -44,6 +44,13 @@ var AggregateOperatorToSQLFunc = map[model.AggregateOperator]string{
 	model.RATE_MIN: "min",
 }
 
+var (
+	queryCumulative = `SELECT %s ts, runningDifference(value)/runningDifference(ts) as value FROM(%s)`
+	queryDelta      = `SELECT %s ts, value/runningDifference(ts) as value FROM(%s)`
+	opCumulative    = `max(value)`
+	opDelta         = `sum(value)`
+)
+
 var SupportedFunctions = []string{"exp", "log", "ln", "exp2", "log2", "exp10", "log10", "sqrt", "cbrt", "erf", "erfc", "lgamma", "tgamma", "sin", "cos", "tan", "asin", "acos", "atan", "degrees", "radians"}
 
 func GoValuateFuncs() map[string]govaluate.ExpressionFunction {
@@ -196,29 +203,57 @@ func BuildMetricQuery(qp *model.QueryRangeParamsV2, mq *model.MetricQuery, table
 		// Calculate rate of change of metric for each unique time series
 		groupBy = "fingerprint, ts"
 		groupTags = "fingerprint,"
-		op := "max(value)" // max value should be the closest value for point in time
+		var op string
+		if mq.Temporaltiy == model.CUMULATIVE {
+			op = opCumulative
+		} else {
+			op = opDelta
+		}
 		subQuery := fmt.Sprintf(
 			queryTmpl, "any(labels) as labels, "+groupTags, qp.Step, op, filterSubQuery, groupBy, groupTags,
 		) // labels will be same so any should be fine
-		query := `SELECT %s ts, runningDifference(value)/runningDifference(ts) as value FROM(%s)`
+		var query string
+		if mq.Temporaltiy == model.CUMULATIVE {
+			query = queryCumulative
+		} else {
+			query = queryDelta
+		}
 
 		query = fmt.Sprintf(query, "labels as fullLabels,", subQuery)
 		return query, nil
 	case model.SUM_RATE:
 		rateGroupBy := "fingerprint, " + groupBy
 		rateGroupTags := "fingerprint, " + groupTags
-		op := "max(value)"
+		var op string
+		if mq.Temporaltiy == model.CUMULATIVE {
+			op = opCumulative
+		} else {
+			op = opDelta
+		}
 		subQuery := fmt.Sprintf(
 			queryTmpl, rateGroupTags, qp.Step, op, filterSubQuery, rateGroupBy, rateGroupTags,
 		) // labels will be same so any should be fine
-		query := `SELECT %s ts, runningDifference(value)/runningDifference(ts) as value FROM(%s) OFFSET 1`
+		var query string
+		if mq.Temporaltiy == model.CUMULATIVE {
+			query = queryCumulative
+		} else {
+			query = queryDelta
+		}
+
 		query = fmt.Sprintf(query, groupTags, subQuery)
 		query = fmt.Sprintf(`SELECT %s ts, sum(value) as value FROM (%s) GROUP BY %s ORDER BY %s ts`, groupTags, query, groupBy, groupTags)
 		return query, nil
 	case model.RATE_SUM, model.RATE_MAX, model.RATE_AVG, model.RATE_MIN:
 		op := fmt.Sprintf("%s(value)", AggregateOperatorToSQLFunc[mq.AggregateOperator])
 		subQuery := fmt.Sprintf(queryTmpl, groupTags, qp.Step, op, filterSubQuery, groupBy, groupTags)
-		query := `SELECT %s ts, runningDifference(value)/runningDifference(ts) as value FROM(%s) OFFSET 1`
+
+		var query string
+		if mq.Temporaltiy == model.CUMULATIVE {
+			query = queryCumulative
+		} else {
+			query = queryDelta
+		}
+
 		query = fmt.Sprintf(query, groupTags, subQuery)
 		return query, nil
 	case model.P05, model.P10, model.P20, model.P25, model.P50, model.P75, model.P90, model.P95, model.P99:
@@ -228,11 +263,22 @@ func BuildMetricQuery(qp *model.QueryRangeParamsV2, mq *model.MetricQuery, table
 	case model.HIST_QUANTILE_50, model.HIST_QUANTILE_75, model.HIST_QUANTILE_90, model.HIST_QUANTILE_95, model.HIST_QUANTILE_99:
 		rateGroupBy := "fingerprint, " + groupBy
 		rateGroupTags := "fingerprint, " + groupTags
-		op := "max(value)"
+		var op string
+		if mq.Temporaltiy == model.CUMULATIVE {
+			op = opCumulative
+		} else {
+			op = opDelta
+		}
 		subQuery := fmt.Sprintf(
 			queryTmpl, rateGroupTags, qp.Step, op, filterSubQuery, rateGroupBy, rateGroupTags,
 		) // labels will be same so any should be fine
-		query := `SELECT %s ts, runningDifference(value)/runningDifference(ts) as value FROM(%s) OFFSET 1`
+		var query string
+		if mq.Temporaltiy == model.CUMULATIVE {
+			query = queryCumulative
+		} else {
+			query = queryDelta
+		}
+
 		query = fmt.Sprintf(query, groupTags, subQuery)
 		query = fmt.Sprintf(`SELECT %s ts, sum(value) as value FROM (%s) GROUP BY %s ORDER BY %s ts`, groupTags, query, groupBy, groupTags)
 		value := AggregateOperatorToPercentile[mq.AggregateOperator]

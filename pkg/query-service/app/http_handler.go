@@ -431,6 +431,29 @@ func (aH *APIHandler) metricAutocompleteTagValue(w http.ResponseWriter, r *http.
 	aH.Respond(w, tagValueList)
 }
 
+func (aH *APIHandler) addTemporality(ctx context.Context, qp *model.QueryRangeParamsV2) {
+
+	metricNameToTemporality := make(map[string]model.Temporality)
+
+	if qp.CompositeMetricQuery != nil && len(qp.CompositeMetricQuery.BuilderQueries) > 0 {
+		for name := range qp.CompositeMetricQuery.BuilderQueries {
+			mq := qp.CompositeMetricQuery.BuilderQueries[name]
+			metricNameToTemporality[mq.MetricName] = model.CUMULATIVE
+		}
+	}
+
+	metricNameToTemporality, _ = aH.reader.FetchTemporality(ctx, metricNameToTemporality)
+	fmt.Println(metricNameToTemporality)
+
+	if qp.CompositeMetricQuery != nil && len(qp.CompositeMetricQuery.BuilderQueries) > 0 {
+		for name := range qp.CompositeMetricQuery.BuilderQueries {
+			mq := qp.CompositeMetricQuery.BuilderQueries[name]
+			mq.Temporaltiy = metricNameToTemporality[mq.MetricName]
+		}
+	}
+
+}
+
 func (aH *APIHandler) QueryRangeMetricsV2(w http.ResponseWriter, r *http.Request) {
 	metricsQueryRangeParams, apiErrorObj := parser.ParseMetricQueryRangeParams(r)
 
@@ -452,6 +475,10 @@ func (aH *APIHandler) QueryRangeMetricsV2(w http.ResponseWriter, r *http.Request
 		step := metricsQueryRangeParams.Step
 		metricsQueryRangeParams.End = (end / step * step) * 1000
 	}
+
+	// add temporality for each metric
+
+	aH.addTemporality(r.Context(), metricsQueryRangeParams)
 
 	type channelResult struct {
 		Series []*model.Series

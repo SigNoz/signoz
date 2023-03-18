@@ -2166,6 +2166,7 @@ func (r *ClickHouseReader) GetFilteredSpansAggregates(ctx context.Context, query
 	}
 
 	err := r.db.Select(ctx, &SpanAggregatesDBResponseItems, query, args...)
+	fmt.Println(args...)
 
 	zap.S().Info(query)
 
@@ -3217,6 +3218,25 @@ func (r *ClickHouseReader) GetSpansInLastHeartBeatInterval(ctx context.Context) 
 	r.db.QueryRow(ctx, queryStr).Scan(&spansInLastHeartBeatInterval)
 
 	return spansInLastHeartBeatInterval, nil
+}
+
+func (r *ClickHouseReader) FetchTemporality(ctx context.Context, metricNameToTemporality map[string]model.Temporality) (map[string]model.Temporality, error) {
+
+	query := fmt.Sprintf(`SELECT temporality FROM %s.%s WHERE metric_name = $1 LIMIT 1`, signozMetricDBName, signozTSTableName)
+
+	for name := range metricNameToTemporality {
+		var temporality string
+		err := r.db.QueryRow(ctx, query, name).Scan(&temporality)
+		if err != nil {
+			zap.S().Error("unexpected error", zap.Error(err))
+		}
+		if temporality == "Cumulative" {
+			metricNameToTemporality[name] = model.CUMULATIVE
+		} else if temporality == "Delta" {
+			metricNameToTemporality[name] = model.DELTA
+		}
+	}
+	return metricNameToTemporality, nil
 }
 
 // func sum(array []tsByMetricName) uint64 {
