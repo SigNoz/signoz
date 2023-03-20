@@ -240,6 +240,28 @@ type AttributeKey struct {
 	IsColumn bool                 `json:"isColumn"`
 }
 
+func (a AttributeKey) Validate() error {
+	switch a.DataType {
+	case AttributeKeyDataTypeBool, AttributeKeyDataTypeNumber, AttributeKeyDataTypeString:
+		return nil
+	default:
+		return fmt.Errorf("invalid query type: %s", q)
+	}
+
+	switch a.Type {
+	case AttributeKeyTypeResource, AttributeKeyTypeTag:
+		return nil
+	default:
+		return fmt.Errorf("invalid query type: %s", q)
+	}
+
+	if a.Key == "" {
+		return fmt.Errorf("key is empty")
+	}
+
+	return nil
+}
+
 type FilterAttributeValueResponse struct {
 	StringAttributeValues []string      `json:"stringAttributeValues"`
 	NumberAttributeValues []interface{} `json:"numberAttributeValues"`
@@ -345,7 +367,7 @@ type BuilderQuery struct {
 	QueryName          string            `json:"queryName"`
 	DataSource         DataSource        `json:"dataSource"`
 	AggregateOperator  AggregateOperator `json:"aggregateOperator"`
-	AggregateAttribute string            `json:"aggregateAttribute,omitempty"`
+	AggregateAttribute AttributeKey      `json:"aggregateAttribute,omitempty"`
 	Filters            *FilterSet        `json:"filters,omitempty"`
 	GroupBy            []AttributeKey    `json:"groupBy,omitempty"`
 	Expression         string            `json:"expression"`
@@ -376,7 +398,7 @@ func (b *BuilderQuery) Validate() error {
 		if err := b.AggregateOperator.Validate(); err != nil {
 			return fmt.Errorf("aggregate operator is invalid: %w", err)
 		}
-		if b.AggregateAttribute == "" && b.AggregateOperator.RequireAttribute() {
+		if b.AggregateAttribute == (AttributeKey{}) && b.AggregateOperator.RequireAttribute() {
 			return fmt.Errorf("aggregate attribute is required")
 		}
 	}
@@ -388,11 +410,36 @@ func (b *BuilderQuery) Validate() error {
 	}
 	if b.GroupBy != nil {
 		for _, groupBy := range b.GroupBy {
-			if groupBy == (AttributeKey{}) {
-				return fmt.Errorf("group by cannot be empty")
+			if groupBy.Validate() != nil {
+				return fmt.Errorf("group by is invalid")
 			}
 		}
 	}
+
+	if b.Having != nil {
+		for _, having := range b.Having {
+			if having.ColumnName.Validate() != nil {
+				return fmt.Errorf("having columnName is invalid")
+			}
+		}
+	}
+
+	if b.OrderBy != nil {
+		for _, orderBy := range b.OrderBy {
+			if orderBy.ColumnName.Validate() != nil {
+				return fmt.Errorf("order by columnName is invalid")
+			}
+		}
+	}
+	
+	if b.SelectColumns != nil {
+		for _, selectColumn := range b.SelectColumns {
+			if selectColumn.Validate() != nil {
+				return fmt.Errorf("select column is invalid")
+			}
+		}
+	}
+
 	if b.Expression == "" {
 		return fmt.Errorf("expression is required")
 	}
@@ -410,6 +457,11 @@ func (f *FilterSet) Validate() error {
 	}
 	if f.Operator != "" && f.Operator != "AND" && f.Operator != "OR" {
 		return fmt.Errorf("operator must be AND or OR")
+	}
+	for _, item := range f.Items {
+		if err := item.Key.Validate(); err != nil {
+			return fmt.Errorf("filter item key is invalid: %w", err)
+		}
 	}
 	return nil
 }
