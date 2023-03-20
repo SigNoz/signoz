@@ -33,3 +33,17 @@ export const TextContainer = styled.div`
 export const LogContainer = styled.div`
 	margin-left: 0.5rem;
 `;
+
+export const LogText = styled.div`
+	display: inline-block;
+
+	text-overflow: ellipsis;
+	overflow: hidden;
+	white-space: nowrap;
+`;
+
+export const SelectedLog = styled.div`
+	display: flex;
+	width: 100%;
+	overflow: hidden;
+`;
