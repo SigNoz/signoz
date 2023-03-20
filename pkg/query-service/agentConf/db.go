@@ -31,11 +31,11 @@ func (r *Repo) initDB(engine string) error {
 	}
 }
 
-func (r *Repo) GetConfigHistory(ctx context.Context, typ ElementTypeDef) ([]ConfigVersion, error) {
+func (r *Repo) GetConfigHistory(ctx context.Context, typ ElementTypeDef, limit int) ([]ConfigVersion, error) {
 	var c []ConfigVersion
-	err := r.db.SelectContext(ctx, &c, `SELECT 
-		id, 
+	err := r.db.SelectContext(ctx, &c, fmt.Sprintf(`SELECT 
 		version, 
+		id, 
 		element_type, 
 		COALESCE(created_by, -1) as created_by, 
 		created_at,
@@ -45,9 +45,14 @@ func (r *Repo) GetConfigHistory(ctx context.Context, typ ElementTypeDef) ([]Conf
 		is_valid, 
 		disabled, 
 		deploy_status, 
-		deploy_result 
+		deploy_result,
+		last_hash,
+		last_config 
 		FROM agent_config_versions AS v
-		WHERE element_type = $1`, typ)
+		WHERE element_type = $1
+		ORDER BY created_at desc, version desc
+		limit %v`, limit),
+		typ)
 
 	return c, err
 }
@@ -57,7 +62,7 @@ func (r *Repo) GetConfigVersion(ctx context.Context, typ ElementTypeDef, v int) 
 	err := r.db.GetContext(ctx, &c, `SELECT 
 		id, 
 		version, 
-		element_type, 
+		element_type,
 		COALESCE(created_by, -1) as created_by, 
 		created_at,
 		COALESCE((SELECT NAME FROM users 
