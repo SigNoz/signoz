@@ -8,6 +8,7 @@ type ProcessorType = {
 
 export const processorTypes: Array<ProcessorType> = [
 	{ key: 'grok_parser', value: 'grok_parser', label: 'Grok' },
+	{ key: 'json_parser', value: 'json_parser', label: 'Json Parser' },
 	{ key: 'regex_parser', value: 'regex_parser', label: 'Regex' },
 	{ key: 'add', value: 'add', label: 'Add' },
 	{ key: 'remove', value: 'remove', label: 'Remove' },
@@ -32,7 +33,7 @@ export const processorFields: { [key: string]: Array<ProcessorFormField> } = {
 	grok_parser: [
 		{
 			id: 1,
-			fieldName: 'Name the Grok Processor',
+			fieldName: 'Name of Grok Processor',
 			placeholder: 'processor_name_placeholder',
 			name: 'name',
 		},
@@ -44,7 +45,7 @@ export const processorFields: { [key: string]: Array<ProcessorFormField> } = {
 		},
 		{
 			id: 3,
-			fieldName: 'Parse From',
+			fieldName: 'Grok Parse From',
 			placeholder: 'processor_parsefrom_placeholder',
 			name: 'parse_from', // optional
 			rules: [],
@@ -52,7 +53,7 @@ export const processorFields: { [key: string]: Array<ProcessorFormField> } = {
 		},
 		{
 			id: 4,
-			fieldName: 'Parse To',
+			fieldName: 'Grok Parse To',
 			placeholder: 'processor_parseto_placeholder',
 			name: 'parse_to', // optional
 			rules: [],
@@ -60,17 +61,39 @@ export const processorFields: { [key: string]: Array<ProcessorFormField> } = {
 		},
 		{
 			id: 5,
-			fieldName: 'On Error',
+			fieldName: 'Grok On Error',
 			placeholder: 'processor_onerror_placeholder',
 			name: 'on_error', // optional
 			rules: [],
 			initialValue: 'send',
 		},
 	],
+	json_parser: [
+		{
+			id: 1,
+			fieldName: 'Name of Json Parser Processor',
+			placeholder: 'processor_name_placeholder',
+			name: 'name',
+		},
+		{
+			id: 2,
+			fieldName: 'Json Parse From',
+			placeholder: 'processor_parsefrom_placeholder',
+			name: 'parse_from',
+			initialValue: 'body',
+		},
+		{
+			id: 3,
+			fieldName: 'Json Parse To',
+			placeholder: 'processor_parseto_placeholder',
+			name: 'parse_to',
+			initialValue: 'attributes',
+		},
+	],
 	regex_parser: [
 		{
 			id: 1,
-			fieldName: 'Name the Regex Processor',
+			fieldName: 'Name of Regex Processor',
 			placeholder: 'processor_name_placeholder',
 			name: 'name',
 		},
@@ -82,7 +105,7 @@ export const processorFields: { [key: string]: Array<ProcessorFormField> } = {
 		},
 		{
 			id: 3,
-			fieldName: 'Parse From',
+			fieldName: 'Regex Parse From',
 			placeholder: 'processor_parsefrom_placeholder',
 			name: 'parse_from', // optional
 			rules: [],
@@ -90,7 +113,7 @@ export const processorFields: { [key: string]: Array<ProcessorFormField> } = {
 		},
 		{
 			id: 4,
-			fieldName: 'Parse To',
+			fieldName: 'Regex Parse To',
 			placeholder: 'processor_parseto_placeholder',
 			name: 'parse_to', // optional
 			rules: [],
@@ -98,7 +121,7 @@ export const processorFields: { [key: string]: Array<ProcessorFormField> } = {
 		},
 		{
 			id: 5,
-			fieldName: 'On Error',
+			fieldName: 'Regex On Error',
 			placeholder: 'processor_onerror_placeholder',
 			name: 'on_error', // optional
 			rules: [],
@@ -108,7 +131,7 @@ export const processorFields: { [key: string]: Array<ProcessorFormField> } = {
 	add: [
 		{
 			id: 1,
-			fieldName: 'Name the Add Processor',
+			fieldName: 'Name of Add Processor',
 			placeholder: 'processor_name_placeholder',
 			name: 'name',
 		},
@@ -128,7 +151,7 @@ export const processorFields: { [key: string]: Array<ProcessorFormField> } = {
 	remove: [
 		{
 			id: 1,
-			fieldName: 'Name the Remove Processor',
+			fieldName: 'Name of Remove Processor',
 			placeholder: 'processor_name_placeholder',
 			name: 'name',
 		},
@@ -142,7 +165,7 @@ export const processorFields: { [key: string]: Array<ProcessorFormField> } = {
 	trace_parser: [
 		{
 			id: 1,
-			fieldName: 'Name the Trace Parser Processor',
+			fieldName: 'Name of Trace Parser Processor',
 			placeholder: 'processor_name_placeholder',
 			name: 'name',
 		},
@@ -168,7 +191,7 @@ export const processorFields: { [key: string]: Array<ProcessorFormField> } = {
 	retain: [
 		{
 			id: 1,
-			fieldName: 'Name the Retain Processor',
+			fieldName: 'Name of Retain Processor',
 			placeholder: 'processor_name_placeholder',
 			name: 'name',
 		},
@@ -182,7 +205,7 @@ export const processorFields: { [key: string]: Array<ProcessorFormField> } = {
 	move: [
 		{
 			id: 1,
-			fieldName: 'Name the Move Processor',
+			fieldName: 'Name of Move Processor',
 			placeholder: 'processor_name_placeholder',
 			name: 'name',
 		},
@@ -202,7 +225,7 @@ export const processorFields: { [key: string]: Array<ProcessorFormField> } = {
 	copy: [
 		{
 			id: 1,
-			fieldName: 'Name the Copy Processor',
+			fieldName: 'Name of Copy Processor',
 			placeholder: 'processor_name_placeholder',
 			name: 'name',
 		},
