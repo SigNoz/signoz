@@ -2,6 +2,7 @@ import { ColumnType } from 'antd/lib/table/interface';
 import dayjs from 'dayjs';
 import React from 'react';
 import update from 'react-addons-update';
+import { ProcessorData } from 'types/api/pipeline/def';
 
 import TableComponents, { Record } from './TableComponents';
 
@@ -26,22 +27,11 @@ export function getUpdatedRow<T>(
 	dragIndex: number,
 	hoverIndex: number,
 ): Array<T> {
-	const updatedRow = update(data, {
+	return update(data, {
 		$splice: [
 			[dragIndex, 1],
 			[hoverIndex, 0, data[dragIndex]],
 		],
-	});
-	if (dragIndex === updatedRow.length - 1) {
-		updatedRow[hoverIndex].output = updatedRow[hoverIndex + 1].id;
-	}
-	if (hoverIndex === updatedRow.length - 1) {
-		updatedRow[hoverIndex - 1].output = updatedRow[hoverIndex].id;
-	}
-	return updatedRow.map((item, index) => {
-		const obj = item;
-		obj.orderId = index + 1;
-		return obj;
 	});
 }
 
@@ -83,4 +73,23 @@ export function getDataOnSearch(
 					.includes(searchValue)
 			: String(data[key]).toLowerCase().includes(searchValue.toLowerCase()),
 	);
+}
+
+export function getProcessorUpdatedRow<T extends ProcessorData>(
+	processorData: Array<T>,
+	dragIndex: number,
+	hoverIndex: number,
+): Array<T> {
+	const data = processorData;
+	const item = data.splice(dragIndex, 1)[0];
+	data.splice(hoverIndex, 0, item);
+	data.forEach((item, index) => {
+		const obj = item;
+		obj.orderId = index + 1;
+	});
+	for (let i = 0; i < data.length - 1; i += 1) {
+		data[i].output = data[i + 1].id;
+	}
+	delete data[data.length - 1].output;
+	return data;
 }

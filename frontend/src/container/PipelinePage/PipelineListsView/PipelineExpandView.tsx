@@ -20,9 +20,9 @@ import DragAction from './TableComponents/DragAction';
 import PipelineActions from './TableComponents/PipelineActions';
 import {
 	getEditedDataSource,
+	getProcessorUpdatedRow,
 	getRecordIndex,
 	getTableColumn,
-	getUpdatedRow,
 } from './utils';
 
 function PipelineExpandView({
@@ -155,12 +155,11 @@ function PipelineExpandView({
 	const moveProcessorRow = useCallback(
 		(dragIndex: number, hoverIndex: number) => {
 			if (expandedPipelineData?.config && isEditingActionMode) {
-				const updatedRow = getUpdatedRow(
+				const updatedRow = getProcessorUpdatedRow(
 					expandedPipelineData?.config,
 					dragIndex,
 					hoverIndex,
 				);
-				delete updatedRow[updatedRow.length - 1].output;
 				handleAlert({
 					title: t('reorder_processor'),
 					descrition: t('reorder_processor_description'),
