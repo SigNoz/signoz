@@ -75,7 +75,8 @@ function PipelineListsView({
 	const isEditingActionMode = isActionMode === ActionMode.Editing;
 
 	useEffect(() => {
-		if (pipelineSearchValue) {
+		if (pipelineSearchValue === '') setCurrPipelineData(piplineData.pipelines);
+		if (pipelineSearchValue !== '') {
 			const filterData = piplineData.pipelines.filter((data: PipelineData) =>
 				getDataOnSearch(data as never, pipelineSearchValue),
 			);

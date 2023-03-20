@@ -5,6 +5,7 @@ import {
 	ProcessorData,
 } from 'types/api/pipeline/def';
 
+import DeploymentStage from '../Layouts/ChangeHistory/DeploymentStage';
 import DescriptionTextArea from './AddNewPipeline/FormFields/DescriptionTextArea';
 import FilterSearch from './AddNewPipeline/FormFields/FilterSearch';
 import NameInput from './AddNewPipeline/FormFields/NameInput';
@@ -92,6 +93,12 @@ export const changeHistoryColumns: Array<
 		key: 'version',
 		title: 'Version',
 		dataIndex: 'version',
+	},
+	{
+		title: 'Deployment Stage',
+		key: 'deployStatus',
+		dataIndex: 'deployStatus',
+		render: DeploymentStage,
 	},
 	{
 		key: 'deployResult',
