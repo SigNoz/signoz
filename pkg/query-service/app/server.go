@@ -112,12 +112,15 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 		return nil, err
 	}
 
+	authm := NewAuthMiddleware(auth.GetUserFromRequest)
+
 	telemetry.GetInstance().SetReader(reader)
 	apiHandler, err := NewAPIHandler(APIHandlerOpts{
-		Reader:       reader,
-		AppDao:       dao.DB(),
-		RuleManager:  rm,
-		FeatureFlags: fm,
+		Reader:        reader,
+		AppDao:        dao.DB(),
+		RuleManager:   rm,
+		FeatureFlags:  fm,
+		Authenticator: authm,
 	})
 	if err != nil {
 		return nil, err
@@ -191,12 +194,10 @@ func (s *Server) createPublicServer(api *APIHandler) (*http.Server, error) {
 	r.Use(s.analyticsMiddleware)
 	r.Use(loggingMiddleware)
 
-	am := NewAuthMiddleware(auth.GetUserFromRequest)
-
-	api.RegisterRoutes(r, am)
-	api.RegisterMetricsRoutes(r, am)
-	api.RegisterLogsRoutes(r, am)
-	api.RegisterQueryRangeV3Routes(r, am)
+	api.RegisterRoutes(r)
+	api.RegisterMetricsRoutes(r)
+	api.RegisterLogsRoutes(r)
+	api.RegisterQueryRangeV3Routes(r)
 
 	c := cors.New(cors.Options{
 		AllowedOrigins: []string{"*"},
