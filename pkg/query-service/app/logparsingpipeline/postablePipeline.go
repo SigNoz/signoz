@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/antonmedv/expr"
 	"go.signoz.io/signoz/pkg/query-service/model"
 )
 
@@ -40,6 +41,12 @@ func (p *PostablePipeline) IsValid() *model.ApiError {
 
 	if p.Filter == "" {
 		return model.BadRequestStr("pipeline filter is required")
+	}
+
+	// check the expression
+	_, err := expr.Compile(p.Filter, expr.AsBool(), expr.AllowUndefinedVariables())
+	if err != nil {
+		return model.BadRequestStr(fmt.Sprintf("filter for pipeline %v is not correct: %v", p.Name, err.Error()))
 	}
 
 	idUnique := map[string]struct{}{}
