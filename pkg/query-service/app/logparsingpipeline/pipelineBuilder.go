@@ -17,18 +17,10 @@ func PreparePipelineProcessor(pipelines []model.Pipeline) (map[string]interface{
 			continue
 		}
 
-		operators := []model.PipelineOperator{}
-		// remove disabled operators
-		for _, operator := range v.Config {
-			if operator.Enabled {
-				operators = append(operators, operator)
-			}
-		}
-
+		operators := getOperators(v.Config)
 		if len(operators) == 0 {
 			continue
 		}
-
 		router := []model.PipelineOperator{
 			{
 				ID:   "router_signoz",
@@ -60,4 +52,22 @@ func PreparePipelineProcessor(pipelines []model.Pipeline) (map[string]interface{
 		names = append(names, name)
 	}
 	return processors, names, nil
+}
+
+func getOperators(op []model.PipelineOperator) []model.PipelineOperator {
+	lastIndex := 0
+	operators := []model.PipelineOperator{}
+	// remove disabled operators
+	for i, operator := range op {
+		if operator.Enabled {
+			operators = append(operators, operator)
+			if i > 0 {
+				operators[lastIndex].Output = operator.ID
+			}
+			lastIndex = i
+		} else if i == len(op)-1 && len(operators) != 0 {
+			operators[len(operators)-1].Output = ""
+		}
+	}
+	return operators
 }

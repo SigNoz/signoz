@@ -36,12 +36,12 @@ func (ic *LogParsingPipelineController) ApplyPipelines(ctx context.Context, post
 	// get user info from context
 	jwt, err := auth.ExtractJwtFromContext(ctx)
 	if err != nil {
-		return nil, model.InternalError(fmt.Errorf("failed to extract jwt from context", err))
+		return nil, model.InternalError(fmt.Errorf("failed to extract jwt from context %v", err))
 	}
 
 	claims, err := auth.ParseJWT(jwt)
 	if err != nil {
-		return nil, model.InternalError(fmt.Errorf("failed get claims from jwt", err))
+		return nil, model.InternalError(fmt.Errorf("failed get claims from jwt %v", err))
 	}
 
 	userId := ""
