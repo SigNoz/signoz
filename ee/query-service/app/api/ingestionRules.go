@@ -15,7 +15,13 @@ import (
 
 // ingestion rules handler - combines common methods for drop and sampling rules
 
+// parseAgentConfigVersion parses the version string from URL path.
 func parseAgentConfigVersion(r *http.Request) (int, *model.ApiError) {
+	// parse version from path and respond with
+	// - (-1) to indicate no version specified in the url path but the user is looking for the latest version
+	// - (0) indicates a failure in parsing
+	// - non-zero (>0) to indicate user is looking for a specific version
+
 	versionString := mux.Vars(r)["version"]
 
 	if versionString == "latest" {

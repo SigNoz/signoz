@@ -61,8 +61,8 @@ type APIHandler struct {
 	appDao        dao.ModelDao
 	alertManager  am.Manager
 	ruleManager   *rules.Manager
-	featureFlags  interfaces.FeatureLookup
 	authenticator *AuthMiddleware
+	featureFlags  interfaces.FeatureLookup
 	ready         func(http.HandlerFunc) http.HandlerFunc
 
 	// SetupCompleted indicates if SigNoz is ready for general use.
@@ -235,17 +235,23 @@ func writeHttpResponse(w http.ResponseWriter, data interface{}) {
 	}
 }
 
+func (ah *APIHandler) Auth() *AuthMiddleware {
+	return ah.authenticator
+}
+
 func (aH *APIHandler) RegisterMetricsRoutes(router *mux.Router) {
 	subRouter := router.PathPrefix("/api/v2/metrics").Subrouter()
-	subRouter.HandleFunc("/query_range", aH.authenticator.ViewAccess(aH.QueryRangeMetricsV2)).Methods(http.MethodPost)
-	subRouter.HandleFunc("/autocomplete/list", aH.authenticator.ViewAccess(aH.metricAutocompleteMetricName)).Methods(http.MethodGet)
-	subRouter.HandleFunc("/autocomplete/tagKey", aH.authenticator.ViewAccess(aH.metricAutocompleteTagKey)).Methods(http.MethodGet)
-	subRouter.HandleFunc("/autocomplete/tagValue", aH.authenticator.ViewAccess(aH.metricAutocompleteTagValue)).Methods(http.MethodGet)
+	subRouter.HandleFunc("/query_range", aH.Auth().ViewAccess(aH.QueryRangeMetricsV2)).Methods(http.MethodPost)
+	subRouter.HandleFunc("/autocomplete/list", aH.Auth().ViewAccess(aH.metricAutocompleteMetricName)).Methods(http.MethodGet)
+	subRouter.HandleFunc("/autocomplete/tagKey", aH.Auth().ViewAccess(aH.metricAutocompleteTagKey)).Methods(http.MethodGet)
+	subRouter.HandleFunc("/autocomplete/tagValue", aH.Auth().ViewAccess(aH.metricAutocompleteTagValue)).Methods(http.MethodGet)
 }
 
 func (aH *APIHandler) RegisterQueryRangeV3Routes(router *mux.Router) {
 	subRouter := router.PathPrefix("/api/v3").Subrouter()
-	subRouter.HandleFunc("/autocomplete/aggregate_attributes", aH.authenticator.ViewAccess(aH.autocompleteAggregateAttributes)).Methods(http.MethodGet)
+	subRouter.HandleFunc("/autocomplete/aggregate_attributes", aH.Auth().ViewAccess(aH.autocompleteAggregateAttributes)).Methods(http.MethodGet)
+	subRouter.HandleFunc("/autocomplete/attribute_keys", aH.Auth().ViewAccess(aH.autoCompleteAttributeKeys)).Methods(http.MethodGet)
+	subRouter.HandleFunc("/autocomplete/attribute_values", aH.Auth().ViewAccess(aH.autoCompleteAttributeValues)).Methods(http.MethodGet)
 }
 
 func (aH *APIHandler) Respond(w http.ResponseWriter, data interface{}) {
@@ -259,97 +265,97 @@ func (aH *APIHandler) RegisterPrivateRoutes(router *mux.Router) {
 
 // RegisterRoutes registers routes for this handler on the given router
 func (aH *APIHandler) RegisterRoutes(router *mux.Router) {
-	router.HandleFunc("/api/v1/query_range", aH.authenticator.ViewAccess(aH.queryRangeMetrics)).Methods(http.MethodGet)
-	router.HandleFunc("/api/v1/query", aH.authenticator.ViewAccess(aH.queryMetrics)).Methods(http.MethodGet)
-	router.HandleFunc("/api/v1/channels", aH.authenticator.ViewAccess(aH.listChannels)).Methods(http.MethodGet)
-	router.HandleFunc("/api/v1/channels/{id}", aH.authenticator.ViewAccess(aH.getChannel)).Methods(http.MethodGet)
-	router.HandleFunc("/api/v1/channels/{id}", aH.authenticator.AdminAccess(aH.editChannel)).Methods(http.MethodPut)
-	router.HandleFunc("/api/v1/channels/{id}", aH.authenticator.AdminAccess(aH.deleteChannel)).Methods(http.MethodDelete)
-	router.HandleFunc("/api/v1/channels", aH.authenticator.EditAccess(aH.createChannel)).Methods(http.MethodPost)
-	router.HandleFunc("/api/v1/testChannel", aH.authenticator.EditAccess(aH.testChannel)).Methods(http.MethodPost)
+	router.HandleFunc("/api/v1/query_range", aH.Auth().ViewAccess(aH.queryRangeMetrics)).Methods(http.MethodGet)
+	router.HandleFunc("/api/v1/query", aH.Auth().ViewAccess(aH.queryMetrics)).Methods(http.MethodGet)
+	router.HandleFunc("/api/v1/channels", aH.Auth().ViewAccess(aH.listChannels)).Methods(http.MethodGet)
+	router.HandleFunc("/api/v1/channels/{id}", aH.Auth().ViewAccess(aH.getChannel)).Methods(http.MethodGet)
+	router.HandleFunc("/api/v1/channels/{id}", aH.Auth().AdminAccess(aH.editChannel)).Methods(http.MethodPut)
+	router.HandleFunc("/api/v1/channels/{id}", aH.Auth().AdminAccess(aH.deleteChannel)).Methods(http.MethodDelete)
+	router.HandleFunc("/api/v1/channels", aH.Auth().EditAccess(aH.createChannel)).Methods(http.MethodPost)
+	router.HandleFunc("/api/v1/testChannel", aH.Auth().EditAccess(aH.testChannel)).Methods(http.MethodPost)
 
-	router.HandleFunc("/api/v1/rules", aH.authenticator.ViewAccess(aH.listRules)).Methods(http.MethodGet)
-	router.HandleFunc("/api/v1/rules/{id}", aH.authenticator.ViewAccess(aH.getRule)).Methods(http.MethodGet)
-	router.HandleFunc("/api/v1/rules", aH.authenticator.EditAccess(aH.createRule)).Methods(http.MethodPost)
-	router.HandleFunc("/api/v1/rules/{id}", aH.authenticator.EditAccess(aH.editRule)).Methods(http.MethodPut)
-	router.HandleFunc("/api/v1/rules/{id}", aH.authenticator.EditAccess(aH.deleteRule)).Methods(http.MethodDelete)
-	router.HandleFunc("/api/v1/rules/{id}", aH.authenticator.EditAccess(aH.patchRule)).Methods(http.MethodPatch)
-	router.HandleFunc("/api/v1/testRule", aH.authenticator.EditAccess(aH.testRule)).Methods(http.MethodPost)
+	router.HandleFunc("/api/v1/rules", aH.Auth().ViewAccess(aH.listRules)).Methods(http.MethodGet)
+	router.HandleFunc("/api/v1/rules/{id}", aH.Auth().ViewAccess(aH.getRule)).Methods(http.MethodGet)
+	router.HandleFunc("/api/v1/rules", aH.Auth().EditAccess(aH.createRule)).Methods(http.MethodPost)
+	router.HandleFunc("/api/v1/rules/{id}", aH.Auth().EditAccess(aH.editRule)).Methods(http.MethodPut)
+	router.HandleFunc("/api/v1/rules/{id}", aH.Auth().EditAccess(aH.deleteRule)).Methods(http.MethodDelete)
+	router.HandleFunc("/api/v1/rules/{id}", aH.Auth().EditAccess(aH.patchRule)).Methods(http.MethodPatch)
+	router.HandleFunc("/api/v1/testRule", aH.Auth().EditAccess(aH.testRule)).Methods(http.MethodPost)
 
-	router.HandleFunc("/api/v1/dashboards", aH.authenticator.ViewAccess(aH.getDashboards)).Methods(http.MethodGet)
-	router.HandleFunc("/api/v1/dashboards", aH.authenticator.EditAccess(aH.createDashboards)).Methods(http.MethodPost)
-	router.HandleFunc("/api/v1/dashboards/grafana", aH.authenticator.EditAccess(aH.createDashboardsTransform)).Methods(http.MethodPost)
-	router.HandleFunc("/api/v1/dashboards/{uuid}", aH.authenticator.ViewAccess(aH.getDashboard)).Methods(http.MethodGet)
-	router.HandleFunc("/api/v1/dashboards/{uuid}", aH.authenticator.EditAccess(aH.updateDashboard)).Methods(http.MethodPut)
-	router.HandleFunc("/api/v1/dashboards/{uuid}", aH.authenticator.EditAccess(aH.deleteDashboard)).Methods(http.MethodDelete)
-	router.HandleFunc("/api/v1/variables/query", aH.authenticator.ViewAccess(aH.queryDashboardVars)).Methods(http.MethodGet)
-	router.HandleFunc("/api/v2/variables/query", aH.authenticator.ViewAccess(aH.queryDashboardVarsV2)).Methods(http.MethodPost)
+	router.HandleFunc("/api/v1/dashboards", aH.Auth().ViewAccess(aH.getDashboards)).Methods(http.MethodGet)
+	router.HandleFunc("/api/v1/dashboards", aH.Auth().EditAccess(aH.createDashboards)).Methods(http.MethodPost)
+	router.HandleFunc("/api/v1/dashboards/grafana", aH.Auth().EditAccess(aH.createDashboardsTransform)).Methods(http.MethodPost)
+	router.HandleFunc("/api/v1/dashboards/{uuid}", aH.Auth().ViewAccess(aH.getDashboard)).Methods(http.MethodGet)
+	router.HandleFunc("/api/v1/dashboards/{uuid}", aH.Auth().EditAccess(aH.updateDashboard)).Methods(http.MethodPut)
+	router.HandleFunc("/api/v1/dashboards/{uuid}", aH.Auth().EditAccess(aH.deleteDashboard)).Methods(http.MethodDelete)
+	router.HandleFunc("/api/v1/variables/query", aH.Auth().ViewAccess(aH.queryDashboardVars)).Methods(http.MethodGet)
+	router.HandleFunc("/api/v2/variables/query", aH.Auth().ViewAccess(aH.queryDashboardVarsV2)).Methods(http.MethodPost)
 
-	router.HandleFunc("/api/v1/explorer/queries", aH.authenticator.ViewAccess(aH.getExplorerQueries)).Methods(http.MethodGet)
-	router.HandleFunc("/api/v1/explorer/queries", aH.authenticator.EditAccess(aH.createExplorerQueries)).Methods(http.MethodPost)
-	router.HandleFunc("/api/v1/explorer/queries/{queryId}", aH.authenticator.ViewAccess(aH.getExplorerQuery)).Methods(http.MethodGet)
-	router.HandleFunc("/api/v1/explorer/queries/{queryId}", aH.authenticator.EditAccess(aH.updateExplorerQuery)).Methods(http.MethodPut)
-	router.HandleFunc("/api/v1/explorer/queries/{queryId}", aH.authenticator.EditAccess(aH.deleteExplorerQuery)).Methods(http.MethodDelete)
+	router.HandleFunc("/api/v1/explorer/queries", aH.Auth().ViewAccess(aH.getExplorerQueries)).Methods(http.MethodGet)
+	router.HandleFunc("/api/v1/explorer/queries", aH.Auth().EditAccess(aH.createExplorerQueries)).Methods(http.MethodPost)
+	router.HandleFunc("/api/v1/explorer/queries/{queryId}", aH.Auth().ViewAccess(aH.getExplorerQuery)).Methods(http.MethodGet)
+	router.HandleFunc("/api/v1/explorer/queries/{queryId}", aH.Auth().EditAccess(aH.updateExplorerQuery)).Methods(http.MethodPut)
+	router.HandleFunc("/api/v1/explorer/queries/{queryId}", aH.Auth().EditAccess(aH.deleteExplorerQuery)).Methods(http.MethodDelete)
 
-	router.HandleFunc("/api/v1/feedback", aH.authenticator.OpenAccess(aH.submitFeedback)).Methods(http.MethodPost)
+	router.HandleFunc("/api/v1/feedback", aH.Auth().OpenAccess(aH.submitFeedback)).Methods(http.MethodPost)
 	// router.HandleFunc("/api/v1/get_percentiles", aH.getApplicationPercentiles).Methods(http.MethodGet)
-	router.HandleFunc("/api/v1/services", aH.authenticator.ViewAccess(aH.getServices)).Methods(http.MethodPost)
-	router.HandleFunc("/api/v1/services/list", aH.authenticator.ViewAccess(aH.getServicesList)).Methods(http.MethodGet)
-	router.HandleFunc("/api/v1/service/overview", aH.authenticator.ViewAccess(aH.getServiceOverview)).Methods(http.MethodPost)
-	router.HandleFunc("/api/v1/service/top_operations", aH.authenticator.ViewAccess(aH.getTopOperations)).Methods(http.MethodPost)
-	router.HandleFunc("/api/v1/service/top_level_operations", aH.authenticator.ViewAccess(aH.getServicesTopLevelOps)).Methods(http.MethodPost)
-	router.HandleFunc("/api/v1/traces/{traceId}", aH.authenticator.ViewAccess(aH.SearchTraces)).Methods(http.MethodGet)
-	router.HandleFunc("/api/v1/usage", aH.authenticator.ViewAccess(aH.getUsage)).Methods(http.MethodGet)
-	router.HandleFunc("/api/v1/dependency_graph", aH.authenticator.ViewAccess(aH.dependencyGraph)).Methods(http.MethodPost)
-	router.HandleFunc("/api/v1/settings/ttl", aH.authenticator.AdminAccess(aH.setTTL)).Methods(http.MethodPost)
-	router.HandleFunc("/api/v1/settings/ttl", aH.authenticator.ViewAccess(aH.getTTL)).Methods(http.MethodGet)
+	router.HandleFunc("/api/v1/services", aH.Auth().ViewAccess(aH.getServices)).Methods(http.MethodPost)
+	router.HandleFunc("/api/v1/services/list", aH.Auth().ViewAccess(aH.getServicesList)).Methods(http.MethodGet)
+	router.HandleFunc("/api/v1/service/overview", aH.Auth().ViewAccess(aH.getServiceOverview)).Methods(http.MethodPost)
+	router.HandleFunc("/api/v1/service/top_operations", aH.Auth().ViewAccess(aH.getTopOperations)).Methods(http.MethodPost)
+	router.HandleFunc("/api/v1/service/top_level_operations", aH.Auth().ViewAccess(aH.getServicesTopLevelOps)).Methods(http.MethodPost)
+	router.HandleFunc("/api/v1/traces/{traceId}", aH.Auth().ViewAccess(aH.SearchTraces)).Methods(http.MethodGet)
+	router.HandleFunc("/api/v1/usage", aH.Auth().ViewAccess(aH.getUsage)).Methods(http.MethodGet)
+	router.HandleFunc("/api/v1/dependency_graph", aH.Auth().ViewAccess(aH.dependencyGraph)).Methods(http.MethodPost)
+	router.HandleFunc("/api/v1/settings/ttl", aH.Auth().AdminAccess(aH.setTTL)).Methods(http.MethodPost)
+	router.HandleFunc("/api/v1/settings/ttl", aH.Auth().ViewAccess(aH.getTTL)).Methods(http.MethodGet)
 
-	router.HandleFunc("/api/v1/version", aH.authenticator.OpenAccess(aH.getVersion)).Methods(http.MethodGet)
-	router.HandleFunc("/api/v1/featureFlags", aH.authenticator.OpenAccess(aH.getFeatureFlags)).Methods(http.MethodGet)
-	router.HandleFunc("/api/v1/configs", aH.authenticator.OpenAccess(aH.getConfigs)).Methods(http.MethodGet)
-	router.HandleFunc("/api/v1/health", aH.authenticator.OpenAccess(aH.getHealth)).Methods(http.MethodGet)
+	router.HandleFunc("/api/v1/version", aH.Auth().OpenAccess(aH.getVersion)).Methods(http.MethodGet)
+	router.HandleFunc("/api/v1/featureFlags", aH.Auth().OpenAccess(aH.getFeatureFlags)).Methods(http.MethodGet)
+	router.HandleFunc("/api/v1/configs", aH.Auth().OpenAccess(aH.getConfigs)).Methods(http.MethodGet)
+	router.HandleFunc("/api/v1/health", aH.Auth().OpenAccess(aH.getHealth)).Methods(http.MethodGet)
 
-	router.HandleFunc("/api/v1/getSpanFilters", aH.authenticator.ViewAccess(aH.getSpanFilters)).Methods(http.MethodPost)
-	router.HandleFunc("/api/v1/getTagFilters", aH.authenticator.ViewAccess(aH.getTagFilters)).Methods(http.MethodPost)
-	router.HandleFunc("/api/v1/getFilteredSpans", aH.authenticator.ViewAccess(aH.getFilteredSpans)).Methods(http.MethodPost)
-	router.HandleFunc("/api/v1/getFilteredSpans/aggregates", aH.authenticator.ViewAccess(aH.getFilteredSpanAggregates)).Methods(http.MethodPost)
-	router.HandleFunc("/api/v1/getTagValues", aH.authenticator.ViewAccess(aH.getTagValues)).Methods(http.MethodPost)
+	router.HandleFunc("/api/v1/getSpanFilters", aH.Auth().ViewAccess(aH.getSpanFilters)).Methods(http.MethodPost)
+	router.HandleFunc("/api/v1/getTagFilters", aH.Auth().ViewAccess(aH.getTagFilters)).Methods(http.MethodPost)
+	router.HandleFunc("/api/v1/getFilteredSpans", aH.Auth().ViewAccess(aH.getFilteredSpans)).Methods(http.MethodPost)
+	router.HandleFunc("/api/v1/getFilteredSpans/aggregates", aH.Auth().ViewAccess(aH.getFilteredSpanAggregates)).Methods(http.MethodPost)
+	router.HandleFunc("/api/v1/getTagValues", aH.Auth().ViewAccess(aH.getTagValues)).Methods(http.MethodPost)
 
-	router.HandleFunc("/api/v1/listErrors", aH.authenticator.ViewAccess(aH.listErrors)).Methods(http.MethodGet)
-	router.HandleFunc("/api/v1/countErrors", aH.authenticator.ViewAccess(aH.countErrors)).Methods(http.MethodGet)
-	router.HandleFunc("/api/v1/errorFromErrorID", aH.authenticator.ViewAccess(aH.getErrorFromErrorID)).Methods(http.MethodGet)
-	router.HandleFunc("/api/v1/errorFromGroupID", aH.authenticator.ViewAccess(aH.getErrorFromGroupID)).Methods(http.MethodGet)
-	router.HandleFunc("/api/v1/nextPrevErrorIDs", aH.authenticator.ViewAccess(aH.getNextPrevErrorIDs)).Methods(http.MethodGet)
+	router.HandleFunc("/api/v1/listErrors", aH.Auth().ViewAccess(aH.listErrors)).Methods(http.MethodGet)
+	router.HandleFunc("/api/v1/countErrors", aH.Auth().ViewAccess(aH.countErrors)).Methods(http.MethodGet)
+	router.HandleFunc("/api/v1/errorFromErrorID", aH.Auth().ViewAccess(aH.getErrorFromErrorID)).Methods(http.MethodGet)
+	router.HandleFunc("/api/v1/errorFromGroupID", aH.Auth().ViewAccess(aH.getErrorFromGroupID)).Methods(http.MethodGet)
+	router.HandleFunc("/api/v1/nextPrevErrorIDs", aH.Auth().ViewAccess(aH.getNextPrevErrorIDs)).Methods(http.MethodGet)
 
-	router.HandleFunc("/api/v1/disks", aH.authenticator.ViewAccess(aH.getDisks)).Methods(http.MethodGet)
+	router.HandleFunc("/api/v1/disks", aH.Auth().ViewAccess(aH.getDisks)).Methods(http.MethodGet)
 
 	// === Authentication APIs ===
-	router.HandleFunc("/api/v1/invite", aH.authenticator.AdminAccess(aH.inviteUser)).Methods(http.MethodPost)
-	router.HandleFunc("/api/v1/invite/{token}", aH.authenticator.OpenAccess(aH.getInvite)).Methods(http.MethodGet)
-	router.HandleFunc("/api/v1/invite/{email}", aH.authenticator.AdminAccess(aH.revokeInvite)).Methods(http.MethodDelete)
-	router.HandleFunc("/api/v1/invite", aH.authenticator.AdminAccess(aH.listPendingInvites)).Methods(http.MethodGet)
+	router.HandleFunc("/api/v1/invite", aH.Auth().AdminAccess(aH.inviteUser)).Methods(http.MethodPost)
+	router.HandleFunc("/api/v1/invite/{token}", aH.Auth().OpenAccess(aH.getInvite)).Methods(http.MethodGet)
+	router.HandleFunc("/api/v1/invite/{email}", aH.Auth().AdminAccess(aH.revokeInvite)).Methods(http.MethodDelete)
+	router.HandleFunc("/api/v1/invite", aH.Auth().AdminAccess(aH.listPendingInvites)).Methods(http.MethodGet)
 
-	router.HandleFunc("/api/v1/register", aH.authenticator.OpenAccess(aH.registerUser)).Methods(http.MethodPost)
-	router.HandleFunc("/api/v1/login", aH.authenticator.OpenAccess(aH.loginUser)).Methods(http.MethodPost)
+	router.HandleFunc("/api/v1/register", aH.Auth().OpenAccess(aH.registerUser)).Methods(http.MethodPost)
+	router.HandleFunc("/api/v1/login", aH.Auth().OpenAccess(aH.loginUser)).Methods(http.MethodPost)
 
-	router.HandleFunc("/api/v1/user", aH.authenticator.AdminAccess(aH.listUsers)).Methods(http.MethodGet)
-	router.HandleFunc("/api/v1/user/{id}", aH.authenticator.SelfAccess(aH.getUser)).Methods(http.MethodGet)
-	router.HandleFunc("/api/v1/user/{id}", aH.authenticator.SelfAccess(aH.editUser)).Methods(http.MethodPut)
-	router.HandleFunc("/api/v1/user/{id}", aH.authenticator.AdminAccess(aH.deleteUser)).Methods(http.MethodDelete)
+	router.HandleFunc("/api/v1/user", aH.Auth().AdminAccess(aH.listUsers)).Methods(http.MethodGet)
+	router.HandleFunc("/api/v1/user/{id}", aH.Auth().SelfAccess(aH.getUser)).Methods(http.MethodGet)
+	router.HandleFunc("/api/v1/user/{id}", aH.Auth().SelfAccess(aH.editUser)).Methods(http.MethodPut)
+	router.HandleFunc("/api/v1/user/{id}", aH.Auth().AdminAccess(aH.deleteUser)).Methods(http.MethodDelete)
 
-	router.HandleFunc("/api/v1/user/{id}/flags", aH.authenticator.SelfAccess(aH.patchUserFlag)).Methods(http.MethodPatch)
+	router.HandleFunc("/api/v1/user/{id}/flags", aH.Auth().SelfAccess(aH.patchUserFlag)).Methods(http.MethodPatch)
 
-	router.HandleFunc("/api/v1/rbac/role/{id}", aH.authenticator.SelfAccess(aH.getRole)).Methods(http.MethodGet)
-	router.HandleFunc("/api/v1/rbac/role/{id}", aH.authenticator.AdminAccess(aH.editRole)).Methods(http.MethodPut)
+	router.HandleFunc("/api/v1/rbac/role/{id}", aH.Auth().SelfAccess(aH.getRole)).Methods(http.MethodGet)
+	router.HandleFunc("/api/v1/rbac/role/{id}", aH.Auth().AdminAccess(aH.editRole)).Methods(http.MethodPut)
 
-	router.HandleFunc("/api/v1/org", aH.authenticator.AdminAccess(aH.getOrgs)).Methods(http.MethodGet)
-	router.HandleFunc("/api/v1/org/{id}", aH.authenticator.AdminAccess(aH.getOrg)).Methods(http.MethodGet)
-	router.HandleFunc("/api/v1/org/{id}", aH.authenticator.AdminAccess(aH.editOrg)).Methods(http.MethodPut)
-	router.HandleFunc("/api/v1/orgUsers/{id}", aH.authenticator.AdminAccess(aH.getOrgUsers)).Methods(http.MethodGet)
+	router.HandleFunc("/api/v1/org", aH.Auth().AdminAccess(aH.getOrgs)).Methods(http.MethodGet)
+	router.HandleFunc("/api/v1/org/{id}", aH.Auth().AdminAccess(aH.getOrg)).Methods(http.MethodGet)
+	router.HandleFunc("/api/v1/org/{id}", aH.Auth().AdminAccess(aH.editOrg)).Methods(http.MethodPut)
+	router.HandleFunc("/api/v1/orgUsers/{id}", aH.Auth().AdminAccess(aH.getOrgUsers)).Methods(http.MethodGet)
 
-	router.HandleFunc("/api/v1/getResetPasswordToken/{id}", aH.authenticator.AdminAccess(aH.getResetPasswordToken)).Methods(http.MethodGet)
-	router.HandleFunc("/api/v1/resetPassword", aH.authenticator.OpenAccess(aH.resetPassword)).Methods(http.MethodPost)
-	router.HandleFunc("/api/v1/changePassword/{id}", aH.authenticator.SelfAccess(aH.changePassword)).Methods(http.MethodPost)
+	router.HandleFunc("/api/v1/getResetPasswordToken/{id}", aH.Auth().AdminAccess(aH.getResetPasswordToken)).Methods(http.MethodGet)
+	router.HandleFunc("/api/v1/resetPassword", aH.Auth().OpenAccess(aH.resetPassword)).Methods(http.MethodPost)
+	router.HandleFunc("/api/v1/changePassword/{id}", aH.Auth().SelfAccess(aH.changePassword)).Methods(http.MethodPost)
 }
 
 func Intersection(a, b []int) (c []int) {
@@ -2148,11 +2154,11 @@ func (aH *APIHandler) WriteJSON(w http.ResponseWriter, r *http.Request, response
 // logs
 func (aH *APIHandler) RegisterLogsRoutes(router *mux.Router) {
 	subRouter := router.PathPrefix("/api/v1/logs").Subrouter()
-	subRouter.HandleFunc("", aH.authenticator.ViewAccess(aH.getLogs)).Methods(http.MethodGet)
-	subRouter.HandleFunc("/tail", aH.authenticator.ViewAccess(aH.tailLogs)).Methods(http.MethodGet)
-	subRouter.HandleFunc("/fields", aH.authenticator.ViewAccess(aH.logFields)).Methods(http.MethodGet)
-	subRouter.HandleFunc("/fields", aH.authenticator.EditAccess(aH.logFieldUpdate)).Methods(http.MethodPost)
-	subRouter.HandleFunc("/aggregate", aH.authenticator.ViewAccess(aH.logAggregate)).Methods(http.MethodGet)
+	subRouter.HandleFunc("", aH.Auth().ViewAccess(aH.getLogs)).Methods(http.MethodGet)
+	subRouter.HandleFunc("/tail", aH.Auth().ViewAccess(aH.tailLogs)).Methods(http.MethodGet)
+	subRouter.HandleFunc("/fields", aH.Auth().ViewAccess(aH.logFields)).Methods(http.MethodGet)
+	subRouter.HandleFunc("/fields", aH.Auth().EditAccess(aH.logFieldUpdate)).Methods(http.MethodPost)
+	subRouter.HandleFunc("/aggregate", aH.Auth().ViewAccess(aH.logAggregate)).Methods(http.MethodGet)
 }
 
 func (aH *APIHandler) logFields(w http.ResponseWriter, r *http.Request) {
@@ -2352,6 +2358,64 @@ func (aH *APIHandler) autocompleteAggregateAttributes(w http.ResponseWriter, r *
 	switch req.DataSource {
 	case v3.DataSourceMetrics:
 		response, err = aH.reader.GetMetricAggregateAttributes(r.Context(), req)
+	case v3.DataSourceLogs:
+		// TODO: implement
+	case v3.DataSourceTraces:
+		// TODO: implement
+	default:
+		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: fmt.Errorf("invalid data source")}, nil)
+		return
+	}
+
+	if err != nil {
+		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
+		return
+	}
+
+	aH.Respond(w, response)
+}
+
+func (aH *APIHandler) autoCompleteAttributeKeys(w http.ResponseWriter, r *http.Request) {
+	var response *v3.FilterAttributeKeyResponse
+	req, err := parseFilterAttributeKeyRequest(r)
+
+	if err != nil {
+		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
+		return
+	}
+
+	switch req.DataSource {
+	case v3.DataSourceMetrics:
+		response, err = aH.reader.GetMetricAttributeKeys(r.Context(), req)
+	case v3.DataSourceLogs:
+		// TODO: implement
+	case v3.DataSourceTraces:
+		// TODO: implement
+	default:
+		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: fmt.Errorf("invalid data source")}, nil)
+		return
+	}
+
+	if err != nil {
+		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
+		return
+	}
+
+	aH.Respond(w, response)
+}
+
+func (aH *APIHandler) autoCompleteAttributeValues(w http.ResponseWriter, r *http.Request) {
+	var response *v3.FilterAttributeValueResponse
+	req, err := parseFilterAttributeValueRequest(r)
+
+	if err != nil {
+		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
+		return
+	}
+
+	switch req.DataSource {
+	case v3.DataSourceMetrics:
+		response, err = aH.reader.GetMetricAttributeValues(r.Context(), req)
 	case v3.DataSourceLogs:
 		// TODO: implement
 	case v3.DataSourceTraces:

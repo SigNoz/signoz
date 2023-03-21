@@ -21,8 +21,8 @@ type APIHandlerOptions struct {
 	RulesManager        *rules.Manager
 	FeatureFlags        baseint.FeatureLookup
 	LicenseManager      *license.Manager
-	IngestionController *ingestionRules.IngestionController
 	Authenticator       *baseapp.AuthMiddleware
+	IngestionController *ingestionRules.IngestionController
 }
 
 type APIHandler struct {
@@ -51,10 +51,6 @@ func NewAPIHandler(opts APIHandlerOptions) (*APIHandler, error) {
 	return ah, nil
 }
 
-func (ah *APIHandler) Auth() *baseapp.AuthMiddleware {
-	return ah.opts.Authenticator
-}
-
 func (ah *APIHandler) FF() baseint.FeatureLookup {
 	return ah.opts.FeatureFlags
 }
@@ -65,6 +61,10 @@ func (ah *APIHandler) RM() *rules.Manager {
 
 func (ah *APIHandler) LM() *license.Manager {
 	return ah.opts.LicenseManager
+}
+
+func (ah *APIHandler) Auth() *baseapp.AuthMiddleware {
+	return ah.opts.Authenticator
 }
 
 func (ah *APIHandler) AppDao() dao.ModelDao {
@@ -160,7 +160,6 @@ func (ah *APIHandler) RegisterRoutes(router *mux.Router) {
 	router.HandleFunc("/api/v1/pat/{id}", ah.Auth().OpenAccess(ah.deletePAT)).Methods(http.MethodDelete)
 
 	ah.APIHandler.RegisterRoutes(router)
-
 }
 
 func (ah *APIHandler) getVersion(w http.ResponseWriter, r *http.Request) {

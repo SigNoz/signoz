@@ -161,6 +161,8 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 	}
 
 	telemetry.GetInstance().SetReader(reader)
+
+	// auth middleware for EE
 	getUserFromRequest := func(r *http.Request) (*basemodel.UserPayload, error) {
 		patToken := r.Header.Get("SIGNOZ-API-KEY")
 		if len(patToken) > 0 {
@@ -177,16 +179,15 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 		}
 		return baseauth.GetUserFromRequest(r)
 	}
+	authm := baseapp.NewAuthMiddleware(getUserFromRequest)
 
-	authMiddleware := baseapp.NewAuthMiddleware(getUserFromRequest)
 	apiOpts := api.APIHandlerOptions{
-		DataConnector:       reader,
-		AppDao:              modelDao,
-		RulesManager:        rm,
-		FeatureFlags:        lm,
-		LicenseManager:      lm,
-		IngestionController: ingestionController,
-		Authenticator:       authMiddleware,
+		DataConnector:  reader,
+		AppDao:         modelDao,
+		RulesManager:   rm,
+		FeatureFlags:   lm,
+		LicenseManager: lm,
+		Authenticator:  authm,
 	}
 
 	apiHandler, err := api.NewAPIHandler(apiOpts)
@@ -257,6 +258,7 @@ func (s *Server) createPublicServer(apiHandler *api.APIHandler) (*http.Server, e
 	apiHandler.RegisterRoutes(r)
 	apiHandler.RegisterMetricsRoutes(r)
 	apiHandler.RegisterLogsRoutes(r)
+	apiHandler.RegisterQueryRangeV3Routes(r)
 
 	c := cors.New(cors.Options{
 		AllowedOrigins: []string{"*"},
