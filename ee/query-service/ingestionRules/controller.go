@@ -103,7 +103,7 @@ func (ic *IngestionController) ApplyDropRules(ctx context.Context, userId string
 
 	// queue up the config to push to opamp
 	err = agentConf.UpsertFilterProcessor(ctx, cfg.Version, filterConfig)
-	history, _ := agentConf.GetConfigHistory(ctx, agentConf.ElementTypeDropRules)
+	history, _ := agentConf.GetConfigHistory(ctx, agentConf.ElementTypeDropRules, 10)
 
 	response := &IngestionRulesResponse{
 		ConfigVersion: cfg,
@@ -205,7 +205,7 @@ func (ic *IngestionController) ApplySamplingRules(ctx context.Context, userId st
 
 	// queue up the config to push to opamp
 	err = agentConf.UpsertSamplingProcessor(ctx, cfg.Version, params)
-	history, _ := agentConf.GetConfigHistory(ctx, agentConf.ElementTypeSamplingRules)
+	history, _ := agentConf.GetConfigHistory(ctx, agentConf.ElementTypeSamplingRules, 10)
 
 	response := &IngestionRulesResponse{
 		ConfigVersion: cfg,

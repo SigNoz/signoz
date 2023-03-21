@@ -249,9 +249,9 @@ func (aH *APIHandler) RegisterMetricsRoutes(router *mux.Router) {
 
 func (aH *APIHandler) RegisterQueryRangeV3Routes(router *mux.Router) {
 	subRouter := router.PathPrefix("/api/v3").Subrouter()
-	subRouter.HandleFunc("/autocomplete/aggregate_attributes", am.ViewAccess(aH.autocompleteAggregateAttributes)).Methods(http.MethodGet)
-	subRouter.HandleFunc("/autocomplete/attribute_keys", am.ViewAccess(aH.autoCompleteAttributeKeys)).Methods(http.MethodGet)
-	subRouter.HandleFunc("/autocomplete/attribute_values", am.ViewAccess(aH.autoCompleteAttributeValues)).Methods(http.MethodGet)
+	subRouter.HandleFunc("/autocomplete/aggregate_attributes", aH.Auth().ViewAccess(aH.autocompleteAggregateAttributes)).Methods(http.MethodGet)
+	subRouter.HandleFunc("/autocomplete/attribute_keys", aH.Auth().ViewAccess(aH.autoCompleteAttributeKeys)).Methods(http.MethodGet)
+	subRouter.HandleFunc("/autocomplete/attribute_values", aH.Auth().ViewAccess(aH.autoCompleteAttributeValues)).Methods(http.MethodGet)
 }
 
 func (aH *APIHandler) Respond(w http.ResponseWriter, data interface{}) {

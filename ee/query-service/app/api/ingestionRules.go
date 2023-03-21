@@ -76,7 +76,7 @@ func (ah *APIHandler) listIngestionRules(ctx context.Context, elementType agentC
 		return payload, apierr
 	}
 
-	history, err := agentConf.GetConfigHistory(ctx, elementType)
+	history, err := agentConf.GetConfigHistory(ctx, elementType, 10)
 	if apierr != nil {
 		return payload, apierr
 	}
@@ -92,7 +92,7 @@ func (ah *APIHandler) listIngestionRulesByVersion(ctx context.Context, version i
 		return payload, apierr
 	}
 
-	history, err := agentConf.GetConfigHistory(ctx, elementType)
+	history, err := agentConf.GetConfigHistory(ctx, elementType, 10)
 	if err != nil {
 		zap.S().Errorf("failed to retreive config history for element type", elementType, err)
 		return payload, model.InternalErrorStr("failed to retrieve agent config history")

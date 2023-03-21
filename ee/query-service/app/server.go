@@ -182,12 +182,13 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 	authm := baseapp.NewAuthMiddleware(getUserFromRequest)
 
 	apiOpts := api.APIHandlerOptions{
-		DataConnector:  reader,
-		AppDao:         modelDao,
-		RulesManager:   rm,
-		FeatureFlags:   lm,
-		LicenseManager: lm,
-		Authenticator:  authm,
+		DataConnector:       reader,
+		AppDao:              modelDao,
+		RulesManager:        rm,
+		FeatureFlags:        lm,
+		LicenseManager:      lm,
+		Authenticator:       authm,
+		IngestionController: ingestionController,
 	}
 
 	apiHandler, err := api.NewAPIHandler(apiOpts)
