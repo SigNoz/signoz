@@ -42,6 +42,9 @@ func (p *PostablePipeline) IsValid() *model.ApiError {
 		return model.BadRequestStr("pipeline filter is required")
 	}
 
+	idUnique := map[string]struct{}{}
+	outputUnique := map[string]struct{}{}
+
 	l := len(p.Config)
 	for i, op := range p.Config {
 		if op.OrderId == 0 {
@@ -56,12 +59,28 @@ func (p *PostablePipeline) IsValid() *model.ApiError {
 		if i != (l-1) && op.Output == "" {
 			return model.BadRequestStr(fmt.Sprintf("Output of operator %s cannot be nil", op.ID))
 		}
+		if i == (l-1) && op.Output != "" {
+			return model.BadRequestStr(fmt.Sprintf("Output of operator %s should be empty", op.ID))
+		}
+
+		if _, ok := idUnique[op.ID]; ok {
+			return model.BadRequestStr("duplicate id cannot be present")
+		}
+		if _, ok := outputUnique[op.Output]; ok {
+			return model.BadRequestStr("duplicate output cannot be present")
+		}
+
+		if op.ID == op.Output {
+			return model.BadRequestStr("id and output cannot be same")
+		}
 
 		err := isValidOperator(op)
 		if err != nil {
 			return err
 		}
 
+		idUnique[op.ID] = struct{}{}
+		outputUnique[op.Output] = struct{}{}
 	}
 	return nil
 }
