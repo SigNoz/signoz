@@ -229,7 +229,6 @@ type FilterAttributeKeyResponse struct {
 type AttributeKeyType string
 
 const (
-	AttributeKeyTypeColumn   AttributeKeyType = "column"
 	AttributeKeyTypeTag      AttributeKeyType = "tag"
 	AttributeKeyTypeResource AttributeKeyType = "resource"
 )
@@ -238,6 +237,29 @@ type AttributeKey struct {
 	Key      string               `json:"key"`
 	DataType AttributeKeyDataType `json:"dataType"`
 	Type     AttributeKeyType     `json:"type"`
+	IsColumn bool                 `json:"isColumn"`
+}
+
+func (a AttributeKey) Validate() error {
+	switch a.DataType {
+	case AttributeKeyDataTypeBool, AttributeKeyDataTypeNumber, AttributeKeyDataTypeString:
+		break
+	default:
+		return fmt.Errorf("invalid attribute dataType: %s", a.DataType)
+	}
+
+	switch a.Type {
+	case AttributeKeyTypeResource, AttributeKeyTypeTag:
+		break
+	default:
+		return fmt.Errorf("invalid attribute type: %s", a.Type)
+	}
+
+	if a.Key == "" {
+		return fmt.Errorf("key is empty")
+	}
+
+	return nil
 }
 
 type FilterAttributeValueResponse struct {
@@ -345,9 +367,9 @@ type BuilderQuery struct {
 	QueryName          string            `json:"queryName"`
 	DataSource         DataSource        `json:"dataSource"`
 	AggregateOperator  AggregateOperator `json:"aggregateOperator"`
-	AggregateAttribute string            `json:"aggregateAttribute,omitempty"`
+	AggregateAttribute AttributeKey      `json:"aggregateAttribute,omitempty"`
 	Filters            *FilterSet        `json:"filters,omitempty"`
-	GroupBy            []string          `json:"groupBy,omitempty"`
+	GroupBy            []AttributeKey    `json:"groupBy,omitempty"`
 	Expression         string            `json:"expression"`
 	Disabled           bool              `json:"disabled"`
 	Having             []Having          `json:"having,omitempty"`
@@ -356,7 +378,7 @@ type BuilderQuery struct {
 	PageSize           uint64            `json:"pageSize"`
 	OrderBy            []OrderBy         `json:"orderBy,omitempty"`
 	ReduceTo           ReduceToOperator  `json:"reduceTo,omitempty"`
-	SelectColumns      []string          `json:"selectColumns,omitempty"`
+	SelectColumns      []AttributeKey    `json:"selectColumns,omitempty"`
 }
 
 func (b *BuilderQuery) Validate() error {
@@ -376,7 +398,7 @@ func (b *BuilderQuery) Validate() error {
 		if err := b.AggregateOperator.Validate(); err != nil {
 			return fmt.Errorf("aggregate operator is invalid: %w", err)
 		}
-		if b.AggregateAttribute == "" && b.AggregateOperator.RequireAttribute() {
+		if b.AggregateAttribute == (AttributeKey{}) && b.AggregateOperator.RequireAttribute() {
 			return fmt.Errorf("aggregate attribute is required")
 		}
 	}
@@ -388,11 +410,20 @@ func (b *BuilderQuery) Validate() error {
 	}
 	if b.GroupBy != nil {
 		for _, groupBy := range b.GroupBy {
-			if groupBy == "" {
-				return fmt.Errorf("group by cannot be empty")
+			if groupBy.Validate() != nil {
+				return fmt.Errorf("group by is invalid")
 			}
 		}
 	}
+
+	if b.SelectColumns != nil {
+		for _, selectColumn := range b.SelectColumns {
+			if selectColumn.Validate() != nil {
+				return fmt.Errorf("select column is invalid")
+			}
+		}
+	}
+
 	if b.Expression == "" {
 		return fmt.Errorf("expression is required")
 	}
@@ -411,13 +442,18 @@ func (f *FilterSet) Validate() error {
 	if f.Operator != "" && f.Operator != "AND" && f.Operator != "OR" {
 		return fmt.Errorf("operator must be AND or OR")
 	}
+	for _, item := range f.Items {
+		if err := item.Key.Validate(); err != nil {
+			return fmt.Errorf("filter item key is invalid: %w", err)
+		}
+	}
 	return nil
 }
 
 type FilterItem struct {
-	Key      string      `json:"key"`
-	Value    interface{} `json:"value"`
-	Operator string      `json:"op"`
+	Key      AttributeKey `json:"key"`
+	Value    interface{}  `json:"value"`
+	Operator string       `json:"op"`
 }
 
 type OrderBy struct {

@@ -32,8 +32,9 @@ function TimePreference({
 
 	return (
 		<TextContainer noButtonMargin>
-			<Dropdown menu={menu} />
-			<Button>{selectedTime.name}</Button>
+			<Dropdown menu={menu}>
+				<Button>{selectedTime.name}</Button>
+			</Dropdown>
 		</TextContainer>
 	);
 }
