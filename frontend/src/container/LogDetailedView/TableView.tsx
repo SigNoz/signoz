@@ -1,14 +1,18 @@
 import { blue, orange } from '@ant-design/colors';
 import { Input } from 'antd';
+import { ColumnsType } from 'antd/es/table';
+import Editor from 'components/Editor';
 import AddToQueryHOC from 'components/Logs/AddToQueryHOC';
 import CopyClipboardHOC from 'components/Logs/CopyClipboardHOC';
 import { ResizeTable } from 'components/ResizeTable';
 import flatten from 'flat';
 import { fieldSearchFilter } from 'lib/logs/fieldSearch';
+import { isEmpty } from 'lodash-es';
 import React, { useMemo, useState } from 'react';
 import { ILog } from 'types/api/logs/log';
 
 import ActionItem from './ActionItem';
+import { recursiveParseJSON } from './utils';
 
 // Fields which should be restricted from adding it to query
 const RESTRICTED_FIELDS = ['timestamp'];
@@ -41,10 +45,10 @@ function TableView({ logData }: TableViewProps): JSX.Element | null {
 		return null;
 	}
 
-	const columns = [
+	const columns: ColumnsType<DataType> = [
 		{
 			title: 'Action',
-			width: 100,
+			width: 15,
 			render: (fieldData: Record<string, string>): JSX.Element | null => {
 				const fieldKey = fieldData.field.split('.').slice(-1);
 				if (!RESTRICTED_FIELDS.includes(fieldKey[0])) {
@@ -57,7 +61,8 @@ function TableView({ logData }: TableViewProps): JSX.Element | null {
 			title: 'Field',
 			dataIndex: 'field',
 			key: 'field',
-			width: 100,
+			width: 30,
+			ellipsis: true,
 			render: (field: string): JSX.Element => {
 				const fieldKey = field.split('.').slice(-1);
 				const renderedField = <span style={{ color: blue[4] }}>{field}</span>;
@@ -78,16 +83,36 @@ function TableView({ logData }: TableViewProps): JSX.Element | null {
 			key: 'value',
 			width: 80,
 			ellipsis: false,
-			render: (field: never): JSX.Element => (
-				<CopyClipboardHOC textToCopy={field}>
-					<span style={{ color: orange[6] }}>{field}</span>
-				</CopyClipboardHOC>
-			),
+			render: (field, record): JSX.Element => {
+				if (record.field === 'body') {
+					const parsedBody = recursiveParseJSON(field);
+					if (!isEmpty(parsedBody)) {
+						return (
+							<Editor
+								value={JSON.stringify(parsedBody, null, 2)}
+								readOnly
+								height="70vh"
+								options={{
+									minimap: {
+										enabled: false,
+									},
+								}}
+							/>
+						);
+					}
+				}
+
+				return (
+					<CopyClipboardHOC textToCopy={field}>
+						<span style={{ color: orange[6] }}>{field}</span>
+					</CopyClipboardHOC>
+				);
+			},
 		},
 	];
 
 	return (
-		<div style={{ position: 'relative' }}>
+		<>
 			<Input
 				placeholder="Search field names"
 				size="large"
@@ -95,13 +120,19 @@ function TableView({ logData }: TableViewProps): JSX.Element | null {
 				onChange={(e): void => setFieldSearchInput(e.target.value)}
 			/>
 			<ResizeTable
-				columns={columns as never}
+				columns={columns}
 				tableLayout="fixed"
 				dataSource={dataSource}
 				pagination={false}
 			/>
-		</div>
+		</>
 	);
+}
+
+interface DataType {
+	key: string;
+	field: string;
+	value: string;
 }
 
 export default TableView;
