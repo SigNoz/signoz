@@ -17,7 +17,7 @@ func TestBuildQuery(t *testing.T) {
 				BuilderQueries: map[string]*v3.BuilderQuery{
 					"A": {
 						QueryName:          "A",
-						AggregateAttribute: "name",
+						AggregateAttribute: v3.AttributeKey{Key: "name"},
 						AggregateOperator:  v3.AggregateOperatorRateMax,
 						Expression:         "A",
 					},
@@ -42,10 +42,10 @@ func TestBuildQueryWithFilters(t *testing.T) {
 				BuilderQueries: map[string]*v3.BuilderQuery{
 					"A": {
 						QueryName:          "A",
-						AggregateAttribute: "name",
+						AggregateAttribute: v3.AttributeKey{Key: "name"},
 						Filters: &v3.FilterSet{Operator: "AND", Items: []v3.FilterItem{
-							{Key: "a", Value: "b", Operator: "neq"},
-							{Key: "code", Value: "ERROR_*", Operator: "nmatch"},
+							{Key: v3.AttributeKey{Key: "a"}, Value: "b", Operator: "neq"},
+							{Key: v3.AttributeKey{Key: "code"}, Value: "ERROR_*", Operator: "nmatch"},
 						}},
 						AggregateOperator: v3.AggregateOperatorRateMax,
 						Expression:        "A",
@@ -72,16 +72,16 @@ func TestBuildQueryWithMultipleQueries(t *testing.T) {
 				BuilderQueries: map[string]*v3.BuilderQuery{
 					"A": {
 						QueryName:          "A",
-						AggregateAttribute: "name",
+						AggregateAttribute: v3.AttributeKey{Key: "name"},
 						Filters: &v3.FilterSet{Operator: "AND", Items: []v3.FilterItem{
-							{Key: "in", Value: []interface{}{"a", "b", "c"}, Operator: "in"},
+							{Key: v3.AttributeKey{Key: "in"}, Value: []interface{}{"a", "b", "c"}, Operator: "in"},
 						}},
 						AggregateOperator: v3.AggregateOperatorRateAvg,
 						Expression:        "A",
 					},
 					"B": {
 						QueryName:          "B",
-						AggregateAttribute: "name2",
+						AggregateAttribute: v3.AttributeKey{Key: "name2"},
 						AggregateOperator:  v3.AggregateOperatorRateMax,
 						Expression:         "B",
 					},

@@ -39,7 +39,7 @@ var aggregateOperatorToSQLFunc = map[v3.AggregateOperator]string{
 
 // buildMetricsTimeSeriesFilterQuery builds the sub-query to be used for filtering
 // timeseries based on search criteria
-func buildMetricsTimeSeriesFilterQuery(fs *v3.FilterSet, groupTags []string, metricName string, aggregateOperator v3.AggregateOperator) (string, error) {
+func buildMetricsTimeSeriesFilterQuery(fs *v3.FilterSet, groupTags []v3.AttributeKey, metricName string, aggregateOperator v3.AggregateOperator) (string, error) {
 	var conditions []string
 	conditions = append(conditions, fmt.Sprintf("metric_name = %s", utils.ClickHouseFormattedValue(metricName)))
 
@@ -60,37 +60,37 @@ func buildMetricsTimeSeriesFilterQuery(fs *v3.FilterSet, groupTags []string, met
 			fmtVal := utils.ClickHouseFormattedValue(toFormat)
 			switch op {
 			case "eq":
-				conditions = append(conditions, fmt.Sprintf("JSONExtractString(labels, '%s') = %s", item.Key, fmtVal))
+				conditions = append(conditions, fmt.Sprintf("JSONExtractString(labels, '%s') = %s", item.Key.Key, fmtVal))
 			case "neq":
-				conditions = append(conditions, fmt.Sprintf("JSONExtractString(labels, '%s') != %s", item.Key, fmtVal))
+				conditions = append(conditions, fmt.Sprintf("JSONExtractString(labels, '%s') != %s", item.Key.Key, fmtVal))
 			case "in":
-				conditions = append(conditions, fmt.Sprintf("JSONExtractString(labels, '%s') IN %s", item.Key, fmtVal))
+				conditions = append(conditions, fmt.Sprintf("JSONExtractString(labels, '%s') IN %s", item.Key.Key, fmtVal))
 			case "nin":
-				conditions = append(conditions, fmt.Sprintf("JSONExtractString(labels, '%s') NOT IN %s", item.Key, fmtVal))
+				conditions = append(conditions, fmt.Sprintf("JSONExtractString(labels, '%s') NOT IN %s", item.Key.Key, fmtVal))
 			case "like":
-				conditions = append(conditions, fmt.Sprintf("like(JSONExtractString(labels, '%s'), %s)", item.Key, fmtVal))
+				conditions = append(conditions, fmt.Sprintf("like(JSONExtractString(labels, '%s'), %s)", item.Key.Key, fmtVal))
 			case "nlike":
-				conditions = append(conditions, fmt.Sprintf("notLike(JSONExtractString(labels, '%s'), %s)", item.Key, fmtVal))
+				conditions = append(conditions, fmt.Sprintf("notLike(JSONExtractString(labels, '%s'), %s)", item.Key.Key, fmtVal))
 			case "match":
-				conditions = append(conditions, fmt.Sprintf("match(JSONExtractString(labels, '%s'), %s)", item.Key, fmtVal))
+				conditions = append(conditions, fmt.Sprintf("match(JSONExtractString(labels, '%s'), %s)", item.Key.Key, fmtVal))
 			case "nmatch":
-				conditions = append(conditions, fmt.Sprintf("not match(JSONExtractString(labels, '%s'), %s)", item.Key, fmtVal))
+				conditions = append(conditions, fmt.Sprintf("not match(JSONExtractString(labels, '%s'), %s)", item.Key.Key, fmtVal))
 			case "gt":
-				conditions = append(conditions, fmt.Sprintf("JSONExtractString(labels, '%s') > %s", item.Key, fmtVal))
+				conditions = append(conditions, fmt.Sprintf("JSONExtractString(labels, '%s') > %s", item.Key.Key, fmtVal))
 			case "gte":
-				conditions = append(conditions, fmt.Sprintf("JSONExtractString(labels, '%s') >= %s", item.Key, fmtVal))
+				conditions = append(conditions, fmt.Sprintf("JSONExtractString(labels, '%s') >= %s", item.Key.Key, fmtVal))
 			case "lt":
-				conditions = append(conditions, fmt.Sprintf("JSONExtractString(labels, '%s') < %s", item.Key, fmtVal))
+				conditions = append(conditions, fmt.Sprintf("JSONExtractString(labels, '%s') < %s", item.Key.Key, fmtVal))
 			case "lte":
-				conditions = append(conditions, fmt.Sprintf("JSONExtractString(labels, '%s') <= %s", item.Key, fmtVal))
+				conditions = append(conditions, fmt.Sprintf("JSONExtractString(labels, '%s') <= %s", item.Key.Key, fmtVal))
 			case "contains":
-				conditions = append(conditions, fmt.Sprintf("like(JSONExtractString(labels, '%s'), %s)", item.Key, fmtVal))
+				conditions = append(conditions, fmt.Sprintf("like(JSONExtractString(labels, '%s'), %s)", item.Key.Key, fmtVal))
 			case "ncontains":
-				conditions = append(conditions, fmt.Sprintf("notLike(JSONExtractString(labels, '%s'), %s)", item.Key, fmtVal))
+				conditions = append(conditions, fmt.Sprintf("notLike(JSONExtractString(labels, '%s'), %s)", item.Key.Key, fmtVal))
 			case "exists":
-				conditions = append(conditions, fmt.Sprintf("has(JSONExtractKeys(labels), %s)", item.Key))
+				conditions = append(conditions, fmt.Sprintf("has(JSONExtractKeys(labels), %s)", item.Key.Key))
 			case "nexists":
-				conditions = append(conditions, fmt.Sprintf("not has(JSONExtractKeys(labels), %s)", item.Key))
+				conditions = append(conditions, fmt.Sprintf("not has(JSONExtractKeys(labels), %s)", item.Key.Key))
 			default:
 				return "", fmt.Errorf("unsupported operation")
 			}
@@ -103,7 +103,7 @@ func buildMetricsTimeSeriesFilterQuery(fs *v3.FilterSet, groupTags []string, met
 		selectLabels = "labels,"
 	} else {
 		for _, tag := range groupTags {
-			selectLabels += fmt.Sprintf(" JSONExtractString(labels, '%s') as %s,", tag, tag)
+			selectLabels += fmt.Sprintf(" JSONExtractString(labels, '%s') as %s,", tag.Key, tag.Key)
 		}
 	}
 
@@ -114,12 +114,12 @@ func buildMetricsTimeSeriesFilterQuery(fs *v3.FilterSet, groupTags []string, met
 
 func buildMetricQuery(start, end, step int64, mq *v3.BuilderQuery, tableName string) (string, error) {
 
-	filterSubQuery, err := buildMetricsTimeSeriesFilterQuery(mq.Filters, mq.GroupBy, mq.AggregateAttribute, mq.AggregateOperator)
+	filterSubQuery, err := buildMetricsTimeSeriesFilterQuery(mq.Filters, mq.GroupBy, mq.AggregateAttribute.Key, mq.AggregateOperator)
 	if err != nil {
 		return "", err
 	}
 
-	samplesTableTimeFilter := fmt.Sprintf("metric_name = %s AND timestamp_ms >= %d AND timestamp_ms <= %d", utils.ClickHouseFormattedValue(mq.AggregateAttribute), start, end)
+	samplesTableTimeFilter := fmt.Sprintf("metric_name = %s AND timestamp_ms >= %d AND timestamp_ms <= %d", utils.ClickHouseFormattedValue(mq.AggregateAttribute.Key), start, end)
 
 	// Select the aggregate value for interval
 	queryTmpl :=
@@ -139,8 +139,8 @@ func buildMetricQuery(start, end, step int64, mq *v3.BuilderQuery, tableName str
 	// Otherwise, we want to group by all tags except le
 	tagsWithoutLe := []string{}
 	for _, tag := range mq.GroupBy {
-		if tag != "le" {
-			tagsWithoutLe = append(tagsWithoutLe, tag)
+		if tag.Key != "le" {
+			tagsWithoutLe = append(tagsWithoutLe, tag.Key)
 		}
 	}
 
@@ -148,9 +148,9 @@ func buildMetricQuery(start, end, step int64, mq *v3.BuilderQuery, tableName str
 	groupTagsWithoutLe := groupSelect(tagsWithoutLe...)
 	orderWithoutLe := orderBy(mq.OrderBy, tagsWithoutLe)
 
-	groupBy := groupBy(mq.GroupBy...)
-	groupTags := groupSelect(mq.GroupBy...)
-	orderBy := orderBy(mq.OrderBy, mq.GroupBy)
+	groupBy := groupByAttributeKeyTags(mq.GroupBy...)
+	groupTags := groupSelectAttributeKeyTags(mq.GroupBy...)
+	orderBy := orderByAttributeKeyTags(mq.OrderBy, mq.GroupBy)
 
 	if len(orderBy) != 0 {
 		orderBy += ","
@@ -266,6 +266,22 @@ func groupSelect(tags ...string) string {
 	return groupTags
 }
 
+func groupByAttributeKeyTags(tags ...v3.AttributeKey) string {
+	groupTags := []string{}
+	for _, tag := range tags {
+		groupTags = append(groupTags, tag.Key)
+	}
+	return groupBy(groupTags...)
+}
+
+func groupSelectAttributeKeyTags(tags ...v3.AttributeKey) string {
+	groupTags := []string{}
+	for _, tag := range tags {
+		groupTags = append(groupTags, tag.Key)
+	}
+	return groupSelect(groupTags...)
+}
+
 // orderBy returns a string of comma separated tags for order by clause
 // if the order is not specified, it defaults to ASC
 func orderBy(items []v3.OrderBy, tags []string) string {
@@ -284,6 +300,14 @@ func orderBy(items []v3.OrderBy, tags []string) string {
 		}
 	}
 	return strings.Join(orderBy, ",")
+}
+
+func orderByAttributeKeyTags(items []v3.OrderBy, tags []v3.AttributeKey) string {
+	var groupTags []string
+	for _, tag := range tags {
+		groupTags = append(groupTags, tag.Key)
+	}
+	return orderBy(items, groupTags)
 }
 
 func having(items []v3.Having) string {

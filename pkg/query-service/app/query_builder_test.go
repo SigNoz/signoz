@@ -20,15 +20,15 @@ func TestBuildQueryWithMultipleQueriesAndFormula(t *testing.T) {
 					"A": {
 						QueryName:          "A",
 						DataSource:         v3.DataSourceMetrics,
-						AggregateAttribute: "name",
+						AggregateAttribute: v3.AttributeKey{Key: "name"},
 						Filters: &v3.FilterSet{Operator: "AND", Items: []v3.FilterItem{
-							{Key: "in", Value: []interface{}{"a", "b", "c"}, Operator: "in"},
+							{Key: v3.AttributeKey{Key: "in"}, Value: []interface{}{"a", "b", "c"}, Operator: "in"},
 						}},
 						AggregateOperator: v3.AggregateOperatorRateMax,
 						Expression:        "A",
 					},
 					"B": {
-						AggregateAttribute: "name2",
+						AggregateAttribute: v3.AttributeKey{Key: "name2"},
 						DataSource:         v3.DataSourceMetrics,
 						AggregateOperator:  v3.AggregateOperatorRateAvg,
 						Expression:         "B",
@@ -66,9 +66,9 @@ func TestBuildQueryWithIncorrectQueryRef(t *testing.T) {
 					"A": {
 						QueryName:          "A",
 						DataSource:         v3.DataSourceMetrics,
-						AggregateAttribute: "name",
+						AggregateAttribute: v3.AttributeKey{Key: "name"},
 						Filters: &v3.FilterSet{Operator: "AND", Items: []v3.FilterItem{
-							{Key: "in", Value: []interface{}{"a", "b", "c"}, Operator: "in"},
+							{Key: v3.AttributeKey{Key: "in"}, Value: []interface{}{"a", "b", "c"}, Operator: "in"},
 						}},
 						AggregateOperator: v3.AggregateOperatorRateMax,
 						Expression:        "A",
@@ -103,16 +103,16 @@ func TestBuildQueryWithThreeOrMoreQueriesRefAndFormula(t *testing.T) {
 					"A": {
 						QueryName:          "A",
 						DataSource:         v3.DataSourceMetrics,
-						AggregateAttribute: "name",
+						AggregateAttribute: v3.AttributeKey{Key: "name"},
 						Filters: &v3.FilterSet{Operator: "AND", Items: []v3.FilterItem{
-							{Key: "in", Value: []interface{}{"a", "b", "c"}, Operator: "in"},
+							{Key: v3.AttributeKey{Key: "in"}, Value: []interface{}{"a", "b", "c"}, Operator: "in"},
 						}},
 						AggregateOperator: v3.AggregateOperatorRateMax,
 						Expression:        "A",
 						Disabled:          true,
 					},
 					"B": {
-						AggregateAttribute: "name2",
+						AggregateAttribute: v3.AttributeKey{Key: "name2"},
 						DataSource:         v3.DataSourceMetrics,
 
 						AggregateOperator: v3.AggregateOperatorRateMax,
@@ -120,7 +120,7 @@ func TestBuildQueryWithThreeOrMoreQueriesRefAndFormula(t *testing.T) {
 						Disabled:          true,
 					},
 					"C": {
-						AggregateAttribute: "name3",
+						AggregateAttribute: v3.AttributeKey{Key: "name3"},
 						DataSource:         v3.DataSourceMetrics,
 
 						AggregateOperator: v3.AggregateOperatorSumRate,

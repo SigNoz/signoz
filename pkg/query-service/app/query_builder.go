@@ -99,7 +99,10 @@ func expressionToQuery(qp *v3.QueryRangeParamsV3, varToQuery map[string]string, 
 	var prevVar string
 	for idx, variable := range variables {
 		query := varToQuery[variable]
-		groupTags := qp.CompositeQuery.BuilderQueries[variable].GroupBy
+		groupTags := []string{}
+		for _, tag := range qp.CompositeQuery.BuilderQueries[variable].GroupBy {
+			groupTags = append(groupTags, tag.Key)
+		}
 		groupTags = append(groupTags, "ts")
 		if joinUsing == "" {
 			for _, tag := range groupTags {

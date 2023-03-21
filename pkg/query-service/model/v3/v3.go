@@ -248,11 +248,13 @@ func (a AttributeKey) Validate() error {
 		return fmt.Errorf("invalid attribute dataType: %s", a.DataType)
 	}
 
-	switch a.Type {
-	case AttributeKeyTypeResource, AttributeKeyTypeTag:
-		break
-	default:
-		return fmt.Errorf("invalid attribute type: %s", a.Type)
+	if a.IsColumn {
+		switch a.Type {
+		case AttributeKeyTypeResource, AttributeKeyTypeTag:
+			break
+		default:
+			return fmt.Errorf("invalid attribute type: %s", a.Type)
+		}
 	}
 
 	if a.Key == "" {
@@ -410,16 +412,16 @@ func (b *BuilderQuery) Validate() error {
 	}
 	if b.GroupBy != nil {
 		for _, groupBy := range b.GroupBy {
-			if groupBy.Validate() != nil {
-				return fmt.Errorf("group by is invalid")
+			if err := groupBy.Validate(); err != nil {
+				return fmt.Errorf("group by is invalid %w", err)
 			}
 		}
 	}
 
 	if b.SelectColumns != nil {
 		for _, selectColumn := range b.SelectColumns {
-			if selectColumn.Validate() != nil {
-				return fmt.Errorf("select column is invalid")
+			if err := selectColumn.Validate(); err != nil {
+				return fmt.Errorf("select column is invalid %w", err)
 			}
 		}
 	}

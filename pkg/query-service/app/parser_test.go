@@ -3,6 +3,7 @@ package app
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -519,7 +520,7 @@ func TestParseQueryRangeParamsCompositeQuery(t *testing.T) {
 						QueryName:          "A",
 						DataSource:         "traces",
 						AggregateOperator:  "sum",
-						AggregateAttribute: "",
+						AggregateAttribute: v3.AttributeKey{},
 						Expression:         "A",
 					},
 				},
@@ -537,14 +538,14 @@ func TestParseQueryRangeParamsCompositeQuery(t *testing.T) {
 						QueryName:          "A",
 						DataSource:         "logs",
 						AggregateOperator:  "sum",
-						AggregateAttribute: "attribute",
-						GroupBy:            []string{""},
+						AggregateAttribute: v3.AttributeKey{Key: "attribute"},
+						GroupBy:            []v3.AttributeKey{{Key: ""}},
 						Expression:         "A",
 					},
 				},
 			},
 			expectErr: true,
-			errMsg:    "group by cannot be empty",
+			errMsg:    "builder query A is invalid: group by is invalid",
 		},
 	}
 
@@ -592,7 +593,7 @@ func TestParseQueryRangeParamsExpressions(t *testing.T) {
 						QueryName:          "A",
 						DataSource:         v3.DataSourceMetrics,
 						AggregateOperator:  v3.AggregateOperatorSum,
-						AggregateAttribute: "attribute_metrics",
+						AggregateAttribute: v3.AttributeKey{Key: "attribute_metrics"},
 						Expression:         "A +",
 					},
 				},
@@ -610,7 +611,7 @@ func TestParseQueryRangeParamsExpressions(t *testing.T) {
 						QueryName:          "A",
 						DataSource:         v3.DataSourceLogs,
 						AggregateOperator:  v3.AggregateOperatorSum,
-						AggregateAttribute: "attribute_logs",
+						AggregateAttribute: v3.AttributeKey{Key: "attribute_logs"},
 						Expression:         "A",
 					},
 					"F1": {
@@ -632,7 +633,7 @@ func TestParseQueryRangeParamsExpressions(t *testing.T) {
 						QueryName:          "A",
 						DataSource:         v3.DataSourceLogs,
 						AggregateOperator:  v3.AggregateOperatorSum,
-						AggregateAttribute: "attribute_logs",
+						AggregateAttribute: v3.AttributeKey{Key: "attribute_logs"},
 						Expression:         "A",
 					},
 					"F1": {
@@ -695,18 +696,18 @@ func TestParseQueryRangeParamsDashboardVarsSubstitution(t *testing.T) {
 						QueryName:          "A",
 						DataSource:         v3.DataSourceMetrics,
 						AggregateOperator:  v3.AggregateOperatorSum,
-						AggregateAttribute: "attribute_metrics",
+						AggregateAttribute: v3.AttributeKey{Key: "attribute_metrics"},
 						Expression:         "A",
 						Filters: &v3.FilterSet{
 							Operator: "AND",
 							Items: []v3.FilterItem{
 								{
-									Key:      "service_name",
+									Key:      v3.AttributeKey{Key: "service_name", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag},
 									Operator: "EQ",
 									Value:    "{{.service_name}}",
 								},
 								{
-									Key:      "operation_name",
+									Key:      v3.AttributeKey{Key: "operation_name", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag},
 									Operator: "IN",
 									Value:    "{{.operation_name}}",
 								},
@@ -748,6 +749,7 @@ func TestParseQueryRangeParamsDashboardVarsSubstitution(t *testing.T) {
 				require.Error(t, apiErr)
 				require.Contains(t, apiErr.Error(), tc.errMsg)
 			} else {
+				fmt.Println(apiErr)
 				require.Nil(t, apiErr)
 				require.Equal(t, parsedQueryRangeParams.CompositeQuery.BuilderQueries["A"].Filters.Items[0].Value, tc.expectedValue[0])
 				require.Equal(t, parsedQueryRangeParams.CompositeQuery.BuilderQueries["A"].Filters.Items[1].Value, tc.expectedValue[1])
