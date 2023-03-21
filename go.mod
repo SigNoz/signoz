@@ -30,9 +30,10 @@ require (
 	github.com/sethvargo/go-password v0.2.0
 	github.com/smartystreets/goconvey v1.6.4
 	github.com/soheilhy/cmux v0.1.5
-	go.opentelemetry.io/collector/confmap v0.73.0
+	go.opentelemetry.io/collector/confmap v0.70.0
 	go.uber.org/zap v1.24.0
 	gopkg.in/segmentio/analytics-go.v3 v3.1.0
+	gopkg.in/yaml.v3 v3.0.1
 	k8s.io/apimachinery v0.26.0
 )
 
@@ -81,10 +82,9 @@ require (
 	github.com/mitchellh/reflectwalk v1.0.2 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/prometheus/client_golang v1.14.0 // indirect
-	go.opentelemetry.io/collector/featuregate v0.73.0 // indirect
+	go.opentelemetry.io/collector/featuregate v0.70.0 // indirect
 	gopkg.in/ini.v1 v1.67.0 // indirect
 	gopkg.in/square/go-jose.v2 v2.6.0 // indirect
-	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
 
 require (

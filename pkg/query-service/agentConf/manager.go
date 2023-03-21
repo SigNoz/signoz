@@ -51,8 +51,8 @@ func GetConfigVersion(ctx context.Context, elementType ElementTypeDef, version i
 	return m.GetConfigVersion(ctx, elementType, version)
 }
 
-func GetConfigHistory(ctx context.Context, typ ElementTypeDef) ([]ConfigVersion, error) {
-	return m.GetConfigHistory(ctx, typ)
+func GetConfigHistory(ctx context.Context, typ ElementTypeDef, limit int) ([]ConfigVersion, error) {
+	return m.GetConfigHistory(ctx, typ, limit)
 }
 
 // StartNewVersion launches a new config version for given set of elements
@@ -79,11 +79,6 @@ func StartNewVersion(ctx context.Context, userId string, eleType ElementTypeDef,
 // and re-sends it to collector for deployment. This method is useful
 // in enabling previous configs from history
 func Redeploy(ctx context.Context, typ ElementTypeDef, version int) error {
-	if !atomic.CompareAndSwapUint32(&m.lock, 0, 1) {
-		return fmt.Errorf("agent updater is busy")
-	}
-
-	defer atomic.StoreUint32(&m.lock, 0)
 
 	configVersion, err := GetConfigVersion(ctx, typ, version)
 	if err != nil {

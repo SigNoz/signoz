@@ -1,7 +1,9 @@
 import { ExpandAltOutlined } from '@ant-design/icons';
+import Convert from 'ansi-to-html';
 import { Table, Typography } from 'antd';
 import { ColumnsType, ColumnType } from 'antd/es/table';
 import dayjs from 'dayjs';
+import dompurify from 'dompurify';
 // utils
 import { FlatLogData } from 'lib/logs/flatLogData';
 import React, { useMemo } from 'react';
@@ -13,6 +15,7 @@ import { ILog } from 'types/api/logs/log';
 import { ExpandIconWrapper } from '../RawLogView/styles';
 // config
 import { defaultCellStyle, defaultTableStyle, tableScroll } from './config';
+import { TableBodyContent } from './styles';
 
 type ColumnTypeRender<T = unknown> = ReturnType<
 	NonNullable<ColumnType<T>['render']>
@@ -24,6 +27,8 @@ type LogsTableViewProps = {
 	linesPerRow: number;
 	onClickExpand: (log: ILog) => void;
 };
+
+const convert = new Convert();
 
 function LogsTableView(props: LogsTableViewProps): JSX.Element {
 	const { logs, fields, linesPerRow, onClickExpand } = props;
@@ -94,9 +99,12 @@ function LogsTableView(props: LogsTableViewProps): JSX.Element {
 						style: defaultTableStyle,
 					},
 					children: (
-						<Typography.Paragraph ellipsis={{ rows: linesPerRow }}>
-							{field}
-						</Typography.Paragraph>
+						<TableBodyContent
+							dangerouslySetInnerHTML={{
+								__html: convert.toHtml(dompurify.sanitize(field)),
+							}}
+							linesPerRow={linesPerRow}
+						/>
 					),
 				}),
 			},
