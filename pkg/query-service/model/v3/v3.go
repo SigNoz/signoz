@@ -243,16 +243,16 @@ type AttributeKey struct {
 func (a AttributeKey) Validate() error {
 	switch a.DataType {
 	case AttributeKeyDataTypeBool, AttributeKeyDataTypeNumber, AttributeKeyDataTypeString:
-		return nil
+		break
 	default:
-		return fmt.Errorf("invalid query type: %s", q)
+		return fmt.Errorf("invalid attribute dataType: %s", a.DataType)
 	}
 
 	switch a.Type {
 	case AttributeKeyTypeResource, AttributeKeyTypeTag:
-		return nil
+		break
 	default:
-		return fmt.Errorf("invalid query type: %s", q)
+		return fmt.Errorf("invalid attribute type: %s", a.Type)
 	}
 
 	if a.Key == "" {
