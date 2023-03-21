@@ -115,8 +115,9 @@ func (r *Repo) insertConfig(ctx context.Context, userId string, c *ConfigVersion
 		return fmt.Errorf("element type is required for creating agent config version")
 	}
 
-	if len(elements) == 0 {
-		zap.S().Error("insert config called with no elements", c.ElementType)
+	// allowing empty elements for logs - use case is deleting all pipelines
+	if len(elements) == 0 && c.ElementType != ElementTypeLogPipelines {
+		zap.S().Error("insert config called with no elements ", c.ElementType)
 		return fmt.Errorf("config must have atleast one element")
 	}
 

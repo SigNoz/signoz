@@ -69,13 +69,26 @@ func (p *PostablePipeline) IsValid() *model.ApiError {
 func isValidOperator(op model.PipelineOperator) *model.ApiError {
 	valueErrStr := "value should have prefix of body, attributes, resource"
 	switch op.Type {
+	case "json_parser":
+		if op.ParseFrom == "" && op.ParseTo == "" {
+			return model.BadRequestStr(fmt.Sprintf("parse from and parse to of %s json operator cannot be empty", op.ID))
+		}
+		if !isValidOtelValue(op.ParseFrom) || !isValidOtelValue(op.ParseTo) {
+			return model.BadRequestStr(fmt.Sprintf("%s  for operator Id %s", valueErrStr, op.ID))
+		}
 	case "grok_parser":
 		if op.Pattern == "" {
 			return model.BadRequestStr(fmt.Sprintf("pattern of %s grok operator cannot be empty", op.ID))
 		}
+		if !isValidOtelValue(op.ParseFrom) || !isValidOtelValue(op.ParseTo) {
+			return model.BadRequestStr(fmt.Sprintf("%s  for operator Id %s", valueErrStr, op.ID))
+		}
 	case "regex":
 		if op.Pattern == "" {
 			return model.BadRequestStr(fmt.Sprintf("pattern of %s regex operator cannot be empty", op.ID))
+		}
+		if !isValidOtelValue(op.ParseFrom) || !isValidOtelValue(op.ParseTo) {
+			return model.BadRequestStr(fmt.Sprintf("%s  for operator Id %s", valueErrStr, op.ID))
 		}
 	case "copy":
 		if op.From == "" || op.To == "" {
@@ -128,8 +141,8 @@ func isValidOtelValue(val string) bool {
 		return true
 	}
 	if !strings.HasPrefix(val, "body") &&
-		!strings.HasPrefix(val, "attributes.") &&
-		!strings.HasPrefix(val, "resource.") {
+		!strings.HasPrefix(val, "attributes") &&
+		!strings.HasPrefix(val, "resource") {
 		return false
 	}
 	return true
