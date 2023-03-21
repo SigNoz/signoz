@@ -16,15 +16,13 @@ export default function QueryChip({
 }: IQueryChipProps): JSX.Element {
 	return (
 		<QueryChipContainer>
-			<QueryChipItem>{queryData.key}</QueryChipItem>
-			<QueryChipItem>{queryData.op}</QueryChipItem>
 			<QueryChipItem
 				closable={!disabled}
 				onClose={(): void => {
 					if (!disabled) onClose(queryData.id);
 				}}
 			>
-				{queryData.value.join(', ')}
+				{queryData.key} {queryData.op} {queryData.value.join(', ')}
 			</QueryChipItem>
 		</QueryChipContainer>
 	);

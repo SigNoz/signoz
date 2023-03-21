@@ -1,4 +1,4 @@
-import { Select as AtnSelect, Tag as AntTag } from 'antd';
+import { Select as AntSelect, Tag as AntTag } from 'antd';
 import styled from 'styled-components';
 
 const Tag = styled(AntTag)`
@@ -8,8 +8,8 @@ const Tag = styled(AntTag)`
 	margin-inline-end: 4px;
 `;
 
-const SelectStyled = styled(AtnSelect)`
+const SelectStyled = styled(AntSelect)`
 	width: 100%;
-` as typeof AtnSelect;
+` as typeof AntSelect;
 
 export { SelectStyled, Tag };
