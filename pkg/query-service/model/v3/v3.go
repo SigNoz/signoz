@@ -416,22 +416,6 @@ func (b *BuilderQuery) Validate() error {
 		}
 	}
 
-	if b.Having != nil {
-		for _, having := range b.Having {
-			if having.ColumnName.Validate() != nil {
-				return fmt.Errorf("having columnName is invalid")
-			}
-		}
-	}
-
-	if b.OrderBy != nil {
-		for _, orderBy := range b.OrderBy {
-			if orderBy.ColumnName.Validate() != nil {
-				return fmt.Errorf("order by columnName is invalid")
-			}
-		}
-	}
-	
 	if b.SelectColumns != nil {
 		for _, selectColumn := range b.SelectColumns {
 			if selectColumn.Validate() != nil {
@@ -473,14 +457,14 @@ type FilterItem struct {
 }
 
 type OrderBy struct {
-	ColumnName AttributeKey `json:"columnName"`
-	Order      string       `json:"order"`
+	ColumnName string `json:"columnName"`
+	Order      string `json:"order"`
 }
 
 type Having struct {
-	ColumnName AttributeKey `json:"columnName"`
-	Operator   string       `json:"operator"`
-	Value      interface{}  `json:"value"`
+	ColumnName string      `json:"columnName"`
+	Operator   string      `json:"operator"`
+	Value      interface{} `json:"value"`
 }
 
 type QueryRangeResponse struct {
