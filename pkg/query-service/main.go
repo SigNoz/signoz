@@ -39,7 +39,7 @@ func main() {
 	flag.StringVar(&promConfigPath, "config", "./config/prometheus.yml", "(prometheus config to read metrics)")
 	flag.BoolVar(&disableRules, "rules.disable", false, "(disable rule evaluation)")
 	flag.StringVar(&ruleRepoURL, "rules.repo-url", constants.AlertHelpPage, "(host address used to build rule link in alert messages)")
-	flag.StringVar(&defaultOtelConfig, "opamp.defaultOtelConfig", "./config/otel-default.yaml", "(default otel config used by opamp)")
+	flag.StringVar(&defaultOtelConfig, "opamp.defaultOtelConfig", "./config/otel-default.yml", "(default otel config used by opamp)")
 	flag.Parse()
 
 	loggerMgr := initZapLog()
