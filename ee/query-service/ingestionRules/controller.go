@@ -83,7 +83,6 @@ func (ic *IngestionController) ApplyDropRules(ctx context.Context, userId string
 	}
 
 	if !agentConf.Ready() {
-		// todo(amol): may be good idea to new ingestion rules created in this request?
 		return nil, model.InternalErrorStr("Agent updater unavailable at the moment. Please try in sometime")
 	}
 
