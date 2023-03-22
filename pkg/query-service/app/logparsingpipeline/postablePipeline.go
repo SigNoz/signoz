@@ -118,10 +118,10 @@ func isValidOperator(op model.PipelineOperator) *model.ApiError {
 		r, err := regexp.Compile(op.Regex)
 		if err != nil {
 			return model.BadRequestStr(fmt.Sprintf("error compiling regex expression of %s regex operator", op.ID))
-		} 
-		namedCaptureGroups := 0  
+		}
+		namedCaptureGroups := 0
 		for _, groupName := range r.SubexpNames() {
-			if groupName != "" { 
+			if groupName != "" {
 				namedCaptureGroups++
 			}
 		}
@@ -156,7 +156,7 @@ func isValidOperator(op model.PipelineOperator) *model.ApiError {
 		if op.Field == "" {
 			return model.BadRequestStr(fmt.Sprintf("field of %s remove operator cannot be empty", op.ID))
 		}
-		if !isValidOtelValue(op.From) || !isValidOtelValue(op.To) {
+		if !isValidOtelValue(op.Field) {
 			return model.BadRequestStr(fmt.Sprintf("%s  for operator Id %s", valueErrStr, op.ID))
 		}
 	case "traceParser":
