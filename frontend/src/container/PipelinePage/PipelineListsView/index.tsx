@@ -372,6 +372,15 @@ function PipelineListsView({
 		prevPipelineData.forEach((item, index) => {
 			const obj = item;
 			obj.orderId = index + 1;
+			if (obj.config) {
+				obj.config?.forEach((configItem, index) => {
+					const config = configItem;
+					config.orderId = index + 1;
+				});
+				for (let i = 0; i < obj.config.length - 1; i += 1) {
+					obj.config[i].output = obj.config[i + 1].id;
+				}
+			}
 		});
 		setCurrPipelineData(prevPipelineData);
 		setExpandedRowKeys([]);
