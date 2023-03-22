@@ -1497,7 +1497,7 @@ func buildQueryWithTagParams(ctx context.Context, tags []model.TagQuery) (string
 		tagMapType := ""
 		switch item.(type) {
 		case model.TagQueryString:
-			tagMapType = constants.StringTagMapCol
+			tagMapType = "resource_attributes"
 		case model.TagQueryNumber:
 			tagMapType = constants.NumberTagMapCol
 		case model.TagQueryBool:
@@ -2007,12 +2007,18 @@ func (r *ClickHouseReader) GetDependencyGraph(ctx context.Context, queryParams *
 			sum(total_count)/ @duration AS callRate,
 			sum(error_count)/sum(total_count) * 100 as errorRate
 		FROM %s.%s
-		WHERE toUInt64(toDateTime(timestamp)) >= @start AND toUInt64(toDateTime(timestamp)) <= @end
-		GROUP BY
-			src,
-			dest`,
+		WHERE toUInt64(toDateTime(timestamp)) >= @start AND toUInt64(toDateTime(timestamp)) <= @end`,
 		r.TraceDB, r.dependencyGraphTable,
 	)
+	// create TagQuery from TagQueryParams
+	tags := createTagQueryFromTagQueryParams(queryParams.Tags)
+	subQuery, argsSubQuery, errStatus := buildQueryWithTagParams(ctx, tags)
+	query += subQuery
+	args = append(args, argsSubQuery...)
+	if errStatus != nil {
+		return nil, errStatus
+	}
+	query += " GROUP BY src, dest;"
 
 	zap.S().Debug(query, args)
 
