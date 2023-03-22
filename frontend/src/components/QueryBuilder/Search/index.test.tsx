@@ -1,6 +1,7 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { QueryBuilderContainer } from 'container/QueryBuilder';
 import React from 'react';
+import { QueryClient, QueryClientProvider } from 'react-query';
 
 import QueryBuilderSearch from './index';
 
@@ -8,6 +9,14 @@ const locationGeneral = {
 	search: '',
 	pathname: '/logs',
 };
+
+const queryClient = new QueryClient({
+	defaultOptions: {
+		queries: {
+			refetchOnWindowFocus: false,
+		},
+	},
+});
 
 type LocationT = typeof locationGeneral;
 
@@ -17,9 +26,11 @@ jest.mock('react-router-dom', () => ({
 }));
 
 const component = (
-	<QueryBuilderContainer>
-		<QueryBuilderSearch />
-	</QueryBuilderContainer>
+	<QueryClientProvider client={queryClient}>
+		<QueryBuilderContainer>
+			<QueryBuilderSearch />
+		</QueryBuilderContainer>
+	</QueryClientProvider>
 );
 
 describe('Query search', () => {
@@ -36,9 +47,9 @@ describe('Query search', () => {
 		fireEvent.change(select, { target: { value: 'service' } });
 		await waitFor(() => {
 			const options = document.querySelectorAll('[role="option"]');
-			expect(options.length).toBe(2);
+			expect(options.length).toBe(1);
 			const values = Array.from(options).map((el) => el.innerHTML);
-			expect(values).toEqual(['service_name', 'service_namespace']);
+			expect(values).toEqual(['service']);
 		});
 	});
 });
