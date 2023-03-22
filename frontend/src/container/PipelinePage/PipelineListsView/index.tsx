@@ -3,6 +3,7 @@ import { Modal, Table, Typography } from 'antd';
 import { ExpandableConfig } from 'antd/es/table/interface';
 import savePipeline from 'api/pipeline/post';
 import { useNotifications } from 'hooks/useNotifications';
+import { cloneDeep } from 'lodash-es';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { DndProvider } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
@@ -54,10 +55,10 @@ function PipelineListsView({
 	const [modal, contextHolder] = Modal.useModal();
 	const { notifications } = useNotifications();
 	const [prevPipelineData, setPrevPipelineData] = useState<Array<PipelineData>>(
-		piplineData.pipelines,
+		cloneDeep(piplineData.pipelines),
 	);
 	const [currPipelineData, setCurrPipelineData] = useState<Array<PipelineData>>(
-		piplineData.pipelines,
+		cloneDeep(piplineData.pipelines),
 	);
 	const [
 		expandedPipelineData,
