@@ -3,7 +3,7 @@ import React from 'react';
 import { IconListStyle } from '../styles';
 import DeleteAction from './TableActions/DeleteAction';
 import EditAction from './TableActions/EditAction';
-import ViewAction from './TableActions/ViewAction';
+// import ViewAction from './TableActions/ViewAction';
 
 function PipelineActions({
 	isPipelineAction,
@@ -13,7 +13,7 @@ function PipelineActions({
 	return (
 		<IconListStyle>
 			<EditAction editAction={editAction} isPipelineAction={isPipelineAction} />
-			<ViewAction isPipelineAction={isPipelineAction} />
+			{/* <ViewAction isPipelineAction={isPipelineAction} /> */}
 			<DeleteAction
 				deleteAction={deleteAction}
 				isPipelineAction={isPipelineAction}

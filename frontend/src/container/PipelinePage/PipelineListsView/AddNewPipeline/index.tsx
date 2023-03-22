@@ -5,6 +5,7 @@ import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
 import { ActionMode, ActionType, PipelineData } from 'types/api/pipeline/def';
 import AppReducer from 'types/reducer/app';
+import { v4 } from 'uuid';
 
 import { ModalButtonWrapper, ModalTitle } from '../styles';
 import { getEditedDataSource, getRecordIndex } from '../utils';
@@ -36,6 +37,7 @@ function AddNewPipeline({
 
 	const onFinish = (values: PipelineData): void => {
 		const newPipeLineData: PipelineData = {
+			id: v4(),
 			orderId: currPipelineData.length + 1,
 			createdAt: new Date().toISOString(),
 			createdBy: user?.name || '',

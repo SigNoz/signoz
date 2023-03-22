@@ -29,6 +29,33 @@ export type ProcessorFormField = {
 	initialValue?: string;
 };
 
+const commonFields = [
+	{
+		id: 3,
+		fieldName: 'Parse From',
+		placeholder: 'processor_parsefrom_placeholder',
+		name: 'parse_from', // optional
+		rules: [],
+		initialValue: 'body',
+	},
+	{
+		id: 4,
+		fieldName: 'Parse To',
+		placeholder: 'processor_parseto_placeholder',
+		name: 'parse_to', // optional
+		rules: [],
+		initialValue: 'attributes',
+	},
+	{
+		id: 5,
+		fieldName: 'On Error',
+		placeholder: 'processor_onerror_placeholder',
+		name: 'on_error', // optional
+		rules: [],
+		initialValue: 'send',
+	},
+];
+
 export const processorFields: { [key: string]: Array<ProcessorFormField> } = {
 	grok_parser: [
 		{
@@ -43,30 +70,7 @@ export const processorFields: { [key: string]: Array<ProcessorFormField> } = {
 			placeholder: 'processor_pattern_placeholder',
 			name: 'pattern',
 		},
-		{
-			id: 3,
-			fieldName: 'Grok Parse From',
-			placeholder: 'processor_parsefrom_placeholder',
-			name: 'parse_from', // optional
-			rules: [],
-			initialValue: 'body',
-		},
-		{
-			id: 4,
-			fieldName: 'Grok Parse To',
-			placeholder: 'processor_parseto_placeholder',
-			name: 'parse_to', // optional
-			rules: [],
-			initialValue: 'attributes',
-		},
-		{
-			id: 5,
-			fieldName: 'Grok On Error',
-			placeholder: 'processor_onerror_placeholder',
-			name: 'on_error', // optional
-			rules: [],
-			initialValue: 'send',
-		},
+		...commonFields,
 	],
 	json_parser: [
 		{
@@ -77,14 +81,14 @@ export const processorFields: { [key: string]: Array<ProcessorFormField> } = {
 		},
 		{
 			id: 2,
-			fieldName: 'Json Parse From',
+			fieldName: 'Parse From',
 			placeholder: 'processor_parsefrom_placeholder',
 			name: 'parse_from',
 			initialValue: 'body',
 		},
 		{
 			id: 3,
-			fieldName: 'Json Parse To',
+			fieldName: 'Parse To',
 			placeholder: 'processor_parseto_placeholder',
 			name: 'parse_to',
 			initialValue: 'attributes',
@@ -103,30 +107,7 @@ export const processorFields: { [key: string]: Array<ProcessorFormField> } = {
 			placeholder: 'processor_regex_placeholder',
 			name: 'regex',
 		},
-		{
-			id: 3,
-			fieldName: 'Regex Parse From',
-			placeholder: 'processor_parsefrom_placeholder',
-			name: 'parse_from', // optional
-			rules: [],
-			initialValue: 'body',
-		},
-		{
-			id: 4,
-			fieldName: 'Regex Parse To',
-			placeholder: 'processor_parseto_placeholder',
-			name: 'parse_to', // optional
-			rules: [],
-			initialValue: 'attributes',
-		},
-		{
-			id: 5,
-			fieldName: 'Regex On Error',
-			placeholder: 'processor_onerror_placeholder',
-			name: 'on_error', // optional
-			rules: [],
-			initialValue: 'send',
-		},
+		...commonFields,
 	],
 	add: [
 		{

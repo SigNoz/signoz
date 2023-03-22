@@ -14,6 +14,7 @@ import {
 	PipelineData,
 	ProcessorData,
 } from 'types/api/pipeline/def';
+import { v4 } from 'uuid';
 
 import { tableComponents } from '../config';
 import AddNewPipeline from './AddNewPipeline';
@@ -215,6 +216,10 @@ function PipelineListsView({
 			if (currPipelineData && isEditingActionMode) {
 				const rawData = currPipelineData;
 				const updatedRow = getUpdatedRow(currPipelineData, dragIndex, hoverIndex);
+				updatedRow.forEach((item, index) => {
+					const obj = item;
+					obj.orderId = index + 1;
+				});
 				handleAlert({
 					title: t('reorder_pipeline'),
 					descrition: t('reorder_pipeline_description'),
@@ -338,6 +343,11 @@ function PipelineListsView({
 			setCurrPipelineData(response.payload?.pipelines);
 			setPrevPipelineData(response.payload?.pipelines);
 		} else {
+			modifiedPipelineData.forEach((item: PipelineData) => {
+				const pipelineData = item;
+				pipelineData.id = v4();
+				return pipelineData;
+			});
 			setActionMode(ActionMode.Editing);
 			setShowSaveButton(ActionMode.Editing);
 			notifications.error({
