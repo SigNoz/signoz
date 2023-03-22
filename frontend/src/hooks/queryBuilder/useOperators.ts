@@ -1,7 +1,6 @@
 import { QUERY_BUILDER_OPERATORS_BY_TYPES } from 'constants/queryBuilder';
+import { KeyType } from 'container/QueryBuilder/type';
 import { useMemo } from 'react';
-
-import { KeyType } from './useAutoComplete';
 
 type ReturnT =
 	| typeof QUERY_BUILDER_OPERATORS_BY_TYPES.universal
