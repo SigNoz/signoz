@@ -48,75 +48,24 @@ var correctQueriesTest = []struct {
 		IsValid: false,
 	},
 	{
-		Name: "Valid grok",
+		Name: "Invalid filter",
 		Pipeline: PostablePipeline{
 			OrderId: 1,
 			Name:    "pipeline 1",
 			Alias:   "pipeline1",
 			Enabled: true,
-			Filter:  "attributes.method == \"GET\"",
-			Config: []model.PipelineOperator{
-				{
-					Type:    "grok_parser",
-					ID:      "Id",
-					Pattern: "%{COMMONAPACHELOG}",
-					Output:  "attributes",
-				},
-			},
-		},
-		IsValid: true,
-	},
-	{
-		Name: "Operator without id",
-		Pipeline: PostablePipeline{
-			OrderId: 1,
-			Name:    "pipeline 1",
-			Alias:   "pipeline1",
-			Enabled: true,
-			Filter:  "attributes.method == \"GET\"",
-			Config: []model.PipelineOperator{
-				{
-					Type:    "grok_parser",
-					Pattern: "%{COMMONAPACHELOG}",
-					Output:  "attributes",
-				},
-			},
+			Filter:  "test filter",
 		},
 		IsValid: false,
 	},
 	{
-		Name: "Operator without type",
+		Name: "Valid filter",
 		Pipeline: PostablePipeline{
 			OrderId: 1,
 			Name:    "pipeline 1",
 			Alias:   "pipeline1",
 			Enabled: true,
 			Filter:  "attributes.method == \"GET\"",
-			Config: []model.PipelineOperator{
-				{
-					ID:      "mygrok",
-					Pattern: "%{COMMONAPACHELOG}",
-					Output:  "attributes",
-				},
-			},
-		},
-		IsValid: false,
-	},
-	{
-		Name: "Grok operator without pattern",
-		Pipeline: PostablePipeline{
-			OrderId: 1,
-			Name:    "pipeline 1",
-			Alias:   "pipeline1",
-			Enabled: true,
-			Filter:  "attributes.method == \"GET\"",
-			Config: []model.PipelineOperator{
-				{
-					ID:     "mygrok",
-					Type:   "grok_parser",
-					Output: "attributes",
-				},
-			},
 		},
 		IsValid: false,
 	},
@@ -140,6 +89,22 @@ var operatorTest = []struct {
 	Operator model.PipelineOperator
 	IsValid  bool
 }{
+	{
+		Name: "Operator - without id",
+		Operator: model.PipelineOperator{
+			Type:  "remove",
+			Field: "attributes.abc",
+		},
+		IsValid: false,
+	},
+	{
+		Name: "Operator - without type",
+		Operator: model.PipelineOperator{
+			ID:    "test",
+			Field: "attributes.abc",
+		},
+		IsValid: false,
+	},
 	{
 		Name: "Copy - invalid to and from",
 		Operator: model.PipelineOperator{
@@ -215,6 +180,46 @@ var operatorTest = []struct {
 			Type: "operator",
 			From: "resource.x1",
 			To:   "resource.x2",
+		},
+		IsValid: false,
+	},
+	{
+		Name: "Grok - valid",
+		Operator: model.PipelineOperator{
+			ID:      "grok",
+			Type:    "grok_parser",
+			Pattern: "%{COMMONAPACHELOG}",
+			ParseTo: "attributes",
+		},
+		IsValid: true,
+	},
+	{
+		Name: "Grok - invalid",
+		Operator: model.PipelineOperator{
+			ID:      "grok",
+			Type:    "grok_parser",
+			Pattern: "%{COMMONAPACHELOG}",
+			ParseTo: "test",
+		},
+		IsValid: false,
+	},
+	{
+		Name: "Regex - valid",
+		Operator: model.PipelineOperator{
+			ID:      "regex",
+			Type:    "regex_parser",
+			Regex:   "(?P<time>[^ Z]+) (?P<stream>stdout|stderr) (?P<logtag>[^ ]*) ?(?P<log>.*)$",
+			ParseTo: "attributes",
+		},
+		IsValid: true,
+	},
+	{
+		Name: "Regex - invalid",
+		Operator: model.PipelineOperator{
+			ID:      "regex",
+			Type:    "regex_parser",
+			Regex:   "abcd",
+			ParseTo: "attributes",
 		},
 		IsValid: false,
 	},

@@ -96,24 +96,19 @@ func (p *PostablePipeline) IsValid() *model.ApiError {
 
 func isValidOperator(op model.PipelineOperator) *model.ApiError {
 	valueErrStr := "value should have prefix of body, attributes, resource"
+
 	switch op.Type {
 	case "json_parser":
 		if op.ParseFrom == "" && op.ParseTo == "" {
 			return model.BadRequestStr(fmt.Sprintf("parse from and parse to of %s json operator cannot be empty", op.ID))
 		}
-		if !isValidOtelValue(op.ParseFrom) || !isValidOtelValue(op.ParseTo) {
-			return model.BadRequestStr(fmt.Sprintf("%s  for operator Id %s", valueErrStr, op.ID))
-		}
 	case "grok_parser":
 		if op.Pattern == "" {
 			return model.BadRequestStr(fmt.Sprintf("pattern of %s grok operator cannot be empty", op.ID))
 		}
-		if !isValidOtelValue(op.ParseFrom) || !isValidOtelValue(op.ParseTo) {
-			return model.BadRequestStr(fmt.Sprintf("%s  for operator Id %s", valueErrStr, op.ID))
-		}
 	case "regex_parser":
 		if op.Regex == "" {
-			return model.BadRequestStr(fmt.Sprintf("pattern of %s regex operator cannot be empty", op.ID))
+			return model.BadRequestStr(fmt.Sprintf("regex of %s regex operator cannot be empty", op.ID))
 		}
 		r, err := regexp.Compile(op.Regex)
 		if err != nil {
@@ -128,36 +123,21 @@ func isValidOperator(op model.PipelineOperator) *model.ApiError {
 		if namedCaptureGroups == 0 {
 			return model.BadRequestStr(fmt.Sprintf("no capture groups in regex expression of %s regex operator", op.ID))
 		}
-		if !isValidOtelValue(op.ParseFrom) || !isValidOtelValue(op.ParseTo) {
-			return model.BadRequestStr(fmt.Sprintf("%s  for operator Id %s", valueErrStr, op.ID))
-		}
 	case "copy":
 		if op.From == "" || op.To == "" {
 			return model.BadRequestStr(fmt.Sprintf("from or to of %s copy operator cannot be empty", op.ID))
-		}
-		if !isValidOtelValue(op.From) || !isValidOtelValue(op.To) {
-			return model.BadRequestStr(fmt.Sprintf("%s  for operator Id %s", valueErrStr, op.ID))
 		}
 	case "move":
 		if op.From == "" || op.To == "" {
 			return model.BadRequestStr(fmt.Sprintf("from or to of %s move operator cannot be empty", op.ID))
 		}
-		if !isValidOtelValue(op.From) || !isValidOtelValue(op.To) {
-			return model.BadRequestStr(fmt.Sprintf("%s  for operator Id %s", valueErrStr, op.ID))
-		}
 	case "add":
 		if op.Field == "" || op.Value == "" {
 			return model.BadRequestStr(fmt.Sprintf("field or value of %s add operator cannot be empty", op.ID))
 		}
-		if !isValidOtelValue(op.Field) {
-			return model.BadRequestStr(fmt.Sprintf("%s  for operator Id %s", valueErrStr, op.ID))
-		}
 	case "remove":
 		if op.Field == "" {
 			return model.BadRequestStr(fmt.Sprintf("field of %s remove operator cannot be empty", op.ID))
-		}
-		if !isValidOtelValue(op.Field) {
-			return model.BadRequestStr(fmt.Sprintf("%s  for operator Id %s", valueErrStr, op.ID))
 		}
 	case "traceParser":
 		if op.TraceParser == nil {
@@ -173,6 +153,14 @@ func isValidOperator(op model.PipelineOperator) *model.ApiError {
 		}
 	default:
 		return model.BadRequestStr(fmt.Sprintf("operator type %s not supported for %s, use one of (grok_parser, regex_parser, copy, move, add, remove, traceParser, retain)", op.Type, op.ID))
+	}
+
+	if !isValidOtelValue(op.ParseFrom) ||
+		!isValidOtelValue(op.ParseTo) ||
+		!isValidOtelValue(op.From) ||
+		!isValidOtelValue(op.To) ||
+		!isValidOtelValue(op.Field) {
+		return model.BadRequestStr(fmt.Sprintf("%s  for operator Id %s", valueErrStr, op.ID))
 	}
 	return nil
 }

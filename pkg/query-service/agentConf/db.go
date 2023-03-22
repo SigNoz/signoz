@@ -104,7 +104,8 @@ func (r *Repo) GetLatestVersion(ctx context.Context, typ ElementTypeDef) (*Confi
 			FROM agent_config_versions 
 			WHERE element_type=$2)`, typ, typ)
 	if err != nil {
-		zap.S().Error("failed get latest config version for element:", typ, err)
+		// intially the table will be empty
+		return nil, err
 	}
 	return &c, err
 }
