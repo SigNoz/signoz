@@ -42,7 +42,8 @@ SigNoz helps developers monitor applications and troubleshoot problems in their 
 
 ### Application Metrics
 
-<img width="2560" alt="application_metrics" src="https://user-images.githubusercontent.com/83692067/226536399-be9298c9-b4c1-4879-83b9-bc73417c032c.png">
+![application_metrics](https://user-images.githubusercontent.com/83692067/226637410-900dbc5e-6705-4b11-a10c-bd0faeb2a92f.png)
+
 
 ### Distributed Tracing
 <img width="2068" alt="distributed_tracing_2 2" src="https://user-images.githubusercontent.com/83692067/226536447-bae58321-6a22-4ed3-af80-e3e964cb3489.png">
@@ -56,6 +57,11 @@ SigNoz helps developers monitor applications and troubleshoot problems in their 
 ### Infrastructure Monitoring
 
 <img width="2068" alt="infrastructure_monitoring" src="https://user-images.githubusercontent.com/83692067/226536496-f38c4dbf-e03c-4158-8be0-32d4a61158c7.png">
+
+### Exceptions Monitoring
+
+![exceptions_light](https://user-images.githubusercontent.com/83692067/226637967-4188d024-3ac9-4799-be95-f5ea9c45436f.png)
+
 
 ### Alerts
 
