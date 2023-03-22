@@ -369,6 +369,10 @@ function PipelineListsView({
 	const onCancelConfigurationHandler = useCallback((): void => {
 		setActionMode(ActionMode.Viewing);
 		setShowSaveButton(undefined);
+		prevPipelineData.forEach((item, index) => {
+			const obj = item;
+			obj.orderId = index + 1;
+		});
 		setCurrPipelineData(prevPipelineData);
 		setExpandedRowKeys([]);
 	}, [prevPipelineData, setActionMode]);

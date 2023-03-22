@@ -76,7 +76,7 @@ function AddNewProcessor({
 			const updatedProcessorData = {
 				...expandedPipelineData?.config?.[findRecordIndex],
 				type: processorType,
-				name: values.name,
+				...values,
 			};
 
 			const editedData = getEditedDataSource(

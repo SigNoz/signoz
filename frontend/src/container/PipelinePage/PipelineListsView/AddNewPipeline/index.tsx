@@ -57,9 +57,7 @@ function AddNewPipeline({
 			);
 			const updatedPipelineData: PipelineData = {
 				...currPipelineData[findRecordIndex],
-				name: values.name,
-				description: values.description,
-				filter: values.filter,
+				...values,
 			};
 
 			const editedPipelineData = getEditedDataSource(
