@@ -224,3 +224,6 @@ const (
 	NumberTagMapCol = "numberTagMap"
 	BoolTagMapCol   = "boolTagMap"
 )
+
+// logsPPLPfx is a short constant for logsPipelinePrefix
+const LogsPPLPfx = "logstransform/pipeline_"
