@@ -46,17 +46,17 @@ function PipelineExpandView({
 				const filteredData = expandedPipelineData?.config.filter(
 					(item: ProcessorData) => item.id !== record.id,
 				);
-				const processorData = { ...expandedPipelineData };
-				processorData.config = filteredData;
-				processorData.config.forEach((item, index) => {
+				const pipelineData = { ...expandedPipelineData };
+				pipelineData.config = filteredData;
+				pipelineData.config.forEach((item, index) => {
 					const obj = item;
 					obj.orderId = index + 1;
 				});
-				for (let i = 0; i < processorData.config.length - 1; i += 1) {
-					processorData.config[i].output = processorData.config[i + 1].id;
+				for (let i = 0; i < pipelineData.config.length - 1; i += 1) {
+					pipelineData.config[i].output = pipelineData.config[i + 1].id;
 				}
-				delete processorData.config[processorData.config.length - 1].output;
-				setExpandedPipelineData(processorData);
+				delete pipelineData.config[pipelineData.config.length - 1].output;
+				setExpandedPipelineData(pipelineData);
 			}
 		},
 		[expandedPipelineData, setShowSaveButton, setExpandedPipelineData],

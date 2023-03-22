@@ -74,8 +74,11 @@ function AddNewProcessor({
 			);
 
 			const updatedProcessorData = {
-				...expandedPipelineData?.config?.[findRecordIndex],
+				id: values.name.replace(/\s/g, ''),
+				orderId: expandedPipelineData?.config?.[findRecordIndex].orderId,
 				type: processorType,
+				enabled: expandedPipelineData?.config?.[findRecordIndex].enabled,
+				output: expandedPipelineData?.config?.[findRecordIndex].output,
 				...values,
 			};
 
