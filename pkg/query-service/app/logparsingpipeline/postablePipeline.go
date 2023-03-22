@@ -2,9 +2,11 @@ package logparsingpipeline
 
 import (
 	"fmt"
+	"regexp"
 	"strings"
 
 	"github.com/antonmedv/expr"
+
 	"go.signoz.io/signoz/pkg/query-service/model"
 )
 
@@ -109,9 +111,22 @@ func isValidOperator(op model.PipelineOperator) *model.ApiError {
 		if !isValidOtelValue(op.ParseFrom) || !isValidOtelValue(op.ParseTo) {
 			return model.BadRequestStr(fmt.Sprintf("%s  for operator Id %s", valueErrStr, op.ID))
 		}
-	case "regex":
-		if op.Pattern == "" {
+	case "regex_parser":
+		if op.Regex == "" {
 			return model.BadRequestStr(fmt.Sprintf("pattern of %s regex operator cannot be empty", op.ID))
+		}
+		r, err := regexp.Compile(op.Regex)
+		if err != nil {
+			return model.BadRequestStr(fmt.Sprintf("error compiling regex expression of %s regex operator", op.ID))
+		} 
+		namedCaptureGroups := 0  
+		for _, groupName := range r.SubexpNames() {
+			if groupName != "" { 
+				namedCaptureGroups++
+			}
+		}
+		if namedCaptureGroups == 0 {
+			return model.BadRequestStr(fmt.Sprintf("no capture groups in regex expression of %s regex operator", op.ID))
 		}
 		if !isValidOtelValue(op.ParseFrom) || !isValidOtelValue(op.ParseTo) {
 			return model.BadRequestStr(fmt.Sprintf("%s  for operator Id %s", valueErrStr, op.ID))
