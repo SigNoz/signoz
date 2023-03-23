@@ -28,28 +28,6 @@ describe('PipelinePage', () => {
 							setShowSaveButton={jest.fn()}
 							expandedPipelineData={pipelineMockData[0]}
 							setExpandedPipelineData={jest.fn()}
-							processorData={[
-								{
-									orderId: 1,
-									enabled: true,
-									type: 'grok_parser',
-									id: 'grokusecommon',
-									name: 'grok use common asd',
-									output: 'renameauth',
-									parse_to: 'attributes',
-									pattern: '%{COMMONAPACHELOG}',
-									parse_from: 'body',
-								},
-								{
-									orderId: 2,
-									enabled: true,
-									type: 'move',
-									id: 'renameauth',
-									name: 'rename auth',
-									from: 'attributes.auth',
-									to: 'attributes.username',
-								},
-							]}
 						/>
 					</I18nextProvider>
 				</Provider>
