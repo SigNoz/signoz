@@ -211,6 +211,21 @@ function PipelineExpandView({
 			moveRow: moveProcessorRow,
 		} as React.HTMLAttributes<unknown>);
 
+	const processorData = useMemo(
+		() =>
+			expandedPipelineData?.config &&
+			expandedPipelineData?.config.map(
+				(item: ProcessorData): ProcessorData => ({
+					id: item.id,
+					orderId: item.orderId,
+					type: item.type,
+					name: item.name,
+					enabled: item.enabled,
+				}),
+			),
+		[expandedPipelineData],
+	);
+
 	return (
 		<DndProvider backend={HTML5Backend}>
 			<StyledTable
@@ -220,7 +235,7 @@ function PipelineExpandView({
 				rowKey="name"
 				size="small"
 				components={tableComponents}
-				dataSource={expandedPipelineData?.config}
+				dataSource={processorData}
 				pagination={false}
 				onRow={onRowHandler}
 				footer={footer}
