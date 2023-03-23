@@ -51,7 +51,7 @@ check_os() {
     os_name="$(cat /etc/*-release | awk -F= '$1 == "NAME" { gsub(/"/, ""); print $2; exit }')"
 
     case "$os_name" in
-        Ubuntu*)
+        Ubuntu*|Pop!_OS)
             desired_os=1
             os="ubuntu"
             package_manager="apt-get"

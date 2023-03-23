@@ -6,7 +6,6 @@ import { ConfigProps } from 'types/api/dynamicConfigs/getDynamicConfigs';
 
 import ErrorLink from './ErrorLink';
 import LinkContainer from './Link';
-import { MenuItem } from './styles';
 
 function HelpToolTip({ config }: HelpToolTipProps): JSX.Element {
 	const sortedConfig = useMemo(
@@ -16,31 +15,29 @@ function HelpToolTip({ config }: HelpToolTipProps): JSX.Element {
 
 	const isDarkMode = useIsDarkMode();
 
-	return (
-		<Menu>
-			{sortedConfig.map((item) => {
-				const iconName = `${isDarkMode ? item.darkIcon : item.lightIcon}`;
+	const items = sortedConfig.map((item) => {
+		const iconName = `${isDarkMode ? item.darkIcon : item.lightIcon}`;
+		const Component = React.lazy(
+			() => import(`@ant-design/icons/es/icons/${iconName}.js`),
+		);
+		return {
+			key: item.text + item.href,
+			label: (
+				<ErrorLink key={item.text + item.href}>
+					<Suspense fallback={<Spinner height="5vh" />}>
+						<LinkContainer href={item.href}>
+							<Space size="small" align="start">
+								<Component />
+								{item.text}
+							</Space>
+						</LinkContainer>
+					</Suspense>
+				</ErrorLink>
+			),
+		};
+	});
 
-				const Component = React.lazy(
-					() => import(`@ant-design/icons/es/icons/${iconName}.js`),
-				);
-				return (
-					<ErrorLink key={item.text + item.href}>
-						<Suspense fallback={<Spinner height="5vh" />}>
-							<MenuItem>
-								<LinkContainer href={item.href}>
-									<Space size="small" align="start">
-										<Component />
-										{item.text}
-									</Space>
-								</LinkContainer>
-							</MenuItem>
-						</Suspense>
-					</ErrorLink>
-				);
-			})}
-		</Menu>
-	);
+	return <Menu items={items} />;
 }
 
 interface HelpToolTipProps {

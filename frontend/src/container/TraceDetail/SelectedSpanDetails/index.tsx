@@ -15,8 +15,6 @@ import {
 } from './styles';
 import Tags from './Tags';
 
-const { TabPane } = Tabs;
-
 function SelectedSpanDetails(props: SelectedSpanDetailsProps): JSX.Element {
 	const { tree, firstSpanStartTime } = props;
 
@@ -42,7 +40,34 @@ function SelectedSpanDetails(props: SelectedSpanDetailsProps): JSX.Element {
 		return <div />;
 	}
 
-	const { tags } = tree;
+	const { tags, nonChildReferences } = tree;
+
+	const items = [
+		{
+			label: 'Tags',
+			key: '1',
+			children: (
+				<Tags
+					onToggleHandler={onToggleHandler}
+					setText={setText}
+					tags={tags}
+					linkedSpans={nonChildReferences}
+				/>
+			),
+		},
+		{
+			label: 'Events',
+			key: '2',
+			children: (
+				<Events
+					events={tree.event}
+					onToggleHandler={onToggleHandler}
+					setText={setText}
+					firstSpanStartTime={firstSpanStartTime}
+				/>
+			),
+		},
+	];
 
 	return (
 		<CardContainer>
@@ -81,19 +106,7 @@ function SelectedSpanDetails(props: SelectedSpanDetailsProps): JSX.Element {
 				)}
 			</Modal>
 
-			<Tabs defaultActiveKey="1">
-				<TabPane tab="Tags" key="1">
-					<Tags onToggleHandler={onToggleHandler} setText={setText} tags={tags} />
-				</TabPane>
-				<TabPane tab="Events" key="2">
-					<Events
-						events={tree.event}
-						onToggleHandler={onToggleHandler}
-						setText={setText}
-						firstSpanStartTime={firstSpanStartTime}
-					/>
-				</TabPane>
-			</Tabs>
+			<Tabs defaultActiveKey="1" items={items} />
 		</CardContainer>
 	);
 }

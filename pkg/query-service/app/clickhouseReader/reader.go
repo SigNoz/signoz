@@ -27,7 +27,7 @@ import (
 	"github.com/prometheus/common/promlog"
 	"github.com/prometheus/prometheus/config"
 	"github.com/prometheus/prometheus/discovery"
-	sd_config "github.com/prometheus/prometheus/discovery/config"
+	sd_config "github.com/prometheus/prometheus/discovery"
 	"github.com/prometheus/prometheus/promql"
 
 	"github.com/prometheus/prometheus/scrape"
@@ -45,6 +45,7 @@ import (
 	am "go.signoz.io/signoz/pkg/query-service/integrations/alertManager"
 	"go.signoz.io/signoz/pkg/query-service/interfaces"
 	"go.signoz.io/signoz/pkg/query-service/model"
+	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
 	"go.signoz.io/signoz/pkg/query-service/telemetry"
 	"go.signoz.io/signoz/pkg/query-service/utils"
 	"go.uber.org/zap"
@@ -157,21 +158,28 @@ func NewReader(localDB *sqlx.DB, configFile string, featureFlag interfaces.Featu
 func (r *ClickHouseReader) Start(readerReady chan bool) {
 	logLevel := promlog.AllowedLevel{}
 	logLevel.Set("debug")
-	// allowedFormat := promlog.AllowedFormat{}
-	// allowedFormat.Set("logfmt")
+	allowedFormat := promlog.AllowedFormat{}
+	allowedFormat.Set("logfmt")
 
-	// promlogConfig := promlog.Config{
-	// 	Level:  &logLevel,
-	// 	Format: &allowedFormat,
-	// }
+	promlogConfig := promlog.Config{
+		Level:  &logLevel,
+		Format: &allowedFormat,
+	}
 
-	logger := promlog.New(logLevel)
+	logger := promlog.New(&promlogConfig)
 
 	startTime := func() (int64, error) {
 		return int64(promModel.Latest), nil
 	}
 
-	remoteStorage := remote.NewStorage(log.With(logger, "component", "remote"), startTime, time.Duration(1*time.Minute))
+	remoteStorage := remote.NewStorage(
+		log.With(logger, "component", "remote"),
+		nil,
+		startTime,
+		"",
+		time.Duration(1*time.Minute),
+		nil,
+	)
 
 	cfg := struct {
 		configFile string
@@ -197,14 +205,18 @@ func (r *ClickHouseReader) Start(readerReady chan bool) {
 	ctxScrape, cancelScrape := context.WithCancel(context.Background())
 	discoveryManagerScrape := discovery.NewManager(ctxScrape, log.With(logger, "component", "discovery manager scrape"), discovery.Name("scrape"))
 
-	scrapeManager := scrape.NewManager(log.With(logger, "component", "scrape manager"), fanoutStorage)
+	scrapeManager := scrape.NewManager(nil, log.With(logger, "component", "scrape manager"), fanoutStorage)
 
 	opts := promql.EngineOpts{
-		Logger:        log.With(logger, "component", "query engine"),
-		Reg:           nil,
-		MaxConcurrent: 20,
-		MaxSamples:    50000000,
-		Timeout:       time.Duration(2 * time.Minute),
+		Logger:     log.With(logger, "component", "query engine"),
+		Reg:        nil,
+		MaxSamples: 50000000,
+		Timeout:    time.Duration(2 * time.Minute),
+		ActiveQueryTracker: promql.NewActiveQueryTracker(
+			"",
+			20,
+			log.With(logger, "component", "activeQueryTracker"),
+		),
 	}
 
 	queryEngine := promql.NewEngine(opts)
@@ -215,9 +227,9 @@ func (r *ClickHouseReader) Start(readerReady chan bool) {
 		// they need to read the most updated config when receiving the new targets list.
 		scrapeManager.ApplyConfig,
 		func(cfg *config.Config) error {
-			c := make(map[string]sd_config.ServiceDiscoveryConfig)
+			c := make(map[string]sd_config.Configs)
 			for _, v := range cfg.ScrapeConfigs {
-				c[v.JobName] = v.ServiceDiscoveryConfig
+				c[v.JobName] = v.ServiceDiscoveryConfigs
 			}
 			return discoveryManagerScrape.ApplyConfig(c)
 		},
@@ -343,7 +355,7 @@ func (r *ClickHouseReader) GetFanoutStorage() *storage.Storage {
 func reloadConfig(filename string, logger log.Logger, rls ...func(*config.Config) error) (promConfig *config.Config, err error) {
 	level.Info(logger).Log("msg", "Loading configuration file", "filename", filename)
 
-	conf, err := config.LoadFile(filename)
+	conf, err := config.LoadFile(filename, false, false, logger)
 	if err != nil {
 		return nil, fmt.Errorf("couldn't load configuration (--config.file=%q): %v", filename, err)
 	}
@@ -634,7 +646,7 @@ func (r *ClickHouseReader) CreateChannel(receiver *am.Receiver) (*am.Receiver, *
 }
 
 func (r *ClickHouseReader) GetInstantQueryMetricsResult(ctx context.Context, queryParams *model.InstantQueryMetricsParams) (*promql.Result, *stats.QueryStats, *model.ApiError) {
-	qry, err := r.queryEngine.NewInstantQuery(r.remoteStorage, queryParams.Query, queryParams.Time)
+	qry, err := r.queryEngine.NewInstantQuery(r.remoteStorage, &promql.QueryOpts{}, queryParams.Query, queryParams.Time)
 	if err != nil {
 		return nil, nil, &model.ApiError{Typ: model.ErrorBadData, Err: err}
 	}
@@ -642,19 +654,18 @@ func (r *ClickHouseReader) GetInstantQueryMetricsResult(ctx context.Context, que
 	res := qry.Exec(ctx)
 
 	// Optional stats field in response if parameter "stats" is not empty.
-	var qs *stats.QueryStats
+	var qs stats.QueryStats
 	if queryParams.Stats != "" {
 		qs = stats.NewQueryStats(qry.Stats())
 	}
 
 	qry.Close()
-	return res, qs, nil
+	return res, &qs, nil
 
 }
 
 func (r *ClickHouseReader) GetQueryRangeResult(ctx context.Context, query *model.QueryRangeParams) (*promql.Result, *stats.QueryStats, *model.ApiError) {
-
-	qry, err := r.queryEngine.NewRangeQuery(r.remoteStorage, query.Query, query.Start, query.End, query.Step)
+	qry, err := r.queryEngine.NewRangeQuery(r.remoteStorage, &promql.QueryOpts{}, query.Query, query.Start, query.End, query.Step)
 
 	if err != nil {
 		return nil, nil, &model.ApiError{Typ: model.ErrorBadData, Err: err}
@@ -663,13 +674,13 @@ func (r *ClickHouseReader) GetQueryRangeResult(ctx context.Context, query *model
 	res := qry.Exec(ctx)
 
 	// Optional stats field in response if parameter "stats" is not empty.
-	var qs *stats.QueryStats
+	var qs stats.QueryStats
 	if query.Stats != "" {
 		qs = stats.NewQueryStats(qry.Stats())
 	}
 
 	qry.Close()
-	return res, qs, nil
+	return res, &qs, nil
 }
 
 func (r *ClickHouseReader) GetServicesList(ctx context.Context) (*[]string, error) {
@@ -3652,6 +3663,108 @@ func (r *ClickHouseReader) QueryDashboardVars(ctx context.Context, query string)
 		}
 	}
 	return &result, nil
+}
+
+func (r *ClickHouseReader) GetMetricAggregateAttributes(ctx context.Context, req *v3.AggregateAttributeRequest) (*v3.AggregateAttributeResponse, error) {
+
+	var query string
+	var err error
+	var rows driver.Rows
+	var response v3.AggregateAttributeResponse
+
+	query = fmt.Sprintf("SELECT DISTINCT(metric_name) from %s.%s WHERE metric_name ILIKE $1", signozMetricDBName, signozTSTableName)
+	if req.Limit != 0 {
+		query = query + fmt.Sprintf(" LIMIT %d;", req.Limit)
+	}
+	rows, err = r.db.Query(ctx, query, fmt.Sprintf("%%%s%%", req.SearchText))
+
+	if err != nil {
+		zap.S().Error(err)
+		return nil, fmt.Errorf("error while executing query: %s", err.Error())
+	}
+	defer rows.Close()
+
+	var metricName string
+	for rows.Next() {
+		if err := rows.Scan(&metricName); err != nil {
+			return nil, fmt.Errorf("error while scanning rows: %s", err.Error())
+		}
+		key := v3.AttributeKey{
+			Key:      metricName,
+			DataType: v3.AttributeKeyDataTypeNumber,
+			Type:     v3.AttributeKeyTypeTag,
+		}
+		response.AttributeKeys = append(response.AttributeKeys, key)
+	}
+
+	return &response, nil
+}
+
+func (r *ClickHouseReader) GetMetricAttributeKeys(ctx context.Context, req *v3.FilterAttributeKeyRequest) (*v3.FilterAttributeKeyResponse, error) {
+
+	var query string
+	var err error
+	var rows driver.Rows
+	var response v3.FilterAttributeKeyResponse
+
+	// skips the internal attributes i.e attributes starting with __
+	query = fmt.Sprintf("SELECT DISTINCT arrayJoin(tagKeys) as distinctTagKey from (SELECT DISTINCT(JSONExtractKeys(labels)) tagKeys from %s.%s WHERE metric_name=$1) WHERE distinctTagKey ILIKE $2 AND distinctTagKey NOT LIKE '\\_\\_%%'", signozMetricDBName, signozTSTableName)
+	if req.Limit != 0 {
+		query = query + fmt.Sprintf(" LIMIT %d;", req.Limit)
+	}
+	rows, err = r.db.Query(ctx, query, req.AggregateAttribute, fmt.Sprintf("%%%s%%", req.SearchText))
+	if err != nil {
+		zap.S().Error(err)
+		return nil, fmt.Errorf("error while executing query: %s", err.Error())
+	}
+	defer rows.Close()
+
+	var attributeKey string
+	for rows.Next() {
+		if err := rows.Scan(&attributeKey); err != nil {
+			return nil, fmt.Errorf("error while scanning rows: %s", err.Error())
+		}
+		key := v3.AttributeKey{
+			Key:      attributeKey,
+			DataType: v3.AttributeKeyDataTypeString, // https://github.com/OpenObservability/OpenMetrics/blob/main/proto/openmetrics_data_model.proto#L64-L72.
+			Type:     v3.AttributeKeyTypeTag,
+		}
+		response.AttributeKeys = append(response.AttributeKeys, key)
+	}
+
+	return &response, nil
+}
+
+func (r *ClickHouseReader) GetMetricAttributeValues(ctx context.Context, req *v3.FilterAttributeValueRequest) (*v3.FilterAttributeValueResponse, error) {
+
+	var query string
+	var err error
+	var rows driver.Rows
+	var attributeValues v3.FilterAttributeValueResponse
+
+	query = fmt.Sprintf("SELECT DISTINCT(JSONExtractString(labels, $1)) from %s.%s WHERE metric_name=$2 AND JSONExtractString(labels, $3) ILIKE $4", signozMetricDBName, signozTSTableName)
+	if req.Limit != 0 {
+		query = query + fmt.Sprintf(" LIMIT %d;", req.Limit)
+	}
+	rows, err = r.db.Query(ctx, query, req.FilterAttributeKey, req.AggregateAttribute, req.FilterAttributeKey, fmt.Sprintf("%%%s%%", req.SearchText))
+
+	if err != nil {
+		zap.S().Error(err)
+		return nil, fmt.Errorf("error while executing query: %s", err.Error())
+	}
+	defer rows.Close()
+
+	var atrributeValue string
+	for rows.Next() {
+		if err := rows.Scan(&atrributeValue); err != nil {
+			return nil, fmt.Errorf("error while scanning rows: %s", err.Error())
+		}
+		// https://github.com/OpenObservability/OpenMetrics/blob/main/proto/openmetrics_data_model.proto#L64-L72
+		// this may change in future if we use OTLP as the data model
+		attributeValues.StringAttributeValues = append(attributeValues.StringAttributeValues, atrributeValue)
+	}
+
+	return &attributeValues, nil
 }
 
 func (r *ClickHouseReader) CheckClickHouse(ctx context.Context) error {

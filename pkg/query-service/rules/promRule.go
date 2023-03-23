@@ -10,7 +10,7 @@ import (
 	"github.com/go-kit/log/level"
 	"go.uber.org/zap"
 
-	plabels "github.com/prometheus/prometheus/pkg/labels"
+	plabels "github.com/prometheus/prometheus/model/labels"
 	pql "github.com/prometheus/prometheus/promql"
 	"go.signoz.io/signoz/pkg/query-service/model"
 	qslabels "go.signoz.io/signoz/pkg/query-service/utils/labels"
@@ -190,7 +190,7 @@ func (r *PromRule) sample(alert *Alert, ts time.Time) pql.Sample {
 	lb.Set(qslabels.AlertStateLabel, alert.State.String())
 
 	s := pql.Sample{
-		Metric: lb.Labels(),
+		Metric: lb.Labels(nil),
 		Point:  pql.Point{T: timestamp.FromTime(ts), V: 1},
 	}
 	return s
@@ -373,7 +373,7 @@ func (r *PromRule) Eval(ctx context.Context, ts time.Time, queriers *Queriers) (
 			annotations = append(annotations, plabels.Label{Name: a.Name, Value: expand(a.Value)})
 		}
 
-		lbs := lb.Labels()
+		lbs := lb.Labels(nil)
 		h := lbs.Hash()
 		resultFPs[h] = struct{}{}
 
