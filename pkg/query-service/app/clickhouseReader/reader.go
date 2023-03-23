@@ -1497,7 +1497,7 @@ func buildQueryWithTagParams(ctx context.Context, tags []model.TagQuery) (string
 		tagMapType := ""
 		switch item.(type) {
 		case model.TagQueryString:
-			tagMapType = "resource_attributes"
+			tagMapType = constants.StringTagMapCol
 		case model.TagQueryNumber:
 			tagMapType = constants.NumberTagMapCol
 		case model.TagQueryBool:
@@ -1506,6 +1506,50 @@ func buildQueryWithTagParams(ctx context.Context, tags []model.TagQuery) (string
 			// type not supported error
 			return "", nil, &model.ApiError{Typ: model.ErrorBadData, Err: fmt.Errorf("type not supported")}
 		}
+		switch item.GetOperator() {
+		case model.EqualOperator:
+			subQuery, argsSubQuery = addArithmeticOperator(item, tagMapType, "=")
+		case model.NotEqualOperator:
+			subQuery, argsSubQuery = addArithmeticOperator(item, tagMapType, "!=")
+		case model.LessThanOperator:
+			subQuery, argsSubQuery = addArithmeticOperator(item, tagMapType, "<")
+		case model.GreaterThanOperator:
+			subQuery, argsSubQuery = addArithmeticOperator(item, tagMapType, ">")
+		case model.InOperator:
+			subQuery, argsSubQuery = addInOperator(item, tagMapType, false)
+		case model.NotInOperator:
+			subQuery, argsSubQuery = addInOperator(item, tagMapType, true)
+		case model.LessThanEqualOperator:
+			subQuery, argsSubQuery = addArithmeticOperator(item, tagMapType, "<=")
+		case model.GreaterThanEqualOperator:
+			subQuery, argsSubQuery = addArithmeticOperator(item, tagMapType, ">=")
+		case model.ContainsOperator:
+			subQuery, argsSubQuery = addContainsOperator(item, tagMapType, false)
+		case model.NotContainsOperator:
+			subQuery, argsSubQuery = addContainsOperator(item, tagMapType, true)
+		case model.StartsWithOperator:
+			subQuery, argsSubQuery = addStartsWithOperator(item, tagMapType, false)
+		case model.NotStartsWithOperator:
+			subQuery, argsSubQuery = addStartsWithOperator(item, tagMapType, true)
+		case model.ExistsOperator:
+			subQuery, argsSubQuery = addExistsOperator(item, tagMapType, false)
+		case model.NotExistsOperator:
+			subQuery, argsSubQuery = addExistsOperator(item, tagMapType, true)
+		default:
+			return "", nil, &model.ApiError{Typ: model.ErrorExec, Err: fmt.Errorf("Tag Operator %s not supported", item.GetOperator())}
+		}
+		query += subQuery
+		args = append(args, argsSubQuery...)
+	}
+	return query, args, nil
+}
+
+func buildQueryWithTagParamsWithTagMap(ctx context.Context, tags []model.TagQuery, tagMapType string) (string, []interface{}, *model.ApiError) {
+	query := ""
+	var args []interface{}
+	for _, item := range tags {
+		var subQuery string
+		var argsSubQuery []interface{}
 		switch item.GetOperator() {
 		case model.EqualOperator:
 			subQuery, argsSubQuery = addArithmeticOperator(item, tagMapType, "=")
@@ -2012,7 +2056,15 @@ func (r *ClickHouseReader) GetDependencyGraph(ctx context.Context, queryParams *
 	)
 	// create TagQuery from TagQueryParams
 	tags := createTagQueryFromTagQueryParams(queryParams.Tags)
-	subQuery, argsSubQuery, errStatus := buildQueryWithTagParams(ctx, tags)
+	subQuery, argsSubQuery, errStatus := buildQueryWithTagParamsWithTagMap(ctx, tags, "src_resource_attributes")
+	query += subQuery
+	args = append(args, argsSubQuery...)
+	if errStatus != nil {
+		return nil, errStatus
+	}
+	// create TagQuery from TagQueryParams
+	tags = createTagQueryFromTagQueryParams(queryParams.Tags)
+	subQuery, argsSubQuery, errStatus = buildQueryWithTagParamsWithTagMap(ctx, tags, "dest_resource_attributes")
 	query += subQuery
 	args = append(args, argsSubQuery...)
 	if errStatus != nil {
