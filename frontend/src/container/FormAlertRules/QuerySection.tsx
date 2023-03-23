@@ -23,7 +23,6 @@ import PromqlSection from './PromqlSection';
 import { FormContainer, QueryButton, StepHeading } from './styles';
 import { toIMetricsBuilderQuery } from './utils';
 
-const { TabPane } = Tabs;
 function QuerySection({
 	queryCategory,
 	setQueryCategory,
@@ -282,6 +281,24 @@ function QuerySection({
 		runQuery();
 	};
 
+	const tabs = [
+		{
+			label: t('tab_qb'),
+			key: EQueryType.QUERY_BUILDER.toString(),
+			disabled: true,
+		},
+		{
+			label: t('tab_chquery'),
+			key: EQueryType.CLICKHOUSE.toString(),
+		},
+	];
+
+	const items = [
+		{ label: t('tab_qb'), key: EQueryType.QUERY_BUILDER.toString() },
+		{ label: t('tab_chquery'), key: EQueryType.CLICKHOUSE.toString() },
+		{ label: t('tab_promql'), key: EQueryType.PROM.toString() },
+	];
+
 	const renderTabs = (typ: AlertTypes): JSX.Element | null => {
 		switch (typ) {
 			case AlertTypes.TRACES_BASED_ALERT:
@@ -303,14 +320,8 @@ function QuerySection({
 								)}
 							</span>
 						}
-					>
-						<TabPane
-							tab={t('tab_qb')}
-							key={EQueryType.QUERY_BUILDER.toString()}
-							disabled
-						/>
-						<TabPane tab={t('tab_chquery')} key={EQueryType.CLICKHOUSE.toString()} />
-					</Tabs>
+						items={tabs}
+					/>
 				);
 			case AlertTypes.METRICS_BASED_ALERT:
 			default:
@@ -330,11 +341,8 @@ function QuerySection({
 								)}
 							</span>
 						}
-					>
-						<TabPane tab={t('tab_qb')} key={EQueryType.QUERY_BUILDER.toString()} />
-						<TabPane tab={t('tab_chquery')} key={EQueryType.CLICKHOUSE.toString()} />
-						<TabPane tab={t('tab_promql')} key={EQueryType.PROM.toString()} />
-					</Tabs>
+						items={items}
+					/>
 				);
 		}
 	};

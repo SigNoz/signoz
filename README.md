@@ -35,14 +35,37 @@ SigNoz helps developers monitor applications and troubleshoot problems in their 
 
 👉 Filter and query logs, build dashboards and alerts based on attributes in logs
 
-![screenzy-1670570187181](https://user-images.githubusercontent.com/504541/206646629-829fdafe-70e2-4503-a9c4-1301b7918586.png)
-<br />
-![screenzy-1670570193901](https://user-images.githubusercontent.com/504541/206646676-a676fdeb-331c-4847-aea9-d1cabf7c47e1.png)
-<br />
-![screenzy-1670570199026](https://user-images.githubusercontent.com/504541/206646754-28c5534f-0377-428c-9c6e-5c7c0d9dd22d.png)
-<br />
-![screenzy-1670569888865](https://user-images.githubusercontent.com/504541/206645819-1e865a56-71b4-4fde-80cc-fbdb137a4da5.png)
+👉 Record exceptions automatically in Python, Java, Ruby, and Javascript
 
+👉 Easy to set alerts with DIY query builder
+
+
+### Application Metrics
+
+![application_metrics](https://user-images.githubusercontent.com/83692067/226637410-900dbc5e-6705-4b11-a10c-bd0faeb2a92f.png)
+
+
+### Distributed Tracing
+<img width="2068" alt="distributed_tracing_2 2" src="https://user-images.githubusercontent.com/83692067/226536447-bae58321-6a22-4ed3-af80-e3e964cb3489.png">
+
+<img width="2068" alt="distributed_tracing_1" src="https://user-images.githubusercontent.com/83692067/226536462-939745b6-4f9d-45a6-8016-814837e7f7b4.png">
+
+### Logs Management
+
+<img width="2068" alt="logs_management" src="https://user-images.githubusercontent.com/83692067/226536482-b8a5c4af-b69c-43d5-969c-338bd5eaf1a5.png">
+
+### Infrastructure Monitoring
+
+<img width="2068" alt="infrastructure_monitoring" src="https://user-images.githubusercontent.com/83692067/226536496-f38c4dbf-e03c-4158-8be0-32d4a61158c7.png">
+
+### Exceptions Monitoring
+
+![exceptions_light](https://user-images.githubusercontent.com/83692067/226637967-4188d024-3ac9-4799-be95-f5ea9c45436f.png)
+
+
+### Alerts
+
+<img width="2068" alt="alerts_management" src="https://user-images.githubusercontent.com/83692067/226536548-2c81e2e8-c12d-47e8-bad7-c6be79055def.png">
 
 
 <br /><br />
@@ -65,6 +88,10 @@ Come say Hi to us on [Slack](https://signoz.io/slack) 👋
 - See exact request trace to figure out issues in downstream services, slow DB queries, call to 3rd party services like payment gateways, etc
 - Filter traces by service name, operation, latency, error, tags/annotations.
 - Run aggregates on trace data (events/spans) to get business relevant metrics. e.g. You can get error rate and 99th percentile latency of `customer_type: gold` or `deployment_version: v2` or `external_call: paypal`
+- Native support for OpenTelemetry Logs, advanced log query builder, and automatic log collection from k8s cluster
+- Lightening quick log analytics ([Logs Perf. Benchmark](https://signoz.io/blog/logs-performance-benchmark/))
+- End-to-End visibility into infrastructure performance, ingest metrics from all kinds of host environments
+- Easy to set alerts with DIY query builder
 
 <br /><br />
 
