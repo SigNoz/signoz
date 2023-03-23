@@ -38,7 +38,7 @@ function AddNewPipeline({
 	const onFinish = (values: PipelineData): void => {
 		const newPipeLineData: PipelineData = {
 			id: v4(),
-			orderId: currPipelineData.length + 1,
+			orderId: (currPipelineData?.length || 0) + 1,
 			createdAt: new Date().toISOString(),
 			createdBy: user?.name || '',
 			name: values.name,
@@ -70,7 +70,10 @@ function AddNewPipeline({
 			setCurrPipelineData(editedPipelineData);
 		}
 		if (isAdd) {
-			setCurrPipelineData((prevState) => [...prevState, newPipeLineData]);
+			setCurrPipelineData((prevState) => {
+				if (prevState) return [...prevState, newPipeLineData];
+				return [newPipeLineData];
+			});
 		}
 		setActionType(undefined);
 	};
