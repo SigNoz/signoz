@@ -98,7 +98,7 @@ function SideNav(): JSX.Element {
 	);
 
 	const items = [
-		...menus.map(({ to, Icon, name, tags }) => ({
+		...menus.map(({ to, Icon, name, tags, children }) => ({
 			key: to,
 			icon: <Icon />,
 			onClick: (): void => onClickHandler(to),
@@ -113,6 +113,7 @@ function SideNav(): JSX.Element {
 						))}
 				</Space>
 			),
+			children,
 		})),
 	];
 
@@ -129,7 +130,7 @@ function SideNav(): JSX.Element {
 				theme="dark"
 				defaultSelectedKeys={[ROUTES.APPLICATION]}
 				selectedKeys={currentMenu ? [currentMenu?.to] : []}
-				mode="inline"
+				mode="vertical"
 				style={styles}
 				items={items}
 			/>
