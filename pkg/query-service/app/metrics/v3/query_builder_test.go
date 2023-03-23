@@ -57,7 +57,7 @@ func TestBuildQueryWithFilters(t *testing.T) {
 		require.NoError(t, err)
 
 		require.Contains(t, query, "WHERE metric_name = 'name' AND JSONExtractString(labels, 'a') != 'b'")
-		require.Contains(t, query, "runningDifference(value)/runningDifference(ts)")
+		require.Contains(t, query, rateWithoutNegative)
 		require.Contains(t, query, "not match(JSONExtractString(labels, 'code'), 'ERROR_*')")
 	})
 }
@@ -93,6 +93,6 @@ func TestBuildQueryWithMultipleQueries(t *testing.T) {
 		require.NoError(t, err)
 
 		require.Contains(t, query, "WHERE metric_name = 'name' AND JSONExtractString(labels, 'in') IN ['a','b','c']")
-		require.Contains(t, query, "runningDifference(value)/runningDifference(ts)")
+		require.Contains(t, query, rateWithoutNegative)
 	})
 }

@@ -1,7 +1,9 @@
 package v3
 
 import (
+	"encoding/json"
 	"fmt"
+	"strconv"
 	"time"
 
 	"github.com/google/uuid"
@@ -491,8 +493,14 @@ type Row struct {
 }
 
 type Point struct {
-	Timestamp int64   `json:"timestamp"`
-	Value     float64 `json:"value"`
+	Timestamp int64
+	Value     float64
+}
+
+// MarshalJSON implements json.Marshaler.
+func (p *Point) MarshalJSON() ([]byte, error) {
+	v := strconv.FormatFloat(p.Value, 'f', -1, 64)
+	return json.Marshal(map[string]interface{}{"timestamp": p.Timestamp, "value": v})
 }
 
 // ExploreQuery is a query for the explore page

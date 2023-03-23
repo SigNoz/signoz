@@ -37,6 +37,9 @@ var aggregateOperatorToSQLFunc = map[v3.AggregateOperator]string{
 	v3.AggregateOperatorRateMin: "min",
 }
 
+// See https://github.com/SigNoz/signoz/issues/2151#issuecomment-1467249056
+var rateWithoutNegative = `if (runningDifference(value) < 0 OR runningDifference(ts) < 0, nan, runningDifference(value)/runningDifference(ts))`
+
 // buildMetricsTimeSeriesFilterQuery builds the sub-query to be used for filtering
 // timeseries based on search criteria
 func buildMetricsTimeSeriesFilterQuery(fs *v3.FilterSet, groupTags []v3.AttributeKey, metricName string, aggregateOperator v3.AggregateOperator) (string, error) {
@@ -165,7 +168,7 @@ func buildMetricQuery(start, end, step int64, mq *v3.BuilderQuery, tableName str
 		subQuery := fmt.Sprintf(
 			queryTmpl, "any(labels) as labels, "+groupTags, step, op, filterSubQuery, groupBy, orderBy,
 		) // labels will be same so any should be fine
-		query := `SELECT %s ts, runningDifference(value)/runningDifference(ts) as value FROM(%s)`
+		query := `SELECT %s ts, ` + rateWithoutNegative + ` as value FROM(%s)`
 
 		query = fmt.Sprintf(query, "labels as fullLabels,", subQuery)
 		return query, nil
@@ -177,7 +180,7 @@ func buildMetricQuery(start, end, step int64, mq *v3.BuilderQuery, tableName str
 		subQuery := fmt.Sprintf(
 			queryTmpl, rateGroupTags, step, op, filterSubQuery, rateGroupBy, rateOrderBy,
 		) // labels will be same so any should be fine
-		query := `SELECT %s ts, runningDifference(value)/runningDifference(ts) as value FROM(%s) OFFSET 1`
+		query := `SELECT %s ts, ` + rateWithoutNegative + `as value FROM(%s)`
 		query = fmt.Sprintf(query, groupTags, subQuery)
 		query = fmt.Sprintf(`SELECT %s ts, sum(value) as value FROM (%s) GROUP BY %s ORDER BY %s ts`, groupTags, query, groupBy, orderBy)
 		return query, nil
@@ -188,7 +191,7 @@ func buildMetricQuery(start, end, step int64, mq *v3.BuilderQuery, tableName str
 		v3.AggregateOperatorRateMin:
 		op := fmt.Sprintf("%s(value)", aggregateOperatorToSQLFunc[mq.AggregateOperator])
 		subQuery := fmt.Sprintf(queryTmpl, groupTags, step, op, filterSubQuery, groupBy, orderBy)
-		query := `SELECT %s ts, runningDifference(value)/runningDifference(ts) as value FROM(%s) OFFSET 1`
+		query := `SELECT %s ts, ` + rateWithoutNegative + `as value FROM(%s)`
 		query = fmt.Sprintf(query, groupTags, subQuery)
 		return query, nil
 	case
@@ -212,7 +215,7 @@ func buildMetricQuery(start, end, step int64, mq *v3.BuilderQuery, tableName str
 		subQuery := fmt.Sprintf(
 			queryTmpl, rateGroupTags, step, op, filterSubQuery, rateGroupBy, rateOrderBy,
 		) // labels will be same so any should be fine
-		query := `SELECT %s ts, runningDifference(value)/runningDifference(ts) as value FROM(%s) OFFSET 1`
+		query := `SELECT %s ts, ` + rateWithoutNegative + ` as value FROM(%s)`
 		query = fmt.Sprintf(query, groupTags, subQuery)
 		query = fmt.Sprintf(`SELECT %s ts, sum(value) as value FROM (%s) GROUP BY %s ORDER BY %s ts`, groupTags, query, groupBy, orderBy)
 		value := aggregateOperatorToPercentile[mq.AggregateOperator]
