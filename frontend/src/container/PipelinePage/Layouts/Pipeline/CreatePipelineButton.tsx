@@ -16,8 +16,8 @@ function CreatePipelineButton({
 	const { t } = useTranslation(['pipeline']);
 
 	const isAddNewPipelineVisible = useMemo(
-		() => checkDataLength(piplineData.pipelines),
-		[piplineData.pipelines],
+		() => checkDataLength(piplineData?.pipelines),
+		[piplineData?.pipelines],
 	);
 	const isDisabled = isActionMode === ActionMode.Editing;
 

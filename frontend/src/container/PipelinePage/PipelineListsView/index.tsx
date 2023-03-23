@@ -55,10 +55,10 @@ function PipelineListsView({
 	const [modal, contextHolder] = Modal.useModal();
 	const { notifications } = useNotifications();
 	const [prevPipelineData, setPrevPipelineData] = useState<Array<PipelineData>>(
-		cloneDeep(piplineData.pipelines),
+		cloneDeep(piplineData?.pipelines),
 	);
 	const [currPipelineData, setCurrPipelineData] = useState<Array<PipelineData>>(
-		cloneDeep(piplineData.pipelines),
+		cloneDeep(piplineData?.pipelines),
 	);
 	const [
 		expandedPipelineData,
@@ -77,14 +77,14 @@ function PipelineListsView({
 	const isEditingActionMode = isActionMode === ActionMode.Editing;
 
 	useEffect(() => {
-		if (pipelineSearchValue === '') setCurrPipelineData(piplineData.pipelines);
+		if (pipelineSearchValue === '') setCurrPipelineData(piplineData?.pipelines);
 		if (pipelineSearchValue !== '') {
-			const filterData = piplineData.pipelines.filter((data: PipelineData) =>
+			const filterData = piplineData?.pipelines.filter((data: PipelineData) =>
 				getDataOnSearch(data as never, pipelineSearchValue),
 			);
 			setCurrPipelineData(filterData);
 		}
-	}, [pipelineSearchValue, piplineData.pipelines]);
+	}, [pipelineSearchValue, piplineData?.pipelines]);
 
 	const handleAlert = useCallback(
 		({ title, descrition, buttontext, onCancel, onOk }: AlertMessage) => {
@@ -425,7 +425,7 @@ function PipelineListsView({
 			<Container>
 				<ModeAndConfiguration
 					isActionMode={isActionMode}
-					verison={piplineData.version}
+					verison={piplineData?.version}
 				/>
 				<DndProvider backend={HTML5Backend}>
 					<Table
