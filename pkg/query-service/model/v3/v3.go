@@ -1,7 +1,9 @@
 package v3
 
 import (
+	"encoding/json"
 	"fmt"
+	"strconv"
 	"time"
 
 	"github.com/google/uuid"
@@ -248,11 +250,13 @@ func (a AttributeKey) Validate() error {
 		return fmt.Errorf("invalid attribute dataType: %s", a.DataType)
 	}
 
-	switch a.Type {
-	case AttributeKeyTypeResource, AttributeKeyTypeTag:
-		break
-	default:
-		return fmt.Errorf("invalid attribute type: %s", a.Type)
+	if a.IsColumn {
+		switch a.Type {
+		case AttributeKeyTypeResource, AttributeKeyTypeTag:
+			break
+		default:
+			return fmt.Errorf("invalid attribute type: %s", a.Type)
+		}
 	}
 
 	if a.Key == "" {
@@ -410,16 +414,16 @@ func (b *BuilderQuery) Validate() error {
 	}
 	if b.GroupBy != nil {
 		for _, groupBy := range b.GroupBy {
-			if groupBy.Validate() != nil {
-				return fmt.Errorf("group by is invalid")
+			if err := groupBy.Validate(); err != nil {
+				return fmt.Errorf("group by is invalid %w", err)
 			}
 		}
 	}
 
 	if b.SelectColumns != nil {
 		for _, selectColumn := range b.SelectColumns {
-			if selectColumn.Validate() != nil {
-				return fmt.Errorf("select column is invalid")
+			if err := selectColumn.Validate(); err != nil {
+				return fmt.Errorf("select column is invalid %w", err)
 			}
 		}
 	}
@@ -473,9 +477,9 @@ type QueryRangeResponse struct {
 }
 
 type Result struct {
-	QueryName string  `json:"queryName"`
-	Series    *Series `json:"series"`
-	List      []*Row  `json:"list"`
+	QueryName string    `json:"queryName"`
+	Series    []*Series `json:"series"`
+	List      []*Row    `json:"list"`
 }
 
 type Series struct {
@@ -489,8 +493,14 @@ type Row struct {
 }
 
 type Point struct {
-	Timestamp int64   `json:"timestamp"`
-	Value     float64 `json:"value"`
+	Timestamp int64
+	Value     float64
+}
+
+// MarshalJSON implements json.Marshaler.
+func (p *Point) MarshalJSON() ([]byte, error) {
+	v := strconv.FormatFloat(p.Value, 'f', -1, 64)
+	return json.Marshal(map[string]interface{}{"timestamp": p.Timestamp, "value": v})
 }
 
 // ExploreQuery is a query for the explore page
