@@ -3,13 +3,14 @@ import Graph from 'components/Graph';
 import { METRICS_PAGE_QUERY_PARAM } from 'constants/query';
 import ROUTES from 'constants/routes';
 import FullView from 'container/GridGraphLayout/Graph/FullView/index.metricsBuilder';
-import convertToNanoSecondsToSecond from 'lib/convertToNanoSecondsToSecond';
-import { colors } from 'lib/getRandomColor';
-import history from 'lib/history';
+import useResourceAttribute from 'hooks/useResourceAttribute';
 import {
 	convertRawQueriesToTraceSelectedTags,
 	resourceAttributesToTagFilterItems,
-} from 'lib/resourceAttributes';
+} from 'hooks/useResourceAttribute/utils';
+import convertToNanoSecondsToSecond from 'lib/convertToNanoSecondsToSecond';
+import { colors } from 'lib/getRandomColor';
+import history from 'lib/history';
 import React, { useCallback, useMemo, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useParams } from 'react-router-dom';
@@ -54,20 +55,20 @@ function Application({ getWidgetQueryBuilder }: DashboardProps): JSX.Element {
 		[handleSetTimeStamp],
 	);
 
-	const {
-		topOperations,
-		serviceOverview,
-		resourceAttributeQueries,
-		topLevelOperations,
-	} = useSelector<AppState, MetricReducer>((state) => state.metrics);
+	const { topOperations, serviceOverview, topLevelOperations } = useSelector<
+		AppState,
+		MetricReducer
+	>((state) => state.metrics);
+
+	const { queries } = useResourceAttribute();
 
 	const selectedTraceTags: string = JSON.stringify(
-		convertRawQueriesToTraceSelectedTags(resourceAttributeQueries) || [],
+		convertRawQueriesToTraceSelectedTags(queries) || [],
 	);
 
 	const tagFilterItems = useMemo(
-		() => resourceAttributesToTagFilterItems(resourceAttributeQueries) || [],
-		[resourceAttributeQueries],
+		() => resourceAttributesToTagFilterItems(queries) || [],
+		[queries],
 	);
 
 	const operationPerSecWidget = useMemo(

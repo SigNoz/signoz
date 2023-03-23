@@ -17,6 +17,7 @@ export interface Props {
 	offset?: number;
 	exceptionType?: string;
 	serviceName?: string;
+	tags?: string;
 }
 
 export interface Exception {
