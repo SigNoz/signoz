@@ -1464,13 +1464,13 @@ func createTagQueryFromTagQueryParams(queryParams []model.TagQueryParam) []model
 	tags := []model.TagQuery{}
 	for _, tag := range queryParams {
 		if len(tag.StringValues) > 0 {
-			tags = append(tags, model.NewTagQueryString(tag.Key, tag.StringValues, tag.Operator))
+			tags = append(tags, model.NewTagQueryString(tag.Key, tag.StringValues, tag.Operator, tag.TagType))
 		}
 		if len(tag.NumberValues) > 0 {
-			tags = append(tags, model.NewTagQueryNumber(tag.Key, tag.NumberValues, tag.Operator))
+			tags = append(tags, model.NewTagQueryNumber(tag.Key, tag.NumberValues, tag.Operator, tag.TagType))
 		}
 		if len(tag.BoolValues) > 0 {
-			tags = append(tags, model.NewTagQueryBool(tag.Key, tag.BoolValues, tag.Operator))
+			tags = append(tags, model.NewTagQueryBool(tag.Key, tag.BoolValues, tag.Operator, tag.TagType))
 		}
 	}
 	return tags
@@ -1497,7 +1497,11 @@ func buildQueryWithTagParams(ctx context.Context, tags []model.TagQuery) (string
 		tagMapType := ""
 		switch item.(type) {
 		case model.TagQueryString:
-			tagMapType = constants.StringTagMapCol
+			if item.GetTagType() == model.ResourceAttributeTagType {
+				tagMapType = constants.ResourceTagMapCol
+			} else {
+				tagMapType = constants.StringTagMapCol
+			}
 		case model.TagQueryNumber:
 			tagMapType = constants.NumberTagMapCol
 		case model.TagQueryBool:
@@ -2697,6 +2701,17 @@ func (r *ClickHouseReader) ListErrors(ctx context.Context, queryParams *model.Li
 	if len(queryParams.ExceptionType) != 0 {
 		query = query + " AND exceptionType ilike @exceptionType"
 		args = append(args, clickhouse.Named("exceptionType", "%"+queryParams.ExceptionType+"%"))
+	}
+
+	// create TagQuery from TagQueryParams
+	tags := createTagQueryFromTagQueryParams(queryParams.Tags)
+	subQuery, argsSubQuery, errStatus := buildQueryWithTagParams(ctx, tags)
+	query += subQuery
+	args = append(args, argsSubQuery...)
+
+	if errStatus != nil {
+		zap.S().Error("Error in processing tags: ", errStatus)
+		return nil, errStatus
 	}
 	query = query + " GROUP BY groupID"
 	if len(queryParams.ServiceName) != 0 {

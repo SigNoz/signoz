@@ -216,9 +216,10 @@ const (
 var ReservedColumnTargetAliases = map[string]bool{"result": true, "res": true, "value": true}
 
 const (
-	StringTagMapCol = "stringTagMap"
-	NumberTagMapCol = "numberTagMap"
-	BoolTagMapCol   = "boolTagMap"
+	StringTagMapCol   = "stringTagMap"
+	NumberTagMapCol   = "numberTagMap"
+	BoolTagMapCol     = "boolTagMap"
+	ResourceTagMapCol = "resourceTagsMap"
 )
 
 // logsPPLPfx is a short constant for logsPipelinePrefix

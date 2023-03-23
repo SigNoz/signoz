@@ -187,6 +187,7 @@ type GetServiceOverviewParams struct {
 
 type TagQueryParam struct {
 	Key          string    `json:"key"`
+	TagType      TagType   `json:"tagType"`
 	StringValues []string  `json:"stringValues"`
 	BoolValues   []bool    `json:"boolValues"`
 	NumberValues []float64 `json:"numberValues"`
@@ -212,23 +213,33 @@ const (
 	NotStartsWithOperator    Operator = "NotStartsWith"
 )
 
+type TagType string
+
+const (
+	ResourceAttributeTagType TagType = "ResourceAttribute"
+	SpanAttributeTagType     TagType = "SpanAttribute"
+)
+
 type TagQuery interface {
 	GetKey() string
 	GetValues() []interface{}
 	GetOperator() Operator
+	GetTagType() TagType
 }
 
 type TagQueryString struct {
 	key      string
 	values   []string
 	operator Operator
+	tagType  TagType
 }
 
-func NewTagQueryString(key string, values []string, operator Operator) TagQueryString {
+func NewTagQueryString(key string, values []string, operator Operator, tagType TagType) TagQueryString {
 	return TagQueryString{
 		key:      key,
 		values:   values,
 		operator: operator,
+		tagType:  tagType,
 	}
 }
 
@@ -248,17 +259,23 @@ func (tqs TagQueryString) GetOperator() Operator {
 	return tqs.operator
 }
 
+func (tqs TagQueryString) GetTagType() TagType {
+	return tqs.tagType
+}
+
 type TagQueryBool struct {
 	key      string
 	values   []bool
 	operator Operator
+	tagType  TagType
 }
 
-func NewTagQueryBool(key string, values []bool, operator Operator) TagQueryBool {
+func NewTagQueryBool(key string, values []bool, operator Operator, tagType TagType) TagQueryBool {
 	return TagQueryBool{
 		key:      key,
 		values:   values,
 		operator: operator,
+		tagType:  tagType,
 	}
 }
 
@@ -278,17 +295,23 @@ func (tqb TagQueryBool) GetOperator() Operator {
 	return tqb.operator
 }
 
+func (tqb TagQueryBool) GetTagType() TagType {
+	return tqb.tagType
+}
+
 type TagQueryNumber struct {
 	key      string
 	values   []float64
 	operator Operator
+	tagType  TagType
 }
 
-func NewTagQueryNumber(key string, values []float64, operator Operator) TagQueryNumber {
+func NewTagQueryNumber(key string, values []float64, operator Operator, tagType TagType) TagQueryNumber {
 	return TagQueryNumber{
 		key:      key,
 		values:   values,
 		operator: operator,
+		tagType:  tagType,
 	}
 }
 
@@ -306,6 +329,10 @@ func (tqn TagQueryNumber) GetValues() []interface{} {
 
 func (tqn TagQueryNumber) GetOperator() Operator {
 	return tqn.operator
+}
+
+func (tqn TagQueryNumber) GetTagType() TagType {
+	return tqn.tagType
 }
 
 type GetFilteredSpansParams struct {
@@ -414,17 +441,17 @@ type TagFilterParams struct {
 	End                *time.Time
 }
 
-type TagType string
+type TagDataType string
 
 const (
-	TagTypeString TagType = "string"
-	TagTypeNumber TagType = "number"
-	TagTypeBool   TagType = "bool"
+	TagTypeString TagDataType = "string"
+	TagTypeNumber TagDataType = "number"
+	TagTypeBool   TagDataType = "bool"
 )
 
 type TagKey struct {
-	Key  string  `json:"key"`
-	Type TagType `json:"type"`
+	Key  string      `json:"key"`
+	Type TagDataType `json:"type"`
 }
 
 type TTLParams struct {
@@ -447,6 +474,7 @@ type ListErrorsParams struct {
 	Offset        int64
 	ServiceName   string
 	ExceptionType string
+	Tags          []TagQueryParam
 }
 
 type CountErrorsParams struct {

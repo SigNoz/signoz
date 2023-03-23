@@ -521,6 +521,15 @@ func parseListErrorsRequest(r *http.Request) (*model.ListErrorsParams, error) {
 	}
 	serviceName := r.URL.Query().Get("serviceName")
 	exceptionType := r.URL.Query().Get("exceptionType")
+	tags := r.URL.Query().Get("tags")
+	var tagParams []model.TagQueryParam
+	// parse tags as json
+	if len(tags) > 0 {
+		err := json.Unmarshal([]byte(tags), &tagParams)
+		if err != nil {
+			return nil, err
+		}
+	}
 
 	params := &model.ListErrorsParams{
 		Start:         startTime,
@@ -531,6 +540,7 @@ func parseListErrorsRequest(r *http.Request) (*model.ListErrorsParams, error) {
 		Offset:        int64(offsetInt),
 		ServiceName:   serviceName,
 		ExceptionType: exceptionType,
+		Tags:          tagParams,
 	}
 
 	return params, nil
