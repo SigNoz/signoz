@@ -1,5 +1,13 @@
 import { PlusOutlined } from '@ant-design/icons';
-import { Card, Dropdown, Menu, Row, TableColumnProps, Typography } from 'antd';
+import {
+	Card,
+	Dropdown,
+	MenuProps,
+	Row,
+	TableColumnProps,
+	Typography,
+} from 'antd';
+import { ItemType } from 'antd/es/menu/hooks/useItems';
 import createDashboard from 'api/dashboard/create';
 import { AxiosError } from 'axios';
 import { ResizeTable } from 'components/ResizeTable';
@@ -46,10 +54,12 @@ function ListOfAllDashboard(): JSX.Element {
 	);
 
 	const { t } = useTranslation('dashboard');
+
 	const [
 		isImportJSONModalVisible,
 		setIsImportJSONModalVisible,
 	] = useState<boolean>(false);
+
 	const [uploadedGrafana, setUploadedGrafana] = useState<boolean>(false);
 
 	const [filteredDashboards, setFilteredDashboards] = useState<Dashboard[]>();
@@ -57,6 +67,7 @@ function ListOfAllDashboard(): JSX.Element {
 	useEffect(() => {
 		setFilteredDashboards(dashboards);
 	}, [dashboards]);
+
 	const [newDashboardState, setNewDashboardState] = useState({
 		loading: false,
 		error: false,
@@ -188,33 +199,37 @@ function ListOfAllDashboard(): JSX.Element {
 		setUploadedGrafana(uploadedGrafana);
 	};
 
-	const menu = useMemo(
-		() => (
-			<Menu>
-				{createNewDashboard && (
-					<Menu.Item
-						onClick={onNewDashboardHandler}
-						disabled={loading}
-						key={t('create_dashboard').toString()}
-					>
-						{t('create_dashboard')}
-					</Menu.Item>
-				)}
-				<Menu.Item
-					onClick={(): void => onModalHandler(false)}
-					key={t('import_json').toString()}
-				>
-					{t('import_json')}
-				</Menu.Item>
-				<Menu.Item
-					onClick={(): void => onModalHandler(true)}
-					key={t('import_grafana_json').toString()}
-				>
-					{t('import_grafana_json')}
-				</Menu.Item>
-			</Menu>
-		),
-		[createNewDashboard, loading, onNewDashboardHandler, t],
+	const getMenuItems = useCallback(() => {
+		const menuItems: ItemType[] = [];
+		if (createNewDashboard) {
+			menuItems.push({
+				key: t('create_dashboard').toString(),
+				label: t('create_dashboard'),
+				disabled: loading,
+				onClick: onNewDashboardHandler,
+			});
+		}
+
+		menuItems.push({
+			key: t('import_json').toString(),
+			label: t('import_json'),
+			onClick: (): void => onModalHandler(false),
+		});
+
+		menuItems.push({
+			key: t('import_grafana_json').toString(),
+			label: t('import_grafana_json'),
+			onClick: (): void => onModalHandler(true),
+		});
+
+		return menuItems;
+	}, [createNewDashboard, loading, onNewDashboardHandler, t]);
+
+	const menu: MenuProps = useMemo(
+		() => ({
+			items: getMenuItems(),
+		}),
+		[getMenuItems],
 	);
 
 	const GetHeader = useMemo(
@@ -230,7 +245,7 @@ function ListOfAllDashboard(): JSX.Element {
 						}}
 					/>
 					{newDashboard && (
-						<Dropdown trigger={['click']} overlay={menu}>
+						<Dropdown trigger={['click']} menu={menu}>
 							<NewDashboardButton
 								icon={<PlusOutlined />}
 								type="primary"
@@ -246,10 +261,10 @@ function ListOfAllDashboard(): JSX.Element {
 		),
 		[
 			getText,
-			menu,
 			newDashboard,
 			newDashboardState.error,
 			newDashboardState.loading,
+			menu,
 		],
 	);
 

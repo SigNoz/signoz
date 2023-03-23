@@ -153,7 +153,7 @@ services:
 # Notes for Maintainers/Contributors who will change Line Numbers of Frontend & Query-Section. Please Update Line Numbers in `./scripts/commentLinesForSetup.sh` & `./CONTRIBUTING.md`
 
   query-service:
-    image: signoz/query-service:${DOCKER_TAG:-0.16.1}
+    image: signoz/query-service:${DOCKER_TAG:-0.17.0}
     container_name: query-service
     command: ["-config=/root/config/prometheus.yml"]
     # ports:
@@ -174,14 +174,14 @@ services:
       - DEPLOYMENT_TYPE=docker-standalone-amd
     restart: on-failure
     healthcheck:
-      test: ["CMD", "wget", "--spider", "-q", "localhost:8080/api/v1/version"]
+      test: ["CMD", "wget", "--spider", "-q", "localhost:8080/api/v1/health"]
       interval: 30s
       timeout: 5s
       retries: 3
     <<: *clickhouse-depend
 
   frontend:
-    image: signoz/frontend:${DOCKER_TAG:-0.16.1}
+    image: signoz/frontend:${DOCKER_TAG:-0.17.0}
     container_name: frontend
     restart: on-failure
     depends_on:
@@ -193,7 +193,7 @@ services:
       - ../common/nginx-config.conf:/etc/nginx/conf.d/default.conf
 
   otel-collector:
-    image: signoz/signoz-otel-collector:${OTELCOL_TAG:-0.66.4}
+    image: signoz/signoz-otel-collector:${OTELCOL_TAG:-0.66.6}
     command: ["--config=/etc/otel-collector-config.yaml"]
     user: root # required for reading docker container logs
     volumes:
@@ -219,7 +219,7 @@ services:
     <<: *clickhouse-depend
 
   otel-collector-metrics:
-    image: signoz/signoz-otel-collector:${OTELCOL_TAG:-0.66.4}
+    image: signoz/signoz-otel-collector:${OTELCOL_TAG:-0.66.6}
     command: ["--config=/etc/otel-collector-metrics-config.yaml"]
     volumes:
       - ./otel-collector-metrics-config.yaml:/etc/otel-collector-metrics-config.yaml

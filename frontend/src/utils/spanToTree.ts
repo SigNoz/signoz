@@ -4,8 +4,20 @@ import { ITraceForest, ITraceTree, Span } from 'types/api/trace/getTraceItem';
 
 const getSpanReferences = (
 	rawReferences: string[] = [],
-): Record<string, string>[] =>
-	rawReferences.map((rawRef) => {
+	isChildReference: boolean,
+): Record<string, string>[] => {
+	let filteredReferences = [];
+	if (isChildReference) {
+		filteredReferences = rawReferences.filter((value) =>
+			value.includes('CHILD_OF'),
+		);
+	} else {
+		filteredReferences = rawReferences.filter(
+			(value) => !value.includes('CHILD_OF'),
+		);
+	}
+
+	return filteredReferences.map((rawRef) => {
 		const refObject: Record<string, string> = {};
 		rawRef
 			.replaceAll('{', '')
@@ -19,6 +31,7 @@ const getSpanReferences = (
 
 		return refObject;
 	});
+};
 
 // This getSpanTags is migrated from the previous implementation.
 const getSpanTags = (spanData: Span): { key: string; value: string }[] => {
@@ -41,7 +54,7 @@ export const spanToTreeUtil = (inputSpanList: Span[]): ITraceForest => {
 	const traceIdSet: Set<string> = new Set();
 	const spanMap: Record<string, ITraceTree> = {};
 
-	const createTarceRootSpan = (
+	const createTraceRootSpan = (
 		spanReferences: Record<string, string>[],
 	): void => {
 		spanReferences.forEach(({ SpanId, TraceId }) => {
@@ -64,7 +77,8 @@ export const spanToTreeUtil = (inputSpanList: Span[]): ITraceForest => {
 	};
 
 	spanList.forEach((span) => {
-		const spanReferences = getSpanReferences(span[9] as string[]);
+		const childReferences = getSpanReferences(span[9] as string[], true);
+		const nonChildReferences = getSpanReferences(span[9] as string[], false);
 		const spanObject = {
 			id: span[1],
 			name: span[4],
@@ -76,16 +90,17 @@ export const spanToTreeUtil = (inputSpanList: Span[]): ITraceForest => {
 			serviceName: span[3],
 			hasError: !!span[11],
 			serviceColour: '',
-			event: span[10].map((e) => JSON.parse(e || '{}') || {}),
-			references: spanReferences,
+			event: span[10]?.map((e) => JSON.parse(e || '{}') || {}),
+			childReferences,
+			nonChildReferences,
 		};
 		spanMap[span[1]] = spanObject;
 	});
 
 	for (const [, spanData] of Object.entries(spanMap)) {
-		if (spanData.references) {
-			createTarceRootSpan(spanData.references);
-			spanData.references.forEach(({ SpanId: parentSpanId }) => {
+		if (spanData.childReferences) {
+			createTraceRootSpan(spanData.childReferences);
+			spanData.childReferences.forEach(({ SpanId: parentSpanId }) => {
 				if (spanMap[parentSpanId]) {
 					spanData.isProcessed = true;
 					spanMap[parentSpanId].children.push(spanData);
@@ -103,7 +118,9 @@ export const spanToTreeUtil = (inputSpanList: Span[]): ITraceForest => {
 	const missingSpanTree: ITraceTree[] = [];
 	const referencedTraceIds: string[] = Array.from(traceIdSet);
 	Object.keys(spanMap).forEach((spanId) => {
-		const isRoot = spanMap[spanId].references?.some((refs) => refs.SpanId === '');
+		const isRoot = spanMap[spanId].childReferences?.some(
+			(refs) => refs.SpanId === '',
+		);
 		if (isRoot) {
 			spanTree.push(spanMap[spanId]);
 			return;
