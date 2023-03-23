@@ -240,21 +240,6 @@ function PipelineListsView({
 		],
 	);
 
-	const processorData = useMemo(
-		() =>
-			expandedPipelineData?.config &&
-			expandedPipelineData?.config.map(
-				(item: ProcessorData): ProcessorData => ({
-					id: item.id,
-					orderId: item.orderId,
-					type: item.type,
-					name: item.name,
-					enabled: item.enabled,
-				}),
-			),
-		[expandedPipelineData],
-	);
-
 	const expandedRowView = useCallback(
 		(): JSX.Element => (
 			<PipelineExpanView
@@ -265,14 +250,12 @@ function PipelineListsView({
 				setShowSaveButton={setShowSaveButton}
 				expandedPipelineData={expandedPipelineData}
 				setExpandedPipelineData={setExpandedPipelineData}
-				processorData={processorData}
 			/>
 		),
 		[
 			handleAlert,
 			processorEditAction,
 			isActionMode,
-			processorData,
 			expandedPipelineData,
 			setActionType,
 		],

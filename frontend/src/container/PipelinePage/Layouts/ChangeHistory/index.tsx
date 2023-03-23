@@ -11,7 +11,7 @@ function ChangeHistory({ piplineData }: ChangeHistoryProps): JSX.Element {
 		<HistoryTableWrapper>
 			<Table
 				columns={changeHistoryColumns}
-				dataSource={piplineData.history}
+				dataSource={piplineData?.history}
 				pagination={historyPagination}
 			/>
 		</HistoryTableWrapper>

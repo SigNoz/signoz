@@ -54,7 +54,7 @@ function Pipelines(): JSX.Element {
 		}
 	}, [isError, notifications, piplineData?.error, t]);
 
-	if (isLoading || !piplineData?.payload) {
+	if (isLoading) {
 		return <Spinner height="75vh" tip="Loading Pipelines..." />;
 	}
 

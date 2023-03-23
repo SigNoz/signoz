@@ -33,7 +33,6 @@ function PipelineExpandView({
 	setShowSaveButton,
 	expandedPipelineData,
 	setExpandedPipelineData,
-	processorData,
 }: PipelineExpandViewProps): JSX.Element {
 	const { t } = useTranslation(['pipeline']);
 	const isDarkMode = useIsDarkMode();
@@ -221,7 +220,7 @@ function PipelineExpandView({
 				rowKey="name"
 				size="small"
 				components={tableComponents}
-				dataSource={processorData}
+				dataSource={expandedPipelineData?.config}
 				pagination={false}
 				onRow={onRowHandler}
 				footer={footer}
@@ -232,7 +231,6 @@ function PipelineExpandView({
 
 PipelineExpandView.defaultProps = {
 	expandedPipelineData: {},
-	processorData: {},
 };
 
 interface PipelineExpandViewProps {
@@ -243,7 +241,6 @@ interface PipelineExpandViewProps {
 	setShowSaveButton: (actionMode: ActionMode) => void;
 	expandedPipelineData?: PipelineData;
 	setExpandedPipelineData: (data: PipelineData) => void;
-	processorData?: Array<ProcessorData>;
 }
 
 export default PipelineExpandView;

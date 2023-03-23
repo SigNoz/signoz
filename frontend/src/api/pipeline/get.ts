@@ -15,7 +15,7 @@ const get = async (
 			statusCode: 200,
 			error: null,
 			message: response.data.status,
-			payload: response.data.data,
+			payload: response?.data?.data,
 		};
 	} catch (error) {
 		return ErrorResponseHandler(error as AxiosError);
