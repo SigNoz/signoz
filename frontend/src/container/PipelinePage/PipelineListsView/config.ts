@@ -78,7 +78,7 @@ export const processorColumns: Array<
 		key: 'id',
 		title: '',
 		dataIndex: 'orderId',
-		width: 142,
+		width: 150,
 	},
 	{
 		key: 'name',

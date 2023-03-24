@@ -56,7 +56,11 @@ exports[`PipelinePage should render PipelineExpandView section 1`] = `
               <table
                 style="table-layout: auto;"
               >
-                <colgroup />
+                <colgroup>
+                  <col
+                    style="width: 150px;"
+                  />
+                </colgroup>
                 <tbody
                   class="ant-table-tbody"
                 >
