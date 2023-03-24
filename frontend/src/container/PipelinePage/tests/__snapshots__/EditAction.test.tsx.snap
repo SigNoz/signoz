@@ -2,15 +2,11 @@
 
 exports[`PipelinePage container test should render EditAction section 1`] = `
 <DocumentFragment>
-  .c0 {
-  color: #DBDBDB;
-  font-size: 1.5rem;
-}
-
-<span
+  <span
     aria-label="edit"
-    class="anticon anticon-edit c0"
+    class="anticon anticon-edit"
     role="img"
+    style="font-size: 1.5rem;"
     tabindex="-1"
   >
     <svg

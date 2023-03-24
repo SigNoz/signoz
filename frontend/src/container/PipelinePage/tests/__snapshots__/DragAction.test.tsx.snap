@@ -2,12 +2,7 @@
 
 exports[`PipelinePage container test should render DragAction section 1`] = `
 <DocumentFragment>
-  .c2 {
-  color: #8DCFF8;
-  font-size: 1.12rem;
-}
-
-.c0 {
+  .c0 {
   display: -webkit-box;
   display: -webkit-flex;
   display: -ms-flexbox;
@@ -23,57 +18,48 @@ exports[`PipelinePage container test should render DragAction section 1`] = `
   align-items: center;
 }
 
-.c1 {
-  cursor: move;
-}
-
 <div
     class="c0"
   >
-    <span>
-      <button
-        aria-checked="true"
-        class="ant-switch css-dev-only-do-not-override-1i536d8 ant-switch-checked"
-        role="switch"
-        type="button"
+    <button
+      aria-checked="true"
+      class="ant-switch css-dev-only-do-not-override-1i536d8 ant-switch-checked"
+      role="switch"
+      type="button"
+    >
+      <div
+        class="ant-switch-handle"
+      />
+      <span
+        class="ant-switch-inner"
       >
-        <div
-          class="ant-switch-handle"
+        <span
+          class="ant-switch-inner-checked"
         />
         <span
-          class="ant-switch-inner"
-        >
-          <span
-            class="ant-switch-inner-checked"
-          />
-          <span
-            class="ant-switch-inner-unchecked"
-          />
-        </span>
-      </button>
-    </span>
-    <span
-      class="c1"
-    >
-      <span
-        aria-label="holder"
-        class="anticon anticon-holder c2"
-        role="img"
-      >
-        <svg
-          aria-hidden="true"
-          data-icon="holder"
-          fill="currentColor"
-          focusable="false"
-          height="1em"
-          viewBox="64 64 896 896"
-          width="1em"
-        >
-          <path
-            d="M300 276.5a56 56 0 1056-97 56 56 0 00-56 97zm0 284a56 56 0 1056-97 56 56 0 00-56 97zM640 228a56 56 0 10112 0 56 56 0 00-112 0zm0 284a56 56 0 10112 0 56 56 0 00-112 0zM300 844.5a56 56 0 1056-97 56 56 0 00-56 97zM640 796a56 56 0 10112 0 56 56 0 00-112 0z"
-          />
-        </svg>
+          class="ant-switch-inner-unchecked"
+        />
       </span>
+    </button>
+    <span
+      aria-label="holder"
+      class="anticon anticon-holder"
+      role="img"
+      style="font-size: 1.5rem; cursor: move;"
+    >
+      <svg
+        aria-hidden="true"
+        data-icon="holder"
+        fill="currentColor"
+        focusable="false"
+        height="1em"
+        viewBox="64 64 896 896"
+        width="1em"
+      >
+        <path
+          d="M300 276.5a56 56 0 1056-97 56 56 0 00-56 97zm0 284a56 56 0 1056-97 56 56 0 00-56 97zM640 228a56 56 0 10112 0 56 56 0 00-112 0zm0 284a56 56 0 10112 0 56 56 0 00-112 0zM300 844.5a56 56 0 1056-97 56 56 0 00-56 97zM640 796a56 56 0 10112 0 56 56 0 00-112 0z"
+        />
+      </svg>
     </span>
   </div>
 </DocumentFragment>

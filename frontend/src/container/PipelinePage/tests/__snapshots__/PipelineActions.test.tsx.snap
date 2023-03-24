@@ -14,23 +14,14 @@ exports[`PipelinePage container test should render PipelineActions section 1`] =
   justify-content: flex-end;
 }
 
-.c1 {
-  color: #DBDBDB;
-  font-size: 1.5rem;
-}
-
-.c2 {
-  color: #DBDBDB;
-  font-size: 1.5rem;
-}
-
 <div
     class="c0"
   >
     <span
       aria-label="edit"
-      class="anticon anticon-edit c1"
+      class="anticon anticon-edit"
       role="img"
+      style="font-size: 1.5rem;"
       tabindex="-1"
     >
       <svg
@@ -49,8 +40,9 @@ exports[`PipelinePage container test should render PipelineActions section 1`] =
     </span>
     <span
       aria-label="delete"
-      class="anticon anticon-delete c2"
+      class="anticon anticon-delete"
       role="img"
+      style="font-size: 1.5rem;"
       tabindex="-1"
     >
       <svg
