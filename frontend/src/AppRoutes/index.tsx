@@ -18,9 +18,9 @@ function App(): JSX.Element {
 	return (
 		<ConfigProvider theme={themeConfig}>
 			<NotificationProvider>
-				<QueryBuilderProvider>
-					<Router history={history}>
-						<PrivateRoute>
+				<Router history={history}>
+					<PrivateRoute>
+						<QueryBuilderProvider>
 							<AppLayout>
 								<Suspense fallback={<Spinner size="large" tip="Loading..." />}>
 									<Switch>
@@ -37,9 +37,9 @@ function App(): JSX.Element {
 									</Switch>
 								</Suspense>
 							</AppLayout>
-						</PrivateRoute>
-					</Router>
-				</QueryBuilderProvider>
+						</QueryBuilderProvider>
+					</PrivateRoute>
+				</Router>
 			</NotificationProvider>
 		</ConfigProvider>
 	);
