@@ -1,4 +1,5 @@
 import { PlusCircleOutlined } from '@ant-design/icons';
+import { TableLocale } from 'antd/es/table/interface';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import React, { useCallback, useMemo } from 'react';
 import { DndProvider } from 'react-dnd';
@@ -54,7 +55,7 @@ function PipelineExpandView({
 				for (let i = 0; i < pipelineData.config.length - 1; i += 1) {
 					pipelineData.config[i].output = pipelineData.config[i + 1].id;
 				}
-				delete pipelineData.config[pipelineData.config.length - 1].output;
+				delete pipelineData.config[pipelineData.config.length - 1]?.output;
 				setExpandedPipelineData(pipelineData);
 			}
 		},
@@ -226,9 +227,14 @@ function PipelineExpandView({
 		[expandedPipelineData],
 	);
 
+	const getLocales = (): TableLocale => ({
+		emptyText: <span />,
+	});
+
 	return (
 		<DndProvider backend={HTML5Backend}>
 			<StyledTable
+				locale={getLocales()}
 				isDarkMode={isDarkMode}
 				showHeader={false}
 				columns={columns}

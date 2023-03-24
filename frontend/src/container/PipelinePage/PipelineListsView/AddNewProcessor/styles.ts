@@ -4,6 +4,10 @@ import styled from 'styled-components';
 
 export const PipelineIndexIcon = styled(Avatar)`
 	background-color: ${themeColors.navyBlue};
+	height: 1.5rem;
+	width: 1.5rem;
+	font-size: 0.875rem;
+	line-height: 1.375rem;
 `;
 
 export const ProcessorTypeWrapper = styled.div`

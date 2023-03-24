@@ -27,6 +27,10 @@ export const IconListStyle = styled.div`
 	justify-content: flex-end;
 `;
 
+export const ColumnDataStyle = styled.span`
+	font-size: 0.75rem;
+`;
+
 export const ListDataStyle = styled.div`
 	margin: 0.125rem;
 	padding: 0.313rem;

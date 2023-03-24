@@ -6,8 +6,8 @@ import {
 } from 'types/api/pipeline/def';
 
 import DeploymentStage from '../Layouts/ChangeHistory/DeploymentStage';
+import DeploymentTime from '../Layouts/ChangeHistory/DeploymentTime';
 import DescriptionTextArea from './AddNewPipeline/FormFields/DescriptionTextArea';
-import FilterSearch from './AddNewPipeline/FormFields/FilterSearch';
 import NameInput from './AddNewPipeline/FormFields/NameInput';
 
 export const pipelineFields = [
@@ -16,7 +16,7 @@ export const pipelineFields = [
 		fieldName: 'Filter',
 		placeholder: 'search_pipeline_placeholder',
 		name: 'filter',
-		component: FilterSearch,
+		component: NameInput,
 	},
 	{
 		id: 2,
@@ -78,6 +78,7 @@ export const processorColumns: Array<
 		key: 'id',
 		title: '',
 		dataIndex: 'orderId',
+		width: 142,
 	},
 	{
 		key: 'name',
@@ -105,6 +106,12 @@ export const changeHistoryColumns: Array<
 		title: 'Last Deploy Message',
 		dataIndex: 'deployResult',
 		ellipsis: true,
+	},
+	{
+		key: 'createdAt',
+		title: 'Last Deployed Time',
+		dataIndex: 'createdAt',
+		render: DeploymentTime,
 	},
 	{
 		key: 'createdByName',

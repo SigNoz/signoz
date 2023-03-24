@@ -3,12 +3,14 @@ import React from 'react';
 import { PipelineData, ProcessorData } from 'types/api/pipeline/def';
 
 import { PipelineIndexIcon } from '../AddNewProcessor/styles';
-import { ListDataStyle, ProcessorIndexIcon } from '../styles';
+import { ColumnDataStyle, ListDataStyle, ProcessorIndexIcon } from '../styles';
 
 const componentMap: ComponentMap = {
 	orderId: ({ record }) => <PipelineIndexIcon>{record}</PipelineIndexIcon>,
 	createdAt: ({ record }) => (
-		<span>{dayjs(record).locale('en').format('MMMM DD, YYYY hh:mm A')}</span>
+		<ColumnDataStyle>
+			{dayjs(record).locale('en').format('MMMM DD, YYYY hh:mm A')}
+		</ColumnDataStyle>
 	),
 	id: ({ record }) => <ProcessorIndexIcon>{record}</ProcessorIndexIcon>,
 	name: ({ record }) => <ListDataStyle>{record}</ListDataStyle>,
@@ -20,7 +22,7 @@ function TableComponents({
 }: TableComponentsProps): JSX.Element {
 	const Component =
 		componentMap[columnKey] ??
-		(({ record }): JSX.Element => <span>{record}</span>);
+		(({ record }): JSX.Element => <ColumnDataStyle>{record}</ColumnDataStyle>);
 
 	return <Component record={record} />;
 }
