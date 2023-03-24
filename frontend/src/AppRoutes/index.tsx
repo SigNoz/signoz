@@ -18,9 +18,9 @@ function App(): JSX.Element {
 
 	return (
 		<ConfigProvider theme={themeConfig}>
-			<NotificationProvider>
-				<PrivateRoute>
-					<Router history={history}>
+			<Router history={history}>
+				<NotificationProvider>
+					<PrivateRoute>
 						<ResourceProvider>
 							<QueryBuilderProvider>
 								<AppLayout>
@@ -41,9 +41,9 @@ function App(): JSX.Element {
 								</AppLayout>
 							</QueryBuilderProvider>
 						</ResourceProvider>
-					</Router>
-				</PrivateRoute>
-			</NotificationProvider>
+					</PrivateRoute>
+				</NotificationProvider>
+			</Router>
 		</ConfigProvider>
 	);
 }
