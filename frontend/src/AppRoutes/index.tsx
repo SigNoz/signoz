@@ -5,6 +5,7 @@ import AppLayout from 'container/AppLayout';
 import { useThemeConfig } from 'hooks/useDarkMode';
 import { NotificationProvider } from 'hooks/useNotifications';
 import history from 'lib/history';
+import { QueryBuilderProvider } from 'providers/QueryBuilder';
 import React, { Suspense } from 'react';
 import { Route, Router, Switch } from 'react-router-dom';
 
@@ -17,26 +18,28 @@ function App(): JSX.Element {
 	return (
 		<ConfigProvider theme={themeConfig}>
 			<NotificationProvider>
-				<Router history={history}>
-					<PrivateRoute>
-						<AppLayout>
-							<Suspense fallback={<Spinner size="large" tip="Loading..." />}>
-								<Switch>
-									{routes.map(({ path, component, exact }) => (
-										<Route
-											key={`${path}`}
-											exact={exact}
-											path={path}
-											component={component}
-										/>
-									))}
+				<QueryBuilderProvider>
+					<Router history={history}>
+						<PrivateRoute>
+							<AppLayout>
+								<Suspense fallback={<Spinner size="large" tip="Loading..." />}>
+									<Switch>
+										{routes.map(({ path, component, exact }) => (
+											<Route
+												key={`${path}`}
+												exact={exact}
+												path={path}
+												component={component}
+											/>
+										))}
 
-									<Route path="*" component={NotFound} />
-								</Switch>
-							</Suspense>
-						</AppLayout>
-					</PrivateRoute>
-				</Router>
+										<Route path="*" component={NotFound} />
+									</Switch>
+								</Suspense>
+							</AppLayout>
+						</PrivateRoute>
+					</Router>
+				</QueryBuilderProvider>
 			</NotificationProvider>
 		</ConfigProvider>
 	);
