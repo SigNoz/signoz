@@ -1,5 +1,5 @@
 import { ExclamationCircleOutlined, PlusOutlined } from '@ant-design/icons';
-import { Modal, Table, Typography } from 'antd';
+import { Modal, Table } from 'antd';
 import { ExpandableConfig } from 'antd/es/table/interface';
 import savePipeline from 'api/pipeline/post';
 import { useNotifications } from 'hooks/useNotifications';
@@ -92,8 +92,8 @@ function PipelineListsView({
 				title: <AlertModalTitle>{title}</AlertModalTitle>,
 				icon: <ExclamationCircleOutlined />,
 				content: <AlertContentWrapper>{descrition}</AlertContentWrapper>,
-				okText: <Typography.Text>{buttontext}</Typography.Text>,
-				cancelText: <Typography.Text>{t('cancel')}</Typography.Text>,
+				okText: <span>{buttontext}</span>,
+				cancelText: <span>{t('cancel')}</span>,
 				onOk,
 				onCancel,
 			});
@@ -113,6 +113,10 @@ function PipelineListsView({
 		(record: PipelineData) => (): void => {
 			setShowSaveButton(ActionMode.Editing);
 			const filteredData = getElementFromArray(currPipelineData, record, 'id');
+			filteredData.forEach((item, index) => {
+				const obj = item;
+				obj.orderId = index + 1;
+			});
 			setCurrPipelineData(filteredData);
 		},
 		[currPipelineData],

@@ -1,17 +1,18 @@
+import { EditOutlined } from '@ant-design/icons';
 import React from 'react';
 
-import { EditOutlinedIcon, SmallEditOutlinedIcon } from '../../styles';
+import { iconStyle, smallIconStyle } from '../../config';
 
 function EditAction({
 	isPipelineAction,
 	editAction,
 }: EditActionProps): JSX.Element {
 	if (isPipelineAction) {
-		return <EditOutlinedIcon onClick={editAction} />;
+		return <EditOutlined style={iconStyle} onClick={editAction} />;
 	}
 	return (
-		<span key="delete-action">
-			<SmallEditOutlinedIcon onClick={editAction} />
+		<span key="edit-action">
+			<EditOutlined style={smallIconStyle} onClick={editAction} />
 		</span>
 	);
 }

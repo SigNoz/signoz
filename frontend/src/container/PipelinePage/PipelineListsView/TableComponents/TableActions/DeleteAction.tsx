@@ -1,17 +1,18 @@
+import { DeleteFilled } from '@ant-design/icons';
 import React from 'react';
 
-import { DeleteFilledIcon, SmallDeleteFilledIcon } from '../../styles';
+import { iconStyle, smallIconStyle } from '../../config';
 
 function DeleteAction({
 	isPipelineAction,
 	deleteAction,
 }: DeleteActionProps): JSX.Element {
 	if (isPipelineAction) {
-		return <DeleteFilledIcon onClick={deleteAction} />;
+		return <DeleteFilled onClick={deleteAction} style={iconStyle} />;
 	}
 	return (
 		<span key="delete-action">
-			<SmallDeleteFilledIcon onClick={deleteAction} />
+			<DeleteFilled onClick={deleteAction} style={smallIconStyle} />
 		</span>
 	);
 }

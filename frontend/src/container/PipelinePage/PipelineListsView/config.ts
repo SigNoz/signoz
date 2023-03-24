@@ -125,3 +125,7 @@ export const formValidationRules = [
 		required: true,
 	},
 ];
+
+export const iconStyle = { fontSize: '1.5rem' };
+export const smallIconStyle = { fontSize: '1rem' };
+export const holdIconStyle = { ...iconStyle, cursor: 'move' };

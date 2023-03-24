@@ -1,21 +1,15 @@
+import { HolderOutlined } from '@ant-design/icons';
 import { Switch } from 'antd';
 import React from 'react';
 
-import {
-	HolderIconWrapper,
-	HolderOutlinedIcon,
-	LastActionColumn,
-} from '../styles';
+import { holdIconStyle } from '../config';
+import { LastActionColumn } from '../styles';
 
 function DragAction({ isEnabled, onChange }: DragActionProps): JSX.Element {
 	return (
 		<LastActionColumn>
-			<span>
-				<Switch defaultChecked={isEnabled} onChange={onChange} />
-			</span>
-			<HolderIconWrapper>
-				<HolderOutlinedIcon />
-			</HolderIconWrapper>
+			<Switch defaultChecked={isEnabled} onChange={onChange} />
+			<HolderOutlined style={holdIconStyle} />
 		</LastActionColumn>
 	);
 }

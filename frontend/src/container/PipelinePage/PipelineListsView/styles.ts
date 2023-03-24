@@ -1,10 +1,3 @@
-import {
-	CopyFilled,
-	DeleteFilled,
-	EditOutlined,
-	EyeFilled,
-	HolderOutlined,
-} from '@ant-design/icons';
 import { Avatar, Button, Table, Typography } from 'antd';
 import { TableProps } from 'antd/lib/table';
 import { themeColors } from 'constants/theme';
@@ -14,7 +7,7 @@ import styled from 'styled-components';
 export const FooterButton = styled(Button)`
 	display: flex;
 	gap: 0.5rem;
-	margin-left: 5.875rem;
+	margin-left: 6.2rem;
 	align-items: center;
 	font-weight: 400;
 	font-size: 0.875rem;
@@ -67,41 +60,6 @@ export const StyledTable: React.FC<
 	}
 `;
 
-export const EditOutlinedIcon = styled(EditOutlined)`
-	color: ${themeColors.gainsboro};
-	font-size: 1.5rem;
-`;
-
-export const SmallEditOutlinedIcon = styled(EditOutlined)`
-	color: ${themeColors.gainsboro};
-	font-size: 1rem;
-`;
-
-export const EyeFilledIcon = styled(EyeFilled)`
-	color: ${themeColors.gainsboro};
-	font-size: 1.5rem;
-`;
-
-export const DeleteFilledIcon = styled(DeleteFilled)`
-	color: ${themeColors.gainsboro};
-	font-size: 1.5rem;
-`;
-
-export const SmallDeleteFilledIcon = styled(DeleteFilled)`
-	color: ${themeColors.gainsboro};
-	font-size: 1rem;
-`;
-
-export const CopyFilledIcon = styled(CopyFilled)`
-	color: ${themeColors.gainsboro};
-	font-size: 1rem;
-`;
-
-export const HolderOutlinedIcon = styled(HolderOutlined)`
-	color: ${themeColors.lightSkyBlue};
-	font-size: 1.12rem;
-`;
-
 export const AlertContentWrapper = styled.div`
 	font-weight: 400;
 	font-style: normal;
@@ -152,8 +110,4 @@ export const SaveConfigWrapper = styled.div`
 	display: flex;
 	gap: 0.938rem;
 	margin-top: 1.25rem;
-`;
-
-export const HolderIconWrapper = styled.span`
-	cursor: move;
 `;

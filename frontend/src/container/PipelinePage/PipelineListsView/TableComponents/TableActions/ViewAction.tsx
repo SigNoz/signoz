@@ -1,11 +1,15 @@
+import { CopyFilled, EyeFilled } from '@ant-design/icons';
 import React from 'react';
 
-import { CopyFilledIcon, EyeFilledIcon } from '../../styles';
+import { iconStyle, smallIconStyle } from '../../config';
 
 function ViewAction({ isPipelineAction }: ViewActionProps): JSX.Element {
+	if (isPipelineAction) {
+		return <EyeFilled style={iconStyle} />;
+	}
 	return (
 		<span key="view-action">
-			{isPipelineAction ? <EyeFilledIcon /> : <CopyFilledIcon />}
+			<CopyFilled style={smallIconStyle} />
 		</span>
 	);
 }

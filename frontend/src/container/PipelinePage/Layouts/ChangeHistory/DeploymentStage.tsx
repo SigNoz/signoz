@@ -1,16 +1,12 @@
-import { LoadingOutlined } from '@ant-design/icons';
-import { Spin } from 'antd';
 import { IconDataSpan } from 'container/PipelinePage/styles';
 import React from 'react';
 
-import { getDeploymentStage } from './utils';
+import { getDeploymentStage, getDeploymentStageIcon } from './utils';
 
 function DeploymentStage(deployStatus: string): JSX.Element {
-	const antSpinner = <LoadingOutlined style={{ fontSize: 15 }} spin />;
-
 	return (
 		<>
-			{deployStatus === 'IN_PROGRESS' && <Spin indicator={antSpinner} />}
+			{getDeploymentStageIcon(deployStatus)}
 			<IconDataSpan>{getDeploymentStage(deployStatus)}</IconDataSpan>
 		</>
 	);
