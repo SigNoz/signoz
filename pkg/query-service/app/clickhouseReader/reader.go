@@ -3767,6 +3767,145 @@ func (r *ClickHouseReader) GetMetricAttributeValues(ctx context.Context, req *v3
 	return &attributeValues, nil
 }
 
+func readRow(vars []interface{}, columnNames []string) ([]string, map[string]string, v3.Point) {
+	// Each row will have a value and a timestamp, and an optional list of label values
+	// example: {Timestamp: ..., Value: ...}
+	// The timestamp may also not present in some cases where the time series is reduced to single value
+	var point v3.Point
+
+	// groupBy is a container to hold label values for the current point
+	// example: ["frontend", "/fetch"]
+	var groupBy []string
+
+	// groupAttributes is a container to hold the key-value pairs for the current
+	// metric point.
+	// example: {"serviceName": "frontend", "operation": "/fetch"}
+	groupAttributes := make(map[string]string)
+
+	for idx, v := range vars {
+		colName := columnNames[idx]
+		switch v := v.(type) {
+		case *string:
+			// special case for returning all labels in metrics datasource
+			if colName == "fullLabels" {
+				var metric map[string]string
+				err := json.Unmarshal([]byte(*v), &metric)
+				if err != nil {
+					zap.S().Errorf("unexpected error encountered %v", err)
+				}
+				for key, val := range metric {
+					groupBy = append(groupBy, val)
+					groupAttributes[key] = val
+				}
+			} else {
+				groupBy = append(groupBy, *v)
+				groupAttributes[colName] = *v
+			}
+		case *time.Time:
+			point.Timestamp = v.UnixMilli()
+		case *float64, *float32:
+			if _, ok := constants.ReservedColumnTargetAliases[colName]; ok {
+				point.Value = float64(reflect.ValueOf(v).Elem().Float())
+			} else {
+				groupBy = append(groupBy, fmt.Sprintf("%v", reflect.ValueOf(v).Elem().Float()))
+				groupAttributes[colName] = fmt.Sprintf("%v", reflect.ValueOf(v).Elem().Float())
+			}
+		case *uint8, *uint64, *uint16, *uint32:
+			if _, ok := constants.ReservedColumnTargetAliases[colName]; ok {
+				point.Value = float64(reflect.ValueOf(v).Elem().Uint())
+			} else {
+				groupBy = append(groupBy, fmt.Sprintf("%v", reflect.ValueOf(v).Elem().Uint()))
+				groupAttributes[colName] = fmt.Sprintf("%v", reflect.ValueOf(v).Elem().Uint())
+			}
+		case *int8, *int16, *int32, *int64:
+			if _, ok := constants.ReservedColumnTargetAliases[colName]; ok {
+				point.Value = float64(reflect.ValueOf(v).Elem().Int())
+			} else {
+				groupBy = append(groupBy, fmt.Sprintf("%v", reflect.ValueOf(v).Elem().Int()))
+				groupAttributes[colName] = fmt.Sprintf("%v", reflect.ValueOf(v).Elem().Int())
+			}
+		default:
+			zap.S().Errorf("unsupported var type %v found in metric builder query result for column %s", v, colName)
+		}
+	}
+	return groupBy, groupAttributes, point
+}
+
+func readRowsForTimeSeriesResult(rows driver.Rows, vars []interface{}, columnNames []string) ([]*v3.Series, error) {
+	// when groupBy is applied, each combination of cartesian product
+	// of attribute values is a separate series. Each item in seriesToPoints
+	// represent a unique series where the key is sorted attribute values joined
+	// by "," and the value is the list of points for that series
+
+	// For instance, group by (serviceName, operation)
+	// with two services and three operations in each will result in (maximum of) 6 series
+	// ("frontend", "order") x ("/fetch", "/fetch/{Id}", "/order")
+	//
+	// ("frontend", "/fetch")
+	// ("frontend", "/fetch/{Id}")
+	// ("frontend", "/order")
+	// ("order", "/fetch")
+	// ("order", "/fetch/{Id}")
+	// ("order", "/order")
+	seriesToPoints := make(map[string][]v3.Point)
+
+	// seriesToAttrs is a mapping of key to a map of attribute key to attribute value
+	// for each series. This is used to populate the series' attributes
+	// For instance, for the above example, the seriesToAttrs will be
+	// {
+	//   "frontend,/fetch": {"serviceName": "frontend", "operation": "/fetch"},
+	//   "frontend,/fetch/{Id}": {"serviceName": "frontend", "operation": "/fetch/{Id}"},
+	//   "frontend,/order": {"serviceName": "frontend", "operation": "/order"},
+	//   "order,/fetch": {"serviceName": "order", "operation": "/fetch"},
+	//   "order,/fetch/{Id}": {"serviceName": "order", "operation": "/fetch/{Id}"},
+	//   "order,/order": {"serviceName": "order", "operation": "/order"},
+	// }
+	seriesToAttrs := make(map[string]map[string]string)
+
+	for rows.Next() {
+		if err := rows.Scan(vars...); err != nil {
+			return nil, err
+		}
+		groupBy, groupAttributes, metricPoint := readRow(vars, columnNames)
+		sort.Strings(groupBy)
+		key := strings.Join(groupBy, "")
+		seriesToAttrs[key] = groupAttributes
+		seriesToPoints[key] = append(seriesToPoints[key], metricPoint)
+	}
+
+	var seriesList []*v3.Series
+	for key := range seriesToPoints {
+		series := v3.Series{Labels: seriesToAttrs[key], Points: seriesToPoints[key]}
+		seriesList = append(seriesList, &series)
+	}
+	return seriesList, nil
+}
+
+// GetTimeSeriesResultV3 runs the query and returns list of time series
+func (r *ClickHouseReader) GetTimeSeriesResultV3(ctx context.Context, query string) ([]*v3.Series, error) {
+
+	defer utils.Elapsed("GetTimeSeriesResultV3", query)()
+
+	rows, err := r.db.Query(ctx, query)
+
+	if err != nil {
+		zap.S().Errorf("error while reading time series result %v", err)
+		return nil, err
+	}
+	defer rows.Close()
+
+	var (
+		columnTypes = rows.ColumnTypes()
+		columnNames = rows.Columns()
+		vars        = make([]interface{}, len(columnTypes))
+	)
+	for i := range columnTypes {
+		vars[i] = reflect.New(columnTypes[i].ScanType()).Interface()
+	}
+
+	return readRowsForTimeSeriesResult(rows, vars, columnNames)
+}
+
 func (r *ClickHouseReader) CheckClickHouse(ctx context.Context) error {
 	rows, err := r.db.Query(ctx, "SELECT 1")
 	if err != nil {
