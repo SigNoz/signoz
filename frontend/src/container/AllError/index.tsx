@@ -120,6 +120,7 @@ function AllErrors(): JSX.Element {
 				minTime,
 				getUpdatedExceptionType,
 				getUpdatedServiceName,
+				queries,
 			],
 			queryFn: (): Promise<ErrorResponse | SuccessResponse<number>> =>
 				getErrorCounts({
@@ -127,6 +128,7 @@ function AllErrors(): JSX.Element {
 					start: minTime,
 					exceptionType: getUpdatedExceptionType,
 					serviceName: getUpdatedServiceName,
+					tags: JSON.stringify(queries),
 				}),
 			enabled: !loading,
 		},

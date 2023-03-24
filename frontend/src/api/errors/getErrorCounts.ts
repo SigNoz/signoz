@@ -9,7 +9,7 @@ const getErrorCounts = async (
 	props: Props,
 ): Promise<SuccessResponse<PayloadProps> | ErrorResponse> => {
 	try {
-		const response = await axios.get(
+		const response = await axios.post(
 			`/countErrors?${createQueryParams({
 				...props,
 			})}`,

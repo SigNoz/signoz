@@ -5,6 +5,7 @@ export type Props = {
 	end: GlobalTime['minTime'];
 	exceptionType: string;
 	serviceName: string;
+	tags: string;
 };
 
 export type PayloadProps = number;
