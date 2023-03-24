@@ -41,6 +41,7 @@ import (
 
 	promModel "github.com/prometheus/common/model"
 	"go.signoz.io/signoz/pkg/query-service/app/logs"
+	"go.signoz.io/signoz/pkg/query-service/app/services"
 	"go.signoz.io/signoz/pkg/query-service/constants"
 	am "go.signoz.io/signoz/pkg/query-service/integrations/alertManager"
 	"go.signoz.io/signoz/pkg/query-service/interfaces"
@@ -2054,23 +2055,11 @@ func (r *ClickHouseReader) GetDependencyGraph(ctx context.Context, queryParams *
 		WHERE toUInt64(toDateTime(timestamp)) >= @start AND toUInt64(toDateTime(timestamp)) <= @end`,
 		r.TraceDB, r.dependencyGraphTable,
 	)
-	// create TagQuery from TagQueryParams
+
 	tags := createTagQueryFromTagQueryParams(queryParams.Tags)
-	subQuery, argsSubQuery, errStatus := buildQueryWithTagParamsWithTagMap(ctx, tags, "src_resource_attributes")
-	query += subQuery
-	args = append(args, argsSubQuery...)
-	if errStatus != nil {
-		return nil, errStatus
-	}
-	// create TagQuery from TagQueryParams
-	tags = createTagQueryFromTagQueryParams(queryParams.Tags)
-	subQuery, argsSubQuery, errStatus = buildQueryWithTagParamsWithTagMap(ctx, tags, "dest_resource_attributes")
-	query += subQuery
-	args = append(args, argsSubQuery...)
-	if errStatus != nil {
-		return nil, errStatus
-	}
-	query += " GROUP BY src, dest;"
+	filterQuery, filterArgs := services.BuildServiceMapQuery(tags)
+	query += filterQuery + " GROUP BY src, dest;"
+	args = append(args, filterArgs...)
 
 	zap.S().Debug(query, args)
 
@@ -2078,7 +2067,7 @@ func (r *ClickHouseReader) GetDependencyGraph(ctx context.Context, queryParams *
 
 	if err != nil {
 		zap.S().Error("Error in processing sql query: ", err)
-		return nil, fmt.Errorf("Error in processing sql query")
+		return nil, fmt.Errorf("error in processing sql query %w", err)
 	}
 
 	return &response, nil
