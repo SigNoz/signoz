@@ -202,12 +202,12 @@ func BuildMetricQuery(qp *model.QueryRangeParamsV2, mq *model.MetricQuery, table
 	groupTags := groupSelect(mq.GroupingTags...)
 
 	var rateQuery, rateOp string
-	if mq.Temporaltiy == model.Cumulative {
-		rateQuery = queryCumulative
-		rateOp = opCumulative
-	} else {
+	if mq.Temporaltiy == model.Delta {
 		rateQuery = queryDelta
 		rateOp = opDelta
+	} else {
+		rateQuery = queryCumulative
+		rateOp = opCumulative
 	}
 
 	switch mq.AggregateOperator {

@@ -121,6 +121,40 @@ func TestBuildQueryWithMultipleQueries(t *testing.T) {
 		So(queries["A"], ShouldContainSubstring, "WHERE metric_name = 'name' AND JSONExtractString(labels, 'in') IN ['a','b','c']")
 		So(queries["A"], ShouldContainSubstring, rateWithoutNegativeCumulative)
 	})
+
+	// delta temporality
+	Convey("TestBuildQueryWithFilters", t, func() {
+		q := &model.QueryRangeParamsV2{
+			Start: 1650991982000,
+			End:   1651078382000,
+			Step:  60,
+			CompositeMetricQuery: &model.CompositeMetricQuery{
+				BuilderQueries: map[string]*model.MetricQuery{
+					"A": {
+						QueryName:  "A",
+						MetricName: "name",
+						TagFilters: &model.FilterSet{Operator: "AND", Items: []model.FilterItem{
+							{Key: "in", Value: []interface{}{"a", "b", "c"}, Operator: "in"},
+						}},
+						AggregateOperator: model.RATE_AVG,
+						Expression:        "A",
+						Temporaltiy:       model.Delta,
+					},
+					"B": {
+						QueryName:         "B",
+						MetricName:        "name2",
+						AggregateOperator: model.RATE_MAX,
+						Expression:        "B",
+						Temporaltiy:       model.Delta,
+					},
+				},
+			},
+		}
+		queries := PrepareBuilderMetricQueries(q, "table").Queries
+		So(len(queries), ShouldEqual, 2)
+		So(queries["A"], ShouldContainSubstring, "WHERE metric_name = 'name' AND JSONExtractString(labels, 'in') IN ['a','b','c']")
+		So(queries["A"], ShouldContainSubstring, rateWithoutNegativeDelta)
+	})
 }
 
 func TestBuildQueryWithMultipleQueriesAndFormula(t *testing.T) {

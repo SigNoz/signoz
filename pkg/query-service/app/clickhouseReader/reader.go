@@ -3,6 +3,7 @@ package clickhouseReader
 import (
 	"bytes"
 	"context"
+	"database/sql"
 	"encoding/json"
 
 	"fmt"
@@ -2166,7 +2167,6 @@ func (r *ClickHouseReader) GetFilteredSpansAggregates(ctx context.Context, query
 	}
 
 	err := r.db.Select(ctx, &SpanAggregatesDBResponseItems, query, args...)
-	fmt.Println(args...)
 
 	zap.S().Info(query)
 
@@ -3229,6 +3229,10 @@ func (r *ClickHouseReader) FetchTemporality(ctx context.Context, metricNames []s
 		var temporality int8
 		err := r.db.QueryRow(ctx, query, name).Scan(&temporality)
 		if err != nil {
+			if err == sql.ErrNoRows {
+				metricNameToTemporality[name] = model.Unspecified
+				continue
+			}
 			zap.S().Error("unexpected error", zap.Error(err))
 			return nil, err
 		}
