@@ -48,8 +48,8 @@ var (
 	// See https://github.com/SigNoz/signoz/issues/2151#issuecomment-1467249056
 	rateWithoutNegativeCumulative = `if (runningDifference(value) < 0 OR runningDifference(ts) < 0, nan, runningDifference(value)/runningDifference(ts))`
 	rateWithoutNegativeDelta      = `if (value < 0 OR runningDifference(ts) < 0, nan, value/runningDifference(ts))`
-	queryCumulative               = `SELECT %s ts, %s as value FROM(%s)`
-	queryDelta                    = `SELECT %s ts, %s as value FROM(%s)`
+	queryCumulative               = `SELECT %s ts, ` + rateWithoutNegativeCumulative + ` as value FROM(%s)`
+	queryDelta                    = `SELECT %s ts, ` + rateWithoutNegativeDelta + ` as value FROM(%s)`
 	opCumulative                  = `max(value)`
 	opDelta                       = `sum(value)`
 )
@@ -202,11 +202,11 @@ func BuildMetricQuery(qp *model.QueryRangeParamsV2, mq *model.MetricQuery, table
 	groupTags := groupSelect(mq.GroupingTags...)
 
 	var rateQuery, rateOp string
-	if mq.Temporaltiy == model.CUMULATIVE {
-		rateQuery = fmt.Sprintf(queryCumulative, rateWithoutNegativeCumulative)
+	if mq.Temporaltiy == model.Cumulative {
+		rateQuery = queryCumulative
 		rateOp = opCumulative
 	} else {
-		rateQuery = fmt.Sprintf(queryDelta, rateWithoutNegativeDelta)
+		rateQuery = queryDelta
 		rateOp = opDelta
 	}
 

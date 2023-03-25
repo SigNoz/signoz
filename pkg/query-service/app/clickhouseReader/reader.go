@@ -3220,21 +3220,19 @@ func (r *ClickHouseReader) GetSpansInLastHeartBeatInterval(ctx context.Context) 
 	return spansInLastHeartBeatInterval, nil
 }
 
-func (r *ClickHouseReader) FetchTemporality(ctx context.Context, metricNameToTemporality map[string]model.Temporality) (map[string]model.Temporality, error) {
+func (r *ClickHouseReader) FetchTemporality(ctx context.Context, metricNames []string) (map[string]model.Temporality, error) {
 
-	query := fmt.Sprintf(`SELECT temporality FROM %s.%s WHERE metric_name = $1 LIMIT 1`, signozMetricDBName, signozTSTableName)
+	metricNameToTemporality := make(map[string]model.Temporality)
 
-	for name := range metricNameToTemporality {
-		var temporality string
+	query := fmt.Sprintf(`SELECT CAST(temporality, 'Int8') FROM %s.%s WHERE metric_name = $1 LIMIT 1`, signozMetricDBName, signozTSTableName)
+	for _, name := range metricNames {
+		var temporality int8
 		err := r.db.QueryRow(ctx, query, name).Scan(&temporality)
 		if err != nil {
 			zap.S().Error("unexpected error", zap.Error(err))
+			return nil, err
 		}
-		if temporality == "Cumulative" {
-			metricNameToTemporality[name] = model.CUMULATIVE
-		} else if temporality == "Delta" {
-			metricNameToTemporality[name] = model.DELTA
-		}
+		metricNameToTemporality[name] = model.Temporality(temporality)
 	}
 	return metricNameToTemporality, nil
 }

@@ -18,12 +18,12 @@ type QueryRangeParams struct {
 	Stats string
 }
 
-type Temporality int
+type Temporality int8
 
 const (
-	_ Temporality = iota
-	DELTA
-	CUMULATIVE
+	Unspecified Temporality = iota
+	Delta
+	Cumulative
 )
 
 type MetricQuery struct {
