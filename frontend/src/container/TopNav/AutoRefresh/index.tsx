@@ -58,7 +58,7 @@ function AutoRefresh({ disabled = false }: AutoRefreshProps): JSX.Element {
 	const dispatch = useDispatch<Dispatch<AppActions>>();
 
 	useEffect(() => {
-		const isLocalAutoRefreshEnabled = Boolean(localStorageValue);
+		const isLocalStorageAutoRefreshEnabled = Boolean(localStorageValue);
 		dispatch({
 			type: UPDATE_AUTO_REFRESH_INTERVAL,
 			payload: localStorageValue,
