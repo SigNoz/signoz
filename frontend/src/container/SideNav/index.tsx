@@ -26,7 +26,7 @@ import {
 
 function SideNav(): JSX.Element {
 	const dispatch = useDispatch();
-	const [boolCollapsed, setCollapsed] = useState<boolean>(
+	const [isSideNavCollapsed, setIsSideNavCollapsed] = useState<boolean>(
 		getLocalStorageKey(IS_SIDEBAR_COLLAPSED) === 'true',
 	);
 	const { currentVersion, latestVersion, isCurrentVersionError } = useSelector<
