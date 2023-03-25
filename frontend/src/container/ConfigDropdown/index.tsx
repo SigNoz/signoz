@@ -38,7 +38,7 @@ function DynamicConfigDropdown({
 			items: [
 				{
 					key: '1',
-					label: <HelpToolTip config={config as ConfigProps} />,
+					label: <HelpToolTip config={currentConfig as ConfigProps} />,
 				},
 			],
 		}),

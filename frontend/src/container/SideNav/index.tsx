@@ -38,12 +38,12 @@ function SideNav(): JSX.Element {
 	const { t } = useTranslation('');
 
 	const onCollapse = useCallback(() => {
-		setCollapsed((isCollapsed) => !isCollapsed);
+		setIsSideNavCollapsed((isCollapsed) => !isCollapsed);
 	}, []);
 
 	useLayoutEffect(() => {
-		dispatch(SideBarCollapse(boolCollapsed));
-	}, [boolCollapsed, dispatch]);
+		dispatch(SideBarCollapse(isSideNavCollapsed));
+	}, [isSideNavCollapsed, dispatch]);
 
 	const onClickHandler = useCallback(
 		(to: string) => {
@@ -127,7 +127,7 @@ function SideNav(): JSX.Element {
 	return (
 		<Sider
 			collapsible
-			collapsed={boolCollapsed}
+			collapsed={isSideNavCollapsed}
 			onCollapse={onCollapse}
 			width={200}
 		>
@@ -143,7 +143,7 @@ function SideNav(): JSX.Element {
 				<SlackMenuItemContainer
 					index={index + 1}
 					key={`${index + 1}`}
-					collapsed={boolCollapsed}
+					collapsed={isSideNavCollapsed}
 				>
 					<Menu
 						theme="dark"

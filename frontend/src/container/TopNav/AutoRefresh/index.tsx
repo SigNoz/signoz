@@ -63,7 +63,7 @@ function AutoRefresh({ disabled = false }: AutoRefreshProps): JSX.Element {
 			type: UPDATE_AUTO_REFRESH_INTERVAL,
 			payload: localStorageValue,
 		});
-		setIsAutoRefreshfreshEnabled(isLocalAutoRefreshEnabled);
+		setIsAutoRefreshfreshEnabled(isLocalStorageAutoRefreshEnabled);
 	}, [localStorageValue, dispatch]);
 
 	const params = useUrlQuery();

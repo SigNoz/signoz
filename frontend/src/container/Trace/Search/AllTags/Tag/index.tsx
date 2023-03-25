@@ -110,7 +110,7 @@ function SingleTags(props: AllTagsProps): JSX.Element {
 	} = tag;
 
 	const onDeleteTagHandler = (deletedTagIndex: number): void => {
-		onCloseHandler(indexDelHandler);
+		onCloseHandler(deletedTagIndex);
 	};
 
 	const onChangeOperatorHandler = (key: unknown): void => {
