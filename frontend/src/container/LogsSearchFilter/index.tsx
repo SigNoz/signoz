@@ -173,6 +173,13 @@ function SearchFilter({
 		globalTime.minTime,
 	]);
 
+	const onPopOverChange = useCallback(
+		(isVisible: boolean) => {
+			onDropDownToggleHandler(isVisible)();
+		},
+		[onDropDownToggleHandler],
+	);
+
 	return (
 		<Container>
 			<Popover
@@ -189,11 +196,9 @@ function SearchFilter({
 				overlayInnerStyle={{
 					width: `${searchRef?.current?.input?.offsetWidth || 0}px`,
 				}}
-				visible={showDropDown}
+				open={showDropDown}
 				destroyTooltipOnHide
-				onVisibleChange={(value): void => {
-					onDropDownToggleHandler(value)();
-				}}
+				onOpenChange={onPopOverChange}
 			>
 				<Input.Search
 					ref={searchRef}

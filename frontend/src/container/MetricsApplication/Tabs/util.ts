@@ -60,7 +60,7 @@ export function onGraphClickHandler(
 			const points = chart.getElementsAtEventForMode(
 				event.native,
 				'nearest',
-				{ intersect: false },
+				{ intersect: true },
 				true,
 			);
 			const id = `${from}_button`;
