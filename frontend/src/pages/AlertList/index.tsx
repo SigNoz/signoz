@@ -4,31 +4,23 @@ import AllAlertRules from 'container/ListAlertRules';
 import TriggeredAlerts from 'container/TriggeredAlerts';
 import React from 'react';
 
-const { TabPane } = Tabs;
-
 function AllAlertList(): JSX.Element {
+	const items = [
+		{ label: 'Alert Rules', key: 'Alert Rules', children: <AllAlertRules /> },
+		{
+			label: 'Triggered Alerts',
+			key: 'Triggered Alerts',
+			children: <TriggeredAlerts />,
+		},
+		// {
+		// 	label: 'Map Alert Channels',
+		// 	key = 'Map Alert Channels',
+		// 	children: <MapAlertChannels />,
+		// },
+	];
+
 	return (
-		<Tabs destroyInactiveTabPane defaultActiveKey="Alert Rules">
-			<TabPane tabKey="Alert Rules" tab="Alert Rules" key="Alert Rules">
-				<AllAlertRules />
-			</TabPane>
-
-			<TabPane
-				tabKey="Triggered Alerts"
-				key="Triggered Alerts"
-				tab="Triggered Alerts"
-			>
-				<TriggeredAlerts />
-			</TabPane>
-
-			{/* <TabPane
-				tabKey="Map Alert Channels"
-				key="Map Alert Channels"
-				tab="Map Alert Channels"
-			>
-				<MapAlertChannels />
-			</TabPane> */}
-		</Tabs>
+		<Tabs destroyInactiveTabPane defaultActiveKey="Alert Rules" items={items} />
 	);
 }
 

@@ -1,6 +1,7 @@
 package app
 
 import (
+	"bytes"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -8,15 +9,21 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
+	"text/template"
 	"time"
 
+	"github.com/SigNoz/govaluate"
 	"github.com/gorilla/mux"
 	promModel "github.com/prometheus/common/model"
+	"go.uber.org/multierr"
 
+	"go.signoz.io/signoz/pkg/query-service/app/metrics"
 	"go.signoz.io/signoz/pkg/query-service/auth"
 	"go.signoz.io/signoz/pkg/query-service/constants"
 	"go.signoz.io/signoz/pkg/query-service/model"
 	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
+	"go.signoz.io/signoz/pkg/query-service/utils"
+	querytemplate "go.signoz.io/signoz/pkg/query-service/utils/queryTemplate"
 )
 
 var allowedFunctions = []string{"count", "ratePerSec", "sum", "avg", "min", "max", "p50", "p90", "p95", "p99"}
@@ -901,4 +908,148 @@ func parseFilterAttributeValueRequest(r *http.Request) (*v3.FilterAttributeValue
 		FilterAttributeKey: r.URL.Query().Get("attributeKey"),
 	}
 	return &req, nil
+}
+
+func validateQueryRangeParamsV3(qp *v3.QueryRangeParamsV3) error {
+	err := qp.CompositeQuery.Validate()
+	if err != nil {
+		return err
+	}
+
+	var expressions []string
+	for _, q := range qp.CompositeQuery.BuilderQueries {
+		expressions = append(expressions, q.Expression)
+	}
+	errs := validateExpressions(expressions, evalFuncs, qp.CompositeQuery)
+	if len(errs) > 0 {
+		return multierr.Combine(errs...)
+	}
+	return nil
+}
+
+// validateExpressions validates the math expressions using the list of
+// allowed functions.
+func validateExpressions(expressions []string, funcs map[string]govaluate.ExpressionFunction, cq *v3.CompositeQuery) []error {
+	var errs []error
+	for _, exp := range expressions {
+		evalExp, err := govaluate.NewEvaluableExpressionWithFunctions(exp, funcs)
+		if err != nil {
+			errs = append(errs, err)
+			continue
+		}
+		variables := evalExp.Vars()
+		for _, v := range variables {
+			var hasVariable bool
+			for _, q := range cq.BuilderQueries {
+				if q.Expression == v {
+					hasVariable = true
+					break
+				}
+			}
+			if !hasVariable {
+				errs = append(errs, fmt.Errorf("unknown variable %s", v))
+			}
+		}
+	}
+	return errs
+}
+
+func ParseQueryRangeParams(r *http.Request) (*v3.QueryRangeParamsV3, *model.ApiError) {
+
+	var queryRangeParams *v3.QueryRangeParamsV3
+
+	// parse the request body
+	if err := json.NewDecoder(r.Body).Decode(&queryRangeParams); err != nil {
+		return nil, &model.ApiError{Typ: model.ErrorBadData, Err: err}
+	}
+
+	// validate the request body
+	if err := validateQueryRangeParamsV3(queryRangeParams); err != nil {
+		return nil, &model.ApiError{Typ: model.ErrorBadData, Err: err}
+	}
+
+	// prepare the variables for the corrspnding query type
+	formattedVars := make(map[string]interface{})
+	for name, value := range queryRangeParams.Variables {
+		if queryRangeParams.CompositeQuery.QueryType == v3.QueryTypePromQL {
+			formattedVars[name] = metrics.PromFormattedValue(value)
+		} else if queryRangeParams.CompositeQuery.QueryType == v3.QueryTypeClickHouseSQL {
+			formattedVars[name] = utils.ClickHouseFormattedValue(value)
+		}
+	}
+
+	// replace the variables in metrics builder filter item with actual value
+	// example: {"key": "host", "value": "{{ .host }}", "operator": "equals"} with
+	// variables {"host": "test"} will be replaced with {"key": "host", "value": "test", "operator": "equals"}
+
+	if queryRangeParams.CompositeQuery.QueryType == v3.QueryTypeBuilder {
+		for _, query := range queryRangeParams.CompositeQuery.BuilderQueries {
+			if query.Filters == nil || len(query.Filters.Items) == 0 {
+				continue
+			}
+			for idx := range query.Filters.Items {
+				item := &query.Filters.Items[idx]
+				value := item.Value
+				if value != nil {
+					switch x := value.(type) {
+					case string:
+						variableName := strings.Trim(x, "{{ . }}")
+						if _, ok := queryRangeParams.Variables[variableName]; ok {
+							item.Value = queryRangeParams.Variables[variableName]
+						}
+					case []interface{}:
+						if len(x) > 0 {
+							switch x[0].(type) {
+							case string:
+								variableName := strings.Trim(x[0].(string), "{{ . }}")
+								if _, ok := queryRangeParams.Variables[variableName]; ok {
+									item.Value = queryRangeParams.Variables[variableName]
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+	queryRangeParams.Variables = formattedVars
+
+	// prometheus instant query needs same timestamp
+	if queryRangeParams.CompositeQuery.PanelType == v3.PanelTypeValue &&
+		queryRangeParams.CompositeQuery.QueryType == v3.QueryTypePromQL {
+		queryRangeParams.Start = queryRangeParams.End
+	}
+
+	// round up the end to neaerest multiple
+	if queryRangeParams.CompositeQuery.QueryType == v3.QueryTypeBuilder {
+		end := (queryRangeParams.End) / 1000
+		step := queryRangeParams.Step
+		queryRangeParams.End = (end / step * step) * 1000
+	}
+
+	// replace go template variables in clickhouse query
+	if queryRangeParams.CompositeQuery.QueryType == v3.QueryTypeClickHouseSQL {
+		for _, chQuery := range queryRangeParams.CompositeQuery.ClickHouseQueries {
+			if chQuery.Disabled {
+				continue
+			}
+			tmpl := template.New("clickhouse-query")
+			tmpl, err := tmpl.Parse(chQuery.Query)
+			if err != nil {
+				return nil, &model.ApiError{Typ: model.ErrorBadData, Err: err}
+			}
+			var query bytes.Buffer
+
+			// replace go template variables
+			querytemplate.AssignReservedVarsV3(queryRangeParams)
+
+			err = tmpl.Execute(&query, queryRangeParams.Variables)
+			if err != nil {
+				return nil, &model.ApiError{Typ: model.ErrorBadData, Err: err}
+			}
+			chQuery.Query = query.String()
+		}
+	}
+
+	return queryRangeParams, nil
 }

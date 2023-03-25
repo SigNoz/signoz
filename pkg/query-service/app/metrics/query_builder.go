@@ -45,10 +45,13 @@ var AggregateOperatorToSQLFunc = map[model.AggregateOperator]string{
 }
 
 var (
-	queryCumulative = `SELECT %s ts, runningDifference(value)/runningDifference(ts) as value FROM(%s)`
-	queryDelta      = `SELECT %s ts, value/runningDifference(ts) as value FROM(%s)`
-	opCumulative    = `max(value)`
-	opDelta         = `sum(value)`
+	// See https://github.com/SigNoz/signoz/issues/2151#issuecomment-1467249056
+	rateWithoutNegativeCumulative = `if (runningDifference(value) < 0 OR runningDifference(ts) < 0, nan, runningDifference(value)/runningDifference(ts))`
+	rateWithoutNegativeDelta      = `if (value < 0 OR runningDifference(ts) < 0, nan, value/runningDifference(ts))`
+	queryCumulative               = `SELECT %s ts, %s as value FROM(%s)`
+	queryDelta                    = `SELECT %s ts, %s as value FROM(%s)`
+	opCumulative                  = `max(value)`
+	opDelta                       = `sum(value)`
 )
 
 var SupportedFunctions = []string{"exp", "log", "ln", "exp2", "log2", "exp10", "log10", "sqrt", "cbrt", "erf", "erfc", "lgamma", "tgamma", "sin", "cos", "tan", "asin", "acos", "atan", "degrees", "radians"}
@@ -198,63 +201,41 @@ func BuildMetricQuery(qp *model.QueryRangeParamsV2, mq *model.MetricQuery, table
 	groupBy := groupBy(mq.GroupingTags...)
 	groupTags := groupSelect(mq.GroupingTags...)
 
+	var rateQuery, rateOp string
+	if mq.Temporaltiy == model.CUMULATIVE {
+		rateQuery = fmt.Sprintf(queryCumulative, rateWithoutNegativeCumulative)
+		rateOp = opCumulative
+	} else {
+		rateQuery = fmt.Sprintf(queryDelta, rateWithoutNegativeDelta)
+		rateOp = opDelta
+	}
+
 	switch mq.AggregateOperator {
 	case model.RATE:
 		// Calculate rate of change of metric for each unique time series
 		groupBy = "fingerprint, ts"
 		groupTags = "fingerprint,"
-		var op string
-		if mq.Temporaltiy == model.CUMULATIVE {
-			op = opCumulative
-		} else {
-			op = opDelta
-		}
 		subQuery := fmt.Sprintf(
-			queryTmpl, "any(labels) as labels, "+groupTags, qp.Step, op, filterSubQuery, groupBy, groupTags,
+			queryTmpl, "any(labels) as labels, "+groupTags, qp.Step, rateOp, filterSubQuery, groupBy, groupTags,
 		) // labels will be same so any should be fine
-		var query string
-		if mq.Temporaltiy == model.CUMULATIVE {
-			query = queryCumulative
-		} else {
-			query = queryDelta
-		}
 
-		query = fmt.Sprintf(query, "labels as fullLabels,", subQuery)
+		query := fmt.Sprintf(rateQuery, "labels as fullLabels,", subQuery)
 		return query, nil
 	case model.SUM_RATE:
 		rateGroupBy := "fingerprint, " + groupBy
 		rateGroupTags := "fingerprint, " + groupTags
-		var op string
-		if mq.Temporaltiy == model.CUMULATIVE {
-			op = opCumulative
-		} else {
-			op = opDelta
-		}
 		subQuery := fmt.Sprintf(
-			queryTmpl, rateGroupTags, qp.Step, op, filterSubQuery, rateGroupBy, rateGroupTags,
+			queryTmpl, rateGroupTags, qp.Step, rateOp, filterSubQuery, rateGroupBy, rateGroupTags,
 		) // labels will be same so any should be fine
-		var query string
-		if mq.Temporaltiy == model.CUMULATIVE {
-			query = queryCumulative
-		} else {
-			query = queryDelta
-		}
 
-		query = fmt.Sprintf(query, groupTags, subQuery)
+		query := fmt.Sprintf(rateQuery, groupTags, subQuery)
 		query = fmt.Sprintf(`SELECT %s ts, sum(value) as value FROM (%s) GROUP BY %s ORDER BY %s ts`, groupTags, query, groupBy, groupTags)
 		return query, nil
 	case model.RATE_SUM, model.RATE_MAX, model.RATE_AVG, model.RATE_MIN:
 		op := fmt.Sprintf("%s(value)", AggregateOperatorToSQLFunc[mq.AggregateOperator])
 		subQuery := fmt.Sprintf(queryTmpl, groupTags, qp.Step, op, filterSubQuery, groupBy, groupTags)
 
-		var query string
-		if mq.Temporaltiy == model.CUMULATIVE {
-			query = queryCumulative
-		} else {
-			query = queryDelta
-		}
-
-		query = fmt.Sprintf(query, groupTags, subQuery)
+		query := fmt.Sprintf(rateQuery, groupTags, subQuery)
 		return query, nil
 	case model.P05, model.P10, model.P20, model.P25, model.P50, model.P75, model.P90, model.P95, model.P99:
 		op := fmt.Sprintf("quantile(%v)(value)", AggregateOperatorToPercentile[mq.AggregateOperator])
@@ -263,24 +244,13 @@ func BuildMetricQuery(qp *model.QueryRangeParamsV2, mq *model.MetricQuery, table
 	case model.HIST_QUANTILE_50, model.HIST_QUANTILE_75, model.HIST_QUANTILE_90, model.HIST_QUANTILE_95, model.HIST_QUANTILE_99:
 		rateGroupBy := "fingerprint, " + groupBy
 		rateGroupTags := "fingerprint, " + groupTags
-		var op string
-		if mq.Temporaltiy == model.CUMULATIVE {
-			op = opCumulative
-		} else {
-			op = opDelta
-		}
 		subQuery := fmt.Sprintf(
-			queryTmpl, rateGroupTags, qp.Step, op, filterSubQuery, rateGroupBy, rateGroupTags,
+			queryTmpl, rateGroupTags, qp.Step, rateOp, filterSubQuery, rateGroupBy, rateGroupTags,
 		) // labels will be same so any should be fine
-		var query string
-		if mq.Temporaltiy == model.CUMULATIVE {
-			query = queryCumulative
-		} else {
-			query = queryDelta
-		}
 
-		query = fmt.Sprintf(query, groupTags, subQuery)
-		query = fmt.Sprintf(`SELECT %s ts, sum(value) as value FROM (%s) GROUP BY %s ORDER BY %s ts`, groupTags, query, groupBy, groupTags)
+		query := fmt.Sprintf(rateQuery, groupTags, subQuery)
+		// filter out NaN values from the rate query as histogramQuantile doesn't support NaN values
+		query = fmt.Sprintf(`SELECT %s ts, sum(value) as value FROM (%s) GROUP BY %s HAVING isNaN(value) = 0 ORDER BY %s ts`, groupTags, query, groupBy, groupTags)
 		value := AggregateOperatorToPercentile[mq.AggregateOperator]
 
 		query = fmt.Sprintf(`SELECT %s ts, histogramQuantile(arrayMap(x -> toFloat64(x), groupArray(le)), groupArray(value), %.3f) as value FROM (%s) GROUP BY %s ORDER BY %s ts`, groupTagsWithoutLe, value, query, groupByWithoutLe, groupTagsWithoutLe)
