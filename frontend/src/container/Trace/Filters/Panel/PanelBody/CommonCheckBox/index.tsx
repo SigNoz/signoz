@@ -66,7 +66,7 @@ function CommonCheckBox(props: CommonCheckBoxProps): JSX.Element {
 					}
 					return countA - countB;
 				})
-				.filter((filterParam) => {
+				.filter((status) => {
 					if (searchFilter.length === 0) {
 						return true;
 					}
