@@ -2348,14 +2348,14 @@ func (ah *APIHandler) listLogsPipelines(ctx context.Context) (*logparsingpipelin
 func (ah *APIHandler) listLogsPipelinesByVersion(ctx context.Context, version int) (*logparsingpipeline.PipelinesResponse, *model.ApiError) {
 	payload, apierr := ah.LogsParsingPipelineController.GetPipelinesByVersion(ctx, version)
 	if apierr != nil {
-		return payload, apierr
+		return nil, apierr
 	}
 
 	// todo(Nitya): make a new API for history pagination
 	limit := 10
 	history, err := agentConf.GetConfigHistory(ctx, logPipelines, limit)
 	if err != nil {
-		return payload, model.InternalError(fmt.Errorf("failed to retrieve agent config history with error %w", err))
+		return nil, model.InternalError(fmt.Errorf("failed to retrieve agent config history with error %w", err))
 	}
 
 	payload.History = history
