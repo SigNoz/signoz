@@ -33,20 +33,10 @@ type PipelinesResponse struct {
 
 // ApplyPipelines stores new or changed pipelines and initiates a new config update
 func (ic *LogParsingPipelineController) ApplyPipelines(ctx context.Context, postable []PostablePipeline) (*PipelinesResponse, *model.ApiError) {
-	// get user info from context
-	jwt, err := auth.ExtractJwtFromContext(ctx)
+	// get user id from context
+	userId, err := auth.ExtractUserIdFromContext(ctx)
 	if err != nil {
-		return nil, model.InternalError(fmt.Errorf("failed to extract jwt from context %v", err))
-	}
-
-	claims, err := auth.ParseJWT(jwt)
-	if err != nil {
-		return nil, model.InternalError(fmt.Errorf("failed get claims from jwt %v", err))
-	}
-
-	userId := ""
-	if v, ok := claims["id"]; ok {
-		userId = v.(string)
+		return nil, model.InternalError(fmt.Errorf("failed to get userId from context %v", err))
 	}
 
 	var pipelines []model.Pipeline
