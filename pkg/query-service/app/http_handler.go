@@ -2297,7 +2297,7 @@ func (ah *APIHandler) listLogsPipelinesHandler(w http.ResponseWriter, r *http.Re
 
 	version, err := parseAgentConfigVersion(r)
 	if err != nil {
-		RespondError(w, model.BadRequestStr("invalid version"), nil)
+		RespondError(w, err, nil)
 		return
 	}
 
@@ -2323,8 +2323,7 @@ func (ah *APIHandler) listLogsPipelines(ctx context.Context) (*logparsingpipelin
 	lastestConfig, err := agentConf.GetLatestVersion(ctx, logPipelines)
 	if err != nil {
 		if err != sql.ErrNoRows {
-			zap.S().Errorf("failed to get latest agent config version ", err)
-			return nil, model.InternalError(fmt.Errorf("failed to get latest agent config version"))
+			return nil, model.InternalError(fmt.Errorf("failed to get latest agent config version with error %w", err))
 		} else {
 			return nil, nil
 		}
@@ -2332,14 +2331,14 @@ func (ah *APIHandler) listLogsPipelines(ctx context.Context) (*logparsingpipelin
 
 	payload, apierr := ah.LogsParsingPipelineController.GetPipelinesByVersion(ctx, lastestConfig.Version)
 	if apierr != nil {
-		return payload, apierr
+		return nil, apierr
 	}
 
 	// todo(Nitya): make a new API for history pagination
 	limit := 10
 	history, err := agentConf.GetConfigHistory(ctx, logPipelines, limit)
 	if err != nil {
-		return payload, apierr
+		return nil, model.InternalError(fmt.Errorf("failed to get config history with error %w", err))
 	}
 	payload.History = history
 	return payload, nil
@@ -2356,8 +2355,7 @@ func (ah *APIHandler) listLogsPipelinesByVersion(ctx context.Context, version in
 	limit := 10
 	history, err := agentConf.GetConfigHistory(ctx, logPipelines, limit)
 	if err != nil {
-		zap.S().Errorf("failed to retreive config history for element type", logPipelines, err)
-		return payload, model.InternalError(fmt.Errorf("failed to retrieve agent config history"))
+		return payload, model.InternalError(fmt.Errorf("failed to retrieve agent config history with error %w", err))
 	}
 
 	payload.History = history
@@ -2382,7 +2380,6 @@ func (ah *APIHandler) createLogsPipeline(w http.ResponseWriter, r *http.Request)
 
 		for _, p := range postable {
 			if apierr := p.IsValid(); apierr != nil {
-				zap.S().Debugf("received invalid pipeline in the POST request", apierr)
 				return nil, apierr
 			}
 		}
