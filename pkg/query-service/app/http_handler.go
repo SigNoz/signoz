@@ -2281,12 +2281,16 @@ func parseAgentConfigVersion(r *http.Request) (int, *model.ApiError) {
 	versionString := mux.Vars(r)["version"]
 
 	if versionString == "latest" {
-		return 0, nil
+		return -1, nil
 	}
 
 	version64, err := strconv.ParseInt(versionString, 0, 8)
 
 	if err != nil {
+		return 0, model.BadRequestStr("invalid version number")
+	}
+
+	if version64 <= 0 {
 		return 0, model.BadRequestStr("invalid version number")
 	}
 
@@ -2304,7 +2308,7 @@ func (ah *APIHandler) listLogsPipelinesHandler(w http.ResponseWriter, r *http.Re
 	var payload *logparsingpipeline.PipelinesResponse
 	var apierr *model.ApiError
 
-	if version != 0 {
+	if version != -1 {
 		payload, apierr = ah.listLogsPipelinesByVersion(context.Background(), version)
 	} else {
 		payload, apierr = ah.listLogsPipelines(context.Background())
