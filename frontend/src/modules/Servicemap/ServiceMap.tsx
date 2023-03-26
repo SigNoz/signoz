@@ -3,7 +3,10 @@
 
 import { Card } from 'antd';
 import Spinner from 'components/Spinner';
+import ResourceAttributesFilter from 'container/ResourceAttributesFilter';
 import { useIsDarkMode } from 'hooks/useDarkMode';
+import useResourceAttribute from 'hooks/useResourceAttribute';
+import { IResourceAttribute } from 'hooks/useResourceAttribute/types';
 import React, { useEffect, useRef } from 'react';
 import { ForceGraph2D } from 'react-force-graph';
 import { connect } from 'react-redux';
@@ -38,7 +41,10 @@ const Container = styled.div`
 interface ServiceMapProps extends RouteComponentProps<any> {
 	serviceMap: ServiceMapStore;
 	globalTime: GlobalTime;
-	getDetailedServiceMapItems: (time: GlobalTime) => void;
+	getDetailedServiceMapItems: (
+		time: GlobalTime,
+		queries: IResourceAttribute[],
+	) => void;
 }
 interface graphNode {
 	id: string;
@@ -64,13 +70,15 @@ function ServiceMap(props: ServiceMapProps): JSX.Element {
 
 	const { getDetailedServiceMapItems, globalTime, serviceMap } = props;
 
+	const { queries } = useResourceAttribute();
+
 	useEffect(() => {
 		/*
 			Call the apis only when the route is loaded.
 			Check this issue: https://github.com/SigNoz/signoz/issues/110
 		 */
-		getDetailedServiceMapItems(globalTime);
-	}, [globalTime, getDetailedServiceMapItems]);
+		getDetailedServiceMapItems(globalTime, queries);
+	}, [globalTime, getDetailedServiceMapItems, queries]);
 
 	useEffect(() => {
 		fgRef.current && fgRef.current.d3Force('charge').strength(-400);
@@ -92,6 +100,7 @@ function ServiceMap(props: ServiceMapProps): JSX.Element {
 	const graphData = { nodes, links };
 	return (
 		<Container>
+			<ResourceAttributesFilter />
 			<ForceGraph2D
 				ref={fgRef}
 				cooldownTicks={100}
