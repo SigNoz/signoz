@@ -143,7 +143,7 @@ func (r *Repo) getPipelinesByVersion(ctx context.Context, version int) ([]model.
 }
 
 // GetPipelines returns pipeline and errors (if any)
-func (r *Repo) GetPipeline(ctx context.Context, id string) (*model.Pipeline, *model.ApiError) {
+func (r *Repo) GetPipeline(ctx context.Context, id string) (*model.Pipeline, error) {
 	pipelines := []model.Pipeline{}
 
 	pipelineQuery := `SELECT id, 
@@ -183,7 +183,7 @@ func (r *Repo) GetPipeline(ctx context.Context, id string) (*model.Pipeline, *mo
 
 }
 
-func (r *Repo) DeletePipeline(ctx context.Context, id string) *model.ApiError {
+func (r *Repo) DeletePipeline(ctx context.Context, id string) error {
 	deleteQuery := `DELETE
 		FROM pipelines 
 		WHERE id = $1`

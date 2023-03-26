@@ -2329,9 +2329,9 @@ func (ah *APIHandler) listLogsPipelines(ctx context.Context) (*logparsingpipelin
 		}
 	}
 
-	payload, apierr := ah.LogsParsingPipelineController.GetPipelinesByVersion(ctx, lastestConfig.Version)
-	if apierr != nil {
-		return nil, apierr
+	payload, err := ah.LogsParsingPipelineController.GetPipelinesByVersion(ctx, lastestConfig.Version)
+	if err != nil {
+		return nil, model.InternalError(fmt.Errorf("failed to get pipelines with error %w", err))
 	}
 
 	// todo(Nitya): make a new API for history pagination
@@ -2346,9 +2346,9 @@ func (ah *APIHandler) listLogsPipelines(ctx context.Context) (*logparsingpipelin
 
 // listLogsPipelinesByVersion lists pipelines along with config version history
 func (ah *APIHandler) listLogsPipelinesByVersion(ctx context.Context, version int) (*logparsingpipeline.PipelinesResponse, *model.ApiError) {
-	payload, apierr := ah.LogsParsingPipelineController.GetPipelinesByVersion(ctx, version)
-	if apierr != nil {
-		return nil, apierr
+	payload, err := ah.LogsParsingPipelineController.GetPipelinesByVersion(ctx, version)
+	if err != nil {
+		return nil, model.InternalError(err)
 	}
 
 	// todo(Nitya): make a new API for history pagination
@@ -2373,23 +2373,23 @@ func (ah *APIHandler) createLogsPipeline(w http.ResponseWriter, r *http.Request)
 
 	ctx := auth.AttachJwtToContext(context.Background(), r)
 
-	createPipeline := func(ctx context.Context, postable []logparsingpipeline.PostablePipeline) (*logparsingpipeline.PipelinesResponse, *model.ApiError) {
+	createPipeline := func(ctx context.Context, postable []logparsingpipeline.PostablePipeline) (*logparsingpipeline.PipelinesResponse, error) {
 		if len(postable) == 0 {
 			zap.S().Warnf("found no pipelines in the http request, this will delete all the pipelines")
 		}
 
 		for _, p := range postable {
-			if apierr := p.IsValid(); apierr != nil {
-				return nil, apierr
+			if err := p.IsValid(); err != nil {
+				return nil, model.BadRequestStr(err.Error())
 			}
 		}
 
 		return ah.LogsParsingPipelineController.ApplyPipelines(ctx, postable)
 	}
 
-	res, apierr := createPipeline(ctx, req.Pipelines)
-	if apierr != nil {
-		RespondError(w, apierr, nil)
+	res, err := createPipeline(ctx, req.Pipelines)
+	if err != nil {
+		RespondError(w, model.InternalError(err), nil)
 		return
 	}
 

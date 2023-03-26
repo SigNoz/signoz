@@ -32,7 +32,7 @@ type PipelinesResponse struct {
 }
 
 // ApplyPipelines stores new or changed pipelines and initiates a new config update
-func (ic *LogParsingPipelineController) ApplyPipelines(ctx context.Context, postable []PostablePipeline) (*PipelinesResponse, *model.ApiError) {
+func (ic *LogParsingPipelineController) ApplyPipelines(ctx context.Context, postable []PostablePipeline) (*PipelinesResponse, error) {
 	// get user id from context
 	userId, err := auth.ExtractUserIdFromContext(ctx)
 	if err != nil {
@@ -52,16 +52,16 @@ func (ic *LogParsingPipelineController) ApplyPipelines(ctx context.Context, post
 			// looks like a new or changed pipeline, store it first
 			inserted, err := ic.insertPipeline(ctx, &r)
 			if err != nil || inserted == nil {
-				zap.S().Errorf("failed to insert edited pipeline", err)
-				return nil, model.BadRequestStr("failed to insert edited pipeline")
+				zap.S().Errorf("failed to insert edited pipeline %s", err.Error())
+				return nil, fmt.Errorf("failed to insert edited pipeline")
 			} else {
 				pipelines = append(pipelines, *inserted)
 			}
 		} else {
 			selected, err := ic.GetPipeline(ctx, r.Id)
 			if err != nil || selected == nil {
-				zap.S().Errorf("failed to find edited pipeline", err)
-				return nil, model.BadRequestStr("failed to find pipeline, invalid request")
+				zap.S().Errorf("failed to find edited pipeline %s", err.Error())
+				return nil, fmt.Errorf("failed to find pipeline, invalid request")
 			}
 			pipelines = append(pipelines, *selected)
 		}
@@ -71,12 +71,12 @@ func (ic *LogParsingPipelineController) ApplyPipelines(ctx context.Context, post
 	// prepare filter config (processor) from the pipelines
 	filterConfig, names, err := PreparePipelineProcessor(pipelines)
 	if err != nil {
-		zap.S().Errorf("failed to generate processor config from pipelines for deployment", err)
-		return nil, model.BadRequest(err)
+		zap.S().Errorf("failed to generate processor config from pipelines for deployment %s", err.Error())
+		return nil, err
 	}
 
 	if !agentConf.Ready() {
-		return nil, model.InternalError(fmt.Errorf("Agent updater unavailable at the moment. Please try in sometime"))
+		return nil, fmt.Errorf("agent updater unavailable at the moment. Please try in sometime")
 	}
 
 	// prepare config elements
@@ -88,7 +88,7 @@ func (ic *LogParsingPipelineController) ApplyPipelines(ctx context.Context, post
 	// prepare config by calling gen func
 	cfg, err := agentConf.StartNewVersion(ctx, userId, agentConf.ElementTypeLogPipelines, elements)
 	if err != nil || cfg == nil {
-		return nil, model.InternalError(err)
+		return nil, err
 	}
 
 	zap.S().Info("applying drop pipeline config", cfg)
@@ -107,23 +107,22 @@ func (ic *LogParsingPipelineController) ApplyPipelines(ctx context.Context, post
 	}
 
 	if err != nil {
-		zap.S().Errorf("failed to insert pipelines into agent config", filterConfig, err)
-		return response, model.InternalError(fmt.Errorf("failed to apply pipelines"))
+		return response, fmt.Errorf("failed to apply pipelines")
 	}
 	return response, nil
 }
 
 // GetPipelinesByVersion responds with version info and associated pipelines
-func (ic *LogParsingPipelineController) GetPipelinesByVersion(ctx context.Context, version int) (*PipelinesResponse, *model.ApiError) {
-	pipelines, apiErr := ic.getPipelinesByVersion(ctx, version)
-	if apiErr != nil {
-		zap.S().Errorf("failed to get pipelines for version", version, apiErr)
-		return nil, model.InternalError(fmt.Errorf("failed to get pipelines for given version"))
+func (ic *LogParsingPipelineController) GetPipelinesByVersion(ctx context.Context, version int) (*PipelinesResponse, error) {
+	pipelines, errors := ic.getPipelinesByVersion(ctx, version)
+	if errors != nil {
+		zap.S().Errorf("failed to get pipelines for version %d, %w", version, errors)
+		return nil, fmt.Errorf("failed to get pipelines for given version")
 	}
 	configVersion, err := agentConf.GetConfigVersion(ctx, agentConf.ElementTypeLogPipelines, version)
 	if err != nil || configVersion == nil {
-		zap.S().Errorf("failed to get pipelines for version", version, err)
-		return nil, model.InternalError(fmt.Errorf("failed to get pipelines for given version"))
+		zap.S().Errorf("failed to get config for version %d, %s", version, err.Error())
+		return nil, fmt.Errorf("failed to get config for given version")
 	}
 
 	return &PipelinesResponse{
