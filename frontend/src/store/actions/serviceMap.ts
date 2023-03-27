@@ -1,5 +1,6 @@
 import api from 'api';
 import { IResourceAttribute } from 'hooks/useResourceAttribute/types';
+import { convertRawQueriesToTraceSelectedTags } from 'hooks/useResourceAttribute/utils';
 import { Dispatch } from 'redux';
 import { GlobalTime } from 'types/actions/globalTime';
 
@@ -41,7 +42,7 @@ export const getDetailedServiceMapItems = (
 	const serviceMapPayload = {
 		start,
 		end,
-		tags: queries,
+		tags: convertRawQueriesToTraceSelectedTags(queries),
 	};
 	const [dependencyGraphResponse] = await Promise.all([
 		api.post<ServicesMapItem[]>(`/dependency_graph`, serviceMapPayload),
