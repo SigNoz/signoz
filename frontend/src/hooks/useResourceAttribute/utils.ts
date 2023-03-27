@@ -46,6 +46,7 @@ export const convertOperatorLabelToTraceOperator = (
 
 export const convertRawQueriesToTraceSelectedTags = (
 	queries: IResourceAttribute[],
+	tagType = 'ResourceAttribute',
 ): Tags[] =>
 	queries.map((query) => ({
 		Key: convertMetricKeyToTrace(query.tagKey),
@@ -53,6 +54,7 @@ export const convertRawQueriesToTraceSelectedTags = (
 		StringValues: query.tagValue,
 		NumberValues: [],
 		BoolValues: [],
+		TagType: tagType,
 	}));
 
 /**

@@ -19,6 +19,7 @@ import ROUTES from 'constants/routes';
 import dayjs from 'dayjs';
 import { useNotifications } from 'hooks/useNotifications';
 import useResourceAttribute from 'hooks/useResourceAttribute';
+import { convertRawQueriesToTraceSelectedTags } from 'hooks/useResourceAttribute/utils';
 import useUrlQuery from 'hooks/useUrlQuery';
 import createQueryParams from 'lib/createQueryParams';
 import history from 'lib/history';
@@ -109,7 +110,7 @@ function AllErrors(): JSX.Element {
 					orderParam: getUpdatedParams,
 					exceptionType: getUpdatedExceptionType,
 					serviceName: getUpdatedServiceName,
-					tags: JSON.stringify(queries),
+					tags: convertRawQueriesToTraceSelectedTags(queries),
 				}),
 			enabled: !loading,
 		},
@@ -128,7 +129,7 @@ function AllErrors(): JSX.Element {
 					start: minTime,
 					exceptionType: getUpdatedExceptionType,
 					serviceName: getUpdatedServiceName,
-					tags: JSON.stringify(queries),
+					tags: convertRawQueriesToTraceSelectedTags(queries),
 				}),
 			enabled: !loading,
 		},
