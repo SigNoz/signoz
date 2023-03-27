@@ -3,7 +3,6 @@ import {
 	getResourceAttributesTagValues,
 } from 'api/metrics/getResourceAttributes';
 import { OperatorConversions } from 'constants/resourceAttributes';
-import ROUTES from 'constants/routes';
 import {
 	IOption,
 	IResourceAttribute,
@@ -14,8 +13,6 @@ import history from 'lib/history';
 import { IQueryBuilderTagFilterItems } from 'types/api/dashboard/getAll';
 import { OperatorValues, Tags } from 'types/reducer/trace';
 import { v4 as uuid } from 'uuid';
-
-import { whilelistedKeys } from './config';
 
 /**
  * resource_x_y -> x.y
@@ -142,10 +139,3 @@ export const isResourceEmpty = (
 	staging: IResourceAttributeProps['staging'],
 	selectedQuery: IResourceAttributeProps['selectedQuery'],
 ): boolean => !!(queries.length || staging.length || selectedQuery.length);
-
-export const filterKeys = (pathname: string, filters: IOption[]): IOption[] => {
-	if (ROUTES.SERVICE_MAP === pathname) {
-		return filters.filter((filter) => whilelistedKeys.includes(filter.value));
-	}
-	return filters;
-};

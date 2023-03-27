@@ -1,7 +1,7 @@
 import { useMachine } from '@xstate/react';
 import { encode } from 'js-base64';
 import history from 'lib/history';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 
 import { ResourceContext } from './context';
@@ -13,7 +13,6 @@ import {
 } from './types';
 import {
 	createQuery,
-	filterKeys,
 	getResourceAttributeQueriesFromURL,
 	GetTagKeys,
 	GetTagValues,
@@ -41,29 +40,26 @@ function ResourceProvider({ children }: Props): JSX.Element {
 		}
 	};
 
-	const dispatchQueries = useCallback((queries: IResourceAttribute[]): void => {
-		// not to watch the history change
-		history.replace({
-			pathname: window.location.pathname,
-			search:
-				queries && queries.length
-					? `?resourceAttribute=${encode(JSON.stringify(queries))}`
-					: '',
-		});
-		setQueries(queries);
-	}, []);
+	const dispatchQueries = useCallback(
+		(queries: IResourceAttribute[]): void => {
+			history.replace({
+				pathname,
+				search:
+					queries && queries.length
+						? `?resourceAttribute=${encode(JSON.stringify(queries))}`
+						: '',
+			});
+			setQueries(queries);
+		},
+		[pathname],
+	);
 
 	const [state, send] = useMachine(ResourceAttributesFilterMachine, {
 		actions: {
 			onSelectTagKey: () => {
 				handleLoading(true);
 				GetTagKeys()
-					.then((tagKeys) =>
-						setOptionsData({
-							options: filterKeys(pathname, tagKeys),
-							mode: undefined,
-						}),
-					)
+					.then((tagKeys) => setOptionsData({ options: tagKeys, mode: undefined }))
 					.finally(() => {
 						handleLoading(false);
 					});
@@ -162,14 +158,6 @@ function ResourceProvider({ children }: Props): JSX.Element {
 			selectedQuery,
 			optionsData,
 		],
-	);
-
-	// clear all when the path changes
-	useEffect(
-		() => (): void => {
-			handleClearAll();
-		},
-		[handleClearAll, pathname],
 	);
 
 	return (
