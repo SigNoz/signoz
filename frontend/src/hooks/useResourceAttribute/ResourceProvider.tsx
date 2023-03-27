@@ -1,7 +1,7 @@
 import { useMachine } from '@xstate/react';
 import { encode } from 'js-base64';
 import history from 'lib/history';
-import React, { useCallback, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 
 import { ResourceContext } from './context';
@@ -13,11 +13,11 @@ import {
 } from './types';
 import {
 	createQuery,
+	filterKeys,
 	getResourceAttributeQueriesFromURL,
 	GetTagKeys,
 	GetTagValues,
 	OperatorSchema,
-	resourceAttributesQueryToPromQL,
 } from './utils';
 
 function ResourceProvider({ children }: Props): JSX.Element {
@@ -27,10 +27,6 @@ function ResourceProvider({ children }: Props): JSX.Element {
 	const [staging, setStaging] = useState<string[]>([]);
 	const [queries, setQueries] = useState<IResourceAttribute[]>(
 		getResourceAttributeQueriesFromURL(),
-	);
-
-	const [promQLQuery, setpromQLQuery] = useState<string>(
-		resourceAttributesQueryToPromQL(queries),
 	);
 
 	const [optionsData, setOptionsData] = useState<OptionsData>({
@@ -45,27 +41,29 @@ function ResourceProvider({ children }: Props): JSX.Element {
 		}
 	};
 
-	const dispatchQueries = useCallback(
-		(queries: IResourceAttribute[]): void => {
-			history.replace({
-				pathname,
-				search:
-					queries && queries.length
-						? `?resourceAttribute=${encode(JSON.stringify(queries))}`
-						: '',
-			});
-			setQueries(queries);
-			setpromQLQuery(resourceAttributesQueryToPromQL(queries));
-		},
-		[pathname],
-	);
+	const dispatchQueries = useCallback((queries: IResourceAttribute[]): void => {
+		// not to watch the history change
+		history.replace({
+			pathname: window.location.pathname,
+			search:
+				queries && queries.length
+					? `?resourceAttribute=${encode(JSON.stringify(queries))}`
+					: '',
+		});
+		setQueries(queries);
+	}, []);
 
 	const [state, send] = useMachine(ResourceAttributesFilterMachine, {
 		actions: {
 			onSelectTagKey: () => {
 				handleLoading(true);
 				GetTagKeys()
-					.then((tagKeys) => setOptionsData({ options: tagKeys, mode: undefined }))
+					.then((tagKeys) =>
+						setOptionsData({
+							options: filterKeys(pathname, tagKeys),
+							mode: undefined,
+						}),
+					)
 					.finally(() => {
 						handleLoading(false);
 					});
@@ -143,7 +141,6 @@ function ResourceProvider({ children }: Props): JSX.Element {
 		() => ({
 			queries,
 			staging,
-			promQLQuery,
 			handleClearAll,
 			handleClose,
 			handleBlur,
@@ -160,12 +157,19 @@ function ResourceProvider({ children }: Props): JSX.Element {
 			handleClose,
 			handleFocus,
 			loading,
-			promQLQuery,
 			queries,
 			staging,
 			selectedQuery,
 			optionsData,
 		],
+	);
+
+	// clear all when the path changes
+	useEffect(
+		() => (): void => {
+			handleClearAll();
+		},
+		[handleClearAll, pathname],
 	);
 
 	return (
