@@ -91,6 +91,7 @@ function ServiceMap(props: ServiceMapProps): JSX.Element {
 	if (!serviceMap.loading && serviceMap.items.length === 0) {
 		return (
 			<Container>
+				<ResourceAttributesFilter />
 				<Card>No Service Found</Card>
 			</Container>
 		);
