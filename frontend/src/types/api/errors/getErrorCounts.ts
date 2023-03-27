@@ -1,3 +1,4 @@
+import { IResourceAttribute } from 'hooks/useResourceAttribute/types';
 import { GlobalTime } from 'types/actions/globalTime';
 
 export type Props = {
@@ -5,7 +6,7 @@ export type Props = {
 	end: GlobalTime['minTime'];
 	exceptionType: string;
 	serviceName: string;
-	tags: string;
+	tags: IResourceAttribute[];
 };
 
 export type PayloadProps = number;

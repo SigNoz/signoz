@@ -1,3 +1,4 @@
+import { IResourceAttribute } from 'hooks/useResourceAttribute/types';
 import { GlobalTime } from 'types/actions/globalTime';
 
 export type Order = 'ascending' | 'descending';
@@ -17,7 +18,7 @@ export interface Props {
 	offset?: number;
 	exceptionType?: string;
 	serviceName?: string;
-	tags?: string;
+	tags?: IResourceAttribute[];
 }
 
 export interface Exception {
