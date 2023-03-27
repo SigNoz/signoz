@@ -138,7 +138,12 @@ func (r *Repo) insertConfig(ctx context.Context, userId string, c *ConfigVersion
 		}
 	}
 
-	c.Version = updateVersion(configVersion.Version)
+	if configVersion != nil {
+		c.Version = updateVersion(configVersion.Version)
+	} else {
+		// first version
+		c.Version = 1
+	}
 
 	defer func() {
 		if fnerr != nil {
