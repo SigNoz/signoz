@@ -219,12 +219,5 @@ var ReservedColumnTargetAliases = map[string]struct{}{
 	"value":  {},
 }
 
-const (
-	StringTagMapCol   = "stringTagMap"
-	NumberTagMapCol   = "numberTagMap"
-	BoolTagMapCol     = "boolTagMap"
-	ResourceTagMapCol = "resourceTagsMap"
-)
-
 // logsPPLPfx is a short constant for logsPipelinePrefix
 const LogsPPLPfx = "logstransform/pipeline_"

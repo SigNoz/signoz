@@ -122,6 +122,13 @@ const (
 	LOGS
 )
 
+const (
+	StringTagMapCol   = "stringTagMap"
+	NumberTagMapCol   = "numberTagMap"
+	BoolTagMapCol     = "boolTagMap"
+	ResourceTagMapCol = "resourceTagsMap"
+)
+
 type QueryRangeParamsV2 struct {
 	DataSource           DataSource             `json:"dataSource"`
 	Start                int64                  `json:"start"`
@@ -225,6 +232,7 @@ type TagQuery interface {
 	GetValues() []interface{}
 	GetOperator() Operator
 	GetTagType() TagType
+	GetTagMapColumn() string
 }
 
 type TagQueryString struct {
@@ -234,12 +242,12 @@ type TagQueryString struct {
 	tagType  TagType
 }
 
-func NewTagQueryString(key string, values []string, operator Operator, tagType TagType) TagQueryString {
+func NewTagQueryString(tag TagQueryParam) TagQueryString {
 	return TagQueryString{
-		key:      key,
-		values:   values,
-		operator: operator,
-		tagType:  tagType,
+		key:      tag.Key,
+		values:   tag.StringValues,
+		operator: tag.Operator,
+		tagType:  tag.TagType,
 	}
 }
 
@@ -263,6 +271,14 @@ func (tqs TagQueryString) GetTagType() TagType {
 	return tqs.tagType
 }
 
+func (tqs TagQueryString) GetTagMapColumn() string {
+	if tqs.GetTagType() == ResourceAttributeTagType {
+		return ResourceTagMapCol
+	} else {
+		return StringTagMapCol
+	}
+}
+
 type TagQueryBool struct {
 	key      string
 	values   []bool
@@ -270,12 +286,12 @@ type TagQueryBool struct {
 	tagType  TagType
 }
 
-func NewTagQueryBool(key string, values []bool, operator Operator, tagType TagType) TagQueryBool {
+func NewTagQueryBool(tag TagQueryParam) TagQueryBool {
 	return TagQueryBool{
-		key:      key,
-		values:   values,
-		operator: operator,
-		tagType:  tagType,
+		key:      tag.Key,
+		values:   tag.BoolValues,
+		operator: tag.Operator,
+		tagType:  tag.TagType,
 	}
 }
 
@@ -299,6 +315,10 @@ func (tqb TagQueryBool) GetTagType() TagType {
 	return tqb.tagType
 }
 
+func (tqb TagQueryBool) GetTagMapColumn() string {
+	return BoolTagMapCol
+}
+
 type TagQueryNumber struct {
 	key      string
 	values   []float64
@@ -306,12 +326,12 @@ type TagQueryNumber struct {
 	tagType  TagType
 }
 
-func NewTagQueryNumber(key string, values []float64, operator Operator, tagType TagType) TagQueryNumber {
+func NewTagQueryNumber(tag TagQueryParam) TagQueryNumber {
 	return TagQueryNumber{
-		key:      key,
-		values:   values,
-		operator: operator,
-		tagType:  tagType,
+		key:      tag.Key,
+		values:   tag.NumberValues,
+		operator: tag.Operator,
+		tagType:  tag.TagType,
 	}
 }
 
@@ -333,6 +353,10 @@ func (tqn TagQueryNumber) GetOperator() Operator {
 
 func (tqn TagQueryNumber) GetTagType() TagType {
 	return tqn.tagType
+}
+
+func (tqn TagQueryNumber) GetTagMapColumn() string {
+	return NumberTagMapCol
 }
 
 type GetFilteredSpansParams struct {
@@ -466,22 +490,27 @@ type GetTTLParams struct {
 }
 
 type ListErrorsParams struct {
+	StartStr      string `json:"start"`
+	EndStr        string `json:"end"`
 	Start         *time.Time
 	End           *time.Time
-	Limit         int64
-	OrderParam    string
-	Order         string
-	Offset        int64
-	ServiceName   string
-	ExceptionType string
-	Tags          []TagQueryParam
+	Limit         int64           `json:"limit"`
+	OrderParam    string          `json:"orderParam"`
+	Order         string          `json:"order"`
+	Offset        int64           `json:"offset"`
+	ServiceName   string          `json:"serviceName"`
+	ExceptionType string          `json:"exceptionType"`
+	Tags          []TagQueryParam `json:"tags"`
 }
 
 type CountErrorsParams struct {
+	StartStr      string `json:"start"`
+	EndStr        string `json:"end"`
 	Start         *time.Time
 	End           *time.Time
-	ServiceName   string
-	ExceptionType string
+	ServiceName   string          `json:"serviceName"`
+	ExceptionType string          `json:"exceptionType"`
+	Tags          []TagQueryParam `json:"tags"`
 }
 
 type GetErrorParams struct {
