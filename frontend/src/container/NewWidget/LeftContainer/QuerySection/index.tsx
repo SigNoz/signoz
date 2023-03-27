@@ -146,6 +146,7 @@ function QuerySection({
 	const items = [
 		{
 			key: EQueryType.QUERY_BUILDER.toString(),
+			label: 'Query Builder',
 			tab: (
 				<TabHeader
 					tabName="Query Builder"
@@ -172,6 +173,7 @@ function QuerySection({
 		},
 		{
 			key: EQueryType.CLICKHOUSE.toString(),
+			label: 'ClickHouse Query',
 			tab: (
 				<TabHeader
 					tabName="ClickHouse Query"
@@ -195,6 +197,7 @@ function QuerySection({
 		},
 		{
 			key: EQueryType.PROM.toString(),
+			label: 'PromQL',
 			tab: (
 				<TabHeader
 					tabName="PromQL"
