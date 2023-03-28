@@ -50,8 +50,9 @@ function ResourceAttributesFilter(): JSX.Element | null {
 				options={optionsData.options}
 				mode={optionsData?.mode}
 				showArrow={false}
-				onFocus={handleFocus}
+				onClick={handleFocus}
 				onBlur={handleBlur}
+				onClear={handleClearAll}
 				notFoundContent={
 					loading ? (
 						<span>

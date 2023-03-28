@@ -131,6 +131,7 @@ function ResourceProvider({ children }: Props): JSX.Element {
 		dispatchQueries([]);
 		setStaging([]);
 		setQueries([]);
+		setOptionsData({ mode: undefined, options: [] });
 	}, [dispatchQueries, send]);
 
 	const value: IResourceAttributeProps = useMemo(
