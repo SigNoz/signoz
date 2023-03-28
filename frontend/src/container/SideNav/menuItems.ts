@@ -29,12 +29,12 @@ const menus: SidebarMenu[] = [
 		to: ROUTES.LOGS,
 		name: 'Logs',
 		// tags: ['Beta'],
-		children: [
-			{
-				key: ROUTES.LOGS,
-				label: 'Search',
-			},
-		],
+		// children: [
+		// 	{
+		// 		key: ROUTES.LOGS,
+		// 		label: 'Search',
+		// 	},
+		// ],
 	},
 	{
 		Icon: DashboardFilled,
