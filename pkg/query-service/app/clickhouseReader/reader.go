@@ -41,6 +41,7 @@ import (
 
 	promModel "github.com/prometheus/common/model"
 	"go.signoz.io/signoz/pkg/query-service/app/logs"
+	"go.signoz.io/signoz/pkg/query-service/app/services"
 	"go.signoz.io/signoz/pkg/query-service/constants"
 	am "go.signoz.io/signoz/pkg/query-service/integrations/alertManager"
 	"go.signoz.io/signoz/pkg/query-service/interfaces"
@@ -1996,12 +1997,14 @@ func (r *ClickHouseReader) GetDependencyGraph(ctx context.Context, queryParams *
 			sum(total_count)/ @duration AS callRate,
 			sum(error_count)/sum(total_count) * 100 as errorRate
 		FROM %s.%s
-		WHERE toUInt64(toDateTime(timestamp)) >= @start AND toUInt64(toDateTime(timestamp)) <= @end
-		GROUP BY
-			src,
-			dest`,
+		WHERE toUInt64(toDateTime(timestamp)) >= @start AND toUInt64(toDateTime(timestamp)) <= @end`,
 		r.TraceDB, r.dependencyGraphTable,
 	)
+
+	tags := createTagQueryFromTagQueryParams(queryParams.Tags)
+	filterQuery, filterArgs := services.BuildServiceMapQuery(tags)
+	query += filterQuery + " GROUP BY src, dest;"
+	args = append(args, filterArgs...)
 
 	zap.S().Debug(query, args)
 
@@ -2009,7 +2012,7 @@ func (r *ClickHouseReader) GetDependencyGraph(ctx context.Context, queryParams *
 
 	if err != nil {
 		zap.S().Error("Error in processing sql query: ", err)
-		return nil, fmt.Errorf("Error in processing sql query")
+		return nil, fmt.Errorf("error in processing sql query %w", err)
 	}
 
 	return &response, nil
