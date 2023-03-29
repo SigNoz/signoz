@@ -29,6 +29,7 @@ function SideNav(): JSX.Element {
 	const [collapsed, setCollapsed] = useState<boolean>(
 		getLocalStorageKey(IS_SIDEBAR_COLLAPSED) === 'true',
 	);
+	const { search } = useLocation();
 	const { currentVersion, latestVersion, isCurrentVersionError } = useSelector<
 		AppState,
 		AppReducer
@@ -47,11 +48,15 @@ function SideNav(): JSX.Element {
 
 	const onClickHandler = useCallback(
 		(to: string) => {
+			const queryParams = new URLSearchParams(search);
+
+			const url = queryParams.toString();
+
 			if (pathname !== to) {
-				history.push(to);
+				history.push(`${to}?${url}`);
 			}
 		},
-		[pathname],
+		[pathname, search],
 	);
 
 	const onClickSlackHandler = (): void => {

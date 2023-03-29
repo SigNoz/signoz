@@ -1,5 +1,3 @@
-import { resourceAttributesQueryToPromQL } from 'lib/resourceAttributes';
-import { GetResourceAttributeQueriesFromURL } from 'store/actions/metrics/setResourceAttributeQueries';
 import {
 	GET_INITIAL_APPLICATION_ERROR,
 	GET_INITIAL_APPLICATION_LOADING,
@@ -9,7 +7,6 @@ import {
 	GET_SERVICE_LIST_SUCCESS,
 	MetricsActions,
 	RESET_INITIAL_APPLICATION_DATA,
-	SET_RESOURCE_ATTRIBUTE_QUERIES,
 } from 'types/actions/metrics';
 import InitialValueTypes from 'types/reducer/metrics';
 
@@ -25,10 +22,6 @@ const InitialValue: InitialValueTypes = {
 	externalAverageDuration: [],
 	externalError: [],
 	serviceOverview: [],
-	resourceAttributeQueries: GetResourceAttributeQueriesFromURL() || [],
-	resourceAttributePromQLQuery: resourceAttributesQueryToPromQL(
-		GetResourceAttributeQueriesFromURL() || [],
-	),
 	topLevelOperations: [],
 };
 
@@ -107,15 +100,6 @@ const metrics = (
 				// externalError,
 				metricsApplicationLoading: false,
 				topLevelOperations,
-			};
-		}
-
-		case SET_RESOURCE_ATTRIBUTE_QUERIES: {
-			const { queries, promQLQuery } = action.payload;
-			return {
-				...state,
-				resourceAttributeQueries: queries,
-				resourceAttributePromQLQuery: promQLQuery,
 			};
 		}
 
