@@ -42,7 +42,7 @@ function Metrics({ getService }: MetricsProps): JSX.Element {
 	const { queries } = useResourceAttribute();
 
 	const selectedTags = useMemo(
-		() => (convertRawQueriesToTraceSelectedTags(queries) as Tags[]) || [],
+		() => (convertRawQueriesToTraceSelectedTags(queries, '') as Tags[]) || [],
 		[queries],
 	);
 
