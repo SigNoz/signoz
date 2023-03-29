@@ -20,6 +20,7 @@ import {
 	NewDashboardPage,
 	OrganizationSettings,
 	PasswordReset,
+	SelfHostPage,
 	ServiceMapPage,
 	ServiceMetricsPage,
 	ServicesTablePage,
@@ -235,6 +236,13 @@ const routes: AppRoutes[] = [
 		exact: true,
 		component: SomethingWentWrong,
 		key: 'SOMETHING_WENT_WRONG',
+		isPrivate: false,
+	},
+	{
+		path: ROUTES.SELF_HOST,
+		exact: true,
+		component: SelfHostPage,
+		key: 'SELF_HOST',
 		isPrivate: false,
 	},
 ];

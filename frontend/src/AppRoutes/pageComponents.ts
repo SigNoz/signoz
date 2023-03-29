@@ -123,3 +123,7 @@ export const SomethingWentWrong = Loadable(
 export const LicensePage = Loadable(
 	() => import(/* webpackChunkName: "All Channels" */ 'pages/License'),
 );
+
+export const SelfHostPage = Loadable(
+	() => import(/* webpackChunkName: "All Channels" */ 'pages/SelfHost'),
+);

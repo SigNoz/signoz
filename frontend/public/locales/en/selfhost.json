@@ -1,0 +1,14 @@
+{
+	"form_title": "Get more info on SigNoz Enterprise",
+	"placeholder_email": "Email*",
+	"placeholder_name": "Name",
+	"placeholder_company": "Company",
+	"button_submit": "Submit",
+	"enterprise": "Enterprise",
+	"self_host_list_1": "Managed Self-Hosted SigNoz in your premise or cloud",
+	"self_host_list_2": "Single Sign-On",
+	"self_host_list_3": "SAML and LDAP support",
+	"self_host_list_4": "AWS Private Link",
+	"self_host_list_5": "Support for Dashboard configuration from expert engineers",
+	"self_host_list_6": "Support plan with SLAs"
+}

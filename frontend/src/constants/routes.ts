@@ -30,6 +30,7 @@ const ROUTES = {
 	HOME_PAGE: '/',
 	PASSWORD_RESET: '/password-reset',
 	LIST_LICENSES: '/licenses',
+	SELF_HOST: '/self-host',
 };
 
 export default ROUTES;
