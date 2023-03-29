@@ -26,7 +26,11 @@ import {
 import { Card, Col, GraphContainer, GraphTitle, Row } from '../styles';
 import TopOperationsTable from '../TopOperationsTable';
 import { Button } from './styles';
-import { onGraphClickHandler, onViewTracePopupClick } from './util';
+import {
+	handleNonInQueryRange,
+	onGraphClickHandler,
+	onViewTracePopupClick,
+} from './util';
 
 function Application({ getWidgetQueryBuilder }: DashboardProps): JSX.Element {
 	const { servicename } = useParams<{ servicename?: string }>();
@@ -67,7 +71,8 @@ function Application({ getWidgetQueryBuilder }: DashboardProps): JSX.Element {
 	);
 
 	const tagFilterItems = useMemo(
-		() => resourceAttributesToTagFilterItems(queries) || [],
+		() =>
+			handleNonInQueryRange(resourceAttributesToTagFilterItems(queries)) || [],
 		[queries],
 	);
 
