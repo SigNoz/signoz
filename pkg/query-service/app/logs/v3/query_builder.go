@@ -136,7 +136,7 @@ func buildLogsQuery(start, end, step int64, mq *v3.BuilderQuery, tableName strin
 			"from signoz_logs.distributed_logs " +
 			"where " + samplesTableTimeFilter + "%s " +
 			"group by %s " +
-			"order by ts%s"
+			"order by %sts"
 
 	// tagsWithoutLe is used to group by all tags except le
 	// This is done because we want to group by le only when we are calculating quantile
@@ -256,7 +256,7 @@ func buildLogsQuery(start, end, step int64, mq *v3.BuilderQuery, tableName strin
 // groupBy returns a string of comma separated tags for group by clause
 // `ts` is always added to the group by clause
 func groupBy(tags ...string) string {
-	tags = append([]string{"ts"}, tags...)
+	tags = append(tags, "ts")
 	return strings.Join(tags, ",")
 }
 
@@ -313,7 +313,7 @@ func orderByAttributeKeyTags(items []v3.OrderBy, tags []v3.AttributeKey) string 
 	// groupTags = append(groupTags, "ts")
 	str := orderBy(items, groupTags)
 	if len(str) > 0 {
-		str = "," + str
+		str = str + ","
 	}
 	return str
 }

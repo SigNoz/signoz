@@ -171,8 +171,8 @@ var testBuildLogsQueryData = []struct {
 			"toFloat64(count(*)) as value from signoz_logs.distributed_logs " +
 			"where (timestamp >= 1680066360726210000 AND timestamp <= 1680066458000000000) " +
 			"AND attributes_string_value[indexOf(attributes_string_key, 'method')] = 'GET' AND resources_string_value[indexOf(resources_string_key, 'x')] != 'abc' " +
-			"group by ts,method " +
-			"order by ts,method ASC",
+			"group by method,ts " +
+			"order by method ASC,ts",
 	},
 	{
 		Name:  "Test aggregate count with multiple filter,groupBy and orderBy",
@@ -199,8 +199,8 @@ var testBuildLogsQueryData = []struct {
 			"toFloat64(count(*)) as value from signoz_logs.distributed_logs " +
 			"where (timestamp >= 1680066360726210000 AND timestamp <= 1680066458000000000) " +
 			"AND attributes_string_value[indexOf(attributes_string_key, 'method')] = 'GET' AND resources_string_value[indexOf(resources_string_key, 'x')] != 'abc' " +
-			"group by ts,method,x " +
-			"order by ts,method ASC,x ASC",
+			"group by method,x,ts " +
+			"order by method ASC,x ASC,ts",
 	},
 }
 
