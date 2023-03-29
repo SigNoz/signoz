@@ -4,7 +4,6 @@ import {
 	QueryBuilderQueryTemplate,
 } from 'constants/dashboard';
 import { GRAPH_TYPES } from 'container/NewDashboard/ComponentsSlider';
-import SearchFilters from 'container/QueryBuilder/filters/SearchFilters';
 import { useNotifications } from 'hooks/useNotifications';
 import GetFormulaName from 'lib/query/GetFormulaName';
 import GetQueryName from 'lib/query/GetQueryName';
@@ -157,7 +156,6 @@ function QueryBuilderQueryContainer({
 	}
 	return (
 		<>
-			<SearchFilters />
 			{metricsBuilderQueries.queryBuilder.map((q, idx) => (
 				<MetricsBuilder
 					key={q.name}

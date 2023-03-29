@@ -1,19 +1,28 @@
 import { Select } from 'antd';
-import { IOption } from 'container/MetricsApplication/ResourceAttributesFilter/types';
+import { IOption } from 'container/FormAlertRules/labels/types';
 import React, { useCallback, useEffect, useState } from 'react';
 
-function SearchFilters(): JSX.Element {
+import { GetTagKeys } from './utils';
+
+function SearchFilters(props: SearchFiltersProps): JSX.Element {
+	const { dataSource, aggregateOperator, aggregateAttribute } = props;
 	const [currentState, setCurrentState] = useState<string>('tagKey');
 	const [optionsData, setOptionsData] = useState<IOption[]>([]);
+	const [searchText, setSearchText] = useState<string>('');
 
 	useEffect(() => {
 		if (currentState === 'tagKey') {
-			setOptionsData([
-				{ value: 'jack', label: 'Jack' },
-				{ value: 'lucy', label: 'Lucy' },
-				{ value: 'Yiminghe', label: 'yiminghe' },
-				{ value: 'disabled', label: 'Disabled' },
-			]);
+			const payload = {
+				searchText,
+				dataSource,
+				aggregateOperator,
+				aggregateAttribute,
+			};
+			GetTagKeys(payload)
+				.then((tagKeys) => setOptionsData(tagKeys))
+				.catch(() => {
+					console.log('false');
+				});
 		}
 		if (currentState === 'tagOperator') {
 			setOptionsData([
@@ -31,7 +40,13 @@ function SearchFilters(): JSX.Element {
 				{ value: '14', label: '14' },
 			]);
 		}
-	}, [currentState]);
+	}, [
+		aggregateAttribute,
+		aggregateOperator,
+		currentState,
+		dataSource,
+		searchText,
+	]);
 
 	const handleChange = useCallback(
 		(value: string[]): void => {
@@ -49,6 +64,9 @@ function SearchFilters(): JSX.Element {
 		[currentState],
 	);
 
+	const handleSearch = (e: React.SetStateAction<string>): void =>
+		setSearchText(e);
+
 	return (
 		<Select
 			allowClear
@@ -59,8 +77,15 @@ function SearchFilters(): JSX.Element {
 			showArrow={false}
 			optionLabelProp="label"
 			options={optionsData}
+			showSearch
+			onSearch={handleSearch}
 		/>
 	);
 }
 
+interface SearchFiltersProps {
+	dataSource: string;
+	aggregateOperator: string;
+	aggregateAttribute: string;
+}
 export default SearchFilters;
