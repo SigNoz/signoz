@@ -2,6 +2,8 @@ import { Select } from 'antd';
 import React from 'react';
 import { DataSource } from 'types/common/queryBuilder';
 import { SelectOption } from 'types/common/select';
+// ** Helpers
+import { transformToUpperCase } from 'utils/transformToUpperCase';
 
 // ** Types
 import { isLabelDropdown, QueryLabelProps } from './QueryLabel.interfaces';
@@ -16,26 +18,27 @@ export function QueryLabel(props: QueryLabelProps): JSX.Element {
 	const isDropdown = isLabelDropdown(props);
 
 	if (!isDropdown) {
-		const { dataSource } = props;
+		const { dataSource, style } = props;
 
 		return (
 			<StyledSingleLabel
 				defaultValue={dataSource}
 				showArrow={false}
 				dropdownStyle={{ display: 'none' }}
+				style={style}
 			>
-				<Option value={dataSource}>{dataSource}</Option>
+				<Option value={dataSource}>{transformToUpperCase(dataSource)}</Option>
 			</StyledSingleLabel>
 		);
 	}
 
-	const { onChange } = props;
+	const { onChange, value, style } = props;
 
 	const dataSourceOptions: SelectOption<
 		DataSource,
 		string
 	>[] = dataSourceMap.map((source) => ({
-		label: source.charAt(0).toUpperCase() + source.slice(1),
+		label: transformToUpperCase(source),
 		value: source,
 	}));
 
@@ -44,6 +47,8 @@ export function QueryLabel(props: QueryLabelProps): JSX.Element {
 			defaultValue={dataSourceOptions[0].value}
 			options={dataSourceOptions}
 			onChange={onChange}
+			value={value}
+			style={style}
 		/>
 	);
 }

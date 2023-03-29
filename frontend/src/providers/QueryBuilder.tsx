@@ -1,3 +1,4 @@
+// ** Helpers
 import React, {
 	createContext,
 	PropsWithChildren,
@@ -9,11 +10,12 @@ import React, {
 // TODO: Rename Types on the Reusable type for any source
 import {
 	IBuilderFormula,
-	IBuilderQuery,
+	IBuilderQueryForm,
 } from 'types/api/queryBuilder/queryBuilderData';
+import { DataSource, MetricAggregateOperator } from 'types/common/queryBuilder';
 
 export type QueryBuilderData = {
-	queryData: IBuilderQuery[];
+	queryData: IBuilderQueryForm[];
 	queryFormulas: IBuilderFormula[];
 };
 
@@ -21,8 +23,12 @@ export type QueryBuilderData = {
 export type QueryBuilderContextType = {
 	queryBuilderData: QueryBuilderData;
 	resetQueryBuilderData: () => void;
-	handleSetQueryData: (index: number, queryData: IBuilderQuery) => void;
+	handleSetQueryData: (
+		index: number,
+		queryData: Partial<IBuilderQueryForm>,
+	) => void;
 	handleSetFormulaData: (index: number, formulaData: IBuilderFormula) => void;
+	initQueryBuilderData: (queryBuilderData: QueryBuilderData) => void;
 };
 
 export const QueryBuilderContext = createContext<QueryBuilderContextType>({
@@ -30,6 +36,7 @@ export const QueryBuilderContext = createContext<QueryBuilderContextType>({
 	resetQueryBuilderData: () => {},
 	handleSetQueryData: () => {},
 	handleSetFormulaData: () => {},
+	initQueryBuilderData: () => {},
 });
 
 const initialQueryBuilderData: QueryBuilderData = {
@@ -44,20 +51,51 @@ export function QueryBuilderProvider({
 	// ** TODO: type the params which will be used for request of the data for query builder
 
 	const [queryBuilderData, setQueryBuilderData] = useState<QueryBuilderData>({
-		queryData: [],
+		// ** TODO temporary initial value for first query for testing first filters
+		queryData: [
+			// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+			// @ts-ignore
+			{
+				dataSource: DataSource.METRICS,
+				queryName: 'A',
+				aggregateOperator: Object.values(MetricAggregateOperator)[0],
+				aggregateAttribute: {
+					dataType: null,
+					key: '',
+					isColumn: null,
+					type: null,
+					label: '',
+				},
+			},
+		],
 		queryFormulas: [],
 	});
 
-	// ** TODO: Also in the future need to add AddFormula and AddQuery and remove them.
-
+	// ** Method for resetting query builder data
 	const resetQueryBuilderData = useCallback((): void => {
 		setQueryBuilderData(initialQueryBuilderData);
 	}, []);
 
-	const handleSetQueryData = useCallback(
-		// eslint-disable-next-line @typescript-eslint/no-unused-vars
-		(index: number, queryData: IBuilderQuery): void => {},
+	// ** Method for setupping query builder data
+	const initQueryBuilderData = useCallback(
+		(queryBuilderData: QueryBuilderData): void => {
+			setQueryBuilderData(queryBuilderData);
+		},
 		[],
+	);
+
+	const handleSetQueryData = useCallback(
+		(index: number, newQueryData: Partial<IBuilderQueryForm>): void => {
+			const updatedQueryBuilderData = queryBuilderData.queryData.map((item, idx) =>
+				index === idx ? { ...item, ...newQueryData } : item,
+			);
+
+			setQueryBuilderData((prevState) => ({
+				...prevState,
+				queryData: updatedQueryBuilderData,
+			}));
+		},
+		[queryBuilderData],
 	);
 	const handleSetFormulaData = useCallback(
 		// eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -76,12 +114,14 @@ export function QueryBuilderProvider({
 			resetQueryBuilderData,
 			handleSetQueryData,
 			handleSetFormulaData,
+			initQueryBuilderData,
 		}),
 		[
 			queryBuilderData,
 			resetQueryBuilderData,
 			handleSetQueryData,
 			handleSetFormulaData,
+			initQueryBuilderData,
 		],
 	);
 

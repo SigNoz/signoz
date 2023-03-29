@@ -1,7 +1,12 @@
 import { SelectProps } from 'antd';
+import { CSSProperties } from 'react';
 import { DataSource } from 'types/common/queryBuilder';
 
-type StaticLabel = { variant: 'static'; dataSource: DataSource };
+type StaticLabel = {
+	variant: 'static';
+	dataSource: DataSource;
+	style?: CSSProperties;
+};
 
 export type DropdownLabel = {
 	variant: 'dropdown';
