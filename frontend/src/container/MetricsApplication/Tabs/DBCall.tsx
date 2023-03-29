@@ -4,16 +4,14 @@ import {
 	databaseCallsAvgDuration,
 	databaseCallsRPS,
 } from 'container/MetricsApplication/MetricsPageQueries/DBCallQueries';
+import useResourceAttribute from 'hooks/useResourceAttribute';
 import {
 	convertRawQueriesToTraceSelectedTags,
 	resourceAttributesToTagFilterItems,
-} from 'lib/resourceAttributes';
+} from 'hooks/useResourceAttribute/utils';
 import React, { useMemo, useState } from 'react';
-import { useSelector } from 'react-redux';
 import { useParams } from 'react-router-dom';
-import { AppState } from 'store/reducers';
 import { Widgets } from 'types/api/dashboard/getAll';
-import MetricReducer from 'types/reducer/metrics';
 
 import { Card, GraphContainer, GraphTitle, Row } from '../styles';
 import { Button } from './styles';
@@ -26,22 +24,19 @@ import {
 function DBCall({ getWidgetQueryBuilder }: DBCallProps): JSX.Element {
 	const { servicename } = useParams<{ servicename?: string }>();
 	const [selectedTimeStamp, setSelectedTimeStamp] = useState<number>(0);
-	const { resourceAttributeQueries } = useSelector<AppState, MetricReducer>(
-		(state) => state.metrics,
-	);
+	const { queries } = useResourceAttribute();
 	const tagFilterItems = useMemo(
-		() => resourceAttributesToTagFilterItems(resourceAttributeQueries) || [],
-		[resourceAttributeQueries],
+		() => resourceAttributesToTagFilterItems(queries) || [],
+		[queries],
 	);
 	const selectedTraceTags: string = useMemo(
 		() =>
 			JSON.stringify(
-				convertRawQueriesToTraceSelectedTags(resourceAttributeQueries).concat(
-					...dbSystemTags,
-				) || [],
+				convertRawQueriesToTraceSelectedTags(queries).concat(...dbSystemTags) || [],
 			),
-		[resourceAttributeQueries],
+		[queries],
 	);
+
 	const legend = '{{db_system}}';
 
 	const databaseCallsRPSWidget = useMemo(

@@ -6,16 +6,14 @@ import {
 	externalCallErrorPercent,
 	externalCallRpsByAddress,
 } from 'container/MetricsApplication/MetricsPageQueries/ExternalQueries';
+import useResourceAttribute from 'hooks/useResourceAttribute';
 import {
 	convertRawQueriesToTraceSelectedTags,
 	resourceAttributesToTagFilterItems,
-} from 'lib/resourceAttributes';
+} from 'hooks/useResourceAttribute/utils';
 import React, { useMemo, useState } from 'react';
-import { useSelector } from 'react-redux';
 import { useParams } from 'react-router-dom';
-import { AppState } from 'store/reducers';
 import { Widgets } from 'types/api/dashboard/getAll';
-import MetricReducer from 'types/reducer/metrics';
 
 import { Card, GraphContainer, GraphTitle, Row } from '../styles';
 import { legend } from './constant';
@@ -26,13 +24,11 @@ function External({ getWidgetQueryBuilder }: ExternalProps): JSX.Element {
 	const [selectedTimeStamp, setSelectedTimeStamp] = useState<number>(0);
 
 	const { servicename } = useParams<{ servicename?: string }>();
-	const { resourceAttributeQueries } = useSelector<AppState, MetricReducer>(
-		(state) => state.metrics,
-	);
+	const { queries } = useResourceAttribute();
 
 	const tagFilterItems = useMemo(
-		() => resourceAttributesToTagFilterItems(resourceAttributeQueries) || [],
-		[resourceAttributeQueries],
+		() => resourceAttributesToTagFilterItems(queries) || [],
+		[queries],
 	);
 
 	const externalCallErrorWidget = useMemo(
@@ -51,11 +47,8 @@ function External({ getWidgetQueryBuilder }: ExternalProps): JSX.Element {
 	);
 
 	const selectedTraceTags = useMemo(
-		() =>
-			JSON.stringify(
-				convertRawQueriesToTraceSelectedTags(resourceAttributeQueries) || [],
-			),
-		[resourceAttributeQueries],
+		() => JSON.stringify(convertRawQueriesToTraceSelectedTags(queries) || []),
+		[queries],
 	);
 
 	const externalCallDurationWidget = useMemo(

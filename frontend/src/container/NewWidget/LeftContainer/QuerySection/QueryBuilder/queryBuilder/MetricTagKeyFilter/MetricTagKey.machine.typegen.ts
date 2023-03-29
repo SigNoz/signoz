@@ -2,31 +2,31 @@
 
 export interface Typegen0 {
 	'@@xstate/typegen': true;
-	eventsCausingActions: {
-		onSelectOperator: 'NEXT';
-		onBlurPurge: 'onBlur';
-		onSelectTagValue: 'NEXT';
-		onValidateQuery: 'onBlur';
-		onSelectTagKey: 'NEXT';
-	};
 	internalEvents: {
 		'xstate.init': { type: 'xstate.init' };
 	};
 	invokeSrcNameMap: {};
 	missingImplementations: {
 		actions:
-			| 'onSelectOperator'
 			| 'onBlurPurge'
+			| 'onSelectOperator'
+			| 'onSelectTagKey'
 			| 'onSelectTagValue'
-			| 'onValidateQuery'
-			| 'onSelectTagKey';
-		services: never;
-		guards: never;
+			| 'onValidateQuery';
 		delays: never;
+		guards: never;
+		services: never;
 	};
-	eventsCausingServices: {};
-	eventsCausingGuards: {};
+	eventsCausingActions: {
+		onBlurPurge: 'onBlur';
+		onSelectOperator: 'NEXT';
+		onSelectTagKey: 'NEXT';
+		onSelectTagValue: 'NEXT';
+		onValidateQuery: 'onBlur';
+	};
 	eventsCausingDelays: {};
-	matchesStates: 'TagKey' | 'Operator' | 'TagValue' | 'Idle';
+	eventsCausingGuards: {};
+	eventsCausingServices: {};
+	matchesStates: 'Idle' | 'Operator' | 'TagKey' | 'TagValue';
 	tags: never;
 }
