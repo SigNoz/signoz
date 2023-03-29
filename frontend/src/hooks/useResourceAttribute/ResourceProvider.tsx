@@ -17,7 +17,6 @@ import {
 	GetTagKeys,
 	GetTagValues,
 	OperatorSchema,
-	resourceAttributesQueryToPromQL,
 } from './utils';
 
 function ResourceProvider({ children }: Props): JSX.Element {
@@ -27,10 +26,6 @@ function ResourceProvider({ children }: Props): JSX.Element {
 	const [staging, setStaging] = useState<string[]>([]);
 	const [queries, setQueries] = useState<IResourceAttribute[]>(
 		getResourceAttributeQueriesFromURL(),
-	);
-
-	const [promQLQuery, setpromQLQuery] = useState<string>(
-		resourceAttributesQueryToPromQL(queries),
 	);
 
 	const [optionsData, setOptionsData] = useState<OptionsData>({
@@ -55,7 +50,6 @@ function ResourceProvider({ children }: Props): JSX.Element {
 						: '',
 			});
 			setQueries(queries);
-			setpromQLQuery(resourceAttributesQueryToPromQL(queries));
 		},
 		[pathname],
 	);
@@ -144,7 +138,6 @@ function ResourceProvider({ children }: Props): JSX.Element {
 		() => ({
 			queries,
 			staging,
-			promQLQuery,
 			handleClearAll,
 			handleClose,
 			handleBlur,
@@ -161,7 +154,6 @@ function ResourceProvider({ children }: Props): JSX.Element {
 			handleClose,
 			handleFocus,
 			loading,
-			promQLQuery,
 			queries,
 			staging,
 			selectedQuery,

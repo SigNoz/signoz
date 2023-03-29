@@ -57,26 +57,6 @@ export const convertRawQueriesToTraceSelectedTags = (
 		TagType: tagType,
 	}));
 
-/**
- * Converts Resource Attribute Queries to PromQL query string
- */
-export const resourceAttributesQueryToPromQL = (
-	queries: IResourceAttribute[],
-): string => {
-	let parsedQueryString = '';
-
-	if (Array.isArray(queries))
-		queries.forEach((query) => {
-			parsedQueryString += `, ${
-				query.tagKey
-			}${convertOperatorLabelToMetricOperator(
-				query.operator,
-			)}"${query.tagValue.join('|')}"`;
-		});
-
-	return parsedQueryString;
-};
-
 /* Convert resource attributes to tagFilter items for queryBuilder */
 export const resourceAttributesToTagFilterItems = (
 	queries: IResourceAttribute[],
