@@ -17,6 +17,7 @@ import { Card, GraphContainer, GraphTitle, Row } from '../styles';
 import { Button } from './styles';
 import {
 	dbSystemTags,
+	handleNonInQueryRange,
 	onGraphClickHandler,
 	onViewTracePopupClick,
 } from './util';
@@ -25,10 +26,13 @@ function DBCall({ getWidgetQueryBuilder }: DBCallProps): JSX.Element {
 	const { servicename } = useParams<{ servicename?: string }>();
 	const [selectedTimeStamp, setSelectedTimeStamp] = useState<number>(0);
 	const { queries } = useResourceAttribute();
+
 	const tagFilterItems = useMemo(
-		() => resourceAttributesToTagFilterItems(queries) || [],
+		() =>
+			handleNonInQueryRange(resourceAttributesToTagFilterItems(queries)) || [],
 		[queries],
 	);
+
 	const selectedTraceTags: string = useMemo(
 		() =>
 			JSON.stringify(

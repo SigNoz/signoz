@@ -3,9 +3,10 @@
 
 import { Card } from 'antd';
 import Spinner from 'components/Spinner';
-import { useIsDarkMode } from 'hooks/useDarkMode';
+import ResourceAttributesFilter from 'container/ResourceAttributesFilter';
+import useResourceAttribute from 'hooks/useResourceAttribute';
+import { IResourceAttribute } from 'hooks/useResourceAttribute/types';
 import React, { useEffect, useRef } from 'react';
-import { ForceGraph2D } from 'react-force-graph';
 import { connect } from 'react-redux';
 import { RouteComponentProps, withRouter } from 'react-router-dom';
 import { getDetailedServiceMapItems, ServiceMapStore } from 'store/actions';
@@ -13,7 +14,7 @@ import { AppState } from 'store/reducers';
 import styled from 'styled-components';
 import { GlobalTime } from 'types/actions/globalTime';
 
-import { getGraphData, getTooltip, getZoomPx, transformLabel } from './utils';
+import Map from './Map';
 
 const Container = styled.div`
 	.force-graph-container {
@@ -38,7 +39,10 @@ const Container = styled.div`
 interface ServiceMapProps extends RouteComponentProps<any> {
 	serviceMap: ServiceMapStore;
 	globalTime: GlobalTime;
-	getDetailedServiceMapItems: (time: GlobalTime) => void;
+	getDetailedServiceMapItems: (
+		time: GlobalTime,
+		queries: IResourceAttribute[],
+	) => void;
 }
 interface graphNode {
 	id: string;
@@ -60,17 +64,17 @@ export interface graphDataType {
 function ServiceMap(props: ServiceMapProps): JSX.Element {
 	const fgRef = useRef();
 
-	const isDarkMode = useIsDarkMode();
-
 	const { getDetailedServiceMapItems, globalTime, serviceMap } = props;
+
+	const { queries } = useResourceAttribute();
 
 	useEffect(() => {
 		/*
 			Call the apis only when the route is loaded.
 			Check this issue: https://github.com/SigNoz/signoz/issues/110
 		 */
-		getDetailedServiceMapItems(globalTime);
-	}, [globalTime, getDetailedServiceMapItems]);
+		getDetailedServiceMapItems(globalTime, queries);
+	}, [globalTime, getDetailedServiceMapItems, queries]);
 
 	useEffect(() => {
 		fgRef.current && fgRef.current.d3Force('charge').strength(-400);
@@ -83,51 +87,15 @@ function ServiceMap(props: ServiceMapProps): JSX.Element {
 	if (!serviceMap.loading && serviceMap.items.length === 0) {
 		return (
 			<Container>
+				<ResourceAttributesFilter />
 				<Card>No Service Found</Card>
 			</Container>
 		);
 	}
-
-	const { nodes, links } = getGraphData(serviceMap, isDarkMode);
-	const graphData = { nodes, links };
 	return (
 		<Container>
-			<ForceGraph2D
-				ref={fgRef}
-				cooldownTicks={100}
-				graphData={graphData}
-				linkLabel={getTooltip}
-				linkAutoColorBy={(d) => d.target}
-				linkDirectionalParticles="value"
-				linkDirectionalParticleSpeed={(d) => d.value}
-				nodeCanvasObject={(node, ctx) => {
-					const label = transformLabel(node.id);
-					const { fontSize } = node;
-					ctx.font = `${fontSize}px Roboto`;
-					const { width } = node;
-
-					ctx.fillStyle = node.color;
-					ctx.beginPath();
-					ctx.arc(node.x, node.y, width, 0, 2 * Math.PI, false);
-					ctx.fill();
-					ctx.textAlign = 'center';
-					ctx.textBaseline = 'middle';
-					ctx.fillStyle = isDarkMode ? '#ffffff' : '#000000';
-					ctx.fillText(label, node.x, node.y);
-				}}
-				onLinkHover={(node) => {
-					const tooltip = document.querySelector('.graph-tooltip');
-					if (tooltip && node) {
-						tooltip.innerHTML = getTooltip(node);
-					}
-				}}
-				nodePointerAreaPaint={(node, color, ctx) => {
-					ctx.fillStyle = color;
-					ctx.beginPath();
-					ctx.arc(node.x, node.y, 5, 0, 2 * Math.PI, false);
-					ctx.fill();
-				}}
-			/>
+			<ResourceAttributesFilter />
+			<Map fgRef={fgRef} serviceMap={serviceMap} />
 		</Container>
 	);
 }

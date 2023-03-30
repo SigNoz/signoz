@@ -18,7 +18,11 @@ import { Widgets } from 'types/api/dashboard/getAll';
 import { Card, GraphContainer, GraphTitle, Row } from '../styles';
 import { legend } from './constant';
 import { Button } from './styles';
-import { onGraphClickHandler, onViewTracePopupClick } from './util';
+import {
+	handleNonInQueryRange,
+	onGraphClickHandler,
+	onViewTracePopupClick,
+} from './util';
 
 function External({ getWidgetQueryBuilder }: ExternalProps): JSX.Element {
 	const [selectedTimeStamp, setSelectedTimeStamp] = useState<number>(0);
@@ -27,7 +31,8 @@ function External({ getWidgetQueryBuilder }: ExternalProps): JSX.Element {
 	const { queries } = useResourceAttribute();
 
 	const tagFilterItems = useMemo(
-		() => resourceAttributesToTagFilterItems(queries) || [],
+		() =>
+			handleNonInQueryRange(resourceAttributesToTagFilterItems(queries)) || [],
 		[queries],
 	);
 

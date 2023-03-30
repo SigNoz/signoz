@@ -20,7 +20,6 @@ export interface OptionsData {
 export interface IResourceAttributeProps {
 	queries: IResourceAttribute[];
 	staging: string[];
-	promQLQuery: string;
 	handleClearAll: VoidFunction;
 	handleClose: (id: string) => void;
 	handleBlur: VoidFunction;
