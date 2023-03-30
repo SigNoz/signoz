@@ -6,7 +6,7 @@ import { ForceGraph2D } from 'react-force-graph';
 
 import { getGraphData, getTooltip, transformLabel } from './utils';
 
-function Map({ fgRef, serviceMap }: any): JSX.Element {
+function ServiceMap({ fgRef, serviceMap }: any): JSX.Element {
 	const isDarkMode = useIsDarkMode();
 
 	const { nodes, links } = getGraphData(serviceMap, isDarkMode);
@@ -53,4 +53,4 @@ function Map({ fgRef, serviceMap }: any): JSX.Element {
 	);
 }
 
-export default memo(Map);
+export default memo(ServiceMap);
