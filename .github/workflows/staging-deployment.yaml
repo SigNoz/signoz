@@ -18,7 +18,7 @@ jobs:
         with:
           host: ${{ secrets.HOST_DNS }}
           username: ${{ secrets.USERNAME }}
-          key: ${{ secrets.EC2_SSH_KEY }}
+          key: ${{ secrets.SSH_KEY }}
           envs: GITHUB_BRANCH,GITHUB_SHA
           command_timeout: 60m
           script: |
