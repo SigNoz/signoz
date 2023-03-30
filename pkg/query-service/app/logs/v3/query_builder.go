@@ -204,19 +204,19 @@ func buildLogsQuery(start, end, step int64, mq *v3.BuilderQuery, tableName strin
 	// 	query := `SELECT %s ts, ` + rateWithoutNegative + `as value FROM(%s)`
 	// 	query = fmt.Sprintf(query, groupTags, subQuery)
 	// 	return query, nil
-	// case
-	// 	v3.AggregateOperatorP05,
-	// 	v3.AggregateOperatorP10,
-	// 	v3.AggregateOperatorP20,
-	// 	v3.AggregateOperatorP25,
-	// 	v3.AggregateOperatorP50,
-	// 	v3.AggregateOperatorP75,
-	// 	v3.AggregateOperatorP90,
-	// 	v3.AggregateOperatorP95,
-	// 	v3.AggregateOperatorP99:
-	// 	op := fmt.Sprintf("quantile(%v)(value)", aggregateOperatorToPercentile[mq.AggregateOperator])
-	// 	query := fmt.Sprintf(queryTmpl, groupTags, step, op, filterSubQuery, groupBy, orderBy)
-	// 	return query, nil
+	case
+		v3.AggregateOperatorP05,
+		v3.AggregateOperatorP10,
+		v3.AggregateOperatorP20,
+		v3.AggregateOperatorP25,
+		v3.AggregateOperatorP50,
+		v3.AggregateOperatorP75,
+		v3.AggregateOperatorP90,
+		v3.AggregateOperatorP95,
+		v3.AggregateOperatorP99:
+		op := fmt.Sprintf("quantile(%v)(%s)", aggregateOperatorToPercentile[mq.AggregateOperator], aggregationKey)
+		query := fmt.Sprintf(queryTmpl, step, op, filterSubQuery, groupBy, orderBy)
+		return query, nil
 	// case v3.AggregateOperatorHistQuant50, v3.AggregateOperatorHistQuant75, v3.AggregateOperatorHistQuant90, v3.AggregateOperatorHistQuant95, v3.AggregateOperatorHistQuant99:
 	// 	rateGroupBy := "fingerprint, " + groupBy
 	// 	rateGroupTags := "fingerprint, " + groupTags
@@ -273,13 +273,13 @@ func groupBy(tags ...string) string {
 }
 
 // groupSelect returns a string of comma separated tags for select clause
-func groupSelect(tags ...string) string {
-	groupTags := strings.Join(tags, ",")
-	if len(tags) != 0 {
-		groupTags += ", "
-	}
-	return groupTags
-}
+// func groupSelect(tags ...string) string {
+// 	groupTags := strings.Join(tags, ",")
+// 	if len(tags) != 0 {
+// 		groupTags += ", "
+// 	}
+// 	return groupTags
+// }
 
 func groupByAttributeKeyTags(tags ...v3.AttributeKey) string {
 	groupTags := []string{}
@@ -289,13 +289,13 @@ func groupByAttributeKeyTags(tags ...v3.AttributeKey) string {
 	return groupBy(groupTags...)
 }
 
-func groupSelectAttributeKeyTags(tags ...v3.AttributeKey) string {
-	groupTags := []string{}
-	for _, tag := range tags {
-		groupTags = append(groupTags, tag.Key)
-	}
-	return groupSelect(groupTags...)
-}
+// func groupSelectAttributeKeyTags(tags ...v3.AttributeKey) string {
+// 	groupTags := []string{}
+// 	for _, tag := range tags {
+// 		groupTags = append(groupTags, tag.Key)
+// 	}
+// 	return groupSelect(groupTags...)
+// }
 
 // orderBy returns a string of comma separated tags for order by clause
 // if the order is not specified, it defaults to ASC

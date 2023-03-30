@@ -323,6 +323,29 @@ var testBuildLogsQueryData = []struct {
 			"group by method,ts " +
 			"order by method ASC,ts",
 	},
+	{
+		Name:  "Test aggregate PXX",
+		Start: 1680066360726210000,
+		End:   1680066458000000000,
+		Step:  60,
+		BuilderQuery: &v3.BuilderQuery{
+			QueryName:          "A",
+			AggregateAttribute: v3.AttributeKey{Key: "bytes", IsColumn: true},
+			AggregateOperator:  v3.AggregateOperatorP05,
+			Expression:         "A",
+			Filters:            &v3.FilterSet{Operator: "AND", Items: []v3.FilterItem{}},
+			GroupBy:            []v3.AttributeKey{{Key: "method", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag}},
+			OrderBy:            []v3.OrderBy{{ColumnName: "method", Order: "ASC"}},
+		},
+		TableName: "logs",
+		ExpectedQuery: "SELECT toStartOfInterval(fromUnixTimestamp64Nano(timestamp), INTERVAL 60 SECOND) AS ts," +
+			" attributes_string_value[indexOf(attributes_string_key, 'method')] as method, " +
+			"quantile(0.5)(bytes) as value " +
+			"from signoz_logs.distributed_logs " +
+			"where (timestamp >= 1680066360726210000 AND timestamp <= 1680066458000000000) " +
+			"group by method,ts " +
+			"order by method ASC,ts",
+	},
 }
 
 func TestBuildLogsQuery(t *testing.T) {
