@@ -12,9 +12,16 @@ import { filterSelectStyle } from './config';
 export function SearchFilters({ query }: SearchFiltersProps): JSX.Element {
 	const [currentState, setCurrentState] = useState<string>('tagKey');
 	const [searchText, setSearchText] = useState<string>('');
+	const [isMenuOpen, setMenuOpen] = useState<boolean>(false);
 
 	const { data, isFetching } = useQuery(
-		['GET_ATTRIBUTE_KEY', searchText],
+		[
+			'GET_ATTRIBUTE_KEY',
+			searchText,
+			query.dataSource,
+			query.aggregateOperator,
+			query.aggregateAttribute,
+		],
 		async () =>
 			getAttributesKeys({
 				searchText,
@@ -55,12 +62,17 @@ export function SearchFilters({ query }: SearchFiltersProps): JSX.Element {
 	const handleSearch = (e: React.SetStateAction<string>): void =>
 		setSearchText(e);
 
+	const handleDropdownOpen = (open: boolean): void => setMenuOpen(open);
+
+	const tagRender = (props: CustomTagProps): React.ReactElement => (
+		<span>{props.label}</span>
+	);
+
 	return (
 		<Select
 			allowClear
-			showSearch
-			autoFocus
 			mode="tags"
+			open={isMenuOpen}
 			showArrow={false}
 			style={filterSelectStyle}
 			placeholder="Type your Query"
@@ -68,6 +80,8 @@ export function SearchFilters({ query }: SearchFiltersProps): JSX.Element {
 			optionFilterProp="label"
 			onChange={handleChange}
 			onSearch={handleSearch}
+			tagRender={tagRender}
+			onDropdownVisibleChange={handleDropdownOpen}
 			notFoundContent={isFetching ? <Spin size="small" /> : null}
 		/>
 	);
@@ -76,3 +90,11 @@ export function SearchFilters({ query }: SearchFiltersProps): JSX.Element {
 interface SearchFiltersProps {
 	query: IBuilderQuery;
 }
+
+type CustomTagProps = {
+	label: React.ReactNode;
+	value: unknown;
+	disabled: boolean;
+	onClose: (event?: React.MouseEvent<HTMLElement, MouseEvent>) => void;
+	closable: boolean;
+};
