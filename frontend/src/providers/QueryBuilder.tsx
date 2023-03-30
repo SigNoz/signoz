@@ -12,24 +12,12 @@ import {
 	IBuilderFormula,
 	IBuilderQueryForm,
 } from 'types/api/queryBuilder/queryBuilderData';
-import { DataSource, MetricAggregateOperator } from 'types/common/queryBuilder';
-
-export type QueryBuilderData = {
-	queryData: IBuilderQueryForm[];
-	queryFormulas: IBuilderFormula[];
-};
-
-// ** TODO: temporary types for context, fix it during development
-export type QueryBuilderContextType = {
-	queryBuilderData: QueryBuilderData;
-	resetQueryBuilderData: () => void;
-	handleSetQueryData: (
-		index: number,
-		queryData: Partial<IBuilderQueryForm>,
-	) => void;
-	handleSetFormulaData: (index: number, formulaData: IBuilderFormula) => void;
-	initQueryBuilderData: (queryBuilderData: QueryBuilderData) => void;
-};
+import {
+	DataSource,
+	MetricAggregateOperator,
+	QueryBuilderContextType,
+	QueryBuilderData,
+} from 'types/common/queryBuilder';
 
 export const QueryBuilderContext = createContext<QueryBuilderContextType>({
 	queryBuilderData: { queryData: [], queryFormulas: [] },
@@ -64,7 +52,6 @@ export function QueryBuilderProvider({
 					key: '',
 					isColumn: null,
 					type: null,
-					label: '',
 				},
 			},
 		],

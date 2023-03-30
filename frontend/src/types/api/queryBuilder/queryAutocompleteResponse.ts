@@ -5,14 +5,6 @@ export interface AutocompleteData {
 	type: 'tag' | 'resource' | null;
 }
 
-export interface AutocompleteDataLabeled extends AutocompleteData {
-	label: string;
-}
-
-export interface IQueryAutocompleteResponseWithLabel {
-	attributeKeys: AutocompleteDataLabeled[];
-}
-
 export interface IQueryAutocompleteResponse {
 	attributeKeys: AutocompleteData[];
 }

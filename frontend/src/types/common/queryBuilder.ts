@@ -1,3 +1,8 @@
+import {
+	IBuilderFormula,
+	IBuilderQueryForm,
+} from 'types/api/queryBuilder/queryBuilderData';
+
 export enum DataSource {
 	METRICS = 'metrics',
 	TRACES = 'traces',
@@ -76,3 +81,20 @@ export enum LogsAggregatorOperator {
 	P99 = 'p99',
 	RATE = 'rate',
 }
+
+export type QueryBuilderData = {
+	queryData: IBuilderQueryForm[];
+	queryFormulas: IBuilderFormula[];
+};
+
+// ** TODO: temporary types for context, fix it during development
+export type QueryBuilderContextType = {
+	queryBuilderData: QueryBuilderData;
+	resetQueryBuilderData: () => void;
+	handleSetQueryData: (
+		index: number,
+		queryData: Partial<IBuilderQueryForm>,
+	) => void;
+	handleSetFormulaData: (index: number, formulaData: IBuilderFormula) => void;
+	initQueryBuilderData: (queryBuilderData: QueryBuilderData) => void;
+};

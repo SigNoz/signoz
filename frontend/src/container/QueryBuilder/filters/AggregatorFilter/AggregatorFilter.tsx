@@ -2,7 +2,8 @@
 import { AutoComplete, Spin } from 'antd';
 // ** Api
 import { getAggregateAttribute } from 'api/queryBuilder/getAggregateAttribute';
-import React, { useState } from 'react';
+import { transformStringWithPrefix } from 'lib/query/transformStringWithPrefix';
+import React, { useMemo, useState } from 'react';
 import { useQuery } from 'react-query';
 import { SelectOption } from 'types/common/select';
 import { transformToUpperCase } from 'utils/transformToUpperCase';
@@ -17,7 +18,12 @@ export function AggregatorFilter({
 	const [searchText, setSearchText] = useState<string>('');
 
 	const { data, isFetching } = useQuery(
-		['GET_AGGREGATE_ATTRIBUTE', searchText],
+		[
+			'GET_AGGREGATE_ATTRIBUTE',
+			searchText,
+			query.aggregateOperator,
+			query.dataSource,
+		],
 		async () =>
 			getAggregateAttribute({
 				aggregateOperator: query.aggregateOperator,
@@ -33,17 +39,31 @@ export function AggregatorFilter({
 
 	const optionsData: SelectOption<string, string>[] =
 		data?.payload?.attributeKeys?.map((item) => ({
-			label: item.label,
+			label: transformStringWithPrefix({
+				str: item.key,
+				prefix: item.type || '',
+				condition: !item.isColumn,
+			}),
 			value: item.key,
 		})) || [];
 
 	const handleChangeAttribute = (value: string): void => {
 		const currentAttributeObj = data?.payload?.attributeKeys?.find(
 			(item) => item.key === value,
-		) || { label: value, key: value, type: null, dataType: null, isColumn: null };
+		) || { key: value, type: null, dataType: null, isColumn: null };
 
 		onChange(currentAttributeObj);
 	};
+
+	const value = useMemo(
+		() =>
+			transformStringWithPrefix({
+				str: query.aggregateAttribute.key,
+				prefix: query.aggregateAttribute.type || '',
+				condition: !query.aggregateAttribute.isColumn,
+			}),
+		[query],
+	);
 
 	return (
 		<AutoComplete
@@ -57,7 +77,7 @@ export function AggregatorFilter({
 			onSearch={handleSearchAttribute}
 			notFoundContent={isFetching ? <Spin size="small" /> : null}
 			options={optionsData}
-			value={query.aggregateAttribute.label}
+			value={value}
 			onChange={handleChangeAttribute}
 		/>
 	);

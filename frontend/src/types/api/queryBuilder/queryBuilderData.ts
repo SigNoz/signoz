@@ -1,6 +1,6 @@
 import { DataSource } from 'types/common/queryBuilder';
 
-import { AutocompleteDataLabeled } from './queryAutocompleteResponse';
+import { AutocompleteData } from './queryAutocompleteResponse';
 
 // Type for Formula
 export interface IBuilderFormula {
@@ -40,5 +40,5 @@ export type IBuilderQuery = {
 };
 
 export type IBuilderQueryForm = Omit<IBuilderQuery, 'aggregateAttribute'> & {
-	aggregateAttribute: AutocompleteDataLabeled;
+	aggregateAttribute: AutocompleteData;
 };

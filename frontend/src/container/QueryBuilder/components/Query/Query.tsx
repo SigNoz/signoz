@@ -1,7 +1,11 @@
 /* eslint-disable react/jsx-props-no-spreading */
 import { Col, Row } from 'antd';
 // ** Components
-import { ListMarker, QueryLabel } from 'container/QueryBuilder/components';
+import {
+	DataSourceDropdown,
+	FilterLabel,
+	ListMarker,
+} from 'container/QueryBuilder/components';
 import {
 	AggregatorFilter,
 	OperatorsSelect,
@@ -10,7 +14,7 @@ import {
 import { useQueryBuilder } from 'hooks/useQueryBuilder';
 // ** Hooks
 import React from 'react';
-import { AutocompleteDataLabeled } from 'types/api/queryBuilder/queryAutocompleteResponse';
+import { AutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { DataSource } from 'types/common/queryBuilder';
 // ** Constants
 import {
@@ -18,8 +22,8 @@ import {
 	MetricAggregateOperator,
 	TracesAggregatorOperator,
 } from 'types/common/queryBuilder';
+import { transformToUpperCase } from 'utils/transformToUpperCase';
 
-import { QueryLabelProps } from '../QueryLabel/QueryLabel.interfaces';
 // ** Types
 import { QueryProps } from './Query.interfaces';
 
@@ -51,20 +55,9 @@ export function Query({
 		handleSetQueryData(index, { disabled: !query.disabled });
 	};
 
-	const handleChangeAggregatorAttribute = (
-		value: AutocompleteDataLabeled,
-	): void => {
+	const handleChangeAggregatorAttribute = (value: AutocompleteData): void => {
 		handleSetQueryData(index, { aggregateAttribute: value });
 	};
-
-	const queryLabelProps: QueryLabelProps =
-		queryVariant === 'dropdown'
-			? {
-					variant: 'dropdown',
-					onChange: handleChangeDataSource,
-					value: query.dataSource,
-			  }
-			: { variant: 'static', dataSource: query.dataSource };
 
 	return (
 		<Row style={{ gap: '0.75rem' }}>
@@ -76,7 +69,14 @@ export function Query({
 					index={index}
 					isAvailableToDisable={isAvailableToDisable}
 				/>
-				<QueryLabel {...queryLabelProps} style={{ marginRight: '0.5rem' }} />
+				{queryVariant === 'dropdown' ? (
+					<DataSourceDropdown
+						onChange={handleChangeDataSource}
+						value={query.dataSource}
+					/>
+				) : (
+					<FilterLabel label={transformToUpperCase(query.dataSource)} />
+				)}
 			</Col>
 			<Col span={24}>
 				<OperatorsSelect
