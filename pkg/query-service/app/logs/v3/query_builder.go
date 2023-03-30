@@ -50,6 +50,7 @@ var logsOperatorMappingV3 = map[string]string{
 	"nregex": "NOT REGEXP",
 	"in":     "IN",
 	"nin":    "NOT IN",
+	// (todo) check contains/not contains/exists/not exists
 }
 
 // getClickhouseColumnName returns the corresponding clickhouse column name for the given attribute/resource key
@@ -62,7 +63,12 @@ func getClickhouseColumnName(key v3.AttributeKey) string {
 		} else {
 			columnType = "resources"
 		}
-		clickhouseColumn = fmt.Sprintf("%s_%s_value[indexOf(%s_%s_key, '%s')]", columnType, key.DataType, columnType, key.DataType, key.Key)
+
+		columnDataType := "string"
+		if key.DataType == v3.AttributeKeyDataTypeNumber {
+			columnDataType = "float64"
+		}
+		clickhouseColumn = fmt.Sprintf("%s_%s_value[indexOf(%s_%s_key, '%s')]", columnType, columnDataType, columnType, columnDataType, key.Key)
 	}
 	return clickhouseColumn
 }
@@ -156,6 +162,11 @@ func buildLogsQuery(start, end, step int64, mq *v3.BuilderQuery, tableName strin
 	// groupTags := groupSelectAttributeKeyTags(mq.GroupBy...)
 	orderBy := orderByAttributeKeyTags(mq.OrderBy, mq.GroupBy)
 
+	aggregationKey := ""
+	if mq.AggregateAttribute.Key != "" {
+		aggregationKey = getClickhouseColumnName(mq.AggregateAttribute)
+	}
+
 	switch mq.AggregateOperator {
 	// case v3.AggregateOperatorRate:
 	// 	// Calculate rate of change of metric for each unique time series
@@ -165,7 +176,9 @@ func buildLogsQuery(start, end, step int64, mq *v3.BuilderQuery, tableName strin
 	// 	subQuery := fmt.Sprintf(
 	// 		queryTmpl, "any(labels) as labels, "+groupTags, step, op, filterSubQuery, groupBy, orderBy,
 	// 	) // labels will be same so any should be fine
-	// 	query := `SELECT %s ts, ` + rateWithoutNegative + ` as value FROM(%s)`
+	// 	query := `SELECT %s ts, ` + ` as value FROM(%s)`
+
+	// 	// var rateWithoutNegative = `if (runningDifference(value) < 0 OR runningDifference(ts) < 0, nan, runningDifference(value)/runningDifference(ts))`
 
 	// 	query = fmt.Sprintf(query, "labels as fullLabels,", subQuery)
 	// 	return query, nil
@@ -219,17 +232,16 @@ func buildLogsQuery(start, end, step int64, mq *v3.BuilderQuery, tableName strin
 
 	// 	query = fmt.Sprintf(`SELECT %s ts, histogramQuantile(arrayMap(x -> toFloat64(x), groupArray(le)), groupArray(value), %.3f) as value FROM (%s) GROUP BY %s ORDER BY %s ts`, groupTagsWithoutLe, value, query, groupByWithoutLe, orderWithoutLe)
 	// 	return query, nil
-	// case v3.AggregateOperatorAvg, v3.AggregateOperatorSum, v3.AggregateOperatorMin, v3.AggregateOperatorMax:
-	// 	op := fmt.Sprintf("%s(value)", aggregateOperatorToSQLFunc[mq.AggregateOperator])
-	// 	query := fmt.Sprintf(queryTmpl, groupTags, step, op, filterSubQuery, groupBy, orderBy)
-	// 	return query, nil
-
+	case v3.AggregateOperatorAvg, v3.AggregateOperatorSum, v3.AggregateOperatorMin, v3.AggregateOperatorMax:
+		op := fmt.Sprintf("%s(%s)", aggregateOperatorToSQLFunc[mq.AggregateOperator], aggregationKey)
+		query := fmt.Sprintf(queryTmpl, step, op, filterSubQuery, groupBy, orderBy)
+		return query, nil
 	case v3.AggregateOpeatorCount:
-		op := "toFloat64(count(*))"
+		op := fmt.Sprintf("toFloat64(count(%s))", aggregationKey)
 		query := fmt.Sprintf(queryTmpl, step, op, filterSubQuery, groupBy, orderBy)
 		return query, nil
 	case v3.AggregateOperatorCountDistinct:
-		op := "toFloat64(count(distinct(value)))"
+		op := fmt.Sprintf("toFloat64(count(distinct(%s)))", aggregationKey)
 		query := fmt.Sprintf(queryTmpl, step, op, filterSubQuery, groupBy, orderBy)
 		return query, nil
 	case v3.AggregateOperatorNoOp:
@@ -310,7 +322,6 @@ func orderByAttributeKeyTags(items []v3.OrderBy, tags []v3.AttributeKey) string 
 	for _, tag := range tags {
 		groupTags = append(groupTags, tag.Key)
 	}
-	// groupTags = append(groupTags, "ts")
 	str := orderBy(items, groupTags)
 	if len(str) > 0 {
 		str = str + ","
