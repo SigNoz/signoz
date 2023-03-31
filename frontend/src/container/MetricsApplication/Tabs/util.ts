@@ -2,6 +2,7 @@ import { ActiveElement, Chart, ChartData, ChartEvent } from 'chart.js';
 import { METRICS_PAGE_QUERY_PARAM } from 'constants/query';
 import ROUTES from 'constants/routes';
 import history from 'lib/history';
+import { IQueryBuilderTagFilterItems } from 'types/api/dashboard/getAll';
 import { Tags } from 'types/reducer/trace';
 
 export const dbSystemTags: Tags[] = [
@@ -60,7 +61,7 @@ export function onGraphClickHandler(
 			const points = chart.getElementsAtEventForMode(
 				event.native,
 				'nearest',
-				{ intersect: false },
+				{ intersect: true },
 				true,
 			);
 			const id = `${from}_button`;
@@ -84,3 +85,16 @@ export function onGraphClickHandler(
 		}
 	};
 }
+
+export const handleNonInQueryRange = (
+	tags: IQueryBuilderTagFilterItems[],
+): IQueryBuilderTagFilterItems[] =>
+	tags.map((tag) => {
+		if (tag.op === 'Not IN') {
+			return {
+				...tag,
+				op: 'NIN',
+			};
+		}
+		return tag;
+	});

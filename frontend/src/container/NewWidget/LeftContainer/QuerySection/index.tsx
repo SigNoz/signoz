@@ -34,7 +34,6 @@ import TabHeader from './TabHeader';
 import { getQueryKey } from './utils/getQueryKey';
 import { showUnstagedStashConfirmBox } from './utils/userSettings';
 
-const { TabPane } = Tabs;
 function QuerySection({
 	handleUnstagedChanges,
 	updateQuery,
@@ -144,6 +143,80 @@ function QuerySection({
 		setLocalQueryChanges(cloneDeep(updatedQuery));
 	};
 
+	const items = [
+		{
+			key: EQueryType.QUERY_BUILDER.toString(),
+			label: 'Query Builder',
+			tab: (
+				<TabHeader
+					tabName="Query Builder"
+					hasUnstagedChanges={queryDiff(
+						query,
+						localQueryChanges,
+						EQueryType.QUERY_BUILDER,
+					)}
+				/>
+			),
+			children: (
+				<QueryBuilderQueryContainer
+					key={rctTabKey.QUERY_BUILDER}
+					queryData={localQueryChanges}
+					updateQueryData={({ updatedQuery }: IHandleUpdatedQuery): void => {
+						handleLocalQueryUpdate({ updatedQuery });
+					}}
+					metricsBuilderQueries={
+						localQueryChanges[WIDGET_QUERY_BUILDER_QUERY_KEY_NAME]
+					}
+					selectedGraph={selectedGraph}
+				/>
+			),
+		},
+		{
+			key: EQueryType.CLICKHOUSE.toString(),
+			label: 'ClickHouse Query',
+			tab: (
+				<TabHeader
+					tabName="ClickHouse Query"
+					hasUnstagedChanges={queryDiff(
+						query,
+						localQueryChanges,
+						EQueryType.CLICKHOUSE,
+					)}
+				/>
+			),
+			children: (
+				<ClickHouseQueryContainer
+					key={rctTabKey.CLICKHOUSE}
+					queryData={localQueryChanges}
+					updateQueryData={({ updatedQuery }: IHandleUpdatedQuery): void => {
+						handleLocalQueryUpdate({ updatedQuery });
+					}}
+					clickHouseQueries={localQueryChanges[WIDGET_CLICKHOUSE_QUERY_KEY_NAME]}
+				/>
+			),
+		},
+		{
+			key: EQueryType.PROM.toString(),
+			label: 'PromQL',
+			tab: (
+				<TabHeader
+					tabName="PromQL"
+					hasUnstagedChanges={queryDiff(query, localQueryChanges, EQueryType.PROM)}
+				/>
+			),
+			children: (
+				<PromQLQueryContainer
+					key={rctTabKey.PROM}
+					queryData={localQueryChanges}
+					updateQueryData={({ updatedQuery }: IHandleUpdatedQuery): void => {
+						handleLocalQueryUpdate({ updatedQuery });
+					}}
+					promQLQueries={localQueryChanges[WIDGET_PROMQL_QUERY_KEY_NAME]}
+				/>
+			),
+		},
+	];
+
 	return (
 		<>
 			<div style={{ display: 'flex' }}>
@@ -165,77 +238,8 @@ function QuerySection({
 							</Button>
 						</span>
 					}
-				>
-					<TabPane
-						tab={
-							<TabHeader
-								tabName="Query Builder"
-								hasUnstagedChanges={queryDiff(
-									query,
-									localQueryChanges,
-									EQueryType.QUERY_BUILDER,
-								)}
-							/>
-						}
-						key={EQueryType.QUERY_BUILDER.toString()}
-					>
-						<QueryBuilderQueryContainer
-							key={rctTabKey.QUERY_BUILDER}
-							queryData={localQueryChanges}
-							updateQueryData={({ updatedQuery }: IHandleUpdatedQuery): void => {
-								handleLocalQueryUpdate({ updatedQuery });
-							}}
-							metricsBuilderQueries={
-								localQueryChanges[WIDGET_QUERY_BUILDER_QUERY_KEY_NAME]
-							}
-							selectedGraph={selectedGraph}
-						/>
-					</TabPane>
-					<TabPane
-						tab={
-							<TabHeader
-								tabName="ClickHouse Query"
-								hasUnstagedChanges={queryDiff(
-									query,
-									localQueryChanges,
-									EQueryType.CLICKHOUSE,
-								)}
-							/>
-						}
-						key={EQueryType.CLICKHOUSE.toString()}
-					>
-						<ClickHouseQueryContainer
-							key={rctTabKey.CLICKHOUSE}
-							queryData={localQueryChanges}
-							updateQueryData={({ updatedQuery }: IHandleUpdatedQuery): void => {
-								handleLocalQueryUpdate({ updatedQuery });
-							}}
-							clickHouseQueries={localQueryChanges[WIDGET_CLICKHOUSE_QUERY_KEY_NAME]}
-						/>
-					</TabPane>
-					<TabPane
-						tab={
-							<TabHeader
-								tabName="PromQL"
-								hasUnstagedChanges={queryDiff(
-									query,
-									localQueryChanges,
-									EQueryType.PROM,
-								)}
-							/>
-						}
-						key={EQueryType.PROM.toString()}
-					>
-						<PromQLQueryContainer
-							key={rctTabKey.PROM}
-							queryData={localQueryChanges}
-							updateQueryData={({ updatedQuery }: IHandleUpdatedQuery): void => {
-								handleLocalQueryUpdate({ updatedQuery });
-							}}
-							promQLQueries={localQueryChanges[WIDGET_PROMQL_QUERY_KEY_NAME]}
-						/>
-					</TabPane>
-				</Tabs>
+					items={items}
+				/>
 			</div>
 			{/* {localQueryChanges.map((e, index) => (
 				// <Query
