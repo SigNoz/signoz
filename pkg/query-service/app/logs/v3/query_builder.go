@@ -53,6 +53,8 @@ var logsOperatorMappingV3 = map[string]string{
 	// (todo) check contains/not contains/exists/not exists
 }
 
+var rateWithoutNegative = `if (runningDifference(value) < 0 OR runningDifference(ts) < 0, nan, runningDifference(value)/runningDifference(ts))`
+
 // getClickhouseColumnName returns the corresponding clickhouse column name for the given attribute/resource key
 func getClickhouseColumnName(key v3.AttributeKey) string {
 	clickhouseColumn := key.Key
@@ -169,7 +171,7 @@ func buildLogsQuery(start, end, step int64, mq *v3.BuilderQuery, tableName strin
 
 	switch mq.AggregateOperator {
 	// case v3.AggregateOperatorRate:
-	// 	// Calculate rate of change of metric for each unique time series
+	// 	// https://stackoverflow.com/questions/66674880/understanding-of-rate-function-of-promql
 	// 	groupBy = "fingerprint, ts"
 	// 	groupTags = "fingerprint,"
 	// 	op := "max(value)" // max value should be the closest value for point in time
@@ -194,16 +196,17 @@ func buildLogsQuery(start, end, step int64, mq *v3.BuilderQuery, tableName strin
 	// 	query = fmt.Sprintf(query, groupTags, subQuery)
 	// 	query = fmt.Sprintf(`SELECT %s ts, sum(value) as value FROM (%s) GROUP BY %s ORDER BY %s ts`, groupTags, query, groupBy, orderBy)
 	// 	return query, nil
-	// case
-	// 	v3.AggregateOperatorRateSum,
-	// 	v3.AggregateOperatorRateMax,
-	// 	v3.AggregateOperatorRateAvg,
-	// 	v3.AggregateOperatorRateMin:
-	// 	op := fmt.Sprintf("%s(value)", aggregateOperatorToSQLFunc[mq.AggregateOperator])
-	// 	subQuery := fmt.Sprintf(queryTmpl, groupTags, step, op, filterSubQuery, groupBy, orderBy)
-	// 	query := `SELECT %s ts, ` + rateWithoutNegative + `as value FROM(%s)`
-	// 	query = fmt.Sprintf(query, groupTags, subQuery)
-	// 	return query, nil
+	case
+		v3.AggregateOperatorRateSum,
+		v3.AggregateOperatorRateMax,
+		v3.AggregateOperatorRateAvg,
+		v3.AggregateOperatorRateMin:
+		op := fmt.Sprintf("%s(%s)", aggregateOperatorToSQLFunc[mq.AggregateOperator], aggregationKey)
+		subQuery := fmt.Sprintf(queryTmpl, step, op, filterSubQuery, groupBy, orderBy)
+		query := `SELECT ts, ` + rateWithoutNegative + `as value FROM(%s)`
+		// todo(nitya) check the use of group tags
+		query = fmt.Sprintf(query, subQuery)
+		return query, nil
 	case
 		v3.AggregateOperatorP05,
 		v3.AggregateOperatorP10,
