@@ -871,7 +871,7 @@ func parseFilterAttributeValueRequest(r *http.Request) (*v3.FilterAttributeValue
 	aggregateOperator := v3.AggregateOperator(r.URL.Query().Get("aggregateOperator"))
 	aggregateAttribute := r.URL.Query().Get("aggregateAttribute")
 	tagType := v3.TagType(r.URL.Query().Get("tagType"))
-	filterAttributeKeyDataType := v3.FilterAttributeKeyDataType(r.URL.Query().Get("filterAttributeKeyDataType"))
+	filterAttributeKeyDataType := v3.AttributeKeyDataType(r.URL.Query().Get("filterAttributeKeyDataType"))
 
 	limit, err := strconv.Atoi(r.URL.Query().Get("limit"))
 	if err != nil {
