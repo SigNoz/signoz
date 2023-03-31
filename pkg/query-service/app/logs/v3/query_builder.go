@@ -170,16 +170,17 @@ func buildLogsQuery(start, end, step int64, mq *v3.BuilderQuery, tableName strin
 	}
 
 	switch mq.AggregateOperator {
+	case v3.AggregateOperatorRate:
+		op := fmt.Sprintf("count(%s)/%d", aggregationKey, step)
+		query := fmt.Sprintf(queryTmpl, step, op, filterSubQuery, groupBy, orderBy)
+		return query, nil
 	case
 		v3.AggregateOperatorRateSum,
 		v3.AggregateOperatorRateMax,
 		v3.AggregateOperatorRateAvg,
 		v3.AggregateOperatorRateMin:
-		op := fmt.Sprintf("%s(%s)", aggregateOperatorToSQLFunc[mq.AggregateOperator], aggregationKey)
-		subQuery := fmt.Sprintf(queryTmpl, step, op, filterSubQuery, groupBy, orderBy)
-		query := `SELECT ts, ` + rateWithoutNegative + `as value FROM(%s)`
-		// todo(nitya) check the use of group tags
-		query = fmt.Sprintf(query, subQuery)
+		op := fmt.Sprintf("%s(%s)/%d", aggregateOperatorToSQLFunc[mq.AggregateOperator], aggregationKey, step)
+		query := fmt.Sprintf(queryTmpl, step, op, filterSubQuery, groupBy, orderBy)
 		return query, nil
 	case
 		v3.AggregateOperatorP05,
