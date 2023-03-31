@@ -3,8 +3,10 @@
 
 import { Card } from 'antd';
 import Spinner from 'components/Spinner';
+import TextToolTip from 'components/TextToolTip';
 import ResourceAttributesFilter from 'container/ResourceAttributesFilter';
 import useResourceAttribute from 'hooks/useResourceAttribute';
+import { whilelistedKeys } from 'hooks/useResourceAttribute/config';
 import { IResourceAttribute } from 'hooks/useResourceAttribute/types';
 import React, { useEffect, useRef } from 'react';
 import { connect } from 'react-redux';
@@ -94,7 +96,18 @@ function ServiceMap(props: ServiceMapProps): JSX.Element {
 	}
 	return (
 		<Container>
-			<ResourceAttributesFilter />
+			<ResourceAttributesFilter
+				suffixIcon={
+					<TextToolTip
+						{...{
+							text: `Currently, service map supports filtering of ${whilelistedKeys.join(
+								', ',
+							)} only, in resource attributes`,
+						}}
+					/>
+				}
+			/>
+
 			<Map fgRef={fgRef} serviceMap={serviceMap} />
 		</Container>
 	);
