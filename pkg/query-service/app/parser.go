@@ -22,11 +22,8 @@ import (
 	"go.signoz.io/signoz/pkg/query-service/constants"
 	"go.signoz.io/signoz/pkg/query-service/model"
 	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
-<<<<<<< HEAD
-=======
 	"go.signoz.io/signoz/pkg/query-service/utils"
 	querytemplate "go.signoz.io/signoz/pkg/query-service/utils/queryTemplate"
->>>>>>> 037559537be5536386288fdd0b53dcd23a3d8a10
 )
 
 var allowedFunctions = []string{"count", "ratePerSec", "sum", "avg", "min", "max", "p50", "p90", "p95", "p99"}

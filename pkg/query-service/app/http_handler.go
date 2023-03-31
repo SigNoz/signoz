@@ -261,13 +261,6 @@ func (aH *APIHandler) RegisterQueryRangeV3Routes(router *mux.Router, am *AuthMid
 	subRouter.HandleFunc("/query_range", am.ViewAccess(aH.QueryRangeV3)).Methods(http.MethodPost)
 }
 
-func (aH *APIHandler) RegisterQueryRangeV3Routes(router *mux.Router) {
-	subRouter := router.PathPrefix("/api/v3").Subrouter()
-	subRouter.HandleFunc("/autocomplete/aggregate_attributes", OpenAccess(aH.autocompleteAggregateAttributes)).Methods(http.MethodGet)
-	subRouter.HandleFunc("/autocomplete/attribute_keys", OpenAccess(aH.autoCompleteAttributeKeys)).Methods(http.MethodGet)
-	subRouter.HandleFunc("/autocomplete/attribute_values", OpenAccess(aH.autoCompleteAttributeValues)).Methods(http.MethodGet)
-}
-
 func (aH *APIHandler) Respond(w http.ResponseWriter, data interface{}) {
 	writeHttpResponse(w, data)
 }
