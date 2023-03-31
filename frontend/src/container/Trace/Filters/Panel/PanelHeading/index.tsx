@@ -37,6 +37,7 @@ function PanelHeading(props: PanelHeadingProps): JSX.Element {
 		filter,
 		isFilterExclude,
 		userSelectedFilter,
+		spanKind,
 	} = useSelector<AppState, TraceReducer>((state) => state.traces);
 
 	const { name: PanelName, isOpen: IsPanelOpen } = props;
@@ -75,6 +76,7 @@ function PanelHeading(props: PanelHeadingProps): JSX.Element {
 				getFilters: updatedFilterData,
 				other: Object.fromEntries(getprepdatedSelectedFilter),
 				isFilterExclude,
+				spanKind,
 			});
 
 			if (response.statusCode === 200) {
@@ -107,6 +109,7 @@ function PanelHeading(props: PanelHeadingProps): JSX.Element {
 						order: spansAggregate.order,
 						pageSize: spansAggregate.pageSize,
 						orderParam: spansAggregate.orderParam,
+						spanKind,
 					},
 				});
 
@@ -160,6 +163,7 @@ function PanelHeading(props: PanelHeadingProps): JSX.Element {
 				order: spansAggregate.order,
 				pageSize: spansAggregate.pageSize,
 				orderParam: spansAggregate.orderParam,
+				spanKind,
 			},
 		});
 
@@ -195,6 +199,7 @@ function PanelHeading(props: PanelHeadingProps): JSX.Element {
 				getFilters: filterToFetchData,
 				other: Object.fromEntries(updatedFilter),
 				isFilterExclude: postIsFilterExclude,
+				spanKind,
 			});
 
 			if (response.statusCode === 200 && response.payload) {
@@ -213,6 +218,7 @@ function PanelHeading(props: PanelHeadingProps): JSX.Element {
 						order: spansAggregate.order,
 						pageSize: spansAggregate.pageSize,
 						orderParam: spansAggregate.orderParam,
+						spanKind,
 					},
 				});
 

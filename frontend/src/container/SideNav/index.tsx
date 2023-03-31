@@ -29,6 +29,7 @@ function SideNav(): JSX.Element {
 	const [collapsed, setCollapsed] = useState<boolean>(
 		getLocalStorageKey(IS_SIDEBAR_COLLAPSED) === 'true',
 	);
+	const { search } = useLocation();
 	const { currentVersion, latestVersion, isCurrentVersionError } = useSelector<
 		AppState,
 		AppReducer
@@ -47,11 +48,15 @@ function SideNav(): JSX.Element {
 
 	const onClickHandler = useCallback(
 		(to: string) => {
+			const queryParams = new URLSearchParams(search);
+
+			const url = queryParams.toString();
+
 			if (pathname !== to) {
-				history.push(to);
+				history.push(`${to}?${url}`);
 			}
 		},
-		[pathname],
+		[pathname, search],
 	);
 
 	const onClickSlackHandler = (): void => {
@@ -64,14 +69,16 @@ function SideNav(): JSX.Element {
 
 	const isNotCurrentVersion = currentVersion !== latestVersion;
 
-	const sidebar = [
+	const sidebar: SidebarItem[] = [
 		{
 			onClick: onClickSlackHandler,
 			icon: <Slack />,
 			text: <SlackButton>Support</SlackButton>,
+			key: 'slack',
 		},
 		{
 			onClick: onClickVersionHandler,
+			key: 'version',
 			icon: isNotCurrentVersion ? (
 				<WarningOutlined style={{ color: '#E87040' }} />
 			) : (
@@ -95,50 +102,69 @@ function SideNav(): JSX.Element {
 		[pathname],
 	);
 
+	const items = [
+		...menus.map(({ to, Icon, name, tags, children }) => ({
+			key: to,
+			icon: <Icon />,
+			onClick: (): void => onClickHandler(to),
+			label: (
+				<Space>
+					<div>{name}</div>
+					{tags &&
+						tags.map((e) => (
+							<Tags key={e}>
+								<Typography.Text>{e}</Typography.Text>
+							</Tags>
+						))}
+				</Space>
+			),
+			children,
+		})),
+	];
+
+	const sidebarItems = (props: SidebarItem, index: number): SidebarItem => ({
+		key: `${index}`,
+		icon: props.icon,
+		onClick: props.onClick,
+		label: props.text,
+	});
+
 	return (
 		<Sider collapsible collapsed={collapsed} onCollapse={onCollapse} width={200}>
 			<Menu
 				theme="dark"
 				defaultSelectedKeys={[ROUTES.APPLICATION]}
 				selectedKeys={currentMenu ? [currentMenu?.to] : []}
-				mode="inline"
+				mode="vertical"
 				style={styles}
-			>
-				{menus.map(({ to, Icon, name, tags }) => (
-					<Menu.Item
-						key={to}
-						icon={<Icon />}
-						onClick={(): void => onClickHandler(to)}
-					>
-						<Space>
-							<div>{name}</div>
-							{tags &&
-								tags.map((e) => (
-									<Tags style={{ lineHeight: '1rem' }} color="#177DDC" key={e}>
-										<Typography.Text style={{ fontWeight: '300' }}>{e}</Typography.Text>
-									</Tags>
-								))}
-						</Space>
-					</Menu.Item>
-				))}
-				{sidebar.map((props, index) => (
-					<SlackMenuItemContainer
-						index={index + 1}
-						key={`${index + 1}`}
-						collapsed={collapsed}
-					>
-						<Menu.Item
-							eventKey={index.toString()}
-							onClick={props.onClick}
-							icon={props.icon}
-						>
-							{props.text}
-						</Menu.Item>
-					</SlackMenuItemContainer>
-				))}
-			</Menu>
+				items={items}
+			/>
+			{sidebar.map((props, index) => (
+				<SlackMenuItemContainer
+					index={index + 1}
+					key={`${index + 1}`}
+					collapsed={collapsed}
+				>
+					<Menu
+						theme="dark"
+						defaultSelectedKeys={[ROUTES.APPLICATION]}
+						selectedKeys={currentMenu ? [currentMenu?.to] : []}
+						mode="inline"
+						style={styles}
+						items={[sidebarItems(props, index)]}
+					/>
+				</SlackMenuItemContainer>
+			))}
 		</Sider>
 	);
+}
+
+interface SidebarItem {
+	onClick: VoidFunction;
+	icon?: React.ReactNode;
+	text?: React.ReactNode;
+	key: string;
+	label?: React.ReactNode;
 }
 
 export default SideNav;

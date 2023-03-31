@@ -30,6 +30,7 @@ function Duration(): JSX.Element {
 		selectedTags,
 		userSelectedFilter,
 		isFilterExclude,
+		spanKind,
 	} = useSelector<AppState, TraceReducer>((state) => state.traces);
 
 	const dispatch = useDispatch<Dispatch<AppActions>>();
@@ -88,6 +89,7 @@ function Duration(): JSX.Element {
 			other: Object.fromEntries(preSelectedFilter),
 			start: String(globalTime.minTime),
 			isFilterExclude,
+			spanKind,
 		});
 
 		if (response.statusCode === 200) {
@@ -113,6 +115,7 @@ function Duration(): JSX.Element {
 					order: spansAggregate.order,
 					pageSize: spansAggregate.pageSize,
 					orderParam: spansAggregate.orderParam,
+					spanKind,
 				},
 			});
 
@@ -207,7 +210,7 @@ function Duration(): JSX.Element {
 					min={Number(getMs(String(preLocalMinDuration.current || 0)))}
 					max={Number(getMs(String(preLocalMaxDuration.current || 0)))}
 					range
-					tipFormatter={TipComponent}
+					tooltip={{ formatter: TipComponent }}
 					onChange={([min, max]): void => {
 						onRangeSliderHandler([String(min), String(max)]);
 					}}

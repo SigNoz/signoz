@@ -48,6 +48,7 @@ function SearchFilter({
 		AppState,
 		ILogsReducer
 	>((state) => state.logs);
+
 	const globalTime = useSelector<AppState, GlobalReducer>(
 		(state) => state.globalTime,
 	);
@@ -73,6 +74,7 @@ function SearchFilter({
 	const handleSearch = useCallback(
 		(customQuery: string) => {
 			getLogsFields();
+			const { maxTime, minTime } = globalTime;
 
 			if (liveTail === 'PLAYING') {
 				dispatch({
@@ -86,9 +88,24 @@ function SearchFilter({
 					type: TOGGLE_LIVE_TAIL,
 					payload: liveTail,
 				});
-			} else {
-				const { maxTime, minTime } = globalTime;
+				dispatch({
+					type: SET_LOADING,
+					payload: false,
+				});
 
+				getLogsAggregate({
+					timestampStart: minTime,
+					timestampEnd: maxTime,
+					step: getStep({
+						start: minTime,
+						end: maxTime,
+						inputFormat: 'ns',
+					}),
+					q: customQuery,
+					...(idStart ? { idGt: idStart } : {}),
+					...(idEnd ? { idLt: idEnd } : {}),
+				});
+			} else {
 				getLogs({
 					q: customQuery,
 					limit: logLinesPerPage,
@@ -156,6 +173,13 @@ function SearchFilter({
 		globalTime.minTime,
 	]);
 
+	const onPopOverChange = useCallback(
+		(isVisible: boolean) => {
+			onDropDownToggleHandler(isVisible)();
+		},
+		[onDropDownToggleHandler],
+	);
+
 	return (
 		<Container>
 			<Popover
@@ -172,11 +196,9 @@ function SearchFilter({
 				overlayInnerStyle={{
 					width: `${searchRef?.current?.input?.offsetWidth || 0}px`,
 				}}
-				visible={showDropDown}
+				open={showDropDown}
 				destroyTooltipOnHide
-				onVisibleChange={(value): void => {
-					onDropDownToggleHandler(value)();
-				}}
+				onOpenChange={onPopOverChange}
 			>
 				<Input.Search
 					ref={searchRef}
@@ -185,8 +207,8 @@ function SearchFilter({
 					onChange={(e): void => {
 						const { value } = e.target;
 						setSearchText(value);
-						debouncedupdateQueryString(value);
 					}}
+					onSearch={debouncedupdateQueryString}
 					allowClear
 				/>
 			</Popover>

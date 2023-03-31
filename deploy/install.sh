@@ -51,7 +51,7 @@ check_os() {
     os_name="$(cat /etc/*-release | awk -F= '$1 == "NAME" { gsub(/"/, ""); print $2; exit }')"
 
     case "$os_name" in
-        Ubuntu*)
+        Ubuntu*|Pop!_OS)
             desired_os=1
             os="ubuntu"
             package_manager="apt-get"
@@ -228,7 +228,7 @@ wait_for_containers_start() {
 
     # The while loop is important because for-loops don't work for dynamic values
     while [[ $timeout -gt 0 ]]; do
-        status_code="$(curl -s -o /dev/null -w "%{http_code}" http://localhost:3301/api/v1/services/list || true)"
+        status_code="$(curl -s -o /dev/null -w "%{http_code}" "http://localhost:3301/api/v1/health?live=1" || true)"
         if [[ status_code -eq 200 ]]; then
             break
         else

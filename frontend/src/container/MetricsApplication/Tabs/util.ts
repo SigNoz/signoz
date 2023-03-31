@@ -2,11 +2,12 @@ import { ActiveElement, Chart, ChartData, ChartEvent } from 'chart.js';
 import { METRICS_PAGE_QUERY_PARAM } from 'constants/query';
 import ROUTES from 'constants/routes';
 import history from 'lib/history';
+import { IQueryBuilderTagFilterItems } from 'types/api/dashboard/getAll';
 import { Tags } from 'types/reducer/trace';
 
 export const dbSystemTags: Tags[] = [
 	{
-		Key: ['db.system.(string)'],
+		Key: 'db.system.(string)',
 		StringValues: [''],
 		NumberValues: [],
 		BoolValues: [],
@@ -14,14 +15,21 @@ export const dbSystemTags: Tags[] = [
 	},
 ];
 
-export function onViewTracePopupClick(
-	servicename: string | undefined,
-	selectedTraceTags: string,
-	timestamp: number,
-): VoidFunction {
+interface OnViewTracePopupClickProps {
+	servicename: string | undefined;
+	selectedTraceTags: string;
+	timestamp: number;
+	isExternalCall?: boolean;
+}
+export function onViewTracePopupClick({
+	selectedTraceTags,
+	servicename,
+	timestamp,
+	isExternalCall,
+}: OnViewTracePopupClickProps): VoidFunction {
 	return (): void => {
 		const currentTime = timestamp;
-		const tPlusOne = timestamp + 1 * 60 * 1000;
+		const tPlusOne = timestamp + 60 * 1000;
 
 		const urlParams = new URLSearchParams();
 		urlParams.set(METRICS_PAGE_QUERY_PARAM.startTime, currentTime.toString());
@@ -30,13 +38,17 @@ export function onViewTracePopupClick(
 		history.replace(
 			`${
 				ROUTES.TRACE
-			}?${urlParams.toString()}&selected={"serviceName":["${servicename}"]}&filterToFetchData=["duration","status","serviceName"]&spanAggregateCurrentPage=1&selectedTags=${selectedTraceTags}&&isFilterExclude={"serviceName":false}&userSelectedFilter={"status":["error","ok"],"serviceName":["${servicename}"]}&spanAggregateCurrentPage=1`,
+			}?${urlParams.toString()}&selected={"serviceName":["${servicename}"]}&filterToFetchData=["duration","status","serviceName"]&spanAggregateCurrentPage=1&selectedTags=${selectedTraceTags}&&isFilterExclude={"serviceName":false}&userSelectedFilter={"status":["error","ok"],"serviceName":["${servicename}"]}&spanAggregateCurrentPage=1${
+				isExternalCall ? '&spanKind=3' : ''
+			}`,
 		);
 	};
 }
 
 export function onGraphClickHandler(
-	setSelectedTimeStamp: React.Dispatch<React.SetStateAction<number>>,
+	setSelectedTimeStamp: (
+		n: number,
+	) => void | React.Dispatch<React.SetStateAction<number>>,
 ) {
 	return async (
 		event: ChartEvent,
@@ -73,3 +85,16 @@ export function onGraphClickHandler(
 		}
 	};
 }
+
+export const handleNonInQueryRange = (
+	tags: IQueryBuilderTagFilterItems[],
+): IQueryBuilderTagFilterItems[] =>
+	tags.map((tag) => {
+		if (tag.op === 'Not IN') {
+			return {
+				...tag,
+				op: 'NIN',
+			};
+		}
+		return tag;
+	});

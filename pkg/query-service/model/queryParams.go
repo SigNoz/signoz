@@ -122,6 +122,13 @@ const (
 	LOGS
 )
 
+const (
+	StringTagMapCol   = "stringTagMap"
+	NumberTagMapCol   = "numberTagMap"
+	BoolTagMapCol     = "boolTagMap"
+	ResourceTagMapCol = "resourceTagsMap"
+)
+
 type QueryRangeParamsV2 struct {
 	DataSource           DataSource             `json:"dataSource"`
 	Start                int64                  `json:"start"`
@@ -187,6 +194,7 @@ type GetServiceOverviewParams struct {
 
 type TagQueryParam struct {
 	Key          string    `json:"key"`
+	TagType      TagType   `json:"tagType"`
 	StringValues []string  `json:"stringValues"`
 	BoolValues   []bool    `json:"boolValues"`
 	NumberValues []float64 `json:"numberValues"`
@@ -212,23 +220,34 @@ const (
 	NotStartsWithOperator    Operator = "NotStartsWith"
 )
 
+type TagType string
+
+const (
+	ResourceAttributeTagType TagType = "ResourceAttribute"
+	SpanAttributeTagType     TagType = "SpanAttribute"
+)
+
 type TagQuery interface {
 	GetKey() string
 	GetValues() []interface{}
 	GetOperator() Operator
+	GetTagType() TagType
+	GetTagMapColumn() string
 }
 
 type TagQueryString struct {
 	key      string
 	values   []string
 	operator Operator
+	tagType  TagType
 }
 
-func NewTagQueryString(key string, values []string, operator Operator) TagQueryString {
+func NewTagQueryString(tag TagQueryParam) TagQueryString {
 	return TagQueryString{
-		key:      key,
-		values:   values,
-		operator: operator,
+		key:      tag.Key,
+		values:   tag.StringValues,
+		operator: tag.Operator,
+		tagType:  tag.TagType,
 	}
 }
 
@@ -248,17 +267,31 @@ func (tqs TagQueryString) GetOperator() Operator {
 	return tqs.operator
 }
 
+func (tqs TagQueryString) GetTagType() TagType {
+	return tqs.tagType
+}
+
+func (tqs TagQueryString) GetTagMapColumn() string {
+	if tqs.GetTagType() == ResourceAttributeTagType {
+		return ResourceTagMapCol
+	} else {
+		return StringTagMapCol
+	}
+}
+
 type TagQueryBool struct {
 	key      string
 	values   []bool
 	operator Operator
+	tagType  TagType
 }
 
-func NewTagQueryBool(key string, values []bool, operator Operator) TagQueryBool {
+func NewTagQueryBool(tag TagQueryParam) TagQueryBool {
 	return TagQueryBool{
-		key:      key,
-		values:   values,
-		operator: operator,
+		key:      tag.Key,
+		values:   tag.BoolValues,
+		operator: tag.Operator,
+		tagType:  tag.TagType,
 	}
 }
 
@@ -278,17 +311,27 @@ func (tqb TagQueryBool) GetOperator() Operator {
 	return tqb.operator
 }
 
+func (tqb TagQueryBool) GetTagType() TagType {
+	return tqb.tagType
+}
+
+func (tqb TagQueryBool) GetTagMapColumn() string {
+	return BoolTagMapCol
+}
+
 type TagQueryNumber struct {
 	key      string
 	values   []float64
 	operator Operator
+	tagType  TagType
 }
 
-func NewTagQueryNumber(key string, values []float64, operator Operator) TagQueryNumber {
+func NewTagQueryNumber(tag TagQueryParam) TagQueryNumber {
 	return TagQueryNumber{
-		key:      key,
-		values:   values,
-		operator: operator,
+		key:      tag.Key,
+		values:   tag.NumberValues,
+		operator: tag.Operator,
+		tagType:  tag.TagType,
 	}
 }
 
@@ -308,11 +351,19 @@ func (tqn TagQueryNumber) GetOperator() Operator {
 	return tqn.operator
 }
 
+func (tqn TagQueryNumber) GetTagType() TagType {
+	return tqn.tagType
+}
+
+func (tqn TagQueryNumber) GetTagMapColumn() string {
+	return NumberTagMapCol
+}
+
 type GetFilteredSpansParams struct {
 	TraceID            []string        `json:"traceID"`
 	ServiceName        []string        `json:"serviceName"`
 	Operation          []string        `json:"operation"`
-	Kind               string          `json:"kind"`
+	SpanKind           string          `json:"spanKind"`
 	Status             []string        `json:"status"`
 	HttpRoute          []string        `json:"httpRoute"`
 	HttpCode           []string        `json:"httpCode"`
@@ -340,7 +391,7 @@ type GetFilteredSpanAggregatesParams struct {
 	TraceID            []string        `json:"traceID"`
 	ServiceName        []string        `json:"serviceName"`
 	Operation          []string        `json:"operation"`
-	Kind               string          `json:"kind"`
+	SpanKind           string          `json:"spanKind"`
 	Status             []string        `json:"status"`
 	HttpRoute          []string        `json:"httpRoute"`
 	HttpCode           []string        `json:"httpCode"`
@@ -369,6 +420,7 @@ type SpanFilterParams struct {
 	TraceID            []string `json:"traceID"`
 	Status             []string `json:"status"`
 	ServiceName        []string `json:"serviceName"`
+	SpanKind           string   `json:"spanKind"`
 	HttpRoute          []string `json:"httpRoute"`
 	HttpCode           []string `json:"httpCode"`
 	HttpUrl            []string `json:"httpUrl"`
@@ -394,6 +446,7 @@ type TagFilterParams struct {
 	ServiceName        []string `json:"serviceName"`
 	HttpRoute          []string `json:"httpRoute"`
 	HttpCode           []string `json:"httpCode"`
+	SpanKind           string   `json:"spanKind"`
 	HttpUrl            []string `json:"httpUrl"`
 	HttpHost           []string `json:"httpHost"`
 	HttpMethod         []string `json:"httpMethod"`
@@ -412,17 +465,17 @@ type TagFilterParams struct {
 	End                *time.Time
 }
 
-type TagType string
+type TagDataType string
 
 const (
-	TagTypeString TagType = "string"
-	TagTypeNumber TagType = "number"
-	TagTypeBool   TagType = "bool"
+	TagTypeString TagDataType = "string"
+	TagTypeNumber TagDataType = "number"
+	TagTypeBool   TagDataType = "bool"
 )
 
 type TagKey struct {
-	Key  string  `json:"key"`
-	Type TagType `json:"type"`
+	Key  string      `json:"key"`
+	Type TagDataType `json:"type"`
 }
 
 type TTLParams struct {
@@ -437,21 +490,27 @@ type GetTTLParams struct {
 }
 
 type ListErrorsParams struct {
+	StartStr      string `json:"start"`
+	EndStr        string `json:"end"`
 	Start         *time.Time
 	End           *time.Time
-	Limit         int64
-	OrderParam    string
-	Order         string
-	Offset        int64
-	ServiceName   string
-	ExceptionType string
+	Limit         int64           `json:"limit"`
+	OrderParam    string          `json:"orderParam"`
+	Order         string          `json:"order"`
+	Offset        int64           `json:"offset"`
+	ServiceName   string          `json:"serviceName"`
+	ExceptionType string          `json:"exceptionType"`
+	Tags          []TagQueryParam `json:"tags"`
 }
 
 type CountErrorsParams struct {
+	StartStr      string `json:"start"`
+	EndStr        string `json:"end"`
 	Start         *time.Time
 	End           *time.Time
-	ServiceName   string
-	ExceptionType string
+	ServiceName   string          `json:"serviceName"`
+	ExceptionType string          `json:"exceptionType"`
+	Tags          []TagQueryParam `json:"tags"`
 }
 
 type GetErrorParams struct {

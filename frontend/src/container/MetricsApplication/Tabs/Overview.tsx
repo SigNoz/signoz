@@ -1,14 +1,16 @@
+import { ActiveElement, Chart, ChartData, ChartEvent } from 'chart.js';
 import Graph from 'components/Graph';
 import { METRICS_PAGE_QUERY_PARAM } from 'constants/query';
 import ROUTES from 'constants/routes';
 import FullView from 'container/GridGraphLayout/Graph/FullView/index.metricsBuilder';
-import convertToNanoSecondsToSecond from 'lib/convertToNanoSecondsToSecond';
-import { colors } from 'lib/getRandomColor';
-import history from 'lib/history';
+import useResourceAttribute from 'hooks/useResourceAttribute';
 import {
 	convertRawQueriesToTraceSelectedTags,
 	resourceAttributesToTagFilterItems,
-} from 'lib/resourceAttributes';
+} from 'hooks/useResourceAttribute/utils';
+import convertToNanoSecondsToSecond from 'lib/convertToNanoSecondsToSecond';
+import { colors } from 'lib/getRandomColor';
+import history from 'lib/history';
 import React, { useCallback, useMemo, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useParams } from 'react-router-dom';
@@ -24,27 +26,54 @@ import {
 import { Card, Col, GraphContainer, GraphTitle, Row } from '../styles';
 import TopOperationsTable from '../TopOperationsTable';
 import { Button } from './styles';
-import { onGraphClickHandler, onViewTracePopupClick } from './util';
+import {
+	handleNonInQueryRange,
+	onGraphClickHandler,
+	onViewTracePopupClick,
+} from './util';
 
 function Application({ getWidgetQueryBuilder }: DashboardProps): JSX.Element {
 	const { servicename } = useParams<{ servicename?: string }>();
 	const [selectedTimeStamp, setSelectedTimeStamp] = useState<number>(0);
-	const dispatch = useDispatch();
 
-	const {
-		topOperations,
-		serviceOverview,
-		resourceAttributeQueries,
-		topLevelOperations,
-	} = useSelector<AppState, MetricReducer>((state) => state.metrics);
+	const handleSetTimeStamp = useCallback((selectTime: number) => {
+		setSelectedTimeStamp(selectTime);
+	}, []);
+
+	const dispatch = useDispatch();
+	const handleGraphClick = useCallback(
+		(type: string): ClickHandlerType => (
+			ChartEvent: ChartEvent,
+			activeElements: ActiveElement[],
+			chart: Chart,
+			data: ChartData,
+		): void => {
+			onGraphClickHandler(handleSetTimeStamp)(
+				ChartEvent,
+				activeElements,
+				chart,
+				data,
+				type,
+			);
+		},
+		[handleSetTimeStamp],
+	);
+
+	const { topOperations, serviceOverview, topLevelOperations } = useSelector<
+		AppState,
+		MetricReducer
+	>((state) => state.metrics);
+
+	const { queries } = useResourceAttribute();
 
 	const selectedTraceTags: string = JSON.stringify(
-		convertRawQueriesToTraceSelectedTags(resourceAttributeQueries) || [],
+		convertRawQueriesToTraceSelectedTags(queries) || [],
 	);
 
 	const tagFilterItems = useMemo(
-		() => resourceAttributesToTagFilterItems(resourceAttributeQueries) || [],
-		[resourceAttributeQueries],
+		() =>
+			handleNonInQueryRange(resourceAttributesToTagFilterItems(queries)) || [],
+		[queries],
 	);
 
 	const operationPerSecWidget = useMemo(
@@ -82,14 +111,16 @@ function Application({ getWidgetQueryBuilder }: DashboardProps): JSX.Element {
 			const startTimestamp = Math.trunc(start);
 			const endTimestamp = Math.trunc(end);
 
-			dispatch(UpdateTimeInterval('custom', [startTimestamp, endTimestamp]));
+			if (startTimestamp !== endTimestamp) {
+				dispatch(UpdateTimeInterval('custom', [startTimestamp, endTimestamp]));
+			}
 		},
 		[dispatch],
 	);
 
 	const onErrorTrackHandler = (timestamp: number): void => {
 		const currentTime = timestamp;
-		const tPlusOne = timestamp + 1 * 60 * 1000;
+		const tPlusOne = timestamp + 60 * 1000;
 
 		const urlParams = new URLSearchParams();
 		urlParams.set(METRICS_PAGE_QUERY_PARAM.startTime, currentTime.toString());
@@ -102,6 +133,52 @@ function Application({ getWidgetQueryBuilder }: DashboardProps): JSX.Element {
 		);
 	};
 
+	const generalChartDataProperties = useCallback(
+		(title: string, colorIndex: number) => ({
+			borderColor: colors[colorIndex],
+			label: title,
+			showLine: true,
+			borderWidth: 1.5,
+			spanGaps: true,
+			pointRadius: 2,
+			pointHoverRadius: 4,
+		}),
+		[],
+	);
+
+	const dataSets = useMemo(
+		() => [
+			{
+				data: serviceOverview.map((e) =>
+					parseFloat(convertToNanoSecondsToSecond(e.p99)),
+				),
+				...generalChartDataProperties('p99 Latency', 0),
+			},
+			{
+				data: serviceOverview.map((e) =>
+					parseFloat(convertToNanoSecondsToSecond(e.p95)),
+				),
+				...generalChartDataProperties('p95 Latency', 1),
+			},
+			{
+				data: serviceOverview.map((e) =>
+					parseFloat(convertToNanoSecondsToSecond(e.p50)),
+				),
+				...generalChartDataProperties('p50 Latency', 2),
+			},
+		],
+		[generalChartDataProperties, serviceOverview],
+	);
+
+	const data = useMemo(
+		() => ({
+			datasets: dataSets,
+			labels: serviceOverview.map(
+				(e) => new Date(parseFloat(convertToNanoSecondsToSecond(e.timestamp))),
+			),
+		}),
+		[serviceOverview, dataSets],
+	);
 	return (
 		<>
 			<Row gutter={24}>
@@ -110,11 +187,11 @@ function Application({ getWidgetQueryBuilder }: DashboardProps): JSX.Element {
 						type="default"
 						size="small"
 						id="Service_button"
-						onClick={onViewTracePopupClick(
+						onClick={onViewTracePopupClick({
 							servicename,
 							selectedTraceTags,
-							selectedTimeStamp,
-						)}
+							timestamp: selectedTimeStamp,
+						})}
 					>
 						View Traces
 					</Button>
@@ -122,58 +199,11 @@ function Application({ getWidgetQueryBuilder }: DashboardProps): JSX.Element {
 						<GraphTitle>Latency</GraphTitle>
 						<GraphContainer>
 							<Graph
-								onClickHandler={(ChartEvent, activeElements, chart, data): void => {
-									onGraphClickHandler(setSelectedTimeStamp)(
-										ChartEvent,
-										activeElements,
-										chart,
-										data,
-										'Service',
-									);
-								}}
+								animate={false}
+								onClickHandler={handleGraphClick('Service')}
 								name="service_latency"
 								type="line"
-								data={{
-									datasets: [
-										{
-											data: serviceOverview.map((e) =>
-												parseFloat(convertToNanoSecondsToSecond(e.p99)),
-											),
-											borderColor: colors[0],
-											label: 'p99 Latency',
-											showLine: true,
-											borderWidth: 1.5,
-											spanGaps: true,
-											pointRadius: 1.5,
-										},
-										{
-											data: serviceOverview.map((e) =>
-												parseFloat(convertToNanoSecondsToSecond(e.p95)),
-											),
-											borderColor: colors[1],
-											label: 'p95 Latency',
-											showLine: true,
-											borderWidth: 1.5,
-											spanGaps: true,
-											pointRadius: 1.5,
-										},
-										{
-											data: serviceOverview.map((e) =>
-												parseFloat(convertToNanoSecondsToSecond(e.p50)),
-											),
-											borderColor: colors[2],
-											label: 'p50 Latency',
-											showLine: true,
-											borderWidth: 1.5,
-											spanGaps: true,
-											pointRadius: 1.5,
-										},
-									],
-									labels: serviceOverview.map(
-										(e) =>
-											new Date(parseFloat(convertToNanoSecondsToSecond(e.timestamp))),
-									),
-								}}
+								data={data}
 								yAxisUnit="ms"
 								onDragSelect={onDragSelect}
 							/>
@@ -186,11 +216,11 @@ function Application({ getWidgetQueryBuilder }: DashboardProps): JSX.Element {
 						type="default"
 						size="small"
 						id="Rate_button"
-						onClick={onViewTracePopupClick(
+						onClick={onViewTracePopupClick({
 							servicename,
 							selectedTraceTags,
-							selectedTimeStamp,
-						)}
+							timestamp: selectedTimeStamp,
+						})}
 					>
 						View Traces
 					</Button>
@@ -200,15 +230,7 @@ function Application({ getWidgetQueryBuilder }: DashboardProps): JSX.Element {
 							<FullView
 								name="operations_per_sec"
 								fullViewOptions={false}
-								onClickHandler={(event, element, chart, data): void => {
-									onGraphClickHandler(setSelectedTimeStamp)(
-										event,
-										element,
-										chart,
-										data,
-										'Rate',
-									);
-								}}
+								onClickHandler={handleGraphClick('Rate')}
 								widget={operationPerSecWidget}
 								yAxisUnit="ops"
 								onDragSelect={onDragSelect}
@@ -236,15 +258,7 @@ function Application({ getWidgetQueryBuilder }: DashboardProps): JSX.Element {
 							<FullView
 								name="error_percentage_%"
 								fullViewOptions={false}
-								onClickHandler={(ChartEvent, activeElements, chart, data): void => {
-									onGraphClickHandler(setSelectedTimeStamp)(
-										ChartEvent,
-										activeElements,
-										chart,
-										data,
-										'Error',
-									);
-								}}
+								onClickHandler={handleGraphClick('Error')}
 								widget={errorPercentageWidget}
 								yAxisUnit="%"
 								onDragSelect={onDragSelect}
@@ -266,5 +280,13 @@ function Application({ getWidgetQueryBuilder }: DashboardProps): JSX.Element {
 interface DashboardProps {
 	getWidgetQueryBuilder: (query: Widgets['query']) => Widgets;
 }
+
+type ClickHandlerType = (
+	ChartEvent: ChartEvent,
+	activeElements: ActiveElement[],
+	chart: Chart,
+	data: ChartData,
+	type?: string,
+) => void;
 
 export default Application;

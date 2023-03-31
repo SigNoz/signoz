@@ -26,13 +26,13 @@ const (
 	defaultDurationTable           string        = "distributed_durationSort"
 	defaultUsageExplorerTable      string        = "distributed_usage_explorer"
 	defaultSpansTable              string        = "distributed_signoz_spans"
-	defaultDependencyGraphTable    string        = "distributed_dependency_graph_minutes"
+	defaultDependencyGraphTable    string        = "distributed_dependency_graph_minutes_v2"
 	defaultTopLevelOperationsTable string        = "distributed_top_level_operations"
 	defaultSpanAttributeTable      string        = "distributed_span_attributes"
 	defaultLogsDB                  string        = "signoz_logs"
 	defaultLogsTable               string        = "distributed_logs"
 	defaultLogsLocalTable          string        = "logs"
-	defaultLogAttributeKeysTable   string        = "distributed_logs_atrribute_keys"
+	defaultLogAttributeKeysTable   string        = "distributed_logs_attribute_keys"
 	defaultLogResourceKeysTable    string        = "distributed_logs_resource_keys"
 	defaultLiveTailRefreshSeconds  int           = 10
 	defaultWriteBatchDelay         time.Duration = 5 * time.Second

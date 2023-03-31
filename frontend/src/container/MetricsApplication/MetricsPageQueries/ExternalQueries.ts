@@ -45,7 +45,7 @@ export const externalCallErrorPercent = ({
 		},
 		...tagFilterItems,
 	];
-	const legendFormula = 'External Call Error Percentage';
+	const legendFormula = legend;
 	const expression = 'A*100/B';
 	const disabled = true;
 	return getQueryBuilderQuerieswithFormula({
@@ -161,7 +161,7 @@ export const externalCallDurationByAddress = ({
 };
 
 interface ExternalCallDurationByAddressProps extends ExternalCallProps {
-	legend: '{{address}}';
+	legend: string;
 }
 
 export interface ExternalCallProps {

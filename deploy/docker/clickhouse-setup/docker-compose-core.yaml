@@ -41,7 +41,7 @@ services:
   # Notes for Maintainers/Contributors who will change Line Numbers of Frontend & Query-Section. Please Update Line Numbers in `./scripts/commentLinesForSetup.sh` & `./CONTRIBUTING.md`
   otel-collector:
     container_name: otel-collector
-    image: signoz/signoz-otel-collector:0.66.4
+    image: signoz/signoz-otel-collector:0.66.6
     command: ["--config=/etc/otel-collector-config.yaml"]
     # user: root # required for reading docker container logs
     volumes:
@@ -67,7 +67,7 @@ services:
 
   otel-collector-metrics:
     container_name: otel-collector-metrics
-    image: signoz/signoz-otel-collector:0.66.4
+    image: signoz/signoz-otel-collector:0.66.6
     command: ["--config=/etc/otel-collector-metrics-config.yaml"]
     volumes:
       - ./otel-collector-metrics-config.yaml:/etc/otel-collector-metrics-config.yaml

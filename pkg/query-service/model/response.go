@@ -7,7 +7,7 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/prometheus/prometheus/promql"
+	"github.com/prometheus/prometheus/promql/parser"
 	"github.com/prometheus/prometheus/util/stats"
 	"k8s.io/apimachinery/pkg/labels"
 )
@@ -49,19 +49,20 @@ func (a *ApiError) IsNil() bool {
 type ErrorType string
 
 const (
-	ErrorNone                  ErrorType = ""
-	ErrorTimeout               ErrorType = "timeout"
-	ErrorCanceled              ErrorType = "canceled"
-	ErrorExec                  ErrorType = "execution"
-	ErrorBadData               ErrorType = "bad_data"
-	ErrorInternal              ErrorType = "internal"
-	ErrorUnavailable           ErrorType = "unavailable"
-	ErrorNotFound              ErrorType = "not_found"
-	ErrorNotImplemented        ErrorType = "not_implemented"
-	ErrorUnauthorized          ErrorType = "unauthorized"
-	ErrorForbidden             ErrorType = "forbidden"
-	ErrorConflict              ErrorType = "conflict"
-	ErrorStreamingNotSupported ErrorType = "streaming is not supported"
+	ErrorNone                     ErrorType = ""
+	ErrorTimeout                  ErrorType = "timeout"
+	ErrorCanceled                 ErrorType = "canceled"
+	ErrorExec                     ErrorType = "execution"
+	ErrorBadData                  ErrorType = "bad_data"
+	ErrorInternal                 ErrorType = "internal"
+	ErrorUnavailable              ErrorType = "unavailable"
+	ErrorNotFound                 ErrorType = "not_found"
+	ErrorNotImplemented           ErrorType = "not_implemented"
+	ErrorUnauthorized             ErrorType = "unauthorized"
+	ErrorForbidden                ErrorType = "forbidden"
+	ErrorConflict                 ErrorType = "conflict"
+	ErrorStreamingNotSupported    ErrorType = "streaming is not supported"
+	ErrorStatusServiceUnavailable ErrorType = "service unavailable"
 )
 
 // BadRequest returns a ApiError object of bad request
@@ -89,13 +90,13 @@ func InternalError(err error) *ApiError {
 }
 
 type QueryDataV2 struct {
-	ResultType promql.ValueType `json:"resultType"`
-	Result     promql.Value     `json:"result"`
+	ResultType parser.ValueType `json:"resultType"`
+	Result     parser.Value     `json:"result"`
 }
 
 type QueryData struct {
-	ResultType promql.ValueType  `json:"resultType"`
-	Result     promql.Value      `json:"result"`
+	ResultType parser.ValueType  `json:"resultType"`
+	Result     parser.Value      `json:"result"`
 	Stats      *stats.QueryStats `json:"stats,omitempty"`
 }
 
@@ -584,4 +585,10 @@ func (ci *ClusterInfo) GetMapFromStruct() map[string]interface{} {
 	data, _ := json.Marshal(*ci)
 	json.Unmarshal(data, &clusterInfoMap)
 	return clusterInfoMap
+}
+
+type GetVersionResponse struct {
+	Version        string `json:"version"`
+	EE             string `json:"ee"`
+	SetupCompleted bool   `json:"setupCompleted"`
 }
