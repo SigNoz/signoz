@@ -11,6 +11,7 @@ const (
 	HTTPHostPort    = "0.0.0.0:8080" // Address to serve http (query service)
 	PrivateHostPort = "0.0.0.0:8085" // Address to server internal services like alert manager
 	DebugHttpPort   = "0.0.0.0:6060" // Address to serve http (pprof)
+	OpAmpWsEndpoint = "0.0.0.0:4320" // address for opamp websocket
 )
 
 var ConfigSignozIo = "https://config.signoz.io/api/v1"
@@ -212,10 +213,11 @@ const (
 // ReservedColumnTargetAliases identifies result value from a user
 // written clickhouse query. The column alias indcate which value is
 // to be considered as final result (or target)
-var ReservedColumnTargetAliases = map[string]bool{"result": true, "res": true, "value": true}
+var ReservedColumnTargetAliases = map[string]struct{}{
+	"result": {},
+	"res":    {},
+	"value":  {},
+}
 
-const (
-	StringTagMapCol = "stringTagMap"
-	NumberTagMapCol = "numberTagMap"
-	BoolTagMapCol   = "boolTagMap"
-)
+// logsPPLPfx is a short constant for logsPipelinePrefix
+const LogsPPLPfx = "logstransform/pipeline_"

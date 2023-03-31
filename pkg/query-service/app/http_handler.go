@@ -22,6 +22,7 @@ import (
 	"go.signoz.io/signoz/pkg/query-service/app/explorer"
 	"go.signoz.io/signoz/pkg/query-service/app/logs"
 	"go.signoz.io/signoz/pkg/query-service/app/metrics"
+	metricsv3 "go.signoz.io/signoz/pkg/query-service/app/metrics/v3"
 	"go.signoz.io/signoz/pkg/query-service/app/parser"
 	"go.signoz.io/signoz/pkg/query-service/auth"
 	"go.signoz.io/signoz/pkg/query-service/constants"
@@ -36,6 +37,7 @@ import (
 	"go.signoz.io/signoz/pkg/query-service/rules"
 	"go.signoz.io/signoz/pkg/query-service/telemetry"
 	"go.signoz.io/signoz/pkg/query-service/version"
+	"go.uber.org/multierr"
 	"go.uber.org/zap"
 )
 
@@ -63,6 +65,7 @@ type APIHandler struct {
 	ruleManager  *rules.Manager
 	featureFlags interfaces.FeatureLookup
 	ready        func(http.HandlerFunc) http.HandlerFunc
+	queryBuilder *queryBuilder
 
 	// SetupCompleted indicates if SigNoz is ready for general use.
 	// at the moment, we mark the app ready when the first user
@@ -100,6 +103,17 @@ func NewAPIHandler(opts APIHandlerOpts) (*APIHandler, error) {
 		ruleManager:  opts.RuleManager,
 		featureFlags: opts.FeatureFlags,
 	}
+
+	builderOpts := queryBuilderOptions{
+		BuildMetricQuery: metricsv3.PrepareMetricQuery,
+		BuildTraceQuery: func(start, end, step int64, queryType v3.QueryType, panelType v3.PanelType, bq *v3.BuilderQuery) (string, error) {
+			return "", errors.New("not implemented")
+		},
+		BuildLogQuery: func(start, end, step int64, queryType v3.QueryType, panelType v3.PanelType, bq *v3.BuilderQuery) (string, error) {
+			return "", errors.New("not implemented")
+		},
+	}
+	aH.queryBuilder = NewQueryBuilder(builderOpts)
 
 	aH.ready = aH.testReady
 
@@ -244,6 +258,7 @@ func (aH *APIHandler) RegisterQueryRangeV3Routes(router *mux.Router, am *AuthMid
 	subRouter.HandleFunc("/autocomplete/aggregate_attributes", am.ViewAccess(aH.autocompleteAggregateAttributes)).Methods(http.MethodGet)
 	subRouter.HandleFunc("/autocomplete/attribute_keys", am.ViewAccess(aH.autoCompleteAttributeKeys)).Methods(http.MethodGet)
 	subRouter.HandleFunc("/autocomplete/attribute_values", am.ViewAccess(aH.autoCompleteAttributeValues)).Methods(http.MethodGet)
+	subRouter.HandleFunc("/query_range", am.ViewAccess(aH.QueryRangeV3)).Methods(http.MethodPost)
 }
 
 func (aH *APIHandler) Respond(w http.ResponseWriter, data interface{}) {
@@ -313,8 +328,8 @@ func (aH *APIHandler) RegisterRoutes(router *mux.Router, am *AuthMiddleware) {
 	router.HandleFunc("/api/v1/getFilteredSpans/aggregates", am.ViewAccess(aH.getFilteredSpanAggregates)).Methods(http.MethodPost)
 	router.HandleFunc("/api/v1/getTagValues", am.ViewAccess(aH.getTagValues)).Methods(http.MethodPost)
 
-	router.HandleFunc("/api/v1/listErrors", am.ViewAccess(aH.listErrors)).Methods(http.MethodGet)
-	router.HandleFunc("/api/v1/countErrors", am.ViewAccess(aH.countErrors)).Methods(http.MethodGet)
+	router.HandleFunc("/api/v1/listErrors", am.ViewAccess(aH.listErrors)).Methods(http.MethodPost)
+	router.HandleFunc("/api/v1/countErrors", am.ViewAccess(aH.countErrors)).Methods(http.MethodPost)
 	router.HandleFunc("/api/v1/errorFromErrorID", am.ViewAccess(aH.getErrorFromErrorID)).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/errorFromGroupID", am.ViewAccess(aH.getErrorFromGroupID)).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/nextPrevErrorIDs", am.ViewAccess(aH.getNextPrevErrorIDs)).Methods(http.MethodGet)
@@ -2423,4 +2438,187 @@ func (aH *APIHandler) autoCompleteAttributeValues(w http.ResponseWriter, r *http
 	}
 
 	aH.Respond(w, response)
+}
+
+func (aH *APIHandler) execClickHouseQueries(ctx context.Context, queries map[string]string) ([]*v3.Result, error, map[string]string) {
+	type channelResult struct {
+		Series []*v3.Series
+		Err    error
+		Name   string
+		Query  string
+	}
+
+	ch := make(chan channelResult, len(queries))
+	var wg sync.WaitGroup
+
+	for name, query := range queries {
+		wg.Add(1)
+		go func(name, query string) {
+			defer wg.Done()
+			seriesList, err := aH.reader.GetTimeSeriesResultV3(ctx, query)
+
+			if err != nil {
+				ch <- channelResult{Err: fmt.Errorf("error in query-%s: %v", name, err), Name: name, Query: query}
+				return
+			}
+			ch <- channelResult{Series: seriesList, Name: name, Query: query}
+		}(name, query)
+	}
+
+	wg.Wait()
+	close(ch)
+
+	var errs []error
+	errQuriesByName := make(map[string]string)
+	res := make([]*v3.Result, 0)
+	// read values from the channel
+	for r := range ch {
+		if r.Err != nil {
+			errs = append(errs, r.Err)
+			errQuriesByName[r.Name] = r.Query
+			continue
+		}
+		res = append(res, &v3.Result{
+			QueryName: r.Name,
+			Series:    r.Series,
+		})
+	}
+	if len(errs) != 0 {
+		return nil, fmt.Errorf("encountered multiple errors: %s", multierr.Combine(errs...)), errQuriesByName
+	}
+	return res, nil, nil
+}
+
+func (aH *APIHandler) execPromQueries(ctx context.Context, metricsQueryRangeParams *v3.QueryRangeParamsV3) ([]*v3.Result, error, map[string]string) {
+	type channelResult struct {
+		Series []*v3.Series
+		Err    error
+		Name   string
+		Query  string
+	}
+
+	ch := make(chan channelResult, len(metricsQueryRangeParams.CompositeQuery.PromQueries))
+	var wg sync.WaitGroup
+
+	for name, query := range metricsQueryRangeParams.CompositeQuery.PromQueries {
+		if query.Disabled {
+			continue
+		}
+		wg.Add(1)
+		go func(name string, query *v3.PromQuery) {
+			var seriesList []*v3.Series
+			defer wg.Done()
+			tmpl := template.New("promql-query")
+			tmpl, tmplErr := tmpl.Parse(query.Query)
+			if tmplErr != nil {
+				ch <- channelResult{Err: fmt.Errorf("error in parsing query-%s: %v", name, tmplErr), Name: name, Query: query.Query}
+				return
+			}
+			var queryBuf bytes.Buffer
+			tmplErr = tmpl.Execute(&queryBuf, metricsQueryRangeParams.Variables)
+			if tmplErr != nil {
+				ch <- channelResult{Err: fmt.Errorf("error in parsing query-%s: %v", name, tmplErr), Name: name, Query: query.Query}
+				return
+			}
+			query.Query = queryBuf.String()
+			queryModel := model.QueryRangeParams{
+				Start: time.UnixMilli(metricsQueryRangeParams.Start),
+				End:   time.UnixMilli(metricsQueryRangeParams.End),
+				Step:  time.Duration(metricsQueryRangeParams.Step * int64(time.Second)),
+				Query: query.Query,
+			}
+			promResult, _, err := aH.reader.GetQueryRangeResult(ctx, &queryModel)
+			if err != nil {
+				ch <- channelResult{Err: fmt.Errorf("error in query-%s: %v", name, err), Name: name, Query: query.Query}
+				return
+			}
+			matrix, _ := promResult.Matrix()
+			for _, v := range matrix {
+				var s v3.Series
+				s.Labels = v.Metric.Copy().Map()
+				for _, p := range v.Points {
+					s.Points = append(s.Points, v3.Point{Timestamp: p.T, Value: p.V})
+				}
+				seriesList = append(seriesList, &s)
+			}
+			ch <- channelResult{Series: seriesList, Name: name, Query: query.Query}
+		}(name, query)
+	}
+
+	wg.Wait()
+	close(ch)
+
+	var errs []error
+	errQuriesByName := make(map[string]string)
+	res := make([]*v3.Result, 0)
+	// read values from the channel
+	for r := range ch {
+		if r.Err != nil {
+			errs = append(errs, r.Err)
+			errQuriesByName[r.Name] = r.Query
+			continue
+		}
+		res = append(res, &v3.Result{
+			QueryName: r.Name,
+			Series:    r.Series,
+		})
+	}
+	if len(errs) != 0 {
+		return nil, fmt.Errorf("encountered multiple errors: %s", multierr.Combine(errs...)), errQuriesByName
+	}
+	return res, nil, nil
+}
+
+func (aH *APIHandler) queryRangeV3(queryRangeParams *v3.QueryRangeParamsV3, w http.ResponseWriter, r *http.Request) {
+
+	var result []*v3.Result
+	var err error
+	var errQuriesByName map[string]string
+	switch queryRangeParams.CompositeQuery.QueryType {
+	case v3.QueryTypeBuilder:
+		queries, err := aH.queryBuilder.prepareQueries(queryRangeParams)
+		if err != nil {
+			RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
+			return
+		}
+		result, err, errQuriesByName = aH.execClickHouseQueries(r.Context(), queries)
+	case v3.QueryTypeClickHouseSQL:
+		queries := make(map[string]string)
+		for name, query := range queryRangeParams.CompositeQuery.ClickHouseQueries {
+			if query.Disabled {
+				continue
+			}
+			queries[name] = query.Query
+		}
+		result, err, errQuriesByName = aH.execClickHouseQueries(r.Context(), queries)
+	case v3.QueryTypePromQL:
+		result, err, errQuriesByName = aH.execPromQueries(r.Context(), queryRangeParams)
+	default:
+		err = fmt.Errorf("invalid query type")
+		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, errQuriesByName)
+		return
+	}
+
+	if err != nil {
+		apiErrObj := &model.ApiError{Typ: model.ErrorBadData, Err: err}
+		RespondError(w, apiErrObj, errQuriesByName)
+		return
+	}
+
+	resp := v3.QueryRangeResponse{
+		Result: result,
+	}
+	aH.Respond(w, resp)
+}
+
+func (aH *APIHandler) QueryRangeV3(w http.ResponseWriter, r *http.Request) {
+	queryRangeParams, apiErrorObj := ParseQueryRangeParams(r)
+
+	if apiErrorObj != nil {
+		zap.S().Errorf(apiErrorObj.Err.Error())
+		RespondError(w, apiErrorObj, nil)
+		return
+	}
+
+	aH.queryRangeV3(queryRangeParams, w, r)
 }
