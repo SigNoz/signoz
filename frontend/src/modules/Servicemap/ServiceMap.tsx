@@ -101,8 +101,8 @@ function ServiceMap(props: ServiceMapProps): JSX.Element {
 					<TextToolTip
 						{...{
 							text: `Currently, service map supports filtering of ${whilelistedKeys.join(
-								' , ',
-							)} only in resource attributes`,
+								', ',
+							)} only, in resource attributes`,
 						}}
 					/>
 				}
