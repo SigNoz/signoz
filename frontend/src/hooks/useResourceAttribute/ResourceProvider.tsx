@@ -2,7 +2,7 @@ import { useMachine } from '@xstate/react';
 import ROUTES from 'constants/routes';
 import { encode } from 'js-base64';
 import history from 'lib/history';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 
 import { whilelistedKeys } from './config';
@@ -30,14 +30,6 @@ function ResourceProvider({ children }: Props): JSX.Element {
 	const [queries, setQueries] = useState<IResourceAttribute[]>(
 		getResourceAttributeQueriesFromURL(),
 	);
-
-	useEffect(() => {
-		if (pathname === ROUTES.SERVICE_MAP) {
-			setQueries((queries) =>
-				queries.filter((query) => whilelistedKeys.includes(query.tagKey)),
-			);
-		}
-	}, [pathname]);
 
 	const [optionsData, setOptionsData] = useState<OptionsData>({
 		mode: undefined,
@@ -150,9 +142,16 @@ function ResourceProvider({ children }: Props): JSX.Element {
 		setOptionsData({ mode: undefined, options: [] });
 	}, [dispatchQueries, send]);
 
+	const getVisibleQueries = useMemo(() => {
+		if (pathname === ROUTES.SERVICE_MAP) {
+			return queries.filter((query) => whilelistedKeys.includes(query.tagKey));
+		}
+		return queries;
+	}, [queries, pathname]);
+
 	const value: IResourceAttributeProps = useMemo(
 		() => ({
-			queries,
+			queries: getVisibleQueries,
 			staging,
 			handleClearAll,
 			handleClose,
@@ -170,10 +169,10 @@ function ResourceProvider({ children }: Props): JSX.Element {
 			handleClose,
 			handleFocus,
 			loading,
-			queries,
 			staging,
 			selectedQuery,
 			optionsData,
+			getVisibleQueries,
 		],
 	);
 
