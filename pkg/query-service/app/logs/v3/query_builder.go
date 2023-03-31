@@ -170,32 +170,6 @@ func buildLogsQuery(start, end, step int64, mq *v3.BuilderQuery, tableName strin
 	}
 
 	switch mq.AggregateOperator {
-	// case v3.AggregateOperatorRate:
-	// 	// https://stackoverflow.com/questions/66674880/understanding-of-rate-function-of-promql
-	// 	groupBy = "fingerprint, ts"
-	// 	groupTags = "fingerprint,"
-	// 	op := "max(value)" // max value should be the closest value for point in time
-	// 	subQuery := fmt.Sprintf(
-	// 		queryTmpl, "any(labels) as labels, "+groupTags, step, op, filterSubQuery, groupBy, orderBy,
-	// 	) // labels will be same so any should be fine
-	// 	query := `SELECT %s ts, ` + ` as value FROM(%s)`
-
-	// 	// var rateWithoutNegative = `if (runningDifference(value) < 0 OR runningDifference(ts) < 0, nan, runningDifference(value)/runningDifference(ts))`
-
-	// 	query = fmt.Sprintf(query, "labels as fullLabels,", subQuery)
-	// 	return query, nil
-	// case v3.AggregateOperatorSumRate:
-	// 	rateGroupBy := "fingerprint, " + groupBy
-	// 	rateGroupTags := "fingerprint, " + groupTags
-	// 	rateOrderBy := "fingerprint, " + orderBy
-	// 	op := "max(value)"
-	// 	subQuery := fmt.Sprintf(
-	// 		queryTmpl, rateGroupTags, step, op, filterSubQuery, rateGroupBy, rateOrderBy,
-	// 	) // labels will be same so any should be fine
-	// 	query := `SELECT %s ts, ` + rateWithoutNegative + `as value FROM(%s)`
-	// 	query = fmt.Sprintf(query, groupTags, subQuery)
-	// 	query = fmt.Sprintf(`SELECT %s ts, sum(value) as value FROM (%s) GROUP BY %s ORDER BY %s ts`, groupTags, query, groupBy, orderBy)
-	// 	return query, nil
 	case
 		v3.AggregateOperatorRateSum,
 		v3.AggregateOperatorRateMax,
@@ -248,20 +222,8 @@ func buildLogsQuery(start, end, step int64, mq *v3.BuilderQuery, tableName strin
 		query := fmt.Sprintf(queryTmpl, step, op, filterSubQuery, groupBy, orderBy)
 		return query, nil
 	case v3.AggregateOperatorNoOp:
-		// queryTmpl :=
-		// 	"SELECT fingerprint, labels as fullLabels," +
-		// 		" toStartOfInterval(toDateTime(intDiv(timestamp_ms, 1000)), INTERVAL %d SECOND) as ts," +
-		// 		" any(value) as value" +
-		// 		" FROM " + constants.SIGNOZ_METRIC_DBNAME + "." + constants.SIGNOZ_SAMPLES_TABLENAME +
-		// 		" GLOBAL INNER JOIN" +
-		// 		" (%s) as filtered_time_series" +
-		// 		" USING fingerprint" +
-		// 		" WHERE " + samplesTableTimeFilter +
-		// 		" GROUP BY fingerprint, labels, ts" +
-		// 		" ORDER BY fingerprint, labels, ts"
-		// queryTmpl :=
-		// 	"SELECT * from logs"
-		query := fmt.Sprintf(queryTmpl, step, filterSubQuery)
+		queryTmpl := constants.LogsSQLSelect + "from signoz_logs.distributed_logs where %s %s"
+		query := fmt.Sprintf(queryTmpl, samplesTableTimeFilter, filterSubQuery)
 		return query, nil
 	default:
 		return "", fmt.Errorf("unsupported aggregate operator")
