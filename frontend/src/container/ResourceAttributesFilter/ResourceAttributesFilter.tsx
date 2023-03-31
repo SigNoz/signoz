@@ -10,7 +10,9 @@ import { v4 as uuid } from 'uuid';
 import QueryChip from './components/QueryChip';
 import { QueryChipItem, SearchContainer } from './styles';
 
-function ResourceAttributesFilter(): JSX.Element | null {
+function ResourceAttributesFilter({
+	suffixIcon,
+}: ResourceAttributesFilterProps): JSX.Element | null {
 	const {
 		queries,
 		staging,
@@ -49,14 +51,15 @@ function ResourceAttributesFilter(): JSX.Element | null {
 				style={{ flex: 1 }}
 				options={optionsData.options}
 				mode={optionsData?.mode}
-				showArrow={false}
+				showArrow={!!suffixIcon}
 				onClick={handleFocus}
 				onBlur={handleBlur}
 				onClear={handleClearAll}
+				suffixIcon={suffixIcon}
 				notFoundContent={
 					loading ? (
 						<span>
-							<Spin size="small" /> Loading...{' '}
+							<Spin size="small" /> Loading...
 						</span>
 					) : (
 						<span>
@@ -73,5 +76,13 @@ function ResourceAttributesFilter(): JSX.Element | null {
 		</SearchContainer>
 	);
 }
+
+interface ResourceAttributesFilterProps {
+	suffixIcon?: React.ReactNode;
+}
+
+ResourceAttributesFilter.defaultProps = {
+	suffixIcon: undefined,
+};
 
 export default ResourceAttributesFilter;

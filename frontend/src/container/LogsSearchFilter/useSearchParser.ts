@@ -62,7 +62,9 @@ export function useSearchParser(): {
 				});
 			}
 		},
-		[dispatch, maxTime, minTime, parsedQuery, selectedTime],
+		// need to hide this warning as we don't want to update the query string on every change
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+		[dispatch, parsedQuery, selectedTime],
 	);
 
 	useEffect(() => {
