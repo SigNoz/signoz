@@ -173,9 +173,9 @@ func parseLogQuery(query string) ([]string, error) {
 			searchString := strings.TrimSpace(strings.Split(v, op)[1])
 
 			operatorRemovedTokens := strings.Split(operatorRegex.ReplaceAllString(v, " "), " ")
-			searchCol := strings.ToLower(operatorRemovedTokens[0])
-			if searchCol == AND || searchCol == OR {
-				searchCol = strings.ToLower(operatorRemovedTokens[1])
+			searchCol := operatorRemovedTokens[0]
+			if strings.ToLower(searchCol) == AND || strings.ToLower(searchCol) == OR {
+				searchCol = operatorRemovedTokens[1]
 			}
 			col := searchCol
 			if strings.ToLower(searchCol) == "fulltext" {
