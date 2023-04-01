@@ -1,10 +1,9 @@
-/* eslint-disable  */
-//@ts-nocheck
-
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import { Button, Tabs } from 'antd';
 import TextToolTip from 'components/TextToolTip';
 import { GRAPH_TYPES } from 'container/NewDashboard/ComponentsSlider';
 import { timePreferance } from 'container/NewWidget/RightContainer/timeItems';
+import { QueryBuilder } from 'container/QueryBuilder';
 import { cloneDeep, isEqual } from 'lodash-es';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { connect, useSelector } from 'react-redux';
@@ -31,6 +30,7 @@ import ClickHouseQueryContainer from './QueryBuilder/clickHouse';
 import PromQLQueryContainer from './QueryBuilder/promQL';
 import QueryBuilderQueryContainer from './QueryBuilder/queryBuilder';
 import TabHeader from './TabHeader';
+import { IHandleUpdatedQuery } from './types';
 import { getQueryKey } from './utils/getQueryKey';
 import { showUnstagedStashConfirmBox } from './utils/userSettings';
 
@@ -54,9 +54,7 @@ function QuerySection({
 	const { search } = useLocation();
 	const { widgets } = selectedDashboards.data;
 
-	const urlQuery = useMemo(() => {
-		return new URLSearchParams(search);
-	}, [search]);
+	const urlQuery = useMemo(() => new URLSearchParams(search), [search]);
 
 	const getWidget = useCallback(() => {
 		const widgetId = urlQuery.get('widgetId');
@@ -169,6 +167,9 @@ function QuerySection({
 					}
 					selectedGraph={selectedGraph}
 				/>
+
+				// TODO: uncomment for testing new QueryBuilder
+				// <QueryBuilder />
 			),
 		},
 		{
