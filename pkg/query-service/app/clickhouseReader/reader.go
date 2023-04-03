@@ -3826,6 +3826,8 @@ func (r *ClickHouseReader) GetLogAttributeValues(ctx context.Context, req *v3.Fi
 	var filterValueColumn string
 	var rows driver.Rows
 	var attributeValues v3.FilterAttributeValueResponse
+
+	// if data type is bool, return true and false
 	if req.FilterAttributeKeyDataType == v3.AttributeKeyDataTypeBool {
 		return &v3.FilterAttributeValueResponse{
 			BoolAttributeValues: []bool{true, false},
@@ -3834,17 +3836,19 @@ func (r *ClickHouseReader) GetLogAttributeValues(ctx context.Context, req *v3.Fi
 
 	query := "select distinct"
 	switch req.FilterAttributeKeyDataType {
-	case v3.AttributeKeyDataTypeNumber:
-		filterValueColumn = "numberTagValue"
+	case v3.AttributeKeyDataTypeInt64:
+		filterValueColumn = "int64TagValue"
+	case v3.AttributeKeyDataTypeFloat64:
+		filterValueColumn = "float64TagValue"
 	case v3.AttributeKeyDataTypeString:
 		filterValueColumn = "stringTagValue"
 	}
 
 	if len(req.SearchText) != 0 {
-		query = fmt.Sprintf("select distinct %s  from  %s.%s where tagKey ILIKE $1 and %s ILIKE $2  and tagType=$3 limit $4", filterValueColumn, r.logsDB, r.logsTagAttributeTable, filterValueColumn)
+		query = fmt.Sprintf("select distinct %s  from  %s.%s where tagKey=$1 and %s ILIKE $2  and tagType=$3 limit $4", filterValueColumn, r.logsDB, r.logsTagAttributeTable, filterValueColumn)
 		rows, err = r.db.Query(ctx, query, req.FilterAttributeKey, fmt.Sprintf("%%%s%%", req.SearchText), req.TagType, req.Limit)
 	} else {
-		query = fmt.Sprintf("select distinct %s from  %s.%s where tagKey ILIKE $1 and tagType=$2 limit $3", filterValueColumn, r.logsDB, r.logsTagAttributeTable)
+		query = fmt.Sprintf("select distinct %s from  %s.%s where tagKey=$1 and tagType=$2 limit $3", filterValueColumn, r.logsDB, r.logsTagAttributeTable)
 		rows, err = r.db.Query(ctx, query, req.FilterAttributeKey, req.TagType, req.Limit)
 	}
 
@@ -3855,14 +3859,20 @@ func (r *ClickHouseReader) GetLogAttributeValues(ctx context.Context, req *v3.Fi
 	defer rows.Close()
 
 	var strAttributeValue string
-	var numAttributeValue float64
+	var float64AttributeValue float64
+	var int64AttributeValue int64
 	for rows.Next() {
 		switch req.FilterAttributeKeyDataType {
-		case v3.AttributeKeyDataTypeNumber:
-			if err := rows.Scan(&numAttributeValue); err != nil {
+		case v3.AttributeKeyDataTypeInt64:
+			if err := rows.Scan(&int64AttributeValue); err != nil {
 				return nil, fmt.Errorf("error while scanning rows: %s", err.Error())
 			}
-			attributeValues.NumberAttributeValues = append(attributeValues.NumberAttributeValues, numAttributeValue)
+			attributeValues.Int64AttributeValues = append(attributeValues.Int64AttributeValues, int64AttributeValue)
+		case v3.AttributeKeyDataTypeFloat64:
+			if err := rows.Scan(&float64AttributeValue); err != nil {
+				return nil, fmt.Errorf("error while scanning rows: %s", err.Error())
+			}
+			attributeValues.Float64AttributeValues = append(attributeValues.Float64AttributeValues, float64AttributeValue)
 		case v3.AttributeKeyDataTypeString:
 			if err := rows.Scan(&strAttributeValue); err != nil {
 				return nil, fmt.Errorf("error while scanning rows: %s", err.Error())
