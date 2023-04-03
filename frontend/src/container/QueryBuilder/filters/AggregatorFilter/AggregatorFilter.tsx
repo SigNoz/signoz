@@ -11,6 +11,7 @@ import { transformToUpperCase } from 'utils/transformToUpperCase';
 
 // ** Types
 import { AgregatorFilterProps } from './AggregatorFilter.intefaces';
+import { aggregatorFilterStyle } from './config';
 
 export const AggregatorFilter = memo(function AggregatorFilter({
 	onChange,
