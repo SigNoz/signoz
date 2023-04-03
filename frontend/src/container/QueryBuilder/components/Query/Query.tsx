@@ -19,7 +19,7 @@ import {
 	OperatorsSelect,
 	ReduceToFilter,
 } from 'container/QueryBuilder/filters';
-// Context
+import { SearchFilters } from 'container/QueryBuilder/filters/SearchFilters';
 import { useQueryBuilder } from 'hooks/useQueryBuilder';
 import { findDataTypeOfOperator } from 'lib/query/findDataTypeOfOperator';
 // ** Hooks
