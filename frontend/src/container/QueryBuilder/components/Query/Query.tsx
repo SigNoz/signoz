@@ -2,10 +2,10 @@ import { Col, Input, Row } from 'antd';
 // ** Constants
 import {
 	initialAggregateAttribute,
+	initialQueryBuilderFormValues,
 	mapOfFilters,
 	mapOfOperators,
 } from 'constants/queryBuilder';
-import { initialQueryBuilderFormValues } from 'constants/queryBuilder';
 // ** Components
 import {
 	AdditionalFiltersToggler,
