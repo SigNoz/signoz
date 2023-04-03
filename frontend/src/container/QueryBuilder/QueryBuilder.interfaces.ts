@@ -1,9 +1,12 @@
-import {
-	IBuilderFormula,
-	IBuilderQuery,
-} from 'types/api/queryBuilder/queryBuilderData';
+import { DataSource } from 'types/common/queryBuilder';
+
+export type QueryBuilderConfig =
+	| {
+			queryVariant: 'static';
+			initialDataSource: DataSource;
+	  }
+	| { queryVariant: 'dropdown' };
 
 export type QueryBuilderProps = {
-	queryData: IBuilderQuery[];
-	queryFormula: IBuilderFormula[];
+	config?: QueryBuilderConfig;
 };

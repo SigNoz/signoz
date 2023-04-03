@@ -1,0 +1,3 @@
+export enum QueryBuilderKeys {
+	GET_AGGREGATE_ATTRIBUTE = 'GET_AGGREGATE_ATTRIBUTE',
+}
