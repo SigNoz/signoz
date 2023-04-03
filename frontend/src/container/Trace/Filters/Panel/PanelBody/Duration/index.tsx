@@ -178,7 +178,7 @@ function Duration(): JSX.Element {
 		if (value === undefined) {
 			return <div />;
 		}
-		return <div>{`${getMs(value?.toString())}ms`}</div>;
+		return <div>{`${value?.toString()}ms`}</div>;
 	}, []);
 
 	return (
