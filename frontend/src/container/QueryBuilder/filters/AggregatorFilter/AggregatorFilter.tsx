@@ -12,6 +12,7 @@ import { transformToUpperCase } from 'utils/transformToUpperCase';
 import { selectStyle } from '../QueryBuilderSearch/config';
 // ** Types
 import { AgregatorFilterProps } from './AggregatorFilter.intefaces';
+import { aggregatorFilterStyle } from './config';
 
 export const AggregatorFilter = memo(function AggregatorFilter({
 	onChange,
