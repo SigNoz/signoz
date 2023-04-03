@@ -3387,12 +3387,19 @@ func (r *ClickHouseReader) GetLogFields(ctx context.Context) (*model.GetFieldsRe
 func extractSelectedAndInterestingFields(tableStatement string, fieldType string, fields *[]model.LogField, response *model.GetFieldsResponse) {
 	for _, field := range *fields {
 		field.Type = fieldType
-		if strings.Contains(tableStatement, fmt.Sprintf("INDEX %s_idx", field.Name)) {
+		if isSelectedField(tableStatement, field.Name) {
 			response.Selected = append(response.Selected, field)
 		} else {
 			response.Interesting = append(response.Interesting, field)
 		}
 	}
+}
+
+func isSelectedField(tableStatement, field string) bool {
+	if strings.Contains(tableStatement, fmt.Sprintf("INDEX %s_idx", field)) {
+		return true
+	}
+	return false
 }
 
 func (r *ClickHouseReader) UpdateLogField(ctx context.Context, field *model.UpdateField) *model.ApiError {
@@ -3804,6 +3811,13 @@ func (r *ClickHouseReader) GetLogAttributeKeys(ctx context.Context, req *v3.Filt
 	}
 	defer rows.Close()
 
+	statements := []model.ShowCreateTableStatement{}
+	query = fmt.Sprintf("SHOW CREATE TABLE %s.%s", r.logsDB, r.logsLocalTable)
+	err = r.db.Select(ctx, &statements, query)
+	if err != nil {
+		return nil, &model.ApiError{Err: err, Typ: model.ErrorInternal}
+	}
+
 	var attributeKey string
 	var attributeDataType string
 	var tagType string
@@ -3811,11 +3825,14 @@ func (r *ClickHouseReader) GetLogAttributeKeys(ctx context.Context, req *v3.Filt
 		if err := rows.Scan(&attributeKey, &tagType, &attributeDataType); err != nil {
 			return nil, fmt.Errorf("error while scanning rows: %s", err.Error())
 		}
+
 		key := v3.AttributeKey{
 			Key:      attributeKey,
 			DataType: v3.AttributeKeyDataType(attributeDataType),
 			Type:     v3.AttributeKeyType(tagType),
+			IsColumn: isSelectedField(statements[0].Statement, attributeKey),
 		}
+
 		response.AttributeKeys = append(response.AttributeKeys, key)
 	}
 
