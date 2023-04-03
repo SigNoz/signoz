@@ -1,1 +1,0 @@
-export { QueryLabel } from './QueryLabel';
