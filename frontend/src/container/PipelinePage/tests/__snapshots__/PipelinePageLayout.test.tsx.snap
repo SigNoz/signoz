@@ -31,7 +31,7 @@ exports[`PipelinePage container test should render PipelinePageLayout section 1`
       aria-label="question-circle"
       class="anticon anticon-question-circle"
       role="img"
-      style="font-size: 1.3125rem;"
+      style="font-size: 1.3125rem; color: rgba(255, 255, 255, 0.835);"
     >
       <svg
         aria-hidden="true"
