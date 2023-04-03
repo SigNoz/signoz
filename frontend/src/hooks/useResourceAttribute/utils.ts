@@ -3,6 +3,7 @@ import {
 	getResourceAttributesTagValues,
 } from 'api/metrics/getResourceAttributes';
 import { OperatorConversions } from 'constants/resourceAttributes';
+import ROUTES from 'constants/routes';
 import {
 	IOption,
 	IResourceAttribute,
@@ -13,6 +14,8 @@ import history from 'lib/history';
 import { IQueryBuilderTagFilterItems } from 'types/api/dashboard/getAll';
 import { OperatorValues, Tags } from 'types/reducer/trace';
 import { v4 as uuid } from 'uuid';
+
+import { whilelistedKeys } from './config';
 
 /**
  * resource_x_y -> x.y
@@ -56,26 +59,6 @@ export const convertRawQueriesToTraceSelectedTags = (
 		BoolValues: [],
 		TagType: tagType,
 	}));
-
-/**
- * Converts Resource Attribute Queries to PromQL query string
- */
-export const resourceAttributesQueryToPromQL = (
-	queries: IResourceAttribute[],
-): string => {
-	let parsedQueryString = '';
-
-	if (Array.isArray(queries))
-		queries.forEach((query) => {
-			parsedQueryString += `, ${
-				query.tagKey
-			}${convertOperatorLabelToMetricOperator(
-				query.operator,
-			)}"${query.tagValue.join('|')}"`;
-		});
-
-	return parsedQueryString;
-};
 
 /* Convert resource attributes to tagFilter items for queryBuilder */
 export const resourceAttributesToTagFilterItems = (
@@ -159,3 +142,13 @@ export const isResourceEmpty = (
 	staging: IResourceAttributeProps['staging'],
 	selectedQuery: IResourceAttributeProps['selectedQuery'],
 ): boolean => !!(queries.length || staging.length || selectedQuery.length);
+
+export const mappingWithRoutesAndKeys = (
+	pathname: string,
+	filters: IOption[],
+): IOption[] => {
+	if (ROUTES.SERVICE_MAP === pathname) {
+		return filters.filter((filter) => whilelistedKeys.includes(filter.value));
+	}
+	return filters;
+};
