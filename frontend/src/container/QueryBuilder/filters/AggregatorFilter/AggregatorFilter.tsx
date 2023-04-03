@@ -28,16 +28,15 @@ export const AggregatorFilter = memo(function AggregatorFilter({
 		],
 		async () =>
 			getAggregateAttribute({
+				searchText,
 				aggregateOperator: query.aggregateOperator,
 				dataSource: query.dataSource,
-				searchText,
 			}),
 		{ enabled: !!query.aggregateOperator && !!query.dataSource },
 	);
 
-	const handleSearchAttribute = (searchText: string): void => {
+	const handleSearchAttribute = (searchText: string): void =>
 		setSearchText(searchText);
-	};
 
 	const optionsData: SelectOption<string, string>[] =
 		data?.payload?.attributeKeys?.map((item) => ({
