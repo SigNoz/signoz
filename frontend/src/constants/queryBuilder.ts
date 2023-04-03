@@ -39,6 +39,23 @@ export const initialAggregateAttribute: IBuilderQueryForm['aggregateAttribute'] 
 	type: null,
 };
 
+export const OPERATORS = {
+	IN: 'IN',
+	NIN: 'NOT_IN',
+	LIKE: 'LIKE',
+	NLIKE: 'NOT_LIKE',
+	EQUALS: '=',
+	NOT_EQUALS: '!=',
+	EXISTS: 'EXISTS',
+	NOT_EXISTS: 'NOT_EXISTS',
+	CONTAINS: 'CONTAINS',
+	NOT_CONTAINS: 'NOT_CONTAINS',
+	GTE: '>=',
+	GT: '>',
+	LTE: '<=',
+	LT: '<',
+};
+
 export const initialQueryBuilderFormValues: IBuilderQueryForm = {
 	dataSource: DataSource.METRICS,
 	queryName: createNewQueryName([]),

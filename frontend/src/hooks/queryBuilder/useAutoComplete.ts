@@ -1,6 +1,6 @@
 import { Option } from 'container/QueryBuilder/type';
 import React, { useCallback, useState } from 'react';
-import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
+import { IBuilderQueryForm } from 'types/api/queryBuilder/queryBuilderData';
 
 import { checkStringEndWIthSpace } from '../../utils/checkStringEndWIthSpace';
 import { useFetchKeysAndValues } from './useFetchKeysAndValues';
@@ -20,7 +20,7 @@ type ReturnT = {
 	isFilter: boolean;
 };
 
-export const useAutoComplete = (query: IBuilderQuery): ReturnT => {
+export const useAutoComplete = (query: IBuilderQueryForm): ReturnT => {
 	const [searchValue, setSearchValue] = useState('');
 
 	const handleSearch = useCallback((value: string) => {

@@ -6,7 +6,7 @@ import {
 import { useRef, useState } from 'react';
 import { useQuery } from 'react-query';
 import { useDebounce } from 'react-use';
-import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
+import { IBuilderQueryForm } from 'types/api/queryBuilder/queryBuilderData';
 import { getCountOfSpace } from 'utils/getCountOfSpace';
 import { separateSearchValue } from 'utils/separateSearchValue';
 
@@ -17,7 +17,7 @@ type UseFetchKeysAndValuesReturnT = {
 
 export const useFetchKeysAndValues = (
 	searchValue: string,
-	query: IBuilderQuery,
+	query: IBuilderQueryForm,
 ): UseFetchKeysAndValuesReturnT => {
 	const [keys, setKeys] = useState<AttributeKeyOptions[]>([]);
 	const [results, setResults] = useState<string[]>([]);
@@ -28,14 +28,14 @@ export const useFetchKeysAndValues = (
 			searchValue,
 			query.dataSource,
 			query.aggregateOperator,
-			query.aggregateAttribute,
+			query.aggregateAttribute.key,
 		],
 		async () => {
 			const { payload } = await getAttributesKeys({
 				searchText: searchValue,
 				dataSource: query.dataSource,
 				aggregateOperator: query.aggregateOperator,
-				aggregateAttribute: query.aggregateAttribute,
+				aggregateAttribute: query.aggregateAttribute.key,
 			});
 			if (payload) {
 				setKeys(payload);
@@ -53,7 +53,7 @@ export const useFetchKeysAndValues = (
 
 	const handleFetchOption = async (
 		value: string,
-		query: IBuilderQuery,
+		query: IBuilderQueryForm,
 	): Promise<void> => {
 		if (value) {
 			const [tKey, operator] = separateSearchValue(value);
@@ -63,7 +63,7 @@ export const useFetchKeysAndValues = (
 					searchText: value,
 					dataSource: query.dataSource,
 					aggregateOperator: query.aggregateOperator,
-					aggregateAttribute: query.aggregateAttribute,
+					aggregateAttribute: query.aggregateAttribute.key,
 				});
 				handleSetKey(payload);
 			}
@@ -73,7 +73,7 @@ export const useFetchKeysAndValues = (
 					searchText: searchValue,
 					dataSource: query.dataSource,
 					aggregateOperator: query.aggregateOperator,
-					aggregateAttribute: query.aggregateAttribute,
+					aggregateAttribute: query.aggregateAttribute.key,
 					attributeKey: tKey,
 				});
 				if (payload) {

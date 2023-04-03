@@ -1,9 +1,11 @@
+import { CheckOutlined } from '@ant-design/icons';
 import { Select, Tag } from 'antd';
+import { OPERATORS } from 'constants/queryBuilder';
 import { useAutoComplete } from 'hooks/queryBuilder/useAutoComplete';
 import React, { useCallback } from 'react';
-import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
+import { IBuilderQueryForm } from 'types/api/queryBuilder/queryBuilderData';
 
-import { filterSelectStyle } from './config';
+import { dropdownCheckIcon, filterSelectStyle } from './config';
 
 function QueryBuilderSearch({ query }: QueryBuilderSearchProps): JSX.Element {
 	const {
@@ -17,9 +19,15 @@ function QueryBuilderSearch({ query }: QueryBuilderSearchProps): JSX.Element {
 		isFilter,
 	} = useAutoComplete(query);
 
-	const onTagRender = ({ value }: { value: string }): React.ReactElement => (
-		<Tag closable>{value}</Tag>
-	);
+	const onTagRender = ({ value }: { value: string }): React.ReactElement => {
+		const [tagKey, tagOperator, ...tagValue] = value.split(' ');
+		if (tagOperator === OPERATORS.IN || tagOperator === OPERATORS.NIN) {
+			return (
+				<Tag closable>{`${tagKey} ${tagOperator} ${tagValue.join(', ')}`}</Tag>
+			);
+		}
+		return <Tag closable>{value}</Tag>;
+	};
 
 	const getOptionClasses = useCallback(
 		(selected: boolean | undefined) =>
@@ -36,7 +44,7 @@ function QueryBuilderSearch({ query }: QueryBuilderSearchProps): JSX.Element {
 			mode="multiple"
 			placeholder="Search Filter"
 			value={tags}
-			disabled={!query.aggregateAttribute}
+			disabled={!query.aggregateAttribute.key}
 			style={filterSelectStyle}
 			onDeselect={handleClearTag}
 			onSelect={handleSelect}
@@ -51,6 +59,7 @@ function QueryBuilderSearch({ query }: QueryBuilderSearchProps): JSX.Element {
 					className={getOptionClasses(option.selected)}
 				>
 					{option.value}
+					{option.selected && <CheckOutlined style={dropdownCheckIcon} />}
 				</Select.Option>
 			))}
 		</Select>
@@ -58,7 +67,7 @@ function QueryBuilderSearch({ query }: QueryBuilderSearchProps): JSX.Element {
 }
 
 interface QueryBuilderSearchProps {
-	query: IBuilderQuery;
+	query: IBuilderQueryForm;
 }
 
 export default QueryBuilderSearch;
