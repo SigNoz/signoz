@@ -14,6 +14,7 @@ export function ListMarker({
 	isAvailableToDisable,
 	className,
 	toggleDisabled,
+	style,
 }: ListMarkerProps): JSX.Element {
 	const buttonProps: Partial<ButtonProps> = isAvailableToDisable
 		? {
@@ -29,6 +30,7 @@ export function ListMarker({
 			icon={buttonProps.icon}
 			onClick={buttonProps.onClick}
 			className={className}
+			style={{ marginRight: '0.1rem', ...style }}
 		>
 			{labelName}
 		</StyledButton>
