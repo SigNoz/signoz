@@ -3791,11 +3791,11 @@ func (r *ClickHouseReader) GetLogAttributeKeys(ctx context.Context, req *v3.Filt
 	var response v3.FilterAttributeKeyResponse
 
 	if len(req.SearchText) != 0 {
-		query = fmt.Sprintf("select distinct tagKey, tagDataType from  %s.%s where tagKey ILIKE $1 and tagType=$2 limit $3", r.logsDB, r.logsTagAttributeTable)
-		rows, err = r.db.Query(ctx, query, fmt.Sprintf("%%%s%%", req.SearchText), req.TagType, req.Limit)
+		query = fmt.Sprintf("select distinct tagKey, tagType, tagDataType from  %s.%s where tagKey ILIKE $1 limit $2", r.logsDB, r.logsTagAttributeTable)
+		rows, err = r.db.Query(ctx, query, fmt.Sprintf("%%%s%%", req.SearchText), req.Limit)
 	} else {
-		query = fmt.Sprintf("select distinct tagKey, tagDataType from  %s.%s where tagType=$1 limit $2", r.logsDB, r.logsTagAttributeTable)
-		rows, err = r.db.Query(ctx, query, req.TagType, req.Limit)
+		query = fmt.Sprintf("select distinct tagKey, tagType, tagDataType from  %s.%s limit $1", r.logsDB, r.logsTagAttributeTable)
+		rows, err = r.db.Query(ctx, query, req.Limit)
 	}
 
 	if err != nil {
@@ -3806,14 +3806,15 @@ func (r *ClickHouseReader) GetLogAttributeKeys(ctx context.Context, req *v3.Filt
 
 	var attributeKey string
 	var attributeDataType string
+	var tagType string
 	for rows.Next() {
-		if err := rows.Scan(&attributeKey, &attributeDataType); err != nil {
+		if err := rows.Scan(&attributeKey, &tagType, &attributeDataType); err != nil {
 			return nil, fmt.Errorf("error while scanning rows: %s", err.Error())
 		}
 		key := v3.AttributeKey{
 			Key:      attributeKey,
 			DataType: v3.AttributeKeyDataType(attributeDataType),
-			Type:     v3.AttributeKeyType(req.TagType),
+			Type:     v3.AttributeKeyType(tagType),
 		}
 		response.AttributeKeys = append(response.AttributeKeys, key)
 	}

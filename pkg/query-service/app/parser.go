@@ -848,7 +848,7 @@ func parseFilterAttributeKeyRequest(r *http.Request) (*v3.FilterAttributeKeyRequ
 		return nil, err
 	}
 
-	if err := tagType.Validate(); err != nil {
+	if err := tagType.Validate(); err != nil && tagType != v3.TagType("") {
 		return nil, err
 	}
 
