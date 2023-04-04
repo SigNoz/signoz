@@ -207,7 +207,17 @@ export const Query = memo(function Query({
 						) : (
 							<FilterLabel label={transformToUpperCase(query.dataSource)} />
 						)}
-						{/* TODO: here will be search */}
+						{query.dataSource === 'metrics' && (
+							<Select
+								defaultValue="WHERE"
+								showArrow={false}
+								dropdownStyle={dropdownStyle}
+								style={queryLabelStyle}
+							>
+								<Select.Option value="WHERE">WHERE</Select.Option>
+							</Select>
+						)}
+						<QueryBuilderSearch query={query} />
 					</Col>
 				</Row>
 			</Col>

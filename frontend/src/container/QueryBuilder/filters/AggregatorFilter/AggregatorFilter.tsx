@@ -70,7 +70,7 @@ export const AggregatorFilter = memo(function AggregatorFilter({
 		<AutoComplete
 			showSearch
 			placeholder={`${transformToUpperCase(query.dataSource)} name`}
-			style={{ width: '100%' }}
+			style={aggregatorFilterStyle}
 			showArrow={false}
 			filterOption={false}
 			onSearch={handleSearchAttribute}
