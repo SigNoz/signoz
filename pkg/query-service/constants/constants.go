@@ -213,13 +213,11 @@ const (
 // ReservedColumnTargetAliases identifies result value from a user
 // written clickhouse query. The column alias indcate which value is
 // to be considered as final result (or target)
-var ReservedColumnTargetAliases = map[string]bool{"result": true, "res": true, "value": true}
-
-const (
-	StringTagMapCol = "stringTagMap"
-	NumberTagMapCol = "numberTagMap"
-	BoolTagMapCol   = "boolTagMap"
-)
+var ReservedColumnTargetAliases = map[string]struct{}{
+	"result": {},
+	"res":    {},
+	"value":  {},
+}
 
 // logsPPLPfx is a short constant for logsPipelinePrefix
 const LogsPPLPfx = "logstransform/pipeline_"
