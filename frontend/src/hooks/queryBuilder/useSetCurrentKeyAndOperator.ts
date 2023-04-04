@@ -3,13 +3,13 @@ import { useMemo } from 'react';
 import { getCountOfSpace } from 'utils/getCountOfSpace';
 import { separateSearchValue } from 'utils/separateSearchValue';
 
-type ReturnT = [string, string, string[]];
+type HookReturnValues = [string, string, string[]];
 
 export const useSetCurrentKeyAndOperator = (
 	value: string,
 	keys: AttributeKeyOptions[],
-): ReturnT =>
-	useMemo((): ReturnT => {
+): HookReturnValues =>
+	useMemo((): HookReturnValues => {
 		let key = '';
 		let operator = '';
 		let result: string[] = [];
