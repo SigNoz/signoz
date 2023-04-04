@@ -113,7 +113,6 @@ function SearchFields({
 			<SearchFieldsActionBar
 				applyUpdate={applyUpdate}
 				clearFilters={clearFilters}
-				fieldsQuery={fieldsQuery}
 			/>
 			<Suggestions applySuggestion={addSuggestedField} />
 		</>
