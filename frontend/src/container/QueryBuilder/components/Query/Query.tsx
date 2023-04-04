@@ -29,7 +29,7 @@ import { IBuilderQueryForm } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource } from 'types/common/queryBuilder';
 import { transformToUpperCase } from 'utils/transformToUpperCase';
 
-import { dropdownStyle, operatorsSelectStyle, queryLabelStyle } from './config';
+import { dropdownStyle, queryLabelStyle } from './config';
 // ** Types
 import { QueryProps } from './Query.interfaces';
 // ** Styles
