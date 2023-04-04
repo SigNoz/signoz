@@ -294,6 +294,17 @@ func reduceQuery(query string, reduceTo v3.ReduceToOperator, aggregateOperator v
 	return "", nil
 }
 
+func addLimitToQuery(query string, limit uint64) string {
+	if limit == 0 {
+		limit = 100
+	}
+	return fmt.Sprintf("%s LIMIT %d", query, limit)
+}
+
+func addOffsetToQuery(query string, offset uint64) string {
+	return fmt.Sprintf("%s OFFSET %d", query, offset)
+}
+
 func PrepareLogsQuery(start, end, step int64, queryType v3.QueryType, panelType v3.PanelType, mq *v3.BuilderQuery) (string, error) {
 	query, err := buildLogsQuery(start, end, step, mq, constants.SIGNOZ_TIMESERIES_TABLENAME)
 	if err != nil {
@@ -302,5 +313,12 @@ func PrepareLogsQuery(start, end, step int64, queryType v3.QueryType, panelType 
 	if panelType == v3.PanelTypeValue {
 		query, err = reduceQuery(query, mq.ReduceTo, mq.AggregateOperator)
 	}
+
+	query = addLimitToQuery(query, mq.Limit)
+
+	if mq.Offset != 0 {
+		query = addOffsetToQuery(query, mq.Offset)
+	}
+
 	return query, err
 }
