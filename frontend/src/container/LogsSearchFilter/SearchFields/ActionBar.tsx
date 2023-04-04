@@ -5,8 +5,8 @@ import { QueryFields } from './utils';
 
 interface SearchFieldsActionBarProps {
 	fieldsQuery: QueryFields[][];
-	applyUpdate: () => void;
-	clearFilters: () => void;
+	applyUpdate: VoidFunction;
+	clearFilters: VoidFunction;
 }
 
 export function SearchFieldsActionBar({
