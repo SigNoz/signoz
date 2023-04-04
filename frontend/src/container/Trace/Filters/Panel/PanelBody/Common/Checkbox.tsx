@@ -35,6 +35,7 @@ function CheckBoxComponent(props: CheckBoxProps): JSX.Element {
 	const dispatch = useDispatch<Dispatch<AppActions>>();
 
 	const [isLoading, setIsLoading] = useState<boolean>(false);
+	const [timeoutId, setTimeoutId] = useState<NodeJS.Timeout>();
 
 	const isUserSelected =
 		(userSelectedFilter.get(name) || []).find((e) => e === keyValue) !==
@@ -42,14 +43,20 @@ function CheckBoxComponent(props: CheckBoxProps): JSX.Element {
 
 	const { notifications } = useNotifications();
 
-	// eslint-disable-next-line sonarjs/cognitive-complexity
-	const onCheckHandler = async (): Promise<void> => {
+	const updateFilter: (isSingleSelection?: boolean) => Promise<void> = async (
+		isSingleSelection,
+		// eslint-disable-next-line sonarjs/cognitive-complexity
+	) => {
 		try {
 			setIsLoading(true);
 
 			const newSelectedMap = new Map(selectedFilter);
 			const preUserSelectedMap = new Map(userSelectedFilter);
 			const preIsFilterExclude = new Map(isFilterExclude);
+
+			if (isSingleSelection) {
+				preUserSelectedMap.delete(name);
+			}
 
 			const isTopicPresent = preUserSelectedMap.get(name);
 
@@ -72,7 +79,9 @@ function CheckBoxComponent(props: CheckBoxProps): JSX.Element {
 				}
 			}
 
-			if (newSelectedMap.get(name)?.find((e) => e === keyValue)) {
+			if (isSingleSelection) {
+				newSelectedMap.set(name, [...new Set([...[], keyValue])]);
+			} else if (newSelectedMap.get(name)?.find((e) => e === keyValue)) {
 				newSelectedMap.set(name, [
 					...(newSelectedMap.get(name) || []).filter((e) => e !== keyValue),
 				]);
@@ -82,7 +91,9 @@ function CheckBoxComponent(props: CheckBoxProps): JSX.Element {
 				]);
 			}
 
-			if (preIsFilterExclude.get(name) !== false) {
+			if (isSingleSelection) {
+				preIsFilterExclude.set(name, false);
+			} else if (preIsFilterExclude.get(name) !== false) {
 				preIsFilterExclude.set(name, true);
 			}
 
@@ -156,6 +167,19 @@ function CheckBoxComponent(props: CheckBoxProps): JSX.Element {
 				message: (error as AxiosError).toString() || 'Something went wrong',
 			});
 			setIsLoading(false);
+		}
+	};
+
+	const onCheckHandler: React.MouseEventHandler<HTMLElement> = async (
+		e,
+	): Promise<void> => {
+		if (e.detail === 1) {
+			const id = setTimeout(updateFilter, 500);
+			setTimeoutId(id);
+		}
+		if (e.detail === 2) {
+			updateFilter(true);
+			clearTimeout(timeoutId);
 		}
 	};
 
