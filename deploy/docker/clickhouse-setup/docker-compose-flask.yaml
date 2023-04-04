@@ -1,0 +1,40 @@
+version: "2.4"
+services:
+  mongodb:
+    image: "mongo:latest"
+    container_name: mongodb
+    hostname: mongodb
+    restart: always
+    # environment:
+    #   MONGO_INITDB_ROOT_USERNAME: root
+    #   MONGO_INITDB_ROOT_PASSWORD: example
+    # ports:
+    #   - 27017:27017
+
+  sample-flask:
+    image: "signoz/sample-flask-app:latest"
+    container_name: sample-flask
+    hostname: sample-flask
+    ports:
+      - 5002:5002
+    extra_hosts:
+      - signoz:host-gateway
+    environment:
+      MONGO_HOST: mongodb
+      OTEL_RESOURCE_ATTRIBUTES: service.name=sample-flask
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://signoz:4317
+
+  load-hotrod-flask:
+    image: "grubykarol/locust:1.2.3-python3.9-alpine3.12"
+    container_name: load-hotrod-flask
+    hostname: load-hotrod-flask
+    environment:
+      ATTACKED_HOST: http://sample-flask:5002
+      LOCUST_MODE: standalone
+      NO_PROXY: standalone
+      TASK_DELAY_FROM: 5
+      TASK_DELAY_TO: 30
+      QUIET_MODE: "${QUIET_MODE:-false}"
+      LOCUST_OPTS: "--headless -u 10 -r 1"
+    volumes:
+      - ../common/locust-flask:/locust
