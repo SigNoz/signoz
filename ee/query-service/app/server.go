@@ -21,6 +21,7 @@ import (
 	"go.signoz.io/signoz/ee/query-service/app/api"
 	"go.signoz.io/signoz/ee/query-service/app/db"
 	"go.signoz.io/signoz/ee/query-service/dao"
+	"go.signoz.io/signoz/ee/query-service/ingestionRules"
 	"go.signoz.io/signoz/ee/query-service/interfaces"
 	licensepkg "go.signoz.io/signoz/ee/query-service/license"
 	"go.signoz.io/signoz/ee/query-service/usage"
@@ -84,7 +85,7 @@ func (s Server) HealthCheckStatus() chan healthcheck.Status {
 // NewServer creates and initializes Server
 func NewServer(serverOptions *ServerOptions) (*Server, error) {
 
-	modelDao, err := dao.InitDao("sqlite", baseconst.RELATIONAL_DATASOURCE_PATH)
+	modelDao, err := dao.InitDao(AppDbEngine, baseconst.RELATIONAL_DATASOURCE_PATH)
 	if err != nil {
 		return nil, err
 	}
@@ -117,7 +118,7 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 		go qb.Start(readerReady)
 		reader = qb
 	} else {
-		return nil, fmt.Errorf("Storage type: %s is not supported in query service", storage)
+		return nil, fmt.Errorf("storage type: %s is not supported in query service", storage)
 	}
 
 	<-readerReady
@@ -128,6 +129,12 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 		reader,
 		serverOptions.DisableRules)
 
+	if err != nil {
+		return nil, err
+	}
+
+	// ingestion rules manager
+	ingestionController, err := ingestionRules.NewIngestionController(localDB, AppDbEngine)
 	if err != nil {
 		return nil, err
 	}
@@ -144,7 +151,7 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 	}
 
 	// start the usagemanager
-	usageManager, err := usage.New("sqlite", localDB, lm.GetRepo(), reader.GetConn())
+	usageManager, err := usage.New(AppDbEngine, localDB, lm.GetRepo(), reader.GetConn())
 	if err != nil {
 		return nil, err
 	}
@@ -155,12 +162,33 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 
 	telemetry.GetInstance().SetReader(reader)
 
+	// auth middleware for EE
+	getUserFromRequest := func(r *http.Request) (*basemodel.UserPayload, error) {
+		patToken := r.Header.Get("SIGNOZ-API-KEY")
+		if len(patToken) > 0 {
+			zap.S().Debugf("Received a non-zero length PAT token")
+			ctx := context.Background()
+			user, err := modelDao.GetUserByPAT(ctx, patToken)
+			if err == nil && user != nil {
+				zap.S().Debugf("Found valid PAT user: %+v", user)
+				return user, nil
+			}
+			if err != nil {
+				zap.S().Debugf("Error while getting user for PAT: %+v", err)
+			}
+		}
+		return baseauth.GetUserFromRequest(r)
+	}
+	authm := baseapp.NewAuthMiddleware(getUserFromRequest)
+
 	apiOpts := api.APIHandlerOptions{
-		DataConnector:  reader,
-		AppDao:         modelDao,
-		RulesManager:   rm,
-		FeatureFlags:   lm,
-		LicenseManager: lm,
+		DataConnector:       reader,
+		AppDao:              modelDao,
+		RulesManager:        rm,
+		FeatureFlags:        lm,
+		LicenseManager:      lm,
+		Authenticator:       authm,
+		IngestionController: ingestionController,
 	}
 
 	apiHandler, err := api.NewAPIHandler(apiOpts)
@@ -209,7 +237,7 @@ func (s *Server) createPrivateServer(apiHandler *api.APIHandler) (*http.Server, 
 		// ip here for alert manager
 		AllowedOrigins: []string{"*"},
 		AllowedMethods: []string{"GET", "DELETE", "POST", "PUT", "PATCH"},
-		AllowedHeaders: []string{"Accept", "Authorization", "Content-Type", "SIGNOZ-API-KEY"},
+		AllowedHeaders: []string{"Accept", "Authorization", "Content-Type"},
 	})
 
 	handler := c.Handler(r)
@@ -224,33 +252,14 @@ func (s *Server) createPublicServer(apiHandler *api.APIHandler) (*http.Server, e
 
 	r := mux.NewRouter()
 
-	getUserFromRequest := func(r *http.Request) (*basemodel.UserPayload, error) {
-		patToken := r.Header.Get("SIGNOZ-API-KEY")
-		if len(patToken) > 0 {
-			zap.S().Debugf("Received a non-zero length PAT token")
-			ctx := context.Background()
-			dao := apiHandler.AppDao()
-
-			user, err := dao.GetUserByPAT(ctx, patToken)
-			if err == nil && user != nil {
-				zap.S().Debugf("Found valid PAT user: %+v", user)
-				return user, nil
-			}
-			if err != nil {
-				zap.S().Debugf("Error while getting user for PAT: %+v", err)
-			}
-		}
-		return baseauth.GetUserFromRequest(r)
-	}
-	am := baseapp.NewAuthMiddleware(getUserFromRequest)
 	r.Use(setTimeoutMiddleware)
 	r.Use(s.analyticsMiddleware)
 	r.Use(loggingMiddleware)
 
-	apiHandler.RegisterRoutes(r, am)
-	apiHandler.RegisterMetricsRoutes(r, am)
-	apiHandler.RegisterLogsRoutes(r, am)
-	apiHandler.RegisterQueryRangeV3Routes(r, am)
+	apiHandler.RegisterRoutes(r)
+	apiHandler.RegisterMetricsRoutes(r)
+	apiHandler.RegisterLogsRoutes(r)
+	apiHandler.RegisterQueryRangeV3Routes(r)
 
 	c := cors.New(cors.Options{
 		AllowedOrigins: []string{"*"},

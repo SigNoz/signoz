@@ -25,6 +25,12 @@ func generatePATToken() string {
 }
 
 func (ah *APIHandler) createPAT(w http.ResponseWriter, r *http.Request) {
+
+	if !ah.CheckFeature(model.Pat) {
+		RespondError(w, model.BadRequestStr("feature unavailable, please upgrade to EE"), nil)
+		return
+	}
+
 	ctx := context.Background()
 
 	req := model.PAT{}
@@ -57,6 +63,11 @@ func (ah *APIHandler) createPAT(w http.ResponseWriter, r *http.Request) {
 }
 
 func (ah *APIHandler) getPATs(w http.ResponseWriter, r *http.Request) {
+	if !ah.CheckFeature(model.Pat) {
+		RespondError(w, model.BadRequestStr("feature unavailable, please upgrade to EE"), nil)
+		return
+	}
+
 	ctx := context.Background()
 	user, err := auth.GetUserFromRequest(r)
 	if err != nil {
@@ -76,6 +87,11 @@ func (ah *APIHandler) getPATs(w http.ResponseWriter, r *http.Request) {
 }
 
 func (ah *APIHandler) deletePAT(w http.ResponseWriter, r *http.Request) {
+	if !ah.CheckFeature(model.Pat) {
+		RespondError(w, model.BadRequestStr("feature unavailable, please upgrade to EE"), nil)
+		return
+	}
+
 	ctx := context.Background()
 	id := mux.Vars(r)["id"]
 	user, err := auth.GetUserFromRequest(r)

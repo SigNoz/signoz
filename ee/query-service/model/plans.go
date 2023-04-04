@@ -10,6 +10,9 @@ const Pro = "PRO_PLAN"
 const Enterprise = "ENTERPRISE_PLAN"
 const DisableUpsell = "DISABLE_UPSELL"
 
+// personal access tokens feature
+const Pat = "PAT"
+
 var BasicPlan = basemodel.FeatureSet{
 	Basic:         true,
 	SSO:           false,
@@ -21,6 +24,7 @@ var ProPlan = basemodel.FeatureSet{
 	SSO:                             true,
 	basemodel.SmartTraceDetail:      true,
 	basemodel.CustomMetricsFunction: true,
+	Pat:                             true,
 }
 
 var EnterprisePlan = basemodel.FeatureSet{
@@ -28,4 +32,5 @@ var EnterprisePlan = basemodel.FeatureSet{
 	SSO:                             true,
 	basemodel.SmartTraceDetail:      true,
 	basemodel.CustomMetricsFunction: true,
+	Pat:                             true,
 }
