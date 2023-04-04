@@ -222,7 +222,7 @@ var testBuildLogsQueryData = []struct {
 		Step:  60,
 		BuilderQuery: &v3.BuilderQuery{
 			QueryName:          "A",
-			AggregateAttribute: v3.AttributeKey{Key: "bytes", DataType: v3.AttributeKeyDataTypeNumber, Type: v3.AttributeKeyTypeTag},
+			AggregateAttribute: v3.AttributeKey{Key: "bytes", DataType: v3.AttributeKeyDataTypeFloat64, Type: v3.AttributeKeyTypeTag},
 			AggregateOperator:  v3.AggregateOperatorAvg,
 			Expression:         "A",
 			Filters: &v3.FilterSet{Operator: "AND", Items: []v3.FilterItem{
@@ -373,7 +373,7 @@ var testBuildLogsQueryData = []struct {
 		Step:  60,
 		BuilderQuery: &v3.BuilderQuery{
 			QueryName:          "A",
-			AggregateAttribute: v3.AttributeKey{Key: "bytes", Type: v3.AttributeKeyTypeTag, DataType: v3.AttributeKeyDataTypeNumber},
+			AggregateAttribute: v3.AttributeKey{Key: "bytes", Type: v3.AttributeKeyTypeTag, DataType: v3.AttributeKeyDataTypeFloat64},
 			AggregateOperator:  v3.AggregateOperatorRate,
 			Expression:         "A",
 			Filters:            &v3.FilterSet{Operator: "AND", Items: []v3.FilterItem{}},
@@ -394,7 +394,7 @@ var testBuildLogsQueryData = []struct {
 		Step:  60,
 		BuilderQuery: &v3.BuilderQuery{
 			QueryName:          "A",
-			AggregateAttribute: v3.AttributeKey{Key: "bytes", Type: v3.AttributeKeyTypeTag, DataType: v3.AttributeKeyDataTypeNumber},
+			AggregateAttribute: v3.AttributeKey{Key: "bytes", Type: v3.AttributeKeyTypeTag, DataType: v3.AttributeKeyDataTypeFloat64},
 			AggregateOperator:  v3.AggregateOperatorRateSum,
 			Expression:         "A",
 			Filters:            &v3.FilterSet{Operator: "AND", Items: []v3.FilterItem{}},

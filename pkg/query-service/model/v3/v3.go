@@ -508,8 +508,8 @@ type Series struct {
 }
 
 type Row struct {
-	Timestamp time.Time         `json:"timestamp"`
-	Data      map[string]string `json:"data"`
+	Timestamp time.Time              `json:"timestamp"`
+	Data      map[string]interface{} `json:"data"`
 }
 
 type Point struct {
