@@ -1,20 +1,22 @@
 import { useMemo } from 'react';
 
-import { QUERY_BUILDER_SEARCH_VALUES } from '../../constants/queryBuilder';
+import { OperatorType } from './useOperatorType';
+
+const validationMapper: Record<
+	OperatorType,
+	(resultLength: number) => boolean
+> = {
+	SINGLE_VALUE: (resultLength: number) => resultLength === 1,
+	MULTIPLY_VALUE: (resultLength: number) => resultLength >= 1,
+	NON_VALUE: (resultLength: number) => resultLength === 0,
+	NOT_VALID: () => false,
+};
 
 export const useIsValidTag = (
-	operatorType: string,
+	operatorType: OperatorType,
 	resultLength: number,
 ): boolean =>
-	useMemo(() => {
-		if (operatorType === QUERY_BUILDER_SEARCH_VALUES.SINGLE) {
-			return resultLength === 1;
-		}
-		if (operatorType === QUERY_BUILDER_SEARCH_VALUES.MULTIPLY) {
-			return resultLength >= 1;
-		}
-		if (operatorType === QUERY_BUILDER_SEARCH_VALUES.NON) {
-			return resultLength === 0;
-		}
-		return false;
-	}, [operatorType, resultLength]);
+	useMemo(() => validationMapper[operatorType]?.(resultLength), [
+		operatorType,
+		resultLength,
+	]);

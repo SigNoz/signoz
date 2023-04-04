@@ -1,6 +1,6 @@
 import { OPERATORS } from 'constants/queryBuilder';
 
-type OperatorType =
+export type OperatorType =
 	| 'SINGLE_VALUE'
 	| 'MULTIPLY_VALUE'
 	| 'NON_VALUE'

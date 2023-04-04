@@ -10,7 +10,7 @@ import { IBuilderQueryForm } from 'types/api/queryBuilder/queryBuilderData';
 import { getCountOfSpace } from 'utils/getCountOfSpace';
 import { separateSearchValue } from 'utils/separateSearchValue';
 
-type UseFetchKeysAndValuesReturnT = {
+type UseFetchKeysAndValuesReturnValues = {
 	keys: AttributeKeyOptions[];
 	results: string[];
 };
@@ -18,7 +18,7 @@ type UseFetchKeysAndValuesReturnT = {
 export const useFetchKeysAndValues = (
 	searchValue: string,
 	query: IBuilderQueryForm,
-): UseFetchKeysAndValuesReturnT => {
+): UseFetchKeysAndValuesReturnValues => {
 	const [keys, setKeys] = useState<AttributeKeyOptions[]>([]);
 	const [results, setResults] = useState<string[]>([]);
 
