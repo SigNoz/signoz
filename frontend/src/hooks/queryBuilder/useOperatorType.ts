@@ -1,27 +1,27 @@
-import { OPERATORS, QUERY_BUILDER_SEARCH_VALUES } from 'constants/queryBuilder';
-import { useMemo } from 'react';
+import { OPERATORS } from 'constants/queryBuilder';
 
-export const useOperatorType = (operator: string): string =>
-	useMemo(() => {
-		switch (operator) {
-			case OPERATORS.IN:
-			case OPERATORS.NIN:
-				return QUERY_BUILDER_SEARCH_VALUES.MULTIPLY;
-			case OPERATORS.EXISTS:
-			case OPERATORS.NOT_EXISTS:
-				return QUERY_BUILDER_SEARCH_VALUES.NON;
-			case OPERATORS.LTE:
-			case OPERATORS.LT:
-			case OPERATORS.GTE:
-			case OPERATORS.GT:
-			case OPERATORS.LIKE:
-			case OPERATORS.NLIKE:
-			case OPERATORS.CONTAINS:
-			case OPERATORS.NOT_CONTAINS:
-			case OPERATORS.EQUALS:
-			case OPERATORS.NOT_EQUALS:
-				return QUERY_BUILDER_SEARCH_VALUES.SINGLE;
-			default:
-				return QUERY_BUILDER_SEARCH_VALUES.NOT_VALID;
-		}
-	}, [operator]);
+type OperatorType =
+	| 'SINGLE_VALUE'
+	| 'MULTIPLY_VALUE'
+	| 'NON_VALUE'
+	| 'NOT_VALID';
+
+const operatorTypeMapper: Record<string, OperatorType> = {
+	[OPERATORS.IN]: 'MULTIPLY_VALUE',
+	[OPERATORS.NIN]: 'MULTIPLY_VALUE',
+	[OPERATORS.EXISTS]: 'NON_VALUE',
+	[OPERATORS.NOT_EXISTS]: 'NON_VALUE',
+	[OPERATORS.LTE]: 'SINGLE_VALUE',
+	[OPERATORS.LT]: 'SINGLE_VALUE',
+	[OPERATORS.GTE]: 'SINGLE_VALUE',
+	[OPERATORS.GT]: 'SINGLE_VALUE',
+	[OPERATORS.LIKE]: 'SINGLE_VALUE',
+	[OPERATORS.NLIKE]: 'SINGLE_VALUE',
+	[OPERATORS.CONTAINS]: 'SINGLE_VALUE',
+	[OPERATORS.NOT_CONTAINS]: 'SINGLE_VALUE',
+	[OPERATORS.EQUALS]: 'SINGLE_VALUE',
+	[OPERATORS.NOT_EQUALS]: 'SINGLE_VALUE',
+};
+
+export const useOperatorType = (operator: string): OperatorType =>
+	operatorTypeMapper[operator] || 'NOT_VALID';
