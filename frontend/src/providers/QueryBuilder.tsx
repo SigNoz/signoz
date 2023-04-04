@@ -1,3 +1,4 @@
+// ** Helpers
 import React, {
 	createContext,
 	PropsWithChildren,
@@ -5,62 +6,92 @@ import React, {
 	useMemo,
 	useState,
 } from 'react';
-import { useParams } from 'react-router-dom';
-
-// ** TODO: temporary types for context, fix it during development
-export type QueryBuilderContextType = {
-	queryBuilderData: unknown[];
-	resetQueryBuilderData: () => void;
-	handleSetQueryBuilderData: () => void;
-};
+// ** Types
+// TODO: Rename Types on the Reusable type for any source
+import {
+	IBuilderFormula,
+	IBuilderQueryForm,
+} from 'types/api/queryBuilder/queryBuilderData';
+import {
+	DataSource,
+	MetricAggregateOperator,
+	QueryBuilderContextType,
+	QueryBuilderData,
+} from 'types/common/queryBuilder';
 
 export const QueryBuilderContext = createContext<QueryBuilderContextType>({
-	queryBuilderData: [
-		{
-			queryData: '',
-			queryFormulas: '',
-		},
-	],
+	queryBuilderData: { queryData: [], queryFormulas: [] },
 	resetQueryBuilderData: () => {},
-	handleSetQueryBuilderData: () => {},
+	handleSetQueryData: () => {},
+	handleSetFormulaData: () => {},
+	initQueryBuilderData: () => {},
 });
 
-const initialQueryBuilderData: unknown[] = [
-	{
-		queryData: '',
-		queryFormulas: '',
-	},
-];
+const initialQueryBuilderData: QueryBuilderData = {
+	queryData: [],
+	queryFormulas: [],
+};
 
 export function QueryBuilderProvider({
 	children,
 }: PropsWithChildren): JSX.Element {
 	// ** TODO: get queryId from url for getting data for query builder
 	// ** TODO: type the params which will be used for request of the data for query builder
-	// eslint-disable-next-line @typescript-eslint/no-unused-vars
-	const params = useParams();
 
-	// ** TODO: create state for queryBuilder
-	// ** TODO: create state for queryFormulas
+	const [queryBuilderData, setQueryBuilderData] = useState<QueryBuilderData>({
+		// ** TODO temporary initial value for first query for testing first filters
+		queryData: [
+			// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+			// @ts-ignore
+			{
+				dataSource: DataSource.METRICS,
+				queryName: 'A',
+				aggregateOperator: Object.values(MetricAggregateOperator)[0],
+				aggregateAttribute: {
+					dataType: null,
+					key: '',
+					isColumn: null,
+					type: null,
+				},
+			},
+		],
+		queryFormulas: [],
+	});
 
-	// ** TODO: Find out the types of the queryBuilder state
-	// ** TODO: Check exist version of the functionality
-	const [queryBuilderData, setQueryBuilderData] = useState<unknown[]>([
-		{
-			queryData: '',
-			queryFormulas: '',
-		},
-	]);
-
+	// ** Method for resetting query builder data
 	const resetQueryBuilderData = useCallback((): void => {
 		setQueryBuilderData(initialQueryBuilderData);
 	}, []);
 
-	const handleSetQueryBuilderData = useCallback((): void => {}, []);
+	// ** Method for setupping query builder data
+	const initQueryBuilderData = useCallback(
+		(queryBuilderData: QueryBuilderData): void => {
+			setQueryBuilderData(queryBuilderData);
+		},
+		[],
+	);
+
+	const handleSetQueryData = useCallback(
+		(index: number, newQueryData: Partial<IBuilderQueryForm>): void => {
+			const updatedQueryBuilderData = queryBuilderData.queryData.map((item, idx) =>
+				index === idx ? { ...item, ...newQueryData } : item,
+			);
+
+			setQueryBuilderData((prevState) => ({
+				...prevState,
+				queryData: updatedQueryBuilderData,
+			}));
+		},
+		[queryBuilderData],
+	);
+	const handleSetFormulaData = useCallback(
+		// eslint-disable-next-line @typescript-eslint/no-unused-vars
+		(index: number, formulaData: IBuilderFormula): void => {},
+		[],
+	);
+
 	// ** TODO: Discuss with Palash how the state of the queryBuilder and queryFormulas
 	// ** TODO: should be filled from url
-
-	// ** TODO: create set function for state
 
 	// ** TODO: put these values and setter to the context value
 
@@ -68,9 +99,17 @@ export function QueryBuilderProvider({
 		() => ({
 			queryBuilderData,
 			resetQueryBuilderData,
-			handleSetQueryBuilderData,
+			handleSetQueryData,
+			handleSetFormulaData,
+			initQueryBuilderData,
 		}),
-		[queryBuilderData, resetQueryBuilderData, handleSetQueryBuilderData],
+		[
+			queryBuilderData,
+			resetQueryBuilderData,
+			handleSetQueryData,
+			handleSetFormulaData,
+			initQueryBuilderData,
+		],
 	);
 
 	return (

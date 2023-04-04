@@ -2,9 +2,7 @@ import { grey } from '@ant-design/colors';
 import { Tag } from 'antd';
 import styled from 'styled-components';
 
-export const SearchContainer = styled.div<{
-	disabled: boolean;
-}>`
+export const SearchContainer = styled.div`
 	width: 100%;
 	display: flex;
 	align-items: center;
@@ -12,8 +10,8 @@ export const SearchContainer = styled.div<{
 	padding: 0.2rem;
 	margin: 1rem 0;
 	border: 1px solid #ccc5;
-	${({ disabled }): string => (disabled ? `cursor: not-allowed;` : '')}
 `;
+
 export const QueryChipContainer = styled.span`
 	display: flex;
 	align-items: center;

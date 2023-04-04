@@ -48,7 +48,7 @@ function SideNav(): JSX.Element {
 	const onClickHandler = useCallback(
 		(to: string) => {
 			if (pathname !== to) {
-				history.push(to);
+				history.push(`${to}`);
 			}
 		},
 		[pathname],
