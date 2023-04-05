@@ -285,10 +285,9 @@ func (a AttributeKey) Validate() error {
 }
 
 type FilterAttributeValueResponse struct {
-	StringAttributeValues  []string      `json:"stringAttributeValues"`
-	Int64AttributeValues   []interface{} `json:"int64AttributeValues"`
-	Float64AttributeValues []interface{} `json:"float64AttributeValues"`
-	BoolAttributeValues    []bool        `json:"boolAttributeValues"`
+	StringAttributeValues []string      `json:"stringAttributeValues"`
+	NumberAttributeValues []interface{} `json:"numberAttributeValues"`
+	BoolAttributeValues   []bool        `json:"boolAttributeValues"`
 }
 
 type QueryRangeParamsV3 struct {
