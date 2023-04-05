@@ -3895,9 +3895,7 @@ func (r *ClickHouseReader) GetLogAttributeValues(ctx context.Context, req *v3.Fi
 			if err := rows.Scan(&strAttributeValue); err != nil {
 				return nil, fmt.Errorf("error while scanning rows: %s", err.Error())
 			}
-			if strAttributeValue != "" {
-				attributeValues.StringAttributeValues = append(attributeValues.StringAttributeValues, strAttributeValue)
-			}
+			attributeValues.StringAttributeValues = append(attributeValues.StringAttributeValues, strAttributeValue)
 		}
 	}
 
