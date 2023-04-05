@@ -3881,10 +3881,10 @@ func (r *ClickHouseReader) GetLogAttributeValues(ctx context.Context, req *v3.Fi
 			if req.SearchText == constants.EmptySearchString {
 				searchText = ""
 			}
-			query = fmt.Sprintf("select distinct %s from %s.%s where timestamp >= now() - INTERVAL 48 HOUR and %s ILIKE $1 limit $2", req.FilterAttributeKey, r.logsDB, r.logsTable, req.FilterAttributeKey)
+			query = fmt.Sprintf("select distinct %s from %s.%s where timestamp >= toInt64(toUnixTimestamp(now() - INTERVAL 48 HOUR)*1000000000) and %s ILIKE $1 limit $2", req.FilterAttributeKey, r.logsDB, r.logsTable, req.FilterAttributeKey)
 			rows, err = r.db.Query(ctx, query, searchText, req.Limit)
 		} else {
-			query = fmt.Sprintf("select distinct %s from %s.%s where timestamp >= now() - INTERVAL 48 HOUR limit $1", req.FilterAttributeKey, r.logsDB, r.logsTable)
+			query = fmt.Sprintf("select distinct %s from %s.%s where timestamp >= toInt64(toUnixTimestamp(now() - INTERVAL 48 HOUR)*1000000000) limit $1", req.FilterAttributeKey, r.logsDB, r.logsTable)
 			rows, err = r.db.Query(ctx, query, req.Limit)
 		}
 	} else if len(req.SearchText) != 0 {
