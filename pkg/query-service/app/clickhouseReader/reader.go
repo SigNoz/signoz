@@ -3,6 +3,7 @@ package clickhouseReader
 import (
 	"bytes"
 	"context"
+	"database/sql"
 	"encoding/json"
 
 	"fmt"
@@ -3917,20 +3918,24 @@ func (r *ClickHouseReader) GetLogAttributeValues(ctx context.Context, req *v3.Fi
 	defer rows.Close()
 
 	var strAttributeValue string
-	var float64AttributeValue float64
-	var int64AttributeValue int64
+	var float64AttributeValue sql.NullFloat64
+	var int64AttributeValue sql.NullInt64
 	for rows.Next() {
 		switch req.FilterAttributeKeyDataType {
 		case v3.AttributeKeyDataTypeInt64:
 			if err := rows.Scan(&int64AttributeValue); err != nil {
 				return nil, fmt.Errorf("error while scanning rows: %s", err.Error())
 			}
-			attributeValues.Int64AttributeValues = append(attributeValues.Int64AttributeValues, int64AttributeValue)
+			if int64AttributeValue.Valid {
+				attributeValues.NumberAttributeValues = append(attributeValues.NumberAttributeValues, int64AttributeValue.Int64)
+			}
 		case v3.AttributeKeyDataTypeFloat64:
 			if err := rows.Scan(&float64AttributeValue); err != nil {
 				return nil, fmt.Errorf("error while scanning rows: %s", err.Error())
 			}
-			attributeValues.Float64AttributeValues = append(attributeValues.Float64AttributeValues, float64AttributeValue)
+			if float64AttributeValue.Valid {
+				attributeValues.NumberAttributeValues = append(attributeValues.NumberAttributeValues, float64AttributeValue.Float64)
+			}
 		case v3.AttributeKeyDataTypeString:
 			if err := rows.Scan(&strAttributeValue); err != nil {
 				return nil, fmt.Errorf("error while scanning rows: %s", err.Error())
