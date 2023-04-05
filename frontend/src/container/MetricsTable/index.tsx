@@ -148,8 +148,8 @@ function Metrics(): JSX.Element {
 		<Container>
 			<ResizeTable
 				columns={columns}
-				loading
-				dataSource={[]}
+				loading={loading}
+				dataSource={services}
 				rowKey="serviceName"
 			/>
 		</Container>
