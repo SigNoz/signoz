@@ -223,8 +223,6 @@ var ReservedColumnTargetAliases = map[string]struct{}{
 // logsPPLPfx is a short constant for logsPipelinePrefix
 const LogsPPLPfx = "logstransform/pipeline_"
 
-const EmptySearchString = "#EmptySearchString"
-
 // The datatype present here doesn't represent the actual datatype of column in the logs table.
 var StaticInterestingLogFieldsV3 = []v3.AttributeKey{
 	{
@@ -262,4 +260,5 @@ var LogsTopLevelColumnsV3 = map[string]struct{}{
 	"severity_number": {},
 	"timestamp":       {},
 	"id":              {},
+	"body":            {},
 }

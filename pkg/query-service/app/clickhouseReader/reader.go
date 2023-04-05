@@ -3796,8 +3796,35 @@ func (r *ClickHouseReader) GetLogAggregateAttributes(ctx context.Context, req *v
 	var rows driver.Rows
 	var response v3.AggregateAttributeResponse
 
-	// Future TODO: return filtered attributes based on aggregate operator
-	query = fmt.Sprintf("SELECT DISTINCT(tagKey), tagType, tagDataType from %s.%s WHERE tagKey ILIKE $1 limit $2", r.TraceDB, r.logsTagAttributeTable)
+	where := ""
+	switch req.Operator {
+	case v3.AggregateOperatorCountDistinct:
+		where = "tagKey ILIKE $1"
+	case
+		v3.AggregateOperatorRateSum,
+		v3.AggregateOperatorRateMax,
+		v3.AggregateOperatorRateAvg,
+		v3.AggregateOperatorRate,
+		v3.AggregateOperatorRateMin,
+		v3.AggregateOperatorP05,
+		v3.AggregateOperatorP10,
+		v3.AggregateOperatorP20,
+		v3.AggregateOperatorP25,
+		v3.AggregateOperatorP50,
+		v3.AggregateOperatorP75,
+		v3.AggregateOperatorP90,
+		v3.AggregateOperatorP95,
+		v3.AggregateOperatorP99,
+		v3.AggregateOperatorAvg,
+		v3.AggregateOperatorSum,
+		v3.AggregateOperatorMin,
+		v3.AggregateOperatorMax:
+		where = "tagKey ILIKE $1 AND (tagDataType='int64' or tagDataType='float64')"
+	default:
+		return nil, fmt.Errorf("unsupported aggregate operator")
+	}
+
+	query = fmt.Sprintf("SELECT DISTINCT(tagKey), tagType, tagDataType from %s.%s WHERE %s limit $2", r.logsDB, r.logsTagAttributeTable, where)
 	rows, err = r.db.Query(ctx, query, fmt.Sprintf("%%%s%%", req.SearchText), req.Limit)
 	if err != nil {
 		zap.S().Error(err)
@@ -3901,7 +3928,7 @@ func (r *ClickHouseReader) GetLogAttributeValues(ctx context.Context, req *v3.Fi
 	var attributeValues v3.FilterAttributeValueResponse
 
 	// if dataType or tagType is not present return empty response
-	if len(req.FilterAttributeKeyDataType) == 0 || len(req.TagType) == 0 {
+	if len(req.FilterAttributeKeyDataType) == 0 || len(req.TagType) == 0 || req.FilterAttributeKey == "body" {
 		return &v3.FilterAttributeValueResponse{}, nil
 	}
 
@@ -3936,9 +3963,6 @@ func (r *ClickHouseReader) GetLogAttributeValues(ctx context.Context, req *v3.Fi
 
 		// prepare the query and run
 		if len(req.SearchText) != 0 {
-			if req.SearchText == constants.EmptySearchString {
-				searchText = ""
-			}
 			query = fmt.Sprintf("select distinct %s from %s.%s where timestamp >= toInt64(toUnixTimestamp(now() - INTERVAL 48 HOUR)*1000000000) and %s ILIKE $1 limit $2", selectKey, r.logsDB, r.logsTable, filterValueColumnWhere)
 			rows, err = r.db.Query(ctx, query, searchText, req.Limit)
 		} else {
@@ -3946,9 +3970,6 @@ func (r *ClickHouseReader) GetLogAttributeValues(ctx context.Context, req *v3.Fi
 			rows, err = r.db.Query(ctx, query, req.Limit)
 		}
 	} else if len(req.SearchText) != 0 {
-		if req.SearchText == constants.EmptySearchString {
-			searchText = ""
-		}
 		filterValueColumnWhere := filterValueColumn
 		if req.FilterAttributeKeyDataType != v3.AttributeKeyDataTypeString {
 			filterValueColumnWhere = fmt.Sprintf("toString(%s)", filterValueColumn)

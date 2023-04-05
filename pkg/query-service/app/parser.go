@@ -886,21 +886,13 @@ func parseFilterAttributeValueRequest(r *http.Request) (*v3.FilterAttributeValue
 		return nil, err
 	}
 
-	searchText := ""
-	if r.URL.Query().Has("searchText") {
-		searchText = r.URL.Query().Get("searchText")
-		if searchText == "" {
-			searchText = constants.EmptySearchString
-		}
-	}
-
 	req = v3.FilterAttributeValueRequest{
 		DataSource:                 dataSource,
 		AggregateOperator:          aggregateOperator,
 		AggregateAttribute:         aggregateAttribute,
 		TagType:                    tagType,
 		Limit:                      limit,
-		SearchText:                 searchText,
+		SearchText:                 r.URL.Query().Get("searchText"),
 		FilterAttributeKey:         r.URL.Query().Get("attributeKey"),
 		FilterAttributeKeyDataType: filterAttributeKeyDataType,
 	}
