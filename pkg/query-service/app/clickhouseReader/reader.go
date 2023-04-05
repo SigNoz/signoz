@@ -3877,21 +3877,33 @@ func (r *ClickHouseReader) GetLogAttributeValues(ctx context.Context, req *v3.Fi
 	// check if the tagKey is a topLevelColumn
 	if _, ok := constants.LogsTopLevelColumnsV3[req.FilterAttributeKey]; ok {
 		// query the column for the last 48 hours
+		filterValueColumnWhere := req.FilterAttributeKey
+		selectKey := req.FilterAttributeKey
+		if req.FilterAttributeKeyDataType != v3.AttributeKeyDataTypeString {
+			filterValueColumnWhere = fmt.Sprintf("toString(%s)", req.FilterAttributeKey)
+			selectKey = fmt.Sprintf("toInt64(%s)", req.FilterAttributeKey)
+		}
+
+		// prepare the query and run
 		if len(req.SearchText) != 0 {
 			if req.SearchText == constants.EmptySearchString {
 				searchText = ""
 			}
-			query = fmt.Sprintf("select distinct %s from %s.%s where timestamp >= toInt64(toUnixTimestamp(now() - INTERVAL 48 HOUR)*1000000000) and %s ILIKE $1 limit $2", req.FilterAttributeKey, r.logsDB, r.logsTable, req.FilterAttributeKey)
+			query = fmt.Sprintf("select distinct %s from %s.%s where timestamp >= toInt64(toUnixTimestamp(now() - INTERVAL 48 HOUR)*1000000000) and %s ILIKE $1 limit $2", selectKey, r.logsDB, r.logsTable, filterValueColumnWhere)
 			rows, err = r.db.Query(ctx, query, searchText, req.Limit)
 		} else {
-			query = fmt.Sprintf("select distinct %s from %s.%s where timestamp >= toInt64(toUnixTimestamp(now() - INTERVAL 48 HOUR)*1000000000) limit $1", req.FilterAttributeKey, r.logsDB, r.logsTable)
+			query = fmt.Sprintf("select distinct %s from %s.%s where timestamp >= toInt64(toUnixTimestamp(now() - INTERVAL 48 HOUR)*1000000000) limit $1", selectKey, r.logsDB, r.logsTable)
 			rows, err = r.db.Query(ctx, query, req.Limit)
 		}
 	} else if len(req.SearchText) != 0 {
 		if req.SearchText == constants.EmptySearchString {
 			searchText = ""
 		}
-		query = fmt.Sprintf("select distinct %s  from  %s.%s where tagKey=$1 and %s ILIKE $2  and tagType=$3 limit $4", filterValueColumn, r.logsDB, r.logsTagAttributeTable, filterValueColumn)
+		filterValueColumnWhere := filterValueColumn
+		if req.FilterAttributeKeyDataType != v3.AttributeKeyDataTypeString {
+			filterValueColumnWhere = fmt.Sprintf("toString(%s)", filterValueColumn)
+		}
+		query = fmt.Sprintf("select distinct %s  from  %s.%s where tagKey=$1 and %s ILIKE $2  and tagType=$3 limit $4", filterValueColumn, r.logsDB, r.logsTagAttributeTable, filterValueColumnWhere)
 		rows, err = r.db.Query(ctx, query, req.FilterAttributeKey, searchText, req.TagType, req.Limit)
 	} else {
 		query = fmt.Sprintf("select distinct %s from  %s.%s where tagKey=$1 and tagType=$2 limit $3", filterValueColumn, r.logsDB, r.logsTagAttributeTable)
