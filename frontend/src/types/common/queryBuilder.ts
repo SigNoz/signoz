@@ -82,6 +82,14 @@ export enum LogsAggregatorOperator {
 	RATE = 'rate',
 }
 
+export enum EReduceOperator {
+	LATEST_OF_VALUES_IN_TIMEFRAME = 'Latest of values in timeframe',
+	'SUM_OF_VALUES_IN_TIMEFRAME' = 'Sum of values in timeframe',
+	'AVERAGE_OF_VALUES_IN_TIMEFRAME' = 'Average of values in timeframe',
+	'MAX_OF_VALUES_IN_TIMEFRAME' = 'Max of values in timeframe',
+	'MIN_OF_VALUES_IN_TIMEFRAME' = 'Min of values in timeframe',
+}
+
 export type QueryBuilderData = {
 	queryData: IBuilderQueryForm[];
 	queryFormulas: IBuilderFormula[];
@@ -97,4 +105,7 @@ export type QueryBuilderContextType = {
 	) => void;
 	handleSetFormulaData: (index: number, formulaData: IBuilderFormula) => void;
 	initQueryBuilderData: (queryBuilderData: QueryBuilderData) => void;
+	setupInitialDataSource: (newInitialDataSource: DataSource | null) => void;
+	removeEntityByIndex: (type: keyof QueryBuilderData, index: number) => void;
+	addNewQuery: () => void;
 };

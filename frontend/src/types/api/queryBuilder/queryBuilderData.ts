@@ -23,6 +23,12 @@ export interface TagFilter {
 	op: string;
 }
 
+export interface Having {
+	key: string;
+	value: string;
+	op: string;
+}
+
 // Type for query builder
 export type IBuilderQuery = {
 	queryName: string;
@@ -33,12 +39,14 @@ export type IBuilderQuery = {
 	groupBy: BaseAutocompleteData[];
 	expression: string;
 	disabled: boolean;
-	having?: string;
-	limit?: number;
-	orderBy?: string[];
-	reduceTo?: string;
+	having: Having[];
+	limit: number;
+	stepInterval: number;
+	orderBy: string[];
+	reduceTo: string;
 };
 
 export type IBuilderQueryForm = Omit<IBuilderQuery, 'aggregateAttribute'> & {
 	aggregateAttribute: BaseAutocompleteData;
+	legend: string;
 };
