@@ -24,10 +24,10 @@ services:
       OTEL_RESOURCE_ATTRIBUTES: service.name=sample-flask
       OTEL_EXPORTER_OTLP_ENDPOINT: http://signoz:4317
 
-  load-hotrod-flask:
+  load-flask:
     image: "grubykarol/locust:1.2.3-python3.9-alpine3.12"
-    container_name: load-hotrod-flask
-    hostname: load-hotrod-flask
+    container_name: load-flask
+    hostname: load-flask
     environment:
       ATTACKED_HOST: http://sample-flask:5002
       LOCUST_MODE: standalone
