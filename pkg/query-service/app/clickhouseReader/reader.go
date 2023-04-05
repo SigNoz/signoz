@@ -3833,6 +3833,13 @@ func (r *ClickHouseReader) GetLogAttributeKeys(ctx context.Context, req *v3.Filt
 		response.AttributeKeys = append(response.AttributeKeys, key)
 	}
 
+	// add other attributes
+	for _, f := range constants.StaticInterestingLogFieldsV3 {
+		if len(req.SearchText) == 0 || strings.Contains(f.Key, req.SearchText) {
+			response.AttributeKeys = append(response.AttributeKeys, f)
+		}
+	}
+
 	return &response, nil
 }
 
