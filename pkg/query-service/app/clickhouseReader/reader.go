@@ -3812,7 +3812,7 @@ func (r *ClickHouseReader) GetLogAttributeKeys(ctx context.Context, req *v3.Filt
 	query = fmt.Sprintf("SHOW CREATE TABLE %s.%s", r.logsDB, r.logsLocalTable)
 	err = r.db.Select(ctx, &statements, query)
 	if err != nil {
-		return nil, &model.ApiError{Err: err, Typ: model.ErrorInternal}
+		return nil, fmt.Errorf("error while fetching logs schema: %s", err.Error())
 	}
 
 	var attributeKey string
@@ -3860,8 +3860,12 @@ func (r *ClickHouseReader) GetLogAttributeValues(ctx context.Context, req *v3.Fi
 	}
 
 	if len(req.SearchText) != 0 {
+		searchText := fmt.Sprintf("%%%s%%", req.SearchText)
+		if req.SearchText == constants.EmptySearchString {
+			searchText = ""
+		}
 		query = fmt.Sprintf("select distinct %s  from  %s.%s where tagKey=$1 and %s ILIKE $2  and tagType=$3 limit $4", filterValueColumn, r.logsDB, r.logsTagAttributeTable, filterValueColumn)
-		rows, err = r.db.Query(ctx, query, req.FilterAttributeKey, fmt.Sprintf("%%%s%%", req.SearchText), req.TagType, req.Limit)
+		rows, err = r.db.Query(ctx, query, req.FilterAttributeKey, searchText, req.TagType, req.Limit)
 	} else {
 		query = fmt.Sprintf("select distinct %s from  %s.%s where tagKey=$1 and tagType=$2 limit $3", filterValueColumn, r.logsDB, r.logsTagAttributeTable)
 		rows, err = r.db.Query(ctx, query, req.FilterAttributeKey, req.TagType, req.Limit)

@@ -221,3 +221,5 @@ var ReservedColumnTargetAliases = map[string]struct{}{
 
 // logsPPLPfx is a short constant for logsPipelinePrefix
 const LogsPPLPfx = "logstransform/pipeline_"
+
+const EmptySearchString = "#EmptySearchString"
