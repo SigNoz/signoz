@@ -224,7 +224,7 @@ var ReservedColumnTargetAliases = map[string]struct{}{
 const LogsPPLPfx = "logstransform/pipeline_"
 
 // The datatype present here doesn't represent the actual datatype of column in the logs table.
-var StaticInterestingLogFieldsV3 = []v3.AttributeKey{
+var StaticFieldsLogsV3 = []v3.AttributeKey{
 	{
 		Key:      "trace_id",
 		DataType: v3.AttributeKeyDataTypeString,
@@ -250,6 +250,11 @@ var StaticInterestingLogFieldsV3 = []v3.AttributeKey{
 		DataType: v3.AttributeKeyDataTypeInt64,
 		Type:     v3.AttributeKeyTypeTag,
 	},
+	{
+		Key:      "body",
+		DataType: v3.AttributeKeyDataTypeInt64,
+		Type:     v3.AttributeKeyTypeTag,
+	},
 }
 
 var LogsTopLevelColumnsV3 = map[string]struct{}{
@@ -260,5 +265,4 @@ var LogsTopLevelColumnsV3 = map[string]struct{}{
 	"severity_number": {},
 	"timestamp":       {},
 	"id":              {},
-	"body":            {},
 }

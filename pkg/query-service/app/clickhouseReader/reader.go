@@ -3855,7 +3855,7 @@ func (r *ClickHouseReader) GetLogAggregateAttributes(ctx context.Context, req *v
 		response.AttributeKeys = append(response.AttributeKeys, key)
 	}
 	// add other attributes
-	for _, f := range constants.StaticInterestingLogFieldsV3 {
+	for _, f := range constants.StaticFieldsLogsV3 {
 		if len(req.SearchText) == 0 || strings.Contains(f.Key, req.SearchText) {
 			f.IsColumn = isSelectedField(statements[0].Statement, f.Key)
 			response.AttributeKeys = append(response.AttributeKeys, f)
@@ -3911,7 +3911,7 @@ func (r *ClickHouseReader) GetLogAttributeKeys(ctx context.Context, req *v3.Filt
 	}
 
 	// add other attributes
-	for _, f := range constants.StaticInterestingLogFieldsV3 {
+	for _, f := range constants.StaticFieldsLogsV3 {
 		if len(req.SearchText) == 0 || strings.Contains(f.Key, req.SearchText) {
 			f.IsColumn = isSelectedField(statements[0].Statement, f.Key)
 			response.AttributeKeys = append(response.AttributeKeys, f)
