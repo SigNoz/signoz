@@ -2366,7 +2366,7 @@ func (aH *APIHandler) autocompleteAggregateAttributes(w http.ResponseWriter, r *
 	case v3.DataSourceMetrics:
 		response, err = aH.reader.GetMetricAggregateAttributes(r.Context(), req)
 	case v3.DataSourceLogs:
-		// TODO: implement
+		response, err = aH.reader.GetLogAggregateAttributes(r.Context(), req)
 	case v3.DataSourceTraces:
 		// TODO: implement
 	default:
