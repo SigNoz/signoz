@@ -53,10 +53,23 @@ var logsOperatorMappingV3 = map[string]string{
 	// (todo) check contains/not contains/exists/not exists
 }
 
+var topLevelColumns = map[string]struct{}{
+	"trace_id":        {},
+	"span_id":         {},
+	"trace_flags":     {},
+	"severity_text":   {},
+	"severity_number": {},
+	"timestamp":       {},
+	"id":              {},
+}
+
 // getClickhouseColumnName returns the corresponding clickhouse column name for the given attribute/resource key
 func getClickhouseColumnName(key v3.AttributeKey) string {
 	clickhouseColumn := key.Key
-	if !key.IsColumn {
+	//if the key is present in the topLevelColumn then it will be only searched in those columns,
+	//regardless if it is indexed/present again in resource or column attribute
+	_, isTopLevelCol := topLevelColumns[key.Key]
+	if !isTopLevelCol && !key.IsColumn {
 		columnType := key.Type
 		if columnType == v3.AttributeKeyTypeTag {
 			columnType = "attributes"

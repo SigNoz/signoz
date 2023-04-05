@@ -28,6 +28,16 @@ var testGetClickhouseColumnNameData = []struct {
 		AttributeKey:       v3.AttributeKey{Key: "servicename", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag, IsColumn: true},
 		ExpectedColumnName: "servicename",
 	},
+	{
+		Name:               "top level column",
+		AttributeKey:       v3.AttributeKey{Key: "trace_id", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag},
+		ExpectedColumnName: "trace_id",
+	},
+	{
+		Name:               "top level column with isColumn ignored",
+		AttributeKey:       v3.AttributeKey{Key: "trace_id", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag, IsColumn: false},
+		ExpectedColumnName: "trace_id",
+	},
 }
 
 func TestGetClickhouseColumnName(t *testing.T) {
