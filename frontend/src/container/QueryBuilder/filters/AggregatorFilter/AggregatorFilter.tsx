@@ -68,10 +68,8 @@ export function AggregatorFilter({
 	return (
 		<AutoComplete
 			showSearch
-			placeholder={`${transformToUpperCase(
-				query.dataSource,
-			)} Name (Start typing to get suggestions)`}
-			style={{ flex: 1, minWidth: 200 }}
+			placeholder={`${transformToUpperCase(query.dataSource)} name`}
+			style={{ width: '100%' }}
 			showArrow={false}
 			filterOption={false}
 			onSearch={handleSearchAttribute}
