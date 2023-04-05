@@ -36,7 +36,7 @@ frontend/src/constants/env.ts
 **/.vscode
 **/build
 **/storage
-**/locust-scripts/__pycache__/
+**/__pycache__/
 **/__debug_bin
 
 frontend/*.env
