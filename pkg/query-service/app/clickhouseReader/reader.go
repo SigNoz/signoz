@@ -3836,6 +3836,7 @@ func (r *ClickHouseReader) GetLogAttributeKeys(ctx context.Context, req *v3.Filt
 	// add other attributes
 	for _, f := range constants.StaticInterestingLogFieldsV3 {
 		if len(req.SearchText) == 0 || strings.Contains(f.Key, req.SearchText) {
+			f.IsColumn = isSelectedField(statements[0].Statement, f.Key)
 			response.AttributeKeys = append(response.AttributeKeys, f)
 		}
 	}
@@ -3866,8 +3867,22 @@ func (r *ClickHouseReader) GetLogAttributeValues(ctx context.Context, req *v3.Fi
 		filterValueColumn = "stringTagValue"
 	}
 
-	if len(req.SearchText) != 0 {
-		searchText := fmt.Sprintf("%%%s%%", req.SearchText)
+	searchText := fmt.Sprintf("%%%s%%", req.SearchText)
+
+	// check if the tagKey is a topLevelColumn
+	if _, ok := constants.LogsTopLevelColumnsV3[req.FilterAttributeKey]; ok {
+		// query the column for the last 48 hours
+		if len(req.SearchText) != 0 {
+			if req.SearchText == constants.EmptySearchString {
+				searchText = ""
+			}
+			query = fmt.Sprintf("select distinct %s from %s.%s where timestamp >= now() - INTERVAL 48 HOUR and %s ILIKE $1 limit $2", req.FilterAttributeKey, r.logsDB, r.logsTable, req.FilterAttributeKey)
+			rows, err = r.db.Query(ctx, query, searchText, req.Limit)
+		} else {
+			query = fmt.Sprintf("select distinct %s from %s.%s where timestamp >= now() - INTERVAL 48 HOUR limit $1", req.FilterAttributeKey, r.logsDB, r.logsTable)
+			rows, err = r.db.Query(ctx, query, req.Limit)
+		}
+	} else if len(req.SearchText) != 0 {
 		if req.SearchText == constants.EmptySearchString {
 			searchText = ""
 		}

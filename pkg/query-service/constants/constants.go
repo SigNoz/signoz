@@ -253,3 +253,13 @@ var StaticInterestingLogFieldsV3 = []v3.AttributeKey{
 		Type:     v3.AttributeKeyTypeTag,
 	},
 }
+
+var LogsTopLevelColumnsV3 = map[string]struct{}{
+	"trace_id":        {},
+	"span_id":         {},
+	"trace_flags":     {},
+	"severity_text":   {},
+	"severity_number": {},
+	"timestamp":       {},
+	"id":              {},
+}
