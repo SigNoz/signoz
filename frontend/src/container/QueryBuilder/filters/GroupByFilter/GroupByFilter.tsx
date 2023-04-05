@@ -1,5 +1,4 @@
 import { Select, Spin } from 'antd';
-// ** Api
 import { getAggregateKeys } from 'api/queryBuilder/getAttributeKeys';
 // ** Constants
 import { QueryBuilderKeys } from 'constants/queryBuilder';
@@ -9,9 +8,9 @@ import { transformStringWithPrefix } from 'lib/query/transformStringWithPrefix';
 import React, { memo, useState } from 'react';
 import { useQuery } from 'react-query';
 import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
+import { MetricAggregateOperator } from 'types/common/queryBuilder';
 import { SelectOption } from 'types/common/select';
 
-// ** Types
 import {
 	GroupByFilterProps,
 	GroupByFilterValue,
@@ -81,13 +80,20 @@ export const GroupByFilter = memo(function GroupByFilter({
 		title: undefined,
 	}));
 
+	const isDisabledSelect = useMemo(
+		() =>
+			!query.aggregateAttribute.key ||
+			query.aggregateOperator === MetricAggregateOperator.NOOP,
+		[query.aggregateAttribute.key, query.aggregateOperator],
+	);
+
 	return (
 		<Select
 			mode="tags"
-			style={{ width: '100%' }}
+			style={selectStyle}
 			onSearch={handleSearchKeys}
 			showSearch
-			disabled={!query.aggregateAttribute.key}
+			disabled={isDisabledSelect}
 			showArrow={false}
 			filterOption={false}
 			options={optionsData}

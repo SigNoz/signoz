@@ -1,4 +1,5 @@
 import { Select } from 'antd';
+import { selectStyle } from 'container/QueryBuilder/components/Query/config';
 import React, { memo } from 'react';
 // ** Types
 import { SelectOption } from 'types/common/select';
@@ -25,7 +26,7 @@ export const OperatorsSelect = memo(function OperatorsSelect({
 			options={operatorsOptions}
 			value={value}
 			onChange={onChange}
-			style={{ width: '100%' }}
+			style={selectStyle}
 			// eslint-disable-next-line react/jsx-props-no-spreading
 			{...props}
 		/>

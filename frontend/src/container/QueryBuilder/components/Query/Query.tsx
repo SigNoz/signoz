@@ -19,6 +19,7 @@ import {
 	OperatorsSelect,
 	ReduceToFilter,
 } from 'container/QueryBuilder/filters';
+import { OrderByFilter } from 'container/QueryBuilder/filters/OrderByFilter';
 import QueryBuilderSearch from 'container/QueryBuilder/filters/QueryBuilderSearch';
 import { useQueryBuilder } from 'hooks/useQueryBuilder';
 import { findDataTypeOfOperator } from 'lib/query/findDataTypeOfOperator';
@@ -191,6 +192,9 @@ export const Query = memo(function Query({
 		() => query.dataSource === DataSource.METRICS,
 		[query.dataSource],
 	);
+	const handleChangeOrderByKeys = (values: BaseAutocompleteData[]): void => {
+		handleSetQueryData(index, { orderBy: values });
+	};
 
 	return (
 		<StyledRow gutter={[0, 15]}>
@@ -266,6 +270,16 @@ export const Query = memo(function Query({
 					addonBefore="Legend Format"
 				/>
 			</Row>
+			<Col span={11}>
+				<Row gutter={[11, 5]}>
+					<Col flex="95px">
+						<FilterLabel label="Order by" />
+					</Col>
+					<Col flex="1 1 200px">
+						<OrderByFilter query={query} onChange={handleChangeOrderByKeys} />
+					</Col>
+				</Row>
+			</Col>
 		</StyledRow>
 	);
 });
