@@ -3850,6 +3850,11 @@ func (r *ClickHouseReader) GetLogAttributeValues(ctx context.Context, req *v3.Fi
 	var rows driver.Rows
 	var attributeValues v3.FilterAttributeValueResponse
 
+	// if dataType or tagType is not present return empty response
+	if len(req.FilterAttributeKeyDataType) == 0 || len(req.TagType) == 0 {
+		return &v3.FilterAttributeValueResponse{}, nil
+	}
+
 	// if data type is bool, return true and false
 	if req.FilterAttributeKeyDataType == v3.AttributeKeyDataTypeBool {
 		return &v3.FilterAttributeValueResponse{
