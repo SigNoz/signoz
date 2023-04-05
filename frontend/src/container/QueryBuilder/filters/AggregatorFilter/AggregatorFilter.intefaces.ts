@@ -1,7 +1,7 @@
-import { AutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
+import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { IBuilderQueryForm } from 'types/api/queryBuilder/queryBuilderData';
 
 export type AgregatorFilterProps = {
-	onChange: (value: AutocompleteData) => void;
+	onChange: (value: BaseAutocompleteData) => void;
 	query: IBuilderQueryForm;
 };

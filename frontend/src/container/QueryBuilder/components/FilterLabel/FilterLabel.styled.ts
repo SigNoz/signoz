@@ -2,7 +2,6 @@ import styled from 'styled-components';
 
 export const StyledLabel = styled.div`
 	padding: 0 0.6875rem;
-	min-width: 6.5rem;
 	width: fit-content;
 	min-height: 2rem;
 	display: inline-flex;
