@@ -30,7 +30,8 @@ export function ListMarker({
 			icon={buttonProps.icon}
 			onClick={buttonProps.onClick}
 			className={className}
-			style={{ marginRight: '0.1rem', ...style }}
+			isAvailableToDisable={isAvailableToDisable}
+			style={style}
 		>
 			{labelName}
 		</StyledButton>

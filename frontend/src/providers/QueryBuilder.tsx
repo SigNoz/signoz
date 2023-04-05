@@ -53,6 +53,7 @@ export function QueryBuilderProvider({
 					isColumn: null,
 					type: null,
 				},
+				groupBy: [],
 			},
 		],
 		queryFormulas: [],
