@@ -3396,10 +3396,7 @@ func extractSelectedAndInterestingFields(tableStatement string, fieldType string
 }
 
 func isSelectedField(tableStatement, field string) bool {
-	if strings.Contains(tableStatement, fmt.Sprintf("INDEX %s_idx", field)) {
-		return true
-	}
-	return false
+	return strings.Contains(tableStatement, fmt.Sprintf("INDEX %s_idx", field))
 }
 
 func (r *ClickHouseReader) UpdateLogField(ctx context.Context, field *model.UpdateField) *model.ApiError {
