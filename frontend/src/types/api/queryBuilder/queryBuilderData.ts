@@ -1,6 +1,6 @@
 import { DataSource } from 'types/common/queryBuilder';
 
-import { AutocompleteData } from './queryAutocompleteResponse';
+import { BaseAutocompleteData } from './queryAutocompleteResponse';
 
 // Type for Formula
 export interface IBuilderFormula {
@@ -30,7 +30,7 @@ export type IBuilderQuery = {
 	aggregateOperator: string;
 	aggregateAttribute: string;
 	tagFilters: TagFilter[];
-	groupBy: string[];
+	groupBy: BaseAutocompleteData[];
 	expression: string;
 	disabled: boolean;
 	having?: string;
@@ -40,5 +40,5 @@ export type IBuilderQuery = {
 };
 
 export type IBuilderQueryForm = Omit<IBuilderQuery, 'aggregateAttribute'> & {
-	aggregateAttribute: AutocompleteData;
+	aggregateAttribute: BaseAutocompleteData;
 };

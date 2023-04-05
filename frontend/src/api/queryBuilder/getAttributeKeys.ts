@@ -11,6 +11,7 @@ export const getAggregateKeys = async ({
 	searchText,
 	dataSource,
 	aggregateAttribute,
+	tagType,
 }: IGetAttributeKeysPayload): Promise<
 	SuccessResponse<IQueryAutocompleteResponse> | ErrorResponse
 > => {
@@ -18,7 +19,7 @@ export const getAggregateKeys = async ({
 		const response: AxiosResponse<{
 			data: IQueryAutocompleteResponse;
 		}> = await ApiV3Instance.get(
-			`autocomplete/attribute_keys?aggregateOperator=${aggregateOperator}&dataSource=${dataSource}&aggregateAttribute=${aggregateAttribute}&searchText=${searchText}`,
+			`autocomplete/attribute_keys?aggregateOperator=${aggregateOperator}&dataSource=${dataSource}&aggregateAttribute=${aggregateAttribute}&tagType=${tagType}&searchText=${searchText}`,
 		);
 
 		return {

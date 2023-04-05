@@ -1,4 +1,4 @@
-export interface AutocompleteData {
+export interface BaseAutocompleteData {
 	dataType: 'number' | 'string' | 'boolean' | null;
 	isColumn: boolean | null;
 	key: string;
@@ -6,5 +6,5 @@ export interface AutocompleteData {
 }
 
 export interface IQueryAutocompleteResponse {
-	attributeKeys: AutocompleteData[];
+	attributeKeys: BaseAutocompleteData[];
 }
