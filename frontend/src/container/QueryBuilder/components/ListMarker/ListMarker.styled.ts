@@ -7,7 +7,7 @@ export const StyledButton = styled(Button)<{ $isAvailableToDisable: boolean }>`
 	padding: ${(props): string =>
 		props.$isAvailableToDisable ? '0.43rem' : '0.43rem 0.68rem'};
 	border-radius: 0.375rem;
-	margin-right: 0.1rem;
+	margin-right: 0.5rem;
 	pointer-events: ${(props): string =>
 		props.$isAvailableToDisable ? 'default' : 'none'};
 `;

@@ -186,12 +186,17 @@ export const Query = memo(function Query({
 		removeEntityByIndex('queryData', index);
 	}, [removeEntityByIndex, index]);
 
+	const isMatricsDataSource = useMemo(
+		() => query.dataSource === DataSource.METRICS,
+		[query.dataSource],
+	);
+
 	return (
 		<StyledRow gutter={[0, 15]}>
 			<StyledDeleteEntity onClick={handleDeleteQuery} />
 			<Col span={24}>
-				<Row wrap={false} align="middle">
-					<Col span={24}>
+				<Row>
+					<Col span={isMatricsDataSource ? 7 : 4}>
 						<ListMarker
 							isDisabled={query.disabled}
 							toggleDisabled={handleToggleDisableQuery}
@@ -207,7 +212,7 @@ export const Query = memo(function Query({
 						) : (
 							<FilterLabel label={transformToUpperCase(query.dataSource)} />
 						)}
-						{query.dataSource === 'metrics' && (
+						{isMatricsDataSource && (
 							<Select
 								defaultValue="WHERE"
 								showArrow={false}
@@ -217,6 +222,8 @@ export const Query = memo(function Query({
 								<Select.Option value="WHERE">WHERE</Select.Option>
 							</Select>
 						)}
+					</Col>
+					<Col span={isMatricsDataSource ? 17 : 20}>
 						<QueryBuilderSearch query={query} />
 					</Col>
 				</Row>
