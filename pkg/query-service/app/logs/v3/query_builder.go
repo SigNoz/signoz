@@ -296,8 +296,8 @@ func reduceQuery(query string, reduceTo v3.ReduceToOperator, aggregateOperator v
 	return query, nil
 }
 
-func addLimitToQuery(query string, limit uint64) string {
-	if limit == 0 {
+func addLimitToQuery(query string, limit uint64, panelType v3.PanelType) string {
+	if limit == 0 && panelType == v3.PanelTypeList {
 		limit = 100
 	}
 	return fmt.Sprintf("%s LIMIT %d", query, limit)
@@ -316,7 +316,7 @@ func PrepareLogsQuery(start, end, step int64, queryType v3.QueryType, panelType 
 		query, err = reduceQuery(query, mq.ReduceTo, mq.AggregateOperator)
 	}
 
-	query = addLimitToQuery(query, mq.Limit)
+	query = addLimitToQuery(query, mq.Limit, panelType)
 
 	if mq.Offset != 0 {
 		query = addOffsetToQuery(query, mq.Offset)
