@@ -208,15 +208,12 @@ export const Query = memo(function Query({
 							<DataSourceDropdown
 								onChange={handleChangeDataSource}
 								value={query.dataSource}
+								style={{ marginRight: '0.5rem' }}
 							/>
 						) : (
 							<FilterLabel label={transformToUpperCase(query.dataSource)} />
 						)}
-						{isMatricsDataSource && (
-							<StyledSelect defaultValue="WHERE" showArrow={false} open={false}>
-								<StyledSelect.Option value="WHERE">WHERE</StyledSelect.Option>
-							</StyledSelect>
-						)}
+						{isMatricsDataSource && <FilterLabel label="WHERE" />}
 					</Col>
 					<Col span={isMatricsDataSource ? 17 : 20}>
 						<QueryBuilderSearch query={query} />
