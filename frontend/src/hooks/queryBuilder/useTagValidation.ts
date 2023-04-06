@@ -5,7 +5,7 @@ import { checkStringEndWIthSpace } from '../../utils/checkStringEndWIthSpace';
 import { useIsValidTag } from './useIsValidTag';
 import { useOperatorType } from './useOperatorType';
 
-type HookReturnValues = {
+type ITagValidation = {
 	isValidTag: boolean;
 	isExist: boolean;
 	isValidOperator: boolean;
@@ -17,7 +17,7 @@ export const useTagValidation = (
 	value: string,
 	operator: string,
 	result: string[],
-): HookReturnValues => {
+): ITagValidation => {
 	const operatorType = useOperatorType(operator);
 
 	const isValidTag = useIsValidTag(operatorType, result.length);

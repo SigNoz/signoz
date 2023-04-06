@@ -2,7 +2,7 @@ import { AttributeKeyOptions } from 'api/queryBuilder/getAttributesKeysValues';
 import { QUERY_BUILDER_OPERATORS_BY_TYPES } from 'constants/queryBuilder';
 import { useMemo } from 'react';
 
-type HookReturnValues =
+type IOperators =
 	| typeof QUERY_BUILDER_OPERATORS_BY_TYPES.universal
 	| typeof QUERY_BUILDER_OPERATORS_BY_TYPES.string
 	| typeof QUERY_BUILDER_OPERATORS_BY_TYPES.boolean
@@ -11,7 +11,7 @@ type HookReturnValues =
 export const useOperators = (
 	key: string,
 	keys: AttributeKeyOptions[],
-): HookReturnValues =>
+): IOperators =>
 	useMemo(() => {
 		const currentKey = keys?.find((el) => el.key === key);
 		return currentKey

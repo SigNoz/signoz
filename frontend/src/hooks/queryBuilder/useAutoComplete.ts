@@ -9,7 +9,7 @@ import { useSetCurrentKeyAndOperator } from './useSetCurrentKeyAndOperator';
 import { useTag } from './useTag';
 import { useTagValidation } from './useTagValidation';
 
-type HookReturnValues = {
+type IAutoComplete = {
 	handleSearch: (value: string) => void;
 	handleClearTag: (value: string) => void;
 	handleSelect: (value: string) => void;
@@ -21,7 +21,7 @@ type HookReturnValues = {
 	isFetching: boolean;
 };
 
-export const useAutoComplete = (query: IBuilderQueryForm): HookReturnValues => {
+export const useAutoComplete = (query: IBuilderQueryForm): IAutoComplete => {
 	const [searchValue, setSearchValue] = useState('');
 
 	const handleSearch = useCallback((value: string) => {
