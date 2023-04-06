@@ -33,6 +33,7 @@ const (
 	defaultLogsLocalTable          string        = "logs"
 	defaultLogAttributeKeysTable   string        = "distributed_logs_attribute_keys"
 	defaultLogResourceKeysTable    string        = "distributed_logs_resource_keys"
+	defaultLogTagAttributeTable    string        = "distributed_tag_attributes"
 	defaultLiveTailRefreshSeconds  int           = 10
 	defaultWriteBatchDelay         time.Duration = 5 * time.Second
 	defaultWriteBatchSize          int           = 10000
@@ -69,6 +70,7 @@ type namespaceConfig struct {
 	LogsLocalTable          string
 	LogsAttributeKeysTable  string
 	LogsResourceKeysTable   string
+	LogsTagAttributeTable   string
 	LiveTailRefreshSeconds  int
 	WriteBatchDelay         time.Duration
 	WriteBatchSize          int
@@ -137,6 +139,7 @@ func NewOptions(datasource string, primaryNamespace string, otherNamespaces ...s
 			LogsLocalTable:          defaultLogsLocalTable,
 			LogsAttributeKeysTable:  defaultLogAttributeKeysTable,
 			LogsResourceKeysTable:   defaultLogResourceKeysTable,
+			LogsTagAttributeTable:   defaultLogTagAttributeTable,
 			LiveTailRefreshSeconds:  defaultLiveTailRefreshSeconds,
 			WriteBatchDelay:         defaultWriteBatchDelay,
 			WriteBatchSize:          defaultWriteBatchSize,
