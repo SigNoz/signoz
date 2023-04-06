@@ -139,19 +139,19 @@ func (qb *queryBuilder) prepareQueries(params *v3.QueryRangeParamsV3) (map[strin
 			if query.Expression == queryName {
 				switch query.DataSource {
 				case v3.DataSourceTraces:
-					queryString, err := qb.options.BuildTraceQuery(params.Start, params.End, params.Step, compositeQuery.QueryType, compositeQuery.PanelType, query)
+					queryString, err := qb.options.BuildTraceQuery(params.Start, params.End, query.StepInterval, compositeQuery.QueryType, compositeQuery.PanelType, query)
 					if err != nil {
 						return nil, err
 					}
 					queries[queryName] = queryString
 				case v3.DataSourceLogs:
-					queryString, err := qb.options.BuildLogQuery(params.Start, params.End, params.Step, compositeQuery.QueryType, compositeQuery.PanelType, query)
+					queryString, err := qb.options.BuildLogQuery(params.Start, params.End, query.StepInterval, compositeQuery.QueryType, compositeQuery.PanelType, query)
 					if err != nil {
 						return nil, err
 					}
 					queries[queryName] = queryString
 				case v3.DataSourceMetrics:
-					queryString, err := qb.options.BuildMetricQuery(params.Start, params.End, params.Step, compositeQuery.QueryType, compositeQuery.PanelType, query)
+					queryString, err := qb.options.BuildMetricQuery(params.Start, params.End, query.StepInterval, compositeQuery.QueryType, compositeQuery.PanelType, query)
 					if err != nil {
 						return nil, err
 					}

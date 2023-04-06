@@ -388,6 +388,7 @@ func (c *CompositeQuery) Validate() error {
 
 type BuilderQuery struct {
 	QueryName          string            `json:"queryName"`
+	StepInterval       int64             `json:"stepInterval"`
 	DataSource         DataSource        `json:"dataSource"`
 	AggregateOperator  AggregateOperator `json:"aggregateOperator"`
 	AggregateAttribute AttributeKey      `json:"aggregateAttribute,omitempty"`
