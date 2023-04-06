@@ -17,7 +17,7 @@ type HookReturnValues = {
 	options: Option[];
 	tags: string[];
 	searchValue: string;
-	isFilter: boolean;
+	isMulti: boolean;
 	isFetching: boolean;
 };
 
@@ -65,31 +65,32 @@ export const useAutoComplete = (query: IBuilderQueryForm): HookReturnValues => {
 		}
 	};
 
-	const handleKeyDown = (e: React.KeyboardEvent): void => {
-		if (
-			e.key === ' ' &&
-			(searchValue.endsWith(' ') || searchValue.length === 0)
-		) {
-			e.preventDefault();
-		}
-
-		if (e.key === 'Enter' && searchValue) {
-			if (isMulti || isFreeText) {
-				e.stopPropagation();
+	const handleKeyDown = useCallback(
+		(e: React.KeyboardEvent): void => {
+			if (
+				e.key === ' ' &&
+				(searchValue.endsWith(' ') || searchValue.length === 0)
+			) {
+				e.preventDefault();
 			}
-			e.preventDefault();
-			handleAddTag(searchValue);
-		}
 
-		if (e.key === 'Backspace' && !searchValue) {
-			e.stopPropagation();
-			const last = tags[tags.length - 1];
-			setSearchValue(last);
-			handleClearTag(last);
-		}
-	};
+			if (e.key === 'Enter' && searchValue) {
+				if (isMulti || isFreeText) {
+					e.stopPropagation();
+				}
+				e.preventDefault();
+				handleAddTag(searchValue);
+			}
 
-	const isFilter = !isMulti;
+			if (e.key === 'Backspace' && !searchValue) {
+				e.stopPropagation();
+				const last = tags[tags.length - 1];
+				setSearchValue(last);
+				handleClearTag(last);
+			}
+		},
+		[handleAddTag, handleClearTag, isFreeText, isMulti, searchValue, tags],
+	);
 
 	const options = useOptions(
 		key,
@@ -110,7 +111,7 @@ export const useAutoComplete = (query: IBuilderQueryForm): HookReturnValues => {
 		options,
 		tags,
 		searchValue,
-		isFilter,
+		isMulti,
 		isFetching,
 	};
 };

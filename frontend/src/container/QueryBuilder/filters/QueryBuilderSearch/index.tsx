@@ -16,7 +16,7 @@ function QueryBuilderSearch({ query }: QueryBuilderSearchProps): JSX.Element {
 		tags,
 		options,
 		searchValue,
-		isFilter,
+		isMulti,
 		isFetching,
 	} = useAutoComplete(query);
 
@@ -42,7 +42,7 @@ function QueryBuilderSearch({ query }: QueryBuilderSearchProps): JSX.Element {
 			virtual
 			showSearch
 			tagRender={onTagRender}
-			filterOption={isFilter}
+			filterOption={!isMulti}
 			autoClearSearchValue={false}
 			mode="multiple"
 			placeholder="Search Filter"
