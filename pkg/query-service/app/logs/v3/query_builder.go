@@ -214,7 +214,7 @@ func buildLogsQuery(start, end, step int64, mq *v3.BuilderQuery, tableName strin
 		query := fmt.Sprintf(queryTmpl, step, op, filterSubQuery, groupBy, orderBy)
 		return query, nil
 	case v3.AggregateOpeatorCount:
-		op := fmt.Sprintf("toFloat64(count(%s))", aggregationKey)
+		op := "toFloat64(count(*))"
 		query := fmt.Sprintf(queryTmpl, step, op, filterSubQuery, groupBy, orderBy)
 		return query, nil
 	case v3.AggregateOperatorCountDistinct:
