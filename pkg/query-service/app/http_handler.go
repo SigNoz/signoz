@@ -255,9 +255,12 @@ func (aH *APIHandler) RegisterMetricsRoutes(router *mux.Router, am *AuthMiddlewa
 
 func (aH *APIHandler) RegisterQueryRangeV3Routes(router *mux.Router, am *AuthMiddleware) {
 	subRouter := router.PathPrefix("/api/v3").Subrouter()
-	subRouter.HandleFunc("/autocomplete/aggregate_attributes", am.ViewAccess(aH.autocompleteAggregateAttributes)).Methods(http.MethodGet)
-	subRouter.HandleFunc("/autocomplete/attribute_keys", am.ViewAccess(aH.autoCompleteAttributeKeys)).Methods(http.MethodGet)
-	subRouter.HandleFunc("/autocomplete/attribute_values", am.ViewAccess(aH.autoCompleteAttributeValues)).Methods(http.MethodGet)
+	subRouter.HandleFunc("/autocomplete/aggregate_attributes", am.ViewAccess(
+		withCacheControl(AutoCompleteCacheControlAge, aH.autocompleteAggregateAttributes))).Methods(http.MethodGet)
+	subRouter.HandleFunc("/autocomplete/attribute_keys", am.ViewAccess(
+		withCacheControl(AutoCompleteCacheControlAge, aH.autoCompleteAttributeKeys))).Methods(http.MethodGet)
+	subRouter.HandleFunc("/autocomplete/attribute_values", am.ViewAccess(
+		withCacheControl(AutoCompleteCacheControlAge, aH.autoCompleteAttributeValues))).Methods(http.MethodGet)
 	subRouter.HandleFunc("/query_range", am.ViewAccess(aH.QueryRangeV3)).Methods(http.MethodPost)
 }
 
@@ -2366,7 +2369,7 @@ func (aH *APIHandler) autocompleteAggregateAttributes(w http.ResponseWriter, r *
 	case v3.DataSourceMetrics:
 		response, err = aH.reader.GetMetricAggregateAttributes(r.Context(), req)
 	case v3.DataSourceLogs:
-		// TODO: implement
+		response, err = aH.reader.GetLogAggregateAttributes(r.Context(), req)
 	case v3.DataSourceTraces:
 		// TODO: implement
 	default:
@@ -2395,7 +2398,7 @@ func (aH *APIHandler) autoCompleteAttributeKeys(w http.ResponseWriter, r *http.R
 	case v3.DataSourceMetrics:
 		response, err = aH.reader.GetMetricAttributeKeys(r.Context(), req)
 	case v3.DataSourceLogs:
-		// TODO: implement
+		response, err = aH.reader.GetLogAttributeKeys(r.Context(), req)
 	case v3.DataSourceTraces:
 		// TODO: implement
 	default:
@@ -2424,7 +2427,7 @@ func (aH *APIHandler) autoCompleteAttributeValues(w http.ResponseWriter, r *http
 	case v3.DataSourceMetrics:
 		response, err = aH.reader.GetMetricAttributeValues(r.Context(), req)
 	case v3.DataSourceLogs:
-		// TODO: implement
+		response, err = aH.reader.GetLogAttributeValues(r.Context(), req)
 	case v3.DataSourceTraces:
 		// TODO: implement
 	default:

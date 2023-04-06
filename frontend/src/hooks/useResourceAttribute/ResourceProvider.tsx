@@ -1,9 +1,11 @@
 import { useMachine } from '@xstate/react';
+import ROUTES from 'constants/routes';
 import { encode } from 'js-base64';
 import history from 'lib/history';
 import React, { useCallback, useMemo, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 
+import { whilelistedKeys } from './config';
 import { ResourceContext } from './context';
 import { ResourceAttributesFilterMachine } from './machine';
 import {
@@ -16,6 +18,7 @@ import {
 	getResourceAttributeQueriesFromURL,
 	GetTagKeys,
 	GetTagValues,
+	mappingWithRoutesAndKeys,
 	OperatorSchema,
 } from './utils';
 
@@ -59,7 +62,12 @@ function ResourceProvider({ children }: Props): JSX.Element {
 			onSelectTagKey: () => {
 				handleLoading(true);
 				GetTagKeys()
-					.then((tagKeys) => setOptionsData({ options: tagKeys, mode: undefined }))
+					.then((tagKeys) =>
+						setOptionsData({
+							options: mappingWithRoutesAndKeys(pathname, tagKeys),
+							mode: undefined,
+						}),
+					)
 					.finally(() => {
 						handleLoading(false);
 					});
@@ -134,9 +142,16 @@ function ResourceProvider({ children }: Props): JSX.Element {
 		setOptionsData({ mode: undefined, options: [] });
 	}, [dispatchQueries, send]);
 
+	const getVisibleQueries = useMemo(() => {
+		if (pathname === ROUTES.SERVICE_MAP) {
+			return queries.filter((query) => whilelistedKeys.includes(query.tagKey));
+		}
+		return queries;
+	}, [queries, pathname]);
+
 	const value: IResourceAttributeProps = useMemo(
 		() => ({
-			queries,
+			queries: getVisibleQueries,
 			staging,
 			handleClearAll,
 			handleClose,
@@ -154,10 +169,10 @@ function ResourceProvider({ children }: Props): JSX.Element {
 			handleClose,
 			handleFocus,
 			loading,
-			queries,
 			staging,
 			selectedQuery,
 			optionsData,
+			getVisibleQueries,
 		],
 	);
 
