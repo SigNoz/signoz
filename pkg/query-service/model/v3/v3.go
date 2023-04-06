@@ -182,14 +182,13 @@ type AggregateAttributeRequest struct {
 type TagType string
 
 const (
-	TagTypeColumn   TagType = "column"
 	TagTypeTag      TagType = "tag"
 	TagTypeResource TagType = "resource"
 )
 
 func (q TagType) Validate() error {
 	switch q {
-	case TagTypeColumn, TagTypeTag, TagTypeResource:
+	case TagTypeTag, TagTypeResource:
 		return nil
 	default:
 		return fmt.Errorf("invalid tag type: %s", q)

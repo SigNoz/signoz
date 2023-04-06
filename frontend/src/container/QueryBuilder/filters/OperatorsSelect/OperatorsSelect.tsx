@@ -25,6 +25,7 @@ export function OperatorsSelect({
 			options={operatorsOptions}
 			value={value}
 			onChange={onChange}
+			style={{ width: '100%' }}
 			// eslint-disable-next-line react/jsx-props-no-spreading
 			{...props}
 		/>
