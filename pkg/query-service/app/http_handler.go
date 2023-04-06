@@ -2617,7 +2617,56 @@ func (aH *APIHandler) execPromQueries(ctx context.Context, metricsQueryRangePara
 	return res, nil, nil
 }
 
-func (aH *APIHandler) queryRangeV3(queryRangeParams *v3.QueryRangeParamsV3, w http.ResponseWriter, r *http.Request) {
+func (aH *APIHandler) getLogFieldsV3(ctx context.Context, queryRangeParams *v3.QueryRangeParamsV3) (map[string]v3.AttributeKey, error) {
+	data := map[string]v3.AttributeKey{}
+	for _, v := range queryRangeParams.CompositeQuery.BuilderQueries {
+		if v.DataSource == v3.DataSourceLogs {
+			fields, apiError := aH.reader.GetLogFields(ctx)
+			if apiError != nil {
+				return nil, apiError.Err
+			}
+
+			// top level fields meta will always be present in the frontend. (can be support for that as enchancement)
+			getType := func(t string) (v3.AttributeKeyType, bool) {
+				if t == "attributes" {
+					return v3.AttributeKeyTypeTag, false
+				} else if t == "resources" {
+					return v3.AttributeKeyTypeResource, false
+				}
+				return "", true
+			}
+
+			for _, v := range fields.Selected {
+				x, pass := getType(v.Type)
+				if pass {
+					continue
+				}
+				data[v.Name] = v3.AttributeKey{
+					Key:      v.Name,
+					Type:     x,
+					DataType: v3.AttributeKeyDataType(strings.ToLower(v.DataType)),
+					IsColumn: true,
+				}
+			}
+			for _, v := range fields.Interesting {
+				x, pass := getType(v.Type)
+				if pass {
+					continue
+				}
+				data[v.Name] = v3.AttributeKey{
+					Key:      v.Name,
+					Type:     x,
+					DataType: v3.AttributeKeyDataType(strings.ToLower(v.DataType)),
+					IsColumn: false,
+				}
+			}
+			break
+		}
+	}
+	return data, nil
+}
+
+func (aH *APIHandler) queryRangeV3(ctx context.Context, queryRangeParams *v3.QueryRangeParamsV3, w http.ResponseWriter, r *http.Request) {
 
 	var result []*v3.Result
 	var err error
@@ -2625,7 +2674,16 @@ func (aH *APIHandler) queryRangeV3(queryRangeParams *v3.QueryRangeParamsV3, w ht
 	var queries map[string]string
 	switch queryRangeParams.CompositeQuery.QueryType {
 	case v3.QueryTypeBuilder:
-		queries, err = aH.queryBuilder.prepareQueries(queryRangeParams)
+		// get the fields if any logs query is present
+		var fields map[string]v3.AttributeKey
+		fields, err = aH.getLogFieldsV3(ctx, queryRangeParams)
+		if err != nil {
+			apiErrObj := &model.ApiError{Typ: model.ErrorInternal, Err: err}
+			RespondError(w, apiErrObj, errQuriesByName)
+			return
+		}
+
+		queries, err = aH.queryBuilder.prepareQueries(queryRangeParams, fields)
 		if err != nil {
 			RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
 			return
@@ -2668,11 +2726,13 @@ func (aH *APIHandler) queryRangeV3(queryRangeParams *v3.QueryRangeParamsV3, w ht
 func (aH *APIHandler) QueryRangeV3(w http.ResponseWriter, r *http.Request) {
 	queryRangeParams, apiErrorObj := ParseQueryRangeParams(r)
 
+	ctx := context.Background()
+
 	if apiErrorObj != nil {
 		zap.S().Errorf(apiErrorObj.Err.Error())
 		RespondError(w, apiErrorObj, nil)
 		return
 	}
 
-	aH.queryRangeV3(queryRangeParams, w, r)
+	aH.queryRangeV3(ctx, queryRangeParams, w, r)
 }

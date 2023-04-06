@@ -64,12 +64,23 @@ var topLevelColumns = map[string]struct{}{
 }
 
 // getClickhouseColumnName returns the corresponding clickhouse column name for the given attribute/resource key
-func getClickhouseColumnName(key v3.AttributeKey) string {
+func getClickhouseColumnName(key v3.AttributeKey, fields map[string]v3.AttributeKey) (string, error) {
 	clickhouseColumn := key.Key
 	//if the key is present in the topLevelColumn then it will be only searched in those columns,
 	//regardless if it is indexed/present again in resource or column attribute
 	_, isTopLevelCol := topLevelColumns[key.Key]
 	if !isTopLevelCol && !key.IsColumn {
+		// check if we need to enrich metadata
+		if key.Type == "" || key.DataType == "" {
+			// check if the field is present in the fields map
+			if field, ok := fields[key.Key]; ok {
+				key.Type = field.Type
+				key.DataType = field.DataType
+			} else {
+				return "", fmt.Errorf("field not found to enrich metadata")
+			}
+		}
+
 		columnType := key.Type
 		if columnType == v3.AttributeKeyTypeTag {
 			columnType = "attributes"
@@ -86,24 +97,27 @@ func getClickhouseColumnName(key v3.AttributeKey) string {
 		}
 		clickhouseColumn = fmt.Sprintf("%s_%s_value[indexOf(%s_%s_key, '%s')]", columnType, columnDataType, columnType, columnDataType, key.Key)
 	}
-	return clickhouseColumn
+	return clickhouseColumn, nil
 }
 
 // getSelectLabels returns the select labels for the query based on groupBy and aggregateOperator
-func getSelectLabels(aggregatorOperator v3.AggregateOperator, groupBy []v3.AttributeKey) string {
+func getSelectLabels(aggregatorOperator v3.AggregateOperator, groupBy []v3.AttributeKey, fields map[string]v3.AttributeKey) (string, error) {
 	var selectLabels string
 	if aggregatorOperator == v3.AggregateOperatorNoOp || aggregatorOperator == v3.AggregateOperatorRate {
 		selectLabels = ""
 	} else {
 		for _, tag := range groupBy {
-			columnName := getClickhouseColumnName(tag)
+			columnName, err := getClickhouseColumnName(tag, fields)
+			if err != nil {
+				return "", err
+			}
 			selectLabels += fmt.Sprintf(", %s as %s", columnName, tag.Key)
 		}
 	}
-	return selectLabels
+	return selectLabels, nil
 }
 
-func buildLogsTimeSeriesFilterQuery(fs *v3.FilterSet) (string, error) {
+func buildLogsTimeSeriesFilterQuery(fs *v3.FilterSet, fields map[string]v3.AttributeKey) (string, error) {
 	var conditions []string
 
 	if fs != nil && len(fs.Items) != 0 {
@@ -122,7 +136,10 @@ func buildLogsTimeSeriesFilterQuery(fs *v3.FilterSet) (string, error) {
 			// }
 
 			// generate the key
-			columnName := getClickhouseColumnName(item.Key)
+			columnName, err := getClickhouseColumnName(item.Key, fields)
+			if err != nil {
+				return "", err
+			}
 			fmtVal := utils.ClickHouseFormattedValue(toFormat)
 
 			if operator, ok := logsOperatorMappingV3[op]; ok {
@@ -140,16 +157,19 @@ func buildLogsTimeSeriesFilterQuery(fs *v3.FilterSet) (string, error) {
 	return queryString, nil
 }
 
-func buildLogsQuery(start, end, step int64, mq *v3.BuilderQuery, tableName string) (string, error) {
+func buildLogsQuery(start, end, step int64, mq *v3.BuilderQuery, tableName string, fields map[string]v3.AttributeKey) (string, error) {
 
-	filterSubQuery, err := buildLogsTimeSeriesFilterQuery(mq.Filters)
+	filterSubQuery, err := buildLogsTimeSeriesFilterQuery(mq.Filters, fields)
 	if err != nil {
 		return "", err
 	}
 
 	samplesTableTimeFilter := fmt.Sprintf("(timestamp >= %d AND timestamp <= %d)", start, end)
 
-	selectLabels := getSelectLabels(mq.AggregateOperator, mq.GroupBy)
+	selectLabels, err := getSelectLabels(mq.AggregateOperator, mq.GroupBy, fields)
+	if err != nil {
+		return "", err
+	}
 
 	// Select the aggregate value for interval
 	queryTmpl :=
@@ -180,7 +200,10 @@ func buildLogsQuery(start, end, step int64, mq *v3.BuilderQuery, tableName strin
 
 	aggregationKey := ""
 	if mq.AggregateAttribute.Key != "" {
-		aggregationKey = getClickhouseColumnName(mq.AggregateAttribute)
+		aggregationKey, err = getClickhouseColumnName(mq.AggregateAttribute, fields)
+		if err != nil {
+			return "", err
+		}
 	}
 
 	switch mq.AggregateOperator {
@@ -318,8 +341,8 @@ func addOffsetToQuery(query string, offset uint64) string {
 	return fmt.Sprintf("%s OFFSET %d", query, offset)
 }
 
-func PrepareLogsQuery(start, end, step int64, queryType v3.QueryType, panelType v3.PanelType, mq *v3.BuilderQuery) (string, error) {
-	query, err := buildLogsQuery(start, end, step, mq, constants.SIGNOZ_TIMESERIES_TABLENAME)
+func PrepareLogsQuery(start, end, step int64, queryType v3.QueryType, panelType v3.PanelType, mq *v3.BuilderQuery, fields map[string]v3.AttributeKey) (string, error) {
+	query, err := buildLogsQuery(start, end, step, mq, constants.SIGNOZ_TIMESERIES_TABLENAME, fields)
 	if err != nil {
 		return "", err
 	}

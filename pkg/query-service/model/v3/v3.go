@@ -265,6 +265,9 @@ func (a AttributeKey) Validate() error {
 	switch a.DataType {
 	case AttributeKeyDataTypeBool, AttributeKeyDataTypeInt64, AttributeKeyDataTypeFloat64, AttributeKeyDataTypeString:
 		break
+	case "":
+		// allow empty values to pass through
+		break
 	default:
 		return fmt.Errorf("invalid attribute dataType: %s", a.DataType)
 	}
