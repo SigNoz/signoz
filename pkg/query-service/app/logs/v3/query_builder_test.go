@@ -43,7 +43,8 @@ var testGetClickhouseColumnNameData = []struct {
 func TestGetClickhouseColumnName(t *testing.T) {
 	for _, tt := range testGetClickhouseColumnNameData {
 		Convey("testGetClickhouseColumnNameData", t, func() {
-			columnName := getClickhouseColumnName(tt.AttributeKey)
+			columnName, err := getClickhouseColumnName(tt.AttributeKey, map[string]v3.AttributeKey{})
+			So(err, ShouldBeNil)
 			So(columnName, ShouldEqual, tt.ExpectedColumnName)
 		})
 	}
@@ -87,8 +88,9 @@ var testGetSelectLabelsData = []struct {
 func TestGetSelectLabels(t *testing.T) {
 	for _, tt := range testGetSelectLabelsData {
 		Convey("testGetSelectLabelsData", t, func() {
-			selectLabels := getSelectLabels(tt.AggregateOperator, tt.GroupByTags)
+			selectLabels, err := getSelectLabels(tt.AggregateOperator, tt.GroupByTags, map[string]v3.AttributeKey{})
 			fmt.Println(selectLabels)
+			So(err, ShouldBeNil)
 			So(selectLabels, ShouldEqual, tt.SelectLabels)
 		})
 	}
@@ -123,7 +125,7 @@ var timeSeriesFilterQueryData = []struct {
 func TestBuildLogsTimeSeriesFilterQuery(t *testing.T) {
 	for _, tt := range timeSeriesFilterQueryData {
 		Convey("TestBuildLogsTimeSeriesFilterQuery", t, func() {
-			query, err := buildLogsTimeSeriesFilterQuery(tt.FilterSet)
+			query, err := buildLogsTimeSeriesFilterQuery(tt.FilterSet, map[string]v3.AttributeKey{})
 			So(err, ShouldBeNil)
 			So(query, ShouldEqual, tt.ExpectedFilter)
 			fmt.Println(query)
@@ -457,7 +459,7 @@ var testBuildLogsQueryData = []struct {
 func TestBuildLogsQuery(t *testing.T) {
 	for _, tt := range testBuildLogsQueryData {
 		Convey("TestBuildLogsQuery", t, func() {
-			query, err := buildLogsQuery(tt.Start, tt.End, tt.Step, tt.BuilderQuery, tt.TableName)
+			query, err := buildLogsQuery(tt.Start, tt.End, tt.Step, tt.BuilderQuery, tt.TableName, map[string]v3.AttributeKey{})
 			fmt.Println(query)
 			So(err, ShouldBeNil)
 			So(query, ShouldEqual, tt.ExpectedQuery)

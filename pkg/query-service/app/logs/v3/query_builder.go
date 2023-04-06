@@ -124,16 +124,6 @@ func buildLogsTimeSeriesFilterQuery(fs *v3.FilterSet, fields map[string]v3.Attri
 		for _, item := range fs.Items {
 			toFormat := item.Value
 			op := strings.ToLower(strings.TrimSpace(item.Operator))
-			// if the received value is an array for like/match op, just take the first value
-			// if op == "like" || op == "match" || op == "nlike" || op == "nmatch" {
-			// 	x, ok := item.Value.([]interface{})
-			// 	if ok {
-			// 		if len(x) == 0 {
-			// 			continue
-			// 		}
-			// 		toFormat = x[0]
-			// 	}
-			// }
 
 			// generate the key
 			columnName, err := getClickhouseColumnName(item.Key, fields)
