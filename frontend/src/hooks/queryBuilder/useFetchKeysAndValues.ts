@@ -3,7 +3,7 @@ import {
 	getAttributesKeys,
 	getAttributesValues,
 } from 'api/queryBuilder/getAttributesKeysValues';
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useQuery } from 'react-query';
 import { useDebounce } from 'react-use';
 import { IBuilderQueryForm } from 'types/api/queryBuilder/queryBuilderData';
@@ -23,7 +23,7 @@ export const useFetchKeysAndValues = (
 	const [keys, setKeys] = useState<AttributeKeyOptions[]>([]);
 	const [results, setResults] = useState<string[]>([]);
 
-	const { isFetching } = useQuery(
+	const { data, isFetching, status } = useQuery(
 		[
 			'GET_ATTRIBUTE_KEY',
 			searchValue,
@@ -31,23 +31,25 @@ export const useFetchKeysAndValues = (
 			query.aggregateOperator,
 			query.aggregateAttribute.key,
 		],
-		async () => {
-			const { payload } = await getAttributesKeys({
+		async () =>
+			getAttributesKeys({
 				searchText: searchValue,
 				dataSource: query.dataSource,
 				aggregateOperator: query.aggregateOperator,
 				aggregateAttribute: query.aggregateAttribute.key,
-			});
-			if (payload) {
-				setKeys(payload);
-			}
-		},
+			}),
 		{ enabled: !!query.aggregateOperator && !!query.dataSource },
 	);
 
-	const handleSetKey = (payload: AttributeKeyOptions[] | null): void => {
-		if (payload) {
-			setKeys(payload);
+	useEffect(() => {
+		if (status === 'success' && data?.payload) {
+			setKeys(data?.payload);
+		}
+	}, [data?.payload, status]);
+
+	const handleSetKey = (tagKeys: AttributeKeyOptions[] | null): void => {
+		if (tagKeys) {
+			setKeys(tagKeys);
 		} else {
 			setKeys([]);
 		}
