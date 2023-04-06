@@ -252,7 +252,7 @@ var StaticFieldsLogsV3 = []v3.AttributeKey{
 	},
 	{
 		Key:      "body",
-		DataType: v3.AttributeKeyDataTypeInt64,
+		DataType: v3.AttributeKeyDataTypeString,
 		Type:     v3.AttributeKeyTypeTag,
 	},
 }
