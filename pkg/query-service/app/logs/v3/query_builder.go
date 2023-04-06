@@ -154,7 +154,6 @@ func buildLogsQuery(start, end, step int64, mq *v3.BuilderQuery, tableName strin
 		return "", err
 	}
 
-	// Select the aggregate value for interval
 	queryTmpl :=
 		"SELECT toStartOfInterval(fromUnixTimestamp64Nano(timestamp), INTERVAL %d SECOND) AS ts" + selectLabels +
 			", %s as value " +
@@ -163,22 +162,7 @@ func buildLogsQuery(start, end, step int64, mq *v3.BuilderQuery, tableName strin
 			"group by %s " +
 			"order by %sts"
 
-	// tagsWithoutLe is used to group by all tags except le
-	// This is done because we want to group by le only when we are calculating quantile
-	// Otherwise, we want to group by all tags except le
-	tagsWithoutLe := []string{}
-	for _, tag := range mq.GroupBy {
-		if tag.Key != "le" {
-			tagsWithoutLe = append(tagsWithoutLe, tag.Key)
-		}
-	}
-
-	// groupByWithoutLe := groupBy(tagsWithoutLe...)
-	// groupTagsWithoutLe := groupSelect(tagsWithoutLe...)
-	// orderWithoutLe := orderBy(mq.OrderBy, tagsWithoutLe)
-
 	groupBy := groupByAttributeKeyTags(mq.GroupBy...)
-	// groupTags := groupSelectAttributeKeyTags(mq.GroupBy...)
 	orderBy := orderByAttributeKeyTags(mq.OrderBy, mq.GroupBy)
 
 	aggregationKey := ""
@@ -243,15 +227,6 @@ func groupBy(tags ...string) string {
 	return strings.Join(tags, ",")
 }
 
-// groupSelect returns a string of comma separated tags for select clause
-// func groupSelect(tags ...string) string {
-// 	groupTags := strings.Join(tags, ",")
-// 	if len(tags) != 0 {
-// 		groupTags += ", "
-// 	}
-// 	return groupTags
-// }
-
 func groupByAttributeKeyTags(tags ...v3.AttributeKey) string {
 	groupTags := []string{}
 	for _, tag := range tags {
@@ -259,14 +234,6 @@ func groupByAttributeKeyTags(tags ...v3.AttributeKey) string {
 	}
 	return groupBy(groupTags...)
 }
-
-// func groupSelectAttributeKeyTags(tags ...v3.AttributeKey) string {
-// 	groupTags := []string{}
-// 	for _, tag := range tags {
-// 		groupTags = append(groupTags, tag.Key)
-// 	}
-// 	return groupSelect(groupTags...)
-// }
 
 // orderBy returns a string of comma separated tags for order by clause
 // if the order is not specified, it defaults to ASC
