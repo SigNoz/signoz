@@ -18,6 +18,7 @@ type HookReturnValues = {
 	tags: string[];
 	searchValue: string;
 	isFilter: boolean;
+	isFetching: boolean;
 };
 
 export const useAutoComplete = (query: IBuilderQueryForm): HookReturnValues => {
@@ -27,7 +28,10 @@ export const useAutoComplete = (query: IBuilderQueryForm): HookReturnValues => {
 		setSearchValue(value);
 	}, []);
 
-	const { keys, results } = useFetchKeysAndValues(searchValue, query);
+	const { keys, results, isFetching } = useFetchKeysAndValues(
+		searchValue,
+		query,
+	);
 
 	const [key, operator, result] = useSetCurrentKeyAndOperator(searchValue, keys);
 
@@ -107,5 +111,6 @@ export const useAutoComplete = (query: IBuilderQueryForm): HookReturnValues => {
 		tags,
 		searchValue,
 		isFilter,
+		isFetching,
 	};
 };

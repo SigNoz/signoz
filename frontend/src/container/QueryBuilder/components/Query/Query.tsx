@@ -195,8 +195,8 @@ export const Query = memo(function Query({
 		<StyledRow gutter={[0, 15]}>
 			<StyledDeleteEntity onClick={handleDeleteQuery} />
 			<Col span={24}>
-				<Row>
-					<Col span={isMatricsDataSource ? 7 : 4}>
+				<Row align="middle" justify="space-between">
+					<Col>
 						<ListMarker
 							isDisabled={query.disabled}
 							toggleDisabled={handleToggleDisableQuery}

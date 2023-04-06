@@ -1,5 +1,5 @@
 import { CheckOutlined } from '@ant-design/icons';
-import { Select, Tag } from 'antd';
+import { Select, Spin, Tag } from 'antd';
 import { OPERATORS } from 'constants/queryBuilder';
 import { useAutoComplete } from 'hooks/queryBuilder/useAutoComplete';
 import React, { useCallback } from 'react';
@@ -17,10 +17,12 @@ function QueryBuilderSearch({ query }: QueryBuilderSearchProps): JSX.Element {
 		options,
 		searchValue,
 		isFilter,
+		isFetching,
 	} = useAutoComplete(query);
 
 	const onTagRender = ({ value }: { value: string }): React.ReactElement => {
 		const [tagKey, tagOperator, ...tagValue] = value.split(' ');
+		if (!tagOperator) return <div>{value}</div>;
 		if (tagOperator === OPERATORS.IN || tagOperator === OPERATORS.NIN) {
 			return (
 				<Tag closable>{`${tagKey} ${tagOperator} ${tagValue.join(', ')}`}</Tag>
@@ -37,6 +39,7 @@ function QueryBuilderSearch({ query }: QueryBuilderSearchProps): JSX.Element {
 
 	return (
 		<Select
+			virtual
 			showSearch
 			tagRender={onTagRender}
 			filterOption={isFilter}
@@ -51,6 +54,8 @@ function QueryBuilderSearch({ query }: QueryBuilderSearchProps): JSX.Element {
 			onInputKeyDown={handleKeyDown}
 			onSearch={handleSearch}
 			searchValue={searchValue}
+			placement="topLeft"
+			notFoundContent={isFetching ? <Spin size="small" /> : null}
 		>
 			{options?.map((option) => (
 				<Select.Option

@@ -13,6 +13,7 @@ import { separateSearchValue } from 'utils/separateSearchValue';
 type UseFetchKeysAndValuesReturnValues = {
 	keys: AttributeKeyOptions[];
 	results: string[];
+	isFetching: boolean;
 };
 
 export const useFetchKeysAndValues = (
@@ -22,7 +23,7 @@ export const useFetchKeysAndValues = (
 	const [keys, setKeys] = useState<AttributeKeyOptions[]>([]);
 	const [results, setResults] = useState<string[]>([]);
 
-	useQuery(
+	const { isFetching } = useQuery(
 		[
 			'GET_ATTRIBUTE_KEY',
 			searchValue,
@@ -41,6 +42,7 @@ export const useFetchKeysAndValues = (
 				setKeys(payload);
 			}
 		},
+		{ enabled: !!query.aggregateOperator && !!query.dataSource },
 	);
 
 	const handleSetKey = (payload: AttributeKeyOptions[] | null): void => {
@@ -99,5 +101,6 @@ export const useFetchKeysAndValues = (
 	return {
 		keys,
 		results,
+		isFetching,
 	};
 };
