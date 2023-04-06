@@ -182,10 +182,18 @@ type AggregateAttributeRequest struct {
 type TagType string
 
 const (
-	TagTypeColumn   TagType = "column"
 	TagTypeTag      TagType = "tag"
 	TagTypeResource TagType = "resource"
 )
+
+func (q TagType) Validate() error {
+	switch q {
+	case TagTypeTag, TagTypeResource:
+		return nil
+	default:
+		return fmt.Errorf("invalid tag type: %s", q)
+	}
+}
 
 // FilterAttributeKeyRequest is a request to fetch possible attribute keys
 // for a selected aggregate operator and aggregate attribute and search text.
@@ -201,10 +209,20 @@ type FilterAttributeKeyRequest struct {
 type AttributeKeyDataType string
 
 const (
-	AttributeKeyDataTypeString AttributeKeyDataType = "string"
-	AttributeKeyDataTypeNumber AttributeKeyDataType = "number"
-	AttributeKeyDataTypeBool   AttributeKeyDataType = "bool"
+	AttributeKeyDataTypeString  AttributeKeyDataType = "string"
+	AttributeKeyDataTypeInt64   AttributeKeyDataType = "int64"
+	AttributeKeyDataTypeFloat64 AttributeKeyDataType = "float64"
+	AttributeKeyDataTypeBool    AttributeKeyDataType = "bool"
 )
+
+func (q AttributeKeyDataType) Validate() error {
+	switch q {
+	case AttributeKeyDataTypeString, AttributeKeyDataTypeInt64, AttributeKeyDataTypeFloat64, AttributeKeyDataTypeBool:
+		return nil
+	default:
+		return fmt.Errorf("invalid tag type: %s", q)
+	}
+}
 
 // FilterAttributeValueRequest is a request to fetch possible attribute values
 // for a selected aggregate operator, aggregate attribute, filter attribute key
@@ -244,7 +262,7 @@ type AttributeKey struct {
 
 func (a AttributeKey) Validate() error {
 	switch a.DataType {
-	case AttributeKeyDataTypeBool, AttributeKeyDataTypeNumber, AttributeKeyDataTypeString:
+	case AttributeKeyDataTypeBool, AttributeKeyDataTypeInt64, AttributeKeyDataTypeFloat64, AttributeKeyDataTypeString:
 		break
 	default:
 		return fmt.Errorf("invalid attribute dataType: %s", a.DataType)
