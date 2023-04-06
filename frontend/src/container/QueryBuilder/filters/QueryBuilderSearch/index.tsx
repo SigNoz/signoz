@@ -2,7 +2,7 @@ import { CheckOutlined } from '@ant-design/icons';
 import { Select, Spin, Tag } from 'antd';
 import { OPERATORS } from 'constants/queryBuilder';
 import { useAutoComplete } from 'hooks/queryBuilder/useAutoComplete';
-import React, { useCallback } from 'react';
+import React from 'react';
 import { IBuilderQueryForm } from 'types/api/queryBuilder/queryBuilderData';
 
 import { dropdownCheckIcon, filterSelectStyle } from './config';
@@ -31,12 +31,6 @@ function QueryBuilderSearch({ query }: QueryBuilderSearchProps): JSX.Element {
 		return <Tag closable>{value}</Tag>;
 	};
 
-	const getOptionClasses = useCallback(
-		(selected: boolean | undefined) =>
-			selected ? 'ant-select-item-option-selected select-item-option-state' : '',
-		[],
-	);
-
 	return (
 		<Select
 			virtual
@@ -58,11 +52,7 @@ function QueryBuilderSearch({ query }: QueryBuilderSearchProps): JSX.Element {
 			notFoundContent={isFetching ? <Spin size="small" /> : null}
 		>
 			{options?.map((option) => (
-				<Select.Option
-					key={option.value}
-					value={option.value}
-					className={getOptionClasses(option.selected)}
-				>
+				<Select.Option key={option.value} value={option.value}>
 					{option.value}
 					{option.selected && <CheckOutlined style={dropdownCheckIcon} />}
 				</Select.Option>
