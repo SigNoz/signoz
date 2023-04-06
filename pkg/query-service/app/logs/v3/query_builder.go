@@ -64,6 +64,9 @@ func getClickhouseColumnName(key v3.AttributeKey, fields map[string]v3.Attribute
 		if key.Type == "" || key.DataType == "" {
 			// check if the field is present in the fields map
 			if field, ok := fields[key.Key]; ok {
+				if field.IsColumn {
+					return field.Key, nil
+				}
 				key.Type = field.Type
 				key.DataType = field.DataType
 			} else {
@@ -307,7 +310,23 @@ func having(items []v3.Having) string {
 
 // todo(nitya): implement reduceQuery
 func reduceQuery(query string, reduceTo v3.ReduceToOperator, aggregateOperator v3.AggregateOperator) (string, error) {
-	return "", nil
+	// the timestamp picked is not relevant here since the final value used is show the single
+	// chart with just the query value.
+	switch reduceTo {
+	case v3.ReduceToOperatorLast:
+		query = fmt.Sprintf("SELECT anyLast(value) as value, any(ts) as ts FROM (%s)", query)
+	case v3.ReduceToOperatorSum:
+		query = fmt.Sprintf("SELECT sum(value) as value, any(ts) as ts FROM (%s)", query)
+	case v3.ReduceToOperatorAvg:
+		query = fmt.Sprintf("SELECT avg(value) as value, any(ts) as ts FROM (%s)", query)
+	case v3.ReduceToOperatorMax:
+		query = fmt.Sprintf("SELECT max(value) as value, any(ts) as ts FROM (%s)", query)
+	case v3.ReduceToOperatorMin:
+		query = fmt.Sprintf("SELECT min(value) as value, any(ts) as ts FROM (%s)", query)
+	default:
+		return "", fmt.Errorf("unsupported reduce operator")
+	}
+	return query, nil
 }
 
 func addLimitToQuery(query string, limit uint64) string {
