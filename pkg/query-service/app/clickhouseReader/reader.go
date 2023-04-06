@@ -3789,6 +3789,10 @@ func (r *ClickHouseReader) GetMetricAttributeValues(ctx context.Context, req *v3
 	return &attributeValues, nil
 }
 
+func isColumn(tableStatement, field string) bool {
+	return strings.Contains(tableStatement, fmt.Sprintf("`%s` ", field))
+}
+
 func (r *ClickHouseReader) GetLogAggregateAttributes(ctx context.Context, req *v3.AggregateAttributeRequest) (*v3.AggregateAttributeResponse, error) {
 
 	var query string
@@ -3854,14 +3858,14 @@ func (r *ClickHouseReader) GetLogAggregateAttributes(ctx context.Context, req *v
 			Key:      tagKey,
 			DataType: v3.AttributeKeyDataType(dataType),
 			Type:     v3.AttributeKeyType(attType),
-			IsColumn: isSelectedField(statements[0].Statement, tagKey),
+			IsColumn: isColumn(statements[0].Statement, tagKey),
 		}
 		response.AttributeKeys = append(response.AttributeKeys, key)
 	}
 	// add other attributes
 	for _, f := range constants.StaticFieldsLogsV3 {
 		if len(req.SearchText) == 0 || strings.Contains(f.Key, req.SearchText) {
-			f.IsColumn = isSelectedField(statements[0].Statement, f.Key)
+			f.IsColumn = isColumn(statements[0].Statement, f.Key)
 			response.AttributeKeys = append(response.AttributeKeys, f)
 		}
 	}
@@ -3908,7 +3912,7 @@ func (r *ClickHouseReader) GetLogAttributeKeys(ctx context.Context, req *v3.Filt
 			Key:      attributeKey,
 			DataType: v3.AttributeKeyDataType(attributeDataType),
 			Type:     v3.AttributeKeyType(tagType),
-			IsColumn: isSelectedField(statements[0].Statement, attributeKey),
+			IsColumn: isColumn(statements[0].Statement, attributeKey),
 		}
 
 		response.AttributeKeys = append(response.AttributeKeys, key)
@@ -3917,7 +3921,7 @@ func (r *ClickHouseReader) GetLogAttributeKeys(ctx context.Context, req *v3.Filt
 	// add other attributes
 	for _, f := range constants.StaticFieldsLogsV3 {
 		if len(req.SearchText) == 0 || strings.Contains(f.Key, req.SearchText) {
-			f.IsColumn = isSelectedField(statements[0].Statement, f.Key)
+			f.IsColumn = isColumn(statements[0].Statement, f.Key)
 			response.AttributeKeys = append(response.AttributeKeys, f)
 		}
 	}
