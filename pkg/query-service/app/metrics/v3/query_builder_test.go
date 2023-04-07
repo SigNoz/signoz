@@ -26,7 +26,7 @@ func TestBuildQuery(t *testing.T) {
 				PanelType: v3.PanelTypeGraph,
 			},
 		}
-		query, err := PrepareMetricQuery(q.Start, q.End, q.Step, q.CompositeQuery.QueryType, q.CompositeQuery.PanelType, q.CompositeQuery.BuilderQueries["A"])
+		query, err := PrepareMetricQuery(q.Start, q.End, q.CompositeQuery.QueryType, q.CompositeQuery.PanelType, q.CompositeQuery.BuilderQueries["A"])
 		require.NoError(t, err)
 		require.Contains(t, query, "WHERE metric_name = 'name'")
 	})
@@ -44,8 +44,8 @@ func TestBuildQueryWithFilters(t *testing.T) {
 						QueryName:          "A",
 						AggregateAttribute: v3.AttributeKey{Key: "name"},
 						Filters: &v3.FilterSet{Operator: "AND", Items: []v3.FilterItem{
-							{Key: v3.AttributeKey{Key: "a"}, Value: "b", Operator: "neq"},
-							{Key: v3.AttributeKey{Key: "code"}, Value: "ERROR_*", Operator: "nmatch"},
+							{Key: v3.AttributeKey{Key: "a"}, Value: "b", Operator: v3.FilterOperatorNotEqual},
+							{Key: v3.AttributeKey{Key: "code"}, Value: "ERROR_*", Operator: v3.FilterOperatorNotRegex},
 						}},
 						AggregateOperator: v3.AggregateOperatorRateMax,
 						Expression:        "A",
@@ -53,7 +53,7 @@ func TestBuildQueryWithFilters(t *testing.T) {
 				},
 			},
 		}
-		query, err := PrepareMetricQuery(q.Start, q.End, q.Step, q.CompositeQuery.QueryType, q.CompositeQuery.PanelType, q.CompositeQuery.BuilderQueries["A"])
+		query, err := PrepareMetricQuery(q.Start, q.End, q.CompositeQuery.QueryType, q.CompositeQuery.PanelType, q.CompositeQuery.BuilderQueries["A"])
 		require.NoError(t, err)
 
 		require.Contains(t, query, "WHERE metric_name = 'name' AND JSONExtractString(labels, 'a') != 'b'")
@@ -74,7 +74,7 @@ func TestBuildQueryWithMultipleQueries(t *testing.T) {
 						QueryName:          "A",
 						AggregateAttribute: v3.AttributeKey{Key: "name"},
 						Filters: &v3.FilterSet{Operator: "AND", Items: []v3.FilterItem{
-							{Key: v3.AttributeKey{Key: "in"}, Value: []interface{}{"a", "b", "c"}, Operator: "in"},
+							{Key: v3.AttributeKey{Key: "in"}, Value: []interface{}{"a", "b", "c"}, Operator: v3.FilterOperatorIn},
 						}},
 						AggregateOperator: v3.AggregateOperatorRateAvg,
 						Expression:        "A",
@@ -89,7 +89,7 @@ func TestBuildQueryWithMultipleQueries(t *testing.T) {
 			},
 		}
 
-		query, err := PrepareMetricQuery(q.Start, q.End, q.Step, q.CompositeQuery.QueryType, q.CompositeQuery.PanelType, q.CompositeQuery.BuilderQueries["A"])
+		query, err := PrepareMetricQuery(q.Start, q.End, q.CompositeQuery.QueryType, q.CompositeQuery.PanelType, q.CompositeQuery.BuilderQueries["A"])
 		require.NoError(t, err)
 
 		require.Contains(t, query, "WHERE metric_name = 'name' AND JSONExtractString(labels, 'in') IN ['a','b','c']")
