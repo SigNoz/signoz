@@ -2729,13 +2729,11 @@ func (aH *APIHandler) queryRangeV3(ctx context.Context, queryRangeParams *v3.Que
 func (aH *APIHandler) QueryRangeV3(w http.ResponseWriter, r *http.Request) {
 	queryRangeParams, apiErrorObj := ParseQueryRangeParams(r)
 
-	ctx := context.Background()
-
 	if apiErrorObj != nil {
 		zap.S().Errorf(apiErrorObj.Err.Error())
 		RespondError(w, apiErrorObj, nil)
 		return
 	}
 
-	aH.queryRangeV3(ctx, queryRangeParams, w, r)
+	aH.queryRangeV3(r.Context(), queryRangeParams, w, r)
 }

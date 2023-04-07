@@ -209,10 +209,11 @@ type FilterAttributeKeyRequest struct {
 type AttributeKeyDataType string
 
 const (
-	AttributeKeyDataTypeString  AttributeKeyDataType = "string"
-	AttributeKeyDataTypeInt64   AttributeKeyDataType = "int64"
-	AttributeKeyDataTypeFloat64 AttributeKeyDataType = "float64"
-	AttributeKeyDataTypeBool    AttributeKeyDataType = "bool"
+	AttributeKeyDataTypeUnspecified AttributeKeyDataType = ""
+	AttributeKeyDataTypeString      AttributeKeyDataType = "string"
+	AttributeKeyDataTypeInt64       AttributeKeyDataType = "int64"
+	AttributeKeyDataTypeFloat64     AttributeKeyDataType = "float64"
+	AttributeKeyDataTypeBool        AttributeKeyDataType = "bool"
 )
 
 func (q AttributeKeyDataType) Validate() error {
@@ -263,10 +264,7 @@ type AttributeKey struct {
 
 func (a AttributeKey) Validate() error {
 	switch a.DataType {
-	case AttributeKeyDataTypeBool, AttributeKeyDataTypeInt64, AttributeKeyDataTypeFloat64, AttributeKeyDataTypeString:
-		break
-	case "":
-		// allow empty values to pass through
+	case AttributeKeyDataTypeBool, AttributeKeyDataTypeInt64, AttributeKeyDataTypeFloat64, AttributeKeyDataTypeString, AttributeKeyDataTypeUnspecified:
 		break
 	default:
 		return fmt.Errorf("invalid attribute dataType: %s", a.DataType)

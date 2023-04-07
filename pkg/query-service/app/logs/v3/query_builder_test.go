@@ -448,7 +448,6 @@ var testBuildLogsQueryData = []struct {
 			// GroupBy:           []v3.AttributeKey{{Key: "method", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag}},
 			// OrderBy:           []v3.OrderBy{{ColumnName: "method", Order: "ASC"}},
 		},
-		TableName: "logs",
 		ExpectedQuery: "SELECT timestamp, id, trace_id, span_id, trace_flags, severity_text, severity_number, body,CAST((attributes_string_key, attributes_string_value), 'Map(String, String)') as  attributes_string," +
 			"CAST((attributes_int64_key, attributes_int64_value), 'Map(String, Int64)') as  attributes_int64,CAST((attributes_float64_key, attributes_float64_value), 'Map(String, Float64)') as  attributes_float64," +
 			"CAST((resources_string_key, resources_string_value), 'Map(String, String)') as resources_string " +
@@ -459,11 +458,41 @@ var testBuildLogsQueryData = []struct {
 func TestBuildLogsQuery(t *testing.T) {
 	for _, tt := range testBuildLogsQueryData {
 		Convey("TestBuildLogsQuery", t, func() {
-			query, err := buildLogsQuery(tt.Start, tt.End, tt.Step, tt.BuilderQuery, tt.TableName, map[string]v3.AttributeKey{})
+			query, err := buildLogsQuery(tt.Start, tt.End, tt.Step, tt.BuilderQuery, map[string]v3.AttributeKey{})
 			fmt.Println(query)
 			So(err, ShouldBeNil)
 			So(query, ShouldEqual, tt.ExpectedQuery)
 
+		})
+	}
+}
+
+var testGetZerosForEpochNanoData = []struct {
+	Name       string
+	Epoch      int64
+	Multiplier int64
+	Result     int64
+}{
+	{
+		Name:       "Test 1",
+		Epoch:      1680712080000,
+		Multiplier: 1000000,
+		Result:     1680712080000000000,
+	},
+	{
+		Name:       "Test 1",
+		Epoch:      1680712080000000000,
+		Multiplier: 1,
+		Result:     1680712080000000000,
+	},
+}
+
+func TestGetZerosForEpochNano(t *testing.T) {
+	for _, tt := range testGetZerosForEpochNanoData {
+		Convey("testGetZerosForEpochNanoData", t, func() {
+			multiplier := getZerosForEpochNano(tt.Epoch)
+			So(multiplier, ShouldEqual, tt.Multiplier)
+			So(tt.Epoch*multiplier, ShouldEqual, tt.Result)
 		})
 	}
 }
