@@ -10,7 +10,7 @@ import (
 )
 
 var aggregateOperatorToPercentile = map[v3.AggregateOperator]float64{
-	v3.AggregateOperatorP05:         0.5,
+	v3.AggregateOperatorP05:         0.05,
 	v3.AggregateOperatorP10:         0.10,
 	v3.AggregateOperatorP20:         0.20,
 	v3.AggregateOperatorP25:         0.25,
@@ -37,19 +37,19 @@ var aggregateOperatorToSQLFunc = map[v3.AggregateOperator]string{
 	v3.AggregateOperatorRateMin: "min",
 }
 
-var logsOperatorMappingV3 = map[string]string{
-	"eq":     "=",
-	"neq":    "!=",
-	"lt":     "<",
-	"lte":    "<=",
-	"gt":     ">",
-	"gte":    ">=",
-	"like":   "LIKE",
-	"nlike":  "NOT LIKE",
-	"regex":  "REGEXP",
-	"nregex": "NOT REGEXP",
-	"in":     "IN",
-	"nin":    "NOT IN",
+var logsOperatorsEnabled = map[v3.FilterOperator]struct{}{
+	v3.FilterOperatorEqual:           {},
+	v3.FilterOperatorNotEqual:        {},
+	v3.FilterOperatorLessThan:        {},
+	v3.FilterOperatorLessThanOrEq:    {},
+	v3.FilterOperatorGreaterThan:     {},
+	v3.FilterOperatorGreaterThanOrEq: {},
+	v3.FilterOperatorLike:            {},
+	v3.FilterOperatorNotLike:         {},
+	v3.FilterOperatorRegex:           {},
+	v3.FilterOperatorNotRegex:        {},
+	v3.FilterOperatorIn:              {},
+	v3.FilterOperatorNotIn:           {},
 	// (todo) check contains/not contains/exists/not exists
 }
 
@@ -116,7 +116,7 @@ func buildLogsTimeSeriesFilterQuery(fs *v3.FilterSet, fields map[string]v3.Attri
 	if fs != nil && len(fs.Items) != 0 {
 		for _, item := range fs.Items {
 			toFormat := item.Value
-			op := strings.ToLower(strings.TrimSpace(item.Operator))
+			op := v3.FilterOperator(strings.ToLower(strings.TrimSpace(string(item.Operator))))
 
 			// generate the key
 			columnName, err := getClickhouseColumnName(item.Key, fields)
@@ -125,10 +125,10 @@ func buildLogsTimeSeriesFilterQuery(fs *v3.FilterSet, fields map[string]v3.Attri
 			}
 			fmtVal := utils.ClickHouseFormattedValue(toFormat)
 
-			if operator, ok := logsOperatorMappingV3[op]; ok {
-				conditions = append(conditions, fmt.Sprintf("%s %s %s", columnName, operator, fmtVal))
+			if _, ok := logsOperatorsEnabled[op]; ok {
+				conditions = append(conditions, fmt.Sprintf("%s %s %s", columnName, op, fmtVal))
 			} else {
-				return "", fmt.Errorf("unsupported operation")
+				return "", fmt.Errorf("unsupported operator: %s", op)
 			}
 		}
 	}
@@ -307,8 +307,8 @@ func addOffsetToQuery(query string, offset uint64) string {
 	return fmt.Sprintf("%s OFFSET %d", query, offset)
 }
 
-func PrepareLogsQuery(start, end, step int64, queryType v3.QueryType, panelType v3.PanelType, mq *v3.BuilderQuery, fields map[string]v3.AttributeKey) (string, error) {
-	query, err := buildLogsQuery(start, end, step, mq, constants.SIGNOZ_TIMESERIES_TABLENAME, fields)
+func PrepareLogsQuery(start, end int64, queryType v3.QueryType, panelType v3.PanelType, mq *v3.BuilderQuery, fields map[string]v3.AttributeKey) (string, error) {
+	query, err := buildLogsQuery(start, end, mq.StepInterval, mq, constants.SIGNOZ_TIMESERIES_TABLENAME, fields)
 	if err != nil {
 		return "", err
 	}

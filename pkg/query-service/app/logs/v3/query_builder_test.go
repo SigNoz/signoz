@@ -105,8 +105,8 @@ var timeSeriesFilterQueryData = []struct {
 	{
 		Name: "Test attribute and resource attribute",
 		FilterSet: &v3.FilterSet{Operator: "AND", Items: []v3.FilterItem{
-			{Key: v3.AttributeKey{Key: "user_name", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag}, Value: "john", Operator: "eq"},
-			{Key: v3.AttributeKey{Key: "k8s_namespace", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeResource}, Value: "my_service", Operator: "neq"},
+			{Key: v3.AttributeKey{Key: "user_name", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag}, Value: "john", Operator: "="},
+			{Key: v3.AttributeKey{Key: "k8s_namespace", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeResource}, Value: "my_service", Operator: "!="},
 		}},
 		TableName:      "logs",
 		ExpectedFilter: " AND attributes_string_value[indexOf(attributes_string_key, 'user_name')] = 'john' AND resources_string_value[indexOf(resources_string_key, 'k8s_namespace')] != 'my_service'",
@@ -114,8 +114,8 @@ var timeSeriesFilterQueryData = []struct {
 	{
 		Name: "Test materialized column",
 		FilterSet: &v3.FilterSet{Operator: "AND", Items: []v3.FilterItem{
-			{Key: v3.AttributeKey{Key: "user_name", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag, IsColumn: true}, Value: "john", Operator: "eq"},
-			{Key: v3.AttributeKey{Key: "k8s_namespace", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeResource}, Value: "my_service", Operator: "neq"},
+			{Key: v3.AttributeKey{Key: "user_name", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag, IsColumn: true}, Value: "john", Operator: "="},
+			{Key: v3.AttributeKey{Key: "k8s_namespace", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeResource}, Value: "my_service", Operator: "!="},
 		}},
 		TableName:      "logs",
 		ExpectedFilter: " AND user_name = 'john' AND resources_string_value[indexOf(resources_string_key, 'k8s_namespace')] != 'my_service'",
@@ -196,8 +196,8 @@ var testBuildLogsQueryData = []struct {
 			AggregateOperator:  v3.AggregateOperatorCountDistinct,
 			Expression:         "A",
 			Filters: &v3.FilterSet{Operator: "AND", Items: []v3.FilterItem{
-				{Key: v3.AttributeKey{Key: "method", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag}, Value: "GET", Operator: "eq"},
-				{Key: v3.AttributeKey{Key: "x", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeResource}, Value: "abc", Operator: "neq"},
+				{Key: v3.AttributeKey{Key: "method", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag}, Value: "GET", Operator: "="},
+				{Key: v3.AttributeKey{Key: "x", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeResource}, Value: "abc", Operator: "!="},
 			},
 			},
 			GroupBy: []v3.AttributeKey{{Key: "method", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag}},
@@ -223,8 +223,8 @@ var testBuildLogsQueryData = []struct {
 			AggregateOperator:  v3.AggregateOperatorCountDistinct,
 			Expression:         "A",
 			Filters: &v3.FilterSet{Operator: "AND", Items: []v3.FilterItem{
-				{Key: v3.AttributeKey{Key: "method", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag}, Value: "GET", Operator: "eq"},
-				{Key: v3.AttributeKey{Key: "x", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeResource}, Value: "abc", Operator: "neq"},
+				{Key: v3.AttributeKey{Key: "method", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag}, Value: "GET", Operator: "="},
+				{Key: v3.AttributeKey{Key: "x", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeResource}, Value: "abc", Operator: "!="},
 			},
 			},
 			GroupBy: []v3.AttributeKey{{Key: "method", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag}, {Key: "x", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeResource}},
@@ -251,7 +251,7 @@ var testBuildLogsQueryData = []struct {
 			AggregateOperator:  v3.AggregateOperatorAvg,
 			Expression:         "A",
 			Filters: &v3.FilterSet{Operator: "AND", Items: []v3.FilterItem{
-				{Key: v3.AttributeKey{Key: "method", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag}, Value: "GET", Operator: "eq"},
+				{Key: v3.AttributeKey{Key: "method", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag}, Value: "GET", Operator: "="},
 			},
 			},
 			GroupBy: []v3.AttributeKey{{Key: "method", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag}},
@@ -278,7 +278,7 @@ var testBuildLogsQueryData = []struct {
 			AggregateOperator:  v3.AggregateOperatorSum,
 			Expression:         "A",
 			Filters: &v3.FilterSet{Operator: "AND", Items: []v3.FilterItem{
-				{Key: v3.AttributeKey{Key: "method", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag}, Value: "GET", Operator: "eq"},
+				{Key: v3.AttributeKey{Key: "method", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag}, Value: "GET", Operator: "="},
 			},
 			},
 			GroupBy: []v3.AttributeKey{{Key: "method", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag}},
@@ -305,7 +305,7 @@ var testBuildLogsQueryData = []struct {
 			AggregateOperator:  v3.AggregateOperatorMin,
 			Expression:         "A",
 			Filters: &v3.FilterSet{Operator: "AND", Items: []v3.FilterItem{
-				{Key: v3.AttributeKey{Key: "method", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag}, Value: "GET", Operator: "eq"},
+				{Key: v3.AttributeKey{Key: "method", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag}, Value: "GET", Operator: "="},
 			},
 			},
 			GroupBy: []v3.AttributeKey{{Key: "method", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag}},
@@ -332,7 +332,7 @@ var testBuildLogsQueryData = []struct {
 			AggregateOperator:  v3.AggregateOperatorMax,
 			Expression:         "A",
 			Filters: &v3.FilterSet{Operator: "AND", Items: []v3.FilterItem{
-				{Key: v3.AttributeKey{Key: "method", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag}, Value: "GET", Operator: "eq"},
+				{Key: v3.AttributeKey{Key: "method", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag}, Value: "GET", Operator: "="},
 			},
 			},
 			GroupBy: []v3.AttributeKey{{Key: "method", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag}},
@@ -365,7 +365,7 @@ var testBuildLogsQueryData = []struct {
 		TableName: "logs",
 		ExpectedQuery: "SELECT toStartOfInterval(fromUnixTimestamp64Nano(timestamp), INTERVAL 60 SECOND) AS ts," +
 			" attributes_string_value[indexOf(attributes_string_key, 'method')] as method, " +
-			"quantile(0.5)(bytes) as value " +
+			"quantile(0.05)(bytes) as value " +
 			"from signoz_logs.distributed_logs " +
 			"where (timestamp >= 1680066360726210000 AND timestamp <= 1680066458000000000) " +
 			"group by method,ts " +

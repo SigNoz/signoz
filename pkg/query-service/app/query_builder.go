@@ -36,7 +36,7 @@ var SupportedFunctions = []string{
 var evalFuncs = map[string]govaluate.ExpressionFunction{}
 
 type prepareTracesQueryFunc func(start, end int64, queryType v3.QueryType, panelType v3.PanelType, bq *v3.BuilderQuery) (string, error)
-type prepareLogsQueryFunc func(start, end, queryType v3.QueryType, panelType v3.PanelType, bq *v3.BuilderQuery, fields map[string]v3.AttributeKey) (string, error)
+type prepareLogsQueryFunc func(start, end int64, queryType v3.QueryType, panelType v3.PanelType, bq *v3.BuilderQuery, fields map[string]v3.AttributeKey) (string, error)
 type prepareMetricQueryFunc func(start, end int64, queryType v3.QueryType, panelType v3.PanelType, bq *v3.BuilderQuery) (string, error)
 
 type queryBuilder struct {
