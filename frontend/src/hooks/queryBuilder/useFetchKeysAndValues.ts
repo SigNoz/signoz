@@ -7,7 +7,6 @@ import { useEffect, useRef, useState } from 'react';
 import { useQuery } from 'react-query';
 import { useDebounce } from 'react-use';
 import { IBuilderQueryForm } from 'types/api/queryBuilder/queryBuilderData';
-import { getCountOfSpace } from 'utils/getCountOfSpace';
 import { separateSearchValue } from 'utils/separateSearchValue';
 
 type UseFetchKeysAndValuesReturnValues = {
@@ -44,16 +43,10 @@ export const useFetchKeysAndValues = (
 	useEffect(() => {
 		if (status === 'success' && data?.payload) {
 			setKeys(data?.payload);
-		}
-	}, [data?.payload, status]);
-
-	const handleSetKey = (tagKeys: AttributeKeyOptions[] | null): void => {
-		if (tagKeys) {
-			setKeys(tagKeys);
 		} else {
 			setKeys([]);
 		}
-	};
+	}, [data?.payload, status]);
 
 	const handleFetchOption = async (
 		value: string,
@@ -61,16 +54,6 @@ export const useFetchKeysAndValues = (
 	): Promise<void> => {
 		if (value) {
 			const [tKey, operator] = separateSearchValue(value);
-
-			if (getCountOfSpace(value) === 0 && tKey) {
-				const { payload } = await getAttributesKeys({
-					searchText: value,
-					dataSource: query.dataSource,
-					aggregateOperator: query.aggregateOperator,
-					aggregateAttribute: query.aggregateAttribute.key,
-				});
-				handleSetKey(payload);
-			}
 
 			if (tKey && operator) {
 				const { payload } = await getAttributesValues({
