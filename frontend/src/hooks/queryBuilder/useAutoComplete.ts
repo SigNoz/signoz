@@ -75,7 +75,7 @@ export const useAutoComplete = (query: IBuilderQueryForm): IAutoComplete => {
 			}
 
 			if (e.key === 'Enter' && searchValue) {
-				if (isMulti || isFreeText) {
+				if (isMulti) {
 					e.stopPropagation();
 				}
 				e.preventDefault();
@@ -89,7 +89,7 @@ export const useAutoComplete = (query: IBuilderQueryForm): IAutoComplete => {
 				handleClearTag(last);
 			}
 		},
-		[handleAddTag, handleClearTag, isFreeText, isMulti, searchValue, tags],
+		[handleAddTag, handleClearTag, isMulti, searchValue, tags],
 	);
 
 	const options = useOptions(

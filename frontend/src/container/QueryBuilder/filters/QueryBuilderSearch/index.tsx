@@ -40,7 +40,7 @@ function QueryBuilderSearch({ query }: QueryBuilderSearchProps): JSX.Element {
 			autoClearSearchValue={false}
 			mode="multiple"
 			placeholder="Search Filter"
-			value={tags}
+			value={tags.filter((item) => item.split(' ').length > 2)}
 			disabled={!query.aggregateAttribute.key}
 			style={filterSelectStyle}
 			onDeselect={handleClearTag}
