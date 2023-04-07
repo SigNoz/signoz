@@ -158,6 +158,19 @@ var testBuildLogsQueryData = []struct {
 		ExpectedQuery: "SELECT toStartOfInterval(fromUnixTimestamp64Nano(timestamp), INTERVAL 60 SECOND) AS ts, toFloat64(count(*)) as value from signoz_logs.distributed_logs where (timestamp >= 1680066360726210000 AND timestamp <= 1680066458000000000) group by ts order by ts",
 	},
 	{
+		Name:  "Test aggregate count and order by value",
+		Start: 1680066360726210000,
+		End:   1680066458000000000,
+		Step:  60,
+		BuilderQuery: &v3.BuilderQuery{
+			QueryName:         "A",
+			AggregateOperator: v3.AggregateOpeatorCount,
+			Expression:        "A",
+		},
+		TableName:     "logs",
+		ExpectedQuery: "SELECT toStartOfInterval(fromUnixTimestamp64Nano(timestamp), INTERVAL 60 SECOND) AS ts, toFloat64(count(*)) as value from signoz_logs.distributed_logs where (timestamp >= 1680066360726210000 AND timestamp <= 1680066458000000000) group by ts order by ts",
+	},
+	{
 		Name:  "Test aggregate count distinct on select field",
 		Start: 1680066360726210000,
 		End:   1680066458000000000,
@@ -167,9 +180,10 @@ var testBuildLogsQueryData = []struct {
 			AggregateAttribute: v3.AttributeKey{Key: "name", IsColumn: true},
 			AggregateOperator:  v3.AggregateOperatorCountDistinct,
 			Expression:         "A",
+			OrderBy:            []v3.OrderBy{{ColumnName: "#SIGNOZ_VALUE", Order: "ASC"}},
 		},
 		TableName:     "logs",
-		ExpectedQuery: "SELECT toStartOfInterval(fromUnixTimestamp64Nano(timestamp), INTERVAL 60 SECOND) AS ts, toFloat64(count(distinct(name))) as value from signoz_logs.distributed_logs where (timestamp >= 1680066360726210000 AND timestamp <= 1680066458000000000) group by ts order by ts",
+		ExpectedQuery: "SELECT toStartOfInterval(fromUnixTimestamp64Nano(timestamp), INTERVAL 60 SECOND) AS ts, toFloat64(count(distinct(name))) as value from signoz_logs.distributed_logs where (timestamp >= 1680066360726210000 AND timestamp <= 1680066458000000000) group by ts order by value ASC,ts",
 	},
 	{
 		Name:  "Test aggregate count distinct on non selected field",
@@ -406,8 +420,8 @@ var testBuildLogsQueryData = []struct {
 			OrderBy:            []v3.OrderBy{{ColumnName: "method", Order: "ASC"}},
 		},
 		TableName: "logs",
-		ExpectedQuery: "SELECT toStartOfInterval(fromUnixTimestamp64Nano(timestamp), INTERVAL 60 SECOND) AS ts, " +
-			"count(attributes_float64_value[indexOf(attributes_float64_key, 'bytes')])/60 as value " +
+		ExpectedQuery: "SELECT toStartOfInterval(fromUnixTimestamp64Nano(timestamp), INTERVAL 60 SECOND) AS ts, attributes_string_value[indexOf(attributes_string_key, 'method')] as method" +
+			", count(attributes_float64_value[indexOf(attributes_float64_key, 'bytes')])/60 as value " +
 			"from signoz_logs.distributed_logs where (timestamp >= 1680066360726210000 AND timestamp <= 1680066458000000000) " +
 			"group by method,ts " +
 			"order by method ASC,ts",

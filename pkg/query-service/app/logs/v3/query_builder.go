@@ -97,7 +97,7 @@ func getClickhouseColumnName(key v3.AttributeKey, fields map[string]v3.Attribute
 // getSelectLabels returns the select labels for the query based on groupBy and aggregateOperator
 func getSelectLabels(aggregatorOperator v3.AggregateOperator, groupBy []v3.AttributeKey, fields map[string]v3.AttributeKey) (string, error) {
 	var selectLabels string
-	if aggregatorOperator == v3.AggregateOperatorNoOp || aggregatorOperator == v3.AggregateOperatorRate {
+	if aggregatorOperator == v3.AggregateOperatorNoOp {
 		selectLabels = ""
 	} else {
 		for _, tag := range groupBy {
@@ -267,6 +267,13 @@ func orderBy(items []v3.OrderBy, tags []string) string {
 			orderBy = append(orderBy, fmt.Sprintf("%s ASC", tag))
 		}
 	}
+
+	// users might want to order by value of aggreagation
+	for _, item := range items {
+		if item.ColumnName == constants.SigNozOrderByValue {
+			orderBy = append(orderBy, fmt.Sprintf("value %s", item.Order))
+		}
+	}
 	return strings.Join(orderBy, ",")
 }
 
@@ -283,14 +290,15 @@ func orderByAttributeKeyTags(items []v3.OrderBy, tags []v3.AttributeKey) string 
 }
 
 func having(items []v3.Having) string {
+	// aggregate something and filter on that aggregate
 	var having []string
 	for _, item := range items {
 		having = append(having, fmt.Sprintf("%s %s %v", item.ColumnName, item.Operator, utils.ClickHouseFormattedValue(item.Value)))
 	}
 	return strings.Join(having, " AND ")
+
 }
 
-// todo(nitya): implement reduceQuery
 func reduceQuery(query string, reduceTo v3.ReduceToOperator, aggregateOperator v3.AggregateOperator) (string, error) {
 	// the timestamp picked is not relevant here since the final value used is show the single
 	// chart with just the query value.

@@ -266,3 +266,5 @@ var LogsTopLevelColumnsV3 = map[string]struct{}{
 	"timestamp":       {},
 	"id":              {},
 }
+
+const SigNozOrderByValue = "#SIGNOZ_VALUE"
