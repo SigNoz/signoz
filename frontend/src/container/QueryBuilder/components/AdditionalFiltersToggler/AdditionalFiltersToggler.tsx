@@ -5,7 +5,6 @@ import React, { Fragment, memo, ReactNode, useState } from 'react';
 import { AdditionalFiltersProps } from './AdditionalFiltersToggler.interfaces';
 // ** Styles
 import {
-	StyledFiltersText,
 	StyledIconClose,
 	StyledIconOpen,
 	StyledInner,
@@ -45,9 +44,7 @@ export const AdditionalFiltersToggler = memo(function AdditionalFiltersToggler({
 		<StyledWrapper>
 			<StyledInner onClick={handleToggleOpenFilters}>
 				{isOpenedFilters ? <StyledIconClose /> : <StyledIconOpen />}
-				{!isOpenedFilters && (
-					<StyledFiltersText>Add conditions for {filtersTexts}</StyledFiltersText>
-				)}
+				{!isOpenedFilters && <span>Add conditions for {filtersTexts}</span>}
 			</StyledInner>
 			{isOpenedFilters && <Row>{children}</Row>}
 		</StyledWrapper>

@@ -1,6 +1,11 @@
 import { Col, Input, Row } from 'antd';
 // ** Constants
-import { mapOfFilters, mapOfOperators } from 'constants/queryBuilder';
+import {
+	initialAggregateAttribute,
+	mapOfFilters,
+	mapOfOperators,
+} from 'constants/queryBuilder';
+import { initialQueryBuilderFormValues } from 'constants/queryBuilder';
 // ** Components
 import {
 	AdditionalFiltersToggler,
@@ -16,14 +21,18 @@ import {
 } from 'container/QueryBuilder/filters';
 // Context
 import { useQueryBuilder } from 'hooks/useQueryBuilder';
+import { findDataTypeOfOperator } from 'lib/query/findDataTypeOfOperator';
 // ** Hooks
 import React, { memo, useCallback, useMemo } from 'react';
 import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
+import { IBuilderQueryForm } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource } from 'types/common/queryBuilder';
 import { transformToUpperCase } from 'utils/transformToUpperCase';
 
 // ** Types
 import { QueryProps } from './Query.interfaces';
+// ** Styles
+import { StyledDeleteEntity, StyledRow } from './Query.styled';
 
 export const Query = memo(function Query({
 	index,
@@ -32,7 +41,11 @@ export const Query = memo(function Query({
 	query,
 	panelType,
 }: QueryProps): JSX.Element {
-	const { handleSetQueryData } = useQueryBuilder();
+	const {
+		handleSetQueryData,
+		removeEntityByIndex,
+		initialDataSource,
+	} = useQueryBuilder();
 
 	const currentListOfOperators = useMemo(
 		() => mapOfOperators[query.dataSource],
@@ -44,52 +57,138 @@ export const Query = memo(function Query({
 
 	const handleChangeOperator = useCallback(
 		(value: string): void => {
-			handleSetQueryData(index, { aggregateOperator: value });
+			const aggregateDataType: BaseAutocompleteData['dataType'] =
+				query.aggregateAttribute.dataType;
+
+			const newQuery: IBuilderQueryForm = {
+				...query,
+				aggregateOperator: value,
+				having: [],
+			};
+
+			if (!aggregateDataType || query.dataSource === DataSource.METRICS) {
+				handleSetQueryData(index, newQuery);
+				return;
+			}
+
+			switch (aggregateDataType) {
+				case 'string':
+				case 'bool': {
+					const typeOfValue = findDataTypeOfOperator(value);
+
+					handleSetQueryData(index, {
+						...newQuery,
+						...(typeOfValue === 'number'
+							? { aggregateAttribute: initialAggregateAttribute }
+							: {}),
+					});
+
+					break;
+				}
+				case 'float64':
+				case 'int64': {
+					handleSetQueryData(index, newQuery);
+
+					break;
+				}
+
+				default: {
+					handleSetQueryData(index, newQuery);
+					break;
+				}
+			}
 		},
-		[index, handleSetQueryData],
+		[index, query, handleSetQueryData],
+	);
+
+	const handleChangeAggregatorAttribute = useCallback(
+		(value: BaseAutocompleteData): void => {
+			const newQuery: IBuilderQueryForm = {
+				...query,
+				aggregateAttribute: value,
+			};
+
+			handleSetQueryData(index, newQuery);
+		},
+		[index, query, handleSetQueryData],
 	);
 
 	const handleChangeDataSource = useCallback(
 		(nextSource: DataSource): void => {
-			handleSetQueryData(index, { dataSource: nextSource });
+			let newQuery: IBuilderQueryForm = {
+				...query,
+				dataSource: nextSource,
+			};
+
+			if (nextSource !== query.dataSource) {
+				const initCopy = {
+					...(initialQueryBuilderFormValues as Partial<IBuilderQueryForm>),
+				};
+				delete initCopy.queryName;
+
+				newQuery = {
+					...newQuery,
+					...initCopy,
+					dataSource: initialDataSource || nextSource,
+					aggregateOperator: mapOfOperators[nextSource][0],
+				};
+			}
+
+			handleSetQueryData(index, newQuery);
 		},
-		[index, handleSetQueryData],
+		[index, query, initialDataSource, handleSetQueryData],
 	);
 
 	const handleToggleDisableQuery = useCallback((): void => {
-		handleSetQueryData(index, { disabled: !query.disabled });
-	}, [index, handleSetQueryData, query]);
+		const newQuery: IBuilderQueryForm = {
+			...query,
+			disabled: !query.disabled,
+		};
 
-	const handleChangeAggregatorAttribute = useCallback(
-		(value: BaseAutocompleteData): void => {
-			handleSetQueryData(index, { aggregateAttribute: value });
-		},
-		[index, handleSetQueryData],
-	);
+		handleSetQueryData(index, newQuery);
+	}, [index, query, handleSetQueryData]);
 
 	const handleChangeGroupByKeys = useCallback(
 		(values: BaseAutocompleteData[]): void => {
-			handleSetQueryData(index, { groupBy: values });
+			const newQuery: IBuilderQueryForm = {
+				...query,
+				groupBy: values,
+			};
+
+			handleSetQueryData(index, newQuery);
 		},
-		[index, handleSetQueryData],
+		[index, query, handleSetQueryData],
 	);
 
 	const handleChangeQueryLegend = useCallback(
 		(e: React.ChangeEvent<HTMLInputElement>): void => {
-			handleSetQueryData(index, { legend: e.target.value });
+			const newQuery: IBuilderQueryForm = {
+				...query,
+				legend: e.target.value,
+			};
+			handleSetQueryData(index, newQuery);
 		},
-		[index, handleSetQueryData],
+		[index, query, handleSetQueryData],
 	);
 
 	const handleChangeReduceTo = useCallback(
 		(value: string): void => {
-			handleSetQueryData(index, { reduceTo: value });
+			const newQuery: IBuilderQueryForm = {
+				...query,
+				reduceTo: value,
+			};
+			handleSetQueryData(index, newQuery);
 		},
-		[index, handleSetQueryData],
+		[index, query, handleSetQueryData],
 	);
 
+	const handleDeleteQuery = useCallback(() => {
+		removeEntityByIndex('queryData', index);
+	}, [removeEntityByIndex, index]);
+
 	return (
-		<Row gutter={[0, 15]}>
+		<StyledRow gutter={[0, 15]}>
+			<StyledDeleteEntity onClick={handleDeleteQuery} />
 			<Col span={24}>
 				<Row wrap={false} align="middle">
 					<Col span={24}>
@@ -157,6 +256,6 @@ export const Query = memo(function Query({
 					addonBefore="Legend Format"
 				/>
 			</Row>
-		</Row>
+		</StyledRow>
 	);
 });

@@ -1,5 +1,5 @@
 import { CloseCircleOutlined } from '@ant-design/icons';
-import { Col } from 'antd';
+import { Row } from 'antd';
 import styled from 'styled-components';
 
 export const StyledDeleteEntity = styled(CloseCircleOutlined)`
@@ -17,7 +17,6 @@ export const StyledDeleteEntity = styled(CloseCircleOutlined)`
 	}
 `;
 
-export const StyledCol = styled(Col)`
-	position: relative;
+export const StyledRow = styled(Row)`
 	padding-right: 3rem;
 `;

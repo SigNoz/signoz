@@ -12,7 +12,6 @@ import { Query } from './components';
 // ** Types
 import { QueryBuilderProps } from './QueryBuilder.interfaces';
 // ** Styles
-import { StyledCol, StyledDeleteEntity } from './QueryBuilder.styled';
 
 export const QueryBuilder = memo(function QueryBuilder({
 	config,
@@ -22,7 +21,6 @@ export const QueryBuilder = memo(function QueryBuilder({
 		queryBuilderData,
 		setupInitialDataSource,
 		addNewQuery,
-		removeEntityByIndex,
 	} = useQueryBuilder();
 
 	useEffect(() => {
@@ -50,10 +48,7 @@ export const QueryBuilder = memo(function QueryBuilder({
 			<Col span={24}>
 				<Row gutter={[0, 50]}>
 					{queryBuilderData.queryData.map((query, index) => (
-						<StyledCol key={query.queryName} span={24}>
-							<StyledDeleteEntity
-								onClick={(): void => removeEntityByIndex('queryData', index)}
-							/>
+						<Col key={query.queryName} span={24}>
 							<Query
 								index={index}
 								isAvailableToDisable={queryBuilderData.queryData.length > 1}
@@ -61,7 +56,7 @@ export const QueryBuilder = memo(function QueryBuilder({
 								query={query}
 								panelType={panelType}
 							/>
-						</StyledCol>
+						</Col>
 					))}
 				</Row>
 			</Col>

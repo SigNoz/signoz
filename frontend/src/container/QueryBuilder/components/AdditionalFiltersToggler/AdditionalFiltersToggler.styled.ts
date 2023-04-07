@@ -35,8 +35,6 @@ export const StyledInner = styled.div`
 	}
 `;
 
-export const StyledFiltersText = styled.span``;
-
 export const StyledLink = styled(Typography.Link)`
 	pointer-events: none;
 `;

@@ -2,6 +2,7 @@
 import { AutoComplete, Spin } from 'antd';
 // ** Api
 import { getAggregateAttribute } from 'api/queryBuilder/getAggregateAttribute';
+import { initialAggregateAttribute } from 'constants/queryBuilder';
 import { transformStringWithPrefix } from 'lib/query/transformStringWithPrefix';
 import React, { memo, useMemo, useState } from 'react';
 import { useQuery } from 'react-query';
@@ -50,7 +51,7 @@ export const AggregatorFilter = memo(function AggregatorFilter({
 	const handleChangeAttribute = (value: string): void => {
 		const currentAttributeObj = data?.payload?.attributeKeys?.find(
 			(item) => item.key === value,
-		) || { key: value, type: null, dataType: null, isColumn: null };
+		) || { ...initialAggregateAttribute, key: value };
 
 		onChange(currentAttributeObj);
 	};

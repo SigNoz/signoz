@@ -27,6 +27,7 @@ import {
 
 export const QueryBuilderContext = createContext<QueryBuilderContextType>({
 	queryBuilderData: { queryData: [], queryFormulas: [] },
+	initialDataSource: null,
 	resetQueryBuilderData: () => {},
 	handleSetQueryData: () => {},
 	handleSetFormulaData: () => {},
@@ -84,11 +85,9 @@ export function QueryBuilderProvider({
 		[],
 	);
 
-	const addNewQuery = useCallback(() => {
-		setQueryBuilderData((prevState) => {
-			if (prevState.queryData.length >= MAX_QUERIES) return prevState;
-
-			const existNames = prevState.queryData.map((item) => item.queryName);
+	const createNewQuery = useCallback(
+		(queries: IBuilderQueryForm[]): IBuilderQueryForm => {
+			const existNames = queries.map((item) => item.queryName);
 
 			const newQuery: IBuilderQueryForm = {
 				...initialQueryBuilderFormValues,
@@ -102,9 +101,20 @@ export function QueryBuilderProvider({
 					: {}),
 			};
 
+			return newQuery;
+		},
+		[initialDataSource],
+	);
+
+	const addNewQuery = useCallback(() => {
+		setQueryBuilderData((prevState) => {
+			if (prevState.queryData.length >= MAX_QUERIES) return prevState;
+
+			const newQuery = createNewQuery(prevState.queryData);
+
 			return { ...prevState, queryData: [...prevState.queryData, newQuery] };
 		});
-	}, [initialDataSource]);
+	}, [createNewQuery]);
 
 	const setupInitialDataSource = useCallback(
 		(newInitialDataSource: DataSource | null) =>
@@ -112,46 +122,31 @@ export function QueryBuilderProvider({
 		[],
 	);
 
+	const updateQueryBuilderData = useCallback(
+		(
+			queries: IBuilderQueryForm[],
+			index: number,
+			newQueryData: IBuilderQueryForm,
+		) => queries.map((item, idx) => (index === idx ? newQueryData : item)),
+		[],
+	);
+
 	const handleSetQueryData = useCallback(
-		(index: number, newQueryData: Partial<IBuilderQueryForm>): void => {
+		(index: number, newQueryData: IBuilderQueryForm): void => {
 			setQueryBuilderData((prevState) => {
-				const updatedQueryBuilderData = prevState.queryData.map((item, idx) => {
-					if (index === idx) {
-						let newElement: Partial<IBuilderQueryForm> = {
-							...item,
-							...newQueryData,
-						};
-
-						if (
-							newQueryData.dataSource &&
-							newQueryData.dataSource !== item.dataSource
-						) {
-							const initCopy = {
-								...(initialQueryBuilderFormValues as Partial<IBuilderQueryForm>),
-							};
-							delete initCopy.queryName;
-
-							newElement = {
-								...newElement,
-								...initCopy,
-								dataSource: initialDataSource || newQueryData.dataSource,
-								aggregateOperator: mapOfOperators[newQueryData.dataSource][0],
-							};
-						}
-
-						return newElement;
-					}
-
-					return item;
-				});
+				const updatedQueryBuilderData = updateQueryBuilderData(
+					prevState.queryData,
+					index,
+					newQueryData,
+				);
 
 				return {
 					...prevState,
-					queryData: updatedQueryBuilderData as Required<IBuilderQueryForm>[],
+					queryData: updatedQueryBuilderData,
 				};
 			});
 		},
-		[initialDataSource],
+		[updateQueryBuilderData],
 	);
 	const handleSetFormulaData = useCallback(
 		// eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -163,6 +158,7 @@ export function QueryBuilderProvider({
 	const contextValues: QueryBuilderContextType = useMemo(
 		() => ({
 			queryBuilderData,
+			initialDataSource,
 			resetQueryBuilderData,
 			handleSetQueryData,
 			handleSetFormulaData,
@@ -173,6 +169,7 @@ export function QueryBuilderProvider({
 		}),
 		[
 			queryBuilderData,
+			initialDataSource,
 			resetQueryBuilderData,
 			handleSetQueryData,
 			handleSetFormulaData,
