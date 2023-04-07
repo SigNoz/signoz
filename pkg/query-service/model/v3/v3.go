@@ -249,8 +249,9 @@ type FilterAttributeKeyResponse struct {
 type AttributeKeyType string
 
 const (
-	AttributeKeyTypeTag      AttributeKeyType = "tag"
-	AttributeKeyTypeResource AttributeKeyType = "resource"
+	AttributeKeyTypeUnspecified AttributeKeyType = ""
+	AttributeKeyTypeTag         AttributeKeyType = "tag"
+	AttributeKeyTypeResource    AttributeKeyType = "resource"
 )
 
 type AttributeKey struct {
@@ -387,6 +388,7 @@ func (c *CompositeQuery) Validate() error {
 
 type BuilderQuery struct {
 	QueryName          string            `json:"queryName"`
+	StepInterval       int64             `json:"stepInterval"`
 	DataSource         DataSource        `json:"dataSource"`
 	AggregateOperator  AggregateOperator `json:"aggregateOperator"`
 	AggregateAttribute AttributeKey      `json:"aggregateAttribute,omitempty"`
@@ -436,6 +438,12 @@ func (b *BuilderQuery) Validate() error {
 				return fmt.Errorf("group by is invalid %w", err)
 			}
 		}
+
+		if b.DataSource == DataSourceMetrics && len(b.GroupBy) > 0 {
+			if b.AggregateOperator == AggregateOperatorNoOp || b.AggregateOperator == AggregateOperatorRate {
+				return fmt.Errorf("group by requires aggregate operator other than noop or rate")
+			}
+		}
 	}
 
 	if b.SelectColumns != nil {
@@ -472,10 +480,33 @@ func (f *FilterSet) Validate() error {
 	return nil
 }
 
+type FilterOperator string
+
+const (
+	FilterOperatorEqual           FilterOperator = "="
+	FilterOperatorNotEqual        FilterOperator = "!="
+	FilterOperatorGreaterThan     FilterOperator = ">"
+	FilterOperatorGreaterThanOrEq FilterOperator = ">="
+	FilterOperatorLessThan        FilterOperator = "<"
+	FilterOperatorLessThanOrEq    FilterOperator = "<="
+	FilterOperatorIn              FilterOperator = "in"
+	FilterOperatorNotIn           FilterOperator = "nin"
+	FilterOperatorContains        FilterOperator = "contains"
+	FilterOperatorNotContains     FilterOperator = "ncontains"
+	FilterOperatorRegex           FilterOperator = "regex"
+	FilterOperatorNotRegex        FilterOperator = "nregex"
+	// (I)LIKE is faster than REGEX and supports index
+	FilterOperatorLike    FilterOperator = "like"
+	FilterOperatorNotLike FilterOperator = "nlike"
+
+	FilterOperatorExists    FilterOperator = "exists"
+	FilterOperatorNotExists FilterOperator = "nexists"
+)
+
 type FilterItem struct {
-	Key      AttributeKey `json:"key"`
-	Value    interface{}  `json:"value"`
-	Operator string       `json:"op"`
+	Key      AttributeKey   `json:"key"`
+	Value    interface{}    `json:"value"`
+	Operator FilterOperator `json:"op"`
 }
 
 type OrderBy struct {
