@@ -26,7 +26,7 @@ func TestBuildQuery(t *testing.T) {
 				PanelType: v3.PanelTypeGraph,
 			},
 		}
-		query, err := PrepareMetricQuery(q.Start, q.End, q.Step, q.CompositeQuery.QueryType, q.CompositeQuery.PanelType, q.CompositeQuery.BuilderQueries["A"])
+		query, err := PrepareMetricQuery(q.Start, q.End, q.CompositeQuery.QueryType, q.CompositeQuery.PanelType, q.CompositeQuery.BuilderQueries["A"])
 		require.NoError(t, err)
 		require.Contains(t, query, "WHERE metric_name = 'name'")
 	})
@@ -53,7 +53,7 @@ func TestBuildQueryWithFilters(t *testing.T) {
 				},
 			},
 		}
-		query, err := PrepareMetricQuery(q.Start, q.End, q.Step, q.CompositeQuery.QueryType, q.CompositeQuery.PanelType, q.CompositeQuery.BuilderQueries["A"])
+		query, err := PrepareMetricQuery(q.Start, q.End, q.CompositeQuery.QueryType, q.CompositeQuery.PanelType, q.CompositeQuery.BuilderQueries["A"])
 		require.NoError(t, err)
 
 		require.Contains(t, query, "WHERE metric_name = 'name' AND JSONExtractString(labels, 'a') != 'b'")
@@ -89,7 +89,7 @@ func TestBuildQueryWithMultipleQueries(t *testing.T) {
 			},
 		}
 
-		query, err := PrepareMetricQuery(q.Start, q.End, q.Step, q.CompositeQuery.QueryType, q.CompositeQuery.PanelType, q.CompositeQuery.BuilderQueries["A"])
+		query, err := PrepareMetricQuery(q.Start, q.End, q.CompositeQuery.QueryType, q.CompositeQuery.PanelType, q.CompositeQuery.BuilderQueries["A"])
 		require.NoError(t, err)
 
 		require.Contains(t, query, "WHERE metric_name = 'name' AND JSONExtractString(labels, 'in') IN ['a','b','c']")

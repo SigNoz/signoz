@@ -385,8 +385,8 @@ func reduceQuery(query string, reduceTo v3.ReduceToOperator, aggregateOperator v
 	return query, nil
 }
 
-func PrepareMetricQuery(start, end, step int64, queryType v3.QueryType, panelType v3.PanelType, mq *v3.BuilderQuery) (string, error) {
-	query, err := buildMetricQuery(start, end, step, mq, constants.SIGNOZ_TIMESERIES_TABLENAME)
+func PrepareMetricQuery(start, end int64, queryType v3.QueryType, panelType v3.PanelType, mq *v3.BuilderQuery) (string, error) {
+	query, err := buildMetricQuery(start, end, mq.StepInterval, mq, constants.SIGNOZ_TIMESERIES_TABLENAME)
 	if err != nil {
 		return "", err
 	}
