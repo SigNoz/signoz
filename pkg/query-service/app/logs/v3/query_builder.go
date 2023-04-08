@@ -52,12 +52,12 @@ var logsOperatorsEnabled = map[v3.FilterOperator]struct{}{
 func encrichFieldWithMetadata(field v3.AttributeKey, fields map[string]v3.AttributeKey) (v3.AttributeKey, error) {
 	if field.Type == "" || field.DataType == "" {
 		// check if the field is present in the fields map
-		if field, ok := fields[field.Key]; ok {
-			if field.IsColumn {
+		if existingField, ok := fields[field.Key]; ok {
+			if existingField.IsColumn {
 				return field, nil
 			}
-			field.Type = field.Type
-			field.DataType = field.DataType
+			field.Type = existingField.Type
+			field.DataType = existingField.DataType
 		} else {
 			return field, fmt.Errorf("field not found to enrich metadata")
 		}
@@ -79,6 +79,7 @@ func getClickhouseLogsColumnDataType(columnDataType v3.AttributeKeyDataType) str
 	if columnDataType == v3.AttributeKeyDataTypeInt64 {
 		return "int64"
 	}
+	// for bool also we are returning string as we store bool data as string.
 	return "string"
 }
 

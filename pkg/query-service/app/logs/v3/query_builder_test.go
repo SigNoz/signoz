@@ -120,6 +120,22 @@ var timeSeriesFilterQueryData = []struct {
 		TableName:      "logs",
 		ExpectedFilter: " AND user_name = 'john' AND resources_string_value[indexOf(resources_string_key, 'k8s_namespace')] != 'my_service'",
 	},
+	{
+		Name: "Test IN",
+		FilterSet: &v3.FilterSet{Operator: "AND", Items: []v3.FilterItem{
+			{Key: v3.AttributeKey{Key: "bytes", DataType: v3.AttributeKeyDataTypeFloat64, Type: v3.AttributeKeyTypeTag}, Value: []interface{}{1, 2, 3, 4}, Operator: "in"},
+		}},
+		TableName:      "logs",
+		ExpectedFilter: " AND attributes_float64_value[indexOf(attributes_float64_key, 'bytes')] in [1,2,3,4]",
+	},
+	{
+		Name: "Test NOT IN",
+		FilterSet: &v3.FilterSet{Operator: "AND", Items: []v3.FilterItem{
+			{Key: v3.AttributeKey{Key: "name", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag}, Value: []interface{}{"john", "bunny"}, Operator: "in"},
+		}},
+		TableName:      "logs",
+		ExpectedFilter: " AND attributes_string_value[indexOf(attributes_string_key, 'name')] in ['john','bunny']",
+	},
 }
 
 func TestBuildLogsTimeSeriesFilterQuery(t *testing.T) {
