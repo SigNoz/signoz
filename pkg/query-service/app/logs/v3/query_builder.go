@@ -54,41 +54,53 @@ var logsOperatorsEnabled = map[v3.FilterOperator]struct{}{
 	// (todo) check contains/not contains/exists/not exists
 }
 
+func encrichFieldWithMetadata(field v3.AttributeKey, fields map[string]v3.AttributeKey) (v3.AttributeKey, error) {
+	if field.Type == "" || field.DataType == "" {
+		// check if the field is present in the fields map
+		if field, ok := fields[field.Key]; ok {
+			if field.IsColumn {
+				return field, nil
+			}
+			field.Type = field.Type
+			field.DataType = field.DataType
+		} else {
+			return field, fmt.Errorf("field not found to enrich metadata")
+		}
+	}
+	return field, nil
+}
+
+func getClickhouseLogsColumnType(columnType v3.AttributeKeyType) string {
+	if columnType == v3.AttributeKeyTypeTag {
+		return "attributes"
+	}
+	return "resources"
+}
+
+func getClickhouseLogsColumnDataType(columnDataType v3.AttributeKeyDataType) string {
+	if columnDataType == v3.AttributeKeyDataTypeFloat64 {
+		return "float64"
+	}
+	if columnDataType == v3.AttributeKeyDataTypeInt64 {
+		return "int64"
+	}
+	return "string"
+}
+
 // getClickhouseColumnName returns the corresponding clickhouse column name for the given attribute/resource key
 func getClickhouseColumnName(key v3.AttributeKey, fields map[string]v3.AttributeKey) (string, error) {
 	clickhouseColumn := key.Key
 	//if the key is present in the topLevelColumn then it will be only searched in those columns,
 	//regardless if it is indexed/present again in resource or column attribute
+	var err error
 	_, isTopLevelCol := constants.LogsTopLevelColumnsV3[key.Key]
 	if !isTopLevelCol && !key.IsColumn {
-		// check if we need to enrich metadata
-		if key.Type == "" || key.DataType == "" {
-			// check if the field is present in the fields map
-			if field, ok := fields[key.Key]; ok {
-				if field.IsColumn {
-					return field.Key, nil
-				}
-				key.Type = field.Type
-				key.DataType = field.DataType
-			} else {
-				return "", fmt.Errorf("field not found to enrich metadata")
-			}
+		key, err = encrichFieldWithMetadata(key, fields)
+		if err != nil {
+			return "", err
 		}
-
-		columnType := key.Type
-		if columnType == v3.AttributeKeyTypeTag {
-			columnType = "attributes"
-		} else {
-			columnType = "resources"
-		}
-
-		columnDataType := "string"
-		if key.DataType == v3.AttributeKeyDataTypeFloat64 {
-			columnDataType = "float64"
-		}
-		if key.DataType == v3.AttributeKeyDataTypeInt64 {
-			columnDataType = "int64"
-		}
+		columnType := getClickhouseLogsColumnType(key.Type)
+		columnDataType := getClickhouseLogsColumnDataType(key.DataType)
 		clickhouseColumn = fmt.Sprintf("%s_%s_value[indexOf(%s_%s_key, '%s')]", columnType, columnDataType, columnType, columnDataType, key.Key)
 	}
 	return clickhouseColumn, nil
@@ -219,6 +231,16 @@ func buildLogsQuery(start, end, step int64, mq *v3.BuilderQuery, fields map[stri
 		query := fmt.Sprintf(queryTmpl, step, op, filterSubQuery, groupBy, orderBy)
 		return query, nil
 	case v3.AggregateOpeatorCount:
+		if mq.AggregateAttribute.Key != "" {
+			field, err := encrichFieldWithMetadata(mq.AggregateAttribute, fields)
+			if err != nil {
+				return "", err
+			}
+			columnType := getClickhouseLogsColumnType(field.Type)
+			columnDataType := getClickhouseLogsColumnDataType(field.DataType)
+			filterSubQuery = fmt.Sprintf("%s AND has(%s_%s_key, '%s')", filterSubQuery, columnType, columnDataType, mq.AggregateAttribute.Key)
+		}
+
 		op := "toFloat64(count(*))"
 		query := fmt.Sprintf(queryTmpl, step, op, filterSubQuery, groupBy, orderBy)
 		return query, nil
