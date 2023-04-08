@@ -2622,8 +2622,8 @@ func (aH *APIHandler) execPromQueries(ctx context.Context, metricsQueryRangePara
 
 func (aH *APIHandler) getLogFieldsV3(ctx context.Context, queryRangeParams *v3.QueryRangeParamsV3) (map[string]v3.AttributeKey, error) {
 	data := map[string]v3.AttributeKey{}
-	for _, v := range queryRangeParams.CompositeQuery.BuilderQueries {
-		if v.DataSource == v3.DataSourceLogs {
+	for _, query := range queryRangeParams.CompositeQuery.BuilderQueries {
+		if query.DataSource == v3.DataSourceLogs {
 			fields, apiError := aH.reader.GetLogFields(ctx)
 			if apiError != nil {
 				return nil, apiError.Err
@@ -2639,27 +2639,27 @@ func (aH *APIHandler) getLogFieldsV3(ctx context.Context, queryRangeParams *v3.Q
 				return "", true
 			}
 
-			for _, v := range fields.Selected {
-				x, pass := getType(v.Type)
+			for _, selectedField := range fields.Selected {
+				fieldType, pass := getType(selectedField.Type)
 				if pass {
 					continue
 				}
-				data[v.Name] = v3.AttributeKey{
-					Key:      v.Name,
-					Type:     x,
-					DataType: v3.AttributeKeyDataType(strings.ToLower(v.DataType)),
+				data[selectedField.Name] = v3.AttributeKey{
+					Key:      selectedField.Name,
+					Type:     fieldType,
+					DataType: v3.AttributeKeyDataType(strings.ToLower(selectedField.DataType)),
 					IsColumn: true,
 				}
 			}
-			for _, v := range fields.Interesting {
-				x, pass := getType(v.Type)
+			for _, interestingField := range fields.Interesting {
+				fieldType, pass := getType(interestingField.Type)
 				if pass {
 					continue
 				}
-				data[v.Name] = v3.AttributeKey{
-					Key:      v.Name,
-					Type:     x,
-					DataType: v3.AttributeKeyDataType(strings.ToLower(v.DataType)),
+				data[interestingField.Name] = v3.AttributeKey{
+					Key:      interestingField.Name,
+					Type:     fieldType,
+					DataType: v3.AttributeKeyDataType(strings.ToLower(interestingField.DataType)),
 					IsColumn: false,
 				}
 			}

@@ -11,20 +11,15 @@ import (
 )
 
 var aggregateOperatorToPercentile = map[v3.AggregateOperator]float64{
-	v3.AggregateOperatorP05:         0.05,
-	v3.AggregateOperatorP10:         0.10,
-	v3.AggregateOperatorP20:         0.20,
-	v3.AggregateOperatorP25:         0.25,
-	v3.AggregateOperatorP50:         0.50,
-	v3.AggregateOperatorP75:         0.75,
-	v3.AggregateOperatorP90:         0.90,
-	v3.AggregateOperatorP95:         0.95,
-	v3.AggregateOperatorP99:         0.99,
-	v3.AggregateOperatorHistQuant50: 0.50,
-	v3.AggregateOperatorHistQuant75: 0.75,
-	v3.AggregateOperatorHistQuant90: 0.90,
-	v3.AggregateOperatorHistQuant95: 0.95,
-	v3.AggregateOperatorHistQuant99: 0.99,
+	v3.AggregateOperatorP05: 0.05,
+	v3.AggregateOperatorP10: 0.10,
+	v3.AggregateOperatorP20: 0.20,
+	v3.AggregateOperatorP25: 0.25,
+	v3.AggregateOperatorP50: 0.50,
+	v3.AggregateOperatorP75: 0.75,
+	v3.AggregateOperatorP90: 0.90,
+	v3.AggregateOperatorP95: 0.95,
+	v3.AggregateOperatorP99: 0.99,
 }
 
 var aggregateOperatorToSQLFunc = map[v3.AggregateOperator]string{
