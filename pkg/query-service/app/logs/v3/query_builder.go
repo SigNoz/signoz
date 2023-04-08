@@ -33,19 +33,19 @@ var aggregateOperatorToSQLFunc = map[v3.AggregateOperator]string{
 	v3.AggregateOperatorRateMin: "min",
 }
 
-var logsOperatorsEnabled = map[v3.FilterOperator]struct{}{
-	v3.FilterOperatorEqual:           {},
-	v3.FilterOperatorNotEqual:        {},
-	v3.FilterOperatorLessThan:        {},
-	v3.FilterOperatorLessThanOrEq:    {},
-	v3.FilterOperatorGreaterThan:     {},
-	v3.FilterOperatorGreaterThanOrEq: {},
-	v3.FilterOperatorLike:            {},
-	v3.FilterOperatorNotLike:         {},
-	v3.FilterOperatorRegex:           {},
-	v3.FilterOperatorNotRegex:        {},
-	v3.FilterOperatorIn:              {},
-	v3.FilterOperatorNotIn:           {},
+var logsOperatorsEnabled = map[v3.FilterOperator]string{
+	v3.FilterOperatorEqual:           "=",
+	v3.FilterOperatorNotEqual:        "!=",
+	v3.FilterOperatorLessThan:        "<",
+	v3.FilterOperatorLessThanOrEq:    "<=",
+	v3.FilterOperatorGreaterThan:     ">",
+	v3.FilterOperatorGreaterThanOrEq: ">=",
+	v3.FilterOperatorLike:            "LIKE",
+	v3.FilterOperatorNotLike:         "NOT LIKE",
+	v3.FilterOperatorRegex:           "REGEXP",
+	v3.FilterOperatorNotRegex:        "NOT REGEXP",
+	v3.FilterOperatorIn:              "IN",
+	v3.FilterOperatorNotIn:           "NOT IN",
 	// (todo) check contains/not contains/exists/not exists
 }
 
@@ -134,8 +134,8 @@ func buildLogsTimeSeriesFilterQuery(fs *v3.FilterSet, fields map[string]v3.Attri
 			}
 			fmtVal := utils.ClickHouseFormattedValue(toFormat)
 
-			if _, ok := logsOperatorsEnabled[op]; ok {
-				conditions = append(conditions, fmt.Sprintf("%s %s %s", columnName, op, fmtVal))
+			if logsOp, ok := logsOperatorsEnabled[op]; ok {
+				conditions = append(conditions, fmt.Sprintf("%s %s %s", columnName, logsOp, fmtVal))
 			} else {
 				return "", fmt.Errorf("unsupported operator: %s", op)
 			}

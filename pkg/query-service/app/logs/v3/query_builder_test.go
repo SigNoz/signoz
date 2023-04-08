@@ -126,15 +126,15 @@ var timeSeriesFilterQueryData = []struct {
 			{Key: v3.AttributeKey{Key: "bytes", DataType: v3.AttributeKeyDataTypeFloat64, Type: v3.AttributeKeyTypeTag}, Value: []interface{}{1, 2, 3, 4}, Operator: "in"},
 		}},
 		TableName:      "logs",
-		ExpectedFilter: " AND attributes_float64_value[indexOf(attributes_float64_key, 'bytes')] in [1,2,3,4]",
+		ExpectedFilter: " AND attributes_float64_value[indexOf(attributes_float64_key, 'bytes')] IN [1,2,3,4]",
 	},
 	{
 		Name: "Test NOT IN",
 		FilterSet: &v3.FilterSet{Operator: "AND", Items: []v3.FilterItem{
-			{Key: v3.AttributeKey{Key: "name", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag}, Value: []interface{}{"john", "bunny"}, Operator: "in"},
+			{Key: v3.AttributeKey{Key: "name", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag}, Value: []interface{}{"john", "bunny"}, Operator: "nin"},
 		}},
 		TableName:      "logs",
-		ExpectedFilter: " AND attributes_string_value[indexOf(attributes_string_key, 'name')] in ['john','bunny']",
+		ExpectedFilter: " AND attributes_string_value[indexOf(attributes_string_key, 'name')] NOT IN ['john','bunny']",
 	},
 }
 
