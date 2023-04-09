@@ -106,10 +106,10 @@ func NewAPIHandler(opts APIHandlerOpts) (*APIHandler, error) {
 
 	builderOpts := queryBuilderOptions{
 		BuildMetricQuery: metricsv3.PrepareMetricQuery,
-		BuildTraceQuery: func(start, end, step int64, queryType v3.QueryType, panelType v3.PanelType, bq *v3.BuilderQuery) (string, error) {
+		BuildTraceQuery: func(start, end int64, queryType v3.QueryType, panelType v3.PanelType, bq *v3.BuilderQuery) (string, error) {
 			return "", errors.New("not implemented")
 		},
-		BuildLogQuery: func(start, end, step int64, queryType v3.QueryType, panelType v3.PanelType, bq *v3.BuilderQuery) (string, error) {
+		BuildLogQuery: func(start, end int64, queryType v3.QueryType, panelType v3.PanelType, bq *v3.BuilderQuery) (string, error) {
 			return "", errors.New("not implemented")
 		},
 	}

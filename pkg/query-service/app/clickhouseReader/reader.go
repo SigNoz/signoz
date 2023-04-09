@@ -3714,7 +3714,8 @@ func (r *ClickHouseReader) GetMetricAggregateAttributes(ctx context.Context, req
 		key := v3.AttributeKey{
 			Key:      metricName,
 			DataType: v3.AttributeKeyDataTypeFloat64,
-			Type:     v3.AttributeKeyTypeTag,
+			Type:     v3.AttributeKeyTypeUnspecified,
+			IsColumn: true,
 		}
 		response.AttributeKeys = append(response.AttributeKeys, key)
 	}
@@ -3750,6 +3751,7 @@ func (r *ClickHouseReader) GetMetricAttributeKeys(ctx context.Context, req *v3.F
 			Key:      attributeKey,
 			DataType: v3.AttributeKeyDataTypeString, // https://github.com/OpenObservability/OpenMetrics/blob/main/proto/openmetrics_data_model.proto#L64-L72.
 			Type:     v3.AttributeKeyTypeTag,
+			IsColumn: false,
 		}
 		response.AttributeKeys = append(response.AttributeKeys, key)
 	}
