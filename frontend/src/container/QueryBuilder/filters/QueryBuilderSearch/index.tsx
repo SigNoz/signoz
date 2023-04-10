@@ -20,13 +20,17 @@ function QueryBuilderSearch({ query }: QueryBuilderSearchProps): JSX.Element {
 		isFetching,
 	} = useAutoComplete(query);
 
-	const onTagRender = ({ value }: { value: string }): React.ReactElement => {
+	const onTagRender = ({
+		value,
+		closable,
+		onClose,
+	}: CustomTagProps): React.ReactElement => {
 		const [tagKey, tagOperator, ...tagValue] = value.split(' ');
 		if (!tagOperator) return <div>{value}</div>;
 		if (tagOperator === OPERATORS.IN || tagOperator === OPERATORS.NIN) {
 			const tagTitle = `${tagKey} ${tagOperator} ${tagValue.join(', ')}`;
 			return (
-				<Tag closable>
+				<Tag closable={closable} onClose={onClose}>
 					<Tooltip title={tagTitle}>
 						{tagKey} {tagOperator}{' '}
 						<Typography.Text ellipsis style={{ width: '3rem' }}>
@@ -37,7 +41,7 @@ function QueryBuilderSearch({ query }: QueryBuilderSearchProps): JSX.Element {
 			);
 		}
 		return (
-			<Tag closable>
+			<Tag closable={closable} onClose={onClose}>
 				<Tooltip title={value}>
 					<Typography.Text ellipsis>{value}</Typography.Text>
 				</Tooltip>
@@ -76,6 +80,14 @@ function QueryBuilderSearch({ query }: QueryBuilderSearchProps): JSX.Element {
 
 interface QueryBuilderSearchProps {
 	query: IBuilderQueryForm;
+}
+
+export interface CustomTagProps {
+	label: React.ReactNode;
+	value: string;
+	disabled: boolean;
+	onClose: (event?: React.MouseEvent<HTMLElement, MouseEvent>) => void;
+	closable: boolean;
 }
 
 export default QueryBuilderSearch;

@@ -1,5 +1,5 @@
 import { Option } from 'container/QueryBuilder/type';
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useState } from 'react';
 import { IBuilderQueryForm } from 'types/api/queryBuilder/queryBuilderData';
 
 import { checkStringEndWIthSpace } from '../../utils/checkStringEndWIthSpace';
@@ -65,12 +65,6 @@ export const useAutoComplete = (query: IBuilderQueryForm): IAutoComplete => {
 		}
 	};
 
-	useEffect(() => {
-		if (searchValue && isValidTag && !isMulti) {
-			handleAddTag(searchValue);
-		}
-	}, [handleAddTag, isMulti, isValidTag, searchValue]);
-
 	const handleKeyDown = useCallback(
 		(e: React.KeyboardEvent): void => {
 			if (
@@ -91,7 +85,6 @@ export const useAutoComplete = (query: IBuilderQueryForm): IAutoComplete => {
 			if (e.key === 'Backspace' && !searchValue) {
 				e.stopPropagation();
 				const last = tags[tags.length - 1];
-				// setSearchValue(last);
 				handleClearTag(last);
 			}
 		},
