@@ -54,7 +54,7 @@ export const useFetchKeysAndValues = (
 	): Promise<void> => {
 		if (value) {
 			const [tKey, operator] = separateSearchValue(value);
-
+			setResults([]);
 			if (tKey && operator) {
 				const { payload } = await getAttributesValues({
 					searchText: searchValue,
