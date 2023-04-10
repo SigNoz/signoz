@@ -46,7 +46,9 @@ var logsOperatorsEnabled = map[v3.FilterOperator]string{
 	v3.FilterOperatorNotRegex:        "NOT REGEXP",
 	v3.FilterOperatorIn:              "IN",
 	v3.FilterOperatorNotIn:           "NOT IN",
-	// (todo) check contains/not contains/exists/not exists
+	v3.FilterOperatorExists:          "has(%s_%s_key, '%s')",
+	v3.FilterOperatorNotExists:       "not has(%s_%s_key, '%s')",
+	// (todo) check contains/not contains/
 }
 
 func encrichFieldWithMetadata(field v3.AttributeKey, fields map[string]v3.AttributeKey) (v3.AttributeKey, error) {
@@ -126,16 +128,26 @@ func buildLogsTimeSeriesFilterQuery(fs *v3.FilterSet, fields map[string]v3.Attri
 		for _, item := range fs.Items {
 			toFormat := item.Value
 			op := v3.FilterOperator(strings.ToLower(strings.TrimSpace(string(item.Operator))))
-
-			// generate the key
-			columnName, err := getClickhouseColumnName(item.Key, fields)
-			if err != nil {
-				return "", err
-			}
-			fmtVal := utils.ClickHouseFormattedValue(toFormat)
-
 			if logsOp, ok := logsOperatorsEnabled[op]; ok {
-				conditions = append(conditions, fmt.Sprintf("%s %s %s", columnName, logsOp, fmtVal))
+				switch op {
+				case v3.FilterOperatorExists, v3.FilterOperatorNotExists:
+					//(todo): refractor this later
+					key, err := encrichFieldWithMetadata(item.Key, fields)
+					if err != nil {
+						return "", err
+					}
+					columnType := getClickhouseLogsColumnType(key.Type)
+					columnDataType := getClickhouseLogsColumnDataType(key.DataType)
+					conditions = append(conditions, fmt.Sprintf(logsOp, columnType, columnDataType, item.Key.Key))
+				default:
+					// generate the key
+					columnName, err := getClickhouseColumnName(item.Key, fields)
+					if err != nil {
+						return "", err
+					}
+					fmtVal := utils.ClickHouseFormattedValue(toFormat)
+					conditions = append(conditions, fmt.Sprintf("%s %s %s", columnName, logsOp, fmtVal))
+				}
 			} else {
 				return "", fmt.Errorf("unsupported operator: %s", op)
 			}
