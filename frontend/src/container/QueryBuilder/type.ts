@@ -1,4 +1,4 @@
-import { QueryBuilderStateT } from 'constants/queryBuilder';
+import { IQueryBuilderState } from 'constants/queryBuilder';
 
 export interface InitialStateI {
 	search: string;
@@ -6,7 +6,7 @@ export interface InitialStateI {
 
 export interface ContextValueI {
 	values: InitialStateI;
-	onChangeHandler: (type: QueryBuilderStateT) => (value: string) => void;
+	onChangeHandler: (type: IQueryBuilderState) => (value: string) => void;
 	onSubmitHandler: VoidFunction;
 }
 

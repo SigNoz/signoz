@@ -62,7 +62,6 @@ function QueryBuilderSearch({ query }: QueryBuilderSearchProps): JSX.Element {
 			onInputKeyDown={handleKeyDown}
 			onSearch={handleSearch}
 			searchValue={searchValue}
-			placement="topLeft"
 			notFoundContent={isFetching ? <Spin size="small" /> : null}
 		>
 			{options?.map((option) => (
