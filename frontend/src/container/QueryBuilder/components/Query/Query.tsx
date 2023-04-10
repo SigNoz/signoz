@@ -1,7 +1,14 @@
-/* eslint-disable react/jsx-props-no-spreading */
-import { Col, Row } from 'antd';
+import { Col, Input, Row } from 'antd';
+// ** Constants
+import {
+	initialAggregateAttribute,
+	mapOfFilters,
+	mapOfOperators,
+} from 'constants/queryBuilder';
+import { initialQueryBuilderFormValues } from 'constants/queryBuilder';
 // ** Components
 import {
+	AdditionalFiltersToggler,
 	DataSourceDropdown,
 	FilterLabel,
 	ListMarker,
@@ -10,64 +17,178 @@ import {
 	AggregatorFilter,
 	GroupByFilter,
 	OperatorsSelect,
+	ReduceToFilter,
 } from 'container/QueryBuilder/filters';
 // Context
 import { useQueryBuilder } from 'hooks/useQueryBuilder';
+import { findDataTypeOfOperator } from 'lib/query/findDataTypeOfOperator';
 // ** Hooks
-import React from 'react';
+import React, { memo, useCallback, useMemo } from 'react';
 import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
+import { IBuilderQueryForm } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource } from 'types/common/queryBuilder';
-// ** Constants
-import {
-	LogsAggregatorOperator,
-	MetricAggregateOperator,
-	TracesAggregatorOperator,
-} from 'types/common/queryBuilder';
 import { transformToUpperCase } from 'utils/transformToUpperCase';
 
 // ** Types
 import { QueryProps } from './Query.interfaces';
+// ** Styles
+import { StyledDeleteEntity, StyledRow } from './Query.styled';
 
-const mapOfOperators: Record<DataSource, string[]> = {
-	metrics: Object.values(MetricAggregateOperator),
-	logs: Object.values(LogsAggregatorOperator),
-	traces: Object.values(TracesAggregatorOperator),
-};
-
-export function Query({
+export const Query = memo(function Query({
 	index,
 	isAvailableToDisable,
 	queryVariant,
 	query,
+	panelType,
 }: QueryProps): JSX.Element {
-	const { handleSetQueryData } = useQueryBuilder();
+	const {
+		handleSetQueryData,
+		removeEntityByIndex,
+		initialDataSource,
+	} = useQueryBuilder();
 
-	const currentListOfOperators = mapOfOperators[query.dataSource];
+	const currentListOfOperators = useMemo(
+		() => mapOfOperators[query.dataSource],
+		[query],
+	);
+	const listOfAdditionalFilters = useMemo(() => mapOfFilters[query.dataSource], [
+		query,
+	]);
 
-	const handleChangeOperator = (value: string): void => {
-		handleSetQueryData(index, { aggregateOperator: value });
-	};
+	const handleChangeOperator = useCallback(
+		(value: string): void => {
+			const aggregateDataType: BaseAutocompleteData['dataType'] =
+				query.aggregateAttribute.dataType;
 
-	const handleChangeDataSource = (nextSource: DataSource): void => {
-		handleSetQueryData(index, { dataSource: nextSource });
-	};
+			const newQuery: IBuilderQueryForm = {
+				...query,
+				aggregateOperator: value,
+				having: [],
+			};
 
-	const handleToggleDisableQuery = (): void => {
-		handleSetQueryData(index, { disabled: !query.disabled });
-	};
+			if (!aggregateDataType || query.dataSource === DataSource.METRICS) {
+				handleSetQueryData(index, newQuery);
+				return;
+			}
 
-	const handleChangeAggregatorAttribute = (
-		value: BaseAutocompleteData,
-	): void => {
-		handleSetQueryData(index, { aggregateAttribute: value });
-	};
+			switch (aggregateDataType) {
+				case 'string':
+				case 'bool': {
+					const typeOfValue = findDataTypeOfOperator(value);
 
-	const handleChangeGroupByKeys = (values: BaseAutocompleteData[]): void => {
-		handleSetQueryData(index, { groupBy: values });
-	};
+					handleSetQueryData(index, {
+						...newQuery,
+						...(typeOfValue === 'number'
+							? { aggregateAttribute: initialAggregateAttribute }
+							: {}),
+					});
+
+					break;
+				}
+				case 'float64':
+				case 'int64': {
+					handleSetQueryData(index, newQuery);
+
+					break;
+				}
+
+				default: {
+					handleSetQueryData(index, newQuery);
+					break;
+				}
+			}
+		},
+		[index, query, handleSetQueryData],
+	);
+
+	const handleChangeAggregatorAttribute = useCallback(
+		(value: BaseAutocompleteData): void => {
+			const newQuery: IBuilderQueryForm = {
+				...query,
+				aggregateAttribute: value,
+			};
+
+			handleSetQueryData(index, newQuery);
+		},
+		[index, query, handleSetQueryData],
+	);
+
+	const handleChangeDataSource = useCallback(
+		(nextSource: DataSource): void => {
+			let newQuery: IBuilderQueryForm = {
+				...query,
+				dataSource: nextSource,
+			};
+
+			if (nextSource !== query.dataSource) {
+				const initCopy = {
+					...(initialQueryBuilderFormValues as Partial<IBuilderQueryForm>),
+				};
+				delete initCopy.queryName;
+
+				newQuery = {
+					...newQuery,
+					...initCopy,
+					dataSource: initialDataSource || nextSource,
+					aggregateOperator: mapOfOperators[nextSource][0],
+				};
+			}
+
+			handleSetQueryData(index, newQuery);
+		},
+		[index, query, initialDataSource, handleSetQueryData],
+	);
+
+	const handleToggleDisableQuery = useCallback((): void => {
+		const newQuery: IBuilderQueryForm = {
+			...query,
+			disabled: !query.disabled,
+		};
+
+		handleSetQueryData(index, newQuery);
+	}, [index, query, handleSetQueryData]);
+
+	const handleChangeGroupByKeys = useCallback(
+		(values: BaseAutocompleteData[]): void => {
+			const newQuery: IBuilderQueryForm = {
+				...query,
+				groupBy: values,
+			};
+
+			handleSetQueryData(index, newQuery);
+		},
+		[index, query, handleSetQueryData],
+	);
+
+	const handleChangeQueryLegend = useCallback(
+		(e: React.ChangeEvent<HTMLInputElement>): void => {
+			const newQuery: IBuilderQueryForm = {
+				...query,
+				legend: e.target.value,
+			};
+			handleSetQueryData(index, newQuery);
+		},
+		[index, query, handleSetQueryData],
+	);
+
+	const handleChangeReduceTo = useCallback(
+		(value: string): void => {
+			const newQuery: IBuilderQueryForm = {
+				...query,
+				reduceTo: value,
+			};
+			handleSetQueryData(index, newQuery);
+		},
+		[index, query, handleSetQueryData],
+	);
+
+	const handleDeleteQuery = useCallback(() => {
+		removeEntityByIndex('queryData', index);
+	}, [removeEntityByIndex, index]);
 
 	return (
-		<Row gutter={[0, 15]}>
+		<StyledRow gutter={[0, 15]}>
+			<StyledDeleteEntity onClick={handleDeleteQuery} />
 			<Col span={24}>
 				<Row wrap={false} align="middle">
 					<Col span={24}>
@@ -92,14 +213,14 @@ export function Query({
 			</Col>
 			<Col span={11}>
 				<Row gutter={[11, 5]}>
-					<Col flex="95px">
+					<Col flex="5.93rem">
 						<OperatorsSelect
 							value={query.aggregateOperator || currentListOfOperators[0]}
 							onChange={handleChangeOperator}
 							operators={currentListOfOperators}
 						/>
 					</Col>
-					<Col flex="1 1 200px">
+					<Col flex="1 1 12.5rem">
 						<AggregatorFilter
 							onChange={handleChangeAggregatorAttribute}
 							query={query}
@@ -109,14 +230,32 @@ export function Query({
 			</Col>
 			<Col span={11} offset={2}>
 				<Row gutter={[11, 5]}>
-					<Col flex="95px">
-						<FilterLabel label="Group by" />
+					<Col flex="5.93rem">
+						<FilterLabel label={panelType === 'VALUE' ? 'Reduce to' : 'Group by'} />
 					</Col>
-					<Col flex="1 1 200px">
-						<GroupByFilter query={query} onChange={handleChangeGroupByKeys} />
+					<Col flex="1 1 12.5rem">
+						{panelType === 'VALUE' ? (
+							<ReduceToFilter query={query} onChange={handleChangeReduceTo} />
+						) : (
+							<GroupByFilter query={query} onChange={handleChangeGroupByKeys} />
+						)}
 					</Col>
 				</Row>
 			</Col>
-		</Row>
+			<Col span={24}>
+				<AdditionalFiltersToggler listOfAdditionalFilter={listOfAdditionalFilters}>
+					{/* TODO: Render filter by Col component */}
+					test additional filter
+				</AdditionalFiltersToggler>
+			</Col>
+			<Row style={{ width: '100%' }}>
+				<Input
+					onChange={handleChangeQueryLegend}
+					size="middle"
+					value={query.legend}
+					addonBefore="Legend Format"
+				/>
+			</Row>
+		</StyledRow>
 	);
-}
+});
