@@ -497,8 +497,10 @@ const (
 	FilterOperatorRegex           FilterOperator = "regex"
 	FilterOperatorNotRegex        FilterOperator = "nregex"
 	// (I)LIKE is faster than REGEX and supports index
-	FilterOperatorLike    FilterOperator = "like"
-	FilterOperatorNotLike FilterOperator = "nlike"
+	FilterOperatorLike     FilterOperator = "like"
+	FilterOperatorNotLike  FilterOperator = "nlike"
+	FilterOperatorILike    FilterOperator = "ilike"
+	FilterOperatorNotILike FilterOperator = "nilike"
 
 	FilterOperatorExists    FilterOperator = "exists"
 	FilterOperatorNotExists FilterOperator = "nexists"

@@ -33,7 +33,7 @@ var aggregateOperatorToSQLFunc = map[v3.AggregateOperator]string{
 	v3.AggregateOperatorRateMin: "min",
 }
 
-var logsOperatorsEnabled = map[v3.FilterOperator]string{
+var logOperators = map[v3.FilterOperator]string{
 	v3.FilterOperatorEqual:           "=",
 	v3.FilterOperatorNotEqual:        "!=",
 	v3.FilterOperatorLessThan:        "<",
@@ -42,6 +42,8 @@ var logsOperatorsEnabled = map[v3.FilterOperator]string{
 	v3.FilterOperatorGreaterThanOrEq: ">=",
 	v3.FilterOperatorLike:            "LIKE",
 	v3.FilterOperatorNotLike:         "NOT LIKE",
+	v3.FilterOperatorILike:           "ILIKE",
+	v3.FilterOperatorNotILike:        "NOT ILIKE",
 	v3.FilterOperatorRegex:           "REGEXP",
 	v3.FilterOperatorNotRegex:        "NOT REGEXP",
 	v3.FilterOperatorIn:              "IN",
@@ -128,7 +130,7 @@ func buildLogsTimeSeriesFilterQuery(fs *v3.FilterSet, fields map[string]v3.Attri
 		for _, item := range fs.Items {
 			toFormat := item.Value
 			op := v3.FilterOperator(strings.ToLower(strings.TrimSpace(string(item.Operator))))
-			if logsOp, ok := logsOperatorsEnabled[op]; ok {
+			if logsOp, ok := logOperators[op]; ok {
 				switch op {
 				case v3.FilterOperatorExists, v3.FilterOperatorNotExists:
 					//(todo): refractor this later
@@ -161,6 +163,7 @@ func buildLogsTimeSeriesFilterQuery(fs *v3.FilterSet, fields map[string]v3.Attri
 	return queryString, nil
 }
 
+// getZerosForEpochNano returns the number of zeros to be appended to the epoch time for converting it to nanoseconds
 func getZerosForEpochNano(epoch int64) int64 {
 	count := 0
 	if epoch == 0 {
@@ -189,11 +192,16 @@ func buildLogsQuery(start, end, step int64, mq *v3.BuilderQuery, fields map[stri
 		return "", err
 	}
 
+	having := having(mq.Having)
+	if having != "" {
+		having = having + " "
+	}
+
 	queryTmpl :=
 		"SELECT toStartOfInterval(fromUnixTimestamp64Nano(timestamp), INTERVAL %d SECOND) AS ts" + selectLabels +
 			", %s as value " +
 			"from signoz_logs.distributed_logs " +
-			"where " + timeFilter + "%s " +
+			"where " + timeFilter + "%s %s" +
 			"group by %s " +
 			"order by %sts"
 
@@ -211,7 +219,7 @@ func buildLogsQuery(start, end, step int64, mq *v3.BuilderQuery, fields map[stri
 	switch mq.AggregateOperator {
 	case v3.AggregateOperatorRate:
 		op := fmt.Sprintf("count(%s)/%d", aggregationKey, step)
-		query := fmt.Sprintf(queryTmpl, step, op, filterSubQuery, groupBy, orderBy)
+		query := fmt.Sprintf(queryTmpl, step, op, filterSubQuery, having, groupBy, orderBy)
 		return query, nil
 	case
 		v3.AggregateOperatorRateSum,
@@ -219,7 +227,7 @@ func buildLogsQuery(start, end, step int64, mq *v3.BuilderQuery, fields map[stri
 		v3.AggregateOperatorRateAvg,
 		v3.AggregateOperatorRateMin:
 		op := fmt.Sprintf("%s(%s)/%d", aggregateOperatorToSQLFunc[mq.AggregateOperator], aggregationKey, step)
-		query := fmt.Sprintf(queryTmpl, step, op, filterSubQuery, groupBy, orderBy)
+		query := fmt.Sprintf(queryTmpl, step, op, filterSubQuery, having, groupBy, orderBy)
 		return query, nil
 	case
 		v3.AggregateOperatorP05,
@@ -232,11 +240,11 @@ func buildLogsQuery(start, end, step int64, mq *v3.BuilderQuery, fields map[stri
 		v3.AggregateOperatorP95,
 		v3.AggregateOperatorP99:
 		op := fmt.Sprintf("quantile(%v)(%s)", aggregateOperatorToPercentile[mq.AggregateOperator], aggregationKey)
-		query := fmt.Sprintf(queryTmpl, step, op, filterSubQuery, groupBy, orderBy)
+		query := fmt.Sprintf(queryTmpl, step, op, filterSubQuery, having, groupBy, orderBy)
 		return query, nil
 	case v3.AggregateOperatorAvg, v3.AggregateOperatorSum, v3.AggregateOperatorMin, v3.AggregateOperatorMax:
 		op := fmt.Sprintf("%s(%s)", aggregateOperatorToSQLFunc[mq.AggregateOperator], aggregationKey)
-		query := fmt.Sprintf(queryTmpl, step, op, filterSubQuery, groupBy, orderBy)
+		query := fmt.Sprintf(queryTmpl, step, op, filterSubQuery, having, groupBy, orderBy)
 		return query, nil
 	case v3.AggregateOpeatorCount:
 		if mq.AggregateAttribute.Key != "" {
@@ -247,14 +255,15 @@ func buildLogsQuery(start, end, step int64, mq *v3.BuilderQuery, fields map[stri
 			columnType := getClickhouseLogsColumnType(field.Type)
 			columnDataType := getClickhouseLogsColumnDataType(field.DataType)
 			filterSubQuery = fmt.Sprintf("%s AND has(%s_%s_key, '%s')", filterSubQuery, columnType, columnDataType, mq.AggregateAttribute.Key)
+			// check having
 		}
 
 		op := "toFloat64(count(*))"
-		query := fmt.Sprintf(queryTmpl, step, op, filterSubQuery, groupBy, orderBy)
+		query := fmt.Sprintf(queryTmpl, step, op, filterSubQuery, having, groupBy, orderBy)
 		return query, nil
 	case v3.AggregateOperatorCountDistinct:
 		op := fmt.Sprintf("toFloat64(count(distinct(%s)))", aggregationKey)
-		query := fmt.Sprintf(queryTmpl, step, op, filterSubQuery, groupBy, orderBy)
+		query := fmt.Sprintf(queryTmpl, step, op, filterSubQuery, having, groupBy, orderBy)
 		return query, nil
 	case v3.AggregateOperatorNoOp:
 		queryTmpl := constants.LogsSQLSelect + "from signoz_logs.distributed_logs where %s %s"
