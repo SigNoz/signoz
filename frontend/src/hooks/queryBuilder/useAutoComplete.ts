@@ -91,7 +91,7 @@ export const useAutoComplete = (query: IBuilderQueryForm): IAutoComplete => {
 			if (e.key === 'Backspace' && !searchValue) {
 				e.stopPropagation();
 				const last = tags[tags.length - 1];
-				setSearchValue(last);
+				// setSearchValue(last);
 				handleClearTag(last);
 			}
 		},
