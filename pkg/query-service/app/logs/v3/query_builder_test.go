@@ -118,9 +118,9 @@ var timeSeriesFilterQueryData = []struct {
 		ExpectedFilter: " AND user_name = 'john' AND resources_string_value[indexOf(resources_string_key, 'k8s_namespace')] != 'my_service'",
 	},
 	{
-		Name: "Test Ilike",
+		Name: "Test like",
 		FilterSet: &v3.FilterSet{Operator: "AND", Items: []v3.FilterItem{
-			{Key: v3.AttributeKey{Key: "host", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag}, Value: "102.%", Operator: "ilike"},
+			{Key: v3.AttributeKey{Key: "host", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag}, Value: "102.%", Operator: "like"},
 		}},
 		ExpectedFilter: " AND attributes_string_value[indexOf(attributes_string_key, 'host')] ILIKE '102.%'",
 	},
@@ -151,6 +151,20 @@ var timeSeriesFilterQueryData = []struct {
 			{Key: v3.AttributeKey{Key: "bytes", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag}, Value: "", Operator: "nexists"},
 		}},
 		ExpectedFilter: " AND not has(attributes_string_key, 'bytes')",
+	},
+	{
+		Name: "Test contains",
+		FilterSet: &v3.FilterSet{Operator: "AND", Items: []v3.FilterItem{
+			{Key: v3.AttributeKey{Key: "host", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag}, Value: "102.", Operator: "contains"},
+		}},
+		ExpectedFilter: " AND attributes_string_value[indexOf(attributes_string_key, 'host')] ILIKE '%102.%'",
+	},
+	{
+		Name: "Test not contains",
+		FilterSet: &v3.FilterSet{Operator: "AND", Items: []v3.FilterItem{
+			{Key: v3.AttributeKey{Key: "host", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag}, Value: "102.", Operator: "ncontains"},
+		}},
+		ExpectedFilter: " AND attributes_string_value[indexOf(attributes_string_key, 'host')] NOT ILIKE '%102.%'",
 	},
 }
 

@@ -40,10 +40,10 @@ var logOperators = map[v3.FilterOperator]string{
 	v3.FilterOperatorLessThanOrEq:    "<=",
 	v3.FilterOperatorGreaterThan:     ">",
 	v3.FilterOperatorGreaterThanOrEq: ">=",
-	v3.FilterOperatorLike:            "LIKE",
-	v3.FilterOperatorNotLike:         "NOT LIKE",
-	v3.FilterOperatorILike:           "ILIKE",
-	v3.FilterOperatorNotILike:        "NOT ILIKE",
+	v3.FilterOperatorLike:            "ILIKE",
+	v3.FilterOperatorNotLike:         "NOT ILIKE",
+	v3.FilterOperatorContains:        "ILIKE",
+	v3.FilterOperatorNotContains:     "NOT ILIKE",
 	v3.FilterOperatorRegex:           "REGEXP",
 	v3.FilterOperatorNotRegex:        "NOT REGEXP",
 	v3.FilterOperatorIn:              "IN",
@@ -141,6 +141,13 @@ func buildLogsTimeSeriesFilterQuery(fs *v3.FilterSet, fields map[string]v3.Attri
 					columnType := getClickhouseLogsColumnType(key.Type)
 					columnDataType := getClickhouseLogsColumnDataType(key.DataType)
 					conditions = append(conditions, fmt.Sprintf(logsOp, columnType, columnDataType, item.Key.Key))
+				case v3.FilterOperatorContains, v3.FilterOperatorNotContains:
+					// generate the key
+					columnName, err := getClickhouseColumnName(item.Key, fields)
+					if err != nil {
+						return "", err
+					}
+					conditions = append(conditions, fmt.Sprintf("%s %s '%%%s%%'", columnName, logsOp, item.Value))
 				default:
 					// generate the key
 					columnName, err := getClickhouseColumnName(item.Key, fields)

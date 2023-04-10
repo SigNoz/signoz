@@ -497,10 +497,8 @@ const (
 	FilterOperatorRegex           FilterOperator = "regex"
 	FilterOperatorNotRegex        FilterOperator = "nregex"
 	// (I)LIKE is faster than REGEX and supports index
-	FilterOperatorLike     FilterOperator = "like"
-	FilterOperatorNotLike  FilterOperator = "nlike"
-	FilterOperatorILike    FilterOperator = "ilike"
-	FilterOperatorNotILike FilterOperator = "nilike"
+	FilterOperatorLike    FilterOperator = "like"
+	FilterOperatorNotLike FilterOperator = "nlike"
 
 	FilterOperatorExists    FilterOperator = "exists"
 	FilterOperatorNotExists FilterOperator = "nexists"
@@ -519,7 +517,7 @@ type OrderBy struct {
 
 type Having struct {
 	ColumnName string      `json:"columnName"`
-	Operator   string      `json:"operator"`
+	Operator   string      `json:"op"`
 	Value      interface{} `json:"value"`
 }
 
