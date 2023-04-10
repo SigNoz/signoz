@@ -201,15 +201,15 @@ func buildLogsQuery(start, end, step int64, mq *v3.BuilderQuery, fields map[stri
 
 	having := having(mq.Having)
 	if having != "" {
-		having = having + " "
+		having = " having " + having
 	}
 
 	queryTmpl :=
 		"SELECT toStartOfInterval(fromUnixTimestamp64Nano(timestamp), INTERVAL %d SECOND) AS ts" + selectLabels +
 			", %s as value " +
 			"from signoz_logs.distributed_logs " +
-			"where " + timeFilter + "%s %s" +
-			"group by %s " +
+			"where " + timeFilter + "%s " +
+			"group by %s%s " +
 			"order by %sts"
 
 	groupBy := groupByAttributeKeyTags(mq.GroupBy...)
@@ -226,7 +226,7 @@ func buildLogsQuery(start, end, step int64, mq *v3.BuilderQuery, fields map[stri
 	switch mq.AggregateOperator {
 	case v3.AggregateOperatorRate:
 		op := fmt.Sprintf("count(%s)/%d", aggregationKey, step)
-		query := fmt.Sprintf(queryTmpl, step, op, filterSubQuery, having, groupBy, orderBy)
+		query := fmt.Sprintf(queryTmpl, step, op, filterSubQuery, groupBy, having, orderBy)
 		return query, nil
 	case
 		v3.AggregateOperatorRateSum,
@@ -234,7 +234,7 @@ func buildLogsQuery(start, end, step int64, mq *v3.BuilderQuery, fields map[stri
 		v3.AggregateOperatorRateAvg,
 		v3.AggregateOperatorRateMin:
 		op := fmt.Sprintf("%s(%s)/%d", aggregateOperatorToSQLFunc[mq.AggregateOperator], aggregationKey, step)
-		query := fmt.Sprintf(queryTmpl, step, op, filterSubQuery, having, groupBy, orderBy)
+		query := fmt.Sprintf(queryTmpl, step, op, filterSubQuery, groupBy, having, orderBy)
 		return query, nil
 	case
 		v3.AggregateOperatorP05,
@@ -247,11 +247,11 @@ func buildLogsQuery(start, end, step int64, mq *v3.BuilderQuery, fields map[stri
 		v3.AggregateOperatorP95,
 		v3.AggregateOperatorP99:
 		op := fmt.Sprintf("quantile(%v)(%s)", aggregateOperatorToPercentile[mq.AggregateOperator], aggregationKey)
-		query := fmt.Sprintf(queryTmpl, step, op, filterSubQuery, having, groupBy, orderBy)
+		query := fmt.Sprintf(queryTmpl, step, op, filterSubQuery, groupBy, having, orderBy)
 		return query, nil
 	case v3.AggregateOperatorAvg, v3.AggregateOperatorSum, v3.AggregateOperatorMin, v3.AggregateOperatorMax:
 		op := fmt.Sprintf("%s(%s)", aggregateOperatorToSQLFunc[mq.AggregateOperator], aggregationKey)
-		query := fmt.Sprintf(queryTmpl, step, op, filterSubQuery, having, groupBy, orderBy)
+		query := fmt.Sprintf(queryTmpl, step, op, filterSubQuery, groupBy, having, orderBy)
 		return query, nil
 	case v3.AggregateOpeatorCount:
 		if mq.AggregateAttribute.Key != "" {
@@ -266,11 +266,11 @@ func buildLogsQuery(start, end, step int64, mq *v3.BuilderQuery, fields map[stri
 		}
 
 		op := "toFloat64(count(*))"
-		query := fmt.Sprintf(queryTmpl, step, op, filterSubQuery, having, groupBy, orderBy)
+		query := fmt.Sprintf(queryTmpl, step, op, filterSubQuery, groupBy, having, orderBy)
 		return query, nil
 	case v3.AggregateOperatorCountDistinct:
 		op := fmt.Sprintf("toFloat64(count(distinct(%s)))", aggregationKey)
-		query := fmt.Sprintf(queryTmpl, step, op, filterSubQuery, having, groupBy, orderBy)
+		query := fmt.Sprintf(queryTmpl, step, op, filterSubQuery, groupBy, having, orderBy)
 		return query, nil
 	case v3.AggregateOperatorNoOp:
 		queryTmpl := constants.LogsSQLSelect + "from signoz_logs.distributed_logs where %s %s"
@@ -339,10 +339,9 @@ func having(items []v3.Having) string {
 	// aggregate something and filter on that aggregate
 	var having []string
 	for _, item := range items {
-		having = append(having, fmt.Sprintf("%s %s %v", item.ColumnName, item.Operator, utils.ClickHouseFormattedValue(item.Value)))
+		having = append(having, fmt.Sprintf("value %s %s", item.Operator, utils.ClickHouseFormattedValue(item.Value)))
 	}
 	return strings.Join(having, " AND ")
-
 }
 
 func reduceQuery(query string, reduceTo v3.ReduceToOperator, aggregateOperator v3.AggregateOperator) (string, error) {
@@ -366,10 +365,13 @@ func reduceQuery(query string, reduceTo v3.ReduceToOperator, aggregateOperator v
 }
 
 func addLimitToQuery(query string, limit uint64, panelType v3.PanelType) string {
-	if limit == 0 && panelType == v3.PanelTypeList {
+	if limit == 0 {
 		limit = 100
 	}
-	return fmt.Sprintf("%s LIMIT %d", query, limit)
+	if panelType == v3.PanelTypeList {
+		return fmt.Sprintf("%s LIMIT %d", query, limit)
+	}
+	return query
 }
 
 func addOffsetToQuery(query string, offset uint64) string {
