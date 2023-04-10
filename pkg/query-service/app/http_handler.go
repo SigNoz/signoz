@@ -21,6 +21,7 @@ import (
 	"go.signoz.io/signoz/pkg/query-service/app/dashboards"
 	"go.signoz.io/signoz/pkg/query-service/app/explorer"
 	"go.signoz.io/signoz/pkg/query-service/app/logs"
+	logsv3 "go.signoz.io/signoz/pkg/query-service/app/logs/v3"
 	"go.signoz.io/signoz/pkg/query-service/app/metrics"
 	metricsv3 "go.signoz.io/signoz/pkg/query-service/app/metrics/v3"
 	"go.signoz.io/signoz/pkg/query-service/app/parser"
@@ -109,9 +110,7 @@ func NewAPIHandler(opts APIHandlerOpts) (*APIHandler, error) {
 		BuildTraceQuery: func(start, end int64, queryType v3.QueryType, panelType v3.PanelType, bq *v3.BuilderQuery) (string, error) {
 			return "", errors.New("not implemented")
 		},
-		BuildLogQuery: func(start, end int64, queryType v3.QueryType, panelType v3.PanelType, bq *v3.BuilderQuery) (string, error) {
-			return "", errors.New("not implemented")
-		},
+		BuildLogQuery: logsv3.PrepareLogsQuery,
 	}
 	aH.queryBuilder = NewQueryBuilder(builderOpts)
 
@@ -2443,7 +2442,7 @@ func (aH *APIHandler) autoCompleteAttributeValues(w http.ResponseWriter, r *http
 	aH.Respond(w, response)
 }
 
-func (aH *APIHandler) execClickHouseQueries(ctx context.Context, queries map[string]string) ([]*v3.Result, error, map[string]string) {
+func (aH *APIHandler) execClickHouseGraphQueries(ctx context.Context, queries map[string]string) ([]*v3.Result, error, map[string]string) {
 	type channelResult struct {
 		Series []*v3.Series
 		Err    error
@@ -2484,6 +2483,55 @@ func (aH *APIHandler) execClickHouseQueries(ctx context.Context, queries map[str
 		res = append(res, &v3.Result{
 			QueryName: r.Name,
 			Series:    r.Series,
+		})
+	}
+	if len(errs) != 0 {
+		return nil, fmt.Errorf("encountered multiple errors: %s", multierr.Combine(errs...)), errQuriesByName
+	}
+	return res, nil, nil
+}
+
+func (aH *APIHandler) execClickHouseListQueries(ctx context.Context, queries map[string]string) ([]*v3.Result, error, map[string]string) {
+	type channelResult struct {
+		List  []*v3.Row
+		Err   error
+		Name  string
+		Query string
+	}
+
+	ch := make(chan channelResult, len(queries))
+	var wg sync.WaitGroup
+
+	for name, query := range queries {
+		wg.Add(1)
+		go func(name, query string) {
+			defer wg.Done()
+			rowList, err := aH.reader.GetListResultV3(ctx, query)
+
+			if err != nil {
+				ch <- channelResult{Err: fmt.Errorf("error in query-%s: %v", name, err), Name: name, Query: query}
+				return
+			}
+			ch <- channelResult{List: rowList, Name: name, Query: query}
+		}(name, query)
+	}
+
+	wg.Wait()
+	close(ch)
+
+	var errs []error
+	errQuriesByName := make(map[string]string)
+	res := make([]*v3.Result, 0)
+	// read values from the channel
+	for r := range ch {
+		if r.Err != nil {
+			errs = append(errs, r.Err)
+			errQuriesByName[r.Name] = r.Query
+			continue
+		}
+		res = append(res, &v3.Result{
+			QueryName: r.Name,
+			List:      r.List,
 		})
 	}
 	if len(errs) != 0 {
@@ -2572,19 +2620,83 @@ func (aH *APIHandler) execPromQueries(ctx context.Context, metricsQueryRangePara
 	return res, nil, nil
 }
 
-func (aH *APIHandler) queryRangeV3(queryRangeParams *v3.QueryRangeParamsV3, w http.ResponseWriter, r *http.Request) {
+func (aH *APIHandler) getLogFieldsV3(ctx context.Context, queryRangeParams *v3.QueryRangeParamsV3) (map[string]v3.AttributeKey, error) {
+	data := map[string]v3.AttributeKey{}
+	for _, query := range queryRangeParams.CompositeQuery.BuilderQueries {
+		if query.DataSource == v3.DataSourceLogs {
+			fields, apiError := aH.reader.GetLogFields(ctx)
+			if apiError != nil {
+				return nil, apiError.Err
+			}
+
+			// top level fields meta will always be present in the frontend. (can be support for that as enchancement)
+			getType := func(t string) (v3.AttributeKeyType, bool) {
+				if t == "attributes" {
+					return v3.AttributeKeyTypeTag, false
+				} else if t == "resources" {
+					return v3.AttributeKeyTypeResource, false
+				}
+				return "", true
+			}
+
+			for _, selectedField := range fields.Selected {
+				fieldType, pass := getType(selectedField.Type)
+				if pass {
+					continue
+				}
+				data[selectedField.Name] = v3.AttributeKey{
+					Key:      selectedField.Name,
+					Type:     fieldType,
+					DataType: v3.AttributeKeyDataType(strings.ToLower(selectedField.DataType)),
+					IsColumn: true,
+				}
+			}
+			for _, interestingField := range fields.Interesting {
+				fieldType, pass := getType(interestingField.Type)
+				if pass {
+					continue
+				}
+				data[interestingField.Name] = v3.AttributeKey{
+					Key:      interestingField.Name,
+					Type:     fieldType,
+					DataType: v3.AttributeKeyDataType(strings.ToLower(interestingField.DataType)),
+					IsColumn: false,
+				}
+			}
+			break
+		}
+	}
+	return data, nil
+}
+
+func (aH *APIHandler) queryRangeV3(ctx context.Context, queryRangeParams *v3.QueryRangeParamsV3, w http.ResponseWriter, r *http.Request) {
 
 	var result []*v3.Result
 	var err error
 	var errQuriesByName map[string]string
+	var queries map[string]string
 	switch queryRangeParams.CompositeQuery.QueryType {
 	case v3.QueryTypeBuilder:
-		queries, err := aH.queryBuilder.prepareQueries(queryRangeParams)
+		// get the fields if any logs query is present
+		var fields map[string]v3.AttributeKey
+		fields, err = aH.getLogFieldsV3(ctx, queryRangeParams)
+		if err != nil {
+			apiErrObj := &model.ApiError{Typ: model.ErrorInternal, Err: err}
+			RespondError(w, apiErrObj, errQuriesByName)
+			return
+		}
+
+		queries, err = aH.queryBuilder.prepareQueries(queryRangeParams, fields)
 		if err != nil {
 			RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
 			return
 		}
-		result, err, errQuriesByName = aH.execClickHouseQueries(r.Context(), queries)
+
+		if queryRangeParams.CompositeQuery.PanelType == v3.PanelTypeList {
+			result, err, errQuriesByName = aH.execClickHouseListQueries(r.Context(), queries)
+		} else {
+			result, err, errQuriesByName = aH.execClickHouseGraphQueries(r.Context(), queries)
+		}
 	case v3.QueryTypeClickHouseSQL:
 		queries := make(map[string]string)
 		for name, query := range queryRangeParams.CompositeQuery.ClickHouseQueries {
@@ -2593,7 +2705,7 @@ func (aH *APIHandler) queryRangeV3(queryRangeParams *v3.QueryRangeParamsV3, w ht
 			}
 			queries[name] = query.Query
 		}
-		result, err, errQuriesByName = aH.execClickHouseQueries(r.Context(), queries)
+		result, err, errQuriesByName = aH.execClickHouseGraphQueries(r.Context(), queries)
 	case v3.QueryTypePromQL:
 		result, err, errQuriesByName = aH.execPromQueries(r.Context(), queryRangeParams)
 	default:
@@ -2623,5 +2735,5 @@ func (aH *APIHandler) QueryRangeV3(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	aH.queryRangeV3(queryRangeParams, w, r)
+	aH.queryRangeV3(r.Context(), queryRangeParams, w, r)
 }

@@ -4167,6 +4167,48 @@ func (r *ClickHouseReader) GetTimeSeriesResultV3(ctx context.Context, query stri
 	return readRowsForTimeSeriesResult(rows, vars, columnNames)
 }
 
+// GetListResultV3 runs the query and returns list of rows
+func (r *ClickHouseReader) GetListResultV3(ctx context.Context, query string) ([]*v3.Row, error) {
+
+	defer utils.Elapsed("GetListResultV3", query)()
+
+	rows, err := r.db.Query(ctx, query)
+
+	if err != nil {
+		zap.S().Errorf("error while reading time series result %v", err)
+		return nil, err
+	}
+	defer rows.Close()
+
+	var (
+		columnTypes = rows.ColumnTypes()
+		columnNames = rows.Columns()
+		vars        = make([]interface{}, len(columnTypes))
+	)
+	for i := range columnTypes {
+		vars[i] = reflect.New(columnTypes[i].ScanType()).Interface()
+	}
+
+	var rowList []*v3.Row
+
+	for rows.Next() {
+		if err := rows.Scan(vars...); err != nil {
+			return nil, err
+		}
+		row := map[string]interface{}{}
+		var t time.Time
+		for idx, v := range vars {
+			if columnNames[idx] == "timestamp" {
+				t = time.Unix(0, int64(*v.(*uint64)))
+			}
+			row[columnNames[idx]] = v
+		}
+		rowList = append(rowList, &v3.Row{Timestamp: t, Data: row})
+	}
+
+	return rowList, nil
+
+}
 func (r *ClickHouseReader) CheckClickHouse(ctx context.Context) error {
 	rows, err := r.db.Query(ctx, "SELECT 1")
 	if err != nil {

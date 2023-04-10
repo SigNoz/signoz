@@ -36,7 +36,7 @@ var SupportedFunctions = []string{
 var evalFuncs = map[string]govaluate.ExpressionFunction{}
 
 type prepareTracesQueryFunc func(start, end int64, queryType v3.QueryType, panelType v3.PanelType, bq *v3.BuilderQuery) (string, error)
-type prepareLogsQueryFunc func(start, end int64, queryType v3.QueryType, panelType v3.PanelType, bq *v3.BuilderQuery) (string, error)
+type prepareLogsQueryFunc func(start, end int64, queryType v3.QueryType, panelType v3.PanelType, bq *v3.BuilderQuery, fields map[string]v3.AttributeKey) (string, error)
 type prepareMetricQueryFunc func(start, end int64, queryType v3.QueryType, panelType v3.PanelType, bq *v3.BuilderQuery) (string, error)
 
 type queryBuilder struct {
@@ -127,7 +127,7 @@ func expressionToQuery(qp *v3.QueryRangeParamsV3, varToQuery map[string]string, 
 	return formulaQuery, nil
 }
 
-func (qb *queryBuilder) prepareQueries(params *v3.QueryRangeParamsV3) (map[string]string, error) {
+func (qb *queryBuilder) prepareQueries(params *v3.QueryRangeParamsV3, args ...interface{}) (map[string]string, error) {
 	queries := make(map[string]string)
 
 	compositeQuery := params.CompositeQuery
@@ -145,7 +145,11 @@ func (qb *queryBuilder) prepareQueries(params *v3.QueryRangeParamsV3) (map[strin
 					}
 					queries[queryName] = queryString
 				case v3.DataSourceLogs:
-					queryString, err := qb.options.BuildLogQuery(params.Start, params.End, compositeQuery.QueryType, compositeQuery.PanelType, query)
+					fields := map[string]v3.AttributeKey{}
+					if len(args) == 1 {
+						fields = args[0].(map[string]v3.AttributeKey)
+					}
+					queryString, err := qb.options.BuildLogQuery(params.Start, params.End, compositeQuery.QueryType, compositeQuery.PanelType, query, fields)
 					if err != nil {
 						return nil, err
 					}
