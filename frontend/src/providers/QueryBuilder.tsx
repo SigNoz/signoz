@@ -1,4 +1,11 @@
 // ** Helpers
+// ** Constants
+import { initialQueryBuilderFormValues } from 'constants/queryBuilder';
+import { mapOfOperators } from 'constants/queryBuilder';
+import {
+	createNewQueryName,
+	MAX_QUERIES,
+} from 'lib/newQueryBuilder/createNewQueryName';
 import React, {
 	createContext,
 	PropsWithChildren,
@@ -14,17 +21,20 @@ import {
 } from 'types/api/queryBuilder/queryBuilderData';
 import {
 	DataSource,
-	MetricAggregateOperator,
 	QueryBuilderContextType,
 	QueryBuilderData,
 } from 'types/common/queryBuilder';
 
 export const QueryBuilderContext = createContext<QueryBuilderContextType>({
 	queryBuilderData: { queryData: [], queryFormulas: [] },
+	initialDataSource: null,
 	resetQueryBuilderData: () => {},
 	handleSetQueryData: () => {},
 	handleSetFormulaData: () => {},
 	initQueryBuilderData: () => {},
+	setupInitialDataSource: () => {},
+	removeEntityByIndex: () => {},
+	addNewQuery: () => {},
 });
 
 const initialQueryBuilderData: QueryBuilderData = {
@@ -35,27 +45,15 @@ const initialQueryBuilderData: QueryBuilderData = {
 export function QueryBuilderProvider({
 	children,
 }: PropsWithChildren): JSX.Element {
-	// ** TODO: get queryId from url for getting data for query builder
-	// ** TODO: type the params which will be used for request of the data for query builder
+	// TODO: this is temporary. It will be used when we have fixed dataSource and need create new query with this data source
+	// eslint-disable-next-line @typescript-eslint/no-unused-vars
+	const [initialDataSource, setInitialDataSource] = useState<DataSource | null>(
+		null,
+	);
 
+	// TODO: when initialDataSource will be setuped, on create button initial dataSource will from initialDataSource
 	const [queryBuilderData, setQueryBuilderData] = useState<QueryBuilderData>({
-		// ** TODO temporary initial value for first query for testing first filters
-		queryData: [
-			// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-			// @ts-ignore
-			{
-				dataSource: DataSource.METRICS,
-				queryName: 'A',
-				aggregateOperator: Object.values(MetricAggregateOperator)[0],
-				aggregateAttribute: {
-					dataType: null,
-					key: '',
-					isColumn: null,
-					type: null,
-				},
-				groupBy: [],
-			},
-		],
+		queryData: [],
 		queryFormulas: [],
 	});
 
@@ -64,7 +62,8 @@ export function QueryBuilderProvider({
 		setQueryBuilderData(initialQueryBuilderData);
 	}, []);
 
-	// ** Method for setupping query builder data
+	// ** Method for setuping query builder data
+	// ** Before setuping transform data from backend to frontend format
 	const initQueryBuilderData = useCallback(
 		(queryBuilderData: QueryBuilderData): void => {
 			setQueryBuilderData(queryBuilderData);
@@ -72,44 +71,112 @@ export function QueryBuilderProvider({
 		[],
 	);
 
-	const handleSetQueryData = useCallback(
-		(index: number, newQueryData: Partial<IBuilderQueryForm>): void => {
-			const updatedQueryBuilderData = queryBuilderData.queryData.map((item, idx) =>
-				index === idx ? { ...item, ...newQueryData } : item,
-			);
-
-			setQueryBuilderData((prevState) => ({
-				...prevState,
-				queryData: updatedQueryBuilderData,
-			}));
+	const removeEntityByIndex = useCallback(
+		(type: keyof QueryBuilderData, index: number) => {
+			setQueryBuilderData((prevState) => {
+				const currentArray: (IBuilderQueryForm | IBuilderFormula)[] =
+					prevState[type];
+				return {
+					...prevState,
+					[type]: currentArray.filter((item, i) => index !== i),
+				};
+			});
 		},
-		[queryBuilderData],
+		[],
+	);
+
+	const createNewQuery = useCallback(
+		(queries: IBuilderQueryForm[]): IBuilderQueryForm => {
+			const existNames = queries.map((item) => item.queryName);
+
+			const newQuery: IBuilderQueryForm = {
+				...initialQueryBuilderFormValues,
+				queryName: createNewQueryName(existNames),
+				...(initialDataSource
+					? {
+							dataSource: initialDataSource,
+							aggregateOperator: mapOfOperators[initialDataSource][0],
+							expression: createNewQueryName(existNames),
+					  }
+					: {}),
+			};
+
+			return newQuery;
+		},
+		[initialDataSource],
+	);
+
+	const addNewQuery = useCallback(() => {
+		setQueryBuilderData((prevState) => {
+			if (prevState.queryData.length >= MAX_QUERIES) return prevState;
+
+			const newQuery = createNewQuery(prevState.queryData);
+
+			return { ...prevState, queryData: [...prevState.queryData, newQuery] };
+		});
+	}, [createNewQuery]);
+
+	const setupInitialDataSource = useCallback(
+		(newInitialDataSource: DataSource | null) =>
+			setInitialDataSource(newInitialDataSource),
+		[],
+	);
+
+	const updateQueryBuilderData = useCallback(
+		(
+			queries: IBuilderQueryForm[],
+			index: number,
+			newQueryData: IBuilderQueryForm,
+		) => queries.map((item, idx) => (index === idx ? newQueryData : item)),
+		[],
+	);
+
+	const handleSetQueryData = useCallback(
+		(index: number, newQueryData: IBuilderQueryForm): void => {
+			setQueryBuilderData((prevState) => {
+				const updatedQueryBuilderData = updateQueryBuilderData(
+					prevState.queryData,
+					index,
+					newQueryData,
+				);
+
+				return {
+					...prevState,
+					queryData: updatedQueryBuilderData,
+				};
+			});
+		},
+		[updateQueryBuilderData],
 	);
 	const handleSetFormulaData = useCallback(
 		// eslint-disable-next-line @typescript-eslint/no-unused-vars
 		(index: number, formulaData: IBuilderFormula): void => {},
 		[],
 	);
-
-	// ** TODO: Discuss with Palash how the state of the queryBuilder and queryFormulas
-	// ** TODO: should be filled from url
-
-	// ** TODO: put these values and setter to the context value
+	console.log(queryBuilderData.queryData);
 
 	const contextValues: QueryBuilderContextType = useMemo(
 		() => ({
 			queryBuilderData,
+			initialDataSource,
 			resetQueryBuilderData,
 			handleSetQueryData,
 			handleSetFormulaData,
 			initQueryBuilderData,
+			setupInitialDataSource,
+			removeEntityByIndex,
+			addNewQuery,
 		}),
 		[
 			queryBuilderData,
+			initialDataSource,
 			resetQueryBuilderData,
 			handleSetQueryData,
 			handleSetFormulaData,
 			initQueryBuilderData,
+			setupInitialDataSource,
+			removeEntityByIndex,
+			addNewQuery,
 		],
 	);
 

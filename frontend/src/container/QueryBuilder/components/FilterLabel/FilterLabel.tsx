@@ -1,10 +1,12 @@
-import React from 'react';
+import React, { memo } from 'react';
 
 // ** Types
 import { FilterLabelProps } from './FilterLabel.interfaces';
 // ** Styles
 import { StyledLabel } from './FilterLabel.styled';
 
-export function FilterLabel({ label }: FilterLabelProps): JSX.Element {
+export const FilterLabel = memo(function FilterLabel({
+	label,
+}: FilterLabelProps): JSX.Element {
 	return <StyledLabel>{label}</StyledLabel>;
-}
+});
