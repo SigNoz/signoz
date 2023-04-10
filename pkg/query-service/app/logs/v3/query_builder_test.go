@@ -181,7 +181,6 @@ func TestBuildLogsTimeSeriesFilterQuery(t *testing.T) {
 			query, err := buildLogsTimeSeriesFilterQuery(tt.FilterSet, map[string]v3.AttributeKey{})
 			So(err, ShouldBeNil)
 			So(query, ShouldEqual, tt.ExpectedFilter)
-			fmt.Println(query)
 		})
 	}
 }
