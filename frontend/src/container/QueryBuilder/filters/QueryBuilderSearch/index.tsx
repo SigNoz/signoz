@@ -1,5 +1,5 @@
 import { CheckOutlined } from '@ant-design/icons';
-import { Select, Spin, Tag } from 'antd';
+import { Select, Spin, Tag, Tooltip, Typography } from 'antd';
 import { OPERATORS } from 'constants/queryBuilder';
 import { useAutoComplete } from 'hooks/queryBuilder/useAutoComplete';
 import React from 'react';
@@ -24,11 +24,25 @@ function QueryBuilderSearch({ query }: QueryBuilderSearchProps): JSX.Element {
 		const [tagKey, tagOperator, ...tagValue] = value.split(' ');
 		if (!tagOperator) return <div>{value}</div>;
 		if (tagOperator === OPERATORS.IN || tagOperator === OPERATORS.NIN) {
+			const tagTitle = `${tagKey} ${tagOperator} ${tagValue.join(', ')}`;
 			return (
-				<Tag closable>{`${tagKey} ${tagOperator} ${tagValue.join(', ')}`}</Tag>
+				<Tag closable>
+					<Tooltip title={tagTitle}>
+						{tagKey} {tagOperator}{' '}
+						<Typography.Text ellipsis style={{ width: '3rem' }}>
+							{tagValue.join(', ')}
+						</Typography.Text>
+					</Tooltip>
+				</Tag>
 			);
 		}
-		return <Tag closable>{value}</Tag>;
+		return (
+			<Tag closable>
+				<Tooltip title={value}>
+					<Typography.Text ellipsis>{value}</Typography.Text>
+				</Tooltip>
+			</Tag>
+		);
 	};
 
 	return (
