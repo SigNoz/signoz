@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	. "github.com/smartystreets/goconvey/convey"
+	"go.signoz.io/signoz/pkg/query-service/constants"
 	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
 )
 
@@ -624,6 +625,75 @@ func TestGetZerosForEpochNano(t *testing.T) {
 			multiplier := getZerosForEpochNano(tt.Epoch)
 			So(multiplier, ShouldEqual, tt.Multiplier)
 			So(tt.Epoch*multiplier, ShouldEqual, tt.Result)
+		})
+	}
+}
+
+var testOrderBy = []struct {
+	Name   string
+	Items  []v3.OrderBy
+	Tags   []string
+	Result string
+}{
+	{
+		Name: "Test 1",
+		Items: []v3.OrderBy{
+			{
+				ColumnName: "name",
+				Order:      "asc",
+			},
+			{
+				ColumnName: constants.SigNozOrderByValue,
+				Order:      "desc",
+			},
+		},
+		Tags:   []string{"name"},
+		Result: "name asc,value desc",
+	},
+	{
+		Name: "Test 2",
+		Items: []v3.OrderBy{
+			{
+				ColumnName: "name",
+				Order:      "asc",
+			},
+			{
+				ColumnName: "bytes",
+				Order:      "asc",
+			},
+		},
+		Tags:   []string{"name", "bytes"},
+		Result: "name asc,bytes asc",
+	},
+	{
+		Name: "Test 3",
+		Items: []v3.OrderBy{
+			{
+				ColumnName: "name",
+				Order:      "asc",
+			},
+			{
+				ColumnName: constants.SigNozOrderByValue,
+				Order:      "asc",
+			},
+			{
+				ColumnName: "bytes",
+				Order:      "asc",
+			},
+		},
+		Tags:   []string{"name", "bytes"},
+		Result: "name asc,bytes asc,value asc",
+	},
+}
+
+func TestOrderBy(t *testing.T) {
+	for _, tt := range testOrderBy {
+		Convey("testOrderBy", t, func() {
+			res := orderBy(tt.Items, tt.Tags)
+			So(res, ShouldEqual, tt.Result)
+
+			// So(multiplier, ShouldEqual, tt.Multiplier)
+			// So(tt.Epoch*multiplier, ShouldEqual, tt.Result)
 		})
 	}
 }
