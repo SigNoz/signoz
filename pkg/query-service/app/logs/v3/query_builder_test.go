@@ -90,7 +90,6 @@ func TestGetSelectLabels(t *testing.T) {
 	for _, tt := range testGetSelectLabelsData {
 		Convey("testGetSelectLabelsData", t, func() {
 			selectLabels, err := getSelectLabels(tt.AggregateOperator, tt.GroupByTags, map[string]v3.AttributeKey{})
-			fmt.Println(selectLabels)
 			So(err, ShouldBeNil)
 			So(selectLabels, ShouldEqual, tt.SelectLabels)
 		})
