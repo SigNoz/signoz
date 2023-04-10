@@ -1,5 +1,5 @@
 import { Option } from 'container/QueryBuilder/type';
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { IBuilderQueryForm } from 'types/api/queryBuilder/queryBuilderData';
 
 import { checkStringEndWIthSpace } from '../../utils/checkStringEndWIthSpace';
@@ -64,6 +64,12 @@ export const useAutoComplete = (query: IBuilderQueryForm): IAutoComplete => {
 			setSearchValue(value);
 		}
 	};
+
+	useEffect(() => {
+		if (searchValue && isValidTag && !isMulti) {
+			handleAddTag(searchValue);
+		}
+	}, [handleAddTag, isMulti, isValidTag, searchValue]);
 
 	const handleKeyDown = useCallback(
 		(e: React.KeyboardEvent): void => {
