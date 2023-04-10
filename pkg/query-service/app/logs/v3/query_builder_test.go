@@ -1,7 +1,6 @@
 package v3
 
 import (
-	"fmt"
 	"testing"
 
 	. "github.com/smartystreets/goconvey/convey"
