@@ -2,10 +2,11 @@ import { Select, Spin } from 'antd';
 import { getAggregateKeys } from 'api/queryBuilder/getAttributeKeys';
 // ** Constants
 import { QueryBuilderKeys } from 'constants/queryBuilder';
+import { selectStyle } from 'container/QueryBuilder/components/Query/config';
 // ** Components
 // ** Helpers
 import { transformStringWithPrefix } from 'lib/query/transformStringWithPrefix';
-import React, { memo, useState } from 'react';
+import React, { memo, useMemo, useState } from 'react';
 import { useQuery } from 'react-query';
 import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { MetricAggregateOperator } from 'types/common/queryBuilder';

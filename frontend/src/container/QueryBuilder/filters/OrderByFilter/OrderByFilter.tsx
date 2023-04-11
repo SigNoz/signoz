@@ -1,6 +1,6 @@
 import { Select, Spin } from 'antd';
 import { getAggregateKeys } from 'api/queryBuilder/getAttributeKeys';
-import { QueryBuilderKeys } from 'constants/useQueryKeys';
+import { QueryBuilderKeys } from 'constants/queryBuilder';
 import { selectStyle } from 'container/QueryBuilder/components/Query/config';
 import { IOption } from 'hooks/useResourceAttribute/types';
 import React, { useCallback, useMemo, useState } from 'react';

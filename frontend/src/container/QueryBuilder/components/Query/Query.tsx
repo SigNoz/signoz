@@ -1,4 +1,4 @@
-import { Col, Input, Row } from 'antd';
+import { Col, Input, Row, Select } from 'antd';
 // ** Constants
 import {
 	initialAggregateAttribute,
@@ -192,9 +192,17 @@ export const Query = memo(function Query({
 		() => query.dataSource === DataSource.METRICS,
 		[query.dataSource],
 	);
-	const handleChangeOrderByKeys = (values: BaseAutocompleteData[]): void => {
-		handleSetQueryData(index, { orderBy: values });
-	};
+
+	const handleChangeOrderByKeys = useCallback(
+		(values: BaseAutocompleteData[]): void => {
+			const newQuery: IBuilderQueryForm = {
+				...query,
+				orderBy: values,
+			};
+			handleSetQueryData(index, newQuery);
+		},
+		[handleSetQueryData, index, query],
+	);
 
 	return (
 		<StyledRow gutter={[0, 15]}>

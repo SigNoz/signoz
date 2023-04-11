@@ -42,7 +42,7 @@ export type IBuilderQuery = {
 	having: Having[];
 	limit: number;
 	stepInterval: number;
-	orderBy: string[];
+	orderBy: BaseAutocompleteData[];
 	reduceTo: string;
 };
 
