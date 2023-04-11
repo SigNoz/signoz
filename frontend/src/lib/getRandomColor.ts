@@ -13,17 +13,33 @@ const getRandomColor = (): string => {
 	return colors[index];
 };
 
+export const SIGNOZ_UI_COLOR_HEX = 'signoz_ui_color_hex';
+
 export const spanServiceNameToColorMapping = (
 	spans: Span[],
 ): { [key: string]: string } => {
-	const serviceNameSet = new Set();
+	const allServiceMap = new Map<string, string | undefined>();
+
 	spans.forEach((spanItem) => {
-		serviceNameSet.add(spanItem[3]);
+		const signozUiColorKeyIndex = spanItem[7].findIndex(
+			(span) => span === SIGNOZ_UI_COLOR_HEX,
+		);
+
+		allServiceMap.set(
+			spanItem[3],
+			signozUiColorKeyIndex === -1
+				? undefined
+				: spanItem[8][signozUiColorKeyIndex],
+		);
 	});
+
 	const serviceToColorMap: { [key: string]: string } = {};
-	Array.from(serviceNameSet).forEach((serviceName, idx) => {
-		serviceToColorMap[`${serviceName}`] = colors[idx % colors.length];
+
+	Array.from(allServiceMap).forEach(([serviceName, signozColor], idx) => {
+		serviceToColorMap[`${serviceName}`] =
+			signozColor || colors[idx % colors.length];
 	});
+
 	return serviceToColorMap;
 };
 
