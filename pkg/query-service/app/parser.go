@@ -848,7 +848,7 @@ func parseFilterAttributeKeyRequest(r *http.Request) (*v3.FilterAttributeKeyRequ
 		return nil, err
 	}
 
-	if err := tagType.Validate(); err != nil {
+	if err := tagType.Validate(); err != nil && tagType != v3.TagType("") {
 		return nil, err
 	}
 
@@ -869,9 +869,9 @@ func parseFilterAttributeValueRequest(r *http.Request) (*v3.FilterAttributeValue
 
 	dataSource := v3.DataSource(r.URL.Query().Get("dataSource"))
 	aggregateOperator := v3.AggregateOperator(r.URL.Query().Get("aggregateOperator"))
+	filterAttributeKeyDataType := v3.AttributeKeyDataType(r.URL.Query().Get("filterAttributeKeyDataType")) // can be empty
 	aggregateAttribute := r.URL.Query().Get("aggregateAttribute")
-	tagType := v3.TagType(r.URL.Query().Get("tagType"))
-	filterAttributeKeyDataType := v3.AttributeKeyDataType(r.URL.Query().Get("filterAttributeKeyDataType"))
+	tagType := v3.TagType(r.URL.Query().Get("tagType")) // can be empty
 
 	limit, err := strconv.Atoi(r.URL.Query().Get("limit"))
 	if err != nil {
@@ -898,11 +898,11 @@ func parseFilterAttributeValueRequest(r *http.Request) (*v3.FilterAttributeValue
 		DataSource:                 dataSource,
 		AggregateOperator:          aggregateOperator,
 		AggregateAttribute:         aggregateAttribute,
-		FilterAttributeKeyDataType: filterAttributeKeyDataType,
 		TagType:                    tagType,
 		Limit:                      limit,
 		SearchText:                 r.URL.Query().Get("searchText"),
 		FilterAttributeKey:         r.URL.Query().Get("attributeKey"),
+		FilterAttributeKeyDataType: filterAttributeKeyDataType,
 	}
 	return &req, nil
 }

@@ -256,19 +256,19 @@ var TracesIndexTableColumns = []v3.AttributeKey{
 	},
 	{
 		Key:      "kind",
-		DataType: v3.AttributeKeyDataTypeNumber,
+		DataType: v3.AttributeKeyDataTypeInt64,
 		Type:     v3.AttributeKeyTypeTag,
 		IsColumn: true,
 	},
 	{
 		Key: "durationNano",
-		DataType: v3.AttributeKeyDataTypeNumber,
+		DataType: v3.AttributeKeyDataTypeFloat64,
 		Type: v3.AttributeKeyTypeTag,
 		IsColumn: true,
 	},
 	{
 		Key: "statusCode",
-		DataType: v3.AttributeKeyDataTypeNumber,
+		DataType: v3.AttributeKeyDataTypeInt64,
 		Type: v3.AttributeKeyTypeTag,
 		IsColumn: true,
 	},
@@ -387,3 +387,48 @@ var TracesIndexTableColumns = []v3.AttributeKey{
 		IsColumn: true,
 	},
 }
+// The datatype present here doesn't represent the actual datatype of column in the logs table.
+var StaticFieldsLogsV3 = []v3.AttributeKey{
+	{
+		Key:      "trace_id",
+		DataType: v3.AttributeKeyDataTypeString,
+		Type:     v3.AttributeKeyTypeTag,
+	},
+	{
+		Key:      "span_id",
+		DataType: v3.AttributeKeyDataTypeString,
+		Type:     v3.AttributeKeyTypeTag,
+	},
+	{
+		Key:      "trace_flags",
+		DataType: v3.AttributeKeyDataTypeInt64,
+		Type:     v3.AttributeKeyTypeTag,
+	},
+	{
+		Key:      "severity_text",
+		DataType: v3.AttributeKeyDataTypeString,
+		Type:     v3.AttributeKeyTypeTag,
+	},
+	{
+		Key:      "severity_number",
+		DataType: v3.AttributeKeyDataTypeInt64,
+		Type:     v3.AttributeKeyTypeTag,
+	},
+	{
+		Key:      "body",
+		DataType: v3.AttributeKeyDataTypeString,
+		Type:     v3.AttributeKeyTypeTag,
+	},
+}
+
+var LogsTopLevelColumnsV3 = map[string]struct{}{
+	"trace_id":        {},
+	"span_id":         {},
+	"trace_flags":     {},
+	"severity_text":   {},
+	"severity_number": {},
+	"timestamp":       {},
+	"id":              {},
+}
+
+const SigNozOrderByValue = "#SIGNOZ_VALUE"
