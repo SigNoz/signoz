@@ -256,7 +256,7 @@ var TracesIndexTableColumns = []v3.AttributeKey{
 	},
 	{
 		Key:      "kind",
-		DataType: v3.AttributeKeyDataTypeInt64,
+		DataType: v3.AttributeKeyDataTypeFloat64,
 		Type:     v3.AttributeKeyTypeTag,
 		IsColumn: true,
 	},
@@ -268,7 +268,7 @@ var TracesIndexTableColumns = []v3.AttributeKey{
 	},
 	{
 		Key: "statusCode",
-		DataType: v3.AttributeKeyDataTypeInt64,
+		DataType: v3.AttributeKeyDataTypeFloat64,
 		Type: v3.AttributeKeyTypeTag,
 		IsColumn: true,
 	},

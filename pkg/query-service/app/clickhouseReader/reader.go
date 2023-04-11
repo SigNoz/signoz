@@ -4343,7 +4343,7 @@ func (r *ClickHouseReader) GetTraceAttributeValues(ctx context.Context, req *v3.
 			}
 			attributeValues.StringAttributeValues = append(attributeValues.StringAttributeValues, strAttributeValue)
 		}
-	case v3.AttributeKeyDataTypeNumber:
+	case v3.AttributeKeyDataTypeFloat64, v3.AttributeKeyDataTypeInt64:
 		if isTraceIndexTableColumn(req.FilterAttributeKey) {
 			query = fmt.Sprintf("SELECT DISTINCT($1) as numberTagValue from %s.%s WHERE tagType=$2 limit $3", r.TraceDB, r.spanAttributeTable)
 			rows, err = r.db.Query(ctx, query, req.FilterAttributeKey, req.TagType, req.Limit)
