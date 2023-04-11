@@ -209,10 +209,11 @@ type FilterAttributeKeyRequest struct {
 type AttributeKeyDataType string
 
 const (
-	AttributeKeyDataTypeString  AttributeKeyDataType = "string"
-	AttributeKeyDataTypeInt64   AttributeKeyDataType = "int64"
-	AttributeKeyDataTypeFloat64 AttributeKeyDataType = "float64"
-	AttributeKeyDataTypeBool    AttributeKeyDataType = "bool"
+	AttributeKeyDataTypeUnspecified AttributeKeyDataType = ""
+	AttributeKeyDataTypeString      AttributeKeyDataType = "string"
+	AttributeKeyDataTypeInt64       AttributeKeyDataType = "int64"
+	AttributeKeyDataTypeFloat64     AttributeKeyDataType = "float64"
+	AttributeKeyDataTypeBool        AttributeKeyDataType = "bool"
 )
 
 func (q AttributeKeyDataType) Validate() error {
@@ -263,7 +264,7 @@ type AttributeKey struct {
 
 func (a AttributeKey) Validate() error {
 	switch a.DataType {
-	case AttributeKeyDataTypeBool, AttributeKeyDataTypeInt64, AttributeKeyDataTypeFloat64, AttributeKeyDataTypeString:
+	case AttributeKeyDataTypeBool, AttributeKeyDataTypeInt64, AttributeKeyDataTypeFloat64, AttributeKeyDataTypeString, AttributeKeyDataTypeUnspecified:
 		break
 	default:
 		return fmt.Errorf("invalid attribute dataType: %s", a.DataType)
@@ -516,7 +517,7 @@ type OrderBy struct {
 
 type Having struct {
 	ColumnName string      `json:"columnName"`
-	Operator   string      `json:"operator"`
+	Operator   string      `json:"op"`
 	Value      interface{} `json:"value"`
 }
 
@@ -537,8 +538,8 @@ type Series struct {
 }
 
 type Row struct {
-	Timestamp time.Time         `json:"timestamp"`
-	Data      map[string]string `json:"data"`
+	Timestamp time.Time              `json:"timestamp"`
+	Data      map[string]interface{} `json:"data"`
 }
 
 type Point struct {

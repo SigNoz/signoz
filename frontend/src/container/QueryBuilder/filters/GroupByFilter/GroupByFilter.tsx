@@ -2,11 +2,11 @@ import { Select, Spin } from 'antd';
 // ** Api
 import { getAggregateKeys } from 'api/queryBuilder/getAttributeKeys';
 // ** Constants
-import { QueryBuilderKeys } from 'constants/useQueryKeys';
+import { QueryBuilderKeys } from 'constants/queryBuilder';
 // ** Components
 // ** Helpers
 import { transformStringWithPrefix } from 'lib/query/transformStringWithPrefix';
-import React, { useState } from 'react';
+import React, { memo, useState } from 'react';
 import { useQuery } from 'react-query';
 import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { SelectOption } from 'types/common/select';
@@ -17,7 +17,7 @@ import {
 	GroupByFilterValue,
 } from './GroupByFilter.interfaces';
 
-export function GroupByFilter({
+export const GroupByFilter = memo(function GroupByFilter({
 	query,
 	onChange,
 }: GroupByFilterProps): JSX.Element {
@@ -97,4 +97,4 @@ export function GroupByFilter({
 			onChange={handleChange}
 		/>
 	);
-}
+});
