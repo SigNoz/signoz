@@ -3,6 +3,7 @@ package clickhouseReader
 import (
 	"bytes"
 	"context"
+	"database/sql"
 	"encoding/json"
 
 	"fmt"
@@ -3784,153 +3785,6 @@ func (r *ClickHouseReader) GetMetricAttributeValues(ctx context.Context, req *v3
 	return &attributeValues, nil
 }
 
-func (r *ClickHouseReader) GetTraceAggregateAttributes(ctx context.Context, req *v3.AggregateAttributeRequest) (*v3.AggregateAttributeResponse, error) {
-	var query string
-	var err error
-	var rows driver.Rows
-	var response v3.AggregateAttributeResponse
-	// TODO: return filtered attributes based on aggregate operator
-	if len(req.SearchText) != 0 {
-		query = fmt.Sprintf("SELECT DISTINCT(tagKey), attType, dataType from %s.%s WHERE tagKey ILIKE $1", r.TraceDB, r.spanAttributeTable)
-	} else {
-		query = fmt.Sprintf("SELECT DISTINCT(tagKey), attType, dataType from %s.%s", r.TraceDB, r.spanAttributeTable)
-	}
-	if req.Limit != 0 {
-		query = query + fmt.Sprintf(" LIMIT %d;", req.Limit)
-	}
-	rows, err = r.db.Query(ctx, query, fmt.Sprintf("%%%s%%", req.SearchText))
-
-	if err != nil {
-		zap.S().Error(err)
-		return nil, fmt.Errorf("error while executing query: %s", err.Error())
-	}
-	defer rows.Close()
-
-	var tagKey string
-	var dataType string
-	var attType string
-	for rows.Next() {
-		if err := rows.Scan(&tagKey, &attType, &dataType); err != nil {
-			return nil, fmt.Errorf("error while scanning rows: %s", err.Error())
-		}
-		key := v3.AttributeKey{
-			Key:      tagKey,
-			DataType: dataType,
-			Type:     attType,
-		}
-		response.AttributeKeys = append(response.AttributeKeys, key)
-	}
-
-	return &response, nil
-}
-
-func (r *ClickHouseReader) GetTraceAttributeKeys(ctx context.Context, req *v3.FilterAttributeKeyRequest) (*v3.FilterAttributeKeyResponse, error) {
-
-	var query string
-	var err error
-	var rows driver.Rows
-	var response v3.FilterAttributeKeyResponse
-
-	if len(req.SearchText) != 0 {
-		query = fmt.Sprintf("SELECT DISTINCT(tagKey), attType, dataType from %s.%s WHERE tagKey ILIKE $1 AND tagType = $2", r.TraceDB, r.spanAttributeTable)
-	} else {
-		query = fmt.Sprintf("SELECT DISTINCT(tagKey), attType, dataType from %s.%s", r.TraceDB, r.spanAttributeTable)
-	}
-
-	if req.Limit != 0 {
-		query = query + fmt.Sprintf(" LIMIT %d;", req.Limit)
-	}
-	rows, err = r.db.Query(ctx, query, fmt.Sprintf("%%%s%%", req.SearchText), req.TagType)
-
-	if err != nil {
-		zap.S().Error(err)
-		return nil, fmt.Errorf("error while executing query: %s", err.Error())
-	}
-	defer rows.Close()
-
-	var tagKey string
-	var dataType string
-	var attType string
-	for rows.Next() {
-		if err := rows.Scan(&tagKey, &attType, &dataType); err != nil {
-			return nil, fmt.Errorf("error while scanning rows: %s", err.Error())
-		}
-		key := v3.AttributeKey{
-			Key:      tagKey,
-			DataType: dataType,
-			Type:     attType,
-		}
-		response.AttributeKeys = append(response.AttributeKeys, key)
-	}
-
-	return &response, nil
-}
-
-func (r *ClickHouseReader) GetTraceAttributeValues(ctx context.Context, req *v3.FilterAttributeValueRequest) (*v3.FilterAttributeValueResponse, error) {
-
-	var query string
-	var err error
-	var rows driver.Rows
-	var attributeValues v3.FilterAttributeValueResponse
-	switch req.FilterAttributeKeyDataType {
-	case v3.AttributeKeyDataTypeString:
-		if len(req.SearchText) != 0 {
-			query = fmt.Sprintf("select distinct stringTagValue  from  %s.%s where tagKey ILIKE $1 and stringTagValue ILIKE $2  and tagType=$3 limit $4", r.TraceDB, r.spanAttributeTable)
-			rows, err = r.db.Query(ctx, query, req.FilterAttributeKey, fmt.Sprintf("%%%s%%", req.SearchText), req.TagType, req.Limit)
-		} else {
-			query = fmt.Sprintf("select distinct stringTagValue from  %s.%s where tagKey ILIKE $1 and tagType=$2 limit $3", r.TraceDB, r.spanAttributeTable)
-			rows, err = r.db.Query(ctx, query, req.FilterAttributeKey, req.TagType, req.Limit)
-		}
-
-		if err != nil {
-			zap.S().Error(err)
-			return nil, fmt.Errorf("error while executing query: %s", err.Error())
-		}
-		defer rows.Close()
-
-		var strAttributeValue string
-		for rows.Next() {
-			if err := rows.Scan(&strAttributeValue); err != nil {
-				return nil, fmt.Errorf("error while scanning rows: %s", err.Error())
-			}
-			if strAttributeValue != "" {
-				attributeValues.StringAttributeValues = append(attributeValues.StringAttributeValues, strAttributeValue)
-			}
-		}
-	//TODO: Number type case to be added, https://github.com/ClickHouse/clickhouse-go/pull/686
-	// case v3.FilterAttributeKeyDataTypeNumber:
-	// if len(req.SearchText) != 0 {
-	// 	query = fmt.Sprintf("select distinct numberTagValue  from  %s.%s where tagKey ILIKE $1 and numberTagValue ILIKE $2  and tagType=$3 limit $4", r.TraceDB, r.spanAttributeTable)
-	// 	rows, err = r.db.Query(ctx, query, req.FilterAttributeKey, fmt.Sprintf("%%%s%%", req.SearchText), req.TagType, req.Limit)
-	// } else {
-	// 	query = fmt.Sprintf("select distinct numberTagValue from  %s.%s where tagKey ILIKE $1 and tagType=$2 limit $3", r.TraceDB, r.spanAttributeTable)
-	// 	rows, err = r.db.Query(ctx, query, req.FilterAttributeKey, req.TagType, req.Limit)
-	// }
-
-	// if err != nil {
-	// 	zap.S().Error(err)
-	// 	return nil, fmt.Errorf("error while executing query: %s", err.Error())
-	// }
-	// defer rows.Close()
-
-	// var numberAttributeValue float64
-	// for rows.Next() {
-	// 	if err := rows.Scan(&numberAttributeValue); err != nil {
-	// 		return nil, fmt.Errorf("error while scanning rows: %s", err.Error())
-	// 	}
-	// 	if numberAttributeValue != nil {
-	// 		attributeValues.NumberAttributeValues = append(attributeValues.NumberAttributeValues, numberAttributeValue)
-	// 	}
-	// }
-	case v3.AttributeKeyDataTypeBool:
-		attributeValues.BoolAttributeValues = []bool{true, false}
-	default:
-		return nil, fmt.Errorf("invalid data type")
-	}
-
-	return &attributeValues, nil
-}
-
 func readRow(vars []interface{}, columnNames []string) ([]string, map[string]string, v3.Point) {
 	// Each row will have a value and a timestamp, and an optional list of label values
 	// example: {Timestamp: ..., Value: ...}
@@ -4078,4 +3932,167 @@ func (r *ClickHouseReader) CheckClickHouse(ctx context.Context) error {
 	defer rows.Close()
 
 	return nil
+}
+
+func (r *ClickHouseReader) GetTraceAggregateAttributes(ctx context.Context, req *v3.AggregateAttributeRequest) (*v3.AggregateAttributeResponse, error) {
+	var query string
+	var err error
+	var rows driver.Rows
+	var response v3.AggregateAttributeResponse
+	// Future TODO: return filtered attributes based on aggregate operator
+	query = fmt.Sprintf("SELECT DISTINCT(tagKey), tagType, dataType from %s.%s WHERE tagKey ILIKE $1", r.TraceDB, r.spanAttributeTable)
+	if req.Limit != 0 {
+		query = query + fmt.Sprintf(" LIMIT %d;", req.Limit)
+	}
+	rows, err = r.db.Query(ctx, query, fmt.Sprintf("%%%s%%", req.SearchText))
+
+	if err != nil {
+		zap.S().Error(err)
+		return nil, fmt.Errorf("error while executing query: %s", err.Error())
+	}
+	defer rows.Close()
+
+	var tagKey string
+	var dataType string
+	var tagType string
+	for rows.Next() {
+		if err := rows.Scan(&tagKey, &tagType, &dataType); err != nil {
+			return nil, fmt.Errorf("error while scanning rows: %s", err.Error())
+		}
+		key := v3.AttributeKey{
+			Key:      tagKey,
+			DataType: v3.AttributeKeyDataType(dataType),
+			Type:     v3.AttributeKeyType(tagType),
+			IsColumn: false,
+		}
+		response.AttributeKeys = append(response.AttributeKeys, key)
+	}
+	if req.SearchText == "" {
+		response.AttributeKeys = append(response.AttributeKeys, constants.TracesIndexTableColumns...)
+	} else {
+		for _, column := range constants.TracesIndexTableColumns {
+			if strings.Contains(column.Key, req.SearchText) {
+				response.AttributeKeys = append(response.AttributeKeys, column)
+			}
+		}
+	}
+	return &response, nil
+}
+
+func (r *ClickHouseReader) GetTraceAttributeKeys(ctx context.Context, req *v3.FilterAttributeKeyRequest) (*v3.FilterAttributeKeyResponse, error) {
+
+	var query string
+	var err error
+	var rows driver.Rows
+	var response v3.FilterAttributeKeyResponse
+
+	query = fmt.Sprintf("SELECT DISTINCT(tagKey), tagType, dataType from %s.%s WHERE tagKey ILIKE $1 AND tagType = $2", r.TraceDB, r.spanAttributeTable)
+
+	if req.Limit != 0 {
+		query = query + fmt.Sprintf(" LIMIT %d;", req.Limit)
+	}
+	rows, err = r.db.Query(ctx, query, fmt.Sprintf("%%%s%%", req.SearchText), req.TagType)
+
+	if err != nil {
+		zap.S().Error(err)
+		return nil, fmt.Errorf("error while executing query: %s", err.Error())
+	}
+	defer rows.Close()
+
+	var tagKey string
+	var dataType string
+	var tagType string
+	for rows.Next() {
+		if err := rows.Scan(&tagKey, &tagType, &dataType); err != nil {
+			return nil, fmt.Errorf("error while scanning rows: %s", err.Error())
+		}
+		key := v3.AttributeKey{
+			Key:      tagKey,
+			DataType: v3.AttributeKeyDataType(dataType),
+			Type:     v3.AttributeKeyType(tagType),
+			IsColumn: false,
+		}
+		response.AttributeKeys = append(response.AttributeKeys, key)
+	}
+	if req.TagType != v3.TagTypeResource {
+		if req.SearchText == "" {
+			response.AttributeKeys = append(response.AttributeKeys, constants.TracesIndexTableColumns...)
+		} else {
+			for _, column := range constants.TracesIndexTableColumns {
+				if strings.Contains(column.Key, req.SearchText) {
+					response.AttributeKeys = append(response.AttributeKeys, column)
+				}
+			}
+		}
+	}
+	return &response, nil
+}
+
+func (r *ClickHouseReader) GetTraceAttributeValues(ctx context.Context, req *v3.FilterAttributeValueRequest) (*v3.FilterAttributeValueResponse, error) {
+
+	var query string
+	var err error
+	var rows driver.Rows
+	var attributeValues v3.FilterAttributeValueResponse
+	switch req.FilterAttributeKeyDataType {
+	case v3.AttributeKeyDataTypeString:
+		if isTraceIndexTableColumn(req.FilterAttributeKey) {
+			query = fmt.Sprintf("SELECT DISTINCT($1) as stringTagValue from %s.%s WHERE stringTagValue ILIKE $2 and tagType=$3 limit $4", r.TraceDB, r.spanAttributeTable)
+			rows, err = r.db.Query(ctx, query, req.FilterAttributeKey, fmt.Sprintf("%%%s%%", req.SearchText), req.TagType, req.Limit)
+		} else {
+			query = fmt.Sprintf("select distinct stringTagValue  from  %s.%s WHERE tagKey ILIKE $1 and stringTagValue ILIKE $2 and tagType=$3 limit $4", r.TraceDB, r.spanAttributeTable)
+			rows, err = r.db.Query(ctx, query, req.FilterAttributeKey, fmt.Sprintf("%%%s%%", req.SearchText), req.TagType, req.Limit)
+		}
+		if err != nil {
+			zap.S().Error(err)
+			return nil, fmt.Errorf("error while executing query: %s", err.Error())
+		}
+		defer rows.Close()
+
+		var strAttributeValue string
+		for rows.Next() {
+			if err := rows.Scan(&strAttributeValue); err != nil {
+				return nil, fmt.Errorf("error while scanning rows: %s", err.Error())
+			}
+			attributeValues.StringAttributeValues = append(attributeValues.StringAttributeValues, strAttributeValue)
+		}
+	case v3.AttributeKeyDataTypeNumber:
+		if isTraceIndexTableColumn(req.FilterAttributeKey) {
+			query = fmt.Sprintf("SELECT DISTINCT($1) as numberTagValue from %s.%s WHERE tagType=$2 limit $3", r.TraceDB, r.spanAttributeTable)
+			rows, err = r.db.Query(ctx, query, req.FilterAttributeKey, req.TagType, req.Limit)
+		} else {
+			query = fmt.Sprintf("select distinct numberTagValue from  %s.%s where tagKey ILIKE $1 and tagType=$2 limit $3", r.TraceDB, r.spanAttributeTable)
+			rows, err = r.db.Query(ctx, query, req.FilterAttributeKey, req.TagType, req.Limit)
+		}
+		if err != nil {
+			zap.S().Error(err)
+			return nil, fmt.Errorf("error while executing query: %s", err.Error())
+		}
+		defer rows.Close()
+
+		var numberAttributeValue sql.NullFloat64
+		for rows.Next() {
+			if err := rows.Scan(&numberAttributeValue); err != nil {
+				return nil, fmt.Errorf("error while scanning rows: %s", err.Error())
+			}
+			if numberAttributeValue.Valid {
+				attributeValues.NumberAttributeValues = append(attributeValues.NumberAttributeValues, numberAttributeValue.Float64)
+			}
+		}
+	case v3.AttributeKeyDataTypeBool:
+		attributeValues.BoolAttributeValues = []bool{true, false}
+	default:
+		return nil, fmt.Errorf("invalid data type")
+	}
+
+	return &attributeValues, nil
+}
+
+func isTraceIndexTableColumn(columnName string) bool {
+	for _, col := range constants.TracesIndexTableColumns {
+		if col.Key == columnName {
+			return true
+		}
+	}
+	return false
 }
