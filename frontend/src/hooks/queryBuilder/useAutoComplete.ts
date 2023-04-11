@@ -50,47 +50,54 @@ export const useAutoComplete = (query: IBuilderQueryForm): IAutoComplete => {
 		handleSearch,
 	);
 
-	const handleSelect = useCallback(
-		(value: string): void => {
-			if (isMulti) {
-				setSearchValue((prev) => {
-					if (prev.includes(value)) {
-						return prev.replace(` ${value}`, '');
-					}
-					return checkStringEndWIthSpace(prev)
-						? `${prev}${value}`
-						: `${prev} ${value}`;
-				});
-			} else {
-				setSearchValue(value);
-				if (isValidTag) handleAddTag(value);
-			}
-		},
-		[handleAddTag, isMulti, isValidTag],
-	);
-
-	const handleKeyDown = (e: React.KeyboardEvent): void => {
-		if (
-			e.key === ' ' &&
-			(searchValue.endsWith(' ') || searchValue.length === 0)
-		) {
-			e.preventDefault();
-		}
-
-		if (e.key === 'Enter' && searchValue && isValidTag) {
-			if (isMulti || isFreeText) {
-				e.stopPropagation();
-			}
-			e.preventDefault();
-			if (isMulti) handleAddTag(searchValue);
-		}
-
-		if (e.key === 'Backspace' && !searchValue) {
-			e.stopPropagation();
-			const last = tags[tags.length - 1];
-			handleClearTag(last);
+	const handleSelect = (value: string): void => {
+		if (isMulti) {
+			setSearchValue((prev) => {
+				if (prev.includes(value)) {
+					return prev.replace(` ${value}`, '');
+				}
+				return checkStringEndWIthSpace(prev)
+					? `${prev}${value}`
+					: `${prev} ${value}`;
+			});
+		} else if (!result.length) {
+			setSearchValue(value);
 		}
 	};
+
+	const handleKeyDown = useCallback(
+		(e: React.KeyboardEvent): void => {
+			if (
+				e.key === ' ' &&
+				(searchValue.endsWith(' ') || searchValue.length === 0)
+			) {
+				e.preventDefault();
+			}
+
+			if (e.key === 'Enter' && searchValue && isValidTag) {
+				if (isMulti || isFreeText) {
+					e.stopPropagation();
+				}
+				e.preventDefault();
+				handleAddTag(searchValue);
+			}
+
+			if (e.key === 'Backspace' && !searchValue) {
+				e.stopPropagation();
+				const last = tags[tags.length - 1];
+				handleClearTag(last);
+			}
+		},
+		[
+			handleAddTag,
+			handleClearTag,
+			isFreeText,
+			isMulti,
+			isValidTag,
+			searchValue,
+			tags,
+		],
+	);
 
 	const options = useOptions(
 		key,
