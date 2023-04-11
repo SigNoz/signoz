@@ -19,6 +19,7 @@ import {
 	OperatorsSelect,
 	ReduceToFilter,
 } from 'container/QueryBuilder/filters';
+import LimitFilter from 'container/QueryBuilder/filters/LimitFilter/LimitFilter';
 import QueryBuilderSearch from 'container/QueryBuilder/filters/QueryBuilderSearch';
 import { useQueryBuilder } from 'hooks/useQueryBuilder';
 import { findDataTypeOfOperator } from 'lib/query/findDataTypeOfOperator';
@@ -64,6 +65,7 @@ export const Query = memo(function Query({
 				...query,
 				aggregateOperator: value,
 				having: [],
+				limit: null,
 			};
 
 			if (!aggregateDataType || query.dataSource === DataSource.METRICS) {
@@ -191,6 +193,17 @@ export const Query = memo(function Query({
 		[query.dataSource],
 	);
 
+	const handleChangeLimit = useCallback(
+		(value: number | null): void => {
+			const newQuery: IBuilderQueryForm = {
+				...query,
+				limit: value,
+			};
+			handleSetQueryData(index, newQuery);
+		},
+		[index, query, handleSetQueryData],
+	);
+
 	return (
 		<StyledRow gutter={[0, 15]}>
 			<StyledDeleteEntity onClick={handleDeleteQuery} />
@@ -253,8 +266,16 @@ export const Query = memo(function Query({
 			</Col>
 			<Col span={24}>
 				<AdditionalFiltersToggler listOfAdditionalFilter={listOfAdditionalFilters}>
-					{/* TODO: Render filter by Col component */}
-					test additional filter
+					{!isMatricsDataSource && (
+						<Row gutter={[11, 5]}>
+							<Col span={6}>
+								<FilterLabel label="Limit" />
+							</Col>
+							<Col span={18}>
+								<LimitFilter query={query} onChange={handleChangeLimit} />
+							</Col>
+						</Row>
+					)}
 				</AdditionalFiltersToggler>
 			</Col>
 			<Row style={{ width: '100%' }}>
