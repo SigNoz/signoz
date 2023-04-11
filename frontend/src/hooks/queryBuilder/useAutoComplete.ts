@@ -57,8 +57,8 @@ export const useAutoComplete = (query: IBuilderQueryForm): IAutoComplete => {
 					return prev.replace(` ${value}`, '');
 				}
 				return checkStringEndWIthSpace(prev)
-					? `${prev}${value}`
-					: `${prev} ${value}`;
+					? `${prev} ${value}`
+					: `${prev}, ${value}`;
 			});
 		} else if (!result.length) {
 			setSearchValue(value);
