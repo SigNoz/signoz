@@ -3,6 +3,7 @@ import { getAggregateKeys } from 'api/queryBuilder/getAttributeKeys';
 import { QueryBuilderKeys } from 'constants/queryBuilder';
 import { selectStyle } from 'container/QueryBuilder/components/Query/config';
 import { IOption } from 'hooks/useResourceAttribute/types';
+import { transformStringWithPrefix } from 'lib/query/transformStringWithPrefix';
 import React, { useCallback, useMemo, useState } from 'react';
 import { useQuery } from 'react-query';
 import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
@@ -102,17 +103,37 @@ export function OrderByFilter({
 		onChange(orderByValues);
 	};
 
+	const values: OrderByFilterValue[] = query.orderBy.map((item) => ({
+		label: transformStringWithPrefix({
+			str: item.key,
+			prefix: item.type || '',
+			condition: !item.isColumn,
+		}),
+		key: item.key,
+		value: item.key,
+		disabled: undefined,
+		title: undefined,
+	}));
+
+	const isDisabledSelect = useMemo(
+		() =>
+			!query.aggregateAttribute.key ||
+			query.aggregateOperator === MetricAggregateOperator.NOOP,
+		[query.aggregateAttribute.key, query.aggregateOperator],
+	);
+
 	return (
 		<Select
 			mode="tags"
 			style={selectStyle}
 			onSearch={handleSearchKeys}
 			showSearch
-			disabled={!query.aggregateAttribute.key}
+			disabled={isDisabledSelect}
 			showArrow={false}
 			filterOption={false}
 			options={optionsData}
 			labelInValue
+			value={values}
 			notFoundContent={isFetching ? <Spin size="small" /> : null}
 			onChange={handleChange}
 		/>

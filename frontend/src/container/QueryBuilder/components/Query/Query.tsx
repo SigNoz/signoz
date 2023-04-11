@@ -66,9 +66,11 @@ export const Query = memo(function Query({
 				...query,
 				aggregateOperator: value,
 				having: [],
+				groupBy: [],
+				orderBy: [],
 			};
 
-			if (!aggregateDataType || query.dataSource === DataSource.METRICS) {
+			if (!aggregateDataType) {
 				handleSetQueryData(index, newQuery);
 				return;
 			}
@@ -266,8 +268,16 @@ export const Query = memo(function Query({
 			</Col>
 			<Col span={24}>
 				<AdditionalFiltersToggler listOfAdditionalFilter={listOfAdditionalFilters}>
-					{/* TODO: Render filter by Col component */}
-					test additional filter
+					{!isMatricsDataSource && (
+						<Row gutter={[11, 5]}>
+							<Col span={2}>
+								<FilterLabel label="Order by" />
+							</Col>
+							<Col span={10}>
+								<OrderByFilter query={query} onChange={handleChangeOrderByKeys} />
+							</Col>
+						</Row>
+					)}
 				</AdditionalFiltersToggler>
 			</Col>
 			<Row style={{ width: '100%' }}>
@@ -278,16 +288,6 @@ export const Query = memo(function Query({
 					addonBefore="Legend Format"
 				/>
 			</Row>
-			<Col span={11}>
-				<Row gutter={[11, 5]}>
-					<Col flex="95px">
-						<FilterLabel label="Order by" />
-					</Col>
-					<Col flex="1 1 200px">
-						<OrderByFilter query={query} onChange={handleChangeOrderByKeys} />
-					</Col>
-				</Row>
-			</Col>
 		</StyledRow>
 	);
 });
