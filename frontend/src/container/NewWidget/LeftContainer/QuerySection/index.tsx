@@ -169,7 +169,7 @@ function QuerySection({
 				/>
 
 				// TODO: uncomment for testing new QueryBuilder
-				// <QueryBuilder />
+				// <QueryBuilder panelType={selectedGraph} />
 			),
 		},
 		{
