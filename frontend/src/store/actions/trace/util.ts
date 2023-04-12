@@ -26,44 +26,21 @@ export const updateURL = (
 	spanAggregateCurrentPageSize: TraceReducer['spansAggregate']['pageSize'],
 	spanAggregateOrderParam: TraceReducer['spansAggregate']['orderParam'],
 ): void => {
-	const search = new URLSearchParams(window.location.search);
-	const preResult: { key: string; value: string }[] = [];
+	const updatedUserSelectedFilter = Object.fromEntries(userSelectedFilter);
 
-	const keyToSkip = [
-		'selected',
-		'filterToFetchData',
-		'selectedTags',
-		'filter',
-		'isFilterExclude',
-		'userSelectedFilter',
-		'spanAggregateCurrentPage',
-		'spanAggregateOrder',
-		'spanAggregateCurrentPageSize',
-		'spanAggregateOrderParam',
-	];
-
-	search.forEach((value, key) => {
-		if (!keyToSkip.includes(key)) {
-			preResult.push({
-				key,
-				value,
-			});
-		}
-	});
+	updatedUserSelectedFilter.httpUrl = [];
 
 	history.replace(
 		`${history.location.pathname}?selected=${JSON.stringify(
 			Object.fromEntries(selectedFilter),
 		)}&filterToFetchData=${JSON.stringify(
 			filterToFetchData,
-		)}&spanAggregateCurrentPage=${spanAggregateCurrentPage}&selectedTags=${JSON.stringify(
+		)}&selectedTags=${JSON.stringify(
 			selectedTags,
-		)}&${preResult
-			.map((e) => `${e.key}=${e.value}`)
-			.join('&')}&isFilterExclude=${JSON.stringify(
+		)}&isFilterExclude=${JSON.stringify(
 			Object.fromEntries(isFilterExclude),
 		)}&userSelectedFilter=${JSON.stringify(
-			Object.fromEntries(userSelectedFilter),
+			updatedUserSelectedFilter,
 		)}&spanAggregateCurrentPage=${spanAggregateCurrentPage}&spanAggregateOrder=${spanAggregateOrder}&spanAggregateCurrentPageSize=${spanAggregateCurrentPageSize}&spanAggregateOrderParam=${spanAggregateOrderParam}`,
 	);
 };
