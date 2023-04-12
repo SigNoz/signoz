@@ -129,7 +129,8 @@ function VariableItem({
 
 	useEffect(() => {
 		getOptions();
-	}, [getOptions]);
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, []);
 
 	const handleChange = (value: string | string[]): void => {
 		if (
