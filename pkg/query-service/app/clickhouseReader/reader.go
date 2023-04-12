@@ -4227,7 +4227,7 @@ func (r *ClickHouseReader) GetTraceAggregateAttributes(ctx context.Context, req 
 	var rows driver.Rows
 	var response v3.AggregateAttributeResponse
 	// Future TODO: return filtered attributes based on aggregate operator
-	query = fmt.Sprintf("SELECT DISTINCT(tagKey), tagType, dataType from %s.%s WHERE tagKey ILIKE $1", r.TraceDB, r.spanAttributeTable)
+	query = fmt.Sprintf("SELECT DISTINCT(tagKey), tagType, dataType, isColumn FROM %s.%s WHERE tagKey ILIKE $1", r.TraceDB, r.spanAttributeTable)
 	if req.Limit != 0 {
 		query = query + fmt.Sprintf(" LIMIT %d;", req.Limit)
 	}
@@ -4242,26 +4242,18 @@ func (r *ClickHouseReader) GetTraceAggregateAttributes(ctx context.Context, req 
 	var tagKey string
 	var dataType string
 	var tagType string
+	var isColumn bool
 	for rows.Next() {
-		if err := rows.Scan(&tagKey, &tagType, &dataType); err != nil {
+		if err := rows.Scan(&tagKey, &tagType, &dataType, &isColumn); err != nil {
 			return nil, fmt.Errorf("error while scanning rows: %s", err.Error())
 		}
 		key := v3.AttributeKey{
 			Key:      tagKey,
 			DataType: v3.AttributeKeyDataType(dataType),
 			Type:     v3.AttributeKeyType(tagType),
-			IsColumn: false,
+			IsColumn: isColumn,
 		}
 		response.AttributeKeys = append(response.AttributeKeys, key)
-	}
-	if req.SearchText == "" {
-		response.AttributeKeys = append(response.AttributeKeys, constants.TracesIndexTableColumns...)
-	} else {
-		for _, column := range constants.TracesIndexTableColumns {
-			if strings.Contains(column.Key, req.SearchText) {
-				response.AttributeKeys = append(response.AttributeKeys, column)
-			}
-		}
 	}
 	return &response, nil
 }
@@ -4273,7 +4265,7 @@ func (r *ClickHouseReader) GetTraceAttributeKeys(ctx context.Context, req *v3.Fi
 	var rows driver.Rows
 	var response v3.FilterAttributeKeyResponse
 
-	query = fmt.Sprintf("SELECT DISTINCT(tagKey), tagType, dataType from %s.%s WHERE tagKey ILIKE $1 AND tagType = $2", r.TraceDB, r.spanAttributeTable)
+	query = fmt.Sprintf("SELECT DISTINCT(tagKey), tagType, dataType, isColumn FROM %s.%s WHERE tagKey ILIKE $1 AND tagType = $2", r.TraceDB, r.spanAttributeTable)
 
 	if req.Limit != 0 {
 		query = query + fmt.Sprintf(" LIMIT %d;", req.Limit)
@@ -4289,28 +4281,18 @@ func (r *ClickHouseReader) GetTraceAttributeKeys(ctx context.Context, req *v3.Fi
 	var tagKey string
 	var dataType string
 	var tagType string
+	var isColumn bool
 	for rows.Next() {
-		if err := rows.Scan(&tagKey, &tagType, &dataType); err != nil {
+		if err := rows.Scan(&tagKey, &tagType, &dataType, &isColumn); err != nil {
 			return nil, fmt.Errorf("error while scanning rows: %s", err.Error())
 		}
 		key := v3.AttributeKey{
 			Key:      tagKey,
 			DataType: v3.AttributeKeyDataType(dataType),
 			Type:     v3.AttributeKeyType(tagType),
-			IsColumn: false,
+			IsColumn: isColumn,
 		}
 		response.AttributeKeys = append(response.AttributeKeys, key)
-	}
-	if req.TagType != v3.TagTypeResource {
-		if req.SearchText == "" {
-			response.AttributeKeys = append(response.AttributeKeys, constants.TracesIndexTableColumns...)
-		} else {
-			for _, column := range constants.TracesIndexTableColumns {
-				if strings.Contains(column.Key, req.SearchText) {
-					response.AttributeKeys = append(response.AttributeKeys, column)
-				}
-			}
-		}
 	}
 	return &response, nil
 }
@@ -4323,13 +4305,9 @@ func (r *ClickHouseReader) GetTraceAttributeValues(ctx context.Context, req *v3.
 	var attributeValues v3.FilterAttributeValueResponse
 	switch req.FilterAttributeKeyDataType {
 	case v3.AttributeKeyDataTypeString:
-		if isTraceIndexTableColumn(req.FilterAttributeKey) {
-			query = fmt.Sprintf("SELECT DISTINCT($1) as stringTagValue from %s.%s WHERE stringTagValue ILIKE $2 and tagType=$3 limit $4", r.TraceDB, r.spanAttributeTable)
-			rows, err = r.db.Query(ctx, query, req.FilterAttributeKey, fmt.Sprintf("%%%s%%", req.SearchText), req.TagType, req.Limit)
-		} else {
-			query = fmt.Sprintf("select distinct stringTagValue  from  %s.%s WHERE tagKey ILIKE $1 and stringTagValue ILIKE $2 and tagType=$3 limit $4", r.TraceDB, r.spanAttributeTable)
-			rows, err = r.db.Query(ctx, query, req.FilterAttributeKey, fmt.Sprintf("%%%s%%", req.SearchText), req.TagType, req.Limit)
-		}
+		query = fmt.Sprintf("SELECT DISTINCT stringTagValue from  %s.%s WHERE tagKey ILIKE $1 AND stringTagValue ILIKE $2 AND tagType=$3 limit $4", r.TraceDB, r.spanAttributeTable)
+		fmt.Println(query)
+		rows, err = r.db.Query(ctx, query, req.FilterAttributeKey, fmt.Sprintf("%%%s%%", req.SearchText), req.TagType, req.Limit)
 		if err != nil {
 			zap.S().Error(err)
 			return nil, fmt.Errorf("error while executing query: %s", err.Error())
@@ -4344,13 +4322,8 @@ func (r *ClickHouseReader) GetTraceAttributeValues(ctx context.Context, req *v3.
 			attributeValues.StringAttributeValues = append(attributeValues.StringAttributeValues, strAttributeValue)
 		}
 	case v3.AttributeKeyDataTypeFloat64, v3.AttributeKeyDataTypeInt64:
-		if isTraceIndexTableColumn(req.FilterAttributeKey) {
-			query = fmt.Sprintf("SELECT DISTINCT($1) as numberTagValue from %s.%s WHERE tagType=$2 limit $3", r.TraceDB, r.spanAttributeTable)
-			rows, err = r.db.Query(ctx, query, req.FilterAttributeKey, req.TagType, req.Limit)
-		} else {
-			query = fmt.Sprintf("select distinct numberTagValue from  %s.%s where tagKey ILIKE $1 and tagType=$2 limit $3", r.TraceDB, r.spanAttributeTable)
-			rows, err = r.db.Query(ctx, query, req.FilterAttributeKey, req.TagType, req.Limit)
-		}
+		query = fmt.Sprintf("SELECT DISTINCT numberTagValue from %s.%s where tagKey ILIKE $1 AND toString(numberTagValue) ILIKE $2 AND tagType=$3 limit $4", r.TraceDB, r.spanAttributeTable)
+		rows, err = r.db.Query(ctx, query, req.FilterAttributeKey, fmt.Sprintf("%%%s%%", req.SearchText), req.TagType, req.Limit)
 		if err != nil {
 			zap.S().Error(err)
 			return nil, fmt.Errorf("error while executing query: %s", err.Error())
@@ -4373,13 +4346,4 @@ func (r *ClickHouseReader) GetTraceAttributeValues(ctx context.Context, req *v3.
 	}
 
 	return &attributeValues, nil
-}
-
-func isTraceIndexTableColumn(columnName string) bool {
-	for _, col := range constants.TracesIndexTableColumns {
-		if col.Key == columnName {
-			return true
-		}
-	}
-	return false
 }
