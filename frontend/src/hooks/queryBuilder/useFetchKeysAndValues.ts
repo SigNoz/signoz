@@ -15,13 +15,19 @@ type UseFetchKeysAndValuesReturnValues = {
 	isFetching: boolean;
 };
 
+/**
+ * Custom hook to fetch attribute keys and values from an API
+ * @param searchValue - the search query value
+ * @param query - an object containing data for the query
+ * @returns an object containing the fetched attribute keys, results, and the status of the fetch
+ */
+
 export const useFetchKeysAndValues = (
 	searchValue: string,
 	query: IBuilderQueryForm,
 ): UseFetchKeysAndValuesReturnValues => {
 	const [keys, setKeys] = useState<AttributeKeyOptions[]>([]);
 	const [results, setResults] = useState<string[]>([]);
-
 	const { data, isFetching, status } = useQuery(
 		[
 			'GET_ATTRIBUTE_KEY',
@@ -40,19 +46,17 @@ export const useFetchKeysAndValues = (
 		{ enabled: !!query.aggregateOperator && !!query.dataSource },
 	);
 
-	useEffect(() => {
-		if (status === 'success' && data?.payload) {
-			setKeys(data?.payload);
-		} else {
-			setKeys([]);
-		}
-	}, [data?.payload, status]);
-
+	/**
+	 * Fetches the options to be displayed based on the selected value
+	 * @param value - the selected value
+	 * @param query - an object containing data for the query
+	 */
 	const handleFetchOption = async (
 		value: string,
 		query: IBuilderQueryForm,
 	): Promise<void> => {
 		if (value) {
+			// separate the search value into the attribute key and the operator
 			const [tKey, operator] = separateSearchValue(value);
 			setResults([]);
 			if (tKey && operator) {
@@ -75,13 +79,24 @@ export const useFetchKeysAndValues = (
 		}
 	};
 
+	// creates a ref to the fetch function so that it doesn't change on every render
 	const clearFetcher = useRef(handleFetchOption).current;
 
+	// debounces the fetch function to avoid excessive API calls
 	useDebounce(() => clearFetcher(searchValue, query), 500, [
 		clearFetcher,
 		searchValue,
 		query,
 	]);
+
+	// update the fetched keys when the fetch status changes
+	useEffect(() => {
+		if (status === 'success' && data?.payload) {
+			setKeys(data?.payload);
+		} else {
+			setKeys([]);
+		}
+	}, [data?.payload, status]);
 
 	return {
 		keys,

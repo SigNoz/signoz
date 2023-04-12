@@ -2,27 +2,27 @@ import { Option } from 'container/QueryBuilder/type';
 import React, { useCallback, useState } from 'react';
 import { IBuilderQueryForm } from 'types/api/queryBuilder/queryBuilderData';
 
-import { checkStringEndWIthSpace } from '../../utils/checkStringEndWIthSpace';
+import { checkStringEndsWithSpace } from '../../utils/checkStringEndsWithSpace';
 import { useFetchKeysAndValues } from './useFetchKeysAndValues';
 import { useOptions } from './useOptions';
 import { useSetCurrentKeyAndOperator } from './useSetCurrentKeyAndOperator';
 import { useTag } from './useTag';
 import { useTagValidation } from './useTagValidation';
 
-type IAutoComplete = {
+interface IAutoComplete {
 	handleSearch: (value: string) => void;
 	handleClearTag: (value: string) => void;
 	handleSelect: (value: string) => void;
-	handleKeyDown: (e: React.KeyboardEvent) => void;
+	handleKeyDown: (event: React.KeyboardEvent) => void;
 	options: Option[];
 	tags: string[];
 	searchValue: string;
 	isMulti: boolean;
 	isFetching: boolean;
-};
+}
 
 export const useAutoComplete = (query: IBuilderQueryForm): IAutoComplete => {
-	const [searchValue, setSearchValue] = useState('');
+	const [searchValue, setSearchValue] = useState<string>('');
 
 	const handleSearch = useCallback((value: string) => {
 		setSearchValue(value);
@@ -52,11 +52,11 @@ export const useAutoComplete = (query: IBuilderQueryForm): IAutoComplete => {
 
 	const handleSelect = (value: string): void => {
 		if (isMulti) {
-			setSearchValue((prev) => {
+			setSearchValue((prev: string) => {
 				if (prev.includes(value)) {
 					return prev.replace(` ${value}`, '');
 				}
-				return checkStringEndWIthSpace(prev)
+				return checkStringEndsWithSpace(prev)
 					? `${prev} ${value}`
 					: `${prev}, ${value}`;
 			});
@@ -66,24 +66,24 @@ export const useAutoComplete = (query: IBuilderQueryForm): IAutoComplete => {
 	};
 
 	const handleKeyDown = useCallback(
-		(e: React.KeyboardEvent): void => {
+		(event: React.KeyboardEvent): void => {
 			if (
-				e.key === ' ' &&
+				event.key === ' ' &&
 				(searchValue.endsWith(' ') || searchValue.length === 0)
 			) {
-				e.preventDefault();
+				event.preventDefault();
 			}
 
-			if (e.key === 'Enter' && searchValue && isValidTag) {
+			if (event.key === 'Enter' && searchValue && isValidTag) {
 				if (isMulti || isFreeText) {
-					e.stopPropagation();
+					event.stopPropagation();
 				}
-				e.preventDefault();
+				event.preventDefault();
 				handleAddTag(searchValue);
 			}
 
-			if (e.key === 'Backspace' && !searchValue) {
-				e.stopPropagation();
+			if (event.key === 'Backspace' && !searchValue) {
+				event.stopPropagation();
 				const last = tags[tags.length - 1];
 				handleClearTag(last);
 			}

@@ -3,16 +3,17 @@ import { useMemo } from 'react';
 import { getCountOfSpace } from 'utils/getCountOfSpace';
 import { separateSearchValue } from 'utils/separateSearchValue';
 
-type ISetCurrentKeyAndOperator = [string, string, string[]];
+type ICurrentKeyAndOperator = [string, string, string[]];
 
 export const useSetCurrentKeyAndOperator = (
 	value: string,
 	keys: AttributeKeyOptions[],
-): ISetCurrentKeyAndOperator =>
-	useMemo((): ISetCurrentKeyAndOperator => {
+): ICurrentKeyAndOperator => {
+	const [key, operator, result] = useMemo(() => {
 		let key = '';
 		let operator = '';
 		let result: string[] = [];
+
 		if (value) {
 			const [tKey, tOperator, tResult] = separateSearchValue(value);
 			const isSuggestKey = keys?.some((el) => el.key === tKey);
@@ -25,4 +26,7 @@ export const useSetCurrentKeyAndOperator = (
 		}
 
 		return [key, operator, result];
-	}, [keys, value]);
+	}, [value, keys]);
+
+	return [key, operator, result];
+};

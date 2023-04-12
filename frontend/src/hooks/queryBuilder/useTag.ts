@@ -1,32 +1,47 @@
 import { useCallback, useState } from 'react';
 
-type UseTagReturnT = {
+type IUseTag = {
 	handleAddTag: (value: string) => void;
 	handleClearTag: (value: string) => void;
 	tags: string[];
 };
 
+/**
+ * A custom React hook for handling tags.
+ * @param {string} key - A string value to identify tags.
+ * @param {boolean} isValidTag - A boolean value to indicate whether the tag is valid.
+ * @param {boolean} isFreeText - A boolean value to indicate whether free text is allowed.
+ * @param {function} handleSearch - A callback function to handle search.
+ * @returns {IUseTag} The return object containing handlers and tags.
+ */
 export const useTag = (
 	key: string,
 	isValidTag: boolean,
 	isFreeText: boolean,
 	handleSearch: (value: string) => void,
-): UseTagReturnT => {
+): IUseTag => {
 	const [tags, setTags] = useState<string[]>([]);
 
+	/**
+	 * Adds a new tag to the tag list.
+	 * @param {string} value - The tag value to be added.
+	 */
 	const handleAddTag = useCallback(
 		(value: string): void => {
 			if ((value && key && isValidTag) || isFreeText) {
-				setTags((prev) => [...prev, value]);
+				setTags((prevTags) => [...prevTags, value]);
 				handleSearch('');
 			}
 		},
 		[key, isValidTag, isFreeText, handleSearch],
 	);
 
-	// REMOVE TAGS
+	/**
+	 * Removes a tag from the tag list.
+	 * @param {string} value - The tag value to be removed.
+	 */
 	const handleClearTag = useCallback((value: string): void => {
-		setTags((prev) => prev.filter((v) => v !== value));
+		setTags((prevTags) => prevTags.filter((v) => v !== value));
 	}, []);
 
 	return { handleAddTag, handleClearTag, tags };

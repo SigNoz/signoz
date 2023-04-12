@@ -1,7 +1,7 @@
 import { QUERY_BUILDER_SEARCH_VALUES } from 'constants/queryBuilder';
 import { useMemo } from 'react';
+import { checkStringEndsWithSpace } from 'utils/checkStringEndsWithSpace';
 
-import { checkStringEndWIthSpace } from '../../utils/checkStringEndWIthSpace';
 import { useIsValidTag } from './useIsValidTag';
 import { useOperatorType } from './useOperatorType';
 
@@ -19,18 +19,17 @@ export const useTagValidation = (
 	result: string[],
 ): ITagValidation => {
 	const operatorType = useOperatorType(operator);
-
 	const isValidTag = useIsValidTag(operatorType, result.length);
 
-	const { isExist, isValidOperator, isMulti, isFreeText } = useMemo(
-		() => ({
-			isExist: operatorType === QUERY_BUILDER_SEARCH_VALUES.NON,
-			isValidOperator: operatorType !== QUERY_BUILDER_SEARCH_VALUES.NOT_VALID,
-			isMulti: operatorType === QUERY_BUILDER_SEARCH_VALUES.MULTIPLY,
-			isFreeText: operator === '' && !checkStringEndWIthSpace(value),
-		}),
-		[operator, operatorType, value],
-	);
+	const { isExist, isValidOperator, isMulti, isFreeText } = useMemo(() => {
+		const isExist = operatorType === QUERY_BUILDER_SEARCH_VALUES.NON;
+		const isValidOperator =
+			operatorType !== QUERY_BUILDER_SEARCH_VALUES.NOT_VALID;
+		const isMulti = operatorType === QUERY_BUILDER_SEARCH_VALUES.MULTIPLY;
+		const isFreeText = operator === '' && !checkStringEndsWithSpace(value);
+
+		return { isExist, isValidOperator, isMulti, isFreeText };
+	}, [operator, operatorType, value]);
 
 	return { isValidTag, isExist, isValidOperator, isMulti, isFreeText };
 };
