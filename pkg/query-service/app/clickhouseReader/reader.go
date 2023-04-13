@@ -4336,7 +4336,6 @@ func (r *ClickHouseReader) GetTraceAttributeValues(ctx context.Context, req *v3.
 	switch req.FilterAttributeKeyDataType {
 	case v3.AttributeKeyDataTypeString:
 		query = fmt.Sprintf("SELECT DISTINCT stringTagValue from %s.%s WHERE tagKey = $1 AND stringTagValue ILIKE $2 AND tagType=$3 limit $4", r.TraceDB, r.spanAttributeTable)
-		fmt.Println(query)
 		rows, err = r.db.Query(ctx, query, req.FilterAttributeKey, fmt.Sprintf("%%%s%%", req.SearchText), req.TagType, req.Limit)
 		if err != nil {
 			zap.S().Error(err)
