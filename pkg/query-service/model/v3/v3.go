@@ -221,7 +221,7 @@ func (q AttributeKeyDataType) Validate() error {
 	case AttributeKeyDataTypeString, AttributeKeyDataTypeInt64, AttributeKeyDataTypeFloat64, AttributeKeyDataTypeBool:
 		return nil
 	default:
-		return fmt.Errorf("invalid tag type: %s", q)
+		return fmt.Errorf("invalid tag data type: %s", q)
 	}
 }
 
