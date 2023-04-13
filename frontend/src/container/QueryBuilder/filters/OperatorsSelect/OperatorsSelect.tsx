@@ -1,5 +1,5 @@
 import { Select } from 'antd';
-import React from 'react';
+import React, { memo } from 'react';
 // ** Types
 import { SelectOption } from 'types/common/select';
 // ** Helpers
@@ -7,7 +7,7 @@ import { transformToUpperCase } from 'utils/transformToUpperCase';
 
 import { OperatorsSelectProps } from './OperatorsSelect.interfaces';
 
-export function OperatorsSelect({
+export const OperatorsSelect = memo(function OperatorsSelect({
 	operators,
 	value,
 	onChange,
@@ -25,8 +25,9 @@ export function OperatorsSelect({
 			options={operatorsOptions}
 			value={value}
 			onChange={onChange}
+			style={{ width: '100%' }}
 			// eslint-disable-next-line react/jsx-props-no-spreading
 			{...props}
 		/>
 	);
-}
+});

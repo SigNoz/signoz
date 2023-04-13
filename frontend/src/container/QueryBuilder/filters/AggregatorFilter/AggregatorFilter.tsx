@@ -2,8 +2,9 @@
 import { AutoComplete, Spin } from 'antd';
 // ** Api
 import { getAggregateAttribute } from 'api/queryBuilder/getAggregateAttribute';
+import { initialAggregateAttribute } from 'constants/queryBuilder';
 import { transformStringWithPrefix } from 'lib/query/transformStringWithPrefix';
-import React, { useMemo, useState } from 'react';
+import React, { memo, useMemo, useState } from 'react';
 import { useQuery } from 'react-query';
 import { SelectOption } from 'types/common/select';
 import { transformToUpperCase } from 'utils/transformToUpperCase';
@@ -11,7 +12,7 @@ import { transformToUpperCase } from 'utils/transformToUpperCase';
 // ** Types
 import { AgregatorFilterProps } from './AggregatorFilter.intefaces';
 
-export function AggregatorFilter({
+export const AggregatorFilter = memo(function AggregatorFilter({
 	onChange,
 	query,
 }: AgregatorFilterProps): JSX.Element {
@@ -50,7 +51,7 @@ export function AggregatorFilter({
 	const handleChangeAttribute = (value: string): void => {
 		const currentAttributeObj = data?.payload?.attributeKeys?.find(
 			(item) => item.key === value,
-		) || { key: value, type: null, dataType: null, isColumn: null };
+		) || { ...initialAggregateAttribute, key: value };
 
 		onChange(currentAttributeObj);
 	};
@@ -68,10 +69,8 @@ export function AggregatorFilter({
 	return (
 		<AutoComplete
 			showSearch
-			placeholder={`${transformToUpperCase(
-				query.dataSource,
-			)} Name (Start typing to get suggestions)`}
-			style={{ flex: 1, minWidth: 200 }}
+			placeholder={`${transformToUpperCase(query.dataSource)} name`}
+			style={{ width: '100%' }}
 			showArrow={false}
 			filterOption={false}
 			onSearch={handleSearchAttribute}
@@ -81,4 +80,4 @@ export function AggregatorFilter({
 			onChange={handleChangeAttribute}
 		/>
 	);
-}
+});

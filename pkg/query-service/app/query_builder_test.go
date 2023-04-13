@@ -22,7 +22,7 @@ func TestBuildQueryWithMultipleQueriesAndFormula(t *testing.T) {
 						DataSource:         v3.DataSourceMetrics,
 						AggregateAttribute: v3.AttributeKey{Key: "name"},
 						Filters: &v3.FilterSet{Operator: "AND", Items: []v3.FilterItem{
-							{Key: v3.AttributeKey{Key: "in"}, Value: []interface{}{"a", "b", "c"}, Operator: "in"},
+							{Key: v3.AttributeKey{Key: "in"}, Value: []interface{}{"a", "b", "c"}, Operator: v3.FilterOperatorIn},
 						}},
 						AggregateOperator: v3.AggregateOperatorRateMax,
 						Expression:        "A",
@@ -68,7 +68,7 @@ func TestBuildQueryWithIncorrectQueryRef(t *testing.T) {
 						DataSource:         v3.DataSourceMetrics,
 						AggregateAttribute: v3.AttributeKey{Key: "name"},
 						Filters: &v3.FilterSet{Operator: "AND", Items: []v3.FilterItem{
-							{Key: v3.AttributeKey{Key: "in"}, Value: []interface{}{"a", "b", "c"}, Operator: "in"},
+							{Key: v3.AttributeKey{Key: "in"}, Value: []interface{}{"a", "b", "c"}, Operator: v3.FilterOperatorIn},
 						}},
 						AggregateOperator: v3.AggregateOperatorRateMax,
 						Expression:        "A",
@@ -105,7 +105,7 @@ func TestBuildQueryWithThreeOrMoreQueriesRefAndFormula(t *testing.T) {
 						DataSource:         v3.DataSourceMetrics,
 						AggregateAttribute: v3.AttributeKey{Key: "name"},
 						Filters: &v3.FilterSet{Operator: "AND", Items: []v3.FilterItem{
-							{Key: v3.AttributeKey{Key: "in"}, Value: []interface{}{"a", "b", "c"}, Operator: "in"},
+							{Key: v3.AttributeKey{Key: "in"}, Value: []interface{}{"a", "b", "c"}, Operator: v3.FilterOperatorIn},
 						}},
 						AggregateOperator: v3.AggregateOperatorRateMax,
 						Expression:        "A",

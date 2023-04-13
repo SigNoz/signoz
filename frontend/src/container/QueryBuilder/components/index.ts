@@ -1,3 +1,4 @@
+export { AdditionalFiltersToggler } from './AdditionalFiltersToggler';
 export { DataSourceDropdown } from './DataSourceDropdown';
 export { FilterLabel } from './FilterLabel';
 export { Formula } from './Formula';
