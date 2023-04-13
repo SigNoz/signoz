@@ -886,14 +886,6 @@ func parseFilterAttributeValueRequest(r *http.Request) (*v3.FilterAttributeValue
 		return nil, err
 	}
 
-	if err := tagType.Validate(); err != nil {
-		return nil, err
-	}
-
-	if err := filterAttributeKeyDataType.Validate(); err != nil {
-		return nil, err
-	}
-
 	req = v3.FilterAttributeValueRequest{
 		DataSource:                 dataSource,
 		AggregateOperator:          aggregateOperator,

@@ -4333,6 +4333,10 @@ func (r *ClickHouseReader) GetTraceAttributeValues(ctx context.Context, req *v3.
 	var err error
 	var rows driver.Rows
 	var attributeValues v3.FilterAttributeValueResponse
+	// if dataType or tagType is not present return empty response
+	if len(req.FilterAttributeKeyDataType) == 0 || len(req.TagType) == 0 || req.FilterAttributeKey == "body" {
+		return &v3.FilterAttributeValueResponse{}, nil
+	}
 	switch req.FilterAttributeKeyDataType {
 	case v3.AttributeKeyDataTypeString:
 		query = fmt.Sprintf("SELECT DISTINCT stringTagValue from %s.%s WHERE tagKey = $1 AND stringTagValue ILIKE $2 AND tagType=$3 limit $4", r.TraceDB, r.spanAttributeTable)
