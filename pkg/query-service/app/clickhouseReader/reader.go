@@ -3827,7 +3827,7 @@ func (r *ClickHouseReader) GetLogAggregateAttributes(ctx context.Context, req *v
 		v3.AggregateOperatorMax:
 		where = "tagKey ILIKE $1 AND (tagDataType='int64' or tagDataType='float64')"
 	case
-		v3.AggregateOpeatorCount,
+		v3.AggregateOperatorCount,
 		v3.AggregateOperatorNoOp:
 		return &v3.AggregateAttributeResponse{}, nil
 	default:

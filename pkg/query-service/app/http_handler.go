@@ -25,6 +25,7 @@ import (
 	"go.signoz.io/signoz/pkg/query-service/app/metrics"
 	metricsv3 "go.signoz.io/signoz/pkg/query-service/app/metrics/v3"
 	"go.signoz.io/signoz/pkg/query-service/app/parser"
+	tracesV3 "go.signoz.io/signoz/pkg/query-service/app/traces/v3"
 	"go.signoz.io/signoz/pkg/query-service/auth"
 	"go.signoz.io/signoz/pkg/query-service/constants"
 	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
@@ -107,10 +108,8 @@ func NewAPIHandler(opts APIHandlerOpts) (*APIHandler, error) {
 
 	builderOpts := queryBuilderOptions{
 		BuildMetricQuery: metricsv3.PrepareMetricQuery,
-		BuildTraceQuery: func(start, end int64, queryType v3.QueryType, panelType v3.PanelType, bq *v3.BuilderQuery) (string, error) {
-			return "", errors.New("not implemented")
-		},
-		BuildLogQuery: logsv3.PrepareLogsQuery,
+		BuildTraceQuery:  tracesV3.PrepareTracesQuery,
+		BuildLogQuery:    logsv3.PrepareLogsQuery,
 	}
 	aH.queryBuilder = NewQueryBuilder(builderOpts)
 

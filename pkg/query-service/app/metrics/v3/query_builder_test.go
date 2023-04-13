@@ -18,7 +18,7 @@ func TestBuildQuery(t *testing.T) {
 					"A": {
 						QueryName:          "A",
 						AggregateAttribute: v3.AttributeKey{Key: "name"},
-						AggregateOperator:  v3.AggregateOperatorRateMax,
+						AggregateOperator:  v3.AggregateOperatorNoOp,
 						Expression:         "A",
 					},
 				},
