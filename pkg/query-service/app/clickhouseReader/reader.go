@@ -4351,7 +4351,7 @@ func (r *ClickHouseReader) GetTraceAttributeValues(ctx context.Context, req *v3.
 			attributeValues.StringAttributeValues = append(attributeValues.StringAttributeValues, strAttributeValue)
 		}
 	case v3.AttributeKeyDataTypeFloat64, v3.AttributeKeyDataTypeInt64:
-		query = fmt.Sprintf("SELECT DISTINCT float64TagValue from %s.%s where tagKey ILIKE $1 AND toString(float64TagValue) ILIKE $2 AND tagType=$3 limit $4", r.TraceDB, r.spanAttributeTable)
+		query = fmt.Sprintf("SELECT DISTINCT float64TagValue from %s.%s where tagKey = $1 AND toString(float64TagValue) ILIKE $2 AND tagType=$3 limit $4", r.TraceDB, r.spanAttributeTable)
 		rows, err = r.db.Query(ctx, query, req.FilterAttributeKey, fmt.Sprintf("%%%s%%", req.SearchText), req.TagType, req.Limit)
 		if err != nil {
 			zap.S().Error(err)
