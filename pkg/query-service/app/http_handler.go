@@ -2668,6 +2668,20 @@ func (aH *APIHandler) getLogFieldsV3(ctx context.Context, queryRangeParams *v3.Q
 	return data, nil
 }
 
+func (aH *APIHandler) getSpanKeysV3(ctx context.Context, queryRangeParams *v3.QueryRangeParamsV3) (map[string]v3.AttributeKey, error) {
+	data := map[string]v3.AttributeKey{}
+	for _, query := range queryRangeParams.CompositeQuery.BuilderQueries {
+		if query.DataSource == v3.DataSourceTraces {
+			spanKeys, err := aH.reader.GetSpanAttributeKeys(ctx)
+			if err != nil {
+				return nil, err
+			}
+			return spanKeys, nil
+		}
+	}
+	return data, nil
+}
+
 func (aH *APIHandler) queryRangeV3(ctx context.Context, queryRangeParams *v3.QueryRangeParamsV3, w http.ResponseWriter, r *http.Request) {
 
 	var result []*v3.Result
@@ -2685,7 +2699,15 @@ func (aH *APIHandler) queryRangeV3(ctx context.Context, queryRangeParams *v3.Que
 			return
 		}
 
-		queries, err = aH.queryBuilder.prepareQueries(queryRangeParams, fields)
+		var spanKeys map[string]v3.AttributeKey
+		spanKeys, err = aH.getSpanKeysV3(ctx, queryRangeParams)
+		if err != nil {
+			apiErrObj := &model.ApiError{Typ: model.ErrorInternal, Err: err}
+			RespondError(w, apiErrObj, errQuriesByName)
+			return
+		}
+
+		queries, err = aH.queryBuilder.prepareQueries(queryRangeParams, fields, spanKeys)
 		if err != nil {
 			RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
 			return
