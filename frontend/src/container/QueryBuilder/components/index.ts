@@ -1,2 +1,6 @@
+export { AdditionalFiltersToggler } from './AdditionalFiltersToggler';
+export { DataSourceDropdown } from './DataSourceDropdown';
+export { FilterLabel } from './FilterLabel';
+export { Formula } from './Formula';
 export { ListMarker } from './ListMarker';
-export { QueryLabel } from './QueryLabel';
+export { Query } from './Query';

@@ -494,76 +494,54 @@ func parseListErrorsRequest(r *http.Request) (*model.ListErrorsParams, error) {
 	var allowedOrderParams = []string{"exceptionType", "exceptionCount", "firstSeen", "lastSeen", "serviceName"}
 	var allowedOrderDirections = []string{"ascending", "descending"}
 
-	startTime, err := parseTime("start", r)
+	var postData *model.ListErrorsParams
+	err := json.NewDecoder(r.Body).Decode(&postData)
+
 	if err != nil {
 		return nil, err
 	}
-	endTime, err := parseTimeMinusBuffer("end", r)
+
+	postData.Start, err = parseTimeStr(postData.StartStr, "start")
 	if err != nil {
 		return nil, err
 	}
-
-	order := r.URL.Query().Get("order")
-	if len(order) > 0 && !DoesExistInSlice(order, allowedOrderDirections) {
-		return nil, errors.New(fmt.Sprintf("given order: %s is not allowed in query", order))
-	}
-	orderParam := r.URL.Query().Get("orderParam")
-	if len(order) > 0 && !DoesExistInSlice(orderParam, allowedOrderParams) {
-		return nil, errors.New(fmt.Sprintf("given orderParam: %s is not allowed in query", orderParam))
-	}
-	limit := r.URL.Query().Get("limit")
-	offset := r.URL.Query().Get("offset")
-
-	if len(offset) == 0 || len(limit) == 0 {
-		return nil, fmt.Errorf("offset or limit param cannot be empty from the query")
-	}
-
-	limitInt, err := strconv.Atoi(limit)
+	postData.End, err = parseTimeMinusBufferStr(postData.EndStr, "end")
 	if err != nil {
-		return nil, errors.New("limit param is not in correct format")
+		return nil, err
 	}
-	offsetInt, err := strconv.Atoi(offset)
-	if err != nil {
-		return nil, errors.New("offset param is not in correct format")
-	}
-	serviceName := r.URL.Query().Get("serviceName")
-	exceptionType := r.URL.Query().Get("exceptionType")
-
-	params := &model.ListErrorsParams{
-		Start:         startTime,
-		End:           endTime,
-		OrderParam:    orderParam,
-		Order:         order,
-		Limit:         int64(limitInt),
-		Offset:        int64(offsetInt),
-		ServiceName:   serviceName,
-		ExceptionType: exceptionType,
+	if postData.Limit == 0 {
+		return nil, fmt.Errorf("limit param cannot be empty from the query")
 	}
 
-	return params, nil
+	if len(postData.Order) > 0 && !DoesExistInSlice(postData.Order, allowedOrderDirections) {
+		return nil, errors.New(fmt.Sprintf("given order: %s is not allowed in query", postData.Order))
+	}
+
+	if len(postData.Order) > 0 && !DoesExistInSlice(postData.OrderParam, allowedOrderParams) {
+		return nil, errors.New(fmt.Sprintf("given orderParam: %s is not allowed in query", postData.OrderParam))
+	}
+
+	return postData, nil
 }
 
 func parseCountErrorsRequest(r *http.Request) (*model.CountErrorsParams, error) {
 
-	startTime, err := parseTime("start", r)
+	var postData *model.CountErrorsParams
+	err := json.NewDecoder(r.Body).Decode(&postData)
+
 	if err != nil {
 		return nil, err
 	}
-	endTime, err := parseTimeMinusBuffer("end", r)
+
+	postData.Start, err = parseTimeStr(postData.StartStr, "start")
 	if err != nil {
 		return nil, err
 	}
-	serviceName := r.URL.Query().Get("serviceName")
-	exceptionType := r.URL.Query().Get("exceptionType")
-
-	params := &model.CountErrorsParams{
-		Start:         startTime,
-		End:           endTime,
-		ServiceName:   serviceName,
-		ExceptionType: exceptionType,
+	postData.End, err = parseTimeMinusBufferStr(postData.EndStr, "end")
+	if err != nil {
+		return nil, err
 	}
-
-	return params, nil
+	return postData, nil
 }
 
 func parseGetErrorRequest(r *http.Request) (*model.GetErrorParams, error) {
@@ -855,6 +833,8 @@ func parseFilterAttributeKeyRequest(r *http.Request) (*v3.FilterAttributeKeyRequ
 	dataSource := v3.DataSource(r.URL.Query().Get("dataSource"))
 	aggregateOperator := v3.AggregateOperator(r.URL.Query().Get("aggregateOperator"))
 	aggregateAttribute := r.URL.Query().Get("aggregateAttribute")
+	tagType := v3.TagType(r.URL.Query().Get("tagType"))
+
 	limit, err := strconv.Atoi(r.URL.Query().Get("limit"))
 	if err != nil {
 		limit = 50
@@ -868,10 +848,15 @@ func parseFilterAttributeKeyRequest(r *http.Request) (*v3.FilterAttributeKeyRequ
 		return nil, err
 	}
 
+	if err := tagType.Validate(); err != nil && tagType != v3.TagType("") {
+		return nil, err
+	}
+
 	req = v3.FilterAttributeKeyRequest{
 		DataSource:         dataSource,
 		AggregateOperator:  aggregateOperator,
 		AggregateAttribute: aggregateAttribute,
+		TagType:            tagType,
 		Limit:              limit,
 		SearchText:         r.URL.Query().Get("searchText"),
 	}
@@ -884,7 +869,9 @@ func parseFilterAttributeValueRequest(r *http.Request) (*v3.FilterAttributeValue
 
 	dataSource := v3.DataSource(r.URL.Query().Get("dataSource"))
 	aggregateOperator := v3.AggregateOperator(r.URL.Query().Get("aggregateOperator"))
+	filterAttributeKeyDataType := v3.AttributeKeyDataType(r.URL.Query().Get("filterAttributeKeyDataType")) // can be empty
 	aggregateAttribute := r.URL.Query().Get("aggregateAttribute")
+	tagType := v3.TagType(r.URL.Query().Get("tagType")) // can be empty
 
 	limit, err := strconv.Atoi(r.URL.Query().Get("limit"))
 	if err != nil {
@@ -900,12 +887,14 @@ func parseFilterAttributeValueRequest(r *http.Request) (*v3.FilterAttributeValue
 	}
 
 	req = v3.FilterAttributeValueRequest{
-		DataSource:         dataSource,
-		AggregateOperator:  aggregateOperator,
-		AggregateAttribute: aggregateAttribute,
-		Limit:              limit,
-		SearchText:         r.URL.Query().Get("searchText"),
-		FilterAttributeKey: r.URL.Query().Get("attributeKey"),
+		DataSource:                 dataSource,
+		AggregateOperator:          aggregateOperator,
+		AggregateAttribute:         aggregateAttribute,
+		TagType:                    tagType,
+		Limit:                      limit,
+		SearchText:                 r.URL.Query().Get("searchText"),
+		FilterAttributeKey:         r.URL.Query().Get("attributeKey"),
+		FilterAttributeKeyDataType: filterAttributeKeyDataType,
 	}
 	return &req, nil
 }

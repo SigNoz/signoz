@@ -1,11 +1,11 @@
 import RouteTab from 'components/RouteTab';
 import ROUTES from 'constants/routes';
+import ResourceAttributesFilter from 'container/ResourceAttributesFilter';
 import React, { memo } from 'react';
 import { generatePath, useParams } from 'react-router-dom';
 import { useLocation } from 'react-use';
 
 import { getWidgetQueryBuilder } from './MetricsApplication.factory';
-import ResourceAttributesFilter from './ResourceAttributesFilter';
 import DBCall from './Tabs/DBCall';
 import External from './Tabs/External';
 import Overview from './Tabs/Overview';
