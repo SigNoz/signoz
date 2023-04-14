@@ -131,8 +131,10 @@ func buildTracesFilterQuery(fs *v3.FilterSet, keys map[string]v3.AttributeKey) (
 			if err != nil {
 				return "", err
 			}
-			fmtVal := utils.ClickHouseFormattedValue(toFormat)
-
+			var fmtVal string
+			if toFormat != "" {
+				fmtVal = utils.ClickHouseFormattedValue(toFormat)
+			}
 			if operator, ok := tracesOperatorMappingV3[item.Operator]; ok {
 				conditions = append(conditions, fmt.Sprintf("%s %s %s", columnName, operator, fmtVal))
 			} else {
