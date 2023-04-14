@@ -26,13 +26,15 @@ const (
 	defaultDurationTable           string        = "distributed_durationSort"
 	defaultUsageExplorerTable      string        = "distributed_usage_explorer"
 	defaultSpansTable              string        = "distributed_signoz_spans"
-	defaultDependencyGraphTable    string        = "distributed_dependency_graph_minutes"
+	defaultDependencyGraphTable    string        = "distributed_dependency_graph_minutes_v2"
 	defaultTopLevelOperationsTable string        = "distributed_top_level_operations"
+	defaultSpanAttributeTable      string        = "distributed_span_attributes"
 	defaultLogsDB                  string        = "signoz_logs"
 	defaultLogsTable               string        = "distributed_logs"
 	defaultLogsLocalTable          string        = "logs"
 	defaultLogAttributeKeysTable   string        = "distributed_logs_attribute_keys"
 	defaultLogResourceKeysTable    string        = "distributed_logs_resource_keys"
+	defaultLogTagAttributeTable    string        = "distributed_tag_attributes"
 	defaultLiveTailRefreshSeconds  int           = 10
 	defaultWriteBatchDelay         time.Duration = 5 * time.Second
 	defaultWriteBatchSize          int           = 10000
@@ -62,6 +64,7 @@ type namespaceConfig struct {
 	UsageExplorerTable      string
 	SpansTable              string
 	ErrorTable              string
+	SpanAttributeTable      string
 	DependencyGraphTable    string
 	TopLevelOperationsTable string
 	LogsDB                  string
@@ -69,6 +72,7 @@ type namespaceConfig struct {
 	LogsLocalTable          string
 	LogsAttributeKeysTable  string
 	LogsResourceKeysTable   string
+	LogsTagAttributeTable   string
 	LiveTailRefreshSeconds  int
 	WriteBatchDelay         time.Duration
 	WriteBatchSize          int
@@ -130,6 +134,7 @@ func NewOptions(datasource string, primaryNamespace string, otherNamespaces ...s
 			DurationTable:           defaultDurationTable,
 			UsageExplorerTable:      defaultUsageExplorerTable,
 			SpansTable:              defaultSpansTable,
+			SpanAttributeTable:      defaultSpanAttributeTable,
 			DependencyGraphTable:    defaultDependencyGraphTable,
 			TopLevelOperationsTable: defaultTopLevelOperationsTable,
 			LogsDB:                  defaultLogsDB,
@@ -137,6 +142,7 @@ func NewOptions(datasource string, primaryNamespace string, otherNamespaces ...s
 			LogsLocalTable:          defaultLogsLocalTable,
 			LogsAttributeKeysTable:  defaultLogAttributeKeysTable,
 			LogsResourceKeysTable:   defaultLogResourceKeysTable,
+			LogsTagAttributeTable:   defaultLogTagAttributeTable,
 			LiveTailRefreshSeconds:  defaultLiveTailRefreshSeconds,
 			WriteBatchDelay:         defaultWriteBatchDelay,
 			WriteBatchSize:          defaultWriteBatchSize,

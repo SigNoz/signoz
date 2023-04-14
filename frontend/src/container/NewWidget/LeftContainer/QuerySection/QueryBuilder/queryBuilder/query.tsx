@@ -68,6 +68,8 @@ function MetricsBuilder({
 		});
 	}, [metricName]);
 
+	// TODO: rewrite to Form component from antd
+
 	return (
 		<QueryHeader
 			name={queryData.name}

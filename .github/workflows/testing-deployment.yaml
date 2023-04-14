@@ -11,14 +11,14 @@ jobs:
     if: ${{ github.event.label.name == 'testing-deploy' }}
     steps:
       - name: Executing remote ssh commands using ssh key
-        uses: appleboy/ssh-action@v0.1.6
+        uses: appleboy/ssh-action@v0.1.8
         env:
           GITHUB_BRANCH: ${{ github.head_ref || github.ref_name }}
           GITHUB_SHA: ${{ github.sha }}
         with:
           host: ${{ secrets.HOST_DNS }}
           username: ${{ secrets.USERNAME }}
-          key: ${{ secrets.EC2_SSH_KEY }}
+          key: ${{ secrets.SSH_KEY }}
           envs: GITHUB_BRANCH,GITHUB_SHA
           command_timeout: 60m
           script: |
