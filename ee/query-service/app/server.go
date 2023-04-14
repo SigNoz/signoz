@@ -180,6 +180,7 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 
 		apiHandler: apiHandler,
 		// Allows 100 requests per second, with maximum burst of 50 at a time.
+		// TODO(ahsanb): Figure out the right rate limit.
 		patRateLimiter: NewRateLimiter(100, 50),
 	}
 
