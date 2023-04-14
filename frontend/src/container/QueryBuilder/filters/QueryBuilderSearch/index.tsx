@@ -54,9 +54,14 @@ function QueryBuilderSearch({ query }: QueryBuilderSearchProps): JSX.Element {
 			value={tags}
 			disabled={!query.aggregateAttribute.key}
 			style={filterSelectStyle}
+			onChange={(value): void => {
+				if (!isMulti) handleSearch(value[value.length - 1]);
+			}}
 			onDeselect={handleClearTag}
 			onSelect={handleSelect}
-			onInputKeyDown={handleKeyDown}
+			onInputKeyDown={(e): void => {
+				if (isMulti || e.key === 'Backspace') handleKeyDown(e);
+			}}
 			onSearch={handleSearch}
 			searchValue={searchValue}
 			notFoundContent={isFetching ? <Spin size="small" /> : null}

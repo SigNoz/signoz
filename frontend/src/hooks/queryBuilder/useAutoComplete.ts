@@ -1,3 +1,4 @@
+import { OPERATORS } from 'constants/queryBuilder';
 import { Option } from 'container/QueryBuilder/type';
 import React, { useCallback, useState } from 'react';
 import { IBuilderQueryForm } from 'types/api/queryBuilder/queryBuilderData';
@@ -24,9 +25,17 @@ interface IAutoComplete {
 export const useAutoComplete = (query: IBuilderQueryForm): IAutoComplete => {
 	const [searchValue, setSearchValue] = useState<string>('');
 
-	const handleSearch = useCallback((value: string) => {
-		setSearchValue(value);
-	}, []);
+	const handleSearch = (value: string): void => {
+		if (
+			value.includes(OPERATORS.NOT_EXISTS) ||
+			value.includes(OPERATORS.EXISTS)
+		) {
+			// eslint-disable-next-line @typescript-eslint/no-use-before-define
+			handleAddTag(value);
+		} else {
+			setSearchValue(value);
+		}
+	};
 
 	const { keys, results, isFetching } = useFetchKeysAndValues(
 		searchValue,
@@ -50,20 +59,28 @@ export const useAutoComplete = (query: IBuilderQueryForm): IAutoComplete => {
 		handleSearch,
 	);
 
-	const handleSelect = (value: string): void => {
-		if (isMulti) {
-			setSearchValue((prev: string) => {
-				if (prev.includes(value)) {
-					return prev.replace(` ${value}`, '');
-				}
-				return checkStringEndsWithSpace(prev)
-					? `${prev} ${value}`
-					: `${prev}, ${value}`;
-			});
-		} else if (!result.length) {
-			setSearchValue(value);
-		}
-	};
+	const handleSelect = useCallback(
+		(value: string): void => {
+			if (isMulti) {
+				setSearchValue((prev: string) => {
+					if (prev.includes(value)) {
+						return prev.replace(` ${value}`, '');
+					}
+					return checkStringEndsWithSpace(prev)
+						? `${prev} ${value}`
+						: `${prev}, ${value}`;
+				});
+			}
+			if (
+				!isMulti &&
+				isValidTag &&
+				!(value.includes(OPERATORS.NOT_EXISTS) || value.includes(OPERATORS.EXISTS))
+			) {
+				handleAddTag(value);
+			}
+		},
+		[handleAddTag, isMulti, isValidTag],
+	);
 
 	const handleKeyDown = useCallback(
 		(event: React.KeyboardEvent): void => {
