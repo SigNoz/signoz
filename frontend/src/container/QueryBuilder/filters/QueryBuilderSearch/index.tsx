@@ -1,11 +1,11 @@
 import { CheckOutlined } from '@ant-design/icons';
 import { Select, Spin, Tag, Tooltip, Typography } from 'antd';
-import { OPERATORS } from 'constants/queryBuilder';
 import { useAutoComplete } from 'hooks/queryBuilder/useAutoComplete';
 import React from 'react';
 import { IBuilderQueryForm } from 'types/api/queryBuilder/queryBuilderData';
 
 import { dropdownCheckIcon, filterSelectStyle } from './config';
+import { isInNotInOperator } from './utils';
 
 function QueryBuilderSearch({ query }: QueryBuilderSearchProps): JSX.Element {
 	const {
@@ -25,14 +25,14 @@ function QueryBuilderSearch({ query }: QueryBuilderSearchProps): JSX.Element {
 		closable,
 		onClose,
 	}: CustomTagProps): React.ReactElement => {
-		const isInNin = value.includes(OPERATORS.IN || OPERATORS.NIN);
+		const isInNin = isInNotInOperator(value);
 		return (
 			<Tag closable={closable} onClose={onClose}>
 				<Tooltip title={value}>
 					<Typography.Text
 						ellipsis
 						style={{
-							width: isInNin ? '3rem' : 'auto',
+							width: isInNin ? '5rem' : 'auto',
 						}}
 					>
 						{value}

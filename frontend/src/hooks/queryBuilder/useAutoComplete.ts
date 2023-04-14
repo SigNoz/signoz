@@ -1,9 +1,9 @@
-import { OPERATORS } from 'constants/queryBuilder';
+import { isExistsNotExistsOperator } from 'container/QueryBuilder/filters/QueryBuilderSearch/utils';
 import { Option } from 'container/QueryBuilder/type';
-import React, { useCallback, useState } from 'react';
+import { useCallback, useState } from 'react';
 import { IBuilderQueryForm } from 'types/api/queryBuilder/queryBuilderData';
+import { checkStringEndsWithSpace } from 'utils/checkStringEndsWithSpace';
 
-import { checkStringEndsWithSpace } from '../../utils/checkStringEndsWithSpace';
 import { useFetchKeysAndValues } from './useFetchKeysAndValues';
 import { useOptions } from './useOptions';
 import { useSetCurrentKeyAndOperator } from './useSetCurrentKeyAndOperator';
@@ -26,10 +26,7 @@ export const useAutoComplete = (query: IBuilderQueryForm): IAutoComplete => {
 	const [searchValue, setSearchValue] = useState<string>('');
 
 	const handleSearch = (value: string): void => {
-		if (
-			value.includes(OPERATORS.NOT_EXISTS) ||
-			value.includes(OPERATORS.EXISTS)
-		) {
+		if (isExistsNotExistsOperator(value)) {
 			// eslint-disable-next-line @typescript-eslint/no-use-before-define
 			handleAddTag(value);
 		} else {
@@ -71,11 +68,7 @@ export const useAutoComplete = (query: IBuilderQueryForm): IAutoComplete => {
 						: `${prev}, ${value}`;
 				});
 			}
-			if (
-				!isMulti &&
-				isValidTag &&
-				!(value.includes(OPERATORS.NOT_EXISTS) || value.includes(OPERATORS.EXISTS))
-			) {
+			if (!isMulti && isValidTag && !isExistsNotExistsOperator(value)) {
 				handleAddTag(value);
 			}
 		},
