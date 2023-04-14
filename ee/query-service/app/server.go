@@ -15,6 +15,7 @@ import (
 	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
 	"github.com/jmoiron/sqlx"
+	"golang.org/x/time/rate"
 
 	"github.com/rs/cors"
 	"github.com/soheilhy/cmux"
@@ -74,6 +75,8 @@ type Server struct {
 	featureLookup baseint.FeatureLookup
 
 	unavailableChannel chan healthcheck.Status
+
+	patRateLimiter *rate.Limiter
 }
 
 // HealthCheckStatus returns health check status channel a client can subscribe to
@@ -168,12 +171,15 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 		return nil, err
 	}
 
+	reqPS := 100
+	burstSize := 50
 	s := &Server{
 		// logger: logger,
 		// tracer: tracer,
 		ruleManager:        rm,
 		serverOptions:      serverOptions,
 		unavailableChannel: make(chan healthcheck.Status),
+		patRateLimiter:     rate.NewLimiter(rate.Limit(reqPS), burstSize),
 	}
 
 	httpServer, err := s.createPublicServer(apiHandler)
@@ -228,6 +234,7 @@ func (s *Server) createPublicServer(apiHandler *api.APIHandler) (*http.Server, e
 		patToken := r.Header.Get("SIGNOZ-API-KEY")
 		if len(patToken) > 0 {
 			zap.S().Debugf("Received a non-zero length PAT token")
+
 			ctx := context.Background()
 			dao := apiHandler.AppDao()
 
