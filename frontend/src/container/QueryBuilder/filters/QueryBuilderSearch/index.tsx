@@ -1,10 +1,10 @@
-import { CheckOutlined } from '@ant-design/icons';
-import { Select, Spin, Tag, Tooltip, Typography } from 'antd';
+import { Select, Spin, Tag, Tooltip } from 'antd';
 import { useAutoComplete } from 'hooks/queryBuilder/useAutoComplete';
 import React from 'react';
 import { IBuilderQueryForm } from 'types/api/queryBuilder/queryBuilderData';
 
-import { dropdownCheckIcon, filterSelectStyle } from './config';
+import { selectStyle } from './config';
+import { StyledCheckOutlined, TypographyText } from './style';
 import { isInNotInOperator } from './utils';
 
 function QueryBuilderSearch({ query }: QueryBuilderSearchProps): JSX.Element {
@@ -26,20 +26,28 @@ function QueryBuilderSearch({ query }: QueryBuilderSearchProps): JSX.Element {
 		onClose,
 	}: CustomTagProps): React.ReactElement => {
 		const isInNin = isInNotInOperator(value);
+		const handleOnClose = (): void => {
+			onClose();
+			handleSearch('');
+		};
+
 		return (
-			<Tag closable={closable} onClose={onClose}>
+			<Tag closable={closable} onClose={handleOnClose}>
 				<Tooltip title={value}>
-					<Typography.Text
-						ellipsis
-						style={{
-							width: isInNin ? '5rem' : 'auto',
-						}}
-					>
+					<TypographyText ellipsis isInNin={isInNin}>
 						{value}
-					</Typography.Text>
+					</TypographyText>
 				</Tooltip>
 			</Tag>
 		);
+	};
+
+	const onChangeHandler = (value: string[]): void => {
+		if (!isMulti) handleSearch(value[value.length - 1]);
+	};
+
+	const onInputKeyDownHandler = (event: React.KeyboardEvent<Element>): void => {
+		if (isMulti || event.key === 'Backspace') handleKeyDown(event);
 	};
 
 	return (
@@ -52,24 +60,20 @@ function QueryBuilderSearch({ query }: QueryBuilderSearchProps): JSX.Element {
 			mode="multiple"
 			placeholder="Search Filter"
 			value={tags}
-			disabled={!query.aggregateAttribute.key}
-			style={filterSelectStyle}
-			onChange={(value): void => {
-				if (!isMulti) handleSearch(value[value.length - 1]);
-			}}
-			onDeselect={handleClearTag}
-			onSelect={handleSelect}
-			onInputKeyDown={(e): void => {
-				if (isMulti || e.key === 'Backspace') handleKeyDown(e);
-			}}
-			onSearch={handleSearch}
 			searchValue={searchValue}
+			disabled={!query.aggregateAttribute.key}
+			style={selectStyle}
+			onSearch={handleSearch}
+			onChange={onChangeHandler}
+			onSelect={handleSelect}
+			onDeselect={handleClearTag}
+			onInputKeyDown={onInputKeyDownHandler}
 			notFoundContent={isFetching ? <Spin size="small" /> : null}
 		>
 			{options?.map((option) => (
 				<Select.Option key={option.value} value={option.value}>
 					{option.value}
-					{option.selected && <CheckOutlined style={dropdownCheckIcon} />}
+					{option.selected && <StyledCheckOutlined />}
 				</Select.Option>
 			))}
 		</Select>

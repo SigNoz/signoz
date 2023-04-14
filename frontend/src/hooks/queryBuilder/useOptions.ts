@@ -34,7 +34,11 @@ export const useOptions = (
 		} else if (key && operator && isMulti) {
 			setOptions(results.map((r) => ({ value: `${r}` })));
 		} else if (key && operator && !isMulti && !isExist && isValidOperator) {
-			setOptions(results.map((r) => ({ value: `${key} ${operator} ${r}` })));
+			setOptions(
+				results.map((r) =>
+					r !== '' ? { value: `${key} ${operator} ${r}` } : { value: searchValue },
+				),
+			);
 		} else if (key && operator && isExist && !isMulti) {
 			setOptions([]);
 		}
