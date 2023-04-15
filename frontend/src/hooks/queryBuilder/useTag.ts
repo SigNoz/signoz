@@ -1,3 +1,4 @@
+import { isExistsNotExistsOperator } from 'container/QueryBuilder/filters/QueryBuilderSearch/utils';
 import { useCallback, useState } from 'react';
 
 type IUseTag = {
@@ -28,7 +29,11 @@ export const useTag = (
 	 */
 	const handleAddTag = useCallback(
 		(value: string): void => {
-			if ((value && key && isValidTag) || isFreeText) {
+			if (
+				(value && key && isValidTag) ||
+				isFreeText ||
+				isExistsNotExistsOperator(value)
+			) {
 				setTags((prevTags) => [...prevTags, value]);
 				handleSearch('');
 			}

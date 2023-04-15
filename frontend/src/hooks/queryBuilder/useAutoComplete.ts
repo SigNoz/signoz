@@ -25,14 +25,7 @@ interface IAutoComplete {
 export const useAutoComplete = (query: IBuilderQueryForm): IAutoComplete => {
 	const [searchValue, setSearchValue] = useState<string>('');
 
-	const handleSearch = (value: string): void => {
-		if (isExistsNotExistsOperator(value)) {
-			// eslint-disable-next-line @typescript-eslint/no-use-before-define
-			handleAddTag(value);
-		} else {
-			setSearchValue(value);
-		}
-	};
+	const handleSearch = (value: string): void => setSearchValue(value);
 
 	const { keys, results, isFetching } = useFetchKeysAndValues(
 		searchValue,
@@ -69,6 +62,9 @@ export const useAutoComplete = (query: IBuilderQueryForm): IAutoComplete => {
 				});
 			}
 			if (!isMulti && isValidTag && !isExistsNotExistsOperator(value)) {
+				handleAddTag(value);
+			}
+			if (!isMulti && isExistsNotExistsOperator(value)) {
 				handleAddTag(value);
 			}
 		},
