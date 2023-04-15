@@ -2,10 +2,10 @@ import { Col, Input, Row } from 'antd';
 // ** Constants
 import {
 	initialAggregateAttribute,
+	initialQueryBuilderFormValues,
 	mapOfFilters,
 	mapOfOperators,
 } from 'constants/queryBuilder';
-import { initialQueryBuilderFormValues } from 'constants/queryBuilder';
 // ** Components
 import {
 	AdditionalFiltersToggler,
@@ -19,7 +19,7 @@ import {
 	OperatorsSelect,
 	ReduceToFilter,
 } from 'container/QueryBuilder/filters';
-// Context
+import QueryBuilderSearch from 'container/QueryBuilder/filters/QueryBuilderSearch';
 import { useQueryBuilder } from 'hooks/useQueryBuilder';
 import { findDataTypeOfOperator } from 'lib/query/findDataTypeOfOperator';
 // ** Hooks
@@ -186,12 +186,17 @@ export const Query = memo(function Query({
 		removeEntityByIndex('queryData', index);
 	}, [removeEntityByIndex, index]);
 
+	const isMatricsDataSource = useMemo(
+		() => query.dataSource === DataSource.METRICS,
+		[query.dataSource],
+	);
+
 	return (
 		<StyledRow gutter={[0, 15]}>
 			<StyledDeleteEntity onClick={handleDeleteQuery} />
 			<Col span={24}>
-				<Row wrap={false} align="middle">
-					<Col span={24}>
+				<Row align="middle" justify="space-between">
+					<Col>
 						<ListMarker
 							isDisabled={query.disabled}
 							toggleDisabled={handleToggleDisableQuery}
@@ -203,11 +208,15 @@ export const Query = memo(function Query({
 							<DataSourceDropdown
 								onChange={handleChangeDataSource}
 								value={query.dataSource}
+								style={{ marginRight: '0.5rem' }}
 							/>
 						) : (
 							<FilterLabel label={transformToUpperCase(query.dataSource)} />
 						)}
-						{/* TODO: here will be search */}
+						{isMatricsDataSource && <FilterLabel label="WHERE" />}
+					</Col>
+					<Col span={isMatricsDataSource ? 17 : 20}>
+						<QueryBuilderSearch query={query} />
 					</Col>
 				</Row>
 			</Col>
