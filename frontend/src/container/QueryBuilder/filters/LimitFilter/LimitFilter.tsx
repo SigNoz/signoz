@@ -2,7 +2,7 @@ import { InputNumber } from 'antd';
 import React, { useState } from 'react';
 import { IBuilderQueryForm } from 'types/api/queryBuilder/queryBuilderData';
 
-import { filterSelectStyle } from '../QueryBuilderSearch/config';
+import { selectStyle } from '../QueryBuilderSearch/config';
 
 function LimitFilter({ onChange, query }: LimitFilterProps): JSX.Element {
 	const [isData, setIsData] = useState<number | null>(null);
@@ -22,7 +22,7 @@ function LimitFilter({ onChange, query }: LimitFilterProps): JSX.Element {
 			type="number"
 			placeholder="e.g 10"
 			disabled={!query.aggregateAttribute.key}
-			style={filterSelectStyle}
+			style={selectStyle}
 			onChange={onChangeHandler}
 			onPressEnter={handleEnter}
 		/>
