@@ -1,7 +1,6 @@
 import { Select, Spin } from 'antd';
 import { getAggregateKeys } from 'api/queryBuilder/getAttributeKeys';
 import { QueryBuilderKeys } from 'constants/queryBuilder';
-import { selectStyle } from 'container/QueryBuilder/components/Query/config';
 import { IOption } from 'hooks/useResourceAttribute/types';
 import { transformStringWithPrefix } from 'lib/query/transformStringWithPrefix';
 import React, { useCallback, useMemo, useState } from 'react';
@@ -10,6 +9,7 @@ import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteRe
 import { IBuilderQueryForm } from 'types/api/queryBuilder/queryBuilderData';
 import { MetricAggregateOperator } from 'types/common/queryBuilder';
 
+import { selectStyle } from '../QueryBuilderSearch/config';
 import {
 	OrderByFilterProps,
 	OrderByFilterValue,

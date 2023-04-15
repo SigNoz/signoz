@@ -1,11 +1,11 @@
 import { Select } from 'antd';
-import { selectStyle } from 'container/QueryBuilder/components/Query/config';
 import React, { memo } from 'react';
 // ** Types
 import { SelectOption } from 'types/common/select';
 // ** Helpers
 import { transformToUpperCase } from 'utils/transformToUpperCase';
 
+import { selectStyle } from '../QueryBuilderSearch/config';
 import { OperatorsSelectProps } from './OperatorsSelect.interfaces';
 
 export const OperatorsSelect = memo(function OperatorsSelect({

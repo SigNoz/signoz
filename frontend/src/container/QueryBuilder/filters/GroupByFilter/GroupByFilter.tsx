@@ -2,7 +2,6 @@ import { Select, Spin } from 'antd';
 import { getAggregateKeys } from 'api/queryBuilder/getAttributeKeys';
 // ** Constants
 import { QueryBuilderKeys } from 'constants/queryBuilder';
-import { selectStyle } from 'container/QueryBuilder/components/Query/config';
 // ** Components
 // ** Helpers
 import { transformStringWithPrefix } from 'lib/query/transformStringWithPrefix';
@@ -12,6 +11,7 @@ import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteRe
 import { MetricAggregateOperator } from 'types/common/queryBuilder';
 import { SelectOption } from 'types/common/select';
 
+import { selectStyle } from '../QueryBuilderSearch/config';
 import {
 	GroupByFilterProps,
 	GroupByFilterValue,
