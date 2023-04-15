@@ -39,12 +39,13 @@ export const useOptions = (
 				setOptions([]);
 			} else if (isValidOperator) {
 				const hasAllResults = result.every((val) => results.includes(val));
+				const values = results.map((r) => ({
+					value: `${key} ${operator} ${r}`,
+				}));
 				const options = hasAllResults
-					? results.map((r) => ({ value: `${key} ${operator} ${r}` }))
-					: [{ value: searchValue }];
+					? values
+					: [{ value: searchValue }, ...values];
 				setOptions(options);
-			} else {
-				setOptions([{ value: searchValue }]);
 			}
 		}
 	}, [
