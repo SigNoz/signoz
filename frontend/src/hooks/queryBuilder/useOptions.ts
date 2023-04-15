@@ -1,6 +1,6 @@
 import { AttributeKeyOptions } from 'api/queryBuilder/getAttributesKeysValues';
 import { Option } from 'container/QueryBuilder/type';
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { useOperators } from './useOperators';
 
@@ -13,11 +13,12 @@ export const useOptions = (
 	isValidOperator: boolean,
 	isExist: boolean,
 	results: string[],
+	result: string[],
 ): Option[] => {
 	const [options, setOptions] = useState<Option[]>([]);
 	const operators = useOperators(key, keys);
 
-	useEffect(() => {
+	const updateOptions = useCallback(() => {
 		if (!key) {
 			setOptions(
 				searchValue
@@ -31,16 +32,20 @@ export const useOptions = (
 					label: `${key} ${o.replace('_', ' ')}`,
 				})),
 			);
-		} else if (key && operator && isMulti) {
-			setOptions(results.map((r) => ({ value: `${r}` })));
-		} else if (key && operator && !isMulti && !isExist && isValidOperator) {
-			setOptions(
-				results.map((r) =>
-					r !== '' ? { value: `${key} ${operator} ${r}` } : { value: searchValue },
-				),
-			);
-		} else if (key && operator && isExist && !isMulti) {
-			setOptions([]);
+		} else if (key && operator) {
+			if (isMulti) {
+				setOptions(results.map((r) => ({ value: `${r}` })));
+			} else if (isExist) {
+				setOptions([]);
+			} else if (isValidOperator) {
+				const hasAllResults = result.every((val) => results.includes(val));
+				const options = hasAllResults
+					? results.map((r) => ({ value: `${key} ${operator} ${r}` }))
+					: [{ value: searchValue }];
+				setOptions(options);
+			} else {
+				setOptions([{ value: searchValue }]);
+			}
 		}
 	}, [
 		isExist,
@@ -50,9 +55,14 @@ export const useOptions = (
 		keys,
 		operator,
 		operators,
+		result,
 		results,
 		searchValue,
 	]);
+
+	useEffect(() => {
+		updateOptions();
+	}, [updateOptions]);
 
 	return useMemo(
 		() =>

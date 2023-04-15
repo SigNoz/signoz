@@ -26,13 +26,14 @@ function QueryBuilderSearch({ query }: QueryBuilderSearchProps): JSX.Element {
 		onClose,
 	}: CustomTagProps): React.ReactElement => {
 		const isInNin = isInNotInOperator(value);
-		const handleOnClose = (): void => {
+
+		const onCloseHandler = (): void => {
 			onClose();
 			handleSearch('');
 		};
 
 		return (
-			<Tag closable={closable} onClose={handleOnClose}>
+			<Tag closable={closable} onClose={onCloseHandler}>
 				<Tooltip title={value}>
 					<TypographyText ellipsis isInNin={isInNin}>
 						{value}

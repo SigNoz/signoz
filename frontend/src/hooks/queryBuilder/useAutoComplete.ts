@@ -118,6 +118,7 @@ export const useAutoComplete = (query: IBuilderQueryForm): IAutoComplete => {
 		isValidOperator,
 		isExist,
 		results,
+		result,
 	);
 
 	return {
