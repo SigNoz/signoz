@@ -9,7 +9,6 @@ import {
 	StyledIconOpen,
 	StyledInner,
 	StyledLink,
-	StyledWrapper,
 } from './AdditionalFiltersToggler.styled';
 
 export const AdditionalFiltersToggler = memo(function AdditionalFiltersToggler({
@@ -41,12 +40,12 @@ export const AdditionalFiltersToggler = memo(function AdditionalFiltersToggler({
 	});
 
 	return (
-		<StyledWrapper>
+		<div>
 			<StyledInner onClick={handleToggleOpenFilters}>
 				{isOpenedFilters ? <StyledIconClose /> : <StyledIconOpen />}
 				{!isOpenedFilters && <span>Add conditions for {filtersTexts}</span>}
 			</StyledInner>
 			{isOpenedFilters && <Row>{children}</Row>}
-		</StyledWrapper>
+		</div>
 	);
 });
