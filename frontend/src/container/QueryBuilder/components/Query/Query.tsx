@@ -19,6 +19,7 @@ import {
 	OperatorsSelect,
 	ReduceToFilter,
 } from 'container/QueryBuilder/filters';
+import LimitFilter from 'container/QueryBuilder/filters/LimitFilter/LimitFilter';
 import { OrderByFilter } from 'container/QueryBuilder/filters/OrderByFilter';
 import QueryBuilderSearch from 'container/QueryBuilder/filters/QueryBuilderSearch';
 import { useQueryBuilder } from 'hooks/useQueryBuilder';
@@ -67,6 +68,7 @@ export const Query = memo(function Query({
 				having: [],
 				groupBy: [],
 				orderBy: [],
+				limit: null,
 			};
 
 			if (!aggregateDataType) {
@@ -205,6 +207,17 @@ export const Query = memo(function Query({
 		[handleSetQueryData, index, query],
 	);
 
+	const handleChangeLimit = useCallback(
+		(value: number | null): void => {
+			const newQuery: IBuilderQueryForm = {
+				...query,
+				limit: value,
+			};
+			handleSetQueryData(index, newQuery);
+		},
+		[index, query, handleSetQueryData],
+	);
+
 	return (
 		<StyledRow gutter={[0, 15]}>
 			<StyledDeleteEntity onClick={handleDeleteQuery} />
@@ -268,12 +281,18 @@ export const Query = memo(function Query({
 			<Col span={24}>
 				<AdditionalFiltersToggler listOfAdditionalFilter={listOfAdditionalFilters}>
 					{!isMatricsDataSource && (
-						<Row gutter={[11, 5]}>
+						<Row gutter={[11, 5]} justify="space-around">
 							<Col span={2}>
 								<FilterLabel label="Order by" />
 							</Col>
 							<Col span={10}>
 								<OrderByFilter query={query} onChange={handleChangeOrderByKeys} />
+							</Col>
+							<Col span={1.5}>
+								<FilterLabel label="Limit" />
+							</Col>
+							<Col span={10}>
+								<LimitFilter query={query} onChange={handleChangeLimit} />
 							</Col>
 						</Row>
 					)}
