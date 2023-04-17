@@ -156,20 +156,20 @@ function QuerySection({
 				/>
 			),
 			children: (
-				<QueryBuilderQueryContainer
-					key={rctTabKey.QUERY_BUILDER}
-					queryData={localQueryChanges}
-					updateQueryData={({ updatedQuery }: IHandleUpdatedQuery): void => {
-						handleLocalQueryUpdate({ updatedQuery });
-					}}
-					metricsBuilderQueries={
-						localQueryChanges[WIDGET_QUERY_BUILDER_QUERY_KEY_NAME]
-					}
-					selectedGraph={selectedGraph}
-				/>
+				// <QueryBuilderQueryContainer
+				// 	key={rctTabKey.QUERY_BUILDER}
+				// 	queryData={localQueryChanges}
+				// 	updateQueryData={({ updatedQuery }: IHandleUpdatedQuery): void => {
+				// 		handleLocalQueryUpdate({ updatedQuery });
+				// 	}}
+				// 	metricsBuilderQueries={
+				// 		localQueryChanges[WIDGET_QUERY_BUILDER_QUERY_KEY_NAME]
+				// 	}
+				// 	selectedGraph={selectedGraph}
+				// />
 
 				// TODO: uncomment for testing new QueryBuilder
-				// <QueryBuilder panelType={selectedGraph} />
+				<QueryBuilder panelType={selectedGraph} />
 			),
 		},
 		{
