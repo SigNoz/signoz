@@ -1,7 +1,9 @@
 // ** Helpers
 // ** Constants
-import { initialQueryBuilderFormValues } from 'constants/queryBuilder';
-import { mapOfOperators } from 'constants/queryBuilder';
+import {
+	initialQueryBuilderFormValues,
+	mapOfOperators,
+} from 'constants/queryBuilder';
 import {
 	createNewQueryName,
 	MAX_QUERIES,
