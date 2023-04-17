@@ -35,7 +35,7 @@ function QueryBuilderSearch({ query }: QueryBuilderSearchProps): JSX.Element {
 		return (
 			<Tag closable={closable} onClose={onCloseHandler}>
 				<Tooltip title={value}>
-					<TypographyText ellipsis isInNin={isInNin}>
+					<TypographyText ellipsis $isInNin={isInNin}>
 						{value}
 					</TypographyText>
 				</Tooltip>
