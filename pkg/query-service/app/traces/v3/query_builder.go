@@ -11,7 +11,7 @@ import (
 )
 
 var aggregateOperatorToPercentile = map[v3.AggregateOperator]float64{
-	v3.AggregateOperatorP05: 0.5,
+	v3.AggregateOperatorP05: 0.05,
 	v3.AggregateOperatorP10: 0.10,
 	v3.AggregateOperatorP20: 0.20,
 	v3.AggregateOperatorP25: 0.25,
@@ -47,8 +47,8 @@ var tracesOperatorMappingV3 = map[v3.FilterOperator]string{
 	v3.FilterOperatorNotLike:         "NOT ILIKE",
 	v3.FilterOperatorContains:        "ILIKE",
 	v3.FilterOperatorNotContains:     "NOT ILIKE",
-	v3.FilterOperatorExists:          "IS NOT NULL",
-	v3.FilterOperatorNotExists:       "IS NULL",
+	v3.FilterOperatorExists:          "has(%s%s, '%s')",
+	v3.FilterOperatorNotExists:       "NOT has(%s%s, '%s')",
 }
 
 func getColumnName(key v3.AttributeKey, keys map[string]v3.AttributeKey) (string, error) {
@@ -59,6 +59,11 @@ func getColumnName(key v3.AttributeKey, keys map[string]v3.AttributeKey) (string
 	if key.IsColumn {
 		return key.Key, nil
 	}
+	filterType, filterDataType := getClickhouseTracesColumnDataTypeAndType(key)
+	return fmt.Sprintf("%s%s['%s']", filterDataType, filterType, key.Key), nil
+}
+
+func getClickhouseTracesColumnDataTypeAndType(key v3.AttributeKey) (v3.AttributeKeyType, string) {
 	filterType := key.Type
 	filterDataType := "string"
 	if key.DataType == v3.AttributeKeyDataTypeFloat64 || key.DataType == v3.AttributeKeyDataTypeInt64 {
@@ -72,7 +77,7 @@ func getColumnName(key v3.AttributeKey, keys map[string]v3.AttributeKey) (string
 		filterType = "resourceTagsMap"
 		filterDataType = ""
 	}
-	return fmt.Sprintf("%s%s['%s']", filterDataType, filterType, key.Key), nil
+	return filterType, filterDataType
 }
 
 func enrichKeyWithMetadata(key v3.AttributeKey, keys map[string]v3.AttributeKey) (v3.AttributeKey, error) {
@@ -100,7 +105,7 @@ func getSelectLabels(aggregatorOperator v3.AggregateOperator, groupBy []v3.Attri
 			if err != nil {
 				return "", err
 			}
-			selectLabels += fmt.Sprintf(", %s as %s", filterName, tag.Key)
+			selectLabels += fmt.Sprintf(", %s as `%s`", filterName, tag.Key)
 		}
 	}
 	return selectLabels, nil
@@ -136,7 +141,21 @@ func buildTracesFilterQuery(fs *v3.FilterSet, keys map[string]v3.AttributeKey) (
 				fmtVal = utils.ClickHouseFormattedValue(toFormat)
 			}
 			if operator, ok := tracesOperatorMappingV3[item.Operator]; ok {
-				conditions = append(conditions, fmt.Sprintf("%s %s %s", columnName, operator, fmtVal))
+				switch item.Operator {
+				case v3.FilterOperatorContains, v3.FilterOperatorNotContains:
+					conditions = append(conditions, fmt.Sprintf("%s %s '%%%s%%'", columnName, operator, item.Value))
+
+				case v3.FilterOperatorExists, v3.FilterOperatorNotExists:
+					key, err := enrichKeyWithMetadata(item.Key, keys)
+					if err != nil {
+						return "", err
+					}
+					columnType, columnDataType := getClickhouseTracesColumnDataTypeAndType(key)
+					conditions = append(conditions, fmt.Sprintf(operator, columnDataType, columnType, item.Key.Key))
+
+				default:
+					conditions = append(conditions, fmt.Sprintf("%s %s %s", columnName, operator, fmtVal))
+				}
 			} else {
 				return "", fmt.Errorf("unsupported operation")
 			}
@@ -222,7 +241,15 @@ func buildTracesQuery(start, end, step int64, mq *v3.BuilderQuery, tableName str
 		query := fmt.Sprintf(queryTmpl, step, op, filterSubQuery, groupBy, having, orderBy)
 		return query, nil
 	case v3.AggregateOperatorCount:
-		op := fmt.Sprintf("toFloat64(count(%s))", aggregationKey)
+		if mq.AggregateAttribute.Key != "" {
+			key, err := enrichKeyWithMetadata(mq.AggregateAttribute, keys)
+			if err != nil {
+				return "", err
+			}
+			columnType, columnDataType := getClickhouseTracesColumnDataTypeAndType(key)
+			filterSubQuery = fmt.Sprintf("%s AND has(%s%s, '%s')", filterSubQuery, columnDataType, columnType, mq.AggregateAttribute.Key)
+		}
+		op := "toFloat64(count())"
 		query := fmt.Sprintf(queryTmpl, step, op, filterSubQuery, groupBy, having, orderBy)
 		return query, nil
 	case v3.AggregateOperatorCountDistinct:
