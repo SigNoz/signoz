@@ -22,7 +22,10 @@ interface IAutoComplete {
 	isFetching: boolean;
 }
 
-export const useAutoComplete = (query: IBuilderQueryForm): IAutoComplete => {
+export const useAutoComplete = (
+	query: IBuilderQueryForm,
+	updateTagData: string[] | undefined,
+): IAutoComplete => {
 	const [searchValue, setSearchValue] = useState<string>('');
 
 	const handleSearch = (value: string): void => setSearchValue(value);
@@ -44,6 +47,7 @@ export const useAutoComplete = (query: IBuilderQueryForm): IAutoComplete => {
 
 	const { handleAddTag, handleClearTag, tags } = useTag(
 		key,
+		updateTagData,
 		isValidTag,
 		isFreeText,
 		handleSearch,

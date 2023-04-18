@@ -17,6 +17,7 @@ type IUseTag = {
  */
 export const useTag = (
 	key: string,
+	updateTagData: string[] | undefined,
 	isValidTag: boolean,
 	isFreeText: boolean,
 	handleSearch: (value: string) => void,
@@ -29,6 +30,9 @@ export const useTag = (
 	 */
 	const handleAddTag = useCallback(
 		(value: string): void => {
+			if (updateTagData) {
+				setTags(updateTagData);
+			}
 			if (
 				(value && key && isValidTag) ||
 				isFreeText ||
@@ -38,7 +42,7 @@ export const useTag = (
 				handleSearch('');
 			}
 		},
-		[key, isValidTag, isFreeText, handleSearch],
+		[updateTagData, key, isValidTag, isFreeText, handleSearch],
 	);
 
 	/**
