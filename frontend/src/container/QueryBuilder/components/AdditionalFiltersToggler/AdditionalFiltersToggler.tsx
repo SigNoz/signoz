@@ -1,4 +1,3 @@
-import { Row } from 'antd';
 import React, { Fragment, memo, ReactNode, useState } from 'react';
 
 // ** Types
@@ -45,7 +44,7 @@ export const AdditionalFiltersToggler = memo(function AdditionalFiltersToggler({
 				{isOpenedFilters ? <StyledIconClose /> : <StyledIconOpen />}
 				{!isOpenedFilters && <span>Add conditions for {filtersTexts}</span>}
 			</StyledInner>
-			{isOpenedFilters && <Row>{children}</Row>}
+			{isOpenedFilters && children}
 		</div>
 	);
 });

@@ -20,3 +20,7 @@ export const StyledDeleteEntity = styled(CloseCircleOutlined)`
 export const StyledRow = styled(Row)`
 	padding-right: 3rem;
 `;
+
+export const StyledFilterRow = styled(Row)`
+	margin-bottom: 0.875rem;
+`;
