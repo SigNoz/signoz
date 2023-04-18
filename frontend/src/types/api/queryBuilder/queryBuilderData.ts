@@ -27,7 +27,7 @@ export interface TagFilter {
 export type Having = {
 	columnName: string;
 	op: string;
-	value: string;
+	value: string[];
 };
 
 // Type for query builder

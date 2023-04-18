@@ -117,6 +117,7 @@ export const Query = memo(function Query({
 			const newQuery: IBuilderQueryForm = {
 				...query,
 				aggregateAttribute: value,
+				having: [],
 			};
 
 			handleSetQueryData(index, newQuery);

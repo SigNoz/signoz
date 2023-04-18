@@ -1,9 +1,8 @@
 import { Select } from 'antd';
 // ** Constants
-import {
-	initialHavingValues,
-	QUERY_BUILDER_OPERATORS_BY_TYPES,
-} from 'constants/queryBuilder';
+import { HAVING_OPERATORS, initialHavingValues } from 'constants/queryBuilder';
+// ** Hooks
+import { useTagValidation } from 'hooks/queryBuilder/useTagValidation';
 import {
 	transformFromStringToHaving,
 	transformHavingToStringValue,
@@ -31,7 +30,11 @@ export function HavingFilter({
 		initialHavingValues,
 	);
 
-	const numberOperators = QUERY_BUILDER_OPERATORS_BY_TYPES.number;
+	const { isMulti } = useTagValidation(
+		searchText,
+		currentFormValue.op,
+		currentFormValue.value,
+	);
 
 	const aggregatorAttribute = useMemo(
 		() =>
@@ -53,9 +56,16 @@ export function HavingFilter({
 		[columnName],
 	);
 
+	const getHavingObject = useCallback((currentSearch: string): Having => {
+		const textArr = currentSearch.split(' ');
+		const [columnName = '', op = '', ...value] = textArr;
+
+		return { columnName, op, value };
+	}, []);
+
 	const generateOptions = useCallback(
 		(search: string): void => {
-			const [aggregator = '', op = '', value = ''] = search.split(' ');
+			const [aggregator = '', op = '', ...restValue] = search.split(' ');
 			let newOptions: SelectOption<string, string>[] = [];
 
 			const isAggregatorExist = columnName
@@ -69,40 +79,42 @@ export function HavingFilter({
 			}
 
 			if ((isAggregatorChosen && op === '') || op) {
-				const filteredOperators = numberOperators.filter((num) =>
+				const filteredOperators = HAVING_OPERATORS.filter((num) =>
 					num.toLowerCase().includes(op.toLowerCase()),
 				);
 
 				newOptions = filteredOperators.map((opt) => ({
-					label: `${columnName} ${opt} ${value}`,
-					value: `${columnName} ${opt} ${value}`,
+					label: `${columnName} ${opt} ${restValue && restValue.join(' ')}`,
+					value: `${columnName} ${opt} ${restValue && restValue.join(' ')}`,
 				}));
 			}
 
 			setOptions(newOptions);
 		},
-		[columnName, numberOperators, aggregatorOptions],
+		[columnName, aggregatorOptions],
 	);
 
 	const isValidHavingValue = (search: string): boolean => {
-		const arr = search.split(' ');
-		if (arr.length === 3 && arr.at(-1)) {
-			const havingValue = arr[2];
+		const values = getHavingObject(search).value.join(' ');
+		if (values) {
+			const numRegexp = /^[^a-zA-Z]*$/;
 
-			const numRegexp = /^-?\d*\.?\d*$/;
-
-			return numRegexp.test(havingValue);
+			return numRegexp.test(values);
 		}
 
 		return true;
 	};
 
 	const handleSearch = (search: string): void => {
-		const currentSearch = search.split(' ').slice(0, 3).join(' ');
-		const isValidSearch = isValidHavingValue(search);
+		const trimmedSearch = search.replace(/\s\s+/g, ' ').trimStart();
+
+		const currentSearch = isMulti
+			? trimmedSearch
+			: trimmedSearch.split(' ').slice(0, 3).join(' ');
+		const isValidSearch = isValidHavingValue(currentSearch);
 
 		if (isValidSearch) {
-			setSearchText(currentSearch.trimStart());
+			setSearchText(currentSearch);
 		}
 	};
 
@@ -115,9 +127,9 @@ export function HavingFilter({
 	const handleChange = (values: string[]): void => {
 		const having: Having[] = values.map(transformFromStringToHaving);
 
-		const isSelectable: boolean = Object.values(currentFormValue).every(
-			(value) => !!value,
-		);
+		const isSelectable: boolean =
+			currentFormValue.value.length > 0 &&
+			currentFormValue.value.every((value) => !!value);
 
 		if (isSelectable) {
 			onChange(having);
@@ -126,22 +138,23 @@ export function HavingFilter({
 	};
 
 	const handleSelect = (currentValue: string): void => {
-		const arr = currentValue.split(' ');
-		const isCompleted = arr.every((item) => !!item);
+		const { columnName, op, value } = getHavingObject(currentValue);
 
-		const isClearSearch = isCompleted && arr.length === 3;
+		const isCompletedValue = value.every((item) => !!item);
+
+		const isClearSearch = isCompletedValue && columnName && op;
 
 		handleSearch(isClearSearch ? '' : currentValue);
 	};
 
 	const parseSearchText = useCallback(
 		(text: string) => {
-			const [columnName = '', op = '', value = ''] = text.split(' ');
+			const { columnName, op, value } = getHavingObject(text);
 			setCurrentFormValue({ columnName, op, value });
 
 			generateOptions(text);
 		},
-		[generateOptions],
+		[generateOptions, getHavingObject],
 	);
 
 	const handleDeselect = (value: string): void => {
@@ -166,7 +179,7 @@ export function HavingFilter({
 			data-testid="havingSelect"
 			disabled={!query.aggregateAttribute.key}
 			style={{ width: '100%' }}
-			notFoundContent={!currentFormValue.value ? undefined : null}
+			notFoundContent={currentFormValue.value.length === 0 ? undefined : null}
 			placeholder="Count(operation) > 5"
 			onDeselect={handleDeselect}
 			onBlur={resetChanges}

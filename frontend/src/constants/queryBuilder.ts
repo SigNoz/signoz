@@ -47,7 +47,7 @@ export const mapOfFilters: Record<DataSource, string[]> = {
 export const initialHavingValues: Having = {
 	columnName: '',
 	op: '',
-	value: '',
+	value: [],
 };
 
 export const initialAggregateAttribute: IBuilderQueryForm['aggregateAttribute'] = {
@@ -164,3 +164,14 @@ export const QUERY_BUILDER_OPERATORS_BY_TYPES = {
 		OPERATORS.NOT_CONTAINS,
 	],
 };
+
+export const HAVING_OPERATORS: string[] = [
+	OPERATORS.EQUALS,
+	OPERATORS.NOT_EQUALS,
+	OPERATORS.IN,
+	OPERATORS.NIN,
+	OPERATORS.GTE,
+	OPERATORS.GT,
+	OPERATORS.LTE,
+	OPERATORS.LT,
+];

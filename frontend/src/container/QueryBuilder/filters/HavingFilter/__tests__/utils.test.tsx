@@ -1,8 +1,10 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 // Constants
-import { initialQueryBuilderFormValues } from 'constants/queryBuilder';
-import { QUERY_BUILDER_OPERATORS_BY_TYPES } from 'constants/queryBuilder';
+import {
+	HAVING_OPERATORS,
+	initialQueryBuilderFormValues,
+} from 'constants/queryBuilder';
 import { transformFromStringToHaving } from 'lib/query/transformQueryBuilderData';
 import React from 'react';
 // ** Types
@@ -110,9 +112,7 @@ describe('Having filter behaviour', () => {
 		// show operators after SUM(tag_bytes)
 		const operatorsOptions = screen.getAllByTitle(optionTestTitle);
 
-		expect(operatorsOptions.length).toEqual(
-			QUERY_BUILDER_OPERATORS_BY_TYPES.number.length,
-		);
+		expect(operatorsOptions.length).toEqual(HAVING_OPERATORS.length);
 
 		// show operators after SUM(tag_bytes) when type from keyboard
 		await user.clear(input);
@@ -130,9 +130,7 @@ describe('Having filter behaviour', () => {
 
 		const returnedOptions = screen.getAllByTitle(optionTestTitle);
 
-		expect(returnedOptions.length).toEqual(
-			QUERY_BUILDER_OPERATORS_BY_TYPES.number.length,
-		);
+		expect(returnedOptions.length).toEqual(HAVING_OPERATORS.length);
 
 		// check write value after operator
 		await user.clear(input);
@@ -148,6 +146,19 @@ describe('Having filter behaviour', () => {
 		expect(onChange).toHaveBeenCalledTimes(1);
 		expect(onChange).toHaveBeenCalledWith([
 			transformFromStringToHaving(`${constructedAttribute} != 123`),
+		]);
+
+		// onChange with multiple operator
+		await user.type(input, `${constructedAttribute} IN 123 123`);
+
+		expect(input).toHaveValue(`${constructedAttribute} IN 123 123`);
+
+		const optionWithMultipleValue = screen.getByTitle(optionTestTitle);
+		await user.click(optionWithMultipleValue);
+
+		expect(onChange).toHaveBeenCalledTimes(2);
+		expect(onChange).toHaveBeenCalledWith([
+			transformFromStringToHaving(`${constructedAttribute} IN 123 123`),
 		]);
 
 		unmount();
