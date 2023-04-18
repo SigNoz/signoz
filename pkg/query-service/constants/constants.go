@@ -74,6 +74,17 @@ var DEFAULT_FEATURE_SET = model.FeatureSet{
 	TimestampSort: IsTimestampSortFeatureEnabled(),
 }
 
+func GetContextTimeout() int {
+	contextTimeoutStr := os.Getenv("CONTEXT_TIMEOUT")
+	contextTimeoutInt, err := strconv.Atoi(contextTimeoutStr)
+	if err != nil {
+		return 60 // seconds
+	}
+	return contextTimeoutInt
+}
+
+var ContextTimeout = GetContextTimeout()
+
 const (
 	TraceID                        = "traceID"
 	ServiceName                    = "serviceName"
@@ -97,7 +108,6 @@ const (
 	ResponseStatusCode             = "responseStatusCode"
 	Descending                     = "descending"
 	Ascending                      = "ascending"
-	ContextTimeout                 = 60 // seconds
 	StatusPending                  = "pending"
 	StatusFailed                   = "failed"
 	StatusSuccess                  = "success"
