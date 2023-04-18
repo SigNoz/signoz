@@ -1,6 +1,6 @@
 import { Select, Spin, Tag, Tooltip } from 'antd';
 import { useAutoComplete } from 'hooks/queryBuilder/useAutoComplete';
-import React, { useEffect } from 'react';
+import React, { useEffect, useMemo } from 'react';
 import {
 	IBuilderQueryForm,
 	TagFilter,
@@ -58,6 +58,11 @@ function QueryBuilderSearch({
 		if (isMulti || event.key === 'Backspace') handleKeyDown(event);
 	};
 
+	const queryTags = useMemo(() => {
+		if (!query.aggregateAttribute.key) return [];
+		return tags;
+	}, [query.aggregateAttribute.key, tags]);
+
 	useEffect(() => {
 		const initialTagFilters: TagFilter = { items: [], op: 'AND' };
 		initialTagFilters.items = tags.map((tag) => {
@@ -82,7 +87,7 @@ function QueryBuilderSearch({
 			autoClearSearchValue={false}
 			mode="multiple"
 			placeholder="Search Filter"
-			value={tags}
+			value={queryTags}
 			searchValue={searchValue}
 			disabled={!query.aggregateAttribute.key}
 			style={selectStyle}
