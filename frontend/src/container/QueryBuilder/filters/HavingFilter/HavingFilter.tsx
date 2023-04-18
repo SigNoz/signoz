@@ -1,6 +1,9 @@
 import { Select } from 'antd';
 // ** Constants
-import { QUERY_BUILDER_OPERATORS_BY_TYPES } from 'constants/queryBuilder';
+import {
+	initialHavingValues,
+	QUERY_BUILDER_OPERATORS_BY_TYPES,
+} from 'constants/queryBuilder';
 import {
 	transformFromStringToHaving,
 	transformHavingToStringValue,
@@ -16,12 +19,6 @@ import { HavingFilterProps } from './HavingFilter.interfaces';
 
 const { Option } = Select;
 
-const initialFormValues: Having = {
-	columnName: '',
-	op: '',
-	value: '',
-};
-
 export function HavingFilter({
 	query,
 	onChange,
@@ -31,7 +28,7 @@ export function HavingFilter({
 	const [options, setOptions] = useState<SelectOption<string, string>[]>([]);
 	const [localValues, setLocalValues] = useState<string[]>([]);
 	const [currentFormValue, setCurrentFormValue] = useState<Having>(
-		initialFormValues,
+		initialHavingValues,
 	);
 
 	const numberOperators = QUERY_BUILDER_OPERATORS_BY_TYPES.number;
@@ -111,7 +108,7 @@ export function HavingFilter({
 
 	const resetChanges = (): void => {
 		handleSearch('');
-		setCurrentFormValue(initialFormValues);
+		setCurrentFormValue(initialHavingValues);
 		setOptions(aggregatorOptions);
 	};
 

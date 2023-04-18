@@ -39,9 +39,9 @@ export const mapOfOperators: Record<DataSource, string[]> = {
 
 export const mapOfFilters: Record<DataSource, string[]> = {
 	// eslint-disable-next-line sonarjs/no-duplicate-string
-	metrics: ['Limit', 'Aggregation interval'],
-	logs: ['Limit', 'Having', 'Order by', 'Aggregation interval'],
-	traces: ['Limit', 'Having', 'Order by', 'Aggregation interval'],
+	metrics: ['Aggregation interval', 'Having'],
+	logs: ['Order by', 'Limit', 'Having', 'Aggregation interval'],
+	traces: ['Order by', 'Limit', 'Having', 'Aggregation interval'],
 };
 
 export const initialHavingValues: Having = {
