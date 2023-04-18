@@ -3,6 +3,7 @@ package constants
 import (
 	"os"
 	"strconv"
+	"time"
 
 	"go.signoz.io/signoz/pkg/query-service/model"
 	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
@@ -74,6 +75,17 @@ var DEFAULT_FEATURE_SET = model.FeatureSet{
 	TimestampSort: IsTimestampSortFeatureEnabled(),
 }
 
+func GetContextTimeout() time.Duration {
+	contextTimeoutStr := os.Getenv("CONTEXT_TIMEOUT")
+	contextTimeoutInt, err := strconv.Atoi(contextTimeoutStr)
+	if err != nil {
+		return 60 // seconds
+	}
+	return time.Duration(contextTimeoutInt)
+}
+
+var ContextTimeout = GetContextTimeout()
+
 const (
 	TraceID                        = "traceID"
 	ServiceName                    = "serviceName"
@@ -97,7 +109,6 @@ const (
 	ResponseStatusCode             = "responseStatusCode"
 	Descending                     = "descending"
 	Ascending                      = "ascending"
-	ContextTimeout                 = 60 // seconds
 	StatusPending                  = "pending"
 	StatusFailed                   = "failed"
 	StatusSuccess                  = "success"
