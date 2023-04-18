@@ -1,13 +1,20 @@
 import { Select, Spin, Tag, Tooltip } from 'antd';
 import { useAutoComplete } from 'hooks/queryBuilder/useAutoComplete';
-import React from 'react';
-import { IBuilderQueryForm } from 'types/api/queryBuilder/queryBuilderData';
+import React, { useEffect } from 'react';
+import {
+	IBuilderQueryForm,
+	TagFilter,
+} from 'types/api/queryBuilder/queryBuilderData';
+import { v4 as uuid } from 'uuid';
 
 import { selectStyle } from './config';
 import { StyledCheckOutlined, TypographyText } from './style';
 import { isInNotInOperator } from './utils';
 
-function QueryBuilderSearch({ query }: QueryBuilderSearchProps): JSX.Element {
+function QueryBuilderSearch({
+	query,
+	onChange,
+}: QueryBuilderSearchProps): JSX.Element {
 	const {
 		handleClearTag,
 		handleKeyDown,
@@ -51,6 +58,21 @@ function QueryBuilderSearch({ query }: QueryBuilderSearchProps): JSX.Element {
 		if (isMulti || event.key === 'Backspace') handleKeyDown(event);
 	};
 
+	useEffect(() => {
+		const initialTagFilters: TagFilter = { items: [], op: 'AND' };
+		initialTagFilters.items = tags.map((tag) => {
+			const [tagKey, tagOperator, ...tagValue] = tag.split(' ');
+			return {
+				id: uuid().slice(0, 8),
+				key: tagKey,
+				op: tagOperator,
+				value: tagValue.map((i) => i.replace(',', '')),
+			};
+		});
+		onChange(initialTagFilters);
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [tags]);
+
 	return (
 		<Select
 			virtual
@@ -83,6 +105,7 @@ function QueryBuilderSearch({ query }: QueryBuilderSearchProps): JSX.Element {
 
 interface QueryBuilderSearchProps {
 	query: IBuilderQueryForm;
+	onChange: (value: TagFilter) => void;
 }
 
 export interface CustomTagProps {

@@ -28,7 +28,10 @@ import { findDataTypeOfOperator } from 'lib/query/findDataTypeOfOperator';
 // ** Hooks
 import React, { memo, useCallback, useMemo } from 'react';
 import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
-import { IBuilderQueryForm } from 'types/api/queryBuilder/queryBuilderData';
+import {
+	IBuilderQueryForm,
+	TagFilter,
+} from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource } from 'types/common/queryBuilder';
 import { transformToUpperCase } from 'utils/transformToUpperCase';
 
@@ -70,6 +73,7 @@ export const Query = memo(function Query({
 				groupBy: [],
 				orderBy: [],
 				limit: null,
+				tagFilters: { items: [], op: 'AND' },
 			};
 
 			if (!aggregateDataType) {
@@ -230,6 +234,17 @@ export const Query = memo(function Query({
 		[index, query, handleSetQueryData],
 	);
 
+	const handleChangeTagFilters = useCallback(
+		(value: TagFilter): void => {
+			const newQuery: IBuilderQueryForm = {
+				...query,
+				tagFilters: value,
+			};
+			handleSetQueryData(index, newQuery);
+		},
+		[index, query, handleSetQueryData],
+	);
+
 	return (
 		<StyledRow gutter={[0, 15]}>
 			<StyledDeleteEntity onClick={handleDeleteQuery} />
@@ -255,7 +270,7 @@ export const Query = memo(function Query({
 						{isMatricsDataSource && <FilterLabel label="WHERE" />}
 					</Col>
 					<Col span={isMatricsDataSource ? 17 : 20}>
-						<QueryBuilderSearch query={query} />
+						<QueryBuilderSearch query={query} onChange={handleChangeTagFilters} />
 					</Col>
 				</Row>
 			</Col>

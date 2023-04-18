@@ -86,8 +86,8 @@ export function OrderByFilter({
 		setSelectedValue(values);
 		const orderByValues: BaseAutocompleteData[] = values?.map((item) => {
 			const iterationArray = data?.payload?.attributeKeys || query.orderBy;
-			const existingOrderValues = iterationArray.find((order) =>
-				item.value.includes(order.key),
+			const existingOrderValues = iterationArray.find(
+				(group) => group.key === item.value,
 			);
 			if (existingOrderValues) {
 				return existingOrderValues;

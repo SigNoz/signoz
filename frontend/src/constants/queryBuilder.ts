@@ -44,7 +44,7 @@ export const initialQueryBuilderFormValues: IBuilderQueryForm = {
 	queryName: createNewQueryName([]),
 	aggregateOperator: Object.values(MetricAggregateOperator)[0],
 	aggregateAttribute: initialAggregateAttribute,
-	tagFilters: [],
+	tagFilters: { items: [], op: 'AND' },
 	expression: '',
 	disabled: false,
 	having: [],
