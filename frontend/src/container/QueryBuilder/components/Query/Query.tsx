@@ -19,6 +19,7 @@ import {
 	OperatorsSelect,
 	ReduceToFilter,
 } from 'container/QueryBuilder/filters';
+import AggregateEveryFilter from 'container/QueryBuilder/filters/AggregateEveryFilter';
 import LimitFilter from 'container/QueryBuilder/filters/LimitFilter/LimitFilter';
 import { OrderByFilter } from 'container/QueryBuilder/filters/OrderByFilter';
 import QueryBuilderSearch from 'container/QueryBuilder/filters/QueryBuilderSearch';
@@ -218,6 +219,17 @@ export const Query = memo(function Query({
 		[index, query, handleSetQueryData],
 	);
 
+	const handleChangeAggregateEvery = useCallback(
+		(value: number): void => {
+			const newQuery: IBuilderQueryForm = {
+				...query,
+				stepInterval: value,
+			};
+			handleSetQueryData(index, newQuery);
+		},
+		[index, query, handleSetQueryData],
+	);
+
 	return (
 		<StyledRow gutter={[0, 15]}>
 			<StyledDeleteEntity onClick={handleDeleteQuery} />
@@ -296,6 +308,17 @@ export const Query = memo(function Query({
 							</Col>
 						</Row>
 					)}
+					<Row gutter={[11, 5]}>
+						<Col span={10}>
+							<FilterLabel label="Aggregate Every" />
+						</Col>
+						<Col span={14}>
+							<AggregateEveryFilter
+								query={query}
+								onChange={handleChangeAggregateEvery}
+							/>
+						</Col>
+					</Row>
 				</AdditionalFiltersToggler>
 			</Col>
 			<Row style={{ width: '100%' }}>
