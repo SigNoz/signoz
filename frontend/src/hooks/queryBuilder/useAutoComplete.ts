@@ -11,6 +11,7 @@ import { useTag } from './useTag';
 import { useTagValidation } from './useTagValidation';
 
 interface IAutoComplete {
+	updateTag: (value: string) => void;
 	handleSearch: (value: string) => void;
 	handleClearTag: (value: string) => void;
 	handleSelect: (value: string) => void;
@@ -22,10 +23,7 @@ interface IAutoComplete {
 	isFetching: boolean;
 }
 
-export const useAutoComplete = (
-	query: IBuilderQueryForm,
-	updateTagData: string[] | undefined,
-): IAutoComplete => {
+export const useAutoComplete = (query: IBuilderQueryForm): IAutoComplete => {
 	const [searchValue, setSearchValue] = useState<string>('');
 
 	const handleSearch = (value: string): void => setSearchValue(value);
@@ -45,9 +43,8 @@ export const useAutoComplete = (
 		isFreeText,
 	} = useTagValidation(searchValue, operator, result);
 
-	const { handleAddTag, handleClearTag, tags } = useTag(
+	const { handleAddTag, handleClearTag, tags, updateTag } = useTag(
 		key,
-		updateTagData,
 		isValidTag,
 		isFreeText,
 		handleSearch,
@@ -122,6 +119,7 @@ export const useAutoComplete = (
 	);
 
 	return {
+		updateTag,
 		handleSearch,
 		handleClearTag,
 		handleSelect,

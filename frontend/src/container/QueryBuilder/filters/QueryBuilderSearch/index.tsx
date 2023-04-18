@@ -1,6 +1,6 @@
 import { Select, Spin, Tag, Tooltip } from 'antd';
 import { useAutoComplete } from 'hooks/queryBuilder/useAutoComplete';
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import { IBuilderQueryForm } from 'types/api/queryBuilder/queryBuilderData';
 
 import { selectStyle } from './config';
@@ -8,9 +8,8 @@ import { StyledCheckOutlined, TypographyText } from './style';
 import { isInNotInOperator } from './utils';
 
 function QueryBuilderSearch({ query }: QueryBuilderSearchProps): JSX.Element {
-	const [updateTagData, setUpdateTagData] = useState<string[] | undefined>();
-
 	const {
+		updateTag,
 		handleClearTag,
 		handleKeyDown,
 		handleSearch,
@@ -20,7 +19,7 @@ function QueryBuilderSearch({ query }: QueryBuilderSearchProps): JSX.Element {
 		searchValue,
 		isMulti,
 		isFetching,
-	} = useAutoComplete(query, updateTagData);
+	} = useAutoComplete(query);
 
 	const onTagRender = ({
 		value,
@@ -35,10 +34,7 @@ function QueryBuilderSearch({ query }: QueryBuilderSearchProps): JSX.Element {
 		};
 
 		const tagEditHandler = (value: string): void => {
-			const removeDataFromList = updateTagData?.filter(
-				(items: string) => items !== value,
-			);
-			setUpdateTagData(removeDataFromList);
+			updateTag(value);
 			handleSearch(value);
 		};
 
@@ -65,10 +61,6 @@ function QueryBuilderSearch({ query }: QueryBuilderSearchProps): JSX.Element {
 		if (isMulti || event.key === 'Backspace') handleKeyDown(event);
 	};
 
-	useEffect(() => {
-		setUpdateTagData(tags);
-	}, [tags]);
-
 	return (
 		<Select
 			virtual
@@ -78,7 +70,7 @@ function QueryBuilderSearch({ query }: QueryBuilderSearchProps): JSX.Element {
 			autoClearSearchValue={false}
 			mode="multiple"
 			placeholder="Search Filter"
-			value={updateTagData}
+			value={tags}
 			searchValue={searchValue}
 			disabled={!query.aggregateAttribute.key}
 			style={selectStyle}

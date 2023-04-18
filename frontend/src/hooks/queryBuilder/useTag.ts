@@ -5,6 +5,7 @@ type IUseTag = {
 	handleAddTag: (value: string) => void;
 	handleClearTag: (value: string) => void;
 	tags: string[];
+	updateTag: (value: string) => void;
 };
 
 /**
@@ -17,12 +18,16 @@ type IUseTag = {
  */
 export const useTag = (
 	key: string,
-	updateTagData: string[] | undefined,
 	isValidTag: boolean,
 	isFreeText: boolean,
 	handleSearch: (value: string) => void,
 ): IUseTag => {
 	const [tags, setTags] = useState<string[]>([]);
+
+	const updateTag = (value: string): void => {
+		const newTags = tags?.filter((item: string) => item !== value);
+		setTags(newTags);
+	};
 
 	/**
 	 * Adds a new tag to the tag list.
@@ -30,9 +35,6 @@ export const useTag = (
 	 */
 	const handleAddTag = useCallback(
 		(value: string): void => {
-			if (updateTagData) {
-				setTags(updateTagData);
-			}
 			if (
 				(value && key && isValidTag) ||
 				isFreeText ||
@@ -42,7 +44,7 @@ export const useTag = (
 				handleSearch('');
 			}
 		},
-		[updateTagData, key, isValidTag, isFreeText, handleSearch],
+		[key, isValidTag, isFreeText, handleSearch],
 	);
 
 	/**
@@ -53,5 +55,5 @@ export const useTag = (
 		setTags((prevTags) => prevTags.filter((v) => v !== value));
 	}, []);
 
-	return { handleAddTag, handleClearTag, tags };
+	return { handleAddTag, handleClearTag, tags, updateTag };
 };
