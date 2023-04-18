@@ -130,9 +130,9 @@ You can find the complete list of languages here - https://opentelemetry.io/docs
 
 ### Deploy using Docker
 
-Please follow the steps listed [here](https://signoz.io/docs/deployment/docker/) to install using docker
+Please follow the steps listed [here](https://signoz.io/docs/install/docker/) to install using docker
 
-The [troubleshooting instructions](https://signoz.io/docs/deployment/troubleshooting) may be helpful if you face any issues.
+The [troubleshooting instructions](https://signoz.io/docs/install/troubleshooting/) may be helpful if you face any issues.
 
 <p>&nbsp  </p>
   

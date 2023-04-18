@@ -40,7 +40,7 @@ export type IBuilderQuery = {
 	expression: string;
 	disabled: boolean;
 	having: Having[];
-	limit: number;
+	limit: number | null;
 	stepInterval: number;
 	orderBy: string[];
 	reduceTo: string;

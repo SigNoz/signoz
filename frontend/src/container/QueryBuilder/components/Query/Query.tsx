@@ -2,10 +2,10 @@ import { Col, Input, Row } from 'antd';
 // ** Constants
 import {
 	initialAggregateAttribute,
+	initialQueryBuilderFormValues,
 	mapOfFilters,
 	mapOfOperators,
 } from 'constants/queryBuilder';
-import { initialQueryBuilderFormValues } from 'constants/queryBuilder';
 // ** Components
 import {
 	AdditionalFiltersToggler,
@@ -19,7 +19,9 @@ import {
 	OperatorsSelect,
 	ReduceToFilter,
 } from 'container/QueryBuilder/filters';
-// Context
+import AggregateEveryFilter from 'container/QueryBuilder/filters/AggregateEveryFilter';
+import LimitFilter from 'container/QueryBuilder/filters/LimitFilter/LimitFilter';
+import QueryBuilderSearch from 'container/QueryBuilder/filters/QueryBuilderSearch';
 import { useQueryBuilder } from 'hooks/useQueryBuilder';
 import { findDataTypeOfOperator } from 'lib/query/findDataTypeOfOperator';
 // ** Hooks
@@ -64,6 +66,7 @@ export const Query = memo(function Query({
 				...query,
 				aggregateOperator: value,
 				having: [],
+				limit: null,
 			};
 
 			if (!aggregateDataType || query.dataSource === DataSource.METRICS) {
@@ -186,12 +189,39 @@ export const Query = memo(function Query({
 		removeEntityByIndex('queryData', index);
 	}, [removeEntityByIndex, index]);
 
+	const isMatricsDataSource = useMemo(
+		() => query.dataSource === DataSource.METRICS,
+		[query.dataSource],
+	);
+
+	const handleChangeLimit = useCallback(
+		(value: number | null): void => {
+			const newQuery: IBuilderQueryForm = {
+				...query,
+				limit: value,
+			};
+			handleSetQueryData(index, newQuery);
+		},
+		[index, query, handleSetQueryData],
+	);
+
+	const handleChangeAggregateEvery = useCallback(
+		(value: number): void => {
+			const newQuery: IBuilderQueryForm = {
+				...query,
+				stepInterval: value,
+			};
+			handleSetQueryData(index, newQuery);
+		},
+		[index, query, handleSetQueryData],
+	);
+
 	return (
 		<StyledRow gutter={[0, 15]}>
 			<StyledDeleteEntity onClick={handleDeleteQuery} />
 			<Col span={24}>
-				<Row wrap={false} align="middle">
-					<Col span={24}>
+				<Row align="middle" justify="space-between">
+					<Col>
 						<ListMarker
 							isDisabled={query.disabled}
 							toggleDisabled={handleToggleDisableQuery}
@@ -203,11 +233,15 @@ export const Query = memo(function Query({
 							<DataSourceDropdown
 								onChange={handleChangeDataSource}
 								value={query.dataSource}
+								style={{ marginRight: '0.5rem' }}
 							/>
 						) : (
 							<FilterLabel label={transformToUpperCase(query.dataSource)} />
 						)}
-						{/* TODO: here will be search */}
+						{isMatricsDataSource && <FilterLabel label="WHERE" />}
+					</Col>
+					<Col span={isMatricsDataSource ? 17 : 20}>
+						<QueryBuilderSearch query={query} />
 					</Col>
 				</Row>
 			</Col>
@@ -244,8 +278,27 @@ export const Query = memo(function Query({
 			</Col>
 			<Col span={24}>
 				<AdditionalFiltersToggler listOfAdditionalFilter={listOfAdditionalFilters}>
-					{/* TODO: Render filter by Col component */}
-					test additional filter
+					{!isMatricsDataSource && (
+						<Row gutter={[11, 5]}>
+							<Col span={6}>
+								<FilterLabel label="Limit" />
+							</Col>
+							<Col span={18}>
+								<LimitFilter query={query} onChange={handleChangeLimit} />
+							</Col>
+						</Row>
+					)}
+					<Row gutter={[11, 5]}>
+						<Col span={10}>
+							<FilterLabel label="Aggregate Every" />
+						</Col>
+						<Col span={14}>
+							<AggregateEveryFilter
+								query={query}
+								onChange={handleChangeAggregateEvery}
+							/>
+						</Col>
+					</Row>
 				</AdditionalFiltersToggler>
 			</Col>
 			<Row style={{ width: '100%' }}>

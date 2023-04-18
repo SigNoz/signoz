@@ -27,7 +27,7 @@ function Search({
 	const dispatch = useDispatch<Dispatch<AppActions>>();
 
 	useEffect(() => {
-		if (traces.filterLoading) {
+		if (!traces.filterLoading) {
 			const initialTags = parseTagsToQuery(traces.selectedTags);
 			if (!initialTags.isError) {
 				setValue(initialTags.payload);
