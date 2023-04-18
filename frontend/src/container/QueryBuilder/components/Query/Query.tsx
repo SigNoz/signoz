@@ -35,7 +35,7 @@ import { transformToUpperCase } from 'utils/transformToUpperCase';
 // ** Types
 import { QueryProps } from './Query.interfaces';
 // ** Styles
-import { StyledDeleteEntity, StyledRow } from './Query.styled';
+import { StyledDeleteEntity, StyledFilterRow, StyledRow } from './Query.styled';
 
 export const Query = memo(function Query({
 	index,
@@ -293,7 +293,7 @@ export const Query = memo(function Query({
 			<Col span={24}>
 				<AdditionalFiltersToggler listOfAdditionalFilter={listOfAdditionalFilters}>
 					{!isMatricsDataSource && (
-						<Row gutter={[11, 5]} justify="space-around">
+						<StyledFilterRow gutter={[11, 5]} justify="space-around">
 							<Col span={2}>
 								<FilterLabel label="Order by" />
 							</Col>
@@ -306,13 +306,13 @@ export const Query = memo(function Query({
 							<Col span={10}>
 								<LimitFilter query={query} onChange={handleChangeLimit} />
 							</Col>
-						</Row>
+						</StyledFilterRow>
 					)}
 					<Row gutter={[11, 5]}>
-						<Col span={10}>
+						<Col span={3}>
 							<FilterLabel label="Aggregate Every" />
 						</Col>
-						<Col span={14}>
+						<Col span={8}>
 							<AggregateEveryFilter
 								query={query}
 								onChange={handleChangeAggregateEvery}
