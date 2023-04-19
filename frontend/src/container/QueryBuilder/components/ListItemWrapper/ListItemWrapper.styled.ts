@@ -4,7 +4,7 @@ import styled from 'styled-components';
 
 export const StyledDeleteEntity = styled(CloseCircleOutlined)`
 	position: absolute;
-	top: 0.9375rem;
+	top: 0.5rem;
 	right: 0.9375rem;
 	z-index: 1;
 	cursor: pointer;
