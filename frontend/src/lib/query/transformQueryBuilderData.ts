@@ -5,18 +5,23 @@ export const transformHavingToStringValue = (having: Having[]): string[] => {
 	const result: string[] = having.map((item) => {
 		const operator = Object.entries(OPERATORS).find(([key]) => key === item.op);
 
-		return `${item.columnName} ${operator ? operator[1] : ''} ${item.value.join(
-			' ',
-		)}`;
+		const value = Array.isArray(item.value) ? item.value.join(', ') : item.value;
+
+		return `${item.columnName} ${operator ? operator[1] : ''} ${value}`;
 	});
 
 	return result;
 };
 
 export const transformFromStringToHaving = (havingStr: string): Having => {
-	const [columnName, op, ...value] = havingStr.split(' ');
+	const [columnName, op, ...values] = havingStr.split(' ');
 
 	const operator = Object.entries(OPERATORS).find(([, value]) => value === op);
+	const currentValue = values.map((strNum) => parseFloat(strNum));
 
-	return { columnName, op: operator ? operator[0] : '', value };
+	return {
+		columnName,
+		op: operator ? operator[0] : '',
+		value: currentValue.length > 1 ? currentValue : currentValue[0],
+	};
 };

@@ -10,7 +10,7 @@ import {
 // ** Helpers
 import { transformStringWithPrefix } from 'lib/query/transformStringWithPrefix';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { Having } from 'types/api/queryBuilder/queryBuilderData';
+import { Having, HavingForm } from 'types/api/queryBuilder/queryBuilderData';
 import { SelectOption } from 'types/common/select';
 
 // ** Types
@@ -26,7 +26,7 @@ export function HavingFilter({
 	const [searchText, setSearchText] = useState<string>('');
 	const [options, setOptions] = useState<SelectOption<string, string>[]>([]);
 	const [localValues, setLocalValues] = useState<string[]>([]);
-	const [currentFormValue, setCurrentFormValue] = useState<Having>(
+	const [currentFormValue, setCurrentFormValue] = useState<HavingForm>(
 		initialHavingValues,
 	);
 
@@ -56,7 +56,7 @@ export function HavingFilter({
 		[columnName],
 	);
 
-	const getHavingObject = useCallback((currentSearch: string): Having => {
+	const getHavingObject = useCallback((currentSearch: string): HavingForm => {
 		const textArr = currentSearch.split(' ');
 		const [columnName = '', op = '', ...value] = textArr;
 

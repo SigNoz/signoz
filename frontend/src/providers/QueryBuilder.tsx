@@ -113,11 +113,14 @@ export function QueryBuilderProvider({
 	);
 
 	const createNewFormula = useCallback((formulas: IBuilderFormula[]) => {
-		const existNames = formulas.map((item) => item.label);
+		const existNames = formulas.map((item) => item.queryName);
 
 		const newFormula: IBuilderFormula = {
 			...initialFormulaBuilderFormValues,
-			label: createNewBuilderItemName({ existNames, sourceNames: formulasNames }),
+			queryName: createNewBuilderItemName({
+				existNames,
+				sourceNames: formulasNames,
+			}),
 		};
 
 		return newFormula;
