@@ -137,9 +137,7 @@ func buildTracesFilterQuery(fs *v3.FilterSet, keys map[string]v3.AttributeKey) (
 				return "", err
 			}
 			var fmtVal string
-			if toFormat != "" {
-				fmtVal = utils.ClickHouseFormattedValue(toFormat)
-			}
+			fmtVal = utils.ClickHouseFormattedValue(toFormat)
 			if operator, ok := tracesOperatorMappingV3[item.Operator]; ok {
 				switch item.Operator {
 				case v3.FilterOperatorContains, v3.FilterOperatorNotContains:
@@ -197,14 +195,8 @@ func buildTracesQuery(start, end, step int64, mq *v3.BuilderQuery, tableName str
 			"group by %s%s " +
 			"order by %sts"
 
-	groupBy, err := groupByAttributeKeyTags(keys, mq.GroupBy...)
-	if err != nil {
-		return "", err
-	}
+	groupBy := groupByAttributeKeyTags(keys, mq.GroupBy...)
 	orderBy := orderByAttributeKeyTags(mq.OrderBy, mq.GroupBy)
-	if err != nil {
-		return "", err
-	}
 
 	aggregationKey := ""
 	if mq.AggregateAttribute.Key != "" {
@@ -255,7 +247,6 @@ func buildTracesQuery(start, end, step int64, mq *v3.BuilderQuery, tableName str
 	case v3.AggregateOperatorCountDistinct:
 		op := fmt.Sprintf("toFloat64(count(distinct(%s)))", aggregationKey)
 		query := fmt.Sprintf(queryTmpl, step, op, filterSubQuery, groupBy, having, orderBy)
-		fmt.Println(query)
 		return query, nil
 	case v3.AggregateOperatorNoOp:
 		// queryTmpl := constants.TracesSQLSelect + "from " + constants.SIGNOZ_TRACE_DBNAME + "." + constants.SIGNOZ_SPAN_INDEX_TABLENAME + " where %s %s"
@@ -274,16 +265,12 @@ func groupBy(tags ...string) string {
 	return strings.Join(tags, ",")
 }
 
-func groupByAttributeKeyTags(keys map[string]v3.AttributeKey, tags ...v3.AttributeKey) (string, error) {
+func groupByAttributeKeyTags(keys map[string]v3.AttributeKey, tags ...v3.AttributeKey) string {
 	groupTags := []string{}
 	for _, tag := range tags {
-		groupTag, err := getColumnName(tag, keys)
-		if err != nil {
-			return "", err
-		}
-		groupTags = append(groupTags, groupTag)
+		groupTags = append(groupTags, tag.Key)
 	}
-	return groupBy(groupTags...), nil
+	return groupBy(groupTags...)
 }
 
 // orderBy returns a string of comma separated tags for order by clause

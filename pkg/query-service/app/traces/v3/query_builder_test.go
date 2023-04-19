@@ -8,7 +8,7 @@ import (
 	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
 )
 
-var timeSeriesFilterQueryData = []struct {
+var buildFilterQueryData = []struct {
 	Name           string
 	FilterSet      *v3.FilterSet
 	ExpectedFilter string
@@ -28,6 +28,14 @@ var timeSeriesFilterQueryData = []struct {
 			{Key: v3.AttributeKey{Key: "k8s_namespace", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeResource}, Value: "my_service", Operator: "!="},
 		}},
 		ExpectedFilter: " AND user.name = 'john' AND resourceTagsMap['k8s_namespace'] != 'my_service'",
+	},
+	{
+		Name: "Test fixed column with empty value",
+		FilterSet: &v3.FilterSet{Operator: "AND", Items: []v3.FilterItem{
+			{Key: v3.AttributeKey{Key: "user.name", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag, IsColumn: true}, Value: "", Operator: "="},
+			{Key: v3.AttributeKey{Key: "k8s_namespace", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeResource}, Value: "my_service", Operator: "!="},
+		}},
+		ExpectedFilter: " AND user.name = '' AND resourceTagsMap['k8s_namespace'] != 'my_service'",
 	},
 	{
 		Name: "Test like",
@@ -65,6 +73,13 @@ var timeSeriesFilterQueryData = []struct {
 		ExpectedFilter: " AND has(stringTagMap, 'bytes')",
 	},
 	{
+		Name: "Test exists with fixed column",
+		FilterSet: &v3.FilterSet{Operator: "AND", Items: []v3.FilterItem{
+			{Key: v3.AttributeKey{Key: "name", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag, IsColumn: true}, Value: "", Operator: "exists"},
+		}},
+		ExpectedFilter: " AND isNotNull(name)",
+	},
+	{
 		Name: "Test not exists",
 		FilterSet: &v3.FilterSet{Operator: "AND", Items: []v3.FilterItem{
 			{Key: v3.AttributeKey{Key: "bytes", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag}, Value: "", Operator: "nexists"},
@@ -87,9 +102,9 @@ var timeSeriesFilterQueryData = []struct {
 	},
 }
 
-func TestBuildTracesTimeSeriesFilterQuery(t *testing.T) {
-	for _, tt := range timeSeriesFilterQueryData {
-		Convey("TestBuildTracesTimeSeriesFilterQuery", t, func() {
+func TestBuildTracesFilterQuery(t *testing.T) {
+	for _, tt := range buildFilterQueryData {
+		Convey("TestBuildTracesFilterQuery", t, func() {
 			query, err := buildTracesFilterQuery(tt.FilterSet, map[string]v3.AttributeKey{})
 			So(err, ShouldBeNil)
 			So(query, ShouldEqual, tt.ExpectedFilter)
@@ -324,6 +339,20 @@ var testBuildTracesQueryData = []struct {
 		ExpectedQuery: "SELECT toStartOfInterval(timestamp, INTERVAL 60 SECOND) AS ts, toFloat64(count()) as value from signoz_traces.distributed_signoz_index_v2 where (timestamp >= '1680066360726210000' AND timestamp <= '1680066458000000000') AND has(stringTagMap, 'user_name') group by ts order by ts",
 	},
 	{
+		Name:  "Test aggregate count on a fixed column",
+		Start: 1680066360726210000,
+		End:   1680066458000000000,
+		Step:  60,
+		BuilderQuery: &v3.BuilderQuery{
+			QueryName:          "A",
+			AggregateAttribute: v3.AttributeKey{Key: "name", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag, IsColumn: true},
+			AggregateOperator:  v3.AggregateOperatorCount,
+			Expression:         "A",
+		},
+		TableName:     "signoz_traces.distributed_signoz_index_v2",
+		ExpectedQuery: "SELECT toStartOfInterval(timestamp, INTERVAL 60 SECOND) AS ts, toFloat64(count()) as value from signoz_traces.distributed_signoz_index_v2 where (timestamp >= '1680066360726210000' AND timestamp <= '1680066458000000000') group by ts order by ts",
+	},
+	{
 		Name:  "Test aggregate count on a with filter",
 		Start: 1680066360726210000,
 		End:   1680066458000000000,
@@ -393,7 +422,7 @@ var testBuildTracesQueryData = []struct {
 			"toFloat64(count(distinct(name))) as value from signoz_traces.distributed_signoz_index_v2 " +
 			"where (timestamp >= '1680066360726210000' AND timestamp <= '1680066458000000000') " +
 			"AND stringTagMap['http.method'] = 'GET' AND resourceTagsMap['x'] != 'abc' " +
-			"group by stringTagMap['http.method'],ts " +
+			"group by http.method,ts " +
 			"order by http.method ASC,ts",
 	},
 	{
@@ -421,7 +450,7 @@ var testBuildTracesQueryData = []struct {
 			"toFloat64(count(distinct(name))) as value from signoz_traces.distributed_signoz_index_v2 " +
 			"where (timestamp >= '1680066360726210000' AND timestamp <= '1680066458000000000') " +
 			"AND stringTagMap['method'] = 'GET' AND resourceTagsMap['x'] != 'abc' " +
-			"group by stringTagMap['method'],resourceTagsMap['x'],ts " +
+			"group by method,x,ts " +
 			"order by method ASC,x ASC,ts",
 	},
 	{
@@ -448,7 +477,7 @@ var testBuildTracesQueryData = []struct {
 			"from signoz_traces.distributed_signoz_index_v2 " +
 			"where (timestamp >= '1680066360726210000' AND timestamp <= '1680066458000000000') " +
 			"AND stringTagMap['method'] = 'GET' " +
-			"group by stringTagMap['method'],ts " +
+			"group by method,ts " +
 			"order by method ASC,ts",
 	},
 	{
@@ -475,7 +504,7 @@ var testBuildTracesQueryData = []struct {
 			"from signoz_traces.distributed_signoz_index_v2 " +
 			"where (timestamp >= '1680066360726210000' AND timestamp <= '1680066458000000000') " +
 			"AND stringTagMap['method'] = 'GET' " +
-			"group by stringTagMap['method'],ts " +
+			"group by method,ts " +
 			"order by method ASC,ts",
 	},
 	{
@@ -502,7 +531,7 @@ var testBuildTracesQueryData = []struct {
 			"from signoz_traces.distributed_signoz_index_v2 " +
 			"where (timestamp >= '1680066360726210000' AND timestamp <= '1680066458000000000') " +
 			"AND stringTagMap['method'] = 'GET' " +
-			"group by stringTagMap['method'],ts " +
+			"group by method,ts " +
 			"order by method ASC,ts",
 	},
 	{
@@ -529,7 +558,7 @@ var testBuildTracesQueryData = []struct {
 			"from signoz_traces.distributed_signoz_index_v2 " +
 			"where (timestamp >= '1680066360726210000' AND timestamp <= '1680066458000000000') " +
 			"AND stringTagMap['method'] = 'GET' " +
-			"group by stringTagMap['method'],ts " +
+			"group by method,ts " +
 			"order by method ASC,ts",
 	},
 	{
@@ -552,7 +581,7 @@ var testBuildTracesQueryData = []struct {
 			"quantile(0.05)(bytes) as value " +
 			"from signoz_traces.distributed_signoz_index_v2 " +
 			"where (timestamp >= '1680066360726210000' AND timestamp <= '1680066458000000000') " +
-			"group by stringTagMap['method'],ts " +
+			"group by method,ts " +
 			"order by method ASC,ts",
 	},
 	{
@@ -573,7 +602,7 @@ var testBuildTracesQueryData = []struct {
 		ExpectedQuery: "SELECT toStartOfInterval(timestamp, INTERVAL 60 SECOND) AS ts, stringTagMap['method'] as `method`" +
 			", sum(bytes)/60 as value from signoz_traces.distributed_signoz_index_v2 " +
 			"where (timestamp >= '1680066360726210000' AND timestamp <= '1680066458000000000')" +
-			" group by stringTagMap['method'],ts order by method ASC,ts",
+			" group by method,ts order by method ASC,ts",
 	},
 	{
 		Name:  "Test aggregate rate",
@@ -593,7 +622,7 @@ var testBuildTracesQueryData = []struct {
 		ExpectedQuery: "SELECT toStartOfInterval(timestamp, INTERVAL 60 SECOND) AS ts, stringTagMap['method'] as `method`" +
 			", count(numberTagMap['bytes'])/60 as value " +
 			"from signoz_traces.distributed_signoz_index_v2 where (timestamp >= '1680066360726210000' AND timestamp <= '1680066458000000000') " +
-			"group by stringTagMap['method'],ts " +
+			"group by method,ts " +
 			"order by method ASC,ts",
 	},
 	{
@@ -615,7 +644,7 @@ var testBuildTracesQueryData = []struct {
 			"stringTagMap['method'] as `method`, " +
 			"sum(numberTagMap['bytes'])/60 as value " +
 			"from signoz_traces.distributed_signoz_index_v2 where (timestamp >= '1680066360726210000' AND timestamp <= '1680066458000000000') " +
-			"group by stringTagMap['method'],ts " +
+			"group by method,ts " +
 			"order by method ASC,ts",
 	},
 	{
