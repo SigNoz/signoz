@@ -27,7 +27,7 @@ export const useOptions = (
 			);
 		} else if (key && !operator) {
 			setOptions(
-				operators.map((o) => ({
+				operators?.map((o) => ({
 					value: `${key} ${o}`,
 					label: `${key} ${o.replace('_', ' ')}`,
 				})),

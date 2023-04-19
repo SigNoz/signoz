@@ -21,20 +21,24 @@ import {
 } from 'container/QueryBuilder/filters';
 import AggregateEveryFilter from 'container/QueryBuilder/filters/AggregateEveryFilter';
 import LimitFilter from 'container/QueryBuilder/filters/LimitFilter/LimitFilter';
+import { OrderByFilter } from 'container/QueryBuilder/filters/OrderByFilter';
 import QueryBuilderSearch from 'container/QueryBuilder/filters/QueryBuilderSearch';
 import { useQueryBuilder } from 'hooks/useQueryBuilder';
 import { findDataTypeOfOperator } from 'lib/query/findDataTypeOfOperator';
 // ** Hooks
 import React, { memo, useCallback, useMemo } from 'react';
 import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
-import { IBuilderQueryForm } from 'types/api/queryBuilder/queryBuilderData';
+import {
+	IBuilderQueryForm,
+	TagFilter,
+} from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource } from 'types/common/queryBuilder';
 import { transformToUpperCase } from 'utils/transformToUpperCase';
 
 // ** Types
 import { QueryProps } from './Query.interfaces';
 // ** Styles
-import { StyledDeleteEntity, StyledRow } from './Query.styled';
+import { StyledDeleteEntity, StyledFilterRow, StyledRow } from './Query.styled';
 
 export const Query = memo(function Query({
 	index,
@@ -66,10 +70,13 @@ export const Query = memo(function Query({
 				...query,
 				aggregateOperator: value,
 				having: [],
+				groupBy: [],
+				orderBy: [],
 				limit: null,
+				tagFilters: { items: [], op: 'AND' },
 			};
 
-			if (!aggregateDataType || query.dataSource === DataSource.METRICS) {
+			if (!aggregateDataType) {
 				handleSetQueryData(index, newQuery);
 				return;
 			}
@@ -194,6 +201,17 @@ export const Query = memo(function Query({
 		[query.dataSource],
 	);
 
+	const handleChangeOrderByKeys = useCallback(
+		(values: BaseAutocompleteData[]): void => {
+			const newQuery: IBuilderQueryForm = {
+				...query,
+				orderBy: values,
+			};
+			handleSetQueryData(index, newQuery);
+		},
+		[handleSetQueryData, index, query],
+	);
+
 	const handleChangeLimit = useCallback(
 		(value: number | null): void => {
 			const newQuery: IBuilderQueryForm = {
@@ -210,6 +228,17 @@ export const Query = memo(function Query({
 			const newQuery: IBuilderQueryForm = {
 				...query,
 				stepInterval: value,
+			};
+			handleSetQueryData(index, newQuery);
+		},
+		[index, query, handleSetQueryData],
+	);
+
+	const handleChangeTagFilters = useCallback(
+		(value: TagFilter): void => {
+			const newQuery: IBuilderQueryForm = {
+				...query,
+				tagFilters: value,
 			};
 			handleSetQueryData(index, newQuery);
 		},
@@ -241,7 +270,7 @@ export const Query = memo(function Query({
 						{isMatricsDataSource && <FilterLabel label="WHERE" />}
 					</Col>
 					<Col span={isMatricsDataSource ? 17 : 20}>
-						<QueryBuilderSearch query={query} />
+						<QueryBuilderSearch query={query} onChange={handleChangeTagFilters} />
 					</Col>
 				</Row>
 			</Col>
@@ -279,20 +308,26 @@ export const Query = memo(function Query({
 			<Col span={24}>
 				<AdditionalFiltersToggler listOfAdditionalFilter={listOfAdditionalFilters}>
 					{!isMatricsDataSource && (
-						<Row gutter={[11, 5]}>
-							<Col span={6}>
+						<StyledFilterRow gutter={[11, 5]} justify="space-around">
+							<Col span={2}>
+								<FilterLabel label="Order by" />
+							</Col>
+							<Col span={10}>
+								<OrderByFilter query={query} onChange={handleChangeOrderByKeys} />
+							</Col>
+							<Col span={1.5}>
 								<FilterLabel label="Limit" />
 							</Col>
-							<Col span={18}>
+							<Col span={10}>
 								<LimitFilter query={query} onChange={handleChangeLimit} />
 							</Col>
-						</Row>
+						</StyledFilterRow>
 					)}
 					<Row gutter={[11, 5]}>
-						<Col span={10}>
+						<Col span={3}>
 							<FilterLabel label="Aggregate Every" />
 						</Col>
-						<Col span={14}>
+						<Col span={8}>
 							<AggregateEveryFilter
 								query={query}
 								onChange={handleChangeAggregateEvery}
