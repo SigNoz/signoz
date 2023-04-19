@@ -77,11 +77,11 @@ var DEFAULT_FEATURE_SET = model.FeatureSet{
 
 func GetContextTimeout() time.Duration {
 	contextTimeoutStr := os.Getenv("CONTEXT_TIMEOUT")
-	contextTimeoutInt, err := strconv.ParseInt(contextTimeoutStr, 10, 0)
+	contextTimeoutDuration, err := time.ParseDuration(contextTimeoutStr + "s")
 	if err != nil {
-		return 60 // seconds
+		return 60000000000 // 60 seconds
 	}
-	return time.Duration(contextTimeoutInt)
+	return contextTimeoutDuration
 }
 
 var ContextTimeout = GetContextTimeout()

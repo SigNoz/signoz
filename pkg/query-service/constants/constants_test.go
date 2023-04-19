@@ -24,12 +24,12 @@ func TestGetAlertManagerApiPrefix(t *testing.T) {
 func TestGetContextTimeout(t *testing.T) {
 	Convey("TestGetContextTimeout", t, func() {
 		res := GetContextTimeout()
-		So(res, ShouldEqual, time.Duration(60))
+		So(res, ShouldEqual, time.Duration(60000000000))
 
 		Convey("WithEnvSet", func() {
 			os.Setenv("CONTEXT_TIMEOUT", "120")
 			res = GetContextTimeout()
-			So(res, ShouldEqual, time.Duration(120))
+			So(res, ShouldEqual, time.Duration(120000000000))
 		})
 	})
 }
