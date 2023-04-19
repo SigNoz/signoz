@@ -59,7 +59,7 @@ export const QueryBuilder = memo(function QueryBuilder({
 						</Col>
 					))}
 					{queryBuilderData.queryFormulas.map((formula, index) => (
-						<Col key={formula.label} span={24}>
+						<Col key={formula.queryName} span={24}>
 							<Formula formula={formula} index={index} />
 						</Col>
 					))}

@@ -46,7 +46,7 @@ export function Formula({ index, formula }: FormulaProps): JSX.Element {
 				<ListMarker
 					isDisabled={formula.disabled}
 					onDisable={handleToggleDisableFormula}
-					labelName={formula.label}
+					labelName={formula.queryName}
 					index={index}
 				/>
 			</Col>

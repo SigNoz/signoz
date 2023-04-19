@@ -2,7 +2,7 @@
 import { createNewBuilderItemName } from 'lib/newQueryBuilder/createNewBuilderItemName';
 import { LocalDataType } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import {
-	Having,
+	HavingForm,
 	IBuilderFormula,
 	IBuilderQueryForm,
 } from 'types/api/queryBuilder/queryBuilderData';
@@ -44,7 +44,7 @@ export const mapOfFilters: Record<DataSource, string[]> = {
 	traces: ['Order by', 'Limit', 'Having', 'Aggregation interval'],
 };
 
-export const initialHavingValues: Having = {
+export const initialHavingValues: HavingForm = {
 	columnName: '',
 	op: '',
 	value: [],
@@ -75,7 +75,7 @@ export const initialQueryBuilderFormValues: IBuilderQueryForm = {
 };
 
 export const initialFormulaBuilderFormValues: IBuilderFormula = {
-	label: createNewBuilderItemName({
+	queryName: createNewBuilderItemName({
 		existNames: [],
 		sourceNames: formulasNames,
 	}),
@@ -104,22 +104,22 @@ export const OPERATORS = {
 	NIN: 'NOT_IN',
 	LIKE: 'LIKE',
 	NLIKE: 'NOT_LIKE',
-	EQUALS: '=',
-	NOT_EQUALS: '!=',
+	'=': '=',
+	'!=': '!=',
 	EXISTS: 'EXISTS',
 	NOT_EXISTS: 'NOT_EXISTS',
 	CONTAINS: 'CONTAINS',
 	NOT_CONTAINS: 'NOT_CONTAINS',
-	GTE: '>=',
-	GT: '>',
-	LTE: '<=',
-	LT: '<',
+	'>=': '>=',
+	'>': '>',
+	'<=': '<=',
+	'<': '<',
 };
 
 export const QUERY_BUILDER_OPERATORS_BY_TYPES = {
 	string: [
-		OPERATORS.EQUALS,
-		OPERATORS.NOT_EQUALS,
+		OPERATORS['='],
+		OPERATORS['!='],
 		OPERATORS.IN,
 		OPERATORS.NIN,
 		OPERATORS.LIKE,
@@ -130,48 +130,48 @@ export const QUERY_BUILDER_OPERATORS_BY_TYPES = {
 		OPERATORS.NOT_EXISTS,
 	],
 	number: [
-		OPERATORS.EQUALS,
-		OPERATORS.NOT_EQUALS,
+		OPERATORS['='],
+		OPERATORS['!='],
 		OPERATORS.IN,
 		OPERATORS.NIN,
 		OPERATORS.EXISTS,
 		OPERATORS.NOT_EXISTS,
-		OPERATORS.GTE,
-		OPERATORS.GT,
-		OPERATORS.LTE,
-		OPERATORS.LT,
+		OPERATORS['>='],
+		OPERATORS['>'],
+		OPERATORS['<='],
+		OPERATORS['<'],
 	],
 	boolean: [
-		OPERATORS.EQUALS,
-		OPERATORS.NOT_EQUALS,
+		OPERATORS['='],
+		OPERATORS['!='],
 		OPERATORS.EXISTS,
 		OPERATORS.NOT_EXISTS,
 	],
 	universal: [
-		OPERATORS.EQUALS,
-		OPERATORS.NOT_EQUALS,
+		OPERATORS['='],
+		OPERATORS['!='],
 		OPERATORS.IN,
 		OPERATORS.NIN,
 		OPERATORS.EXISTS,
 		OPERATORS.NOT_EXISTS,
 		OPERATORS.LIKE,
 		OPERATORS.NLIKE,
-		OPERATORS.GTE,
-		OPERATORS.GT,
-		OPERATORS.LTE,
-		OPERATORS.LT,
+		OPERATORS['>='],
+		OPERATORS['>'],
+		OPERATORS['<='],
+		OPERATORS['<'],
 		OPERATORS.CONTAINS,
 		OPERATORS.NOT_CONTAINS,
 	],
 };
 
 export const HAVING_OPERATORS: string[] = [
-	OPERATORS.EQUALS,
-	OPERATORS.NOT_EQUALS,
+	OPERATORS['='],
+	OPERATORS['!='],
 	OPERATORS.IN,
 	OPERATORS.NIN,
-	OPERATORS.GTE,
-	OPERATORS.GT,
-	OPERATORS.LTE,
-	OPERATORS.LT,
+	OPERATORS['>='],
+	OPERATORS['>'],
+	OPERATORS['<='],
+	OPERATORS['<'],
 ];
