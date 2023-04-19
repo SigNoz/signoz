@@ -1,4 +1,4 @@
-import { Row } from 'antd';
+import { Col, Row } from 'antd';
 import React, { Fragment, memo, ReactNode, useState } from 'react';
 
 // ** Types
@@ -9,7 +9,6 @@ import {
 	StyledIconOpen,
 	StyledInner,
 	StyledLink,
-	StyledWrapper,
 } from './AdditionalFiltersToggler.styled';
 
 export const AdditionalFiltersToggler = memo(function AdditionalFiltersToggler({
@@ -41,12 +40,14 @@ export const AdditionalFiltersToggler = memo(function AdditionalFiltersToggler({
 	});
 
 	return (
-		<StyledWrapper>
-			<StyledInner onClick={handleToggleOpenFilters}>
-				{isOpenedFilters ? <StyledIconClose /> : <StyledIconOpen />}
-				{!isOpenedFilters && <span>Add conditions for {filtersTexts}</span>}
-			</StyledInner>
-			{isOpenedFilters && <Row>{children}</Row>}
-		</StyledWrapper>
+		<Row>
+			<Col span={24}>
+				<StyledInner onClick={handleToggleOpenFilters}>
+					{isOpenedFilters ? <StyledIconClose /> : <StyledIconOpen />}
+					{!isOpenedFilters && <span>Add conditions for {filtersTexts}</span>}
+				</StyledInner>
+			</Col>
+			{isOpenedFilters && <Col span={24}>{children}</Col>}
+		</Row>
 	);
 });

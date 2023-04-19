@@ -28,6 +28,7 @@ const (
 	defaultSpansTable              string        = "distributed_signoz_spans"
 	defaultDependencyGraphTable    string        = "distributed_dependency_graph_minutes_v2"
 	defaultTopLevelOperationsTable string        = "distributed_top_level_operations"
+	defaultSpanAttributeTable      string        = "distributed_span_attributes"
 	defaultLogsDB                  string        = "signoz_logs"
 	defaultLogsTable               string        = "distributed_logs"
 	defaultLogsLocalTable          string        = "logs"
@@ -63,6 +64,7 @@ type namespaceConfig struct {
 	UsageExplorerTable      string
 	SpansTable              string
 	ErrorTable              string
+	SpanAttributeTable      string
 	DependencyGraphTable    string
 	TopLevelOperationsTable string
 	LogsDB                  string
@@ -132,6 +134,7 @@ func NewOptions(datasource string, primaryNamespace string, otherNamespaces ...s
 			DurationTable:           defaultDurationTable,
 			UsageExplorerTable:      defaultUsageExplorerTable,
 			SpansTable:              defaultSpansTable,
+			SpanAttributeTable:      defaultSpanAttributeTable,
 			DependencyGraphTable:    defaultDependencyGraphTable,
 			TopLevelOperationsTable: defaultTopLevelOperationsTable,
 			LogsDB:                  defaultLogsDB,

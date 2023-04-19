@@ -4,7 +4,7 @@ import styled from 'styled-components';
 
 export const StyledDeleteEntity = styled(CloseCircleOutlined)`
 	position: absolute;
-	top: 0.9375rem;
+	top: 0.5rem;
 	right: 0.9375rem;
 	z-index: 1;
 	cursor: pointer;
@@ -19,4 +19,8 @@ export const StyledDeleteEntity = styled(CloseCircleOutlined)`
 
 export const StyledRow = styled(Row)`
 	padding-right: 3rem;
+`;
+
+export const StyledFilterRow = styled(Row)`
+	margin-bottom: 0.875rem;
 `;
