@@ -1,9 +1,11 @@
-// ** TODO: use it for creating formula names
-// import { createNewFormulaName } from 'lib/newQueryBuilder/createNewFormulaName';
 // ** Helpers
-import { createNewQueryName } from 'lib/newQueryBuilder/createNewQueryName';
+import { createNewBuilderItemName } from 'lib/newQueryBuilder/createNewBuilderItemName';
 import { LocalDataType } from 'types/api/queryBuilder/queryAutocompleteResponse';
-import { IBuilderQueryForm } from 'types/api/queryBuilder/queryBuilderData';
+import {
+	Having,
+	IBuilderFormula,
+	IBuilderQueryForm,
+} from 'types/api/queryBuilder/queryBuilderData';
 import {
 	BoolOperators,
 	DataSource,
@@ -13,6 +15,16 @@ import {
 	StringOperators,
 	TracesAggregatorOperator,
 } from 'types/common/queryBuilder';
+
+export const MAX_FORMULAS = 20;
+export const MAX_QUERIES = 26;
+
+export const formulasNames: string[] = Array.from(
+	Array(MAX_FORMULAS),
+	(_, i) => `F${i + 1}`,
+);
+const alpha: number[] = Array.from(Array(MAX_QUERIES), (_, i) => i + 65);
+export const alphabet: string[] = alpha.map((str) => String.fromCharCode(str));
 
 export enum QueryBuilderKeys {
 	GET_AGGREGATE_ATTRIBUTE = 'GET_AGGREGATE_ATTRIBUTE',
@@ -27,9 +39,15 @@ export const mapOfOperators: Record<DataSource, string[]> = {
 
 export const mapOfFilters: Record<DataSource, string[]> = {
 	// eslint-disable-next-line sonarjs/no-duplicate-string
-	metrics: ['Having', 'Aggregation interval'],
-	logs: ['Limit', 'Having', 'Order by', 'Aggregation interval'],
-	traces: ['Limit', 'Having', 'Order by', 'Aggregation interval'],
+	metrics: ['Aggregation interval', 'Having'],
+	logs: ['Order by', 'Limit', 'Having', 'Aggregation interval'],
+	traces: ['Order by', 'Limit', 'Having', 'Aggregation interval'],
+};
+
+export const initialHavingValues: Having = {
+	columnName: '',
+	op: '',
+	value: [],
 };
 
 export const initialAggregateAttribute: IBuilderQueryForm['aggregateAttribute'] = {
@@ -41,7 +59,7 @@ export const initialAggregateAttribute: IBuilderQueryForm['aggregateAttribute'] 
 
 export const initialQueryBuilderFormValues: IBuilderQueryForm = {
 	dataSource: DataSource.METRICS,
-	queryName: createNewQueryName([]),
+	queryName: createNewBuilderItemName({ existNames: [], sourceNames: alphabet }),
 	aggregateOperator: Object.values(MetricAggregateOperator)[0],
 	aggregateAttribute: initialAggregateAttribute,
 	tagFilters: { items: [], op: 'AND' },
@@ -54,6 +72,16 @@ export const initialQueryBuilderFormValues: IBuilderQueryForm = {
 	groupBy: [],
 	legend: '',
 	reduceTo: '',
+};
+
+export const initialFormulaBuilderFormValues: IBuilderFormula = {
+	label: createNewBuilderItemName({
+		existNames: [],
+		sourceNames: formulasNames,
+	}),
+	expression: '',
+	disabled: false,
+	legend: '',
 };
 
 export const operatorsByTypes: Record<LocalDataType, string[]> = {
@@ -136,3 +164,14 @@ export const QUERY_BUILDER_OPERATORS_BY_TYPES = {
 		OPERATORS.NOT_CONTAINS,
 	],
 };
+
+export const HAVING_OPERATORS: string[] = [
+	OPERATORS.EQUALS,
+	OPERATORS.NOT_EQUALS,
+	OPERATORS.IN,
+	OPERATORS.NIN,
+	OPERATORS.GTE,
+	OPERATORS.GT,
+	OPERATORS.LTE,
+	OPERATORS.LT,
+];

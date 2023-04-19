@@ -149,4 +149,5 @@ export type QueryBuilderContextType = {
 	setupInitialDataSource: (newInitialDataSource: DataSource | null) => void;
 	removeEntityByIndex: (type: keyof QueryBuilderData, index: number) => void;
 	addNewQuery: () => void;
+	addNewFormula: () => void;
 };
