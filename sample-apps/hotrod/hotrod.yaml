@@ -56,13 +56,6 @@ spec:
           name: hotrod
           ports:
             - containerPort: 8080
-          resources:
-            requests:
-              cpu: 100m
-              memory: 100Mi
-            limits:
-              cpu: 200m
-              memory: 200Mi
       restartPolicy: Always
 ---
 apiVersion: v1
@@ -126,13 +119,6 @@ spec:
           name: comm-plus-1
         - containerPort: 8089
           name: web-ui
-        resources:
-          requests:
-            cpu: 100m
-            memory: 100Mi
-          limits:
-            cpu: 200m
-            memory: 200Mi
         terminationMessagePath: /dev/termination-log
         terminationMessagePolicy: File
       dnsPolicy: ClusterFirst
@@ -203,13 +189,6 @@ spec:
         volumeMounts:
           - mountPath: /locust
             name: locust-scripts
-        resources:
-          requests:
-            cpu: 100m
-            memory: 100Mi
-          limits:
-            cpu: 200m
-            memory: 200Mi
         terminationMessagePath: /dev/termination-log
         terminationMessagePolicy: File
       dnsPolicy: ClusterFirst

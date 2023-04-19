@@ -11,6 +11,7 @@ export interface IBuilderFormula {
 }
 
 export interface TagFilterItem {
+	id: string;
 	key: string;
 	// TODO: type it in the future
 	op: string;
@@ -18,7 +19,7 @@ export interface TagFilterItem {
 }
 
 export interface TagFilter {
-	items: TagFilterItem[];
+	items: TagFilterItem[] | [];
 	// TODO: type it in the future
 	op: string;
 }
@@ -35,14 +36,14 @@ export type IBuilderQuery = {
 	dataSource: DataSource;
 	aggregateOperator: string;
 	aggregateAttribute: string;
-	tagFilters: TagFilter[];
+	tagFilters: TagFilter;
 	groupBy: BaseAutocompleteData[];
 	expression: string;
 	disabled: boolean;
 	having: Having[];
 	limit: number | null;
 	stepInterval: number;
-	orderBy: string[];
+	orderBy: BaseAutocompleteData[];
 	reduceTo: string;
 };
 

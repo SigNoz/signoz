@@ -3808,7 +3808,9 @@ func (r *ClickHouseReader) GetLogAggregateAttributes(ctx context.Context, req *v
 
 	where := ""
 	switch req.Operator {
-	case v3.AggregateOperatorCountDistinct:
+	case
+		v3.AggregateOperatorCountDistinct,
+		v3.AggregateOperatorCount:
 		where = "tagKey ILIKE $1"
 	case
 		v3.AggregateOperatorRateSum,
@@ -3831,7 +3833,6 @@ func (r *ClickHouseReader) GetLogAggregateAttributes(ctx context.Context, req *v
 		v3.AggregateOperatorMax:
 		where = "tagKey ILIKE $1 AND (tagDataType='int64' or tagDataType='float64')"
 	case
-		v3.AggregateOperatorCount,
 		v3.AggregateOperatorNoOp:
 		return &v3.AggregateAttributeResponse{}, nil
 	default:
@@ -4230,7 +4231,9 @@ func (r *ClickHouseReader) GetTraceAggregateAttributes(ctx context.Context, req 
 	var response v3.AggregateAttributeResponse
 	where := ""
 	switch req.Operator {
-	case v3.AggregateOperatorCountDistinct:
+	case
+		v3.AggregateOperatorCountDistinct,
+		v3.AggregateOperatorCount:
 		where = "tagKey ILIKE $1"
 	case
 		v3.AggregateOperatorRateSum,
@@ -4253,7 +4256,6 @@ func (r *ClickHouseReader) GetTraceAggregateAttributes(ctx context.Context, req 
 		v3.AggregateOperatorMax:
 		where = "tagKey ILIKE $1 AND dataType='float64'"
 	case
-		v3.AggregateOperatorCount,
 		v3.AggregateOperatorNoOp:
 		return &v3.AggregateAttributeResponse{}, nil
 	default:
