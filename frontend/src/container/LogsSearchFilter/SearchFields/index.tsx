@@ -97,6 +97,7 @@ function SearchFields({
 
 	const clearFilters = useCallback((): void => {
 		keyPrefixRef.current = hashCode(JSON.stringify([]));
+		setFieldsQuery([]);
 		updateQueryString('');
 	}, [updateQueryString]);
 
