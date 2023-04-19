@@ -11,11 +11,13 @@ import {
 	AdditionalFiltersToggler,
 	DataSourceDropdown,
 	FilterLabel,
+	ListItemWrapper,
 	ListMarker,
 } from 'container/QueryBuilder/components';
 import {
 	AggregatorFilter,
 	GroupByFilter,
+	HavingFilter,
 	OperatorsSelect,
 	ReduceToFilter,
 } from 'container/QueryBuilder/filters';
@@ -29,16 +31,15 @@ import { findDataTypeOfOperator } from 'lib/query/findDataTypeOfOperator';
 import React, { memo, useCallback, useMemo } from 'react';
 import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import {
+	Having,
 	IBuilderQueryForm,
 	TagFilter,
 } from 'types/api/queryBuilder/queryBuilderData';
-import { DataSource } from 'types/common/queryBuilder';
+import { DataSource, StringOperators } from 'types/common/queryBuilder';
 import { transformToUpperCase } from 'utils/transformToUpperCase';
 
 // ** Types
 import { QueryProps } from './Query.interfaces';
-// ** Styles
-import { StyledDeleteEntity, StyledFilterRow, StyledRow } from './Query.styled';
 
 export const Query = memo(function Query({
 	index,
@@ -116,6 +117,7 @@ export const Query = memo(function Query({
 			const newQuery: IBuilderQueryForm = {
 				...query,
 				aggregateAttribute: value,
+				having: [],
 			};
 
 			handleSetQueryData(index, newQuery);
@@ -192,6 +194,15 @@ export const Query = memo(function Query({
 		[index, query, handleSetQueryData],
 	);
 
+	const handleChangeHavingFilter = useCallback(
+		(having: Having[]) => {
+			const newQuery: IBuilderQueryForm = { ...query, having };
+
+			handleSetQueryData(index, newQuery);
+		},
+		[index, query, handleSetQueryData],
+	);
+
 	const handleDeleteQuery = useCallback(() => {
 		removeEntityByIndex('queryData', index);
 	}, [removeEntityByIndex, index]);
@@ -246,14 +257,13 @@ export const Query = memo(function Query({
 	);
 
 	return (
-		<StyledRow gutter={[0, 15]}>
-			<StyledDeleteEntity onClick={handleDeleteQuery} />
+		<ListItemWrapper onDelete={handleDeleteQuery}>
 			<Col span={24}>
-				<Row align="middle" justify="space-between">
+				<Row align="middle">
 					<Col>
 						<ListMarker
 							isDisabled={query.disabled}
-							toggleDisabled={handleToggleDisableQuery}
+							onDisable={handleToggleDisableQuery}
 							labelName={query.queryName}
 							index={index}
 							isAvailableToDisable={isAvailableToDisable}
@@ -267,10 +277,18 @@ export const Query = memo(function Query({
 						) : (
 							<FilterLabel label={transformToUpperCase(query.dataSource)} />
 						)}
-						{isMatricsDataSource && <FilterLabel label="WHERE" />}
 					</Col>
-					<Col span={isMatricsDataSource ? 17 : 20}>
-						<QueryBuilderSearch query={query} onChange={handleChangeTagFilters} />
+					<Col flex="1">
+						<Row gutter={[11, 5]}>
+							{isMatricsDataSource && (
+								<Col>
+									<FilterLabel label="WHERE" />
+								</Col>
+							)}
+							<Col flex="1">
+								<QueryBuilderSearch query={query} onChange={handleChangeTagFilters} />
+							</Col>
+						</Row>
 					</Col>
 				</Row>
 			</Col>
@@ -291,6 +309,7 @@ export const Query = memo(function Query({
 					</Col>
 				</Row>
 			</Col>
+
 			<Col span={11} offset={2}>
 				<Row gutter={[11, 5]}>
 					<Col flex="5.93rem">
@@ -307,31 +326,56 @@ export const Query = memo(function Query({
 			</Col>
 			<Col span={24}>
 				<AdditionalFiltersToggler listOfAdditionalFilter={listOfAdditionalFilters}>
-					{!isMatricsDataSource && (
-						<StyledFilterRow gutter={[11, 5]} justify="space-around">
-							<Col span={2}>
-								<FilterLabel label="Order by" />
+					<Row gutter={[0, 11]} justify="space-between">
+						{!isMatricsDataSource && (
+							<Col span={11}>
+								<Row gutter={[11, 5]}>
+									<Col flex="5.93rem">
+										<FilterLabel label="Limit" />
+									</Col>
+									<Col flex="1 1 12.5rem">
+										<LimitFilter query={query} onChange={handleChangeLimit} />
+									</Col>
+								</Row>
 							</Col>
-							<Col span={10}>
-								<OrderByFilter query={query} onChange={handleChangeOrderByKeys} />
+						)}
+						{query.aggregateOperator !== StringOperators.NOOP && (
+							<Col span={11}>
+								<Row gutter={[11, 5]}>
+									<Col flex="5.93rem">
+										<FilterLabel label="HAVING" />
+									</Col>
+									<Col flex="1 1 12.5rem">
+										<HavingFilter onChange={handleChangeHavingFilter} query={query} />
+									</Col>
+								</Row>
 							</Col>
-							<Col span={1.5}>
-								<FilterLabel label="Limit" />
+						)}
+						{!isMatricsDataSource && (
+							<Col span={11}>
+								<Row gutter={[11, 5]}>
+									<Col flex="5.93rem">
+										<FilterLabel label="Order by" />
+									</Col>
+									<Col flex="1 1 12.5rem">
+										<OrderByFilter query={query} onChange={handleChangeOrderByKeys} />
+									</Col>
+								</Row>
 							</Col>
-							<Col span={10}>
-								<LimitFilter query={query} onChange={handleChangeLimit} />
-							</Col>
-						</StyledFilterRow>
-					)}
-					<Row gutter={[11, 5]}>
-						<Col span={3}>
-							<FilterLabel label="Aggregate Every" />
-						</Col>
-						<Col span={8}>
-							<AggregateEveryFilter
-								query={query}
-								onChange={handleChangeAggregateEvery}
-							/>
+						)}
+
+						<Col span={11}>
+							<Row gutter={[11, 5]}>
+								<Col flex="5.93rem">
+									<FilterLabel label="Aggregate Every" />
+								</Col>
+								<Col flex="1 1 6rem">
+									<AggregateEveryFilter
+										query={query}
+										onChange={handleChangeAggregateEvery}
+									/>
+								</Col>
+							</Row>
 						</Col>
 					</Row>
 				</AdditionalFiltersToggler>
@@ -344,6 +388,6 @@ export const Query = memo(function Query({
 					addonBefore="Legend Format"
 				/>
 			</Row>
-		</StyledRow>
+		</ListItemWrapper>
 	);
 });

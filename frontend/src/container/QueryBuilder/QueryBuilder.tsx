@@ -1,14 +1,13 @@
 import { PlusOutlined } from '@ant-design/icons';
 import { Button, Col, Row } from 'antd';
+import { MAX_FORMULAS, MAX_QUERIES } from 'constants/queryBuilder';
 // ** Hooks
 import { useQueryBuilder } from 'hooks/useQueryBuilder';
-import { MAX_FORMULAS } from 'lib/newQueryBuilder/createNewFormulaName';
 // ** Constants
-import { MAX_QUERIES } from 'lib/newQueryBuilder/createNewQueryName';
 import React, { memo, useEffect, useMemo } from 'react';
 
 // ** Components
-import { Query } from './components';
+import { Formula, Query } from './components';
 // ** Types
 import { QueryBuilderProps } from './QueryBuilder.interfaces';
 // ** Styles
@@ -21,6 +20,7 @@ export const QueryBuilder = memo(function QueryBuilder({
 		queryBuilderData,
 		setupInitialDataSource,
 		addNewQuery,
+		addNewFormula,
 	} = useQueryBuilder();
 
 	useEffect(() => {
@@ -39,7 +39,7 @@ export const QueryBuilder = memo(function QueryBuilder({
 	);
 
 	const isDisabledFormulaButton = useMemo(
-		() => queryBuilderData.queryData.length >= MAX_FORMULAS,
+		() => queryBuilderData.queryFormulas.length >= MAX_FORMULAS,
 		[queryBuilderData],
 	);
 
@@ -56,6 +56,11 @@ export const QueryBuilder = memo(function QueryBuilder({
 								query={query}
 								panelType={panelType}
 							/>
+						</Col>
+					))}
+					{queryBuilderData.queryFormulas.map((formula, index) => (
+						<Col key={formula.label} span={24}>
+							<Formula formula={formula} index={index} />
 						</Col>
 					))}
 				</Row>
@@ -75,6 +80,7 @@ export const QueryBuilder = memo(function QueryBuilder({
 				<Col>
 					<Button
 						disabled={isDisabledFormulaButton}
+						onClick={addNewFormula}
 						type="primary"
 						icon={<PlusOutlined />}
 					>
