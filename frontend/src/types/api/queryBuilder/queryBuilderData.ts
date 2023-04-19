@@ -24,11 +24,11 @@ export interface TagFilter {
 	op: string;
 }
 
-export interface Having {
-	key: string;
-	value: string;
+export type Having = {
+	columnName: string;
 	op: string;
-}
+	value: string[];
+};
 
 // Type for query builder
 export type IBuilderQuery = {
