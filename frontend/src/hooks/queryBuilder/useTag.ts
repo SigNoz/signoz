@@ -5,6 +5,7 @@ type IUseTag = {
 	handleAddTag: (value: string) => void;
 	handleClearTag: (value: string) => void;
 	tags: string[];
+	updateTag: (value: string) => void;
 };
 
 /**
@@ -22,6 +23,11 @@ export const useTag = (
 	handleSearch: (value: string) => void,
 ): IUseTag => {
 	const [tags, setTags] = useState<string[]>([]);
+
+	const updateTag = (value: string): void => {
+		const newTags = tags?.filter((item: string) => item !== value);
+		setTags(newTags);
+	};
 
 	/**
 	 * Adds a new tag to the tag list.
@@ -49,5 +55,5 @@ export const useTag = (
 		setTags((prevTags) => prevTags.filter((v) => v !== value));
 	}, []);
 
-	return { handleAddTag, handleClearTag, tags };
+	return { handleAddTag, handleClearTag, tags, updateTag };
 };
