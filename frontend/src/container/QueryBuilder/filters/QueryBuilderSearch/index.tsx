@@ -16,6 +16,7 @@ function QueryBuilderSearch({
 	onChange,
 }: QueryBuilderSearchProps): JSX.Element {
 	const {
+		updateTag,
 		handleClearTag,
 		handleKeyDown,
 		handleSearch,
@@ -39,10 +40,19 @@ function QueryBuilderSearch({
 			handleSearch('');
 		};
 
+		const tagEditHandler = (value: string): void => {
+			updateTag(value);
+			handleSearch(value);
+		};
+
 		return (
 			<Tag closable={closable} onClose={onCloseHandler}>
 				<Tooltip title={value}>
-					<TypographyText ellipsis $isInNin={isInNin}>
+					<TypographyText
+						ellipsis
+						$isInNin={isInNin}
+						onClick={(): void => tagEditHandler(value)}
+					>
 						{value}
 					</TypographyText>
 				</Tooltip>
