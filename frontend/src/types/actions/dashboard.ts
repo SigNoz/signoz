@@ -11,11 +11,6 @@ import { QueryData } from 'types/api/widgets/getQuery';
 export const GET_DASHBOARD = 'GET_DASHBOARD';
 export const UPDATE_DASHBOARD = 'UPDATE_DASHBOARD';
 
-export const GET_ALL_DASHBOARD_LOADING_START =
-	'GET_ALL_DASHBOARD_LOADING_START';
-export const GET_ALL_DASHBOARD_SUCCESS = 'GET_ALL_DASHBOARD_SUCCESS';
-export const GET_ALL_DASHBOARD_ERROR = 'GET_ALL_DASHBOARD_ERROR';
-
 export const GET_DASHBOARD_LOADING_START = 'GET_DASHBOARD_LOADING_START';
 export const GET_DASHBOARD_SUCCESS = 'GET_DASHBOARD_SUCCESS';
 export const GET_DASHBOARD_ERROR = 'GET_DASHBOARD_ERROR';
@@ -66,14 +61,7 @@ interface DeleteDashboardSuccess {
 }
 
 interface DashboardStart {
-	type:
-		| typeof GET_ALL_DASHBOARD_LOADING_START
-		| typeof GET_DASHBOARD_LOADING_START;
-}
-
-interface GetAllDashboardSuccess {
-	type: typeof GET_ALL_DASHBOARD_SUCCESS;
-	payload: Dashboard[];
+	type: typeof GET_DASHBOARD_LOADING_START;
 }
 
 interface GetDashboardSuccess {
@@ -100,7 +88,6 @@ interface IsAddWidget {
 
 interface DashboardError {
 	type:
-		| typeof GET_ALL_DASHBOARD_ERROR
 		| typeof GET_DASHBOARD_ERROR
 		| typeof UPDATE_TITLE_DESCRIPTION_TAGS_ERROR
 		| typeof DELETE_DASHBOARD_ERROR
@@ -191,7 +178,6 @@ export type DashboardActions =
 	| UpdateDashboard
 	| DeleteDashboardSuccess
 	| DashboardError
-	| GetAllDashboardSuccess
 	| DashboardStart
 	| GetDashboardSuccess
 	| UpdateDashboardTitle

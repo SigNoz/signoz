@@ -6,9 +6,6 @@ import {
 	// DELETE_QUERY,
 	DELETE_WIDGET_SUCCESS,
 	FLUSH_DASHBOARD,
-	GET_ALL_DASHBOARD_ERROR,
-	GET_ALL_DASHBOARD_LOADING_START,
-	GET_ALL_DASHBOARD_SUCCESS,
 	GET_DASHBOARD_ERROR,
 	GET_DASHBOARD_LOADING_START,
 	GET_DASHBOARD_SUCCESS,
@@ -40,19 +37,10 @@ const dashboard = (
 	// eslint-disable-next-line sonarjs/cognitive-complexity
 ): InitialValueTypes => {
 	switch (action.type) {
-		case GET_ALL_DASHBOARD_LOADING_START:
 		case GET_DASHBOARD_LOADING_START: {
 			return {
 				...state,
 				loading: true,
-			};
-		}
-
-		case GET_ALL_DASHBOARD_SUCCESS: {
-			return {
-				...state,
-				loading: false,
-				dashboards: action.payload,
 			};
 		}
 
@@ -70,17 +58,6 @@ const dashboard = (
 						},
 					},
 				],
-			};
-		}
-
-		case GET_ALL_DASHBOARD_ERROR: {
-			const { payload } = action;
-
-			return {
-				...state,
-				loading: false,
-				error: true,
-				errorMessage: payload.errorMessage,
 			};
 		}
 

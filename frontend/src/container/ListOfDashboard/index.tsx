@@ -9,6 +9,7 @@ import {
 } from 'antd';
 import { ItemType } from 'antd/es/menu/hooks/useItems';
 import createDashboard from 'api/dashboard/create';
+import getAll from 'api/dashboard/getAll';
 import { AxiosError } from 'axios';
 import { ResizeTable } from 'components/ResizeTable';
 import TextToolTip from 'components/TextToolTip';
@@ -16,22 +17,14 @@ import ROUTES from 'constants/routes';
 import SearchFilter from 'container/ListOfDashboard/SearchFilter';
 import useComponentPermission from 'hooks/useComponentPermission';
 import history from 'lib/history';
-import React, {
-	Dispatch,
-	useCallback,
-	useEffect,
-	useMemo,
-	useState,
-} from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useDispatch, useSelector } from 'react-redux';
+import { useQuery } from 'react-query';
+import { useSelector } from 'react-redux';
 import { generatePath } from 'react-router-dom';
 import { AppState } from 'store/reducers';
-import AppActions from 'types/actions';
-import { GET_ALL_DASHBOARD_SUCCESS } from 'types/actions/dashboard';
 import { Dashboard } from 'types/api/dashboard/getAll';
 import AppReducer from 'types/reducer/app';
-import DashboardReducer from 'types/reducer/dashboards';
 
 import ImportJSON from './ImportJSON';
 import { ButtonContainer, NewDashboardButton, TableContainer } from './styles';
@@ -42,10 +35,21 @@ import Name from './TableComponents/Name';
 import Tags from './TableComponents/Tags';
 
 function ListOfAllDashboard(): JSX.Element {
-	const { dashboards, loading } = useSelector<AppState, DashboardReducer>(
-		(state) => state.dashboards,
+	const { user } = useSelector<AppState, AppReducer>((state) => state.app);
+
+	const { data: getAllDashboardData, isLoading } = useQuery(
+		['getAllDashboards', user?.userId],
+		{
+			queryFn: getAll,
+		},
 	);
-	const dispatch = useDispatch<Dispatch<AppActions>>();
+
+	const dashboards = useMemo(() => getAllDashboardData?.payload || [], [
+		getAllDashboardData,
+	]);
+
+	console.log('dashboards', dashboards);
+
 	const { role } = useSelector<AppState, AppReducer>((state) => state.app);
 
 	const [action, createNewDashboard, newDashboard] = useComponentPermission(
@@ -62,10 +66,12 @@ function ListOfAllDashboard(): JSX.Element {
 
 	const [uploadedGrafana, setUploadedGrafana] = useState<boolean>(false);
 
-	const [filteredDashboards, setFilteredDashboards] = useState<Dashboard[]>();
+	const [filteredDashboards, setFilteredDashboards] = useState<Dashboard[]>(
+		dashboards || [],
+	);
 
 	useEffect(() => {
-		setFilteredDashboards(dashboards);
+		if (dashboards) setFilteredDashboards(dashboards);
 	}, [dashboards]);
 
 	const [newDashboardState, setNewDashboardState] = useState({
@@ -128,7 +134,7 @@ function ListOfAllDashboard(): JSX.Element {
 		});
 	}
 
-	const data: Data[] = (filteredDashboards || dashboards).map((e) => ({
+	const data: Data[] = filteredDashboards.map((e) => ({
 		createdBy: e.created_at,
 		description: e.data.description || '',
 		id: e.uuid,
@@ -152,10 +158,6 @@ function ListOfAllDashboard(): JSX.Element {
 			});
 
 			if (response.statusCode === 200) {
-				dispatch({
-					type: GET_ALL_DASHBOARD_SUCCESS,
-					payload: [],
-				});
 				history.push(
 					generatePath(ROUTES.DASHBOARD, {
 						dashboardId: response.payload.uuid,
@@ -176,7 +178,7 @@ function ListOfAllDashboard(): JSX.Element {
 				errorMessage: (error as AxiosError).toString() || 'Something went Wrong',
 			});
 		}
-	}, [newDashboardState, t, dispatch]);
+	}, [newDashboardState, t]);
 
 	const getText = useCallback(() => {
 		if (!newDashboardState.error && !newDashboardState.loading) {
@@ -205,7 +207,7 @@ function ListOfAllDashboard(): JSX.Element {
 			menuItems.push({
 				key: t('create_dashboard').toString(),
 				label: t('create_dashboard'),
-				disabled: loading,
+				disabled: isLoading,
 				onClick: onNewDashboardHandler,
 			});
 		}
@@ -223,7 +225,7 @@ function ListOfAllDashboard(): JSX.Element {
 		});
 
 		return menuItems;
-	}, [createNewDashboard, loading, onNewDashboardHandler, t]);
+	}, [createNewDashboard, isLoading, onNewDashboardHandler, t]);
 
 	const menu: MenuProps = useMemo(
 		() => ({
@@ -272,12 +274,10 @@ function ListOfAllDashboard(): JSX.Element {
 		<Card>
 			{GetHeader}
 
-			{!loading && (
-				<SearchFilter
-					searchData={dashboards}
-					filterDashboards={setFilteredDashboards}
-				/>
-			)}
+			<SearchFilter
+				searchData={dashboards}
+				filterDashboards={setFilteredDashboards}
+			/>
 
 			<TableContainer>
 				<ImportJSON
@@ -294,7 +294,7 @@ function ListOfAllDashboard(): JSX.Element {
 					showHeader
 					bordered
 					sticky
-					loading={loading}
+					loading={isLoading}
 					dataSource={data}
 					showSorterTooltip
 				/>
