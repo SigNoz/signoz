@@ -11,16 +11,16 @@ export const ListMarker = memo(function ListMarker({
 	isDisabled,
 	labelName,
 	index,
-	isAvailableToDisable,
+	isAvailableToDisable = true,
 	className,
-	toggleDisabled,
+	onDisable,
 	style,
 }: ListMarkerProps): JSX.Element {
 	const buttonProps: Partial<ButtonProps> = isAvailableToDisable
 		? {
 				type: isDisabled ? 'default' : 'primary',
 				icon: isDisabled ? <EyeInvisibleFilled /> : <EyeFilled />,
-				onClick: (): void => toggleDisabled(index),
+				onClick: (): void => onDisable(index),
 		  }
 		: { type: 'primary' };
 

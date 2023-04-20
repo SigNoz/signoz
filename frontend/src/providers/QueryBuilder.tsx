@@ -1,11 +1,13 @@
-// ** Helpers
-// ** Constants
-import { initialQueryBuilderFormValues } from 'constants/queryBuilder';
-import { mapOfOperators } from 'constants/queryBuilder';
 import {
-	createNewQueryName,
+	alphabet,
+	formulasNames,
+	initialFormulaBuilderFormValues,
+	initialQueryBuilderFormValues,
+	mapOfOperators,
+	MAX_FORMULAS,
 	MAX_QUERIES,
-} from 'lib/newQueryBuilder/createNewQueryName';
+} from 'constants/queryBuilder';
+import { createNewBuilderItemName } from 'lib/newQueryBuilder/createNewBuilderItemName';
 import React, {
 	createContext,
 	PropsWithChildren,
@@ -35,6 +37,7 @@ export const QueryBuilderContext = createContext<QueryBuilderContextType>({
 	setupInitialDataSource: () => {},
 	removeEntityByIndex: () => {},
 	addNewQuery: () => {},
+	addNewFormula: () => {},
 });
 
 const initialQueryBuilderData: QueryBuilderData = {
@@ -91,12 +94,15 @@ export function QueryBuilderProvider({
 
 			const newQuery: IBuilderQueryForm = {
 				...initialQueryBuilderFormValues,
-				queryName: createNewQueryName(existNames),
+				queryName: createNewBuilderItemName({ existNames, sourceNames: alphabet }),
 				...(initialDataSource
 					? {
 							dataSource: initialDataSource,
 							aggregateOperator: mapOfOperators[initialDataSource][0],
-							expression: createNewQueryName(existNames),
+							expression: createNewBuilderItemName({
+								existNames,
+								sourceNames: alphabet,
+							}),
 					  }
 					: {}),
 			};
@@ -105,6 +111,17 @@ export function QueryBuilderProvider({
 		},
 		[initialDataSource],
 	);
+
+	const createNewFormula = useCallback((formulas: IBuilderFormula[]) => {
+		const existNames = formulas.map((item) => item.label);
+
+		const newFormula: IBuilderFormula = {
+			...initialFormulaBuilderFormValues,
+			label: createNewBuilderItemName({ existNames, sourceNames: formulasNames }),
+		};
+
+		return newFormula;
+	}, []);
 
 	const addNewQuery = useCallback(() => {
 		setQueryBuilderData((prevState) => {
@@ -115,6 +132,19 @@ export function QueryBuilderProvider({
 			return { ...prevState, queryData: [...prevState.queryData, newQuery] };
 		});
 	}, [createNewQuery]);
+
+	const addNewFormula = useCallback(() => {
+		setQueryBuilderData((prevState) => {
+			if (prevState.queryFormulas.length >= MAX_FORMULAS) return prevState;
+
+			const newFormula = createNewFormula(prevState.queryFormulas);
+
+			return {
+				...prevState,
+				queryFormulas: [...prevState.queryFormulas, newFormula],
+			};
+		});
+	}, [createNewFormula]);
 
 	const setupInitialDataSource = useCallback(
 		(newInitialDataSource: DataSource | null) =>
@@ -128,6 +158,12 @@ export function QueryBuilderProvider({
 			index: number,
 			newQueryData: IBuilderQueryForm,
 		) => queries.map((item, idx) => (index === idx ? newQueryData : item)),
+		[],
+	);
+
+	const updateFormulaBuilderData = useCallback(
+		(formulas: IBuilderFormula[], index: number, newFormula: IBuilderFormula) =>
+			formulas.map((item, idx) => (index === idx ? newFormula : item)),
 		[],
 	);
 
@@ -150,10 +186,22 @@ export function QueryBuilderProvider({
 	);
 	const handleSetFormulaData = useCallback(
 		// eslint-disable-next-line @typescript-eslint/no-unused-vars
-		(index: number, formulaData: IBuilderFormula): void => {},
-		[],
+		(index: number, formulaData: IBuilderFormula): void => {
+			setQueryBuilderData((prevState) => {
+				const updatedFormulasBuilderData = updateFormulaBuilderData(
+					prevState.queryFormulas,
+					index,
+					formulaData,
+				);
+
+				return {
+					...prevState,
+					queryFormulas: updatedFormulasBuilderData,
+				};
+			});
+		},
+		[updateFormulaBuilderData],
 	);
-	console.log(queryBuilderData.queryData);
 
 	const contextValues: QueryBuilderContextType = useMemo(
 		() => ({
@@ -166,6 +214,7 @@ export function QueryBuilderProvider({
 			setupInitialDataSource,
 			removeEntityByIndex,
 			addNewQuery,
+			addNewFormula,
 		}),
 		[
 			queryBuilderData,
@@ -177,6 +226,7 @@ export function QueryBuilderProvider({
 			setupInitialDataSource,
 			removeEntityByIndex,
 			addNewQuery,
+			addNewFormula,
 		],
 	);
 
