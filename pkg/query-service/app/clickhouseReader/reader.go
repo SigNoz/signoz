@@ -3803,6 +3803,7 @@ func (r *ClickHouseReader) GetLogAggregateAttributes(ctx context.Context, req *v
 	var err error
 	var rows driver.Rows
 	var response v3.AggregateAttributeResponse
+	var stringAllowed bool
 
 	where := ""
 	switch req.Operator {
@@ -3810,6 +3811,7 @@ func (r *ClickHouseReader) GetLogAggregateAttributes(ctx context.Context, req *v
 		v3.AggregateOperatorCountDistinct,
 		v3.AggregateOpeatorCount:
 		where = "tagKey ILIKE $1"
+		stringAllowed = true
 	case
 		v3.AggregateOperatorRateSum,
 		v3.AggregateOperatorRateMax,
@@ -3830,6 +3832,7 @@ func (r *ClickHouseReader) GetLogAggregateAttributes(ctx context.Context, req *v
 		v3.AggregateOperatorMin,
 		v3.AggregateOperatorMax:
 		where = "tagKey ILIKE $1 AND (tagDataType='int64' or tagDataType='float64')"
+		stringAllowed = false
 	case
 		v3.AggregateOperatorNoOp:
 		return &v3.AggregateAttributeResponse{}, nil
@@ -3868,10 +3871,12 @@ func (r *ClickHouseReader) GetLogAggregateAttributes(ctx context.Context, req *v
 		response.AttributeKeys = append(response.AttributeKeys, key)
 	}
 	// add other attributes
-	for _, f := range constants.StaticFieldsLogsV3 {
-		if len(req.SearchText) == 0 || strings.Contains(f.Key, req.SearchText) {
-			f.IsColumn = isColumn(statements[0].Statement, f.Key)
-			response.AttributeKeys = append(response.AttributeKeys, f)
+	for _, field := range constants.StaticFieldsLogsV3 {
+		if !stringAllowed && field.DataType == v3.AttributeKeyDataTypeString {
+			continue
+		} else if len(req.SearchText) == 0 || strings.Contains(field.Key, req.SearchText) {
+			field.IsColumn = isColumn(statements[0].Statement, field.Key)
+			response.AttributeKeys = append(response.AttributeKeys, field)
 		}
 	}
 
