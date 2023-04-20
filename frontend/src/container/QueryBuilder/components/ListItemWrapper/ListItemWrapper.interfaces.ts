@@ -1,3 +1,6 @@
-import { PropsWithChildren } from 'react';
+import React from 'react';
 
-export type ListItemWrapperProps = PropsWithChildren & { onDelete: () => void };
+export type ListItemWrapperProps = {
+	onDelete: () => void;
+	children: React.ReactNode;
+};

@@ -1,12 +1,8 @@
-// ** Helpers
-// ** Constants
-import {
-	initialFormulaBuilderFormValues,
-	initialQueryBuilderFormValues,
-} from 'constants/queryBuilder';
 import {
 	alphabet,
 	formulasNames,
+	initialFormulaBuilderFormValues,
+	initialQueryBuilderFormValues,
 	mapOfOperators,
 	MAX_FORMULAS,
 	MAX_QUERIES,
