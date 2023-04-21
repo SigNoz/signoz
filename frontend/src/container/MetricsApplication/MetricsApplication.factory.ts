@@ -7,7 +7,7 @@ export const getWidgetQueryBuilder = (query: Widgets['query']): Widgets => ({
 	isStacked: false,
 	nullZeroValues: '',
 	opacity: '0',
-	panelTypes: 'TIME_SERIES',
+	panelTypes: 'graph',
 	query,
 	queryData: {
 		data: { queryData: [] },

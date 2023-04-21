@@ -28,14 +28,18 @@ import QueryBuilderSearch from 'container/QueryBuilder/filters/QueryBuilderSearc
 import { useQueryBuilder } from 'hooks/useQueryBuilder';
 import { findDataTypeOfOperator } from 'lib/query/findDataTypeOfOperator';
 // ** Hooks
-import React, { memo, useCallback, useMemo } from 'react';
+import React, { memo, ReactNode, useCallback, useMemo } from 'react';
 import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import {
 	Having,
 	IBuilderQueryForm,
 	TagFilter,
 } from 'types/api/queryBuilder/queryBuilderData';
-import { DataSource, StringOperators } from 'types/common/queryBuilder';
+import {
+	DataSource,
+	ReduceOperators,
+	StringOperators,
+} from 'types/common/queryBuilder';
 import { transformToUpperCase } from 'utils/transformToUpperCase';
 
 // ** Types
@@ -74,11 +78,6 @@ export const Query = memo(function Query({
 				limit: null,
 				tagFilters: { items: [], op: 'AND' },
 			};
-
-			if (!aggregateDataType) {
-				handleSetQueryData(index, newQuery);
-				return;
-			}
 
 			switch (aggregateDataType) {
 				case 'string':
@@ -135,6 +134,7 @@ export const Query = memo(function Query({
 					...(initialQueryBuilderFormValues as Partial<IBuilderQueryForm>),
 				};
 				delete initCopy.queryName;
+				delete initCopy.expression;
 
 				newQuery = {
 					...newQuery,
@@ -182,7 +182,7 @@ export const Query = memo(function Query({
 	);
 
 	const handleChangeReduceTo = useCallback(
-		(value: string): void => {
+		(value: ReduceOperators): void => {
 			const newQuery: IBuilderQueryForm = {
 				...query,
 				reduceTo: value,
@@ -205,7 +205,7 @@ export const Query = memo(function Query({
 		removeEntityByIndex('queryData', index);
 	}, [removeEntityByIndex, index]);
 
-	const isMatricsDataSource = useMemo(
+	const isMetricsDataSource = useMemo(
 		() => query.dataSource === DataSource.METRICS,
 		[query.dataSource],
 	);
@@ -254,6 +254,112 @@ export const Query = memo(function Query({
 		[index, query, handleSetQueryData],
 	);
 
+	const renderAdditionalFilters = useCallback((): ReactNode => {
+		switch (panelType) {
+			case 'graph': {
+				return (
+					<>
+						{!isMetricsDataSource && (
+							<Col span={11}>
+								<Row gutter={[11, 5]}>
+									<Col flex="5.93rem">
+										<FilterLabel label="Limit" />
+									</Col>
+									<Col flex="1 1 12.5rem">
+										<LimitFilter query={query} onChange={handleChangeLimit} />
+									</Col>
+								</Row>
+							</Col>
+						)}
+						{query.aggregateOperator !== StringOperators.NOOP &&
+							!isMetricsDataSource && (
+								<Col span={11}>
+									<Row gutter={[11, 5]}>
+										<Col flex="5.93rem">
+											<FilterLabel label="HAVING" />
+										</Col>
+										<Col flex="1 1 12.5rem">
+											<HavingFilter onChange={handleChangeHavingFilter} query={query} />
+										</Col>
+									</Row>
+								</Col>
+							)}
+						{!isMetricsDataSource && (
+							<Col span={11}>
+								<Row gutter={[11, 5]}>
+									<Col flex="5.93rem">
+										<FilterLabel label="Order by" />
+									</Col>
+									<Col flex="1 1 12.5rem">
+										<OrderByFilter query={query} onChange={handleChangeOrderByKeys} />
+									</Col>
+								</Row>
+							</Col>
+						)}
+
+						<Col span={11}>
+							<Row gutter={[11, 5]}>
+								<Col flex="5.93rem">
+									<FilterLabel label="Aggregate Every" />
+								</Col>
+								<Col flex="1 1 6rem">
+									<AggregateEveryFilter
+										query={query}
+										onChange={handleChangeAggregateEvery}
+									/>
+								</Col>
+							</Row>
+						</Col>
+					</>
+				);
+			}
+
+			case 'value': {
+				return (
+					<>
+						{query.aggregateOperator !== StringOperators.NOOP && (
+							<Col span={11}>
+								<Row gutter={[11, 5]}>
+									<Col flex="5.93rem">
+										<FilterLabel label="HAVING" />
+									</Col>
+									<Col flex="1 1 12.5rem">
+										<HavingFilter onChange={handleChangeHavingFilter} query={query} />
+									</Col>
+								</Row>
+							</Col>
+						)}
+						<Col span={11}>
+							<Row gutter={[11, 5]}>
+								<Col flex="5.93rem">
+									<FilterLabel label="Aggregate Every" />
+								</Col>
+								<Col flex="1 1 6rem">
+									<AggregateEveryFilter
+										query={query}
+										onChange={handleChangeAggregateEvery}
+									/>
+								</Col>
+							</Row>
+						</Col>
+					</>
+				);
+			}
+
+			default: {
+				return null;
+			}
+		}
+	}, [
+		panelType,
+		query,
+		isMetricsDataSource,
+		handleChangeAggregateEvery,
+		handleChangeHavingFilter,
+		handleChangeLimit,
+		handleChangeOrderByKeys,
+	]);
+
 	return (
 		<ListItemWrapper onDelete={handleDeleteQuery}>
 			<Col span={24}>
@@ -278,7 +384,7 @@ export const Query = memo(function Query({
 					</Col>
 					<Col flex="1">
 						<Row gutter={[11, 5]}>
-							{isMatricsDataSource && (
+							{isMetricsDataSource && (
 								<Col>
 									<FilterLabel label="WHERE" />
 								</Col>
@@ -311,10 +417,10 @@ export const Query = memo(function Query({
 			<Col span={11} offset={2}>
 				<Row gutter={[11, 5]}>
 					<Col flex="5.93rem">
-						<FilterLabel label={panelType === 'VALUE' ? 'Reduce to' : 'Group by'} />
+						<FilterLabel label={panelType === 'value' ? 'Reduce to' : 'Group by'} />
 					</Col>
 					<Col flex="1 1 12.5rem">
-						{panelType === 'VALUE' ? (
+						{panelType === 'value' ? (
 							<ReduceToFilter query={query} onChange={handleChangeReduceTo} />
 						) : (
 							<GroupByFilter query={query} onChange={handleChangeGroupByKeys} />
@@ -325,56 +431,7 @@ export const Query = memo(function Query({
 			<Col span={24}>
 				<AdditionalFiltersToggler listOfAdditionalFilter={listOfAdditionalFilters}>
 					<Row gutter={[0, 11]} justify="space-between">
-						{!isMatricsDataSource && (
-							<Col span={11}>
-								<Row gutter={[11, 5]}>
-									<Col flex="5.93rem">
-										<FilterLabel label="Limit" />
-									</Col>
-									<Col flex="1 1 12.5rem">
-										<LimitFilter query={query} onChange={handleChangeLimit} />
-									</Col>
-								</Row>
-							</Col>
-						)}
-						{query.aggregateOperator !== StringOperators.NOOP && (
-							<Col span={11}>
-								<Row gutter={[11, 5]}>
-									<Col flex="5.93rem">
-										<FilterLabel label="HAVING" />
-									</Col>
-									<Col flex="1 1 12.5rem">
-										<HavingFilter onChange={handleChangeHavingFilter} query={query} />
-									</Col>
-								</Row>
-							</Col>
-						)}
-						{!isMatricsDataSource && (
-							<Col span={11}>
-								<Row gutter={[11, 5]}>
-									<Col flex="5.93rem">
-										<FilterLabel label="Order by" />
-									</Col>
-									<Col flex="1 1 12.5rem">
-										<OrderByFilter query={query} onChange={handleChangeOrderByKeys} />
-									</Col>
-								</Row>
-							</Col>
-						)}
-
-						<Col span={11}>
-							<Row gutter={[11, 5]}>
-								<Col flex="5.93rem">
-									<FilterLabel label="Aggregate Every" />
-								</Col>
-								<Col flex="1 1 6rem">
-									<AggregateEveryFilter
-										query={query}
-										onChange={handleChangeAggregateEvery}
-									/>
-								</Col>
-							</Row>
-						</Col>
+						{renderAdditionalFilters()}
 					</Row>
 				</AdditionalFiltersToggler>
 			</Col>

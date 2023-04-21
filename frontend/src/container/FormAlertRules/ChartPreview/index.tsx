@@ -32,7 +32,7 @@ interface QueryResponseError {
 function ChartPreview({
 	name,
 	query,
-	graphType = 'TIME_SERIES',
+	graphType = 'graph',
 	selectedTime = 'GLOBAL_TIME',
 	selectedInterval = '5min',
 	headline,
@@ -66,8 +66,8 @@ function ChartPreview({
 				);
 			case EQueryType.QUERY_BUILDER:
 				return (
-					query.metricsBuilder?.queryBuilder?.length > 0 &&
-					query.metricsBuilder?.queryBuilder[0].metricName !== ''
+					query.builder.queryData.length > 0 &&
+					query.builder.queryData[0].queryName !== ''
 				);
 			default:
 				return false;
@@ -85,9 +85,9 @@ function ChartPreview({
 				query: query || {
 					queryType: 1,
 					promQL: [],
-					metricsBuilder: {
-						formulas: [],
-						queryBuilder: [],
+					builder: {
+						queryFormulas: [],
+						queryData: [],
 					},
 					clickHouse: [],
 				},
@@ -127,7 +127,7 @@ function ChartPreview({
 					title={name}
 					data={chartDataSet}
 					isStacked
-					GRAPH_TYPES={graphType || 'TIME_SERIES'}
+					GRAPH_TYPES={graphType || 'graph'}
 					name={name || 'Chart Preview'}
 					staticLine={staticLine}
 				/>
@@ -137,7 +137,7 @@ function ChartPreview({
 }
 
 ChartPreview.defaultProps = {
-	graphType: 'TIME_SERIES',
+	graphType: 'graph',
 	selectedTime: 'GLOBAL_TIME',
 	selectedInterval: '5min',
 	headline: undefined,

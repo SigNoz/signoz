@@ -19,6 +19,7 @@ export const QueryBuilder = memo(function QueryBuilder({
 	const {
 		queryBuilderData,
 		setupInitialDataSource,
+		resetQueryBuilderData,
 		addNewQuery,
 		addNewFormula,
 	} = useQueryBuilder();
@@ -32,6 +33,13 @@ export const QueryBuilder = memo(function QueryBuilder({
 			setupInitialDataSource(null);
 		};
 	}, [config, setupInitialDataSource]);
+
+	useEffect(
+		() => (): void => {
+			resetQueryBuilderData();
+		},
+		[resetQueryBuilderData],
+	);
 
 	const isDisabledQueryButton = useMemo(
 		() => queryBuilderData.queryData.length >= MAX_QUERIES,

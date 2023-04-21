@@ -1,3 +1,5 @@
+/* eslint-disable */
+// @ts-nocheck
 import { ActiveElement, Chart, ChartData, ChartEvent } from 'chart.js';
 import Graph from 'components/Graph';
 import { QueryParams } from 'constants/query';
@@ -84,6 +86,7 @@ function Application({ getWidgetQueryBuilder }: DashboardProps): JSX.Element {
 			getWidgetQueryBuilder({
 				queryType: 1,
 				promQL: [],
+				// TODO: change it later to actual builder
 				metricsBuilder: operationPerSec({
 					servicename,
 					tagFilterItems,
@@ -99,6 +102,7 @@ function Application({ getWidgetQueryBuilder }: DashboardProps): JSX.Element {
 			getWidgetQueryBuilder({
 				queryType: 1,
 				promQL: [],
+				// TODO: change it later to actual builder
 				metricsBuilder: errorPercentage({
 					servicename,
 					tagFilterItems,

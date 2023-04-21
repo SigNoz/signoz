@@ -95,14 +95,14 @@ export function QueryBuilderProvider({
 			const newQuery: IBuilderQueryForm = {
 				...initialQueryBuilderFormValues,
 				queryName: createNewBuilderItemName({ existNames, sourceNames: alphabet }),
+				expression: createNewBuilderItemName({
+					existNames,
+					sourceNames: alphabet,
+				}),
 				...(initialDataSource
 					? {
 							dataSource: initialDataSource,
 							aggregateOperator: mapOfOperators[initialDataSource][0],
-							expression: createNewBuilderItemName({
-								existNames,
-								sourceNames: alphabet,
-							}),
 					  }
 					: {}),
 			};

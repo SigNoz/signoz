@@ -6,7 +6,6 @@ import { getMetricsQueryRange } from 'api/metrics/getQueryRange';
 import { AxiosError } from 'axios';
 import { GRAPH_TYPES } from 'container/NewDashboard/ComponentsSlider';
 import { ITEMS } from 'container/NewDashboard/ComponentsSlider/menuItems';
-import { WIDGET_QUERY_BUILDER_FORMULA_KEY_NAME } from 'container/NewWidget/LeftContainer/QuerySection/constants';
 import { EQueryTypeToQueryKeyMapping } from 'container/NewWidget/LeftContainer/QuerySection/types';
 import { timePreferenceType } from 'container/NewWidget/RightContainer/timeItems';
 import { Time } from 'container/TopNav/DateTimeSelection/config';
@@ -14,15 +13,17 @@ import GetMaxMinTime from 'lib/getMaxMinTime';
 import GetMinMax from 'lib/getMinMax';
 import GetStartAndEndTime from 'lib/getStartAndEndTime';
 import getStep from 'lib/getStep';
+import { mapQueryDataToApi } from 'lib/newQueryBuilder/queryBuilderMappers/mapQueryDataToApi';
 import { isEmpty } from 'lodash-es';
 import { Dispatch } from 'redux';
 import store from 'store';
 import AppActions from 'types/actions';
 import { ErrorResponse, SuccessResponse } from 'types/api';
-import { IDashboardVariable, Query } from 'types/api/dashboard/getAll';
+import { Query } from 'types/api/dashboard/getAll';
 import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
-import { EDataSource, EPanelType, EQueryType } from 'types/common/dashboard';
+import { EQueryType } from 'types/common/dashboard';
 import { GlobalReducer } from 'types/reducer/globalTime';
+import { convertNewDataToOld } from 'lib/newQueryBuilder/convertNewDataToOld';
 
 export async function GetMetricQueryRange({
 	query,
@@ -44,48 +45,22 @@ export async function GetMetricQueryRange({
 	const legendMap: Record<string, string> = {};
 
 	const QueryPayload = {
-		dataSource: EDataSource.METRICS,
-		compositeMetricQuery: {
-			queryType,
-			panelType: EPanelType[graphType],
+		compositeQuery: {
+			queryType: queryKey,
+			panelType: graphType,
 		},
 	};
+
+	console.log({ query });
 	switch (queryType as EQueryType) {
 		case EQueryType.QUERY_BUILDER: {
-			const builderQueries = {};
-			queryData.queryBuilder.map((query) => {
-				const generatedQueryPayload = {
-					queryName: query.name,
-					aggregateOperator: query.aggregateOperator,
-					metricName: query.metricName,
-					tagFilters: query.tagFilters,
-				};
-
-				if (graphType === 'TIME_SERIES') {
-					generatedQueryPayload.groupBy = query.groupBy;
-				}
-
-				// Value
-				else {
-					generatedQueryPayload.reduceTo = query.reduceTo;
-				}
-
-				generatedQueryPayload.expression = query.name;
-				generatedQueryPayload.disabled = query.disabled;
-				builderQueries[query.name] = generatedQueryPayload;
-				legendMap[query.name] = query.legend || '';
+			const { queryData, queryFormulas } = query.builder;
+			const builderQueries = mapQueryDataToApi({
+				queryData,
+				queryFormulas,
 			});
 
-			queryData[WIDGET_QUERY_BUILDER_FORMULA_KEY_NAME].map((formula) => {
-				const generatedFormulaPayload = {};
-				legendMap[formula.name] = formula.legend || formula.name;
-				generatedFormulaPayload.queryName = formula.name;
-				generatedFormulaPayload.expression = formula.expression;
-				generatedFormulaPayload.disabled = formula.disabled;
-				generatedFormulaPayload.legend = formula.legend;
-				builderQueries[formula.name] = generatedFormulaPayload;
-			});
-			QueryPayload.compositeMetricQuery.builderQueries = builderQueries;
+			QueryPayload.compositeQuery.builderQueries = builderQueries;
 			break;
 		}
 		case EQueryType.CLICKHOUSE: {
@@ -98,7 +73,7 @@ export async function GetMetricQueryRange({
 				};
 				legendMap[query.name] = query.legend;
 			});
-			QueryPayload.compositeMetricQuery.chQueries = chQueries;
+			QueryPayload.compositeQuery.chQueries = chQueries;
 			break;
 		}
 		case EQueryType.PROM: {
@@ -111,7 +86,7 @@ export async function GetMetricQueryRange({
 				};
 				legendMap[query.name] = query.legend;
 			});
-			QueryPayload.compositeMetricQuery.promQueries = promQueries;
+			QueryPayload.compositeQuery.promQueries = promQueries;
 			break;
 		}
 		default:
@@ -148,7 +123,12 @@ export async function GetMetricQueryRange({
 			`API responded with ${response.statusCode} -  ${response.error}`,
 		);
 	}
+
 	if (response.payload?.data?.result) {
+		const v2Range = convertNewDataToOld(response.payload);
+
+		response.payload = v2Range;
+
 		response.payload.data.result = response.payload.data.result.map(
 			(queryData) => {
 				const newQueryData = queryData;

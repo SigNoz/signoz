@@ -6,7 +6,7 @@ const GetMaxMinTime = ({
 	minTime,
 	maxTime,
 }: GetMaxMinProps): GlobalTime => {
-	if (graphType === 'VALUE') {
+	if (graphType === 'value') {
 		return {
 			maxTime,
 			minTime: maxTime,
