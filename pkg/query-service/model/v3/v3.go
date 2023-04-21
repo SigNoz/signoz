@@ -256,10 +256,11 @@ const (
 )
 
 type AttributeKey struct {
-	Key      string               `json:"key"`
-	DataType AttributeKeyDataType `json:"dataType"`
-	Type     AttributeKeyType     `json:"type"`
-	IsColumn bool                 `json:"isColumn"`
+	Key               string               `json:"key"`
+	DataType          AttributeKeyDataType `json:"dataType"`
+	Type              AttributeKeyType     `json:"type"`
+	IsColumn          bool                 `json:"isColumn"`
+	IsDefaultEnriched bool                 `json:"isDefaultEnriched"`
 }
 
 func (a AttributeKey) Validate() error {

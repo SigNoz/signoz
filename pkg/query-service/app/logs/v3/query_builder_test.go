@@ -172,6 +172,20 @@ var timeSeriesFilterQueryData = []struct {
 		}},
 		ExpectedFilter: " AND attributes_string_value[indexOf(attributes_string_key, 'host')] NOT ILIKE '%102.%'",
 	},
+	{
+		Name: "Test no metadata",
+		FilterSet: &v3.FilterSet{Operator: "AND", Items: []v3.FilterItem{
+			{Key: v3.AttributeKey{Key: "host"}, Value: "102.", Operator: "ncontains"},
+		}},
+		ExpectedFilter: " AND attributes_string_value[indexOf(attributes_string_key, 'host')] NOT ILIKE '%102.%'",
+	},
+	{
+		Name: "Test no metadata number",
+		FilterSet: &v3.FilterSet{Operator: "AND", Items: []v3.FilterItem{
+			{Key: v3.AttributeKey{Key: "bytes"}, Value: 102, Operator: "="},
+		}},
+		ExpectedFilter: " AND attributes_string_value[indexOf(attributes_string_key, 'bytes')] = '102'",
+	},
 }
 
 func TestBuildLogsTimeSeriesFilterQuery(t *testing.T) {
