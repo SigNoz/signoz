@@ -185,6 +185,15 @@ var testValidateAndCastValueData = []struct {
 		wantErr: false,
 	},
 	{
+		name: "v3.AttributeKeyDataTypeFloat: Valid []interface{}",
+		args: args{
+			v:        []interface{}{4, 3},
+			dataType: v3.AttributeKeyDataTypeFloat64,
+		},
+		want:    []interface{}{4, 3},
+		wantErr: false,
+	},
+	{
 		name: "v3.AttributeKeyDataTypeFloat64: Invalid type",
 		args: args{
 			v:        true,

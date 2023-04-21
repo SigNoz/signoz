@@ -23,6 +23,8 @@ func ValidateAndCastValue(v interface{}, dataType v3.AttributeKeyDataType) (inte
 		}
 	case v3.AttributeKeyDataTypeBool:
 		switch x := v.(type) {
+		case []interface{}:
+			return v, nil
 		case bool:
 			return v, nil
 		case string:
@@ -36,6 +38,8 @@ func ValidateAndCastValue(v interface{}, dataType v3.AttributeKeyDataType) (inte
 		}
 	case v3.AttributeKeyDataTypeInt64:
 		switch x := v.(type) {
+		case []interface{}:
+			return v, nil
 		case int, int64:
 			return x, nil
 		case string:
@@ -49,10 +53,12 @@ func ValidateAndCastValue(v interface{}, dataType v3.AttributeKeyDataType) (inte
 		}
 	case v3.AttributeKeyDataTypeFloat64:
 		switch x := v.(type) {
+		case []interface{}:
+			return v, nil
 		case float32, float64:
 			return v, nil
 		case string:
-			float64val, err:= strconv.ParseFloat(x, 64)
+			float64val, err := strconv.ParseFloat(x, 64)
 			if err != nil {
 				return nil, fmt.Errorf("invalid data type, expected float, got %v", reflect.TypeOf(v))
 			}
