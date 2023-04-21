@@ -4,6 +4,7 @@ import TextToolTip from 'components/TextToolTip';
 import { GRAPH_TYPES } from 'container/NewDashboard/ComponentsSlider';
 import { timePreferance } from 'container/NewWidget/RightContainer/timeItems';
 import { QueryBuilder } from 'container/QueryBuilder';
+import { useQueryBuilder } from 'hooks/useQueryBuilder';
 import { cloneDeep, isEqual } from 'lodash-es';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { connect, useSelector } from 'react-redux';
@@ -39,6 +40,7 @@ function QuerySection({
 	updateQuery,
 	selectedGraph,
 }: QueryProps): JSX.Element {
+	const { queryBuilderData, initQueryBuilderData } = useQueryBuilder();
 	const [localQueryChanges, setLocalQueryChanges] = useState<Query>({} as Query);
 	const [rctTabKey, setRctTabKey] = useState<
 		Record<keyof typeof EQueryType, string>
@@ -68,9 +70,9 @@ function QuerySection({
 
 	const { query } = selectedWidget || {};
 	useEffect(() => {
+		initQueryBuilderData(query.builder);
 		setLocalQueryChanges(cloneDeep(query) as Query);
-	}, [query]);
-
+	}, [query, initQueryBuilderData]);
 	const queryDiff = (
 		queryA: Query,
 		queryB: Query,
@@ -99,7 +101,10 @@ function QuerySection({
 
 	const handleStageQuery = (): void => {
 		updateQuery({
-			updatedQuery: localQueryChanges,
+			updatedQuery: {
+				...localQueryChanges,
+				builder: queryBuilderData,
+			},
 			widgetId: urlQuery.get('widgetId') || '',
 			yAxisUnit: selectedWidget.yAxisUnit,
 		});
@@ -156,20 +161,20 @@ function QuerySection({
 				/>
 			),
 			children: (
-				<QueryBuilderQueryContainer
-					key={rctTabKey.QUERY_BUILDER}
-					queryData={localQueryChanges}
-					updateQueryData={({ updatedQuery }: IHandleUpdatedQuery): void => {
-						handleLocalQueryUpdate({ updatedQuery });
-					}}
-					metricsBuilderQueries={
-						localQueryChanges[WIDGET_QUERY_BUILDER_QUERY_KEY_NAME]
-					}
-					selectedGraph={selectedGraph}
-				/>
+				// <QueryBuilderQueryContainer
+				// 	key={rctTabKey.QUERY_BUILDER}
+				// 	queryData={localQueryChanges}
+				// 	updateQueryData={({ updatedQuery }: IHandleUpdatedQuery): void => {
+				// 		handleLocalQueryUpdate({ updatedQuery });
+				// 	}}
+				// 	metricsBuilderQueries={
+				// 		localQueryChanges[WIDGET_QUERY_BUILDER_QUERY_KEY_NAME]
+				// 	}
+				// 	selectedGraph={selectedGraph}
+				// />
 
 				// TODO: uncomment for testing new QueryBuilder
-				// <QueryBuilder panelType={selectedGraph} />
+				<QueryBuilder panelType={selectedGraph} />
 			),
 		},
 		{

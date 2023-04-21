@@ -1,4 +1,4 @@
-import { DataSource } from 'types/common/queryBuilder';
+import { DataSource, ReduceOperators } from 'types/common/queryBuilder';
 
 import { BaseAutocompleteData } from './queryAutocompleteResponse';
 
@@ -49,7 +49,7 @@ export type IBuilderQuery = {
 	limit: number | null;
 	stepInterval: number;
 	orderBy: BaseAutocompleteData[];
-	reduceTo: string;
+	reduceTo: ReduceOperators;
 };
 
 export type IBuilderQueryForm = IBuilderQuery & {

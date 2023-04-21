@@ -12,9 +12,11 @@ import {
 	LogsAggregatorOperator,
 	MetricAggregateOperator,
 	NumberOperators,
+	ReduceOperators,
 	StringOperators,
 	TracesAggregatorOperator,
 } from 'types/common/queryBuilder';
+import { SelectOption } from 'types/common/select';
 
 export const MAX_FORMULAS = 20;
 export const MAX_QUERIES = 26;
@@ -44,6 +46,14 @@ export const mapOfFilters: Record<DataSource, string[]> = {
 	traces: ['Order by', 'Limit', 'Having', 'Aggregation interval'],
 };
 
+export const REDUCE_TO_VALUES: SelectOption<ReduceOperators, string>[] = [
+	{ value: 'last', label: 'Latest of values in timeframe' },
+	{ value: 'sum', label: 'Sum of values in timeframe' },
+	{ value: 'avg', label: 'Average of values in timeframe' },
+	{ value: 'max', label: 'Max of values in timeframe' },
+	{ value: 'min', label: 'Min of values in timeframe' },
+];
+
 export const initialHavingValues: HavingForm = {
 	columnName: '',
 	op: '',
@@ -63,15 +73,18 @@ export const initialQueryBuilderFormValues: IBuilderQueryForm = {
 	aggregateOperator: Object.values(MetricAggregateOperator)[0],
 	aggregateAttribute: initialAggregateAttribute,
 	tagFilters: { items: [], op: 'AND' },
-	expression: '',
+	expression: createNewBuilderItemName({
+		existNames: [],
+		sourceNames: alphabet,
+	}),
 	disabled: false,
 	having: [],
 	stepInterval: 30,
-	limit: 10,
+	limit: null,
 	orderBy: [],
 	groupBy: [],
 	legend: '',
-	reduceTo: '',
+	reduceTo: 'sum',
 };
 
 export const initialFormulaBuilderFormValues: IBuilderFormula = {

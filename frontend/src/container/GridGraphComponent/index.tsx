@@ -25,7 +25,7 @@ function GridGraphComponent({
 
 	const isDashboardPage = location.split('/').length === 3;
 
-	if (GRAPH_TYPES === 'TIME_SERIES') {
+	if (GRAPH_TYPES === 'graph') {
 		return (
 			<Graph
 				{...{
@@ -45,7 +45,7 @@ function GridGraphComponent({
 		);
 	}
 
-	if (GRAPH_TYPES === 'VALUE') {
+	if (GRAPH_TYPES === 'value') {
 		const value = (((data.datasets[0] || []).data || [])[0] || 0) as number;
 
 		if (data.datasets.length === 0) {

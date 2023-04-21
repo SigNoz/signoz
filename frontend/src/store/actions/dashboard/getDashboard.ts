@@ -2,8 +2,8 @@ import getDashboard from 'api/dashboard/get';
 import {
 	ClickHouseQueryTemplate,
 	PromQLQueryTemplate,
-	QueryBuilderQueryTemplate,
 } from 'constants/dashboard';
+import { initialQueryBuilderFormValues } from 'constants/queryBuilder';
 import { GRAPH_TYPES } from 'container/NewDashboard/ComponentsSlider';
 import GetQueryName from 'lib/query/GetQueryName';
 import { Dispatch } from 'redux';
@@ -42,7 +42,7 @@ export const GetDashboard = ({
 						isStacked: false,
 						nullZeroValues: 'zero',
 						opacity: '0',
-						panelTypes: graphType || 'TIME_SERIES',
+						panelTypes: graphType || 'graph',
 						timePreferance: 'GLOBAL_TIME',
 						title: '',
 						queryType: 0,
@@ -69,14 +69,9 @@ export const GetDashboard = ({
 									...ClickHouseQueryTemplate,
 								},
 							],
-							metricsBuilder: {
-								formulas: [],
-								queryBuilder: [
-									{
-										name: GetQueryName([]) as string,
-										...QueryBuilderQueryTemplate,
-									},
-								],
+							builder: {
+								queryFormulas: [],
+								queryData: [initialQueryBuilderFormValues],
 							},
 						},
 					},

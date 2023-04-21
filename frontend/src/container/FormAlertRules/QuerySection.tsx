@@ -245,7 +245,7 @@ function QuerySection({
 							key={key}
 							queryIndex={key}
 							queryData={toIMetricsBuilderQuery(current)}
-							selectedGraph="TIME_SERIES"
+							selectedGraph="graph"
 							handleQueryChange={handleMetricQueryChange}
 						/>
 					);

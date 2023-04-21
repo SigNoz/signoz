@@ -142,7 +142,7 @@ function MetricsBuilder({
 							/>
 						</Row>
 						<Row style={{ gap: '3%', marginBottom: '1rem' }}>
-							{selectedGraph === 'TIME_SERIES' ? (
+							{selectedGraph === 'graph' ? (
 								<>
 									{' '}
 									<Select

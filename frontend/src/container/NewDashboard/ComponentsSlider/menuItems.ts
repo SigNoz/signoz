@@ -3,18 +3,18 @@ import ValueIcon from 'assets/Dashboard/Value';
 
 const Items: ItemsProps[] = [
 	{
-		name: 'TIME_SERIES',
+		name: 'graph',
 		Icon: TimeSeries,
 		display: 'Time Series',
 	},
 	{
-		name: 'VALUE',
+		name: 'value',
 		Icon: ValueIcon,
 		display: 'Value',
 	},
 ];
 
-export type ITEMS = 'TIME_SERIES' | 'VALUE' | 'EMPTY_WIDGET';
+export type ITEMS = 'graph' | 'value' | 'EMPTY_WIDGET';
 
 interface ItemsProps {
 	name: ITEMS;
