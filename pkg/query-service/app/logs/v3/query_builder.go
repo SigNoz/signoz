@@ -66,7 +66,6 @@ func encrichFieldWithMetadata(field v3.AttributeKey, fields map[string]v3.Attrib
 			// enrich with default values if metadata is not found
 			field.Type = v3.AttributeKeyTypeTag
 			field.DataType = v3.AttributeKeyDataTypeString
-			field.IsDefaultEnriched = true
 		}
 	}
 	return field
@@ -127,7 +126,6 @@ func buildLogsTimeSeriesFilterQuery(fs *v3.FilterSet, fields map[string]v3.Attri
 
 	if fs != nil && len(fs.Items) != 0 {
 		for _, item := range fs.Items {
-			toFormat := item.Value
 			op := v3.FilterOperator(strings.ToLower(strings.TrimSpace(string(item.Operator))))
 			key := encrichFieldWithMetadata(item.Key, fields)
 
@@ -149,10 +147,8 @@ func buildLogsTimeSeriesFilterQuery(fs *v3.FilterSet, fields map[string]v3.Attri
 						return "", err
 					}
 
-					fmtVal := utils.ClickHouseFormattedValue(toFormat)
-					if key.IsDefaultEnriched {
-						fmtVal = fmt.Sprintf("'%v'", fmtVal)
-					}
+					// (todo) check and convert value
+					fmtVal := utils.ClickHouseFormattedValue(item.Value)
 					conditions = append(conditions, fmt.Sprintf("%s %s %s", columnName, logsOp, fmtVal))
 				}
 			} else {
