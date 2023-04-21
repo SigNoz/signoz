@@ -19,41 +19,53 @@ func ValidateAndCastValue(v interface{}, dataType v3.AttributeKeyDataType) (inte
 		case []interface{}:
 			return v, nil
 		default:
-			return nil, fmt.Errorf("invalid data type")
+			return nil, fmt.Errorf("invalid data type, expected string, got %v", reflect.TypeOf(v))
 		}
 	case v3.AttributeKeyDataTypeBool:
 		switch x := v.(type) {
 		case bool:
 			return v, nil
 		case string:
-			return strconv.ParseBool(x)
+			boolean, err := strconv.ParseBool(x)
+			if err != nil {
+				return nil, fmt.Errorf("invalid data type, expected bool, got %v", reflect.TypeOf(v))
+			}
+			return boolean, nil
 		default:
-			return nil, fmt.Errorf("invalid data type")
+			return nil, fmt.Errorf("invalid data type, expected bool, got %v", reflect.TypeOf(v))
 		}
 	case v3.AttributeKeyDataTypeInt64:
 		switch x := v.(type) {
 		case int, int64:
 			return x, nil
 		case string:
-			return strconv.ParseInt(x, 10, 64)
+			int64val, err := strconv.ParseInt(x, 10, 64)
+			if err != nil {
+				return nil, fmt.Errorf("invalid data type, expected int, got %v", reflect.TypeOf(v))
+			}
+			return int64val, nil
 		default:
-			return nil, fmt.Errorf("invalid data type")
+			return nil, fmt.Errorf("invalid data type, expected int, got %v", reflect.TypeOf(v))
 		}
 	case v3.AttributeKeyDataTypeFloat64:
 		switch x := v.(type) {
 		case float32, float64:
 			return v, nil
 		case string:
-			return strconv.ParseFloat(x, 64)
+			float64val, err:= strconv.ParseFloat(x, 64)
+			if err != nil {
+				return nil, fmt.Errorf("invalid data type, expected float, got %v", reflect.TypeOf(v))
+			}
+			return float64val, nil
 		case int:
 			return float64(x), nil
 		case int64:
 			return float64(x), nil
 		default:
-			return nil, fmt.Errorf("invalid data type")
+			return nil, fmt.Errorf("invalid data type, expected float, got %v", reflect.TypeOf(v))
 		}
 	default:
-		return nil, fmt.Errorf("invalid data type")
+		return nil, fmt.Errorf("invalid data type, expected float, bool, int, string or []interface{} but got %v", dataType)
 	}
 }
 
