@@ -1,14 +1,22 @@
 import { Select, Spin, Tag, Tooltip } from 'antd';
 import { useAutoComplete } from 'hooks/queryBuilder/useAutoComplete';
-import React from 'react';
-import { IBuilderQueryForm } from 'types/api/queryBuilder/queryBuilderData';
+import React, { useEffect, useMemo } from 'react';
+import {
+	IBuilderQueryForm,
+	TagFilter,
+} from 'types/api/queryBuilder/queryBuilderData';
+import { v4 as uuid } from 'uuid';
 
 import { selectStyle } from './config';
 import { StyledCheckOutlined, TypographyText } from './style';
 import { isInNotInOperator } from './utils';
 
-function QueryBuilderSearch({ query }: QueryBuilderSearchProps): JSX.Element {
+function QueryBuilderSearch({
+	query,
+	onChange,
+}: QueryBuilderSearchProps): JSX.Element {
 	const {
+		updateTag,
 		handleClearTag,
 		handleKeyDown,
 		handleSearch,
@@ -32,10 +40,19 @@ function QueryBuilderSearch({ query }: QueryBuilderSearchProps): JSX.Element {
 			handleSearch('');
 		};
 
+		const tagEditHandler = (value: string): void => {
+			updateTag(value);
+			handleSearch(value);
+		};
+
 		return (
 			<Tag closable={closable} onClose={onCloseHandler}>
 				<Tooltip title={value}>
-					<TypographyText ellipsis $isInNin={isInNin}>
+					<TypographyText
+						ellipsis
+						$isInNin={isInNin}
+						onClick={(): void => tagEditHandler(value)}
+					>
 						{value}
 					</TypographyText>
 				</Tooltip>
@@ -51,6 +68,26 @@ function QueryBuilderSearch({ query }: QueryBuilderSearchProps): JSX.Element {
 		if (isMulti || event.key === 'Backspace') handleKeyDown(event);
 	};
 
+	const queryTags = useMemo(() => {
+		if (!query.aggregateAttribute.key) return [];
+		return tags;
+	}, [query.aggregateAttribute.key, tags]);
+
+	useEffect(() => {
+		const initialTagFilters: TagFilter = { items: [], op: 'AND' };
+		initialTagFilters.items = tags.map((tag) => {
+			const [tagKey, tagOperator, ...tagValue] = tag.split(' ');
+			return {
+				id: uuid().slice(0, 8),
+				key: tagKey,
+				op: tagOperator,
+				value: tagValue.map((i) => i.replace(',', '')),
+			};
+		});
+		onChange(initialTagFilters);
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [tags]);
+
 	return (
 		<Select
 			virtual
@@ -60,7 +97,7 @@ function QueryBuilderSearch({ query }: QueryBuilderSearchProps): JSX.Element {
 			autoClearSearchValue={false}
 			mode="multiple"
 			placeholder="Search Filter"
-			value={tags}
+			value={queryTags}
 			searchValue={searchValue}
 			disabled={!query.aggregateAttribute.key}
 			style={selectStyle}
@@ -83,6 +120,7 @@ function QueryBuilderSearch({ query }: QueryBuilderSearchProps): JSX.Element {
 
 interface QueryBuilderSearchProps {
 	query: IBuilderQueryForm;
+	onChange: (value: TagFilter) => void;
 }
 
 export interface CustomTagProps {

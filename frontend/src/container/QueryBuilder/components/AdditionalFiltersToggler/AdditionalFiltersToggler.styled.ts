@@ -1,5 +1,5 @@
 import { MinusSquareOutlined, PlusSquareOutlined } from '@ant-design/icons';
-import { Typography } from 'antd';
+import { Col, Typography } from 'antd';
 import styled, { css } from 'styled-components';
 
 const IconCss = css`
@@ -15,14 +15,8 @@ export const StyledIconClose = styled(MinusSquareOutlined)`
 	${IconCss}
 `;
 
-export const StyledWrapper = styled.div`
-	display: flex;
-	flex-direction: column;
+export const StyledInner = styled(Col)`
 	width: fit-content;
-`;
-
-export const StyledInner = styled.div`
-	width: 100%;
 	display: flex;
 	align-items: center;
 	margin-bottom: 0.875rem;
