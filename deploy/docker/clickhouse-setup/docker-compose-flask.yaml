@@ -15,6 +15,7 @@ services:
     image: "signoz/sample-flask-app:latest"
     container_name: sample-flask
     hostname: sample-flask
+    restart: always
     ports:
       - 5002:5002
     extra_hosts:
@@ -28,13 +29,14 @@ services:
     image: "grubykarol/locust:1.2.3-python3.9-alpine3.12"
     container_name: load-flask
     hostname: load-flask
+    restart: always
     environment:
       ATTACKED_HOST: http://sample-flask:5002
       LOCUST_MODE: standalone
       NO_PROXY: standalone
-      TASK_DELAY_FROM: 5
-      TASK_DELAY_TO: 30
+      TASK_DELAY_FROM: 45
+      TASK_DELAY_TO: 60
       QUIET_MODE: "${QUIET_MODE:-false}"
-      LOCUST_OPTS: "--headless -u 10 -r 1"
+      LOCUST_OPTS: "--headless -u 10 -r 10"
     volumes:
       - ../common/locust-flask:/locust

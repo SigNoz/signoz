@@ -1,7 +1,7 @@
 from locust import HttpUser, task, between
 from uuid import uuid4
 class UserTasks(HttpUser):
-    wait_time = between(5, 15)
+    wait_time = between(30, 60)
 
     @task(1)
     def list(self):
