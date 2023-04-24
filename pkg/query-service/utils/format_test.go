@@ -67,11 +67,29 @@ var testValidateAndCastValueData = []struct {
 	{
 		name: "v3.AttributeKeyDataTypeString: Valid []interface{}",
 		args: args{
-			v:        []interface{}{"test"},
+			v:        []interface{}{"test", "test2"},
 			dataType: v3.AttributeKeyDataTypeString,
 		},
-		want:    []interface{}{"test"},
+		want:    []interface{}{"test", "test2"},
 		wantErr: false,
+	},
+	{
+		name: "v3.AttributeKeyDataTypeString: Valid []interface{}",
+		args: args{
+			v:        []interface{}{"test", 1},
+			dataType: v3.AttributeKeyDataTypeString,
+		},
+		want:    []interface{}{"test", "1"},
+		wantErr: false,
+	},
+	{
+		name: "v3.AttributeKeyDataTypeString: Invalid []interface{}",
+		args: args{
+			v:        []interface{}{"test", [1]string{"string Array"}},
+			dataType: v3.AttributeKeyDataTypeString,
+		},
+		want:    nil,
+		wantErr: true,
 	},
 	{
 		name: "v3.AttributeKeyDataTypeString: Invalid type",
@@ -102,9 +120,27 @@ var testValidateAndCastValueData = []struct {
 		wantErr: false,
 	},
 	{
+		name: "v3.AttributeKeyDataTypeBool: Valid []interface{}",
+		args: args{
+			v:        []interface{}{"true", false},
+			dataType: v3.AttributeKeyDataTypeBool,
+		},
+		want:    []interface{}{true, false},
+		wantErr: false,
+	},
+	{
 		name: "v3.AttributeKeyDataTypeBool: Invalid type",
 		args: args{
 			v:        1,
+			dataType: v3.AttributeKeyDataTypeBool,
+		},
+		want:    nil,
+		wantErr: true,
+	},
+	{
+		name: "v3.AttributeKeyDataTypeBool: Invalid []interface{}",
+		args: args{
+			v:        []interface{}{1, false},
 			dataType: v3.AttributeKeyDataTypeBool,
 		},
 		want:    nil,
@@ -137,6 +173,24 @@ var testValidateAndCastValueData = []struct {
 		},
 		want:    int64(1),
 		wantErr: false,
+	},
+	{
+		name: "v3.AttributeKeyDataTypeInt64: Valid []interface{}",
+		args: args{
+			v:        []interface{}{"1", 2},
+			dataType: v3.AttributeKeyDataTypeInt64,
+		},
+		want:    []interface{}{int64(1), int64(2)},
+		wantErr: false,
+	},
+	{
+		name: "v3.AttributeKeyDataTypeInt64: Invalid []interface{}",
+		args: args{
+			v:        []interface{}{"1", false},
+			dataType: v3.AttributeKeyDataTypeInt64,
+		},
+		want:    nil,
+		wantErr: true,
 	},
 	{
 		name: "v3.AttributeKeyDataTypeInt64: Invalid type",
@@ -190,8 +244,26 @@ var testValidateAndCastValueData = []struct {
 			v:        []interface{}{4, 3},
 			dataType: v3.AttributeKeyDataTypeFloat64,
 		},
-		want:    []interface{}{4, 3},
+		want:    []interface{}{float64(4), float64(3)},
 		wantErr: false,
+	},
+	{
+		name: "v3.AttributeKeyDataTypeFloat: Valid []interface{}",
+		args: args{
+			v:        []interface{}{4, "3"},
+			dataType: v3.AttributeKeyDataTypeFloat64,
+		},
+		want:    []interface{}{float64(4), float64(3)},
+		wantErr: false,
+	},
+	{
+		name: "v3.AttributeKeyDataTypeFloat: Invalid []interface{}",
+		args: args{
+			v:        []interface{}{4, "true"},
+			dataType: v3.AttributeKeyDataTypeFloat64,
+		},
+		want:    nil,
+		wantErr: true,
 	},
 	{
 		name: "v3.AttributeKeyDataTypeFloat64: Invalid type",
