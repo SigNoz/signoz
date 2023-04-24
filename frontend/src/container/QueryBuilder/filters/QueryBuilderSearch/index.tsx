@@ -52,6 +52,8 @@ function QueryBuilderSearch({
 					<TypographyText
 						ellipsis
 						$isInNin={isInNin}
+						disabled={!!searchValue}
+						$isEnabled={!!searchValue}
 						onClick={(): void => tagEditHandler(value)}
 					>
 						{value}
