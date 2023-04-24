@@ -1,16 +1,15 @@
-import {
-	AttributeKeyOptions,
-	getAttributesKeys,
-	getAttributesValues,
-} from 'api/queryBuilder/getAttributesKeysValues';
+import { getAggregateKeys } from 'api/queryBuilder/getAttributeKeys';
+import { getAttributesValues } from 'api/queryBuilder/getAttributesValues';
+import { QueryBuilderKeys } from 'constants/queryBuilder';
 import { useEffect, useRef, useState } from 'react';
 import { useQuery } from 'react-query';
 import { useDebounce } from 'react-use';
+import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { IBuilderQueryForm } from 'types/api/queryBuilder/queryBuilderData';
 import { separateSearchValue } from 'utils/separateSearchValue';
 
 type UseFetchKeysAndValuesReturnValues = {
-	keys: AttributeKeyOptions[];
+	keys: BaseAutocompleteData[];
 	results: string[];
 	isFetching: boolean;
 };
@@ -26,24 +25,30 @@ export const useFetchKeysAndValues = (
 	searchValue: string,
 	query: IBuilderQueryForm,
 ): UseFetchKeysAndValuesReturnValues => {
-	const [keys, setKeys] = useState<AttributeKeyOptions[]>([]);
+	const [keys, setKeys] = useState<BaseAutocompleteData[]>([]);
 	const [results, setResults] = useState<string[]>([]);
 	const { data, isFetching, status } = useQuery(
 		[
-			'GET_ATTRIBUTE_KEY',
+			QueryBuilderKeys.GET_ATTRIBUTE_KEY,
 			searchValue,
 			query.dataSource,
 			query.aggregateOperator,
 			query.aggregateAttribute.key,
 		],
 		async () =>
-			getAttributesKeys({
+			getAggregateKeys({
 				searchText: searchValue,
 				dataSource: query.dataSource,
 				aggregateOperator: query.aggregateOperator,
 				aggregateAttribute: query.aggregateAttribute.key,
+				tagType: query.aggregateAttribute.type,
 			}),
-		{ enabled: !!query.aggregateOperator && !!query.dataSource },
+		{
+			enabled:
+				!!query.aggregateOperator &&
+				!!query.dataSource &&
+				!!query.aggregateAttribute.dataType,
+		},
 	);
 
 	/**
@@ -61,11 +66,13 @@ export const useFetchKeysAndValues = (
 			setResults([]);
 			if (tKey && operator) {
 				const { payload } = await getAttributesValues({
-					searchText: searchValue,
-					dataSource: query.dataSource,
 					aggregateOperator: query.aggregateOperator,
+					dataSource: query.dataSource,
 					aggregateAttribute: query.aggregateAttribute.key,
 					attributeKey: tKey,
+					attributeKeyDataType: query.aggregateAttribute.dataType,
+					filterAttributeTagType: query.aggregateAttribute.type ?? null,
+					searchText: value.split(' ')[2],
 				});
 				if (payload) {
 					const values = Object.values(payload).find((el) => !!el);
@@ -91,12 +98,12 @@ export const useFetchKeysAndValues = (
 
 	// update the fetched keys when the fetch status changes
 	useEffect(() => {
-		if (status === 'success' && data?.payload) {
-			setKeys(data?.payload);
+		if (status === 'success' && data?.payload?.attributeKeys) {
+			setKeys(data?.payload.attributeKeys);
 		} else {
 			setKeys([]);
 		}
-	}, [data?.payload, status]);
+	}, [data?.payload?.attributeKeys, status]);
 
 	return {
 		keys,

@@ -1,12 +1,12 @@
-import { AttributeKeyOptions } from 'api/queryBuilder/getAttributesKeysValues';
 import { Option } from 'container/QueryBuilder/type';
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
 
 import { useOperators } from './useOperators';
 
 export const useOptions = (
 	key: string,
-	keys: AttributeKeyOptions[],
+	keys: BaseAutocompleteData[],
 	operator: string,
 	searchValue: string,
 	isMulti: boolean,
@@ -22,8 +22,11 @@ export const useOptions = (
 		if (!key) {
 			setOptions(
 				searchValue
-					? [{ value: searchValue }, ...keys.map((k) => ({ value: k.key }))]
-					: keys?.map((k) => ({ value: k.key })),
+					? [
+							{ label: searchValue, value: searchValue },
+							...keys.map((k) => ({ label: k.key, value: k.key })),
+					  ]
+					: keys?.map((k) => ({ label: k.key, value: k.key })),
 			);
 		} else if (key && !operator) {
 			setOptions(
@@ -34,17 +37,18 @@ export const useOptions = (
 			);
 		} else if (key && operator) {
 			if (isMulti) {
-				setOptions(results.map((r) => ({ value: `${r}` })));
+				setOptions(results.map((r) => ({ label: `${r}`, value: `${r}` })));
 			} else if (isExist) {
 				setOptions([]);
 			} else if (isValidOperator) {
 				const hasAllResults = result.every((val) => results.includes(val));
 				const values = results.map((r) => ({
+					label: `${key} ${operator} ${r}`,
 					value: `${key} ${operator} ${r}`,
 				}));
 				const options = hasAllResults
 					? values
-					: [{ value: searchValue }, ...values];
+					: [{ label: searchValue, value: searchValue }, ...values];
 				setOptions(options);
 			}
 		}

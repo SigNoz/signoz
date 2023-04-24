@@ -29,6 +29,7 @@ export const alphabet: string[] = alpha.map((str) => String.fromCharCode(str));
 export enum QueryBuilderKeys {
 	GET_AGGREGATE_ATTRIBUTE = 'GET_AGGREGATE_ATTRIBUTE',
 	GET_AGGREGATE_KEYS = 'GET_AGGREGATE_KEYS',
+	GET_ATTRIBUTE_KEY = 'GET_ATTRIBUTE_KEY',
 }
 
 export const mapOfOperators: Record<DataSource, string[]> = {
@@ -129,7 +130,7 @@ export const QUERY_BUILDER_OPERATORS_BY_TYPES = {
 		OPERATORS.EXISTS,
 		OPERATORS.NOT_EXISTS,
 	],
-	number: [
+	int64: [
 		OPERATORS.EQUALS,
 		OPERATORS.NOT_EQUALS,
 		OPERATORS.IN,
@@ -141,7 +142,19 @@ export const QUERY_BUILDER_OPERATORS_BY_TYPES = {
 		OPERATORS.LTE,
 		OPERATORS.LT,
 	],
-	boolean: [
+	float64: [
+		OPERATORS.EQUALS,
+		OPERATORS.NOT_EQUALS,
+		OPERATORS.IN,
+		OPERATORS.NIN,
+		OPERATORS.EXISTS,
+		OPERATORS.NOT_EXISTS,
+		OPERATORS.GTE,
+		OPERATORS.GT,
+		OPERATORS.LTE,
+		OPERATORS.LT,
+	],
+	bool: [
 		OPERATORS.EQUALS,
 		OPERATORS.NOT_EQUALS,
 		OPERATORS.EXISTS,
