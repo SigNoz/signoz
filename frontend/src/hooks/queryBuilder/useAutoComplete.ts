@@ -60,7 +60,7 @@ export const useAutoComplete = (query: IBuilderQuery): IAutoComplete => {
 					}
 					return checkStringEndsWithSpace(prev)
 						? `${prev} ${value}`
-						: `${prev} ${value},`;
+						: `${prev}, ${value}`;
 				});
 			}
 			if (!isMulti && isValidTag && !isExistsNotExistsOperator(value)) {
