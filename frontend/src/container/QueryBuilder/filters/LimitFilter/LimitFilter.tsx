@@ -26,7 +26,7 @@ function LimitFilter({ onChange, query }: LimitFilterProps): JSX.Element {
 			type="number"
 			disabled={!query.aggregateAttribute.key}
 			style={selectStyle}
-			onChange={(value): void => onChange(value)}
+			onChange={onChange}
 			onKeyDown={handleKeyDown}
 		/>
 	);
