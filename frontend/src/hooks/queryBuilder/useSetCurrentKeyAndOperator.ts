@@ -1,5 +1,5 @@
-import { AttributeKeyOptions } from 'api/queryBuilder/getAttributesKeysValues';
 import { useMemo } from 'react';
+import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { getCountOfSpace } from 'utils/getCountOfSpace';
 import { separateSearchValue } from 'utils/separateSearchValue';
 
@@ -7,7 +7,7 @@ type ICurrentKeyAndOperator = [string, string, string[]];
 
 export const useSetCurrentKeyAndOperator = (
 	value: string,
-	keys: AttributeKeyOptions[],
+	keys: BaseAutocompleteData[],
 ): ICurrentKeyAndOperator => {
 	const [key, operator, result] = useMemo(() => {
 		let key = '';
