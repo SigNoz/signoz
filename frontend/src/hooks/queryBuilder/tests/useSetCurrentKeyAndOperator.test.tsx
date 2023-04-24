@@ -1,13 +1,13 @@
 import { renderHook } from '@testing-library/react';
-import { AttributeKeyOptions } from 'api/queryBuilder/getAttributesKeysValues';
+import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
 
 import { useSetCurrentKeyAndOperator } from '../useSetCurrentKeyAndOperator';
 
 describe('useSetCurrentKeyAndOperator', () => {
-	const keys: AttributeKeyOptions[] = [
+	const keys: BaseAutocompleteData[] = [
 		{ key: 'color', dataType: 'string', type: 'tag', isColumn: false },
-		{ key: 'size', dataType: 'number', type: 'tag', isColumn: false },
-		{ key: 'material', dataType: 'boolean', type: 'tag', isColumn: false },
+		{ key: 'size', dataType: 'int64', type: 'tag', isColumn: false },
+		{ key: 'material', dataType: 'bool', type: 'tag', isColumn: false },
 	];
 
 	test('should return an empty array when the input value is an empty string', () => {

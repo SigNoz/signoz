@@ -1,8 +1,8 @@
 import { initialQueryBuilderFormValues } from 'constants/queryBuilder';
-import { IBuilderQueryForm } from 'types/api/queryBuilder/queryBuilderData';
+import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource } from 'types/common/queryBuilder';
 
-export const queryMockData: IBuilderQueryForm = {
+export const queryMockData: IBuilderQuery = {
 	dataSource: DataSource.METRICS,
 	queryName: 'A',
 	aggregateOperator: 'noop',
@@ -37,17 +37,18 @@ export const queryMockData: IBuilderQueryForm = {
 	orderBy: [],
 	groupBy: [],
 	legend: '',
-	reduceTo: '',
+	reduceTo: 'sum',
 };
 
 export const formulaMockData = {
+	queryName: 'C',
 	label: 'Formula',
 	expression: 'sum(A, B)',
 	legend: 'Total',
 	disabled: false,
 };
 
-export const valueWithAttributeAndOperator: IBuilderQueryForm = {
+export const valueWithAttributeAndOperator: IBuilderQuery = {
 	...initialQueryBuilderFormValues,
 	dataSource: DataSource.LOGS,
 	aggregateOperator: 'SUM',

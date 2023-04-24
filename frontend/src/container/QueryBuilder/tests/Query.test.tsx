@@ -1,4 +1,5 @@
 import { render } from '@testing-library/react';
+import { PANEL_TYPES } from 'constants/queryBuilder';
 import React from 'react';
 import { I18nextProvider } from 'react-i18next';
 import { QueryClient, QueryClientProvider } from 'react-query';
@@ -30,7 +31,7 @@ describe('QueryBuilder: Main Query wrapper', () => {
 								isAvailableToDisable={false}
 								queryVariant="static"
 								query={queryMockData}
-								panelType="TIME_SERIES"
+								panelType={PANEL_TYPES.TIME_SERIES}
 							/>
 						</QueryClientProvider>
 					</I18nextProvider>

@@ -25,7 +25,11 @@ describe('QueryBuilder: groupBy Filter', () => {
 				<Provider store={store}>
 					<I18nextProvider i18n={i18n}>
 						<QueryClientProvider client={queryClient}>
-							<GroupByFilter onChange={jest.fn()} query={queryMockData} />
+							<GroupByFilter
+								onChange={jest.fn()}
+								query={queryMockData}
+								disabled={false}
+							/>
 						</QueryClientProvider>
 					</I18nextProvider>
 				</Provider>

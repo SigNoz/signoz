@@ -86,7 +86,7 @@ exports[`QueryBuilder: Formula Component it should render Formula 1`] = `
           </svg>
         </span>
         <span>
-          Formula
+          C
         </span>
       </button>
     </div>

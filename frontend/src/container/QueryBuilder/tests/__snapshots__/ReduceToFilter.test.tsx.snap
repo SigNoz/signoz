@@ -31,8 +31,10 @@ exports[`QueryBuilder: Reduce To Filter it should render ReduceToFilter 1`] = `
       </span>
       <span
         class="ant-select-selection-item"
-        title=""
-      />
+        title="Sum of values in timeframe"
+      >
+        Sum of values in timeframe
+      </span>
     </div>
     <span
       aria-hidden="true"

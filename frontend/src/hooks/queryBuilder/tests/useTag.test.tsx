@@ -1,4 +1,5 @@
 import { renderHook } from '@testing-library/react';
+import { queryMockData } from 'container/QueryBuilder/mock/queryData';
 import { act } from 'react-dom/test-utils';
 
 import { useTag } from '../useTag';
@@ -7,7 +8,7 @@ describe('useTag', () => {
 	test('should add a new tag', () => {
 		const handleSearchMock = jest.fn();
 		const { result } = renderHook(() =>
-			useTag('test', true, true, handleSearchMock),
+			useTag('test', true, true, handleSearchMock, queryMockData),
 		);
 
 		act(() => {
@@ -29,7 +30,7 @@ describe('useTag', () => {
 	test('should remove a tag', () => {
 		const handleSearchMock = jest.fn();
 		const { result } = renderHook(() =>
-			useTag('test', true, true, handleSearchMock),
+			useTag('test', true, true, handleSearchMock, queryMockData),
 		);
 
 		act(() => {
@@ -48,7 +49,7 @@ describe('useTag', () => {
 	test('should update a tag', () => {
 		const handleSearchMock = jest.fn();
 		const { result } = renderHook(() =>
-			useTag('test', true, true, handleSearchMock),
+			useTag('test', true, true, handleSearchMock, queryMockData),
 		);
 		act(() => {
 			result.current.handleAddTag('tag1 LIKE tag');
@@ -66,7 +67,7 @@ describe('useTag', () => {
 	test('should remove a tag when clicking on it', () => {
 		const handleSearchMock = jest.fn();
 		const { result } = renderHook(() =>
-			useTag('test', true, false, handleSearchMock),
+			useTag('test', true, false, handleSearchMock, queryMockData),
 		);
 
 		act(() => {
@@ -85,7 +86,7 @@ describe('useTag', () => {
 	test('should not add an invalid tag', () => {
 		const handleSearchMock = jest.fn();
 		const { result } = renderHook(() =>
-			useTag('test', false, true, handleSearchMock),
+			useTag('test', false, true, handleSearchMock, queryMockData),
 		);
 
 		act(() => {
@@ -98,7 +99,7 @@ describe('useTag', () => {
 	test('should add a free text tag', () => {
 		const handleSearchMock = jest.fn();
 		const { result } = renderHook(() =>
-			useTag('test', true, true, handleSearchMock),
+			useTag('test', true, true, handleSearchMock, queryMockData),
 		);
 
 		act(() => {
@@ -112,7 +113,7 @@ describe('useTag', () => {
 	test('should add an EXISTS tag', () => {
 		const handleSearchMock = jest.fn();
 		const { result } = renderHook(() =>
-			useTag('test', true, true, handleSearchMock),
+			useTag('test', true, true, handleSearchMock, queryMockData),
 		);
 
 		act(() => {
@@ -126,7 +127,7 @@ describe('useTag', () => {
 	test('should add an NOT_EXISTS tag', () => {
 		const handleSearchMock = jest.fn();
 		const { result } = renderHook(() =>
-			useTag('test', true, true, handleSearchMock),
+			useTag('test', true, true, handleSearchMock, queryMockData),
 		);
 
 		act(() => {
@@ -140,7 +141,7 @@ describe('useTag', () => {
 	test('should add an IN  isMulti true add multiple value tag', () => {
 		const handleSearchMock = jest.fn();
 		const { result } = renderHook(() =>
-			useTag('test', true, true, handleSearchMock),
+			useTag('test', true, true, handleSearchMock, queryMockData),
 		);
 
 		act(() => {
@@ -154,7 +155,7 @@ describe('useTag', () => {
 	test('should add an NOT_IN isMulti true add multiple value tag', () => {
 		const handleSearchMock = jest.fn();
 		const { result } = renderHook(() =>
-			useTag('test', true, true, handleSearchMock),
+			useTag('test', true, true, handleSearchMock, queryMockData),
 		);
 
 		act(() => {

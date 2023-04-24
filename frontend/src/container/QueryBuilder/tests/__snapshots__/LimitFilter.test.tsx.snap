@@ -4,7 +4,7 @@ exports[`QueryBuilder: Limit Filter it should render LimitFilter 1`] = `
 <DocumentFragment>
   <div
     class="ant-input-number css-dev-only-do-not-override-1i536d8"
-    style="width: 100%;"
+    style="width: 100%; min-width: 10rem;"
   >
     <div
       class="ant-input-number-handler-wrap"
@@ -69,12 +69,13 @@ exports[`QueryBuilder: Limit Filter it should render LimitFilter 1`] = `
     >
       <input
         aria-valuemin="1"
+        aria-valuenow="10"
         autocomplete="off"
         class="ant-input-number-input"
         role="spinbutton"
         step="1"
         type="number"
-        value=""
+        value="10"
       />
     </div>
   </div>

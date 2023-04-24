@@ -1,7 +1,7 @@
 /* eslint-disable sonarjs/no-identical-functions */
 import { renderHook } from '@testing-library/react';
-import { AttributeKeyOptions } from 'api/queryBuilder/getAttributesKeysValues';
 import { act } from 'react-dom/test-utils';
+import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
 
 import { useOptions } from '../useOptions';
 
@@ -33,7 +33,7 @@ describe('useOptions', () => {
 		const { result } = renderHook(() =>
 			useOptions(
 				key,
-				keys as AttributeKeyOptions[],
+				keys as BaseAutocompleteData[],
 				operator,
 				searchValue,
 				isMulti,
@@ -51,7 +51,7 @@ describe('useOptions', () => {
 		const { result } = renderHook(() =>
 			useOptions(
 				key,
-				keys as AttributeKeyOptions[],
+				keys as BaseAutocompleteData[],
 				operator,
 				searchValue,
 				isMulti,
@@ -72,7 +72,7 @@ describe('useOptions', () => {
 		const { result } = renderHook(() =>
 			useOptions(
 				key,
-				keys as AttributeKeyOptions[],
+				keys as BaseAutocompleteData[],
 				operator,
 				searchValue,
 				true,
@@ -93,7 +93,7 @@ describe('useOptions', () => {
 		const { result } = renderHook(() =>
 			useOptions(
 				'',
-				keys as AttributeKeyOptions[],
+				keys as BaseAutocompleteData[],
 				operator,
 				searchValue,
 				isMulti,
@@ -115,7 +115,7 @@ describe('useOptions', () => {
 		const { result } = renderHook(() =>
 			useOptions(
 				key,
-				keys as AttributeKeyOptions[],
+				keys as BaseAutocompleteData[],
 				operator,
 				searchValue,
 				isMulti,
@@ -134,7 +134,7 @@ describe('useOptions', () => {
 			({ key }) =>
 				useOptions(
 					key,
-					keys as AttributeKeyOptions[],
+					keys as BaseAutocompleteData[],
 					operator,
 					searchValue,
 					isMulti,

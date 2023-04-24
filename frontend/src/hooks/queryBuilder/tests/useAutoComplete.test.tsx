@@ -42,17 +42,21 @@ describe('useAutoComplete', () => {
 		);
 		result.current.options = [
 			{
+				label: 'deployment_environment',
 				value: 'deployment_environment',
 			},
 			{
+				label: 'operation',
 				value: 'operation',
 			},
 		];
 		expect(result.current.options).toStrictEqual([
 			{
+				label: 'deployment_environment',
 				value: 'deployment_environment',
 			},
 			{
+				label: 'operation',
 				value: 'operation',
 			},
 		]);

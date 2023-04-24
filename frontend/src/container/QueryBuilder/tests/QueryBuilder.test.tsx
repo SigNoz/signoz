@@ -1,4 +1,5 @@
 import { fireEvent, render } from '@testing-library/react';
+import { PANEL_TYPES } from 'constants/queryBuilder';
 import React from 'react';
 import { I18nextProvider } from 'react-i18next';
 import { Provider } from 'react-redux';
@@ -17,7 +18,7 @@ describe('Query Builder', () => {
 					queryVariant: 'static',
 					initialDataSource: DataSource.METRICS,
 				}}
-				panelType="TIME_SERIES"
+				panelType={PANEL_TYPES.TIME_SERIES}
 			/>,
 		);
 	});
@@ -29,7 +30,7 @@ describe('Query Builder', () => {
 					queryVariant: 'static',
 					initialDataSource: DataSource.METRICS,
 				}}
-				panelType="TIME_SERIES"
+				panelType={PANEL_TYPES.TIME_SERIES}
 			/>,
 		);
 
@@ -44,7 +45,7 @@ describe('Query Builder', () => {
 					queryVariant: 'static',
 					initialDataSource: DataSource.METRICS,
 				}}
-				panelType="TIME_SERIES"
+				panelType={PANEL_TYPES.TIME_SERIES}
 			/>,
 		);
 
@@ -57,7 +58,7 @@ describe('Query Builder', () => {
 			<MemoryRouter>
 				<Provider store={store}>
 					<I18nextProvider i18n={i18n}>
-						<QueryBuilder config={undefined} panelType="TIME_SERIES" />
+						<QueryBuilder config={undefined} panelType={PANEL_TYPES.TIME_SERIES} />
 					</I18nextProvider>
 				</Provider>
 			</MemoryRouter>,
