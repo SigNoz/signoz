@@ -1,7 +1,6 @@
 package v3
 
 import (
-	"fmt"
 	"testing"
 
 	. "github.com/smartystreets/goconvey/convey"
@@ -617,7 +616,6 @@ func TestBuildLogsQuery(t *testing.T) {
 	for _, tt := range testBuildLogsQueryData {
 		Convey("TestBuildLogsQuery", t, func() {
 			query, err := buildLogsQuery(tt.Start, tt.End, tt.Step, tt.BuilderQuery, map[string]v3.AttributeKey{})
-			fmt.Println(query)
 			So(err, ShouldBeNil)
 			So(query, ShouldEqual, tt.ExpectedQuery)
 
