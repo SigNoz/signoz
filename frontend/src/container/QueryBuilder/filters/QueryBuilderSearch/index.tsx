@@ -5,6 +5,7 @@ import {
 	IBuilderQueryForm,
 	TagFilter,
 } from 'types/api/queryBuilder/queryBuilderData';
+import { DataSource } from 'types/common/queryBuilder';
 import { v4 as uuid } from 'uuid';
 
 import { selectStyle } from './config';
@@ -73,6 +74,11 @@ function QueryBuilderSearch({
 		return tags;
 	}, [query.aggregateAttribute.key, tags]);
 
+	const isMatricsDataSource = useMemo(
+		() => query.dataSource === DataSource.METRICS,
+		[query.dataSource],
+	);
+
 	useEffect(() => {
 		const initialTagFilters: TagFilter = { items: [], op: 'AND' };
 		initialTagFilters.items = tags.map((tag) => {
@@ -99,7 +105,7 @@ function QueryBuilderSearch({
 			placeholder="Search Filter"
 			value={queryTags}
 			searchValue={searchValue}
-			disabled={!query.aggregateAttribute.key}
+			disabled={isMatricsDataSource && !query.aggregateAttribute.key}
 			style={selectStyle}
 			onSearch={handleSearch}
 			onChange={onChangeHandler}
