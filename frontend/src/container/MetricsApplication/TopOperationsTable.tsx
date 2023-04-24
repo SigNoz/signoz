@@ -1,7 +1,7 @@
 import { Tooltip, Typography } from 'antd';
 import { ColumnsType } from 'antd/lib/table';
 import { ResizeTable } from 'components/ResizeTable';
-import { METRICS_PAGE_QUERY_PARAM } from 'constants/query';
+import { QueryParams } from 'constants/query';
 import ROUTES from 'constants/routes';
 import useResourceAttribute from 'hooks/useResourceAttribute';
 import { convertRawQueriesToTraceSelectedTags } from 'hooks/useResourceAttribute/utils';
@@ -29,14 +29,8 @@ function TopOperationsTable(props: TopOperationsTableProps): JSX.Element {
 	const handleOnClick = (operation: string): void => {
 		const urlParams = new URLSearchParams();
 		const { servicename } = params;
-		urlParams.set(
-			METRICS_PAGE_QUERY_PARAM.startTime,
-			(minTime / 1000000).toString(),
-		);
-		urlParams.set(
-			METRICS_PAGE_QUERY_PARAM.endTime,
-			(maxTime / 1000000).toString(),
-		);
+		urlParams.set(QueryParams.startTime, (minTime / 1000000).toString());
+		urlParams.set(QueryParams.endTime, (maxTime / 1000000).toString());
 
 		history.push(
 			`${
