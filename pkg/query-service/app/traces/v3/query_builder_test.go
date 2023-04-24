@@ -77,7 +77,7 @@ var buildFilterQueryData = []struct {
 		FilterSet: &v3.FilterSet{Operator: "AND", Items: []v3.FilterItem{
 			{Key: v3.AttributeKey{Key: "name", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag, IsColumn: true}, Value: "", Operator: "exists"},
 		}},
-		ExpectedFilter: " AND isNotNull(name)",
+		ExpectedFilter: " AND name != ''",
 	},
 	{
 		Name: "Test not exists",
@@ -85,6 +85,13 @@ var buildFilterQueryData = []struct {
 			{Key: v3.AttributeKey{Key: "bytes", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag}, Value: "", Operator: "nexists"},
 		}},
 		ExpectedFilter: " AND NOT has(stringTagMap, 'bytes')",
+	},
+	{
+		Name: "Test not exists with fixed column",
+		FilterSet: &v3.FilterSet{Operator: "AND", Items: []v3.FilterItem{
+			{Key: v3.AttributeKey{Key: "name", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag, IsColumn: true}, Value: "", Operator: "nexists"},
+		}},
+		ExpectedFilter: " AND name = ''",
 	},
 	{
 		Name: "Test contains",
@@ -112,49 +119,89 @@ func TestBuildTracesFilterQuery(t *testing.T) {
 	}
 }
 
-var testGetFilter = []struct {
+var handleEmptyValuesInGroupByData = []struct {
+	Name           string
+	GroupBy        []v3.AttributeKey
+	ExpectedFilter string
+}{
+	{
+		Name:           "String type key",
+		GroupBy:        []v3.AttributeKey{{Key: "bytes", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag}},
+		ExpectedFilter: " AND has(stringTagMap, 'bytes')",
+	},
+	{
+		Name:           "fixed column type key",
+		GroupBy:        []v3.AttributeKey{{Key: "bytes", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag, IsColumn: true}},
+		ExpectedFilter: "",
+	},
+	{
+		Name: "String, float64 and fixed column type key",
+		GroupBy: []v3.AttributeKey{
+			{Key: "bytes", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag},
+			{Key: "count", DataType: v3.AttributeKeyDataTypeFloat64, Type: v3.AttributeKeyTypeTag},
+			{Key: "name", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag, IsColumn: true},
+		},
+		ExpectedFilter: " AND has(stringTagMap, 'bytes') AND has(numberTagMap, 'count')",
+	},
+}
+
+func TestBuildTracesHandleEmptyValuesInGroupBy(t *testing.T) {
+	for _, tt := range handleEmptyValuesInGroupByData {
+		Convey("TestBuildTracesHandleEmptyValuesInGroupBy", t, func() {
+			query, err := handleEmptyValuesInGroupBy(map[string]v3.AttributeKey{}, tt.GroupBy)
+			So(err, ShouldBeNil)
+			So(query, ShouldEqual, tt.ExpectedFilter)
+		})
+	}
+}
+
+var testColumnName = []struct {
 	Name           string
 	AttributeKey   v3.AttributeKey
-	ExpectedFilter string
+	ExpectedColumn string
 }{
 	{
 		Name:           "resource",
 		AttributeKey:   v3.AttributeKey{Key: "collector_id", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeResource, IsColumn: false},
-		ExpectedFilter: "resourceTagsMap['collector_id']",
+		ExpectedColumn: "resourceTagsMap['collector_id']",
 	},
 	{
 		Name:           "stringAttribute",
 		AttributeKey:   v3.AttributeKey{Key: "customer_id", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag, IsColumn: false},
-		ExpectedFilter: "stringTagMap['customer_id']",
+		ExpectedColumn: "stringTagMap['customer_id']",
 	},
 	{
 		Name:           "boolAttribute",
 		AttributeKey:   v3.AttributeKey{Key: "has_error", DataType: v3.AttributeKeyDataTypeBool, Type: v3.AttributeKeyTypeTag, IsColumn: false},
-		ExpectedFilter: "boolTagMap['has_error']",
+		ExpectedColumn: "boolTagMap['has_error']",
 	},
 	{
 		Name:           "float64Attribute",
 		AttributeKey:   v3.AttributeKey{Key: "count", DataType: v3.AttributeKeyDataTypeFloat64, Type: v3.AttributeKeyTypeTag, IsColumn: false},
-		ExpectedFilter: "numberTagMap['count']",
+		ExpectedColumn: "numberTagMap['count']",
 	},
 	{
 		Name:           "int64Attribute",
 		AttributeKey:   v3.AttributeKey{Key: "count", DataType: v3.AttributeKeyDataTypeInt64, Type: v3.AttributeKeyTypeTag, IsColumn: false},
-		ExpectedFilter: "numberTagMap['count']",
+		ExpectedColumn: "numberTagMap['count']",
 	},
 	{
 		Name:           "column",
 		AttributeKey:   v3.AttributeKey{Key: "name", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag, IsColumn: true},
-		ExpectedFilter: "name",
+		ExpectedColumn: "name",
+	},
+	{
+		Name:           "missing key",
+		AttributeKey:   v3.AttributeKey{Key: "xyz"},
+		ExpectedColumn: "stringTagMap['xyz']",
 	},
 }
 
-func TestGetFilter(t *testing.T) {
-	for _, tt := range testGetFilter {
-		Convey("testGetFilter", t, func() {
-			Filter, err := getColumnName(tt.AttributeKey, map[string]v3.AttributeKey{})
-			So(err, ShouldBeNil)
-			So(Filter, ShouldEqual, tt.ExpectedFilter)
+func TestColumnName(t *testing.T) {
+	for _, tt := range testColumnName {
+		Convey("testColumnName", t, func() {
+			Column := getColumnName(tt.AttributeKey, map[string]v3.AttributeKey{})
+			So(Column, ShouldEqual, tt.ExpectedColumn)
 		})
 	}
 }
@@ -321,8 +368,10 @@ var testBuildTracesQueryData = []struct {
 			AggregateOperator: v3.AggregateOperatorCount,
 			Expression:        "A",
 		},
-		TableName:     "signoz_traces.distributed_signoz_index_v2",
-		ExpectedQuery: "SELECT toStartOfInterval(timestamp, INTERVAL 60 SECOND) AS ts, toFloat64(count()) as value from signoz_traces.distributed_signoz_index_v2 where (timestamp >= '1680066360726210000' AND timestamp <= '1680066458000000000') group by ts order by ts",
+		TableName: "signoz_traces.distributed_signoz_index_v2",
+		ExpectedQuery: "SELECT toStartOfInterval(timestamp, INTERVAL 60 SECOND) AS ts, toFloat64(count()) as value" +
+			" from signoz_traces.distributed_signoz_index_v2 where (timestamp >= '1680066360726210000' AND timestamp <= '1680066458000000000')" +
+			" group by ts order by ts",
 	},
 	{
 		Name:  "Test aggregate count on a attribute",
@@ -335,8 +384,10 @@ var testBuildTracesQueryData = []struct {
 			AggregateOperator:  v3.AggregateOperatorCount,
 			Expression:         "A",
 		},
-		TableName:     "signoz_traces.distributed_signoz_index_v2",
-		ExpectedQuery: "SELECT toStartOfInterval(timestamp, INTERVAL 60 SECOND) AS ts, toFloat64(count()) as value from signoz_traces.distributed_signoz_index_v2 where (timestamp >= '1680066360726210000' AND timestamp <= '1680066458000000000') AND has(stringTagMap, 'user_name') group by ts order by ts",
+		TableName: "signoz_traces.distributed_signoz_index_v2",
+		ExpectedQuery: "SELECT toStartOfInterval(timestamp, INTERVAL 60 SECOND) AS ts, toFloat64(count()) as value" +
+			" from signoz_traces.distributed_signoz_index_v2 where (timestamp >= '1680066360726210000' AND timestamp <= '1680066458000000000')" +
+			" AND has(stringTagMap, 'user_name') group by ts order by ts",
 	},
 	{
 		Name:  "Test aggregate count on a fixed column",
@@ -349,11 +400,13 @@ var testBuildTracesQueryData = []struct {
 			AggregateOperator:  v3.AggregateOperatorCount,
 			Expression:         "A",
 		},
-		TableName:     "signoz_traces.distributed_signoz_index_v2",
-		ExpectedQuery: "SELECT toStartOfInterval(timestamp, INTERVAL 60 SECOND) AS ts, toFloat64(count()) as value from signoz_traces.distributed_signoz_index_v2 where (timestamp >= '1680066360726210000' AND timestamp <= '1680066458000000000') group by ts order by ts",
+		TableName: "signoz_traces.distributed_signoz_index_v2",
+		ExpectedQuery: "SELECT toStartOfInterval(timestamp, INTERVAL 60 SECOND) AS ts, toFloat64(count()) as value" +
+			" from signoz_traces.distributed_signoz_index_v2 where (timestamp >= '1680066360726210000' AND timestamp <= '1680066458000000000')" +
+			" AND name != '' group by ts order by ts",
 	},
 	{
-		Name:  "Test aggregate count on a with filter",
+		Name:  "Test aggregate count with filter",
 		Start: 1680066360726210000,
 		End:   1680066458000000000,
 		Step:  60,
@@ -366,8 +419,10 @@ var testBuildTracesQueryData = []struct {
 			}},
 			Expression: "A",
 		},
-		TableName:     "signoz_traces.distributed_signoz_index_v2",
-		ExpectedQuery: "SELECT toStartOfInterval(timestamp, INTERVAL 60 SECOND) AS ts, toFloat64(count()) as value from signoz_traces.distributed_signoz_index_v2 where (timestamp >= '1680066360726210000' AND timestamp <= '1680066458000000000') AND numberTagMap['bytes'] > 100 AND has(stringTagMap, 'user_name') group by ts order by ts",
+		TableName: "signoz_traces.distributed_signoz_index_v2",
+		ExpectedQuery: "SELECT toStartOfInterval(timestamp, INTERVAL 60 SECOND) AS ts, toFloat64(count()) as value" +
+			" from signoz_traces.distributed_signoz_index_v2 where (timestamp >= '1680066360726210000' AND timestamp <= '1680066458000000000')" +
+			" AND numberTagMap['bytes'] > 100.000000 AND has(stringTagMap, 'user_name') group by ts order by ts",
 	},
 	{
 		Name:  "Test aggregate count distinct and order by value",
@@ -381,11 +436,13 @@ var testBuildTracesQueryData = []struct {
 			Expression:         "A",
 			OrderBy:            []v3.OrderBy{{ColumnName: "#SIGNOZ_VALUE", Order: "ASC"}},
 		},
-		TableName:     "signoz_traces.distributed_signoz_index_v2",
-		ExpectedQuery: "SELECT toStartOfInterval(timestamp, INTERVAL 60 SECOND) AS ts, toFloat64(count(distinct(name))) as value from signoz_traces.distributed_signoz_index_v2 where (timestamp >= '1680066360726210000' AND timestamp <= '1680066458000000000') group by ts order by value ASC,ts",
+		TableName: "signoz_traces.distributed_signoz_index_v2",
+		ExpectedQuery: "SELECT toStartOfInterval(timestamp, INTERVAL 60 SECOND) AS ts, toFloat64(count(distinct(name))) as value" +
+			" from signoz_traces.distributed_signoz_index_v2 where (timestamp >= '1680066360726210000' AND timestamp <= '1680066458000000000')" +
+			" group by ts order by value ASC,ts",
 	},
 	{
-		Name:  "Test aggregate count distinct on non selected field",
+		Name:  "Test aggregate count distinct on string key",
 		Start: 1680066360726210000,
 		End:   1680066458000000000,
 		Step:  60,
@@ -395,8 +452,10 @@ var testBuildTracesQueryData = []struct {
 			AggregateOperator:  v3.AggregateOperatorCountDistinct,
 			Expression:         "A",
 		},
-		TableName:     "signoz_traces.distributed_signoz_index_v2",
-		ExpectedQuery: "SELECT toStartOfInterval(timestamp, INTERVAL 60 SECOND) AS ts, toFloat64(count(distinct(stringTagMap['name']))) as value from signoz_traces.distributed_signoz_index_v2 where (timestamp >= '1680066360726210000' AND timestamp <= '1680066458000000000') group by ts order by ts",
+		TableName: "signoz_traces.distributed_signoz_index_v2",
+		ExpectedQuery: "SELECT toStartOfInterval(timestamp, INTERVAL 60 SECOND) AS ts, toFloat64(count(distinct(stringTagMap['name'])))" +
+			" as value from signoz_traces.distributed_signoz_index_v2 where" +
+			" (timestamp >= '1680066360726210000' AND timestamp <= '1680066458000000000') group by ts order by ts",
 	},
 	{
 		Name:  "Test aggregate count distinct with filter and groupBy",
@@ -422,7 +481,7 @@ var testBuildTracesQueryData = []struct {
 			"toFloat64(count(distinct(name))) as value from signoz_traces.distributed_signoz_index_v2 " +
 			"where (timestamp >= '1680066360726210000' AND timestamp <= '1680066458000000000') " +
 			"AND stringTagMap['http.method'] = 'GET' AND resourceTagsMap['x'] != 'abc' " +
-			"group by http.method,ts " +
+			"AND has(stringTagMap, 'http.method') group by http.method,ts " +
 			"order by http.method ASC,ts",
 	},
 	{
@@ -440,7 +499,10 @@ var testBuildTracesQueryData = []struct {
 				{Key: v3.AttributeKey{Key: "x", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeResource}, Value: "abc", Operator: "!="},
 			},
 			},
-			GroupBy: []v3.AttributeKey{{Key: "method", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag}, {Key: "x", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeResource}},
+			GroupBy: []v3.AttributeKey{
+				{Key: "method", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag},
+				{Key: "x", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeResource},
+			},
 			OrderBy: []v3.OrderBy{{ColumnName: "method", Order: "ASC"}, {ColumnName: "x", Order: "ASC"}},
 		},
 		TableName: "signoz_traces.distributed_signoz_index_v2",
@@ -450,7 +512,7 @@ var testBuildTracesQueryData = []struct {
 			"toFloat64(count(distinct(name))) as value from signoz_traces.distributed_signoz_index_v2 " +
 			"where (timestamp >= '1680066360726210000' AND timestamp <= '1680066458000000000') " +
 			"AND stringTagMap['method'] = 'GET' AND resourceTagsMap['x'] != 'abc' " +
-			"group by method,x,ts " +
+			"AND has(stringTagMap, 'method') AND has(resourceTagsMap, 'x') group by method,x,ts " +
 			"order by method ASC,x ASC,ts",
 	},
 	{
@@ -477,7 +539,7 @@ var testBuildTracesQueryData = []struct {
 			"from signoz_traces.distributed_signoz_index_v2 " +
 			"where (timestamp >= '1680066360726210000' AND timestamp <= '1680066458000000000') " +
 			"AND stringTagMap['method'] = 'GET' " +
-			"group by method,ts " +
+			"AND has(stringTagMap, 'method') group by method,ts " +
 			"order by method ASC,ts",
 	},
 	{
@@ -504,7 +566,7 @@ var testBuildTracesQueryData = []struct {
 			"from signoz_traces.distributed_signoz_index_v2 " +
 			"where (timestamp >= '1680066360726210000' AND timestamp <= '1680066458000000000') " +
 			"AND stringTagMap['method'] = 'GET' " +
-			"group by method,ts " +
+			"AND has(stringTagMap, 'method') group by method,ts " +
 			"order by method ASC,ts",
 	},
 	{
@@ -531,7 +593,7 @@ var testBuildTracesQueryData = []struct {
 			"from signoz_traces.distributed_signoz_index_v2 " +
 			"where (timestamp >= '1680066360726210000' AND timestamp <= '1680066458000000000') " +
 			"AND stringTagMap['method'] = 'GET' " +
-			"group by method,ts " +
+			"AND has(stringTagMap, 'method') group by method,ts " +
 			"order by method ASC,ts",
 	},
 	{
@@ -558,7 +620,7 @@ var testBuildTracesQueryData = []struct {
 			"from signoz_traces.distributed_signoz_index_v2 " +
 			"where (timestamp >= '1680066360726210000' AND timestamp <= '1680066458000000000') " +
 			"AND stringTagMap['method'] = 'GET' " +
-			"group by method,ts " +
+			"AND has(stringTagMap, 'method') group by method,ts " +
 			"order by method ASC,ts",
 	},
 	{
@@ -581,7 +643,7 @@ var testBuildTracesQueryData = []struct {
 			"quantile(0.05)(bytes) as value " +
 			"from signoz_traces.distributed_signoz_index_v2 " +
 			"where (timestamp >= '1680066360726210000' AND timestamp <= '1680066458000000000') " +
-			"group by method,ts " +
+			"AND has(stringTagMap, 'method') group by method,ts " +
 			"order by method ASC,ts",
 	},
 	{
@@ -602,7 +664,7 @@ var testBuildTracesQueryData = []struct {
 		ExpectedQuery: "SELECT toStartOfInterval(timestamp, INTERVAL 60 SECOND) AS ts, stringTagMap['method'] as `method`" +
 			", sum(bytes)/60 as value from signoz_traces.distributed_signoz_index_v2 " +
 			"where (timestamp >= '1680066360726210000' AND timestamp <= '1680066458000000000')" +
-			" group by method,ts order by method ASC,ts",
+			" AND has(stringTagMap, 'method') group by method,ts order by method ASC,ts",
 	},
 	{
 		Name:  "Test aggregate rate",
@@ -622,7 +684,7 @@ var testBuildTracesQueryData = []struct {
 		ExpectedQuery: "SELECT toStartOfInterval(timestamp, INTERVAL 60 SECOND) AS ts, stringTagMap['method'] as `method`" +
 			", count(numberTagMap['bytes'])/60 as value " +
 			"from signoz_traces.distributed_signoz_index_v2 where (timestamp >= '1680066360726210000' AND timestamp <= '1680066458000000000') " +
-			"group by method,ts " +
+			"AND has(stringTagMap, 'method') group by method,ts " +
 			"order by method ASC,ts",
 	},
 	{
@@ -644,7 +706,7 @@ var testBuildTracesQueryData = []struct {
 			"stringTagMap['method'] as `method`, " +
 			"sum(numberTagMap['bytes'])/60 as value " +
 			"from signoz_traces.distributed_signoz_index_v2 where (timestamp >= '1680066360726210000' AND timestamp <= '1680066458000000000') " +
-			"group by method,ts " +
+			"AND has(stringTagMap, 'method') group by method,ts " +
 			"order by method ASC,ts",
 	},
 	{
@@ -665,8 +727,10 @@ var testBuildTracesQueryData = []struct {
 				},
 			},
 		},
-		TableName:     "signoz_traces.distributed_signoz_index_v2",
-		ExpectedQuery: "SELECT toStartOfInterval(timestamp, INTERVAL 60 SECOND) AS ts, toFloat64(count(distinct(stringTagMap['name']))) as value from signoz_traces.distributed_signoz_index_v2 where (timestamp >= '1680066360726210000' AND timestamp <= '1680066458000000000') group by ts having value > 10 order by ts",
+		TableName: "signoz_traces.distributed_signoz_index_v2",
+		ExpectedQuery: "SELECT toStartOfInterval(timestamp, INTERVAL 60 SECOND) AS ts, toFloat64(count(distinct(stringTagMap['name']))) as value" +
+			" from signoz_traces.distributed_signoz_index_v2 where (timestamp >= '1680066360726210000' AND timestamp <= '1680066458000000000')" +
+			" group by ts having value > 10 order by ts",
 	},
 	{
 		Name:  "Test count aggregate with having clause and filters",

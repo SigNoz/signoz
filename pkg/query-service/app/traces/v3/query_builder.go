@@ -51,16 +51,13 @@ var tracesOperatorMappingV3 = map[v3.FilterOperator]string{
 	v3.FilterOperatorNotExists:       "NOT has(%s%s, '%s')",
 }
 
-func getColumnName(key v3.AttributeKey, keys map[string]v3.AttributeKey) (string, error) {
-	key, err := enrichKeyWithMetadata(key, keys)
-	if err != nil {
-		return "", err
-	}
+func getColumnName(key v3.AttributeKey, keys map[string]v3.AttributeKey) string {
+	key = enrichKeyWithMetadata(key, keys)
 	if key.IsColumn {
-		return key.Key, nil
+		return key.Key
 	}
 	filterType, filterDataType := getClickhouseTracesColumnDataTypeAndType(key)
-	return fmt.Sprintf("%s%s['%s']", filterDataType, filterType, key.Key), nil
+	return fmt.Sprintf("%s%s['%s']", filterDataType, filterType, key.Key)
 }
 
 func getClickhouseTracesColumnDataTypeAndType(key v3.AttributeKey) (v3.AttributeKeyType, string) {
@@ -80,18 +77,21 @@ func getClickhouseTracesColumnDataTypeAndType(key v3.AttributeKey) (v3.Attribute
 	return filterType, filterDataType
 }
 
-func enrichKeyWithMetadata(key v3.AttributeKey, keys map[string]v3.AttributeKey) (v3.AttributeKey, error) {
+func enrichKeyWithMetadata(key v3.AttributeKey, keys map[string]v3.AttributeKey) v3.AttributeKey {
 	if key.Type == "" || key.DataType == "" {
 		// check if the key is present in the keys map
 		if existingKey, ok := keys[key.Key]; ok {
 			key.IsColumn = existingKey.IsColumn
 			key.Type = existingKey.Type
 			key.DataType = existingKey.DataType
-		} else {
-			return key, fmt.Errorf("key not found to enrich metadata")
+		} else { // if not present then set the default values
+			key.Type = v3.AttributeKeyTypeTag
+			key.DataType = v3.AttributeKeyDataTypeString
+			key.IsColumn = false
+			return key
 		}
 	}
-	return key, nil
+	return key
 }
 
 // getSelectLabels returns the select labels for the query based on groupBy and aggregateOperator
@@ -101,10 +101,7 @@ func getSelectLabels(aggregatorOperator v3.AggregateOperator, groupBy []v3.Attri
 		selectLabels = ""
 	} else {
 		for _, tag := range groupBy {
-			filterName, err := getColumnName(tag, keys)
-			if err != nil {
-				return "", err
-			}
+			filterName := getColumnName(tag, keys)
 			selectLabels += fmt.Sprintf(", %s as `%s`", filterName, tag.Key)
 		}
 	}
@@ -130,32 +127,41 @@ func buildTracesFilterQuery(fs *v3.FilterSet, keys map[string]v3.AttributeKey) (
 
 	if fs != nil && len(fs.Items) != 0 {
 		for _, item := range fs.Items {
-			toFormat := item.Value
+			val := item.Value
 			// generate the key
-			columnName, err := getColumnName(item.Key, keys)
-			if err != nil {
-				return "", err
-			}
+			columnName := getColumnName(item.Key, keys)
 			var fmtVal string
-			fmtVal = utils.ClickHouseFormattedValue(toFormat)
+			key := enrichKeyWithMetadata(item.Key, keys)
+			if item.Operator != v3.FilterOperatorExists && item.Operator != v3.FilterOperatorNotExists {
+				var err error
+				val, err = utils.ValidateAndCastValue(val, key.DataType)
+				if err != nil {
+					return "", fmt.Errorf("invalid value for key %s: %v", item.Key.Key, err)
+				}
+			}
+			fmtVal = utils.ClickHouseFormattedValue(val)
 			if operator, ok := tracesOperatorMappingV3[item.Operator]; ok {
 				switch item.Operator {
 				case v3.FilterOperatorContains, v3.FilterOperatorNotContains:
 					conditions = append(conditions, fmt.Sprintf("%s %s '%%%s%%'", columnName, operator, item.Value))
 
 				case v3.FilterOperatorExists, v3.FilterOperatorNotExists:
-					key, err := enrichKeyWithMetadata(item.Key, keys)
-					if err != nil {
-						return "", err
+					if key.IsColumn {
+						subQuery, err := existsSubQueryForFixedColumn(key, item.Operator)
+						if err != nil {
+							return "", err
+						}
+						conditions = append(conditions, subQuery)
+					} else {
+						columnType, columnDataType := getClickhouseTracesColumnDataTypeAndType(key)
+						conditions = append(conditions, fmt.Sprintf(operator, columnDataType, columnType, key.Key))
 					}
-					columnType, columnDataType := getClickhouseTracesColumnDataTypeAndType(key)
-					conditions = append(conditions, fmt.Sprintf(operator, columnDataType, columnType, item.Key.Key))
 
 				default:
 					conditions = append(conditions, fmt.Sprintf("%s %s %s", columnName, operator, fmtVal))
 				}
 			} else {
-				return "", fmt.Errorf("unsupported operation")
+				return "", fmt.Errorf("unsupported operator %s", item.Operator)
 			}
 		}
 	}
@@ -165,6 +171,41 @@ func buildTracesFilterQuery(fs *v3.FilterSet, keys map[string]v3.AttributeKey) (
 		queryString = " AND " + queryString
 	}
 	return queryString, nil
+}
+
+func existsSubQueryForFixedColumn(key v3.AttributeKey, op v3.FilterOperator) (string, error) {
+	if key.DataType == v3.AttributeKeyDataTypeString {
+		if op == v3.FilterOperatorExists {
+			return fmt.Sprintf("%s %s ''", key.Key, tracesOperatorMappingV3[v3.FilterOperatorNotEqual]), nil
+		} else {
+			return fmt.Sprintf("%s %s ''", key.Key, tracesOperatorMappingV3[v3.FilterOperatorEqual]), nil
+		}
+	} else {
+		return "", fmt.Errorf("unsupported operation, exists and not exists can only be applied on custom attributes or string type columns")
+	}
+}
+
+func handleEmptyValuesInGroupBy(keys map[string]v3.AttributeKey, groupBy []v3.AttributeKey) (string, error) {
+	filterItems := []v3.FilterItem{}
+	if len(groupBy) != 0 {
+		for _, item := range groupBy {
+			key := enrichKeyWithMetadata(item, keys)
+			if !key.IsColumn {
+				filterItems = append(filterItems, v3.FilterItem{
+					Key:      item,
+					Operator: v3.FilterOperatorExists,
+				})
+			}
+		}
+	}
+	if len(filterItems) != 0 {
+		filterSet := v3.FilterSet{
+			Operator: "AND",
+			Items:    filterItems,
+		}
+		return buildTracesFilterQuery(&filterSet, keys)
+	}
+	return "", nil
 }
 
 func buildTracesQuery(start, end, step int64, mq *v3.BuilderQuery, tableName string, keys map[string]v3.AttributeKey) (string, error) {
@@ -195,15 +236,18 @@ func buildTracesQuery(start, end, step int64, mq *v3.BuilderQuery, tableName str
 			"group by %s%s " +
 			"order by %sts"
 
+	emptyValuesInGroupByFilter, err := handleEmptyValuesInGroupBy(keys, mq.GroupBy)
+	if err != nil {
+		return "", err
+	}
+	filterSubQuery += emptyValuesInGroupByFilter
+
 	groupBy := groupByAttributeKeyTags(keys, mq.GroupBy...)
 	orderBy := orderByAttributeKeyTags(mq.OrderBy, mq.GroupBy)
 
 	aggregationKey := ""
 	if mq.AggregateAttribute.Key != "" {
-		aggregationKey, err = getColumnName(mq.AggregateAttribute, keys)
-		if err != nil {
-			return "", err
-		}
+		aggregationKey = getColumnName(mq.AggregateAttribute, keys)
 	}
 
 	switch mq.AggregateOperator {
@@ -234,12 +278,17 @@ func buildTracesQuery(start, end, step int64, mq *v3.BuilderQuery, tableName str
 		return query, nil
 	case v3.AggregateOperatorCount:
 		if mq.AggregateAttribute.Key != "" {
-			key, err := enrichKeyWithMetadata(mq.AggregateAttribute, keys)
-			if err != nil {
-				return "", err
+			key := enrichKeyWithMetadata(mq.AggregateAttribute, keys)
+			if key.IsColumn {
+				subQuery, err := existsSubQueryForFixedColumn(key, v3.FilterOperatorExists)
+				if err != nil {
+					filterSubQuery = ""
+				}
+				filterSubQuery = fmt.Sprintf(" AND %s", subQuery)
+			} else {
+				columnType, columnDataType := getClickhouseTracesColumnDataTypeAndType(key)
+				filterSubQuery = fmt.Sprintf("%s AND has(%s%s, '%s')", filterSubQuery, columnDataType, columnType, mq.AggregateAttribute.Key)
 			}
-			columnType, columnDataType := getClickhouseTracesColumnDataTypeAndType(key)
-			filterSubQuery = fmt.Sprintf("%s AND has(%s%s, '%s')", filterSubQuery, columnDataType, columnType, mq.AggregateAttribute.Key)
 		}
 		op := "toFloat64(count())"
 		query := fmt.Sprintf(queryTmpl, step, op, filterSubQuery, groupBy, having, orderBy)

@@ -10,6 +10,7 @@ import (
 	"go.uber.org/zap"
 )
 
+// ValidateAndCastValue validates and casts the value of a key to the corresponding data type of the key
 func ValidateAndCastValue(v interface{}, dataType v3.AttributeKeyDataType) (interface{}, error) {
 	switch dataType {
 	case v3.AttributeKeyDataTypeString:
