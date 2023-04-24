@@ -31,7 +31,6 @@ export const useFetchKeysAndValues = (
 	const { data, isFetching, status } = useQuery(
 		[
 			QueryBuilderKeys.GET_ATTRIBUTE_KEY,
-			searchValue,
 			query.dataSource,
 			query.aggregateOperator,
 			query.aggregateAttribute.key,
