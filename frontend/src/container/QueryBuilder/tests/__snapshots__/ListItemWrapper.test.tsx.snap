@@ -49,6 +49,7 @@ exports[`QueryBuilder should render ListItemWrapper 1`] = `
         />
       </svg>
     </span>
+    ListItemWrapper
   </div>
 </DocumentFragment>
 `;
