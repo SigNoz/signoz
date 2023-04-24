@@ -1,0 +1,66 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`QueryBuilder should render AdditionalFiltersToggler 1`] = `
+<DocumentFragment>
+  .c1 {
+  margin-right: 0.6875rem;
+  -webkit-transition: all 0.2s ease;
+  transition: all 0.2s ease;
+}
+
+.c0 {
+  width: -webkit-fit-content;
+  width: -moz-fit-content;
+  width: fit-content;
+  display: -webkit-box;
+  display: -webkit-flex;
+  display: -ms-flexbox;
+  display: flex;
+  -webkit-align-items: center;
+  -webkit-box-align: center;
+  -ms-flex-align: center;
+  align-items: center;
+  margin-bottom: 0.875rem;
+  min-height: 1.375rem;
+  cursor: pointer;
+}
+
+<div
+    class="ant-row css-dev-only-do-not-override-1i536d8"
+  >
+    <div
+      class="ant-col ant-col-24 css-dev-only-do-not-override-1i536d8"
+    >
+      <div
+        class="ant-col c0 css-dev-only-do-not-override-1i536d8"
+      >
+        <span
+          aria-label="plus-square"
+          class="anticon anticon-plus-square c1"
+          role="img"
+        >
+          <svg
+            aria-hidden="true"
+            data-icon="plus-square"
+            fill="currentColor"
+            focusable="false"
+            height="1em"
+            viewBox="64 64 896 896"
+            width="1em"
+          >
+            <path
+              d="M328 544h152v152c0 4.4 3.6 8 8 8h48c4.4 0 8-3.6 8-8V544h152c4.4 0 8-3.6 8-8v-48c0-4.4-3.6-8-8-8H544V328c0-4.4-3.6-8-8-8h-48c-4.4 0-8 3.6-8 8v152H328c-4.4 0-8 3.6-8 8v48c0 4.4 3.6 8 8 8z"
+            />
+            <path
+              d="M880 112H144c-17.7 0-32 14.3-32 32v736c0 17.7 14.3 32 32 32h736c17.7 0 32-14.3 32-32V144c0-17.7-14.3-32-32-32zm-40 728H184V184h656v656z"
+            />
+          </svg>
+        </span>
+        <span>
+          Add conditions for 
+        </span>
+      </div>
+    </div>
+  </div>
+</DocumentFragment>
+`;
