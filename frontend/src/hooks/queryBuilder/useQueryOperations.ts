@@ -267,8 +267,6 @@ export const useQueryOperations: UseQueryOperations = ({
 		[query.dataSource],
 	);
 
-	console.log({ query });
-
 	useEffect(() => {
 		if (operators.length === 0) {
 			const initialOperators = getNewOperators(dataSource, panelType);

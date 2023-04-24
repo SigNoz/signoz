@@ -42,7 +42,7 @@ export async function GetMetricQueryRange({
 	const queryKey: Record<EQueryTypeToQueryKeyMapping, string> =
 		EQueryTypeToQueryKeyMapping[EQueryType[query.queryType]];
 	const queryData = query[queryKey];
-	const legendMap: Record<string, string> = {};
+	let legendMap: Record<string, string> = {};
 
 	const QueryPayload = {
 		compositeQuery: {
@@ -51,7 +51,6 @@ export async function GetMetricQueryRange({
 		},
 	};
 
-	console.log({ query });
 	switch (queryType as EQueryType) {
 		case EQueryType.QUERY_BUILDER: {
 			const { queryData, queryFormulas } = query.builder;
@@ -59,8 +58,9 @@ export async function GetMetricQueryRange({
 				queryData,
 				queryFormulas,
 			});
+			legendMap = builderQueries.newLegendMap;
 
-			QueryPayload.compositeQuery.builderQueries = builderQueries;
+			QueryPayload.compositeQuery.builderQueries = builderQueries.data;
 			break;
 		}
 		case EQueryType.CLICKHOUSE: {
@@ -144,6 +144,7 @@ export async function GetMetricQueryRange({
 						newQueryData.metric[queryData.queryName] = queryData.queryName;
 					}
 				}
+
 				return newQueryData;
 			},
 		);
