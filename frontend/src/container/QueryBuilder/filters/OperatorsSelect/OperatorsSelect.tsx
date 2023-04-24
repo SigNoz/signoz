@@ -5,6 +5,7 @@ import { SelectOption } from 'types/common/select';
 // ** Helpers
 import { transformToUpperCase } from 'utils/transformToUpperCase';
 
+import { selectStyle } from '../QueryBuilderSearch/config';
 import { OperatorsSelectProps } from './OperatorsSelect.interfaces';
 
 export const OperatorsSelect = memo(function OperatorsSelect({
@@ -25,7 +26,7 @@ export const OperatorsSelect = memo(function OperatorsSelect({
 			options={operatorsOptions}
 			value={value}
 			onChange={onChange}
-			style={{ width: '100%' }}
+			style={selectStyle}
 			// eslint-disable-next-line react/jsx-props-no-spreading
 			{...props}
 		/>
