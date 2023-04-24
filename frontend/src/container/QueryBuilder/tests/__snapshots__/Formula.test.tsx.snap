@@ -1,0 +1,131 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`QueryBuilder should render Formula 1`] = `
+<DocumentFragment>
+  .c1 {
+  position: absolute;
+  top: 0.5rem;
+  right: 0.9375rem;
+  z-index: 1;
+  cursor: pointer;
+  opacity: 0.45;
+  width: 1.3125rem;
+  height: 1.3125rem;
+}
+
+.c1 svg {
+  width: 100%;
+  height: 100%;
+}
+
+.c0 {
+  padding-right: 3rem;
+}
+
+.c2 {
+  min-width: 2rem;
+  height: 2.25rem;
+  padding: 0.43rem;
+  border-radius: 0.375rem;
+  margin-right: 0.5rem;
+  pointer-events: default;
+}
+
+<div
+    class="ant-row c0 css-dev-only-do-not-override-1i536d8"
+    style="margin-top: -7.5px; margin-bottom: -7.5px;"
+  >
+    <span
+      aria-label="close-circle"
+      class="anticon anticon-close-circle c1"
+      role="img"
+      tabindex="-1"
+    >
+      <svg
+        aria-hidden="true"
+        data-icon="close-circle"
+        fill="currentColor"
+        focusable="false"
+        height="1em"
+        viewBox="64 64 896 896"
+        width="1em"
+      >
+        <path
+          d="M685.4 354.8c0-4.4-3.6-8-8-8l-66 .3L512 465.6l-99.3-118.4-66.1-.3c-4.4 0-8 3.5-8 8 0 1.9.7 3.7 1.9 5.2l130.1 155L340.5 670a8.32 8.32 0 00-1.9 5.2c0 4.4 3.6 8 8 8l66.1-.3L512 564.4l99.3 118.4 66 .3c4.4 0 8-3.5 8-8 0-1.9-.7-3.7-1.9-5.2L553.5 515l130.1-155c1.2-1.4 1.8-3.3 1.8-5.2z"
+        />
+        <path
+          d="M512 65C264.6 65 64 265.6 64 513s200.6 448 448 448 448-200.6 448-448S759.4 65 512 65zm0 820c-205.4 0-372-166.6-372-372s166.6-372 372-372 372 166.6 372 372-166.6 372-372 372z"
+        />
+      </svg>
+    </span>
+    <div
+      class="ant-col ant-col-24 css-dev-only-do-not-override-1i536d8"
+      style="padding-top: 7.5px; padding-bottom: 7.5px;"
+    >
+      <button
+        class="ant-btn css-dev-only-do-not-override-1i536d8 ant-btn-primary c2"
+        type="button"
+      >
+        <span
+          aria-label="eye"
+          class="anticon anticon-eye"
+          role="img"
+        >
+          <svg
+            aria-hidden="true"
+            data-icon="eye"
+            fill="currentColor"
+            focusable="false"
+            height="1em"
+            viewBox="64 64 896 896"
+            width="1em"
+          >
+            <path
+              d="M396 512a112 112 0 10224 0 112 112 0 10-224 0zm546.2-25.8C847.4 286.5 704.1 186 512 186c-192.2 0-335.4 100.5-430.2 300.3a60.3 60.3 0 000 51.5C176.6 737.5 319.9 838 512 838c192.2 0 335.4-100.5 430.2-300.3 7.7-16.2 7.7-35 0-51.5zM508 688c-97.2 0-176-78.8-176-176s78.8-176 176-176 176 78.8 176 176-78.8 176-176 176z"
+            />
+          </svg>
+        </span>
+        <span>
+          Formula
+        </span>
+      </button>
+    </div>
+    <div
+      class="ant-col ant-col-24 css-dev-only-do-not-override-1i536d8"
+      style="padding-top: 7.5px; padding-bottom: 7.5px;"
+    >
+      <textarea
+        class="ant-input css-dev-only-do-not-override-1i536d8"
+        name="expression"
+        rows="2"
+      >
+        sum(A, B)
+      </textarea>
+    </div>
+    <div
+      class="ant-col ant-col-24 css-dev-only-do-not-override-1i536d8"
+      style="padding-top: 7.5px; padding-bottom: 7.5px;"
+    >
+      <span
+        class="ant-input-group-wrapper css-dev-only-do-not-override-1i536d8"
+      >
+        <span
+          class="ant-input-wrapper ant-input-group css-dev-only-do-not-override-1i536d8"
+        >
+          <span
+            class="ant-input-group-addon"
+          >
+            Legend Format
+          </span>
+          <input
+            class="ant-input css-dev-only-do-not-override-1i536d8"
+            name="legend"
+            type="text"
+            value="Total"
+          />
+        </span>
+      </span>
+    </div>
+  </div>
+</DocumentFragment>
+`;
