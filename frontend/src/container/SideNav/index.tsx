@@ -12,7 +12,8 @@ import { SideBarCollapse } from 'store/actions/app';
 import { AppState } from 'store/reducers';
 import AppReducer from 'types/reducer/app';
 
-import { styles } from './config';
+import { routeConfig, styles } from './config';
+import { getQueryString } from './helper';
 import menus from './menuItems';
 import Slack from './Slack';
 import {
@@ -34,7 +35,7 @@ function SideNav(): JSX.Element {
 		AppReducer
 	>((state) => state.app);
 
-	const { pathname } = useLocation();
+	const { pathname, search } = useLocation();
 	const { t } = useTranslation('');
 
 	const onCollapse = useCallback(() => {
@@ -47,11 +48,16 @@ function SideNav(): JSX.Element {
 
 	const onClickHandler = useCallback(
 		(to: string) => {
+			const params = new URLSearchParams(search);
+			const avialableParams = routeConfig[to];
+
+			const queryString = getQueryString(avialableParams, params);
+
 			if (pathname !== to) {
-				history.push(to);
+				history.push(`${to}?${queryString.join('&')}`);
 			}
 		},
-		[pathname],
+		[pathname, search],
 	);
 
 	const onClickSlackHandler = (): void => {

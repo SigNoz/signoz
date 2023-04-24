@@ -1,27 +1,25 @@
 import { Tooltip, Typography } from 'antd';
 import { ColumnsType } from 'antd/lib/table';
 import { ResizeTable } from 'components/ResizeTable';
-import { METRICS_PAGE_QUERY_PARAM } from 'constants/query';
+import { QueryParams } from 'constants/query';
 import ROUTES from 'constants/routes';
+import useResourceAttribute from 'hooks/useResourceAttribute';
+import { convertRawQueriesToTraceSelectedTags } from 'hooks/useResourceAttribute/utils';
 import history from 'lib/history';
-import { convertRawQueriesToTraceSelectedTags } from 'lib/resourceAttributes';
 import React from 'react';
 import { useSelector } from 'react-redux';
 import { useParams } from 'react-router-dom';
 import { AppState } from 'store/reducers';
 import { GlobalReducer } from 'types/reducer/globalTime';
-import MetricReducer from 'types/reducer/metrics';
 
 function TopOperationsTable(props: TopOperationsTableProps): JSX.Element {
 	const { minTime, maxTime } = useSelector<AppState, GlobalReducer>(
 		(state) => state.globalTime,
 	);
-	const { resourceAttributeQueries } = useSelector<AppState, MetricReducer>(
-		(state) => state.metrics,
-	);
+	const { queries } = useResourceAttribute();
 
 	const selectedTraceTags: string = JSON.stringify(
-		convertRawQueriesToTraceSelectedTags(resourceAttributeQueries) || [],
+		convertRawQueriesToTraceSelectedTags(queries) || [],
 	);
 
 	const { data } = props;
@@ -31,14 +29,8 @@ function TopOperationsTable(props: TopOperationsTableProps): JSX.Element {
 	const handleOnClick = (operation: string): void => {
 		const urlParams = new URLSearchParams();
 		const { servicename } = params;
-		urlParams.set(
-			METRICS_PAGE_QUERY_PARAM.startTime,
-			(minTime / 1000000).toString(),
-		);
-		urlParams.set(
-			METRICS_PAGE_QUERY_PARAM.endTime,
-			(maxTime / 1000000).toString(),
-		);
+		urlParams.set(QueryParams.startTime, (minTime / 1000000).toString());
+		urlParams.set(QueryParams.endTime, (maxTime / 1000000).toString());
 
 		history.push(
 			`${

@@ -1,23 +1,93 @@
+import { PlusOutlined } from '@ant-design/icons';
+import { Button, Col, Row } from 'antd';
+import { MAX_FORMULAS, MAX_QUERIES } from 'constants/queryBuilder';
 // ** Hooks
 import { useQueryBuilder } from 'hooks/useQueryBuilder';
-import React from 'react';
+// ** Constants
+import React, { memo, useEffect, useMemo } from 'react';
 
+// ** Components
+import { Formula, Query } from './components';
 // ** Types
 import { QueryBuilderProps } from './QueryBuilder.interfaces';
+// ** Styles
 
-// TODO: temporary eslint disable while variable isn't used
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-export function QueryBuilder(props: QueryBuilderProps): JSX.Element {
-	// TODO: temporary doesn't use
-	// eslint-disable-next-line @typescript-eslint/no-unused-vars
-	const { queryBuilderData } = useQueryBuilder();
+export const QueryBuilder = memo(function QueryBuilder({
+	config,
+	panelType,
+}: QueryBuilderProps): JSX.Element {
+	const {
+		queryBuilderData,
+		setupInitialDataSource,
+		addNewQuery,
+		addNewFormula,
+	} = useQueryBuilder();
 
-	// Here we can use Form from antd library and fill context data or edit
-	// Connect form with adding or removing items from the list
+	useEffect(() => {
+		if (config && config.queryVariant === 'static') {
+			setupInitialDataSource(config.initialDataSource);
+		}
 
-	// Here will be map of query queryBuilderData.queryData and queryBuilderData.queryFormulas components
-	// Each component can be part of antd Form list where we can add or remove items
-	// Also need decide to make a copy of queryData for working with form or not and after it set the full new list with formulas or queries to the context
-	// With button to add him
-	return <div>null</div>;
-}
+		return (): void => {
+			setupInitialDataSource(null);
+		};
+	}, [config, setupInitialDataSource]);
+
+	const isDisabledQueryButton = useMemo(
+		() => queryBuilderData.queryData.length >= MAX_QUERIES,
+		[queryBuilderData],
+	);
+
+	const isDisabledFormulaButton = useMemo(
+		() => queryBuilderData.queryFormulas.length >= MAX_FORMULAS,
+		[queryBuilderData],
+	);
+
+	return (
+		<Row gutter={[0, 20]} justify="start">
+			<Col span={24}>
+				<Row gutter={[0, 50]}>
+					{queryBuilderData.queryData.map((query, index) => (
+						<Col key={query.queryName} span={24}>
+							<Query
+								index={index}
+								isAvailableToDisable={queryBuilderData.queryData.length > 1}
+								queryVariant={config?.queryVariant || 'dropdown'}
+								query={query}
+								panelType={panelType}
+							/>
+						</Col>
+					))}
+					{queryBuilderData.queryFormulas.map((formula, index) => (
+						<Col key={formula.label} span={24}>
+							<Formula formula={formula} index={index} />
+						</Col>
+					))}
+				</Row>
+			</Col>
+
+			<Row gutter={[20, 0]}>
+				<Col>
+					<Button
+						disabled={isDisabledQueryButton}
+						type="primary"
+						icon={<PlusOutlined />}
+						onClick={addNewQuery}
+					>
+						Query
+					</Button>
+				</Col>
+				<Col>
+					<Button
+						disabled={isDisabledFormulaButton}
+						onClick={addNewFormula}
+						type="primary"
+						icon={<PlusOutlined />}
+					>
+						Formula
+					</Button>
+				</Col>
+			</Row>
+		</Row>
+	);
+});

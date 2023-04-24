@@ -1,7 +1,10 @@
 import { ActiveElement, Chart, ChartData, ChartEvent } from 'chart.js';
-import { METRICS_PAGE_QUERY_PARAM } from 'constants/query';
+import { QueryParams } from 'constants/query';
 import ROUTES from 'constants/routes';
+import { routeConfig } from 'container/SideNav/config';
+import { getQueryString } from 'container/SideNav/helper';
 import history from 'lib/history';
+import { IQueryBuilderTagFilterItems } from 'types/api/dashboard/getAll';
 import { Tags } from 'types/reducer/trace';
 
 export const dbSystemTags: Tags[] = [
@@ -30,16 +33,18 @@ export function onViewTracePopupClick({
 		const currentTime = timestamp;
 		const tPlusOne = timestamp + 60 * 1000;
 
-		const urlParams = new URLSearchParams();
-		urlParams.set(METRICS_PAGE_QUERY_PARAM.startTime, currentTime.toString());
-		urlParams.set(METRICS_PAGE_QUERY_PARAM.endTime, tPlusOne.toString());
+		const urlParams = new URLSearchParams(window.location.search);
+		urlParams.set(QueryParams.startTime, currentTime.toString());
+		urlParams.set(QueryParams.endTime, tPlusOne.toString());
+		const avialableParams = routeConfig[ROUTES.TRACE];
+		const queryString = getQueryString(avialableParams, urlParams);
 
 		history.replace(
 			`${
 				ROUTES.TRACE
 			}?${urlParams.toString()}&selected={"serviceName":["${servicename}"]}&filterToFetchData=["duration","status","serviceName"]&spanAggregateCurrentPage=1&selectedTags=${selectedTraceTags}&&isFilterExclude={"serviceName":false}&userSelectedFilter={"status":["error","ok"],"serviceName":["${servicename}"]}&spanAggregateCurrentPage=1${
 				isExternalCall ? '&spanKind=3' : ''
-			}`,
+			}&${queryString.join('&')}`,
 		);
 	};
 }
@@ -60,7 +65,7 @@ export function onGraphClickHandler(
 			const points = chart.getElementsAtEventForMode(
 				event.native,
 				'nearest',
-				{ intersect: true },
+				{ intersect: false },
 				true,
 			);
 			const id = `${from}_button`;
@@ -84,3 +89,16 @@ export function onGraphClickHandler(
 		}
 	};
 }
+
+export const handleNonInQueryRange = (
+	tags: IQueryBuilderTagFilterItems[],
+): IQueryBuilderTagFilterItems[] =>
+	tags.map((tag) => {
+		if (tag.op === 'Not IN') {
+			return {
+				...tag,
+				op: 'NIN',
+			};
+		}
+		return tag;
+	});
