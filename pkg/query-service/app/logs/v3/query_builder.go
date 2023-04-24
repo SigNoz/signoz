@@ -123,7 +123,7 @@ func getSelectLabels(aggregatorOperator v3.AggregateOperator, groupBy []v3.Attri
 	return selectLabels, nil
 }
 
-func buildLogsTimeSeriesFilterQuery(fs *v3.FilterSet, fields map[string]v3.AttributeKey) (string, error) {
+func buildLogsTimeSeriesFilterQuery(fs *v3.FilterSet, groupBy []v3.AttributeKey, fields map[string]v3.AttributeKey) (string, error) {
 	var conditions []string
 
 	if fs != nil && len(fs.Items) != 0 {
@@ -162,6 +162,20 @@ func buildLogsTimeSeriesFilterQuery(fs *v3.FilterSet, fields map[string]v3.Attri
 			}
 		}
 	}
+
+	// add group by conditions to filter out log lines which doesn't have the key
+	for _, attr := range groupBy {
+		enrichedAttr, err := encrichFieldWithMetadata(attr, fields)
+		if err != nil {
+			return "", err
+		}
+		if !enrichedAttr.IsColumn {
+			columnType := getClickhouseLogsColumnType(enrichedAttr.Type)
+			columnDataType := getClickhouseLogsColumnDataType(enrichedAttr.DataType)
+			conditions = append(conditions, fmt.Sprintf("indexOf(%s_%s_key, '%s') > 0", columnType, columnDataType, enrichedAttr.Key))
+		}
+	}
+
 	queryString := strings.Join(conditions, " AND ")
 
 	if len(queryString) > 0 {
@@ -186,7 +200,7 @@ func getZerosForEpochNano(epoch int64) int64 {
 
 func buildLogsQuery(start, end, step int64, mq *v3.BuilderQuery, fields map[string]v3.AttributeKey) (string, error) {
 
-	filterSubQuery, err := buildLogsTimeSeriesFilterQuery(mq.Filters, fields)
+	filterSubQuery, err := buildLogsTimeSeriesFilterQuery(mq.Filters, mq.GroupBy, fields)
 	if err != nil {
 		return "", err
 	}
