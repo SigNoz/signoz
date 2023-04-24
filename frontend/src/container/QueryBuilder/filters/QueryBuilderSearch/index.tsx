@@ -92,6 +92,11 @@ function QueryBuilderSearch({
 		return tags;
 	}, [isMatricsDataSource, query.aggregateAttribute.key, tags]);
 
+	const isMatricsDataSource = useMemo(
+		() => query.dataSource === DataSource.METRICS,
+		[query.dataSource],
+	);
+
 	useEffect(() => {
 		const initialTagFilters: TagFilter = { items: [], op: 'AND' };
 		initialTagFilters.items = tags.map((tag) => {
