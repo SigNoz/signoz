@@ -1,12 +1,10 @@
 import { Select, Spin } from 'antd';
 import { getAggregateKeys } from 'api/queryBuilder/getAttributeKeys';
 import { QueryBuilderKeys } from 'constants/queryBuilder';
-import { IOption } from 'hooks/useResourceAttribute/types';
 import { transformStringWithPrefix } from 'lib/query/transformStringWithPrefix';
 import React, { useCallback, useMemo, useState } from 'react';
 import { useQuery } from 'react-query';
 import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
-import { IBuilderQueryForm } from 'types/api/queryBuilder/queryBuilderData';
 import { MetricAggregateOperator } from 'types/common/queryBuilder';
 
 import { selectStyle } from '../QueryBuilderSearch/config';
@@ -41,45 +39,51 @@ export function OrderByFilter({
 		[],
 	);
 
-	const generateOptionsData = (
-		attributeKeys: BaseAutocompleteData[] | undefined,
-		selectedValue: OrderByFilterValue[],
-		query: IBuilderQueryForm,
-	): IOption[] => {
-		const selectedValueLabels = getLabelFromValue(selectedValue);
+	const noAggregationOptions = useMemo(
+		() =>
+			data?.payload?.attributeKeys
+				? mapLabelValuePairs(data?.payload?.attributeKeys)
+						.flat()
+						.filter(
+							(option) =>
+								!getLabelFromValue(selectedValue).includes(option.label.split(' ')[0]),
+						)
+				: [],
+		[data?.payload?.attributeKeys, selectedValue],
+	);
 
-		const noAggregationOptions = attributeKeys
-			? mapLabelValuePairs(attributeKeys)
-					.flat()
-					.filter(
-						(option) => !selectedValueLabels.includes(option.label.split(' ')[0]),
-					)
-			: [];
-
-		const aggregationOptions = mapLabelValuePairs(query.groupBy)
-			.flat()
-			.concat([
-				{
-					label: `${query.aggregateOperator}(${query.aggregateAttribute.key}) asc`,
-					value: `${query.aggregateOperator}(${query.aggregateAttribute.key}) asc`,
-				},
-				{
-					label: `${query.aggregateOperator}(${query.aggregateAttribute.key}) desc`,
-					value: `${query.aggregateOperator}(${query.aggregateAttribute.key}) desc`,
-				},
-			])
-			.filter(
-				(option) => !selectedValueLabels.includes(option.label.split(' ')[0]),
-			);
-
-		return query.aggregateOperator === MetricAggregateOperator.NOOP
-			? noAggregationOptions
-			: aggregationOptions;
-	};
+	const aggregationOptions = useMemo(
+		() =>
+			mapLabelValuePairs(query.groupBy)
+				.flat()
+				.concat([
+					{
+						label: `${query.aggregateOperator}(${query.aggregateAttribute.key}) asc`,
+						value: `${query.aggregateOperator}(${query.aggregateAttribute.key}) asc`,
+					},
+					{
+						label: `${query.aggregateOperator}(${query.aggregateAttribute.key}) desc`,
+						value: `${query.aggregateOperator}(${query.aggregateAttribute.key}) desc`,
+					},
+				])
+				.filter(
+					(option) =>
+						!getLabelFromValue(selectedValue).includes(option.label.split(' ')[0]),
+				),
+		[
+			query.aggregateAttribute.key,
+			query.aggregateOperator,
+			query.groupBy,
+			selectedValue,
+		],
+	);
 
 	const optionsData = useMemo(
-		() => generateOptionsData(data?.payload?.attributeKeys, selectedValue, query),
-		[data?.payload?.attributeKeys, query, selectedValue],
+		() =>
+			query.aggregateOperator === MetricAggregateOperator.NOOP
+				? noAggregationOptions
+				: aggregationOptions,
+		[aggregationOptions, noAggregationOptions, query.aggregateOperator],
 	);
 
 	const handleChange = (values: OrderByFilterValue[]): void => {
@@ -103,17 +107,29 @@ export function OrderByFilter({
 		onChange(orderByValues);
 	};
 
-	const values: OrderByFilterValue[] = query.orderBy.map((item) => ({
-		label: transformStringWithPrefix({
-			str: item.key,
-			prefix: item.type || '',
-			condition: !item.isColumn,
-		}),
-		key: item.key,
-		value: item.key,
-		disabled: undefined,
-		title: undefined,
-	}));
+	const values: OrderByFilterValue[] = useMemo(
+		() =>
+			query.orderBy
+				.filter((order) =>
+					query.groupBy.find(
+						(group) =>
+							order.key.includes(group.key) ||
+							order.key.includes(query.aggregateOperator),
+					),
+				)
+				.map((item) => ({
+					label: transformStringWithPrefix({
+						str: item.key,
+						prefix: item.type || '',
+						condition: !item.isColumn,
+					}),
+					key: item.key,
+					value: item.key,
+					disabled: undefined,
+					title: undefined,
+				})),
+		[query.aggregateOperator, query.groupBy, query.orderBy],
+	);
 
 	const isDisabledSelect = useMemo(
 		() =>
