@@ -7,9 +7,21 @@
         </default>
         <s3>
             <type>s3</type>
-            <endpoint>https://BUCKET-NAME.s3.amazonaws.com/data/</endpoint>
+            <!-- For S3 cold storage,
+                    if region is us-east-1, endpoint can be https://<bucket-name>.s3.amazonaws.com
+                    if region is not us-east-1, endpoint should be https://<bucket-name>.s3-<region>.amazonaws.com
+                For GCS cold storage,
+                    endpoint should be https://storage.googleapis.com/<bucket-name>/data/
+                -->
+            <endpoint>https://BUCKET-NAME.s3-REGION-NAME.amazonaws.com/data/</endpoint>
             <access_key_id>ACCESS-KEY-ID</access_key_id>
             <secret_access_key>SECRET-ACCESS-KEY</secret_access_key>
+            <!-- In case of S3, uncomment the below configuration in case you want to read
+                AWS credentials from the Environment variables if they exist. -->
+            <!-- <use_environment_credentials>true</use_environment_credentials> -->
+            <!-- In case of GCS, uncomment the below configuration, since GCS does
+                not support batch deletion and result in error messages in logs. -->
+            <!-- <support_batch_delete>false</support_batch_delete> -->
         </s3>
    </disks>
    <policies>
