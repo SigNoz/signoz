@@ -23,7 +23,7 @@ export const useOptions = (
 			setOptions(
 				searchValue
 					? [
-							{ label: searchValue, value: searchValue },
+							{ label: `${searchValue} `, value: `${searchValue} ` },
 							...keys.map((k) => ({ label: k.key, value: k.key })),
 					  ]
 					: keys?.map((k) => ({ label: k.key, value: k.key })),
@@ -31,8 +31,8 @@ export const useOptions = (
 		} else if (key && !operator) {
 			setOptions(
 				operators?.map((o) => ({
-					value: `${key} ${o} `,
-					label: `${key} ${o.replace('_', ' ')} `,
+					value: `${key} ${o}`,
+					label: `${key} ${o.replace('_', ' ')}`,
 				})),
 			);
 		} else if (key && operator) {

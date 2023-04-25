@@ -8,7 +8,7 @@ import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteRe
 import { IBuilderQueryForm } from 'types/api/queryBuilder/queryBuilderData';
 import { separateSearchValue } from 'utils/separateSearchValue';
 
-type UseFetchKeysAndValuesReturnValues = {
+type IuseFetchKeysAndValues = {
 	keys: BaseAutocompleteData[];
 	results: string[];
 	isFetching: boolean;
@@ -24,7 +24,7 @@ type UseFetchKeysAndValuesReturnValues = {
 export const useFetchKeysAndValues = (
 	searchValue: string,
 	query: IBuilderQueryForm,
-): UseFetchKeysAndValuesReturnValues => {
+): IuseFetchKeysAndValues => {
 	const [keys, setKeys] = useState<BaseAutocompleteData[]>([]);
 	const [results, setResults] = useState<string[]>([]);
 	const { data, isFetching, status } = useQuery(
@@ -59,29 +59,31 @@ export const useFetchKeysAndValues = (
 		value: string,
 		query: IBuilderQueryForm,
 	): Promise<void> => {
-		if (value) {
-			// separate the search value into the attribute key and the operator
-			const [tKey, operator] = separateSearchValue(value);
-			setResults([]);
-			if (tKey && operator) {
-				const { payload } = await getAttributesValues({
-					aggregateOperator: query.aggregateOperator,
-					dataSource: query.dataSource,
-					aggregateAttribute: query.aggregateAttribute.key,
-					attributeKey: tKey,
-					attributeKeyDataType: query.aggregateAttribute.dataType,
-					filterAttributeTagType: query.aggregateAttribute.type ?? null,
-					searchText: value.split(' ')[2],
-				});
-				if (payload) {
-					const values = Object.values(payload).find((el) => !!el);
-					if (values) {
-						setResults(values);
-					} else {
-						setResults([]);
-					}
-				}
-			}
+		if (!value) {
+			return;
+		}
+		const [attributeKey, operator, result] = separateSearchValue(value);
+		setResults([]);
+
+		if (!attributeKey || !operator) {
+			return;
+		}
+
+		const { payload } = await getAttributesValues({
+			aggregateOperator: query.aggregateOperator,
+			dataSource: query.dataSource,
+			aggregateAttribute: query.aggregateAttribute.key,
+			attributeKey,
+			attributeKeyDataType: query.aggregateAttribute.dataType,
+			filterAttributeTagType: query.aggregateAttribute.type ?? null,
+			searchText: !result[result.length - 1]?.endsWith(',')
+				? result[result.length - 1] ?? ''
+				: '',
+		});
+
+		if (payload) {
+			const values = Object.values(payload).find((el) => !!el) || [];
+			setResults(values);
 		}
 	};
 
