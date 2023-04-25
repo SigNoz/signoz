@@ -1,6 +1,6 @@
-import { Select, Spin, Tag, Tooltip } from 'antd';
+import { Select, Spin } from 'antd';
 import { useAutoComplete } from 'hooks/queryBuilder/useAutoComplete';
-import React, { useEffect, useMemo } from 'react';
+import React, { useCallback, useEffect, useMemo } from 'react';
 import {
 	IBuilderQueryForm,
 	TagFilter,
@@ -8,15 +8,14 @@ import {
 import { v4 as uuid } from 'uuid';
 
 import { selectStyle } from './config';
-import { StyledCheckOutlined, TypographyText } from './style';
-import { isInNotInOperator } from './utils';
+import { StyledCheckOutlined } from './style';
+import TagRender from './TagRender';
 
 function QueryBuilderSearch({
 	query,
 	onChange,
 }: QueryBuilderSearchProps): JSX.Element {
 	const {
-		updateTag,
 		handleClearTag,
 		handleKeyDown,
 		handleSearch,
@@ -27,38 +26,6 @@ function QueryBuilderSearch({
 		isMulti,
 		isFetching,
 	} = useAutoComplete(query);
-
-	const onTagRender = ({
-		value,
-		closable,
-		onClose,
-	}: CustomTagProps): React.ReactElement => {
-		const isInNin = isInNotInOperator(value);
-
-		const onCloseHandler = (): void => {
-			onClose();
-			handleSearch('');
-		};
-
-		const tagEditHandler = (value: string): void => {
-			updateTag(value);
-			handleSearch(value);
-		};
-
-		return (
-			<Tag closable={closable} onClose={onCloseHandler}>
-				<Tooltip title={value}>
-					<TypographyText
-						ellipsis
-						$isInNin={isInNin}
-						onClick={(): void => tagEditHandler(value)}
-					>
-						{value}
-					</TypographyText>
-				</Tooltip>
-			</Tag>
-		);
-	};
 
 	const onChangeHandler = (value: string[]): void => {
 		if (!isMulti) handleSearch(value[value.length - 1]);
@@ -88,11 +55,24 @@ function QueryBuilderSearch({
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [tags]);
 
+	const tagRender = useCallback(
+		(props: CustomTagProps) =>
+			TagRender({
+				closable: props.closable,
+				disabled: props.disabled,
+				label: props.label,
+				onClose: props.onClose,
+				query,
+				value: props.value,
+			}),
+		[query],
+	);
+
 	return (
 		<Select
 			virtual
 			showSearch
-			tagRender={onTagRender}
+			tagRender={tagRender}
 			filterOption={!isMulti}
 			autoClearSearchValue={false}
 			mode="multiple"

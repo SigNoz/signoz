@@ -7,9 +7,9 @@ export type GroupByFilterProps = {
 };
 
 export type GroupByFilterValue = {
-	disabled: boolean | undefined;
+	disabled?: boolean;
 	key: string;
 	label: string;
-	title: string | undefined;
+	title?: string;
 	value: string;
 };

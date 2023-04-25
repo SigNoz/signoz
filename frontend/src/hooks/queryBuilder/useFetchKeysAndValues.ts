@@ -36,7 +36,7 @@ export const useFetchKeysAndValues = (
 			query.aggregateOperator,
 			query.aggregateAttribute.key,
 		],
-		async () =>
+		() =>
 			getAttributesKeys({
 				searchText: searchValue,
 				dataSource: query.dataSource,

@@ -25,7 +25,7 @@ export const GroupByFilter = memo(function GroupByFilter({
 
 	const { data, isFetching } = useQuery(
 		[QueryBuilderKeys.GET_AGGREGATE_KEYS, searchText],
-		async () =>
+		() =>
 			getAggregateKeys({
 				aggregateAttribute: query.aggregateAttribute.key,
 				tagType: query.aggregateAttribute.type,

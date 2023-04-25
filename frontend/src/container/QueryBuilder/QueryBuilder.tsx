@@ -12,10 +12,7 @@ import { Formula, Query } from './components';
 import { QueryBuilderProps } from './QueryBuilder.interfaces';
 // ** Styles
 
-export const QueryBuilder = memo(function QueryBuilder({
-	config,
-	panelType,
-}: QueryBuilderProps): JSX.Element {
+function QueryBuilder({ config, panelType }: QueryBuilderProps): JSX.Element {
 	const {
 		queryBuilderData,
 		setupInitialDataSource,
@@ -90,4 +87,6 @@ export const QueryBuilder = memo(function QueryBuilder({
 			</Row>
 		</Row>
 	);
-});
+}
+
+export default memo(QueryBuilder);

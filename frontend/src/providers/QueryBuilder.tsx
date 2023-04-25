@@ -8,13 +8,7 @@ import {
 	MAX_QUERIES,
 } from 'constants/queryBuilder';
 import { createNewBuilderItemName } from 'lib/newQueryBuilder/createNewBuilderItemName';
-import React, {
-	createContext,
-	PropsWithChildren,
-	useCallback,
-	useMemo,
-	useState,
-} from 'react';
+import React, { createContext, useCallback, useMemo, useState } from 'react';
 // ** Types
 // TODO: Rename Types on the Reusable type for any source
 import {
@@ -45,9 +39,13 @@ const initialQueryBuilderData: QueryBuilderData = {
 	queryFormulas: [],
 };
 
+interface QueryBuilderProviderProps {
+	children: React.ReactNode;
+}
+
 export function QueryBuilderProvider({
 	children,
-}: PropsWithChildren): JSX.Element {
+}: QueryBuilderProviderProps): JSX.Element {
 	// TODO: this is temporary. It will be used when we have fixed dataSource and need create new query with this data source
 	// eslint-disable-next-line @typescript-eslint/no-unused-vars
 	const [initialDataSource, setInitialDataSource] = useState<DataSource | null>(
@@ -55,10 +53,9 @@ export function QueryBuilderProvider({
 	);
 
 	// TODO: when initialDataSource will be setuped, on create button initial dataSource will from initialDataSource
-	const [queryBuilderData, setQueryBuilderData] = useState<QueryBuilderData>({
-		queryData: [],
-		queryFormulas: [],
-	});
+	const [queryBuilderData, setQueryBuilderData] = useState<QueryBuilderData>(
+		initialQueryBuilderData,
+	);
 
 	// ** Method for resetting query builder data
 	const resetQueryBuilderData = useCallback((): void => {
@@ -185,7 +182,6 @@ export function QueryBuilderProvider({
 		[updateQueryBuilderData],
 	);
 	const handleSetFormulaData = useCallback(
-		// eslint-disable-next-line @typescript-eslint/no-unused-vars
 		(index: number, formulaData: IBuilderFormula): void => {
 			setQueryBuilderData((prevState) => {
 				const updatedFormulasBuilderData = updateFormulaBuilderData(
