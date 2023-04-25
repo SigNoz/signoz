@@ -4,34 +4,15 @@ import { Input, Popover, Select, Typography } from 'antd';
 import query from 'api/dashboard/variables/query';
 import { commaValuesParser } from 'lib/dashbaordVariables/customCommaValuesParser';
 import sortValues from 'lib/dashbaordVariables/sortVariableValues';
-import { map } from 'lodash-es';
 import React, { useCallback, useEffect, useState } from 'react';
+import { useQuery } from 'react-query';
 import { IDashboardVariable } from 'types/api/dashboard/getAll';
 
 import { variablePropsToPayloadVariables } from '../utils';
+import { ALL_SELECT_VALUE } from './config';
 import { SelectItemStyle, VariableContainer, VariableName } from './styles';
 import { areArraysEqual } from './util';
 
-const { Option } = Select;
-
-const ALL_SELECT_VALUE = '__ALL__';
-
-interface VariableItemProps {
-	variableData: IDashboardVariable;
-	existingVariables: Record<string, IDashboardVariable>;
-	onValueUpdate: (
-		name: string | undefined,
-		arg1:
-			| string
-			| number
-			| boolean
-			| (string | number | boolean)[]
-			| null
-			| undefined,
-	) => void;
-	onAllSelectedUpdate: (name: string | undefined, arg1: boolean) => void;
-	lastUpdatedVar: string;
-}
 function VariableItem({
 	variableData,
 	existingVariables,
@@ -39,26 +20,25 @@ function VariableItem({
 	onAllSelectedUpdate,
 	lastUpdatedVar,
 }: VariableItemProps): JSX.Element {
-	const [optionsData, setOptionsData] = useState<(string | number | boolean)[]>(
-		[],
-	);
-	const [isLoading, setIsLoading] = useState<boolean>(false);
+	const [optionsData, setOptionsData] = useState<string[]>([]);
 
-	const [errorMessage, setErrorMessage] = useState<null | string>(null);
+	const variableResponse = useQuery(['getOptions', variableData.queryValue], {
+		queryFn: () =>
+			query({
+				query: variableData.queryValue || '',
+				variables: variablePropsToPayloadVariables(existingVariables),
+			}),
+	});
 
 	/* eslint-disable sonarjs/cognitive-complexity */
 	const getOptions = useCallback(async (): Promise<void> => {
 		if (variableData.type === 'QUERY') {
 			try {
-				setErrorMessage(null);
-				setIsLoading(true);
-
 				const response = await query({
 					query: variableData.queryValue || '',
 					variables: variablePropsToPayloadVariables(existingVariables),
 				});
 
-				setIsLoading(false);
 				if (response.error) {
 					let message = response.error;
 					if (response.error.includes('Syntax error:')) {
@@ -73,11 +53,12 @@ function VariableItem({
 						response.payload?.variableValues,
 						variableData.sort,
 					);
+
 					// Since there is a chance of a variable being dependent on other
 					// variables, we need to check if the optionsData has changed
 					// If it has changed, we need to update the dependent variable
 					// So we compare the new optionsData with the old optionsData
-					const oldOptionsData = sortValues(optionsData, variableData.sort) as never;
+					const oldOptionsData = sortValues(optionsData, variableData.sort);
 					if (!areArraysEqual(newOptionsData, oldOptionsData)) {
 						/* eslint-disable no-useless-escape */
 						const re = new RegExp(`\\{\\{\\s*?\\.${lastUpdatedVar}\\s*?\\}\\}`); // regex for `{{.var}}`
@@ -101,8 +82,11 @@ function VariableItem({
 							} else {
 								[value] = newOptionsData;
 							}
-							onValueUpdate(variableData.name, value);
-							onAllSelectedUpdate(variableData.name, allSelected);
+
+							if (variableData.name) {
+								onValueUpdate(variableData.name, value);
+								onAllSelectedUpdate(variableData.name, allSelected);
+							}
 						}
 						setOptionsData(newOptionsData);
 					}
@@ -149,11 +133,14 @@ function VariableItem({
 	const selectValue = variableData.allSelected
 		? 'ALL'
 		: variableData.selectedValue?.toString() || '';
+
 	const mode =
 		variableData.multiSelect && !variableData.allSelected
 			? 'multiple'
 			: undefined;
+
 	const enableSelectAll = variableData.multiSelect && variableData.showALLOption;
+
 	return (
 		<VariableContainer>
 			<VariableName>${variableData.name}</VariableName>
@@ -183,22 +170,36 @@ function VariableItem({
 						loading={isLoading}
 						showArrow
 					>
-						{enableSelectAll && <Option value={ALL_SELECT_VALUE}>ALL</Option>}
-						{map(optionsData, (option) => (
-							<Option value={option}>{option.toString()}</Option>
+						{enableSelectAll && (
+							<Select.Option value={ALL_SELECT_VALUE}>ALL</Select.Option>
+						)}
+
+						{optionsData.map((option) => (
+							<Select.Option key={String(option)} value={option}>
+								{option.toString()}
+							</Select.Option>
 						))}
 					</Select>
 				)
 			)}
 			{errorMessage && (
-				<span style={{ margin: '0 0.5rem' }}>
-					<Popover placement="top" content={<Typography>{errorMessage}</Typography>}>
-						<WarningOutlined style={{ color: orange[5] }} />
-					</Popover>
-				</span>
+				<Popover placement="top" content={<Typography>{errorMessage}</Typography>}>
+					<WarningOutlined style={{ color: orange[5] }} />
+				</Popover>
 			)}
 		</VariableContainer>
 	);
+}
+
+interface VariableItemProps {
+	variableData: IDashboardVariable;
+	existingVariables: Record<string, IDashboardVariable>;
+	onValueUpdate: (
+		name: string,
+		value: IDashboardVariable['selectedValue'],
+	) => void;
+	onAllSelectedUpdate: (name: string, arg1: boolean) => void;
+	lastUpdatedVar: string;
 }
 
 export default VariableItem;

@@ -1,7 +1,7 @@
 import { Row } from 'antd';
 import { NotificationInstance } from 'antd/es/notification/interface';
 import { useNotifications } from 'hooks/useNotifications';
-import { map, sortBy } from 'lodash-es';
+import sortBy from 'lodash-es/sortBy';
 import React, { useState } from 'react';
 import { connect, useSelector } from 'react-redux';
 import { bindActionCreators, Dispatch } from 'redux';
@@ -36,15 +36,7 @@ function DashboardVariableSelection({
 
 	const onValueUpdate = (
 		name: string,
-		value:
-			| string
-			| string[]
-			| number
-			| number[]
-			| boolean
-			| boolean[]
-			| null
-			| undefined,
+		value: IDashboardVariable['selectedValue'],
 	): void => {
 		const updatedVariablesData = { ...variables };
 		updatedVariablesData[name].selectedValue = value;
@@ -63,7 +55,7 @@ function DashboardVariableSelection({
 
 	return (
 		<Row style={{ gap: '1rem' }}>
-			{map(sortBy(Object.keys(variables)), (variableName) => (
+			{sortBy(Object.keys(variables)).map((variableName) => (
 				<VariableItem
 					key={`${variableName}${variables[variableName].modificationUUID}`}
 					existingVariables={variables}
@@ -72,8 +64,8 @@ function DashboardVariableSelection({
 						...variables[variableName],
 						change: update,
 					}}
-					onValueUpdate={onValueUpdate as never}
-					onAllSelectedUpdate={onAllSelectedUpdate as never}
+					onValueUpdate={onValueUpdate}
+					onAllSelectedUpdate={onAllSelectedUpdate}
 					lastUpdatedVar={lastUpdatedVar}
 				/>
 			))}
