@@ -71,7 +71,6 @@ export const Query = memo(function Query({
 				...query,
 				aggregateOperator: value,
 				having: [],
-				groupBy: [],
 				limit: null,
 				tagFilters: { items: [], op: 'AND' },
 			};

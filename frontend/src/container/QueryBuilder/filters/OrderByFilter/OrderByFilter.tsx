@@ -111,7 +111,11 @@ export function OrderByFilter({
 		() =>
 			query.orderBy
 				.filter((order) =>
-					query.groupBy.find((group) => order.key.includes(group.key)),
+					query.groupBy.find(
+						(group) =>
+							order.key.includes(group.key) ||
+							order.key.includes(query.aggregateOperator),
+					),
 				)
 				.map((item) => ({
 					label: transformStringWithPrefix({
@@ -124,7 +128,7 @@ export function OrderByFilter({
 					disabled: undefined,
 					title: undefined,
 				})),
-		[query.groupBy, query.orderBy],
+		[query.aggregateOperator, query.groupBy, query.orderBy],
 	);
 
 	const isDisabledSelect = useMemo(
