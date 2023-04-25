@@ -5,8 +5,19 @@ import { IBuilderQueryForm } from 'types/api/queryBuilder/queryBuilderData';
 import { selectStyle } from '../QueryBuilderSearch/config';
 
 function LimitFilter({ onChange, query }: LimitFilterProps): JSX.Element {
-	const onChangeHandler = (value: number | null): void => {
-		onChange(value);
+	const handleKeyDown = (event: {
+		keyCode: number;
+		which: number;
+		preventDefault: () => void;
+	}): void => {
+		const keyCode = event.keyCode || event.which;
+		const isBackspace = keyCode === 8;
+		const isNumeric =
+			(keyCode >= 48 && keyCode <= 57) || (keyCode >= 96 && keyCode <= 105);
+
+		if (!isNumeric && !isBackspace) {
+			event.preventDefault();
+		}
 	};
 
 	return (
@@ -15,7 +26,8 @@ function LimitFilter({ onChange, query }: LimitFilterProps): JSX.Element {
 			type="number"
 			disabled={!query.aggregateAttribute.key}
 			style={selectStyle}
-			onChange={onChangeHandler}
+			onChange={onChange}
+			onKeyDown={handleKeyDown}
 		/>
 	);
 }
