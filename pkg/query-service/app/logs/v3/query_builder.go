@@ -128,7 +128,10 @@ func buildLogsTimeSeriesFilterQuery(fs *v3.FilterSet, groupBy []v3.AttributeKey,
 		for _, item := range fs.Items {
 			op := v3.FilterOperator(strings.ToLower(strings.TrimSpace(string(item.Operator))))
 			key := encrichFieldWithMetadata(item.Key, fields)
-
+			value, err := utils.ValidateAndCastValue(item.Value, key.DataType)
+			if err != nil {
+				return "", fmt.Errorf("failed to validate and cast value for %s: %v", item.Key.Key, err)
+			}
 			if logsOp, ok := logOperators[op]; ok {
 				switch op {
 				case v3.FilterOperatorExists, v3.FilterOperatorNotExists:
@@ -147,8 +150,7 @@ func buildLogsTimeSeriesFilterQuery(fs *v3.FilterSet, groupBy []v3.AttributeKey,
 						return "", err
 					}
 
-					// (todo) check and convert value
-					fmtVal := utils.ClickHouseFormattedValue(item.Value)
+					fmtVal := utils.ClickHouseFormattedValue(value)
 					conditions = append(conditions, fmt.Sprintf("%s %s %s", columnName, logsOp, fmtVal))
 				}
 			} else {
@@ -159,10 +161,7 @@ func buildLogsTimeSeriesFilterQuery(fs *v3.FilterSet, groupBy []v3.AttributeKey,
 
 	// add group by conditions to filter out log lines which doesn't have the key
 	for _, attr := range groupBy {
-		enrichedAttr, err := encrichFieldWithMetadata(attr, fields)
-		if err != nil {
-			return "", err
-		}
+		enrichedAttr := encrichFieldWithMetadata(attr, fields)
 		if !enrichedAttr.IsColumn {
 			columnType := getClickhouseLogsColumnType(enrichedAttr.Type)
 			columnDataType := getClickhouseLogsColumnDataType(enrichedAttr.DataType)
