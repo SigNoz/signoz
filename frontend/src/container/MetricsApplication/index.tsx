@@ -7,7 +7,7 @@ import { useLocation } from 'react-use';
 
 import { getWidgetQueryBuilder } from './MetricsApplication.factory';
 import DBCall from './Tabs/DBCall';
-import External from './Tabs/External';
+import External from './Tabs/External/External';
 import Overview from './Tabs/Overview';
 
 function OverViewTab(): JSX.Element {

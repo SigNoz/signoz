@@ -15,14 +15,15 @@ import React, { useMemo, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { Widgets } from 'types/api/dashboard/getAll';
 
-import { Card, GraphContainer, GraphTitle, Row } from '../styles';
-import { legend } from './constant';
-import { Button } from './styles';
+import { Card, GraphContainer, GraphTitle, Row } from '../../styles';
+import { legend } from '../constant';
+import { Button } from '../styles';
 import {
 	handleNonInQueryRange,
 	onGraphClickHandler,
 	onViewTracePopupClick,
-} from './util';
+} from '../util';
+import Table from './Table';
 
 function External({ getWidgetQueryBuilder }: ExternalProps): JSX.Element {
 	const [selectedTimeStamp, setSelectedTimeStamp] = useState<number>(0);
@@ -103,6 +104,11 @@ function External({ getWidgetQueryBuilder }: ExternalProps): JSX.Element {
 	return (
 		<>
 			<Row gutter={24}>
+				<Col span={24}>
+					<Table />
+					<br />
+				</Col>
+
 				<Col span={12}>
 					<Button
 						type="default"
