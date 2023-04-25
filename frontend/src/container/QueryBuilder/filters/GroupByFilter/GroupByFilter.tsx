@@ -5,10 +5,9 @@ import { QueryBuilderKeys } from 'constants/queryBuilder';
 // ** Components
 // ** Helpers
 import { transformStringWithPrefix } from 'lib/query/transformStringWithPrefix';
-import React, { memo, useMemo, useState } from 'react';
+import React, { memo, useState } from 'react';
 import { useQuery } from 'react-query';
 import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
-import { MetricAggregateOperator } from 'types/common/queryBuilder';
 import { SelectOption } from 'types/common/select';
 
 import { selectStyle } from '../QueryBuilderSearch/config';
@@ -20,6 +19,7 @@ import {
 export const GroupByFilter = memo(function GroupByFilter({
 	query,
 	onChange,
+	disabled,
 }: GroupByFilterProps): JSX.Element {
 	const [searchText, setSearchText] = useState<string>('');
 
@@ -81,20 +81,13 @@ export const GroupByFilter = memo(function GroupByFilter({
 		title: undefined,
 	}));
 
-	const isDisabledSelect = useMemo(
-		() =>
-			!query.aggregateAttribute.key ||
-			query.aggregateOperator === MetricAggregateOperator.NOOP,
-		[query.aggregateAttribute.key, query.aggregateOperator],
-	);
-
 	return (
 		<Select
 			mode="tags"
 			style={selectStyle}
 			onSearch={handleSearchKeys}
 			showSearch
-			disabled={isDisabledSelect}
+			disabled={disabled}
 			showArrow={false}
 			filterOption={false}
 			options={optionsData}

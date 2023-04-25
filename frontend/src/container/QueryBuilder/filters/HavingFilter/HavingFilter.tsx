@@ -96,8 +96,9 @@ export function HavingFilter({
 
 	const isValidHavingValue = (search: string): boolean => {
 		const values = getHavingObject(search).value.join(' ');
+
 		if (values) {
-			const numRegexp = /^[^a-zA-Z]*$/;
+			const numRegexp = /^[\d. ]+$/;
 
 			return numRegexp.test(values);
 		}

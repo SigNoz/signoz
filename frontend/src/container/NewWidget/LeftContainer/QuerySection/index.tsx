@@ -4,7 +4,7 @@ import TextToolTip from 'components/TextToolTip';
 import { GRAPH_TYPES } from 'container/NewDashboard/ComponentsSlider';
 import { timePreferance } from 'container/NewWidget/RightContainer/timeItems';
 import { QueryBuilder } from 'container/QueryBuilder';
-import { useQueryBuilder } from 'hooks/useQueryBuilder';
+import { useQueryBuilderContext } from 'hooks/queryBuilder/useQueryBuilderContext';
 import { cloneDeep, isEqual } from 'lodash-es';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { connect, useSelector } from 'react-redux';
@@ -40,7 +40,7 @@ function QuerySection({
 	updateQuery,
 	selectedGraph,
 }: QueryProps): JSX.Element {
-	const { queryBuilderData, initQueryBuilderData } = useQueryBuilder();
+	const { queryBuilderData, initQueryBuilderData } = useQueryBuilderContext();
 	const [localQueryChanges, setLocalQueryChanges] = useState<Query>({} as Query);
 	const [rctTabKey, setRctTabKey] = useState<
 		Record<keyof typeof EQueryType, string>
