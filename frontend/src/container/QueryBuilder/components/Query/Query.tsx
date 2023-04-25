@@ -22,7 +22,14 @@ import { OrderByFilter } from 'container/QueryBuilder/filters/OrderByFilter';
 import QueryBuilderSearch from 'container/QueryBuilder/filters/QueryBuilderSearch';
 import { useQueryOperations } from 'hooks/queryBuilder/useQueryOperations';
 // ** Hooks
-import React, { memo, ReactNode, useCallback, useMemo } from 'react';
+import React, {
+	ChangeEvent,
+	memo,
+	ReactNode,
+	useCallback,
+	useMemo,
+} from 'react';
+import { IBuilderQueryForm } from 'types/api/queryBuilder/queryBuilderData';
 import { StringOperators } from 'types/common/queryBuilder';
 import { transformToUpperCase } from 'utils/transformToUpperCase';
 
@@ -39,20 +46,72 @@ export const Query = memo(function Query({
 	const {
 		operators,
 		isMetricsDataSource,
-		handleChangeAggregateEvery,
 		handleChangeAggregatorAttribute,
 		handleChangeDataSource,
-		handleChangeGroupByKeys,
-		handleChangeHavingFilter,
-		handleChangeLimit,
+		handleChangeQueryData,
 		handleChangeOperator,
-		handleChangeOrderByKeys,
-		handleChangeQueryLegend,
-		handleChangeReduceTo,
-		handleChangeTagFilters,
 		handleDeleteQuery,
-		handleToggleDisableQuery,
 	} = useQueryOperations({ index, query, panelType });
+
+	const handleChangeAggregateEvery = useCallback(
+		(value: IBuilderQueryForm['stepInterval']) => {
+			handleChangeQueryData('stepInterval', value);
+		},
+		[handleChangeQueryData],
+	);
+
+	const handleChangeLimit = useCallback(
+		(value: IBuilderQueryForm['limit']) => {
+			handleChangeQueryData('limit', value);
+		},
+		[handleChangeQueryData],
+	);
+
+	const handleChangeHavingFilter = useCallback(
+		(value: IBuilderQueryForm['having']) => {
+			handleChangeQueryData('having', value);
+		},
+		[handleChangeQueryData],
+	);
+
+	const handleChangeOrderByKeys = useCallback(
+		(value: IBuilderQueryForm['orderBy']) => {
+			handleChangeQueryData('orderBy', value);
+		},
+		[handleChangeQueryData],
+	);
+
+	const handleToggleDisableQuery = useCallback(() => {
+		handleChangeQueryData('disabled', !query.disabled);
+	}, [handleChangeQueryData, query]);
+
+	const handleChangeTagFilters = useCallback(
+		(value: IBuilderQueryForm['tagFilters']) => {
+			handleChangeQueryData('tagFilters', value);
+		},
+		[handleChangeQueryData],
+	);
+
+	const handleChangeReduceTo = useCallback(
+		(value: IBuilderQueryForm['reduceTo']) => {
+			handleChangeQueryData('reduceTo', value);
+		},
+		[handleChangeQueryData],
+	);
+
+	const handleChangeGroupByKeys = useCallback(
+		(value: IBuilderQueryForm['groupBy']) => {
+			handleChangeQueryData('groupBy', value);
+		},
+		[handleChangeQueryData],
+	);
+
+	const handleChangeQueryLegend = useCallback(
+		(event: ChangeEvent<HTMLInputElement>) => {
+			handleChangeQueryData('legend', event.target.value);
+		},
+		[handleChangeQueryData],
+	);
 
 	const listOfAdditionalFilters = useMemo(() => mapOfFilters[query.dataSource], [
 		query,
@@ -179,7 +238,7 @@ export const Query = memo(function Query({
 							<DataSourceDropdown
 								onChange={handleChangeDataSource}
 								value={query.dataSource}
-								style={{ marginRight: '0.5rem', minWidth: '90px' }}
+								style={{ marginRight: '0.5rem', minWidth: '5.625rem' }}
 							/>
 						) : (
 							<FilterLabel label={transformToUpperCase(query.dataSource)} />

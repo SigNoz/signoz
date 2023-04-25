@@ -163,6 +163,7 @@ export const GetQueryResults = (
 					errorMessage: '',
 					widgetId: props.widgetId,
 					errorBoolean: false,
+					isLoadingQueryResult: true,
 				},
 			});
 			const response = await GetMetricQueryRange(props);
@@ -175,6 +176,7 @@ export const GetQueryResults = (
 					payload: {
 						errorMessage: isError || '',
 						widgetId: props.widgetId,
+						isLoadingQueryResult: false,
 					},
 				});
 				return;
@@ -198,6 +200,7 @@ export const GetQueryResults = (
 					errorMessage: (error as AxiosError).toString(),
 					widgetId: props.widgetId,
 					errorBoolean: true,
+					isLoadingQueryResult: false,
 				},
 			});
 		}

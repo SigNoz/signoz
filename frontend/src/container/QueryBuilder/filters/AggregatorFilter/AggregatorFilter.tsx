@@ -67,14 +67,15 @@ export const AggregatorFilter = memo(function AggregatorFilter({
 		[query],
 	);
 
+	const placeholder: string =
+		query.dataSource === DataSource.METRICS
+			? `${transformToUpperCase(query.dataSource)} name`
+			: 'Aggregate attribute';
+
 	return (
 		<AutoComplete
 			showSearch
-			placeholder={
-				query.dataSource === DataSource.METRICS
-					? `${transformToUpperCase(query.dataSource)} name`
-					: 'Aggregate attribute'
-			}
+			placeholder={placeholder}
 			style={selectStyle}
 			showArrow={false}
 			filterOption={false}

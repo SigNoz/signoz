@@ -2,7 +2,7 @@ import { PlusOutlined } from '@ant-design/icons';
 import { Button, Col, Row } from 'antd';
 import { MAX_FORMULAS, MAX_QUERIES } from 'constants/queryBuilder';
 // ** Hooks
-import { useQueryBuilderContext } from 'hooks/queryBuilder/useQueryBuilderContext';
+import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 // ** Constants
 import React, { memo, useEffect, useMemo } from 'react';
 
@@ -22,7 +22,7 @@ export const QueryBuilder = memo(function QueryBuilder({
 		resetQueryBuilderData,
 		addNewQuery,
 		addNewFormula,
-	} = useQueryBuilderContext();
+	} = useQueryBuilder();
 
 	useEffect(() => {
 		if (config && config.queryVariant === 'static') {

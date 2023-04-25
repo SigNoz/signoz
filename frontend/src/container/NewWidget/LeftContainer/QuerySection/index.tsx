@@ -4,7 +4,7 @@ import TextToolTip from 'components/TextToolTip';
 import { GRAPH_TYPES } from 'container/NewDashboard/ComponentsSlider';
 import { timePreferance } from 'container/NewWidget/RightContainer/timeItems';
 import { QueryBuilder } from 'container/QueryBuilder';
-import { useQueryBuilderContext } from 'hooks/queryBuilder/useQueryBuilderContext';
+import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { cloneDeep, isEqual } from 'lodash-es';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { connect, useSelector } from 'react-redux';
@@ -40,7 +40,7 @@ function QuerySection({
 	updateQuery,
 	selectedGraph,
 }: QueryProps): JSX.Element {
-	const { queryBuilderData, initQueryBuilderData } = useQueryBuilderContext();
+	const { queryBuilderData, initQueryBuilderData } = useQueryBuilder();
 	const [localQueryChanges, setLocalQueryChanges] = useState<Query>({} as Query);
 	const [rctTabKey, setRctTabKey] = useState<
 		Record<keyof typeof EQueryType, string>
@@ -49,9 +49,10 @@ function QuerySection({
 		CLICKHOUSE: uuid(),
 		PROM: uuid(),
 	});
-	const { dashboards } = useSelector<AppState, DashboardReducer>(
-		(state) => state.dashboards,
-	);
+	const { dashboards, isLoadingQueryResult } = useSelector<
+		AppState,
+		DashboardReducer
+	>((state) => state.dashboards);
 	const [selectedDashboards] = dashboards;
 	const { search } = useLocation();
 	const { widgets } = selectedDashboards.data;
@@ -239,7 +240,11 @@ function QuerySection({
 									text: `This will temporarily save the current query and graph state. This will persist across tab change`,
 								}}
 							/>
-							<Button type="primary" onClick={handleStageQuery}>
+							<Button
+								loading={isLoadingQueryResult}
+								type="primary"
+								onClick={handleStageQuery}
+							>
 								Stage & Run Query
 							</Button>
 						</span>
