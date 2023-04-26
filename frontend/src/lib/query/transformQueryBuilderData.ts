@@ -4,8 +4,7 @@ import { Having } from 'types/api/queryBuilder/queryBuilderData';
 export const transformHavingToStringValue = (having: Having[]): string[] => {
 	const result: string[] = having.map((item) => {
 		const operator = Object.entries(OPERATORS).find(([key]) => key === item.op);
-
-		const value = Array.isArray(item.value) ? item.value.join(', ') : item.value;
+		const value = Array.isArray(item.value) ? item.value.join(' ') : item.value;
 
 		return `${item.columnName} ${operator ? operator[1] : ''} ${value}`;
 	});

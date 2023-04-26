@@ -1,6 +1,8 @@
 import { Select } from 'antd';
 // ** Constants
 import { HAVING_OPERATORS, initialHavingValues } from 'constants/queryBuilder';
+import { HavingFilterTag } from 'container/QueryBuilder/components';
+import { HavingTagRenderProps } from 'container/QueryBuilder/components/HavingFilterTag/HavingFilterTag.interfaces';
 // ** Hooks
 import { useTagValidation } from 'hooks/queryBuilder/useTagValidation';
 import {
@@ -94,49 +96,92 @@ export function HavingFilter({
 		[columnName, aggregatorOptions],
 	);
 
-	const isValidHavingValue = (search: string): boolean => {
-		const values = getHavingObject(search).value.join(' ');
+	const isValidHavingValue = useCallback(
+		(search: string): boolean => {
+			const values = getHavingObject(search).value.join(' ');
 
-		if (values) {
-			const numRegexp = /^[\d. ]+$/;
+			if (values) {
+				const numRegexp = /^[\d. ]+$/;
 
-			return numRegexp.test(values);
-		}
+				return numRegexp.test(values);
+			}
 
-		return true;
-	};
+			return true;
+		},
+		[getHavingObject],
+	);
 
-	const handleSearch = (search: string): void => {
-		const trimmedSearch = search.replace(/\s\s+/g, ' ').trimStart();
+	const handleSearch = useCallback(
+		(search: string): void => {
+			const trimmedSearch = search.replace(/\s\s+/g, ' ').trimStart();
 
-		const currentSearch = isMulti
-			? trimmedSearch
-			: trimmedSearch.split(' ').slice(0, 3).join(' ');
-		const isValidSearch = isValidHavingValue(currentSearch);
+			const currentSearch = isMulti
+				? trimmedSearch
+				: trimmedSearch.split(' ').slice(0, 3).join(' ');
 
-		if (isValidSearch) {
-			setSearchText(currentSearch);
-		}
-	};
+			const isValidSearch = isValidHavingValue(currentSearch);
 
-	const resetChanges = (): void => {
-		handleSearch('');
+			if (isValidSearch) {
+				setSearchText(currentSearch);
+			}
+		},
+		[isMulti, isValidHavingValue],
+	);
+
+	const resetChanges = useCallback((): void => {
+		setSearchText('');
 		setCurrentFormValue(initialHavingValues);
 		setOptions(aggregatorOptions);
-	};
+	}, [aggregatorOptions]);
 
-	const handleChange = (values: string[]): void => {
-		const having: Having[] = values.map(transformFromStringToHaving);
+	const handleChange = useCallback(
+		(values: string[]): void => {
+			const having: Having[] = values.map(transformFromStringToHaving);
 
-		const isSelectable: boolean =
-			currentFormValue.value.length > 0 &&
-			currentFormValue.value.every((value) => !!value);
+			const isSelectable =
+				currentFormValue.value.length > 0 &&
+				currentFormValue.value.every((value) => !!value);
 
-		if (isSelectable) {
+			if (isSelectable) {
+				onChange(having);
+				resetChanges();
+			}
+		},
+		[currentFormValue, resetChanges, onChange],
+	);
+
+	const handleUpdateTag = useCallback(
+		(value: string) => {
+			const filteredValues = localValues.filter(
+				(currentValue) => currentValue !== value,
+			);
+			const having: Having[] = filteredValues.map(transformFromStringToHaving);
+
 			onChange(having);
-			resetChanges();
-		}
-	};
+			setSearchText(value);
+		},
+		[localValues, onChange],
+	);
+
+	const tagRender = useCallback(
+		({ label, value, closable, disabled, onClose }: HavingTagRenderProps) => {
+			const handleClose = (): void => {
+				onClose();
+				setSearchText('');
+			};
+			return (
+				<HavingFilterTag
+					label={label}
+					value={value}
+					closable={closable}
+					disabled={disabled}
+					onClose={handleClose}
+					onUpdate={handleUpdateTag}
+				/>
+			);
+		},
+		[handleUpdateTag],
+	);
 
 	const handleSelect = (currentValue: string): void => {
 		const { columnName, op, value } = getHavingObject(currentValue);
@@ -145,7 +190,7 @@ export function HavingFilter({
 
 		const isClearSearch = isCompletedValue && columnName && op;
 
-		handleSearch(isClearSearch ? '' : currentValue);
+		setSearchText(isClearSearch ? '' : currentValue);
 	};
 
 	const parseSearchText = useCallback(
@@ -173,9 +218,11 @@ export function HavingFilter({
 
 	return (
 		<Select
+			autoClearSearchValue={false}
 			mode="multiple"
 			onSearch={handleSearch}
 			searchValue={searchText}
+			tagRender={tagRender}
 			value={localValues}
 			data-testid="havingSelect"
 			disabled={!query.aggregateAttribute.key}
@@ -183,7 +230,6 @@ export function HavingFilter({
 			notFoundContent={currentFormValue.value.length === 0 ? undefined : null}
 			placeholder="Count(operation) > 5"
 			onDeselect={handleDeselect}
-			onBlur={resetChanges}
 			onChange={handleChange}
 			onSelect={handleSelect}
 		>
