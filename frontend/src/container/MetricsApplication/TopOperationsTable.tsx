@@ -85,6 +85,16 @@ function TopOperationsTable(props: TopOperationsTableProps): JSX.Element {
 			sorter: (a: TopOperationListItem, b: TopOperationListItem): number =>
 				a.numCalls - b.numCalls,
 		},
+		{
+			title: 'Error Rate',
+			dataIndex: 'errorCount',
+			key: 'errorCount',
+			width: 50,
+			sorter: (a: TopOperationListItem, b: TopOperationListItem): number =>
+				a.errorCount - b.errorCount,
+			render: (value: number, record: TopOperationListItem): string =>
+				((value / record.numCalls) * 100).toFixed(2),
+		},
 	];
 
 	return (
@@ -105,6 +115,7 @@ interface TopOperationListItem {
 	p99: number;
 	numCalls: number;
 	name: string;
+	errorCount: number;
 }
 
 type DataProps = TopOperationListItem;
