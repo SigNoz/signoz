@@ -272,6 +272,7 @@ type TopOperationsItem struct {
 	Percentile95 float64 `json:"p95" ch:"p95"`
 	Percentile99 float64 `json:"p99" ch:"p99"`
 	NumCalls     uint64  `json:"numCalls" ch:"numCalls"`
+	ErrorCount   uint64  `json:"errorCount" ch:"errorCount"`
 	Name         string  `json:"name" ch:"name"`
 }
 
