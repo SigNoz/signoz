@@ -1,4 +1,5 @@
 // ** Helpers
+import { GRAPH_TYPES } from 'container/NewDashboard/ComponentsSlider';
 import { createNewBuilderItemName } from 'lib/newQueryBuilder/createNewBuilderItemName';
 import { LocalDataType } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import {
@@ -12,6 +13,7 @@ import {
 	LogsAggregatorOperator,
 	MetricAggregateOperator,
 	NumberOperators,
+	PanelTypeKeys,
 	ReduceOperators,
 	StringOperators,
 	TracesAggregatorOperator,
@@ -101,6 +103,14 @@ export const operatorsByTypes: Record<LocalDataType, string[]> = {
 	string: Object.values(StringOperators),
 	number: Object.values(NumberOperators),
 	bool: Object.values(BoolOperators),
+};
+
+export const PANEL_TYPES: Record<PanelTypeKeys, GRAPH_TYPES> = {
+	TIME_SERIES: 'graph',
+	VALUE: 'value',
+	TABLE: 'table',
+	LIST: 'list',
+	EMPTY_WIDGET: 'EMPTY_WIDGET',
 };
 
 export type IQueryBuilderState = 'search';

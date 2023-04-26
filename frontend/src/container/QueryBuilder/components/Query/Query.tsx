@@ -1,6 +1,6 @@
 import { Col, Input, Row } from 'antd';
 // ** Constants
-import { mapOfFilters } from 'constants/queryBuilder';
+import { mapOfFilters, PANEL_TYPES } from 'constants/queryBuilder';
 // ** Components
 import {
 	AdditionalFiltersToggler,
@@ -119,7 +119,7 @@ export const Query = memo(function Query({
 
 	const renderAdditionalFilters = useCallback((): ReactNode => {
 		switch (panelType) {
-			case 'graph': {
+			case PANEL_TYPES.TIME_SERIES: {
 				return (
 					<>
 						{!isMetricsDataSource && (
@@ -176,7 +176,7 @@ export const Query = memo(function Query({
 				);
 			}
 
-			case 'value': {
+			case PANEL_TYPES.VALUE: {
 				return (
 					<>
 						{query.aggregateOperator !== StringOperators.NOOP && (
@@ -279,10 +279,12 @@ export const Query = memo(function Query({
 			<Col span={11} offset={2}>
 				<Row gutter={[11, 5]}>
 					<Col flex="5.93rem">
-						<FilterLabel label={panelType === 'value' ? 'Reduce to' : 'Group by'} />
+						<FilterLabel
+							label={panelType === PANEL_TYPES.VALUE ? 'Reduce to' : 'Group by'}
+						/>
 					</Col>
 					<Col flex="1 1 12.5rem">
-						{panelType === 'value' ? (
+						{panelType === PANEL_TYPES.VALUE ? (
 							<ReduceToFilter query={query} onChange={handleChangeReduceTo} />
 						) : (
 							<GroupByFilter

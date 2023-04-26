@@ -125,6 +125,13 @@ export enum LogsAggregatorOperator {
 	RATE = 'rate',
 }
 
+export type PanelTypeKeys =
+	| 'TIME_SERIES'
+	| 'VALUE'
+	| 'TABLE'
+	| 'LIST'
+	| 'EMPTY_WIDGET';
+
 export type ReduceOperators = 'last' | 'sum' | 'avg' | 'max' | 'min';
 
 export type QueryBuilderData = {

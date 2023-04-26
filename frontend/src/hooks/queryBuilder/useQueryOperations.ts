@@ -2,6 +2,7 @@ import {
 	initialAggregateAttribute,
 	initialQueryBuilderFormValues,
 	mapOfOperators,
+	PANEL_TYPES,
 } from 'constants/queryBuilder';
 import { ITEMS } from 'container/NewDashboard/ComponentsSlider/menuItems';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
@@ -73,7 +74,10 @@ export const useQueryOperations: UseQueryOperations = ({
 		(dataSource: DataSource, currentPanelType: ITEMS): string[] => {
 			let operatorsByDataSource = mapOfOperators[dataSource];
 
-			if (dataSource !== DataSource.METRICS && currentPanelType !== 'list') {
+			if (
+				dataSource !== DataSource.METRICS &&
+				currentPanelType !== PANEL_TYPES.LIST
+			) {
 				operatorsByDataSource = operatorsByDataSource.filter(
 					(operator) => operator !== StringOperators.NOOP,
 				);

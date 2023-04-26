@@ -25,11 +25,9 @@ import { v4 as uuid } from 'uuid';
 import {
 	WIDGET_CLICKHOUSE_QUERY_KEY_NAME,
 	WIDGET_PROMQL_QUERY_KEY_NAME,
-	WIDGET_QUERY_BUILDER_QUERY_KEY_NAME,
 } from './constants';
 import ClickHouseQueryContainer from './QueryBuilder/clickHouse';
 import PromQLQueryContainer from './QueryBuilder/promQL';
-import QueryBuilderQueryContainer from './QueryBuilder/queryBuilder';
 import TabHeader from './TabHeader';
 import { IHandleUpdatedQuery } from './types';
 import { getQueryKey } from './utils/getQueryKey';
@@ -161,22 +159,7 @@ function QuerySection({
 					)}
 				/>
 			),
-			children: (
-				// <QueryBuilderQueryContainer
-				// 	key={rctTabKey.QUERY_BUILDER}
-				// 	queryData={localQueryChanges}
-				// 	updateQueryData={({ updatedQuery }: IHandleUpdatedQuery): void => {
-				// 		handleLocalQueryUpdate({ updatedQuery });
-				// 	}}
-				// 	metricsBuilderQueries={
-				// 		localQueryChanges[WIDGET_QUERY_BUILDER_QUERY_KEY_NAME]
-				// 	}
-				// 	selectedGraph={selectedGraph}
-				// />
-
-				// TODO: uncomment for testing new QueryBuilder
-				<QueryBuilder panelType={selectedGraph} />
-			),
+			children: <QueryBuilder panelType={selectedGraph} />,
 		},
 		{
 			key: EQueryType.CLICKHOUSE.toString(),
