@@ -1854,6 +1854,7 @@ func (r *ClickHouseReader) GetTopOperations(ctx context.Context, queryParams *mo
 			quantile(0.95)(durationNano) as p95,
 			quantile(0.99)(durationNano) as p99,
 			COUNT(*) as numCalls,
+			countIf(statusCode=2) as errorCount,
 			name
 		FROM %s.%s
 		WHERE serviceName = @serviceName AND timestamp>= @start AND timestamp<= @end`,
