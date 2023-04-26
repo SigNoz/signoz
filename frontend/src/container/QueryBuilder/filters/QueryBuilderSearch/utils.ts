@@ -7,3 +7,7 @@ export function isInNotInOperator(value: string): boolean {
 export function isExistsNotExistsOperator(value: string): boolean {
 	return value?.includes(OPERATORS.EXISTS || OPERATORS.NOT_EXISTS);
 }
+
+export function checkCommaAndSpace(value: string): boolean {
+	return value.endsWith(',') || value.endsWith(' ');
+}

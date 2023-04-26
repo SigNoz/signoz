@@ -10,7 +10,7 @@ import { v4 as uuid } from 'uuid';
 
 import { selectStyle } from './config';
 import { StyledCheckOutlined, TypographyText } from './style';
-import { isInNotInOperator } from './utils';
+import { checkCommaAndSpace, isInNotInOperator } from './utils';
 
 function QueryBuilderSearch({
 	query,
@@ -35,6 +35,9 @@ function QueryBuilderSearch({
 		onClose,
 	}: CustomTagProps): React.ReactElement => {
 		const isInNin = isInNotInOperator(value);
+		const chipValue = checkCommaAndSpace(value)
+			? value.substring(0, value.length - 2)
+			: value;
 
 		const onCloseHandler = (): void => {
 			onClose();
@@ -48,7 +51,7 @@ function QueryBuilderSearch({
 
 		return (
 			<Tag closable={closable} onClose={onCloseHandler}>
-				<Tooltip title={value}>
+				<Tooltip title={chipValue}>
 					<TypographyText
 						ellipsis
 						$isInNin={isInNin}
@@ -56,7 +59,7 @@ function QueryBuilderSearch({
 						$isEnabled={!!searchValue}
 						onClick={(): void => tagEditHandler(value)}
 					>
-						{value}
+						{chipValue}
 					</TypographyText>
 				</Tooltip>
 			</Tag>
