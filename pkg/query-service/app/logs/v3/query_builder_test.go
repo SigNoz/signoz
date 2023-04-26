@@ -58,19 +58,19 @@ var testGetSelectLabelsData = []struct {
 }{
 	{
 		Name:              "select fields for groupBy attribute",
-		AggregateOperator: v3.AggregateOpeatorCount,
+		AggregateOperator: v3.AggregateOperatorCount,
 		GroupByTags:       []v3.AttributeKey{{Key: "user_name", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag}},
 		SelectLabels:      ", attributes_string_value[indexOf(attributes_string_key, 'user_name')] as user_name",
 	},
 	{
 		Name:              "select fields for groupBy resource",
-		AggregateOperator: v3.AggregateOpeatorCount,
+		AggregateOperator: v3.AggregateOperatorCount,
 		GroupByTags:       []v3.AttributeKey{{Key: "user_name", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeResource}},
 		SelectLabels:      ", resources_string_value[indexOf(resources_string_key, 'user_name')] as user_name",
 	},
 	{
 		Name:              "select fields for groupBy attribute and resource",
-		AggregateOperator: v3.AggregateOpeatorCount,
+		AggregateOperator: v3.AggregateOperatorCount,
 		GroupByTags: []v3.AttributeKey{
 			{Key: "user_name", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeResource},
 			{Key: "host", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag},
@@ -79,7 +79,7 @@ var testGetSelectLabelsData = []struct {
 	},
 	{
 		Name:              "select fields for groupBy materialized columns",
-		AggregateOperator: v3.AggregateOpeatorCount,
+		AggregateOperator: v3.AggregateOperatorCount,
 		GroupByTags:       []v3.AttributeKey{{Key: "host", IsColumn: true}},
 		SelectLabels:      ", host as host",
 	},
@@ -219,7 +219,7 @@ var testBuildLogsQueryData = []struct {
 		Step:  60,
 		BuilderQuery: &v3.BuilderQuery{
 			QueryName:         "A",
-			AggregateOperator: v3.AggregateOpeatorCount,
+			AggregateOperator: v3.AggregateOperatorCount,
 			Expression:        "A",
 		},
 		TableName:     "logs",
@@ -233,7 +233,7 @@ var testBuildLogsQueryData = []struct {
 		BuilderQuery: &v3.BuilderQuery{
 			QueryName:          "A",
 			AggregateAttribute: v3.AttributeKey{Key: "user_name", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag},
-			AggregateOperator:  v3.AggregateOpeatorCount,
+			AggregateOperator:  v3.AggregateOperatorCount,
 			Expression:         "A",
 		},
 		TableName:     "logs",
@@ -247,7 +247,7 @@ var testBuildLogsQueryData = []struct {
 		BuilderQuery: &v3.BuilderQuery{
 			QueryName:          "A",
 			AggregateAttribute: v3.AttributeKey{Key: "user_name", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag},
-			AggregateOperator:  v3.AggregateOpeatorCount,
+			AggregateOperator:  v3.AggregateOperatorCount,
 			Filters: &v3.FilterSet{Operator: "AND", Items: []v3.FilterItem{
 				{Key: v3.AttributeKey{Key: "bytes", DataType: v3.AttributeKeyDataTypeFloat64, Type: v3.AttributeKeyTypeTag}, Value: 100, Operator: ">"},
 			}},

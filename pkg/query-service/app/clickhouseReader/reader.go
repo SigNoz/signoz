@@ -96,6 +96,7 @@ type ClickHouseReader struct {
 	usageExplorerTable      string
 	SpansTable              string
 	spanAttributeTable      string
+	spanAttributesKeysTable string
 	dependencyGraphTable    string
 	topLevelOperationsTable string
 	logsDB                  string
@@ -147,6 +148,7 @@ func NewReader(localDB *sqlx.DB, configFile string, featureFlag interfaces.Featu
 		durationTable:           options.primary.DurationTable,
 		SpansTable:              options.primary.SpansTable,
 		spanAttributeTable:      options.primary.SpanAttributeTable,
+		spanAttributesKeysTable: options.primary.SpanAttributeKeysTable,
 		dependencyGraphTable:    options.primary.DependencyGraphTable,
 		topLevelOperationsTable: options.primary.TopLevelOperationsTable,
 		logsDB:                  options.primary.LogsDB,
@@ -3809,7 +3811,7 @@ func (r *ClickHouseReader) GetLogAggregateAttributes(ctx context.Context, req *v
 	switch req.Operator {
 	case
 		v3.AggregateOperatorCountDistinct,
-		v3.AggregateOpeatorCount:
+		v3.AggregateOperatorCount:
 		where = "tagKey ILIKE $1"
 		stringAllowed = true
 	case
@@ -4236,7 +4238,7 @@ func (r *ClickHouseReader) GetTraceAggregateAttributes(ctx context.Context, req 
 	switch req.Operator {
 	case
 		v3.AggregateOperatorCountDistinct,
-		v3.AggregateOpeatorCount:
+		v3.AggregateOperatorCount:
 		where = "tagKey ILIKE $1"
 	case
 		v3.AggregateOperatorRateSum,
@@ -4386,4 +4388,39 @@ func (r *ClickHouseReader) GetTraceAttributeValues(ctx context.Context, req *v3.
 	}
 
 	return &attributeValues, nil
+}
+
+func (r *ClickHouseReader) GetSpanAttributeKeys(ctx context.Context) (map[string]v3.AttributeKey, error) {
+	var query string
+	var err error
+	var rows driver.Rows
+	response := map[string]v3.AttributeKey{}
+
+	query = fmt.Sprintf("SELECT DISTINCT(tagKey), tagType, dataType, isColumn FROM %s.%s", r.TraceDB, r.spanAttributesKeysTable)
+
+	rows, err = r.db.Query(ctx, query)
+
+	if err != nil {
+		zap.S().Error(err)
+		return nil, fmt.Errorf("error while executing query: %s", err.Error())
+	}
+	defer rows.Close()
+
+	var tagKey string
+	var dataType string
+	var tagType string
+	var isColumn bool
+	for rows.Next() {
+		if err := rows.Scan(&tagKey, &tagType, &dataType, &isColumn); err != nil {
+			return nil, fmt.Errorf("error while scanning rows: %s", err.Error())
+		}
+		key := v3.AttributeKey{
+			Key:      tagKey,
+			DataType: v3.AttributeKeyDataType(dataType),
+			Type:     v3.AttributeKeyType(tagType),
+			IsColumn: isColumn,
+		}
+		response[tagKey] = key
+	}
+	return response, nil
 }

@@ -30,7 +30,7 @@ type AggregateOperator string
 
 const (
 	AggregateOperatorNoOp          AggregateOperator = "noop"
-	AggregateOpeatorCount          AggregateOperator = "count"
+	AggregateOperatorCount         AggregateOperator = "count"
 	AggregateOperatorCountDistinct AggregateOperator = "count_distinct"
 	AggregateOperatorSum           AggregateOperator = "sum"
 	AggregateOperatorAvg           AggregateOperator = "avg"
@@ -64,7 +64,7 @@ const (
 func (a AggregateOperator) Validate() error {
 	switch a {
 	case AggregateOperatorNoOp,
-		AggregateOpeatorCount,
+		AggregateOperatorCount,
 		AggregateOperatorCountDistinct,
 		AggregateOperatorSum,
 		AggregateOperatorAvg,
@@ -104,7 +104,7 @@ func (a AggregateOperator) Validate() error {
 func (a AggregateOperator) RequireAttribute() bool {
 	switch a {
 	case AggregateOperatorNoOp,
-		AggregateOpeatorCount,
+		AggregateOperatorCount,
 		AggregateOperatorCountDistinct:
 		return false
 	default:
