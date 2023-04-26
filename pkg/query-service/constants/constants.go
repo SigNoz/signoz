@@ -3,6 +3,7 @@ package constants
 import (
 	"os"
 	"strconv"
+	"time"
 
 	"go.signoz.io/signoz/pkg/query-service/model"
 	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
@@ -74,6 +75,17 @@ var DEFAULT_FEATURE_SET = model.FeatureSet{
 	TimestampSort: IsTimestampSortFeatureEnabled(),
 }
 
+func GetContextTimeout() time.Duration {
+	contextTimeoutStr := GetOrDefaultEnv("CONTEXT_TIMEOUT", "60")
+	contextTimeoutDuration, err := time.ParseDuration(contextTimeoutStr + "s")
+	if err != nil {
+		return time.Minute
+	}
+	return contextTimeoutDuration
+}
+
+var ContextTimeout = GetContextTimeout()
+
 const (
 	TraceID                        = "traceID"
 	ServiceName                    = "serviceName"
@@ -97,7 +109,6 @@ const (
 	ResponseStatusCode             = "responseStatusCode"
 	Descending                     = "descending"
 	Ascending                      = "ascending"
-	ContextTimeout                 = 60 // seconds
 	StatusPending                  = "pending"
 	StatusFailed                   = "failed"
 	StatusSuccess                  = "success"
@@ -133,6 +144,8 @@ const (
 	SIGNOZ_METRIC_DBNAME        = "signoz_metrics"
 	SIGNOZ_SAMPLES_TABLENAME    = "distributed_samples_v2"
 	SIGNOZ_TIMESERIES_TABLENAME = "distributed_time_series_v2"
+	SIGNOZ_TRACE_DBNAME         = "signoz_traces"
+	SIGNOZ_SPAN_INDEX_TABLENAME = "distributed_signoz_index_v2"
 )
 
 var TimeoutExcludedRoutes = map[string]bool{

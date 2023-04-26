@@ -402,7 +402,7 @@ func setTimeoutMiddleware(next http.Handler) http.Handler {
 		// check if route is not excluded
 		url := r.URL.Path
 		if _, ok := baseconst.TimeoutExcludedRoutes[url]; !ok {
-			ctx, cancel = context.WithTimeout(r.Context(), baseconst.ContextTimeout*time.Second)
+			ctx, cancel = context.WithTimeout(r.Context(), baseconst.ContextTimeout)
 			defer cancel()
 		}
 

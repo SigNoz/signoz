@@ -35,7 +35,7 @@ var SupportedFunctions = []string{
 
 var evalFuncs = map[string]govaluate.ExpressionFunction{}
 
-type prepareTracesQueryFunc func(start, end int64, queryType v3.QueryType, panelType v3.PanelType, bq *v3.BuilderQuery) (string, error)
+type prepareTracesQueryFunc func(start, end int64, queryType v3.QueryType, panelType v3.PanelType, bq *v3.BuilderQuery, keys map[string]v3.AttributeKey) (string, error)
 type prepareLogsQueryFunc func(start, end int64, queryType v3.QueryType, panelType v3.PanelType, bq *v3.BuilderQuery, fields map[string]v3.AttributeKey) (string, error)
 type prepareMetricQueryFunc func(start, end int64, queryType v3.QueryType, panelType v3.PanelType, bq *v3.BuilderQuery) (string, error)
 
@@ -139,7 +139,11 @@ func (qb *queryBuilder) prepareQueries(params *v3.QueryRangeParamsV3, args ...in
 			if query.Expression == queryName {
 				switch query.DataSource {
 				case v3.DataSourceTraces:
-					queryString, err := qb.options.BuildTraceQuery(params.Start, params.End, compositeQuery.QueryType, compositeQuery.PanelType, query)
+					keys := map[string]v3.AttributeKey{}
+					if len(args) == 2 {
+						keys = args[1].(map[string]v3.AttributeKey)
+					}
+					queryString, err := qb.options.BuildTraceQuery(params.Start, params.End, compositeQuery.QueryType, compositeQuery.PanelType, query, keys)
 					if err != nil {
 						return nil, err
 					}
