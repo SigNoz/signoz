@@ -91,7 +91,7 @@ export const useFetchKeysAndValues = (
 	const clearFetcher = useRef(handleFetchOption).current;
 
 	// debounces the fetch function to avoid excessive API calls
-	useDebounce(() => clearFetcher(searchValue, query), 500, [
+	useDebounce(() => clearFetcher(searchValue, query), 750, [
 		clearFetcher,
 		searchValue,
 		query,
