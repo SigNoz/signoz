@@ -56,11 +56,12 @@ export const useAutoComplete = (query: IBuilderQueryForm): IAutoComplete => {
 				setSearchValue((prev: string) => {
 					const prevLength = prev.split(' ').length;
 					if (prev.includes(value)) {
-						return prev.replace(` ${value}`, '');
+						return prev.replace(` ${value} `, '');
 					}
-					return checkStringEndsWithSpace(prev)
-						? `${prev} ${value}`
-						: `${prev.replace(prev.split(' ')[prevLength - 1], value)},`;
+					if (checkStringEndsWithSpace(prev)) {
+						return `${prev} ${value}, `;
+					}
+					return `${prev.replace(prev.split(' ')[prevLength - 1], value)}, `;
 				});
 			}
 			if (!isMulti && isValidTag && !isExistsNotExistsOperator(value)) {
