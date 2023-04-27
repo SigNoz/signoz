@@ -47,7 +47,7 @@ function AggregateEveryFilter({
 			placeholder="Enter in seconds"
 			disabled={!query.aggregateAttribute.key}
 			style={selectStyle}
-			defaultValue={stepInterval ?? query.stepInterval}
+			defaultValue={query.stepInterval ?? stepInterval}
 			onChange={(event): void => onChange(Number(event.target.value))}
 			onKeyDown={handleKeyDown}
 		/>
