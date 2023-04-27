@@ -1,4 +1,5 @@
 // ** Helpers
+import { GRAPH_TYPES } from 'container/NewDashboard/ComponentsSlider';
 import { createNewBuilderItemName } from 'lib/newQueryBuilder/createNewBuilderItemName';
 import { LocalDataType } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import {
@@ -12,6 +13,8 @@ import {
 	LogsAggregatorOperator,
 	MetricAggregateOperator,
 	NumberOperators,
+	PanelTypeKeys,
+	QueryAdditionalFilter,
 	ReduceOperators,
 	StringOperators,
 	TracesAggregatorOperator,
@@ -39,11 +42,24 @@ export const mapOfOperators: Record<DataSource, string[]> = {
 	traces: Object.values(TracesAggregatorOperator),
 };
 
-export const mapOfFilters: Record<DataSource, string[]> = {
-	// eslint-disable-next-line sonarjs/no-duplicate-string
-	metrics: ['Aggregation interval', 'Having'],
-	logs: ['Order by', 'Limit', 'Having', 'Aggregation interval'],
-	traces: ['Order by', 'Limit', 'Having', 'Aggregation interval'],
+export const mapOfFilters: Record<DataSource, QueryAdditionalFilter[]> = {
+	metrics: [
+		// eslint-disable-next-line sonarjs/no-duplicate-string
+		{ text: 'Aggregation interval', field: 'stepInterval' },
+		{ text: 'Having', field: 'having' },
+	],
+	logs: [
+		{ text: 'Order by', field: 'orderBy' },
+		{ text: 'Limit', field: 'limit' },
+		{ text: 'Having', field: 'having' },
+		{ text: 'Aggregation interval', field: 'stepInterval' },
+	],
+	traces: [
+		{ text: 'Order by', field: 'orderBy' },
+		{ text: 'Limit', field: 'limit' },
+		{ text: 'Having', field: 'having' },
+		{ text: 'Aggregation interval', field: 'stepInterval' },
+	],
 };
 
 export const REDUCE_TO_VALUES: SelectOption<ReduceOperators, string>[] = [
@@ -101,6 +117,14 @@ export const operatorsByTypes: Record<LocalDataType, string[]> = {
 	string: Object.values(StringOperators),
 	number: Object.values(NumberOperators),
 	bool: Object.values(BoolOperators),
+};
+
+export const PANEL_TYPES: Record<PanelTypeKeys, GRAPH_TYPES> = {
+	TIME_SERIES: 'graph',
+	VALUE: 'value',
+	TABLE: 'table',
+	LIST: 'list',
+	EMPTY_WIDGET: 'EMPTY_WIDGET',
 };
 
 export type IQueryBuilderState = 'search';

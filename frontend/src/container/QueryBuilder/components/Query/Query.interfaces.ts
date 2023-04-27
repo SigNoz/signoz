@@ -6,5 +6,5 @@ export type QueryProps = {
 	isAvailableToDisable: boolean;
 	query: IBuilderQueryForm;
 	queryVariant: 'static' | 'dropdown';
-	panelType?: ITEMS;
+	panelType: ITEMS;
 };

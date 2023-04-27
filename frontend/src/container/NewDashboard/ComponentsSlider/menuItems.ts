@@ -1,20 +1,21 @@
 import TimeSeries from 'assets/Dashboard/TimeSeries';
 import ValueIcon from 'assets/Dashboard/Value';
+import { PANEL_TYPES } from 'constants/queryBuilder';
 
 const Items: ItemsProps[] = [
 	{
-		name: 'graph',
+		name: PANEL_TYPES.TIME_SERIES,
 		Icon: TimeSeries,
 		display: 'Time Series',
 	},
 	{
-		name: 'value',
+		name: PANEL_TYPES.VALUE,
 		Icon: ValueIcon,
 		display: 'Value',
 	},
 ];
 
-export type ITEMS = 'graph' | 'value' | 'EMPTY_WIDGET';
+export type ITEMS = 'graph' | 'value' | 'list' | 'table' | 'EMPTY_WIDGET';
 
 interface ItemsProps {
 	name: ITEMS;

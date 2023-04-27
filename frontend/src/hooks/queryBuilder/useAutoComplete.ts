@@ -48,6 +48,7 @@ export const useAutoComplete = (query: IBuilderQueryForm): IAutoComplete => {
 		isValidTag,
 		isFreeText,
 		handleSearch,
+		query,
 	);
 
 	const handleSelect = useCallback(
