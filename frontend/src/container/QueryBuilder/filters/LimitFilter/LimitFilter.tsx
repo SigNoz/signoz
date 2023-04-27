@@ -1,6 +1,6 @@
 import { InputNumber } from 'antd';
 import React from 'react';
-import { IBuilderQueryForm } from 'types/api/queryBuilder/queryBuilderData';
+import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 
 import { selectStyle } from '../QueryBuilderSearch/config';
 
@@ -35,7 +35,7 @@ function LimitFilter({ onChange, query }: LimitFilterProps): JSX.Element {
 
 interface LimitFilterProps {
 	onChange: (values: number | null) => void;
-	query: IBuilderQueryForm;
+	query: IBuilderQuery;
 }
 
 export default LimitFilter;

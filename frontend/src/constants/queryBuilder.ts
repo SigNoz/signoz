@@ -5,7 +5,7 @@ import { LocalDataType } from 'types/api/queryBuilder/queryAutocompleteResponse'
 import {
 	HavingForm,
 	IBuilderFormula,
-	IBuilderQueryForm,
+	IBuilderQuery,
 } from 'types/api/queryBuilder/queryBuilderData';
 import {
 	BoolOperators,
@@ -76,14 +76,14 @@ export const initialHavingValues: HavingForm = {
 	value: [],
 };
 
-export const initialAggregateAttribute: IBuilderQueryForm['aggregateAttribute'] = {
+export const initialAggregateAttribute: IBuilderQuery['aggregateAttribute'] = {
 	dataType: null,
 	key: '',
 	isColumn: null,
 	type: null,
 };
 
-export const initialQueryBuilderFormValues: IBuilderQueryForm = {
+export const initialQueryBuilderFormValues: IBuilderQuery = {
 	dataSource: DataSource.METRICS,
 	queryName: createNewBuilderItemName({ existNames: [], sourceNames: alphabet }),
 	aggregateOperator: Object.values(MetricAggregateOperator)[0],

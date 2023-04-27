@@ -23,7 +23,7 @@ import QueryBuilderSearch from 'container/QueryBuilder/filters/QueryBuilderSearc
 import { useQueryOperations } from 'hooks/queryBuilder/useQueryOperations';
 // ** Hooks
 import React, { ChangeEvent, memo, ReactNode, useCallback } from 'react';
-import { IBuilderQueryForm } from 'types/api/queryBuilder/queryBuilderData';
+import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 import { transformToUpperCase } from 'utils/transformToUpperCase';
 
 // ** Types
@@ -48,28 +48,28 @@ export const Query = memo(function Query({
 	} = useQueryOperations({ index, query, panelType });
 
 	const handleChangeAggregateEvery = useCallback(
-		(value: IBuilderQueryForm['stepInterval']) => {
+		(value: IBuilderQuery['stepInterval']) => {
 			handleChangeQueryData('stepInterval', value);
 		},
 		[handleChangeQueryData],
 	);
 
 	const handleChangeLimit = useCallback(
-		(value: IBuilderQueryForm['limit']) => {
+		(value: IBuilderQuery['limit']) => {
 			handleChangeQueryData('limit', value);
 		},
 		[handleChangeQueryData],
 	);
 
 	const handleChangeHavingFilter = useCallback(
-		(value: IBuilderQueryForm['having']) => {
+		(value: IBuilderQuery['having']) => {
 			handleChangeQueryData('having', value);
 		},
 		[handleChangeQueryData],
 	);
 
 	const handleChangeOrderByKeys = useCallback(
-		(value: IBuilderQueryForm['orderBy']) => {
+		(value: IBuilderQuery['orderBy']) => {
 			handleChangeQueryData('orderBy', value);
 		},
 		[handleChangeQueryData],
@@ -80,21 +80,21 @@ export const Query = memo(function Query({
 	}, [handleChangeQueryData, query]);
 
 	const handleChangeTagFilters = useCallback(
-		(value: IBuilderQueryForm['tagFilters']) => {
+		(value: IBuilderQuery['tagFilters']) => {
 			handleChangeQueryData('tagFilters', value);
 		},
 		[handleChangeQueryData],
 	);
 
 	const handleChangeReduceTo = useCallback(
-		(value: IBuilderQueryForm['reduceTo']) => {
+		(value: IBuilderQuery['reduceTo']) => {
 			handleChangeQueryData('reduceTo', value);
 		},
 		[handleChangeQueryData],
 	);
 
 	const handleChangeGroupByKeys = useCallback(
-		(value: IBuilderQueryForm['groupBy']) => {
+		(value: IBuilderQuery['groupBy']) => {
 			handleChangeQueryData('groupBy', value);
 		},
 		[handleChangeQueryData],

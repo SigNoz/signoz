@@ -50,8 +50,5 @@ export type IBuilderQuery = {
 	stepInterval: number;
 	orderBy: BaseAutocompleteData[];
 	reduceTo: ReduceOperators;
-};
-
-export type IBuilderQueryForm = IBuilderQuery & {
 	legend: string;
 };

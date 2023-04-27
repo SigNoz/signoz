@@ -1,6 +1,6 @@
 import {
 	IBuilderFormula,
-	IBuilderQueryForm,
+	IBuilderQuery,
 } from 'types/api/queryBuilder/queryBuilderData';
 
 export enum DataSource {
@@ -143,7 +143,7 @@ export type PanelTypeKeys =
 export type ReduceOperators = 'last' | 'sum' | 'avg' | 'max' | 'min';
 
 export type QueryBuilderData = {
-	queryData: IBuilderQueryForm[];
+	queryData: IBuilderQuery[];
 	queryFormulas: IBuilderFormula[];
 };
 
@@ -152,7 +152,7 @@ export type QueryBuilderContextType = {
 	queryBuilderData: QueryBuilderData;
 	initialDataSource: DataSource | null;
 	resetQueryBuilderData: () => void;
-	handleSetQueryData: (index: number, queryData: IBuilderQueryForm) => void;
+	handleSetQueryData: (index: number, queryData: IBuilderQuery) => void;
 	handleSetFormulaData: (index: number, formulaData: IBuilderFormula) => void;
 	initQueryBuilderData: (queryBuilderData: QueryBuilderData) => void;
 	setupInitialDataSource: (newInitialDataSource: DataSource | null) => void;
@@ -162,6 +162,6 @@ export type QueryBuilderContextType = {
 };
 
 export type QueryAdditionalFilter = {
-	field: keyof IBuilderQueryForm;
+	field: keyof IBuilderQuery;
 	text: string;
 };
