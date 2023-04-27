@@ -24,7 +24,6 @@ import { useQueryOperations } from 'hooks/queryBuilder/useQueryOperations';
 // ** Hooks
 import React, { ChangeEvent, memo, ReactNode, useCallback } from 'react';
 import { IBuilderQueryForm } from 'types/api/queryBuilder/queryBuilderData';
-import { StringOperators } from 'types/common/queryBuilder';
 import { transformToUpperCase } from 'utils/transformToUpperCase';
 
 // ** Types
@@ -168,18 +167,16 @@ export const Query = memo(function Query({
 			case PANEL_TYPES.VALUE: {
 				return (
 					<>
-						{query.aggregateOperator !== StringOperators.NOOP && (
-							<Col span={11}>
-								<Row gutter={[11, 5]}>
-									<Col flex="5.93rem">
-										<FilterLabel label="HAVING" />
-									</Col>
-									<Col flex="1 1 12.5rem">
-										<HavingFilter onChange={handleChangeHavingFilter} query={query} />
-									</Col>
-								</Row>
-							</Col>
-						)}
+						<Col span={11}>
+							<Row gutter={[11, 5]}>
+								<Col flex="5.93rem">
+									<FilterLabel label="HAVING" />
+								</Col>
+								<Col flex="1 1 12.5rem">
+									<HavingFilter onChange={handleChangeHavingFilter} query={query} />
+								</Col>
+							</Row>
+						</Col>
 						<Col span={11}>
 							<Row gutter={[11, 5]}>
 								<Col flex="5.93rem">

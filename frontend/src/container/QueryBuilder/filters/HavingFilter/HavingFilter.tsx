@@ -101,7 +101,7 @@ export function HavingFilter({
 			const values = getHavingObject(search).value.join(' ');
 
 			if (values) {
-				const numRegexp = /^[\d. ]+$/;
+				const numRegexp = /^[\d.,\s]+$/;
 
 				return numRegexp.test(values);
 			}

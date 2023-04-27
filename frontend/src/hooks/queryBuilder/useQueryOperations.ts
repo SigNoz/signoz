@@ -97,11 +97,6 @@ export const useQueryOperations: UseQueryOperations = ({
 
 	const handleChangeDataSource = useCallback(
 		(nextSource: DataSource): void => {
-			let newQuery: IBuilderQueryForm = {
-				...query,
-				dataSource: nextSource,
-			};
-
 			const newOperators = getNewOperators(nextSource, panelType);
 
 			const entries = Object.entries(initialQueryBuilderFormValues).filter(
@@ -110,8 +105,8 @@ export const useQueryOperations: UseQueryOperations = ({
 
 			const initCopyResult = Object.fromEntries(entries);
 
-			newQuery = {
-				...newQuery,
+			const newQuery: IBuilderQueryForm = {
+				...query,
 				...initCopyResult,
 				dataSource: nextSource,
 				aggregateOperator: newOperators[0],
