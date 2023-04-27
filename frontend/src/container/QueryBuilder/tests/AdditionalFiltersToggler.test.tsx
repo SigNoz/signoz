@@ -8,14 +8,14 @@ import store from 'store';
 
 import { AdditionalFiltersToggler } from '../components';
 
-describe('QueryBuilder', () => {
-	it('should render AdditionalFiltersToggler', () => {
+describe('QueryBuilder: Toggler for Additional Filters', () => {
+	it('it should render AdditionalFiltersToggler', () => {
 		const { asFragment } = render(
 			<MemoryRouter>
 				<Provider store={store}>
 					<I18nextProvider i18n={i18n}>
 						<AdditionalFiltersToggler listOfAdditionalFilter={[]}>
-							Testing AdditionalFiltersToggler{' '}
+							Testing AdditionalFiltersToggler
 						</AdditionalFiltersToggler>
 					</I18nextProvider>
 				</Provider>

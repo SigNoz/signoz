@@ -9,7 +9,7 @@ import store from 'store';
 
 import { OperatorsSelect } from '../filters';
 
-describe('QueryBuilder', () => {
+describe('QueryBuilder: Operators Selection Dropdown', () => {
 	const queryClient = new QueryClient({
 		defaultOptions: {
 			queries: {
@@ -18,7 +18,7 @@ describe('QueryBuilder', () => {
 		},
 	});
 
-	it('should render OperatorsSelect', () => {
+	it('it should render OperatorsSelect', () => {
 		const { asFragment } = render(
 			<MemoryRouter>
 				<Provider store={store}>

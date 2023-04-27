@@ -8,8 +8,8 @@ import store from 'store';
 
 import { DataSourceDropdown } from '../components';
 
-describe('QueryBuilder', () => {
-	it('should render DataSourceDropdown', () => {
+describe('QueryBuilder: Data Source Dropdown', () => {
+	it('it should render DataSourceDropdown', () => {
 		const { asFragment } = render(
 			<MemoryRouter>
 				<Provider store={store}>

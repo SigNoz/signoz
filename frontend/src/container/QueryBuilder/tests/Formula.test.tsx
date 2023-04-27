@@ -7,20 +7,15 @@ import i18n from 'ReactI18';
 import store from 'store';
 
 import { Formula } from '../components';
+import { formulaMockData } from '../mock/queryData';
 
-describe('QueryBuilder', () => {
-	const formula = {
-		label: 'Formula',
-		expression: 'sum(A, B)',
-		legend: 'Total',
-		disabled: false,
-	};
-	it('should render Formula', () => {
+describe('QueryBuilder: Formula Component', () => {
+	it('it should render Formula', () => {
 		const { asFragment } = render(
 			<MemoryRouter>
 				<Provider store={store}>
 					<I18nextProvider i18n={i18n}>
-						<Formula formula={formula} index={0} />
+						<Formula formula={formulaMockData} index={0} />
 					</I18nextProvider>
 				</Provider>
 			</MemoryRouter>,

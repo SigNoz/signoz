@@ -1,6 +1,6 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`QueryBuilder should render Formula 1`] = `
+exports[`QueryBuilder: Formula Component it should render Formula 1`] = `
 <DocumentFragment>
   .c1 {
   position: absolute;

@@ -1,6 +1,6 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`ListMarker should render ListMarker 1`] = `
+exports[`Query Builder List Marker it should render ListMarker 1`] = `
 <DocumentFragment>
   .c0 {
   min-width: 2rem;

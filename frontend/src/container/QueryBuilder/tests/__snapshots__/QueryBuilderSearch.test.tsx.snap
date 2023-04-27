@@ -1,6 +1,6 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`QueryBuilder should render QueryBuilderSearch 1`] = `
+exports[`QueryBuilder: WHERE clause Seach Filter it should render QueryBuilderSearch 1`] = `
 <DocumentFragment>
   <div
     class="ant-select css-dev-only-do-not-override-1i536d8 ant-select-multiple ant-select-show-search"
