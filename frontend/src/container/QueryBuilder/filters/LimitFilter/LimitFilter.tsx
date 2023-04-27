@@ -24,6 +24,7 @@ function LimitFilter({ onChange, query }: LimitFilterProps): JSX.Element {
 		<InputNumber
 			min={1}
 			type="number"
+			defaultValue={query.limit ?? 1}
 			disabled={!query.aggregateAttribute.key}
 			style={selectStyle}
 			onChange={onChange}
