@@ -1,4 +1,3 @@
-/* eslint-disable sonarjs/no-identical-functions */
 import { renderHook } from '@testing-library/react';
 import { act } from 'react-dom/test-utils';
 import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
@@ -48,6 +47,7 @@ describe('useOptions', () => {
 	});
 
 	test('returns expected options when key and operator are not provided', () => {
+		// eslint-disable-next-line sonarjs/no-identical-functions
 		const { result } = renderHook(() =>
 			useOptions(
 				key,
@@ -63,8 +63,8 @@ describe('useOptions', () => {
 		);
 
 		expect(result.current).toEqual([
-			{ value: 'testKey operator result1' },
-			{ value: 'testKey operator result2' },
+			{ label: 'testKey_operator_result_1', value: 'testKey_operator_result_1' },
+			{ label: 'testKey_operator_result_2', value: 'testKey_operator_result_2' },
 		]);
 	});
 
@@ -84,8 +84,8 @@ describe('useOptions', () => {
 		);
 
 		expect(result.current).toEqual([
-			{ value: 'result1', selected: false },
-			{ value: 'result2', selected: false },
+			{ label: 'result1', value: 'result1', selected: false },
+			{ label: 'result2', value: 'result2', selected: false },
 		]);
 	});
 
@@ -105,9 +105,9 @@ describe('useOptions', () => {
 		);
 
 		expect(result.current).toEqual([
-			{ value: searchValue },
-			{ value: 'key1' },
-			{ value: 'key2' },
+			{ label: searchValue, value: searchValue },
+			{ label: 'key1', value: 'key1' },
+			{ label: 'key2', value: 'key2' },
 		]);
 	});
 
@@ -131,6 +131,7 @@ describe('useOptions', () => {
 
 	test('updates options when key is updated', () => {
 		const { result, rerender } = renderHook(
+			// eslint-disable-next-line sonarjs/no-identical-functions
 			({ key }) =>
 				useOptions(
 					key,
@@ -149,9 +150,9 @@ describe('useOptions', () => {
 		);
 
 		expect(result.current).toEqual([
-			{ value: searchValue },
-			{ value: 'key1' },
-			{ value: 'key2' },
+			{ label: searchValue, value: searchValue },
+			{ label: 'key1', value: 'key1' },
+			{ label: 'key2', value: 'key2' },
 		]);
 
 		act(() => {
@@ -159,8 +160,8 @@ describe('useOptions', () => {
 		});
 
 		expect(result.current).toEqual([
-			{ value: 'testKey operator result1' },
-			{ value: 'testKey operator result2' },
+			{ label: 'testKey_operator_result_1', value: 'testKey_operator_result_1' },
+			{ label: 'testKey_operator_result_2', value: 'testKey_operator_result_2' },
 		]);
 	});
 });
