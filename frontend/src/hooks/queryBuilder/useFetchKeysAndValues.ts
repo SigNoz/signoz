@@ -78,9 +78,7 @@ export const useFetchKeysAndValues = (
 			return;
 		}
 		const [attributeKey, operator, result] = separateSearchValue(value);
-		const filterAttributeKeyDataType = keys.find(
-			(key) => key.key === attributeKey,
-		)?.dataType;
+		const filterAttributeKey = keys.find((key) => key.key === attributeKey);
 		setResults([]);
 
 		if (!attributeKey || !operator) {
@@ -92,8 +90,8 @@ export const useFetchKeysAndValues = (
 			dataSource: query.dataSource,
 			aggregateAttribute: query.aggregateAttribute.key,
 			attributeKey,
-			filterAttributeKeyDataType: filterAttributeKeyDataType ?? null,
-			tagType: query.aggregateAttribute.type ?? null,
+			filterAttributeKeyDataType: filterAttributeKey?.dataType ?? null,
+			tagType: filterAttributeKey?.type ?? null,
 			searchText: !result[result.length - 1]?.endsWith(',') // for IN and Not IN string ends with ","
 				? result[result.length - 1] ?? '' // so needs to add last search value if present
 				: '',
