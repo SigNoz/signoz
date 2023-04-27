@@ -32,6 +32,7 @@ function Table(props: TableProps): JSX.Element {
 	const { selectedTime } = useSelector<AppState, GlobalReducer>(
 		(state) => state.globalTime,
 	);
+	console.log('selected time', selectedTime);
 
 	const { t } = useTranslation(['common']);
 	const { notifications } = useNotifications();
@@ -103,8 +104,6 @@ function Table(props: TableProps): JSX.Element {
 			}),
 		[reqRateResponse.data, durationResponse.data, errPercentResponse.data],
 	);
-
-	console.log('tableRows', tableRows);
 
 	return (
 		<div>

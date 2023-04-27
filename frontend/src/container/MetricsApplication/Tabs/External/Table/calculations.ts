@@ -44,7 +44,9 @@ type MakeDataEntriesProps = {
 };
 function makeDataEntries(props: MakeDataEntriesProps): DataEntries {
 	function valuesToNumbers(values: QueryData['values']): number[] {
-		return values.map(([, value]) => Number(value));
+		return values
+			.map(([, value]) => Number(value))
+			.filter((n) => !Number.isNaN(n));
 	}
 
 	const result: DataEntries = {};
