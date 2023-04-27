@@ -28,12 +28,11 @@ export const GroupByFilter = memo(function GroupByFilter({
 		async () =>
 			getAggregateKeys({
 				aggregateAttribute: query.aggregateAttribute.key,
-				tagType: query.aggregateAttribute.type,
 				dataSource: query.dataSource,
 				aggregateOperator: query.aggregateOperator,
 				searchText,
 			}),
-		{ enabled: !!query.aggregateAttribute.key, keepPreviousData: true },
+		{ enabled: !disabled, keepPreviousData: true },
 	);
 
 	const handleSearchKeys = (searchText: string): void => {

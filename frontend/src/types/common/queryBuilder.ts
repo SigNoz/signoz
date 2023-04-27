@@ -103,6 +103,10 @@ export enum TracesAggregatorOperator {
 	P95 = 'p95',
 	P99 = 'p99',
 	RATE = 'rate',
+	RATE_SUM = 'rate_sum',
+	RATE_AVG = 'rate_avg',
+	RATE_MIN = 'rate_min',
+	RATE_MAX = 'rate_max',
 }
 
 export enum LogsAggregatorOperator {
@@ -123,6 +127,10 @@ export enum LogsAggregatorOperator {
 	P95 = 'p95',
 	P99 = 'p99',
 	RATE = 'rate',
+	RATE_SUM = 'rate_sum',
+	RATE_AVG = 'rate_avg',
+	RATE_MIN = 'rate_min',
+	RATE_MAX = 'rate_max',
 }
 
 export type PanelTypeKeys =

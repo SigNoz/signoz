@@ -125,18 +125,16 @@ export const Query = memo(function Query({
 								</Row>
 							</Col>
 						)}
-						{query.aggregateOperator !== StringOperators.NOOP && (
-							<Col span={11}>
-								<Row gutter={[11, 5]}>
-									<Col flex="5.93rem">
-										<FilterLabel label="HAVING" />
-									</Col>
-									<Col flex="1 1 12.5rem">
-										<HavingFilter onChange={handleChangeHavingFilter} query={query} />
-									</Col>
-								</Row>
-							</Col>
-						)}
+						<Col span={11}>
+							<Row gutter={[11, 5]}>
+								<Col flex="5.93rem">
+									<FilterLabel label="HAVING" />
+								</Col>
+								<Col flex="1 1 12.5rem">
+									<HavingFilter onChange={handleChangeHavingFilter} query={query} />
+								</Col>
+							</Row>
+						</Col>
 						{!isMetricsDataSource && (
 							<Col span={11}>
 								<Row gutter={[11, 5]}>

@@ -15,11 +15,7 @@ import {
 	HandleChangeQueryData,
 	UseQueryOperations,
 } from 'types/common/operations.types';
-import {
-	DataSource,
-	QueryAdditionalFilter,
-	StringOperators,
-} from 'types/common/queryBuilder';
+import { DataSource, StringOperators } from 'types/common/queryBuilder';
 
 export const useQueryOperations: UseQueryOperations = ({
 	query,
@@ -81,15 +77,8 @@ export const useQueryOperations: UseQueryOperations = ({
 	);
 
 	const getNewListOfAdditionalFilters = useCallback(
-		(dataSource: DataSource, operator: string): string[] => {
-			let result: QueryAdditionalFilter[] = mapOfFilters[dataSource];
-
-			if (dataSource === DataSource.METRICS && operator === StringOperators.NOOP) {
-				result = result.filter((currentFilter) => currentFilter.field !== 'having');
-			}
-
-			return result.map((item) => item.text);
-		},
+		(dataSource: DataSource): string[] =>
+			mapOfFilters[dataSource].map((item) => item.text),
 		[],
 	);
 
@@ -163,10 +152,7 @@ export const useQueryOperations: UseQueryOperations = ({
 	}, [operators, dataSource, panelType, getNewOperators]);
 
 	useEffect(() => {
-		const additionalFilters = getNewListOfAdditionalFilters(
-			dataSource,
-			aggregateOperator,
-		);
+		const additionalFilters = getNewListOfAdditionalFilters(dataSource);
 
 		setListOfAdditionalFilters(additionalFilters);
 	}, [dataSource, aggregateOperator, getNewListOfAdditionalFilters]);
