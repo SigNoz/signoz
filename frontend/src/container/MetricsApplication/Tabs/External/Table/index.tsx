@@ -36,7 +36,7 @@ function Table(props: TableProps): JSX.Element {
 		(state) => state.globalTime,
 	);
 	const [addressFilter, setAddressFilter] = React.useState<string>('');
-	const [reduceTo, setReduceTo] = React.useState<ReduceTo>('avg');
+	const [reduceTo, setReduceTo] = React.useState<ReduceTo>('latest');
 
 	const { t } = useTranslation(['common']);
 	const { notifications } = useNotifications();

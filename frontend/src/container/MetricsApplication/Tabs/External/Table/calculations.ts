@@ -20,7 +20,6 @@ export interface TableRow {
 	reqRate?: number;
 }
 
-
 type GroupByAddressResult = Record<Address, QueryData['values']>;
 function groupByAddress(data: QueryData[]): GroupByAddressResult {
 	const result: GroupByAddressResult = {};

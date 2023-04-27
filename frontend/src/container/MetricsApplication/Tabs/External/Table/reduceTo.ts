@@ -42,6 +42,7 @@ function avg(ns: number[]): number {
 	return sum / ns.length;
 }
 
+// Source: https://stackoverflow.com/a/55297611/4182882
 function quantile(ns: number[], q: number): number {
 	const sorted = ns.sort((a, b) => a - b);
 	const pos = (sorted.length - 1) * q;
