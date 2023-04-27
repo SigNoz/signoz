@@ -51,10 +51,19 @@ export const GroupByFilter = memo(function GroupByFilter({
 
 	const handleChange = (values: GroupByFilterValue[]): void => {
 		const groupByValues: BaseAutocompleteData[] = values.map((item) => {
-			const iterationArray = data?.payload?.attributeKeys || query.groupBy;
-			const existGroup = iterationArray.find((group) => group.key === item.value);
-			if (existGroup) {
-				return existGroup;
+			const existGroupResponse = data?.payload?.attributeKeys.find(
+				(group) => group.key === item.value,
+			);
+			if (existGroupResponse) {
+				return existGroupResponse;
+			}
+
+			const existGroupQuery = query.groupBy.find(
+				(group) => group.key === item.value,
+			);
+
+			if (existGroupQuery) {
+				return existGroupQuery;
 			}
 
 			return {
