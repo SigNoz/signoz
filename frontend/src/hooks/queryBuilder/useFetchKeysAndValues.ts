@@ -1,12 +1,13 @@
 import { getAggregateKeys } from 'api/queryBuilder/getAttributeKeys';
 import { getAttributesValues } from 'api/queryBuilder/getAttributesValues';
 import { QueryBuilderKeys } from 'constants/queryBuilder';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useQuery } from 'react-query';
 import { useDebounce } from 'react-use';
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { IBuilderQueryForm } from 'types/api/queryBuilder/queryBuilderData';
+import { DataSource } from 'types/common/queryBuilder';
 import { separateSearchValue } from 'utils/separateSearchValue';
 
 type IuseFetchKeysAndValues = {
@@ -28,6 +29,21 @@ export const useFetchKeysAndValues = (
 ): IuseFetchKeysAndValues => {
 	const [keys, setKeys] = useState<BaseAutocompleteData[]>([]);
 	const [results, setResults] = useState<string[]>([]);
+
+	const isQueryEnabled = useMemo(
+		() =>
+			query.dataSource === DataSource.METRICS
+				? !!query.aggregateOperator &&
+				  !!query.dataSource &&
+				  !!query.aggregateAttribute.dataType
+				: true,
+		[
+			query.aggregateAttribute.dataType,
+			query.aggregateOperator,
+			query.dataSource,
+		],
+	);
+
 	const { data, isFetching, status } = useQuery(
 		[
 			QueryBuilderKeys.GET_ATTRIBUTE_KEY,
@@ -41,13 +57,10 @@ export const useFetchKeysAndValues = (
 				dataSource: query.dataSource,
 				aggregateOperator: query.aggregateOperator,
 				aggregateAttribute: query.aggregateAttribute.key,
-				tagType: query.aggregateAttribute.type,
+				tagType: query.aggregateAttribute.type ?? '',
 			}),
 		{
-			enabled:
-				!!query.aggregateOperator &&
-				!!query.dataSource &&
-				!!query.aggregateAttribute.dataType,
+			enabled: isQueryEnabled,
 		},
 	);
 

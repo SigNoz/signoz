@@ -6,7 +6,7 @@ export interface BaseAutocompleteData {
 	dataType: DataType | null;
 	isColumn: boolean | null;
 	key: string;
-	type: 'tag' | 'resource' | null;
+	type: 'tag' | 'resource' | '' | null;
 }
 
 export interface IQueryAutocompleteResponse {
