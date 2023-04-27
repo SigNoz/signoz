@@ -1,5 +1,7 @@
 import { QueryData } from 'types/api/widgets/getQuery';
 
+import { resultQueryName } from './queries';
+
 type Address = string;
 
 type DataEntry = {
@@ -23,7 +25,7 @@ function groupByAddress(data: QueryData[]): GroupByAddressResult {
 
 	data.forEach((queryData) => {
 		if (
-			queryData.queryName === 'RESULT' &&
+			queryData.queryName === resultQueryName &&
 			queryData.metric?.address !== undefined
 		) {
 			const metricValue = queryData.metric.address;
@@ -87,8 +89,6 @@ export function makeTableRows(props: MakeTableRowsProps): TableRow[] {
 		reqRate: groupByAddress(props.reqRate),
 		reduceToNumber: avg,
 	});
-
-	console.log('dataEntries', dataEntries);
 
 	return Object.entries(dataEntries).map(([address, dataEntry]) => ({
 		address,

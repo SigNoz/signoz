@@ -14,7 +14,11 @@ import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
 import { GlobalReducer } from 'types/reducer/globalTime';
 
 import { makeTableRows, TableRow } from './calculations';
-import { makeDurationQuery, makeErrPercentQuery } from './queries';
+import {
+	makeDurationQuery,
+	makeErrPercentQuery,
+	makeReqRateQuery,
+} from './queries';
 
 interface TableProps {
 	widgetId: string;
@@ -25,13 +29,34 @@ const noDataPlaceholder = '-';
 
 function Table(props: TableProps): JSX.Element {
 	const { widgetId, serviceName } = props;
-	const { t } = useTranslation(['common']);
 	const { selectedTime } = useSelector<AppState, GlobalReducer>(
 		(state) => state.globalTime,
 	);
 
+	const { t } = useTranslation(['common']);
 	const { notifications } = useNotifications();
+	const errorMessage = t('something_went_wrong');
 
+	// BEGIN Request rate
+	const reqRateQuery: GetQueryResultsProps = makeReqRateQuery({
+		widgetId: `${widgetId}-req-rate`,
+		selectedTime,
+		serviceName,
+	});
+
+	const reqRateResponse = useQuery<
+		SuccessResponse<MetricRangePayloadProps> | ErrorResponse
+	>(`${widgetId}-req-rate`, () => GetMetricQueryRange(reqRateQuery));
+
+	if (reqRateResponse.isError) {
+		notifications.error({
+			message: errorMessage,
+			description: `Unable to fetch request rate data. ${reqRateResponse.error?.toString()}`,
+		});
+	}
+	// END Request rate
+
+	// BEGIN Duration
 	const durationQuery: GetQueryResultsProps = makeDurationQuery({
 		widgetId: `${widgetId}-duration`,
 		selectedTime,
@@ -44,11 +69,13 @@ function Table(props: TableProps): JSX.Element {
 
 	if (durationResponse.isError) {
 		notifications.error({
-			message: t('something_went_wrong'),
-			description: durationResponse.error?.toString(),
+			message: errorMessage,
+			description: `Unable to fetch duration response data. ${durationResponse.error?.toString()}`,
 		});
 	}
+	// END Duration
 
+	// BEGIN Error percentage
 	const errPercentQuery: GetQueryResultsProps = makeErrPercentQuery({
 		widgetId: `${widgetId}-err-percent`,
 		selectedTime,
@@ -61,19 +88,20 @@ function Table(props: TableProps): JSX.Element {
 
 	if (errPercentResponse.isError) {
 		notifications.error({
-			message: t('something_went_wrong'),
-			description: errPercentResponse.error?.toString(),
+			message: errorMessage,
+			description: `Unable to fetch error percentage data. ${errPercentResponse.error?.toString()}`,
 		});
 	}
+	// END Error percentage
 
 	const tableRows = useMemo(
 		() =>
 			makeTableRows({
 				duration: durationResponse.data?.payload?.data.result || [],
 				errPercent: errPercentResponse.data?.payload?.data.result || [],
-				reqRate: [],
+				reqRate: reqRateResponse.data?.payload?.data.result || [],
 			}),
-		[durationResponse.data, errPercentResponse.data],
+		[reqRateResponse.data, durationResponse.data, errPercentResponse.data],
 	);
 
 	console.log('tableRows', tableRows);
