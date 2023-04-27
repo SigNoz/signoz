@@ -1,14 +1,15 @@
 import TimeSeries from 'assets/Dashboard/TimeSeries';
 import ValueIcon from 'assets/Dashboard/Value';
+import { PANEL_TYPES } from 'constants/queryBuilder';
 
 const Items: ItemsProps[] = [
 	{
-		name: 'graph',
+		name: PANEL_TYPES.TIME_SERIES,
 		Icon: TimeSeries,
 		display: 'Time Series',
 	},
 	{
-		name: 'value',
+		name: PANEL_TYPES.VALUE,
 		Icon: ValueIcon,
 		display: 'Value',
 	},
