@@ -1,4 +1,5 @@
 import { useNotifications } from 'hooks/useNotifications';
+import { reverseParser } from 'lib/logql';
 import { flatten } from 'lodash-es';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useSelector } from 'react-redux';
@@ -18,13 +19,13 @@ import {
 } from './utils';
 
 export interface SearchFieldsProps {
-	updateParsedQuery: (query: QueryFields[]) => void;
 	onDropDownToggleHandler: (value: boolean) => VoidFunction;
+	updateQueryString: (value: string) => void;
 }
 
 function SearchFields({
-	updateParsedQuery,
 	onDropDownToggleHandler,
+	updateQueryString,
 }: SearchFieldsProps): JSX.Element {
 	const {
 		searchFilter: { parsedQuery },
@@ -90,15 +91,15 @@ function SearchFields({
 		}
 
 		keyPrefixRef.current = hashCode(JSON.stringify(flatParsedQuery));
-		updateParsedQuery(flatParsedQuery);
+		updateQueryString(reverseParser(flatParsedQuery));
 		onDropDownToggleHandler(false)();
-	}, [onDropDownToggleHandler, fieldsQuery, updateParsedQuery, notifications]);
+	}, [fieldsQuery, notifications, onDropDownToggleHandler, updateQueryString]);
 
 	const clearFilters = useCallback((): void => {
 		keyPrefixRef.current = hashCode(JSON.stringify([]));
-		updateParsedQuery([]);
-		onDropDownToggleHandler(false)();
-	}, [onDropDownToggleHandler, updateParsedQuery]);
+		setFieldsQuery([]);
+		updateQueryString('');
+	}, [updateQueryString]);
 
 	return (
 		<>
@@ -113,7 +114,6 @@ function SearchFields({
 			<SearchFieldsActionBar
 				applyUpdate={applyUpdate}
 				clearFilters={clearFilters}
-				fieldsQuery={fieldsQuery}
 			/>
 			<Suggestions applySuggestion={addSuggestedField} />
 		</>

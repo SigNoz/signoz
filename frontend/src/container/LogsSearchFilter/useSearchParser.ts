@@ -1,8 +1,7 @@
 import { getMinMax } from 'container/TopNav/AutoRefresh/config';
 import useUrlQuery from 'hooks/useUrlQuery';
 import history from 'lib/history';
-import { parseQuery, reverseParser } from 'lib/logql';
-import { ILogQLParsedQueryItem } from 'lib/logql/types';
+import { parseQuery } from 'lib/logql';
 import isEqual from 'lodash-es/isEqual';
 import { useCallback, useEffect, useMemo } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
@@ -21,7 +20,6 @@ import { getGlobalTime } from './utils';
 export function useSearchParser(): {
 	queryString: string;
 	parsedQuery: unknown;
-	updateParsedQuery: (arg0: ILogQLParsedQueryItem[]) => void;
 	updateQueryString: (arg0: string) => void;
 } {
 	const dispatch = useDispatch<Dispatch<AppActions>>();
@@ -75,32 +73,9 @@ export function useSearchParser(): {
 		}
 	}, [queryString, updateQueryString, parsedFilters]);
 
-	const updateParsedQuery = useCallback(
-		(updatedParsedPayload: ILogQLParsedQueryItem[]) => {
-			dispatch({
-				type: SET_SEARCH_QUERY_PARSED_PAYLOAD,
-				payload: updatedParsedPayload,
-			});
-			const reversedParsedQuery = reverseParser(updatedParsedPayload);
-			if (
-				!isEqual(queryString, reversedParsedQuery) ||
-				(queryString === '' && reversedParsedQuery === '')
-			) {
-				dispatch({
-					type: SET_SEARCH_QUERY_STRING,
-					payload: {
-						searchQueryString: reversedParsedQuery,
-					},
-				});
-			}
-		},
-		[dispatch, queryString],
-	);
-
 	return {
 		queryString,
 		parsedQuery,
-		updateParsedQuery,
 		updateQueryString,
 	};
 }
