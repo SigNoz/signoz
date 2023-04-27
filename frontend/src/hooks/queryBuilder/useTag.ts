@@ -3,7 +3,7 @@ import {
 	isInNotInOperator,
 } from 'container/QueryBuilder/filters/QueryBuilderSearch/utils';
 import { useCallback, useEffect, useState } from 'react';
-import { IBuilderQueryForm } from 'types/api/queryBuilder/queryBuilderData';
+import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 
 type IUseTag = {
 	handleAddTag: (value: string) => void;
@@ -25,7 +25,7 @@ export const useTag = (
 	isValidTag: boolean,
 	isFreeText: boolean,
 	handleSearch: (value: string) => void,
-	query: IBuilderQueryForm,
+	query: IBuilderQuery,
 ): IUseTag => {
 	const [tags, setTags] = useState<string[]>([]);
 

@@ -10,7 +10,7 @@ import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { findDataTypeOfOperator } from 'lib/query/findDataTypeOfOperator';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
-import { IBuilderQueryForm } from 'types/api/queryBuilder/queryBuilderData';
+import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 import {
 	HandleChangeQueryData,
 	UseQueryOperations,
@@ -40,7 +40,7 @@ export const useQueryOperations: UseQueryOperations = ({
 				(aggregateDataType === 'string' || aggregateDataType === 'bool') &&
 				typeOfValue === 'number';
 
-			const newQuery: IBuilderQueryForm = {
+			const newQuery: IBuilderQuery = {
 				...query,
 				aggregateOperator: value,
 				having: [],
@@ -84,7 +84,7 @@ export const useQueryOperations: UseQueryOperations = ({
 
 	const handleChangeAggregatorAttribute = useCallback(
 		(value: BaseAutocompleteData): void => {
-			const newQuery: IBuilderQueryForm = {
+			const newQuery: IBuilderQuery = {
 				...query,
 				aggregateAttribute: value,
 				having: [],
@@ -105,7 +105,7 @@ export const useQueryOperations: UseQueryOperations = ({
 
 			const initCopyResult = Object.fromEntries(entries);
 
-			const newQuery: IBuilderQueryForm = {
+			const newQuery: IBuilderQuery = {
 				...query,
 				...initCopyResult,
 				dataSource: nextSource,
@@ -124,7 +124,7 @@ export const useQueryOperations: UseQueryOperations = ({
 
 	const handleChangeQueryData: HandleChangeQueryData = useCallback(
 		(key, value) => {
-			const newQuery: IBuilderQueryForm = {
+			const newQuery: IBuilderQuery = {
 				...query,
 				[key]: value,
 			};

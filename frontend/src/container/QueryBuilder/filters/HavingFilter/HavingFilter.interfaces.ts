@@ -1,9 +1,6 @@
-import {
-	Having,
-	IBuilderQueryForm,
-} from 'types/api/queryBuilder/queryBuilderData';
+import { Having, IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 
 export type HavingFilterProps = {
-	query: IBuilderQueryForm;
+	query: IBuilderQuery;
 	onChange: (having: Having[]) => void;
 };

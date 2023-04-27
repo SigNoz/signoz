@@ -1,6 +1,6 @@
 import { QueryProps } from 'container/QueryBuilder/components/Query/Query.interfaces';
 import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
-import { IBuilderQueryForm } from 'types/api/queryBuilder/queryBuilderData';
+import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource } from 'types/common/queryBuilder';
 
 type UseQueryOperationsParams = Pick<
@@ -9,8 +9,8 @@ type UseQueryOperationsParams = Pick<
 >;
 
 export type HandleChangeQueryData = <
-	Key extends keyof IBuilderQueryForm,
-	Value extends IBuilderQueryForm[Key]
+	Key extends keyof IBuilderQuery,
+	Value extends IBuilderQuery[Key]
 >(
 	key: Key,
 	value: Value,

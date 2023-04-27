@@ -19,7 +19,7 @@ import React, {
 // TODO: Rename Types on the Reusable type for any source
 import {
 	IBuilderFormula,
-	IBuilderQueryForm,
+	IBuilderQuery,
 } from 'types/api/queryBuilder/queryBuilderData';
 import {
 	DataSource,
@@ -77,8 +77,7 @@ export function QueryBuilderProvider({
 	const removeEntityByIndex = useCallback(
 		(type: keyof QueryBuilderData, index: number) => {
 			setQueryBuilderData((prevState) => {
-				const currentArray: (IBuilderQueryForm | IBuilderFormula)[] =
-					prevState[type];
+				const currentArray: (IBuilderQuery | IBuilderFormula)[] = prevState[type];
 				return {
 					...prevState,
 					[type]: currentArray.filter((item, i) => index !== i),
@@ -89,10 +88,10 @@ export function QueryBuilderProvider({
 	);
 
 	const createNewQuery = useCallback(
-		(queries: IBuilderQueryForm[]): IBuilderQueryForm => {
+		(queries: IBuilderQuery[]): IBuilderQuery => {
 			const existNames = queries.map((item) => item.queryName);
 
-			const newQuery: IBuilderQueryForm = {
+			const newQuery: IBuilderQuery = {
 				...initialQueryBuilderFormValues,
 				queryName: createNewBuilderItemName({ existNames, sourceNames: alphabet }),
 				expression: createNewBuilderItemName({
@@ -156,11 +155,8 @@ export function QueryBuilderProvider({
 	);
 
 	const updateQueryBuilderData = useCallback(
-		(
-			queries: IBuilderQueryForm[],
-			index: number,
-			newQueryData: IBuilderQueryForm,
-		) => queries.map((item, idx) => (index === idx ? newQueryData : item)),
+		(queries: IBuilderQuery[], index: number, newQueryData: IBuilderQuery) =>
+			queries.map((item, idx) => (index === idx ? newQueryData : item)),
 		[],
 	);
 
@@ -171,7 +167,7 @@ export function QueryBuilderProvider({
 	);
 
 	const handleSetQueryData = useCallback(
-		(index: number, newQueryData: IBuilderQueryForm): void => {
+		(index: number, newQueryData: IBuilderQuery): void => {
 			setQueryBuilderData((prevState) => {
 				const updatedQueryBuilderData = updateQueryBuilderData(
 					prevState.queryData,
