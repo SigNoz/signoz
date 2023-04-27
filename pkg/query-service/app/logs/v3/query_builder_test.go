@@ -58,19 +58,19 @@ var testGetSelectLabelsData = []struct {
 }{
 	{
 		Name:              "select fields for groupBy attribute",
-		AggregateOperator: v3.AggregateOpeatorCount,
+		AggregateOperator: v3.AggregateOperatorCount,
 		GroupByTags:       []v3.AttributeKey{{Key: "user_name", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag}},
 		SelectLabels:      ", attributes_string_value[indexOf(attributes_string_key, 'user_name')] as user_name",
 	},
 	{
 		Name:              "select fields for groupBy resource",
-		AggregateOperator: v3.AggregateOpeatorCount,
+		AggregateOperator: v3.AggregateOperatorCount,
 		GroupByTags:       []v3.AttributeKey{{Key: "user_name", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeResource}},
 		SelectLabels:      ", resources_string_value[indexOf(resources_string_key, 'user_name')] as user_name",
 	},
 	{
 		Name:              "select fields for groupBy attribute and resource",
-		AggregateOperator: v3.AggregateOpeatorCount,
+		AggregateOperator: v3.AggregateOperatorCount,
 		GroupByTags: []v3.AttributeKey{
 			{Key: "user_name", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeResource},
 			{Key: "host", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag},
@@ -79,7 +79,7 @@ var testGetSelectLabelsData = []struct {
 	},
 	{
 		Name:              "select fields for groupBy materialized columns",
-		AggregateOperator: v3.AggregateOpeatorCount,
+		AggregateOperator: v3.AggregateOperatorCount,
 		GroupByTags:       []v3.AttributeKey{{Key: "host", IsColumn: true}},
 		SelectLabels:      ", host as host",
 	},
@@ -98,6 +98,7 @@ func TestGetSelectLabels(t *testing.T) {
 var timeSeriesFilterQueryData = []struct {
 	Name           string
 	FilterSet      *v3.FilterSet
+	GroupBy        []v3.AttributeKey
 	ExpectedFilter string
 }{
 	{
@@ -172,12 +173,28 @@ var timeSeriesFilterQueryData = []struct {
 		}},
 		ExpectedFilter: " AND attributes_string_value[indexOf(attributes_string_key, 'host')] NOT ILIKE '%102.%'",
 	},
+	{
+		Name: "Test groupBy",
+		FilterSet: &v3.FilterSet{Operator: "AND", Items: []v3.FilterItem{
+			{Key: v3.AttributeKey{Key: "host", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag}, Value: "102.", Operator: "ncontains"},
+		}},
+		GroupBy:        []v3.AttributeKey{{Key: "host", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag}},
+		ExpectedFilter: " AND attributes_string_value[indexOf(attributes_string_key, 'host')] NOT ILIKE '%102.%' AND indexOf(attributes_string_key, 'host') > 0",
+	},
+	{
+		Name: "Test groupBy isColumn",
+		FilterSet: &v3.FilterSet{Operator: "AND", Items: []v3.FilterItem{
+			{Key: v3.AttributeKey{Key: "host", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag}, Value: "102.", Operator: "ncontains"},
+		}},
+		GroupBy:        []v3.AttributeKey{{Key: "host", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag, IsColumn: true}},
+		ExpectedFilter: " AND attributes_string_value[indexOf(attributes_string_key, 'host')] NOT ILIKE '%102.%'",
+	},
 }
 
 func TestBuildLogsTimeSeriesFilterQuery(t *testing.T) {
 	for _, tt := range timeSeriesFilterQueryData {
 		Convey("TestBuildLogsTimeSeriesFilterQuery", t, func() {
-			query, err := buildLogsTimeSeriesFilterQuery(tt.FilterSet, map[string]v3.AttributeKey{})
+			query, err := buildLogsTimeSeriesFilterQuery(tt.FilterSet, tt.GroupBy, map[string]v3.AttributeKey{})
 			So(err, ShouldBeNil)
 			So(query, ShouldEqual, tt.ExpectedFilter)
 		})
@@ -202,7 +219,7 @@ var testBuildLogsQueryData = []struct {
 		Step:  60,
 		BuilderQuery: &v3.BuilderQuery{
 			QueryName:         "A",
-			AggregateOperator: v3.AggregateOpeatorCount,
+			AggregateOperator: v3.AggregateOperatorCount,
 			Expression:        "A",
 		},
 		TableName:     "logs",
@@ -216,7 +233,7 @@ var testBuildLogsQueryData = []struct {
 		BuilderQuery: &v3.BuilderQuery{
 			QueryName:          "A",
 			AggregateAttribute: v3.AttributeKey{Key: "user_name", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag},
-			AggregateOperator:  v3.AggregateOpeatorCount,
+			AggregateOperator:  v3.AggregateOperatorCount,
 			Expression:         "A",
 		},
 		TableName:     "logs",
@@ -230,7 +247,7 @@ var testBuildLogsQueryData = []struct {
 		BuilderQuery: &v3.BuilderQuery{
 			QueryName:          "A",
 			AggregateAttribute: v3.AttributeKey{Key: "user_name", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag},
-			AggregateOperator:  v3.AggregateOpeatorCount,
+			AggregateOperator:  v3.AggregateOperatorCount,
 			Filters: &v3.FilterSet{Operator: "AND", Items: []v3.FilterItem{
 				{Key: v3.AttributeKey{Key: "bytes", DataType: v3.AttributeKeyDataTypeFloat64, Type: v3.AttributeKeyTypeTag}, Value: 100, Operator: ">"},
 			}},
@@ -292,6 +309,7 @@ var testBuildLogsQueryData = []struct {
 			"toFloat64(count(distinct(name))) as value from signoz_logs.distributed_logs " +
 			"where (timestamp >= 1680066360726210000 AND timestamp <= 1680066458000000000) " +
 			"AND attributes_string_value[indexOf(attributes_string_key, 'method')] = 'GET' AND resources_string_value[indexOf(resources_string_key, 'x')] != 'abc' " +
+			"AND indexOf(attributes_string_key, 'method') > 0 " +
 			"group by method,ts " +
 			"order by method ASC,ts",
 	},
@@ -320,6 +338,8 @@ var testBuildLogsQueryData = []struct {
 			"toFloat64(count(distinct(name))) as value from signoz_logs.distributed_logs " +
 			"where (timestamp >= 1680066360726210000 AND timestamp <= 1680066458000000000) " +
 			"AND attributes_string_value[indexOf(attributes_string_key, 'method')] = 'GET' AND resources_string_value[indexOf(resources_string_key, 'x')] != 'abc' " +
+			"AND indexOf(attributes_string_key, 'method') > 0 " +
+			"AND indexOf(resources_string_key, 'x') > 0 " +
 			"group by method,x,ts " +
 			"order by method ASC,x ASC,ts",
 	},
@@ -347,6 +367,7 @@ var testBuildLogsQueryData = []struct {
 			"from signoz_logs.distributed_logs " +
 			"where (timestamp >= 1680066360726210000 AND timestamp <= 1680066458000000000) " +
 			"AND attributes_string_value[indexOf(attributes_string_key, 'method')] = 'GET' " +
+			"AND indexOf(attributes_string_key, 'method') > 0 " +
 			"group by method,ts " +
 			"order by method ASC,ts",
 	},
@@ -374,6 +395,7 @@ var testBuildLogsQueryData = []struct {
 			"from signoz_logs.distributed_logs " +
 			"where (timestamp >= 1680066360726210000 AND timestamp <= 1680066458000000000) " +
 			"AND attributes_string_value[indexOf(attributes_string_key, 'method')] = 'GET' " +
+			"AND indexOf(attributes_string_key, 'method') > 0 " +
 			"group by method,ts " +
 			"order by method ASC,ts",
 	},
@@ -401,6 +423,7 @@ var testBuildLogsQueryData = []struct {
 			"from signoz_logs.distributed_logs " +
 			"where (timestamp >= 1680066360726210000 AND timestamp <= 1680066458000000000) " +
 			"AND attributes_string_value[indexOf(attributes_string_key, 'method')] = 'GET' " +
+			"AND indexOf(attributes_string_key, 'method') > 0 " +
 			"group by method,ts " +
 			"order by method ASC,ts",
 	},
@@ -428,6 +451,7 @@ var testBuildLogsQueryData = []struct {
 			"from signoz_logs.distributed_logs " +
 			"where (timestamp >= 1680066360726210000 AND timestamp <= 1680066458000000000) " +
 			"AND attributes_string_value[indexOf(attributes_string_key, 'method')] = 'GET' " +
+			"AND indexOf(attributes_string_key, 'method') > 0 " +
 			"group by method,ts " +
 			"order by method ASC,ts",
 	},
@@ -451,6 +475,7 @@ var testBuildLogsQueryData = []struct {
 			"quantile(0.05)(bytes) as value " +
 			"from signoz_logs.distributed_logs " +
 			"where (timestamp >= 1680066360726210000 AND timestamp <= 1680066458000000000) " +
+			"AND indexOf(attributes_string_key, 'method') > 0 " +
 			"group by method,ts " +
 			"order by method ASC,ts",
 	},
@@ -471,8 +496,9 @@ var testBuildLogsQueryData = []struct {
 		TableName: "logs",
 		ExpectedQuery: "SELECT toStartOfInterval(fromUnixTimestamp64Nano(timestamp), INTERVAL 60 SECOND) AS ts, attributes_string_value[indexOf(attributes_string_key, 'method')] as method" +
 			", sum(bytes)/60 as value from signoz_logs.distributed_logs " +
-			"where (timestamp >= 1680066360726210000 AND timestamp <= 1680066458000000000)" +
-			" group by method,ts order by method ASC,ts",
+			"where (timestamp >= 1680066360726210000 AND timestamp <= 1680066458000000000) " +
+			"AND indexOf(attributes_string_key, 'method') > 0 " +
+			"group by method,ts order by method ASC,ts",
 	},
 	{
 		Name:  "Test aggregate rate",
@@ -492,6 +518,7 @@ var testBuildLogsQueryData = []struct {
 		ExpectedQuery: "SELECT toStartOfInterval(fromUnixTimestamp64Nano(timestamp), INTERVAL 60 SECOND) AS ts, attributes_string_value[indexOf(attributes_string_key, 'method')] as method" +
 			", count(attributes_float64_value[indexOf(attributes_float64_key, 'bytes')])/60 as value " +
 			"from signoz_logs.distributed_logs where (timestamp >= 1680066360726210000 AND timestamp <= 1680066458000000000) " +
+			"AND indexOf(attributes_string_key, 'method') > 0 " +
 			"group by method,ts " +
 			"order by method ASC,ts",
 	},
@@ -514,6 +541,7 @@ var testBuildLogsQueryData = []struct {
 			"attributes_string_value[indexOf(attributes_string_key, 'method')] as method, " +
 			"sum(attributes_float64_value[indexOf(attributes_float64_key, 'bytes')])/60 as value " +
 			"from signoz_logs.distributed_logs where (timestamp >= 1680066360726210000 AND timestamp <= 1680066458000000000) " +
+			"AND indexOf(attributes_string_key, 'method') > 0 " +
 			"group by method,ts " +
 			"order by method ASC,ts",
 	},
