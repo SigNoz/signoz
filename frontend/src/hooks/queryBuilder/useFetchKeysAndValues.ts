@@ -74,8 +74,8 @@ export const useFetchKeysAndValues = (
 			dataSource: query.dataSource,
 			aggregateAttribute: query.aggregateAttribute.key,
 			attributeKey,
-			attributeKeyDataType: query.aggregateAttribute.dataType,
-			filterAttributeTagType: query.aggregateAttribute.type ?? null,
+			filterAttributeKeyDataType: query.aggregateAttribute.dataType,
+			tagType: query.aggregateAttribute.type ?? null,
 			searchText: !result[result.length - 1]?.endsWith(',') // for IN and Not IN string ends with ","
 				? result[result.length - 1] ?? '' // so needs to add last search value if present
 				: '',

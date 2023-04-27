@@ -13,8 +13,8 @@ export const getAttributesValues = async ({
 	dataSource,
 	aggregateAttribute,
 	attributeKey,
-	attributeKeyDataType,
-	filterAttributeTagType,
+	filterAttributeKeyDataType,
+	tagType,
 	searchText,
 }: IGetAttributeValuesPayload): Promise<
 	SuccessResponse<IAttributeValuesResponse> | ErrorResponse
@@ -27,7 +27,7 @@ export const getAttributesValues = async ({
 				aggregateAttribute,
 				attributeKey,
 				searchText,
-			})}&attributeKeyDataType=${attributeKeyDataType}&filterAttributeTagType=${filterAttributeTagType}`,
+			})}&filterAttributeKeyDataType=${filterAttributeKeyDataType}&tagType=${tagType}`,
 		);
 
 		return {
