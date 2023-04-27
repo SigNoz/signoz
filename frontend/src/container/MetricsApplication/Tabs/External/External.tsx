@@ -104,13 +104,6 @@ function External({ getWidgetQueryBuilder }: ExternalProps): JSX.Element {
 	return (
 		<>
 			<Row gutter={24}>
-				<Col span={24}>
-					{servicename && (
-						<Table widgetId="external-calls-table" serviceName={servicename} />
-					)}
-					<br />
-				</Col>
-
 				<Col span={12}>
 					<Button
 						type="default"
@@ -257,6 +250,13 @@ function External({ getWidgetQueryBuilder }: ExternalProps): JSX.Element {
 							/>
 						</GraphContainer>
 					</Card>
+				</Col>
+			</Row>
+			<Row>
+				<Col span={24}>
+					{servicename && (
+						<Table widgetId="external-calls-table" serviceName={servicename} />
+					)}
 				</Col>
 			</Row>
 		</>

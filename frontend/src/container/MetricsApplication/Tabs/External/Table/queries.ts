@@ -107,6 +107,12 @@ export function makeErrPercentQuery(
 									op: 'IN',
 									value: [props.serviceName],
 								},
+								{
+									id: '',
+									key: 'status_code',
+									op: 'IN',
+									value: ['STATUS_CODE_ERROR'],
+								},
 							],
 							op: 'AND',
 						},
