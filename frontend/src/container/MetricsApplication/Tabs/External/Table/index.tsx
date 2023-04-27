@@ -14,6 +14,7 @@ import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
 import { GlobalReducer } from 'types/reducer/globalTime';
 
 import { makeTableRows, TableRow } from './calculations';
+import FilterDropdown from './FilterDropdown';
 import {
 	makeDurationQuery,
 	makeErrPercentQuery,
@@ -32,7 +33,7 @@ function Table(props: TableProps): JSX.Element {
 	const { selectedTime } = useSelector<AppState, GlobalReducer>(
 		(state) => state.globalTime,
 	);
-	console.log('selected time', selectedTime);
+	const [addressFilter, setAddressFilter] = React.useState<string>('');
 
 	const { t } = useTranslation(['common']);
 	const { notifications } = useNotifications();
@@ -105,16 +106,16 @@ function Table(props: TableProps): JSX.Element {
 		[reqRateResponse.data, durationResponse.data, errPercentResponse.data],
 	);
 
+	console.log('addressFilter', addressFilter);
 	return (
 		<div>
+			<FilterDropdown value={addressFilter} onChange={setAddressFilter} />
 			<ResizeTable
 				columns={[
 					{
 						title: 'Address',
 						dataIndex: 'address',
 						key: 'address',
-						sorter: (a: TableRow, b: TableRow): number =>
-							a.address.localeCompare(b.address, 'en', { numeric: true }),
 					},
 					{
 						title: 'Req. rate',

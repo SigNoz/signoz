@@ -66,7 +66,7 @@ export function makeDurationQuery(
 					{
 						disabled: false,
 						expression: 'A/B',
-						legend: '{{address}}',
+						legend: '',
 						name: resultQueryName,
 					},
 				],
@@ -145,7 +145,7 @@ export function makeErrPercentQuery(
 					{
 						disabled: false,
 						expression: 'A*100/B',
-						legend: '{{address}}',
+						legend: '',
 						name: resultQueryName,
 					},
 				],
@@ -188,7 +188,7 @@ export function makeReqRateQuery(
 							],
 							op: 'AND',
 						},
-						legend: '{{address}}',
+						legend: '',
 						aggregateOperator: EAggregateOperator.SUM_RATE,
 						metricName: 'signoz_external_call_latency_count',
 						groupBy: ['address'],
@@ -198,7 +198,7 @@ export function makeReqRateQuery(
 					{
 						disabled: false,
 						expression: 'A',
-						legend: '{{address}}',
+						legend: '',
 						name: resultQueryName,
 					},
 				],
