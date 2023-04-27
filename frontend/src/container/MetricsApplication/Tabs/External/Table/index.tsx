@@ -1,74 +1,63 @@
 import { ResizeTable } from 'components/ResizeTable';
-import { getDashboardVariables } from 'lib/dashbaordVariables/getDashboardVariables';
-import React from 'react';
+import { useNotifications } from 'hooks/useNotifications';
+import React, { useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useQuery } from 'react-query';
 import { useSelector } from 'react-redux';
 import {
 	GetMetricQueryRange,
-	GetQueryResults,
 	GetQueryResultsProps,
 } from 'store/actions/dashboard/getQueryResults';
 import { AppState } from 'store/reducers';
 import { ErrorResponse, SuccessResponse } from 'types/api';
-import { Query } from 'types/api/dashboard/getAll';
 import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
-import {
-	EAggregateOperator,
-	EQueryType,
-	EReduceOperator,
-} from 'types/common/dashboard';
 import { GlobalReducer } from 'types/reducer/globalTime';
 
+import { makeTableRows } from './calculations';
+import { makeDurationQuery } from './queries';
+
+interface TableProps {
+	widgetId: string;
+	serviceName: string;
+}
+
 function Table(props: TableProps): JSX.Element {
-	const { minTime, maxTime, selectedTime } = useSelector<
-		AppState,
-		GlobalReducer
-	>((state) => state.globalTime);
+	const { widgetId, serviceName } = props;
+	const { t } = useTranslation(['common']);
+	const { selectedTime } = useSelector<AppState, GlobalReducer>(
+		(state) => state.globalTime,
+	);
 
-	const getQueryResultsProps: GetQueryResultsProps = {
-		globalSelectedInterval: selectedTime,
-		graphType: 'VALUE',
-		variables: {},
-		selectedTime: 'GLOBAL_TIME',
-		widgetId: 'abc',
-		query: {
-			queryType: EQueryType.QUERY_BUILDER,
-			metricsBuilder: {
-				formulas: [],
-				queryBuilder: [
-					{
-						name: 'A',
-						disabled: false,
-						tagFilters: {
-							items: [
-								{
-									id: '',
-									key: 'service_name',
-									op: 'IN',
-									value: ['frontend'],
-								},
-							],
-							op: 'AND',
-						},
-						legend: 'A',
-						aggregateOperator: EAggregateOperator.SUM,
-						metricName: 'signoz_external_call_latency_count',
-						groupBy: ['address'],
-						reduceTo: EReduceOperator['Average of values in timeframe'],
-					},
-				],
-			},
-			clickHouse: [],
-			promQL: [],
-		},
-	};
+	const { notifications } = useNotifications();
 
-	const response = useQuery<
+	const durationQuery: GetQueryResultsProps = makeDurationQuery({
+		widgetId: `${widgetId}-duration`,
+		selectedTime,
+		serviceName,
+	});
+
+	const durationResponse = useQuery<
 		SuccessResponse<MetricRangePayloadProps> | ErrorResponse
-	>(`Abc`, () => GetMetricQueryRange(getQueryResultsProps));
+	>(`${widgetId}-duration`, () => GetMetricQueryRange(durationQuery));
 
-	console.log('timez', minTime, maxTime, selectedTime);
-	console.log('response', response);
+	if (durationResponse.isError) {
+		notifications.error({
+			message: t('something_went_wrong'),
+			description: durationResponse.error?.toString(),
+		});
+	}
+
+	console.log('addressesRes', durationResponse);
+
+	const tableRows = useMemo(
+		() =>
+			makeTableRows({
+				duration: durationResponse.data?.payload?.data.result || [],
+				errorPercentage: durationResponse.data?.payload?.data.result || [],
+				reqRate: durationResponse.data?.payload?.data.result || [],
+			}),
+		[durationResponse.data],
+	);
 
 	return (
 		<div>
@@ -95,13 +84,10 @@ function Table(props: TableProps): JSX.Element {
 						key: 'duration',
 					},
 				]}
+				dataSource={tableRows}
 			/>
 		</div>
 	);
-}
-
-interface TableProps {
-	queries: Query[];
 }
 
 export default Table;

@@ -105,7 +105,9 @@ function External({ getWidgetQueryBuilder }: ExternalProps): JSX.Element {
 		<>
 			<Row gutter={24}>
 				<Col span={24}>
-					<Table />
+					{servicename && (
+						<Table widgetId="external-calls-table" serviceName={servicename} />
+					)}
 					<br />
 				</Col>
 
