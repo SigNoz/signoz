@@ -8,8 +8,8 @@ export interface IGetAttributeValuesPayload {
 	aggregateAttribute: string;
 	searchText: string;
 	attributeKey: string;
-	attributeKeyDataType: BaseAutocompleteData['dataType'];
-	filterAttributeTagType: BaseAutocompleteData['type'];
+	filterAttributeKeyDataType: BaseAutocompleteData['dataType'];
+	tagType: BaseAutocompleteData['type'];
 }
 
 export interface IAttributeValuesResponse {
