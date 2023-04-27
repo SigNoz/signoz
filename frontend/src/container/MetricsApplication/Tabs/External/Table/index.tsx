@@ -1,6 +1,7 @@
 import { ResizeTable } from 'components/ResizeTable';
 import { useNotifications } from 'hooks/useNotifications';
 import React, { useMemo } from 'react';
+import Highlighter from 'react-highlight-words';
 import { useTranslation } from 'react-i18next';
 import { useQuery } from 'react-query';
 import { useSelector } from 'react-redux';
@@ -106,16 +107,31 @@ function Table(props: TableProps): JSX.Element {
 		[reqRateResponse.data, durationResponse.data, errPercentResponse.data],
 	);
 
-	console.log('addressFilter', addressFilter);
+	const tableRowsFiltered = useMemo(() => {
+		if (!addressFilter) {
+			return tableRows;
+		}
+		return tableRows.filter((row) => row.address.includes(addressFilter));
+	}, [tableRows, addressFilter]);
+
 	return (
 		<div>
 			<FilterDropdown value={addressFilter} onChange={setAddressFilter} />
 			<ResizeTable
+				key={addressFilter /* Force cell re-render on filter value change. */}
 				columns={[
 					{
 						title: 'Address',
 						dataIndex: 'address',
 						key: 'address',
+						render: (value: string): JSX.Element => (
+							<Highlighter
+								highlightClassName="highlight-substring"
+								searchWords={[addressFilter]}
+								autoEscape
+								textToHighlight={value}
+							/>
+						),
 					},
 					{
 						title: 'Req. rate',
@@ -147,7 +163,7 @@ function Table(props: TableProps): JSX.Element {
 					},
 				]}
 				rowKey="address"
-				dataSource={tableRows}
+				dataSource={tableRowsFiltered}
 			/>
 		</div>
 	);

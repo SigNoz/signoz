@@ -1,6 +1,4 @@
-import Card from 'antd/es/card';
-import Input from 'antd/es/input';
-import Space from 'antd/es/space';
+import { Card, Input, Space } from 'antd';
 import React from 'react';
 
 export type FilterDropdownProps = {
