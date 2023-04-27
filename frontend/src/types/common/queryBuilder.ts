@@ -152,3 +152,8 @@ export type QueryBuilderContextType = {
 	addNewQuery: () => void;
 	addNewFormula: () => void;
 };
+
+export type QueryAdditionalFilter = {
+	field: keyof IBuilderQueryForm;
+	text: string;
+};

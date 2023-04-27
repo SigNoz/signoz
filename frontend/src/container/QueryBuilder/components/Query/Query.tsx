@@ -1,6 +1,6 @@
 import { Col, Input, Row } from 'antd';
 // ** Constants
-import { mapOfFilters, PANEL_TYPES } from 'constants/queryBuilder';
+import { PANEL_TYPES } from 'constants/queryBuilder';
 // ** Components
 import {
 	AdditionalFiltersToggler,
@@ -22,13 +22,7 @@ import { OrderByFilter } from 'container/QueryBuilder/filters/OrderByFilter';
 import QueryBuilderSearch from 'container/QueryBuilder/filters/QueryBuilderSearch';
 import { useQueryOperations } from 'hooks/queryBuilder/useQueryOperations';
 // ** Hooks
-import React, {
-	ChangeEvent,
-	memo,
-	ReactNode,
-	useCallback,
-	useMemo,
-} from 'react';
+import React, { ChangeEvent, memo, ReactNode, useCallback } from 'react';
 import { IBuilderQueryForm } from 'types/api/queryBuilder/queryBuilderData';
 import { StringOperators } from 'types/common/queryBuilder';
 import { transformToUpperCase } from 'utils/transformToUpperCase';
@@ -46,6 +40,7 @@ export const Query = memo(function Query({
 	const {
 		operators,
 		isMetricsDataSource,
+		listOfAdditionalFilters,
 		handleChangeAggregatorAttribute,
 		handleChangeDataSource,
 		handleChangeQueryData,
@@ -112,10 +107,6 @@ export const Query = memo(function Query({
 		},
 		[handleChangeQueryData],
 	);
-
-	const listOfAdditionalFilters = useMemo(() => mapOfFilters[query.dataSource], [
-		query,
-	]);
 
 	const renderAdditionalFilters = useCallback((): ReactNode => {
 		switch (panelType) {

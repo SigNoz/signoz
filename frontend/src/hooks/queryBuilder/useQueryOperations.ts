@@ -1,6 +1,7 @@
 import {
 	initialAggregateAttribute,
 	initialQueryBuilderFormValues,
+	mapOfFilters,
 	mapOfOperators,
 	PANEL_TYPES,
 } from 'constants/queryBuilder';
@@ -14,7 +15,11 @@ import {
 	HandleChangeQueryData,
 	UseQueryOperations,
 } from 'types/common/operations.types';
-import { DataSource, StringOperators } from 'types/common/queryBuilder';
+import {
+	DataSource,
+	QueryAdditionalFilter,
+	StringOperators,
+} from 'types/common/queryBuilder';
 
 export const useQueryOperations: UseQueryOperations = ({
 	query,
@@ -23,8 +28,11 @@ export const useQueryOperations: UseQueryOperations = ({
 }) => {
 	const { handleSetQueryData, removeEntityByIndex } = useQueryBuilder();
 	const [operators, setOperators] = useState<string[]>([]);
+	const [listOfAdditionalFilters, setListOfAdditionalFilters] = useState<
+		string[]
+	>([]);
 
-	const { dataSource } = query;
+	const { dataSource, aggregateOperator } = query;
 
 	const handleChangeOperator = useCallback(
 		(value: string): void => {
@@ -68,6 +76,19 @@ export const useQueryOperations: UseQueryOperations = ({
 			}
 
 			return operatorsByDataSource;
+		},
+		[],
+	);
+
+	const getNewListOfAdditionalFilters = useCallback(
+		(dataSource: DataSource, operator: string): string[] => {
+			let result: QueryAdditionalFilter[] = mapOfFilters[dataSource];
+
+			if (dataSource === DataSource.METRICS && operator === StringOperators.NOOP) {
+				result = result.filter((currentFilter) => currentFilter.field !== 'having');
+			}
+
+			return result.map((item) => item.text);
 		},
 		[],
 	);
@@ -141,9 +162,19 @@ export const useQueryOperations: UseQueryOperations = ({
 		}
 	}, [operators, dataSource, panelType, getNewOperators]);
 
+	useEffect(() => {
+		const additionalFilters = getNewListOfAdditionalFilters(
+			dataSource,
+			aggregateOperator,
+		);
+
+		setListOfAdditionalFilters(additionalFilters);
+	}, [dataSource, aggregateOperator, getNewListOfAdditionalFilters]);
+
 	return {
 		isMetricsDataSource,
 		operators,
+		listOfAdditionalFilters,
 		handleChangeOperator,
 		handleChangeAggregatorAttribute,
 		handleChangeDataSource,

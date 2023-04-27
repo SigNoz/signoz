@@ -21,6 +21,7 @@ export type UseQueryOperations = (
 ) => {
 	isMetricsDataSource: boolean;
 	operators: string[];
+	listOfAdditionalFilters: string[];
 	handleChangeOperator: (value: string) => void;
 	handleChangeAggregatorAttribute: (value: BaseAutocompleteData) => void;
 	handleChangeDataSource: (newSource: DataSource) => void;

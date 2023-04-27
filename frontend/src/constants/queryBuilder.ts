@@ -14,6 +14,7 @@ import {
 	MetricAggregateOperator,
 	NumberOperators,
 	PanelTypeKeys,
+	QueryAdditionalFilter,
 	ReduceOperators,
 	StringOperators,
 	TracesAggregatorOperator,
@@ -41,11 +42,24 @@ export const mapOfOperators: Record<DataSource, string[]> = {
 	traces: Object.values(TracesAggregatorOperator),
 };
 
-export const mapOfFilters: Record<DataSource, string[]> = {
-	// eslint-disable-next-line sonarjs/no-duplicate-string
-	metrics: ['Aggregation interval', 'Having'],
-	logs: ['Order by', 'Limit', 'Having', 'Aggregation interval'],
-	traces: ['Order by', 'Limit', 'Having', 'Aggregation interval'],
+export const mapOfFilters: Record<DataSource, QueryAdditionalFilter[]> = {
+	metrics: [
+		// eslint-disable-next-line sonarjs/no-duplicate-string
+		{ text: 'Aggregation interval', field: 'stepInterval' },
+		{ text: 'Having', field: 'having' },
+	],
+	logs: [
+		{ text: 'Order by', field: 'orderBy' },
+		{ text: 'Limit', field: 'limit' },
+		{ text: 'Having', field: 'having' },
+		{ text: 'Aggregation interval', field: 'stepInterval' },
+	],
+	traces: [
+		{ text: 'Order by', field: 'orderBy' },
+		{ text: 'Limit', field: 'limit' },
+		{ text: 'Having', field: 'having' },
+		{ text: 'Aggregation interval', field: 'stepInterval' },
+	],
 };
 
 export const REDUCE_TO_VALUES: SelectOption<ReduceOperators, string>[] = [
