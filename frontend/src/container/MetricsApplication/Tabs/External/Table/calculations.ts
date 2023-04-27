@@ -1,6 +1,7 @@
 import { QueryData } from 'types/api/widgets/getQuery';
 
 import { resultQueryName } from './queries';
+import * as reduceTo from './reduceTo';
 
 type Address = string;
 
@@ -18,6 +19,7 @@ export interface TableRow {
 	errPercent?: number;
 	reqRate?: number;
 }
+
 
 type GroupByAddressResult = Record<Address, QueryData['values']>;
 function groupByAddress(data: QueryData[]): GroupByAddressResult {
@@ -40,7 +42,7 @@ type MakeDataEntriesProps = {
 	duration: Record<Address, QueryData['values']>;
 	errPercent: Record<Address, QueryData['values']>;
 	reqRate: Record<Address, QueryData['values']>;
-	reduceToNumber: (values: number[]) => number;
+	reduceToNumber: (ns: number[]) => number;
 };
 function makeDataEntries(props: MakeDataEntriesProps): DataEntries {
 	function valuesToNumbers(values: QueryData['values']): number[] {
@@ -75,21 +77,18 @@ function makeDataEntries(props: MakeDataEntriesProps): DataEntries {
 	return result;
 }
 
-function avg(values: number[]): number {
-	return values.reduce((acc, curr) => acc + curr, 0) / values.length;
-}
-
 export type MakeTableRowsProps = {
 	duration: QueryData[];
 	errPercent: QueryData[];
 	reqRate: QueryData[];
+	reduceTo: reduceTo.ReduceTo;
 };
 export function makeTableRows(props: MakeTableRowsProps): TableRow[] {
 	const dataEntries = makeDataEntries({
 		duration: groupByAddress(props.duration),
 		errPercent: groupByAddress(props.errPercent),
 		reqRate: groupByAddress(props.reqRate),
-		reduceToNumber: avg,
+		reduceToNumber: reduceTo.pickFn(props.reduceTo),
 	});
 
 	return Object.entries(dataEntries).map(([address, dataEntry]) => ({

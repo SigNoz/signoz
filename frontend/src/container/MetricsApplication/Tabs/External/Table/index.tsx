@@ -15,12 +15,13 @@ import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
 import { GlobalReducer } from 'types/reducer/globalTime';
 
 import { makeTableRows, TableRow } from './calculations';
-import FilterDropdown from './FilterDropdown';
 import {
 	makeDurationQuery,
 	makeErrPercentQuery,
 	makeReqRateQuery,
 } from './queries';
+import { ReduceTo } from './reduceTo';
+import Toolbar from './Toolbar';
 
 interface TableProps {
 	widgetId: string;
@@ -35,6 +36,7 @@ function Table(props: TableProps): JSX.Element {
 		(state) => state.globalTime,
 	);
 	const [addressFilter, setAddressFilter] = React.useState<string>('');
+	const [reduceTo, setReduceTo] = React.useState<ReduceTo>('avg');
 
 	const { t } = useTranslation(['common']);
 	const { notifications } = useNotifications();
@@ -103,8 +105,14 @@ function Table(props: TableProps): JSX.Element {
 				duration: durationResponse.data?.payload?.data.result || [],
 				errPercent: errPercentResponse.data?.payload?.data.result || [],
 				reqRate: reqRateResponse.data?.payload?.data.result || [],
+				reduceTo,
 			}),
-		[reqRateResponse.data, durationResponse.data, errPercentResponse.data],
+		[
+			reqRateResponse.data,
+			durationResponse.data,
+			errPercentResponse.data,
+			reduceTo,
+		],
 	);
 
 	const tableRowsFiltered = useMemo(() => {
@@ -116,7 +124,12 @@ function Table(props: TableProps): JSX.Element {
 
 	return (
 		<div>
-			<FilterDropdown value={addressFilter} onChange={setAddressFilter} />
+			<Toolbar
+				addressFilter={addressFilter}
+				onAddressFilterChange={setAddressFilter}
+				reduceTo={reduceTo}
+				onReduceToChange={setReduceTo}
+			/>
 			<ResizeTable
 				key={addressFilter /* Force cell re-render on filter value change. */}
 				columns={[
