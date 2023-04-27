@@ -8,8 +8,8 @@ import store from 'store';
 
 import { ListMarker } from '../components';
 
-describe('ListMarker', () => {
-	it('should render ListMarker', () => {
+describe('Query Builder List Marker', () => {
+	it('it should render ListMarker', () => {
 		const { asFragment } = render(
 			<MemoryRouter>
 				<Provider store={store}>

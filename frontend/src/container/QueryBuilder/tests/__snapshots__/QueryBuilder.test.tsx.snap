@@ -1,6 +1,6 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`QueryBuilder should render QueryBuilder 1`] = `
+exports[`Query Builder it should render QueryBuilder 1`] = `
 <DocumentFragment>
   <div
     class="ant-row ant-row-start css-dev-only-do-not-override-1i536d8"

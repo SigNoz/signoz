@@ -1,6 +1,6 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`QueryBuilder should render OrderByFilter 1`] = `
+exports[`QueryBuilder: orderBy Filter it should render OrderByFilter 1`] = `
 <DocumentFragment>
   <div
     class="ant-select css-dev-only-do-not-override-1i536d8 ant-select-multiple ant-select-disabled ant-select-show-search"

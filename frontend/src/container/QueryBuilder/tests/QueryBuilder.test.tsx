@@ -9,8 +9,8 @@ import { DataSource } from 'types/common/queryBuilder';
 
 import { QueryBuilder } from '../QueryBuilder';
 
-describe('QueryBuilder', () => {
-	it('renders the QueryBuilder component', () => {
+describe('Query Builder', () => {
+	it('it renders the QueryBuilder component', () => {
 		render(
 			<QueryBuilder
 				config={{
@@ -22,7 +22,7 @@ describe('QueryBuilder', () => {
 		);
 	});
 
-	it('adds a new query when the "Query" button is clicked', () => {
+	it('it adds a new query when the "Query" button is clicked', () => {
 		const { getByText } = render(
 			<QueryBuilder
 				config={{
@@ -34,11 +34,10 @@ describe('QueryBuilder', () => {
 		);
 
 		fireEvent.click(getByText('Query'));
-
 		expect(getByText('Query')).toBeInTheDocument();
 	});
 
-	it('adds a new formula when the "Formula" button is clicked', () => {
+	it('it adds a new formula when the "Formula" button is clicked', () => {
 		const { getByText } = render(
 			<QueryBuilder
 				config={{
@@ -50,13 +49,10 @@ describe('QueryBuilder', () => {
 		);
 
 		fireEvent.click(getByText('Formula'));
-
 		expect(getByText('Formula')).toBeInTheDocument();
 	});
-});
 
-describe('QueryBuilder', () => {
-	it('should render QueryBuilder', () => {
+	it('it should render QueryBuilder', () => {
 		const { asFragment } = render(
 			<MemoryRouter>
 				<Provider store={store}>

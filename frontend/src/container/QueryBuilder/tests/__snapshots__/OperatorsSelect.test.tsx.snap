@@ -1,6 +1,6 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`QueryBuilder should render OperatorsSelect 1`] = `
+exports[`QueryBuilder: Operators Selection Dropdown it should render OperatorsSelect 1`] = `
 <DocumentFragment>
   <div
     class="ant-select css-dev-only-do-not-override-1i536d8 ant-select-single ant-select-show-arrow"
