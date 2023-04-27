@@ -40,7 +40,7 @@ describe('useFetchKeysAndValues', () => {
 		});
 	});
 
-	test('should results', () => {
+	test('should results', async () => {
 		const { result } = renderHook(
 			() => useFetchKeysAndValues(searchValue, valueWithAttributeAndOperator),
 			{
@@ -57,14 +57,16 @@ describe('useFetchKeysAndValues', () => {
 
 		result.current.results = ['employee = find'];
 
-		Object.keys(result.current.results).forEach((key: string) => {
-			expect(
-				result.current.results[(key as unknown) as number].includes('find'),
-			).toBeTruthy();
+		await waitFor(() => {
+			Object.keys(result.current.results).forEach((key: string) => {
+				expect(
+					result.current.results[(key as unknown) as number].includes('find'),
+				).toBeTruthy();
+			});
 		});
 	});
 
-	test('should keys data', () => {
+	test('should keys data', async () => {
 		const { result } = renderHook(
 			() => useFetchKeysAndValues(searchValue, valueWithAttributeAndOperator),
 			{
@@ -85,13 +87,15 @@ describe('useFetchKeysAndValues', () => {
 			];
 		});
 
-		expect(result.current.keys).toStrictEqual([
-			{
-				key: 'exporter',
-				dataType: 'string',
-				type: 'tag',
-				isColumn: false,
-			},
-		]);
+		await waitFor(() => {
+			expect(result.current.keys).toStrictEqual([
+				{
+					key: 'exporter',
+					dataType: 'string',
+					type: 'tag',
+					isColumn: false,
+				},
+			]);
+		});
 	});
 });
