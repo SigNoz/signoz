@@ -31,7 +31,12 @@ export const useQueryOperations: UseQueryOperations = ({
 			const aggregateDataType: BaseAutocompleteData['dataType'] =
 				query.aggregateAttribute.dataType;
 
-			let newQuery: IBuilderQueryForm = {
+			const typeOfValue = findDataTypeOfOperator(value);
+			const shouldResetAggregateAttribute =
+				(aggregateDataType === 'string' || aggregateDataType === 'bool') &&
+				typeOfValue === 'number';
+
+			const newQuery: IBuilderQueryForm = {
 				...query,
 				aggregateOperator: value,
 				having: [],
@@ -39,31 +44,10 @@ export const useQueryOperations: UseQueryOperations = ({
 				orderBy: [],
 				limit: null,
 				tagFilters: { items: [], op: 'AND' },
+				...(shouldResetAggregateAttribute
+					? { aggregateAttribute: initialAggregateAttribute }
+					: {}),
 			};
-
-			switch (aggregateDataType) {
-				case 'string':
-				case 'bool': {
-					const typeOfValue = findDataTypeOfOperator(value);
-
-					newQuery = {
-						...newQuery,
-						...(typeOfValue === 'number'
-							? { aggregateAttribute: initialAggregateAttribute }
-							: {}),
-					};
-
-					break;
-				}
-				case 'float64':
-				case 'int64': {
-					break;
-				}
-
-				default: {
-					break;
-				}
-			}
 
 			handleSetQueryData(index, newQuery);
 		},
