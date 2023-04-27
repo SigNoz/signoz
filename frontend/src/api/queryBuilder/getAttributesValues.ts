@@ -1,6 +1,7 @@
 import { ApiV3Instance } from 'api';
 import { ErrorResponseHandler } from 'api/ErrorResponseHandler';
 import { AxiosError } from 'axios';
+import createQueryParams from 'lib/createQueryParams';
 import { ErrorResponse, SuccessResponse } from 'types/api';
 import {
 	IAttributeValuesResponse,
@@ -20,7 +21,13 @@ export const getAttributesValues = async ({
 > => {
 	try {
 		const response = await ApiV3Instance.get(
-			`/autocomplete/attribute_values?aggregateOperator=${aggregateOperator}&dataSource=${dataSource}&aggregateAttribute=${aggregateAttribute}&filterAttributeTagType=${filterAttributeTagType}&searchText=${searchText}&attributeKey=${attributeKey}&attributeKeyDataType=${attributeKeyDataType}`,
+			`/autocomplete/attribute_values?${createQueryParams({
+				aggregateOperator,
+				dataSource,
+				aggregateAttribute,
+				attributeKey,
+				searchText,
+			})}&attributeKeyDataType=${attributeKeyDataType}&filterAttributeTagType=${filterAttributeTagType}`,
 		);
 
 		return {
