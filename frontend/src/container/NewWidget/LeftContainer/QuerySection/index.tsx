@@ -4,7 +4,7 @@ import TextToolTip from 'components/TextToolTip';
 import { GRAPH_TYPES } from 'container/NewDashboard/ComponentsSlider';
 import { timePreferance } from 'container/NewWidget/RightContainer/timeItems';
 import { QueryBuilder } from 'container/QueryBuilder';
-import { useQueryBuilder } from 'hooks/useQueryBuilder';
+import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { cloneDeep, isEqual } from 'lodash-es';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { connect, useSelector } from 'react-redux';
@@ -25,11 +25,9 @@ import { v4 as uuid } from 'uuid';
 import {
 	WIDGET_CLICKHOUSE_QUERY_KEY_NAME,
 	WIDGET_PROMQL_QUERY_KEY_NAME,
-	WIDGET_QUERY_BUILDER_QUERY_KEY_NAME,
 } from './constants';
 import ClickHouseQueryContainer from './QueryBuilder/clickHouse';
 import PromQLQueryContainer from './QueryBuilder/promQL';
-import QueryBuilderQueryContainer from './QueryBuilder/queryBuilder';
 import TabHeader from './TabHeader';
 import { IHandleUpdatedQuery } from './types';
 import { getQueryKey } from './utils/getQueryKey';
@@ -49,9 +47,10 @@ function QuerySection({
 		CLICKHOUSE: uuid(),
 		PROM: uuid(),
 	});
-	const { dashboards } = useSelector<AppState, DashboardReducer>(
-		(state) => state.dashboards,
-	);
+	const { dashboards, isLoadingQueryResult } = useSelector<
+		AppState,
+		DashboardReducer
+	>((state) => state.dashboards);
 	const [selectedDashboards] = dashboards;
 	const { search } = useLocation();
 	const { widgets } = selectedDashboards.data;
@@ -160,22 +159,7 @@ function QuerySection({
 					)}
 				/>
 			),
-			children: (
-				// <QueryBuilderQueryContainer
-				// 	key={rctTabKey.QUERY_BUILDER}
-				// 	queryData={localQueryChanges}
-				// 	updateQueryData={({ updatedQuery }: IHandleUpdatedQuery): void => {
-				// 		handleLocalQueryUpdate({ updatedQuery });
-				// 	}}
-				// 	metricsBuilderQueries={
-				// 		localQueryChanges[WIDGET_QUERY_BUILDER_QUERY_KEY_NAME]
-				// 	}
-				// 	selectedGraph={selectedGraph}
-				// />
-
-				// TODO: uncomment for testing new QueryBuilder
-				<QueryBuilder panelType={selectedGraph} />
-			),
+			children: <QueryBuilder panelType={selectedGraph} />,
 		},
 		{
 			key: EQueryType.CLICKHOUSE.toString(),
@@ -239,7 +223,11 @@ function QuerySection({
 									text: `This will temporarily save the current query and graph state. This will persist across tab change`,
 								}}
 							/>
-							<Button type="primary" onClick={handleStageQuery}>
+							<Button
+								loading={isLoadingQueryResult}
+								type="primary"
+								onClick={handleStageQuery}
+							>
 								Stage & Run Query
 							</Button>
 						</span>

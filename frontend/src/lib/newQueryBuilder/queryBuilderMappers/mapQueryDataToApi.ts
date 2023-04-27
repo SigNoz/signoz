@@ -4,13 +4,18 @@ import {
 } from 'types/api/queryBuilder/queryBuilderData';
 import { QueryBuilderData } from 'types/common/queryBuilder';
 
-type MapQueryDataToApiResult = Record<string, IBuilderQuery | IBuilderFormula>;
+type MapQueryDataToApiResult = {
+	data: Record<string, IBuilderQuery | IBuilderFormula>;
+	newLegendMap: Record<string, string>;
+};
 type MapQuery = Record<string, IBuilderQuery>;
 type MapFormula = Record<string, IBuilderFormula>;
 
 export const mapQueryDataToApi = (
 	data: QueryBuilderData,
 ): MapQueryDataToApiResult => {
+	const newLegendMap: Record<string, string> = {};
+
 	const preparedQueryData: MapQuery = data.queryData.reduce<MapQuery>(
 		(acc, query) => {
 			const { legend, ...restQuery } = query;
@@ -21,6 +26,8 @@ export const mapQueryDataToApi = (
 					...restQuery,
 				},
 			};
+
+			newLegendMap[query.queryName] = query.legend;
 
 			return newResult;
 		},
@@ -41,5 +48,8 @@ export const mapQueryDataToApi = (
 		{},
 	);
 
-	return { ...preparedQueryData, ...preparedFormulaData };
+	return {
+		data: { ...preparedQueryData, ...preparedFormulaData },
+		newLegendMap,
+	};
 };

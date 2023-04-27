@@ -3,7 +3,10 @@ import {
 	ClickHouseQueryTemplate,
 	PromQLQueryTemplate,
 } from 'constants/dashboard';
-import { initialQueryBuilderFormValues } from 'constants/queryBuilder';
+import {
+	initialQueryBuilderFormValues,
+	PANEL_TYPES,
+} from 'constants/queryBuilder';
 import { GRAPH_TYPES } from 'container/NewDashboard/ComponentsSlider';
 import GetQueryName from 'lib/query/GetQueryName';
 import { Dispatch } from 'redux';
@@ -42,7 +45,7 @@ export const GetDashboard = ({
 						isStacked: false,
 						nullZeroValues: 'zero',
 						opacity: '0',
-						panelTypes: graphType || 'graph',
+						panelTypes: graphType || PANEL_TYPES.TIME_SERIES,
 						timePreferance: 'GLOBAL_TIME',
 						title: '',
 						queryType: 0,

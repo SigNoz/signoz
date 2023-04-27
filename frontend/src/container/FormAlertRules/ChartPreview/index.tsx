@@ -1,6 +1,7 @@
 import { InfoCircleOutlined } from '@ant-design/icons';
 import { StaticLineProps } from 'components/Graph';
 import Spinner from 'components/Spinner';
+import { PANEL_TYPES } from 'constants/queryBuilder';
 import GridGraphComponent from 'container/GridGraphComponent';
 import { GRAPH_TYPES } from 'container/NewDashboard/ComponentsSlider';
 import { timePreferenceType } from 'container/NewWidget/RightContainer/timeItems';
@@ -32,7 +33,7 @@ interface QueryResponseError {
 function ChartPreview({
 	name,
 	query,
-	graphType = 'graph',
+	graphType = PANEL_TYPES.TIME_SERIES,
 	selectedTime = 'GLOBAL_TIME',
 	selectedInterval = '5min',
 	headline,
@@ -127,7 +128,7 @@ function ChartPreview({
 					title={name}
 					data={chartDataSet}
 					isStacked
-					GRAPH_TYPES={graphType || 'graph'}
+					GRAPH_TYPES={graphType || PANEL_TYPES.TIME_SERIES}
 					name={name || 'Chart Preview'}
 					staticLine={staticLine}
 				/>
@@ -137,7 +138,7 @@ function ChartPreview({
 }
 
 ChartPreview.defaultProps = {
-	graphType: 'graph',
+	graphType: PANEL_TYPES.TIME_SERIES,
 	selectedTime: 'GLOBAL_TIME',
 	selectedInterval: '5min',
 	headline: undefined,
