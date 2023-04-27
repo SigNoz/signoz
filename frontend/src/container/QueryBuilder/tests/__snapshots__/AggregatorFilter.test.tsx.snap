@@ -1,6 +1,6 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`QueryBuilder should render AggregatorFilter 1`] = `
+exports[`QueryBuilder: Aggregator Filter it should render AggregatorFilter 1`] = `
 <DocumentFragment>
   <div
     class="ant-select ant-select-auto-complete css-dev-only-do-not-override-1i536d8 ant-select-single ant-select-show-search"

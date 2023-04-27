@@ -1,6 +1,6 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`QueryBuilder should render AggregateEveryFilter 1`] = `
+exports[`QueryBuilder: Aggregate Every Filter it should render AggregateEveryFilter 1`] = `
 <DocumentFragment>
   <input
     class="ant-input css-dev-only-do-not-override-1i536d8"

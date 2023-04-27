@@ -1,6 +1,6 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`QueryBuilder should render AdditionalFiltersToggler 1`] = `
+exports[`QueryBuilder: Toggler for Additional Filters it should render AdditionalFiltersToggler 1`] = `
 <DocumentFragment>
   .c1 {
   margin-right: 0.6875rem;

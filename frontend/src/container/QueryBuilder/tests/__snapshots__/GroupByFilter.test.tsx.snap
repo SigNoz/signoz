@@ -1,6 +1,6 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`QueryBuilder should render GroupByFilter 1`] = `
+exports[`QueryBuilder: groupBy Filter it should render GroupByFilter 1`] = `
 <DocumentFragment>
   <div
     class="ant-select css-dev-only-do-not-override-1i536d8 ant-select-multiple ant-select-disabled ant-select-show-search"

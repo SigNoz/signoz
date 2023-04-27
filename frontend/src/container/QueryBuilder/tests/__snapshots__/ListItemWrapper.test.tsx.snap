@@ -1,6 +1,6 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`QueryBuilder should render ListItemWrapper 1`] = `
+exports[`QueryBuilder: List Item Wrapper it should render ListItemWrapper 1`] = `
 <DocumentFragment>
   .c1 {
   position: absolute;
@@ -49,7 +49,7 @@ exports[`QueryBuilder should render ListItemWrapper 1`] = `
         />
       </svg>
     </span>
-    ListItemWrapper
+    List Item Wrapper
   </div>
 </DocumentFragment>
 `;

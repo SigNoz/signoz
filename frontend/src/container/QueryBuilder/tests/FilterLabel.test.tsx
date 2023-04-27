@@ -8,15 +8,16 @@ import store from 'store';
 
 import { FilterLabel } from '../components';
 
-describe('QueryBuilder', () => {
+describe('QueryBuilder: Filter Labels', () => {
 	const labelText = 'Filter label text';
-	it('should render the label text', () => {
+
+	it('it should render the label text', () => {
 		const { getByText } = render(<FilterLabel label={labelText} />);
 		const labelElement = getByText(labelText);
 		expect(labelElement).toBeInTheDocument();
 	});
 
-	it('should render FilterLabel', () => {
+	it('it should render FilterLabel', () => {
 		const { asFragment } = render(
 			<MemoryRouter>
 				<Provider store={store}>

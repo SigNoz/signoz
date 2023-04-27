@@ -8,13 +8,13 @@ import store from 'store';
 
 import { ListItemWrapper } from '../components';
 
-describe('QueryBuilder', () => {
-	it('should render ListItemWrapper', () => {
+describe('QueryBuilder: List Item Wrapper', () => {
+	it('it should render ListItemWrapper', () => {
 		const { asFragment } = render(
 			<MemoryRouter>
 				<Provider store={store}>
 					<I18nextProvider i18n={i18n}>
-						<ListItemWrapper onDelete={jest.fn()}>ListItemWrapper</ListItemWrapper>
+						<ListItemWrapper onDelete={jest.fn()}>List Item Wrapper</ListItemWrapper>
 					</I18nextProvider>
 				</Provider>
 			</MemoryRouter>,

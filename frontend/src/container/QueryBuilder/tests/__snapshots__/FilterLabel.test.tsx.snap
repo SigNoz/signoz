@@ -1,6 +1,6 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`QueryBuilder should render FilterLabel 1`] = `
+exports[`QueryBuilder: Filter Labels it should render FilterLabel 1`] = `
 <DocumentFragment>
   .c0 {
   padding: 0 0.6875rem;

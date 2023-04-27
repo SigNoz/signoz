@@ -6,44 +6,11 @@ import { Provider } from 'react-redux';
 import { MemoryRouter } from 'react-router-dom';
 import i18n from 'ReactI18';
 import store from 'store';
-import { IBuilderQueryForm } from 'types/api/queryBuilder/queryBuilderData';
-import { DataSource } from 'types/common/queryBuilder';
 
 import { ReduceToFilter } from '../filters';
+import { queryMockData } from '../mock/queryData';
 
-describe('QueryBuilder', () => {
-	const query: IBuilderQueryForm = {
-		dataSource: DataSource.METRICS,
-		queryName: 'A',
-		aggregateOperator: 'noop',
-		aggregateAttribute: {
-			key: 'signoz_latency_count',
-			dataType: 'float64',
-			type: 'tag',
-			isColumn: true,
-		},
-		tagFilters: {
-			items: [
-				{
-					id: '',
-					key: '',
-					op: '',
-					value: [''],
-				},
-			],
-			op: 'AND',
-		},
-		expression: '',
-		disabled: false,
-		having: [],
-		stepInterval: 30,
-		limit: 10,
-		orderBy: [],
-		groupBy: [],
-		legend: '',
-		reduceTo: '',
-	};
-
+describe('QueryBuilder: Reduce To Filter', () => {
 	const queryClient = new QueryClient({
 		defaultOptions: {
 			queries: {
@@ -52,13 +19,13 @@ describe('QueryBuilder', () => {
 		},
 	});
 
-	it('should render ReduceToFilter', () => {
+	it('it should render ReduceToFilter', () => {
 		const { asFragment } = render(
 			<MemoryRouter>
 				<Provider store={store}>
 					<I18nextProvider i18n={i18n}>
 						<QueryClientProvider client={queryClient}>
-							<ReduceToFilter onChange={jest.fn()} query={query} />
+							<ReduceToFilter onChange={jest.fn()} query={queryMockData} />
 						</QueryClientProvider>
 					</I18nextProvider>
 				</Provider>
