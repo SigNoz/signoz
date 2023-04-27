@@ -13,13 +13,15 @@ import { ErrorResponse, SuccessResponse } from 'types/api';
 import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
 import { GlobalReducer } from 'types/reducer/globalTime';
 
-import { makeTableRows } from './calculations';
-import { makeDurationQuery } from './queries';
+import { makeTableRows, TableRow } from './calculations';
+import { makeDurationQuery, makeErrPercentQuery } from './queries';
 
 interface TableProps {
 	widgetId: string;
 	serviceName: string;
 }
+
+const noDataPlaceholder = '-';
 
 function Table(props: TableProps): JSX.Element {
 	const { widgetId, serviceName } = props;
@@ -47,17 +49,34 @@ function Table(props: TableProps): JSX.Element {
 		});
 	}
 
-	console.log('addressesRes', durationResponse);
+	const errPercentQuery: GetQueryResultsProps = makeErrPercentQuery({
+		widgetId: `${widgetId}-err-percent`,
+		selectedTime,
+		serviceName,
+	});
+
+	const errPercentResponse = useQuery<
+		SuccessResponse<MetricRangePayloadProps> | ErrorResponse
+	>(`${widgetId}-err-percent`, () => GetMetricQueryRange(errPercentQuery));
+
+	if (errPercentResponse.isError) {
+		notifications.error({
+			message: t('something_went_wrong'),
+			description: errPercentResponse.error?.toString(),
+		});
+	}
 
 	const tableRows = useMemo(
 		() =>
 			makeTableRows({
 				duration: durationResponse.data?.payload?.data.result || [],
-				errorPercentage: durationResponse.data?.payload?.data.result || [],
-				reqRate: durationResponse.data?.payload?.data.result || [],
+				errPercent: errPercentResponse.data?.payload?.data.result || [],
+				reqRate: [],
 			}),
-		[durationResponse.data],
+		[durationResponse.data, errPercentResponse.data],
 	);
+
+	console.log('tableRows', tableRows);
 
 	return (
 		<div>
@@ -67,23 +86,39 @@ function Table(props: TableProps): JSX.Element {
 						title: 'Address',
 						dataIndex: 'address',
 						key: 'address',
+						sorter: (a: TableRow, b: TableRow): number =>
+							a.address.localeCompare(b.address, 'en', { numeric: true }),
 					},
 					{
 						title: 'Req. rate',
 						dataIndex: 'reqRate',
 						key: 'reqRate',
+						sorter: (a: TableRow, b: TableRow): number =>
+							(a.reqRate || 0) - (b.reqRate || 0),
+						render: (value: number | undefined): string =>
+							value === undefined ? noDataPlaceholder : value.toFixed(2),
 					},
 					{
 						title: 'Error %',
-						dataIndex: 'errPercentage',
-						key: 'errPercentage',
+						dataIndex: 'errPercent',
+						key: 'errPercent',
+						defaultSortOrder: 'descend',
+						sorter: (a: TableRow, b: TableRow): number =>
+							(a.errPercent || 0) - (b.errPercent || 0),
+						render: (value: number | undefined): string =>
+							value === undefined ? noDataPlaceholder : value.toFixed(2),
 					},
 					{
 						title: 'Duration (ms)',
 						dataIndex: 'duration',
 						key: 'duration',
+						sorter: (a: TableRow, b: TableRow): number =>
+							(a.duration || 0) - (b.duration || 0),
+						render: (value: number | undefined): string =>
+							value === undefined ? noDataPlaceholder : value.toFixed(2),
 					},
 				]}
+				rowKey="address"
 				dataSource={tableRows}
 			/>
 		</div>

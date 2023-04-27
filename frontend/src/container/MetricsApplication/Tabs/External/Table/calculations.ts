@@ -4,16 +4,16 @@ type Address = string;
 
 type DataEntry = {
 	duration?: number;
-	errPercentage?: number;
+	errPercent?: number;
 	reqRate?: number;
 };
 
 type DataEntries = Record<Address, DataEntry>;
 
-interface TableRow {
+export interface TableRow {
 	address: Address;
 	duration?: number;
-	errPercentage?: number;
+	errPercent?: number;
 	reqRate?: number;
 }
 
@@ -36,13 +36,13 @@ function groupByAddress(data: QueryData[]): GroupByAddressResult {
 
 type MakeDataEntriesProps = {
 	duration: Record<Address, QueryData['values']>;
-	errPercentage: Record<Address, QueryData['values']>;
+	errPercent: Record<Address, QueryData['values']>;
 	reqRate: Record<Address, QueryData['values']>;
 	reduceToNumber: (values: number[]) => number;
 };
 function makeDataEntries(props: MakeDataEntriesProps): DataEntries {
 	function valuesToNumbers(values: QueryData['values']): number[] {
-		return values.map(([, value]) => Number(value) || 0);
+		return values.map(([, value]) => Number(value));
 	}
 
 	const result: DataEntries = {};
@@ -54,10 +54,10 @@ function makeDataEntries(props: MakeDataEntriesProps): DataEntries {
 		};
 	});
 
-	Object.entries(props.errPercentage).forEach(([address, values]) => {
+	Object.entries(props.errPercent).forEach(([address, values]) => {
 		result[address] = {
 			...result[address],
-			errPercentage: props.reduceToNumber(valuesToNumbers(values)),
+			errPercent: props.reduceToNumber(valuesToNumbers(values)),
 		};
 	});
 
@@ -77,16 +77,18 @@ function avg(values: number[]): number {
 
 export type MakeTableRowsProps = {
 	duration: QueryData[];
-	errorPercentage: QueryData[];
+	errPercent: QueryData[];
 	reqRate: QueryData[];
 };
 export function makeTableRows(props: MakeTableRowsProps): TableRow[] {
 	const dataEntries = makeDataEntries({
 		duration: groupByAddress(props.duration),
-		errPercentage: groupByAddress(props.errorPercentage),
+		errPercent: groupByAddress(props.errPercent),
 		reqRate: groupByAddress(props.reqRate),
 		reduceToNumber: avg,
 	});
+
+	console.log('dataEntries', dataEntries);
 
 	return Object.entries(dataEntries).map(([address, dataEntry]) => ({
 		address,
