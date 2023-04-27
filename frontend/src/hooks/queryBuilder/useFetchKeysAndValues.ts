@@ -71,11 +71,15 @@ export const useFetchKeysAndValues = (
 	const handleFetchOption = async (
 		value: string,
 		query: IBuilderQueryForm,
+		keys: BaseAutocompleteData[],
 	): Promise<void> => {
 		if (!value) {
 			return;
 		}
 		const [attributeKey, operator, result] = separateSearchValue(value);
+		const filterAttributeKeyDataType = keys.find(
+			(key) => key.key === attributeKey,
+		)?.dataType;
 		setResults([]);
 
 		if (!attributeKey || !operator) {
@@ -87,7 +91,7 @@ export const useFetchKeysAndValues = (
 			dataSource: query.dataSource,
 			aggregateAttribute: query.aggregateAttribute.key,
 			attributeKey,
-			filterAttributeKeyDataType: query.aggregateAttribute.dataType,
+			filterAttributeKeyDataType: filterAttributeKeyDataType ?? null,
 			tagType: query.aggregateAttribute.type ?? null,
 			searchText: !result[result.length - 1]?.endsWith(',') // for IN and Not IN string ends with ","
 				? result[result.length - 1] ?? '' // so needs to add last search value if present
@@ -104,10 +108,11 @@ export const useFetchKeysAndValues = (
 	const clearFetcher = useRef(handleFetchOption).current;
 
 	// debounces the fetch function to avoid excessive API calls
-	useDebounce(() => clearFetcher(searchValue, query), 750, [
+	useDebounce(() => clearFetcher(searchValue, query, keys), 750, [
 		clearFetcher,
 		searchValue,
 		query,
+		keys,
 	]);
 
 	// update the fetched keys when the fetch status changes
