@@ -93,7 +93,7 @@ function TopOperationsTable(props: TopOperationsTableProps): JSX.Element {
 			sorter: (a: TopOperationList, b: TopOperationList): number =>
 				a.errorCount - b.errorCount,
 			render: (value: number, record: TopOperationList): string =>
-				((value / record.numCalls) * 100).toFixed(2),
+				`${((value / record.numCalls) * 100).toFixed(2)} %`,
 		},
 	];
 
