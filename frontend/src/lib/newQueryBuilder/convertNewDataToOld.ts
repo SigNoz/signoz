@@ -13,20 +13,16 @@ export const convertNewDataToOld = (
 	result.forEach((item) => {
 		if (item.series) {
 			item.series.forEach((serie) => {
-				const values: QueryData['values'] = item.series.reduce<QueryData['values']>(
-					(acc, item) => {
-						const renderValues: [
-							number,
-							string,
-						][] = item.values.map((currentStep) => [
-							currentStep.timestamp,
-							currentStep.value,
-						]);
+				const values: QueryData['values'] = serie.values.reduce<
+					QueryData['values']
+				>((acc, currentInfo) => {
+					const renderValues: [number, string] = [
+						currentInfo.timestamp,
+						currentInfo.value,
+					];
 
-						return [...acc, ...renderValues];
-					},
-					[],
-				);
+					return [...acc, renderValues];
+				}, []);
 				const result: QueryData = {
 					metric: serie.labels,
 					values,
