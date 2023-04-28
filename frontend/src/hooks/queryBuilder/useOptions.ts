@@ -19,12 +19,24 @@ export const useOptions = (
 	const [options, setOptions] = useState<Option[]>([]);
 	const operators = useOperators(key, keys);
 
-	const getLabel = (data: BaseAutocompleteData): Option['label'] =>
-		transformStringWithPrefix({
-			str: data?.key,
-			prefix: data?.type || '',
-			condition: !data?.isColumn,
-		});
+	const getLabel = useCallback(
+		(data: BaseAutocompleteData): Option['label'] =>
+			transformStringWithPrefix({
+				str: data?.key,
+				prefix: data?.type || '',
+				condition: !data?.isColumn,
+			}),
+		[],
+	);
+
+	const getOptionsFromKeys = useCallback(
+		(items: BaseAutocompleteData[]): Option[] =>
+			items?.map((item) => ({
+				label: `${getLabel(item)} `,
+				value: item.key,
+			})),
+		[getLabel],
+	);
 
 	const updateOptions = useCallback(() => {
 		if (!key) {
@@ -32,30 +44,29 @@ export const useOptions = (
 				searchValue
 					? [
 							{ label: `${searchValue} `, value: `${searchValue} ` },
-							...keys.map((k) => ({ label: `${getLabel(k)} `, value: k.key })),
+							...getOptionsFromKeys(keys),
 					  ]
-					: keys?.map((k) => ({
-							label: `${getLabel(k)} `,
-							value: k.key,
-					  })),
+					: getOptionsFromKeys(keys),
 			);
 		} else if (key && !operator) {
 			setOptions(
-				operators?.map((o) => ({
-					value: `${key} ${o} `,
-					label: `${key} ${o.replace('_', ' ')} `,
+				operators?.map((operator) => ({
+					value: `${key} ${operator} `,
+					label: `${key} ${operator.replace('_', ' ')} `,
 				})),
 			);
 		} else if (key && operator) {
 			if (isMulti) {
-				setOptions(results.map((r) => ({ label: `${r}`, value: `${r}` })));
+				setOptions(
+					results.map((value) => ({ label: `${value}`, value: `${value}` })),
+				);
 			} else if (isExist) {
 				setOptions([]);
 			} else if (isValidOperator) {
-				const hasAllResults = result.every((val) => results.includes(val));
-				const values = results.map((r) => ({
-					label: `${key} ${operator} ${r}`,
-					value: `${key} ${operator} ${r}`,
+				const hasAllResults = result.every((value) => results.includes(value));
+				const values = results.map((value) => ({
+					label: `${key} ${operator} ${value}`,
+					value: `${key} ${operator} ${value}`,
 				}));
 				const options = hasAllResults
 					? values
@@ -64,6 +75,7 @@ export const useOptions = (
 			}
 		}
 	}, [
+		getOptionsFromKeys,
 		isExist,
 		isMulti,
 		isValidOperator,
