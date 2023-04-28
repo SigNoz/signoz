@@ -14,7 +14,7 @@ export const useOperators = (
 	keys: BaseAutocompleteData[],
 ): IOperators =>
 	useMemo(() => {
-		const currentKey = keys?.find((el) => el.key === key);
+		const currentKey = keys?.find((el) => key.includes(el.key));
 		return currentKey?.dataType
 			? QUERY_BUILDER_OPERATORS_BY_TYPES[currentKey.dataType]
 			: QUERY_BUILDER_OPERATORS_BY_TYPES.universal;
