@@ -54,6 +54,7 @@ export const AggregatorFilter = memo(function AggregatorFilter({
 			(item) => item.key === value,
 		) || { ...initialAggregateAttribute, key: value };
 
+		setSearchText('');
 		onChange(currentAttributeObj);
 	};
 
