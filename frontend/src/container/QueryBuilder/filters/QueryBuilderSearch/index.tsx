@@ -121,7 +121,7 @@ function QueryBuilderSearch({
 		>
 			{options?.map((option) => (
 				<Select.Option key={option.value} value={option.value}>
-					{option.value}
+					{option.label}
 					{option.selected && <StyledCheckOutlined />}
 				</Select.Option>
 			))}
