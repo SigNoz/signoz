@@ -63,8 +63,8 @@ describe('useOptions', () => {
 		);
 
 		expect(result.current).toEqual([
-			{ label: 'testKey_operator_result_1', value: 'testKey_operator_result_1' },
-			{ label: 'testKey_operator_result_2', value: 'testKey_operator_result_2' },
+			{ label: 'testKey operator result1', value: 'testKey operator result1' },
+			{ label: 'testKey operator result2', value: 'testKey operator result2' },
 		]);
 	});
 
@@ -105,7 +105,7 @@ describe('useOptions', () => {
 		);
 
 		expect(result.current).toEqual([
-			{ label: searchValue, value: searchValue },
+			{ label: `${searchValue} `, value: `${searchValue} ` },
 			{ label: 'key1', value: 'key1' },
 			{ label: 'key2', value: 'key2' },
 		]);
@@ -150,18 +150,18 @@ describe('useOptions', () => {
 		);
 
 		expect(result.current).toEqual([
-			{ label: searchValue, value: searchValue },
+			{ label: `${searchValue} `, value: `${searchValue} ` },
 			{ label: 'key1', value: 'key1' },
 			{ label: 'key2', value: 'key2' },
 		]);
 
 		act(() => {
-			rerender({ key: 'testKey' });
+			rerender({ key: 'signoz' });
 		});
 
 		expect(result.current).toEqual([
-			{ label: 'testKey_operator_result_1', value: 'testKey_operator_result_1' },
-			{ label: 'testKey_operator_result_2', value: 'testKey_operator_result_2' },
+			{ label: 'signoz operator result1', value: 'signoz operator result1' },
+			{ label: 'signoz operator result2', value: 'signoz operator result2' },
 		]);
 	});
 });
