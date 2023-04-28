@@ -21,9 +21,9 @@ export const useOptions = (
 
 	const getLabel = (data: BaseAutocompleteData): Option['label'] =>
 		transformStringWithPrefix({
-			str: data.key,
-			prefix: data.type || '',
-			condition: !data.isColumn,
+			str: data?.key,
+			prefix: data?.type || '',
+			condition: !data?.isColumn,
 		});
 
 	const updateOptions = useCallback(() => {
