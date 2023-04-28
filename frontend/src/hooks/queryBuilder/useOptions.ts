@@ -32,13 +32,10 @@ export const useOptions = (
 				searchValue
 					? [
 							{ label: `${searchValue} `, value: `${searchValue} ` },
-							...keys.map((k) => ({
-								label: getLabel(k),
-								value: k.key,
-							})),
+							...keys.map((k) => ({ label: `${getLabel(k)} `, value: k.key })),
 					  ]
 					: keys?.map((k) => ({
-							label: getLabel(k),
+							label: `${getLabel(k)} `,
 							value: k.key,
 					  })),
 			);
