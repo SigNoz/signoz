@@ -1,4 +1,5 @@
 import { Option } from 'container/QueryBuilder/type';
+import { transformStringWithPrefix } from 'lib/query/transformStringWithPrefix';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
 
@@ -18,15 +19,28 @@ export const useOptions = (
 	const [options, setOptions] = useState<Option[]>([]);
 	const operators = useOperators(key, keys);
 
+	const getLabel = (data: BaseAutocompleteData): Option['label'] =>
+		transformStringWithPrefix({
+			str: data.key,
+			prefix: data.type || '',
+			condition: !data.isColumn,
+		});
+
 	const updateOptions = useCallback(() => {
 		if (!key) {
 			setOptions(
 				searchValue
 					? [
 							{ label: `${searchValue} `, value: `${searchValue} ` },
-							...keys.map((k) => ({ label: k.key, value: k.key })),
+							...keys.map((k) => ({
+								label: getLabel(k),
+								value: k.key,
+							})),
 					  ]
-					: keys?.map((k) => ({ label: k.key, value: k.key })),
+					: keys?.map((k) => ({
+							label: getLabel(k),
+							value: k.key,
+					  })),
 			);
 		} else if (key && !operator) {
 			setOptions(

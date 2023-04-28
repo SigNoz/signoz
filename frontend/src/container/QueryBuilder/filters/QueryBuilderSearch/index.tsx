@@ -74,15 +74,15 @@ function QueryBuilderSearch({
 		if (isMulti || event.key === 'Backspace') handleKeyDown(event);
 	};
 
-	const queryTags = useMemo(() => {
-		if (!query.aggregateAttribute.key) return [];
-		return tags;
-	}, [query.aggregateAttribute.key, tags]);
-
 	const isMatricsDataSource = useMemo(
 		() => query.dataSource === DataSource.METRICS,
 		[query.dataSource],
 	);
+
+	const queryTags = useMemo(() => {
+		if (!query.aggregateAttribute.key && isMatricsDataSource) return [];
+		return tags;
+	}, [isMatricsDataSource, query.aggregateAttribute.key, tags]);
 
 	useEffect(() => {
 		const initialTagFilters: TagFilter = { items: [], op: 'AND' };
