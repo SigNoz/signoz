@@ -120,7 +120,7 @@ function QueryBuilderSearch({
 			notFoundContent={isFetching ? <Spin size="small" /> : null}
 		>
 			{options?.map((option) => (
-				<Select.Option key={option.value} value={option.value}>
+				<Select.Option key={option.value} value={option.label}>
 					{option.label}
 					{option.selected && <StyledCheckOutlined />}
 				</Select.Option>
