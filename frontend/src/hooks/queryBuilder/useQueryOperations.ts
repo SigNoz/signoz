@@ -44,7 +44,6 @@ export const useQueryOperations: UseQueryOperations = ({
 				...query,
 				aggregateOperator: value,
 				having: [],
-				groupBy: [],
 				orderBy: [],
 				limit: null,
 				tagFilters: { items: [], op: 'AND' },
