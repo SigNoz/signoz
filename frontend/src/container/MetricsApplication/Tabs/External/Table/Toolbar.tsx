@@ -1,13 +1,13 @@
 import { Card, Input, Radio, Space } from 'antd';
 import React from 'react';
 
-import { ReduceTo } from './reduceTo';
+import { ReduceToVariant, reduceToVariants } from './reduceTo';
 
 export type FilterDropdownProps = {
 	addressFilter: string;
 	onAddressFilterChange: (v: string) => void;
-	reduceTo: ReduceTo;
-	onReduceToChange: (v: ReduceTo) => void;
+	reduceTo: ReduceToVariant;
+	onReduceToChange: (v: ReduceToVariant) => void;
 };
 
 function FilterDropdown(props: FilterDropdownProps): JSX.Element {
@@ -37,14 +37,11 @@ function FilterDropdown(props: FilterDropdownProps): JSX.Element {
 					onChange={(e): void => onReduceToChange(e.target.value)}
 					size="middle"
 				>
-					<Radio.Button value="min">min</Radio.Button>
-					<Radio.Button value="max">max</Radio.Button>
-					<Radio.Button value="avg">avg</Radio.Button>
-					<Radio.Button value="p50">p50</Radio.Button>
-					<Radio.Button value="p90">p90</Radio.Button>
-					<Radio.Button value="p95">p95</Radio.Button>
-					<Radio.Button value="p99">p99</Radio.Button>
-					<Radio.Button value="latest">latest</Radio.Button>
+					{reduceToVariants.map((v) => (
+						<Radio.Button key={v} value={v}>
+							{v}
+						</Radio.Button>
+					))}
 				</Radio.Group>
 			</Space>
 		</Card>

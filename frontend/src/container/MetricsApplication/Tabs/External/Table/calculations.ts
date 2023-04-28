@@ -80,7 +80,7 @@ export type MakeTableRowsProps = {
 	duration: QueryData[];
 	errPercent: QueryData[];
 	reqRate: QueryData[];
-	reduceTo: reduceTo.ReduceTo;
+	reduceTo: reduceTo.ReduceToVariant;
 };
 export function makeTableRows(props: MakeTableRowsProps): TableRow[] {
 	const dataEntries = makeDataEntries({

@@ -1,12 +1,14 @@
-export type ReduceTo =
-	| 'avg'
-	| 'min'
-	| 'max'
-	| 'p50'
-	| 'p90'
-	| 'p95'
-	| 'p99'
-	| 'latest';
+export const reduceToVariants = [
+	'avg',
+	'min',
+	'max',
+	'p50',
+	'p90',
+	'p95',
+	'p99',
+	'latest',
+] as const;
+export type ReduceToVariant = typeof reduceToVariants[number];
 
 function min(ns: number[]): number {
 	let result = ns[0];
@@ -75,7 +77,7 @@ function latest(ns: number[]): number {
 	return ns[ns.length - 1];
 }
 
-export function pickFn(reduceTo: ReduceTo): (ns: number[]) => number {
+export function pickFn(reduceTo: ReduceToVariant): (ns: number[]) => number {
 	let result: (ns: number[]) => number;
 
 	switch (reduceTo) {
