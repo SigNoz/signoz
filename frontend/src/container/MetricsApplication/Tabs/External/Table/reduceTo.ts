@@ -78,36 +78,14 @@ function latest(ns: number[]): number {
 }
 
 export function pickFn(reduceTo: ReduceToVariant): (ns: number[]) => number {
-	let result: (ns: number[]) => number;
-
-	switch (reduceTo) {
-		case 'min':
-			result = min;
-			break;
-		case 'max':
-			result = max;
-			break;
-		case 'avg':
-			result = avg;
-			break;
-		case 'p50':
-			result = p50;
-			break;
-		case 'p90':
-			result = p90;
-			break;
-		case 'p95':
-			result = p95;
-			break;
-		case 'p99':
-			result = p99;
-			break;
-		case 'latest':
-			result = latest;
-			break;
-		default:
-			throw new Error(`Unknown reduceTo: ${reduceTo}`);
-	}
-
-	return result;
+	return {
+		min,
+		max,
+		avg,
+		p50,
+		p90,
+		p95,
+		p99,
+		latest,
+	}[reduceTo];
 }
