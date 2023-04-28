@@ -1,9 +1,9 @@
 import { ResizeTable } from 'components/ResizeTable';
 import { useNotifications } from 'hooks/useNotifications';
-import React, { useMemo } from 'react';
+import React, { useEffect, useMemo } from 'react';
 import Highlighter from 'react-highlight-words';
 import { useTranslation } from 'react-i18next';
-import { useQuery } from 'react-query';
+import { useQueries } from 'react-query';
 import { useSelector } from 'react-redux';
 import {
 	GetMetricQueryRange,
@@ -40,64 +40,57 @@ function Table(props: TableProps): JSX.Element {
 
 	const { t } = useTranslation(['common']);
 	const { notifications } = useNotifications();
-	const errorMessage = t('something_went_wrong');
 
-	// BEGIN Request rate
 	const reqRateQuery: GetQueryResultsProps = makeReqRateQuery({
 		widgetId: `${widgetId}-req-rate`,
 		selectedTime,
 		serviceName,
 	});
 
-	const reqRateResponse = useQuery<
-		SuccessResponse<MetricRangePayloadProps> | ErrorResponse
-	>(`${widgetId}-req-rate`, () => GetMetricQueryRange(reqRateQuery));
-
-	if (reqRateResponse.isError) {
-		notifications.error({
-			message: errorMessage,
-			description: `Unable to fetch request rate data. ${reqRateResponse.error?.toString()}`,
-		});
-	}
-	// END Request rate
-
-	// BEGIN Duration
-	const durationQuery: GetQueryResultsProps = makeDurationQuery({
-		widgetId: `${widgetId}-duration`,
-		selectedTime,
-		serviceName,
-	});
-
-	const durationResponse = useQuery<
-		SuccessResponse<MetricRangePayloadProps> | ErrorResponse
-	>(`${widgetId}-duration`, () => GetMetricQueryRange(durationQuery));
-
-	if (durationResponse.isError) {
-		notifications.error({
-			message: errorMessage,
-			description: `Unable to fetch duration response data. ${durationResponse.error?.toString()}`,
-		});
-	}
-	// END Duration
-
-	// BEGIN Error percentage
 	const errPercentQuery: GetQueryResultsProps = makeErrPercentQuery({
 		widgetId: `${widgetId}-err-percent`,
 		selectedTime,
 		serviceName,
 	});
 
-	const errPercentResponse = useQuery<
-		SuccessResponse<MetricRangePayloadProps> | ErrorResponse
-	>(`${widgetId}-err-percent`, () => GetMetricQueryRange(errPercentQuery));
+	const durationQuery: GetQueryResultsProps = makeDurationQuery({
+		widgetId: `${widgetId}-duration`,
+		selectedTime,
+		serviceName,
+	});
 
-	if (errPercentResponse.isError) {
-		notifications.error({
-			message: errorMessage,
-			description: `Unable to fetch error percentage data. ${errPercentResponse.error?.toString()}`,
+	const [reqRateResponse, errPercentResponse, durationResponse] = useQueries([
+		{
+			queryKey: `${widgetId}-req-rate`,
+			queryFn: (): Promise<
+				SuccessResponse<MetricRangePayloadProps> | ErrorResponse
+			> => GetMetricQueryRange(reqRateQuery),
+		},
+		{
+			queryKey: `${widgetId}-err-percent`,
+			queryFn: (): Promise<
+				SuccessResponse<MetricRangePayloadProps> | ErrorResponse
+			> => GetMetricQueryRange(errPercentQuery),
+		},
+		{
+			queryKey: `${widgetId}-duration`,
+			queryFn: (): Promise<
+				SuccessResponse<MetricRangePayloadProps> | ErrorResponse
+			> => GetMetricQueryRange(durationQuery),
+		},
+	]);
+
+	useEffect(() => {
+		const responses = [reqRateResponse, errPercentResponse, durationResponse];
+		responses.forEach((res) => {
+			if (res.error) {
+				notifications.error({
+					message: t('something_went_wrong'),
+					description: `Unable to fetch table data. ${res.error.toString()}`,
+				});
+			}
 		});
-	}
-	// END Error percentage
+	}, [durationResponse, errPercentResponse, notifications, reqRateResponse, t]);
 
 	const tableRows = useMemo(
 		() =>
