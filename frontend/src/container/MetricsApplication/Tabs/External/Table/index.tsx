@@ -137,6 +137,9 @@ function Table(props: TableProps): JSX.Element {
 						title: 'Address',
 						dataIndex: 'address',
 						key: 'address',
+						defaultSortOrder: 'ascend',
+						sorter: (a: TableRow, b: TableRow): number =>
+							a.address.localeCompare(b.address, 'en', { numeric: true }),
 						render: (value: string): JSX.Element => (
 							<Highlighter
 								highlightClassName="highlight-substring"
@@ -159,7 +162,6 @@ function Table(props: TableProps): JSX.Element {
 						title: 'Error %',
 						dataIndex: 'errPercent',
 						key: 'errPercent',
-						defaultSortOrder: 'descend',
 						sorter: (a: TableRow, b: TableRow): number =>
 							(a.errPercent || 0) - (b.errPercent || 0),
 						render: (value: number | undefined): string =>
