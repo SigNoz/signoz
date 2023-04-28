@@ -252,13 +252,13 @@ function External({ getWidgetQueryBuilder }: ExternalProps): JSX.Element {
 					</Card>
 				</Col>
 			</Row>
-			<Row>
-				<Col span={24}>
-					{servicename && (
+			{servicename && (
+				<Row>
+					<Col span={24}>
 						<Table widgetId="external-calls-table" serviceName={servicename} />
-					)}
-				</Col>
-			</Row>
+					</Col>
+				</Row>
+			)}
 		</>
 	);
 }
