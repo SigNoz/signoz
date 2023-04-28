@@ -1,3 +1,4 @@
+import { ColumnsType } from 'antd/lib/table';
 import { ResizeTable } from 'components/ResizeTable';
 import { useNotifications } from 'hooks/useNotifications';
 import React, { useEffect, useMemo } from 'react';
@@ -115,6 +116,55 @@ function Table(props: TableProps): JSX.Element {
 		return tableRows.filter((row) => row.address.includes(addressFilter));
 	}, [tableRows, addressFilter]);
 
+	const tableColumns: ColumnsType<TableRow> = useMemo(
+		() => [
+			{
+				title: 'Address',
+				dataIndex: 'address',
+				key: 'address',
+				defaultSortOrder: 'ascend',
+				sorter: (a: TableRow, b: TableRow): number =>
+					a.address.localeCompare(b.address, 'en', { numeric: true }),
+				render: (value: string): JSX.Element => (
+					<Highlighter
+						highlightClassName="highlight-substring"
+						searchWords={[addressFilter]}
+						autoEscape
+						textToHighlight={value}
+					/>
+				),
+			},
+			{
+				title: 'Req. rate',
+				dataIndex: 'reqRate',
+				key: 'reqRate',
+				sorter: (a: TableRow, b: TableRow): number =>
+					(a.reqRate || 0) - (b.reqRate || 0),
+				render: (value: number | undefined): string =>
+					value === undefined ? noDataPlaceholder : value.toFixed(2),
+			},
+			{
+				title: 'Error %',
+				dataIndex: 'errPercent',
+				key: 'errPercent',
+				sorter: (a: TableRow, b: TableRow): number =>
+					(a.errPercent || 0) - (b.errPercent || 0),
+				render: (value: number | undefined): string =>
+					value === undefined ? noDataPlaceholder : value.toFixed(2),
+			},
+			{
+				title: 'Duration (ms)',
+				dataIndex: 'duration',
+				key: 'duration',
+				sorter: (a: TableRow, b: TableRow): number =>
+					(a.duration || 0) - (b.duration || 0),
+				render: (value: number | undefined): string =>
+					value === undefined ? noDataPlaceholder : value.toFixed(2),
+			},
+		],
+		[addressFilter],
+	);
+
 	return (
 		<div>
 			<Toolbar
@@ -125,51 +175,7 @@ function Table(props: TableProps): JSX.Element {
 			/>
 			<ResizeTable
 				key={addressFilter /* Force cell re-render on filter value change. */}
-				columns={[
-					{
-						title: 'Address',
-						dataIndex: 'address',
-						key: 'address',
-						defaultSortOrder: 'ascend',
-						sorter: (a: TableRow, b: TableRow): number =>
-							a.address.localeCompare(b.address, 'en', { numeric: true }),
-						render: (value: string): JSX.Element => (
-							<Highlighter
-								highlightClassName="highlight-substring"
-								searchWords={[addressFilter]}
-								autoEscape
-								textToHighlight={value}
-							/>
-						),
-					},
-					{
-						title: 'Req. rate',
-						dataIndex: 'reqRate',
-						key: 'reqRate',
-						sorter: (a: TableRow, b: TableRow): number =>
-							(a.reqRate || 0) - (b.reqRate || 0),
-						render: (value: number | undefined): string =>
-							value === undefined ? noDataPlaceholder : value.toFixed(2),
-					},
-					{
-						title: 'Error %',
-						dataIndex: 'errPercent',
-						key: 'errPercent',
-						sorter: (a: TableRow, b: TableRow): number =>
-							(a.errPercent || 0) - (b.errPercent || 0),
-						render: (value: number | undefined): string =>
-							value === undefined ? noDataPlaceholder : value.toFixed(2),
-					},
-					{
-						title: 'Duration (ms)',
-						dataIndex: 'duration',
-						key: 'duration',
-						sorter: (a: TableRow, b: TableRow): number =>
-							(a.duration || 0) - (b.duration || 0),
-						render: (value: number | undefined): string =>
-							value === undefined ? noDataPlaceholder : value.toFixed(2),
-					},
-				]}
+				columns={tableColumns}
 				rowKey="address"
 				dataSource={tableRowsFiltered}
 			/>
