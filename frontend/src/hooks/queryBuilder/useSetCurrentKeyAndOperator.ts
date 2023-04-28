@@ -16,7 +16,7 @@ export const useSetCurrentKeyAndOperator = (
 
 		if (value) {
 			const [tKey, tOperator, tResult] = separateSearchValue(value);
-			const isSuggestKey = keys?.some((el) => el.key === tKey);
+			const isSuggestKey = keys?.some((el) => tKey.includes(el.key));
 
 			if (getCountOfSpace(value) >= 1 || isSuggestKey) {
 				key = tKey || '';
