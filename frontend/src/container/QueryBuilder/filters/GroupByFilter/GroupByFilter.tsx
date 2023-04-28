@@ -75,6 +75,7 @@ export const GroupByFilter = memo(function GroupByFilter({
 			};
 		});
 
+		setSearchText('');
 		onChange(groupByValues);
 	};
 
