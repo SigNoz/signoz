@@ -1,6 +1,6 @@
+import { TopOperationList } from 'container/MetricsApplication/TopOperationsTable';
 import { ServicesList } from 'types/api/metrics/getService';
 import { ServiceOverview } from 'types/api/metrics/getServiceOverview';
-import { TopOperations } from 'types/api/metrics/getTopOperations';
 
 export const GET_SERVICE_LIST_SUCCESS = 'GET_SERVICE_LIST_SUCCESS';
 export const GET_SERVICE_LIST_LOADING_START = 'GET_SERVICE_LIST_LOADING_START';
@@ -32,7 +32,7 @@ export interface GetServiceListError {
 export interface GetInitialApplicationData {
 	type: typeof GET_INTIAL_APPLICATION_DATA;
 	payload: {
-		topOperations: TopOperations[];
+		topOperations: TopOperationList[];
 		// dbOverView: DBOverView[];
 		// externalService: ExternalService[];
 		// externalAverageDuration: ExternalAverageDuration[];
