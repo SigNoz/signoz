@@ -9,6 +9,7 @@ import { useQuery } from 'react-query';
 import { SelectOption } from 'types/common/select';
 import { transformToUpperCase } from 'utils/transformToUpperCase';
 
+import { selectStyle } from '../QueryBuilderSearch/config';
 // ** Types
 import { AgregatorFilterProps } from './AggregatorFilter.intefaces';
 
@@ -27,16 +28,15 @@ export const AggregatorFilter = memo(function AggregatorFilter({
 		],
 		async () =>
 			getAggregateAttribute({
+				searchText,
 				aggregateOperator: query.aggregateOperator,
 				dataSource: query.dataSource,
-				searchText,
 			}),
 		{ enabled: !!query.aggregateOperator && !!query.dataSource },
 	);
 
-	const handleSearchAttribute = (searchText: string): void => {
+	const handleSearchAttribute = (searchText: string): void =>
 		setSearchText(searchText);
-	};
 
 	const optionsData: SelectOption<string, string>[] =
 		data?.payload?.attributeKeys?.map((item) => ({
@@ -70,7 +70,7 @@ export const AggregatorFilter = memo(function AggregatorFilter({
 		<AutoComplete
 			showSearch
 			placeholder={`${transformToUpperCase(query.dataSource)} name`}
-			style={{ width: '100%' }}
+			style={selectStyle}
 			showArrow={false}
 			filterOption={false}
 			onSearch={handleSearchAttribute}

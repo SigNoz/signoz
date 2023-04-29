@@ -5,7 +5,7 @@ import query from 'api/dashboard/variables/query';
 import { commaValuesParser } from 'lib/dashbaordVariables/customCommaValuesParser';
 import sortValues from 'lib/dashbaordVariables/sortVariableValues';
 import { map } from 'lodash-es';
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { memo, useCallback, useEffect, useState } from 'react';
 import { IDashboardVariable } from 'types/api/dashboard/getAll';
 
 import { variablePropsToPayloadVariables } from '../utils';
@@ -130,7 +130,7 @@ function VariableItem({
 	useEffect(() => {
 		getOptions();
 		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, []);
+	}, [variableData, existingVariables]);
 
 	const handleChange = (value: string | string[]): void => {
 		if (
@@ -201,4 +201,4 @@ function VariableItem({
 	);
 }
 
-export default VariableItem;
+export default memo(VariableItem);

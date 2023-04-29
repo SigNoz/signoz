@@ -30,7 +30,7 @@ type AggregateOperator string
 
 const (
 	AggregateOperatorNoOp          AggregateOperator = "noop"
-	AggregateOpeatorCount          AggregateOperator = "count"
+	AggregateOperatorCount         AggregateOperator = "count"
 	AggregateOperatorCountDistinct AggregateOperator = "count_distinct"
 	AggregateOperatorSum           AggregateOperator = "sum"
 	AggregateOperatorAvg           AggregateOperator = "avg"
@@ -64,7 +64,7 @@ const (
 func (a AggregateOperator) Validate() error {
 	switch a {
 	case AggregateOperatorNoOp,
-		AggregateOpeatorCount,
+		AggregateOperatorCount,
 		AggregateOperatorCountDistinct,
 		AggregateOperatorSum,
 		AggregateOperatorAvg,
@@ -104,7 +104,7 @@ func (a AggregateOperator) Validate() error {
 func (a AggregateOperator) RequireAttribute() bool {
 	switch a {
 	case AggregateOperatorNoOp,
-		AggregateOpeatorCount,
+		AggregateOperatorCount,
 		AggregateOperatorCountDistinct:
 		return false
 	default:
@@ -221,7 +221,7 @@ func (q AttributeKeyDataType) Validate() error {
 	case AttributeKeyDataTypeString, AttributeKeyDataTypeInt64, AttributeKeyDataTypeFloat64, AttributeKeyDataTypeBool:
 		return nil
 	default:
-		return fmt.Errorf("invalid tag type: %s", q)
+		return fmt.Errorf("invalid tag data type: %s", q)
 	}
 }
 
