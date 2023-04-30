@@ -2,6 +2,7 @@
 import { PlusOutlined } from '@ant-design/icons';
 import { Typography } from 'antd';
 import { ColumnsType } from 'antd/lib/table';
+import saveAlertApi from 'api/alerts/save';
 import { ResizeTable } from 'components/ResizeTable';
 import TextToolTip from 'components/TextToolTip';
 import ROUTES from 'constants/routes';
@@ -54,6 +55,42 @@ function ListAlert({ allAlertRules, refetch }: ListAlertProps): JSX.Element {
 
 	const onEditHandler = (id: string): void => {
 		history.push(`${ROUTES.EDIT_ALERTS}?ruleId=${id}`);
+	};
+
+	const onCloneHandler = async (originalAlert: GettableAlert): Promise<void> => {
+		const copyAlert = {
+			...originalAlert,
+			alert: originalAlert.alert.concat(' - Copy'),
+		};
+		const apiReq = { data: copyAlert };
+
+		const response = await saveAlertApi(apiReq);
+
+		if (response.statusCode === 200) {
+			notificationsApi.success({
+				message: 'Success',
+				description: 'Alert cloned successfully',
+			});
+
+			const { data: refetchData, status } = await refetch();
+			if (status === 'success' && refetchData.payload) {
+				setData(refetchData.payload || []);
+				setTimeout(() => {
+					const clonedAlert = refetchData.payload[refetchData.payload.length - 1];
+					history.push(`${ROUTES.EDIT_ALERTS}?ruleId=${clonedAlert.id}`);
+				}, 2000);
+			}
+			if (status === 'error') {
+				notificationsApi.error({
+					message: t('something_went_wrong'),
+				});
+			}
+		} else {
+			notificationsApi.error({
+				message: 'Error',
+				description: response.error || t('something_went_wrong'),
+			});
+		}
 	};
 
 	const columns: ColumnsType<GettableAlert> = [
@@ -141,6 +178,12 @@ function ListAlert({ allAlertRules, refetch }: ListAlertProps): JSX.Element {
 						type="link"
 					>
 						Edit
+					</ColumnButton>
+					<ColumnButton
+						onClick={(): Promise<void> => onCloneHandler(record)}
+						type="link"
+					>
+						Clone
 					</ColumnButton>
 
 					<DeleteAlert notifications={notificationsApi} setData={setData} id={id} />
