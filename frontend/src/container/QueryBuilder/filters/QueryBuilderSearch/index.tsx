@@ -104,7 +104,7 @@ function QueryBuilderSearch({
 			virtual
 			showSearch
 			tagRender={onTagRender}
-			filterOption={!isMulti}
+			filterOption={false}
 			autoClearSearchValue={false}
 			mode="multiple"
 			placeholder="Search Filter"

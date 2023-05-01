@@ -38,7 +38,7 @@ export const useOptions = (
 		[getLabel],
 	);
 
-	const updateOptions = useCallback(() => {
+	useEffect(() => {
 		if (!key) {
 			setOptions(
 				searchValue
@@ -87,10 +87,6 @@ export const useOptions = (
 		results,
 		searchValue,
 	]);
-
-	useEffect(() => {
-		updateOptions();
-	}, [updateOptions]);
 
 	return useMemo(
 		() =>
