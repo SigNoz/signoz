@@ -156,7 +156,7 @@ services:
     image: signoz/query-service:${DOCKER_TAG:-0.18.1}
     container_name: query-service
     command: ["-config=/root/config/prometheus.yml"]
-    ports:
+    # ports:
     #   - "6060:6060"     # pprof port
     #   - "8080:8080"     # query-service port
     volumes:
