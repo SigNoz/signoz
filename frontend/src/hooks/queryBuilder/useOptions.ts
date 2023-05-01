@@ -52,7 +52,7 @@ export const useOptions = (
 			setOptions(
 				operators?.map((operator) => ({
 					value: `${key} ${operator} `,
-					label: `${key} ${operator.replace('_', ' ')} `,
+					label: `${key} ${operator} `,
 				})),
 			);
 		} else if (key && operator) {
