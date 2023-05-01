@@ -27,6 +27,7 @@ function QueryBuilderSearch({
 		searchValue,
 		isMulti,
 		isFetching,
+		setSearchKey,
 	} = useAutoComplete(query);
 
 	const onTagRender = ({
@@ -42,6 +43,7 @@ function QueryBuilderSearch({
 		const onCloseHandler = (): void => {
 			onClose();
 			handleSearch('');
+			setSearchKey('');
 		};
 
 		const tagEditHandler = (value: string): void => {
