@@ -119,7 +119,9 @@ function QueryBuilderSearch({
 			onSelect={handleSelect}
 			onDeselect={handleClearTag}
 			onInputKeyDown={onInputKeyDownHandler}
-			notFoundContent={isFetching ? <Spin size="small" /> : null}
+			notFoundContent={
+				isFetching || options.length === 0 ? <Spin size="small" /> : null
+			}
 		>
 			{(
 				options.filter(
