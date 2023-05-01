@@ -1,5 +1,6 @@
 import { isExistsNotExistsOperator } from 'container/QueryBuilder/filters/QueryBuilderSearch/utils';
 import { Option } from 'container/QueryBuilder/type';
+import { isEmpty } from 'lodash-es';
 import { useCallback, useState } from 'react';
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 import { checkStringEndsWithSpace } from 'utils/checkStringEndsWithSpace';
@@ -21,19 +22,25 @@ interface IAutoComplete {
 	searchValue: string;
 	isMulti: boolean;
 	isFetching: boolean;
+	setSearchKey: (value: string) => void;
 }
 
 export const useAutoComplete = (query: IBuilderQuery): IAutoComplete => {
 	const [searchValue, setSearchValue] = useState<string>('');
-
-	const handleSearch = (value: string): void => setSearchValue(value);
+	const [searchKey, setSearchKey] = useState<string>('');
 
 	const { keys, results, isFetching } = useFetchKeysAndValues(
 		searchValue,
 		query,
+		searchKey,
 	);
 
 	const [key, operator, result] = useSetCurrentKeyAndOperator(searchValue, keys);
+
+	const handleSearch = (value: string): void => {
+		setSearchValue(value);
+		if (isEmpty(operator)) setSearchKey(value);
+	};
 
 	const {
 		isValidTag,
@@ -49,6 +56,7 @@ export const useAutoComplete = (query: IBuilderQuery): IAutoComplete => {
 		isFreeText,
 		handleSearch,
 		query,
+		setSearchKey,
 	);
 
 	const handleSelect = useCallback(
@@ -132,5 +140,6 @@ export const useAutoComplete = (query: IBuilderQuery): IAutoComplete => {
 		searchValue,
 		isMulti,
 		isFetching,
+		setSearchKey,
 	};
 };

@@ -26,6 +26,7 @@ export const useTag = (
 	isFreeText: boolean,
 	handleSearch: (value: string) => void,
 	query: IBuilderQuery,
+	setSearchKey: (value: string) => void,
 ): IUseTag => {
 	const [tags, setTags] = useState<string[]>([]);
 
@@ -47,9 +48,10 @@ export const useTag = (
 			) {
 				setTags((prevTags) => [...prevTags, value]);
 				handleSearch('');
+				setSearchKey('');
 			}
 		},
-		[key, isValidTag, isFreeText, handleSearch],
+		[key, isValidTag, isFreeText, handleSearch, setSearchKey],
 	);
 
 	/**

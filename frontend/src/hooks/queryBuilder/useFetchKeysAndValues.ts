@@ -26,6 +26,7 @@ type IuseFetchKeysAndValues = {
 export const useFetchKeysAndValues = (
 	searchValue: string,
 	query: IBuilderQueryForm,
+	searchKey: string,
 ): IuseFetchKeysAndValues => {
 	const [keys, setKeys] = useState<BaseAutocompleteData[]>([]);
 	const [results, setResults] = useState<string[]>([]);
@@ -47,13 +48,15 @@ export const useFetchKeysAndValues = (
 	const { data, isFetching, status } = useQuery(
 		[
 			QueryBuilderKeys.GET_ATTRIBUTE_KEY,
+			searchKey,
 			query.dataSource,
 			query.aggregateOperator,
 			query.aggregateAttribute.key,
 		],
 		async () =>
 			getAggregateKeys({
-				searchText: searchValue,
+				searchText:
+					keys.find((item) => searchKey.includes(item.key))?.key ?? searchKey,
 				dataSource: query.dataSource,
 				aggregateOperator: query.aggregateOperator,
 				aggregateAttribute: query.aggregateAttribute.key,
