@@ -2,24 +2,24 @@
 
 export interface Typegen0 {
 	'@@xstate/typegen': true;
-	eventsCausingActions: {
-		onSelectLabelValue: 'NEXT' | 'onBlur';
-		onValidateQuery: 'NEXT' | 'onBlur';
-		onSelectLabelKey: 'NEXT';
-	};
 	internalEvents: {
 		'xstate.init': { type: 'xstate.init' };
 	};
 	invokeSrcNameMap: {};
 	missingImplementations: {
-		actions: 'onSelectLabelValue' | 'onValidateQuery' | 'onSelectLabelKey';
-		services: never;
-		guards: never;
+		actions: 'onSelectLabelKey' | 'onSelectLabelValue' | 'onValidateQuery';
 		delays: never;
+		guards: never;
+		services: never;
 	};
-	eventsCausingServices: {};
-	eventsCausingGuards: {};
+	eventsCausingActions: {
+		onSelectLabelKey: 'NEXT';
+		onSelectLabelValue: 'NEXT' | 'onBlur';
+		onValidateQuery: 'NEXT' | 'onBlur';
+	};
 	eventsCausingDelays: {};
-	matchesStates: 'LabelKey' | 'LabelValue' | 'Idle';
+	eventsCausingGuards: {};
+	eventsCausingServices: {};
+	matchesStates: 'Idle' | 'LabelKey' | 'LabelValue';
 	tags: never;
 }

@@ -8,6 +8,7 @@ const config: Config.InitialOptions = {
 	modulePathIgnorePatterns: ['dist'],
 	moduleNameMapper: {
 		'\\.(css|less)$': '<rootDir>/__mocks__/cssMock.ts',
+		'^react-i18next$': '<rootDir>/__mocks__/react-i18next.ts',
 	},
 	globals: {
 		extensionsToTreatAsEsm: ['.ts'],

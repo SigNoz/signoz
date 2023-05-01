@@ -47,4 +47,5 @@ export const DashboardSearchAndFilter = createMachine({
 		},
 	},
 	id: 'Dashboard Search And Filter',
+	predictableActionArguments: true,
 });

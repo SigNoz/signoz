@@ -148,8 +148,6 @@ function AllErrors(): JSX.Element {
 		<Typography>{dayjs(value).format('DD/MM/YYYY HH:mm:ss A')}</Typography>
 	);
 
-	const filterIcon = useCallback(() => <SearchOutlined />, []);
-
 	const handleSearch = useCallback(
 		(
 			confirm: (param?: FilterConfirmProps) => void,
@@ -243,14 +241,23 @@ function AllErrors(): JSX.Element {
 		[],
 	);
 
+	const filterIcon = useCallback(
+		// eslint-disable-next-line react/no-unused-prop-types
+		({ filterTestId }: { filterTestId: string }) => (
+			<SearchOutlined data-testid={filterTestId} />
+		),
+		[],
+	);
+
 	const getFilter = useCallback(
 		(
 			onFilter: ColumnType<Exception>['onFilter'],
 			placeholder: string,
 			filterKey: string,
+			filterTestId: string,
 		): ColumnType<Exception> => ({
 			onFilter,
-			filterIcon,
+			filterIcon: filterIcon({ filterTestId }),
 			filterDropdown: ({ confirm, selectedKeys, setSelectedKeys }): JSX.Element =>
 				filterDropdownWrapper({
 					setSelectedKeys,
@@ -260,7 +267,7 @@ function AllErrors(): JSX.Element {
 					filterKey,
 				}),
 		}),
-		[filterIcon, filterDropdownWrapper],
+		[filterDropdownWrapper, filterIcon],
 	);
 
 	const columns: ColumnsType<Exception> = [
@@ -269,7 +276,12 @@ function AllErrors(): JSX.Element {
 			width: 100,
 			dataIndex: 'exceptionType',
 			key: 'exceptionType',
-			...getFilter(onExceptionTypeFilter, 'Search By Exception', 'exceptionType'),
+			...getFilter(
+				onExceptionTypeFilter,
+				'Search By Exception',
+				'exceptionType',
+				'exception-type-filter-icon',
+			),
 			render: (value, record): JSX.Element => (
 				<Tooltip overlay={(): JSX.Element => value}>
 					<Link
@@ -358,6 +370,7 @@ function AllErrors(): JSX.Element {
 				onApplicationTypeFilter,
 				'Search By Application',
 				'serviceName',
+				'application-type-filter-icon',
 			),
 		},
 	];
