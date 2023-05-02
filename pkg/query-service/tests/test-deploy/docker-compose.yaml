@@ -35,7 +35,7 @@ x-clickhouse-depends: &clickhouse-depends
 
 services:
   zookeeper-1:
-    image: bitnami/zookeeper:3.7.0
+    image: bitnami/zookeeper:3.7.1
     user: root
     ports:
       - "2181:2181"
@@ -127,7 +127,7 @@ services:
   #     - ./data/clickhouse-3/:/var/lib/clickhouse/
 
   alertmanager:
-    image: signoz/alertmanager:0.23.0-0.2
+    image: signoz/alertmanager:0.23.1
     volumes:
       - ./data/alertmanager:/data
     depends_on:
