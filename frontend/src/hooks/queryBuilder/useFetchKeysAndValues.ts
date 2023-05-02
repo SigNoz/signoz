@@ -6,7 +6,6 @@ import { useQuery } from 'react-query';
 import { useDebounce } from 'react-use';
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
-import { IBuilderQueryForm } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource } from 'types/common/queryBuilder';
 import { separateSearchValue } from 'utils/separateSearchValue';
 
@@ -25,7 +24,7 @@ type IuseFetchKeysAndValues = {
 
 export const useFetchKeysAndValues = (
 	searchValue: string,
-	query: IBuilderQueryForm,
+	query: IBuilderQuery,
 	searchKey: string,
 ): IuseFetchKeysAndValues => {
 	const [keys, setKeys] = useState<BaseAutocompleteData[]>([]);
@@ -74,7 +73,7 @@ export const useFetchKeysAndValues = (
 	 */
 	const handleFetchOption = async (
 		value: string,
-		query: IBuilderQueryForm,
+		query: IBuilderQuery,
 		keys: BaseAutocompleteData[],
 	): Promise<void> => {
 		if (!value) {
