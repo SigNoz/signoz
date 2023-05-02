@@ -57,7 +57,7 @@ function QueryBuilderSearch({
 		};
 
 		return (
-			<Tag closable={closable} onClose={onCloseHandler}>
+			<Tag closable={!searchValue && closable} onClose={onCloseHandler}>
 				<Tooltip title={tagValue}>
 					<TypographyText
 						ellipsis
