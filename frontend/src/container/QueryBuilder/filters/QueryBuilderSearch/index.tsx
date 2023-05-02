@@ -92,7 +92,6 @@ function QueryBuilderSearch({
 		return tags;
 	}, [isMatricsDataSource, query.aggregateAttribute.key, tags]);
 
-
 	useEffect(() => {
 		const initialTagFilters: TagFilter = { items: [], op: 'AND' };
 		initialTagFilters.items = tags.map((tag) => {
