@@ -6,6 +6,7 @@ import { initialAggregateAttribute } from 'constants/queryBuilder';
 import { transformStringWithPrefix } from 'lib/query/transformStringWithPrefix';
 import React, { memo, useMemo, useState } from 'react';
 import { useQuery } from 'react-query';
+import { DataSource } from 'types/common/queryBuilder';
 import { SelectOption } from 'types/common/select';
 import { transformToUpperCase } from 'utils/transformToUpperCase';
 
@@ -53,6 +54,7 @@ export const AggregatorFilter = memo(function AggregatorFilter({
 			(item) => item.key === value,
 		) || { ...initialAggregateAttribute, key: value };
 
+		setSearchText('');
 		onChange(currentAttributeObj);
 	};
 
@@ -66,10 +68,15 @@ export const AggregatorFilter = memo(function AggregatorFilter({
 		[query],
 	);
 
+	const placeholder: string =
+		query.dataSource === DataSource.METRICS
+			? `${transformToUpperCase(query.dataSource)} name`
+			: 'Aggregate attribute';
+
 	return (
 		<AutoComplete
 			showSearch
-			placeholder={`${transformToUpperCase(query.dataSource)} name`}
+			placeholder={placeholder}
 			style={selectStyle}
 			showArrow={false}
 			filterOption={false}

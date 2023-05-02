@@ -27,7 +27,7 @@ services:
 
   alertmanager:
     container_name: alertmanager
-    image: signoz/alertmanager:0.23.0-0.2
+    image: signoz/alertmanager:0.23.1
     volumes:
       - ./data/alertmanager:/data
     depends_on:

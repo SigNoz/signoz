@@ -5,10 +5,9 @@ import { QueryBuilderKeys } from 'constants/queryBuilder';
 // ** Components
 // ** Helpers
 import { transformStringWithPrefix } from 'lib/query/transformStringWithPrefix';
-import React, { memo, useMemo, useState } from 'react';
+import React, { memo, useState } from 'react';
 import { useQuery } from 'react-query';
 import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
-import { MetricAggregateOperator } from 'types/common/queryBuilder';
 import { SelectOption } from 'types/common/select';
 
 import { selectStyle } from '../QueryBuilderSearch/config';
@@ -20,24 +19,33 @@ import {
 export const GroupByFilter = memo(function GroupByFilter({
 	query,
 	onChange,
+	disabled,
 }: GroupByFilterProps): JSX.Element {
 	const [searchText, setSearchText] = useState<string>('');
+	const [isFocused, setIsFocused] = useState<boolean>(false);
 
 	const { data, isFetching } = useQuery(
-		[QueryBuilderKeys.GET_AGGREGATE_KEYS, searchText],
+		[QueryBuilderKeys.GET_AGGREGATE_KEYS, searchText, isFocused],
 		async () =>
 			getAggregateKeys({
 				aggregateAttribute: query.aggregateAttribute.key,
-				tagType: query.aggregateAttribute.type,
 				dataSource: query.dataSource,
 				aggregateOperator: query.aggregateOperator,
 				searchText,
 			}),
-		{ enabled: !!query.aggregateAttribute.key, keepPreviousData: true },
+		{ enabled: !disabled && isFocused, keepPreviousData: true },
 	);
 
 	const handleSearchKeys = (searchText: string): void => {
 		setSearchText(searchText);
+	};
+
+	const onBlur = (): void => {
+		setIsFocused(false);
+	};
+
+	const onFocus = (): void => {
+		setIsFocused(true);
 	};
 
 	const optionsData: SelectOption<string, string>[] =
@@ -52,10 +60,20 @@ export const GroupByFilter = memo(function GroupByFilter({
 
 	const handleChange = (values: GroupByFilterValue[]): void => {
 		const groupByValues: BaseAutocompleteData[] = values.map((item) => {
-			const iterationArray = data?.payload?.attributeKeys || query.groupBy;
-			const existGroup = iterationArray.find((group) => group.key === item.value);
-			if (existGroup) {
-				return existGroup;
+			const responseKeys = data?.payload?.attributeKeys || [];
+			const existGroupResponse = responseKeys.find(
+				(group) => group.key === item.value,
+			);
+			if (existGroupResponse) {
+				return existGroupResponse;
+			}
+
+			const existGroupQuery = query.groupBy.find(
+				(group) => group.key === item.value,
+			);
+
+			if (existGroupQuery) {
+				return existGroupQuery;
 			}
 
 			return {
@@ -66,6 +84,7 @@ export const GroupByFilter = memo(function GroupByFilter({
 			};
 		});
 
+		setSearchText('');
 		onChange(groupByValues);
 	};
 
@@ -81,21 +100,16 @@ export const GroupByFilter = memo(function GroupByFilter({
 		title: undefined,
 	}));
 
-	const isDisabledSelect = useMemo(
-		() =>
-			!query.aggregateAttribute.key ||
-			query.aggregateOperator === MetricAggregateOperator.NOOP,
-		[query.aggregateAttribute.key, query.aggregateOperator],
-	);
-
 	return (
 		<Select
 			mode="tags"
 			style={selectStyle}
 			onSearch={handleSearchKeys}
 			showSearch
-			disabled={isDisabledSelect}
+			disabled={disabled}
 			showArrow={false}
+			onBlur={onBlur}
+			onFocus={onFocus}
 			filterOption={false}
 			options={optionsData}
 			labelInValue

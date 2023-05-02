@@ -93,7 +93,12 @@ export const getSortedData = (treeData: ITraceTree): ITraceTree => {
 };
 
 export const getTreeLevelsCount = (tree: ITraceTree): number => {
-	let levels = 0;
+	if (!tree) {
+		return 0;
+	}
+
+	let levels = 1;
+
 	const traverse = (treeNode: ITraceTree, level: number): void => {
 		if (!treeNode) {
 			return;

@@ -1,8 +1,8 @@
 import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
-import { IBuilderQueryForm } from 'types/api/queryBuilder/queryBuilderData';
+import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 
 export type OrderByFilterProps = {
-	query: IBuilderQueryForm;
+	query: IBuilderQuery;
 	onChange: (values: BaseAutocompleteData[]) => void;
 };
 
