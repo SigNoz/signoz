@@ -18,12 +18,10 @@ export const mapQueryDataToApi = (
 
 	const preparedQueryData: MapQuery = data.queryData.reduce<MapQuery>(
 		(acc, query) => {
-			const { legend, ...restQuery } = query;
-
 			const newResult: MapQuery = {
 				...acc,
-				[restQuery.queryName]: {
-					...restQuery,
+				[query.queryName]: {
+					...query,
 				},
 			};
 
