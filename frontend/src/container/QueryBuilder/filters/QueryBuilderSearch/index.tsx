@@ -129,12 +129,7 @@ function QueryBuilderSearch({
 				isFetching || options.length === 0 ? <Spin size="small" /> : null
 			}
 		>
-			{(
-				options.filter(
-					(item, index) =>
-						JSON.stringify(item) !== JSON.stringify(options[index - 1]),
-				) || []
-			).map((option) => (
+			{options.map((option) => (
 				<Select.Option key={option.label} value={option.label}>
 					{option.label}
 					{option.selected && <StyledCheckOutlined />}
