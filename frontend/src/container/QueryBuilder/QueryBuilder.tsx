@@ -2,7 +2,7 @@ import { PlusOutlined } from '@ant-design/icons';
 import { Button, Col, Row } from 'antd';
 import { MAX_FORMULAS, MAX_QUERIES } from 'constants/queryBuilder';
 // ** Hooks
-import { useQueryBuilder } from 'hooks/useQueryBuilder';
+import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 // ** Constants
 import React, { memo, useEffect, useMemo } from 'react';
 
@@ -19,6 +19,7 @@ export const QueryBuilder = memo(function QueryBuilder({
 	const {
 		queryBuilderData,
 		setupInitialDataSource,
+		resetQueryBuilderData,
 		addNewQuery,
 		addNewFormula,
 	} = useQueryBuilder();
@@ -32,6 +33,13 @@ export const QueryBuilder = memo(function QueryBuilder({
 			setupInitialDataSource(null);
 		};
 	}, [config, setupInitialDataSource]);
+
+	useEffect(
+		() => (): void => {
+			resetQueryBuilderData();
+		},
+		[resetQueryBuilderData],
+	);
 
 	const isDisabledQueryButton = useMemo(
 		() => queryBuilderData.queryData.length >= MAX_QUERIES,
@@ -59,7 +67,7 @@ export const QueryBuilder = memo(function QueryBuilder({
 						</Col>
 					))}
 					{queryBuilderData.queryFormulas.map((formula, index) => (
-						<Col key={formula.label} span={24}>
+						<Col key={formula.queryName} span={24}>
 							<Formula formula={formula} index={index} />
 						</Col>
 					))}

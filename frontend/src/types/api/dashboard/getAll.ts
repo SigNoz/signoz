@@ -6,6 +6,7 @@ import {
 	EQueryType,
 	EReduceOperator,
 } from 'types/common/dashboard';
+import { QueryBuilderData } from 'types/common/queryBuilder';
 
 import { QueryData } from '../widgets/getQuery';
 
@@ -92,10 +93,7 @@ export interface PromQLWidgets extends IBaseWidget {
 export interface Query {
 	queryType: EQueryType;
 	promQL: IPromQLQuery[];
-	metricsBuilder: {
-		formulas: IMetricsBuilderFormula[];
-		queryBuilder: IMetricsBuilderQuery[];
-	};
+	builder: QueryBuilderData;
 	clickHouse: IClickHouseQuery[];
 }
 

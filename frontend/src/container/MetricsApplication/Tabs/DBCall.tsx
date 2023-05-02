@@ -1,3 +1,5 @@
+/* eslint-disable */
+// @ts-nocheck
 import { Col } from 'antd';
 import FullView from 'container/GridGraphLayout/Graph/FullView/index.metricsBuilder';
 import {
@@ -48,6 +50,7 @@ function DBCall({ getWidgetQueryBuilder }: DBCallProps): JSX.Element {
 			getWidgetQueryBuilder({
 				queryType: 1,
 				promQL: [],
+				// TODO: change it later to actual builder
 				metricsBuilder: databaseCallsRPS({
 					servicename,
 					legend,
@@ -62,6 +65,7 @@ function DBCall({ getWidgetQueryBuilder }: DBCallProps): JSX.Element {
 			getWidgetQueryBuilder({
 				queryType: 1,
 				promQL: [],
+				// TODO: change it later to actual builder
 				metricsBuilder: databaseCallsAvgDuration({
 					servicename,
 					tagFilterItems,

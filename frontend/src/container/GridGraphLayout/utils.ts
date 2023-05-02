@@ -3,8 +3,8 @@ import updateDashboardApi from 'api/dashboard/update';
 import {
 	ClickHouseQueryTemplate,
 	PromQLQueryTemplate,
-	QueryBuilderQueryTemplate,
 } from 'constants/dashboard';
+import { initialQueryBuilderFormValues } from 'constants/queryBuilder';
 import { GRAPH_TYPES } from 'container/NewDashboard/ComponentsSlider';
 import GetQueryName from 'lib/query/GetQueryName';
 import { Layout } from 'react-grid-layout';
@@ -54,14 +54,9 @@ export const UpdateDashboard = async (
 								...ClickHouseQueryTemplate,
 							},
 						],
-						metricsBuilder: {
-							formulas: [],
-							queryBuilder: [
-								{
-									name: GetQueryName([]) || '',
-									...QueryBuilderQueryTemplate,
-								},
-							],
+						builder: {
+							queryFormulas: [],
+							queryData: [initialQueryBuilderFormValues],
 						},
 					},
 					queryData: {
