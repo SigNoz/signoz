@@ -79,6 +79,7 @@ function QueryBuilderSearch({
 
 	const onInputKeyDownHandler = (event: React.KeyboardEvent<Element>): void => {
 		if (isMulti || event.key === 'Backspace') handleKeyDown(event);
+		if (isExistsNotExistsOperator(searchValue)) handleKeyDown(event);
 	};
 
 	const isMatricsDataSource = useMemo(
