@@ -2,7 +2,7 @@ import { Select, Spin, Tag, Tooltip } from 'antd';
 import { useAutoComplete } from 'hooks/queryBuilder/useAutoComplete';
 import React, { useEffect, useMemo } from 'react';
 import {
-	IBuilderQueryForm,
+	IBuilderQuery,
 	TagFilter,
 } from 'types/api/queryBuilder/queryBuilderData';
 import { v4 as uuid } from 'uuid';
@@ -119,7 +119,7 @@ function QueryBuilderSearch({
 }
 
 interface QueryBuilderSearchProps {
-	query: IBuilderQueryForm;
+	query: IBuilderQuery;
 	onChange: (value: TagFilter) => void;
 }
 

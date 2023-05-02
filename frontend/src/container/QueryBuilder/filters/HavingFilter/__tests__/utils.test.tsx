@@ -8,13 +8,13 @@ import {
 import { transformFromStringToHaving } from 'lib/query/transformQueryBuilderData';
 import React from 'react';
 // ** Types
-import { IBuilderQueryForm } from 'types/api/queryBuilder/queryBuilderData';
+import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource } from 'types/common/queryBuilder';
 
 // ** Components
 import { HavingFilter } from '../HavingFilter';
 
-const valueWithAttributeAndOperator: IBuilderQueryForm = {
+const valueWithAttributeAndOperator: IBuilderQuery = {
 	...initialQueryBuilderFormValues,
 	dataSource: DataSource.LOGS,
 	aggregateOperator: 'SUM',

@@ -26,7 +26,6 @@ export function OrderByFilter({
 		async () =>
 			getAggregateKeys({
 				aggregateAttribute: query.aggregateAttribute.key,
-				tagType: query.aggregateAttribute.type,
 				dataSource: query.dataSource,
 				aggregateOperator: query.aggregateOperator,
 				searchText,

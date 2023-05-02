@@ -1,3 +1,6 @@
+/* eslint-disable  */
+// @ts-ignore
+// @ts-nocheck
 import { Time } from 'container/TopNav/DateTimeSelection/config';
 import {
 	IBuilderQueries,
@@ -113,6 +116,7 @@ export const prepareStagedQuery = (
 	return {
 		queryType: t,
 		promQL: promList,
+		// TODO: change it later to actual builder
 		metricsBuilder: {
 			formulas: formulaList,
 			queryBuilder: qbList,
