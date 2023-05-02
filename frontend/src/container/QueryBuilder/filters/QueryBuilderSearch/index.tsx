@@ -10,7 +10,11 @@ import { v4 as uuid } from 'uuid';
 
 import { selectStyle } from './config';
 import { StyledCheckOutlined, TypographyText } from './style';
-import { checkCommaAndSpace, isInNotInOperator } from './utils';
+import {
+	checkCommaAndSpace,
+	isExistsNotExistsOperator,
+	isInNotInOperator,
+} from './utils';
 
 function QueryBuilderSearch({
 	query,
@@ -39,6 +43,7 @@ function QueryBuilderSearch({
 		const chipValue = checkCommaAndSpace(value)
 			? value.substring(0, value.length - 2)
 			: value;
+		const tagValue = isExistsNotExistsOperator(value) ? value : chipValue;
 
 		const onCloseHandler = (): void => {
 			onClose();
@@ -53,7 +58,7 @@ function QueryBuilderSearch({
 
 		return (
 			<Tag closable={closable} onClose={onCloseHandler}>
-				<Tooltip title={chipValue}>
+				<Tooltip title={tagValue}>
 					<TypographyText
 						ellipsis
 						$isInNin={isInNin}
@@ -61,7 +66,7 @@ function QueryBuilderSearch({
 						$isEnabled={!!searchValue}
 						onClick={(): void => tagEditHandler(value)}
 					>
-						{chipValue}
+						{tagValue}
 					</TypographyText>
 				</Tooltip>
 			</Tag>
