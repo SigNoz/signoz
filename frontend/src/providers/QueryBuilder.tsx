@@ -3,11 +3,13 @@ import {
 	formulasNames,
 	initialFormulaBuilderFormValues,
 	initialQueryBuilderFormValues,
-	mapOfOperators,
 	MAX_FORMULAS,
 	MAX_QUERIES,
+	PANEL_TYPES,
 } from 'constants/queryBuilder';
+import { GRAPH_TYPES } from 'container/NewDashboard/ComponentsSlider';
 import { createNewBuilderItemName } from 'lib/newQueryBuilder/createNewBuilderItemName';
+import { getOperatorsBySourceAndPanelType } from 'lib/newQueryBuilder/getOperatorsBySourceAndPanelType';
 import React, {
 	createContext,
 	PropsWithChildren,
@@ -16,7 +18,6 @@ import React, {
 	useState,
 } from 'react';
 // ** Types
-// TODO: Rename Types on the Reusable type for any source
 import {
 	IBuilderFormula,
 	IBuilderQuery,
@@ -30,9 +31,11 @@ import {
 export const QueryBuilderContext = createContext<QueryBuilderContextType>({
 	queryBuilderData: { queryData: [], queryFormulas: [] },
 	initialDataSource: null,
+	panelType: PANEL_TYPES.TIME_SERIES,
 	resetQueryBuilderData: () => {},
 	handleSetQueryData: () => {},
 	handleSetFormulaData: () => {},
+	handleSetPanelType: () => {},
 	initQueryBuilderData: () => {},
 	setupInitialDataSource: () => {},
 	removeEntityByIndex: () => {},
@@ -48,25 +51,25 @@ const initialQueryBuilderData: QueryBuilderData = {
 export function QueryBuilderProvider({
 	children,
 }: PropsWithChildren): JSX.Element {
-	// TODO: this is temporary. It will be used when we have fixed dataSource and need create new query with this data source
-	// eslint-disable-next-line @typescript-eslint/no-unused-vars
 	const [initialDataSource, setInitialDataSource] = useState<DataSource | null>(
 		null,
 	);
 
-	// TODO: when initialDataSource will be setuped, on create button initial dataSource will from initialDataSource
+	const [panelType, setPanelType] = useState<GRAPH_TYPES>(
+		PANEL_TYPES.TIME_SERIES,
+	);
+
 	const [queryBuilderData, setQueryBuilderData] = useState<QueryBuilderData>({
 		queryData: [],
 		queryFormulas: [],
 	});
 
-	// ** Method for resetting query builder data
 	const resetQueryBuilderData = useCallback((): void => {
 		setQueryBuilderData(initialQueryBuilderData);
+		setInitialDataSource(null);
+		setPanelType(PANEL_TYPES.TIME_SERIES);
 	}, []);
 
-	// ** Method for setuping query builder data
-	// ** Before setuping transform data from backend to frontend format
 	const initQueryBuilderData = useCallback(
 		(queryBuilderData: QueryBuilderData): void => {
 			setQueryBuilderData(queryBuilderData);
@@ -101,14 +104,17 @@ export function QueryBuilderProvider({
 				...(initialDataSource
 					? {
 							dataSource: initialDataSource,
-							aggregateOperator: mapOfOperators[initialDataSource][0],
+							aggregateOperator: getOperatorsBySourceAndPanelType({
+								dataSource: initialDataSource,
+								panelType,
+							})[0],
 					  }
 					: {}),
 			};
 
 			return newQuery;
 		},
-		[initialDataSource],
+		[initialDataSource, panelType],
 	);
 
 	const createNewFormula = useCallback((formulas: IBuilderFormula[]) => {
@@ -184,7 +190,6 @@ export function QueryBuilderProvider({
 		[updateQueryBuilderData],
 	);
 	const handleSetFormulaData = useCallback(
-		// eslint-disable-next-line @typescript-eslint/no-unused-vars
 		(index: number, formulaData: IBuilderFormula): void => {
 			setQueryBuilderData((prevState) => {
 				const updatedFormulasBuilderData = updateFormulaBuilderData(
@@ -202,13 +207,19 @@ export function QueryBuilderProvider({
 		[updateFormulaBuilderData],
 	);
 
+	const handleSetPanelType = useCallback((newPanelType: GRAPH_TYPES) => {
+		setPanelType(newPanelType);
+	}, []);
+
 	const contextValues: QueryBuilderContextType = useMemo(
 		() => ({
 			queryBuilderData,
 			initialDataSource,
+			panelType,
 			resetQueryBuilderData,
 			handleSetQueryData,
 			handleSetFormulaData,
+			handleSetPanelType,
 			initQueryBuilderData,
 			setupInitialDataSource,
 			removeEntityByIndex,
@@ -218,9 +229,11 @@ export function QueryBuilderProvider({
 		[
 			queryBuilderData,
 			initialDataSource,
+			panelType,
 			resetQueryBuilderData,
 			handleSetQueryData,
 			handleSetFormulaData,
+			handleSetPanelType,
 			initQueryBuilderData,
 			setupInitialDataSource,
 			removeEntityByIndex,

@@ -42,14 +42,14 @@ function External({ getWidgetQueryBuilder }: ExternalProps): JSX.Element {
 		() =>
 			getWidgetQueryBuilder({
 				queryType: 1,
-				promQL: [],
+				promql: [],
 				// TODO: change it later to actual builder
-				metricsBuilder: externalCallErrorPercent({
+				builder: externalCallErrorPercent({
 					servicename,
 					legend: legend.address,
 					tagFilterItems,
 				}),
-				clickHouse: [],
+				clickhouse_sql: [],
 			}),
 		[getWidgetQueryBuilder, servicename, tagFilterItems],
 	);
@@ -63,13 +63,13 @@ function External({ getWidgetQueryBuilder }: ExternalProps): JSX.Element {
 		() =>
 			getWidgetQueryBuilder({
 				queryType: 1,
-				promQL: [],
+				promql: [],
 				// TODO: change it later to actual builder
-				metricsBuilder: externalCallDuration({
+				builder: externalCallDuration({
 					servicename,
 					tagFilterItems,
 				}),
-				clickHouse: [],
+				clickhouse_sql: [],
 			}),
 		[getWidgetQueryBuilder, servicename, tagFilterItems],
 	);
@@ -78,14 +78,14 @@ function External({ getWidgetQueryBuilder }: ExternalProps): JSX.Element {
 		() =>
 			getWidgetQueryBuilder({
 				queryType: 1,
-				promQL: [],
+				promql: [],
 				// TODO: change it later to actual builder
-				metricsBuilder: externalCallRpsByAddress({
+				builder: externalCallRpsByAddress({
 					servicename,
 					legend: legend.address,
 					tagFilterItems,
 				}),
-				clickHouse: [],
+				clickhouse_sql: [],
 			}),
 		[getWidgetQueryBuilder, servicename, tagFilterItems],
 	);
@@ -94,14 +94,14 @@ function External({ getWidgetQueryBuilder }: ExternalProps): JSX.Element {
 		() =>
 			getWidgetQueryBuilder({
 				queryType: 1,
-				promQL: [],
+				promql: [],
 				// TODO: change it later to actual builder
-				metricsBuilder: externalCallDurationByAddress({
+				builder: externalCallDurationByAddress({
 					servicename,
 					legend: legend.address,
 					tagFilterItems,
 				}),
-				clickHouse: [],
+				clickhouse_sql: [],
 			}),
 		[getWidgetQueryBuilder, servicename, tagFilterItems],
 	);

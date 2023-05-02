@@ -1,3 +1,5 @@
+import { FORMULA_REGEXP } from 'constants/regExp';
+import { GRAPH_TYPES } from 'container/NewDashboard/ComponentsSlider';
 import {
 	IBuilderFormula,
 	IBuilderQuery,
@@ -45,7 +47,6 @@ export enum NumberOperators {
 	HIST_QUANTILE_99 = 'hist_quantile_99',
 }
 
-// TODO: add boolean operators from backend
 export enum BoolOperators {
 	NOOP = 'noop',
 	COUNT = 'count',
@@ -147,13 +148,19 @@ export type QueryBuilderData = {
 	queryFormulas: IBuilderFormula[];
 };
 
-// ** TODO: temporary types for context, fix it during development
+export const isFormula = (
+	query: IBuilderFormula | IBuilderQuery,
+	queryName: string,
+): query is IBuilderFormula => FORMULA_REGEXP.test(queryName);
+
 export type QueryBuilderContextType = {
 	queryBuilderData: QueryBuilderData;
 	initialDataSource: DataSource | null;
+	panelType: GRAPH_TYPES;
 	resetQueryBuilderData: () => void;
 	handleSetQueryData: (index: number, queryData: IBuilderQuery) => void;
 	handleSetFormulaData: (index: number, formulaData: IBuilderFormula) => void;
+	handleSetPanelType: (newPanelType: GRAPH_TYPES) => void;
 	initQueryBuilderData: (queryBuilderData: QueryBuilderData) => void;
 	setupInitialDataSource: (newInitialDataSource: DataSource | null) => void;
 	removeEntityByIndex: (type: keyof QueryBuilderData, index: number) => void;

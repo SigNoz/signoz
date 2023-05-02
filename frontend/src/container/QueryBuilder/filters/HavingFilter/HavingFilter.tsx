@@ -1,6 +1,7 @@
 import { Select } from 'antd';
 // ** Constants
 import { HAVING_OPERATORS, initialHavingValues } from 'constants/queryBuilder';
+import { HAVING_FILTER_REGEXP } from 'constants/regExp';
 import { HavingFilterTag } from 'container/QueryBuilder/components';
 import { HavingTagRenderProps } from 'container/QueryBuilder/components/HavingFilterTag/HavingFilterTag.interfaces';
 // ** Hooks
@@ -101,9 +102,7 @@ export function HavingFilter({
 			const values = getHavingObject(search).value.join(' ');
 
 			if (values) {
-				const numRegexp = /^[-\d.,\s]+$/;
-
-				return numRegexp.test(values);
+				return HAVING_FILTER_REGEXP.test(values);
 			}
 
 			return true;

@@ -38,7 +38,6 @@ export async function GetMetricQueryRange({
 	globalSelectedInterval: Time;
 	variables?: Record<string, unknown>;
 }): Promise<SuccessResponse<MetricRangePayloadProps> | ErrorResponse> {
-	const { queryType } = query;
 	const queryKey: Record<EQueryTypeToQueryKeyMapping, string> =
 		EQueryTypeToQueryKeyMapping[EQueryType[query.queryType]];
 	const queryData = query[queryKey];
@@ -51,11 +50,11 @@ export async function GetMetricQueryRange({
 		},
 	};
 
-	switch (queryType as EQueryType) {
+	switch (query.queryType) {
 		case EQueryType.QUERY_BUILDER: {
-			const { queryData, queryFormulas } = query.builder;
+			const { queryData: data, queryFormulas } = query.builder;
 			const builderQueries = mapQueryDataToApi({
-				queryData,
+				queryData: data,
 				queryFormulas,
 			});
 			legendMap = builderQueries.newLegendMap;

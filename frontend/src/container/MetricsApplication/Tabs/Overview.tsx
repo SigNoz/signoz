@@ -85,14 +85,14 @@ function Application({ getWidgetQueryBuilder }: DashboardProps): JSX.Element {
 		() =>
 			getWidgetQueryBuilder({
 				queryType: 1,
-				promQL: [],
+				promql: [],
 				// TODO: change it later to actual builder
-				metricsBuilder: operationPerSec({
+				builder: operationPerSec({
 					servicename,
 					tagFilterItems,
 					topLevelOperations,
 				}),
-				clickHouse: [],
+				clickhouse_sql: [],
 			}),
 		[getWidgetQueryBuilder, servicename, topLevelOperations, tagFilterItems],
 	);
@@ -101,14 +101,14 @@ function Application({ getWidgetQueryBuilder }: DashboardProps): JSX.Element {
 		() =>
 			getWidgetQueryBuilder({
 				queryType: 1,
-				promQL: [],
+				promql: [],
 				// TODO: change it later to actual builder
-				metricsBuilder: errorPercentage({
+				builder: errorPercentage({
 					servicename,
 					tagFilterItems,
 					topLevelOperations,
 				}),
-				clickHouse: [],
+				clickhouse_sql: [],
 			}),
 		[servicename, topLevelOperations, tagFilterItems, getWidgetQueryBuilder],
 	);

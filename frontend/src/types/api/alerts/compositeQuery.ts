@@ -6,9 +6,10 @@ import {
 	IQueryBuilderTagFilters,
 } from 'types/api/dashboard/getAll';
 import { EAggregateOperator, EQueryType } from 'types/common/dashboard';
+import { QueryDataResourse } from 'types/common/queryBuilderMappers.types';
 
 export interface ICompositeMetricQuery {
-	builderQueries: IBuilderQueries;
+	builderQueries: QueryDataResourse;
 	promQueries: IPromQueries;
 	chQueries: IChQueries;
 	queryType: EQueryType;

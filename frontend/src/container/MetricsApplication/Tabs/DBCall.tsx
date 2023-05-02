@@ -49,14 +49,14 @@ function DBCall({ getWidgetQueryBuilder }: DBCallProps): JSX.Element {
 		() =>
 			getWidgetQueryBuilder({
 				queryType: 1,
-				promQL: [],
+				promql: [],
 				// TODO: change it later to actual builder
-				metricsBuilder: databaseCallsRPS({
+				builder: databaseCallsRPS({
 					servicename,
 					legend,
 					tagFilterItems,
 				}),
-				clickHouse: [],
+				clickhouse_sql: [],
 			}),
 		[getWidgetQueryBuilder, servicename, tagFilterItems],
 	);
@@ -64,13 +64,13 @@ function DBCall({ getWidgetQueryBuilder }: DBCallProps): JSX.Element {
 		() =>
 			getWidgetQueryBuilder({
 				queryType: 1,
-				promQL: [],
+				promql: [],
 				// TODO: change it later to actual builder
-				metricsBuilder: databaseCallsAvgDuration({
+				builder: databaseCallsAvgDuration({
 					servicename,
 					tagFilterItems,
 				}),
-				clickHouse: [],
+				clickhouse_sql: [],
 			}),
 		[getWidgetQueryBuilder, servicename, tagFilterItems],
 	);

@@ -22,17 +22,18 @@ export const QueryBuilder = memo(function QueryBuilder({
 		resetQueryBuilderData,
 		addNewQuery,
 		addNewFormula,
+		handleSetPanelType,
 	} = useQueryBuilder();
 
 	useEffect(() => {
 		if (config && config.queryVariant === 'static') {
 			setupInitialDataSource(config.initialDataSource);
 		}
-
-		return (): void => {
-			setupInitialDataSource(null);
-		};
 	}, [config, setupInitialDataSource]);
+
+	useEffect(() => {
+		handleSetPanelType(panelType);
+	}, [handleSetPanelType, panelType]);
 
 	useEffect(
 		() => (): void => {
@@ -62,7 +63,6 @@ export const QueryBuilder = memo(function QueryBuilder({
 								isAvailableToDisable={queryBuilderData.queryData.length > 1}
 								queryVariant={config?.queryVariant || 'dropdown'}
 								query={query}
-								panelType={panelType}
 							/>
 						</Col>
 					))}

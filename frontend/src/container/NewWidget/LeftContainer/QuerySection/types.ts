@@ -1,7 +1,5 @@
 import { Query } from 'types/api/dashboard/getAll';
 
-export type TQueryCategories = 'query_builder' | 'clickhouse_query' | 'promql';
-
 export enum EQueryCategories {
 	query_builder = 0,
 	clickhouse_query,
@@ -10,8 +8,8 @@ export enum EQueryCategories {
 
 export enum EQueryTypeToQueryKeyMapping {
 	QUERY_BUILDER = 'builder',
-	CLICKHOUSE = 'clickHouse',
-	PROM = 'promQL',
+	CLICKHOUSE = 'clickhouse_sql',
+	PROM = 'promql',
 }
 
 export interface IHandleUpdatedQuery {
