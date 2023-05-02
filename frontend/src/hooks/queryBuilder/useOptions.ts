@@ -92,8 +92,11 @@ export const useOptions = (
 		() =>
 			(
 				options.filter(
-					(item, index) =>
-						JSON.stringify(item) !== JSON.stringify(options[index - 1]), // to remove duplicate options from list
+					(option, index, self) =>
+						index ===
+							self.findIndex(
+								(o) => o.label === option.label && o.value === option.value, // to remove duplicate & empty options from list
+							) && option.value !== '',
 				) || []
 			).map((option) => {
 				if (isMulti) {
