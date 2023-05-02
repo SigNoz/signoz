@@ -4,7 +4,7 @@ import { Input, Popover, Select, Typography } from 'antd';
 import query from 'api/dashboard/variables/query';
 import { commaValuesParser } from 'lib/dashbaordVariables/customCommaValuesParser';
 import sortValues from 'lib/dashbaordVariables/sortVariableValues';
-import { map } from 'lodash-es';
+import map from 'lodash-es/map';
 import React, { memo, useCallback, useEffect, useState } from 'react';
 import { IDashboardVariable } from 'types/api/dashboard/getAll';
 
@@ -12,24 +12,16 @@ import { variablePropsToPayloadVariables } from '../utils';
 import { SelectItemStyle, VariableContainer, VariableName } from './styles';
 import { areArraysEqual } from './util';
 
-const { Option } = Select;
-
 const ALL_SELECT_VALUE = '__ALL__';
 
 interface VariableItemProps {
 	variableData: IDashboardVariable;
 	existingVariables: Record<string, IDashboardVariable>;
 	onValueUpdate: (
-		name: string | undefined,
-		arg1:
-			| string
-			| number
-			| boolean
-			| (string | number | boolean)[]
-			| null
-			| undefined,
+		name: string,
+		arg1: IDashboardVariable['selectedValue'],
 	) => void;
-	onAllSelectedUpdate: (name: string | undefined, arg1: boolean) => void;
+	onAllSelectedUpdate: (name: string, arg1: boolean) => void;
 	lastUpdatedVar: string;
 }
 function VariableItem({
@@ -101,8 +93,10 @@ function VariableItem({
 							} else {
 								[value] = newOptionsData;
 							}
-							onValueUpdate(variableData.name, value);
-							onAllSelectedUpdate(variableData.name, allSelected);
+							if (variableData.name) {
+								onValueUpdate(variableData.name, value);
+								onAllSelectedUpdate(variableData.name, allSelected);
+							}
 						}
 						setOptionsData(newOptionsData);
 					}
@@ -133,17 +127,18 @@ function VariableItem({
 	}, [variableData, existingVariables]);
 
 	const handleChange = (value: string | string[]): void => {
-		if (
-			value === ALL_SELECT_VALUE ||
-			(Array.isArray(value) && value.includes(ALL_SELECT_VALUE)) ||
-			(Array.isArray(value) && value.length === 0)
-		) {
-			onValueUpdate(variableData.name, optionsData);
-			onAllSelectedUpdate(variableData.name, true);
-		} else {
-			onValueUpdate(variableData.name, value);
-			onAllSelectedUpdate(variableData.name, false);
-		}
+		if (variableData.name)
+			if (
+				value === ALL_SELECT_VALUE ||
+				(Array.isArray(value) && value.includes(ALL_SELECT_VALUE)) ||
+				(Array.isArray(value) && value.length === 0)
+			) {
+				onValueUpdate(variableData.name, optionsData);
+				onAllSelectedUpdate(variableData.name, true);
+			} else {
+				onValueUpdate(variableData.name, value);
+				onAllSelectedUpdate(variableData.name, false);
+			}
 	};
 
 	const selectValue = variableData.allSelected
@@ -182,10 +177,21 @@ function VariableItem({
 						style={SelectItemStyle}
 						loading={isLoading}
 						showArrow
+						data-testid="variable-select"
 					>
-						{enableSelectAll && <Option value={ALL_SELECT_VALUE}>ALL</Option>}
+						{enableSelectAll && (
+							<Select.Option data-testid="option-ALL" value={ALL_SELECT_VALUE}>
+								ALL
+							</Select.Option>
+						)}
 						{map(optionsData, (option) => (
-							<Option value={option}>{option.toString()}</Option>
+							<Select.Option
+								data-testid={`option-${option}`}
+								key={option.toString()}
+								value={option}
+							>
+								{option.toString()}
+							</Select.Option>
 						))}
 					</Select>
 				)
