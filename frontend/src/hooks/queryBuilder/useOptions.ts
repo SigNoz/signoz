@@ -90,7 +90,12 @@ export const useOptions = (
 
 	return useMemo(
 		() =>
-			options?.map((option) => {
+			(
+				options.filter(
+					(item, index) =>
+						JSON.stringify(item) !== JSON.stringify(options[index - 1]), // to remove duplicate options from list
+				) || []
+			).map((option) => {
 				if (isMulti) {
 					return { ...option, selected: searchValue.includes(option.value) };
 				}
