@@ -34,9 +34,9 @@ x-clickhouse-depend: &clickhouse-depend
     #   condition: service_healthy
 
 services:
-  
+
   zookeeper-1:
-    image: bitnami/zookeeper:3.7.0
+    image: bitnami/zookeeper:3.7.1
     container_name: zookeeper-1
     hostname: zookeeper-1
     user: root
@@ -120,7 +120,7 @@ services:
   #     - ./data/clickhouse-2/:/var/lib/clickhouse/
   #     - ./user_scripts:/var/lib/clickhouse/user_scripts/
 
-
+  
   # clickhouse-3:
   #   <<: *clickhouse-defaults
   #   container_name: clickhouse-3
@@ -139,7 +139,7 @@ services:
   #     - ./user_scripts:/var/lib/clickhouse/user_scripts/
 
   alertmanager:
-    image: signoz/alertmanager:${ALERTMANAGER_TAG:-0.23.0-0.2}
+    image: signoz/alertmanager:${ALERTMANAGER_TAG:-0.23.1}
     volumes:
       - ./data/alertmanager:/data
     depends_on:
@@ -150,7 +150,7 @@ services:
       - --queryService.url=http://query-service:8085
       - --storage.path=/data
 
-# Notes for Maintainers/Contributors who will change Line Numbers of Frontend & Query-Section. Please Update Line Numbers in `./scripts/commentLinesForSetup.sh` & `./CONTRIBUTING.md`
+  # Notes for Maintainers/Contributors who will change Line Numbers of Frontend & Query-Section. Please Update Line Numbers in `./scripts/commentLinesForSetup.sh` & `./CONTRIBUTING.md`
 
   query-service:
     image: signoz/query-service:${DOCKER_TAG:-0.18.1}
