@@ -3,7 +3,7 @@ import getStep from 'lib/getStep';
 import React, { useMemo } from 'react';
 import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
-import { IBuilderQueryForm } from 'types/api/queryBuilder/queryBuilderData';
+import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 import { GlobalReducer } from 'types/reducer/globalTime';
 
 import { selectStyle } from '../QueryBuilderSearch/config';
@@ -47,7 +47,7 @@ function AggregateEveryFilter({
 			placeholder="Enter in seconds"
 			disabled={!query.aggregateAttribute.key}
 			style={selectStyle}
-			defaultValue={stepInterval ?? query.stepInterval}
+			defaultValue={query.stepInterval ?? stepInterval}
 			onChange={(event): void => onChange(Number(event.target.value))}
 			onKeyDown={handleKeyDown}
 		/>
@@ -56,7 +56,7 @@ function AggregateEveryFilter({
 
 interface AggregateEveryFilterProps {
 	onChange: (values: number) => void;
-	query: IBuilderQueryForm;
+	query: IBuilderQuery;
 }
 
 export default AggregateEveryFilter;

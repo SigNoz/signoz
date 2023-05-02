@@ -3,6 +3,7 @@ import { ChartData } from 'chart.js';
 import Graph, { GraphOnClickHandler, StaticLineProps } from 'components/Graph';
 import { getYAxisFormattedValue } from 'components/Graph/yAxisConfig';
 import ValueGraph from 'components/ValueGraph';
+import { PANEL_TYPES } from 'constants/queryBuilder';
 import { GRAPH_TYPES } from 'container/NewDashboard/ComponentsSlider';
 import history from 'lib/history';
 import React from 'react';
@@ -25,7 +26,7 @@ function GridGraphComponent({
 
 	const isDashboardPage = location.split('/').length === 3;
 
-	if (GRAPH_TYPES === 'TIME_SERIES') {
+	if (GRAPH_TYPES === PANEL_TYPES.TIME_SERIES) {
 		return (
 			<Graph
 				{...{
@@ -45,7 +46,7 @@ function GridGraphComponent({
 		);
 	}
 
-	if (GRAPH_TYPES === 'VALUE') {
+	if (GRAPH_TYPES === PANEL_TYPES.VALUE) {
 		const value = (((data.datasets[0] || []).data || [])[0] || 0) as number;
 
 		if (data.datasets.length === 0) {
