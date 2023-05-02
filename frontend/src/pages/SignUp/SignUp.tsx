@@ -38,23 +38,32 @@ type FormValues = {
 };
 
 function SignUp({ version }: SignUpProps): JSX.Element {
+	const { search } = useLocation();
+	const { notifications } = useNotifications();
 	const { t } = useTranslation(['signup']);
-	const [loading, setLoading] = useState(false);
+	const params = new URLSearchParams(search);
+	const token = params.get('token');
 
+	const [form] = Form.useForm<FormValues>();
+	const email = Form.useWatch('email', form);
+	const firstName = Form.useWatch('firstName', form);
+	const organizationName = Form.useWatch('organizationName', form);
+	const password = Form.useWatch('password', form);
+	const confirmPassword = Form.useWatch('confirmPassword', form);
+	const isAnonymous = Form.useWatch('isAnonymous', form);
+	const hasOptedUpdates = Form.useWatch('hasOptedUpdates', form);
+
+	const [loading, setLoading] = useState(false);
 	const [precheck, setPrecheck] = useState<loginPrecheck.PayloadProps>({
 		sso: false,
 		isUser: false,
 	});
-
 	const [confirmPasswordError, setConfirmPasswordError] = useState<boolean>(
 		false,
 	);
 	const [isPasswordPolicyError, setIsPasswordPolicyError] = useState<boolean>(
 		false,
 	);
-	const { search } = useLocation();
-	const params = new URLSearchParams(search);
-	const token = params.get('token');
 	const [isDetailsDisable, setIsDetailsDisable] = useState<boolean>(false);
 
 	const getInviteDetailsResponse = useQuery({
@@ -65,9 +74,6 @@ function SignUp({ version }: SignUpProps): JSX.Element {
 		queryKey: 'getInviteDetails',
 		enabled: token !== null,
 	});
-
-	const { notifications } = useNotifications();
-	const [form] = Form.useForm<FormValues>();
 
 	useEffect(() => {
 		if (
@@ -99,14 +105,20 @@ function SignUp({ version }: SignUpProps): JSX.Element {
 		form,
 	]);
 
+	useEffect(() => {
+		const isInvalidPassword = !isPasswordValid(password) && password.length > 0;
+		setIsPasswordPolicyError(isInvalidPassword);
+
+		const isSamePassword = password === confirmPassword;
+		setConfirmPasswordError(!isSamePassword);
+	}, [password, confirmPassword]);
+
 	const isPreferenceVisible = token === null;
 
 	const commonHandler = async (
-		values: FormValues,
 		callback: (e: SuccessResponse<PayloadProps>) => Promise<void> | VoidFunction,
 	): Promise<void> => {
 		try {
-			const { organizationName, password, firstName, email } = values;
 			const response = await signUpApi({
 				email,
 				name: firstName,
@@ -151,11 +163,6 @@ function SignUp({ version }: SignUpProps): JSX.Element {
 	const onAdminAfterLogin = async (
 		userResponse: SuccessResponse<PayloadProps>,
 	): Promise<void> => {
-		const {
-			organizationName,
-			isAnonymous,
-			hasOptedUpdates,
-		} = form.getFieldsValue();
 		const editResponse = await editOrg({
 			isAnonymous,
 			name: organizationName,
@@ -180,12 +187,11 @@ function SignUp({ version }: SignUpProps): JSX.Element {
 		setLoading(true);
 
 		try {
-			const values = form.getFieldsValue();
 			const response = await signUpApi({
-				email: values.email,
-				name: values.firstName,
-				orgName: values.organizationName,
-				password: values.password,
+				email,
+				name: firstName,
+				orgName: organizationName,
+				password,
 				token: params.get('token') || undefined,
 				sourceUrl: encodeURIComponent(window.location.href),
 			});
@@ -219,20 +225,18 @@ function SignUp({ version }: SignUpProps): JSX.Element {
 	const handleSubmit = (): void => {
 		(async (): Promise<void> => {
 			try {
-				const values = form.getFieldsValue();
 				setLoading(true);
 
-				if (!isPasswordValid(values.password)) {
+				if (!isPasswordValid(password)) {
 					setIsPasswordPolicyError(true);
 					setLoading(false);
 					return;
 				}
 
 				if (isPreferenceVisible) {
-					await commonHandler(values, onAdminAfterLogin);
+					await commonHandler(onAdminAfterLogin);
 				} else {
 					await commonHandler(
-						values,
 						async (): Promise<void> => {
 							history.push(ROUTES.APPLICATION);
 						},
@@ -254,39 +258,20 @@ function SignUp({ version }: SignUpProps): JSX.Element {
 
 	const isNameVisible = getIsNameVisible();
 
-	const handleValuesChange: (changedValues: Partial<FormValues>) => void = (
-		changedValues,
-	) => {
-		if ('password' in changedValues || 'confirmPassword' in changedValues) {
-			const { password, confirmPassword } = form.getFieldsValue();
-
-			const isInvalidPassword = !isPasswordValid(password) && password.length > 0;
-			setIsPasswordPolicyError(isInvalidPassword);
-
-			const isSamePassword = password === confirmPassword;
-			setConfirmPasswordError(!isSamePassword);
-		}
-	};
-
-	const isValidForm: () => boolean = () => {
-		const values = form.getFieldsValue();
-		return (
-			loading ||
-			!values.email ||
-			!values.organizationName ||
-			(!precheck.sso && (!values.password || !values.confirmPassword)) ||
-			(!isDetailsDisable && !values.firstName) ||
-			confirmPasswordError ||
-			isPasswordPolicyError
-		);
-	};
+	const isValidForm: () => boolean = () =>
+		loading ||
+		!email ||
+		!organizationName ||
+		(!precheck.sso && (!password || !confirmPassword)) ||
+		(!isDetailsDisable && !firstName) ||
+		confirmPasswordError ||
+		isPasswordPolicyError;
 
 	return (
 		<WelcomeLeftContainer version={version}>
 			<FormWrapper>
 				<FormContainer
 					onFinish={!precheck.sso ? handleSubmit : handleSubmitSSO}
-					onValuesChange={handleValuesChange}
 					initialValues={{ hasOptedUpdates: true, isAnonymous: false }}
 					form={form}
 				>
