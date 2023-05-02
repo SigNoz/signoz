@@ -4,8 +4,8 @@ import { QueryBuilderKeys } from 'constants/queryBuilder';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useQuery } from 'react-query';
 import { useDebounce } from 'react-use';
-import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
+import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource } from 'types/common/queryBuilder';
 import { separateSearchValue } from 'utils/separateSearchValue';
 
