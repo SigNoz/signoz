@@ -13,6 +13,8 @@ import { StyledCheckOutlined, TypographyText } from './style';
 import {
 	checkCommaAndSpace,
 	createTagValues,
+	getRemovePrefixFromKey,
+	getTagToken,
 	isExistsNotExistsOperator,
 	isInNInOperator,
 	isValueHaveInNotInOperator,
@@ -97,10 +99,10 @@ function QueryBuilderSearch({
 	useEffect(() => {
 		const initialTagFilters: TagFilter = { items: [], op: 'AND' };
 		initialTagFilters.items = tags.map((tag) => {
-			const [tagKey, tagOperator, ...tagValue] = tag.split(' ');
+			const { tagKey, tagOperator, tagValue } = getTagToken(tag);
 			return {
 				id: uuid().slice(0, 8),
-				key: tagKey,
+				key: getRemovePrefixFromKey(tagKey),
 				op: tagOperator,
 				value: isInNInOperator(tagOperator)
 					? createTagValues(tagValue)

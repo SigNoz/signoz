@@ -23,3 +23,22 @@ export function createTagValues(tagValue: string[]): string[] {
 		.filter(Boolean)
 		.map((tag) => (tag.endsWith(',') ? tag.slice(0, -1).trim() : tag.trim()));
 }
+
+interface ITagToken {
+	tagKey: string;
+	tagOperator: string;
+	tagValue: string[];
+}
+
+export function getTagToken(tag: string): ITagToken {
+	const [tagKey, tagOperator, ...tagValue] = tag.split(' ');
+	return {
+		tagKey,
+		tagOperator,
+		tagValue,
+	};
+}
+
+export function getRemovePrefixFromKey(tag: string): string {
+	return tag?.replace(/^(tag_|resource_)/, '');
+}

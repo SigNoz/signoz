@@ -1,3 +1,8 @@
+import {
+	createTagValues,
+	getTagToken,
+	isInNInOperator,
+} from 'container/QueryBuilder/filters/QueryBuilderSearch/utils';
 import { Option } from 'container/QueryBuilder/type';
 import { transformStringWithPrefix } from 'lib/query/transformStringWithPrefix';
 import { useCallback, useEffect, useMemo, useState } from 'react';
@@ -99,8 +104,12 @@ export const useOptions = (
 							) && option.value !== '',
 				) || []
 			).map((option) => {
+				const { tagOperator, tagValue } = getTagToken(searchValue);
+				const value = isInNInOperator(tagOperator)
+					? createTagValues(tagValue)
+					: Array(tagValue.join(' '));
 				if (isMulti) {
-					return { ...option, selected: searchValue.includes(option.value) };
+					return { ...option, selected: value.includes(option.value) };
 				}
 				return option;
 			}),
