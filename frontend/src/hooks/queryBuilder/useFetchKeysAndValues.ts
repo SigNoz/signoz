@@ -54,8 +54,7 @@ export const useFetchKeysAndValues = (
 		],
 		async () =>
 			getAggregateKeys({
-				searchText:
-					keys.find((item) => searchKey.includes(item.key))?.key ?? searchKey,
+				searchText: searchKey,
 				dataSource: query.dataSource,
 				aggregateOperator: query.aggregateOperator,
 				aggregateAttribute: query.aggregateAttribute.key,
