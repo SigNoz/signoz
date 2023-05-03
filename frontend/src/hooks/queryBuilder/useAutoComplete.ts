@@ -40,10 +40,8 @@ export const useAutoComplete = (query: IBuilderQuery): IAutoComplete => {
 	const handleSearch = (value: string): void => {
 		const getKey = keys.find((item) => value.includes(item.key))?.key ?? value;
 		setSearchValue(value);
-		if (isEmpty(operator)) {
-			setTimeout(() => {
-				setSearchKey(getKey);
-			}, 200);
+		if (isEmpty(operator) && !isFetching) {
+			setSearchKey(getKey);
 		} else {
 			setSearchKey('');
 		}
