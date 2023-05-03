@@ -83,7 +83,7 @@ export const useFetchKeysAndValues = (
 		const filterAttributeKey = keys.find((key) => attributeKey.includes(key.key));
 		setResults([]);
 
-		if (!attributeKey || !operator) {
+		if (!attributeKey || !operator || !filterAttributeKey?.key) {
 			return;
 		}
 

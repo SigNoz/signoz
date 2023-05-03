@@ -39,7 +39,11 @@ export const useAutoComplete = (query: IBuilderQuery): IAutoComplete => {
 
 	const handleSearch = (value: string): void => {
 		setSearchValue(value);
-		if (isEmpty(operator)) setSearchKey(value);
+		if (isEmpty(operator)) {
+			setSearchKey(value);
+		} else {
+			setSearchKey('');
+		}
 	};
 
 	const {
