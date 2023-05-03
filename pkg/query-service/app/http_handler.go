@@ -1612,7 +1612,11 @@ func (aH *APIHandler) getVersion(w http.ResponseWriter, r *http.Request) {
 }
 
 func (aH *APIHandler) getFeatureFlags(w http.ResponseWriter, r *http.Request) {
-	featureSet := aH.FF().GetFeatureFlags()
+	featureSet, err := aH.FF().GetFeatureFlags()
+	if err != nil{
+		aH.HandleError(w, err, http.StatusInternalServerError)
+		return
+	}
 	aH.Respond(w, featureSet)
 }
 

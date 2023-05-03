@@ -32,6 +32,9 @@ type Queries interface {
 	GetResetPasswordEntry(ctx context.Context, token string) (*model.ResetPasswordEntry, *model.ApiError)
 	GetUsersByOrg(ctx context.Context, orgId string) ([]model.UserPayload, *model.ApiError)
 	GetUsersByGroup(ctx context.Context, groupId string) ([]model.UserPayload, *model.ApiError)
+
+	GetFeature(featureName string) (model.Feature, error)
+	GetAllFeatures() ([]model.Feature, error)
 }
 
 type Mutations interface {
@@ -56,4 +59,8 @@ type Mutations interface {
 
 	UpdateUserPassword(ctx context.Context, hash, userId string) *model.ApiError
 	UpdateUserGroup(ctx context.Context, userId, groupId string) *model.ApiError
+
+	CreateFeature(req *model.Feature) *model.ApiError
+	UpdateFeature(req model.Feature) error
+	InitFeatures(req model.FeatureSet) error
 }

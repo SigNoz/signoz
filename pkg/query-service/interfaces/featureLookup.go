@@ -6,5 +6,5 @@ import (
 
 type FeatureLookup interface {
 	CheckFeature(f string) error
-	GetFeatureFlags() model.FeatureSet
+	GetFeatureFlags() (model.FeatureSet, error)
 }

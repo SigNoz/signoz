@@ -12,6 +12,7 @@ import (
 
 	baseconstants "go.signoz.io/signoz/pkg/query-service/constants"
 
+	"go.signoz.io/signoz/ee/query-service/dao"
 	validate "go.signoz.io/signoz/ee/query-service/integrations/signozio"
 	"go.signoz.io/signoz/ee/query-service/model"
 	basemodel "go.signoz.io/signoz/pkg/query-service/model"
@@ -96,6 +97,11 @@ func (lm *Manager) SetActive(l *model.License) {
 	lm.activeFeatures = l.FeatureSet
 	// set default features
 	setDefaultFeatures(lm)
+
+	err := dao.DB().InitFeatures(lm.activeFeatures)
+	if err != nil {
+		zap.S().Error("Couldn't activate features: ", err)
+	}
 	if !lm.validatorRunning {
 		// we want to make sure only one validator runs,
 		// we already have lock() so good to go
@@ -106,8 +112,8 @@ func (lm *Manager) SetActive(l *model.License) {
 }
 
 func setDefaultFeatures(lm *Manager) {
-	for k, v := range baseconstants.DEFAULT_FEATURE_SET {
-		lm.activeFeatures[k] = v
+	for _, feature := range baseconstants.DEFAULT_FEATURE_SET {
+		lm.activeFeatures = append(lm.activeFeatures, feature)
 	}
 }
 
@@ -123,8 +129,13 @@ func (lm *Manager) LoadActiveLicense() error {
 	} else {
 		zap.S().Info("No active license found, defaulting to basic plan")
 		// if no active license is found, we default to basic(free) plan with all default features
-		lm.activeFeatures = basemodel.BasicPlan
+		lm.activeFeatures = model.BasicPlan
 		setDefaultFeatures(lm)
+		err := dao.DB().InitFeatures(lm.activeFeatures)
+		if err != nil {
+			zap.S().Error("Couldn't initialize features: ", err)
+			return err
+		}
 	}
 
 	return nil
@@ -291,18 +302,19 @@ func (lm *Manager) Activate(ctx context.Context, key string) (licenseResponse *m
 // CheckFeature will be internally used by backend routines
 // for feature gating
 func (lm *Manager) CheckFeature(featureKey string) error {
-	if value, ok := lm.activeFeatures[featureKey]; ok {
-		if value {
-			return nil
-		}
-		return basemodel.ErrFeatureUnavailable{Key: featureKey}
+	feature, err := dao.DB().GetFeature(featureKey)
+	if err != nil {
+		return err
+	}
+	if feature.Active {
+		return nil
 	}
 	return basemodel.ErrFeatureUnavailable{Key: featureKey}
 }
 
 // GetFeatureFlags returns current active features
-func (lm *Manager) GetFeatureFlags() basemodel.FeatureSet {
-	return lm.activeFeatures
+func (lm *Manager) GetFeatureFlags() (basemodel.FeatureSet, error) {
+	return dao.DB().GetAllFeatures()
 }
 
 // GetRepo return the license repo

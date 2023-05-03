@@ -80,6 +80,19 @@ func InitDB(dataSourceName string) (*ModelDaoSqlite, error) {
 		return nil, fmt.Errorf("Error in creating tables: %v", err.Error())
 	}
 
+	table_schema = `CREATE TABLE IF NOT EXISTS feature_status (
+		name TEXT PRIMARY KEY,
+		active bool,
+		usage INTEGER DEFAULT 0,
+		usage_limit INTEGER DEFAULT 0,
+		route TEXT
+	);`
+
+	_, err = db.Exec(table_schema)
+	if err != nil {
+		return nil, fmt.Errorf("Error in creating feature_status table: %s", err.Error())
+	}
+
 	mds := &ModelDaoSqlite{db: db}
 
 	ctx := context.Background()
