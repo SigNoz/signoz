@@ -2,7 +2,7 @@ import { Col, Input } from 'antd';
 // ** Components
 import { ListItemWrapper, ListMarker } from 'container/QueryBuilder/components';
 // ** Hooks
-import { useQueryBuilder } from 'hooks/useQueryBuilder';
+import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import React, { ChangeEvent, useCallback } from 'react';
 import { IBuilderFormula } from 'types/api/queryBuilder/queryBuilderData';
 
@@ -46,7 +46,7 @@ export function Formula({ index, formula }: FormulaProps): JSX.Element {
 				<ListMarker
 					isDisabled={formula.disabled}
 					onDisable={handleToggleDisableFormula}
-					labelName={formula.label}
+					labelName={formula.queryName}
 					index={index}
 				/>
 			</Col>

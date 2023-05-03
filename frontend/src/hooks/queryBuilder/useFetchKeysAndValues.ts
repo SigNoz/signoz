@@ -6,7 +6,7 @@ import {
 import { useEffect, useRef, useState } from 'react';
 import { useQuery } from 'react-query';
 import { useDebounce } from 'react-use';
-import { IBuilderQueryForm } from 'types/api/queryBuilder/queryBuilderData';
+import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 import { separateSearchValue } from 'utils/separateSearchValue';
 
 type UseFetchKeysAndValuesReturnValues = {
@@ -24,7 +24,7 @@ type UseFetchKeysAndValuesReturnValues = {
 
 export const useFetchKeysAndValues = (
 	searchValue: string,
-	query: IBuilderQueryForm,
+	query: IBuilderQuery,
 ): UseFetchKeysAndValuesReturnValues => {
 	const [keys, setKeys] = useState<AttributeKeyOptions[]>([]);
 	const [results, setResults] = useState<string[]>([]);
@@ -53,7 +53,7 @@ export const useFetchKeysAndValues = (
 	 */
 	const handleFetchOption = async (
 		value: string,
-		query: IBuilderQueryForm,
+		query: IBuilderQuery,
 	): Promise<void> => {
 		if (value) {
 			// separate the search value into the attribute key and the operator

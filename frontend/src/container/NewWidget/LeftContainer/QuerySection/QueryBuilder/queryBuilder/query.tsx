@@ -1,5 +1,6 @@
 import { AutoComplete, Col, Input, Row, Select, Spin } from 'antd';
 import { getMetricName } from 'api/metrics/getMetricName';
+import { PANEL_TYPES } from 'constants/queryBuilder';
 import { GRAPH_TYPES } from 'container/NewDashboard/ComponentsSlider';
 import React, { useEffect, useState } from 'react';
 import { IMetricsBuilderQuery } from 'types/api/dashboard/getAll';
@@ -142,7 +143,7 @@ function MetricsBuilder({
 							/>
 						</Row>
 						<Row style={{ gap: '3%', marginBottom: '1rem' }}>
-							{selectedGraph === 'TIME_SERIES' ? (
+							{selectedGraph === PANEL_TYPES.TIME_SERIES ? (
 								<>
 									{' '}
 									<Select
