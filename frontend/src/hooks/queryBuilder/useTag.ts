@@ -1,6 +1,6 @@
 import {
 	isExistsNotExistsOperator,
-	isInNotInOperator,
+	isValueHaveInNotInOperator,
 } from 'container/QueryBuilder/filters/QueryBuilderSearch/utils';
 import { useCallback, useEffect, useState } from 'react';
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
@@ -65,7 +65,7 @@ export const useTag = (
 	useEffect(() => {
 		setTags(
 			(query?.tagFilters?.items || []).map((obj) =>
-				isInNotInOperator(obj.op)
+				isValueHaveInNotInOperator(obj.op)
 					? `${obj.key} ${obj.op} ${obj.value.join(',')}`
 					: `${obj.key} ${obj.op} ${obj.value.join(' ')}`,
 			),

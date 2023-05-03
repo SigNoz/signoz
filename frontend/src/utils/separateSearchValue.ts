@@ -1,11 +1,11 @@
-import { OPERATORS } from 'constants/queryBuilder';
+import { isInNInOperator } from 'container/QueryBuilder/filters/QueryBuilderSearch/utils';
 
 export const separateSearchValue = (
 	value: string,
 ): [string, string, string[]] => {
 	const separatedString = value.split(' ');
 	const [key, operator, ...result] = separatedString;
-	if (operator === OPERATORS.IN || operator === OPERATORS.NIN) {
+	if (isInNInOperator(operator)) {
 		return [key, operator, result];
 	}
 	return [key, operator, Array(result.join(' '))];

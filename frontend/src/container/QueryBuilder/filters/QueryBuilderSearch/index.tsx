@@ -12,8 +12,10 @@ import { selectStyle } from './config';
 import { StyledCheckOutlined, TypographyText } from './style';
 import {
 	checkCommaAndSpace,
+	createTagValues,
 	isExistsNotExistsOperator,
-	isInNotInOperator,
+	isInNInOperator,
+	isValueHaveInNotInOperator,
 } from './utils';
 
 function QueryBuilderSearch({
@@ -39,7 +41,7 @@ function QueryBuilderSearch({
 		closable,
 		onClose,
 	}: CustomTagProps): React.ReactElement => {
-		const isInNin = isInNotInOperator(value);
+		const isInNin = isValueHaveInNotInOperator(value);
 		const chipValue = checkCommaAndSpace(value)
 			? value.substring(0, value.length - 2)
 			: value;
@@ -100,7 +102,9 @@ function QueryBuilderSearch({
 				id: uuid().slice(0, 8),
 				key: tagKey,
 				op: tagOperator,
-				value: tagValue.map((i) => i.replace(',', '')),
+				value: isInNInOperator(tagOperator)
+					? createTagValues(tagValue)
+					: Array(tagValue.join(' ')),
 			};
 		});
 		onChange(initialTagFilters);
