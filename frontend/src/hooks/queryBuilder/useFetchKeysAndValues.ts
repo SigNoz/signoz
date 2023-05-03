@@ -1,6 +1,7 @@
 import { getAggregateKeys } from 'api/queryBuilder/getAttributeKeys';
 import { getAttributesValues } from 'api/queryBuilder/getAttributesValues';
 import { QueryBuilderKeys } from 'constants/queryBuilder';
+import { isInNInOperator } from 'container/QueryBuilder/filters/QueryBuilderSearch/utils';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useQuery } from 'react-query';
 import { useDebounce } from 'react-use';
@@ -93,9 +94,9 @@ export const useFetchKeysAndValues = (
 			attributeKey: filterAttributeKey?.key ?? attributeKey,
 			filterAttributeKeyDataType: filterAttributeKey?.dataType ?? null,
 			tagType: filterAttributeKey?.type ?? null,
-			searchText: !result[result.length - 1]?.endsWith(',') // for IN and Not IN string ends with ","
-				? result[result.length - 1] ?? '' // so needs to add last search value if present
-				: '',
+			searchText: isInNInOperator(operator)
+				? result[result.length - 1] ?? ''
+				: result[0] ?? '',
 		});
 
 		if (payload) {

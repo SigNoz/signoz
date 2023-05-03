@@ -1,5 +1,6 @@
 import {
 	getRemovePrefixFromKey,
+	getTagToken,
 	isExistsNotExistsOperator,
 } from 'container/QueryBuilder/filters/QueryBuilderSearch/utils';
 import { Option } from 'container/QueryBuilder/type';
@@ -40,14 +41,9 @@ export const useAutoComplete = (query: IBuilderQuery): IAutoComplete => {
 	const [key, operator, result] = useSetCurrentKeyAndOperator(searchValue, keys);
 
 	const handleSearch = (value: string): void => {
-		const getKey = keys.find((item) => value?.includes(item.key))?.key ?? value;
+		const prefixFreeValue = getRemovePrefixFromKey(getTagToken(value).tagKey);
 		setSearchValue(value);
-		if (operator === '') {
-			const prefixFreeValue = getRemovePrefixFromKey(getKey);
-			setSearchKey(prefixFreeValue);
-		} else {
-			setSearchKey('');
-		}
+		setSearchKey(prefixFreeValue);
 	};
 
 	const {
@@ -72,9 +68,6 @@ export const useAutoComplete = (query: IBuilderQuery): IAutoComplete => {
 			if (isMulti) {
 				setSearchValue((prev: string) => {
 					const prevLength = prev.split(' ').length;
-					if (prev.includes(value)) {
-						return prev.replace(` ${value} `, '');
-					}
 					if (checkStringEndsWithSpace(prev)) {
 						return `${prev} ${value}, `;
 					}
