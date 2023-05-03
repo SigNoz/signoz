@@ -1,6 +1,8 @@
-import { isExistsNotExistsOperator } from 'container/QueryBuilder/filters/QueryBuilderSearch/utils';
+import {
+	getRemovePrefixFromKey,
+	isExistsNotExistsOperator,
+} from 'container/QueryBuilder/filters/QueryBuilderSearch/utils';
 import { Option } from 'container/QueryBuilder/type';
-import { isEmpty } from 'lodash-es';
 import { useCallback, useState } from 'react';
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 import { checkStringEndsWithSpace } from 'utils/checkStringEndsWithSpace';
@@ -40,8 +42,9 @@ export const useAutoComplete = (query: IBuilderQuery): IAutoComplete => {
 	const handleSearch = (value: string): void => {
 		const getKey = keys.find((item) => value?.includes(item.key))?.key ?? value;
 		setSearchValue(value);
-		if (isEmpty(operator)) {
-			setSearchKey(getKey);
+		if (operator === '') {
+			const prefixFreeValue = getRemovePrefixFromKey(getKey);
+			setSearchKey(prefixFreeValue);
 		} else {
 			setSearchKey('');
 		}
