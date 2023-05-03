@@ -13,7 +13,6 @@ import get from 'api/browser/localstorage/get';
 import set from 'api/browser/localstorage/set';
 import { DASHBOARD_TIME_IN_DURATION } from 'constants/app';
 import useUrlQuery from 'hooks/useUrlQuery';
-import _omit from 'lodash-es/omit';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useLocation } from 'react-router-dom';
@@ -26,6 +25,7 @@ import {
 	UPDATE_TIME_INTERVAL,
 } from 'types/actions/globalTime';
 import { GlobalReducer } from 'types/reducer/globalTime';
+import { omit } from 'utils/lodash/omit';
 
 import { getMinMax, options } from './config';
 import { ButtonContainer, Container } from './styles';
@@ -127,7 +127,7 @@ function AutoRefresh({ disabled = false }: AutoRefreshProps): JSX.Element {
 				// remove the path from localstorage
 				set(
 					DASHBOARD_TIME_IN_DURATION,
-					JSON.stringify(_omit(localStorageData, pathname)),
+					JSON.stringify(omit(pathname, localStorageData)),
 				);
 			}
 			setIsAutoRefreshfreshEnabled(checked);

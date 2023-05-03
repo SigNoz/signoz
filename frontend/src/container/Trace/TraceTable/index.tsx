@@ -10,7 +10,6 @@ import { formUrlParams } from 'container/TraceDetail/utils';
 import dayjs from 'dayjs';
 import duration from 'dayjs/plugin/duration';
 import history from 'lib/history';
-import omit from 'lodash-es/omit';
 import React from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { Dispatch } from 'redux';
@@ -24,6 +23,7 @@ import {
 	UPDATE_SPANS_AGGREGATE_PAGE_SIZE,
 } from 'types/actions/trace';
 import { TraceReducer } from 'types/reducer/trace';
+import { omit } from 'utils/lodash/omit';
 import { v4 } from 'uuid';
 
 dayjs.extend(duration);
@@ -180,7 +180,7 @@ function TraceTable(): JSX.Element {
 		}
 	};
 
-	const totalObject = omit(statusFilter, [...(selectedStatusFilter || [])]);
+	const totalObject = omit(selectedStatusFilter || [], statusFilter || {});
 	const totalCount = Object.values(totalObject).reduce(
 		(a, b) => parseInt(String(a), 10) + parseInt(String(b), 10),
 		0,
