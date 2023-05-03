@@ -1,5 +1,6 @@
 import { PlusOutlined } from '@ant-design/icons';
 import { Button, Tabs } from 'antd';
+import { PANEL_TYPES } from 'constants/queryBuilder';
 import MetricsBuilderFormula from 'container/NewWidget/LeftContainer/QuerySection/QueryBuilder/queryBuilder/formula';
 import MetricsBuilder from 'container/NewWidget/LeftContainer/QuerySection/QueryBuilder/queryBuilder/query';
 import {
@@ -245,7 +246,7 @@ function QuerySection({
 							key={key}
 							queryIndex={key}
 							queryData={toIMetricsBuilderQuery(current)}
-							selectedGraph="TIME_SERIES"
+							selectedGraph={PANEL_TYPES.TIME_SERIES}
 							handleQueryChange={handleMetricQueryChange}
 						/>
 					);

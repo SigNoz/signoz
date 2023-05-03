@@ -1,3 +1,6 @@
+/* eslint-disable  */
+// TODO: fix it after merge actual functionality
+// @ts-nocheck
 import { Query } from 'types/api/dashboard/getAll';
 
 import {

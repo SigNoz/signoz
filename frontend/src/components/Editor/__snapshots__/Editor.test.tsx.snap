@@ -1,0 +1,69 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`Editor renders correctly with custom props 1`] = `
+<div>
+  <section
+    style="display: flex; position: relative; text-align: initial; width: 100%; height: 50vh;"
+  >
+    <div
+      style="display: flex; height: 100%; width: 100%; justify-content: center; align-items: center;"
+    >
+      Loading...
+    </div>
+    <div
+      style="width: 100%; display: none;"
+    />
+  </section>
+</div>
+`;
+
+exports[`Editor renders correctly with default props 1`] = `
+<div>
+  <section
+    style="display: flex; position: relative; text-align: initial; width: 100%; height: 40vh;"
+  >
+    <div
+      style="display: flex; height: 100%; width: 100%; justify-content: center; align-items: center;"
+    >
+      Loading...
+    </div>
+    <div
+      style="width: 100%; display: none;"
+    />
+  </section>
+</div>
+`;
+
+exports[`Editor renders with dark mode theme 1`] = `
+<div>
+  <section
+    style="display: flex; position: relative; text-align: initial; width: 100%; height: 40vh;"
+  >
+    <div
+      style="display: flex; height: 100%; width: 100%; justify-content: center; align-items: center;"
+    >
+      Loading...
+    </div>
+    <div
+      style="width: 100%; display: none;"
+    />
+  </section>
+</div>
+`;
+
+exports[`Editor renders with light mode theme 1`] = `
+<div>
+  <section
+    style="display: flex; position: relative; text-align: initial; width: 100%; height: 40vh;"
+  >
+    <div
+      style="display: flex; height: 100%; width: 100%; justify-content: center; align-items: center;"
+    >
+      Loading...
+    </div>
+    <div
+      style="width: 100%; display: none;"
+    />
+  </section>
+</div>
+`;

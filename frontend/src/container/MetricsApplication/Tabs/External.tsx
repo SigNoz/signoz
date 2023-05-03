@@ -1,3 +1,5 @@
+/* eslint-disable */
+// @ts-nocheck
 import { Col } from 'antd';
 import FullView from 'container/GridGraphLayout/Graph/FullView/index.metricsBuilder';
 import {
@@ -41,6 +43,7 @@ function External({ getWidgetQueryBuilder }: ExternalProps): JSX.Element {
 			getWidgetQueryBuilder({
 				queryType: 1,
 				promQL: [],
+				// TODO: change it later to actual builder
 				metricsBuilder: externalCallErrorPercent({
 					servicename,
 					legend: legend.address,
@@ -61,6 +64,7 @@ function External({ getWidgetQueryBuilder }: ExternalProps): JSX.Element {
 			getWidgetQueryBuilder({
 				queryType: 1,
 				promQL: [],
+				// TODO: change it later to actual builder
 				metricsBuilder: externalCallDuration({
 					servicename,
 					tagFilterItems,
@@ -75,6 +79,7 @@ function External({ getWidgetQueryBuilder }: ExternalProps): JSX.Element {
 			getWidgetQueryBuilder({
 				queryType: 1,
 				promQL: [],
+				// TODO: change it later to actual builder
 				metricsBuilder: externalCallRpsByAddress({
 					servicename,
 					legend: legend.address,
@@ -90,6 +95,7 @@ function External({ getWidgetQueryBuilder }: ExternalProps): JSX.Element {
 			getWidgetQueryBuilder({
 				queryType: 1,
 				promQL: [],
+				// TODO: change it later to actual builder
 				metricsBuilder: externalCallDurationByAddress({
 					servicename,
 					legend: legend.address,
