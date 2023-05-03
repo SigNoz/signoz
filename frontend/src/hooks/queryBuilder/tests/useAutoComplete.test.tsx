@@ -10,16 +10,11 @@ describe('useAutoComplete', () => {
 	let queryClient: QueryClient;
 	let wrapper: React.FC<{ children: React.ReactNode }>;
 
-	beforeAll(async () => {
+	beforeAll(() => {
 		queryClient = new QueryClient();
 		wrapper = ({ children }): JSX.Element => (
 			<QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
 		);
-	});
-
-	afterEach(() => {
-		jest.clearAllMocks();
-		queryClient.clear();
 	});
 
 	test('should options empty', () => {
@@ -152,7 +147,7 @@ describe('useAutoComplete', () => {
 		}
 	});
 
-	test('should isFetching Data', async () => {
+	test('should isFetching Data', () => {
 		const { result } = renderHook(
 			() => useAutoComplete(valueWithAttributeAndOperator),
 			{
@@ -160,7 +155,7 @@ describe('useAutoComplete', () => {
 			},
 		);
 		expect(result.current.isFetching).toBeTruthy();
-		await waitFor(() => {
+		waitFor(() => {
 			expect(result.current.isFetching).toBeFalsy();
 		});
 	});

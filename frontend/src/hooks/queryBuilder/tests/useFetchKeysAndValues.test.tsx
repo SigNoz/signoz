@@ -15,19 +15,14 @@ describe('useFetchKeysAndValues', () => {
 	let queryClient: QueryClient;
 	let wrapper: React.FC<{ children: React.ReactNode }>;
 
-	beforeAll(async () => {
+	beforeAll(() => {
 		queryClient = new QueryClient();
 		wrapper = ({ children }): JSX.Element => (
 			<QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
 		);
 	});
 
-	afterEach(() => {
-		jest.clearAllMocks();
-		queryClient.clear();
-	});
-
-	test('should isFetching Data', async () => {
+	test('should isFetching Data', () => {
 		const { result } = renderHook(
 			() => useFetchKeysAndValues(searchValue, valueWithAttributeAndOperator),
 			{
@@ -35,7 +30,7 @@ describe('useFetchKeysAndValues', () => {
 			},
 		);
 		expect(result.current.isFetching).toBeTruthy();
-		await waitFor(() => {
+		waitFor(() => {
 			expect(result.current.isFetching).toBeFalsy();
 		});
 	});
