@@ -2,13 +2,13 @@
 
 exports[`QueryBuilder: Main Query wrapper it should render Query 1`] = `
 <DocumentFragment>
-  .c6 {
+  .c7 {
   margin-right: 0.6875rem;
   -webkit-transition: all 0.2s ease;
   transition: all 0.2s ease;
 }
 
-.c5 {
+.c6 {
   width: -webkit-fit-content;
   width: -moz-fit-content;
   width: fit-content;
@@ -25,7 +25,7 @@ exports[`QueryBuilder: Main Query wrapper it should render Query 1`] = `
   cursor: pointer;
 }
 
-.c7 {
+.c8 {
   pointer-events: none;
 }
 
@@ -78,6 +78,12 @@ exports[`QueryBuilder: Main Query wrapper it should render Query 1`] = `
 
 .c4 {
   width: auto;
+  cursor: pointer;
+  pointer-events: auto;
+}
+
+.c5 {
+  width: 10rem;
   cursor: pointer;
   pointer-events: auto;
 }
@@ -210,9 +216,9 @@ exports[`QueryBuilder: Main Query wrapper it should render Query 1`] = `
                           class="ant-tag css-dev-only-do-not-override-1i536d8"
                         >
                           <span
-                            class="ant-typography ant-typography-ellipsis ant-typography-single-line ant-typography-ellipsis-single-line c4 css-dev-only-do-not-override-1i536d8"
+                            class="ant-typography ant-typography-ellipsis ant-typography-single-line ant-typography-ellipsis-single-line c5 css-dev-only-do-not-override-1i536d8"
                           >
-                            service_name != frontend operation ser
+                            service_name IN frontend,operation,ser
                           </span>
                           <span
                             aria-label="close"
@@ -459,11 +465,11 @@ exports[`QueryBuilder: Main Query wrapper it should render Query 1`] = `
           class="ant-col ant-col-24 css-dev-only-do-not-override-1i536d8"
         >
           <div
-            class="ant-col c5 css-dev-only-do-not-override-1i536d8"
+            class="ant-col c6 css-dev-only-do-not-override-1i536d8"
           >
             <span
               aria-label="plus-square"
-              class="anticon anticon-plus-square c6"
+              class="anticon anticon-plus-square c7"
               role="img"
             >
               <svg
@@ -487,7 +493,7 @@ exports[`QueryBuilder: Main Query wrapper it should render Query 1`] = `
               Add conditions for 
               <span>
                 <a
-                  class="ant-typography c7 css-dev-only-do-not-override-1i536d8"
+                  class="ant-typography c8 css-dev-only-do-not-override-1i536d8"
                 >
                   AGGREGATION INTERVAL
                 </a>
@@ -495,7 +501,7 @@ exports[`QueryBuilder: Main Query wrapper it should render Query 1`] = `
               </span>
               and 
               <a
-                class="ant-typography c7 css-dev-only-do-not-override-1i536d8"
+                class="ant-typography c8 css-dev-only-do-not-override-1i536d8"
               >
                 HAVING
               </a>

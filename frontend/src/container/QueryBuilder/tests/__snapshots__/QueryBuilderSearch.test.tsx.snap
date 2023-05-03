@@ -8,6 +8,12 @@ exports[`QueryBuilder: WHERE clause Seach Filter it should render QueryBuilderSe
   pointer-events: auto;
 }
 
+.c1 {
+  width: 10rem;
+  cursor: pointer;
+  pointer-events: auto;
+}
+
 <div
     class="ant-select css-dev-only-do-not-override-1i536d8 ant-select-multiple ant-select-show-search"
     style="width: 100%; min-width: 10rem;"
@@ -63,9 +69,9 @@ exports[`QueryBuilder: WHERE clause Seach Filter it should render QueryBuilderSe
               class="ant-tag css-dev-only-do-not-override-1i536d8"
             >
               <span
-                class="ant-typography ant-typography-ellipsis ant-typography-single-line ant-typography-ellipsis-single-line c0 css-dev-only-do-not-override-1i536d8"
+                class="ant-typography ant-typography-ellipsis ant-typography-single-line ant-typography-ellipsis-single-line c1 css-dev-only-do-not-override-1i536d8"
               >
-                service_name != frontend operation ser
+                service_name IN frontend,operation,ser
               </span>
               <span
                 aria-label="close"

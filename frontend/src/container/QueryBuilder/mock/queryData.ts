@@ -23,7 +23,7 @@ export const queryMockData: IBuilderQuery = {
 			{
 				id: '8fadtr46b',
 				key: 'service_name',
-				op: '!=',
+				op: 'IN',
 				value: ['frontend', 'operation', 'ser'],
 			},
 		],
