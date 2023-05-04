@@ -66,8 +66,8 @@ export const useTag = (
 		setTags(
 			(query?.tagFilters?.items || []).map((obj) =>
 				isValueHaveInNotInOperator(obj.op)
-					? `${obj.key} ${obj.op} ${obj.value.join(',')}`
-					: `${obj.key} ${obj.op} ${obj.value.join(' ')}`,
+					? `${obj.key?.key} ${obj.op} ${obj.value.join(', ')}`
+					: `${obj.key?.key} ${obj.op} ${obj.value.join(' ')}`,
 			),
 		);
 		// eslint-disable-next-line react-hooks/exhaustive-deps
