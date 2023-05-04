@@ -237,7 +237,7 @@ function FormAlertRules({
 			return false;
 		}
 
-		return false;
+		return true;
 	}, [t, alertDef, queryCategory, queryBuilderData, notifications]);
 
 	const isFormValid = useCallback((): boolean => {
