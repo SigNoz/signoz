@@ -17,7 +17,6 @@ import dayjs from 'dayjs';
 import useUrlQuery from 'hooks/useUrlQuery';
 import { spanServiceNameToColorMapping } from 'lib/getRandomColor';
 import history from 'lib/history';
-import { map } from 'lodash-es';
 import { SPAN_DETAILS_LEFT_COL_WIDTH } from 'pages/TraceDetail/constants';
 import React, { useEffect, useMemo, useState } from 'react';
 import { ITraceForest, PayloadProps } from 'types/api/trace/getTraceItem';
@@ -64,9 +63,8 @@ function TraceDetail({ response }: TraceDetailProps): JSX.Element {
 
 	const { treesData: tree, ...traceMetaData } = useMemo(() => {
 		const sortedTreesData: ITraceForest = {
-			spanTree: map(treesData.spanTree, (tree) => getSortedData(tree)),
-			missingSpanTree: map(
-				treesData.missingSpanTree,
+			spanTree: treesData.spanTree.map((tree) => getSortedData(tree)),
+			missingSpanTree: treesData.missingSpanTree.map(
 				(tree) => getSortedData(tree) || [],
 			),
 		};
@@ -144,7 +142,7 @@ function TraceDetail({ response }: TraceDetailProps): JSX.Element {
 						{hasMissingSpans && <MissingSpansMessage />}
 					</StyledCol>
 					<Col flex="auto">
-						{map(tree.spanTree, (tree) => (
+						{tree.spanTree.map((tree) => (
 							<TraceFlameGraph
 								key={tree.id}
 								treeData={tree}
@@ -159,7 +157,7 @@ function TraceDetail({ response }: TraceDetailProps): JSX.Element {
 
 						{hasMissingSpans && (
 							<FlameGraphMissingSpansContainer>
-								{map(tree.missingSpanTree, (tree) => (
+								{tree.missingSpanTree.map((tree) => (
 									<TraceFlameGraph
 										key={tree.id}
 										treeData={tree}
@@ -218,7 +216,7 @@ function TraceDetail({ response }: TraceDetailProps): JSX.Element {
 				</StyledRow>
 				<StyledDiv styledclass={[styles.ganttChartContainer]}>
 					<GanttChartWrapper>
-						{map([...tree.spanTree, ...tree.missingSpanTree], (tree) => (
+						{[...tree.spanTree, ...tree.missingSpanTree].map((tree) => (
 							<GanttChart
 								key={tree as never}
 								traceMetaData={traceMetaData}

@@ -1,6 +1,5 @@
 import { Button } from 'antd';
 import CategoryHeading from 'components/Logs/CategoryHeading';
-import map from 'lodash-es/map';
 import React from 'react';
 import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
@@ -46,7 +45,7 @@ function Suggestions({ applySuggestion }: SuggestionsProps): JSX.Element {
 		<div>
 			<CategoryHeading>SUGGESTIONS</CategoryHeading>
 			<div>
-				{map(selected, (field) => (
+				{selected.map((field) => (
 					<SuggestedItem
 						key={JSON.stringify(field)}
 						name={field.name}

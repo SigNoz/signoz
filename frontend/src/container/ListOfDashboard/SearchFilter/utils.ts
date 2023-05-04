@@ -2,7 +2,7 @@
 /* eslint-disable no-restricted-syntax */
 /* eslint-disable sonarjs/cognitive-complexity */
 import { decode, encode } from 'js-base64';
-import { flattenDeep, map, uniqWith } from 'lodash-es';
+import { flattenDeep, uniqWith } from 'lodash-es';
 import { Dashboard } from 'types/api/dashboard/getAll';
 
 import { IOptionsData, IQueryStructure, TCategory, TOperator } from './types';
@@ -113,33 +113,34 @@ export function OptionsValueResolution(
 		title: {
 			mode: 'tags',
 			options: uniqWith(
-				map(searchData, (searchItem) => ({ name: searchItem.data.title })),
+				searchData.map((searchItem) => ({ name: searchItem.data.title })),
 				(prev, next) => prev.name === next.name,
 			),
 		},
 		description: {
 			mode: 'tags',
 			options: uniqWith(
-				map(searchData, (searchItem) =>
-					searchItem.data.description
-						? {
-								name: searchItem.data.description,
-								value: searchItem.data.description,
-						  }
-						: null,
-				).filter(Boolean),
+				searchData
+					.map((searchItem) =>
+						searchItem.data.description
+							? {
+									name: searchItem.data.description,
+									value: searchItem.data.description,
+							  }
+							: null,
+					)
+					.filter(Boolean),
 				(prev, next) => prev?.name === next?.name,
 			),
 		},
 		tags: {
 			mode: 'tags',
 			options: uniqWith(
-				map(
-					flattenDeep(
-						map(searchData, (searchItem) => searchItem.data.tags).filter(Boolean),
-					),
-					(tag) => ({ name: tag }),
-				),
+				searchData
+					.map((searchItem) => searchItem.data.tags)
+					.filter(Boolean)
+					.flat()
+					.map((tag) => ({ name: tag })),
 				(prev, next) => prev.name === next.name,
 			),
 		},

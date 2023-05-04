@@ -5,7 +5,6 @@ import {
 import { useMachine } from '@xstate/react';
 import { Button, Input, message, Modal } from 'antd';
 import { useIsDarkMode } from 'hooks/useDarkMode';
-import { map } from 'lodash-es';
 import React, { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Labels } from 'types/api/alerts/def';
@@ -116,16 +115,12 @@ function LabelSelect({
 	return (
 		<SearchContainer isDarkMode={isDarkMode} disabled={false}>
 			<div style={{ display: 'inline-flex', flexWrap: 'wrap' }}>
-				{queries.length > 0 &&
-					map(
-						queries,
-						(query): JSX.Element => (
-							<QueryChip key={query.key} queryData={query} onRemove={handleClose} />
-						),
-					)}
+				{queries.map((query) => (
+					<QueryChip key={query.key} queryData={query} onRemove={handleClose} />
+				))}
 			</div>
 			<div>
-				{map(staging, (item) => (
+				{staging.map((item) => (
 					<QueryChipItem key={uuid()}>{item}</QueryChipItem>
 				))}
 			</div>

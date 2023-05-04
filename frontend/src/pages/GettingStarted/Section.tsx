@@ -1,5 +1,4 @@
 import { Col, Row, Typography } from 'antd';
-import { map } from 'lodash-es';
 import React from 'react';
 
 import DocCard from './DocCard';
@@ -22,8 +21,9 @@ function DocSection({ sectionData }: IDocSectionProps): JSX.Element {
 						<Typography.Text>{sectionData.description}</Typography.Text>
 					</Col>
 				)}
-				{map(sectionData.items, (item, idx) => (
+				{sectionData.items.map((item, idx) => (
 					<Col
+						// eslint-disable-next-line react/no-array-index-key
 						key={`${item.title}+${idx}`}
 						sm={24}
 						md={12}

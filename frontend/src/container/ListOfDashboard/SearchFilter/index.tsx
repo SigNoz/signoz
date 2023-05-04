@@ -3,7 +3,7 @@ import { useMachine } from '@xstate/react';
 import { Button, Select } from 'antd';
 import { RefSelectProps } from 'antd/lib/select';
 import history from 'lib/history';
-import { filter, map } from 'lodash-es';
+import { filter } from 'lodash-es';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { Dashboard } from 'types/api/dashboard/getAll';
 import { v4 as uuidv4 } from 'uuid';
@@ -152,10 +152,10 @@ function SearchFilter({
 	return (
 		<SearchContainer>
 			<div>
-				{map(queries, (query) => (
+				{queries.map((query) => (
 					<QueryChip key={query.id} queryData={query} onRemove={removeQueryById} />
 				))}
-				{map(staging, (value) => (
+				{staging.map((value) => (
 					<QueryChipItem key={JSON.stringify(value)}>
 						{value as string}
 					</QueryChipItem>

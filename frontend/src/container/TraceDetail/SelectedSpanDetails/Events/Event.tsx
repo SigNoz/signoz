@@ -1,7 +1,6 @@
 import { Collapse } from 'antd';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import keys from 'lodash-es/keys';
-import map from 'lodash-es/map';
 import React from 'react';
 import { ITraceTree } from 'types/api/trace/getTraceItem';
 
@@ -17,68 +16,70 @@ function ErrorTag({
 	onToggleHandler,
 	setText,
 	firstSpanStartTime,
-}: ErrorTagProps): JSX.Element {
+}: ErrorTagProps): JSX.Element | undefined {
 	const isDarkMode = useIsDarkMode();
 
-	return (
-		<>
-			{map(event, ({ attributeMap, name, timeUnixNano }) => {
-				const attributes = keys(attributeMap);
+	if (event) {
+		return (
+			<>
+				{event.map(({ attributeMap, name, timeUnixNano }) => {
+					const attributes = keys(attributeMap);
 
-				return (
-					<Collapse
-						key={`${name}${JSON.stringify(attributeMap)}`}
-						defaultActiveKey={[name || attributeMap.event, 'timestamp']}
-						expandIconPosition="right"
-					>
-						<Panel
-							header={name || attributeMap?.event}
-							key={name || attributeMap.event}
+					return (
+						<Collapse
+							key={`${name}${JSON.stringify(attributeMap)}`}
+							defaultActiveKey={[name || attributeMap.event, 'timestamp']}
+							expandIconPosition="right"
 						>
-							{firstSpanStartTime ? (
-								<RelativeStartTime
-									firstSpanStartTime={firstSpanStartTime}
-									timeUnixNano={timeUnixNano}
-								/>
-							) : (
-								<EventStartTime timeUnixNano={timeUnixNano} />
-							)}
+							<Panel
+								header={name || attributeMap?.event}
+								key={name || attributeMap.event}
+							>
+								{firstSpanStartTime ? (
+									<RelativeStartTime
+										firstSpanStartTime={firstSpanStartTime}
+										timeUnixNano={timeUnixNano}
+									/>
+								) : (
+									<EventStartTime timeUnixNano={timeUnixNano} />
+								)}
 
-							{map(attributes, (event) => {
-								const value = attributeMap[event];
-								const isEllipsed = value.length > 24;
+								{attributes.map((event) => {
+									const value = attributeMap[event];
+									const isEllipsed = value.length > 24;
 
-								return (
-									<>
-										<CustomSubTitle>{event}</CustomSubTitle>
-										<CustomSubText
-											ellipsis={{
-												rows: isEllipsed ? 1 : 0,
-											}}
-											isDarkMode={isDarkMode}
-										>
-											{value}
-											<br />
-											{isEllipsed && (
-												<EllipsedButton
-													{...{
-														event,
-														onToggleHandler,
-														setText,
-														value,
-													}}
-												/>
-											)}
-										</CustomSubText>
-									</>
-								);
-							})}
-						</Panel>
-					</Collapse>
-				);
-			})}
-		</>
-	);
+									return (
+										<>
+											<CustomSubTitle>{event}</CustomSubTitle>
+											<CustomSubText
+												ellipsis={{
+													rows: isEllipsed ? 1 : 0,
+												}}
+												isDarkMode={isDarkMode}
+											>
+												{value}
+												<br />
+												{isEllipsed && (
+													<EllipsedButton
+														{...{
+															event,
+															onToggleHandler,
+															setText,
+															value,
+														}}
+													/>
+												)}
+											</CustomSubText>
+										</>
+									);
+								})}
+							</Panel>
+						</Collapse>
+					);
+				})}
+			</>
+		);
+	}
 }
 
 interface ErrorTagProps {

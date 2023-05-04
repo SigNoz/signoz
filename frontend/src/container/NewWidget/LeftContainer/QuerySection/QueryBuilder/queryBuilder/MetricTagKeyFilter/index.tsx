@@ -2,7 +2,6 @@ import { CloseCircleFilled } from '@ant-design/icons';
 import { useMachine } from '@xstate/react';
 import { Button, Select, Spin } from 'antd';
 import { useIsDarkMode } from 'hooks/useDarkMode';
-import { map } from 'lodash-es';
 import React, { useCallback, useEffect, useState } from 'react';
 import { IMetricsBuilderQuery } from 'types/api/dashboard/getAll';
 import { v4 as uuid } from 'uuid';
@@ -151,16 +150,12 @@ function MetricTagKeyFilter({
 	return (
 		<SearchContainer isDarkMode={isDarkMode}>
 			<div style={{ display: 'inline-flex', flexWrap: 'wrap' }}>
-				{queries.length > 0 &&
-					map(
-						queries,
-						(query): JSX.Element => (
-							<QueryChip key={query.id} queryData={query} onClose={handleClose} />
-						),
-					)}
+				{queries.map((query) => (
+					<QueryChip key={query.id} queryData={query} onClose={handleClose} />
+				))}
 			</div>
 			<div>
-				{map(staging, (item) => (
+				{staging.map((item) => (
 					<QueryChipItem key={uuid()}>{item}</QueryChipItem>
 				))}
 			</div>

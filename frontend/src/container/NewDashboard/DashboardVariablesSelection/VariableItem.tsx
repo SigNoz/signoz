@@ -4,7 +4,6 @@ import { Input, Popover, Select, Typography } from 'antd';
 import query from 'api/dashboard/variables/query';
 import { commaValuesParser } from 'lib/dashbaordVariables/customCommaValuesParser';
 import sortValues from 'lib/dashbaordVariables/sortVariableValues';
-import map from 'lodash-es/map';
 import React, { memo, useCallback, useEffect, useState } from 'react';
 import { IDashboardVariable } from 'types/api/dashboard/getAll';
 
@@ -184,7 +183,7 @@ function VariableItem({
 								ALL
 							</Select.Option>
 						)}
-						{map(optionsData, (option) => (
+						{optionsData.map((option) => (
 							<Select.Option
 								data-testid={`option-${option}`}
 								key={option.toString()}

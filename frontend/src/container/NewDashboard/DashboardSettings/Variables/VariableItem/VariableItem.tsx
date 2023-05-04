@@ -14,7 +14,6 @@ import query from 'api/dashboard/variables/query';
 import Editor from 'components/Editor';
 import { commaValuesParser } from 'lib/dashbaordVariables/customCommaValuesParser';
 import sortValues from 'lib/dashbaordVariables/sortVariableValues';
-import { map } from 'lodash-es';
 import React, { useEffect, useState } from 'react';
 import {
 	IDashboardVariable,
@@ -295,7 +294,8 @@ function VariableItem({
 							{errorPreview ? (
 								<Typography style={{ color: orange[5] }}>{errorPreview}</Typography>
 							) : (
-								map(previewValues, (value, idx) => (
+								previewValues.map((value, idx) => (
+									// eslint-disable-next-line react/no-array-index-key
 									<Tag key={`${value}${idx}`}>{value.toString()}</Tag>
 								))
 							)}
