@@ -13,15 +13,13 @@ export interface IBuilderFormula {
 
 export interface TagFilterItem {
 	id: string;
-	key: string;
-	// TODO: type it in the future
+	key?: BaseAutocompleteData;
 	op: string;
 	value: string[];
 }
 
 export interface TagFilter {
 	items: TagFilterItem[] | [];
-	// TODO: type it in the future
 	op: string;
 }
 

@@ -1,5 +1,6 @@
 import { Select, Spin, Tag, Tooltip } from 'antd';
 import { useAutoComplete } from 'hooks/queryBuilder/useAutoComplete';
+import { useFetchKeysAndValues } from 'hooks/queryBuilder/useFetchKeysAndValues';
 import React, { useEffect, useMemo } from 'react';
 import {
 	IBuilderQuery,
@@ -36,7 +37,10 @@ function QueryBuilderSearch({
 		isMulti,
 		isFetching,
 		setSearchKey,
+		searchKey,
 	} = useAutoComplete(query);
+
+	const { keys } = useFetchKeysAndValues(searchValue, query, searchKey);
 
 	const onTagRender = ({
 		value,
@@ -100,9 +104,12 @@ function QueryBuilderSearch({
 		const initialTagFilters: TagFilter = { items: [], op: 'AND' };
 		initialTagFilters.items = tags.map((tag) => {
 			const { tagKey, tagOperator, tagValue } = getTagToken(tag);
+			const filterAttribute = keys.find(
+				(key) => key.key === getRemovePrefixFromKey(tagKey),
+			);
 			return {
 				id: uuid().slice(0, 8),
-				key: getRemovePrefixFromKey(tagKey),
+				key: filterAttribute,
 				op: tagOperator,
 				value: isInNInOperator(tagOperator)
 					? createTagValues(tagValue)
@@ -111,7 +118,7 @@ function QueryBuilderSearch({
 		});
 		onChange(initialTagFilters);
 		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [tags]);
+	}, [keys, tags]);
 
 	return (
 		<Select
