@@ -1,5 +1,3 @@
-/* eslint-disable */
-// @ts-nocheck
 import { Col } from 'antd';
 import FullView from 'container/GridGraphLayout/Graph/FullView/index.metricsBuilder';
 import {
@@ -14,6 +12,7 @@ import {
 import React, { useMemo, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { Widgets } from 'types/api/dashboard/getAll';
+import { TagFilterItem } from 'types/api/queryBuilder/queryBuilderData';
 
 import { Card, GraphContainer, GraphTitle, Row } from '../styles';
 import { Button } from './styles';
@@ -29,7 +28,7 @@ function DBCall({ getWidgetQueryBuilder }: DBCallProps): JSX.Element {
 	const [selectedTimeStamp, setSelectedTimeStamp] = useState<number>(0);
 	const { queries } = useResourceAttribute();
 
-	const tagFilterItems = useMemo(
+	const tagFilterItems: TagFilterItem[] = useMemo(
 		() =>
 			handleNonInQueryRange(resourceAttributesToTagFilterItems(queries)) || [],
 		[queries],
@@ -50,7 +49,6 @@ function DBCall({ getWidgetQueryBuilder }: DBCallProps): JSX.Element {
 			getWidgetQueryBuilder({
 				queryType: 1,
 				promql: [],
-				// TODO: change it later to actual builder
 				builder: databaseCallsRPS({
 					servicename,
 					legend,
@@ -65,7 +63,6 @@ function DBCall({ getWidgetQueryBuilder }: DBCallProps): JSX.Element {
 			getWidgetQueryBuilder({
 				queryType: 1,
 				promql: [],
-				// TODO: change it later to actual builder
 				builder: databaseCallsAvgDuration({
 					servicename,
 					tagFilterItems,

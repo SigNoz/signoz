@@ -11,7 +11,7 @@ import {
 } from 'hooks/useResourceAttribute/types';
 import { decode } from 'js-base64';
 import history from 'lib/history';
-import { IQueryBuilderTagFilterItems } from 'types/api/dashboard/getAll';
+import { TagFilterItem } from 'types/api/queryBuilder/queryBuilderData';
 import { OperatorValues, Tags } from 'types/reducer/trace';
 import { v4 as uuid } from 'uuid';
 
@@ -63,10 +63,10 @@ export const convertRawQueriesToTraceSelectedTags = (
 /* Convert resource attributes to tagFilter items for queryBuilder */
 export const resourceAttributesToTagFilterItems = (
 	queries: IResourceAttribute[],
-): IQueryBuilderTagFilterItems[] =>
+): TagFilterItem[] =>
 	queries.map((res) => ({
 		id: `${res.id}`,
-		key: `${res.tagKey}`,
+		key: { key: res.tagKey, isColumn: false, type: null, dataType: null },
 		op: `${res.operator}`,
 		value: `${res.tagValue}`.split(','),
 	}));

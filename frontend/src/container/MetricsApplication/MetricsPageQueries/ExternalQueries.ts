@@ -1,45 +1,67 @@
-import {
-	IMetricsBuilderFormula,
-	IMetricsBuilderQuery,
-	IQueryBuilderTagFilterItems,
-} from 'types/api/dashboard/getAll';
+import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
+import { TagFilterItem } from 'types/api/queryBuilder/queryBuilderData';
+import { QueryBuilderData } from 'types/common/queryBuilder';
 
 import {
 	getQueryBuilderQueries,
 	getQueryBuilderQuerieswithFormula,
 } from './MetricsPageQueriesFactory';
 
-const groupBy = ['address'];
+const groupBy: BaseAutocompleteData[] = [
+	{ dataType: 'string', isColumn: false, key: 'address', type: 'tag' },
+];
 
 export const externalCallErrorPercent = ({
 	servicename,
 	legend,
 	tagFilterItems,
-}: ExternalCallDurationByAddressProps): {
-	formulas: IMetricsBuilderFormula[];
-	queryBuilder: IMetricsBuilderQuery[];
-} => {
-	const metricNameA = 'signoz_external_call_latency_count';
-	const metricNameB = 'signoz_external_call_latency_count';
-	const additionalItemsA = [
+}: ExternalCallDurationByAddressProps): QueryBuilderData => {
+	const metricNameA: BaseAutocompleteData = {
+		dataType: 'float64',
+		isColumn: true,
+		key: 'signoz_external_call_latency_count',
+		type: null,
+	};
+	const metricNameB: BaseAutocompleteData = {
+		dataType: 'float64',
+		isColumn: true,
+		key: 'signoz_external_call_latency_count',
+		type: null,
+	};
+	const additionalItemsA: TagFilterItem[] = [
 		{
 			id: '',
-			key: 'service_name',
+			key: {
+				dataType: 'string',
+				isColumn: false,
+				key: 'service_name',
+				type: 'resource',
+			},
 			op: 'IN',
 			value: [`${servicename}`],
 		},
 		{
 			id: '',
-			key: 'status_code',
+			key: {
+				dataType: 'int64',
+				isColumn: false,
+				key: 'status_code',
+				type: 'tag',
+			},
 			op: 'IN',
 			value: ['STATUS_CODE_ERROR'],
 		},
 		...tagFilterItems,
 	];
-	const additionalItemsB = [
+	const additionalItemsB: TagFilterItem[] = [
 		{
 			id: '',
-			key: 'service_name',
+			key: {
+				dataType: 'string',
+				isColumn: false,
+				key: 'service_name',
+				type: 'resource',
+			},
 			op: 'IN',
 			value: [`${servicename}`],
 		},
@@ -64,20 +86,32 @@ export const externalCallErrorPercent = ({
 export const externalCallDuration = ({
 	servicename,
 	tagFilterItems,
-}: ExternalCallProps): {
-	formulas: IMetricsBuilderFormula[];
-	queryBuilder: IMetricsBuilderQuery[];
-} => {
-	const metricNameA = 'signoz_external_call_latency_sum';
-	const metricNameB = 'signoz_external_call_latency_count';
+}: ExternalCallProps): QueryBuilderData => {
+	const metricNameA: BaseAutocompleteData = {
+		dataType: 'float64',
+		isColumn: true,
+		key: 'signoz_external_call_latency_sum',
+		type: null,
+	};
+	const metricNameB: BaseAutocompleteData = {
+		dataType: 'float64',
+		isColumn: true,
+		key: 'signoz_external_call_latency_count',
+		type: null,
+	};
 	const expression = 'A/B';
 	const legendFormula = 'Average Duration';
 	const legend = '';
 	const disabled = true;
-	const additionalItemsA = [
+	const additionalItemsA: TagFilterItem[] = [
 		{
 			id: '',
-			key: 'service_name',
+			key: {
+				dataType: 'string',
+				isColumn: false,
+				key: 'service_name',
+				type: 'resource',
+			},
 			op: 'IN',
 			value: [`${servicename}`],
 		},
@@ -101,15 +135,22 @@ export const externalCallRpsByAddress = ({
 	servicename,
 	legend,
 	tagFilterItems,
-}: ExternalCallDurationByAddressProps): {
-	formulas: IMetricsBuilderFormula[];
-	queryBuilder: IMetricsBuilderQuery[];
-} => {
-	const metricName = 'signoz_external_call_latency_count';
-	const itemsA = [
+}: ExternalCallDurationByAddressProps): QueryBuilderData => {
+	const metricName: BaseAutocompleteData = {
+		dataType: 'float64',
+		isColumn: true,
+		key: 'signoz_external_call_latency_count',
+		type: null,
+	};
+	const itemsA: TagFilterItem[] = [
 		{
 			id: '',
-			key: 'service_name',
+			key: {
+				dataType: 'string',
+				isColumn: false,
+				key: 'service_name',
+				type: 'resource',
+			},
 			op: 'IN',
 			value: [`${servicename}`],
 		},
@@ -127,19 +168,31 @@ export const externalCallDurationByAddress = ({
 	servicename,
 	legend,
 	tagFilterItems,
-}: ExternalCallDurationByAddressProps): {
-	formulas: IMetricsBuilderFormula[];
-	queryBuilder: IMetricsBuilderQuery[];
-} => {
-	const metricNameA = 'signoz_external_call_latency_sum';
-	const metricNameB = 'signoz_external_call_latency_count';
+}: ExternalCallDurationByAddressProps): QueryBuilderData => {
+	const metricNameA: BaseAutocompleteData = {
+		dataType: 'float64',
+		isColumn: true,
+		key: 'signoz_external_call_latency_sum',
+		type: null,
+	};
+	const metricNameB: BaseAutocompleteData = {
+		dataType: 'float64',
+		isColumn: true,
+		key: 'signoz_external_call_latency_count',
+		type: null,
+	};
 	const expression = 'A/B';
 	const legendFormula = legend;
 	const disabled = true;
-	const additionalItemsA = [
+	const additionalItemsA: TagFilterItem[] = [
 		{
 			id: '',
-			key: 'service_name',
+			key: {
+				dataType: 'string',
+				isColumn: false,
+				key: 'service_name',
+				type: 'resource',
+			},
 			op: 'IN',
 			value: [`${servicename}`],
 		},
@@ -166,5 +219,5 @@ interface ExternalCallDurationByAddressProps extends ExternalCallProps {
 
 export interface ExternalCallProps {
 	servicename: string | undefined;
-	tagFilterItems: IQueryBuilderTagFilterItems[];
+	tagFilterItems: TagFilterItem[];
 }
