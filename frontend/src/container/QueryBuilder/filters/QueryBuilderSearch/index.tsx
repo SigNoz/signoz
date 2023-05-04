@@ -14,6 +14,7 @@ import { StyledCheckOutlined, TypographyText } from './style';
 import {
 	checkCommaAndSpace,
 	createTagValues,
+	getOperatorValue,
 	getRemovePrefixFromKey,
 	getTagToken,
 	isExistsNotExistsOperator,
@@ -110,10 +111,10 @@ function QueryBuilderSearch({
 			return {
 				id: uuid().slice(0, 8),
 				key: filterAttribute,
-				op: tagOperator,
+				op: getOperatorValue(tagOperator),
 				value: isInNInOperator(tagOperator)
 					? createTagValues(tagValue)
-					: Array(tagValue.join(' ')),
+					: createTagValues(tagValue)[0],
 			};
 		});
 		onChange(initialTagFilters);

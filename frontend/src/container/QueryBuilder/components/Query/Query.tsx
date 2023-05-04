@@ -80,8 +80,8 @@ export const Query = memo(function Query({
 	}, [handleChangeQueryData, query]);
 
 	const handleChangeTagFilters = useCallback(
-		(value: IBuilderQuery['tagFilters']) => {
-			handleChangeQueryData('tagFilters', value);
+		(value: IBuilderQuery['filters']) => {
+			handleChangeQueryData('filters', value);
 		},
 		[handleChangeQueryData],
 	);

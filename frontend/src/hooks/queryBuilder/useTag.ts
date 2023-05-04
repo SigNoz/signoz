@@ -1,4 +1,5 @@
 import {
+	getOperatorFromValue,
 	isExistsNotExistsOperator,
 	isValueHaveInNotInOperator,
 } from 'container/QueryBuilder/filters/QueryBuilderSearch/utils';
@@ -63,13 +64,14 @@ export const useTag = (
 	}, []);
 
 	useEffect(() => {
-		setTags(
-			(query?.tagFilters?.items || []).map((obj) =>
-				isValueHaveInNotInOperator(obj.op)
-					? `${obj.key?.key} ${obj.op} ${obj.value.join(', ')}`
-					: `${obj.key?.key} ${obj.op} ${obj.value.join(' ')}`,
-			),
+		const initialTags = (query?.filters?.items || []).map((obj) =>
+			isValueHaveInNotInOperator(getOperatorFromValue(obj.op))
+				? `${obj.key?.key} ${getOperatorFromValue(
+						obj.op,
+				  )} ${(obj.value as string[]).join(', ')}`
+				: `${obj.key?.key} ${getOperatorFromValue(obj.op)} ${obj.value}`,
 		);
+		setTags(initialTags);
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, []);
 

@@ -46,7 +46,7 @@ export const useQueryOperations: UseQueryOperations = ({
 				having: [],
 				orderBy: [],
 				limit: null,
-				tagFilters: { items: [], op: 'AND' },
+				filters: { items: [], op: 'AND' },
 				...(shouldResetAggregateAttribute
 					? { aggregateAttribute: initialAggregateAttribute }
 					: {}),
