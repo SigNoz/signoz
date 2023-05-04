@@ -17,9 +17,11 @@ export function isInNInOperator(value: string): boolean {
 }
 
 export function createTagValues(tagValue: string[]): string[] {
-	return tagValue
-		.join(' ')
-		.split(', ')
+	const joinValue = tagValue.join(' ');
+	const splitValue = joinValue.endsWith(', ')
+		? joinValue.split(', ')
+		: joinValue.split(',');
+	return splitValue
 		.filter(Boolean)
 		.map((tag) => (tag.endsWith(',') ? tag.slice(0, -1).trim() : tag.trim()));
 }
