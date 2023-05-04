@@ -122,14 +122,12 @@ export const useQueryOperations: UseQueryOperations = ({ query, index }) => {
 	);
 
 	useEffect(() => {
-		if (operators.length === 0) {
-			const initialOperators = getOperatorsBySourceAndPanelType({
-				dataSource,
-				panelType,
-			});
-			setOperators(initialOperators);
-		}
-	}, [operators, dataSource, panelType]);
+		const initialOperators = getOperatorsBySourceAndPanelType({
+			dataSource,
+			panelType,
+		});
+		setOperators(initialOperators);
+	}, [dataSource, panelType]);
 
 	useEffect(() => {
 		const additionalFilters = getNewListOfAdditionalFilters(dataSource);

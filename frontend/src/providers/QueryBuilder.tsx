@@ -33,6 +33,7 @@ export const QueryBuilderContext = createContext<QueryBuilderContextType>({
 	initialDataSource: null,
 	panelType: PANEL_TYPES.TIME_SERIES,
 	resetQueryBuilderData: () => {},
+	resetQueryBuilderInfo: () => {},
 	handleSetQueryData: () => {},
 	handleSetFormulaData: () => {},
 	handleSetPanelType: () => {},
@@ -64,10 +65,13 @@ export function QueryBuilderProvider({
 		queryFormulas: [],
 	});
 
-	const resetQueryBuilderData = useCallback((): void => {
-		setQueryBuilderData(initialQueryBuilderData);
+	const resetQueryBuilderInfo = useCallback((): void => {
 		setInitialDataSource(null);
 		setPanelType(PANEL_TYPES.TIME_SERIES);
+	}, []);
+
+	const resetQueryBuilderData = useCallback(() => {
+		setQueryBuilderData(initialQueryBuilderData);
 	}, []);
 
 	const initQueryBuilderData = useCallback(
@@ -217,6 +221,7 @@ export function QueryBuilderProvider({
 			initialDataSource,
 			panelType,
 			resetQueryBuilderData,
+			resetQueryBuilderInfo,
 			handleSetQueryData,
 			handleSetFormulaData,
 			handleSetPanelType,
@@ -231,6 +236,7 @@ export function QueryBuilderProvider({
 			initialDataSource,
 			panelType,
 			resetQueryBuilderData,
+			resetQueryBuilderInfo,
 			handleSetQueryData,
 			handleSetFormulaData,
 			handleSetPanelType,

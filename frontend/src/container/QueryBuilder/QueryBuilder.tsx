@@ -19,7 +19,7 @@ export const QueryBuilder = memo(function QueryBuilder({
 	const {
 		queryBuilderData,
 		setupInitialDataSource,
-		resetQueryBuilderData,
+		resetQueryBuilderInfo,
 		addNewQuery,
 		addNewFormula,
 		handleSetPanelType,
@@ -37,9 +37,9 @@ export const QueryBuilder = memo(function QueryBuilder({
 
 	useEffect(
 		() => (): void => {
-			resetQueryBuilderData();
+			resetQueryBuilderInfo();
 		},
-		[resetQueryBuilderData],
+		[resetQueryBuilderInfo],
 	);
 
 	const isDisabledQueryButton = useMemo(

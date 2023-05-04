@@ -158,6 +158,7 @@ export type QueryBuilderContextType = {
 	initialDataSource: DataSource | null;
 	panelType: GRAPH_TYPES;
 	resetQueryBuilderData: () => void;
+	resetQueryBuilderInfo: () => void;
 	handleSetQueryData: (index: number, queryData: IBuilderQuery) => void;
 	handleSetFormulaData: (index: number, formulaData: IBuilderFormula) => void;
 	handleSetPanelType: (newPanelType: GRAPH_TYPES) => void;

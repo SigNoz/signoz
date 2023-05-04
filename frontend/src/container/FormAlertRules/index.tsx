@@ -34,7 +34,6 @@ import {
 	PanelContainer,
 	StyledLeftContainer,
 } from './styles';
-import useDebounce from './useDebounce';
 import UserGuide from './UserGuide';
 import { prepareStagedQuery, toChartInterval } from './utils';
 
@@ -53,10 +52,6 @@ function FormAlertRules({
 	const ruleCache = useQueryClient();
 
 	const [loading, setLoading] = useState(false);
-
-	// queryRunId helps to override of query caching for clickhouse query
-	// tab. A random string will be assigned for each execution
-	const [runQueryId, setRunQueryId] = useState<string>();
 
 	// alertDef holds the form values to be posted
 	const [alertDef, setAlertDef] = useState<AlertDef>(initialValue);
@@ -89,15 +84,6 @@ function FormAlertRules({
 	// when user clicks run query button. Useful for clickhouse tab where
 	// run query button is provided.
 	const [manualStagedQuery, setManualStagedQuery] = useState<StagedQuery>();
-
-	// delay to reduce load on backend api with auto-run query. only for clickhouse
-	// queries we have manual run, hence both debounce and debounceStagedQuery are not required
-	const debounceDelay = queryCategory !== EQueryType.CLICKHOUSE ? 1000 : 0;
-
-	// debounce query to delay backend api call and chart update.
-	// used in query builder and promql tabs to enable auto-refresh
-	// of chart on user edit
-	const debouncedStagedQuery = useDebounce(stagedQuery, debounceDelay);
 
 	// this use effect initiates staged query and
 	// other queries based on server data.
@@ -149,7 +135,6 @@ function FormAlertRules({
 	}, [queryCategory, chQueries, queryBuilderData, promQueries]);
 
 	const onRunQuery = (): void => {
-		setRunQueryId(Math.random().toString(36).substring(2, 15));
 		setManualStagedQuery(stagedQuery);
 	};
 
@@ -171,6 +156,15 @@ function FormAlertRules({
 				evalWindow: defaultEvalWindow,
 			});
 		}
+
+		const sq: StagedQuery = prepareStagedQuery(
+			val,
+			queryBuilderData.queryData,
+			queryBuilderData.queryFormulas,
+			promQueries,
+			chQueries,
+		);
+		setManualStagedQuery(sq);
 	};
 	const { notifications } = useNotifications();
 
@@ -418,7 +412,7 @@ function FormAlertRules({
 			headline={<PlotTag queryType={queryCategory} />}
 			name=""
 			threshold={alertDef.condition?.target}
-			query={debouncedStagedQuery}
+			query={manualStagedQuery}
 			selectedInterval={toChartInterval(alertDef.evalWindow)}
 		/>
 	);
@@ -428,7 +422,7 @@ function FormAlertRules({
 			headline={<PlotTag queryType={queryCategory} />}
 			name="Chart Preview"
 			threshold={alertDef.condition?.target}
-			query={debouncedStagedQuery}
+			query={manualStagedQuery}
 		/>
 	);
 
@@ -438,7 +432,6 @@ function FormAlertRules({
 			name="Chart Preview"
 			threshold={alertDef.condition?.target}
 			query={manualStagedQuery}
-			userQueryKey={runQueryId}
 			selectedInterval={toChartInterval(alertDef.evalWindow)}
 		/>
 	);
