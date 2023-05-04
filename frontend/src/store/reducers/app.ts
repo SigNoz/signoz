@@ -47,7 +47,7 @@ const InitialValue: InitialValueTypes = {
 	isSideBarCollapsed: getLocalStorageKey(IS_SIDEBAR_COLLAPSED) === 'true',
 	currentVersion: '',
 	latestVersion: '',
-	featureFlags: {},
+	featureFlags: null,
 	isCurrentVersionError: false,
 	isLatestVersionError: false,
 	user: getInitialUser(),
@@ -83,7 +83,7 @@ const appReducer = (
 		case UPDATE_FEATURE_FLAGS: {
 			return {
 				...state,
-				featureFlags: { ...action.payload },
+				featureFlags: action.payload || [],
 			};
 		}
 

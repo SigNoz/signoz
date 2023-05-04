@@ -1,7 +1,6 @@
-import { Typography } from 'antd';
-import { FeatureKeys } from 'constants/features';
+import { Spin, Typography } from 'antd';
 import ROUTES from 'constants/routes';
-import useFeatureFlags from 'hooks/useFeatureFlag';
+import useLicense, { LICENSE_PLAN_KEY } from 'hooks/useLicense';
 import history from 'lib/history';
 import React from 'react';
 
@@ -12,7 +11,22 @@ import {
 } from './styles';
 
 function ManageLicense({ onToggle }: ManageLicenseProps): JSX.Element {
-	const isEnterprise = useFeatureFlags(FeatureKeys.ENTERPRISE_PLAN);
+	const { data, isLoading } = useLicense();
+
+	const onManageLicense = (): void => {
+		onToggle();
+		history.push(ROUTES.LIST_LICENSES);
+	};
+
+	if (isLoading || data?.payload === undefined) {
+		return <Spin />;
+	}
+
+	const isEnterprise = data?.payload?.some(
+		(license) =>
+			license.isCurrent && license.planKey === LICENSE_PLAN_KEY.ENTERPRISE_PLAN,
+	);
+
 	return (
 		<>
 			<Typography>SIGNOZ STATUS</Typography>
@@ -23,14 +37,7 @@ function ManageLicense({ onToggle }: ManageLicenseProps): JSX.Element {
 					<Typography>{!isEnterprise ? 'Free Plan' : 'Enterprise Plan'} </Typography>
 				</ManageLicenseWrapper>
 
-				<Typography.Link
-					onClick={(): void => {
-						onToggle();
-						history.push(ROUTES.LIST_LICENSES);
-					}}
-				>
-					Manage Licenses
-				</Typography.Link>
+				<Typography.Link onClick={onManageLicense}>Manage Licenses</Typography.Link>
 			</ManageLicenseContainer>
 		</>
 	);

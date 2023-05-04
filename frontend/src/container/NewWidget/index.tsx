@@ -1,7 +1,10 @@
-import { Button, Modal, Typography } from 'antd';
+import { LockFilled } from '@ant-design/icons';
+import { Button, Modal, Tooltip, Typography } from 'antd';
+import { FeatureKeys } from 'constants/features';
 import ROUTES from 'constants/routes';
 import { GRAPH_TYPES } from 'container/NewDashboard/ComponentsSlider';
 import { ITEMS } from 'container/NewDashboard/ComponentsSlider/menuItems';
+import useFeatureFlag, { MESSAGE } from 'hooks/useFeatureFlag';
 import { getDashboardVariables } from 'lib/dashbaordVariables/getDashboardVariables';
 import history from 'lib/history';
 import { DashboardWidgetPageParams } from 'pages/DashboardWidget';
@@ -169,13 +172,39 @@ function NewWidget({
 		getQueryResult();
 	}, [getQueryResult]);
 
+	const onSaveDashboard = useCallback((): void => {
+		setSaveModal(true);
+	}, []);
+
+	const isQueryBuilderNotActive = useFeatureFlag(
+		FeatureKeys.QUERY_BUILDER_PANELS,
+	);
+
 	return (
 		<Container>
 			<ButtonContainer>
-				<Button type="primary" onClick={(): void => setSaveModal(true)}>
-					Save
-				</Button>
-				{/* <Button onClick={onClickApplyHandler}>Apply</Button> */}
+				{isQueryBuilderNotActive && (
+					<Tooltip title={MESSAGE.PANEL}>
+						<Button
+							icon={isQueryBuilderNotActive && <LockFilled />}
+							type="primary"
+							disabled={isQueryBuilderNotActive}
+							onClick={onSaveDashboard}
+						>
+							Save
+						</Button>
+					</Tooltip>
+				)}
+
+				{!isQueryBuilderNotActive && (
+					<Button
+						type="primary"
+						disabled={isQueryBuilderNotActive}
+						onClick={onSaveDashboard}
+					>
+						Save
+					</Button>
+				)}
 				<Button onClick={onClickDiscardHandler}>Discard</Button>
 			</ButtonContainer>
 

@@ -1,10 +1,11 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
 import { Button, Tabs } from 'antd';
 import TextToolTip from 'components/TextToolTip';
+import { FeatureKeys } from 'constants/features';
 import { GRAPH_TYPES } from 'container/NewDashboard/ComponentsSlider';
 import { timePreferance } from 'container/NewWidget/RightContainer/timeItems';
 import { QueryBuilder } from 'container/QueryBuilder';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
+import useFeatureFlag from 'hooks/useFeatureFlag';
 import { cloneDeep, isEqual } from 'lodash-es';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { connect, useSelector } from 'react-redux';
@@ -47,10 +48,12 @@ function QuerySection({
 		CLICKHOUSE: uuid(),
 		PROM: uuid(),
 	});
+
 	const { dashboards, isLoadingQueryResult } = useSelector<
 		AppState,
 		DashboardReducer
 	>((state) => state.dashboards);
+
 	const [selectedDashboards] = dashboards;
 	const { search } = useLocation();
 	const { widgets } = selectedDashboards.data;
@@ -68,10 +71,12 @@ function QuerySection({
 	);
 
 	const { query } = selectedWidget || {};
+
 	useEffect(() => {
 		initQueryBuilderData(query.builder);
 		setLocalQueryChanges(cloneDeep(query) as Query);
 	}, [query, initQueryBuilderData]);
+
 	const queryDiff = (
 		queryA: Query,
 		queryB: Query,
@@ -207,6 +212,10 @@ function QuerySection({
 		},
 	];
 
+	const isQueryBuilderNotActive = useFeatureFlag(
+		FeatureKeys.QUERY_BUILDER_PANELS,
+	);
+
 	return (
 		<>
 			<div style={{ display: 'flex' }}>
@@ -223,13 +232,15 @@ function QuerySection({
 									text: `This will temporarily save the current query and graph state. This will persist across tab change`,
 								}}
 							/>
-							<Button
-								loading={isLoadingQueryResult}
-								type="primary"
-								onClick={handleStageQuery}
-							>
-								Stage & Run Query
-							</Button>
+							{isQueryBuilderNotActive && (
+								<Button
+									loading={isLoadingQueryResult}
+									type="primary"
+									onClick={handleStageQuery}
+								>
+									Stage & Run Query
+								</Button>
+							)}
 						</span>
 					}
 					items={items}

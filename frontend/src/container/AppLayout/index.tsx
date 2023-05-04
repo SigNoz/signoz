@@ -181,9 +181,7 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 		) {
 			dispatch({
 				type: UPDATE_FEATURE_FLAGS,
-				payload: {
-					...getFeaturesResponse.data.payload,
-				},
+				payload: getFeaturesResponse.data.payload,
 			});
 		}
 
