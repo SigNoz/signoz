@@ -1,5 +1,4 @@
 import { AutoComplete, Col, Input, Typography } from 'antd';
-import { find } from 'lodash-es';
 import React from 'react';
 
 import { flattenedCategories } from './dataFormatCategories';
@@ -7,11 +6,11 @@ import { flattenedCategories } from './dataFormatCategories';
 const findCategoryById = (
 	searchValue: string,
 ): Record<string, string> | undefined =>
-	find(flattenedCategories, (option) => option.id === searchValue);
+	flattenedCategories.find((option) => option.id === searchValue);
 const findCategoryByName = (
 	searchValue: string,
 ): Record<string, string> | undefined =>
-	find(flattenedCategories, (option) => option.name === searchValue);
+	flattenedCategories.find((option) => option.name === searchValue);
 
 function YAxisUnitSelector({
 	defaultValue,

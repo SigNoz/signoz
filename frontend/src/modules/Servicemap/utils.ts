@@ -1,7 +1,7 @@
 /*eslint-disable*/
 //@ts-nocheck
 
-import { cloneDeep, find, maxBy, uniq, uniqBy, groupBy, sumBy } from 'lodash-es';
+import { cloneDeep, maxBy, uniq, uniqBy, groupBy, sumBy } from 'lodash-es';
 import { graphDataType } from './ServiceMap';
 
 const MIN_WIDTH = 10;
@@ -25,7 +25,7 @@ export const getGraphData = (serviceMap, isDarkMode): graphDataType => {
 			serviceName: e[0].child,
 			errorRate: sumBy(e, 'errorRate'),
 			callRate: sumBy(e, 'callRate'),
-		}
+		};
 	});
 	const highestCallCount = maxBy(items, (e) => e?.callCount)?.callCount;
 	const highestCallRate = maxBy(services, (e) => e?.callRate)?.callRate;
@@ -49,7 +49,7 @@ export const getGraphData = (serviceMap, isDarkMode): graphDataType => {
 	const uniqChild = uniqBy(cloneDeep(items), 'child').map((e) => e.child);
 	const uniqNodes = uniq([...uniqParent, ...uniqChild]);
 	const nodes = uniqNodes.map((node, i) => {
-		const service = find(services, (service) => service.serviceName === node);
+		const service = services.find((service) => service.serviceName === node);
 		let color = isDarkMode ? '#7CA568' : '#D5F2BB';
 		if (!service) {
 			return {
@@ -99,7 +99,7 @@ const getRound2DigitsAfterDecimal = (num: number) => {
 		return 0;
 	}
 	return num.toFixed(20).match(/^-?\d*\.?0*\d{0,2}/)[0];
-}
+};
 
 export const getTooltip = (link: {
 	p99: number;
@@ -110,7 +110,7 @@ export const getTooltip = (link: {
 	return `<div style="color:#333333;padding:12px;background: white;border-radius: 2px;">
 								<div class="keyval">
 									<div class="key">P99 latency:</div>
-									<div class="val">${getRound2DigitsAfterDecimal(link.p99/ 1000000)}ms</div>
+									<div class="val">${getRound2DigitsAfterDecimal(link.p99 / 1000000)}ms</div>
 								</div>
 								<div class="keyval">
 									<div class="key">Request:</div>

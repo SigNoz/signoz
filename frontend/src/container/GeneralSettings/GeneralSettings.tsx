@@ -5,7 +5,6 @@ import setRetentionApi from 'api/settings/setRetention';
 import TextToolTip from 'components/TextToolTip';
 import useComponentPermission from 'hooks/useComponentPermission';
 import { useNotifications } from 'hooks/useNotifications';
-import find from 'lodash-es/find';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { UseQueryResult } from 'react-query';
@@ -190,7 +189,7 @@ function GeneralSettings({
 	);
 
 	const s3Enabled = useMemo(
-		() => !!find(availableDisks, (disks: IDiskType) => disks?.type === 's3'),
+		() => !!availableDisks.find((disks: IDiskType) => disks.type === 's3'),
 		[availableDisks],
 	);
 

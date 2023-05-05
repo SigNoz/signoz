@@ -1,5 +1,4 @@
 import { Col, Row, Select } from 'antd';
-import { find } from 'lodash-es';
 import React, { useEffect, useRef, useState } from 'react';
 
 import {
@@ -46,13 +45,12 @@ function Retention({
 	));
 
 	const currentSelectedOption = (option: SettingPeriod): void => {
-		const selectedValue = find(TimeUnits, (e) => e.value === option)?.value;
+		const selectedValue = TimeUnits.find((e) => e.value === option)?.value;
 		if (selectedValue) setSelectTimeUnit(selectedValue);
 	};
 
 	useEffect(() => {
-		const inverseMultiplier = find(
-			TimeUnits,
+		const inverseMultiplier = TimeUnits.find(
 			(timeUnit) => timeUnit.value === selectedTimeUnit,
 		)?.multiplier;
 		if (!selectedValue) setRetentionValue(null);
