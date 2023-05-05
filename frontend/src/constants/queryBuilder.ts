@@ -1,10 +1,11 @@
 // ** Helpers
+import { GRAPH_TYPES } from 'container/NewDashboard/ComponentsSlider';
 import { createNewBuilderItemName } from 'lib/newQueryBuilder/createNewBuilderItemName';
 import { LocalDataType } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import {
-	Having,
+	HavingForm,
 	IBuilderFormula,
-	IBuilderQueryForm,
+	IBuilderQuery,
 } from 'types/api/queryBuilder/queryBuilderData';
 import {
 	BoolOperators,
@@ -12,9 +13,13 @@ import {
 	LogsAggregatorOperator,
 	MetricAggregateOperator,
 	NumberOperators,
+	PanelTypeKeys,
+	QueryAdditionalFilter,
+	ReduceOperators,
 	StringOperators,
 	TracesAggregatorOperator,
 } from 'types/common/queryBuilder';
+import { SelectOption } from 'types/common/select';
 
 export const MAX_FORMULAS = 20;
 export const MAX_QUERIES = 26;
@@ -37,45 +42,69 @@ export const mapOfOperators: Record<DataSource, string[]> = {
 	traces: Object.values(TracesAggregatorOperator),
 };
 
-export const mapOfFilters: Record<DataSource, string[]> = {
-	// eslint-disable-next-line sonarjs/no-duplicate-string
-	metrics: ['Aggregation interval', 'Having'],
-	logs: ['Order by', 'Limit', 'Having', 'Aggregation interval'],
-	traces: ['Order by', 'Limit', 'Having', 'Aggregation interval'],
+export const mapOfFilters: Record<DataSource, QueryAdditionalFilter[]> = {
+	metrics: [
+		// eslint-disable-next-line sonarjs/no-duplicate-string
+		{ text: 'Aggregation interval', field: 'stepInterval' },
+		{ text: 'Having', field: 'having' },
+	],
+	logs: [
+		{ text: 'Order by', field: 'orderBy' },
+		{ text: 'Limit', field: 'limit' },
+		{ text: 'Having', field: 'having' },
+		{ text: 'Aggregation interval', field: 'stepInterval' },
+	],
+	traces: [
+		{ text: 'Order by', field: 'orderBy' },
+		{ text: 'Limit', field: 'limit' },
+		{ text: 'Having', field: 'having' },
+		{ text: 'Aggregation interval', field: 'stepInterval' },
+	],
 };
 
-export const initialHavingValues: Having = {
+export const REDUCE_TO_VALUES: SelectOption<ReduceOperators, string>[] = [
+	{ value: 'last', label: 'Latest of values in timeframe' },
+	{ value: 'sum', label: 'Sum of values in timeframe' },
+	{ value: 'avg', label: 'Average of values in timeframe' },
+	{ value: 'max', label: 'Max of values in timeframe' },
+	{ value: 'min', label: 'Min of values in timeframe' },
+];
+
+export const initialHavingValues: HavingForm = {
 	columnName: '',
 	op: '',
 	value: [],
 };
 
-export const initialAggregateAttribute: IBuilderQueryForm['aggregateAttribute'] = {
+export const initialAggregateAttribute: IBuilderQuery['aggregateAttribute'] = {
 	dataType: null,
 	key: '',
 	isColumn: null,
 	type: null,
 };
 
-export const initialQueryBuilderFormValues: IBuilderQueryForm = {
+export const initialQueryBuilderFormValues: IBuilderQuery = {
 	dataSource: DataSource.METRICS,
 	queryName: createNewBuilderItemName({ existNames: [], sourceNames: alphabet }),
 	aggregateOperator: Object.values(MetricAggregateOperator)[0],
 	aggregateAttribute: initialAggregateAttribute,
 	tagFilters: { items: [], op: 'AND' },
-	expression: '',
+	expression: createNewBuilderItemName({
+		existNames: [],
+		sourceNames: alphabet,
+	}),
 	disabled: false,
 	having: [],
 	stepInterval: 30,
-	limit: 10,
+	limit: null,
 	orderBy: [],
 	groupBy: [],
 	legend: '',
-	reduceTo: '',
+	reduceTo: 'sum',
 };
 
 export const initialFormulaBuilderFormValues: IBuilderFormula = {
-	label: createNewBuilderItemName({
+	queryName: createNewBuilderItemName({
 		existNames: [],
 		sourceNames: formulasNames,
 	}),
@@ -88,6 +117,14 @@ export const operatorsByTypes: Record<LocalDataType, string[]> = {
 	string: Object.values(StringOperators),
 	number: Object.values(NumberOperators),
 	bool: Object.values(BoolOperators),
+};
+
+export const PANEL_TYPES: Record<PanelTypeKeys, GRAPH_TYPES> = {
+	TIME_SERIES: 'graph',
+	VALUE: 'value',
+	TABLE: 'table',
+	LIST: 'list',
+	EMPTY_WIDGET: 'EMPTY_WIDGET',
 };
 
 export type IQueryBuilderState = 'search';
@@ -104,22 +141,22 @@ export const OPERATORS = {
 	NIN: 'NOT_IN',
 	LIKE: 'LIKE',
 	NLIKE: 'NOT_LIKE',
-	EQUALS: '=',
-	NOT_EQUALS: '!=',
+	'=': '=',
+	'!=': '!=',
 	EXISTS: 'EXISTS',
 	NOT_EXISTS: 'NOT_EXISTS',
 	CONTAINS: 'CONTAINS',
 	NOT_CONTAINS: 'NOT_CONTAINS',
-	GTE: '>=',
-	GT: '>',
-	LTE: '<=',
-	LT: '<',
+	'>=': '>=',
+	'>': '>',
+	'<=': '<=',
+	'<': '<',
 };
 
 export const QUERY_BUILDER_OPERATORS_BY_TYPES = {
 	string: [
-		OPERATORS.EQUALS,
-		OPERATORS.NOT_EQUALS,
+		OPERATORS['='],
+		OPERATORS['!='],
 		OPERATORS.IN,
 		OPERATORS.NIN,
 		OPERATORS.LIKE,
@@ -130,48 +167,48 @@ export const QUERY_BUILDER_OPERATORS_BY_TYPES = {
 		OPERATORS.NOT_EXISTS,
 	],
 	number: [
-		OPERATORS.EQUALS,
-		OPERATORS.NOT_EQUALS,
+		OPERATORS['='],
+		OPERATORS['!='],
 		OPERATORS.IN,
 		OPERATORS.NIN,
 		OPERATORS.EXISTS,
 		OPERATORS.NOT_EXISTS,
-		OPERATORS.GTE,
-		OPERATORS.GT,
-		OPERATORS.LTE,
-		OPERATORS.LT,
+		OPERATORS['>='],
+		OPERATORS['>'],
+		OPERATORS['<='],
+		OPERATORS['<'],
 	],
 	boolean: [
-		OPERATORS.EQUALS,
-		OPERATORS.NOT_EQUALS,
+		OPERATORS['='],
+		OPERATORS['!='],
 		OPERATORS.EXISTS,
 		OPERATORS.NOT_EXISTS,
 	],
 	universal: [
-		OPERATORS.EQUALS,
-		OPERATORS.NOT_EQUALS,
+		OPERATORS['='],
+		OPERATORS['!='],
 		OPERATORS.IN,
 		OPERATORS.NIN,
 		OPERATORS.EXISTS,
 		OPERATORS.NOT_EXISTS,
 		OPERATORS.LIKE,
 		OPERATORS.NLIKE,
-		OPERATORS.GTE,
-		OPERATORS.GT,
-		OPERATORS.LTE,
-		OPERATORS.LT,
+		OPERATORS['>='],
+		OPERATORS['>'],
+		OPERATORS['<='],
+		OPERATORS['<'],
 		OPERATORS.CONTAINS,
 		OPERATORS.NOT_CONTAINS,
 	],
 };
 
 export const HAVING_OPERATORS: string[] = [
-	OPERATORS.EQUALS,
-	OPERATORS.NOT_EQUALS,
+	OPERATORS['='],
+	OPERATORS['!='],
 	OPERATORS.IN,
 	OPERATORS.NIN,
-	OPERATORS.GTE,
-	OPERATORS.GT,
-	OPERATORS.LTE,
-	OPERATORS.LT,
+	OPERATORS['>='],
+	OPERATORS['>'],
+	OPERATORS['<='],
+	OPERATORS['<'],
 ];
