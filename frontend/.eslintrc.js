@@ -106,7 +106,6 @@ module.exports = {
 		'arrow-body-style': ['error', 'as-needed'],
 
 		// eslint rules need to remove
-		'@typescript-eslint/no-shadow': 'off',
 		'import/no-cycle': 'off',
 
 		'prettier/prettier': [
