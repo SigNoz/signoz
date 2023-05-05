@@ -3,7 +3,6 @@ import { useMachine } from '@xstate/react';
 import { Button, Select } from 'antd';
 import { RefSelectProps } from 'antd/lib/select';
 import history from 'lib/history';
-import { filter } from 'lodash-es';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { Dashboard } from 'types/api/dashboard/getAll';
 import { v4 as uuidv4 } from 'uuid';
@@ -107,7 +106,7 @@ function SearchFilter({
 
 	const removeQueryById = (queryId: string): void => {
 		setQueries((queries) => {
-			const updatedQueries = filter(queries, ({ id }) => id !== queryId);
+			const updatedQueries = queries.filter(({ id }) => id !== queryId);
 			updateURLWithQuery(updatedQueries);
 			return updatedQueries;
 		});
