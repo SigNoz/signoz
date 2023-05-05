@@ -33,7 +33,7 @@ interface ITagToken {
 }
 
 export function getTagToken(tag: string): ITagToken {
-	const [tagKey, tagOperator, ...tagValue] = tag.split(' ');
+	const [tagKey, tagOperator, ...tagValue] = (tag || '').split(' ');
 	return {
 		tagKey,
 		tagOperator,

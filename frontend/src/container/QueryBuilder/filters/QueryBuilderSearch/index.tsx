@@ -114,7 +114,7 @@ function QueryBuilderSearch({
 				op: getOperatorValue(tagOperator),
 				value: isInNInOperator(tagOperator)
 					? createTagValues(tagValue)
-					: createTagValues(tagValue)[0],
+					: createTagValues(tagValue)[0] ?? '',
 			};
 		});
 		onChange(initialTagFilters);
