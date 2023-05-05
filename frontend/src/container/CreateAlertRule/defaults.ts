@@ -1,4 +1,8 @@
-import { initialQueryBuilderFormValues } from 'constants/queryBuilder';
+import {
+	initialQueryBuilderFormValues,
+	PANEL_TYPES,
+} from 'constants/queryBuilder';
+import { EQueryTypeToQueryKeyMapping } from 'container/NewWidget/LeftContainer/QuerySection/types';
 import { AlertTypes } from 'types/api/alerts/alertTypes';
 import {
 	AlertDef,
@@ -33,7 +37,8 @@ export const alertDefaults: AlertDef = {
 			},
 			promQueries: {},
 			chQueries: {},
-			queryType: 1,
+			queryType: EQueryTypeToQueryKeyMapping.QUERY_BUILDER,
+			panelType: PANEL_TYPES.TIME_SERIES,
 		},
 		op: defaultCompareOp,
 		matchType: defaultMatchType,
@@ -66,7 +71,8 @@ export const logAlertDefaults: AlertDef = {
 					disabled: false,
 				},
 			},
-			queryType: 2,
+			queryType: EQueryTypeToQueryKeyMapping.CLICKHOUSE,
+			panelType: PANEL_TYPES.TIME_SERIES,
 		},
 		op: defaultCompareOp,
 		matchType: '4',
@@ -100,7 +106,8 @@ export const traceAlertDefaults: AlertDef = {
 					disabled: false,
 				},
 			},
-			queryType: 2,
+			queryType: EQueryTypeToQueryKeyMapping.CLICKHOUSE,
+			panelType: PANEL_TYPES.TIME_SERIES,
 		},
 		op: defaultCompareOp,
 		matchType: '4',
@@ -134,7 +141,8 @@ export const exceptionAlertDefaults: AlertDef = {
 					disabled: false,
 				},
 			},
-			queryType: 2,
+			queryType: EQueryTypeToQueryKeyMapping.CLICKHOUSE,
+			panelType: PANEL_TYPES.TIME_SERIES,
 		},
 		op: defaultCompareOp,
 		matchType: '4',

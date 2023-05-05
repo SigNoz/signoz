@@ -8,6 +8,10 @@ import PlotTag from 'container/NewWidget/LeftContainer/WidgetGraph/PlotTag';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useNotifications } from 'hooks/useNotifications';
 import history from 'lib/history';
+import {
+	getQueryKeyNumber,
+	getQueryKeyString,
+} from 'lib/newQueryBuilder/getQueryKey';
 import { mapQueryDataFromApi } from 'lib/newQueryBuilder/queryBuilderMappers/mapQueryDataFromApi';
 import { mapQueryDataToApi } from 'lib/newQueryBuilder/queryBuilderMappers/mapQueryDataToApi';
 import React, { useCallback, useEffect, useState } from 'react';
@@ -60,7 +64,7 @@ function FormAlertRules({
 	const initQuery = initialValue.condition.compositeQuery;
 
 	const [queryCategory, setQueryCategory] = useState<EQueryType>(
-		initQuery?.queryType,
+		getQueryKeyNumber(initQuery.queryType),
 	);
 
 	// local state to handle promql queries
@@ -91,7 +95,7 @@ function FormAlertRules({
 	// is delayed
 	useEffect(() => {
 		const initQuery = initialValue?.condition?.compositeQuery;
-		const typ = initQuery?.queryType;
+		const type = getQueryKeyNumber(initQuery.queryType);
 
 		const builderData = mapQueryDataFromApi(
 			initialValue?.condition?.compositeQuery?.builderQueries || {},
@@ -99,7 +103,7 @@ function FormAlertRules({
 
 		// prepare staged query
 		const sq = prepareStagedQuery(
-			typ,
+			type,
 			builderData.queryData,
 			builderData.queryFormulas,
 			initQuery?.promQueries,
@@ -108,7 +112,7 @@ function FormAlertRules({
 		const pq = initQuery?.promQueries;
 		const chq = initQuery?.chQueries;
 
-		setQueryCategory(typ);
+		setQueryCategory(type);
 		initQueryBuilderData(builderData);
 		setPromQueries(pq);
 		setStagedQuery(sq);
@@ -280,7 +284,8 @@ function FormAlertRules({
 					builderQueries: mapQueryDataToApi(queryBuilderData).data,
 					promQueries,
 					chQueries,
-					queryType: queryCategory,
+					queryType: getQueryKeyString(queryCategory),
+					panelType: initQuery.panelType,
 				},
 			},
 		};
@@ -294,6 +299,7 @@ function FormAlertRules({
 		promQueries,
 		chQueries,
 		alertType,
+		initQuery,
 	]);
 
 	const saveRule = useCallback(async () => {

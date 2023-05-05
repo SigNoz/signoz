@@ -1,5 +1,6 @@
 // ** Helpers
 import { GRAPH_TYPES } from 'container/NewDashboard/ComponentsSlider';
+import { EQueryTypeToQueryKeyMapping } from 'container/NewWidget/LeftContainer/QuerySection/types';
 import { createNewBuilderItemName } from 'lib/newQueryBuilder/createNewBuilderItemName';
 import { LocalDataType } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import {
@@ -125,6 +126,15 @@ export const PANEL_TYPES: Record<PanelTypeKeys, GRAPH_TYPES> = {
 	TABLE: 'table',
 	LIST: 'list',
 	EMPTY_WIDGET: 'EMPTY_WIDGET',
+};
+
+export const QUERY_TYPES: Record<
+	EQueryTypeToQueryKeyMapping,
+	keyof typeof EQueryTypeToQueryKeyMapping
+> = {
+	[EQueryTypeToQueryKeyMapping.QUERY_BUILDER]: 'QUERY_BUILDER',
+	[EQueryTypeToQueryKeyMapping.CLICKHOUSE]: 'CLICKHOUSE',
+	[EQueryTypeToQueryKeyMapping.PROM]: 'PROM',
 };
 
 export type IQueryBuilderState = 'search';

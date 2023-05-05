@@ -1,4 +1,5 @@
-import { isFormula, QueryBuilderData } from 'types/common/queryBuilder';
+import { initialQueryBuilderFormValues } from 'constants/queryBuilder';
+import { isQuery, QueryBuilderData } from 'types/common/queryBuilder';
 import { QueryDataResourse } from 'types/common/queryBuilderMappers.types';
 
 export const mapQueryDataFromApi = (
@@ -7,11 +8,11 @@ export const mapQueryDataFromApi = (
 	const queryData: QueryBuilderData['queryData'] = [];
 	const queryFormulas: QueryBuilderData['queryFormulas'] = [];
 
-	Object.entries(data).forEach(([key, value]) => {
-		if (isFormula(value, key)) {
-			queryFormulas.push(value);
+	Object.entries(data).forEach(([, value]) => {
+		if (isQuery(value)) {
+			queryData.push({ ...initialQueryBuilderFormValues, ...value });
 		} else {
-			queryData.push(value);
+			queryFormulas.push(value);
 		}
 	});
 
