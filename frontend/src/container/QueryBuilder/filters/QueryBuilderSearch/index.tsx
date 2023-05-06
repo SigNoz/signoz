@@ -12,14 +12,11 @@ import { v4 as uuid } from 'uuid';
 import { selectStyle } from './config';
 import { StyledCheckOutlined, TypographyText } from './style';
 import {
-	checkCommaAndSpace,
-	createTagValues,
 	getOperatorValue,
 	getRemovePrefixFromKey,
 	getTagToken,
 	isExistsNotExistsOperator,
 	isInNInOperator,
-	isValueHaveInNotInOperator,
 } from './utils';
 
 function QueryBuilderSearch({
@@ -48,11 +45,9 @@ function QueryBuilderSearch({
 		closable,
 		onClose,
 	}: CustomTagProps): React.ReactElement => {
-		const isInNin = isValueHaveInNotInOperator(value);
-		const chipValue = checkCommaAndSpace(value)
-			? value.substring(0, value.length - 2)
-			: value;
-		const tagValue = isExistsNotExistsOperator(value) ? value : chipValue;
+		const { tagOperator } = getTagToken(value);
+		const isInNin = isInNInOperator(tagOperator);
+		const chipValue = isInNin ? value.trim().replace(/,\s*$/, '') : value.trim();
 
 		const onCloseHandler = (): void => {
 			onClose();
@@ -67,7 +62,7 @@ function QueryBuilderSearch({
 
 		return (
 			<Tag closable={!searchValue && closable} onClose={onCloseHandler}>
-				<Tooltip title={tagValue}>
+				<Tooltip title={chipValue}>
 					<TypographyText
 						ellipsis
 						$isInNin={isInNin}
@@ -75,7 +70,7 @@ function QueryBuilderSearch({
 						$isEnabled={!!searchValue}
 						onClick={(): void => tagEditHandler(value)}
 					>
-						{tagValue}
+						{chipValue}
 					</TypographyText>
 				</Tooltip>
 			</Tag>
@@ -112,9 +107,7 @@ function QueryBuilderSearch({
 				id: uuid().slice(0, 8),
 				key: filterAttribute,
 				op: getOperatorValue(tagOperator),
-				value: isInNInOperator(tagOperator)
-					? createTagValues(tagValue)
-					: createTagValues(tagValue)[0] ?? '',
+				value: tagValue ?? '',
 			};
 		});
 		onChange(initialTagFilters);

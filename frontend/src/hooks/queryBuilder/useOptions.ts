@@ -1,8 +1,4 @@
-import {
-	createTagValues,
-	getTagToken,
-	isInNInOperator,
-} from 'container/QueryBuilder/filters/QueryBuilderSearch/utils';
+import { getTagToken } from 'container/QueryBuilder/filters/QueryBuilderSearch/utils';
 import { Option } from 'container/QueryBuilder/type';
 import { transformStringWithPrefix } from 'lib/query/transformStringWithPrefix';
 import { useCallback, useEffect, useMemo, useState } from 'react';
@@ -68,7 +64,7 @@ export const useOptions = (
 			} else if (isExist) {
 				setOptions([]);
 			} else if (isValidOperator) {
-				const hasAllResults = result.every((value) => results.includes(value));
+				const hasAllResults = results.every((value) => result.includes(value));
 				const values = results.map((value) => ({
 					label: `${key} ${operator} ${value}`,
 					value: `${key} ${operator} ${value}`,
@@ -104,12 +100,14 @@ export const useOptions = (
 							) && option.value !== '',
 				) || []
 			).map((option) => {
-				const { tagOperator, tagValue } = getTagToken(searchValue);
-				const value = isInNInOperator(tagOperator)
-					? createTagValues(tagValue)
-					: Array(tagValue.join(' '));
+				const { tagValue } = getTagToken(searchValue);
 				if (isMulti) {
-					return { ...option, selected: value.includes(option.value) };
+					return {
+						...option,
+						selected: tagValue
+							.filter((i) => i.trim().replace(/^\s+/, '') === option.value)
+							.includes(option.value),
+					};
 				}
 				return option;
 			}),

@@ -1,14 +1,16 @@
 import { getAggregateKeys } from 'api/queryBuilder/getAttributeKeys';
 import { getAttributesValues } from 'api/queryBuilder/getAttributesValues';
 import { QueryBuilderKeys } from 'constants/queryBuilder';
-import { isInNInOperator } from 'container/QueryBuilder/filters/QueryBuilderSearch/utils';
+import {
+	getTagToken,
+	isInNInOperator,
+} from 'container/QueryBuilder/filters/QueryBuilderSearch/utils';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useQuery } from 'react-query';
 import { useDebounce } from 'react-use';
 import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource } from 'types/common/queryBuilder';
-import { separateSearchValue } from 'utils/separateSearchValue';
 
 type IuseFetchKeysAndValues = {
 	keys: BaseAutocompleteData[];
@@ -79,11 +81,11 @@ export const useFetchKeysAndValues = (
 		if (!value) {
 			return;
 		}
-		const [attributeKey, operator, result] = separateSearchValue(value);
-		const filterAttributeKey = keys.find((key) => attributeKey.includes(key.key));
+		const { tagKey, tagOperator, tagValue } = getTagToken(value);
+		const filterAttributeKey = keys.find((key) => tagKey.includes(key.key));
 		setResults([]);
 
-		if (!attributeKey || !operator || !filterAttributeKey?.key) {
+		if (!tagKey || !tagOperator || !filterAttributeKey?.key) {
 			return;
 		}
 
@@ -91,12 +93,12 @@ export const useFetchKeysAndValues = (
 			aggregateOperator: query.aggregateOperator,
 			dataSource: query.dataSource,
 			aggregateAttribute: query.aggregateAttribute.key,
-			attributeKey: filterAttributeKey?.key ?? attributeKey,
+			attributeKey: filterAttributeKey?.key ?? tagKey,
 			filterAttributeKeyDataType: filterAttributeKey?.dataType ?? null,
 			tagType: filterAttributeKey?.type ?? null,
-			searchText: isInNInOperator(operator)
-				? result[result.length - 1] ?? ''
-				: result[0] ?? '',
+			searchText: isInNInOperator(tagOperator)
+				? tagValue[tagValue.length - 1]?.toString() ?? '' // last element of tagvalue will be always user search value
+				: tagValue?.toString() ?? '',
 		});
 
 		if (payload) {

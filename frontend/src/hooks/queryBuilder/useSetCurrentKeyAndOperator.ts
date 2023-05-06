@@ -1,7 +1,7 @@
+import { getTagToken } from 'container/QueryBuilder/filters/QueryBuilderSearch/utils';
 import { useMemo } from 'react';
 import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { getCountOfSpace } from 'utils/getCountOfSpace';
-import { separateSearchValue } from 'utils/separateSearchValue';
 
 type ICurrentKeyAndOperator = [string, string, string[]];
 
@@ -15,13 +15,13 @@ export const useSetCurrentKeyAndOperator = (
 		let result: string[] = [];
 
 		if (value) {
-			const [tKey, tOperator, tResult] = separateSearchValue(value);
-			const isSuggestKey = keys?.some((el) => tKey.includes(el.key));
+			const { tagKey, tagOperator, tagValue } = getTagToken(value);
+			const isSuggestKey = keys?.some((el) => tagKey.includes(el.key));
 
 			if (getCountOfSpace(value) >= 1 || isSuggestKey) {
-				key = tKey || '';
-				operator = tOperator || '';
-				result = tResult.filter((el) => el);
+				key = tagKey || '';
+				operator = tagOperator || '';
+				result = tagValue || [];
 			}
 		}
 

@@ -2,11 +2,14 @@ import {
 	getRemovePrefixFromKey,
 	getTagToken,
 	isExistsNotExistsOperator,
+	replaceStringWithMaxLength,
+	TAG_FSM,
 } from 'container/QueryBuilder/filters/QueryBuilderSearch/utils';
 import { Option } from 'container/QueryBuilder/type';
+// eslint-disable-next-line import/no-extraneous-dependencies
+import * as Papa from 'papaparse';
 import { useCallback, useState } from 'react';
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
-import { checkStringEndsWithSpace } from 'utils/checkStringEndsWithSpace';
 
 import { useFetchKeysAndValues } from './useFetchKeysAndValues';
 import { useOptions } from './useOptions';
@@ -68,11 +71,11 @@ export const useAutoComplete = (query: IBuilderQuery): IAutoComplete => {
 		(value: string): void => {
 			if (isMulti) {
 				setSearchValue((prev: string) => {
-					const prevLength = prev.split(' ').length;
-					if (checkStringEndsWithSpace(prev)) {
-						return `${prev} ${value}, `;
-					}
-					return `${prev.replace(prev.split(' ')[prevLength - 1], value)}, `;
+					const matches = prev?.matchAll(TAG_FSM);
+					const [match] = matches ? Array.from(matches) : [];
+					const [, , , matchTagValue] = match;
+					const data = Papa.parse(matchTagValue).data.flat();
+					return replaceStringWithMaxLength(prev, data as string[], value);
 				});
 			}
 			if (!isMulti && isValidTag && !isExistsNotExistsOperator(value)) {

@@ -1,7 +1,11 @@
 import { OPERATORS } from 'constants/queryBuilder';
+// eslint-disable-next-line import/no-extraneous-dependencies
+import * as Papa from 'papaparse';
 
-export function isValueHaveInNotInOperator(value: string): boolean {
-	return value?.includes(OPERATORS.IN || OPERATORS.NIN);
+export const TAG_FSM = /(\w+(?:\.\w+)*)\s*(!=|=|<|<=|>|>=|IN|NOT_IN|LIKE|NOT_LIKE|EXISTS|NOT_EXISTS|CONTAINS|NOT_CONTAINS)\s*([\s\S]*)/g;
+
+export function isInNInOperator(value: string): boolean {
+	return value === OPERATORS.IN || value === OPERATORS.NIN;
 }
 
 export function isExistsNotExistsOperator(value: string): boolean {
@@ -12,20 +16,6 @@ export function checkCommaAndSpace(value: string): boolean {
 	return value.endsWith(',') || value.endsWith(' ');
 }
 
-export function isInNInOperator(value: string): boolean {
-	return value === OPERATORS.IN || value === OPERATORS.NIN;
-}
-
-export function createTagValues(tagValue: string[]): string[] {
-	const joinValue = tagValue.join(' ');
-	const splitValue = joinValue.endsWith(', ')
-		? joinValue.split(', ')
-		: joinValue.split(',');
-	return splitValue
-		.filter(Boolean)
-		.map((tag) => (tag.endsWith(',') ? tag.slice(0, -1).trim() : tag.trim()));
-}
-
 interface ITagToken {
 	tagKey: string;
 	tagOperator: string;
@@ -33,11 +23,24 @@ interface ITagToken {
 }
 
 export function getTagToken(tag: string): ITagToken {
-	const [tagKey, tagOperator, ...tagValue] = (tag || '').split(' ');
+	const matches = tag?.matchAll(TAG_FSM);
+	const [match] = matches ? Array.from(matches) : [];
+
+	if (match) {
+		const [, matchTagKey, matchTagOperator, matchTagValue] = match;
+		return {
+			tagKey: matchTagKey,
+			tagOperator: matchTagOperator,
+			tagValue: isInNInOperator(matchTagOperator)
+				? Papa.parse(matchTagValue).data.flat()
+				: matchTagValue,
+		} as ITagToken;
+	}
+
 	return {
-		tagKey,
-		tagOperator,
-		tagValue,
+		tagKey: tag,
+		tagOperator: '',
+		tagValue: [],
 	};
 }
 
@@ -89,4 +92,14 @@ export function getOperatorFromValue(op: string): string {
 		default:
 			return op;
 	}
+}
+
+export function replaceStringWithMaxLength(
+	mainString: string,
+	array: string[],
+	replacementString: string,
+): string {
+	const lastSearchValue = array.pop() ?? ''; // Remove the last search value from the array
+	if (lastSearchValue === '') return `${mainString}${replacementString},`; // if user select direclty from options
+	return mainString.replace(lastSearchValue, `${replacementString},`);
 }

@@ -19,7 +19,9 @@ export const useTagValidation = (
 	result: string[],
 ): ITagValidation => {
 	const operatorType = useOperatorType(operator);
-	const isValidTag = useIsValidTag(operatorType, result.length);
+	const resultLength =
+		operatorType === 'SINGLE_VALUE' ? [result]?.length : result?.length;
+	const isValidTag = useIsValidTag(operatorType, resultLength);
 
 	const { isExist, isValidOperator, isMulti, isFreeText } = useMemo(() => {
 		const isExist = operatorType === QUERY_BUILDER_SEARCH_VALUES.NON;
