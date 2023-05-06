@@ -52,8 +52,8 @@ export const useOptions = (
 		} else if (key && !operator) {
 			setOptions(
 				operators?.map((operator) => ({
-					value: `${key} ${operator} `,
-					label: `${key} ${operator} `,
+					value: `${key}${operator} `,
+					label: `${key}${operator} `,
 				})),
 			);
 		} else if (key && operator) {
