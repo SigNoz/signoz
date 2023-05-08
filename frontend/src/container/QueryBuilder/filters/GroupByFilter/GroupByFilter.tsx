@@ -47,7 +47,7 @@ export const GroupByFilter = memo(function GroupByFilter({
 	};
 
 	const optionsData: ExtendedSelectOption[] = useMemo(() => {
-		if (data && data.payload) {
+		if (data && data.payload && data.payload.attributeKeys) {
 			return data.payload.attributeKeys.map((item) => ({
 				label: transformStringWithPrefix({
 					str: item.key,
