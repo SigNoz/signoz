@@ -198,7 +198,7 @@ func testTemplateParsing(rl *PostableRule) (errs []error) {
 	}
 
 	// Trying to parse templates.
-	tmplData := AlertTemplateData(make(map[string]string), 0, 0)
+	tmplData := AlertTemplateData(make(map[string]string), "0", "0")
 	defs := "{{$labels := .Labels}}{{$value := .Value}}{{$threshold := .Threshold}}"
 	parseTest := func(text string) error {
 		tmpl := NewTemplateExpander(

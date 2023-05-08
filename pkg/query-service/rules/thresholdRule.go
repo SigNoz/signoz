@@ -27,6 +27,7 @@ import (
 	logsv3 "go.signoz.io/signoz/pkg/query-service/app/logs/v3"
 	metricsv3 "go.signoz.io/signoz/pkg/query-service/app/metrics/v3"
 	tracesV3 "go.signoz.io/signoz/pkg/query-service/app/traces/v3"
+	"go.signoz.io/signoz/pkg/query-service/formatter"
 
 	yaml "gopkg.in/yaml.v2"
 )
@@ -687,7 +688,7 @@ func (r *ThresholdRule) Eval(ctx context.Context, ts time.Time, queriers *Querie
 			l[lbl.Name] = lbl.Value
 		}
 
-		tmplData := AlertTemplateData(l, smpl.V, r.targetVal())
+		tmplData := AlertTemplateData(l, formatter.Humanize(smpl.V, r.ruleCondition.YAxis), formatter.Humanize(r.targetVal(), r.ruleCondition.YAxis))
 		// Inject some convenience variables that are easier to remember for users
 		// who are not used to Go's templating system.
 		defs := "{{$labels := .Labels}}{{$value := .Value}}{{$threshold := .Threshold}}"
