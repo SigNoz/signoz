@@ -720,6 +720,8 @@ func parseInviteRequest(r *http.Request) (*model.InviteRequest, error) {
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		return nil, err
 	}
+	// Trim spaces from email
+	req.Email = strings.TrimSpace(req.Email)
 	return &req, nil
 }
 
