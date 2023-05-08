@@ -143,7 +143,6 @@ type RuleCondition struct {
 	CompareOp      CompareOp          `yaml:"op,omitempty" json:"op,omitempty"`
 	Target         *float64           `yaml:"target,omitempty" json:"target,omitempty"`
 	MatchType      `json:"matchType,omitempty"`
-	YAxis          string `json:"yAxis,omitempty"`
 }
 
 func (rc *RuleCondition) IsValid() bool {

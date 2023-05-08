@@ -12,7 +12,6 @@ import (
 
 	plabels "github.com/prometheus/prometheus/model/labels"
 	pql "github.com/prometheus/prometheus/promql"
-	"go.signoz.io/signoz/pkg/query-service/formatter"
 	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
 	qslabels "go.signoz.io/signoz/pkg/query-service/utils/labels"
 	"go.signoz.io/signoz/pkg/query-service/utils/times"
@@ -336,7 +335,7 @@ func (r *PromRule) Eval(ctx context.Context, ts time.Time, queriers *Queriers) (
 			l[lbl.Name] = lbl.Value
 		}
 
-		tmplData := AlertTemplateData(l, formatter.Humanize(smpl.V, r.ruleCondition.YAxis), formatter.Humanize(r.targetVal(), r.ruleCondition.YAxis))
+		tmplData := AlertTemplateData(l, smpl.V, r.targetVal())
 		// Inject some convenience variables that are easier to remember for users
 		// who are not used to Go's templating system.
 		defs := "{{$labels := .Labels}}{{$value := .Value}}{{$threshold := .Threshold}}"
