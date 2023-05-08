@@ -1,4 +1,4 @@
-package query_builder
+package queryBuilder
 
 import (
 	"strings"

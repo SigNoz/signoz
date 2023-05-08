@@ -15,7 +15,7 @@ import (
 
 	"github.com/ClickHouse/clickhouse-go/v2"
 
-	"go.signoz.io/signoz/pkg/query-service/app/query_builder"
+	"go.signoz.io/signoz/pkg/query-service/app/queryBuilder"
 	"go.signoz.io/signoz/pkg/query-service/constants"
 	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
 	"go.signoz.io/signoz/pkg/query-service/utils/labels"
@@ -53,7 +53,7 @@ type ThresholdRule struct {
 	// map of active alerts
 	active map[uint64]*Alert
 
-	queryBuilder *query_builder.QueryBuilder
+	queryBuilder *queryBuilder.QueryBuilder
 
 	opts ThresholdRuleOpts
 }
@@ -99,12 +99,12 @@ func NewThresholdRule(
 		t.evalWindow = 5 * time.Minute
 	}
 
-	builderOpts := query_builder.QueryBuilderOptions{
+	builderOpts := queryBuilder.QueryBuilderOptions{
 		BuildMetricQuery: metricsv3.PrepareMetricQuery,
 		BuildTraceQuery:  tracesV3.PrepareTracesQuery,
 		BuildLogQuery:    logsv3.PrepareLogsQuery,
 	}
-	t.queryBuilder = query_builder.NewQueryBuilder(builderOpts)
+	t.queryBuilder = queryBuilder.NewQueryBuilder(builderOpts)
 
 	zap.S().Info("msg:", "creating new alerting rule", "\t name:", t.name, "\t condition:", t.ruleCondition.String(), "\t generatorURL:", t.GeneratorURL())
 

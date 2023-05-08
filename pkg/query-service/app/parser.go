@@ -18,7 +18,7 @@ import (
 	"go.uber.org/multierr"
 
 	"go.signoz.io/signoz/pkg/query-service/app/metrics"
-	"go.signoz.io/signoz/pkg/query-service/app/query_builder"
+	"go.signoz.io/signoz/pkg/query-service/app/queryBuilder"
 	"go.signoz.io/signoz/pkg/query-service/auth"
 	"go.signoz.io/signoz/pkg/query-service/constants"
 	"go.signoz.io/signoz/pkg/query-service/model"
@@ -910,7 +910,7 @@ func validateQueryRangeParamsV3(qp *v3.QueryRangeParamsV3) error {
 	for _, q := range qp.CompositeQuery.BuilderQueries {
 		expressions = append(expressions, q.Expression)
 	}
-	errs := validateExpressions(expressions, query_builder.EvalFuncs, qp.CompositeQuery)
+	errs := validateExpressions(expressions, queryBuilder.EvalFuncs, qp.CompositeQuery)
 	if len(errs) > 0 {
 		return multierr.Combine(errs...)
 	}

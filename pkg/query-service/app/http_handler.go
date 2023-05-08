@@ -25,7 +25,7 @@ import (
 	"go.signoz.io/signoz/pkg/query-service/app/metrics"
 	metricsv3 "go.signoz.io/signoz/pkg/query-service/app/metrics/v3"
 	"go.signoz.io/signoz/pkg/query-service/app/parser"
-	"go.signoz.io/signoz/pkg/query-service/app/query_builder"
+	"go.signoz.io/signoz/pkg/query-service/app/queryBuilder"
 	tracesV3 "go.signoz.io/signoz/pkg/query-service/app/traces/v3"
 	"go.signoz.io/signoz/pkg/query-service/auth"
 	"go.signoz.io/signoz/pkg/query-service/constants"
@@ -68,7 +68,7 @@ type APIHandler struct {
 	ruleManager  *rules.Manager
 	featureFlags interfaces.FeatureLookup
 	ready        func(http.HandlerFunc) http.HandlerFunc
-	queryBuilder *query_builder.QueryBuilder
+	queryBuilder *queryBuilder.QueryBuilder
 
 	// SetupCompleted indicates if SigNoz is ready for general use.
 	// at the moment, we mark the app ready when the first user
@@ -107,12 +107,12 @@ func NewAPIHandler(opts APIHandlerOpts) (*APIHandler, error) {
 		featureFlags: opts.FeatureFlags,
 	}
 
-	builderOpts := query_builder.QueryBuilderOptions{
+	builderOpts := queryBuilder.QueryBuilderOptions{
 		BuildMetricQuery: metricsv3.PrepareMetricQuery,
 		BuildTraceQuery:  tracesV3.PrepareTracesQuery,
 		BuildLogQuery:    logsv3.PrepareLogsQuery,
 	}
-	aH.queryBuilder = query_builder.NewQueryBuilder(builderOpts)
+	aH.queryBuilder = queryBuilder.NewQueryBuilder(builderOpts)
 
 	aH.ready = aH.testReady
 
