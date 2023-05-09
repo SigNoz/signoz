@@ -3,6 +3,8 @@ import {
 	isExistsNotExistsOperator,
 	isInNInOperator,
 } from 'container/QueryBuilder/filters/QueryBuilderSearch/utils';
+// eslint-disable-next-line import/no-extraneous-dependencies
+import * as Papa from 'papaparse';
 import { useCallback, useEffect, useState } from 'react';
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 
@@ -59,13 +61,13 @@ export const useTag = (
 	}, []);
 
 	useEffect(() => {
-		const initialTags = (query?.filters?.items || []).map((obj) =>
-			isInNInOperator(getOperatorFromValue(obj.op))
-				? `${obj.key?.key} ${getOperatorFromValue(
-						obj.op,
-				  )} ${(obj.value as string[]).join(', ')}`
-				: `${obj.key?.key} ${getOperatorFromValue(obj.op)} ${obj.value}`,
-		);
+		const initialTags = (query?.filters?.items || []).map((ele) => {
+			if (isInNInOperator(getOperatorFromValue(ele.op))) {
+				const csvString = Papa.unparse([ele.value]);
+				return `${ele.key?.key} ${getOperatorFromValue(ele.op)} ${csvString}`;
+			}
+			return `${ele.key?.key} ${getOperatorFromValue(ele.op)} ${ele.value}`;
+		});
 		setTags(initialTags);
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, []);
