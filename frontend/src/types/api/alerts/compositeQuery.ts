@@ -1,3 +1,4 @@
+import { GRAPH_TYPES } from 'container/NewDashboard/ComponentsSlider';
 import {
 	IClickHouseQuery,
 	IMetricsBuilderFormula,
@@ -13,6 +14,7 @@ export interface ICompositeMetricQuery {
 	promQueries: IPromQueries;
 	chQueries: IChQueries;
 	queryType: EQueryType;
+	panelType: GRAPH_TYPES;
 }
 
 export interface IChQueries {

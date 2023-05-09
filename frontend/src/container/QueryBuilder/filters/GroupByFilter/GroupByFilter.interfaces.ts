@@ -6,11 +6,3 @@ export type GroupByFilterProps = {
 	onChange: (values: BaseAutocompleteData[]) => void;
 	disabled: boolean;
 };
-
-export type GroupByFilterValue = {
-	disabled: boolean | undefined;
-	key: string;
-	label: string;
-	title: string | undefined;
-	value: string;
-};

@@ -14,14 +14,19 @@ import (
 	"go.uber.org/zap"
 
 	"github.com/ClickHouse/clickhouse-go/v2"
-	"go.signoz.io/signoz/pkg/query-service/app/metrics"
+
+	"go.signoz.io/signoz/pkg/query-service/app/queryBuilder"
 	"go.signoz.io/signoz/pkg/query-service/constants"
-	qsmodel "go.signoz.io/signoz/pkg/query-service/model"
+	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
 	"go.signoz.io/signoz/pkg/query-service/utils/labels"
 	querytemplate "go.signoz.io/signoz/pkg/query-service/utils/queryTemplate"
 	"go.signoz.io/signoz/pkg/query-service/utils/times"
 	"go.signoz.io/signoz/pkg/query-service/utils/timestamp"
 	"go.signoz.io/signoz/pkg/query-service/utils/value"
+
+	logsv3 "go.signoz.io/signoz/pkg/query-service/app/logs/v3"
+	metricsv3 "go.signoz.io/signoz/pkg/query-service/app/metrics/v3"
+	tracesV3 "go.signoz.io/signoz/pkg/query-service/app/traces/v3"
 
 	yaml "gopkg.in/yaml.v2"
 )
@@ -47,6 +52,8 @@ type ThresholdRule struct {
 
 	// map of active alerts
 	active map[uint64]*Alert
+
+	queryBuilder *queryBuilder.QueryBuilder
 
 	opts ThresholdRuleOpts
 }
@@ -91,6 +98,13 @@ func NewThresholdRule(
 	if int64(t.evalWindow) == 0 {
 		t.evalWindow = 5 * time.Minute
 	}
+
+	builderOpts := queryBuilder.QueryBuilderOptions{
+		BuildMetricQuery: metricsv3.PrepareMetricQuery,
+		BuildTraceQuery:  tracesV3.PrepareTracesQuery,
+		BuildLogQuery:    logsv3.PrepareLogsQuery,
+	}
+	t.queryBuilder = queryBuilder.NewQueryBuilder(builderOpts)
 
 	zap.S().Info("msg:", "creating new alerting rule", "\t name:", t.name, "\t condition:", t.ruleCondition.String(), "\t generatorURL:", t.GeneratorURL())
 
@@ -338,25 +352,25 @@ func (r *ThresholdRule) CheckCondition(v float64) bool {
 	}
 }
 
-func (r *ThresholdRule) prepareQueryRange(ts time.Time) *qsmodel.QueryRangeParamsV2 {
+func (r *ThresholdRule) prepareQueryRange(ts time.Time) *v3.QueryRangeParamsV3 {
 	// todo(amol): add 30 seconds to evalWindow for rate calc
 
-	if r.ruleCondition.QueryType() == qsmodel.CLICKHOUSE {
-		return &qsmodel.QueryRangeParamsV2{
-			Start:                ts.Add(-time.Duration(r.evalWindow)).UnixMilli(),
-			End:                  ts.UnixMilli(),
-			Step:                 30,
-			CompositeMetricQuery: r.ruleCondition.CompositeMetricQuery,
-			Variables:            make(map[string]interface{}, 0),
+	if r.ruleCondition.QueryType() == v3.QueryTypeClickHouseSQL {
+		return &v3.QueryRangeParamsV3{
+			Start:          ts.Add(-time.Duration(r.evalWindow)).UnixMilli(),
+			End:            ts.UnixMilli(),
+			Step:           30,
+			CompositeQuery: r.ruleCondition.CompositeQuery,
+			Variables:      make(map[string]interface{}, 0),
 		}
 	}
 
 	// default mode
-	return &qsmodel.QueryRangeParamsV2{
-		Start:                ts.Add(-time.Duration(r.evalWindow)).UnixMilli(),
-		End:                  ts.UnixMilli(),
-		Step:                 30,
-		CompositeMetricQuery: r.ruleCondition.CompositeMetricQuery,
+	return &v3.QueryRangeParamsV3{
+		Start:          ts.Add(-time.Duration(r.evalWindow)).UnixMilli(),
+		End:            ts.UnixMilli(),
+		Step:           30,
+		CompositeQuery: r.ruleCondition.CompositeQuery,
 	}
 }
 
@@ -502,7 +516,7 @@ func (r *ThresholdRule) runChQuery(ctx context.Context, db clickhouse.Conn, quer
 			}
 
 		} else {
-			if r.Condition().QueryType() == qsmodel.QUERY_BUILDER {
+			if r.Condition().QueryType() == v3.QueryTypeBuilder {
 				// for query builder, time series data
 				// we skip the first record to support rate cases correctly
 				// improvement(amol): explore approaches to limit this only for
@@ -537,9 +551,9 @@ func (r *ThresholdRule) runChQuery(ctx context.Context, db clickhouse.Conn, quer
 
 func (r *ThresholdRule) prepareBuilderQueries(ts time.Time) (map[string]string, error) {
 	params := r.prepareQueryRange(ts)
-	runQueries := metrics.PrepareBuilderMetricQueries(params, constants.SIGNOZ_TIMESERIES_TABLENAME)
+	runQueries, err := r.queryBuilder.PrepareQueries(params)
 
-	return runQueries.Queries, runQueries.Err
+	return runQueries, err
 }
 
 func (r *ThresholdRule) prepareClickhouseQueries(ts time.Time) (map[string]string, error) {
@@ -549,7 +563,7 @@ func (r *ThresholdRule) prepareClickhouseQueries(ts time.Time) (map[string]strin
 		return nil, fmt.Errorf("rule condition is empty")
 	}
 
-	if r.ruleCondition.QueryType() != qsmodel.CLICKHOUSE {
+	if r.ruleCondition.QueryType() != v3.QueryTypeClickHouseSQL {
 		zap.S().Debugf("ruleid:", r.ID(), "\t msg: unsupported query type in prepareClickhouseQueries()")
 		return nil, fmt.Errorf("failed to prepare clickhouse queries")
 	}
@@ -557,9 +571,9 @@ func (r *ThresholdRule) prepareClickhouseQueries(ts time.Time) (map[string]strin
 	params := r.prepareQueryRange(ts)
 
 	// replace reserved go template variables
-	querytemplate.AssignReservedVars(params)
+	querytemplate.AssignReservedVarsV3(params)
 
-	for name, chQuery := range r.ruleCondition.CompositeMetricQuery.ClickHouseQueries {
+	for name, chQuery := range r.ruleCondition.CompositeQuery.ClickHouseQueries {
 		if chQuery.Disabled {
 			continue
 		}
@@ -586,7 +600,7 @@ func (r *ThresholdRule) prepareClickhouseQueries(ts time.Time) (map[string]strin
 // query looks if alert condition is being
 // satisfied and returns the signals
 func (r *ThresholdRule) buildAndRunQuery(ctx context.Context, ts time.Time, ch clickhouse.Conn) (Vector, error) {
-	if r.ruleCondition == nil || r.ruleCondition.CompositeMetricQuery == nil {
+	if r.ruleCondition == nil || r.ruleCondition.CompositeQuery == nil {
 		r.SetHealth(HealthBad)
 		return nil, fmt.Errorf("invalid rule condition")
 	}
@@ -596,7 +610,7 @@ func (r *ThresholdRule) buildAndRunQuery(ctx context.Context, ts time.Time, ch c
 	var err error
 
 	// fetch the target query based on query type
-	if r.ruleCondition.QueryType() == qsmodel.QUERY_BUILDER {
+	if r.ruleCondition.QueryType() == v3.QueryTypeBuilder {
 
 		queries, err = r.prepareBuilderQueries(ts)
 
@@ -605,7 +619,7 @@ func (r *ThresholdRule) buildAndRunQuery(ctx context.Context, ts time.Time, ch c
 			return nil, fmt.Errorf("failed to prepare metric queries")
 		}
 
-	} else if r.ruleCondition.QueryType() == qsmodel.CLICKHOUSE {
+	} else if r.ruleCondition.QueryType() == v3.QueryTypeClickHouseSQL {
 
 		queries, err = r.prepareClickhouseQueries(ts)
 

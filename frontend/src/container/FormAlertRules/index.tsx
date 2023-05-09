@@ -60,7 +60,7 @@ function FormAlertRules({
 	const initQuery = initialValue.condition.compositeQuery;
 
 	const [queryCategory, setQueryCategory] = useState<EQueryType>(
-		initQuery?.queryType,
+		initQuery.queryType,
 	);
 
 	// local state to handle promql queries
@@ -91,7 +91,7 @@ function FormAlertRules({
 	// is delayed
 	useEffect(() => {
 		const initQuery = initialValue?.condition?.compositeQuery;
-		const typ = initQuery?.queryType;
+		const type = initQuery.queryType;
 
 		const builderData = mapQueryDataFromApi(
 			initialValue?.condition?.compositeQuery?.builderQueries || {},
@@ -99,7 +99,7 @@ function FormAlertRules({
 
 		// prepare staged query
 		const sq = prepareStagedQuery(
-			typ,
+			type,
 			builderData.queryData,
 			builderData.queryFormulas,
 			initQuery?.promQueries,
@@ -108,7 +108,7 @@ function FormAlertRules({
 		const pq = initQuery?.promQueries;
 		const chq = initQuery?.chQueries;
 
-		setQueryCategory(typ);
+		setQueryCategory(type);
 		initQueryBuilderData(builderData);
 		setPromQueries(pq);
 		setStagedQuery(sq);
@@ -237,7 +237,7 @@ function FormAlertRules({
 			return false;
 		}
 
-		return false;
+		return true;
 	}, [t, alertDef, queryCategory, queryBuilderData, notifications]);
 
 	const isFormValid = useCallback((): boolean => {
@@ -281,6 +281,7 @@ function FormAlertRules({
 					promQueries,
 					chQueries,
 					queryType: queryCategory,
+					panelType: initQuery.panelType,
 				},
 			},
 		};
@@ -294,6 +295,7 @@ function FormAlertRules({
 		promQueries,
 		chQueries,
 		alertType,
+		initQuery,
 	]);
 
 	const saveRule = useCallback(async () => {

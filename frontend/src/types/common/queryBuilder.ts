@@ -1,4 +1,3 @@
-import { FORMULA_REGEXP } from 'constants/regExp';
 import { GRAPH_TYPES } from 'container/NewDashboard/ComponentsSlider';
 import {
 	IBuilderFormula,
@@ -148,10 +147,10 @@ export type QueryBuilderData = {
 	queryFormulas: IBuilderFormula[];
 };
 
-export const isFormula = (
+export const isQuery = (
 	query: IBuilderFormula | IBuilderQuery,
-	queryName: string,
-): query is IBuilderFormula => FORMULA_REGEXP.test(queryName);
+): query is IBuilderQuery =>
+	'dataSource' in query && 'aggregateOperator' in query;
 
 export type QueryBuilderContextType = {
 	queryBuilderData: QueryBuilderData;

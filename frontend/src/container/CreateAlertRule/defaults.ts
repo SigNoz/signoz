@@ -1,4 +1,7 @@
-import { initialQueryBuilderFormValues } from 'constants/queryBuilder';
+import {
+	initialQueryBuilderFormValues,
+	PANEL_TYPES,
+} from 'constants/queryBuilder';
 import { AlertTypes } from 'types/api/alerts/alertTypes';
 import {
 	AlertDef,
@@ -35,6 +38,7 @@ export const alertDefaults: AlertDef = {
 			promQueries: {},
 			chQueries: {},
 			queryType: EQueryType.QUERY_BUILDER,
+			panelType: PANEL_TYPES.TIME_SERIES,
 		},
 		op: defaultCompareOp,
 		matchType: defaultMatchType,
@@ -68,6 +72,7 @@ export const logAlertDefaults: AlertDef = {
 				},
 			},
 			queryType: EQueryType.CLICKHOUSE,
+			panelType: PANEL_TYPES.TIME_SERIES,
 		},
 		op: defaultCompareOp,
 		matchType: '4',
@@ -102,6 +107,7 @@ export const traceAlertDefaults: AlertDef = {
 				},
 			},
 			queryType: EQueryType.CLICKHOUSE,
+			panelType: PANEL_TYPES.TIME_SERIES,
 		},
 		op: defaultCompareOp,
 		matchType: '4',
@@ -136,6 +142,7 @@ export const exceptionAlertDefaults: AlertDef = {
 				},
 			},
 			queryType: EQueryType.CLICKHOUSE,
+			panelType: PANEL_TYPES.TIME_SERIES,
 		},
 		op: defaultCompareOp,
 		matchType: '4',
