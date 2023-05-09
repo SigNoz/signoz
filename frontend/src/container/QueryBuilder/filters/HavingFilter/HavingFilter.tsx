@@ -33,7 +33,6 @@ export function HavingFilter({
 	);
 
 	const { isMulti } = useTagValidation(
-		searchText,
 		currentFormValue.op,
 		currentFormValue.value,
 	);
