@@ -9,7 +9,7 @@ export enum EQueryCategories {
 }
 
 export enum EQueryTypeToQueryKeyMapping {
-	QUERY_BUILDER = 'metricsBuilder',
+	QUERY_BUILDER = 'builder',
 	CLICKHOUSE = 'clickHouse',
 	PROM = 'promQL',
 }

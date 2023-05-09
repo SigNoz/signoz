@@ -10,5 +10,5 @@ export type QueryBuilderConfig =
 
 export type QueryBuilderProps = {
 	config?: QueryBuilderConfig;
-	panelType?: ITEMS;
+	panelType: ITEMS;
 };

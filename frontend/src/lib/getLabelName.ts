@@ -1,7 +1,7 @@
-import { QueryData } from 'types/api/widgets/getQuery';
+import { SeriesItem } from 'types/api/widgets/getQuery';
 
 const getLabelName = (
-	metric: QueryData['metric'],
+	metric: SeriesItem['labels'],
 	query: string,
 	legends: string,
 ): string => {
