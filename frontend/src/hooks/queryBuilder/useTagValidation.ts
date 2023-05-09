@@ -12,7 +12,6 @@ type ITagValidation = {
 };
 
 export const useTagValidation = (
-	value: string,
 	operator: string,
 	result: string[],
 ): ITagValidation => {

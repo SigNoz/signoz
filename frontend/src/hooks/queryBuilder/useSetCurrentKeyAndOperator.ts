@@ -1,7 +1,9 @@
-import { getTagToken } from 'container/QueryBuilder/filters/QueryBuilderSearch/utils';
+import {
+	getRemovePrefixFromKey,
+	getTagToken,
+} from 'container/QueryBuilder/filters/QueryBuilderSearch/utils';
 import { useMemo } from 'react';
 import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
-import { getCountOfSpace } from 'utils/getCountOfSpace';
 
 type ICurrentKeyAndOperator = [string, string, string[]];
 
@@ -16,9 +18,10 @@ export const useSetCurrentKeyAndOperator = (
 
 		if (value) {
 			const { tagKey, tagOperator, tagValue } = getTagToken(value);
-			const isSuggestKey = keys?.some((el) => tagKey.includes(el.key));
-
-			if (getCountOfSpace(value) >= 1 || isSuggestKey) {
+			const isSuggestKey = keys?.some(
+				(el) => el?.key === getRemovePrefixFromKey(tagKey),
+			);
+			if (isSuggestKey || keys.length === 0) {
 				key = tagKey || '';
 				operator = tagOperator || '';
 				result = tagValue || [];

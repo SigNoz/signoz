@@ -51,7 +51,6 @@ export const useAutoComplete = (query: IBuilderQuery): IAutoComplete => {
 	};
 
 	const { isValidTag, isExist, isValidOperator, isMulti } = useTagValidation(
-		searchValue,
 		operator,
 		result,
 	);
