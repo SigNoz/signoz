@@ -85,7 +85,7 @@ function ChartPreview({
 		queryFn: () =>
 			GetMetricQueryRange({
 				query: query || {
-					queryType: 1,
+					queryType: EQueryType.QUERY_BUILDER,
 					promql: [],
 					builder: {
 						queryFormulas: [],

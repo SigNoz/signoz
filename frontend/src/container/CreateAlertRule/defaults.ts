@@ -6,6 +6,7 @@ import {
 	defaultEvalWindow,
 	defaultMatchType,
 } from 'types/api/alerts/def';
+import { EQueryType } from 'types/common/dashboard';
 import {
 	DataSource,
 	LogsAggregatorOperator,
@@ -33,7 +34,7 @@ export const alertDefaults: AlertDef = {
 			},
 			promQueries: {},
 			chQueries: {},
-			queryType: 1,
+			queryType: EQueryType.QUERY_BUILDER,
 		},
 		op: defaultCompareOp,
 		matchType: defaultMatchType,
@@ -66,7 +67,7 @@ export const logAlertDefaults: AlertDef = {
 					disabled: false,
 				},
 			},
-			queryType: 2,
+			queryType: EQueryType.CLICKHOUSE,
 		},
 		op: defaultCompareOp,
 		matchType: '4',
@@ -100,7 +101,7 @@ export const traceAlertDefaults: AlertDef = {
 					disabled: false,
 				},
 			},
-			queryType: 2,
+			queryType: EQueryType.CLICKHOUSE,
 		},
 		op: defaultCompareOp,
 		matchType: '4',
@@ -134,7 +135,7 @@ export const exceptionAlertDefaults: AlertDef = {
 					disabled: false,
 				},
 			},
-			queryType: 2,
+			queryType: EQueryType.CLICKHOUSE,
 		},
 		op: defaultCompareOp,
 		matchType: '4',

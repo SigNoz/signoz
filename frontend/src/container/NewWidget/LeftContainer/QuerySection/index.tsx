@@ -30,7 +30,6 @@ import ClickHouseQueryContainer from './QueryBuilder/clickHouse';
 import PromQLQueryContainer from './QueryBuilder/promQL';
 import TabHeader from './TabHeader';
 import { IHandleUpdatedQuery } from './types';
-import { getQueryKey } from './utils/getQueryKey';
 import { showUnstagedStashConfirmBox } from './utils/userSettings';
 
 function QuerySection({
@@ -76,15 +75,10 @@ function QuerySection({
 		queryA: Query,
 		queryB: Query,
 		queryCategory: EQueryType,
-	): boolean => {
-		const keyOfConcern = getQueryKey(queryCategory);
-		return !isEqual(queryA[keyOfConcern], queryB[keyOfConcern]);
-	};
+	): boolean => !isEqual(queryA[queryCategory], queryB[queryCategory]);
 
 	useEffect(() => {
-		handleUnstagedChanges(
-			queryDiff(query, localQueryChanges, parseInt(`${queryCategory}`, 10)),
-		);
+		handleUnstagedChanges(queryDiff(query, localQueryChanges, queryCategory));
 	}, [handleUnstagedChanges, localQueryChanges, query, queryCategory]);
 
 	const regenRctKeys = (): void => {
@@ -111,11 +105,7 @@ function QuerySection({
 
 	const handleQueryCategoryChange = (qCategory: string): void => {
 		// If true, then it means that the user has made some changes and haven't staged them
-		const unstagedChanges = queryDiff(
-			query,
-			localQueryChanges,
-			parseInt(`${queryCategory}`, 10),
-		);
+		const unstagedChanges = queryDiff(query, localQueryChanges, queryCategory);
 
 		if (unstagedChanges && showUnstagedStashConfirmBox()) {
 			// eslint-disable-next-line no-alert
@@ -125,10 +115,10 @@ function QuerySection({
 			return;
 		}
 
-		setQueryCategory(parseInt(`${qCategory}`, 10));
+		setQueryCategory(qCategory as EQueryType);
 		const newLocalQuery = {
 			...cloneDeep(query),
-			queryType: parseInt(`${qCategory}`, 10),
+			queryType: qCategory as EQueryType,
 		};
 		setLocalQueryChanges(newLocalQuery);
 		regenRctKeys();

@@ -6,12 +6,6 @@ export enum EQueryCategories {
 	promql,
 }
 
-export enum EQueryTypeToQueryKeyMapping {
-	QUERY_BUILDER = 'builder',
-	CLICKHOUSE = 'clickhouse_sql',
-	PROM = 'promql',
-}
-
 export interface IHandleUpdatedQuery {
 	updatedQuery: Query;
 }

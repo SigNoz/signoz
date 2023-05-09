@@ -27,7 +27,7 @@ function QuerySection({
 
 	const handleQueryCategoryChange = (s: string): void => {
 		if (
-			parseInt(s, 10) === EQueryType.PROM &&
+			s === EQueryType.PROM &&
 			(!promQueries || Object.keys(promQueries).length === 0)
 		) {
 			setPromQueries({
@@ -42,7 +42,7 @@ function QuerySection({
 		}
 
 		if (
-			parseInt(s, 10) === EQueryType.CLICKHOUSE &&
+			s === EQueryType.CLICKHOUSE &&
 			(!chQueries || Object.keys(chQueries).length === 0)
 		) {
 			setChQueries({
@@ -55,7 +55,7 @@ function QuerySection({
 				},
 			});
 		}
-		setQueryCategory(parseInt(s, 10));
+		setQueryCategory(s as EQueryType);
 	};
 
 	const renderPromqlUI = (): JSX.Element => (
@@ -83,18 +83,18 @@ function QuerySection({
 	const tabs = [
 		{
 			label: t('tab_qb'),
-			key: EQueryType.QUERY_BUILDER.toString(),
+			key: EQueryType.QUERY_BUILDER,
 		},
 		{
 			label: t('tab_chquery'),
-			key: EQueryType.CLICKHOUSE.toString(),
+			key: EQueryType.CLICKHOUSE,
 		},
 	];
 
 	const items = [
-		{ label: t('tab_qb'), key: EQueryType.QUERY_BUILDER.toString() },
-		{ label: t('tab_chquery'), key: EQueryType.CLICKHOUSE.toString() },
-		{ label: t('tab_promql'), key: EQueryType.PROM.toString() },
+		{ label: t('tab_qb'), key: EQueryType.QUERY_BUILDER },
+		{ label: t('tab_chquery'), key: EQueryType.CLICKHOUSE },
+		{ label: t('tab_promql'), key: EQueryType.PROM },
 	];
 
 	const renderTabs = (typ: AlertTypes): JSX.Element | null => {
@@ -106,8 +106,8 @@ function QuerySection({
 					<Tabs
 						type="card"
 						style={{ width: '100%' }}
-						defaultActiveKey={EQueryType.QUERY_BUILDER.toString()}
-						activeKey={queryCategory.toString()}
+						defaultActiveKey={EQueryType.QUERY_BUILDER}
+						activeKey={queryCategory}
 						onChange={handleQueryCategoryChange}
 						tabBarExtraContent={
 							<span style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
@@ -125,8 +125,8 @@ function QuerySection({
 					<Tabs
 						type="card"
 						style={{ width: '100%' }}
-						defaultActiveKey={EQueryType.QUERY_BUILDER.toString()}
-						activeKey={queryCategory.toString()}
+						defaultActiveKey={EQueryType.QUERY_BUILDER}
+						activeKey={queryCategory}
 						onChange={handleQueryCategoryChange}
 						tabBarExtraContent={
 							<span style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>

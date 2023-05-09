@@ -19,6 +19,7 @@ import { useLocation, useParams } from 'react-router-dom';
 import { UpdateTimeInterval } from 'store/actions';
 import { AppState } from 'store/reducers';
 import { Widgets } from 'types/api/dashboard/getAll';
+import { EQueryType } from 'types/common/dashboard';
 import MetricReducer from 'types/reducer/metrics';
 
 import {
@@ -82,7 +83,7 @@ function Application({ getWidgetQueryBuilder }: DashboardProps): JSX.Element {
 	const operationPerSecWidget = useMemo(
 		() =>
 			getWidgetQueryBuilder({
-				queryType: 1,
+				queryType: EQueryType.QUERY_BUILDER,
 				promql: [],
 				builder: operationPerSec({
 					servicename,
@@ -97,7 +98,7 @@ function Application({ getWidgetQueryBuilder }: DashboardProps): JSX.Element {
 	const errorPercentageWidget = useMemo(
 		() =>
 			getWidgetQueryBuilder({
-				queryType: 1,
+				queryType: EQueryType.QUERY_BUILDER,
 				promql: [],
 				builder: errorPercentage({
 					servicename,
