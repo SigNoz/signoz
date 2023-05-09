@@ -134,6 +134,7 @@ func (r ReduceToOperator) Validate() error {
 type QueryType string
 
 const (
+	QueryTypeUnknown       QueryType = "unknown"
 	QueryTypeBuilder       QueryType = "builder"
 	QueryTypeClickHouseSQL QueryType = "clickhouse_sql"
 	QueryTypePromQL        QueryType = "promql"
