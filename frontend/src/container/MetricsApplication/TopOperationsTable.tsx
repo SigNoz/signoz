@@ -59,7 +59,7 @@ function TopOperationsTable(props: TopOperationsTableProps): JSX.Element {
 			key: 'p50',
 			width: 50,
 			sorter: (a: TopOperationList, b: TopOperationList): number => a.p50 - b.p50,
-			render: (value: number): string => (value / 1000000).toFixed(2),
+			render: (value: number): string => (value || 0 / 1000000).toFixed(2),
 		},
 		{
 			title: 'P95  (in ms)',
@@ -67,7 +67,7 @@ function TopOperationsTable(props: TopOperationsTableProps): JSX.Element {
 			key: 'p95',
 			width: 50,
 			sorter: (a: TopOperationList, b: TopOperationList): number => a.p95 - b.p95,
-			render: (value: number): string => (value / 1000000).toFixed(2),
+			render: (value: number): string => (value || 0 / 1000000).toFixed(2),
 		},
 		{
 			title: 'P99  (in ms)',
@@ -75,7 +75,7 @@ function TopOperationsTable(props: TopOperationsTableProps): JSX.Element {
 			key: 'p99',
 			width: 50,
 			sorter: (a: TopOperationList, b: TopOperationList): number => a.p99 - b.p99,
-			render: (value: number): string => (value / 1000000).toFixed(2),
+			render: (value: number): string => (value || 0 / 1000000).toFixed(2),
 		},
 		{
 			title: 'Number of Calls',
@@ -93,7 +93,7 @@ function TopOperationsTable(props: TopOperationsTableProps): JSX.Element {
 			sorter: (a: TopOperationList, b: TopOperationList): number =>
 				a.errorCount - b.errorCount,
 			render: (value: number, record: TopOperationList): string =>
-				`${((value / record.numCalls) * 100).toFixed(2)} %`,
+				`${((value || 0 / record.numCalls) * 100).toFixed(2)} %`,
 		},
 	];
 
