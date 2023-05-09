@@ -2,6 +2,7 @@ import { getAggregateKeys } from 'api/queryBuilder/getAttributeKeys';
 import { getAttributesValues } from 'api/queryBuilder/getAttributesValues';
 import { QueryBuilderKeys } from 'constants/queryBuilder';
 import {
+	getRemovePrefixFromKey,
 	getTagToken,
 	isInNInOperator,
 } from 'container/QueryBuilder/filters/QueryBuilderSearch/utils';
@@ -82,10 +83,12 @@ export const useFetchKeysAndValues = (
 			return;
 		}
 		const { tagKey, tagOperator, tagValue } = getTagToken(value);
-		const filterAttributeKey = keys.find((key) => tagKey.includes(key.key));
+		const filterAttributeKey = keys.find(
+			(item) => item.key === getRemovePrefixFromKey(tagKey),
+		);
 		setResults([]);
 
-		if (!tagKey || !tagOperator || !filterAttributeKey?.key) {
+		if (!tagKey || !tagOperator) {
 			return;
 		}
 
