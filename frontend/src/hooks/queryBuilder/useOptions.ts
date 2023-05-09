@@ -33,7 +33,7 @@ export const useOptions = (
 	const getOptionsFromKeys = useCallback(
 		(items: BaseAutocompleteData[]): Option[] =>
 			items?.map((item) => ({
-				label: `${getLabel(item)} `,
+				label: `${getLabel(item)}`,
 				value: item.key,
 			})),
 		[getLabel],
@@ -44,7 +44,7 @@ export const useOptions = (
 			setOptions(
 				searchValue
 					? [
-							{ label: `${searchValue} `, value: `${searchValue} ` },
+							{ label: `${searchValue}`, value: `${searchValue}` },
 							...getOptionsFromKeys(keys),
 					  ]
 					: getOptionsFromKeys(keys),
@@ -64,12 +64,12 @@ export const useOptions = (
 			} else if (isExist) {
 				setOptions([]);
 			} else if (isValidOperator) {
-				const hasAllResults = !results.every((value) => result.includes(value));
+				const hasAllResults = results.every((value) => result.includes(value));
 				const values = results.map((value) => ({
 					label: `${key} ${operator} ${value}`,
 					value: `${key} ${operator} ${value}`,
 				}));
-				const options = hasAllResults
+				const options = !hasAllResults
 					? values
 					: [{ label: searchValue, value: searchValue }, ...values];
 				setOptions(options);
