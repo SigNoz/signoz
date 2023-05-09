@@ -17,14 +17,13 @@ type IUseTag = {
  * A custom React hook for handling tags.
  * @param {string} key - A string value to identify tags.
  * @param {boolean} isValidTag - A boolean value to indicate whether the tag is valid.
- * @param {boolean} isFreeText - A boolean value to indicate whether free text is allowed.
  * @param {function} handleSearch - A callback function to handle search.
  * @returns {IUseTag} The return object containing handlers and tags.
  */
+
 export const useTag = (
 	key: string,
 	isValidTag: boolean,
-	isFreeText: boolean,
 	handleSearch: (value: string) => void,
 	query: IBuilderQuery,
 	setSearchKey: (value: string) => void,
@@ -42,17 +41,13 @@ export const useTag = (
 	 */
 	const handleAddTag = useCallback(
 		(value: string): void => {
-			if (
-				(value && key && isValidTag) ||
-				isFreeText ||
-				isExistsNotExistsOperator(value)
-			) {
+			if ((value && key && isValidTag) || isExistsNotExistsOperator(value)) {
 				setTags((prevTags) => [...prevTags, value]);
 				handleSearch('');
 				setSearchKey('');
 			}
 		},
-		[key, isValidTag, isFreeText, handleSearch, setSearchKey],
+		[key, isValidTag, handleSearch, setSearchKey],
 	);
 
 	/**

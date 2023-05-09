@@ -50,18 +50,15 @@ export const useAutoComplete = (query: IBuilderQuery): IAutoComplete => {
 		setSearchKey(prefixFreeValue);
 	};
 
-	const {
-		isValidTag,
-		isExist,
-		isValidOperator,
-		isMulti,
-		isFreeText,
-	} = useTagValidation(searchValue, operator, result);
+	const { isValidTag, isExist, isValidOperator, isMulti } = useTagValidation(
+		searchValue,
+		operator,
+		result,
+	);
 
 	const { handleAddTag, handleClearTag, tags, updateTag } = useTag(
 		key,
 		isValidTag,
-		isFreeText,
 		handleSearch,
 		query,
 		setSearchKey,
@@ -98,7 +95,7 @@ export const useAutoComplete = (query: IBuilderQuery): IAutoComplete => {
 			}
 
 			if (event.key === 'Enter' && searchValue && isValidTag) {
-				if (isMulti || isFreeText) {
+				if (isMulti) {
 					event.stopPropagation();
 				}
 				event.preventDefault();
@@ -111,15 +108,7 @@ export const useAutoComplete = (query: IBuilderQuery): IAutoComplete => {
 				handleClearTag(last);
 			}
 		},
-		[
-			handleAddTag,
-			handleClearTag,
-			isFreeText,
-			isMulti,
-			isValidTag,
-			searchValue,
-			tags,
-		],
+		[handleAddTag, handleClearTag, isMulti, isValidTag, searchValue, tags],
 	);
 
 	const options = useOptions(
