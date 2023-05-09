@@ -64,7 +64,7 @@ export const useOptions = (
 			} else if (isExist) {
 				setOptions([]);
 			} else if (isValidOperator) {
-				const hasAllResults = results.every((value) => result.includes(value));
+				const hasAllResults = !results.every((value) => result.includes(value));
 				const values = results.map((value) => ({
 					label: `${key} ${operator} ${value}`,
 					value: `${key} ${operator} ${value}`,
