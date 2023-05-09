@@ -203,7 +203,7 @@ func BuildMetricQuery(qp *model.QueryRangeParamsV2, mq *model.MetricQuery, table
 		subQuery := fmt.Sprintf(
 			queryTmpl, "any(labels) as labels, "+groupTags, qp.Step, op, filterSubQuery, groupBy, groupTags,
 		) // labels will be same so any should be fine
-		query := `SELECT %s ts, ` + rateWithoutNegative + ` as value FROM(%s)`
+		query := `SELECT %s ts, ` + rateWithoutNegative + ` as value FROM(%s) WHERE isNaN(value) = 0`
 
 		query = fmt.Sprintf(query, "labels as fullLabels,", subQuery)
 		return query, nil
@@ -214,14 +214,14 @@ func BuildMetricQuery(qp *model.QueryRangeParamsV2, mq *model.MetricQuery, table
 		subQuery := fmt.Sprintf(
 			queryTmpl, rateGroupTags, qp.Step, op, filterSubQuery, rateGroupBy, rateGroupTags,
 		) // labels will be same so any should be fine
-		query := `SELECT %s ts, ` + rateWithoutNegative + `as value FROM(%s)`
+		query := `SELECT %s ts, ` + rateWithoutNegative + `as value FROM(%s) WHERE isNaN(value) = 0`
 		query = fmt.Sprintf(query, groupTags, subQuery)
 		query = fmt.Sprintf(`SELECT %s ts, sum(value) as value FROM (%s) GROUP BY %s ORDER BY %s ts`, groupTags, query, groupBy, groupTags)
 		return query, nil
 	case model.RATE_SUM, model.RATE_MAX, model.RATE_AVG, model.RATE_MIN:
 		op := fmt.Sprintf("%s(value)", AggregateOperatorToSQLFunc[mq.AggregateOperator])
 		subQuery := fmt.Sprintf(queryTmpl, groupTags, qp.Step, op, filterSubQuery, groupBy, groupTags)
-		query := `SELECT %s ts, ` + rateWithoutNegative + `as value FROM(%s)`
+		query := `SELECT %s ts, ` + rateWithoutNegative + `as value FROM(%s) WHERE isNaN(value) = 0`
 		query = fmt.Sprintf(query, groupTags, subQuery)
 		return query, nil
 	case model.P05, model.P10, model.P20, model.P25, model.P50, model.P75, model.P90, model.P95, model.P99:
@@ -235,7 +235,7 @@ func BuildMetricQuery(qp *model.QueryRangeParamsV2, mq *model.MetricQuery, table
 		subQuery := fmt.Sprintf(
 			queryTmpl, rateGroupTags, qp.Step, op, filterSubQuery, rateGroupBy, rateGroupTags,
 		) // labels will be same so any should be fine
-		query := `SELECT %s ts, ` + rateWithoutNegative + ` as value FROM(%s)`
+		query := `SELECT %s ts, ` + rateWithoutNegative + ` as value FROM(%s) WHERE isNaN(value) = 0`
 		query = fmt.Sprintf(query, groupTags, subQuery)
 		// filter out NaN values from the rate query as histogramQuantile doesn't support NaN values
 		query = fmt.Sprintf(`SELECT %s ts, sum(value) as value FROM (%s) GROUP BY %s HAVING isNaN(value) = 0 ORDER BY %s ts`, groupTags, query, groupBy, groupTags)
