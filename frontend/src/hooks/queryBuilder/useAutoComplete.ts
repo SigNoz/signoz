@@ -81,7 +81,7 @@ export const useAutoComplete = (query: IBuilderQuery): IAutoComplete => {
 			if (!isMulti && isValidTag && !isExistsNotExistsOperator(value)) {
 				handleAddTag(value);
 			}
-			if (!isMulti && isExistsNotExistsOperator(value)) {
+			if (!isMulti && isValidTag && isExistsNotExistsOperator(value)) {
 				handleAddTag(value);
 			}
 		},
