@@ -8,14 +8,6 @@ export function isInNInOperator(value: string): boolean {
 	return value === OPERATORS.IN || value === OPERATORS.NIN;
 }
 
-export function isExistsNotExistsOperator(value: string): boolean {
-	return value?.includes(OPERATORS.EXISTS || OPERATORS.NOT_EXISTS);
-}
-
-export function checkCommaAndSpace(value: string): boolean {
-	return value.endsWith(',') || value.endsWith(' ');
-}
-
 interface ITagToken {
 	tagKey: string;
 	tagOperator: string;
@@ -42,6 +34,13 @@ export function getTagToken(tag: string): ITagToken {
 		tagOperator: '',
 		tagValue: [],
 	};
+}
+
+export function isExistsNotExistsOperator(value: string): boolean {
+	const { tagOperator } = getTagToken(value);
+	return (
+		tagOperator === OPERATORS.NOT_EXISTS || tagOperator === OPERATORS.EXISTS
+	);
 }
 
 export function getRemovePrefixFromKey(tag: string): string {
