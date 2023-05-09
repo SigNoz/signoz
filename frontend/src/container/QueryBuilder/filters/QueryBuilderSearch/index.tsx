@@ -47,7 +47,9 @@ function QueryBuilderSearch({
 	}: CustomTagProps): React.ReactElement => {
 		const { tagOperator } = getTagToken(value);
 		const isInNin = isInNInOperator(tagOperator);
-		const chipValue = isInNin ? value.trim().replace(/,\s*$/, '') : value.trim();
+		const chipValue = isInNin
+			? value?.trim()?.replace(/,\s*$/, '')
+			: value?.trim();
 
 		const onCloseHandler = (): void => {
 			onClose();
@@ -100,14 +102,17 @@ function QueryBuilderSearch({
 		const initialTagFilters: TagFilter = { items: [], op: 'AND' };
 		initialTagFilters.items = tags.map((tag) => {
 			const { tagKey, tagOperator, tagValue } = getTagToken(tag);
-			const filterAttribute = keys.find(
+			const filterAttribute = (keys || []).find(
 				(key) => key.key === getRemovePrefixFromKey(tagKey),
 			);
 			return {
 				id: uuid().slice(0, 8),
 				key: filterAttribute,
 				op: getOperatorValue(tagOperator),
-				value: tagValue ?? '',
+				value:
+					tagValue[tagValue.length - 1] === ''
+						? tagValue?.slice(0, -1)
+						: tagValue ?? '',
 			};
 		});
 		onChange(initialTagFilters);
