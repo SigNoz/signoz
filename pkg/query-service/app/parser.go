@@ -18,6 +18,7 @@ import (
 	"go.uber.org/multierr"
 
 	"go.signoz.io/signoz/pkg/query-service/app/metrics"
+	"go.signoz.io/signoz/pkg/query-service/app/queryBuilder"
 	"go.signoz.io/signoz/pkg/query-service/auth"
 	"go.signoz.io/signoz/pkg/query-service/constants"
 	"go.signoz.io/signoz/pkg/query-service/model"
@@ -720,6 +721,8 @@ func parseInviteRequest(r *http.Request) (*model.InviteRequest, error) {
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		return nil, err
 	}
+	// Trim spaces from email
+	req.Email = strings.TrimSpace(req.Email)
 	return &req, nil
 }
 
@@ -909,7 +912,7 @@ func validateQueryRangeParamsV3(qp *v3.QueryRangeParamsV3) error {
 	for _, q := range qp.CompositeQuery.BuilderQueries {
 		expressions = append(expressions, q.Expression)
 	}
-	errs := validateExpressions(expressions, evalFuncs, qp.CompositeQuery)
+	errs := validateExpressions(expressions, queryBuilder.EvalFuncs, qp.CompositeQuery)
 	if len(errs) > 0 {
 		return multierr.Combine(errs...)
 	}
