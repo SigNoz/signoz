@@ -92,9 +92,9 @@ export interface PromQLWidgets extends IBaseWidget {
 }
 export interface Query {
 	queryType: EQueryType;
-	promQL: IPromQLQuery[];
+	promql: IPromQLQuery[];
 	builder: QueryBuilderData;
-	clickHouse: IClickHouseQuery[];
+	clickhouse_sql: IClickHouseQuery[];
 }
 
 export interface IMetricsBuilderFormula {

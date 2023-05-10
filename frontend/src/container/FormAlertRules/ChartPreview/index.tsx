@@ -60,10 +60,11 @@ function ChartPreview({
 
 		switch (query?.queryType) {
 			case EQueryType.PROM:
-				return query.promQL?.length > 0 && query.promQL[0].query !== '';
+				return query.promql?.length > 0 && query.promql[0].query !== '';
 			case EQueryType.CLICKHOUSE:
 				return (
-					query.clickHouse?.length > 0 && query.clickHouse[0].rawQuery?.length > 0
+					query.clickhouse_sql?.length > 0 &&
+					query.clickhouse_sql[0].rawQuery?.length > 0
 				);
 			case EQueryType.QUERY_BUILDER:
 				return (
@@ -84,13 +85,13 @@ function ChartPreview({
 		queryFn: () =>
 			GetMetricQueryRange({
 				query: query || {
-					queryType: 1,
-					promQL: [],
+					queryType: EQueryType.QUERY_BUILDER,
+					promql: [],
 					builder: {
 						queryFormulas: [],
 						queryData: [],
 					},
-					clickHouse: [],
+					clickhouse_sql: [],
 				},
 				globalSelectedInterval: selectedInterval,
 				graphType,
