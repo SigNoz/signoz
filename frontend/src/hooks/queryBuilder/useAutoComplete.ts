@@ -6,7 +6,6 @@ import {
 	TAG_FSM,
 } from 'container/QueryBuilder/filters/QueryBuilderSearch/utils';
 import { Option } from 'container/QueryBuilder/type';
-// eslint-disable-next-line import/no-extraneous-dependencies
 import * as Papa from 'papaparse';
 import { useCallback, useState } from 'react';
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
