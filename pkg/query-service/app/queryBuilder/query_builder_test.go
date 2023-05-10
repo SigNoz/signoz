@@ -1,4 +1,4 @@
-package app
+package queryBuilder
 
 import (
 	"strings"
@@ -40,12 +40,12 @@ func TestBuildQueryWithMultipleQueriesAndFormula(t *testing.T) {
 				},
 			},
 		}
-		qbOptions := queryBuilderOptions{
+		qbOptions := QueryBuilderOptions{
 			BuildMetricQuery: metricsv3.PrepareMetricQuery,
 		}
 		qb := NewQueryBuilder(qbOptions)
 
-		queries, err := qb.prepareQueries(q)
+		queries, err := qb.PrepareQueries(q)
 
 		require.NoError(t, err)
 
@@ -81,12 +81,12 @@ func TestBuildQueryWithIncorrectQueryRef(t *testing.T) {
 			},
 		}
 
-		qbOptions := queryBuilderOptions{
+		qbOptions := QueryBuilderOptions{
 			BuildMetricQuery: metricsv3.PrepareMetricQuery,
 		}
 		qb := NewQueryBuilder(qbOptions)
 
-		_, err := qb.prepareQueries(q)
+		_, err := qb.PrepareQueries(q)
 
 		require.NoError(t, err)
 	})
@@ -151,12 +151,12 @@ func TestBuildQueryWithThreeOrMoreQueriesRefAndFormula(t *testing.T) {
 			},
 		}
 
-		qbOptions := queryBuilderOptions{
+		qbOptions := QueryBuilderOptions{
 			BuildMetricQuery: metricsv3.PrepareMetricQuery,
 		}
 		qb := NewQueryBuilder(qbOptions)
 
-		queries, err := qb.prepareQueries(q)
+		queries, err := qb.PrepareQueries(q)
 
 		require.NoError(t, err)
 

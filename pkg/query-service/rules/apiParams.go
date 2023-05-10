@@ -9,6 +9,7 @@ import (
 
 	"github.com/pkg/errors"
 	"go.signoz.io/signoz/pkg/query-service/model"
+	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
 	"go.uber.org/zap"
 
 	"go.signoz.io/signoz/pkg/query-service/utils/times"
@@ -90,9 +91,9 @@ func parseIntoRule(initRule PostableRule, content []byte, kind string) (*Postabl
 		rule.EvalWindow = Duration(5 * time.Minute)
 		rule.Frequency = Duration(1 * time.Minute)
 		rule.RuleCondition = &RuleCondition{
-			CompositeMetricQuery: &model.CompositeMetricQuery{
-				QueryType: model.PROM,
-				PromQueries: map[string]*model.PromQuery{
+			CompositeQuery: &v3.CompositeQuery{
+				QueryType: v3.QueryTypePromQL,
+				PromQueries: map[string]*v3.PromQuery{
 					"A": {
 						Query: rule.Expr,
 					},
@@ -110,14 +111,14 @@ func parseIntoRule(initRule PostableRule, content []byte, kind string) (*Postabl
 	}
 
 	if rule.RuleCondition != nil {
-		if rule.RuleCondition.CompositeMetricQuery.QueryType == model.QUERY_BUILDER {
+		if rule.RuleCondition.CompositeQuery.QueryType == v3.QueryTypeBuilder {
 			rule.RuleType = RuleTypeThreshold
-		} else if rule.RuleCondition.CompositeMetricQuery.QueryType == model.PROM {
+		} else if rule.RuleCondition.CompositeQuery.QueryType == v3.QueryTypePromQL {
 			rule.RuleType = RuleTypeProm
 		}
 
-		for qLabel, q := range rule.RuleCondition.CompositeMetricQuery.BuilderQueries {
-			if q.MetricName != "" && q.Expression == "" {
+		for qLabel, q := range rule.RuleCondition.CompositeQuery.BuilderQueries {
+			if q.AggregateAttribute.Key != "" && q.Expression == "" {
 				q.Expression = qLabel
 			}
 		}
@@ -153,7 +154,7 @@ func (r *PostableRule) Validate() (errs []error) {
 	if r.RuleCondition == nil {
 		errs = append(errs, errors.Errorf("rule condition is required"))
 	} else {
-		if r.RuleCondition.CompositeMetricQuery == nil {
+		if r.RuleCondition.CompositeQuery == nil {
 			errs = append(errs, errors.Errorf("composite metric query is required"))
 		}
 	}
