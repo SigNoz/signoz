@@ -72,8 +72,8 @@ export const useOptions = (
 			if (isMulti) {
 				setOptions(
 					results.map((item) => ({
-						label: checkCommaInValue(item),
-						value: item,
+						label: checkCommaInValue(String(item)),
+						value: String(item),
 					})),
 				);
 			} else if (isExist) {
