@@ -107,7 +107,12 @@ function QueryBuilderSearch({
 			);
 			return {
 				id: uuid().slice(0, 8),
-				key: filterAttribute,
+				key: filterAttribute ?? {
+					key: tagKey,
+					dataType: null,
+					type: null,
+					isColumn: null,
+				},
 				op: getOperatorValue(tagOperator),
 				value:
 					tagValue[tagValue.length - 1] === ''
