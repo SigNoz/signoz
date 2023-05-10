@@ -62,7 +62,7 @@ export const useFetchKeysAndValues = (
 				dataSource: query.dataSource,
 				aggregateOperator: query.aggregateOperator,
 				aggregateAttribute: query.aggregateAttribute.key,
-				tagType: query.aggregateAttribute.type ?? '',
+				tagType: query.aggregateAttribute.type ?? null,
 			}),
 		{
 			enabled: isQueryEnabled,
