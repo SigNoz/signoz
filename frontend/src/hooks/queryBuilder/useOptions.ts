@@ -1,4 +1,7 @@
-import { getTagToken } from 'container/QueryBuilder/filters/QueryBuilderSearch/utils';
+import {
+	checkCommaInValue,
+	getTagToken,
+} from 'container/QueryBuilder/filters/QueryBuilderSearch/utils';
 import { Option } from 'container/QueryBuilder/type';
 import { transformStringWithPrefix } from 'lib/query/transformStringWithPrefix';
 import { useCallback, useEffect, useMemo, useState } from 'react';
@@ -39,6 +42,15 @@ export const useOptions = (
 		[getLabel],
 	);
 
+	const getKeyOpValue = useCallback(
+		(items: string[]): Option[] =>
+			items?.map((item) => ({
+				label: `${key} ${operator} ${item}`,
+				value: `${key} ${operator} ${item}`,
+			})),
+		[key, operator],
+	);
+
 	useEffect(() => {
 		if (!key) {
 			setOptions(
@@ -59,16 +71,16 @@ export const useOptions = (
 		} else if (key && operator) {
 			if (isMulti) {
 				setOptions(
-					results.map((value) => ({ label: `${value}`, value: `${value}` })),
+					results.map((item) => ({
+						label: checkCommaInValue(item),
+						value: item,
+					})),
 				);
 			} else if (isExist) {
 				setOptions([]);
 			} else if (isValidOperator) {
 				const hasAllResults = results.every((value) => result.includes(value));
-				const values = results.map((value) => ({
-					label: `${key} ${operator} ${value}`,
-					value: `${key} ${operator} ${value}`,
-				}));
+				const values = getKeyOpValue(results);
 				const options = !hasAllResults
 					? values
 					: [{ label: searchValue, value: searchValue }, ...values];
@@ -76,6 +88,7 @@ export const useOptions = (
 			}
 		}
 	}, [
+		getKeyOpValue,
 		getOptionsFromKeys,
 		isExist,
 		isMulti,

@@ -102,3 +102,7 @@ export function replaceStringWithMaxLength(
 	if (lastSearchValue === '') return `${mainString}${replacementString},`; // if user select direclty from options
 	return mainString.replace(lastSearchValue, `${replacementString},`);
 }
+
+export function checkCommaInValue(str: string): string {
+	return str.includes(',') ? `"${str}"` : str;
+}
