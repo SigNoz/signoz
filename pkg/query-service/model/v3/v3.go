@@ -101,14 +101,19 @@ func (a AggregateOperator) Validate() error {
 
 // RequireAttribute returns true if the aggregate operator requires an attribute
 // to be specified.
-func (a AggregateOperator) RequireAttribute() bool {
-	switch a {
-	case AggregateOperatorNoOp,
-		AggregateOperatorCount,
-		AggregateOperatorCountDistinct:
-		return false
+func (a AggregateOperator) RequireAttribute(dataSource DataSource) bool {
+	switch dataSource {
+	case DataSourceMetrics:
+		switch a {
+		case AggregateOperatorNoOp,
+			AggregateOperatorCount,
+			AggregateOperatorCountDistinct:
+			return false
+		default:
+			return true
+		}
 	default:
-		return true
+		return false
 	}
 }
 
@@ -424,7 +429,7 @@ func (b *BuilderQuery) Validate() error {
 		if err := b.AggregateOperator.Validate(); err != nil {
 			return fmt.Errorf("aggregate operator is invalid: %w", err)
 		}
-		if b.AggregateAttribute == (AttributeKey{}) && b.AggregateOperator.RequireAttribute() {
+		if b.AggregateAttribute == (AttributeKey{}) && b.AggregateOperator.RequireAttribute(b.DataSource) {
 			return fmt.Errorf("aggregate attribute is required")
 		}
 	}
