@@ -2,11 +2,9 @@ import {
 	initialAggregateAttribute,
 	initialQueryBuilderFormValues,
 	mapOfFilters,
-	mapOfOperators,
-	PANEL_TYPES,
 } from 'constants/queryBuilder';
-import { ITEMS } from 'container/NewDashboard/ComponentsSlider/menuItems';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
+import { getOperatorsBySourceAndPanelType } from 'lib/newQueryBuilder/getOperatorsBySourceAndPanelType';
 import { findDataTypeOfOperator } from 'lib/query/findDataTypeOfOperator';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
@@ -15,14 +13,14 @@ import {
 	HandleChangeQueryData,
 	UseQueryOperations,
 } from 'types/common/operations.types';
-import { DataSource, StringOperators } from 'types/common/queryBuilder';
+import { DataSource } from 'types/common/queryBuilder';
 
-export const useQueryOperations: UseQueryOperations = ({
-	query,
-	index,
-	panelType,
-}) => {
-	const { handleSetQueryData, removeEntityByIndex } = useQueryBuilder();
+export const useQueryOperations: UseQueryOperations = ({ query, index }) => {
+	const {
+		handleSetQueryData,
+		removeEntityByIndex,
+		panelType,
+	} = useQueryBuilder();
 	const [operators, setOperators] = useState<string[]>([]);
 	const [listOfAdditionalFilters, setListOfAdditionalFilters] = useState<
 		string[]
@@ -57,24 +55,6 @@ export const useQueryOperations: UseQueryOperations = ({
 		[index, query, handleSetQueryData],
 	);
 
-	const getNewOperators = useCallback(
-		(dataSource: DataSource, currentPanelType: ITEMS): string[] => {
-			let operatorsByDataSource = mapOfOperators[dataSource];
-
-			if (
-				dataSource !== DataSource.METRICS &&
-				currentPanelType !== PANEL_TYPES.LIST
-			) {
-				operatorsByDataSource = operatorsByDataSource.filter(
-					(operator) => operator !== StringOperators.NOOP,
-				);
-			}
-
-			return operatorsByDataSource;
-		},
-		[],
-	);
-
 	const getNewListOfAdditionalFilters = useCallback(
 		(dataSource: DataSource): string[] =>
 			mapOfFilters[dataSource].map((item) => item.text),
@@ -96,7 +76,10 @@ export const useQueryOperations: UseQueryOperations = ({
 
 	const handleChangeDataSource = useCallback(
 		(nextSource: DataSource): void => {
-			const newOperators = getNewOperators(nextSource, panelType);
+			const newOperators = getOperatorsBySourceAndPanelType({
+				dataSource: nextSource,
+				panelType,
+			});
 
 			const entries = Object.entries(initialQueryBuilderFormValues).filter(
 				([key]) => key !== 'queryName' && key !== 'expression',
@@ -114,7 +97,7 @@ export const useQueryOperations: UseQueryOperations = ({
 			setOperators(newOperators);
 			handleSetQueryData(index, newQuery);
 		},
-		[index, query, panelType, handleSetQueryData, getNewOperators],
+		[index, query, panelType, handleSetQueryData],
 	);
 
 	const handleDeleteQuery = useCallback(() => {
@@ -139,11 +122,12 @@ export const useQueryOperations: UseQueryOperations = ({
 	);
 
 	useEffect(() => {
-		if (operators.length === 0) {
-			const initialOperators = getNewOperators(dataSource, panelType);
-			setOperators(initialOperators);
-		}
-	}, [operators, dataSource, panelType, getNewOperators]);
+		const initialOperators = getOperatorsBySourceAndPanelType({
+			dataSource,
+			panelType,
+		});
+		setOperators(initialOperators);
+	}, [dataSource, panelType]);
 
 	useEffect(() => {
 		const additionalFilters = getNewListOfAdditionalFilters(dataSource);
