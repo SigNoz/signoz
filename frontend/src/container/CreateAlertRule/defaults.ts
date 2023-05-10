@@ -2,7 +2,6 @@ import {
 	initialQueryBuilderFormValues,
 	PANEL_TYPES,
 } from 'constants/queryBuilder';
-import { EQueryTypeToQueryKeyMapping } from 'container/NewWidget/LeftContainer/QuerySection/types';
 import { AlertTypes } from 'types/api/alerts/alertTypes';
 import {
 	AlertDef,
@@ -10,6 +9,7 @@ import {
 	defaultEvalWindow,
 	defaultMatchType,
 } from 'types/api/alerts/def';
+import { EQueryType } from 'types/common/dashboard';
 import {
 	DataSource,
 	LogsAggregatorOperator,
@@ -37,7 +37,7 @@ export const alertDefaults: AlertDef = {
 			},
 			promQueries: {},
 			chQueries: {},
-			queryType: EQueryTypeToQueryKeyMapping.QUERY_BUILDER,
+			queryType: EQueryType.QUERY_BUILDER,
 			panelType: PANEL_TYPES.TIME_SERIES,
 		},
 		op: defaultCompareOp,
@@ -71,7 +71,7 @@ export const logAlertDefaults: AlertDef = {
 					disabled: false,
 				},
 			},
-			queryType: EQueryTypeToQueryKeyMapping.CLICKHOUSE,
+			queryType: EQueryType.CLICKHOUSE,
 			panelType: PANEL_TYPES.TIME_SERIES,
 		},
 		op: defaultCompareOp,
@@ -106,7 +106,7 @@ export const traceAlertDefaults: AlertDef = {
 					disabled: false,
 				},
 			},
-			queryType: EQueryTypeToQueryKeyMapping.CLICKHOUSE,
+			queryType: EQueryType.CLICKHOUSE,
 			panelType: PANEL_TYPES.TIME_SERIES,
 		},
 		op: defaultCompareOp,
@@ -141,7 +141,7 @@ export const exceptionAlertDefaults: AlertDef = {
 					disabled: false,
 				},
 			},
-			queryType: EQueryTypeToQueryKeyMapping.CLICKHOUSE,
+			queryType: EQueryType.CLICKHOUSE,
 			panelType: PANEL_TYPES.TIME_SERIES,
 		},
 		op: defaultCompareOp,

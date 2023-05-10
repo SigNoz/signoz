@@ -8,10 +8,6 @@ import PlotTag from 'container/NewWidget/LeftContainer/WidgetGraph/PlotTag';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useNotifications } from 'hooks/useNotifications';
 import history from 'lib/history';
-import {
-	getQueryKeyNumber,
-	getQueryKeyString,
-} from 'lib/newQueryBuilder/getQueryKey';
 import { mapQueryDataFromApi } from 'lib/newQueryBuilder/queryBuilderMappers/mapQueryDataFromApi';
 import { mapQueryDataToApi } from 'lib/newQueryBuilder/queryBuilderMappers/mapQueryDataToApi';
 import React, { useCallback, useEffect, useState } from 'react';
@@ -64,7 +60,7 @@ function FormAlertRules({
 	const initQuery = initialValue.condition.compositeQuery;
 
 	const [queryCategory, setQueryCategory] = useState<EQueryType>(
-		getQueryKeyNumber(initQuery.queryType),
+		initQuery.queryType,
 	);
 
 	// local state to handle promql queries
@@ -95,7 +91,7 @@ function FormAlertRules({
 	// is delayed
 	useEffect(() => {
 		const initQuery = initialValue?.condition?.compositeQuery;
-		const type = getQueryKeyNumber(initQuery.queryType);
+		const type = initQuery.queryType;
 
 		const builderData = mapQueryDataFromApi(
 			initialValue?.condition?.compositeQuery?.builderQueries || {},
@@ -284,7 +280,7 @@ function FormAlertRules({
 					builderQueries: mapQueryDataToApi(queryBuilderData).data,
 					promQueries,
 					chQueries,
-					queryType: getQueryKeyString(queryCategory),
+					queryType: queryCategory,
 					panelType: initQuery.panelType,
 				},
 			},

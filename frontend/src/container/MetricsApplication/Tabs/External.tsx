@@ -1,5 +1,3 @@
-/* eslint-disable */
-// @ts-nocheck
 import { Col } from 'antd';
 import FullView from 'container/GridGraphLayout/Graph/FullView/index.metricsBuilder';
 import {
@@ -16,6 +14,7 @@ import {
 import React, { useMemo, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { Widgets } from 'types/api/dashboard/getAll';
+import { EQueryType } from 'types/common/dashboard';
 
 import { Card, GraphContainer, GraphTitle, Row } from '../styles';
 import { legend } from './constant';
@@ -41,9 +40,8 @@ function External({ getWidgetQueryBuilder }: ExternalProps): JSX.Element {
 	const externalCallErrorWidget = useMemo(
 		() =>
 			getWidgetQueryBuilder({
-				queryType: 1,
+				queryType: EQueryType.QUERY_BUILDER,
 				promql: [],
-				// TODO: change it later to actual builder
 				builder: externalCallErrorPercent({
 					servicename,
 					legend: legend.address,
@@ -62,9 +60,8 @@ function External({ getWidgetQueryBuilder }: ExternalProps): JSX.Element {
 	const externalCallDurationWidget = useMemo(
 		() =>
 			getWidgetQueryBuilder({
-				queryType: 1,
+				queryType: EQueryType.QUERY_BUILDER,
 				promql: [],
-				// TODO: change it later to actual builder
 				builder: externalCallDuration({
 					servicename,
 					tagFilterItems,
@@ -77,9 +74,8 @@ function External({ getWidgetQueryBuilder }: ExternalProps): JSX.Element {
 	const externalCallRPSWidget = useMemo(
 		() =>
 			getWidgetQueryBuilder({
-				queryType: 1,
+				queryType: EQueryType.QUERY_BUILDER,
 				promql: [],
-				// TODO: change it later to actual builder
 				builder: externalCallRpsByAddress({
 					servicename,
 					legend: legend.address,
@@ -93,9 +89,8 @@ function External({ getWidgetQueryBuilder }: ExternalProps): JSX.Element {
 	const externalCallDurationAddressWidget = useMemo(
 		() =>
 			getWidgetQueryBuilder({
-				queryType: 1,
+				queryType: EQueryType.QUERY_BUILDER,
 				promql: [],
-				// TODO: change it later to actual builder
 				builder: externalCallDurationByAddress({
 					servicename,
 					legend: legend.address,

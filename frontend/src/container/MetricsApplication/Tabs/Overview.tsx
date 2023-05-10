@@ -1,5 +1,3 @@
-/* eslint-disable */
-// @ts-nocheck
 import { ActiveElement, Chart, ChartData, ChartEvent } from 'chart.js';
 import Graph from 'components/Graph';
 import { QueryParams } from 'constants/query';
@@ -21,6 +19,7 @@ import { useLocation, useParams } from 'react-router-dom';
 import { UpdateTimeInterval } from 'store/actions';
 import { AppState } from 'store/reducers';
 import { Widgets } from 'types/api/dashboard/getAll';
+import { EQueryType } from 'types/common/dashboard';
 import MetricReducer from 'types/reducer/metrics';
 
 import {
@@ -84,9 +83,8 @@ function Application({ getWidgetQueryBuilder }: DashboardProps): JSX.Element {
 	const operationPerSecWidget = useMemo(
 		() =>
 			getWidgetQueryBuilder({
-				queryType: 1,
+				queryType: EQueryType.QUERY_BUILDER,
 				promql: [],
-				// TODO: change it later to actual builder
 				builder: operationPerSec({
 					servicename,
 					tagFilterItems,
@@ -100,9 +98,8 @@ function Application({ getWidgetQueryBuilder }: DashboardProps): JSX.Element {
 	const errorPercentageWidget = useMemo(
 		() =>
 			getWidgetQueryBuilder({
-				queryType: 1,
+				queryType: EQueryType.QUERY_BUILDER,
 				promql: [],
-				// TODO: change it later to actual builder
 				builder: errorPercentage({
 					servicename,
 					tagFilterItems,

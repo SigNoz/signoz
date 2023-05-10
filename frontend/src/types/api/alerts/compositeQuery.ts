@@ -1,5 +1,4 @@
 import { GRAPH_TYPES } from 'container/NewDashboard/ComponentsSlider';
-import { EQueryTypeToQueryKeyMapping } from 'container/NewWidget/LeftContainer/QuerySection/types';
 import {
 	IClickHouseQuery,
 	IMetricsBuilderFormula,
@@ -7,14 +6,14 @@ import {
 	IPromQLQuery,
 	IQueryBuilderTagFilters,
 } from 'types/api/dashboard/getAll';
-import { EAggregateOperator } from 'types/common/dashboard';
+import { EAggregateOperator, EQueryType } from 'types/common/dashboard';
 import { QueryDataResourse } from 'types/common/queryBuilderMappers.types';
 
 export interface ICompositeMetricQuery {
 	builderQueries: QueryDataResourse;
 	promQueries: IPromQueries;
 	chQueries: IChQueries;
-	queryType: EQueryTypeToQueryKeyMapping;
+	queryType: EQueryType;
 	panelType: GRAPH_TYPES;
 }
 
