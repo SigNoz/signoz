@@ -13,7 +13,7 @@ import { IClickHouseQueryHandleChange } from './types';
 interface IClickHouseQueryContainerProps {
 	queryData: Query;
 	updateQueryData: (args: IHandleUpdatedQuery) => void;
-	clickHouseQueries: Query['clickHouse'];
+	clickHouseQueries: Query['clickhouse_sql'];
 }
 function ClickHouseQueryContainer({
 	queryData,

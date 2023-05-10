@@ -3,10 +3,12 @@ import { AutoComplete, Spin } from 'antd';
 // ** Api
 import { getAggregateAttribute } from 'api/queryBuilder/getAggregateAttribute';
 import { initialAggregateAttribute } from 'constants/queryBuilder';
+import { getFilterObjectValue } from 'lib/newQueryBuilder/getFilterObjectValue';
 import { transformStringWithPrefix } from 'lib/query/transformStringWithPrefix';
 import React, { memo, useMemo, useState } from 'react';
 import { useQuery } from 'react-query';
-import { SelectOption } from 'types/common/select';
+import { DataSource } from 'types/common/queryBuilder';
+import { ExtendedSelectOption } from 'types/common/select';
 import { transformToUpperCase } from 'utils/transformToUpperCase';
 
 import { selectStyle } from '../QueryBuilderSearch/config';
@@ -35,24 +37,37 @@ export const AggregatorFilter = memo(function AggregatorFilter({
 		{ enabled: !!query.aggregateOperator && !!query.dataSource },
 	);
 
-	const handleSearchAttribute = (searchText: string): void =>
-		setSearchText(searchText);
+	const handleSearchAttribute = (searchText: string): void => {
+		const { key } = getFilterObjectValue(searchText);
+		setSearchText(key);
+	};
 
-	const optionsData: SelectOption<string, string>[] =
+	const optionsData: ExtendedSelectOption[] =
 		data?.payload?.attributeKeys?.map((item) => ({
 			label: transformStringWithPrefix({
 				str: item.key,
 				prefix: item.type || '',
 				condition: !item.isColumn,
 			}),
-			value: item.key,
+			value: transformStringWithPrefix({
+				str: item.key,
+				prefix: item.type || '',
+				condition: !item.isColumn,
+			}),
+			key: transformStringWithPrefix({
+				str: item.key,
+				prefix: item.type || '',
+				condition: !item.isColumn,
+			}),
 		})) || [];
 
 	const handleChangeAttribute = (value: string): void => {
+		const { key, isColumn } = getFilterObjectValue(value);
 		const currentAttributeObj = data?.payload?.attributeKeys?.find(
-			(item) => item.key === value,
-		) || { ...initialAggregateAttribute, key: value };
+			(item) => item.key === key && isColumn === item.isColumn,
+		) || { ...initialAggregateAttribute, key };
 
+		setSearchText('');
 		onChange(currentAttributeObj);
 	};
 
@@ -66,10 +81,15 @@ export const AggregatorFilter = memo(function AggregatorFilter({
 		[query],
 	);
 
+	const placeholder: string =
+		query.dataSource === DataSource.METRICS
+			? `${transformToUpperCase(query.dataSource)} name`
+			: 'Aggregate attribute';
+
 	return (
 		<AutoComplete
 			showSearch
-			placeholder={`${transformToUpperCase(query.dataSource)} name`}
+			placeholder={placeholder}
 			style={selectStyle}
 			showArrow={false}
 			filterOption={false}

@@ -1,7 +1,7 @@
 import { isExistsNotExistsOperator } from 'container/QueryBuilder/filters/QueryBuilderSearch/utils';
 import { Option } from 'container/QueryBuilder/type';
 import { useCallback, useState } from 'react';
-import { IBuilderQueryForm } from 'types/api/queryBuilder/queryBuilderData';
+import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 import { checkStringEndsWithSpace } from 'utils/checkStringEndsWithSpace';
 
 import { useFetchKeysAndValues } from './useFetchKeysAndValues';
@@ -23,7 +23,7 @@ interface IAutoComplete {
 	isFetching: boolean;
 }
 
-export const useAutoComplete = (query: IBuilderQueryForm): IAutoComplete => {
+export const useAutoComplete = (query: IBuilderQuery): IAutoComplete => {
 	const [searchValue, setSearchValue] = useState<string>('');
 
 	const handleSearch = (value: string): void => setSearchValue(value);
@@ -48,6 +48,7 @@ export const useAutoComplete = (query: IBuilderQueryForm): IAutoComplete => {
 		isValidTag,
 		isFreeText,
 		handleSearch,
+		query,
 	);
 
 	const handleSelect = useCallback(

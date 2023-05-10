@@ -1,3 +1,4 @@
+import { PANEL_TYPES } from 'constants/queryBuilder';
 import { GlobalTime } from 'types/actions/globalTime';
 import { Widgets } from 'types/api/dashboard/getAll';
 
@@ -6,7 +7,7 @@ const GetMaxMinTime = ({
 	minTime,
 	maxTime,
 }: GetMaxMinProps): GlobalTime => {
-	if (graphType === 'VALUE') {
+	if (graphType === PANEL_TYPES.VALUE) {
 		return {
 			maxTime,
 			minTime: maxTime,

@@ -1,8 +1,6 @@
-import {
-	IMetricsBuilderFormula,
-	IMetricsBuilderQuery,
-	IQueryBuilderTagFilterItems,
-} from 'types/api/dashboard/getAll';
+import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
+import { TagFilterItem } from 'types/api/queryBuilder/queryBuilderData';
+import { QueryBuilderData } from 'types/common/queryBuilder';
 
 import {
 	getQueryBuilderQueries,
@@ -13,16 +11,25 @@ export const databaseCallsRPS = ({
 	servicename,
 	legend,
 	tagFilterItems,
-}: DatabaseCallsRPSProps): {
-	formulas: IMetricsBuilderFormula[];
-	queryBuilder: IMetricsBuilderQuery[];
-} => {
-	const metricName = 'signoz_db_latency_count';
-	const groupBy = ['db_system'];
-	const itemsA = [
+}: DatabaseCallsRPSProps): QueryBuilderData => {
+	const metricName: BaseAutocompleteData = {
+		dataType: 'float64',
+		isColumn: true,
+		key: 'signoz_db_latency_count',
+		type: null,
+	};
+	const groupBy: BaseAutocompleteData[] = [
+		{ dataType: 'string', isColumn: false, key: 'db_system', type: 'tag' },
+	];
+	const itemsA: TagFilterItem[] = [
 		{
 			id: '',
-			key: 'service_name',
+			key: {
+				dataType: 'string',
+				isColumn: false,
+				key: 'service_name',
+				type: 'resource',
+			},
 			op: 'IN',
 			value: [`${servicename}`],
 		},
@@ -40,20 +47,32 @@ export const databaseCallsRPS = ({
 export const databaseCallsAvgDuration = ({
 	servicename,
 	tagFilterItems,
-}: DatabaseCallProps): {
-	formulas: IMetricsBuilderFormula[];
-	queryBuilder: IMetricsBuilderQuery[];
-} => {
-	const metricNameA = 'signoz_db_latency_sum';
-	const metricNameB = 'signoz_db_latency_count';
+}: DatabaseCallProps): QueryBuilderData => {
+	const metricNameA: BaseAutocompleteData = {
+		dataType: 'float64',
+		isColumn: true,
+		key: 'signoz_db_latency_sum',
+		type: null,
+	};
+	const metricNameB: BaseAutocompleteData = {
+		dataType: 'float64',
+		isColumn: true,
+		key: 'signoz_db_latency_count',
+		type: null,
+	};
 	const expression = 'A/B';
 	const legendFormula = 'Average Duration';
 	const legend = '';
 	const disabled = true;
-	const additionalItemsA = [
+	const additionalItemsA: TagFilterItem[] = [
 		{
 			id: '',
-			key: 'service_name',
+			key: {
+				dataType: 'string',
+				isColumn: false,
+				key: 'service_name',
+				type: 'resource',
+			},
 			op: 'IN',
 			value: [`${servicename}`],
 		},
@@ -79,5 +98,5 @@ interface DatabaseCallsRPSProps extends DatabaseCallProps {
 
 interface DatabaseCallProps {
 	servicename: string | undefined;
-	tagFilterItems: IQueryBuilderTagFilterItems[] | [];
+	tagFilterItems: TagFilterItem[];
 }

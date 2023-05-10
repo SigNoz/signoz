@@ -1,13 +1,7 @@
-export enum EDataSource {
-	METRICS = 1,
-	TRACES,
-	LOGS,
-}
-
 export enum EQueryType {
-	QUERY_BUILDER = 1,
-	CLICKHOUSE,
-	PROM,
+	QUERY_BUILDER = 'builder',
+	CLICKHOUSE = 'clickhouse_sql',
+	PROM = 'promql',
 }
 
 export enum EAggregateOperator {
@@ -42,8 +36,8 @@ export enum EAggregateOperator {
 }
 
 export enum EPanelType {
-	TIME_SERIES = 1,
-	VALUE,
+	GRAPH = 'graph',
+	VALUE = 'value',
 }
 
 export enum EReduceOperator {

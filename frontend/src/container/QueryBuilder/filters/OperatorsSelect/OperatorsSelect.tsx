@@ -27,6 +27,7 @@ export const OperatorsSelect = memo(function OperatorsSelect({
 			value={value}
 			onChange={onChange}
 			style={selectStyle}
+			showSearch
 			// eslint-disable-next-line react/jsx-props-no-spreading
 			{...props}
 		/>

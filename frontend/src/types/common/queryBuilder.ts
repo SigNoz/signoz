@@ -1,6 +1,7 @@
+import { GRAPH_TYPES } from 'container/NewDashboard/ComponentsSlider';
 import {
 	IBuilderFormula,
-	IBuilderQueryForm,
+	IBuilderQuery,
 } from 'types/api/queryBuilder/queryBuilderData';
 
 export enum DataSource {
@@ -45,7 +46,6 @@ export enum NumberOperators {
 	HIST_QUANTILE_99 = 'hist_quantile_99',
 }
 
-// TODO: add boolean operators from backend
 export enum BoolOperators {
 	NOOP = 'noop',
 	COUNT = 'count',
@@ -103,6 +103,10 @@ export enum TracesAggregatorOperator {
 	P95 = 'p95',
 	P99 = 'p99',
 	RATE = 'rate',
+	RATE_SUM = 'rate_sum',
+	RATE_AVG = 'rate_avg',
+	RATE_MIN = 'rate_min',
+	RATE_MAX = 'rate_max',
 }
 
 export enum LogsAggregatorOperator {
@@ -123,31 +127,48 @@ export enum LogsAggregatorOperator {
 	P95 = 'p95',
 	P99 = 'p99',
 	RATE = 'rate',
+	RATE_SUM = 'rate_sum',
+	RATE_AVG = 'rate_avg',
+	RATE_MIN = 'rate_min',
+	RATE_MAX = 'rate_max',
 }
 
-export enum EReduceOperator {
-	LATEST_OF_VALUES_IN_TIMEFRAME = 'Latest of values in timeframe',
-	'SUM_OF_VALUES_IN_TIMEFRAME' = 'Sum of values in timeframe',
-	'AVERAGE_OF_VALUES_IN_TIMEFRAME' = 'Average of values in timeframe',
-	'MAX_OF_VALUES_IN_TIMEFRAME' = 'Max of values in timeframe',
-	'MIN_OF_VALUES_IN_TIMEFRAME' = 'Min of values in timeframe',
-}
+export type PanelTypeKeys =
+	| 'TIME_SERIES'
+	| 'VALUE'
+	| 'TABLE'
+	| 'LIST'
+	| 'EMPTY_WIDGET';
+
+export type ReduceOperators = 'last' | 'sum' | 'avg' | 'max' | 'min';
 
 export type QueryBuilderData = {
-	queryData: IBuilderQueryForm[];
+	queryData: IBuilderQuery[];
 	queryFormulas: IBuilderFormula[];
 };
 
-// ** TODO: temporary types for context, fix it during development
+export const isQuery = (
+	query: IBuilderFormula | IBuilderQuery,
+): query is IBuilderQuery =>
+	'dataSource' in query && 'aggregateOperator' in query;
+
 export type QueryBuilderContextType = {
 	queryBuilderData: QueryBuilderData;
 	initialDataSource: DataSource | null;
+	panelType: GRAPH_TYPES;
 	resetQueryBuilderData: () => void;
-	handleSetQueryData: (index: number, queryData: IBuilderQueryForm) => void;
+	resetQueryBuilderInfo: () => void;
+	handleSetQueryData: (index: number, queryData: IBuilderQuery) => void;
 	handleSetFormulaData: (index: number, formulaData: IBuilderFormula) => void;
+	handleSetPanelType: (newPanelType: GRAPH_TYPES) => void;
 	initQueryBuilderData: (queryBuilderData: QueryBuilderData) => void;
 	setupInitialDataSource: (newInitialDataSource: DataSource | null) => void;
 	removeEntityByIndex: (type: keyof QueryBuilderData, index: number) => void;
 	addNewQuery: () => void;
 	addNewFormula: () => void;
+};
+
+export type QueryAdditionalFilter = {
+	field: keyof IBuilderQuery;
+	text: string;
 };

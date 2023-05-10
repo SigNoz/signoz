@@ -1,6 +1,7 @@
 import { InfoCircleOutlined } from '@ant-design/icons';
 import { StaticLineProps } from 'components/Graph';
 import Spinner from 'components/Spinner';
+import { PANEL_TYPES } from 'constants/queryBuilder';
 import GridGraphComponent from 'container/GridGraphComponent';
 import { GRAPH_TYPES } from 'container/NewDashboard/ComponentsSlider';
 import { timePreferenceType } from 'container/NewWidget/RightContainer/timeItems';
@@ -32,7 +33,7 @@ interface QueryResponseError {
 function ChartPreview({
 	name,
 	query,
-	graphType = 'TIME_SERIES',
+	graphType = PANEL_TYPES.TIME_SERIES,
 	selectedTime = 'GLOBAL_TIME',
 	selectedInterval = '5min',
 	headline,
@@ -59,15 +60,16 @@ function ChartPreview({
 
 		switch (query?.queryType) {
 			case EQueryType.PROM:
-				return query.promQL?.length > 0 && query.promQL[0].query !== '';
+				return query.promql?.length > 0 && query.promql[0].query !== '';
 			case EQueryType.CLICKHOUSE:
 				return (
-					query.clickHouse?.length > 0 && query.clickHouse[0].rawQuery?.length > 0
+					query.clickhouse_sql?.length > 0 &&
+					query.clickhouse_sql[0].rawQuery?.length > 0
 				);
 			case EQueryType.QUERY_BUILDER:
 				return (
-					query.metricsBuilder?.queryBuilder?.length > 0 &&
-					query.metricsBuilder?.queryBuilder[0].metricName !== ''
+					query.builder.queryData.length > 0 &&
+					query.builder.queryData[0].queryName !== ''
 				);
 			default:
 				return false;
@@ -83,13 +85,13 @@ function ChartPreview({
 		queryFn: () =>
 			GetMetricQueryRange({
 				query: query || {
-					queryType: 1,
-					promQL: [],
-					metricsBuilder: {
-						formulas: [],
-						queryBuilder: [],
+					queryType: EQueryType.QUERY_BUILDER,
+					promql: [],
+					builder: {
+						queryFormulas: [],
+						queryData: [],
 					},
-					clickHouse: [],
+					clickhouse_sql: [],
 				},
 				globalSelectedInterval: selectedInterval,
 				graphType,
@@ -127,7 +129,7 @@ function ChartPreview({
 					title={name}
 					data={chartDataSet}
 					isStacked
-					GRAPH_TYPES={graphType || 'TIME_SERIES'}
+					GRAPH_TYPES={graphType || PANEL_TYPES.TIME_SERIES}
 					name={name || 'Chart Preview'}
 					staticLine={staticLine}
 				/>
@@ -137,7 +139,7 @@ function ChartPreview({
 }
 
 ChartPreview.defaultProps = {
-	graphType: 'TIME_SERIES',
+	graphType: PANEL_TYPES.TIME_SERIES,
 	selectedTime: 'GLOBAL_TIME',
 	selectedInterval: '5min',
 	headline: undefined,
