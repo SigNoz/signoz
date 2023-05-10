@@ -100,6 +100,8 @@ function QueryBuilderSearch({
 
 	useEffect(() => {
 		const initialTagFilters: TagFilter = { items: [], op: 'AND' };
+		// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+		// @ts-ignore
 		initialTagFilters.items = tags.map((tag) => {
 			const { tagKey, tagOperator, tagValue } = getTagToken(tag);
 			const filterAttribute = (keys || []).find(

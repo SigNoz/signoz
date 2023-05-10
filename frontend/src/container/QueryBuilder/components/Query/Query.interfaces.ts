@@ -1,4 +1,3 @@
-import { ITEMS } from 'container/NewDashboard/ComponentsSlider/menuItems';
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 
 export type QueryProps = {
@@ -6,5 +5,4 @@ export type QueryProps = {
 	isAvailableToDisable: boolean;
 	query: IBuilderQuery;
 	queryVariant: 'static' | 'dropdown';
-	panelType: ITEMS;
 };

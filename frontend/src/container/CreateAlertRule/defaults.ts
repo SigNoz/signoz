@@ -1,3 +1,7 @@
+import {
+	initialQueryBuilderFormValues,
+	PANEL_TYPES,
+} from 'constants/queryBuilder';
 import { AlertTypes } from 'types/api/alerts/alertTypes';
 import {
 	AlertDef,
@@ -5,6 +9,12 @@ import {
 	defaultEvalWindow,
 	defaultMatchType,
 } from 'types/api/alerts/def';
+import { EQueryType } from 'types/common/dashboard';
+import {
+	DataSource,
+	LogsAggregatorOperator,
+	TracesAggregatorOperator,
+} from 'types/common/queryBuilder';
 
 const defaultAlertDescription =
 	'This alert is fired when the defined metric (current value: {{$value}}) crosses the threshold ({{$threshold}})';
@@ -19,28 +29,16 @@ const defaultAnnotations = {
 export const alertDefaults: AlertDef = {
 	alertType: AlertTypes.METRICS_BASED_ALERT,
 	condition: {
-		compositeMetricQuery: {
+		compositeQuery: {
 			builderQueries: {
 				A: {
-					queryName: 'A',
-					name: 'A',
-					formulaOnly: false,
-					metricName: '',
-					tagFilters: {
-						op: 'AND',
-						items: [],
-					},
-					groupBy: [],
-					aggregateOperator: 1,
-					expression: 'A',
-					disabled: false,
-					toggleDisable: false,
-					toggleDelete: false,
+					...initialQueryBuilderFormValues,
 				},
 			},
 			promQueries: {},
 			chQueries: {},
-			queryType: 1,
+			queryType: EQueryType.QUERY_BUILDER,
+			panelType: PANEL_TYPES.TIME_SERIES,
 		},
 		op: defaultCompareOp,
 		matchType: defaultMatchType,
@@ -55,23 +53,12 @@ export const alertDefaults: AlertDef = {
 export const logAlertDefaults: AlertDef = {
 	alertType: AlertTypes.LOGS_BASED_ALERT,
 	condition: {
-		compositeMetricQuery: {
+		compositeQuery: {
 			builderQueries: {
 				A: {
-					queryName: 'A',
-					name: 'A',
-					formulaOnly: false,
-					metricName: '',
-					tagFilters: {
-						op: 'AND',
-						items: [],
-					},
-					groupBy: [],
-					aggregateOperator: 1,
-					expression: 'A',
-					disabled: false,
-					toggleDisable: false,
-					toggleDelete: false,
+					...initialQueryBuilderFormValues,
+					aggregateOperator: LogsAggregatorOperator.COUNT,
+					dataSource: DataSource.LOGS,
 				},
 			},
 			promQueries: {},
@@ -84,7 +71,8 @@ export const logAlertDefaults: AlertDef = {
 					disabled: false,
 				},
 			},
-			queryType: 2,
+			queryType: EQueryType.CLICKHOUSE,
+			panelType: PANEL_TYPES.TIME_SERIES,
 		},
 		op: defaultCompareOp,
 		matchType: '4',
@@ -100,23 +88,12 @@ export const logAlertDefaults: AlertDef = {
 export const traceAlertDefaults: AlertDef = {
 	alertType: AlertTypes.TRACES_BASED_ALERT,
 	condition: {
-		compositeMetricQuery: {
+		compositeQuery: {
 			builderQueries: {
 				A: {
-					queryName: 'A',
-					name: 'A',
-					formulaOnly: false,
-					metricName: '',
-					tagFilters: {
-						op: 'AND',
-						items: [],
-					},
-					groupBy: [],
-					aggregateOperator: 1,
-					expression: 'A',
-					disabled: false,
-					toggleDisable: false,
-					toggleDelete: false,
+					...initialQueryBuilderFormValues,
+					aggregateOperator: TracesAggregatorOperator.COUNT,
+					dataSource: DataSource.TRACES,
 				},
 			},
 			promQueries: {},
@@ -129,7 +106,8 @@ export const traceAlertDefaults: AlertDef = {
 					disabled: false,
 				},
 			},
-			queryType: 2,
+			queryType: EQueryType.CLICKHOUSE,
+			panelType: PANEL_TYPES.TIME_SERIES,
 		},
 		op: defaultCompareOp,
 		matchType: '4',
@@ -145,23 +123,12 @@ export const traceAlertDefaults: AlertDef = {
 export const exceptionAlertDefaults: AlertDef = {
 	alertType: AlertTypes.EXCEPTIONS_BASED_ALERT,
 	condition: {
-		compositeMetricQuery: {
+		compositeQuery: {
 			builderQueries: {
 				A: {
-					queryName: 'A',
-					name: 'A',
-					formulaOnly: false,
-					metricName: '',
-					tagFilters: {
-						op: 'AND',
-						items: [],
-					},
-					groupBy: [],
-					aggregateOperator: 1,
-					expression: 'A',
-					disabled: false,
-					toggleDisable: false,
-					toggleDelete: false,
+					...initialQueryBuilderFormValues,
+					aggregateOperator: TracesAggregatorOperator.COUNT,
+					dataSource: DataSource.TRACES,
 				},
 			},
 			promQueries: {},
@@ -174,7 +141,8 @@ export const exceptionAlertDefaults: AlertDef = {
 					disabled: false,
 				},
 			},
-			queryType: 2,
+			queryType: EQueryType.CLICKHOUSE,
+			panelType: PANEL_TYPES.TIME_SERIES,
 		},
 		op: defaultCompareOp,
 		matchType: '4',

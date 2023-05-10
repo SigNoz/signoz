@@ -19,7 +19,7 @@ export interface TagFilterItem {
 }
 
 export interface TagFilter {
-	items: TagFilterItem[] | [];
+	items: TagFilterItem[];
 	op: string;
 }
 
