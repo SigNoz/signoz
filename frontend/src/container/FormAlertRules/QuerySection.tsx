@@ -25,9 +25,9 @@ function QuerySection({
 	// init namespace for translations
 	const { t } = useTranslation('alerts');
 
-	const handleQueryCategoryChange = (s: string): void => {
+	const handleQueryCategoryChange = (queryType: string): void => {
 		if (
-			s === EQueryType.PROM &&
+			queryType === EQueryType.PROM &&
 			(!promQueries || Object.keys(promQueries).length === 0)
 		) {
 			setPromQueries({
@@ -42,7 +42,7 @@ function QuerySection({
 		}
 
 		if (
-			s === EQueryType.CLICKHOUSE &&
+			queryType === EQueryType.CLICKHOUSE &&
 			(!chQueries || Object.keys(chQueries).length === 0)
 		) {
 			setChQueries({
@@ -55,7 +55,7 @@ function QuerySection({
 				},
 			});
 		}
-		setQueryCategory(s as EQueryType);
+		setQueryCategory(queryType as EQueryType);
 	};
 
 	const renderPromqlUI = (): JSX.Element => (
