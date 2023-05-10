@@ -96,3 +96,84 @@ func TestBuildQueryWithMultipleQueries(t *testing.T) {
 		require.Contains(t, query, rateWithoutNegative)
 	})
 }
+
+func TestBuildQueryOperators(t *testing.T) {
+
+	operators := []v3.FilterOperator{
+		v3.FilterOperatorEqual,
+		v3.FilterOperatorNotEqual,
+		v3.FilterOperatorRegex,
+		v3.FilterOperatorNotRegex,
+		v3.FilterOperatorIn,
+		v3.FilterOperatorNotIn,
+		v3.FilterOperatorExists,
+		v3.FilterOperatorNotExists,
+		v3.FilterOperatorContains,
+		v3.FilterOperatorNotContains,
+		v3.FilterOperatorLike,
+		v3.FilterOperatorNotLike,
+	}
+
+	filterSets := []v3.FilterSet{
+		{Operator: "AND", Items: []v3.FilterItem{
+			{Key: v3.AttributeKey{Key: "service_name"}, Value: "route", Operator: v3.FilterOperatorEqual},
+		}},
+		{Operator: "AND", Items: []v3.FilterItem{
+			{Key: v3.AttributeKey{Key: "service_name"}, Value: "route", Operator: v3.FilterOperatorNotEqual},
+		}},
+		{Operator: "AND", Items: []v3.FilterItem{
+			{Key: v3.AttributeKey{Key: "service_name"}, Value: "out", Operator: v3.FilterOperatorRegex},
+		}},
+		{Operator: "AND", Items: []v3.FilterItem{
+			{Key: v3.AttributeKey{Key: "service_name"}, Value: "out", Operator: v3.FilterOperatorNotRegex},
+		}},
+		{Operator: "AND", Items: []v3.FilterItem{
+			{Key: v3.AttributeKey{Key: "service_name"}, Value: []interface{}{"route", "driver"}, Operator: v3.FilterOperatorIn},
+		}},
+		{Operator: "AND", Items: []v3.FilterItem{
+			{Key: v3.AttributeKey{Key: "service_name"}, Value: []interface{}{"route", "driver"}, Operator: v3.FilterOperatorNotIn},
+		}},
+		{Operator: "AND", Items: []v3.FilterItem{
+			{Key: v3.AttributeKey{Key: "horn"}, Operator: v3.FilterOperatorExists},
+		}},
+		{Operator: "AND", Items: []v3.FilterItem{
+			{Key: v3.AttributeKey{Key: "horn"}, Operator: v3.FilterOperatorNotExists},
+		}},
+		{Operator: "AND", Items: []v3.FilterItem{
+			{Key: v3.AttributeKey{Key: "service_name"}, Operator: v3.FilterOperatorContains, Value: "out"},
+		}},
+		{Operator: "AND", Items: []v3.FilterItem{
+			{Key: v3.AttributeKey{Key: "serice_name"}, Operator: v3.FilterOperatorNotContains, Value: "out"},
+		}},
+		{Operator: "AND", Items: []v3.FilterItem{
+			{Key: v3.AttributeKey{Key: "service_name"}, Operator: v3.FilterOperatorLike, Value: "dri"},
+		}},
+		{Operator: "AND", Items: []v3.FilterItem{
+			{Key: v3.AttributeKey{Key: "a"}, Operator: v3.FilterOperatorNotLike, Value: "dri"},
+		}},
+	}
+
+	expectedTimeSeriesQueriesWhereClause := []string{
+		"JSONExtractString(labels, 'service_name') = 'route'",
+		"JSONExtractString(labels, 'service_name') != 'route'",
+		"match(JSONExtractString(labels, 'service_name'), 'out')",
+		"not match(JSONExtractString(labels, 'service_name'), 'out')",
+		"JSONExtractString(labels, 'service_name') IN ['route','driver']",
+		"JSONExtractString(labels, 'service_name') NOT IN ['route','driver']",
+		"has(JSONExtractKeys(labels), 'horn')",
+		"not has(JSONExtractKeys(labels), 'horn')",
+		"like(JSONExtractString(labels, 'service_name'), '%out%')",
+		"notLike(JSONExtractString(labels, 'serice_name'), '%out%')",
+		"like(JSONExtractString(labels, 'service_name'), 'dri')",
+		"notLike(JSONExtractString(labels, 'a'), 'dri')",
+	}
+
+	for i, operator := range operators {
+		t.Run(string(operator), func(t *testing.T) {
+			filterSet := filterSets[i]
+			query, err := buildMetricsTimeSeriesFilterQuery(&filterSet, []v3.AttributeKey{}, "signoz_calls_total", "sum")
+			require.NoError(t, err)
+			require.Contains(t, query, expectedTimeSeriesQueriesWhereClause[i])
+		})
+	}
+}
