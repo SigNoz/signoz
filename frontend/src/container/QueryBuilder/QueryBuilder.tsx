@@ -19,26 +19,27 @@ export const QueryBuilder = memo(function QueryBuilder({
 	const {
 		queryBuilderData,
 		setupInitialDataSource,
-		resetQueryBuilderData,
+		resetQueryBuilderInfo,
 		addNewQuery,
 		addNewFormula,
+		handleSetPanelType,
 	} = useQueryBuilder();
 
 	useEffect(() => {
 		if (config && config.queryVariant === 'static') {
 			setupInitialDataSource(config.initialDataSource);
 		}
-
-		return (): void => {
-			setupInitialDataSource(null);
-		};
 	}, [config, setupInitialDataSource]);
+
+	useEffect(() => {
+		handleSetPanelType(panelType);
+	}, [handleSetPanelType, panelType]);
 
 	useEffect(
 		() => (): void => {
-			resetQueryBuilderData();
+			resetQueryBuilderInfo();
 		},
-		[resetQueryBuilderData],
+		[resetQueryBuilderInfo],
 	);
 
 	const isDisabledQueryButton = useMemo(
@@ -51,6 +52,13 @@ export const QueryBuilder = memo(function QueryBuilder({
 		[queryBuilderData],
 	);
 
+	const isAvailableToDisableQuery = useMemo(
+		() =>
+			queryBuilderData.queryData.length > 1 ||
+			queryBuilderData.queryFormulas.length > 0,
+		[queryBuilderData],
+	);
+
 	return (
 		<Row gutter={[0, 20]} justify="start">
 			<Col span={24}>
@@ -59,10 +67,9 @@ export const QueryBuilder = memo(function QueryBuilder({
 						<Col key={query.queryName} span={24}>
 							<Query
 								index={index}
-								isAvailableToDisable={queryBuilderData.queryData.length > 1}
+								isAvailableToDisable={isAvailableToDisableQuery}
 								queryVariant={config?.queryVariant || 'dropdown'}
 								query={query}
-								panelType={panelType}
 							/>
 						</Col>
 					))}
