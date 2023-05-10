@@ -30,7 +30,6 @@ import ClickHouseQueryContainer from './QueryBuilder/clickHouse';
 import PromQLQueryContainer from './QueryBuilder/promQL';
 import TabHeader from './TabHeader';
 import { IHandleUpdatedQuery } from './types';
-import { getQueryKey } from './utils/getQueryKey';
 import { showUnstagedStashConfirmBox } from './utils/userSettings';
 
 function QuerySection({
@@ -76,15 +75,10 @@ function QuerySection({
 		queryA: Query,
 		queryB: Query,
 		queryCategory: EQueryType,
-	): boolean => {
-		const keyOfConcern = getQueryKey(queryCategory);
-		return !isEqual(queryA[keyOfConcern], queryB[keyOfConcern]);
-	};
+	): boolean => !isEqual(queryA[queryCategory], queryB[queryCategory]);
 
 	useEffect(() => {
-		handleUnstagedChanges(
-			queryDiff(query, localQueryChanges, parseInt(`${queryCategory}`, 10)),
-		);
+		handleUnstagedChanges(queryDiff(query, localQueryChanges, queryCategory));
 	}, [handleUnstagedChanges, localQueryChanges, query, queryCategory]);
 
 	const regenRctKeys = (): void => {
@@ -111,11 +105,7 @@ function QuerySection({
 
 	const handleQueryCategoryChange = (qCategory: string): void => {
 		// If true, then it means that the user has made some changes and haven't staged them
-		const unstagedChanges = queryDiff(
-			query,
-			localQueryChanges,
-			parseInt(`${queryCategory}`, 10),
-		);
+		const unstagedChanges = queryDiff(query, localQueryChanges, queryCategory);
 
 		if (unstagedChanges && showUnstagedStashConfirmBox()) {
 			// eslint-disable-next-line no-alert
@@ -125,10 +115,10 @@ function QuerySection({
 			return;
 		}
 
-		setQueryCategory(parseInt(`${qCategory}`, 10));
+		setQueryCategory(qCategory as EQueryType);
 		const newLocalQuery = {
 			...cloneDeep(query),
-			queryType: parseInt(`${qCategory}`, 10),
+			queryType: qCategory as EQueryType,
 		};
 		setLocalQueryChanges(newLocalQuery);
 		regenRctKeys();
@@ -147,7 +137,7 @@ function QuerySection({
 
 	const items = [
 		{
-			key: EQueryType.QUERY_BUILDER.toString(),
+			key: EQueryType.QUERY_BUILDER,
 			label: 'Query Builder',
 			tab: (
 				<TabHeader
@@ -162,7 +152,7 @@ function QuerySection({
 			children: <QueryBuilder panelType={selectedGraph} />,
 		},
 		{
-			key: EQueryType.CLICKHOUSE.toString(),
+			key: EQueryType.CLICKHOUSE,
 			label: 'ClickHouse Query',
 			tab: (
 				<TabHeader
@@ -186,7 +176,7 @@ function QuerySection({
 			),
 		},
 		{
-			key: EQueryType.PROM.toString(),
+			key: EQueryType.PROM,
 			label: 'PromQL',
 			tab: (
 				<TabHeader
@@ -213,8 +203,8 @@ function QuerySection({
 				<Tabs
 					type="card"
 					style={{ width: '100%' }}
-					defaultActiveKey={queryCategory.toString()}
-					activeKey={queryCategory.toString()}
+					defaultActiveKey={queryCategory}
+					activeKey={queryCategory}
 					onChange={handleQueryCategoryChange}
 					tabBarExtraContent={
 						<span style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>

@@ -60,13 +60,13 @@ export const GetDashboard = ({
 						},
 						query: {
 							queryType: EQueryType.QUERY_BUILDER,
-							promQL: [
+							promql: [
 								{
 									name: GetQueryName([]) as string,
 									...PromQLQueryTemplate,
 								},
 							],
-							clickHouse: [
+							clickhouse_sql: [
 								{
 									name: GetQueryName([]) as string,
 									...ClickHouseQueryTemplate,

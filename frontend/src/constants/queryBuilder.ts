@@ -86,7 +86,7 @@ export const initialAggregateAttribute: IBuilderQuery['aggregateAttribute'] = {
 export const initialQueryBuilderFormValues: IBuilderQuery = {
 	dataSource: DataSource.METRICS,
 	queryName: createNewBuilderItemName({ existNames: [], sourceNames: alphabet }),
-	aggregateOperator: Object.values(MetricAggregateOperator)[0],
+	aggregateOperator: MetricAggregateOperator.NOOP,
 	aggregateAttribute: initialAggregateAttribute,
 	tagFilters: { items: [], op: 'AND' },
 	expression: createNewBuilderItemName({
