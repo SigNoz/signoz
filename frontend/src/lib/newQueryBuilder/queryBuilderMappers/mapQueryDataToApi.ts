@@ -35,6 +35,8 @@ export const mapQueryDataToApi = (
 				},
 			};
 
+			newLegendMap[formula.queryName] = formula.legend;
+
 			return newResult;
 		},
 		{},

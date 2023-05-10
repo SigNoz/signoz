@@ -128,6 +128,7 @@ export async function GetMetricQueryRange({
 		response.payload.data.result = response.payload.data.result.map(
 			(queryData) => {
 				const newQueryData = queryData;
+				console.log({ legendMap });
 				newQueryData.legend = legendMap[queryData.queryName]; // Adds the legend if it is already defined by the user.
 				// If metric names is an empty object
 				if (isEmpty(queryData.metric)) {

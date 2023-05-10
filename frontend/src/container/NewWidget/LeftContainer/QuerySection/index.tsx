@@ -137,7 +137,7 @@ function QuerySection({
 
 	const items = [
 		{
-			key: EQueryType.QUERY_BUILDER.toString(),
+			key: EQueryType.QUERY_BUILDER,
 			label: 'Query Builder',
 			tab: (
 				<TabHeader
@@ -152,7 +152,7 @@ function QuerySection({
 			children: <QueryBuilder panelType={selectedGraph} />,
 		},
 		{
-			key: EQueryType.CLICKHOUSE.toString(),
+			key: EQueryType.CLICKHOUSE,
 			label: 'ClickHouse Query',
 			tab: (
 				<TabHeader
@@ -176,7 +176,7 @@ function QuerySection({
 			),
 		},
 		{
-			key: EQueryType.PROM.toString(),
+			key: EQueryType.PROM,
 			label: 'PromQL',
 			tab: (
 				<TabHeader
@@ -203,8 +203,8 @@ function QuerySection({
 				<Tabs
 					type="card"
 					style={{ width: '100%' }}
-					defaultActiveKey={queryCategory.toString()}
-					activeKey={queryCategory.toString()}
+					defaultActiveKey={queryCategory}
+					activeKey={queryCategory}
 					onChange={handleQueryCategoryChange}
 					tabBarExtraContent={
 						<span style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
