@@ -1,15 +1,31 @@
 import { TYPE_ADDON_REGEXP } from 'constants/regExp';
-import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
+import {
+	AutocompleteType,
+	BaseAutocompleteData,
+} from 'types/api/queryBuilder/queryAutocompleteResponse';
+
+const isTypeExist = (str: string): boolean => {
+	const types: AutocompleteType[] = ['tag', 'resource'];
+	let isExist = false;
+	types.forEach((type) => {
+		if (str.includes(type)) {
+			isExist = true;
+		}
+	});
+
+	return isExist;
+};
 
 export const getFilterObjectValue = (
 	value: string,
-): Omit<BaseAutocompleteData, 'dataType'> => {
-	const splittedValue = value.split(TYPE_ADDON_REGEXP);
-	const currentValue = splittedValue[1] || splittedValue[0];
-	const isColumn = !splittedValue[1];
-	const type: BaseAutocompleteData['type'] = splittedValue[1]
-		? (splittedValue[0] as BaseAutocompleteData['type'])
-		: null;
+): Omit<BaseAutocompleteData, 'dataType' | 'type'> => {
+	const isExist = isTypeExist(value);
 
-	return { type, isColumn, key: currentValue };
+	if (!isExist) {
+		return { isColumn: true, key: value };
+	}
+
+	const splittedValue = value.split(TYPE_ADDON_REGEXP);
+
+	return { isColumn: false, key: splittedValue[1] };
 };

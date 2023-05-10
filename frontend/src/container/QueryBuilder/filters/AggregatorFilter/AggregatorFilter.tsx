@@ -37,8 +37,10 @@ export const AggregatorFilter = memo(function AggregatorFilter({
 		{ enabled: !!query.aggregateOperator && !!query.dataSource },
 	);
 
-	const handleSearchAttribute = (searchText: string): void =>
-		setSearchText(searchText);
+	const handleSearchAttribute = (searchText: string): void => {
+		const { key } = getFilterObjectValue(searchText);
+		setSearchText(key);
+	};
 
 	const optionsData: ExtendedSelectOption[] =
 		data?.payload?.attributeKeys?.map((item) => ({
