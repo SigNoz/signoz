@@ -28,6 +28,7 @@ func TestBuildQueryWithMultipleQueriesAndFormula(t *testing.T) {
 						Expression:        "A",
 					},
 					"B": {
+						QueryName:          "B",
 						AggregateAttribute: v3.AttributeKey{Key: "name2"},
 						DataSource:         v3.DataSourceMetrics,
 						AggregateOperator:  v3.AggregateOperatorRateAvg,
@@ -112,6 +113,7 @@ func TestBuildQueryWithThreeOrMoreQueriesRefAndFormula(t *testing.T) {
 						Disabled:          true,
 					},
 					"B": {
+						QueryName:          "B",
 						AggregateAttribute: v3.AttributeKey{Key: "name2"},
 						DataSource:         v3.DataSourceMetrics,
 
@@ -120,6 +122,7 @@ func TestBuildQueryWithThreeOrMoreQueriesRefAndFormula(t *testing.T) {
 						Disabled:          true,
 					},
 					"C": {
+						QueryName:          "C",
 						AggregateAttribute: v3.AttributeKey{Key: "name3"},
 						DataSource:         v3.DataSourceMetrics,
 

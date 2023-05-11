@@ -183,6 +183,7 @@ func (qb *QueryBuilder) PrepareQueries(params *v3.QueryRangeParamsV3, args ...in
 			}
 		}
 	}
+
 	// filter out disabled queries
 	for queryName := range queries {
 		if compositeQuery.BuilderQueries[queryName].Disabled {
