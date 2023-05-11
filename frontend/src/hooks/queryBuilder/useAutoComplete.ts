@@ -3,7 +3,7 @@ import {
 	getTagToken,
 	isExistsNotExistsOperator,
 	replaceStringWithMaxLength,
-	TAG_FSM,
+	tagRegexp,
 } from 'container/QueryBuilder/filters/QueryBuilderSearch/utils';
 import { Option } from 'container/QueryBuilder/type';
 import * as Papa from 'papaparse';
@@ -66,7 +66,7 @@ export const useAutoComplete = (query: IBuilderQuery): IAutoComplete => {
 		(value: string): void => {
 			if (isMulti) {
 				setSearchValue((prev: string) => {
-					const matches = prev?.matchAll(TAG_FSM);
+					const matches = prev?.matchAll(tagRegexp);
 					const [match] = matches ? Array.from(matches) : [];
 					const [, , , matchTagValue] = match;
 					const data = Papa.parse(matchTagValue).data.flat();

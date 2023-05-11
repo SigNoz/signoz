@@ -2,8 +2,7 @@ import { OPERATORS } from 'constants/queryBuilder';
 // eslint-disable-next-line import/no-extraneous-dependencies
 import * as Papa from 'papaparse';
 
-export const TAG_FSM = /(\w+(?:\.\w+)*)\s*(!=|=|<|<=|>|>=|IN|NOT_IN|LIKE|NOT_LIKE|EXISTS|NOT_EXISTS|CONTAINS|NOT_CONTAINS)\s*([\s\S]*)/g;
-
+export const tagRegexp = /([a-zA-Z0-9_.:@$()\-/\\]+)\s*(!=|=|<=|<|>=|>|IN|NOT_IN|LIKE|NOT_LIKE|EXISTS|NOT_EXISTS|CONTAINS|NOT_CONTAINS)\s*([\s\S]*)/g;
 export function isInNInOperator(value: string): boolean {
 	return value === OPERATORS.IN || value === OPERATORS.NIN;
 }
@@ -15,7 +14,7 @@ interface ITagToken {
 }
 
 export function getTagToken(tag: string): ITagToken {
-	const matches = tag?.matchAll(TAG_FSM);
+	const matches = tag?.matchAll(tagRegexp);
 	const [match] = matches ? Array.from(matches) : [];
 
 	if (match) {
