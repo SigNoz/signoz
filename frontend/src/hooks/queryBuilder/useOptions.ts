@@ -81,8 +81,8 @@ export const useOptions = (
 			} else if (isValidOperator) {
 				const hasAllResults = results.every((value) => result.includes(value));
 				const values = getKeyOpValue(results);
-				const options = !hasAllResults
-					? values
+				const options = hasAllResults
+					? [{ label: searchValue, value: searchValue }]
 					: [{ label: searchValue, value: searchValue }, ...values];
 				setOptions(options);
 			}
