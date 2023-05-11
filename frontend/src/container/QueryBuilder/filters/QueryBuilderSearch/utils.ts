@@ -3,6 +3,7 @@ import { OPERATORS } from 'constants/queryBuilder';
 import * as Papa from 'papaparse';
 
 export const tagRegexp = /([a-zA-Z0-9_.:@$()\-/\\]+)\s*(!=|=|<=|<|>=|>|IN|NOT_IN|LIKE|NOT_LIKE|EXISTS|NOT_EXISTS|CONTAINS|NOT_CONTAINS)\s*([\s\S]*)/g;
+
 export function isInNInOperator(value: string): boolean {
 	return value === OPERATORS.IN || value === OPERATORS.NIN;
 }

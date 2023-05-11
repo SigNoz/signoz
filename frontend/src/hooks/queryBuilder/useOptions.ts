@@ -56,7 +56,7 @@ export const useOptions = (
 			setOptions(
 				searchValue
 					? [
-							{ label: `${searchValue}`, value: `${searchValue}` },
+							{ label: `${searchValue} `, value: `${searchValue} ` },
 							...getOptionsFromKeys(keys),
 					  ]
 					: getOptionsFromKeys(keys),
