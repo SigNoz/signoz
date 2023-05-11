@@ -394,7 +394,10 @@ func PrepareMetricQuery(start, end int64, queryType v3.QueryType, panelType v3.P
 	if err != nil {
 		return "", err
 	}
-	query += having(mq.Having)
+	if having(mq.Having) != "" {
+		query = fmt.Sprintf("SELECT * FROM (%s) HAVING %s", query, having(mq.Having))
+	}
+
 	if panelType == v3.PanelTypeValue {
 		query, err = reduceQuery(query, mq.ReduceTo, mq.AggregateOperator)
 	}
