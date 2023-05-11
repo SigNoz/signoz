@@ -3,7 +3,7 @@ import styled from 'styled-components';
 export const StyledLabel = styled.div`
 	padding: 0 0.6875rem;
 	min-height: 2rem;
-	width: 100%;
+	min-width: 5.625rem;
 	display: inline-flex;
 	white-space: nowrap;
 	align-items: center;
