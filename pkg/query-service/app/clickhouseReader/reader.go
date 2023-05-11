@@ -551,7 +551,9 @@ func getChannelType(receiver *am.Receiver) string {
 	if receiver.WechatConfigs != nil {
 		return "wechat"
 	}
-
+	if receiver.MSTeamsConfigs != nil {
+		return "msteams"
+	}
 	return ""
 }
 
@@ -574,6 +576,13 @@ func (r *ClickHouseReader) EditChannel(receiver *am.Receiver, id string) (*am.Re
 	}
 
 	channel_type := getChannelType(receiver)
+
+	// check if channel type is supported in the current user plan
+	if err := r.featureFlags.CheckFeature(fmt.Sprintf("ALERT_CHANNEL_%s", strings.ToUpper(channel_type))); err != nil {
+		zap.S().Warn("an unsupported feature was blocked", err)
+		return nil, &model.ApiError{Typ: model.ErrorBadData, Err: fmt.Errorf("unsupported feature. please upgrade your plan to access this feature")}
+	}
+
 	receiverString, _ := json.Marshal(receiver)
 
 	{
@@ -617,6 +626,13 @@ func (r *ClickHouseReader) CreateChannel(receiver *am.Receiver) (*am.Receiver, *
 	}
 
 	channel_type := getChannelType(receiver)
+
+	// check if channel type is supported in the current user plan
+	if err := r.featureFlags.CheckFeature(fmt.Sprintf("ALERT_CHANNEL_%s", strings.ToUpper(channel_type))); err != nil {
+		zap.S().Warn("an unsupported feature was blocked", err)
+		return nil, &model.ApiError{Typ: model.ErrorBadData, Err: fmt.Errorf("unsupported feature. please upgrade your plan to access this feature")}
+	}
+
 	receiverString, _ := json.Marshal(receiver)
 
 	// todo: check if the channel name already exists, raise an error if so

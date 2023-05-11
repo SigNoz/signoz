@@ -11,9 +11,13 @@ const Enterprise = "ENTERPRISE_PLAN"
 const DisableUpsell = "DISABLE_UPSELL"
 
 var BasicPlan = basemodel.FeatureSet{
-	Basic:         true,
-	SSO:           false,
-	DisableUpsell: false,
+	Basic:                           true,
+	SSO:                             false,
+	DisableUpsell:                   false,
+	basemodel.AlertChannelSlack:     true,
+	basemodel.AlertChannelWebhook:   true,
+	basemodel.AlertChannelPagerduty: true,
+	basemodel.AlertChannelMsTeams:   false,
 }
 
 var ProPlan = basemodel.FeatureSet{
@@ -21,6 +25,10 @@ var ProPlan = basemodel.FeatureSet{
 	SSO:                             true,
 	basemodel.SmartTraceDetail:      true,
 	basemodel.CustomMetricsFunction: true,
+	basemodel.AlertChannelSlack:     true,
+	basemodel.AlertChannelWebhook:   true,
+	basemodel.AlertChannelPagerduty: true,
+	basemodel.AlertChannelMsTeams:   true,
 }
 
 var EnterprisePlan = basemodel.FeatureSet{
@@ -28,4 +36,8 @@ var EnterprisePlan = basemodel.FeatureSet{
 	SSO:                             true,
 	basemodel.SmartTraceDetail:      true,
 	basemodel.CustomMetricsFunction: true,
+	basemodel.AlertChannelSlack:     true,
+	basemodel.AlertChannelWebhook:   true,
+	basemodel.AlertChannelPagerduty: true,
+	basemodel.AlertChannelMsTeams:   true,
 }
