@@ -38,6 +38,8 @@ const themeColors = {
 	whiteCream: '#ffffffd5',
 	black: '#000000',
 	lightgrey: '#ddd',
+	borderLightGrey: '#d9d9d9',
+	borderDarkGrey: '#424242',
 };
 
 export { themeColors };

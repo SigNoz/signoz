@@ -10,7 +10,7 @@ const useFeatureFlag = (flagKey: keyof typeof FeatureKeys): boolean => {
 
 	const feature = featureFlags?.find((flag) => flag.name === flagKey);
 
-	return !feature?.active || false;
+	return feature?.active || true;
 };
 
 export default useFeatureFlag;
