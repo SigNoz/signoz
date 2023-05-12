@@ -4,17 +4,24 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"flag"
 	"fmt"
 	"io/ioutil"
+	"log"
 	"net"
 	"net/http"
 	_ "net/http/pprof" // http profiler
 	"os"
+	"os/signal"
 	"time"
 
 	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
 	"github.com/jmoiron/sqlx"
+	"go.opentelemetry.io/otel/sdk/instrumentation"
+	"go.opentelemetry.io/otel/sdk/resource"
+	semconv "go.opentelemetry.io/otel/semconv/v1.4.0"
+	"google.golang.org/grpc"
 
 	"github.com/rs/cors"
 	"github.com/soheilhy/cmux"
@@ -42,6 +49,10 @@ import (
 	"go.signoz.io/signoz/pkg/query-service/telemetry"
 	"go.signoz.io/signoz/pkg/query-service/utils"
 	"go.uber.org/zap"
+	"go.uber.org/zap/zapcore"
+
+	zapotlpencoder "github.com/SigNoz/zap_otlp/zap_otlp_encoder"
+	zapotlpsync "github.com/SigNoz/zap_otlp/zap_otlp_sync"
 )
 
 const AppDbEngine = "sqlite"
@@ -176,7 +187,39 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 		unavailableChannel: make(chan healthcheck.Status),
 	}
 
-	httpServer, err := s.createPublicServer(apiHandler)
+	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt)
+	defer stop()
+
+	conn, err := grpc.DialContext(ctx, *targetPtr, grpc.WithBlock(), grpc.WithInsecure())
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	config := zap.NewProductionEncoderConfig()
+	config.EncodeDuration = zapcore.StringDurationEncoder
+	otlpEncoder := zapotlpencoder.NewOTLPEncoder(config)
+	consoleEncoder := zapcore.NewConsoleEncoder(config)
+	defaultLogLevel := zapcore.DebugLevel
+
+	res := resource.NewWithAttributes(
+		semconv.SchemaURL,
+		semconv.ServiceNameKey.String("query-service"),
+	)
+
+	scope := instrumentation.Scope{Name: lib, Version: libVer}
+	ws := zapcore.AddSync(zapotlpsync.NewOtlpSyncer(conn, zapotlpsync.Options{
+		BatchSize:      2,
+		ResourceSchema: semconv.SchemaURL,
+		Scope:          &scope,
+		Resource:       res,
+	}))
+	core := zapcore.NewTee(
+		zapcore.NewCore(consoleEncoder, os.Stdout, defaultLogLevel),
+		zapcore.NewCore(otlpEncoder, zapcore.NewMultiWriteSyncer(ws), defaultLogLevel),
+	)
+	logger := zap.New(core, zap.AddCaller(), zap.AddStacktrace(zapcore.ErrorLevel))
+
+	httpServer, err := s.createPublicServer(apiHandler, logger)
 
 	if err != nil {
 		return nil, err
@@ -184,7 +227,7 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 
 	s.httpServer = httpServer
 
-	privateServer, err := s.createPrivateServer(apiHandler)
+	privateServer, err := s.createPrivateServer(apiHandler, logger)
 	if err != nil {
 		return nil, err
 	}
@@ -194,13 +237,20 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 	return s, nil
 }
 
-func (s *Server) createPrivateServer(apiHandler *api.APIHandler) (*http.Server, error) {
+var (
+	lib    = "github.com/SigNoz/query-service"
+	libVer = "v0.1.0"
+)
+
+var targetPtr = flag.String("target", "127.0.0.1:4317", "OTLP target")
+
+func (s *Server) createPrivateServer(apiHandler *api.APIHandler, logger *zap.Logger) (*http.Server, error) {
 
 	r := mux.NewRouter()
 
 	r.Use(setTimeoutMiddleware)
 	r.Use(s.analyticsMiddleware)
-	r.Use(loggingMiddlewarePrivate)
+	r.Use(loggingMiddlewarePrivateV2(logger))
 
 	apiHandler.RegisterPrivateRoutes(r)
 
@@ -220,7 +270,7 @@ func (s *Server) createPrivateServer(apiHandler *api.APIHandler) (*http.Server, 
 	}, nil
 }
 
-func (s *Server) createPublicServer(apiHandler *api.APIHandler) (*http.Server, error) {
+func (s *Server) createPublicServer(apiHandler *api.APIHandler, logger *zap.Logger) (*http.Server, error) {
 
 	r := mux.NewRouter()
 
@@ -245,7 +295,7 @@ func (s *Server) createPublicServer(apiHandler *api.APIHandler) (*http.Server, e
 	am := baseapp.NewAuthMiddleware(getUserFromRequest)
 	r.Use(setTimeoutMiddleware)
 	r.Use(s.analyticsMiddleware)
-	r.Use(loggingMiddleware)
+	r.Use(loggingMiddlewareV2(logger))
 
 	apiHandler.RegisterRoutes(r, am)
 	apiHandler.RegisterMetricsRoutes(r, am)
@@ -274,8 +324,21 @@ func loggingMiddleware(next http.Handler) http.Handler {
 		path, _ := route.GetPathTemplate()
 		startTime := time.Now()
 		next.ServeHTTP(w, r)
+		// make change here
 		zap.S().Info(path, "\ttimeTaken: ", time.Now().Sub(startTime))
 	})
+}
+func loggingMiddlewareV2(logger *zap.Logger) func(http.Handler) http.Handler {
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			route := mux.CurrentRoute(r)
+			path, _ := route.GetPathTemplate()
+			startTime := time.Now()
+			next.ServeHTTP(w, r)
+			logger.Info(path+"\ttimeTaken:"+time.Now().Sub(startTime).String(), zap.Duration("timeTaken", time.Now().Sub(startTime)), zap.String("path", path))
+			zap.S().Info(path, "\ttimeTaken: ", time.Now().Sub(startTime))
+		})
+	}
 }
 
 // loggingMiddlewarePrivate is used for logging private api calls
@@ -286,8 +349,22 @@ func loggingMiddlewarePrivate(next http.Handler) http.Handler {
 		path, _ := route.GetPathTemplate()
 		startTime := time.Now()
 		next.ServeHTTP(w, r)
+		// make change here
 		zap.S().Info(path, "\tprivatePort: true", "\ttimeTaken: ", time.Now().Sub(startTime))
 	})
+}
+
+func loggingMiddlewarePrivateV2(logger *zap.Logger) func(http.Handler) http.Handler {
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			route := mux.CurrentRoute(r)
+			path, _ := route.GetPathTemplate()
+			startTime := time.Now()
+			next.ServeHTTP(w, r)
+			logger.Info(path+"\tprivatePort: true \ttimeTaken"+time.Now().Sub(startTime).String(), zap.Duration("timeTaken", time.Now().Sub(startTime)), zap.String("path", path), zap.Bool("tprivatePort", true))
+			zap.S().Info(path, "\tprivatePort: true", "\ttimeTaken: ", time.Now().Sub(startTime))
+		})
+	}
 }
 
 type loggingResponseWriter struct {
