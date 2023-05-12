@@ -3,10 +3,7 @@ import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteRe
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource } from 'types/common/queryBuilder';
 
-type UseQueryOperationsParams = Pick<
-	QueryProps,
-	'index' | 'panelType' | 'query'
->;
+type UseQueryOperationsParams = Pick<QueryProps, 'index' | 'query'>;
 
 export type HandleChangeQueryData = <
 	Key extends keyof IBuilderQuery,

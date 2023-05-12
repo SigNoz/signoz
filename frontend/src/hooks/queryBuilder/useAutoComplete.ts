@@ -1,8 +1,14 @@
-import { isExistsNotExistsOperator } from 'container/QueryBuilder/filters/QueryBuilderSearch/utils';
+import {
+	getRemovePrefixFromKey,
+	getTagToken,
+	isExistsNotExistsOperator,
+	replaceStringWithMaxLength,
+	tagRegexp,
+} from 'container/QueryBuilder/filters/QueryBuilderSearch/utils';
 import { Option } from 'container/QueryBuilder/type';
+import * as Papa from 'papaparse';
 import { useCallback, useState } from 'react';
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
-import { checkStringEndsWithSpace } from 'utils/checkStringEndsWithSpace';
 
 import { useFetchKeysAndValues } from './useFetchKeysAndValues';
 import { useOptions } from './useOptions';
@@ -21,52 +27,56 @@ interface IAutoComplete {
 	searchValue: string;
 	isMulti: boolean;
 	isFetching: boolean;
+	setSearchKey: (value: string) => void;
+	searchKey: string;
 }
 
 export const useAutoComplete = (query: IBuilderQuery): IAutoComplete => {
 	const [searchValue, setSearchValue] = useState<string>('');
-
-	const handleSearch = (value: string): void => setSearchValue(value);
+	const [searchKey, setSearchKey] = useState<string>('');
 
 	const { keys, results, isFetching } = useFetchKeysAndValues(
 		searchValue,
 		query,
+		searchKey,
 	);
 
 	const [key, operator, result] = useSetCurrentKeyAndOperator(searchValue, keys);
 
-	const {
-		isValidTag,
-		isExist,
-		isValidOperator,
-		isMulti,
-		isFreeText,
-	} = useTagValidation(searchValue, operator, result);
+	const handleSearch = (value: string): void => {
+		const prefixFreeValue = getRemovePrefixFromKey(getTagToken(value).tagKey);
+		setSearchValue(value);
+		setSearchKey(prefixFreeValue);
+	};
+
+	const { isValidTag, isExist, isValidOperator, isMulti } = useTagValidation(
+		operator,
+		result,
+	);
 
 	const { handleAddTag, handleClearTag, tags, updateTag } = useTag(
 		key,
 		isValidTag,
-		isFreeText,
 		handleSearch,
 		query,
+		setSearchKey,
 	);
 
 	const handleSelect = useCallback(
 		(value: string): void => {
 			if (isMulti) {
 				setSearchValue((prev: string) => {
-					if (prev.includes(value)) {
-						return prev.replace(` ${value}`, '');
-					}
-					return checkStringEndsWithSpace(prev)
-						? `${prev} ${value}`
-						: `${prev} ${value},`;
+					const matches = prev?.matchAll(tagRegexp);
+					const [match] = matches ? Array.from(matches) : [];
+					const [, , , matchTagValue] = match;
+					const data = Papa.parse(matchTagValue).data.flat();
+					return replaceStringWithMaxLength(prev, data as string[], value);
 				});
 			}
 			if (!isMulti && isValidTag && !isExistsNotExistsOperator(value)) {
 				handleAddTag(value);
 			}
-			if (!isMulti && isExistsNotExistsOperator(value)) {
+			if (!isMulti && isValidTag && isExistsNotExistsOperator(value)) {
 				handleAddTag(value);
 			}
 		},
@@ -83,7 +93,7 @@ export const useAutoComplete = (query: IBuilderQuery): IAutoComplete => {
 			}
 
 			if (event.key === 'Enter' && searchValue && isValidTag) {
-				if (isMulti || isFreeText) {
+				if (isMulti) {
 					event.stopPropagation();
 				}
 				event.preventDefault();
@@ -96,15 +106,7 @@ export const useAutoComplete = (query: IBuilderQuery): IAutoComplete => {
 				handleClearTag(last);
 			}
 		},
-		[
-			handleAddTag,
-			handleClearTag,
-			isFreeText,
-			isMulti,
-			isValidTag,
-			searchValue,
-			tags,
-		],
+		[handleAddTag, handleClearTag, isMulti, isValidTag, searchValue, tags],
 	);
 
 	const options = useOptions(
@@ -130,5 +132,7 @@ export const useAutoComplete = (query: IBuilderQuery): IAutoComplete => {
 		searchValue,
 		isMulti,
 		isFetching,
+		setSearchKey,
+		searchKey,
 	};
 };

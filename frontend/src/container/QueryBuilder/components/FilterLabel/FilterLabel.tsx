@@ -1,3 +1,4 @@
+import { useIsDarkMode } from 'hooks/useDarkMode';
 import React, { memo } from 'react';
 
 // ** Types
@@ -8,5 +9,7 @@ import { StyledLabel } from './FilterLabel.styled';
 export const FilterLabel = memo(function FilterLabel({
 	label,
 }: FilterLabelProps): JSX.Element {
-	return <StyledLabel>{label}</StyledLabel>;
+	const isDarkMode = useIsDarkMode();
+
+	return <StyledLabel isDarkMode={isDarkMode}>{label}</StyledLabel>;
 });

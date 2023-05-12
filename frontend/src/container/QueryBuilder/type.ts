@@ -12,5 +12,6 @@ export interface ContextValueI {
 
 export type Option = {
 	value: string;
+	label: string;
 	selected?: boolean;
 };
