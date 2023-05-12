@@ -1,15 +1,23 @@
 import { Select, Spin, Tag, Tooltip } from 'antd';
 import { useAutoComplete } from 'hooks/queryBuilder/useAutoComplete';
+import { useFetchKeysAndValues } from 'hooks/queryBuilder/useFetchKeysAndValues';
 import React, { useEffect, useMemo } from 'react';
 import {
 	IBuilderQuery,
 	TagFilter,
 } from 'types/api/queryBuilder/queryBuilderData';
+import { DataSource } from 'types/common/queryBuilder';
 import { v4 as uuid } from 'uuid';
 
 import { selectStyle } from './config';
 import { StyledCheckOutlined, TypographyText } from './style';
-import { isInNotInOperator } from './utils';
+import {
+	getOperatorValue,
+	getRemovePrefixFromKey,
+	getTagToken,
+	isExistsNotExistsOperator,
+	isInNInOperator,
+} from './utils';
 
 function QueryBuilderSearch({
 	query,
@@ -26,18 +34,27 @@ function QueryBuilderSearch({
 		searchValue,
 		isMulti,
 		isFetching,
+		setSearchKey,
+		searchKey,
 	} = useAutoComplete(query);
+
+	const { keys } = useFetchKeysAndValues(searchValue, query, searchKey);
 
 	const onTagRender = ({
 		value,
 		closable,
 		onClose,
 	}: CustomTagProps): React.ReactElement => {
-		const isInNin = isInNotInOperator(value);
+		const { tagOperator } = getTagToken(value);
+		const isInNin = isInNInOperator(tagOperator);
+		const chipValue = isInNin
+			? value?.trim()?.replace(/,\s*$/, '')
+			: value?.trim();
 
 		const onCloseHandler = (): void => {
 			onClose();
 			handleSearch('');
+			setSearchKey('');
 		};
 
 		const tagEditHandler = (value: string): void => {
@@ -46,14 +63,16 @@ function QueryBuilderSearch({
 		};
 
 		return (
-			<Tag closable={closable} onClose={onCloseHandler}>
-				<Tooltip title={value}>
+			<Tag closable={!searchValue && closable} onClose={onCloseHandler}>
+				<Tooltip title={chipValue}>
 					<TypographyText
 						ellipsis
 						$isInNin={isInNin}
+						disabled={!!searchValue}
+						$isEnabled={!!searchValue}
 						onClick={(): void => tagEditHandler(value)}
 					>
-						{value}
+						{chipValue}
 					</TypographyText>
 				</Tooltip>
 			</Tag>
@@ -66,43 +85,57 @@ function QueryBuilderSearch({
 
 	const onInputKeyDownHandler = (event: React.KeyboardEvent<Element>): void => {
 		if (isMulti || event.key === 'Backspace') handleKeyDown(event);
+		if (isExistsNotExistsOperator(searchValue)) handleKeyDown(event);
 	};
 
+	const isMatricsDataSource = useMemo(
+		() => query.dataSource === DataSource.METRICS,
+		[query.dataSource],
+	);
+
 	const queryTags = useMemo(() => {
-		if (!query.aggregateAttribute.key) return [];
+		if (!query.aggregateAttribute.key && isMatricsDataSource) return [];
 		return tags;
-	}, [query.aggregateAttribute.key, tags]);
+	}, [isMatricsDataSource, query.aggregateAttribute.key, tags]);
 
 	useEffect(() => {
 		const initialTagFilters: TagFilter = { items: [], op: 'AND' };
-		// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-		// @ts-ignore
 		initialTagFilters.items = tags.map((tag) => {
-			const [tagKey, tagOperator, ...tagValue] = tag.split(' ');
+			const { tagKey, tagOperator, tagValue } = getTagToken(tag);
+			const filterAttribute = (keys || []).find(
+				(key) => key.key === getRemovePrefixFromKey(tagKey),
+			);
 			return {
 				id: uuid().slice(0, 8),
-				// TODO: key should be fixed by Chintan Sudani
-				key: tagKey,
-				op: tagOperator,
-				value: tagValue.map((i) => i.replace(',', '')),
+				key: filterAttribute ?? {
+					key: tagKey,
+					dataType: null,
+					type: null,
+					isColumn: null,
+				},
+				op: getOperatorValue(tagOperator),
+				value:
+					tagValue[tagValue.length - 1] === ''
+						? tagValue?.slice(0, -1)
+						: tagValue ?? '',
 			};
 		});
 		onChange(initialTagFilters);
 		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [tags]);
+	}, [keys, tags]);
 
 	return (
 		<Select
 			virtual
 			showSearch
 			tagRender={onTagRender}
-			filterOption={!isMulti}
+			filterOption={false}
 			autoClearSearchValue={false}
 			mode="multiple"
 			placeholder="Search Filter"
 			value={queryTags}
 			searchValue={searchValue}
-			disabled={!query.aggregateAttribute.key}
+			disabled={isMatricsDataSource && !query.aggregateAttribute.key}
 			style={selectStyle}
 			onSearch={handleSearch}
 			onChange={onChangeHandler}
@@ -111,9 +144,9 @@ function QueryBuilderSearch({
 			onInputKeyDown={onInputKeyDownHandler}
 			notFoundContent={isFetching ? <Spin size="small" /> : null}
 		>
-			{options?.map((option) => (
-				<Select.Option key={option.value} value={option.value}>
-					{option.value}
+			{options.map((option) => (
+				<Select.Option key={option.label} value={option.label}>
+					{option.label}
 					{option.selected && <StyledCheckOutlined />}
 				</Select.Option>
 			))}
