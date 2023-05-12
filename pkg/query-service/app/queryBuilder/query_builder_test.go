@@ -178,6 +178,12 @@ func TestBuildQueryWithThreeOrMoreQueriesRefAndFormula(t *testing.T) {
 		require.Contains(t, queries["F5"], "SELECT A.ts as ts, ((A.value - B.value) / B.value) * 100")
 		require.Equal(t, 1, strings.Count(queries["F5"], " ON "))
 
+		for _, query := range q.CompositeQuery.BuilderQueries {
+			if query.Disabled {
+				require.NotContains(t, queries, query.QueryName)
+			}
+		}
+
 		// res := PrepareBuilderMetricQueries(q, "table")
 		// So(res.Err, ShouldBeNil)
 		// queries := res.Queries
