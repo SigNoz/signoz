@@ -1,4 +1,4 @@
-package app
+package queryBuilder
 
 import (
 	"fmt"
@@ -33,31 +33,31 @@ var SupportedFunctions = []string{
 	"radians",
 }
 
-var evalFuncs = map[string]govaluate.ExpressionFunction{}
+var EvalFuncs = map[string]govaluate.ExpressionFunction{}
 
 type prepareTracesQueryFunc func(start, end int64, queryType v3.QueryType, panelType v3.PanelType, bq *v3.BuilderQuery, keys map[string]v3.AttributeKey) (string, error)
 type prepareLogsQueryFunc func(start, end int64, queryType v3.QueryType, panelType v3.PanelType, bq *v3.BuilderQuery, fields map[string]v3.AttributeKey) (string, error)
 type prepareMetricQueryFunc func(start, end int64, queryType v3.QueryType, panelType v3.PanelType, bq *v3.BuilderQuery) (string, error)
 
-type queryBuilder struct {
-	options queryBuilderOptions
+type QueryBuilder struct {
+	options QueryBuilderOptions
 }
 
-type queryBuilderOptions struct {
+type QueryBuilderOptions struct {
 	BuildTraceQuery  prepareTracesQueryFunc
 	BuildLogQuery    prepareLogsQueryFunc
 	BuildMetricQuery prepareMetricQueryFunc
 }
 
-func NewQueryBuilder(options queryBuilderOptions) *queryBuilder {
-	return &queryBuilder{
+func NewQueryBuilder(options QueryBuilderOptions) *QueryBuilder {
+	return &QueryBuilder{
 		options: options,
 	}
 }
 
 func init() {
 	for _, fn := range SupportedFunctions {
-		evalFuncs[fn] = func(args ...interface{}) (interface{}, error) {
+		EvalFuncs[fn] = func(args ...interface{}) (interface{}, error) {
 			return nil, nil
 		}
 	}
@@ -127,7 +127,7 @@ func expressionToQuery(qp *v3.QueryRangeParamsV3, varToQuery map[string]string, 
 	return formulaQuery, nil
 }
 
-func (qb *queryBuilder) prepareQueries(params *v3.QueryRangeParamsV3, args ...interface{}) (map[string]string, error) {
+func (qb *QueryBuilder) PrepareQueries(params *v3.QueryRangeParamsV3, args ...interface{}) (map[string]string, error) {
 	queries := make(map[string]string)
 
 	compositeQuery := params.CompositeQuery
@@ -173,7 +173,7 @@ func (qb *queryBuilder) prepareQueries(params *v3.QueryRangeParamsV3, args ...in
 		// Build queries for each expression
 		for _, query := range compositeQuery.BuilderQueries {
 			if query.Expression != query.QueryName {
-				expression, _ := govaluate.NewEvaluableExpressionWithFunctions(query.Expression, evalFuncs)
+				expression, _ := govaluate.NewEvaluableExpressionWithFunctions(query.Expression, EvalFuncs)
 
 				queryString, err := expressionToQuery(params, queries, expression)
 				if err != nil {

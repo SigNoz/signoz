@@ -1,15 +1,9 @@
-import {
-	IBuilderFormula,
-	IBuilderQuery,
-} from 'types/api/queryBuilder/queryBuilderData';
 import { QueryBuilderData } from 'types/common/queryBuilder';
-
-type MapQueryDataToApiResult = {
-	data: Record<string, IBuilderQuery | IBuilderFormula>;
-	newLegendMap: Record<string, string>;
-};
-type MapQuery = Record<string, IBuilderQuery>;
-type MapFormula = Record<string, IBuilderFormula>;
+import {
+	MapFormula,
+	MapQuery,
+	MapQueryDataToApiResult,
+} from 'types/common/queryBuilderMappers.types';
 
 export const mapQueryDataToApi = (
 	data: QueryBuilderData,
@@ -40,6 +34,8 @@ export const mapQueryDataToApi = (
 					...formula,
 				},
 			};
+
+			newLegendMap[formula.queryName] = formula.legend;
 
 			return newResult;
 		},
