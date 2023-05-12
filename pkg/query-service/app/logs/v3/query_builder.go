@@ -53,7 +53,7 @@ var logOperators = map[v3.FilterOperator]string{
 	// (todo) check contains/not contains/
 }
 
-func encrichFieldWithMetadata(field v3.AttributeKey, fields map[string]v3.AttributeKey) v3.AttributeKey {
+func enrichFieldWithMetadata(field v3.AttributeKey, fields map[string]v3.AttributeKey) v3.AttributeKey {
 	if field.Type == "" || field.DataType == "" {
 		// check if the field is present in the fields map
 		if existingField, ok := fields[field.Key]; ok {
@@ -110,7 +110,7 @@ func getSelectLabels(aggregatorOperator v3.AggregateOperator, groupBy []v3.Attri
 		selectLabels = ""
 	} else {
 		for _, tag := range groupBy {
-			enrichedTag := encrichFieldWithMetadata(tag, fields)
+			enrichedTag := enrichFieldWithMetadata(tag, fields)
 			columnName, err := getClickhouseColumnName(enrichedTag, fields)
 			if err != nil {
 				return "", err
@@ -127,7 +127,7 @@ func buildLogsTimeSeriesFilterQuery(fs *v3.FilterSet, groupBy []v3.AttributeKey,
 	if fs != nil && len(fs.Items) != 0 {
 		for _, item := range fs.Items {
 			op := v3.FilterOperator(strings.ToLower(strings.TrimSpace(string(item.Operator))))
-			key := encrichFieldWithMetadata(item.Key, fields)
+			key := enrichFieldWithMetadata(item.Key, fields)
 			value, err := utils.ValidateAndCastValue(item.Value, key.DataType)
 			if err != nil {
 				return "", fmt.Errorf("failed to validate and cast value for %s: %v", item.Key.Key, err)
@@ -161,7 +161,7 @@ func buildLogsTimeSeriesFilterQuery(fs *v3.FilterSet, groupBy []v3.AttributeKey,
 
 	// add group by conditions to filter out log lines which doesn't have the key
 	for _, attr := range groupBy {
-		enrichedAttr := encrichFieldWithMetadata(attr, fields)
+		enrichedAttr := enrichFieldWithMetadata(attr, fields)
 		if !enrichedAttr.IsColumn {
 			columnType := getClickhouseLogsColumnType(enrichedAttr.Type)
 			columnDataType := getClickhouseLogsColumnDataType(enrichedAttr.DataType)
@@ -224,7 +224,7 @@ func buildLogsQuery(start, end, step int64, mq *v3.BuilderQuery, fields map[stri
 
 	aggregationKey := ""
 	if mq.AggregateAttribute.Key != "" {
-		enrichedAttribute := encrichFieldWithMetadata(mq.AggregateAttribute, fields)
+		enrichedAttribute := enrichFieldWithMetadata(mq.AggregateAttribute, fields)
 		aggregationKey, err = getClickhouseColumnName(enrichedAttribute, fields)
 		if err != nil {
 			return "", err
@@ -263,7 +263,7 @@ func buildLogsQuery(start, end, step int64, mq *v3.BuilderQuery, fields map[stri
 		return query, nil
 	case v3.AggregateOperatorCount:
 		if mq.AggregateAttribute.Key != "" {
-			field := encrichFieldWithMetadata(mq.AggregateAttribute, fields)
+			field := enrichFieldWithMetadata(mq.AggregateAttribute, fields)
 			columnType := getClickhouseLogsColumnType(field.Type)
 			columnDataType := getClickhouseLogsColumnDataType(field.DataType)
 			filterSubQuery = fmt.Sprintf("%s AND has(%s_%s_key, '%s')", filterSubQuery, columnType, columnDataType, mq.AggregateAttribute.Key)
