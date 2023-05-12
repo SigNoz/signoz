@@ -35,7 +35,6 @@ import {
 	LeftContainerWrapper,
 	PanelContainer,
 	RightContainerWrapper,
-	Tag,
 } from './styles';
 
 function NewWidget({
@@ -85,7 +84,6 @@ function NewWidget({
 		selectedWidget?.nullZeroValues || 'zero',
 	);
 	const [saveModal, setSaveModal] = useState(false);
-	const [hasUnstagedChanges, setHasUnstagedChanges] = useState(false);
 
 	const [graphType, setGraphType] = useState(selectedGraph);
 	const getSelectedTime = useCallback(
@@ -181,12 +179,7 @@ function NewWidget({
 
 			<PanelContainer>
 				<LeftContainerWrapper flex={5}>
-					<LeftContainer
-						handleUnstagedChanges={setHasUnstagedChanges}
-						selectedTime={selectedTime}
-						selectedGraph={graphType}
-						yAxisUnit={yAxisUnit}
-					/>
+					<LeftContainer selectedGraph={graphType} yAxisUnit={yAxisUnit} />
 				</LeftContainerWrapper>
 
 				<RightContainerWrapper flex={1}>
@@ -219,26 +212,16 @@ function NewWidget({
 				destroyOnClose
 				closable
 				onCancel={(): void => setSaveModal(false)}
-				onOk={(): void => {
-					onClickSaveHandler();
-				}}
+				onOk={onClickSaveHandler}
 				centered
 				open={saveModal}
 				width={600}
 			>
-				{hasUnstagedChanges ? (
-					<Typography>
-						Looks like you have unstaged changes. Would you like to SAVE the last
-						staged changes? If you want to stage new changes - Press{' '}
-						<Tag>Stage & Run Query</Tag> and then try saving again.
-					</Typography>
-				) : (
-					<Typography>
-						Your graph built with{' '}
-						<QueryTypeTag queryType={selectedWidget?.query.queryType} /> query will be
-						saved. Press OK to confirm.
-					</Typography>
-				)}
+				<Typography>
+					Your graph built with{' '}
+					<QueryTypeTag queryType={selectedWidget?.query.queryType} /> query will be
+					saved. Press OK to confirm.
+				</Typography>
 			</Modal>
 		</Container>
 	);
