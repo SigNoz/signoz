@@ -260,7 +260,7 @@ func buildMetricQuery(start, end, step int64, mq *v3.BuilderQuery, tableName str
 		op := fmt.Sprintf("%s(value)", aggregateOperatorToSQLFunc[mq.AggregateOperator])
 		query := fmt.Sprintf(queryTmpl, groupTags, step, op, filterSubQuery, groupBy, orderBy)
 		return query, nil
-	case v3.AggregateOpeatorCount:
+	case v3.AggregateOperatorCount:
 		op := "toFloat64(count(*))"
 		query := fmt.Sprintf(queryTmpl, groupTags, step, op, filterSubQuery, groupBy, orderBy)
 		return query, nil

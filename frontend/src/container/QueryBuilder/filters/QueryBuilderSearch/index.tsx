@@ -2,7 +2,7 @@ import { Select, Spin, Tag, Tooltip } from 'antd';
 import { useAutoComplete } from 'hooks/queryBuilder/useAutoComplete';
 import React, { useEffect, useMemo } from 'react';
 import {
-	IBuilderQueryForm,
+	IBuilderQuery,
 	TagFilter,
 } from 'types/api/queryBuilder/queryBuilderData';
 import { v4 as uuid } from 'uuid';
@@ -75,10 +75,13 @@ function QueryBuilderSearch({
 
 	useEffect(() => {
 		const initialTagFilters: TagFilter = { items: [], op: 'AND' };
+		// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+		// @ts-ignore
 		initialTagFilters.items = tags.map((tag) => {
 			const [tagKey, tagOperator, ...tagValue] = tag.split(' ');
 			return {
 				id: uuid().slice(0, 8),
+				// TODO: key should be fixed by Chintan Sudani
 				key: tagKey,
 				op: tagOperator,
 				value: tagValue.map((i) => i.replace(',', '')),
@@ -119,7 +122,7 @@ function QueryBuilderSearch({
 }
 
 interface QueryBuilderSearchProps {
-	query: IBuilderQueryForm;
+	query: IBuilderQuery;
 	onChange: (value: TagFilter) => void;
 }
 

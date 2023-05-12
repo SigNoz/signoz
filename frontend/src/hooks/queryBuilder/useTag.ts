@@ -1,5 +1,9 @@
-import { isExistsNotExistsOperator } from 'container/QueryBuilder/filters/QueryBuilderSearch/utils';
-import { useCallback, useState } from 'react';
+import {
+	isExistsNotExistsOperator,
+	isInNotInOperator,
+} from 'container/QueryBuilder/filters/QueryBuilderSearch/utils';
+import { useCallback, useEffect, useState } from 'react';
+import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 
 type IUseTag = {
 	handleAddTag: (value: string) => void;
@@ -21,6 +25,7 @@ export const useTag = (
 	isValidTag: boolean,
 	isFreeText: boolean,
 	handleSearch: (value: string) => void,
+	query: IBuilderQuery,
 ): IUseTag => {
 	const [tags, setTags] = useState<string[]>([]);
 
@@ -53,6 +58,17 @@ export const useTag = (
 	 */
 	const handleClearTag = useCallback((value: string): void => {
 		setTags((prevTags) => prevTags.filter((v) => v !== value));
+	}, []);
+
+	useEffect(() => {
+		setTags(
+			(query?.tagFilters?.items || []).map((obj) =>
+				isInNotInOperator(obj.op)
+					? `${obj.key} ${obj.op} ${obj.value.join(',')}`
+					: `${obj.key} ${obj.op} ${obj.value.join(' ')}`,
+			),
+		);
+		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, []);
 
 	return { handleAddTag, handleClearTag, tags, updateTag };

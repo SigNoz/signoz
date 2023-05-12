@@ -19,6 +19,7 @@ import { useLocation, useParams } from 'react-router-dom';
 import { UpdateTimeInterval } from 'store/actions';
 import { AppState } from 'store/reducers';
 import { Widgets } from 'types/api/dashboard/getAll';
+import { EQueryType } from 'types/common/dashboard';
 import MetricReducer from 'types/reducer/metrics';
 
 import {
@@ -82,14 +83,14 @@ function Application({ getWidgetQueryBuilder }: DashboardProps): JSX.Element {
 	const operationPerSecWidget = useMemo(
 		() =>
 			getWidgetQueryBuilder({
-				queryType: 1,
-				promQL: [],
-				metricsBuilder: operationPerSec({
+				queryType: EQueryType.QUERY_BUILDER,
+				promql: [],
+				builder: operationPerSec({
 					servicename,
 					tagFilterItems,
 					topLevelOperations,
 				}),
-				clickHouse: [],
+				clickhouse_sql: [],
 			}),
 		[getWidgetQueryBuilder, servicename, topLevelOperations, tagFilterItems],
 	);
@@ -97,14 +98,14 @@ function Application({ getWidgetQueryBuilder }: DashboardProps): JSX.Element {
 	const errorPercentageWidget = useMemo(
 		() =>
 			getWidgetQueryBuilder({
-				queryType: 1,
-				promQL: [],
-				metricsBuilder: errorPercentage({
+				queryType: EQueryType.QUERY_BUILDER,
+				promql: [],
+				builder: errorPercentage({
 					servicename,
 					tagFilterItems,
 					topLevelOperations,
 				}),
-				clickHouse: [],
+				clickhouse_sql: [],
 			}),
 		[servicename, topLevelOperations, tagFilterItems, getWidgetQueryBuilder],
 	);

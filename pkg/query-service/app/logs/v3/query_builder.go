@@ -261,7 +261,7 @@ func buildLogsQuery(start, end, step int64, mq *v3.BuilderQuery, fields map[stri
 		op := fmt.Sprintf("%s(%s)", aggregateOperatorToSQLFunc[mq.AggregateOperator], aggregationKey)
 		query := fmt.Sprintf(queryTmpl, step, op, filterSubQuery, groupBy, having, orderBy)
 		return query, nil
-	case v3.AggregateOpeatorCount:
+	case v3.AggregateOperatorCount:
 		if mq.AggregateAttribute.Key != "" {
 			field := encrichFieldWithMetadata(mq.AggregateAttribute, fields)
 			columnType := getClickhouseLogsColumnType(field.Type)

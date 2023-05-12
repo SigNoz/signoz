@@ -13,6 +13,8 @@ function Editor({
 	const isDarkMode = useIsDarkMode();
 
 	const onChangeHandler = (newValue?: string): void => {
+		if (readOnly) return;
+
 		if (typeof newValue === 'string' && onChange) onChange(newValue);
 	};
 
@@ -29,6 +31,7 @@ function Editor({
 			options={editorOptions}
 			height={height}
 			onChange={onChangeHandler}
+			data-testid="monaco-editor"
 		/>
 	);
 }

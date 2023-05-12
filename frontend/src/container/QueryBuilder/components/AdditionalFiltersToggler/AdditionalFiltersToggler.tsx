@@ -23,10 +23,12 @@ export const AdditionalFiltersToggler = memo(function AdditionalFiltersToggler({
 
 	const filtersTexts: ReactNode = listOfAdditionalFilter.map((str, index) => {
 		const isNextLast = index + 1 === listOfAdditionalFilter.length - 1;
+
 		if (index === listOfAdditionalFilter.length - 1) {
 			return (
 				<Fragment key={str}>
-					and <StyledLink>{str.toUpperCase()}</StyledLink>
+					{listOfAdditionalFilter.length > 1 && 'and'}{' '}
+					<StyledLink>{str.toUpperCase()}</StyledLink>
 				</Fragment>
 			);
 		}

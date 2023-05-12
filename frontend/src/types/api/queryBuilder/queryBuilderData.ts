@@ -1,4 +1,4 @@
-import { DataSource } from 'types/common/queryBuilder';
+import { DataSource, ReduceOperators } from 'types/common/queryBuilder';
 
 import { BaseAutocompleteData } from './queryAutocompleteResponse';
 
@@ -6,20 +6,20 @@ import { BaseAutocompleteData } from './queryAutocompleteResponse';
 export interface IBuilderFormula {
 	expression: string;
 	disabled: boolean;
-	label: string;
+	queryName: string;
+	dataSource?: DataSource;
 	legend: string;
 }
 
 export interface TagFilterItem {
 	id: string;
-	key: string;
-	// TODO: type it in the future
+	key?: BaseAutocompleteData;
 	op: string;
 	value: string[];
 }
 
 export interface TagFilter {
-	items: TagFilterItem[] | [];
+	items: TagFilterItem[];
 	// TODO: type it in the future
 	op: string;
 }
@@ -27,6 +27,10 @@ export interface TagFilter {
 export type Having = {
 	columnName: string;
 	op: string;
+	value: number | number[];
+};
+
+export type HavingForm = Omit<Having, 'value'> & {
 	value: string[];
 };
 
@@ -35,7 +39,7 @@ export type IBuilderQuery = {
 	queryName: string;
 	dataSource: DataSource;
 	aggregateOperator: string;
-	aggregateAttribute: string;
+	aggregateAttribute: BaseAutocompleteData;
 	tagFilters: TagFilter;
 	groupBy: BaseAutocompleteData[];
 	expression: string;
@@ -44,10 +48,6 @@ export type IBuilderQuery = {
 	limit: number | null;
 	stepInterval: number;
 	orderBy: BaseAutocompleteData[];
-	reduceTo: string;
-};
-
-export type IBuilderQueryForm = Omit<IBuilderQuery, 'aggregateAttribute'> & {
-	aggregateAttribute: BaseAutocompleteData;
+	reduceTo: ReduceOperators;
 	legend: string;
 };
