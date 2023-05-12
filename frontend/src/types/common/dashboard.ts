@@ -1,7 +1,7 @@
 export enum EQueryType {
-	QUERY_BUILDER = 1,
-	CLICKHOUSE,
-	PROM,
+	QUERY_BUILDER = 'builder',
+	CLICKHOUSE = 'clickhouse_sql',
+	PROM = 'promql',
 }
 
 export enum EAggregateOperator {
