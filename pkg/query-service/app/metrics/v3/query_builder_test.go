@@ -1,6 +1,7 @@
 package v3
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -98,82 +99,138 @@ func TestBuildQueryWithMultipleQueries(t *testing.T) {
 }
 
 func TestBuildQueryOperators(t *testing.T) {
-
-	operators := []v3.FilterOperator{
-		v3.FilterOperatorEqual,
-		v3.FilterOperatorNotEqual,
-		v3.FilterOperatorRegex,
-		v3.FilterOperatorNotRegex,
-		v3.FilterOperatorIn,
-		v3.FilterOperatorNotIn,
-		v3.FilterOperatorExists,
-		v3.FilterOperatorNotExists,
-		v3.FilterOperatorContains,
-		v3.FilterOperatorNotContains,
-		v3.FilterOperatorLike,
-		v3.FilterOperatorNotLike,
+	testCases := []struct {
+		operator            v3.FilterOperator
+		filterSet           v3.FilterSet
+		expectedWhereClause string
+	}{
+		{
+			operator: v3.FilterOperatorEqual,
+			filterSet: v3.FilterSet{
+				Operator: "AND",
+				Items: []v3.FilterItem{
+					{Key: v3.AttributeKey{Key: "service_name"}, Value: "route", Operator: v3.FilterOperatorEqual},
+				},
+			},
+			expectedWhereClause: "JSONExtractString(labels, 'service_name') = 'route'",
+		},
+		{
+			operator: v3.FilterOperatorNotEqual,
+			filterSet: v3.FilterSet{
+				Operator: "AND",
+				Items: []v3.FilterItem{
+					{Key: v3.AttributeKey{Key: "service_name"}, Value: "route", Operator: v3.FilterOperatorNotEqual},
+				},
+			},
+			expectedWhereClause: "JSONExtractString(labels, 'service_name') != 'route'",
+		},
+		{
+			operator: v3.FilterOperatorRegex,
+			filterSet: v3.FilterSet{
+				Operator: "AND",
+				Items: []v3.FilterItem{
+					{Key: v3.AttributeKey{Key: "service_name"}, Value: "out", Operator: v3.FilterOperatorRegex},
+				},
+			},
+			expectedWhereClause: "match(JSONExtractString(labels, 'service_name'), 'out')",
+		},
+		{
+			operator: v3.FilterOperatorNotRegex,
+			filterSet: v3.FilterSet{
+				Operator: "AND",
+				Items: []v3.FilterItem{
+					{Key: v3.AttributeKey{Key: "service_name"}, Value: "out", Operator: v3.FilterOperatorNotRegex},
+				},
+			},
+			expectedWhereClause: "not match(JSONExtractString(labels, 'service_name'), 'out')",
+		},
+		{
+			operator: v3.FilterOperatorIn,
+			filterSet: v3.FilterSet{
+				Operator: "AND",
+				Items: []v3.FilterItem{
+					{Key: v3.AttributeKey{Key: "service_name"}, Value: []interface{}{"route", "driver"}, Operator: v3.FilterOperatorIn},
+				},
+			},
+			expectedWhereClause: "JSONExtractString(labels, 'service_name') IN ['route','driver']",
+		},
+		{
+			operator: v3.FilterOperatorNotIn,
+			filterSet: v3.FilterSet{
+				Operator: "AND",
+				Items: []v3.FilterItem{
+					{Key: v3.AttributeKey{Key: "service_name"}, Value: []interface{}{"route", "driver"}, Operator: v3.FilterOperatorNotIn},
+				},
+			},
+			expectedWhereClause: "JSONExtractString(labels, 'service_name') NOT IN ['route','driver']",
+		},
+		{
+			operator: v3.FilterOperatorExists,
+			filterSet: v3.FilterSet{
+				Operator: "AND",
+				Items: []v3.FilterItem{
+					{Key: v3.AttributeKey{Key: "horn"}, Operator: v3.FilterOperatorExists},
+				},
+			},
+			expectedWhereClause: "has(JSONExtractKeys(labels), 'horn')",
+		},
+		{
+			operator: v3.FilterOperatorNotExists,
+			filterSet: v3.FilterSet{
+				Operator: "AND",
+				Items: []v3.FilterItem{
+					{Key: v3.AttributeKey{Key: "horn"}, Operator: v3.FilterOperatorNotExists},
+				},
+			},
+			expectedWhereClause: "not has(JSONExtractKeys(labels), 'horn')",
+		},
+		{
+			operator: v3.FilterOperatorContains,
+			filterSet: v3.FilterSet{
+				Operator: "AND",
+				Items: []v3.FilterItem{
+					{Key: v3.AttributeKey{Key: "service_name"}, Value: "out", Operator: v3.FilterOperatorContains},
+				},
+			},
+			expectedWhereClause: "like(JSONExtractString(labels, 'service_name'), '%out%')",
+		},
+		{
+			operator: v3.FilterOperatorNotContains,
+			filterSet: v3.FilterSet{
+				Operator: "AND",
+				Items: []v3.FilterItem{
+					{Key: v3.AttributeKey{Key: "serice_name"}, Value: "out", Operator: v3.FilterOperatorNotContains},
+				},
+			},
+			expectedWhereClause: "notLike(JSONExtractString(labels, 'serice_name'), '%out%')",
+		},
+		{
+			operator: v3.FilterOperatorLike,
+			filterSet: v3.FilterSet{
+				Operator: "AND",
+				Items: []v3.FilterItem{
+					{Key: v3.AttributeKey{Key: "service_name"}, Value: "dri", Operator: v3.FilterOperatorLike},
+				},
+			},
+			expectedWhereClause: "like(JSONExtractString(labels, 'service_name'), 'dri')",
+		},
+		{
+			operator: v3.FilterOperatorNotLike,
+			filterSet: v3.FilterSet{
+				Operator: "AND",
+				Items: []v3.FilterItem{
+					{Key: v3.AttributeKey{Key: "serice_name"}, Value: "dri", Operator: v3.FilterOperatorNotLike},
+				},
+			},
+			expectedWhereClause: "notLike(JSONExtractString(labels, 'serice_name'), 'dri')",
+		},
 	}
 
-	filterSets := []v3.FilterSet{
-		{Operator: "AND", Items: []v3.FilterItem{
-			{Key: v3.AttributeKey{Key: "service_name"}, Value: "route", Operator: v3.FilterOperatorEqual},
-		}},
-		{Operator: "AND", Items: []v3.FilterItem{
-			{Key: v3.AttributeKey{Key: "service_name"}, Value: "route", Operator: v3.FilterOperatorNotEqual},
-		}},
-		{Operator: "AND", Items: []v3.FilterItem{
-			{Key: v3.AttributeKey{Key: "service_name"}, Value: "out", Operator: v3.FilterOperatorRegex},
-		}},
-		{Operator: "AND", Items: []v3.FilterItem{
-			{Key: v3.AttributeKey{Key: "service_name"}, Value: "out", Operator: v3.FilterOperatorNotRegex},
-		}},
-		{Operator: "AND", Items: []v3.FilterItem{
-			{Key: v3.AttributeKey{Key: "service_name"}, Value: []interface{}{"route", "driver"}, Operator: v3.FilterOperatorIn},
-		}},
-		{Operator: "AND", Items: []v3.FilterItem{
-			{Key: v3.AttributeKey{Key: "service_name"}, Value: []interface{}{"route", "driver"}, Operator: v3.FilterOperatorNotIn},
-		}},
-		{Operator: "AND", Items: []v3.FilterItem{
-			{Key: v3.AttributeKey{Key: "horn"}, Operator: v3.FilterOperatorExists},
-		}},
-		{Operator: "AND", Items: []v3.FilterItem{
-			{Key: v3.AttributeKey{Key: "horn"}, Operator: v3.FilterOperatorNotExists},
-		}},
-		{Operator: "AND", Items: []v3.FilterItem{
-			{Key: v3.AttributeKey{Key: "service_name"}, Operator: v3.FilterOperatorContains, Value: "out"},
-		}},
-		{Operator: "AND", Items: []v3.FilterItem{
-			{Key: v3.AttributeKey{Key: "serice_name"}, Operator: v3.FilterOperatorNotContains, Value: "out"},
-		}},
-		{Operator: "AND", Items: []v3.FilterItem{
-			{Key: v3.AttributeKey{Key: "service_name"}, Operator: v3.FilterOperatorLike, Value: "dri"},
-		}},
-		{Operator: "AND", Items: []v3.FilterItem{
-			{Key: v3.AttributeKey{Key: "a"}, Operator: v3.FilterOperatorNotLike, Value: "dri"},
-		}},
-	}
-
-	expectedTimeSeriesQueriesWhereClause := []string{
-		"JSONExtractString(labels, 'service_name') = 'route'",
-		"JSONExtractString(labels, 'service_name') != 'route'",
-		"match(JSONExtractString(labels, 'service_name'), 'out')",
-		"not match(JSONExtractString(labels, 'service_name'), 'out')",
-		"JSONExtractString(labels, 'service_name') IN ['route','driver']",
-		"JSONExtractString(labels, 'service_name') NOT IN ['route','driver']",
-		"has(JSONExtractKeys(labels), 'horn')",
-		"not has(JSONExtractKeys(labels), 'horn')",
-		"like(JSONExtractString(labels, 'service_name'), '%out%')",
-		"notLike(JSONExtractString(labels, 'serice_name'), '%out%')",
-		"like(JSONExtractString(labels, 'service_name'), 'dri')",
-		"notLike(JSONExtractString(labels, 'a'), 'dri')",
-	}
-
-	for i, operator := range operators {
-		t.Run(string(operator), func(t *testing.T) {
-			filterSet := filterSets[i]
-			query, err := buildMetricsTimeSeriesFilterQuery(&filterSet, []v3.AttributeKey{}, "signoz_calls_total", "sum")
+	for i, tc := range testCases {
+		t.Run(fmt.Sprintf("case %d", i), func(t *testing.T) {
+			whereClause, err := buildMetricsTimeSeriesFilterQuery(&tc.filterSet, []v3.AttributeKey{}, "signoz_calls_total", "sum")
 			require.NoError(t, err)
-			require.Contains(t, query, expectedTimeSeriesQueriesWhereClause[i])
+			require.Contains(t, whereClause, tc.expectedWhereClause)
 		})
 	}
 }
