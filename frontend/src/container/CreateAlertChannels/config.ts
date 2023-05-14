@@ -63,10 +63,16 @@ export const ValidatePagerChannel = (p: PagerChannel): string => {
 	return '';
 };
 
-export type ChannelType = 'slack' | 'email' | 'webhook' | 'pagerduty';
+export type ChannelType =
+	| 'slack'
+	| 'email'
+	| 'webhook'
+	| 'pagerduty'
+	| 'msteams';
 export const SlackType: ChannelType = 'slack';
 export const WebhookType: ChannelType = 'webhook';
 export const PagerType: ChannelType = 'pagerduty';
+export const MsTeamsType: ChannelType = 'msteams';
 
 // LabelFilterStatement will be used for preparing filter conditions / matchers
 export interface LabelFilterStatement {
@@ -80,4 +86,10 @@ export interface LabelFilterStatement {
 
 	// filter value
 	value: string;
+}
+
+export interface MsTeamsChannel extends Channel {
+	webhook_url?: string;
+	title?: string;
+	text?: string;
 }

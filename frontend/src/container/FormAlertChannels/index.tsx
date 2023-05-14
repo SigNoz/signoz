@@ -1,8 +1,11 @@
 import { Form, FormInstance, Input, Select, Typography } from 'antd';
 import { Store } from 'antd/lib/form/interface';
+import UpgradePrompt from 'components/Upgrade/UpgradePrompt';
+import { FeatureKeys } from 'constants/features';
 import ROUTES from 'constants/routes';
 import {
 	ChannelType,
+	MsTeamsType,
 	PagerChannel,
 	PagerType,
 	SlackChannel,
@@ -10,10 +13,12 @@ import {
 	WebhookChannel,
 	WebhookType,
 } from 'container/CreateAlertChannels/config';
+import useFeatureFlags from 'hooks/useFeatureFlag';
 import history from 'lib/history';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 
+import MsTeamsSettings from './Settings/MsTeams';
 import PagerSettings from './Settings/Pager';
 import SlackSettings from './Settings/Slack';
 import WebhookSettings from './Settings/Webhook';
@@ -36,8 +41,15 @@ function FormAlertChannels({
 	editing = false,
 }: FormAlertChannelsProps): JSX.Element {
 	const { t } = useTranslation('channels');
+	const isUserOnEEPlan = useFeatureFlags(FeatureKeys.ENTERPRISE_PLAN);
+	const hasFeature = true; // useFeatureFlags("ALERT_CHANNEL_".concat(type.toUpperCase()));
 
 	const renderSettings = (): React.ReactElement | null => {
+		if (!hasFeature) {
+			// channel type is not available for users plan
+			return <UpgradePrompt />;
+		}
+
 		switch (type) {
 			case SlackType:
 				return <SlackSettings setSelectedConfig={setSelectedConfig} />;
@@ -45,11 +57,13 @@ function FormAlertChannels({
 				return <WebhookSettings setSelectedConfig={setSelectedConfig} />;
 			case PagerType:
 				return <PagerSettings setSelectedConfig={setSelectedConfig} />;
-
+			case MsTeamsType:
+				return <MsTeamsSettings setSelectedConfig={setSelectedConfig} />;
 			default:
 				return null;
 		}
 	};
+
 	return (
 		<>
 			<Title level={3}>{title}</Title>
@@ -78,6 +92,11 @@ function FormAlertChannels({
 						<Option value="pagerduty" key="pagerduty">
 							Pagerduty
 						</Option>
+						<Option value="msteams" key="msteams">
+							<div>
+								Microsoft Teams {!isUserOnEEPlan && '(Available in Enterprise Plan)'}{' '}
+							</div>
+						</Option>
 					</Select>
 				</Form.Item>
 
@@ -85,7 +104,7 @@ function FormAlertChannels({
 
 				<Form.Item>
 					<Button
-						disabled={savingState}
+						disabled={savingState || !hasFeature}
 						loading={savingState}
 						type="primary"
 						onClick={(): void => onSaveHandler(type)}
@@ -93,7 +112,7 @@ function FormAlertChannels({
 						{t('button_save_channel')}
 					</Button>
 					<Button
-						disabled={testingState}
+						disabled={testingState || !hasFeature}
 						loading={testingState}
 						onClick={(): void => onTestHandler(type)}
 					>
