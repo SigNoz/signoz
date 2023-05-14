@@ -17,7 +17,7 @@ var BasicPlan = basemodel.FeatureSet{
 	basemodel.AlertChannelSlack:     true,
 	basemodel.AlertChannelWebhook:   true,
 	basemodel.AlertChannelPagerduty: true,
-	basemodel.AlertChannelMsTeams:   false,
+	basemodel.AlertChannelMsTeams:   true,
 }
 
 var ProPlan = basemodel.FeatureSet{
