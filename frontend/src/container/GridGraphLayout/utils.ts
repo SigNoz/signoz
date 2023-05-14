@@ -42,13 +42,13 @@ export const UpdateDashboard = async (
 					panelTypes: graphType,
 					query: {
 						queryType: EQueryType.QUERY_BUILDER,
-						promQL: [
+						promql: [
 							{
 								name: GetQueryName([]) || '',
 								...PromQLQueryTemplate,
 							},
 						],
-						clickHouse: [
+						clickhouse_sql: [
 							{
 								name: GetQueryName([]) || '',
 								...ClickHouseQueryTemplate,
