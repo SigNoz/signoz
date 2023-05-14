@@ -42,7 +42,7 @@ function FormAlertChannels({
 }: FormAlertChannelsProps): JSX.Element {
 	const { t } = useTranslation('channels');
 	const isUserOnEEPlan = useFeatureFlags(FeatureKeys.ENTERPRISE_PLAN);
-	const hasFeature = true; // useFeatureFlags("ALERT_CHANNEL_".concat(type.toUpperCase()));
+	const hasFeature = useFeatureFlags("ALERT_CHANNEL_".concat(type.toUpperCase()));
 
 	const renderSettings = (): React.ReactElement | null => {
 		if (!hasFeature) {
