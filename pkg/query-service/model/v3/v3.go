@@ -101,14 +101,19 @@ func (a AggregateOperator) Validate() error {
 
 // RequireAttribute returns true if the aggregate operator requires an attribute
 // to be specified.
-func (a AggregateOperator) RequireAttribute() bool {
-	switch a {
-	case AggregateOperatorNoOp,
-		AggregateOperatorCount,
-		AggregateOperatorCountDistinct:
-		return false
+func (a AggregateOperator) RequireAttribute(dataSource DataSource) bool {
+	switch dataSource {
+	case DataSourceMetrics:
+		switch a {
+		case AggregateOperatorNoOp,
+			AggregateOperatorCount,
+			AggregateOperatorCountDistinct:
+			return false
+		default:
+			return true
+		}
 	default:
-		return true
+		return false
 	}
 }
 
@@ -134,6 +139,7 @@ func (r ReduceToOperator) Validate() error {
 type QueryType string
 
 const (
+	QueryTypeUnknown       QueryType = "unknown"
 	QueryTypeBuilder       QueryType = "builder"
 	QueryTypeClickHouseSQL QueryType = "clickhouse_sql"
 	QueryTypePromQL        QueryType = "promql"
@@ -201,7 +207,6 @@ type FilterAttributeKeyRequest struct {
 	DataSource         DataSource        `json:"dataSource"`
 	AggregateOperator  AggregateOperator `json:"aggregateOperator"`
 	AggregateAttribute string            `json:"aggregateAttribute"`
-	TagType            TagType           `json:"tagType"`
 	SearchText         string            `json:"searchText"`
 	Limit              int               `json:"limit"`
 }
@@ -423,7 +428,7 @@ func (b *BuilderQuery) Validate() error {
 		if err := b.AggregateOperator.Validate(); err != nil {
 			return fmt.Errorf("aggregate operator is invalid: %w", err)
 		}
-		if b.AggregateAttribute == (AttributeKey{}) && b.AggregateOperator.RequireAttribute() {
+		if b.AggregateAttribute == (AttributeKey{}) && b.AggregateOperator.RequireAttribute(b.DataSource) {
 			return fmt.Errorf("aggregate attribute is required")
 		}
 	}

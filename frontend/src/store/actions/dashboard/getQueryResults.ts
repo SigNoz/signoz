@@ -6,7 +6,6 @@ import { getMetricsQueryRange } from 'api/metrics/getQueryRange';
 import { AxiosError } from 'axios';
 import { GRAPH_TYPES } from 'container/NewDashboard/ComponentsSlider';
 import { ITEMS } from 'container/NewDashboard/ComponentsSlider/menuItems';
-import { EQueryTypeToQueryKeyMapping } from 'container/NewWidget/LeftContainer/QuerySection/types';
 import { timePreferenceType } from 'container/NewWidget/RightContainer/timeItems';
 import { Time } from 'container/TopNav/DateTimeSelection/config';
 import GetMaxMinTime from 'lib/getMaxMinTime';
@@ -38,24 +37,21 @@ export async function GetMetricQueryRange({
 	globalSelectedInterval: Time;
 	variables?: Record<string, unknown>;
 }): Promise<SuccessResponse<MetricRangePayloadProps> | ErrorResponse> {
-	const { queryType } = query;
-	const queryKey: Record<EQueryTypeToQueryKeyMapping, string> =
-		EQueryTypeToQueryKeyMapping[EQueryType[query.queryType]];
-	const queryData = query[queryKey];
+	const queryData = query[query.queryType];
 	let legendMap: Record<string, string> = {};
 
 	const QueryPayload = {
 		compositeQuery: {
-			queryType: queryKey,
+			queryType: query.queryType,
 			panelType: graphType,
 		},
 	};
 
-	switch (queryType as EQueryType) {
+	switch (query.queryType) {
 		case EQueryType.QUERY_BUILDER: {
-			const { queryData, queryFormulas } = query.builder;
+			const { queryData: data, queryFormulas } = query.builder;
 			const builderQueries = mapQueryDataToApi({
-				queryData,
+				queryData: data,
 				queryFormulas,
 			});
 			legendMap = builderQueries.newLegendMap;

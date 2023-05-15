@@ -42,7 +42,7 @@ services:
   otel-collector:
     container_name: otel-collector
     image: signoz/signoz-otel-collector:0.66.7
-    command: ["--config=/etc/otel-collector-config.yaml"]
+    command: ["--config=/etc/otel-collector-config.yaml", "--feature-gates=-pkg.translator.prometheus.NormalizeName"]
     # user: root # required for reading docker container logs
     volumes:
       - ./otel-collector-config.yaml:/etc/otel-collector-config.yaml
@@ -68,7 +68,7 @@ services:
   otel-collector-metrics:
     container_name: otel-collector-metrics
     image: signoz/signoz-otel-collector:0.66.7
-    command: ["--config=/etc/otel-collector-metrics-config.yaml"]
+    command: ["--config=/etc/otel-collector-metrics-config.yaml", "--feature-gates=-pkg.translator.prometheus.NormalizeName"]
     volumes:
       - ./otel-collector-metrics-config.yaml:/etc/otel-collector-metrics-config.yaml
     # ports:

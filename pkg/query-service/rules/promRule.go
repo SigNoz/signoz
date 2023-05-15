@@ -12,7 +12,7 @@ import (
 
 	plabels "github.com/prometheus/prometheus/model/labels"
 	pql "github.com/prometheus/prometheus/promql"
-	"go.signoz.io/signoz/pkg/query-service/model"
+	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
 	qslabels "go.signoz.io/signoz/pkg/query-service/utils/labels"
 	"go.signoz.io/signoz/pkg/query-service/utils/times"
 	"go.signoz.io/signoz/pkg/query-service/utils/timestamp"
@@ -288,9 +288,9 @@ func (r *PromRule) SendAlerts(ctx context.Context, ts time.Time, resendDelay tim
 
 func (r *PromRule) getPqlQuery() (string, error) {
 
-	if r.ruleCondition.CompositeMetricQuery.QueryType == model.PROM {
-		if len(r.ruleCondition.CompositeMetricQuery.PromQueries) > 0 {
-			if promQuery, ok := r.ruleCondition.CompositeMetricQuery.PromQueries["A"]; ok {
+	if r.ruleCondition.CompositeQuery.QueryType == v3.QueryTypePromQL {
+		if len(r.ruleCondition.CompositeQuery.PromQueries) > 0 {
+			if promQuery, ok := r.ruleCondition.CompositeQuery.PromQueries["A"]; ok {
 				query := promQuery.Query
 				if query == "" {
 					return query, fmt.Errorf("a promquery needs to be set for this rule to function")

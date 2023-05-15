@@ -1,29 +1,31 @@
 import {
-	IMetricsBuilderFormula,
-	IMetricsBuilderQuery,
-	IQueryBuilderTagFilterItems,
-} from 'types/api/dashboard/getAll';
+	initialFormulaBuilderFormValues,
+	initialQueryBuilderFormValues,
+} from 'constants/queryBuilder';
+import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
+import { TagFilterItem } from 'types/api/queryBuilder/queryBuilderData';
+import {
+	MetricAggregateOperator,
+	QueryBuilderData,
+} from 'types/common/queryBuilder';
 
 export const getQueryBuilderQueries = ({
 	metricName,
-	groupBy,
+	groupBy = [],
 	legend,
 	itemsA,
-}: BuilderQueriesProps): {
-	formulas: IMetricsBuilderFormula[];
-	queryBuilder: IMetricsBuilderQuery[];
-} => ({
-	formulas: [],
-	queryBuilder: [
+}: BuilderQueriesProps): QueryBuilderData => ({
+	queryFormulas: [],
+	queryData: [
 		{
-			aggregateOperator: 18,
+			...initialQueryBuilderFormValues,
+			aggregateOperator: MetricAggregateOperator.SUM_RATE,
 			disabled: false,
 			groupBy,
+			aggregateAttribute: metricName,
 			legend,
-			metricName,
-			name: 'A',
-			reduceTo: 1,
-			tagFilters: {
+			reduceTo: 'sum',
+			filters: {
 				items: itemsA,
 				op: 'AND',
 			},
@@ -37,45 +39,43 @@ export const getQueryBuilderQuerieswithFormula = ({
 	additionalItemsA,
 	additionalItemsB,
 	legend,
-	groupBy,
+	groupBy = [],
 	disabled,
 	expression,
 	legendFormula,
-}: BuilderQuerieswithFormulaProps): {
-	formulas: IMetricsBuilderFormula[];
-	queryBuilder: IMetricsBuilderQuery[];
-} => ({
-	formulas: [
+}: BuilderQuerieswithFormulaProps): QueryBuilderData => ({
+	queryFormulas: [
 		{
-			disabled: false,
+			...initialFormulaBuilderFormValues,
 			expression,
-			name: 'F1',
 			legend: legendFormula,
 		},
 	],
-	queryBuilder: [
+	queryData: [
 		{
-			aggregateOperator: 18,
+			...initialQueryBuilderFormValues,
+			aggregateOperator: MetricAggregateOperator.SUM_RATE,
 			disabled,
 			groupBy,
 			legend,
-			metricName: metricNameA,
-			name: 'A',
-			reduceTo: 1,
-			tagFilters: {
+			aggregateAttribute: metricNameA,
+			reduceTo: 'sum',
+			filters: {
 				items: additionalItemsA,
 				op: 'AND',
 			},
 		},
 		{
-			aggregateOperator: 18,
+			...initialQueryBuilderFormValues,
+			aggregateOperator: MetricAggregateOperator.SUM_RATE,
 			disabled,
 			groupBy,
 			legend,
-			metricName: metricNameB,
-			name: 'B',
-			reduceTo: 1,
-			tagFilters: {
+			aggregateAttribute: metricNameB,
+			queryName: 'B',
+			expression: 'B',
+			reduceTo: 'sum',
+			filters: {
 				items: additionalItemsB,
 				op: 'AND',
 			},
@@ -84,20 +84,20 @@ export const getQueryBuilderQuerieswithFormula = ({
 });
 
 interface BuilderQueriesProps {
-	metricName: string;
-	groupBy?: string[];
+	metricName: BaseAutocompleteData;
+	groupBy?: BaseAutocompleteData[];
 	legend: string;
-	itemsA: IQueryBuilderTagFilterItems[];
+	itemsA: TagFilterItem[];
 }
 
 interface BuilderQuerieswithFormulaProps {
-	metricNameA: string;
-	metricNameB: string;
+	metricNameA: BaseAutocompleteData;
+	metricNameB: BaseAutocompleteData;
 	legend: string;
 	disabled: boolean;
-	groupBy?: string[];
+	groupBy?: BaseAutocompleteData[];
 	expression: string;
 	legendFormula: string;
-	additionalItemsA: IQueryBuilderTagFilterItems[];
-	additionalItemsB: IQueryBuilderTagFilterItems[];
+	additionalItemsA: TagFilterItem[];
+	additionalItemsB: TagFilterItem[];
 }

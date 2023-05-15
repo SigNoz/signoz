@@ -17,7 +17,7 @@ export const convertNewDataToOld = (
 					QueryData['values']
 				>((acc, currentInfo) => {
 					const renderValues: [number, string] = [
-						currentInfo.timestamp,
+						currentInfo.timestamp / 1000,
 						currentInfo.value,
 					];
 

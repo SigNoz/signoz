@@ -3,8 +3,8 @@ import { ClickHouseQueryTemplate } from 'constants/dashboard';
 import GetQueryName from 'lib/query/GetQueryName';
 import React from 'react';
 import { Query } from 'types/api/dashboard/getAll';
+import { EQueryType } from 'types/common/dashboard';
 
-import { WIDGET_CLICKHOUSE_QUERY_KEY_NAME } from '../../constants';
 import { QueryButton } from '../../styles';
 import { IHandleUpdatedQuery } from '../../types';
 import ClickHouseQueryBuilder from './query';
@@ -13,7 +13,7 @@ import { IClickHouseQueryHandleChange } from './types';
 interface IClickHouseQueryContainerProps {
 	queryData: Query;
 	updateQueryData: (args: IHandleUpdatedQuery) => void;
-	clickHouseQueries: Query['clickHouse'];
+	clickHouseQueries: Query['clickhouse_sql'];
 }
 function ClickHouseQueryContainer({
 	queryData,
@@ -35,7 +35,7 @@ function ClickHouseQueryContainer({
 		// hence, this method is only applies when queryIndex is in number format.
 
 		if (typeof queryIndex === 'number') {
-			const allQueries = queryData[WIDGET_CLICKHOUSE_QUERY_KEY_NAME];
+			const allQueries = queryData[EQueryType.CLICKHOUSE];
 
 			const currentIndexQuery = allQueries[queryIndex];
 
@@ -57,8 +57,8 @@ function ClickHouseQueryContainer({
 		}
 	};
 	const addQueryHandler = (): void => {
-		queryData[WIDGET_CLICKHOUSE_QUERY_KEY_NAME].push({
-			name: GetQueryName(queryData[WIDGET_CLICKHOUSE_QUERY_KEY_NAME]) || '',
+		queryData[EQueryType.CLICKHOUSE].push({
+			name: GetQueryName(queryData[EQueryType.CLICKHOUSE]) || '',
 			...ClickHouseQueryTemplate,
 		});
 		updateQueryData({ updatedQuery: { ...queryData } });
