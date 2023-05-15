@@ -4,7 +4,7 @@ import { FeatureKeys } from 'constants/features';
 import ROUTES from 'constants/routes';
 import { GRAPH_TYPES } from 'container/NewDashboard/ComponentsSlider';
 import { ITEMS } from 'container/NewDashboard/ComponentsSlider/menuItems';
-import useFeatureFlag, { MESSAGE } from 'hooks/useFeatureFlag';
+import { MESSAGE, useIsFeatureAvialable } from 'hooks/useFeatureFlag';
 import { getDashboardVariables } from 'lib/dashbaordVariables/getDashboardVariables';
 import history from 'lib/history';
 import { DashboardWidgetPageParams } from 'pages/DashboardWidget';
@@ -174,19 +174,19 @@ function NewWidget({
 		setSaveModal(true);
 	}, []);
 
-	const isQueryBuilderNotActive = useFeatureFlag(
+	const isQueryBuilderActive = useIsFeatureAvialable(
 		FeatureKeys.QUERY_BUILDER_PANELS,
 	);
 
 	return (
 		<Container>
 			<ButtonContainer>
-				{isQueryBuilderNotActive && (
+				{isQueryBuilderActive && (
 					<Tooltip title={MESSAGE.PANEL}>
 						<Button
-							icon={isQueryBuilderNotActive && <LockFilled />}
+							icon={<LockFilled />}
 							type="primary"
-							disabled={isQueryBuilderNotActive}
+							disabled={isQueryBuilderActive}
 							onClick={onSaveDashboard}
 						>
 							Save
@@ -194,10 +194,10 @@ function NewWidget({
 					</Tooltip>
 				)}
 
-				{!isQueryBuilderNotActive && (
+				{!isQueryBuilderActive && (
 					<Button
 						type="primary"
-						disabled={isQueryBuilderNotActive}
+						disabled={isQueryBuilderActive}
 						onClick={onSaveDashboard}
 					>
 						Save

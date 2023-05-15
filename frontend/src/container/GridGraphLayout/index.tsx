@@ -280,16 +280,14 @@ function GridGraph(props: Props): JSX.Element {
 
 	return (
 		<GraphLayoutContainer
-			{...{
-				addPanelLoading,
-				layouts,
-				onAddPanelHandler,
-				onLayoutChangeHandler,
-				onLayoutSaveHandler,
-				saveLayoutState,
-				widgets,
-				setLayout,
-			}}
+			addPanelLoading={addPanelLoading}
+			layouts={layouts}
+			onAddPanelHandler={onAddPanelHandler}
+			onLayoutChangeHandler={onLayoutChangeHandler}
+			onLayoutSaveHandler={onLayoutSaveHandler}
+			saveLayoutState={saveLayoutState}
+			setLayout={setLayout}
+			widgets={widgets}
 		/>
 	);
 }

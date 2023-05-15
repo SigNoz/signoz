@@ -26,7 +26,7 @@ export default interface AppReducer {
 	isUserFetchingError: boolean;
 	role: ROLES | null;
 	org: OrgPayload | null;
-	featureFlags: FeatureFlagPayload;
+	featureFlags: FeatureFlagPayload | null;
 	configs: ConfigPayload;
 	userFlags: null | UserFlags;
 	ee: 'Y' | 'N';

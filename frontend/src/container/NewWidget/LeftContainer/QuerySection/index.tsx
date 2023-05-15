@@ -1,6 +1,5 @@
 import { Button, Tabs, Typography } from 'antd';
 import TextToolTip from 'components/TextToolTip';
-// import { FeatureKeys } from 'constants/features';
 import { GRAPH_TYPES } from 'container/NewDashboard/ComponentsSlider';
 import { QueryBuilder } from 'container/QueryBuilder';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
@@ -24,7 +23,6 @@ import { v4 as uuid } from 'uuid';
 import ClickHouseQueryContainer from './QueryBuilder/clickHouse';
 import PromQLQueryContainer from './QueryBuilder/promQL';
 import { IHandleUpdatedQuery } from './types';
-// import useFeatureFlag from 'hooks/useFeatureFlag';
 
 function QuerySection({ updateQuery, selectedGraph }: QueryProps): JSX.Element {
 	const { queryBuilderData, initQueryBuilderData } = useQueryBuilder();
@@ -146,10 +144,6 @@ function QuerySection({ updateQuery, selectedGraph }: QueryProps): JSX.Element {
 			),
 		},
 	];
-
-	// const isQueryBuilderNotActive = useFeatureFlag(
-	// 	FeatureKeys.QUERY_BUILDER_PANELS,
-	// );
 
 	return (
 		<Tabs

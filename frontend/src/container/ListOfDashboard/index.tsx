@@ -12,9 +12,11 @@ import createDashboard from 'api/dashboard/create';
 import { AxiosError } from 'axios';
 import { ResizeTable } from 'components/ResizeTable';
 import TextToolTip from 'components/TextToolTip';
+import { FeatureKeys } from 'constants/features';
 import ROUTES from 'constants/routes';
 import SearchFilter from 'container/ListOfDashboard/SearchFilter';
 import useComponentPermission from 'hooks/useComponentPermission';
+import { MESSAGE, useIsFeatureAvialable } from 'hooks/useFeatureFlag';
 import history from 'lib/history';
 import React, {
 	Dispatch,
@@ -74,49 +76,52 @@ function ListOfAllDashboard(): JSX.Element {
 		errorMessage: '',
 	});
 
-	const columns: TableColumnProps<Data>[] = [
-		{
-			title: 'Name',
-			dataIndex: 'name',
-			width: 100,
-			render: Name,
-		},
-		{
-			title: 'Description',
-			width: 100,
-			dataIndex: 'description',
-		},
-		{
-			title: 'Tags (can be multiple)',
-			dataIndex: 'tags',
-			width: 80,
-			render: Tags,
-		},
-		{
-			title: 'Created At',
-			dataIndex: 'createdBy',
-			width: 80,
-			sorter: (a: Data, b: Data): number => {
-				const prev = new Date(a.createdBy).getTime();
-				const next = new Date(b.createdBy).getTime();
-
-				return prev - next;
+	const columns: TableColumnProps<Data>[] = useMemo(
+		() => [
+			{
+				title: 'Name',
+				dataIndex: 'name',
+				width: 100,
+				render: Name,
 			},
-			render: Createdby,
-		},
-		{
-			title: 'Last Updated Time',
-			width: 90,
-			dataIndex: 'lastUpdatedTime',
-			sorter: (a: Data, b: Data): number => {
-				const prev = new Date(a.lastUpdatedTime).getTime();
-				const next = new Date(b.lastUpdatedTime).getTime();
-
-				return prev - next;
+			{
+				title: 'Description',
+				width: 100,
+				dataIndex: 'description',
 			},
-			render: DateComponent,
-		},
-	];
+			{
+				title: 'Tags (can be multiple)',
+				dataIndex: 'tags',
+				width: 80,
+				render: Tags,
+			},
+			{
+				title: 'Created At',
+				dataIndex: 'createdBy',
+				width: 80,
+				sorter: (a: Data, b: Data): number => {
+					const prev = new Date(a.createdBy).getTime();
+					const next = new Date(b.createdBy).getTime();
+
+					return prev - next;
+				},
+				render: Createdby,
+			},
+			{
+				title: 'Last Updated Time',
+				width: 90,
+				dataIndex: 'lastUpdatedTime',
+				sorter: (a: Data, b: Data): number => {
+					const prev = new Date(a.lastUpdatedTime).getTime();
+					const next = new Date(b.lastUpdatedTime).getTime();
+
+					return prev - next;
+				},
+				render: DateComponent,
+			},
+		],
+		[],
+	);
 
 	if (action) {
 		columns.push({
@@ -199,14 +204,19 @@ function ListOfAllDashboard(): JSX.Element {
 		setUploadedGrafana(uploadedGrafana);
 	};
 
-	const getMenuItems = useCallback(() => {
+	const isPanelAvialable = useIsFeatureAvialable(
+		FeatureKeys.QUERY_BUILDER_PANELS,
+	);
+
+	const getMenuItems = useMemo(() => {
 		const menuItems: ItemType[] = [];
 		if (createNewDashboard) {
 			menuItems.push({
 				key: t('create_dashboard').toString(),
 				label: t('create_dashboard'),
-				disabled: loading,
+				disabled: isPanelAvialable,
 				onClick: onNewDashboardHandler,
+				title: isPanelAvialable ? MESSAGE.PANEL : '',
 			});
 		}
 
@@ -223,11 +233,11 @@ function ListOfAllDashboard(): JSX.Element {
 		});
 
 		return menuItems;
-	}, [createNewDashboard, loading, onNewDashboardHandler, t]);
+	}, [createNewDashboard, isPanelAvialable, onNewDashboardHandler, t]);
 
 	const menu: MenuProps = useMemo(
 		() => ({
-			items: getMenuItems(),
+			items: getMenuItems,
 		}),
 		[getMenuItems],
 	);
@@ -245,7 +255,7 @@ function ListOfAllDashboard(): JSX.Element {
 						}}
 					/>
 					{newDashboard && (
-						<Dropdown trigger={['click']} menu={menu}>
+						<Dropdown disabled={loading} trigger={['click']} menu={menu}>
 							<NewDashboardButton
 								icon={<PlusOutlined />}
 								type="primary"
@@ -260,11 +270,12 @@ function ListOfAllDashboard(): JSX.Element {
 			</Row>
 		),
 		[
-			getText,
 			newDashboard,
-			newDashboardState.error,
-			newDashboardState.loading,
+			loading,
 			menu,
+			newDashboardState.loading,
+			newDashboardState.error,
+			getText,
 		],
 	);
 

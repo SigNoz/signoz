@@ -1,9 +1,19 @@
 import { red } from '@ant-design/colors';
 import { ExclamationCircleTwoTone } from '@ant-design/icons';
-import { Button, Modal, Space, Typography, Upload, UploadProps } from 'antd';
+import {
+	Button,
+	Modal,
+	Space,
+	Tooltip,
+	Typography,
+	Upload,
+	UploadProps,
+} from 'antd';
 import createDashboard from 'api/dashboard/create';
 import Editor from 'components/Editor';
+import { FeatureKeys } from 'constants/features';
 import ROUTES from 'constants/routes';
+import { MESSAGE, useIsFeatureAvialable } from 'hooks/useFeatureFlag';
 import { useNotifications } from 'hooks/useNotifications';
 import history from 'lib/history';
 import React, { useState } from 'react';
@@ -124,6 +134,14 @@ function ImportJSON({
 		</Space>
 	);
 
+	const isPanelAvialable = useIsFeatureAvialable(
+		FeatureKeys.QUERY_BUILDER_PANELS,
+	);
+
+	const isLoadJSONDisabled = !isPanelAvialable
+		? editorValue.length === 0
+		: isPanelAvialable;
+
 	return (
 		<Modal
 			open={isImportJSONModalVisible}
@@ -140,13 +158,15 @@ function ImportJSON({
 			}
 			footer={
 				<FooterContainer>
-					<Button
-						disabled={editorValue.length === 0}
-						onClick={onClickLoadJsonHandler}
-						loading={dashboardCreating}
-					>
-						{t('load_json')}
-					</Button>
+					<Tooltip title={isPanelAvialable ? MESSAGE.PANEL : ''}>
+						<Button
+							disabled={isLoadJSONDisabled}
+							onClick={onClickLoadJsonHandler}
+							loading={dashboardCreating}
+						>
+							{t('load_json')}
+						</Button>
+					</Tooltip>
 					{isCreateDashboardError && getErrorNode(t('error_loading_json'))}
 				</FooterContainer>
 			}
