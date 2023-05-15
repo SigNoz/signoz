@@ -7,7 +7,7 @@ export const recursiveParseJSON = (obj: string): Record<string, unknown> => {
 		if (typeof value === 'object') {
 			Object.entries(value).forEach(([key, val]) => {
 				if (typeof val === 'string') {
-					value[key] = val.replace(/\n/g, '').trim();
+					value[key] = val.trim();
 				} else if (typeof val === 'object') {
 					value[key] = recursiveParseJSON(JSON.stringify(val));
 				}
