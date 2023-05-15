@@ -25,7 +25,7 @@ export const getQueryBuilderQueries = ({
 			aggregateAttribute: metricName,
 			legend,
 			reduceTo: 'sum',
-			tagFilters: {
+			filters: {
 				items: itemsA,
 				op: 'AND',
 			},
@@ -60,7 +60,7 @@ export const getQueryBuilderQuerieswithFormula = ({
 			legend,
 			aggregateAttribute: metricNameA,
 			reduceTo: 'sum',
-			tagFilters: {
+			filters: {
 				items: additionalItemsA,
 				op: 'AND',
 			},
@@ -75,7 +75,7 @@ export const getQueryBuilderQuerieswithFormula = ({
 			queryName: 'B',
 			expression: 'B',
 			reduceTo: 'sum',
-			tagFilters: {
+			filters: {
 				items: additionalItemsB,
 				op: 'AND',
 			},

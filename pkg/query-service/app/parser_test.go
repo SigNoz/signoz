@@ -518,7 +518,7 @@ func TestParseQueryRangeParamsCompositeQuery(t *testing.T) {
 				BuilderQueries: map[string]*v3.BuilderQuery{
 					"A": {
 						QueryName:          "A",
-						DataSource:         "traces",
+						DataSource:         "metrics",
 						AggregateOperator:  "sum",
 						AggregateAttribute: v3.AttributeKey{},
 						Expression:         "A",

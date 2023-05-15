@@ -1,4 +1,9 @@
+import {
+	checkCommaInValue,
+	getTagToken,
+} from 'container/QueryBuilder/filters/QueryBuilderSearch/utils';
 import { Option } from 'container/QueryBuilder/type';
+import { transformStringWithPrefix } from 'lib/query/transformStringWithPrefix';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
 
@@ -18,41 +23,73 @@ export const useOptions = (
 	const [options, setOptions] = useState<Option[]>([]);
 	const operators = useOperators(key, keys);
 
-	const updateOptions = useCallback(() => {
+	const getLabel = useCallback(
+		(data: BaseAutocompleteData): Option['label'] =>
+			transformStringWithPrefix({
+				str: data?.key,
+				prefix: data?.type || '',
+				condition: !data?.isColumn,
+			}),
+		[],
+	);
+
+	const getOptionsFromKeys = useCallback(
+		(items: BaseAutocompleteData[]): Option[] =>
+			items?.map((item) => ({
+				label: `${getLabel(item)}`,
+				value: item.key,
+			})),
+		[getLabel],
+	);
+
+	const getKeyOpValue = useCallback(
+		(items: string[]): Option[] =>
+			items?.map((item) => ({
+				label: `${key} ${operator} ${item}`,
+				value: `${key} ${operator} ${item}`,
+			})),
+		[key, operator],
+	);
+
+	useEffect(() => {
 		if (!key) {
 			setOptions(
 				searchValue
 					? [
 							{ label: `${searchValue} `, value: `${searchValue} ` },
-							...keys.map((k) => ({ label: k.key, value: k.key })),
+							...getOptionsFromKeys(keys),
 					  ]
-					: keys?.map((k) => ({ label: k.key, value: k.key })),
+					: getOptionsFromKeys(keys),
 			);
 		} else if (key && !operator) {
 			setOptions(
-				operators?.map((o) => ({
-					value: `${key} ${o} `,
-					label: `${key} ${o.replace('_', ' ')} `,
+				operators?.map((operator) => ({
+					value: `${key} ${operator} `,
+					label: `${key} ${operator} `,
 				})),
 			);
 		} else if (key && operator) {
 			if (isMulti) {
-				setOptions(results.map((r) => ({ label: `${r}`, value: `${r}` })));
+				setOptions(
+					results.map((item) => ({
+						label: checkCommaInValue(String(item)),
+						value: String(item),
+					})),
+				);
 			} else if (isExist) {
 				setOptions([]);
 			} else if (isValidOperator) {
-				const hasAllResults = result.every((val) => results.includes(val));
-				const values = results.map((r) => ({
-					label: `${key} ${operator} ${r}`,
-					value: `${key} ${operator} ${r}`,
-				}));
+				const hasAllResults = results.every((value) => result.includes(value));
+				const values = getKeyOpValue(results);
 				const options = hasAllResults
-					? values
+					? [{ label: searchValue, value: searchValue }]
 					: [{ label: searchValue, value: searchValue }, ...values];
 				setOptions(options);
 			}
 		}
 	}, [
+		getKeyOpValue,
+		getOptionsFromKeys,
 		isExist,
 		isMulti,
 		isValidOperator,
@@ -65,15 +102,25 @@ export const useOptions = (
 		searchValue,
 	]);
 
-	useEffect(() => {
-		updateOptions();
-	}, [updateOptions]);
-
 	return useMemo(
 		() =>
-			options?.map((option) => {
+			(
+				options.filter(
+					(option, index, self) =>
+						index ===
+							self.findIndex(
+								(o) => o.label === option.label && o.value === option.value, // to remove duplicate & empty options from list
+							) && option.value !== '',
+				) || []
+			).map((option) => {
+				const { tagValue } = getTagToken(searchValue);
 				if (isMulti) {
-					return { ...option, selected: searchValue.includes(option.value) };
+					return {
+						...option,
+						selected: tagValue
+							.filter((i) => i.trim().replace(/^\s+/, '') === option.value)
+							.includes(option.value),
+					};
 				}
 				return option;
 			}),

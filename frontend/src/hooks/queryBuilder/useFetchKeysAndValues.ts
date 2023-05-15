@@ -1,12 +1,17 @@
 import { getAggregateKeys } from 'api/queryBuilder/getAttributeKeys';
 import { getAttributesValues } from 'api/queryBuilder/getAttributesValues';
 import { QueryBuilderKeys } from 'constants/queryBuilder';
-import { useEffect, useRef, useState } from 'react';
+import {
+	getRemovePrefixFromKey,
+	getTagToken,
+	isInNInOperator,
+} from 'container/QueryBuilder/filters/QueryBuilderSearch/utils';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useQuery } from 'react-query';
 import { useDebounce } from 'react-use';
 import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
-import { separateSearchValue } from 'utils/separateSearchValue';
+import { DataSource } from 'types/common/queryBuilder';
 
 type IuseFetchKeysAndValues = {
 	keys: BaseAutocompleteData[];
@@ -24,29 +29,43 @@ type IuseFetchKeysAndValues = {
 export const useFetchKeysAndValues = (
 	searchValue: string,
 	query: IBuilderQuery,
+	searchKey: string,
 ): IuseFetchKeysAndValues => {
 	const [keys, setKeys] = useState<BaseAutocompleteData[]>([]);
 	const [results, setResults] = useState<string[]>([]);
+
+	const isQueryEnabled = useMemo(
+		() =>
+			query.dataSource === DataSource.METRICS
+				? !!query.aggregateOperator &&
+				  !!query.dataSource &&
+				  !!query.aggregateAttribute.dataType
+				: true,
+		[
+			query.aggregateAttribute.dataType,
+			query.aggregateOperator,
+			query.dataSource,
+		],
+	);
+
 	const { data, isFetching, status } = useQuery(
 		[
 			QueryBuilderKeys.GET_ATTRIBUTE_KEY,
+			searchKey,
 			query.dataSource,
 			query.aggregateOperator,
 			query.aggregateAttribute.key,
 		],
 		async () =>
 			getAggregateKeys({
-				searchText: searchValue,
+				searchText: searchKey,
 				dataSource: query.dataSource,
 				aggregateOperator: query.aggregateOperator,
 				aggregateAttribute: query.aggregateAttribute.key,
-				tagType: query.aggregateAttribute.type,
+				tagType: query.aggregateAttribute.type ?? null,
 			}),
 		{
-			enabled:
-				!!query.aggregateOperator &&
-				!!query.dataSource &&
-				!!query.aggregateAttribute.dataType,
+			enabled: isQueryEnabled,
 		},
 	);
 
@@ -58,14 +77,18 @@ export const useFetchKeysAndValues = (
 	const handleFetchOption = async (
 		value: string,
 		query: IBuilderQuery,
+		keys: BaseAutocompleteData[],
 	): Promise<void> => {
 		if (!value) {
 			return;
 		}
-		const [attributeKey, operator, result] = separateSearchValue(value);
+		const { tagKey, tagOperator, tagValue } = getTagToken(value);
+		const filterAttributeKey = keys.find(
+			(item) => item.key === getRemovePrefixFromKey(tagKey),
+		);
 		setResults([]);
 
-		if (!attributeKey || !operator) {
+		if (!tagKey || !tagOperator) {
 			return;
 		}
 
@@ -73,12 +96,12 @@ export const useFetchKeysAndValues = (
 			aggregateOperator: query.aggregateOperator,
 			dataSource: query.dataSource,
 			aggregateAttribute: query.aggregateAttribute.key,
-			attributeKey,
-			filterAttributeKeyDataType: query.aggregateAttribute.dataType,
-			tagType: query.aggregateAttribute.type ?? null,
-			searchText: !result[result.length - 1]?.endsWith(',') // for IN and Not IN string ends with ","
-				? result[result.length - 1] ?? '' // so needs to add last search value if present
-				: '',
+			attributeKey: filterAttributeKey?.key ?? tagKey,
+			filterAttributeKeyDataType: filterAttributeKey?.dataType ?? null,
+			tagType: filterAttributeKey?.type ?? null,
+			searchText: isInNInOperator(tagOperator)
+				? tagValue[tagValue.length - 1]?.toString() ?? '' // last element of tagvalue will be always user search value
+				: tagValue?.toString() ?? '',
 		});
 
 		if (payload) {
@@ -91,10 +114,11 @@ export const useFetchKeysAndValues = (
 	const clearFetcher = useRef(handleFetchOption).current;
 
 	// debounces the fetch function to avoid excessive API calls
-	useDebounce(() => clearFetcher(searchValue, query), 750, [
+	useDebounce(() => clearFetcher(searchValue, query, keys), 750, [
 		clearFetcher,
 		searchValue,
 		query,
+		keys,
 	]);
 
 	// update the fetched keys when the fetch status changes

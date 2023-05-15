@@ -1,4 +1,5 @@
 import { QUERY_BUILDER_OPERATORS_BY_TYPES } from 'constants/queryBuilder';
+import { getRemovePrefixFromKey } from 'container/QueryBuilder/filters/QueryBuilderSearch/utils';
 import { useMemo } from 'react';
 import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
 
@@ -14,7 +15,7 @@ export const useOperators = (
 	keys: BaseAutocompleteData[],
 ): IOperators =>
 	useMemo(() => {
-		const currentKey = keys?.find((el) => el.key === key);
+		const currentKey = keys?.find((el) => el.key === getRemovePrefixFromKey(key));
 		return currentKey?.dataType
 			? QUERY_BUILDER_OPERATORS_BY_TYPES[currentKey.dataType]
 			: QUERY_BUILDER_OPERATORS_BY_TYPES.universal;

@@ -7,16 +7,16 @@ import {
 } from '../filters/OrderByFilter/utils';
 import {
 	isExistsNotExistsOperator,
-	isInNotInOperator,
+	isInNInOperator,
 } from '../filters/QueryBuilderSearch/utils';
 
-describe('isInNotInOperator', () => {
+describe('isInNInOperator', () => {
 	test('returns true if the value contains the IN operator', () => {
-		expect(isInNotInOperator('IN [ab, cd, 1]')).toBe(true);
+		expect(isInNInOperator('service_name IN [ab, cd, 1]')).toBe(true);
 	});
 
 	test('returns true if the value contains the NIN operator', () => {
-		expect(isInNotInOperator('NIN [ab, cd, 1]')).toBe(true);
+		expect(isInNInOperator('service_name NIN [ab, cd, 1]')).toBe(true);
 	});
 });
 

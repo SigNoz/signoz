@@ -18,13 +18,16 @@ function EditRules(): JSX.Element {
 
 	const isValidRuleId = ruleId !== null && String(ruleId).length !== 0;
 
-	const { isLoading, data, isError } = useQuery(['ruleId', ruleId], {
-		queryFn: () =>
-			get({
-				id: parseInt(ruleId || '', 10),
-			}),
-		enabled: isValidRuleId,
-	});
+	const { isLoading, data, isRefetching, isError } = useQuery(
+		['ruleId', ruleId],
+		{
+			queryFn: () =>
+				get({
+					id: parseInt(ruleId || '', 10),
+				}),
+			enabled: isValidRuleId,
+		},
+	);
 
 	const { notifications } = useNotifications();
 
@@ -45,7 +48,7 @@ function EditRules(): JSX.Element {
 		return <div>{data?.error || t('something_went_wrong')}</div>;
 	}
 
-	if (isLoading || !data?.payload) {
+	if (isLoading || isRefetching || !data?.payload) {
 		return <Spinner tip="Loading Rules..." />;
 	}
 

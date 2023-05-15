@@ -20,10 +20,6 @@ import { EQueryType } from 'types/common/dashboard';
 import DashboardReducer from 'types/reducer/dashboards';
 import { v4 as uuid } from 'uuid';
 
-import {
-	WIDGET_CLICKHOUSE_QUERY_KEY_NAME,
-	WIDGET_PROMQL_QUERY_KEY_NAME,
-} from './constants';
 import ClickHouseQueryContainer from './QueryBuilder/clickHouse';
 import PromQLQueryContainer from './QueryBuilder/promQL';
 import { IHandleUpdatedQuery } from './types';
@@ -126,7 +122,7 @@ function QuerySection({ updateQuery, selectedGraph }: QueryProps): JSX.Element {
 					updateQueryData={({ updatedQuery }: IHandleUpdatedQuery): void => {
 						handleLocalQueryUpdate({ updatedQuery });
 					}}
-					clickHouseQueries={localQueryChanges[WIDGET_CLICKHOUSE_QUERY_KEY_NAME]}
+					clickHouseQueries={localQueryChanges[EQueryType.CLICKHOUSE]}
 				/>
 			),
 		},
@@ -141,7 +137,7 @@ function QuerySection({ updateQuery, selectedGraph }: QueryProps): JSX.Element {
 					updateQueryData={({ updatedQuery }: IHandleUpdatedQuery): void => {
 						handleLocalQueryUpdate({ updatedQuery });
 					}}
-					promQLQueries={localQueryChanges[WIDGET_PROMQL_QUERY_KEY_NAME]}
+					promQLQueries={localQueryChanges[EQueryType.PROM]}
 				/>
 			),
 		},
