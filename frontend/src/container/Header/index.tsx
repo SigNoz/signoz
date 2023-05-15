@@ -112,7 +112,7 @@ function HeaderContainer(): JSX.Element {
 					</NavLinkWrapper>
 				</NavLink>
 
-				<Space style={{ height: '100%' }} align="center">
+				<Space size="middle" align="center">
 					<Button onClick={onClickSignozCloud} type="primary">
 						Try Signoz Cloud
 					</Button>
