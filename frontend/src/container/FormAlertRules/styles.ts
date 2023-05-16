@@ -82,7 +82,6 @@ export const InputSmall = styled(Input)`
 `;
 
 export const FormContainer = styled(Card)`
-	padding: 2em;
 	margin-top: 1rem;
 	display: flex;
 	flex-direction: column;

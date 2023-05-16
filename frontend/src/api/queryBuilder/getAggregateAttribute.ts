@@ -1,6 +1,7 @@
 import { ApiV3Instance } from 'api';
 import { ErrorResponseHandler } from 'api/ErrorResponseHandler';
 import { AxiosError, AxiosResponse } from 'axios';
+import createQueryParams from 'lib/createQueryParams';
 // ** Helpers
 import { ErrorResponse, SuccessResponse } from 'types/api';
 // ** Types
@@ -18,7 +19,11 @@ export const getAggregateAttribute = async ({
 		const response: AxiosResponse<{
 			data: IQueryAutocompleteResponse;
 		}> = await ApiV3Instance.get(
-			`autocomplete/aggregate_attributes?aggregateOperator=${aggregateOperator}&dataSource=${dataSource}&searchText=${searchText}`,
+			`autocomplete/aggregate_attributes?${createQueryParams({
+				aggregateOperator,
+				searchText,
+				dataSource,
+			})}`,
 		);
 
 		return {
