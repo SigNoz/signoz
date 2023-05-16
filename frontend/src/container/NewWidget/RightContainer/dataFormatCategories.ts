@@ -1,5 +1,3 @@
-import { flattenDeep } from 'lodash-es';
-
 export const dataTypeCategories = [
 	{
 		name: 'Time',
@@ -382,6 +380,6 @@ export const dataTypeCategories = [
 	},
 ];
 
-export const flattenedCategories = flattenDeep(
-	dataTypeCategories.map((category) => category.formats),
-);
+export const flattenedCategories = dataTypeCategories
+	.map((category) => category.formats)
+	.flat();
