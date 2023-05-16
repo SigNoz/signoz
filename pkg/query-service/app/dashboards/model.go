@@ -594,14 +594,18 @@ func countTraceAndLogsPanel(data map[string]interface{}) int64 {
 		data := widgets.([]interface{})
 		for _, widget := range data {
 			sData := widget.(map[string]interface{})
-			query := sData["query"].(interface{}).(map[string]interface{})
-			if query["queryType"] == "builder" && query["builder"] != nil {
-				builderData := query["builder"].(interface{}).(map[string]interface{})
-				builderQueryData := builderData["queryData"].([]interface{})
-				for _, queryData := range builderQueryData {
-					data := queryData.(map[string]interface{})
-					if data["dataSource"] == "traces" || data["dataSource"] == "logs" {
-						count++
+			if sData["query"] != nil {
+				query := sData["query"].(interface{}).(map[string]interface{})
+				if query["queryType"] == "builder" && query["builder"] != nil {
+					builderData := query["builder"].(interface{}).(map[string]interface{})
+					if builderData["queryData"] != nil {
+						builderQueryData := builderData["queryData"].([]interface{})
+						for _, queryData := range builderQueryData {
+							data := queryData.(map[string]interface{})
+							if data["dataSource"] == "traces" || data["dataSource"] == "logs" {
+								count++
+							}
+						}
 					}
 				}
 			}
