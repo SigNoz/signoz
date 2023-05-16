@@ -139,6 +139,7 @@ interface QueryError {
 		errorMessage: string;
 		widgetId: string;
 		errorBoolean?: boolean;
+		isLoadingQueryResult?: boolean;
 	};
 }
 

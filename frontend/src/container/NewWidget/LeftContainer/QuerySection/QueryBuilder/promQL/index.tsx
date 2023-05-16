@@ -3,8 +3,8 @@ import { PromQLQueryTemplate } from 'constants/dashboard';
 import GetQueryName from 'lib/query/GetQueryName';
 import React from 'react';
 import { IPromQLQuery, Query } from 'types/api/dashboard/getAll';
+import { EQueryType } from 'types/common/dashboard';
 
-import { WIDGET_PROMQL_QUERY_KEY_NAME } from '../../constants';
 import { QueryButton } from '../../styles';
 import { IHandleUpdatedQuery } from '../../types';
 import PromQLQueryBuilder from './query';
@@ -28,7 +28,7 @@ function PromQLQueryContainer({
 		toggleDisable,
 		toggleDelete,
 	}: IPromQLQueryHandleChange): void => {
-		const allQueries = queryData[WIDGET_PROMQL_QUERY_KEY_NAME];
+		const allQueries = queryData[EQueryType.PROM];
 		const currentIndexQuery = allQueries[queryIndex as number];
 		if (query !== undefined) currentIndexQuery.query = query;
 		if (legend !== undefined) currentIndexQuery.legend = legend;
@@ -42,8 +42,8 @@ function PromQLQueryContainer({
 		updateQueryData({ updatedQuery: { ...queryData } });
 	};
 	const addQueryHandler = (): void => {
-		queryData[WIDGET_PROMQL_QUERY_KEY_NAME].push({
-			name: GetQueryName(queryData[WIDGET_PROMQL_QUERY_KEY_NAME]) || '',
+		queryData[EQueryType.PROM].push({
+			name: GetQueryName(queryData[EQueryType.PROM]) || '',
 			...PromQLQueryTemplate,
 		});
 		updateQueryData({ updatedQuery: { ...queryData } });

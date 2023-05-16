@@ -14,6 +14,7 @@ import {
 import React, { useMemo, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { Widgets } from 'types/api/dashboard/getAll';
+import { EQueryType } from 'types/common/dashboard';
 
 import { Card, GraphContainer, GraphTitle, Row } from '../styles';
 import { legend } from './constant';
@@ -39,14 +40,14 @@ function External({ getWidgetQueryBuilder }: ExternalProps): JSX.Element {
 	const externalCallErrorWidget = useMemo(
 		() =>
 			getWidgetQueryBuilder({
-				queryType: 1,
-				promQL: [],
-				metricsBuilder: externalCallErrorPercent({
+				queryType: EQueryType.QUERY_BUILDER,
+				promql: [],
+				builder: externalCallErrorPercent({
 					servicename,
 					legend: legend.address,
 					tagFilterItems,
 				}),
-				clickHouse: [],
+				clickhouse_sql: [],
 			}),
 		[getWidgetQueryBuilder, servicename, tagFilterItems],
 	);
@@ -59,13 +60,13 @@ function External({ getWidgetQueryBuilder }: ExternalProps): JSX.Element {
 	const externalCallDurationWidget = useMemo(
 		() =>
 			getWidgetQueryBuilder({
-				queryType: 1,
-				promQL: [],
-				metricsBuilder: externalCallDuration({
+				queryType: EQueryType.QUERY_BUILDER,
+				promql: [],
+				builder: externalCallDuration({
 					servicename,
 					tagFilterItems,
 				}),
-				clickHouse: [],
+				clickhouse_sql: [],
 			}),
 		[getWidgetQueryBuilder, servicename, tagFilterItems],
 	);
@@ -73,14 +74,14 @@ function External({ getWidgetQueryBuilder }: ExternalProps): JSX.Element {
 	const externalCallRPSWidget = useMemo(
 		() =>
 			getWidgetQueryBuilder({
-				queryType: 1,
-				promQL: [],
-				metricsBuilder: externalCallRpsByAddress({
+				queryType: EQueryType.QUERY_BUILDER,
+				promql: [],
+				builder: externalCallRpsByAddress({
 					servicename,
 					legend: legend.address,
 					tagFilterItems,
 				}),
-				clickHouse: [],
+				clickhouse_sql: [],
 			}),
 		[getWidgetQueryBuilder, servicename, tagFilterItems],
 	);
@@ -88,14 +89,14 @@ function External({ getWidgetQueryBuilder }: ExternalProps): JSX.Element {
 	const externalCallDurationAddressWidget = useMemo(
 		() =>
 			getWidgetQueryBuilder({
-				queryType: 1,
-				promQL: [],
-				metricsBuilder: externalCallDurationByAddress({
+				queryType: EQueryType.QUERY_BUILDER,
+				promql: [],
+				builder: externalCallDurationByAddress({
 					servicename,
 					legend: legend.address,
 					tagFilterItems,
 				}),
-				clickHouse: [],
+				clickhouse_sql: [],
 			}),
 		[getWidgetQueryBuilder, servicename, tagFilterItems],
 	);

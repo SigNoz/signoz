@@ -7,5 +7,5 @@ export interface IGetAttributeKeysPayload {
 	dataSource: DataSource;
 	searchText: string;
 	aggregateAttribute: string;
-	tagType: BaseAutocompleteData['type'];
+	tagType?: BaseAutocompleteData['type'];
 }

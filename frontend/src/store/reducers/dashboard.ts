@@ -29,6 +29,7 @@ const InitialValue: InitialValueTypes = {
 	isEditMode: false,
 	isQueryFired: false,
 	isAddWidget: false,
+	isLoadingQueryResult: false,
 };
 
 const dashboard = (
@@ -147,7 +148,12 @@ const dashboard = (
 		}
 
 		case QUERY_ERROR: {
-			const { widgetId, errorMessage, errorBoolean = true } = action.payload;
+			const {
+				widgetId,
+				errorMessage,
+				errorBoolean = true,
+				isLoadingQueryResult = false,
+			} = action.payload;
 			const [selectedDashboard] = state.dashboards;
 			const { data } = selectedDashboard;
 
@@ -187,6 +193,7 @@ const dashboard = (
 					},
 				],
 				isQueryFired: true,
+				isLoadingQueryResult,
 			};
 		}
 
@@ -232,6 +239,7 @@ const dashboard = (
 					},
 				],
 				isQueryFired: true,
+				isLoadingQueryResult: false,
 			};
 		}
 

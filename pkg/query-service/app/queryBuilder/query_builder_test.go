@@ -1,4 +1,4 @@
-package app
+package queryBuilder
 
 import (
 	"strings"
@@ -28,6 +28,7 @@ func TestBuildQueryWithMultipleQueriesAndFormula(t *testing.T) {
 						Expression:        "A",
 					},
 					"B": {
+						QueryName:          "B",
 						AggregateAttribute: v3.AttributeKey{Key: "name2"},
 						DataSource:         v3.DataSourceMetrics,
 						AggregateOperator:  v3.AggregateOperatorRateAvg,
@@ -40,12 +41,12 @@ func TestBuildQueryWithMultipleQueriesAndFormula(t *testing.T) {
 				},
 			},
 		}
-		qbOptions := queryBuilderOptions{
+		qbOptions := QueryBuilderOptions{
 			BuildMetricQuery: metricsv3.PrepareMetricQuery,
 		}
 		qb := NewQueryBuilder(qbOptions)
 
-		queries, err := qb.prepareQueries(q)
+		queries, err := qb.PrepareQueries(q)
 
 		require.NoError(t, err)
 
@@ -81,12 +82,12 @@ func TestBuildQueryWithIncorrectQueryRef(t *testing.T) {
 			},
 		}
 
-		qbOptions := queryBuilderOptions{
+		qbOptions := QueryBuilderOptions{
 			BuildMetricQuery: metricsv3.PrepareMetricQuery,
 		}
 		qb := NewQueryBuilder(qbOptions)
 
-		_, err := qb.prepareQueries(q)
+		_, err := qb.PrepareQueries(q)
 
 		require.NoError(t, err)
 	})
@@ -112,6 +113,7 @@ func TestBuildQueryWithThreeOrMoreQueriesRefAndFormula(t *testing.T) {
 						Disabled:          true,
 					},
 					"B": {
+						QueryName:          "B",
 						AggregateAttribute: v3.AttributeKey{Key: "name2"},
 						DataSource:         v3.DataSourceMetrics,
 
@@ -120,6 +122,7 @@ func TestBuildQueryWithThreeOrMoreQueriesRefAndFormula(t *testing.T) {
 						Disabled:          true,
 					},
 					"C": {
+						QueryName:          "C",
 						AggregateAttribute: v3.AttributeKey{Key: "name3"},
 						DataSource:         v3.DataSourceMetrics,
 
@@ -151,12 +154,12 @@ func TestBuildQueryWithThreeOrMoreQueriesRefAndFormula(t *testing.T) {
 			},
 		}
 
-		qbOptions := queryBuilderOptions{
+		qbOptions := QueryBuilderOptions{
 			BuildMetricQuery: metricsv3.PrepareMetricQuery,
 		}
 		qb := NewQueryBuilder(qbOptions)
 
-		queries, err := qb.prepareQueries(q)
+		queries, err := qb.PrepareQueries(q)
 
 		require.NoError(t, err)
 
@@ -174,6 +177,12 @@ func TestBuildQueryWithThreeOrMoreQueriesRefAndFormula(t *testing.T) {
 
 		require.Contains(t, queries["F5"], "SELECT A.ts as ts, ((A.value - B.value) / B.value) * 100")
 		require.Equal(t, 1, strings.Count(queries["F5"], " ON "))
+
+		for _, query := range q.CompositeQuery.BuilderQueries {
+			if query.Disabled {
+				require.NotContains(t, queries, query.QueryName)
+			}
+		}
 
 		// res := PrepareBuilderMetricQueries(q, "table")
 		// So(res.Err, ShouldBeNil)

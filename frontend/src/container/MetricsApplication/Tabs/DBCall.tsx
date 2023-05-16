@@ -12,6 +12,8 @@ import {
 import React, { useMemo, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { Widgets } from 'types/api/dashboard/getAll';
+import { TagFilterItem } from 'types/api/queryBuilder/queryBuilderData';
+import { EQueryType } from 'types/common/dashboard';
 
 import { Card, GraphContainer, GraphTitle, Row } from '../styles';
 import { Button } from './styles';
@@ -27,7 +29,7 @@ function DBCall({ getWidgetQueryBuilder }: DBCallProps): JSX.Element {
 	const [selectedTimeStamp, setSelectedTimeStamp] = useState<number>(0);
 	const { queries } = useResourceAttribute();
 
-	const tagFilterItems = useMemo(
+	const tagFilterItems: TagFilterItem[] = useMemo(
 		() =>
 			handleNonInQueryRange(resourceAttributesToTagFilterItems(queries)) || [],
 		[queries],
@@ -46,27 +48,27 @@ function DBCall({ getWidgetQueryBuilder }: DBCallProps): JSX.Element {
 	const databaseCallsRPSWidget = useMemo(
 		() =>
 			getWidgetQueryBuilder({
-				queryType: 1,
-				promQL: [],
-				metricsBuilder: databaseCallsRPS({
+				queryType: EQueryType.QUERY_BUILDER,
+				promql: [],
+				builder: databaseCallsRPS({
 					servicename,
 					legend,
 					tagFilterItems,
 				}),
-				clickHouse: [],
+				clickhouse_sql: [],
 			}),
 		[getWidgetQueryBuilder, servicename, tagFilterItems],
 	);
 	const databaseCallsAverageDurationWidget = useMemo(
 		() =>
 			getWidgetQueryBuilder({
-				queryType: 1,
-				promQL: [],
-				metricsBuilder: databaseCallsAvgDuration({
+				queryType: EQueryType.QUERY_BUILDER,
+				promql: [],
+				builder: databaseCallsAvgDuration({
 					servicename,
 					tagFilterItems,
 				}),
-				clickHouse: [],
+				clickhouse_sql: [],
 			}),
 		[getWidgetQueryBuilder, servicename, tagFilterItems],
 	);
