@@ -283,8 +283,9 @@ func buildTracesQuery(start, end, step int64, mq *v3.BuilderQuery, tableName str
 				subQuery, err := existsSubQueryForFixedColumn(key, v3.FilterOperatorExists)
 				if err != nil {
 					filterSubQuery = ""
+				} else {
+					filterSubQuery = fmt.Sprintf(" AND %s", subQuery)
 				}
-				filterSubQuery = fmt.Sprintf(" AND %s", subQuery)
 			} else {
 				columnType, columnDataType := getClickhouseTracesColumnDataTypeAndType(key)
 				filterSubQuery = fmt.Sprintf("%s AND has(%s%s, '%s')", filterSubQuery, columnDataType, columnType, mq.AggregateAttribute.Key)

@@ -359,14 +359,31 @@ var testBuildTracesQueryData = []struct {
 	ExpectedQuery     string
 }{
 	{
-		Name:  "Test aggregate count on column",
+		Name:  "Test aggregate count on fixed column of float64 type",
 		Start: 1680066360726210000,
 		End:   1680066458000000000,
 		Step:  60,
 		BuilderQuery: &v3.BuilderQuery{
-			QueryName:         "A",
-			AggregateOperator: v3.AggregateOperatorCount,
-			Expression:        "A",
+			QueryName:          "A",
+			AggregateOperator:  v3.AggregateOperatorCount,
+			Expression:         "A",
+			AggregateAttribute: v3.AttributeKey{Key: "durationNano", DataType: v3.AttributeKeyDataTypeFloat64, Type: v3.AttributeKeyTypeTag, IsColumn: true},
+		},
+		TableName: "signoz_traces.distributed_signoz_index_v2",
+		ExpectedQuery: "SELECT toStartOfInterval(timestamp, INTERVAL 60 SECOND) AS ts, toFloat64(count()) as value" +
+			" from signoz_traces.distributed_signoz_index_v2 where (timestamp >= '1680066360726210000' AND timestamp <= '1680066458000000000')" +
+			" group by ts order by ts",
+	},
+	{
+		Name:  "Test aggregate count on fixed column of bool type",
+		Start: 1680066360726210000,
+		End:   1680066458000000000,
+		Step:  60,
+		BuilderQuery: &v3.BuilderQuery{
+			QueryName:          "A",
+			AggregateOperator:  v3.AggregateOperatorCount,
+			Expression:         "A",
+			AggregateAttribute: v3.AttributeKey{Key: "hasError", DataType: v3.AttributeKeyDataTypeBool, Type: v3.AttributeKeyTypeTag, IsColumn: true},
 		},
 		TableName: "signoz_traces.distributed_signoz_index_v2",
 		ExpectedQuery: "SELECT toStartOfInterval(timestamp, INTERVAL 60 SECOND) AS ts, toFloat64(count()) as value" +
@@ -390,7 +407,7 @@ var testBuildTracesQueryData = []struct {
 			" AND has(stringTagMap, 'user_name') group by ts order by ts",
 	},
 	{
-		Name:  "Test aggregate count on a fixed column",
+		Name:  "Test aggregate count on a fixed column of string type",
 		Start: 1680066360726210000,
 		End:   1680066458000000000,
 		Step:  60,
