@@ -12,7 +12,6 @@ import (
 
 	baseconstants "go.signoz.io/signoz/pkg/query-service/constants"
 
-	"go.signoz.io/signoz/ee/query-service/dao"
 	validate "go.signoz.io/signoz/ee/query-service/integrations/signozio"
 	"go.signoz.io/signoz/ee/query-service/model"
 	basemodel "go.signoz.io/signoz/pkg/query-service/model"
@@ -98,7 +97,7 @@ func (lm *Manager) SetActive(l *model.License) {
 	// set default features
 	setDefaultFeatures(lm)
 
-	err := dao.DB().InitFeatures(lm.activeFeatures)
+	err := lm.repo.InitFeatures(lm.activeFeatures)
 	if err != nil {
 		zap.S().Error("Couldn't activate features: ", err)
 	}
@@ -131,7 +130,7 @@ func (lm *Manager) LoadActiveLicense() error {
 		// if no active license is found, we default to basic(free) plan with all default features
 		lm.activeFeatures = model.BasicPlan
 		setDefaultFeatures(lm)
-		err := dao.DB().InitFeatures(lm.activeFeatures)
+		err := lm.repo.InitFeatures(lm.activeFeatures)
 		if err != nil {
 			zap.S().Error("Couldn't initialize features: ", err)
 			return err
@@ -302,7 +301,7 @@ func (lm *Manager) Activate(ctx context.Context, key string) (licenseResponse *m
 // CheckFeature will be internally used by backend routines
 // for feature gating
 func (lm *Manager) CheckFeature(featureKey string) error {
-	feature, err := dao.DB().GetFeature(featureKey)
+	feature, err := lm.repo.GetFeature(featureKey)
 	if err != nil {
 		return err
 	}
@@ -314,7 +313,19 @@ func (lm *Manager) CheckFeature(featureKey string) error {
 
 // GetFeatureFlags returns current active features
 func (lm *Manager) GetFeatureFlags() (basemodel.FeatureSet, error) {
-	return dao.DB().GetAllFeatures()
+	return lm.repo.GetAllFeatures()
+}
+
+func (lm *Manager) InitFeatures(features basemodel.FeatureSet) error {
+	return lm.repo.InitFeatures(features)
+}
+
+func (lm *Manager) UpdateFeatureFlag(feature basemodel.Feature) error {
+	return lm.repo.UpdateFeature(feature)
+}
+
+func (lm *Manager) GetFeatureFlag(key string) (basemodel.Feature, error) {
+	return lm.repo.GetFeature(key)
 }
 
 // GetRepo return the license repo

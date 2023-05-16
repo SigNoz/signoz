@@ -12,3 +12,5 @@ type Feature struct {
 const SmartTraceDetail = "SMART_TRACE_DETAIL"
 const CustomMetricsFunction = "CUSTOM_METRICS_FUNCTION"
 const OSS = "OSS"
+const QueryBuilderPanels = "QUERY_BUILDER_PANELS"
+const QueryBuilderAlerts = "QUERY_BUILDER_ALERTS"

@@ -2,8 +2,8 @@ package featureManager
 
 import (
 	"go.signoz.io/signoz/pkg/query-service/constants"
-	"go.signoz.io/signoz/pkg/query-service/dao"
 	"go.signoz.io/signoz/pkg/query-service/model"
+	"go.uber.org/zap"
 )
 
 type FeatureManager struct {
@@ -11,17 +11,6 @@ type FeatureManager struct {
 
 func StartManager() *FeatureManager {
 	fM := &FeatureManager{}
-	features := append(constants.DEFAULT_FEATURE_SET, model.Feature{
-		Name:       model.OSS,
-		Active:     true,
-		Usage:      0,
-		UsageLimit: -1,
-		Route:      "",
-	})
-	err := dao.DB().InitFeatures(features)
-	if err != nil {
-		panic(err)
-	}
 	return fM
 }
 
@@ -29,21 +18,44 @@ func StartManager() *FeatureManager {
 // for feature gating
 func (fm *FeatureManager) CheckFeature(featureKey string) error {
 
-	feature, err := dao.DB().GetFeature(featureKey)
+	features, err := fm.GetFeatureFlags()
 	if err != nil {
 		return err
 	}
-	if feature.Active {
-		return nil
+	for _, feature := range features {
+		if feature.Name == featureKey {
+			if feature.Active {
+				return nil
+			}
+			return model.ErrFeatureUnavailable{Key: featureKey}
+		}
 	}
 	return model.ErrFeatureUnavailable{Key: featureKey}
 }
 
 // GetFeatureFlags returns current features
 func (fm *FeatureManager) GetFeatureFlags() (model.FeatureSet, error) {
-	features, err := dao.DB().GetAllFeatures()
-	if err != nil {
-		return nil, err
-	}
+	features := append(constants.DEFAULT_FEATURE_SET, model.Feature{
+		Name:       model.OSS,
+		Active:     true,
+		Usage:      0,
+		UsageLimit: -1,
+		Route:      "",
+	})
 	return features, nil
+}
+
+func (fm *FeatureManager) InitFeatures(req model.FeatureSet) error {
+	zap.S().Error("InitFeatures not implemented in OSS")
+	return nil
+}
+
+func (fm *FeatureManager) UpdateFeatureFlag(req model.Feature) error {
+	zap.S().Error("UpdateFeatureFlag not implemented in OSS")
+	return nil
+}
+
+func (fm *FeatureManager) GetFeatureFlag(key string) (model.Feature, error) {
+	zap.S().Error("GetFeatureFlag not implemented in OSS")
+	return model.Feature{}, model.ErrFeatureUnavailable{Key: key}
 }

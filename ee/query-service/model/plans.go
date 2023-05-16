@@ -9,8 +9,6 @@ const Basic = "BASIC_PLAN"
 const Pro = "PRO_PLAN"
 const Enterprise = "ENTERPRISE_PLAN"
 const DisableUpsell = "DISABLE_UPSELL"
-const QueryBuilderPanels = "QUERY_BUILDER_PANELS"
-const QueryBuilderAlerts = "QUERY_BUILDER_ALERTS"
 
 var BasicPlan = basemodel.FeatureSet{
 	basemodel.Feature{
@@ -49,14 +47,14 @@ var BasicPlan = basemodel.FeatureSet{
 		Route:      "",
 	},
 	basemodel.Feature{
-		Name:       QueryBuilderPanels,
+		Name:       basemodel.QueryBuilderPanels,
 		Active:     true,
 		Usage:      0,
 		UsageLimit: 5,
 		Route:      "",
 	},
 	basemodel.Feature{
-		Name:       QueryBuilderAlerts,
+		Name:       basemodel.QueryBuilderAlerts,
 		Active:     true,
 		Usage:      0,
 		UsageLimit: 5,
@@ -94,14 +92,14 @@ var ProPlan = basemodel.FeatureSet{
 		Route:      "",
 	},
 	basemodel.Feature{
-		Name:       QueryBuilderPanels,
+		Name:       basemodel.QueryBuilderPanels,
 		Active:     true,
 		Usage:      0,
 		UsageLimit: -1,
 		Route:      "",
 	},
 	basemodel.Feature{
-		Name:       QueryBuilderAlerts,
+		Name:       basemodel.QueryBuilderAlerts,
 		Active:     true,
 		Usage:      0,
 		UsageLimit: -1,
@@ -139,14 +137,14 @@ var EnterprisePlan = basemodel.FeatureSet{
 		Route:      "",
 	},
 	basemodel.Feature{
-		Name:       QueryBuilderPanels,
+		Name:       basemodel.QueryBuilderPanels,
 		Active:     true,
 		Usage:      0,
 		UsageLimit: -1,
 		Route:      "",
 	},
 	basemodel.Feature{
-		Name:       QueryBuilderAlerts,
+		Name:       basemodel.QueryBuilderAlerts,
 		Active:     true,
 		Usage:      0,
 		UsageLimit: -1,
