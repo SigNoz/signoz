@@ -1,14 +1,22 @@
 import { blue, orange } from '@ant-design/colors';
-import { Input } from 'antd';
+import { InfoOutlined } from '@ant-design/icons';
+import { Button, Input, Space, Tooltip } from 'antd';
 import { ColumnsType } from 'antd/es/table';
 import Editor from 'components/Editor';
 import AddToQueryHOC from 'components/Logs/AddToQueryHOC';
 import CopyClipboardHOC from 'components/Logs/CopyClipboardHOC';
 import { ResizeTable } from 'components/ResizeTable';
+import ROUTES from 'constants/routes';
 import flatten from 'flat';
+import history from 'lib/history';
 import { fieldSearchFilter } from 'lib/logs/fieldSearch';
 import { isEmpty } from 'lodash-es';
 import React, { useMemo, useState } from 'react';
+import { useDispatch } from 'react-redux';
+import { generatePath } from 'react-router-dom';
+import { Dispatch } from 'redux';
+import AppActions from 'types/actions';
+import { SET_DETAILED_LOG_DATA } from 'types/actions/logs';
 import { ILog } from 'types/api/logs/log';
 
 import ActionItem from './ActionItem';
@@ -22,6 +30,8 @@ interface TableViewProps {
 }
 function TableView({ logData }: TableViewProps): JSX.Element | null {
 	const [fieldSearchInput, setFieldSearchInput] = useState<string>('');
+
+	const dispatch = useDispatch<Dispatch<AppActions>>();
 
 	const flattenLogData: Record<string, never> | null = useMemo(
 		() => (logData ? flatten(logData) : null),
@@ -40,6 +50,25 @@ function TableView({ logData }: TableViewProps): JSX.Element | null {
 				field: key,
 				value: JSON.stringify(flattenLogData[key]),
 			}));
+
+	const onTraceHandler = (record: DataType) => (): void => {
+		if (flattenLogData === null) return;
+
+		const traceId = flattenLogData[record.field];
+
+		if (traceId) {
+			dispatch({
+				type: SET_DETAILED_LOG_DATA,
+				payload: null,
+			});
+
+			history.push(
+				generatePath(ROUTES.TRACE_DETAIL, {
+					id: traceId,
+				}),
+			);
+		}
+	};
 
 	if (!dataSource) {
 		return null;
@@ -63,9 +92,30 @@ function TableView({ logData }: TableViewProps): JSX.Element | null {
 			key: 'field',
 			width: 30,
 			ellipsis: true,
-			render: (field: string): JSX.Element => {
+			render: (field: string, record): JSX.Element => {
 				const fieldKey = field.split('.').slice(-1);
 				const renderedField = <span style={{ color: blue[4] }}>{field}</span>;
+
+				if (record.field === 'trace_id') {
+					const traceId = flattenLogData[record.field];
+
+					return (
+						<Space size="middle">
+							{renderedField}
+
+							{traceId && (
+								<Tooltip title="Inspect in Trace">
+									<Button
+										onClick={onTraceHandler(record)}
+										size="small"
+										shape="circle"
+										icon={<InfoOutlined />}
+									/>
+								</Tooltip>
+							)}
+						</Space>
+					);
+				}
 
 				if (!RESTRICTED_FIELDS.includes(fieldKey[0])) {
 					return (
