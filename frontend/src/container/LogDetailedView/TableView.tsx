@@ -89,7 +89,7 @@ function TableView({ logData }: TableViewProps): JSX.Element | null {
 					if (!isEmpty(parsedBody)) {
 						return (
 							<Editor
-								value={JSON.stringify(parsedBody, null, 2)}
+								value={JSON.stringify(parsedBody, null, 2).replace(/\\n/g, '\n')}
 								readOnly
 								height="70vh"
 								options={{
