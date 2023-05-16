@@ -266,7 +266,7 @@ func (m *Manager) EditRule(ruleStr string, id string) error {
 			zap.S().Errorf("error updating feature usage: %v", err)
 		}
 		// update feature usage if the new rule is not a trace or log query builder and the current rule is
-	} else if !checkIfTraceOrLogQB(parsedRule) { 
+	} else if !checkIfTraceOrLogQB(parsedRule) {
 		err = m.updateFeatureUsage(&currentRule.PostableRule, -1)
 		if err != nil {
 			zap.S().Errorf("error updating feature usage: %v", err)
@@ -444,10 +444,12 @@ func (m *Manager) checkFeatureUsage(parsedRule *PostableRule) error {
 }
 
 func checkIfTraceOrLogQB(parsedRule *PostableRule) bool {
-	if parsedRule.RuleCondition.QueryType() == v3.QueryTypeBuilder {
-		for _, query := range parsedRule.RuleCondition.CompositeQuery.BuilderQueries {
-			if query.DataSource == v3.DataSourceTraces || query.DataSource == v3.DataSourceLogs {
-				return true
+	if parsedRule != nil {
+		if parsedRule.RuleCondition.QueryType() == v3.QueryTypeBuilder {
+			for _, query := range parsedRule.RuleCondition.CompositeQuery.BuilderQueries {
+				if query.DataSource == v3.DataSourceTraces || query.DataSource == v3.DataSourceLogs {
+					return true
+				}
 			}
 		}
 	}
