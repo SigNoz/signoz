@@ -215,7 +215,7 @@ export function HavingFilter({
 		setLocalValues(transformHavingToStringValue(having));
 	}, [having]);
 
-	const isMatricsDataSource = useMemo(
+	const isMetricsDataSource = useMemo(
 		() => query.dataSource === DataSource.METRICS,
 		[query.dataSource],
 	);
@@ -229,7 +229,7 @@ export function HavingFilter({
 			tagRender={tagRender}
 			value={localValues}
 			data-testid="havingSelect"
-			disabled={isMatricsDataSource && !query.aggregateAttribute.key}
+			disabled={isMetricsDataSource && !query.aggregateAttribute.key}
 			style={{ width: '100%' }}
 			notFoundContent={currentFormValue.value.length === 0 ? undefined : null}
 			placeholder="Count(operation) > 5"

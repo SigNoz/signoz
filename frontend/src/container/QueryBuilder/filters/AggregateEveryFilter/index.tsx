@@ -42,7 +42,7 @@ function AggregateEveryFilter({
 		}
 	};
 
-	const isMatricsDataSource = useMemo(
+	const isMetricsDataSource = useMemo(
 		() => query.dataSource === DataSource.METRICS,
 		[query.dataSource],
 	);
@@ -51,7 +51,7 @@ function AggregateEveryFilter({
 		<Input
 			type="text"
 			placeholder="Enter in seconds"
-			disabled={isMatricsDataSource && !query.aggregateAttribute.key}
+			disabled={isMetricsDataSource && !query.aggregateAttribute.key}
 			style={selectStyle}
 			defaultValue={query.stepInterval ?? stepInterval}
 			onChange={(event): void => onChange(Number(event.target.value))}
