@@ -287,10 +287,10 @@ func updateFeatureUsage(fm interfaces.FeatureLookup, usage int64) *model.ApiErro
 		}
 	}
 	feature.Usage += usage
-	if feature.Usage >= feature.UsageLimit {
+	if feature.Usage >= feature.UsageLimit && feature.UsageLimit != -1 {
 		feature.Active = false
 	}
-	if feature.Usage < feature.UsageLimit {
+	if feature.Usage < feature.UsageLimit || feature.UsageLimit == -1 {
 		feature.Active = true
 	}
 	err = fm.UpdateFeatureFlag(feature)
@@ -313,7 +313,7 @@ func checkFeatureUsage(fm interfaces.FeatureLookup, usage int64) *model.ApiError
 			return model.BadRequest(err)
 		}
 	}
-	if feature.UsageLimit-(feature.Usage+usage) < 0 {
+	if feature.UsageLimit-(feature.Usage+usage) < 0 && feature.UsageLimit != -1 {
 		return model.BadRequest(fmt.Errorf("feature usage exceeded"))
 	}
 	return nil
