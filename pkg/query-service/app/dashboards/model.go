@@ -287,7 +287,7 @@ func updateFeatureUsage(fm interfaces.FeatureLookup, usage int64) *model.ApiErro
 		}
 	}
 	feature.Usage += usage
-	if feature.Usage == feature.UsageLimit {
+	if feature.Usage >= feature.UsageLimit {
 		feature.Active = false
 	}
 	if feature.Usage < feature.UsageLimit {
@@ -590,21 +590,29 @@ func TransformGrafanaJSONToSignoz(grafanaJSON model.GrafanaJSON) model.Dashboard
 
 func countTraceAndLogsPanel(data map[string]interface{}) int64 {
 	count := int64(0)
-	if data["widgets"] != nil {
-		widgets := data["widgets"].(interface{})
-		data := widgets.([]interface{})
-		for _, widget := range data {
-			sData := widget.(map[string]interface{})
-			if sData["query"] != nil {
-				query := sData["query"].(interface{}).(map[string]interface{})
-				if query["queryType"] == "builder" && query["builder"] != nil {
-					builderData := query["builder"].(interface{}).(map[string]interface{})
-					if builderData["queryData"] != nil {
-						builderQueryData := builderData["queryData"].([]interface{})
-						for _, queryData := range builderQueryData {
-							data := queryData.(map[string]interface{})
-							if data["dataSource"] == "traces" || data["dataSource"] == "logs" {
-								count++
+	if data != nil && data["widgets"] != nil {
+		widgets, ok := data["widgets"].(interface{})
+		if ok {
+			data, ok := widgets.([]interface{})
+			if ok {
+				for _, widget := range data {
+					sData, ok := widget.(map[string]interface{})
+					if ok && sData["query"] != nil {
+						query, ok := sData["query"].(interface{}).(map[string]interface{})
+						if ok && query["queryType"] == "builder" && query["builder"] != nil {
+							builderData, ok := query["builder"].(interface{}).(map[string]interface{})
+							if ok && builderData["queryData"] != nil {
+								builderQueryData, ok := builderData["queryData"].([]interface{})
+								if ok {
+									for _, queryData := range builderQueryData {
+										data, ok := queryData.(map[string]interface{})
+										if ok {
+											if data["dataSource"] == "traces" || data["dataSource"] == "logs" {
+												count++
+											}
+										}
+									}
+								}
 							}
 						}
 					}
