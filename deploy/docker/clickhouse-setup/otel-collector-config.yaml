@@ -70,7 +70,7 @@ receivers:
 
 
 processors:
-  logstransform/default:
+  logstransform/internal:
     operators:
       - type: trace_parser
         if: '"trace_id" in attributes or "span_id" in attributes'
@@ -206,5 +206,5 @@ service:
       exporters: [prometheus]
     logs:
       receivers: [otlp, filelog/dockercontainers]
-      processors: [logstransform/default, batch]
+      processors: [logstransform/internal, batch]
       exporters: [clickhouselogsexporter]
