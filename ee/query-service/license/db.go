@@ -2,6 +2,7 @@ package license
 
 import (
 	"context"
+	"database/sql"
 	"fmt"
 	"time"
 
@@ -9,6 +10,7 @@ import (
 
 	"go.signoz.io/signoz/ee/query-service/license/sqlite"
 	"go.signoz.io/signoz/ee/query-service/model"
+	basemodel "go.signoz.io/signoz/pkg/query-service/model"
 	"go.uber.org/zap"
 )
 
@@ -123,5 +125,81 @@ func (r *Repo) UpdatePlanDetails(ctx context.Context,
 		return fmt.Errorf("failed to update license in db: %v", err)
 	}
 
+	return nil
+}
+
+func (r *Repo) CreateFeature(req *basemodel.Feature) *basemodel.ApiError {
+
+	_, err := r.db.Exec(
+		`INSERT INTO feature_status (name, active, usage, usage_limit, route)
+		VALUES (?, ?, ?, ?, ?);`,
+		req.Name, req.Active, req.Usage, req.UsageLimit, req.Route)
+	if err != nil {
+		return &basemodel.ApiError{Typ: basemodel.ErrorInternal, Err: err}
+	}
+	return nil
+}
+
+func (r *Repo) GetFeature(featureName string) (basemodel.Feature, error) {
+
+	var feature basemodel.Feature
+
+	err := r.db.Get(&feature,
+		`SELECT * FROM feature_status WHERE name = ?;`, featureName)
+	if err != nil {
+		return feature, err
+	}
+	if feature.Name == "" {
+		return feature, basemodel.ErrFeatureUnavailable{Key: featureName}
+	}
+	return feature, nil
+}
+
+func (r *Repo) GetAllFeatures() ([]basemodel.Feature, error) {
+
+	var feature []basemodel.Feature
+
+	err := r.db.Select(&feature,
+		`SELECT * FROM feature_status;`)
+	if err != nil {
+		return feature, err
+	}
+
+	return feature, nil
+}
+
+func (r *Repo) UpdateFeature(req basemodel.Feature) error {
+
+	_, err := r.db.Exec(
+		`UPDATE feature_status SET active = ?, usage = ?, usage_limit = ?, route = ? WHERE name = ?;`,
+		req.Active, req.Usage, req.UsageLimit, req.Route, req.Name)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (r *Repo) InitFeatures(req basemodel.FeatureSet) error {
+	// get a feature by name, if it doesn't exist, create it. If it does exist, update it.
+	for _, feature := range req {
+		currentFeature, err := r.GetFeature(feature.Name)
+		if err != nil && err == sql.ErrNoRows {
+			err := r.CreateFeature(&feature)
+			if err != nil {
+				return err
+			}
+			continue
+		} else if err != nil {
+			return err
+		}
+		feature.Usage = currentFeature.Usage
+		if feature.Usage >= feature.UsageLimit && feature.UsageLimit != -1 {
+			feature.Active = false
+		}
+		err = r.UpdateFeature(feature)
+		if err != nil {
+			return err
+		}
+	}
 	return nil
 }
