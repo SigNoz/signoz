@@ -3,7 +3,7 @@ import { ALERTS_DATA_SOURCE_MAP } from 'constants/alerts';
 import { FeatureKeys } from 'constants/features';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { QueryBuilder } from 'container/QueryBuilder';
-import { useIsFeatureAvialable } from 'hooks/useFeatureFlag';
+import { useIsFeatureDisabled } from 'hooks/useFeatureFlag';
 import React, { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { AlertTypes } from 'types/api/alerts/alertTypes';
@@ -26,8 +26,6 @@ function QuerySection({
 }: QuerySectionProps): JSX.Element {
 	// init namespace for translations
 	const { t } = useTranslation('alerts');
-
-	console.log(queryCategory);
 
 	const handleQueryCategoryChange = (queryType: string): void => {
 		if (
@@ -95,7 +93,7 @@ function QuerySection({
 		},
 	];
 
-	const isPanelAvialable = useIsFeatureAvialable(
+	const isPanelAvialable = useIsFeatureDisabled(
 		FeatureKeys.QUERY_BUILDER_ALERTS,
 	);
 

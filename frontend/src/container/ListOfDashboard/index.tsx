@@ -12,11 +12,9 @@ import createDashboard from 'api/dashboard/create';
 import { AxiosError } from 'axios';
 import { ResizeTable } from 'components/ResizeTable';
 import TextToolTip from 'components/TextToolTip';
-import { FeatureKeys } from 'constants/features';
 import ROUTES from 'constants/routes';
 import SearchFilter from 'container/ListOfDashboard/SearchFilter';
 import useComponentPermission from 'hooks/useComponentPermission';
-import { MESSAGE, useIsFeatureAvialable } from 'hooks/useFeatureFlag';
 import history from 'lib/history';
 import React, {
 	Dispatch,
@@ -204,19 +202,14 @@ function ListOfAllDashboard(): JSX.Element {
 		setUploadedGrafana(uploadedGrafana);
 	};
 
-	const isPanelAvialable = useIsFeatureAvialable(
-		FeatureKeys.QUERY_BUILDER_PANELS,
-	);
-
 	const getMenuItems = useMemo(() => {
 		const menuItems: ItemType[] = [];
 		if (createNewDashboard) {
 			menuItems.push({
 				key: t('create_dashboard').toString(),
 				label: t('create_dashboard'),
-				disabled: isPanelAvialable,
+				disabled: loading,
 				onClick: onNewDashboardHandler,
-				title: isPanelAvialable ? MESSAGE.PANEL : '',
 			});
 		}
 
@@ -233,7 +226,7 @@ function ListOfAllDashboard(): JSX.Element {
 		});
 
 		return menuItems;
-	}, [createNewDashboard, isPanelAvialable, onNewDashboardHandler, t]);
+	}, [createNewDashboard, loading, onNewDashboardHandler, t]);
 
 	const menu: MenuProps = useMemo(
 		() => ({

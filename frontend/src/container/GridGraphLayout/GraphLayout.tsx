@@ -83,9 +83,9 @@ function GraphLayout({
 				{layouts.map(({ Component, ...rest }, layoutIndex) => {
 					const currentWidget = (widgets || [])?.find((e) => e.id === rest.i);
 
-					const usage = queryBuilderFeature?.usage || 0;
+					const usageLimit = queryBuilderFeature?.usage_limit || 0;
 
-					const isPanelNotAvialable = usage <= layoutIndex;
+					const isPanelNotAvialable = usageLimit > 0 && usageLimit <= layoutIndex;
 
 					if (isPanelNotAvialable) {
 						return (
@@ -97,7 +97,7 @@ function GraphLayout({
 								<Card>
 									<Typography.Text type="danger">
 										<NoPanelAvialable isDarkMode={isDarkMode}>
-											{MESSAGE.WIDGET.replace('{{widget}}', usage.toString())}
+											{MESSAGE.WIDGET.replace('{{widget}}', usageLimit.toString())}
 										</NoPanelAvialable>
 									</Typography.Text>
 								</Card>

@@ -7,11 +7,17 @@ import AppReducer from 'types/reducer/app';
 const useFeatureFlag = (
 	flagKey: keyof typeof FeatureKeys,
 ): FlatArray<FeatureFlagPayload, 1> | undefined => {
-	const { featureFlags = [] } = useSelector<AppState, AppReducer>(
+	const { featureResponse = [] } = useSelector<AppState, AppReducer>(
 		(state) => state.app,
 	);
 
-	const feature = featureFlags?.find((flag) => flag.name === flagKey);
+	if (featureResponse === null) return undefined;
+
+	// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+	// @ts-ignore
+	const featureResponseData = featureResponse.data as FeatureFlagPayload;
+
+	const feature = featureResponseData?.find((flag) => flag.name === flagKey);
 
 	if (!feature) {
 		return undefined;

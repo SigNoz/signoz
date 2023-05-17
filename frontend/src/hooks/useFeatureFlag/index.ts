@@ -1,7 +1,7 @@
 import { MESSAGE } from './constant';
 import useFeatureFlag from './useFeatureFlag';
-import useIsFeatureAvialable from './useIsFeatureAvialable';
+import useIsFeatureDisabled from './useIsFeatureDisabled';
 
 export default useFeatureFlag;
 
-export { MESSAGE, useIsFeatureAvialable };
+export { MESSAGE, useIsFeatureDisabled };

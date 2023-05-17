@@ -7,7 +7,7 @@ import ROUTES from 'constants/routes';
 import QueryTypeTag from 'container/NewWidget/LeftContainer/QueryTypeTag';
 import PlotTag from 'container/NewWidget/LeftContainer/WidgetGraph/PlotTag';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
-import { MESSAGE, useIsFeatureAvialable } from 'hooks/useFeatureFlag';
+import { MESSAGE, useIsFeatureDisabled } from 'hooks/useFeatureFlag';
 import { useNotifications } from 'hooks/useNotifications';
 import history from 'lib/history';
 import { mapQueryDataFromApi } from 'lib/newQueryBuilder/queryBuilderMappers/mapQueryDataFromApi';
@@ -301,7 +301,7 @@ function FormAlertRules({
 		initQuery,
 	]);
 
-	const isAlertAvialable = useIsFeatureAvialable(
+	const isAlertAvialable = useIsFeatureDisabled(
 		FeatureKeys.QUERY_BUILDER_ALERTS,
 	);
 
@@ -447,7 +447,8 @@ function FormAlertRules({
 
 	const isNewRule = ruleId === 0;
 
-	const isAlertAvialableToSave = isAlertAvialable && isNewRule;
+	const isAlertAvialableToSave =
+		isAlertAvialable && isNewRule && queryCategory === EQueryType.QUERY_BUILDER;
 
 	return (
 		<>

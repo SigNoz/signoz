@@ -4,7 +4,8 @@ import { FeatureKeys } from 'constants/features';
 import ROUTES from 'constants/routes';
 import { GRAPH_TYPES } from 'container/NewDashboard/ComponentsSlider';
 import { ITEMS } from 'container/NewDashboard/ComponentsSlider/menuItems';
-import { MESSAGE, useIsFeatureAvialable } from 'hooks/useFeatureFlag';
+import { MESSAGE, useIsFeatureDisabled } from 'hooks/useFeatureFlag';
+import { useNotifications } from 'hooks/useNotifications';
 import { getDashboardVariables } from 'lib/dashbaordVariables/getDashboardVariables';
 import history from 'lib/history';
 import { DashboardWidgetPageParams } from 'pages/DashboardWidget';
@@ -25,6 +26,7 @@ import { AppState } from 'store/reducers';
 import AppActions from 'types/actions';
 import { FLUSH_DASHBOARD } from 'types/actions/dashboard';
 import { Widgets } from 'types/api/dashboard/getAll';
+import AppReducer from 'types/reducer/app';
 import DashboardReducer from 'types/reducer/dashboards';
 import { GlobalReducer } from 'types/reducer/globalTime';
 
@@ -53,6 +55,10 @@ function NewWidget({
 		AppState,
 		GlobalReducer
 	>((state) => state.globalTime);
+
+	const { featureResponse } = useSelector<AppState, AppReducer>(
+		(state) => state.app,
+	);
 
 	const [selectedDashboard] = dashboards;
 
@@ -102,22 +108,34 @@ function NewWidget({
 		enum: selectedWidget?.timePreferance || 'GLOBAL_TIME',
 	});
 
+	const { notifications } = useNotifications();
+
 	const onClickSaveHandler = useCallback(() => {
 		// update the global state
-		saveSettingOfPanel({
-			uuid: selectedDashboard.uuid,
-			description,
-			isStacked: stacked,
-			nullZeroValues: selectedNullZeroValue,
-			opacity,
-			timePreferance: selectedTime.enum,
-			title,
-			yAxisUnit,
-			widgetId: query.get('widgetId') || '',
-			dashboardId,
-			graphType,
-		});
+		featureResponse
+			.refetch()
+			.then(() => {
+				saveSettingOfPanel({
+					uuid: selectedDashboard.uuid,
+					description,
+					isStacked: stacked,
+					nullZeroValues: selectedNullZeroValue,
+					opacity,
+					timePreferance: selectedTime.enum,
+					title,
+					yAxisUnit,
+					widgetId: query.get('widgetId') || '',
+					dashboardId,
+					graphType,
+				});
+			})
+			.catch(() => {
+				notifications.error({
+					message: 'Something went wrong',
+				});
+			});
 	}, [
+		featureResponse,
 		saveSettingOfPanel,
 		selectedDashboard.uuid,
 		description,
@@ -130,6 +148,7 @@ function NewWidget({
 		query,
 		dashboardId,
 		graphType,
+		notifications,
 	]);
 
 	const onClickDiscardHandler = useCallback(() => {
@@ -174,7 +193,7 @@ function NewWidget({
 		setSaveModal(true);
 	}, []);
 
-	const isQueryBuilderActive = useIsFeatureAvialable(
+	const isQueryBuilderActive = useIsFeatureDisabled(
 		FeatureKeys.QUERY_BUILDER_PANELS,
 	);
 
