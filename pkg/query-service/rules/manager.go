@@ -411,10 +411,10 @@ func (m *Manager) updateFeatureUsage(parsedRule *PostableRule, usage int64) erro
 			return err
 		}
 		feature.Usage += usage
-		if feature.Usage == feature.UsageLimit {
+		if feature.Usage == feature.UsageLimit && feature.UsageLimit != -1 {
 			feature.Active = false
 		}
-		if feature.Usage < feature.UsageLimit {
+		if feature.Usage < feature.UsageLimit || feature.UsageLimit == -1 {
 			feature.Active = true
 		}
 		err = m.featureFlags.UpdateFeatureFlag(feature)
