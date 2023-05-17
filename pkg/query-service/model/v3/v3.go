@@ -112,6 +112,22 @@ func (a AggregateOperator) RequireAttribute(dataSource DataSource) bool {
 		default:
 			return true
 		}
+	case DataSourceLogs:
+		switch a {
+		case AggregateOperatorNoOp,
+			AggregateOperatorCount:
+			return false
+		default:
+			return true
+		}
+	case DataSourceTraces:
+		switch a {
+		case AggregateOperatorNoOp,
+			AggregateOperatorCount:
+			return false
+		default:
+			return true
+		}
 	default:
 		return false
 	}
