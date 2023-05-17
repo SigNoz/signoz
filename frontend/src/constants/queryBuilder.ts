@@ -34,6 +34,7 @@ export const alphabet: string[] = alpha.map((str) => String.fromCharCode(str));
 export enum QueryBuilderKeys {
 	GET_AGGREGATE_ATTRIBUTE = 'GET_AGGREGATE_ATTRIBUTE',
 	GET_AGGREGATE_KEYS = 'GET_AGGREGATE_KEYS',
+	GET_ATTRIBUTE_KEY = 'GET_ATTRIBUTE_KEY',
 }
 
 export const mapOfOperators: Record<DataSource, string[]> = {
@@ -88,7 +89,7 @@ export const initialQueryBuilderFormValues: IBuilderQuery = {
 	queryName: createNewBuilderItemName({ existNames: [], sourceNames: alphabet }),
 	aggregateOperator: MetricAggregateOperator.NOOP,
 	aggregateAttribute: initialAggregateAttribute,
-	tagFilters: { items: [], op: 'AND' },
+	filters: { items: [], op: 'AND' },
 	expression: createNewBuilderItemName({
 		existNames: [],
 		sourceNames: alphabet,
@@ -166,7 +167,7 @@ export const QUERY_BUILDER_OPERATORS_BY_TYPES = {
 		OPERATORS.EXISTS,
 		OPERATORS.NOT_EXISTS,
 	],
-	number: [
+	int64: [
 		OPERATORS['='],
 		OPERATORS['!='],
 		OPERATORS.IN,
@@ -178,7 +179,19 @@ export const QUERY_BUILDER_OPERATORS_BY_TYPES = {
 		OPERATORS['<='],
 		OPERATORS['<'],
 	],
-	boolean: [
+	float64: [
+		OPERATORS['='],
+		OPERATORS['!='],
+		OPERATORS.IN,
+		OPERATORS.NIN,
+		OPERATORS.EXISTS,
+		OPERATORS.NOT_EXISTS,
+		OPERATORS['>='],
+		OPERATORS['>'],
+		OPERATORS['<='],
+		OPERATORS['<'],
+	],
+	bool: [
 		OPERATORS['='],
 		OPERATORS['!='],
 		OPERATORS.EXISTS,
