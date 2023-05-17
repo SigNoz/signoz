@@ -18,18 +18,15 @@ func StartManager() *FeatureManager {
 // for feature gating
 func (fm *FeatureManager) CheckFeature(featureKey string) error {
 
-	features, err := fm.GetFeatureFlags()
+	feature, err := fm.GetFeatureFlag(featureKey)
 	if err != nil {
 		return err
 	}
-	for _, feature := range features {
-		if feature.Name == featureKey {
-			if feature.Active {
-				return nil
-			}
-			return model.ErrFeatureUnavailable{Key: featureKey}
-		}
+
+	if feature.Active {
+		return nil
 	}
+
 	return model.ErrFeatureUnavailable{Key: featureKey}
 }
 
@@ -56,6 +53,14 @@ func (fm *FeatureManager) UpdateFeatureFlag(req model.Feature) error {
 }
 
 func (fm *FeatureManager) GetFeatureFlag(key string) (model.Feature, error) {
-	zap.S().Error("GetFeatureFlag not implemented in OSS")
+	features, err := fm.GetFeatureFlags()
+	if err != nil {
+		return model.Feature{}, err
+	}
+	for _, feature := range features {
+		if feature.Name == key {
+			return feature, nil
+		}
+	}
 	return model.Feature{}, model.ErrFeatureUnavailable{Key: key}
 }
