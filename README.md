@@ -89,7 +89,7 @@ Come say Hi to us on [Slack](https://signoz.io/slack) 👋
 - Filter traces by service name, operation, latency, error, tags/annotations.
 - Run aggregates on trace data (events/spans) to get business relevant metrics. e.g. You can get error rate and 99th percentile latency of `customer_type: gold` or `deployment_version: v2` or `external_call: paypal`
 - Native support for OpenTelemetry Logs, advanced log query builder, and automatic log collection from k8s cluster
-- Lightening quick log analytics ([Logs Perf. Benchmark](https://signoz.io/blog/logs-performance-benchmark/))
+- Lightning quick log analytics ([Logs Perf. Benchmark](https://signoz.io/blog/logs-performance-benchmark/))
 - End-to-End visibility into infrastructure performance, ingest metrics from all kinds of host environments
 - Easy to set alerts with DIY query builder
 
