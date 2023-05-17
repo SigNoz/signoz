@@ -45,7 +45,7 @@ export function isExistsNotExistsOperator(value: string): boolean {
 }
 
 export function getRemovePrefixFromKey(tag: string): string {
-	return tag?.replace(/^(tag_|resource_)/, '');
+	return tag?.replace(/^(tag_|resource_)/, '').trim();
 }
 
 export function getOperatorValue(op: string): string {
@@ -106,4 +106,8 @@ export function replaceStringWithMaxLength(
 
 export function checkCommaInValue(str: string): string {
 	return str.includes(',') ? `"${str}"` : str;
+}
+
+export function getRemovePrefixAndOrder(tag: string): string {
+	return tag?.replace(/tag_|resource_|desc|asc/g, '').trim();
 }

@@ -14,11 +14,11 @@ import {
 	GroupByFilter,
 	HavingFilter,
 	OperatorsSelect,
+	OrderByFilter,
 	ReduceToFilter,
 } from 'container/QueryBuilder/filters';
 import AggregateEveryFilter from 'container/QueryBuilder/filters/AggregateEveryFilter';
 import LimitFilter from 'container/QueryBuilder/filters/LimitFilter/LimitFilter';
-import { OrderByFilter } from 'container/QueryBuilder/filters/OrderByFilter';
 import QueryBuilderSearch from 'container/QueryBuilder/filters/QueryBuilderSearch';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useQueryOperations } from 'hooks/queryBuilder/useQueryOperations';
