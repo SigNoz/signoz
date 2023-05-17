@@ -99,7 +99,7 @@ func (lm *Manager) SetActive(l *model.License) {
 
 	err := lm.InitFeatures(lm.activeFeatures)
 	if err != nil {
-		zap.S().Panicf("Couldn't activate features: ", err)
+		zap.S().Panicf("Couldn't activate features: %v", err)
 	}
 	if !lm.validatorRunning {
 		// we want to make sure only one validator runs,
