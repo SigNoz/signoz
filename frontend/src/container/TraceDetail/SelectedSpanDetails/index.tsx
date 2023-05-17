@@ -99,7 +99,7 @@ function SelectedSpanDetails(props: SelectedSpanDetailsProps): JSX.Element {
 					<CustomText ellipsis>{tree.name}</CustomText>
 				</Tooltip>
 
-				<Button onClick={onLogsHandler}>Go to Logs</Button>
+				<Button onClick={onLogsHandler}>Go to Related logs</Button>
 			</StyledSpace>
 
 			<Modal

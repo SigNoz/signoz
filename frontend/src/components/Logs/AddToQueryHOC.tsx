@@ -1,4 +1,4 @@
-import { Button, Popover } from 'antd';
+import { Popover } from 'antd';
 import ROUTES from 'constants/routes';
 import history from 'lib/history';
 import { generateFilterQuery } from 'lib/logs/generateFilterQuery';
@@ -6,6 +6,8 @@ import React, { memo, useCallback, useMemo } from 'react';
 import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
 import { ILogsReducer } from 'types/reducer/logs';
+
+import { ButtonContainer } from './styles';
 
 function AddToQueryHOC({
 	fieldKey,
@@ -38,11 +40,11 @@ function AddToQueryHOC({
 	]);
 
 	return (
-		<Button size="small" type="text" onClick={handleQueryAdd}>
+		<ButtonContainer size="small" type="text" onClick={handleQueryAdd}>
 			<Popover placement="top" content={popOverContent}>
 				{children}
 			</Popover>
-		</Button>
+		</ButtonContainer>
 	);
 }
 

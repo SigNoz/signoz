@@ -1,6 +1,6 @@
 import { blue, orange } from '@ant-design/colors';
-import { RightOutlined } from '@ant-design/icons';
-import { Button, Input, Space, Tooltip } from 'antd';
+import { LinkOutlined } from '@ant-design/icons';
+import { Input, Space, Tooltip } from 'antd';
 import { ColumnsType } from 'antd/es/table';
 import Editor from 'components/Editor';
 import AddToQueryHOC from 'components/Logs/AddToQueryHOC';
@@ -95,6 +95,7 @@ function TableView({ logData }: TableViewProps): JSX.Element | null {
 			dataIndex: 'field',
 			key: 'field',
 			width: 30,
+			align: 'left',
 			ellipsis: true,
 			render: (field: string, record): JSX.Element => {
 				const fieldKey = field.split('.').slice(-1);
@@ -109,12 +110,17 @@ function TableView({ logData }: TableViewProps): JSX.Element | null {
 
 							{traceId && (
 								<Tooltip title="Inspect in Trace">
-									<Button
+									<div
+										style={{ cursor: 'pointer' }}
+										role="presentation"
 										onClick={onTraceHandler(record)}
-										size="small"
-										shape="circle"
-										icon={<RightOutlined />}
-									/>
+									>
+										<LinkOutlined
+											style={{
+												width: '15px',
+											}}
+										/>
+									</div>
 								</Tooltip>
 							)}
 						</Space>
