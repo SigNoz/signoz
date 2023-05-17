@@ -1,6 +1,7 @@
 import { InputNumber } from 'antd';
-import React from 'react';
+import React, { useMemo } from 'react';
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
+import { DataSource } from 'types/common/queryBuilder';
 
 import { selectStyle } from '../QueryBuilderSearch/config';
 
@@ -20,12 +21,17 @@ function LimitFilter({ onChange, query }: LimitFilterProps): JSX.Element {
 		}
 	};
 
+	const isMetricsDataSource = useMemo(
+		() => query.dataSource === DataSource.METRICS,
+		[query.dataSource],
+	);
+
 	return (
 		<InputNumber
 			min={1}
 			type="number"
 			defaultValue={query.limit ?? 1}
-			disabled={!query.aggregateAttribute.key}
+			disabled={isMetricsDataSource && !query.aggregateAttribute.key}
 			style={selectStyle}
 			onChange={onChange}
 			onKeyDown={handleKeyDown}

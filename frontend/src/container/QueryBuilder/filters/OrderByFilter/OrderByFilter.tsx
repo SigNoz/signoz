@@ -5,7 +5,7 @@ import * as Papa from 'papaparse';
 import React, { useCallback, useMemo, useState } from 'react';
 import { useQuery } from 'react-query';
 import { OrderByPayload } from 'types/api/queryBuilder/queryBuilderData';
-import { MetricAggregateOperator } from 'types/common/queryBuilder';
+import { DataSource, MetricAggregateOperator } from 'types/common/queryBuilder';
 
 import { selectStyle } from '../QueryBuilderSearch/config';
 import { getRemoveOrderFromValue } from '../QueryBuilderSearch/utils';
@@ -113,13 +113,18 @@ export function OrderByFilter({
 		[query.aggregateAttribute.key, query.aggregateOperator],
 	);
 
+	const isMetricsDataSource = useMemo(
+		() => query.dataSource === DataSource.METRICS,
+		[query.dataSource],
+	);
+
 	return (
 		<Select
 			mode="tags"
 			style={selectStyle}
 			onSearch={handleSearchKeys}
 			showSearch
-			disabled={isDisabledSelect}
+			disabled={isMetricsDataSource && isDisabledSelect}
 			showArrow={false}
 			filterOption={false}
 			options={optionsData}

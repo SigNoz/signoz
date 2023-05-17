@@ -234,7 +234,7 @@ export const Query = memo(function Query({
 						)}
 					</Col>
 					{isMetricsDataSource && (
-						<Col span={9}>
+						<Col span={12}>
 							<Row gutter={[11, 5]}>
 								<Col flex="5.93rem">
 									<OperatorsSelect
