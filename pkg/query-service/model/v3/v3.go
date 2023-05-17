@@ -105,6 +105,8 @@ func (a AggregateOperator) RequireAttribute(dataSource DataSource) bool {
 	switch dataSource {
 	case DataSourceMetrics:
 		switch a {
+		case AggregateOperatorNoOp:
+			return false
 		default:
 			return true
 		}
