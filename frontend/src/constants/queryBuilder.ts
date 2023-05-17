@@ -20,6 +20,7 @@ import {
 	TracesAggregatorOperator,
 } from 'types/common/queryBuilder';
 import { SelectOption } from 'types/common/select';
+import { v4 as uuid } from 'uuid';
 
 export const MAX_FORMULAS = 20;
 export const MAX_QUERIES = 26;
@@ -78,6 +79,7 @@ export const initialHavingValues: HavingForm = {
 };
 
 export const initialAggregateAttribute: IBuilderQuery['aggregateAttribute'] = {
+	id: uuid(),
 	dataType: null,
 	key: '',
 	isColumn: null,

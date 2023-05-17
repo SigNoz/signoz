@@ -4,28 +4,30 @@ import {
 	BaseAutocompleteData,
 } from 'types/api/queryBuilder/queryAutocompleteResponse';
 
-const isTypeExist = (str: string): boolean => {
+const getType = (str: string): AutocompleteType | null => {
 	const types: AutocompleteType[] = ['tag', 'resource'];
-	let isExist = false;
+
+	let currentType: AutocompleteType | null = null;
+
 	types.forEach((type) => {
 		if (str.includes(type)) {
-			isExist = true;
+			currentType = type;
 		}
 	});
 
-	return isExist;
+	return currentType;
 };
 
 export const getFilterObjectValue = (
 	value: string,
-): Omit<BaseAutocompleteData, 'dataType' | 'type'> => {
-	const isExist = isTypeExist(value);
+): Omit<BaseAutocompleteData, 'dataType' | 'id'> => {
+	const type = getType(value);
 
-	if (!isExist) {
-		return { isColumn: true, key: value };
+	if (!type) {
+		return { isColumn: true, key: value, type: null };
 	}
 
 	const splittedValue = value.split(TYPE_ADDON_REGEXP);
 
-	return { isColumn: false, key: splittedValue[1] };
+	return { isColumn: false, key: splittedValue[1], type };
 };
