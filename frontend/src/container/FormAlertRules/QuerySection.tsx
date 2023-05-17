@@ -1,9 +1,7 @@
 import { Button, Tabs } from 'antd';
 import { ALERTS_DATA_SOURCE_MAP } from 'constants/alerts';
-import { FeatureKeys } from 'constants/features';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { QueryBuilder } from 'container/QueryBuilder';
-import { useIsFeatureDisabled } from 'hooks/useFeatureFlag';
 import React, { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { AlertTypes } from 'types/api/alerts/alertTypes';
@@ -93,23 +91,14 @@ function QuerySection({
 		},
 	];
 
-	const isPanelAvialable = useIsFeatureDisabled(
-		FeatureKeys.QUERY_BUILDER_ALERTS,
-	);
-
-	const items = useMemo(() => {
-		if (isPanelAvialable) {
-			return [
-				{ label: t('tab_chquery'), key: EQueryType.CLICKHOUSE },
-				{ label: t('tab_promql'), key: EQueryType.PROM },
-			];
-		}
-		return [
+	const items = useMemo(
+		() => [
 			{ label: t('tab_qb'), key: EQueryType.QUERY_BUILDER },
 			{ label: t('tab_chquery'), key: EQueryType.CLICKHOUSE },
 			{ label: t('tab_promql'), key: EQueryType.PROM },
-		];
-	}, [isPanelAvialable, t]);
+		],
+		[t],
+	);
 
 	const renderTabs = (typ: AlertTypes): JSX.Element | null => {
 		switch (typ) {
