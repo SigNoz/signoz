@@ -191,6 +191,12 @@ func GetDashboards() ([]Dashboard, *model.ApiError) {
 
 func DeleteDashboard(uuid string, fm interfaces.FeatureLookup) *model.ApiError {
 
+	dashboard, dErr := GetDashboard(uuid)
+	if dErr != nil {
+		zap.S().Errorf("Error in getting dashboard: ", uuid, dErr)
+		return dErr
+	}
+
 	query := fmt.Sprintf("DELETE FROM dashboards WHERE uuid='%s';", uuid)
 
 	result, err := db.Exec(query)
@@ -207,11 +213,6 @@ func DeleteDashboard(uuid string, fm interfaces.FeatureLookup) *model.ApiError {
 		return &model.ApiError{Typ: model.ErrorNotFound, Err: fmt.Errorf("no dashboard found with uuid: %s", uuid)}
 	}
 
-	// test this
-	dashboard, err := GetDashboard(uuid)
-	if err != nil {
-		zap.S().Errorf("Error in getting dashboard: ", uuid, err)
-	}
 	traceAndLogsPanelUsage := countTraceAndLogsPanel(dashboard.Data)
 	if traceAndLogsPanelUsage > 0 {
 		updateFeatureUsage(fm, -traceAndLogsPanelUsage)

@@ -2,6 +2,7 @@ package license
 
 import (
 	"context"
+	"database/sql"
 	"fmt"
 	"time"
 
@@ -182,12 +183,14 @@ func (r *Repo) InitFeatures(req basemodel.FeatureSet) error {
 	// get a feature by name, if it doesn't exist, create it. If it does exist, update it.
 	for _, feature := range req {
 		currentFeature, err := r.GetFeature(feature.Name)
-		if err != nil {
+		if err != nil && err == sql.ErrNoRows {
 			err := r.CreateFeature(&feature)
 			if err != nil {
 				return err
 			}
 			continue
+		} else if err != nil {
+			return err
 		}
 		feature.Usage = currentFeature.Usage
 		if feature.Usage >= feature.UsageLimit && feature.UsageLimit != -1 {

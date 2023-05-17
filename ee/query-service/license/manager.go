@@ -97,9 +97,9 @@ func (lm *Manager) SetActive(l *model.License) {
 	// set default features
 	setDefaultFeatures(lm)
 
-	err := lm.repo.InitFeatures(lm.activeFeatures)
+	err := lm.InitFeatures(lm.activeFeatures)
 	if err != nil {
-		zap.S().Error("Couldn't activate features: ", err)
+		zap.S().Panicf("Couldn't activate features: ", err)
 	}
 	if !lm.validatorRunning {
 		// we want to make sure only one validator runs,
@@ -111,9 +111,7 @@ func (lm *Manager) SetActive(l *model.License) {
 }
 
 func setDefaultFeatures(lm *Manager) {
-	for _, feature := range baseconstants.DEFAULT_FEATURE_SET {
-		lm.activeFeatures = append(lm.activeFeatures, feature)
-	}
+	lm.activeFeatures = append(lm.activeFeatures, baseconstants.DEFAULT_FEATURE_SET...)
 }
 
 // LoadActiveLicense loads the most recent active license
@@ -130,7 +128,7 @@ func (lm *Manager) LoadActiveLicense() error {
 		// if no active license is found, we default to basic(free) plan with all default features
 		lm.activeFeatures = model.BasicPlan
 		setDefaultFeatures(lm)
-		err := lm.repo.InitFeatures(lm.activeFeatures)
+		err := lm.InitFeatures(lm.activeFeatures)
 		if err != nil {
 			zap.S().Error("Couldn't initialize features: ", err)
 			return err

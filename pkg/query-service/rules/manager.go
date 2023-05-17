@@ -230,7 +230,7 @@ func (m *Manager) EditRule(ruleStr string, id string) error {
 	currentRule, err := m.GetRule(id)
 	if err != nil {
 		zap.S().Errorf("msg: ", "failed to get the rule from rule db", "\t ruleid: ", id)
-		return nil
+		return err
 	}
 
 	if !checkIfTraceOrLogQB(&currentRule.PostableRule) {
@@ -326,7 +326,7 @@ func (m *Manager) DeleteRule(id string) error {
 	rule, err := m.GetRule(id)
 	if err != nil {
 		zap.S().Errorf("msg: ", "failed to get the rule from rule db", "\t ruleid: ", id)
-		return nil
+		return err
 	}
 
 	taskName := prepareTaskName(int64(idInt))
