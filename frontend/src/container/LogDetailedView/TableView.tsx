@@ -1,5 +1,5 @@
 import { blue, orange } from '@ant-design/colors';
-import { InfoOutlined } from '@ant-design/icons';
+import { RightOutlined } from '@ant-design/icons';
 import { Button, Input, Space, Tooltip } from 'antd';
 import { ColumnsType } from 'antd/es/table';
 import Editor from 'components/Editor';
@@ -56,17 +56,21 @@ function TableView({ logData }: TableViewProps): JSX.Element | null {
 
 		const traceId = flattenLogData[record.field];
 
+		const spanId = flattenLogData?.span_id;
+
 		if (traceId) {
 			dispatch({
 				type: SET_DETAILED_LOG_DATA,
 				payload: null,
 			});
 
-			history.push(
-				generatePath(ROUTES.TRACE_DETAIL, {
-					id: traceId,
-				}),
-			);
+			const basePath = generatePath(ROUTES.TRACE_DETAIL, {
+				id: traceId,
+			});
+
+			const route = spanId ? `${basePath}?spanId=${spanId}` : basePath;
+
+			history.push(route);
 		}
 	};
 
@@ -109,7 +113,7 @@ function TableView({ logData }: TableViewProps): JSX.Element | null {
 										onClick={onTraceHandler(record)}
 										size="small"
 										shape="circle"
-										icon={<InfoOutlined />}
+										icon={<RightOutlined />}
 									/>
 								</Tooltip>
 							)}
