@@ -15,12 +15,11 @@ export interface TagFilterItem {
 	id: string;
 	key?: BaseAutocompleteData;
 	op: string;
-	value: string[];
+	value: string[] | string;
 }
 
 export interface TagFilter {
 	items: TagFilterItem[];
-	// TODO: type it in the future
 	op: string;
 }
 
@@ -40,7 +39,7 @@ export type IBuilderQuery = {
 	dataSource: DataSource;
 	aggregateOperator: string;
 	aggregateAttribute: BaseAutocompleteData;
-	tagFilters: TagFilter;
+	filters: TagFilter;
 	groupBy: BaseAutocompleteData[];
 	expression: string;
 	disabled: boolean;

@@ -2,6 +2,7 @@ package sqlite
 
 import (
 	"fmt"
+
 	"github.com/jmoiron/sqlx"
 )
 
@@ -33,5 +34,19 @@ func InitDB(db *sqlx.DB) error {
 	if err != nil {
 		return fmt.Errorf("Error in creating licenses table: %s", err.Error())
 	}
+
+	table_schema = `CREATE TABLE IF NOT EXISTS feature_status (
+		name TEXT PRIMARY KEY,
+		active bool,
+		usage INTEGER DEFAULT 0,
+		usage_limit INTEGER DEFAULT 0,
+		route TEXT
+	);`
+
+	_, err = db.Exec(table_schema)
+	if err != nil {
+		return fmt.Errorf("Error in creating feature_status table: %s", err.Error())
+	}
+
 	return nil
 }
