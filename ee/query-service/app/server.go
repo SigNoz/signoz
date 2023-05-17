@@ -18,7 +18,6 @@ import (
 	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
 	"github.com/jmoiron/sqlx"
-	"go.opentelemetry.io/otel/sdk/instrumentation"
 	"go.opentelemetry.io/otel/sdk/resource"
 	semconv "go.opentelemetry.io/otel/semconv/v1.4.0"
 	"google.golang.org/grpc"
@@ -206,11 +205,9 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 		semconv.ServiceNameKey.String("query-service"),
 	)
 
-	scope := instrumentation.Scope{Name: lib, Version: libVer}
 	ws := zapcore.AddSync(zapotlpsync.NewOtlpSyncer(conn, zapotlpsync.Options{
 		BatchSize:      2,
 		ResourceSchema: semconv.SchemaURL,
-		Scope:          &scope,
 		Resource:       res,
 	}))
 	core := zapcore.NewTee(
@@ -250,7 +247,7 @@ func (s *Server) createPrivateServer(apiHandler *api.APIHandler, logger *zap.Log
 
 	r.Use(setTimeoutMiddleware)
 	r.Use(s.analyticsMiddleware)
-	r.Use(loggingMiddlewarePrivateV2(logger))
+	r.Use(loggingMiddlewarePrivate(logger))
 
 	apiHandler.RegisterPrivateRoutes(r)
 
@@ -295,7 +292,7 @@ func (s *Server) createPublicServer(apiHandler *api.APIHandler, logger *zap.Logg
 	am := baseapp.NewAuthMiddleware(getUserFromRequest)
 	r.Use(setTimeoutMiddleware)
 	r.Use(s.analyticsMiddleware)
-	r.Use(loggingMiddlewareV2(logger))
+	r.Use(loggingMiddleware(logger))
 
 	apiHandler.RegisterRoutes(r, am)
 	apiHandler.RegisterMetricsRoutes(r, am)
@@ -318,17 +315,7 @@ func (s *Server) createPublicServer(apiHandler *api.APIHandler, logger *zap.Logg
 }
 
 // loggingMiddleware is used for logging public api calls
-func loggingMiddleware(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		route := mux.CurrentRoute(r)
-		path, _ := route.GetPathTemplate()
-		startTime := time.Now()
-		next.ServeHTTP(w, r)
-		// make change here
-		zap.S().Info(path, "\ttimeTaken: ", time.Now().Sub(startTime))
-	})
-}
-func loggingMiddlewareV2(logger *zap.Logger) func(http.Handler) http.Handler {
+func loggingMiddleware(logger *zap.Logger) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			route := mux.CurrentRoute(r)
@@ -343,18 +330,7 @@ func loggingMiddlewareV2(logger *zap.Logger) func(http.Handler) http.Handler {
 
 // loggingMiddlewarePrivate is used for logging private api calls
 // from internal services like alert manager
-func loggingMiddlewarePrivate(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		route := mux.CurrentRoute(r)
-		path, _ := route.GetPathTemplate()
-		startTime := time.Now()
-		next.ServeHTTP(w, r)
-		// make change here
-		zap.S().Info(path, "\tprivatePort: true", "\ttimeTaken: ", time.Now().Sub(startTime))
-	})
-}
-
-func loggingMiddlewarePrivateV2(logger *zap.Logger) func(http.Handler) http.Handler {
+func loggingMiddlewarePrivate(logger *zap.Logger) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			route := mux.CurrentRoute(r)
