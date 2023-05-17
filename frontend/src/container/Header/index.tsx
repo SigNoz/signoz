@@ -3,8 +3,7 @@ import {
 	CaretUpFilled,
 	LogoutOutlined,
 } from '@ant-design/icons';
-import type { MenuProps } from 'antd';
-import { Divider, Dropdown, Space, Typography } from 'antd';
+import { Button, Divider, Dropdown, MenuProps, Space, Typography } from 'antd';
 import { Logout } from 'api/utils';
 import ROUTES from 'constants/routes';
 import Config from 'container/ConfigDropdown';
@@ -91,6 +90,13 @@ function HeaderContainer(): JSX.Element {
 		[onToggleHandler, onLogoutKeyDown],
 	);
 
+	const onClickSignozCloud = (): void => {
+		window.open(
+			'https://signoz.io/pricing/?utm_source=product_navbar&utm_medium=frontend',
+			'_blank',
+		);
+	};
+
 	return (
 		<Header>
 			<Container>
@@ -106,7 +112,11 @@ function HeaderContainer(): JSX.Element {
 					</NavLinkWrapper>
 				</NavLink>
 
-				<Space style={{ height: '100%' }} align="center">
+				<Space size="middle" align="center">
+					<Button onClick={onClickSignozCloud} type="primary">
+						Try Signoz Cloud
+					</Button>
+
 					<Config frontendId="tooltip" />
 
 					<ToggleButton
