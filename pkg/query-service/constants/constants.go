@@ -71,8 +71,19 @@ func IsTimestampSortFeatureEnabled() bool {
 }
 
 var DEFAULT_FEATURE_SET = model.FeatureSet{
-	DurationSort:  IsDurationSortFeatureEnabled(),
-	TimestampSort: IsTimestampSortFeatureEnabled(),
+	model.Feature{
+		Name:       DurationSort,
+		Active:     IsDurationSortFeatureEnabled(),
+		Usage:      0,
+		UsageLimit: -1,
+		Route:      "",
+	}, model.Feature{
+		Name:       TimestampSort,
+		Active:     IsTimestampSortFeatureEnabled(),
+		Usage:      0,
+		UsageLimit: -1,
+		Route:      "",
+	},
 }
 
 func GetContextTimeout() time.Duration {

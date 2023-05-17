@@ -232,7 +232,7 @@ function FormAlertRules({
 			return false;
 		}
 
-		if (!alertDef.condition?.target) {
+		if (alertDef.condition?.target !== 0 && !alertDef.condition?.target) {
 			notifications.error({
 				message: 'Error',
 				description: t('target_missing'),
