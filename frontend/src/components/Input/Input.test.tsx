@@ -7,7 +7,7 @@ describe('InputComponent', () => {
 	test('renders input component with label and placeholder', () => {
 		const label = 'Username';
 		const placeholder = 'Enter your username';
-		render(<InputComponent label={label} placeholder={placeholder} />);
+		render(<InputComponent value="" label={label} placeholder={placeholder} />);
 
 		const inputElement = screen.getByLabelText(label);
 
@@ -17,7 +17,9 @@ describe('InputComponent', () => {
 
 	test('calls onChangeHandler when input value changes', () => {
 		const onChangeHandler = jest.fn();
-		render(<InputComponent onChangeHandler={onChangeHandler} />);
+		render(
+			<InputComponent value={undefined} onChangeHandler={onChangeHandler} />,
+		);
 
 		const inputElement = screen.getByRole('textbox');
 		const testValue = 'Test value';
@@ -25,13 +27,16 @@ describe('InputComponent', () => {
 		fireEvent.change(inputElement, { target: { value: testValue } });
 
 		expect(onChangeHandler).toHaveBeenCalledTimes(1);
-		expect(onChangeHandler).toHaveBeenCalledWith(expect.any(Object));
-		expect(inputElement.value).toBe(testValue);
+		expect(onChangeHandler).toHaveBeenCalledWith(
+			expect.objectContaining({
+				target: expect.objectContaining({ value: testValue }),
+			}),
+		);
 	});
 
 	test('calls onBlurHandler when input loses focus', () => {
 		const onBlurHandler = jest.fn();
-		render(<InputComponent onBlurHandler={onBlurHandler} />);
+		render(<InputComponent value="" onBlurHandler={onBlurHandler} />);
 
 		const inputElement = screen.getByRole('textbox');
 
@@ -43,7 +48,7 @@ describe('InputComponent', () => {
 
 	test('calls onPressEnterHandler when Enter key is pressed in input', () => {
 		const onPressEnterHandler = jest.fn();
-		render(<InputComponent onPressEnterHandler={onPressEnterHandler} />);
+		render(<InputComponent value="" onPressEnterHandler={onPressEnterHandler} />);
 
 		const inputElement = screen.getByRole('textbox');
 
@@ -55,7 +60,7 @@ describe('InputComponent', () => {
 
 	test('renders input component with addonBefore', () => {
 		const addonContent = 'http://';
-		render(<InputComponent addonBefore={addonContent} />);
+		render(<InputComponent value="" addonBefore={addonContent} />);
 
 		const addonElement = screen.getByText(addonContent);
 
