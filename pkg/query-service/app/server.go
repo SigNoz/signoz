@@ -107,7 +107,7 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 	}
 
 	<-readerReady
-	rm, err := makeRulesManager(serverOptions.PromConfigPath, constants.GetAlertManagerApiPrefix(), serverOptions.RuleRepoURL, localDB, reader, serverOptions.DisableRules)
+	rm, err := makeRulesManager(serverOptions.PromConfigPath, constants.GetAlertManagerApiPrefix(), serverOptions.RuleRepoURL, localDB, reader, serverOptions.DisableRules, fm)
 	if err != nil {
 		return nil, err
 	}
@@ -491,7 +491,8 @@ func makeRulesManager(
 	ruleRepoURL string,
 	db *sqlx.DB,
 	ch interfaces.Reader,
-	disableRules bool) (*rules.Manager, error) {
+	disableRules bool,
+	fm interfaces.FeatureLookup) (*rules.Manager, error) {
 
 	// create engine
 	pqle, err := pqle.FromReader(ch)
@@ -518,6 +519,7 @@ func makeRulesManager(
 		Context:      context.Background(),
 		Logger:       nil,
 		DisableRules: disableRules,
+		FeatureFlags: fm,
 	}
 
 	// create Manager

@@ -5,6 +5,10 @@ import (
 )
 
 func (ah *APIHandler) getFeatureFlags(w http.ResponseWriter, r *http.Request) {
-	featureSet := ah.FF().GetFeatureFlags()
+	featureSet, err := ah.FF().GetFeatureFlags()
+	if err != nil {
+		ah.HandleError(w, err, http.StatusInternalServerError)
+		return
+	}
 	ah.Respond(w, featureSet)
 }
