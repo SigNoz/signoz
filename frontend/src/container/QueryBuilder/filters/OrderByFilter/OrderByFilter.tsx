@@ -8,7 +8,7 @@ import { OrderByPayload } from 'types/api/queryBuilder/queryBuilderData';
 import { MetricAggregateOperator } from 'types/common/queryBuilder';
 
 import { selectStyle } from '../QueryBuilderSearch/config';
-import { getRemovePrefixAndOrder } from '../QueryBuilderSearch/utils';
+import { getRemoveOrderFromValue } from '../QueryBuilderSearch/utils';
 import { OrderByFilterProps } from './OrderByFilter.interfaces';
 import {
 	checkIfKeyPresent,
@@ -74,7 +74,7 @@ export function OrderByFilter({
 		return options.filter(
 			(option) =>
 				!getLabelFromValue(selectedValue).includes(
-					getRemovePrefixAndOrder(option.label),
+					getRemoveOrderFromValue(option.value),
 				),
 		);
 	}, [
