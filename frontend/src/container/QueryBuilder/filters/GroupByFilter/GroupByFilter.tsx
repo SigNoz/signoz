@@ -2,6 +2,7 @@ import { Select, Spin } from 'antd';
 import { getAggregateKeys } from 'api/queryBuilder/getAttributeKeys';
 // ** Constants
 import { QueryBuilderKeys, selectValueDivider } from 'constants/queryBuilder';
+import useDebounce from 'hooks/useDebounce';
 import { getFilterObjectValue } from 'lib/newQueryBuilder/getFilterObjectValue';
 // ** Components
 // ** Helpers
@@ -24,14 +25,16 @@ export const GroupByFilter = memo(function GroupByFilter({
 	const [optionsData, setOptionsData] = useState<ExtendedSelectOption[]>([]);
 	const [isFocused, setIsFocused] = useState<boolean>(false);
 
+	const debouncedValue = useDebounce(searchText, 300);
+
 	const { data, isFetching } = useQuery(
-		[QueryBuilderKeys.GET_AGGREGATE_KEYS, searchText, isFocused],
+		[QueryBuilderKeys.GET_AGGREGATE_KEYS, debouncedValue, isFocused],
 		async () =>
 			getAggregateKeys({
 				aggregateAttribute: query.aggregateAttribute.key,
 				dataSource: query.dataSource,
 				aggregateOperator: query.aggregateOperator,
-				searchText,
+				searchText: debouncedValue,
 			}),
 		{
 			enabled: !disabled && isFocused,
@@ -73,6 +76,7 @@ export const GroupByFilter = memo(function GroupByFilter({
 
 	const onBlur = (): void => {
 		setIsFocused(false);
+		setSearchText('');
 	};
 
 	const onFocus = (): void => {
