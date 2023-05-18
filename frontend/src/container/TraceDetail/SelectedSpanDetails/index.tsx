@@ -1,8 +1,11 @@
-import { Modal, Tabs, Tooltip, Typography } from 'antd';
+import { Button, Modal, Tabs, Tooltip, Typography } from 'antd';
 import Editor from 'components/Editor';
 import { StyledSpace } from 'components/Styled';
+import ROUTES from 'constants/routes';
 import { useIsDarkMode } from 'hooks/useDarkMode';
+import history from 'lib/history';
 import React, { useMemo, useState } from 'react';
+import { useParams } from 'react-router-dom';
 import { ITraceTree } from 'types/api/trace/getTraceItem';
 
 import Events from './Events';
@@ -17,6 +20,8 @@ import Tags from './Tags';
 
 function SelectedSpanDetails(props: SelectedSpanDetailsProps): JSX.Element {
 	const { tree, firstSpanStartTime } = props;
+
+	const { id: traceId } = useParams<Params>();
 
 	const isDarkMode = useIsDarkMode();
 
@@ -69,6 +74,12 @@ function SelectedSpanDetails(props: SelectedSpanDetailsProps): JSX.Element {
 		},
 	];
 
+	const onLogsHandler = (): void => {
+		const query = encodeURIComponent(`trace_id IN ('${traceId}')`);
+
+		history.push(`${ROUTES.LOGS}?q=${query}`);
+	};
+
 	return (
 		<CardContainer>
 			<StyledSpace
@@ -78,6 +89,7 @@ function SelectedSpanDetails(props: SelectedSpanDetailsProps): JSX.Element {
 				<Typography.Text strong> Details for selected Span </Typography.Text>
 
 				<CustomTitle>Service</CustomTitle>
+
 				<Tooltip overlay={OverLayComponentServiceName}>
 					<CustomText ellipsis>{tree.serviceName}</CustomText>
 				</Tooltip>
@@ -86,6 +98,8 @@ function SelectedSpanDetails(props: SelectedSpanDetailsProps): JSX.Element {
 				<Tooltip overlay={OverLayComponentName}>
 					<CustomText ellipsis>{tree.name}</CustomText>
 				</Tooltip>
+
+				<Button onClick={onLogsHandler}>Go to Related logs</Button>
 			</StyledSpace>
 
 			<Modal
@@ -123,6 +137,10 @@ SelectedSpanDetails.defaultProps = {
 export interface ModalText {
 	text: string;
 	subText: string;
+}
+
+interface Params {
+	id: string;
 }
 
 export default SelectedSpanDetails;
