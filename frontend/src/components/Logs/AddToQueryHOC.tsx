@@ -2,7 +2,7 @@ import { Popover } from 'antd';
 import ROUTES from 'constants/routes';
 import history from 'lib/history';
 import { generateFilterQuery } from 'lib/logs/generateFilterQuery';
-import React, { memo, useCallback, useMemo } from 'react';
+import { memo, ReactNode, useCallback, useMemo } from 'react';
 import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
 import { ILogsReducer } from 'types/reducer/logs';
@@ -51,7 +51,7 @@ function AddToQueryHOC({
 interface AddToQueryHOCProps {
 	fieldKey: string;
 	fieldValue: string;
-	children: React.ReactNode;
+	children: ReactNode;
 }
 
 export default memo(AddToQueryHOC);

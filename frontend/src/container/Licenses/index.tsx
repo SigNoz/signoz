@@ -1,7 +1,6 @@
 import { Tabs, Typography } from 'antd';
 import getAll from 'api/licenses/getAll';
 import Spinner from 'components/Spinner';
-import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { useQuery } from 'react-query';
 

@@ -1,5 +1,4 @@
 import { Input } from 'antd';
-import React from 'react';
 import { IPromQLQuery } from 'types/api/dashboard/getAll';
 
 import QueryHeader from '../QueryHeader';

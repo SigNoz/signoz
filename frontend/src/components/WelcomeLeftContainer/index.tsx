@@ -1,5 +1,5 @@
 import { Card, Space, Typography } from 'antd';
-import React from 'react';
+import { ReactChild } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { Container, LeftContainer, Logo } from './styles';
@@ -34,7 +34,7 @@ function WelcomeLeftContainer({
 
 interface WelcomeLeftContainerProps {
 	version: string;
-	children: React.ReactChild;
+	children: ReactChild;
 }
 
 export default WelcomeLeftContainer;

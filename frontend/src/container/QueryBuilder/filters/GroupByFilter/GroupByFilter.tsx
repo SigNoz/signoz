@@ -6,7 +6,7 @@ import { getFilterObjectValue } from 'lib/newQueryBuilder/getFilterObjectValue';
 // ** Components
 // ** Helpers
 import { transformStringWithPrefix } from 'lib/query/transformStringWithPrefix';
-import React, { memo, useMemo, useState } from 'react';
+import { memo, useMemo, useState } from 'react';
 import { useQuery } from 'react-query';
 import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { ExtendedSelectOption } from 'types/common/select';

@@ -4,7 +4,7 @@ import useResourceAttribute, {
 	isResourceEmpty,
 } from 'hooks/useResourceAttribute';
 import { convertMetricKeyToTrace } from 'hooks/useResourceAttribute/utils';
-import React, { useMemo } from 'react';
+import { ReactNode, useMemo } from 'react';
 import { v4 as uuid } from 'uuid';
 
 import QueryChip from './components/QueryChip';
@@ -78,7 +78,7 @@ function ResourceAttributesFilter({
 }
 
 interface ResourceAttributesFilterProps {
-	suffixIcon?: React.ReactNode;
+	suffixIcon?: ReactNode;
 }
 
 ResourceAttributesFilter.defaultProps = {

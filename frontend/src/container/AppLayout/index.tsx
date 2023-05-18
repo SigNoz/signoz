@@ -6,7 +6,7 @@ import Header from 'container/Header';
 import SideNav from 'container/SideNav';
 import TopNav from 'container/TopNav';
 import { useNotifications } from 'hooks/useNotifications';
-import React, { ReactNode, useEffect, useRef } from 'react';
+import { ReactNode, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useQueries } from 'react-query';
 import { useDispatch, useSelector } from 'react-redux';

@@ -9,7 +9,7 @@ import useComponentPermission from 'hooks/useComponentPermission';
 import useInterval from 'hooks/useInterval';
 import { useNotifications } from 'hooks/useNotifications';
 import history from 'lib/history';
-import React, { useCallback, useState } from 'react';
+import { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { UseQueryResult } from 'react-query';
 import { useSelector } from 'react-redux';

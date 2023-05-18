@@ -3,7 +3,6 @@ import { FeatureKeys } from 'constants/features';
 import ROUTES from 'constants/routes';
 import useFeatureFlags from 'hooks/useFeatureFlag';
 import history from 'lib/history';
-import React from 'react';
 
 import {
 	FreePlanIcon,

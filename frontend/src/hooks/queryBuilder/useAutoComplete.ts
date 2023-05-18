@@ -7,7 +7,7 @@ import {
 } from 'container/QueryBuilder/filters/QueryBuilderSearch/utils';
 import { Option } from 'container/QueryBuilder/type';
 import * as Papa from 'papaparse';
-import { useCallback, useState } from 'react';
+import { KeyboardEvent, useCallback, useState } from 'react';
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 
 import { useFetchKeysAndValues } from './useFetchKeysAndValues';
@@ -21,7 +21,7 @@ interface IAutoComplete {
 	handleSearch: (value: string) => void;
 	handleClearTag: (value: string) => void;
 	handleSelect: (value: string) => void;
-	handleKeyDown: (event: React.KeyboardEvent) => void;
+	handleKeyDown: (event: KeyboardEvent) => void;
 	options: Option[];
 	tags: string[];
 	searchValue: string;
@@ -84,7 +84,7 @@ export const useAutoComplete = (query: IBuilderQuery): IAutoComplete => {
 	);
 
 	const handleKeyDown = useCallback(
-		(event: React.KeyboardEvent): void => {
+		(event: KeyboardEvent): void => {
 			if (
 				event.key === ' ' &&
 				(searchValue.endsWith(' ') || searchValue.length === 0)

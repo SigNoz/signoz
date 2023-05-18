@@ -1,6 +1,5 @@
 import PromQLQueryBuilder from 'container/NewWidget/LeftContainer/QuerySection/QueryBuilder/promQL/query';
 import { IPromQLQueryHandleChange } from 'container/NewWidget/LeftContainer/QuerySection/QueryBuilder/promQL/types';
-import React from 'react';
 import { IPromQueries } from 'types/api/alerts/compositeQuery';
 
 function PromqlSection({

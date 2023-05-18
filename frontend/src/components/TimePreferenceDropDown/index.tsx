@@ -3,7 +3,7 @@ import TimeItems, {
 	timePreferance,
 	timePreferenceType,
 } from 'container/NewWidget/RightContainer/timeItems';
-import React, { useCallback, useMemo } from 'react';
+import { Dispatch, SetStateAction, useCallback, useMemo } from 'react';
 
 import { menuItems } from './config';
 import { TextContainer } from './styles';
@@ -44,7 +44,7 @@ interface TimeMenuItemOnChangeHandlerEvent {
 }
 
 interface TimePreferenceDropDownProps {
-	setSelectedTime: React.Dispatch<React.SetStateAction<timePreferance>>;
+	setSelectedTime: Dispatch<SetStateAction<timePreferance>>;
 	selectedTime: timePreferance;
 }
 

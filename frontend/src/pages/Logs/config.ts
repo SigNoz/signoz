@@ -1,3 +1,5 @@
+import { CSSProperties } from 'react';
+
 import { ViewModeOption } from './types';
 
 export const viewModeOptionList: ViewModeOption[] = [
@@ -20,6 +22,6 @@ export const viewModeOptionList: ViewModeOption[] = [
 
 export const logsOptions = ['raw', 'table'];
 
-export const defaultSelectStyle: React.CSSProperties = {
+export const defaultSelectStyle: CSSProperties = {
 	minWidth: '6rem',
 };

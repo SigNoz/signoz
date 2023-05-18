@@ -8,8 +8,9 @@ import { Logout } from 'api/utils';
 import ROUTES from 'constants/routes';
 import Config from 'container/ConfigDropdown';
 import { useIsDarkMode, useThemeMode } from 'hooks/useDarkMode';
-import React, {
+import {
 	Dispatch,
+	KeyboardEvent,
 	SetStateAction,
 	useCallback,
 	useMemo,
@@ -49,14 +50,11 @@ function HeaderContainer(): JSX.Element {
 		[],
 	);
 
-	const onLogoutKeyDown = useCallback(
-		(e: React.KeyboardEvent<HTMLDivElement>) => {
-			if (e.key === 'Enter' || e.key === 'Space') {
-				Logout();
-			}
-		},
-		[],
-	);
+	const onLogoutKeyDown = useCallback((e: KeyboardEvent<HTMLDivElement>) => {
+		if (e.key === 'Enter' || e.key === 'Space') {
+			Logout();
+		}
+	}, []);
 
 	const menu: MenuProps = useMemo(
 		() => ({

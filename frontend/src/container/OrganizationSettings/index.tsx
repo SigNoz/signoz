@@ -1,7 +1,6 @@
 import { Divider, Space } from 'antd';
 import { FeatureKeys } from 'constants/featureKeys';
 import useFeatureFlag from 'hooks/useFeatureFlag';
-import React from 'react';
 import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
 import AppReducer from 'types/reducer/app';

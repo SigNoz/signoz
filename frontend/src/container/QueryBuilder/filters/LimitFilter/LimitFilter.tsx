@@ -1,5 +1,4 @@
 import { InputNumber } from 'antd';
-import React from 'react';
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 
 import { selectStyle } from '../QueryBuilderSearch/config';

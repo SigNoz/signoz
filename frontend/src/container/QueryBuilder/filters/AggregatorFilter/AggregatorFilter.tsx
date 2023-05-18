@@ -5,7 +5,7 @@ import { getAggregateAttribute } from 'api/queryBuilder/getAggregateAttribute';
 import { initialAggregateAttribute } from 'constants/queryBuilder';
 import { getFilterObjectValue } from 'lib/newQueryBuilder/getFilterObjectValue';
 import { transformStringWithPrefix } from 'lib/query/transformStringWithPrefix';
-import React, { memo, useMemo, useState } from 'react';
+import { memo, useMemo, useState } from 'react';
 import { useQuery } from 'react-query';
 import { DataSource } from 'types/common/queryBuilder';
 import { ExtendedSelectOption } from 'types/common/select';

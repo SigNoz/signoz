@@ -2,7 +2,6 @@ import { Typography } from 'antd';
 import getDisks from 'api/disks/getDisks';
 import getRetentionPeriodApi from 'api/settings/getRetention';
 import Spinner from 'components/Spinner';
-import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { useQueries } from 'react-query';
 import { ErrorResponse, SuccessResponse } from 'types/api';

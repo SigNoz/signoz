@@ -8,7 +8,6 @@ import {
 } from '@ant-design/icons';
 import { Typography } from 'antd';
 import Slack from 'container/SideNav/Slack';
-import React from 'react';
 import store from 'store';
 
 import { TGetStartedContentSection } from './types';

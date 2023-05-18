@@ -2,7 +2,6 @@ import { Button, Tabs } from 'antd';
 import { ALERTS_DATA_SOURCE_MAP } from 'constants/alerts';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { QueryBuilder } from 'container/QueryBuilder';
-import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { AlertTypes } from 'types/api/alerts/alertTypes';
 import { IChQueries, IPromQueries } from 'types/api/alerts/compositeQuery';

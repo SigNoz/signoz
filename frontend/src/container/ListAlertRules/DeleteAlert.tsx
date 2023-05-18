@@ -1,7 +1,7 @@
 import { NotificationInstance } from 'antd/es/notification/interface';
 import deleteAlerts from 'api/alerts/delete';
 import { State } from 'hooks/useFetch';
-import React, { useState } from 'react';
+import { Dispatch, SetStateAction, useState } from 'react';
 import { PayloadProps as DeleteAlertPayloadProps } from 'types/api/alerts/delete';
 import { GettableAlert } from 'types/api/alerts/get';
 
@@ -86,7 +86,7 @@ function DeleteAlert({
 
 interface DeleteAlertProps {
 	id: GettableAlert['id'];
-	setData: React.Dispatch<React.SetStateAction<GettableAlert[]>>;
+	setData: Dispatch<SetStateAction<GettableAlert[]>>;
 	notifications: NotificationInstance;
 }
 

@@ -23,7 +23,7 @@ import QueryBuilderSearch from 'container/QueryBuilder/filters/QueryBuilderSearc
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useQueryOperations } from 'hooks/queryBuilder/useQueryOperations';
 // ** Hooks
-import React, { ChangeEvent, memo, ReactNode, useCallback } from 'react';
+import { ChangeEvent, memo, ReactNode, useCallback } from 'react';
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 import { transformToUpperCase } from 'utils/transformToUpperCase';
 

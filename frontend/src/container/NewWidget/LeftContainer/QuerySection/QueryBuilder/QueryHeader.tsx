@@ -6,7 +6,7 @@ import {
 	RightOutlined,
 } from '@ant-design/icons';
 import { Button, Row } from 'antd';
-import React, { useState } from 'react';
+import { ReactNode, useState } from 'react';
 
 import { QueryWrapper } from '../styles';
 
@@ -15,7 +15,7 @@ interface IQueryHeaderProps {
 	onDisable: VoidFunction;
 	name: string;
 	onDelete: VoidFunction;
-	children: React.ReactNode;
+	children: ReactNode;
 }
 
 function QueryHeader({
