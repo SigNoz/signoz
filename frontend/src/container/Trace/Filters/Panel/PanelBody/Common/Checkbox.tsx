@@ -90,7 +90,7 @@ function CheckBoxComponent(props: CheckBoxProps): JSX.Element {
 				other: Object.fromEntries(newSelectedMap),
 				end: String(globalTime.maxTime),
 				start: String(globalTime.minTime),
-				getFilters: filterToFetchData.filter((e) => e !== name),
+				getFilters: filterToFetchData,
 				isFilterExclude: preIsFilterExclude,
 				spanKind,
 			});
