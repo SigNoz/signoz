@@ -7,6 +7,7 @@ import {
 	QueryBuilderKeys,
 	selectValueDivider,
 } from 'constants/queryBuilder';
+import useDebounce from 'hooks/useDebounce';
 import { getFilterObjectValue } from 'lib/newQueryBuilder/getFilterObjectValue';
 import { transformStringWithPrefix } from 'lib/query/transformStringWithPrefix';
 import React, { memo, useCallback, useMemo, useState } from 'react';
@@ -25,16 +26,17 @@ export const AggregatorFilter = memo(function AggregatorFilter({
 	query,
 }: AgregatorFilterProps): JSX.Element {
 	const [optionsData, setOptionsData] = useState<ExtendedSelectOption[]>([]);
+	const debouncedValue = useDebounce(query.aggregateAttribute.key, 300);
 	const { data, isFetching } = useQuery(
 		[
 			QueryBuilderKeys.GET_AGGREGATE_ATTRIBUTE,
-			query.aggregateAttribute.key,
+			debouncedValue,
 			query.aggregateOperator,
 			query.dataSource,
 		],
 		async () =>
 			getAggregateAttribute({
-				searchText: query.aggregateAttribute.key,
+				searchText: debouncedValue,
 				aggregateOperator: query.aggregateOperator,
 				dataSource: query.dataSource,
 			}),
