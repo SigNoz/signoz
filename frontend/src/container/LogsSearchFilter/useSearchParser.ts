@@ -3,7 +3,7 @@ import useUrlQuery from 'hooks/useUrlQuery';
 import history from 'lib/history';
 import { parseQuery } from 'lib/logql';
 import isEqual from 'lodash-es/isEqual';
-import { useCallback, useEffect, useMemo } from 'react';
+import { useCallback, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { Dispatch } from 'redux';
 import { AppState } from 'store/reducers';
@@ -28,7 +28,7 @@ export function useSearchParser(): {
 	} = useSelector<AppState, ILogsReducer>((store) => store.logs);
 
 	const urlQuery = useUrlQuery();
-	const parsedFilters = useMemo(() => urlQuery.get('q'), [urlQuery]);
+	const parsedFilters = urlQuery.get('q');
 
 	const { minTime, maxTime, selectedTime } = useSelector<
 		AppState,
@@ -62,16 +62,12 @@ export function useSearchParser(): {
 		},
 		// need to hide this warning as we don't want to update the query string on every change
 		// eslint-disable-next-line react-hooks/exhaustive-deps
-		[dispatch, parsedQuery, selectedTime],
+		[dispatch, parsedQuery, selectedTime, queryString],
 	);
 
 	useEffect(() => {
-		if (!queryString && parsedFilters) {
-			updateQueryString(parsedFilters);
-		} else if (queryString) {
-			updateQueryString(queryString);
-		}
-	}, [queryString, updateQueryString, parsedFilters]);
+		updateQueryString(parsedFilters || '');
+	}, [parsedFilters, updateQueryString]);
 
 	return {
 		queryString,
