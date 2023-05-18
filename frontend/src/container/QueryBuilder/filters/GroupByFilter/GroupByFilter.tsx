@@ -7,10 +7,10 @@ import { getFilterObjectValue } from 'lib/newQueryBuilder/getFilterObjectValue';
 // ** Components
 // ** Helpers
 import { transformStringWithPrefix } from 'lib/query/transformStringWithPrefix';
-import React, { memo, useState } from 'react';
+import React, { memo, useEffect, useState } from 'react';
 import { useQuery } from 'react-query';
 import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
-import { ExtendedSelectOption } from 'types/common/select';
+import { SelectOption } from 'types/common/select';
 import { v4 as uuid } from 'uuid';
 
 import { selectStyle } from '../QueryBuilderSearch/config';
@@ -22,7 +22,12 @@ export const GroupByFilter = memo(function GroupByFilter({
 	disabled,
 }: GroupByFilterProps): JSX.Element {
 	const [searchText, setSearchText] = useState<string>('');
-	const [optionsData, setOptionsData] = useState<ExtendedSelectOption[]>([]);
+	const [optionsData, setOptionsData] = useState<SelectOption<string, string>[]>(
+		[],
+	);
+	const [localValues, setLocalValues] = useState<SelectOption<string, string>[]>(
+		[],
+	);
 	const [isFocused, setIsFocused] = useState<boolean>(false);
 
 	const debouncedValue = useDebounce(searchText, 300);
@@ -49,7 +54,7 @@ export const GroupByFilter = memo(function GroupByFilter({
 						(attrKey) => !keys.includes(attrKey.key),
 					) || [];
 
-				const options: ExtendedSelectOption[] =
+				const options: SelectOption<string, string>[] =
 					filteredOptions.map((item) => ({
 						label: transformStringWithPrefix({
 							str: item.key,
@@ -61,8 +66,6 @@ export const GroupByFilter = memo(function GroupByFilter({
 							prefix: item.type || '',
 							condition: !item.isColumn,
 						})}${selectValueDivider}${item.id || uuid()}`,
-						key: item.id || uuid(),
-						title: item.key,
 					})) || [];
 
 				setOptionsData(options);
@@ -74,59 +77,64 @@ export const GroupByFilter = memo(function GroupByFilter({
 		setSearchText(searchText);
 	};
 
-	const onBlur = (): void => {
+	const handleBlur = (): void => {
 		setIsFocused(false);
 		setSearchText('');
 	};
 
-	const onFocus = (): void => {
+	const handleFocus = (): void => {
 		setIsFocused(true);
 	};
 
-	const handleChange = (values: ExtendedSelectOption[]): void => {
+	const handleChange = (values: SelectOption<string, string>[]): void => {
+		const responseKeys = data?.payload?.attributeKeys || [];
+
 		const groupByValues: BaseAutocompleteData[] = values.map((item) => {
-			const responseKeys = data?.payload?.attributeKeys || [];
-			const { key } = getFilterObjectValue(item.value);
+			const [currentValue, id] = item.value.split(selectValueDivider);
+			const { key, type, isColumn } = getFilterObjectValue(currentValue);
 
-			const existGroupResponse = responseKeys.find(
-				(group) => group.id === item.key,
-			);
-
-			if (existGroupResponse) {
-				return existGroupResponse;
-			}
-
-			const existGroupQuery = query.groupBy.find((group) => group.id === item.key);
+			const existGroupQuery = query.groupBy.find((group) => group.id === id);
 
 			if (existGroupQuery) {
 				return existGroupQuery;
 			}
 
+			const existGroupResponse = responseKeys.find((group) => group.id === id);
+
+			if (existGroupResponse) {
+				return existGroupResponse;
+			}
+
 			return {
 				id: uuid(),
-				isColumn: null,
+				isColumn,
 				key,
 				dataType: null,
-				type: null,
+				type,
 			};
 		});
 
 		onChange(groupByValues);
 	};
 
-	const values: ExtendedSelectOption[] = query.groupBy.map((item) => ({
-		label: transformStringWithPrefix({
-			str: item.key,
-			prefix: item.type || '',
-			condition: !item.isColumn,
-		}),
-		key: item.id || uuid(),
-		value: `${transformStringWithPrefix({
-			str: item.key,
-			prefix: item.type || '',
-			condition: !item.isColumn,
-		})}${selectValueDivider}${item.id || uuid()}`,
-	}));
+	useEffect(() => {
+		const currentValues: SelectOption<string, string>[] = query.groupBy.map(
+			(item) => ({
+				label: `${transformStringWithPrefix({
+					str: item.key,
+					prefix: item.type || '',
+					condition: !item.isColumn,
+				})}`,
+				value: `${transformStringWithPrefix({
+					str: item.key,
+					prefix: item.type || '',
+					condition: !item.isColumn,
+				})}${selectValueDivider}${item.id || uuid()}`,
+			}),
+		);
+
+		setLocalValues(currentValues);
+	}, [query]);
 
 	return (
 		<Select
@@ -136,12 +144,12 @@ export const GroupByFilter = memo(function GroupByFilter({
 			showSearch
 			disabled={disabled}
 			showArrow={false}
-			onBlur={onBlur}
-			onFocus={onFocus}
-			options={optionsData}
 			filterOption={false}
+			onBlur={handleBlur}
+			onFocus={handleFocus}
+			options={optionsData}
+			value={localValues}
 			labelInValue
-			value={values}
 			notFoundContent={isFetching ? <Spin size="small" /> : null}
 			onChange={handleChange}
 		/>
