@@ -375,6 +375,21 @@ var testBuildTracesQueryData = []struct {
 			" group by ts order by ts",
 	},
 	{
+		Name:  "Test aggregate rate without aggregate attribute",
+		Start: 1680066360726210000,
+		End:   1680066458000000000,
+		Step:  60,
+		BuilderQuery: &v3.BuilderQuery{
+			QueryName:         "A",
+			AggregateOperator: v3.AggregateOperatorRate,
+			Expression:        "A",
+		},
+		TableName: "signoz_traces.distributed_signoz_index_v2",
+		ExpectedQuery: "SELECT toStartOfInterval(timestamp, INTERVAL 60 SECOND) AS ts, count()/60 as value from" +
+			" signoz_traces.distributed_signoz_index_v2 where (timestamp >= '1680066360726210000' AND timestamp <=" +
+			" '1680066458000000000') group by ts order by ts",
+	},
+	{
 		Name:  "Test aggregate count on fixed column of float64 type with filter",
 		Start: 1680066360726210000,
 		End:   1680066458000000000,
