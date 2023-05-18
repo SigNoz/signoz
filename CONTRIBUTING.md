@@ -185,6 +185,8 @@ Also, have a look at [Frontend README.md](https://github.com/SigNoz/signoz/blob/
   yarn dev
   ```
 
+  **Note:** Please make sure to have classic version of yarn - `v1.22.19` installed in your system
+
 ### Important Notes:
 The Maintainers / Contributors who will change Line Numbers of `Frontend` & `Query-Section`, please update line numbers in [`/.scripts/commentLinesForSetup.sh`](https://github.com/SigNoz/signoz/blob/develop/.scripts/commentLinesForSetup.sh)
 
@@ -204,6 +206,8 @@ If you don't want to install the SigNoz backend just for doing frontend developm
   yarn install
   yarn dev
   ```
+
+  **Note:** Please make sure to have classic version of yarn - `v1.22.19` installed in your system
 
 Please ping us in the [`#contributing`](https://signoz-community.slack.com/archives/C01LWQ8KS7M) channel or ask `@Prashant Shahi` in our [Slack Community](https://signoz.io/slack)  and we will DM you with `<test environment URL>`.
 
