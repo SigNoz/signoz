@@ -73,11 +73,9 @@ export const useAutoComplete = (query: IBuilderQuery): IAutoComplete => {
 					return replaceStringWithMaxLength(prev, data as string[], value);
 				});
 			}
-			if (!isMulti && isValidTag && !isExistsNotExistsOperator(value)) {
-				handleAddTag(value);
-			}
-			if (!isMulti && isValidTag && isExistsNotExistsOperator(value)) {
-				handleAddTag(value);
+			if (!isMulti) {
+				if (isExistsNotExistsOperator(value)) handleAddTag(value);
+				if (isValidTag && !isExistsNotExistsOperator(value)) handleAddTag(value);
 			}
 		},
 		[handleAddTag, isMulti, isValidTag],
