@@ -1,25 +1,28 @@
 import { Select, Spin } from 'antd';
 import { getAggregateKeys } from 'api/queryBuilder/getAttributeKeys';
 import { QueryBuilderKeys } from 'constants/queryBuilder';
-import { transformStringWithPrefix } from 'lib/query/transformStringWithPrefix';
+import * as Papa from 'papaparse';
 import React, { useCallback, useMemo, useState } from 'react';
 import { useQuery } from 'react-query';
-import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
-import { MetricAggregateOperator } from 'types/common/queryBuilder';
+import { OrderByPayload } from 'types/api/queryBuilder/queryBuilderData';
+import { DataSource, MetricAggregateOperator } from 'types/common/queryBuilder';
 
 import { selectStyle } from '../QueryBuilderSearch/config';
+import { getRemoveOrderFromValue } from '../QueryBuilderSearch/utils';
+import { OrderByFilterProps } from './OrderByFilter.interfaces';
 import {
-	OrderByFilterProps,
-	OrderByFilterValue,
-} from './OrderByFilter.interfaces';
-import { getLabelFromValue, mapLabelValuePairs } from './utils';
+	checkIfKeyPresent,
+	getLabelFromValue,
+	mapLabelValuePairs,
+	orderByValueDelimiter,
+} from './utils';
 
 export function OrderByFilter({
 	query,
 	onChange,
 }: OrderByFilterProps): JSX.Element {
 	const [searchText, setSearchText] = useState<string>('');
-	const [selectedValue, setSelectedValue] = useState<OrderByFilterValue[]>([]);
+	const [selectedValue, setSelectedValue] = useState<string[]>([]);
 
 	const { data, isFetching } = useQuery(
 		[QueryBuilderKeys.GET_AGGREGATE_KEYS, searchText],
@@ -41,14 +44,9 @@ export function OrderByFilter({
 	const noAggregationOptions = useMemo(
 		() =>
 			data?.payload?.attributeKeys
-				? mapLabelValuePairs(data?.payload?.attributeKeys)
-						.flat()
-						.filter(
-							(option) =>
-								!getLabelFromValue(selectedValue).includes(option.label.split(' ')[0]),
-						)
+				? mapLabelValuePairs(data?.payload?.attributeKeys).flat()
 				: [],
-		[data?.payload?.attributeKeys, selectedValue],
+		[data?.payload?.attributeKeys],
 	);
 
 	const aggregationOptions = useMemo(
@@ -58,77 +56,55 @@ export function OrderByFilter({
 				.concat([
 					{
 						label: `${query.aggregateOperator}(${query.aggregateAttribute.key}) asc`,
-						value: `${query.aggregateOperator}(${query.aggregateAttribute.key}) asc`,
+						value: `${query.aggregateOperator}(${query.aggregateAttribute.key})${orderByValueDelimiter}asc`,
 					},
 					{
 						label: `${query.aggregateOperator}(${query.aggregateAttribute.key}) desc`,
-						value: `${query.aggregateOperator}(${query.aggregateAttribute.key}) desc`,
+						value: `${query.aggregateOperator}(${query.aggregateAttribute.key})${orderByValueDelimiter}desc`,
 					},
-				])
-				.filter(
-					(option) =>
-						!getLabelFromValue(selectedValue).includes(option.label.split(' ')[0]),
-				),
-		[
-			query.aggregateAttribute.key,
-			query.aggregateOperator,
-			query.groupBy,
-			selectedValue,
-		],
+				]),
+		[query.aggregateAttribute.key, query.aggregateOperator, query.groupBy],
 	);
 
-	const optionsData = useMemo(
-		() =>
+	const optionsData = useMemo(() => {
+		const options =
 			query.aggregateOperator === MetricAggregateOperator.NOOP
 				? noAggregationOptions
-				: aggregationOptions,
-		[aggregationOptions, noAggregationOptions, query.aggregateOperator],
-	);
+				: aggregationOptions;
+		return options.filter(
+			(option) =>
+				!getLabelFromValue(selectedValue).includes(
+					getRemoveOrderFromValue(option.value),
+				),
+		);
+	}, [
+		aggregationOptions,
+		noAggregationOptions,
+		query.aggregateOperator,
+		selectedValue,
+	]);
 
-	const handleChange = (values: OrderByFilterValue[]): void => {
+	const handleChange = (values: string[]): void => {
 		setSelectedValue(values);
-		const orderByValues: BaseAutocompleteData[] = values?.map((item) => {
-			const iterationArray = data?.payload?.attributeKeys || query.orderBy;
-			const existingOrderValues = iterationArray.find(
-				(group) => group.key === item.value,
-			);
-			if (existingOrderValues) {
-				return existingOrderValues;
+		const orderByValues: OrderByPayload[] = values.map((item) => {
+			const match = Papa.parse(item, { delimiter: '|' });
+			if (match) {
+				const [columnName, order] = match.data.flat() as string[];
+				return {
+					columnName: checkIfKeyPresent(columnName, query.aggregateAttribute.key)
+						? '#SIGNOZ_VALUE'
+						: columnName,
+					order,
+				};
 			}
 
 			return {
-				isColumn: null,
-				key: item.value,
-				dataType: null,
-				type: null,
+				columnName: item,
+				order: '',
 			};
 		});
 		onChange(orderByValues);
 	};
-
-	const values: OrderByFilterValue[] = useMemo(
-		() =>
-			query.orderBy
-				.filter((order) =>
-					query.groupBy.find(
-						(group) =>
-							order.key.includes(group.key) ||
-							order.key.includes(query.aggregateOperator),
-					),
-				)
-				.map((item) => ({
-					label: transformStringWithPrefix({
-						str: item.key,
-						prefix: item.type || '',
-						condition: !item.isColumn,
-					}),
-					key: item.key,
-					value: item.key,
-					disabled: undefined,
-					title: undefined,
-				})),
-		[query.aggregateOperator, query.groupBy, query.orderBy],
-	);
 
 	const isDisabledSelect = useMemo(
 		() =>
@@ -137,18 +113,21 @@ export function OrderByFilter({
 		[query.aggregateAttribute.key, query.aggregateOperator],
 	);
 
+	const isMetricsDataSource = useMemo(
+		() => query.dataSource === DataSource.METRICS,
+		[query.dataSource],
+	);
+
 	return (
 		<Select
 			mode="tags"
 			style={selectStyle}
 			onSearch={handleSearchKeys}
 			showSearch
-			disabled={isDisabledSelect}
+			disabled={isMetricsDataSource && isDisabledSelect}
 			showArrow={false}
 			filterOption={false}
 			options={optionsData}
-			labelInValue
-			value={values}
 			notFoundContent={isFetching ? <Spin size="small" /> : null}
 			onChange={handleChange}
 		/>
