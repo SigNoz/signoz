@@ -1,12 +1,13 @@
-import { Button, Popover } from 'antd';
+import { Popover } from 'antd';
+import ROUTES from 'constants/routes';
+import history from 'lib/history';
 import { generateFilterQuery } from 'lib/logs/generateFilterQuery';
 import React, { memo, useCallback, useMemo } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
-import { Dispatch } from 'redux';
+import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
-import AppActions from 'types/actions';
-import { SET_SEARCH_QUERY_STRING } from 'types/actions/logs';
 import { ILogsReducer } from 'types/reducer/logs';
+
+import { ButtonContainer } from './styles';
 
 function AddToQueryHOC({
 	fieldKey,
@@ -16,7 +17,6 @@ function AddToQueryHOC({
 	const {
 		searchFilter: { queryString },
 	} = useSelector<AppState, ILogsReducer>((store) => store.logs);
-	const dispatch = useDispatch<Dispatch<AppActions>>();
 
 	const generatedQuery = useMemo(
 		() => generateFilterQuery({ fieldKey, fieldValue, type: 'IN' }),
@@ -31,24 +31,20 @@ function AddToQueryHOC({
 		} else {
 			updatedQueryString += ` AND ${generatedQuery}`;
 		}
-		dispatch({
-			type: SET_SEARCH_QUERY_STRING,
-			payload: {
-				searchQueryString: updatedQueryString,
-			},
-		});
-	}, [dispatch, generatedQuery, queryString]);
+
+		history.replace(`${ROUTES.LOGS}?q=${updatedQueryString}`);
+	}, [generatedQuery, queryString]);
 
 	const popOverContent = useMemo(() => <span>Add to query: {fieldKey}</span>, [
 		fieldKey,
 	]);
 
 	return (
-		<Button size="small" type="text" onClick={handleQueryAdd}>
+		<ButtonContainer size="small" type="text" onClick={handleQueryAdd}>
 			<Popover placement="top" content={popOverContent}>
 				{children}
 			</Popover>
-		</Button>
+		</ButtonContainer>
 	);
 }
 
