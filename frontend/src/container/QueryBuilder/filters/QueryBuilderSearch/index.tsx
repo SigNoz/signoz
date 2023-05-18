@@ -95,15 +95,15 @@ function QueryBuilderSearch({
 		if (isExistsNotExistsOperator(searchValue)) handleKeyDown(event);
 	};
 
-	const isMatricsDataSource = useMemo(
+	const isMetricsDataSource = useMemo(
 		() => query.dataSource === DataSource.METRICS,
 		[query.dataSource],
 	);
 
 	const queryTags = useMemo(() => {
-		if (!query.aggregateAttribute.key && isMatricsDataSource) return [];
+		if (!query.aggregateAttribute.key && isMetricsDataSource) return [];
 		return tags;
-	}, [isMatricsDataSource, query.aggregateAttribute.key, tags]);
+	}, [isMetricsDataSource, query.aggregateAttribute.key, tags]);
 
 	useEffect(() => {
 		const initialTagFilters: TagFilter = { items: [], op: 'AND' };
@@ -142,7 +142,7 @@ function QueryBuilderSearch({
 			placeholder="Search Filter"
 			value={queryTags}
 			searchValue={searchValue}
-			disabled={isMatricsDataSource && !query.aggregateAttribute.key}
+			disabled={isMetricsDataSource && !query.aggregateAttribute.key}
 			style={selectStyle}
 			onSearch={handleSearch}
 			onChange={onChangeHandler}

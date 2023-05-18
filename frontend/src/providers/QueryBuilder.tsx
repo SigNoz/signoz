@@ -111,7 +111,7 @@ export function QueryBuilderProvider({
 							aggregateOperator: getOperatorsBySourceAndPanelType({
 								dataSource: initialDataSource,
 								panelType,
-							})[0],
+							})[0].value,
 					  }
 					: {}),
 			};
