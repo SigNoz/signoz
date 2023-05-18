@@ -22,12 +22,7 @@ function CopyClipboardHOC({
 	}, [setCopy, textToCopy]);
 
 	return (
-		<span
-			onClick={onClick}
-			onKeyDown={(): null => null}
-			role="button"
-			tabIndex={0}
-		>
+		<span onClick={onClick} role="presentation" tabIndex={-1}>
 			<Popover
 				placement="top"
 				content={<span style={{ fontSize: '0.9rem' }}>Copy to clipboard</span>}
