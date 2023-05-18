@@ -4,6 +4,7 @@ import React, { useMemo } from 'react';
 import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
+import { DataSource } from 'types/common/queryBuilder';
 import { GlobalReducer } from 'types/reducer/globalTime';
 
 import { selectStyle } from '../QueryBuilderSearch/config';
@@ -41,11 +42,16 @@ function AggregateEveryFilter({
 		}
 	};
 
+	const isMetricsDataSource = useMemo(
+		() => query.dataSource === DataSource.METRICS,
+		[query.dataSource],
+	);
+
 	return (
 		<Input
 			type="text"
 			placeholder="Enter in seconds"
-			disabled={!query.aggregateAttribute.key}
+			disabled={isMetricsDataSource && !query.aggregateAttribute.key}
 			style={selectStyle}
 			defaultValue={query.stepInterval ?? stepInterval}
 			onChange={(event): void => onChange(Number(event.target.value))}

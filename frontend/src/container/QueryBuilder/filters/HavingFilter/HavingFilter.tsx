@@ -14,6 +14,7 @@ import {
 import { transformStringWithPrefix } from 'lib/query/transformStringWithPrefix';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Having, HavingForm } from 'types/api/queryBuilder/queryBuilderData';
+import { DataSource } from 'types/common/queryBuilder';
 import { SelectOption } from 'types/common/select';
 
 // ** Types
@@ -214,6 +215,11 @@ export function HavingFilter({
 		setLocalValues(transformHavingToStringValue(having));
 	}, [having]);
 
+	const isMetricsDataSource = useMemo(
+		() => query.dataSource === DataSource.METRICS,
+		[query.dataSource],
+	);
+
 	return (
 		<Select
 			autoClearSearchValue={false}
@@ -223,7 +229,7 @@ export function HavingFilter({
 			tagRender={tagRender}
 			value={localValues}
 			data-testid="havingSelect"
-			disabled={!query.aggregateAttribute.key}
+			disabled={isMetricsDataSource && !query.aggregateAttribute.key}
 			style={{ width: '100%' }}
 			notFoundContent={currentFormValue.value.length === 0 ? undefined : null}
 			placeholder="Count(operation) > 5"
