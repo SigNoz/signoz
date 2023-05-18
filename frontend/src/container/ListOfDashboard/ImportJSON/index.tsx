@@ -137,6 +137,13 @@ function ImportJSON({
 		</Space>
 	);
 
+	const onCancelHandler = (): void => {
+		setIsUploadJSONError(false);
+		setIsCreateDashboardError(false);
+		setIsFeatureAlert(false);
+		onModalHandler();
+	};
+
 	return (
 		<Modal
 			open={isImportJSONModalVisible}
@@ -144,7 +151,7 @@ function ImportJSON({
 			maskClosable
 			destroyOnClose
 			width="70vw"
-			onCancel={onModalHandler}
+			onCancel={onCancelHandler}
 			title={
 				<>
 					<Typography.Title level={4}>{t('import_json')}</Typography.Title>
