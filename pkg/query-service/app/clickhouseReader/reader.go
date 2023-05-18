@@ -4097,16 +4097,9 @@ func readRow(vars []interface{}, columnNames []string) ([]string, map[string]str
 				groupAttributes[colName] = fmt.Sprintf("%v", reflect.ValueOf(v).Elem().Int())
 			}
 		case *bool:
-			if _, ok := constants.ReservedColumnTargetAliases[colName]; ok {
-				if *v {
-					point.Value = 1
-				} else {
-					point.Value = 0
-				}
-			} else {
-				groupBy = append(groupBy, fmt.Sprintf("%v", *v))
-				groupAttributes[colName] = fmt.Sprintf("%v", *v)
-			}
+			groupBy = append(groupBy, fmt.Sprintf("%v", *v))
+			groupAttributes[colName] = fmt.Sprintf("%v", *v)
+
 		default:
 			zap.S().Errorf("unsupported var type %v found in query builder query result for column %s", v, colName)
 		}
