@@ -204,7 +204,9 @@ export function HavingFilter({
 
 	const handleDeselect = (value: string): void => {
 		const result = localValues.filter((item) => item !== value);
-		setLocalValues(result);
+		const having: Having[] = result.map(transformFromStringToHaving);
+		onChange(having);
+		resetChanges();
 	};
 
 	useEffect(() => {
