@@ -4,4 +4,6 @@ export const MESSAGE = {
 	ALERT:
 		'You have exceeded the number of alerts that are allowed in the community edition.',
 	WIDGET: 'You have reached limit of {{widget}} free widgets.',
+	CREATE_DASHBOARD:
+		'You have reached limit of creating the query builder based dashboard panels.',
 };

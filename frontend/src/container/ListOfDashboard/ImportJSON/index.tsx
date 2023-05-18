@@ -4,6 +4,7 @@ import { Button, Modal, Space, Typography, Upload, UploadProps } from 'antd';
 import createDashboard from 'api/dashboard/create';
 import Editor from 'components/Editor';
 import ROUTES from 'constants/routes';
+import { MESSAGE } from 'hooks/useFeatureFlag';
 import { useNotifications } from 'hooks/useNotifications';
 import history from 'lib/history';
 import React, { useState } from 'react';
@@ -28,6 +29,8 @@ function ImportJSON({
 	const [isCreateDashboardError, setIsCreateDashboardError] = useState<boolean>(
 		false,
 	);
+	const [isFeatureAlert, setIsFeatureAlert] = useState<boolean>(false);
+
 	const dispatch = useDispatch<Dispatch<AppActions>>();
 
 	const [dashboardCreating, setDashboardCreating] = useState<boolean>(false);
@@ -99,6 +102,15 @@ function ImportJSON({
 						}),
 					);
 				}, 10);
+			} else if (response.error === 'feature usage exceeded') {
+				setIsFeatureAlert(true);
+				notifications.error({
+					message:
+						response.error ||
+						t('something_went_wrong', {
+							ns: 'common',
+						}),
+				});
 			} else {
 				setIsCreateDashboardError(true);
 				notifications.error({
@@ -112,6 +124,7 @@ function ImportJSON({
 			setDashboardCreating(false);
 		} catch {
 			setDashboardCreating(false);
+			setIsFeatureAlert(false);
 
 			setIsCreateDashboardError(true);
 		}
@@ -148,6 +161,11 @@ function ImportJSON({
 						{t('load_json')}
 					</Button>
 					{isCreateDashboardError && getErrorNode(t('error_loading_json'))}
+					{isFeatureAlert && (
+						<Typography.Text type="danger">
+							{MESSAGE.CREATE_DASHBOARD}
+						</Typography.Text>
+					)}
 				</FooterContainer>
 			}
 		>
