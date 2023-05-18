@@ -5,6 +5,7 @@ import { getAggregateAttribute } from 'api/queryBuilder/getAggregateAttribute';
 import {
 	initialAggregateAttribute,
 	QueryBuilderKeys,
+	selectValueDivider,
 } from 'constants/queryBuilder';
 import { getFilterObjectValue } from 'lib/newQueryBuilder/getFilterObjectValue';
 import { transformStringWithPrefix } from 'lib/query/transformStringWithPrefix';
@@ -51,7 +52,7 @@ export const AggregatorFilter = memo(function AggregatorFilter({
 							str: item.key,
 							prefix: item.type || '',
 							condition: !item.isColumn,
-						})}--${item.id || uuid()}`,
+						})}${selectValueDivider}${item.id || uuid()}`,
 						key: item.id || uuid(),
 					})) || [];
 

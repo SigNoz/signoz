@@ -1,7 +1,7 @@
 import { Select, Spin } from 'antd';
 import { getAggregateKeys } from 'api/queryBuilder/getAttributeKeys';
 // ** Constants
-import { QueryBuilderKeys } from 'constants/queryBuilder';
+import { QueryBuilderKeys, selectValueDivider } from 'constants/queryBuilder';
 import { getFilterObjectValue } from 'lib/newQueryBuilder/getFilterObjectValue';
 // ** Components
 // ** Helpers
@@ -57,7 +57,7 @@ export const GroupByFilter = memo(function GroupByFilter({
 							str: item.key,
 							prefix: item.type || '',
 							condition: !item.isColumn,
-						})}--${item.id || uuid()}`,
+						})}${selectValueDivider}${item.id || uuid()}`,
 						key: item.id || uuid(),
 						title: item.key,
 					})) || [];
@@ -121,7 +121,7 @@ export const GroupByFilter = memo(function GroupByFilter({
 			str: item.key,
 			prefix: item.type || '',
 			condition: !item.isColumn,
-		})}--${item.id || uuid()}`,
+		})}${selectValueDivider}${item.id || uuid()}`,
 	}));
 
 	return (
