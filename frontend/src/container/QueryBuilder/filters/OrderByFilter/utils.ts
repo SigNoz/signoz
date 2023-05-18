@@ -1,8 +1,9 @@
 import { IOption } from 'hooks/useResourceAttribute/types';
 import { transformStringWithPrefix } from 'lib/query/transformStringWithPrefix';
+import * as Papa from 'papaparse';
 import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
 
-import { OrderByFilterValue } from './OrderByFilter.interfaces';
+export const orderByValueDelimiter = '|';
 
 export function mapLabelValuePairs(
 	arr: BaseAutocompleteData[],
@@ -17,16 +18,27 @@ export function mapLabelValuePairs(
 		return [
 			{
 				label: `${label} asc`,
-				value: `${value} asc`,
+				value: `${value}${orderByValueDelimiter}asc`,
 			},
 			{
 				label: `${label} desc`,
-				value: `${value} desc`,
+				value: `${value}${orderByValueDelimiter}desc`,
 			},
 		];
 	});
 }
 
-export function getLabelFromValue(arr: OrderByFilterValue[]): string[] {
-	return arr.map((value) => value.label.split(' ')[0]);
+export function getLabelFromValue(arr: string[]): string[] {
+	return arr.flat().map((item) => {
+		const match = Papa.parse(item, { delimiter: orderByValueDelimiter });
+		if (match) {
+			const [key] = match.data as string[];
+			return key[0];
+		}
+		return item;
+	});
+}
+
+export function checkIfKeyPresent(str: string, valueToCheck: string): boolean {
+	return new RegExp(`\\(${valueToCheck}\\)`).test(str);
 }
