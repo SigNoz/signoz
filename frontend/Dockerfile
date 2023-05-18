@@ -1,5 +1,5 @@
 # Builder stage
-FROM node:16.15.0-slim as builder
+FROM node:16.15.0 as builder
 
 # Add Maintainer Info
 LABEL maintainer="signoz"
