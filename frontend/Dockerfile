@@ -11,6 +11,8 @@ WORKDIR /frontend
 
 # Copy the package.json and .yarnrc files prior to install dependencies
 COPY package.json ./
+# Copy lock file
+COPY yarn.lock ./
 COPY .yarnrc ./
 
 # Install the dependencies and make the folder
