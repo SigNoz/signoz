@@ -121,7 +121,7 @@ export const GroupByFilter = memo(function GroupByFilter({
 			str: item.key,
 			prefix: item.type || '',
 			condition: !item.isColumn,
-		})}${selectValueDivider}${item.id || uuid()}`,
+		})}${selectValueDivider}${item.id || uuid()}'`,
 	}));
 
 	return (
