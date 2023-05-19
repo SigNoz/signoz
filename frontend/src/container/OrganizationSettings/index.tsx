@@ -1,6 +1,6 @@
 import { Divider, Space } from 'antd';
-import { FeatureKeys } from 'constants/featureKeys';
-import useFeatureFlag from 'hooks/useFeatureFlag';
+import { FeatureKeys } from 'constants/features';
+import { useIsFeatureDisabled } from 'hooks/useFeatureFlag';
 import React from 'react';
 import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
@@ -14,8 +14,11 @@ import PendingInvitesContainer from './PendingInvitesContainer';
 function OrganizationSettings(): JSX.Element {
 	const { org } = useSelector<AppState, AppReducer>((state) => state.app);
 
-	const sso = useFeatureFlag(FeatureKeys.SSO);
-	const noUpsell = useFeatureFlag(FeatureKeys.DISABLE_UPSELL);
+	const isNotSSO = useIsFeatureDisabled(FeatureKeys.SSO);
+
+	const isNoUpSell = useIsFeatureDisabled(FeatureKeys.DISABLE_UPSELL);
+
+	const isAuthDomain = !isNoUpSell || (isNoUpSell && !isNotSSO);
 
 	if (!org) {
 		return <div />;
@@ -38,7 +41,7 @@ function OrganizationSettings(): JSX.Element {
 			<Divider />
 			<Members />
 			<Divider />
-			{(!noUpsell || (noUpsell && sso)) && <AuthDomains />}
+			{isAuthDomain && <AuthDomains />}
 		</>
 	);
 }

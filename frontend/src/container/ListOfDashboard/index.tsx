@@ -74,49 +74,52 @@ function ListOfAllDashboard(): JSX.Element {
 		errorMessage: '',
 	});
 
-	const columns: TableColumnProps<Data>[] = [
-		{
-			title: 'Name',
-			dataIndex: 'name',
-			width: 100,
-			render: Name,
-		},
-		{
-			title: 'Description',
-			width: 100,
-			dataIndex: 'description',
-		},
-		{
-			title: 'Tags (can be multiple)',
-			dataIndex: 'tags',
-			width: 80,
-			render: Tags,
-		},
-		{
-			title: 'Created At',
-			dataIndex: 'createdBy',
-			width: 80,
-			sorter: (a: Data, b: Data): number => {
-				const prev = new Date(a.createdBy).getTime();
-				const next = new Date(b.createdBy).getTime();
-
-				return prev - next;
+	const columns: TableColumnProps<Data>[] = useMemo(
+		() => [
+			{
+				title: 'Name',
+				dataIndex: 'name',
+				width: 100,
+				render: Name,
 			},
-			render: Createdby,
-		},
-		{
-			title: 'Last Updated Time',
-			width: 90,
-			dataIndex: 'lastUpdatedTime',
-			sorter: (a: Data, b: Data): number => {
-				const prev = new Date(a.lastUpdatedTime).getTime();
-				const next = new Date(b.lastUpdatedTime).getTime();
-
-				return prev - next;
+			{
+				title: 'Description',
+				width: 100,
+				dataIndex: 'description',
 			},
-			render: DateComponent,
-		},
-	];
+			{
+				title: 'Tags (can be multiple)',
+				dataIndex: 'tags',
+				width: 80,
+				render: Tags,
+			},
+			{
+				title: 'Created At',
+				dataIndex: 'createdBy',
+				width: 80,
+				sorter: (a: Data, b: Data): number => {
+					const prev = new Date(a.createdBy).getTime();
+					const next = new Date(b.createdBy).getTime();
+
+					return prev - next;
+				},
+				render: Createdby,
+			},
+			{
+				title: 'Last Updated Time',
+				width: 90,
+				dataIndex: 'lastUpdatedTime',
+				sorter: (a: Data, b: Data): number => {
+					const prev = new Date(a.lastUpdatedTime).getTime();
+					const next = new Date(b.lastUpdatedTime).getTime();
+
+					return prev - next;
+				},
+				render: DateComponent,
+			},
+		],
+		[],
+	);
 
 	if (action) {
 		columns.push({
@@ -199,7 +202,7 @@ function ListOfAllDashboard(): JSX.Element {
 		setUploadedGrafana(uploadedGrafana);
 	};
 
-	const getMenuItems = useCallback(() => {
+	const getMenuItems = useMemo(() => {
 		const menuItems: ItemType[] = [];
 		if (createNewDashboard) {
 			menuItems.push({
@@ -227,7 +230,7 @@ function ListOfAllDashboard(): JSX.Element {
 
 	const menu: MenuProps = useMemo(
 		() => ({
-			items: getMenuItems(),
+			items: getMenuItems,
 		}),
 		[getMenuItems],
 	);
@@ -245,7 +248,7 @@ function ListOfAllDashboard(): JSX.Element {
 						}}
 					/>
 					{newDashboard && (
-						<Dropdown trigger={['click']} menu={menu}>
+						<Dropdown disabled={loading} trigger={['click']} menu={menu}>
 							<NewDashboardButton
 								icon={<PlusOutlined />}
 								type="primary"
@@ -260,11 +263,12 @@ function ListOfAllDashboard(): JSX.Element {
 			</Row>
 		),
 		[
-			getText,
 			newDashboard,
-			newDashboardState.error,
-			newDashboardState.loading,
+			loading,
 			menu,
+			newDashboardState.loading,
+			newDashboardState.error,
+			getText,
 		],
 	);
 

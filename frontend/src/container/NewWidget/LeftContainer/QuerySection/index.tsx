@@ -34,10 +34,12 @@ function QuerySection({ updateQuery, selectedGraph }: QueryProps): JSX.Element {
 		CLICKHOUSE: uuid(),
 		PROM: uuid(),
 	});
+
 	const { dashboards, isLoadingQueryResult } = useSelector<
 		AppState,
 		DashboardReducer
 	>((state) => state.dashboards);
+
 	const [selectedDashboards] = dashboards;
 	const { search } = useLocation();
 	const { widgets } = selectedDashboards.data;

@@ -2,12 +2,14 @@ import { Typography } from 'antd';
 import { ChartData } from 'chart.js';
 import Spinner from 'components/Spinner';
 import GridGraphComponent from 'container/GridGraphComponent';
+import { useNotifications } from 'hooks/useNotifications';
 import usePreviousValue from 'hooks/usePreviousValue';
 import { getDashboardVariables } from 'lib/dashbaordVariables/getDashboardVariables';
 import getChartData from 'lib/getChartData';
 import isEmpty from 'lodash-es/isEmpty';
 import React, { memo, useCallback, useMemo, useState } from 'react';
 import { Layout } from 'react-grid-layout';
+import { useTranslation } from 'react-i18next';
 import { useInView } from 'react-intersection-observer';
 import { useQuery } from 'react-query';
 import { connect, useSelector } from 'react-redux';
@@ -20,8 +22,8 @@ import {
 import { GetMetricQueryRange } from 'store/actions/dashboard/getQueryResults';
 import { AppState } from 'store/reducers';
 import AppActions from 'types/actions';
-import { GlobalTime } from 'types/actions/globalTime';
 import { Widgets } from 'types/api/dashboard/getAll';
+import AppReducer from 'types/reducer/app';
 import DashboardReducer from 'types/reducer/dashboards';
 import { GlobalReducer } from 'types/reducer/globalTime';
 
@@ -46,18 +48,22 @@ function GridCardGraph({
 		initialInView: true,
 	});
 
+	const { notifications } = useNotifications();
+
+	const { t } = useTranslation(['common']);
+
 	const [errorMessage, setErrorMessage] = useState<string | undefined>('');
 	const [hovered, setHovered] = useState(false);
 	const [modal, setModal] = useState(false);
 	const [deleteModal, setDeleteModal] = useState(false);
 
-	const { minTime, maxTime } = useSelector<AppState, GlobalTime>(
-		(state) => state.globalTime,
-	);
-	const { selectedTime: globalSelectedInterval } = useSelector<
+	const { minTime, maxTime, selectedTime: globalSelectedInterval } = useSelector<
 		AppState,
 		GlobalReducer
 	>((state) => state.globalTime);
+	const { featureResponse } = useSelector<AppState, AppReducer>(
+		(state) => state.app,
+	);
 	const { dashboards } = useSelector<AppState, DashboardReducer>(
 		(state) => state.dashboards,
 	);
@@ -122,9 +128,27 @@ function GridCardGraph({
 
 		const widgetId = isEmptyWidget ? layout[0].i : widget?.id;
 
-		deleteWidget({ widgetId, setLayout });
-		onToggleModal(setDeleteModal);
-	}, [deleteWidget, layout, onToggleModal, setLayout, widget]);
+		featureResponse
+			.refetch()
+			.then(() => {
+				deleteWidget({ widgetId, setLayout });
+				onToggleModal(setDeleteModal);
+			})
+			.catch(() => {
+				notifications.error({
+					message: t('common:something_went_wrong'),
+				});
+			});
+	}, [
+		widget,
+		layout,
+		featureResponse,
+		deleteWidget,
+		setLayout,
+		onToggleModal,
+		notifications,
+		t,
+	]);
 
 	const getModals = (): JSX.Element => (
 		<>

@@ -1,11 +1,13 @@
 import { ExclamationCircleOutlined, SaveOutlined } from '@ant-design/icons';
-import { Col, FormInstance, Modal, Typography } from 'antd';
+import { Col, FormInstance, Modal, Tooltip, Typography } from 'antd';
 import saveAlertApi from 'api/alerts/save';
 import testAlertApi from 'api/alerts/testAlert';
+import { FeatureKeys } from 'constants/features';
 import ROUTES from 'constants/routes';
 import QueryTypeTag from 'container/NewWidget/LeftContainer/QueryTypeTag';
 import PlotTag from 'container/NewWidget/LeftContainer/WidgetGraph/PlotTag';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
+import { MESSAGE, useIsFeatureDisabled } from 'hooks/useFeatureFlag';
 import { useNotifications } from 'hooks/useNotifications';
 import history from 'lib/history';
 import { mapQueryDataFromApi } from 'lib/newQueryBuilder/queryBuilderMappers/mapQueryDataFromApi';
@@ -145,6 +147,7 @@ function FormAlertRules({
 	// onQueryCategoryChange handles changes to query category
 	// in state as well as sets additional defaults
 	const onQueryCategoryChange = (val: EQueryType): void => {
+		console.log('onQueryCategoryChange', val);
 		setQueryCategory(val);
 		if (val === EQueryType.PROM) {
 			setAlertDef({
@@ -298,6 +301,10 @@ function FormAlertRules({
 		initQuery,
 	]);
 
+	const isAlertAvialable = useIsFeatureDisabled(
+		FeatureKeys.QUERY_BUILDER_ALERTS,
+	);
+
 	const saveRule = useCallback(async () => {
 		if (!isFormValid()) {
 			return;
@@ -437,6 +444,12 @@ function FormAlertRules({
 			selectedInterval={toChartInterval(alertDef.evalWindow)}
 		/>
 	);
+
+	const isNewRule = ruleId === 0;
+
+	const isAlertAvialableToSave =
+		isAlertAvialable && isNewRule && queryCategory === EQueryType.QUERY_BUILDER;
+
 	return (
 		<>
 			{Element}
@@ -469,14 +482,18 @@ function FormAlertRules({
 
 						{renderBasicInfo()}
 						<ButtonContainer>
-							<ActionButton
-								loading={loading || false}
-								type="primary"
-								onClick={onSaveHandler}
-								icon={<SaveOutlined />}
-							>
-								{ruleId > 0 ? t('button_savechanges') : t('button_createrule')}
-							</ActionButton>
+							<Tooltip title={isAlertAvialableToSave ? MESSAGE.ALERT : ''}>
+								<ActionButton
+									loading={loading || false}
+									type="primary"
+									onClick={onSaveHandler}
+									icon={<SaveOutlined />}
+									disabled={isAlertAvialableToSave}
+								>
+									{isNewRule ? t('button_createrule') : t('button_savechanges')}
+								</ActionButton>
+							</Tooltip>
+
 							<ActionButton
 								loading={loading || false}
 								type="default"

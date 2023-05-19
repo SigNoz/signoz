@@ -1,7 +1,11 @@
-import { Button, Modal, Typography } from 'antd';
+import { LockFilled } from '@ant-design/icons';
+import { Button, Modal, Tooltip, Typography } from 'antd';
+import { FeatureKeys } from 'constants/features';
 import ROUTES from 'constants/routes';
 import { GRAPH_TYPES } from 'container/NewDashboard/ComponentsSlider';
 import { ITEMS } from 'container/NewDashboard/ComponentsSlider/menuItems';
+import { MESSAGE, useIsFeatureDisabled } from 'hooks/useFeatureFlag';
+import { useNotifications } from 'hooks/useNotifications';
 import { getDashboardVariables } from 'lib/dashbaordVariables/getDashboardVariables';
 import history from 'lib/history';
 import { DashboardWidgetPageParams } from 'pages/DashboardWidget';
@@ -22,6 +26,7 @@ import { AppState } from 'store/reducers';
 import AppActions from 'types/actions';
 import { FLUSH_DASHBOARD } from 'types/actions/dashboard';
 import { Widgets } from 'types/api/dashboard/getAll';
+import AppReducer from 'types/reducer/app';
 import DashboardReducer from 'types/reducer/dashboards';
 import { GlobalReducer } from 'types/reducer/globalTime';
 
@@ -50,6 +55,10 @@ function NewWidget({
 		AppState,
 		GlobalReducer
 	>((state) => state.globalTime);
+
+	const { featureResponse } = useSelector<AppState, AppReducer>(
+		(state) => state.app,
+	);
 
 	const [selectedDashboard] = dashboards;
 
@@ -99,22 +108,34 @@ function NewWidget({
 		enum: selectedWidget?.timePreferance || 'GLOBAL_TIME',
 	});
 
+	const { notifications } = useNotifications();
+
 	const onClickSaveHandler = useCallback(() => {
 		// update the global state
-		saveSettingOfPanel({
-			uuid: selectedDashboard.uuid,
-			description,
-			isStacked: stacked,
-			nullZeroValues: selectedNullZeroValue,
-			opacity,
-			timePreferance: selectedTime.enum,
-			title,
-			yAxisUnit,
-			widgetId: query.get('widgetId') || '',
-			dashboardId,
-			graphType,
-		});
+		featureResponse
+			.refetch()
+			.then(() => {
+				saveSettingOfPanel({
+					uuid: selectedDashboard.uuid,
+					description,
+					isStacked: stacked,
+					nullZeroValues: selectedNullZeroValue,
+					opacity,
+					timePreferance: selectedTime.enum,
+					title,
+					yAxisUnit,
+					widgetId: query.get('widgetId') || '',
+					dashboardId,
+					graphType,
+				});
+			})
+			.catch(() => {
+				notifications.error({
+					message: 'Something went wrong',
+				});
+			});
 	}, [
+		featureResponse,
 		saveSettingOfPanel,
 		selectedDashboard.uuid,
 		description,
@@ -127,6 +148,7 @@ function NewWidget({
 		query,
 		dashboardId,
 		graphType,
+		notifications,
 	]);
 
 	const onClickDiscardHandler = useCallback(() => {
@@ -167,13 +189,39 @@ function NewWidget({
 		getQueryResult();
 	}, [getQueryResult]);
 
+	const onSaveDashboard = useCallback((): void => {
+		setSaveModal(true);
+	}, []);
+
+	const isQueryBuilderActive = useIsFeatureDisabled(
+		FeatureKeys.QUERY_BUILDER_PANELS,
+	);
+
 	return (
 		<Container>
 			<ButtonContainer>
-				<Button type="primary" onClick={(): void => setSaveModal(true)}>
-					Save
-				</Button>
-				{/* <Button onClick={onClickApplyHandler}>Apply</Button> */}
+				{isQueryBuilderActive && (
+					<Tooltip title={MESSAGE.PANEL}>
+						<Button
+							icon={<LockFilled />}
+							type="primary"
+							disabled={isQueryBuilderActive}
+							onClick={onSaveDashboard}
+						>
+							Save
+						</Button>
+					</Tooltip>
+				)}
+
+				{!isQueryBuilderActive && (
+					<Button
+						type="primary"
+						disabled={isQueryBuilderActive}
+						onClick={onSaveDashboard}
+					>
+						Save
+					</Button>
+				)}
 				<Button onClick={onClickDiscardHandler}>Discard</Button>
 			</ButtonContainer>
 

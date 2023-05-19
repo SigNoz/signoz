@@ -1,19 +1,15 @@
 import { Tabs, Typography } from 'antd';
-import getAll from 'api/licenses/getAll';
 import Spinner from 'components/Spinner';
+import useLicense from 'hooks/useLicense';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { useQuery } from 'react-query';
 
 import ApplyLicenseForm from './ApplyLicenseForm';
 import ListLicenses from './ListLicenses';
 
 function Licenses(): JSX.Element {
 	const { t } = useTranslation(['licenses']);
-	const { data, isError, isLoading, refetch } = useQuery({
-		queryFn: getAll,
-		queryKey: 'getAllLicenses',
-	});
+	const { data, isError, isLoading, refetch } = useLicense();
 
 	if (isError || data?.error) {
 		return <Typography>{data?.error}</Typography>;

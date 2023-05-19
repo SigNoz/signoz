@@ -1,6 +1,9 @@
 import { PlusOutlined, SaveFilled } from '@ant-design/icons';
+import { Typography } from 'antd';
+import { FeatureKeys } from 'constants/features';
 import useComponentPermission from 'hooks/useComponentPermission';
 import { useIsDarkMode } from 'hooks/useDarkMode';
+import useFeatureFlag, { MESSAGE } from 'hooks/useFeatureFlag';
 import React from 'react';
 import { Layout } from 'react-grid-layout';
 import { useSelector } from 'react-redux';
@@ -14,6 +17,7 @@ import {
 	ButtonContainer,
 	Card,
 	CardContainer,
+	NoPanelAvialable,
 	ReactGridLayout,
 } from './styles';
 
@@ -34,6 +38,8 @@ function GraphLayout({
 		['save_layout', 'add_panel'],
 		role,
 	);
+
+	const queryBuilderFeature = useFeatureFlag(FeatureKeys.QUERY_BUILDER_PANELS);
 
 	return (
 		<>
@@ -74,8 +80,30 @@ function GraphLayout({
 				onLayoutChange={onLayoutChangeHandler}
 				draggableHandle=".drag-handle"
 			>
-				{layouts.map(({ Component, ...rest }) => {
+				{layouts.map(({ Component, ...rest }, layoutIndex) => {
 					const currentWidget = (widgets || [])?.find((e) => e.id === rest.i);
+
+					const usageLimit = queryBuilderFeature?.usage_limit || 0;
+
+					const isPanelNotAvialable = usageLimit > 0 && usageLimit <= layoutIndex;
+
+					if (isPanelNotAvialable) {
+						return (
+							<CardContainer
+								data-grid={rest}
+								isDarkMode={isDarkMode}
+								key={currentWidget?.id}
+							>
+								<Card>
+									<Typography.Text type="danger">
+										<NoPanelAvialable isDarkMode={isDarkMode}>
+											{MESSAGE.WIDGET.replace('{{widget}}', usageLimit.toString())}
+										</NoPanelAvialable>
+									</Typography.Text>
+								</Card>
+							</CardContainer>
+						);
+					}
 
 					return (
 						<CardContainer

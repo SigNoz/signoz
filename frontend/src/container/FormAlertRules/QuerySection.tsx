@@ -2,7 +2,7 @@ import { Button, Tabs } from 'antd';
 import { ALERTS_DATA_SOURCE_MAP } from 'constants/alerts';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { QueryBuilder } from 'container/QueryBuilder';
-import React from 'react';
+import React, { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { AlertTypes } from 'types/api/alerts/alertTypes';
 import { IChQueries, IPromQueries } from 'types/api/alerts/compositeQuery';
@@ -91,11 +91,14 @@ function QuerySection({
 		},
 	];
 
-	const items = [
-		{ label: t('tab_qb'), key: EQueryType.QUERY_BUILDER },
-		{ label: t('tab_chquery'), key: EQueryType.CLICKHOUSE },
-		{ label: t('tab_promql'), key: EQueryType.PROM },
-	];
+	const items = useMemo(
+		() => [
+			{ label: t('tab_qb'), key: EQueryType.QUERY_BUILDER },
+			{ label: t('tab_chquery'), key: EQueryType.CLICKHOUSE },
+			{ label: t('tab_promql'), key: EQueryType.PROM },
+		],
+		[t],
+	);
 
 	const renderTabs = (typ: AlertTypes): JSX.Element | null => {
 		switch (typ) {
