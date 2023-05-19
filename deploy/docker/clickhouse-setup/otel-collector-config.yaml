@@ -70,6 +70,40 @@ receivers:
 
 
 processors:
+  logstransform/internal:
+    operators:
+      - type: trace_parser
+        if: '"trace_id" in attributes or "span_id" in attributes'
+        trace_id:
+          parse_from: attributes.trace_id
+        span_id:
+          parse_from: attributes.span_id
+        output: remove_trace_id
+      - type: trace_parser
+        if: '"traceId" in attributes or "spanId" in attributes'
+        trace_id:
+          parse_from: attributes.traceId
+        span_id:
+          parse_from: attributes.spanId
+        output: remove_traceId
+      - id: remove_traceId
+        type: remove
+        if: '"traceId" in attributes'
+        field: attributes.traceId
+        output: remove_spanId
+      - id: remove_spanId
+        type: remove
+        if: '"spanId" in attributes'
+        field: attributes.spanId
+      - id: remove_trace_id
+        type: remove
+        if: '"trace_id" in attributes'
+        field: attributes.trace_id
+        output: remove_span_id
+      - id: remove_span_id
+        type: remove
+        if: '"span_id" in attributes'
+        field: attributes.span_id
   batch:
     send_batch_size: 10000
     send_batch_max_size: 11000
@@ -172,5 +206,5 @@ service:
       exporters: [prometheus]
     logs:
       receivers: [otlp, filelog/dockercontainers]
-      processors: [batch]
+      processors: [logstransform/internal, batch]
       exporters: [clickhouselogsexporter]

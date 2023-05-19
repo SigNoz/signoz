@@ -10,19 +10,26 @@ import {
 import {
 	BoolOperators,
 	DataSource,
-	LogsAggregatorOperator,
 	MetricAggregateOperator,
 	NumberOperators,
 	PanelTypeKeys,
 	QueryAdditionalFilter,
 	ReduceOperators,
 	StringOperators,
-	TracesAggregatorOperator,
 } from 'types/common/queryBuilder';
 import { SelectOption } from 'types/common/select';
+import { v4 as uuid } from 'uuid';
+
+import {
+	logsAggregateOperatorOptions,
+	metricAggregateOperatorOptions,
+	tracesAggregateOperatorOptions,
+} from './queryBuilderOperators';
 
 export const MAX_FORMULAS = 20;
 export const MAX_QUERIES = 26;
+
+export const selectValueDivider = '--';
 
 export const formulasNames: string[] = Array.from(
 	Array(MAX_FORMULAS),
@@ -37,10 +44,10 @@ export enum QueryBuilderKeys {
 	GET_ATTRIBUTE_KEY = 'GET_ATTRIBUTE_KEY',
 }
 
-export const mapOfOperators: Record<DataSource, string[]> = {
-	metrics: Object.values(MetricAggregateOperator),
-	logs: Object.values(LogsAggregatorOperator),
-	traces: Object.values(TracesAggregatorOperator),
+export const mapOfOperators = {
+	metrics: metricAggregateOperatorOptions,
+	logs: logsAggregateOperatorOptions,
+	traces: tracesAggregateOperatorOptions,
 };
 
 export const mapOfFilters: Record<DataSource, QueryAdditionalFilter[]> = {
@@ -78,6 +85,7 @@ export const initialHavingValues: HavingForm = {
 };
 
 export const initialAggregateAttribute: IBuilderQuery['aggregateAttribute'] = {
+	id: uuid(),
 	dataType: null,
 	key: '',
 	isColumn: null,

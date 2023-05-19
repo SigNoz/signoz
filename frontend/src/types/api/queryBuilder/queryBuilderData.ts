@@ -33,6 +33,11 @@ export type HavingForm = Omit<Having, 'value'> & {
 	value: string[];
 };
 
+export type OrderByPayload = {
+	columnName: string;
+	order: string;
+};
+
 // Type for query builder
 export type IBuilderQuery = {
 	queryName: string;
@@ -46,7 +51,7 @@ export type IBuilderQuery = {
 	having: Having[];
 	limit: number | null;
 	stepInterval: number;
-	orderBy: BaseAutocompleteData[];
+	orderBy: OrderByPayload[];
 	reduceTo: ReduceOperators;
 	legend: string;
 };

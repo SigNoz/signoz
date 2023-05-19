@@ -2,7 +2,6 @@ import { Tabs } from 'antd';
 import AllAlertRules from 'container/ListAlertRules';
 // import MapAlertChannels from 'container/MapAlertChannels';
 import TriggeredAlerts from 'container/TriggeredAlerts';
-import React from 'react';
 
 function AllAlertList(): JSX.Element {
 	const items = [
