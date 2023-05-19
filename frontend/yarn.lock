@@ -2141,11 +2141,6 @@
     "@types/qs" "*"
     "@types/serve-static" "*"
 
-"@types/flat@^5.0.2":
-  version "5.0.2"
-  resolved "https://registry.npmjs.org/@types/flat/-/flat-5.0.2.tgz"
-  integrity sha512-3zsplnP2djeps5P9OyarTxwRpMLoe5Ash8aL9iprw0JxB+FAHjY+ifn4yZUuW4/9hqtnmor6uvjSRzJhiVbrEQ==
-
 "@types/fontfaceobserver@2.1.0":
   version "2.1.0"
   resolved "https://registry.npmjs.org/@types/fontfaceobserver/-/fontfaceobserver-2.1.0.tgz"
