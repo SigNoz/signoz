@@ -26,7 +26,9 @@ import ToggleAlertState from './ToggleAlertState';
 function ListAlert({ allAlertRules, refetch }: ListAlertProps): JSX.Element {
 	const [data, setData] = useState<GettableAlert[]>(allAlertRules || []);
 	const { t } = useTranslation('common');
-	const { role } = useSelector<AppState, AppReducer>((state) => state.app);
+	const { role, featureResponse } = useSelector<AppState, AppReducer>(
+		(state) => state.app,
+	);
 	const [addNewAlert, action] = useComponentPermission(
 		['add_new_alert', 'action'],
 		role,
@@ -48,12 +50,28 @@ function ListAlert({ allAlertRules, refetch }: ListAlertProps): JSX.Element {
 		})();
 	}, 30000);
 
+	const handleError = useCallback((): void => {
+		notificationsApi.error({
+			message: t('something_went_wrong'),
+		});
+	}, [notificationsApi, t]);
+
 	const onClickNewAlertHandler = useCallback(() => {
-		history.push(ROUTES.ALERTS_NEW);
-	}, []);
+		featureResponse
+			.refetch()
+			.then(() => {
+				history.push(ROUTES.ALERTS_NEW);
+			})
+			.catch(handleError);
+	}, [featureResponse, handleError]);
 
 	const onEditHandler = (id: string): void => {
-		history.push(`${ROUTES.EDIT_ALERTS}?ruleId=${id}`);
+		featureResponse
+			.refetch()
+			.then(() => {
+				history.push(`${ROUTES.EDIT_ALERTS}?ruleId=${id}`);
+			})
+			.catch(handleError);
 	};
 
 	const columns: ColumnsType<GettableAlert> = [
