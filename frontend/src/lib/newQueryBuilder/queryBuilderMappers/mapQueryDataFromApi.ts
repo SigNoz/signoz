@@ -1,4 +1,5 @@
 import { initialQueryBuilderFormValues } from 'constants/queryBuilder';
+import { FORMULA_REGEXP } from 'constants/regExp';
 import {
 	IBuilderFormula,
 	IBuilderQuery,
@@ -13,7 +14,7 @@ export const mapQueryDataFromApi = (
 	const queryFormulas: QueryBuilderData['queryFormulas'] = [];
 
 	Object.entries(data).forEach(([, value]) => {
-		if (/F\d+/.test(value.queryName)) {
+		if (FORMULA_REGEXP.test(value.queryName)) {
 			const formula = value as IBuilderFormula;
 			queryFormulas.push(formula);
 		} else {
