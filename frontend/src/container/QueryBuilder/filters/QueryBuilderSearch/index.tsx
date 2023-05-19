@@ -3,7 +3,6 @@ import { useAutoComplete } from 'hooks/queryBuilder/useAutoComplete';
 import { useFetchKeysAndValues } from 'hooks/queryBuilder/useFetchKeysAndValues';
 import {
 	KeyboardEvent,
-	MouseEvent,
 	ReactElement,
 	ReactNode,
 	useEffect,
@@ -170,7 +169,7 @@ export interface CustomTagProps {
 	label: ReactNode;
 	value: string;
 	disabled: boolean;
-	onClose: (event?: MouseEvent<HTMLElement, MouseEvent>) => void;
+	onClose: () => void;
 	closable: boolean;
 }
 
