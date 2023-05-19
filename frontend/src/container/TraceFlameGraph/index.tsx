@@ -2,7 +2,13 @@
 import Color from 'color';
 import { ITraceMetaData } from 'container/GantChart';
 import { useIsDarkMode } from 'hooks/useDarkMode';
-import React, { useLayoutEffect, useMemo, useState } from 'react';
+import {
+	Dispatch,
+	SetStateAction,
+	useLayoutEffect,
+	useMemo,
+	useState,
+} from 'react';
 import { ITraceTree } from 'types/api/trace/getTraceItem';
 
 import {
@@ -18,7 +24,7 @@ interface SpanItemProps {
 	spanData: ITraceTree;
 	tooltipText: string;
 	onSpanSelect: (id: string) => void;
-	onSpanHover: React.Dispatch<React.SetStateAction<string>>;
+	onSpanHover: Dispatch<SetStateAction<string>>;
 	hoveredSpanId: string;
 	selectedSpanId: string;
 }

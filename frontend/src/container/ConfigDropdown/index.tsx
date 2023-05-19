@@ -6,7 +6,7 @@ import {
 } from '@ant-design/icons';
 import { Dropdown, Space } from 'antd';
 import { useIsDarkMode } from 'hooks/useDarkMode';
-import React, { useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
 import { ConfigProps } from 'types/api/dynamicConfigs/getDynamicConfigs';

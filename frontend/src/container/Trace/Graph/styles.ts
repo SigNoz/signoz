@@ -1,10 +1,10 @@
 import { StyledCSS } from 'container/GantChart/Trace/styles';
-import React from 'react';
+import { RefObject } from 'react';
 import styled, { css } from 'styled-components';
 
 interface Props {
 	center?: boolean;
-	ref?: React.RefObject<HTMLDivElement> | null; // The ref type provided by react-use is incorrect -> https://github.com/streamich/react-use/issues/1264 Open Issue
+	ref?: RefObject<HTMLDivElement> | null; // The ref type provided by react-use is incorrect -> https://github.com/streamich/react-use/issues/1264 Open Issue
 }
 
 export const Container = styled.div<Props>`

@@ -100,6 +100,8 @@ var timeSeriesFilterQueryData = []struct {
 	FilterSet      *v3.FilterSet
 	GroupBy        []v3.AttributeKey
 	ExpectedFilter string
+	Fields         map[string]v3.AttributeKey
+	Error          string
 }{
 	{
 		Name: "Test attribute and resource attribute",
@@ -174,6 +176,20 @@ var timeSeriesFilterQueryData = []struct {
 		ExpectedFilter: " AND attributes_string_value[indexOf(attributes_string_key, 'host')] NOT ILIKE '%102.%'",
 	},
 	{
+		Name: "Test no metadata",
+		FilterSet: &v3.FilterSet{Operator: "AND", Items: []v3.FilterItem{
+			{Key: v3.AttributeKey{Key: "host"}, Value: "102.", Operator: "ncontains"},
+		}},
+		ExpectedFilter: " AND attributes_string_value[indexOf(attributes_string_key, 'host')] NOT ILIKE '%102.%'",
+	},
+	{
+		Name: "Test no metadata number",
+		FilterSet: &v3.FilterSet{Operator: "AND", Items: []v3.FilterItem{
+			{Key: v3.AttributeKey{Key: "bytes"}, Value: 102, Operator: "="},
+		}},
+		ExpectedFilter: " AND attributes_string_value[indexOf(attributes_string_key, 'bytes')] = '102'",
+	},
+	{
 		Name: "Test groupBy",
 		FilterSet: &v3.FilterSet{Operator: "AND", Items: []v3.FilterItem{
 			{Key: v3.AttributeKey{Key: "host", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag}, Value: "102.", Operator: "ncontains"},
@@ -189,14 +205,35 @@ var timeSeriesFilterQueryData = []struct {
 		GroupBy:        []v3.AttributeKey{{Key: "host", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag, IsColumn: true}},
 		ExpectedFilter: " AND attributes_string_value[indexOf(attributes_string_key, 'host')] NOT ILIKE '%102.%'",
 	},
+	{
+		Name: "Wrong data",
+		FilterSet: &v3.FilterSet{Operator: "AND", Items: []v3.FilterItem{
+			{Key: v3.AttributeKey{Key: "bytes"}, Value: true, Operator: "="},
+		}},
+		Fields: map[string]v3.AttributeKey{"bytes": {Key: "bytes", DataType: v3.AttributeKeyDataTypeFloat64, Type: v3.AttributeKeyTypeTag}},
+		Error:  "failed to validate and cast value for bytes: invalid data type, expected float, got bool",
+	},
+	{
+		Name: "Cast data",
+		FilterSet: &v3.FilterSet{Operator: "AND", Items: []v3.FilterItem{
+			{Key: v3.AttributeKey{Key: "bytes"}, Value: 102, Operator: "="},
+		}},
+		Fields:         map[string]v3.AttributeKey{"bytes": {Key: "bytes", DataType: v3.AttributeKeyDataTypeInt64, Type: v3.AttributeKeyTypeTag}},
+		ExpectedFilter: " AND attributes_int64_value[indexOf(attributes_int64_key, 'bytes')] = 102",
+	},
 }
 
 func TestBuildLogsTimeSeriesFilterQuery(t *testing.T) {
 	for _, tt := range timeSeriesFilterQueryData {
 		Convey("TestBuildLogsTimeSeriesFilterQuery", t, func() {
-			query, err := buildLogsTimeSeriesFilterQuery(tt.FilterSet, tt.GroupBy, map[string]v3.AttributeKey{})
-			So(err, ShouldBeNil)
-			So(query, ShouldEqual, tt.ExpectedFilter)
+			query, err := buildLogsTimeSeriesFilterQuery(tt.FilterSet, tt.GroupBy, tt.Fields)
+			if tt.Error != "" {
+				So(err.Error(), ShouldEqual, tt.Error)
+			} else {
+				So(err, ShouldBeNil)
+				So(query, ShouldEqual, tt.ExpectedFilter)
+			}
+
 		})
 	}
 }
@@ -254,7 +291,7 @@ var testBuildLogsQueryData = []struct {
 			Expression: "A",
 		},
 		TableName:     "logs",
-		ExpectedQuery: "SELECT toStartOfInterval(fromUnixTimestamp64Nano(timestamp), INTERVAL 60 SECOND) AS ts, toFloat64(count(*)) as value from signoz_logs.distributed_logs where (timestamp >= 1680066360726210000 AND timestamp <= 1680066458000000000) AND attributes_float64_value[indexOf(attributes_float64_key, 'bytes')] > 100 AND has(attributes_string_key, 'user_name') group by ts order by ts",
+		ExpectedQuery: "SELECT toStartOfInterval(fromUnixTimestamp64Nano(timestamp), INTERVAL 60 SECOND) AS ts, toFloat64(count(*)) as value from signoz_logs.distributed_logs where (timestamp >= 1680066360726210000 AND timestamp <= 1680066458000000000) AND attributes_float64_value[indexOf(attributes_float64_key, 'bytes')] > 100.000000 AND has(attributes_string_key, 'user_name') group by ts order by ts",
 	},
 	{
 		Name:  "Test aggregate count distinct and order by value",

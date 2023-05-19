@@ -3,7 +3,7 @@
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { useNotifications } from 'hooks/useNotifications';
 import history from 'lib/history';
-import React, { useCallback } from 'react';
+import { CSSProperties, useCallback } from 'react';
 import { connect, useSelector } from 'react-redux';
 import { bindActionCreators, Dispatch } from 'redux';
 import { ThunkDispatch } from 'redux-thunk';
@@ -54,7 +54,7 @@ function DashboardGraphSlider({ toggleAddWidget }: Props): JSX.Element {
 		[data, toggleAddWidget, notifications],
 	);
 	const isDarkMode = useIsDarkMode();
-	const fillColor: React.CSSProperties['color'] = isDarkMode ? 'white' : 'black';
+	const fillColor: CSSProperties['color'] = isDarkMode ? 'white' : 'black';
 
 	return (
 		<Container>
