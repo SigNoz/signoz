@@ -4,7 +4,7 @@
 	"description": "",
 	"main": "webpack.config.js",
 	"scripts": {
-		"i18n:generate-hash": "node ./i18-generate-hash.js",
+		"i18n:generate-hash": "ts-node ./i18-generate-hash.ts",
 		"dev": "npm run i18n:generate-hash && cross-env NODE_ENV=development webpack serve --progress",
 		"build": "npm run i18n:generate-hash && webpack --config=webpack.config.prod.js --progress",
 		"prettify": "prettier --write .",

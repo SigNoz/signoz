@@ -37,6 +37,7 @@
 		"./webpack.config.js",
 		"./webpack.config.prod.js",
 		"./jest.setup.ts",
+		"./i18-generate-hash.ts",
 		"./tests/**.ts"
 	]
 }
