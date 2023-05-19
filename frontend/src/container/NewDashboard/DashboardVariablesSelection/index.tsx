@@ -2,7 +2,7 @@ import { Row } from 'antd';
 import { NotificationInstance } from 'antd/es/notification/interface';
 import { useNotifications } from 'hooks/useNotifications';
 import { map, sortBy } from 'lodash-es';
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { connect, useSelector } from 'react-redux';
 import { bindActionCreators, Dispatch } from 'redux';
 import { ThunkDispatch } from 'redux-thunk';

@@ -5,7 +5,11 @@ import createQueryParams from 'lib/createQueryParams';
 import { ErrorResponse, SuccessResponse } from 'types/api';
 // ** Types
 import { IGetAttributeKeysPayload } from 'types/api/queryBuilder/getAttributeKeys';
-import { IQueryAutocompleteResponse } from 'types/api/queryBuilder/queryAutocompleteResponse';
+import {
+	BaseAutocompleteData,
+	IQueryAutocompleteResponse,
+} from 'types/api/queryBuilder/queryAutocompleteResponse';
+import { v4 as uuid } from 'uuid';
 
 export const getAggregateKeys = async ({
 	aggregateOperator,
@@ -28,11 +32,15 @@ export const getAggregateKeys = async ({
 			})}&tagType=${tagType}`,
 		);
 
+		const payload: BaseAutocompleteData[] =
+			response.data.data.attributeKeys?.map((item) => ({ ...item, id: uuid() })) ||
+			[];
+
 		return {
 			statusCode: 200,
 			error: null,
 			message: response.statusText,
-			payload: response.data.data,
+			payload: { attributeKeys: payload },
 		};
 	} catch (e) {
 		return ErrorResponseHandler(e as AxiosError);

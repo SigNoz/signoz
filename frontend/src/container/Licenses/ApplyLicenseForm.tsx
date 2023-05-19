@@ -1,15 +1,14 @@
 import { Button, Form, Input } from 'antd';
-import getFeaturesFlags from 'api/features/getFeatureFlags';
 import apply from 'api/licenses/apply';
 import { useNotifications } from 'hooks/useNotifications';
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { QueryObserverResult, RefetchOptions, useQuery } from 'react-query';
-import { useDispatch } from 'react-redux';
-import { Dispatch } from 'redux';
-import { AppAction, UPDATE_FEATURE_FLAGS } from 'types/actions/app';
+import { QueryObserverResult, RefetchOptions } from 'react-query';
+import { useSelector } from 'react-redux';
+import { AppState } from 'store/reducers';
 import { ErrorResponse, SuccessResponse } from 'types/api';
 import { PayloadProps } from 'types/api/licenses/getAll';
+import AppReducer from 'types/reducer/app';
 
 import { ApplyForm, ApplyFormContainer, LicenseInput } from './styles';
 
@@ -21,12 +20,9 @@ function ApplyLicenseForm({
 	const { t } = useTranslation(['licenses']);
 	const [key, setKey] = useState('');
 	const [loading, setLoading] = useState(false);
-	const dispatch = useDispatch<Dispatch<AppAction>>();
-	const { refetch } = useQuery({
-		queryFn: getFeaturesFlags,
-		queryKey: 'getFeatureFlags',
-		enabled: false,
-	});
+	const { featureResponse } = useSelector<AppState, AppReducer>(
+		(state) => state.app,
+	);
 
 	const { notifications } = useNotifications();
 
@@ -47,16 +43,8 @@ function ApplyLicenseForm({
 			});
 
 			if (response.statusCode === 200) {
-				const [featureFlagsResponse] = await Promise.all([
-					refetch(),
-					licenseRefetch(),
-				]);
-				if (featureFlagsResponse.data?.payload) {
-					dispatch({
-						type: UPDATE_FEATURE_FLAGS,
-						payload: featureFlagsResponse.data.payload,
-					});
-				}
+				await Promise.all([featureResponse?.refetch(), licenseRefetch()]);
+
 				notifications.success({
 					message: 'Success',
 					description: t('license_applied'),

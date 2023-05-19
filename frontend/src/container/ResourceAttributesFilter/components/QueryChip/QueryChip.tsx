@@ -1,5 +1,4 @@
 import { convertMetricKeyToTrace } from 'hooks/useResourceAttribute/utils';
-import React from 'react';
 
 import { QueryChipContainer, QueryChipItem } from '../../styles';
 import { IQueryChipProps } from './types';

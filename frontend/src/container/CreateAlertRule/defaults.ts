@@ -36,8 +36,16 @@ export const alertDefaults: AlertDef = {
 				},
 			},
 			promQueries: {},
-			chQueries: {},
-			queryType: EQueryType.QUERY_BUILDER,
+			chQueries: {
+				A: {
+					name: 'A',
+					query: ``,
+					rawQuery: ``,
+					legend: '',
+					disabled: false,
+				},
+			},
+			queryType: EQueryType.CLICKHOUSE,
 			panelType: PANEL_TYPES.TIME_SERIES,
 		},
 		op: defaultCompareOp,
