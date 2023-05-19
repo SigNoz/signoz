@@ -1,28 +1,48 @@
 /* eslint-disable  */
 //@ts-nocheck
 import { useIsDarkMode } from 'hooks/useDarkMode';
-import { memo } from 'react';
+import { memo, useState } from 'react';
 import { ForceGraph2D } from 'react-force-graph';
+import { isEqual } from 'lodash-es';
 
-import { getGraphData, getTooltip, transformLabel } from './utils';
+import {
+	getGraphData,
+	getNodePositions,
+	getTooltip,
+	transformLabel,
+} from './utils';
 
 function ServiceMap({ fgRef, serviceMap }: any): JSX.Element {
 	const isDarkMode = useIsDarkMode();
-
+	const [firstRenderDone, setFirstRenderDone] = useState(false);
+	const [capturedNodePosition, setCapturedNodePosition] = useState({});
 	const { nodes, links } = getGraphData(serviceMap, isDarkMode);
-
 	const graphData = { nodes, links };
+
+	const onEngineStopHandler = () => {
+		if (!firstRenderDone) {
+			setFirstRenderDone(true);
+			setCapturedNodePosition(getNodePositions(nodes));
+		}
+	};
 
 	return (
 		<ForceGraph2D
 			ref={fgRef}
-			cooldownTicks={100}
+			warmupTicks={firstRenderDone ? 100 : 0}
+			cooldownTicks={firstRenderDone ? 0 : 100}
+			onEngineStop={onEngineStopHandler}
 			graphData={graphData}
 			linkLabel={getTooltip}
 			linkAutoColorBy={(d) => d.target}
 			linkDirectionalParticles="value"
 			linkDirectionalParticleSpeed={(d) => d.value}
 			nodeCanvasObject={(node, ctx) => {
+				if (firstRenderDone && Object.keys(capturedNodePosition).length) {
+					node.fx = capturedNodePosition[node.id].x;
+					node.fy = capturedNodePosition[node.id].y;
+				}
+
 				const label = transformLabel(node.id);
 				const { fontSize } = node;
 				ctx.font = `${fontSize}px Roboto`;
@@ -30,12 +50,12 @@ function ServiceMap({ fgRef, serviceMap }: any): JSX.Element {
 
 				ctx.fillStyle = node.color;
 				ctx.beginPath();
-				ctx.arc(node.x, node.y, width, 0, 2 * Math.PI, false);
+				ctx.arc(node.fx || node.x, node.fy || node.y, width, 0, 2 * Math.PI, false);
 				ctx.fill();
 				ctx.textAlign = 'center';
 				ctx.textBaseline = 'middle';
 				ctx.fillStyle = isDarkMode ? '#ffffff' : '#000000';
-				ctx.fillText(label, node.x, node.y);
+				ctx.fillText(label, node.fx || node.x, node.fy || node.y);
 			}}
 			onLinkHover={(node) => {
 				const tooltip = document.querySelector('.graph-tooltip');
@@ -53,4 +73,6 @@ function ServiceMap({ fgRef, serviceMap }: any): JSX.Element {
 	);
 }
 
-export default memo(ServiceMap);
+export default memo(ServiceMap, (prevProps, nextProps) => {
+	return isEqual(prevProps, nextProps);
+});

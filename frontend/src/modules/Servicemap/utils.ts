@@ -1,7 +1,16 @@
 /*eslint-disable*/
-//@ts-nocheck
+// @ts-nocheck
 
-import { cloneDeep, find, maxBy, uniq, uniqBy, groupBy, sumBy } from 'lodash-es';
+import {
+	cloneDeep,
+	find,
+	groupBy,
+	maxBy,
+	sumBy,
+	uniq,
+	uniqBy,
+} from 'lodash-es';
+
 import { graphDataType } from './ServiceMap';
 
 const MIN_WIDTH = 10;
@@ -20,13 +29,11 @@ export const getDimensions = (num, highest) => {
 
 export const getGraphData = (serviceMap, isDarkMode): graphDataType => {
 	const { items } = serviceMap;
-	const services = Object.values(groupBy(items, 'child')).map((e) => {
-		return {
-			serviceName: e[0].child,
-			errorRate: sumBy(e, 'errorRate'),
-			callRate: sumBy(e, 'callRate'),
-		}
-	});
+	const services = Object.values(groupBy(items, 'child')).map((e) => ({
+		serviceName: e[0].child,
+		errorRate: sumBy(e, 'errorRate'),
+		callRate: sumBy(e, 'callRate'),
+	}));
 	const highestCallCount = maxBy(items, (e) => e?.callCount)?.callCount;
 	const highestCallRate = maxBy(services, (e) => e?.callRate)?.callRate;
 
@@ -80,6 +87,18 @@ export const getGraphData = (serviceMap, isDarkMode): graphDataType => {
 	};
 };
 
+export const getNodePositions = (nodes) => {
+	const positions = {};
+	nodes.forEach((node) => {
+		positions[node.id] = {
+			x: node.x,
+			y: node.y,
+		};
+	});
+
+	return positions;
+};
+
 export const getZoomPx = (): number => {
 	const { width } = window.screen;
 	if (width < 1400) {
@@ -99,18 +118,17 @@ const getRound2DigitsAfterDecimal = (num: number) => {
 		return 0;
 	}
 	return num.toFixed(20).match(/^-?\d*\.?0*\d{0,2}/)[0];
-}
+};
 
 export const getTooltip = (link: {
 	p99: number;
 	errorRate: number;
 	callRate: number;
 	id: string;
-}) => {
-	return `<div style="color:#333333;padding:12px;background: white;border-radius: 2px;">
+}) => `<div style="color:#333333;padding:12px;background: white;border-radius: 2px;">
 								<div class="keyval">
 									<div class="key">P99 latency:</div>
-									<div class="val">${getRound2DigitsAfterDecimal(link.p99/ 1000000)}ms</div>
+									<div class="val">${getRound2DigitsAfterDecimal(link.p99 / 1000000)}ms</div>
 								</div>
 								<div class="keyval">
 									<div class="key">Request:</div>
@@ -121,7 +139,6 @@ export const getTooltip = (link: {
 									<div class="val">${getRound2DigitsAfterDecimal(link.errorRate)}%</div>
 								</div>
 							</div>`;
-};
 
 export const transformLabel = (label: string) => {
 	const MAX_LENGTH = 13;
