@@ -67,7 +67,7 @@
 		"js-base64": "^3.7.2",
 		"less": "^4.1.2",
 		"less-loader": "^10.2.0",
-		"lodash-es": "4.17.21",
+		"lodash-es": "^4.17.21",
 		"mini-css-extract-plugin": "2.4.5",
 		"papaparse": "5.4.1",
 		"react": "18.2.0",
