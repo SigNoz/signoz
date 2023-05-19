@@ -1,5 +1,4 @@
 import { Form, Select } from 'antd';
-import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { AlertDef, Labels } from 'types/api/alerts/def';
 

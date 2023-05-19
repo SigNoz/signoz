@@ -1,5 +1,3 @@
-import React from 'react';
-
 import { UsageExplorer } from './UsageExplorer';
 
 function UsageExplorerContainer(): JSX.Element {

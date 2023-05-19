@@ -10,7 +10,7 @@ import {
 import { GRAPH_TYPES } from 'container/NewDashboard/ComponentsSlider';
 import { createNewBuilderItemName } from 'lib/newQueryBuilder/createNewBuilderItemName';
 import { getOperatorsBySourceAndPanelType } from 'lib/newQueryBuilder/getOperatorsBySourceAndPanelType';
-import React, {
+import {
 	createContext,
 	PropsWithChildren,
 	useCallback,

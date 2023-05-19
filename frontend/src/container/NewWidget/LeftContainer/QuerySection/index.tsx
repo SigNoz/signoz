@@ -4,7 +4,7 @@ import { GRAPH_TYPES } from 'container/NewDashboard/ComponentsSlider';
 import { QueryBuilder } from 'container/QueryBuilder';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { cloneDeep } from 'lodash-es';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { connect, useSelector } from 'react-redux';
 import { useLocation } from 'react-router-dom';
 import { bindActionCreators, Dispatch } from 'redux';
@@ -34,10 +34,12 @@ function QuerySection({ updateQuery, selectedGraph }: QueryProps): JSX.Element {
 		CLICKHOUSE: uuid(),
 		PROM: uuid(),
 	});
+
 	const { dashboards, isLoadingQueryResult } = useSelector<
 		AppState,
 		DashboardReducer
 	>((state) => state.dashboards);
+
 	const [selectedDashboards] = dashboards;
 	const { search } = useLocation();
 	const { widgets } = selectedDashboards.data;

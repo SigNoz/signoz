@@ -11,7 +11,7 @@ import flatten from 'flat';
 import history from 'lib/history';
 import { fieldSearchFilter } from 'lib/logs/fieldSearch';
 import { isEmpty } from 'lodash-es';
-import React, { useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useDispatch } from 'react-redux';
 import { generatePath } from 'react-router-dom';
 import { Dispatch } from 'redux';

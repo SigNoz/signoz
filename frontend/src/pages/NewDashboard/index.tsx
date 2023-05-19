@@ -1,6 +1,6 @@
 import Spinner from 'components/Spinner';
 import NewDashboard from 'container/NewDashboard';
-import React, { useEffect } from 'react';
+import { useEffect } from 'react';
 import { connect, useSelector } from 'react-redux';
 import { useParams } from 'react-router-dom';
 import { bindActionCreators, Dispatch } from 'redux';

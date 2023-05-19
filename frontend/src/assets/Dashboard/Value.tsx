@@ -1,4 +1,4 @@
-import React from 'react';
+import { CSSProperties } from 'react';
 
 function Value(props: ValueProps): JSX.Element {
 	const { fillColor } = props;
@@ -20,7 +20,7 @@ function Value(props: ValueProps): JSX.Element {
 }
 
 interface ValueProps {
-	fillColor: React.CSSProperties['color'];
+	fillColor: CSSProperties['color'];
 }
 
 export default Value;

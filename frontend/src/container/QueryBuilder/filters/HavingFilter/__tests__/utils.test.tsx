@@ -6,7 +6,10 @@ import {
 } from 'constants/queryBuilder';
 import { valueWithAttributeAndOperator } from 'container/QueryBuilder/mock/queryData';
 import { transformFromStringToHaving } from 'lib/query/transformQueryBuilderData';
-import React from 'react';
+
+// ** Types
+import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
+import { DataSource } from 'types/common/queryBuilder';
 
 import { HavingFilter } from '../HavingFilter';
 

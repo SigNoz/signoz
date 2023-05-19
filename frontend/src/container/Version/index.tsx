@@ -1,6 +1,6 @@
 import { WarningFilled } from '@ant-design/icons';
 import { Button, Card, Form, Space, Typography } from 'antd';
-import React, { useMemo } from 'react';
+import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
