@@ -27,7 +27,9 @@ import AppReducer from 'types/reducer/app';
 import { ChildrenContainer, Layout } from './styles';
 
 function AppLayout(props: AppLayoutProps): JSX.Element {
-	const { isLoggedIn } = useSelector<AppState, AppReducer>((state) => state.app);
+	const { isLoggedIn, user } = useSelector<AppState, AppReducer>(
+		(state) => state.app,
+	);
 	const { pathname } = useLocation();
 	const { t } = useTranslation();
 
@@ -39,21 +41,21 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 	] = useQueries([
 		{
 			queryFn: getUserVersion,
-			queryKey: 'getUserVersion',
+			queryKey: ['getUserVersion', user?.accessJwt],
 			enabled: isLoggedIn,
 		},
 		{
 			queryFn: getUserLatestVersion,
-			queryKey: 'getUserLatestVersion',
+			queryKey: ['getUserLatestVersion', user?.accessJwt],
 			enabled: isLoggedIn,
 		},
 		{
 			queryFn: getFeaturesFlags,
-			queryKey: 'getFeatureFlags',
+			queryKey: ['getFeatureFlags', user?.accessJwt],
 		},
 		{
 			queryFn: getDynamicConfigs,
-			queryKey: 'getDynamicConfigs',
+			queryKey: ['getDynamicConfigs', user?.accessJwt],
 		},
 	]);
 
