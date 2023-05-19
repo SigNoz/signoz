@@ -7,7 +7,6 @@ import AddToQueryHOC from 'components/Logs/AddToQueryHOC';
 import CopyClipboardHOC from 'components/Logs/CopyClipboardHOC';
 import { ResizeTable } from 'components/ResizeTable';
 import ROUTES from 'constants/routes';
-import flatten from 'flat';
 import history from 'lib/history';
 import { fieldSearchFilter } from 'lib/logs/fieldSearch';
 import { isEmpty } from 'lodash-es';
@@ -20,7 +19,7 @@ import { SET_DETAILED_LOG_DATA } from 'types/actions/logs';
 import { ILog } from 'types/api/logs/log';
 
 import ActionItem from './ActionItem';
-import { recursiveParseJSON } from './utils';
+import { flattenObject, recursiveParseJSON } from './utils';
 
 // Fields which should be restricted from adding it to query
 const RESTRICTED_FIELDS = ['timestamp'];
@@ -33,8 +32,8 @@ function TableView({ logData }: TableViewProps): JSX.Element | null {
 
 	const dispatch = useDispatch<Dispatch<AppActions>>();
 
-	const flattenLogData: Record<string, never> | null = useMemo(
-		() => (logData ? flatten(logData) : null),
+	const flattenLogData: Record<string, any> | null = useMemo(
+		() => (logData ? flattenObject(logData) : null),
 		[logData],
 	);
 	if (logData === null) {
