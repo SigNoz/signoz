@@ -49,7 +49,7 @@ const InitialValue: InitialValueTypes = {
 	latestVersion: '',
 	featureResponse: {
 		data: null,
-		refetch: () => {},
+		refetch: Promise.resolve,
 	},
 	isCurrentVersionError: false,
 	isLatestVersionError: false,
