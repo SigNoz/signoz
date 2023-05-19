@@ -1,7 +1,7 @@
 import { Button, Form, Input } from 'antd';
 import apply from 'api/licenses/apply';
 import { useNotifications } from 'hooks/useNotifications';
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { QueryObserverResult, RefetchOptions } from 'react-query';
 import { useSelector } from 'react-redux';

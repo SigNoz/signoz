@@ -6,7 +6,7 @@ import afterLogin from 'AppRoutes/utils';
 import ROUTES from 'constants/routes';
 import { useNotifications } from 'hooks/useNotifications';
 import history from 'lib/history';
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useQuery } from 'react-query';
 import { PayloadProps as PrecheckResultType } from 'types/api/user/loginPrecheck';

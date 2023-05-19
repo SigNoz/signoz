@@ -1,7 +1,7 @@
 import * as AntD from 'antd';
 import { TextProps } from 'antd/lib/typography/Text';
 import { TitleProps } from 'antd/lib/typography/Title';
-import React from 'react';
+import { HTMLAttributes } from 'react';
 import styled, { FlattenSimpleInterpolation } from 'styled-components';
 
 import { IStyledClass } from './types';
@@ -51,7 +51,7 @@ const StyledTypographyTitle = styled(Title)<TStyledTypographyTitle>`
 	${styledClass}
 `;
 
-type TStyledDiv = React.HTMLAttributes<HTMLDivElement> & IStyledClass;
+type TStyledDiv = HTMLAttributes<HTMLDivElement> & IStyledClass;
 const StyledDiv = styled.div<TStyledDiv>`
 	${styledClass}
 `;

@@ -3,7 +3,7 @@ import Spinner from 'components/Spinner';
 import MetricsApplicationContainer from 'container/MetricsApplication';
 import useResourceAttribute from 'hooks/useResourceAttribute';
 import { convertRawQueriesToTraceSelectedTags } from 'hooks/useResourceAttribute/utils';
-import React, { useEffect, useMemo } from 'react';
+import { useEffect, useMemo } from 'react';
 import { connect, useSelector } from 'react-redux';
 import { useParams } from 'react-router-dom';
 import { bindActionCreators } from 'redux';

@@ -2,7 +2,6 @@ import { Card, Typography } from 'antd';
 import GridGraphComponent from 'container/GridGraphComponent';
 import { NewWidgetProps } from 'container/NewWidget';
 import getChartData from 'lib/getChartData';
-import React from 'react';
 import { useSelector } from 'react-redux';
 import { useLocation } from 'react-router-dom';
 import { AppState } from 'store/reducers';

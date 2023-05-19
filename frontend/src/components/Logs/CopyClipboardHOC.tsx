@@ -1,6 +1,6 @@
 import { Popover } from 'antd';
 import { useNotifications } from 'hooks/useNotifications';
-import React, { useCallback, useEffect } from 'react';
+import { ReactNode, useCallback, useEffect } from 'react';
 import { useCopyToClipboard } from 'react-use';
 
 function CopyClipboardHOC({
@@ -35,7 +35,7 @@ function CopyClipboardHOC({
 
 interface CopyClipboardHOCProps {
 	textToCopy: string;
-	children: React.ReactNode;
+	children: ReactNode;
 }
 
 export default CopyClipboardHOC;

@@ -3,11 +3,17 @@
 import updateDashboardApi from 'api/dashboard/update';
 import useComponentPermission from 'hooks/useComponentPermission';
 import { useNotifications } from 'hooks/useNotifications';
-import React, { useCallback, useEffect, useState } from 'react';
+import {
+	Dispatch,
+	SetStateAction,
+	useCallback,
+	useEffect,
+	useState,
+} from 'react';
 import { Layout } from 'react-grid-layout';
 import { useTranslation } from 'react-i18next';
 import { connect, useDispatch, useSelector } from 'react-redux';
-import { bindActionCreators, Dispatch } from 'redux';
+import { bindActionCreators, Dispatch as ReduxDispatch } from 'redux';
 import { ThunkDispatch } from 'redux-thunk';
 import { AppDispatch } from 'store';
 import { UpdateTimeInterval } from 'store/actions';
@@ -66,7 +72,7 @@ function GridGraph(props: Props): JSX.Element {
 	const [selectedDashboard] = dashboards;
 	const { data } = selectedDashboard;
 	const { widgets } = data;
-	const dispatch: AppDispatch = useDispatch<Dispatch<AppActions>>();
+	const dispatch: AppDispatch = useDispatch<ReduxDispatch<AppActions>>();
 
 	const [layouts, setLayout] = useState<LayoutProps[]>(
 		getPreLayouts(widgets, selectedDashboard.data.layout || []),
@@ -336,7 +342,7 @@ function GridGraph(props: Props): JSX.Element {
 }
 
 interface ComponentProps {
-	setLayout: React.Dispatch<React.SetStateAction<LayoutProps[]>>;
+	setLayout: Dispatch<SetStateAction<LayoutProps[]>>;
 }
 
 export interface LayoutProps extends Layout {
@@ -353,7 +359,7 @@ export interface State {
 interface DispatchProps {
 	toggleAddWidget: (
 		props: ToggleAddWidgetProps,
-	) => (dispatch: Dispatch<AppActions>) => void;
+	) => (dispatch: ReduxDispatch<AppActions>) => void;
 }
 
 const mapDispatchToProps = (

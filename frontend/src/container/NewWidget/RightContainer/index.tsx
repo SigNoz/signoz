@@ -5,7 +5,7 @@ import { GRAPH_TYPES } from 'container/NewDashboard/ComponentsSlider';
 import GraphTypes, {
 	ITEMS,
 } from 'container/NewDashboard/ComponentsSlider/menuItems';
-import React, { useCallback } from 'react';
+import { Dispatch, SetStateAction, useCallback } from 'react';
 
 import { Container, Title } from './styles';
 import { timePreferance } from './timeItems';
@@ -27,7 +27,7 @@ function RightContainer({
 	setGraphHandler,
 }: RightContainerProps): JSX.Element {
 	const onChangeHandler = useCallback(
-		(setFunc: React.Dispatch<React.SetStateAction<string>>, value: string) => {
+		(setFunc: Dispatch<SetStateAction<string>>, value: string) => {
 			setFunc(value);
 		},
 		[],
@@ -135,20 +135,20 @@ function RightContainer({
 
 interface RightContainerProps {
 	title: string;
-	setTitle: React.Dispatch<React.SetStateAction<string>>;
+	setTitle: Dispatch<SetStateAction<string>>;
 	description: string;
-	setDescription: React.Dispatch<React.SetStateAction<string>>;
+	setDescription: Dispatch<SetStateAction<string>>;
 	stacked: boolean;
-	setStacked: React.Dispatch<React.SetStateAction<boolean>>;
+	setStacked: Dispatch<SetStateAction<boolean>>;
 	opacity: string;
-	setOpacity: React.Dispatch<React.SetStateAction<string>>;
+	setOpacity: Dispatch<SetStateAction<string>>;
 	selectedNullZeroValue: string;
-	setSelectedNullZeroValue: React.Dispatch<React.SetStateAction<string>>;
+	setSelectedNullZeroValue: Dispatch<SetStateAction<string>>;
 	selectedGraph: GRAPH_TYPES;
-	setSelectedTime: React.Dispatch<React.SetStateAction<timePreferance>>;
+	setSelectedTime: Dispatch<SetStateAction<timePreferance>>;
 	selectedTime: timePreferance;
 	yAxisUnit: string;
-	setYAxisUnit: React.Dispatch<React.SetStateAction<string>>;
+	setYAxisUnit: Dispatch<SetStateAction<string>>;
 	setGraphHandler: (type: ITEMS) => void;
 }
 

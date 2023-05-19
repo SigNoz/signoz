@@ -6,7 +6,7 @@ import createDomainApi from 'api/SAML/postDomain';
 import { FeatureKeys } from 'constants/features';
 import useFeatureFlag from 'hooks/useFeatureFlag/useFeatureFlag';
 import { useNotifications } from 'hooks/useNotifications';
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';

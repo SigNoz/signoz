@@ -9,7 +9,7 @@ import { useNotifications } from 'hooks/useNotifications';
 import { getDashboardVariables } from 'lib/dashbaordVariables/getDashboardVariables';
 import history from 'lib/history';
 import { DashboardWidgetPageParams } from 'pages/DashboardWidget';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { connect, useDispatch, useSelector } from 'react-redux';
 import { generatePath, useLocation, useParams } from 'react-router-dom';
 import { bindActionCreators, Dispatch } from 'redux';

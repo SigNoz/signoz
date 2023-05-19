@@ -7,7 +7,7 @@ import ROUTES from 'constants/routes';
 import { MESSAGE } from 'hooks/useFeatureFlag';
 import { useNotifications } from 'hooks/useNotifications';
 import history from 'lib/history';
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useDispatch } from 'react-redux';
 import { generatePath } from 'react-router-dom';

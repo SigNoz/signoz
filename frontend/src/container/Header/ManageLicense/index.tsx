@@ -2,7 +2,6 @@ import { Spin, Typography } from 'antd';
 import ROUTES from 'constants/routes';
 import useLicense, { LICENSE_PLAN_KEY } from 'hooks/useLicense';
 import history from 'lib/history';
-import React from 'react';
 
 import {
 	FreePlanIcon,

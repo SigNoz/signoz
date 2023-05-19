@@ -1,7 +1,6 @@
 import { Tabs, Typography } from 'antd';
 import Spinner from 'components/Spinner';
 import useLicense from 'hooks/useLicense';
-import React from 'react';
 import { useTranslation } from 'react-i18next';
 
 import ApplyLicenseForm from './ApplyLicenseForm';

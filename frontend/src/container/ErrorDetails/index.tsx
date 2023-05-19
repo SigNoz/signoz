@@ -7,7 +7,7 @@ import dayjs from 'dayjs';
 import { useNotifications } from 'hooks/useNotifications';
 import history from 'lib/history';
 import { urlKey } from 'pages/ErrorDetails/utils';
-import React, { useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useQuery } from 'react-query';
 import { useLocation } from 'react-router-dom';

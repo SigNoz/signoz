@@ -10,7 +10,7 @@ import {
 import useDebounce from 'hooks/useDebounce';
 import { getFilterObjectValue } from 'lib/newQueryBuilder/getFilterObjectValue';
 import { transformStringWithPrefix } from 'lib/query/transformStringWithPrefix';
-import React, { memo, useCallback, useMemo, useState } from 'react';
+import { memo, useCallback, useMemo, useState } from 'react';
 import { useQuery } from 'react-query';
 import { DataSource } from 'types/common/queryBuilder';
 import { ExtendedSelectOption } from 'types/common/select';

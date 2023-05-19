@@ -16,8 +16,9 @@ import ROUTES from 'constants/routes';
 import SearchFilter from 'container/ListOfDashboard/SearchFilter';
 import useComponentPermission from 'hooks/useComponentPermission';
 import history from 'lib/history';
-import React, {
+import {
 	Dispatch,
+	Key,
 	useCallback,
 	useEffect,
 	useMemo,
@@ -308,7 +309,7 @@ function ListOfAllDashboard(): JSX.Element {
 }
 
 export interface Data {
-	key: React.Key;
+	key: Key;
 	name: string;
 	description: string;
 	tags: string[];
