@@ -1,6 +1,12 @@
 import { AutoComplete, Input } from 'antd';
 import getTagFilters from 'api/trace/getTagFilter';
-import React, { useCallback, useMemo, useState } from 'react';
+import {
+	Dispatch,
+	SetStateAction,
+	useCallback,
+	useMemo,
+	useState,
+} from 'react';
 import { useQuery } from 'react-query';
 import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
@@ -83,9 +89,7 @@ function TagsKey(props: TagsKeysProps): JSX.Element {
 interface TagsKeysProps {
 	index: number;
 	tag: FlatArray<TraceReducer['selectedTags'], 1>;
-	setLocalSelectedTags: React.Dispatch<
-		React.SetStateAction<TraceReducer['selectedTags']>
-	>;
+	setLocalSelectedTags: Dispatch<SetStateAction<TraceReducer['selectedTags']>>;
 }
 
 export default TagsKey;

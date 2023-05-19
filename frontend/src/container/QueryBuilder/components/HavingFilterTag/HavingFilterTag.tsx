@@ -1,5 +1,3 @@
-import React from 'react';
-
 import { HavingFilterTagProps } from './HavingFilterTag.interfaces';
 import { StyledTag, StyledText } from './HavingFilterTag.styled';
 

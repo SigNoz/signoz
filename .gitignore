@@ -1,7 +1,5 @@
 
 node_modules
-yarn.lock
-package.json
 
 deploy/docker/environment_tiny/common_test
 frontend/node_modules

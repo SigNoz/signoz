@@ -1,7 +1,6 @@
 import { PlusOutlined } from '@ant-design/icons';
 import { ClickHouseQueryTemplate } from 'constants/dashboard';
 import GetQueryName from 'lib/query/GetQueryName';
-import React from 'react';
 import { Query } from 'types/api/dashboard/getAll';
 import { EQueryType } from 'types/common/dashboard';
 

@@ -4,6 +4,7 @@ import ROUTES from 'constants/routes';
 import { routeConfig } from 'container/SideNav/config';
 import { getQueryString } from 'container/SideNav/helper';
 import history from 'lib/history';
+import { Dispatch, SetStateAction } from 'react';
 import { TagFilterItem } from 'types/api/queryBuilder/queryBuilderData';
 import { Tags } from 'types/reducer/trace';
 
@@ -50,9 +51,7 @@ export function onViewTracePopupClick({
 }
 
 export function onGraphClickHandler(
-	setSelectedTimeStamp: (
-		n: number,
-	) => void | React.Dispatch<React.SetStateAction<number>>,
+	setSelectedTimeStamp: (n: number) => void | Dispatch<SetStateAction<number>>,
 ) {
 	return async (
 		event: ChartEvent,

@@ -7,7 +7,7 @@ import { LOCALSTORAGE } from 'constants/localStorage';
 import ROUTES from 'constants/routes';
 import { useNotifications } from 'hooks/useNotifications';
 import history from 'lib/history';
-import React, { useEffect, useMemo } from 'react';
+import { ReactChild, useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useDispatch, useSelector } from 'react-redux';
 import { matchPath, Redirect, useLocation } from 'react-router-dom';
@@ -161,7 +161,7 @@ function PrivateRoute({ children }: PrivateRouteProps): JSX.Element {
 }
 
 interface PrivateRouteProps {
-	children: React.ReactChild;
+	children: ReactChild;
 }
 
 export default PrivateRoute;

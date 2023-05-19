@@ -1,6 +1,6 @@
 import { Col } from 'antd';
 import ROUTES from 'constants/routes';
-import React, { useMemo } from 'react';
+import { useMemo } from 'react';
 import { matchPath, useHistory } from 'react-router-dom';
 
 import ShowBreadcrumbs from './Breadcrumbs';

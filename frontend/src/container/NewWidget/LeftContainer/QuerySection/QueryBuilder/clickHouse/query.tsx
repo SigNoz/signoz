@@ -1,6 +1,5 @@
 import { Input } from 'antd';
 import MonacoEditor from 'components/Editor';
-import React from 'react';
 import { IClickHouseQuery } from 'types/api/dashboard/getAll';
 
 import QueryHeader from '../QueryHeader';
