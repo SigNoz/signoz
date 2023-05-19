@@ -3,7 +3,7 @@ import { Col, Input } from 'antd';
 import { ListItemWrapper, ListMarker } from 'container/QueryBuilder/components';
 // ** Hooks
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
-import React, { ChangeEvent, useCallback } from 'react';
+import { ChangeEvent, useCallback } from 'react';
 import { IBuilderFormula } from 'types/api/queryBuilder/queryBuilderData';
 
 // ** Types

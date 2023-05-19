@@ -1,6 +1,6 @@
 import { PlusOutlined } from '@ant-design/icons';
 import { Button, Form, Input, Select, Space, Typography } from 'antd';
-import React, { useCallback, useEffect } from 'react';
+import { Dispatch, SetStateAction, useCallback, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { InviteTeamMembersProps } from '../PendingInvitesContainer/index';
@@ -101,7 +101,7 @@ function InviteTeamMembers({ allMembers, setAllMembers }: Props): JSX.Element {
 
 interface Props {
 	allMembers: InviteTeamMembersProps[];
-	setAllMembers: React.Dispatch<React.SetStateAction<InviteTeamMembersProps[]>>;
+	setAllMembers: Dispatch<SetStateAction<InviteTeamMembersProps[]>>;
 }
 
 export default InviteTeamMembers;

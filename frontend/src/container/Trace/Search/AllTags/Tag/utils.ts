@@ -1,5 +1,6 @@
 import { AutoCompleteProps } from 'antd';
 import { DefaultOptionType } from 'antd/es/select';
+import { Dispatch, SetStateAction } from 'react';
 import { PayloadProps as TagKeyPayload } from 'types/api/trace/getTagFilters';
 import { PayloadProps as TagValuePayload } from 'types/api/trace/getTagValue';
 import { OperatorValues, Tags } from 'types/reducer/trace';
@@ -104,9 +105,9 @@ export function separateTagValues(
 
 export function disableTagValue(
 	selectedOperator: OperatorValues,
-	setLocalValue: React.Dispatch<React.SetStateAction<TagValueTypes[]>>,
+	setLocalValue: Dispatch<SetStateAction<TagValueTypes[]>>,
 	selectedKeys: string,
-	setLocalSelectedTags: React.Dispatch<React.SetStateAction<Tags[]>>,
+	setLocalSelectedTags: Dispatch<SetStateAction<Tags[]>>,
 	index: number,
 ): boolean {
 	if (selectedOperator === 'Exists' || selectedOperator === 'NotExists') {
@@ -205,8 +206,8 @@ export function mapOperators(selectedKey: string): AllMenuProps[] {
 export function onTagKeySelect(
 	value: unknown,
 	options: AutoCompleteProps['options'],
-	setSelectedKey: React.Dispatch<React.SetStateAction<string>>,
-	setLocalSelectedTags: React.Dispatch<React.SetStateAction<Tags[]>>,
+	setSelectedKey: Dispatch<SetStateAction<string>>,
+	setLocalSelectedTags: Dispatch<SetStateAction<Tags[]>>,
 	index: number,
 	tag: Tags,
 ): void {

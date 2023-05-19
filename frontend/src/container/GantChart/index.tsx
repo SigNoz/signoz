@@ -1,6 +1,6 @@
 import { MinusSquareOutlined, PlusSquareOutlined } from '@ant-design/icons';
 import { IIntervalUnit } from 'container/TraceDetail/utils';
-import React, { useEffect, useState } from 'react';
+import { Dispatch, SetStateAction, useEffect, useState } from 'react';
 import { ITraceTree } from 'types/api/trace/getTraceItem';
 
 import { CardContainer, CardWrapper, CollapseButton } from './styles';
@@ -79,8 +79,8 @@ export interface GanttChartProps {
 	traceMetaData: ITraceMetaData;
 	activeSelectedId: string;
 	activeHoverId: string;
-	setActiveHoverId: React.Dispatch<React.SetStateAction<string>>;
-	setActiveSelectedId: React.Dispatch<React.SetStateAction<string>>;
+	setActiveHoverId: Dispatch<SetStateAction<string>>;
+	setActiveSelectedId: Dispatch<SetStateAction<string>>;
 	spanId: string;
 	intervalUnit: IIntervalUnit;
 }

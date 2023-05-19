@@ -6,7 +6,7 @@ import { useMachine } from '@xstate/react';
 import { Button, Input, message, Modal } from 'antd';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { map } from 'lodash-es';
-import React, { useCallback, useEffect, useState } from 'react';
+import { ChangeEvent, useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Labels } from 'types/api/alerts/def';
 import { v4 as uuid } from 'uuid';
@@ -84,7 +84,7 @@ function LabelSelect({
 		handleBlur();
 	}, [handleBlur]);
 
-	const handleChange = (e: React.ChangeEvent<HTMLInputElement>): void => {
+	const handleChange = (e: ChangeEvent<HTMLInputElement>): void => {
 		setCurrentVal(e.target?.value);
 	};
 

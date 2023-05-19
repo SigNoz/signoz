@@ -1,7 +1,6 @@
 import { volcano } from '@ant-design/colors';
 import { InfoCircleOutlined } from '@ant-design/icons';
 import { Popover, Typography } from 'antd';
-import React from 'react';
 
 function PopOverContent(): JSX.Element {
 	return (
