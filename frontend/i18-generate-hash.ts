@@ -1,6 +1,5 @@
 import crypto, { BinaryToTextEncoding } from 'crypto';
 import fs from 'fs';
-// eslint-disable-next-line import/no-extraneous-dependencies
 import glob from 'glob';
 
 function generateChecksum(
