@@ -15,4 +15,6 @@ jobs:
       # or just "yarn" if you depend on "@commitlint/cli" already
       - run: yarn add @commitlint/cli
       - run: yarn add @commitlint/config-conventional
+      - name: Create dummy COMMIT_EDITMSG
+        run: echo "dummy" > .git/COMMIT_EDITMSG
       - run: yarn commitlint --from ${{ github.event.pull_request.base.sha }} --to ${{ github.event.pull_request.head.sha }} --verbose
