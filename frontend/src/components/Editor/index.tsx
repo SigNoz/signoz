@@ -1,6 +1,6 @@
 import MEditor, { EditorProps } from '@monaco-editor/react';
 import { useIsDarkMode } from 'hooks/useDarkMode';
-import React, { useMemo } from 'react';
+import { useMemo } from 'react';
 
 function Editor({
 	value,
@@ -13,6 +13,8 @@ function Editor({
 	const isDarkMode = useIsDarkMode();
 
 	const onChangeHandler = (newValue?: string): void => {
+		if (readOnly) return;
+
 		if (typeof newValue === 'string' && onChange) onChange(newValue);
 	};
 
@@ -29,6 +31,7 @@ function Editor({
 			options={editorOptions}
 			height={height}
 			onChange={onChangeHandler}
+			data-testid="monaco-editor"
 		/>
 	);
 }

@@ -1,44 +1,57 @@
-import { DataSource } from 'types/common/queryBuilder';
+import { DataSource, ReduceOperators } from 'types/common/queryBuilder';
 
-import { AutocompleteData } from './queryAutocompleteResponse';
+import { BaseAutocompleteData } from './queryAutocompleteResponse';
 
 // Type for Formula
 export interface IBuilderFormula {
 	expression: string;
 	disabled: boolean;
-	label: string;
+	queryName: string;
+	dataSource?: DataSource;
 	legend: string;
 }
 
 export interface TagFilterItem {
-	key: string;
-	// TODO: type it in the future
+	id: string;
+	key?: BaseAutocompleteData;
 	op: string;
-	value: string[];
+	value: string[] | string;
 }
 
 export interface TagFilter {
 	items: TagFilterItem[];
-	// TODO: type it in the future
 	op: string;
 }
+
+export type Having = {
+	columnName: string;
+	op: string;
+	value: number | number[];
+};
+
+export type HavingForm = Omit<Having, 'value'> & {
+	value: string[];
+};
+
+export type OrderByPayload = {
+	columnName: string;
+	order: string;
+};
 
 // Type for query builder
 export type IBuilderQuery = {
 	queryName: string;
 	dataSource: DataSource;
 	aggregateOperator: string;
-	aggregateAttribute: string;
-	tagFilters: TagFilter[];
-	groupBy: string[];
+	aggregateAttribute: BaseAutocompleteData;
+	filters: TagFilter;
+	groupBy: BaseAutocompleteData[];
 	expression: string;
 	disabled: boolean;
-	having?: string;
-	limit?: number;
-	orderBy?: string[];
-	reduceTo?: string;
-};
-
-export type IBuilderQueryForm = Omit<IBuilderQuery, 'aggregateAttribute'> & {
-	aggregateAttribute: AutocompleteData;
+	having: Having[];
+	limit: number | null;
+	stepInterval: number;
+	orderBy: OrderByPayload[];
+	reduceTo: ReduceOperators;
+	legend: string;
 };

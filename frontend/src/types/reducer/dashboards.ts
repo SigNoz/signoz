@@ -8,4 +8,5 @@ export default interface DashboardReducer {
 	isEditMode: boolean;
 	isQueryFired: boolean;
 	isAddWidget: boolean;
+	isLoadingQueryResult: boolean;
 }

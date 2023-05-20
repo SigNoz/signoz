@@ -1,5 +1,3 @@
-import React from 'react';
-
 function SomethingWentWrong(): JSX.Element {
 	return (
 		<svg

@@ -4,7 +4,13 @@ import getLocalStorageKey from 'api/browser/localstorage/get';
 import { IS_SIDEBAR_COLLAPSED } from 'constants/app';
 import ROUTES from 'constants/routes';
 import history from 'lib/history';
-import React, { useCallback, useLayoutEffect, useMemo, useState } from 'react';
+import {
+	ReactNode,
+	useCallback,
+	useLayoutEffect,
+	useMemo,
+	useState,
+} from 'react';
 import { useTranslation } from 'react-i18next';
 import { useDispatch, useSelector } from 'react-redux';
 import { useLocation } from 'react-router-dom';
@@ -12,7 +18,8 @@ import { SideBarCollapse } from 'store/actions/app';
 import { AppState } from 'store/reducers';
 import AppReducer from 'types/reducer/app';
 
-import { styles } from './config';
+import { routeConfig, styles } from './config';
+import { getQueryString } from './helper';
 import menus from './menuItems';
 import Slack from './Slack';
 import {
@@ -34,7 +41,7 @@ function SideNav(): JSX.Element {
 		AppReducer
 	>((state) => state.app);
 
-	const { pathname } = useLocation();
+	const { pathname, search } = useLocation();
 	const { t } = useTranslation('');
 
 	const onCollapse = useCallback(() => {
@@ -47,11 +54,16 @@ function SideNav(): JSX.Element {
 
 	const onClickHandler = useCallback(
 		(to: string) => {
+			const params = new URLSearchParams(search);
+			const avialableParams = routeConfig[to];
+
+			const queryString = getQueryString(avialableParams, params);
+
 			if (pathname !== to) {
-				history.push(`${to}`);
+				history.push(`${to}?${queryString.join('&')}`);
 			}
 		},
-		[pathname],
+		[pathname, search],
 	);
 
 	const onClickSlackHandler = (): void => {
@@ -156,10 +168,10 @@ function SideNav(): JSX.Element {
 
 interface SidebarItem {
 	onClick: VoidFunction;
-	icon?: React.ReactNode;
-	text?: React.ReactNode;
+	icon?: ReactNode;
+	text?: ReactNode;
 	key: string;
-	label?: React.ReactNode;
+	label?: ReactNode;
 }
 
 export default SideNav;

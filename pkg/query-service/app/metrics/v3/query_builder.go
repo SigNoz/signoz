@@ -10,7 +10,7 @@ import (
 )
 
 var aggregateOperatorToPercentile = map[v3.AggregateOperator]float64{
-	v3.AggregateOperatorP05:         0.5,
+	v3.AggregateOperatorP05:         0.05,
 	v3.AggregateOperatorP10:         0.10,
 	v3.AggregateOperatorP20:         0.20,
 	v3.AggregateOperatorP25:         0.25,
@@ -49,9 +49,10 @@ func buildMetricsTimeSeriesFilterQuery(fs *v3.FilterSet, groupTags []v3.Attribut
 	if fs != nil && len(fs.Items) != 0 {
 		for _, item := range fs.Items {
 			toFormat := item.Value
-			op := strings.ToLower(strings.TrimSpace(item.Operator))
+			op := v3.FilterOperator(strings.ToLower(strings.TrimSpace(string(item.Operator))))
 			// if the received value is an array for like/match op, just take the first value
-			if op == "like" || op == "match" || op == "nlike" || op == "nmatch" {
+			// or should we throw an error?
+			if op == v3.FilterOperatorLike || op == v3.FilterOperatorRegex || op == v3.FilterOperatorNotLike || op == v3.FilterOperatorNotRegex {
 				x, ok := item.Value.([]interface{})
 				if ok {
 					if len(x) == 0 {
@@ -60,40 +61,44 @@ func buildMetricsTimeSeriesFilterQuery(fs *v3.FilterSet, groupTags []v3.Attribut
 					toFormat = x[0]
 				}
 			}
+
+			if op == v3.FilterOperatorContains || op == v3.FilterOperatorNotContains {
+				toFormat = fmt.Sprintf("%%%s%%", toFormat)
+			}
 			fmtVal := utils.ClickHouseFormattedValue(toFormat)
 			switch op {
-			case "eq":
+			case v3.FilterOperatorEqual:
 				conditions = append(conditions, fmt.Sprintf("JSONExtractString(labels, '%s') = %s", item.Key.Key, fmtVal))
-			case "neq":
+			case v3.FilterOperatorNotEqual:
 				conditions = append(conditions, fmt.Sprintf("JSONExtractString(labels, '%s') != %s", item.Key.Key, fmtVal))
-			case "in":
+			case v3.FilterOperatorIn:
 				conditions = append(conditions, fmt.Sprintf("JSONExtractString(labels, '%s') IN %s", item.Key.Key, fmtVal))
-			case "nin":
+			case v3.FilterOperatorNotIn:
 				conditions = append(conditions, fmt.Sprintf("JSONExtractString(labels, '%s') NOT IN %s", item.Key.Key, fmtVal))
-			case "like":
+			case v3.FilterOperatorLike:
 				conditions = append(conditions, fmt.Sprintf("like(JSONExtractString(labels, '%s'), %s)", item.Key.Key, fmtVal))
-			case "nlike":
+			case v3.FilterOperatorNotLike:
 				conditions = append(conditions, fmt.Sprintf("notLike(JSONExtractString(labels, '%s'), %s)", item.Key.Key, fmtVal))
-			case "match":
+			case v3.FilterOperatorRegex:
 				conditions = append(conditions, fmt.Sprintf("match(JSONExtractString(labels, '%s'), %s)", item.Key.Key, fmtVal))
-			case "nmatch":
+			case v3.FilterOperatorNotRegex:
 				conditions = append(conditions, fmt.Sprintf("not match(JSONExtractString(labels, '%s'), %s)", item.Key.Key, fmtVal))
-			case "gt":
+			case v3.FilterOperatorGreaterThan:
 				conditions = append(conditions, fmt.Sprintf("JSONExtractString(labels, '%s') > %s", item.Key.Key, fmtVal))
-			case "gte":
+			case v3.FilterOperatorGreaterThanOrEq:
 				conditions = append(conditions, fmt.Sprintf("JSONExtractString(labels, '%s') >= %s", item.Key.Key, fmtVal))
-			case "lt":
+			case v3.FilterOperatorLessThan:
 				conditions = append(conditions, fmt.Sprintf("JSONExtractString(labels, '%s') < %s", item.Key.Key, fmtVal))
-			case "lte":
+			case v3.FilterOperatorLessThanOrEq:
 				conditions = append(conditions, fmt.Sprintf("JSONExtractString(labels, '%s') <= %s", item.Key.Key, fmtVal))
-			case "contains":
+			case v3.FilterOperatorContains:
 				conditions = append(conditions, fmt.Sprintf("like(JSONExtractString(labels, '%s'), %s)", item.Key.Key, fmtVal))
-			case "ncontains":
+			case v3.FilterOperatorNotContains:
 				conditions = append(conditions, fmt.Sprintf("notLike(JSONExtractString(labels, '%s'), %s)", item.Key.Key, fmtVal))
-			case "exists":
-				conditions = append(conditions, fmt.Sprintf("has(JSONExtractKeys(labels), %s)", item.Key.Key))
-			case "nexists":
-				conditions = append(conditions, fmt.Sprintf("not has(JSONExtractKeys(labels), %s)", item.Key.Key))
+			case v3.FilterOperatorExists:
+				conditions = append(conditions, fmt.Sprintf("has(JSONExtractKeys(labels), '%s')", item.Key.Key))
+			case v3.FilterOperatorNotExists:
+				conditions = append(conditions, fmt.Sprintf("not has(JSONExtractKeys(labels), '%s')", item.Key.Key))
 			default:
 				return "", fmt.Errorf("unsupported operation")
 			}
@@ -117,7 +122,36 @@ func buildMetricsTimeSeriesFilterQuery(fs *v3.FilterSet, groupTags []v3.Attribut
 
 func buildMetricQuery(start, end, step int64, mq *v3.BuilderQuery, tableName string) (string, error) {
 
-	filterSubQuery, err := buildMetricsTimeSeriesFilterQuery(mq.Filters, mq.GroupBy, mq.AggregateAttribute.Key, mq.AggregateOperator)
+	metricQueryGroupBy := mq.GroupBy
+
+	// if the aggregate operator is a histogram quantile, and user has not forgotten
+	// the le tag in the group by then add the le tag to the group by
+	if mq.AggregateOperator == v3.AggregateOperatorHistQuant50 ||
+		mq.AggregateOperator == v3.AggregateOperatorHistQuant75 ||
+		mq.AggregateOperator == v3.AggregateOperatorHistQuant90 ||
+		mq.AggregateOperator == v3.AggregateOperatorHistQuant95 ||
+		mq.AggregateOperator == v3.AggregateOperatorHistQuant99 {
+		found := false
+		for _, tag := range mq.GroupBy {
+			if tag.Key == "le" {
+				found = true
+				break
+			}
+		}
+		if !found {
+			metricQueryGroupBy = append(
+				metricQueryGroupBy,
+				v3.AttributeKey{
+					Key:      "le",
+					DataType: v3.AttributeKeyDataTypeString,
+					Type:     v3.AttributeKeyTypeTag,
+					IsColumn: false,
+				},
+			)
+		}
+	}
+
+	filterSubQuery, err := buildMetricsTimeSeriesFilterQuery(mq.Filters, metricQueryGroupBy, mq.AggregateAttribute.Key, mq.AggregateOperator)
 	if err != nil {
 		return "", err
 	}
@@ -151,24 +185,28 @@ func buildMetricQuery(start, end, step int64, mq *v3.BuilderQuery, tableName str
 	groupTagsWithoutLe := groupSelect(tagsWithoutLe...)
 	orderWithoutLe := orderBy(mq.OrderBy, tagsWithoutLe)
 
-	groupBy := groupByAttributeKeyTags(mq.GroupBy...)
-	groupTags := groupSelectAttributeKeyTags(mq.GroupBy...)
-	orderBy := orderByAttributeKeyTags(mq.OrderBy, mq.GroupBy)
+	groupBy := groupByAttributeKeyTags(metricQueryGroupBy...)
+	groupTags := groupSelectAttributeKeyTags(metricQueryGroupBy...)
+	orderBy := orderByAttributeKeyTags(mq.OrderBy, metricQueryGroupBy)
 
 	if len(orderBy) != 0 {
 		orderBy += ","
+	}
+	if len(orderWithoutLe) != 0 {
+		orderWithoutLe += ","
 	}
 
 	switch mq.AggregateOperator {
 	case v3.AggregateOperatorRate:
 		// Calculate rate of change of metric for each unique time series
 		groupBy = "fingerprint, ts"
+		orderBy = "fingerprint, "
 		groupTags = "fingerprint,"
 		op := "max(value)" // max value should be the closest value for point in time
 		subQuery := fmt.Sprintf(
 			queryTmpl, "any(labels) as labels, "+groupTags, step, op, filterSubQuery, groupBy, orderBy,
 		) // labels will be same so any should be fine
-		query := `SELECT %s ts, ` + rateWithoutNegative + ` as value FROM(%s)`
+		query := `SELECT %s ts, ` + rateWithoutNegative + ` as value FROM(%s) WHERE isNaN(value) = 0`
 
 		query = fmt.Sprintf(query, "labels as fullLabels,", subQuery)
 		return query, nil
@@ -180,7 +218,7 @@ func buildMetricQuery(start, end, step int64, mq *v3.BuilderQuery, tableName str
 		subQuery := fmt.Sprintf(
 			queryTmpl, rateGroupTags, step, op, filterSubQuery, rateGroupBy, rateOrderBy,
 		) // labels will be same so any should be fine
-		query := `SELECT %s ts, ` + rateWithoutNegative + `as value FROM(%s)`
+		query := `SELECT %s ts, ` + rateWithoutNegative + `as value FROM(%s) WHERE isNaN(value) = 0`
 		query = fmt.Sprintf(query, groupTags, subQuery)
 		query = fmt.Sprintf(`SELECT %s ts, sum(value) as value FROM (%s) GROUP BY %s ORDER BY %s ts`, groupTags, query, groupBy, orderBy)
 		return query, nil
@@ -191,7 +229,7 @@ func buildMetricQuery(start, end, step int64, mq *v3.BuilderQuery, tableName str
 		v3.AggregateOperatorRateMin:
 		op := fmt.Sprintf("%s(value)", aggregateOperatorToSQLFunc[mq.AggregateOperator])
 		subQuery := fmt.Sprintf(queryTmpl, groupTags, step, op, filterSubQuery, groupBy, orderBy)
-		query := `SELECT %s ts, ` + rateWithoutNegative + `as value FROM(%s)`
+		query := `SELECT %s ts, ` + rateWithoutNegative + `as value FROM(%s) WHERE isNaN(value) = 0`
 		query = fmt.Sprintf(query, groupTags, subQuery)
 		return query, nil
 	case
@@ -215,9 +253,9 @@ func buildMetricQuery(start, end, step int64, mq *v3.BuilderQuery, tableName str
 		subQuery := fmt.Sprintf(
 			queryTmpl, rateGroupTags, step, op, filterSubQuery, rateGroupBy, rateOrderBy,
 		) // labels will be same so any should be fine
-		query := `SELECT %s ts, ` + rateWithoutNegative + ` as value FROM(%s)`
+		query := `SELECT %s ts, ` + rateWithoutNegative + ` as value FROM(%s) WHERE isNaN(value) = 0`
 		query = fmt.Sprintf(query, groupTags, subQuery)
-		query = fmt.Sprintf(`SELECT %s ts, sum(value) as value FROM (%s) GROUP BY %s ORDER BY %s ts`, groupTags, query, groupBy, orderBy)
+		query = fmt.Sprintf(`SELECT %s ts, sum(value) as value FROM (%s) GROUP BY %s HAVING isNaN(value) = 0 ORDER BY %s ts`, groupTags, query, groupBy, orderBy)
 		value := aggregateOperatorToPercentile[mq.AggregateOperator]
 
 		query = fmt.Sprintf(`SELECT %s ts, histogramQuantile(arrayMap(x -> toFloat64(x), groupArray(le)), groupArray(value), %.3f) as value FROM (%s) GROUP BY %s ORDER BY %s ts`, groupTagsWithoutLe, value, query, groupByWithoutLe, orderWithoutLe)
@@ -226,7 +264,7 @@ func buildMetricQuery(start, end, step int64, mq *v3.BuilderQuery, tableName str
 		op := fmt.Sprintf("%s(value)", aggregateOperatorToSQLFunc[mq.AggregateOperator])
 		query := fmt.Sprintf(queryTmpl, groupTags, step, op, filterSubQuery, groupBy, orderBy)
 		return query, nil
-	case v3.AggregateOpeatorCount:
+	case v3.AggregateOperatorCount:
 		op := "toFloat64(count(*))"
 		query := fmt.Sprintf(queryTmpl, groupTags, step, op, filterSubQuery, groupBy, orderBy)
 		return query, nil
@@ -316,7 +354,7 @@ func orderByAttributeKeyTags(items []v3.OrderBy, tags []v3.AttributeKey) string 
 func having(items []v3.Having) string {
 	var having []string
 	for _, item := range items {
-		having = append(having, fmt.Sprintf("%s %s %v", item.ColumnName, item.Operator, utils.ClickHouseFormattedValue(item.Value)))
+		having = append(having, fmt.Sprintf("%s %s %v", "value", item.Operator, utils.ClickHouseFormattedValue(item.Value)))
 	}
 	return strings.Join(having, " AND ")
 }
@@ -351,11 +389,15 @@ func reduceQuery(query string, reduceTo v3.ReduceToOperator, aggregateOperator v
 	return query, nil
 }
 
-func PrepareMetricQuery(start, end, step int64, queryType v3.QueryType, panelType v3.PanelType, mq *v3.BuilderQuery) (string, error) {
-	query, err := buildMetricQuery(start, end, step, mq, constants.SIGNOZ_TIMESERIES_TABLENAME)
+func PrepareMetricQuery(start, end int64, queryType v3.QueryType, panelType v3.PanelType, mq *v3.BuilderQuery) (string, error) {
+	query, err := buildMetricQuery(start, end, mq.StepInterval, mq, constants.SIGNOZ_TIMESERIES_TABLENAME)
 	if err != nil {
 		return "", err
 	}
+	if having(mq.Having) != "" {
+		query = fmt.Sprintf("SELECT * FROM (%s) HAVING %s", query, having(mq.Having))
+	}
+
 	if panelType == v3.PanelTypeValue {
 		query, err = reduceQuery(query, mq.ReduceTo, mq.AggregateOperator)
 	}

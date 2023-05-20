@@ -30,7 +30,7 @@ type AggregateOperator string
 
 const (
 	AggregateOperatorNoOp          AggregateOperator = "noop"
-	AggregateOpeatorCount          AggregateOperator = "count"
+	AggregateOperatorCount         AggregateOperator = "count"
 	AggregateOperatorCountDistinct AggregateOperator = "count_distinct"
 	AggregateOperatorSum           AggregateOperator = "sum"
 	AggregateOperatorAvg           AggregateOperator = "avg"
@@ -64,7 +64,7 @@ const (
 func (a AggregateOperator) Validate() error {
 	switch a {
 	case AggregateOperatorNoOp,
-		AggregateOpeatorCount,
+		AggregateOperatorCount,
 		AggregateOperatorCountDistinct,
 		AggregateOperatorSum,
 		AggregateOperatorAvg,
@@ -101,14 +101,35 @@ func (a AggregateOperator) Validate() error {
 
 // RequireAttribute returns true if the aggregate operator requires an attribute
 // to be specified.
-func (a AggregateOperator) RequireAttribute() bool {
-	switch a {
-	case AggregateOperatorNoOp,
-		AggregateOpeatorCount,
-		AggregateOperatorCountDistinct:
-		return false
+func (a AggregateOperator) RequireAttribute(dataSource DataSource) bool {
+	switch dataSource {
+	case DataSourceMetrics:
+		switch a {
+		case AggregateOperatorNoOp:
+			return false
+		default:
+			return true
+		}
+	case DataSourceLogs:
+		switch a {
+		case AggregateOperatorNoOp,
+			AggregateOperatorCount,
+			AggregateOperatorRate:
+			return false
+		default:
+			return true
+		}
+	case DataSourceTraces:
+		switch a {
+		case AggregateOperatorNoOp,
+			AggregateOperatorCount,
+			AggregateOperatorRate:
+			return false
+		default:
+			return true
+		}
 	default:
-		return true
+		return false
 	}
 }
 
@@ -134,6 +155,7 @@ func (r ReduceToOperator) Validate() error {
 type QueryType string
 
 const (
+	QueryTypeUnknown       QueryType = "unknown"
 	QueryTypeBuilder       QueryType = "builder"
 	QueryTypeClickHouseSQL QueryType = "clickhouse_sql"
 	QueryTypePromQL        QueryType = "promql"
@@ -182,10 +204,18 @@ type AggregateAttributeRequest struct {
 type TagType string
 
 const (
-	TagTypeColumn   TagType = "column"
 	TagTypeTag      TagType = "tag"
 	TagTypeResource TagType = "resource"
 )
+
+func (q TagType) Validate() error {
+	switch q {
+	case TagTypeTag, TagTypeResource:
+		return nil
+	default:
+		return fmt.Errorf("invalid tag type: %s", q)
+	}
+}
 
 // FilterAttributeKeyRequest is a request to fetch possible attribute keys
 // for a selected aggregate operator and aggregate attribute and search text.
@@ -193,7 +223,6 @@ type FilterAttributeKeyRequest struct {
 	DataSource         DataSource        `json:"dataSource"`
 	AggregateOperator  AggregateOperator `json:"aggregateOperator"`
 	AggregateAttribute string            `json:"aggregateAttribute"`
-	TagType            TagType           `json:"tagType"`
 	SearchText         string            `json:"searchText"`
 	Limit              int               `json:"limit"`
 }
@@ -201,10 +230,21 @@ type FilterAttributeKeyRequest struct {
 type AttributeKeyDataType string
 
 const (
-	AttributeKeyDataTypeString AttributeKeyDataType = "string"
-	AttributeKeyDataTypeNumber AttributeKeyDataType = "number"
-	AttributeKeyDataTypeBool   AttributeKeyDataType = "bool"
+	AttributeKeyDataTypeUnspecified AttributeKeyDataType = ""
+	AttributeKeyDataTypeString      AttributeKeyDataType = "string"
+	AttributeKeyDataTypeInt64       AttributeKeyDataType = "int64"
+	AttributeKeyDataTypeFloat64     AttributeKeyDataType = "float64"
+	AttributeKeyDataTypeBool        AttributeKeyDataType = "bool"
 )
+
+func (q AttributeKeyDataType) Validate() error {
+	switch q {
+	case AttributeKeyDataTypeString, AttributeKeyDataTypeInt64, AttributeKeyDataTypeFloat64, AttributeKeyDataTypeBool:
+		return nil
+	default:
+		return fmt.Errorf("invalid tag data type: %s", q)
+	}
+}
 
 // FilterAttributeValueRequest is a request to fetch possible attribute values
 // for a selected aggregate operator, aggregate attribute, filter attribute key
@@ -231,8 +271,9 @@ type FilterAttributeKeyResponse struct {
 type AttributeKeyType string
 
 const (
-	AttributeKeyTypeTag      AttributeKeyType = "tag"
-	AttributeKeyTypeResource AttributeKeyType = "resource"
+	AttributeKeyTypeUnspecified AttributeKeyType = ""
+	AttributeKeyTypeTag         AttributeKeyType = "tag"
+	AttributeKeyTypeResource    AttributeKeyType = "resource"
 )
 
 type AttributeKey struct {
@@ -244,7 +285,7 @@ type AttributeKey struct {
 
 func (a AttributeKey) Validate() error {
 	switch a.DataType {
-	case AttributeKeyDataTypeBool, AttributeKeyDataTypeNumber, AttributeKeyDataTypeString:
+	case AttributeKeyDataTypeBool, AttributeKeyDataTypeInt64, AttributeKeyDataTypeFloat64, AttributeKeyDataTypeString, AttributeKeyDataTypeUnspecified:
 		break
 	default:
 		return fmt.Errorf("invalid attribute dataType: %s", a.DataType)
@@ -369,6 +410,7 @@ func (c *CompositeQuery) Validate() error {
 
 type BuilderQuery struct {
 	QueryName          string            `json:"queryName"`
+	StepInterval       int64             `json:"stepInterval"`
 	DataSource         DataSource        `json:"dataSource"`
 	AggregateOperator  AggregateOperator `json:"aggregateOperator"`
 	AggregateAttribute AttributeKey      `json:"aggregateAttribute,omitempty"`
@@ -402,7 +444,7 @@ func (b *BuilderQuery) Validate() error {
 		if err := b.AggregateOperator.Validate(); err != nil {
 			return fmt.Errorf("aggregate operator is invalid: %w", err)
 		}
-		if b.AggregateAttribute == (AttributeKey{}) && b.AggregateOperator.RequireAttribute() {
+		if b.AggregateAttribute == (AttributeKey{}) && b.AggregateOperator.RequireAttribute(b.DataSource) {
 			return fmt.Errorf("aggregate attribute is required")
 		}
 	}
@@ -416,6 +458,12 @@ func (b *BuilderQuery) Validate() error {
 		for _, groupBy := range b.GroupBy {
 			if err := groupBy.Validate(); err != nil {
 				return fmt.Errorf("group by is invalid %w", err)
+			}
+		}
+
+		if b.DataSource == DataSourceMetrics && len(b.GroupBy) > 0 {
+			if b.AggregateOperator == AggregateOperatorNoOp || b.AggregateOperator == AggregateOperatorRate {
+				return fmt.Errorf("group by requires aggregate operator other than noop or rate")
 			}
 		}
 	}
@@ -454,10 +502,33 @@ func (f *FilterSet) Validate() error {
 	return nil
 }
 
+type FilterOperator string
+
+const (
+	FilterOperatorEqual           FilterOperator = "="
+	FilterOperatorNotEqual        FilterOperator = "!="
+	FilterOperatorGreaterThan     FilterOperator = ">"
+	FilterOperatorGreaterThanOrEq FilterOperator = ">="
+	FilterOperatorLessThan        FilterOperator = "<"
+	FilterOperatorLessThanOrEq    FilterOperator = "<="
+	FilterOperatorIn              FilterOperator = "in"
+	FilterOperatorNotIn           FilterOperator = "nin"
+	FilterOperatorContains        FilterOperator = "contains"
+	FilterOperatorNotContains     FilterOperator = "ncontains"
+	FilterOperatorRegex           FilterOperator = "regex"
+	FilterOperatorNotRegex        FilterOperator = "nregex"
+	// (I)LIKE is faster than REGEX and supports index
+	FilterOperatorLike    FilterOperator = "like"
+	FilterOperatorNotLike FilterOperator = "nlike"
+
+	FilterOperatorExists    FilterOperator = "exists"
+	FilterOperatorNotExists FilterOperator = "nexists"
+)
+
 type FilterItem struct {
-	Key      AttributeKey `json:"key"`
-	Value    interface{}  `json:"value"`
-	Operator string       `json:"op"`
+	Key      AttributeKey   `json:"key"`
+	Value    interface{}    `json:"value"`
+	Operator FilterOperator `json:"op"`
 }
 
 type OrderBy struct {
@@ -467,7 +538,7 @@ type OrderBy struct {
 
 type Having struct {
 	ColumnName string      `json:"columnName"`
-	Operator   string      `json:"operator"`
+	Operator   string      `json:"op"`
 	Value      interface{} `json:"value"`
 }
 
@@ -488,8 +559,8 @@ type Series struct {
 }
 
 type Row struct {
-	Timestamp time.Time         `json:"timestamp"`
-	Data      map[string]string `json:"data"`
+	Timestamp time.Time              `json:"timestamp"`
+	Data      map[string]interface{} `json:"data"`
 }
 
 type Point struct {

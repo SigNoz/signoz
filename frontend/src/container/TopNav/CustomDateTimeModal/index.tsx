@@ -1,6 +1,6 @@
 import { DatePicker, Modal } from 'antd';
 import dayjs, { Dayjs } from 'dayjs';
-import React, { useState } from 'react';
+import { useState } from 'react';
 
 export type DateTimeRangeType = [Dayjs | null, Dayjs | null] | null;
 
@@ -13,6 +13,7 @@ function CustomDateTimeModal({
 }: CustomDateTimeModalProps): JSX.Element {
 	const [selectedDate, setDateTime] = useState<DateTimeRangeType>();
 
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	const onModalOkHandler = (date_time: any): void => {
 		onCreate(date_time);
 		setDateTime(date_time);

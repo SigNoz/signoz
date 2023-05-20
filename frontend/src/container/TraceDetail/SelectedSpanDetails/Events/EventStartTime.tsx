@@ -1,7 +1,6 @@
 import { Popover } from 'antd';
 import dayjs from 'dayjs';
 import { useIsDarkMode } from 'hooks/useDarkMode';
-import React from 'react';
 
 import { CustomSubText, CustomSubTitle } from '../styles';
 
