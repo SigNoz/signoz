@@ -236,7 +236,7 @@ function Members(): JSX.Element {
 			getOrgUser({
 				orgId: (org || [])[0].id,
 			}),
-		queryKey: 'getOrgUser',
+		queryKey: ['getOrgUser', org?.[0].id],
 	});
 
 	const [dataSource, setDataSource] = useState<DataType[]>([]);

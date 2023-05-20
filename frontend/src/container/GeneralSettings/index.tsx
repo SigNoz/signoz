@@ -4,9 +4,12 @@ import getRetentionPeriodApi from 'api/settings/getRetention';
 import Spinner from 'components/Spinner';
 import { useTranslation } from 'react-i18next';
 import { useQueries } from 'react-query';
+import { useSelector } from 'react-redux';
+import { AppState } from 'store/reducers';
 import { ErrorResponse, SuccessResponse } from 'types/api';
 import { TTTLType } from 'types/api/settings/common';
 import { PayloadProps as GetRetentionPeriodAPIPayloadProps } from 'types/api/settings/getRetention';
+import AppReducer from 'types/reducer/app';
 
 import GeneralSettingsContainer from './GeneralSettings';
 
@@ -16,6 +19,7 @@ type TRetentionAPIReturn<T extends TTTLType> = Promise<
 
 function GeneralSettings(): JSX.Element {
 	const { t } = useTranslation('common');
+	const { user } = useSelector<AppState, AppReducer>((state) => state.app);
 
 	const [
 		getRetentionPeriodMetricsApiResponse,
@@ -26,20 +30,20 @@ function GeneralSettings(): JSX.Element {
 		{
 			queryFn: (): TRetentionAPIReturn<'metrics'> =>
 				getRetentionPeriodApi('metrics'),
-			queryKey: 'getRetentionPeriodApiMetrics',
+			queryKey: ['getRetentionPeriodApiMetrics', user?.accessJwt],
 		},
 		{
 			queryFn: (): TRetentionAPIReturn<'traces'> =>
 				getRetentionPeriodApi('traces'),
-			queryKey: 'getRetentionPeriodApiTraces',
+			queryKey: ['getRetentionPeriodApiTraces', user?.accessJwt],
 		},
 		{
 			queryFn: (): TRetentionAPIReturn<'logs'> => getRetentionPeriodApi('logs'),
-			queryKey: 'getRetentionPeriodApiLogs',
+			queryKey: ['getRetentionPeriodApiLogs', user?.accessJwt],
 		},
 		{
 			queryFn: getDisks,
-			queryKey: 'getDisks',
+			queryKey: ['getDisks', user?.accessJwt],
 		},
 	]);
 

@@ -11,12 +11,14 @@ import SignUpComponent from './SignUp';
 
 function SignUp(): JSX.Element {
 	const { t } = useTranslation('common');
-	const { isLoggedIn } = useSelector<AppState, AppReducer>((state) => state.app);
+	const { isLoggedIn, user } = useSelector<AppState, AppReducer>(
+		(state) => state.app,
+	);
 
 	const [versionResponse] = useQueries([
 		{
 			queryFn: getUserVersion,
-			queryKey: 'getUserVersion',
+			queryKey: ['getUserVersion', user?.accessJwt],
 			enabled: !isLoggedIn,
 		},
 	]);

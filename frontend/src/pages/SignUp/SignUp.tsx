@@ -62,7 +62,7 @@ function SignUp({ version }: SignUpProps): JSX.Element {
 			getInviteDetails({
 				inviteId: token || '',
 			}),
-		queryKey: 'getInviteDetails',
+		queryKey: ['getInviteDetails', token],
 		enabled: token !== null,
 	});
 
