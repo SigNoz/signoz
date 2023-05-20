@@ -1886,6 +1886,11 @@
   dependencies:
     "@sinonjs/commons" "^1.7.0"
 
+"@snyk/protect@^1.1159.0":
+  version "1.1159.0"
+  resolved "https://registry.yarnpkg.com/@snyk/protect/-/protect-1.1159.0.tgz#5b357a73a37798ccacd0feab221a5e31cb5e3530"
+  integrity sha512-1bkWJjWAYGkb50iHNQ4a57DqveidaBge/cYVql9jYlGHo/B+gEG1QWRzH0K6suz4AYVBnj7ZP5LjN5qSboj7oQ==
+
 "@testing-library/dom@^8.5.0":
   version "8.20.0"
   resolved "https://registry.npmjs.org/@testing-library/dom/-/dom-8.20.0.tgz"
