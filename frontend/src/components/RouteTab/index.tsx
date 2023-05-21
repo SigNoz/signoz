@@ -1,6 +1,5 @@
 import { Tabs, TabsProps } from 'antd';
 import history from 'lib/history';
-import React from 'react';
 
 function RouteTab({
 	routes,

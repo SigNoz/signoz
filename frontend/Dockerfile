@@ -1,5 +1,5 @@
 # Builder stage
-FROM node:16.15.0-slim as builder
+FROM node:16.15.0 as builder
 
 # Add Maintainer Info
 LABEL maintainer="signoz"
@@ -11,6 +11,8 @@ WORKDIR /frontend
 
 # Copy the package.json and .yarnrc files prior to install dependencies
 COPY package.json ./
+# Copy lock file
+COPY yarn.lock ./
 COPY .yarnrc ./
 
 # Install the dependencies and make the folder

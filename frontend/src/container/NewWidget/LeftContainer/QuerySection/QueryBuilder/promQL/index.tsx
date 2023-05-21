@@ -1,7 +1,6 @@
 import { PlusOutlined } from '@ant-design/icons';
 import { PromQLQueryTemplate } from 'constants/dashboard';
 import GetQueryName from 'lib/query/GetQueryName';
-import React from 'react';
 import { IPromQLQuery, Query } from 'types/api/dashboard/getAll';
 import { EQueryType } from 'types/common/dashboard';
 

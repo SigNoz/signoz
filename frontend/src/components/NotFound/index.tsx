@@ -2,7 +2,7 @@ import getLocalStorageKey from 'api/browser/localstorage/get';
 import NotFoundImage from 'assets/NotFound';
 import { LOCALSTORAGE } from 'constants/localStorage';
 import ROUTES from 'constants/routes';
-import React, { useCallback } from 'react';
+import { useCallback } from 'react';
 import { useDispatch } from 'react-redux';
 import { Dispatch } from 'redux';
 import AppActions from 'types/actions';

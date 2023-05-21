@@ -13,7 +13,7 @@ import {
 import convertToNanoSecondsToSecond from 'lib/convertToNanoSecondsToSecond';
 import { colors } from 'lib/getRandomColor';
 import history from 'lib/history';
-import React, { useCallback, useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useLocation, useParams } from 'react-router-dom';
 import { UpdateTimeInterval } from 'store/actions';

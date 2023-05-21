@@ -19,7 +19,7 @@ import { spanServiceNameToColorMapping } from 'lib/getRandomColor';
 import history from 'lib/history';
 import { map } from 'lodash-es';
 import { SPAN_DETAILS_LEFT_COL_WIDTH } from 'pages/TraceDetail/constants';
-import React, { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { ITraceForest, PayloadProps } from 'types/api/trace/getTraceItem';
 import { getSpanTreeMetadata } from 'utils/getSpanTreeMetadata';
 import { spanToTreeUtil } from 'utils/spanToTree';

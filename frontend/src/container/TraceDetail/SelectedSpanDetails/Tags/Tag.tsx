@@ -1,6 +1,6 @@
 import { Tooltip } from 'antd';
 import { useIsDarkMode } from 'hooks/useDarkMode';
-import React, { useMemo } from 'react';
+import { Fragment, useMemo } from 'react';
 import { ITraceTag } from 'types/api/trace/getTraceItem';
 
 import EllipsedButton from '../EllipsedButton';
@@ -21,7 +21,7 @@ function Tag({ tags, onToggleHandler, setText }: TagProps): JSX.Element {
 	}, [tags]);
 
 	return (
-		<React.Fragment key={JSON.stringify(tags)}>
+		<Fragment key={JSON.stringify(tags)}>
 			{tags.value && (
 				<Container>
 					<CustomSubTitle>{tags.key}</CustomSubTitle>
@@ -51,7 +51,7 @@ function Tag({ tags, onToggleHandler, setText }: TagProps): JSX.Element {
 					</SubTextContainer>
 				</Container>
 			)}
-		</React.Fragment>
+		</Fragment>
 	);
 }
 
