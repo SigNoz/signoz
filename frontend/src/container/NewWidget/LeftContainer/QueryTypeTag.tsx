@@ -1,11 +1,7 @@
-import React from 'react';
 import { EQueryType } from 'types/common/dashboard';
 
 import { Tag } from '../styles';
 
-interface IQueryTypeTagProps {
-	queryType: EQueryType | undefined;
-}
 function QueryTypeTag({ queryType }: IQueryTypeTagProps): JSX.Element {
 	switch (queryType) {
 		case EQueryType.QUERY_BUILDER:
@@ -31,5 +27,13 @@ function QueryTypeTag({ queryType }: IQueryTypeTagProps): JSX.Element {
 			return <span />;
 	}
 }
+
+interface IQueryTypeTagProps {
+	queryType?: EQueryType;
+}
+
+QueryTypeTag.defaultProps = {
+	queryType: EQueryType.QUERY_BUILDER,
+};
 
 export default QueryTypeTag;

@@ -3,6 +3,7 @@ package clickhouseReader
 import (
 	"bytes"
 	"context"
+	"database/sql"
 	"encoding/json"
 
 	"fmt"
@@ -94,6 +95,8 @@ type ClickHouseReader struct {
 	errorTable              string
 	usageExplorerTable      string
 	SpansTable              string
+	spanAttributeTable      string
+	spanAttributesKeysTable string
 	dependencyGraphTable    string
 	topLevelOperationsTable string
 	logsDB                  string
@@ -101,6 +104,7 @@ type ClickHouseReader struct {
 	logsLocalTable          string
 	logsAttributeKeys       string
 	logsResourceKeys        string
+	logsTagAttributeTable   string
 	queryEngine             *promql.Engine
 	remoteStorage           *remote.Storage
 	fanoutStorage           *storage.Storage
@@ -143,6 +147,8 @@ func NewReader(localDB *sqlx.DB, configFile string, featureFlag interfaces.Featu
 		usageExplorerTable:      options.primary.UsageExplorerTable,
 		durationTable:           options.primary.DurationTable,
 		SpansTable:              options.primary.SpansTable,
+		spanAttributeTable:      options.primary.SpanAttributeTable,
+		spanAttributesKeysTable: options.primary.SpanAttributeKeysTable,
 		dependencyGraphTable:    options.primary.DependencyGraphTable,
 		topLevelOperationsTable: options.primary.TopLevelOperationsTable,
 		logsDB:                  options.primary.LogsDB,
@@ -150,6 +156,7 @@ func NewReader(localDB *sqlx.DB, configFile string, featureFlag interfaces.Featu
 		logsLocalTable:          options.primary.LogsLocalTable,
 		logsAttributeKeys:       options.primary.LogsAttributeKeysTable,
 		logsResourceKeys:        options.primary.LogsResourceKeysTable,
+		logsTagAttributeTable:   options.primary.LogsTagAttributeTable,
 		liveTailRefreshSeconds:  options.primary.LiveTailRefreshSeconds,
 		promConfigFile:          configFile,
 		featureFlags:            featureFlag,
@@ -1847,6 +1854,7 @@ func (r *ClickHouseReader) GetTopOperations(ctx context.Context, queryParams *mo
 			quantile(0.95)(durationNano) as p95,
 			quantile(0.99)(durationNano) as p99,
 			COUNT(*) as numCalls,
+			countIf(statusCode=2) as errorCount,
 			name
 		FROM %s.%s
 		WHERE serviceName = @serviceName AND timestamp>= @start AND timestamp<= @end`,
@@ -3385,12 +3393,16 @@ func (r *ClickHouseReader) GetLogFields(ctx context.Context) (*model.GetFieldsRe
 func extractSelectedAndInterestingFields(tableStatement string, fieldType string, fields *[]model.LogField, response *model.GetFieldsResponse) {
 	for _, field := range *fields {
 		field.Type = fieldType
-		if strings.Contains(tableStatement, fmt.Sprintf("INDEX %s_idx", field.Name)) {
+		if isSelectedField(tableStatement, field.Name) {
 			response.Selected = append(response.Selected, field)
 		} else {
 			response.Interesting = append(response.Interesting, field)
 		}
 	}
+}
+
+func isSelectedField(tableStatement, field string) bool {
+	return strings.Contains(tableStatement, fmt.Sprintf("INDEX %s_idx", field))
 }
 
 func (r *ClickHouseReader) UpdateLogField(ctx context.Context, field *model.UpdateField) *model.ApiError {
@@ -3706,8 +3718,9 @@ func (r *ClickHouseReader) GetMetricAggregateAttributes(ctx context.Context, req
 		}
 		key := v3.AttributeKey{
 			Key:      metricName,
-			DataType: v3.AttributeKeyDataTypeNumber,
-			Type:     v3.AttributeKeyTypeTag,
+			DataType: v3.AttributeKeyDataTypeFloat64,
+			Type:     v3.AttributeKeyTypeUnspecified,
+			IsColumn: true,
 		}
 		response.AttributeKeys = append(response.AttributeKeys, key)
 	}
@@ -3743,6 +3756,7 @@ func (r *ClickHouseReader) GetMetricAttributeKeys(ctx context.Context, req *v3.F
 			Key:      attributeKey,
 			DataType: v3.AttributeKeyDataTypeString, // https://github.com/OpenObservability/OpenMetrics/blob/main/proto/openmetrics_data_model.proto#L64-L72.
 			Type:     v3.AttributeKeyTypeTag,
+			IsColumn: false,
 		}
 		response.AttributeKeys = append(response.AttributeKeys, key)
 	}
@@ -3780,6 +3794,249 @@ func (r *ClickHouseReader) GetMetricAttributeValues(ctx context.Context, req *v3
 	}
 
 	return &attributeValues, nil
+}
+
+func isColumn(tableStatement, field string) bool {
+	return strings.Contains(tableStatement, fmt.Sprintf("`%s` ", field))
+}
+
+func (r *ClickHouseReader) GetLogAggregateAttributes(ctx context.Context, req *v3.AggregateAttributeRequest) (*v3.AggregateAttributeResponse, error) {
+
+	var query string
+	var err error
+	var rows driver.Rows
+	var response v3.AggregateAttributeResponse
+	var stringAllowed bool
+
+	where := ""
+	switch req.Operator {
+	case
+		v3.AggregateOperatorCountDistinct,
+		v3.AggregateOperatorCount:
+		where = "tagKey ILIKE $1"
+		stringAllowed = true
+	case
+		v3.AggregateOperatorRateSum,
+		v3.AggregateOperatorRateMax,
+		v3.AggregateOperatorRateAvg,
+		v3.AggregateOperatorRate,
+		v3.AggregateOperatorRateMin,
+		v3.AggregateOperatorP05,
+		v3.AggregateOperatorP10,
+		v3.AggregateOperatorP20,
+		v3.AggregateOperatorP25,
+		v3.AggregateOperatorP50,
+		v3.AggregateOperatorP75,
+		v3.AggregateOperatorP90,
+		v3.AggregateOperatorP95,
+		v3.AggregateOperatorP99,
+		v3.AggregateOperatorAvg,
+		v3.AggregateOperatorSum,
+		v3.AggregateOperatorMin,
+		v3.AggregateOperatorMax:
+		where = "tagKey ILIKE $1 AND (tagDataType='int64' or tagDataType='float64')"
+		stringAllowed = false
+	case
+		v3.AggregateOperatorNoOp:
+		return &v3.AggregateAttributeResponse{}, nil
+	default:
+		return nil, fmt.Errorf("unsupported aggregate operator")
+	}
+
+	query = fmt.Sprintf("SELECT DISTINCT(tagKey), tagType, tagDataType from %s.%s WHERE %s limit $2", r.logsDB, r.logsTagAttributeTable, where)
+	rows, err = r.db.Query(ctx, query, fmt.Sprintf("%%%s%%", req.SearchText), req.Limit)
+	if err != nil {
+		zap.S().Error(err)
+		return nil, fmt.Errorf("error while executing query: %s", err.Error())
+	}
+	defer rows.Close()
+
+	statements := []model.ShowCreateTableStatement{}
+	query = fmt.Sprintf("SHOW CREATE TABLE %s.%s", r.logsDB, r.logsLocalTable)
+	err = r.db.Select(ctx, &statements, query)
+	if err != nil {
+		return nil, fmt.Errorf("error while fetching logs schema: %s", err.Error())
+	}
+
+	var tagKey string
+	var dataType string
+	var attType string
+	for rows.Next() {
+		if err := rows.Scan(&tagKey, &attType, &dataType); err != nil {
+			return nil, fmt.Errorf("error while scanning rows: %s", err.Error())
+		}
+		key := v3.AttributeKey{
+			Key:      tagKey,
+			DataType: v3.AttributeKeyDataType(dataType),
+			Type:     v3.AttributeKeyType(attType),
+			IsColumn: isColumn(statements[0].Statement, tagKey),
+		}
+		response.AttributeKeys = append(response.AttributeKeys, key)
+	}
+	// add other attributes
+	for _, field := range constants.StaticFieldsLogsV3 {
+		if !stringAllowed && field.DataType == v3.AttributeKeyDataTypeString {
+			continue
+		} else if len(req.SearchText) == 0 || strings.Contains(field.Key, req.SearchText) {
+			field.IsColumn = isColumn(statements[0].Statement, field.Key)
+			response.AttributeKeys = append(response.AttributeKeys, field)
+		}
+	}
+
+	return &response, nil
+}
+
+func (r *ClickHouseReader) GetLogAttributeKeys(ctx context.Context, req *v3.FilterAttributeKeyRequest) (*v3.FilterAttributeKeyResponse, error) {
+	var query string
+	var err error
+	var rows driver.Rows
+	var response v3.FilterAttributeKeyResponse
+
+	if len(req.SearchText) != 0 {
+		query = fmt.Sprintf("select distinct tagKey, tagType, tagDataType from  %s.%s where tagKey ILIKE $1 limit $2", r.logsDB, r.logsTagAttributeTable)
+		rows, err = r.db.Query(ctx, query, fmt.Sprintf("%%%s%%", req.SearchText), req.Limit)
+	} else {
+		query = fmt.Sprintf("select distinct tagKey, tagType, tagDataType from  %s.%s limit $1", r.logsDB, r.logsTagAttributeTable)
+		rows, err = r.db.Query(ctx, query, req.Limit)
+	}
+
+	if err != nil {
+		zap.S().Error(err)
+		return nil, fmt.Errorf("error while executing query: %s", err.Error())
+	}
+	defer rows.Close()
+
+	statements := []model.ShowCreateTableStatement{}
+	query = fmt.Sprintf("SHOW CREATE TABLE %s.%s", r.logsDB, r.logsLocalTable)
+	err = r.db.Select(ctx, &statements, query)
+	if err != nil {
+		return nil, fmt.Errorf("error while fetching logs schema: %s", err.Error())
+	}
+
+	var attributeKey string
+	var attributeDataType string
+	var tagType string
+	for rows.Next() {
+		if err := rows.Scan(&attributeKey, &tagType, &attributeDataType); err != nil {
+			return nil, fmt.Errorf("error while scanning rows: %s", err.Error())
+		}
+
+		key := v3.AttributeKey{
+			Key:      attributeKey,
+			DataType: v3.AttributeKeyDataType(attributeDataType),
+			Type:     v3.AttributeKeyType(tagType),
+			IsColumn: isColumn(statements[0].Statement, attributeKey),
+		}
+
+		response.AttributeKeys = append(response.AttributeKeys, key)
+	}
+
+	// add other attributes
+	for _, f := range constants.StaticFieldsLogsV3 {
+		if len(req.SearchText) == 0 || strings.Contains(f.Key, req.SearchText) {
+			f.IsColumn = isColumn(statements[0].Statement, f.Key)
+			response.AttributeKeys = append(response.AttributeKeys, f)
+		}
+	}
+
+	return &response, nil
+}
+
+func (r *ClickHouseReader) GetLogAttributeValues(ctx context.Context, req *v3.FilterAttributeValueRequest) (*v3.FilterAttributeValueResponse, error) {
+	var err error
+	var filterValueColumn string
+	var rows driver.Rows
+	var attributeValues v3.FilterAttributeValueResponse
+
+	// if dataType or tagType is not present return empty response
+	if len(req.FilterAttributeKeyDataType) == 0 || len(req.TagType) == 0 || req.FilterAttributeKey == "body" {
+		return &v3.FilterAttributeValueResponse{}, nil
+	}
+
+	// if data type is bool, return true and false
+	if req.FilterAttributeKeyDataType == v3.AttributeKeyDataTypeBool {
+		return &v3.FilterAttributeValueResponse{
+			BoolAttributeValues: []bool{true, false},
+		}, nil
+	}
+
+	query := "select distinct"
+	switch req.FilterAttributeKeyDataType {
+	case v3.AttributeKeyDataTypeInt64:
+		filterValueColumn = "int64TagValue"
+	case v3.AttributeKeyDataTypeFloat64:
+		filterValueColumn = "float64TagValue"
+	case v3.AttributeKeyDataTypeString:
+		filterValueColumn = "stringTagValue"
+	}
+
+	searchText := fmt.Sprintf("%%%s%%", req.SearchText)
+
+	// check if the tagKey is a topLevelColumn
+	if _, ok := constants.LogsTopLevelColumnsV3[req.FilterAttributeKey]; ok {
+		// query the column for the last 48 hours
+		filterValueColumnWhere := req.FilterAttributeKey
+		selectKey := req.FilterAttributeKey
+		if req.FilterAttributeKeyDataType != v3.AttributeKeyDataTypeString {
+			filterValueColumnWhere = fmt.Sprintf("toString(%s)", req.FilterAttributeKey)
+			selectKey = fmt.Sprintf("toInt64(%s)", req.FilterAttributeKey)
+		}
+
+		// prepare the query and run
+		if len(req.SearchText) != 0 {
+			query = fmt.Sprintf("select distinct %s from %s.%s where timestamp >= toInt64(toUnixTimestamp(now() - INTERVAL 48 HOUR)*1000000000) and %s ILIKE $1 limit $2", selectKey, r.logsDB, r.logsTable, filterValueColumnWhere)
+			rows, err = r.db.Query(ctx, query, searchText, req.Limit)
+		} else {
+			query = fmt.Sprintf("select distinct %s from %s.%s where timestamp >= toInt64(toUnixTimestamp(now() - INTERVAL 48 HOUR)*1000000000) limit $1", selectKey, r.logsDB, r.logsTable)
+			rows, err = r.db.Query(ctx, query, req.Limit)
+		}
+	} else if len(req.SearchText) != 0 {
+		filterValueColumnWhere := filterValueColumn
+		if req.FilterAttributeKeyDataType != v3.AttributeKeyDataTypeString {
+			filterValueColumnWhere = fmt.Sprintf("toString(%s)", filterValueColumn)
+		}
+		query = fmt.Sprintf("select distinct %s  from  %s.%s where tagKey=$1 and %s ILIKE $2  and tagType=$3 limit $4", filterValueColumn, r.logsDB, r.logsTagAttributeTable, filterValueColumnWhere)
+		rows, err = r.db.Query(ctx, query, req.FilterAttributeKey, searchText, req.TagType, req.Limit)
+	} else {
+		query = fmt.Sprintf("select distinct %s from  %s.%s where tagKey=$1 and tagType=$2 limit $3", filterValueColumn, r.logsDB, r.logsTagAttributeTable)
+		rows, err = r.db.Query(ctx, query, req.FilterAttributeKey, req.TagType, req.Limit)
+	}
+
+	if err != nil {
+		zap.S().Error(err)
+		return nil, fmt.Errorf("error while executing query: %s", err.Error())
+	}
+	defer rows.Close()
+
+	var strAttributeValue string
+	var float64AttributeValue sql.NullFloat64
+	var int64AttributeValue sql.NullInt64
+	for rows.Next() {
+		switch req.FilterAttributeKeyDataType {
+		case v3.AttributeKeyDataTypeInt64:
+			if err := rows.Scan(&int64AttributeValue); err != nil {
+				return nil, fmt.Errorf("error while scanning rows: %s", err.Error())
+			}
+			if int64AttributeValue.Valid {
+				attributeValues.NumberAttributeValues = append(attributeValues.NumberAttributeValues, int64AttributeValue.Int64)
+			}
+		case v3.AttributeKeyDataTypeFloat64:
+			if err := rows.Scan(&float64AttributeValue); err != nil {
+				return nil, fmt.Errorf("error while scanning rows: %s", err.Error())
+			}
+			if float64AttributeValue.Valid {
+				attributeValues.NumberAttributeValues = append(attributeValues.NumberAttributeValues, float64AttributeValue.Float64)
+			}
+		case v3.AttributeKeyDataTypeString:
+			if err := rows.Scan(&strAttributeValue); err != nil {
+				return nil, fmt.Errorf("error while scanning rows: %s", err.Error())
+			}
+			attributeValues.StringAttributeValues = append(attributeValues.StringAttributeValues, strAttributeValue)
+		}
+	}
+
+	return &attributeValues, nil
+
 }
 
 func readRow(vars []interface{}, columnNames []string) ([]string, map[string]string, v3.Point) {
@@ -3839,8 +4096,12 @@ func readRow(vars []interface{}, columnNames []string) ([]string, map[string]str
 				groupBy = append(groupBy, fmt.Sprintf("%v", reflect.ValueOf(v).Elem().Int()))
 				groupAttributes[colName] = fmt.Sprintf("%v", reflect.ValueOf(v).Elem().Int())
 			}
+		case *bool:
+			groupBy = append(groupBy, fmt.Sprintf("%v", *v))
+			groupAttributes[colName] = fmt.Sprintf("%v", *v)
+
 		default:
-			zap.S().Errorf("unsupported var type %v found in metric builder query result for column %s", v, colName)
+			zap.S().Errorf("unsupported var type %v found in query builder query result for column %s", v, colName)
 		}
 	}
 	return groupBy, groupAttributes, point
@@ -3921,6 +4182,48 @@ func (r *ClickHouseReader) GetTimeSeriesResultV3(ctx context.Context, query stri
 	return readRowsForTimeSeriesResult(rows, vars, columnNames)
 }
 
+// GetListResultV3 runs the query and returns list of rows
+func (r *ClickHouseReader) GetListResultV3(ctx context.Context, query string) ([]*v3.Row, error) {
+
+	defer utils.Elapsed("GetListResultV3", query)()
+
+	rows, err := r.db.Query(ctx, query)
+
+	if err != nil {
+		zap.S().Errorf("error while reading time series result %v", err)
+		return nil, err
+	}
+	defer rows.Close()
+
+	var (
+		columnTypes = rows.ColumnTypes()
+		columnNames = rows.Columns()
+		vars        = make([]interface{}, len(columnTypes))
+	)
+	for i := range columnTypes {
+		vars[i] = reflect.New(columnTypes[i].ScanType()).Interface()
+	}
+
+	var rowList []*v3.Row
+
+	for rows.Next() {
+		if err := rows.Scan(vars...); err != nil {
+			return nil, err
+		}
+		row := map[string]interface{}{}
+		var t time.Time
+		for idx, v := range vars {
+			if columnNames[idx] == "timestamp" {
+				t = time.Unix(0, int64(*v.(*uint64)))
+			}
+			row[columnNames[idx]] = v
+		}
+		rowList = append(rowList, &v3.Row{Timestamp: t, Data: row})
+	}
+
+	return rowList, nil
+
+}
 func (r *ClickHouseReader) CheckClickHouse(ctx context.Context) error {
 	rows, err := r.db.Query(ctx, "SELECT 1")
 	if err != nil {
@@ -3929,4 +4232,200 @@ func (r *ClickHouseReader) CheckClickHouse(ctx context.Context) error {
 	defer rows.Close()
 
 	return nil
+}
+
+func (r *ClickHouseReader) GetTraceAggregateAttributes(ctx context.Context, req *v3.AggregateAttributeRequest) (*v3.AggregateAttributeResponse, error) {
+	var query string
+	var err error
+	var rows driver.Rows
+	var response v3.AggregateAttributeResponse
+	where := ""
+	switch req.Operator {
+	case
+		v3.AggregateOperatorCountDistinct,
+		v3.AggregateOperatorCount:
+		where = "tagKey ILIKE $1"
+	case
+		v3.AggregateOperatorRateSum,
+		v3.AggregateOperatorRateMax,
+		v3.AggregateOperatorRateAvg,
+		v3.AggregateOperatorRate,
+		v3.AggregateOperatorRateMin,
+		v3.AggregateOperatorP05,
+		v3.AggregateOperatorP10,
+		v3.AggregateOperatorP20,
+		v3.AggregateOperatorP25,
+		v3.AggregateOperatorP50,
+		v3.AggregateOperatorP75,
+		v3.AggregateOperatorP90,
+		v3.AggregateOperatorP95,
+		v3.AggregateOperatorP99,
+		v3.AggregateOperatorAvg,
+		v3.AggregateOperatorSum,
+		v3.AggregateOperatorMin,
+		v3.AggregateOperatorMax:
+		where = "tagKey ILIKE $1 AND dataType='float64'"
+	case
+		v3.AggregateOperatorNoOp:
+		return &v3.AggregateAttributeResponse{}, nil
+	default:
+		return nil, fmt.Errorf("unsupported aggregate operator")
+	}
+	query = fmt.Sprintf("SELECT DISTINCT(tagKey), tagType, dataType, isColumn FROM %s.%s WHERE %s", r.TraceDB, r.spanAttributeTable, where)
+	if req.Limit != 0 {
+		query = query + fmt.Sprintf(" LIMIT %d;", req.Limit)
+	}
+	rows, err = r.db.Query(ctx, query, fmt.Sprintf("%%%s%%", req.SearchText))
+
+	if err != nil {
+		zap.S().Error(err)
+		return nil, fmt.Errorf("error while executing query: %s", err.Error())
+	}
+	defer rows.Close()
+
+	var tagKey string
+	var dataType string
+	var tagType string
+	var isColumn bool
+	for rows.Next() {
+		if err := rows.Scan(&tagKey, &tagType, &dataType, &isColumn); err != nil {
+			return nil, fmt.Errorf("error while scanning rows: %s", err.Error())
+		}
+		key := v3.AttributeKey{
+			Key:      tagKey,
+			DataType: v3.AttributeKeyDataType(dataType),
+			Type:     v3.AttributeKeyType(tagType),
+			IsColumn: isColumn,
+		}
+		response.AttributeKeys = append(response.AttributeKeys, key)
+	}
+	return &response, nil
+}
+
+func (r *ClickHouseReader) GetTraceAttributeKeys(ctx context.Context, req *v3.FilterAttributeKeyRequest) (*v3.FilterAttributeKeyResponse, error) {
+
+	var query string
+	var err error
+	var rows driver.Rows
+	var response v3.FilterAttributeKeyResponse
+
+	query = fmt.Sprintf("SELECT DISTINCT(tagKey), tagType, dataType, isColumn FROM %s.%s WHERE tagKey ILIKE $1", r.TraceDB, r.spanAttributeTable)
+
+	if req.Limit != 0 {
+		query = query + fmt.Sprintf(" LIMIT %d;", req.Limit)
+	}
+	rows, err = r.db.Query(ctx, query, fmt.Sprintf("%%%s%%", req.SearchText))
+
+	if err != nil {
+		zap.S().Error(err)
+		return nil, fmt.Errorf("error while executing query: %s", err.Error())
+	}
+	defer rows.Close()
+
+	var tagKey string
+	var dataType string
+	var tagType string
+	var isColumn bool
+	for rows.Next() {
+		if err := rows.Scan(&tagKey, &tagType, &dataType, &isColumn); err != nil {
+			return nil, fmt.Errorf("error while scanning rows: %s", err.Error())
+		}
+		key := v3.AttributeKey{
+			Key:      tagKey,
+			DataType: v3.AttributeKeyDataType(dataType),
+			Type:     v3.AttributeKeyType(tagType),
+			IsColumn: isColumn,
+		}
+		response.AttributeKeys = append(response.AttributeKeys, key)
+	}
+	return &response, nil
+}
+
+func (r *ClickHouseReader) GetTraceAttributeValues(ctx context.Context, req *v3.FilterAttributeValueRequest) (*v3.FilterAttributeValueResponse, error) {
+
+	var query string
+	var err error
+	var rows driver.Rows
+	var attributeValues v3.FilterAttributeValueResponse
+	// if dataType or tagType is not present return empty response
+	if len(req.FilterAttributeKeyDataType) == 0 || len(req.TagType) == 0 || req.FilterAttributeKey == "body" {
+		return &v3.FilterAttributeValueResponse{}, nil
+	}
+	switch req.FilterAttributeKeyDataType {
+	case v3.AttributeKeyDataTypeString:
+		query = fmt.Sprintf("SELECT DISTINCT stringTagValue from %s.%s WHERE tagKey = $1 AND stringTagValue ILIKE $2 AND tagType=$3 limit $4", r.TraceDB, r.spanAttributeTable)
+		rows, err = r.db.Query(ctx, query, req.FilterAttributeKey, fmt.Sprintf("%%%s%%", req.SearchText), req.TagType, req.Limit)
+		if err != nil {
+			zap.S().Error(err)
+			return nil, fmt.Errorf("error while executing query: %s", err.Error())
+		}
+		defer rows.Close()
+
+		var strAttributeValue string
+		for rows.Next() {
+			if err := rows.Scan(&strAttributeValue); err != nil {
+				return nil, fmt.Errorf("error while scanning rows: %s", err.Error())
+			}
+			attributeValues.StringAttributeValues = append(attributeValues.StringAttributeValues, strAttributeValue)
+		}
+	case v3.AttributeKeyDataTypeFloat64, v3.AttributeKeyDataTypeInt64:
+		query = fmt.Sprintf("SELECT DISTINCT float64TagValue from %s.%s where tagKey = $1 AND toString(float64TagValue) ILIKE $2 AND tagType=$3 limit $4", r.TraceDB, r.spanAttributeTable)
+		rows, err = r.db.Query(ctx, query, req.FilterAttributeKey, fmt.Sprintf("%%%s%%", req.SearchText), req.TagType, req.Limit)
+		if err != nil {
+			zap.S().Error(err)
+			return nil, fmt.Errorf("error while executing query: %s", err.Error())
+		}
+		defer rows.Close()
+
+		var numberAttributeValue sql.NullFloat64
+		for rows.Next() {
+			if err := rows.Scan(&numberAttributeValue); err != nil {
+				return nil, fmt.Errorf("error while scanning rows: %s", err.Error())
+			}
+			if numberAttributeValue.Valid {
+				attributeValues.NumberAttributeValues = append(attributeValues.NumberAttributeValues, numberAttributeValue.Float64)
+			}
+		}
+	case v3.AttributeKeyDataTypeBool:
+		attributeValues.BoolAttributeValues = []bool{true, false}
+	default:
+		return nil, fmt.Errorf("invalid data type")
+	}
+
+	return &attributeValues, nil
+}
+
+func (r *ClickHouseReader) GetSpanAttributeKeys(ctx context.Context) (map[string]v3.AttributeKey, error) {
+	var query string
+	var err error
+	var rows driver.Rows
+	response := map[string]v3.AttributeKey{}
+
+	query = fmt.Sprintf("SELECT DISTINCT(tagKey), tagType, dataType, isColumn FROM %s.%s", r.TraceDB, r.spanAttributesKeysTable)
+
+	rows, err = r.db.Query(ctx, query)
+
+	if err != nil {
+		zap.S().Error(err)
+		return nil, fmt.Errorf("error while executing query: %s", err.Error())
+	}
+	defer rows.Close()
+
+	var tagKey string
+	var dataType string
+	var tagType string
+	var isColumn bool
+	for rows.Next() {
+		if err := rows.Scan(&tagKey, &tagType, &dataType, &isColumn); err != nil {
+			return nil, fmt.Errorf("error while scanning rows: %s", err.Error())
+		}
+		key := v3.AttributeKey{
+			Key:      tagKey,
+			DataType: v3.AttributeKeyDataType(dataType),
+			Type:     v3.AttributeKeyType(tagType),
+			IsColumn: isColumn,
+		}
+		response[tagKey] = key
+	}
+	return response, nil
 }

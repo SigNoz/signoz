@@ -1,5 +1,4 @@
 import { Tabs } from 'antd';
-import React from 'react';
 
 import GeneralDashboardSettings from './General';
 import VariablesSetting from './Variables';
