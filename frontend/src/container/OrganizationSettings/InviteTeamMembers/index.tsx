@@ -11,7 +11,7 @@ import {
 import { useTranslation } from 'react-i18next';
 
 import { InviteMemberFormValues } from '../PendingInvitesContainer/index';
-import { SelectDrawer, TitleWrapper } from './styles';
+import { SelectDrawer, SpaceContainer, TitleWrapper } from './styles';
 
 const { Option } = Select;
 
@@ -30,46 +30,44 @@ function InviteTeamMembers({ form, onFinish }: Props): JSX.Element {
 				onFinish={onFinish}
 				initialValues={{ members: [{ email: '', name: '', role: 'VIEWER' }] }}
 			>
-				<Space direction="vertical" align="center" size="middle">
-					<Form.List name="members">
-						{(fields, { add }): JSX.Element => (
-							<>
-								{fields.map(({ key, name }) => (
-									<Space key={key} direction="horizontal">
-										<Form.Item
-											name={[name, 'email']}
-											rules={[{ required: true, message: 'Missing email' }]}
-										>
-											<Input placeholder={t('email_placeholder')} />
-										</Form.Item>
-										<Form.Item
-											name={[name, 'name']}
-											rules={[{ required: true, message: 'Missing name' }]}
-										>
-											<Input placeholder={t('name_placeholder')} />
-										</Form.Item>
-										<Form.Item name={[name, 'role']} initialValue="VIEWER">
-											<SelectDrawer>
-												<Option value="ADMIN">ADMIN</Option>
-												<Option value="VIEWER">VIEWER</Option>
-												<Option value="EDITOR">EDITOR</Option>
-											</SelectDrawer>
-										</Form.Item>
-									</Space>
-								))}
-								<Form.Item>
-									<Button
-										onClick={(): void => add()}
-										icon={<PlusOutlined />}
-										type="default"
+				<Form.List name="members">
+					{(fields, { add }): JSX.Element => (
+						<SpaceContainer direction="vertical" align="center" size="middle">
+							{fields.map(({ key, name }) => (
+								<Space key={key} direction="horizontal">
+									<Form.Item
+										name={[name, 'email']}
+										rules={[{ required: true, message: 'Missing email' }]}
 									>
-										{t('add_another_team_member')}
-									</Button>
-								</Form.Item>
-							</>
-						)}
-					</Form.List>
-				</Space>
+										<Input placeholder={t('email_placeholder')} />
+									</Form.Item>
+									<Form.Item
+										name={[name, 'name']}
+										rules={[{ required: true, message: 'Missing name' }]}
+									>
+										<Input placeholder={t('name_placeholder')} />
+									</Form.Item>
+									<Form.Item name={[name, 'role']} initialValue="VIEWER">
+										<SelectDrawer>
+											<Option value="ADMIN">ADMIN</Option>
+											<Option value="VIEWER">VIEWER</Option>
+											<Option value="EDITOR">EDITOR</Option>
+										</SelectDrawer>
+									</Form.Item>
+								</Space>
+							))}
+							<Form.Item>
+								<Button
+									onClick={(): void => add()}
+									icon={<PlusOutlined />}
+									type="default"
+								>
+									{t('add_another_team_member')}
+								</Button>
+							</Form.Item>
+						</SpaceContainer>
+					)}
+				</Form.List>
 			</Form>
 		</>
 	);
