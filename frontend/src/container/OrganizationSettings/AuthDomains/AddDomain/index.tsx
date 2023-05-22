@@ -3,10 +3,10 @@ import { PlusOutlined } from '@ant-design/icons';
 import { Button, Form, Input, Modal, Typography } from 'antd';
 import { useForm } from 'antd/es/form/Form';
 import createDomainApi from 'api/SAML/postDomain';
-import { FeatureKeys } from 'constants/featureKeys';
-import useFeatureFlag from 'hooks/useFeatureFlag';
+import { FeatureKeys } from 'constants/features';
+import useFeatureFlag from 'hooks/useFeatureFlag/useFeatureFlag';
 import { useNotifications } from 'hooks/useNotifications';
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
@@ -18,7 +18,7 @@ function AddDomain({ refetch }: Props): JSX.Element {
 	const { t } = useTranslation(['common', 'organizationsettings']);
 	const [isAddDomains, setIsDomain] = useState(false);
 	const [form] = useForm<FormProps>();
-	const SSOFlag = useFeatureFlag(FeatureKeys.SSO);
+	const isSsoFlagEnabled = useFeatureFlag(FeatureKeys.SSO);
 
 	const { org } = useSelector<AppState, AppReducer>((state) => state.app);
 
@@ -58,7 +58,7 @@ function AddDomain({ refetch }: Props): JSX.Element {
 						ns: 'organizationsettings',
 					})}
 				</Typography.Title>
-				{SSOFlag && (
+				{isSsoFlagEnabled && (
 					<Button
 						onClick={(): void => setIsDomain(true)}
 						type="primary"

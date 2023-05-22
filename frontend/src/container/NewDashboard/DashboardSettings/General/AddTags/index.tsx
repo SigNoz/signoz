@@ -1,7 +1,7 @@
 import { PlusOutlined } from '@ant-design/icons';
 import { Col, Tooltip, Typography } from 'antd';
 import Input from 'components/Input';
-import React, { useState } from 'react';
+import { Dispatch, SetStateAction, useState } from 'react';
 
 import { InputContainer, NewTagContainer, TagsContainer } from './styles';
 
@@ -38,7 +38,7 @@ function AddTags({ tags, setTags }: AddTagsProps): JSX.Element {
 
 	const onChangeHandler = (
 		value: string,
-		func: React.Dispatch<React.SetStateAction<string>>,
+		func: Dispatch<SetStateAction<string>>,
 	): void => {
 		func(value);
 	};
@@ -113,7 +113,7 @@ function AddTags({ tags, setTags }: AddTagsProps): JSX.Element {
 
 interface AddTagsProps {
 	tags: string[];
-	setTags: React.Dispatch<React.SetStateAction<string[]>>;
+	setTags: Dispatch<SetStateAction<string[]>>;
 }
 
 export default AddTags;

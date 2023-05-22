@@ -8,7 +8,7 @@ import ResourceAttributesFilter from 'container/ResourceAttributesFilter';
 import useResourceAttribute from 'hooks/useResourceAttribute';
 import { whilelistedKeys } from 'hooks/useResourceAttribute/config';
 import { IResourceAttribute } from 'hooks/useResourceAttribute/types';
-import React, { useEffect, useRef } from 'react';
+import { useEffect, useRef } from 'react';
 import { connect } from 'react-redux';
 import { RouteComponentProps, withRouter } from 'react-router-dom';
 import { getDetailedServiceMapItems, ServiceMapStore } from 'store/actions';

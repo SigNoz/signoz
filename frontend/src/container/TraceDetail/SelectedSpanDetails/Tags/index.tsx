@@ -1,7 +1,15 @@
 import { Input, List, Typography } from 'antd';
 import ROUTES from 'constants/routes';
 import { formUrlParams } from 'container/TraceDetail/utils';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import {
+	ChangeEvent,
+	Dispatch,
+	SetStateAction,
+	useCallback,
+	useEffect,
+	useMemo,
+	useState,
+} from 'react';
 import { useTranslation } from 'react-i18next';
 import { ITraceTag } from 'types/api/trace/getTraceItem';
 
@@ -34,7 +42,7 @@ function Tags({
 	);
 
 	const onChangeHandler = useCallback(
-		(e: React.ChangeEvent<HTMLInputElement>): void => {
+		(e: ChangeEvent<HTMLInputElement>): void => {
 			const { value } = e.target;
 			const filteredTags = tags.filter((tag) => tag.key.includes(value));
 			setAllRenderedTags(filteredTags);
@@ -87,7 +95,7 @@ interface TagsProps extends CommonTagsProps {
 
 export interface CommonTagsProps {
 	onToggleHandler: (state: boolean) => void;
-	setText: React.Dispatch<React.SetStateAction<ModalText>>;
+	setText: Dispatch<SetStateAction<ModalText>>;
 }
 
 Tags.defaultProps = {

@@ -1,15 +1,17 @@
 import { Select, Spin } from 'antd';
 import { getAggregateKeys } from 'api/queryBuilder/getAttributeKeys';
 // ** Constants
-import { QueryBuilderKeys } from 'constants/queryBuilder';
+import { QueryBuilderKeys, selectValueDivider } from 'constants/queryBuilder';
+import useDebounce from 'hooks/useDebounce';
 import { getFilterObjectValue } from 'lib/newQueryBuilder/getFilterObjectValue';
 // ** Components
 // ** Helpers
 import { transformStringWithPrefix } from 'lib/query/transformStringWithPrefix';
-import React, { memo, useMemo, useState } from 'react';
+import { memo, useEffect, useState } from 'react';
 import { useQuery } from 'react-query';
 import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
-import { ExtendedSelectOption } from 'types/common/select';
+import { SelectOption } from 'types/common/select';
+import { v4 as uuid } from 'uuid';
 
 import { selectStyle } from '../QueryBuilderSearch/config';
 import { GroupByFilterProps } from './GroupByFilter.interfaces';
@@ -20,105 +22,119 @@ export const GroupByFilter = memo(function GroupByFilter({
 	disabled,
 }: GroupByFilterProps): JSX.Element {
 	const [searchText, setSearchText] = useState<string>('');
+	const [optionsData, setOptionsData] = useState<SelectOption<string, string>[]>(
+		[],
+	);
+	const [localValues, setLocalValues] = useState<SelectOption<string, string>[]>(
+		[],
+	);
 	const [isFocused, setIsFocused] = useState<boolean>(false);
 
+	const debouncedValue = useDebounce(searchText, 300);
+
 	const { data, isFetching } = useQuery(
-		[QueryBuilderKeys.GET_AGGREGATE_KEYS, searchText, isFocused],
+		[QueryBuilderKeys.GET_AGGREGATE_KEYS, debouncedValue, isFocused],
 		async () =>
 			getAggregateKeys({
 				aggregateAttribute: query.aggregateAttribute.key,
 				dataSource: query.dataSource,
 				aggregateOperator: query.aggregateOperator,
-				searchText,
+				searchText: debouncedValue,
 			}),
-		{ enabled: !disabled && isFocused, keepPreviousData: true },
+		{
+			enabled: !disabled && isFocused,
+			onSuccess: (data) => {
+				const keys = query.groupBy.reduce<string[]>((acc, item) => {
+					acc.push(item.key);
+					return acc;
+				}, []);
+
+				const filteredOptions: BaseAutocompleteData[] =
+					data?.payload?.attributeKeys?.filter(
+						(attrKey) => !keys.includes(attrKey.key),
+					) || [];
+
+				const options: SelectOption<string, string>[] =
+					filteredOptions.map((item) => ({
+						label: transformStringWithPrefix({
+							str: item.key,
+							prefix: item.type || '',
+							condition: !item.isColumn,
+						}),
+						value: `${transformStringWithPrefix({
+							str: item.key,
+							prefix: item.type || '',
+							condition: !item.isColumn,
+						})}${selectValueDivider}${item.id || uuid()}`,
+					})) || [];
+
+				setOptionsData(options);
+			},
+		},
 	);
 
 	const handleSearchKeys = (searchText: string): void => {
 		setSearchText(searchText);
 	};
 
-	const onBlur = (): void => {
+	const handleBlur = (): void => {
 		setIsFocused(false);
+		setSearchText('');
 	};
 
-	const onFocus = (): void => {
+	const handleFocus = (): void => {
 		setIsFocused(true);
 	};
 
-	const optionsData: ExtendedSelectOption[] = useMemo(() => {
-		if (data && data.payload && data.payload.attributeKeys) {
-			return data.payload.attributeKeys.map((item) => ({
-				label: transformStringWithPrefix({
-					str: item.key,
-					prefix: item.type || '',
-					condition: !item.isColumn,
-				}),
-				value: transformStringWithPrefix({
-					str: item.key,
-					prefix: item.type || '',
-					condition: !item.isColumn,
-				}),
-				key: transformStringWithPrefix({
-					str: item.key,
-					prefix: item.type || '',
-					condition: !item.isColumn,
-				}),
-			}));
-		}
+	const handleChange = (values: SelectOption<string, string>[]): void => {
+		const responseKeys = data?.payload?.attributeKeys || [];
 
-		return [];
-	}, [data]);
-
-	const handleChange = (values: ExtendedSelectOption[]): void => {
 		const groupByValues: BaseAutocompleteData[] = values.map((item) => {
-			const responseKeys = data?.payload?.attributeKeys || [];
-			const { key, isColumn } = getFilterObjectValue(item.value);
+			const [currentValue, id] = item.value.split(selectValueDivider);
+			const { key, type, isColumn } = getFilterObjectValue(currentValue);
 
-			const existGroupResponse = responseKeys.find(
-				(group) => group.key === key && group.isColumn === isColumn,
-			);
-			if (existGroupResponse) {
-				return existGroupResponse;
-			}
-
-			const existGroupQuery = query.groupBy.find(
-				(group) => group.key === key && group.isColumn === isColumn,
-			);
+			const existGroupQuery = query.groupBy.find((group) => group.id === id);
 
 			if (existGroupQuery) {
 				return existGroupQuery;
 			}
 
+			const existGroupResponse = responseKeys.find((group) => group.id === id);
+
+			if (existGroupResponse) {
+				return existGroupResponse;
+			}
+
 			return {
-				isColumn: null,
+				id: uuid(),
+				isColumn,
 				key,
 				dataType: null,
-				type: null,
+				type,
 			};
 		});
 
-		setSearchText('');
 		onChange(groupByValues);
 	};
 
-	const values: ExtendedSelectOption[] = query.groupBy.map((item) => ({
-		label: transformStringWithPrefix({
-			str: item.key,
-			prefix: item.type || '',
-			condition: !item.isColumn,
-		}),
-		key: transformStringWithPrefix({
-			str: item.key,
-			prefix: item.type || '',
-			condition: !item.isColumn,
-		}),
-		value: transformStringWithPrefix({
-			str: item.key,
-			prefix: item.type || '',
-			condition: !item.isColumn,
-		}),
-	}));
+	useEffect(() => {
+		const currentValues: SelectOption<string, string>[] = query.groupBy.map(
+			(item) => ({
+				label: `${transformStringWithPrefix({
+					str: item.key,
+					prefix: item.type || '',
+					condition: !item.isColumn,
+				})}`,
+				value: `${transformStringWithPrefix({
+					str: item.key,
+					prefix: item.type || '',
+					condition: !item.isColumn,
+				})}${selectValueDivider}${item.id || uuid()}`,
+			}),
+		);
+
+		setLocalValues(currentValues);
+	}, [query]);
 
 	return (
 		<Select
@@ -128,12 +144,12 @@ export const GroupByFilter = memo(function GroupByFilter({
 			showSearch
 			disabled={disabled}
 			showArrow={false}
-			onBlur={onBlur}
-			onFocus={onFocus}
-			options={optionsData}
 			filterOption={false}
+			onBlur={handleBlur}
+			onFocus={handleFocus}
+			options={optionsData}
+			value={localValues}
 			labelInValue
-			value={values}
 			notFoundContent={isFetching ? <Spin size="small" /> : null}
 			onChange={handleChange}
 		/>

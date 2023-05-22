@@ -1,5 +1,5 @@
 import { useIsDarkMode } from 'hooks/useDarkMode';
-import React, { memo } from 'react';
+import { memo } from 'react';
 
 // ** Types
 import { FilterLabelProps } from './FilterLabel.interfaces';

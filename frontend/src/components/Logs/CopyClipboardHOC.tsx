@@ -1,6 +1,6 @@
 import { Popover } from 'antd';
 import { useNotifications } from 'hooks/useNotifications';
-import React, { useCallback, useEffect } from 'react';
+import { ReactNode, useCallback, useEffect } from 'react';
 import { useCopyToClipboard } from 'react-use';
 
 function CopyClipboardHOC({
@@ -22,7 +22,7 @@ function CopyClipboardHOC({
 	}, [setCopy, textToCopy]);
 
 	return (
-		<span onClick={onClick} onKeyDown={onClick} role="button" tabIndex={0}>
+		<span onClick={onClick} role="presentation" tabIndex={-1}>
 			<Popover
 				placement="top"
 				content={<span style={{ fontSize: '0.9rem' }}>Copy to clipboard</span>}
@@ -35,7 +35,7 @@ function CopyClipboardHOC({
 
 interface CopyClipboardHOCProps {
 	textToCopy: string;
-	children: React.ReactNode;
+	children: ReactNode;
 }
 
 export default CopyClipboardHOC;

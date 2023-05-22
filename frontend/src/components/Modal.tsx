@@ -1,5 +1,5 @@
 import { Modal, ModalProps as Props } from 'antd';
-import React, { ReactElement } from 'react';
+import { ReactElement } from 'react';
 
 function CustomModal({
 	title,

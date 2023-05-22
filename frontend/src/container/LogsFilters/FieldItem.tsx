@@ -1,7 +1,7 @@
 import { LoadingOutlined } from '@ant-design/icons';
 import { Button, Popover, Spin, Typography } from 'antd';
 import { useIsDarkMode } from 'hooks/useDarkMode';
-import React, { useCallback, useMemo, useState } from 'react';
+import { ReactNode, useCallback, useMemo, useState } from 'react';
 import {
 	IField,
 	IInterestingFields,
@@ -70,7 +70,7 @@ function FieldItem({
 
 interface FieldItemProps {
 	name: string;
-	buttonIcon: React.ReactNode;
+	buttonIcon: ReactNode;
 	buttonOnClick: (props: {
 		fieldData: IInterestingFields | ISelectedFields;
 		fieldIndex: number;
