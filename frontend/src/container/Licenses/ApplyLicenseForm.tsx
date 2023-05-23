@@ -9,6 +9,7 @@ import { AppState } from 'store/reducers';
 import { ErrorResponse, SuccessResponse } from 'types/api';
 import { PayloadProps } from 'types/api/licenses/getAll';
 import AppReducer from 'types/reducer/app';
+import { requireErrorMessage } from 'utils/form/requireErrorMessage';
 
 import {
 	ApplyForm,
@@ -78,7 +79,7 @@ function ApplyLicenseForm({
 			>
 				<LicenseInput
 					name="key"
-					rules={[{ required: true, message: 'Missing License Key' }]}
+					rules={[{ required: true, message: requireErrorMessage('License Key') }]}
 				>
 					<Input placeholder={t('placeholder_license_key')} />
 				</LicenseInput>
