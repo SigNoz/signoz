@@ -1,8 +1,7 @@
 import { GRAPH_TYPES } from 'container/NewDashboard/ComponentsSlider';
 import { timePreferenceType } from 'container/NewWidget/RightContainer/timeItems';
 import { Layout } from 'react-grid-layout';
-import { EQueryType } from 'types/common/dashboard';
-import { QueryBuilderData } from 'types/common/queryBuilder';
+import { Query } from 'types/api/queryBuilder/queryBuilderData';
 
 import { QueryData } from '../widgets/getQuery';
 
@@ -85,25 +84,6 @@ export interface Widgets extends IBaseWidget {
 
 export interface PromQLWidgets extends IBaseWidget {
 	query: { query: string; legend: string }[];
-}
-export interface Query {
-	queryType: EQueryType;
-	promql: IPromQLQuery[];
-	builder: QueryBuilderData;
-	clickhouse_sql: IClickHouseQuery[];
-}
-
-export interface IClickHouseQuery {
-	name: string;
-	rawQuery: string;
-	legend: string;
-	disabled: boolean;
-}
-export interface IPromQLQuery {
-	query: string;
-	legend: string;
-	disabled: boolean;
-	name: string;
 }
 
 export interface IQueryBuilderTagFilterItems {
