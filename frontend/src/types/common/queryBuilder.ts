@@ -152,11 +152,6 @@ export type QueryBuilderData = {
 	queryFormulas: IBuilderFormula[];
 };
 
-export const isQuery = (
-	query: IBuilderFormula | IBuilderQuery,
-): query is IBuilderQuery =>
-	'dataSource' in query && 'aggregateOperator' in query;
-
 export type QueryBuilderContextType = {
 	currentQuery: QueryState;
 	queryType: EQueryType;
