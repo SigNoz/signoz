@@ -82,7 +82,12 @@ function DisplayName({
 				<Input size="large" placeholder={t('signoz')} />
 			</Form.Item>
 			<Form.Item>
-				<Button loading={isLoading} type="primary" htmlType="submit">
+				<Button
+					loading={isLoading}
+					disabled={isLoading}
+					type="primary"
+					htmlType="submit"
+				>
 					Submit
 				</Button>
 			</Form.Item>
