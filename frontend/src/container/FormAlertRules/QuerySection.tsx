@@ -5,7 +5,6 @@ import { QueryBuilder } from 'container/QueryBuilder';
 import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { AlertTypes } from 'types/api/alerts/alertTypes';
-import { IChQueries, IPromQueries } from 'types/api/alerts/compositeQuery';
 import { EQueryType } from 'types/common/dashboard';
 
 import ChQuerySection from './ChQuerySection';
@@ -15,10 +14,6 @@ import { FormContainer, StepHeading } from './styles';
 function QuerySection({
 	queryCategory,
 	setQueryCategory,
-	promQueries,
-	setPromQueries,
-	chQueries,
-	setChQueries,
 	alertType,
 	runQuery,
 }: QuerySectionProps): JSX.Element {
@@ -26,45 +21,12 @@ function QuerySection({
 	const { t } = useTranslation('alerts');
 
 	const handleQueryCategoryChange = (queryType: string): void => {
-		if (
-			queryType === EQueryType.PROM &&
-			(!promQueries || Object.keys(promQueries).length === 0)
-		) {
-			setPromQueries({
-				A: {
-					query: '',
-					stats: '',
-					name: 'A',
-					legend: '',
-					disabled: false,
-				},
-			});
-		}
-
-		if (
-			queryType === EQueryType.CLICKHOUSE &&
-			(!chQueries || Object.keys(chQueries).length === 0)
-		) {
-			setChQueries({
-				A: {
-					rawQuery: '',
-					name: 'A',
-					query: '',
-					legend: '',
-					disabled: false,
-				},
-			});
-		}
 		setQueryCategory(queryType as EQueryType);
 	};
 
-	const renderPromqlUI = (): JSX.Element => (
-		<PromqlSection promQueries={promQueries} setPromQueries={setPromQueries} />
-	);
+	const renderPromqlUI = (): JSX.Element => <PromqlSection />;
 
-	const renderChQueryUI = (): JSX.Element => (
-		<ChQuerySection chQueries={chQueries} setChQueries={setChQueries} />
-	);
+	const renderChQueryUI = (): JSX.Element => <ChQuerySection />;
 
 	const renderMetricUI = (): JSX.Element => (
 		<QueryBuilder
@@ -169,10 +131,6 @@ function QuerySection({
 interface QuerySectionProps {
 	queryCategory: EQueryType;
 	setQueryCategory: (n: EQueryType) => void;
-	promQueries: IPromQueries;
-	setPromQueries: (p: IPromQueries) => void;
-	chQueries: IChQueries;
-	setChQueries: (q: IChQueries) => void;
 	alertType: AlertTypes;
 	runQuery: () => void;
 }

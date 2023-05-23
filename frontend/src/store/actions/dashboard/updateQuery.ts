@@ -1,6 +1,6 @@
 import { Dispatch } from 'redux';
 import AppActions from 'types/actions';
-import { Query } from 'types/api/dashboard/getAll';
+import { Query } from 'types/api/queryBuilder/queryBuilderData';
 
 export const UpdateQuery = (
 	props: UpdateQueryProps,
@@ -18,9 +18,6 @@ export const UpdateQuery = (
 };
 
 export interface UpdateQueryProps {
-	// query: string;
-	// legend: string;
-	// currentIndex: number;
 	updatedQuery: Query;
 	widgetId: string;
 	yAxisUnit: string | undefined;

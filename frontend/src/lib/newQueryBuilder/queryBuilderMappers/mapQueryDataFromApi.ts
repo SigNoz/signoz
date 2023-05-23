@@ -1,14 +1,14 @@
 import { initialQueryBuilderFormValues } from 'constants/queryBuilder';
 import { FORMULA_REGEXP } from 'constants/regExp';
 import {
+	BuilderQueryDataResourse,
 	IBuilderFormula,
 	IBuilderQuery,
 } from 'types/api/queryBuilder/queryBuilderData';
 import { QueryBuilderData } from 'types/common/queryBuilder';
-import { QueryDataResourse } from 'types/common/queryBuilderMappers.types';
 
 export const mapQueryDataFromApi = (
-	data: QueryDataResourse,
+	data: BuilderQueryDataResourse,
 ): QueryBuilderData => {
 	const queryData: QueryBuilderData['queryData'] = [];
 	const queryFormulas: QueryBuilderData['queryFormulas'] = [];

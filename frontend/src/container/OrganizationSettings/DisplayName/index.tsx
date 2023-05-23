@@ -9,13 +9,15 @@ import { AppState } from 'store/reducers';
 import AppActions from 'types/actions';
 import { UPDATE_ORG_NAME } from 'types/actions/app';
 import AppReducer, { User } from 'types/reducer/app';
+import { requireErrorMessage } from 'utils/form/requireErrorMessage';
 
 function DisplayName({
 	index,
 	id: orgId,
 	isAnonymous,
 }: DisplayNameProps): JSX.Element {
-	const [form] = Form.useForm();
+	const [form] = Form.useForm<FormValues>();
+	const orgName = Form.useWatch('name', form);
 
 	const { t } = useTranslation(['organizationsettings', 'common']);
 	const { org } = useSelector<AppState, AppReducer>((state) => state.app);
@@ -24,12 +26,13 @@ function DisplayName({
 	const dispatch = useDispatch<Dispatch<AppActions>>();
 	const { notifications } = useNotifications();
 
-	const onSubmit = async ({ name: orgName }: OnSubmitProps): Promise<void> => {
+	const onSubmit = async (values: FormValues): Promise<void> => {
 		try {
 			setIsLoading(true);
+			const { name } = values;
 			const { statusCode, error } = await editOrg({
 				isAnonymous,
-				name: orgName,
+				name,
 				orgId,
 			});
 			if (statusCode === 200) {
@@ -42,7 +45,7 @@ function DisplayName({
 					type: UPDATE_ORG_NAME,
 					payload: {
 						orgId,
-						name: orgName,
+						name,
 					},
 				});
 			} else {
@@ -69,6 +72,8 @@ function DisplayName({
 		return <div />;
 	}
 
+	const isDisabled = isLoading || orgName === name || !orgName;
+
 	return (
 		<Form
 			initialValues={{ name }}
@@ -77,11 +82,20 @@ function DisplayName({
 			onFinish={onSubmit}
 			autoComplete="off"
 		>
-			<Form.Item name="name" label="Display name" rules={[{ required: true }]}>
-				<Input size="large" placeholder={t('signoz')} disabled={isLoading} />
+			<Form.Item
+				name="name"
+				label="Display name"
+				rules={[{ required: true, message: requireErrorMessage('Display name') }]}
+			>
+				<Input size="large" placeholder={t('signoz')} />
 			</Form.Item>
 			<Form.Item>
-				<Button loading={isLoading} type="primary" htmlType="submit">
+				<Button
+					loading={isLoading}
+					disabled={isDisabled}
+					type="primary"
+					htmlType="submit"
+				>
 					Submit
 				</Button>
 			</Form.Item>
@@ -95,7 +109,7 @@ interface DisplayNameProps {
 	isAnonymous: boolean;
 }
 
-interface OnSubmitProps {
+interface FormValues {
 	name: string;
 }
 
