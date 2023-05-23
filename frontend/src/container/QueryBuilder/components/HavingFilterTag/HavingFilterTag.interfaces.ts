@@ -1,8 +1,10 @@
+import { ReactNode } from 'react';
+
 export type HavingFilterTagProps = {
-	label: React.ReactNode;
+	label: ReactNode;
 	value: string;
 	disabled: boolean;
-	onClose: (event?: React.MouseEvent<HTMLElement, MouseEvent>) => void;
+	onClose: VoidFunction;
 	closable: boolean;
 	onUpdate: (value: string) => void;
 };

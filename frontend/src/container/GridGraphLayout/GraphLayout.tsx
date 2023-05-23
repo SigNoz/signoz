@@ -1,7 +1,7 @@
 import { PlusOutlined, SaveFilled } from '@ant-design/icons';
 import useComponentPermission from 'hooks/useComponentPermission';
 import { useIsDarkMode } from 'hooks/useDarkMode';
-import React from 'react';
+import { Dispatch, SetStateAction } from 'react';
 import { Layout } from 'react-grid-layout';
 import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
@@ -102,7 +102,7 @@ interface GraphLayoutProps {
 	onAddPanelHandler: VoidFunction;
 	onLayoutChangeHandler: (layout: Layout[]) => Promise<void>;
 	widgets: Widgets[] | undefined;
-	setLayout: React.Dispatch<React.SetStateAction<LayoutProps[]>>;
+	setLayout: Dispatch<SetStateAction<LayoutProps[]>>;
 }
 
 export default GraphLayout;

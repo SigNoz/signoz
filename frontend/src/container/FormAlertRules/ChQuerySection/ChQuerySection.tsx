@@ -1,6 +1,5 @@
 import ClickHouseQueryBuilder from 'container/NewWidget/LeftContainer/QuerySection/QueryBuilder/clickHouse/query';
 import { IClickHouseQueryHandleChange } from 'container/NewWidget/LeftContainer/QuerySection/QueryBuilder/clickHouse/types';
-import React from 'react';
 import { IChQueries } from 'types/api/alerts/compositeQuery';
 
 import { rawQueryToIChQuery, toIClickHouseQuery } from './transform';

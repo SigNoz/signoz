@@ -3,7 +3,7 @@
 
 import { Select, Space, Typography } from 'antd';
 import Graph from 'components/Graph';
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { connect, useSelector } from 'react-redux';
 import { withRouter } from 'react-router-dom';
 import { GetService, getUsageData, UsageDataItem } from 'store/actions';

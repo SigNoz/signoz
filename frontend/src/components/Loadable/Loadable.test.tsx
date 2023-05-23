@@ -3,7 +3,7 @@ import {
 	screen,
 	waitForElementToBeRemoved,
 } from '@testing-library/react';
-import React from 'react';
+import React, { ComponentType, Suspense } from 'react';
 
 import Loadable from './index';
 
@@ -13,9 +13,9 @@ function SampleComponent(): JSX.Element {
 }
 
 const loadSampleComponent = (): Promise<{
-	default: React.ComponentType;
+	default: ComponentType;
 }> =>
-	new Promise<{ default: React.ComponentType }>((resolve) => {
+	new Promise<{ default: ComponentType }>((resolve) => {
 		setTimeout(() => {
 			resolve({ default: SampleComponent });
 		}, 500);
@@ -26,9 +26,9 @@ describe('Loadable', () => {
 		const LoadableSampleComponent = Loadable(loadSampleComponent);
 
 		const { container } = render(
-			<React.Suspense fallback={<div>Loading...</div>}>
+			<Suspense fallback={<div>Loading...</div>}>
 				<LoadableSampleComponent />
-			</React.Suspense>,
+			</Suspense>,
 		);
 
 		expect(screen.getByText('Loading...')).toBeInTheDocument();
@@ -37,7 +37,7 @@ describe('Loadable', () => {
 		expect(container.querySelector('div')).toHaveTextContent('Sample Component');
 	});
 
-	it('should call React.lazy with the provided import path', () => {
+	it('should call lazy with the provided import path', () => {
 		const reactLazySpy = jest.spyOn(React, 'lazy');
 		Loadable(loadSampleComponent);
 

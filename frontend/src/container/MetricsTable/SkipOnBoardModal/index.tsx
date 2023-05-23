@@ -1,6 +1,5 @@
 import { Button, Typography } from 'antd';
 import Modal from 'components/Modal';
-import React from 'react';
 
 function SkipOnBoardingModal({ onContinueClick }: Props): JSX.Element {
 	return (

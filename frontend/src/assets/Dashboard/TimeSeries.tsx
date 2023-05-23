@@ -1,5 +1,3 @@
-import React from 'react';
-
 function TimeSeries(): JSX.Element {
 	return (
 		<svg

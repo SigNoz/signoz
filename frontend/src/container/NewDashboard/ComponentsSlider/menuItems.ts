@@ -1,6 +1,7 @@
 import TimeSeries from 'assets/Dashboard/TimeSeries';
 import ValueIcon from 'assets/Dashboard/Value';
 import { PANEL_TYPES } from 'constants/queryBuilder';
+import { CSSProperties } from 'react';
 
 const Items: ItemsProps[] = [
 	{
@@ -24,7 +25,7 @@ interface ItemsProps {
 }
 
 interface IconProps {
-	fillColor: React.CSSProperties['color'];
+	fillColor: CSSProperties['color'];
 }
 
 export default Items;

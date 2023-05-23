@@ -1,7 +1,7 @@
 import RouteTab from 'components/RouteTab';
 import ROUTES from 'constants/routes';
 import ResourceAttributesFilter from 'container/ResourceAttributesFilter';
-import React, { memo } from 'react';
+import { memo } from 'react';
 import { generatePath, useParams } from 'react-router-dom';
 import { useLocation } from 'react-use';
 
