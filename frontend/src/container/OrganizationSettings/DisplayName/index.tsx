@@ -72,7 +72,7 @@ function DisplayName({
 		return <div />;
 	}
 
-	const isDisabled = orgName === name || !orgName;
+	const isDisabled = isLoading || orgName === name || !orgName;
 
 	return (
 		<Form
