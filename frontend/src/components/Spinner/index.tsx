@@ -13,9 +13,24 @@ function Spinner({ size, tip, height, style }: SpinnerProps): JSX.Element {
 }
 
 interface SpinnerProps {
+	/**
+	 * Size of the spinner
+	 */
 	size?: SpinProps['size'];
+
+	/**
+	 * Text to show when the spinner is spinning
+	 */
 	tip?: SpinProps['tip'];
+
+	/**
+	 * Height of the spinner
+	 */
 	height?: CSSProperties['height'];
+
+	/**
+	 * Style of the spinner
+	 */
 	style?: CSSProperties;
 }
 Spinner.defaultProps = {

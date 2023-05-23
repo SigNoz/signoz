@@ -12,7 +12,7 @@ interface ButtonProps {
 	/**
 	 * How large should the button be?
 	 */
-	size?: 'small' | 'medium' | 'large';
+	size: 'small' | 'medium' | 'large';
 	/**
 	 * Button contents
 	 */
@@ -28,7 +28,7 @@ interface ButtonProps {
  */
 export function Button({
 	primary,
-	size,
+	size = 'medium',
 	backgroundColor,
 	label,
 	...props
@@ -51,7 +51,6 @@ export function Button({
 
 Button.defaultProps = {
 	primary: false,
-	size: undefined,
 	backgroundColor: 'white',
 	onClick: undefined,
 };
