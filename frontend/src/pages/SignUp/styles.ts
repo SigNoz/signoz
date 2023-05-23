@@ -1,5 +1,5 @@
-import { Card } from 'antd';
-import React from 'react';
+import { Card, Form } from 'antd';
+import { CSSProperties } from 'react';
 import styled from 'styled-components';
 
 export const FormWrapper = styled(Card)`
@@ -25,9 +25,15 @@ export const ButtonContainer = styled.div`
 `;
 
 interface Props {
-	marginTop: React.CSSProperties['marginTop'];
+	marginTop: CSSProperties['marginTop'];
 }
 
 export const MarginTop = styled.div<Props>`
 	margin-top: ${({ marginTop = 0 }): number | string => marginTop};
+`;
+
+export const FormContainer = styled(Form)`
+	& .ant-form-item {
+		margin-bottom: 0px;
+	}
 `;

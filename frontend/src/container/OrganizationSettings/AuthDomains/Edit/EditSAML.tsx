@@ -1,6 +1,5 @@
 import { InfoCircleFilled } from '@ant-design/icons';
 import { Card, Form, Input, Space, Typography } from 'antd';
-import React from 'react';
 
 function EditSAML(): JSX.Element {
 	return (

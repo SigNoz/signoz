@@ -1,5 +1,12 @@
 import { PlusOutlined } from '@ant-design/icons';
-import { Card, Dropdown, Menu, Row, TableColumnProps, Typography } from 'antd';
+import {
+	Card,
+	Dropdown,
+	MenuProps,
+	Row,
+	TableColumnProps,
+	Typography,
+} from 'antd';
 import { ItemType } from 'antd/es/menu/hooks/useItems';
 import createDashboard from 'api/dashboard/create';
 import { AxiosError } from 'axios';
@@ -9,8 +16,9 @@ import ROUTES from 'constants/routes';
 import SearchFilter from 'container/ListOfDashboard/SearchFilter';
 import useComponentPermission from 'hooks/useComponentPermission';
 import history from 'lib/history';
-import React, {
+import {
 	Dispatch,
+	Key,
 	useCallback,
 	useEffect,
 	useMemo,
@@ -47,10 +55,12 @@ function ListOfAllDashboard(): JSX.Element {
 	);
 
 	const { t } = useTranslation('dashboard');
+
 	const [
 		isImportJSONModalVisible,
 		setIsImportJSONModalVisible,
 	] = useState<boolean>(false);
+
 	const [uploadedGrafana, setUploadedGrafana] = useState<boolean>(false);
 
 	const [filteredDashboards, setFilteredDashboards] = useState<Dashboard[]>();
@@ -58,55 +68,59 @@ function ListOfAllDashboard(): JSX.Element {
 	useEffect(() => {
 		setFilteredDashboards(dashboards);
 	}, [dashboards]);
+
 	const [newDashboardState, setNewDashboardState] = useState({
 		loading: false,
 		error: false,
 		errorMessage: '',
 	});
 
-	const columns: TableColumnProps<Data>[] = [
-		{
-			title: 'Name',
-			dataIndex: 'name',
-			width: 100,
-			render: Name,
-		},
-		{
-			title: 'Description',
-			width: 100,
-			dataIndex: 'description',
-		},
-		{
-			title: 'Tags (can be multiple)',
-			dataIndex: 'tags',
-			width: 80,
-			render: Tags,
-		},
-		{
-			title: 'Created At',
-			dataIndex: 'createdBy',
-			width: 80,
-			sorter: (a: Data, b: Data): number => {
-				const prev = new Date(a.createdBy).getTime();
-				const next = new Date(b.createdBy).getTime();
-
-				return prev - next;
+	const columns: TableColumnProps<Data>[] = useMemo(
+		() => [
+			{
+				title: 'Name',
+				dataIndex: 'name',
+				width: 100,
+				render: Name,
 			},
-			render: Createdby,
-		},
-		{
-			title: 'Last Updated Time',
-			width: 90,
-			dataIndex: 'lastUpdatedTime',
-			sorter: (a: Data, b: Data): number => {
-				const prev = new Date(a.lastUpdatedTime).getTime();
-				const next = new Date(b.lastUpdatedTime).getTime();
-
-				return prev - next;
+			{
+				title: 'Description',
+				width: 100,
+				dataIndex: 'description',
 			},
-			render: DateComponent,
-		},
-	];
+			{
+				title: 'Tags (can be multiple)',
+				dataIndex: 'tags',
+				width: 80,
+				render: Tags,
+			},
+			{
+				title: 'Created At',
+				dataIndex: 'createdBy',
+				width: 80,
+				sorter: (a: Data, b: Data): number => {
+					const prev = new Date(a.createdBy).getTime();
+					const next = new Date(b.createdBy).getTime();
+
+					return prev - next;
+				},
+				render: Createdby,
+			},
+			{
+				title: 'Last Updated Time',
+				width: 90,
+				dataIndex: 'lastUpdatedTime',
+				sorter: (a: Data, b: Data): number => {
+					const prev = new Date(a.lastUpdatedTime).getTime();
+					const next = new Date(b.lastUpdatedTime).getTime();
+
+					return prev - next;
+				},
+				render: DateComponent,
+			},
+		],
+		[],
+	);
 
 	if (action) {
 		columns.push({
@@ -189,7 +203,7 @@ function ListOfAllDashboard(): JSX.Element {
 		setUploadedGrafana(uploadedGrafana);
 	};
 
-	const getMenuItems = useCallback(() => {
+	const getMenuItems = useMemo(() => {
 		const menuItems: ItemType[] = [];
 		if (createNewDashboard) {
 			menuItems.push({
@@ -215,7 +229,12 @@ function ListOfAllDashboard(): JSX.Element {
 		return menuItems;
 	}, [createNewDashboard, loading, onNewDashboardHandler, t]);
 
-	const menuItems = getMenuItems();
+	const menu: MenuProps = useMemo(
+		() => ({
+			items: getMenuItems,
+		}),
+		[getMenuItems],
+	);
 
 	const GetHeader = useMemo(
 		() => (
@@ -230,7 +249,7 @@ function ListOfAllDashboard(): JSX.Element {
 						}}
 					/>
 					{newDashboard && (
-						<Dropdown trigger={['click']} overlay={<Menu items={menuItems} />}>
+						<Dropdown disabled={loading} trigger={['click']} menu={menu}>
 							<NewDashboardButton
 								icon={<PlusOutlined />}
 								type="primary"
@@ -245,11 +264,12 @@ function ListOfAllDashboard(): JSX.Element {
 			</Row>
 		),
 		[
-			getText,
 			newDashboard,
-			newDashboardState.error,
+			loading,
+			menu,
 			newDashboardState.loading,
-			menuItems,
+			newDashboardState.error,
+			getText,
 		],
 	);
 
@@ -289,7 +309,7 @@ function ListOfAllDashboard(): JSX.Element {
 }
 
 export interface Data {
-	key: React.Key;
+	key: Key;
 	name: string;
 	description: string;
 	tags: string[];

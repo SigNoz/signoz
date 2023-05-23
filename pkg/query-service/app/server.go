@@ -18,8 +18,12 @@ import (
 
 	"github.com/rs/cors"
 	"github.com/soheilhy/cmux"
+	"go.signoz.io/signoz/pkg/query-service/agentConf"
 	"go.signoz.io/signoz/pkg/query-service/app/clickhouseReader"
 	"go.signoz.io/signoz/pkg/query-service/app/dashboards"
+	"go.signoz.io/signoz/pkg/query-service/app/opamp"
+	opAmpModel "go.signoz.io/signoz/pkg/query-service/app/opamp/model"
+
 	"go.signoz.io/signoz/pkg/query-service/app/explorer"
 	"go.signoz.io/signoz/pkg/query-service/auth"
 	"go.signoz.io/signoz/pkg/query-service/cache"
@@ -105,7 +109,7 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 	}
 
 	<-readerReady
-	rm, err := makeRulesManager(serverOptions.PromConfigPath, constants.GetAlertManagerApiPrefix(), serverOptions.RuleRepoURL, localDB, reader, serverOptions.DisableRules)
+	rm, err := makeRulesManager(serverOptions.PromConfigPath, constants.GetAlertManagerApiPrefix(), serverOptions.RuleRepoURL, localDB, reader, serverOptions.DisableRules, fm)
 	if err != nil {
 		return nil, err
 	}
@@ -150,6 +154,14 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 
 	s.privateHTTP = privateServer
 
+	_, err = opAmpModel.InitDB(constants.RELATIONAL_DATASOURCE_PATH)
+	if err != nil {
+		return nil, err
+	}
+
+	if err := agentConf.Initiate(localDB, "sqlite"); err != nil {
+		return nil, err
+	}
 	return s, nil
 }
 
@@ -345,7 +357,7 @@ func setTimeoutMiddleware(next http.Handler) http.Handler {
 		// check if route is not excluded
 		url := r.URL.Path
 		if _, ok := constants.TimeoutExcludedRoutes[url]; !ok {
-			ctx, cancel = context.WithTimeout(r.Context(), constants.ContextTimeout*time.Second)
+			ctx, cancel = context.WithTimeout(r.Context(), constants.ContextTimeout)
 			defer cancel()
 		}
 
@@ -447,6 +459,37 @@ func (s *Server) Start() error {
 
 	}()
 
+	go func() {
+		zap.S().Info("Starting OpAmp Websocket server", zap.String("addr", constants.OpAmpWsEndpoint))
+		err := opamp.InitalizeServer(constants.OpAmpWsEndpoint, &opAmpModel.AllAgents)
+		if err != nil {
+			zap.S().Info("opamp ws server failed to start", err)
+			s.unavailableChannel <- healthcheck.Unavailable
+		}
+	}()
+
+	return nil
+}
+
+func (s *Server) Stop() error {
+	if s.httpServer != nil {
+		if err := s.httpServer.Shutdown(context.Background()); err != nil {
+			return err
+		}
+	}
+
+	if s.privateHTTP != nil {
+		if err := s.privateHTTP.Shutdown(context.Background()); err != nil {
+			return err
+		}
+	}
+
+	opamp.StopServer()
+
+	if s.ruleManager != nil {
+		s.ruleManager.Stop()
+	}
+
 	return nil
 }
 
@@ -456,7 +499,8 @@ func makeRulesManager(
 	ruleRepoURL string,
 	db *sqlx.DB,
 	ch interfaces.Reader,
-	disableRules bool) (*rules.Manager, error) {
+	disableRules bool,
+	fm interfaces.FeatureLookup) (*rules.Manager, error) {
 
 	// create engine
 	pqle, err := pqle.FromReader(ch)
@@ -483,6 +527,7 @@ func makeRulesManager(
 		Context:      context.Background(),
 		Logger:       nil,
 		DisableRules: disableRules,
+		FeatureFlags: fm,
 	}
 
 	// create Manager

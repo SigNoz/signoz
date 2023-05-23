@@ -1,8 +1,11 @@
-import { Modal, Tabs, Tooltip, Typography } from 'antd';
+import { Button, Modal, Tabs, Tooltip, Typography } from 'antd';
 import Editor from 'components/Editor';
 import { StyledSpace } from 'components/Styled';
+import ROUTES from 'constants/routes';
 import { useIsDarkMode } from 'hooks/useDarkMode';
-import React, { useMemo, useState } from 'react';
+import history from 'lib/history';
+import { useMemo, useState } from 'react';
+import { useParams } from 'react-router-dom';
 import { ITraceTree } from 'types/api/trace/getTraceItem';
 
 import Events from './Events';
@@ -15,10 +18,10 @@ import {
 } from './styles';
 import Tags from './Tags';
 
-const { TabPane } = Tabs;
-
 function SelectedSpanDetails(props: SelectedSpanDetailsProps): JSX.Element {
 	const { tree, firstSpanStartTime } = props;
+
+	const { id: traceId } = useParams<Params>();
 
 	const isDarkMode = useIsDarkMode();
 
@@ -44,6 +47,39 @@ function SelectedSpanDetails(props: SelectedSpanDetailsProps): JSX.Element {
 
 	const { tags, nonChildReferences } = tree;
 
+	const items = [
+		{
+			label: 'Tags',
+			key: '1',
+			children: (
+				<Tags
+					onToggleHandler={onToggleHandler}
+					setText={setText}
+					tags={tags}
+					linkedSpans={nonChildReferences}
+				/>
+			),
+		},
+		{
+			label: 'Events',
+			key: '2',
+			children: (
+				<Events
+					events={tree.event}
+					onToggleHandler={onToggleHandler}
+					setText={setText}
+					firstSpanStartTime={firstSpanStartTime}
+				/>
+			),
+		},
+	];
+
+	const onLogsHandler = (): void => {
+		const query = encodeURIComponent(`trace_id IN ('${traceId}')`);
+
+		history.push(`${ROUTES.LOGS}?q=${query}`);
+	};
+
 	return (
 		<CardContainer>
 			<StyledSpace
@@ -53,6 +89,7 @@ function SelectedSpanDetails(props: SelectedSpanDetailsProps): JSX.Element {
 				<Typography.Text strong> Details for selected Span </Typography.Text>
 
 				<CustomTitle>Service</CustomTitle>
+
 				<Tooltip overlay={OverLayComponentServiceName}>
 					<CustomText ellipsis>{tree.serviceName}</CustomText>
 				</Tooltip>
@@ -61,6 +98,8 @@ function SelectedSpanDetails(props: SelectedSpanDetailsProps): JSX.Element {
 				<Tooltip overlay={OverLayComponentName}>
 					<CustomText ellipsis>{tree.name}</CustomText>
 				</Tooltip>
+
+				<Button onClick={onLogsHandler}>Go to Related logs</Button>
 			</StyledSpace>
 
 			<Modal
@@ -81,24 +120,7 @@ function SelectedSpanDetails(props: SelectedSpanDetailsProps): JSX.Element {
 				)}
 			</Modal>
 
-			<Tabs defaultActiveKey="1">
-				<TabPane tab="Tags" key="1">
-					<Tags
-						onToggleHandler={onToggleHandler}
-						setText={setText}
-						tags={tags}
-						linkedSpans={nonChildReferences}
-					/>
-				</TabPane>
-				<TabPane tab="Events" key="2">
-					<Events
-						events={tree.event}
-						onToggleHandler={onToggleHandler}
-						setText={setText}
-						firstSpanStartTime={firstSpanStartTime}
-					/>
-				</TabPane>
-			</Tabs>
+			<Tabs defaultActiveKey="1" items={items} />
 		</CardContainer>
 	);
 }
@@ -115,6 +137,10 @@ SelectedSpanDetails.defaultProps = {
 export interface ModalText {
 	text: string;
 	subText: string;
+}
+
+interface Params {
+	id: string;
 }
 
 export default SelectedSpanDetails;

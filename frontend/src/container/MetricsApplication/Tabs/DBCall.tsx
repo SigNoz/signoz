@@ -4,21 +4,22 @@ import {
 	databaseCallsAvgDuration,
 	databaseCallsRPS,
 } from 'container/MetricsApplication/MetricsPageQueries/DBCallQueries';
+import useResourceAttribute from 'hooks/useResourceAttribute';
 import {
 	convertRawQueriesToTraceSelectedTags,
 	resourceAttributesToTagFilterItems,
-} from 'lib/resourceAttributes';
-import React, { useMemo, useState } from 'react';
-import { useSelector } from 'react-redux';
+} from 'hooks/useResourceAttribute/utils';
+import { useMemo, useState } from 'react';
 import { useParams } from 'react-router-dom';
-import { AppState } from 'store/reducers';
 import { Widgets } from 'types/api/dashboard/getAll';
-import MetricReducer from 'types/reducer/metrics';
+import { TagFilterItem } from 'types/api/queryBuilder/queryBuilderData';
+import { EQueryType } from 'types/common/dashboard';
 
 import { Card, GraphContainer, GraphTitle, Row } from '../styles';
 import { Button } from './styles';
 import {
 	dbSystemTags,
+	handleNonInQueryRange,
 	onGraphClickHandler,
 	onViewTracePopupClick,
 } from './util';
@@ -26,48 +27,48 @@ import {
 function DBCall({ getWidgetQueryBuilder }: DBCallProps): JSX.Element {
 	const { servicename } = useParams<{ servicename?: string }>();
 	const [selectedTimeStamp, setSelectedTimeStamp] = useState<number>(0);
-	const { resourceAttributeQueries } = useSelector<AppState, MetricReducer>(
-		(state) => state.metrics,
+	const { queries } = useResourceAttribute();
+
+	const tagFilterItems: TagFilterItem[] = useMemo(
+		() =>
+			handleNonInQueryRange(resourceAttributesToTagFilterItems(queries)) || [],
+		[queries],
 	);
-	const tagFilterItems = useMemo(
-		() => resourceAttributesToTagFilterItems(resourceAttributeQueries) || [],
-		[resourceAttributeQueries],
-	);
+
 	const selectedTraceTags: string = useMemo(
 		() =>
 			JSON.stringify(
-				convertRawQueriesToTraceSelectedTags(resourceAttributeQueries).concat(
-					...dbSystemTags,
-				) || [],
+				convertRawQueriesToTraceSelectedTags(queries).concat(...dbSystemTags) || [],
 			),
-		[resourceAttributeQueries],
+		[queries],
 	);
+
 	const legend = '{{db_system}}';
 
 	const databaseCallsRPSWidget = useMemo(
 		() =>
 			getWidgetQueryBuilder({
-				queryType: 1,
-				promQL: [],
-				metricsBuilder: databaseCallsRPS({
+				queryType: EQueryType.QUERY_BUILDER,
+				promql: [],
+				builder: databaseCallsRPS({
 					servicename,
 					legend,
 					tagFilterItems,
 				}),
-				clickHouse: [],
+				clickhouse_sql: [],
 			}),
 		[getWidgetQueryBuilder, servicename, tagFilterItems],
 	);
 	const databaseCallsAverageDurationWidget = useMemo(
 		() =>
 			getWidgetQueryBuilder({
-				queryType: 1,
-				promQL: [],
-				metricsBuilder: databaseCallsAvgDuration({
+				queryType: EQueryType.QUERY_BUILDER,
+				promql: [],
+				builder: databaseCallsAvgDuration({
 					servicename,
 					tagFilterItems,
 				}),
-				clickHouse: [],
+				clickhouse_sql: [],
 			}),
 		[getWidgetQueryBuilder, servicename, tagFilterItems],
 	);

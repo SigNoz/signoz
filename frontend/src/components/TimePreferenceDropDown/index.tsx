@@ -1,9 +1,9 @@
-import { Button, Dropdown, Menu } from 'antd';
+import { Button, Dropdown } from 'antd';
 import TimeItems, {
 	timePreferance,
 	timePreferenceType,
 } from 'container/NewWidget/RightContainer/timeItems';
-import React, { useCallback } from 'react';
+import { Dispatch, SetStateAction, useCallback, useMemo } from 'react';
 
 import { menuItems } from './config';
 import { TextContainer } from './styles';
@@ -22,11 +22,17 @@ function TimePreference({
 		[setSelectedTime],
 	);
 
+	const menu = useMemo(
+		() => ({
+			items: menuItems,
+			onClick: timeMenuItemOnChangeHandler,
+		}),
+		[timeMenuItemOnChangeHandler],
+	);
+
 	return (
 		<TextContainer noButtonMargin>
-			<Dropdown
-				overlay={<Menu onClick={timeMenuItemOnChangeHandler} items={menuItems} />}
-			>
+			<Dropdown menu={menu}>
 				<Button>{selectedTime.name}</Button>
 			</Dropdown>
 		</TextContainer>
@@ -38,7 +44,7 @@ interface TimeMenuItemOnChangeHandlerEvent {
 }
 
 interface TimePreferenceDropDownProps {
-	setSelectedTime: React.Dispatch<React.SetStateAction<timePreferance>>;
+	setSelectedTime: Dispatch<SetStateAction<timePreferance>>;
 	selectedTime: timePreferance;
 }
 

@@ -10,6 +10,7 @@ import {
 	MenuOutlined,
 	SettingOutlined,
 } from '@ant-design/icons';
+import type { MenuProps } from 'antd';
 import ROUTES from 'constants/routes';
 
 const menus: SidebarMenu[] = [
@@ -28,6 +29,12 @@ const menus: SidebarMenu[] = [
 		to: ROUTES.LOGS,
 		name: 'Logs',
 		// tags: ['Beta'],
+		// children: [
+		// 	{
+		// 		key: ROUTES.LOGS,
+		// 		label: 'Search',
+		// 	},
+		// ],
 	},
 	{
 		Icon: DashboardFilled,
@@ -71,6 +78,7 @@ interface SidebarMenu {
 	name: string;
 	Icon: typeof ApiOutlined;
 	tags?: string[];
+	children?: Required<MenuProps>['items'][number][];
 }
 
 export default menus;

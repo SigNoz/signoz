@@ -1,11 +1,11 @@
 import getDashboard from 'api/dashboard/get';
 import {
-	ClickHouseQueryTemplate,
-	PromQLQueryTemplate,
-	QueryBuilderQueryTemplate,
-} from 'constants/dashboard';
+	initialClickHouseData,
+	initialQueryBuilderFormValues,
+	initialQueryPromQLData,
+	PANEL_TYPES,
+} from 'constants/queryBuilder';
 import { GRAPH_TYPES } from 'container/NewDashboard/ComponentsSlider';
-import GetQueryName from 'lib/query/GetQueryName';
 import { Dispatch } from 'redux';
 import AppActions from 'types/actions';
 import { Props } from 'types/api/dashboard/get';
@@ -42,7 +42,7 @@ export const GetDashboard = ({
 						isStacked: false,
 						nullZeroValues: 'zero',
 						opacity: '0',
-						panelTypes: graphType || 'TIME_SERIES',
+						panelTypes: graphType || PANEL_TYPES.TIME_SERIES,
 						timePreferance: 'GLOBAL_TIME',
 						title: '',
 						queryType: 0,
@@ -57,26 +57,11 @@ export const GetDashboard = ({
 						},
 						query: {
 							queryType: EQueryType.QUERY_BUILDER,
-							promQL: [
-								{
-									name: GetQueryName([]) as string,
-									...PromQLQueryTemplate,
-								},
-							],
-							clickHouse: [
-								{
-									name: GetQueryName([]) as string,
-									...ClickHouseQueryTemplate,
-								},
-							],
-							metricsBuilder: {
-								formulas: [],
-								queryBuilder: [
-									{
-										name: GetQueryName([]) as string,
-										...QueryBuilderQueryTemplate,
-									},
-								],
+							promql: [initialQueryPromQLData],
+							clickhouse_sql: [initialClickHouseData],
+							builder: {
+								queryFormulas: [],
+								queryData: [initialQueryBuilderFormValues],
 							},
 						},
 					},

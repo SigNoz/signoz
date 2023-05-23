@@ -1,15 +1,18 @@
-import { Input } from 'antd';
+import { Input, Select } from 'antd';
 import InputComponent from 'components/Input';
 import TimePreference from 'components/TimePreferenceDropDown';
 import { GRAPH_TYPES } from 'container/NewDashboard/ComponentsSlider';
-import GraphTypes from 'container/NewDashboard/ComponentsSlider/menuItems';
-import React, { useCallback } from 'react';
+import GraphTypes, {
+	ITEMS,
+} from 'container/NewDashboard/ComponentsSlider/menuItems';
+import { Dispatch, SetStateAction, useCallback } from 'react';
 
 import { Container, Title } from './styles';
 import { timePreferance } from './timeItems';
 import YAxisUnitSelector from './YAxisUnitSelector';
 
 const { TextArea } = Input;
+const { Option } = Select;
 
 function RightContainer({
 	description,
@@ -21,9 +24,10 @@ function RightContainer({
 	selectedTime,
 	yAxisUnit,
 	setYAxisUnit,
+	setGraphHandler,
 }: RightContainerProps): JSX.Element {
 	const onChangeHandler = useCallback(
-		(setFunc: React.Dispatch<React.SetStateAction<string>>, value: string) => {
+		(setFunc: Dispatch<SetStateAction<string>>, value: string) => {
 			setFunc(value);
 		},
 		[],
@@ -34,14 +38,19 @@ function RightContainer({
 
 	return (
 		<Container>
-			<InputComponent
-				labelOnTop
-				label="Panel Type"
-				size="middle"
-				value={selectedGraphType}
+			<Title>Panel Type</Title>
+			<Select
+				onChange={setGraphHandler}
+				value={selectedGraph}
 				disabled
-			/>
-
+				style={{ width: '100%', marginBottom: 24 }}
+			>
+				{GraphTypes.map((item) => (
+					<Option key={item.name} value={item.name}>
+						{item.display}
+					</Option>
+				))}
+			</Select>
 			<Title>Panel Attributes</Title>
 
 			<InputComponent
@@ -126,20 +135,21 @@ function RightContainer({
 
 interface RightContainerProps {
 	title: string;
-	setTitle: React.Dispatch<React.SetStateAction<string>>;
+	setTitle: Dispatch<SetStateAction<string>>;
 	description: string;
-	setDescription: React.Dispatch<React.SetStateAction<string>>;
+	setDescription: Dispatch<SetStateAction<string>>;
 	stacked: boolean;
-	setStacked: React.Dispatch<React.SetStateAction<boolean>>;
+	setStacked: Dispatch<SetStateAction<boolean>>;
 	opacity: string;
-	setOpacity: React.Dispatch<React.SetStateAction<string>>;
+	setOpacity: Dispatch<SetStateAction<string>>;
 	selectedNullZeroValue: string;
-	setSelectedNullZeroValue: React.Dispatch<React.SetStateAction<string>>;
+	setSelectedNullZeroValue: Dispatch<SetStateAction<string>>;
 	selectedGraph: GRAPH_TYPES;
-	setSelectedTime: React.Dispatch<React.SetStateAction<timePreferance>>;
+	setSelectedTime: Dispatch<SetStateAction<timePreferance>>;
 	selectedTime: timePreferance;
 	yAxisUnit: string;
-	setYAxisUnit: React.Dispatch<React.SetStateAction<string>>;
+	setYAxisUnit: Dispatch<SetStateAction<string>>;
+	setGraphHandler: (type: ITEMS) => void;
 }
 
 export default RightContainer;

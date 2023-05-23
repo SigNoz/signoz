@@ -1,5 +1,4 @@
 import { Drawer, Tabs } from 'antd';
-import React from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { Dispatch } from 'redux';
 import { AppState } from 'store/reducers';
@@ -24,6 +23,19 @@ function LogDetailedView(): JSX.Element {
 		});
 	};
 
+	const items = [
+		{
+			label: 'Table',
+			key: '1',
+			children: detailedLog && <TableView logData={detailedLog} />,
+		},
+		{
+			label: 'JSON',
+			key: '2',
+			children: detailedLog && <JSONView logData={detailedLog} />,
+		},
+	];
+
 	return (
 		<Drawer
 			width="60%"
@@ -35,14 +47,7 @@ function LogDetailedView(): JSX.Element {
 			style={{ overscrollBehavior: 'contain' }}
 			destroyOnClose
 		>
-			<Tabs defaultActiveKey="1">
-				<Tabs.TabPane tab="Table" key="1">
-					{detailedLog && <TableView logData={detailedLog} />}
-				</Tabs.TabPane>
-				<Tabs.TabPane tab="JSON" key="2">
-					{detailedLog && <JSONView logData={detailedLog} />}
-				</Tabs.TabPane>
-			</Tabs>
+			<Tabs defaultActiveKey="1" items={items} />
 		</Drawer>
 	);
 }
