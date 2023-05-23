@@ -311,6 +311,8 @@ func (r *PromRule) getPqlQuery() (string, error) {
 
 func (r *PromRule) Eval(ctx context.Context, ts time.Time, queriers *Queriers) (interface{}, error) {
 
+	valueFormatter := formatter.FromUnit(r.ruleCondition.YAxis)
+
 	q, err := r.getPqlQuery()
 	if err != nil {
 		return nil, err
@@ -336,7 +338,7 @@ func (r *PromRule) Eval(ctx context.Context, ts time.Time, queriers *Queriers) (
 			l[lbl.Name] = lbl.Value
 		}
 
-		tmplData := AlertTemplateData(l, formatter.Humanize(smpl.V, r.ruleCondition.YAxis), formatter.Humanize(r.targetVal(), r.ruleCondition.YAxis))
+		tmplData := AlertTemplateData(l, valueFormatter.Format(smpl.V, r.ruleCondition.YAxis), valueFormatter.Format(r.targetVal(), r.ruleCondition.YAxis))
 		// Inject some convenience variables that are easier to remember for users
 		// who are not used to Go's templating system.
 		defs := "{{$labels := .Labels}}{{$value := .Value}}{{$threshold := .Threshold}}"

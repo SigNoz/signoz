@@ -1,0 +1,107 @@
+package converter
+
+type Duration float64
+
+const (
+	Nanosecond           = Second * 1e-9
+	Microsecond          = Second * 1e-6
+	Millisecond          = Second * 1e-3
+	Centisecond          = Second * 1e-2
+	Decisecond           = Second * 1e-1
+	Second      Duration = 1e0
+	Minute               = Second * 60
+	Hour                 = Minute * 60
+	Day                  = Hour * 24
+	Week                 = Day * 7
+)
+
+type durationConverter struct {
+}
+
+func NewDurationConverter() Converter {
+	return &durationConverter{}
+}
+
+func FromTimeUnit(u Unit) Duration {
+	switch u {
+	case "ns":
+		return Nanosecond
+	case "us":
+		return Microsecond
+	case "ms":
+		return Millisecond
+	case "cs":
+		return Centisecond
+	case "ds":
+		return Decisecond
+	case "s":
+		return Second
+	case "m":
+		return Minute
+	case "h":
+		return Hour
+	case "d":
+		return Day
+	case "w":
+		return Week
+	default:
+		return Second
+	}
+}
+
+func (c *durationConverter) Convert(v Value, to Unit) Value {
+	return Value{
+		F: v.F * float64(FromTimeUnit(v.U)) / float64(FromTimeUnit(to)),
+		U: to,
+	}
+}
+
+// Nanoseconds returns the time in ns
+func (t Duration) Nanoseconds() float64 {
+	return float64(t / Nanosecond)
+}
+
+// Microseconds returns the time in µs
+func (t Duration) Microseconds() float64 {
+	return float64(t / Microsecond)
+}
+
+// Milliseconds returns the time in ms
+func (t Duration) Milliseconds() float64 {
+	return float64(t / Millisecond)
+}
+
+// Centiseconds returns the time in cs
+func (t Duration) Centiseconds() float64 {
+	return float64(t / Centisecond)
+}
+
+// Deciseconds returns the time in ds
+func (t Duration) Deciseconds() float64 {
+	return float64(t / Decisecond)
+}
+
+// Seconds returns the time in s
+func (t Duration) Seconds() float64 {
+	return float64(t / Second)
+}
+
+// Minutes returns the time in m
+func (t Duration) Minutes() float64 {
+	return float64(t / Minute)
+}
+
+// Hours returns the time in h
+func (t Duration) Hours() float64 {
+	return float64(t / Hour)
+}
+
+// Days returns the time in d
+func (t Duration) Days() float64 {
+	return float64(t / Day)
+}
+
+// Weeks returns the time in w
+func (t Duration) Weeks() float64 {
+	return float64(t / Week)
+}
