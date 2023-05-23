@@ -17,6 +17,7 @@ function DisplayName({
 	isAnonymous,
 }: DisplayNameProps): JSX.Element {
 	const [form] = Form.useForm<FormValues>();
+	const orgName = Form.useWatch('name', form);
 
 	const { t } = useTranslation(['organizationsettings', 'common']);
 	const { org } = useSelector<AppState, AppReducer>((state) => state.app);
@@ -71,6 +72,8 @@ function DisplayName({
 		return <div />;
 	}
 
+	const isDisabled = orgName === name || !orgName;
+
 	return (
 		<Form
 			initialValues={{ name }}
@@ -89,7 +92,7 @@ function DisplayName({
 			<Form.Item>
 				<Button
 					loading={isLoading}
-					disabled={isLoading}
+					disabled={isDisabled}
 					type="primary"
 					htmlType="submit"
 				>
