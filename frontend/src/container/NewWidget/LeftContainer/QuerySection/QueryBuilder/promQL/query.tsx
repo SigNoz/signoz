@@ -1,46 +1,71 @@
 import { Input } from 'antd';
-import { IPromQLQuery } from 'types/api/dashboard/getAll';
+import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
+import { ChangeEvent, useCallback } from 'react';
+import { IPromQLQuery } from 'types/api/queryBuilder/queryBuilderData';
+import { EQueryType } from 'types/common/dashboard';
 
 import QueryHeader from '../QueryHeader';
-import { IPromQLQueryHandleChange } from './types';
 
 interface IPromQLQueryBuilderProps {
 	queryData: IPromQLQuery;
-	queryIndex: number | string;
-	handleQueryChange: (args: IPromQLQueryHandleChange) => void;
+	queryIndex: number;
+	deletable: boolean;
 }
 
 function PromQLQueryBuilder({
 	queryData,
 	queryIndex,
-	handleQueryChange,
+	deletable,
 }: IPromQLQueryBuilderProps): JSX.Element {
+	const {
+		handleSetQueryItemData,
+		removeQueryTypeItemByIndex,
+	} = useQueryBuilder();
+
+	const handleRemoveQuery = useCallback(() => {
+		removeQueryTypeItemByIndex(EQueryType.PROM, queryIndex);
+	}, [queryIndex, removeQueryTypeItemByIndex]);
+
+	const handleUpdateQuery = useCallback(
+		(e: ChangeEvent<HTMLInputElement>) => {
+			const { name, value } = e.target;
+			const newQuery: IPromQLQuery = { ...queryData, [name]: value };
+
+			handleSetQueryItemData(queryIndex, EQueryType.PROM, newQuery);
+		},
+		[handleSetQueryItemData, queryIndex, queryData],
+	);
+
+	const handleDisable = useCallback(() => {
+		const newQuery: IPromQLQuery = {
+			...queryData,
+			disabled: !queryData.disabled,
+		};
+
+		handleSetQueryItemData(queryIndex, EQueryType.PROM, newQuery);
+	}, [handleSetQueryItemData, queryData, queryIndex]);
+
 	return (
 		<QueryHeader
 			name={queryData.name}
 			disabled={queryData.disabled}
-			onDisable={(): void =>
-				handleQueryChange({ queryIndex, toggleDisable: true })
-			}
-			onDelete={(): void => {
-				handleQueryChange({ queryIndex, toggleDelete: true });
-			}}
+			onDisable={handleDisable}
+			onDelete={handleRemoveQuery}
+			deletable={deletable}
 		>
 			<Input
-				onChange={(event): void =>
-					handleQueryChange({ queryIndex, query: event.target.value })
-				}
+				onChange={handleUpdateQuery}
 				size="middle"
+				name="query"
 				defaultValue={queryData.query}
 				addonBefore="PromQL Query"
 				style={{ marginBottom: '0.5rem' }}
 			/>
 
 			<Input
-				onChange={(event): void =>
-					handleQueryChange({ queryIndex, legend: event.target.value })
-				}
+				onChange={handleUpdateQuery}
 				size="middle"
+				name="legend"
 				defaultValue={queryData.legend}
 				addonBefore="Legend Format"
 				style={{ marginBottom: '0.5rem' }}
