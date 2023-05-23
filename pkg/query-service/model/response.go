@@ -7,7 +7,7 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/prometheus/prometheus/promql"
+	"github.com/prometheus/prometheus/promql/parser"
 	"github.com/prometheus/prometheus/util/stats"
 	"k8s.io/apimachinery/pkg/labels"
 )
@@ -90,13 +90,13 @@ func InternalError(err error) *ApiError {
 }
 
 type QueryDataV2 struct {
-	ResultType promql.ValueType `json:"resultType"`
-	Result     promql.Value     `json:"result"`
+	ResultType parser.ValueType `json:"resultType"`
+	Result     parser.Value     `json:"result"`
 }
 
 type QueryData struct {
-	ResultType promql.ValueType  `json:"resultType"`
-	Result     promql.Value      `json:"result"`
+	ResultType parser.ValueType  `json:"resultType"`
+	Result     parser.Value      `json:"result"`
 	Stats      *stats.QueryStats `json:"stats,omitempty"`
 }
 
@@ -272,6 +272,7 @@ type TopOperationsItem struct {
 	Percentile95 float64 `json:"p95" ch:"p95"`
 	Percentile99 float64 `json:"p99" ch:"p99"`
 	NumCalls     uint64  `json:"numCalls" ch:"numCalls"`
+	ErrorCount   uint64  `json:"errorCount" ch:"errorCount"`
 	Name         string  `json:"name" ch:"name"`
 }
 

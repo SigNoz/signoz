@@ -1,5 +1,4 @@
 import { Row } from 'antd';
-import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { AlertTypes } from 'types/api/alerts/alertTypes';
 

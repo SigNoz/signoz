@@ -51,7 +51,7 @@ check_os() {
     os_name="$(cat /etc/*-release | awk -F= '$1 == "NAME" { gsub(/"/, ""); print $2; exit }')"
 
     case "$os_name" in
-        Ubuntu*)
+        Ubuntu*|Pop!_OS)
             desired_os=1
             os="ubuntu"
             package_manager="apt-get"
@@ -125,7 +125,7 @@ check_ports_occupied() {
 
         echo "+++++++++++ ERROR ++++++++++++++++++++++"
         echo "SigNoz requires ports 3301 & 4317 to be open. Please shut down any other service(s) that may be running on these ports."
-        echo "You can run SigNoz on another port following this guide https://signoz.io/docs/deployment/docker#troubleshooting"
+        echo "You can run SigNoz on another port following this guide https://signoz.io/docs/install/troubleshooting/"
         echo "++++++++++++++++++++++++++++++++++++++++"
         echo ""
         exit 1
@@ -249,7 +249,7 @@ bye() {  # Prints a friendly good bye message and exits the script.
         echo ""
         echo -e "$sudo_cmd docker-compose -f ./docker/clickhouse-setup/docker-compose.yaml ps -a"
 
-        # echo "Please read our troubleshooting guide https://signoz.io/docs/deployment/docker#troubleshooting"
+        echo "Please read our troubleshooting guide https://signoz.io/docs/install/troubleshooting/"
         echo "or reach us for support in #help channel in our Slack Community https://signoz.io/slack"
         echo "++++++++++++++++++++++++++++++++++++++++"
 
@@ -500,7 +500,7 @@ if [[ $status_code -ne 200 ]]; then
 
     echo -e "$sudo_cmd docker-compose -f ./docker/clickhouse-setup/docker-compose.yaml ps -a"
 
-    echo "Please read our troubleshooting guide https://signoz.io/docs/deployment/docker/#troubleshooting-of-common-issues"
+    echo "Please read our troubleshooting guide https://signoz.io/docs/install/troubleshooting/"
     echo "or reach us on SigNoz for support https://signoz.io/slack"
     echo "++++++++++++++++++++++++++++++++++++++++"
 

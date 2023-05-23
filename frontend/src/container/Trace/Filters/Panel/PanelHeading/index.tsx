@@ -3,7 +3,7 @@ import { Card, Divider, Typography } from 'antd';
 import getFilters from 'api/trace/getFilters';
 import { AxiosError } from 'axios';
 import { useNotifications } from 'hooks/useNotifications';
-import React, { useState } from 'react';
+import { MouseEventHandler, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { Dispatch } from 'redux';
 import { getFilter, updateURL } from 'store/actions/trace/util';
@@ -58,7 +58,7 @@ function PanelHeading(props: PanelHeadingProps): JSX.Element {
 	const { notifications } = useNotifications();
 
 	// eslint-disable-next-line sonarjs/cognitive-complexity
-	const onExpandHandler: React.MouseEventHandler<HTMLDivElement> = async (e) => {
+	const onExpandHandler: MouseEventHandler<HTMLDivElement> = async (e) => {
 		try {
 			e.preventDefault();
 			e.stopPropagation();

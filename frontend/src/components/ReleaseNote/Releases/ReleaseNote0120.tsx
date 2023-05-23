@@ -1,7 +1,7 @@
 import { Button, Space } from 'antd';
 import setFlags from 'api/user/setFlags';
 import MessageTip from 'components/MessageTip';
-import React, { useCallback } from 'react';
+import { useCallback } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { Dispatch } from 'redux';
 import { AppState } from 'store/reducers';

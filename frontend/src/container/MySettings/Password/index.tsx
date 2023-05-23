@@ -2,7 +2,7 @@ import { Button, Space, Typography } from 'antd';
 import changeMyPassword from 'api/user/changeMyPassword';
 import { useNotifications } from 'hooks/useNotifications';
 import { isPasswordNotValidMessage, isPasswordValid } from 'pages/SignUp/utils';
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';

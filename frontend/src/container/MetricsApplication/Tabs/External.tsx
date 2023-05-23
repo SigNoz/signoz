@@ -6,68 +6,67 @@ import {
 	externalCallErrorPercent,
 	externalCallRpsByAddress,
 } from 'container/MetricsApplication/MetricsPageQueries/ExternalQueries';
+import useResourceAttribute from 'hooks/useResourceAttribute';
 import {
 	convertRawQueriesToTraceSelectedTags,
 	resourceAttributesToTagFilterItems,
-} from 'lib/resourceAttributes';
-import React, { useMemo, useState } from 'react';
-import { useSelector } from 'react-redux';
+} from 'hooks/useResourceAttribute/utils';
+import { useMemo, useState } from 'react';
 import { useParams } from 'react-router-dom';
-import { AppState } from 'store/reducers';
 import { Widgets } from 'types/api/dashboard/getAll';
-import MetricReducer from 'types/reducer/metrics';
+import { EQueryType } from 'types/common/dashboard';
 
 import { Card, GraphContainer, GraphTitle, Row } from '../styles';
 import { legend } from './constant';
 import { Button } from './styles';
-import { onGraphClickHandler, onViewTracePopupClick } from './util';
+import {
+	handleNonInQueryRange,
+	onGraphClickHandler,
+	onViewTracePopupClick,
+} from './util';
 
 function External({ getWidgetQueryBuilder }: ExternalProps): JSX.Element {
 	const [selectedTimeStamp, setSelectedTimeStamp] = useState<number>(0);
 
 	const { servicename } = useParams<{ servicename?: string }>();
-	const { resourceAttributeQueries } = useSelector<AppState, MetricReducer>(
-		(state) => state.metrics,
-	);
+	const { queries } = useResourceAttribute();
 
 	const tagFilterItems = useMemo(
-		() => resourceAttributesToTagFilterItems(resourceAttributeQueries) || [],
-		[resourceAttributeQueries],
+		() =>
+			handleNonInQueryRange(resourceAttributesToTagFilterItems(queries)) || [],
+		[queries],
 	);
 
 	const externalCallErrorWidget = useMemo(
 		() =>
 			getWidgetQueryBuilder({
-				queryType: 1,
-				promQL: [],
-				metricsBuilder: externalCallErrorPercent({
+				queryType: EQueryType.QUERY_BUILDER,
+				promql: [],
+				builder: externalCallErrorPercent({
 					servicename,
 					legend: legend.address,
 					tagFilterItems,
 				}),
-				clickHouse: [],
+				clickhouse_sql: [],
 			}),
 		[getWidgetQueryBuilder, servicename, tagFilterItems],
 	);
 
 	const selectedTraceTags = useMemo(
-		() =>
-			JSON.stringify(
-				convertRawQueriesToTraceSelectedTags(resourceAttributeQueries) || [],
-			),
-		[resourceAttributeQueries],
+		() => JSON.stringify(convertRawQueriesToTraceSelectedTags(queries) || []),
+		[queries],
 	);
 
 	const externalCallDurationWidget = useMemo(
 		() =>
 			getWidgetQueryBuilder({
-				queryType: 1,
-				promQL: [],
-				metricsBuilder: externalCallDuration({
+				queryType: EQueryType.QUERY_BUILDER,
+				promql: [],
+				builder: externalCallDuration({
 					servicename,
 					tagFilterItems,
 				}),
-				clickHouse: [],
+				clickhouse_sql: [],
 			}),
 		[getWidgetQueryBuilder, servicename, tagFilterItems],
 	);
@@ -75,14 +74,14 @@ function External({ getWidgetQueryBuilder }: ExternalProps): JSX.Element {
 	const externalCallRPSWidget = useMemo(
 		() =>
 			getWidgetQueryBuilder({
-				queryType: 1,
-				promQL: [],
-				metricsBuilder: externalCallRpsByAddress({
+				queryType: EQueryType.QUERY_BUILDER,
+				promql: [],
+				builder: externalCallRpsByAddress({
 					servicename,
 					legend: legend.address,
 					tagFilterItems,
 				}),
-				clickHouse: [],
+				clickhouse_sql: [],
 			}),
 		[getWidgetQueryBuilder, servicename, tagFilterItems],
 	);
@@ -90,14 +89,14 @@ function External({ getWidgetQueryBuilder }: ExternalProps): JSX.Element {
 	const externalCallDurationAddressWidget = useMemo(
 		() =>
 			getWidgetQueryBuilder({
-				queryType: 1,
-				promQL: [],
-				metricsBuilder: externalCallDurationByAddress({
+				queryType: EQueryType.QUERY_BUILDER,
+				promql: [],
+				builder: externalCallDurationByAddress({
 					servicename,
 					legend: legend.address,
 					tagFilterItems,
 				}),
-				clickHouse: [],
+				clickhouse_sql: [],
 			}),
 		[getWidgetQueryBuilder, servicename, tagFilterItems],
 	);

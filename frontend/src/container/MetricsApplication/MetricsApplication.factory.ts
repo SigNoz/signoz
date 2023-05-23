@@ -1,3 +1,4 @@
+import { PANEL_TYPES } from 'constants/queryBuilder';
 import { Widgets } from 'types/api/dashboard/getAll';
 import { v4 } from 'uuid';
 
@@ -7,7 +8,7 @@ export const getWidgetQueryBuilder = (query: Widgets['query']): Widgets => ({
 	isStacked: false,
 	nullZeroValues: '',
 	opacity: '0',
-	panelTypes: 'TIME_SERIES',
+	panelTypes: PANEL_TYPES.TIME_SERIES,
 	query,
 	queryData: {
 		data: { queryData: [] },

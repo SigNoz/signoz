@@ -1,7 +1,6 @@
 import ReleaseNoteProps from 'components/ReleaseNote/ReleaseNoteProps';
 import ReleaseNote0120 from 'components/ReleaseNote/Releases/ReleaseNote0120';
 import ROUTES from 'constants/routes';
-import React from 'react';
 import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
 import { UserFlags } from 'types/api/user/setFlags';

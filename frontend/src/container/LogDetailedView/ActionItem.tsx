@@ -2,7 +2,7 @@ import { MinusCircleOutlined, PlusCircleOutlined } from '@ant-design/icons';
 import { Button, Col, Popover } from 'antd';
 import getStep from 'lib/getStep';
 import { generateFilterQuery } from 'lib/logs/generateFilterQuery';
-import React, { memo, useMemo } from 'react';
+import { memo, useMemo } from 'react';
 import { connect, useDispatch, useSelector } from 'react-redux';
 import { bindActionCreators, Dispatch } from 'redux';
 import { ThunkDispatch } from 'redux-thunk';

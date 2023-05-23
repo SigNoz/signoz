@@ -2,14 +2,7 @@ import { Input, InputRef, Popover } from 'antd';
 import useUrlQuery from 'hooks/useUrlQuery';
 import getStep from 'lib/getStep';
 import debounce from 'lodash-es/debounce';
-import React, {
-	memo,
-	useCallback,
-	useEffect,
-	useMemo,
-	useRef,
-	useState,
-} from 'react';
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { connect, useDispatch, useSelector } from 'react-redux';
 import { bindActionCreators, Dispatch } from 'redux';
 import { ThunkDispatch } from 'redux-thunk';
@@ -36,11 +29,7 @@ function SearchFilter({
 	getLogsAggregate,
 	getLogsFields,
 }: SearchFilterProps): JSX.Element {
-	const {
-		updateParsedQuery,
-		updateQueryString,
-		queryString,
-	} = useSearchParser();
+	const { updateQueryString, queryString } = useSearchParser();
 	const [searchText, setSearchText] = useState(queryString);
 	const [showDropDown, setShowDropDown] = useState(false);
 	const searchRef = useRef<InputRef>(null);
@@ -173,6 +162,13 @@ function SearchFilter({
 		globalTime.minTime,
 	]);
 
+	const onPopOverChange = useCallback(
+		(isVisible: boolean) => {
+			onDropDownToggleHandler(isVisible)();
+		},
+		[onDropDownToggleHandler],
+	);
+
 	return (
 		<Container>
 			<Popover
@@ -180,8 +176,8 @@ function SearchFilter({
 				content={
 					<DropDownContainer>
 						<SearchFields
+							updateQueryString={updateQueryString}
 							onDropDownToggleHandler={onDropDownToggleHandler}
-							updateParsedQuery={updateParsedQuery as never}
 						/>
 					</DropDownContainer>
 				}
@@ -189,11 +185,9 @@ function SearchFilter({
 				overlayInnerStyle={{
 					width: `${searchRef?.current?.input?.offsetWidth || 0}px`,
 				}}
-				visible={showDropDown}
+				open={showDropDown}
 				destroyTooltipOnHide
-				onVisibleChange={(value): void => {
-					onDropDownToggleHandler(value)();
-				}}
+				onOpenChange={onPopOverChange}
 			>
 				<Input.Search
 					ref={searchRef}

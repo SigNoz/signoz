@@ -1,6 +1,5 @@
 /* eslint-disable react/destructuring-assignment */
 import { Tag } from 'antd';
-import React from 'react';
 
 import { Data } from '../index';
 

@@ -6,7 +6,7 @@ import Header from 'container/Header';
 import SideNav from 'container/SideNav';
 import TopNav from 'container/TopNav';
 import { useNotifications } from 'hooks/useNotifications';
-import React, { ReactNode, useEffect, useRef } from 'react';
+import { ReactNode, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useQueries } from 'react-query';
 import { useDispatch, useSelector } from 'react-redux';
@@ -18,7 +18,7 @@ import {
 	UPDATE_CONFIGS,
 	UPDATE_CURRENT_ERROR,
 	UPDATE_CURRENT_VERSION,
-	UPDATE_FEATURE_FLAGS,
+	UPDATE_FEATURE_FLAG_RESPONSE,
 	UPDATE_LATEST_VERSION,
 	UPDATE_LATEST_VERSION_ERROR,
 } from 'types/actions/app';
@@ -27,7 +27,9 @@ import AppReducer from 'types/reducer/app';
 import { ChildrenContainer, Layout } from './styles';
 
 function AppLayout(props: AppLayoutProps): JSX.Element {
-	const { isLoggedIn } = useSelector<AppState, AppReducer>((state) => state.app);
+	const { isLoggedIn, user } = useSelector<AppState, AppReducer>(
+		(state) => state.app,
+	);
 	const { pathname } = useLocation();
 	const { t } = useTranslation();
 
@@ -39,21 +41,21 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 	] = useQueries([
 		{
 			queryFn: getUserVersion,
-			queryKey: 'getUserVersion',
+			queryKey: ['getUserVersion', user?.accessJwt],
 			enabled: isLoggedIn,
 		},
 		{
 			queryFn: getUserLatestVersion,
-			queryKey: 'getUserLatestVersion',
+			queryKey: ['getUserLatestVersion', user?.accessJwt],
 			enabled: isLoggedIn,
 		},
 		{
 			queryFn: getFeaturesFlags,
-			queryKey: 'getFeatureFlags',
+			queryKey: ['getFeatureFlags', user?.accessJwt],
 		},
 		{
 			queryFn: getDynamicConfigs,
-			queryKey: 'getDynamicConfigs',
+			queryKey: ['getDynamicConfigs', user?.accessJwt],
 		},
 	]);
 
@@ -129,19 +131,6 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 				message: t('oops_something_went_wrong_version'),
 			});
 		}
-		if (
-			getFeaturesResponse.isFetched &&
-			getFeaturesResponse.isSuccess &&
-			getFeaturesResponse.data &&
-			getFeaturesResponse.data.payload
-		) {
-			dispatch({
-				type: UPDATE_FEATURE_FLAGS,
-				payload: {
-					...getFeaturesResponse.data.payload,
-				},
-			});
-		}
 
 		if (
 			getUserVersionResponse.isFetched &&
@@ -169,20 +158,6 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 				type: UPDATE_LATEST_VERSION,
 				payload: {
 					latestVersion: getUserLatestVersionResponse.data.payload.tag_name,
-				},
-			});
-		}
-
-		if (
-			getFeaturesResponse.isFetched &&
-			getFeaturesResponse.isSuccess &&
-			getFeaturesResponse.data &&
-			getFeaturesResponse.data.payload
-		) {
-			dispatch({
-				type: UPDATE_FEATURE_FLAGS,
-				payload: {
-					...getFeaturesResponse.data.payload,
 				},
 			});
 		}
@@ -224,6 +199,29 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 		getDynamicConfigsResponse.isFetched,
 		getDynamicConfigsResponse.isSuccess,
 		notifications,
+	]);
+
+	useEffect(() => {
+		if (
+			getFeaturesResponse.isFetched &&
+			getFeaturesResponse.isSuccess &&
+			getFeaturesResponse.data &&
+			getFeaturesResponse.data.payload
+		) {
+			dispatch({
+				type: UPDATE_FEATURE_FLAG_RESPONSE,
+				payload: {
+					featureFlag: getFeaturesResponse.data.payload,
+					refetch: getFeaturesResponse.refetch,
+				},
+			});
+		}
+	}, [
+		dispatch,
+		getFeaturesResponse.data,
+		getFeaturesResponse.isFetched,
+		getFeaturesResponse.isSuccess,
+		getFeaturesResponse.refetch,
 	]);
 
 	const isToDisplayLayout = isLoggedIn;

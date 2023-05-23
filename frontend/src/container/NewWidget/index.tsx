@@ -1,10 +1,15 @@
-import { Button, Modal, Typography } from 'antd';
+import { LockFilled } from '@ant-design/icons';
+import { Button, Modal, Tooltip, Typography } from 'antd';
+import { FeatureKeys } from 'constants/features';
 import ROUTES from 'constants/routes';
 import { GRAPH_TYPES } from 'container/NewDashboard/ComponentsSlider';
+import { ITEMS } from 'container/NewDashboard/ComponentsSlider/menuItems';
+import { MESSAGE, useIsFeatureDisabled } from 'hooks/useFeatureFlag';
+import { useNotifications } from 'hooks/useNotifications';
 import { getDashboardVariables } from 'lib/dashbaordVariables/getDashboardVariables';
 import history from 'lib/history';
 import { DashboardWidgetPageParams } from 'pages/DashboardWidget';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { connect, useDispatch, useSelector } from 'react-redux';
 import { generatePath, useLocation, useParams } from 'react-router-dom';
 import { bindActionCreators, Dispatch } from 'redux';
@@ -21,6 +26,7 @@ import { AppState } from 'store/reducers';
 import AppActions from 'types/actions';
 import { FLUSH_DASHBOARD } from 'types/actions/dashboard';
 import { Widgets } from 'types/api/dashboard/getAll';
+import AppReducer from 'types/reducer/app';
 import DashboardReducer from 'types/reducer/dashboards';
 import { GlobalReducer } from 'types/reducer/globalTime';
 
@@ -34,7 +40,6 @@ import {
 	LeftContainerWrapper,
 	PanelContainer,
 	RightContainerWrapper,
-	Tag,
 } from './styles';
 
 function NewWidget({
@@ -50,6 +55,10 @@ function NewWidget({
 		AppState,
 		GlobalReducer
 	>((state) => state.globalTime);
+
+	const { featureResponse } = useSelector<AppState, AppReducer>(
+		(state) => state.app,
+	);
 
 	const [selectedDashboard] = dashboards;
 
@@ -84,8 +93,8 @@ function NewWidget({
 		selectedWidget?.nullZeroValues || 'zero',
 	);
 	const [saveModal, setSaveModal] = useState(false);
-	const [hasUnstagedChanges, setHasUnstagedChanges] = useState(false);
 
+	const [graphType, setGraphType] = useState(selectedGraph);
 	const getSelectedTime = useCallback(
 		() =>
 			TimeItems.find(
@@ -99,21 +108,34 @@ function NewWidget({
 		enum: selectedWidget?.timePreferance || 'GLOBAL_TIME',
 	});
 
+	const { notifications } = useNotifications();
+
 	const onClickSaveHandler = useCallback(() => {
 		// update the global state
-		saveSettingOfPanel({
-			uuid: selectedDashboard.uuid,
-			description,
-			isStacked: stacked,
-			nullZeroValues: selectedNullZeroValue,
-			opacity,
-			timePreferance: selectedTime.enum,
-			title,
-			yAxisUnit,
-			widgetId: query.get('widgetId') || '',
-			dashboardId,
-		});
+		featureResponse
+			.refetch()
+			.then(() => {
+				saveSettingOfPanel({
+					uuid: selectedDashboard.uuid,
+					description,
+					isStacked: stacked,
+					nullZeroValues: selectedNullZeroValue,
+					opacity,
+					timePreferance: selectedTime.enum,
+					title,
+					yAxisUnit,
+					widgetId: query.get('widgetId') || '',
+					dashboardId,
+					graphType,
+				});
+			})
+			.catch(() => {
+				notifications.error({
+					message: 'Something went wrong',
+				});
+			});
 	}, [
+		featureResponse,
 		saveSettingOfPanel,
 		selectedDashboard.uuid,
 		description,
@@ -125,6 +147,8 @@ function NewWidget({
 		yAxisUnit,
 		query,
 		dashboardId,
+		graphType,
+		notifications,
 	]);
 
 	const onClickDiscardHandler = useCallback(() => {
@@ -140,7 +164,7 @@ function NewWidget({
 				query: selectedWidget?.query,
 				selectedTime: selectedTime.enum,
 				widgetId: selectedWidget?.id || '',
-				graphType: selectedGraph,
+				graphType,
 				globalSelectedInterval,
 				variables: getDashboardVariables(),
 			});
@@ -149,37 +173,66 @@ function NewWidget({
 		selectedWidget?.query,
 		selectedTime.enum,
 		selectedWidget?.id,
-		selectedGraph,
 		getQueryResults,
 		globalSelectedInterval,
+		graphType,
 	]);
+
+	const setGraphHandler = (type: ITEMS): void => {
+		const params = new URLSearchParams(search);
+		params.set('graphType', type);
+		history.push({ search: params.toString() });
+		setGraphType(type);
+	};
 
 	useEffect(() => {
 		getQueryResult();
 	}, [getQueryResult]);
 
+	const onSaveDashboard = useCallback((): void => {
+		setSaveModal(true);
+	}, []);
+
+	const isQueryBuilderActive = useIsFeatureDisabled(
+		FeatureKeys.QUERY_BUILDER_PANELS,
+	);
+
 	return (
 		<Container>
 			<ButtonContainer>
-				<Button type="primary" onClick={(): void => setSaveModal(true)}>
-					Save
-				</Button>
-				{/* <Button onClick={onClickApplyHandler}>Apply</Button> */}
+				{isQueryBuilderActive && (
+					<Tooltip title={MESSAGE.PANEL}>
+						<Button
+							icon={<LockFilled />}
+							type="primary"
+							disabled={isQueryBuilderActive}
+							onClick={onSaveDashboard}
+						>
+							Save
+						</Button>
+					</Tooltip>
+				)}
+
+				{!isQueryBuilderActive && (
+					<Button
+						type="primary"
+						disabled={isQueryBuilderActive}
+						onClick={onSaveDashboard}
+					>
+						Save
+					</Button>
+				)}
 				<Button onClick={onClickDiscardHandler}>Discard</Button>
 			</ButtonContainer>
 
 			<PanelContainer>
 				<LeftContainerWrapper flex={5}>
-					<LeftContainer
-						handleUnstagedChanges={setHasUnstagedChanges}
-						selectedTime={selectedTime}
-						selectedGraph={selectedGraph}
-						yAxisUnit={yAxisUnit}
-					/>
+					<LeftContainer selectedGraph={graphType} yAxisUnit={yAxisUnit} />
 				</LeftContainerWrapper>
 
 				<RightContainerWrapper flex={1}>
 					<RightContainer
+						setGraphHandler={setGraphHandler}
 						{...{
 							title,
 							setTitle,
@@ -192,7 +245,7 @@ function NewWidget({
 							setOpacity,
 							selectedNullZeroValue,
 							setSelectedNullZeroValue,
-							selectedGraph,
+							selectedGraph: graphType,
 							setSelectedTime,
 							selectedTime,
 							setYAxisUnit,
@@ -207,26 +260,16 @@ function NewWidget({
 				destroyOnClose
 				closable
 				onCancel={(): void => setSaveModal(false)}
-				onOk={(): void => {
-					onClickSaveHandler();
-				}}
+				onOk={onClickSaveHandler}
 				centered
 				open={saveModal}
 				width={600}
 			>
-				{hasUnstagedChanges ? (
-					<Typography>
-						Looks like you have unstaged changes. Would you like to SAVE the last
-						staged changes? If you want to stage new changes - Press{' '}
-						<Tag>Stage & Run Query</Tag> and then try saving again.
-					</Typography>
-				) : (
-					<Typography>
-						Your graph built with{' '}
-						<QueryTypeTag queryType={selectedWidget?.query.queryType} /> query will be
-						saved. Press OK to confirm.
-					</Typography>
-				)}
+				<Typography>
+					Your graph built with{' '}
+					<QueryTypeTag queryType={selectedWidget?.query.queryType} /> query will be
+					saved. Press OK to confirm.
+				</Typography>
 			</Modal>
 		</Container>
 	);

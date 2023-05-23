@@ -1,8 +1,5 @@
 import { Tabs, TabsProps } from 'antd';
 import history from 'lib/history';
-import React from 'react';
-
-const { TabPane } = Tabs;
 
 function RouteTab({
 	routes,
@@ -22,29 +19,23 @@ function RouteTab({
 		}
 	};
 
+	const items = routes.map(({ Component, name, route }) => ({
+		label: name,
+		key: name,
+		tabKey: route,
+		children: <Component />,
+	}));
+
 	return (
 		<Tabs
 			onChange={onChange}
 			destroyInactiveTabPane
 			activeKey={activeKey}
 			animated
+			items={items}
 			// eslint-disable-next-line react/jsx-props-no-spreading
 			{...rest}
-		>
-			{routes.map(
-				({ Component, name, route }): JSX.Element => (
-					<TabPane
-						tabKey={route}
-						animated
-						destroyInactiveTabPane
-						tab={name}
-						key={name}
-					>
-						<Component />
-					</TabPane>
-				),
-			)}
-		</Tabs>
+		/>
 	);
 }
 

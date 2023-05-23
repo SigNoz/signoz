@@ -97,6 +97,11 @@ var correctQueriesTest = []struct {
 		`id.userid in (100) and id_userid gt 50`,
 		[]string{`id.userid IN (100) `, `and id_userid > 50 `},
 	},
+	{
+		`filters with case sensitive key name`,
+		`userIdentifier in ('user') and userIdentifier contains 'user'`,
+		[]string{`userIdentifier IN ('user') `, `AND userIdentifier ILIKE '%user%' `},
+	},
 }
 
 func TestParseLogQueryCorrect(t *testing.T) {
