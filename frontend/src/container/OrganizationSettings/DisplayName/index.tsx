@@ -15,7 +15,7 @@ function DisplayName({
 	id: orgId,
 	isAnonymous,
 }: DisplayNameProps): JSX.Element {
-	const [form] = Form.useForm();
+	const [form] = Form.useForm<FormValues>();
 
 	const { t } = useTranslation(['organizationsettings', 'common']);
 	const { org } = useSelector<AppState, AppReducer>((state) => state.app);
@@ -24,12 +24,13 @@ function DisplayName({
 	const dispatch = useDispatch<Dispatch<AppActions>>();
 	const { notifications } = useNotifications();
 
-	const onSubmit = async ({ name: orgName }: OnSubmitProps): Promise<void> => {
+	const onSubmit = async (values: FormValues): Promise<void> => {
 		try {
 			setIsLoading(true);
+			const { name } = values;
 			const { statusCode, error } = await editOrg({
 				isAnonymous,
-				name: orgName,
+				name,
 				orgId,
 			});
 			if (statusCode === 200) {
@@ -42,7 +43,7 @@ function DisplayName({
 					type: UPDATE_ORG_NAME,
 					payload: {
 						orgId,
-						name: orgName,
+						name,
 					},
 				});
 			} else {
@@ -78,7 +79,7 @@ function DisplayName({
 			autoComplete="off"
 		>
 			<Form.Item name="name" label="Display name" rules={[{ required: true }]}>
-				<Input size="large" placeholder={t('signoz')} disabled={isLoading} />
+				<Input size="large" placeholder={t('signoz')} />
 			</Form.Item>
 			<Form.Item>
 				<Button loading={isLoading} type="primary" htmlType="submit">
@@ -95,7 +96,7 @@ interface DisplayNameProps {
 	isAnonymous: boolean;
 }
 
-interface OnSubmitProps {
+interface FormValues {
 	name: string;
 }
 
