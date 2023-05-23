@@ -9,6 +9,7 @@ import { AppState } from 'store/reducers';
 import AppActions from 'types/actions';
 import { UPDATE_ORG_NAME } from 'types/actions/app';
 import AppReducer, { User } from 'types/reducer/app';
+import { requireErrorMessage } from 'utils/form/requireErrorMessage';
 
 function DisplayName({
 	index,
@@ -78,7 +79,11 @@ function DisplayName({
 			onFinish={onSubmit}
 			autoComplete="off"
 		>
-			<Form.Item name="name" label="Display name" rules={[{ required: true }]}>
+			<Form.Item
+				name="name"
+				label="Display name"
+				rules={[{ required: true, message: requireErrorMessage('Display name') }]}
+			>
 				<Input size="large" placeholder={t('signoz')} />
 			</Form.Item>
 			<Form.Item>
