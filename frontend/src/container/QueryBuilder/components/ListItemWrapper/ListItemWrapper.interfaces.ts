@@ -1,6 +1,6 @@
-import React from 'react';
+import { ReactNode } from 'react';
 
 export type ListItemWrapperProps = {
 	onDelete: () => void;
-	children: React.ReactNode;
+	children: ReactNode;
 };

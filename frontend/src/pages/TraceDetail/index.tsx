@@ -4,7 +4,7 @@ import NotFound from 'components/NotFound';
 import Spinner from 'components/Spinner';
 import TraceDetailContainer from 'container/TraceDetail';
 import useUrlQuery from 'hooks/useUrlQuery';
-import React, { useMemo } from 'react';
+import { useMemo } from 'react';
 import { useQuery } from 'react-query';
 import { useParams } from 'react-router-dom';
 import { Props as TraceDetailProps } from 'types/api/trace/getTraceItem';

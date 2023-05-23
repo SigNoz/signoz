@@ -1,7 +1,7 @@
 import { Table } from 'antd';
 import type { TableProps } from 'antd/es/table';
 import { ColumnsType } from 'antd/lib/table';
-import React, { useCallback, useMemo, useState } from 'react';
+import { SyntheticEvent, useCallback, useMemo, useState } from 'react';
 import { ResizeCallbackData } from 'react-resizable';
 
 import ResizableHeader from './ResizableHeader';
@@ -12,7 +12,7 @@ function ResizeTable({ columns, ...restprops }: TableProps<any>): JSX.Element {
 
 	const handleResize = useCallback(
 		(index: number) => (
-			_e: React.SyntheticEvent<Element>,
+			_e: SyntheticEvent<Element>,
 			{ size }: ResizeCallbackData,
 		): void => {
 			const newColumns = [...columnsData];

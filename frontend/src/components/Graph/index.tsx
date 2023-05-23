@@ -26,7 +26,7 @@ import annotationPlugin from 'chartjs-plugin-annotation';
 import dayjs from 'dayjs';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import isEqual from 'lodash-es/isEqual';
-import React, { memo, useCallback, useEffect, useRef } from 'react';
+import { memo, useCallback, useEffect, useRef } from 'react';
 
 import { hasData } from './hasData';
 import { getAxisLabelColor } from './helpers';

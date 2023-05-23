@@ -1,5 +1,5 @@
 import { render, RenderResult, screen, waitFor } from '@testing-library/react';
-import React from 'react';
+import { ReactElement } from 'react';
 import { Provider } from 'react-redux';
 import { BrowserRouter } from 'react-router-dom';
 import {
@@ -18,7 +18,7 @@ const rootReducer = combineReducers({
 const mockStore = createStore(rootReducer);
 
 const renderWithReduxAndRouter = (mockStore: Store) => (
-	component: React.ReactElement,
+	component: ReactElement,
 ): RenderResult =>
 	render(
 		<BrowserRouter>

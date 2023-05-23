@@ -8,8 +8,10 @@ import { Logout } from 'api/utils';
 import ROUTES from 'constants/routes';
 import Config from 'container/ConfigDropdown';
 import { useIsDarkMode, useThemeMode } from 'hooks/useDarkMode';
-import React, {
+import useLicense, { LICENSE_PLAN_STATUS } from 'hooks/useLicense';
+import {
 	Dispatch,
+	KeyboardEvent,
 	SetStateAction,
 	useCallback,
 	useMemo,
@@ -49,14 +51,11 @@ function HeaderContainer(): JSX.Element {
 		[],
 	);
 
-	const onLogoutKeyDown = useCallback(
-		(e: React.KeyboardEvent<HTMLDivElement>) => {
-			if (e.key === 'Enter' || e.key === 'Space') {
-				Logout();
-			}
-		},
-		[],
-	);
+	const onLogoutKeyDown = useCallback((e: KeyboardEvent<HTMLDivElement>) => {
+		if (e.key === 'Enter' || e.key === 'Space') {
+			Logout();
+		}
+	}, []);
 
 	const menu: MenuProps = useMemo(
 		() => ({
@@ -97,6 +96,11 @@ function HeaderContainer(): JSX.Element {
 		);
 	};
 
+	const { data } = useLicense();
+
+	const isLicenseActive =
+		data?.payload?.find((e) => e.isCurrent)?.status === LICENSE_PLAN_STATUS.VALID;
+
 	return (
 		<Header>
 			<Container>
@@ -113,9 +117,11 @@ function HeaderContainer(): JSX.Element {
 				</NavLink>
 
 				<Space size="middle" align="center">
-					<Button onClick={onClickSignozCloud} type="primary">
-						Try Signoz Cloud
-					</Button>
+					{!isLicenseActive && (
+						<Button onClick={onClickSignozCloud} type="primary">
+							Try Signoz Cloud
+						</Button>
+					)}
 
 					<Config frontendId="tooltip" />
 

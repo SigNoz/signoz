@@ -2,7 +2,6 @@ import RouteTab from 'components/RouteTab';
 import ROUTES from 'constants/routes';
 import AllErrorsContainer from 'container/AllError';
 import ResourceAttributesFilter from 'container/ResourceAttributesFilter';
-import React from 'react';
 import { useTranslation } from 'react-i18next';
 
 function AllErrors(): JSX.Element {

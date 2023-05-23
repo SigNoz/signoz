@@ -1,7 +1,13 @@
 import { Select, Spin, Tag, Tooltip } from 'antd';
 import { useAutoComplete } from 'hooks/queryBuilder/useAutoComplete';
 import { useFetchKeysAndValues } from 'hooks/queryBuilder/useFetchKeysAndValues';
-import React, { useEffect, useMemo } from 'react';
+import {
+	KeyboardEvent,
+	ReactElement,
+	ReactNode,
+	useEffect,
+	useMemo,
+} from 'react';
 import {
 	IBuilderQuery,
 	TagFilter,
@@ -44,7 +50,7 @@ function QueryBuilderSearch({
 		value,
 		closable,
 		onClose,
-	}: CustomTagProps): React.ReactElement => {
+	}: CustomTagProps): ReactElement => {
 		const { tagOperator } = getTagToken(value);
 		const isInNin = isInNInOperator(tagOperator);
 		const chipValue = isInNin
@@ -83,7 +89,7 @@ function QueryBuilderSearch({
 		if (!isMulti) handleSearch(value[value.length - 1]);
 	};
 
-	const onInputKeyDownHandler = (event: React.KeyboardEvent<Element>): void => {
+	const onInputKeyDownHandler = (event: KeyboardEvent<Element>): void => {
 		if (isMulti || event.key === 'Backspace') handleKeyDown(event);
 		if (isExistsNotExistsOperator(searchValue)) handleKeyDown(event);
 	};
@@ -160,10 +166,10 @@ interface QueryBuilderSearchProps {
 }
 
 export interface CustomTagProps {
-	label: React.ReactNode;
+	label: ReactNode;
 	value: string;
 	disabled: boolean;
-	onClose: (event?: React.MouseEvent<HTMLElement, MouseEvent>) => void;
+	onClose: () => void;
 	closable: boolean;
 }
 

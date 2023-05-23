@@ -12,7 +12,7 @@ import {
 } from 'lib/query/transformQueryBuilderData';
 // ** Helpers
 import { transformStringWithPrefix } from 'lib/query/transformStringWithPrefix';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Having, HavingForm } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource } from 'types/common/queryBuilder';
 import { SelectOption } from 'types/common/select';

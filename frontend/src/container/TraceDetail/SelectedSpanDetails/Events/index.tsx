@@ -1,5 +1,4 @@
 import { Typography } from 'antd';
-import React from 'react';
 import { ITraceEvents } from 'types/api/trace/getTraceItem';
 
 import ErrorTag from './Event';

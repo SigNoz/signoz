@@ -1,6 +1,5 @@
 import { Breadcrumb } from 'antd';
 import ROUTES from 'constants/routes';
-import React from 'react';
 import { Link, RouteComponentProps, withRouter } from 'react-router-dom';
 
 const breadcrumbNameMap = {

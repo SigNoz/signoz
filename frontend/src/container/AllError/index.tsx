@@ -23,7 +23,7 @@ import { convertRawQueriesToTraceSelectedTags } from 'hooks/useResourceAttribute
 import useUrlQuery from 'hooks/useUrlQuery';
 import createQueryParams from 'lib/createQueryParams';
 import history from 'lib/history';
-import React, { useCallback, useEffect, useMemo } from 'react';
+import { useCallback, useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useQueries } from 'react-query';
 import { useSelector } from 'react-redux';

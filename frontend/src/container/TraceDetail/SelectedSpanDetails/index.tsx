@@ -4,7 +4,7 @@ import { StyledSpace } from 'components/Styled';
 import ROUTES from 'constants/routes';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import history from 'lib/history';
-import React, { useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { ITraceTree } from 'types/api/trace/getTraceItem';
 
