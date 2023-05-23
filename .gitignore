@@ -53,3 +53,5 @@ ee/query-service/tests/test-deploy/data/
 bin/
 
 */query-service/queries.active
+
+frontend/storybook-static

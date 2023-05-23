@@ -17,6 +17,7 @@ module.exports = {
 		'plugin:import/errors',
 		'plugin:import/warnings',
 		'plugin:react/jsx-runtime',
+		'plugin:storybook/recommended',
 	],
 	parser: '@typescript-eslint/parser',
 	parserOptions: {
@@ -85,7 +86,12 @@ module.exports = {
 				tsx: 'never',
 			},
 		],
-		'import/no-extraneous-dependencies': ['error', { devDependencies: true }],
+		'import/no-extraneous-dependencies': [
+			'error',
+			{
+				devDependencies: true,
+			},
+		],
 		'jsx-a11y/label-has-associated-control': [
 			'error',
 			{
@@ -103,7 +109,13 @@ module.exports = {
 			},
 		],
 		'@typescript-eslint/no-unused-vars': 'error',
-		'func-style': ['error', 'declaration', { allowArrowFunctions: true }],
+		'func-style': [
+			'error',
+			'declaration',
+			{
+				allowArrowFunctions: true,
+			},
+		],
 		'arrow-body-style': ['error', 'as-needed'],
 
 		// eslint rules need to remove

@@ -19,7 +19,9 @@
 		"playwright:codegen:local": "playwright codegen http://localhost:3301",
 		"playwright:codegen:local:auth": "yarn playwright:codegen:local --load-storage=tests/auth.json",
 		"husky:configure": "cd .. && husky install frontend/.husky && cd frontend && chmod ug+x .husky/*",
-		"commitlint": "commitlint --edit $1"
+		"commitlint": "commitlint --edit $1",
+		"storybook": "storybook dev -p 6006",
+		"build-storybook": "storybook build"
 	},
 	"engines": {
 		"node": ">=16.15.0"
@@ -116,6 +118,13 @@
 		"@commitlint/config-conventional": "^16.2.4",
 		"@jest/globals": "^27.5.1",
 		"@playwright/test": "^1.22.0",
+		"@storybook/addon-essentials": "^7.0.14",
+		"@storybook/addon-interactions": "^7.0.14",
+		"@storybook/addon-links": "^7.0.14",
+		"@storybook/blocks": "^7.0.14",
+		"@storybook/react": "^7.0.14",
+		"@storybook/react-webpack5": "^7.0.14",
+		"@storybook/testing-library": "^0.0.14-next.2",
 		"@testing-library/jest-dom": "5.16.5",
 		"@testing-library/react": "13.4.0",
 		"@testing-library/user-event": "14.4.3",
@@ -163,6 +172,7 @@
 		"eslint-plugin-react-hooks": "^4.3.0",
 		"eslint-plugin-simple-import-sort": "^7.0.0",
 		"eslint-plugin-sonarjs": "^0.12.0",
+		"eslint-plugin-storybook": "0.6.12",
 		"husky": "^7.0.4",
 		"is-ci": "^3.0.1",
 		"jest-playwright-preset": "^1.7.0",
@@ -173,6 +183,7 @@
 		"react-hooks-testing-library": "0.6.0",
 		"react-hot-loader": "^4.13.0",
 		"react-resizable": "3.0.4",
+		"storybook": "^7.0.14",
 		"ts-jest": "^27.1.4",
 		"ts-node": "^10.2.1",
 		"typescript-plugin-css-modules": "^3.4.0",
