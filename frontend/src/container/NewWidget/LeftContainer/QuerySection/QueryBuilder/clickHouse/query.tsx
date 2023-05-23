@@ -1,42 +1,80 @@
 import { Input } from 'antd';
 import MonacoEditor from 'components/Editor';
-import { IClickHouseQuery } from 'types/api/dashboard/getAll';
+import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
+import { ChangeEvent, useCallback } from 'react';
+import { IClickHouseQuery } from 'types/api/queryBuilder/queryBuilderData';
+import { EQueryType } from 'types/common/dashboard';
 
 import QueryHeader from '../QueryHeader';
-import { IClickHouseQueryHandleChange } from './types';
 
 interface IClickHouseQueryBuilderProps {
 	queryData: IClickHouseQuery;
-	queryIndex: number | string;
-	handleQueryChange: (args: IClickHouseQueryHandleChange) => void;
+	queryIndex: number;
+	deletable: boolean;
 }
 
 function ClickHouseQueryBuilder({
 	queryData,
 	queryIndex,
-	handleQueryChange,
+	deletable,
 }: IClickHouseQueryBuilderProps): JSX.Element | null {
-	if (queryData === undefined) {
-		return null;
-	}
+	const {
+		handleSetQueryItemData,
+		removeQueryTypeItemByIndex,
+	} = useQueryBuilder();
+
+	const handleRemoveQuery = useCallback(() => {
+		removeQueryTypeItemByIndex(EQueryType.CLICKHOUSE, queryIndex);
+	}, [queryIndex, removeQueryTypeItemByIndex]);
+
+	const handleUpdateQuery = useCallback(
+		<Field extends keyof IClickHouseQuery, Value extends IClickHouseQuery[Field]>(
+			field: keyof IClickHouseQuery,
+			value: Value,
+		) => {
+			const newQuery: IClickHouseQuery = { ...queryData, [field]: value };
+
+			handleSetQueryItemData(queryIndex, EQueryType.CLICKHOUSE, newQuery);
+		},
+		[handleSetQueryItemData, queryIndex, queryData],
+	);
+
+	const handleDisable = useCallback(() => {
+		const newQuery: IClickHouseQuery = {
+			...queryData,
+			disabled: !queryData.disabled,
+		};
+
+		handleSetQueryItemData(queryIndex, EQueryType.CLICKHOUSE, newQuery);
+	}, [handleSetQueryItemData, queryData, queryIndex]);
+
+	const handleUpdateEditor = useCallback(
+		(value: string) => {
+			handleUpdateQuery('rawQuery', value);
+		},
+		[handleUpdateQuery],
+	);
+
+	const handleUpdateInput = useCallback(
+		(e: ChangeEvent<HTMLInputElement>) => {
+			const { name, value } = e.target;
+			handleUpdateQuery(name as keyof IClickHouseQuery, value);
+		},
+		[handleUpdateQuery],
+	);
 
 	return (
 		<QueryHeader
 			name={queryData.name}
 			disabled={queryData.disabled}
-			onDisable={(): void =>
-				handleQueryChange({ queryIndex, toggleDisable: true })
-			}
-			onDelete={(): void => {
-				handleQueryChange({ queryIndex, toggleDelete: true });
-			}}
+			onDisable={handleDisable}
+			onDelete={handleRemoveQuery}
+			deletable={deletable}
 		>
 			<MonacoEditor
 				language="sql"
 				height="200px"
-				onChange={(value): void =>
-					handleQueryChange({ queryIndex, rawQuery: value })
-				}
+				onChange={handleUpdateEditor}
 				value={queryData.rawQuery}
 				options={{
 					scrollbar: {
@@ -48,9 +86,8 @@ function ClickHouseQueryBuilder({
 				}}
 			/>
 			<Input
-				onChange={(event): void =>
-					handleQueryChange({ queryIndex, legend: event.target.value })
-				}
+				onChange={handleUpdateInput}
+				name="legend"
 				size="middle"
 				defaultValue={queryData.legend}
 				value={queryData.legend}
