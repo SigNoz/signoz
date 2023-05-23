@@ -1,9 +1,9 @@
 import { initialQueryBuilderFormValues } from 'constants/queryBuilder';
+import { BuilderQueryDataResourse } from 'types/api/queryBuilder/queryBuilderData';
 import { isQuery, QueryBuilderData } from 'types/common/queryBuilder';
-import { QueryDataResourse } from 'types/common/queryBuilderMappers.types';
 
 export const mapQueryDataFromApi = (
-	data: QueryDataResourse,
+	data: BuilderQueryDataResourse,
 ): QueryBuilderData => {
 	const queryData: QueryBuilderData['queryData'] = [];
 	const queryFormulas: QueryBuilderData['queryFormulas'] = [];
