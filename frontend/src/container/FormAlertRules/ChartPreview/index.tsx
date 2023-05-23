@@ -11,7 +11,7 @@ import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useQuery } from 'react-query';
 import { GetMetricQueryRange } from 'store/actions/dashboard/getQueryResults';
-import { Query } from 'types/api/dashboard/getAll';
+import { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { EQueryType } from 'types/common/dashboard';
 
 import { ChartContainer, FailedMessageContainer } from './styles';
