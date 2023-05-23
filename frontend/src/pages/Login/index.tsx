@@ -23,7 +23,7 @@ function Login(): JSX.Element {
 
 	const versionResult = useQuery({
 		queryFn: getUserVersion,
-		queryKey: 'getUserVersion',
+		queryKey: ['getUserVersion', jwt],
 		enabled: !isLoggedIn,
 	});
 
