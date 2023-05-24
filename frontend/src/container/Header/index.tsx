@@ -8,6 +8,7 @@ import { Logout } from 'api/utils';
 import ROUTES from 'constants/routes';
 import Config from 'container/ConfigDropdown';
 import { useIsDarkMode, useThemeMode } from 'hooks/useDarkMode';
+import useLicense, { LICENSE_PLAN_STATUS } from 'hooks/useLicense';
 import {
 	Dispatch,
 	KeyboardEvent,
@@ -95,6 +96,11 @@ function HeaderContainer(): JSX.Element {
 		);
 	};
 
+	const { data } = useLicense();
+
+	const isLicenseActive =
+		data?.payload?.find((e) => e.isCurrent)?.status === LICENSE_PLAN_STATUS.VALID;
+
 	return (
 		<Header>
 			<Container>
@@ -111,9 +117,11 @@ function HeaderContainer(): JSX.Element {
 				</NavLink>
 
 				<Space size="middle" align="center">
-					<Button onClick={onClickSignozCloud} type="primary">
-						Try Signoz Cloud
-					</Button>
+					{!isLicenseActive && (
+						<Button onClick={onClickSignozCloud} type="primary">
+							Try Signoz Cloud
+						</Button>
+					)}
 
 					<Config frontendId="tooltip" />
 

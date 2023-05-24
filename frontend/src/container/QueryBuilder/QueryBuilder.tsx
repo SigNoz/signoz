@@ -17,10 +17,10 @@ export const QueryBuilder = memo(function QueryBuilder({
 	panelType,
 }: QueryBuilderProps): JSX.Element {
 	const {
-		queryBuilderData,
+		currentQuery,
 		setupInitialDataSource,
 		resetQueryBuilderInfo,
-		addNewQuery,
+		addNewBuilderQuery,
 		addNewFormula,
 		handleSetPanelType,
 	} = useQueryBuilder();
@@ -43,27 +43,27 @@ export const QueryBuilder = memo(function QueryBuilder({
 	);
 
 	const isDisabledQueryButton = useMemo(
-		() => queryBuilderData.queryData.length >= MAX_QUERIES,
-		[queryBuilderData],
+		() => currentQuery.builder.queryData.length >= MAX_QUERIES,
+		[currentQuery],
 	);
 
 	const isDisabledFormulaButton = useMemo(
-		() => queryBuilderData.queryFormulas.length >= MAX_FORMULAS,
-		[queryBuilderData],
+		() => currentQuery.builder.queryFormulas.length >= MAX_FORMULAS,
+		[currentQuery],
 	);
 
 	const isAvailableToDisableQuery = useMemo(
 		() =>
-			queryBuilderData.queryData.length > 1 ||
-			queryBuilderData.queryFormulas.length > 0,
-		[queryBuilderData],
+			currentQuery.builder.queryData.length > 1 ||
+			currentQuery.builder.queryFormulas.length > 0,
+		[currentQuery],
 	);
 
 	return (
 		<Row gutter={[0, 20]} justify="start">
 			<Col span={24}>
 				<Row gutter={[0, 50]}>
-					{queryBuilderData.queryData.map((query, index) => (
+					{currentQuery.builder.queryData.map((query, index) => (
 						<Col key={query.queryName} span={24}>
 							<Query
 								index={index}
@@ -73,7 +73,7 @@ export const QueryBuilder = memo(function QueryBuilder({
 							/>
 						</Col>
 					))}
-					{queryBuilderData.queryFormulas.map((formula, index) => (
+					{currentQuery.builder.queryFormulas.map((formula, index) => (
 						<Col key={formula.queryName} span={24}>
 							<Formula formula={formula} index={index} />
 						</Col>
@@ -87,7 +87,7 @@ export const QueryBuilder = memo(function QueryBuilder({
 						disabled={isDisabledQueryButton}
 						type="primary"
 						icon={<PlusOutlined />}
-						onClick={addNewQuery}
+						onClick={addNewBuilderQuery}
 					>
 						Query
 					</Button>
