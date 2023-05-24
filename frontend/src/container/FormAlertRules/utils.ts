@@ -1,34 +1,30 @@
 import { Time } from 'container/TopNav/DateTimeSelection/config';
+import { mapQueryDataFromApi } from 'lib/newQueryBuilder/queryBuilderMappers/mapQueryDataFromApi';
 import {
-	IChQueries,
-	IChQuery,
-	IPromQueries,
-	IPromQuery,
-} from 'types/api/alerts/compositeQuery';
-import { Query as IStagedQuery } from 'types/api/dashboard/getAll';
-import {
-	IBuilderFormula,
-	IBuilderQuery,
+	BuilderClickHouseResource,
+	BuilderPromQLResource,
+	BuilderQueryDataResourse,
+	IClickHouseQuery,
+	IPromQLQuery,
+	Query,
 } from 'types/api/queryBuilder/queryBuilderData';
 import { EQueryType } from 'types/common/dashboard';
 
 export const prepareStagedQuery = (
 	t: EQueryType,
-	m: IBuilderQuery[],
-	f: IBuilderFormula[],
-	p: IPromQueries,
-	c: IChQueries,
-): IStagedQuery => {
-	const promList: IPromQuery[] = [];
-	const chQueryList: IChQuery[] = [];
+	b: BuilderQueryDataResourse,
+	p: BuilderPromQLResource,
+	c: BuilderClickHouseResource,
+): Query => {
+	const promList: IPromQLQuery[] = [];
+	const chQueryList: IClickHouseQuery[] = [];
 
-	// convert map[string]IPromQuery to IPromQuery[]
+	const builder = mapQueryDataFromApi(b);
 	if (p) {
 		Object.keys(p).forEach((key) => {
 			promList.push({ ...p[key], name: key });
 		});
 	}
-	// convert map[string]IChQuery to IChQuery[]
 	if (c) {
 		Object.keys(c).forEach((key) => {
 			chQueryList.push({ ...c[key], name: key, rawQuery: c[key].query });
@@ -38,10 +34,7 @@ export const prepareStagedQuery = (
 	return {
 		queryType: t,
 		promql: promList,
-		builder: {
-			queryFormulas: f,
-			queryData: m,
-		},
+		builder,
 		clickhouse_sql: chQueryList,
 	};
 };

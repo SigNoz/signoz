@@ -1,6 +1,6 @@
 import { AutoComplete, Input, Space } from 'antd';
 import getTagFilters from 'api/trace/getTagFilter';
-import React, { useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useQuery } from 'react-query';
 import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';

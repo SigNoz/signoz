@@ -5,7 +5,7 @@ import dayjs from 'dayjs';
 import dompurify from 'dompurify';
 // hooks
 import { useIsDarkMode } from 'hooks/useDarkMode';
-import React, { useCallback, useMemo } from 'react';
+import { useCallback, useMemo } from 'react';
 // interfaces
 import { ILog } from 'types/api/logs/log';
 

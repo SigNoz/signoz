@@ -6,7 +6,7 @@ import LogsTableView from 'components/Logs/TableView';
 import Spinner from 'components/Spinner';
 import { contentStyle } from 'container/Trace/Search/config';
 import useFontFaceObserver from 'hooks/useFontObserver';
-import React, { memo, useCallback, useMemo } from 'react';
+import { memo, useCallback, useMemo } from 'react';
 import { useSelector } from 'react-redux';
 import { Virtuoso } from 'react-virtuoso';
 // interfaces

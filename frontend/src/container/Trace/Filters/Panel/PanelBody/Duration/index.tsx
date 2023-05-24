@@ -2,7 +2,8 @@ import { Slider } from 'antd';
 import { SliderRangeProps } from 'antd/lib/slider';
 import getFilters from 'api/trace/getFilters';
 import useDebouncedFn from 'hooks/useDebouncedFunction';
-import React, {
+import {
+	ChangeEventHandler,
 	useCallback,
 	useEffect,
 	useMemo,
@@ -148,9 +149,7 @@ function Duration(): JSX.Element {
 		undefined,
 	);
 
-	const onChangeMaxHandler: React.ChangeEventHandler<HTMLInputElement> = (
-		event,
-	) => {
+	const onChangeMaxHandler: ChangeEventHandler<HTMLInputElement> = (event) => {
 		const { value } = event.target;
 		const min = preMin;
 		const max = value;
@@ -159,9 +158,7 @@ function Duration(): JSX.Element {
 		debouncedFunction(min, max);
 	};
 
-	const onChangeMinHandler: React.ChangeEventHandler<HTMLInputElement> = (
-		event,
-	) => {
+	const onChangeMinHandler: ChangeEventHandler<HTMLInputElement> = (event) => {
 		const { value } = event.target;
 		const min = value;
 		const max = preMax;

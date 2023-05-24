@@ -1,4 +1,4 @@
-import { recursiveParseJSON } from './utils';
+import { flattenObject, recursiveParseJSON } from './utils';
 
 describe('recursiveParseJSON', () => {
 	it('should return an empty object if the input is not valid JSON', () => {
@@ -43,5 +43,106 @@ describe('recursiveParseJSON', () => {
 		const jsonString = '{"name": "John\\", \\"Doe", "age": 30}';
 		const result = recursiveParseJSON(jsonString);
 		expect(result).toEqual({ name: 'John", "Doe', age: 30 });
+	});
+});
+
+describe('flattenObject in the objects recursively', () => {
+	it('should flatten nested objects correctly', () => {
+		const nestedObj = {
+			a: {
+				b: {
+					c: 1,
+					d: 2,
+				},
+				e: 3,
+			},
+			f: 4,
+		};
+		const expected = {
+			'a.b.c': 1,
+			'a.b.d': 2,
+			'a.e': 3,
+			f: 4,
+		};
+
+		expect(flattenObject(nestedObj)).toEqual(expected);
+	});
+
+	it('should return an empty object when input is empty', () => {
+		const nestedObj = {};
+		const expected = {};
+
+		expect(flattenObject(nestedObj)).toEqual(expected);
+	});
+
+	it('should handle non-nested objects correctly', () => {
+		const nestedObj = {
+			a: 1,
+			b: 2,
+			c: 3,
+		};
+		const expected = {
+			a: 1,
+			b: 2,
+			c: 3,
+		};
+
+		expect(flattenObject(nestedObj)).toEqual(expected);
+	});
+
+	it('should handle null and undefined correctly', () => {
+		const nestedObj = {
+			a: null,
+			b: undefined,
+		};
+		const expected = {
+			a: null,
+			b: undefined,
+		};
+
+		expect(flattenObject(nestedObj)).toEqual(expected);
+	});
+
+	it('should handle arrays correctly', () => {
+		const objWithArray = {
+			a: [1, 2, 3],
+			b: 2,
+		};
+		const expected = {
+			a: [1, 2, 3],
+			b: 2,
+		};
+
+		expect(flattenObject(objWithArray)).toEqual(expected);
+	});
+
+	it('should handle nested objects in arrays correctly', () => {
+		const objWithArray = {
+			a: [{ b: 1 }, { c: 2 }],
+			d: 3,
+		};
+		const expected = {
+			a: [{ b: 1 }, { c: 2 }],
+			d: 3,
+		};
+
+		expect(flattenObject(objWithArray)).toEqual(expected);
+	});
+
+	it('should handle objects with arrays and nested objects correctly', () => {
+		const complexObj = {
+			a: {
+				b: [1, 2, { c: 3 }],
+				d: 4,
+			},
+			e: 5,
+		};
+		const expected = {
+			'a.b': [1, 2, { c: 3 }],
+			'a.d': 4,
+			e: 5,
+		};
+
+		expect(flattenObject(complexObj)).toEqual(expected);
 	});
 });
