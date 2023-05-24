@@ -34,17 +34,14 @@ function InviteTeamMembers({ form, onFinish }: Props): JSX.Element {
 					{(fields, { add }): JSX.Element => (
 						<SpaceContainer direction="vertical" align="center" size="middle">
 							{fields.map(({ key, name }) => (
-								<Space key={key} direction="horizontal">
+								<Space key={key} direction="horizontal" align="start">
 									<Form.Item
 										name={[name, 'email']}
 										rules={[{ required: true, message: 'Missing email' }]}
 									>
 										<Input placeholder={t('email_placeholder')} />
 									</Form.Item>
-									<Form.Item
-										name={[name, 'name']}
-										rules={[{ required: true, message: 'Missing name' }]}
-									>
+									<Form.Item name={[name, 'name']}>
 										<Input placeholder={t('name_placeholder')} />
 									</Form.Item>
 									<Form.Item name={[name, 'role']} initialValue="VIEWER">
@@ -57,11 +54,7 @@ function InviteTeamMembers({ form, onFinish }: Props): JSX.Element {
 								</Space>
 							))}
 							<Form.Item>
-								<Button
-									onClick={(): void => add()}
-									icon={<PlusOutlined />}
-									type="default"
-								>
+								<Button onClick={add} icon={<PlusOutlined />} type="default">
 									{t('add_another_team_member')}
 								</Button>
 							</Form.Item>
