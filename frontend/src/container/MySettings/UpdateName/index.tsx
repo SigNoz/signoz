@@ -1,6 +1,7 @@
-import { Button, notification, Space, Typography } from 'antd';
+import { Button, Space, Typography } from 'antd';
 import editUser from 'api/user/editUser';
-import React, { useState } from 'react';
+import { useNotifications } from 'hooks/useNotifications';
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useDispatch, useSelector } from 'react-redux';
 import { Dispatch } from 'redux';
@@ -12,7 +13,7 @@ import AppReducer from 'types/reducer/app';
 import { NameInput } from '../styles';
 
 function UpdateName(): JSX.Element {
-	const { user, role, org } = useSelector<AppState, AppReducer>(
+	const { user, role, org, userFlags } = useSelector<AppState, AppReducer>(
 		(state) => state.app,
 	);
 	const { t } = useTranslation();
@@ -20,6 +21,8 @@ function UpdateName(): JSX.Element {
 
 	const [changedName, setChangedName] = useState<string>(user?.name || '');
 	const [loading, setLoading] = useState<boolean>(false);
+
+	const { notifications } = useNotifications();
 
 	if (!user || !org) {
 		return <div />;
@@ -34,7 +37,7 @@ function UpdateName(): JSX.Element {
 			});
 
 			if (statusCode === 200) {
-				notification.success({
+				notifications.success({
 					message: t('success', {
 						ns: 'common',
 					}),
@@ -47,10 +50,11 @@ function UpdateName(): JSX.Element {
 						ROLE: role || 'ADMIN',
 						orgId: org[0].id,
 						orgName: org[0].name,
+						userFlags: userFlags || {},
 					},
 				});
 			} else {
-				notification.error({
+				notifications.error({
 					message: t('something_went_wrong', {
 						ns: 'common',
 					}),
@@ -58,7 +62,7 @@ function UpdateName(): JSX.Element {
 			}
 			setLoading(false);
 		} catch (error) {
-			notification.error({
+			notifications.error({
 				message: t('something_went_wrong', {
 					ns: 'common',
 				}),

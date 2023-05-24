@@ -1,11 +1,17 @@
 import { TableProps, Tag, Typography } from 'antd';
-import Table, { ColumnsType } from 'antd/lib/table';
+import { ColumnsType } from 'antd/lib/table';
+import { ResizeTable } from 'components/ResizeTable';
 import ROUTES from 'constants/routes';
+import {
+	getSpanOrder,
+	getSpanOrderParam,
+} from 'container/Trace/TraceTable/util';
+import { formUrlParams } from 'container/TraceDetail/utils';
 import dayjs from 'dayjs';
 import duration from 'dayjs/plugin/duration';
 import history from 'lib/history';
 import omit from 'lodash-es/omit';
-import React from 'react';
+import { HTMLAttributes } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { Dispatch } from 'redux';
 import { updateURL } from 'store/actions/trace/util';
@@ -43,13 +49,16 @@ function TraceTable(): JSX.Element {
 
 	type TableType = FlatArray<TraceReducer['spansAggregate']['data'], 1>;
 
-	const getLink = (record: TableType): string => {
-		return `${ROUTES.TRACE}/${record.traceID}?spanId=${record.spanID}`;
-	};
+	const getLink = (record: TableType): string =>
+		`${ROUTES.TRACE}/${record.traceID}${formUrlParams({
+			spanId: record.spanID,
+			levelUp: 0,
+			levelDown: 0,
+		})}`;
 
-	const getValue = (value: string): JSX.Element => {
-		return <Typography>{value}</Typography>;
-	};
+	const getValue = (value: string): JSX.Element => (
+		<Typography>{value}</Typography>
+	);
 
 	const getHttpMethodOrStatus = (
 		value: TableType['statusCode'],
@@ -65,6 +74,7 @@ function TraceTable(): JSX.Element {
 			title: 'Date',
 			dataIndex: 'timestamp',
 			key: 'timestamp',
+			width: 120,
 			sorter: true,
 			render: (value: TableType['timestamp']): JSX.Element => {
 				const day = dayjs(value);
@@ -75,18 +85,21 @@ function TraceTable(): JSX.Element {
 			title: 'Service',
 			dataIndex: 'serviceName',
 			key: 'serviceName',
+			width: 50,
 			render: getValue,
 		},
 		{
 			title: 'Operation',
 			dataIndex: 'operation',
 			key: 'operation',
+			width: 110,
 			render: getValue,
 		},
 		{
 			title: 'Duration',
 			dataIndex: 'durationNano',
 			key: 'durationNano',
+			width: 50,
 			sorter: true,
 			render: (value: TableType['durationNano']): JSX.Element => (
 				<Typography>
@@ -101,25 +114,17 @@ function TraceTable(): JSX.Element {
 			title: 'Method',
 			dataIndex: 'method',
 			key: 'method',
+			width: 50,
 			render: getHttpMethodOrStatus,
 		},
 		{
 			title: 'Status Code',
 			dataIndex: 'statusCode',
 			key: 'statusCode',
+			width: 50,
 			render: getHttpMethodOrStatus,
 		},
 	];
-
-	const getSortKey = (key: string): string => {
-		if (key === 'durationNano') {
-			return 'duration';
-		}
-		if (key === 'timestamp') {
-			return 'timestamp';
-		}
-		return '';
-	};
 
 	const onChangeHandler: TableProps<TableType>['onChange'] = (
 		props,
@@ -129,8 +134,8 @@ function TraceTable(): JSX.Element {
 		if (!Array.isArray(sort)) {
 			const { order = spansAggregateOrder } = sort;
 			if (props.current && props.pageSize) {
-				const spanOrder = order === 'ascend' ? 'ascending' : 'descending';
-				const orderParam = getSortKey(sort.field as string);
+				const spanOrder = getSpanOrder(order || '');
+				const orderParam = getSpanOrderParam(sort.field as string);
 
 				dispatch({
 					type: UPDATE_SPAN_ORDER,
@@ -182,20 +187,26 @@ function TraceTable(): JSX.Element {
 	) as number;
 
 	return (
-		<Table
+		<ResizeTable
+			columns={columns}
 			onChange={onChangeHandler}
 			dataSource={spansAggregate.data}
 			loading={loading || filterLoading}
-			columns={columns}
-			rowKey={(record): string => `${record.traceID}-${record.spanID}-${v4()}`}
+			rowKey={(record: { traceID: string; spanID: string }): string =>
+				`${record.traceID}-${record.spanID}-${v4()}`
+			}
 			style={{
 				cursor: 'pointer',
 			}}
-			onRow={(record): React.HTMLAttributes<TableType> => ({
+			onRow={(record: TableType): HTMLAttributes<TableType> => ({
 				onClick: (event): void => {
 					event.preventDefault();
 					event.stopPropagation();
-					history.push(getLink(record));
+					if (event.metaKey || event.ctrlKey) {
+						window.open(getLink(record), '_blank');
+					} else {
+						history.push(getLink(record));
+					}
 				},
 			})}
 			pagination={{

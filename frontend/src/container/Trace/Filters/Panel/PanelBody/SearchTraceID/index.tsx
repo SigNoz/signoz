@@ -1,7 +1,8 @@
-import { Input, notification } from 'antd';
+import { Input } from 'antd';
 import getFilters from 'api/trace/getFilters';
 import { AxiosError } from 'axios';
-import React, { useEffect, useState } from 'react';
+import { useNotifications } from 'hooks/useNotifications';
+import { ChangeEvent, useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { Dispatch } from 'redux';
 import { getFilter, updateURL } from 'store/actions/trace/util';
@@ -21,6 +22,7 @@ function TraceID(): JSX.Element {
 		selectedTags,
 		userSelectedFilter,
 		isFilterExclude,
+		spanKind,
 	} = useSelector<AppState, TraceReducer>((state) => state.traces);
 	const dispatch = useDispatch<Dispatch<AppActions>>();
 	const globalTime = useSelector<AppState, GlobalReducer>(
@@ -28,6 +30,7 @@ function TraceID(): JSX.Element {
 	);
 	const [isLoading, setIsLoading] = useState(false);
 	const [userEnteredValue, setUserEnteredValue] = useState<string>('');
+	const { notifications } = useNotifications();
 	useEffect(() => {
 		setUserEnteredValue(selectedFilter.get('traceID')?.[0] || '');
 	}, [selectedFilter]);
@@ -50,6 +53,7 @@ function TraceID(): JSX.Element {
 				start: String(globalTime.minTime),
 				getFilters: filterToFetchData,
 				isFilterExclude,
+				spanKind,
 			});
 
 			if (response.statusCode === 200) {
@@ -75,6 +79,7 @@ function TraceID(): JSX.Element {
 						order: spansAggregate.order,
 						pageSize: spansAggregate.pageSize,
 						orderParam: spansAggregate.orderParam,
+						spanKind,
 					},
 				});
 
@@ -91,14 +96,14 @@ function TraceID(): JSX.Element {
 				);
 			}
 		} catch (error) {
-			notification.error({
+			notifications.error({
 				message: (error as AxiosError).toString() || 'Something went wrong',
 			});
 		} finally {
 			setIsLoading(false);
 		}
 	};
-	const onChange = (e: React.ChangeEvent<HTMLInputElement>): void => {
+	const onChange = (e: ChangeEvent<HTMLInputElement>): void => {
 		setUserEnteredValue(e.target.value);
 	};
 	const onBlur = (): void => {

@@ -1,8 +1,8 @@
-import { notification } from 'antd';
 import getTriggeredApi from 'api/alerts/getTriggered';
 import Spinner from 'components/Spinner';
 import { State } from 'hooks/useFetch';
-import React, { useCallback, useEffect, useState } from 'react';
+import { useNotifications } from 'hooks/useNotifications';
+import { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { PayloadProps } from 'types/api/alerts/getTriggered';
 
@@ -17,6 +17,7 @@ function TriggeredAlerts(): JSX.Element {
 		payload: [],
 	});
 	const { t } = useTranslation(['common']);
+	const { notifications } = useNotifications();
 
 	const fetchData = useCallback(async () => {
 		try {
@@ -61,11 +62,11 @@ function TriggeredAlerts(): JSX.Element {
 
 	useEffect(() => {
 		if (groupState.error) {
-			notification.error({
+			notifications.error({
 				message: groupState.errorMessage || t('something_went_wrong'),
 			});
 		}
-	}, [groupState.error, groupState.errorMessage, t]);
+	}, [groupState.error, groupState.errorMessage, t, notifications]);
 
 	if (groupState.error) {
 		return <TriggerComponent allAlerts={[]} />;

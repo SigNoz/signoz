@@ -47,7 +47,7 @@ receivers:
       # thrift_binary:
       #   endpoint: 0.0.0.0:6832
   hostmetrics:
-    collection_interval: 60s
+    collection_interval: 30s
     scrapers:
       cpu: {}
       load: {}
@@ -55,6 +55,16 @@ receivers:
       disk: {}
       filesystem: {}
       network: {}
+  prometheus:
+    config:
+      global:
+        scrape_interval: 60s
+      scrape_configs:
+        # otel-collector internal metrics
+        - job_name: otel-collector
+          static_configs:
+            - targets:
+              - otel-collector:8888
 
 processors:
   batch:
@@ -64,7 +74,7 @@ processors:
   signozspanmetrics/prometheus:
     metrics_exporter: prometheus
     latency_histogram_buckets: [100us, 1ms, 2ms, 6ms, 10ms, 50ms, 100ms, 250ms, 500ms, 1000ms, 1400ms, 2000ms, 5s, 10s, 20s, 40s, 60s ]
-    dimensions_cache_size: 10000
+    dimensions_cache_size: 100000
     dimensions:
       - name: service.namespace
         default: default
@@ -88,7 +98,6 @@ processors:
   resourcedetection:
     detectors: [env, system]
     timeout: 2s
-    override: false
 
 extensions:
   health_check:
@@ -101,6 +110,8 @@ extensions:
 exporters:
   clickhousetraces:
     datasource: tcp://clickhouse:9000/?database=signoz_traces
+    docker_multi_node_cluster: ${DOCKER_MULTI_NODE_CLUSTER}
+    low_cardinal_exception_grouping: ${LOW_CARDINAL_EXCEPTION_GROUPING}
   clickhousemetricswrite:
     endpoint: tcp://clickhouse:9000/?database=signoz_metrics
     resource_to_telemetry_conversion:
@@ -108,6 +119,18 @@ exporters:
   prometheus:
     endpoint: 0.0.0.0:8889
   # logging: {}
+
+  clickhouselogsexporter:
+    dsn: tcp://clickhouse:9000/
+    docker_multi_node_cluster: ${DOCKER_MULTI_NODE_CLUSTER}
+    timeout: 5s
+    sending_queue:
+      queue_size: 100
+    retry_on_failure:
+      enabled: true
+      initial_interval: 5s
+      max_interval: 30s
+      max_elapsed_time: 300s
 
 service:
   telemetry:
@@ -126,8 +149,8 @@ service:
       receivers: [otlp]
       processors: [batch]
       exporters: [clickhousemetricswrite]
-    metrics/hostmetrics:
-      receivers: [hostmetrics]
+    metrics/generic:
+      receivers: [hostmetrics, prometheus]
       processors: [resourcedetection, batch]
       exporters: [clickhousemetricswrite]
     metrics/spanmetrics:

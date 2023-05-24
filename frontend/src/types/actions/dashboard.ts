@@ -3,9 +3,9 @@ import { ApplySettingsToPanelProps } from 'store/actions/dashboard/applySettings
 import {
 	Dashboard,
 	IDashboardVariable,
-	Query,
 	Widgets,
 } from 'types/api/dashboard/getAll';
+import { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { QueryData } from 'types/api/widgets/getQuery';
 
 export const GET_DASHBOARD = 'GET_DASHBOARD';
@@ -152,6 +152,7 @@ interface QueryError {
 		errorMessage: string;
 		widgetId: string;
 		errorBoolean?: boolean;
+		isLoadingQueryResult?: boolean;
 	};
 }
 

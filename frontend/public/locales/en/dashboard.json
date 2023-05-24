@@ -1,6 +1,7 @@
 {
 	"create_dashboard": "Create Dashboard",
 	"import_json": "Import JSON",
+	"import_grafana_json": "Import Grafana JSON",
 	"copy_to_clipboard": "Copy To ClipBoard",
 	"download_json": "Download JSON",
 	"view_json": "View JSON",

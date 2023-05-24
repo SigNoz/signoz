@@ -1,7 +1,8 @@
-import { Checkbox, notification, Tooltip, Typography } from 'antd';
+import { Checkbox, Tooltip, Typography } from 'antd';
 import getFilters from 'api/trace/getFilters';
 import { AxiosError } from 'axios';
-import React, { useMemo, useState } from 'react';
+import { useNotifications } from 'hooks/useNotifications';
+import { useMemo, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { Dispatch } from 'redux';
 import { getFilter, updateURL } from 'store/actions/trace/util';
@@ -23,6 +24,7 @@ function CheckBoxComponent(props: CheckBoxProps): JSX.Element {
 		filter,
 		userSelectedFilter,
 		isFilterExclude,
+		spanKind,
 	} = useSelector<AppState, TraceReducer>((state) => state.traces);
 
 	const globalTime = useSelector<AppState, GlobalReducer>(
@@ -37,6 +39,8 @@ function CheckBoxComponent(props: CheckBoxProps): JSX.Element {
 	const isUserSelected =
 		(userSelectedFilter.get(name) || []).find((e) => e === keyValue) !==
 		undefined;
+
+	const { notifications } = useNotifications();
 
 	// eslint-disable-next-line sonarjs/cognitive-complexity
 	const onCheckHandler = async (): Promise<void> => {
@@ -88,6 +92,7 @@ function CheckBoxComponent(props: CheckBoxProps): JSX.Element {
 				start: String(globalTime.minTime),
 				getFilters: filterToFetchData.filter((e) => e !== name),
 				isFilterExclude: preIsFilterExclude,
+				spanKind,
 			});
 
 			if (response.statusCode === 200) {
@@ -122,6 +127,7 @@ function CheckBoxComponent(props: CheckBoxProps): JSX.Element {
 						order: spansAggregate.order,
 						orderParam: spansAggregate.orderParam,
 						pageSize: spansAggregate.pageSize,
+						spanKind,
 					},
 				});
 
@@ -141,12 +147,12 @@ function CheckBoxComponent(props: CheckBoxProps): JSX.Element {
 			} else {
 				setIsLoading(false);
 
-				notification.error({
+				notifications.error({
 					message: response.error || 'Something went wrong',
 				});
 			}
 		} catch (error) {
-			notification.error({
+			notifications.error({
 				message: (error as AxiosError).toString() || 'Something went wrong',
 			});
 			setIsLoading(false);

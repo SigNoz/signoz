@@ -1,4 +1,4 @@
-import { Form, notification } from 'antd';
+import { Form } from 'antd';
 import editPagerApi from 'api/channels/editPager';
 import editSlackApi from 'api/channels/editSlack';
 import editWebhookApi from 'api/channels/editWebhook';
@@ -17,8 +17,9 @@ import {
 	WebhookType,
 } from 'container/CreateAlertChannels/config';
 import FormAlertChannels from 'container/FormAlertChannels';
+import { useNotifications } from 'hooks/useNotifications';
 import history from 'lib/history';
-import React, { useCallback, useState } from 'react';
+import { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useParams } from 'react-router-dom';
 
@@ -36,7 +37,7 @@ function EditAlertChannels({
 	});
 	const [savingState, setSavingState] = useState<boolean>(false);
 	const [testingState, setTestingState] = useState<boolean>(false);
-	const [notifications, NotificationElement] = notification.useNotification();
+	const { notifications } = useNotifications();
 	const { id } = useParams<{ id: string }>();
 
 	const [type, setType] = useState<ChannelType>(
@@ -47,8 +48,8 @@ function EditAlertChannels({
 		setType(value as ChannelType);
 	}, []);
 
-	const prepareSlackRequest = useCallback(() => {
-		return {
+	const prepareSlackRequest = useCallback(
+		() => ({
 			api_url: selectedConfig?.api_url || '',
 			channel: selectedConfig?.channel || '',
 			name: selectedConfig?.name || '',
@@ -56,8 +57,9 @@ function EditAlertChannels({
 			text: selectedConfig?.text || '',
 			title: selectedConfig?.title || '',
 			id,
-		};
-	}, [id, selectedConfig]);
+		}),
+		[id, selectedConfig],
+	);
 
 	const onSlackEditHandler = useCallback(async () => {
 		setSavingState(true);
@@ -143,8 +145,8 @@ function EditAlertChannels({
 		setSavingState(false);
 	}, [prepareWebhookRequest, t, notifications, selectedConfig]);
 
-	const preparePagerRequest = useCallback(() => {
-		return {
+	const preparePagerRequest = useCallback(
+		() => ({
 			name: selectedConfig.name || '',
 			routing_key: selectedConfig.routing_key,
 			client: selectedConfig.client,
@@ -157,8 +159,9 @@ function EditAlertChannels({
 			details: selectedConfig.details,
 			detailsArray: JSON.parse(selectedConfig.details || '{}'),
 			id,
-		};
-	}, [id, selectedConfig]);
+		}),
+		[id, selectedConfig],
+	);
 
 	const onPagerEditHandler = useCallback(async () => {
 		setSavingState(true);
@@ -279,7 +282,6 @@ function EditAlertChannels({
 				onSaveHandler,
 				testingState,
 				savingState,
-				NotificationElement,
 				title: t('page_title_edit'),
 				initialValue,
 				editing: true,

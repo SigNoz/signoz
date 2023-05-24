@@ -1,6 +1,13 @@
 import { Col, Row, Select } from 'antd';
 import { find } from 'lodash-es';
-import React, { useEffect, useRef, useState } from 'react';
+import {
+	ChangeEvent,
+	Dispatch,
+	SetStateAction,
+	useEffect,
+	useRef,
+	useState,
+} from 'react';
 
 import {
 	Input,
@@ -62,8 +69,8 @@ function Retention({
 	}, [selectedTimeUnit, selectedValue, setRetentionValue]);
 
 	const onChangeHandler = (
-		e: React.ChangeEvent<HTMLInputElement>,
-		func: React.Dispatch<React.SetStateAction<number | null>>,
+		e: ChangeEvent<HTMLInputElement>,
+		func: Dispatch<SetStateAction<number | null>>,
 	): void => {
 		interacted.current = true;
 		const { value } = e.target;
@@ -111,7 +118,7 @@ function Retention({
 interface RetentionProps {
 	retentionValue: number | null;
 	text: string;
-	setRetentionValue: React.Dispatch<React.SetStateAction<number | null>>;
+	setRetentionValue: Dispatch<SetStateAction<number | null>>;
 	hide: boolean;
 }
 

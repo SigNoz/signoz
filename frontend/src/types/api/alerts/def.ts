@@ -11,6 +11,7 @@ export const defaultCompareOp = '1';
 
 export interface AlertDef {
 	id?: number;
+	alertType?: string;
 	alert?: string;
 	ruleType?: string;
 	condition: RuleCondition;
@@ -23,7 +24,7 @@ export interface AlertDef {
 }
 
 export interface RuleCondition {
-	compositeMetricQuery: ICompositeMetricQuery;
+	compositeQuery: ICompositeMetricQuery;
 	op?: string | undefined;
 	target?: number | undefined;
 	matchType?: string | undefined;

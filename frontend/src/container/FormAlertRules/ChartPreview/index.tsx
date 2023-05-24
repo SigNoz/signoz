@@ -1,15 +1,17 @@
 import { InfoCircleOutlined } from '@ant-design/icons';
 import { StaticLineProps } from 'components/Graph';
+import Spinner from 'components/Spinner';
+import { PANEL_TYPES } from 'constants/queryBuilder';
 import GridGraphComponent from 'container/GridGraphComponent';
 import { GRAPH_TYPES } from 'container/NewDashboard/ComponentsSlider';
 import { timePreferenceType } from 'container/NewWidget/RightContainer/timeItems';
 import { Time } from 'container/TopNav/DateTimeSelection/config';
 import getChartData from 'lib/getChartData';
-import React from 'react';
+import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useQuery } from 'react-query';
 import { GetMetricQueryRange } from 'store/actions/dashboard/getQueryResults';
-import { Query } from 'types/api/dashboard/getAll';
+import { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { EQueryType } from 'types/common/dashboard';
 
 import { ChartContainer, FailedMessageContainer } from './styles';
@@ -22,16 +24,21 @@ export interface ChartPreviewProps {
 	selectedInterval?: Time;
 	headline?: JSX.Element;
 	threshold?: number | undefined;
+	userQueryKey?: string;
+}
+interface QueryResponseError {
+	message?: string;
 }
 
 function ChartPreview({
 	name,
 	query,
-	graphType = 'TIME_SERIES',
+	graphType = PANEL_TYPES.TIME_SERIES,
 	selectedTime = 'GLOBAL_TIME',
 	selectedInterval = '5min',
 	headline,
 	threshold,
+	userQueryKey,
 }: ChartPreviewProps): JSX.Element | null {
 	const { t } = useTranslation('alerts');
 	const staticLine: StaticLineProps | undefined =
@@ -46,32 +53,52 @@ function ChartPreview({
 			  }
 			: undefined;
 
-	const queryKey = JSON.stringify(query);
+	const canQuery = useMemo((): boolean => {
+		if (!query || query == null) {
+			return false;
+		}
+
+		switch (query?.queryType) {
+			case EQueryType.PROM:
+				return query.promql?.length > 0 && query.promql[0].query !== '';
+			case EQueryType.CLICKHOUSE:
+				return (
+					query.clickhouse_sql?.length > 0 &&
+					query.clickhouse_sql[0].rawQuery?.length > 0
+				);
+			case EQueryType.QUERY_BUILDER:
+				return (
+					query.builder.queryData.length > 0 &&
+					query.builder.queryData[0].queryName !== ''
+				);
+			default:
+				return false;
+		}
+	}, [query]);
+
 	const queryResponse = useQuery({
-		queryKey: ['chartPreview', queryKey, selectedInterval],
+		queryKey: [
+			'chartPreview',
+			userQueryKey || JSON.stringify(query),
+			selectedInterval,
+		],
 		queryFn: () =>
 			GetMetricQueryRange({
 				query: query || {
-					queryType: 1,
-					promQL: [],
-					metricsBuilder: {
-						formulas: [],
-						queryBuilder: [],
+					queryType: EQueryType.QUERY_BUILDER,
+					promql: [],
+					builder: {
+						queryFormulas: [],
+						queryData: [],
 					},
-					clickHouse: [],
+					clickhouse_sql: [],
 				},
 				globalSelectedInterval: selectedInterval,
 				graphType,
 				selectedTime,
 			}),
-		enabled:
-			query != null &&
-			((query.queryType === EQueryType.PROM &&
-				query.promQL?.length > 0 &&
-				query.promQL[0].query !== '') ||
-				(query.queryType === EQueryType.QUERY_BUILDER &&
-					query.metricsBuilder?.queryBuilder?.length > 0 &&
-					query.metricsBuilder?.queryBuilder[0].metricName !== '')),
+		retry: false,
+		enabled: canQuery,
 	});
 
 	const chartDataSet = queryResponse.isError
@@ -89,21 +116,20 @@ function ChartPreview({
 	return (
 		<ChartContainer>
 			{headline}
-			{(queryResponse?.data?.error || queryResponse?.isError) && (
+			{(queryResponse?.isError || queryResponse?.error) && (
 				<FailedMessageContainer color="red" title="Failed to refresh the chart">
 					<InfoCircleOutlined />{' '}
-					{queryResponse?.data?.error ||
-						queryResponse?.error ||
+					{(queryResponse?.error as QueryResponseError).message ||
 						t('preview_chart_unexpected_error')}
 				</FailedMessageContainer>
 			)}
-
+			{queryResponse.isLoading && <Spinner size="large" tip="Loading..." />}
 			{chartDataSet && !queryResponse.isError && (
 				<GridGraphComponent
 					title={name}
 					data={chartDataSet}
 					isStacked
-					GRAPH_TYPES={graphType || 'TIME_SERIES'}
+					GRAPH_TYPES={graphType || PANEL_TYPES.TIME_SERIES}
 					name={name || 'Chart Preview'}
 					staticLine={staticLine}
 				/>
@@ -113,11 +139,12 @@ function ChartPreview({
 }
 
 ChartPreview.defaultProps = {
-	graphType: 'TIME_SERIES',
+	graphType: PANEL_TYPES.TIME_SERIES,
 	selectedTime: 'GLOBAL_TIME',
 	selectedInterval: '5min',
 	headline: undefined,
 	threshold: undefined,
+	userQueryKey: '',
 };
 
 export default ChartPreview;

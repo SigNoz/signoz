@@ -1,42 +1,112 @@
 import { CloseOutlined } from '@ant-design/icons';
 import { Select } from 'antd';
-import React from 'react';
-import { useSelector } from 'react-redux';
-import { AppState } from 'store/reducers';
+import { Dispatch, SetStateAction } from 'react';
 import { TraceReducer } from 'types/reducer/trace';
 
 import { Container, IconContainer, SelectComponent } from './styles';
 import TagsKey from './TagKey';
 import TagValue from './TagValue';
+import { mapOperators } from './utils';
 
 const { Option } = Select;
 
 type Tags = FlatArray<TraceReducer['selectedTags'], 1>['Operator'];
-
-interface AllMenuProps {
+const StringBoolNumber = ['string', 'number', 'bool'];
+const Number = ['number'];
+const String = ['string'];
+export interface AllMenuProps {
 	key: Tags | '';
 	value: string;
+	supportedTypes: string[];
 }
 
-const AllMenu: AllMenuProps[] = [
+export const AllMenu: AllMenuProps[] = [
 	{
-		key: 'in',
-		value: 'IN',
+		key: 'Equals',
+		value: 'EQUALS',
+		supportedTypes: StringBoolNumber,
 	},
 	{
-		key: 'not in',
+		key: 'NotEquals',
+		value: 'NOT EQUALS',
+		supportedTypes: StringBoolNumber,
+	},
+	{
+		key: 'In',
+		value: 'IN',
+		supportedTypes: String,
+	},
+	{
+		key: 'NotIn',
 		value: 'NOT IN',
+		supportedTypes: String,
+	},
+	{
+		key: 'Exists',
+		value: 'EXISTS',
+		supportedTypes: StringBoolNumber,
+	},
+	{
+		key: 'NotExists',
+		value: 'NOT EXISTS',
+		supportedTypes: StringBoolNumber,
+	},
+	{
+		key: 'GreaterThan',
+		value: 'GREATER THAN',
+		supportedTypes: Number,
+	},
+	{
+		key: 'LessThan',
+		value: 'LESS THAN',
+		supportedTypes: Number,
+	},
+	{
+		key: 'GreaterThanEquals',
+		value: 'GREATER THAN OR EQUALS',
+		supportedTypes: Number,
+	},
+	{
+		key: 'LessThanEquals',
+		value: 'LESS THAN OR EQUALS',
+		supportedTypes: Number,
+	},
+	{
+		key: 'StartsWith',
+		value: 'STARTS WITH',
+		supportedTypes: String,
+	},
+	{
+		key: 'NotStartsWith',
+		value: 'NOT STARTS WITH',
+		supportedTypes: String,
+	},
+	{
+		key: 'Contains',
+		value: 'CONTAINS',
+		supportedTypes: String,
+	},
+	{
+		key: 'NotContains',
+		value: 'NOT CONTAINS',
+		supportedTypes: String,
 	},
 ];
 
 function SingleTags(props: AllTagsProps): JSX.Element {
-	const traces = useSelector<AppState, TraceReducer>((state) => state.traces);
-
-	const { tag, onCloseHandler, setLocalSelectedTags, index } = props;
+	const {
+		tag,
+		onCloseHandler,
+		setLocalSelectedTags,
+		index,
+		localSelectedTags,
+	} = props;
 	const {
 		Key: selectedKey,
 		Operator: selectedOperator,
-		Values: selectedValues,
+		StringValues: selectedStringValues,
+		NumberValues: selectedNumberValues,
+		BoolValues: selectedBoolValues,
 	} = tag;
 
 	const onDeleteTagHandler = (index: number): void => {
@@ -46,13 +116,15 @@ function SingleTags(props: AllTagsProps): JSX.Element {
 	const onChangeOperatorHandler = (key: unknown): void => {
 		if (typeof key === 'string') {
 			setLocalSelectedTags([
-				...traces.selectedTags.slice(0, index),
+				...localSelectedTags.slice(0, index),
 				{
 					Key: selectedKey,
-					Values: selectedValues,
+					StringValues: selectedStringValues,
+					NumberValues: selectedNumberValues,
+					BoolValues: selectedBoolValues,
 					Operator: key as Tags,
 				},
-				...traces.selectedTags.slice(index + 1, traces.selectedTags.length),
+				...localSelectedTags.slice(index + 1, localSelectedTags.length),
 			]);
 		}
 	};
@@ -68,19 +140,22 @@ function SingleTags(props: AllTagsProps): JSX.Element {
 				onChange={onChangeOperatorHandler}
 				value={AllMenu.find((e) => e.key === selectedOperator)?.value || ''}
 			>
-				{AllMenu.map((e) => (
-					<Option key={e.value} value={e.key}>
-						{e.value}
-					</Option>
-				))}
+				{
+					// filter out the operator that does not include supported type of the selected key
+					mapOperators(selectedKey).map((e) => (
+						<Option key={e.value} value={e.key}>
+							{e.value}
+						</Option>
+					))
+				}
 			</SelectComponent>
 
-			{selectedKey[0] ? (
+			{selectedKey ? (
 				<TagValue
 					index={index}
 					tag={tag}
 					setLocalSelectedTags={setLocalSelectedTags}
-					tagKey={selectedKey[0]}
+					tagKey={selectedKey}
 				/>
 			) : (
 				<SelectComponent />
@@ -97,9 +172,8 @@ interface AllTagsProps {
 	onCloseHandler: (index: number) => void;
 	index: number;
 	tag: FlatArray<TraceReducer['selectedTags'], 1>;
-	setLocalSelectedTags: React.Dispatch<
-		React.SetStateAction<TraceReducer['selectedTags']>
-	>;
+	setLocalSelectedTags: Dispatch<SetStateAction<TraceReducer['selectedTags']>>;
+	localSelectedTags: TraceReducer['selectedTags'];
 }
 
 export interface Value {

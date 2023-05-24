@@ -1,29 +1,28 @@
 import { Popover } from 'antd';
-import React from 'react';
+import { useNotifications } from 'hooks/useNotifications';
+import { ReactNode, useCallback, useEffect } from 'react';
 import { useCopyToClipboard } from 'react-use';
 
-interface CopyClipboardHOCProps {
-	textToCopy: string;
-	children: React.ReactNode;
-}
 function CopyClipboardHOC({
 	textToCopy,
 	children,
 }: CopyClipboardHOCProps): JSX.Element {
-	const [, setCopy] = useCopyToClipboard();
+	const [value, setCopy] = useCopyToClipboard();
+	const { notifications } = useNotifications();
+	useEffect(() => {
+		if (value.value) {
+			notifications.success({
+				message: 'Copied to clipboard',
+			});
+		}
+	}, [value, notifications]);
+
+	const onClick = useCallback((): void => {
+		setCopy(textToCopy);
+	}, [setCopy, textToCopy]);
 
 	return (
-		<span
-			style={{
-				margin: 0,
-				padding: 0,
-				cursor: 'pointer',
-			}}
-			onClick={(): void => setCopy(textToCopy)}
-			onKeyDown={(): void => setCopy(textToCopy)}
-			role="button"
-			tabIndex={0}
-		>
+		<span onClick={onClick} role="presentation" tabIndex={-1}>
 			<Popover
 				placement="top"
 				content={<span style={{ fontSize: '0.9rem' }}>Copy to clipboard</span>}
@@ -32,6 +31,11 @@ function CopyClipboardHOC({
 			</Popover>
 		</span>
 	);
+}
+
+interface CopyClipboardHOCProps {
+	textToCopy: string;
+	children: ReactNode;
 }
 
 export default CopyClipboardHOC;

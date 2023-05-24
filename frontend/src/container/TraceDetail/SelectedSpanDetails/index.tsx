@@ -1,28 +1,29 @@
-import { Modal, Tabs, Tooltip, Typography } from 'antd';
+import { Button, Modal, Tabs, Tooltip, Typography } from 'antd';
 import Editor from 'components/Editor';
 import { StyledSpace } from 'components/Styled';
-import useThemeMode from 'hooks/useThemeMode';
-import React, { useMemo, useState } from 'react';
+import ROUTES from 'constants/routes';
+import { useIsDarkMode } from 'hooks/useDarkMode';
+import history from 'lib/history';
+import { useMemo, useState } from 'react';
+import { useParams } from 'react-router-dom';
 import { ITraceTree } from 'types/api/trace/getTraceItem';
 
-import EllipsedButton from './EllipsedButton';
-import ErrorTag from './ErrorTag';
+import Events from './Events';
 import {
 	CardContainer,
 	CustomSubText,
-	CustomSubTitle,
 	CustomText,
 	CustomTitle,
 	styles,
-	SubTextContainer,
 } from './styles';
-
-const { TabPane } = Tabs;
+import Tags from './Tags';
 
 function SelectedSpanDetails(props: SelectedSpanDetailsProps): JSX.Element {
-	const { tree } = props;
+	const { tree, firstSpanStartTime } = props;
 
-	const { isDarkMode } = useThemeMode();
+	const { id: traceId } = useParams<Params>();
+
+	const isDarkMode = useIsDarkMode();
 
 	const OverLayComponentName = useMemo(() => tree?.name, [tree?.name]);
 	const OverLayComponentServiceName = useMemo(() => tree?.serviceName, [
@@ -31,7 +32,7 @@ function SelectedSpanDetails(props: SelectedSpanDetailsProps): JSX.Element {
 
 	const [isOpen, setIsOpen] = useState(false);
 
-	const [text, setText] = useState({
+	const [text, setText] = useState<ModalText>({
 		text: '',
 		subText: '',
 	});
@@ -44,18 +45,51 @@ function SelectedSpanDetails(props: SelectedSpanDetailsProps): JSX.Element {
 		return <div />;
 	}
 
-	const { tags } = tree;
+	const { tags, nonChildReferences } = tree;
+
+	const items = [
+		{
+			label: 'Tags',
+			key: '1',
+			children: (
+				<Tags
+					onToggleHandler={onToggleHandler}
+					setText={setText}
+					tags={tags}
+					linkedSpans={nonChildReferences}
+				/>
+			),
+		},
+		{
+			label: 'Events',
+			key: '2',
+			children: (
+				<Events
+					events={tree.event}
+					onToggleHandler={onToggleHandler}
+					setText={setText}
+					firstSpanStartTime={firstSpanStartTime}
+				/>
+			),
+		},
+	];
+
+	const onLogsHandler = (): void => {
+		const query = encodeURIComponent(`trace_id IN ('${traceId}')`);
+
+		history.push(`${ROUTES.LOGS}?q=${query}`);
+	};
 
 	return (
 		<CardContainer>
 			<StyledSpace
 				styledclass={[styles.selectedSpanDetailsContainer, styles.overflow]}
 				direction="vertical"
-				style={{ marginLeft: '0.5rem' }}
 			>
-				<strong> Details for selected Span </strong>
+				<Typography.Text strong> Details for selected Span </Typography.Text>
 
 				<CustomTitle>Service</CustomTitle>
+
 				<Tooltip overlay={OverLayComponentServiceName}>
 					<CustomText ellipsis>{tree.serviceName}</CustomText>
 				</Tooltip>
@@ -64,12 +98,14 @@ function SelectedSpanDetails(props: SelectedSpanDetailsProps): JSX.Element {
 				<Tooltip overlay={OverLayComponentName}>
 					<CustomText ellipsis>{tree.name}</CustomText>
 				</Tooltip>
+
+				<Button onClick={onLogsHandler}>Go to Related logs</Button>
 			</StyledSpace>
 
 			<Modal
 				onCancel={(): void => onToggleHandler(false)}
 				title={text.text}
-				visible={isOpen}
+				open={isOpen}
 				destroyOnClose
 				footer={[]}
 				width="70vw"
@@ -84,73 +120,27 @@ function SelectedSpanDetails(props: SelectedSpanDetailsProps): JSX.Element {
 				)}
 			</Modal>
 
-			<Tabs defaultActiveKey="1">
-				<TabPane tab="Tags" key="1">
-					{tags.length !== 0 ? (
-						tags.map((tags) => {
-							const value = tags.key === 'error' ? 'true' : tags.value;
-							const isEllipsed = value.length > 24;
-
-							return (
-								<React.Fragment key={JSON.stringify(tags)}>
-									{tags.value && (
-										<>
-											<CustomSubTitle>{tags.key}</CustomSubTitle>
-											<SubTextContainer isDarkMode={isDarkMode}>
-												<Tooltip overlay={(): string => value}>
-													<CustomSubText
-														ellipsis={{
-															rows: isEllipsed ? 1 : 0,
-														}}
-														isDarkMode={isDarkMode}
-													>
-														{value}
-													</CustomSubText>
-
-													{isEllipsed && (
-														<EllipsedButton
-															{...{
-																event: tags.key,
-																onToggleHandler,
-																setText,
-																value,
-																buttonText: 'View full value',
-															}}
-														/>
-													)}
-												</Tooltip>
-											</SubTextContainer>
-										</>
-									)}
-								</React.Fragment>
-							);
-						})
-					) : (
-						<Typography>No tags in selected span</Typography>
-					)}
-				</TabPane>
-				<TabPane tab="Events" key="2">
-					{tree.event && Object.keys(tree.event).length !== 0 ? (
-						<ErrorTag
-							onToggleHandler={onToggleHandler}
-							setText={setText}
-							event={tree.event}
-						/>
-					) : (
-						<Typography>No events data in selected span</Typography>
-					)}
-				</TabPane>
-			</Tabs>
+			<Tabs defaultActiveKey="1" items={items} />
 		</CardContainer>
 	);
 }
 
 interface SelectedSpanDetailsProps {
 	tree?: ITraceTree;
+	firstSpanStartTime: number;
 }
 
 SelectedSpanDetails.defaultProps = {
 	tree: undefined,
 };
+
+export interface ModalText {
+	text: string;
+	subText: string;
+}
+
+interface Params {
+	id: string;
+}
 
 export default SelectedSpanDetails;

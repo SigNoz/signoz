@@ -1,19 +1,13 @@
 import { red } from '@ant-design/colors';
 import { ExclamationCircleTwoTone } from '@ant-design/icons';
-import {
-	Button,
-	Modal,
-	notification,
-	Space,
-	Typography,
-	Upload,
-	UploadProps,
-} from 'antd';
+import { Button, Modal, Space, Typography, Upload, UploadProps } from 'antd';
 import createDashboard from 'api/dashboard/create';
 import Editor from 'components/Editor';
 import ROUTES from 'constants/routes';
+import { MESSAGE } from 'hooks/useFeatureFlag';
+import { useNotifications } from 'hooks/useNotifications';
 import history from 'lib/history';
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useDispatch } from 'react-redux';
 import { generatePath } from 'react-router-dom';
@@ -26,6 +20,7 @@ import { EditorContainer, FooterContainer } from './styles';
 
 function ImportJSON({
 	isImportJSONModalVisible,
+	uploadedGrafana,
 	onModalHandler,
 }: ImportJSONProps): JSX.Element {
 	const [jsonData, setJsonData] = useState<Record<string, unknown>>();
@@ -34,11 +29,15 @@ function ImportJSON({
 	const [isCreateDashboardError, setIsCreateDashboardError] = useState<boolean>(
 		false,
 	);
+	const [isFeatureAlert, setIsFeatureAlert] = useState<boolean>(false);
+
 	const dispatch = useDispatch<Dispatch<AppActions>>();
 
 	const [dashboardCreating, setDashboardCreating] = useState<boolean>(false);
 
 	const [editorValue, setEditorValue] = useState<string>('');
+
+	const { notifications } = useNotifications();
 
 	const onChangeHandler: UploadProps['onChange'] = (info) => {
 		const { fileList } = info;
@@ -89,6 +88,7 @@ function ImportJSON({
 
 			const response = await createDashboard({
 				...parsedWidgets,
+				uploadedGrafana,
 			});
 
 			if (response.statusCode === 200) {
@@ -102,9 +102,18 @@ function ImportJSON({
 						}),
 					);
 				}, 10);
+			} else if (response.error === 'feature usage exceeded') {
+				setIsFeatureAlert(true);
+				notifications.error({
+					message:
+						response.error ||
+						t('something_went_wrong', {
+							ns: 'common',
+						}),
+				});
 			} else {
 				setIsCreateDashboardError(true);
-				notification.error({
+				notifications.error({
 					message:
 						response.error ||
 						t('something_went_wrong', {
@@ -115,6 +124,7 @@ function ImportJSON({
 			setDashboardCreating(false);
 		} catch {
 			setDashboardCreating(false);
+			setIsFeatureAlert(false);
 
 			setIsCreateDashboardError(true);
 		}
@@ -127,14 +137,21 @@ function ImportJSON({
 		</Space>
 	);
 
+	const onCancelHandler = (): void => {
+		setIsUploadJSONError(false);
+		setIsCreateDashboardError(false);
+		setIsFeatureAlert(false);
+		onModalHandler();
+	};
+
 	return (
 		<Modal
-			visible={isImportJSONModalVisible}
+			open={isImportJSONModalVisible}
 			centered
 			maskClosable
 			destroyOnClose
 			width="70vw"
-			onCancel={onModalHandler}
+			onCancel={onCancelHandler}
 			title={
 				<>
 					<Typography.Title level={4}>{t('import_json')}</Typography.Title>
@@ -151,6 +168,11 @@ function ImportJSON({
 						{t('load_json')}
 					</Button>
 					{isCreateDashboardError && getErrorNode(t('error_loading_json'))}
+					{isFeatureAlert && (
+						<Typography.Text type="danger">
+							{MESSAGE.CREATE_DASHBOARD}
+						</Typography.Text>
+					)}
 				</FooterContainer>
 			}
 		>
@@ -186,6 +208,7 @@ function ImportJSON({
 interface ImportJSONProps {
 	isImportJSONModalVisible: boolean;
 	onModalHandler: VoidFunction;
+	uploadedGrafana: boolean;
 }
 
 export default ImportJSON;

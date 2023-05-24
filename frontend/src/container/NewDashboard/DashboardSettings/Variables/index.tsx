@@ -1,7 +1,10 @@
 import { blue, red } from '@ant-design/colors';
 import { PlusOutlined } from '@ant-design/icons';
-import { Button, Modal, Row, Space, Table, Tag } from 'antd';
-import React, { useRef, useState } from 'react';
+import { Button, Modal, Row, Space, Tag } from 'antd';
+import { NotificationInstance } from 'antd/es/notification/interface';
+import { ResizeTable } from 'components/ResizeTable';
+import { useNotifications } from 'hooks/useNotifications';
+import { useRef, useState } from 'react';
 import { connect, useSelector } from 'react-redux';
 import { bindActionCreators, Dispatch } from 'redux';
 import { ThunkDispatch } from 'redux-thunk';
@@ -23,6 +26,8 @@ function VariablesSetting({
 	const { dashboards } = useSelector<AppState, DashboardReducer>(
 		(state) => state.dashboards,
 	);
+
+	const { notifications } = useNotifications();
 
 	const [selectedDashboard] = dashboards;
 
@@ -74,8 +79,7 @@ function VariablesSetting({
 		if (oldName) {
 			delete newVariables[oldName];
 		}
-
-		updateDashboardVariables(newVariables);
+		updateDashboardVariables(newVariables, notifications);
 		onDoneVariableViewMode();
 	};
 
@@ -87,7 +91,7 @@ function VariablesSetting({
 	const handleDeleteConfirm = (): void => {
 		const newVariables = { ...variables };
 		if (variableToDelete?.current) delete newVariables[variableToDelete?.current];
-		updateDashboardVariables(newVariables);
+		updateDashboardVariables(newVariables, notifications);
 		variableToDelete.current = null;
 		setDeleteVariableModal(false);
 	};
@@ -96,23 +100,24 @@ function VariablesSetting({
 		setDeleteVariableModal(false);
 	};
 
-	const validateVariableName = (name: string): boolean => {
-		return !variables[name];
-	};
+	const validateVariableName = (name: string): boolean => !variables[name];
 
 	const columns = [
 		{
 			title: 'Variable',
 			dataIndex: 'name',
+			width: 100,
 			key: 'name',
 		},
 		{
 			title: 'Definition',
 			dataIndex: 'description',
+			width: 100,
 			key: 'description',
 		},
 		{
 			title: 'Actions',
+			width: 50,
 			key: 'action',
 			render: (_: IDashboardVariable): JSX.Element => (
 				<Space>
@@ -142,6 +147,7 @@ function VariablesSetting({
 			{variableViewMode ? (
 				<VariableItem
 					variableData={{ ...variableEditData } as IDashboardVariable}
+					existingVariables={variables}
 					onSave={onVariableSaveHandler}
 					onCancel={onDoneVariableViewMode}
 					validateName={validateVariableName}
@@ -159,13 +165,13 @@ function VariablesSetting({
 							<PlusOutlined /> New Variables
 						</Button>
 					</Row>
-					<Table columns={columns} dataSource={variablesTableData} />
+					<ResizeTable columns={columns} dataSource={variablesTableData} />
 				</>
 			)}
 			<Modal
 				title="Delete variable"
 				centered
-				visible={deleteVariableModal}
+				open={deleteVariableModal}
 				onOk={handleDeleteConfirm}
 				onCancel={handleDeleteCancel}
 			>
@@ -179,6 +185,7 @@ function VariablesSetting({
 interface DispatchProps {
 	updateDashboardVariables: (
 		props: Record<string, IDashboardVariable>,
+		notify: NotificationInstance,
 	) => (dispatch: Dispatch<AppActions>) => void;
 }
 

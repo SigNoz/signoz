@@ -1,11 +1,7 @@
 import { GRAPH_TYPES } from 'container/NewDashboard/ComponentsSlider';
 import { timePreferenceType } from 'container/NewWidget/RightContainer/timeItems';
 import { Layout } from 'react-grid-layout';
-import {
-	EAggregateOperator,
-	EQueryType,
-	EReduceOperator,
-} from 'types/common/dashboard';
+import { Query } from 'types/api/queryBuilder/queryBuilderData';
 
 import { QueryData } from '../widgets/getQuery';
 
@@ -31,10 +27,16 @@ export interface IDashboardVariable {
 	sort: TSortVariableValuesType;
 	multiSelect: boolean;
 	showALLOption: boolean;
-	selectedValue?: null | string | string[];
+	selectedValue?:
+		| null
+		| string
+		| number
+		| boolean
+		| (string | number | boolean)[];
 	// Internal use
 	modificationUUID?: string;
 	allSelected?: boolean;
+	change?: boolean;
 }
 export interface Dashboard {
 	id: number;
@@ -82,50 +84,6 @@ export interface Widgets extends IBaseWidget {
 
 export interface PromQLWidgets extends IBaseWidget {
 	query: { query: string; legend: string }[];
-}
-export interface Query {
-	queryType: EQueryType;
-	promQL: IPromQLQuery[];
-	metricsBuilder: {
-		formulas: IMetricsBuilderFormula[];
-		queryBuilder: IMetricsBuilderQuery[];
-	};
-	clickHouse: IClickHouseQuery[];
-}
-
-export interface IMetricsBuilderFormula {
-	expression: string;
-	disabled: boolean;
-	name: string;
-	legend: string;
-}
-export interface IMetricsBuilderQuery {
-	aggregateOperator: EAggregateOperator;
-	disabled: boolean;
-	name: string;
-	legend: string;
-	metricName: string | null;
-	groupBy?: string[];
-	tagFilters: IQueryBuilderTagFilters;
-	reduceTo?: EReduceOperator;
-}
-
-export interface IQueryBuilderTagFilters {
-	op: string;
-	items: IQueryBuilderTagFilterItems[] | [];
-}
-
-export interface IClickHouseQuery {
-	name: string;
-	rawQuery: string;
-	legend: string;
-	disabled: boolean;
-}
-export interface IPromQLQuery {
-	query: string;
-	legend: string;
-	disabled: boolean;
-	name: string;
 }
 
 export interface IQueryBuilderTagFilterItems {

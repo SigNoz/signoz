@@ -1,4 +1,4 @@
-import { notification } from 'antd';
+import { NotificationInstance } from 'antd/es/notification/interface';
 import getSpansAggregate from 'api/trace/getSpansAggregate';
 import { Dispatch, Store } from 'redux';
 import { AppState } from 'store/reducers';
@@ -12,38 +12,68 @@ import { updateURL } from './util';
 
 export const GetSpansAggregate = (
 	props: GetSpansAggregateProps,
+	notify: NotificationInstance,
 ): ((
 	dispatch: Dispatch<AppActions>,
 	getState: Store<AppState>['getState'],
-) => void) => {
-	return async (dispatch, getState): Promise<void> => {
-		const { traces, globalTime } = getState();
-		const { spansAggregate } = traces;
+) => void) => async (dispatch, getState): Promise<void> => {
+	const { traces, globalTime } = getState();
+	const { spansAggregate } = traces;
 
-		if (
-			globalTime.maxTime !== props.maxTime &&
-			globalTime.minTime !== props.minTime
-		) {
-			return;
-		}
+	if (
+		globalTime.maxTime !== props.maxTime &&
+		globalTime.minTime !== props.minTime
+	) {
+		return;
+	}
 
-		if (traces.filterLoading) {
-			return;
-		}
+	if (traces.filterLoading) {
+		return;
+	}
 
-		const { order = '' } = props;
+	const { order = '' } = props;
 
-		try {
-			// triggering loading
+	try {
+		// triggering loading
+		dispatch({
+			type: UPDATE_SPANS_AGGREGATE,
+			payload: {
+				spansAggregate: {
+					currentPage: props.current,
+					loading: true,
+					data: spansAggregate.data,
+					error: false,
+					total: spansAggregate.total,
+					pageSize: props.pageSize,
+					order,
+					orderParam: spansAggregate.orderParam,
+				},
+			},
+		});
+
+		const response = await getSpansAggregate({
+			end: props.maxTime,
+			start: props.minTime,
+			selectedFilter: props.selectedFilter,
+			limit: props.pageSize,
+			offset: props.current * props.pageSize - props.pageSize,
+			selectedTags: props.selectedTags,
+			isFilterExclude: traces.isFilterExclude,
+			order,
+			orderParam: props.orderParam,
+			spanKind: props.spanKind,
+		});
+
+		if (response.statusCode === 200) {
 			dispatch({
 				type: UPDATE_SPANS_AGGREGATE,
 				payload: {
 					spansAggregate: {
 						currentPage: props.current,
-						loading: true,
-						data: spansAggregate.data,
+						loading: false,
+						data: response.payload.spans,
 						error: false,
-						total: spansAggregate.total,
+						total: response.payload.totalSpans,
 						pageSize: props.pageSize,
 						order,
 						orderParam: spansAggregate.orderParam,
@@ -51,68 +81,22 @@ export const GetSpansAggregate = (
 				},
 			});
 
-			const response = await getSpansAggregate({
-				end: props.maxTime,
-				start: props.minTime,
-				selectedFilter: props.selectedFilter,
-				limit: props.pageSize,
-				offset: props.current * props.pageSize - props.pageSize,
-				selectedTags: props.selectedTags,
-				isFilterExclude: traces.isFilterExclude,
+			updateURL(
+				traces.selectedFilter,
+				traces.filterToFetchData,
+				props.current,
+				traces.selectedTags,
+				traces.isFilterExclude,
+				traces.userSelectedFilter,
 				order,
-				orderParam: props.orderParam,
+				traces.spansAggregate.pageSize,
+				spansAggregate.orderParam,
+			);
+		} else {
+			notify.error({
+				message: response.error || 'Something went wrong',
 			});
 
-			if (response.statusCode === 200) {
-				dispatch({
-					type: UPDATE_SPANS_AGGREGATE,
-					payload: {
-						spansAggregate: {
-							currentPage: props.current,
-							loading: false,
-							data: response.payload.spans,
-							error: false,
-							total: response.payload.totalSpans,
-							pageSize: props.pageSize,
-							order,
-							orderParam: spansAggregate.orderParam,
-						},
-					},
-				});
-
-				updateURL(
-					traces.selectedFilter,
-					traces.filterToFetchData,
-					props.current,
-					traces.selectedTags,
-					traces.isFilterExclude,
-					traces.userSelectedFilter,
-					order,
-					traces.spansAggregate.pageSize,
-					spansAggregate.orderParam,
-				);
-			} else {
-				notification.error({
-					message: response.error || 'Something went wrong',
-				});
-
-				dispatch({
-					type: UPDATE_SPANS_AGGREGATE,
-					payload: {
-						spansAggregate: {
-							currentPage: props.current,
-							loading: false,
-							data: spansAggregate.data,
-							error: true,
-							total: spansAggregate.total,
-							pageSize: props.pageSize,
-							order,
-							orderParam: spansAggregate.orderParam,
-						},
-					},
-				});
-			}
-		} catch (error) {
 			dispatch({
 				type: UPDATE_SPANS_AGGREGATE,
 				payload: {
@@ -129,7 +113,23 @@ export const GetSpansAggregate = (
 				},
 			});
 		}
-	};
+	} catch (error) {
+		dispatch({
+			type: UPDATE_SPANS_AGGREGATE,
+			payload: {
+				spansAggregate: {
+					currentPage: props.current,
+					loading: false,
+					data: spansAggregate.data,
+					error: true,
+					total: spansAggregate.total,
+					pageSize: props.pageSize,
+					order,
+					orderParam: spansAggregate.orderParam,
+				},
+			},
+		});
+	}
 };
 
 export interface GetSpansAggregateProps {
@@ -141,4 +141,5 @@ export interface GetSpansAggregateProps {
 	selectedTags: TraceReducer['selectedTags'];
 	order: GetSpanAggregateProps['order'];
 	orderParam: GetSpanAggregateProps['orderParam'];
+	spanKind: TraceReducer['spanKind'];
 }

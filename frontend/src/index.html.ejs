@@ -20,22 +20,22 @@
 		<meta
 			data-react-helmet="true"
 			name="description"
-			content="SigNoz is an opensource observability platform to help you find issues in your deployed applications &amp; solve them quickly.  It provides an integrated UI for metrics and traces with deep filtering and aggregation to pin down specific issues very quickly.  Built on Kafka and Druid, it is designed to handle enterprise scale."
+			content="SigNoz is an open source observability platform to help you find issues in your deployed applications & solve them quickly. It provides a single pane of glass for metrics, traces and logs with deep filtering and aggregation to pin down specific issues very quickly."
 		/>
 		<meta
 			data-react-helmet="true"
 			property="og:description"
-			content="SigNoz is an opensource observability platform to help you find issues in your deployed applications &amp; solve them quickly.  It provides an integrated UI for metrics and traces with deep filtering and aggregation to pin down specific issues very quickly.  Built on Kafka and Druid, it is designed to handle enterprise scale."
+			content="SigNoz is an open source observability platform to help you find issues in your deployed applications & solve them quickly. It provides a single pane of glass for metrics, traces and logs with deep filtering and aggregation to pin down specific issues very quickly."
 		/>
 		<meta
 			data-react-helmet="true"
 			property="og:image"
-			content="https://signoz.io/img/HeroShot-3.jpg"
+			content="https://signoz.io/img/signoz-hero-image.webp"
 		/>
 		<meta
 			data-react-helmet="true"
 			name="twitter:image"
-			content="https://signoz.io/img/HeroShot-3.jpg"
+			content="https://signoz.io/img/signoz-hero-image.webp"
 		/>
 		<meta
 			data-react-helmet="true"
@@ -50,27 +50,15 @@
 		<meta data-react-helmet="true" name="docusaurus_locale" content="en" />
 		<meta data-react-helmet="true" name="docusaurus_tag" content="default" />
 		<link data-react-helmet="true" rel="shortcut icon" href="/favicon.ico" />
-
+		<link rel="preconnect" href="https://fonts.googleapis.com" />
+		<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 		<link
-			id="appMode"
+			href="https://fonts.googleapis.com/css?family=Fira+Code"
 			rel="stylesheet"
-			type="text/css"
-			rel="preload"
 		/>
 	</head>
-	<body>
+	<body style="margin: 0; padding: 0; box-sizing: border-box">
 		<noscript>You need to enable JavaScript to run this app.</noscript>
 		<div id="root"></div>
-
-		<script>
-			const themeNode = document.getElementById('appMode');
-			let userTheme = localStorage.getItem('theme') || "";
-
-			if (userTheme === 'lightMode') {
-				themeNode.setAttribute('href', '/css/antd.min.css');
-			} else {
-				themeNode.setAttribute('href', '/css/antd.dark.min.css');
-			}
-		</script>
 	</body>
 </html>

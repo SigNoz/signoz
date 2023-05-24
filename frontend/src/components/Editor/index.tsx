@@ -1,8 +1,6 @@
 import MEditor, { EditorProps } from '@monaco-editor/react';
-import React from 'react';
-import { useSelector } from 'react-redux';
-import { AppState } from 'store/reducers';
-import AppReducer from 'types/reducer/app';
+import { useIsDarkMode } from 'hooks/useDarkMode';
+import { useMemo } from 'react';
 
 function Editor({
 	value,
@@ -12,17 +10,28 @@ function Editor({
 	height,
 	options,
 }: MEditorProps): JSX.Element {
-	const { isDarkMode } = useSelector<AppState, AppReducer>((state) => state.app);
+	const isDarkMode = useIsDarkMode();
+
+	const onChangeHandler = (newValue?: string): void => {
+		if (readOnly) return;
+
+		if (typeof newValue === 'string' && onChange) onChange(newValue);
+	};
+
+	const editorOptions = useMemo(
+		() => ({ fontSize: 16, automaticLayout: true, readOnly, ...options }),
+		[options, readOnly],
+	);
+
 	return (
 		<MEditor
 			theme={isDarkMode ? 'vs-dark' : 'vs-light'}
 			language={language}
 			value={value}
-			options={{ fontSize: 16, automaticLayout: true, readOnly, ...options }}
+			options={editorOptions}
 			height={height}
-			onChange={(newValue): void => {
-				if (typeof newValue === 'string') onChange(newValue);
-			}}
+			onChange={onChangeHandler}
+			data-testid="monaco-editor"
 		/>
 	);
 }
@@ -30,7 +39,7 @@ function Editor({
 interface MEditorProps {
 	value: string;
 	language?: string;
-	onChange: (value: string) => void;
+	onChange?: (value: string) => void;
 	readOnly?: boolean;
 	height?: string;
 	options?: EditorProps['options'];
@@ -41,6 +50,7 @@ Editor.defaultProps = {
 	readOnly: false,
 	height: '40vh',
 	options: {},
+	onChange: (): void => {},
 };
 
 export default Editor;

@@ -1,10 +1,11 @@
+import { SyncOutlined } from '@ant-design/icons';
 import { Button, Select as DefaultSelect } from 'antd';
 import getLocalStorageKey from 'api/browser/localstorage/get';
 import setLocalStorageKey from 'api/browser/localstorage/set';
 import { LOCALSTORAGE } from 'constants/localStorage';
 import dayjs, { Dayjs } from 'dayjs';
 import getTimeString from 'lib/getTimeString';
-import React, { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { connect, useSelector } from 'react-redux';
 import { RouteComponentProps, withRouter } from 'react-router-dom';
 import { bindActionCreators, Dispatch } from 'redux';
@@ -14,10 +15,11 @@ import { AppState } from 'store/reducers';
 import AppActions from 'types/actions';
 import { GlobalReducer } from 'types/reducer/globalTime';
 
+import AutoRefresh from '../AutoRefresh';
 import CustomDateTimeModal, { DateTimeRangeType } from '../CustomDateTimeModal';
 import { getDefaultOption, getOptions, Time } from './config';
 import RefreshText from './Refresh';
-import { Container, Form, FormItem } from './styles';
+import { Form, FormContainer, FormItem } from './styles';
 
 const { Option } = DefaultSelect;
 
@@ -58,9 +60,6 @@ function DateTimeSelection({
 		searchStartTime,
 	]);
 
-	const [startTime, setStartTime] = useState<Dayjs>();
-	const [endTime, setEndTime] = useState<Dayjs>();
-
 	const [options, setOptions] = useState(getOptions(location.pathname));
 	const [refreshButtonHidden, setRefreshButtonHidden] = useState<boolean>(false);
 	const [customDateTimeVisible, setCustomDTPickerVisible] = useState<boolean>(
@@ -89,6 +88,14 @@ function DateTimeSelection({
 		return timeInterval;
 	};
 
+	useEffect(() => {
+		if (selectedTime === 'custom') {
+			setRefreshButtonHidden(true);
+		} else {
+			setRefreshButtonHidden(false);
+		}
+	}, [selectedTime]);
+
 	const getDefaultTime = (pathName: string): Time => {
 		const defaultSelectedOption = getDefaultOption(pathName);
 
@@ -105,10 +112,6 @@ function DateTimeSelection({
 
 		return defaultSelectedOption;
 	};
-
-	const [selectedTimeInterval, setSelectedTimeInterval] = useState<Time>(
-		getDefaultTime(location.pathname),
-	);
 
 	const updateLocalStorageForRoutes = (value: Time): void => {
 		const preRoutes = getLocalStorageKey(LOCALSTORAGE.METRICS_TIME_IN_DURATION);
@@ -131,7 +134,7 @@ function DateTimeSelection({
 		const currentTime = dayjs();
 
 		const lastRefresh = dayjs(
-			selectedTimeInterval === 'custom' ? minTime / 1000000 : maxTime / 1000000,
+			selectedTime === 'custom' ? minTime / 1000000 : maxTime / 1000000,
 		);
 
 		const secondsDiff = currentTime.diff(lastRefresh, 'seconds');
@@ -158,13 +161,11 @@ function DateTimeSelection({
 		}
 
 		return `Last refresh - ${secondsDiff} sec ago`;
-	}, [maxTime, minTime, selectedTimeInterval]);
+	}, [maxTime, minTime, selectedTime]);
 
 	const onSelectHandler = (value: Time): void => {
 		if (value !== 'custom') {
 			updateTimeInterval(value);
-			const selectedLabel = getInputLabel(undefined, undefined, value);
-			setSelectedTimeInterval(selectedLabel as Time);
 			updateLocalStorageForRoutes(value);
 			if (refreshButtonHidden) {
 				setRefreshButtonHidden(false);
@@ -176,7 +177,7 @@ function DateTimeSelection({
 	};
 
 	const onRefreshHandler = (): void => {
-		onSelectHandler(selectedTimeInterval);
+		onSelectHandler(selectedTime);
 		onLastRefreshHandler();
 	};
 
@@ -184,9 +185,6 @@ function DateTimeSelection({
 		if (dateTimeRange !== null) {
 			const [startTimeMoment, endTimeMoment] = dateTimeRange;
 			if (startTimeMoment && endTimeMoment) {
-				setSelectedTimeInterval('custom');
-				setStartTime(startTimeMoment);
-				setEndTime(endTimeMoment);
 				setCustomDTPickerVisible(false);
 				updateTimeInterval('custom', [
 					startTimeMoment?.toDate().getTime() || 0,
@@ -237,8 +235,7 @@ function DateTimeSelection({
 
 		const [preStartTime = 0, preEndTime = 0] = getTime() || [];
 
-		setStartTime(dayjs(preStartTime));
-		setEndTime(dayjs(preEndTime));
+		setRefreshButtonHidden(updatedTime === 'custom');
 
 		updateTimeInterval(updatedTime, [preStartTime, preEndTime]);
 	}, [
@@ -253,35 +250,48 @@ function DateTimeSelection({
 	]);
 
 	return (
-		<Container>
+		<>
 			<Form
 				form={formSelector}
 				layout="inline"
 				initialValues={{ interval: selectedTime }}
 			>
-				<DefaultSelect
-					onSelect={(value: unknown): void => onSelectHandler(value as Time)}
-					value={getInputLabel(startTime, endTime, selectedTime)}
-					data-testid="dropDown"
-				>
-					{options.map(({ value, label }) => (
-						<Option key={value + label} value={value}>
-							{label}
-						</Option>
-					))}
-				</DefaultSelect>
+				<FormContainer>
+					<DefaultSelect
+						onSelect={(value: unknown): void => onSelectHandler(value as Time)}
+						value={getInputLabel(
+							dayjs(minTime / 1000000),
+							dayjs(maxTime / 1000000),
+							selectedTime,
+						)}
+						data-testid="dropDown"
+					>
+						{options.map(({ value, label }) => (
+							<Option key={value + label} value={value}>
+								{label}
+							</Option>
+						))}
+					</DefaultSelect>
 
-				<FormItem hidden={refreshButtonHidden}>
-					<Button type="primary" onClick={onRefreshHandler}>
-						Refresh
-					</Button>
-				</FormItem>
+					<FormItem hidden={refreshButtonHidden}>
+						<Button
+							icon={<SyncOutlined />}
+							type="primary"
+							onClick={onRefreshHandler}
+						/>
+					</FormItem>
+
+					<FormItem>
+						<AutoRefresh disabled={refreshButtonHidden} />
+					</FormItem>
+				</FormContainer>
 			</Form>
 
 			<RefreshText
 				{...{
 					onLastRefreshHandler,
 				}}
+				refreshButtonHidden={refreshButtonHidden}
 			/>
 
 			<CustomDateTimeModal
@@ -291,7 +301,7 @@ function DateTimeSelection({
 					setCustomDTPickerVisible(false);
 				}}
 			/>
-		</Container>
+		</>
 	);
 }
 

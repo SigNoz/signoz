@@ -16,7 +16,9 @@ jobs:
         uses: actions/checkout@v2
 
       - name: Build query-service image
-        run: make build-query-service-amd64
+        env:
+          DEV_BUILD: 1
+        run: make build-ee-query-service-amd64
 
       - name: Build frontend image
         run: make build-frontend-amd64
@@ -55,7 +57,7 @@ jobs:
             --set frontend.service.type=LoadBalancer \
             --set queryService.image.tag=$DOCKER_TAG \
             --set frontend.image.tag=$DOCKER_TAG
-          
+
           # get pods, services and the container images
           kubectl get pods -n platform
           kubectl get svc -n platform

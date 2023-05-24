@@ -1,7 +1,7 @@
 import { Button } from 'antd';
-import { NotificationInstance } from 'antd/lib/notification';
+import { NotificationInstance } from 'antd/es/notification/interface';
 import deleteChannel from 'api/channels/delete';
-import React, { useState } from 'react';
+import { Dispatch, SetStateAction, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Channels } from 'types/api/channels/getAll';
 
@@ -55,7 +55,7 @@ function Delete({ notifications, setChannels, id }: DeleteProps): JSX.Element {
 
 interface DeleteProps {
 	notifications: NotificationInstance;
-	setChannels: React.Dispatch<React.SetStateAction<Channels[]>>;
+	setChannels: Dispatch<SetStateAction<Channels[]>>;
 	id: string;
 }
 

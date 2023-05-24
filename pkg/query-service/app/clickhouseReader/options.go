@@ -20,18 +20,22 @@ const (
 const (
 	defaultDatasource              string        = "tcp://localhost:9000"
 	defaultTraceDB                 string        = "signoz_traces"
-	defaultOperationsTable         string        = "signoz_operations"
-	defaultIndexTable              string        = "signoz_index_v2"
-	defaultErrorTable              string        = "signoz_error_index_v2"
-	defaultDurationTable           string        = "durationSortMV"
-	defaultUsageExplorerTable      string        = "usage_explorer"
-	defaultSpansTable              string        = "signoz_spans"
-	defaultDependencyGraphTable    string        = "dependency_graph_minutes"
-	defaultTopLevelOperationsTable string        = "top_level_operations"
+	defaultOperationsTable         string        = "distributed_signoz_operations"
+	defaultIndexTable              string        = "distributed_signoz_index_v2"
+	defaultErrorTable              string        = "distributed_signoz_error_index_v2"
+	defaultDurationTable           string        = "distributed_durationSort"
+	defaultUsageExplorerTable      string        = "distributed_usage_explorer"
+	defaultSpansTable              string        = "distributed_signoz_spans"
+	defaultDependencyGraphTable    string        = "distributed_dependency_graph_minutes_v2"
+	defaultTopLevelOperationsTable string        = "distributed_top_level_operations"
+	defaultSpanAttributeTable      string        = "distributed_span_attributes"
+	defaultSpanAttributeKeysTable  string        = "distributed_span_attributes_keys"
 	defaultLogsDB                  string        = "signoz_logs"
-	defaultLogsTable               string        = "logs"
-	defaultLogAttributeKeysTable   string        = "logs_atrribute_keys"
-	defaultLogResourceKeysTable    string        = "logs_resource_keys"
+	defaultLogsTable               string        = "distributed_logs"
+	defaultLogsLocalTable          string        = "logs"
+	defaultLogAttributeKeysTable   string        = "distributed_logs_attribute_keys"
+	defaultLogResourceKeysTable    string        = "distributed_logs_resource_keys"
+	defaultLogTagAttributeTable    string        = "distributed_tag_attributes"
 	defaultLiveTailRefreshSeconds  int           = 10
 	defaultWriteBatchDelay         time.Duration = 5 * time.Second
 	defaultWriteBatchSize          int           = 10000
@@ -61,12 +65,16 @@ type namespaceConfig struct {
 	UsageExplorerTable      string
 	SpansTable              string
 	ErrorTable              string
+	SpanAttributeTable      string
+	SpanAttributeKeysTable  string
 	DependencyGraphTable    string
 	TopLevelOperationsTable string
 	LogsDB                  string
 	LogsTable               string
+	LogsLocalTable          string
 	LogsAttributeKeysTable  string
 	LogsResourceKeysTable   string
+	LogsTagAttributeTable   string
 	LiveTailRefreshSeconds  int
 	WriteBatchDelay         time.Duration
 	WriteBatchSize          int
@@ -128,12 +136,16 @@ func NewOptions(datasource string, primaryNamespace string, otherNamespaces ...s
 			DurationTable:           defaultDurationTable,
 			UsageExplorerTable:      defaultUsageExplorerTable,
 			SpansTable:              defaultSpansTable,
+			SpanAttributeTable:      defaultSpanAttributeTable,
+			SpanAttributeKeysTable:  defaultSpanAttributeKeysTable,
 			DependencyGraphTable:    defaultDependencyGraphTable,
 			TopLevelOperationsTable: defaultTopLevelOperationsTable,
 			LogsDB:                  defaultLogsDB,
 			LogsTable:               defaultLogsTable,
+			LogsLocalTable:          defaultLogsLocalTable,
 			LogsAttributeKeysTable:  defaultLogAttributeKeysTable,
 			LogsResourceKeysTable:   defaultLogResourceKeysTable,
+			LogsTagAttributeTable:   defaultLogTagAttributeTable,
 			LiveTailRefreshSeconds:  defaultLiveTailRefreshSeconds,
 			WriteBatchDelay:         defaultWriteBatchDelay,
 			WriteBatchSize:          defaultWriteBatchSize,
@@ -154,6 +166,7 @@ func NewOptions(datasource string, primaryNamespace string, otherNamespaces ...s
 				ErrorTable:             "",
 				LogsDB:                 "",
 				LogsTable:              "",
+				LogsLocalTable:         "",
 				LogsAttributeKeysTable: "",
 				LogsResourceKeysTable:  "",
 				LiveTailRefreshSeconds: defaultLiveTailRefreshSeconds,

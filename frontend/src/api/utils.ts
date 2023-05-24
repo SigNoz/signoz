@@ -41,6 +41,7 @@ export const Logout = (): void => {
 			orgName: '',
 			profilePictureURL: '',
 			userId: '',
+			userFlags: {},
 		},
 	});
 

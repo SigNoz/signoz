@@ -1,16 +1,8 @@
 import { Span } from 'types/api/trace/getTraceItem';
 
-export const colors = [
-	'#2F80ED',
-	'#BB6BD9',
-	'#F2994A',
-	'#219653',
-	'#56CCF2',
-	'#F2C94C',
-	'#BDBDBD',
-];
+import { themeColors } from '../constants/theme';
 
-export const errorColor = '#d32f2f';
+export const colors = Object.values(themeColors.chartcolors);
 
 export function getRandomNumber(min: number, max: number): number {
 	return Math.random() * (max - min) + min;
@@ -21,17 +13,33 @@ const getRandomColor = (): string => {
 	return colors[index];
 };
 
+export const SIGNOZ_UI_COLOR_HEX = 'signoz_ui_color_hex';
+
 export const spanServiceNameToColorMapping = (
 	spans: Span[],
 ): { [key: string]: string } => {
-	const serviceNameSet = new Set();
+	const allServiceMap = new Map<string, string | undefined>();
+
 	spans.forEach((spanItem) => {
-		serviceNameSet.add(spanItem[3]);
+		const signozUiColorKeyIndex = spanItem[7].findIndex(
+			(span) => span === SIGNOZ_UI_COLOR_HEX,
+		);
+
+		allServiceMap.set(
+			spanItem[3],
+			signozUiColorKeyIndex === -1
+				? undefined
+				: spanItem[8][signozUiColorKeyIndex],
+		);
 	});
+
 	const serviceToColorMap: { [key: string]: string } = {};
-	Array.from(serviceNameSet).forEach((serviceName, idx) => {
-		serviceToColorMap[`${serviceName}`] = colors[idx % colors.length];
+
+	Array.from(allServiceMap).forEach(([serviceName, signozColor], idx) => {
+		serviceToColorMap[`${serviceName}`] =
+			signozColor || colors[idx % colors.length];
 	});
+
 	return serviceToColorMap;
 };
 

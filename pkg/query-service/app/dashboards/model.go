@@ -4,18 +4,31 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"reflect"
+	"regexp"
+	"strconv"
 	"strings"
 	"time"
 
 	"github.com/google/uuid"
 	"github.com/gosimple/slug"
 	"github.com/jmoiron/sqlx"
+	"github.com/mitchellh/mapstructure"
+	"go.signoz.io/signoz/pkg/query-service/interfaces"
 	"go.signoz.io/signoz/pkg/query-service/model"
 	"go.uber.org/zap"
 )
 
 // This time the global variable is unexported.
 var db *sqlx.DB
+
+// User for mapping job,instance from grafana
+var instanceEQRE = regexp.MustCompile("instance(?s)=(?s)\\\"{{.instance}}\\\"")
+var nodeEQRE = regexp.MustCompile("instance(?s)=(?s)\\\"{{.node}}\\\"")
+var jobEQRE = regexp.MustCompile("job(?s)=(?s)\\\"{{.job}}\\\"")
+var instanceRERE = regexp.MustCompile("instance(?s)=~(?s)\\\"{{.instance}}\\\"")
+var nodeRERE = regexp.MustCompile("instance(?s)=~(?s)\\\"{{.node}}\\\"")
+var jobRERE = regexp.MustCompile("job(?s)=~(?s)\\\"{{.job}}\\\"")
 
 // InitDB sets up setting up the connection pool global variable.
 func InitDB(dataSourceName string) (*sqlx.DB, error) {
@@ -119,7 +132,7 @@ func (c *Data) Scan(src interface{}) error {
 }
 
 // CreateDashboard creates a new dashboard
-func CreateDashboard(data map[string]interface{}) (*Dashboard, *model.ApiError) {
+func CreateDashboard(data map[string]interface{}, fm interfaces.FeatureLookup) (*Dashboard, *model.ApiError) {
 	dash := &Dashboard{
 		Data: data,
 	}
@@ -132,6 +145,13 @@ func CreateDashboard(data map[string]interface{}) (*Dashboard, *model.ApiError) 
 	if err != nil {
 		zap.S().Errorf("Error in marshalling data field in dashboard: ", dash, err)
 		return nil, &model.ApiError{Typ: model.ErrorExec, Err: err}
+	}
+
+	if countTraceAndLogsPanel(data) > 0 {
+		fErr := checkFeatureUsage(fm, countTraceAndLogsPanel(data))
+		if fErr != nil {
+			return nil, fErr
+		}
 	}
 
 	// db.Prepare("Insert into dashboards where")
@@ -147,6 +167,11 @@ func CreateDashboard(data map[string]interface{}) (*Dashboard, *model.ApiError) 
 		return nil, &model.ApiError{Typ: model.ErrorExec, Err: err}
 	}
 	dash.Id = int(lastInsertId)
+
+	traceAndLogsPanelUsage := countTraceAndLogsPanel(data)
+	if traceAndLogsPanelUsage > 0 {
+		updateFeatureUsage(fm, traceAndLogsPanelUsage)
+	}
 
 	return dash, nil
 }
@@ -164,7 +189,13 @@ func GetDashboards() ([]Dashboard, *model.ApiError) {
 	return dashboards, nil
 }
 
-func DeleteDashboard(uuid string) *model.ApiError {
+func DeleteDashboard(uuid string, fm interfaces.FeatureLookup) *model.ApiError {
+
+	dashboard, dErr := GetDashboard(uuid)
+	if dErr != nil {
+		zap.S().Errorf("Error in getting dashboard: ", uuid, dErr)
+		return dErr
+	}
 
 	query := fmt.Sprintf("DELETE FROM dashboards WHERE uuid='%s';", uuid)
 
@@ -180,6 +211,11 @@ func DeleteDashboard(uuid string) *model.ApiError {
 	}
 	if affectedRows == 0 {
 		return &model.ApiError{Typ: model.ErrorNotFound, Err: fmt.Errorf("no dashboard found with uuid: %s", uuid)}
+	}
+
+	traceAndLogsPanelUsage := countTraceAndLogsPanel(dashboard.Data)
+	if traceAndLogsPanelUsage > 0 {
+		updateFeatureUsage(fm, -traceAndLogsPanelUsage)
 	}
 
 	return nil
@@ -198,7 +234,7 @@ func GetDashboard(uuid string) (*Dashboard, *model.ApiError) {
 	return &dashboard, nil
 }
 
-func UpdateDashboard(uuid string, data map[string]interface{}) (*Dashboard, *model.ApiError) {
+func UpdateDashboard(uuid string, data map[string]interface{}, fm interfaces.FeatureLookup) (*Dashboard, *model.ApiError) {
 
 	map_data, err := json.Marshal(data)
 	if err != nil {
@@ -211,6 +247,16 @@ func UpdateDashboard(uuid string, data map[string]interface{}) (*Dashboard, *mod
 		return nil, apiErr
 	}
 
+	// check if the count of trace and logs QB panel has changed, if yes, then check feature flag count
+	existingCount := countTraceAndLogsPanel(dashboard.Data)
+	newCount := countTraceAndLogsPanel(data)
+	if newCount > existingCount {
+		err := checkFeatureUsage(fm, newCount-existingCount)
+		if err != nil {
+			return nil, err
+		}
+	}
+
 	dashboard.UpdatedAt = time.Now()
 	dashboard.Data = data
 
@@ -221,8 +267,56 @@ func UpdateDashboard(uuid string, data map[string]interface{}) (*Dashboard, *mod
 		zap.S().Errorf("Error in inserting dashboard data: ", data, err)
 		return nil, &model.ApiError{Typ: model.ErrorExec, Err: err}
 	}
-
+	if existingCount != newCount {
+		// if the count of trace and logs panel has changed, we need to update feature flag count as well
+		updateFeatureUsage(fm, newCount-existingCount)
+	}
 	return dashboard, nil
+}
+
+func updateFeatureUsage(fm interfaces.FeatureLookup, usage int64) *model.ApiError {
+	feature, err := fm.GetFeatureFlag(model.QueryBuilderPanels)
+	if err != nil {
+		switch err.(type) {
+		case model.ErrFeatureUnavailable:
+			zap.S().Errorf("feature unavailable", zap.String("featureKey", model.QueryBuilderPanels), zap.Error(err))
+			return model.BadRequest(err)
+		default:
+			zap.S().Errorf("feature check failed", zap.String("featureKey", model.QueryBuilderPanels), zap.Error(err))
+			return model.BadRequest(err)
+		}
+	}
+	feature.Usage += usage
+	if feature.Usage >= feature.UsageLimit && feature.UsageLimit != -1 {
+		feature.Active = false
+	}
+	if feature.Usage < feature.UsageLimit || feature.UsageLimit == -1 {
+		feature.Active = true
+	}
+	err = fm.UpdateFeatureFlag(feature)
+	if err != nil {
+		return model.BadRequest(err)
+	}
+
+	return nil
+}
+
+func checkFeatureUsage(fm interfaces.FeatureLookup, usage int64) *model.ApiError {
+	feature, err := fm.GetFeatureFlag(model.QueryBuilderPanels)
+	if err != nil {
+		switch err.(type) {
+		case model.ErrFeatureUnavailable:
+			zap.S().Errorf("feature unavailable", zap.String("featureKey", model.QueryBuilderPanels), zap.Error(err))
+			return model.BadRequest(err)
+		default:
+			zap.S().Errorf("feature check failed", zap.String("featureKey", model.QueryBuilderPanels), zap.Error(err))
+			return model.BadRequest(err)
+		}
+	}
+	if feature.UsageLimit-(feature.Usage+usage) < 0 && feature.UsageLimit != -1 {
+		return model.BadRequest(fmt.Errorf("feature usage exceeded"))
+	}
+	return nil
 }
 
 // UpdateSlug updates the slug
@@ -259,4 +353,272 @@ func SlugifyTitle(title string) string {
 		}
 	}
 	return s
+}
+
+func widgetFromPanel(panel model.Panels, idx int, variables map[string]model.Variable) *model.Widget {
+	widget := model.Widget{
+		Description:    panel.Description,
+		ID:             strconv.Itoa(idx),
+		IsStacked:      false,
+		NullZeroValues: "zero",
+		Opacity:        "1",
+		PanelTypes:     "TIME_SERIES", // TODO: Need to figure out how to get this
+		Query: model.Query{
+			ClickHouse: []model.ClickHouseQueryDashboard{
+				{
+					Disabled: false,
+					Legend:   "",
+					Name:     "A",
+					Query:    "",
+				},
+			},
+			MetricsBuilder: model.MetricsBuilder{
+				Formulas: []string{},
+				QueryBuilder: []model.QueryBuilder{
+					{
+						AggregateOperator: 1,
+						Disabled:          false,
+						GroupBy:           []string{},
+						Legend:            "",
+						MetricName:        "",
+						Name:              "A",
+						ReduceTo:          1,
+					},
+				},
+			},
+			PromQL:    []model.PromQueryDashboard{},
+			QueryType: int(model.PROM),
+		},
+		QueryData: model.QueryDataDashboard{
+			Data: model.Data{
+				QueryData: []interface{}{},
+			},
+		},
+		Title:     panel.Title,
+		YAxisUnit: panel.FieldConfig.Defaults.Unit,
+		QueryType: int(model.PROM), // TODO: Supprot for multiple query types
+	}
+	for _, target := range panel.Targets {
+		if target.Expr != "" {
+			for name := range variables {
+				target.Expr = strings.ReplaceAll(target.Expr, "$"+name, "{{"+"."+name+"}}")
+				target.Expr = strings.ReplaceAll(target.Expr, "$"+"__rate_interval", "5m")
+			}
+
+			// prometheus receiver in collector maps job,instance as service_name,service_instance_id
+			target.Expr = instanceEQRE.ReplaceAllString(target.Expr, "service_instance_id=\"{{.instance}}\"")
+			target.Expr = nodeEQRE.ReplaceAllString(target.Expr, "service_instance_id=\"{{.node}}\"")
+			target.Expr = jobEQRE.ReplaceAllString(target.Expr, "service_name=\"{{.job}}\"")
+			target.Expr = instanceRERE.ReplaceAllString(target.Expr, "service_instance_id=~\"{{.instance}}\"")
+			target.Expr = nodeRERE.ReplaceAllString(target.Expr, "service_instance_id=~\"{{.node}}\"")
+			target.Expr = jobRERE.ReplaceAllString(target.Expr, "service_name=~\"{{.job}}\"")
+
+			widget.Query.PromQL = append(
+				widget.Query.PromQL,
+				model.PromQueryDashboard{
+					Disabled: false,
+					Legend:   target.LegendFormat,
+					Name:     target.RefID,
+					Query:    target.Expr,
+				},
+			)
+		}
+	}
+	return &widget
+}
+
+func TransformGrafanaJSONToSignoz(grafanaJSON model.GrafanaJSON) model.DashboardData {
+	var toReturn model.DashboardData
+	toReturn.Title = grafanaJSON.Title
+	toReturn.Tags = grafanaJSON.Tags
+	toReturn.Variables = make(map[string]model.Variable)
+
+	for templateIdx, template := range grafanaJSON.Templating.List {
+		var sort, typ, textboxValue, customValue, queryValue string
+		if template.Sort == 1 {
+			sort = "ASC"
+		} else if template.Sort == 2 {
+			sort = "DESC"
+		} else {
+			sort = "DISABLED"
+		}
+
+		if template.Type == "query" {
+			if template.Datasource == nil {
+				zap.S().Warnf("Skipping panel %d as it has no datasource", templateIdx)
+				continue
+			}
+			// Skip if the source is not prometheus
+			source, stringOk := template.Datasource.(string)
+			if stringOk && !strings.Contains(strings.ToLower(source), "prometheus") {
+				zap.S().Warnf("Skipping template %d as it is not prometheus", templateIdx)
+				continue
+			}
+			var result model.Datasource
+			var structOk bool
+			if reflect.TypeOf(template.Datasource).Kind() == reflect.Map {
+				err := mapstructure.Decode(template.Datasource, &result)
+				if err == nil {
+					structOk = true
+				}
+			}
+			if result.Type != "prometheus" && result.Type != "" {
+				zap.S().Warnf("Skipping template %d as it is not prometheus", templateIdx)
+				continue
+			}
+
+			if !stringOk && !structOk {
+				zap.S().Warnf("Didn't recognize source, skipping")
+				continue
+			}
+			typ = "QUERY"
+		} else if template.Type == "custom" {
+			typ = "CUSTOM"
+		} else if template.Type == "textbox" {
+			typ = "TEXTBOX"
+			text, ok := template.Current.Text.(string)
+			if ok {
+				textboxValue = text
+			}
+			array, ok := template.Current.Text.([]string)
+			if ok {
+				textboxValue = strings.Join(array, ",")
+			}
+		} else {
+			continue
+		}
+
+		var selectedValue string
+		text, ok := template.Current.Value.(string)
+		if ok {
+			selectedValue = text
+		}
+		array, ok := template.Current.Value.([]string)
+		if ok {
+			selectedValue = strings.Join(array, ",")
+		}
+
+		toReturn.Variables[template.Name] = model.Variable{
+			AllSelected:   false,
+			CustomValue:   customValue,
+			Description:   template.Label,
+			MultiSelect:   template.Multi,
+			QueryValue:    queryValue,
+			SelectedValue: selectedValue,
+			ShowALLOption: template.IncludeAll,
+			Sort:          sort,
+			TextboxValue:  textboxValue,
+			Type:          typ,
+		}
+	}
+
+	row := 0
+	idx := 0
+	for _, panel := range grafanaJSON.Panels {
+		if panel.Type == "row" {
+			if panel.Panels != nil && len(panel.Panels) > 0 {
+				for _, innerPanel := range panel.Panels {
+					if idx%3 == 0 {
+						row++
+					}
+					toReturn.Layout = append(
+						toReturn.Layout,
+						model.Layout{
+							X: idx % 3 * 4,
+							Y: row * 3,
+							W: 4,
+							H: 3,
+							I: strconv.Itoa(idx),
+						},
+					)
+
+					toReturn.Widgets = append(toReturn.Widgets, *widgetFromPanel(innerPanel, idx, toReturn.Variables))
+					idx++
+				}
+			}
+			continue
+		}
+		if panel.Datasource == nil {
+			zap.S().Warnf("Skipping panel %d as it has no datasource", idx)
+			continue
+		}
+		// Skip if the datasource is not prometheus
+		source, stringOk := panel.Datasource.(string)
+		if stringOk && !strings.Contains(strings.ToLower(source), "prometheus") {
+			zap.S().Warnf("Skipping panel %d as it is not prometheus", idx)
+			continue
+		}
+		var result model.Datasource
+		var structOk bool
+		if reflect.TypeOf(panel.Datasource).Kind() == reflect.Map {
+			err := mapstructure.Decode(panel.Datasource, &result)
+			if err == nil {
+				structOk = true
+			}
+		}
+		if result.Type != "prometheus" && result.Type != "" {
+			zap.S().Warnf("Skipping panel %d as it is not prometheus", idx)
+			continue
+		}
+
+		if !stringOk && !structOk {
+			zap.S().Warnf("Didn't recognize source, skipping")
+			continue
+		}
+
+		// Create a panel from "gridPos"
+
+		if idx%3 == 0 {
+			row++
+		}
+		toReturn.Layout = append(
+			toReturn.Layout,
+			model.Layout{
+				X: idx % 3 * 4,
+				Y: row * 3,
+				W: 4,
+				H: 3,
+				I: strconv.Itoa(idx),
+			},
+		)
+
+		toReturn.Widgets = append(toReturn.Widgets, *widgetFromPanel(panel, idx, toReturn.Variables))
+		idx++
+	}
+	return toReturn
+}
+
+func countTraceAndLogsPanel(data map[string]interface{}) int64 {
+	count := int64(0)
+	if data != nil && data["widgets"] != nil {
+		widgets, ok := data["widgets"].(interface{})
+		if ok {
+			data, ok := widgets.([]interface{})
+			if ok {
+				for _, widget := range data {
+					sData, ok := widget.(map[string]interface{})
+					if ok && sData["query"] != nil {
+						query, ok := sData["query"].(interface{}).(map[string]interface{})
+						if ok && query["queryType"] == "builder" && query["builder"] != nil {
+							builderData, ok := query["builder"].(interface{}).(map[string]interface{})
+							if ok && builderData["queryData"] != nil {
+								builderQueryData, ok := builderData["queryData"].([]interface{})
+								if ok {
+									for _, queryData := range builderQueryData {
+										data, ok := queryData.(map[string]interface{})
+										if ok {
+											if data["dataSource"] == "traces" || data["dataSource"] == "logs" {
+												count++
+											}
+										}
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+	return count
 }

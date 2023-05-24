@@ -1,13 +1,13 @@
 /* eslint-disable react-hooks/exhaustive-deps */
-import { notification } from 'antd';
 import getLocalStorageApi from 'api/browser/localstorage/get';
 import loginApi from 'api/user/login';
 import { Logout } from 'api/utils';
 import Spinner from 'components/Spinner';
 import { LOCALSTORAGE } from 'constants/localStorage';
 import ROUTES from 'constants/routes';
+import { useNotifications } from 'hooks/useNotifications';
 import history from 'lib/history';
-import React, { useEffect, useMemo } from 'react';
+import { ReactChild, useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useDispatch, useSelector } from 'react-redux';
 import { matchPath, Redirect, useLocation } from 'react-router-dom';
@@ -46,6 +46,8 @@ function PrivateRoute({ children }: PrivateRouteProps): JSX.Element {
 	const { t } = useTranslation(['common']);
 
 	const dispatch = useDispatch<Dispatch<AppActions>>();
+
+	const { notifications } = useNotifications();
 
 	const currentRoute = mapRoutes.get('current');
 
@@ -106,7 +108,7 @@ function PrivateRoute({ children }: PrivateRouteProps): JSX.Element {
 							} else {
 								Logout();
 
-								notification.error({
+								notifications.error({
 									message: response.error || t('something_went_wrong'),
 								});
 							}
@@ -159,7 +161,7 @@ function PrivateRoute({ children }: PrivateRouteProps): JSX.Element {
 }
 
 interface PrivateRouteProps {
-	children: React.ReactChild;
+	children: ReactChild;
 }
 
 export default PrivateRoute;

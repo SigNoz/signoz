@@ -1,12 +1,16 @@
-import { notification } from 'antd';
+import { Space } from 'antd';
 import getLocalStorageKey from 'api/browser/localstorage/get';
+import ReleaseNote from 'components/ReleaseNote';
 import Spinner from 'components/Spinner';
 import { SKIP_ONBOARDING } from 'constants/onboarding';
-import ResourceAttributesFilter from 'container/MetricsApplication/ResourceAttributesFilter';
 import MetricTable from 'container/MetricsTable';
-import { convertRawQueriesToTraceSelectedTags } from 'lib/resourceAttributes';
-import React, { useEffect, useMemo } from 'react';
+import ResourceAttributesFilter from 'container/ResourceAttributesFilter';
+import { useNotifications } from 'hooks/useNotifications';
+import useResourceAttribute from 'hooks/useResourceAttribute';
+import { convertRawQueriesToTraceSelectedTags } from 'hooks/useResourceAttribute/utils';
+import { useEffect, useMemo } from 'react';
 import { connect, useSelector } from 'react-redux';
+import { useLocation } from 'react-router-dom';
 import { bindActionCreators, Dispatch } from 'redux';
 import { ThunkDispatch } from 'redux-thunk';
 import { GetService, GetServiceProps } from 'store/actions/metrics';
@@ -21,27 +25,27 @@ function Metrics({ getService }: MetricsProps): JSX.Element {
 		AppState,
 		GlobalReducer
 	>((state) => state.globalTime);
-	const {
-		services,
-		resourceAttributeQueries,
-		error,
-		errorMessage,
-	} = useSelector<AppState, MetricReducer>((state) => state.metrics);
+	const location = useLocation();
+	const { services, error, errorMessage } = useSelector<AppState, MetricReducer>(
+		(state) => state.metrics,
+	);
+	const { notifications } = useNotifications();
 
 	useEffect(() => {
 		if (error) {
-			notification.error({
+			notifications.error({
 				message: errorMessage,
 			});
 		}
-	}, [error, errorMessage]);
+	}, [error, errorMessage, notifications]);
+
+	const { queries } = useResourceAttribute();
 
 	const selectedTags = useMemo(
-		() =>
-			(convertRawQueriesToTraceSelectedTags(resourceAttributeQueries) as Tags[]) ||
-			[],
-		[resourceAttributeQueries],
+		() => (convertRawQueriesToTraceSelectedTags(queries, '') as Tags[]) || [],
+		[queries],
 	);
+
 	const isSkipped = getLocalStorageKey(SKIP_ONBOARDING) === 'true';
 
 	useEffect(() => {
@@ -86,10 +90,12 @@ function Metrics({ getService }: MetricsProps): JSX.Element {
 	}
 
 	return (
-		<>
+		<Space direction="vertical" style={{ width: '100%' }}>
+			<ReleaseNote path={location.pathname} />
+
 			<ResourceAttributesFilter />
 			<MetricTable />
-		</>
+		</Space>
 	);
 }
 

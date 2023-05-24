@@ -1,25 +1,27 @@
-import { notification } from 'antd';
+import { NotificationInstance } from 'antd/es/notification/interface';
 import updateDashboardApi from 'api/dashboard/update';
 import {
-	ClickHouseQueryTemplate,
-	PromQLQueryTemplate,
-	QueryBuilderQueryTemplate,
-} from 'constants/dashboard';
+	initialClickHouseData,
+	initialQueryBuilderFormValues,
+	initialQueryPromQLData,
+} from 'constants/queryBuilder';
 import { GRAPH_TYPES } from 'container/NewDashboard/ComponentsSlider';
-import GetQueryName from 'lib/query/GetQueryName';
 import { Layout } from 'react-grid-layout';
 import store from 'store';
 import { Dashboard } from 'types/api/dashboard/getAll';
 import { EQueryType } from 'types/common/dashboard';
 
-export const UpdateDashboard = async ({
-	data,
-	graphType,
-	generateWidgetId,
-	layout,
-	selectedDashboard,
-	isRedirected,
-}: UpdateDashboardProps): Promise<Dashboard | undefined> => {
+export const UpdateDashboard = async (
+	{
+		data,
+		graphType,
+		generateWidgetId,
+		layout,
+		selectedDashboard,
+		isRedirected,
+	}: UpdateDashboardProps,
+	notify: NotificationInstance,
+): Promise<Dashboard | undefined> => {
 	const updatedSelectedDashboard: Dashboard = {
 		...selectedDashboard,
 		data: {
@@ -39,26 +41,11 @@ export const UpdateDashboard = async ({
 					panelTypes: graphType,
 					query: {
 						queryType: EQueryType.QUERY_BUILDER,
-						promQL: [
-							{
-								name: GetQueryName([]) || '',
-								...PromQLQueryTemplate,
-							},
-						],
-						clickHouse: [
-							{
-								name: GetQueryName([]) || '',
-								...ClickHouseQueryTemplate,
-							},
-						],
-						metricsBuilder: {
-							formulas: [],
-							queryBuilder: [
-								{
-									name: GetQueryName([]) || '',
-									...QueryBuilderQueryTemplate,
-								},
-							],
+						promql: [initialQueryPromQLData],
+						clickhouse_sql: [initialClickHouseData],
+						builder: {
+							queryFormulas: [],
+							queryData: [initialQueryBuilderFormValues],
 						},
 					},
 					queryData: {
@@ -89,7 +76,7 @@ export const UpdateDashboard = async ({
 		if (response.statusCode === 200) {
 			return response.payload;
 		}
-		notification.error({
+		notify.error({
 			message: response.error || 'Something went wrong',
 		});
 		return undefined;

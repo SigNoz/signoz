@@ -1,9 +1,4 @@
-/**
- * @jest-environment jsdom
- */
-
 import { render } from '@testing-library/react';
-import React from 'react';
 import { Provider } from 'react-redux';
 import { MemoryRouter } from 'react-router-dom';
 import store from 'store';

@@ -11,3 +11,5 @@ export const INVITE_MEMBERS_HASH = '#invite-team-members';
 
 export const SIGNOZ_UPGRADE_PLAN_URL =
 	'https://upgrade.signoz.io/upgrade-from-app';
+
+export const DASHBOARD_TIME_IN_DURATION = 'refreshInterval';

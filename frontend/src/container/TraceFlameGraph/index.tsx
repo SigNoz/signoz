@@ -1,8 +1,14 @@
 /* eslint-disable react/no-unstable-nested-components */
 import Color from 'color';
 import { ITraceMetaData } from 'container/GantChart';
-import useThemeMode from 'hooks/useThemeMode';
-import React, { useLayoutEffect, useMemo, useState } from 'react';
+import { useIsDarkMode } from 'hooks/useDarkMode';
+import {
+	Dispatch,
+	SetStateAction,
+	useLayoutEffect,
+	useMemo,
+	useState,
+} from 'react';
 import { ITraceTree } from 'types/api/trace/getTraceItem';
 
 import {
@@ -18,7 +24,7 @@ interface SpanItemProps {
 	spanData: ITraceTree;
 	tooltipText: string;
 	onSpanSelect: (id: string) => void;
-	onSpanHover: React.Dispatch<React.SetStateAction<string>>;
+	onSpanHover: Dispatch<SetStateAction<string>>;
 	hoveredSpanId: string;
 	selectedSpanId: string;
 }
@@ -37,7 +43,7 @@ function SpanItem({
 	const { serviceColour } = spanData;
 	const [isSelected, setIsSelected] = useState<boolean>(false);
 	// const [isLocalHover, setIsLocalHover] = useState<boolean>(false);
-	const { isDarkMode } = useThemeMode();
+	const isDarkMode = useIsDarkMode();
 
 	useLayoutEffect(() => {
 		if (

@@ -1,7 +1,6 @@
 import { volcano } from '@ant-design/colors';
 import { InfoCircleOutlined } from '@ant-design/icons';
-import { Popover } from 'antd';
-import React from 'react';
+import { Popover, Typography } from 'antd';
 
 function PopOverContent(): JSX.Element {
 	return (
@@ -21,19 +20,10 @@ function PopOverContent(): JSX.Element {
 function MissingSpansMessage(): JSX.Element {
 	return (
 		<Popover content={PopOverContent} trigger="hover" placement="bottom">
-			<div
-				style={{
-					textAlign: 'center',
-					display: 'flex',
-					justifyContent: 'center',
-					alignItems: 'center',
-					margin: '1rem 0',
-					fontSize: '0.8rem',
-				}}
-			>
-				<InfoCircleOutlined style={{ color: volcano[6], marginRight: '0.3rem' }} />{' '}
+			<Typography>
+				<InfoCircleOutlined style={{ color: volcano[6], marginRight: '0.3rem' }} />
 				This trace has missing spans
-			</div>
+			</Typography>
 		</Popover>
 	);
 }

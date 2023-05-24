@@ -9,17 +9,13 @@ import {
 	Select,
 	Typography,
 } from 'antd';
-import FormItem from 'antd/lib/form/FormItem';
-import TextArea from 'antd/lib/input/TextArea';
 import styled from 'styled-components';
+
+const { TextArea } = Input;
+const { Item } = Form;
 
 export const PanelContainer = styled(Row)`
 	flex-wrap: nowrap;
-`;
-
-export const StyledRightContainer = styled(Col)`
-	&&& {
-	}
 `;
 
 export const StyledLeftContainer = styled(Col)`
@@ -86,7 +82,6 @@ export const InputSmall = styled(Input)`
 `;
 
 export const FormContainer = styled(Card)`
-	padding: 2em;
 	margin-top: 1rem;
 	display: flex;
 	flex-direction: column;
@@ -99,6 +94,8 @@ export const ThresholdInput = styled(InputNumber)`
 		align-items: center;
 		& > .ant-input-number-group-addon {
 			width: 130px;
+			border: 0;
+			background: transparent;
 		}
 		& > .ant-input-number {
 			width: 50%;
@@ -111,7 +108,7 @@ export const TextareaMedium = styled(TextArea)`
 	width: 70%;
 `;
 
-export const FormItemMedium = styled(FormItem)`
+export const FormItemMedium = styled(Item)`
 	width: 70%;
 `;
 

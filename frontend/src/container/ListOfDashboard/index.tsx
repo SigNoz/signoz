@@ -2,21 +2,23 @@ import { PlusOutlined } from '@ant-design/icons';
 import {
 	Card,
 	Dropdown,
-	Menu,
+	MenuProps,
 	Row,
-	Table,
 	TableColumnProps,
 	Typography,
 } from 'antd';
+import { ItemType } from 'antd/es/menu/hooks/useItems';
 import createDashboard from 'api/dashboard/create';
 import { AxiosError } from 'axios';
+import { ResizeTable } from 'components/ResizeTable';
 import TextToolTip from 'components/TextToolTip';
 import ROUTES from 'constants/routes';
 import SearchFilter from 'container/ListOfDashboard/SearchFilter';
 import useComponentPermission from 'hooks/useComponentPermission';
 import history from 'lib/history';
-import React, {
+import {
 	Dispatch,
+	Key,
 	useCallback,
 	useEffect,
 	useMemo,
@@ -53,66 +55,79 @@ function ListOfAllDashboard(): JSX.Element {
 	);
 
 	const { t } = useTranslation('dashboard');
+
 	const [
 		isImportJSONModalVisible,
 		setIsImportJSONModalVisible,
 	] = useState<boolean>(false);
+
+	const [uploadedGrafana, setUploadedGrafana] = useState<boolean>(false);
 
 	const [filteredDashboards, setFilteredDashboards] = useState<Dashboard[]>();
 
 	useEffect(() => {
 		setFilteredDashboards(dashboards);
 	}, [dashboards]);
+
 	const [newDashboardState, setNewDashboardState] = useState({
 		loading: false,
 		error: false,
 		errorMessage: '',
 	});
 
-	const columns: TableColumnProps<Data>[] = [
-		{
-			title: 'Name',
-			dataIndex: 'name',
-			render: Name,
-		},
-		{
-			title: 'Description',
-			dataIndex: 'description',
-		},
-		{
-			title: 'Tags (can be multiple)',
-			dataIndex: 'tags',
-			render: Tags,
-		},
-		{
-			title: 'Created At',
-			dataIndex: 'createdBy',
-			sorter: (a: Data, b: Data): number => {
-				const prev = new Date(a.createdBy).getTime();
-				const next = new Date(b.createdBy).getTime();
-
-				return prev - next;
+	const columns: TableColumnProps<Data>[] = useMemo(
+		() => [
+			{
+				title: 'Name',
+				dataIndex: 'name',
+				width: 100,
+				render: Name,
 			},
-			render: Createdby,
-		},
-		{
-			title: 'Last Updated Time',
-			dataIndex: 'lastUpdatedTime',
-			sorter: (a: Data, b: Data): number => {
-				const prev = new Date(a.lastUpdatedTime).getTime();
-				const next = new Date(b.lastUpdatedTime).getTime();
-
-				return prev - next;
+			{
+				title: 'Description',
+				width: 100,
+				dataIndex: 'description',
 			},
-			render: DateComponent,
-		},
-	];
+			{
+				title: 'Tags (can be multiple)',
+				dataIndex: 'tags',
+				width: 80,
+				render: Tags,
+			},
+			{
+				title: 'Created At',
+				dataIndex: 'createdBy',
+				width: 80,
+				sorter: (a: Data, b: Data): number => {
+					const prev = new Date(a.createdBy).getTime();
+					const next = new Date(b.createdBy).getTime();
+
+					return prev - next;
+				},
+				render: Createdby,
+			},
+			{
+				title: 'Last Updated Time',
+				width: 90,
+				dataIndex: 'lastUpdatedTime',
+				sorter: (a: Data, b: Data): number => {
+					const prev = new Date(a.lastUpdatedTime).getTime();
+					const next = new Date(b.lastUpdatedTime).getTime();
+
+					return prev - next;
+				},
+				render: DateComponent,
+			},
+		],
+		[],
+	);
 
 	if (action) {
 		columns.push({
 			title: 'Action',
 			dataIndex: '',
 			key: 'x',
+			width: 40,
 			render: DeleteButton,
 		});
 	}
@@ -137,6 +152,7 @@ function ListOfAllDashboard(): JSX.Element {
 				title: t('new_dashboard_title', {
 					ns: 'dashboard',
 				}),
+				uploadedGrafana: false,
 			});
 
 			if (response.statusCode === 200) {
@@ -182,28 +198,42 @@ function ListOfAllDashboard(): JSX.Element {
 		newDashboardState.loading,
 	]);
 
-	const onModalHandler = (): void => {
+	const onModalHandler = (uploadedGrafana: boolean): void => {
 		setIsImportJSONModalVisible((state) => !state);
+		setUploadedGrafana(uploadedGrafana);
 	};
 
-	const menu = useMemo(
-		() => (
-			<Menu>
-				{createNewDashboard && (
-					<Menu.Item
-						onClick={onNewDashboardHandler}
-						disabled={loading}
-						key={t('create_dashboard').toString()}
-					>
-						{t('create_dashboard')}
-					</Menu.Item>
-				)}
-				<Menu.Item onClick={onModalHandler} key={t('import_json').toString()}>
-					{t('import_json')}
-				</Menu.Item>
-			</Menu>
-		),
-		[createNewDashboard, loading, onNewDashboardHandler, t],
+	const getMenuItems = useMemo(() => {
+		const menuItems: ItemType[] = [];
+		if (createNewDashboard) {
+			menuItems.push({
+				key: t('create_dashboard').toString(),
+				label: t('create_dashboard'),
+				disabled: loading,
+				onClick: onNewDashboardHandler,
+			});
+		}
+
+		menuItems.push({
+			key: t('import_json').toString(),
+			label: t('import_json'),
+			onClick: (): void => onModalHandler(false),
+		});
+
+		menuItems.push({
+			key: t('import_grafana_json').toString(),
+			label: t('import_grafana_json'),
+			onClick: (): void => onModalHandler(true),
+		});
+
+		return menuItems;
+	}, [createNewDashboard, loading, onNewDashboardHandler, t]);
+
+	const menu: MenuProps = useMemo(
+		() => ({
+			items: getMenuItems,
+		}),
+		[getMenuItems],
 	);
 
 	const GetHeader = useMemo(
@@ -219,7 +249,7 @@ function ListOfAllDashboard(): JSX.Element {
 						}}
 					/>
 					{newDashboard && (
-						<Dropdown trigger={['click']} overlay={menu}>
+						<Dropdown disabled={loading} trigger={['click']} menu={menu}>
 							<NewDashboardButton
 								icon={<PlusOutlined />}
 								type="primary"
@@ -234,11 +264,12 @@ function ListOfAllDashboard(): JSX.Element {
 			</Row>
 		),
 		[
-			getText,
-			menu,
 			newDashboard,
-			newDashboardState.error,
+			loading,
+			menu,
 			newDashboardState.loading,
+			newDashboardState.error,
+			getText,
 		],
 	);
 
@@ -256,9 +287,11 @@ function ListOfAllDashboard(): JSX.Element {
 			<TableContainer>
 				<ImportJSON
 					isImportJSONModalVisible={isImportJSONModalVisible}
-					onModalHandler={onModalHandler}
+					uploadedGrafana={uploadedGrafana}
+					onModalHandler={(): void => onModalHandler(false)}
 				/>
-				<Table
+				<ResizeTable
+					columns={columns}
 					pagination={{
 						pageSize: 9,
 						defaultPageSize: 9,
@@ -267,7 +300,6 @@ function ListOfAllDashboard(): JSX.Element {
 					bordered
 					sticky
 					loading={loading}
-					columns={columns}
 					dataSource={data}
 					showSorterTooltip
 				/>
@@ -277,7 +309,7 @@ function ListOfAllDashboard(): JSX.Element {
 }
 
 export interface Data {
-	key: React.Key;
+	key: Key;
 	name: string;
 	description: string;
 	tags: string[];

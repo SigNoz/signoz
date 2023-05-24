@@ -1,64 +1,22 @@
 import RouteTab from 'components/RouteTab';
 import ROUTES from 'constants/routes';
-import React from 'react';
+import ResourceAttributesFilter from 'container/ResourceAttributesFilter';
+import history from 'lib/history';
+import { memo, useMemo } from 'react';
 import { generatePath, useParams } from 'react-router-dom';
 import { useLocation } from 'react-use';
-import { PromQLWidgets, Widgets } from 'types/api/dashboard/getAll';
-import { v4 } from 'uuid';
 
-import ResourceAttributesFilter from './ResourceAttributesFilter';
+import { getWidgetQueryBuilder } from './MetricsApplication.factory';
 import DBCall from './Tabs/DBCall';
 import External from './Tabs/External';
 import Overview from './Tabs/Overview';
 
-const getWidget = (query: PromQLWidgets['query']): PromQLWidgets => {
-	return {
-		description: '',
-		id: '',
-		isStacked: false,
-		nullZeroValues: '',
-		opacity: '0',
-		panelTypes: 'TIME_SERIES',
-		query,
-		queryData: {
-			data: { queryData: [] },
-			error: false,
-			errorMessage: '',
-			loading: false,
-		},
-		timePreferance: 'GLOBAL_TIME',
-		title: '',
-		stepSize: 60,
-	};
-};
-
-const getWidgetQueryBuilder = (query: Widgets['query']): Widgets => {
-	return {
-		description: '',
-		id: v4(),
-		isStacked: false,
-		nullZeroValues: '',
-		opacity: '0',
-		panelTypes: 'TIME_SERIES',
-		query,
-		queryData: {
-			data: { queryData: [] },
-			error: false,
-			errorMessage: '',
-			loading: false,
-		},
-		timePreferance: 'GLOBAL_TIME',
-		title: '',
-		stepSize: 60,
-	};
-};
-
 function OverViewTab(): JSX.Element {
-	return <Overview getWidget={getWidget} />;
+	return <Overview getWidgetQueryBuilder={getWidgetQueryBuilder} />;
 }
 
 function DbCallTab(): JSX.Element {
-	return <DBCall getWidget={getWidget} />;
+	return <DBCall getWidgetQueryBuilder={getWidgetQueryBuilder} />;
 }
 
 function ExternalTab(): JSX.Element {
@@ -95,37 +53,39 @@ function ServiceMetrics(): JSX.Element {
 
 	const activeKey = getActiveKey();
 
+	const routes = useMemo(
+		() => [
+			{
+				Component: OverViewTab,
+				name: overMetrics,
+				route: `${generatePath(ROUTES.SERVICE_METRICS, {
+					servicename,
+				})}?tab=${overMetrics}`,
+			},
+			{
+				Component: DbCallTab,
+				name: dbCallMetrics,
+				route: `${generatePath(ROUTES.SERVICE_METRICS, {
+					servicename,
+				})}?tab=${dbCallMetrics}`,
+			},
+			{
+				Component: ExternalTab,
+				name: externalMetrics,
+				route: `${generatePath(ROUTES.SERVICE_METRICS, {
+					servicename,
+				})}?tab=${externalMetrics}`,
+			},
+		],
+		[servicename],
+	);
+
 	return (
 		<>
 			<ResourceAttributesFilter />
-			<RouteTab
-				routes={[
-					{
-						Component: OverViewTab,
-						name: overMetrics,
-						route: `${generatePath(ROUTES.SERVICE_METRICS, {
-							servicename,
-						})}?tab=${overMetrics}`,
-					},
-					{
-						Component: DbCallTab,
-						name: dbCallMetrics,
-						route: `${generatePath(ROUTES.SERVICE_METRICS, {
-							servicename,
-						})}?tab=${dbCallMetrics}`,
-					},
-					{
-						Component: ExternalTab,
-						name: externalMetrics,
-						route: `${generatePath(ROUTES.SERVICE_METRICS, {
-							servicename,
-						})}?tab=${externalMetrics}`,
-					},
-				]}
-				activeKey={activeKey}
-			/>
+			<RouteTab routes={routes} history={history} activeKey={activeKey} />
 		</>
 	);
 }
 
-export default React.memo(ServiceMetrics);
+export default memo(ServiceMetrics);

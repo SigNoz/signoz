@@ -36,7 +36,7 @@ const (
 	DESC            = "desc"
 )
 
-var tokenRegex, _ = regexp.Compile(`(?i)(and( )*?|or( )*?)?(([\w.-]+ (in|nin) \([^(]+\))|([\w.]+ (gt|lt|gte|lte) (')?[\S]+(')?)|([\w.]+ (contains|ncontains)) '[^']+')`)
+var tokenRegex, _ = regexp.Compile(`(?i)(and( )*?|or( )*?)?(([\w.-]+( )+(in|nin)( )+\([^(]+\))|([\w.]+( )+(gt|lt|gte|lte)( )+(')?[\S]+(')?)|([\w.]+( )+(contains|ncontains))( )+[^\\]?'(.*?[^\\])')`)
 var operatorRegex, _ = regexp.Compile(`(?i)(?: )(in|nin|gt|lt|gte|lte|contains|ncontains)(?: )`)
 
 func ParseLogFilterParams(r *http.Request) (*model.LogsFilterParams, error) {
@@ -152,6 +152,7 @@ func ParseLogAggregateParams(r *http.Request) (*model.LogsAggregateParams, error
 
 func parseLogQuery(query string) ([]string, error) {
 	sqlQueryTokens := []string{}
+
 	filterTokens := tokenRegex.FindAllString(query, -1)
 
 	if len(filterTokens) == 0 {
@@ -172,9 +173,9 @@ func parseLogQuery(query string) ([]string, error) {
 			searchString := strings.TrimSpace(strings.Split(v, op)[1])
 
 			operatorRemovedTokens := strings.Split(operatorRegex.ReplaceAllString(v, " "), " ")
-			searchCol := strings.ToLower(operatorRemovedTokens[0])
-			if searchCol == AND || searchCol == OR {
-				searchCol = strings.ToLower(operatorRemovedTokens[1])
+			searchCol := operatorRemovedTokens[0]
+			if strings.ToLower(searchCol) == AND || strings.ToLower(searchCol) == OR {
+				searchCol = operatorRemovedTokens[1]
 			}
 			col := searchCol
 			if strings.ToLower(searchCol) == "fulltext" {
@@ -190,7 +191,13 @@ func parseLogQuery(query string) ([]string, error) {
 			sqlQueryTokens = append(sqlQueryTokens, f)
 		} else {
 			symbol := operatorMapping[strings.ToLower(op)]
-			sqlQueryTokens = append(sqlQueryTokens, strings.Replace(v, " "+op+" ", " "+symbol+" ", 1)+" ")
+			sqlExpr := strings.Replace(v, " "+op+" ", " "+symbol+" ", 1)
+			splittedExpr := strings.Split(sqlExpr, symbol)
+			if len(splittedExpr) != 2 {
+				return nil, fmt.Errorf("error while splitting expression: %s", sqlExpr)
+			}
+			trimmedSqlExpr := fmt.Sprintf("%s %s %s ", strings.Join(strings.Fields(splittedExpr[0]), " "), symbol, strings.TrimSpace(splittedExpr[1]))
+			sqlQueryTokens = append(sqlQueryTokens, trimmedSqlExpr)
 		}
 	}
 
@@ -198,8 +205,6 @@ func parseLogQuery(query string) ([]string, error) {
 }
 
 func parseColumn(s string) (*string, error) {
-	s = strings.ToLower(s)
-
 	colName := ""
 
 	// if has and/or as prefix
@@ -208,7 +213,8 @@ func parseColumn(s string) (*string, error) {
 		return nil, fmt.Errorf("incorrect filter")
 	}
 
-	if strings.HasPrefix(s, AND) || strings.HasPrefix(s, OR) {
+	first := strings.ToLower(filter[0])
+	if first == AND || first == OR {
 		colName = filter[1]
 	} else {
 		colName = filter[0]
@@ -231,25 +237,35 @@ func replaceInterestingFields(allFields *model.GetFieldsResponse, queryTokens []
 	interestingFieldLookup := arrayToMap(allFields.Interesting)
 
 	for index := 0; index < len(queryTokens); index++ {
-		queryToken := queryTokens[index]
-		col, err := parseColumn(queryToken)
+		result, err := replaceFieldInToken(queryTokens[index], selectedFieldsLookup, interestingFieldLookup)
 		if err != nil {
 			return nil, err
 		}
-
-		sqlColName := *col
-		if _, ok := selectedFieldsLookup[*col]; !ok && *col != "body" {
-			if field, ok := interestingFieldLookup[*col]; ok {
-				if field.Type != constants.Static {
-					sqlColName = fmt.Sprintf("%s_%s_value[indexOf(%s_%s_key, '%s')]", field.Type, strings.ToLower(field.DataType), field.Type, strings.ToLower(field.DataType), *col)
-				}
-			} else if strings.Compare(strings.ToLower(*col), "fulltext") != 0 && field.Type != constants.Static {
-				return nil, fmt.Errorf("field not found for filtering")
-			}
-		}
-		queryTokens[index] = strings.Replace(queryToken, *col, sqlColName, 1)
+		queryTokens[index] = result
 	}
 	return queryTokens, nil
+}
+
+func replaceFieldInToken(queryToken string, selectedFieldsLookup map[string]model.LogField, interestingFieldLookup map[string]model.LogField) (string, error) {
+	col, err := parseColumn(queryToken)
+	if err != nil {
+		return "", err
+	}
+
+	sqlColName := *col
+	lowerColName := strings.ToLower(*col)
+	if lowerColName != "body" {
+		if _, ok := selectedFieldsLookup[sqlColName]; !ok {
+			if field, ok := interestingFieldLookup[sqlColName]; ok {
+				if field.Type != constants.Static {
+					sqlColName = fmt.Sprintf("%s_%s_value[indexOf(%s_%s_key, '%s')]", field.Type, strings.ToLower(field.DataType), field.Type, strings.ToLower(field.DataType), field.Name)
+				}
+			} else if strings.Compare(strings.ToLower(*col), "fulltext") != 0 && field.Type != constants.Static {
+				return "", fmt.Errorf("field not found for filtering")
+			}
+		}
+	}
+	return strings.Replace(queryToken, *col, sqlColName, 1), nil
 }
 
 func CheckIfPrevousPaginateAndModifyOrder(params *model.LogsFilterParams) (isPaginatePrevious bool) {
@@ -263,20 +279,23 @@ func CheckIfPrevousPaginateAndModifyOrder(params *model.LogsFilterParams) (isPag
 	return
 }
 
-func GenerateSQLWhere(allFields *model.GetFieldsResponse, params *model.LogsFilterParams) (string, error) {
+func GenerateSQLWhere(allFields *model.GetFieldsResponse, params *model.LogsFilterParams) (string, int, error) {
 	var tokens []string
 	var err error
 	var sqlWhere string
+	var lenTokens = 0
 	if params.Query != "" {
 		tokens, err = parseLogQuery(params.Query)
+
 		if err != nil {
-			return sqlWhere, err
+			return sqlWhere, -1, err
 		}
+		lenTokens = len(tokens)
 	}
 
 	tokens, err = replaceInterestingFields(allFields, tokens)
 	if err != nil {
-		return sqlWhere, err
+		return sqlWhere, -1, err
 	}
 
 	filterTokens := []string{}
@@ -309,9 +328,16 @@ func GenerateSQLWhere(allFields *model.GetFieldsResponse, params *model.LogsFilt
 		filterTokens = append(filterTokens, filter)
 	}
 
-	if len(filterTokens) > 0 {
-		if len(tokens) > 0 {
-			tokens[0] = fmt.Sprintf("and %s", tokens[0])
+	lenFilterTokens := len(filterTokens)
+	if lenFilterTokens > 0 {
+		// add parenthesis
+		filterTokens[0] = fmt.Sprintf("( %s", filterTokens[0])
+		filterTokens[lenFilterTokens-1] = fmt.Sprintf("%s) ", filterTokens[lenFilterTokens-1])
+
+		lenTokens := len(tokens)
+		if lenTokens > 0 {
+			tokens[0] = fmt.Sprintf("and ( %s", tokens[0])
+			tokens[lenTokens-1] = fmt.Sprintf("%s) ", tokens[lenTokens-1])
 		}
 		filterTokens = append(filterTokens, tokens...)
 		tokens = filterTokens
@@ -319,5 +345,5 @@ func GenerateSQLWhere(allFields *model.GetFieldsResponse, params *model.LogsFilt
 
 	sqlWhere = strings.Join(tokens, "")
 
-	return sqlWhere, nil
+	return sqlWhere, lenTokens, nil
 }

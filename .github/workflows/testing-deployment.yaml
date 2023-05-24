@@ -1,0 +1,39 @@
+name: testing-deployment
+# Trigger deployment only on testing-deploy label on pull request
+on:
+  pull_request:
+    types: [labeled]
+jobs:
+  deploy:
+    name: Deploy PR branch to testing
+    runs-on: ubuntu-latest
+    environment: testing
+    if: ${{ github.event.label.name == 'testing-deploy' }}
+    steps:
+      - name: Executing remote ssh commands using ssh key
+        uses: appleboy/ssh-action@v0.1.8
+        env:
+          GITHUB_BRANCH: ${{ github.head_ref || github.ref_name }}
+          GITHUB_SHA: ${{ github.sha }}
+        with:
+          host: ${{ secrets.HOST_DNS }}
+          username: ${{ secrets.USERNAME }}
+          key: ${{ secrets.SSH_KEY }}
+          envs: GITHUB_BRANCH,GITHUB_SHA
+          command_timeout: 60m
+          script: |
+            echo "GITHUB_BRANCH: ${GITHUB_BRANCH}"
+            echo "GITHUB_SHA: ${GITHUB_SHA}"
+            export DOCKER_TAG="${GITHUB_SHA:0:7}" # needed for child process to access it
+            export DEV_BUILD="1"
+            docker system prune --force
+            cd ~/signoz
+            git status
+            git add .
+            git stash push -m "stashed on $(date --iso-8601=seconds)"
+            git fetch origin
+            git checkout ${GITHUB_BRANCH}
+            git pull
+            make build-ee-query-service-amd64
+            make build-frontend-amd64
+            make run-signoz

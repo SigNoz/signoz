@@ -1,9 +1,14 @@
-import { Switch, Typography } from 'antd';
+import { Avatar, Layout, Switch, Typography } from 'antd';
 import styled from 'styled-components';
+
+export const Header = styled(Layout.Header)`
+	background: #1f1f1f !important;
+`;
 
 export const Container = styled.div`
 	display: flex;
 	justify-content: space-between;
+	height: 4rem;
 `;
 
 export const AvatarContainer = styled.div`
@@ -60,4 +65,20 @@ export const ToggleButton = styled(Switch)<DarkModeProps>`
 	.ant-switch-inner {
 		font-size: 1rem !important;
 	}
+`;
+
+export const IconContainer = styled.div`
+	color: white;
+`;
+
+export const NavLinkWrapper = styled.div`
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	height: 100%;
+	gap: 0.5rem;
+`;
+
+export const AvatarWrapper = styled(Avatar)`
+	background-color: rgba(255, 255, 255, 0.25);
 `;

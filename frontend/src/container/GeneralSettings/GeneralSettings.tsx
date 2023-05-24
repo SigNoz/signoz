@@ -1,21 +1,12 @@
 /* eslint-disable sonarjs/no-duplicate-string */
 import { LoadingOutlined } from '@ant-design/icons';
-import {
-	Button,
-	Card,
-	Col,
-	Divider,
-	Modal,
-	notification,
-	Row,
-	Spin,
-	Typography,
-} from 'antd';
+import { Button, Card, Col, Divider, Modal, Row, Spin, Typography } from 'antd';
 import setRetentionApi from 'api/settings/setRetention';
 import TextToolTip from 'components/TextToolTip';
 import useComponentPermission from 'hooks/useComponentPermission';
+import { useNotifications } from 'hooks/useNotifications';
 import find from 'lodash-es/find';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { Fragment, useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { UseQueryResult } from 'react-query';
 import { useSelector } from 'react-redux';
@@ -172,6 +163,8 @@ function GeneralSettings({
 		logsTtlValuesPayload.status === 'pending' ? 1000 : null,
 	);
 
+	const { notifications } = useNotifications();
+
 	const onModalToggleHandler = (type: TTTLType): void => {
 		if (type === 'metrics') setModalMetrics((modal) => !modal);
 		if (type === 'traces') setModalTraces((modal) => !modal);
@@ -186,14 +179,14 @@ function GeneralSettings({
 	const onClickSaveHandler = useCallback(
 		(type: TTTLType) => {
 			if (!setRetentionPermission) {
-				notification.error({
+				notifications.error({
 					message: `Sorry you don't have permission to make these changes`,
 				});
 				return;
 			}
 			onModalToggleHandler(type);
 		},
-		[setRetentionPermission],
+		[setRetentionPermission, notifications],
 	);
 
 	const s3Enabled = useMemo(
@@ -352,7 +345,7 @@ function GeneralSettings({
 			let hasSetTTLFailed = false;
 			if (setTTLResponse.statusCode === 409) {
 				hasSetTTLFailed = true;
-				notification.error({
+				notifications.error({
 					message: 'Error',
 					description: t('retention_request_race_condition'),
 					placement: 'topRight',
@@ -390,7 +383,7 @@ function GeneralSettings({
 					});
 			}
 		} catch (error) {
-			notification.error({
+			notifications.error({
 				message: 'Error',
 				description: t('retention_failed_message'),
 				placement: 'topRight',
@@ -526,7 +519,7 @@ function GeneralSettings({
 			category.retentionFields.length > 0
 		) {
 			return (
-				<React.Fragment key={category.name}>
+				<Fragment key={category.name}>
 					<Col xs={22} xl={11} key={category.name} style={{ margin: '0.5rem' }}>
 						<Card style={{ height: '100%', minHeight: 300 }}>
 							<Typography.Title style={{ margin: 0 }} level={3}>
@@ -572,7 +565,7 @@ function GeneralSettings({
 									onOkHandler(category.name.toLowerCase() as TTTLType)
 								}
 								centered
-								visible={category.save.modal}
+								open={category.save.modal}
 								confirmLoading={category.save.apiLoading}
 							>
 								<Typography>
@@ -583,27 +576,29 @@ function GeneralSettings({
 							</Modal>
 						</Card>
 					</Col>
-				</React.Fragment>
+				</Fragment>
 			);
 		}
 		return null;
 	});
 
 	return (
-		<Col xs={24} md={22} xl={20} xxl={18} style={{ margin: 'auto' }}>
+		<>
 			{Element}
-			<ErrorTextContainer>
-				<TextToolTip
-					{...{
-						text: `More details on how to set retention period`,
-						url: 'https://signoz.io/docs/userguide/retention-period/',
-					}}
-				/>
-				{errorText && <ErrorText>{errorText}</ErrorText>}
-			</ErrorTextContainer>
+			<Col xs={24} md={22} xl={20} xxl={18} style={{ margin: 'auto' }}>
+				<ErrorTextContainer>
+					<TextToolTip
+						{...{
+							text: `More details on how to set retention period`,
+							url: 'https://signoz.io/docs/userguide/retention-period/',
+						}}
+					/>
+					{errorText && <ErrorText>{errorText}</ErrorText>}
+				</ErrorTextContainer>
 
-			<Row justify="start">{renderConfig}</Row>
-		</Col>
+				<Row justify="start">{renderConfig}</Row>
+			</Col>
+		</>
 	);
 }
 

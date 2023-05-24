@@ -51,7 +51,7 @@ check_os() {
     os_name="$(cat /etc/*-release | awk -F= '$1 == "NAME" { gsub(/"/, ""); print $2; exit }')"
 
     case "$os_name" in
-        Ubuntu*)
+        Ubuntu*|Pop!_OS)
             desired_os=1
             os="ubuntu"
             package_manager="apt-get"
@@ -77,6 +77,11 @@ check_os() {
             package_manager="yum"
             ;;
         CentOS*)
+            desired_os=1
+            os="centos"
+            package_manager="yum"
+            ;;
+        Rocky*)
             desired_os=1
             os="centos"
             package_manager="yum"
@@ -120,7 +125,7 @@ check_ports_occupied() {
 
         echo "+++++++++++ ERROR ++++++++++++++++++++++"
         echo "SigNoz requires ports 3301 & 4317 to be open. Please shut down any other service(s) that may be running on these ports."
-        echo "You can run SigNoz on another port following this guide https://signoz.io/docs/deployment/docker#troubleshooting"
+        echo "You can run SigNoz on another port following this guide https://signoz.io/docs/install/troubleshooting/"
         echo "++++++++++++++++++++++++++++++++++++++++"
         echo ""
         exit 1
@@ -223,7 +228,7 @@ wait_for_containers_start() {
 
     # The while loop is important because for-loops don't work for dynamic values
     while [[ $timeout -gt 0 ]]; do
-        status_code="$(curl -s -o /dev/null -w "%{http_code}" http://localhost:3301/api/v1/services/list || true)"
+        status_code="$(curl -s -o /dev/null -w "%{http_code}" "http://localhost:3301/api/v1/health?live=1" || true)"
         if [[ status_code -eq 200 ]]; then
             break
         else
@@ -244,7 +249,7 @@ bye() {  # Prints a friendly good bye message and exits the script.
         echo ""
         echo -e "$sudo_cmd docker-compose -f ./docker/clickhouse-setup/docker-compose.yaml ps -a"
 
-        # echo "Please read our troubleshooting guide https://signoz.io/docs/deployment/docker#troubleshooting"
+        echo "Please read our troubleshooting guide https://signoz.io/docs/install/troubleshooting/"
         echo "or reach us for support in #help channel in our Slack Community https://signoz.io/slack"
         echo "++++++++++++++++++++++++++++++++++++++++"
 
@@ -495,7 +500,7 @@ if [[ $status_code -ne 200 ]]; then
 
     echo -e "$sudo_cmd docker-compose -f ./docker/clickhouse-setup/docker-compose.yaml ps -a"
 
-    echo "Please read our troubleshooting guide https://signoz.io/docs/deployment/docker/#troubleshooting-of-common-issues"
+    echo "Please read our troubleshooting guide https://signoz.io/docs/install/troubleshooting/"
     echo "or reach us on SigNoz for support https://signoz.io/slack"
     echo "++++++++++++++++++++++++++++++++++++++++"
 
@@ -511,13 +516,15 @@ else
     echo ""
     echo -e "🟢 Your frontend is running on http://localhost:3301"
     echo ""
+    echo "ℹ️  By default, retention period is set to 7 days for logs and traces, and 30 days for metrics." 
+    echo -e "To change this, navigate to the General tab on the Settings page of SigNoz UI. For more details, refer to https://signoz.io/docs/userguide/retention-period \n"
 
     echo "ℹ️  To bring down SigNoz and clean volumes : $sudo_cmd docker-compose -f ./docker/clickhouse-setup/docker-compose.yaml down -v"
 
     echo ""
     echo "+++++++++++++++++++++++++++++++++++++++++++++++++"
     echo ""
-    echo "👉 Need help Getting Started?"
+    echo "👉 Need help in Getting Started?"
     echo -e "Join us on Slack https://signoz.io/slack"
     echo ""
     echo -e "\n📨 Please share your email to receive support & updates about SigNoz!"

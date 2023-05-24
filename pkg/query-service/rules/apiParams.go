@@ -9,6 +9,7 @@ import (
 
 	"github.com/pkg/errors"
 	"go.signoz.io/signoz/pkg/query-service/model"
+	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
 	"go.uber.org/zap"
 
 	"go.signoz.io/signoz/pkg/query-service/utils/times"
@@ -32,6 +33,7 @@ func newApiErrorBadData(err error) *model.ApiError {
 // PostableRule is used to create alerting rule from HTTP api
 type PostableRule struct {
 	Alert       string   `yaml:"alert,omitempty" json:"alert,omitempty"`
+	AlertType   string   `yaml:"alertType,omitempty" json:"alertType,omitempty"`
 	Description string   `yaml:"description,omitempty" json:"description,omitempty"`
 	RuleType    RuleType `yaml:"ruleType,omitempty" json:"ruleType,omitempty"`
 	EvalWindow  Duration `yaml:"evalWindow,omitempty" json:"evalWindow,omitempty"`
@@ -89,10 +91,10 @@ func parseIntoRule(initRule PostableRule, content []byte, kind string) (*Postabl
 		rule.EvalWindow = Duration(5 * time.Minute)
 		rule.Frequency = Duration(1 * time.Minute)
 		rule.RuleCondition = &RuleCondition{
-			CompositeMetricQuery: &model.CompositeMetricQuery{
-				QueryType: model.PROM,
-				PromQueries: map[string]*model.PromQuery{
-					"A": &model.PromQuery{
+			CompositeQuery: &v3.CompositeQuery{
+				QueryType: v3.QueryTypePromQL,
+				PromQueries: map[string]*v3.PromQuery{
+					"A": {
 						Query: rule.Expr,
 					},
 				},
@@ -109,14 +111,14 @@ func parseIntoRule(initRule PostableRule, content []byte, kind string) (*Postabl
 	}
 
 	if rule.RuleCondition != nil {
-		if rule.RuleCondition.CompositeMetricQuery.QueryType == model.QUERY_BUILDER {
+		if rule.RuleCondition.CompositeQuery.QueryType == v3.QueryTypeBuilder {
 			rule.RuleType = RuleTypeThreshold
-		} else if rule.RuleCondition.CompositeMetricQuery.QueryType == model.PROM {
+		} else if rule.RuleCondition.CompositeQuery.QueryType == v3.QueryTypePromQL {
 			rule.RuleType = RuleTypeProm
 		}
 
-		for qLabel, q := range rule.RuleCondition.CompositeMetricQuery.BuilderQueries {
-			if q.MetricName != "" && q.Expression == "" {
+		for qLabel, q := range rule.RuleCondition.CompositeQuery.BuilderQueries {
+			if q.AggregateAttribute.Key != "" && q.Expression == "" {
 				q.Expression = qLabel
 			}
 		}
@@ -152,7 +154,7 @@ func (r *PostableRule) Validate() (errs []error) {
 	if r.RuleCondition == nil {
 		errs = append(errs, errors.Errorf("rule condition is required"))
 	} else {
-		if r.RuleCondition.CompositeMetricQuery == nil {
+		if r.RuleCondition.CompositeQuery == nil {
 			errs = append(errs, errors.Errorf("composite metric query is required"))
 		}
 	}
@@ -196,8 +198,8 @@ func testTemplateParsing(rl *PostableRule) (errs []error) {
 	}
 
 	// Trying to parse templates.
-	tmplData := AlertTemplateData(make(map[string]string), 0)
-	defs := "{{$labels := .Labels}}{{$value := .Value}}"
+	tmplData := AlertTemplateData(make(map[string]string), 0, 0)
+	defs := "{{$labels := .Labels}}{{$value := .Value}}{{$threshold := .Threshold}}"
 	parseTest := func(text string) error {
 		tmpl := NewTemplateExpander(
 			context.TODO(),

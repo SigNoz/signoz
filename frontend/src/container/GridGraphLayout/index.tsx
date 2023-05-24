@@ -1,13 +1,22 @@
 /* eslint-disable react/no-unstable-nested-components */
-import { notification } from 'antd';
+
 import updateDashboardApi from 'api/dashboard/update';
 import useComponentPermission from 'hooks/useComponentPermission';
-import React, { useCallback, useEffect, useState } from 'react';
+import { useNotifications } from 'hooks/useNotifications';
+import {
+	Dispatch,
+	SetStateAction,
+	useCallback,
+	useEffect,
+	useState,
+} from 'react';
 import { Layout } from 'react-grid-layout';
 import { useTranslation } from 'react-i18next';
 import { connect, useDispatch, useSelector } from 'react-redux';
-import { bindActionCreators, Dispatch } from 'redux';
+import { bindActionCreators, Dispatch as ReduxDispatch } from 'redux';
 import { ThunkDispatch } from 'redux-thunk';
+import { AppDispatch } from 'store';
+import { UpdateTimeInterval } from 'store/actions';
 import {
 	ToggleAddWidget,
 	ToggleAddWidgetProps,
@@ -63,11 +72,25 @@ function GridGraph(props: Props): JSX.Element {
 	const [selectedDashboard] = dashboards;
 	const { data } = selectedDashboard;
 	const { widgets } = data;
-	const dispatch = useDispatch<Dispatch<AppActions>>();
+	const dispatch: AppDispatch = useDispatch<ReduxDispatch<AppActions>>();
 
 	const [layouts, setLayout] = useState<LayoutProps[]>(
 		getPreLayouts(widgets, selectedDashboard.data.layout || []),
 	);
+
+	const onDragSelect = useCallback(
+		(start: number, end: number) => {
+			const startTimestamp = Math.trunc(start);
+			const endTimestamp = Math.trunc(end);
+
+			if (startTimestamp !== endTimestamp) {
+				dispatch(UpdateTimeInterval('custom', [startTimestamp, endTimestamp]));
+			}
+		},
+		[dispatch],
+	);
+
+	const { notifications } = useNotifications();
 
 	useEffect(() => {
 		(async (): Promise<void> => {
@@ -104,6 +127,12 @@ function GridGraph(props: Props): JSX.Element {
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, []);
 
+	const { featureResponse } = useSelector<AppState, AppReducer>(
+		(state) => state.app,
+	);
+
+	const errorMessage = t('common:something_went_wrong');
+
 	const onLayoutSaveHandler = useCallback(
 		async (layout: Layout[]) => {
 			try {
@@ -113,44 +142,62 @@ function GridGraph(props: Props): JSX.Element {
 					errorMessage: '',
 					loading: true,
 				}));
-				const updatedDashboard: Dashboard = {
-					...selectedDashboard,
-					data: {
-						title: data.title,
-						description: data.description,
-						name: data.name,
-						tags: data.tags,
-						widgets: data.widgets,
-						variables: data.variables,
-						layout,
-					},
-					uuid: selectedDashboard.uuid,
-				};
-				// Save layout only when users has the has the permission to do so.
-				if (saveLayoutPermission) {
-					const response = await updateDashboardApi(updatedDashboard);
-					if (response.statusCode === 200) {
-						setSaveLayoutState((state) => ({
-							...state,
-							error: false,
-							errorMessage: '',
-							loading: false,
-						}));
-						dispatch({
-							type: UPDATE_DASHBOARD,
-							payload: updatedDashboard,
-						});
-					} else {
+
+				featureResponse
+					.refetch()
+					.then(async () => {
+						const updatedDashboard: Dashboard = {
+							...selectedDashboard,
+							data: {
+								title: data.title,
+								description: data.description,
+								name: data.name,
+								tags: data.tags,
+								widgets: data.widgets,
+								variables: data.variables,
+								layout,
+							},
+							uuid: selectedDashboard.uuid,
+						};
+						// Save layout only when users has the has the permission to do so.
+						if (saveLayoutPermission) {
+							const response = await updateDashboardApi(updatedDashboard);
+							if (response.statusCode === 200) {
+								setSaveLayoutState((state) => ({
+									...state,
+									error: false,
+									errorMessage: '',
+									loading: false,
+								}));
+								dispatch({
+									type: UPDATE_DASHBOARD,
+									payload: updatedDashboard,
+								});
+							} else {
+								setSaveLayoutState((state) => ({
+									...state,
+									error: true,
+									errorMessage: response.error || errorMessage,
+									loading: false,
+								}));
+							}
+						}
+					})
+					.catch(() => {
 						setSaveLayoutState((state) => ({
 							...state,
 							error: true,
-							errorMessage: response.error || 'Something went wrong',
+							errorMessage,
 							loading: false,
 						}));
-					}
-				}
+						notifications.error({
+							message: errorMessage,
+						});
+					});
 			} catch (error) {
-				console.error(error);
+				notifications.error({
+					message: errorMessage,
+				});
 			}
 		},
 		[
@@ -161,6 +208,9 @@ function GridGraph(props: Props): JSX.Element {
 			data.variables,
 			data.widgets,
 			dispatch,
+			errorMessage,
+			featureResponse,
+			notifications,
 			saveLayoutPermission,
 			selectedDashboard,
 		],
@@ -182,13 +232,14 @@ function GridGraph(props: Props): JSX.Element {
 								yAxisUnit={currentWidget?.yAxisUnit}
 								layout={layout}
 								setLayout={setLayout}
+								onDragSelect={onDragSelect}
 							/>
 						),
 					};
 				}),
 			);
 		},
-		[widgets],
+		[widgets, onDragSelect],
 	);
 
 	const onEmptyWidgetHandler = useCallback(async () => {
@@ -206,22 +257,25 @@ function GridGraph(props: Props): JSX.Element {
 				...(data.layout || []),
 			];
 
-			await UpdateDashboard({
-				data,
-				generateWidgetId: id,
-				graphType: 'EMPTY_WIDGET',
-				selectedDashboard,
-				layout,
-				isRedirected: false,
-			});
+			await UpdateDashboard(
+				{
+					data,
+					generateWidgetId: id,
+					graphType: 'EMPTY_WIDGET',
+					selectedDashboard,
+					layout,
+					isRedirected: false,
+				},
+				notifications,
+			);
 
 			setLayoutFunction(layout);
 		} catch (error) {
-			notification.error({
-				message: error instanceof Error ? error.toString() : 'Something went wrong',
+			notifications.error({
+				message: error instanceof Error ? error.toString() : errorMessage,
 			});
 		}
-	}, [data, selectedDashboard, setLayoutFunction]);
+	}, [data, selectedDashboard, setLayoutFunction, notifications, errorMessage]);
 
 	const onLayoutChangeHandler = async (layout: Layout[]): Promise<void> => {
 		setLayoutFunction(layout);
@@ -232,49 +286,63 @@ function GridGraph(props: Props): JSX.Element {
 	const onAddPanelHandler = useCallback(() => {
 		try {
 			setAddPanelLoading(true);
-			const isEmptyLayoutPresent =
-				layouts.find((e) => e.i === 'empty') !== undefined;
+			featureResponse
+				.refetch()
+				.then(() => {
+					const isEmptyLayoutPresent =
+						layouts.find((e) => e.i === 'empty') !== undefined;
 
-			if (!isEmptyLayoutPresent) {
-				onEmptyWidgetHandler()
-					.then(() => {
-						setAddPanelLoading(false);
+					if (!isEmptyLayoutPresent) {
+						onEmptyWidgetHandler()
+							.then(() => {
+								setAddPanelLoading(false);
+								toggleAddWidget(true);
+							})
+							.catch(() => {
+								notifications.error({
+									message: errorMessage,
+								});
+							});
+					} else {
 						toggleAddWidget(true);
-					})
-					.catch(() => {
-						notification.error(t('something_went_wrong'));
-					});
-			} else {
-				toggleAddWidget(true);
-				setAddPanelLoading(false);
-			}
+						setAddPanelLoading(false);
+					}
+				})
+				.catch(() =>
+					notifications.error({
+						message: errorMessage,
+					}),
+				);
 		} catch (error) {
-			if (typeof error === 'string') {
-				notification.error({
-					message: error || t('something_went_wrong'),
-				});
-			}
+			notifications.error({
+				message: errorMessage,
+			});
 		}
-	}, [layouts, onEmptyWidgetHandler, t, toggleAddWidget]);
+	}, [
+		featureResponse,
+		layouts,
+		onEmptyWidgetHandler,
+		toggleAddWidget,
+		notifications,
+		errorMessage,
+	]);
 
 	return (
 		<GraphLayoutContainer
-			{...{
-				addPanelLoading,
-				layouts,
-				onAddPanelHandler,
-				onLayoutChangeHandler,
-				onLayoutSaveHandler,
-				saveLayoutState,
-				widgets,
-				setLayout,
-			}}
+			addPanelLoading={addPanelLoading}
+			layouts={layouts}
+			onAddPanelHandler={onAddPanelHandler}
+			onLayoutChangeHandler={onLayoutChangeHandler}
+			onLayoutSaveHandler={onLayoutSaveHandler}
+			saveLayoutState={saveLayoutState}
+			setLayout={setLayout}
+			widgets={widgets}
 		/>
 	);
 }
 
 interface ComponentProps {
-	setLayout: React.Dispatch<React.SetStateAction<LayoutProps[]>>;
+	setLayout: Dispatch<SetStateAction<LayoutProps[]>>;
 }
 
 export interface LayoutProps extends Layout {
@@ -291,7 +359,7 @@ export interface State {
 interface DispatchProps {
 	toggleAddWidget: (
 		props: ToggleAddWidgetProps,
-	) => (dispatch: Dispatch<AppActions>) => void;
+	) => (dispatch: ReduxDispatch<AppActions>) => void;
 }
 
 const mapDispatchToProps = (

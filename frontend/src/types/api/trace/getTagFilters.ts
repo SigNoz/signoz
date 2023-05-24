@@ -7,10 +7,11 @@ export interface Props {
 		[k: string]: string[];
 	};
 	isFilterExclude: TraceReducer['isFilterExclude'];
+	spanKind?: TraceReducer['spanKind'];
 }
 
-interface TagsKeys {
-	tagKeys: string;
+export interface PayloadProps {
+	stringTagKeys: string[];
+	numberTagKeys: string[];
+	boolTagKeys: string[];
 }
-
-export type PayloadProps = TagsKeys[];

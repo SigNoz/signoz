@@ -28,9 +28,11 @@ const getSpanAggregate = async (
 		});
 
 		const updatedSelectedTags = props.selectedTags.map((e) => ({
-			Key: e.Key[0],
+			Key: `${e.Key}.(string)`,
 			Operator: e.Operator,
-			Values: e.Values,
+			StringValues: e.StringValues,
+			NumberValues: e.NumberValues,
+			BoolValues: e.BoolValues,
 		}));
 
 		const other = Object.fromEntries(props.selectedFilter);
@@ -46,6 +48,7 @@ const getSpanAggregate = async (
 			maxDuration: String((duration.duration || [])[0] || ''),
 			minDuration: String((duration.duration || [])[1] || ''),
 			exclude,
+			spanKind: props.spanKind,
 		});
 
 		return {

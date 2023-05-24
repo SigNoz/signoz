@@ -1,6 +1,7 @@
 import { PlusOutlined, SaveFilled } from '@ant-design/icons';
 import useComponentPermission from 'hooks/useComponentPermission';
-import React from 'react';
+import { useIsDarkMode } from 'hooks/useDarkMode';
+import { Dispatch, SetStateAction } from 'react';
 import { Layout } from 'react-grid-layout';
 import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
@@ -27,7 +28,7 @@ function GraphLayout({
 	setLayout,
 }: GraphLayoutProps): JSX.Element {
 	const { role } = useSelector<AppState, AppReducer>((state) => state.app);
-	const { isDarkMode } = useSelector<AppState, AppReducer>((state) => state.app);
+	const isDarkMode = useIsDarkMode();
 
 	const [saveLayoutPermission, addPanelPermission] = useComponentPermission(
 		['save_layout', 'add_panel'],
@@ -71,6 +72,7 @@ function GraphLayout({
 				useCSSTransforms
 				allowOverlap={false}
 				onLayoutChange={onLayoutChangeHandler}
+				draggableHandle=".drag-handle"
 			>
 				{layouts.map(({ Component, ...rest }) => {
 					const currentWidget = (widgets || [])?.find((e) => e.id === rest.i);
@@ -100,7 +102,7 @@ interface GraphLayoutProps {
 	onAddPanelHandler: VoidFunction;
 	onLayoutChangeHandler: (layout: Layout[]) => Promise<void>;
 	widgets: Widgets[] | undefined;
-	setLayout: React.Dispatch<React.SetStateAction<LayoutProps[]>>;
+	setLayout: Dispatch<SetStateAction<LayoutProps[]>>;
 }
 
 export default GraphLayout;

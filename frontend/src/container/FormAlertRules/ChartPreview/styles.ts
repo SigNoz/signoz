@@ -1,3 +1,4 @@
+import { red } from '@ant-design/colors';
 import { Card, Tooltip } from 'antd';
 import styled from 'styled-components';
 
@@ -10,7 +11,8 @@ export const NotFoundContainer = styled.div`
 
 export const FailedMessageContainer = styled(Tooltip)`
 	position: absolute;
-	top: 10px;
+	color: ${red};
+	top: 4rem;
 	left: 10px;
 `;
 

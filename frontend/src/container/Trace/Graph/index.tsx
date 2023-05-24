@@ -1,7 +1,7 @@
 import { Typography } from 'antd';
 import Graph from 'components/Graph';
 import Spinner from 'components/Spinner';
-import React, { useMemo } from 'react';
+import { useMemo } from 'react';
 import { useSelector } from 'react-redux';
 import { useMeasure } from 'react-use';
 import { AppState } from 'store/reducers';
@@ -20,11 +20,13 @@ function TraceGraph(): JSX.Element {
 
 	const { loading, error, errorMessage, payload } = spansGraph;
 
-	const ChartData = useMemo(() => {
-		return selectedGroupBy.length === 0
-			? getChartData(payload)
-			: getChartDataforGroupBy(payload);
-	}, [payload, selectedGroupBy]);
+	const ChartData = useMemo(
+		() =>
+			selectedGroupBy.length === 0 || selectedGroupBy === 'none'
+				? getChartData(payload)
+				: getChartDataforGroupBy(payload),
+		[payload, selectedGroupBy],
+	);
 
 	if (error) {
 		return (

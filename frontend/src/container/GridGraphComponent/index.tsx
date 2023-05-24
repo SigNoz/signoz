@@ -3,9 +3,9 @@ import { ChartData } from 'chart.js';
 import Graph, { GraphOnClickHandler, StaticLineProps } from 'components/Graph';
 import { getYAxisFormattedValue } from 'components/Graph/yAxisConfig';
 import ValueGraph from 'components/ValueGraph';
+import { PANEL_TYPES } from 'constants/queryBuilder';
 import { GRAPH_TYPES } from 'container/NewDashboard/ComponentsSlider';
 import history from 'lib/history';
-import React from 'react';
 
 import { TitleContainer, ValueContainer } from './styles';
 
@@ -19,12 +19,13 @@ function GridGraphComponent({
 	name,
 	yAxisUnit,
 	staticLine,
+	onDragSelect,
 }: GridGraphComponentProps): JSX.Element | null {
 	const location = history.location.pathname;
 
 	const isDashboardPage = location.split('/').length === 3;
 
-	if (GRAPH_TYPES === 'TIME_SERIES') {
+	if (GRAPH_TYPES === PANEL_TYPES.TIME_SERIES) {
 		return (
 			<Graph
 				{...{
@@ -38,12 +39,13 @@ function GridGraphComponent({
 					name,
 					yAxisUnit,
 					staticLine,
+					onDragSelect,
 				}}
 			/>
 		);
 	}
 
-	if (GRAPH_TYPES === 'VALUE') {
+	if (GRAPH_TYPES === PANEL_TYPES.VALUE) {
 		const value = (((data.datasets[0] || []).data || [])[0] || 0) as number;
 
 		if (data.datasets.length === 0) {
@@ -85,6 +87,7 @@ export interface GridGraphComponentProps {
 	name: string;
 	yAxisUnit?: string;
 	staticLine?: StaticLineProps;
+	onDragSelect?: (start: number, end: number) => void;
 }
 
 GridGraphComponent.defaultProps = {
@@ -94,6 +97,7 @@ GridGraphComponent.defaultProps = {
 	onClickHandler: undefined,
 	yAxisUnit: undefined,
 	staticLine: undefined,
+	onDragSelect: undefined,
 };
 
 export default GridGraphComponent;

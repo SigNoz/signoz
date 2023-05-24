@@ -2,8 +2,8 @@ import './wdyr';
 import './ReactI18';
 
 import AppRoutes from 'AppRoutes';
-import React from 'react';
-import ReactDOM from 'react-dom';
+import { ThemeProvider } from 'hooks/useDarkMode';
+import { createRoot } from 'react-dom/client';
 import { QueryClient, QueryClientProvider } from 'react-query';
 import { ReactQueryDevtools } from 'react-query/devtools';
 import { Provider } from 'react-redux';
@@ -22,16 +22,21 @@ const queryClient = new QueryClient({
 	},
 });
 
-ReactDOM.render(
-	<QueryClientProvider client={queryClient}>
-		<Provider store={store}>
-			<React.StrictMode>
-				<AppRoutes />
-			</React.StrictMode>
-		</Provider>
-		{process.env.NODE_ENV === 'development' && (
-			<ReactQueryDevtools initialIsOpen />
-		)}
-	</QueryClientProvider>,
-	document.querySelector('#root'),
-);
+const container = document.getElementById('root');
+
+if (container) {
+	const root = createRoot(container);
+
+	root.render(
+		<ThemeProvider>
+			<QueryClientProvider client={queryClient}>
+				<Provider store={store}>
+					<AppRoutes />
+				</Provider>
+				{process.env.NODE_ENV === 'development' && (
+					<ReactQueryDevtools initialIsOpen />
+				)}
+			</QueryClientProvider>
+		</ThemeProvider>,
+	);
+}

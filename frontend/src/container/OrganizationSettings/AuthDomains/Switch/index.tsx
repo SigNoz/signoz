@@ -1,8 +1,8 @@
 import { Switch } from 'antd';
-import React, { useMemo, useState } from 'react';
-import { SAMLDomain } from 'types/api/SAML/listDomain';
+import { useMemo, useState } from 'react';
+import { AuthDomain } from 'types/api/SAML/listDomain';
 
-import { getIsValidCertificate } from '../utils';
+import { isSSOConfigValid } from '../helpers';
 
 function SwitchComponent({
 	isDefaultChecked,
@@ -25,15 +25,12 @@ function SwitchComponent({
 		setIsLoading(false);
 	};
 
-	const isInValidCertificate = useMemo(
-		() => !getIsValidCertificate(record?.samlConfig),
-		[record],
-	);
+	const isInValidVerificate = useMemo(() => !isSSOConfigValid(record), [record]);
 
 	return (
 		<Switch
 			loading={isLoading}
-			disabled={isInValidCertificate}
+			disabled={isInValidVerificate}
 			checked={isChecked}
 			onChange={onChangeHandler}
 		/>
@@ -42,8 +39,8 @@ function SwitchComponent({
 
 interface SwitchComponentProps {
 	isDefaultChecked: boolean;
-	onRecordUpdateHandler: (record: SAMLDomain) => Promise<boolean>;
-	record: SAMLDomain;
+	onRecordUpdateHandler: (record: AuthDomain) => Promise<boolean>;
+	record: AuthDomain;
 }
 
 export default SwitchComponent;

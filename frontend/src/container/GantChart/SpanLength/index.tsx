@@ -1,6 +1,5 @@
 import { convertTimeToRelevantUnit } from 'container/TraceDetail/utils';
-import useThemeMode from 'hooks/useThemeMode';
-import React from 'react';
+import { useIsDarkMode } from 'hooks/useDarkMode';
 import { toFixed } from 'utils/toFixed';
 
 import { SpanBorder, SpanLine, SpanText, SpanWrapper } from './styles';
@@ -14,7 +13,7 @@ interface SpanLengthProps {
 
 function SpanLength(props: SpanLengthProps): JSX.Element {
 	const { width, leftOffset, bgColor, inMsCount } = props;
-	const { isDarkMode } = useThemeMode();
+	const isDarkMode = useIsDarkMode();
 	const { time, timeUnitName } = convertTimeToRelevantUnit(inMsCount);
 	return (
 		<SpanWrapper>
