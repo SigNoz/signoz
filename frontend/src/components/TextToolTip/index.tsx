@@ -3,7 +3,7 @@ import { QuestionCircleFilled } from '@ant-design/icons';
 import { Tooltip } from 'antd';
 import { themeColors } from 'constants/theme';
 import { useIsDarkMode } from 'hooks/useDarkMode';
-import React, { useMemo } from 'react';
+import { useMemo } from 'react';
 
 import { style } from './styles';
 

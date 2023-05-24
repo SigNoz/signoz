@@ -4,7 +4,6 @@ import ROUTES from 'constants/routes';
 import CreateAlertChannels from 'container/CreateAlertChannels';
 import GeneralSettings from 'container/GeneralSettings';
 import history from 'lib/history';
-import React from 'react';
 import { useTranslation } from 'react-i18next';
 
 function SettingsPage(): JSX.Element {

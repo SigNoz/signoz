@@ -6,7 +6,6 @@ import ValueGraph from 'components/ValueGraph';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { GRAPH_TYPES } from 'container/NewDashboard/ComponentsSlider';
 import history from 'lib/history';
-import React from 'react';
 
 import { TitleContainer, ValueContainer } from './styles';
 

@@ -52,40 +52,38 @@ export const useOptions = (
 	);
 
 	useEffect(() => {
+		let newOptions: Option[] = [];
+
 		if (!key) {
-			setOptions(
-				searchValue
-					? [
-							{ label: `${searchValue} `, value: `${searchValue} ` },
-							...getOptionsFromKeys(keys),
-					  ]
-					: getOptionsFromKeys(keys),
-			);
+			newOptions = searchValue
+				? [
+						{ label: `${searchValue} `, value: `${searchValue} ` },
+						...getOptionsFromKeys(keys),
+				  ]
+				: getOptionsFromKeys(keys);
 		} else if (key && !operator) {
-			setOptions(
-				operators?.map((operator) => ({
-					value: `${key} ${operator} `,
-					label: `${key} ${operator} `,
-				})),
-			);
+			newOptions = operators?.map((operator) => ({
+				value: `${key} ${operator} `,
+				label: `${key} ${operator} `,
+			}));
 		} else if (key && operator) {
 			if (isMulti) {
-				setOptions(
-					results.map((item) => ({
-						label: checkCommaInValue(String(item)),
-						value: String(item),
-					})),
-				);
+				newOptions = results.map((item) => ({
+					label: checkCommaInValue(String(item)),
+					value: String(item),
+				}));
 			} else if (isExist) {
-				setOptions([]);
+				newOptions = [];
 			} else if (isValidOperator) {
 				const hasAllResults = results.every((value) => result.includes(value));
 				const values = getKeyOpValue(results);
-				const options = hasAllResults
+				newOptions = hasAllResults
 					? [{ label: searchValue, value: searchValue }]
 					: [{ label: searchValue, value: searchValue }, ...values];
-				setOptions(options);
 			}
+		}
+		if (newOptions.length > 0) {
+			setOptions(newOptions);
 		}
 	}, [
 		getKeyOpValue,

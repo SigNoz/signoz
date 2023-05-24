@@ -5,7 +5,6 @@ import { ResizeTable } from 'components/ResizeTable';
 import AlertStatus from 'container/TriggeredAlerts/TableComponents/AlertStatus';
 import convertDateToAmAndPm from 'lib/convertDateToAmAndPm';
 import getFormattedDate from 'lib/getFormatedDate';
-import React from 'react';
 import { Alerts } from 'types/api/alerts/getTriggered';
 
 import { Value } from './Filter';

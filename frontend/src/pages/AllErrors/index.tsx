@@ -3,7 +3,7 @@ import ROUTES from 'constants/routes';
 import AllErrorsContainer from 'container/AllError';
 import ResourceAttributesFilter from 'container/ResourceAttributesFilter';
 import history from 'lib/history';
-import React, { useMemo } from 'react';
+import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 
 function AllErrors(): JSX.Element {

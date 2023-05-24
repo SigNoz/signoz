@@ -1,0 +1,3 @@
+export const REACT_QUERY_KEY = {
+	GET_ALL_LICENCES: 'GET_ALL_LICENCES',
+};

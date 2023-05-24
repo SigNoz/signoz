@@ -1,11 +1,11 @@
-import React from 'react';
+import { ReactNode } from 'react';
 
 import { StyledAlert } from './styles';
 
 interface MessageTipProps {
 	show?: boolean;
-	message: React.ReactNode | string;
-	action: React.ReactNode | undefined;
+	message: ReactNode | string;
+	action: ReactNode | undefined;
 }
 
 function MessageTip({

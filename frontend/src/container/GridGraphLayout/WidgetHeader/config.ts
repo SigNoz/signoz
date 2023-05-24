@@ -1,6 +1,7 @@
 import { themeColors } from 'constants/theme';
+import { CSSProperties } from 'react';
 
-const positionCss: React.CSSProperties['position'] = 'fixed';
+const positionCss: CSSProperties['position'] = 'fixed';
 
 export const spinnerStyles = { position: positionCss, right: '0.5rem' };
 export const tooltipStyles = {
@@ -13,7 +14,7 @@ export const tooltipStyles = {
 
 export const errorTooltipPosition = 'top';
 
-export const overlayStyles: React.CSSProperties = {
+export const overlayStyles: CSSProperties = {
 	display: 'flex',
 	flexDirection: 'column',
 	alignItems: 'center',

@@ -1,6 +1,6 @@
 import { SettingOutlined } from '@ant-design/icons';
 import { Button } from 'antd';
-import React, { useState } from 'react';
+import { useState } from 'react';
 
 import DashboardSettingsContent from '../DashboardSettings';
 import { DrawerContainer } from './styles';

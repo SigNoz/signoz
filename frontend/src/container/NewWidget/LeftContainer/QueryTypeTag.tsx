@@ -1,4 +1,3 @@
-import React from 'react';
 import { EQueryType } from 'types/common/dashboard';
 
 import { Tag } from '../styles';

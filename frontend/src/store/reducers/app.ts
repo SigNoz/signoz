@@ -9,7 +9,7 @@ import {
 	UPDATE_CONFIGS,
 	UPDATE_CURRENT_ERROR,
 	UPDATE_CURRENT_VERSION,
-	UPDATE_FEATURE_FLAGS,
+	UPDATE_FEATURE_FLAG_RESPONSE,
 	UPDATE_LATEST_VERSION,
 	UPDATE_LATEST_VERSION_ERROR,
 	UPDATE_ORG,
@@ -47,7 +47,10 @@ const InitialValue: InitialValueTypes = {
 	isSideBarCollapsed: getLocalStorageKey(IS_SIDEBAR_COLLAPSED) === 'true',
 	currentVersion: '',
 	latestVersion: '',
-	featureFlags: {},
+	featureResponse: {
+		data: null,
+		refetch: Promise.resolve,
+	},
 	isCurrentVersionError: false,
 	isLatestVersionError: false,
 	user: getInitialUser(),
@@ -80,10 +83,13 @@ const appReducer = (
 			};
 		}
 
-		case UPDATE_FEATURE_FLAGS: {
+		case UPDATE_FEATURE_FLAG_RESPONSE: {
 			return {
 				...state,
-				featureFlags: { ...action.payload },
+				featureResponse: {
+					data: action.payload.featureFlag,
+					refetch: action.payload.refetch,
+				},
 			};
 		}
 

@@ -2,6 +2,8 @@ import { OPERATORS } from 'constants/queryBuilder';
 // eslint-disable-next-line import/no-extraneous-dependencies
 import * as Papa from 'papaparse';
 
+import { orderByValueDelimiter } from '../OrderByFilter/utils';
+
 export const tagRegexp = /([a-zA-Z0-9_.:@$()\-/\\]+)\s*(!=|=|<=|<|>=|>|IN|NOT_IN|LIKE|NOT_LIKE|EXISTS|NOT_EXISTS|CONTAINS|NOT_CONTAINS)\s*([\s\S]*)/g;
 
 export function isInNInOperator(value: string): boolean {
@@ -39,12 +41,13 @@ export function getTagToken(tag: string): ITagToken {
 export function isExistsNotExistsOperator(value: string): boolean {
 	const { tagOperator } = getTagToken(value);
 	return (
-		tagOperator === OPERATORS.NOT_EXISTS || tagOperator === OPERATORS.EXISTS
+		tagOperator?.trim() === OPERATORS.NOT_EXISTS ||
+		tagOperator?.trim() === OPERATORS.EXISTS
 	);
 }
 
 export function getRemovePrefixFromKey(tag: string): string {
-	return tag?.replace(/^(tag_|resource_)/, '');
+	return tag?.replace(/^(tag_|resource_)/, '').trim();
 }
 
 export function getOperatorValue(op: string): string {
@@ -105,4 +108,13 @@ export function replaceStringWithMaxLength(
 
 export function checkCommaInValue(str: string): string {
 	return str.includes(',') ? `"${str}"` : str;
+}
+
+export function getRemoveOrderFromValue(tag: string): string {
+	const match = Papa.parse(tag, { delimiter: orderByValueDelimiter });
+	if (match) {
+		const [key] = match.data.flat() as string[];
+		return key;
+	}
+	return tag;
 }

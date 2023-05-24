@@ -1,18 +1,25 @@
 import { initialQueryBuilderFormValues } from 'constants/queryBuilder';
-import { isQuery, QueryBuilderData } from 'types/common/queryBuilder';
-import { QueryDataResourse } from 'types/common/queryBuilderMappers.types';
+import { FORMULA_REGEXP } from 'constants/regExp';
+import {
+	BuilderQueryDataResourse,
+	IBuilderFormula,
+	IBuilderQuery,
+} from 'types/api/queryBuilder/queryBuilderData';
+import { QueryBuilderData } from 'types/common/queryBuilder';
 
 export const mapQueryDataFromApi = (
-	data: QueryDataResourse,
+	data: BuilderQueryDataResourse,
 ): QueryBuilderData => {
 	const queryData: QueryBuilderData['queryData'] = [];
 	const queryFormulas: QueryBuilderData['queryFormulas'] = [];
 
 	Object.entries(data).forEach(([, value]) => {
-		if (isQuery(value)) {
-			queryData.push({ ...initialQueryBuilderFormValues, ...value });
+		if (FORMULA_REGEXP.test(value.queryName)) {
+			const formula = value as IBuilderFormula;
+			queryFormulas.push(formula);
 		} else {
-			queryFormulas.push(value);
+			const query = value as IBuilderQuery;
+			queryData.push({ ...initialQueryBuilderFormValues, ...query });
 		}
 	});
 
