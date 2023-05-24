@@ -1,53 +1,23 @@
 import { PlusOutlined } from '@ant-design/icons';
-import { Button, Form, Input, Select, Space, Typography } from 'antd';
-import { Dispatch, SetStateAction, useCallback, useEffect } from 'react';
+import {
+	Button,
+	Form,
+	FormInstance,
+	Input,
+	Select,
+	Space,
+	Typography,
+} from 'antd';
 import { useTranslation } from 'react-i18next';
+import { requireErrorMessage } from 'utils/form/requireErrorMessage';
 
-import { InviteTeamMembersProps } from '../PendingInvitesContainer/index';
-import { SelectDrawer, TitleWrapper } from './styles';
+import { InviteMemberFormValues } from '../PendingInvitesContainer/index';
+import { SelectDrawer, SpaceContainer, TitleWrapper } from './styles';
 
 const { Option } = Select;
 
-function InviteTeamMembers({ allMembers, setAllMembers }: Props): JSX.Element {
+function InviteTeamMembers({ form, onFinish }: Props): JSX.Element {
 	const { t } = useTranslation('organizationsettings');
-
-	useEffect(
-		() => (): void => {
-			setAllMembers([
-				{
-					email: '',
-					name: '',
-					role: 'VIEWER',
-				},
-			]);
-		},
-		[setAllMembers],
-	);
-
-	const onAddHandler = (): void => {
-		setAllMembers((state) => [
-			...state,
-			{
-				email: '',
-				name: '',
-				role: 'VIEWER',
-			},
-		]);
-	};
-
-	const onChangeHandler = useCallback(
-		(value: string, index: number, type: string): void => {
-			setAllMembers((prev) => [
-				...prev.slice(0, index),
-				{
-					...prev[index],
-					[type]: value,
-				},
-				...prev.slice(index, prev.length - 1),
-			]);
-		},
-		[setAllMembers],
-	);
 
 	return (
 		<>
@@ -56,52 +26,50 @@ function InviteTeamMembers({ allMembers, setAllMembers }: Props): JSX.Element {
 				<Typography>{t('name_optional')}</Typography>
 				<Typography>{t('role')}</Typography>
 			</TitleWrapper>
-			<Form>
-				<Space direction="vertical" align="center" size="middle">
-					{allMembers.map((e, index) => (
-						<Space key={Number(index)} direction="horizontal">
-							<Input
-								placeholder={t('email_placeholder')}
-								value={e.email}
-								onChange={(event): void => {
-									onChangeHandler(event.target.value, index, 'email');
-								}}
-								required
-							/>
-							<Input
-								placeholder={t('name_placeholder')}
-								value={e.name}
-								onChange={(event): void => {
-									onChangeHandler(event.target.value, index, 'name');
-								}}
-								required
-							/>
-							<SelectDrawer
-								value={e.role}
-								onSelect={(value: unknown): void => {
-									if (typeof value === 'string') {
-										onChangeHandler(value, index, 'role');
-									}
-								}}
-							>
-								<Option value="ADMIN">ADMIN</Option>
-								<Option value="VIEWER">VIEWER</Option>
-								<Option value="EDITOR">EDITOR</Option>
-							</SelectDrawer>
-						</Space>
-					))}
-					<Button onClick={onAddHandler} icon={<PlusOutlined />} type="default">
-						{t('add_another_team_member')}
-					</Button>
-				</Space>
+			<Form
+				form={form}
+				onFinish={onFinish}
+				initialValues={{ members: [{ email: '', name: '', role: 'VIEWER' }] }}
+			>
+				<Form.List name="members">
+					{(fields, { add }): JSX.Element => (
+						<SpaceContainer direction="vertical" align="center" size="middle">
+							{fields.map(({ key, name }) => (
+								<Space key={key} direction="horizontal" align="start">
+									<Form.Item
+										name={[name, 'email']}
+										rules={[{ required: true, message: requireErrorMessage('Email') }]}
+									>
+										<Input placeholder={t('email_placeholder')} />
+									</Form.Item>
+									<Form.Item name={[name, 'name']}>
+										<Input placeholder={t('name_placeholder')} />
+									</Form.Item>
+									<Form.Item name={[name, 'role']} initialValue="VIEWER">
+										<SelectDrawer>
+											<Option value="ADMIN">ADMIN</Option>
+											<Option value="VIEWER">VIEWER</Option>
+											<Option value="EDITOR">EDITOR</Option>
+										</SelectDrawer>
+									</Form.Item>
+								</Space>
+							))}
+							<Form.Item>
+								<Button onClick={add} icon={<PlusOutlined />} type="default">
+									{t('add_another_team_member')}
+								</Button>
+							</Form.Item>
+						</SpaceContainer>
+					)}
+				</Form.List>
 			</Form>
 		</>
 	);
 }
 
 interface Props {
-	allMembers: InviteTeamMembersProps[];
-	setAllMembers: Dispatch<SetStateAction<InviteTeamMembersProps[]>>;
+	form: FormInstance<InviteMemberFormValues>;
+	onFinish: (values: InviteMemberFormValues) => Promise<void>;
 }
 
 export default InviteTeamMembers;
