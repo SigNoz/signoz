@@ -484,46 +484,6 @@ func (b *BuilderQuery) Validate() error {
 	return nil
 }
 
-func (b *BuilderQuery) Validate() error {
-	if b == nil {
-		return nil
-	}
-	if b.QueryName == "" {
-		return fmt.Errorf("query name is required")
-	}
-
-	// if expression is same as query name, it's a simple builder query and not a formula
-	// formula involves more than one data source, aggregate operator, etc.
-	if b.QueryName == b.Expression {
-		if err := b.DataSource.Validate(); err != nil {
-			return fmt.Errorf("data source is invalid: %w", err)
-		}
-		if err := b.AggregateOperator.Validate(); err != nil {
-			return fmt.Errorf("aggregate operator is invalid: %w", err)
-		}
-		if b.AggregateAttribute == "" && b.AggregateOperator.RequireAttribute() {
-			return fmt.Errorf("aggregate attribute is required")
-		}
-	}
-
-	if b.Filters != nil {
-		if err := b.Filters.Validate(); err != nil {
-			return fmt.Errorf("filters are invalid: %w", err)
-		}
-	}
-	if b.GroupBy != nil {
-		for _, groupBy := range b.GroupBy {
-			if groupBy == "" {
-				return fmt.Errorf("group by cannot be empty")
-			}
-		}
-	}
-	if b.Expression == "" {
-		return fmt.Errorf("expression is required")
-	}
-	return nil
-}
-
 type FilterSet struct {
 	Operator string       `json:"op,omitempty"`
 	Items    []FilterItem `json:"items"`
@@ -620,35 +580,6 @@ type Point struct {
 func (p *Point) MarshalJSON() ([]byte, error) {
 	v := strconv.FormatFloat(p.Value, 'f', -1, 64)
 	return json.Marshal(map[string]interface{}{"timestamp": p.Timestamp, "value": v})
-}
-
-// ExploreQuery is a query for the explore page
-// It is a composite query with a source page name
-// The source page name is used to identify the page that initiated the query
-// The source page could be "traces", "logs", "metrics" or "dashboards", "alerts" etc.
-type ExplorerQuery struct {
-	UUID           string          `json:"uuid,omitempty"`
-	SourcePage     string          `json:"sourcePage"`
-	CompositeQuery *CompositeQuery `json:"compositeQuery"`
-	// ExtraData is JSON encoded data used by frontend to store additional data
-	ExtraData string `json:"extraData"`
-	// 0 - false, 1 - true; this is int8 because sqlite doesn't support bool
-	IsView int8 `json:"isView"`
-}
-
-func (eq *ExplorerQuery) Validate() error {
-	if eq.IsView != 0 && eq.IsView != 1 {
-		return fmt.Errorf("isView must be 0 or 1")
-	}
-
-	if eq.CompositeQuery == nil {
-		return fmt.Errorf("composite query is required")
-	}
-
-	if eq.UUID == "" {
-		eq.UUID = uuid.New().String()
-	}
-	return eq.CompositeQuery.Validate()
 }
 
 // ExploreQuery is a query for the explore page
