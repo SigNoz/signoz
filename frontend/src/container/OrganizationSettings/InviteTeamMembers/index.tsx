@@ -9,6 +9,7 @@ import {
 	Typography,
 } from 'antd';
 import { useTranslation } from 'react-i18next';
+import { requireErrorMessage } from 'utils/form/requireErrorMessage';
 
 import { InviteMemberFormValues } from '../PendingInvitesContainer/index';
 import { SelectDrawer, SpaceContainer, TitleWrapper } from './styles';
@@ -37,7 +38,7 @@ function InviteTeamMembers({ form, onFinish }: Props): JSX.Element {
 								<Space key={key} direction="horizontal" align="start">
 									<Form.Item
 										name={[name, 'email']}
-										rules={[{ required: true, message: 'Missing email' }]}
+										rules={[{ required: true, message: requireErrorMessage('Email') }]}
 									>
 										<Input placeholder={t('email_placeholder')} />
 									</Form.Item>
