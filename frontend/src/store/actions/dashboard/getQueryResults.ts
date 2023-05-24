@@ -18,7 +18,7 @@ import { Dispatch } from 'redux';
 import store from 'store';
 import AppActions from 'types/actions';
 import { ErrorResponse, SuccessResponse } from 'types/api';
-import { Query } from 'types/api/dashboard/getAll';
+import { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
 import { EQueryType } from 'types/common/dashboard';
 import { GlobalReducer } from 'types/reducer/globalTime';
@@ -50,13 +50,18 @@ export async function GetMetricQueryRange({
 	switch (query.queryType) {
 		case EQueryType.QUERY_BUILDER: {
 			const { queryData: data, queryFormulas } = query.builder;
-			const builderQueries = mapQueryDataToApi({
-				queryData: data,
-				queryFormulas,
-			});
-			legendMap = builderQueries.newLegendMap;
+			const currentQueryData = mapQueryDataToApi(data, 'queryName');
+			const currentFormulas = mapQueryDataToApi(queryFormulas, 'queryName');
+			const builderQueries = {
+				...currentQueryData.data,
+				...currentFormulas.data,
+			};
+			legendMap = {
+				...currentQueryData.newLegendMap,
+				...currentFormulas.newLegendMap,
+			};
 
-			QueryPayload.compositeQuery.builderQueries = builderQueries.data;
+			QueryPayload.compositeQuery.builderQueries = builderQueries;
 			break;
 		}
 		case EQueryType.CLICKHOUSE: {
