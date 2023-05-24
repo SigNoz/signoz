@@ -7,7 +7,7 @@ import (
 	inmemory "go.signoz.io/signoz/pkg/query-service/cache/inmemory"
 	redis "go.signoz.io/signoz/pkg/query-service/cache/redis"
 	"go.signoz.io/signoz/pkg/query-service/cache/status"
-	"go.signoz.io/signoz/pkg/query-service/model"
+	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
 	"gopkg.in/yaml.v2"
 )
 
@@ -34,7 +34,7 @@ type Cache interface {
 type KeyGenerator interface {
 	// GenerateKeys generates the cache keys for the given query range params
 	// The keys are returned as a map where the key is the query name and the value is the cache key
-	GenerateKeys(*model.QueryRangeParamsV2) map[string]string
+	GenerateKeys(*v3.QueryRangeParamsV3) map[string]string
 }
 
 // LoadFromYAMLCacheConfig loads the cache options from the given YAML config bytes
