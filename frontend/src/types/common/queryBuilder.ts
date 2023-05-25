@@ -4,6 +4,7 @@ import {
 	IBuilderQuery,
 	IClickHouseQuery,
 	IPromQLQuery,
+	Query,
 	QueryState,
 } from 'types/api/queryBuilder/queryBuilderData';
 
@@ -168,7 +169,7 @@ export type QueryBuilderContextType = {
 	) => void;
 	handleSetPanelType: (newPanelType: GRAPH_TYPES) => void;
 	handleSetQueryType: (newQueryType: EQueryType) => void;
-	initQueryBuilderData: (query: QueryState, queryType: EQueryType) => void;
+	initQueryBuilderData: (query: Partial<Query>) => void;
 	setupInitialDataSource: (newInitialDataSource: DataSource | null) => void;
 	removeQueryBuilderEntityByIndex: (
 		type: keyof QueryBuilderData,

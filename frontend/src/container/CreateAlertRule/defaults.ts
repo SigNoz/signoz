@@ -1,5 +1,6 @@
 import {
 	initialQueryBuilderFormValues,
+	initialQueryPromQLData,
 	PANEL_TYPES,
 } from 'constants/queryBuilder';
 import { AlertTypes } from 'types/api/alerts/alertTypes';
@@ -31,11 +32,9 @@ export const alertDefaults: AlertDef = {
 	condition: {
 		compositeQuery: {
 			builderQueries: {
-				A: {
-					...initialQueryBuilderFormValues,
-				},
+				A: initialQueryBuilderFormValues,
 			},
-			promQueries: {},
+			promQueries: { A: initialQueryPromQLData },
 			chQueries: {
 				A: {
 					name: 'A',
@@ -69,7 +68,7 @@ export const logAlertDefaults: AlertDef = {
 					dataSource: DataSource.LOGS,
 				},
 			},
-			promQueries: {},
+			promQueries: { A: initialQueryPromQLData },
 			chQueries: {
 				A: {
 					name: 'A',
@@ -104,7 +103,7 @@ export const traceAlertDefaults: AlertDef = {
 					dataSource: DataSource.TRACES,
 				},
 			},
-			promQueries: {},
+			promQueries: { A: initialQueryPromQLData },
 			chQueries: {
 				A: {
 					name: 'A',
@@ -139,7 +138,7 @@ export const exceptionAlertDefaults: AlertDef = {
 					dataSource: DataSource.TRACES,
 				},
 			},
-			promQueries: {},
+			promQueries: { A: initialQueryPromQLData },
 			chQueries: {
 				A: {
 					name: 'A',

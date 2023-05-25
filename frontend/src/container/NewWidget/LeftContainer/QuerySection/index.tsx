@@ -1,11 +1,12 @@
 import { Button, Tabs, Typography } from 'antd';
 import TextToolTip from 'components/TextToolTip';
+import { COMPOSITE_QUERY } from 'constants/queryBuilderQueryNames';
 import { GRAPH_TYPES } from 'container/NewDashboard/ComponentsSlider';
 import { QueryBuilder } from 'container/QueryBuilder';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
-import { useCallback, useEffect, useMemo } from 'react';
+import useUrlQuery from 'hooks/useUrlQuery';
+import { useCallback, useEffect, useState } from 'react';
 import { connect, useSelector } from 'react-redux';
-import { useLocation } from 'react-router-dom';
 import { bindActionCreators, Dispatch } from 'redux';
 import { ThunkDispatch } from 'redux-thunk';
 import {
@@ -15,6 +16,7 @@ import {
 import { AppState } from 'store/reducers';
 import AppActions from 'types/actions';
 import { Widgets } from 'types/api/dashboard/getAll';
+import { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { EQueryType } from 'types/common/dashboard';
 import DashboardReducer from 'types/reducer/dashboards';
 
@@ -28,6 +30,10 @@ function QuerySection({ updateQuery, selectedGraph }: QueryProps): JSX.Element {
 		handleSetQueryType,
 		initQueryBuilderData,
 	} = useQueryBuilder();
+	const [stagedQuery, setStagedQuery] = useState<Query | null>(null);
+	const urlQuery = useUrlQuery();
+
+	const compositeQuery = urlQuery.get(COMPOSITE_QUERY);
 
 	const { dashboards, isLoadingQueryResult } = useSelector<
 		AppState,
@@ -35,10 +41,7 @@ function QuerySection({ updateQuery, selectedGraph }: QueryProps): JSX.Element {
 	>((state) => state.dashboards);
 
 	const [selectedDashboards] = dashboards;
-	const { search } = useLocation();
 	const { widgets } = selectedDashboards.data;
-
-	const urlQuery = useMemo(() => new URLSearchParams(search), [search]);
 
 	const getWidget = useCallback(() => {
 		const widgetId = urlQuery.get('widgetId');
@@ -49,31 +52,47 @@ function QuerySection({ updateQuery, selectedGraph }: QueryProps): JSX.Element {
 
 	const { query } = selectedWidget || {};
 
-	useEffect(() => {
-		initQueryBuilderData(query, selectedWidget.query.queryType);
-	}, [query, initQueryBuilderData, selectedWidget]);
-
-	const handleStageQuery = (): void => {
-		updateQuery({
-			updatedQuery: {
-				...currentQuery,
-				queryType,
-			},
-			widgetId: urlQuery.get('widgetId') || '',
-			yAxisUnit: selectedWidget.yAxisUnit,
-		});
-	};
+	const handleStageQuery = useCallback(
+		(updatedQuery: Query): void => {
+			updateQuery({
+				updatedQuery,
+				widgetId: urlQuery.get('widgetId') || '',
+				yAxisUnit: selectedWidget.yAxisUnit,
+			});
+		},
+		[urlQuery, selectedWidget, updateQuery],
+	);
 
 	const handleQueryCategoryChange = (qCategory: string): void => {
 		const currentQueryType = qCategory as EQueryType;
 
 		handleSetQueryType(currentQueryType);
-		updateQuery({
-			updatedQuery: { ...currentQuery, queryType: currentQueryType },
-			widgetId: urlQuery.get('widgetId') || '',
-			yAxisUnit: selectedWidget.yAxisUnit,
-		});
+
+		handleStageQuery({ ...currentQuery, queryType: currentQueryType });
 	};
+
+	const handleRunQuery = (): void => {
+		handleStageQuery({ ...currentQuery, queryType });
+	};
+
+	useEffect(() => {
+		const actualQuery = (compositeQuery
+			? JSON.parse(compositeQuery)
+			: query) as Query;
+
+		if (!stagedQuery) {
+			initQueryBuilderData(actualQuery);
+			handleStageQuery(actualQuery);
+			setStagedQuery(actualQuery);
+		}
+	}, [
+		query,
+		selectedWidget,
+		compositeQuery,
+		stagedQuery,
+		initQueryBuilderData,
+		handleStageQuery,
+	]);
 
 	const items = [
 		{
@@ -109,7 +128,7 @@ function QuerySection({ updateQuery, selectedGraph }: QueryProps): JSX.Element {
 					<Button
 						loading={isLoadingQueryResult}
 						type="primary"
-						onClick={handleStageQuery}
+						onClick={handleRunQuery}
 					>
 						Stage & Run Query
 					</Button>

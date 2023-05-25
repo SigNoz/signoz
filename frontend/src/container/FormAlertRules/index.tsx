@@ -3,13 +3,16 @@ import { Col, FormInstance, Modal, Tooltip, Typography } from 'antd';
 import saveAlertApi from 'api/alerts/save';
 import testAlertApi from 'api/alerts/testAlert';
 import { FeatureKeys } from 'constants/features';
+import { COMPOSITE_QUERY } from 'constants/queryBuilderQueryNames';
 import ROUTES from 'constants/routes';
 import QueryTypeTag from 'container/NewWidget/LeftContainer/QueryTypeTag';
 import PlotTag from 'container/NewWidget/LeftContainer/WidgetGraph/PlotTag';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { MESSAGE, useIsFeatureDisabled } from 'hooks/useFeatureFlag';
 import { useNotifications } from 'hooks/useNotifications';
+import useUrlQuery from 'hooks/useUrlQuery';
 import history from 'lib/history';
+import { mapQueryDataFromApi } from 'lib/newQueryBuilder/queryBuilderMappers/mapQueryDataFromApi';
 import { mapQueryDataToApi } from 'lib/newQueryBuilder/queryBuilderMappers/mapQueryDataToApi';
 import { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -35,7 +38,7 @@ import {
 	StyledLeftContainer,
 } from './styles';
 import UserGuide from './UserGuide';
-import { prepareStagedQuery, toChartInterval } from './utils';
+import { toChartInterval } from './utils';
 
 function FormAlertRules({
 	alertType,
@@ -45,6 +48,9 @@ function FormAlertRules({
 }: FormAlertRuleProps): JSX.Element {
 	// init namespace for translations
 	const { t } = useTranslation('alerts');
+	const urlQuery = useUrlQuery();
+
+	const compositeQueryParam = urlQuery.get(COMPOSITE_QUERY);
 
 	const {
 		currentQuery,
@@ -74,22 +80,19 @@ function FormAlertRules({
 	// useful when fetching of initial values (from api)
 	// is delayed
 	useEffect(() => {
-		const type = initQuery.queryType;
-
 		// prepare staged query
-		const sq = prepareStagedQuery(
-			type,
-			initQuery?.builderQueries,
-			initQuery?.promQueries,
-			initQuery?.chQueries,
-		);
+		const sq = mapQueryDataFromApi(initQuery);
 
-		initQueryBuilderData(sq, type);
+		const query = compositeQueryParam
+			? (JSON.parse(compositeQueryParam) as Query)
+			: sq;
 
-		setManualStagedQuery(sq);
+		initQueryBuilderData(query);
+
+		setManualStagedQuery(query);
 
 		setAlertDef(initialValue);
-	}, [initialValue, initQueryBuilderData, initQuery]);
+	}, [initialValue, initQueryBuilderData, initQuery, compositeQueryParam]);
 
 	const onRunQuery = (): void => {
 		setManualStagedQuery({ ...currentQuery, queryType });

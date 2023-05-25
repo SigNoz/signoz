@@ -1,9 +1,12 @@
 import {
 	alphabet,
 	formulasNames,
+	initialClickHouseData,
 	initialFormulaBuilderFormValues,
 	initialQuery,
+	initialQueryBuilderData,
 	initialQueryBuilderFormValues,
+	initialQueryPromQLData,
 	initialSingleQueryMap,
 	MAX_FORMULAS,
 	MAX_QUERIES,
@@ -25,6 +28,7 @@ import {
 	IBuilderQuery,
 	IClickHouseQuery,
 	IPromQLQuery,
+	Query,
 	QueryState,
 } from 'types/api/queryBuilder/queryBuilderData';
 import { EQueryType } from 'types/common/dashboard';
@@ -85,13 +89,41 @@ export function QueryBuilderProvider({
 		setCurrentQuery(initialQuery);
 	}, []);
 
-	const initQueryBuilderData = useCallback(
-		(query: QueryState, queryType: EQueryType): void => {
-			setCurrentQuery(query);
-			setQueryType(queryType);
-		},
-		[],
-	);
+	const initQueryBuilderData = useCallback((query: Partial<Query>): void => {
+		const { queryType, ...queryState } = query;
+		const builder: QueryBuilderData = {
+			queryData: queryState.builder
+				? queryState.builder.queryData.map((item) => ({
+						...initialQueryBuilderData,
+						...item,
+				  }))
+				: initialQuery.builder.queryData,
+			queryFormulas: queryState.builder
+				? queryState.builder.queryFormulas.map((item) => ({
+						...initialFormulaBuilderFormValues,
+						...item,
+				  }))
+				: initialQuery.builder.queryFormulas,
+		};
+
+		const promql: IPromQLQuery[] = queryState.promql
+			? queryState.promql.map((item) => ({
+					...initialQueryPromQLData,
+					...item,
+			  }))
+			: initialQuery.promql;
+
+		const clickHouse: IClickHouseQuery[] = queryState.clickhouse_sql
+			? queryState.clickhouse_sql.map((item) => ({
+					...initialClickHouseData,
+					...item,
+			  }))
+			: initialQuery.clickhouse_sql;
+
+		setCurrentQuery({ builder, clickhouse_sql: clickHouse, promql });
+
+		setQueryType(queryType || EQueryType.QUERY_BUILDER);
+	}, []);
 
 	const removeQueryBuilderEntityByIndex = useCallback(
 		(type: keyof QueryBuilderData, index: number) => {
