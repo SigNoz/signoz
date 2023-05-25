@@ -6,7 +6,11 @@ import {
 	HavingForm,
 	IBuilderFormula,
 	IBuilderQuery,
+	IClickHouseQuery,
+	IPromQLQuery,
+	QueryState,
 } from 'types/api/queryBuilder/queryBuilderData';
+import { EQueryType } from 'types/common/dashboard';
 import {
 	BoolOperators,
 	DataSource,
@@ -14,6 +18,7 @@ import {
 	NumberOperators,
 	PanelTypeKeys,
 	QueryAdditionalFilter,
+	QueryBuilderData,
 	ReduceOperators,
 	StringOperators,
 } from 'types/common/queryBuilder';
@@ -120,6 +125,37 @@ export const initialFormulaBuilderFormValues: IBuilderFormula = {
 	expression: '',
 	disabled: false,
 	legend: '',
+};
+
+export const initialQueryPromQLData: IPromQLQuery = {
+	name: createNewBuilderItemName({ existNames: [], sourceNames: alphabet }),
+	query: '',
+	legend: '',
+	disabled: false,
+};
+
+export const initialClickHouseData: IClickHouseQuery = {
+	name: createNewBuilderItemName({ existNames: [], sourceNames: alphabet }),
+	rawQuery: '',
+	legend: '',
+	disabled: false,
+	query: '',
+};
+
+export const initialQueryBuilderData: QueryBuilderData = {
+	queryData: [initialQueryBuilderFormValues],
+	queryFormulas: [],
+};
+
+export const initialSingleQueryMap: Record<
+	EQueryType.PROM | EQueryType.CLICKHOUSE,
+	IClickHouseQuery | IPromQLQuery
+> = { clickhouse_sql: initialClickHouseData, promql: initialQueryPromQLData };
+
+export const initialQuery: QueryState = {
+	builder: initialQueryBuilderData,
+	clickhouse_sql: [initialClickHouseData],
+	promql: [initialQueryPromQLData],
 };
 
 export const operatorsByTypes: Record<LocalDataType, string[]> = {
