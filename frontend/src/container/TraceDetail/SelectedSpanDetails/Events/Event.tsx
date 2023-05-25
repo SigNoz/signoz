@@ -15,7 +15,7 @@ function ErrorTag({
 	onToggleHandler,
 	setText,
 	firstSpanStartTime,
-}: ErrorTagProps): JSX.Element | undefined {
+}: ErrorTagProps): JSX.Element | null {
 	const isDarkMode = useIsDarkMode();
 
 	if (event) {
@@ -79,6 +79,8 @@ function ErrorTag({
 			</>
 		);
 	}
+
+	return null;
 }
 
 interface ErrorTagProps {
