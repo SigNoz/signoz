@@ -144,7 +144,7 @@ func ValidateAndCastValue(v interface{}, dataType v3.AttributeKeyDataType) (inte
 // ClickHouseFormattedValue formats the value to be used in clickhouse query
 func ClickHouseFormattedValue(v interface{}) string {
 	switch x := v.(type) {
-	case int:
+	case int, int32, int64:
 		return fmt.Sprintf("%d", x)
 	case float32, float64:
 		return fmt.Sprintf("%f", x)
