@@ -22,7 +22,7 @@ function ApplyLicenseForm({
 	licenseRefetch,
 }: ApplyLicenseFormProps): JSX.Element {
 	const { t } = useTranslation(['licenses']);
-	const [loading, setLoading] = useState(false);
+	const [isLoading, setIsLoading] = useState(false);
 	const [form] = Form.useForm<FormValues>();
 	const { featureResponse } = useSelector<AppState, AppReducer>(
 		(state) => state.app,
@@ -30,6 +30,8 @@ function ApplyLicenseForm({
 
 	const { notifications } = useNotifications();
 	const key = Form.useWatch('key', form);
+
+	const isDisabled = isLoading || !key;
 
 	const onFinish = async (values: unknown | { key: string }): Promise<void> => {
 		const params = values as { key: string };
@@ -41,7 +43,7 @@ function ApplyLicenseForm({
 			return;
 		}
 
-		setLoading(true);
+		setIsLoading(true);
 		try {
 			const response = await apply({
 				key: params.key,
@@ -66,7 +68,7 @@ function ApplyLicenseForm({
 				description: t('unexpected_error'),
 			});
 		}
-		setLoading(false);
+		setIsLoading(false);
 	};
 
 	return (
@@ -85,8 +87,8 @@ function ApplyLicenseForm({
 				</LicenseInput>
 				<Form.Item>
 					<Button
-						loading={loading}
-						disabled={loading}
+						loading={isLoading}
+						disabled={isDisabled}
 						type="primary"
 						htmlType="submit"
 					>
