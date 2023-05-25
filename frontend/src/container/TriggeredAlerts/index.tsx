@@ -2,7 +2,7 @@ import getTriggeredApi from 'api/alerts/getTriggered';
 import Spinner from 'components/Spinner';
 import { State } from 'hooks/useFetch';
 import { useNotifications } from 'hooks/useNotifications';
-import React, { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { PayloadProps } from 'types/api/alerts/getTriggered';
 

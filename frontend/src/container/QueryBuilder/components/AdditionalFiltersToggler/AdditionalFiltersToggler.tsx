@@ -1,5 +1,5 @@
 import { Col, Row } from 'antd';
-import React, { Fragment, memo, ReactNode, useState } from 'react';
+import { Fragment, memo, ReactNode, useState } from 'react';
 
 // ** Types
 import { AdditionalFiltersProps } from './AdditionalFiltersToggler.interfaces';

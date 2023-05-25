@@ -5,7 +5,7 @@ import setRetentionApi from 'api/settings/setRetention';
 import TextToolTip from 'components/TextToolTip';
 import useComponentPermission from 'hooks/useComponentPermission';
 import { useNotifications } from 'hooks/useNotifications';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { Fragment, useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { UseQueryResult } from 'react-query';
 import { useSelector } from 'react-redux';
@@ -518,7 +518,7 @@ function GeneralSettings({
 			category.retentionFields.length > 0
 		) {
 			return (
-				<React.Fragment key={category.name}>
+				<Fragment key={category.name}>
 					<Col xs={22} xl={11} key={category.name} style={{ margin: '0.5rem' }}>
 						<Card style={{ height: '100%', minHeight: 300 }}>
 							<Typography.Title style={{ margin: 0 }} level={3}>
@@ -575,7 +575,7 @@ function GeneralSettings({
 							</Modal>
 						</Card>
 					</Col>
-				</React.Fragment>
+				</Fragment>
 			);
 		}
 		return null;

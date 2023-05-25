@@ -1,5 +1,4 @@
 import { Drawer, Tabs } from 'antd';
-import React from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { Dispatch } from 'redux';
 import { AppState } from 'store/reducers';

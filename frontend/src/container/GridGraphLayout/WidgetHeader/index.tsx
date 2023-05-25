@@ -10,7 +10,7 @@ import { MenuItemType } from 'antd/es/menu/hooks/useItems';
 import Spinner from 'components/Spinner';
 import useComponentPermission from 'hooks/useComponentPermission';
 import history from 'lib/history';
-import React, { useCallback, useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { UseQueryResult } from 'react-query';
 import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';

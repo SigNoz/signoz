@@ -1,5 +1,4 @@
 import { Col, Row, Typography } from 'antd';
-import React from 'react';
 
 import DocCard from './DocCard';
 import { TGetStartedContentSection } from './types';

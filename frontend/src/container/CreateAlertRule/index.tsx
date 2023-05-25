@@ -1,6 +1,6 @@
 import { Form, Row } from 'antd';
 import FormAlertRules from 'container/FormAlertRules';
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { AlertTypes } from 'types/api/alerts/alertTypes';
 
 import {

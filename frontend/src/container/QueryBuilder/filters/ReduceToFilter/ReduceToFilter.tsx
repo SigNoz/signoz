@@ -1,6 +1,6 @@
 import { Select } from 'antd';
 import { REDUCE_TO_VALUES } from 'constants/queryBuilder';
-import React, { memo } from 'react';
+import { memo } from 'react';
 // ** Types
 import { ReduceOperators } from 'types/common/queryBuilder';
 import { SelectOption } from 'types/common/select';

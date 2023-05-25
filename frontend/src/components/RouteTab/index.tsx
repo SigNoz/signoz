@@ -1,11 +1,11 @@
 import { Tabs, TabsProps } from 'antd';
-import history from 'lib/history';
-import React from 'react';
+import { History } from 'history';
 
 function RouteTab({
 	routes,
 	activeKey,
 	onChangeHandler,
+	history,
 	...rest
 }: RouteTabProps & TabsProps): JSX.Element {
 	const onChange = (activeRoute: string): void => {
@@ -48,6 +48,7 @@ interface RouteTabProps {
 	}[];
 	activeKey: TabsProps['activeKey'];
 	onChangeHandler?: VoidFunction;
+	history: History<unknown>;
 }
 
 RouteTab.defaultProps = {

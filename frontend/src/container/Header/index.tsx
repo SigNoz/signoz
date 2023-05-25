@@ -3,14 +3,15 @@ import {
 	CaretUpFilled,
 	LogoutOutlined,
 } from '@ant-design/icons';
-import type { MenuProps } from 'antd';
-import { Divider, Dropdown, Space, Typography } from 'antd';
+import { Button, Divider, Dropdown, MenuProps, Space, Typography } from 'antd';
 import { Logout } from 'api/utils';
 import ROUTES from 'constants/routes';
 import Config from 'container/ConfigDropdown';
 import { useIsDarkMode, useThemeMode } from 'hooks/useDarkMode';
-import React, {
+import useLicense, { LICENSE_PLAN_STATUS } from 'hooks/useLicense';
+import {
 	Dispatch,
+	KeyboardEvent,
 	SetStateAction,
 	useCallback,
 	useMemo,
@@ -50,14 +51,11 @@ function HeaderContainer(): JSX.Element {
 		[],
 	);
 
-	const onLogoutKeyDown = useCallback(
-		(e: React.KeyboardEvent<HTMLDivElement>) => {
-			if (e.key === 'Enter' || e.key === 'Space') {
-				Logout();
-			}
-		},
-		[],
-	);
+	const onLogoutKeyDown = useCallback((e: KeyboardEvent<HTMLDivElement>) => {
+		if (e.key === 'Enter' || e.key === 'Space') {
+			Logout();
+		}
+	}, []);
 
 	const menu: MenuProps = useMemo(
 		() => ({
@@ -91,6 +89,18 @@ function HeaderContainer(): JSX.Element {
 		[onToggleHandler, onLogoutKeyDown],
 	);
 
+	const onClickSignozCloud = (): void => {
+		window.open(
+			'https://signoz.io/pricing/?utm_source=product_navbar&utm_medium=frontend',
+			'_blank',
+		);
+	};
+
+	const { data } = useLicense();
+
+	const isLicenseActive =
+		data?.payload?.find((e) => e.isCurrent)?.status === LICENSE_PLAN_STATUS.VALID;
+
 	return (
 		<Header>
 			<Container>
@@ -106,7 +116,13 @@ function HeaderContainer(): JSX.Element {
 					</NavLinkWrapper>
 				</NavLink>
 
-				<Space style={{ height: '100%' }} align="center">
+				<Space size="middle" align="center">
+					{!isLicenseActive && (
+						<Button onClick={onClickSignozCloud} type="primary">
+							Try Signoz Cloud
+						</Button>
+					)}
+
 					<Config frontendId="tooltip" />
 
 					<ToggleButton

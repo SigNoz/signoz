@@ -14,7 +14,7 @@ import query from 'api/dashboard/variables/query';
 import Editor from 'components/Editor';
 import { commaValuesParser } from 'lib/dashbaordVariables/customCommaValuesParser';
 import sortValues from 'lib/dashbaordVariables/sortVariableValues';
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
 	IDashboardVariable,
 	TSortVariableValuesType,

@@ -3,7 +3,13 @@ import { useMachine } from '@xstate/react';
 import { Button, Select } from 'antd';
 import { RefSelectProps } from 'antd/lib/select';
 import history from 'lib/history';
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import {
+	MutableRefObject,
+	useCallback,
+	useEffect,
+	useRef,
+	useState,
+} from 'react';
 import { Dashboard } from 'types/api/dashboard/getAll';
 import { v4 as uuidv4 } from 'uuid';
 
@@ -30,7 +36,7 @@ function SearchFilter({
 	const [optionsData, setOptionsData] = useState<IOptionsData>(
 		OptionsSchemas.attribute,
 	);
-	const selectRef = useRef() as React.MutableRefObject<RefSelectProps>;
+	const selectRef = useRef() as MutableRefObject<RefSelectProps>;
 	const [selectedValues, setSelectedValues] = useState<string[]>([]);
 	const [staging, setStaging] = useState<string[] | string[][] | unknown[]>([]);
 	const [queries, setQueries] = useState<IQueryStructure[]>([]);

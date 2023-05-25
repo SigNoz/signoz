@@ -1,5 +1,5 @@
 import { AutoComplete, Col, Input, Typography } from 'antd';
-import React from 'react';
+import { Dispatch, SetStateAction } from 'react';
 
 import { flattenedCategories } from './dataFormatCategories';
 
@@ -18,7 +18,7 @@ function YAxisUnitSelector({
 	fieldLabel,
 }: {
 	defaultValue: string;
-	onSelect: React.Dispatch<React.SetStateAction<string>>;
+	onSelect: Dispatch<SetStateAction<string>>;
 	fieldLabel: string;
 }): JSX.Element {
 	const onSelectHandler = (selectedValue: string): void => {

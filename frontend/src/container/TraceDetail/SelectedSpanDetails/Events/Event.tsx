@@ -1,7 +1,6 @@
 import { Collapse } from 'antd';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import keys from 'lodash-es/keys';
-import React from 'react';
 import { ITraceTree } from 'types/api/trace/getTraceItem';
 
 import EllipsedButton from '../EllipsedButton';
