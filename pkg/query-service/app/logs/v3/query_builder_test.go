@@ -29,13 +29,13 @@ var testGetClickhouseColumnNameData = []struct {
 		ExpectedColumnName: "servicename",
 	},
 	{
-		Name:               "top level column",
+		Name:               "same name as top level column",
 		AttributeKey:       v3.AttributeKey{Key: "trace_id", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag},
-		ExpectedColumnName: "trace_id",
+		ExpectedColumnName: "attributes_string_value[indexOf(attributes_string_key, 'trace_id')]",
 	},
 	{
-		Name:               "top level column with isColumn ignored",
-		AttributeKey:       v3.AttributeKey{Key: "trace_id", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag, IsColumn: false},
+		Name:               "top level column",
+		AttributeKey:       v3.AttributeKey{Key: "trace_id", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag, IsColumn: true},
 		ExpectedColumnName: "trace_id",
 	},
 }
@@ -82,6 +82,18 @@ var testGetSelectLabelsData = []struct {
 		AggregateOperator: v3.AggregateOperatorCount,
 		GroupByTags:       []v3.AttributeKey{{Key: "host", IsColumn: true}},
 		SelectLabels:      ", host as host",
+	},
+	{
+		Name:              "trace_id field with missing meta",
+		AggregateOperator: v3.AggregateOperatorCount,
+		GroupByTags:       []v3.AttributeKey{{Key: "trace_id"}},
+		SelectLabels:      ", trace_id as trace_id",
+	},
+	{
+		Name:              "trace_id field as an attribute",
+		AggregateOperator: v3.AggregateOperatorCount,
+		GroupByTags:       []v3.AttributeKey{{Key: "trace_id", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag}},
+		SelectLabels:      ", attributes_string_value[indexOf(attributes_string_key, 'trace_id')] as trace_id",
 	},
 }
 
@@ -220,6 +232,21 @@ var timeSeriesFilterQueryData = []struct {
 		}},
 		Fields:         map[string]v3.AttributeKey{"bytes": {Key: "bytes", DataType: v3.AttributeKeyDataTypeInt64, Type: v3.AttributeKeyTypeTag}},
 		ExpectedFilter: " AND attributes_int64_value[indexOf(attributes_int64_key, 'bytes')] = 102",
+	},
+	{
+		Name: "Test top level field w/o metadata",
+		FilterSet: &v3.FilterSet{Operator: "AND", Items: []v3.FilterItem{
+			{Key: v3.AttributeKey{Key: "body"}, Value: "%test%", Operator: "like"},
+		}},
+		ExpectedFilter: " AND body ILIKE '%test%'",
+	},
+	{
+		Name: "Test top level field with metadata",
+		FilterSet: &v3.FilterSet{Operator: "AND", Items: []v3.FilterItem{
+			{Key: v3.AttributeKey{Key: "body", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag}, Value: "%test%", Operator: "like"},
+		}},
+		Fields:         map[string]v3.AttributeKey{"body": {Key: "body", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag}},
+		ExpectedFilter: " AND attributes_string_value[indexOf(attributes_string_key, 'body')] ILIKE '%test%'",
 	},
 }
 
@@ -646,6 +673,56 @@ var testBuildLogsQueryData = []struct {
 		},
 		TableName:     "logs",
 		ExpectedQuery: "SELECT toStartOfInterval(fromUnixTimestamp64Nano(timestamp), INTERVAL 60 SECOND) AS ts, toFloat64(count(distinct(attributes_string_value[indexOf(attributes_string_key, 'name')]))) as value from signoz_logs.distributed_logs where (timestamp >= 1680066360726210000 AND timestamp <= 1680066458000000000) AND attributes_string_value[indexOf(attributes_string_key, 'method')] = 'GET' group by ts having value > 10 order by ts",
+	},
+	{
+		Name:  "Test top level key",
+		Start: 1680066360726210000,
+		End:   1680066458000000000,
+		Step:  60,
+		BuilderQuery: &v3.BuilderQuery{
+			QueryName:          "A",
+			AggregateAttribute: v3.AttributeKey{Key: "name", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag},
+			AggregateOperator:  v3.AggregateOperatorCountDistinct,
+			Expression:         "A",
+			Filters: &v3.FilterSet{Operator: "AND", Items: []v3.FilterItem{
+				{Key: v3.AttributeKey{Key: "body", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeUnspecified, IsColumn: true}, Value: "%test%", Operator: "like"},
+			},
+			},
+			Having: []v3.Having{
+				{
+					ColumnName: "name",
+					Operator:   ">",
+					Value:      10,
+				},
+			},
+		},
+		TableName:     "logs",
+		ExpectedQuery: "SELECT toStartOfInterval(fromUnixTimestamp64Nano(timestamp), INTERVAL 60 SECOND) AS ts, toFloat64(count(distinct(attributes_string_value[indexOf(attributes_string_key, 'name')]))) as value from signoz_logs.distributed_logs where (timestamp >= 1680066360726210000 AND timestamp <= 1680066458000000000) AND body ILIKE '%test%' group by ts having value > 10 order by ts",
+	},
+	{
+		Name:  "Test attribute with same name as top level key",
+		Start: 1680066360726210000,
+		End:   1680066458000000000,
+		Step:  60,
+		BuilderQuery: &v3.BuilderQuery{
+			QueryName:          "A",
+			AggregateAttribute: v3.AttributeKey{Key: "name", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag},
+			AggregateOperator:  v3.AggregateOperatorCountDistinct,
+			Expression:         "A",
+			Filters: &v3.FilterSet{Operator: "AND", Items: []v3.FilterItem{
+				{Key: v3.AttributeKey{Key: "body", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag}, Value: "%test%", Operator: "like"},
+			},
+			},
+			Having: []v3.Having{
+				{
+					ColumnName: "name",
+					Operator:   ">",
+					Value:      10,
+				},
+			},
+		},
+		TableName:     "logs",
+		ExpectedQuery: "SELECT toStartOfInterval(fromUnixTimestamp64Nano(timestamp), INTERVAL 60 SECOND) AS ts, toFloat64(count(distinct(attributes_string_value[indexOf(attributes_string_key, 'name')]))) as value from signoz_logs.distributed_logs where (timestamp >= 1680066360726210000 AND timestamp <= 1680066458000000000) AND attributes_string_value[indexOf(attributes_string_key, 'body')] ILIKE '%test%' group by ts having value > 10 order by ts",
 	},
 }
 
