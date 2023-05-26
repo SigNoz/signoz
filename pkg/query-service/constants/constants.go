@@ -248,47 +248,46 @@ var ReservedColumnTargetAliases = map[string]struct{}{
 const LogsPPLPfx = "logstransform/pipeline_"
 
 // The datatype present here doesn't represent the actual datatype of column in the logs table.
-var StaticFieldsLogsV3 = []v3.AttributeKey{
-	{
+
+var StaticFieldsLogsV3 = map[string]v3.AttributeKey{
+	"timestamp": {},
+	"id":        {},
+	"trace_id": {
 		Key:      "trace_id",
 		DataType: v3.AttributeKeyDataTypeString,
-		Type:     v3.AttributeKeyTypeTag,
+		Type:     v3.AttributeKeyTypeUnspecified,
+		IsColumn: true,
 	},
-	{
+	"span_id": {
 		Key:      "span_id",
 		DataType: v3.AttributeKeyDataTypeString,
-		Type:     v3.AttributeKeyTypeTag,
+		Type:     v3.AttributeKeyTypeUnspecified,
+		IsColumn: true,
 	},
-	{
+	"trace_flags": {
 		Key:      "trace_flags",
 		DataType: v3.AttributeKeyDataTypeInt64,
-		Type:     v3.AttributeKeyTypeTag,
+		Type:     v3.AttributeKeyTypeUnspecified,
+		IsColumn: true,
 	},
-	{
+	"severity_text": {
 		Key:      "severity_text",
 		DataType: v3.AttributeKeyDataTypeString,
-		Type:     v3.AttributeKeyTypeTag,
+		Type:     v3.AttributeKeyTypeUnspecified,
+		IsColumn: true,
 	},
-	{
+	"severity_number": {
 		Key:      "severity_number",
 		DataType: v3.AttributeKeyDataTypeInt64,
-		Type:     v3.AttributeKeyTypeTag,
+		Type:     v3.AttributeKeyTypeUnspecified,
+		IsColumn: true,
 	},
-	{
+	"body": {
 		Key:      "body",
 		DataType: v3.AttributeKeyDataTypeString,
-		Type:     v3.AttributeKeyTypeTag,
+		Type:     v3.AttributeKeyTypeUnspecified,
+		IsColumn: true,
 	},
-}
-
-var LogsTopLevelColumnsV3 = map[string]struct{}{
-	"trace_id":        {},
-	"span_id":         {},
-	"trace_flags":     {},
-	"severity_text":   {},
-	"severity_number": {},
-	"timestamp":       {},
-	"id":              {},
 }
 
 const SigNozOrderByValue = "#SIGNOZ_VALUE"

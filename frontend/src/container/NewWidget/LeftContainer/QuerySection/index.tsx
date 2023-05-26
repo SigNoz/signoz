@@ -3,8 +3,7 @@ import TextToolTip from 'components/TextToolTip';
 import { GRAPH_TYPES } from 'container/NewDashboard/ComponentsSlider';
 import { QueryBuilder } from 'container/QueryBuilder';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
-import { cloneDeep } from 'lodash-es';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo } from 'react';
 import { connect, useSelector } from 'react-redux';
 import { useLocation } from 'react-router-dom';
 import { bindActionCreators, Dispatch } from 'redux';
@@ -15,25 +14,20 @@ import {
 } from 'store/actions/dashboard/updateQuery';
 import { AppState } from 'store/reducers';
 import AppActions from 'types/actions';
-import { Query, Widgets } from 'types/api/dashboard/getAll';
+import { Widgets } from 'types/api/dashboard/getAll';
 import { EQueryType } from 'types/common/dashboard';
 import DashboardReducer from 'types/reducer/dashboards';
-import { v4 as uuid } from 'uuid';
 
 import ClickHouseQueryContainer from './QueryBuilder/clickHouse';
 import PromQLQueryContainer from './QueryBuilder/promQL';
-import { IHandleUpdatedQuery } from './types';
 
 function QuerySection({ updateQuery, selectedGraph }: QueryProps): JSX.Element {
-	const { queryBuilderData, initQueryBuilderData } = useQueryBuilder();
-	const [localQueryChanges, setLocalQueryChanges] = useState<Query>({} as Query);
-	const [rctTabKey, setRctTabKey] = useState<
-		Record<keyof typeof EQueryType, string>
-	>({
-		QUERY_BUILDER: uuid(),
-		CLICKHOUSE: uuid(),
-		PROM: uuid(),
-	});
+	const {
+		currentQuery,
+		queryType,
+		handleSetQueryType,
+		initQueryBuilderData,
+	} = useQueryBuilder();
 
 	const { dashboards, isLoadingQueryResult } = useSelector<
 		AppState,
@@ -52,33 +46,18 @@ function QuerySection({ updateQuery, selectedGraph }: QueryProps): JSX.Element {
 	}, [widgets, urlQuery]);
 
 	const selectedWidget = getWidget() as Widgets;
-	const [queryCategory, setQueryCategory] = useState<EQueryType>(
-		selectedWidget.query.queryType,
-	);
 
 	const { query } = selectedWidget || {};
 
 	useEffect(() => {
-		initQueryBuilderData(query.builder);
-		setLocalQueryChanges(cloneDeep(query) as Query);
-	}, [query, initQueryBuilderData]);
-
-	const regenRctKeys = (): void => {
-		setRctTabKey((prevState) => {
-			const newState = prevState;
-			Object.keys(newState).forEach((key) => {
-				newState[key as keyof typeof EQueryType] = uuid();
-			});
-
-			return cloneDeep(newState);
-		});
-	};
+		initQueryBuilderData(query, selectedWidget.query.queryType);
+	}, [query, initQueryBuilderData, selectedWidget]);
 
 	const handleStageQuery = (): void => {
 		updateQuery({
 			updatedQuery: {
-				...localQueryChanges,
-				builder: queryBuilderData,
+				...currentQuery,
+				queryType,
 			},
 			widgetId: urlQuery.get('widgetId') || '',
 			yAxisUnit: selectedWidget.yAxisUnit,
@@ -86,24 +65,14 @@ function QuerySection({ updateQuery, selectedGraph }: QueryProps): JSX.Element {
 	};
 
 	const handleQueryCategoryChange = (qCategory: string): void => {
-		setQueryCategory(qCategory as EQueryType);
-		const newLocalQuery = {
-			...cloneDeep(query),
-			queryType: qCategory as EQueryType,
-		};
-		setLocalQueryChanges(newLocalQuery);
-		regenRctKeys();
+		const currentQueryType = qCategory as EQueryType;
+
+		handleSetQueryType(currentQueryType);
 		updateQuery({
-			updatedQuery: newLocalQuery,
+			updatedQuery: { ...currentQuery, queryType: currentQueryType },
 			widgetId: urlQuery.get('widgetId') || '',
 			yAxisUnit: selectedWidget.yAxisUnit,
 		});
-	};
-
-	const handleLocalQueryUpdate = ({
-		updatedQuery,
-	}: IHandleUpdatedQuery): void => {
-		setLocalQueryChanges(cloneDeep(updatedQuery));
 	};
 
 	const items = [
@@ -117,31 +86,13 @@ function QuerySection({ updateQuery, selectedGraph }: QueryProps): JSX.Element {
 			key: EQueryType.CLICKHOUSE,
 			label: 'ClickHouse Query',
 			tab: <Typography>ClickHouse Query</Typography>,
-			children: (
-				<ClickHouseQueryContainer
-					key={rctTabKey.CLICKHOUSE}
-					queryData={localQueryChanges}
-					updateQueryData={({ updatedQuery }: IHandleUpdatedQuery): void => {
-						handleLocalQueryUpdate({ updatedQuery });
-					}}
-					clickHouseQueries={localQueryChanges[EQueryType.CLICKHOUSE]}
-				/>
-			),
+			children: <ClickHouseQueryContainer />,
 		},
 		{
 			key: EQueryType.PROM,
 			label: 'PromQL',
 			tab: <Typography>PromQL</Typography>,
-			children: (
-				<PromQLQueryContainer
-					key={rctTabKey.PROM}
-					queryData={localQueryChanges}
-					updateQueryData={({ updatedQuery }: IHandleUpdatedQuery): void => {
-						handleLocalQueryUpdate({ updatedQuery });
-					}}
-					promQLQueries={localQueryChanges[EQueryType.PROM]}
-				/>
-			),
+			children: <PromQLQueryContainer />,
 		},
 	];
 
@@ -149,8 +100,8 @@ function QuerySection({ updateQuery, selectedGraph }: QueryProps): JSX.Element {
 		<Tabs
 			type="card"
 			style={{ width: '100%' }}
-			defaultActiveKey={queryCategory}
-			activeKey={queryCategory}
+			defaultActiveKey={queryType}
+			activeKey={queryType}
 			onChange={handleQueryCategoryChange}
 			tabBarExtraContent={
 				<span style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>

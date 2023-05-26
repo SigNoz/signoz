@@ -19,7 +19,7 @@ import { SelectOption } from 'types/common/select';
 export const useQueryOperations: UseQueryOperations = ({ query, index }) => {
 	const {
 		handleSetQueryData,
-		removeEntityByIndex,
+		removeQueryBuilderEntityByIndex,
 		panelType,
 	} = useQueryBuilder();
 	const [operators, setOperators] = useState<SelectOption<string, string>[]>([]);
@@ -101,8 +101,8 @@ export const useQueryOperations: UseQueryOperations = ({ query, index }) => {
 	);
 
 	const handleDeleteQuery = useCallback(() => {
-		removeEntityByIndex('queryData', index);
-	}, [removeEntityByIndex, index]);
+		removeQueryBuilderEntityByIndex('queryData', index);
+	}, [removeQueryBuilderEntityByIndex, index]);
 
 	const handleChangeQueryData: HandleChangeQueryData = useCallback(
 		(key, value) => {

@@ -11,6 +11,7 @@ function SettingsPage(): JSX.Element {
 	const { t } = useTranslation();
 	return (
 		<RouteTab
+			history={history}
 			{...{
 				routes: [
 					{
