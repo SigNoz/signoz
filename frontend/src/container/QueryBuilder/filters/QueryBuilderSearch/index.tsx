@@ -1,6 +1,7 @@
 import { Select, Spin, Tag, Tooltip } from 'antd';
+import { getAggregateKeys } from 'api/queryBuilder/getAttributeKeys';
 import { useAutoComplete } from 'hooks/queryBuilder/useAutoComplete';
-import { useFetchKeysAndValues } from 'hooks/queryBuilder/useFetchKeysAndValues';
+import { useNotifications } from 'hooks/useNotifications';
 import {
 	KeyboardEvent,
 	ReactElement,
@@ -8,6 +9,7 @@ import {
 	useEffect,
 	useMemo,
 } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
 	IBuilderQuery,
 	TagFilter,
@@ -29,6 +31,8 @@ function QueryBuilderSearch({
 	query,
 	onChange,
 }: QueryBuilderSearchProps): JSX.Element {
+	const { t } = useTranslation(['common']);
+	const { notifications } = useNotifications();
 	const {
 		updateTag,
 		handleClearTag,
@@ -41,10 +45,7 @@ function QueryBuilderSearch({
 		isMulti,
 		isFetching,
 		setSearchKey,
-		searchKey,
 	} = useAutoComplete(query);
-
-	const { keys } = useFetchKeysAndValues(searchValue, query, searchKey);
 
 	const onTagRender = ({
 		value,
@@ -105,30 +106,67 @@ function QueryBuilderSearch({
 	}, [isMetricsDataSource, query.aggregateAttribute.key, tags]);
 
 	useEffect(() => {
-		const initialTagFilters: TagFilter = { items: [], op: 'AND' };
-		initialTagFilters.items = tags.map((tag) => {
-			const { tagKey, tagOperator, tagValue } = getTagToken(tag);
-			const filterAttribute = (keys || []).find(
-				(key) => key.key === getRemovePrefixFromKey(tagKey),
-			);
-			return {
-				id: uuid().slice(0, 8),
-				key: filterAttribute ?? {
-					key: tagKey,
-					dataType: null,
-					type: null,
-					isColumn: null,
-				},
-				op: getOperatorValue(tagOperator),
-				value:
-					tagValue[tagValue.length - 1] === ''
-						? tagValue?.slice(0, -1)
-						: tagValue ?? '',
-			};
-		});
-		onChange(initialTagFilters);
+		let isMounted = true;
+
+		const fetchData = async (): Promise<void> => {
+			const initialTagFilters: TagFilter = { items: [], op: 'AND' };
+			try {
+				const responses = await Promise.all(
+					tags.map(async (tag) => {
+						const { tagKey, tagOperator, tagValue } = getTagToken(tag);
+						const response = await getAggregateKeys({
+							searchText: getRemovePrefixFromKey(tagKey),
+							dataSource: query.dataSource,
+							aggregateOperator: query.aggregateOperator,
+							aggregateAttribute: query.aggregateAttribute.key,
+							tagType: query.aggregateAttribute.type ?? null,
+						});
+						const filterAttribute = response.payload?.attributeKeys?.find(
+							(key) => key.key === getRemovePrefixFromKey(tagKey),
+						) || {
+							key: tagKey,
+							dataType: null,
+							type: null,
+							isColumn: null,
+						};
+						return {
+							id: uuid().slice(0, 8),
+							key: filterAttribute,
+							op: getOperatorValue(tagOperator),
+							value:
+								tagValue[tagValue.length - 1] === ''
+									? tagValue?.slice(0, -1)
+									: tagValue ?? '',
+						};
+					}),
+				);
+
+				if (isMounted) {
+					initialTagFilters.items = responses;
+					onChange(initialTagFilters);
+				}
+			} catch (error) {
+				if (isMounted) {
+					notifications.error({
+						message: t('something_went_wrong', { ns: 'common' }),
+					});
+				}
+			}
+		};
+
+		fetchData();
+
+		return (): void => {
+			isMounted = false;
+		};
 		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [tags]);
+	}, [
+		query.aggregateAttribute.key,
+		query.aggregateAttribute.type,
+		query.aggregateOperator,
+		query.dataSource,
+		tags,
+	]);
 
 	return (
 		<Select

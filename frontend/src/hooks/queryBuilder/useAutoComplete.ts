@@ -116,7 +116,6 @@ export const useAutoComplete = (query: IBuilderQuery): IAutoComplete => {
 		isMulti,
 		isFetching,
 		setSearchKey,
-		searchKey,
 	};
 };
 
@@ -132,5 +131,4 @@ interface IAutoComplete {
 	isMulti: boolean;
 	isFetching: boolean;
 	setSearchKey: (value: string) => void;
-	searchKey: string;
 }
