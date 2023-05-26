@@ -128,7 +128,7 @@ function QueryBuilderSearch({
 		});
 		onChange(initialTagFilters);
 		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [keys, tags]);
+	}, [tags]);
 
 	return (
 		<Select

@@ -1,5 +1,4 @@
 import { OPERATORS } from 'constants/queryBuilder';
-// eslint-disable-next-line import/no-extraneous-dependencies
 import * as Papa from 'papaparse';
 
 import { orderByValueDelimiter } from '../OrderByFilter/utils';
