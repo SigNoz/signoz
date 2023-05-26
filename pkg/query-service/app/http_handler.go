@@ -116,7 +116,7 @@ func NewAPIHandler(opts APIHandlerOpts) (*APIHandler, error) {
 
 	aH.ready = aH.testReady
 
-	dashboards.LoadDashboardFiles()
+	dashboards.LoadDashboardFiles(aH.featureFlags)
 	// if errReadingDashboards != nil {
 	// 	return nil, errReadingDashboards
 	// }
@@ -723,7 +723,7 @@ func (aH *APIHandler) getDashboards(w http.ResponseWriter, r *http.Request) {
 func (aH *APIHandler) deleteDashboard(w http.ResponseWriter, r *http.Request) {
 
 	uuid := mux.Vars(r)["uuid"]
-	err := dashboards.DeleteDashboard(uuid)
+	err := dashboards.DeleteDashboard(uuid, aH.featureFlags)
 
 	if err != nil {
 		RespondError(w, err, nil)
@@ -829,7 +829,7 @@ func (aH *APIHandler) updateDashboard(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	dashboard, apiError := dashboards.UpdateDashboard(uuid, postData)
+	dashboard, apiError := dashboards.UpdateDashboard(uuid, postData, aH.featureFlags)
 	if apiError != nil {
 		RespondError(w, apiError, nil)
 		return
@@ -863,7 +863,7 @@ func (aH *APIHandler) saveAndReturn(w http.ResponseWriter, signozDashboard model
 	toSave["widgets"] = signozDashboard.Widgets
 	toSave["variables"] = signozDashboard.Variables
 
-	dashboard, apiError := dashboards.CreateDashboard(toSave)
+	dashboard, apiError := dashboards.CreateDashboard(toSave, aH.featureFlags)
 	if apiError != nil {
 		RespondError(w, apiError, nil)
 		return
@@ -904,7 +904,7 @@ func (aH *APIHandler) createDashboards(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	dash, apiErr := dashboards.CreateDashboard(postData)
+	dash, apiErr := dashboards.CreateDashboard(postData, aH.featureFlags)
 
 	if apiErr != nil {
 		RespondError(w, apiErr, nil)
@@ -1613,7 +1613,11 @@ func (aH *APIHandler) getVersion(w http.ResponseWriter, r *http.Request) {
 }
 
 func (aH *APIHandler) getFeatureFlags(w http.ResponseWriter, r *http.Request) {
-	featureSet := aH.FF().GetFeatureFlags()
+	featureSet, err := aH.FF().GetFeatureFlags()
+	if err != nil {
+		aH.HandleError(w, err, http.StatusInternalServerError)
+		return
+	}
 	aH.Respond(w, featureSet)
 }
 

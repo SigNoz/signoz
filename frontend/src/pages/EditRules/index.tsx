@@ -4,7 +4,7 @@ import ROUTES from 'constants/routes';
 import EditRulesContainer from 'container/EditRules';
 import { useNotifications } from 'hooks/useNotifications';
 import history from 'lib/history';
-import React, { useEffect } from 'react';
+import { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useQuery } from 'react-query';
 import { useLocation } from 'react-router-dom';

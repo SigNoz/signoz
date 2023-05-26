@@ -28,6 +28,8 @@ import (
 	"go.signoz.io/signoz/ee/query-service/app/db"
 	"go.signoz.io/signoz/ee/query-service/dao"
 	"go.signoz.io/signoz/ee/query-service/interfaces"
+	baseInterface "go.signoz.io/signoz/pkg/query-service/interfaces"
+
 	licensepkg "go.signoz.io/signoz/ee/query-service/license"
 	"go.signoz.io/signoz/ee/query-service/usage"
 
@@ -136,7 +138,8 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 		serverOptions.RuleRepoURL,
 		localDB,
 		reader,
-		serverOptions.DisableRules)
+		serverOptions.DisableRules,
+		lm)
 
 	if err != nil {
 		return nil, err
@@ -597,7 +600,8 @@ func makeRulesManager(
 	ruleRepoURL string,
 	db *sqlx.DB,
 	ch baseint.Reader,
-	disableRules bool) (*rules.Manager, error) {
+	disableRules bool,
+	fm baseInterface.FeatureLookup) (*rules.Manager, error) {
 
 	// create engine
 	pqle, err := pqle.FromConfigPath(promConfigPath)
@@ -624,6 +628,7 @@ func makeRulesManager(
 		Context:      context.Background(),
 		Logger:       nil,
 		DisableRules: disableRules,
+		FeatureFlags: fm,
 	}
 
 	// create Manager

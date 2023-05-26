@@ -1,7 +1,7 @@
 import { Button, Modal, Typography } from 'antd';
 import Editor from 'components/Editor';
 import { useNotifications } from 'hooks/useNotifications';
-import React, { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useCopyToClipboard } from 'react-use';
 import { DashboardData } from 'types/api/dashboard/getAll';

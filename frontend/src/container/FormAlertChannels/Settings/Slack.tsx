@@ -1,5 +1,5 @@
 import { Form, Input } from 'antd';
-import React from 'react';
+import { Dispatch, SetStateAction } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { SlackChannel } from '../../CreateAlertChannels/config';
@@ -66,7 +66,7 @@ function Slack({ setSelectedConfig }: SlackProps): JSX.Element {
 }
 
 interface SlackProps {
-	setSelectedConfig: React.Dispatch<React.SetStateAction<Partial<SlackChannel>>>;
+	setSelectedConfig: Dispatch<SetStateAction<Partial<SlackChannel>>>;
 }
 
 export default Slack;

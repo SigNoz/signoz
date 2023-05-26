@@ -1,5 +1,3 @@
-import React from 'react';
-
 // ** Types
 import { ListItemWrapperProps } from './ListItemWrapper.interfaces';
 // ** Styles

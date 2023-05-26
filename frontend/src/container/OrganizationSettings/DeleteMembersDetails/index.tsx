@@ -1,7 +1,6 @@
 import { gold } from '@ant-design/colors';
 import { ExclamationCircleTwoTone } from '@ant-design/icons';
 import { Space, Typography } from 'antd';
-import React from 'react';
 
 function DeleteMembersDetails({
 	name,
