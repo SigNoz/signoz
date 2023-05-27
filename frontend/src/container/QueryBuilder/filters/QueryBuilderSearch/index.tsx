@@ -1,15 +1,16 @@
 import { Select, Spin, Tag, Tooltip } from 'antd';
 import { getAggregateKeys } from 'api/queryBuilder/getAttributeKeys';
+import { QueryBuilderKeys } from 'constants/queryBuilder';
 import { useAutoComplete } from 'hooks/queryBuilder/useAutoComplete';
-import { useNotifications } from 'hooks/useNotifications';
 import {
 	KeyboardEvent,
 	ReactElement,
 	ReactNode,
 	useEffect,
 	useMemo,
+	useState,
 } from 'react';
-import { useTranslation } from 'react-i18next';
+import { useQuery } from 'react-query';
 import {
 	IBuilderQuery,
 	TagFilter,
@@ -31,8 +32,7 @@ function QueryBuilderSearch({
 	query,
 	onChange,
 }: QueryBuilderSearchProps): JSX.Element {
-	const { t } = useTranslation(['common']);
-	const { notifications } = useNotifications();
+	const [currentSearchValue, setCurrentSearchValue] = useState<string>('');
 	const {
 		updateTag,
 		handleClearTag,
@@ -46,6 +46,41 @@ function QueryBuilderSearch({
 		isFetching,
 		setSearchKey,
 	} = useAutoComplete(query);
+
+	const isQueryEnabled = useMemo(
+		() =>
+			query.dataSource === DataSource.METRICS
+				? !!query.aggregateOperator &&
+				  !!query.dataSource &&
+				  !!query.aggregateAttribute.dataType
+				: true,
+		[
+			query.aggregateAttribute.dataType,
+			query.aggregateOperator,
+			query.dataSource,
+		],
+	);
+
+	const { data } = useQuery(
+		[
+			QueryBuilderKeys.GET_ATTRIBUTE_KEY,
+			currentSearchValue,
+			query.dataSource,
+			query.aggregateOperator,
+			query.aggregateAttribute.key,
+		],
+		async () =>
+			getAggregateKeys({
+				searchText: currentSearchValue,
+				dataSource: query.dataSource,
+				aggregateOperator: query.aggregateOperator,
+				aggregateAttribute: query.aggregateAttribute.key,
+				tagType: query.aggregateAttribute.type ?? null,
+			}),
+		{
+			enabled: isQueryEnabled,
+		},
+	);
 
 	const onTagRender = ({
 		value,
@@ -106,67 +141,31 @@ function QueryBuilderSearch({
 	}, [isMetricsDataSource, query.aggregateAttribute.key, tags]);
 
 	useEffect(() => {
-		let isMounted = true;
-
-		const fetchData = async (): Promise<void> => {
-			const initialTagFilters: TagFilter = { items: [], op: 'AND' };
-			try {
-				const responses = await Promise.all(
-					tags.map(async (tag) => {
-						const { tagKey, tagOperator, tagValue } = getTagToken(tag);
-						const response = await getAggregateKeys({
-							searchText: getRemovePrefixFromKey(tagKey),
-							dataSource: query.dataSource,
-							aggregateOperator: query.aggregateOperator,
-							aggregateAttribute: query.aggregateAttribute.key,
-							tagType: query.aggregateAttribute.type ?? null,
-						});
-						const filterAttribute = response.payload?.attributeKeys?.find(
-							(key) => key.key === getRemovePrefixFromKey(tagKey),
-						) || {
-							key: tagKey,
-							dataType: null,
-							type: null,
-							isColumn: null,
-						};
-						return {
-							id: uuid().slice(0, 8),
-							key: filterAttribute,
-							op: getOperatorValue(tagOperator),
-							value:
-								tagValue[tagValue.length - 1] === ''
-									? tagValue?.slice(0, -1)
-									: tagValue ?? '',
-						};
-					}),
-				);
-
-				if (isMounted) {
-					initialTagFilters.items = responses;
-					onChange(initialTagFilters);
-				}
-			} catch (error) {
-				if (isMounted) {
-					notifications.error({
-						message: t('something_went_wrong', { ns: 'common' }),
-					});
-				}
-			}
-		};
-
-		fetchData();
-
-		return (): void => {
-			isMounted = false;
-		};
+		const initialTagFilters: TagFilter = { items: [], op: 'AND' };
+		initialTagFilters.items = tags.map((tag) => {
+			const { tagKey, tagOperator, tagValue } = getTagToken(tag);
+			setCurrentSearchValue(getRemovePrefixFromKey(tagKey));
+			const filterAttribute = (data?.payload?.attributeKeys || []).find(
+				(key) => key.key === getRemovePrefixFromKey(tagKey),
+			);
+			return {
+				id: uuid().slice(0, 8),
+				key: filterAttribute ?? {
+					key: tagKey,
+					dataType: null,
+					type: null,
+					isColumn: null,
+				},
+				op: getOperatorValue(tagOperator),
+				value:
+					tagValue[tagValue.length - 1] === ''
+						? tagValue?.slice(0, -1)
+						: tagValue ?? '',
+			};
+		});
+		onChange(initialTagFilters);
 		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [
-		query.aggregateAttribute.key,
-		query.aggregateAttribute.type,
-		query.aggregateOperator,
-		query.dataSource,
-		tags,
-	]);
+	}, [data?.payload?.attributeKeys, tags]);
 
 	return (
 		<Select
