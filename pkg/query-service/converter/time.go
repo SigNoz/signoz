@@ -15,6 +15,7 @@ const (
 	Week                 = Day * 7
 )
 
+// durationConverter is an implementation of Converter for durations.
 type durationConverter struct {
 }
 
@@ -54,54 +55,4 @@ func (c *durationConverter) Convert(v Value, to Unit) Value {
 		F: v.F * float64(FromTimeUnit(v.U)) / float64(FromTimeUnit(to)),
 		U: to,
 	}
-}
-
-// Nanoseconds returns the time in ns
-func (t Duration) Nanoseconds() float64 {
-	return float64(t / Nanosecond)
-}
-
-// Microseconds returns the time in µs
-func (t Duration) Microseconds() float64 {
-	return float64(t / Microsecond)
-}
-
-// Milliseconds returns the time in ms
-func (t Duration) Milliseconds() float64 {
-	return float64(t / Millisecond)
-}
-
-// Centiseconds returns the time in cs
-func (t Duration) Centiseconds() float64 {
-	return float64(t / Centisecond)
-}
-
-// Deciseconds returns the time in ds
-func (t Duration) Deciseconds() float64 {
-	return float64(t / Decisecond)
-}
-
-// Seconds returns the time in s
-func (t Duration) Seconds() float64 {
-	return float64(t / Second)
-}
-
-// Minutes returns the time in m
-func (t Duration) Minutes() float64 {
-	return float64(t / Minute)
-}
-
-// Hours returns the time in h
-func (t Duration) Hours() float64 {
-	return float64(t / Hour)
-}
-
-// Days returns the time in d
-func (t Duration) Days() float64 {
-	return float64(t / Day)
-}
-
-// Weeks returns the time in w
-func (t Duration) Weeks() float64 {
-	return float64(t / Week)
 }

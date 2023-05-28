@@ -42,6 +42,7 @@ const (
 	YobibytePerSecond = ZebibytePerSecond * 1024
 )
 
+// dataRateConverter is a Converter implementation for data rates
 type dataRateConverter struct {
 }
 

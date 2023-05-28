@@ -1,5 +1,6 @@
 package converter
 
+// boolConverter is a Converter implementation for bool
 type boolConverter struct{}
 
 func NewBoolConverter() Converter {

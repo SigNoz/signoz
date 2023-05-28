@@ -1,22 +1,27 @@
 package converter
 
+// Unit represents a unit of measurement
 type Unit string
 
+// Value represents a value with a unit of measurement
 type Value struct {
 	F float64
 	U Unit
 }
 
+// Converter converts values from one unit to another
 type Converter interface {
 	Convert(v Value, to Unit) Value
 }
 
+// noneConverter is a converter that does not convert
 type noneConverter struct{}
 
 func (c *noneConverter) Convert(v Value, to Unit) Value {
 	return v
 }
 
+// Converters
 var (
 	DurationConverter   = NewDurationConverter()
 	DataConverter       = NewDataConverter()
@@ -27,6 +32,7 @@ var (
 	NoneConverter       = &noneConverter{}
 )
 
+// FromUnit returns a converter for the given unit
 func FromUnit(u Unit) Converter {
 	switch u {
 	case "ns", "us", "ms", "s", "m", "h", "d":

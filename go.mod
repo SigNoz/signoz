@@ -6,6 +6,7 @@ require (
 	github.com/ClickHouse/clickhouse-go/v2 v2.5.1
 	github.com/SigNoz/govaluate v0.0.0-20220522085550-d19c08c206cb
 	github.com/coreos/go-oidc/v3 v3.4.0
+	github.com/dustin/go-humanize v1.0.0
 	github.com/go-kit/log v0.2.1
 	github.com/google/uuid v1.3.0
 	github.com/gorilla/handlers v1.5.1
@@ -27,6 +28,7 @@ require (
 	github.com/rs/cors v1.8.2
 	github.com/russellhaering/gosaml2 v0.8.0
 	github.com/russellhaering/goxmldsig v1.2.0
+	github.com/samber/lo v1.38.1
 	github.com/sethvargo/go-password v0.2.0
 	github.com/smartystreets/goconvey v1.6.4
 	github.com/soheilhy/cmux v0.1.5
@@ -130,7 +132,7 @@ require (
 	go.opentelemetry.io/otel v1.11.2 // indirect
 	go.opentelemetry.io/otel/trace v1.11.2 // indirect
 	go.uber.org/atomic v1.10.0 // indirect
-	go.uber.org/multierr v1.9.0 // indirect
+	go.uber.org/multierr v1.9.0
 	golang.org/x/crypto v0.1.0
 	golang.org/x/net v0.4.0
 	golang.org/x/oauth2 v0.3.0

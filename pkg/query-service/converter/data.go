@@ -46,6 +46,7 @@ const (
 	Yobibyte = Zebibyte * 1024
 )
 
+// dataConverter is a Converter for data units.
 type dataConverter struct {
 }
 

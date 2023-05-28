@@ -1,5 +1,6 @@
 package converter
 
+// throughputConverter is an implementation of Converter that converts throughput
 type throughputConverter struct {
 }
 
