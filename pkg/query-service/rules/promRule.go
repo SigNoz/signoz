@@ -3,6 +3,7 @@ package rules
 import (
 	"context"
 	"fmt"
+	"strconv"
 	"sync"
 	"time"
 
@@ -12,6 +13,7 @@ import (
 
 	plabels "github.com/prometheus/prometheus/model/labels"
 	pql "github.com/prometheus/prometheus/promql"
+	"go.signoz.io/signoz/pkg/query-service/converter"
 	"go.signoz.io/signoz/pkg/query-service/formatter"
 	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
 	qslabels "go.signoz.io/signoz/pkg/query-service/utils/labels"
@@ -297,7 +299,9 @@ func (r *PromRule) getPqlQuery() (string, error) {
 					return query, fmt.Errorf("a promquery needs to be set for this rule to function")
 				}
 				if r.ruleCondition.Target != nil && r.ruleCondition.CompareOp != CompareOpNone {
-					query = fmt.Sprintf("%s %s %f", query, ResolveCompareOp(r.ruleCondition.CompareOp), *r.ruleCondition.Target)
+					unitConverter := converter.FromUnit(converter.Unit(r.ruleCondition.TargetUnit))
+					value := unitConverter.Convert(converter.Value{F: *r.ruleCondition.Target, U: converter.Unit(r.ruleCondition.TargetUnit)}, converter.Unit(r.ruleCondition.YAxis))
+					query = fmt.Sprintf("%s %s %f", query, ResolveCompareOp(r.ruleCondition.CompareOp), value.F)
 					return query, nil
 				} else {
 					return query, nil
@@ -338,7 +342,7 @@ func (r *PromRule) Eval(ctx context.Context, ts time.Time, queriers *Queriers) (
 			l[lbl.Name] = lbl.Value
 		}
 
-		tmplData := AlertTemplateData(l, valueFormatter.Format(smpl.V, r.ruleCondition.YAxis), valueFormatter.Format(r.targetVal(), r.ruleCondition.YAxis))
+		tmplData := AlertTemplateData(l, valueFormatter.Format(smpl.V, r.ruleCondition.YAxis), strconv.FormatFloat(r.targetVal(), 'f', 2, 64)+r.ruleCondition.TargetUnit)
 		// Inject some convenience variables that are easier to remember for users
 		// who are not used to Go's templating system.
 		defs := "{{$labels := .Labels}}{{$value := .Value}}{{$threshold := .Threshold}}"

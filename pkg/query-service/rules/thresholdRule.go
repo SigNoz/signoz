@@ -7,6 +7,7 @@ import (
 	"math"
 	"reflect"
 	"sort"
+	"strconv"
 	"sync"
 	"text/template"
 	"time"
@@ -341,18 +342,18 @@ func (r *ThresholdRule) CheckCondition(v float64) bool {
 
 	unitConverter := converter.FromUnit(converter.Unit(r.ruleCondition.TargetUnit))
 
-	value := unitConverter.Convert(converter.Value{F: v, U: converter.Unit(r.ruleCondition.TargetUnit)}, converter.Unit(r.ruleCondition.YAxis))
+	value := unitConverter.Convert(converter.Value{F: *r.ruleCondition.Target, U: converter.Unit(r.ruleCondition.TargetUnit)}, converter.Unit(r.ruleCondition.YAxis))
 
 	zap.S().Debugf("target:", v, *r.ruleCondition.Target)
 	switch r.ruleCondition.CompareOp {
 	case ValueIsEq:
-		return value.F == *r.ruleCondition.Target
+		return v == value.F
 	case ValueIsNotEq:
-		return value.F != *r.ruleCondition.Target
+		return v != value.F
 	case ValueIsBelow:
-		return value.F < *r.ruleCondition.Target
+		return v < value.F
 	case ValueIsAbove:
-		return value.F > *r.ruleCondition.Target
+		return v > value.F
 	default:
 		return false
 	}
@@ -694,7 +695,7 @@ func (r *ThresholdRule) Eval(ctx context.Context, ts time.Time, queriers *Querie
 			l[lbl.Name] = lbl.Value
 		}
 
-		tmplData := AlertTemplateData(l, valueFormatter.Format(smpl.V, r.ruleCondition.YAxis), valueFormatter.Format(r.targetVal(), r.ruleCondition.YAxis))
+		tmplData := AlertTemplateData(l, valueFormatter.Format(smpl.V, r.ruleCondition.YAxis), strconv.FormatFloat(r.targetVal(), 'f', 2, 64)+r.ruleCondition.TargetUnit)
 		// Inject some convenience variables that are easier to remember for users
 		// who are not used to Go's templating system.
 		defs := "{{$labels := .Labels}}{{$value := .Value}}{{$threshold := .Threshold}}"

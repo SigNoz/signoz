@@ -6,7 +6,7 @@ require (
 	github.com/ClickHouse/clickhouse-go/v2 v2.5.1
 	github.com/SigNoz/govaluate v0.0.0-20220522085550-d19c08c206cb
 	github.com/coreos/go-oidc/v3 v3.4.0
-	github.com/dustin/go-humanize v1.0.0
+	github.com/dustin/go-humanize v1.0.1
 	github.com/go-kit/log v0.2.1
 	github.com/google/uuid v1.3.0
 	github.com/gorilla/handlers v1.5.1
@@ -71,7 +71,6 @@ require (
 	github.com/armon/go-metrics v0.4.0 // indirect
 	github.com/beevik/etree v1.1.0 // indirect
 	github.com/cespare/xxhash/v2 v2.2.0 // indirect
-	github.com/dustin/go-humanize v1.0.1 // indirect
 	github.com/form3tech-oss/jwt-go v3.2.5+incompatible // indirect
 	github.com/gorilla/websocket v1.5.0 // indirect
 	github.com/jonboulle/clockwork v0.2.2 // indirect
@@ -84,7 +83,6 @@ require (
 	github.com/mitchellh/reflectwalk v1.0.2 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/prometheus/client_golang v1.14.0 // indirect
-	github.com/samber/lo v1.38.1 // indirect
 	go.opentelemetry.io/collector/featuregate v0.70.0 // indirect
 	gopkg.in/ini.v1 v1.67.0 // indirect
 	gopkg.in/square/go-jose.v2 v2.6.0 // indirect
