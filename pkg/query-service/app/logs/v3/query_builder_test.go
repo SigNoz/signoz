@@ -784,7 +784,7 @@ var testOrderBy = []struct {
 			},
 		},
 		Tags:   []string{"name"},
-		Result: "name asc,value desc,ts",
+		Result: "name asc,value desc",
 	},
 	{
 		Name: "Test 2",
@@ -799,7 +799,7 @@ var testOrderBy = []struct {
 			},
 		},
 		Tags:   []string{"name", "bytes"},
-		Result: "name asc,bytes asc,ts",
+		Result: "name asc,bytes asc",
 	},
 	{
 		Name: "Test 3",
@@ -818,7 +818,7 @@ var testOrderBy = []struct {
 			},
 		},
 		Tags:   []string{"name", "bytes"},
-		Result: "name asc,bytes asc,value asc,ts",
+		Result: "name asc,bytes asc,value asc",
 	},
 	{
 		Name: "Test 4",
@@ -841,7 +841,7 @@ var testOrderBy = []struct {
 			},
 		},
 		Tags:   []string{"name", "bytes"},
-		Result: "name asc,bytes asc,value asc,ts desc",
+		Result: "name asc,bytes asc,value asc,timestamp desc",
 	},
 	{
 		Name: "Test 5",

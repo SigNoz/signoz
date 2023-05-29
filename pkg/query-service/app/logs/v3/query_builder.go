@@ -230,6 +230,14 @@ func buildLogsQuery(start, end, step int64, mq *v3.BuilderQuery, fields map[stri
 	groupBy := groupByAttributeKeyTags(mq.GroupBy...)
 	orderBy := orderByAttributeKeyTags(mq.OrderBy, mq.GroupBy)
 
+	if mq.AggregateOperator != v3.AggregateOperatorNoOp {
+		if !strings.Contains(orderBy, "ts") {
+			orderBy = orderBy + "ts"
+		}
+		orderBy = strings.Replace(orderBy, "timestamp", "ts", 1)
+		orderBy = strings.Trim(orderBy, ",")
+	}
+
 	aggregationKey := ""
 	if mq.AggregateAttribute.Key != "" {
 		enrichedAttribute := enrichFieldWithMetadata(mq.AggregateAttribute, fields)
@@ -286,7 +294,10 @@ func buildLogsQuery(start, end, step int64, mq *v3.BuilderQuery, fields map[stri
 		return query, nil
 	case v3.AggregateOperatorNoOp:
 		queryTmpl := constants.LogsSQLSelect + "from signoz_logs.distributed_logs where %s %sorder by %s"
-		orderBy = strings.Replace(orderBy, "ts", "timestamp", 1)
+		if orderBy == "" {
+			orderBy = "timestamp"
+		}
+		orderBy = strings.Trim(orderBy, ",")
 		query := fmt.Sprintf(queryTmpl, timeFilter, filterSubQuery, orderBy)
 		return query, nil
 	default:
@@ -320,9 +331,6 @@ func orderBy(items []v3.OrderBy, tags []string) string {
 	itemsLookup := map[string]v3.OrderBy{}
 
 	for i := 0; i < len(items); i++ {
-		if items[i].ColumnName == "timestamp" {
-			items[i].ColumnName = "ts"
-		}
 		addedToGroupBy[items[i].ColumnName] = false
 		itemsLookup[items[i].ColumnName] = items[i]
 	}
@@ -350,11 +358,6 @@ func orderBy(items []v3.OrderBy, tags []string) string {
 			orderBy = append(orderBy, fmt.Sprintf("%s %s", item.ColumnName, item.Order))
 		}
 	}
-
-	// add default order by ts
-	if _, ok := itemsLookup["ts"]; !ok {
-		orderBy = append(orderBy, "ts")
-	}
 	return strings.Trim(strings.Join(orderBy, ","), ",")
 }
 
@@ -363,7 +366,11 @@ func orderByAttributeKeyTags(items []v3.OrderBy, tags []v3.AttributeKey) string 
 	for _, tag := range tags {
 		groupTags = append(groupTags, tag.Key)
 	}
-	return orderBy(items, groupTags)
+	str := orderBy(items, groupTags)
+	if len(str) > 0 {
+		str = str + ","
+	}
+	return str
 }
 
 func having(items []v3.Having) string {
