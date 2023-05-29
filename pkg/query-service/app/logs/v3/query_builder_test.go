@@ -375,7 +375,7 @@ var testBuildLogsQueryData = []struct {
 			"AND attributes_string_value[indexOf(attributes_string_key, 'method')] = 'GET' AND resources_string_value[indexOf(resources_string_key, 'x')] != 'abc' " +
 			"AND indexOf(attributes_string_key, 'method') > 0 " +
 			"group by method,ts " +
-			"order by method ASC,ts",
+			"order by method ASC,ts ASC",
 	},
 	{
 		Name:  "Test aggregate count with multiple filter,groupBy and orderBy",
@@ -433,7 +433,7 @@ var testBuildLogsQueryData = []struct {
 			"AND attributes_string_value[indexOf(attributes_string_key, 'method')] = 'GET' " +
 			"AND indexOf(attributes_string_key, 'method') > 0 " +
 			"group by method,ts " +
-			"order by method ASC,ts",
+			"order by method ASC,x ASC,ts",
 	},
 	{
 		Name:  "Test aggregate sum",
@@ -620,13 +620,11 @@ var testBuildLogsQueryData = []struct {
 			AggregateOperator: v3.AggregateOperatorNoOp,
 			Expression:        "A",
 			Filters:           &v3.FilterSet{Operator: "AND", Items: []v3.FilterItem{}},
-			// GroupBy:           []v3.AttributeKey{{Key: "method", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag}},
-			// OrderBy:           []v3.OrderBy{{ColumnName: "method", Order: "ASC"}},
 		},
 		ExpectedQuery: "SELECT timestamp, id, trace_id, span_id, trace_flags, severity_text, severity_number, body,CAST((attributes_string_key, attributes_string_value), 'Map(String, String)') as  attributes_string," +
 			"CAST((attributes_int64_key, attributes_int64_value), 'Map(String, Int64)') as  attributes_int64,CAST((attributes_float64_key, attributes_float64_value), 'Map(String, Float64)') as  attributes_float64," +
 			"CAST((resources_string_key, resources_string_value), 'Map(String, String)') as resources_string " +
-			"from signoz_logs.distributed_logs where (timestamp >= 1680066360726210000 AND timestamp <= 1680066458000000000) ",
+			"from signoz_logs.distributed_logs where (timestamp >= 1680066360726210000 AND timestamp <= 1680066458000000000) order by timestamp",
 	},
 	{
 		Name:  "Test aggregate with having clause",
@@ -786,7 +784,7 @@ var testOrderBy = []struct {
 			},
 		},
 		Tags:   []string{"name"},
-		Result: "name asc,value desc",
+		Result: "name asc,value desc,ts",
 	},
 	{
 		Name: "Test 2",
@@ -801,7 +799,7 @@ var testOrderBy = []struct {
 			},
 		},
 		Tags:   []string{"name", "bytes"},
-		Result: "name asc,bytes asc",
+		Result: "name asc,bytes asc,ts",
 	},
 	{
 		Name: "Test 3",
@@ -820,7 +818,53 @@ var testOrderBy = []struct {
 			},
 		},
 		Tags:   []string{"name", "bytes"},
-		Result: "name asc,bytes asc,value asc",
+		Result: "name asc,bytes asc,value asc,ts",
+	},
+	{
+		Name: "Test 4",
+		Items: []v3.OrderBy{
+			{
+				ColumnName: "name",
+				Order:      "asc",
+			},
+			{
+				ColumnName: constants.SigNozOrderByValue,
+				Order:      "asc",
+			},
+			{
+				ColumnName: "bytes",
+				Order:      "asc",
+			},
+			{
+				ColumnName: "timestamp",
+				Order:      "desc",
+			},
+		},
+		Tags:   []string{"name", "bytes"},
+		Result: "name asc,bytes asc,value asc,ts desc",
+	},
+	{
+		Name: "Test 5",
+		Items: []v3.OrderBy{
+			{
+				ColumnName: "name",
+				Order:      "asc",
+			},
+			{
+				ColumnName: constants.SigNozOrderByValue,
+				Order:      "asc",
+			},
+			{
+				ColumnName: "bytes",
+				Order:      "asc",
+			},
+			{
+				ColumnName: "ts",
+				Order:      "asc",
+			},
+		},
+		Tags:   []string{"name", "bytes"},
+		Result: "name asc,bytes asc,value asc,ts asc",
 	},
 }
 

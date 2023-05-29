@@ -225,7 +225,7 @@ func buildLogsQuery(start, end, step int64, mq *v3.BuilderQuery, fields map[stri
 			"from signoz_logs.distributed_logs " +
 			"where " + timeFilter + "%s " +
 			"group by %s%s " +
-			"order by %sts"
+			"order by %s"
 
 	groupBy := groupByAttributeKeyTags(mq.GroupBy...)
 	orderBy := orderByAttributeKeyTags(mq.OrderBy, mq.GroupBy)
@@ -285,8 +285,9 @@ func buildLogsQuery(start, end, step int64, mq *v3.BuilderQuery, fields map[stri
 		query := fmt.Sprintf(queryTmpl, step, op, filterSubQuery, groupBy, having, orderBy)
 		return query, nil
 	case v3.AggregateOperatorNoOp:
-		queryTmpl := constants.LogsSQLSelect + "from signoz_logs.distributed_logs where %s %s"
-		query := fmt.Sprintf(queryTmpl, timeFilter, filterSubQuery)
+		queryTmpl := constants.LogsSQLSelect + "from signoz_logs.distributed_logs where %s %sorder by %s"
+		orderBy = strings.Replace(orderBy, "ts", "timestamp", 1)
+		query := fmt.Sprintf(queryTmpl, timeFilter, filterSubQuery, orderBy)
 		return query, nil
 	default:
 		return "", fmt.Errorf("unsupported aggregate operator")
@@ -309,19 +310,28 @@ func groupByAttributeKeyTags(tags ...v3.AttributeKey) string {
 }
 
 // orderBy returns a string of comma separated tags for order by clause
+// if there are remaining items which are not present in tags they are also added
 // if the order is not specified, it defaults to ASC
 func orderBy(items []v3.OrderBy, tags []string) string {
 	var orderBy []string
-	for _, tag := range tags {
-		found := false
-		for _, item := range items {
-			if item.ColumnName == tag {
-				found = true
-				orderBy = append(orderBy, fmt.Sprintf("%s %s", item.ColumnName, item.Order))
-				break
-			}
+
+	// create a lookup
+	addedToGroupBy := map[string]bool{}
+	itemsLookup := map[string]v3.OrderBy{}
+
+	for i := 0; i < len(items); i++ {
+		if items[i].ColumnName == "timestamp" {
+			items[i].ColumnName = "ts"
 		}
-		if !found {
+		addedToGroupBy[items[i].ColumnName] = false
+		itemsLookup[items[i].ColumnName] = items[i]
+	}
+
+	for _, tag := range tags {
+		if item, ok := itemsLookup[tag]; ok {
+			orderBy = append(orderBy, fmt.Sprintf("%s %s", item.ColumnName, item.Order))
+			addedToGroupBy[item.ColumnName] = true
+		} else {
 			orderBy = append(orderBy, fmt.Sprintf("%s ASC", tag))
 		}
 	}
@@ -330,9 +340,22 @@ func orderBy(items []v3.OrderBy, tags []string) string {
 	for _, item := range items {
 		if item.ColumnName == constants.SigNozOrderByValue {
 			orderBy = append(orderBy, fmt.Sprintf("value %s", item.Order))
+			addedToGroupBy[item.ColumnName] = true
 		}
 	}
-	return strings.Join(orderBy, ",")
+
+	// add the remaining items
+	for _, item := range items {
+		if !addedToGroupBy[item.ColumnName] {
+			orderBy = append(orderBy, fmt.Sprintf("%s %s", item.ColumnName, item.Order))
+		}
+	}
+
+	// add default order by ts
+	if _, ok := itemsLookup["ts"]; !ok {
+		orderBy = append(orderBy, "ts")
+	}
+	return strings.Trim(strings.Join(orderBy, ","), ",")
 }
 
 func orderByAttributeKeyTags(items []v3.OrderBy, tags []v3.AttributeKey) string {
@@ -340,11 +363,7 @@ func orderByAttributeKeyTags(items []v3.OrderBy, tags []v3.AttributeKey) string 
 	for _, tag := range tags {
 		groupTags = append(groupTags, tag.Key)
 	}
-	str := orderBy(items, groupTags)
-	if len(str) > 0 {
-		str = str + ","
-	}
-	return str
+	return orderBy(items, groupTags)
 }
 
 func having(items []v3.Having) string {
