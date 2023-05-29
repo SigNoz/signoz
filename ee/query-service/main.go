@@ -3,25 +3,62 @@ package main
 import (
 	"context"
 	"flag"
+	"log"
 	"os"
 	"os/signal"
 	"syscall"
 
+	"go.opentelemetry.io/otel/sdk/resource"
+	semconv "go.opentelemetry.io/otel/semconv/v1.4.0"
 	"go.signoz.io/signoz/ee/query-service/app"
 	"go.signoz.io/signoz/pkg/query-service/auth"
 	baseconst "go.signoz.io/signoz/pkg/query-service/constants"
 	"go.signoz.io/signoz/pkg/query-service/version"
+	"google.golang.org/grpc"
+
+	zapotlpencoder "github.com/SigNoz/zap_otlp/zap_otlp_encoder"
+	zapotlpsync "github.com/SigNoz/zap_otlp/zap_otlp_sync"
 
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 )
 
+var targetPtr = flag.String("target", "stagingapp.signoz.io:4317", "OTLP target")
+
 func initZapLog() *zap.Logger {
 	config := zap.NewDevelopmentConfig()
+	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt)
+	defer stop()
+
+	conn, err := grpc.DialContext(ctx, *targetPtr, grpc.WithBlock(), grpc.WithInsecure())
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	config.EncoderConfig.EncodeDuration = zapcore.StringDurationEncoder
+	otlpEncoder := zapotlpencoder.NewOTLPEncoder(config.EncoderConfig)
+	consoleEncoder := zapcore.NewConsoleEncoder(config.EncoderConfig)
+	defaultLogLevel := zapcore.DebugLevel
 	config.EncoderConfig.EncodeLevel = zapcore.CapitalColorLevelEncoder
 	config.EncoderConfig.TimeKey = "timestamp"
 	config.EncoderConfig.EncodeTime = zapcore.ISO8601TimeEncoder
-	logger, _ := config.Build()
+
+	res := resource.NewWithAttributes(
+		semconv.SchemaURL,
+		semconv.ServiceNameKey.String("query-service"),
+	)
+
+	ws := zapcore.AddSync(zapotlpsync.NewOtlpSyncer(conn, zapotlpsync.Options{
+		BatchSize:      2,
+		ResourceSchema: semconv.SchemaURL,
+		Resource:       res,
+	}))
+	core := zapcore.NewTee(
+		zapcore.NewCore(consoleEncoder, os.Stdout, defaultLogLevel),
+		zapcore.NewCore(otlpEncoder, zapcore.NewMultiWriteSyncer(ws), defaultLogLevel),
+	)
+	logger := zap.New(core, zap.AddCaller(), zap.AddStacktrace(zapcore.ErrorLevel))
+
 	return logger
 }
 
