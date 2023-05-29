@@ -23,7 +23,7 @@ const interceptorsRequestResponse = (
 		store.getState().app.user?.accessJwt ||
 		getLocalStorageApi(LOCALSTORAGE.AUTH_TOKEN) ||
 		'';
-
+	console.log('token', token);
 	value.headers.Authorization = token ? `Bearer ${token}` : '';
 
 	return value;

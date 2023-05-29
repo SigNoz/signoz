@@ -1,6 +1,7 @@
 import { Button, Col, Divider, Popover, Row, Select, Space } from 'antd';
 import LogControls from 'container/LogControls';
 import LogDetailedView from 'container/LogDetailedView';
+import LogDetailsModalView from 'container/LogDetailsModalView';
 import LogLiveTail from 'container/LogLiveTail';
 import LogsAggregate from 'container/LogsAggregate';
 import LogsFilters from 'container/LogsFilters';
@@ -118,6 +119,7 @@ function Logs(): JSX.Element {
 			</Row>
 
 			<LogDetailedView />
+			<LogDetailsModalView />
 		</>
 	);
 }

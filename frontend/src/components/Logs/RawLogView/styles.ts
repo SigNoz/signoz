@@ -7,7 +7,7 @@ export const RawLogViewContainer = styled(Row)<{ $isDarkMode: boolean }>`
 	font-weight: 700;
 	font-size: 0.625rem;
 	line-height: 1.25rem;
-
+	position: relative;
 	transition: background-color 0.2s ease-in;
 
 	&:hover {
@@ -43,4 +43,21 @@ export const RawLogContent = styled.div<RawLogContentProps>`
 	line-height: 2rem;
 
 	cursor: pointer;
+`;
+
+export const AddButtonWrapper = styled.div`
+	position: absolute;
+	top: -4px;
+	right: 6px;
+	display: flex;
+	gap: 6px;
+
+	button {
+		border-radius: 5px;
+		width: 32px;
+		height: 32px;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+	}
 `;
