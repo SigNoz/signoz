@@ -10,7 +10,15 @@ import dayjs from 'dayjs';
 import dompurify from 'dompurify';
 // hooks
 import { useIsDarkMode } from 'hooks/useDarkMode';
-import { MouseEventHandler, useCallback, useMemo, useState } from 'react';
+import { useNotifications } from 'hooks/useNotifications';
+import {
+	MouseEventHandler,
+	useCallback,
+	useEffect,
+	useMemo,
+	useState,
+} from 'react';
+import { useCopyToClipboard } from 'react-use';
 // interfaces
 import { ILog } from 'types/api/logs/log';
 
@@ -33,6 +41,16 @@ interface RawLogViewProps {
 function RawLogView(props: RawLogViewProps): JSX.Element {
 	const { data, linesPerRow, onClickExpand } = props;
 	const [isAddButtonsVisible, setAddButtonVisible] = useState<boolean>(false);
+	const [value, copyToClipboard] = useCopyToClipboard();
+
+	const { notifications } = useNotifications();
+	useEffect(() => {
+		if (value.value) {
+			notifications.success({
+				message: 'Copied to clipboard',
+			});
+		}
+	}, [value, notifications]);
 
 	const isDarkMode = useIsDarkMode();
 
@@ -61,7 +79,8 @@ function RawLogView(props: RawLogViewProps): JSX.Element {
 	const copyLinkHandler: MouseEventHandler<Element> = (event) => {
 		event.preventDefault();
 		event.stopPropagation();
-		console.log('Test');
+		console.log('data', data);
+		copyToClipboard(data.attributes_string.log_file_path);
 	};
 
 	const showButtons = (): void => {

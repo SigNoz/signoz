@@ -11,4 +11,7 @@ export interface ILog {
 	attributesString: Record<string, never>;
 	attributesInt: Record<string, never>;
 	attributesFloat: Record<string, never>;
+	attributes_string: {
+		log_file_path: string;
+	};
 }
