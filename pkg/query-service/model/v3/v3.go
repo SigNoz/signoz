@@ -293,7 +293,7 @@ func (a AttributeKey) Validate() error {
 
 	if a.IsColumn {
 		switch a.Type {
-		case AttributeKeyTypeResource, AttributeKeyTypeTag:
+		case AttributeKeyTypeResource, AttributeKeyTypeTag, AttributeKeyTypeUnspecified:
 			break
 		default:
 			return fmt.Errorf("invalid attribute type: %s", a.Type)
