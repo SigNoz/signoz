@@ -2,6 +2,7 @@ package api
 
 import (
 	"net/http"
+	"time"
 
 	"github.com/gorilla/mux"
 	"go.signoz.io/signoz/ee/query-service/dao"
@@ -22,6 +23,8 @@ type APIHandlerOptions struct {
 	FeatureFlags   baseint.FeatureLookup
 	LicenseManager *license.Manager
 	Cache          cache.Cache
+	// Querier Influx Interval
+	FluxInterval time.Duration
 }
 
 type APIHandler struct {
@@ -38,6 +41,7 @@ func NewAPIHandler(opts APIHandlerOptions) (*APIHandler, error) {
 		RuleManager:  opts.RulesManager,
 		FeatureFlags: opts.FeatureFlags,
 		Cache:        opts.Cache,
+		FluxInterval: opts.FluxInterval,
 	})
 
 	if err != nil {

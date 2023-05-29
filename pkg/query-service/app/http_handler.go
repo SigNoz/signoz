@@ -18,7 +18,6 @@ import (
 	jsoniter "github.com/json-iterator/go"
 	_ "github.com/mattn/go-sqlite3"
 	"github.com/prometheus/prometheus/promql"
-	"go.signoz.io/signoz/pkg/query-service/app/clickhouseReader"
 	"go.signoz.io/signoz/pkg/query-service/app/dashboards"
 	"go.signoz.io/signoz/pkg/query-service/app/explorer"
 	"go.signoz.io/signoz/pkg/query-service/app/logs"
@@ -26,6 +25,7 @@ import (
 	"go.signoz.io/signoz/pkg/query-service/app/metrics"
 	metricsv3 "go.signoz.io/signoz/pkg/query-service/app/metrics/v3"
 	"go.signoz.io/signoz/pkg/query-service/app/parser"
+	"go.signoz.io/signoz/pkg/query-service/app/querier"
 	"go.signoz.io/signoz/pkg/query-service/app/queryBuilder"
 	tracesV3 "go.signoz.io/signoz/pkg/query-service/app/traces/v3"
 	"go.signoz.io/signoz/pkg/query-service/auth"
@@ -97,7 +97,7 @@ type APIHandlerOpts struct {
 	Cache cache.Cache
 
 	// Querier Influx Interval
-	fluxInterval time.Duration
+	FluxInterval time.Duration
 }
 
 // NewAPIHandler returns an APIHandler
@@ -107,10 +107,15 @@ func NewAPIHandler(opts APIHandlerOpts) (*APIHandler, error) {
 	if err != nil {
 		return nil, err
 	}
-	if opts.fluxInterval == 0 {
-		opts.fluxInterval = defaultFluxInterval
+
+	querierOpts := querier.QuerierOptions{
+		Reader:       opts.Reader,
+		Cache:        opts.Cache,
+		KeyGenerator: queryBuilder.NewKeyGenerator(),
+		FluxInterval: opts.FluxInterval,
 	}
-	querier := clickhouseReader.NewQuerier(opts.Cache, opts.Reader, opts.fluxInterval)
+
+	querier := querier.NewQuerier(querierOpts)
 
 	aH := &APIHandler{
 		reader:       opts.Reader,
@@ -260,7 +265,7 @@ func writeHttpResponse(w http.ResponseWriter, data interface{}) {
 
 func (aH *APIHandler) RegisterMetricsRoutes(router *mux.Router, am *AuthMiddleware) {
 	subRouter := router.PathPrefix("/api/v2/metrics").Subrouter()
-	subRouter.HandleFunc("/query_range", am.ViewAccess(aH.queryRangeMetrics)).Methods(http.MethodPost)
+	subRouter.HandleFunc("/query_range", am.ViewAccess(aH.QueryRangeMetricsV2)).Methods(http.MethodPost)
 	subRouter.HandleFunc("/autocomplete/list", am.ViewAccess(aH.metricAutocompleteMetricName)).Methods(http.MethodGet)
 	subRouter.HandleFunc("/autocomplete/tagKey", am.ViewAccess(aH.metricAutocompleteTagKey)).Methods(http.MethodGet)
 	subRouter.HandleFunc("/autocomplete/tagValue", am.ViewAccess(aH.metricAutocompleteTagValue)).Methods(http.MethodGet)
@@ -288,7 +293,7 @@ func (aH *APIHandler) RegisterPrivateRoutes(router *mux.Router) {
 
 // RegisterRoutes registers routes for this handler on the given router
 func (aH *APIHandler) RegisterRoutes(router *mux.Router, am *AuthMiddleware) {
-	router.HandleFunc("/api/v1/query_range", am.ViewAccess(aH.queryRangeMetrics)).Methods(http.MethodGet)
+	router.HandleFunc("/api/v1/query_range", am.ViewAccess(aH.QueryRangeMetricsV2)).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/query", am.ViewAccess(aH.queryMetrics)).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/channels", am.ViewAccess(aH.listChannels)).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/channels/{id}", am.ViewAccess(aH.getChannel)).Methods(http.MethodGet)
@@ -942,7 +947,7 @@ func (aH *APIHandler) createRule(w http.ResponseWriter, r *http.Request) {
 func (aH *APIHandler) queryRangeMetricsFromClickhouse(w http.ResponseWriter, r *http.Request) {
 
 }
-func (aH *APIHandler) queryRangeMetrics(w http.ResponseWriter, r *http.Request) {
+func (aH *APIHandler) QueryRangeMetricsV2(w http.ResponseWriter, r *http.Request) {
 
 	query, apiErrorObj := parseQueryRangeRequest(r)
 
@@ -2494,56 +2499,7 @@ func (aH *APIHandler) getSpanKeysV3(ctx context.Context, queryRangeParams *v3.Qu
 
 func (aH *APIHandler) queryRangeV3(ctx context.Context, queryRangeParams *v3.QueryRangeParamsV3, w http.ResponseWriter, r *http.Request) {
 
-	var result []*v3.Result
-	var err error
-	var errQuriesByName map[string]string
-	var queries map[string]string
-	switch queryRangeParams.CompositeQuery.QueryType {
-	case v3.QueryTypeBuilder:
-		// get the fields if any logs query is present
-		var fields map[string]v3.AttributeKey
-		fields, err = aH.getLogFieldsV3(ctx, queryRangeParams)
-		if err != nil {
-			apiErrObj := &model.ApiError{Typ: model.ErrorInternal, Err: err}
-			RespondError(w, apiErrObj, errQuriesByName)
-			return
-		}
-
-		var spanKeys map[string]v3.AttributeKey
-		spanKeys, err = aH.getSpanKeysV3(ctx, queryRangeParams)
-		if err != nil {
-			apiErrObj := &model.ApiError{Typ: model.ErrorInternal, Err: err}
-			RespondError(w, apiErrObj, errQuriesByName)
-			return
-		}
-
-		queries, err = aH.queryBuilder.PrepareQueries(queryRangeParams, fields, spanKeys)
-		if err != nil {
-			RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
-			return
-		}
-
-		if queryRangeParams.CompositeQuery.PanelType == v3.PanelTypeList {
-			result, err, errQuriesByName = aH.execClickHouseListQueries(r.Context(), queries)
-		} else {
-			result, err, errQuriesByName = aH.execClickHouseGraphQueries(r.Context(), queries)
-		}
-	case v3.QueryTypeClickHouseSQL:
-		queries := make(map[string]string)
-		for name, query := range queryRangeParams.CompositeQuery.ClickHouseQueries {
-			if query.Disabled {
-				continue
-			}
-			queries[name] = query.Query
-		}
-		result, err, errQuriesByName = aH.execClickHouseGraphQueries(r.Context(), queries)
-	case v3.QueryTypePromQL:
-		result, err, errQuriesByName = aH.execPromQueries(r.Context(), queryRangeParams)
-	default:
-		err = fmt.Errorf("invalid query type")
-		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, errQuriesByName)
-		return
-	}
+	result, err, errQuriesByName := aH.qurier.QueryRange(ctx, queryRangeParams)
 
 	if err != nil {
 		apiErrObj := &model.ApiError{Typ: model.ErrorBadData, Err: err}
@@ -2552,7 +2508,11 @@ func (aH *APIHandler) queryRangeV3(ctx context.Context, queryRangeParams *v3.Que
 	}
 
 	resp := v3.QueryRangeResponse{
-		Result: result,
+		Result: []*v3.Result{
+			{
+				Series: result,
+			},
+		},
 	}
 	aH.Respond(w, resp)
 }

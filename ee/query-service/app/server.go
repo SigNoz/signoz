@@ -30,6 +30,7 @@ import (
 	"go.signoz.io/signoz/pkg/query-service/agentConf"
 	baseapp "go.signoz.io/signoz/pkg/query-service/app"
 	"go.signoz.io/signoz/pkg/query-service/app/dashboards"
+	"go.signoz.io/signoz/pkg/query-service/app/explorer"
 	baseexplorer "go.signoz.io/signoz/pkg/query-service/app/explorer"
 	"go.signoz.io/signoz/pkg/query-service/app/opamp"
 	opAmpModel "go.signoz.io/signoz/pkg/query-service/app/opamp/model"
@@ -55,9 +56,10 @@ type ServerOptions struct {
 	HTTPHostPort    string
 	PrivateHostPort string
 	// alert specific params
-	DisableRules              bool
-	RuleRepoURL               string
-	QueryRangeCacheConfigPath string
+	DisableRules    bool
+	RuleRepoURL     string
+	CacheConfigPath string
+	FluxInterval    string
 }
 
 // Server runs HTTP api service
@@ -162,11 +164,20 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 
 	telemetry.GetInstance().SetReader(reader)
 
-	cacheOpts, err := cache.LoadFromYAMLCacheConfigFile(serverOptions.QueryRangeCacheConfigPath)
+	var c cache.Cache
+	if serverOptions.CacheConfigPath != "" {
+		cacheOpts, err := cache.LoadFromYAMLCacheConfigFile(serverOptions.CacheConfigPath)
+		if err != nil {
+			return nil, err
+		}
+		c = cache.NewCache(cacheOpts)
+	}
+
+	fluxInterval, err := time.ParseDuration(serverOptions.FluxInterval)
+
 	if err != nil {
 		return nil, err
 	}
-	cache := cache.NewCache(cacheOpts)
 
 	apiOpts := api.APIHandlerOptions{
 		DataConnector:  reader,
@@ -174,7 +185,8 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 		RulesManager:   rm,
 		FeatureFlags:   lm,
 		LicenseManager: lm,
-		Cache:          cache,
+		Cache:          c,
+		FluxInterval:   fluxInterval,
 	}
 
 	apiHandler, err := api.NewAPIHandler(apiOpts)

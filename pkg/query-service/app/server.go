@@ -46,9 +46,10 @@ type ServerOptions struct {
 	HTTPHostPort    string
 	PrivateHostPort string
 	// alert specific params
-	DisableRules              bool
-	RuleRepoURL               string
-	QueryRangeCacheConfigPath string
+	DisableRules    bool
+	RuleRepoURL     string
+	CacheConfigPath string
+	FluxInterval    string
 }
 
 // Server runs HTTP, Mux and a grpc server
@@ -114,18 +115,28 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 		return nil, err
 	}
 
-	cacheOpts, err := cache.LoadFromYAMLCacheConfigFile(serverOptions.QueryRangeCacheConfigPath)
+	var c cache.Cache
+	if serverOptions.CacheConfigPath != "" {
+		cacheOpts, err := cache.LoadFromYAMLCacheConfigFile(serverOptions.CacheConfigPath)
+		if err != nil {
+			return nil, err
+		}
+		c = cache.NewCache(cacheOpts)
+	}
+
+	fluxInterval, err := time.ParseDuration(serverOptions.FluxInterval)
 	if err != nil {
 		return nil, err
 	}
-	cache := cache.NewCache(cacheOpts)
+
 	telemetry.GetInstance().SetReader(reader)
 	apiHandler, err := NewAPIHandler(APIHandlerOpts{
 		Reader:       reader,
 		AppDao:       dao.DB(),
 		RuleManager:  rm,
 		FeatureFlags: fm,
-		Cache:        cache,
+		Cache:        c,
+		FluxInterval: fluxInterval,
 	})
 	if err != nil {
 		return nil, err

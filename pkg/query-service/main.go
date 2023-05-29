@@ -32,13 +32,13 @@ func main() {
 	var disableRules bool
 
 	// the url used to build link in the alert messages in slack and other systems
-	var ruleRepoURL string
-	var queryRangeCacheConfigPath string
+	var ruleRepoURL, cacheConfigPath, fluxInterval string
 
 	flag.StringVar(&promConfigPath, "config", "./config/prometheus.yml", "(prometheus config to read metrics)")
 	flag.BoolVar(&disableRules, "rules.disable", false, "(disable rule evaluation)")
 	flag.StringVar(&ruleRepoURL, "rules.repo-url", constants.AlertHelpPage, "(host address used to build rule link in alert messages)")
-	flag.StringVar(&queryRangeCacheConfigPath, "cache-config", "./config/cache-config.yml", "(cache config to use)")
+	flag.StringVar(&cacheConfigPath, "experimental.cache-config", "", "(cache config to use)")
+	flag.StringVar(&fluxInterval, "flux-interval", "5m", "(cache config to use)")
 	flag.Parse()
 
 	loggerMgr := initZapLog()
@@ -49,12 +49,13 @@ func main() {
 	version.PrintVersion()
 
 	serverOptions := &app.ServerOptions{
-		HTTPHostPort:              constants.HTTPHostPort,
-		PromConfigPath:            promConfigPath,
-		PrivateHostPort:           constants.PrivateHostPort,
-		DisableRules:              disableRules,
-		RuleRepoURL:               ruleRepoURL,
-		QueryRangeCacheConfigPath: queryRangeCacheConfigPath,
+		HTTPHostPort:    constants.HTTPHostPort,
+		PromConfigPath:  promConfigPath,
+		PrivateHostPort: constants.PrivateHostPort,
+		DisableRules:    disableRules,
+		RuleRepoURL:     ruleRepoURL,
+		CacheConfigPath: cacheConfigPath,
+		FluxInterval:    fluxInterval,
 	}
 
 	// Read the jwt secret key

@@ -16,10 +16,10 @@ import (
 	"go.uber.org/zap"
 )
 
-func (ah *APIHandler) queryRangeMetrics(w http.ResponseWriter, r *http.Request) {
+func (ah *APIHandler) queryRangeMetricsV2(w http.ResponseWriter, r *http.Request) {
 	if !ah.CheckFeature(basemodel.CustomMetricsFunction) {
 		zap.S().Info("CustomMetricsFunction feature is not enabled in this plan")
-		ah.APIHandler.queryRangeMetrics(w, r)
+		ah.APIHandler.QueryRangeMetricsV2(w, r)
 		return
 	}
 	metricsQueryRangeParams, apiErrorObj := parser.ParseMetricQueryRangeParams(r)
