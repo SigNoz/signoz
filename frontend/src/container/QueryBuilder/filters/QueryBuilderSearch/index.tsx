@@ -1,6 +1,5 @@
 import { Select, Spin, Tag, Tooltip } from 'antd';
-import { getAggregateKeys } from 'api/queryBuilder/getAttributeKeys';
-import { QueryBuilderKeys } from 'constants/queryBuilder';
+import useAggregateKeys from 'container/QueryBuilder/hooks/useAggregateKeys';
 import { useAutoComplete } from 'hooks/queryBuilder/useAutoComplete';
 import {
 	KeyboardEvent,
@@ -10,7 +9,6 @@ import {
 	useMemo,
 	useState,
 } from 'react';
-import { useQuery } from 'react-query';
 import {
 	IBuilderQuery,
 	TagFilter,
@@ -33,6 +31,7 @@ function QueryBuilderSearch({
 	onChange,
 }: QueryBuilderSearchProps): JSX.Element {
 	const [currentSearchValue, setCurrentSearchValue] = useState<string>('');
+
 	const {
 		updateTag,
 		handleClearTag,
@@ -47,40 +46,7 @@ function QueryBuilderSearch({
 		setSearchKey,
 	} = useAutoComplete(query);
 
-	const isQueryEnabled = useMemo(
-		() =>
-			query.dataSource === DataSource.METRICS
-				? !!query.aggregateOperator &&
-				  !!query.dataSource &&
-				  !!query.aggregateAttribute.dataType
-				: true,
-		[
-			query.aggregateAttribute.dataType,
-			query.aggregateOperator,
-			query.dataSource,
-		],
-	);
-
-	const { data } = useQuery(
-		[
-			QueryBuilderKeys.GET_ATTRIBUTE_KEY,
-			currentSearchValue,
-			query.dataSource,
-			query.aggregateOperator,
-			query.aggregateAttribute.key,
-		],
-		async () =>
-			getAggregateKeys({
-				searchText: currentSearchValue,
-				dataSource: query.dataSource,
-				aggregateOperator: query.aggregateOperator,
-				aggregateAttribute: query.aggregateAttribute.key,
-				tagType: query.aggregateAttribute.type ?? null,
-			}),
-		{
-			enabled: isQueryEnabled,
-		},
-	);
+	const { data } = useAggregateKeys({ query, searchValue: currentSearchValue });
 
 	const onTagRender = ({
 		value,
@@ -141,29 +107,30 @@ function QueryBuilderSearch({
 	}, [isMetricsDataSource, query.aggregateAttribute.key, tags]);
 
 	useEffect(() => {
-		const initialTagFilters: TagFilter = { items: [], op: 'AND' };
-		initialTagFilters.items = tags.map((tag) => {
-			const { tagKey, tagOperator, tagValue } = getTagToken(tag);
-			setCurrentSearchValue(getRemovePrefixFromKey(tagKey));
-			const filterAttribute = (data?.payload?.attributeKeys || []).find(
-				(key) => key.key === getRemovePrefixFromKey(tagKey),
-			);
-			return {
-				id: uuid().slice(0, 8),
-				key: filterAttribute ?? {
-					key: tagKey,
-					dataType: null,
-					type: null,
-					isColumn: null,
-				},
-				op: getOperatorValue(tagOperator),
-				value:
-					tagValue[tagValue.length - 1] === ''
-						? tagValue?.slice(0, -1)
-						: tagValue ?? '',
-			};
+		onChange({
+			items: tags.map((tag) => {
+				const { tagKey, tagOperator, tagValue } = getTagToken(tag);
+				setCurrentSearchValue(getRemovePrefixFromKey(tagKey));
+				const filterAttribute = (data?.payload?.attributeKeys || []).find(
+					(key) => key.key === getRemovePrefixFromKey(tagKey),
+				);
+				return {
+					id: uuid().slice(0, 8),
+					key: filterAttribute ?? {
+						key: tagKey,
+						dataType: null,
+						type: null,
+						isColumn: null,
+					},
+					op: getOperatorValue(tagOperator),
+					value:
+						tagValue[tagValue.length - 1] === ''
+							? tagValue?.slice(0, -1)
+							: tagValue ?? '',
+				};
+			}),
+			op: 'AND',
 		});
-		onChange(initialTagFilters);
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [data?.payload?.attributeKeys, tags]);
 
