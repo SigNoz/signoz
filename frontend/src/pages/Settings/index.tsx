@@ -52,10 +52,9 @@ function SettingsPage(): JSX.Element {
 
 	return (
 		<RouteTab
-			{...{
-				routes: common,
-				activeKey: getActiveKey(pathName),
-			}}
+			routes={common}
+			activeKey={getActiveKey(pathName)}
+			history={history}
 		/>
 	);
 }

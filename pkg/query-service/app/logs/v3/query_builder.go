@@ -55,6 +55,13 @@ var logOperators = map[v3.FilterOperator]string{
 
 func enrichFieldWithMetadata(field v3.AttributeKey, fields map[string]v3.AttributeKey) v3.AttributeKey {
 	if field.Type == "" || field.DataType == "" {
+		// if type is unknown check if it is a top level key
+		if v, ok := constants.StaticFieldsLogsV3[field.Key]; ok {
+			if (v3.AttributeKey{} != v) {
+				return v
+			}
+		}
+
 		// check if the field is present in the fields map
 		if existingField, ok := fields[field.Key]; ok {
 			if existingField.IsColumn {
@@ -62,11 +69,13 @@ func enrichFieldWithMetadata(field v3.AttributeKey, fields map[string]v3.Attribu
 			}
 			field.Type = existingField.Type
 			field.DataType = existingField.DataType
-		} else {
-			// enrich with default values if metadata is not found
-			field.Type = v3.AttributeKeyTypeTag
-			field.DataType = v3.AttributeKeyDataTypeString
+			return field
 		}
+
+		// enrich with default values if metadata is not found
+		field.Type = v3.AttributeKeyTypeTag
+		field.DataType = v3.AttributeKeyDataTypeString
+
 	}
 	return field
 }
@@ -94,8 +103,7 @@ func getClickhouseColumnName(key v3.AttributeKey, fields map[string]v3.Attribute
 	clickhouseColumn := key.Key
 	//if the key is present in the topLevelColumn then it will be only searched in those columns,
 	//regardless if it is indexed/present again in resource or column attribute
-	_, isTopLevelCol := constants.LogsTopLevelColumnsV3[key.Key]
-	if !isTopLevelCol && !key.IsColumn {
+	if !key.IsColumn {
 		columnType := getClickhouseLogsColumnType(key.Type)
 		columnDataType := getClickhouseLogsColumnDataType(key.DataType)
 		clickhouseColumn = fmt.Sprintf("%s_%s_value[indexOf(%s_%s_key, '%s')]", columnType, columnDataType, columnType, columnDataType, key.Key)

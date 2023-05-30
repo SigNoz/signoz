@@ -2,10 +2,12 @@ package inmemory
 
 import (
 	"time"
+
+	go_cache "github.com/patrickmn/go-cache"
 )
 
 const (
-	defaultTTL             = 5 * time.Minute
+	defaultTTL             = go_cache.NoExpiration
 	defaultCleanupInterval = 1 * time.Minute
 )
 
