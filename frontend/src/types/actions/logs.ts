@@ -33,6 +33,9 @@ export const SET_LINES_PER_ROW = 'SET_LINES_PER_ROW';
 export const SET_VIEW_MODE = 'SET_VIEW_MODE';
 export const UPDATE_SELECTED_FIELDS = 'LOGS_UPDATE_SELECTED_FIELDS';
 export const UPDATE_INTERESTING_FIELDS = 'LOGS_UPDATE_INTERESTING_FIELDS';
+export const SET_CURRENT_LOG = 'SET_CURRENT_LOG';
+export const SET_PREV_CURRENT_LOGS = 'SET_PREV_CURRENT_LOGS';
+export const SET_NEXT_CURRENT_LOGS = 'SET_NEXT_CURRENT_LOGS';
 
 export interface GetFields {
 	type: typeof GET_FIELDS;
@@ -126,6 +129,20 @@ export interface SetLinesPerRow {
 	payload: number;
 }
 
+export interface SetCurrentLog {
+	type: typeof SET_CURRENT_LOG;
+	payload: ILog;
+}
+
+export interface SetPrevCurrentLog {
+	type: typeof SET_PREV_CURRENT_LOGS;
+	payload: ILog[];
+}
+
+export interface SetNextCurrentLog {
+	type: typeof SET_NEXT_CURRENT_LOGS;
+	payload: ILog[];
+}
 export interface SetViewMode {
 	type: typeof SET_VIEW_MODE;
 	payload: LogViewMode;
@@ -163,4 +180,7 @@ export type LogsActions =
 	| SetLiveTailStartTime
 	| SetLinesPerRow
 	| SetViewMode
-	| UpdateSelectedInterestFields;
+	| UpdateSelectedInterestFields
+	| SetCurrentLog
+	| SetPrevCurrentLog
+	| SetNextCurrentLog;

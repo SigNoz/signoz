@@ -18,7 +18,9 @@ import {
 	useMemo,
 	useState,
 } from 'react';
+import { useDispatch } from 'react-redux';
 import { useCopyToClipboard } from 'react-use';
+import { SET_CURRENT_LOG } from 'types/actions/logs';
 // interfaces
 import { ILog } from 'types/api/logs/log';
 
@@ -42,7 +44,7 @@ function RawLogView(props: RawLogViewProps): JSX.Element {
 	const { data, linesPerRow, onClickExpand } = props;
 	const [isAddButtonsVisible, setAddButtonVisible] = useState<boolean>(false);
 	const [value, copyToClipboard] = useCopyToClipboard();
-
+	const dispatch = useDispatch();
 	const { notifications } = useNotifications();
 	useEffect(() => {
 		if (value.value) {
@@ -73,13 +75,16 @@ function RawLogView(props: RawLogViewProps): JSX.Element {
 	const showContextHandler: MouseEventHandler<Element> = (event) => {
 		event.preventDefault();
 		event.stopPropagation();
+		dispatch({
+			type: SET_CURRENT_LOG,
+			payload: data,
+		});
 		console.log('e', event);
 	};
 
 	const copyLinkHandler: MouseEventHandler<Element> = (event) => {
 		event.preventDefault();
 		event.stopPropagation();
-		console.log('data', data);
 		copyToClipboard(data.attributes_string.log_file_path);
 	};
 

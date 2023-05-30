@@ -8,6 +8,7 @@ import {
 	LogsActions,
 	PUSH_LIVE_TAIL_EVENT,
 	RESET_ID_START_AND_END,
+	SET_CURRENT_LOG,
 	SET_DETAILED_LOG_DATA,
 	SET_FIELDS,
 	SET_LINES_PER_ROW,
@@ -17,6 +18,8 @@ import {
 	SET_LOG_LINES_PER_PAGE,
 	SET_LOGS,
 	SET_LOGS_AGGREGATE_SERIES,
+	SET_NEXT_CURRENT_LOGS,
+	SET_PREV_CURRENT_LOGS,
 	SET_SEARCH_QUERY_PARSED_PAYLOAD,
 	SET_SEARCH_QUERY_STRING,
 	SET_VIEW_MODE,
@@ -49,6 +52,9 @@ const initialState: ILogsReducer = {
 	liveTailStartRange: 15,
 	selectedLogId: null,
 	detailedLog: null,
+	currentLog: null,
+	prevCurrentLogs: null,
+	nextCurrentLogs: null,
 };
 
 export const LogsReducer = (
@@ -240,6 +246,27 @@ export const LogsReducer = (
 					...state.fields,
 					selected: action.payload.field,
 				},
+			};
+		}
+
+		case SET_CURRENT_LOG: {
+			return {
+				...state,
+				currentLog: action.payload,
+			};
+		}
+
+		case SET_PREV_CURRENT_LOGS: {
+			return {
+				...state,
+				prevCurrentLogs: action.payload,
+			};
+		}
+
+		case SET_NEXT_CURRENT_LOGS: {
+			return {
+				...state,
+				nextCurrentLogs: action.payload,
 			};
 		}
 

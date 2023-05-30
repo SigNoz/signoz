@@ -1,7 +1,8 @@
 import ICurrentLog from '../interfaces/ICurrentLog';
+import { LogContainer } from '../styles/Log';
 
 function CurrentLog({ log }: ICurrentLog): JSX.Element {
-	return <div>{log}</div>;
+	return <LogContainer>{log}</LogContainer>;
 }
 
 export default CurrentLog;
