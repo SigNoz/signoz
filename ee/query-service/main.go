@@ -12,6 +12,7 @@ import (
 	semconv "go.opentelemetry.io/otel/semconv/v1.4.0"
 	"go.signoz.io/signoz/ee/query-service/app"
 	"go.signoz.io/signoz/pkg/query-service/auth"
+	"go.signoz.io/signoz/pkg/query-service/constants"
 	baseconst "go.signoz.io/signoz/pkg/query-service/constants"
 	"go.signoz.io/signoz/pkg/query-service/version"
 	"google.golang.org/grpc"
@@ -23,14 +24,12 @@ import (
 	"go.uber.org/zap/zapcore"
 )
 
-var targetPtr = flag.String("target", "stagingapp.signoz.io:4317", "OTLP target")
-
 func initZapLog() *zap.Logger {
 	config := zap.NewDevelopmentConfig()
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt)
 	defer stop()
 
-	conn, err := grpc.DialContext(ctx, *targetPtr, grpc.WithBlock(), grpc.WithInsecure())
+	conn, err := grpc.DialContext(ctx, constants.OTLPTarget, grpc.WithBlock(), grpc.WithInsecure())
 	if err != nil {
 		log.Fatal(err)
 	}
