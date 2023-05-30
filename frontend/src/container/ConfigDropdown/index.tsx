@@ -59,7 +59,7 @@ function DynamicConfigDropdown({
 			menu={menu}
 			open={isHelpDropDownOpen}
 		>
-			<Space align="center">
+			<Space align="center" style={{ cursor: 'pointer' }}>
 				<Icon
 					style={{ fontSize: 26, color: 'white', paddingTop: 26, cursor: 'pointer' }}
 				/>

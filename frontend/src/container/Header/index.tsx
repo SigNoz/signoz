@@ -139,7 +139,7 @@ function HeaderContainer(): JSX.Element {
 						menu={menu}
 						open={isUserDropDownOpen}
 					>
-						<Space>
+						<Space style={{ cursor: 'pointer' }}>
 							<AvatarWrapper shape="circle">{user?.name[0]}</AvatarWrapper>
 							<IconContainer>
 								{!isUserDropDownOpen ? <CaretDownFilled /> : <CaretUpFilled />}
