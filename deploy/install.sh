@@ -277,7 +277,7 @@ request_sudo() {
         echo -e "\n\n🙇 We will need sudo access to complete the installation."
         if (( $EUID != 0 )); then
             sudo_cmd="sudo"
-            echo -e "Please enter your sudo password, if prompt."
+            echo -e "Please enter your sudo password, if prompted."
             # $sudo_cmd -l | grep -e "NOPASSWD: ALL" > /dev/null
             # if [[ $? -ne 0 ]] && ! $sudo_cmd -v; then
             #     echo "Need sudo privileges to proceed with the installation."
