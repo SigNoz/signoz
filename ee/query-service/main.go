@@ -7,6 +7,7 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
+	"time"
 
 	"go.opentelemetry.io/otel/sdk/resource"
 	semconv "go.opentelemetry.io/otel/semconv/v1.4.0"
@@ -29,11 +30,6 @@ func initZapLog() *zap.Logger {
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt)
 	defer stop()
 
-	conn, err := grpc.DialContext(ctx, constants.OTLPTarget, grpc.WithBlock(), grpc.WithInsecure())
-	if err != nil {
-		log.Fatal(err)
-	}
-
 	config.EncoderConfig.EncodeDuration = zapcore.StringDurationEncoder
 	otlpEncoder := zapotlpencoder.NewOTLPEncoder(config.EncoderConfig)
 	consoleEncoder := zapcore.NewConsoleEncoder(config.EncoderConfig)
@@ -47,15 +43,24 @@ func initZapLog() *zap.Logger {
 		semconv.ServiceNameKey.String("query-service"),
 	)
 
-	ws := zapcore.AddSync(zapotlpsync.NewOtlpSyncer(conn, zapotlpsync.Options{
-		BatchSize:      2,
-		ResourceSchema: semconv.SchemaURL,
-		Resource:       res,
-	}))
 	core := zapcore.NewTee(
 		zapcore.NewCore(consoleEncoder, os.Stdout, defaultLogLevel),
-		zapcore.NewCore(otlpEncoder, zapcore.NewMultiWriteSyncer(ws), defaultLogLevel),
 	)
+
+	conn, err := grpc.DialContext(ctx, constants.OTLPTarget, grpc.WithBlock(), grpc.WithInsecure(), grpc.WithTimeout(time.Second*10))
+	if err != nil {
+		log.Println("failed to connect to otlp collector to export query service logs with error:", err)
+	} else {
+		ws := zapcore.AddSync(zapotlpsync.NewOtlpSyncer(conn, zapotlpsync.Options{
+			BatchSize:      2,
+			ResourceSchema: semconv.SchemaURL,
+			Resource:       res,
+		}))
+		core = zapcore.NewTee(
+			zapcore.NewCore(consoleEncoder, os.Stdout, defaultLogLevel),
+			zapcore.NewCore(otlpEncoder, zapcore.NewMultiWriteSyncer(ws), defaultLogLevel),
+		)
+	}
 	logger := zap.New(core, zap.AddCaller(), zap.AddStacktrace(zapcore.ErrorLevel))
 
 	return logger
