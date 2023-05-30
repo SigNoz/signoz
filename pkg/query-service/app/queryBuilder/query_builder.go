@@ -198,9 +198,27 @@ func (qb *QueryBuilder) PrepareQueries(params *v3.QueryRangeParamsV3, args ...in
 type cacheKeyGenerator struct {
 }
 
+func expressionToKey(expression *govaluate.EvaluableExpression, keys map[string]string) string {
+
+	var modified []govaluate.ExpressionToken
+	tokens := expression.Tokens()
+	for idx := range tokens {
+		token := tokens[idx]
+		if token.Kind == govaluate.VARIABLE {
+			token.Value = keys[fmt.Sprintf("%s", token.Value)]
+			token.Meta = keys[fmt.Sprintf("%s", token.Meta)]
+		}
+		modified = append(modified, token)
+	}
+	// err should be nil here since the expression is already validated
+	formula, _ := govaluate.NewEvaluableExpressionFromTokens(modified)
+	return formula.ExpressionString()
+}
+
 func (c *cacheKeyGenerator) GenerateKeys(params *v3.QueryRangeParamsV3) map[string]string {
 	keys := make(map[string]string)
 
+	// Build keys for each builder query
 	for queryName, query := range params.CompositeQuery.BuilderQueries {
 		if query.Expression == queryName {
 			var parts []string
@@ -235,6 +253,16 @@ func (c *cacheKeyGenerator) GenerateKeys(params *v3.QueryRangeParamsV3) map[stri
 
 			key := strings.Join(parts, "&")
 			keys[queryName] = key
+		}
+	}
+
+	// Build keys for each expression
+	for _, query := range params.CompositeQuery.BuilderQueries {
+		if query.Expression != query.QueryName {
+			expression, _ := govaluate.NewEvaluableExpressionWithFunctions(query.Expression, EvalFuncs)
+
+			expressionCacheKey := expressionToKey(expression, keys)
+			keys[query.QueryName] = expressionCacheKey
 		}
 	}
 

@@ -428,6 +428,7 @@ func TestQueryRange(t *testing.T) {
 							{Key: "method", IsColumn: false},
 						},
 						AggregateOperator: v3.AggregateOperatorSumRate,
+						Expression:        "A",
 					},
 				},
 			},
@@ -457,6 +458,7 @@ func TestQueryRange(t *testing.T) {
 							{Key: "method", IsColumn: false},
 						},
 						AggregateOperator: v3.AggregateOperatorSumRate,
+						Expression:        "A",
 					},
 				},
 			},
@@ -494,7 +496,7 @@ func TestQueryRange(t *testing.T) {
 	fmt.Println("queries executed", q.QueriesExecuted())
 
 	for i, param := range params {
-		_, err, errByName := q.QueryRange(context.Background(), param)
+		_, err, errByName := q.QueryRange(context.Background(), param, nil, nil)
 		if err != nil {
 			t.Errorf("expected no error, got %s", err)
 		}
