@@ -150,7 +150,7 @@ func (qb *QueryBuilder) PrepareQueries(params *v3.QueryRangeParamsV3, args ...in
 					queries[queryName] = queryString
 				case v3.DataSourceLogs:
 					fields := map[string]v3.AttributeKey{}
-					if len(args) == 1 {
+					if len(args) > 0 {
 						fields = args[0].(map[string]v3.AttributeKey)
 					}
 					queryString, err := qb.options.BuildLogQuery(params.Start, params.End, compositeQuery.QueryType, compositeQuery.PanelType, query, fields)

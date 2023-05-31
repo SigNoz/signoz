@@ -228,7 +228,7 @@ func buildLogsQuery(start, end, step int64, mq *v3.BuilderQuery, fields map[stri
 			"order by %s"
 
 	groupBy := groupByAttributeKeyTags(mq.GroupBy...)
-	orderBy := orderByAttributeKeyTags(mq.OrderBy, mq.GroupBy)
+	orderBy := orderByAttributeKeyTags(mq.OrderBy, mq.GroupBy, fields)
 
 	if mq.AggregateOperator != v3.AggregateOperatorNoOp {
 		if !strings.Contains(orderBy, "ts") {
@@ -323,7 +323,7 @@ func groupByAttributeKeyTags(tags ...v3.AttributeKey) string {
 // orderBy returns a string of comma separated tags for order by clause
 // if there are remaining items which are not present in tags they are also added
 // if the order is not specified, it defaults to ASC
-func orderBy(items []v3.OrderBy, tags []string) string {
+func orderBy(items []v3.OrderBy, tags []string, fields map[string]v3.AttributeKey) string {
 	var orderBy []string
 
 	// create a lookup
@@ -354,19 +354,23 @@ func orderBy(items []v3.OrderBy, tags []string) string {
 
 	// add the remaining items
 	for _, item := range items {
+		// since these are not present in tags we will have to select them correctly
 		if !addedToGroupBy[item.ColumnName] {
-			orderBy = append(orderBy, fmt.Sprintf("%s %s", item.ColumnName, item.Order))
+			enrichedAttr := enrichFieldWithMetadata(v3.AttributeKey{Key: item.ColumnName}, fields)
+			name, _ := getClickhouseColumnName(enrichedAttr, fields)
+			orderBy = append(orderBy, fmt.Sprintf("%s %s", name, item.Order))
+			// orderBy = append(orderBy, fmt.Sprintf("%s %s", item.ColumnName, item.Order))
 		}
 	}
 	return strings.Trim(strings.Join(orderBy, ","), ",")
 }
 
-func orderByAttributeKeyTags(items []v3.OrderBy, tags []v3.AttributeKey) string {
+func orderByAttributeKeyTags(items []v3.OrderBy, tags []v3.AttributeKey, fields map[string]v3.AttributeKey) string {
 	var groupTags []string
 	for _, tag := range tags {
 		groupTags = append(groupTags, tag.Key)
 	}
-	str := orderBy(items, groupTags)
+	str := orderBy(items, groupTags, fields)
 	if len(str) > 0 {
 		str = str + ","
 	}
@@ -402,14 +406,8 @@ func reduceQuery(query string, reduceTo v3.ReduceToOperator, aggregateOperator v
 	return query, nil
 }
 
-func addLimitToQuery(query string, limit uint64, panelType v3.PanelType) string {
-	if limit == 0 {
-		limit = 100
-	}
-	if panelType == v3.PanelTypeList {
-		return fmt.Sprintf("%s LIMIT %d", query, limit)
-	}
-	return query
+func addLimitToQuery(query string, limit uint64) string {
+	return fmt.Sprintf("%s LIMIT %d", query, limit)
 }
 
 func addOffsetToQuery(query string, offset uint64) string {
@@ -425,10 +423,20 @@ func PrepareLogsQuery(start, end int64, queryType v3.QueryType, panelType v3.Pan
 		query, err = reduceQuery(query, mq.ReduceTo, mq.AggregateOperator)
 	}
 
-	query = addLimitToQuery(query, mq.Limit, panelType)
-
-	if mq.Offset != 0 {
-		query = addOffsetToQuery(query, mq.Offset)
+	if panelType == v3.PanelTypeList || panelType == v3.PanelTypeTable {
+		if mq.Limit == 0 {
+			// 100 is the default max limit as well as page limit
+			mq.Limit = 100
+		}
+		if mq.PageSize > 0 {
+			if (mq.Offset + mq.PageSize) > mq.Limit {
+				return "", fmt.Errorf("max limit exceeded")
+			}
+			query = addLimitToQuery(query, mq.PageSize)
+			query = addOffsetToQuery(query, mq.Offset)
+		} else {
+			query = addLimitToQuery(query, mq.Limit)
+		}
 	}
 
 	return query, err

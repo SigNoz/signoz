@@ -871,7 +871,7 @@ var testOrderBy = []struct {
 func TestOrderBy(t *testing.T) {
 	for _, tt := range testOrderBy {
 		Convey("testOrderBy", t, func() {
-			res := orderBy(tt.Items, tt.Tags)
+			res := orderBy(tt.Items, tt.Tags, map[string]v3.AttributeKey{})
 			So(res, ShouldEqual, tt.Result)
 
 			// So(multiplier, ShouldEqual, tt.Multiplier)
