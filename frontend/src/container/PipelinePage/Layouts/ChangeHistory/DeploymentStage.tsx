@@ -1,5 +1,4 @@
 import { IconDataSpan } from 'container/PipelinePage/styles';
-import React from 'react';
 
 import { getDeploymentStage, getDeploymentStageIcon } from './utils';
 

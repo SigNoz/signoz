@@ -1,6 +1,5 @@
 import { ColumnType } from 'antd/lib/table/interface';
 import dayjs from 'dayjs';
-import React from 'react';
 import update from 'react-addons-update';
 import { ProcessorData } from 'types/api/pipeline/def';
 

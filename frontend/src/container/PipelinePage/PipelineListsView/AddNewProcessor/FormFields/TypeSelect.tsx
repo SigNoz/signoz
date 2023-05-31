@@ -1,5 +1,4 @@
 import { Select } from 'antd';
-import React from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { DEFAULT_PROCESSOR_TYPE, processorTypes } from '../config';

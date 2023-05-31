@@ -5,7 +5,7 @@ import Spinner from 'components/Spinner';
 import ChangeHistory from 'container/PipelinePage/Layouts/ChangeHistory';
 import PipelinePage from 'container/PipelinePage/Layouts/Pipeline';
 import { useNotifications } from 'hooks/useNotifications';
-import React, { useEffect, useMemo } from 'react';
+import { useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useQuery } from 'react-query';
 import { Pipeline } from 'types/api/pipeline/def';

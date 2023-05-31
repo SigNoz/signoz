@@ -1,5 +1,4 @@
 import { Table } from 'antd';
-import React from 'react';
 import { Pipeline } from 'types/api/pipeline/def';
 
 import { changeHistoryColumns } from '../../PipelineListsView/config';

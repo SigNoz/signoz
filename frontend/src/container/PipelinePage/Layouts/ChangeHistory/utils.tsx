@@ -5,7 +5,6 @@ import {
 	LoadingOutlined,
 } from '@ant-design/icons';
 import { Spin } from 'antd';
-import React from 'react';
 
 export function getDeploymentStage(value: string): string {
 	switch (value) {

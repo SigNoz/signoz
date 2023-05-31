@@ -1,6 +1,5 @@
 import { HolderOutlined } from '@ant-design/icons';
 import { Switch } from 'antd';
-import React from 'react';
 
 import { holdIconStyle } from '../config';
 import { LastActionColumn } from '../styles';

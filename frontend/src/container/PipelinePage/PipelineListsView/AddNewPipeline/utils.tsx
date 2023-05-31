@@ -1,5 +1,3 @@
-import React from 'react';
-
 import { pipelineFields } from '../config';
 
 export const renderPipelineForm = (): Array<JSX.Element> =>

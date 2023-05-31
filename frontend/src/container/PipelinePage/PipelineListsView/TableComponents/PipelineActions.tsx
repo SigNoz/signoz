@@ -1,5 +1,3 @@
-import React from 'react';
-
 import { IconListStyle } from '../styles';
 import DeleteAction from './TableActions/DeleteAction';
 import EditAction from './TableActions/EditAction';

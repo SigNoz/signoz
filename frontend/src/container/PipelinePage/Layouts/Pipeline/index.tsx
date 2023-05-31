@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { Pipeline } from 'types/api/pipeline/def';
 
 import PipelineListsView from '../../PipelineListsView';

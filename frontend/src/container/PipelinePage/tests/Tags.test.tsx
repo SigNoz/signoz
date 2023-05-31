@@ -1,6 +1,5 @@
 import { render } from '@testing-library/react';
 import Tags from 'container/PipelinePage/PipelineListsView/TableComponents/Tags';
-import React from 'react';
 import { I18nextProvider } from 'react-i18next';
 import { Provider } from 'react-redux';
 import { MemoryRouter } from 'react-router-dom';

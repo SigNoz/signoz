@@ -1,7 +1,6 @@
 import { render } from '@testing-library/react';
 import { pipelineMockData } from 'container/PipelinePage/mocks/pipeline';
 import TableExpandIcon from 'container/PipelinePage/PipelineListsView/TableComponents/TableExpandIcon';
-import React from 'react';
 import { I18nextProvider } from 'react-i18next';
 import { Provider } from 'react-redux';
 import { MemoryRouter } from 'react-router-dom';

@@ -1,6 +1,5 @@
 import { Form } from 'antd';
 import TagInput from 'container/PipelinePage/components/TagInput';
-import React from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { ProcessorFormField } from '../../AddNewProcessor/config';

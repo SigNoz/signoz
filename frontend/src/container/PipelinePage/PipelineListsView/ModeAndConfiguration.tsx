@@ -1,4 +1,3 @@
-import React from 'react';
 import { ActionMode } from 'types/api/pipeline/def';
 
 import { ModeAndConfigWrapper } from './styles';

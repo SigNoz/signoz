@@ -1,7 +1,6 @@
 import { render } from '@testing-library/react';
 import { Table } from 'antd';
 import { matchMedia } from 'container/PipelinePage/tests/AddNewPipeline.test';
-import React from 'react';
 import { I18nextProvider } from 'react-i18next';
 import { Provider } from 'react-redux';
 import i18n from 'ReactI18';

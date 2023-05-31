@@ -1,5 +1,4 @@
 import { EditOutlined } from '@ant-design/icons';
-import React from 'react';
 
 import { iconStyle, smallIconStyle } from '../../config';
 

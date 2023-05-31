@@ -1,6 +1,5 @@
 import { Form, Input } from 'antd';
 import { ModalFooterTitle } from 'container/PipelinePage/styles';
-import React from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { formValidationRules } from '../../config';

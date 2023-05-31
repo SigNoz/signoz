@@ -1,5 +1,4 @@
 import { Tag } from 'antd';
-import React from 'react';
 
 function Tags({ tags }: TagsProps): JSX.Element {
 	return (

@@ -1,5 +1,4 @@
 import dayjs from 'dayjs';
-import React from 'react';
 
 function DeploymentTime(deployTime: string): JSX.Element {
 	return (

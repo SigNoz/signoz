@@ -1,6 +1,6 @@
 import { EditFilled, PlusOutlined } from '@ant-design/icons';
 import TextToolTip from 'components/TextToolTip';
-import React, { useCallback, useMemo } from 'react';
+import { useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ActionMode, ActionType, Pipeline } from 'types/api/pipeline/def';
 

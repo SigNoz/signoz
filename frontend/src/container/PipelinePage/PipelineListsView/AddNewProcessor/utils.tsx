@@ -1,5 +1,3 @@
-import React from 'react';
-
 import { processorFields, ProcessorFormField } from './config';
 import NameInput from './FormFields/NameInput';
 
