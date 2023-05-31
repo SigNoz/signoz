@@ -105,6 +105,14 @@ export const GroupByFilter = memo(function GroupByFilter({
 				return existGroupResponse;
 			}
 
+			if (!id) {
+				const option = responseKeys.find((item) => item.key === currentValue);
+
+				if (option) {
+					return option;
+				}
+			}
+
 			return {
 				id: uuid(),
 				isColumn,
