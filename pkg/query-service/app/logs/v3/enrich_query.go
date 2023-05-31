@@ -7,48 +7,53 @@ import (
 
 func EnrichmentRequired(params *v3.QueryRangeParamsV3) bool {
 	compositeQuery := params.CompositeQuery
-	if compositeQuery != nil {
-		// Build queries for each builder query
-		for queryName, query := range compositeQuery.BuilderQueries {
-			if query.Expression == queryName && query.DataSource == v3.DataSourceLogs {
-				// check aggregation attribute
-				if query.AggregateAttribute.Key != "" {
-					if !isEnriched(query.AggregateAttribute) {
-						return true
-					}
-				}
+	if compositeQuery == nil {
+		return false
+	}
 
-				// enrich filter attribute
-				if query.Filters != nil && len(query.Filters.Items) != 0 {
-					for i := 0; i < len(query.Filters.Items); i++ {
-						if !isEnriched(query.Filters.Items[i].Key) {
-							return true
-						}
-					}
-				}
+	// Build queries for each builder query
+	for queryName, query := range compositeQuery.BuilderQueries {
+		if query.Expression != queryName && query.DataSource != v3.DataSourceLogs {
+			continue
+		}
 
-				groupByLookup := map[string]struct{}{}
-				// enrich groupby
-				for i := 0; i < len(query.GroupBy); i++ {
-					if !isEnriched(query.GroupBy[i]) {
-						return true
-					}
-					groupByLookup[query.GroupBy[i].Key] = struct{}{}
-				}
-
-				// enrich orderby
-				for i := 0; i < len(query.OrderBy); i++ {
-					if _, ok := groupByLookup[query.OrderBy[i].ColumnName]; !ok {
-						key := v3.AttributeKey{Key: query.OrderBy[i].ColumnName}
-						if !isEnriched(key) {
-							return true
-						}
-					}
-				}
-
+		// check aggregation attribute
+		if query.AggregateAttribute.Key != "" {
+			if !isEnriched(query.AggregateAttribute) {
+				return true
 			}
 		}
+
+		// check filter attribute
+		if query.Filters != nil && len(query.Filters.Items) != 0 {
+			for i := 0; i < len(query.Filters.Items); i++ {
+				if !isEnriched(query.Filters.Items[i].Key) {
+					return true
+				}
+			}
+		}
+
+		groupByLookup := map[string]struct{}{}
+		// check groupby
+		for i := 0; i < len(query.GroupBy); i++ {
+			if !isEnriched(query.GroupBy[i]) {
+				return true
+			}
+			groupByLookup[query.GroupBy[i].Key] = struct{}{}
+		}
+
+		// check orderby
+		for i := 0; i < len(query.OrderBy); i++ {
+			if _, ok := groupByLookup[query.OrderBy[i].ColumnName]; !ok {
+				key := v3.AttributeKey{Key: query.OrderBy[i].ColumnName}
+				if !isEnriched(key) {
+					return true
+				}
+			}
+		}
+
 	}
+
 	return false
 }
 
