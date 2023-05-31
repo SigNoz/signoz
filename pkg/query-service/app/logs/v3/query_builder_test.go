@@ -43,7 +43,7 @@ var testGetClickhouseColumnNameData = []struct {
 func TestGetClickhouseColumnName(t *testing.T) {
 	for _, tt := range testGetClickhouseColumnNameData {
 		Convey("testGetClickhouseColumnNameData", t, func() {
-			columnName, err := getClickhouseColumnName(tt.AttributeKey, map[string]v3.AttributeKey{})
+			columnName, err := getClickhouseColumnName(tt.AttributeKey)
 			So(err, ShouldBeNil)
 			So(columnName, ShouldEqual, tt.ExpectedColumnName)
 		})
@@ -100,7 +100,7 @@ var testGetSelectLabelsData = []struct {
 func TestGetSelectLabels(t *testing.T) {
 	for _, tt := range testGetSelectLabelsData {
 		Convey("testGetSelectLabelsData", t, func() {
-			selectLabels, err := getSelectLabels(tt.AggregateOperator, tt.GroupByTags, map[string]v3.AttributeKey{})
+			selectLabels, err := getSelectLabels(tt.AggregateOperator, tt.GroupByTags)
 			So(err, ShouldBeNil)
 			So(selectLabels, ShouldEqual, tt.SelectLabels)
 		})
@@ -253,7 +253,7 @@ var timeSeriesFilterQueryData = []struct {
 func TestBuildLogsTimeSeriesFilterQuery(t *testing.T) {
 	for _, tt := range timeSeriesFilterQueryData {
 		Convey("TestBuildLogsTimeSeriesFilterQuery", t, func() {
-			query, err := buildLogsTimeSeriesFilterQuery(tt.FilterSet, tt.GroupBy, tt.Fields)
+			query, err := buildLogsTimeSeriesFilterQuery(tt.FilterSet, tt.GroupBy)
 			if tt.Error != "" {
 				So(err.Error(), ShouldEqual, tt.Error)
 			} else {
@@ -727,7 +727,7 @@ var testBuildLogsQueryData = []struct {
 func TestBuildLogsQuery(t *testing.T) {
 	for _, tt := range testBuildLogsQueryData {
 		Convey("TestBuildLogsQuery", t, func() {
-			query, err := buildLogsQuery(tt.Start, tt.End, tt.Step, tt.BuilderQuery, map[string]v3.AttributeKey{})
+			query, err := buildLogsQuery(tt.Start, tt.End, tt.Step, tt.BuilderQuery)
 			So(err, ShouldBeNil)
 			So(query, ShouldEqual, tt.ExpectedQuery)
 
@@ -836,42 +836,19 @@ var testOrderBy = []struct {
 				Order:      "asc",
 			},
 			{
-				ColumnName: "timestamp",
+				ColumnName: "response_time",
 				Order:      "desc",
 			},
 		},
 		Tags:   []string{"name", "bytes"},
-		Result: "name asc,bytes asc,value asc,timestamp desc",
-	},
-	{
-		Name: "Test 5",
-		Items: []v3.OrderBy{
-			{
-				ColumnName: "name",
-				Order:      "asc",
-			},
-			{
-				ColumnName: constants.SigNozOrderByValue,
-				Order:      "asc",
-			},
-			{
-				ColumnName: "bytes",
-				Order:      "asc",
-			},
-			{
-				ColumnName: "ts",
-				Order:      "asc",
-			},
-		},
-		Tags:   []string{"name", "bytes"},
-		Result: "name asc,bytes asc,value asc,ts asc",
+		Result: "name asc,bytes asc,value asc,attributes_string_value[indexOf(attributes_string_key, 'response_time')] desc",
 	},
 }
 
 func TestOrderBy(t *testing.T) {
 	for _, tt := range testOrderBy {
 		Convey("testOrderBy", t, func() {
-			res := orderBy(tt.Items, tt.Tags, map[string]v3.AttributeKey{})
+			res := orderBy(tt.Items, tt.Tags)
 			So(res, ShouldEqual, tt.Result)
 
 			// So(multiplier, ShouldEqual, tt.Multiplier)

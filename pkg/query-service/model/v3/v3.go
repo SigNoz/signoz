@@ -532,8 +532,12 @@ type FilterItem struct {
 }
 
 type OrderBy struct {
-	ColumnName string `json:"columnName"`
-	Order      string `json:"order"`
+	ColumnName string               `json:"columnName"`
+	Order      string               `json:"order"`
+	Key        string               `json:"-"`
+	DataType   AttributeKeyDataType `json:"-"`
+	Type       AttributeKeyType     `json:"-"`
+	IsColumn   bool                 `json:"-"`
 }
 
 type Having struct {
