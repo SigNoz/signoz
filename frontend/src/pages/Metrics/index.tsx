@@ -8,7 +8,7 @@ import ResourceAttributesFilter from 'container/ResourceAttributesFilter';
 import { useNotifications } from 'hooks/useNotifications';
 import useResourceAttribute from 'hooks/useResourceAttribute';
 import { convertRawQueriesToTraceSelectedTags } from 'hooks/useResourceAttribute/utils';
-import React, { useEffect, useMemo } from 'react';
+import { useEffect, useMemo } from 'react';
 import { connect, useSelector } from 'react-redux';
 import { useLocation } from 'react-router-dom';
 import { bindActionCreators, Dispatch } from 'redux';

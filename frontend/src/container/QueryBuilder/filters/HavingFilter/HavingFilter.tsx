@@ -1,6 +1,7 @@
 import { Select } from 'antd';
 // ** Constants
 import { HAVING_OPERATORS, initialHavingValues } from 'constants/queryBuilder';
+import { HAVING_FILTER_REGEXP } from 'constants/regExp';
 import { HavingFilterTag } from 'container/QueryBuilder/components';
 import { HavingTagRenderProps } from 'container/QueryBuilder/components/HavingFilterTag/HavingFilterTag.interfaces';
 // ** Hooks
@@ -11,8 +12,9 @@ import {
 } from 'lib/query/transformQueryBuilderData';
 // ** Helpers
 import { transformStringWithPrefix } from 'lib/query/transformStringWithPrefix';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Having, HavingForm } from 'types/api/queryBuilder/queryBuilderData';
+import { DataSource } from 'types/common/queryBuilder';
 import { SelectOption } from 'types/common/select';
 
 // ** Types
@@ -33,7 +35,6 @@ export function HavingFilter({
 	);
 
 	const { isMulti } = useTagValidation(
-		searchText,
 		currentFormValue.op,
 		currentFormValue.value,
 	);
@@ -101,9 +102,7 @@ export function HavingFilter({
 			const values = getHavingObject(search).value.join(' ');
 
 			if (values) {
-				const numRegexp = /^[-\d.,\s]+$/;
-
-				return numRegexp.test(values);
+				return HAVING_FILTER_REGEXP.test(values);
 			}
 
 			return true;
@@ -205,7 +204,9 @@ export function HavingFilter({
 
 	const handleDeselect = (value: string): void => {
 		const result = localValues.filter((item) => item !== value);
-		setLocalValues(result);
+		const having: Having[] = result.map(transformFromStringToHaving);
+		onChange(having);
+		resetChanges();
 	};
 
 	useEffect(() => {
@@ -216,6 +217,11 @@ export function HavingFilter({
 		setLocalValues(transformHavingToStringValue(having));
 	}, [having]);
 
+	const isMetricsDataSource = useMemo(
+		() => query.dataSource === DataSource.METRICS,
+		[query.dataSource],
+	);
+
 	return (
 		<Select
 			autoClearSearchValue={false}
@@ -225,7 +231,7 @@ export function HavingFilter({
 			tagRender={tagRender}
 			value={localValues}
 			data-testid="havingSelect"
-			disabled={!query.aggregateAttribute.key}
+			disabled={isMetricsDataSource && !query.aggregateAttribute.key}
 			style={{ width: '100%' }}
 			notFoundContent={currentFormValue.value.length === 0 ? undefined : null}
 			placeholder="Count(operation) > 5"

@@ -7,7 +7,7 @@ import { Button, Divider, Select } from 'antd';
 import { getGlobalTime } from 'container/LogsSearchFilter/utils';
 import { getMinMax } from 'container/TopNav/AutoRefresh/config';
 import { defaultSelectStyle } from 'pages/Logs/config';
-import React, { memo, useMemo } from 'react';
+import { memo, useMemo } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { Dispatch } from 'redux';
 import { AppState } from 'store/reducers';

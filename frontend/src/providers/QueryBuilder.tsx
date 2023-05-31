@@ -2,13 +2,17 @@ import {
 	alphabet,
 	formulasNames,
 	initialFormulaBuilderFormValues,
+	initialQuery,
 	initialQueryBuilderFormValues,
-	mapOfOperators,
+	initialSingleQueryMap,
 	MAX_FORMULAS,
 	MAX_QUERIES,
+	PANEL_TYPES,
 } from 'constants/queryBuilder';
+import { GRAPH_TYPES } from 'container/NewDashboard/ComponentsSlider';
 import { createNewBuilderItemName } from 'lib/newQueryBuilder/createNewBuilderItemName';
-import React, {
+import { getOperatorsBySourceAndPanelType } from 'lib/newQueryBuilder/getOperatorsBySourceAndPanelType';
+import {
 	createContext,
 	PropsWithChildren,
 	useCallback,
@@ -16,11 +20,14 @@ import React, {
 	useState,
 } from 'react';
 // ** Types
-// TODO: Rename Types on the Reusable type for any source
 import {
 	IBuilderFormula,
 	IBuilderQuery,
+	IClickHouseQuery,
+	IPromQLQuery,
+	QueryState,
 } from 'types/api/queryBuilder/queryBuilderData';
+import { EQueryType } from 'types/common/dashboard';
 import {
 	DataSource,
 	QueryBuilderContextType,
@@ -28,66 +35,95 @@ import {
 } from 'types/common/queryBuilder';
 
 export const QueryBuilderContext = createContext<QueryBuilderContextType>({
-	queryBuilderData: { queryData: [], queryFormulas: [] },
+	currentQuery: initialQuery,
+	queryType: EQueryType.QUERY_BUILDER,
 	initialDataSource: null,
+	panelType: PANEL_TYPES.TIME_SERIES,
 	resetQueryBuilderData: () => {},
+	resetQueryBuilderInfo: () => {},
 	handleSetQueryData: () => {},
 	handleSetFormulaData: () => {},
+	handleSetQueryItemData: () => {},
+	handleSetPanelType: () => {},
+	handleSetQueryType: () => {},
 	initQueryBuilderData: () => {},
 	setupInitialDataSource: () => {},
-	removeEntityByIndex: () => {},
-	addNewQuery: () => {},
+	removeQueryBuilderEntityByIndex: () => {},
+	removeQueryTypeItemByIndex: () => {},
+	addNewBuilderQuery: () => {},
 	addNewFormula: () => {},
+	addNewQueryItem: () => {},
 });
-
-const initialQueryBuilderData: QueryBuilderData = {
-	queryData: [],
-	queryFormulas: [],
-};
 
 export function QueryBuilderProvider({
 	children,
 }: PropsWithChildren): JSX.Element {
-	// TODO: this is temporary. It will be used when we have fixed dataSource and need create new query with this data source
-	// eslint-disable-next-line @typescript-eslint/no-unused-vars
 	const [initialDataSource, setInitialDataSource] = useState<DataSource | null>(
 		null,
 	);
 
-	// TODO: when initialDataSource will be setuped, on create button initial dataSource will from initialDataSource
-	const [queryBuilderData, setQueryBuilderData] = useState<QueryBuilderData>({
-		queryData: [],
-		queryFormulas: [],
-	});
+	const [panelType, setPanelType] = useState<GRAPH_TYPES>(
+		PANEL_TYPES.TIME_SERIES,
+	);
 
-	// ** Method for resetting query builder data
-	const resetQueryBuilderData = useCallback((): void => {
-		setQueryBuilderData(initialQueryBuilderData);
+	const [currentQuery, setCurrentQuery] = useState<QueryState>(initialQuery);
+
+	const [queryType, setQueryType] = useState<EQueryType>(
+		EQueryType.QUERY_BUILDER,
+	);
+
+	const handleSetQueryType = useCallback((newQueryType: EQueryType) => {
+		setQueryType(newQueryType);
 	}, []);
 
-	// ** Method for setuping query builder data
-	// ** Before setuping transform data from backend to frontend format
+	const resetQueryBuilderInfo = useCallback((): void => {
+		setInitialDataSource(null);
+		setPanelType(PANEL_TYPES.TIME_SERIES);
+	}, []);
+
+	const resetQueryBuilderData = useCallback(() => {
+		setCurrentQuery(initialQuery);
+	}, []);
+
 	const initQueryBuilderData = useCallback(
-		(queryBuilderData: QueryBuilderData): void => {
-			setQueryBuilderData(queryBuilderData);
+		(query: QueryState, queryType: EQueryType): void => {
+			setCurrentQuery(query);
+			setQueryType(queryType);
 		},
 		[],
 	);
 
-	const removeEntityByIndex = useCallback(
+	const removeQueryBuilderEntityByIndex = useCallback(
 		(type: keyof QueryBuilderData, index: number) => {
-			setQueryBuilderData((prevState) => {
-				const currentArray: (IBuilderQuery | IBuilderFormula)[] = prevState[type];
+			setCurrentQuery((prevState) => {
+				const currentArray: (IBuilderQuery | IBuilderFormula)[] =
+					prevState.builder[type];
 				return {
 					...prevState,
-					[type]: currentArray.filter((item, i) => index !== i),
+					builder: {
+						...prevState.builder,
+						[type]: currentArray.filter((_, i) => index !== i),
+					},
 				};
 			});
 		},
 		[],
 	);
 
-	const createNewQuery = useCallback(
+	const removeQueryTypeItemByIndex = useCallback(
+		(type: EQueryType.PROM | EQueryType.CLICKHOUSE, index: number) => {
+			setCurrentQuery((prevState) => {
+				const targetArray: (IPromQLQuery | IClickHouseQuery)[] = prevState[type];
+				return {
+					...prevState,
+					[type]: targetArray.filter((_, i) => index !== i),
+				};
+			});
+		},
+		[],
+	);
+
+	const createNewBuilderQuery = useCallback(
 		(queries: IBuilderQuery[]): IBuilderQuery => {
 			const existNames = queries.map((item) => item.queryName);
 
@@ -101,17 +137,20 @@ export function QueryBuilderProvider({
 				...(initialDataSource
 					? {
 							dataSource: initialDataSource,
-							aggregateOperator: mapOfOperators[initialDataSource][0],
+							aggregateOperator: getOperatorsBySourceAndPanelType({
+								dataSource: initialDataSource,
+								panelType,
+							})[0].value,
 					  }
 					: {}),
 			};
 
 			return newQuery;
 		},
-		[initialDataSource],
+		[initialDataSource, panelType],
 	);
 
-	const createNewFormula = useCallback((formulas: IBuilderFormula[]) => {
+	const createNewBuilderFormula = useCallback((formulas: IBuilderFormula[]) => {
 		const existNames = formulas.map((item) => item.queryName);
 
 		const newFormula: IBuilderFormula = {
@@ -125,28 +164,73 @@ export function QueryBuilderProvider({
 		return newFormula;
 	}, []);
 
-	const addNewQuery = useCallback(() => {
-		setQueryBuilderData((prevState) => {
-			if (prevState.queryData.length >= MAX_QUERIES) return prevState;
+	const createNewQueryTypeItem = useCallback(
+		(
+			itemArray: QueryState['clickhouse_sql'] | QueryState['promql'],
+			type: EQueryType.CLICKHOUSE | EQueryType.PROM,
+		): IPromQLQuery | IClickHouseQuery => {
+			const existNames = itemArray.map((item) => item.name);
 
-			const newQuery = createNewQuery(prevState.queryData);
+			const newItem: IPromQLQuery | IClickHouseQuery = {
+				...initialSingleQueryMap[type],
+				name: createNewBuilderItemName({
+					existNames,
+					sourceNames: alphabet,
+				}),
+			};
 
-			return { ...prevState, queryData: [...prevState.queryData, newQuery] };
-		});
-	}, [createNewQuery]);
+			return newItem;
+		},
+		[],
+	);
 
-	const addNewFormula = useCallback(() => {
-		setQueryBuilderData((prevState) => {
-			if (prevState.queryFormulas.length >= MAX_FORMULAS) return prevState;
+	const addNewQueryItem = useCallback(
+		(type: EQueryType.CLICKHOUSE | EQueryType.PROM) => {
+			setCurrentQuery((prevState) => {
+				if (prevState[type].length >= MAX_QUERIES) return prevState;
 
-			const newFormula = createNewFormula(prevState.queryFormulas);
+				const newQuery = createNewQueryTypeItem(prevState[type], type);
+
+				return {
+					...prevState,
+					[type]: [...prevState[type], newQuery],
+				};
+			});
+		},
+		[createNewQueryTypeItem],
+	);
+
+	const addNewBuilderQuery = useCallback(() => {
+		setCurrentQuery((prevState) => {
+			if (prevState.builder.queryData.length >= MAX_QUERIES) return prevState;
+
+			const newQuery = createNewBuilderQuery(prevState.builder.queryData);
 
 			return {
 				...prevState,
-				queryFormulas: [...prevState.queryFormulas, newFormula],
+				builder: {
+					...prevState.builder,
+					queryData: [...prevState.builder.queryData, newQuery],
+				},
 			};
 		});
-	}, [createNewFormula]);
+	}, [createNewBuilderQuery]);
+
+	const addNewFormula = useCallback(() => {
+		setCurrentQuery((prevState) => {
+			if (prevState.builder.queryFormulas.length >= MAX_FORMULAS) return prevState;
+
+			const newFormula = createNewBuilderFormula(prevState.builder.queryFormulas);
+
+			return {
+				...prevState,
+				builder: {
+					...prevState.builder,
+					queryFormulas: [...prevState.builder.queryFormulas, newFormula],
+				},
+			};
+		});
+	}, [createNewBuilderFormula]);
 
 	const setupInitialDataSource = useCallback(
 		(newInitialDataSource: DataSource | null) =>
@@ -154,78 +238,124 @@ export function QueryBuilderProvider({
 		[],
 	);
 
-	const updateQueryBuilderData = useCallback(
-		(queries: IBuilderQuery[], index: number, newQueryData: IBuilderQuery) =>
-			queries.map((item, idx) => (index === idx ? newQueryData : item)),
+	const updateQueryBuilderData: <T>(
+		arr: T[],
+		index: number,
+		newQueryItem: T,
+	) => T[] = useCallback(
+		(arr, index, newQueryItem) =>
+			arr.map((item, idx) => (index === idx ? newQueryItem : item)),
+
 		[],
 	);
 
-	const updateFormulaBuilderData = useCallback(
-		(formulas: IBuilderFormula[], index: number, newFormula: IBuilderFormula) =>
-			formulas.map((item, idx) => (index === idx ? newFormula : item)),
-		[],
-	);
-
-	const handleSetQueryData = useCallback(
-		(index: number, newQueryData: IBuilderQuery): void => {
-			setQueryBuilderData((prevState) => {
+	const handleSetQueryItemData = useCallback(
+		(
+			index: number,
+			type: EQueryType.PROM | EQueryType.CLICKHOUSE,
+			newQueryData: IPromQLQuery | IClickHouseQuery,
+		) => {
+			setCurrentQuery((prevState) => {
 				const updatedQueryBuilderData = updateQueryBuilderData(
-					prevState.queryData,
+					prevState[type],
 					index,
 					newQueryData,
 				);
 
 				return {
 					...prevState,
-					queryData: updatedQueryBuilderData,
+					[type]: updatedQueryBuilderData,
+				};
+			});
+		},
+		[updateQueryBuilderData],
+	);
+
+	const handleSetQueryData = useCallback(
+		(index: number, newQueryData: IBuilderQuery): void => {
+			setCurrentQuery((prevState) => {
+				const updatedQueryBuilderData = updateQueryBuilderData(
+					prevState.builder.queryData,
+					index,
+					newQueryData,
+				);
+
+				return {
+					...prevState,
+					builder: {
+						...prevState.builder,
+						queryData: updatedQueryBuilderData,
+					},
 				};
 			});
 		},
 		[updateQueryBuilderData],
 	);
 	const handleSetFormulaData = useCallback(
-		// eslint-disable-next-line @typescript-eslint/no-unused-vars
 		(index: number, formulaData: IBuilderFormula): void => {
-			setQueryBuilderData((prevState) => {
-				const updatedFormulasBuilderData = updateFormulaBuilderData(
-					prevState.queryFormulas,
+			setCurrentQuery((prevState) => {
+				const updatedFormulasBuilderData = updateQueryBuilderData(
+					prevState.builder.queryFormulas,
 					index,
 					formulaData,
 				);
 
 				return {
 					...prevState,
-					queryFormulas: updatedFormulasBuilderData,
+					builder: {
+						...prevState.builder,
+						queryFormulas: updatedFormulasBuilderData,
+					},
 				};
 			});
 		},
-		[updateFormulaBuilderData],
+		[updateQueryBuilderData],
 	);
+
+	const handleSetPanelType = useCallback((newPanelType: GRAPH_TYPES) => {
+		setPanelType(newPanelType);
+	}, []);
 
 	const contextValues: QueryBuilderContextType = useMemo(
 		() => ({
-			queryBuilderData,
+			currentQuery,
+			queryType,
 			initialDataSource,
+			panelType,
 			resetQueryBuilderData,
+			resetQueryBuilderInfo,
 			handleSetQueryData,
 			handleSetFormulaData,
+			handleSetQueryItemData,
+			handleSetPanelType,
+			handleSetQueryType,
 			initQueryBuilderData,
 			setupInitialDataSource,
-			removeEntityByIndex,
-			addNewQuery,
+			removeQueryBuilderEntityByIndex,
+			removeQueryTypeItemByIndex,
+			addNewBuilderQuery,
 			addNewFormula,
+			addNewQueryItem,
 		}),
 		[
-			queryBuilderData,
+			currentQuery,
 			initialDataSource,
+			panelType,
+			queryType,
 			resetQueryBuilderData,
+			resetQueryBuilderInfo,
 			handleSetQueryData,
 			handleSetFormulaData,
+			handleSetQueryItemData,
+			handleSetPanelType,
+			handleSetQueryType,
 			initQueryBuilderData,
 			setupInitialDataSource,
-			removeEntityByIndex,
-			addNewQuery,
+			removeQueryBuilderEntityByIndex,
+			removeQueryTypeItemByIndex,
+			addNewBuilderQuery,
 			addNewFormula,
+			addNewQueryItem,
 		],
 	);
 

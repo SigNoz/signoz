@@ -14,15 +14,16 @@ import {
 	GroupByFilter,
 	HavingFilter,
 	OperatorsSelect,
+	OrderByFilter,
 	ReduceToFilter,
 } from 'container/QueryBuilder/filters';
 import AggregateEveryFilter from 'container/QueryBuilder/filters/AggregateEveryFilter';
 import LimitFilter from 'container/QueryBuilder/filters/LimitFilter/LimitFilter';
-import { OrderByFilter } from 'container/QueryBuilder/filters/OrderByFilter';
 import QueryBuilderSearch from 'container/QueryBuilder/filters/QueryBuilderSearch';
+import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useQueryOperations } from 'hooks/queryBuilder/useQueryOperations';
 // ** Hooks
-import React, { ChangeEvent, memo, ReactNode, useCallback } from 'react';
+import { ChangeEvent, memo, ReactNode, useCallback } from 'react';
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 import { transformToUpperCase } from 'utils/transformToUpperCase';
 
@@ -34,8 +35,8 @@ export const Query = memo(function Query({
 	isAvailableToDisable,
 	queryVariant,
 	query,
-	panelType,
 }: QueryProps): JSX.Element {
+	const { panelType } = useQueryBuilder();
 	const {
 		operators,
 		isMetricsDataSource,
@@ -45,7 +46,7 @@ export const Query = memo(function Query({
 		handleChangeQueryData,
 		handleChangeOperator,
 		handleDeleteQuery,
-	} = useQueryOperations({ index, query, panelType });
+	} = useQueryOperations({ index, query });
 
 	const handleChangeAggregateEvery = useCallback(
 		(value: IBuilderQuery['stepInterval']) => {
@@ -80,8 +81,8 @@ export const Query = memo(function Query({
 	}, [handleChangeQueryData, query]);
 
 	const handleChangeTagFilters = useCallback(
-		(value: IBuilderQuery['tagFilters']) => {
-			handleChangeQueryData('tagFilters', value);
+		(value: IBuilderQuery['filters']) => {
+			handleChangeQueryData('filters', value);
 		},
 		[handleChangeQueryData],
 	);
@@ -211,7 +212,7 @@ export const Query = memo(function Query({
 	return (
 		<ListItemWrapper onDelete={handleDeleteQuery}>
 			<Col span={24}>
-				<Row align="middle">
+				<Row align="middle" gutter={[5, 11]}>
 					<Col>
 						<ListMarker
 							isDisabled={query.disabled}
@@ -220,17 +221,38 @@ export const Query = memo(function Query({
 							index={index}
 							isAvailableToDisable={isAvailableToDisable}
 						/>
+					</Col>
+					<Col>
 						{queryVariant === 'dropdown' ? (
 							<DataSourceDropdown
 								onChange={handleChangeDataSource}
 								value={query.dataSource}
-								style={{ marginRight: '0.5rem', minWidth: '5.625rem' }}
+								style={{ minWidth: '5.625rem' }}
 							/>
 						) : (
 							<FilterLabel label={transformToUpperCase(query.dataSource)} />
 						)}
 					</Col>
-					<Col flex="1">
+					{isMetricsDataSource && (
+						<Col span={12}>
+							<Row gutter={[11, 5]}>
+								<Col flex="5.93rem">
+									<OperatorsSelect
+										value={query.aggregateOperator}
+										onChange={handleChangeOperator}
+										operators={operators}
+									/>
+								</Col>
+								<Col flex="1 1 12.5rem">
+									<AggregatorFilter
+										onChange={handleChangeAggregatorAttribute}
+										query={query}
+									/>
+								</Col>
+							</Row>
+						</Col>
+					)}
+					<Col flex="1 1 20rem">
 						<Row gutter={[11, 5]}>
 							{isMetricsDataSource && (
 								<Col>
@@ -244,25 +266,26 @@ export const Query = memo(function Query({
 					</Col>
 				</Row>
 			</Col>
-			<Col span={11}>
-				<Row gutter={[11, 5]}>
-					<Col flex="5.93rem">
-						<OperatorsSelect
-							value={query.aggregateOperator}
-							onChange={handleChangeOperator}
-							operators={operators}
-						/>
-					</Col>
-					<Col flex="1 1 12.5rem">
-						<AggregatorFilter
-							onChange={handleChangeAggregatorAttribute}
-							query={query}
-						/>
-					</Col>
-				</Row>
-			</Col>
-
-			<Col span={11} offset={2}>
+			{!isMetricsDataSource && (
+				<Col span={11}>
+					<Row gutter={[11, 5]}>
+						<Col flex="5.93rem">
+							<OperatorsSelect
+								value={query.aggregateOperator}
+								onChange={handleChangeOperator}
+								operators={operators}
+							/>
+						</Col>
+						<Col flex="1 1 12.5rem">
+							<AggregatorFilter
+								onChange={handleChangeAggregatorAttribute}
+								query={query}
+							/>
+						</Col>
+					</Row>
+				</Col>
+			)}
+			<Col span={11} offset={isMetricsDataSource ? 0 : 2}>
 				<Row gutter={[11, 5]}>
 					<Col flex="5.93rem">
 						<FilterLabel

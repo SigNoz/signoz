@@ -4,7 +4,6 @@ import Spinner from 'components/Spinner';
 import WelcomeLeftContainer from 'components/WelcomeLeftContainer';
 import LoginContainer from 'container/Login';
 import useURLQuery from 'hooks/useUrlQuery';
-import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { useQuery } from 'react-query';
 import { useSelector } from 'react-redux';
@@ -24,7 +23,7 @@ function Login(): JSX.Element {
 
 	const versionResult = useQuery({
 		queryFn: getUserVersion,
-		queryKey: 'getUserVersion',
+		queryKey: ['getUserVersion', jwt],
 		enabled: !isLoggedIn,
 	});
 

@@ -1,6 +1,5 @@
 import { render, screen } from '@testing-library/react';
 import { useIsDarkMode } from 'hooks/useDarkMode';
-import React from 'react';
 
 import Editor from './index';
 

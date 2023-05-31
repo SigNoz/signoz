@@ -1,5 +1,4 @@
 import { Typography } from 'antd';
-import React from 'react';
 
 import { GetStartedContent } from './renderConfig';
 import DocSection from './Section';

@@ -3,7 +3,7 @@ import { Col, Input } from 'antd';
 import { ListItemWrapper, ListMarker } from 'container/QueryBuilder/components';
 // ** Hooks
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
-import React, { ChangeEvent, useCallback } from 'react';
+import { ChangeEvent, useCallback } from 'react';
 import { IBuilderFormula } from 'types/api/queryBuilder/queryBuilderData';
 
 // ** Types
@@ -12,11 +12,14 @@ import { FormulaProps } from './Formula.interfaces';
 const { TextArea } = Input;
 
 export function Formula({ index, formula }: FormulaProps): JSX.Element {
-	const { removeEntityByIndex, handleSetFormulaData } = useQueryBuilder();
+	const {
+		removeQueryBuilderEntityByIndex,
+		handleSetFormulaData,
+	} = useQueryBuilder();
 
 	const handleDelete = useCallback(() => {
-		removeEntityByIndex('queryFormulas', index);
-	}, [index, removeEntityByIndex]);
+		removeQueryBuilderEntityByIndex('queryFormulas', index);
+	}, [index, removeQueryBuilderEntityByIndex]);
 
 	const handleToggleDisableFormula = useCallback((): void => {
 		const newFormula: IBuilderFormula = {

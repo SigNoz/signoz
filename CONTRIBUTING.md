@@ -80,7 +80,7 @@ Before sending us a pull request, please ensure that,
 GitHub provides additional document on [forking a repository](https://help.github.com/articles/fork-a-repo/) and 
 [creating a pull request](https://help.github.com/articles/creating-a-pull-request/).
 
-**Note:** Unless your change is small, **please** consider submitting different Pull Rrequest(s):
+**Note:** Unless your change is small, **please** consider submitting different Pull Request(s):
 
 * 1️⃣ First PR should include the overall structure of the new component:
   * Readme, configuration, interfaces or base classes, etc...

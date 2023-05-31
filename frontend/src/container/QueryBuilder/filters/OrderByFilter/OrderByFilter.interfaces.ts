@@ -1,9 +1,11 @@
-import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
-import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
+import {
+	IBuilderQuery,
+	OrderByPayload,
+} from 'types/api/queryBuilder/queryBuilderData';
 
 export type OrderByFilterProps = {
 	query: IBuilderQuery;
-	onChange: (values: BaseAutocompleteData[]) => void;
+	onChange: (values: OrderByPayload[]) => void;
 };
 
 export type OrderByFilterValue = {
