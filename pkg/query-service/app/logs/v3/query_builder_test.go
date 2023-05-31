@@ -84,12 +84,6 @@ var testGetSelectLabelsData = []struct {
 		SelectLabels:      ", host as host",
 	},
 	{
-		Name:              "trace_id field with missing meta",
-		AggregateOperator: v3.AggregateOperatorCount,
-		GroupByTags:       []v3.AttributeKey{{Key: "trace_id"}},
-		SelectLabels:      ", trace_id as trace_id",
-	},
-	{
 		Name:              "trace_id field as an attribute",
 		AggregateOperator: v3.AggregateOperatorCount,
 		GroupByTags:       []v3.AttributeKey{{Key: "trace_id", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag}},
@@ -188,20 +182,6 @@ var timeSeriesFilterQueryData = []struct {
 		ExpectedFilter: " AND attributes_string_value[indexOf(attributes_string_key, 'host')] NOT ILIKE '%102.%'",
 	},
 	{
-		Name: "Test no metadata",
-		FilterSet: &v3.FilterSet{Operator: "AND", Items: []v3.FilterItem{
-			{Key: v3.AttributeKey{Key: "host"}, Value: "102.", Operator: "ncontains"},
-		}},
-		ExpectedFilter: " AND attributes_string_value[indexOf(attributes_string_key, 'host')] NOT ILIKE '%102.%'",
-	},
-	{
-		Name: "Test no metadata number",
-		FilterSet: &v3.FilterSet{Operator: "AND", Items: []v3.FilterItem{
-			{Key: v3.AttributeKey{Key: "bytes"}, Value: 102, Operator: "="},
-		}},
-		ExpectedFilter: " AND attributes_string_value[indexOf(attributes_string_key, 'bytes')] = '102'",
-	},
-	{
 		Name: "Test groupBy",
 		FilterSet: &v3.FilterSet{Operator: "AND", Items: []v3.FilterItem{
 			{Key: v3.AttributeKey{Key: "host", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag}, Value: "102.", Operator: "ncontains"},
@@ -220,32 +200,15 @@ var timeSeriesFilterQueryData = []struct {
 	{
 		Name: "Wrong data",
 		FilterSet: &v3.FilterSet{Operator: "AND", Items: []v3.FilterItem{
-			{Key: v3.AttributeKey{Key: "bytes"}, Value: true, Operator: "="},
+			{Key: v3.AttributeKey{Key: "bytes", Type: v3.AttributeKeyTypeTag, DataType: v3.AttributeKeyDataTypeFloat64}, Value: true, Operator: "="},
 		}},
-		Fields: map[string]v3.AttributeKey{"bytes": {Key: "bytes", DataType: v3.AttributeKeyDataTypeFloat64, Type: v3.AttributeKeyTypeTag}},
-		Error:  "failed to validate and cast value for bytes: invalid data type, expected float, got bool",
-	},
-	{
-		Name: "Cast data",
-		FilterSet: &v3.FilterSet{Operator: "AND", Items: []v3.FilterItem{
-			{Key: v3.AttributeKey{Key: "bytes"}, Value: 102, Operator: "="},
-		}},
-		Fields:         map[string]v3.AttributeKey{"bytes": {Key: "bytes", DataType: v3.AttributeKeyDataTypeInt64, Type: v3.AttributeKeyTypeTag}},
-		ExpectedFilter: " AND attributes_int64_value[indexOf(attributes_int64_key, 'bytes')] = 102",
-	},
-	{
-		Name: "Test top level field w/o metadata",
-		FilterSet: &v3.FilterSet{Operator: "AND", Items: []v3.FilterItem{
-			{Key: v3.AttributeKey{Key: "body"}, Value: "%test%", Operator: "like"},
-		}},
-		ExpectedFilter: " AND body ILIKE '%test%'",
+		Error: "failed to validate and cast value for bytes: invalid data type, expected float, got bool",
 	},
 	{
 		Name: "Test top level field with metadata",
 		FilterSet: &v3.FilterSet{Operator: "AND", Items: []v3.FilterItem{
 			{Key: v3.AttributeKey{Key: "body", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag}, Value: "%test%", Operator: "like"},
 		}},
-		Fields:         map[string]v3.AttributeKey{"body": {Key: "body", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag}},
 		ExpectedFilter: " AND attributes_string_value[indexOf(attributes_string_key, 'body')] ILIKE '%test%'",
 	},
 }
@@ -365,7 +328,7 @@ var testBuildLogsQueryData = []struct {
 			},
 			},
 			GroupBy: []v3.AttributeKey{{Key: "method", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag}},
-			OrderBy: []v3.OrderBy{{ColumnName: "method", Order: "ASC"}, {ColumnName: "ts", Order: "ASC"}},
+			OrderBy: []v3.OrderBy{{ColumnName: "method", Order: "ASC"}, {ColumnName: "ts", Order: "ASC", Key: "ts", IsColumn: true}},
 		},
 		TableName: "logs",
 		ExpectedQuery: "SELECT toStartOfInterval(fromUnixTimestamp64Nano(timestamp), INTERVAL 60 SECOND) AS ts," +
@@ -422,7 +385,7 @@ var testBuildLogsQueryData = []struct {
 			},
 			},
 			GroupBy: []v3.AttributeKey{{Key: "method", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag}},
-			OrderBy: []v3.OrderBy{{ColumnName: "method", Order: "ASC"}, {ColumnName: "x", Order: "ASC"}},
+			OrderBy: []v3.OrderBy{{ColumnName: "method", Order: "ASC"}, {ColumnName: "x", Order: "ASC", Key: "x", IsColumn: true}},
 		},
 		TableName: "logs",
 		ExpectedQuery: "SELECT toStartOfInterval(fromUnixTimestamp64Nano(timestamp), INTERVAL 60 SECOND) AS ts," +
@@ -838,6 +801,9 @@ var testOrderBy = []struct {
 			{
 				ColumnName: "response_time",
 				Order:      "desc",
+				Key:        "response_time",
+				Type:       v3.AttributeKeyTypeTag,
+				DataType:   v3.AttributeKeyDataTypeString,
 			},
 		},
 		Tags:   []string{"name", "bytes"},
