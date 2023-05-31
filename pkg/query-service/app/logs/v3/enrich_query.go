@@ -64,13 +64,22 @@ func isEnriched(field v3.AttributeKey) bool {
 	return true
 }
 
-// func Enrich(params *v3.QueryRangeParamsV3, fields map[string]v3.AttributeKey) {
-// 	if compositeQuery != nil {
+func Enrich(params *v3.QueryRangeParamsV3, fields map[string]v3.AttributeKey) {
+	compositeQuery := params.CompositeQuery
+	if compositeQuery == nil {
+		return
+	}
 
-// 	}
-// }
+	// Build queries for each builder query
+	for queryName, query := range compositeQuery.BuilderQueries {
+		if query.Expression != queryName && query.DataSource != v3.DataSourceLogs {
+			continue
+		}
+		enrichLogsQuery(query, fields)
+	}
+}
 
-func EnrichLogsQuery(query *v3.BuilderQuery, fields map[string]v3.AttributeKey) error {
+func enrichLogsQuery(query *v3.BuilderQuery, fields map[string]v3.AttributeKey) error {
 	// enrich aggregation attribute
 	if query.AggregateAttribute.Key != "" {
 		query.AggregateAttribute = enrichFieldWithMetadata(query.AggregateAttribute, fields)
@@ -101,28 +110,29 @@ func EnrichLogsQuery(query *v3.BuilderQuery, fields map[string]v3.AttributeKey) 
 }
 
 func enrichFieldWithMetadata(field v3.AttributeKey, fields map[string]v3.AttributeKey) v3.AttributeKey {
-	if field.Type == "" || field.DataType == "" {
-		// if type is unknown check if it is a top level key
-		if v, ok := constants.StaticFieldsLogsV3[field.Key]; ok {
-			if (v3.AttributeKey{} != v) {
-				return v
-			}
-		}
+	if isEnriched(field) {
+		return field
+	}
 
-		// check if the field is present in the fields map
-		if existingField, ok := fields[field.Key]; ok {
-			if existingField.IsColumn {
-				return field
-			}
-			field.Type = existingField.Type
-			field.DataType = existingField.DataType
+	// if type is unknown check if it is a top level key
+	if v, ok := constants.StaticFieldsLogsV3[field.Key]; ok {
+		if (v3.AttributeKey{} != v) {
+			return v
+		}
+	}
+
+	// check if the field is present in the fields map
+	if existingField, ok := fields[field.Key]; ok {
+		if existingField.IsColumn {
 			return field
 		}
-
-		// enrich with default values if metadata is not found
-		field.Type = v3.AttributeKeyTypeTag
-		field.DataType = v3.AttributeKeyDataTypeString
-
+		field.Type = existingField.Type
+		field.DataType = existingField.DataType
+		return field
 	}
+
+	// enrich with default values if metadata is not found
+	field.Type = v3.AttributeKeyTypeTag
+	field.DataType = v3.AttributeKeyDataTypeString
 	return field
 }
