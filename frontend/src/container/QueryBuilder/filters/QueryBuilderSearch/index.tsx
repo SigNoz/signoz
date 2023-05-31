@@ -8,6 +8,7 @@ import {
 	useEffect,
 	useMemo,
 } from 'react';
+import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import {
 	IBuilderQuery,
 	TagFilter,
@@ -106,9 +107,12 @@ function QueryBuilderSearch({
 
 	useEffect(() => {
 		const initialTagFilters: TagFilter = { items: [], op: 'AND' };
+		const initialSourceKeys = query.filters.items.map(
+			(item) => item.key as BaseAutocompleteData,
+		);
 		initialTagFilters.items = tags.map((tag) => {
 			const { tagKey, tagOperator, tagValue } = getTagToken(tag);
-			const filterAttribute = sourceKeys.find(
+			const filterAttribute = [...initialSourceKeys, ...sourceKeys].find(
 				(key) => key.key === getRemovePrefixFromKey(tagKey),
 			);
 			return {
@@ -128,7 +132,7 @@ function QueryBuilderSearch({
 		});
 		onChange(initialTagFilters);
 		/* eslint-disable react-hooks/exhaustive-deps */
-	}, [sourceKeys, tags]);
+	}, [sourceKeys]);
 
 	return (
 		<Select
