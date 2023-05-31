@@ -1,7 +1,7 @@
 import { Space } from 'antd';
 import ReleaseNote from 'components/ReleaseNote';
 import ListOfAllDashboard from 'container/ListOfDashboard';
-import React, { useEffect } from 'react';
+import { useEffect } from 'react';
 import { connect } from 'react-redux';
 import { useLocation } from 'react-router-dom';
 import { bindActionCreators } from 'redux';

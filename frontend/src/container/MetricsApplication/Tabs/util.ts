@@ -4,7 +4,8 @@ import ROUTES from 'constants/routes';
 import { routeConfig } from 'container/SideNav/config';
 import { getQueryString } from 'container/SideNav/helper';
 import history from 'lib/history';
-import { IQueryBuilderTagFilterItems } from 'types/api/dashboard/getAll';
+import { Dispatch, SetStateAction } from 'react';
+import { TagFilterItem } from 'types/api/queryBuilder/queryBuilderData';
 import { Tags } from 'types/reducer/trace';
 
 export const dbSystemTags: Tags[] = [
@@ -50,9 +51,7 @@ export function onViewTracePopupClick({
 }
 
 export function onGraphClickHandler(
-	setSelectedTimeStamp: (
-		n: number,
-	) => void | React.Dispatch<React.SetStateAction<number>>,
+	setSelectedTimeStamp: (n: number) => void | Dispatch<SetStateAction<number>>,
 ) {
 	return async (
 		event: ChartEvent,
@@ -90,9 +89,7 @@ export function onGraphClickHandler(
 	};
 }
 
-export const handleNonInQueryRange = (
-	tags: IQueryBuilderTagFilterItems[],
-): IQueryBuilderTagFilterItems[] =>
+export const handleNonInQueryRange = (tags: TagFilterItem[]): TagFilterItem[] =>
 	tags.map((tag) => {
 		if (tag.op === 'Not IN') {
 			return {

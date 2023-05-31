@@ -1,7 +1,7 @@
 /* eslint-disable  */
 //@ts-nocheck
 import { useIsDarkMode } from 'hooks/useDarkMode';
-import React, { memo } from 'react';
+import { memo } from 'react';
 import { ForceGraph2D } from 'react-force-graph';
 
 import { getGraphData, getTooltip, transformLabel } from './utils';

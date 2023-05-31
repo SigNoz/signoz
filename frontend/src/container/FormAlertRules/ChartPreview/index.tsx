@@ -7,11 +7,11 @@ import { GRAPH_TYPES } from 'container/NewDashboard/ComponentsSlider';
 import { timePreferenceType } from 'container/NewWidget/RightContainer/timeItems';
 import { Time } from 'container/TopNav/DateTimeSelection/config';
 import getChartData from 'lib/getChartData';
-import React, { useMemo } from 'react';
+import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useQuery } from 'react-query';
 import { GetMetricQueryRange } from 'store/actions/dashboard/getQueryResults';
-import { Query } from 'types/api/dashboard/getAll';
+import { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { EQueryType } from 'types/common/dashboard';
 
 import { ChartContainer, FailedMessageContainer } from './styles';
@@ -60,10 +60,11 @@ function ChartPreview({
 
 		switch (query?.queryType) {
 			case EQueryType.PROM:
-				return query.promQL?.length > 0 && query.promQL[0].query !== '';
+				return query.promql?.length > 0 && query.promql[0].query !== '';
 			case EQueryType.CLICKHOUSE:
 				return (
-					query.clickHouse?.length > 0 && query.clickHouse[0].rawQuery?.length > 0
+					query.clickhouse_sql?.length > 0 &&
+					query.clickhouse_sql[0].rawQuery?.length > 0
 				);
 			case EQueryType.QUERY_BUILDER:
 				return (
@@ -84,13 +85,13 @@ function ChartPreview({
 		queryFn: () =>
 			GetMetricQueryRange({
 				query: query || {
-					queryType: 1,
-					promQL: [],
+					queryType: EQueryType.QUERY_BUILDER,
+					promql: [],
 					builder: {
 						queryFormulas: [],
 						queryData: [],
 					},
-					clickHouse: [],
+					clickhouse_sql: [],
 				},
 				globalSelectedInterval: selectedInterval,
 				graphType,

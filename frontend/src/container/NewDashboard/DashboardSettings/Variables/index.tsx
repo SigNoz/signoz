@@ -4,7 +4,7 @@ import { Button, Modal, Row, Space, Tag } from 'antd';
 import { NotificationInstance } from 'antd/es/notification/interface';
 import { ResizeTable } from 'components/ResizeTable';
 import { useNotifications } from 'hooks/useNotifications';
-import React, { useRef, useState } from 'react';
+import { useRef, useState } from 'react';
 import { connect, useSelector } from 'react-redux';
 import { bindActionCreators, Dispatch } from 'redux';
 import { ThunkDispatch } from 'redux-thunk';

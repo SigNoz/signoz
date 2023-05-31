@@ -1,7 +1,7 @@
 import { Button, Space, Typography } from 'antd';
 import editUser from 'api/user/editUser';
 import { useNotifications } from 'hooks/useNotifications';
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useDispatch, useSelector } from 'react-redux';
 import { Dispatch } from 'redux';

@@ -6,7 +6,6 @@ import { getMetricsQueryRange } from 'api/metrics/getQueryRange';
 import { AxiosError } from 'axios';
 import { GRAPH_TYPES } from 'container/NewDashboard/ComponentsSlider';
 import { ITEMS } from 'container/NewDashboard/ComponentsSlider/menuItems';
-import { EQueryTypeToQueryKeyMapping } from 'container/NewWidget/LeftContainer/QuerySection/types';
 import { timePreferenceType } from 'container/NewWidget/RightContainer/timeItems';
 import { Time } from 'container/TopNav/DateTimeSelection/config';
 import GetMaxMinTime from 'lib/getMaxMinTime';
@@ -19,7 +18,7 @@ import { Dispatch } from 'redux';
 import store from 'store';
 import AppActions from 'types/actions';
 import { ErrorResponse, SuccessResponse } from 'types/api';
-import { Query } from 'types/api/dashboard/getAll';
+import { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
 import { EQueryType } from 'types/common/dashboard';
 import { GlobalReducer } from 'types/reducer/globalTime';
@@ -38,29 +37,31 @@ export async function GetMetricQueryRange({
 	globalSelectedInterval: Time;
 	variables?: Record<string, unknown>;
 }): Promise<SuccessResponse<MetricRangePayloadProps> | ErrorResponse> {
-	const { queryType } = query;
-	const queryKey: Record<EQueryTypeToQueryKeyMapping, string> =
-		EQueryTypeToQueryKeyMapping[EQueryType[query.queryType]];
-	const queryData = query[queryKey];
+	const queryData = query[query.queryType];
 	let legendMap: Record<string, string> = {};
 
 	const QueryPayload = {
 		compositeQuery: {
-			queryType: queryKey,
+			queryType: query.queryType,
 			panelType: graphType,
 		},
 	};
 
-	switch (queryType as EQueryType) {
+	switch (query.queryType) {
 		case EQueryType.QUERY_BUILDER: {
-			const { queryData, queryFormulas } = query.builder;
-			const builderQueries = mapQueryDataToApi({
-				queryData,
-				queryFormulas,
-			});
-			legendMap = builderQueries.newLegendMap;
+			const { queryData: data, queryFormulas } = query.builder;
+			const currentQueryData = mapQueryDataToApi(data, 'queryName');
+			const currentFormulas = mapQueryDataToApi(queryFormulas, 'queryName');
+			const builderQueries = {
+				...currentQueryData.data,
+				...currentFormulas.data,
+			};
+			legendMap = {
+				...currentQueryData.newLegendMap,
+				...currentFormulas.newLegendMap,
+			};
 
-			QueryPayload.compositeQuery.builderQueries = builderQueries.data;
+			QueryPayload.compositeQuery.builderQueries = builderQueries;
 			break;
 		}
 		case EQueryType.CLICKHOUSE: {

@@ -1,7 +1,7 @@
 import '@testing-library/jest-dom/extend-expect';
 
 import { fireEvent, render, screen } from '@testing-library/react';
-import React from 'react';
+import React, { useEffect } from 'react';
 import { IDashboardVariable } from 'types/api/dashboard/getAll';
 
 import VariableItem from './VariableItem';
@@ -130,7 +130,7 @@ describe('VariableItem', () => {
 			/>,
 		);
 
-		expect(React.useEffect).toHaveBeenCalled();
+		expect(useEffect).toHaveBeenCalled();
 	});
 
 	test('calls useEffect only once when the component mounts', () => {

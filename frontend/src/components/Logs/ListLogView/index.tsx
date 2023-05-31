@@ -2,13 +2,12 @@ import { blue, grey, orange } from '@ant-design/colors';
 import { CopyFilled, ExpandAltOutlined } from '@ant-design/icons';
 import Convert from 'ansi-to-html';
 import { Button, Divider, Row, Typography } from 'antd';
-import { map } from 'd3';
 import dayjs from 'dayjs';
 import dompurify from 'dompurify';
 import { useNotifications } from 'hooks/useNotifications';
 // utils
 import { FlatLogData } from 'lib/logs/flatLogData';
-import React, { useCallback, useMemo } from 'react';
+import { useCallback, useMemo } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useCopyToClipboard } from 'react-use';
 // interfaces
@@ -127,7 +126,7 @@ function ListLogView({ logData }: ListLogViewProps): JSX.Element {
 					</>
 				</LogContainer>
 				<div>
-					{map(updatedSelecedFields, (field) =>
+					{updatedSelecedFields.map((field) =>
 						isValidLogField(flattenLogData[field.name] as never) ? (
 							<LogSelectedField
 								key={field.name}

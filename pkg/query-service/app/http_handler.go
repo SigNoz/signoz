@@ -25,6 +25,7 @@ import (
 	"go.signoz.io/signoz/pkg/query-service/app/metrics"
 	metricsv3 "go.signoz.io/signoz/pkg/query-service/app/metrics/v3"
 	"go.signoz.io/signoz/pkg/query-service/app/parser"
+	"go.signoz.io/signoz/pkg/query-service/app/queryBuilder"
 	tracesV3 "go.signoz.io/signoz/pkg/query-service/app/traces/v3"
 	"go.signoz.io/signoz/pkg/query-service/auth"
 	"go.signoz.io/signoz/pkg/query-service/constants"
@@ -67,7 +68,7 @@ type APIHandler struct {
 	ruleManager  *rules.Manager
 	featureFlags interfaces.FeatureLookup
 	ready        func(http.HandlerFunc) http.HandlerFunc
-	queryBuilder *queryBuilder
+	queryBuilder *queryBuilder.QueryBuilder
 
 	// SetupCompleted indicates if SigNoz is ready for general use.
 	// at the moment, we mark the app ready when the first user
@@ -106,16 +107,16 @@ func NewAPIHandler(opts APIHandlerOpts) (*APIHandler, error) {
 		featureFlags: opts.FeatureFlags,
 	}
 
-	builderOpts := queryBuilderOptions{
+	builderOpts := queryBuilder.QueryBuilderOptions{
 		BuildMetricQuery: metricsv3.PrepareMetricQuery,
 		BuildTraceQuery:  tracesV3.PrepareTracesQuery,
 		BuildLogQuery:    logsv3.PrepareLogsQuery,
 	}
-	aH.queryBuilder = NewQueryBuilder(builderOpts)
+	aH.queryBuilder = queryBuilder.NewQueryBuilder(builderOpts)
 
 	aH.ready = aH.testReady
 
-	dashboards.LoadDashboardFiles()
+	dashboards.LoadDashboardFiles(aH.featureFlags)
 	// if errReadingDashboards != nil {
 	// 	return nil, errReadingDashboards
 	// }
@@ -722,7 +723,7 @@ func (aH *APIHandler) getDashboards(w http.ResponseWriter, r *http.Request) {
 func (aH *APIHandler) deleteDashboard(w http.ResponseWriter, r *http.Request) {
 
 	uuid := mux.Vars(r)["uuid"]
-	err := dashboards.DeleteDashboard(uuid)
+	err := dashboards.DeleteDashboard(uuid, aH.featureFlags)
 
 	if err != nil {
 		RespondError(w, err, nil)
@@ -828,7 +829,7 @@ func (aH *APIHandler) updateDashboard(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	dashboard, apiError := dashboards.UpdateDashboard(uuid, postData)
+	dashboard, apiError := dashboards.UpdateDashboard(uuid, postData, aH.featureFlags)
 	if apiError != nil {
 		RespondError(w, apiError, nil)
 		return
@@ -862,7 +863,7 @@ func (aH *APIHandler) saveAndReturn(w http.ResponseWriter, signozDashboard model
 	toSave["widgets"] = signozDashboard.Widgets
 	toSave["variables"] = signozDashboard.Variables
 
-	dashboard, apiError := dashboards.CreateDashboard(toSave)
+	dashboard, apiError := dashboards.CreateDashboard(toSave, aH.featureFlags)
 	if apiError != nil {
 		RespondError(w, apiError, nil)
 		return
@@ -903,7 +904,7 @@ func (aH *APIHandler) createDashboards(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	dash, apiErr := dashboards.CreateDashboard(postData)
+	dash, apiErr := dashboards.CreateDashboard(postData, aH.featureFlags)
 
 	if apiErr != nil {
 		RespondError(w, apiErr, nil)
@@ -1612,7 +1613,11 @@ func (aH *APIHandler) getVersion(w http.ResponseWriter, r *http.Request) {
 }
 
 func (aH *APIHandler) getFeatureFlags(w http.ResponseWriter, r *http.Request) {
-	featureSet := aH.FF().GetFeatureFlags()
+	featureSet, err := aH.FF().GetFeatureFlags()
+	if err != nil {
+		aH.HandleError(w, err, http.StatusInternalServerError)
+		return
+	}
 	aH.Respond(w, featureSet)
 }
 
@@ -2707,7 +2712,7 @@ func (aH *APIHandler) queryRangeV3(ctx context.Context, queryRangeParams *v3.Que
 			return
 		}
 
-		queries, err = aH.queryBuilder.prepareQueries(queryRangeParams, fields, spanKeys)
+		queries, err = aH.queryBuilder.PrepareQueries(queryRangeParams, fields, spanKeys)
 		if err != nil {
 			RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
 			return

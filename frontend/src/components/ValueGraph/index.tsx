@@ -1,5 +1,3 @@
-import React from 'react';
-
 import { Value } from './styles';
 
 function ValueGraph({ value }: ValueGraphProps): JSX.Element {

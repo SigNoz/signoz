@@ -1,7 +1,7 @@
 import { Button, Form, Space } from 'antd';
 import { useForm } from 'antd/lib/form/Form';
 import { useNotifications } from 'hooks/useNotifications';
-import React, { useCallback } from 'react';
+import { useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { AuthDomain, GOOGLE_AUTH, SAML } from 'types/api/SAML/listDomain';
 

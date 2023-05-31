@@ -1,53 +1,29 @@
 import {
-	IBuilderFormula,
-	IBuilderQuery,
+	MapData,
+	MapQueryDataToApiResult,
 } from 'types/api/queryBuilder/queryBuilderData';
-import { QueryBuilderData } from 'types/common/queryBuilder';
 
-type MapQueryDataToApiResult = {
-	data: Record<string, IBuilderQuery | IBuilderFormula>;
-	newLegendMap: Record<string, string>;
-};
-type MapQuery = Record<string, IBuilderQuery>;
-type MapFormula = Record<string, IBuilderFormula>;
-
-export const mapQueryDataToApi = (
-	data: QueryBuilderData,
-): MapQueryDataToApiResult => {
+export const mapQueryDataToApi = <Data extends MapData, Key extends keyof Data>(
+	data: Data[],
+	nameField: Key,
+): MapQueryDataToApiResult<Record<string, Data>> => {
 	const newLegendMap: Record<string, string> = {};
 
-	const preparedQueryData: MapQuery = data.queryData.reduce<MapQuery>(
-		(acc, query) => {
-			const newResult: MapQuery = {
-				...acc,
-				[query.queryName]: {
-					...query,
-				},
-			};
+	const preparedResult = data.reduce<Record<string, Data>>((acc, query) => {
+		const newResult: Record<string, Data> = {
+			...acc,
+			[query[nameField] as string]: {
+				...query,
+			},
+		};
 
-			newLegendMap[query.queryName] = query.legend;
+		newLegendMap[query[nameField] as string] = query.legend;
 
-			return newResult;
-		},
-		{},
-	);
-
-	const preparedFormulaData: MapFormula = data.queryFormulas.reduce<MapFormula>(
-		(acc, formula) => {
-			const newResult: MapFormula = {
-				...acc,
-				[formula.queryName]: {
-					...formula,
-				},
-			};
-
-			return newResult;
-		},
-		{},
-	);
+		return newResult;
+	}, {} as Record<string, Data>);
 
 	return {
-		data: { ...preparedQueryData, ...preparedFormulaData },
+		data: preparedResult,
 		newLegendMap,
 	};
 };

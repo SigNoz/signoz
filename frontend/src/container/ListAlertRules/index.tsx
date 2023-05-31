@@ -3,7 +3,7 @@ import getAll from 'api/alerts/getAll';
 import ReleaseNote from 'components/ReleaseNote';
 import Spinner from 'components/Spinner';
 import { useNotifications } from 'hooks/useNotifications';
-import React, { useEffect } from 'react';
+import { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useQuery } from 'react-query';
 import { useLocation } from 'react-router-dom';

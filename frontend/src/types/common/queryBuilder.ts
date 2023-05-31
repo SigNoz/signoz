@@ -1,7 +1,13 @@
+import { GRAPH_TYPES } from 'container/NewDashboard/ComponentsSlider';
 import {
 	IBuilderFormula,
 	IBuilderQuery,
+	IClickHouseQuery,
+	IPromQLQuery,
+	QueryState,
 } from 'types/api/queryBuilder/queryBuilderData';
+
+import { EQueryType } from './dashboard';
 
 export enum DataSource {
 	METRICS = 'metrics',
@@ -45,7 +51,6 @@ export enum NumberOperators {
 	HIST_QUANTILE_99 = 'hist_quantile_99',
 }
 
-// TODO: add boolean operators from backend
 export enum BoolOperators {
 	NOOP = 'noop',
 	COUNT = 'count',
@@ -147,18 +152,35 @@ export type QueryBuilderData = {
 	queryFormulas: IBuilderFormula[];
 };
 
-// ** TODO: temporary types for context, fix it during development
 export type QueryBuilderContextType = {
-	queryBuilderData: QueryBuilderData;
+	currentQuery: QueryState;
+	queryType: EQueryType;
 	initialDataSource: DataSource | null;
+	panelType: GRAPH_TYPES;
 	resetQueryBuilderData: () => void;
+	resetQueryBuilderInfo: () => void;
 	handleSetQueryData: (index: number, queryData: IBuilderQuery) => void;
 	handleSetFormulaData: (index: number, formulaData: IBuilderFormula) => void;
-	initQueryBuilderData: (queryBuilderData: QueryBuilderData) => void;
+	handleSetQueryItemData: (
+		index: number,
+		type: EQueryType.PROM | EQueryType.CLICKHOUSE,
+		newQueryData: IPromQLQuery | IClickHouseQuery,
+	) => void;
+	handleSetPanelType: (newPanelType: GRAPH_TYPES) => void;
+	handleSetQueryType: (newQueryType: EQueryType) => void;
+	initQueryBuilderData: (query: QueryState, queryType: EQueryType) => void;
 	setupInitialDataSource: (newInitialDataSource: DataSource | null) => void;
-	removeEntityByIndex: (type: keyof QueryBuilderData, index: number) => void;
-	addNewQuery: () => void;
+	removeQueryBuilderEntityByIndex: (
+		type: keyof QueryBuilderData,
+		index: number,
+	) => void;
+	removeQueryTypeItemByIndex: (
+		type: EQueryType.PROM | EQueryType.CLICKHOUSE,
+		index: number,
+	) => void;
+	addNewBuilderQuery: () => void;
 	addNewFormula: () => void;
+	addNewQueryItem: (type: EQueryType.PROM | EQueryType.CLICKHOUSE) => void;
 };
 
 export type QueryAdditionalFilter = {
