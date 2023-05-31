@@ -74,6 +74,10 @@ func getClickhouseLogsColumnDataType(columnDataType v3.AttributeKeyDataType) str
 // getClickhouseColumnName returns the corresponding clickhouse column name for the given attribute/resource key
 func getClickhouseColumnName(key v3.AttributeKey) (string, error) {
 	clickhouseColumn := key.Key
+	if key.Key == "timestamp" || key.Key == "id" {
+		return key.Key, nil
+	}
+
 	//if the key is present in the topLevelColumn then it will be only searched in those columns,
 	//regardless if it is indexed/present again in resource or column attribute
 	if !key.IsColumn {
@@ -324,7 +328,7 @@ func orderBy(items []v3.OrderBy, tags []string) string {
 	for _, item := range items {
 		// since these are not present in tags we will have to select them correctly
 		if !addedToGroupBy[item.ColumnName] {
-			attr := v3.AttributeKey{Key: item.Key, DataType: item.DataType, Type: item.Type, IsColumn: item.IsColumn}
+			attr := v3.AttributeKey{Key: item.ColumnName, DataType: item.DataType, Type: item.Type, IsColumn: item.IsColumn}
 			name, _ := getClickhouseColumnName(attr)
 			orderBy = append(orderBy, fmt.Sprintf("%s %s", name, item.Order))
 		}

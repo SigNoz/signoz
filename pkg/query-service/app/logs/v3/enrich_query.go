@@ -58,6 +58,11 @@ func EnrichmentRequired(params *v3.QueryRangeParamsV3) bool {
 }
 
 func isEnriched(field v3.AttributeKey) bool {
+	// if it is timestamp/id dont check
+	if field.Key == "timestamp" || field.Key == "id" {
+		return true
+	}
+
 	if field.Type == "" || field.DataType == "" {
 		return false
 	}
@@ -116,9 +121,7 @@ func enrichFieldWithMetadata(field v3.AttributeKey, fields map[string]v3.Attribu
 
 	// if type is unknown check if it is a top level key
 	if v, ok := constants.StaticFieldsLogsV3[field.Key]; ok {
-		if (v3.AttributeKey{} != v) {
-			return v
-		}
+		return v
 	}
 
 	// check if the field is present in the fields map
