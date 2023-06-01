@@ -161,3 +161,10 @@ export const exceptionAlertDefaults: AlertDef = {
 	annotations: defaultAnnotations,
 	evalWindow: defaultEvalWindow,
 };
+
+export const ALERTS_VALUES_MAP: Record<AlertTypes, AlertDef> = {
+	[AlertTypes.METRICS_BASED_ALERT]: alertDefaults,
+	[AlertTypes.LOGS_BASED_ALERT]: logAlertDefaults,
+	[AlertTypes.TRACES_BASED_ALERT]: traceAlertDefaults,
+	[AlertTypes.EXCEPTIONS_BASED_ALERT]: exceptionAlertDefaults,
+};

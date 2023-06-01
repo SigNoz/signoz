@@ -8,6 +8,7 @@ import {
 import { Dropdown, MenuProps, Tooltip, Typography } from 'antd';
 import { MenuItemType } from 'antd/es/menu/hooks/useItems';
 import Spinner from 'components/Spinner';
+import { COMPOSITE_QUERY } from 'constants/queryBuilderQueryNames';
 import useComponentPermission from 'hooks/useComponentPermission';
 import history from 'lib/history';
 import { useCallback, useMemo, useState } from 'react';
@@ -58,9 +59,11 @@ function WidgetHeader({
 	const onEditHandler = useCallback((): void => {
 		const widgetId = widget.id;
 		history.push(
-			`${window.location.pathname}/new?widgetId=${widgetId}&graphType=${widget.panelTypes}`,
+			`${window.location.pathname}/new?widgetId=${widgetId}&graphType=${
+				widget.panelTypes
+			}&${COMPOSITE_QUERY}=${JSON.stringify(widget.query)}`,
 		);
-	}, [widget.id, widget.panelTypes]);
+	}, [widget.id, widget.panelTypes, widget.query]);
 
 	const keyMethodMapping: {
 		[K in TWidgetOptions]: { key: TWidgetOptions; method: VoidFunction };
