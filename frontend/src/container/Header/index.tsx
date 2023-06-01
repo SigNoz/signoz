@@ -32,6 +32,7 @@ import {
 	IconContainer,
 	LogoutContainer,
 	NavLinkWrapper,
+	StyledSpace,
 	ToggleButton,
 } from './styles';
 
@@ -139,12 +140,12 @@ function HeaderContainer(): JSX.Element {
 						menu={menu}
 						open={isUserDropDownOpen}
 					>
-						<Space style={{ cursor: 'pointer' }}>
+						<StyledSpace>
 							<AvatarWrapper shape="circle">{user?.name[0]}</AvatarWrapper>
 							<IconContainer>
 								{!isUserDropDownOpen ? <CaretDownFilled /> : <CaretUpFilled />}
 							</IconContainer>
-						</Space>
+						</StyledSpace>
 					</Dropdown>
 				</Space>
 			</Container>

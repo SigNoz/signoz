@@ -4,7 +4,8 @@ import {
 	QuestionCircleFilled,
 	QuestionCircleOutlined,
 } from '@ant-design/icons';
-import { Dropdown, Space } from 'antd';
+import { Dropdown } from 'antd';
+import { StyledSpace } from 'container/Header/styles';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { useMemo, useState } from 'react';
 import { useSelector } from 'react-redux';
@@ -59,12 +60,12 @@ function DynamicConfigDropdown({
 			menu={menu}
 			open={isHelpDropDownOpen}
 		>
-			<Space align="center" style={{ cursor: 'pointer' }}>
+			<StyledSpace align="center">
 				<Icon
 					style={{ fontSize: 26, color: 'white', paddingTop: 26, cursor: 'pointer' }}
 				/>
 				<DropDownIcon style={{ color: 'white' }} />
-			</Space>
+			</StyledSpace>
 		</Dropdown>
 	);
 }
