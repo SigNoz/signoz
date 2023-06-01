@@ -1,26 +1,28 @@
-export function replaceIncorrectObjectFields<TargetValue, ResultValue>(
+export function replaceIncorrectObjectFields<
+	// eslint-disable-next-line @typescript-eslint/ban-types
+	TargetValue extends object,
+	// eslint-disable-next-line @typescript-eslint/ban-types
+	ResultValue extends object
+>(
 	targetObject: TargetValue,
 	defaultObject: ResultValue,
 ): { isValid: boolean; validData: ResultValue } {
-	const targetValue = targetObject as Record<string, unknown>;
-	const defaultValue = defaultObject as Record<string, unknown>;
-
-	const targetObjectKeys = Object.keys(targetValue);
-	const defaultObjectKeys = Object.keys(defaultValue);
+	const targetObjectKeys = Object.keys(targetObject);
+	const defaultObjectKeys = Object.keys(defaultObject);
 
 	let isValid = true;
 
-	const result = { ...defaultValue };
+	const result: ResultValue = { ...defaultObject };
 
 	defaultObjectKeys.forEach((key) => {
 		if (targetObjectKeys.includes(key)) {
-			result[key as keyof Record<string, unknown>] = targetValue[
-				key
-			] as ResultValue[keyof ResultValue];
+			result[key as keyof ResultValue] = (targetObject[
+				key as keyof TargetValue
+			] as unknown) as ResultValue[keyof ResultValue];
 		} else {
 			isValid = false;
 		}
 	});
 
-	return { isValid, validData: result as ResultValue };
+	return { isValid, validData: result };
 }
