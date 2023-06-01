@@ -1,5 +1,5 @@
 import {
-	initialAggregateAttribute,
+	initialAutocompleteData,
 	initialQueryBuilderFormValues,
 	mapOfFilters,
 } from 'constants/queryBuilder';
@@ -46,7 +46,7 @@ export const useQueryOperations: UseQueryOperations = ({ query, index }) => {
 				limit: null,
 				filters: { items: [], op: 'AND' },
 				...(shouldResetAggregateAttribute
-					? { aggregateAttribute: initialAggregateAttribute }
+					? { aggregateAttribute: initialAutocompleteData }
 					: {}),
 			};
 

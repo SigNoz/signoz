@@ -1,17 +1,24 @@
 import { Select, Spin } from 'antd';
 import { getAggregateKeys } from 'api/queryBuilder/getAttributeKeys';
 // ** Constants
-import { QueryBuilderKeys, selectValueDivider } from 'constants/queryBuilder';
+import {
+	idDivider,
+	initialAutocompleteData,
+	QueryBuilderKeys,
+	selectValueDivider,
+} from 'constants/queryBuilder';
 import useDebounce from 'hooks/useDebounce';
-import { getFilterObjectValue } from 'lib/newQueryBuilder/getFilterObjectValue';
 // ** Components
 // ** Helpers
 import { transformStringWithPrefix } from 'lib/query/transformStringWithPrefix';
 import { memo, useEffect, useState } from 'react';
 import { useQuery } from 'react-query';
-import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
+import {
+	AutocompleteType,
+	BaseAutocompleteData,
+	DataType,
+} from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { SelectOption } from 'types/common/select';
-import { v4 as uuid } from 'uuid';
 
 import { selectStyle } from '../QueryBuilderSearch/config';
 import { GroupByFilterProps } from './GroupByFilter.interfaces';
@@ -32,7 +39,7 @@ export const GroupByFilter = memo(function GroupByFilter({
 
 	const debouncedValue = useDebounce(searchText, 300);
 
-	const { data, isFetching } = useQuery(
+	const { isFetching } = useQuery(
 		[QueryBuilderKeys.GET_AGGREGATE_KEYS, debouncedValue, isFocused],
 		async () =>
 			getAggregateKeys({
@@ -65,7 +72,7 @@ export const GroupByFilter = memo(function GroupByFilter({
 							str: item.key,
 							prefix: item.type || '',
 							condition: !item.isColumn,
-						})}${selectValueDivider}${item.id || uuid()}`,
+						})}${selectValueDivider}${item.id}`,
 					})) || [];
 
 				setOptionsData(options);
@@ -87,39 +94,21 @@ export const GroupByFilter = memo(function GroupByFilter({
 	};
 
 	const handleChange = (values: SelectOption<string, string>[]): void => {
-		const responseKeys = data?.payload?.attributeKeys || [];
-
 		const groupByValues: BaseAutocompleteData[] = values.map((item) => {
 			const [currentValue, id] = item.value.split(selectValueDivider);
-			const { key, type, isColumn } = getFilterObjectValue(currentValue);
+			if (id) {
+				const [key, dataType, type, isColumn] = id.split(idDivider);
 
-			const existGroupQuery = query.groupBy.find((group) => group.id === id);
-
-			if (existGroupQuery) {
-				return existGroupQuery;
+				return {
+					id,
+					key,
+					dataType: dataType as DataType,
+					type: type as AutocompleteType,
+					isColumn: isColumn === 'true',
+				};
 			}
 
-			const existGroupResponse = responseKeys.find((group) => group.id === id);
-
-			if (existGroupResponse) {
-				return existGroupResponse;
-			}
-
-			if (!id) {
-				const option = responseKeys.find((item) => item.key === currentValue);
-
-				if (option) {
-					return option;
-				}
-			}
-
-			return {
-				id: uuid(),
-				isColumn,
-				key,
-				dataType: null,
-				type,
-			};
+			return { ...initialAutocompleteData, key: currentValue };
 		});
 
 		onChange(groupByValues);
@@ -137,7 +126,7 @@ export const GroupByFilter = memo(function GroupByFilter({
 					str: item.key,
 					prefix: item.type || '',
 					condition: !item.isColumn,
-				})}${selectValueDivider}${item.id || uuid()}`,
+				})}${selectValueDivider}${item.id}`,
 			}),
 		);
 

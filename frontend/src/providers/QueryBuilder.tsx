@@ -10,6 +10,7 @@ import {
 	PANEL_TYPES,
 } from 'constants/queryBuilder';
 import { GRAPH_TYPES } from 'container/NewDashboard/ComponentsSlider';
+import { createIdFromObjectFields } from 'lib/createIdFromObjectFields';
 import { createNewBuilderItemName } from 'lib/newQueryBuilder/createNewBuilderItemName';
 import { getOperatorsBySourceAndPanelType } from 'lib/newQueryBuilder/getOperatorsBySourceAndPanelType';
 import {
@@ -87,7 +88,25 @@ export function QueryBuilderProvider({
 
 	const initQueryBuilderData = useCallback(
 		(query: QueryState, queryType: EQueryType): void => {
-			setCurrentQuery(query);
+			const transformedQuery: QueryState = {
+				...query,
+				builder: {
+					...query.builder,
+					queryData: query.builder.queryData.map((q) => ({
+						...q,
+						groupBy: q.groupBy.map((item) => ({
+							...item,
+							id: createIdFromObjectFields(item),
+						})),
+						aggregateAttribute: {
+							...q.aggregateAttribute,
+							id: createIdFromObjectFields(q.aggregateAttribute),
+						},
+					})),
+				},
+			};
+
+			setCurrentQuery(transformedQuery);
 			setQueryType(queryType);
 		},
 		[],

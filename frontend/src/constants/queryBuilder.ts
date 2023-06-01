@@ -1,7 +1,10 @@
 // ** Helpers
 import { GRAPH_TYPES } from 'container/NewDashboard/ComponentsSlider';
 import { createNewBuilderItemName } from 'lib/newQueryBuilder/createNewBuilderItemName';
-import { LocalDataType } from 'types/api/queryBuilder/queryAutocompleteResponse';
+import {
+	BaseAutocompleteData,
+	LocalDataType,
+} from 'types/api/queryBuilder/queryAutocompleteResponse';
 import {
 	HavingForm,
 	IBuilderFormula,
@@ -34,7 +37,8 @@ import {
 export const MAX_FORMULAS = 20;
 export const MAX_QUERIES = 26;
 
-export const selectValueDivider = '--';
+export const idDivider = '--';
+export const selectValueDivider = '__';
 
 export const formulasNames: string[] = Array.from(
 	Array(MAX_FORMULAS),
@@ -89,7 +93,7 @@ export const initialHavingValues: HavingForm = {
 	value: [],
 };
 
-export const initialAggregateAttribute: IBuilderQuery['aggregateAttribute'] = {
+export const initialAutocompleteData: BaseAutocompleteData = {
 	id: uuid(),
 	dataType: null,
 	key: '',
@@ -101,7 +105,7 @@ export const initialQueryBuilderFormValues: IBuilderQuery = {
 	dataSource: DataSource.METRICS,
 	queryName: createNewBuilderItemName({ existNames: [], sourceNames: alphabet }),
 	aggregateOperator: MetricAggregateOperator.NOOP,
-	aggregateAttribute: initialAggregateAttribute,
+	aggregateAttribute: initialAutocompleteData,
 	filters: { items: [], op: 'AND' },
 	expression: createNewBuilderItemName({
 		existNames: [],
