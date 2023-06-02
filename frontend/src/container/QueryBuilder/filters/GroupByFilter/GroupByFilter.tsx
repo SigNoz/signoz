@@ -11,6 +11,7 @@ import useDebounce from 'hooks/useDebounce';
 // ** Components
 // ** Helpers
 import { transformStringWithPrefix } from 'lib/query/transformStringWithPrefix';
+import { isEqual, uniqWith } from 'lodash-es';
 import { memo, useCallback, useEffect, useState } from 'react';
 import { useQuery } from 'react-query';
 import {
@@ -111,19 +112,7 @@ export const GroupByFilter = memo(function GroupByFilter({
 			return { ...initialAutocompleteData, key: currentValue };
 		});
 
-		const result = groupByValues.reduce<BaseAutocompleteData[]>((acc, item) => {
-			const element = acc.find(
-				(currentElem) => item.key === currentElem.key && !item.dataType,
-			);
-
-			if (element) {
-				return acc;
-			}
-
-			acc.push(item);
-
-			return acc;
-		}, []);
+		const result = uniqWith(groupByValues, isEqual);
 
 		onChange(result);
 	};
@@ -163,7 +152,6 @@ export const GroupByFilter = memo(function GroupByFilter({
 			onBlur={handleBlur}
 			onFocus={handleFocus}
 			onDeselect={clearSearch}
-			onSelect={clearSearch}
 			options={optionsData}
 			value={localValues}
 			labelInValue
