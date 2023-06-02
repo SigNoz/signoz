@@ -63,7 +63,7 @@ func isEnriched(field v3.AttributeKey) bool {
 		return true
 	}
 
-	if field.Type == "" || field.DataType == "" {
+	if field.Type == v3.AttributeKeyTypeUnspecified || field.DataType == v3.AttributeKeyDataTypeUnspecified {
 		return false
 	}
 	return true
