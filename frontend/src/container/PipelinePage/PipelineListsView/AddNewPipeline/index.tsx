@@ -53,7 +53,7 @@ function AddNewPipeline({
 			const findRecordIndex = getRecordIndex(
 				currPipelineData,
 				selectedPipelineData,
-				'name',
+				'id',
 			);
 			const updatedPipelineData: PipelineData = {
 				...currPipelineData[findRecordIndex],
@@ -63,7 +63,7 @@ function AddNewPipeline({
 			const editedPipelineData = getEditedDataSource(
 				currPipelineData,
 				selectedPipelineData,
-				'name',
+				'id',
 				updatedPipelineData,
 			);
 

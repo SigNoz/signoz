@@ -192,7 +192,7 @@ exports[`PipelinePage container test should render PipelinePageLayout section 1`
   display: -webkit-flex;
   display: -ms-flexbox;
   display: flex;
-  gap: 0.938rem;
+  gap: 0.5rem;
   -webkit-box-pack: end;
   -webkit-justify-content: flex-end;
   -ms-flex-pack: end;

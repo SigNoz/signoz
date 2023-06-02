@@ -145,7 +145,7 @@ function PipelineListsView({
 	const onSwitchPipelineChange = useCallback(
 		(checked: boolean, record: PipelineData): void => {
 			setShowSaveButton(ActionMode.Editing);
-			const findRecordIndex = getRecordIndex(currPipelineData, record, 'name');
+			const findRecordIndex = getRecordIndex(currPipelineData, record, 'id');
 			const updateSwitch = {
 				...currPipelineData[findRecordIndex],
 				enabled: checked,
@@ -153,7 +153,7 @@ function PipelineListsView({
 			const editedPipelineData = getEditedDataSource(
 				currPipelineData,
 				record,
-				'name',
+				'id',
 				updateSwitch,
 			);
 			setCurrPipelineData(editedPipelineData);

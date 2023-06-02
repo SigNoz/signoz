@@ -99,7 +99,7 @@ export const ModalButtonWrapper = styled.div`
 
 export const ModeAndConfigWrapper = styled.div`
 	display: flex;
-	gap: 0.938rem;
+	gap: 0.5rem;
 	justify-content: flex-end;
 	color: ${themeColors.gamboge};
 	margin: 0.125rem;

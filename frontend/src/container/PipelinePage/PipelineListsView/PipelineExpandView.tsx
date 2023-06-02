@@ -81,7 +81,7 @@ function PipelineExpandView({
 				const findRecordIndex = getRecordIndex(
 					expandedPipelineData?.config,
 					record,
-					'name',
+					'id',
 				);
 				const updateSwitch = {
 					...expandedPipelineData?.config[findRecordIndex],
@@ -90,7 +90,7 @@ function PipelineExpandView({
 				const editedData = getEditedDataSource(
 					expandedPipelineData?.config,
 					record,
-					'name',
+					'id',
 					updateSwitch,
 				);
 				const modifiedProcessorData = { ...expandedPipelineData };
