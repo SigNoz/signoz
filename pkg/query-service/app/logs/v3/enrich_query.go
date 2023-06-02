@@ -26,8 +26,8 @@ func EnrichmentRequired(params *v3.QueryRangeParamsV3) bool {
 
 		// check filter attribute
 		if query.Filters != nil && len(query.Filters.Items) != 0 {
-			for i := 0; i < len(query.Filters.Items); i++ {
-				if !isEnriched(query.Filters.Items[i].Key) {
+			for _, item := range query.Filters.Items {
+				if !isEnriched(item.Key) {
 					return true
 				}
 			}
@@ -35,17 +35,17 @@ func EnrichmentRequired(params *v3.QueryRangeParamsV3) bool {
 
 		groupByLookup := map[string]struct{}{}
 		// check groupby
-		for i := 0; i < len(query.GroupBy); i++ {
-			if !isEnriched(query.GroupBy[i]) {
+		for _, groupBy := range query.GroupBy {
+			if !isEnriched(groupBy) {
 				return true
 			}
-			groupByLookup[query.GroupBy[i].Key] = struct{}{}
+			groupByLookup[groupBy.Key] = struct{}{}
 		}
 
 		// check orderby
-		for i := 0; i < len(query.OrderBy); i++ {
-			if _, ok := groupByLookup[query.OrderBy[i].ColumnName]; !ok {
-				key := v3.AttributeKey{Key: query.OrderBy[i].ColumnName}
+		for _, orderBy := range query.OrderBy {
+			if _, ok := groupByLookup[orderBy.ColumnName]; !ok {
+				key := v3.AttributeKey{Key: orderBy.ColumnName}
 				if !isEnriched(key) {
 					return true
 				}
