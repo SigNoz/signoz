@@ -151,6 +151,22 @@ var testEnrichmentRequiredData = []struct {
 		},
 		EnrichmentRequired: true,
 	},
+	{
+		Name: "top level key",
+		Params: v3.QueryRangeParamsV3{
+			CompositeQuery: &v3.CompositeQuery{
+				BuilderQueries: map[string]*v3.BuilderQuery{
+					"test": {
+						QueryName:  "test",
+						Expression: "test",
+						DataSource: v3.DataSourceLogs,
+						GroupBy:    []v3.AttributeKey{{Key: "trace_id", IsColumn: true}},
+					},
+				},
+			},
+		},
+		EnrichmentRequired: false,
+	},
 }
 
 func TestEnrichmentRquired(t *testing.T) {
