@@ -11,7 +11,7 @@ import useDebounce from 'hooks/useDebounce';
 // ** Components
 // ** Helpers
 import { transformStringWithPrefix } from 'lib/query/transformStringWithPrefix';
-import { memo, useEffect, useState } from 'react';
+import { memo, useCallback, useEffect, useState } from 'react';
 import { useQuery } from 'react-query';
 import {
 	AutocompleteType,
@@ -96,7 +96,7 @@ export const GroupByFilter = memo(function GroupByFilter({
 	const handleChange = (values: SelectOption<string, string>[]): void => {
 		const groupByValues: BaseAutocompleteData[] = values.map((item) => {
 			const [currentValue, id] = item.value.split(selectValueDivider);
-			if (id) {
+			if (id && id.includes(idDivider)) {
 				const [key, dataType, type, isColumn] = id.split(idDivider);
 
 				return {
@@ -111,8 +111,26 @@ export const GroupByFilter = memo(function GroupByFilter({
 			return { ...initialAutocompleteData, key: currentValue };
 		});
 
-		onChange(groupByValues);
+		const result = groupByValues.reduce<BaseAutocompleteData[]>((acc, item) => {
+			const element = acc.find(
+				(currentElem) => item.key === currentElem.key && !item.dataType,
+			);
+
+			if (element) {
+				return acc;
+			}
+
+			acc.push(item);
+
+			return acc;
+		}, []);
+
+		onChange(result);
 	};
+
+	const clearSearch = useCallback(() => {
+		setSearchText('');
+	}, []);
 
 	useEffect(() => {
 		const currentValues: SelectOption<string, string>[] = query.groupBy.map(
@@ -144,6 +162,8 @@ export const GroupByFilter = memo(function GroupByFilter({
 			filterOption={false}
 			onBlur={handleBlur}
 			onFocus={handleFocus}
+			onDeselect={clearSearch}
+			onSelect={clearSearch}
 			options={optionsData}
 			value={localValues}
 			labelInValue
