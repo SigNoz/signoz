@@ -11,6 +11,7 @@ import {
 	IBuilderQuery,
 	IClickHouseQuery,
 	IPromQLQuery,
+	Query,
 	QueryState,
 } from 'types/api/queryBuilder/queryBuilderData';
 import { EQueryType } from 'types/common/dashboard';
@@ -39,6 +40,11 @@ export const MAX_QUERIES = 26;
 
 export const idDivider = '--';
 export const selectValueDivider = '__';
+
+export const baseAutoCompleteIdKeysOrder: (keyof Omit<
+	BaseAutocompleteData,
+	'id'
+>)[] = ['key', 'dataType', 'type', 'isColumn'];
 
 export const formulasNames: string[] = Array.from(
 	Array(MAX_FORMULAS),
@@ -160,6 +166,11 @@ export const initialQuery: QueryState = {
 	builder: initialQueryBuilderData,
 	clickhouse_sql: [initialClickHouseData],
 	promql: [initialQueryPromQLData],
+};
+
+export const initialQueryWithType: Query = {
+	...initialQuery,
+	queryType: EQueryType.QUERY_BUILDER,
 };
 
 export const operatorsByTypes: Record<LocalDataType, string[]> = {

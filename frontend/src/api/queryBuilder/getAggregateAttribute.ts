@@ -1,6 +1,7 @@
 import { ApiV3Instance } from 'api';
 import { ErrorResponseHandler } from 'api/ErrorResponseHandler';
 import { AxiosError, AxiosResponse } from 'axios';
+import { baseAutoCompleteIdKeysOrder } from 'constants/queryBuilder';
 import { createIdFromObjectFields } from 'lib/createIdFromObjectFields';
 import createQueryParams from 'lib/createQueryParams';
 // ** Helpers
@@ -31,9 +32,9 @@ export const getAggregateAttribute = async ({
 		);
 
 		const payload: BaseAutocompleteData[] =
-			response.data.data.attributeKeys?.map((item) => ({
+			response.data.data.attributeKeys?.map(({ id: _, ...item }) => ({
 				...item,
-				id: createIdFromObjectFields(item),
+				id: createIdFromObjectFields(item, baseAutoCompleteIdKeysOrder),
 			})) || [];
 
 		return {

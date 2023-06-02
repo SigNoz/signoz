@@ -1,11 +1,13 @@
 import { LockFilled } from '@ant-design/icons';
 import { Button, Modal, Tooltip, Typography } from 'antd';
 import { FeatureKeys } from 'constants/features';
+import { COMPOSITE_QUERY } from 'constants/queryBuilderQueryNames';
 import ROUTES from 'constants/routes';
 import { GRAPH_TYPES } from 'container/NewDashboard/ComponentsSlider';
 import { ITEMS } from 'container/NewDashboard/ComponentsSlider/menuItems';
 import { MESSAGE, useIsFeatureDisabled } from 'hooks/useFeatureFlag';
 import { useNotifications } from 'hooks/useNotifications';
+import useUrlQuery from 'hooks/useUrlQuery';
 import { getDashboardVariables } from 'lib/dashbaordVariables/getDashboardVariables';
 import history from 'lib/history';
 import { DashboardWidgetPageParams } from 'pages/DashboardWidget';
@@ -47,6 +49,7 @@ function NewWidget({
 	saveSettingOfPanel,
 	getQueryResults,
 }: Props): JSX.Element {
+	const urlQuery = useUrlQuery();
 	const dispatch = useDispatch();
 	const { dashboards } = useSelector<AppState, DashboardReducer>(
 		(state) => state.dashboards,
@@ -159,9 +162,10 @@ function NewWidget({
 	}, [dashboardId, dispatch]);
 
 	const getQueryResult = useCallback(() => {
-		if (selectedWidget?.id.length !== 0 && selectedWidget?.query) {
+		const compositeQuery = urlQuery.get(COMPOSITE_QUERY);
+		if ((selectedWidget?.id.length !== 0 && compositeQuery) || compositeQuery) {
 			getQueryResults({
-				query: selectedWidget?.query,
+				query: JSON.parse(compositeQuery),
 				selectedTime: selectedTime.enum,
 				widgetId: selectedWidget?.id || '',
 				graphType,
@@ -170,12 +174,12 @@ function NewWidget({
 			});
 		}
 	}, [
-		selectedWidget?.query,
 		selectedTime.enum,
 		selectedWidget?.id,
 		getQueryResults,
 		globalSelectedInterval,
 		graphType,
+		urlQuery,
 	]);
 
 	const setGraphHandler = (type: ITEMS): void => {

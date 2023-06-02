@@ -3,6 +3,7 @@ import { AutoComplete, Spin } from 'antd';
 // ** Api
 import { getAggregateAttribute } from 'api/queryBuilder/getAggregateAttribute';
 import {
+	baseAutoCompleteIdKeysOrder,
 	idDivider,
 	initialAutocompleteData,
 	QueryBuilderKeys,
@@ -49,14 +50,17 @@ export const AggregatorFilter = memo(function AggregatorFilter({
 			enabled: !!query.aggregateOperator && !!query.dataSource,
 			onSuccess: (data) => {
 				const options: ExtendedSelectOption[] =
-					data?.payload?.attributeKeys?.map((item) => ({
+					data?.payload?.attributeKeys?.map(({ id: _, ...item }) => ({
 						label: transformStringWithPrefix({
 							str: item.key,
 							prefix: item.type || '',
 							condition: !item.isColumn,
 						}),
-						value: `${item.key}${selectValueDivider}${item.id}`,
-						key: item.id || createIdFromObjectFields(item),
+						value: `${item.key}${selectValueDivider}${createIdFromObjectFields(
+							item,
+							baseAutoCompleteIdKeysOrder,
+						)}`,
+						key: createIdFromObjectFields(item, baseAutoCompleteIdKeysOrder),
 					})) || [];
 
 				setOptionsData(options);
