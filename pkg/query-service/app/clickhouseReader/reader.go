@@ -4216,6 +4216,8 @@ func (r *ClickHouseReader) GetListResultV3(ctx context.Context, query string) ([
 		for idx, v := range vars {
 			if columnNames[idx] == "timestamp" {
 				t = time.Unix(0, int64(*v.(*uint64)))
+			} else if columnNames[idx] == "timestamp_datetime" {
+				t = *v.(*time.Time)
 			}
 			row[columnNames[idx]] = v
 		}

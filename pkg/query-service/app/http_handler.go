@@ -2718,7 +2718,7 @@ func (aH *APIHandler) queryRangeV3(ctx context.Context, queryRangeParams *v3.Que
 			return
 		}
 
-		if queryRangeParams.CompositeQuery.PanelType == v3.PanelTypeList {
+		if queryRangeParams.CompositeQuery.PanelType == v3.PanelTypeList || queryRangeParams.CompositeQuery.PanelType == v3.PanelTypeTrace {
 			result, err, errQuriesByName = aH.execClickHouseListQueries(r.Context(), queries)
 		} else {
 			result, err, errQuriesByName = aH.execClickHouseGraphQueries(r.Context(), queries)

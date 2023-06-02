@@ -208,7 +208,7 @@ func handleEmptyValuesInGroupBy(keys map[string]v3.AttributeKey, groupBy []v3.At
 	return "", nil
 }
 
-func buildTracesQuery(start, end, step int64, mq *v3.BuilderQuery, tableName string, keys map[string]v3.AttributeKey) (string, error) {
+func buildTracesQuery(start, end, step int64, mq *v3.BuilderQuery, tableName string, keys map[string]v3.AttributeKey, panelType v3.PanelType) (string, error) {
 
 	filterSubQuery, err := buildTracesFilterQuery(mq.Filters, keys)
 	if err != nil {
@@ -297,10 +297,19 @@ func buildTracesQuery(start, end, step int64, mq *v3.BuilderQuery, tableName str
 		query := fmt.Sprintf(queryTmpl, step, op, filterSubQuery, groupBy, having, orderBy)
 		return query, nil
 	case v3.AggregateOperatorNoOp:
-		// queryTmpl := constants.TracesSQLSelect + "from " + constants.SIGNOZ_TRACE_DBNAME + "." + constants.SIGNOZ_SPAN_INDEX_TABLENAME + " where %s %s"
-		// query := fmt.Sprintf(queryTmpl, spanIndexTableTimeFilter, filterSubQuery)
-		// return query, nil
-		return "", fmt.Errorf("not implemented, part of traces page")
+		var query string
+		if panelType == v3.PanelTypeTrace {
+			withSubQuery := fmt.Sprintf(constants.TracesExplorerViewSQLSelectWithSubQuery, spanIndexTableTimeFilter, filterSubQuery)
+			withSubQuery = addLimitToQuery(withSubQuery, mq.Limit, panelType)
+			if mq.Offset != 0 {
+				withSubQuery = addOffsetToQuery(withSubQuery, mq.Offset)
+			}
+			query = withSubQuery + ") " + constants.TracesExplorerViewSQLSelectQuery
+		} else {
+			queryNoOpTmpl := constants.TracesListViewSQLSelect + "from " + constants.SIGNOZ_TRACE_DBNAME + "." + constants.SIGNOZ_SPAN_INDEX_TABLENAME + " where %s %s"
+			query = fmt.Sprintf(queryNoOpTmpl, spanIndexTableTimeFilter, filterSubQuery)
+		}
+		return query, nil
 	default:
 		return "", fmt.Errorf("unsupported aggregate operator")
 	}
@@ -339,7 +348,7 @@ func orderBy(items []v3.OrderBy, tags []string) string {
 		}
 	}
 
-	// users might want to order by value of aggreagation
+	// users might want to order by value of aggregation
 	for _, item := range items {
 		if item.ColumnName == constants.SigNozOrderByValue {
 			orderBy = append(orderBy, fmt.Sprintf("value %s", item.Order))
@@ -393,9 +402,9 @@ func addLimitToQuery(query string, limit uint64, panelType v3.PanelType) string 
 	if limit == 0 {
 		limit = 100
 	}
-	if panelType == v3.PanelTypeList {
+	// if panelType == v3.PanelTypeList || panelType == v3.PanelTypeTrace {
 		return fmt.Sprintf("%s LIMIT %d", query, limit)
-	}
+	// }
 	return query
 }
 
@@ -404,17 +413,20 @@ func addOffsetToQuery(query string, offset uint64) string {
 }
 
 func PrepareTracesQuery(start, end int64, queryType v3.QueryType, panelType v3.PanelType, mq *v3.BuilderQuery, keys map[string]v3.AttributeKey) (string, error) {
-	query, err := buildTracesQuery(start, end, mq.StepInterval, mq, constants.SIGNOZ_SPAN_INDEX_TABLENAME, keys)
+	query, err := buildTracesQuery(start, end, mq.StepInterval, mq, constants.SIGNOZ_SPAN_INDEX_TABLENAME, keys, panelType)
 	if err != nil {
 		return "", err
 	}
 	if panelType == v3.PanelTypeValue {
 		query, err = reduceToQuery(query, mq.ReduceTo, mq.AggregateOperator)
 	}
-	query = addLimitToQuery(query, mq.Limit, panelType)
+	if panelType != v3.PanelTypeTrace {
+		query = addLimitToQuery(query, mq.Limit, panelType)
 
-	if mq.Offset != 0 {
-		query = addOffsetToQuery(query, mq.Offset)
+		if mq.Offset != 0 {
+			query = addOffsetToQuery(query, mq.Offset)
+		}
 	}
+	fmt.Println(query)
 	return query, err
 }
