@@ -1,4 +1,4 @@
-import { Form, Select, Typography } from 'antd';
+import { Form, InputNumber, InputNumberProps, Select, Typography } from 'antd';
 import { useTranslation } from 'react-i18next';
 import {
 	AlertDef,
@@ -8,12 +8,7 @@ import {
 } from 'types/api/alerts/def';
 import { EQueryType } from 'types/common/dashboard';
 
-import {
-	FormContainer,
-	InlineSelect,
-	StepHeading,
-	ThresholdInput,
-} from './styles';
+import { FormContainer, InlineSelect, StepHeading } from './styles';
 
 const { Option } = Select;
 const FormItem = Form.Item;
@@ -126,6 +121,18 @@ function RuleOptions({
 		</FormItem>
 	);
 
+	const onChange: InputNumberProps['onChange'] = (value): void => {
+		setAlertDef({
+			...alertDef,
+			condition: {
+				...alertDef.condition,
+				op: alertDef.condition?.op || defaultCompareOp,
+				matchType: alertDef.condition?.matchType || defaultMatchType,
+				target: Number(value) || 0,
+			},
+		});
+	};
+
 	return (
 		<>
 			<StepHeading>{t('alert_form_step2')}</StepHeading>
@@ -133,24 +140,12 @@ function RuleOptions({
 				{queryCategory === EQueryType.PROM
 					? renderPromRuleOptions()
 					: renderThresholdRuleOpts()}
-				<div style={{ display: 'flex', alignItems: 'center' }}>
-					<ThresholdInput
-						controls={false}
-						addonBefore={t('field_threshold')}
-						value={alertDef?.condition?.target}
-						onChange={(value: number | unknown): void => {
-							setAlertDef({
-								...alertDef,
-								condition: {
-									...alertDef.condition,
-									op: alertDef.condition?.op || defaultCompareOp,
-									matchType: alertDef.condition?.matchType || defaultMatchType,
-									target: value as number,
-								},
-							});
-						}}
-					/>
-				</div>
+				<InputNumber
+					addonBefore={t('field_threshold')}
+					value={alertDef?.condition?.target}
+					onChange={onChange}
+					type="number"
+				/>
 			</FormContainer>
 		</>
 	);
