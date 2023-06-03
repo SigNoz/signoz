@@ -100,9 +100,12 @@ function ListAlert({ allAlertRules, refetch }: ListAlertProps): JSX.Element {
 			dataIndex: 'alert',
 			width: 100,
 			key: 'name',
-			sorter: (a, b): number =>
-				(a.alert ? a.alert.charCodeAt(0) : 1000) -
-				(b.alert ? b.alert.charCodeAt(0) : 1000),
+			sorter: (alertA, alertB): number => {
+				if (alertA.alert && alertB.alert) {
+					return alertA.alert.localeCompare(alertB.alert);
+				}
+				return 0;
+			},
 			render: (value, record): JSX.Element => (
 				<Typography.Link onClick={(): void => onEditHandler(record)}>
 					{value}
