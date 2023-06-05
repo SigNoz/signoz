@@ -308,9 +308,13 @@ func (a *Telemetry) SendEvent(event string, data map[string]interface{}, opts ..
 	}
 
 	if rateLimitFlag {
-		if a.rateLimits[event] < RATE_LIMIT_VALUE {
+		telemetry.mutex.Lock()
+		limit := a.rateLimits[event]
+		if limit < RATE_LIMIT_VALUE {
 			a.rateLimits[event] += 1
+			telemetry.mutex.Unlock()
 		} else {
+			telemetry.mutex.Unlock()
 			return
 		}
 	}
