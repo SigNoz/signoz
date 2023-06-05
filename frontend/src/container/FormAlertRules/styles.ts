@@ -1,14 +1,4 @@
-import {
-	Button,
-	Card,
-	Col,
-	Form,
-	Input,
-	InputNumber,
-	Row,
-	Select,
-	Typography,
-} from 'antd';
+import { Button, Card, Col, Form, Input, Row, Select, Typography } from 'antd';
 import styled from 'styled-components';
 
 const { TextArea } = Input;
@@ -86,22 +76,6 @@ export const FormContainer = styled(Card)`
 	display: flex;
 	flex-direction: column;
 	border-radius: 4px;
-`;
-
-export const ThresholdInput = styled(InputNumber)`
-	& > div {
-		display: flex;
-		align-items: center;
-		& > .ant-input-number-group-addon {
-			width: 130px;
-			border: 0;
-			background: transparent;
-		}
-		& > .ant-input-number {
-			width: 50%;
-			margin-left: 1em;
-		}
-	}
 `;
 
 export const TextareaMedium = styled(TextArea)`
