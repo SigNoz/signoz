@@ -44,7 +44,7 @@ function QueryBuilderSearch({
 		searchKey,
 	} = useAutoComplete(query);
 
-	const { keys } = useFetchKeysAndValues(searchValue, query, searchKey);
+	const { sourceKeys } = useFetchKeysAndValues(searchValue, query, searchKey);
 
 	const onTagRender = ({
 		value,
@@ -108,7 +108,7 @@ function QueryBuilderSearch({
 		const initialTagFilters: TagFilter = { items: [], op: 'AND' };
 		initialTagFilters.items = tags.map((tag) => {
 			const { tagKey, tagOperator, tagValue } = getTagToken(tag);
-			const filterAttribute = (keys || []).find(
+			const filterAttribute = sourceKeys.find(
 				(key) => key.key === getRemovePrefixFromKey(tagKey),
 			);
 			return {
@@ -127,8 +127,8 @@ function QueryBuilderSearch({
 			};
 		});
 		onChange(initialTagFilters);
-		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [keys, tags]);
+		/* eslint-disable react-hooks/exhaustive-deps */
+	}, [sourceKeys, tags]);
 
 	return (
 		<Select
