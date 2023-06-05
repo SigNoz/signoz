@@ -3,7 +3,6 @@ import { useAutoComplete } from 'hooks/queryBuilder/useAutoComplete';
 import { useFetchKeysAndValues } from 'hooks/queryBuilder/useFetchKeysAndValues';
 import {
 	KeyboardEvent,
-	memo,
 	ReactElement,
 	ReactNode,
 	useCallback,
@@ -191,4 +190,4 @@ export interface CustomTagProps {
 	closable: boolean;
 }
 
-export default memo(QueryBuilderSearch);
+export default QueryBuilderSearch;
