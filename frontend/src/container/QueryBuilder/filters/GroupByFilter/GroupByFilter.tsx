@@ -2,6 +2,7 @@ import { Select, Spin } from 'antd';
 import { getAggregateKeys } from 'api/queryBuilder/getAttributeKeys';
 // ** Constants
 import { QueryBuilderKeys, selectValueDivider } from 'constants/queryBuilder';
+import { GROUP_BY_OPTION_ID, GROUP_BY_SELECT_ID } from 'constants/testIds';
 import useDebounce from 'hooks/useDebounce';
 import { getFilterObjectValue } from 'lib/newQueryBuilder/getFilterObjectValue';
 // ** Components
@@ -15,6 +16,8 @@ import { v4 as uuid } from 'uuid';
 
 import { selectStyle } from '../QueryBuilderSearch/config';
 import { GroupByFilterProps } from './GroupByFilter.interfaces';
+
+const { Option } = Select;
 
 export const GroupByFilter = memo(function GroupByFilter({
 	query,
@@ -138,7 +141,9 @@ export const GroupByFilter = memo(function GroupByFilter({
 
 	return (
 		<Select
+			data-testid={GROUP_BY_SELECT_ID}
 			mode="tags"
+			open
 			style={selectStyle}
 			onSearch={handleSearchKeys}
 			showSearch
@@ -152,6 +157,16 @@ export const GroupByFilter = memo(function GroupByFilter({
 			labelInValue
 			notFoundContent={isFetching ? <Spin size="small" /> : null}
 			onChange={handleChange}
-		/>
+		>
+			{optionsData.map((option) => (
+				<Option
+					key={option.value}
+					value={option.value}
+					data-testid={GROUP_BY_OPTION_ID}
+				>
+					{option.label}
+				</Option>
+			))}
+		</Select>
 	);
 });

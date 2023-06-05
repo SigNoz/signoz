@@ -2,6 +2,7 @@ import { Select } from 'antd';
 // ** Constants
 import { HAVING_OPERATORS, initialHavingValues } from 'constants/queryBuilder';
 import { HAVING_FILTER_REGEXP } from 'constants/regExp';
+import { HAVING_SELECT_ID } from 'constants/testIds';
 import { HavingFilterTag } from 'container/QueryBuilder/components';
 import { HavingTagRenderProps } from 'container/QueryBuilder/components/HavingFilterTag/HavingFilterTag.interfaces';
 // ** Hooks
@@ -230,7 +231,7 @@ export function HavingFilter({
 			searchValue={searchText}
 			tagRender={tagRender}
 			value={localValues}
-			data-testid="havingSelect"
+			data-testid={HAVING_SELECT_ID}
 			disabled={isMetricsDataSource && !query.aggregateAttribute.key}
 			style={{ width: '100%' }}
 			notFoundContent={currentFormValue.value.length === 0 ? undefined : null}
