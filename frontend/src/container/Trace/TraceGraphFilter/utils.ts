@@ -11,10 +11,10 @@ import { extractTagFilters } from '../Search/AllTags/Tag/utils';
 import { functions, groupBy } from './config';
 
 export function groupByValues(
-	tagFilters: DefaultOptionType[],
+	filters: DefaultOptionType[],
 ): DefaultOptionType[] {
 	const result: DefaultOptionType[] = [...groupBy];
-	tagFilters.forEach((e) => {
+	filters.forEach((e) => {
 		result.push(e);
 	});
 	return result;

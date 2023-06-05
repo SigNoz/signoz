@@ -12,17 +12,27 @@ export const queryMockData: IBuilderQuery = {
 		type: 'tag',
 		isColumn: true,
 	},
-	tagFilters: {
+	filters: {
 		items: [
 			{
 				id: '8fac746b',
-				key: 'resource_signoz_collector_id',
+				key: {
+					key: 'resource_signoz_collector_id',
+					dataType: 'int64',
+					isColumn: false,
+					type: 'tag',
+				},
 				op: '=',
 				value: ['1a5d3cc2-4b3e-4c7c-ad07-c4cdd739d1b9'],
 			},
 			{
 				id: '8fadtr46b',
-				key: 'service_name',
+				key: {
+					key: 'service_name',
+					dataType: 'string',
+					isColumn: false,
+					type: 'tag',
+				},
 				op: 'IN',
 				value: ['frontend', 'operation', 'ser'],
 			},

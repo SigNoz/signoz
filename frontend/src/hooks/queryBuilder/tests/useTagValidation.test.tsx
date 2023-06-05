@@ -58,7 +58,7 @@ describe('useTagValidation', () => {
 	testCases.forEach((testCase) => {
 		test(`expected values for ${JSON.stringify(testCase)}`, () => {
 			const { result } = renderHook(() =>
-				useTagValidation(testCase.value, testCase.operator, testCase.result),
+				useTagValidation(testCase.value, testCase.result),
 			);
 			expect(result.current).toEqual(testCase.expected);
 		});

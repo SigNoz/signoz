@@ -5,7 +5,7 @@ exports[`QueryBuilder: Filter Labels it should render FilterLabel 1`] = `
   .c0 {
   padding: 0 0.6875rem;
   min-height: 2rem;
-  width: 100%;
+  min-width: 5.625rem;
   display: -webkit-inline-box;
   display: -webkit-inline-flex;
   display: -ms-inline-flexbox;
@@ -16,8 +16,7 @@ exports[`QueryBuilder: Filter Labels it should render FilterLabel 1`] = `
   -ms-flex-align: center;
   align-items: center;
   border-radius: 0.125rem;
-  border: 0.0625rem solid #434343;
-  background-color: #141414;
+  border: 1px solid #424242;
 }
 
 <div

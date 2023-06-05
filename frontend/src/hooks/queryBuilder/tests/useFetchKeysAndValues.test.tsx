@@ -9,6 +9,7 @@ import { QueryClient, QueryClientProvider } from 'react-query';
 
 import { useFetchKeysAndValues } from '../useFetchKeysAndValues';
 
+const searchKey = '';
 const searchValue = '';
 
 describe('useFetchKeysAndValues', () => {
@@ -24,7 +25,12 @@ describe('useFetchKeysAndValues', () => {
 
 	test('should isFetching Data', () => {
 		const { result } = renderHook(
-			() => useFetchKeysAndValues(searchValue, valueWithAttributeAndOperator),
+			() =>
+				useFetchKeysAndValues(
+					searchValue,
+					valueWithAttributeAndOperator,
+					searchKey,
+				),
 			{
 				wrapper,
 			},
@@ -36,8 +42,14 @@ describe('useFetchKeysAndValues', () => {
 	});
 
 	test('should results', async () => {
+		const searchKeys = 'serv';
 		const { result } = renderHook(
-			() => useFetchKeysAndValues(searchValue, valueWithAttributeAndOperator),
+			() =>
+				useFetchKeysAndValues(
+					searchValue,
+					valueWithAttributeAndOperator,
+					searchKeys,
+				),
 			{
 				wrapper,
 			},
@@ -62,8 +74,14 @@ describe('useFetchKeysAndValues', () => {
 	});
 
 	test('should keys data', async () => {
+		const searchKeyValue = '';
 		const { result } = renderHook(
-			() => useFetchKeysAndValues(searchValue, valueWithAttributeAndOperator),
+			() =>
+				useFetchKeysAndValues(
+					searchValue,
+					valueWithAttributeAndOperator,
+					searchKeyValue,
+				),
 			{
 				wrapper,
 			},

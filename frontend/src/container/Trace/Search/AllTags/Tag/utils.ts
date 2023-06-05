@@ -14,17 +14,17 @@ export type TagValueTypes = string | number | boolean;
 export const extractTagFilters = (
 	payload: TagKeyPayload,
 ): DefaultOptionType[] => {
-	const tagFilters: string[] = [];
+	const filters: string[] = [];
 	payload.stringTagKeys.forEach((element) => {
-		tagFilters.push(`${element}.(string)`);
+		filters.push(`${element}.(string)`);
 	});
 	payload.numberTagKeys.forEach((element) => {
-		tagFilters.push(`${element}.(number)`);
+		filters.push(`${element}.(number)`);
 	});
 	payload.boolTagKeys.forEach((element) => {
-		tagFilters.push(`${element}.(bool)`);
+		filters.push(`${element}.(bool)`);
 	});
-	return tagFilters.map((e) => ({
+	return filters.map((e) => ({
 		value: e,
 		label: e,
 	}));

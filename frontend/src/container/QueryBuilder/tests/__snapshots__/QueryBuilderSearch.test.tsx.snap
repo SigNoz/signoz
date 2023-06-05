@@ -16,7 +16,7 @@ exports[`QueryBuilder: WHERE clause Seach Filter it should render QueryBuilderSe
 
 <div
     class="ant-select css-dev-only-do-not-override-1i536d8 ant-select-multiple ant-select-show-search"
-    style="width: 100%; min-width: 10rem;"
+    style="width: 100%; min-width: 7.7rem;"
   >
     <div
       class="ant-select-selector"

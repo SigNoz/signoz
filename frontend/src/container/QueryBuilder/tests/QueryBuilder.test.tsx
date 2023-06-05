@@ -1,6 +1,5 @@
 import { fireEvent, render } from '@testing-library/react';
 import { PANEL_TYPES } from 'constants/queryBuilder';
-import React from 'react';
 import { I18nextProvider } from 'react-i18next';
 import { Provider } from 'react-redux';
 import { MemoryRouter } from 'react-router-dom';

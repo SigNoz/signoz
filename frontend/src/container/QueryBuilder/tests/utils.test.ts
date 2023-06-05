@@ -1,6 +1,5 @@
 import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
 
-import { OrderByFilterValue } from '../filters/OrderByFilter/OrderByFilter.interfaces';
 import {
 	getLabelFromValue,
 	mapLabelValuePairs,
@@ -12,21 +11,21 @@ import {
 
 describe('isInNInOperator', () => {
 	test('returns true if the value contains the IN operator', () => {
-		expect(isInNInOperator('service_name IN [ab, cd, 1]')).toBe(true);
+		expect(isInNInOperator('service_name IN ab, cd, 1')).toBe(true);
 	});
 
 	test('returns true if the value contains the NIN operator', () => {
-		expect(isInNInOperator('service_name NIN [ab, cd, 1]')).toBe(true);
+		expect(isInNInOperator('service_name NIN ab, cd, 1')).toBe(true);
 	});
 });
 
 describe('isExistsNotExistsOperator', () => {
 	test('returns true if the value contains the EXISTS operator', () => {
-		expect(isExistsNotExistsOperator('EXISTS')).toBe(true);
+		expect(isExistsNotExistsOperator('service_name EXISTS')).toBe(true);
 	});
 
 	test('returns true if the value contains the NOT_EXISTS operator', () => {
-		expect(isExistsNotExistsOperator('NOT_EXISTS')).toBe(true);
+		expect(isExistsNotExistsOperator('service_name NOT_EXISTS')).toBe(true);
 	});
 });
 
@@ -40,16 +39,16 @@ describe('mapLabelValuePairs', () => {
 		const result = mapLabelValuePairs(arr);
 		expect(result).toEqual([
 			[
-				{ label: 'name asc', value: 'name asc' },
-				{ label: 'name desc', value: 'name desc' },
+				{ label: 'name asc', value: 'name|asc' },
+				{ label: 'name desc', value: 'name|desc' },
 			],
 			[
-				{ label: 'age asc', value: 'age asc' },
-				{ label: 'age desc', value: 'age desc' },
+				{ label: 'age asc', value: 'age|asc' },
+				{ label: 'age desc', value: 'age|desc' },
 			],
 			[
-				{ label: 'created_at asc', value: 'created_at asc' },
-				{ label: 'created_at desc', value: 'created_at desc' },
+				{ label: 'created_at asc', value: 'created_at|asc' },
+				{ label: 'created_at desc', value: 'created_at|desc' },
 			],
 		]);
 	});
@@ -57,23 +56,8 @@ describe('mapLabelValuePairs', () => {
 
 describe('getLabelFromValue', () => {
 	it('should return an array of labels from an array of OrderByFilterValue objects', () => {
-		const arr: OrderByFilterValue[] = [
-			{
-				label: 'name asc',
-				value: 'name asc',
-				disabled: false,
-				key: 'name',
-				title: 'name',
-			},
-			{
-				label: 'age desc',
-				value: 'age asc',
-				disabled: false,
-				key: 'age',
-				title: 'age',
-			},
-		];
+		const arr: string[] = ['service_name asc', 'service_namespace desc'];
 		const result = getLabelFromValue(arr);
-		expect(result).toEqual(['name', 'age']);
+		expect(result).toEqual(['service_name', 'service_namespace']);
 	});
 });
