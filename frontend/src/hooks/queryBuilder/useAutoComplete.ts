@@ -8,6 +8,7 @@ import {
 import { Option } from 'container/QueryBuilder/type';
 import * as Papa from 'papaparse';
 import { KeyboardEvent, useCallback, useState } from 'react';
+import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 
 import { useFetchKeysAndValues } from './useFetchKeysAndValues';
@@ -20,11 +21,13 @@ export const useAutoComplete = (query: IBuilderQuery): IAutoComplete => {
 	const [searchValue, setSearchValue] = useState<string>('');
 	const [searchKey, setSearchKey] = useState<string>('');
 
-	const { keys, results, isFetching } = useFetchKeysAndValues(
-		searchValue,
-		query,
-		searchKey,
-	);
+	const {
+		keys,
+		results,
+		isFetching,
+		sourceKeys,
+		handleRemoveSourceKey,
+	} = useFetchKeysAndValues(searchValue, query, searchKey);
 
 	const [key, operator, result] = useSetCurrentKeyAndOperator(searchValue, keys);
 
@@ -115,7 +118,8 @@ export const useAutoComplete = (query: IBuilderQuery): IAutoComplete => {
 		isMulti,
 		isFetching,
 		setSearchKey,
-		searchKey,
+		sourceKeys,
+		handleRemoveSourceKey,
 	};
 };
 
@@ -131,5 +135,6 @@ interface IAutoComplete {
 	isMulti: boolean;
 	isFetching: boolean;
 	setSearchKey: (value: string) => void;
-	searchKey: string;
+	sourceKeys: BaseAutocompleteData[];
+	handleRemoveSourceKey: (newSourceKey: string) => void;
 }

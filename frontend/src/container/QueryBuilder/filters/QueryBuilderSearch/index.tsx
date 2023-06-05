@@ -1,6 +1,5 @@
 import { Select, Spin, Tag, Tooltip } from 'antd';
 import { useAutoComplete } from 'hooks/queryBuilder/useAutoComplete';
-import { useFetchKeysAndValues } from 'hooks/queryBuilder/useFetchKeysAndValues';
 import {
 	KeyboardEvent,
 	ReactElement,
@@ -43,14 +42,9 @@ function QueryBuilderSearch({
 		isMulti,
 		isFetching,
 		setSearchKey,
-		searchKey,
+		sourceKeys,
+		handleRemoveSourceKey,
 	} = useAutoComplete(query);
-
-	const { sourceKeys, handleRemoveSourceKey } = useFetchKeysAndValues(
-		searchValue,
-		query,
-		searchKey,
-	);
 
 	const onTagRender = ({
 		value,
