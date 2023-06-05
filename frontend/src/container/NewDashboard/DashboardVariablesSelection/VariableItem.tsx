@@ -2,11 +2,15 @@ import { orange } from '@ant-design/colors';
 import { WarningOutlined } from '@ant-design/icons';
 import { Input, Popover, Select, Typography } from 'antd';
 import query from 'api/dashboard/variables/query';
+import dayjs, { ManipulateType } from 'dayjs';
 import { commaValuesParser } from 'lib/dashbaordVariables/customCommaValuesParser';
 import sortValues from 'lib/dashbaordVariables/sortVariableValues';
 import map from 'lodash-es/map';
 import { memo, useCallback, useEffect, useState } from 'react';
+import { useSelector } from 'react-redux';
+import { AppState } from 'store/reducers';
 import { IDashboardVariable } from 'types/api/dashboard/getAll';
+import { GlobalReducer } from 'types/reducer/globalTime';
 
 import { variablePropsToPayloadVariables } from '../utils';
 import { SelectItemStyle, VariableContainer, VariableName } from './styles';
@@ -31,12 +35,39 @@ function VariableItem({
 	onAllSelectedUpdate,
 	lastUpdatedVar,
 }: VariableItemProps): JSX.Element {
+	const globalTime = useSelector<AppState, GlobalReducer>(
+		(state) => state.globalTime,
+	);
+
 	const [optionsData, setOptionsData] = useState<(string | number | boolean)[]>(
 		[],
 	);
 	const [isLoading, setIsLoading] = useState<boolean>(false);
 
 	const [errorMessage, setErrorMessage] = useState<null | string>(null);
+
+	const setCustomVariableOptions = useCallback(
+		(allowedVariableSubgroupsIds: string[] = []): void => {
+			const customValue = variableData.customValue || '';
+			const comma = customValue.slice(-1) === ',' ? '' : ',';
+			const subgroups =
+				variableData.customVariableSubgroups
+					?.filter((subgroup) => allowedVariableSubgroupsIds.includes(subgroup.id))
+					.map(({ value }) => value)
+					.join() || '';
+			setOptionsData(
+				sortValues(
+					commaValuesParser(customValue + comma + subgroups),
+					variableData.sort,
+				) as never,
+			);
+		},
+		[
+			variableData.customValue,
+			variableData.customVariableSubgroups,
+			variableData.sort,
+		],
+	);
 
 	/* eslint-disable sonarjs/cognitive-complexity */
 	const getOptions = useCallback(async (): Promise<void> => {
@@ -105,12 +136,7 @@ function VariableItem({
 				console.error(e);
 			}
 		} else if (variableData.type === 'CUSTOM') {
-			setOptionsData(
-				sortValues(
-					commaValuesParser(variableData.customValue || ''),
-					variableData.sort,
-				) as never,
-			);
+			setCustomVariableOptions();
 		}
 	}, [
 		variableData,
@@ -119,12 +145,69 @@ function VariableItem({
 		onAllSelectedUpdate,
 		optionsData,
 		lastUpdatedVar,
+		setCustomVariableOptions,
 	]);
+
+	const filterOptionsByTimeRange = useCallback(
+		(
+			global: GlobalReducer,
+			timeRanges: IDashboardVariable['customVariableTimeRanges'],
+		): void => {
+			if (!timeRanges) return;
+			const globalStartTime = dayjs(global.minTime / 1000000);
+			const globalEndTime = dayjs(global.maxTime / 1000000);
+			const allowedGroups: string[][] = [];
+			let timeRangeStart;
+			timeRanges.forEach((timeRange) => {
+				const isCustomTime = timeRange.selectedTime === 'custom';
+				const timeRangeEnd = dayjs(isCustomTime ? timeRange.endTime : undefined);
+				if (isCustomTime) {
+					timeRangeStart = dayjs(timeRange.startTime);
+				} else {
+					const [time, unit] = timeRange.selectedTime?.split(' ') || [];
+					const parsedUnit = unit
+						?.replace('min', 'minute')
+						?.replace('hours', 'hour') as ManipulateType;
+					timeRangeStart = timeRangeEnd.subtract(Number(time), parsedUnit);
+				}
+
+				const startIsBetweenGlobal =
+					(timeRangeStart.isAfter(globalStartTime) ||
+						timeRangeStart.isSame(globalStartTime)) &&
+					(timeRangeStart.isBefore(globalEndTime) ||
+						timeRangeStart.isSame(globalEndTime));
+				const endIsBetweenGlobal =
+					(timeRangeEnd.isAfter(globalStartTime) ||
+						timeRangeEnd.isSame(globalStartTime)) &&
+					(timeRangeEnd.isBefore(globalEndTime) ||
+						timeRangeEnd.isSame(globalEndTime));
+
+				if (startIsBetweenGlobal || endIsBetweenGlobal) {
+					allowedGroups.push(timeRange.groups || []);
+				}
+			});
+			const flatAllowedGroups = allowedGroups.flat();
+			setCustomVariableOptions(
+				flatAllowedGroups
+					.flat()
+					.filter((item, index) => flatAllowedGroups.indexOf(item) === index),
+			);
+		},
+		[setCustomVariableOptions],
+	);
 
 	useEffect(() => {
 		getOptions();
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [variableData, existingVariables]);
+
+	useEffect(() => {
+		filterOptionsByTimeRange(globalTime, variableData.customVariableTimeRanges);
+	}, [
+		globalTime,
+		filterOptionsByTimeRange,
+		variableData.customVariableTimeRanges,
+	]);
 
 	const handleChange = (value: string | string[]): void => {
 		if (variableData.name)

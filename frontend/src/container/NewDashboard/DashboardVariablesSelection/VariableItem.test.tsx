@@ -1,7 +1,9 @@
 import '@testing-library/jest-dom/extend-expect';
 
 import { fireEvent, render, screen } from '@testing-library/react';
-import React, { useEffect } from 'react';
+import React, { ReactElement, useEffect } from 'react';
+import { Provider } from 'react-redux';
+import store from 'store';
 import { IDashboardVariable } from 'types/api/dashboard/getAll';
 
 import VariableItem from './VariableItem';
@@ -26,7 +28,9 @@ const mockCustomVariableData: IDashboardVariable = {
 
 const mockOnValueUpdate = jest.fn();
 const mockOnAllSelectedUpdate = jest.fn();
-
+const renderWithProvider = (component: ReactElement): ReactElement => (
+	<Provider store={store}>{component}</Provider>
+);
 describe('VariableItem', () => {
 	let useEffectSpy: jest.SpyInstance;
 
@@ -41,13 +45,15 @@ describe('VariableItem', () => {
 
 	test('renders component with default props', () => {
 		render(
-			<VariableItem
-				variableData={mockVariableData}
-				existingVariables={{}}
-				onValueUpdate={mockOnValueUpdate}
-				onAllSelectedUpdate={mockOnAllSelectedUpdate}
-				lastUpdatedVar=""
-			/>,
+			renderWithProvider(
+				<VariableItem
+					variableData={mockVariableData}
+					existingVariables={{}}
+					onValueUpdate={mockOnValueUpdate}
+					onAllSelectedUpdate={mockOnAllSelectedUpdate}
+					lastUpdatedVar=""
+				/>,
+			),
 		);
 
 		expect(screen.getByText('$testVariable')).toBeInTheDocument();
@@ -55,26 +61,30 @@ describe('VariableItem', () => {
 
 	test('renders Input when the variable type is TEXTBOX', () => {
 		render(
-			<VariableItem
-				variableData={mockVariableData}
-				existingVariables={{}}
-				onValueUpdate={mockOnValueUpdate}
-				onAllSelectedUpdate={mockOnAllSelectedUpdate}
-				lastUpdatedVar=""
-			/>,
+			renderWithProvider(
+				<VariableItem
+					variableData={mockVariableData}
+					existingVariables={{}}
+					onValueUpdate={mockOnValueUpdate}
+					onAllSelectedUpdate={mockOnAllSelectedUpdate}
+					lastUpdatedVar=""
+				/>,
+			),
 		);
 		expect(screen.getByPlaceholderText('Enter value')).toBeInTheDocument();
 	});
 
 	test('calls onChange event handler when Input value changes', () => {
 		render(
-			<VariableItem
-				variableData={mockVariableData}
-				existingVariables={{}}
-				onValueUpdate={mockOnValueUpdate}
-				onAllSelectedUpdate={mockOnAllSelectedUpdate}
-				lastUpdatedVar=""
-			/>,
+			renderWithProvider(
+				<VariableItem
+					variableData={mockVariableData}
+					existingVariables={{}}
+					onValueUpdate={mockOnValueUpdate}
+					onAllSelectedUpdate={mockOnAllSelectedUpdate}
+					lastUpdatedVar=""
+				/>,
+			),
 		);
 		const inputElement = screen.getByPlaceholderText('Enter value');
 		fireEvent.change(inputElement, { target: { value: 'newValue' } });
@@ -87,13 +97,15 @@ describe('VariableItem', () => {
 
 	test('renders a Select element when variable type is CUSTOM', () => {
 		render(
-			<VariableItem
-				variableData={mockCustomVariableData}
-				existingVariables={{}}
-				onValueUpdate={mockOnValueUpdate}
-				onAllSelectedUpdate={mockOnAllSelectedUpdate}
-				lastUpdatedVar=""
-			/>,
+			renderWithProvider(
+				<VariableItem
+					variableData={mockCustomVariableData}
+					existingVariables={{}}
+					onValueUpdate={mockOnValueUpdate}
+					onAllSelectedUpdate={mockOnAllSelectedUpdate}
+					lastUpdatedVar=""
+				/>,
+			),
 		);
 
 		expect(screen.getByText('$customVariable')).toBeInTheDocument();
@@ -107,13 +119,15 @@ describe('VariableItem', () => {
 		};
 
 		render(
-			<VariableItem
-				variableData={customVariableData}
-				existingVariables={{}}
-				onValueUpdate={mockOnValueUpdate}
-				onAllSelectedUpdate={mockOnAllSelectedUpdate}
-				lastUpdatedVar=""
-			/>,
+			renderWithProvider(
+				<VariableItem
+					variableData={customVariableData}
+					existingVariables={{}}
+					onValueUpdate={mockOnValueUpdate}
+					onAllSelectedUpdate={mockOnAllSelectedUpdate}
+					lastUpdatedVar=""
+				/>,
+			),
 		);
 
 		expect(screen.getByTitle('ALL')).toBeInTheDocument();
@@ -121,13 +135,15 @@ describe('VariableItem', () => {
 
 	test('calls useEffect when the component mounts', () => {
 		render(
-			<VariableItem
-				variableData={mockCustomVariableData}
-				existingVariables={{}}
-				onValueUpdate={mockOnValueUpdate}
-				onAllSelectedUpdate={mockOnAllSelectedUpdate}
-				lastUpdatedVar=""
-			/>,
+			renderWithProvider(
+				<VariableItem
+					variableData={mockCustomVariableData}
+					existingVariables={{}}
+					onValueUpdate={mockOnValueUpdate}
+					onAllSelectedUpdate={mockOnAllSelectedUpdate}
+					lastUpdatedVar=""
+				/>,
+			),
 		);
 
 		expect(useEffect).toHaveBeenCalled();
@@ -136,13 +152,15 @@ describe('VariableItem', () => {
 	test('calls useEffect only once when the component mounts', () => {
 		// Render the component
 		const { rerender } = render(
-			<VariableItem
-				variableData={mockCustomVariableData}
-				existingVariables={{}}
-				onValueUpdate={mockOnValueUpdate}
-				onAllSelectedUpdate={mockOnAllSelectedUpdate}
-				lastUpdatedVar=""
-			/>,
+			renderWithProvider(
+				<VariableItem
+					variableData={mockCustomVariableData}
+					existingVariables={{}}
+					onValueUpdate={mockOnValueUpdate}
+					onAllSelectedUpdate={mockOnAllSelectedUpdate}
+					lastUpdatedVar=""
+				/>,
+			),
 		);
 
 		// Create an updated version of the mock data
@@ -153,16 +171,18 @@ describe('VariableItem', () => {
 
 		// Re-render the component with the updated data
 		rerender(
-			<VariableItem
-				variableData={updatedMockCustomVariableData}
-				existingVariables={{}}
-				onValueUpdate={mockOnValueUpdate}
-				onAllSelectedUpdate={mockOnAllSelectedUpdate}
-				lastUpdatedVar=""
-			/>,
+			renderWithProvider(
+				<VariableItem
+					variableData={updatedMockCustomVariableData}
+					existingVariables={{}}
+					onValueUpdate={mockOnValueUpdate}
+					onAllSelectedUpdate={mockOnAllSelectedUpdate}
+					lastUpdatedVar=""
+				/>,
+			),
 		);
 
 		// Check if the useEffect is called with the correct arguments
-		expect(useEffectSpy).toHaveBeenCalledTimes(4);
+		expect(useEffectSpy).toHaveBeenCalledTimes(8);
 	});
 });

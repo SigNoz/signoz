@@ -1,5 +1,6 @@
 /* eslint-disable sonarjs/cognitive-complexity */
 import { orange } from '@ant-design/colors';
+import { DeleteOutlined } from '@ant-design/icons';
 import {
 	Button,
 	Col,
@@ -12,10 +13,14 @@ import {
 } from 'antd';
 import query from 'api/dashboard/variables/query';
 import Editor from 'components/Editor';
+import CustomDateTimeModal, {
+	DateTimeRangeType,
+} from 'container/TopNav/CustomDateTimeModal';
+import dayjs from 'dayjs';
 import { commaValuesParser } from 'lib/dashbaordVariables/customCommaValuesParser';
 import sortValues from 'lib/dashbaordVariables/sortVariableValues';
 import { map } from 'lodash-es';
-import { useEffect, useState } from 'react';
+import { ReactNode, useEffect, useState } from 'react';
 import {
 	IDashboardVariable,
 	TSortVariableValuesType,
@@ -39,6 +44,17 @@ interface VariableItemProps {
 	validateName: (arg0: string) => boolean;
 	variableViewMode: TVariableViewMode;
 }
+
+const timeSelectionOptions = [
+	'5 min',
+	'15 min',
+	'30 min',
+	'1 hour',
+	'6 hours',
+	'1 day',
+	'1 week',
+];
+
 function VariableItem({
 	variableData,
 	existingVariables,
@@ -85,12 +101,23 @@ function VariableItem({
 	const [errorName, setErrorName] = useState<boolean>(false);
 	const [errorPreview, setErrorPreview] = useState<string | null>(null);
 
+	const [isTimePickerOpen, setIsTimePickerOpen] = useState<boolean>(false);
+	const [subgroups, setSubgroups] = useState<{ id: string; value: string }[]>(
+		variableData.customVariableSubgroups || [],
+	);
+	const [variableTimeRanges, setVariableTimeRanges] = useState<
+		IDashboardVariable['customVariableTimeRanges']
+	>(variableData.customVariableTimeRanges || []);
+	const [selectedTimeRange, setSelectedTimeRange] = useState<number>(0);
+
 	useEffect(() => {
 		setPreviewValues([]);
 		if (queryType === 'CUSTOM') {
+			const comma = variableCustomValue.slice(-1) === ',' ? '' : ',';
+			const subGroupsValues = subgroups.map(({ value }) => value);
 			setPreviewValues(
 				sortValues(
-					commaValuesParser(variableCustomValue),
+					commaValuesParser(variableCustomValue + comma + subGroupsValues.join()),
 					variableSortType,
 				) as never,
 			);
@@ -101,6 +128,7 @@ function VariableItem({
 		variableData.customValue,
 		variableData.type,
 		variableSortType,
+		subgroups,
 	]);
 
 	const handleSave = (): void => {
@@ -117,6 +145,10 @@ function VariableItem({
 			...(queryType === 'TEXTBOX' && {
 				selectedValue: (variableData.selectedValue ||
 					variableTextboxValue) as never,
+			}),
+			...(queryType === 'CUSTOM' && {
+				customVariableSubgroups: subgroups,
+				customVariableTimeRanges: variableTimeRanges,
 			}),
 			modificationUUID: v4(),
 		};
@@ -160,6 +192,141 @@ function VariableItem({
 			console.error(e);
 		}
 	};
+
+	const updateTimeRange = (
+		index: number,
+		data: {
+			time?: {
+				startTime?: number;
+				endTime?: number;
+				selectedTime: TimeOptions;
+			};
+			groups?: string[];
+		},
+	): void => {
+		setVariableTimeRanges((prevTimeRange) => {
+			const updatedTimeRange = [...(prevTimeRange || [])];
+			if (data.time) {
+				updatedTimeRange.splice(index, 1, {
+					...updatedTimeRange[index],
+					...data.time,
+				});
+			}
+			if (data.groups) {
+				updatedTimeRange.splice(index, 1, {
+					...updatedTimeRange[index],
+					...{ groups: data.groups },
+				});
+			}
+			return updatedTimeRange;
+		});
+	};
+
+	const updateTimeRangesOnDeleteGroup = (id: string): void => {
+		variableTimeRanges?.forEach((timeRange, index): void => {
+			if (timeRange.groups?.includes(id)) {
+				updateTimeRange(index, {
+					groups: timeRange.groups?.filter((groupId) => groupId !== id) || [],
+				});
+			}
+		});
+	};
+
+	const updateGroups = (
+		action: 'add' | 'update' | 'remove',
+		id?: string,
+		value?: string,
+	): void => {
+		setSubgroups((prevGroup) => {
+			const updatedGroup = [...prevGroup];
+			if (action === 'update' && id) {
+				const groupIndex = updatedGroup.findIndex((item) => item.id === id);
+				updatedGroup.splice(groupIndex, 1, { value: value || '', id });
+			}
+
+			if (action === 'add') {
+				updatedGroup.push({
+					id: v4(),
+					value: '',
+				});
+			}
+
+			if (action === 'remove' && id) {
+				updatedGroup.forEach((item, index) => {
+					if (item.id === id) {
+						updatedGroup.splice(index, 1);
+						updateTimeRangesOnDeleteGroup(id);
+					}
+				});
+			}
+
+			return updatedGroup;
+		});
+	};
+
+	const onSelectTimeRangeGroup = (selectedGroups: string[]): void => {
+		updateTimeRange(selectedTimeRange, { groups: selectedGroups });
+	};
+
+	const addTimeRange = (): void => {
+		setVariableTimeRanges((prevTimeRange) => {
+			const updatedTimeRange = [...(prevTimeRange || [])];
+			updatedTimeRange.push({});
+			setSelectedTimeRange(updatedTimeRange.length - 1);
+			return updatedTimeRange;
+		});
+	};
+
+	const removeTimeRange = (index: number): void => {
+		setVariableTimeRanges((prevTimeRange) => {
+			const updatedTimeRange = [...(prevTimeRange || [])];
+			updatedTimeRange.splice(index, 1);
+			setSelectedTimeRange(updatedTimeRange.length - 1);
+			return updatedTimeRange;
+		});
+	};
+
+	const handleSelectTime = (dateTimeRange: DateTimeRangeType): void => {
+		if (dateTimeRange) {
+			const [startTime, endTime] = dateTimeRange;
+			if (startTime && endTime) {
+				updateTimeRange(selectedTimeRange, {
+					time: {
+						startTime: startTime.toDate().getTime(),
+						endTime: endTime.toDate().getTime(),
+						selectedTime: 'custom',
+					},
+				});
+			}
+		}
+		setIsTimePickerOpen(false);
+	};
+	const onSelectTimeRangeOption = (
+		option: TimeOptions,
+		timeRangeIndex: number,
+	): void => {
+		if (option === 'custom') {
+			setSelectedTimeRange(timeRangeIndex);
+			setIsTimePickerOpen(true);
+			return;
+		}
+		updateTimeRange(timeRangeIndex, {
+			time: {
+				selectedTime: option,
+			},
+		});
+	};
+
+	const displayCustomTimeRange = (timeRange: {
+		startTime?: number;
+		endTime?: number;
+		groups?: string[];
+		selectedTime?: TimeOptions;
+	}): string =>
+		`${dayjs(timeRange.startTime).format('YYYY-MM-DD HH:mm')} - ${dayjs(
+			timeRange.endTime,
+		).format('YYYY-MM-DD HH:mm')}`;
+
 	return (
 		<Col>
 			{/* <Typography.Title level={3}>Add Variable</Typography.Title> */}
@@ -250,25 +417,125 @@ function VariableItem({
 				</VariableItemRow>
 			)}
 			{queryType === 'CUSTOM' && (
-				<VariableItemRow>
-					<LabelContainer>
-						<Typography>Values separated by comma</Typography>
-					</LabelContainer>
-					<Input.TextArea
-						value={variableCustomValue}
-						placeholder="1, 10, mykey, mykey:myvalue"
-						style={{ width: 400 }}
-						onChange={(e): void => {
-							setVariableCustomValue(e.target.value);
-							setPreviewValues(
-								sortValues(
-									commaValuesParser(e.target.value),
-									variableSortType,
-								) as never,
-							);
-						}}
+				<>
+					<VariableItemRow>
+						<LabelContainer>
+							<Typography>Values separated by comma</Typography>
+						</LabelContainer>
+						<Input.TextArea
+							value={variableCustomValue}
+							placeholder="1, 10, mykey, mykey:myvalue"
+							style={{ width: 400 }}
+							onChange={(e): void => {
+								setVariableCustomValue(e.target.value);
+							}}
+						/>
+						{subgroups.map((subgroup, index) => (
+							<VariableItemRow style={{ marginBottom: '0' }} key={subgroup.id}>
+								<LabelContainer>
+									<Typography>Subgroup {index + 1}</Typography>
+								</LabelContainer>
+								<Input.TextArea
+									value={subgroup.value}
+									placeholder="1, 10, mykey, mykey:myvalue"
+									style={{ width: 400 }}
+									onChange={(e): void => {
+										updateGroups('update', subgroup.id, e.target.value);
+									}}
+								/>
+								<DeleteOutlined
+									style={{ alignSelf: 'center' }}
+									onClick={(): void => updateGroups('remove', subgroup.id)}
+								>
+									remove
+								</DeleteOutlined>
+							</VariableItemRow>
+						))}
+						<Button
+							style={{ alignSelf: 'center' }}
+							onClick={(): void => updateGroups('add')}
+						>
+							Add Group
+						</Button>
+					</VariableItemRow>
+					{subgroups.length > 0 && (
+						<VariableItemRow>
+							{variableTimeRanges?.map(
+								(timeRange, idx): ReactNode => (
+									<Col span={8} key={v4()}>
+										<div
+											style={{
+												width: '100%',
+												flexWrap: 'wrap',
+												display: 'flex',
+												alignItems: 'center',
+												marginBottom: '1rem',
+											}}
+										>
+											<p style={{ flexBasis: '50%' }}>Time Range {idx + 1}</p>
+											<Select
+												style={{ flexBasis: '50%' }}
+												onSelect={(e): void => {
+													onSelectTimeRangeOption(e, idx);
+												}}
+												placeholder="Select Time Range"
+												value={timeRange.selectedTime}
+											>
+												{timeSelectionOptions.map(
+													(item): ReactNode => (
+														<Select.Option key={item} value={item}>
+															{`Last ${item}`}
+														</Select.Option>
+													),
+												)}
+												<Select.Option key="custom" value="custom">
+													Custom
+												</Select.Option>
+											</Select>
+
+											{timeRange.selectedTime === 'custom' && (
+												<p style={{ flexBasis: '100%', margin: '0px' }}>
+													{displayCustomTimeRange(timeRange)}
+												</p>
+											)}
+
+											{timeRange.selectedTime && (
+												<Select
+													onDropdownVisibleChange={(e): void => {
+														if (e) {
+															setSelectedTimeRange(idx);
+														}
+													}}
+													mode="multiple"
+													style={{ width: '100%' }}
+													placeholder="Select an group"
+													onChange={onSelectTimeRangeGroup}
+													value={timeRange.groups}
+												>
+													{subgroups.map((subgroup, index) => (
+														<Select.Option key={subgroup.id} value={subgroup.id}>
+															Group {index + 1}
+														</Select.Option>
+													))}
+												</Select>
+											)}
+
+											<Button onClick={(): void => removeTimeRange(idx)}>
+												Remove Time Range
+											</Button>
+										</div>
+									</Col>
+								),
+							)}
+							<Button onClick={addTimeRange}>Add Time Range</Button>
+						</VariableItemRow>
+					)}
+					<CustomDateTimeModal
+						visible={isTimePickerOpen}
+						onCancel={(): void => setIsTimePickerOpen(false)}
+						onCreate={handleSelectTime}
 					/>
-				</VariableItemRow>
+				</>
 			)}
 			{queryType === 'TEXTBOX' && (
 				<VariableItemRow>
@@ -359,5 +626,15 @@ function VariableItem({
 		</Col>
 	);
 }
+
+type TimeOptions =
+	| '5 min'
+	| '15 min'
+	| '30 min'
+	| '1 hour'
+	| '6 hour'
+	| '1 day'
+	| '1 week'
+	| 'custom';
 
 export default VariableItem;

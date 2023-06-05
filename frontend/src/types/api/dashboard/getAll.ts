@@ -21,6 +21,21 @@ export interface IDashboardVariable {
 	queryValue?: string;
 	// Custom
 	customValue?: string;
+	customVariableTimeRanges?: {
+		startTime?: number;
+		endTime?: number;
+		groups?: string[];
+		selectedTime?:
+			| '5 min'
+			| '15 min'
+			| '30 min'
+			| '1 hour'
+			| '6 hour'
+			| '1 day'
+			| '1 week'
+			| 'custom';
+	}[];
+	customVariableSubgroups?: { id: string; value: string }[];
 	// Textbox
 	textboxValue?: string;
 
