@@ -8,6 +8,7 @@ import {
 	IBuilderQuery,
 	IClickHouseQuery,
 	IPromQLQuery,
+	Query,
 	QueryState,
 } from 'types/api/queryBuilder/queryBuilderData';
 import { EQueryType } from 'types/common/dashboard';
@@ -156,6 +157,11 @@ export const initialQuery: QueryState = {
 	builder: initialQueryBuilderData,
 	clickhouse_sql: [initialClickHouseData],
 	promql: [initialQueryPromQLData],
+};
+
+export const initialQueryWithType: Query = {
+	...initialQuery,
+	queryType: EQueryType.QUERY_BUILDER,
 };
 
 export const operatorsByTypes: Record<LocalDataType, string[]> = {

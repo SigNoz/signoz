@@ -7,11 +7,13 @@ import ROUTES from 'constants/routes';
 import QueryTypeTag from 'container/NewWidget/LeftContainer/QueryTypeTag';
 import PlotTag from 'container/NewWidget/LeftContainer/WidgetGraph/PlotTag';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
+import { useShareBuilderUrl } from 'hooks/queryBuilder/useShareBuilderUrl';
 import { MESSAGE, useIsFeatureDisabled } from 'hooks/useFeatureFlag';
 import { useNotifications } from 'hooks/useNotifications';
 import history from 'lib/history';
+import { mapQueryDataFromApi } from 'lib/newQueryBuilder/queryBuilderMappers/mapQueryDataFromApi';
 import { mapQueryDataToApi } from 'lib/newQueryBuilder/queryBuilderMappers/mapQueryDataToApi';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useQueryClient } from 'react-query';
 import { AlertTypes } from 'types/api/alerts/alertTypes';
@@ -35,7 +37,7 @@ import {
 	StyledLeftContainer,
 } from './styles';
 import UserGuide from './UserGuide';
-import { prepareStagedQuery, toChartInterval } from './utils';
+import { toChartInterval } from './utils';
 
 function FormAlertRules({
 	alertType,
@@ -46,12 +48,7 @@ function FormAlertRules({
 	// init namespace for translations
 	const { t } = useTranslation('alerts');
 
-	const {
-		currentQuery,
-		queryType,
-		handleSetQueryType,
-		initQueryBuilderData,
-	} = useQueryBuilder();
+	const { currentQuery, redirectWithQueryBuilderData } = useQueryBuilder();
 
 	// use query client
 	const ruleCache = useQueryClient();
@@ -62,7 +59,11 @@ function FormAlertRules({
 	const [alertDef, setAlertDef] = useState<AlertDef>(initialValue);
 
 	// initQuery contains initial query when component was mounted
-	const initQuery = initialValue.condition.compositeQuery;
+	const initQuery = useMemo(() => initialValue.condition.compositeQuery, [
+		initialValue,
+	]);
+
+	const sq = useMemo(() => mapQueryDataFromApi(initQuery), [initQuery]);
 
 	// manualStagedQuery requires manual staging of query
 	// when user clicks run query button. Useful for clickhouse tab where
@@ -73,26 +74,26 @@ function FormAlertRules({
 	// other queries based on server data.
 	// useful when fetching of initial values (from api)
 	// is delayed
+
+	const { compositeQuery } = useShareBuilderUrl({ defaultValue: sq });
+
 	useEffect(() => {
-		const type = initQuery.queryType;
-
-		// prepare staged query
-		const sq = prepareStagedQuery(
-			type,
-			initQuery?.builderQueries,
-			initQuery?.promQueries,
-			initQuery?.chQueries,
-		);
-
-		initQueryBuilderData(sq, type);
-
-		setManualStagedQuery(sq);
-
+		if (compositeQuery && !manualStagedQuery) {
+			setManualStagedQuery(compositeQuery);
+		}
 		setAlertDef(initialValue);
-	}, [initialValue, initQueryBuilderData, initQuery]);
+	}, [
+		initialValue,
+		initQuery,
+		redirectWithQueryBuilderData,
+		currentQuery,
+		manualStagedQuery,
+		compositeQuery,
+	]);
 
 	const onRunQuery = (): void => {
-		setManualStagedQuery({ ...currentQuery, queryType });
+		setManualStagedQuery(currentQuery);
+		redirectWithQueryBuilderData(currentQuery);
 	};
 
 	const onCancelHandler = useCallback(() => {
@@ -102,7 +103,6 @@ function FormAlertRules({
 	// onQueryCategoryChange handles changes to query category
 	// in state as well as sets additional defaults
 	const onQueryCategoryChange = (val: EQueryType): void => {
-		handleSetQueryType(val);
 		if (val === EQueryType.PROM) {
 			setAlertDef({
 				...alertDef,
@@ -113,14 +113,17 @@ function FormAlertRules({
 				evalWindow: defaultEvalWindow,
 			});
 		}
+		const query: Query = { ...currentQuery, queryType: val };
 
-		setManualStagedQuery({ ...currentQuery, queryType: val });
+		setManualStagedQuery(query);
+
+		redirectWithQueryBuilderData(query);
 	};
 	const { notifications } = useNotifications();
 
 	const validatePromParams = useCallback((): boolean => {
 		let retval = true;
-		if (queryType !== EQueryType.PROM) return retval;
+		if (currentQuery.queryType !== EQueryType.PROM) return retval;
 
 		if (!currentQuery.promql || currentQuery.promql.length === 0) {
 			notifications.error({
@@ -141,11 +144,11 @@ function FormAlertRules({
 		});
 
 		return retval;
-	}, [t, currentQuery, queryType, notifications]);
+	}, [t, currentQuery, notifications]);
 
 	const validateChQueryParams = useCallback((): boolean => {
 		let retval = true;
-		if (queryType !== EQueryType.CLICKHOUSE) return retval;
+		if (currentQuery.queryType !== EQueryType.CLICKHOUSE) return retval;
 
 		if (
 			!currentQuery.clickhouse_sql ||
@@ -169,10 +172,10 @@ function FormAlertRules({
 		});
 
 		return retval;
-	}, [t, queryType, currentQuery, notifications]);
+	}, [t, currentQuery, notifications]);
 
 	const validateQBParams = useCallback((): boolean => {
-		if (queryType !== EQueryType.QUERY_BUILDER) return true;
+		if (currentQuery.queryType !== EQueryType.QUERY_BUILDER) return true;
 
 		if (
 			!currentQuery.builder.queryData ||
@@ -194,7 +197,7 @@ function FormAlertRules({
 		}
 
 		return true;
-	}, [t, alertDef, queryType, currentQuery, notifications]);
+	}, [t, alertDef, currentQuery, notifications]);
 
 	const isFormValid = useCallback((): boolean => {
 		if (!alertDef.alert || alertDef.alert === '') {
@@ -228,7 +231,10 @@ function FormAlertRules({
 			...alertDef,
 			alertType,
 			source: window?.location.toString(),
-			ruleType: queryType === EQueryType.PROM ? 'promql_rule' : 'threshold_rule',
+			ruleType:
+				currentQuery.queryType === EQueryType.PROM
+					? 'promql_rule'
+					: 'threshold_rule',
 			condition: {
 				...alertDef.condition,
 				compositeQuery: {
@@ -239,7 +245,7 @@ function FormAlertRules({
 					},
 					promQueries: mapQueryDataToApi(currentQuery.promql, 'name').data,
 					chQueries: mapQueryDataToApi(currentQuery.clickhouse_sql, 'name').data,
-					queryType,
+					queryType: currentQuery.queryType,
 					panelType: initQuery.panelType,
 				},
 			},
@@ -248,7 +254,6 @@ function FormAlertRules({
 	};
 
 	const memoizedPreparePostData = useCallback(preparePostData, [
-		queryType,
 		currentQuery,
 		alertDef,
 		alertType,
@@ -313,7 +318,8 @@ function FormAlertRules({
 		const content = (
 			<Typography.Text>
 				{' '}
-				{t('confirm_save_content_part1')} <QueryTypeTag queryType={queryType} />{' '}
+				{t('confirm_save_content_part1')}{' '}
+				<QueryTypeTag queryType={currentQuery.queryType} />{' '}
 				{t('confirm_save_content_part2')}
 			</Typography.Text>
 		);
@@ -326,7 +332,7 @@ function FormAlertRules({
 				saveRule();
 			},
 		});
-	}, [t, saveRule, queryType]);
+	}, [t, saveRule, currentQuery]);
 
 	const onTestRuleHandler = useCallback(async () => {
 		if (!isFormValid()) {
@@ -372,7 +378,7 @@ function FormAlertRules({
 
 	const renderQBChartPreview = (): JSX.Element => (
 		<ChartPreview
-			headline={<PlotTag queryType={queryType} />}
+			headline={<PlotTag queryType={currentQuery.queryType} />}
 			name=""
 			threshold={alertDef.condition?.target}
 			query={manualStagedQuery}
@@ -382,7 +388,7 @@ function FormAlertRules({
 
 	const renderPromChartPreview = (): JSX.Element => (
 		<ChartPreview
-			headline={<PlotTag queryType={queryType} />}
+			headline={<PlotTag queryType={currentQuery.queryType} />}
 			name="Chart Preview"
 			threshold={alertDef.condition?.target}
 			query={manualStagedQuery}
@@ -391,7 +397,7 @@ function FormAlertRules({
 
 	const renderChQueryChartPreview = (): JSX.Element => (
 		<ChartPreview
-			headline={<PlotTag queryType={queryType} />}
+			headline={<PlotTag queryType={currentQuery.queryType} />}
 			name="Chart Preview"
 			threshold={alertDef.condition?.target}
 			query={manualStagedQuery}
@@ -402,7 +408,9 @@ function FormAlertRules({
 	const isNewRule = ruleId === 0;
 
 	const isAlertAvialableToSave =
-		isAlertAvialable && isNewRule && queryType === EQueryType.QUERY_BUILDER;
+		isAlertAvialable &&
+		isNewRule &&
+		currentQuery.queryType === EQueryType.QUERY_BUILDER;
 
 	return (
 		<>
@@ -414,18 +422,20 @@ function FormAlertRules({
 						layout="vertical"
 						form={formInstance}
 					>
-						{queryType === EQueryType.QUERY_BUILDER && renderQBChartPreview()}
-						{queryType === EQueryType.PROM && renderPromChartPreview()}
-						{queryType === EQueryType.CLICKHOUSE && renderChQueryChartPreview()}
+						{currentQuery.queryType === EQueryType.QUERY_BUILDER &&
+							renderQBChartPreview()}
+						{currentQuery.queryType === EQueryType.PROM && renderPromChartPreview()}
+						{currentQuery.queryType === EQueryType.CLICKHOUSE &&
+							renderChQueryChartPreview()}
 						<QuerySection
-							queryCategory={queryType}
+							queryCategory={currentQuery.queryType}
 							setQueryCategory={onQueryCategoryChange}
 							alertType={alertType || AlertTypes.METRICS_BASED_ALERT}
 							runQuery={onRunQuery}
 						/>
 
 						<RuleOptions
-							queryCategory={queryType}
+							queryCategory={currentQuery.queryType}
 							alertDef={alertDef}
 							setAlertDef={setAlertDef}
 						/>
@@ -464,7 +474,7 @@ function FormAlertRules({
 					</MainFormContainer>
 				</StyledLeftContainer>
 				<Col flex="1 1 300px">
-					<UserGuide queryType={queryType} />
+					<UserGuide queryType={currentQuery.queryType} />
 				</Col>
 			</PanelContainer>
 		</>
