@@ -5,6 +5,7 @@ import {
 	KeyboardEvent,
 	ReactElement,
 	ReactNode,
+	useCallback,
 	useEffect,
 	useMemo,
 } from 'react';
@@ -45,7 +46,11 @@ function QueryBuilderSearch({
 		searchKey,
 	} = useAutoComplete(query);
 
-	const { sourceKeys } = useFetchKeysAndValues(searchValue, query, searchKey);
+	const { sourceKeys, handleRemoveSourceKey } = useFetchKeysAndValues(
+		searchValue,
+		query,
+		searchKey,
+	);
 
 	const onTagRender = ({
 		value,
@@ -94,6 +99,14 @@ function QueryBuilderSearch({
 		if (isMulti || event.key === 'Backspace') handleKeyDown(event);
 		if (isExistsNotExistsOperator(searchValue)) handleKeyDown(event);
 	};
+
+	const handleDeselect = useCallback(
+		(deselectedItem: string) => {
+			handleClearTag(deselectedItem);
+			handleRemoveSourceKey(deselectedItem);
+		},
+		[handleClearTag, handleRemoveSourceKey],
+	);
 
 	const isMetricsDataSource = useMemo(
 		() => query.dataSource === DataSource.METRICS,
@@ -150,7 +163,7 @@ function QueryBuilderSearch({
 			onSearch={handleSearch}
 			onChange={onChangeHandler}
 			onSelect={handleSelect}
-			onDeselect={handleClearTag}
+			onDeselect={handleDeselect}
 			onInputKeyDown={onInputKeyDownHandler}
 			notFoundContent={isFetching ? <Spin size="small" /> : null}
 		>
