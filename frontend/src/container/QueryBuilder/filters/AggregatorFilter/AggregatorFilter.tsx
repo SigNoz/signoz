@@ -75,8 +75,6 @@ export const AggregatorFilter = memo(function AggregatorFilter({
 		): void => {
 			const currentOption = option as ExtendedSelectOption;
 
-			console.log({ value, currentOption });
-
 			if (currentOption.key) {
 				const [key, dataType, type, isColumn] = currentOption.key.split(idDivider);
 				const attribute: BaseAutocompleteData = {

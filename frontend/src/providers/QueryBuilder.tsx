@@ -132,7 +132,7 @@ export function QueryBuilderProvider({
 			  }))
 			: initialQuery.clickhouse_sql;
 
-		const transformedQuery: QueryState = {
+		setCurrentQuery({
 			clickhouse_sql: clickHouse,
 			promql,
 			builder: {
@@ -152,9 +152,7 @@ export function QueryBuilderProvider({
 					},
 				})),
 			},
-		};
-
-		setCurrentQuery(transformedQuery);
+		});
 
 		setQueryType(queryType || EQueryType.QUERY_BUILDER);
 	}, []);
