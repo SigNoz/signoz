@@ -389,7 +389,14 @@ func reduceQuery(query string, reduceTo v3.ReduceToOperator, aggregateOperator v
 	return query, nil
 }
 
+// PrepareMetricQuery prepares the query to be used for fetching metrics
+// from the database
+// start and end are in milliseconds
+// step is in seconds
 func PrepareMetricQuery(start, end int64, queryType v3.QueryType, panelType v3.PanelType, mq *v3.BuilderQuery) (string, error) {
+	// adjust the start and end time to be aligned with the step interval
+	start = start - (start % (mq.StepInterval * 1000))
+	end = end - (end % (mq.StepInterval * 1000))
 	query, err := buildMetricQuery(start, end, mq.StepInterval, mq, constants.SIGNOZ_TIMESERIES_TABLENAME)
 	if err != nil {
 		return "", err

@@ -14,11 +14,11 @@ func TestBuildQueryWithMultipleQueriesAndFormula(t *testing.T) {
 		q := &v3.QueryRangeParamsV3{
 			Start: 1650991982000,
 			End:   1651078382000,
-			Step:  60,
 			CompositeQuery: &v3.CompositeQuery{
 				BuilderQueries: map[string]*v3.BuilderQuery{
 					"A": {
 						QueryName:          "A",
+						StepInterval:       60,
 						DataSource:         v3.DataSourceMetrics,
 						AggregateAttribute: v3.AttributeKey{Key: "name"},
 						Filters: &v3.FilterSet{Operator: "AND", Items: []v3.FilterItem{
@@ -29,6 +29,7 @@ func TestBuildQueryWithMultipleQueriesAndFormula(t *testing.T) {
 					},
 					"B": {
 						QueryName:          "B",
+						StepInterval:       60,
 						AggregateAttribute: v3.AttributeKey{Key: "name2"},
 						DataSource:         v3.DataSourceMetrics,
 						AggregateOperator:  v3.AggregateOperatorRateAvg,
@@ -61,11 +62,11 @@ func TestBuildQueryWithIncorrectQueryRef(t *testing.T) {
 		q := &v3.QueryRangeParamsV3{
 			Start: 1650991982000,
 			End:   1651078382000,
-			Step:  60,
 			CompositeQuery: &v3.CompositeQuery{
 				BuilderQueries: map[string]*v3.BuilderQuery{
 					"A": {
 						QueryName:          "A",
+						StepInterval:       60,
 						DataSource:         v3.DataSourceMetrics,
 						AggregateAttribute: v3.AttributeKey{Key: "name"},
 						Filters: &v3.FilterSet{Operator: "AND", Items: []v3.FilterItem{
@@ -98,11 +99,11 @@ func TestBuildQueryWithThreeOrMoreQueriesRefAndFormula(t *testing.T) {
 		q := &v3.QueryRangeParamsV3{
 			Start: 1650991982000,
 			End:   1651078382000,
-			Step:  60,
 			CompositeQuery: &v3.CompositeQuery{
 				BuilderQueries: map[string]*v3.BuilderQuery{
 					"A": {
 						QueryName:          "A",
+						StepInterval:       60,
 						DataSource:         v3.DataSourceMetrics,
 						AggregateAttribute: v3.AttributeKey{Key: "name"},
 						Filters: &v3.FilterSet{Operator: "AND", Items: []v3.FilterItem{
@@ -114,6 +115,7 @@ func TestBuildQueryWithThreeOrMoreQueriesRefAndFormula(t *testing.T) {
 					},
 					"B": {
 						QueryName:          "B",
+						StepInterval:       60,
 						AggregateAttribute: v3.AttributeKey{Key: "name2"},
 						DataSource:         v3.DataSourceMetrics,
 
@@ -123,6 +125,7 @@ func TestBuildQueryWithThreeOrMoreQueriesRefAndFormula(t *testing.T) {
 					},
 					"C": {
 						QueryName:          "C",
+						StepInterval:       60,
 						AggregateAttribute: v3.AttributeKey{Key: "name3"},
 						DataSource:         v3.DataSourceMetrics,
 

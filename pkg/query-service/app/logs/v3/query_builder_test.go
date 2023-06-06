@@ -280,9 +280,9 @@ var testBuildLogsQueryData = []struct {
 		Name:  "Test aggregate count on select field",
 		Start: 1680066360726210000,
 		End:   1680066458000000000,
-		Step:  60,
 		BuilderQuery: &v3.BuilderQuery{
 			QueryName:         "A",
+			StepInterval:      60,
 			AggregateOperator: v3.AggregateOperatorCount,
 			Expression:        "A",
 		},
@@ -293,9 +293,9 @@ var testBuildLogsQueryData = []struct {
 		Name:  "Test aggregate count on a attribute",
 		Start: 1680066360726210000,
 		End:   1680066458000000000,
-		Step:  60,
 		BuilderQuery: &v3.BuilderQuery{
 			QueryName:          "A",
+			StepInterval:       60,
 			AggregateAttribute: v3.AttributeKey{Key: "user_name", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag},
 			AggregateOperator:  v3.AggregateOperatorCount,
 			Expression:         "A",
@@ -307,9 +307,9 @@ var testBuildLogsQueryData = []struct {
 		Name:  "Test aggregate count on a with filter",
 		Start: 1680066360726210000,
 		End:   1680066458000000000,
-		Step:  60,
 		BuilderQuery: &v3.BuilderQuery{
 			QueryName:          "A",
+			StepInterval:       60,
 			AggregateAttribute: v3.AttributeKey{Key: "user_name", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag},
 			AggregateOperator:  v3.AggregateOperatorCount,
 			Filters: &v3.FilterSet{Operator: "AND", Items: []v3.FilterItem{
@@ -324,9 +324,9 @@ var testBuildLogsQueryData = []struct {
 		Name:  "Test aggregate count distinct and order by value",
 		Start: 1680066360726210000,
 		End:   1680066458000000000,
-		Step:  60,
 		BuilderQuery: &v3.BuilderQuery{
 			QueryName:          "A",
+			StepInterval:       60,
 			AggregateAttribute: v3.AttributeKey{Key: "name", IsColumn: true},
 			AggregateOperator:  v3.AggregateOperatorCountDistinct,
 			Expression:         "A",
@@ -339,9 +339,9 @@ var testBuildLogsQueryData = []struct {
 		Name:  "Test aggregate count distinct on non selected field",
 		Start: 1680066360726210000,
 		End:   1680066458000000000,
-		Step:  60,
 		BuilderQuery: &v3.BuilderQuery{
 			QueryName:          "A",
+			StepInterval:       60,
 			AggregateAttribute: v3.AttributeKey{Key: "name", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag},
 			AggregateOperator:  v3.AggregateOperatorCountDistinct,
 			Expression:         "A",
@@ -353,9 +353,9 @@ var testBuildLogsQueryData = []struct {
 		Name:  "Test aggregate count distinct with filter and groupBy",
 		Start: 1680066360726210000,
 		End:   1680066458000000000,
-		Step:  60,
 		BuilderQuery: &v3.BuilderQuery{
 			QueryName:          "A",
+			StepInterval:       60,
 			AggregateAttribute: v3.AttributeKey{Key: "name", IsColumn: true},
 			AggregateOperator:  v3.AggregateOperatorCountDistinct,
 			Expression:         "A",
@@ -381,9 +381,9 @@ var testBuildLogsQueryData = []struct {
 		Name:  "Test aggregate count with multiple filter,groupBy and orderBy",
 		Start: 1680066360726210000,
 		End:   1680066458000000000,
-		Step:  60,
 		BuilderQuery: &v3.BuilderQuery{
 			QueryName:          "A",
+			StepInterval:       60,
 			AggregateAttribute: v3.AttributeKey{Key: "name", IsColumn: true},
 			AggregateOperator:  v3.AggregateOperatorCountDistinct,
 			Expression:         "A",
@@ -411,9 +411,9 @@ var testBuildLogsQueryData = []struct {
 		Name:  "Test aggregate avg",
 		Start: 1680066360726210000,
 		End:   1680066458000000000,
-		Step:  60,
 		BuilderQuery: &v3.BuilderQuery{
 			QueryName:          "A",
+			StepInterval:       60,
 			AggregateAttribute: v3.AttributeKey{Key: "bytes", DataType: v3.AttributeKeyDataTypeFloat64, Type: v3.AttributeKeyTypeTag},
 			AggregateOperator:  v3.AggregateOperatorAvg,
 			Expression:         "A",
@@ -439,9 +439,9 @@ var testBuildLogsQueryData = []struct {
 		Name:  "Test aggregate sum",
 		Start: 1680066360726210000,
 		End:   1680066458000000000,
-		Step:  60,
 		BuilderQuery: &v3.BuilderQuery{
 			QueryName:          "A",
+			StepInterval:       60,
 			AggregateAttribute: v3.AttributeKey{Key: "bytes", IsColumn: true},
 			AggregateOperator:  v3.AggregateOperatorSum,
 			Expression:         "A",
@@ -467,9 +467,9 @@ var testBuildLogsQueryData = []struct {
 		Name:  "Test aggregate min",
 		Start: 1680066360726210000,
 		End:   1680066458000000000,
-		Step:  60,
 		BuilderQuery: &v3.BuilderQuery{
 			QueryName:          "A",
+			StepInterval:       60,
 			AggregateAttribute: v3.AttributeKey{Key: "bytes", IsColumn: true},
 			AggregateOperator:  v3.AggregateOperatorMin,
 			Expression:         "A",
@@ -495,9 +495,9 @@ var testBuildLogsQueryData = []struct {
 		Name:  "Test aggregate max",
 		Start: 1680066360726210000,
 		End:   1680066458000000000,
-		Step:  60,
 		BuilderQuery: &v3.BuilderQuery{
 			QueryName:          "A",
+			StepInterval:       60,
 			AggregateAttribute: v3.AttributeKey{Key: "bytes", IsColumn: true},
 			AggregateOperator:  v3.AggregateOperatorMax,
 			Expression:         "A",
@@ -523,9 +523,9 @@ var testBuildLogsQueryData = []struct {
 		Name:  "Test aggregate PXX",
 		Start: 1680066360726210000,
 		End:   1680066458000000000,
-		Step:  60,
 		BuilderQuery: &v3.BuilderQuery{
 			QueryName:          "A",
+			StepInterval:       60,
 			AggregateAttribute: v3.AttributeKey{Key: "bytes", IsColumn: true},
 			AggregateOperator:  v3.AggregateOperatorP05,
 			Expression:         "A",
@@ -547,9 +547,9 @@ var testBuildLogsQueryData = []struct {
 		Name:  "Test aggregate RateSum",
 		Start: 1680066360726210000,
 		End:   1680066458000000000,
-		Step:  60,
 		BuilderQuery: &v3.BuilderQuery{
 			QueryName:          "A",
+			StepInterval:       60,
 			AggregateAttribute: v3.AttributeKey{Key: "bytes", IsColumn: true},
 			AggregateOperator:  v3.AggregateOperatorRateSum,
 			Expression:         "A",
@@ -568,9 +568,9 @@ var testBuildLogsQueryData = []struct {
 		Name:  "Test aggregate rate",
 		Start: 1680066360726210000,
 		End:   1680066458000000000,
-		Step:  60,
 		BuilderQuery: &v3.BuilderQuery{
 			QueryName:          "A",
+			StepInterval:       60,
 			AggregateAttribute: v3.AttributeKey{Key: "bytes", Type: v3.AttributeKeyTypeTag, DataType: v3.AttributeKeyDataTypeFloat64},
 			AggregateOperator:  v3.AggregateOperatorRate,
 			Expression:         "A",
@@ -590,9 +590,9 @@ var testBuildLogsQueryData = []struct {
 		Name:  "Test aggregate RateSum without materialized column",
 		Start: 1680066360726210000,
 		End:   1680066458000000000,
-		Step:  60,
 		BuilderQuery: &v3.BuilderQuery{
 			QueryName:          "A",
+			StepInterval:       60,
 			AggregateAttribute: v3.AttributeKey{Key: "bytes", Type: v3.AttributeKeyTypeTag, DataType: v3.AttributeKeyDataTypeFloat64},
 			AggregateOperator:  v3.AggregateOperatorRateSum,
 			Expression:         "A",
@@ -613,10 +613,10 @@ var testBuildLogsQueryData = []struct {
 		Name:  "Test Noop",
 		Start: 1680066360726210000,
 		End:   1680066458000000000,
-		Step:  60,
 		BuilderQuery: &v3.BuilderQuery{
 			SelectColumns:     []v3.AttributeKey{},
 			QueryName:         "A",
+			StepInterval:      60,
 			AggregateOperator: v3.AggregateOperatorNoOp,
 			Expression:        "A",
 			Filters:           &v3.FilterSet{Operator: "AND", Items: []v3.FilterItem{}},
@@ -632,9 +632,9 @@ var testBuildLogsQueryData = []struct {
 		Name:  "Test aggregate with having clause",
 		Start: 1680066360726210000,
 		End:   1680066458000000000,
-		Step:  60,
 		BuilderQuery: &v3.BuilderQuery{
 			QueryName:          "A",
+			StepInterval:       60,
 			AggregateAttribute: v3.AttributeKey{Key: "name", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag},
 			AggregateOperator:  v3.AggregateOperatorCountDistinct,
 			Expression:         "A",
@@ -653,9 +653,9 @@ var testBuildLogsQueryData = []struct {
 		Name:  "Test aggregate with having clause and filters",
 		Start: 1680066360726210000,
 		End:   1680066458000000000,
-		Step:  60,
 		BuilderQuery: &v3.BuilderQuery{
 			QueryName:          "A",
+			StepInterval:       60,
 			AggregateAttribute: v3.AttributeKey{Key: "name", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag},
 			AggregateOperator:  v3.AggregateOperatorCountDistinct,
 			Expression:         "A",
@@ -678,9 +678,9 @@ var testBuildLogsQueryData = []struct {
 		Name:  "Test top level key",
 		Start: 1680066360726210000,
 		End:   1680066458000000000,
-		Step:  60,
 		BuilderQuery: &v3.BuilderQuery{
 			QueryName:          "A",
+			StepInterval:       60,
 			AggregateAttribute: v3.AttributeKey{Key: "name", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag},
 			AggregateOperator:  v3.AggregateOperatorCountDistinct,
 			Expression:         "A",
@@ -703,9 +703,9 @@ var testBuildLogsQueryData = []struct {
 		Name:  "Test attribute with same name as top level key",
 		Start: 1680066360726210000,
 		End:   1680066458000000000,
-		Step:  60,
 		BuilderQuery: &v3.BuilderQuery{
 			QueryName:          "A",
+			StepInterval:       60,
 			AggregateAttribute: v3.AttributeKey{Key: "name", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag},
 			AggregateOperator:  v3.AggregateOperatorCountDistinct,
 			Expression:         "A",
@@ -729,7 +729,7 @@ var testBuildLogsQueryData = []struct {
 func TestBuildLogsQuery(t *testing.T) {
 	for _, tt := range testBuildLogsQueryData {
 		Convey("TestBuildLogsQuery", t, func() {
-			query, err := buildLogsQuery(tt.Start, tt.End, tt.Step, tt.BuilderQuery, map[string]v3.AttributeKey{})
+			query, err := buildLogsQuery(tt.Start, tt.End, tt.BuilderQuery.StepInterval, tt.BuilderQuery, map[string]v3.AttributeKey{})
 			So(err, ShouldBeNil)
 			So(query, ShouldEqual, tt.ExpectedQuery)
 

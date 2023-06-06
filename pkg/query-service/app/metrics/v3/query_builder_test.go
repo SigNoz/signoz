@@ -13,11 +13,11 @@ func TestBuildQuery(t *testing.T) {
 		q := &v3.QueryRangeParamsV3{
 			Start: 1650991982000,
 			End:   1651078382000,
-			Step:  60,
 			CompositeQuery: &v3.CompositeQuery{
 				BuilderQueries: map[string]*v3.BuilderQuery{
 					"A": {
 						QueryName:          "A",
+						StepInterval:       60,
 						AggregateAttribute: v3.AttributeKey{Key: "name"},
 						AggregateOperator:  v3.AggregateOperatorRateMax,
 						Expression:         "A",
@@ -38,11 +38,11 @@ func TestBuildQueryWithFilters(t *testing.T) {
 		q := &v3.QueryRangeParamsV3{
 			Start: 1650991982000,
 			End:   1651078382000,
-			Step:  60,
 			CompositeQuery: &v3.CompositeQuery{
 				BuilderQueries: map[string]*v3.BuilderQuery{
 					"A": {
 						QueryName:          "A",
+						StepInterval:       60,
 						AggregateAttribute: v3.AttributeKey{Key: "name"},
 						Filters: &v3.FilterSet{Operator: "AND", Items: []v3.FilterItem{
 							{Key: v3.AttributeKey{Key: "a"}, Value: "b", Operator: v3.FilterOperatorNotEqual},
@@ -68,11 +68,11 @@ func TestBuildQueryWithMultipleQueries(t *testing.T) {
 		q := &v3.QueryRangeParamsV3{
 			Start: 1650991982000,
 			End:   1651078382000,
-			Step:  60,
 			CompositeQuery: &v3.CompositeQuery{
 				BuilderQueries: map[string]*v3.BuilderQuery{
 					"A": {
 						QueryName:          "A",
+						StepInterval:       60,
 						AggregateAttribute: v3.AttributeKey{Key: "name"},
 						Filters: &v3.FilterSet{Operator: "AND", Items: []v3.FilterItem{
 							{Key: v3.AttributeKey{Key: "in"}, Value: []interface{}{"a", "b", "c"}, Operator: v3.FilterOperatorIn},

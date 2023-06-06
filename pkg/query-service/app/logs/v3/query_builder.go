@@ -390,7 +390,13 @@ func addOffsetToQuery(query string, offset uint64) string {
 	return fmt.Sprintf("%s OFFSET %d", query, offset)
 }
 
+// PrepareLogsQuery prepares the query for logs
+// start and end are in epoch millisecond
+// step is in seconds
 func PrepareLogsQuery(start, end int64, queryType v3.QueryType, panelType v3.PanelType, mq *v3.BuilderQuery, fields map[string]v3.AttributeKey) (string, error) {
+	// adjust the start and end time to the step interval
+	start = start - (start % mq.StepInterval)
+	end = end - (end % mq.StepInterval)
 	query, err := buildLogsQuery(start, end, mq.StepInterval, mq, fields)
 	if err != nil {
 		return "", err
