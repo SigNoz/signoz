@@ -8,7 +8,7 @@ import {
 } from 'container/QueryBuilder/filters/QueryBuilderSearch/utils';
 import { isEqual, uniqWith } from 'lodash-es';
 import debounce from 'lodash-es/debounce';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useQuery } from 'react-query';
 import { useDebounce } from 'react-use';
 import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
@@ -20,6 +20,7 @@ type IuseFetchKeysAndValues = {
 	results: string[];
 	isFetching: boolean;
 	sourceKeys: BaseAutocompleteData[];
+	handleRemoveSourceKey: (newSourceKey: string) => void;
 };
 
 /**
@@ -127,6 +128,12 @@ export const useFetchKeysAndValues = (
 		}
 	};
 
+	const handleRemoveSourceKey = useCallback((sourceKey: string) => {
+		setSourceKeys((prevState) =>
+			prevState.filter((item) => item.key !== sourceKey),
+		);
+	}, []);
+
 	// creates a ref to the fetch function so that it doesn't change on every render
 	const clearFetcher = useRef(handleFetchOption).current;
 
@@ -155,5 +162,6 @@ export const useFetchKeysAndValues = (
 		results,
 		isFetching,
 		sourceKeys,
+		handleRemoveSourceKey,
 	};
 };
