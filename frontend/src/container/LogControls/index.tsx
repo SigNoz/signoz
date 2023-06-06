@@ -1,13 +1,15 @@
 import {
+	CloudDownloadOutlined,
 	FastBackwardOutlined,
 	LeftOutlined,
 	RightOutlined,
 } from '@ant-design/icons';
-import { Button, Divider, Select } from 'antd';
+import { Button, Divider, Dropdown, MenuProps, Select } from 'antd';
 import { getGlobalTime } from 'container/LogsSearchFilter/utils';
 import { getMinMax } from 'container/TopNav/AutoRefresh/config';
 import { defaultSelectStyle } from 'pages/Logs/config';
-import { memo, useMemo } from 'react';
+import * as Papa from 'papaparse';
+import { memo, useCallback, useMemo } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { Dispatch } from 'redux';
 import { AppState } from 'store/reducers';
@@ -18,11 +20,12 @@ import {
 	RESET_ID_START_AND_END,
 	SET_LOG_LINES_PER_PAGE,
 } from 'types/actions/logs';
+import { ILog } from 'types/api/logs/log';
 import { GlobalReducer } from 'types/reducer/globalTime';
 import { ILogsReducer } from 'types/reducer/logs';
 
 import { ITEMS_PER_PAGE_OPTIONS } from './config';
-import { Container } from './styles';
+import { Container, DownloadLogButton } from './styles';
 
 function LogControls(): JSX.Element | null {
 	const {
@@ -72,11 +75,60 @@ function LogControls(): JSX.Element | null {
 			type: GET_PREVIOUS_LOG_LINES,
 		});
 	};
+
 	const handleNavigateNext = (): void => {
 		dispatch({
 			type: GET_NEXT_LOG_LINES,
 		});
 	};
+
+	const flattenObject = useCallback(
+		(obj: ILog) =>
+			Object.entries(obj).reduce((flattenedObj, [key, value]) => {
+				// eslint-disable-next-line @typescript-eslint/no-explicit-any
+				const updatedObj: any = { ...flattenedObj };
+				if (typeof value === 'object' && value !== null) {
+					updatedObj[key] = JSON.stringify(value);
+				} else {
+					updatedObj[key] = value;
+				}
+				return updatedObj;
+			}, {}),
+		[],
+	);
+
+	const downloadExcelFile = useCallback((): void => {
+		console.log('Write a code here for excel download');
+	}, []);
+
+	const downloadCsvFile = useCallback((): void => {
+		const flattenLogData = logs.map((entry) => flattenObject(entry));
+		const csv = Papa.unparse(flattenLogData);
+		const csvBlob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+		const csvUrl = URL.createObjectURL(csvBlob);
+		const downloadLink = document.createElement('a');
+		downloadLink.href = csvUrl;
+		downloadLink.download = 'log_data.csv';
+		downloadLink.click();
+	}, [flattenObject, logs]);
+
+	const menu: MenuProps = useMemo(
+		() => ({
+			items: [
+				{
+					key: 'download-as-excel',
+					label: 'Excel',
+					onClick: downloadExcelFile,
+				},
+				{
+					key: 'download-as-csv',
+					label: 'CSV',
+					onClick: downloadCsvFile,
+				},
+			],
+		}),
+		[downloadCsvFile, downloadExcelFile],
+	);
 
 	const isLoading = isLogsLoading || isLoadingAggregate;
 
@@ -95,6 +147,12 @@ function LogControls(): JSX.Element | null {
 
 	return (
 		<Container>
+			<Dropdown menu={menu} trigger={['click']}>
+				<DownloadLogButton loading={isLoading} size="small" type="link">
+					<CloudDownloadOutlined />
+					Download
+				</DownloadLogButton>
+			</Dropdown>
 			<Button
 				loading={isLoading}
 				size="small"
