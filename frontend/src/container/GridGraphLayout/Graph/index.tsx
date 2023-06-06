@@ -2,6 +2,7 @@ import { Typography } from 'antd';
 import { ChartData } from 'chart.js';
 import Spinner from 'components/Spinner';
 import GridGraphComponent from 'container/GridGraphComponent';
+import { useGetQueryRange } from 'hooks/queryBuilder/useGetQueryRange';
 import { useNotifications } from 'hooks/useNotifications';
 import usePreviousValue from 'hooks/usePreviousValue';
 import { getDashboardVariables } from 'lib/dashbaordVariables/getDashboardVariables';
@@ -18,7 +19,6 @@ import {
 import { Layout } from 'react-grid-layout';
 import { useTranslation } from 'react-i18next';
 import { useInView } from 'react-intersection-observer';
-import { useQuery } from 'react-query';
 import { connect, useSelector } from 'react-redux';
 import { bindActionCreators } from 'redux';
 import { ThunkDispatch } from 'redux-thunk';
@@ -26,7 +26,6 @@ import {
 	DeleteWidget,
 	DeleteWidgetProps,
 } from 'store/actions/dashboard/deleteWidget';
-import { GetMetricQueryRange } from 'store/actions/dashboard/getQueryResults';
 import { AppState } from 'store/reducers';
 import AppActions from 'types/actions';
 import { Widgets } from 'types/api/dashboard/getAll';
@@ -78,33 +77,28 @@ function GridCardGraph({
 	const selectedData = selectedDashboard?.data;
 	const { variables } = selectedData;
 
-	const queryResponse = useQuery(
-		[
-			`GetMetricsQueryRange-${widget?.timePreferance}-${globalSelectedInterval}-${widget.id}`,
-			{
+	const queryResponse = useGetQueryRange(
+		{
+			selectedTime: widget?.timePreferance,
+			graphType: widget.panelTypes,
+			query: widget.query,
+			globalSelectedInterval,
+			variables: getDashboardVariables(),
+		},
+		{
+			queryKey: [
+				`GetMetricsQueryRange-${widget?.timePreferance}-${globalSelectedInterval}-${widget.id}`,
 				widget,
 				maxTime,
 				minTime,
 				globalSelectedInterval,
 				variables,
-			},
-		],
-		() =>
-			GetMetricQueryRange({
-				selectedTime: widget?.timePreferance,
-				graphType: widget.panelTypes,
-				query: widget.query,
-				globalSelectedInterval,
-				variables: getDashboardVariables(),
-			}),
-		{
+			],
 			keepPreviousData: true,
 			enabled: isGraphVisible,
 			refetchOnMount: false,
 			onError: (error) => {
-				if (error instanceof Error) {
-					setErrorMessage(error.message);
-				}
+				setErrorMessage(error.message);
 			},
 		},
 	);

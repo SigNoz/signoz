@@ -8,12 +8,17 @@ import WidgetGraph from './WidgetGraph';
 function LeftContainer({
 	selectedGraph,
 	yAxisUnit,
+	selectedTime,
 }: NewWidgetProps): JSX.Element {
 	return (
 		<>
-			<WidgetGraph selectedGraph={selectedGraph} yAxisUnit={yAxisUnit} />
+			<WidgetGraph
+				selectedTime={selectedTime}
+				selectedGraph={selectedGraph}
+				yAxisUnit={yAxisUnit}
+			/>
 			<QueryContainer>
-				<QuerySection selectedGraph={selectedGraph} />
+				<QuerySection selectedTime={selectedTime} selectedGraph={selectedGraph} />
 			</QueryContainer>
 		</>
 	);
