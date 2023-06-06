@@ -10,3 +10,4 @@
 Makefile @srikanthccv
 go.* @srikanthccv
 .git* @srikanthccv
+.github @prashant-shahi
