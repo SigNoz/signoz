@@ -234,3 +234,172 @@ func TestBuildQueryOperators(t *testing.T) {
 		})
 	}
 }
+
+func TestBuildQueryAdjustedTimes(t *testing.T) {
+	cases := []struct {
+		name     string
+		params   *v3.QueryRangeParamsV3
+		expected string
+	}{
+		{
+			name: "TestBuildQueryAdjustedTimes start close to 30 seconds",
+			params: &v3.QueryRangeParamsV3{
+				// 20:11:29
+				Start: 1686082289000,
+				// 20:41:00
+				End: 1686084060000,
+				CompositeQuery: &v3.CompositeQuery{
+					BuilderQueries: map[string]*v3.BuilderQuery{
+						"A": {
+							QueryName:          "A",
+							StepInterval:       60,
+							AggregateAttribute: v3.AttributeKey{Key: "name"},
+							Filters: &v3.FilterSet{Operator: "AND", Items: []v3.FilterItem{
+								{Key: v3.AttributeKey{Key: "in"}, Value: []interface{}{"a", "b", "c"}, Operator: v3.FilterOperatorIn},
+							}},
+							AggregateOperator: v3.AggregateOperatorRateAvg,
+							Expression:        "A",
+						},
+					},
+				},
+			},
+			// 20:11:00 - 20:41:00
+			expected: "timestamp_ms >= 1686082260000 AND timestamp_ms <= 1686084060000",
+		},
+		{
+			name: "TestBuildQueryAdjustedTimes start close to 50 seconds",
+			params: &v3.QueryRangeParamsV3{
+				// 20:11:52
+				Start: 1686082312000,
+				// 20:41:00
+				End: 1686084060000,
+				CompositeQuery: &v3.CompositeQuery{
+					BuilderQueries: map[string]*v3.BuilderQuery{
+						"A": {
+							QueryName:          "A",
+							StepInterval:       60,
+							AggregateAttribute: v3.AttributeKey{Key: "name"},
+							Filters: &v3.FilterSet{Operator: "AND", Items: []v3.FilterItem{
+								{Key: v3.AttributeKey{Key: "in"}, Value: []interface{}{"a", "b", "c"}, Operator: v3.FilterOperatorIn},
+							}},
+							AggregateOperator: v3.AggregateOperatorRateAvg,
+							Expression:        "A",
+						},
+					},
+				},
+			},
+			// 20:11:00 - 20:41:00
+			expected: "timestamp_ms >= 1686082260000 AND timestamp_ms <= 1686084060000",
+		},
+		{
+			name: "TestBuildQueryAdjustedTimes start close to 42 seconds with step 30 seconds",
+			params: &v3.QueryRangeParamsV3{
+				// 20:11:42
+				Start: 1686082302000,
+				// 20:41:00
+				End: 1686084060000,
+				CompositeQuery: &v3.CompositeQuery{
+					BuilderQueries: map[string]*v3.BuilderQuery{
+						"A": {
+							QueryName:          "A",
+							StepInterval:       30,
+							AggregateAttribute: v3.AttributeKey{Key: "name"},
+							Filters: &v3.FilterSet{Operator: "AND", Items: []v3.FilterItem{
+								{Key: v3.AttributeKey{Key: "in"}, Value: []interface{}{"a", "b", "c"}, Operator: v3.FilterOperatorIn},
+							}},
+							AggregateOperator: v3.AggregateOperatorRateAvg,
+							Expression:        "A",
+						},
+					},
+				},
+			},
+			// 20:11:30 - 20:41:00
+			expected: "timestamp_ms >= 1686082290000 AND timestamp_ms <= 1686084060000",
+		},
+		{
+			name: "TestBuildQueryAdjustedTimes start close to 42 seconds with step 30 seconds and end close to 30 seconds",
+			params: &v3.QueryRangeParamsV3{
+				// 20:11:42
+				Start: 1686082302000,
+				// 20:41:29
+				End: 1686084089000,
+				CompositeQuery: &v3.CompositeQuery{
+					BuilderQueries: map[string]*v3.BuilderQuery{
+						"A": {
+							QueryName:          "A",
+							StepInterval:       30,
+							AggregateAttribute: v3.AttributeKey{Key: "name"},
+							Filters: &v3.FilterSet{Operator: "AND", Items: []v3.FilterItem{
+								{Key: v3.AttributeKey{Key: "in"}, Value: []interface{}{"a", "b", "c"}, Operator: v3.FilterOperatorIn},
+							}},
+							AggregateOperator: v3.AggregateOperatorRateAvg,
+							Expression:        "A",
+						},
+					},
+				},
+			},
+			// 20:11:30 - 20:41:00
+			expected: "timestamp_ms >= 1686082290000 AND timestamp_ms <= 1686084060000",
+		},
+		{
+			name: "TestBuildQueryAdjustedTimes start close to 42 seconds with step 300 seconds and end close to 30 seconds",
+			params: &v3.QueryRangeParamsV3{
+				// 20:11:42
+				Start: 1686082302000,
+				// 20:41:29
+				End: 1686084089000,
+				CompositeQuery: &v3.CompositeQuery{
+					BuilderQueries: map[string]*v3.BuilderQuery{
+						"A": {
+							QueryName:          "A",
+							StepInterval:       300,
+							AggregateAttribute: v3.AttributeKey{Key: "name"},
+							Filters: &v3.FilterSet{Operator: "AND", Items: []v3.FilterItem{
+								{Key: v3.AttributeKey{Key: "in"}, Value: []interface{}{"a", "b", "c"}, Operator: v3.FilterOperatorIn},
+							}},
+							AggregateOperator: v3.AggregateOperatorRateAvg,
+							Expression:        "A",
+						},
+					},
+				},
+			},
+			// 20:10:00 - 20:40:00
+			expected: "timestamp_ms >= 1686082200000 AND timestamp_ms <= 1686084000000",
+		},
+		{
+			name: "TestBuildQueryAdjustedTimes start close to 42 seconds with step 180 seconds and end close to 30 seconds",
+			params: &v3.QueryRangeParamsV3{
+				// 20:11:42
+				Start: 1686082302000,
+				// 20:41:29
+				End: 1686084089000,
+				CompositeQuery: &v3.CompositeQuery{
+					BuilderQueries: map[string]*v3.BuilderQuery{
+						"A": {
+							QueryName:          "A",
+							StepInterval:       180,
+							AggregateAttribute: v3.AttributeKey{Key: "name"},
+							Filters: &v3.FilterSet{Operator: "AND", Items: []v3.FilterItem{
+								{Key: v3.AttributeKey{Key: "in"}, Value: []interface{}{"a", "b", "c"}, Operator: v3.FilterOperatorIn},
+							}},
+							AggregateOperator: v3.AggregateOperatorRateAvg,
+							Expression:        "A",
+						},
+					},
+				},
+			},
+			// 20:09:00 - 20:39:00
+			expected: "timestamp_ms >= 1686082140000 AND timestamp_ms <= 1686083940000",
+		},
+	}
+
+	for _, testCase := range cases {
+		t.Run(testCase.name, func(t *testing.T) {
+			q := testCase.params
+			query, err := PrepareMetricQuery(q.Start, q.End, q.CompositeQuery.QueryType, q.CompositeQuery.PanelType, q.CompositeQuery.BuilderQueries["A"])
+			require.NoError(t, err)
+
+			require.Contains(t, query, testCase.expected)
+		})
+	}
+}

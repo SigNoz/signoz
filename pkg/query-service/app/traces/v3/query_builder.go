@@ -408,8 +408,8 @@ func addOffsetToQuery(query string, offset uint64) string {
 // step is in seconds
 func PrepareTracesQuery(start, end int64, queryType v3.QueryType, panelType v3.PanelType, mq *v3.BuilderQuery, keys map[string]v3.AttributeKey) (string, error) {
 	// adjust the start and end time to the step interval
-	start = start - (start % mq.StepInterval)
-	end = end - (end % mq.StepInterval)
+	start = start - (start % (mq.StepInterval * 1000))
+	end = end - (end % (mq.StepInterval * 1000))
 	query, err := buildTracesQuery(start, end, mq.StepInterval, mq, constants.SIGNOZ_SPAN_INDEX_TABLENAME, keys)
 	if err != nil {
 		return "", err
