@@ -2,9 +2,11 @@
 # Owners are automatically requested for review for PRs that changes code
 # that they own.
 * @ankitnayan
+
 /frontend/ @palashgdev
 /deploy/ @prashant-shahi
-# negate the frontend folder and deploy folder but allow rest
-! /deploy @srikanthccv
-! /frontend @srikanthccv
-* @srikanthccv
+/sample-apps/ @prashant-shahi
+**/query-service/ @srikanthccv
+Makefile @srikanthccv
+go.* @srikanthccv
+.git* @srikanthccv
