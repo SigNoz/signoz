@@ -72,10 +72,10 @@ func getClickhouseLogsColumnDataType(columnDataType v3.AttributeKeyDataType) str
 }
 
 // getClickhouseColumnName returns the corresponding clickhouse column name for the given attribute/resource key
-func getClickhouseColumnName(key v3.AttributeKey) (string, error) {
+func getClickhouseColumnName(key v3.AttributeKey) string {
 	clickhouseColumn := key.Key
 	if key.Key == "timestamp" || key.Key == "id" {
-		return key.Key, nil
+		return key.Key
 	}
 
 	//if the key is present in the topLevelColumn then it will be only searched in those columns,
@@ -85,7 +85,7 @@ func getClickhouseColumnName(key v3.AttributeKey) (string, error) {
 		columnDataType := getClickhouseLogsColumnDataType(key.DataType)
 		clickhouseColumn = fmt.Sprintf("%s_%s_value[indexOf(%s_%s_key, '%s')]", columnType, columnDataType, columnType, columnDataType, key.Key)
 	}
-	return clickhouseColumn, nil
+	return clickhouseColumn
 }
 
 // getSelectLabels returns the select labels for the query based on groupBy and aggregateOperator
@@ -95,10 +95,7 @@ func getSelectLabels(aggregatorOperator v3.AggregateOperator, groupBy []v3.Attri
 		selectLabels = ""
 	} else {
 		for _, tag := range groupBy {
-			columnName, err := getClickhouseColumnName(tag)
-			if err != nil {
-				return "", err
-			}
+			columnName := getClickhouseColumnName(tag)
 			selectLabels += fmt.Sprintf(", %s as %s", columnName, tag.Key)
 		}
 	}
@@ -122,17 +119,10 @@ func buildLogsTimeSeriesFilterQuery(fs *v3.FilterSet, groupBy []v3.AttributeKey)
 					columnDataType := getClickhouseLogsColumnDataType(item.Key.DataType)
 					conditions = append(conditions, fmt.Sprintf(logsOp, columnType, columnDataType, item.Key.Key))
 				case v3.FilterOperatorContains, v3.FilterOperatorNotContains:
-					columnName, err := getClickhouseColumnName(item.Key)
-					if err != nil {
-						return "", err
-					}
+					columnName := getClickhouseColumnName(item.Key)
 					conditions = append(conditions, fmt.Sprintf("%s %s '%%%s%%'", columnName, logsOp, item.Value))
 				default:
-					columnName, err := getClickhouseColumnName(item.Key)
-					if err != nil {
-						return "", err
-					}
-
+					columnName := getClickhouseColumnName(item.Key)
 					fmtVal := utils.ClickHouseFormattedValue(value)
 					conditions = append(conditions, fmt.Sprintf("%s %s %s", columnName, logsOp, fmtVal))
 				}
@@ -214,10 +204,7 @@ func buildLogsQuery(start, end, step int64, mq *v3.BuilderQuery) (string, error)
 
 	aggregationKey := ""
 	if mq.AggregateAttribute.Key != "" {
-		aggregationKey, err = getClickhouseColumnName(mq.AggregateAttribute)
-		if err != nil {
-			return "", err
-		}
+		aggregationKey = getClickhouseColumnName(mq.AggregateAttribute)
 	}
 
 	switch mq.AggregateOperator {
@@ -329,7 +316,7 @@ func orderBy(items []v3.OrderBy, tags []string) string {
 		// since these are not present in tags we will have to select them correctly
 		if !addedToGroupBy[item.ColumnName] {
 			attr := v3.AttributeKey{Key: item.ColumnName, DataType: item.DataType, Type: item.Type, IsColumn: item.IsColumn}
-			name, _ := getClickhouseColumnName(attr)
+			name := getClickhouseColumnName(attr)
 			orderBy = append(orderBy, fmt.Sprintf("%s %s", name, item.Order))
 		}
 	}

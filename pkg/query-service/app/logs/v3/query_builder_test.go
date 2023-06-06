@@ -43,8 +43,7 @@ var testGetClickhouseColumnNameData = []struct {
 func TestGetClickhouseColumnName(t *testing.T) {
 	for _, tt := range testGetClickhouseColumnNameData {
 		Convey("testGetClickhouseColumnNameData", t, func() {
-			columnName, err := getClickhouseColumnName(tt.AttributeKey)
-			So(err, ShouldBeNil)
+			columnName := getClickhouseColumnName(tt.AttributeKey)
 			So(columnName, ShouldEqual, tt.ExpectedColumnName)
 		})
 	}
