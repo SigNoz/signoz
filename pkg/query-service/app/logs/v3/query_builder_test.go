@@ -229,6 +229,7 @@ func TestBuildLogsTimeSeriesFilterQuery(t *testing.T) {
 
 var testBuildLogsQueryData = []struct {
 	Name              string
+	PanelType         v3.PanelType
 	Start             int64
 	End               int64
 	Step              int64
@@ -239,10 +240,11 @@ var testBuildLogsQueryData = []struct {
 	ExpectedQuery     string
 }{
 	{
-		Name:  "Test aggregate count on select field",
-		Start: 1680066360726210000,
-		End:   1680066458000000000,
-		Step:  60,
+		Name:      "Test aggregate count on select field",
+		PanelType: v3.PanelTypeGraph,
+		Start:     1680066360726210000,
+		End:       1680066458000000000,
+		Step:      60,
 		BuilderQuery: &v3.BuilderQuery{
 			QueryName:         "A",
 			AggregateOperator: v3.AggregateOperatorCount,
@@ -252,10 +254,11 @@ var testBuildLogsQueryData = []struct {
 		ExpectedQuery: "SELECT toStartOfInterval(fromUnixTimestamp64Nano(timestamp), INTERVAL 60 SECOND) AS ts, toFloat64(count(*)) as value from signoz_logs.distributed_logs where (timestamp >= 1680066360726210000 AND timestamp <= 1680066458000000000) group by ts order by ts",
 	},
 	{
-		Name:  "Test aggregate count on a attribute",
-		Start: 1680066360726210000,
-		End:   1680066458000000000,
-		Step:  60,
+		Name:      "Test aggregate count on a attribute",
+		PanelType: v3.PanelTypeGraph,
+		Start:     1680066360726210000,
+		End:       1680066458000000000,
+		Step:      60,
 		BuilderQuery: &v3.BuilderQuery{
 			QueryName:          "A",
 			AggregateAttribute: v3.AttributeKey{Key: "user_name", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag},
@@ -266,10 +269,11 @@ var testBuildLogsQueryData = []struct {
 		ExpectedQuery: "SELECT toStartOfInterval(fromUnixTimestamp64Nano(timestamp), INTERVAL 60 SECOND) AS ts, toFloat64(count(*)) as value from signoz_logs.distributed_logs where (timestamp >= 1680066360726210000 AND timestamp <= 1680066458000000000) AND has(attributes_string_key, 'user_name') group by ts order by ts",
 	},
 	{
-		Name:  "Test aggregate count on a with filter",
-		Start: 1680066360726210000,
-		End:   1680066458000000000,
-		Step:  60,
+		Name:      "Test aggregate count on a with filter",
+		PanelType: v3.PanelTypeGraph,
+		Start:     1680066360726210000,
+		End:       1680066458000000000,
+		Step:      60,
 		BuilderQuery: &v3.BuilderQuery{
 			QueryName:          "A",
 			AggregateAttribute: v3.AttributeKey{Key: "user_name", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag},
@@ -283,10 +287,11 @@ var testBuildLogsQueryData = []struct {
 		ExpectedQuery: "SELECT toStartOfInterval(fromUnixTimestamp64Nano(timestamp), INTERVAL 60 SECOND) AS ts, toFloat64(count(*)) as value from signoz_logs.distributed_logs where (timestamp >= 1680066360726210000 AND timestamp <= 1680066458000000000) AND attributes_float64_value[indexOf(attributes_float64_key, 'bytes')] > 100.000000 AND has(attributes_string_key, 'user_name') group by ts order by ts",
 	},
 	{
-		Name:  "Test aggregate count distinct and order by value",
-		Start: 1680066360726210000,
-		End:   1680066458000000000,
-		Step:  60,
+		Name:      "Test aggregate count distinct and order by value",
+		PanelType: v3.PanelTypeGraph,
+		Start:     1680066360726210000,
+		End:       1680066458000000000,
+		Step:      60,
 		BuilderQuery: &v3.BuilderQuery{
 			QueryName:          "A",
 			AggregateAttribute: v3.AttributeKey{Key: "name", IsColumn: true},
@@ -298,10 +303,11 @@ var testBuildLogsQueryData = []struct {
 		ExpectedQuery: "SELECT toStartOfInterval(fromUnixTimestamp64Nano(timestamp), INTERVAL 60 SECOND) AS ts, toFloat64(count(distinct(name))) as value from signoz_logs.distributed_logs where (timestamp >= 1680066360726210000 AND timestamp <= 1680066458000000000) group by ts order by value ASC,ts",
 	},
 	{
-		Name:  "Test aggregate count distinct on non selected field",
-		Start: 1680066360726210000,
-		End:   1680066458000000000,
-		Step:  60,
+		Name:      "Test aggregate count distinct on non selected field",
+		PanelType: v3.PanelTypeGraph,
+		Start:     1680066360726210000,
+		End:       1680066458000000000,
+		Step:      60,
 		BuilderQuery: &v3.BuilderQuery{
 			QueryName:          "A",
 			AggregateAttribute: v3.AttributeKey{Key: "name", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag},
@@ -312,10 +318,11 @@ var testBuildLogsQueryData = []struct {
 		ExpectedQuery: "SELECT toStartOfInterval(fromUnixTimestamp64Nano(timestamp), INTERVAL 60 SECOND) AS ts, toFloat64(count(distinct(attributes_string_value[indexOf(attributes_string_key, 'name')]))) as value from signoz_logs.distributed_logs where (timestamp >= 1680066360726210000 AND timestamp <= 1680066458000000000) group by ts order by ts",
 	},
 	{
-		Name:  "Test aggregate count distinct with filter and groupBy",
-		Start: 1680066360726210000,
-		End:   1680066458000000000,
-		Step:  60,
+		Name:      "Test aggregate count distinct with filter and groupBy",
+		PanelType: v3.PanelTypeGraph,
+		Start:     1680066360726210000,
+		End:       1680066458000000000,
+		Step:      60,
 		BuilderQuery: &v3.BuilderQuery{
 			QueryName:          "A",
 			AggregateAttribute: v3.AttributeKey{Key: "name", IsColumn: true},
@@ -337,13 +344,14 @@ var testBuildLogsQueryData = []struct {
 			"AND attributes_string_value[indexOf(attributes_string_key, 'method')] = 'GET' AND resources_string_value[indexOf(resources_string_key, 'x')] != 'abc' " +
 			"AND indexOf(attributes_string_key, 'method') > 0 " +
 			"group by method,ts " +
-			"order by method ASC,ts ASC",
+			"order by method ASC,ts",
 	},
 	{
-		Name:  "Test aggregate count with multiple filter,groupBy and orderBy",
-		Start: 1680066360726210000,
-		End:   1680066458000000000,
-		Step:  60,
+		Name:      "Test aggregate count with multiple filter,groupBy and orderBy",
+		PanelType: v3.PanelTypeGraph,
+		Start:     1680066360726210000,
+		End:       1680066458000000000,
+		Step:      60,
 		BuilderQuery: &v3.BuilderQuery{
 			QueryName:          "A",
 			AggregateAttribute: v3.AttributeKey{Key: "name", IsColumn: true},
@@ -370,10 +378,11 @@ var testBuildLogsQueryData = []struct {
 			"order by method ASC,x ASC,ts",
 	},
 	{
-		Name:  "Test aggregate avg",
-		Start: 1680066360726210000,
-		End:   1680066458000000000,
-		Step:  60,
+		Name:      "Test aggregate avg",
+		PanelType: v3.PanelTypeGraph,
+		Start:     1680066360726210000,
+		End:       1680066458000000000,
+		Step:      60,
 		BuilderQuery: &v3.BuilderQuery{
 			QueryName:          "A",
 			AggregateAttribute: v3.AttributeKey{Key: "bytes", DataType: v3.AttributeKeyDataTypeFloat64, Type: v3.AttributeKeyTypeTag},
@@ -395,13 +404,14 @@ var testBuildLogsQueryData = []struct {
 			"AND attributes_string_value[indexOf(attributes_string_key, 'method')] = 'GET' " +
 			"AND indexOf(attributes_string_key, 'method') > 0 " +
 			"group by method,ts " +
-			"order by method ASC,x ASC,ts",
+			"order by method ASC,ts",
 	},
 	{
-		Name:  "Test aggregate sum",
-		Start: 1680066360726210000,
-		End:   1680066458000000000,
-		Step:  60,
+		Name:      "Test aggregate sum",
+		PanelType: v3.PanelTypeGraph,
+		Start:     1680066360726210000,
+		End:       1680066458000000000,
+		Step:      60,
 		BuilderQuery: &v3.BuilderQuery{
 			QueryName:          "A",
 			AggregateAttribute: v3.AttributeKey{Key: "bytes", IsColumn: true},
@@ -426,10 +436,11 @@ var testBuildLogsQueryData = []struct {
 			"order by method ASC,ts",
 	},
 	{
-		Name:  "Test aggregate min",
-		Start: 1680066360726210000,
-		End:   1680066458000000000,
-		Step:  60,
+		Name:      "Test aggregate min",
+		PanelType: v3.PanelTypeGraph,
+		Start:     1680066360726210000,
+		End:       1680066458000000000,
+		Step:      60,
 		BuilderQuery: &v3.BuilderQuery{
 			QueryName:          "A",
 			AggregateAttribute: v3.AttributeKey{Key: "bytes", IsColumn: true},
@@ -454,10 +465,11 @@ var testBuildLogsQueryData = []struct {
 			"order by method ASC,ts",
 	},
 	{
-		Name:  "Test aggregate max",
-		Start: 1680066360726210000,
-		End:   1680066458000000000,
-		Step:  60,
+		Name:      "Test aggregate max",
+		PanelType: v3.PanelTypeGraph,
+		Start:     1680066360726210000,
+		End:       1680066458000000000,
+		Step:      60,
 		BuilderQuery: &v3.BuilderQuery{
 			QueryName:          "A",
 			AggregateAttribute: v3.AttributeKey{Key: "bytes", IsColumn: true},
@@ -482,10 +494,11 @@ var testBuildLogsQueryData = []struct {
 			"order by method ASC,ts",
 	},
 	{
-		Name:  "Test aggregate PXX",
-		Start: 1680066360726210000,
-		End:   1680066458000000000,
-		Step:  60,
+		Name:      "Test aggregate PXX",
+		PanelType: v3.PanelTypeGraph,
+		Start:     1680066360726210000,
+		End:       1680066458000000000,
+		Step:      60,
 		BuilderQuery: &v3.BuilderQuery{
 			QueryName:          "A",
 			AggregateAttribute: v3.AttributeKey{Key: "bytes", IsColumn: true},
@@ -506,10 +519,11 @@ var testBuildLogsQueryData = []struct {
 			"order by method ASC,ts",
 	},
 	{
-		Name:  "Test aggregate RateSum",
-		Start: 1680066360726210000,
-		End:   1680066458000000000,
-		Step:  60,
+		Name:      "Test aggregate RateSum",
+		PanelType: v3.PanelTypeGraph,
+		Start:     1680066360726210000,
+		End:       1680066458000000000,
+		Step:      60,
 		BuilderQuery: &v3.BuilderQuery{
 			QueryName:          "A",
 			AggregateAttribute: v3.AttributeKey{Key: "bytes", IsColumn: true},
@@ -527,10 +541,11 @@ var testBuildLogsQueryData = []struct {
 			"group by method,ts order by method ASC,ts",
 	},
 	{
-		Name:  "Test aggregate rate",
-		Start: 1680066360726210000,
-		End:   1680066458000000000,
-		Step:  60,
+		Name:      "Test aggregate rate",
+		PanelType: v3.PanelTypeGraph,
+		Start:     1680066360726210000,
+		End:       1680066458000000000,
+		Step:      60,
 		BuilderQuery: &v3.BuilderQuery{
 			QueryName:          "A",
 			AggregateAttribute: v3.AttributeKey{Key: "bytes", Type: v3.AttributeKeyTypeTag, DataType: v3.AttributeKeyDataTypeFloat64},
@@ -549,10 +564,11 @@ var testBuildLogsQueryData = []struct {
 			"order by method ASC,ts",
 	},
 	{
-		Name:  "Test aggregate RateSum without materialized column",
-		Start: 1680066360726210000,
-		End:   1680066458000000000,
-		Step:  60,
+		Name:      "Test aggregate RateSum without materialized column",
+		PanelType: v3.PanelTypeGraph,
+		Start:     1680066360726210000,
+		End:       1680066458000000000,
+		Step:      60,
 		BuilderQuery: &v3.BuilderQuery{
 			QueryName:          "A",
 			AggregateAttribute: v3.AttributeKey{Key: "bytes", Type: v3.AttributeKeyTypeTag, DataType: v3.AttributeKeyDataTypeFloat64},
@@ -572,10 +588,11 @@ var testBuildLogsQueryData = []struct {
 			"order by method ASC,ts",
 	},
 	{
-		Name:  "Test Noop",
-		Start: 1680066360726210000,
-		End:   1680066458000000000,
-		Step:  60,
+		Name:      "Test Noop",
+		PanelType: v3.PanelTypeGraph,
+		Start:     1680066360726210000,
+		End:       1680066458000000000,
+		Step:      60,
 		BuilderQuery: &v3.BuilderQuery{
 			SelectColumns:     []v3.AttributeKey{},
 			QueryName:         "A",
@@ -589,10 +606,11 @@ var testBuildLogsQueryData = []struct {
 			"from signoz_logs.distributed_logs where (timestamp >= 1680066360726210000 AND timestamp <= 1680066458000000000) order by timestamp",
 	},
 	{
-		Name:  "Test aggregate with having clause",
-		Start: 1680066360726210000,
-		End:   1680066458000000000,
-		Step:  60,
+		Name:      "Test aggregate with having clause",
+		PanelType: v3.PanelTypeGraph,
+		Start:     1680066360726210000,
+		End:       1680066458000000000,
+		Step:      60,
 		BuilderQuery: &v3.BuilderQuery{
 			QueryName:          "A",
 			AggregateAttribute: v3.AttributeKey{Key: "name", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag},
@@ -610,10 +628,11 @@ var testBuildLogsQueryData = []struct {
 		ExpectedQuery: "SELECT toStartOfInterval(fromUnixTimestamp64Nano(timestamp), INTERVAL 60 SECOND) AS ts, toFloat64(count(distinct(attributes_string_value[indexOf(attributes_string_key, 'name')]))) as value from signoz_logs.distributed_logs where (timestamp >= 1680066360726210000 AND timestamp <= 1680066458000000000) group by ts having value > 10 order by ts",
 	},
 	{
-		Name:  "Test aggregate with having clause and filters",
-		Start: 1680066360726210000,
-		End:   1680066458000000000,
-		Step:  60,
+		Name:      "Test aggregate with having clause and filters",
+		PanelType: v3.PanelTypeGraph,
+		Start:     1680066360726210000,
+		End:       1680066458000000000,
+		Step:      60,
 		BuilderQuery: &v3.BuilderQuery{
 			QueryName:          "A",
 			AggregateAttribute: v3.AttributeKey{Key: "name", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag},
@@ -635,10 +654,11 @@ var testBuildLogsQueryData = []struct {
 		ExpectedQuery: "SELECT toStartOfInterval(fromUnixTimestamp64Nano(timestamp), INTERVAL 60 SECOND) AS ts, toFloat64(count(distinct(attributes_string_value[indexOf(attributes_string_key, 'name')]))) as value from signoz_logs.distributed_logs where (timestamp >= 1680066360726210000 AND timestamp <= 1680066458000000000) AND attributes_string_value[indexOf(attributes_string_key, 'method')] = 'GET' group by ts having value > 10 order by ts",
 	},
 	{
-		Name:  "Test top level key",
-		Start: 1680066360726210000,
-		End:   1680066458000000000,
-		Step:  60,
+		Name:      "Test top level key",
+		PanelType: v3.PanelTypeGraph,
+		Start:     1680066360726210000,
+		End:       1680066458000000000,
+		Step:      60,
 		BuilderQuery: &v3.BuilderQuery{
 			QueryName:          "A",
 			AggregateAttribute: v3.AttributeKey{Key: "name", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag},
@@ -660,10 +680,11 @@ var testBuildLogsQueryData = []struct {
 		ExpectedQuery: "SELECT toStartOfInterval(fromUnixTimestamp64Nano(timestamp), INTERVAL 60 SECOND) AS ts, toFloat64(count(distinct(attributes_string_value[indexOf(attributes_string_key, 'name')]))) as value from signoz_logs.distributed_logs where (timestamp >= 1680066360726210000 AND timestamp <= 1680066458000000000) AND body ILIKE '%test%' group by ts having value > 10 order by ts",
 	},
 	{
-		Name:  "Test attribute with same name as top level key",
-		Start: 1680066360726210000,
-		End:   1680066458000000000,
-		Step:  60,
+		Name:      "Test attribute with same name as top level key",
+		PanelType: v3.PanelTypeGraph,
+		Start:     1680066360726210000,
+		End:       1680066458000000000,
+		Step:      60,
 		BuilderQuery: &v3.BuilderQuery{
 			QueryName:          "A",
 			AggregateAttribute: v3.AttributeKey{Key: "name", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag},
@@ -689,7 +710,7 @@ var testBuildLogsQueryData = []struct {
 func TestBuildLogsQuery(t *testing.T) {
 	for _, tt := range testBuildLogsQueryData {
 		Convey("TestBuildLogsQuery", t, func() {
-			query, err := buildLogsQuery(tt.Start, tt.End, tt.Step, tt.BuilderQuery)
+			query, err := buildLogsQuery(tt.PanelType, tt.Start, tt.End, tt.Step, tt.BuilderQuery)
 			So(err, ShouldBeNil)
 			So(query, ShouldEqual, tt.ExpectedQuery)
 
@@ -728,13 +749,15 @@ func TestGetZerosForEpochNano(t *testing.T) {
 }
 
 var testOrderBy = []struct {
-	Name   string
-	Items  []v3.OrderBy
-	Tags   []string
-	Result string
+	Name      string
+	PanelType v3.PanelType
+	Items     []v3.OrderBy
+	Tags      []string
+	Result    string
 }{
 	{
-		Name: "Test 1",
+		Name:      "Test 1",
+		PanelType: v3.PanelTypeGraph,
 		Items: []v3.OrderBy{
 			{
 				ColumnName: "name",
@@ -749,7 +772,8 @@ var testOrderBy = []struct {
 		Result: "name asc,value desc",
 	},
 	{
-		Name: "Test 2",
+		Name:      "Test 2",
+		PanelType: v3.PanelTypeGraph,
 		Items: []v3.OrderBy{
 			{
 				ColumnName: "name",
@@ -764,7 +788,8 @@ var testOrderBy = []struct {
 		Result: "name asc,bytes asc",
 	},
 	{
-		Name: "Test 3",
+		Name:      "Test 3",
+		PanelType: v3.PanelTypeList,
 		Items: []v3.OrderBy{
 			{
 				ColumnName: "name",
@@ -783,7 +808,8 @@ var testOrderBy = []struct {
 		Result: "name asc,bytes asc,value asc",
 	},
 	{
-		Name: "Test 4",
+		Name:      "Test 4",
+		PanelType: v3.PanelTypeList,
 		Items: []v3.OrderBy{
 			{
 				ColumnName: "name",
@@ -813,11 +839,8 @@ var testOrderBy = []struct {
 func TestOrderBy(t *testing.T) {
 	for _, tt := range testOrderBy {
 		Convey("testOrderBy", t, func() {
-			res := orderBy(tt.Items, tt.Tags)
+			res := orderBy(tt.PanelType, tt.Items, tt.Tags)
 			So(res, ShouldEqual, tt.Result)
-
-			// So(multiplier, ShouldEqual, tt.Multiplier)
-			// So(tt.Epoch*multiplier, ShouldEqual, tt.Result)
 		})
 	}
 }

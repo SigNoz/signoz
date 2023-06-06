@@ -163,7 +163,7 @@ func getZerosForEpochNano(epoch int64) int64 {
 	return int64(math.Pow(10, float64(19-count)))
 }
 
-func buildLogsQuery(start, end, step int64, mq *v3.BuilderQuery) (string, error) {
+func buildLogsQuery(panelType v3.PanelType, start, end, step int64, mq *v3.BuilderQuery) (string, error) {
 
 	filterSubQuery, err := buildLogsTimeSeriesFilterQuery(mq.Filters, mq.GroupBy)
 	if err != nil {
@@ -192,7 +192,7 @@ func buildLogsQuery(start, end, step int64, mq *v3.BuilderQuery) (string, error)
 			"order by %s"
 
 	groupBy := groupByAttributeKeyTags(mq.GroupBy...)
-	orderBy := orderByAttributeKeyTags(mq.OrderBy, mq.GroupBy)
+	orderBy := orderByAttributeKeyTags(panelType, mq.OrderBy, mq.GroupBy)
 
 	if mq.AggregateOperator != v3.AggregateOperatorNoOp {
 		if !strings.Contains(orderBy, "ts") {
@@ -282,7 +282,7 @@ func groupByAttributeKeyTags(tags ...v3.AttributeKey) string {
 // orderBy returns a string of comma separated tags for order by clause
 // if there are remaining items which are not present in tags they are also added
 // if the order is not specified, it defaults to ASC
-func orderBy(items []v3.OrderBy, tags []string) string {
+func orderBy(panelType v3.PanelType, items []v3.OrderBy, tags []string) string {
 	var orderBy []string
 
 	// create a lookup
@@ -312,23 +312,25 @@ func orderBy(items []v3.OrderBy, tags []string) string {
 	}
 
 	// add the remaining items
-	for _, item := range items {
-		// since these are not present in tags we will have to select them correctly
-		if !addedToGroupBy[item.ColumnName] {
-			attr := v3.AttributeKey{Key: item.ColumnName, DataType: item.DataType, Type: item.Type, IsColumn: item.IsColumn}
-			name := getClickhouseColumnName(attr)
-			orderBy = append(orderBy, fmt.Sprintf("%s %s", name, item.Order))
+	if panelType == v3.PanelTypeList {
+		for _, item := range items {
+			// since these are not present in tags we will have to select them correctly
+			if !addedToGroupBy[item.ColumnName] {
+				attr := v3.AttributeKey{Key: item.ColumnName, DataType: item.DataType, Type: item.Type, IsColumn: item.IsColumn}
+				name := getClickhouseColumnName(attr)
+				orderBy = append(orderBy, fmt.Sprintf("%s %s", name, item.Order))
+			}
 		}
 	}
 	return strings.Trim(strings.Join(orderBy, ","), ",")
 }
 
-func orderByAttributeKeyTags(items []v3.OrderBy, tags []v3.AttributeKey) string {
+func orderByAttributeKeyTags(panelType v3.PanelType, items []v3.OrderBy, tags []v3.AttributeKey) string {
 	var groupTags []string
 	for _, tag := range tags {
 		groupTags = append(groupTags, tag.Key)
 	}
-	str := orderBy(items, groupTags)
+	str := orderBy(panelType, items, groupTags)
 	if len(str) > 0 {
 		str = str + ","
 	}
@@ -373,7 +375,7 @@ func addOffsetToQuery(query string, offset uint64) string {
 }
 
 func PrepareLogsQuery(start, end int64, queryType v3.QueryType, panelType v3.PanelType, mq *v3.BuilderQuery) (string, error) {
-	query, err := buildLogsQuery(start, end, mq.StepInterval, mq)
+	query, err := buildLogsQuery(panelType, start, end, mq.StepInterval, mq)
 	if err != nil {
 		return "", err
 	}
