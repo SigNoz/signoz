@@ -4,4 +4,7 @@
 * @ankitnayan
 /frontend/ @palashgdev
 /deploy/ @prashant-shahi
-**/query-service/ @srikanthccv
+# negate the frontend folder and deploy folder but allow rest
+! /deploy @srikanthccv
+! /frontend @srikanthccv
+* @srikanthccv
