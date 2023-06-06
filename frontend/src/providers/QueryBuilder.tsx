@@ -1,5 +1,6 @@
 import {
 	alphabet,
+	baseAutoCompleteIdKeysOrder,
 	formulasNames,
 	initialClickHouseData,
 	initialFormulaBuilderFormValues,
@@ -15,6 +16,7 @@ import {
 import { COMPOSITE_QUERY } from 'constants/queryBuilderQueryNames';
 import { GRAPH_TYPES } from 'container/NewDashboard/ComponentsSlider';
 import useUrlQuery from 'hooks/useUrlQuery';
+import { createIdFromObjectFields } from 'lib/createIdFromObjectFields';
 import { createNewBuilderItemName } from 'lib/newQueryBuilder/createNewBuilderItemName';
 import { getOperatorsBySourceAndPanelType } from 'lib/newQueryBuilder/getOperatorsBySourceAndPanelType';
 import { replaceIncorrectObjectFields } from 'lib/replaceIncorrectObjectFields';
@@ -100,6 +102,7 @@ export function QueryBuilderProvider({
 
 	const initQueryBuilderData = useCallback((query: Partial<Query>): void => {
 		const { queryType, ...queryState } = query;
+
 		const builder: QueryBuilderData = {
 			queryData: queryState.builder
 				? queryState.builder.queryData.map((item) => ({
@@ -129,7 +132,27 @@ export function QueryBuilderProvider({
 			  }))
 			: initialQuery.clickhouse_sql;
 
-		setCurrentQuery({ builder, clickhouse_sql: clickHouse, promql });
+		setCurrentQuery({
+			clickhouse_sql: clickHouse,
+			promql,
+			builder: {
+				...builder,
+				queryData: builder.queryData.map((q) => ({
+					...q,
+					groupBy: q.groupBy.map(({ id: _, ...item }) => ({
+						...item,
+						id: createIdFromObjectFields(item, baseAutoCompleteIdKeysOrder),
+					})),
+					aggregateAttribute: {
+						...q.aggregateAttribute,
+						id: createIdFromObjectFields(
+							q.aggregateAttribute,
+							baseAutoCompleteIdKeysOrder,
+						),
+					},
+				})),
+			},
+		});
 
 		setQueryType(queryType || EQueryType.QUERY_BUILDER);
 	}, []);
