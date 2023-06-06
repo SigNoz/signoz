@@ -44,7 +44,6 @@ export const useQueryOperations: UseQueryOperations = ({ query, index }) => {
 				aggregateOperator: value,
 				having: [],
 				limit: null,
-				filters: { items: [], op: 'AND' },
 				...(shouldResetAggregateAttribute
 					? { aggregateAttribute: initialAutocompleteData }
 					: {}),
