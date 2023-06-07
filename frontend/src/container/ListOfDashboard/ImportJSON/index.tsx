@@ -71,23 +71,8 @@ function ImportJSON({
 			setDashboardCreating(true);
 			const dashboardData = JSON.parse(editorValue) as DashboardData;
 
-			// removing the queryData
-			const parsedWidgets: DashboardData = {
-				...dashboardData,
-				widgets: dashboardData.widgets?.map((e) => ({
-					...e,
-					queryData: {
-						...e.queryData,
-						data: e.queryData.data,
-						error: false,
-						errorMessage: '',
-						loading: false,
-					},
-				})),
-			};
-
 			const response = await createDashboard({
-				...parsedWidgets,
+				...dashboardData,
 				uploadedGrafana,
 			});
 

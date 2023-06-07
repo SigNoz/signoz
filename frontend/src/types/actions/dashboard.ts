@@ -5,7 +5,6 @@ import {
 	IDashboardVariable,
 	Widgets,
 } from 'types/api/dashboard/getAll';
-import { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { QueryData } from 'types/api/widgets/getQuery';
 
 export const GET_DASHBOARD = 'GET_DASHBOARD';
@@ -29,9 +28,6 @@ export const DELETE_DASHBOARD_SUCCESS = 'DELETE_DASHBOARD_SUCCESS';
 export const DELETE_DASHBOARD_ERROR = 'DELETE_DASHBOARD_ERROR';
 
 export const CREATE_DEFAULT_WIDGET = 'CREATE_DEFAULT_WIDGET';
-
-export const QUERY_SUCCESS = 'QUERY_SUCCESS';
-export const QUERY_ERROR = 'QUERY_ERROR';
 
 export const UPDATE_QUERY = 'UPDATE_QUERY';
 
@@ -132,27 +128,12 @@ export interface QuerySuccessPayload {
 		// query: string
 	};
 }
-interface QuerySuccess {
-	type: typeof QUERY_SUCCESS;
-	payload: QuerySuccessPayload;
-}
 
 interface UpdateQuery {
 	type: typeof UPDATE_QUERY;
 	payload: {
-		query: Query;
 		widgetId: string;
 		yAxisUnit: string | undefined;
-	};
-}
-
-interface QueryError {
-	type: typeof QUERY_ERROR;
-	payload: {
-		errorMessage: string;
-		widgetId: string;
-		errorBoolean?: boolean;
-		isLoadingQueryResult?: boolean;
 	};
 }
 
@@ -198,8 +179,6 @@ export type DashboardActions =
 	| UpdateDashboardTitle
 	| ToggleEditMode
 	| CreateDefaultWidget
-	| QuerySuccess
-	| QueryError
 	| ApplySettingsToPanel
 	| SaveDashboardSuccess
 	| WidgetDeleteSuccess
