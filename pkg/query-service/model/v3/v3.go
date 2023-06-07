@@ -326,6 +326,7 @@ type PromQuery struct {
 	Query    string `json:"query"`
 	Stats    string `json:"stats,omitempty"`
 	Disabled bool   `json:"disabled"`
+	Legend   string `json:"legend,omitempty"`
 }
 
 func (p *PromQuery) Validate() error {
@@ -343,6 +344,7 @@ func (p *PromQuery) Validate() error {
 type ClickHouseQuery struct {
 	Query    string `json:"query"`
 	Disabled bool   `json:"disabled"`
+	Legend   string `json:"legend,omitempty"`
 }
 
 func (c *ClickHouseQuery) Validate() error {
@@ -420,6 +422,7 @@ type BuilderQuery struct {
 	Expression         string            `json:"expression"`
 	Disabled           bool              `json:"disabled"`
 	Having             []Having          `json:"having,omitempty"`
+	Legend             string            `json:"legend,omitempty"`
 	Limit              uint64            `json:"limit"`
 	Offset             uint64            `json:"offset"`
 	PageSize           uint64            `json:"pageSize"`
