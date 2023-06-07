@@ -9,6 +9,8 @@ require (
 	github.com/SigNoz/zap_otlp/zap_otlp_sync v0.0.0-20230517094211-cd3f3f0aea85
 	github.com/coreos/go-oidc/v3 v3.4.0
 	github.com/go-kit/log v0.2.1
+	github.com/go-redis/redis/v8 v8.11.5
+	github.com/go-redis/redismock/v8 v8.11.5
 	github.com/google/uuid v1.3.0
 	github.com/gorilla/handlers v1.5.1
 	github.com/gorilla/mux v1.8.0
@@ -22,6 +24,7 @@ require (
 	github.com/mitchellh/mapstructure v1.5.0
 	github.com/oklog/oklog v0.3.2
 	github.com/open-telemetry/opamp-go v0.5.0
+	github.com/patrickmn/go-cache v2.1.0+incompatible
 	github.com/pkg/errors v0.9.1
 	github.com/posthog/posthog-go v0.0.0-20220817142604-0b0bbf0f9c0f
 	github.com/prometheus/common v0.39.0
@@ -73,6 +76,7 @@ require (
 	github.com/armon/go-metrics v0.4.0 // indirect
 	github.com/beevik/etree v1.1.0 // indirect
 	github.com/cespare/xxhash/v2 v2.2.0 // indirect
+	github.com/dgryski/go-rendezvous v0.0.0-20200823014737-9f7001d12a5f // indirect
 	github.com/form3tech-oss/jwt-go v3.2.5+incompatible // indirect
 	github.com/gorilla/websocket v1.5.0 // indirect
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.11.1 // indirect
