@@ -30,7 +30,7 @@ const ROUTES = {
 	HOME_PAGE: '/',
 	PASSWORD_RESET: '/password-reset',
 	LIST_LICENSES: '/licenses',
-	TRACE_EXPLORER: '/trace-explorer',
+	TRACES_EXPLORER: '/trace-explorer',
 };
 
 export default ROUTES;
