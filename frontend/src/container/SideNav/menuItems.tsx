@@ -46,10 +46,11 @@ const menus: SidebarMenu[] = [
 				key: ROUTES.TRACE,
 				label: 'Traces',
 			},
-			{
-				key: ROUTES.TRACES_EXPLORER,
-				label: 'Explorer',
-			},
+			// TODO: uncomment when will be ready explorer
+			// {
+			// 	key: ROUTES.TRACES_EXPLORER,
+			// 	label: "Explorer",
+			// },
 		],
 	},
 	{

@@ -1,4 +1,5 @@
 import { Col, Row } from 'antd';
+import Typography from 'antd/es/typography/Typography';
 import { Fragment, memo, ReactNode, useState } from 'react';
 
 // ** Types
@@ -46,7 +47,9 @@ export const AdditionalFiltersToggler = memo(function AdditionalFiltersToggler({
 			<Col span={24}>
 				<StyledInner onClick={handleToggleOpenFilters}>
 					{isOpenedFilters ? <StyledIconClose /> : <StyledIconOpen />}
-					{!isOpenedFilters && <span>Add conditions for {filtersTexts}</span>}
+					{!isOpenedFilters && (
+						<Typography>Add conditions for {filtersTexts}</Typography>
+					)}
 				</StyledInner>
 			</Col>
 			{isOpenedFilters && <Col span={24}>{children}</Col>}
