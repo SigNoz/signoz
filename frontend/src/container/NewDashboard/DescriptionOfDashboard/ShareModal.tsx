@@ -6,7 +6,7 @@ import { useTranslation } from 'react-i18next';
 import { useCopyToClipboard } from 'react-use';
 import { DashboardData } from 'types/api/dashboard/getAll';
 
-import { cleardQueryData, downloadObjectAsJson } from './util';
+import { downloadObjectAsJson } from './util';
 
 function ShareModal({
 	isJSONModalVisible,
@@ -39,7 +39,6 @@ function ShareModal({
 		}
 	}, [state.error, state.value, t, notifications]);
 
-	const selectedDataCleaned = cleardQueryData(selectedData);
 	const GetFooterComponent = useMemo(() => {
 		if (!isViewJSON) {
 			return (
@@ -55,7 +54,7 @@ function ShareModal({
 					<Button
 						type="primary"
 						onClick={(): void => {
-							downloadObjectAsJson(selectedDataCleaned, selectedData.title);
+							downloadObjectAsJson(selectedData, selectedData.title);
 						}}
 					>
 						{t('download_json')}
@@ -68,7 +67,7 @@ function ShareModal({
 				{t('copy_to_clipboard')}
 			</Button>
 		);
-	}, [isViewJSON, jsonValue, selectedData, selectedDataCleaned, setCopy, t]);
+	}, [isViewJSON, jsonValue, selectedData, setCopy, t]);
 
 	return (
 		<Modal
