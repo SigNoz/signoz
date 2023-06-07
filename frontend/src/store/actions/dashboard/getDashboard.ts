@@ -1,15 +1,9 @@
 import getDashboard from 'api/dashboard/get';
-import {
-	initialClickHouseData,
-	initialQueryBuilderFormValues,
-	initialQueryPromQLData,
-	PANEL_TYPES,
-} from 'constants/queryBuilder';
+import { initialQueryWithType, PANEL_TYPES } from 'constants/queryBuilder';
 import { GRAPH_TYPES } from 'container/NewDashboard/ComponentsSlider';
 import { Dispatch } from 'redux';
 import AppActions from 'types/actions';
 import { Props } from 'types/api/dashboard/get';
-import { EQueryType } from 'types/common/dashboard';
 
 export const GetDashboard = ({
 	uuid,
@@ -45,25 +39,7 @@ export const GetDashboard = ({
 						panelTypes: graphType || PANEL_TYPES.TIME_SERIES,
 						timePreferance: 'GLOBAL_TIME',
 						title: '',
-						queryType: 0,
-						queryData: {
-							data: {
-								queryData: [],
-							},
-
-							error: false,
-							errorMessage: '',
-							loading: false,
-						},
-						query: {
-							queryType: EQueryType.QUERY_BUILDER,
-							promql: [initialQueryPromQLData],
-							clickhouse_sql: [initialClickHouseData],
-							builder: {
-								queryFormulas: [],
-								queryData: [initialQueryBuilderFormValues],
-							},
-						},
+						query: initialQueryWithType,
 					},
 				});
 			}
