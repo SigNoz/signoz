@@ -28,11 +28,11 @@ export const useAutoComplete = (query: IBuilderQuery): IAutoComplete => {
 
 	const [key, operator, result] = useSetCurrentKeyAndOperator(searchValue, keys);
 
-	const handleSearch = (value: string): void => {
+	const handleSearch = useCallback((value: string): void => {
 		const prefixFreeValue = getRemovePrefixFromKey(getTagToken(value).tagKey);
 		setSearchValue(value);
 		setSearchKey(prefixFreeValue);
-	};
+	}, []);
 
 	const { isValidTag, isExist, isValidOperator, isMulti } = useTagValidation(
 		operator,
@@ -51,16 +51,15 @@ export const useAutoComplete = (query: IBuilderQuery): IAutoComplete => {
 		(value: string): void => {
 			if (isMulti) {
 				setSearchValue((prev: string) => {
-					const matches = prev?.matchAll(tagRegexp);
+					const matches = prev.matchAll(tagRegexp);
 					const [match] = matches ? Array.from(matches) : [];
 					const [, , , matchTagValue] = match;
 					const data = Papa.parse(matchTagValue).data.flat();
 					return replaceStringWithMaxLength(prev, data as string[], value);
 				});
 			}
-			if (!isMulti) {
-				if (isExistsNotExistsOperator(value)) handleAddTag(value);
-				if (isValidTag && !isExistsNotExistsOperator(value)) handleAddTag(value);
+			if (!isMulti && (isExistsNotExistsOperator(value) || isValidTag)) {
+				handleAddTag(value);
 			}
 		},
 		[handleAddTag, isMulti, isValidTag],

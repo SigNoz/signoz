@@ -6,11 +6,11 @@ import {
 	getTagToken,
 	isInNInOperator,
 } from 'container/QueryBuilder/filters/QueryBuilderSearch/utils';
+import useDebounce from 'hooks/useDebounce';
 import { isEqual, uniqWith } from 'lodash-es';
-import debounce from 'lodash-es/debounce';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { useQuery } from 'react-query';
-import { useDebounce } from 'react-use';
+import { useCallback, useMemo, useRef, useState } from 'react';
+import { useMutation, useQuery } from 'react-query';
+import { useDebounce as reactDebounce } from 'react-use';
 import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource } from 'types/common/queryBuilder';
@@ -23,13 +23,6 @@ type IuseFetchKeysAndValues = {
 	handleRemoveSourceKey: (newSourceKey: string) => void;
 };
 
-/**
- * Custom hook to fetch attribute keys and values from an API
- * @param searchValue - the search query value
- * @param query - an object containing data for the query
- * @returns an object containing the fetched attribute keys, results, and the status of the fetch
- */
-
 export const useFetchKeysAndValues = (
 	searchValue: string,
 	query: IBuilderQuery,
@@ -39,24 +32,8 @@ export const useFetchKeysAndValues = (
 	const [sourceKeys, setSourceKeys] = useState<BaseAutocompleteData[]>([]);
 	const [results, setResults] = useState<string[]>([]);
 
-	const searchParams = useMemo(
-		() =>
-			debounce(
-				() => [
-					searchKey,
-					query.dataSource,
-					query.aggregateOperator,
-					query.aggregateAttribute.key,
-				],
-				300,
-			),
-		[
-			query.aggregateAttribute.key,
-			query.aggregateOperator,
-			query.dataSource,
-			searchKey,
-		],
-	);
+	const debouncedSearchKey = useDebounce(searchKey, 300);
+	const debouncedSearchValue = useDebounce(searchValue, 300);
 
 	const isQueryEnabled = useMemo(
 		() =>
@@ -72,11 +49,17 @@ export const useFetchKeysAndValues = (
 		],
 	);
 
-	const { data, isFetching, status } = useQuery(
-		[QueryBuilderKeys.GET_ATTRIBUTE_KEY, searchParams()],
+	const { isFetching } = useQuery(
+		[
+			QueryBuilderKeys.GET_ATTRIBUTE_KEY,
+			debouncedSearchKey,
+			query.dataSource,
+			query.aggregateOperator,
+			query.aggregateAttribute.key,
+		],
 		async () =>
 			getAggregateKeys({
-				searchText: searchKey,
+				searchText: debouncedSearchKey,
 				dataSource: query.dataSource,
 				aggregateOperator: query.aggregateOperator,
 				aggregateAttribute: query.aggregateAttribute.key,
@@ -84,14 +67,28 @@ export const useFetchKeysAndValues = (
 			}),
 		{
 			enabled: isQueryEnabled,
+			onSuccess(data) {
+				if (data.payload?.attributeKeys) {
+					setKeys(data.payload.attributeKeys);
+					setSourceKeys((prevState) =>
+						uniqWith([...(data.payload.attributeKeys ?? []), ...prevState], isEqual),
+					);
+				} else {
+					setKeys([]);
+				}
+			},
 		},
 	);
 
-	/**
-	 * Fetches the options to be displayed based on the selected value
-	 * @param value - the selected value
-	 * @param query - an object containing data for the query
-	 */
+	const { mutateAsync } = useMutation(getAttributesValues, {
+		onSuccess(data) {
+			if (data.payload) {
+				const values = Object.values(data.payload).find((el) => !!el) || [];
+				setResults(values);
+			}
+		},
+	});
+
 	const handleFetchOption = async (
 		value: string,
 		query: IBuilderQuery,
@@ -110,7 +107,7 @@ export const useFetchKeysAndValues = (
 			return;
 		}
 
-		const { payload } = await getAttributesValues({
+		mutateAsync({
 			aggregateOperator: query.aggregateOperator,
 			dataSource: query.dataSource,
 			aggregateAttribute: query.aggregateAttribute.key,
@@ -121,11 +118,6 @@ export const useFetchKeysAndValues = (
 				? tagValue[tagValue.length - 1]?.toString() ?? '' // last element of tagvalue will be always user search value
 				: tagValue?.toString() ?? '',
 		});
-
-		if (payload) {
-			const values = Object.values(payload).find((el) => !!el) || [];
-			setResults(values);
-		}
 	};
 
 	const handleRemoveSourceKey = useCallback((sourceKey: string) => {
@@ -138,24 +130,11 @@ export const useFetchKeysAndValues = (
 	const clearFetcher = useRef(handleFetchOption).current;
 
 	// debounces the fetch function to avoid excessive API calls
-	useDebounce(() => clearFetcher(searchValue, query, keys), 750, [
+	reactDebounce(() => clearFetcher(debouncedSearchValue, query, keys), 750, [
 		clearFetcher,
-		searchValue,
-		query,
+		debouncedSearchValue,
 		keys,
 	]);
-
-	// update the fetched keys when the fetch status changes
-	useEffect(() => {
-		if (status === 'success' && data?.payload?.attributeKeys) {
-			setKeys(data.payload.attributeKeys);
-			setSourceKeys((prevState) =>
-				uniqWith([...(data.payload.attributeKeys ?? []), ...prevState], isEqual),
-			);
-		} else {
-			setKeys([]);
-		}
-	}, [data?.payload?.attributeKeys, status]);
 
 	return {
 		keys,
