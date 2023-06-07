@@ -86,17 +86,18 @@ function LogControls(): JSX.Element | null {
 
 	const flattenLogData = useMemo(
 		() =>
-			logs.map((log) => {
-				const logData = { ...log };
-				logData.timestamp = dayjs(log.timestamp / 1e6).format() as never;
-				return FlatLogData(logData);
-			}),
+			logs.map((log) =>
+				FlatLogData({
+					...log,
+					timestamp: (dayjs(log.timestamp / 1e6).format() as unknown) as number,
+				}),
+			),
 		[logs],
 	);
 
-	const logsDataHeaders = useMemo(
-		() =>
-			Object.keys(Object.assign({}, ...flattenLogData)).map((item) => {
+	const downloadExcelFile = useCallback((): void => {
+		const headers = Object.keys(Object.assign({}, ...flattenLogData)).map(
+			(item) => {
 				const updatedTitle = item
 					.split('_')
 					.map((word) => word.charAt(0).toUpperCase() + word.slice(1))
@@ -105,20 +106,17 @@ function LogControls(): JSX.Element | null {
 					title: updatedTitle,
 					dataIndex: item,
 				};
-			}),
-		[flattenLogData],
-	);
-
-	const downloadExcelFile = useCallback((): void => {
+			},
+		);
 		const excel = new Excel();
 		excel
 			.addSheet('log_data')
-			.addColumns(logsDataHeaders)
+			.addColumns(headers)
 			.addDataSource(flattenLogData, {
 				str2Percent: true,
 			})
 			.saveAs('log_data.xlsx');
-	}, [flattenLogData, logsDataHeaders]);
+	}, [flattenLogData]);
 
 	const downloadCsvFile = useCallback((): void => {
 		const csv = Papa.unparse(flattenLogData);
