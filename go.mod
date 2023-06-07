@@ -8,6 +8,7 @@ require (
 	github.com/SigNoz/zap_otlp/zap_otlp_encoder v0.0.0-20230523034029-2b7ff773052c
 	github.com/SigNoz/zap_otlp/zap_otlp_sync v0.0.0-20230517094211-cd3f3f0aea85
 	github.com/coreos/go-oidc/v3 v3.4.0
+	github.com/dustin/go-humanize v1.0.0
 	github.com/go-kit/log v0.2.1
 	github.com/go-redis/redis/v8 v8.11.5
 	github.com/go-redis/redismock/v8 v8.11.5
@@ -32,6 +33,7 @@ require (
 	github.com/rs/cors v1.8.2
 	github.com/russellhaering/gosaml2 v0.8.0
 	github.com/russellhaering/goxmldsig v1.2.0
+	github.com/samber/lo v1.38.1
 	github.com/sethvargo/go-password v0.2.0
 	github.com/smartystreets/goconvey v1.8.0
 	github.com/soheilhy/cmux v0.1.5
