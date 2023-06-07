@@ -5,18 +5,15 @@
 import { getMetricsQueryRange } from 'api/metrics/getQueryRange';
 import { timePreferenceType } from 'container/NewWidget/RightContainer/timeItems';
 import { Time } from 'container/TopNav/DateTimeSelection/config';
-import GetMaxMinTime from 'lib/getMaxMinTime';
-import GetMinMax from 'lib/getMinMax';
-import GetStartAndEndTime from 'lib/getStartAndEndTime';
 import getStep from 'lib/getStep';
 import { mapQueryDataToApi } from 'lib/newQueryBuilder/queryBuilderMappers/mapQueryDataToApi';
 import { isEmpty } from 'lodash-es';
-import store from 'store';
 import { SuccessResponse } from 'types/api';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
 import { EQueryType } from 'types/common/dashboard';
 import { convertNewDataToOld } from 'lib/newQueryBuilder/convertNewDataToOld';
+import getStartEndRangeTime from 'lib/getStartEndRangeTime';
 
 export async function GetMetricQueryRange({
 	query,
@@ -82,24 +79,11 @@ export async function GetMetricQueryRange({
 			return;
 	}
 
-	const { globalTime } = store.getState();
-
-	const minMax = GetMinMax(globalSelectedInterval, [
-		globalTime.minTime / 1000000,
-		globalTime.maxTime / 1000000,
-	]);
-
-	const getMaxMinTime = GetMaxMinTime({
-		graphType: null,
-		maxTime: minMax.maxTime,
-		minTime: minMax.minTime,
-	});
-
-	const { end, start } = GetStartAndEndTime({
+	const { start, end } = getStartEndRangeTime({
 		type: selectedTime,
-		maxTime: getMaxMinTime.maxTime,
-		minTime: getMaxMinTime.minTime,
+		interval: globalSelectedInterval,
 	});
+
 	const response = await getMetricsQueryRange({
 		start: parseInt(start, 10) * 1e3,
 		end: parseInt(end, 10) * 1e3,

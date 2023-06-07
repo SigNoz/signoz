@@ -15,6 +15,7 @@ import { QueryBuilderProps } from './QueryBuilder.interfaces';
 export const QueryBuilder = memo(function QueryBuilder({
 	config,
 	panelType,
+	onRunQuery,
 }: QueryBuilderProps): JSX.Element {
 	const {
 		currentQuery,
@@ -60,7 +61,7 @@ export const QueryBuilder = memo(function QueryBuilder({
 	);
 
 	return (
-		<Row gutter={[0, 20]} justify="start">
+		<Row style={{ width: '100%' }} gutter={[0, 20]} justify="start">
 			<Col span={24}>
 				<Row gutter={[0, 50]}>
 					{currentQuery.builder.queryData.map((query, index) => (
@@ -81,7 +82,7 @@ export const QueryBuilder = memo(function QueryBuilder({
 				</Row>
 			</Col>
 
-			<Row gutter={[20, 0]}>
+			<Row style={{ width: '100%' }} gutter={[20, 0]}>
 				<Col>
 					<Button
 						disabled={isDisabledQueryButton}
@@ -102,6 +103,14 @@ export const QueryBuilder = memo(function QueryBuilder({
 						Formula
 					</Button>
 				</Col>
+
+				{onRunQuery && (
+					<Col style={{ marginLeft: 'auto' }}>
+						<Button onClick={onRunQuery} type="primary">
+							Run Query
+						</Button>
+					</Col>
+				)}
 			</Row>
 		</Row>
 	);
