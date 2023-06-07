@@ -5,6 +5,7 @@ import {
 	RightOutlined,
 } from '@ant-design/icons';
 import { Button, Divider, Dropdown, MenuProps, Select } from 'antd';
+import { Excel } from 'antd-table-saveas-excel';
 import { getGlobalTime } from 'container/LogsSearchFilter/utils';
 import { getMinMax } from 'container/TopNav/AutoRefresh/config';
 import { defaultSelectStyle } from 'pages/Logs/config';
@@ -24,7 +25,7 @@ import { ILog } from 'types/api/logs/log';
 import { GlobalReducer } from 'types/reducer/globalTime';
 import { ILogsReducer } from 'types/reducer/logs';
 
-import { ITEMS_PER_PAGE_OPTIONS } from './config';
+import { ITEMS_PER_PAGE_OPTIONS, logsHeaders } from './config';
 import { Container, DownloadLogButton } from './styles';
 
 function LogControls(): JSX.Element | null {
@@ -98,8 +99,16 @@ function LogControls(): JSX.Element | null {
 	);
 
 	const downloadExcelFile = useCallback((): void => {
-		console.log('Write a code here for excel download');
-	}, []);
+		const logData = logs.map((entry) => convertStringifyObject(entry));
+		const excel = new Excel();
+		excel
+			.addSheet('log_data')
+			.addColumns(logsHeaders)
+			.addDataSource(logData, {
+				str2Percent: true,
+			})
+			.saveAs('log_data.xlsx');
+	}, [convertStringifyObject, logs]);
 
 	const downloadCsvFile = useCallback((): void => {
 		const logData = logs.map((entry) => convertStringifyObject(entry));
