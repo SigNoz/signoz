@@ -42,6 +42,12 @@ function FullView({
 		enum: widget?.timePreferance || 'GLOBAL_TIME',
 	});
 
+	const queryKey = useMemo(
+		() =>
+			`FullViewGetMetricsQueryRange-${selectedTime.enum}-${globalSelectedTime}-${widget.id}`,
+		[selectedTime, globalSelectedTime, widget],
+	);
+
 	const response = useGetQueryRange(
 		{
 			selectedTime: selectedTime.enum,
@@ -51,9 +57,7 @@ function FullView({
 			variables: getDashboardVariables(),
 		},
 		{
-			queryKey: [
-				`FullViewGetMetricsQueryRange-${selectedTime.enum}-${globalSelectedTime}-${widget.id}`,
-			],
+			queryKey,
 		},
 	);
 
