@@ -8,6 +8,8 @@ import { Button, Divider, Dropdown, MenuProps, Select } from 'antd';
 import { Excel } from 'antd-table-saveas-excel';
 import { getGlobalTime } from 'container/LogsSearchFilter/utils';
 import { getMinMax } from 'container/TopNav/AutoRefresh/config';
+import dayjs from 'dayjs';
+import { FlatLogData } from 'lib/logs/flatLogData';
 import { defaultSelectStyle } from 'pages/Logs/config';
 import * as Papa from 'papaparse';
 import { memo, useCallback, useMemo } from 'react';
@@ -21,11 +23,10 @@ import {
 	RESET_ID_START_AND_END,
 	SET_LOG_LINES_PER_PAGE,
 } from 'types/actions/logs';
-import { ILog } from 'types/api/logs/log';
 import { GlobalReducer } from 'types/reducer/globalTime';
 import { ILogsReducer } from 'types/reducer/logs';
 
-import { ITEMS_PER_PAGE_OPTIONS, logsHeaders } from './config';
+import { ITEMS_PER_PAGE_OPTIONS } from './config';
 import { Container, DownloadLogButton } from './styles';
 
 function LogControls(): JSX.Element | null {
@@ -83,36 +84,44 @@ function LogControls(): JSX.Element | null {
 		});
 	};
 
-	const convertStringifyObject = useCallback(
-		(obj: ILog) =>
-			Object.entries(obj).reduce((flattenedObj, [key, value]) => {
-				// eslint-disable-next-line @typescript-eslint/no-explicit-any
-				const updatedObj: any = { ...flattenedObj };
-				if (typeof value === 'object' && value !== null) {
-					updatedObj[key] = JSON.stringify(value);
-				} else {
-					updatedObj[key] = value;
-				}
-				return updatedObj;
-			}, {}),
-		[],
+	const flattenLogData = useMemo(
+		() =>
+			logs.map((log) => {
+				const logData = { ...log };
+				logData.timestamp = dayjs(log.timestamp / 1e6).format() as never;
+				return FlatLogData(logData);
+			}),
+		[logs],
+	);
+
+	const logsDataHeaders = useMemo(
+		() =>
+			Object.keys(Object.assign({}, ...flattenLogData)).map((item) => {
+				const updatedTitle = item
+					.split('_')
+					.map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+					.join(' ');
+				return {
+					title: updatedTitle,
+					dataIndex: item,
+				};
+			}),
+		[flattenLogData],
 	);
 
 	const downloadExcelFile = useCallback((): void => {
-		const logData = logs.map((entry) => convertStringifyObject(entry));
 		const excel = new Excel();
 		excel
 			.addSheet('log_data')
-			.addColumns(logsHeaders)
-			.addDataSource(logData, {
+			.addColumns(logsDataHeaders)
+			.addDataSource(flattenLogData, {
 				str2Percent: true,
 			})
 			.saveAs('log_data.xlsx');
-	}, [convertStringifyObject, logs]);
+	}, [flattenLogData, logsDataHeaders]);
 
 	const downloadCsvFile = useCallback((): void => {
-		const logData = logs.map((entry) => convertStringifyObject(entry));
-		const csv = Papa.unparse(logData);
+		const csv = Papa.unparse(flattenLogData);
 		const csvBlob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
 		const csvUrl = URL.createObjectURL(csvBlob);
 		const downloadLink = document.createElement('a');
@@ -120,7 +129,7 @@ function LogControls(): JSX.Element | null {
 		downloadLink.download = 'log_data.csv';
 		downloadLink.click();
 		downloadLink.remove();
-	}, [convertStringifyObject, logs]);
+	}, [flattenLogData]);
 
 	const menu: MenuProps = useMemo(
 		() => ({
