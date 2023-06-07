@@ -254,6 +254,7 @@ function PipelineListsView({
 				setShowSaveButton={setShowSaveButton}
 				expandedPipelineData={expandedPipelineData}
 				setExpandedPipelineData={setExpandedPipelineData}
+				prevPipelineData={prevPipelineData}
 			/>
 		),
 		[
@@ -262,6 +263,7 @@ function PipelineListsView({
 			isActionMode,
 			expandedPipelineData,
 			setActionType,
+			prevPipelineData,
 		],
 	);
 

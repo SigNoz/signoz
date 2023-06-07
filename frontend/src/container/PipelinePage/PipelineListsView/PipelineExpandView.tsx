@@ -34,6 +34,7 @@ function PipelineExpandView({
 	setShowSaveButton,
 	expandedPipelineData,
 	setExpandedPipelineData,
+	prevPipelineData,
 }: PipelineExpandViewProps): JSX.Element {
 	const { t } = useTranslation(['pipeline']);
 	const isDarkMode = useIsDarkMode();
@@ -192,7 +193,7 @@ function PipelineExpandView({
 	}, [setActionType]);
 
 	const footer = useCallback((): JSX.Element | undefined => {
-		if (isEditingActionMode) {
+		if (prevPipelineData.length === 0 || isEditingActionMode) {
 			return (
 				<FooterButton type="link" onClick={addNewProcessorHandler}>
 					<PlusCircleOutlined />
@@ -201,7 +202,7 @@ function PipelineExpandView({
 			);
 		}
 		return undefined;
-	}, [isEditingActionMode, addNewProcessorHandler, t]);
+	}, [isEditingActionMode, prevPipelineData, addNewProcessorHandler, t]);
 
 	const onRowHandler = (
 		_data: ProcessorData,
@@ -262,6 +263,7 @@ interface PipelineExpandViewProps {
 	setShowSaveButton: (actionMode: ActionMode) => void;
 	expandedPipelineData?: PipelineData;
 	setExpandedPipelineData: (data: PipelineData) => void;
+	prevPipelineData: Array<PipelineData>;
 }
 
 export default PipelineExpandView;

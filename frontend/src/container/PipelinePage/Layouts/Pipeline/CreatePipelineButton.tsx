@@ -30,13 +30,15 @@ function CreatePipelineButton({
 	return (
 		<ButtonContainer>
 			<TextToolTip text={t('add_new_pipeline')} />
-			<CustomButton
-				icon={<EditFilled />}
-				onClick={actionHandler(ActionMode.Editing, setActionMode)}
-				disabled={isDisabled}
-			>
-				{t('enter_edit_mode')}
-			</CustomButton>
+			{isAddNewPipelineVisible && (
+				<CustomButton
+					icon={<EditFilled />}
+					onClick={actionHandler(ActionMode.Editing, setActionMode)}
+					disabled={isDisabled}
+				>
+					{t('enter_edit_mode')}
+				</CustomButton>
+			)}
 			{!isAddNewPipelineVisible && (
 				<CustomButton
 					icon={<PlusOutlined />}
