@@ -5,7 +5,7 @@ import {
 } from 'container/QueryBuilder/filters/QueryBuilderSearch/utils';
 // eslint-disable-next-line import/no-extraneous-dependencies
 import * as Papa from 'papaparse';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 
 type IUseTag = {
@@ -30,7 +30,19 @@ export const useTag = (
 	query: IBuilderQuery,
 	setSearchKey: (value: string) => void,
 ): IUseTag => {
-	const [tags, setTags] = useState<string[]>([]);
+	const initTagsData = useMemo(
+		() =>
+			(query?.filters?.items || []).map((ele) => {
+				if (isInNInOperator(getOperatorFromValue(ele.op))) {
+					const csvString = Papa.unparse([ele.value]);
+					return `${ele.key?.key} ${getOperatorFromValue(ele.op)} ${csvString}`;
+				}
+				return `${ele.key?.key} ${getOperatorFromValue(ele.op)} ${ele.value}`;
+			}),
+		[query.filters],
+	);
+
+	const [tags, setTags] = useState<string[]>(initTagsData);
 
 	const updateTag = (value: string): void => {
 		const newTags = tags?.filter((item: string) => item !== value);
@@ -61,16 +73,8 @@ export const useTag = (
 	}, []);
 
 	useEffect(() => {
-		const initialTags = (query?.filters?.items || []).map((ele) => {
-			if (isInNInOperator(getOperatorFromValue(ele.op))) {
-				const csvString = Papa.unparse([ele.value]);
-				return `${ele.key?.key} ${getOperatorFromValue(ele.op)} ${csvString}`;
-			}
-			return `${ele.key?.key} ${getOperatorFromValue(ele.op)} ${ele.value}`;
-		});
-		setTags(initialTags);
-		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, []);
+		setTags(initTagsData);
+	}, [initTagsData]);
 
 	return { handleAddTag, handleClearTag, tags, updateTag };
 };
