@@ -26,7 +26,7 @@
 
 13. if function expects more than 3 arguments wrap them in an object(except when it is memoized).
 
-14. use **useMemo** and **useCallback** to memorise accordingly
+14. use **useMemo** and **useCallback** to memoize accordingly
 
 15. Naming Conventions
 
