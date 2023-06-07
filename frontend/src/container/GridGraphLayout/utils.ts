@@ -8,7 +8,7 @@ import {
 import { GRAPH_TYPES } from 'container/NewDashboard/ComponentsSlider';
 import { Layout } from 'react-grid-layout';
 import store from 'store';
-import { Dashboard } from 'types/api/dashboard/getAll';
+import { Dashboard, Widgets } from 'types/api/dashboard/getAll';
 import { EQueryType } from 'types/common/dashboard';
 
 export const UpdateDashboard = async (
@@ -19,9 +19,11 @@ export const UpdateDashboard = async (
 		layout,
 		selectedDashboard,
 		isRedirected,
+		widgetData,
 	}: UpdateDashboardProps,
 	notify: NotificationInstance,
 ): Promise<Dashboard | undefined> => {
+	const copyTitle = `${widgetData?.title} - Copy`;
 	const updatedSelectedDashboard: Dashboard = {
 		...selectedDashboard,
 		data: {
@@ -33,13 +35,13 @@ export const UpdateDashboard = async (
 			widgets: [
 				...(data.widgets || []),
 				{
-					description: '',
+					description: widgetData?.description || '',
 					id: generateWidgetId,
 					isStacked: false,
-					nullZeroValues: '',
+					nullZeroValues: widgetData?.nullZeroValues || '',
 					opacity: '',
 					panelTypes: graphType,
-					query: {
+					query: widgetData?.query || {
 						queryType: EQueryType.QUERY_BUILDER,
 						promql: [initialQueryPromQLData],
 						clickhouse_sql: [initialClickHouseData],
@@ -49,13 +51,15 @@ export const UpdateDashboard = async (
 						},
 					},
 					queryData: {
-						data: { queryData: [] },
+						data: {
+							queryData: widgetData?.queryData.data.queryData || [],
+						},
 						error: false,
 						errorMessage: '',
 						loading: false,
 					},
-					timePreferance: 'GLOBAL_TIME',
-					title: '',
+					timePreferance: widgetData?.timePreferance || 'GLOBAL_TIME',
+					title: widgetData ? copyTitle : '',
 				},
 			],
 			layout,
@@ -91,4 +95,5 @@ interface UpdateDashboardProps {
 	layout: Layout[];
 	selectedDashboard: Dashboard;
 	isRedirected: boolean;
+	widgetData?: Widgets;
 }
