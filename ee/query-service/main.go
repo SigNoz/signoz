@@ -6,6 +6,7 @@ import (
 	"log"
 	"os"
 	"os/signal"
+	"strconv"
 	"syscall"
 	"time"
 
@@ -51,8 +52,12 @@ func initZapLog() *zap.Logger {
 	if err != nil {
 		log.Println("failed to connect to otlp collector to export query service logs with error:", err)
 	} else {
+		logExportBatchSizeInt, err := strconv.Atoi(baseconst.LogExportBatchSize)
+		if err != nil {
+			logExportBatchSizeInt = 1000
+		}
 		ws := zapcore.AddSync(zapotlpsync.NewOtlpSyncer(conn, zapotlpsync.Options{
-			BatchSize:      2,
+			BatchSize:      logExportBatchSizeInt,
 			ResourceSchema: semconv.SchemaURL,
 			Resource:       res,
 		}))
