@@ -82,7 +82,7 @@ function LogControls(): JSX.Element | null {
 		});
 	};
 
-	const flattenObject = useCallback(
+	const convertStringifyObject = useCallback(
 		(obj: ILog) =>
 			Object.entries(obj).reduce((flattenedObj, [key, value]) => {
 				// eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -102,15 +102,16 @@ function LogControls(): JSX.Element | null {
 	}, []);
 
 	const downloadCsvFile = useCallback((): void => {
-		const flattenLogData = logs.map((entry) => flattenObject(entry));
-		const csv = Papa.unparse(flattenLogData);
+		const logData = logs.map((entry) => convertStringifyObject(entry));
+		const csv = Papa.unparse(logData);
 		const csvBlob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
 		const csvUrl = URL.createObjectURL(csvBlob);
 		const downloadLink = document.createElement('a');
 		downloadLink.href = csvUrl;
 		downloadLink.download = 'log_data.csv';
 		downloadLink.click();
-	}, [flattenObject, logs]);
+		downloadLink.remove();
+	}, [convertStringifyObject, logs]);
 
 	const menu: MenuProps = useMemo(
 		() => ({
