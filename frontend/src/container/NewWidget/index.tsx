@@ -2,7 +2,6 @@ import { LockFilled } from '@ant-design/icons';
 import { Button, Modal, Tooltip, Typography } from 'antd';
 import { FeatureKeys } from 'constants/features';
 import ROUTES from 'constants/routes';
-import { GRAPH_TYPES } from 'container/NewDashboard/ComponentsSlider';
 import { ITEMS } from 'container/NewDashboard/ComponentsSlider/menuItems';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { MESSAGE, useIsFeatureDisabled } from 'hooks/useFeatureFlag';
@@ -21,7 +20,6 @@ import {
 import { AppState } from 'store/reducers';
 import AppActions from 'types/actions';
 import { FLUSH_DASHBOARD } from 'types/actions/dashboard';
-import { Widgets } from 'types/api/dashboard/getAll';
 import AppReducer from 'types/reducer/app';
 import DashboardReducer from 'types/reducer/dashboards';
 
@@ -36,6 +34,7 @@ import {
 	PanelContainer,
 	RightContainerWrapper,
 } from './styles';
+import { NewWidgetProps } from './types';
 
 function NewWidget({ selectedGraph, saveSettingOfPanel }: Props): JSX.Element {
 	const dispatch = useDispatch();
@@ -241,12 +240,6 @@ function NewWidget({ selectedGraph, saveSettingOfPanel }: Props): JSX.Element {
 			</Modal>
 		</Container>
 	);
-}
-
-export interface NewWidgetProps {
-	selectedGraph: GRAPH_TYPES;
-	yAxisUnit: Widgets['yAxisUnit'];
-	selectedTime: timePreferance;
 }
 
 interface DispatchProps {

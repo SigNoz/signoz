@@ -1,7 +1,7 @@
 import { Card, Typography } from 'antd';
 import Spinner from 'components/Spinner';
 import GridGraphComponent from 'container/GridGraphComponent';
-import { NewWidgetProps } from 'container/NewWidget';
+import { WidgetGraphProps } from 'container/NewWidget/types';
 import { useGetWidgetQueryRange } from 'hooks/queryBuilder/useGetWidgetQueryRange';
 import getChartData from 'lib/getChartData';
 import { useSelector } from 'react-redux';
@@ -77,7 +77,5 @@ function WidgetGraph({
 		/>
 	);
 }
-
-type WidgetGraphProps = NewWidgetProps;
 
 export default WidgetGraph;

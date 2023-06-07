@@ -50,14 +50,6 @@ export const UpdateDashboard = async (
 							queryData: [initialQueryBuilderFormValues],
 						},
 					},
-					queryData: {
-						data: {
-							queryData: widgetData?.queryData.data.queryData || [],
-						},
-						error: false,
-						errorMessage: '',
-						loading: false,
-					},
 					timePreferance: widgetData?.timePreferance || 'GLOBAL_TIME',
 					title: widgetData ? copyTitle : '',
 				},

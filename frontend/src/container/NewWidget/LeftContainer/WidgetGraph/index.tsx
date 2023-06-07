@@ -8,7 +8,7 @@ import { useLocation } from 'react-router-dom';
 import { AppState } from 'store/reducers';
 import DashboardReducer from 'types/reducer/dashboards';
 
-import { NewWidgetProps } from '../../index';
+import { WidgetGraphProps } from '../../types';
 import PlotTag from './PlotTag';
 import { AlertIconContainer, Container } from './styles';
 import WidgetGraphComponent from './WidgetGraph';
@@ -61,7 +61,5 @@ function WidgetGraph({
 		</Container>
 	);
 }
-
-type WidgetGraphProps = NewWidgetProps;
 
 export default memo(WidgetGraph);

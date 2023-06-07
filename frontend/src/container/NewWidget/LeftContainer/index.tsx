@@ -1,6 +1,6 @@
 import { memo } from 'react';
 
-import { NewWidgetProps } from '../index';
+import { WidgetGraphProps } from '../types';
 import QuerySection from './QuerySection';
 import { QueryContainer } from './styles';
 import WidgetGraph from './WidgetGraph';
@@ -9,7 +9,7 @@ function LeftContainer({
 	selectedGraph,
 	yAxisUnit,
 	selectedTime,
-}: NewWidgetProps): JSX.Element {
+}: WidgetGraphProps): JSX.Element {
 	return (
 		<>
 			<WidgetGraph

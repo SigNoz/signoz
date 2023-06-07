@@ -13,21 +13,7 @@ function ShareModal({
 	onToggleHandler,
 	selectedData,
 }: ShareModalProps): JSX.Element {
-	const getParsedValue = (): string => {
-		const updatedData: DashboardData = {
-			...selectedData,
-			widgets: selectedData.widgets?.map((widget) => ({
-				...widget,
-				queryData: {
-					...widget.queryData,
-					loading: false,
-					error: false,
-					errorMessage: '',
-				},
-			})),
-		};
-		return JSON.stringify(updatedData, null, 2);
-	};
+	const getParsedValue = (): string => JSON.stringify(selectedData, null, 2);
 
 	const [jsonValue, setJSONValue] = useState<string>(getParsedValue());
 	const [isViewJSON, setIsViewJSON] = useState<boolean>(false);
