@@ -1,4 +1,9 @@
-import { DataSource, ReduceOperators } from 'types/common/queryBuilder';
+import { EQueryType } from 'types/common/dashboard';
+import {
+	DataSource,
+	QueryBuilderData,
+	ReduceOperators,
+} from 'types/common/queryBuilder';
 
 import { BaseAutocompleteData } from './queryAutocompleteResponse';
 
@@ -54,4 +59,45 @@ export type IBuilderQuery = {
 	orderBy: OrderByPayload[];
 	reduceTo: ReduceOperators;
 	legend: string;
+};
+
+export interface IClickHouseQuery {
+	name: string;
+	rawQuery: string;
+	legend: string;
+	disabled: boolean;
+	query: string;
+}
+export interface IPromQLQuery {
+	query: string;
+	legend: string;
+	disabled: boolean;
+	name: string;
+}
+
+export interface Query {
+	queryType: EQueryType;
+	promql: IPromQLQuery[];
+	builder: QueryBuilderData;
+	clickhouse_sql: IClickHouseQuery[];
+}
+
+export type QueryState = Omit<Query, 'queryType'>;
+
+export type BuilderClickHouseResource = Record<string, IClickHouseQuery>;
+export type BuilderPromQLResource = Record<string, IPromQLQuery>;
+export type BuilderQueryDataResourse = Record<
+	string,
+	IBuilderQuery | IBuilderFormula
+>;
+
+export type MapData =
+	| IBuilderQuery
+	| IBuilderFormula
+	| IClickHouseQuery
+	| IPromQLQuery;
+
+export type MapQueryDataToApiResult<T> = {
+	data: T;
+	newLegendMap: Record<string, string>;
 };
