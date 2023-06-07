@@ -1,4 +1,5 @@
 import {
+	CopyOutlined,
 	DeleteOutlined,
 	DownOutlined,
 	EditFilled,
@@ -38,6 +39,7 @@ interface IWidgetHeaderProps {
 	widget: Widgets;
 	onView: VoidFunction;
 	onDelete: VoidFunction;
+	onClone: VoidFunction;
 	parentHover: boolean;
 	queryResponse: UseQueryResult<
 		SuccessResponse<MetricRangePayloadProps> | ErrorResponse
@@ -49,6 +51,7 @@ function WidgetHeader({
 	widget,
 	onView,
 	onDelete,
+	onClone,
 	parentHover,
 	queryResponse,
 	errorMessage,
@@ -81,8 +84,12 @@ function WidgetHeader({
 				key: 'delete',
 				method: onDelete,
 			},
+			clone: {
+				key: 'clone',
+				method: onClone,
+			},
 		}),
-		[onDelete, onEditHandler, onView],
+		[onDelete, onEditHandler, onView, onClone],
 	);
 
 	const onMenuItemSelectHandler: MenuProps['onClick'] = useCallback(
@@ -117,6 +124,12 @@ function WidgetHeader({
 				label: 'Edit',
 			},
 			{
+				key: keyMethodMapping.clone.key,
+				icon: <CopyOutlined />,
+				disabled: false,
+				label: 'Clone',
+			},
+			{
 				key: keyMethodMapping.delete.key,
 				icon: <DeleteOutlined />,
 				disabled: !deleteWidget,
@@ -130,6 +143,7 @@ function WidgetHeader({
 			keyMethodMapping.delete.key,
 			keyMethodMapping.edit.key,
 			keyMethodMapping.view.key,
+			keyMethodMapping.clone.key,
 			queryResponse.isLoading,
 		],
 	);
