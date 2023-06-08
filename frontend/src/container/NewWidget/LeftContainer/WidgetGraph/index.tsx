@@ -1,24 +1,28 @@
 import { InfoCircleOutlined } from '@ant-design/icons';
-import { Typography } from 'antd';
 import { Card } from 'container/GridGraphLayout/styles';
+import { useGetWidgetQueryRange } from 'hooks/queryBuilder/useGetWidgetQueryRange';
+import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { memo } from 'react';
 import { useSelector } from 'react-redux';
 import { useLocation } from 'react-router-dom';
 import { AppState } from 'store/reducers';
 import DashboardReducer from 'types/reducer/dashboards';
 
-import { NewWidgetProps } from '../../index';
+import { WidgetGraphProps } from '../../types';
 import PlotTag from './PlotTag';
-import { AlertIconContainer, Container, NotFoundContainer } from './styles';
+import { AlertIconContainer, Container } from './styles';
 import WidgetGraphComponent from './WidgetGraph';
 
 function WidgetGraph({
 	selectedGraph,
 	yAxisUnit,
+	selectedTime,
 }: WidgetGraphProps): JSX.Element {
-	const { dashboards, isQueryFired } = useSelector<AppState, DashboardReducer>(
+	const { currentQuery } = useQueryBuilder();
+	const { dashboards } = useSelector<AppState, DashboardReducer>(
 		(state) => state.dashboards,
 	);
+
 	const [selectedDashboard] = dashboards;
 	const { search } = useLocation();
 
@@ -31,33 +35,31 @@ function WidgetGraph({
 
 	const selectedWidget = widgets.find((e) => e.id === widgetId);
 
+	const getWidgetQueryRange = useGetWidgetQueryRange({
+		graphType: selectedGraph,
+		selectedTime: selectedTime.enum,
+	});
+
 	if (selectedWidget === undefined) {
 		return <Card>Invalid widget</Card>;
 	}
 
-	const { queryData } = selectedWidget;
 	return (
 		<Container>
-			<PlotTag queryType={selectedWidget.query.queryType} />
-			{queryData.error && (
-				<AlertIconContainer color="red" title={queryData.errorMessage}>
+			<PlotTag queryType={currentQuery.queryType} />
+			{getWidgetQueryRange.error && (
+				<AlertIconContainer color="red" title={getWidgetQueryRange.error.message}>
 					<InfoCircleOutlined />
 				</AlertIconContainer>
 			)}
 
-			{!isQueryFired && (
-				<NotFoundContainer>
-					<Typography>No Data</Typography>
-				</NotFoundContainer>
-			)}
-
-			{isQueryFired && (
-				<WidgetGraphComponent selectedGraph={selectedGraph} yAxisUnit={yAxisUnit} />
-			)}
+			<WidgetGraphComponent
+				selectedTime={selectedTime}
+				selectedGraph={selectedGraph}
+				yAxisUnit={yAxisUnit}
+			/>
 		</Container>
 	);
 }
-
-type WidgetGraphProps = NewWidgetProps;
 
 export default memo(WidgetGraph);
