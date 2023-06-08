@@ -286,18 +286,18 @@ func orderBy(panelType v3.PanelType, items []v3.OrderBy, tags []string) string {
 	var orderBy []string
 
 	// create a lookup
-	addedToGroupBy := map[string]bool{}
+	addedToOrderBy := map[string]bool{}
 	itemsLookup := map[string]v3.OrderBy{}
 
 	for i := 0; i < len(items); i++ {
-		addedToGroupBy[items[i].ColumnName] = false
+		addedToOrderBy[items[i].ColumnName] = false
 		itemsLookup[items[i].ColumnName] = items[i]
 	}
 
 	for _, tag := range tags {
 		if item, ok := itemsLookup[tag]; ok {
 			orderBy = append(orderBy, fmt.Sprintf("%s %s", item.ColumnName, item.Order))
-			addedToGroupBy[item.ColumnName] = true
+			addedToOrderBy[item.ColumnName] = true
 		} else {
 			orderBy = append(orderBy, fmt.Sprintf("%s ASC", tag))
 		}
@@ -307,7 +307,7 @@ func orderBy(panelType v3.PanelType, items []v3.OrderBy, tags []string) string {
 	for _, item := range items {
 		if item.ColumnName == constants.SigNozOrderByValue {
 			orderBy = append(orderBy, fmt.Sprintf("value %s", item.Order))
-			addedToGroupBy[item.ColumnName] = true
+			addedToOrderBy[item.ColumnName] = true
 		}
 	}
 
@@ -315,14 +315,15 @@ func orderBy(panelType v3.PanelType, items []v3.OrderBy, tags []string) string {
 	if panelType == v3.PanelTypeList {
 		for _, item := range items {
 			// since these are not present in tags we will have to select them correctly
-			if !addedToGroupBy[item.ColumnName] {
+			// for list view there is no need to check if it was added since they wont be added yet but this is just for safety
+			if !addedToOrderBy[item.ColumnName] {
 				attr := v3.AttributeKey{Key: item.ColumnName, DataType: item.DataType, Type: item.Type, IsColumn: item.IsColumn}
 				name := getClickhouseColumnName(attr)
 				orderBy = append(orderBy, fmt.Sprintf("%s %s", name, item.Order))
 			}
 		}
 	}
-	return strings.Trim(strings.Join(orderBy, ","), ",")
+	return strings.Join(orderBy, ",")
 }
 
 func orderByAttributeKeyTags(panelType v3.PanelType, items []v3.OrderBy, tags []v3.AttributeKey) string {
