@@ -47,7 +47,7 @@ const menus: SidebarMenu[] = [
 				label: 'Traces',
 			},
 			{
-				key: ROUTES.TRACES_EXPLORER,
+				key: ROUTES.TRACE_EXPLORER,
 				label: 'Explorer',
 			},
 		],

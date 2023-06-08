@@ -57,7 +57,7 @@ function SideNav(): JSX.Element {
 			const params = new URLSearchParams(search);
 			const availableParams = routeConfig[to];
 
-			const queryString = getQueryString(availableParams, params);
+			const queryString = getQueryString(availableParams || [], params);
 
 			if (pathname !== to) {
 				history.push(`${to}?${queryString.join('&')}`);
