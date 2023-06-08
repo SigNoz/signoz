@@ -753,7 +753,7 @@ var testOrderBy = []struct {
 	PanelType v3.PanelType
 	Items     []v3.OrderBy
 	Tags      []string
-	Result    string
+	Result    []string
 }{
 	{
 		Name:      "Test 1",
@@ -769,7 +769,7 @@ var testOrderBy = []struct {
 			},
 		},
 		Tags:   []string{"name"},
-		Result: "name asc,value desc",
+		Result: []string{"name asc", "value desc"},
 	},
 	{
 		Name:      "Test 2",
@@ -785,7 +785,7 @@ var testOrderBy = []struct {
 			},
 		},
 		Tags:   []string{"name", "bytes"},
-		Result: "name asc,bytes asc",
+		Result: []string{"name asc", "bytes asc"},
 	},
 	{
 		Name:      "Test 3",
@@ -805,7 +805,7 @@ var testOrderBy = []struct {
 			},
 		},
 		Tags:   []string{"name", "bytes"},
-		Result: "name asc,bytes asc,value asc",
+		Result: []string{"name asc", "bytes asc", "value asc"},
 	},
 	{
 		Name:      "Test 4",
@@ -832,7 +832,7 @@ var testOrderBy = []struct {
 			},
 		},
 		Tags:   []string{"name", "bytes"},
-		Result: "name asc,bytes asc,value asc,attributes_string_value[indexOf(attributes_string_key, 'response_time')] desc",
+		Result: []string{"name asc", "bytes asc", "value asc", "attributes_string_value[indexOf(attributes_string_key, 'response_time')] desc"},
 	},
 }
 
@@ -840,7 +840,7 @@ func TestOrderBy(t *testing.T) {
 	for _, tt := range testOrderBy {
 		Convey("testOrderBy", t, func() {
 			res := orderBy(tt.PanelType, tt.Items, tt.Tags)
-			So(res, ShouldEqual, tt.Result)
+			So(res, ShouldResemble, tt.Result)
 		})
 	}
 }

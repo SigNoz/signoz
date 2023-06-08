@@ -74,7 +74,7 @@ func getClickhouseLogsColumnDataType(columnDataType v3.AttributeKeyDataType) str
 // getClickhouseColumnName returns the corresponding clickhouse column name for the given attribute/resource key
 func getClickhouseColumnName(key v3.AttributeKey) string {
 	clickhouseColumn := key.Key
-	if key.Key == "timestamp" || key.Key == "id" {
+	if key.Key == constants.TIMESTAMP || key.Key == "id" {
 		return key.Key
 	}
 
@@ -192,15 +192,7 @@ func buildLogsQuery(panelType v3.PanelType, start, end, step int64, mq *v3.Build
 			"order by %s"
 
 	groupBy := groupByAttributeKeyTags(mq.GroupBy...)
-	orderBy := orderByAttributeKeyTags(panelType, mq.OrderBy, mq.GroupBy)
-
-	if mq.AggregateOperator != v3.AggregateOperatorNoOp {
-		orderBy = strings.Replace(orderBy, " timestamp,", "ts,", 1)
-		if !strings.Contains(orderBy, " ts,") {
-			orderBy = orderBy + "ts"
-		}
-		orderBy = strings.Trim(orderBy, ",")
-	}
+	orderBy := orderByAttributeKeyTags(panelType, mq.AggregateOperator, mq.OrderBy, mq.GroupBy)
 
 	aggregationKey := ""
 	if mq.AggregateAttribute.Key != "" {
@@ -253,10 +245,6 @@ func buildLogsQuery(panelType v3.PanelType, start, end, step int64, mq *v3.Build
 		return query, nil
 	case v3.AggregateOperatorNoOp:
 		queryTmpl := constants.LogsSQLSelect + "from signoz_logs.distributed_logs where %s %sorder by %s"
-		if orderBy == "" {
-			orderBy = "timestamp"
-		}
-		orderBy = strings.Trim(orderBy, ",")
 		query := fmt.Sprintf(queryTmpl, timeFilter, filterSubQuery, orderBy)
 		return query, nil
 	default:
@@ -282,7 +270,7 @@ func groupByAttributeKeyTags(tags ...v3.AttributeKey) string {
 // orderBy returns a string of comma separated tags for order by clause
 // if there are remaining items which are not present in tags they are also added
 // if the order is not specified, it defaults to ASC
-func orderBy(panelType v3.PanelType, items []v3.OrderBy, tags []string) string {
+func orderBy(panelType v3.PanelType, items []v3.OrderBy, tags []string) []string {
 	var orderBy []string
 
 	// create a lookup
@@ -323,18 +311,32 @@ func orderBy(panelType v3.PanelType, items []v3.OrderBy, tags []string) string {
 			}
 		}
 	}
-	return strings.Join(orderBy, ",")
+	return orderBy
 }
 
-func orderByAttributeKeyTags(panelType v3.PanelType, items []v3.OrderBy, tags []v3.AttributeKey) string {
+func orderByAttributeKeyTags(panelType v3.PanelType, aggregatorOperator v3.AggregateOperator, items []v3.OrderBy, tags []v3.AttributeKey) string {
 	var groupTags []string
 	for _, tag := range tags {
 		groupTags = append(groupTags, tag.Key)
 	}
-	str := orderBy(panelType, items, groupTags)
-	if len(str) > 0 {
-		str = str + ","
+	orderByArray := orderBy(panelType, items, groupTags)
+
+	found := false
+	for i := 0; i < len(orderByArray); i++ {
+		if strings.Compare(orderByArray[i], constants.TIMESTAMP) == 0 {
+			orderByArray[i] = "ts"
+			break
+		}
 	}
+	if !found {
+		if aggregatorOperator == v3.AggregateOperatorNoOp {
+			orderByArray = append(orderByArray, constants.TIMESTAMP)
+		} else {
+			orderByArray = append(orderByArray, "ts")
+		}
+	}
+
+	str := strings.Join(orderByArray, ",")
 	return str
 }
 
