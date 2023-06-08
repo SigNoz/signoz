@@ -5,9 +5,11 @@ import {
 	KeyboardEvent,
 	ReactElement,
 	ReactNode,
+	useCallback,
 	useEffect,
 	useMemo,
 } from 'react';
+import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import {
 	IBuilderQuery,
 	TagFilter,
@@ -44,7 +46,11 @@ function QueryBuilderSearch({
 		searchKey,
 	} = useAutoComplete(query);
 
-	const { sourceKeys } = useFetchKeysAndValues(searchValue, query, searchKey);
+	const { sourceKeys, handleRemoveSourceKey } = useFetchKeysAndValues(
+		searchValue,
+		query,
+		searchKey,
+	);
 
 	const onTagRender = ({
 		value,
@@ -94,6 +100,14 @@ function QueryBuilderSearch({
 		if (isExistsNotExistsOperator(searchValue)) handleKeyDown(event);
 	};
 
+	const handleDeselect = useCallback(
+		(deselectedItem: string) => {
+			handleClearTag(deselectedItem);
+			handleRemoveSourceKey(deselectedItem);
+		},
+		[handleClearTag, handleRemoveSourceKey],
+	);
+
 	const isMetricsDataSource = useMemo(
 		() => query.dataSource === DataSource.METRICS,
 		[query.dataSource],
@@ -106,9 +120,12 @@ function QueryBuilderSearch({
 
 	useEffect(() => {
 		const initialTagFilters: TagFilter = { items: [], op: 'AND' };
+		const initialSourceKeys = query.filters.items.map(
+			(item) => item.key as BaseAutocompleteData,
+		);
 		initialTagFilters.items = tags.map((tag) => {
 			const { tagKey, tagOperator, tagValue } = getTagToken(tag);
-			const filterAttribute = sourceKeys.find(
+			const filterAttribute = [...initialSourceKeys, ...sourceKeys].find(
 				(key) => key.key === getRemovePrefixFromKey(tagKey),
 			);
 			return {
@@ -128,7 +145,7 @@ function QueryBuilderSearch({
 		});
 		onChange(initialTagFilters);
 		/* eslint-disable react-hooks/exhaustive-deps */
-	}, [sourceKeys, tags]);
+	}, [sourceKeys]);
 
 	return (
 		<Select
@@ -146,7 +163,7 @@ function QueryBuilderSearch({
 			onSearch={handleSearch}
 			onChange={onChangeHandler}
 			onSelect={handleSelect}
-			onDeselect={handleClearTag}
+			onDeselect={handleDeselect}
 			onInputKeyDown={onInputKeyDownHandler}
 			notFoundContent={isFetching ? <Spin size="small" /> : null}
 		>
