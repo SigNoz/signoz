@@ -1,6 +1,8 @@
 import { Card, Typography } from 'antd';
+import Spinner from 'components/Spinner';
 import GridGraphComponent from 'container/GridGraphComponent';
-import { NewWidgetProps } from 'container/NewWidget';
+import { WidgetGraphProps } from 'container/NewWidget/types';
+import { useGetWidgetQueryRange } from 'hooks/queryBuilder/useGetWidgetQueryRange';
 import getChartData from 'lib/getChartData';
 import { useSelector } from 'react-redux';
 import { useLocation } from 'react-router-dom';
@@ -12,6 +14,7 @@ import { NotFoundContainer } from './styles';
 function WidgetGraph({
 	selectedGraph,
 	yAxisUnit,
+	selectedTime,
 }: WidgetGraphProps): JSX.Element {
 	const { dashboards } = useSelector<AppState, DashboardReducer>(
 		(state) => state.dashboards,
@@ -27,20 +30,28 @@ function WidgetGraph({
 
 	const selectedWidget = widgets.find((e) => e.id === widgetId);
 
+	const getWidgetQueryRange = useGetWidgetQueryRange({
+		graphType: selectedGraph,
+		selectedTime: selectedTime.enum,
+	});
+
 	if (selectedWidget === undefined) {
 		return <Card>Invalid widget</Card>;
 	}
 
-	const { queryData, title, opacity, isStacked } = selectedWidget;
+	const { title, opacity, isStacked } = selectedWidget;
 
-	if (queryData.error) {
+	if (getWidgetQueryRange.error) {
 		return (
 			<NotFoundContainer>
-				<Typography>{queryData.errorMessage}</Typography>
+				<Typography>{getWidgetQueryRange.error.message}</Typography>
 			</NotFoundContainer>
 		);
 	}
-	if (queryData.data.queryData.length === 0) {
+	if (getWidgetQueryRange.isLoading) {
+		return <Spinner size="large" tip="Loading..." />;
+	}
+	if (getWidgetQueryRange.data?.payload.data.result.length === 0) {
 		return (
 			<NotFoundContainer>
 				<Typography>No Data</Typography>
@@ -49,7 +60,9 @@ function WidgetGraph({
 	}
 
 	const chartDataSet = getChartData({
-		queryData: [queryData.data],
+		queryData: [
+			{ queryData: getWidgetQueryRange.data?.payload.data.result ?? [] },
+		],
 	});
 
 	return (
@@ -64,7 +77,5 @@ function WidgetGraph({
 		/>
 	);
 }
-
-type WidgetGraphProps = NewWidgetProps;
 
 export default WidgetGraph;

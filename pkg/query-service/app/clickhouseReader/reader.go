@@ -1870,14 +1870,18 @@ func (r *ClickHouseReader) GetTopOperations(ctx context.Context, queryParams *mo
 	if errStatus != nil {
 		return nil, errStatus
 	}
-	query += " GROUP BY name ORDER BY p99 DESC LIMIT 10"
+	query += " GROUP BY name ORDER BY p99 DESC"
+	if queryParams.Limit > 0 {
+		query += " LIMIT @limit"
+		args = append(args, clickhouse.Named("limit", queryParams.Limit))
+	}
 	err := r.db.Select(ctx, &topOperationsItems, query, args...)
 
 	zap.S().Debug(query)
 
 	if err != nil {
 		zap.S().Error("Error in processing sql query: ", err)
-		return nil, &model.ApiError{Typ: model.ErrorExec, Err: fmt.Errorf("Error in processing sql query")}
+		return nil, &model.ApiError{Typ: model.ErrorExec, Err: fmt.Errorf("error in processing sql query")}
 	}
 
 	if topOperationsItems == nil {
