@@ -1,6 +1,6 @@
 import { ChartData } from 'chart.js';
 import getLabelName from 'lib/getLabelName';
-import { Widgets } from 'types/api/dashboard/getAll';
+import { QueryData } from 'types/api/widgets/getQuery';
 
 import convertIntoEpoc from './covertIntoEpoc';
 import { colors } from './getRandomColor';
@@ -77,7 +77,11 @@ const getChartData = ({ queryData }: GetChartDataProps): ChartData => {
 };
 
 interface GetChartDataProps {
-	queryData: Widgets['queryData']['data'][];
+	queryData: {
+		query?: string;
+		legend?: string;
+		queryData: QueryData[];
+	}[];
 }
 
 export default getChartData;
