@@ -1,49 +1,112 @@
-import { cleanup, render, screen } from '@testing-library/react';
+import { act, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { DEBOUNCE_DELAY } from 'constants/common';
 import { initialQueryBuilderFormValues } from 'constants/queryBuilder';
-import { GROUP_BY_OPTION_ID, GROUP_BY_SELECT_ID } from 'constants/testIds';
+import { GROUP_BY_OPTION_ID } from 'constants/testIds';
+import { transformGroupByFilterValues } from 'lib/query/transformGroupByFilterValues';
+import { mockAttributeKeys } from 'mocks/data/mockAttributeKeys';
 import { QueryClientProvider } from 'react-query';
 import { queryClient } from 'services/queryClient.service';
+import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
+import { DataSource } from 'types/common/queryBuilder';
 
 import { GroupByFilter } from '../GroupByFilter';
 
-beforeEach(() => {
-	const mockOnChange = jest.fn();
+const groupByQueryTraces: IBuilderQuery = {
+	...initialQueryBuilderFormValues,
+	dataSource: DataSource.TRACES,
+};
 
-	render(
-		<QueryClientProvider client={queryClient}>
-			<GroupByFilter
-				onChange={mockOnChange}
-				query={initialQueryBuilderFormValues}
-				disabled={false}
-			/>
-		</QueryClientProvider>,
-	);
+beforeEach(() => {
+	jest.useFakeTimers();
 });
 
 afterEach(() => {
-	cleanup();
+	jest.useRealTimers();
 });
 
 describe('GroupBy filter behaviour', () => {
 	test('Correct render the GroupBy filter component', () => {
-		const select = screen.getByTestId(GROUP_BY_SELECT_ID);
+		const mockOnChange = jest.fn();
 
-		expect(select).toBeInTheDocument();
-	});
-
-	test('Test onChange GroupBy filter', async () => {
-		// TODO: add here mock server for getting keys and prepating options
-		const user = userEvent.setup();
+		render(
+			<QueryClientProvider client={queryClient}>
+				<GroupByFilter
+					onChange={mockOnChange}
+					query={initialQueryBuilderFormValues}
+					disabled={
+						initialQueryBuilderFormValues.dataSource === DataSource.METRICS &&
+						!initialQueryBuilderFormValues.aggregateAttribute.key
+					}
+				/>
+			</QueryClientProvider>,
+		);
 
 		const input = screen.getByRole('combobox');
 
+		expect(input).toBeInTheDocument();
+		expect(input).toBeDisabled();
+	});
+
+	test('Test onChange GroupBy filter', async () => {
+		const mockOnChange = jest.fn();
+		const user = userEvent.setup({ delay: null });
+
+		render(
+			<QueryClientProvider client={queryClient}>
+				<GroupByFilter
+					onChange={mockOnChange}
+					query={groupByQueryTraces}
+					disabled={
+						groupByQueryTraces.dataSource === DataSource.METRICS &&
+						!groupByQueryTraces.aggregateAttribute.key
+					}
+				/>
+			</QueryClientProvider>,
+		);
+
+		act(() => {
+			jest.advanceTimersByTime(DEBOUNCE_DELAY);
+		});
+
+		const input = screen.getByRole('combobox');
+
+		expect(input).toBeEnabled();
+
 		await user.click(input);
 
-		const options = await screen.findAllByTitle(GROUP_BY_OPTION_ID);
+		expect(input).toHaveFocus();
 
-		console.log(options);
+		const options = await screen.findAllByTestId(GROUP_BY_OPTION_ID);
 
-		// TODO: test onChange event and changing the query.groupBy array of the chosen values
+		expect(options.length).toEqual(mockAttributeKeys.data.attributeKeys?.length);
+
+		await user.clear(input);
+		await user.click(input);
+		await user.type(input, '3');
+
+		act(() => {
+			jest.advanceTimersByTime(DEBOUNCE_DELAY);
+		});
+
+		await act(async () => {
+			Promise.resolve();
+		});
+
+		const newFilteredOptions = screen.getAllByTestId(GROUP_BY_OPTION_ID);
+
+		expect(newFilteredOptions.length).toEqual(1);
+
+		await user.clear(input);
+		await user.click(newFilteredOptions[0]);
+
+		const transformedData = transformGroupByFilterValues([
+			{
+				label: newFilteredOptions[0].textContent || '',
+				value: newFilteredOptions[0].title,
+			},
+		]);
+
+		expect(mockOnChange.mock.calls[0][0]).toEqual(transformedData);
 	});
 });

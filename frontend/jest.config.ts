@@ -1,4 +1,7 @@
 import type { Config } from '@jest/types';
+import dotenv from 'dotenv';
+
+dotenv.config({ path: '.env.test' });
 
 const config: Config.InitialOptions = {
 	clearMocks: true,
@@ -23,6 +26,7 @@ const config: Config.InitialOptions = {
 	},
 	transformIgnorePatterns: ['node_modules/(?!(lodash-es)/)'],
 	setupFilesAfterEnv: ['<rootDir>jest.setup.ts'],
+	setupFiles: ['<rootDir>.env.test'],
 	testPathIgnorePatterns: ['/node_modules/', '/public/'],
 	moduleDirectories: ['node_modules', 'src'],
 	testEnvironment: 'jest-environment-jsdom',

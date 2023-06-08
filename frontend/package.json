@@ -168,6 +168,7 @@
 		"jest-playwright-preset": "^1.7.0",
 		"jest-styled-components": "^7.0.8",
 		"lint-staged": "^12.3.7",
+		"msw": "1.2.1",
 		"portfinder-sync": "^0.0.2",
 		"prettier": "2.2.1",
 		"react-hooks-testing-library": "0.6.0",

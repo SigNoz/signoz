@@ -1,25 +1,17 @@
 import { Select, Spin } from 'antd';
 import { getAggregateKeys } from 'api/queryBuilder/getAttributeKeys';
+import { DEBOUNCE_DELAY } from 'constants/common';
 // ** Constants
-import {
-	idDivider,
-	initialAutocompleteData,
-	QueryBuilderKeys,
-	selectValueDivider,
-} from 'constants/queryBuilder';
+import { QueryBuilderKeys, selectValueDivider } from 'constants/queryBuilder';
 import { GROUP_BY_OPTION_ID, GROUP_BY_SELECT_ID } from 'constants/testIds';
 import useDebounce from 'hooks/useDebounce';
+import { transformGroupByFilterValues } from 'lib/query/transformGroupByFilterValues';
 // ** Components
 // ** Helpers
 import { transformStringWithPrefix } from 'lib/query/transformStringWithPrefix';
-import { isEqual, uniqWith } from 'lodash-es';
 import { memo, useCallback, useEffect, useState } from 'react';
 import { useQuery } from 'react-query';
-import {
-	AutocompleteType,
-	BaseAutocompleteData,
-	DataType,
-} from 'types/api/queryBuilder/queryAutocompleteResponse';
+import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { SelectOption } from 'types/common/select';
 
 import { selectStyle } from '../QueryBuilderSearch/config';
@@ -41,10 +33,10 @@ export const GroupByFilter = memo(function GroupByFilter({
 	);
 	const [isFocused, setIsFocused] = useState<boolean>(false);
 
-	const debouncedValue = useDebounce(searchText, 300);
+	const debouncedValue = useDebounce(searchText, DEBOUNCE_DELAY);
 
 	const { isFetching } = useQuery(
-		[QueryBuilderKeys.GET_AGGREGATE_KEYS, debouncedValue, isFocused],
+		[QueryBuilderKeys.GET_AGGREGATE_KEYS, debouncedValue],
 		async () =>
 			getAggregateKeys({
 				aggregateAttribute: query.aggregateAttribute.key,
@@ -98,24 +90,7 @@ export const GroupByFilter = memo(function GroupByFilter({
 	};
 
 	const handleChange = (values: SelectOption<string, string>[]): void => {
-		const groupByValues: BaseAutocompleteData[] = values.map((item) => {
-			const [currentValue, id] = item.value.split(selectValueDivider);
-			if (id && id.includes(idDivider)) {
-				const [key, dataType, type, isColumn] = id.split(idDivider);
-
-				return {
-					id,
-					key,
-					dataType: dataType as DataType,
-					type: type as AutocompleteType,
-					isColumn: isColumn === 'true',
-				};
-			}
-
-			return { ...initialAutocompleteData, key: currentValue };
-		});
-
-		const result = uniqWith(groupByValues, isEqual);
+		const result = transformGroupByFilterValues(values);
 
 		onChange(result);
 	};
@@ -147,7 +122,6 @@ export const GroupByFilter = memo(function GroupByFilter({
 		<Select
 			data-testid={GROUP_BY_SELECT_ID}
 			mode="tags"
-			open
 			style={selectStyle}
 			onSearch={handleSearchKeys}
 			showSearch
@@ -157,7 +131,6 @@ export const GroupByFilter = memo(function GroupByFilter({
 			onBlur={handleBlur}
 			onFocus={handleFocus}
 			onDeselect={clearSearch}
-			options={optionsData}
 			value={localValues}
 			labelInValue
 			notFoundContent={isFetching ? <Spin size="small" /> : null}
@@ -168,6 +141,7 @@ export const GroupByFilter = memo(function GroupByFilter({
 					key={option.value}
 					value={option.value}
 					data-testid={GROUP_BY_OPTION_ID}
+					title={option.value}
 				>
 					{option.label}
 				</Option>
