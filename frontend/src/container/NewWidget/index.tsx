@@ -1,25 +1,18 @@
 import { LockFilled } from '@ant-design/icons';
 import { Button, Modal, Tooltip, Typography } from 'antd';
 import { FeatureKeys } from 'constants/features';
-import { COMPOSITE_QUERY } from 'constants/queryBuilderQueryNames';
 import ROUTES from 'constants/routes';
-import { GRAPH_TYPES } from 'container/NewDashboard/ComponentsSlider';
 import { ITEMS } from 'container/NewDashboard/ComponentsSlider/menuItems';
+import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { MESSAGE, useIsFeatureDisabled } from 'hooks/useFeatureFlag';
 import { useNotifications } from 'hooks/useNotifications';
-import useUrlQuery from 'hooks/useUrlQuery';
-import { getDashboardVariables } from 'lib/dashbaordVariables/getDashboardVariables';
 import history from 'lib/history';
 import { DashboardWidgetPageParams } from 'pages/DashboardWidget';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { connect, useDispatch, useSelector } from 'react-redux';
 import { generatePath, useLocation, useParams } from 'react-router-dom';
 import { bindActionCreators, Dispatch } from 'redux';
 import { ThunkDispatch } from 'redux-thunk';
-import {
-	GetQueryResults,
-	GetQueryResultsProps,
-} from 'store/actions/dashboard/getQueryResults';
 import {
 	SaveDashboard,
 	SaveDashboardProps,
@@ -27,10 +20,8 @@ import {
 import { AppState } from 'store/reducers';
 import AppActions from 'types/actions';
 import { FLUSH_DASHBOARD } from 'types/actions/dashboard';
-import { Widgets } from 'types/api/dashboard/getAll';
 import AppReducer from 'types/reducer/app';
 import DashboardReducer from 'types/reducer/dashboards';
-import { GlobalReducer } from 'types/reducer/globalTime';
 
 import LeftContainer from './LeftContainer';
 import QueryTypeTag from './LeftContainer/QueryTypeTag';
@@ -43,21 +34,15 @@ import {
 	PanelContainer,
 	RightContainerWrapper,
 } from './styles';
+import { NewWidgetProps } from './types';
 
-function NewWidget({
-	selectedGraph,
-	saveSettingOfPanel,
-	getQueryResults,
-}: Props): JSX.Element {
-	const urlQuery = useUrlQuery();
+function NewWidget({ selectedGraph, saveSettingOfPanel }: Props): JSX.Element {
 	const dispatch = useDispatch();
 	const { dashboards } = useSelector<AppState, DashboardReducer>(
 		(state) => state.dashboards,
 	);
-	const { selectedTime: globalSelectedInterval } = useSelector<
-		AppState,
-		GlobalReducer
-	>((state) => state.globalTime);
+
+	const { currentQuery } = useQueryBuilder();
 
 	const { featureResponse } = useSelector<AppState, AppReducer>(
 		(state) => state.app,
@@ -161,37 +146,12 @@ function NewWidget({
 		history.push(generatePath(ROUTES.DASHBOARD, { dashboardId }));
 	}, [dashboardId, dispatch]);
 
-	const getQueryResult = useCallback(() => {
-		const compositeQuery = urlQuery.get(COMPOSITE_QUERY);
-		if ((selectedWidget?.id.length !== 0 && compositeQuery) || compositeQuery) {
-			getQueryResults({
-				query: JSON.parse(compositeQuery),
-				selectedTime: selectedTime.enum,
-				widgetId: selectedWidget?.id || '',
-				graphType,
-				globalSelectedInterval,
-				variables: getDashboardVariables(),
-			});
-		}
-	}, [
-		selectedTime.enum,
-		selectedWidget?.id,
-		getQueryResults,
-		globalSelectedInterval,
-		graphType,
-		urlQuery,
-	]);
-
 	const setGraphHandler = (type: ITEMS): void => {
 		const params = new URLSearchParams(search);
 		params.set('graphType', type);
 		history.push({ search: params.toString() });
 		setGraphType(type);
 	};
-
-	useEffect(() => {
-		getQueryResult();
-	}, [getQueryResult]);
 
 	const onSaveDashboard = useCallback((): void => {
 		setSaveModal(true);
@@ -231,7 +191,11 @@ function NewWidget({
 
 			<PanelContainer>
 				<LeftContainerWrapper flex={5}>
-					<LeftContainer selectedGraph={graphType} yAxisUnit={yAxisUnit} />
+					<LeftContainer
+						selectedTime={selectedTime}
+						selectedGraph={graphType}
+						yAxisUnit={yAxisUnit}
+					/>
 				</LeftContainerWrapper>
 
 				<RightContainerWrapper flex={1}>
@@ -270,26 +234,17 @@ function NewWidget({
 				width={600}
 			>
 				<Typography>
-					Your graph built with{' '}
-					<QueryTypeTag queryType={selectedWidget?.query.queryType} /> query will be
-					saved. Press OK to confirm.
+					Your graph built with <QueryTypeTag queryType={currentQuery.queryType} />{' '}
+					query will be saved. Press OK to confirm.
 				</Typography>
 			</Modal>
 		</Container>
 	);
 }
 
-export interface NewWidgetProps {
-	selectedGraph: GRAPH_TYPES;
-	yAxisUnit: Widgets['yAxisUnit'];
-}
-
 interface DispatchProps {
 	saveSettingOfPanel: (
 		props: SaveDashboardProps,
-	) => (dispatch: Dispatch<AppActions>) => void;
-	getQueryResults: (
-		props: GetQueryResultsProps,
 	) => (dispatch: Dispatch<AppActions>) => void;
 }
 
@@ -297,7 +252,6 @@ const mapDispatchToProps = (
 	dispatch: ThunkDispatch<unknown, unknown, AppActions>,
 ): DispatchProps => ({
 	saveSettingOfPanel: bindActionCreators(SaveDashboard, dispatch),
-	getQueryResults: bindActionCreators(GetQueryResults, dispatch),
 });
 
 type Props = DispatchProps & NewWidgetProps;
