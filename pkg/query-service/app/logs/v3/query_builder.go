@@ -195,10 +195,10 @@ func buildLogsQuery(panelType v3.PanelType, start, end, step int64, mq *v3.Build
 	orderBy := orderByAttributeKeyTags(panelType, mq.OrderBy, mq.GroupBy)
 
 	if mq.AggregateOperator != v3.AggregateOperatorNoOp {
+		orderBy = strings.Replace(orderBy, " timestamp,", "ts,", 1)
 		if !strings.Contains(orderBy, " ts,") {
 			orderBy = orderBy + "ts"
 		}
-		orderBy = strings.Replace(orderBy, " timestamp,", "ts,", 1)
 		orderBy = strings.Trim(orderBy, ",")
 	}
 
