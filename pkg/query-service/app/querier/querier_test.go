@@ -191,7 +191,6 @@ func TestFindMissingTimeRangesZeroFreshNess(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			misses := findMissingTimeRanges(tc.requestedStart, tc.requestedEnd, tc.cachedSeries, 0*time.Minute)
 			if len(misses) != len(tc.expectedMiss) {
-				fmt.Println(misses, tc.expectedMiss)
 				t.Errorf("expected %d misses, got %d", len(tc.expectedMiss), len(misses))
 			}
 			for i, miss := range misses {
@@ -386,7 +385,6 @@ func TestFindMissingTimeRangesWithFluxInterval(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			misses := findMissingTimeRanges(tc.requestedStart, tc.requestedEnd, tc.cachedSeries, tc.fluxInterval)
 			if len(misses) != len(tc.expectedMiss) {
-				fmt.Println(misses, tc.expectedMiss)
 				t.Errorf("expected %d misses, got %d", len(tc.expectedMiss), len(misses))
 			}
 			for i, miss := range misses {
@@ -492,8 +490,6 @@ func TestQueryRange(t *testing.T) {
 		fmt.Sprintf("timestamp_ms >= %d AND timestamp_ms <= %d", 1675115596722, 1675115596722+120*60*1000),
 		fmt.Sprintf("timestamp_ms >= %d AND timestamp_ms <= %d", 1675115596722+120*60*1000+1, 1675115596722+180*60*1000),
 	}
-
-	fmt.Println("queries executed", q.QueriesExecuted())
 
 	for i, param := range params {
 		_, err, errByName := q.QueryRange(context.Background(), param, nil, nil)

@@ -231,8 +231,7 @@ func (q *querier) runBuilderQueries(ctx context.Context, params *v3.QueryRangePa
 	errQueriesByName := make(map[string]string)
 	var err error
 
-	for queryName := range params.CompositeQuery.BuilderQueries {
-		builderQuery := params.CompositeQuery.BuilderQueries[queryName]
+	for queryName, builderQuery := range params.CompositeQuery.BuilderQueries {
 
 		// TODO: add support for logs and traces
 		if builderQuery.DataSource == v3.DataSourceLogs {
@@ -329,8 +328,7 @@ func (q *querier) runPromQueries(ctx context.Context, params *v3.QueryRangeParam
 	seriesList := make([]*v3.Series, 0)
 	errQueriesByName := make(map[string]string)
 	var err error
-	for queryName := range params.CompositeQuery.PromQueries {
-		promQuery := params.CompositeQuery.PromQueries[queryName]
+	for queryName, promQuery := range params.CompositeQuery.PromQueries {
 		cacheKey := q.keyGenerator.GenerateKeys(params)[queryName]
 		var cachedData []byte
 		var retrieveStatus status.RetrieveStatus
@@ -390,8 +388,7 @@ func (q *querier) runClickHouseQueries(ctx context.Context, params *v3.QueryRang
 	seriesList := make([]*v3.Series, 0)
 	errQueriesByName := make(map[string]string)
 	var err error
-	for queryName := range params.CompositeQuery.ClickHouseQueries {
-		clickHouseQuery := params.CompositeQuery.ClickHouseQueries[queryName]
+	for queryName, clickHouseQuery := range params.CompositeQuery.ClickHouseQueries {
 		series, err := q.execClickHouseQuery(ctx, clickHouseQuery.Query)
 		if err != nil {
 			errQueriesByName[queryName] = err.Error()
