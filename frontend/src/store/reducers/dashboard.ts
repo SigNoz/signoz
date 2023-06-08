@@ -13,8 +13,6 @@ import {
 	GET_DASHBOARD_LOADING_START,
 	GET_DASHBOARD_SUCCESS,
 	IS_ADD_WIDGET,
-	QUERY_ERROR,
-	QUERY_SUCCESS,
 	SAVE_SETTING_TO_PANEL_SUCCESS,
 	TOGGLE_EDIT_MODE,
 	UPDATE_DASHBOARD,
@@ -30,9 +28,7 @@ const InitialValue: InitialValueTypes = {
 	error: false,
 	errorMessage: '',
 	isEditMode: false,
-	isQueryFired: false,
 	isAddWidget: false,
-	isLoadingQueryResult: false,
 };
 
 const dashboard = (
@@ -170,102 +166,6 @@ const dashboard = (
 			};
 		}
 
-		case QUERY_ERROR: {
-			const {
-				widgetId,
-				errorMessage,
-				errorBoolean = true,
-				isLoadingQueryResult = false,
-			} = action.payload;
-			const [selectedDashboard] = state.dashboards;
-			const { data } = selectedDashboard;
-
-			const selectedWidgetIndex = data.widgets?.findIndex(
-				(e) => e.id === widgetId,
-			);
-			const { widgets } = data;
-
-			const preWidget = data.widgets?.slice(0, selectedWidgetIndex);
-			const afterWidget = data.widgets?.slice(
-				(selectedWidgetIndex || 0) + 1, // this is never undefined
-				widgets?.length,
-			);
-			const selectedWidget =
-				(selectedDashboard.data.widgets || [])[selectedWidgetIndex || 0] || {};
-
-			return {
-				...state,
-				dashboards: [
-					{
-						...selectedDashboard,
-						data: {
-							...data,
-							widgets: [
-								...(preWidget || []),
-								{
-									...selectedWidget,
-									queryData: {
-										...selectedWidget.queryData,
-										error: errorBoolean,
-										errorMessage,
-									},
-								},
-								...(afterWidget || []),
-							],
-						},
-					},
-				],
-				isQueryFired: true,
-				isLoadingQueryResult,
-			};
-		}
-
-		case QUERY_SUCCESS: {
-			const { widgetId, data: queryDataResponse } = action.payload;
-
-			const { dashboards } = state;
-			const [selectedDashboard] = dashboards;
-			const { data } = selectedDashboard;
-			const { widgets = [] } = data;
-
-			const selectedWidgetIndex = widgets.findIndex((e) => e.id === widgetId) || 0;
-
-			const preWidget = widgets?.slice(0, selectedWidgetIndex) || [];
-			const afterWidget =
-				widgets.slice(
-					selectedWidgetIndex + 1, // this is never undefined
-					widgets.length,
-				) || [];
-			const selectedWidget = widgets[selectedWidgetIndex];
-
-			return {
-				...state,
-				dashboards: [
-					{
-						...selectedDashboard,
-						data: {
-							...data,
-							widgets: [
-								...preWidget,
-								{
-									...selectedWidget,
-									queryData: {
-										data: queryDataResponse,
-										error: selectedWidget.queryData.error,
-										errorMessage: selectedWidget.queryData.errorMessage,
-										loading: false,
-									},
-								},
-								...afterWidget,
-							],
-						},
-					},
-				],
-				isQueryFired: true,
-				isLoadingQueryResult: false,
-			};
-		}
-
 		case APPLY_SETTINGS_TO_PANEL: {
 			const { widgetId } = action.payload;
 
@@ -367,7 +267,7 @@ const dashboard = (
 		}
 
 		case UPDATE_QUERY: {
-			const { query, widgetId, yAxisUnit } = action.payload;
+			const { widgetId, yAxisUnit } = action.payload;
 			const { dashboards } = state;
 			const [selectedDashboard] = dashboards;
 			const { data } = selectedDashboard;
@@ -395,7 +295,6 @@ const dashboard = (
 								...preWidget,
 								{
 									...selectedWidget,
-									query,
 									yAxisUnit,
 								},
 								...afterWidget,

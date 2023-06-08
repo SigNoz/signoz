@@ -10,12 +10,6 @@ export const getWidgetQueryBuilder = (query: Widgets['query']): Widgets => ({
 	opacity: '0',
 	panelTypes: PANEL_TYPES.TIME_SERIES,
 	query,
-	queryData: {
-		data: { queryData: [] },
-		error: false,
-		errorMessage: '',
-		loading: false,
-	},
 	timePreferance: 'GLOBAL_TIME',
 	title: '',
 });
