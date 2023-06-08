@@ -6,8 +6,9 @@ import {
 	getTagToken,
 	isInNInOperator,
 } from 'container/QueryBuilder/filters/QueryBuilderSearch/utils';
+import { isEqual, uniqWith } from 'lodash-es';
 import debounce from 'lodash-es/debounce';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useQuery } from 'react-query';
 import { useDebounce } from 'react-use';
 import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
@@ -18,6 +19,8 @@ type IuseFetchKeysAndValues = {
 	keys: BaseAutocompleteData[];
 	results: string[];
 	isFetching: boolean;
+	sourceKeys: BaseAutocompleteData[];
+	handleRemoveSourceKey: (newSourceKey: string) => void;
 };
 
 /**
@@ -33,6 +36,7 @@ export const useFetchKeysAndValues = (
 	searchKey: string,
 ): IuseFetchKeysAndValues => {
 	const [keys, setKeys] = useState<BaseAutocompleteData[]>([]);
+	const [sourceKeys, setSourceKeys] = useState<BaseAutocompleteData[]>([]);
 	const [results, setResults] = useState<string[]>([]);
 
 	const searchParams = useMemo(
@@ -124,6 +128,12 @@ export const useFetchKeysAndValues = (
 		}
 	};
 
+	const handleRemoveSourceKey = useCallback((sourceKey: string) => {
+		setSourceKeys((prevState) =>
+			prevState.filter((item) => item.key !== sourceKey),
+		);
+	}, []);
+
 	// creates a ref to the fetch function so that it doesn't change on every render
 	const clearFetcher = useRef(handleFetchOption).current;
 
@@ -138,7 +148,10 @@ export const useFetchKeysAndValues = (
 	// update the fetched keys when the fetch status changes
 	useEffect(() => {
 		if (status === 'success' && data?.payload?.attributeKeys) {
-			setKeys(data?.payload.attributeKeys);
+			setKeys(data.payload.attributeKeys);
+			setSourceKeys((prevState) =>
+				uniqWith([...(data.payload.attributeKeys ?? []), ...prevState], isEqual),
+			);
 		} else {
 			setKeys([]);
 		}
@@ -148,5 +161,7 @@ export const useFetchKeysAndValues = (
 		keys,
 		results,
 		isFetching,
+		sourceKeys,
+		handleRemoveSourceKey,
 	};
 };

@@ -9,7 +9,10 @@ import (
 	"strings"
 	"time"
 
-	metricsv3 "go.signoz.io/signoz/pkg/query-service/app/metrics/v3"
+	logsV3 "go.signoz.io/signoz/pkg/query-service/app/logs/v3"
+	metricsV3 "go.signoz.io/signoz/pkg/query-service/app/metrics/v3"
+	tracesV3 "go.signoz.io/signoz/pkg/query-service/app/traces/v3"
+
 	"go.signoz.io/signoz/pkg/query-service/cache"
 	"go.signoz.io/signoz/pkg/query-service/cache/status"
 	"go.signoz.io/signoz/pkg/query-service/interfaces"
@@ -220,15 +223,49 @@ func mergeSerieses(cachedSeries, missedSeries []*v3.Series) []*v3.Series {
 	return mergedSeries
 }
 
-func (q *querier) runBuilderQueries(ctx context.Context, params *v3.QueryRangeParamsV3) ([]*v3.Series, error, map[string]string) {
+func (q *querier) runBuilderQueries(ctx context.Context, params *v3.QueryRangeParamsV3, fields map[string]v3.AttributeKey, keys map[string]v3.AttributeKey) ([]*v3.Series, error, map[string]string) {
+
+	cacheKeys := q.keyGenerator.GenerateKeys(params)
 
 	seriesList := make([]*v3.Series, 0)
 	errQueriesByName := make(map[string]string)
 	var err error
 
-	for queryName := range params.CompositeQuery.BuilderQueries {
-		builderQuery := params.CompositeQuery.BuilderQueries[queryName]
-		cacheKey := q.keyGenerator.GenerateKeys(params)[queryName]
+	for queryName, builderQuery := range params.CompositeQuery.BuilderQueries {
+
+		// TODO: add support for logs and traces
+		if builderQuery.DataSource == v3.DataSourceLogs {
+			query, err := logsV3.PrepareLogsQuery(params.Start, params.End, params.CompositeQuery.QueryType, params.CompositeQuery.PanelType, builderQuery, fields)
+			if err != nil {
+				errQueriesByName[queryName] = err.Error()
+				continue
+			}
+			series, err := q.execClickHouseQuery(ctx, query)
+			if err != nil {
+				errQueriesByName[queryName] = err.Error()
+				continue
+			}
+			seriesList = append(seriesList, series...)
+			continue
+		}
+
+		if builderQuery.DataSource == v3.DataSourceTraces {
+			query, err := tracesV3.PrepareTracesQuery(params.Start, params.End, params.CompositeQuery.QueryType, params.CompositeQuery.PanelType, builderQuery, keys)
+			if err != nil {
+				errQueriesByName[queryName] = err.Error()
+				continue
+			}
+
+			series, err := q.execClickHouseQuery(ctx, query)
+			if err != nil {
+				errQueriesByName[queryName] = err.Error()
+				continue
+			}
+			seriesList = append(seriesList, series...)
+			continue
+		}
+
+		cacheKey := cacheKeys[queryName]
 		var cachedData []byte
 		if !params.NoCache {
 			var retrieveStatus status.RetrieveStatus
@@ -242,7 +279,7 @@ func (q *querier) runBuilderQueries(ctx context.Context, params *v3.QueryRangePa
 		missedSeries := make([]*v3.Series, 0)
 		cachedSeries := make([]*v3.Series, 0)
 		for _, miss := range misses {
-			query, err := metricsv3.PrepareMetricQuery(
+			query, err := metricsV3.PrepareMetricQuery(
 				miss.start,
 				miss.end,
 				params.CompositeQuery.QueryType,
@@ -291,8 +328,7 @@ func (q *querier) runPromQueries(ctx context.Context, params *v3.QueryRangeParam
 	seriesList := make([]*v3.Series, 0)
 	errQueriesByName := make(map[string]string)
 	var err error
-	for queryName := range params.CompositeQuery.PromQueries {
-		promQuery := params.CompositeQuery.PromQueries[queryName]
+	for queryName, promQuery := range params.CompositeQuery.PromQueries {
 		cacheKey := q.keyGenerator.GenerateKeys(params)[queryName]
 		var cachedData []byte
 		var retrieveStatus status.RetrieveStatus
@@ -308,7 +344,7 @@ func (q *querier) runPromQueries(ctx context.Context, params *v3.QueryRangeParam
 		missedSeries := make([]*v3.Series, 0)
 		cachedSeries := make([]*v3.Series, 0)
 		for _, miss := range misses {
-			query := metricsv3.BuildPromQuery(
+			query := metricsV3.BuildPromQuery(
 				promQuery,
 				params.Step,
 				miss.start,
@@ -352,8 +388,7 @@ func (q *querier) runClickHouseQueries(ctx context.Context, params *v3.QueryRang
 	seriesList := make([]*v3.Series, 0)
 	errQueriesByName := make(map[string]string)
 	var err error
-	for queryName := range params.CompositeQuery.ClickHouseQueries {
-		clickHouseQuery := params.CompositeQuery.ClickHouseQueries[queryName]
+	for queryName, clickHouseQuery := range params.CompositeQuery.ClickHouseQueries {
 		series, err := q.execClickHouseQuery(ctx, clickHouseQuery.Query)
 		if err != nil {
 			errQueriesByName[queryName] = err.Error()
@@ -367,14 +402,14 @@ func (q *querier) runClickHouseQueries(ctx context.Context, params *v3.QueryRang
 	return seriesList, err, errQueriesByName
 }
 
-func (q *querier) QueryRange(ctx context.Context, params *v3.QueryRangeParamsV3) ([]*v3.Series, error, map[string]string) {
+func (q *querier) QueryRange(ctx context.Context, params *v3.QueryRangeParamsV3, fields map[string]v3.AttributeKey, keys map[string]v3.AttributeKey) ([]*v3.Series, error, map[string]string) {
 	var seriesList []*v3.Series
 	var err error
 	var errQueriesByName map[string]string
 	if params.CompositeQuery != nil {
 		switch params.CompositeQuery.QueryType {
 		case v3.QueryTypeBuilder:
-			seriesList, err, errQueriesByName = q.runBuilderQueries(ctx, params)
+			seriesList, err, errQueriesByName = q.runBuilderQueries(ctx, params, fields, keys)
 		case v3.QueryTypePromQL:
 			seriesList, err, errQueriesByName = q.runPromQueries(ctx, params)
 		case v3.QueryTypeClickHouseSQL:

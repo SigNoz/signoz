@@ -161,6 +161,7 @@ type GetTopOperationsParams struct {
 	Start       *time.Time
 	End         *time.Time
 	Tags        []TagQueryParam `json:"tags"`
+	Limit       int             `json:"limit"`
 }
 
 type GetUsageParams struct {

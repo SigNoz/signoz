@@ -1,4 +1,5 @@
 import {
+	CopyOutlined,
 	DeleteOutlined,
 	DownOutlined,
 	EditFilled,
@@ -8,6 +9,7 @@ import {
 import { Dropdown, MenuProps, Tooltip, Typography } from 'antd';
 import { MenuItemType } from 'antd/es/menu/hooks/useItems';
 import Spinner from 'components/Spinner';
+import { COMPOSITE_QUERY } from 'constants/queryBuilderQueryNames';
 import useComponentPermission from 'hooks/useComponentPermission';
 import history from 'lib/history';
 import { useCallback, useMemo, useState } from 'react';
@@ -37,6 +39,7 @@ interface IWidgetHeaderProps {
 	widget: Widgets;
 	onView: VoidFunction;
 	onDelete: VoidFunction;
+	onClone: VoidFunction;
 	parentHover: boolean;
 	queryResponse: UseQueryResult<
 		SuccessResponse<MetricRangePayloadProps> | ErrorResponse
@@ -48,6 +51,7 @@ function WidgetHeader({
 	widget,
 	onView,
 	onDelete,
+	onClone,
 	parentHover,
 	queryResponse,
 	errorMessage,
@@ -58,9 +62,11 @@ function WidgetHeader({
 	const onEditHandler = useCallback((): void => {
 		const widgetId = widget.id;
 		history.push(
-			`${window.location.pathname}/new?widgetId=${widgetId}&graphType=${widget.panelTypes}`,
+			`${window.location.pathname}/new?widgetId=${widgetId}&graphType=${
+				widget.panelTypes
+			}&${COMPOSITE_QUERY}=${JSON.stringify(widget.query)}`,
 		);
-	}, [widget.id, widget.panelTypes]);
+	}, [widget.id, widget.panelTypes, widget.query]);
 
 	const keyMethodMapping: {
 		[K in TWidgetOptions]: { key: TWidgetOptions; method: VoidFunction };
@@ -78,8 +84,12 @@ function WidgetHeader({
 				key: 'delete',
 				method: onDelete,
 			},
+			clone: {
+				key: 'clone',
+				method: onClone,
+			},
 		}),
-		[onDelete, onEditHandler, onView],
+		[onDelete, onEditHandler, onView, onClone],
 	);
 
 	const onMenuItemSelectHandler: MenuProps['onClick'] = useCallback(
@@ -114,6 +124,12 @@ function WidgetHeader({
 				label: 'Edit',
 			},
 			{
+				key: keyMethodMapping.clone.key,
+				icon: <CopyOutlined />,
+				disabled: false,
+				label: 'Clone',
+			},
+			{
 				key: keyMethodMapping.delete.key,
 				icon: <DeleteOutlined />,
 				disabled: !deleteWidget,
@@ -127,6 +143,7 @@ function WidgetHeader({
 			keyMethodMapping.delete.key,
 			keyMethodMapping.edit.key,
 			keyMethodMapping.view.key,
+			keyMethodMapping.clone.key,
 			queryResponse.isLoading,
 		],
 	);
