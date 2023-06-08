@@ -1,5 +1,3 @@
-import { DashboardData } from 'types/api/dashboard/getAll';
-
 export function downloadObjectAsJson(
 	exportObj: unknown,
 	exportName: string,
@@ -13,19 +11,4 @@ export function downloadObjectAsJson(
 	document.body.appendChild(downloadAnchorNode); // required for firefox
 	downloadAnchorNode.click();
 	downloadAnchorNode.remove();
-}
-
-export function cleardQueryData(param: DashboardData): DashboardData {
-	return {
-		...param,
-		widgets: param.widgets?.map((widget) => ({
-			...widget,
-			queryData: {
-				...widget.queryData,
-				data: {
-					queryData: [],
-				},
-			},
-		})),
-	};
 }
