@@ -79,11 +79,3 @@ export const Button = styled(ButtonComponent)`
 		align-items: center;
 	}
 `;
-
-export const NoPanelAvialable = styled.div<Props>`
-	display: flex;
-	justify-content: center;
-	align-items: center;
-
-	height: 100%;
-`;

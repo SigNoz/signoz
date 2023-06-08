@@ -12,11 +12,14 @@ import { FormulaProps } from './Formula.interfaces';
 const { TextArea } = Input;
 
 export function Formula({ index, formula }: FormulaProps): JSX.Element {
-	const { removeEntityByIndex, handleSetFormulaData } = useQueryBuilder();
+	const {
+		removeQueryBuilderEntityByIndex,
+		handleSetFormulaData,
+	} = useQueryBuilder();
 
 	const handleDelete = useCallback(() => {
-		removeEntityByIndex('queryFormulas', index);
-	}, [index, removeEntityByIndex]);
+		removeQueryBuilderEntityByIndex('queryFormulas', index);
+	}, [index, removeQueryBuilderEntityByIndex]);
 
 	const handleToggleDisableFormula = useCallback((): void => {
 		const newFormula: IBuilderFormula = {

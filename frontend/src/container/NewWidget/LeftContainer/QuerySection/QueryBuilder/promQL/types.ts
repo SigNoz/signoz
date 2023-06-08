@@ -1,9 +1,6 @@
-import { IPromQLQuery } from 'types/api/dashboard/getAll';
+import { IPromQLQuery } from 'types/api/queryBuilder/queryBuilderData';
 
 export interface IPromQLQueryHandleChange {
 	queryIndex: number | string;
-	query?: IPromQLQuery['query'];
-	legend?: IPromQLQuery['legend'];
-	toggleDisable?: IPromQLQuery['disabled'];
-	toggleDelete?: boolean;
+	query: IPromQLQuery;
 }

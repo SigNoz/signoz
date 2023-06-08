@@ -2,7 +2,12 @@ import { GRAPH_TYPES } from 'container/NewDashboard/ComponentsSlider';
 import {
 	IBuilderFormula,
 	IBuilderQuery,
+	IClickHouseQuery,
+	IPromQLQuery,
+	Query,
 } from 'types/api/queryBuilder/queryBuilderData';
+
+import { EQueryType } from './dashboard';
 
 export enum DataSource {
 	METRICS = 'metrics',
@@ -148,19 +153,34 @@ export type QueryBuilderData = {
 };
 
 export type QueryBuilderContextType = {
-	queryBuilderData: QueryBuilderData;
+	currentQuery: Query;
 	initialDataSource: DataSource | null;
 	panelType: GRAPH_TYPES;
 	resetQueryBuilderData: () => void;
 	resetQueryBuilderInfo: () => void;
 	handleSetQueryData: (index: number, queryData: IBuilderQuery) => void;
 	handleSetFormulaData: (index: number, formulaData: IBuilderFormula) => void;
+	handleSetQueryItemData: (
+		index: number,
+		type: EQueryType.PROM | EQueryType.CLICKHOUSE,
+		newQueryData: IPromQLQuery | IClickHouseQuery,
+	) => void;
 	handleSetPanelType: (newPanelType: GRAPH_TYPES) => void;
-	initQueryBuilderData: (queryBuilderData: QueryBuilderData) => void;
+	handleSetQueryType: (newQueryType: EQueryType) => void;
+	initQueryBuilderData: (query: Partial<Query>) => void;
 	setupInitialDataSource: (newInitialDataSource: DataSource | null) => void;
-	removeEntityByIndex: (type: keyof QueryBuilderData, index: number) => void;
-	addNewQuery: () => void;
+	removeQueryBuilderEntityByIndex: (
+		type: keyof QueryBuilderData,
+		index: number,
+	) => void;
+	removeQueryTypeItemByIndex: (
+		type: EQueryType.PROM | EQueryType.CLICKHOUSE,
+		index: number,
+	) => void;
+	addNewBuilderQuery: () => void;
 	addNewFormula: () => void;
+	addNewQueryItem: (type: EQueryType.PROM | EQueryType.CLICKHOUSE) => void;
+	redirectWithQueryBuilderData: (query: Query) => void;
 };
 
 export type QueryAdditionalFilter = {

@@ -7,16 +7,13 @@ import {
 	timeItems,
 	timePreferance,
 } from 'container/NewWidget/RightContainer/timeItems';
+import { useGetQueryRange } from 'hooks/queryBuilder/useGetQueryRange';
 import { getDashboardVariables } from 'lib/dashbaordVariables/getDashboardVariables';
 import getChartData from 'lib/getChartData';
 import { useCallback, useMemo, useState } from 'react';
-import { useQuery } from 'react-query';
 import { useSelector } from 'react-redux';
-import { GetMetricQueryRange } from 'store/actions/dashboard/getQueryResults';
 import { AppState } from 'store/reducers';
-import { ErrorResponse, SuccessResponse } from 'types/api';
 import { Widgets } from 'types/api/dashboard/getAll';
-import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
 import { GlobalReducer } from 'types/reducer/globalTime';
 
 import { TimeContainer } from './styles';
@@ -44,18 +41,24 @@ function FullView({
 		name: getSelectedTime()?.name || '',
 		enum: widget?.timePreferance || 'GLOBAL_TIME',
 	});
-	const response = useQuery<
-		SuccessResponse<MetricRangePayloadProps> | ErrorResponse
-	>(
-		`FullViewGetMetricsQueryRange-${selectedTime.enum}-${globalSelectedTime}-${widget.id}`,
+
+	const queryKey = useMemo(
 		() =>
-			GetMetricQueryRange({
-				selectedTime: selectedTime.enum,
-				graphType: widget.panelTypes,
-				query: widget.query,
-				globalSelectedInterval: globalSelectedTime,
-				variables: getDashboardVariables(),
-			}),
+			`FullViewGetMetricsQueryRange-${selectedTime.enum}-${globalSelectedTime}-${widget.id}`,
+		[selectedTime, globalSelectedTime, widget],
+	);
+
+	const response = useGetQueryRange(
+		{
+			selectedTime: selectedTime.enum,
+			graphType: widget.panelTypes,
+			query: widget.query,
+			globalSelectedInterval: globalSelectedTime,
+			variables: getDashboardVariables(),
+		},
+		{
+			queryKey,
+		},
 	);
 
 	const chartDataSet = useMemo(
