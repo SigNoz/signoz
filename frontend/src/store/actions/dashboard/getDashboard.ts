@@ -39,16 +39,6 @@ export const GetDashboard = ({
 						panelTypes: graphType || PANEL_TYPES.TIME_SERIES,
 						timePreferance: 'GLOBAL_TIME',
 						title: '',
-						queryType: 0,
-						queryData: {
-							data: {
-								queryData: [],
-							},
-
-							error: false,
-							errorMessage: '',
-							loading: false,
-						},
 						query: initialQueryWithType,
 					},
 				});
