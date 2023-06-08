@@ -112,7 +112,7 @@ function SideNav(): JSX.Element {
 		const routeKeys = Object.keys(ROUTES) as (keyof typeof ROUTES)[];
 		const currentRouteKey = routeKeys.find((key) => {
 			const route = ROUTES[key];
-			return pathname.startsWith(route);
+			return pathname === route;
 		});
 
 		if (!currentRouteKey) return null;
