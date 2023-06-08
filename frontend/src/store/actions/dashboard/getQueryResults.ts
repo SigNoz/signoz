@@ -3,9 +3,6 @@
 // @ts-nocheck
 
 import { getMetricsQueryRange } from 'api/metrics/getQueryRange';
-import { AxiosError } from 'axios';
-import { GRAPH_TYPES } from 'container/NewDashboard/ComponentsSlider';
-import { ITEMS } from 'container/NewDashboard/ComponentsSlider/menuItems';
 import { timePreferenceType } from 'container/NewWidget/RightContainer/timeItems';
 import { Time } from 'container/TopNav/DateTimeSelection/config';
 import GetMaxMinTime from 'lib/getMaxMinTime';
@@ -14,14 +11,11 @@ import GetStartAndEndTime from 'lib/getStartAndEndTime';
 import getStep from 'lib/getStep';
 import { mapQueryDataToApi } from 'lib/newQueryBuilder/queryBuilderMappers/mapQueryDataToApi';
 import { isEmpty } from 'lodash-es';
-import { Dispatch } from 'redux';
 import store from 'store';
-import AppActions from 'types/actions';
-import { ErrorResponse, SuccessResponse } from 'types/api';
+import { SuccessResponse } from 'types/api';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
 import { EQueryType } from 'types/common/dashboard';
-import { GlobalReducer } from 'types/reducer/globalTime';
 import { convertNewDataToOld } from 'lib/newQueryBuilder/convertNewDataToOld';
 
 export async function GetMetricQueryRange({
@@ -30,13 +24,7 @@ export async function GetMetricQueryRange({
 	graphType,
 	selectedTime,
 	variables = {},
-}: {
-	query: Query;
-	graphType: GRAPH_TYPES;
-	selectedTime: timePreferenceType;
-	globalSelectedInterval: Time;
-	variables?: Record<string, unknown>;
-}): Promise<SuccessResponse<MetricRangePayloadProps> | ErrorResponse> {
+}: GetQueryResultsProps): Promise<SuccessResponse<MetricRangePayloadProps>> {
 	const queryData = query[query.queryType];
 	let legendMap: Record<string, string> = {};
 
@@ -153,66 +141,10 @@ export async function GetMetricQueryRange({
 	return response;
 }
 
-export const GetQueryResults = (
-	props: GetQueryResultsProps,
-): ((dispatch: Dispatch<AppActions>) => void) => {
-	return async (dispatch: Dispatch<AppActions>): Promise<void> => {
-		try {
-			dispatch({
-				type: 'QUERY_ERROR',
-				payload: {
-					errorMessage: '',
-					widgetId: props.widgetId,
-					errorBoolean: false,
-					isLoadingQueryResult: true,
-				},
-			});
-			const response = await GetMetricQueryRange(props);
-
-			const isError = response.error;
-
-			if (isError != null) {
-				dispatch({
-					type: 'QUERY_ERROR',
-					payload: {
-						errorMessage: isError || '',
-						widgetId: props.widgetId,
-						isLoadingQueryResult: false,
-					},
-				});
-				return;
-			}
-
-			dispatch({
-				type: 'QUERY_SUCCESS',
-				payload: {
-					widgetId: props.widgetId,
-					data: {
-						queryData: response.payload?.data?.result
-							? response.payload?.data?.result
-							: [],
-					},
-				},
-			});
-		} catch (error) {
-			dispatch({
-				type: 'QUERY_ERROR',
-				payload: {
-					errorMessage: (error as AxiosError).toString(),
-					widgetId: props.widgetId,
-					errorBoolean: true,
-					isLoadingQueryResult: false,
-				},
-			});
-		}
-	};
-};
-
 export interface GetQueryResultsProps {
-	widgetId: string;
-	selectedTime: timePreferenceType;
 	query: Query;
-	graphType: ITEMS;
-	globalSelectedInterval: GlobalReducer['selectedTime'];
-	variables: Record<string, unknown>;
+	graphType: GRAPH_TYPES;
+	selectedTime: timePreferenceType;
+	globalSelectedInterval: Time;
+	variables?: Record<string, unknown>;
 }

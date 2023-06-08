@@ -1,11 +1,14 @@
 import { Button, Tabs, Typography } from 'antd';
 import TextToolTip from 'components/TextToolTip';
 import { GRAPH_TYPES } from 'container/NewDashboard/ComponentsSlider';
+import { WidgetGraphProps } from 'container/NewWidget/types';
 import { QueryBuilder } from 'container/QueryBuilder';
+import { useGetWidgetQueryRange } from 'hooks/queryBuilder/useGetWidgetQueryRange';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
-import { useCallback, useEffect, useMemo } from 'react';
+import { useShareBuilderUrl } from 'hooks/queryBuilder/useShareBuilderUrl';
+import useUrlQuery from 'hooks/useUrlQuery';
+import { useCallback } from 'react';
 import { connect, useSelector } from 'react-redux';
-import { useLocation } from 'react-router-dom';
 import { bindActionCreators, Dispatch } from 'redux';
 import { ThunkDispatch } from 'redux-thunk';
 import {
@@ -15,30 +18,32 @@ import {
 import { AppState } from 'store/reducers';
 import AppActions from 'types/actions';
 import { Widgets } from 'types/api/dashboard/getAll';
+import { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { EQueryType } from 'types/common/dashboard';
 import DashboardReducer from 'types/reducer/dashboards';
 
 import ClickHouseQueryContainer from './QueryBuilder/clickHouse';
 import PromQLQueryContainer from './QueryBuilder/promQL';
 
-function QuerySection({ updateQuery, selectedGraph }: QueryProps): JSX.Element {
-	const {
-		currentQuery,
-		queryType,
-		handleSetQueryType,
-		initQueryBuilderData,
-	} = useQueryBuilder();
+function QuerySection({
+	updateQuery,
+	selectedGraph,
+	selectedTime,
+}: QueryProps): JSX.Element {
+	const { currentQuery, redirectWithQueryBuilderData } = useQueryBuilder();
+	const urlQuery = useUrlQuery();
 
-	const { dashboards, isLoadingQueryResult } = useSelector<
-		AppState,
-		DashboardReducer
-	>((state) => state.dashboards);
+	const { dashboards } = useSelector<AppState, DashboardReducer>(
+		(state) => state.dashboards,
+	);
+
+	const getWidgetQueryRange = useGetWidgetQueryRange({
+		graphType: selectedGraph,
+		selectedTime: selectedTime.enum,
+	});
 
 	const [selectedDashboards] = dashboards;
-	const { search } = useLocation();
 	const { widgets } = selectedDashboards.data;
-
-	const urlQuery = useMemo(() => new URLSearchParams(search), [search]);
 
 	const getWidget = useCallback(() => {
 		const widgetId = urlQuery.get('widgetId');
@@ -47,32 +52,31 @@ function QuerySection({ updateQuery, selectedGraph }: QueryProps): JSX.Element {
 
 	const selectedWidget = getWidget() as Widgets;
 
-	const { query } = selectedWidget || {};
+	const { query } = selectedWidget;
 
-	useEffect(() => {
-		initQueryBuilderData(query, selectedWidget.query.queryType);
-	}, [query, initQueryBuilderData, selectedWidget]);
+	useShareBuilderUrl({ defaultValue: query });
 
-	const handleStageQuery = (): void => {
-		updateQuery({
-			updatedQuery: {
-				...currentQuery,
-				queryType,
-			},
-			widgetId: urlQuery.get('widgetId') || '',
-			yAxisUnit: selectedWidget.yAxisUnit,
-		});
-	};
+	const handleStageQuery = useCallback(
+		(updatedQuery: Query): void => {
+			updateQuery({
+				widgetId: urlQuery.get('widgetId') || '',
+				yAxisUnit: selectedWidget.yAxisUnit,
+			});
+
+			redirectWithQueryBuilderData(updatedQuery);
+		},
+
+		[urlQuery, selectedWidget, updateQuery, redirectWithQueryBuilderData],
+	);
 
 	const handleQueryCategoryChange = (qCategory: string): void => {
 		const currentQueryType = qCategory as EQueryType;
 
-		handleSetQueryType(currentQueryType);
-		updateQuery({
-			updatedQuery: { ...currentQuery, queryType: currentQueryType },
-			widgetId: urlQuery.get('widgetId') || '',
-			yAxisUnit: selectedWidget.yAxisUnit,
-		});
+		handleStageQuery({ ...currentQuery, queryType: currentQueryType });
+	};
+
+	const handleRunQuery = (): void => {
+		handleStageQuery(currentQuery);
 	};
 
 	const items = [
@@ -100,16 +104,16 @@ function QuerySection({ updateQuery, selectedGraph }: QueryProps): JSX.Element {
 		<Tabs
 			type="card"
 			style={{ width: '100%' }}
-			defaultActiveKey={queryType}
-			activeKey={queryType}
+			defaultActiveKey={currentQuery.queryType}
+			activeKey={currentQuery.queryType}
 			onChange={handleQueryCategoryChange}
 			tabBarExtraContent={
 				<span style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
 					<TextToolTip text="This will temporarily save the current query and graph state. This will persist across tab change" />
 					<Button
-						loading={isLoadingQueryResult}
+						loading={getWidgetQueryRange.isFetching}
 						type="primary"
-						onClick={handleStageQuery}
+						onClick={handleRunQuery}
 					>
 						Stage & Run Query
 					</Button>
@@ -134,6 +138,7 @@ const mapDispatchToProps = (
 
 interface QueryProps extends DispatchProps {
 	selectedGraph: GRAPH_TYPES;
+	selectedTime: WidgetGraphProps['selectedTime'];
 }
 
 export default connect(null, mapDispatchToProps)(QuerySection);

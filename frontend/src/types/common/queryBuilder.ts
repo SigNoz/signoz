@@ -4,7 +4,7 @@ import {
 	IBuilderQuery,
 	IClickHouseQuery,
 	IPromQLQuery,
-	QueryState,
+	Query,
 } from 'types/api/queryBuilder/queryBuilderData';
 
 import { EQueryType } from './dashboard';
@@ -153,8 +153,7 @@ export type QueryBuilderData = {
 };
 
 export type QueryBuilderContextType = {
-	currentQuery: QueryState;
-	queryType: EQueryType;
+	currentQuery: Query;
 	initialDataSource: DataSource | null;
 	panelType: GRAPH_TYPES;
 	resetQueryBuilderData: () => void;
@@ -168,7 +167,7 @@ export type QueryBuilderContextType = {
 	) => void;
 	handleSetPanelType: (newPanelType: GRAPH_TYPES) => void;
 	handleSetQueryType: (newQueryType: EQueryType) => void;
-	initQueryBuilderData: (query: QueryState, queryType: EQueryType) => void;
+	initQueryBuilderData: (query: Partial<Query>) => void;
 	setupInitialDataSource: (newInitialDataSource: DataSource | null) => void;
 	removeQueryBuilderEntityByIndex: (
 		type: keyof QueryBuilderData,
@@ -181,6 +180,7 @@ export type QueryBuilderContextType = {
 	addNewBuilderQuery: () => void;
 	addNewFormula: () => void;
 	addNewQueryItem: (type: EQueryType.PROM | EQueryType.CLICKHOUSE) => void;
+	redirectWithQueryBuilderData: (query: Query) => void;
 };
 
 export type QueryAdditionalFilter = {
