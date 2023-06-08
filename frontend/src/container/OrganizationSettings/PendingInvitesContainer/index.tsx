@@ -55,11 +55,17 @@ function PendingInvitesContainer(): JSX.Element {
 		queryKey: ['getPendingInvites', user?.accessJwt],
 	});
 
-	const toggleModal = (value: boolean): void => {
-		setIsInviteTeamMemberModalOpen(value);
-	};
-
 	const [dataSource, setDataSource] = useState<DataProps[]>([]);
+
+	const toggleModal = useCallback(
+		(value: boolean): void => {
+			setIsInviteTeamMemberModalOpen(value);
+			if (!value) {
+				form.resetFields();
+			}
+		},
+		[form],
+	);
 
 	const { hash } = useLocation();
 
@@ -79,7 +85,7 @@ function PendingInvitesContainer(): JSX.Element {
 		if (hash === INVITE_MEMBERS_HASH) {
 			toggleModal(true);
 		}
-	}, [hash]);
+	}, [hash, toggleModal]);
 
 	useEffect(() => {
 		if (
@@ -225,7 +231,13 @@ function PendingInvitesContainer(): JSX.Element {
 				});
 			}
 		},
-		[getParsedInviteData, getPendingInvitesResponse, notifications, t],
+		[
+			getParsedInviteData,
+			getPendingInvitesResponse,
+			notifications,
+			t,
+			toggleModal,
+		],
 	);
 
 	return (
