@@ -1,7 +1,8 @@
 import RouteTab from 'components/RouteTab';
 import ROUTES from 'constants/routes';
 import ResourceAttributesFilter from 'container/ResourceAttributesFilter';
-import { memo } from 'react';
+import history from 'lib/history';
+import { memo, useMemo } from 'react';
 import { generatePath, useParams } from 'react-router-dom';
 import { useLocation } from 'react-use';
 
@@ -52,35 +53,37 @@ function ServiceMetrics(): JSX.Element {
 
 	const activeKey = getActiveKey();
 
+	const routes = useMemo(
+		() => [
+			{
+				Component: OverViewTab,
+				name: overMetrics,
+				route: `${generatePath(ROUTES.SERVICE_METRICS, {
+					servicename,
+				})}?tab=${overMetrics}`,
+			},
+			{
+				Component: DbCallTab,
+				name: dbCallMetrics,
+				route: `${generatePath(ROUTES.SERVICE_METRICS, {
+					servicename,
+				})}?tab=${dbCallMetrics}`,
+			},
+			{
+				Component: ExternalTab,
+				name: externalMetrics,
+				route: `${generatePath(ROUTES.SERVICE_METRICS, {
+					servicename,
+				})}?tab=${externalMetrics}`,
+			},
+		],
+		[servicename],
+	);
+
 	return (
 		<>
 			<ResourceAttributesFilter />
-			<RouteTab
-				routes={[
-					{
-						Component: OverViewTab,
-						name: overMetrics,
-						route: `${generatePath(ROUTES.SERVICE_METRICS, {
-							servicename,
-						})}?tab=${overMetrics}`,
-					},
-					{
-						Component: DbCallTab,
-						name: dbCallMetrics,
-						route: `${generatePath(ROUTES.SERVICE_METRICS, {
-							servicename,
-						})}?tab=${dbCallMetrics}`,
-					},
-					{
-						Component: ExternalTab,
-						name: externalMetrics,
-						route: `${generatePath(ROUTES.SERVICE_METRICS, {
-							servicename,
-						})}?tab=${externalMetrics}`,
-					},
-				]}
-				activeKey={activeKey}
-			/>
+			<RouteTab routes={routes} history={history} activeKey={activeKey} />
 		</>
 	);
 }

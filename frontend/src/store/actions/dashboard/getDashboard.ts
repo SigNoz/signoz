@@ -1,18 +1,9 @@
 import getDashboard from 'api/dashboard/get';
-import {
-	ClickHouseQueryTemplate,
-	PromQLQueryTemplate,
-} from 'constants/dashboard';
-import {
-	initialQueryBuilderFormValues,
-	PANEL_TYPES,
-} from 'constants/queryBuilder';
+import { initialQueryWithType, PANEL_TYPES } from 'constants/queryBuilder';
 import { GRAPH_TYPES } from 'container/NewDashboard/ComponentsSlider';
-import GetQueryName from 'lib/query/GetQueryName';
 import { Dispatch } from 'redux';
 import AppActions from 'types/actions';
 import { Props } from 'types/api/dashboard/get';
-import { EQueryType } from 'types/common/dashboard';
 
 export const GetDashboard = ({
 	uuid,
@@ -58,25 +49,7 @@ export const GetDashboard = ({
 							errorMessage: '',
 							loading: false,
 						},
-						query: {
-							queryType: EQueryType.QUERY_BUILDER,
-							promql: [
-								{
-									name: GetQueryName([]) as string,
-									...PromQLQueryTemplate,
-								},
-							],
-							clickhouse_sql: [
-								{
-									name: GetQueryName([]) as string,
-									...ClickHouseQueryTemplate,
-								},
-							],
-							builder: {
-								queryFormulas: [],
-								queryData: [initialQueryBuilderFormValues],
-							},
-						},
+						query: initialQueryWithType,
 					},
 				});
 			}

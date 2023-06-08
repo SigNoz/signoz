@@ -14,6 +14,7 @@ interface IQueryHeaderProps {
 	disabled: boolean;
 	onDisable: VoidFunction;
 	name: string;
+	deletable: boolean;
 	onDelete: VoidFunction;
 	children: ReactNode;
 }
@@ -23,6 +24,7 @@ function QueryHeader({
 	onDisable,
 	name,
 	onDelete,
+	deletable,
 	children,
 }: IQueryHeaderProps): JSX.Element {
 	const [collapse, setCollapse] = useState(false);
@@ -44,7 +46,9 @@ function QueryHeader({
 					/>
 				</Row>
 
-				<Button type="ghost" danger icon={<DeleteOutlined />} onClick={onDelete} />
+				{deletable && (
+					<Button type="ghost" danger icon={<DeleteOutlined />} onClick={onDelete} />
+				)}
 			</Row>
 			{!collapse && children}
 		</QueryWrapper>

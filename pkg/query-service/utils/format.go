@@ -144,7 +144,7 @@ func ValidateAndCastValue(v interface{}, dataType v3.AttributeKeyDataType) (inte
 // ClickHouseFormattedValue formats the value to be used in clickhouse query
 func ClickHouseFormattedValue(v interface{}) string {
 	switch x := v.(type) {
-	case int:
+	case int, int8, int16, int32, int64:
 		return fmt.Sprintf("%d", x)
 	case float32, float64:
 		return fmt.Sprintf("%f", x)
@@ -167,7 +167,7 @@ func ClickHouseFormattedValue(v interface{}) string {
 			}
 			str += "]"
 			return str
-		case int, float32, float64, bool:
+		case int, int8, int16, int32, int64, float32, float64, bool:
 			return strings.Join(strings.Fields(fmt.Sprint(x)), ",")
 		default:
 			zap.S().Error("invalid type for formatted value", zap.Any("type", reflect.TypeOf(x[0])))
