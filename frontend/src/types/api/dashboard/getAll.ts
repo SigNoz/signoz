@@ -3,8 +3,6 @@ import { timePreferenceType } from 'container/NewWidget/RightContainer/timeItems
 import { Layout } from 'react-grid-layout';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 
-import { QueryData } from '../widgets/getQuery';
-
 export type PayloadProps = Dashboard[];
 
 export const VariableQueryTypeArr = ['QUERY', 'TEXTBOX', 'CUSTOM'] as const;
@@ -65,16 +63,6 @@ export interface IBaseWidget {
 	opacity: string;
 	nullZeroValues: string;
 	timePreferance: timePreferenceType;
-	queryData: {
-		loading: boolean;
-		error: boolean;
-		errorMessage: string;
-		data: {
-			query?: string;
-			legend?: string;
-			queryData: QueryData[];
-		};
-	};
 	stepSize?: number;
 	yAxisUnit?: string;
 }
