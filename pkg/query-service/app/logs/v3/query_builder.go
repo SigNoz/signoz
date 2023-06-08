@@ -195,10 +195,10 @@ func buildLogsQuery(panelType v3.PanelType, start, end, step int64, mq *v3.Build
 	orderBy := orderByAttributeKeyTags(panelType, mq.OrderBy, mq.GroupBy)
 
 	if mq.AggregateOperator != v3.AggregateOperatorNoOp {
-		if !strings.Contains(orderBy, "ts") {
+		if !strings.Contains(orderBy, " ts,") {
 			orderBy = orderBy + "ts"
 		}
-		orderBy = strings.Replace(orderBy, "timestamp", "ts", 1)
+		orderBy = strings.Replace(orderBy, " timestamp,", "ts,", 1)
 		orderBy = strings.Trim(orderBy, ",")
 	}
 
@@ -384,7 +384,7 @@ func PrepareLogsQuery(start, end int64, queryType v3.QueryType, panelType v3.Pan
 		query, err = reduceQuery(query, mq.ReduceTo, mq.AggregateOperator)
 	}
 
-	if panelType == v3.PanelTypeList || panelType == v3.PanelTypeTable {
+	if panelType == v3.PanelTypeList {
 		if mq.Limit == 0 {
 			// 100 is the default max limit as well as page limit
 			mq.Limit = 100
