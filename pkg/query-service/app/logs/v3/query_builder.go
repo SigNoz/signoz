@@ -387,12 +387,8 @@ func PrepareLogsQuery(start, end int64, queryType v3.QueryType, panelType v3.Pan
 	}
 
 	if panelType == v3.PanelTypeList {
-		if mq.Limit == 0 {
-			// 100 is the default max limit as well as page limit
-			mq.Limit = 100
-		}
 		if mq.PageSize > 0 {
-			if mq.Offset > mq.Limit {
+			if mq.Limit > 0 && mq.Offset > mq.Limit {
 				return "", fmt.Errorf("max limit exceeded")
 			}
 			query = addLimitToQuery(query, mq.PageSize)
