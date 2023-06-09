@@ -162,7 +162,7 @@ function FormAlertRules({
 		}
 
 		currentQuery.clickhouse_sql.forEach((item) => {
-			if (item.rawQuery === '') {
+			if (item.query === '') {
 				notifications.error({
 					message: 'Error',
 					description: t('chquery_required'),

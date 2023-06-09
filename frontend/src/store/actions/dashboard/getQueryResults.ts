@@ -67,9 +67,9 @@ export async function GetMetricQueryRange({
 		case EQueryType.CLICKHOUSE: {
 			const chQueries = {};
 			queryData.map((query) => {
-				if (!query.rawQuery) return;
+				if (!query.query) return;
 				chQueries[query.name] = {
-					query: query.rawQuery,
+					query: query.query,
 					disabled: query.disabled,
 				};
 				legendMap[query.name] = query.legend;
