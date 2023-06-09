@@ -63,7 +63,6 @@ export type IBuilderQuery = {
 
 export interface IClickHouseQuery {
 	name: string;
-	rawQuery: string;
 	legend: string;
 	disabled: boolean;
 	query: string;
