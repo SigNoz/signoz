@@ -261,7 +261,7 @@ func replaceFieldInToken(queryToken string, selectedFieldsLookup map[string]mode
 	lowerColName := strings.ToLower(*col)
 
 	if opLower == "exists" || opLower == "nexists" {
-		// user exists
+		// creating the query token here as we have the metadata
 		field := model.LogField{}
 		var result string
 		if sfield, ok := selectedFieldsLookup[sqlColName]; ok {
