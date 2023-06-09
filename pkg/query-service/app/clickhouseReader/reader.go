@@ -3879,7 +3879,7 @@ func (r *ClickHouseReader) GetLogAggregateAttributes(ctx context.Context, req *v
 	}
 	// add other attributes
 	for _, field := range constants.StaticFieldsLogsV3 {
-		if !stringAllowed && field.DataType == v3.AttributeKeyDataTypeString && (v3.AttributeKey{} == field) {
+		if (!stringAllowed && field.DataType == v3.AttributeKeyDataTypeString) || (v3.AttributeKey{} == field) {
 			continue
 		} else if len(req.SearchText) == 0 || strings.Contains(field.Key, req.SearchText) {
 			response.AttributeKeys = append(response.AttributeKeys, field)
