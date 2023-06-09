@@ -53,33 +53,6 @@ var logOperators = map[v3.FilterOperator]string{
 	// (todo) check contains/not contains/
 }
 
-func enrichFieldWithMetadata(field v3.AttributeKey, fields map[string]v3.AttributeKey) v3.AttributeKey {
-	if field.Type == "" || field.DataType == "" {
-		// if type is unknown check if it is a top level key
-		if v, ok := constants.StaticFieldsLogsV3[field.Key]; ok {
-			if (v3.AttributeKey{} != v) {
-				return v
-			}
-		}
-
-		// check if the field is present in the fields map
-		if existingField, ok := fields[field.Key]; ok {
-			if existingField.IsColumn {
-				return field
-			}
-			field.Type = existingField.Type
-			field.DataType = existingField.DataType
-			return field
-		}
-
-		// enrich with default values if metadata is not found
-		field.Type = v3.AttributeKeyTypeTag
-		field.DataType = v3.AttributeKeyDataTypeString
-
-	}
-	return field
-}
-
 func getClickhouseLogsColumnType(columnType v3.AttributeKeyType) string {
 	if columnType == v3.AttributeKeyTypeTag {
 		return "attributes"
@@ -99,8 +72,12 @@ func getClickhouseLogsColumnDataType(columnDataType v3.AttributeKeyDataType) str
 }
 
 // getClickhouseColumnName returns the corresponding clickhouse column name for the given attribute/resource key
-func getClickhouseColumnName(key v3.AttributeKey, fields map[string]v3.AttributeKey) (string, error) {
+func getClickhouseColumnName(key v3.AttributeKey) string {
 	clickhouseColumn := key.Key
+	if key.Key == constants.TIMESTAMP || key.Key == "id" {
+		return key.Key
+	}
+
 	//if the key is present in the topLevelColumn then it will be only searched in those columns,
 	//regardless if it is indexed/present again in resource or column attribute
 	if !key.IsColumn {
@@ -108,56 +85,44 @@ func getClickhouseColumnName(key v3.AttributeKey, fields map[string]v3.Attribute
 		columnDataType := getClickhouseLogsColumnDataType(key.DataType)
 		clickhouseColumn = fmt.Sprintf("%s_%s_value[indexOf(%s_%s_key, '%s')]", columnType, columnDataType, columnType, columnDataType, key.Key)
 	}
-	return clickhouseColumn, nil
+	return clickhouseColumn
 }
 
 // getSelectLabels returns the select labels for the query based on groupBy and aggregateOperator
-func getSelectLabels(aggregatorOperator v3.AggregateOperator, groupBy []v3.AttributeKey, fields map[string]v3.AttributeKey) (string, error) {
+func getSelectLabels(aggregatorOperator v3.AggregateOperator, groupBy []v3.AttributeKey) (string, error) {
 	var selectLabels string
 	if aggregatorOperator == v3.AggregateOperatorNoOp {
 		selectLabels = ""
 	} else {
 		for _, tag := range groupBy {
-			enrichedTag := enrichFieldWithMetadata(tag, fields)
-			columnName, err := getClickhouseColumnName(enrichedTag, fields)
-			if err != nil {
-				return "", err
-			}
+			columnName := getClickhouseColumnName(tag)
 			selectLabels += fmt.Sprintf(", %s as %s", columnName, tag.Key)
 		}
 	}
 	return selectLabels, nil
 }
 
-func buildLogsTimeSeriesFilterQuery(fs *v3.FilterSet, groupBy []v3.AttributeKey, fields map[string]v3.AttributeKey) (string, error) {
+func buildLogsTimeSeriesFilterQuery(fs *v3.FilterSet, groupBy []v3.AttributeKey) (string, error) {
 	var conditions []string
 
 	if fs != nil && len(fs.Items) != 0 {
 		for _, item := range fs.Items {
 			op := v3.FilterOperator(strings.ToLower(strings.TrimSpace(string(item.Operator))))
-			key := enrichFieldWithMetadata(item.Key, fields)
-			value, err := utils.ValidateAndCastValue(item.Value, key.DataType)
+			value, err := utils.ValidateAndCastValue(item.Value, item.Key.DataType)
 			if err != nil {
 				return "", fmt.Errorf("failed to validate and cast value for %s: %v", item.Key.Key, err)
 			}
 			if logsOp, ok := logOperators[op]; ok {
 				switch op {
 				case v3.FilterOperatorExists, v3.FilterOperatorNotExists:
-					columnType := getClickhouseLogsColumnType(key.Type)
-					columnDataType := getClickhouseLogsColumnDataType(key.DataType)
-					conditions = append(conditions, fmt.Sprintf(logsOp, columnType, columnDataType, key.Key))
+					columnType := getClickhouseLogsColumnType(item.Key.Type)
+					columnDataType := getClickhouseLogsColumnDataType(item.Key.DataType)
+					conditions = append(conditions, fmt.Sprintf(logsOp, columnType, columnDataType, item.Key.Key))
 				case v3.FilterOperatorContains, v3.FilterOperatorNotContains:
-					columnName, err := getClickhouseColumnName(key, fields)
-					if err != nil {
-						return "", err
-					}
+					columnName := getClickhouseColumnName(item.Key)
 					conditions = append(conditions, fmt.Sprintf("%s %s '%%%s%%'", columnName, logsOp, item.Value))
 				default:
-					columnName, err := getClickhouseColumnName(key, fields)
-					if err != nil {
-						return "", err
-					}
-
+					columnName := getClickhouseColumnName(item.Key)
 					fmtVal := utils.ClickHouseFormattedValue(value)
 					conditions = append(conditions, fmt.Sprintf("%s %s %s", columnName, logsOp, fmtVal))
 				}
@@ -169,11 +134,10 @@ func buildLogsTimeSeriesFilterQuery(fs *v3.FilterSet, groupBy []v3.AttributeKey,
 
 	// add group by conditions to filter out log lines which doesn't have the key
 	for _, attr := range groupBy {
-		enrichedAttr := enrichFieldWithMetadata(attr, fields)
-		if !enrichedAttr.IsColumn {
-			columnType := getClickhouseLogsColumnType(enrichedAttr.Type)
-			columnDataType := getClickhouseLogsColumnDataType(enrichedAttr.DataType)
-			conditions = append(conditions, fmt.Sprintf("indexOf(%s_%s_key, '%s') > 0", columnType, columnDataType, enrichedAttr.Key))
+		if !attr.IsColumn {
+			columnType := getClickhouseLogsColumnType(attr.Type)
+			columnDataType := getClickhouseLogsColumnDataType(attr.DataType)
+			conditions = append(conditions, fmt.Sprintf("indexOf(%s_%s_key, '%s') > 0", columnType, columnDataType, attr.Key))
 		}
 	}
 
@@ -199,9 +163,9 @@ func getZerosForEpochNano(epoch int64) int64 {
 	return int64(math.Pow(10, float64(19-count)))
 }
 
-func buildLogsQuery(start, end, step int64, mq *v3.BuilderQuery, fields map[string]v3.AttributeKey) (string, error) {
+func buildLogsQuery(panelType v3.PanelType, start, end, step int64, mq *v3.BuilderQuery) (string, error) {
 
-	filterSubQuery, err := buildLogsTimeSeriesFilterQuery(mq.Filters, mq.GroupBy, fields)
+	filterSubQuery, err := buildLogsTimeSeriesFilterQuery(mq.Filters, mq.GroupBy)
 	if err != nil {
 		return "", err
 	}
@@ -209,7 +173,7 @@ func buildLogsQuery(start, end, step int64, mq *v3.BuilderQuery, fields map[stri
 	// timerange will be sent in epoch millisecond
 	timeFilter := fmt.Sprintf("(timestamp >= %d AND timestamp <= %d)", start*getZerosForEpochNano(start), end*getZerosForEpochNano(end))
 
-	selectLabels, err := getSelectLabels(mq.AggregateOperator, mq.GroupBy, fields)
+	selectLabels, err := getSelectLabels(mq.AggregateOperator, mq.GroupBy)
 	if err != nil {
 		return "", err
 	}
@@ -225,18 +189,14 @@ func buildLogsQuery(start, end, step int64, mq *v3.BuilderQuery, fields map[stri
 			"from signoz_logs.distributed_logs " +
 			"where " + timeFilter + "%s " +
 			"group by %s%s " +
-			"order by %sts"
+			"order by %s"
 
 	groupBy := groupByAttributeKeyTags(mq.GroupBy...)
-	orderBy := orderByAttributeKeyTags(mq.OrderBy, mq.GroupBy)
+	orderBy := orderByAttributeKeyTags(panelType, mq.AggregateOperator, mq.OrderBy, mq.GroupBy)
 
 	aggregationKey := ""
 	if mq.AggregateAttribute.Key != "" {
-		enrichedAttribute := enrichFieldWithMetadata(mq.AggregateAttribute, fields)
-		aggregationKey, err = getClickhouseColumnName(enrichedAttribute, fields)
-		if err != nil {
-			return "", err
-		}
+		aggregationKey = getClickhouseColumnName(mq.AggregateAttribute)
 	}
 
 	switch mq.AggregateOperator {
@@ -271,9 +231,8 @@ func buildLogsQuery(start, end, step int64, mq *v3.BuilderQuery, fields map[stri
 		return query, nil
 	case v3.AggregateOperatorCount:
 		if mq.AggregateAttribute.Key != "" {
-			field := enrichFieldWithMetadata(mq.AggregateAttribute, fields)
-			columnType := getClickhouseLogsColumnType(field.Type)
-			columnDataType := getClickhouseLogsColumnDataType(field.DataType)
+			columnType := getClickhouseLogsColumnType(mq.AggregateAttribute.Type)
+			columnDataType := getClickhouseLogsColumnDataType(mq.AggregateAttribute.DataType)
 			filterSubQuery = fmt.Sprintf("%s AND has(%s_%s_key, '%s')", filterSubQuery, columnType, columnDataType, mq.AggregateAttribute.Key)
 		}
 
@@ -285,8 +244,8 @@ func buildLogsQuery(start, end, step int64, mq *v3.BuilderQuery, fields map[stri
 		query := fmt.Sprintf(queryTmpl, step, op, filterSubQuery, groupBy, having, orderBy)
 		return query, nil
 	case v3.AggregateOperatorNoOp:
-		queryTmpl := constants.LogsSQLSelect + "from signoz_logs.distributed_logs where %s %s"
-		query := fmt.Sprintf(queryTmpl, timeFilter, filterSubQuery)
+		queryTmpl := constants.LogsSQLSelect + "from signoz_logs.distributed_logs where %s %sorder by %s"
+		query := fmt.Sprintf(queryTmpl, timeFilter, filterSubQuery, orderBy)
 		return query, nil
 	default:
 		return "", fmt.Errorf("unsupported aggregate operator")
@@ -309,19 +268,25 @@ func groupByAttributeKeyTags(tags ...v3.AttributeKey) string {
 }
 
 // orderBy returns a string of comma separated tags for order by clause
+// if there are remaining items which are not present in tags they are also added
 // if the order is not specified, it defaults to ASC
-func orderBy(items []v3.OrderBy, tags []string) string {
+func orderBy(panelType v3.PanelType, items []v3.OrderBy, tags []string) []string {
 	var orderBy []string
+
+	// create a lookup
+	addedToOrderBy := map[string]bool{}
+	itemsLookup := map[string]v3.OrderBy{}
+
+	for i := 0; i < len(items); i++ {
+		addedToOrderBy[items[i].ColumnName] = false
+		itemsLookup[items[i].ColumnName] = items[i]
+	}
+
 	for _, tag := range tags {
-		found := false
-		for _, item := range items {
-			if item.ColumnName == tag {
-				found = true
-				orderBy = append(orderBy, fmt.Sprintf("%s %s", item.ColumnName, item.Order))
-				break
-			}
-		}
-		if !found {
+		if item, ok := itemsLookup[tag]; ok {
+			orderBy = append(orderBy, fmt.Sprintf("%s %s", item.ColumnName, item.Order))
+			addedToOrderBy[item.ColumnName] = true
+		} else {
 			orderBy = append(orderBy, fmt.Sprintf("%s ASC", tag))
 		}
 	}
@@ -330,20 +295,48 @@ func orderBy(items []v3.OrderBy, tags []string) string {
 	for _, item := range items {
 		if item.ColumnName == constants.SigNozOrderByValue {
 			orderBy = append(orderBy, fmt.Sprintf("value %s", item.Order))
+			addedToOrderBy[item.ColumnName] = true
 		}
 	}
-	return strings.Join(orderBy, ",")
+
+	// add the remaining items
+	if panelType == v3.PanelTypeList {
+		for _, item := range items {
+			// since these are not present in tags we will have to select them correctly
+			// for list view there is no need to check if it was added since they wont be added yet but this is just for safety
+			if !addedToOrderBy[item.ColumnName] {
+				attr := v3.AttributeKey{Key: item.ColumnName, DataType: item.DataType, Type: item.Type, IsColumn: item.IsColumn}
+				name := getClickhouseColumnName(attr)
+				orderBy = append(orderBy, fmt.Sprintf("%s %s", name, item.Order))
+			}
+		}
+	}
+	return orderBy
 }
 
-func orderByAttributeKeyTags(items []v3.OrderBy, tags []v3.AttributeKey) string {
+func orderByAttributeKeyTags(panelType v3.PanelType, aggregatorOperator v3.AggregateOperator, items []v3.OrderBy, tags []v3.AttributeKey) string {
 	var groupTags []string
 	for _, tag := range tags {
 		groupTags = append(groupTags, tag.Key)
 	}
-	str := orderBy(items, groupTags)
-	if len(str) > 0 {
-		str = str + ","
+	orderByArray := orderBy(panelType, items, groupTags)
+
+	found := false
+	for i := 0; i < len(orderByArray); i++ {
+		if strings.Compare(orderByArray[i], constants.TIMESTAMP) == 0 {
+			orderByArray[i] = "ts"
+			break
+		}
 	}
+	if !found {
+		if aggregatorOperator == v3.AggregateOperatorNoOp {
+			orderByArray = append(orderByArray, constants.TIMESTAMP)
+		} else {
+			orderByArray = append(orderByArray, "ts")
+		}
+	}
+
+	str := strings.Join(orderByArray, ",")
 	return str
 }
 
@@ -376,22 +369,16 @@ func reduceQuery(query string, reduceTo v3.ReduceToOperator, aggregateOperator v
 	return query, nil
 }
 
-func addLimitToQuery(query string, limit uint64, panelType v3.PanelType) string {
-	if limit == 0 {
-		limit = 100
-	}
-	if panelType == v3.PanelTypeList {
-		return fmt.Sprintf("%s LIMIT %d", query, limit)
-	}
-	return query
+func addLimitToQuery(query string, limit uint64) string {
+	return fmt.Sprintf("%s LIMIT %d", query, limit)
 }
 
 func addOffsetToQuery(query string, offset uint64) string {
 	return fmt.Sprintf("%s OFFSET %d", query, offset)
 }
 
-func PrepareLogsQuery(start, end int64, queryType v3.QueryType, panelType v3.PanelType, mq *v3.BuilderQuery, fields map[string]v3.AttributeKey) (string, error) {
-	query, err := buildLogsQuery(start, end, mq.StepInterval, mq, fields)
+func PrepareLogsQuery(start, end int64, queryType v3.QueryType, panelType v3.PanelType, mq *v3.BuilderQuery) (string, error) {
+	query, err := buildLogsQuery(panelType, start, end, mq.StepInterval, mq)
 	if err != nil {
 		return "", err
 	}
@@ -399,10 +386,16 @@ func PrepareLogsQuery(start, end int64, queryType v3.QueryType, panelType v3.Pan
 		query, err = reduceQuery(query, mq.ReduceTo, mq.AggregateOperator)
 	}
 
-	query = addLimitToQuery(query, mq.Limit, panelType)
-
-	if mq.Offset != 0 {
-		query = addOffsetToQuery(query, mq.Offset)
+	if panelType == v3.PanelTypeList {
+		if mq.PageSize > 0 {
+			if mq.Limit > 0 && mq.Offset > mq.Limit {
+				return "", fmt.Errorf("max limit exceeded")
+			}
+			query = addLimitToQuery(query, mq.PageSize)
+			query = addOffsetToQuery(query, mq.Offset)
+		} else {
+			query = addLimitToQuery(query, mq.Limit)
+		}
 	}
 
 	return query, err

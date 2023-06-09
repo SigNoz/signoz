@@ -60,7 +60,7 @@ function ChartPreview({
 			case EQueryType.CLICKHOUSE:
 				return (
 					query.clickhouse_sql?.length > 0 &&
-					query.clickhouse_sql[0].rawQuery?.length > 0
+					query.clickhouse_sql[0].query?.length > 0
 				);
 			case EQueryType.QUERY_BUILDER:
 				return (
@@ -117,7 +117,9 @@ function ChartPreview({
 					{queryResponse.error.message || t('preview_chart_unexpected_error')}
 				</FailedMessageContainer>
 			)}
-			{queryResponse.isLoading && <Spinner size="large" tip="Loading..." />}
+			{queryResponse.isLoading && (
+				<Spinner size="large" tip="Loading..." height="70vh" />
+			)}
 			{chartDataSet && !queryResponse.isError && (
 				<GridGraphComponent
 					title={name}
