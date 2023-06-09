@@ -22,7 +22,7 @@ export const mapQueryDataFromApi = (
 		? Object.keys(compositeQuery.chQueries).map((key) => ({
 				...compositeQuery.chQueries[key],
 				name: key,
-				rawQuery: compositeQuery.chQueries[key].query,
+				query: compositeQuery.chQueries[key].query,
 		  }))
 		: initialQuery.clickhouse_sql;
 
