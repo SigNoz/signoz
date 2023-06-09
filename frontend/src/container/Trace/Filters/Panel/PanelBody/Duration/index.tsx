@@ -178,7 +178,7 @@ function Duration(): JSX.Element {
 		if (value === undefined) {
 			return <div />;
 		}
-		return <div>{`${getMs(value?.toString())}ms`}</div>;
+		return <div>{`${value?.toString()}ms`}</div>;
 	}, []);
 
 	return (
@@ -210,7 +210,7 @@ function Duration(): JSX.Element {
 					min={Number(getMs(String(preLocalMinDuration.current || 0)))}
 					max={Number(getMs(String(preLocalMaxDuration.current || 0)))}
 					range
-					tipFormatter={TipComponent}
+					tooltip={{ formatter: TipComponent }}
 					onChange={([min, max]): void => {
 						onRangeSliderHandler([String(min), String(max)]);
 					}}
