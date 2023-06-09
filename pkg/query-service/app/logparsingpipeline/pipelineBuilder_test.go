@@ -104,6 +104,65 @@ var prepareProcessorTestData = []struct {
 		Operators: []model.PipelineOperator{},
 		Output:    []model.PipelineOperator{},
 	},
+	{
+		Name: "new test",
+		Operators: []model.PipelineOperator{
+			{
+				ID:      "move_filename",
+				Output:  "move_function",
+				Enabled: true,
+				Name:    "move_filename",
+			},
+			{
+				ID:      "move_function",
+				Output:  "move_line",
+				Enabled: false,
+				Name:    "move_function",
+			},
+			{
+				ID:      "move_line",
+				Output:  "move_lwp",
+				Enabled: true,
+				Name:    "move_line",
+			},
+			{
+				ID:      "move_lwp",
+				Output:  "move_callid",
+				Enabled: true,
+				Name:    "move_lwp",
+			},
+			{
+				ID:      "move_callid",
+				Enabled: true,
+				Name:    "move_lwp",
+			},
+		},
+		Output: []model.PipelineOperator{
+			{
+				ID:      "move_filename",
+				Output:  "move_line",
+				Enabled: true,
+				Name:    "move_filename",
+			},
+			{
+				ID:      "move_line",
+				Output:  "move_lwp",
+				Enabled: true,
+				Name:    "move_line",
+			},
+			{
+				ID:      "move_lwp",
+				Output:  "move_callid",
+				Enabled: true,
+				Name:    "move_lwp",
+			},
+			{
+				ID:      "move_callid",
+				Enabled: true,
+				Name:    "move_lwp",
+			},
+		},
+	},
 }
 
 func TestPreparePipelineProcessor(t *testing.T) {

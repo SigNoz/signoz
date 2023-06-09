@@ -1,6 +1,9 @@
 package logparsingpipeline
 
 import (
+	"encoding/json"
+	"fmt"
+
 	"go.signoz.io/signoz/pkg/query-service/constants"
 	"go.signoz.io/signoz/pkg/query-service/model"
 )
@@ -54,20 +57,21 @@ func PreparePipelineProcessor(pipelines []model.Pipeline) (map[string]interface{
 	return processors, names, nil
 }
 
-func getOperators(op []model.PipelineOperator) []model.PipelineOperator {
-	lastIndex := 0
-	operators := []model.PipelineOperator{}
-	// remove disabled operators
-	for i, operator := range op {
+func getOperators(ops []model.PipelineOperator) []model.PipelineOperator {
+	filteredOp := []model.PipelineOperator{}
+	for i, operator := range ops {
 		if operator.Enabled {
-			operators = append(operators, operator)
 			if i > 0 {
-				operators[lastIndex].Output = operator.ID
+				filteredOp[len(filteredOp)-1].Output = operator.ID
 			}
-			lastIndex = i
-		} else if i == len(op)-1 && len(operators) != 0 {
-			operators[len(operators)-1].Output = ""
+			filteredOp = append(filteredOp, operator)
+		} else if i == len(ops)-1 && len(filteredOp) != 0 {
+			filteredOp[len(filteredOp)-1].Output = ""
 		}
 	}
-	return operators
+	for _, v := range filteredOp {
+		x, _ := json.Marshal(v)
+		fmt.Println(string(x))
+	}
+	return filteredOp
 }
