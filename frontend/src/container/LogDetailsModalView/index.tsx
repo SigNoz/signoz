@@ -2,14 +2,13 @@ import { Modal } from 'antd';
 import GetLogs from 'api/logs/GetLogs';
 import InputComponent from 'components/Input';
 import dayjs from 'dayjs';
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
+import { useQuery } from 'react-query';
 import { useDispatch, useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
-import {
-	SET_CURRENT_LOG,
-	SET_NEXT_CURRENT_LOGS,
-	SET_PREV_CURRENT_LOGS,
-} from 'types/actions/logs';
+import { SET_CURRENT_LOG } from 'types/actions/logs';
+import { ILog } from 'types/api/logs/log';
+import { GlobalReducer } from 'types/reducer/globalTime';
 import { ILogsReducer } from 'types/reducer/logs';
 
 // components
@@ -22,42 +21,45 @@ import { HistoryPosition } from './interfaces/IHistoryLogs';
 function LogDetailsModalView(): JSX.Element {
 	const dispatch = useDispatch();
 	const [filterInputVisible, setFilterInputVisible] = useState<boolean>(false);
-	const [prevLoading, setPrevLoading] = useState<boolean>(true);
-	const [nextLoading, setNextLoading] = useState<boolean>(true);
-	const { currentLog, prevCurrentLogs, nextCurrentLogs } = useSelector<
-		AppState,
-		ILogsReducer
-	>((state) => state.logs);
+	const [prevLogPage, setPrevLogPage] = useState<number>(1);
+	const [nextLogPage, setNextLogPage] = useState<number>(1);
+	const { currentLog } = useSelector<AppState, ILogsReducer>(
+		(state) => state.logs,
+	);
+	const { minTime, maxTime } = useSelector<AppState, GlobalReducer>(
+		(state) => state.globalTime,
+	);
 
-	useEffect(() => {
-		if (currentLog) {
+	const prevData = useQuery(['allAlerts', prevLogPage], {
+		queryFn: () =>
 			GetLogs({
 				q: "method in ('POST')",
-				limit: 10,
+				limit: prevLogPage * 10,
 				orderBy: 'id',
-				idLt: currentLog.id,
-				timestampStart: currentLog.timestamp,
-				timestampEnd: currentLog.timestamp + 1e18,
+				idLt: currentLog?.id,
+				timestampStart: minTime,
+				timestampEnd: maxTime,
 				order: 'desc',
-			}).then((res) => {
-				setPrevLoading(false);
-				dispatch({ type: SET_PREV_CURRENT_LOGS, payload: res.payload });
-			});
+			}),
+		cacheTime: 0,
+	});
 
+	const nextData = useQuery(['allAlerts', nextLogPage], {
+		queryFn: () =>
 			GetLogs({
 				q: "method in ('POST')",
-				limit: 10,
+				limit: prevLogPage * 10,
 				orderBy: 'id',
-				idLt: currentLog.id,
-				timestampStart: currentLog.timestamp,
-				timestampEnd: currentLog.timestamp + 1e18,
+				idGt: currentLog?.id,
+				timestampStart: minTime,
+				timestampEnd: maxTime,
 				order: 'asc',
-			}).then((res) => {
-				setNextLoading(false);
-				dispatch({ type: SET_NEXT_CURRENT_LOGS, payload: res.payload });
-			});
-		}
-	}, [currentLog, dispatch]);
+			}),
+		cacheTime: 0,
+	});
+
+	const addMoreNextLogs = (): void => setNextLogPage(nextLogPage + 1);
+	const addMorePrevLogs = (): void => setPrevLogPage(nextLogPage + 1);
 
 	const handleCancel = (): void => {
 		dispatch({
@@ -73,8 +75,6 @@ function LogDetailsModalView(): JSX.Element {
 				: '',
 		[currentLog],
 	);
-
-	console.log('currentLog', currentLog);
 
 	return (
 		<Modal
@@ -93,16 +93,18 @@ function LogDetailsModalView(): JSX.Element {
 			{filterInputVisible && <InputComponent value="" />}
 			<HistoryLogs
 				position={HistoryPosition.prev}
-				fetchLogs={(): void => {}}
-				logs={prevCurrentLogs}
-				isLoad={prevLoading}
+				addMoreLogs={addMorePrevLogs}
+				logs={prevData.data?.payload as ILog[]}
+				isLoad={prevData.isLoading}
+				isError={prevData.isError}
 			/>
 			<CurrentLog log={text} />
 			<HistoryLogs
 				position={HistoryPosition.next}
-				fetchLogs={(): void => {}}
-				logs={nextCurrentLogs}
-				isLoad={nextLoading}
+				addMoreLogs={addMoreNextLogs}
+				logs={nextData.data?.payload as ILog[]}
+				isLoad={nextData.isLoading}
+				isError={nextData.isError}
 			/>
 		</Modal>
 	);

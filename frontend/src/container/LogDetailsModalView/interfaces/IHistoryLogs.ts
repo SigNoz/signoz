@@ -6,8 +6,9 @@ export enum HistoryPosition {
 }
 
 export default interface IHistoryLogs {
-	fetchLogs: () => void;
+	addMoreLogs: () => void;
 	position: HistoryPosition.prev | HistoryPosition.next;
 	logs: null | ILog[];
 	isLoad: boolean;
+	isError: boolean;
 }
