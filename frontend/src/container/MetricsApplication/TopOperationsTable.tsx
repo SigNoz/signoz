@@ -89,8 +89,12 @@ function TopOperationsTable(props: TopOperationsTableProps): JSX.Element {
 			dataIndex: 'errorCount',
 			key: 'errorCount',
 			width: 50,
-			sorter: (a: TopOperationList, b: TopOperationList): number =>
-				a.errorCount - b.errorCount,
+			sorter: (first: TopOperationList, second: TopOperationList): number => {
+				const firstCount = (first.errorCount / first.numCalls) * 100;
+				const secondCount = (second.errorCount / second.numCalls) * 100;
+
+				return firstCount - secondCount;
+			},
 			render: (value: number, record: TopOperationList): string =>
 				`${((value / record.numCalls) * 100).toFixed(2)} %`,
 		},
