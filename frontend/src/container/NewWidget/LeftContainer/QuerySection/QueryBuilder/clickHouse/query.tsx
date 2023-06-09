@@ -50,7 +50,7 @@ function ClickHouseQueryBuilder({
 
 	const handleUpdateEditor = useCallback(
 		(value: string) => {
-			handleUpdateQuery('rawQuery', value);
+			handleUpdateQuery('query', value);
 		},
 		[handleUpdateQuery],
 	);
@@ -75,7 +75,7 @@ function ClickHouseQueryBuilder({
 				language="sql"
 				height="200px"
 				onChange={handleUpdateEditor}
-				value={queryData.rawQuery}
+				value={queryData.query}
 				options={{
 					scrollbar: {
 						alwaysConsumeMouseWheel: false,
