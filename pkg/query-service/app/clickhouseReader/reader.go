@@ -4203,15 +4203,15 @@ func (r *ClickHouseReader) GetListResultV3(ctx context.Context, query string) ([
 	var (
 		columnTypes = rows.ColumnTypes()
 		columnNames = rows.Columns()
-		vars        = make([]interface{}, len(columnTypes))
 	)
-	for i := range columnTypes {
-		vars[i] = reflect.New(columnTypes[i].ScanType()).Interface()
-	}
 
 	var rowList []*v3.Row
 
 	for rows.Next() {
+		var vars = make([]interface{}, len(columnTypes))
+		for i := range columnTypes {
+			vars[i] = reflect.New(columnTypes[i].ScanType()).Interface()
+		}
 		if err := rows.Scan(vars...); err != nil {
 			return nil, err
 		}
