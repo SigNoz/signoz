@@ -1,6 +1,5 @@
 import { Alert, Space } from 'antd';
 import { SIGNOZ_UPGRADE_PLAN_URL } from 'constants/app';
-import React from 'react';
 
 type UpgradePromptProps = {
 	title?: string;
@@ -13,7 +12,7 @@ function UpgradePrompt({ title }: UpgradePromptProps): JSX.Element {
 				message={title}
 				description={
 					<div>
-						This feature is available for Enterprise plans.{' '}
+						This feature is available for paid plans only.{' '}
 						<a href={SIGNOZ_UPGRADE_PLAN_URL} target="_blank" rel="noreferrer">
 							Click here
 						</a>{' '}
@@ -27,6 +26,6 @@ function UpgradePrompt({ title }: UpgradePromptProps): JSX.Element {
 }
 
 UpgradePrompt.defaultProps = {
-	title: 'Upgrade to Enterprise Plan',
+	title: 'Upgrade to a Paid Plan',
 };
 export default UpgradePrompt;

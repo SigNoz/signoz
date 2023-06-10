@@ -49,7 +49,7 @@ function FormAlertChannels({
 	);
 
 	const renderSettings = (): ReactElement | null => {
-		if (!hasFeature) {
+		if (!hasFeature || !hasFeature.active) {
 			// channel type is not available for users plan
 			return <UpgradePrompt />;
 		}
@@ -98,7 +98,7 @@ function FormAlertChannels({
 						</Option>
 						<Option value="msteams" key="msteams">
 							<div>
-								Microsoft Teams {!isUserOnEEPlan && '(Available in Enterprise Plan)'}{' '}
+								Microsoft Teams {!isUserOnEEPlan && '(Supported in Paid Plans Only)'}{' '}
 							</div>
 						</Option>
 					</Select>
