@@ -1,5 +1,6 @@
 import {
 	initialQueryBuilderFormValues,
+	initialQueryPromQLData,
 	PANEL_TYPES,
 } from 'constants/queryBuilder';
 import { AlertTypes } from 'types/api/alerts/alertTypes';
@@ -31,13 +32,18 @@ export const alertDefaults: AlertDef = {
 	condition: {
 		compositeQuery: {
 			builderQueries: {
+				A: initialQueryBuilderFormValues,
+			},
+			promQueries: { A: initialQueryPromQLData },
+			chQueries: {
 				A: {
-					...initialQueryBuilderFormValues,
+					name: 'A',
+					query: ``,
+					legend: '',
+					disabled: false,
 				},
 			},
-			promQueries: {},
-			chQueries: {},
-			queryType: EQueryType.QUERY_BUILDER,
+			queryType: EQueryType.CLICKHOUSE,
 			panelType: PANEL_TYPES.TIME_SERIES,
 		},
 		op: defaultCompareOp,
@@ -61,12 +67,11 @@ export const logAlertDefaults: AlertDef = {
 					dataSource: DataSource.LOGS,
 				},
 			},
-			promQueries: {},
+			promQueries: { A: initialQueryPromQLData },
 			chQueries: {
 				A: {
 					name: 'A',
 					query: `select \ntoStartOfInterval(fromUnixTimestamp64Nano(timestamp), INTERVAL 30 MINUTE) AS interval, \ntoFloat64(count()) as value \nFROM signoz_logs.distributed_logs  \nWHERE timestamp BETWEEN {{.start_timestamp_nano}} AND {{.end_timestamp_nano}}  \nGROUP BY interval;\n\n-- available variables:\n-- \t{{.start_timestamp_nano}}\n-- \t{{.end_timestamp_nano}}\n\n-- required columns (or alias):\n-- \tvalue\n-- \tinterval`,
-					rawQuery: `select \ntoStartOfInterval(fromUnixTimestamp64Nano(timestamp), INTERVAL 30 MINUTE) AS interval, \ntoFloat64(count()) as value \nFROM signoz_logs.distributed_logs  \nWHERE timestamp BETWEEN {{.start_timestamp_nano}} AND {{.end_timestamp_nano}}  \nGROUP BY interval;\n\n-- available variables:\n-- \t{{.start_timestamp_nano}}\n-- \t{{.end_timestamp_nano}}\n\n-- required columns (or alias):\n-- \tvalue\n-- \tinterval`,
 					legend: '',
 					disabled: false,
 				},
@@ -96,11 +101,10 @@ export const traceAlertDefaults: AlertDef = {
 					dataSource: DataSource.TRACES,
 				},
 			},
-			promQueries: {},
+			promQueries: { A: initialQueryPromQLData },
 			chQueries: {
 				A: {
 					name: 'A',
-					rawQuery: `SELECT \n\ttoStartOfInterval(timestamp, INTERVAL 1 MINUTE) AS interval, \n\ttagMap['peer.service'] AS op_name, \n\ttoFloat64(avg(durationNano)) AS value \nFROM signoz_traces.distributed_signoz_index_v2  \nWHERE tagMap['peer.service']!='' \nAND timestamp BETWEEN {{.start_datetime}} AND {{.end_datetime}} \nGROUP BY (op_name, interval);\n\n-- available variables:\n-- \t{{.start_datetime}}\n-- \t{{.end_datetime}}\n\n-- required column alias:\n-- \tvalue\n-- \tinterval`,
 					query: `SELECT \n\ttoStartOfInterval(timestamp, INTERVAL 1 MINUTE) AS interval, \n\ttagMap['peer.service'] AS op_name, \n\ttoFloat64(avg(durationNano)) AS value \nFROM signoz_traces.distributed_signoz_index_v2  \nWHERE tagMap['peer.service']!='' \nAND timestamp BETWEEN {{.start_datetime}} AND {{.end_datetime}} \nGROUP BY (op_name, interval);\n\n-- available variables:\n-- \t{{.start_datetime}}\n-- \t{{.end_datetime}}\n\n-- required column alias:\n-- \tvalue\n-- \tinterval`,
 					legend: '',
 					disabled: false,
@@ -131,11 +135,10 @@ export const exceptionAlertDefaults: AlertDef = {
 					dataSource: DataSource.TRACES,
 				},
 			},
-			promQueries: {},
+			promQueries: { A: initialQueryPromQLData },
 			chQueries: {
 				A: {
 					name: 'A',
-					rawQuery: `SELECT \n\tcount() as value,\n\ttoStartOfInterval(timestamp, toIntervalMinute(1)) AS interval,\n\tserviceName\nFROM signoz_traces.distributed_signoz_error_index_v2\nWHERE exceptionType !='OSError'\nAND timestamp BETWEEN {{.start_datetime}} AND {{.end_datetime}}\nGROUP BY serviceName, interval;\n\n-- available variables:\n-- \t{{.start_datetime}}\n-- \t{{.end_datetime}}\n\n-- required column alias:\n-- \tvalue\n-- \tinterval`,
 					query: `SELECT \n\tcount() as value,\n\ttoStartOfInterval(timestamp, toIntervalMinute(1)) AS interval,\n\tserviceName\nFROM signoz_traces.distributed_signoz_error_index_v2\nWHERE exceptionType !='OSError'\nAND timestamp BETWEEN {{.start_datetime}} AND {{.end_datetime}}\nGROUP BY serviceName, interval;\n\n-- available variables:\n-- \t{{.start_datetime}}\n-- \t{{.end_datetime}}\n\n-- required column alias:\n-- \tvalue\n-- \tinterval`,
 					legend: '',
 					disabled: false,
@@ -153,4 +156,11 @@ export const exceptionAlertDefaults: AlertDef = {
 	},
 	annotations: defaultAnnotations,
 	evalWindow: defaultEvalWindow,
+};
+
+export const ALERTS_VALUES_MAP: Record<AlertTypes, AlertDef> = {
+	[AlertTypes.METRICS_BASED_ALERT]: alertDefaults,
+	[AlertTypes.LOGS_BASED_ALERT]: logAlertDefaults,
+	[AlertTypes.TRACES_BASED_ALERT]: traceAlertDefaults,
+	[AlertTypes.EXCEPTIONS_BASED_ALERT]: exceptionAlertDefaults,
 };

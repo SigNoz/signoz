@@ -1,8 +1,11 @@
 import {
+	getOperatorFromValue,
 	isExistsNotExistsOperator,
-	isInNotInOperator,
+	isInNInOperator,
 } from 'container/QueryBuilder/filters/QueryBuilderSearch/utils';
-import { useCallback, useEffect, useState } from 'react';
+// eslint-disable-next-line import/no-extraneous-dependencies
+import * as Papa from 'papaparse';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 
 type IUseTag = {
@@ -16,18 +19,30 @@ type IUseTag = {
  * A custom React hook for handling tags.
  * @param {string} key - A string value to identify tags.
  * @param {boolean} isValidTag - A boolean value to indicate whether the tag is valid.
- * @param {boolean} isFreeText - A boolean value to indicate whether free text is allowed.
  * @param {function} handleSearch - A callback function to handle search.
  * @returns {IUseTag} The return object containing handlers and tags.
  */
+
 export const useTag = (
 	key: string,
 	isValidTag: boolean,
-	isFreeText: boolean,
 	handleSearch: (value: string) => void,
 	query: IBuilderQuery,
+	setSearchKey: (value: string) => void,
 ): IUseTag => {
-	const [tags, setTags] = useState<string[]>([]);
+	const initTagsData = useMemo(
+		() =>
+			(query?.filters?.items || []).map((ele) => {
+				if (isInNInOperator(getOperatorFromValue(ele.op))) {
+					const csvString = Papa.unparse([ele.value]);
+					return `${ele.key?.key} ${getOperatorFromValue(ele.op)} ${csvString}`;
+				}
+				return `${ele.key?.key} ${getOperatorFromValue(ele.op)} ${ele.value}`;
+			}),
+		[query.filters],
+	);
+
+	const [tags, setTags] = useState<string[]>(initTagsData);
 
 	const updateTag = (value: string): void => {
 		const newTags = tags?.filter((item: string) => item !== value);
@@ -40,16 +55,13 @@ export const useTag = (
 	 */
 	const handleAddTag = useCallback(
 		(value: string): void => {
-			if (
-				(value && key && isValidTag) ||
-				isFreeText ||
-				isExistsNotExistsOperator(value)
-			) {
+			if ((value && key && isValidTag) || isExistsNotExistsOperator(value)) {
 				setTags((prevTags) => [...prevTags, value]);
 				handleSearch('');
+				setSearchKey('');
 			}
 		},
-		[key, isValidTag, isFreeText, handleSearch],
+		[key, isValidTag, handleSearch, setSearchKey],
 	);
 
 	/**
@@ -61,15 +73,8 @@ export const useTag = (
 	}, []);
 
 	useEffect(() => {
-		setTags(
-			(query?.tagFilters?.items || []).map((obj) =>
-				isInNotInOperator(obj.op)
-					? `${obj.key} ${obj.op} ${obj.value.join(',')}`
-					: `${obj.key} ${obj.op} ${obj.value.join(' ')}`,
-			),
-		);
-		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, []);
+		setTags(initTagsData);
+	}, [initTagsData]);
 
 	return { handleAddTag, handleClearTag, tags, updateTag };
 };

@@ -1,5 +1,5 @@
 import { Switch } from 'antd';
-import React, { useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { AuthDomain } from 'types/api/SAML/listDomain';
 
 import { isSSOConfigValid } from '../helpers';

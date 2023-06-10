@@ -3,6 +3,7 @@ package v3
 import (
 	"encoding/json"
 	"fmt"
+	"sort"
 	"strconv"
 	"time"
 
@@ -101,14 +102,35 @@ func (a AggregateOperator) Validate() error {
 
 // RequireAttribute returns true if the aggregate operator requires an attribute
 // to be specified.
-func (a AggregateOperator) RequireAttribute() bool {
-	switch a {
-	case AggregateOperatorNoOp,
-		AggregateOperatorCount,
-		AggregateOperatorCountDistinct:
-		return false
+func (a AggregateOperator) RequireAttribute(dataSource DataSource) bool {
+	switch dataSource {
+	case DataSourceMetrics:
+		switch a {
+		case AggregateOperatorNoOp:
+			return false
+		default:
+			return true
+		}
+	case DataSourceLogs:
+		switch a {
+		case AggregateOperatorNoOp,
+			AggregateOperatorCount,
+			AggregateOperatorRate:
+			return false
+		default:
+			return true
+		}
+	case DataSourceTraces:
+		switch a {
+		case AggregateOperatorNoOp,
+			AggregateOperatorCount,
+			AggregateOperatorRate:
+			return false
+		default:
+			return true
+		}
 	default:
-		return true
+		return false
 	}
 }
 
@@ -202,7 +224,6 @@ type FilterAttributeKeyRequest struct {
 	DataSource         DataSource        `json:"dataSource"`
 	AggregateOperator  AggregateOperator `json:"aggregateOperator"`
 	AggregateAttribute string            `json:"aggregateAttribute"`
-	TagType            TagType           `json:"tagType"`
 	SearchText         string            `json:"searchText"`
 	Limit              int               `json:"limit"`
 }
@@ -263,6 +284,10 @@ type AttributeKey struct {
 	IsColumn bool                 `json:"isColumn"`
 }
 
+func (a AttributeKey) CacheKey() string {
+	return fmt.Sprintf("%s-%s-%s-%t", a.Key, a.DataType, a.Type, a.IsColumn)
+}
+
 func (a AttributeKey) Validate() error {
 	switch a.DataType {
 	case AttributeKeyDataTypeBool, AttributeKeyDataTypeInt64, AttributeKeyDataTypeFloat64, AttributeKeyDataTypeString, AttributeKeyDataTypeUnspecified:
@@ -273,7 +298,7 @@ func (a AttributeKey) Validate() error {
 
 	if a.IsColumn {
 		switch a.Type {
-		case AttributeKeyTypeResource, AttributeKeyTypeTag:
+		case AttributeKeyTypeResource, AttributeKeyTypeTag, AttributeKeyTypeUnspecified:
 			break
 		default:
 			return fmt.Errorf("invalid attribute type: %s", a.Type)
@@ -299,12 +324,14 @@ type QueryRangeParamsV3 struct {
 	Step           int64                  `json:"step"`
 	CompositeQuery *CompositeQuery        `json:"compositeQuery"`
 	Variables      map[string]interface{} `json:"variables,omitempty"`
+	NoCache        bool                   `json:"noCache"`
 }
 
 type PromQuery struct {
 	Query    string `json:"query"`
 	Stats    string `json:"stats,omitempty"`
 	Disabled bool   `json:"disabled"`
+	Legend   string `json:"legend,omitempty"`
 }
 
 func (p *PromQuery) Validate() error {
@@ -322,6 +349,7 @@ func (p *PromQuery) Validate() error {
 type ClickHouseQuery struct {
 	Query    string `json:"query"`
 	Disabled bool   `json:"disabled"`
+	Legend   string `json:"legend,omitempty"`
 }
 
 func (c *ClickHouseQuery) Validate() error {
@@ -399,6 +427,7 @@ type BuilderQuery struct {
 	Expression         string            `json:"expression"`
 	Disabled           bool              `json:"disabled"`
 	Having             []Having          `json:"having,omitempty"`
+	Legend             string            `json:"legend,omitempty"`
 	Limit              uint64            `json:"limit"`
 	Offset             uint64            `json:"offset"`
 	PageSize           uint64            `json:"pageSize"`
@@ -424,7 +453,7 @@ func (b *BuilderQuery) Validate() error {
 		if err := b.AggregateOperator.Validate(); err != nil {
 			return fmt.Errorf("aggregate operator is invalid: %w", err)
 		}
-		if b.AggregateAttribute == (AttributeKey{}) && b.AggregateOperator.RequireAttribute() {
+		if b.AggregateAttribute == (AttributeKey{}) && b.AggregateOperator.RequireAttribute(b.DataSource) {
 			return fmt.Errorf("aggregate attribute is required")
 		}
 	}
@@ -511,15 +540,27 @@ type FilterItem struct {
 	Operator FilterOperator `json:"op"`
 }
 
+func (f *FilterItem) CacheKey() string {
+	return fmt.Sprintf("key:%s,op:%s,value:%v", f.Key.CacheKey(), f.Operator, f.Value)
+}
+
 type OrderBy struct {
-	ColumnName string `json:"columnName"`
-	Order      string `json:"order"`
+	ColumnName string               `json:"columnName"`
+	Order      string               `json:"order"`
+	Key        string               `json:"-"`
+	DataType   AttributeKeyDataType `json:"-"`
+	Type       AttributeKeyType     `json:"-"`
+	IsColumn   bool                 `json:"-"`
 }
 
 type Having struct {
 	ColumnName string      `json:"columnName"`
 	Operator   string      `json:"op"`
 	Value      interface{} `json:"value"`
+}
+
+func (h *Having) CacheKey() string {
+	return fmt.Sprintf("column:%s,op:%s,value:%v", h.ColumnName, h.Operator, h.Value)
 }
 
 type QueryRangeResponse struct {
@@ -538,6 +579,12 @@ type Series struct {
 	Points []Point           `json:"values"`
 }
 
+func (s *Series) SortPoints() {
+	sort.Slice(s.Points, func(i, j int) bool {
+		return s.Points[i].Timestamp < s.Points[j].Timestamp
+	})
+}
+
 type Row struct {
 	Timestamp time.Time              `json:"timestamp"`
 	Data      map[string]interface{} `json:"data"`
@@ -552,6 +599,21 @@ type Point struct {
 func (p *Point) MarshalJSON() ([]byte, error) {
 	v := strconv.FormatFloat(p.Value, 'f', -1, 64)
 	return json.Marshal(map[string]interface{}{"timestamp": p.Timestamp, "value": v})
+}
+
+// UnmarshalJSON implements json.Unmarshaler.
+func (p *Point) UnmarshalJSON(data []byte) error {
+	var v struct {
+		Timestamp int64  `json:"timestamp"`
+		Value     string `json:"value"`
+	}
+	if err := json.Unmarshal(data, &v); err != nil {
+		return err
+	}
+	p.Timestamp = v.Timestamp
+	var err error
+	p.Value, err = strconv.ParseFloat(v.Value, 64)
+	return err
 }
 
 // ExploreQuery is a query for the explore page

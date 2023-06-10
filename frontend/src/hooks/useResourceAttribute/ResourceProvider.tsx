@@ -2,7 +2,7 @@ import { useMachine } from '@xstate/react';
 import ROUTES from 'constants/routes';
 import { encode } from 'js-base64';
 import history from 'lib/history';
-import React, { useCallback, useMemo, useState } from 'react';
+import { ReactNode, useCallback, useMemo, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 
 import { whilelistedKeys } from './config';
@@ -182,7 +182,7 @@ function ResourceProvider({ children }: Props): JSX.Element {
 }
 
 interface Props {
-	children: React.ReactNode;
+	children: ReactNode;
 }
 
 export default ResourceProvider;

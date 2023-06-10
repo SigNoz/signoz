@@ -2,11 +2,23 @@
 import { AutoComplete, Spin } from 'antd';
 // ** Api
 import { getAggregateAttribute } from 'api/queryBuilder/getAggregateAttribute';
-import { initialAggregateAttribute } from 'constants/queryBuilder';
-import { getFilterObjectValue } from 'lib/newQueryBuilder/getFilterObjectValue';
+import {
+	baseAutoCompleteIdKeysOrder,
+	idDivider,
+	initialAutocompleteData,
+	QueryBuilderKeys,
+	selectValueDivider,
+} from 'constants/queryBuilder';
+import useDebounce from 'hooks/useDebounce';
+import { createIdFromObjectFields } from 'lib/createIdFromObjectFields';
 import { transformStringWithPrefix } from 'lib/query/transformStringWithPrefix';
-import React, { memo, useMemo, useState } from 'react';
+import { memo, useCallback, useMemo, useState } from 'react';
 import { useQuery } from 'react-query';
+import {
+	AutocompleteType,
+	BaseAutocompleteData,
+	DataType,
+} from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { DataSource } from 'types/common/queryBuilder';
 import { ExtendedSelectOption } from 'types/common/select';
 import { transformToUpperCase } from 'utils/transformToUpperCase';
@@ -19,57 +31,68 @@ export const AggregatorFilter = memo(function AggregatorFilter({
 	onChange,
 	query,
 }: AgregatorFilterProps): JSX.Element {
-	const [searchText, setSearchText] = useState<string>('');
-
-	const { data, isFetching } = useQuery(
+	const [optionsData, setOptionsData] = useState<ExtendedSelectOption[]>([]);
+	const debouncedValue = useDebounce(query.aggregateAttribute.key, 300);
+	const { isFetching } = useQuery(
 		[
-			'GET_AGGREGATE_ATTRIBUTE',
-			searchText,
+			QueryBuilderKeys.GET_AGGREGATE_ATTRIBUTE,
+			debouncedValue,
 			query.aggregateOperator,
 			query.dataSource,
 		],
 		async () =>
 			getAggregateAttribute({
-				searchText,
+				searchText: debouncedValue,
 				aggregateOperator: query.aggregateOperator,
 				dataSource: query.dataSource,
 			}),
-		{ enabled: !!query.aggregateOperator && !!query.dataSource },
+		{
+			enabled: !!query.aggregateOperator && !!query.dataSource,
+			onSuccess: (data) => {
+				const options: ExtendedSelectOption[] =
+					data?.payload?.attributeKeys?.map(({ id: _, ...item }) => ({
+						label: transformStringWithPrefix({
+							str: item.key,
+							prefix: item.type || '',
+							condition: !item.isColumn,
+						}),
+						value: `${item.key}${selectValueDivider}${createIdFromObjectFields(
+							item,
+							baseAutoCompleteIdKeysOrder,
+						)}`,
+						key: createIdFromObjectFields(item, baseAutoCompleteIdKeysOrder),
+					})) || [];
+
+				setOptionsData(options);
+			},
+		},
 	);
 
-	const handleSearchAttribute = (searchText: string): void => {
-		const { key } = getFilterObjectValue(searchText);
-		setSearchText(key);
-	};
+	const handleChangeAttribute = useCallback(
+		(
+			value: string,
+			option: ExtendedSelectOption | ExtendedSelectOption[],
+		): void => {
+			const currentOption = option as ExtendedSelectOption;
 
-	const optionsData: ExtendedSelectOption[] =
-		data?.payload?.attributeKeys?.map((item) => ({
-			label: transformStringWithPrefix({
-				str: item.key,
-				prefix: item.type || '',
-				condition: !item.isColumn,
-			}),
-			value: transformStringWithPrefix({
-				str: item.key,
-				prefix: item.type || '',
-				condition: !item.isColumn,
-			}),
-			key: transformStringWithPrefix({
-				str: item.key,
-				prefix: item.type || '',
-				condition: !item.isColumn,
-			}),
-		})) || [];
+			if (currentOption.key) {
+				const [key, dataType, type, isColumn] = currentOption.key.split(idDivider);
+				const attribute: BaseAutocompleteData = {
+					key,
+					dataType: dataType as DataType,
+					type: type as AutocompleteType,
+					isColumn: isColumn === 'true',
+				};
 
-	const handleChangeAttribute = (value: string): void => {
-		const { key, isColumn } = getFilterObjectValue(value);
-		const currentAttributeObj = data?.payload?.attributeKeys?.find(
-			(item) => item.key === key && isColumn === item.isColumn,
-		) || { ...initialAggregateAttribute, key };
+				onChange(attribute);
+			} else {
+				const attribute = { ...initialAutocompleteData, key: value };
 
-		setSearchText('');
-		onChange(currentAttributeObj);
-	};
+				onChange(attribute);
+			}
+		},
+		[onChange],
+	);
 
 	const value = useMemo(
 		() =>
@@ -88,12 +111,10 @@ export const AggregatorFilter = memo(function AggregatorFilter({
 
 	return (
 		<AutoComplete
-			showSearch
 			placeholder={placeholder}
 			style={selectStyle}
 			showArrow={false}
 			filterOption={false}
-			onSearch={handleSearchAttribute}
 			notFoundContent={isFetching ? <Spin size="small" /> : null}
 			options={optionsData}
 			value={value}

@@ -1884,14 +1884,18 @@ func (r *ClickHouseReader) GetTopOperations(ctx context.Context, queryParams *mo
 	if errStatus != nil {
 		return nil, errStatus
 	}
-	query += " GROUP BY name ORDER BY p99 DESC LIMIT 10"
+	query += " GROUP BY name ORDER BY p99 DESC"
+	if queryParams.Limit > 0 {
+		query += " LIMIT @limit"
+		args = append(args, clickhouse.Named("limit", queryParams.Limit))
+	}
 	err := r.db.Select(ctx, &topOperationsItems, query, args...)
 
 	zap.S().Debug(query)
 
 	if err != nil {
 		zap.S().Error("Error in processing sql query: ", err)
-		return nil, &model.ApiError{Typ: model.ErrorExec, Err: fmt.Errorf("Error in processing sql query")}
+		return nil, &model.ApiError{Typ: model.ErrorExec, Err: fmt.Errorf("error in processing sql query")}
 	}
 
 	if topOperationsItems == nil {
@@ -3889,10 +3893,9 @@ func (r *ClickHouseReader) GetLogAggregateAttributes(ctx context.Context, req *v
 	}
 	// add other attributes
 	for _, field := range constants.StaticFieldsLogsV3 {
-		if !stringAllowed && field.DataType == v3.AttributeKeyDataTypeString {
+		if (!stringAllowed && field.DataType == v3.AttributeKeyDataTypeString) || (v3.AttributeKey{} == field) {
 			continue
 		} else if len(req.SearchText) == 0 || strings.Contains(field.Key, req.SearchText) {
-			field.IsColumn = isColumn(statements[0].Statement, field.Key)
 			response.AttributeKeys = append(response.AttributeKeys, field)
 		}
 	}
@@ -3947,8 +3950,10 @@ func (r *ClickHouseReader) GetLogAttributeKeys(ctx context.Context, req *v3.Filt
 
 	// add other attributes
 	for _, f := range constants.StaticFieldsLogsV3 {
+		if (v3.AttributeKey{} == f) {
+			continue
+		}
 		if len(req.SearchText) == 0 || strings.Contains(f.Key, req.SearchText) {
-			f.IsColumn = isColumn(statements[0].Statement, f.Key)
 			response.AttributeKeys = append(response.AttributeKeys, f)
 		}
 	}
@@ -3987,7 +3992,7 @@ func (r *ClickHouseReader) GetLogAttributeValues(ctx context.Context, req *v3.Fi
 	searchText := fmt.Sprintf("%%%s%%", req.SearchText)
 
 	// check if the tagKey is a topLevelColumn
-	if _, ok := constants.LogsTopLevelColumnsV3[req.FilterAttributeKey]; ok {
+	if _, ok := constants.StaticFieldsLogsV3[req.FilterAttributeKey]; ok {
 		// query the column for the last 48 hours
 		filterValueColumnWhere := req.FilterAttributeKey
 		selectKey := req.FilterAttributeKey
@@ -4110,8 +4115,12 @@ func readRow(vars []interface{}, columnNames []string) ([]string, map[string]str
 				groupBy = append(groupBy, fmt.Sprintf("%v", reflect.ValueOf(v).Elem().Int()))
 				groupAttributes[colName] = fmt.Sprintf("%v", reflect.ValueOf(v).Elem().Int())
 			}
+		case *bool:
+			groupBy = append(groupBy, fmt.Sprintf("%v", *v))
+			groupAttributes[colName] = fmt.Sprintf("%v", *v)
+
 		default:
-			zap.S().Errorf("unsupported var type %v found in metric builder query result for column %s", v, colName)
+			zap.S().Errorf("unsupported var type %v found in query builder query result for column %s", v, colName)
 		}
 	}
 	return groupBy, groupAttributes, point
@@ -4208,15 +4217,15 @@ func (r *ClickHouseReader) GetListResultV3(ctx context.Context, query string) ([
 	var (
 		columnTypes = rows.ColumnTypes()
 		columnNames = rows.Columns()
-		vars        = make([]interface{}, len(columnTypes))
 	)
-	for i := range columnTypes {
-		vars[i] = reflect.New(columnTypes[i].ScanType()).Interface()
-	}
 
 	var rowList []*v3.Row
 
 	for rows.Next() {
+		var vars = make([]interface{}, len(columnTypes))
+		for i := range columnTypes {
+			vars[i] = reflect.New(columnTypes[i].ScanType()).Interface()
+		}
 		if err := rows.Scan(vars...); err != nil {
 			return nil, err
 		}

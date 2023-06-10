@@ -1,5 +1,5 @@
 import {
-	initialAggregateAttribute,
+	initialAutocompleteData,
 	initialQueryBuilderFormValues,
 	mapOfFilters,
 } from 'constants/queryBuilder';
@@ -14,14 +14,15 @@ import {
 	UseQueryOperations,
 } from 'types/common/operations.types';
 import { DataSource } from 'types/common/queryBuilder';
+import { SelectOption } from 'types/common/select';
 
 export const useQueryOperations: UseQueryOperations = ({ query, index }) => {
 	const {
 		handleSetQueryData,
-		removeEntityByIndex,
+		removeQueryBuilderEntityByIndex,
 		panelType,
 	} = useQueryBuilder();
-	const [operators, setOperators] = useState<string[]>([]);
+	const [operators, setOperators] = useState<SelectOption<string, string>[]>([]);
 	const [listOfAdditionalFilters, setListOfAdditionalFilters] = useState<
 		string[]
 	>([]);
@@ -42,11 +43,9 @@ export const useQueryOperations: UseQueryOperations = ({ query, index }) => {
 				...query,
 				aggregateOperator: value,
 				having: [],
-				orderBy: [],
 				limit: null,
-				tagFilters: { items: [], op: 'AND' },
 				...(shouldResetAggregateAttribute
-					? { aggregateAttribute: initialAggregateAttribute }
+					? { aggregateAttribute: initialAutocompleteData }
 					: {}),
 			};
 
@@ -91,7 +90,7 @@ export const useQueryOperations: UseQueryOperations = ({ query, index }) => {
 				...query,
 				...initCopyResult,
 				dataSource: nextSource,
-				aggregateOperator: newOperators[0],
+				aggregateOperator: newOperators[0].value,
 			};
 
 			setOperators(newOperators);
@@ -101,8 +100,8 @@ export const useQueryOperations: UseQueryOperations = ({ query, index }) => {
 	);
 
 	const handleDeleteQuery = useCallback(() => {
-		removeEntityByIndex('queryData', index);
-	}, [removeEntityByIndex, index]);
+		removeQueryBuilderEntityByIndex('queryData', index);
+	}, [removeQueryBuilderEntityByIndex, index]);
 
 	const handleChangeQueryData: HandleChangeQueryData = useCallback(
 		(key, value) => {

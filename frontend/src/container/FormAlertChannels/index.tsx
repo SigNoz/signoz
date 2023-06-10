@@ -15,7 +15,7 @@ import {
 } from 'container/CreateAlertChannels/config';
 import useFeatureFlags from 'hooks/useFeatureFlag';
 import history from 'lib/history';
-import React from 'react';
+import { Dispatch, ReactElement, SetStateAction } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import MsTeamsSettings from './Settings/MsTeams';
@@ -42,9 +42,13 @@ function FormAlertChannels({
 }: FormAlertChannelsProps): JSX.Element {
 	const { t } = useTranslation('channels');
 	const isUserOnEEPlan = useFeatureFlags(FeatureKeys.ENTERPRISE_PLAN);
-	const hasFeature = useFeatureFlags("ALERT_CHANNEL_".concat(type.toUpperCase()));
+	const hasFeature = useFeatureFlags(
+		'ALERT_CHANNEL_'.concat(
+			String(type).toUpperCase(),
+		) as keyof typeof FeatureKeys,
+	);
 
-	const renderSettings = (): React.ReactElement | null => {
+	const renderSettings = (): ReactElement | null => {
 		if (!hasFeature) {
 			// channel type is not available for users plan
 			return <UpgradePrompt />;
@@ -134,8 +138,8 @@ function FormAlertChannels({
 interface FormAlertChannelsProps {
 	formInstance: FormInstance;
 	type: ChannelType;
-	setSelectedConfig: React.Dispatch<
-		React.SetStateAction<Partial<SlackChannel & WebhookChannel & PagerChannel>>
+	setSelectedConfig: Dispatch<
+		SetStateAction<Partial<SlackChannel & WebhookChannel & PagerChannel>>
 	>;
 	onTypeChangeHandler: (value: ChannelType) => void;
 	onSaveHandler: (props: ChannelType) => void;

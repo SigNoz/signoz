@@ -1,5 +1,4 @@
 import { Button, Row } from 'antd';
-import React from 'react';
 
 interface SearchFieldsActionBarProps {
 	applyUpdate: VoidFunction;

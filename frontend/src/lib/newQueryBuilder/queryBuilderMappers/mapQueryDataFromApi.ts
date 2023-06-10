@@ -1,20 +1,35 @@
-import { initialQueryBuilderFormValues } from 'constants/queryBuilder';
-import { isQuery, QueryBuilderData } from 'types/common/queryBuilder';
-import { QueryDataResourse } from 'types/common/queryBuilderMappers.types';
+import { initialQuery } from 'constants/queryBuilder';
+import { ICompositeMetricQuery } from 'types/api/alerts/compositeQuery';
+import { Query } from 'types/api/queryBuilder/queryBuilderData';
+
+import { transformQueryBuilderDataModel } from '../transformQueryBuilderDataModel';
 
 export const mapQueryDataFromApi = (
-	data: QueryDataResourse,
-): QueryBuilderData => {
-	const queryData: QueryBuilderData['queryData'] = [];
-	const queryFormulas: QueryBuilderData['queryFormulas'] = [];
+	compositeQuery: ICompositeMetricQuery,
+): Query => {
+	const builder = compositeQuery.builderQueries
+		? transformQueryBuilderDataModel(compositeQuery.builderQueries)
+		: initialQuery.builder;
 
-	Object.entries(data).forEach(([, value]) => {
-		if (isQuery(value)) {
-			queryData.push({ ...initialQueryBuilderFormValues, ...value });
-		} else {
-			queryFormulas.push(value);
-		}
-	});
+	const promql = compositeQuery.promQueries
+		? Object.keys(compositeQuery.promQueries).map((key) => ({
+				...compositeQuery.promQueries[key],
+				name: key,
+		  }))
+		: initialQuery.promql;
 
-	return { queryData, queryFormulas };
+	const clickhouseSql = compositeQuery.chQueries
+		? Object.keys(compositeQuery.chQueries).map((key) => ({
+				...compositeQuery.chQueries[key],
+				name: key,
+				query: compositeQuery.chQueries[key].query,
+		  }))
+		: initialQuery.clickhouse_sql;
+
+	return {
+		builder,
+		promql,
+		clickhouse_sql: clickhouseSql,
+		queryType: compositeQuery.queryType,
+	};
 };

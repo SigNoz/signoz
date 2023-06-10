@@ -1,6 +1,6 @@
 import MEditor, { EditorProps } from '@monaco-editor/react';
 import { useIsDarkMode } from 'hooks/useDarkMode';
-import React, { useMemo } from 'react';
+import { useMemo } from 'react';
 
 function Editor({
 	value,

@@ -6,7 +6,7 @@ import dayjs from 'dayjs';
 import dompurify from 'dompurify';
 // utils
 import { FlatLogData } from 'lib/logs/flatLogData';
-import React, { useMemo } from 'react';
+import { useMemo } from 'react';
 import { IField } from 'types/api/logs/fields';
 // interfaces
 import { ILog } from 'types/api/logs/log';

@@ -7,7 +7,7 @@ import { NotificationProvider } from 'hooks/useNotifications';
 import { ResourceProvider } from 'hooks/useResourceAttribute';
 import history from 'lib/history';
 import { QueryBuilderProvider } from 'providers/QueryBuilder';
-import React, { Suspense } from 'react';
+import { Suspense } from 'react';
 import { Route, Router, Switch } from 'react-router-dom';
 
 import PrivateRoute from './Private';

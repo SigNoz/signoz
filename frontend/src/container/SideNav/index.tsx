@@ -1,10 +1,16 @@
 import { CheckCircleTwoTone, WarningOutlined } from '@ant-design/icons';
-import { Menu, Space, Typography } from 'antd';
+import { Menu, MenuProps } from 'antd';
 import getLocalStorageKey from 'api/browser/localstorage/get';
 import { IS_SIDEBAR_COLLAPSED } from 'constants/app';
 import ROUTES from 'constants/routes';
 import history from 'lib/history';
-import React, { useCallback, useLayoutEffect, useMemo, useState } from 'react';
+import {
+	ReactNode,
+	useCallback,
+	useLayoutEffect,
+	useMemo,
+	useState,
+} from 'react';
 import { useTranslation } from 'react-i18next';
 import { useDispatch, useSelector } from 'react-redux';
 import { useLocation } from 'react-router-dom';
@@ -21,7 +27,6 @@ import {
 	Sider,
 	SlackButton,
 	SlackMenuItemContainer,
-	Tags,
 	VersionContainer,
 } from './styles';
 
@@ -36,6 +41,7 @@ function SideNav(): JSX.Element {
 	>((state) => state.app);
 
 	const { pathname, search } = useLocation();
+
 	const { t } = useTranslation('');
 
 	const onCollapse = useCallback(() => {
@@ -49,9 +55,9 @@ function SideNav(): JSX.Element {
 	const onClickHandler = useCallback(
 		(to: string) => {
 			const params = new URLSearchParams(search);
-			const avialableParams = routeConfig[to];
+			const availableParams = routeConfig[to];
 
-			const queryString = getQueryString(avialableParams, params);
+			const queryString = getQueryString(availableParams || [], params);
 
 			if (pathname !== to) {
 				history.push(`${to}?${queryString.join('&')}`);
@@ -59,6 +65,10 @@ function SideNav(): JSX.Element {
 		},
 		[pathname, search],
 	);
+
+	const onClickMenuHandler: MenuProps['onClick'] = (e) => {
+		onClickHandler(e.key);
+	};
 
 	const onClickSlackHandler = (): void => {
 		window.open('https://signoz.io/slack', '_blank');
@@ -98,30 +108,17 @@ function SideNav(): JSX.Element {
 		},
 	];
 
-	const currentMenu = useMemo(
-		() => menus.find((menu) => pathname.startsWith(menu.to)),
-		[pathname],
-	);
+	const currentMenu = useMemo(() => {
+		const routeKeys = Object.keys(ROUTES) as (keyof typeof ROUTES)[];
+		const currentRouteKey = routeKeys.find((key) => {
+			const route = ROUTES[key];
+			return pathname === route;
+		});
 
-	const items = [
-		...menus.map(({ to, Icon, name, tags, children }) => ({
-			key: to,
-			icon: <Icon />,
-			onClick: (): void => onClickHandler(to),
-			label: (
-				<Space>
-					<div>{name}</div>
-					{tags &&
-						tags.map((e) => (
-							<Tags key={e}>
-								<Typography.Text>{e}</Typography.Text>
-							</Tags>
-						))}
-				</Space>
-			),
-			children,
-		})),
-	];
+		if (!currentRouteKey) return null;
+
+		return ROUTES[currentRouteKey];
+	}, [pathname]);
 
 	const sidebarItems = (props: SidebarItem, index: number): SidebarItem => ({
 		key: `${index}`,
@@ -135,10 +132,11 @@ function SideNav(): JSX.Element {
 			<Menu
 				theme="dark"
 				defaultSelectedKeys={[ROUTES.APPLICATION]}
-				selectedKeys={currentMenu ? [currentMenu?.to] : []}
+				selectedKeys={currentMenu ? [currentMenu] : []}
 				mode="vertical"
 				style={styles}
-				items={items}
+				items={menus}
+				onClick={onClickMenuHandler}
 			/>
 			{sidebar.map((props, index) => (
 				<SlackMenuItemContainer
@@ -149,7 +147,7 @@ function SideNav(): JSX.Element {
 					<Menu
 						theme="dark"
 						defaultSelectedKeys={[ROUTES.APPLICATION]}
-						selectedKeys={currentMenu ? [currentMenu?.to] : []}
+						selectedKeys={currentMenu ? [currentMenu] : []}
 						mode="inline"
 						style={styles}
 						items={[sidebarItems(props, index)]}
@@ -162,10 +160,10 @@ function SideNav(): JSX.Element {
 
 interface SidebarItem {
 	onClick: VoidFunction;
-	icon?: React.ReactNode;
-	text?: React.ReactNode;
+	icon?: ReactNode;
+	text?: ReactNode;
 	key: string;
-	label?: React.ReactNode;
+	label?: ReactNode;
 }
 
 export default SideNav;

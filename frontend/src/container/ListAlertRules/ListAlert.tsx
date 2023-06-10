@@ -4,12 +4,14 @@ import { Typography } from 'antd';
 import { ColumnsType } from 'antd/lib/table';
 import { ResizeTable } from 'components/ResizeTable';
 import TextToolTip from 'components/TextToolTip';
+import { COMPOSITE_QUERY } from 'constants/queryBuilderQueryNames';
 import ROUTES from 'constants/routes';
 import useComponentPermission from 'hooks/useComponentPermission';
 import useInterval from 'hooks/useInterval';
 import { useNotifications } from 'hooks/useNotifications';
 import history from 'lib/history';
-import React, { useCallback, useState } from 'react';
+import { mapQueryDataFromApi } from 'lib/newQueryBuilder/queryBuilderMappers/mapQueryDataFromApi';
+import { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { UseQueryResult } from 'react-query';
 import { useSelector } from 'react-redux';
@@ -26,7 +28,9 @@ import ToggleAlertState from './ToggleAlertState';
 function ListAlert({ allAlertRules, refetch }: ListAlertProps): JSX.Element {
 	const [data, setData] = useState<GettableAlert[]>(allAlertRules || []);
 	const { t } = useTranslation('common');
-	const { role } = useSelector<AppState, AppReducer>((state) => state.app);
+	const { role, featureResponse } = useSelector<AppState, AppReducer>(
+		(state) => state.app,
+	);
 	const [addNewAlert, action] = useComponentPermission(
 		['add_new_alert', 'action'],
 		role,
@@ -48,12 +52,36 @@ function ListAlert({ allAlertRules, refetch }: ListAlertProps): JSX.Element {
 		})();
 	}, 30000);
 
-	const onClickNewAlertHandler = useCallback(() => {
-		history.push(ROUTES.ALERTS_NEW);
-	}, []);
+	const handleError = useCallback((): void => {
+		notificationsApi.error({
+			message: t('something_went_wrong'),
+		});
+	}, [notificationsApi, t]);
 
-	const onEditHandler = (id: string): void => {
-		history.push(`${ROUTES.EDIT_ALERTS}?ruleId=${id}`);
+	const onClickNewAlertHandler = useCallback(() => {
+		featureResponse
+			.refetch()
+			.then(() => {
+				history.push(ROUTES.ALERTS_NEW);
+			})
+			.catch(handleError);
+	}, [featureResponse, handleError]);
+
+	const onEditHandler = (record: GettableAlert): void => {
+		featureResponse
+			.refetch()
+			.then(() => {
+				const compositeQuery = mapQueryDataFromApi(record.condition.compositeQuery);
+
+				history.push(
+					`${
+						ROUTES.EDIT_ALERTS
+					}?ruleId=${record.id.toString()}&${COMPOSITE_QUERY}=${JSON.stringify(
+						compositeQuery,
+					)}`,
+				);
+			})
+			.catch(handleError);
 	};
 
 	const columns: ColumnsType<GettableAlert> = [
@@ -72,13 +100,14 @@ function ListAlert({ allAlertRules, refetch }: ListAlertProps): JSX.Element {
 			dataIndex: 'alert',
 			width: 100,
 			key: 'name',
-			sorter: (a, b): number =>
-				(a.alert ? a.alert.charCodeAt(0) : 1000) -
-				(b.alert ? b.alert.charCodeAt(0) : 1000),
+			sorter: (alertA, alertB): number => {
+				if (alertA.alert && alertB.alert) {
+					return alertA.alert.localeCompare(alertB.alert);
+				}
+				return 0;
+			},
 			render: (value, record): JSX.Element => (
-				<Typography.Link
-					onClick={(): void => onEditHandler(record.id ? record.id.toString() : '')}
-				>
+				<Typography.Link onClick={(): void => onEditHandler(record)}>
 					{value}
 				</Typography.Link>
 			),
@@ -136,10 +165,7 @@ function ListAlert({ allAlertRules, refetch }: ListAlertProps): JSX.Element {
 				<>
 					<ToggleAlertState disabled={record.disabled} setData={setData} id={id} />
 
-					<ColumnButton
-						onClick={(): void => onEditHandler(id.toString())}
-						type="link"
-					>
+					<ColumnButton onClick={(): void => onEditHandler(record)} type="link">
 						Edit
 					</ColumnButton>
 

@@ -1,28 +1,50 @@
 // ** Helpers
 import { GRAPH_TYPES } from 'container/NewDashboard/ComponentsSlider';
 import { createNewBuilderItemName } from 'lib/newQueryBuilder/createNewBuilderItemName';
-import { LocalDataType } from 'types/api/queryBuilder/queryAutocompleteResponse';
+import {
+	BaseAutocompleteData,
+	LocalDataType,
+} from 'types/api/queryBuilder/queryAutocompleteResponse';
 import {
 	HavingForm,
 	IBuilderFormula,
 	IBuilderQuery,
+	IClickHouseQuery,
+	IPromQLQuery,
+	Query,
+	QueryState,
 } from 'types/api/queryBuilder/queryBuilderData';
+import { EQueryType } from 'types/common/dashboard';
 import {
 	BoolOperators,
 	DataSource,
-	LogsAggregatorOperator,
 	MetricAggregateOperator,
 	NumberOperators,
 	PanelTypeKeys,
 	QueryAdditionalFilter,
+	QueryBuilderData,
 	ReduceOperators,
 	StringOperators,
-	TracesAggregatorOperator,
 } from 'types/common/queryBuilder';
 import { SelectOption } from 'types/common/select';
+import { v4 as uuid } from 'uuid';
+
+import {
+	logsAggregateOperatorOptions,
+	metricAggregateOperatorOptions,
+	tracesAggregateOperatorOptions,
+} from './queryBuilderOperators';
 
 export const MAX_FORMULAS = 20;
 export const MAX_QUERIES = 26;
+
+export const idDivider = '--';
+export const selectValueDivider = '__';
+
+export const baseAutoCompleteIdKeysOrder: (keyof Omit<
+	BaseAutocompleteData,
+	'id'
+>)[] = ['key', 'dataType', 'type', 'isColumn'];
 
 export const formulasNames: string[] = Array.from(
 	Array(MAX_FORMULAS),
@@ -34,12 +56,13 @@ export const alphabet: string[] = alpha.map((str) => String.fromCharCode(str));
 export enum QueryBuilderKeys {
 	GET_AGGREGATE_ATTRIBUTE = 'GET_AGGREGATE_ATTRIBUTE',
 	GET_AGGREGATE_KEYS = 'GET_AGGREGATE_KEYS',
+	GET_ATTRIBUTE_KEY = 'GET_ATTRIBUTE_KEY',
 }
 
-export const mapOfOperators: Record<DataSource, string[]> = {
-	metrics: Object.values(MetricAggregateOperator),
-	logs: Object.values(LogsAggregatorOperator),
-	traces: Object.values(TracesAggregatorOperator),
+export const mapOfOperators = {
+	metrics: metricAggregateOperatorOptions,
+	logs: logsAggregateOperatorOptions,
+	traces: tracesAggregateOperatorOptions,
 };
 
 export const mapOfFilters: Record<DataSource, QueryAdditionalFilter[]> = {
@@ -76,7 +99,8 @@ export const initialHavingValues: HavingForm = {
 	value: [],
 };
 
-export const initialAggregateAttribute: IBuilderQuery['aggregateAttribute'] = {
+export const initialAutocompleteData: BaseAutocompleteData = {
+	id: uuid(),
 	dataType: null,
 	key: '',
 	isColumn: null,
@@ -87,8 +111,8 @@ export const initialQueryBuilderFormValues: IBuilderQuery = {
 	dataSource: DataSource.METRICS,
 	queryName: createNewBuilderItemName({ existNames: [], sourceNames: alphabet }),
 	aggregateOperator: MetricAggregateOperator.NOOP,
-	aggregateAttribute: initialAggregateAttribute,
-	tagFilters: { items: [], op: 'AND' },
+	aggregateAttribute: initialAutocompleteData,
+	filters: { items: [], op: 'AND' },
 	expression: createNewBuilderItemName({
 		existNames: [],
 		sourceNames: alphabet,
@@ -111,6 +135,41 @@ export const initialFormulaBuilderFormValues: IBuilderFormula = {
 	expression: '',
 	disabled: false,
 	legend: '',
+};
+
+export const initialQueryPromQLData: IPromQLQuery = {
+	name: createNewBuilderItemName({ existNames: [], sourceNames: alphabet }),
+	query: '',
+	legend: '',
+	disabled: false,
+};
+
+export const initialClickHouseData: IClickHouseQuery = {
+	name: createNewBuilderItemName({ existNames: [], sourceNames: alphabet }),
+	legend: '',
+	disabled: false,
+	query: '',
+};
+
+export const initialQueryBuilderData: QueryBuilderData = {
+	queryData: [initialQueryBuilderFormValues],
+	queryFormulas: [],
+};
+
+export const initialSingleQueryMap: Record<
+	EQueryType.PROM | EQueryType.CLICKHOUSE,
+	IClickHouseQuery | IPromQLQuery
+> = { clickhouse_sql: initialClickHouseData, promql: initialQueryPromQLData };
+
+export const initialQuery: QueryState = {
+	builder: initialQueryBuilderData,
+	clickhouse_sql: [initialClickHouseData],
+	promql: [initialQueryPromQLData],
+};
+
+export const initialQueryWithType: Query = {
+	...initialQuery,
+	queryType: EQueryType.QUERY_BUILDER,
 };
 
 export const operatorsByTypes: Record<LocalDataType, string[]> = {
@@ -166,7 +225,7 @@ export const QUERY_BUILDER_OPERATORS_BY_TYPES = {
 		OPERATORS.EXISTS,
 		OPERATORS.NOT_EXISTS,
 	],
-	number: [
+	int64: [
 		OPERATORS['='],
 		OPERATORS['!='],
 		OPERATORS.IN,
@@ -178,7 +237,19 @@ export const QUERY_BUILDER_OPERATORS_BY_TYPES = {
 		OPERATORS['<='],
 		OPERATORS['<'],
 	],
-	boolean: [
+	float64: [
+		OPERATORS['='],
+		OPERATORS['!='],
+		OPERATORS.IN,
+		OPERATORS.NIN,
+		OPERATORS.EXISTS,
+		OPERATORS.NOT_EXISTS,
+		OPERATORS['>='],
+		OPERATORS['>'],
+		OPERATORS['<='],
+		OPERATORS['<'],
+	],
+	bool: [
 		OPERATORS['='],
 		OPERATORS['!='],
 		OPERATORS.EXISTS,

@@ -1,6 +1,5 @@
 import { Typography } from 'antd';
 import { useIsDarkMode } from 'hooks/useDarkMode';
-import React from 'react';
 import { Link } from 'react-router-dom';
 
 import { DocCardContainer } from './styles';

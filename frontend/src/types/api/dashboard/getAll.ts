@@ -1,14 +1,7 @@
 import { GRAPH_TYPES } from 'container/NewDashboard/ComponentsSlider';
 import { timePreferenceType } from 'container/NewWidget/RightContainer/timeItems';
 import { Layout } from 'react-grid-layout';
-import {
-	EAggregateOperator,
-	EQueryType,
-	EReduceOperator,
-} from 'types/common/dashboard';
-import { QueryBuilderData } from 'types/common/queryBuilder';
-
-import { QueryData } from '../widgets/getQuery';
+import { Query } from 'types/api/queryBuilder/queryBuilderData';
 
 export type PayloadProps = Dashboard[];
 
@@ -70,16 +63,6 @@ export interface IBaseWidget {
 	opacity: string;
 	nullZeroValues: string;
 	timePreferance: timePreferenceType;
-	queryData: {
-		loading: boolean;
-		error: boolean;
-		errorMessage: string;
-		data: {
-			query?: string;
-			legend?: string;
-			queryData: QueryData[];
-		};
-	};
 	stepSize?: number;
 	yAxisUnit?: string;
 }
@@ -89,47 +72,6 @@ export interface Widgets extends IBaseWidget {
 
 export interface PromQLWidgets extends IBaseWidget {
 	query: { query: string; legend: string }[];
-}
-export interface Query {
-	queryType: EQueryType;
-	promql: IPromQLQuery[];
-	builder: QueryBuilderData;
-	clickhouse_sql: IClickHouseQuery[];
-}
-
-export interface IMetricsBuilderFormula {
-	expression: string;
-	disabled: boolean;
-	name: string;
-	legend: string;
-}
-export interface IMetricsBuilderQuery {
-	aggregateOperator: EAggregateOperator;
-	disabled: boolean;
-	name: string;
-	legend: string;
-	metricName: string | null;
-	groupBy?: string[];
-	tagFilters: IQueryBuilderTagFilters;
-	reduceTo?: EReduceOperator;
-}
-
-export interface IQueryBuilderTagFilters {
-	op: string;
-	items: IQueryBuilderTagFilterItems[] | [];
-}
-
-export interface IClickHouseQuery {
-	name: string;
-	rawQuery: string;
-	legend: string;
-	disabled: boolean;
-}
-export interface IPromQLQuery {
-	query: string;
-	legend: string;
-	disabled: boolean;
-	name: string;
 }
 
 export interface IQueryBuilderTagFilterItems {
