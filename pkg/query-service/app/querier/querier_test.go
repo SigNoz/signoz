@@ -492,7 +492,7 @@ func TestQueryRange(t *testing.T) {
 	}
 
 	for i, param := range params {
-		_, err, errByName := q.QueryRange(context.Background(), param, nil, nil)
+		_, err, errByName := q.QueryRange(context.Background(), param, nil)
 		if err != nil {
 			t.Errorf("expected no error, got %s", err)
 		}

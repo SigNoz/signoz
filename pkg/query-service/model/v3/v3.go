@@ -298,7 +298,7 @@ func (a AttributeKey) Validate() error {
 
 	if a.IsColumn {
 		switch a.Type {
-		case AttributeKeyTypeResource, AttributeKeyTypeTag:
+		case AttributeKeyTypeResource, AttributeKeyTypeTag, AttributeKeyTypeUnspecified:
 			break
 		default:
 			return fmt.Errorf("invalid attribute type: %s", a.Type)
@@ -545,8 +545,12 @@ func (f *FilterItem) CacheKey() string {
 }
 
 type OrderBy struct {
-	ColumnName string `json:"columnName"`
-	Order      string `json:"order"`
+	ColumnName string               `json:"columnName"`
+	Order      string               `json:"order"`
+	Key        string               `json:"-"`
+	DataType   AttributeKeyDataType `json:"-"`
+	Type       AttributeKeyType     `json:"-"`
+	IsColumn   bool                 `json:"-"`
 }
 
 type Having struct {

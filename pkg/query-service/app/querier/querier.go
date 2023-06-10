@@ -223,7 +223,7 @@ func mergeSerieses(cachedSeries, missedSeries []*v3.Series) []*v3.Series {
 	return mergedSeries
 }
 
-func (q *querier) runBuilderQueries(ctx context.Context, params *v3.QueryRangeParamsV3, fields map[string]v3.AttributeKey, keys map[string]v3.AttributeKey) ([]*v3.Series, error, map[string]string) {
+func (q *querier) runBuilderQueries(ctx context.Context, params *v3.QueryRangeParamsV3, keys map[string]v3.AttributeKey) ([]*v3.Series, error, map[string]string) {
 
 	cacheKeys := q.keyGenerator.GenerateKeys(params)
 
@@ -235,7 +235,7 @@ func (q *querier) runBuilderQueries(ctx context.Context, params *v3.QueryRangePa
 
 		// TODO: add support for logs and traces
 		if builderQuery.DataSource == v3.DataSourceLogs {
-			query, err := logsV3.PrepareLogsQuery(params.Start, params.End, params.CompositeQuery.QueryType, params.CompositeQuery.PanelType, builderQuery, fields)
+			query, err := logsV3.PrepareLogsQuery(params.Start, params.End, params.CompositeQuery.QueryType, params.CompositeQuery.PanelType, builderQuery)
 			if err != nil {
 				errQueriesByName[queryName] = err.Error()
 				continue
@@ -402,14 +402,14 @@ func (q *querier) runClickHouseQueries(ctx context.Context, params *v3.QueryRang
 	return seriesList, err, errQueriesByName
 }
 
-func (q *querier) QueryRange(ctx context.Context, params *v3.QueryRangeParamsV3, fields map[string]v3.AttributeKey, keys map[string]v3.AttributeKey) ([]*v3.Series, error, map[string]string) {
+func (q *querier) QueryRange(ctx context.Context, params *v3.QueryRangeParamsV3, keys map[string]v3.AttributeKey) ([]*v3.Series, error, map[string]string) {
 	var seriesList []*v3.Series
 	var err error
 	var errQueriesByName map[string]string
 	if params.CompositeQuery != nil {
 		switch params.CompositeQuery.QueryType {
 		case v3.QueryTypeBuilder:
-			seriesList, err, errQueriesByName = q.runBuilderQueries(ctx, params, fields, keys)
+			seriesList, err, errQueriesByName = q.runBuilderQueries(ctx, params, keys)
 		case v3.QueryTypePromQL:
 			seriesList, err, errQueriesByName = q.runPromQueries(ctx, params)
 		case v3.QueryTypeClickHouseSQL:
