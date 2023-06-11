@@ -2738,11 +2738,7 @@ func (aH *APIHandler) queryRangeV3(ctx context.Context, queryRangeParams *v3.Que
 	}
 
 	resp := v3.QueryRangeResponse{
-		Result: []*v3.Result{
-			{
-				Series: result,
-			},
-		},
+		Result: result,
 	}
 	aH.Respond(w, resp)
 }

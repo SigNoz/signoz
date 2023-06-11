@@ -7,6 +7,7 @@ import (
 	"math"
 	"sort"
 	"strings"
+	"sync"
 	"time"
 
 	logsV3 "go.signoz.io/signoz/pkg/query-service/app/logs/v3"
@@ -20,6 +21,13 @@ import (
 	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
 	"go.uber.org/zap"
 )
+
+type channelResult struct {
+	Series []*v3.Series
+	Err    error
+	Name   string
+	Query  string
+}
 
 type missInterval struct {
 	start, end int64 // in milliseconds
@@ -223,202 +231,336 @@ func mergeSerieses(cachedSeries, missedSeries []*v3.Series) []*v3.Series {
 	return mergedSeries
 }
 
-func (q *querier) runBuilderQueries(ctx context.Context, params *v3.QueryRangeParamsV3, keys map[string]v3.AttributeKey) ([]*v3.Series, error, map[string]string) {
+func (q *querier) runBuilderQueries(ctx context.Context, params *v3.QueryRangeParamsV3, keys map[string]v3.AttributeKey) ([]*v3.Result, error, map[string]string) {
 
 	cacheKeys := q.keyGenerator.GenerateKeys(params)
 
-	seriesList := make([]*v3.Series, 0)
-	errQueriesByName := make(map[string]string)
-	var err error
+	ch := make(chan channelResult, len(params.CompositeQuery.BuilderQueries))
+	var wg sync.WaitGroup
 
 	for queryName, builderQuery := range params.CompositeQuery.BuilderQueries {
+		wg.Add(1)
+		go func(queryName string, builderQuery *v3.BuilderQuery) {
+			defer wg.Done()
+			// TODO: add support for logs and traces
+			if builderQuery.DataSource == v3.DataSourceLogs {
+				query, err := logsV3.PrepareLogsQuery(params.Start, params.End, params.CompositeQuery.QueryType, params.CompositeQuery.PanelType, builderQuery)
+				if err != nil {
+					ch <- channelResult{
+						Err:    err,
+						Name:   queryName,
+						Query:  query,
+						Series: nil,
+					}
+					return
+				}
+				series, err := q.execClickHouseQuery(ctx, query)
+				if err != nil {
+					ch <- channelResult{
+						Err:    err,
+						Name:   queryName,
+						Query:  query,
+						Series: nil,
+					}
+					return
+				}
+				ch <- channelResult{
+					Err:    nil,
+					Name:   queryName,
+					Query:  query,
+					Series: series,
+				}
+				return
+			}
 
-		// TODO: add support for logs and traces
-		if builderQuery.DataSource == v3.DataSourceLogs {
-			query, err := logsV3.PrepareLogsQuery(params.Start, params.End, params.CompositeQuery.QueryType, params.CompositeQuery.PanelType, builderQuery)
-			if err != nil {
-				errQueriesByName[queryName] = err.Error()
-				continue
-			}
-			series, err := q.execClickHouseQuery(ctx, query)
-			if err != nil {
-				errQueriesByName[queryName] = err.Error()
-				continue
-			}
-			seriesList = append(seriesList, series...)
-			continue
-		}
+			if builderQuery.DataSource == v3.DataSourceTraces {
+				query, err := tracesV3.PrepareTracesQuery(params.Start, params.End, params.CompositeQuery.QueryType, params.CompositeQuery.PanelType, builderQuery, keys)
+				if err != nil {
+					ch <- channelResult{
+						Err:    err,
+						Name:   queryName,
+						Query:  query,
+						Series: nil,
+					}
+					return
+				}
 
-		if builderQuery.DataSource == v3.DataSourceTraces {
-			query, err := tracesV3.PrepareTracesQuery(params.Start, params.End, params.CompositeQuery.QueryType, params.CompositeQuery.PanelType, builderQuery, keys)
-			if err != nil {
-				errQueriesByName[queryName] = err.Error()
-				continue
+				series, err := q.execClickHouseQuery(ctx, query)
+				if err != nil {
+					ch <- channelResult{
+						Err:    err,
+						Name:   queryName,
+						Query:  query,
+						Series: nil,
+					}
+					return
+				}
+				ch <- channelResult{
+					Err:    nil,
+					Name:   queryName,
+					Query:  query,
+					Series: series,
+				}
+				return
 			}
 
-			series, err := q.execClickHouseQuery(ctx, query)
-			if err != nil {
-				errQueriesByName[queryName] = err.Error()
-				continue
+			cacheKey := cacheKeys[queryName]
+			var cachedData []byte
+			if !params.NoCache && q.cache != nil {
+				var retrieveStatus status.RetrieveStatus
+				data, retrieveStatus, err := q.cache.Retrieve(cacheKey, true)
+				zap.L().Debug("cache retrieve status", zap.String("status", retrieveStatus.String()))
+				if err == nil {
+					cachedData = data
+				}
 			}
-			seriesList = append(seriesList, series...)
-			continue
-		}
+			misses := q.findMissingTimeRanges(params.Start, params.End, params.Step, cachedData)
+			missedSeries := make([]*v3.Series, 0)
+			cachedSeries := make([]*v3.Series, 0)
+			for _, miss := range misses {
+				query, err := metricsV3.PrepareMetricQuery(
+					miss.start,
+					miss.end,
+					params.CompositeQuery.QueryType,
+					params.CompositeQuery.PanelType,
+					builderQuery,
+				)
+				if err != nil {
+					ch <- channelResult{
+						Err:    err,
+						Name:   queryName,
+						Query:  query,
+						Series: nil,
+					}
+					return
+				}
+				series, err := q.execClickHouseQuery(ctx, query)
+				if err != nil {
+					ch <- channelResult{
+						Err:    err,
+						Name:   queryName,
+						Query:  query,
+						Series: nil,
+					}
+					return
+				}
+				missedSeries = append(missedSeries, series...)
+			}
+			if err := json.Unmarshal(cachedData, &cachedSeries); err != nil && cachedData != nil {
+				zap.L().Error("error unmarshalling cached data", zap.Error(err))
+			}
+			mergedSeries := mergeSerieses(cachedSeries, missedSeries)
 
-		cacheKey := cacheKeys[queryName]
-		var cachedData []byte
-		if !params.NoCache {
-			var retrieveStatus status.RetrieveStatus
-			cachedData, retrieveStatus, err = q.cache.Retrieve(cacheKey, true)
-			zap.L().Debug("cache retrieve status", zap.String("status", retrieveStatus.String()))
-			if err != nil {
-				return nil, err, nil
+			ch <- channelResult{
+				Err:    nil,
+				Name:   queryName,
+				Series: mergedSeries,
 			}
-		}
-		misses := q.findMissingTimeRanges(params.Start, params.End, params.Step, cachedData)
-		missedSeries := make([]*v3.Series, 0)
-		cachedSeries := make([]*v3.Series, 0)
-		for _, miss := range misses {
-			query, err := metricsV3.PrepareMetricQuery(
-				miss.start,
-				miss.end,
-				params.CompositeQuery.QueryType,
-				params.CompositeQuery.PanelType,
-				builderQuery,
-			)
-			if err != nil {
-				errQueriesByName[queryName] = err.Error()
-				continue
+			// Cache the seriesList for future queries
+			if len(missedSeries) > 0 && !params.NoCache && q.cache != nil {
+				mergedSeriesData, err := json.Marshal(mergedSeries)
+				if err != nil {
+					zap.L().Error("error marshalling merged series", zap.Error(err))
+					return
+				}
+				err = q.cache.Store(cacheKey, mergedSeriesData, time.Hour)
+				if err != nil {
+					zap.L().Error("error storing merged series", zap.Error(err))
+					return
+				}
 			}
-			series, err := q.execClickHouseQuery(ctx, query)
-			if err != nil {
-				errQueriesByName[queryName] = err.Error()
-				continue
-			}
-			missedSeries = append(missedSeries, series...)
-		}
-		if err := json.Unmarshal(cachedData, &cachedSeries); err != nil && cachedData != nil {
-			errQueriesByName[queryName] = err.Error()
-			continue
-		}
-		mergedSeries := mergeSerieses(cachedSeries, missedSeries)
-
-		seriesList = append(seriesList, mergedSeries...)
-		// Cache the seriesList for future queries
-		if len(missedSeries) > 0 {
-			mergedSeriesData, err := json.Marshal(mergedSeries)
-			if err != nil {
-				errQueriesByName[queryName] = err.Error()
-				continue
-			}
-			err = q.cache.Store(cacheKey, mergedSeriesData, time.Hour)
-			if err != nil {
-				errQueriesByName[queryName] = err.Error()
-				continue
-			}
-		}
+		}(queryName, builderQuery)
 	}
-	if len(errQueriesByName) > 0 {
+
+	wg.Wait()
+	close(ch)
+
+	results := make([]*v3.Result, 0)
+	errQueriesByName := make(map[string]string)
+	var errs []error
+
+	for result := range ch {
+		if result.Err != nil {
+			errs = append(errs, result.Err)
+			errQueriesByName[result.Name] = result.Err.Error()
+			continue
+		}
+		results = append(results, &v3.Result{
+			QueryName: result.Name,
+			Series:    result.Series,
+		})
+	}
+
+	var err error
+	if len(errs) > 0 {
 		err = fmt.Errorf("error in builder queries")
 	}
-	return seriesList, err, errQueriesByName
+
+	return results, err, errQueriesByName
 }
 
-func (q *querier) runPromQueries(ctx context.Context, params *v3.QueryRangeParamsV3) ([]*v3.Series, error, map[string]string) {
-	seriesList := make([]*v3.Series, 0)
-	errQueriesByName := make(map[string]string)
-	var err error
-	for queryName, promQuery := range params.CompositeQuery.PromQueries {
-		cacheKey := q.keyGenerator.GenerateKeys(params)[queryName]
-		var cachedData []byte
-		var retrieveStatus status.RetrieveStatus
-		if !params.NoCache {
-			cachedData, retrieveStatus, err = q.cache.Retrieve(cacheKey, true)
-			zap.L().Debug("cache retrieve status", zap.String("status", retrieveStatus.String()))
-		}
-		if err != nil {
-			errQueriesByName[queryName] = err.Error()
-			continue
-		}
-		misses := q.findMissingTimeRanges(params.Start, params.End, params.Step, cachedData)
-		missedSeries := make([]*v3.Series, 0)
-		cachedSeries := make([]*v3.Series, 0)
-		for _, miss := range misses {
-			query := metricsV3.BuildPromQuery(
-				promQuery,
-				params.Step,
-				miss.start,
-				miss.end,
-			)
-			series, err := q.execPromQuery(ctx, query)
-			if err != nil {
-				errQueriesByName[queryName] = err.Error()
-				continue
-			}
-			missedSeries = append(missedSeries, series...)
-		}
-		if err := json.Unmarshal(cachedData, &cachedSeries); err != nil && cachedData != nil {
-			errQueriesByName[queryName] = err.Error()
-			continue
-		}
-		mergedSeries := mergeSerieses(cachedSeries, missedSeries)
+func (q *querier) runPromQueries(ctx context.Context, params *v3.QueryRangeParamsV3) ([]*v3.Result, error, map[string]string) {
+	ch := make(chan channelResult, len(params.CompositeQuery.ClickHouseQueries))
+	var wg sync.WaitGroup
 
-		seriesList = append(seriesList, mergedSeries...)
-		// Cache the seriesList for future queries
-		if len(missedSeries) > 0 {
-			mergedSeriesData, err := json.Marshal(mergedSeries)
-			if err != nil {
-				errQueriesByName[queryName] = err.Error()
-				continue
+	for queryName, promQuery := range params.CompositeQuery.PromQueries {
+		wg.Add(1)
+		go func(queryName string, promQuery *v3.PromQuery) {
+			defer wg.Done()
+			cacheKey := q.keyGenerator.GenerateKeys(params)[queryName]
+			var cachedData []byte
+			if !params.NoCache && q.cache != nil {
+				data, retrieveStatus, err := q.cache.Retrieve(cacheKey, true)
+				zap.L().Debug("cache retrieve status", zap.String("status", retrieveStatus.String()))
+				if err == nil {
+					cachedData = data
+				}
 			}
-			err = q.cache.Store(cacheKey, mergedSeriesData, time.Hour)
-			if err != nil {
-				errQueriesByName[queryName] = err.Error()
-				continue
+			misses := q.findMissingTimeRanges(params.Start, params.End, params.Step, cachedData)
+			missedSeries := make([]*v3.Series, 0)
+			cachedSeries := make([]*v3.Series, 0)
+			for _, miss := range misses {
+				query := metricsV3.BuildPromQuery(
+					promQuery,
+					params.Step,
+					miss.start,
+					miss.end,
+				)
+				series, err := q.execPromQuery(ctx, query)
+				if err != nil {
+					ch <- channelResult{
+						Err:    err,
+						Name:   queryName,
+						Query:  query.Query,
+						Series: nil,
+					}
+					return
+				}
+				missedSeries = append(missedSeries, series...)
 			}
-		}
+			if err := json.Unmarshal(cachedData, &cachedSeries); err != nil && cachedData != nil {
+				zap.L().Error("error unmarshalling cached data", zap.Error(err))
+			}
+			mergedSeries := mergeSerieses(cachedSeries, missedSeries)
+
+			ch <- channelResult{
+				Err:    nil,
+				Name:   queryName,
+				Query:  promQuery.Query,
+				Series: mergedSeries,
+			}
+
+			// Cache the seriesList for future queries
+			if len(missedSeries) > 0 && !params.NoCache && q.cache != nil {
+				mergedSeriesData, err := json.Marshal(mergedSeries)
+				if err != nil {
+					zap.L().Error("error marshalling merged series", zap.Error(err))
+					return
+				}
+				err = q.cache.Store(cacheKey, mergedSeriesData, time.Hour)
+				if err != nil {
+					zap.L().Error("error storing merged series", zap.Error(err))
+					return
+				}
+			}
+		}(queryName, promQuery)
 	}
-	if len(errQueriesByName) > 0 {
+	wg.Wait()
+	close(ch)
+
+	results := make([]*v3.Result, 0)
+	errQueriesByName := make(map[string]string)
+	var errs []error
+
+	for result := range ch {
+		if result.Err != nil {
+			errs = append(errs, result.Err)
+			errQueriesByName[result.Name] = result.Err.Error()
+			continue
+		}
+		results = append(results, &v3.Result{
+			QueryName: result.Name,
+			Series:    result.Series,
+		})
+	}
+
+	var err error
+	if len(errs) > 0 {
 		err = fmt.Errorf("error in prom queries")
 	}
-	return seriesList, err, errQueriesByName
+
+	return results, err, errQueriesByName
 }
 
-func (q *querier) runClickHouseQueries(ctx context.Context, params *v3.QueryRangeParamsV3) ([]*v3.Series, error, map[string]string) {
-	seriesList := make([]*v3.Series, 0)
-	errQueriesByName := make(map[string]string)
-	var err error
+func (q *querier) runClickHouseQueries(ctx context.Context, params *v3.QueryRangeParamsV3) ([]*v3.Result, error, map[string]string) {
+
+	ch := make(chan channelResult, len(params.CompositeQuery.ClickHouseQueries))
+	var wg sync.WaitGroup
 	for queryName, clickHouseQuery := range params.CompositeQuery.ClickHouseQueries {
-		series, err := q.execClickHouseQuery(ctx, clickHouseQuery.Query)
-		if err != nil {
-			errQueriesByName[queryName] = err.Error()
+		wg.Add(1)
+		go func(queryName string, clickHouseQuery *v3.ClickHouseQuery) {
+			defer wg.Done()
+			series, err := q.execClickHouseQuery(ctx, clickHouseQuery.Query)
+			if err != nil {
+				ch <- channelResult{
+					Err:    err,
+					Name:   queryName,
+					Query:  clickHouseQuery.Query,
+					Series: nil,
+				}
+				return
+			}
+			ch <- channelResult{
+				Err:    nil,
+				Name:   queryName,
+				Query:  clickHouseQuery.Query,
+				Series: series,
+			}
+		}(queryName, clickHouseQuery)
+	}
+	wg.Wait()
+	close(ch)
+
+	results := make([]*v3.Result, 0)
+	errQueriesByName := make(map[string]string)
+	var errs []error
+
+	for result := range ch {
+		if result.Err != nil {
+			errs = append(errs, result.Err)
+			errQueriesByName[result.Name] = result.Err.Error()
 			continue
 		}
-		seriesList = append(seriesList, series...)
+		results = append(results, &v3.Result{
+			QueryName: result.Name,
+			Series:    result.Series,
+		})
 	}
-	if len(errQueriesByName) > 0 {
+
+	var err error
+	if len(errs) > 0 {
 		err = fmt.Errorf("error in clickhouse queries")
 	}
-	return seriesList, err, errQueriesByName
+	return results, err, errQueriesByName
 }
 
-func (q *querier) QueryRange(ctx context.Context, params *v3.QueryRangeParamsV3, keys map[string]v3.AttributeKey) ([]*v3.Series, error, map[string]string) {
-	var seriesList []*v3.Series
+func (q *querier) QueryRange(ctx context.Context, params *v3.QueryRangeParamsV3, keys map[string]v3.AttributeKey) ([]*v3.Result, error, map[string]string) {
+	var results []*v3.Result
 	var err error
 	var errQueriesByName map[string]string
 	if params.CompositeQuery != nil {
 		switch params.CompositeQuery.QueryType {
 		case v3.QueryTypeBuilder:
-			seriesList, err, errQueriesByName = q.runBuilderQueries(ctx, params, keys)
+			results, err, errQueriesByName = q.runBuilderQueries(ctx, params, keys)
 		case v3.QueryTypePromQL:
-			seriesList, err, errQueriesByName = q.runPromQueries(ctx, params)
+			results, err, errQueriesByName = q.runPromQueries(ctx, params)
 		case v3.QueryTypeClickHouseSQL:
-			seriesList, err, errQueriesByName = q.runClickHouseQueries(ctx, params)
+			results, err, errQueriesByName = q.runClickHouseQueries(ctx, params)
 		default:
 			err = fmt.Errorf("invalid query type")
 		}
 	}
-	return seriesList, err, errQueriesByName
+	return results, err, errQueriesByName
 }
 
 func (q *querier) QueriesExecuted() []string {
