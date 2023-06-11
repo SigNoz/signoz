@@ -211,12 +211,22 @@ func expressionToKey(expression *govaluate.EvaluableExpression, keys map[string]
 	return formula.ExpressionString()
 }
 
+func isMetricExpression(expression *govaluate.EvaluableExpression, params *v3.QueryRangeParamsV3) bool {
+	variables := unique(expression.Vars())
+	for _, variable := range variables {
+		if params.CompositeQuery.BuilderQueries[variable].DataSource != v3.DataSourceMetrics {
+			return false
+		}
+	}
+	return true
+}
+
 func (c *cacheKeyGenerator) GenerateKeys(params *v3.QueryRangeParamsV3) map[string]string {
 	keys := make(map[string]string)
 
 	// Build keys for each builder query
 	for queryName, query := range params.CompositeQuery.BuilderQueries {
-		if query.Expression == queryName {
+		if query.Expression == queryName && query.DataSource == v3.DataSourceMetrics {
 			var parts []string
 
 			// We need to build uniqe cache query for BuilderQuery
@@ -256,6 +266,10 @@ func (c *cacheKeyGenerator) GenerateKeys(params *v3.QueryRangeParamsV3) map[stri
 	for _, query := range params.CompositeQuery.BuilderQueries {
 		if query.Expression != query.QueryName {
 			expression, _ := govaluate.NewEvaluableExpressionWithFunctions(query.Expression, EvalFuncs)
+
+			if !isMetricExpression(expression, params) {
+				continue
+			}
 
 			expressionCacheKey := expressionToKey(expression, keys)
 			keys[query.QueryName] = expressionCacheKey
