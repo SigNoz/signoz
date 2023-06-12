@@ -84,9 +84,8 @@ function LabelSelect({
 		handleBlur();
 	}, [handleBlur]);
 
-	const handleLabelChange = (e: ChangeEvent<HTMLInputElement>): void => {
-		const processedCurrentVal = e.target?.value.replace(':', '');
-		setCurrentVal(processedCurrentVal);
+	const handleLabelChange = (event: ChangeEvent<HTMLInputElement>): void => {
+		setCurrentVal(event.target?.value.replace(':', ''));
 	};
 
 	const handleClose = (key: string): void => {
