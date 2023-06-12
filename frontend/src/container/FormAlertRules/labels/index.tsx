@@ -84,8 +84,8 @@ function LabelSelect({
 		handleBlur();
 	}, [handleBlur]);
 
-	const handleChange = (e: ChangeEvent<HTMLInputElement>): void => {
-		setCurrentVal(e.target?.value);
+	const handleLabelChange = (event: ChangeEvent<HTMLInputElement>): void => {
+		setCurrentVal(event.target?.value.replace(':', ''));
 	};
 
 	const handleClose = (key: string): void => {
@@ -133,9 +133,9 @@ function LabelSelect({
 			<div style={{ display: 'flex', width: '100%' }}>
 				<Input
 					placeholder={renderPlaceholder()}
-					onChange={handleChange}
+					onChange={handleLabelChange}
 					onKeyUp={(e): void => {
-						if (e.key === 'Enter' || e.code === 'Enter') {
+						if (e.key === 'Enter' || e.code === 'Enter' || e.key === ':') {
 							send('NEXT');
 						}
 					}}
