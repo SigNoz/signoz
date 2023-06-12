@@ -398,6 +398,15 @@ var generateSQLQueryTestCases = []struct {
 		},
 		SqlFilter: "( timestamp >= '1657689292000' and timestamp <= '1657689294000' ) and ( has(attributes_int64_key, 'field1') and NOT has(attributes_double64_key, 'Field2') and Field2 > 10 ) ",
 	},
+	{
+		Name: "Check exists and not exists on top level keys",
+		Filter: model.LogsFilterParams{
+			Query:          "trace_id exists and span_id nexists and trace_flags exists and severity_number nexists",
+			TimestampStart: uint64(1657689292000),
+			TimestampEnd:   uint64(1657689294000),
+		},
+		SqlFilter: "( timestamp >= '1657689292000' and timestamp <= '1657689294000' ) and ( trace_id != '' and span_id = '' and trace_flags != 0 and severity_number = 0) ",
+	},
 }
 
 func TestGenerateSQLQuery(t *testing.T) {

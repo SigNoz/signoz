@@ -37,7 +37,7 @@ const (
 )
 
 var tokenRegex, _ = regexp.Compile(`(?i)(and( )*?|or( )*?)?(([\w.-]+( )+(in|nin)( )+\([^(]+\))|([\w.]+( )+(gt|lt|gte|lte)( )+(')?[\S]+(')?)|([\w.]+( )+(contains|ncontains))( )+[^\\]?'(.*?[^\\])'|([\w.]+( )+(exists|nexists)( )?))`)
-var operatorRegex, _ = regexp.Compile(`(?i)(?: )(in|nin|gt|lt|gte|lte|contains|ncontains|exists|nexists)(?: )`)
+var operatorRegex, _ = regexp.Compile(`(?i)(?: )(in|nin|gte|lte|gt|lt|contains|ncontains|exists|nexists)(?: )?`)
 
 func ParseLogFilterParams(r *http.Request) (*model.LogsFilterParams, error) {
 	res := model.LogsFilterParams{
@@ -261,17 +261,36 @@ func replaceFieldInToken(queryToken string, selectedFieldsLookup map[string]mode
 	lowerColName := strings.ToLower(*col)
 
 	if opLower == "exists" || opLower == "nexists" {
-		// creating the query token here as we have the metadata
-		field := model.LogField{}
 		var result string
-		if sfield, ok := selectedFieldsLookup[sqlColName]; ok {
-			field = sfield
-		} else if ifield, ok := interestingFieldLookup[sqlColName]; ok {
-			field = ifield
+
+		// handle static fields which are columns, timestamp and id is not required but added them regardless
+		defaultValue := ""
+		if lowerColName == "trace_id" || lowerColName == "span_id" || lowerColName == "severity_text" || lowerColName == "id" {
+			defaultValue = "''"
 		}
-		result = fmt.Sprintf("has(%s_%s_key, '%s')", field.Type, strings.ToLower(field.DataType), field.Name)
-		if opLower == "nexists" {
-			result = "NOT " + result
+		if lowerColName == "trace_flags" || lowerColName == "severity_number" || lowerColName == "timestamp" {
+			defaultValue = "0"
+		}
+
+		if defaultValue != "" {
+			if opLower == "exists" {
+				result = fmt.Sprintf("%s != %s", sqlColName, defaultValue)
+			} else {
+				result = fmt.Sprintf("%s = %s", sqlColName, defaultValue)
+			}
+		} else {
+			// creating the query token here as we have the metadata
+			field := model.LogField{}
+
+			if sfield, ok := selectedFieldsLookup[sqlColName]; ok {
+				field = sfield
+			} else if ifield, ok := interestingFieldLookup[sqlColName]; ok {
+				field = ifield
+			}
+			result = fmt.Sprintf("has(%s_%s_key, '%s')", field.Type, strings.ToLower(field.DataType), field.Name)
+			if opLower == "nexists" {
+				result = "NOT " + result
+			}
 		}
 		return strings.Replace(queryToken, sqlColName+" "+op, result, 1), nil
 	}
