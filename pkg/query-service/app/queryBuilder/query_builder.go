@@ -120,7 +120,7 @@ func expressionToQuery(qp *v3.QueryRangeParamsV3, varToQuery map[string]string, 
 			formulaSubQuery = strings.TrimSuffix(formulaSubQuery, " AND ")
 		}
 		if idx < len(variables)-1 {
-			formulaSubQuery += " GLOBAL INNER JOIN"
+			formulaSubQuery += " INNER JOIN"
 		}
 		prevVar = variable
 	}

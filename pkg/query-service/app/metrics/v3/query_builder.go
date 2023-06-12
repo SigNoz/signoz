@@ -117,7 +117,7 @@ func buildMetricsTimeSeriesFilterQuery(fs *v3.FilterSet, groupTags []v3.Attribut
 		}
 	}
 
-	filterSubQuery := fmt.Sprintf("SELECT %s fingerprint FROM %s.%s WHERE %s", selectLabels, constants.SIGNOZ_METRIC_DBNAME, constants.SIGNOZ_TIMESERIES_TABLENAME, queryString)
+	filterSubQuery := fmt.Sprintf("SELECT %s fingerprint FROM %s.%s WHERE %s", selectLabels, constants.SIGNOZ_METRIC_DBNAME, constants.SIGNOZ_TIMESERIES_LOCAL_TABLENAME, queryString)
 
 	return filterSubQuery, nil
 }
@@ -166,7 +166,7 @@ func buildMetricQuery(start, end, step int64, mq *v3.BuilderQuery, tableName str
 			" toStartOfInterval(toDateTime(intDiv(timestamp_ms, 1000)), INTERVAL %d SECOND) as ts," +
 			" %s as value" +
 			" FROM " + constants.SIGNOZ_METRIC_DBNAME + "." + constants.SIGNOZ_SAMPLES_TABLENAME +
-			" GLOBAL INNER JOIN" +
+			" INNER JOIN" +
 			" (%s) as filtered_time_series" +
 			" USING fingerprint" +
 			" WHERE " + samplesTableTimeFilter +
@@ -280,7 +280,7 @@ func buildMetricQuery(start, end, step int64, mq *v3.BuilderQuery, tableName str
 				" toStartOfInterval(toDateTime(intDiv(timestamp_ms, 1000)), INTERVAL %d SECOND) as ts," +
 				" any(value) as value" +
 				" FROM " + constants.SIGNOZ_METRIC_DBNAME + "." + constants.SIGNOZ_SAMPLES_TABLENAME +
-				" GLOBAL INNER JOIN" +
+				" INNER JOIN" +
 				" (%s) as filtered_time_series" +
 				" USING fingerprint" +
 				" WHERE " + samplesTableTimeFilter +
@@ -392,7 +392,7 @@ func reduceQuery(query string, reduceTo v3.ReduceToOperator, aggregateOperator v
 }
 
 func PrepareMetricQuery(start, end int64, queryType v3.QueryType, panelType v3.PanelType, mq *v3.BuilderQuery) (string, error) {
-	query, err := buildMetricQuery(start, end, mq.StepInterval, mq, constants.SIGNOZ_TIMESERIES_TABLENAME)
+	query, err := buildMetricQuery(start, end, mq.StepInterval, mq, constants.SIGNOZ_TIMESERIES_LOCAL_TABLENAME)
 	if err != nil {
 		return "", err
 	}
