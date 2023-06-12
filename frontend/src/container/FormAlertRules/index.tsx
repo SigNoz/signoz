@@ -162,7 +162,7 @@ function FormAlertRules({
 		}
 
 		currentQuery.clickhouse_sql.forEach((item) => {
-			if (item.rawQuery === '') {
+			if (item.query === '') {
 				notifications.error({
 					message: 'Error',
 					description: t('chquery_required'),
@@ -416,7 +416,7 @@ function FormAlertRules({
 		<>
 			{Element}
 			<PanelContainer>
-				<StyledLeftContainer flex="5 1 600px">
+				<StyledLeftContainer flex="5 1 600px" md={18}>
 					<MainFormContainer
 						initialValues={initialValue}
 						layout="vertical"
