@@ -3879,7 +3879,7 @@ func (r *ClickHouseReader) GetLogAggregateAttributes(ctx context.Context, req *v
 	}
 	// add other attributes
 	for _, field := range constants.StaticFieldsLogsV3 {
-		if !stringAllowed && field.DataType == v3.AttributeKeyDataTypeString && (v3.AttributeKey{} == field) {
+		if (!stringAllowed && field.DataType == v3.AttributeKeyDataTypeString) || (v3.AttributeKey{} == field) {
 			continue
 		} else if len(req.SearchText) == 0 || strings.Contains(field.Key, req.SearchText) {
 			response.AttributeKeys = append(response.AttributeKeys, field)
@@ -4203,15 +4203,15 @@ func (r *ClickHouseReader) GetListResultV3(ctx context.Context, query string) ([
 	var (
 		columnTypes = rows.ColumnTypes()
 		columnNames = rows.Columns()
-		vars        = make([]interface{}, len(columnTypes))
 	)
-	for i := range columnTypes {
-		vars[i] = reflect.New(columnTypes[i].ScanType()).Interface()
-	}
 
 	var rowList []*v3.Row
 
 	for rows.Next() {
+		var vars = make([]interface{}, len(columnTypes))
+		for i := range columnTypes {
+			vars[i] = reflect.New(columnTypes[i].ScanType()).Interface()
+		}
 		if err := rows.Scan(vars...); err != nil {
 			return nil, err
 		}

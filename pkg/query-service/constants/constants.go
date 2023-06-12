@@ -303,3 +303,5 @@ var StaticFieldsLogsV3 = map[string]v3.AttributeKey{
 }
 
 const SigNozOrderByValue = "#SIGNOZ_VALUE"
+
+const TIMESTAMP = "timestamp"
