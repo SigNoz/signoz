@@ -1,8 +1,8 @@
 export const getQueryString = (
-	avialableParams: string[],
+	availableParams: string[],
 	params: URLSearchParams,
 ): string[] =>
-	avialableParams.map((param) => {
+	availableParams.map((param) => {
 		if (params.has(param)) {
 			return `${param}=${params.get(param)}`;
 		}

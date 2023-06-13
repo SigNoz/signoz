@@ -3,8 +3,10 @@ package v3
 import (
 	"fmt"
 	"strings"
+	"time"
 
 	"go.signoz.io/signoz/pkg/query-service/constants"
+	"go.signoz.io/signoz/pkg/query-service/model"
 	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
 	"go.signoz.io/signoz/pkg/query-service/utils"
 )
@@ -402,4 +404,13 @@ func PrepareMetricQuery(start, end int64, queryType v3.QueryType, panelType v3.P
 		query, err = reduceQuery(query, mq.ReduceTo, mq.AggregateOperator)
 	}
 	return query, err
+}
+
+func BuildPromQuery(promQuery *v3.PromQuery, step, start, end int64) *model.QueryRangeParams {
+	return &model.QueryRangeParams{
+		Query: promQuery.Query,
+		Start: time.UnixMilli(start),
+		End:   time.UnixMilli(end),
+		Step:  time.Duration(step * int64(time.Second)),
+	}
 }
