@@ -317,9 +317,7 @@ function FormAlertRules({
 			title: t('confirm_save_title'),
 			centered: true,
 			content,
-			onOk() {
-				saveRule();
-			},
+			onOk: saveRule,
 		});
 	}, [t, saveRule, currentQuery]);
 
@@ -396,10 +394,7 @@ function FormAlertRules({
 
 	const isNewRule = ruleId === 0;
 
-	const isAlertNameMissing = useMemo(
-		() => !alertDef.alert || alertDef.alert === '',
-		[alertDef.alert],
-	);
+	const isAlertNameMissing = !formInstance.getFieldValue('alert');
 
 	const isAlertAvialableToSave =
 		isAlertAvialable &&
