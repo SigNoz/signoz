@@ -54,7 +54,7 @@ build-push-frontend:
 	@echo "--> Building and pushing frontend docker image"
 	@echo "------------------"
 	@cd $(FRONTEND_DIRECTORY) && \
-	docker buildx build --file Dockerfile --progress plane --push --platform linux/arm64,linux/amd64 \
+	docker buildx build --file Dockerfile  --push --platform linux/arm64,linux/amd64 \
 	--tag $(REPONAME)/$(FRONTEND_DOCKER_IMAGE):$(DOCKER_TAG) .
 
 # Steps to build and push docker image of query service
@@ -73,7 +73,7 @@ build-push-query-service:
 	@echo "------------------"
 	@echo "--> Building and pushing query-service docker image"
 	@echo "------------------"
-	@docker buildx build --file $(QUERY_SERVICE_DIRECTORY)/Dockerfile --progress plane \
+	@docker buildx build --file $(QUERY_SERVICE_DIRECTORY)/Dockerfile  \
 	--push --platform linux/arm64,linux/amd64 --build-arg LD_FLAGS="$(LD_FLAGS)" \
 	--tag $(REPONAME)/$(QUERY_SERVICE_DOCKER_IMAGE):$(DOCKER_TAG) .
 
@@ -98,7 +98,7 @@ build-push-ee-query-service:
 	@echo "--> Building and pushing query-service docker image"
 	@echo "------------------"
 	@docker buildx build --file $(EE_QUERY_SERVICE_DIRECTORY)/Dockerfile \
-	--progress plane --push --platform linux/arm64,linux/amd64 \
+	 --push --platform linux/arm64,linux/amd64 \
 	--build-arg LD_FLAGS="$(LD_FLAGS)" --tag $(REPONAME)/$(QUERY_SERVICE_DOCKER_IMAGE):$(DOCKER_TAG) .
 
 dev-setup:
