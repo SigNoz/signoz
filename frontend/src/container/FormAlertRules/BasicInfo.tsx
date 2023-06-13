@@ -54,7 +54,13 @@ function BasicInfo({ alertDef, setAlertDef }: BasicInfoProps): JSX.Element {
 					</SeveritySelect>
 				</Form.Item>
 
-				<Form.Item label={t('field_alert_name')} labelAlign="left" name="alert">
+				<Form.Item
+					required
+					name="alert"
+					labelAlign="left"
+					label={t('field_alert_name')}
+					rules={[{ required: true, message: t('alertname_required') }]}
+				>
 					<InputSmall
 						onChange={(e): void => {
 							setAlertDef({

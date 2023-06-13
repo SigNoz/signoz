@@ -201,10 +201,6 @@ function FormAlertRules({
 
 	const isFormValid = useCallback((): boolean => {
 		if (!alertDef.alert || alertDef.alert === '') {
-			notifications.error({
-				message: 'Error',
-				description: t('alertname_required'),
-			});
 			return false;
 		}
 
@@ -217,14 +213,7 @@ function FormAlertRules({
 		}
 
 		return validateQBParams();
-	}, [
-		t,
-		validateQBParams,
-		validateChQueryParams,
-		alertDef,
-		validatePromParams,
-		notifications,
-	]);
+	}, [validateQBParams, validateChQueryParams, alertDef, validatePromParams]);
 
 	const preparePostData = (): AlertDef => {
 		const postableAlert: AlertDef = {
@@ -407,10 +396,16 @@ function FormAlertRules({
 
 	const isNewRule = ruleId === 0;
 
+	const isAlertNameMissing = useMemo(
+		() => !alertDef.alert || alertDef.alert === '',
+		[alertDef.alert],
+	);
+
 	const isAlertAvialableToSave =
-		isAlertAvialable &&
-		isNewRule &&
-		currentQuery.queryType === EQueryType.QUERY_BUILDER;
+		isAlertNameMissing ||
+		(isAlertAvialable &&
+			isNewRule &&
+			currentQuery.queryType === EQueryType.QUERY_BUILDER);
 
 	return (
 		<>
