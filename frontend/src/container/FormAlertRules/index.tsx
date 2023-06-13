@@ -402,10 +402,9 @@ function FormAlertRules({
 	);
 
 	const isAlertAvialableToSave =
-		isAlertNameMissing ||
-		(isAlertAvialable &&
-			isNewRule &&
-			currentQuery.queryType === EQueryType.QUERY_BUILDER);
+		isAlertAvialable &&
+		isNewRule &&
+		currentQuery.queryType === EQueryType.QUERY_BUILDER;
 
 	return (
 		<>
@@ -443,7 +442,7 @@ function FormAlertRules({
 									type="primary"
 									onClick={onSaveHandler}
 									icon={<SaveOutlined />}
-									disabled={isAlertAvialableToSave}
+									disabled={isAlertNameMissing || isAlertAvialableToSave}
 								>
 									{isNewRule ? t('button_createrule') : t('button_savechanges')}
 								</ActionButton>
