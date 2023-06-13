@@ -1,52 +1,56 @@
-**_Frontend Guidelines_**
+# **Frontend Guidelines**
 
-1. Make component as small as possible (and divide those into individual one)
+Embrace the spirit of collaboration and contribute to the success of our open-source project by adhering to these frontend development guidelines with precision and passion.
 
-2. modularize the function down to follow SRP. The function’s name should itself signify what it is meant to do.
+### React and Components
 
-3. Break functions semantically into small as possible.
+- Strive to create small and modular components, ensuring they are divided into individual pieces for improved maintainability and reusability.
+- Avoid passing inline objects or functions as props to React components, as they are recreated with each render cycle.
+  Utilize careful memoization of functions and variables, balancing optimization efforts to prevent potential performance issues. [When to useMemo and useCallback](https://kentcdodds.com/blog/usememo-and-usecallback) by Kent C. Dodds is quite helpful for this scenario.
+- Minimize the use of inline functions whenever possible to enhance code readability and improve overall comprehension.
+- Employ the appropriate usage of useMemo and useCallback hooks for effective memoization of values and functions.
+- Determine the appropriate placement of components:
+  - Pages should contain an aggregation of all components and containers.
+  - Commonly used components should reside in the 'components' directory.
+  - Parent components responsible for data manipulation should be placed in the 'container' directory.
+- Strategically decide where to store data, either in global state or local components:
+  - Begin by storing data in local components and gradually transition to global state as necessary.
+- Avoid importing default namespace `React` as the project is using `v18` and `import React from 'react'` is not needed anymore.
+- When a function requires more than three arguments (except when memoized), encapsulate them within an object to enhance readability and reduce potential parameter complexity.
 
-4. No function should exceed more than 40 lines
+### API and Services
 
-5. Follow DRY. If the same functionality is used at multiple places move it to a commonplace and reuse it.
+- Avoid incorporating business logic within API/Service files to maintain flexibility for consumers to handle it according to their specific needs.
+- Employ the use of the useQuery hook for fetching data and the useMutation hook for updating data, ensuring a consistent and efficient approach.
+- Utilize the useQueryClient hook when updating the cache, facilitating smooth and effective management of data within the application.
 
-6. API/Service files should not have business logic. It removes the flexibility for the consumer to handle it differently.
+**Note -** In our project, we are utilizing React Query v3. To gain a comprehensive understanding of its features and implementation, we recommend referring to the [official documentation](https://tanstack.com/query/v3/docs/react/overview) as a valuable resource.
 
-7. **Don't pass inline object/function to react components as a prop. It will get created on every render.**
+### Styling
 
-8. No hard coded string or enums
+- Refrain from using inline styling within React components to maintain separation of concerns and promote a more maintainable codebase.
+- Opt for using the rem unit instead of px values to ensure better scalability and responsiveness across different devices and screen sizes.
 
-9. try to internationalize all strings
+### Linting and Setup
 
-10. memoize functions, and variables judiciously. Over-optimizations can also lead to performance issues.
+- It is crucial to refrain from disabling ESLint and TypeScript errors within the project. If there is a specific rule that needs to be disabled, provide a clear and justified explanation for doing so. Maintaining the integrity of the linting and type-checking processes ensures code quality and consistency throughout the codebase.
+- In our project, we rely on several essential ESLint plugins, namely:
+  - [plugin:@typescript-eslint](https://typescript-eslint.io/rules/)
+  - [airbnb styleguide](https://github.com/airbnb/javascript)
+  - [plugin:sonarjs](https://github.com/SonarSource/eslint-plugin-sonarjs)
 
-11. Try to avoid inline functions as much as possible. It will increase the readability and thus more comprehensible.
+    To ensure compliance with our coding standards and best practices, we encourage you to refer to the documentation of these plugins. Familiarizing yourself with the ESLint rules they provide will help maintain code quality and consistency throughout the project.
 
-12. Avoid using multiple ifs' or cases in the switch. Try to create a mapper out of it and segregate in multiple functions.
+### Naming Conventions
 
-13. if function expects more than 3 arguments wrap them in an object(except when it is memoized).
+- Ensure that component names are written in Capital Case, while the folder names should be in lowercase.
+- Keep all other elements, such as variables, functions, and file names, in lowercase.
 
-14. use **useMemo** and **useCallback** to memoize accordingly
+### Miscellaneous
 
-15. Naming Conventions
-
-    1. Component Name should be in Capital Case (folder should be small case)
-    2. all rest should be small case
-
-16. Where to put the component
-
-    1. Aggregate all components and container in pages
-    2. common used component in all the place should be in components
-    3. data manipulated parent should in container
-
-17. which data to put where in global state or in local
-
-    1. start putting data from local and then move to global state
-
-18. use rem instead of px
-
-19. use useQuery for fetching data and useMutation for updating data
-
-20. use useQueryClient for updating cache
-
-*Note: Never disable eslint and typescript error (if we are disabling any rule need to write why we are disabling any rule)*
+- Ensure that functions are modularized and follow the Single Responsibility Principle (SRP). The function's name should accurately convey its purpose and functionality.
+- Semantic division of functions into smaller units should be prioritized for improved readability and maintainability.
+  Aim to keep functions concise and avoid exceeding a maximum length of 40 lines to enhance code understandability and ease of maintenance.
+- Eliminate the use of hard-coded strings or enums, favoring a more flexible and maintainable approach.
+- Strive to internationalize all strings within the codebase to support localization and improve accessibility for users across different languages.
+- Minimize the usage of multiple if statements or switch cases within a function. Consider creating a mapper and separating logic into multiple functions for better code organization.
