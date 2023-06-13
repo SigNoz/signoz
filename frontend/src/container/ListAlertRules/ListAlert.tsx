@@ -68,7 +68,7 @@ function ListAlert({ allAlertRules, refetch }: ListAlertProps): JSX.Element {
 			.catch(handleError);
 	}, [featureResponse, handleError]);
 
-	const onEditHandler = (record: GettableAlert): void => {
+	const onEditHandler = (record: GettableAlert) => (): void => {
 		featureResponse
 			.refetch()
 			.then(() => {
@@ -85,7 +85,9 @@ function ListAlert({ allAlertRules, refetch }: ListAlertProps): JSX.Element {
 			.catch(handleError);
 	};
 
-	const onCloneHandler = async (originalAlert: GettableAlert): Promise<void> => {
+	const onCloneHandler = (
+		originalAlert: GettableAlert,
+	) => async (): Promise<void> => {
 		const copyAlert = {
 			...originalAlert,
 			alert: originalAlert.alert.concat(' - Copy'),
@@ -144,9 +146,7 @@ function ListAlert({ allAlertRules, refetch }: ListAlertProps): JSX.Element {
 				return 0;
 			},
 			render: (value, record): JSX.Element => (
-				<Typography.Link onClick={(): void => onEditHandler(record)}>
-					{value}
-				</Typography.Link>
+				<Typography.Link onClick={onEditHandler(record)}>{value}</Typography.Link>
 			),
 		},
 		{
@@ -202,13 +202,10 @@ function ListAlert({ allAlertRules, refetch }: ListAlertProps): JSX.Element {
 				<>
 					<ToggleAlertState disabled={record.disabled} setData={setData} id={id} />
 
-					<ColumnButton onClick={(): void => onEditHandler(record)} type="link">
+					<ColumnButton onClick={onEditHandler(record)} type="link">
 						Edit
 					</ColumnButton>
-					<ColumnButton
-						onClick={(): Promise<void> => onCloneHandler(record)}
-						type="link"
-					>
+					<ColumnButton onClick={onCloneHandler(record)} type="link">
 						Clone
 					</ColumnButton>
 
