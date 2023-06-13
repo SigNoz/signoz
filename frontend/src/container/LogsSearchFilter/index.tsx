@@ -33,7 +33,7 @@ function SearchFilter({
 	const [searchText, setSearchText] = useState(queryString);
 	const [showDropDown, setShowDropDown] = useState(false);
 	const searchRef = useRef<InputRef>(null);
-	const { logLinesPerPage, idEnd, idStart, liveTail } = useSelector<
+	const { logLinesPerPage, idEnd, idStart, liveTail, order } = useSelector<
 		AppState,
 		ILogsReducer
 	>((state) => state.logs);
@@ -99,7 +99,7 @@ function SearchFilter({
 					q: customQuery,
 					limit: logLinesPerPage,
 					orderBy: 'timestamp',
-					order: 'desc',
+					order,
 					timestampStart: minTime,
 					timestampEnd: maxTime,
 					...(idStart ? { idGt: idStart } : {}),
@@ -128,6 +128,7 @@ function SearchFilter({
 			logLinesPerPage,
 			globalTime,
 			getLogsFields,
+			order,
 		],
 	);
 
@@ -160,6 +161,7 @@ function SearchFilter({
 		dispatch,
 		globalTime.maxTime,
 		globalTime.minTime,
+		order,
 	]);
 
 	const onPopOverChange = useCallback(

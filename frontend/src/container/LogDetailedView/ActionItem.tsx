@@ -45,6 +45,7 @@ function ActionItem({
 		idStart,
 		liveTail,
 		idEnd,
+		order,
 	} = useSelector<AppState, ILogsReducer>((store) => store.logs);
 	const dispatch = useDispatch<Dispatch<AppActions>>();
 
@@ -72,7 +73,7 @@ function ActionItem({
 				q: updatedQueryString,
 				limit: logLinesPerPage,
 				orderBy: 'timestamp',
-				order: 'desc',
+				order,
 				timestampStart: minTime,
 				timestampEnd: maxTime,
 				...(idStart ? { idGt: idStart } : {}),

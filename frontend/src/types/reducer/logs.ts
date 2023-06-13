@@ -24,6 +24,7 @@ export interface ILogsReducer {
 	detailedLog: null | ILog;
 	liveTail: TLogsLiveTailState;
 	liveTailStartRange: number; // time in minutes
+	order: 'desc' | 'asc';
 }
 
 export default ILogsReducer;

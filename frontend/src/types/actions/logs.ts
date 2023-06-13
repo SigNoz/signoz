@@ -33,6 +33,7 @@ export const SET_LINES_PER_ROW = 'SET_LINES_PER_ROW';
 export const SET_VIEW_MODE = 'SET_VIEW_MODE';
 export const UPDATE_SELECTED_FIELDS = 'LOGS_UPDATE_SELECTED_FIELDS';
 export const UPDATE_INTERESTING_FIELDS = 'LOGS_UPDATE_INTERESTING_FIELDS';
+export const SET_LOGS_ORDER = 'SET_LOGS_ORDER';
 
 export interface GetFields {
 	type: typeof GET_FIELDS;
@@ -140,6 +141,11 @@ export interface UpdateSelectedInterestFields {
 	};
 }
 
+export interface SetLogsOrder {
+	type: typeof SET_LOGS_ORDER;
+	payload: 'desc' | 'asc';
+}
+
 export type LogsActions =
 	| GetFields
 	| SetFields
@@ -163,4 +169,5 @@ export type LogsActions =
 	| SetLiveTailStartTime
 	| SetLinesPerRow
 	| SetViewMode
-	| UpdateSelectedInterestFields;
+	| UpdateSelectedInterestFields
+	| SetLogsOrder;

@@ -17,6 +17,7 @@ import {
 	SET_LOG_LINES_PER_PAGE,
 	SET_LOGS,
 	SET_LOGS_AGGREGATE_SERIES,
+	SET_LOGS_ORDER,
 	SET_SEARCH_QUERY_PARSED_PAYLOAD,
 	SET_SEARCH_QUERY_STRING,
 	SET_VIEW_MODE,
@@ -49,6 +50,7 @@ const initialState: ILogsReducer = {
 	liveTailStartRange: 15,
 	selectedLogId: null,
 	detailedLog: null,
+	order: 'desc',
 };
 
 export const LogsReducer = (
@@ -129,6 +131,15 @@ export const LogsReducer = (
 				logs: logsData,
 			};
 		}
+
+		case SET_LOGS_ORDER: {
+			const order = action.payload;
+			return {
+				...state,
+				order,
+			};
+		}
+
 		case SET_LOG_LINES_PER_PAGE: {
 			return {
 				...state,
