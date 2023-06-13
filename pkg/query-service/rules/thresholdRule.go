@@ -545,6 +545,9 @@ func (r *ThresholdRule) runChQuery(ctx context.Context, db clickhouse.Conn, quer
 			result = append(result, sample)
 		}
 	}
+	if len(result) != 0 {
+		zap.S().Infof("For rule %s, with ClickHouseQuery %s, found %d alerts", r.ID(), query, len(result))
+	}
 	zap.S().Debugf("ruleid:", r.ID(), "\t result (found alerts):", len(result))
 	return result, nil
 }
