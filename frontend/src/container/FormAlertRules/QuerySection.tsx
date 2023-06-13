@@ -38,10 +38,6 @@ function QuerySection({
 		/>
 	);
 
-	const handleRunQuery = (): void => {
-		runQuery();
-	};
-
 	const tabs = [
 		{
 			label: t('tab_qb'),
@@ -76,7 +72,7 @@ function QuerySection({
 						onChange={handleQueryCategoryChange}
 						tabBarExtraContent={
 							<span style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
-								<Button type="primary" onClick={handleRunQuery}>
+								<Button type="primary" onClick={runQuery}>
 									Run Query
 								</Button>
 							</span>
@@ -95,7 +91,7 @@ function QuerySection({
 						onChange={handleQueryCategoryChange}
 						tabBarExtraContent={
 							<span style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
-								<Button type="primary" onClick={handleRunQuery}>
+								<Button type="primary" onClick={runQuery}>
 									Run Query
 								</Button>
 							</span>
@@ -132,7 +128,7 @@ interface QuerySectionProps {
 	queryCategory: EQueryType;
 	setQueryCategory: (n: EQueryType) => void;
 	alertType: AlertTypes;
-	runQuery: () => void;
+	runQuery: VoidFunction;
 }
 
 export default QuerySection;
