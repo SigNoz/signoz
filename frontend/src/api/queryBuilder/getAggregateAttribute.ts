@@ -1,6 +1,8 @@
 import { ApiV3Instance } from 'api';
 import { ErrorResponseHandler } from 'api/ErrorResponseHandler';
 import { AxiosError, AxiosResponse } from 'axios';
+import { baseAutoCompleteIdKeysOrder } from 'constants/queryBuilder';
+import { createIdFromObjectFields } from 'lib/createIdFromObjectFields';
 import createQueryParams from 'lib/createQueryParams';
 // ** Helpers
 import { ErrorResponse, SuccessResponse } from 'types/api';
@@ -10,7 +12,6 @@ import {
 	BaseAutocompleteData,
 	IQueryAutocompleteResponse,
 } from 'types/api/queryBuilder/queryAutocompleteResponse';
-import { v4 as uuid } from 'uuid';
 
 export const getAggregateAttribute = async ({
 	aggregateOperator,
@@ -31,8 +32,10 @@ export const getAggregateAttribute = async ({
 		);
 
 		const payload: BaseAutocompleteData[] =
-			response.data.data.attributeKeys?.map((item) => ({ ...item, id: uuid() })) ||
-			[];
+			response.data.data.attributeKeys?.map(({ id: _, ...item }) => ({
+				...item,
+				id: createIdFromObjectFields(item, baseAutoCompleteIdKeysOrder),
+			})) || [];
 
 		return {
 			statusCode: 200,
