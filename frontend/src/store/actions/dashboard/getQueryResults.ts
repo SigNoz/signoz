@@ -103,7 +103,11 @@ export async function GetMetricQueryRange({
 	const response = await getMetricsQueryRange({
 		start: parseInt(start, 10) * 1e3,
 		end: parseInt(end, 10) * 1e3,
-		step: getStep({ start, end, inputFormat: 'ms' }),
+		step: getStep({
+			start: globalTime.minTime,
+			end: globalTime.maxTime,
+			inputFormat: 'ns',
+		}),
 		variables,
 		...QueryPayload,
 	});

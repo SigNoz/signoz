@@ -11,10 +11,10 @@ import {
 } from 'hooks/useResourceAttribute/utils';
 import { useMemo, useState } from 'react';
 import { useParams } from 'react-router-dom';
-import { Widgets } from 'types/api/dashboard/getAll';
 import { TagFilterItem } from 'types/api/queryBuilder/queryBuilderData';
 import { EQueryType } from 'types/common/dashboard';
 
+import { getWidgetQueryBuilder } from '../MetricsApplication.factory';
 import { Card, GraphContainer, GraphTitle, Row } from '../styles';
 import { Button } from './styles';
 import {
@@ -24,7 +24,7 @@ import {
 	onViewTracePopupClick,
 } from './util';
 
-function DBCall({ getWidgetQueryBuilder }: DBCallProps): JSX.Element {
+function DBCall(): JSX.Element {
 	const { servicename } = useParams<{ servicename?: string }>();
 	const [selectedTimeStamp, setSelectedTimeStamp] = useState<number>(0);
 	const { queries } = useResourceAttribute();
@@ -57,7 +57,7 @@ function DBCall({ getWidgetQueryBuilder }: DBCallProps): JSX.Element {
 				}),
 				clickhouse_sql: [],
 			}),
-		[getWidgetQueryBuilder, servicename, tagFilterItems],
+		[servicename, tagFilterItems],
 	);
 	const databaseCallsAverageDurationWidget = useMemo(
 		() =>
@@ -70,7 +70,7 @@ function DBCall({ getWidgetQueryBuilder }: DBCallProps): JSX.Element {
 				}),
 				clickhouse_sql: [],
 			}),
-		[getWidgetQueryBuilder, servicename, tagFilterItems],
+		[servicename, tagFilterItems],
 	);
 
 	return (
@@ -146,10 +146,6 @@ function DBCall({ getWidgetQueryBuilder }: DBCallProps): JSX.Element {
 			</Col>
 		</Row>
 	);
-}
-
-interface DBCallProps {
-	getWidgetQueryBuilder: (query: Widgets['query']) => Widgets;
 }
 
 export default DBCall;

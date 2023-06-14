@@ -13,9 +13,9 @@ import {
 } from 'hooks/useResourceAttribute/utils';
 import { useMemo, useState } from 'react';
 import { useParams } from 'react-router-dom';
-import { Widgets } from 'types/api/dashboard/getAll';
 import { EQueryType } from 'types/common/dashboard';
 
+import { getWidgetQueryBuilder } from '../MetricsApplication.factory';
 import { Card, GraphContainer, GraphTitle, Row } from '../styles';
 import { legend } from './constant';
 import { Button } from './styles';
@@ -25,7 +25,7 @@ import {
 	onViewTracePopupClick,
 } from './util';
 
-function External({ getWidgetQueryBuilder }: ExternalProps): JSX.Element {
+function External(): JSX.Element {
 	const [selectedTimeStamp, setSelectedTimeStamp] = useState<number>(0);
 
 	const { servicename } = useParams<{ servicename?: string }>();
@@ -49,7 +49,7 @@ function External({ getWidgetQueryBuilder }: ExternalProps): JSX.Element {
 				}),
 				clickhouse_sql: [],
 			}),
-		[getWidgetQueryBuilder, servicename, tagFilterItems],
+		[servicename, tagFilterItems],
 	);
 
 	const selectedTraceTags = useMemo(
@@ -68,7 +68,7 @@ function External({ getWidgetQueryBuilder }: ExternalProps): JSX.Element {
 				}),
 				clickhouse_sql: [],
 			}),
-		[getWidgetQueryBuilder, servicename, tagFilterItems],
+		[servicename, tagFilterItems],
 	);
 
 	const externalCallRPSWidget = useMemo(
@@ -83,7 +83,7 @@ function External({ getWidgetQueryBuilder }: ExternalProps): JSX.Element {
 				}),
 				clickhouse_sql: [],
 			}),
-		[getWidgetQueryBuilder, servicename, tagFilterItems],
+		[servicename, tagFilterItems],
 	);
 
 	const externalCallDurationAddressWidget = useMemo(
@@ -98,7 +98,7 @@ function External({ getWidgetQueryBuilder }: ExternalProps): JSX.Element {
 				}),
 				clickhouse_sql: [],
 			}),
-		[getWidgetQueryBuilder, servicename, tagFilterItems],
+		[servicename, tagFilterItems],
 	);
 
 	return (
@@ -254,10 +254,6 @@ function External({ getWidgetQueryBuilder }: ExternalProps): JSX.Element {
 			</Row>
 		</>
 	);
-}
-
-interface ExternalProps {
-	getWidgetQueryBuilder: (query: Widgets['query']) => Widgets;
 }
 
 export default External;

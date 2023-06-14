@@ -84,10 +84,8 @@ function FullView({
 			{fullViewOptions && (
 				<TimeContainer>
 					<TimePreference
-						{...{
-							selectedTime,
-							setSelectedTime,
-						}}
+						selectedTime={selectedTime}
+						setSelectedTime={setSelectedTime}
 					/>
 					<Button
 						onClick={(): void => {

@@ -41,6 +41,7 @@ import EmptyWidget from '../EmptyWidget';
 import WidgetHeader from '../WidgetHeader';
 import FullView from './FullView/index.metricsBuilder';
 import { FullViewContainer, Modal } from './styles';
+import { useStep } from './utils';
 
 function GridCardGraph({
 	widget,
@@ -80,11 +81,13 @@ function GridCardGraph({
 	const selectedData = selectedDashboard?.data;
 	const { variables } = selectedData;
 
+	const updatedQuery = useStep(widget.query);
+
 	const queryResponse = useGetQueryRange(
 		{
 			selectedTime: widget?.timePreferance,
 			graphType: widget.panelTypes,
-			query: widget.query,
+			query: updatedQuery,
 			globalSelectedInterval,
 			variables: getDashboardVariables(),
 		},
