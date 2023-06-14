@@ -1,7 +1,7 @@
 import { Modal } from 'antd';
 import GetLogs from 'api/logs/GetLogs';
-import InputComponent from 'components/Input';
 import dayjs from 'dayjs';
+import { debounce } from 'lodash-es';
 import { useMemo, useState } from 'react';
 import { useQuery } from 'react-query';
 import { useDispatch, useSelector } from 'react-redux';
@@ -15,6 +15,7 @@ import { ILogsReducer } from 'types/reducer/logs';
 import CloseWrapperIcon from './components/CloseWrapperIcon';
 import CurrentLog from './components/CurrentLog';
 import HistoryLogs from './components/HistoryLogs';
+import LogSearchFilter from './components/LogSearchFilter';
 // types
 import { HistoryPosition } from './interfaces/IHistoryLogs';
 
@@ -23,6 +24,7 @@ function LogDetailsModalView(): JSX.Element {
 	const [filterInputVisible, setFilterInputVisible] = useState<boolean>(false);
 	const [prevLogPage, setPrevLogPage] = useState<number>(1);
 	const [nextLogPage, setNextLogPage] = useState<number>(1);
+	const [query, setQuery] = useState<string>('');
 	const { currentLog } = useSelector<AppState, ILogsReducer>(
 		(state) => state.logs,
 	);
@@ -30,10 +32,12 @@ function LogDetailsModalView(): JSX.Element {
 		(state) => state.globalTime,
 	);
 
-	const prevData = useQuery(['allAlerts', prevLogPage], {
+	const debouncedSetQuery = useMemo(() => debounce(setQuery, 300), [setQuery]);
+
+	const prevData = useQuery(['prevLogs', prevLogPage, currentLog, query], {
 		queryFn: () =>
 			GetLogs({
-				q: "method in ('POST')",
+				q: query,
 				limit: prevLogPage * 10,
 				orderBy: 'id',
 				idLt: currentLog?.id,
@@ -44,10 +48,10 @@ function LogDetailsModalView(): JSX.Element {
 		cacheTime: 0,
 	});
 
-	const nextData = useQuery(['allAlerts', nextLogPage], {
+	const nextData = useQuery(['nextLogs', nextLogPage, currentLog, query], {
 		queryFn: () =>
 			GetLogs({
-				q: "method in ('POST')",
+				q: query,
 				limit: prevLogPage * 10,
 				orderBy: 'id',
 				idGt: currentLog?.id,
@@ -59,7 +63,7 @@ function LogDetailsModalView(): JSX.Element {
 	});
 
 	const addMoreNextLogs = (): void => setNextLogPage(nextLogPage + 1);
-	const addMorePrevLogs = (): void => setPrevLogPage(nextLogPage + 1);
+	const addMorePrevLogs = (): void => setPrevLogPage(prevLogPage + 1);
 
 	const handleCancel = (): void => {
 		dispatch({
@@ -90,7 +94,9 @@ function LogDetailsModalView(): JSX.Element {
 			destroyOnClose
 			onCancel={handleCancel}
 		>
-			{filterInputVisible && <InputComponent value="" />}
+			{filterInputVisible && (
+				<LogSearchFilter query={query} setQuery={debouncedSetQuery} />
+			)}
 			<HistoryLogs
 				position={HistoryPosition.prev}
 				addMoreLogs={addMorePrevLogs}

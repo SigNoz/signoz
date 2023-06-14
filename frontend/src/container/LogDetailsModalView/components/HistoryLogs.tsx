@@ -16,19 +16,9 @@ function HistoryLogs({
 	isLoad,
 	isError,
 }: IHistoryLogs): JSX.Element {
-	if (isLoad) {
-		return (
-			<SpinnerContainer>
-				<Spin />
-			</SpinnerContainer>
-		);
-	}
-
 	if (isError) {
 		return <div>Something went wrong</div>;
 	}
-
-	console.log('logs', logs);
 
 	return (
 		<HisoryLogContainer>
@@ -40,14 +30,20 @@ function HistoryLogs({
 					</Button>
 				</HistoryLogHeader>
 			)}
+			{isLoad ? (
+				<SpinnerContainer>
+					<Spin />
+				</SpinnerContainer>
+			) : (
+				<HistoryLogsScrolled>
+					{logs?.length === 0 ? (
+						<Log>there are no logs</Log>
+					) : (
+						logs?.map((log) => <Log key={log.id}>{log.body}</Log>)
+					)}
+				</HistoryLogsScrolled>
+			)}
 
-			<HistoryLogsScrolled>
-				{logs?.length === 0 ? (
-					<Log>there are no logs</Log>
-				) : (
-					logs?.map((log) => <Log key={log.id}>{log.body}</Log>)
-				)}
-			</HistoryLogsScrolled>
 			{position === HistoryPosition.next && (
 				<HistoryLogHeader>
 					Showing 10 lines before match

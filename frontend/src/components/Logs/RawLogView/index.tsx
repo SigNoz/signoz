@@ -18,11 +18,13 @@ import {
 	useMemo,
 	useState,
 } from 'react';
-import { useDispatch } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import { useCopyToClipboard } from 'react-use';
+import { AppState } from 'store/reducers';
 import { SET_CURRENT_LOG } from 'types/actions/logs';
 // interfaces
 import { ILog } from 'types/api/logs/log';
+import { GlobalReducer } from 'types/reducer/globalTime';
 
 // styles
 import {
@@ -53,6 +55,9 @@ function RawLogView(props: RawLogViewProps): JSX.Element {
 			});
 		}
 	}, [value, notifications]);
+	const { minTime, maxTime } = useSelector<AppState, GlobalReducer>(
+		(state) => state.globalTime,
+	);
 
 	const isDarkMode = useIsDarkMode();
 
@@ -85,7 +90,9 @@ function RawLogView(props: RawLogViewProps): JSX.Element {
 	const copyLinkHandler: MouseEventHandler<Element> = (event) => {
 		event.preventDefault();
 		event.stopPropagation();
-		copyToClipboard(data.attributes_string.log_file_path);
+		copyToClipboard(`
+			https://stagingapp.signoz.io/logs?q=id in ('${data.id}')&timestampStart=${minTime}&timestampEnd=${maxTime}
+		`);
 	};
 
 	const showButtons = (): void => {
