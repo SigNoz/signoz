@@ -169,7 +169,6 @@ export const initialQueryPromQLData: IPromQLQuery = {
 
 export const initialClickHouseData: IClickHouseQuery = {
 	name: createNewBuilderItemName({ existNames: [], sourceNames: alphabet }),
-	rawQuery: '',
 	legend: '',
 	disabled: false,
 	query: '',
