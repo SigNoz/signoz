@@ -48,6 +48,7 @@ var AmChannelApiPath = GetOrDefaultEnv("ALERTMANAGER_API_CHANNEL_PATH", "v1/rout
 
 var OTLPTarget = GetOrDefaultEnv("OTLP_TARGET", "")
 var LogExportBatchSize = GetOrDefaultEnv("LOG_EXPORT_BATCH_SIZE", "1000")
+var EnableQueryServiceLogOTLPExport = GetOrDefaultEnv("ENABLE_QUERY_SERVICE_LOG_OTLP_EXPORT", "false")
 
 var RELATIONAL_DATASOURCE_PATH = GetOrDefaultEnv("SIGNOZ_LOCAL_DB_PATH", "/var/lib/signoz/signoz.db")
 

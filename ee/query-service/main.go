@@ -48,23 +48,25 @@ func initZapLog() *zap.Logger {
 		zapcore.NewCore(consoleEncoder, os.Stdout, defaultLogLevel),
 	)
 
-	conn, err := grpc.DialContext(ctx, constants.OTLPTarget, grpc.WithBlock(), grpc.WithInsecure(), grpc.WithTimeout(time.Second*10))
-	if err != nil {
-		log.Println("failed to connect to otlp collector to export query service logs with error:", err)
-	} else {
-		logExportBatchSizeInt, err := strconv.Atoi(baseconst.LogExportBatchSize)
+	if constants.EnableQueryServiceLogOTLPExport == "true" {
+		conn, err := grpc.DialContext(ctx, constants.OTLPTarget, grpc.WithBlock(), grpc.WithInsecure(), grpc.WithTimeout(time.Second*30))
 		if err != nil {
-			logExportBatchSizeInt = 1000
+			log.Println("failed to connect to otlp collector to export query service logs with error:", err)
+		} else {
+			logExportBatchSizeInt, err := strconv.Atoi(baseconst.LogExportBatchSize)
+			if err != nil {
+				logExportBatchSizeInt = 1000
+			}
+			ws := zapcore.AddSync(zapotlpsync.NewOtlpSyncer(conn, zapotlpsync.Options{
+				BatchSize:      logExportBatchSizeInt,
+				ResourceSchema: semconv.SchemaURL,
+				Resource:       res,
+			}))
+			core = zapcore.NewTee(
+				zapcore.NewCore(consoleEncoder, os.Stdout, defaultLogLevel),
+				zapcore.NewCore(otlpEncoder, zapcore.NewMultiWriteSyncer(ws), defaultLogLevel),
+			)
 		}
-		ws := zapcore.AddSync(zapotlpsync.NewOtlpSyncer(conn, zapotlpsync.Options{
-			BatchSize:      logExportBatchSizeInt,
-			ResourceSchema: semconv.SchemaURL,
-			Resource:       res,
-		}))
-		core = zapcore.NewTee(
-			zapcore.NewCore(consoleEncoder, os.Stdout, defaultLogLevel),
-			zapcore.NewCore(otlpEncoder, zapcore.NewMultiWriteSyncer(ws), defaultLogLevel),
-		)
 	}
 	logger := zap.New(core, zap.AddCaller(), zap.AddStacktrace(zapcore.ErrorLevel))
 
