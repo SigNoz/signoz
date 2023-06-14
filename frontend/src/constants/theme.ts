@@ -36,6 +36,7 @@ const themeColors = {
 	royalGrey: '#888888',
 	matterhornGrey: '#555555',
 	whiteCream: '#ffffffd5',
+	white: '#ffffff',
 	black: '#000000',
 	lightgrey: '#ddd',
 	borderLightGrey: '#d9d9d9',

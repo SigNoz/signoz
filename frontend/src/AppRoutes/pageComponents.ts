@@ -101,6 +101,8 @@ export const Logs = Loadable(
 	() => import(/* webpackChunkName: "Logs" */ 'pages/Logs'),
 );
 
+export const LogsExplorer = Loadable(() => import('pages/LogsExplorer'));
+
 export const Login = Loadable(
 	() => import(/* webpackChunkName: "Login" */ 'pages/Login'),
 );

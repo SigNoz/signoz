@@ -1,6 +1,6 @@
 import {
 	initialAutocompleteData,
-	initialQueryBuilderFormValues,
+	initialQueryBuilderFormValuesMap,
 	mapOfFilters,
 } from 'constants/queryBuilder';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
@@ -80,9 +80,9 @@ export const useQueryOperations: UseQueryOperations = ({ query, index }) => {
 				panelType,
 			});
 
-			const entries = Object.entries(initialQueryBuilderFormValues).filter(
-				([key]) => key !== 'queryName' && key !== 'expression',
-			);
+			const entries = Object.entries(
+				initialQueryBuilderFormValuesMap.metrics,
+			).filter(([key]) => key !== 'queryName' && key !== 'expression');
 
 			const initCopyResult = Object.fromEntries(entries);
 

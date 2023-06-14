@@ -18,6 +18,7 @@ import { EQueryType } from 'types/common/dashboard';
 import {
 	BoolOperators,
 	DataSource,
+	LogsAggregatorOperator,
 	MetricAggregateOperator,
 	NumberOperators,
 	PanelTypeKeys,
@@ -25,6 +26,7 @@ import {
 	QueryBuilderData,
 	ReduceOperators,
 	StringOperators,
+	TracesAggregatorOperator,
 } from 'types/common/queryBuilder';
 import { SelectOption } from 'types/common/select';
 import { v4 as uuid } from 'uuid';
@@ -107,7 +109,7 @@ export const initialAutocompleteData: BaseAutocompleteData = {
 	type: null,
 };
 
-export const initialQueryBuilderFormValues: IBuilderQuery = {
+const initialQueryBuilderFormValues: IBuilderQuery = {
 	dataSource: DataSource.METRICS,
 	queryName: createNewBuilderItemName({ existNames: [], sourceNames: alphabet }),
 	aggregateOperator: MetricAggregateOperator.NOOP,
@@ -125,6 +127,27 @@ export const initialQueryBuilderFormValues: IBuilderQuery = {
 	groupBy: [],
 	legend: '',
 	reduceTo: 'sum',
+};
+
+const initialQueryBuilderFormLogsValues: IBuilderQuery = {
+	...initialQueryBuilderFormValues,
+	aggregateOperator: LogsAggregatorOperator.COUNT,
+	dataSource: DataSource.LOGS,
+};
+
+const initialQueryBuilderFormTracesValues: IBuilderQuery = {
+	...initialQueryBuilderFormValues,
+	aggregateOperator: TracesAggregatorOperator.COUNT,
+	dataSource: DataSource.TRACES,
+};
+
+export const initialQueryBuilderFormValuesMap: Record<
+	DataSource,
+	IBuilderQuery
+> = {
+	metrics: initialQueryBuilderFormValues,
+	logs: initialQueryBuilderFormLogsValues,
+	traces: initialQueryBuilderFormTracesValues,
 };
 
 export const initialFormulaBuilderFormValues: IBuilderFormula = {
@@ -162,15 +185,36 @@ export const initialSingleQueryMap: Record<
 	IClickHouseQuery | IPromQLQuery
 > = { clickhouse_sql: initialClickHouseData, promql: initialQueryPromQLData };
 
-export const initialQuery: QueryState = {
+export const initialQueryState: QueryState = {
 	builder: initialQueryBuilderData,
 	clickhouse_sql: [initialClickHouseData],
 	promql: [initialQueryPromQLData],
 };
 
-export const initialQueryWithType: Query = {
-	...initialQuery,
+const initialQueryWithType: Query = {
+	...initialQueryState,
 	queryType: EQueryType.QUERY_BUILDER,
+};
+
+const initialQueryLogsWithType: Query = {
+	...initialQueryWithType,
+	builder: {
+		...initialQueryWithType.builder,
+		queryData: [initialQueryBuilderFormValuesMap.logs],
+	},
+};
+const initialQueryTracesWithType: Query = {
+	...initialQueryWithType,
+	builder: {
+		...initialQueryWithType.builder,
+		queryData: [initialQueryBuilderFormValuesMap.traces],
+	},
+};
+
+export const initialQueriesMap: Record<DataSource, Query> = {
+	metrics: initialQueryWithType,
+	logs: initialQueryLogsWithType,
+	traces: initialQueryTracesWithType,
 };
 
 export const operatorsByTypes: Record<LocalDataType, string[]> = {

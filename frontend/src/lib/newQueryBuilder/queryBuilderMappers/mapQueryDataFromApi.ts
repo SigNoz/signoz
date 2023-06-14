@@ -1,4 +1,4 @@
-import { initialQuery } from 'constants/queryBuilder';
+import { initialQueryState } from 'constants/queryBuilder';
 import { ICompositeMetricQuery } from 'types/api/alerts/compositeQuery';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 
@@ -9,14 +9,14 @@ export const mapQueryDataFromApi = (
 ): Query => {
 	const builder = compositeQuery.builderQueries
 		? transformQueryBuilderDataModel(compositeQuery.builderQueries)
-		: initialQuery.builder;
+		: initialQueryState.builder;
 
 	const promql = compositeQuery.promQueries
 		? Object.keys(compositeQuery.promQueries).map((key) => ({
 				...compositeQuery.promQueries[key],
 				name: key,
 		  }))
-		: initialQuery.promql;
+		: initialQueryState.promql;
 
 	const clickhouseSql = compositeQuery.chQueries
 		? Object.keys(compositeQuery.chQueries).map((key) => ({
@@ -24,7 +24,7 @@ export const mapQueryDataFromApi = (
 				name: key,
 				rawQuery: compositeQuery.chQueries[key].query,
 		  }))
-		: initialQuery.clickhouse_sql;
+		: initialQueryState.clickhouse_sql;
 
 	return {
 		builder,

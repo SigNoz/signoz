@@ -53,16 +53,19 @@ const menus: SidebarMenu[] = [
 		],
 	},
 	{
-		key: ROUTES.LOGS,
+		key: 'logs',
 		label: 'Logs',
 		icon: <AlignLeftOutlined />,
-		// label: createLabelWithTags('Logs', ['Beta']),
-		// children: [
-		// 	{
-		// 		key: ROUTES.LOGS,
-		// 		label: 'Search',
-		// 	},
-		// ],
+		children: [
+			{
+				key: ROUTES.LOGS,
+				label: 'Search',
+			},
+			{
+				key: ROUTES.LOGS_EXPLORER,
+				label: 'Views',
+			},
+		],
 	},
 	{
 		key: ROUTES.ALL_DASHBOARD,
