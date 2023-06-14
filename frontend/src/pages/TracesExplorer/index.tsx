@@ -3,8 +3,9 @@ import { COMPOSITE_QUERY } from 'constants/queryBuilderQueryNames';
 import QuerySection from 'container/TracesExplorer/QuerySection';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import useUrlQuery from 'hooks/useUrlQuery';
+import useUrlQueryData from 'hooks/useUrlQueryData';
 import { useCallback, useEffect, useMemo } from 'react';
-import { useHistory, useLocation } from 'react-router-dom';
+import { Query } from 'types/api/queryBuilder/queryBuilderData';
 
 import {
 	CURRENT_TRACES_EXPLORER_TAB,
@@ -16,27 +17,16 @@ import { getTabsItems } from './utils';
 
 function TracesExplorer(): JSX.Element {
 	const { currentQuery, redirectWithQueryBuilderData } = useQueryBuilder();
+	const {
+		queryData: currentUrlTab,
+		redirectWithQuery: redirectWithCurrentTab,
+	} = useUrlQueryData<string>(CURRENT_TRACES_EXPLORER_TAB);
+	const { query: currentUrlQuery } = useUrlQueryData<Query>(COMPOSITE_QUERY);
 
 	const urlQuery = useUrlQuery();
-	const history = useHistory();
-	const location = useLocation();
 
-	const currentUrlTab = urlQuery.get(
-		CURRENT_TRACES_EXPLORER_TAB,
-	) as TracesExplorerTabs;
 	const currentTab = currentUrlTab || TracesExplorerTabs.TIME_SERIES;
 	const tabsItems = useMemo(() => getTabsItems(currentQuery), [currentQuery]);
-
-	const redirectWithCurrentTab = useCallback(
-		(tabKey: string): void => {
-			urlQuery.set(CURRENT_TRACES_EXPLORER_TAB, tabKey);
-
-			const generatedUrl = `${location.pathname}?${urlQuery.toString()}`;
-
-			history.push(generatedUrl);
-		},
-		[history, location, urlQuery],
-	);
 
 	const onRunQuery = useCallback((): void => {
 		if (currentQuery.builder.queryData.length === 0) {
@@ -60,12 +50,10 @@ function TracesExplorer(): JSX.Element {
 	}, [currentUrlTab, redirectWithCurrentTab]);
 
 	useEffect(() => {
-		const currentUrlQuery = urlQuery.get(COMPOSITE_QUERY);
-
 		if (currentUrlQuery) return;
 
 		redirectWithQueryBuilderData(initialTracesQuery);
-	}, [currentQuery, urlQuery, redirectWithQueryBuilderData]);
+	}, [currentUrlQuery, urlQuery, redirectWithQueryBuilderData]);
 
 	return (
 		<>

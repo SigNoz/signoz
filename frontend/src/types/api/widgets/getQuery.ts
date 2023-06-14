@@ -19,8 +19,10 @@ export interface SeriesItem {
 	values: { timestamp: number; value: string }[];
 }
 
+//! remove any type
+/* eslint-disable @typescript-eslint/no-explicit-any */
 export interface QueryDataV3 {
-	list: null;
+	list: any;
 	queryName: string;
 	legend?: string;
 	series: SeriesItem[];

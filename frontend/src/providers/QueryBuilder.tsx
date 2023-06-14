@@ -15,7 +15,7 @@ import {
 } from 'constants/queryBuilder';
 import { COMPOSITE_QUERY } from 'constants/queryBuilderQueryNames';
 import { GRAPH_TYPES } from 'container/NewDashboard/ComponentsSlider';
-import useUrlQuery from 'hooks/useUrlQuery';
+import useUrlQueryData from 'hooks/useUrlQueryData';
 import { createIdFromObjectFields } from 'lib/createIdFromObjectFields';
 import { createNewBuilderItemName } from 'lib/newQueryBuilder/createNewBuilderItemName';
 import { getOperatorsBySourceAndPanelType } from 'lib/newQueryBuilder/getOperatorsBySourceAndPanelType';
@@ -28,7 +28,6 @@ import {
 	useMemo,
 	useState,
 } from 'react';
-import { useHistory, useLocation } from 'react-router-dom';
 // ** Types
 import {
 	IBuilderFormula,
@@ -69,9 +68,11 @@ export const QueryBuilderContext = createContext<QueryBuilderContextType>({
 export function QueryBuilderProvider({
 	children,
 }: PropsWithChildren): JSX.Element {
-	const urlQuery = useUrlQuery();
-	const history = useHistory();
-	const location = useLocation();
+	const {
+		query: compositeQuery,
+		queryData: newQuery,
+		redirectWithQuery,
+	} = useUrlQueryData<Query>(COMPOSITE_QUERY);
 
 	const [initialDataSource, setInitialDataSource] = useState<DataSource | null>(
 		null,
@@ -401,20 +402,13 @@ export function QueryBuilderProvider({
 						: query.clickhouse_sql,
 			};
 
-			urlQuery.set(COMPOSITE_QUERY, JSON.stringify(currentGeneratedQuery));
-
-			const generatedUrl = `${location.pathname}?${urlQuery.toString()}`;
-
-			history.push(generatedUrl);
+			redirectWithQuery(currentGeneratedQuery);
 		},
-		[history, location, urlQuery],
+		[redirectWithQuery],
 	);
 
 	useEffect(() => {
-		const compositeQuery = urlQuery.get(COMPOSITE_QUERY);
 		if (!compositeQuery) return;
-
-		const newQuery: Query = JSON.parse(compositeQuery);
 
 		const { isValid, validData } = replaceIncorrectObjectFields(
 			newQuery,
@@ -426,7 +420,12 @@ export function QueryBuilderProvider({
 		} else {
 			initQueryBuilderData(newQuery);
 		}
-	}, [initQueryBuilderData, redirectWithQueryBuilderData, urlQuery]);
+	}, [
+		compositeQuery,
+		newQuery,
+		initQueryBuilderData,
+		redirectWithQueryBuilderData,
+	]);
 
 	const query: Query = useMemo(() => ({ ...currentQuery, queryType }), [
 		currentQuery,

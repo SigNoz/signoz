@@ -4,11 +4,11 @@ import getChartDataV3 from 'lib/getChartDataV3';
 import { useMemo } from 'react';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 
+import { useGetTracesExplorerQueryRange } from '../useGetTracesExplorerQueryRange';
 import { Container, ErrorText } from './styles';
-import { useGetTracesExplorerQueryRange } from './useGetTracesExplorerQueryRange';
 
 function TimeSeriesView({ query }: TimeSeriesViewProps): JSX.Element {
-	const { data, isLoading, isError } = useGetTracesExplorerQueryRange({ query });
+	const { data, isLoading, isError } = useGetTracesExplorerQueryRange(query);
 	const chartData = useMemo(
 		() => getChartDataV3(data?.payload?.data?.result || [], query),
 		[data, query],

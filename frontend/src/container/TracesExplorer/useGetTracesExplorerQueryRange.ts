@@ -2,9 +2,10 @@
 // @ts-ignore
 // @ts-nocheck
 
-import { TracesExplorerRangePayload } from 'types/api/trace/getQueryRange';
+import { getMetricsQueryRange } from 'api/metrics/getQueryRange';
 import { COMPOSITE_QUERY } from 'constants/queryBuilderQueryNames';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
+import { GRAPH_TYPES } from 'container/NewDashboard/ComponentsSlider';
 import useUrlQuery from 'hooks/useUrlQuery';
 import getStartEndRangeTime from 'lib/getStartEndRangeTime';
 import getStep from 'lib/getStep';
@@ -13,18 +14,16 @@ import { useMemo } from 'react';
 import { useQuery, UseQueryResult } from 'react-query';
 import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
-import { ErrorResponse, SuccessResponse } from 'types/api';
+import { SuccessResponse } from 'types/api';
+import { MetricRangePayloadV3 } from 'types/api/metrics/getQueryRange';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource } from 'types/common/queryBuilder';
 import { GlobalReducer } from 'types/reducer/globalTime';
-import { getMetricsQueryRange } from 'api/metrics/getQueryRange';
 
-export const useGetTracesExplorerQueryRange = ({
-	query,
-}: UseGetTracesExplorerQueryRangeProps): UseQueryResult<
-	SuccessResponse<TracesExplorerRangePayload> | ErrorResponse,
-	unknown
-> => {
+export const useGetTracesExplorerQueryRange = (
+	query: Query,
+	panelType?: GRAPH_TYPES = 'graph',
+): UseQueryResult<SuccessResponse<MetricRangePayloadV3>, Error> => {
 	const { selectedTime: globalSelectedTime, maxTime, minTime } = useSelector<
 		AppState,
 		GlobalReducer
@@ -60,7 +59,7 @@ export const useGetTracesExplorerQueryRange = ({
 
 	const queryKeys = [currentQuery, globalSelectedTime, maxTime, minTime];
 
-	const queryResponse = useQuery(
+	return useQuery<SuccessResponse<MetricRangePayloadV3>, Error>(
 		[REACT_QUERY_KEY.GET_TRACES_EXPLORER_QUERY_RANGE, ...queryKeys],
 		async () =>
 			getMetricsQueryRange({
@@ -70,7 +69,7 @@ export const useGetTracesExplorerQueryRange = ({
 				dataSource: DataSource.TRACES,
 				compositeQuery: {
 					queryType: query.queryType,
-					panelType: 'graph',
+					panelType,
 					builderQueries,
 				},
 			}),
@@ -79,10 +78,4 @@ export const useGetTracesExplorerQueryRange = ({
 			enabled: canQuery,
 		},
 	);
-
-	return queryResponse;
 };
-
-interface UseGetTracesExplorerQueryRangeProps {
-	query: Query;
-}
