@@ -6,7 +6,7 @@ export const LogContainer = styled.div`
 	text-overflow: ellipsis;
 	overflow: hidden;
 	text-align: left;
-	margin-left: -24px;
+	margin-left: -1.3rem;
 `;
 
 export const HisoryLogContainer = styled.div`
@@ -14,7 +14,7 @@ export const HisoryLogContainer = styled.div`
 	text-overflow: ellipsis;
 	overflow: hidden;
 	text-align: left;
-	margin: 0 -24px;
+	margin: 0 -1.3rem;
 	* {
 		::-webkit-scrollbar {
 			width: 0.3rem;
@@ -41,10 +41,10 @@ export const HisoryLogContainer = styled.div`
 export const HistoryLogHeader = styled.div`
 	display: flex;
 	align-items: center;
-	padding: 8px;
+	padding: 0.4rem;
 
 	button {
-		margin-left: 8px;
+		margin-left: 0.4rem;
 		border-radius: 4px;
 	}
 `;
@@ -56,13 +56,15 @@ export const HistoryLogsScrolled = styled.div`
 	background: #262626;
 `;
 
-export const Log = styled.div`
-	padding: 4px 8px;
-`;
-
 export const SpinnerContainer = styled.div`
 	display: flex;
 	height: 150px;
 	align-items: center;
 	justify-content: center;
+`;
+
+export const CloseWrapperIconDiv = styled.div`
+	display: flex;
+	gap: 20px;
+	margin-left: -33px;
 `;

@@ -1,10 +1,14 @@
+import { Typography } from 'antd';
+
 import ICurrentLog from '../interfaces/ICurrentLog';
-import { Log, LogContainer } from '../styles/Log';
+import { LogContainer } from '../styles/Log';
+
+const { Text } = Typography;
 
 function CurrentLog({ log }: ICurrentLog): JSX.Element {
 	return (
 		<LogContainer>
-			<Log>{log}</Log>
+			<Text ellipsis>{log}</Text>
 		</LogContainer>
 	);
 }

@@ -1,3 +1,5 @@
+import { MouseEventHandler } from 'react';
+
 export default interface ICloseWrapperIcon {
-	toggleInput: () => void;
+	toggleInput: MouseEventHandler<Element>;
 }

@@ -2,7 +2,7 @@ import { Modal } from 'antd';
 import GetLogs from 'api/logs/GetLogs';
 import dayjs from 'dayjs';
 import { debounce } from 'lodash-es';
-import { useMemo, useState } from 'react';
+import { MouseEventHandler, useMemo, useState } from 'react';
 import { useQuery } from 'react-query';
 import { useDispatch, useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
@@ -64,6 +64,11 @@ function LogDetailsModalView(): JSX.Element {
 
 	const addMoreNextLogs = (): void => setNextLogPage(nextLogPage + 1);
 	const addMorePrevLogs = (): void => setPrevLogPage(prevLogPage + 1);
+	const toggleInputVisible: MouseEventHandler<Element> = (event) => {
+		event.preventDefault();
+		event.stopPropagation();
+		setFilterInputVisible(!filterInputVisible);
+	};
 
 	const handleCancel = (): void => {
 		dispatch({
@@ -86,11 +91,7 @@ function LogDetailsModalView(): JSX.Element {
 			closable
 			open={!!currentLog}
 			footer={null}
-			closeIcon={
-				<CloseWrapperIcon
-					toggleInput={(): void => setFilterInputVisible(!filterInputVisible)}
-				/>
-			}
+			closeIcon={<CloseWrapperIcon toggleInput={toggleInputVisible} />}
 			destroyOnClose
 			onCancel={handleCancel}
 		>

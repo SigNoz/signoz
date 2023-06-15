@@ -84,7 +84,6 @@ function RawLogView(props: RawLogViewProps): JSX.Element {
 			type: SET_CURRENT_LOG,
 			payload: data,
 		});
-		console.log('e', event);
 	};
 
 	const copyLinkHandler: MouseEventHandler<Element> = (event) => {

@@ -1,22 +1,16 @@
 import { CloseOutlined, EditFilled } from '@ant-design/icons';
-import { MouseEventHandler } from 'react';
 
 import ICloseWrapperIcon from '../interfaces/ICloseWrapperIcon';
+import { CloseWrapperIconDiv } from '../styles/Log';
 
 function CloseWrapperIcon({ toggleInput }: ICloseWrapperIcon): JSX.Element {
-	const handleClick: MouseEventHandler<Element> = (event) => {
-		event.preventDefault();
-		event.stopPropagation();
-		toggleInput();
-	};
-
 	return (
-		<div style={{ display: 'flex', gap: 20, marginLeft: -33 }}>
-			<span role="button" aria-hidden="true" onClick={handleClick}>
+		<CloseWrapperIconDiv>
+			<span role="button" aria-hidden="true" onClick={toggleInput}>
 				<EditFilled />
 			</span>
 			<CloseOutlined />
-		</div>
+		</CloseWrapperIconDiv>
 	);
 }
 

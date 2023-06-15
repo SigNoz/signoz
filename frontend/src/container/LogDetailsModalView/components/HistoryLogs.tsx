@@ -1,13 +1,14 @@
-import { Button, Spin } from 'antd';
+import { Button, Spin, Typography } from 'antd';
 
 import IHistoryLogs, { HistoryPosition } from '../interfaces/IHistoryLogs';
 import {
 	HisoryLogContainer,
 	HistoryLogHeader,
 	HistoryLogsScrolled,
-	Log,
 	SpinnerContainer,
 } from '../styles/Log';
+
+const { Text } = Typography;
 
 function HistoryLogs({
 	logs,
@@ -37,9 +38,13 @@ function HistoryLogs({
 			) : (
 				<HistoryLogsScrolled>
 					{logs?.length === 0 ? (
-						<Log>there are no logs</Log>
+						<Text ellipsis>there are no logs</Text>
 					) : (
-						logs?.map((log) => <Log key={log.id}>{log.body}</Log>)
+						logs?.map((log) => (
+							<Text ellipsis key={log.id}>
+								{log.body}
+							</Text>
+						))
 					)}
 				</HistoryLogsScrolled>
 			)}
