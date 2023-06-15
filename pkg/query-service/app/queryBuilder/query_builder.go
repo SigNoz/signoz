@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/SigNoz/govaluate"
+	"go.signoz.io/signoz/pkg/query-service/cache"
 	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
 	"go.uber.org/zap"
 )
@@ -36,7 +37,7 @@ var SupportedFunctions = []string{
 var EvalFuncs = map[string]govaluate.ExpressionFunction{}
 
 type prepareTracesQueryFunc func(start, end int64, queryType v3.QueryType, panelType v3.PanelType, bq *v3.BuilderQuery, keys map[string]v3.AttributeKey) (string, error)
-type prepareLogsQueryFunc func(start, end int64, queryType v3.QueryType, panelType v3.PanelType, bq *v3.BuilderQuery, fields map[string]v3.AttributeKey) (string, error)
+type prepareLogsQueryFunc func(start, end int64, queryType v3.QueryType, panelType v3.PanelType, bq *v3.BuilderQuery) (string, error)
 type prepareMetricQueryFunc func(start, end int64, queryType v3.QueryType, panelType v3.PanelType, bq *v3.BuilderQuery) (string, error)
 
 type QueryBuilder struct {
@@ -140,8 +141,8 @@ func (qb *QueryBuilder) PrepareQueries(params *v3.QueryRangeParamsV3, args ...in
 				switch query.DataSource {
 				case v3.DataSourceTraces:
 					keys := map[string]v3.AttributeKey{}
-					if len(args) == 2 {
-						keys = args[1].(map[string]v3.AttributeKey)
+					if len(args) > 0 {
+						keys = args[0].(map[string]v3.AttributeKey)
 					}
 					queryString, err := qb.options.BuildTraceQuery(params.Start, params.End, compositeQuery.QueryType, compositeQuery.PanelType, query, keys)
 					if err != nil {
@@ -149,11 +150,7 @@ func (qb *QueryBuilder) PrepareQueries(params *v3.QueryRangeParamsV3, args ...in
 					}
 					queries[queryName] = queryString
 				case v3.DataSourceLogs:
-					fields := map[string]v3.AttributeKey{}
-					if len(args) == 1 {
-						fields = args[0].(map[string]v3.AttributeKey)
-					}
-					queryString, err := qb.options.BuildLogQuery(params.Start, params.End, compositeQuery.QueryType, compositeQuery.PanelType, query, fields)
+					queryString, err := qb.options.BuildLogQuery(params.Start, params.End, compositeQuery.QueryType, compositeQuery.PanelType, query)
 					if err != nil {
 						return nil, err
 					}
@@ -191,4 +188,83 @@ func (qb *QueryBuilder) PrepareQueries(params *v3.QueryRangeParamsV3, args ...in
 		}
 	}
 	return queries, nil
+}
+
+// cacheKeyGenerator implements the cache.KeyGenerator interface
+type cacheKeyGenerator struct {
+}
+
+func expressionToKey(expression *govaluate.EvaluableExpression, keys map[string]string) string {
+
+	var modified []govaluate.ExpressionToken
+	tokens := expression.Tokens()
+	for idx := range tokens {
+		token := tokens[idx]
+		if token.Kind == govaluate.VARIABLE {
+			token.Value = keys[fmt.Sprintf("%s", token.Value)]
+			token.Meta = keys[fmt.Sprintf("%s", token.Meta)]
+		}
+		modified = append(modified, token)
+	}
+	// err should be nil here since the expression is already validated
+	formula, _ := govaluate.NewEvaluableExpressionFromTokens(modified)
+	return formula.ExpressionString()
+}
+
+func (c *cacheKeyGenerator) GenerateKeys(params *v3.QueryRangeParamsV3) map[string]string {
+	keys := make(map[string]string)
+
+	// Build keys for each builder query
+	for queryName, query := range params.CompositeQuery.BuilderQueries {
+		if query.Expression == queryName {
+			var parts []string
+
+			// We need to build uniqe cache query for BuilderQuery
+
+			parts = append(parts, fmt.Sprintf("source=%s", query.DataSource))
+			parts = append(parts, fmt.Sprintf("step=%d", query.StepInterval))
+			parts = append(parts, fmt.Sprintf("aggregate=%s", query.AggregateOperator))
+
+			if query.AggregateAttribute.Key != "" {
+				parts = append(parts, fmt.Sprintf("aggregateAttribute=%s", query.AggregateAttribute.CacheKey()))
+			}
+
+			if query.Filters != nil && len(query.Filters.Items) > 0 {
+				for idx, filter := range query.Filters.Items {
+					parts = append(parts, fmt.Sprintf("filter-%d=%s", idx, filter.CacheKey()))
+				}
+			}
+
+			if len(query.GroupBy) > 0 {
+				for idx, groupBy := range query.GroupBy {
+					parts = append(parts, fmt.Sprintf("groupBy-%d=%s", idx, groupBy.CacheKey()))
+				}
+			}
+
+			if len(query.Having) > 0 {
+				for idx, having := range query.Having {
+					parts = append(parts, fmt.Sprintf("having-%d=%s", idx, having.CacheKey()))
+				}
+			}
+
+			key := strings.Join(parts, "&")
+			keys[queryName] = key
+		}
+	}
+
+	// Build keys for each expression
+	for _, query := range params.CompositeQuery.BuilderQueries {
+		if query.Expression != query.QueryName {
+			expression, _ := govaluate.NewEvaluableExpressionWithFunctions(query.Expression, EvalFuncs)
+
+			expressionCacheKey := expressionToKey(expression, keys)
+			keys[query.QueryName] = expressionCacheKey
+		}
+	}
+
+	return keys
+}
+
+func NewKeyGenerator() cache.KeyGenerator {
+	return &cacheKeyGenerator{}
 }

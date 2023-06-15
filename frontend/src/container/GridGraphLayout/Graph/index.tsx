@@ -2,10 +2,13 @@ import { Typography } from 'antd';
 import { ChartData } from 'chart.js';
 import Spinner from 'components/Spinner';
 import GridGraphComponent from 'container/GridGraphComponent';
+import { UpdateDashboard } from 'container/GridGraphLayout/utils';
+import { useGetQueryRange } from 'hooks/queryBuilder/useGetQueryRange';
 import { useNotifications } from 'hooks/useNotifications';
 import usePreviousValue from 'hooks/usePreviousValue';
 import { getDashboardVariables } from 'lib/dashbaordVariables/getDashboardVariables';
 import getChartData from 'lib/getChartData';
+import history from 'lib/history';
 import isEmpty from 'lodash-es/isEmpty';
 import {
 	Dispatch,
@@ -18,7 +21,6 @@ import {
 import { Layout } from 'react-grid-layout';
 import { useTranslation } from 'react-i18next';
 import { useInView } from 'react-intersection-observer';
-import { useQuery } from 'react-query';
 import { connect, useSelector } from 'react-redux';
 import { bindActionCreators } from 'redux';
 import { ThunkDispatch } from 'redux-thunk';
@@ -26,13 +28,13 @@ import {
 	DeleteWidget,
 	DeleteWidgetProps,
 } from 'store/actions/dashboard/deleteWidget';
-import { GetMetricQueryRange } from 'store/actions/dashboard/getQueryResults';
 import { AppState } from 'store/reducers';
 import AppActions from 'types/actions';
 import { Widgets } from 'types/api/dashboard/getAll';
 import AppReducer from 'types/reducer/app';
 import DashboardReducer from 'types/reducer/dashboards';
 import { GlobalReducer } from 'types/reducer/globalTime';
+import { v4 } from 'uuid';
 
 import { LayoutProps } from '..';
 import EmptyWidget from '../EmptyWidget';
@@ -78,33 +80,28 @@ function GridCardGraph({
 	const selectedData = selectedDashboard?.data;
 	const { variables } = selectedData;
 
-	const queryResponse = useQuery(
-		[
-			`GetMetricsQueryRange-${widget?.timePreferance}-${globalSelectedInterval}-${widget.id}`,
-			{
+	const queryResponse = useGetQueryRange(
+		{
+			selectedTime: widget?.timePreferance,
+			graphType: widget?.panelTypes,
+			query: widget?.query,
+			globalSelectedInterval,
+			variables: getDashboardVariables(),
+		},
+		{
+			queryKey: [
+				`GetMetricsQueryRange-${widget?.timePreferance}-${globalSelectedInterval}-${widget?.id}`,
 				widget,
 				maxTime,
 				minTime,
 				globalSelectedInterval,
 				variables,
-			},
-		],
-		() =>
-			GetMetricQueryRange({
-				selectedTime: widget?.timePreferance,
-				graphType: widget.panelTypes,
-				query: widget.query,
-				globalSelectedInterval,
-				variables: getDashboardVariables(),
-			}),
-		{
+			],
 			keepPreviousData: true,
 			enabled: isGraphVisible,
 			refetchOnMount: false,
 			onError: (error) => {
-				if (error instanceof Error) {
-					setErrorMessage(error.message);
-				}
+				setErrorMessage(error.message);
 			},
 		},
 	);
@@ -156,6 +153,46 @@ function GridCardGraph({
 		notifications,
 		t,
 	]);
+
+	const onCloneHandler = async (): Promise<void> => {
+		const uuid = v4();
+
+		const layout = [
+			{
+				i: uuid,
+				w: 6,
+				x: 0,
+				h: 2,
+				y: 0,
+			},
+			...(selectedDashboard.data.layout || []),
+		];
+
+		if (widget) {
+			await UpdateDashboard(
+				{
+					data: selectedDashboard.data,
+					generateWidgetId: uuid,
+					graphType: widget?.panelTypes,
+					selectedDashboard,
+					layout,
+					widgetData: widget,
+					isRedirected: false,
+				},
+				notifications,
+			).then(() => {
+				notifications.success({
+					message: 'Panel cloned successfully, redirecting to new copy.',
+				});
+
+				setTimeout(() => {
+					history.push(
+						`${history.location.pathname}/new?graphType=${widget?.panelTypes}&widgetId=${uuid}`,
+					);
+				}, 1500);
+			});
+		}
+	};
 
 	const getModals = (): JSX.Element => (
 		<>
@@ -210,15 +247,16 @@ function GridCardGraph({
 								widget={widget}
 								onView={handleOnView}
 								onDelete={handleOnDelete}
+								onClone={onCloneHandler}
 								queryResponse={queryResponse}
 								errorMessage={errorMessage}
 							/>
 						</div>
 						<GridGraphComponent
-							GRAPH_TYPES={widget.panelTypes}
+							GRAPH_TYPES={widget?.panelTypes}
 							data={prevChartDataSetRef}
-							isStacked={widget.isStacked}
-							opacity={widget.opacity}
+							isStacked={widget?.isStacked}
+							opacity={widget?.opacity}
 							title={' '}
 							name={name}
 							yAxisUnit={yAxisUnit}
@@ -241,6 +279,7 @@ function GridCardGraph({
 								widget={widget}
 								onView={handleOnView}
 								onDelete={handleOnDelete}
+								onClone={onCloneHandler}
 								queryResponse={queryResponse}
 								errorMessage={errorMessage}
 							/>
@@ -286,6 +325,7 @@ function GridCardGraph({
 						widget={widget}
 						onView={handleOnView}
 						onDelete={handleOnDelete}
+						onClone={onCloneHandler}
 						queryResponse={queryResponse}
 						errorMessage={errorMessage}
 					/>
