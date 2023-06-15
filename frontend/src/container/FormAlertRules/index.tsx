@@ -201,10 +201,6 @@ function FormAlertRules({
 
 	const isFormValid = useCallback((): boolean => {
 		if (!alertDef.alert || alertDef.alert === '') {
-			notifications.error({
-				message: 'Error',
-				description: t('alertname_required'),
-			});
 			return false;
 		}
 
@@ -217,14 +213,7 @@ function FormAlertRules({
 		}
 
 		return validateQBParams();
-	}, [
-		t,
-		validateQBParams,
-		validateChQueryParams,
-		alertDef,
-		validatePromParams,
-		notifications,
-	]);
+	}, [validateQBParams, validateChQueryParams, alertDef, validatePromParams]);
 
 	const preparePostData = (): AlertDef => {
 		const postableAlert: AlertDef = {
@@ -328,9 +317,7 @@ function FormAlertRules({
 			title: t('confirm_save_title'),
 			centered: true,
 			content,
-			onOk() {
-				saveRule();
-			},
+			onOk: saveRule,
 		});
 	}, [t, saveRule, currentQuery]);
 
@@ -407,6 +394,8 @@ function FormAlertRules({
 
 	const isNewRule = ruleId === 0;
 
+	const isAlertNameMissing = !formInstance.getFieldValue('alert');
+
 	const isAlertAvialableToSave =
 		isAlertAvialable &&
 		isNewRule &&
@@ -448,7 +437,7 @@ function FormAlertRules({
 									type="primary"
 									onClick={onSaveHandler}
 									icon={<SaveOutlined />}
-									disabled={isAlertAvialableToSave}
+									disabled={isAlertNameMissing || isAlertAvialableToSave}
 								>
 									{isNewRule ? t('button_createrule') : t('button_savechanges')}
 								</ActionButton>
