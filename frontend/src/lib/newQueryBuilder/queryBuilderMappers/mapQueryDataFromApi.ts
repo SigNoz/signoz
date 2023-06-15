@@ -1,6 +1,7 @@
 import { initialQueryState } from 'constants/queryBuilder';
 import { ICompositeMetricQuery } from 'types/api/alerts/compositeQuery';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
+import { v4 as uuid } from 'uuid';
 
 import { transformQueryBuilderDataModel } from '../transformQueryBuilderDataModel';
 
@@ -31,5 +32,6 @@ export const mapQueryDataFromApi = (
 		promql,
 		clickhouse_sql: clickhouseSql,
 		queryType: compositeQuery.queryType,
+		id: uuid(),
 	};
 };
