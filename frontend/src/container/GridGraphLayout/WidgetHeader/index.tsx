@@ -126,7 +126,7 @@ function WidgetHeader({
 			{
 				key: keyMethodMapping.clone.key,
 				icon: <CopyOutlined />,
-				disabled: false,
+				disabled: !editWidget,
 				label: 'Clone',
 			},
 			{
