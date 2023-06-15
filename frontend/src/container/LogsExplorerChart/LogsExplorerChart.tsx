@@ -1,7 +1,8 @@
 import Graph from 'components/Graph';
 import Spinner from 'components/Spinner';
-import { PANEL_TYPES } from 'constants/queryBuilder';
+import { initialQueriesMap, PANEL_TYPES } from 'constants/queryBuilder';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
+import { useGetPanelTypesQueryParam } from 'hooks/queryBuilder/useGetPanelTypesQueryParam';
 import { useGetQueryRange } from 'hooks/queryBuilder/useGetQueryRange';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { getLogsExplorerChartData } from 'lib/logsExplorer/getLogsExplorerChartData';
@@ -19,14 +20,24 @@ export function LogsExplorerChart(): JSX.Element {
 		(state) => state.globalTime,
 	);
 
+	const panelTypeParam = useGetPanelTypesQueryParam(PANEL_TYPES.LIST);
+
 	const { data, isFetching } = useGetQueryRange(
 		{
-			query: stagedQuery,
-			graphType: PANEL_TYPES.TIME_SERIES,
+			query: stagedQuery || initialQueriesMap.metrics,
+			graphType: panelTypeParam,
 			globalSelectedInterval: selectedTime,
 			selectedTime: 'GLOBAL_TIME',
 		},
-		{ queryKey: [REACT_QUERY_KEY.GET_QUERY_RANGE, selectedTime, stagedQuery] },
+		{
+			queryKey: [
+				REACT_QUERY_KEY.GET_QUERY_RANGE,
+				selectedTime,
+				stagedQuery,
+				panelTypeParam,
+			],
+			enabled: !!stagedQuery,
+		},
 	);
 
 	const graphData = useMemo(() => {

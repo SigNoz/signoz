@@ -61,10 +61,11 @@ const menus: SidebarMenu[] = [
 				key: ROUTES.LOGS,
 				label: 'Search',
 			},
-			{
-				key: ROUTES.LOGS_EXPLORER,
-				label: 'Views',
-			},
+			// TODO: uncomment when will be ready explorer
+			// {
+			// 	key: ROUTES.LOGS_EXPLORER,
+			// 	label: 'Views',
+			// },
 		],
 	},
 	{

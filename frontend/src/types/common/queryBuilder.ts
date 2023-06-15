@@ -154,7 +154,7 @@ export type QueryBuilderData = {
 
 export type QueryBuilderContextType = {
 	currentQuery: Query;
-	stagedQuery: Query;
+	stagedQuery: Query | null;
 	initialDataSource: DataSource | null;
 	panelType: GRAPH_TYPES;
 	handleSetQueryData: (index: number, queryData: IBuilderQuery) => void;
@@ -179,6 +179,7 @@ export type QueryBuilderContextType = {
 	addNewQueryItem: (type: EQueryType.PROM | EQueryType.CLICKHOUSE) => void;
 	redirectWithQueryBuilderData: (query: Query) => void;
 	handleRunQuery: () => void;
+	resetStagedQuery: () => void;
 };
 
 export type QueryAdditionalFilter = {

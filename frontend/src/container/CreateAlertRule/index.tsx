@@ -1,16 +1,11 @@
 import { Form, Row } from 'antd';
-import { COMPOSITE_QUERY } from 'constants/queryBuilderQueryNames';
 import FormAlertRules from 'container/FormAlertRules';
-import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
-import useUrlQuery from 'hooks/useUrlQuery';
-import { mapQueryDataFromApi } from 'lib/newQueryBuilder/queryBuilderMappers/mapQueryDataFromApi';
 import { useState } from 'react';
 import { AlertTypes } from 'types/api/alerts/alertTypes';
 import { AlertDef } from 'types/api/alerts/def';
 
 import {
 	alertDefaults,
-	ALERTS_VALUES_MAP,
 	exceptionAlertDefaults,
 	logAlertDefaults,
 	traceAlertDefaults,
@@ -18,17 +13,11 @@ import {
 import SelectAlertType from './SelectAlertType';
 
 function CreateRules(): JSX.Element {
-	const [initValues, setInitValues] = useState<AlertDef>(alertDefaults);
+	const [initValues, setInitValues] = useState<AlertDef | null>(null);
 	const [alertType, setAlertType] = useState<AlertTypes>(
 		AlertTypes.METRICS_BASED_ALERT,
 	);
 	const [formInstance] = Form.useForm();
-
-	const urlQuery = useUrlQuery();
-
-	const compositeQuery = urlQuery.get(COMPOSITE_QUERY);
-
-	const { redirectWithQueryBuilderData } = useQueryBuilder();
 
 	const onSelectType = (typ: AlertTypes): void => {
 		setAlertType(typ);
@@ -45,15 +34,9 @@ function CreateRules(): JSX.Element {
 			default:
 				setInitValues(alertDefaults);
 		}
-
-		const value = ALERTS_VALUES_MAP[typ].condition.compositeQuery;
-
-		const compositeQuery = mapQueryDataFromApi(value);
-
-		redirectWithQueryBuilderData(compositeQuery);
 	};
 
-	if (!compositeQuery) {
+	if (!initValues) {
 		return (
 			<Row wrap={false}>
 				<SelectAlertType onSelect={onSelectType} />

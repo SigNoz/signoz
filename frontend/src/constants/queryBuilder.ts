@@ -1,5 +1,6 @@
 // ** Helpers
 import { GRAPH_TYPES } from 'container/NewDashboard/ComponentsSlider';
+import { createIdFromObjectFields } from 'lib/createIdFromObjectFields';
 import { createNewBuilderItemName } from 'lib/newQueryBuilder/createNewBuilderItemName';
 import {
 	BaseAutocompleteData,
@@ -102,7 +103,10 @@ export const initialHavingValues: HavingForm = {
 };
 
 export const initialAutocompleteData: BaseAutocompleteData = {
-	id: uuid(),
+	id: createIdFromObjectFields(
+		{ dataType: null, key: '', isColumn: null, type: null },
+		baseAutoCompleteIdKeysOrder,
+	),
 	dataType: null,
 	key: '',
 	isColumn: null,
@@ -185,6 +189,7 @@ export const initialSingleQueryMap: Record<
 > = { clickhouse_sql: initialClickHouseData, promql: initialQueryPromQLData };
 
 export const initialQueryState: QueryState = {
+	id: uuid(),
 	builder: initialQueryBuilderData,
 	clickhouse_sql: [initialClickHouseData],
 	promql: [initialQueryPromQLData],

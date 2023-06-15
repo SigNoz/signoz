@@ -45,6 +45,7 @@ import {
 	QueryBuilderContextType,
 	QueryBuilderData,
 } from 'types/common/queryBuilder';
+import { v4 as uuid } from 'uuid';
 
 export const QueryBuilderContext = createContext<QueryBuilderContextType>({
 	currentQuery: initialQueriesMap.metrics,
@@ -63,6 +64,7 @@ export const QueryBuilderContext = createContext<QueryBuilderContextType>({
 	addNewQueryItem: () => {},
 	redirectWithQueryBuilderData: () => {},
 	handleRunQuery: () => {},
+	resetStagedQuery: () => {},
 });
 
 export function QueryBuilderProvider({
@@ -86,46 +88,42 @@ export function QueryBuilderProvider({
 		initialQueryState,
 	);
 	const [stagedQuery, setStagedQuery] = useState<Query | null>(null);
+
 	const [queryType, setQueryType] = useState<EQueryType>(
 		EQueryType.QUERY_BUILDER,
 	);
 
 	const initQueryBuilderData = useCallback(
-		(query: Partial<Query>): void => {
-			const { queryType, ...queryState } = query;
+		(query: Query): void => {
+			const { queryType: newQueryType, ...queryState } = query;
 
 			const builder: QueryBuilderData = {
-				queryData: queryState.builder
-					? queryState.builder.queryData.map((item) => ({
-							...initialQueryBuilderFormValuesMap[
-								initialDataSource || DataSource.METRICS
-							],
-							...item,
-					  }))
-					: initialQueryState.builder.queryData,
-				queryFormulas: queryState.builder
-					? queryState.builder.queryFormulas.map((item) => ({
-							...initialFormulaBuilderFormValues,
-							...item,
-					  }))
-					: initialQueryState.builder.queryFormulas,
+				queryData: queryState.builder.queryData.map((item) => ({
+					...initialQueryBuilderFormValuesMap[
+						initialDataSource || DataSource.METRICS
+					],
+					...item,
+				})),
+				queryFormulas: queryState.builder.queryFormulas.map((item) => ({
+					...initialFormulaBuilderFormValues,
+					...item,
+				})),
 			};
 
-			const promql: IPromQLQuery[] = queryState.promql
-				? queryState.promql.map((item) => ({
-						...initialQueryPromQLData,
-						...item,
-				  }))
-				: initialQueryState.promql;
+			const promql: IPromQLQuery[] = queryState.promql.map((item) => ({
+				...initialQueryPromQLData,
+				...item,
+			}));
 
-			const clickHouse: IClickHouseQuery[] = queryState.clickhouse_sql
-				? queryState.clickhouse_sql.map((item) => ({
-						...initialClickHouseData,
-						...item,
-				  }))
-				: initialQueryState.clickhouse_sql;
+			const clickHouse: IClickHouseQuery[] = queryState.clickhouse_sql.map(
+				(item) => ({
+					...initialClickHouseData,
+					...item,
+				}),
+			);
 
-			const type = queryType || EQueryType.QUERY_BUILDER;
+			const type = newQueryType || EQueryType.QUERY_BUILDER;
+
 			const newQueryState: QueryState = {
 				clickhouse_sql: clickHouse,
 				promql,
@@ -146,6 +144,7 @@ export function QueryBuilderProvider({
 						},
 					})),
 				},
+				id: queryState.id,
 			};
 
 			const nextQuery: Query = { ...newQueryState, queryType: type };
@@ -192,8 +191,6 @@ export function QueryBuilderProvider({
 			const existNames = queries.map((item) => item.queryName);
 			const initialBuilderQuery =
 				initialQueryBuilderFormValuesMap[initialDataSource || DataSource.METRICS];
-
-			console.log({ initialBuilderQuery });
 
 			const newQuery: IBuilderQuery = {
 				...initialBuilderQuery,
@@ -403,6 +400,7 @@ export function QueryBuilderProvider({
 					!query.clickhouse_sql || query.clickhouse_sql.length === 0
 						? initialQueryState.clickhouse_sql
 						: query.clickhouse_sql,
+				id: uuid(),
 			};
 
 			urlQuery.set(COMPOSITE_QUERY, JSON.stringify(currentGeneratedQuery));
@@ -415,11 +413,19 @@ export function QueryBuilderProvider({
 	);
 
 	const handleRunQuery = useCallback(() => {
-		redirectWithQueryBuilderData(currentQuery);
-	}, [redirectWithQueryBuilderData, currentQuery]);
+		redirectWithQueryBuilderData({ ...currentQuery, queryType });
+	}, [redirectWithQueryBuilderData, currentQuery, queryType]);
+
+	const resetStagedQuery = useCallback(() => {
+		setStagedQuery(null);
+	}, []);
 
 	useEffect(() => {
 		if (!compositeQueryParam) return;
+
+		if (stagedQuery && stagedQuery.id === compositeQueryParam.id) {
+			return;
+		}
 
 		const { isValid, validData } = replaceIncorrectObjectFields(
 			compositeQueryParam,
@@ -434,14 +440,9 @@ export function QueryBuilderProvider({
 	}, [
 		initQueryBuilderData,
 		redirectWithQueryBuilderData,
-		urlQuery,
 		compositeQueryParam,
+		stagedQuery,
 	]);
-
-	const currentStagedQuery: Query = useMemo(
-		() => stagedQuery || initialQueriesMap.metrics,
-		[stagedQuery],
-	);
 
 	const query: Query = useMemo(
 		() => ({
@@ -454,7 +455,7 @@ export function QueryBuilderProvider({
 	const contextValues: QueryBuilderContextType = useMemo(
 		() => ({
 			currentQuery: query,
-			stagedQuery: currentStagedQuery,
+			stagedQuery,
 			initialDataSource,
 			panelType,
 			handleSetQueryData,
@@ -469,10 +470,11 @@ export function QueryBuilderProvider({
 			addNewQueryItem,
 			redirectWithQueryBuilderData,
 			handleRunQuery,
+			resetStagedQuery,
 		}),
 		[
 			query,
-			currentStagedQuery,
+			stagedQuery,
 			initialDataSource,
 			panelType,
 			handleSetQueryData,
@@ -487,6 +489,7 @@ export function QueryBuilderProvider({
 			addNewQueryItem,
 			redirectWithQueryBuilderData,
 			handleRunQuery,
+			resetStagedQuery,
 		],
 	);
 
