@@ -81,9 +81,7 @@ function FormAlertRules({
 		if (compositeQuery && !manualStagedQuery) {
 			setManualStagedQuery(compositeQuery);
 		}
-		setAlertDef(initialValue);
 	}, [
-		initialValue,
 		initQuery,
 		redirectWithQueryBuilderData,
 		currentQuery,
