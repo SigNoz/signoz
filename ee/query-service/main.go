@@ -26,7 +26,7 @@ import (
 	"go.uber.org/zap/zapcore"
 )
 
-func initZapLog() *zap.Logger {
+func initZapLog(enableQueryServiceLogOTLPExport bool) *zap.Logger {
 	config := zap.NewDevelopmentConfig()
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt)
 	defer stop()
@@ -48,7 +48,7 @@ func initZapLog() *zap.Logger {
 		zapcore.NewCore(consoleEncoder, os.Stdout, defaultLogLevel),
 	)
 
-	if constants.EnableQueryServiceLogOTLPExport == "true" {
+	if enableQueryServiceLogOTLPExport == true {
 		conn, err := grpc.DialContext(ctx, constants.OTLPTarget, grpc.WithBlock(), grpc.WithInsecure(), grpc.WithTimeout(time.Second*30))
 		if err != nil {
 			log.Println("failed to connect to otlp collector to export query service logs with error:", err)
@@ -82,12 +82,15 @@ func main() {
 	// the url used to build link in the alert messages in slack and other systems
 	var ruleRepoURL string
 
+	var enableQueryServiceLogOTLPExport bool
+
 	flag.StringVar(&promConfigPath, "config", "./config/prometheus.yml", "(prometheus config to read metrics)")
 	flag.BoolVar(&disableRules, "rules.disable", false, "(disable rule evaluation)")
 	flag.StringVar(&ruleRepoURL, "rules.repo-url", baseconst.AlertHelpPage, "(host address used to build rule link in alert messages)")
+	flag.BoolVar(&enableQueryServiceLogOTLPExport, "enable.query.service.log.otlp.export", false, "(enable query service log otlp export)")
 	flag.Parse()
 
-	loggerMgr := initZapLog()
+	loggerMgr := initZapLog(enableQueryServiceLogOTLPExport)
 	zap.ReplaceGlobals(loggerMgr)
 	defer loggerMgr.Sync() // flushes buffer, if any
 
