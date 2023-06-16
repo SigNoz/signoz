@@ -1,7 +1,7 @@
 import { InfoCircleOutlined } from '@ant-design/icons';
 import { StaticLineProps } from 'components/Graph';
 import Spinner from 'components/Spinner';
-import { PANEL_TYPES } from 'constants/queryBuilder';
+import { initialQueriesMap, PANEL_TYPES } from 'constants/queryBuilder';
 import GridGraphComponent from 'container/GridGraphComponent';
 import { GRAPH_TYPES } from 'container/NewDashboard/ComponentsSlider';
 import { timePreferenceType } from 'container/NewWidget/RightContainer/timeItems';
@@ -17,7 +17,7 @@ import { ChartContainer, FailedMessageContainer } from './styles';
 
 export interface ChartPreviewProps {
 	name: string;
-	query: Query | undefined;
+	query: Query | null;
 	graphType?: GRAPH_TYPES;
 	selectedTime?: timePreferenceType;
 	selectedInterval?: Time;
@@ -74,15 +74,7 @@ function ChartPreview({
 
 	const queryResponse = useGetQueryRange(
 		{
-			query: query || {
-				queryType: EQueryType.QUERY_BUILDER,
-				promql: [],
-				builder: {
-					queryFormulas: [],
-					queryData: [],
-				},
-				clickhouse_sql: [],
-			},
+			query: query || initialQueriesMap.metrics,
 			globalSelectedInterval: selectedInterval,
 			graphType,
 			selectedTime,

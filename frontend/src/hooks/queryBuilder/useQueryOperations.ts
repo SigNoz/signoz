@@ -1,6 +1,6 @@
 import {
 	initialAutocompleteData,
-	initialQueryBuilderFormValues,
+	initialQueryBuilderFormValuesMap,
 	mapOfFilters,
 } from 'constants/queryBuilder';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
@@ -21,6 +21,7 @@ export const useQueryOperations: UseQueryOperations = ({ query, index }) => {
 		handleSetQueryData,
 		removeQueryBuilderEntityByIndex,
 		panelType,
+		initialDataSource,
 	} = useQueryBuilder();
 	const [operators, setOperators] = useState<SelectOption<string, string>[]>([]);
 	const [listOfAdditionalFilters, setListOfAdditionalFilters] = useState<
@@ -80,9 +81,9 @@ export const useQueryOperations: UseQueryOperations = ({ query, index }) => {
 				panelType,
 			});
 
-			const entries = Object.entries(initialQueryBuilderFormValues).filter(
-				([key]) => key !== 'queryName' && key !== 'expression',
-			);
+			const entries = Object.entries(
+				initialQueryBuilderFormValuesMap.metrics,
+			).filter(([key]) => key !== 'queryName' && key !== 'expression');
 
 			const initCopyResult = Object.fromEntries(entries);
 
@@ -121,12 +122,24 @@ export const useQueryOperations: UseQueryOperations = ({ query, index }) => {
 	);
 
 	useEffect(() => {
+		if (initialDataSource && dataSource !== initialDataSource) return;
+
 		const initialOperators = getOperatorsBySourceAndPanelType({
 			dataSource,
 			panelType,
 		});
+
+		if (JSON.stringify(operators) === JSON.stringify(initialOperators)) return;
+
 		setOperators(initialOperators);
-	}, [dataSource, panelType]);
+		handleChangeOperator(initialOperators[0].value);
+	}, [
+		dataSource,
+		initialDataSource,
+		panelType,
+		operators,
+		handleChangeOperator,
+	]);
 
 	useEffect(() => {
 		const additionalFilters = getNewListOfAdditionalFilters(dataSource);
