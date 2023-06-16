@@ -12,6 +12,7 @@ import getStep from 'lib/getStep';
 import { mapQueryDataToApi } from 'lib/newQueryBuilder/queryBuilderMappers/mapQueryDataToApi';
 import { isEmpty } from 'lodash-es';
 import store from 'store';
+import { GRAPH_TYPES } from 'container/NewDashboard/ComponentsSlider';
 import { SuccessResponse } from 'types/api';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';

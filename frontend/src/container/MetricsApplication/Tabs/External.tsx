@@ -14,6 +14,7 @@ import {
 import { useMemo, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { EQueryType } from 'types/common/dashboard';
+import { v4 as uuid } from 'uuid';
 
 import { getWidgetQueryBuilder } from '../MetricsApplication.factory';
 import { Card, GraphContainer, GraphTitle, Row } from '../styles';
@@ -48,6 +49,7 @@ function External(): JSX.Element {
 					tagFilterItems,
 				}),
 				clickhouse_sql: [],
+				id: uuid(),
 			}),
 		[servicename, tagFilterItems],
 	);
@@ -67,6 +69,7 @@ function External(): JSX.Element {
 					tagFilterItems,
 				}),
 				clickhouse_sql: [],
+				id: uuid(),
 			}),
 		[servicename, tagFilterItems],
 	);
@@ -82,6 +85,7 @@ function External(): JSX.Element {
 					tagFilterItems,
 				}),
 				clickhouse_sql: [],
+				id: uuid(),
 			}),
 		[servicename, tagFilterItems],
 	);
@@ -97,6 +101,7 @@ function External(): JSX.Element {
 					tagFilterItems,
 				}),
 				clickhouse_sql: [],
+				id: uuid(),
 			}),
 		[servicename, tagFilterItems],
 	);

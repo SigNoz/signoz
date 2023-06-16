@@ -27,6 +27,7 @@ const ROUTES = {
 	UN_AUTHORIZED: '/un-authorized',
 	NOT_FOUND: '/not-found',
 	LOGS: '/logs',
+	LOGS_EXPLORER: '/logs-explorer',
 	HOME_PAGE: '/',
 	PASSWORD_RESET: '/password-reset',
 	LIST_LICENSES: '/licenses',

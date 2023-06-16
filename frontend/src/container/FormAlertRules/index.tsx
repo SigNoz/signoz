@@ -48,7 +48,12 @@ function FormAlertRules({
 	// init namespace for translations
 	const { t } = useTranslation('alerts');
 
-	const { currentQuery, redirectWithQueryBuilderData } = useQueryBuilder();
+	const {
+		currentQuery,
+		stagedQuery,
+		handleRunQuery,
+		redirectWithQueryBuilderData,
+	} = useQueryBuilder();
 
 	// use query client
 	const ruleCache = useQueryClient();
@@ -65,35 +70,14 @@ function FormAlertRules({
 
 	const sq = useMemo(() => mapQueryDataFromApi(initQuery), [initQuery]);
 
-	// manualStagedQuery requires manual staging of query
-	// when user clicks run query button. Useful for clickhouse tab where
-	// run query button is provided.
-	const [manualStagedQuery, setManualStagedQuery] = useState<Query>();
-
-	// this use effect initiates staged query and
-	// other queries based on server data.
-	// useful when fetching of initial values (from api)
-	// is delayed
-
-	const { compositeQuery } = useShareBuilderUrl({ defaultValue: sq });
+	useShareBuilderUrl({ defaultValue: sq });
 
 	useEffect(() => {
-		if (compositeQuery && !manualStagedQuery) {
-			setManualStagedQuery(compositeQuery);
-		}
 		setAlertDef(initialValue);
-	}, [
-		initialValue,
-		initQuery,
-		redirectWithQueryBuilderData,
-		currentQuery,
-		manualStagedQuery,
-		compositeQuery,
-	]);
+	}, [initialValue]);
 
 	const onRunQuery = (): void => {
-		setManualStagedQuery(currentQuery);
-		redirectWithQueryBuilderData(currentQuery);
+		handleRunQuery();
 	};
 
 	const onCancelHandler = useCallback(() => {
@@ -114,8 +98,6 @@ function FormAlertRules({
 			});
 		}
 		const query: Query = { ...currentQuery, queryType: val };
-
-		setManualStagedQuery(query);
 
 		redirectWithQueryBuilderData(query);
 	};
@@ -368,7 +350,7 @@ function FormAlertRules({
 			headline={<PlotTag queryType={currentQuery.queryType} />}
 			name=""
 			threshold={alertDef.condition?.target}
-			query={manualStagedQuery}
+			query={stagedQuery}
 			selectedInterval={toChartInterval(alertDef.evalWindow)}
 		/>
 	);
@@ -378,7 +360,7 @@ function FormAlertRules({
 			headline={<PlotTag queryType={currentQuery.queryType} />}
 			name="Chart Preview"
 			threshold={alertDef.condition?.target}
-			query={manualStagedQuery}
+			query={stagedQuery}
 		/>
 	);
 
@@ -387,7 +369,7 @@ function FormAlertRules({
 			headline={<PlotTag queryType={currentQuery.queryType} />}
 			name="Chart Preview"
 			threshold={alertDef.condition?.target}
-			query={manualStagedQuery}
+			query={stagedQuery}
 			selectedInterval={toChartInterval(alertDef.evalWindow)}
 		/>
 	);

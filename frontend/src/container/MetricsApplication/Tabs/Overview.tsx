@@ -20,6 +20,7 @@ import { UpdateTimeInterval } from 'store/actions';
 import { AppState } from 'store/reducers';
 import { EQueryType } from 'types/common/dashboard';
 import MetricReducer from 'types/reducer/metrics';
+import { v4 as uuid } from 'uuid';
 
 import { getWidgetQueryBuilder } from '../MetricsApplication.factory';
 import {
@@ -91,6 +92,7 @@ function Application(): JSX.Element {
 					topLevelOperations,
 				}),
 				clickhouse_sql: [],
+				id: uuid(),
 			}),
 		[servicename, topLevelOperations, tagFilterItems],
 	);
@@ -106,6 +108,7 @@ function Application(): JSX.Element {
 					topLevelOperations,
 				}),
 				clickhouse_sql: [],
+				id: uuid(),
 			}),
 		[servicename, topLevelOperations, tagFilterItems],
 	);
