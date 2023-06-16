@@ -11,6 +11,8 @@ import { useParams } from 'react-router-dom';
 import { AppState } from 'store/reducers';
 import { GlobalReducer } from 'types/reducer/globalTime';
 
+import { getErrorRate } from './utils';
+
 function TopOperationsTable(props: TopOperationsTableProps): JSX.Element {
 	const { minTime, maxTime } = useSelector<AppState, GlobalReducer>(
 		(state) => state.globalTime,
@@ -89,10 +91,10 @@ function TopOperationsTable(props: TopOperationsTableProps): JSX.Element {
 			dataIndex: 'errorCount',
 			key: 'errorCount',
 			width: 50,
-			sorter: (a: TopOperationList, b: TopOperationList): number =>
-				a.errorCount - b.errorCount,
-			render: (value: number, record: TopOperationList): string =>
-				`${((value / record.numCalls) * 100).toFixed(2)} %`,
+			sorter: (first: TopOperationList, second: TopOperationList): number =>
+				getErrorRate(first) - getErrorRate(second),
+			render: (_, record: TopOperationList): string =>
+				`${getErrorRate(record).toFixed(2)} %`,
 		},
 	];
 

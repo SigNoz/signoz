@@ -70,4 +70,5 @@ export const routePermission: Record<keyof typeof ROUTES, ROLES[]> = {
 	VERSION: ['ADMIN', 'EDITOR', 'VIEWER'],
 	LOGS: ['ADMIN', 'EDITOR', 'VIEWER'],
 	LIST_LICENSES: ['ADMIN'],
+	TRACE_EXPLORER: ['ADMIN', 'EDITOR', 'VIEWER'],
 };

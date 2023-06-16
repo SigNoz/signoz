@@ -1,5 +1,6 @@
 import updateDashboardApi from 'api/dashboard/update';
 import { AxiosError } from 'axios';
+import { COMPOSITE_QUERY } from 'constants/queryBuilderQueryNames';
 import ROUTES from 'constants/routes';
 import { ITEMS } from 'container/NewDashboard/ComponentsSlider/menuItems';
 import history from 'lib/history';
@@ -84,6 +85,12 @@ export const SaveDashboard = ({
 				];
 			};
 			const allLayout = getAllLayout();
+			const params = new URLSearchParams(window.location.search);
+			const compositeQuery = params.get(COMPOSITE_QUERY);
+			const query = compositeQuery
+				? JSON.parse(compositeQuery)
+				: selectedWidget.query;
+
 			const response = await updateDashboardApi({
 				data: {
 					...selectedDashboard.data,
@@ -98,6 +105,7 @@ export const SaveDashboard = ({
 						...preWidget,
 						{
 							...selectedWidget,
+							query,
 							description: updatedDescription,
 							id: isEmptyWidget ? newWidgetId : widgetId,
 							isStacked: updatedisStacked,
@@ -107,9 +115,6 @@ export const SaveDashboard = ({
 							timePreferance: updatedtimePreferance,
 							yAxisUnit: updatedYAxisUnit,
 							panelTypes: graphType,
-							queryData: {
-								...selectedWidget.queryData,
-							},
 						},
 						...afterWidget,
 					],
