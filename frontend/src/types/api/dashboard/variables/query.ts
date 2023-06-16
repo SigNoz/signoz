@@ -1,6 +1,8 @@
+import { IDashboardVariable } from '../getAll';
+
 export type PayloadVariables = Record<
 	string,
-	undefined | null | string | number | boolean | (string | number | boolean)[]
+	IDashboardVariable['selectedValue']
 >;
 
 export type Props = {
