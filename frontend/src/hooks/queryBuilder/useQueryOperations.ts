@@ -132,12 +132,20 @@ export const useQueryOperations: UseQueryOperations = ({ query, index }) => {
 		if (JSON.stringify(operators) === JSON.stringify(initialOperators)) return;
 
 		setOperators(initialOperators);
-		handleChangeOperator(initialOperators[0].value);
+
+		const isCurrentOperatorAvailableInList = initialOperators
+			.map((operator) => operator.value)
+			.includes(aggregateOperator);
+
+		if (!isCurrentOperatorAvailableInList) {
+			handleChangeOperator(initialOperators[0].value);
+		}
 	}, [
 		dataSource,
 		initialDataSource,
 		panelType,
 		operators,
+		aggregateOperator,
 		handleChangeOperator,
 	]);
 
