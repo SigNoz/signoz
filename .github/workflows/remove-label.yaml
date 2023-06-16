@@ -9,7 +9,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Remove label
-        uses: buildsville/add-remove-label@v1
+        uses: buildsville/add-remove-label@@v2.0.0
         with:
           label: ok-to-test,testing-deploy
           type: remove
