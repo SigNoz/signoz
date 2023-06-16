@@ -75,7 +75,7 @@ jobs:
           subdomain="pr-$(git rev-parse --short HEAD)"
           echo "URL for tunnelling: https://$subdomain.loca.lt"
           echo "subdomain=$subdomain" >> $GITHUB_OUTPUT
-          worker_ip="$(curl -4 -s ifconfig.co)"
+          worker_ip="$(curl -4 -s ipconfig.io/ip)"
           echo "Worker node IP address: $worker_ip"
 
       - name: Start tunnel
