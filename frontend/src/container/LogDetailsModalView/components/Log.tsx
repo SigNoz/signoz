@@ -15,11 +15,11 @@ function Log({ log }: ILog): JSX.Element {
 
 	return (
 		<LogContainer>
-			<Tooltip title={text}>
-				<LogDiv>
+			<LogDiv>
+				<Tooltip title={text}>
 					<Text ellipsis>{text}</Text>
-				</LogDiv>
-			</Tooltip>
+				</Tooltip>
+			</LogDiv>
 		</LogContainer>
 	);
 }

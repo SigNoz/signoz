@@ -6,6 +6,9 @@ export const LogContainer = styled.div`
 	text-overflow: ellipsis;
 	overflow: hidden;
 	text-align: left;
+`;
+
+export const CurrentLogContainer = styled.div`
 	margin-left: -1.3rem;
 `;
 

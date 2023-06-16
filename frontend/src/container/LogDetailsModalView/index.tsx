@@ -17,6 +17,7 @@ import Log from './components/Log';
 import LogSearchFilter from './components/LogSearchFilter';
 // types
 import { HistoryPosition } from './interfaces/IHistoryLogs';
+import { CurrentLogContainer } from './styles/Log';
 
 function LogDetailsModalView(): JSX.Element {
 	const dispatch = useDispatch();
@@ -96,7 +97,9 @@ function LogDetailsModalView(): JSX.Element {
 				isLoad={prevData.isLoading}
 				isError={prevData.isError}
 			/>
-			<Log log={currentLog as ILog} />
+			<CurrentLogContainer>
+				<Log log={currentLog as ILog} />
+			</CurrentLogContainer>
 			<HistoryLogs
 				position={HistoryPosition.next}
 				addMoreLogs={addMoreNextLogs}

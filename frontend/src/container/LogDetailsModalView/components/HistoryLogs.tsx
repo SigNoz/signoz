@@ -5,6 +5,7 @@ import {
 	HisoryLogContainer,
 	HistoryLogHeader,
 	HistoryLogsScrolled,
+	LogContainer,
 	LogDiv,
 	SpinnerContainer,
 } from '../styles/Log';
@@ -41,9 +42,11 @@ function HistoryLogs({
 				) : (
 					<HistoryLogsScrolled>
 						{logs?.length === 0 ? (
-							<LogDiv>
-								<Text ellipsis>there are no logs</Text>
-							</LogDiv>
+							<LogContainer>
+								<LogDiv>
+									<Text ellipsis>There are no logs</Text>
+								</LogDiv>
+							</LogContainer>
 						) : (
 							logs?.map((log) => <Log key={log.id} log={log} />)
 						)}
