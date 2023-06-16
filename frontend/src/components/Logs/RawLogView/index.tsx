@@ -25,6 +25,7 @@ import { SET_CURRENT_LOG } from 'types/actions/logs';
 // interfaces
 import { ILog } from 'types/api/logs/log';
 import { GlobalReducer } from 'types/reducer/globalTime';
+import ILogsReducer from 'types/reducer/logs';
 
 // styles
 import {
@@ -59,6 +60,10 @@ function RawLogView(props: RawLogViewProps): JSX.Element {
 		(state) => state.globalTime,
 	);
 
+	const { searchFilter } = useSelector<AppState, ILogsReducer>(
+		(state) => state.logs,
+	);
+
 	const isDarkMode = useIsDarkMode();
 
 	const text = useMemo(
@@ -90,7 +95,7 @@ function RawLogView(props: RawLogViewProps): JSX.Element {
 		event.preventDefault();
 		event.stopPropagation();
 		copyToClipboard(`
-			${window.location.origin}/logs?q=id in ('${data.id}')&timestampStart=${minTime}&timestampEnd=${maxTime}
+			${window.location.origin}/logs?&startTime=${minTime}&endTime=${maxTime}&selectedLogId=${data.id}q=${searchFilter.queryString}
 		`);
 	};
 
