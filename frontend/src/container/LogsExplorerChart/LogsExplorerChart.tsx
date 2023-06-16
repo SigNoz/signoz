@@ -5,7 +5,7 @@ import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import { useGetPanelTypesQueryParam } from 'hooks/queryBuilder/useGetPanelTypesQueryParam';
 import { useGetQueryRange } from 'hooks/queryBuilder/useGetQueryRange';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
-import { getLogsExplorerChartData } from 'lib/logsExplorer/getLogsExplorerChartData';
+import { getExplorerChartData } from 'lib/explorer/getExplorerChartData';
 import { useMemo } from 'react';
 import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
@@ -41,18 +41,11 @@ export function LogsExplorerChart(): JSX.Element {
 	);
 
 	const graphData = useMemo(() => {
-		if (data?.payload.data) {
-			return getLogsExplorerChartData(data.payload.data.result);
+		if (data?.payload.data && data.payload.data.result.length > 0) {
+			return getExplorerChartData([data.payload.data.result[0]]);
 		}
 
-		return {
-			labels: [],
-			datasets: [
-				{
-					data: [],
-				},
-			],
-		};
+		return getExplorerChartData([]);
 	}, [data]);
 
 	return (

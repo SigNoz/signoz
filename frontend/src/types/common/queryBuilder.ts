@@ -177,7 +177,10 @@ export type QueryBuilderContextType = {
 	addNewBuilderQuery: () => void;
 	addNewFormula: () => void;
 	addNewQueryItem: (type: EQueryType.PROM | EQueryType.CLICKHOUSE) => void;
-	redirectWithQueryBuilderData: (query: Query) => void;
+	redirectWithQueryBuilderData: (
+		query: Query,
+		searchParams?: Record<string, unknown>,
+	) => void;
 	handleRunQuery: () => void;
 	resetStagedQuery: () => void;
 };

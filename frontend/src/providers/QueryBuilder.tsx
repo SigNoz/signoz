@@ -382,7 +382,7 @@ export function QueryBuilderProvider({
 	}, []);
 
 	const redirectWithQueryBuilderData = useCallback(
-		(query: Partial<Query>) => {
+		(query: Partial<Query>, searchParams?: Record<string, unknown>) => {
 			const currentGeneratedQuery: Query = {
 				queryType:
 					!query.queryType || !Object.values(EQueryType).includes(query.queryType)
@@ -405,7 +405,13 @@ export function QueryBuilderProvider({
 
 			urlQuery.set(COMPOSITE_QUERY, JSON.stringify(currentGeneratedQuery));
 
-			const generatedUrl = `${location.pathname}?${urlQuery.toString()}`;
+			if (searchParams) {
+				Object.keys(searchParams).forEach((param) =>
+					urlQuery.set(param, JSON.stringify(searchParams[param])),
+				);
+			}
+
+			const generatedUrl = `${location.pathname}?${urlQuery}`;
 
 			history.push(generatedUrl);
 		},

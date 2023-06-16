@@ -4,7 +4,7 @@ import { QueryData } from 'types/api/widgets/getQuery';
 
 import { colors } from '../getRandomColor';
 
-export const getLogsExplorerChartData = (
+export const getExplorerChartData = (
 	queryData: QueryData[],
 ): ChartData<'bar'> => {
 	const uniqueTimeLabels = new Set<number>();
