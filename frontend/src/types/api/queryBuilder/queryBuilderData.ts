@@ -79,6 +79,7 @@ export interface Query {
 	promql: IPromQLQuery[];
 	builder: QueryBuilderData;
 	clickhouse_sql: IClickHouseQuery[];
+	id: string;
 }
 
 export type QueryState = Omit<Query, 'queryType'>;
