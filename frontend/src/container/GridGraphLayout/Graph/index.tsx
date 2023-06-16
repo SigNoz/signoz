@@ -81,19 +81,19 @@ function GridCardGraph({
 	const selectedData = selectedDashboard?.data;
 	const { variables } = selectedData;
 
-	const updatedQuery = useStep(widget.query);
+	const updatedQuery = useStep(widget?.query);
 
 	const queryResponse = useGetQueryRange(
 		{
 			selectedTime: widget?.timePreferance,
-			graphType: widget.panelTypes,
+			graphType: widget?.panelTypes,
 			query: updatedQuery,
 			globalSelectedInterval,
 			variables: getDashboardVariables(),
 		},
 		{
 			queryKey: [
-				`GetMetricsQueryRange-${widget?.timePreferance}-${globalSelectedInterval}-${widget.id}`,
+				`GetMetricsQueryRange-${widget?.timePreferance}-${globalSelectedInterval}-${widget?.id}`,
 				widget,
 				maxTime,
 				minTime,
@@ -176,7 +176,7 @@ function GridCardGraph({
 				{
 					data: selectedDashboard.data,
 					generateWidgetId: uuid,
-					graphType: widget.panelTypes,
+					graphType: widget?.panelTypes,
 					selectedDashboard,
 					layout,
 					widgetData: widget,
@@ -190,7 +190,7 @@ function GridCardGraph({
 
 				setTimeout(() => {
 					history.push(
-						`${history.location.pathname}/new?graphType=${widget.panelTypes}&widgetId=${uuid}`,
+						`${history.location.pathname}/new?graphType=${widget?.panelTypes}&widgetId=${uuid}`,
 					);
 				}, 1500);
 			});
@@ -256,10 +256,10 @@ function GridCardGraph({
 							/>
 						</div>
 						<GridGraphComponent
-							GRAPH_TYPES={widget.panelTypes}
+							GRAPH_TYPES={widget?.panelTypes}
 							data={prevChartDataSetRef}
-							isStacked={widget.isStacked}
-							opacity={widget.opacity}
+							isStacked={widget?.isStacked}
+							opacity={widget?.opacity}
 							title={' '}
 							name={name}
 							yAxisUnit={yAxisUnit}
