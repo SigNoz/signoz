@@ -3,6 +3,7 @@ import { StaticLineProps } from 'components/Graph';
 import Spinner from 'components/Spinner';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import GridGraphComponent from 'container/GridGraphComponent';
+import { useStep } from 'container/GridGraphLayout/Graph/utils';
 import { GRAPH_TYPES } from 'container/NewDashboard/ComponentsSlider';
 import { timePreferenceType } from 'container/NewWidget/RightContainer/timeItems';
 import { Time } from 'container/TopNav/DateTimeSelection/config';
@@ -72,17 +73,21 @@ function ChartPreview({
 		}
 	}, [query]);
 
+	const defaultQuery = {
+		queryType: EQueryType.QUERY_BUILDER,
+		promql: [],
+		builder: {
+			queryFormulas: [],
+			queryData: [],
+		},
+		clickhouse_sql: [],
+	};
+
+	const updatedQuery = useStep(query || defaultQuery);
+
 	const queryResponse = useGetQueryRange(
 		{
-			query: query || {
-				queryType: EQueryType.QUERY_BUILDER,
-				promql: [],
-				builder: {
-					queryFormulas: [],
-					queryData: [],
-				},
-				clickhouse_sql: [],
-			},
+			query: updatedQuery || defaultQuery,
 			globalSelectedInterval: selectedInterval,
 			graphType,
 			selectedTime,
