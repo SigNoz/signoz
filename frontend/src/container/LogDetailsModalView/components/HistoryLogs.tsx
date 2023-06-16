@@ -5,8 +5,10 @@ import {
 	HisoryLogContainer,
 	HistoryLogHeader,
 	HistoryLogsScrolled,
+	LogDiv,
 	SpinnerContainer,
 } from '../styles/Log';
+import Log from './Log';
 
 const { Text } = Typography;
 
@@ -22,7 +24,7 @@ function HistoryLogs({
 	}
 
 	return (
-		<HisoryLogContainer>
+		<>
 			{position === HistoryPosition.prev && (
 				<HistoryLogHeader>
 					Showing 10 lines after match
@@ -31,24 +33,23 @@ function HistoryLogs({
 					</Button>
 				</HistoryLogHeader>
 			)}
-			{isLoad ? (
-				<SpinnerContainer>
-					<Spin />
-				</SpinnerContainer>
-			) : (
-				<HistoryLogsScrolled>
-					{logs?.length === 0 ? (
-						<Text ellipsis>there are no logs</Text>
-					) : (
-						logs?.map((log) => (
-							<Text ellipsis key={log.id}>
-								{log.body}
-							</Text>
-						))
-					)}
-				</HistoryLogsScrolled>
-			)}
-
+			<HisoryLogContainer>
+				{isLoad ? (
+					<SpinnerContainer>
+						<Spin />
+					</SpinnerContainer>
+				) : (
+					<HistoryLogsScrolled>
+						{logs?.length === 0 ? (
+							<LogDiv>
+								<Text ellipsis>there are no logs</Text>
+							</LogDiv>
+						) : (
+							logs?.map((log) => <Log key={log.id} log={log} />)
+						)}
+					</HistoryLogsScrolled>
+				)}
+			</HisoryLogContainer>
 			{position === HistoryPosition.next && (
 				<HistoryLogHeader>
 					Showing 10 lines before match
@@ -57,7 +58,7 @@ function HistoryLogs({
 					</Button>
 				</HistoryLogHeader>
 			)}
-		</HisoryLogContainer>
+		</>
 	);
 }
 

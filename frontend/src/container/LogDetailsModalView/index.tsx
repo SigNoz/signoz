@@ -1,6 +1,5 @@
 import { Modal } from 'antd';
 import GetLogs from 'api/logs/GetLogs';
-import dayjs from 'dayjs';
 import { debounce } from 'lodash-es';
 import { MouseEventHandler, useMemo, useState } from 'react';
 import { useQuery } from 'react-query';
@@ -13,8 +12,8 @@ import { ILogsReducer } from 'types/reducer/logs';
 
 // components
 import CloseWrapperIcon from './components/CloseWrapperIcon';
-import CurrentLog from './components/CurrentLog';
 import HistoryLogs from './components/HistoryLogs';
+import Log from './components/Log';
 import LogSearchFilter from './components/LogSearchFilter';
 // types
 import { HistoryPosition } from './interfaces/IHistoryLogs';
@@ -77,14 +76,6 @@ function LogDetailsModalView(): JSX.Element {
 		});
 	};
 
-	const text = useMemo(
-		() =>
-			currentLog
-				? `${dayjs(currentLog.timestamp / 1e6).format()} | ${currentLog.body}`
-				: '',
-		[currentLog],
-	);
-
 	return (
 		<Modal
 			title="Log Details"
@@ -105,7 +96,7 @@ function LogDetailsModalView(): JSX.Element {
 				isLoad={prevData.isLoading}
 				isError={prevData.isError}
 			/>
-			<CurrentLog log={text} />
+			<Log log={currentLog as ILog} />
 			<HistoryLogs
 				position={HistoryPosition.next}
 				addMoreLogs={addMoreNextLogs}

@@ -90,7 +90,7 @@ function RawLogView(props: RawLogViewProps): JSX.Element {
 		event.preventDefault();
 		event.stopPropagation();
 		copyToClipboard(`
-			https://stagingapp.signoz.io/logs?q=id in ('${data.id}')&timestampStart=${minTime}&timestampEnd=${maxTime}
+			${window.location.origin}/logs?q=id in ('${data.id}')&timestampStart=${minTime}&timestampEnd=${maxTime}
 		`);
 	};
 

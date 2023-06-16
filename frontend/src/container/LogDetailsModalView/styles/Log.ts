@@ -42,7 +42,7 @@ export const HistoryLogHeader = styled.div`
 	display: flex;
 	align-items: center;
 	padding: 0.4rem;
-
+	margin-left: -1.3rem;
 	button {
 		margin-left: 0.4rem;
 		border-radius: 4px;
@@ -67,4 +67,8 @@ export const CloseWrapperIconDiv = styled.div`
 	display: flex;
 	gap: 20px;
 	margin-left: -33px;
+`;
+
+export const LogDiv = styled.div`
+	padding: 7px 10px 0;
 `;
