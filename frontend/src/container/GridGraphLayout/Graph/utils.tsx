@@ -12,7 +12,7 @@ export const useStep = (query: Widgets['query']): Widgets['query'] => {
 	return {
 		...query,
 		builder: {
-			...query.builder,
+			...query?.builder,
 			queryData:
 				query?.builder?.queryData?.map((item) => ({
 					...item,

@@ -1,5 +1,6 @@
 import { COMPOSITE_QUERY } from 'constants/queryBuilderQueryNames';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
+import { useStep } from 'container/GridGraphLayout/Graph/utils';
 import useUrlQuery from 'hooks/useUrlQuery';
 import { getDashboardVariables } from 'lib/dashbaordVariables/getDashboardVariables';
 import { UseQueryOptions, UseQueryResult } from 'react-query';
@@ -28,12 +29,16 @@ export const useGetWidgetQueryRange = (
 
 	const compositeQuery = urlQuery.get(COMPOSITE_QUERY);
 
+	const query = JSON.parse(compositeQuery || '');
+
+	const updatedQuery = useStep(query);
+
 	return useGetQueryRange(
 		{
 			graphType,
 			selectedTime,
 			globalSelectedInterval,
-			query: JSON.parse(compositeQuery || ''),
+			query: updatedQuery,
 			variables: getDashboardVariables(),
 		},
 		{
