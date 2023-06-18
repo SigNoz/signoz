@@ -11,15 +11,16 @@ import { Formula, Query } from './components';
 // ** Types
 import { QueryBuilderProps } from './QueryBuilder.interfaces';
 // ** Styles
+import { ActionsWrapperStyled } from './QueryBuilder.styled';
 
 export const QueryBuilder = memo(function QueryBuilder({
 	config,
 	panelType,
+	actions,
 }: QueryBuilderProps): JSX.Element {
 	const {
 		currentQuery,
 		setupInitialDataSource,
-		resetQueryBuilderInfo,
 		addNewBuilderQuery,
 		addNewFormula,
 		handleSetPanelType,
@@ -34,13 +35,6 @@ export const QueryBuilder = memo(function QueryBuilder({
 	useEffect(() => {
 		handleSetPanelType(panelType);
 	}, [handleSetPanelType, panelType]);
-
-	useEffect(
-		() => (): void => {
-			resetQueryBuilderInfo();
-		},
-		[resetQueryBuilderInfo],
-	);
 
 	const isDisabledQueryButton = useMemo(
 		() => currentQuery.builder.queryData.length >= MAX_QUERIES,
@@ -81,28 +75,31 @@ export const QueryBuilder = memo(function QueryBuilder({
 				</Row>
 			</Col>
 
-			<Row gutter={[20, 0]}>
-				<Col>
-					<Button
-						disabled={isDisabledQueryButton}
-						type="primary"
-						icon={<PlusOutlined />}
-						onClick={addNewBuilderQuery}
-					>
-						Query
-					</Button>
-				</Col>
-				<Col>
-					<Button
-						disabled={isDisabledFormulaButton}
-						onClick={addNewFormula}
-						type="primary"
-						icon={<PlusOutlined />}
-					>
-						Formula
-					</Button>
-				</Col>
-			</Row>
+			<ActionsWrapperStyled span={24}>
+				<Row gutter={[20, 0]}>
+					<Col>
+						<Button
+							disabled={isDisabledQueryButton}
+							type="primary"
+							icon={<PlusOutlined />}
+							onClick={addNewBuilderQuery}
+						>
+							Query
+						</Button>
+					</Col>
+					<Col>
+						<Button
+							disabled={isDisabledFormulaButton}
+							onClick={addNewFormula}
+							type="primary"
+							icon={<PlusOutlined />}
+						>
+							Formula
+						</Button>
+					</Col>
+					{actions}
+				</Row>
+			</ActionsWrapperStyled>
 		</Row>
 	);
 });

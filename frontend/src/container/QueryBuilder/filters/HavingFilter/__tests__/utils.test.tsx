@@ -2,18 +2,22 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import {
 	HAVING_OPERATORS,
-	initialQueryBuilderFormValues,
+	initialQueryBuilderFormValuesMap,
 } from 'constants/queryBuilder';
 import { valueWithAttributeAndOperator } from 'container/QueryBuilder/mock/queryData';
 import { transformFromStringToHaving } from 'lib/query/transformQueryBuilderData';
 
+// ** Types
 import { HavingFilter } from '../HavingFilter';
 
 describe('Having filter behaviour', () => {
 	test('Having filter render is rendered', () => {
 		const mockFn = jest.fn();
 		const { unmount } = render(
-			<HavingFilter query={initialQueryBuilderFormValues} onChange={mockFn} />,
+			<HavingFilter
+				query={initialQueryBuilderFormValuesMap.metrics}
+				onChange={mockFn}
+			/>,
 		);
 
 		const selectId = 'havingSelect';
@@ -28,7 +32,10 @@ describe('Having filter behaviour', () => {
 	test('Having render is disabled initially', () => {
 		const mockFn = jest.fn();
 		const { unmount } = render(
-			<HavingFilter query={initialQueryBuilderFormValues} onChange={mockFn} />,
+			<HavingFilter
+				query={initialQueryBuilderFormValuesMap.metrics}
+				onChange={mockFn}
+			/>,
 		);
 
 		const input = screen.getByRole('combobox');

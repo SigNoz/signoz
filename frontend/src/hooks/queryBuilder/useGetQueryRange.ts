@@ -1,7 +1,6 @@
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import { useMemo } from 'react';
 import { useQuery, UseQueryOptions, UseQueryResult } from 'react-query';
-import { useLocation } from 'react-router-dom';
 import {
 	GetMetricQueryRange,
 	GetQueryResultsProps,
@@ -9,18 +8,18 @@ import {
 import { SuccessResponse } from 'types/api';
 import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
 
-export const useGetQueryRange = (
+type UseGetQueryRange = (
 	requestData: GetQueryResultsProps,
 	options?: UseQueryOptions<SuccessResponse<MetricRangePayloadProps>, Error>,
-): UseQueryResult<SuccessResponse<MetricRangePayloadProps>, Error> => {
-	const { key } = useLocation();
+) => UseQueryResult<SuccessResponse<MetricRangePayloadProps>, Error>;
 
+export const useGetQueryRange: UseGetQueryRange = (requestData, options) => {
 	const queryKey = useMemo(() => {
 		if (options?.queryKey) {
-			return [...options.queryKey, key];
+			return [...options.queryKey];
 		}
-		return [REACT_QUERY_KEY.GET_QUERY_RANGE, key, requestData];
-	}, [key, options?.queryKey, requestData]);
+		return [REACT_QUERY_KEY.GET_QUERY_RANGE, requestData];
+	}, [options?.queryKey, requestData]);
 
 	return useQuery<SuccessResponse<MetricRangePayloadProps>, Error>({
 		queryFn: async () => GetMetricQueryRange(requestData),
