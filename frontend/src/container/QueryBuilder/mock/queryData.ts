@@ -1,4 +1,4 @@
-import { initialQueryBuilderFormValues } from 'constants/queryBuilder';
+import { initialQueryBuilderFormValuesMap } from 'constants/queryBuilder';
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource } from 'types/common/queryBuilder';
 
@@ -59,7 +59,7 @@ export const formulaMockData = {
 };
 
 export const valueWithAttributeAndOperator: IBuilderQuery = {
-	...initialQueryBuilderFormValues,
+	...initialQueryBuilderFormValuesMap.logs,
 	dataSource: DataSource.LOGS,
 	aggregateOperator: 'SUM',
 	aggregateAttribute: {

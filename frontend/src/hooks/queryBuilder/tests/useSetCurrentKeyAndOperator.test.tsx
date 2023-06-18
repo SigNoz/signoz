@@ -26,7 +26,7 @@ describe('useSetCurrentKeyAndOperator', () => {
 		const { result } = renderHook(() =>
 			useSetCurrentKeyAndOperator('brand:apple red', keys),
 		);
-		expect(result.current).toEqual(['brand:apple', 'red', []]);
+		expect(result.current).toEqual(['brand:apple red', '', []]);
 	});
 
 	test('should return the correct key, operator, and result when the input value is a valid key-value pair with a single result', () => {

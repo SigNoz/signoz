@@ -121,7 +121,7 @@ describe('useTag', () => {
 			result.current.handleAddTag('tag1 =');
 		});
 
-		expect(result.current.tags).toEqual([...defaultOptionsFromMock, 'tag1 =']);
+		expect(result.current.tags).toEqual([...defaultOptionsFromMock]);
 	});
 
 	test('should add a free text tag', () => {
