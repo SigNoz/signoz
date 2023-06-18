@@ -1,5 +1,5 @@
 import {
-	initialQueryBuilderFormValues,
+	initialQueryBuilderFormValuesMap,
 	initialQueryPromQLData,
 	PANEL_TYPES,
 } from 'constants/queryBuilder';
@@ -11,11 +11,6 @@ import {
 	defaultMatchType,
 } from 'types/api/alerts/def';
 import { EQueryType } from 'types/common/dashboard';
-import {
-	DataSource,
-	LogsAggregatorOperator,
-	TracesAggregatorOperator,
-} from 'types/common/queryBuilder';
 
 const defaultAlertDescription =
 	'This alert is fired when the defined metric (current value: {{$value}}) crosses the threshold ({{$threshold}})';
@@ -32,7 +27,7 @@ export const alertDefaults: AlertDef = {
 	condition: {
 		compositeQuery: {
 			builderQueries: {
-				A: initialQueryBuilderFormValues,
+				A: initialQueryBuilderFormValuesMap.metrics,
 			},
 			promQueries: { A: initialQueryPromQLData },
 			chQueries: {
@@ -61,11 +56,7 @@ export const logAlertDefaults: AlertDef = {
 	condition: {
 		compositeQuery: {
 			builderQueries: {
-				A: {
-					...initialQueryBuilderFormValues,
-					aggregateOperator: LogsAggregatorOperator.COUNT,
-					dataSource: DataSource.LOGS,
-				},
+				A: initialQueryBuilderFormValuesMap.logs,
 			},
 			promQueries: { A: initialQueryPromQLData },
 			chQueries: {
@@ -95,11 +86,7 @@ export const traceAlertDefaults: AlertDef = {
 	condition: {
 		compositeQuery: {
 			builderQueries: {
-				A: {
-					...initialQueryBuilderFormValues,
-					aggregateOperator: TracesAggregatorOperator.COUNT,
-					dataSource: DataSource.TRACES,
-				},
+				A: initialQueryBuilderFormValuesMap.traces,
 			},
 			promQueries: { A: initialQueryPromQLData },
 			chQueries: {
@@ -129,11 +116,7 @@ export const exceptionAlertDefaults: AlertDef = {
 	condition: {
 		compositeQuery: {
 			builderQueries: {
-				A: {
-					...initialQueryBuilderFormValues,
-					aggregateOperator: TracesAggregatorOperator.COUNT,
-					dataSource: DataSource.TRACES,
-				},
+				A: initialQueryBuilderFormValuesMap.traces,
 			},
 			promQueries: { A: initialQueryPromQLData },
 			chQueries: {
