@@ -38,35 +38,36 @@ const menus: SidebarMenu[] = [
 		icon: <BarChartOutlined />,
 	},
 	{
-		key: 'traces',
+		key: ROUTES.TRACE,
 		label: 'Traces',
 		icon: <MenuOutlined />,
-		children: [
-			{
-				key: ROUTES.TRACE,
-				label: 'Traces',
-			},
-			// {
-			// 	key: ROUTES.TRACE_EXPLORER,
-			// 	label: 'Explorer',
-			// },
-		],
+		// children: [
+		// {
+		// 	key: ROUTES.TRACE,
+		// 	label: 'Traces',
+		// },
+		// TODO: uncomment when will be ready explorer
+		// {
+		// 	key: ROUTES.TRACES_EXPLORER,
+		// 	label: "Explorer",
+		// },
+		// ],
 	},
 	{
-		key: 'logs',
+		key: ROUTES.LOGS,
 		label: 'Logs',
 		icon: <AlignLeftOutlined />,
-		children: [
-			{
-				key: ROUTES.LOGS,
-				label: 'Search',
-			},
-			// TODO: uncomment when will be ready explorer
-			// {
-			// 	key: ROUTES.LOGS_EXPLORER,
-			// 	label: 'Views',
-			// },
-		],
+		// children: [
+		// {
+		// 	key: ROUTES.LOGS,
+		// 	label: 'Search',
+		// },
+		// TODO: uncomment when will be ready explorer
+		// {
+		// 	key: ROUTES.LOGS_EXPLORER,
+		// 	label: 'Views',
+		// },
+		// ],
 	},
 	{
 		key: ROUTES.ALL_DASHBOARD,
