@@ -5,6 +5,7 @@ import { Link, RouteComponentProps, withRouter } from 'react-router-dom';
 const breadcrumbNameMap = {
 	[ROUTES.APPLICATION]: 'Services',
 	[ROUTES.TRACE]: 'Traces',
+	[ROUTES.TRACES_EXPLORER]: 'Traces Explorer',
 	[ROUTES.SERVICE_MAP]: 'Service Map',
 	[ROUTES.USAGE_EXPLORER]: 'Usage Explorer',
 	[ROUTES.INSTRUMENTATION]: 'Get Started',

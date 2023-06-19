@@ -54,7 +54,7 @@ export const QueryBuilder = memo(function QueryBuilder({
 	);
 
 	return (
-		<Row gutter={[0, 20]} justify="start">
+		<Row style={{ width: '100%' }} gutter={[0, 20]} justify="start">
 			<Col span={24}>
 				<Row gutter={[0, 50]}>
 					{currentQuery.builder.queryData.map((query, index) => (

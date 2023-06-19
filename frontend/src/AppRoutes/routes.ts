@@ -30,6 +30,7 @@ import {
 	StatusPage,
 	TraceDetail,
 	TraceFilter,
+	TracesExplorer,
 	UnAuthorized,
 	UsageExplorerPage,
 } from './pageComponents';
@@ -139,6 +140,13 @@ const routes: AppRoutes[] = [
 		component: TraceFilter,
 		isPrivate: true,
 		key: 'TRACE',
+	},
+	{
+		path: ROUTES.TRACES_EXPLORER,
+		exact: true,
+		component: TracesExplorer,
+		isPrivate: true,
+		key: 'TRACES_EXPLORER',
 	},
 	{
 		path: ROUTES.CHANNELS_NEW,
