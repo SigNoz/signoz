@@ -35,5 +35,9 @@ export const convertNewDataToOld = (
 	});
 	const oldResultType = resultType;
 
-	return { data: { result: oldResult, resultType: oldResultType } };
+	// TODO: fix it later for using only v3 version of api
+
+	return {
+		data: { result: oldResult, resultType: oldResultType, newResult: newData },
+	};
 };
