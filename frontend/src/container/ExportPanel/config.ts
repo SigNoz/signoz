@@ -1,11 +1,9 @@
-import { CSSProperties } from 'react';
-
-export const overlayStyles: CSSProperties = {
-	maxWidth: '32.5rem',
-	width: '100%',
+export const MENU_KEY = {
+	EXPORT: 'export',
+	CREATE_ALERTS: 'create-alerts',
 };
 
-export const overlayInnerStyle: CSSProperties = {
-	maxWidth: '32.5rem',
-	width: '100%',
+export const MENU_LABEL = {
+	EXPORT: 'Export Panel',
+	CREATE_ALERTS: 'Create Alerts',
 };

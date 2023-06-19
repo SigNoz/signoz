@@ -1,130 +1,65 @@
-import { Button, Popover, Typography } from 'antd';
-import createDashboard from 'api/dashboard/create';
-import getAll from 'api/dashboard/getAll';
-import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
-import ROUTES from 'constants/routes';
+import { Button, Dropdown, MenuProps, Modal } from 'antd';
 import { useCallback, useMemo, useState } from 'react';
-import { useTranslation } from 'react-i18next';
-import { useMutation, useQuery } from 'react-query';
-import { generatePath, useHistory } from 'react-router-dom';
 import { Dashboard } from 'types/api/dashboard/getAll';
 
-import { overlayInnerStyle, overlayStyles } from './config';
-import {
-	DashboardSelect,
-	NewDashboardButton,
-	SelectWrapper,
-	Title,
-	Wrapper,
-} from './styles';
-import { getSelectOptions } from './utils';
-
-interface ExportPanelProps {
-	onExport: (dashboard: Dashboard | null) => void;
-}
+import { MENU_KEY, MENU_LABEL } from './config';
+import ExportPanelContainer from './ExportPanel';
 
 function ExportPanel({ onExport }: ExportPanelProps): JSX.Element {
-	const { t } = useTranslation('dashboard');
-	const history = useHistory();
+	const [isExport, setIsExport] = useState<boolean>(false);
 
-	const [selectedDashboardId, setSelectedDashboardId] = useState<string | null>(
-		null,
-	);
+	const onModalToggle = useCallback((value: boolean) => {
+		setIsExport(value);
+	}, []);
 
-	const { data, isLoading } = useQuery({
-		queryFn: getAll,
-		queryKey: REACT_QUERY_KEY.GET_ALL_DASHBOARDS,
-	});
-
-	const { mutate: createNewDashboard } = useMutation(createDashboard, {
-		onSuccess: (response) => {
-			history.push(
-				generatePath(ROUTES.DASHBOARD, {
-					dashboardId: response?.payload?.uuid,
-				}),
-			);
+	const onMenuClickHandler: MenuProps['onClick'] = useCallback(
+		(e: OnClickProps) => {
+			if (e.key === MENU_KEY.EXPORT) {
+				onModalToggle(true);
+			}
 		},
-		onError: (error) => console.error(error),
-	});
-
-	const options = useMemo(() => getSelectOptions(data?.payload || []), [data]);
-
-	const handleExportClick = useCallback((): void => {
-		const currentSelectedDashboard = data?.payload?.find(
-			({ uuid }) => uuid === selectedDashboardId,
-		);
-
-		onExport(currentSelectedDashboard || null);
-	}, [data, selectedDashboardId, onExport]);
-
-	const handleSelect = useCallback(
-		(selectedDashboardValue: string): void => {
-			setSelectedDashboardId(selectedDashboardValue);
-		},
-		[setSelectedDashboardId],
+		[onModalToggle],
 	);
 
-	const handleNewDashboard = useCallback(async () => {
-		createNewDashboard({
-			title: t('new_dashboard_title', {
-				ns: 'dashboard',
-			}),
-			uploadedGrafana: false,
-		});
-	}, [t, createNewDashboard]);
-
-	const ExportPanelContent = useMemo(
-		() => (
-			<Wrapper direction="vertical">
-				<Title>Export Panel</Title>
-
-				<SelectWrapper direction="horizontal">
-					<DashboardSelect
-						placeholder="Select Dashboard"
-						options={options}
-						loading={isLoading}
-						disabled={isLoading}
-						value={selectedDashboardId}
-						onSelect={handleSelect}
-					/>
-					<Button
-						type="primary"
-						disabled={isLoading || !options?.length || !selectedDashboardId}
-						onClick={handleExportClick}
-					>
-						Export
-					</Button>
-				</SelectWrapper>
-
-				<Typography>
-					Or create dashboard with this panel -
-					<NewDashboardButton type="link" onClick={handleNewDashboard}>
-						New Dashboard
-					</NewDashboardButton>
-				</Typography>
-			</Wrapper>
-		),
-		[
-			options,
-			isLoading,
-			selectedDashboardId,
-			handleSelect,
-			handleExportClick,
-			handleNewDashboard,
-		],
+	const menu: MenuProps = useMemo(
+		() => ({
+			items: [
+				{
+					key: MENU_KEY.EXPORT,
+					label: MENU_LABEL.EXPORT,
+				},
+				{
+					key: MENU_KEY.CREATE_ALERTS,
+					label: MENU_LABEL.CREATE_ALERTS,
+				},
+			],
+			onClick: onMenuClickHandler,
+		}),
+		[onMenuClickHandler],
 	);
+
+	const onCancel = (): void => {
+		onModalToggle(false);
+	};
 
 	return (
-		<Popover
-			placement="bottom"
-			trigger="click"
-			content={ExportPanelContent}
-			overlayStyle={overlayStyles}
-			overlayInnerStyle={overlayInnerStyle}
-		>
-			<Button>Actions</Button>
-		</Popover>
+		<>
+			<Dropdown trigger={['click']} menu={menu}>
+				<Button>Actions</Button>
+			</Dropdown>
+			<Modal onCancel={onCancel} open={isExport} centered>
+				<ExportPanelContainer onExport={onExport} />
+			</Modal>
+		</>
 	);
+}
+
+interface OnClickProps {
+	key: string;
+}
+
+export interface ExportPanelProps {
+	onExport: (dashboard: Dashboard | null) => void;
 }
 
 export default ExportPanel;
