@@ -3,7 +3,6 @@ import { StaticLineProps } from 'components/Graph';
 import Spinner from 'components/Spinner';
 import { initialQueriesMap, PANEL_TYPES } from 'constants/queryBuilder';
 import GridGraphComponent from 'container/GridGraphComponent';
-import { useStep } from 'container/GridGraphLayout/Graph/utils';
 import { GRAPH_TYPES } from 'container/NewDashboard/ComponentsSlider';
 import { timePreferenceType } from 'container/NewWidget/RightContainer/timeItems';
 import { Time } from 'container/TopNav/DateTimeSelection/config';
@@ -73,11 +72,9 @@ function ChartPreview({
 		}
 	}, [query]);
 
-	const updatedQuery = useStep(query || initialQueriesMap.metrics);
-
 	const queryResponse = useGetQueryRange(
 		{
-			query: updatedQuery || initialQueriesMap.metrics,
+			query: query || initialQueriesMap.metrics,
 			globalSelectedInterval: selectedInterval,
 			graphType,
 			selectedTime,

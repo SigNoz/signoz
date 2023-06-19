@@ -16,6 +16,7 @@ import {
 import { COMPOSITE_QUERY } from 'constants/queryBuilderQueryNames';
 import { GRAPH_TYPES } from 'container/NewDashboard/ComponentsSlider';
 import { useGetCompositeQueryParam } from 'hooks/queryBuilder/useGetCompositeQueryParam';
+import { updateStepInterval } from 'hooks/queryBuilder/useStepInterval';
 import useUrlQuery from 'hooks/useUrlQuery';
 import { createIdFromObjectFields } from 'lib/createIdFromObjectFields';
 import { createNewBuilderItemName } from 'lib/newQueryBuilder/createNewBuilderItemName';
@@ -29,7 +30,9 @@ import {
 	useMemo,
 	useState,
 } from 'react';
+import { useSelector } from 'react-redux';
 import { useHistory, useLocation } from 'react-router-dom';
+import { AppState } from 'store/reducers';
 // ** Types
 import {
 	IBuilderFormula,
@@ -45,6 +48,7 @@ import {
 	QueryBuilderContextType,
 	QueryBuilderData,
 } from 'types/common/queryBuilder';
+import { GlobalReducer } from 'types/reducer/globalTime';
 import { v4 as uuid } from 'uuid';
 
 export const QueryBuilderContext = createContext<QueryBuilderContextType>({
@@ -73,6 +77,9 @@ export function QueryBuilderProvider({
 	const urlQuery = useUrlQuery();
 	const history = useHistory();
 	const location = useLocation();
+	const { maxTime, minTime } = useSelector<AppState, GlobalReducer>(
+		(state) => state.globalTime,
+	);
 
 	const compositeQueryParam = useGetCompositeQueryParam();
 
@@ -149,11 +156,13 @@ export function QueryBuilderProvider({
 
 			const nextQuery: Query = { ...newQueryState, queryType: type };
 
-			setStagedQuery(nextQuery);
-			setCurrentQuery(newQueryState);
+			setStagedQuery(updateStepInterval(nextQuery, maxTime, minTime));
+			setCurrentQuery(
+				updateStepInterval({ ...newQueryState, queryType: type }, maxTime, minTime),
+			);
 			setQueryType(type);
 		},
-		[initialDataSource],
+		[initialDataSource, maxTime, minTime],
 	);
 
 	const removeQueryBuilderEntityByIndex = useCallback(
@@ -419,8 +428,24 @@ export function QueryBuilderProvider({
 	);
 
 	const handleRunQuery = useCallback(() => {
-		redirectWithQueryBuilderData({ ...currentQuery, queryType });
-	}, [redirectWithQueryBuilderData, currentQuery, queryType]);
+		redirectWithQueryBuilderData({
+			...{
+				...currentQuery,
+				...updateStepInterval(
+					{
+						builder: currentQuery.builder,
+						clickhouse_sql: currentQuery.clickhouse_sql,
+						promql: currentQuery.promql,
+						id: currentQuery.id,
+						queryType,
+					},
+					maxTime,
+					minTime,
+				),
+			},
+			queryType,
+		});
+	}, [currentQuery, queryType, maxTime, minTime, redirectWithQueryBuilderData]);
 
 	const resetStagedQuery = useCallback(() => {
 		setStagedQuery(null);

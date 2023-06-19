@@ -1,6 +1,5 @@
 import { COMPOSITE_QUERY } from 'constants/queryBuilderQueryNames';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
-import { useStep } from 'container/GridGraphLayout/Graph/utils';
 import useUrlQuery from 'hooks/useUrlQuery';
 import { getDashboardVariables } from 'lib/dashbaordVariables/getDashboardVariables';
 import { UseQueryOptions, UseQueryResult } from 'react-query';
@@ -12,6 +11,7 @@ import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
 import { GlobalReducer } from 'types/reducer/globalTime';
 
 import { useGetQueryRange } from './useGetQueryRange';
+import { useStepInterval } from './useStepInterval';
 
 export const useGetWidgetQueryRange = (
 	{
@@ -31,7 +31,7 @@ export const useGetWidgetQueryRange = (
 
 	const query = JSON.parse(compositeQuery || '');
 
-	const updatedQuery = useStep(query);
+	const updatedQuery = useStepInterval(query);
 
 	return useGetQueryRange(
 		{
