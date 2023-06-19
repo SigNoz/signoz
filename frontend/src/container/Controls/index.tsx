@@ -1,33 +1,39 @@
 import { LeftOutlined, RightOutlined } from '@ant-design/icons';
 import { Button, Select } from 'antd';
+import { Pagination } from 'hooks/queryPagination';
 import { memo, useMemo } from 'react';
 
 import { defaultSelectStyle, ITEMS_PER_PAGE_OPTIONS } from './config';
 import { Container } from './styles';
 
-interface ControlsProps {
-	count: number;
-	countPerPage: number;
+export interface ControlsProps {
+	offset: Pagination['offset'];
+	totalCount: number;
+	countPerPage: Pagination['limit'];
 	isLoading: boolean;
 	handleNavigatePrevious: () => void;
 	handleNavigateNext: () => void;
-	handleCountItemsPerPageChange: (e: number) => void;
+	handleCountItemsPerPageChange: (value: Pagination['limit']) => void;
 }
 
-function Controls(props: ControlsProps): JSX.Element | null {
-	const {
-		count,
-		isLoading,
-		countPerPage,
-		handleNavigatePrevious,
-		handleNavigateNext,
-		handleCountItemsPerPageChange,
-	} = props;
-
+function Controls({
+	isLoading,
+	offset,
+	totalCount,
+	countPerPage,
+	handleNavigatePrevious,
+	handleNavigateNext,
+	handleCountItemsPerPageChange,
+}: ControlsProps): JSX.Element | null {
 	const isNextAndPreviousDisabled = useMemo(
-		() => isLoading || countPerPage === 0 || count === 0 || count < countPerPage,
-		[isLoading, countPerPage, count],
+		() => isLoading || countPerPage < 0 || totalCount === 0,
+		[isLoading, countPerPage, totalCount],
 	);
+	const isPreviousDisabled = useMemo(() => offset <= 0, [offset]);
+	const isNextDisabled = useMemo(() => totalCount < countPerPage, [
+		countPerPage,
+		totalCount,
+	]);
 
 	return (
 		<Container>
@@ -35,7 +41,7 @@ function Controls(props: ControlsProps): JSX.Element | null {
 				loading={isLoading}
 				size="small"
 				type="link"
-				disabled={isNextAndPreviousDisabled}
+				disabled={isPreviousDisabled || isNextAndPreviousDisabled}
 				onClick={handleNavigatePrevious}
 			>
 				<LeftOutlined /> Previous
@@ -44,12 +50,12 @@ function Controls(props: ControlsProps): JSX.Element | null {
 				loading={isLoading}
 				size="small"
 				type="link"
-				disabled={isNextAndPreviousDisabled}
+				disabled={isNextDisabled || isNextAndPreviousDisabled}
 				onClick={handleNavigateNext}
 			>
 				Next <RightOutlined />
 			</Button>
-			<Select
+			<Select<Pagination['limit']>
 				style={defaultSelectStyle}
 				loading={isLoading}
 				value={countPerPage}
