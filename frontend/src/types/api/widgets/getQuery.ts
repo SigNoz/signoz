@@ -23,7 +23,7 @@ export interface QueryDataV3 {
 	list: null;
 	queryName: string;
 	legend?: string;
-	series: SeriesItem[];
+	series: SeriesItem[] | null;
 }
 
 export interface Props {

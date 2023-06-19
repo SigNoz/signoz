@@ -1,6 +1,7 @@
 import { TabsProps } from 'antd';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { PANEL_TYPES_QUERY } from 'constants/queryBuilderQueryNames';
+import { LogsExplorerTable } from 'container/LogsExplorerTable';
 import { GRAPH_TYPES } from 'container/NewDashboard/ComponentsSlider';
 import { useGetPanelTypesQueryParam } from 'hooks/queryBuilder/useGetPanelTypesQueryParam';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
@@ -33,7 +34,7 @@ export function LogsExplorerViews(): JSX.Element {
 				disabled: isMultipleQueries,
 			},
 			{ label: 'TimeSeries', key: PANEL_TYPES.TIME_SERIES },
-			{ label: 'Table', key: PANEL_TYPES.TABLE },
+			{ label: 'Table', key: PANEL_TYPES.TABLE, children: <LogsExplorerTable /> },
 		],
 		[isMultipleQueries],
 	);
