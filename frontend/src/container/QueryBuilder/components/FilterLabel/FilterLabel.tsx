@@ -1,4 +1,4 @@
-import Typography from 'antd/es/typography/Typography';
+import { Typography } from 'antd';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { memo } from 'react';
 

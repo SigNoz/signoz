@@ -1,5 +1,4 @@
-import { Col, Row } from 'antd';
-import Typography from 'antd/es/typography/Typography';
+import { Col, Row, Typography } from 'antd';
 import { Fragment, memo, ReactNode, useState } from 'react';
 
 // ** Types
