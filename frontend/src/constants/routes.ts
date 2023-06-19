@@ -16,8 +16,8 @@ const ROUTES = {
 	LIST_ALL_ALERT: '/alerts',
 	ALERTS_NEW: '/alerts/new',
 	ALL_CHANNELS: '/settings/channels',
-	CHANNELS_NEW: '/setting/channels/new',
-	CHANNELS_EDIT: '/setting/channels/edit/:id',
+	CHANNELS_NEW: '/settings/channels/new',
+	CHANNELS_EDIT: '/settings/channels/:id',
 	ALL_ERROR: '/exceptions',
 	ERROR_DETAIL: '/error-detail',
 	VERSION: '/status',
@@ -27,9 +27,11 @@ const ROUTES = {
 	UN_AUTHORIZED: '/un-authorized',
 	NOT_FOUND: '/not-found',
 	LOGS: '/logs',
+	LOGS_EXPLORER: '/logs-explorer',
 	HOME_PAGE: '/',
 	PASSWORD_RESET: '/password-reset',
 	LIST_LICENSES: '/licenses',
+	TRACE_EXPLORER: '/trace-explorer',
 };
 
 export default ROUTES;

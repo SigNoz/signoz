@@ -6,10 +6,11 @@ import (
 	"os"
 
 	"go.signoz.io/signoz/pkg/query-service/constants"
+	"go.signoz.io/signoz/pkg/query-service/interfaces"
 	"go.uber.org/zap"
 )
 
-func readCurrentDir(dir string) error {
+func readCurrentDir(dir string, fm interfaces.FeatureLookup) error {
 	file, err := os.Open(dir)
 	if err != nil {
 		zap.S().Errorf("failed opening directory: %s", err)
@@ -37,8 +38,7 @@ func readCurrentDir(dir string) error {
 			continue
 		}
 
-
-		dashboardUuid, ok := data["uuid"];
+		dashboardUuid, ok := data["uuid"]
 		if ok {
 			_, apiErr := GetDashboard(dashboardUuid.(string))
 			if apiErr == nil {
@@ -51,7 +51,7 @@ func readCurrentDir(dir string) error {
 
 		zap.S().Infof("Creating Dashboards: file: %s\t uuid: %s", filename, dashboardUuid.(string))
 
-		_, apiErr := CreateDashboard(data)
+		_, apiErr := CreateDashboard(data, fm)
 		if apiErr != nil {
 			zap.S().Errorf("Creating Dashboards: Error in file: %s\t%s", filename, apiErr.Err)
 			continue
@@ -61,7 +61,7 @@ func readCurrentDir(dir string) error {
 	return nil
 }
 
-func LoadDashboardFiles() error {
+func LoadDashboardFiles(fm interfaces.FeatureLookup) error {
 	dashboardsPath := constants.GetOrDefaultEnv("DASHBOARDS_PATH", "./config/dashboards")
-	return readCurrentDir(dashboardsPath)
+	return readCurrentDir(dashboardsPath, fm)
 }

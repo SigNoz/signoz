@@ -11,7 +11,9 @@ import localStorageSet from 'api/browser/localstorage/set';
 import { ResizeTable } from 'components/ResizeTable';
 import { SKIP_ONBOARDING } from 'constants/onboarding';
 import ROUTES from 'constants/routes';
-import React, { useCallback, useMemo, useState } from 'react';
+import { routeConfig } from 'container/SideNav/config';
+import { getQueryString } from 'container/SideNav/helper';
+import { useCallback, useMemo, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { Link, useLocation } from 'react-router-dom';
 import { AppState } from 'store/reducers';
@@ -88,11 +90,17 @@ function Metrics(): JSX.Element {
 					.toString()
 					.toLowerCase()
 					.includes(value.toString().toLowerCase()),
-			render: (text: string): JSX.Element => (
-				<Link to={`${ROUTES.APPLICATION}/${text}${search}`}>
-					<Name>{text}</Name>
-				</Link>
-			),
+			render: (metrics: string): JSX.Element => {
+				const urlParams = new URLSearchParams(search);
+				const avialableParams = routeConfig[ROUTES.SERVICE_METRICS];
+				const queryString = getQueryString(avialableParams, urlParams);
+
+				return (
+					<Link to={`${ROUTES.APPLICATION}/${metrics}?${queryString.join('')}`}>
+						<Name>{metrics}</Name>
+					</Link>
+				);
+			},
 		}),
 		[filterDropdown, FilterIcon, search],
 	);

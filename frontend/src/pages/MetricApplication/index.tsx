@@ -1,8 +1,9 @@
 import { Typography } from 'antd';
 import Spinner from 'components/Spinner';
 import MetricsApplicationContainer from 'container/MetricsApplication';
-import { convertRawQueriesToTraceSelectedTags } from 'lib/resourceAttributes';
-import React, { useEffect, useMemo } from 'react';
+import useResourceAttribute from 'hooks/useResourceAttribute';
+import { convertRawQueriesToTraceSelectedTags } from 'hooks/useResourceAttribute/utils';
+import { useEffect, useMemo } from 'react';
 import { connect, useSelector } from 'react-redux';
 import { useParams } from 'react-router-dom';
 import { bindActionCreators } from 'redux';
@@ -27,16 +28,11 @@ function MetricsApplication({ getInitialData }: MetricsProps): JSX.Element {
 	>((state) => state.metrics);
 
 	const { servicename } = useParams<ServiceProps>();
-
-	const { resourceAttributeQueries } = useSelector<AppState, MetricReducer>(
-		(state) => state.metrics,
-	);
+	const { queries } = useResourceAttribute();
 
 	const selectedTags = useMemo(
-		() =>
-			(convertRawQueriesToTraceSelectedTags(resourceAttributeQueries) as Tags[]) ||
-			[],
-		[resourceAttributeQueries],
+		() => (convertRawQueriesToTraceSelectedTags(queries) as Tags[]) || [],
+		[queries],
 	);
 
 	useEffect(() => {

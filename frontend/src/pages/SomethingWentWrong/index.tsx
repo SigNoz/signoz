@@ -3,7 +3,6 @@ import SomethingWentWrongAsset from 'assets/SomethingWentWrong';
 import { Container } from 'components/NotFound/styles';
 import ROUTES from 'constants/routes';
 import history from 'lib/history';
-import React from 'react';
 
 function SomethingWentWrong(): JSX.Element {
 	return (

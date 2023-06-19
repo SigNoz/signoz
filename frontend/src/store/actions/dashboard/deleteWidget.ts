@@ -1,7 +1,7 @@
 import updateDashboardApi from 'api/dashboard/update';
 import { AxiosError } from 'axios';
 import { getPreLayouts, LayoutProps } from 'container/GridGraphLayout';
-import { Dispatch } from 'redux';
+import { Dispatch, SetStateAction } from 'react';
 import store from 'store';
 import AppActions from 'types/actions';
 import { UPDATE_DASHBOARD } from 'types/actions/dashboard';
@@ -66,5 +66,5 @@ export const DeleteWidget = ({
 
 export interface DeleteWidgetProps {
 	widgetId: Widgets['id'];
-	setLayout?: React.Dispatch<React.SetStateAction<LayoutProps[]>>;
+	setLayout?: Dispatch<SetStateAction<LayoutProps[]>>;
 }

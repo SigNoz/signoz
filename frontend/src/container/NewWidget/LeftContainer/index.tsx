@@ -1,34 +1,27 @@
-import React, { memo } from 'react';
+import { memo } from 'react';
 
-import { NewWidgetProps } from '../index';
-import { timePreferance } from '../RightContainer/timeItems';
+import { WidgetGraphProps } from '../types';
 import QuerySection from './QuerySection';
 import { QueryContainer } from './styles';
 import WidgetGraph from './WidgetGraph';
 
 function LeftContainer({
 	selectedGraph,
-	selectedTime,
 	yAxisUnit,
-	handleUnstagedChanges,
-}: LeftContainerProps): JSX.Element {
+	selectedTime,
+}: WidgetGraphProps): JSX.Element {
 	return (
 		<>
-			<WidgetGraph selectedGraph={selectedGraph} yAxisUnit={yAxisUnit} />
+			<WidgetGraph
+				selectedTime={selectedTime}
+				selectedGraph={selectedGraph}
+				yAxisUnit={yAxisUnit}
+			/>
 			<QueryContainer>
-				<QuerySection
-					selectedTime={selectedTime}
-					handleUnstagedChanges={handleUnstagedChanges}
-					selectedGraph={selectedGraph}
-				/>
+				<QuerySection selectedTime={selectedTime} selectedGraph={selectedGraph} />
 			</QueryContainer>
 		</>
 	);
-}
-
-interface LeftContainerProps extends NewWidgetProps {
-	selectedTime: timePreferance;
-	handleUnstagedChanges: (arg0: boolean) => void;
 }
 
 export default memo(LeftContainer);

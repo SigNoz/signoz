@@ -1,8 +1,6 @@
-import {
-	IMetricsBuilderFormula,
-	IMetricsBuilderQuery,
-	IQueryBuilderTagFilterItems,
-} from 'types/api/dashboard/getAll';
+import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
+import { TagFilterItem } from 'types/api/queryBuilder/queryBuilderData';
+import { QueryBuilderData } from 'types/common/queryBuilder';
 
 import {
 	getQueryBuilderQueries,
@@ -13,19 +11,35 @@ export const operationPerSec = ({
 	servicename,
 	tagFilterItems,
 	topLevelOperations,
-}: OperationPerSecProps): IOverviewQueries => {
-	const metricName = 'signoz_latency_count';
+}: OperationPerSecProps): QueryBuilderData => {
+	const metricName: BaseAutocompleteData = {
+		dataType: 'float64',
+		isColumn: true,
+		key: 'signoz_latency_count',
+		type: null,
+	};
 	const legend = 'Operations';
-	const itemsA = [
+
+	const itemsA: TagFilterItem[] = [
 		{
 			id: '',
-			key: 'service_name',
+			key: {
+				dataType: 'string',
+				isColumn: false,
+				key: 'service_name',
+				type: 'resource',
+			},
 			op: 'IN',
 			value: [`${servicename}`],
 		},
 		{
 			id: '',
-			key: 'operation',
+			key: {
+				dataType: 'string',
+				isColumn: false,
+				key: 'operation',
+				type: 'tag',
+			},
 			op: 'IN',
 			value: topLevelOperations,
 		},
@@ -43,41 +57,76 @@ export const errorPercentage = ({
 	servicename,
 	tagFilterItems,
 	topLevelOperations,
-}: OperationPerSecProps): IOverviewQueries => {
-	const metricNameA = 'signoz_calls_total';
-	const metricNameB = 'signoz_calls_total';
-	const additionalItemsA = [
+}: OperationPerSecProps): QueryBuilderData => {
+	const metricNameA: BaseAutocompleteData = {
+		dataType: 'float64',
+		isColumn: true,
+		key: 'signoz_calls_total',
+		type: null,
+	};
+	const metricNameB: BaseAutocompleteData = {
+		dataType: 'float64',
+		isColumn: true,
+		key: 'signoz_calls_total',
+		type: null,
+	};
+	const additionalItemsA: TagFilterItem[] = [
 		{
 			id: '',
-			key: 'service_name',
+			key: {
+				dataType: 'string',
+				isColumn: false,
+				key: 'service_name',
+				type: 'resource',
+			},
 			op: 'IN',
 			value: [`${servicename}`],
 		},
 		{
 			id: '',
-			key: 'operation',
+			key: {
+				dataType: 'string',
+				isColumn: false,
+				key: 'operation',
+				type: 'tag',
+			},
 			op: 'IN',
 			value: topLevelOperations,
 		},
 		{
 			id: '',
-			key: 'status_code',
+			key: {
+				dataType: 'int64',
+				isColumn: false,
+				key: 'status_code',
+				type: 'tag',
+			},
 			op: 'IN',
 			value: ['STATUS_CODE_ERROR'],
 		},
 		...tagFilterItems,
 	];
 
-	const additionalItemsB = [
+	const additionalItemsB: TagFilterItem[] = [
 		{
 			id: '',
-			key: 'service_name',
+			key: {
+				dataType: 'string',
+				isColumn: false,
+				key: 'service_name',
+				type: 'resource',
+			},
 			op: 'IN',
 			value: [`${servicename}`],
 		},
 		{
 			id: '',
-			key: 'operation',
+			key: {
+				dataType: 'string',
+				isColumn: false,
+				key: 'operation',
+				type: 'tag',
+			},
 			op: 'IN',
 			value: topLevelOperations,
 		},
@@ -102,11 +151,6 @@ export const errorPercentage = ({
 
 export interface OperationPerSecProps {
 	servicename: string | undefined;
-	tagFilterItems: IQueryBuilderTagFilterItems[];
+	tagFilterItems: TagFilterItem[];
 	topLevelOperations: string[];
-}
-
-interface IOverviewQueries {
-	formulas: IMetricsBuilderFormula[];
-	queryBuilder: IMetricsBuilderQuery[];
 }

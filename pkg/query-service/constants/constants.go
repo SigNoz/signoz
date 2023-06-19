@@ -3,8 +3,10 @@ package constants
 import (
 	"os"
 	"strconv"
+	"time"
 
 	"go.signoz.io/signoz/pkg/query-service/model"
+	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
 )
 
 const (
@@ -69,9 +71,31 @@ func IsTimestampSortFeatureEnabled() bool {
 }
 
 var DEFAULT_FEATURE_SET = model.FeatureSet{
-	DurationSort:  IsDurationSortFeatureEnabled(),
-	TimestampSort: IsTimestampSortFeatureEnabled(),
+	model.Feature{
+		Name:       DurationSort,
+		Active:     IsDurationSortFeatureEnabled(),
+		Usage:      0,
+		UsageLimit: -1,
+		Route:      "",
+	}, model.Feature{
+		Name:       TimestampSort,
+		Active:     IsTimestampSortFeatureEnabled(),
+		Usage:      0,
+		UsageLimit: -1,
+		Route:      "",
+	},
 }
+
+func GetContextTimeout() time.Duration {
+	contextTimeoutStr := GetOrDefaultEnv("CONTEXT_TIMEOUT", "60")
+	contextTimeoutDuration, err := time.ParseDuration(contextTimeoutStr + "s")
+	if err != nil {
+		return time.Minute
+	}
+	return contextTimeoutDuration
+}
+
+var ContextTimeout = GetContextTimeout()
 
 const (
 	TraceID                        = "traceID"
@@ -96,7 +120,6 @@ const (
 	ResponseStatusCode             = "responseStatusCode"
 	Descending                     = "descending"
 	Ascending                      = "ascending"
-	ContextTimeout                 = 60 // seconds
 	StatusPending                  = "pending"
 	StatusFailed                   = "failed"
 	StatusSuccess                  = "success"
@@ -132,6 +155,8 @@ const (
 	SIGNOZ_METRIC_DBNAME        = "signoz_metrics"
 	SIGNOZ_SAMPLES_TABLENAME    = "distributed_samples_v2"
 	SIGNOZ_TIMESERIES_TABLENAME = "distributed_time_series_v2"
+	SIGNOZ_TRACE_DBNAME         = "signoz_traces"
+	SIGNOZ_SPAN_INDEX_TABLENAME = "distributed_signoz_index_v2"
 )
 
 var TimeoutExcludedRoutes = map[string]bool{
@@ -213,13 +238,58 @@ const (
 // ReservedColumnTargetAliases identifies result value from a user
 // written clickhouse query. The column alias indcate which value is
 // to be considered as final result (or target)
-var ReservedColumnTargetAliases = map[string]bool{"result": true, "res": true, "value": true}
-
-const (
-	StringTagMapCol = "stringTagMap"
-	NumberTagMapCol = "numberTagMap"
-	BoolTagMapCol   = "boolTagMap"
-)
+var ReservedColumnTargetAliases = map[string]struct{}{
+	"result": {},
+	"res":    {},
+	"value":  {},
+}
 
 // logsPPLPfx is a short constant for logsPipelinePrefix
 const LogsPPLPfx = "logstransform/pipeline_"
+
+// The datatype present here doesn't represent the actual datatype of column in the logs table.
+
+var StaticFieldsLogsV3 = map[string]v3.AttributeKey{
+	"timestamp": {},
+	"id":        {},
+	"trace_id": {
+		Key:      "trace_id",
+		DataType: v3.AttributeKeyDataTypeString,
+		Type:     v3.AttributeKeyTypeUnspecified,
+		IsColumn: true,
+	},
+	"span_id": {
+		Key:      "span_id",
+		DataType: v3.AttributeKeyDataTypeString,
+		Type:     v3.AttributeKeyTypeUnspecified,
+		IsColumn: true,
+	},
+	"trace_flags": {
+		Key:      "trace_flags",
+		DataType: v3.AttributeKeyDataTypeInt64,
+		Type:     v3.AttributeKeyTypeUnspecified,
+		IsColumn: true,
+	},
+	"severity_text": {
+		Key:      "severity_text",
+		DataType: v3.AttributeKeyDataTypeString,
+		Type:     v3.AttributeKeyTypeUnspecified,
+		IsColumn: true,
+	},
+	"severity_number": {
+		Key:      "severity_number",
+		DataType: v3.AttributeKeyDataTypeInt64,
+		Type:     v3.AttributeKeyTypeUnspecified,
+		IsColumn: true,
+	},
+	"body": {
+		Key:      "body",
+		DataType: v3.AttributeKeyDataTypeString,
+		Type:     v3.AttributeKeyTypeUnspecified,
+		IsColumn: true,
+	},
+}
+
+const SigNozOrderByValue = "#SIGNOZ_VALUE"
+
+const TIMESTAMP = "timestamp"

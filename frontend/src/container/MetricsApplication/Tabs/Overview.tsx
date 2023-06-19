@@ -1,22 +1,27 @@
 import { ActiveElement, Chart, ChartData, ChartEvent } from 'chart.js';
 import Graph from 'components/Graph';
-import { METRICS_PAGE_QUERY_PARAM } from 'constants/query';
+import { QueryParams } from 'constants/query';
 import ROUTES from 'constants/routes';
 import FullView from 'container/GridGraphLayout/Graph/FullView/index.metricsBuilder';
-import convertToNanoSecondsToSecond from 'lib/convertToNanoSecondsToSecond';
-import { colors } from 'lib/getRandomColor';
-import history from 'lib/history';
+import { routeConfig } from 'container/SideNav/config';
+import { getQueryString } from 'container/SideNav/helper';
+import useResourceAttribute from 'hooks/useResourceAttribute';
 import {
 	convertRawQueriesToTraceSelectedTags,
 	resourceAttributesToTagFilterItems,
-} from 'lib/resourceAttributes';
-import React, { useCallback, useMemo, useState } from 'react';
+} from 'hooks/useResourceAttribute/utils';
+import convertToNanoSecondsToSecond from 'lib/convertToNanoSecondsToSecond';
+import { colors } from 'lib/getRandomColor';
+import history from 'lib/history';
+import { useCallback, useMemo, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { useParams } from 'react-router-dom';
+import { useLocation, useParams } from 'react-router-dom';
 import { UpdateTimeInterval } from 'store/actions';
 import { AppState } from 'store/reducers';
 import { Widgets } from 'types/api/dashboard/getAll';
+import { EQueryType } from 'types/common/dashboard';
 import MetricReducer from 'types/reducer/metrics';
+import { v4 as uuid } from 'uuid';
 
 import {
 	errorPercentage,
@@ -25,11 +30,16 @@ import {
 import { Card, Col, GraphContainer, GraphTitle, Row } from '../styles';
 import TopOperationsTable from '../TopOperationsTable';
 import { Button } from './styles';
-import { onGraphClickHandler, onViewTracePopupClick } from './util';
+import {
+	handleNonInQueryRange,
+	onGraphClickHandler,
+	onViewTracePopupClick,
+} from './util';
 
 function Application({ getWidgetQueryBuilder }: DashboardProps): JSX.Element {
 	const { servicename } = useParams<{ servicename?: string }>();
 	const [selectedTimeStamp, setSelectedTimeStamp] = useState<number>(0);
+	const { search } = useLocation();
 
 	const handleSetTimeStamp = useCallback((selectTime: number) => {
 		setSelectedTimeStamp(selectTime);
@@ -54,33 +64,35 @@ function Application({ getWidgetQueryBuilder }: DashboardProps): JSX.Element {
 		[handleSetTimeStamp],
 	);
 
-	const {
-		topOperations,
-		serviceOverview,
-		resourceAttributeQueries,
-		topLevelOperations,
-	} = useSelector<AppState, MetricReducer>((state) => state.metrics);
+	const { topOperations, serviceOverview, topLevelOperations } = useSelector<
+		AppState,
+		MetricReducer
+	>((state) => state.metrics);
+
+	const { queries } = useResourceAttribute();
 
 	const selectedTraceTags: string = JSON.stringify(
-		convertRawQueriesToTraceSelectedTags(resourceAttributeQueries) || [],
+		convertRawQueriesToTraceSelectedTags(queries) || [],
 	);
 
 	const tagFilterItems = useMemo(
-		() => resourceAttributesToTagFilterItems(resourceAttributeQueries) || [],
-		[resourceAttributeQueries],
+		() =>
+			handleNonInQueryRange(resourceAttributesToTagFilterItems(queries)) || [],
+		[queries],
 	);
 
 	const operationPerSecWidget = useMemo(
 		() =>
 			getWidgetQueryBuilder({
-				queryType: 1,
-				promQL: [],
-				metricsBuilder: operationPerSec({
+				queryType: EQueryType.QUERY_BUILDER,
+				promql: [],
+				builder: operationPerSec({
 					servicename,
 					tagFilterItems,
 					topLevelOperations,
 				}),
-				clickHouse: [],
+				clickhouse_sql: [],
+				id: uuid(),
 			}),
 		[getWidgetQueryBuilder, servicename, topLevelOperations, tagFilterItems],
 	);
@@ -88,14 +100,15 @@ function Application({ getWidgetQueryBuilder }: DashboardProps): JSX.Element {
 	const errorPercentageWidget = useMemo(
 		() =>
 			getWidgetQueryBuilder({
-				queryType: 1,
-				promQL: [],
-				metricsBuilder: errorPercentage({
+				queryType: EQueryType.QUERY_BUILDER,
+				promql: [],
+				builder: errorPercentage({
 					servicename,
 					tagFilterItems,
 					topLevelOperations,
 				}),
-				clickHouse: [],
+				clickhouse_sql: [],
+				id: uuid(),
 			}),
 		[servicename, topLevelOperations, tagFilterItems, getWidgetQueryBuilder],
 	);
@@ -116,14 +129,19 @@ function Application({ getWidgetQueryBuilder }: DashboardProps): JSX.Element {
 		const currentTime = timestamp;
 		const tPlusOne = timestamp + 60 * 1000;
 
-		const urlParams = new URLSearchParams();
-		urlParams.set(METRICS_PAGE_QUERY_PARAM.startTime, currentTime.toString());
-		urlParams.set(METRICS_PAGE_QUERY_PARAM.endTime, tPlusOne.toString());
+		const urlParams = new URLSearchParams(search);
+		urlParams.set(QueryParams.startTime, currentTime.toString());
+		urlParams.set(QueryParams.endTime, tPlusOne.toString());
+
+		const avialableParams = routeConfig[ROUTES.TRACE];
+		const queryString = getQueryString(avialableParams, urlParams);
 
 		history.replace(
 			`${
 				ROUTES.TRACE
-			}?${urlParams.toString()}&selected={"serviceName":["${servicename}"],"status":["error"]}&filterToFetchData=["duration","status","serviceName"]&spanAggregateCurrentPage=1&selectedTags=${selectedTraceTags}&isFilterExclude={"serviceName":false,"status":false}&userSelectedFilter={"serviceName":["${servicename}"],"status":["error"]}&spanAggregateCurrentPage=1`,
+			}?selected={"serviceName":["${servicename}"],"status":["error"]}&filterToFetchData=["duration","status","serviceName"]&spanAggregateCurrentPage=1&selectedTags=${selectedTraceTags}&isFilterExclude={"serviceName":false,"status":false}&userSelectedFilter={"serviceName":["${servicename}"],"status":["error"]}&spanAggregateCurrentPage=1&${queryString.join(
+				'',
+			)}`,
 		);
 	};
 

@@ -1,17 +1,17 @@
-import { ApiV2Instance as axios } from 'api';
+import { ApiV3Instance as axios } from 'api';
 import { ErrorResponseHandler } from 'api/ErrorResponseHandler';
 import { AxiosError } from 'axios';
 import { ErrorResponse, SuccessResponse } from 'types/api';
 import {
-	MetricRangePayloadProps,
+	MetricRangePayloadV3,
 	MetricsRangeProps,
 } from 'types/api/metrics/getQueryRange';
 
 export const getMetricsQueryRange = async (
 	props: MetricsRangeProps,
-): Promise<SuccessResponse<MetricRangePayloadProps> | ErrorResponse> => {
+): Promise<SuccessResponse<MetricRangePayloadV3> | ErrorResponse> => {
 	try {
-		const response = await axios.post(`/metrics/query_range`, props);
+		const response = await axios.post('/query_range', props);
 
 		return {
 			statusCode: 200,
