@@ -38,8 +38,8 @@ function ExportPanel({ onExport }: ExportPanelProps): JSX.Element {
 		[onMenuClickHandler],
 	);
 
-	const onCancel = (): void => {
-		onModalToggle(false);
+	const onCancel = (value: boolean) => (): void => {
+		onModalToggle(value);
 	};
 
 	return (
@@ -47,7 +47,12 @@ function ExportPanel({ onExport }: ExportPanelProps): JSX.Element {
 			<Dropdown trigger={['click']} menu={menu}>
 				<Button>Actions</Button>
 			</Dropdown>
-			<Modal onCancel={onCancel} open={isExport} centered>
+			<Modal
+				onOk={onCancel(false)}
+				onCancel={onCancel(false)}
+				open={isExport}
+				centered
+			>
 				<ExportPanelContainer onExport={onExport} />
 			</Modal>
 		</>
