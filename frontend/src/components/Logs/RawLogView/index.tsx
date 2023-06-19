@@ -11,6 +11,7 @@ import dompurify from 'dompurify';
 // hooks
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { useNotifications } from 'hooks/useNotifications';
+import useUrlQuery from 'hooks/useUrlQuery';
 import {
 	MouseEventHandler,
 	useCallback,
@@ -95,9 +96,13 @@ function RawLogView(props: RawLogViewProps): JSX.Element {
 		event.preventDefault();
 		event.stopPropagation();
 		copyToClipboard(`
-			${window.location.origin}/logs?&startTime=${minTime}&endTime=${maxTime}&selectedLogId=${data.id}q=${searchFilter.queryString}
+			${window.location.origin}/logs?q=${searchFilter.queryString}&startTime=${minTime}&endTime=${maxTime}&selectedLogId=${data.id}
 		`);
 	};
+
+	const urlQuery = useUrlQuery();
+	const startTime = urlQuery.get('startTime');
+	console.log('startTime', startTime);
 
 	const showButtons = (): void => {
 		setAddButtonVisible(true);
