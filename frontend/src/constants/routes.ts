@@ -5,6 +5,7 @@ const ROUTES = {
 	SERVICE_MAP: '/service-map',
 	TRACE: '/trace',
 	TRACE_DETAIL: '/trace/:id',
+	TRACES_EXPLORER: '/traces-explorer',
 	SETTINGS: '/settings',
 	INSTRUMENTATION: '/get-started',
 	USAGE_EXPLORER: '/usage-explorer',
@@ -31,7 +32,6 @@ const ROUTES = {
 	HOME_PAGE: '/',
 	PASSWORD_RESET: '/password-reset',
 	LIST_LICENSES: '/licenses',
-	TRACE_EXPLORER: '/trace-explorer',
 };
 
 export default ROUTES;
