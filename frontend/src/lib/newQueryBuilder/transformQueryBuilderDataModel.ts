@@ -1,6 +1,6 @@
 import {
 	initialFormulaBuilderFormValues,
-	initialQueryBuilderFormValues,
+	initialQueryBuilderFormValuesMap,
 } from 'constants/queryBuilder';
 import { FORMULA_REGEXP } from 'constants/regExp';
 import {
@@ -22,7 +22,7 @@ export const transformQueryBuilderDataModel = (
 			queryFormulas.push({ ...initialFormulaBuilderFormValues, ...formula });
 		} else {
 			const query = value as IBuilderQuery;
-			queryData.push({ ...initialQueryBuilderFormValues, ...query });
+			queryData.push({ ...initialQueryBuilderFormValuesMap.metrics, ...query });
 		}
 	});
 
