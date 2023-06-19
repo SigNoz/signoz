@@ -31,7 +31,10 @@ function ExportPanel({ onExport }: ExportPanelProps): JSX.Element {
 		queryKey: REACT_QUERY_KEY.GET_ALL_DASHBOARDS,
 	});
 
-	const { mutate: createNewDashboard } = useMutation(createDashboard, {
+	const {
+		mutate: createNewDashboard,
+		isLoading: createDashboardLoading,
+	} = useMutation(createDashboard, {
 		onSuccess: () => {
 			refetch();
 		},
@@ -78,8 +81,8 @@ function ExportPanel({ onExport }: ExportPanelProps): JSX.Element {
 				<DashboardSelect
 					placeholder="Select Dashboard"
 					options={options}
-					loading={isLoading}
-					disabled={isLoading}
+					loading={isLoading || createDashboardLoading}
+					disabled={isLoading || createDashboardLoading}
 					value={selectedDashboardId}
 					onSelect={handleSelect}
 				/>
@@ -94,7 +97,12 @@ function ExportPanel({ onExport }: ExportPanelProps): JSX.Element {
 
 			<Typography>
 				Or create dashboard with this panel -
-				<NewDashboardButton type="link" onClick={handleNewDashboard}>
+				<NewDashboardButton
+					disabled={createDashboardLoading}
+					loading={createDashboardLoading}
+					type="link"
+					onClick={handleNewDashboard}
+				>
 					New Dashboard
 				</NewDashboardButton>
 			</Typography>
