@@ -20,6 +20,7 @@ import AppActions from 'types/actions';
 import { Widgets } from 'types/api/dashboard/getAll';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { EQueryType } from 'types/common/dashboard';
+import AppReducer from 'types/reducer/app';
 import DashboardReducer from 'types/reducer/dashboards';
 
 import ClickHouseQueryContainer from './QueryBuilder/clickHouse';
@@ -32,6 +33,9 @@ function QuerySection({
 }: QueryProps): JSX.Element {
 	const { currentQuery, redirectWithQueryBuilderData } = useQueryBuilder();
 	const urlQuery = useUrlQuery();
+	const { featureResponse } = useSelector<AppState, AppReducer>(
+		(state) => state.app,
+	);
 
 	const { dashboards } = useSelector<AppState, DashboardReducer>(
 		(state) => state.dashboards,
@@ -72,7 +76,9 @@ function QuerySection({
 	const handleQueryCategoryChange = (qCategory: string): void => {
 		const currentQueryType = qCategory as EQueryType;
 
-		handleStageQuery({ ...currentQuery, queryType: currentQueryType });
+		featureResponse.refetch().then(() => {
+			handleStageQuery({ ...currentQuery, queryType: currentQueryType });
+		});
 	};
 
 	const handleRunQuery = (): void => {
