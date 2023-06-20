@@ -1,7 +1,7 @@
 import { Button, Col, Row } from 'antd';
 import { initialQueriesMap, PANEL_TYPES } from 'constants/queryBuilder';
-import { LogsExplorerChart } from 'container/LogsExplorerChart';
-import { LogsExplorerViews } from 'container/LogsExplorerViews';
+import LogsExplorerChart from 'container/LogsExplorerChart';
+import LogsExplorerViews from 'container/LogsExplorerViews';
 import { QueryBuilder } from 'container/QueryBuilder';
 import { useGetPanelTypesQueryParam } from 'hooks/queryBuilder/useGetPanelTypesQueryParam';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
