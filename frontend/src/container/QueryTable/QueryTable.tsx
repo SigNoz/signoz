@@ -44,6 +44,7 @@ export function QueryTable({
 			columns={modifiedColumns}
 			tableLayout="fixed"
 			dataSource={dataSource}
+			scroll={{ x: true }}
 			// eslint-disable-next-line react/jsx-props-no-spreading
 			{...props}
 		/>
