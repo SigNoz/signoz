@@ -6,7 +6,7 @@ import LogsTableView from 'components/Logs/TableView';
 import Spinner from 'components/Spinner';
 import { contentStyle } from 'container/Trace/Search/config';
 import useFontFaceObserver from 'hooks/useFontObserver';
-import { memo, useCallback, useMemo } from 'react';
+import { memo, useCallback, useEffect, useMemo, useRef } from 'react';
 import { useSelector } from 'react-redux';
 import { Virtuoso } from 'react-virtuoso';
 // interfaces
@@ -47,6 +47,17 @@ function LogsTable(props: LogsTableProps): JSX.Element {
 		isLoading,
 		liveTail,
 	} = useSelector<AppState, ILogsReducer>((state) => state.logs);
+	const selectedLogRef = useRef<HTMLDivElement>(null);
+
+	useEffect(() => {
+		if (selectedLogRef.current) {
+			selectedLogRef?.current.scrollIntoView({
+				behavior: 'smooth',
+				block: 'start',
+				inline: 'nearest',
+			});
+		}
+	}, [selectedLogRef]);
 
 	const isLiveTail = useMemo(() => logs.length === 0 && liveTail === 'PLAYING', [
 		logs?.length,
@@ -69,13 +80,14 @@ function LogsTable(props: LogsTableProps): JSX.Element {
 						data={log}
 						linesPerRow={linesPerRow}
 						onClickExpand={onClickExpand}
+						selectedLogRef={selectedLogRef}
 					/>
 				);
 			}
 
 			return <ListLogView key={log.id} logData={log} />;
 		},
-		[logs, linesPerRow, viewMode, onClickExpand],
+		[logs, linesPerRow, viewMode, onClickExpand, selectedLogRef],
 	);
 
 	const renderContent = useMemo(() => {

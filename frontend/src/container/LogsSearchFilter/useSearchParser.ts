@@ -29,17 +29,29 @@ export function useSearchParser(): {
 
 	const urlQuery = useUrlQuery();
 	const parsedFilters = urlQuery.get('q');
+	const startTime = urlQuery.get('startTime');
+	const endTime = urlQuery.get('endTime');
+	const selectedLogId = urlQuery.get('selectedLogId');
 
 	const { minTime, maxTime, selectedTime } = useSelector<
 		AppState,
 		GlobalReducer
 	>((store) => store.globalTime);
 
+	const generateSearchString = (updatedQueryString: string): string => {
+		const startTimeQuery = startTime ? `&startTime=${startTime}` : '';
+		const endTimeQuery = endTime ? `&endTime=${endTime}` : '';
+		const selectedLogIdQuery = selectedLogId
+			? `&selectedLogId=${selectedLogId}`
+			: '';
+		return `?q=${updatedQueryString}${startTimeQuery}${endTimeQuery}${selectedLogIdQuery}`;
+	};
+
 	const updateQueryString = useCallback(
 		(updatedQueryString: string) => {
 			history.replace({
 				pathname: history.location.pathname,
-				search: `?q=${updatedQueryString}`,
+				search: generateSearchString(updatedQueryString),
 			});
 
 			const globalTime = getMinMax(selectedTime, minTime, maxTime);

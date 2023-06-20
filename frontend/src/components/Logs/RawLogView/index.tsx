@@ -14,6 +14,7 @@ import { useNotifications } from 'hooks/useNotifications';
 import useUrlQuery from 'hooks/useUrlQuery';
 import {
 	MouseEventHandler,
+	RefObject,
 	useCallback,
 	useEffect,
 	useMemo,
@@ -42,10 +43,11 @@ interface RawLogViewProps {
 	data: ILog;
 	linesPerRow: number;
 	onClickExpand: (log: ILog) => void;
+	selectedLogRef: RefObject<HTMLDivElement> | null;
 }
 
 function RawLogView(props: RawLogViewProps): JSX.Element {
-	const { data, linesPerRow, onClickExpand } = props;
+	const { data, linesPerRow, onClickExpand, selectedLogRef } = props;
 	const [isAddButtonsVisible, setAddButtonVisible] = useState<boolean>(false);
 	const [value, copyToClipboard] = useCopyToClipboard();
 	const dispatch = useDispatch();
@@ -64,6 +66,8 @@ function RawLogView(props: RawLogViewProps): JSX.Element {
 	const { searchFilter } = useSelector<AppState, ILogsReducer>(
 		(state) => state.logs,
 	);
+
+	console.log('selectedLogRef', selectedLogRef);
 
 	const isDarkMode = useIsDarkMode();
 
@@ -100,10 +104,6 @@ function RawLogView(props: RawLogViewProps): JSX.Element {
 		`);
 	};
 
-	const urlQuery = useUrlQuery();
-	const startTime = urlQuery.get('startTime');
-	console.log('startTime', startTime);
-
 	const showButtons = (): void => {
 		setAddButtonVisible(true);
 	};
@@ -111,6 +111,9 @@ function RawLogView(props: RawLogViewProps): JSX.Element {
 	const hideButtons = (): void => {
 		setAddButtonVisible(false);
 	};
+
+	const urlQuery = useUrlQuery();
+	const selectedLogId = urlQuery.get('selectedLogId');
 
 	return (
 		<RawLogViewContainer
@@ -120,6 +123,8 @@ function RawLogView(props: RawLogViewProps): JSX.Element {
 			$isDarkMode={isDarkMode}
 			onMouseOver={showButtons}
 			onMouseLeave={hideButtons}
+			$highlighted={data.id === selectedLogId}
+			ref={data.id === selectedLogId ? selectedLogRef : null}
 		>
 			<ExpandIconWrapper flex="30px">
 				<ExpandAltOutlined />
