@@ -14,6 +14,7 @@ import { useParams } from 'react-router-dom';
 import { Widgets } from 'types/api/dashboard/getAll';
 import { TagFilterItem } from 'types/api/queryBuilder/queryBuilderData';
 import { EQueryType } from 'types/common/dashboard';
+import { v4 as uuid } from 'uuid';
 
 import { Card, GraphContainer, GraphTitle, Row } from '../styles';
 import { Button } from './styles';
@@ -56,6 +57,7 @@ function DBCall({ getWidgetQueryBuilder }: DBCallProps): JSX.Element {
 					tagFilterItems,
 				}),
 				clickhouse_sql: [],
+				id: uuid(),
 			}),
 		[getWidgetQueryBuilder, servicename, tagFilterItems],
 	);
@@ -69,6 +71,7 @@ function DBCall({ getWidgetQueryBuilder }: DBCallProps): JSX.Element {
 					tagFilterItems,
 				}),
 				clickhouse_sql: [],
+				id: uuid(),
 			}),
 		[getWidgetQueryBuilder, servicename, tagFilterItems],
 	);

@@ -1,27 +1,19 @@
-import { COMPOSITE_QUERY } from 'constants/queryBuilderQueryNames';
 import useUrlQuery from 'hooks/useUrlQuery';
-import { useEffect, useMemo } from 'react';
+import { useEffect } from 'react';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 
+import { useGetCompositeQueryParam } from './useGetCompositeQueryParam';
 import { useQueryBuilder } from './useQueryBuilder';
 
 type UseShareBuilderUrlParams = { defaultValue: Query };
-type UseShareBuilderUrlReturnType = { compositeQuery: Query | null };
 
 export const useShareBuilderUrl = ({
 	defaultValue,
-}: UseShareBuilderUrlParams): UseShareBuilderUrlReturnType => {
-	const { redirectWithQueryBuilderData } = useQueryBuilder();
+}: UseShareBuilderUrlParams): void => {
+	const { redirectWithQueryBuilderData, resetStagedQuery } = useQueryBuilder();
 	const urlQuery = useUrlQuery();
 
-	const compositeQuery: Query | null = useMemo(() => {
-		const query = urlQuery.get(COMPOSITE_QUERY);
-		if (query) {
-			return JSON.parse(query);
-		}
-
-		return null;
-	}, [urlQuery]);
+	const compositeQuery = useGetCompositeQueryParam();
 
 	useEffect(() => {
 		if (!compositeQuery) {
@@ -29,5 +21,10 @@ export const useShareBuilderUrl = ({
 		}
 	}, [defaultValue, urlQuery, redirectWithQueryBuilderData, compositeQuery]);
 
-	return { compositeQuery };
+	useEffect(
+		() => (): void => {
+			resetStagedQuery();
+		},
+		[resetStagedQuery],
+	);
 };

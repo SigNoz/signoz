@@ -63,7 +63,6 @@ export type IBuilderQuery = {
 
 export interface IClickHouseQuery {
 	name: string;
-	rawQuery: string;
 	legend: string;
 	disabled: boolean;
 	query: string;
@@ -80,6 +79,7 @@ export interface Query {
 	promql: IPromQLQuery[];
 	builder: QueryBuilderData;
 	clickhouse_sql: IClickHouseQuery[];
+	id: string;
 }
 
 export type QueryState = Omit<Query, 'queryType'>;

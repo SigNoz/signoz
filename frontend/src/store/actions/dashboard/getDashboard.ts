@@ -1,5 +1,5 @@
 import getDashboard from 'api/dashboard/get';
-import { initialQueryWithType, PANEL_TYPES } from 'constants/queryBuilder';
+import { initialQueriesMap, PANEL_TYPES } from 'constants/queryBuilder';
 import { GRAPH_TYPES } from 'container/NewDashboard/ComponentsSlider';
 import { Dispatch } from 'redux';
 import AppActions from 'types/actions';
@@ -39,7 +39,7 @@ export const GetDashboard = ({
 						panelTypes: graphType || PANEL_TYPES.TIME_SERIES,
 						timePreferance: 'GLOBAL_TIME',
 						title: '',
-						query: initialQueryWithType,
+						query: initialQueriesMap.metrics,
 					},
 				});
 			}
