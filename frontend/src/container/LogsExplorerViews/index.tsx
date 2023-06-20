@@ -1,21 +1,51 @@
 import { TabsProps } from 'antd';
-import { PANEL_TYPES } from 'constants/queryBuilder';
+import { initialQueriesMap, PANEL_TYPES } from 'constants/queryBuilder';
 import { PANEL_TYPES_QUERY } from 'constants/queryBuilderQueryNames';
-import { LogsExplorerTable } from 'container/LogsExplorerTable';
+import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
+import LogsExplorerList from 'container/LogsExplorerList';
+import LogsExplorerTable from 'container/LogsExplorerTable';
 import { GRAPH_TYPES } from 'container/NewDashboard/ComponentsSlider';
 import { useGetPanelTypesQueryParam } from 'hooks/queryBuilder/useGetPanelTypesQueryParam';
+import { useGetQueryRange } from 'hooks/queryBuilder/useGetQueryRange';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import useUrlQuery from 'hooks/useUrlQuery';
-import { useCallback, useEffect, useMemo } from 'react';
+import { memo, useCallback, useEffect, useMemo } from 'react';
+import { useSelector } from 'react-redux';
 import { useHistory, useLocation } from 'react-router-dom';
+import { AppState } from 'store/reducers';
+import { GlobalReducer } from 'types/reducer/globalTime';
 
 import { TabsStyled } from './LogsExplorerViews.styled';
 
-export function LogsExplorerViews(): JSX.Element {
+function LogsExplorerViews(): JSX.Element {
 	const location = useLocation();
 	const urlQuery = useUrlQuery();
 	const history = useHistory();
-	const { currentQuery } = useQueryBuilder();
+	const { currentQuery, stagedQuery } = useQueryBuilder();
+
+	const { selectedTime } = useSelector<AppState, GlobalReducer>(
+		(state) => state.globalTime,
+	);
+
+	const panelTypeParam = useGetPanelTypesQueryParam(PANEL_TYPES.LIST);
+
+	const { data, isFetching } = useGetQueryRange(
+		{
+			query: stagedQuery || initialQueriesMap.metrics,
+			graphType: panelTypeParam,
+			globalSelectedInterval: selectedTime,
+			selectedTime: 'GLOBAL_TIME',
+		},
+		{
+			queryKey: [
+				REACT_QUERY_KEY.GET_QUERY_RANGE,
+				selectedTime,
+				stagedQuery,
+				panelTypeParam,
+			],
+			enabled: !!stagedQuery,
+		},
+	);
 
 	const panelTypeParams = useGetPanelTypesQueryParam(PANEL_TYPES.LIST);
 
@@ -35,17 +65,27 @@ export function LogsExplorerViews(): JSX.Element {
 		return groupByCount > 0;
 	}, [currentQuery]);
 
+	const currentData = useMemo(
+		() => data?.payload.data.newResult.data.result || [],
+		[data],
+	);
+
 	const tabsItems: TabsProps['items'] = useMemo(
 		() => [
 			{
 				label: 'List View',
 				key: PANEL_TYPES.LIST,
 				disabled: isMultipleQueries || isGroupByExist,
+				children: <LogsExplorerList data={currentData} isLoading={isFetching} />,
 			},
 			{ label: 'TimeSeries', key: PANEL_TYPES.TIME_SERIES },
-			{ label: 'Table', key: PANEL_TYPES.TABLE, children: <LogsExplorerTable /> },
+			{
+				label: 'Table',
+				key: PANEL_TYPES.TABLE,
+				children: <LogsExplorerTable data={currentData} isLoading={isFetching} />,
+			},
 		],
-		[isMultipleQueries, isGroupByExist],
+		[isMultipleQueries, isGroupByExist, currentData, isFetching],
 	);
 
 	const handleChangeView = useCallback(
@@ -85,3 +125,5 @@ export function LogsExplorerViews(): JSX.Element {
 		</div>
 	);
 }
+
+export default memo(LogsExplorerViews);
