@@ -7,6 +7,7 @@ import (
 	"testing"
 	"time"
 
+	logsV3 "go.signoz.io/signoz/pkg/query-service/app/logs/v3"
 	"go.signoz.io/signoz/pkg/query-service/app/queryBuilder"
 	"go.signoz.io/signoz/pkg/query-service/cache/inmemory"
 	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
@@ -410,6 +411,8 @@ func TestQueryRange(t *testing.T) {
 				BuilderQueries: map[string]*v3.BuilderQuery{
 					"A": {
 						QueryName:          "A",
+						StepInterval:       5 * time.Minute.Microseconds(),
+						DataSource:         v3.DataSourceMetrics,
 						AggregateAttribute: v3.AttributeKey{Key: "http_server_requests_seconds_count", Type: v3.AttributeKeyTypeUnspecified, DataType: "float64", IsColumn: true},
 						Filters: &v3.FilterSet{
 							Operator: "AND",
@@ -441,6 +444,8 @@ func TestQueryRange(t *testing.T) {
 					"A": {
 						QueryName:          "A",
 						AggregateAttribute: v3.AttributeKey{Key: "http_server_requests_seconds_count", Type: v3.AttributeKeyTypeUnspecified, DataType: "float64", IsColumn: true},
+						StepInterval:       5 * time.Minute.Microseconds(),
+						DataSource:         v3.DataSourceMetrics,
 						Filters: &v3.FilterSet{
 							Operator: "AND",
 							Items: []v3.FilterItem{
@@ -456,6 +461,71 @@ func TestQueryRange(t *testing.T) {
 							{Key: "method", IsColumn: false},
 						},
 						AggregateOperator: v3.AggregateOperatorSumRate,
+						Expression:        "A",
+					},
+				},
+			},
+		},
+		// No caching for traces & logs yet
+		{
+			Start: 1675115596722,
+			End:   1675115596722 + 120*60*1000,
+			Step:  5 * time.Minute.Microseconds(),
+			CompositeQuery: &v3.CompositeQuery{
+				QueryType: v3.QueryTypeBuilder,
+				BuilderQueries: map[string]*v3.BuilderQuery{
+					"A": {
+						QueryName:          "A",
+						AggregateAttribute: v3.AttributeKey{Key: "durationNano", Type: v3.AttributeKeyTypeUnspecified, DataType: "float64", IsColumn: true},
+						StepInterval:       5 * time.Minute.Microseconds(),
+						DataSource:         v3.DataSourceTraces,
+						Filters: &v3.FilterSet{
+							Operator: "AND",
+							Items: []v3.FilterItem{
+								{
+									Key:      v3.AttributeKey{Key: "method", IsColumn: false},
+									Operator: "=",
+									Value:    "GET",
+								},
+							},
+						},
+						GroupBy: []v3.AttributeKey{
+							{Key: "serviceName", IsColumn: false},
+							{Key: "name", IsColumn: false},
+						},
+						AggregateOperator: v3.AggregateOperatorP95,
+						Expression:        "A",
+					},
+				},
+			},
+		},
+		{
+			Start: 1675115596722 + 60*60*1000,
+			End:   1675115596722 + 180*60*1000,
+			Step:  5 * time.Minute.Microseconds(),
+			CompositeQuery: &v3.CompositeQuery{
+				QueryType: v3.QueryTypeBuilder,
+				BuilderQueries: map[string]*v3.BuilderQuery{
+					"A": {
+						QueryName:          "A",
+						AggregateAttribute: v3.AttributeKey{Key: "durationNano", Type: v3.AttributeKeyTypeUnspecified, DataType: "float64", IsColumn: true},
+						StepInterval:       5 * time.Minute.Microseconds(),
+						DataSource:         v3.DataSourceTraces,
+						Filters: &v3.FilterSet{
+							Operator: "AND",
+							Items: []v3.FilterItem{
+								{
+									Key:      v3.AttributeKey{Key: "method", IsColumn: false},
+									Operator: "=",
+									Value:    "GET",
+								},
+							},
+						},
+						GroupBy: []v3.AttributeKey{
+							{Key: "serviceName", IsColumn: false},
+							{Key: "name", IsColumn: false},
+						},
+						AggregateOperator: v3.AggregateOperatorP95,
 						Expression:        "A",
 					},
 				},
@@ -489,6 +559,222 @@ func TestQueryRange(t *testing.T) {
 	expectedTimeRangeInQueryString := []string{
 		fmt.Sprintf("timestamp_ms >= %d AND timestamp_ms <= %d", 1675115596722, 1675115596722+120*60*1000),
 		fmt.Sprintf("timestamp_ms >= %d AND timestamp_ms <= %d", 1675115596722+120*60*1000+1, 1675115596722+180*60*1000),
+		fmt.Sprintf("timestamp >= '%d' AND timestamp <= '%d'", 1675115596722*1000000, logsV3.GetZerosForEpochNano(1675115596722+120*60*1000)),
+		fmt.Sprintf("timestamp >= '%d' AND timestamp <= '%d'", logsV3.GetZerosForEpochNano(1675115596722+60*60*1000), logsV3.GetZerosForEpochNano(1675115596722+180*60*1000)),
+	}
+
+	for i, param := range params {
+		_, err, errByName := q.QueryRange(context.Background(), param, nil)
+		if err != nil {
+			t.Errorf("expected no error, got %s", err)
+		}
+		if len(errByName) > 0 {
+			t.Errorf("expected no error, got %v", errByName)
+		}
+
+		if !strings.Contains(q.QueriesExecuted()[i], expectedTimeRangeInQueryString[i]) {
+			t.Errorf("expected query to contain %s, got %s", expectedTimeRangeInQueryString[i], q.QueriesExecuted()[i])
+		}
+	}
+}
+
+func TestQueryRangeValueType(t *testing.T) {
+	// There shouldn't be any caching for value panel type
+	params := []*v3.QueryRangeParamsV3{
+		{
+			Start: 1675115596722,
+			End:   1675115596722 + 120*60*1000,
+			Step:  5 * time.Minute.Microseconds(),
+			CompositeQuery: &v3.CompositeQuery{
+				QueryType: v3.QueryTypeBuilder,
+				PanelType: v3.PanelTypeValue,
+				BuilderQueries: map[string]*v3.BuilderQuery{
+					"A": {
+						QueryName:          "A",
+						StepInterval:       5 * time.Minute.Microseconds(),
+						DataSource:         v3.DataSourceMetrics,
+						AggregateAttribute: v3.AttributeKey{Key: "http_server_requests_seconds_count", Type: v3.AttributeKeyTypeUnspecified, DataType: "float64", IsColumn: true},
+						Filters: &v3.FilterSet{
+							Operator: "AND",
+							Items: []v3.FilterItem{
+								{
+									Key:      v3.AttributeKey{Key: "method", IsColumn: false},
+									Operator: "=",
+									Value:    "GET",
+								},
+							},
+						},
+						AggregateOperator: v3.AggregateOperatorSumRate,
+						Expression:        "A",
+						ReduceTo:          v3.ReduceToOperatorLast,
+					},
+				},
+			},
+		},
+		{
+			Start: 1675115596722 + 60*60*1000,
+			End:   1675115596722 + 180*60*1000,
+			Step:  5 * time.Minute.Microseconds(),
+			CompositeQuery: &v3.CompositeQuery{
+				QueryType: v3.QueryTypeBuilder,
+				PanelType: v3.PanelTypeValue,
+				BuilderQueries: map[string]*v3.BuilderQuery{
+					"A": {
+						QueryName:          "A",
+						StepInterval:       5 * time.Minute.Microseconds(),
+						DataSource:         v3.DataSourceTraces,
+						AggregateAttribute: v3.AttributeKey{Key: "durationNano", Type: v3.AttributeKeyTypeUnspecified, DataType: "float64", IsColumn: true},
+						Filters: &v3.FilterSet{
+							Operator: "AND",
+							Items: []v3.FilterItem{
+								{
+									Key:      v3.AttributeKey{Key: "method", IsColumn: false},
+									Operator: "=",
+									Value:    "GET",
+								},
+							},
+						},
+						AggregateOperator: v3.AggregateOperatorP95,
+						Expression:        "A",
+						ReduceTo:          v3.ReduceToOperatorLast,
+					},
+				},
+			},
+		},
+	}
+	cache := inmemory.New(&inmemory.Options{TTL: 60 * time.Minute, CleanupInterval: 10 * time.Minute})
+	opts := QuerierOptions{
+		Cache:        cache,
+		Reader:       nil,
+		FluxInterval: 5 * time.Minute,
+		KeyGenerator: queryBuilder.NewKeyGenerator(),
+
+		TestingMode: true,
+		ReturnedSeries: []*v3.Series{
+			{
+				Labels: map[string]string{
+					"method":       "GET",
+					"service_name": "test",
+					"__name__":     "http_server_requests_seconds_count",
+				},
+				Points: []v3.Point{
+					{Timestamp: 1675115596722, Value: 1},
+					{Timestamp: 1675115596722 + 60*60*1000, Value: 2},
+					{Timestamp: 1675115596722 + 120*60*1000, Value: 3},
+				},
+			},
+		},
+	}
+	q := NewQuerier(opts)
+	// No caching
+	expectedTimeRangeInQueryString := []string{
+		fmt.Sprintf("timestamp_ms >= %d AND timestamp_ms <= %d", 1675115596722, 1675115596722+120*60*1000),
+		fmt.Sprintf("timestamp_ms >= %d AND timestamp_ms <= %d", 1675115596722+60*60*1000, 1675115596722+180*60*1000),
+	}
+
+	for i, param := range params {
+		_, err, errByName := q.QueryRange(context.Background(), param, nil)
+		if err != nil {
+			t.Errorf("expected no error, got %s", err)
+		}
+		if len(errByName) > 0 {
+			t.Errorf("expected no error, got %v", errByName)
+		}
+
+		if !strings.Contains(q.QueriesExecuted()[i], expectedTimeRangeInQueryString[i]) {
+			t.Errorf("expected query to contain %s, got %s", expectedTimeRangeInQueryString[i], q.QueriesExecuted()[i])
+		}
+	}
+}
+
+func TestQueryRangeValueTypePromQueries(t *testing.T) {
+	// There shouldn't be any caching for value panel type
+	params := []*v3.QueryRangeParamsV3{
+		{
+			Start: 1675115596722,
+			End:   1675115596722 + 120*60*1000,
+			Step:  5 * time.Minute.Microseconds(),
+			CompositeQuery: &v3.CompositeQuery{
+				QueryType: v3.QueryTypeBuilder,
+				PanelType: v3.PanelTypeValue,
+				BuilderQueries: map[string]*v3.BuilderQuery{
+					"A": {
+						QueryName:          "A",
+						AggregateAttribute: v3.AttributeKey{Key: "http_server_requests_seconds_count", Type: v3.AttributeKeyTypeUnspecified, DataType: "float64", IsColumn: true},
+						Filters: &v3.FilterSet{
+							Operator: "AND",
+							Items: []v3.FilterItem{
+								{
+									Key:      v3.AttributeKey{Key: "method", IsColumn: false},
+									Operator: "=",
+									Value:    "GET",
+								},
+							},
+						},
+						AggregateOperator: v3.AggregateOperatorSumRate,
+						Expression:        "A",
+						ReduceTo:          v3.ReduceToOperatorLast,
+					},
+				},
+			},
+		},
+		{
+			Start: 1675115596722 + 60*60*1000,
+			End:   1675115596722 + 180*60*1000,
+			Step:  5 * time.Minute.Microseconds(),
+			CompositeQuery: &v3.CompositeQuery{
+				QueryType: v3.QueryTypeBuilder,
+				PanelType: v3.PanelTypeValue,
+				BuilderQueries: map[string]*v3.BuilderQuery{
+					"A": {
+						QueryName:          "A",
+						AggregateAttribute: v3.AttributeKey{Key: "durationNano", Type: v3.AttributeKeyTypeUnspecified, DataType: "float64", IsColumn: true},
+						Filters: &v3.FilterSet{
+							Operator: "AND",
+							Items: []v3.FilterItem{
+								{
+									Key:      v3.AttributeKey{Key: "method", IsColumn: false},
+									Operator: "=",
+									Value:    "GET",
+								},
+							},
+						},
+						AggregateOperator: v3.AggregateOperatorP95,
+						Expression:        "A",
+						ReduceTo:          v3.ReduceToOperatorLast,
+					},
+				},
+			},
+		},
+	}
+	cache := inmemory.New(&inmemory.Options{TTL: 60 * time.Minute, CleanupInterval: 10 * time.Minute})
+	opts := QuerierOptions{
+		Cache:        cache,
+		Reader:       nil,
+		FluxInterval: 5 * time.Minute,
+		KeyGenerator: queryBuilder.NewKeyGenerator(),
+
+		TestingMode: true,
+		ReturnedSeries: []*v3.Series{
+			{
+				Labels: map[string]string{
+					"method":       "GET",
+					"service_name": "test",
+					"__name__":     "http_server_requests_seconds_count",
+				},
+				Points: []v3.Point{
+					{Timestamp: 1675115596722, Value: 1},
+					{Timestamp: 1675115596722 + 60*60*1000, Value: 2},
+					{Timestamp: 1675115596722 + 120*60*1000, Value: 3},
+				},
+			},
+		},
+	}
+	q := NewQuerier(opts)
+	// No caching
+	expectedTimeRangeInQueryString := []string{
+		fmt.Sprintf("timestamp_ms >= %d AND timestamp_ms <= %d", 1675115596722, 1675115596722+120*60*1000),
+		fmt.Sprintf("timestamp_ms >= %d AND timestamp_ms <= %d", 1675115596722+60*60*1000, 1675115596722+180*60*1000),
 	}
 
 	for i, param := range params {

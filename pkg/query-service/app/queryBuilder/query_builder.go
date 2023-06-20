@@ -224,6 +224,19 @@ func isMetricExpression(expression *govaluate.EvaluableExpression, params *v3.Qu
 func (c *cacheKeyGenerator) GenerateKeys(params *v3.QueryRangeParamsV3) map[string]string {
 	keys := make(map[string]string)
 
+	// For non-graph panels, we don't support caching
+	if params.CompositeQuery.PanelType != v3.PanelTypeGraph {
+		return keys
+	}
+
+	// Use query as the cache key for PromQL queries
+	if params.CompositeQuery.QueryType == v3.QueryTypePromQL {
+		for name, query := range params.CompositeQuery.PromQueries {
+			keys[name] = query.Query
+		}
+		return keys
+	}
+
 	// Build keys for each builder query
 	for queryName, query := range params.CompositeQuery.BuilderQueries {
 		if query.Expression == queryName && query.DataSource == v3.DataSourceMetrics {

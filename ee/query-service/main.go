@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"flag"
+	"fmt"
 	"os"
 	"os/signal"
 	"syscall"
@@ -43,6 +44,9 @@ func main() {
 	flag.StringVar(&fluxInterval, "flux-interval", "5m", "(cache config to use)")
 
 	flag.Parse()
+
+	fmt.Println(disableRules, ruleRepoURL, cacheConfigPath, fluxInterval)
+	os.Exit(1)
 
 	loggerMgr := initZapLog()
 	zap.ReplaceGlobals(loggerMgr)

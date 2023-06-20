@@ -19,11 +19,13 @@ import (
 	"go.signoz.io/signoz/pkg/query-service/interfaces"
 	"go.signoz.io/signoz/pkg/query-service/model"
 	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
+	"go.uber.org/multierr"
 	"go.uber.org/zap"
 )
 
 type channelResult struct {
 	Series []*v3.Series
+	List   []*v3.Row
 	Err    error
 	Name   string
 	Query  string
@@ -286,11 +288,14 @@ func (q *querier) runBuilderQueries(ctx context.Context, params *v3.QueryRangePa
 }
 
 func (q *querier) runPromQueries(ctx context.Context, params *v3.QueryRangeParamsV3) ([]*v3.Result, error, map[string]string) {
-	channelResults := make(chan channelResult, len(params.CompositeQuery.ClickHouseQueries))
+	channelResults := make(chan channelResult, len(params.CompositeQuery.PromQueries))
 	var wg sync.WaitGroup
 	cacheKeys := q.keyGenerator.GenerateKeys(params)
 
 	for queryName, promQuery := range params.CompositeQuery.PromQueries {
+		if promQuery.Disabled {
+			continue
+		}
 		wg.Add(1)
 		go func(queryName string, promQuery *v3.PromQuery) {
 			defer wg.Done()
@@ -370,6 +375,9 @@ func (q *querier) runClickHouseQueries(ctx context.Context, params *v3.QueryRang
 	channelResults := make(chan channelResult, len(params.CompositeQuery.ClickHouseQueries))
 	var wg sync.WaitGroup
 	for queryName, clickHouseQuery := range params.CompositeQuery.ClickHouseQueries {
+		if clickHouseQuery.Disabled {
+			continue
+		}
 		wg.Add(1)
 		go func(queryName string, clickHouseQuery *v3.ClickHouseQuery) {
 			defer wg.Done()
@@ -403,6 +411,55 @@ func (q *querier) runClickHouseQueries(ctx context.Context, params *v3.QueryRang
 	return results, err, errQueriesByName
 }
 
+func (q *querier) runBuilderListQueries(ctx context.Context, params *v3.QueryRangeParamsV3, keys map[string]v3.AttributeKey) ([]*v3.Result, error, map[string]string) {
+
+	queries, err := q.builder.PrepareQueries(params, keys)
+
+	if err != nil {
+		return nil, err, nil
+	}
+
+	ch := make(chan channelResult, len(queries))
+	var wg sync.WaitGroup
+
+	for name, query := range queries {
+		wg.Add(1)
+		go func(name, query string) {
+			defer wg.Done()
+			rowList, err := q.reader.GetListResultV3(ctx, query)
+
+			if err != nil {
+				ch <- channelResult{Err: fmt.Errorf("error in query-%s: %v", name, err), Name: name, Query: query}
+				return
+			}
+			ch <- channelResult{List: rowList, Name: name, Query: query}
+		}(name, query)
+	}
+
+	wg.Wait()
+	close(ch)
+
+	var errs []error
+	errQuriesByName := make(map[string]string)
+	res := make([]*v3.Result, 0)
+	// read values from the channel
+	for r := range ch {
+		if r.Err != nil {
+			errs = append(errs, r.Err)
+			errQuriesByName[r.Name] = r.Query
+			continue
+		}
+		res = append(res, &v3.Result{
+			QueryName: r.Name,
+			List:      r.List,
+		})
+	}
+	if len(errs) != 0 {
+		return nil, fmt.Errorf("encountered multiple errors: %s", multierr.Combine(errs...)), errQuriesByName
+	}
+	return res, nil, nil
+}
+
 func (q *querier) QueryRange(ctx context.Context, params *v3.QueryRangeParamsV3, keys map[string]v3.AttributeKey) ([]*v3.Result, error, map[string]string) {
 	var results []*v3.Result
 	var err error
@@ -410,7 +467,11 @@ func (q *querier) QueryRange(ctx context.Context, params *v3.QueryRangeParamsV3,
 	if params.CompositeQuery != nil {
 		switch params.CompositeQuery.QueryType {
 		case v3.QueryTypeBuilder:
-			results, err, errQueriesByName = q.runBuilderQueries(ctx, params, keys)
+			if params.CompositeQuery.PanelType == v3.PanelTypeList {
+				results, err, errQueriesByName = q.runBuilderListQueries(ctx, params, keys)
+			} else {
+				results, err, errQueriesByName = q.runBuilderQueries(ctx, params, keys)
+			}
 		case v3.QueryTypePromQL:
 			results, err, errQueriesByName = q.runPromQueries(ctx, params)
 		case v3.QueryTypeClickHouseSQL:

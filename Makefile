@@ -19,7 +19,8 @@ LOCAL_GOOS ?= $(shell go env GOOS)
 LOCAL_GOARCH ?= $(shell go env GOARCH)
 
 REPONAME ?= signoz
-DOCKER_TAG ?= latest
+# use branch name as docker tag if not provided
+DOCKER_TAG ?= $(shell git rev-parse --abbrev-ref HEAD)
 
 FRONTEND_DOCKER_IMAGE ?= frontend
 QUERY_SERVICE_DOCKER_IMAGE ?= query-service

@@ -3,7 +3,6 @@ package querier
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"sync"
 	"time"
 
@@ -46,6 +45,19 @@ func (q *querier) runBuilderQuery(
 			return
 		}
 
+		series, err := q.execClickHouseQuery(ctx, query)
+		ch <- channelResult{Err: err, Name: queryName, Query: query, Series: series}
+		return
+	}
+
+	// TODO(srikanthccv): ReduceTo avg should be handled; avg of avg is not correct
+	// cache keys are generated based on the query type
+	if _, ok := cacheKeys[queryName]; !ok {
+		query, err := metricsV3.PrepareMetricQuery(params.Start, params.End, params.CompositeQuery.QueryType, params.CompositeQuery.PanelType, builderQuery)
+		if err != nil {
+			ch <- channelResult{Err: err, Name: queryName, Query: query, Series: nil}
+			return
+		}
 		series, err := q.execClickHouseQuery(ctx, query)
 		ch <- channelResult{Err: err, Name: queryName, Query: query, Series: series}
 		return
@@ -132,7 +144,6 @@ func (q *querier) runBuilderExpression(
 	queryName := builderQuery.QueryName
 
 	queries, err := q.builder.PrepareQueries(params, keys)
-	fmt.Println("queries", queries)
 	if err != nil {
 		ch <- channelResult{Err: err, Name: queryName, Query: "", Series: nil}
 		return

@@ -1,4 +1,4 @@
 provider: "inmemory"
 inmemory:
-  ttl: 5m
+  ttl: 60m
   cleanupInterval: 10m

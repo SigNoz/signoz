@@ -2709,27 +2709,33 @@ func (aH *APIHandler) getSpanKeysV3(ctx context.Context, queryRangeParams *v3.Qu
 
 func (aH *APIHandler) queryRangeV3(ctx context.Context, queryRangeParams *v3.QueryRangeParamsV3, w http.ResponseWriter, r *http.Request) {
 
-	// check if any enrichment is required for logs if yes then enrich them
-	if logsv3.EnrichmentRequired(queryRangeParams) {
-		// get the fields if any logs query is present
-		var fields map[string]v3.AttributeKey
-		fields, err := aH.getLogFieldsV3(ctx, queryRangeParams)
+	var result []*v3.Result
+	var err error
+	var errQuriesByName map[string]string
+	var spanKeys map[string]v3.AttributeKey
+	if queryRangeParams.CompositeQuery.QueryType == v3.QueryTypeBuilder {
+		// check if any enrichment is required for logs if yes then enrich them
+		if logsv3.EnrichmentRequired(queryRangeParams) {
+			// get the fields if any logs query is present
+			var fields map[string]v3.AttributeKey
+			fields, err = aH.getLogFieldsV3(ctx, queryRangeParams)
+			if err != nil {
+				apiErrObj := &model.ApiError{Typ: model.ErrorInternal, Err: err}
+				RespondError(w, apiErrObj, errQuriesByName)
+				return
+			}
+			logsv3.Enrich(queryRangeParams, fields)
+		}
+
+		spanKeys, err = aH.getSpanKeysV3(ctx, queryRangeParams)
 		if err != nil {
 			apiErrObj := &model.ApiError{Typ: model.ErrorInternal, Err: err}
-			RespondError(w, apiErrObj, nil)
+			RespondError(w, apiErrObj, errQuriesByName)
 			return
 		}
-		logsv3.Enrich(queryRangeParams, fields)
 	}
 
-	spanKeys, err := aH.getSpanKeysV3(ctx, queryRangeParams)
-	if err != nil {
-		apiErrObj := &model.ApiError{Typ: model.ErrorBadData, Err: err}
-		RespondError(w, apiErrObj, nil)
-		return
-	}
-
-	result, err, errQuriesByName := aH.qurier.QueryRange(ctx, queryRangeParams, spanKeys)
+	result, err, errQuriesByName = aH.qurier.QueryRange(ctx, queryRangeParams, spanKeys)
 
 	if err != nil {
 		apiErrObj := &model.ApiError{Typ: model.ErrorBadData, Err: err}
