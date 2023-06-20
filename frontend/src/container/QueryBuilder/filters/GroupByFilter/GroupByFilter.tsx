@@ -102,10 +102,12 @@ export const GroupByFilter = memo(function GroupByFilter({
 
 				return {
 					id,
-					key,
-					dataType: dataType as DataType,
-					type: type as AutocompleteType,
-					isColumn: isColumn === 'true',
+					key: key || currentValue,
+					dataType: (dataType as DataType) || initialAutocompleteData.dataType,
+					type: (type as AutocompleteType) || initialAutocompleteData.type,
+					isColumn: isColumn
+						? isColumn === 'true'
+						: initialAutocompleteData.isColumn,
 				};
 			}
 
