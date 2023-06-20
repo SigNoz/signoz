@@ -95,6 +95,20 @@ function SearchFilter({
 					...(idEnd ? { idLt: idEnd } : {}),
 				});
 			} else {
+				const idConditions: Record<string, string> = {};
+
+				if (idStart && order === 'asc') {
+					idConditions.idLt = idStart;
+				} else if (idStart) {
+					idConditions.idGt = idStart;
+				}
+
+				if (idEnd && order === 'asc') {
+					idConditions.idGt = idEnd;
+				} else if (idEnd) {
+					idConditions.idLt = idEnd;
+				}
+
 				getLogs({
 					q: customQuery,
 					limit: logLinesPerPage,
@@ -102,8 +116,7 @@ function SearchFilter({
 					order,
 					timestampStart: minTime,
 					timestampEnd: maxTime,
-					...(idStart ? { idGt: idStart } : {}),
-					...(idEnd ? { idLt: idEnd } : {}),
+					...idConditions,
 				});
 
 				getLogsAggregate({

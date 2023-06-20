@@ -50,7 +50,10 @@ const initialState: ILogsReducer = {
 	liveTailStartRange: 15,
 	selectedLogId: null,
 	detailedLog: null,
-	order: 'desc',
+	order:
+		(new URLSearchParams(window.location.search).get(
+			'order',
+		) as ILogsReducer['order']) ?? 'desc',
 };
 
 export const LogsReducer = (
@@ -137,6 +140,8 @@ export const LogsReducer = (
 			return {
 				...state,
 				order,
+				idStart: '',
+				idEnd: '',
 			};
 		}
 

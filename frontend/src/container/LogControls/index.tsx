@@ -30,6 +30,7 @@ function LogControls(): JSX.Element | null {
 		isLoading: isLogsLoading,
 		isLoadingAggregate,
 		logs,
+		order,
 	} = useSelector<AppState, ILogsReducer>((state) => state.logs);
 	const globalTime = useSelector<AppState, GlobalReducer>(
 		(state) => state.globalTime,
@@ -159,6 +160,7 @@ function LogControls(): JSX.Element | null {
 				loading={isLoading}
 				size="small"
 				type="link"
+				disabled={order === 'asc'}
 				onClick={handleGoToLatest}
 			>
 				<FastBackwardOutlined /> Go to latest

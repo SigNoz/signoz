@@ -6,6 +6,7 @@ import LogsAggregate from 'container/LogsAggregate';
 import LogsFilters from 'container/LogsFilters';
 import LogsSearchFilter from 'container/LogsSearchFilter';
 import LogsTable from 'container/LogsTable';
+import history from 'lib/history';
 import { useCallback, useMemo } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { Dispatch } from 'redux';
@@ -75,6 +76,9 @@ function Logs(): JSX.Element {
 			type: SET_LOGS_ORDER,
 			payload: value,
 		});
+		const params = new URLSearchParams(window.location.search);
+		params.set('order', value);
+		history.push({ search: params.toString() });
 	};
 
 	return (
