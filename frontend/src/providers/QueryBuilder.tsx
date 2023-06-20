@@ -4,10 +4,10 @@ import {
 	formulasNames,
 	initialClickHouseData,
 	initialFormulaBuilderFormValues,
-	initialQuery,
-	initialQueryBuilderFormValues,
+	initialQueriesMap,
+	initialQueryBuilderFormValuesMap,
 	initialQueryPromQLData,
-	initialQueryWithType,
+	initialQueryState,
 	initialSingleQueryMap,
 	MAX_FORMULAS,
 	MAX_QUERIES,
@@ -15,6 +15,7 @@ import {
 } from 'constants/queryBuilder';
 import { COMPOSITE_QUERY } from 'constants/queryBuilderQueryNames';
 import { GRAPH_TYPES } from 'container/NewDashboard/ComponentsSlider';
+import { useGetCompositeQueryParam } from 'hooks/queryBuilder/useGetCompositeQueryParam';
 import useUrlQuery from 'hooks/useUrlQuery';
 import { createIdFromObjectFields } from 'lib/createIdFromObjectFields';
 import { createNewBuilderItemName } from 'lib/newQueryBuilder/createNewBuilderItemName';
@@ -44,19 +45,17 @@ import {
 	QueryBuilderContextType,
 	QueryBuilderData,
 } from 'types/common/queryBuilder';
+import { v4 as uuid } from 'uuid';
 
 export const QueryBuilderContext = createContext<QueryBuilderContextType>({
-	currentQuery: initialQueryWithType,
+	currentQuery: initialQueriesMap.metrics,
+	stagedQuery: initialQueriesMap.metrics,
 	initialDataSource: null,
 	panelType: PANEL_TYPES.TIME_SERIES,
-	resetQueryBuilderData: () => {},
-	resetQueryBuilderInfo: () => {},
 	handleSetQueryData: () => {},
 	handleSetFormulaData: () => {},
 	handleSetQueryItemData: () => {},
 	handleSetPanelType: () => {},
-	handleSetQueryType: () => {},
-	initQueryBuilderData: () => {},
 	setupInitialDataSource: () => {},
 	removeQueryBuilderEntityByIndex: () => {},
 	removeQueryTypeItemByIndex: () => {},
@@ -64,6 +63,8 @@ export const QueryBuilderContext = createContext<QueryBuilderContextType>({
 	addNewFormula: () => {},
 	addNewQueryItem: () => {},
 	redirectWithQueryBuilderData: () => {},
+	handleRunQuery: () => {},
+	resetStagedQuery: () => {},
 });
 
 export function QueryBuilderProvider({
@@ -73,6 +74,8 @@ export function QueryBuilderProvider({
 	const history = useHistory();
 	const location = useLocation();
 
+	const compositeQueryParam = useGetCompositeQueryParam();
+
 	const [initialDataSource, setInitialDataSource] = useState<DataSource | null>(
 		null,
 	);
@@ -81,81 +84,77 @@ export function QueryBuilderProvider({
 		PANEL_TYPES.TIME_SERIES,
 	);
 
-	const [currentQuery, setCurrentQuery] = useState<QueryState>(initialQuery);
+	const [currentQuery, setCurrentQuery] = useState<QueryState>(
+		initialQueryState,
+	);
+	const [stagedQuery, setStagedQuery] = useState<Query | null>(null);
 
 	const [queryType, setQueryType] = useState<EQueryType>(
 		EQueryType.QUERY_BUILDER,
 	);
 
-	const handleSetQueryType = useCallback((newQueryType: EQueryType) => {
-		setQueryType(newQueryType);
-	}, []);
+	const initQueryBuilderData = useCallback(
+		(query: Query): void => {
+			const { queryType: newQueryType, ...queryState } = query;
 
-	const resetQueryBuilderInfo = useCallback((): void => {
-		setInitialDataSource(null);
-		setPanelType(PANEL_TYPES.TIME_SERIES);
-	}, []);
-
-	const resetQueryBuilderData = useCallback(() => {
-		setCurrentQuery(initialQuery);
-	}, []);
-
-	const initQueryBuilderData = useCallback((query: Partial<Query>): void => {
-		const { queryType, ...queryState } = query;
-
-		const builder: QueryBuilderData = {
-			queryData: queryState.builder
-				? queryState.builder.queryData.map((item) => ({
-						...initialQueryBuilderFormValues,
-						...item,
-				  }))
-				: initialQuery.builder.queryData,
-			queryFormulas: queryState.builder
-				? queryState.builder.queryFormulas.map((item) => ({
-						...initialFormulaBuilderFormValues,
-						...item,
-				  }))
-				: initialQuery.builder.queryFormulas,
-		};
-
-		const promql: IPromQLQuery[] = queryState.promql
-			? queryState.promql.map((item) => ({
-					...initialQueryPromQLData,
+			const builder: QueryBuilderData = {
+				queryData: queryState.builder.queryData.map((item) => ({
+					...initialQueryBuilderFormValuesMap[
+						initialDataSource || DataSource.METRICS
+					],
 					...item,
-			  }))
-			: initialQuery.promql;
+				})),
+				queryFormulas: queryState.builder.queryFormulas.map((item) => ({
+					...initialFormulaBuilderFormValues,
+					...item,
+				})),
+			};
 
-		const clickHouse: IClickHouseQuery[] = queryState.clickhouse_sql
-			? queryState.clickhouse_sql.map((item) => ({
+			const promql: IPromQLQuery[] = queryState.promql.map((item) => ({
+				...initialQueryPromQLData,
+				...item,
+			}));
+
+			const clickHouse: IClickHouseQuery[] = queryState.clickhouse_sql.map(
+				(item) => ({
 					...initialClickHouseData,
 					...item,
-			  }))
-			: initialQuery.clickhouse_sql;
+				}),
+			);
 
-		setCurrentQuery({
-			clickhouse_sql: clickHouse,
-			promql,
-			builder: {
-				...builder,
-				queryData: builder.queryData.map((q) => ({
-					...q,
-					groupBy: q.groupBy.map(({ id: _, ...item }) => ({
-						...item,
-						id: createIdFromObjectFields(item, baseAutoCompleteIdKeysOrder),
+			const type = newQueryType || EQueryType.QUERY_BUILDER;
+
+			const newQueryState: QueryState = {
+				clickhouse_sql: clickHouse,
+				promql,
+				builder: {
+					...builder,
+					queryData: builder.queryData.map((q) => ({
+						...q,
+						groupBy: q.groupBy.map(({ id: _, ...item }) => ({
+							...item,
+							id: createIdFromObjectFields(item, baseAutoCompleteIdKeysOrder),
+						})),
+						aggregateAttribute: {
+							...q.aggregateAttribute,
+							id: createIdFromObjectFields(
+								q.aggregateAttribute,
+								baseAutoCompleteIdKeysOrder,
+							),
+						},
 					})),
-					aggregateAttribute: {
-						...q.aggregateAttribute,
-						id: createIdFromObjectFields(
-							q.aggregateAttribute,
-							baseAutoCompleteIdKeysOrder,
-						),
-					},
-				})),
-			},
-		});
+				},
+				id: queryState.id,
+			};
 
-		setQueryType(queryType || EQueryType.QUERY_BUILDER);
-	}, []);
+			const nextQuery: Query = { ...newQueryState, queryType: type };
+
+			setStagedQuery(nextQuery);
+			setCurrentQuery(newQueryState);
+			setQueryType(type);
+		},
+		[initialDataSource],
+	);
 
 	const removeQueryBuilderEntityByIndex = useCallback(
 		(type: keyof QueryBuilderData, index: number) => {
@@ -190,9 +189,11 @@ export function QueryBuilderProvider({
 	const createNewBuilderQuery = useCallback(
 		(queries: IBuilderQuery[]): IBuilderQuery => {
 			const existNames = queries.map((item) => item.queryName);
+			const initialBuilderQuery =
+				initialQueryBuilderFormValuesMap[initialDataSource || DataSource.METRICS];
 
 			const newQuery: IBuilderQuery = {
-				...initialQueryBuilderFormValues,
+				...initialBuilderQuery,
 				queryName: createNewBuilderItemName({ existNames, sourceNames: alphabet }),
 				expression: createNewBuilderItemName({
 					existNames,
@@ -381,7 +382,7 @@ export function QueryBuilderProvider({
 	}, []);
 
 	const redirectWithQueryBuilderData = useCallback(
-		(query: Partial<Query>) => {
+		(query: Partial<Query>, searchParams?: Record<string, unknown>) => {
 			const currentGeneratedQuery: Query = {
 				queryType:
 					!query.queryType || !Object.values(EQueryType).includes(query.queryType)
@@ -389,63 +390,84 @@ export function QueryBuilderProvider({
 						: query.queryType,
 				builder:
 					!query.builder || query.builder.queryData.length === 0
-						? initialQuery.builder
+						? initialQueryState.builder
 						: query.builder,
 				promql:
 					!query.promql || query.promql.length === 0
-						? initialQuery.promql
+						? initialQueryState.promql
 						: query.promql,
 				clickhouse_sql:
 					!query.clickhouse_sql || query.clickhouse_sql.length === 0
-						? initialQuery.clickhouse_sql
+						? initialQueryState.clickhouse_sql
 						: query.clickhouse_sql,
+				id: uuid(),
 			};
 
 			urlQuery.set(COMPOSITE_QUERY, JSON.stringify(currentGeneratedQuery));
 
-			const generatedUrl = `${location.pathname}?${urlQuery.toString()}`;
+			if (searchParams) {
+				Object.keys(searchParams).forEach((param) =>
+					urlQuery.set(param, JSON.stringify(searchParams[param])),
+				);
+			}
+
+			const generatedUrl = `${location.pathname}?${urlQuery}`;
 
 			history.push(generatedUrl);
 		},
 		[history, location, urlQuery],
 	);
 
-	useEffect(() => {
-		const compositeQuery = urlQuery.get(COMPOSITE_QUERY);
-		if (!compositeQuery) return;
+	const handleRunQuery = useCallback(() => {
+		redirectWithQueryBuilderData({ ...currentQuery, queryType });
+	}, [redirectWithQueryBuilderData, currentQuery, queryType]);
 
-		const newQuery: Query = JSON.parse(compositeQuery);
+	const resetStagedQuery = useCallback(() => {
+		setStagedQuery(null);
+	}, []);
+
+	useEffect(() => {
+		if (!compositeQueryParam) return;
+
+		if (stagedQuery && stagedQuery.id === compositeQueryParam.id) {
+			return;
+		}
 
 		const { isValid, validData } = replaceIncorrectObjectFields(
-			newQuery,
-			initialQueryWithType,
+			compositeQueryParam,
+			initialQueriesMap.metrics,
 		);
 
 		if (!isValid) {
 			redirectWithQueryBuilderData(validData);
 		} else {
-			initQueryBuilderData(newQuery);
+			initQueryBuilderData(compositeQueryParam);
 		}
-	}, [initQueryBuilderData, redirectWithQueryBuilderData, urlQuery]);
-
-	const query: Query = useMemo(() => ({ ...currentQuery, queryType }), [
-		currentQuery,
-		queryType,
+	}, [
+		initQueryBuilderData,
+		redirectWithQueryBuilderData,
+		compositeQueryParam,
+		stagedQuery,
 	]);
+
+	const query: Query = useMemo(
+		() => ({
+			...currentQuery,
+			queryType,
+		}),
+		[currentQuery, queryType],
+	);
 
 	const contextValues: QueryBuilderContextType = useMemo(
 		() => ({
 			currentQuery: query,
+			stagedQuery,
 			initialDataSource,
 			panelType,
-			resetQueryBuilderData,
-			resetQueryBuilderInfo,
 			handleSetQueryData,
 			handleSetFormulaData,
 			handleSetQueryItemData,
 			handleSetPanelType,
-			handleSetQueryType,
-			initQueryBuilderData,
 			setupInitialDataSource,
 			removeQueryBuilderEntityByIndex,
 			removeQueryTypeItemByIndex,
@@ -453,19 +475,18 @@ export function QueryBuilderProvider({
 			addNewFormula,
 			addNewQueryItem,
 			redirectWithQueryBuilderData,
+			handleRunQuery,
+			resetStagedQuery,
 		}),
 		[
 			query,
+			stagedQuery,
 			initialDataSource,
 			panelType,
-			resetQueryBuilderData,
-			resetQueryBuilderInfo,
 			handleSetQueryData,
 			handleSetFormulaData,
 			handleSetQueryItemData,
 			handleSetPanelType,
-			handleSetQueryType,
-			initQueryBuilderData,
 			setupInitialDataSource,
 			removeQueryBuilderEntityByIndex,
 			removeQueryTypeItemByIndex,
@@ -473,6 +494,8 @@ export function QueryBuilderProvider({
 			addNewFormula,
 			addNewQueryItem,
 			redirectWithQueryBuilderData,
+			handleRunQuery,
+			resetStagedQuery,
 		],
 	);
 
