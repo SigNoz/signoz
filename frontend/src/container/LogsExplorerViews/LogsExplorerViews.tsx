@@ -26,17 +26,26 @@ export function LogsExplorerViews(): JSX.Element {
 		[currentQuery],
 	);
 
+	const isGroupByExist = useMemo(() => {
+		const groupByCount: number = currentQuery.builder.queryData.reduce<number>(
+			(acc, query) => acc + query.groupBy.length,
+			0,
+		);
+
+		return groupByCount > 0;
+	}, [currentQuery]);
+
 	const tabsItems: TabsProps['items'] = useMemo(
 		() => [
 			{
 				label: 'List View',
 				key: PANEL_TYPES.LIST,
-				disabled: isMultipleQueries,
+				disabled: isMultipleQueries || isGroupByExist,
 			},
 			{ label: 'TimeSeries', key: PANEL_TYPES.TIME_SERIES },
 			{ label: 'Table', key: PANEL_TYPES.TABLE, children: <LogsExplorerTable /> },
 		],
-		[isMultipleQueries],
+		[isMultipleQueries, isGroupByExist],
 	);
 
 	const handleChangeView = useCallback(
@@ -58,10 +67,12 @@ export function LogsExplorerViews(): JSX.Element {
 	);
 
 	useEffect(() => {
-		if (panelTypeParams === 'list' && isMultipleQueries) {
+		const shouldChangeView = isMultipleQueries || isGroupByExist;
+
+		if (panelTypeParams === 'list' && shouldChangeView) {
 			handleChangeView(PANEL_TYPES.TIME_SERIES);
 		}
-	}, [panelTypeParams, isMultipleQueries, handleChangeView]);
+	}, [panelTypeParams, isMultipleQueries, isGroupByExist, handleChangeView]);
 
 	return (
 		<div>
