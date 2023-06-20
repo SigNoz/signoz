@@ -67,8 +67,6 @@ function RawLogView(props: RawLogViewProps): JSX.Element {
 		(state) => state.logs,
 	);
 
-	console.log('selectedLogRef', selectedLogRef);
-
 	const isDarkMode = useIsDarkMode();
 
 	const text = useMemo(
