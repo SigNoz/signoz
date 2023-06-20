@@ -63,6 +63,7 @@ export const routePermission: Record<keyof typeof ROUTES, ROLES[]> = {
 	SETTINGS: ['ADMIN', 'EDITOR', 'VIEWER'],
 	SIGN_UP: ['ADMIN', 'EDITOR', 'VIEWER'],
 	SOMETHING_WENT_WRONG: ['ADMIN', 'EDITOR', 'VIEWER'],
+	TRACES_EXPLORER: ['ADMIN', 'EDITOR', 'VIEWER'],
 	TRACE: ['ADMIN', 'EDITOR', 'VIEWER'],
 	TRACE_DETAIL: ['ADMIN', 'EDITOR', 'VIEWER'],
 	UN_AUTHORIZED: ['ADMIN', 'EDITOR', 'VIEWER'],
@@ -71,5 +72,4 @@ export const routePermission: Record<keyof typeof ROUTES, ROLES[]> = {
 	LOGS: ['ADMIN', 'EDITOR', 'VIEWER'],
 	LOGS_EXPLORER: ['ADMIN', 'EDITOR', 'VIEWER'],
 	LIST_LICENSES: ['ADMIN'],
-	TRACE_EXPLORER: ['ADMIN', 'EDITOR', 'VIEWER'],
 };
