@@ -1,4 +1,4 @@
-import { ILog } from 'types/api/logs/log';
+import { ILogV3 } from 'types/api/logs/log';
 
 export enum HistoryPosition {
 	prev = 'PreviousLogs',
@@ -8,7 +8,7 @@ export enum HistoryPosition {
 export default interface IHistoryLogs {
 	addMoreLogs: () => void;
 	position: HistoryPosition.prev | HistoryPosition.next;
-	logs: null | ILog[];
+	logs: null | ILogV3[];
 	isLoad: boolean;
 	isError: boolean;
 }

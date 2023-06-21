@@ -48,7 +48,9 @@ function HistoryLogs({
 								</LogDiv>
 							</LogContainer>
 						) : (
-							logs?.map((log) => <Log key={log.id} log={log} />)
+							logs?.map((log) => (
+								<Log key={log.data.id} timestamp={log.timestamp} log={log} />
+							))
 						)}
 					</HistoryLogsScrolled>
 				)}

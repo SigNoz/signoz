@@ -52,6 +52,7 @@ function RawLogView(props: RawLogViewProps): JSX.Element {
 	const [value, copyToClipboard] = useCopyToClipboard();
 	const dispatch = useDispatch();
 	const { notifications } = useNotifications();
+
 	useEffect(() => {
 		if (value.value) {
 			notifications.success({

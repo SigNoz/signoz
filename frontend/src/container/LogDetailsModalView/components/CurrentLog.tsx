@@ -2,15 +2,15 @@ import { Tooltip, Typography } from 'antd';
 import dayjs from 'dayjs';
 import { useMemo } from 'react';
 
-import ILog from '../interfaces/ILog';
+import { ICurrentLog } from '../interfaces/ILog';
 import { LogContainer, LogDiv } from '../styles/Log';
 
 const { Text } = Typography;
 
-function Log({ log, timestamp = 0 }: ILog): JSX.Element {
+function CurrentLog({ log }: ICurrentLog): JSX.Element {
 	const text = useMemo(
-		() => `${dayjs(timestamp / 1e6).format()} | ${log.data?.body}`,
-		[log, timestamp],
+		() => `${dayjs(log.timestamp / 1e6).format()} | ${log.body}`,
+		[log],
 	);
 
 	return (
@@ -24,4 +24,4 @@ function Log({ log, timestamp = 0 }: ILog): JSX.Element {
 	);
 }
 
-export default Log;
+export default CurrentLog;

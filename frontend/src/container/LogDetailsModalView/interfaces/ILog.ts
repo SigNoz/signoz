@@ -1,5 +1,10 @@
-import { ILog } from 'types/api/logs/log';
+import { ILog, ILogV3 } from 'types/api/logs/log';
 
-export default interface ICurrentLog {
+export default interface ICurLog {
+	log: ILogV3;
+	timestamp: number;
+}
+
+export interface ICurrentLog {
 	log: ILog;
 }

@@ -10,4 +10,5 @@ export type Props = {
 	idLt?: string;
 	timestampStart?: number;
 	timestampEnd?: number;
+	id?: string;
 };
