@@ -208,7 +208,7 @@ func handleEmptyValuesInGroupBy(keys map[string]v3.AttributeKey, groupBy []v3.At
 	return "", nil
 }
 
-func buildTracesQuery(start, end, step int64, mq *v3.BuilderQuery, tableName string, keys map[string]v3.AttributeKey) (string, error) {
+func buildTracesQuery(start, end, step int64, mq *v3.BuilderQuery, tableName string, keys map[string]v3.AttributeKey, panelType v3.PanelType) (string, error) {
 
 	filterSubQuery, err := buildTracesFilterQuery(mq.Filters, keys)
 	if err != nil {
@@ -242,7 +242,11 @@ func buildTracesQuery(start, end, step int64, mq *v3.BuilderQuery, tableName str
 	}
 	filterSubQuery += emptyValuesInGroupByFilter
 
-	groupBy := groupByAttributeKeyTags(keys, mq.GroupBy...)
+	enableGroupingSet := false
+	if mq.Limit > 0 && (panelType == v3.PanelTypeTable || panelType == v3.PanelTypeGraph){
+		enableGroupingSet = true
+	}
+	groupBy := groupByAttributeKeyTags(keys, enableGroupingSet, mq.GroupBy...)
 	orderBy := orderByAttributeKeyTags(mq.OrderBy, mq.GroupBy)
 
 	aggregationKey := ""
@@ -307,18 +311,25 @@ func buildTracesQuery(start, end, step int64, mq *v3.BuilderQuery, tableName str
 }
 
 // groupBy returns a string of comma separated tags for group by clause
-// `ts` is always added to the group by clause
 func groupBy(tags ...string) string {
-	tags = append(tags, "ts")
 	return strings.Join(tags, ",")
 }
 
-func groupByAttributeKeyTags(keys map[string]v3.AttributeKey, tags ...v3.AttributeKey) string {
+func groupByAttributeKeyTags(keys map[string]v3.AttributeKey, enableGroupingSet bool, tags ...v3.AttributeKey) string {
 	groupTags := []string{}
 	for _, tag := range tags {
 		groupTags = append(groupTags, tag.Key)
 	}
+	if enableGroupingSet {
+		return groupingSet(groupTags, append(groupTags, "ts"))
+	}
+	// `ts` is always added to the group by clause
+	groupTags = append(groupTags, "ts")
 	return groupBy(groupTags...)
+}
+
+func groupingSet(tagsSet1 []string, tagsSet2 []string) string {
+	return fmt.Sprintf("GROUPING SETS((%s), (%s))", groupBy(tagsSet1...), groupBy(tagsSet2...))
 }
 
 // orderBy returns a string of comma separated tags for order by clause
@@ -404,7 +415,7 @@ func addOffsetToQuery(query string, offset uint64) string {
 }
 
 func PrepareTracesQuery(start, end int64, queryType v3.QueryType, panelType v3.PanelType, mq *v3.BuilderQuery, keys map[string]v3.AttributeKey) (string, error) {
-	query, err := buildTracesQuery(start, end, mq.StepInterval, mq, constants.SIGNOZ_SPAN_INDEX_TABLENAME, keys)
+	query, err := buildTracesQuery(start, end, mq.StepInterval, mq, constants.SIGNOZ_SPAN_INDEX_TABLENAME, keys, panelType)
 	if err != nil {
 		return "", err
 	}
