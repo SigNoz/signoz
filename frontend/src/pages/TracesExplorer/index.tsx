@@ -5,18 +5,18 @@ import { GRAPH_TYPES } from 'container/NewDashboard/ComponentsSlider';
 import QuerySection from 'container/TracesExplorer/QuerySection';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useShareBuilderUrl } from 'hooks/queryBuilder/useShareBuilderUrl';
-import { useCallback, useEffect, useMemo } from 'react';
 import { DataSource } from 'types/common/queryBuilder';
+import { useCallback, useEffect, useMemo } from 'react';
 
 import { Container } from './styles';
 import { getTabsItems } from './utils';
 
 function TracesExplorer(): JSX.Element {
 	const {
-		updateAllQueriesOperators,
-		redirectWithQueryBuilderData,
 		currentQuery,
 		panelType,
+		updateAllQueriesOperators,
+		redirectWithQueryBuilderData,
 	} = useQueryBuilder();
 
 	const currentTab = panelType || PANEL_TYPES.TIME_SERIES;
@@ -26,6 +26,16 @@ function TracesExplorer(): JSX.Element {
 			currentQuery.builder.queryData.length > 1 ||
 			currentQuery.builder.queryFormulas.length > 0,
 		[currentQuery],
+	);
+
+	const defaultQuery = useMemo(
+		() =>
+			updateAllQueriesOperators(
+				initialQueriesMap.traces,
+				PANEL_TYPES.TIME_SERIES,
+				DataSource.TRACES,
+			),
+		[updateAllQueriesOperators],
 	);
 
 	const isGroupByExist = useMemo(() => {
@@ -38,16 +48,6 @@ function TracesExplorer(): JSX.Element {
 	}, [currentQuery]);
 
 	const tabsItems = getTabsItems(isMultipleQueries || isGroupByExist);
-
-	const defaultQuery = useMemo(
-		() =>
-			updateAllQueriesOperators(
-				initialQueriesMap.traces,
-				PANEL_TYPES.TIME_SERIES,
-				DataSource.TRACES,
-			),
-		[updateAllQueriesOperators],
-	);
 
 	const handleTabChange = useCallback(
 		(newPanelType: string): void => {
