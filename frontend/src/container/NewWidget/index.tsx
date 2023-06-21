@@ -163,7 +163,7 @@ function NewWidget({ selectedGraph, saveSettingOfPanel }: Props): JSX.Element {
 		FeatureKeys.QUERY_BUILDER_PANELS,
 	);
 
-	const isSaveDisabled = useMemo(
+	const isNewTraceLogsAvailable = useMemo(
 		() =>
 			isQueryBuilderActive &&
 			currentQuery.queryType === EQueryType.QUERY_BUILDER &&
@@ -176,6 +176,30 @@ function NewWidget({ selectedGraph, saveSettingOfPanel }: Props): JSX.Element {
 			isQueryBuilderActive,
 		],
 	);
+
+	const isSaveDisabled = useMemo(() => {
+		// new created dashboard
+		if (selectedWidget?.id === 'empty') {
+			return isNewTraceLogsAvailable;
+		}
+
+		const isTraceOrLogsQueryBuilder =
+			currentQuery.builder.queryData.find(
+				(query) =>
+					query.dataSource === DataSource.TRACES ||
+					query.dataSource === DataSource.LOGS,
+			) !== undefined;
+
+		if (isTraceOrLogsQueryBuilder) {
+			return false;
+		}
+
+		return isNewTraceLogsAvailable;
+	}, [
+		currentQuery.builder.queryData,
+		selectedWidget?.id,
+		isNewTraceLogsAvailable,
+	]);
 
 	return (
 		<Container>
