@@ -233,7 +233,7 @@ services:
         max-file: "3"
 
   load-hotrod:
-    image: "grubykarol/locust:1.2.3-python3.9-alpine3.12"
+    image: "signoz/locust:1.2.3"
     hostname: load-hotrod
     environment:
       ATTACKED_HOST: http://hotrod:8080
