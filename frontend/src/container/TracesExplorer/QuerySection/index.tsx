@@ -3,6 +3,7 @@ import { PANEL_TYPES } from 'constants/queryBuilder';
 import { QueryBuilder } from 'container/QueryBuilder';
 import { useGetPanelTypesQueryParam } from 'hooks/queryBuilder/useGetPanelTypesQueryParam';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
+import { memo } from 'react';
 import { DataSource } from 'types/common/queryBuilder';
 
 import { ButtonWrapper, Container } from './styles';
@@ -32,4 +33,4 @@ function QuerySection(): JSX.Element {
 	);
 }
 
-export default QuerySection;
+export default memo(QuerySection);

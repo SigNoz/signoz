@@ -5,7 +5,7 @@ import { GRAPH_TYPES } from 'container/NewDashboard/ComponentsSlider';
 import QuerySection from 'container/TracesExplorer/QuerySection';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useShareBuilderUrl } from 'hooks/queryBuilder/useShareBuilderUrl';
-import { useCallback, useMemo } from 'react';
+import { useCallback, useEffect, useMemo } from 'react';
 import { DataSource } from 'types/common/queryBuilder';
 
 import { Container } from './styles';
@@ -19,9 +19,35 @@ function TracesExplorer(): JSX.Element {
 		panelType,
 	} = useQueryBuilder();
 
-	const tabsItems = getTabsItems();
-
 	const currentTab = panelType || PANEL_TYPES.TIME_SERIES;
+
+	const isMultipleQueries = useMemo(
+		() =>
+			currentQuery.builder.queryData.length > 1 ||
+			currentQuery.builder.queryFormulas.length > 0,
+		[currentQuery],
+	);
+
+	const isGroupByExist = useMemo(() => {
+		const groupByCount: number = currentQuery.builder.queryData.reduce<number>(
+			(acc, query) => acc + query.groupBy.length,
+			0,
+		);
+
+		return groupByCount > 0;
+	}, [currentQuery]);
+
+	const tabsItems = getTabsItems(isMultipleQueries || isGroupByExist);
+
+	const defaultQuery = useMemo(
+		() =>
+			updateAllQueriesOperators(
+				initialQueriesMap.traces,
+				PANEL_TYPES.TIME_SERIES,
+				DataSource.TRACES,
+			),
+		[updateAllQueriesOperators],
+	);
 
 	const handleTabChange = useCallback(
 		(newPanelType: string): void => {
@@ -43,17 +69,15 @@ function TracesExplorer(): JSX.Element {
 		],
 	);
 
-	const defaultValue = useMemo(
-		() =>
-			updateAllQueriesOperators(
-				initialQueriesMap.traces,
-				PANEL_TYPES.TIME_SERIES,
-				DataSource.TRACES,
-			),
-		[updateAllQueriesOperators],
-	);
+	useShareBuilderUrl(defaultQuery);
 
-	useShareBuilderUrl(defaultValue);
+	useEffect(() => {
+		const shouldChangeView = isMultipleQueries || isGroupByExist;
+
+		if (currentTab === PANEL_TYPES.LIST && shouldChangeView) {
+			handleTabChange(PANEL_TYPES.TIME_SERIES);
+		}
+	}, [currentTab, isMultipleQueries, isGroupByExist, handleTabChange]);
 
 	return (
 		<>

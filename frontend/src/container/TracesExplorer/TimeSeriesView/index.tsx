@@ -1,9 +1,12 @@
 import Graph from 'components/Graph';
 import Spinner from 'components/Spinner';
-import { initialQueriesMap } from 'constants/queryBuilder';
+import { initialQueriesMap, PANEL_TYPES } from 'constants/queryBuilder';
+import { PANEL_TYPES_QUERY } from 'constants/queryBuilderQueryNames';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
+import { GRAPH_TYPES } from 'container/NewDashboard/ComponentsSlider';
 import { useGetQueryRange } from 'hooks/queryBuilder/useGetQueryRange';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
+import useUrlQueryData from 'hooks/useUrlQueryData';
 import getChartData from 'lib/getChartData';
 import { useMemo } from 'react';
 import { useSelector } from 'react-redux';
@@ -20,10 +23,15 @@ function TimeSeriesView(): JSX.Element {
 		GlobalReducer
 	>((state) => state.globalTime);
 
+	const { queryData: panelTypeParam } = useUrlQueryData<GRAPH_TYPES>(
+		PANEL_TYPES_QUERY,
+		PANEL_TYPES.TIME_SERIES,
+	);
+
 	const { data, isLoading, isError } = useGetQueryRange(
 		{
 			query: stagedQuery || initialQueriesMap.traces,
-			graphType: 'graph',
+			graphType: panelTypeParam,
 			selectedTime: 'GLOBAL_TIME',
 			globalSelectedInterval: globalSelectedTime,
 			params: {
@@ -34,11 +42,12 @@ function TimeSeriesView(): JSX.Element {
 			queryKey: [
 				REACT_QUERY_KEY.GET_QUERY_RANGE,
 				globalSelectedTime,
-				stagedQuery,
 				maxTime,
 				minTime,
+				stagedQuery,
+				panelTypeParam,
 			],
-			enabled: !!stagedQuery,
+			enabled: !!stagedQuery && panelTypeParam === PANEL_TYPES.TIME_SERIES,
 		},
 	);
 
