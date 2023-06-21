@@ -23,6 +23,10 @@ func NewDurationConverter() Converter {
 	return &durationConverter{}
 }
 
+func (*durationConverter) Name() string {
+	return "duration"
+}
+
 func FromTimeUnit(u Unit) Duration {
 	switch u {
 	case "ns":

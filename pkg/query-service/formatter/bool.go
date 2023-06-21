@@ -8,6 +8,10 @@ func NewBoolFormatter() Formatter {
 	return &boolFormatter{}
 }
 
+func (*boolFormatter) Name() string {
+	return "bool"
+}
+
 func toBool(value float64) string {
 	if value == 0 {
 		return "false"

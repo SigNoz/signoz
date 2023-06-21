@@ -344,7 +344,7 @@ func (r *ThresholdRule) CheckCondition(v float64) bool {
 
 	value := unitConverter.Convert(converter.Value{F: *r.ruleCondition.Target, U: converter.Unit(r.ruleCondition.TargetUnit)}, converter.Unit(r.ruleCondition.YAxis))
 
-	zap.S().Debugf("target:", v, *r.ruleCondition.Target)
+	zap.S().Debugf("Checking condition for rule: %s, Converter=%s, Value=%f, Target=%f, CompareOp=%s", r.Name(), unitConverter.Name(), v, value.F, r.ruleCondition.CompareOp)
 	switch r.ruleCondition.CompareOp {
 	case ValueIsEq:
 		return v == value.F
@@ -695,7 +695,11 @@ func (r *ThresholdRule) Eval(ctx context.Context, ts time.Time, queriers *Querie
 			l[lbl.Name] = lbl.Value
 		}
 
-		tmplData := AlertTemplateData(l, valueFormatter.Format(smpl.V, r.ruleCondition.YAxis), strconv.FormatFloat(r.targetVal(), 'f', 2, 64)+r.ruleCondition.TargetUnit)
+		value := valueFormatter.Format(smpl.V, r.ruleCondition.YAxis)
+		threshold := strconv.FormatFloat(r.targetVal(), 'f', 2, 64) + r.ruleCondition.TargetUnit
+		zap.S().Debugf("Alert template data for rule %s: Formatter=%s, Value=%s, Threshold=%s", r.Name(), valueFormatter.Name(), value, threshold)
+
+		tmplData := AlertTemplateData(l, value, threshold)
 		// Inject some convenience variables that are easier to remember for users
 		// who are not used to Go's templating system.
 		defs := "{{$labels := .Labels}}{{$value := .Value}}{{$threshold := .Threshold}}"

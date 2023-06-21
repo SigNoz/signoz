@@ -8,6 +8,10 @@ func NewThroughputConverter() Converter {
 	return &throughputConverter{}
 }
 
+func (*throughputConverter) Name() string {
+	return "throughput"
+}
+
 func (c *throughputConverter) Convert(v Value, to Unit) Value {
 	// There is no conversion to be done for throughput
 	return Value{

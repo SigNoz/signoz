@@ -8,6 +8,10 @@ func NewPercentFormatter() Formatter {
 	return &percentFormatter{}
 }
 
+func (*percentFormatter) Name() string {
+	return "percent"
+}
+
 func toPercent(value float64, decimals DecimalCount) string {
 	return toFixed(value, decimals) + "%"
 }

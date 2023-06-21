@@ -14,6 +14,10 @@ func NewDataRateFormatter() Formatter {
 	return &dataRateFormatter{}
 }
 
+func (*dataRateFormatter) Name() string {
+	return "data_rate"
+}
+
 func (f *dataRateFormatter) Format(value float64, unit string) string {
 	switch unit {
 	case "binBps":

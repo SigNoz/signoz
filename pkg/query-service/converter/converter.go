@@ -11,11 +11,19 @@ type Value struct {
 
 // Converter converts values from one unit to another
 type Converter interface {
+	// Convert converts the given value to the given unit
 	Convert(v Value, to Unit) Value
+
+	// Name returns the name of the converter
+	Name() string
 }
 
 // noneConverter is a converter that does not convert
 type noneConverter struct{}
+
+func (*noneConverter) Name() string {
+	return "none"
+}
 
 func (c *noneConverter) Convert(v Value, to Unit) Value {
 	return v

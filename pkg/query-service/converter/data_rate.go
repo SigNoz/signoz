@@ -50,6 +50,10 @@ func NewDataRateConverter() Converter {
 	return &dataRateConverter{}
 }
 
+func (*dataRateConverter) Name() string {
+	return "data_rate"
+}
+
 func FromDataRateUnit(u Unit) float64 {
 	// See https://github.com/SigNoz/signoz/blob/5a81f5f90b34845f5b4b3bdd46acf29d04bf3987/frontend/src/container/NewWidget/RightContainer/dataFormatCategories.ts#L62-L85
 	switch u {

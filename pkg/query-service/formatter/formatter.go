@@ -2,6 +2,8 @@ package formatter
 
 type Formatter interface {
 	Format(value float64, unit string) string
+
+	Name() string
 }
 
 var (
