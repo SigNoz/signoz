@@ -169,7 +169,7 @@ services:
     <<: *clickhouse-depends
 
   otel-collector:
-    image: signoz/signoz-otel-collector:0.76.1
+    image: signoz/signoz-otel-collector:0.79.1
     command: ["--config=/etc/otel-collector-config.yaml", "--feature-gates=-pkg.translator.prometheus.NormalizeName"]
     user: root # required for reading docker container logs
     volumes:
@@ -195,7 +195,7 @@ services:
     <<: *clickhouse-depends
 
   otel-collector-metrics:
-    image: signoz/signoz-otel-collector:0.76.1
+    image: signoz/signoz-otel-collector:0.79.1
     command: ["--config=/etc/otel-collector-metrics-config.yaml", "--feature-gates=-pkg.translator.prometheus.NormalizeName"]
     volumes:
       - ./otel-collector-metrics-config.yaml:/etc/otel-collector-metrics-config.yaml
