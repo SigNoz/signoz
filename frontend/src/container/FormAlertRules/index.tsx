@@ -382,7 +382,7 @@ function FormAlertRules({
 		isAlertAvialable &&
 		isNewRule &&
 		currentQuery.queryType === EQueryType.QUERY_BUILDER &&
-		alertType === AlertTypes.METRICS_BASED_ALERT;
+		alertType !== AlertTypes.METRICS_BASED_ALERT;
 
 	return (
 		<>
