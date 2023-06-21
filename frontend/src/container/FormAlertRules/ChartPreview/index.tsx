@@ -1,16 +1,15 @@
 import { InfoCircleOutlined } from '@ant-design/icons';
 import { StaticLineProps } from 'components/Graph';
 import Spinner from 'components/Spinner';
-import { PANEL_TYPES } from 'constants/queryBuilder';
+import { initialQueriesMap, PANEL_TYPES } from 'constants/queryBuilder';
 import GridGraphComponent from 'container/GridGraphComponent';
 import { GRAPH_TYPES } from 'container/NewDashboard/ComponentsSlider';
 import { timePreferenceType } from 'container/NewWidget/RightContainer/timeItems';
 import { Time } from 'container/TopNav/DateTimeSelection/config';
+import { useGetQueryRange } from 'hooks/queryBuilder/useGetQueryRange';
 import getChartData from 'lib/getChartData';
 import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useQuery } from 'react-query';
-import { GetMetricQueryRange } from 'store/actions/dashboard/getQueryResults';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { EQueryType } from 'types/common/dashboard';
 
@@ -18,16 +17,13 @@ import { ChartContainer, FailedMessageContainer } from './styles';
 
 export interface ChartPreviewProps {
 	name: string;
-	query: Query | undefined;
+	query: Query | null;
 	graphType?: GRAPH_TYPES;
 	selectedTime?: timePreferenceType;
 	selectedInterval?: Time;
 	headline?: JSX.Element;
 	threshold?: number | undefined;
 	userQueryKey?: string;
-}
-interface QueryResponseError {
-	message?: string;
 }
 
 function ChartPreview({
@@ -76,39 +72,30 @@ function ChartPreview({
 		}
 	}, [query]);
 
-	const queryResponse = useQuery({
-		queryKey: [
-			'chartPreview',
-			userQueryKey || JSON.stringify(query),
-			selectedInterval,
-		],
-		queryFn: () =>
-			GetMetricQueryRange({
-				query: query || {
-					queryType: EQueryType.QUERY_BUILDER,
-					promql: [],
-					builder: {
-						queryFormulas: [],
-						queryData: [],
-					},
-					clickhouse_sql: [],
-				},
-				globalSelectedInterval: selectedInterval,
-				graphType,
-				selectedTime,
-			}),
-		retry: false,
-		enabled: canQuery,
-	});
+	const queryResponse = useGetQueryRange(
+		{
+			query: query || initialQueriesMap.metrics,
+			globalSelectedInterval: selectedInterval,
+			graphType,
+			selectedTime,
+		},
+		{
+			queryKey: [
+				'chartPreview',
+				userQueryKey || JSON.stringify(query),
+				selectedInterval,
+			],
+			retry: false,
+			enabled: canQuery,
+		},
+	);
 
 	const chartDataSet = queryResponse.isError
 		? null
 		: getChartData({
 				queryData: [
 					{
-						queryData: queryResponse?.data?.payload?.data?.result
-							? queryResponse?.data?.payload?.data?.result
-							: [],
+						queryData: queryResponse?.data?.payload?.data?.result ?? [],
 					},
 				],
 		  });
@@ -119,11 +106,12 @@ function ChartPreview({
 			{(queryResponse?.isError || queryResponse?.error) && (
 				<FailedMessageContainer color="red" title="Failed to refresh the chart">
 					<InfoCircleOutlined />{' '}
-					{(queryResponse?.error as QueryResponseError).message ||
-						t('preview_chart_unexpected_error')}
+					{queryResponse.error.message || t('preview_chart_unexpected_error')}
 				</FailedMessageContainer>
 			)}
-			{queryResponse.isLoading && <Spinner size="large" tip="Loading..." />}
+			{queryResponse.isLoading && (
+				<Spinner size="large" tip="Loading..." height="70vh" />
+			)}
 			{chartDataSet && !queryResponse.isError && (
 				<GridGraphComponent
 					title={name}

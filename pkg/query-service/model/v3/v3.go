@@ -3,6 +3,7 @@ package v3
 import (
 	"encoding/json"
 	"fmt"
+	"sort"
 	"strconv"
 	"time"
 
@@ -283,6 +284,10 @@ type AttributeKey struct {
 	IsColumn bool                 `json:"isColumn"`
 }
 
+func (a AttributeKey) CacheKey() string {
+	return fmt.Sprintf("%s-%s-%s-%t", a.Key, a.DataType, a.Type, a.IsColumn)
+}
+
 func (a AttributeKey) Validate() error {
 	switch a.DataType {
 	case AttributeKeyDataTypeBool, AttributeKeyDataTypeInt64, AttributeKeyDataTypeFloat64, AttributeKeyDataTypeString, AttributeKeyDataTypeUnspecified:
@@ -319,6 +324,7 @@ type QueryRangeParamsV3 struct {
 	Step           int64                  `json:"step"`
 	CompositeQuery *CompositeQuery        `json:"compositeQuery"`
 	Variables      map[string]interface{} `json:"variables,omitempty"`
+	NoCache        bool                   `json:"noCache"`
 }
 
 type PromQuery struct {
@@ -534,15 +540,27 @@ type FilterItem struct {
 	Operator FilterOperator `json:"op"`
 }
 
+func (f *FilterItem) CacheKey() string {
+	return fmt.Sprintf("key:%s,op:%s,value:%v", f.Key.CacheKey(), f.Operator, f.Value)
+}
+
 type OrderBy struct {
-	ColumnName string `json:"columnName"`
-	Order      string `json:"order"`
+	ColumnName string               `json:"columnName"`
+	Order      string               `json:"order"`
+	Key        string               `json:"-"`
+	DataType   AttributeKeyDataType `json:"-"`
+	Type       AttributeKeyType     `json:"-"`
+	IsColumn   bool                 `json:"-"`
 }
 
 type Having struct {
 	ColumnName string      `json:"columnName"`
 	Operator   string      `json:"op"`
 	Value      interface{} `json:"value"`
+}
+
+func (h *Having) CacheKey() string {
+	return fmt.Sprintf("column:%s,op:%s,value:%v", h.ColumnName, h.Operator, h.Value)
 }
 
 type QueryRangeResponse struct {
@@ -561,6 +579,12 @@ type Series struct {
 	Points []Point           `json:"values"`
 }
 
+func (s *Series) SortPoints() {
+	sort.Slice(s.Points, func(i, j int) bool {
+		return s.Points[i].Timestamp < s.Points[j].Timestamp
+	})
+}
+
 type Row struct {
 	Timestamp time.Time              `json:"timestamp"`
 	Data      map[string]interface{} `json:"data"`
@@ -575,6 +599,21 @@ type Point struct {
 func (p *Point) MarshalJSON() ([]byte, error) {
 	v := strconv.FormatFloat(p.Value, 'f', -1, 64)
 	return json.Marshal(map[string]interface{}{"timestamp": p.Timestamp, "value": v})
+}
+
+// UnmarshalJSON implements json.Unmarshaler.
+func (p *Point) UnmarshalJSON(data []byte) error {
+	var v struct {
+		Timestamp int64  `json:"timestamp"`
+		Value     string `json:"value"`
+	}
+	if err := json.Unmarshal(data, &v); err != nil {
+		return err
+	}
+	p.Timestamp = v.Timestamp
+	var err error
+	p.Value, err = strconv.ParseFloat(v.Value, 64)
+	return err
 }
 
 // ExploreQuery is a query for the explore page
