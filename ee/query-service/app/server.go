@@ -277,7 +277,7 @@ func loggingMiddleware(next http.Handler) http.Handler {
 		path, _ := route.GetPathTemplate()
 		startTime := time.Now()
 		next.ServeHTTP(w, r)
-		zap.S().Info(path, "\ttimeTaken: ", time.Now().Sub(startTime))
+		zap.L().Info(path+"\ttimeTaken:"+time.Now().Sub(startTime).String(), zap.Duration("timeTaken", time.Now().Sub(startTime)), zap.String("path", path))
 	})
 }
 
@@ -289,7 +289,7 @@ func loggingMiddlewarePrivate(next http.Handler) http.Handler {
 		path, _ := route.GetPathTemplate()
 		startTime := time.Now()
 		next.ServeHTTP(w, r)
-		zap.S().Info(path, "\tprivatePort: true", "\ttimeTaken: ", time.Now().Sub(startTime))
+		zap.L().Info(path+"\tprivatePort: true \ttimeTaken"+time.Now().Sub(startTime).String(), zap.Duration("timeTaken", time.Now().Sub(startTime)), zap.String("path", path), zap.Bool("tprivatePort", true))
 	})
 }
 
