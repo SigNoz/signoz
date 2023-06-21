@@ -380,7 +380,6 @@ function FormAlertRules({
 
 	const isAlertAvialableToSave =
 		isAlertAvialable &&
-		isNewRule &&
 		currentQuery.queryType === EQueryType.QUERY_BUILDER &&
 		alertType !== AlertTypes.METRICS_BASED_ALERT;
 
