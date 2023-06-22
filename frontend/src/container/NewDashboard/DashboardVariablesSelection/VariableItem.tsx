@@ -141,9 +141,26 @@ function VariableItem({
 			}
 	};
 
-	const selectValue = variableData.allSelected
-		? 'ALL'
-		: variableData.selectedValue?.toString() || '';
+	const getSelectValue = (): string | number | (number | string)[] => {
+		if (
+			typeof variableData.selectedValue === 'boolean' ||
+			variableData.selectedValue == null
+		) {
+			return variableData.selectedValue?.toString() || '';
+		}
+		if (Array.isArray(variableData.selectedValue)) {
+			return variableData.selectedValue.map((item) => {
+				if (typeof item === 'boolean') {
+					return item.toString();
+				}
+				return item;
+			});
+		}
+		return variableData.selectedValue;
+	};
+
+	const selectValue = variableData.allSelected ? 'ALL' : getSelectValue();
+
 	const mode =
 		variableData.multiSelect && !variableData.allSelected
 			? 'multiple'
