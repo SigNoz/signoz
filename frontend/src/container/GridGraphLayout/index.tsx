@@ -217,11 +217,11 @@ function GridGraph(props: Props): JSX.Element {
 
 	const setLayoutFunction = useCallback(
 		(layout: Layout[]) => {
-			for (let i = 0; i < layout.length; i += 1) {
+			layout.forEach((item, i) => {
 				const currentWidget =
-					widgets?.find((widget) => widget.id === layout[i].i) || ({} as Widgets);
-				const newComponent = {
-					...layout[i],
+					widgets?.find((widget) => widget.id === item.i) || ({} as Widgets);
+				layouts[i] = {
+					...item,
 					Component: (): JSX.Element => (
 						<Graph
 							name={currentWidget.id}
@@ -233,9 +233,7 @@ function GridGraph(props: Props): JSX.Element {
 						/>
 					),
 				};
-				layouts[i] = newComponent;
-			}
-
+			});
 			setLayout((layouts) => layouts);
 		},
 		[widgets, onDragSelect, layouts],
