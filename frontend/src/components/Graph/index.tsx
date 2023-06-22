@@ -181,8 +181,8 @@ function Graph({
 							},
 						},
 						position: 'custom',
-						itemSort(a, b) {
-							return b.parsed.y - a.parsed.y;
+						itemSort(item1, item2) {
+							return item2.parsed.y - item1.parsed.y;
 						},
 					},
 					[dragSelectPluginId]: createDragSelectPluginOptions(
