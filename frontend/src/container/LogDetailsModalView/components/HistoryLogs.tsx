@@ -14,24 +14,26 @@ import Log from './Log';
 const { Text } = Typography;
 
 function HistoryLogs({
-	logs,
+	logs = [],
 	position,
 	addMoreLogs,
 	isLoad,
 	isError,
 }: IHistoryLogs): JSX.Element {
 	if (isError) {
-		return <div>Something went wrong</div>;
+		return <Typography>Something went wrong</Typography>;
 	}
 
 	return (
 		<>
 			{position === HistoryPosition.prev && (
 				<HistoryLogHeader>
-					Showing 10 lines after match
-					<Button size="small" onClick={addMoreLogs}>
-						Show 10 more lines
-					</Button>
+					Showing {logs?.length} lines after match
+					{logs?.length && logs.length % 10 === 0 && (
+						<Button size="small" onClick={addMoreLogs}>
+							Show 10 more lines
+						</Button>
+					)}
 				</HistoryLogHeader>
 			)}
 			<HisoryLogContainer>
@@ -49,7 +51,7 @@ function HistoryLogs({
 							</LogContainer>
 						) : (
 							logs?.map((log) => (
-								<Log key={log.data.id} timestamp={log.timestamp} log={log} />
+								<Log key={log.data.id} timestamp={log.data.timestamp} log={log} />
 							))
 						)}
 					</HistoryLogsScrolled>
@@ -57,10 +59,12 @@ function HistoryLogs({
 			</HisoryLogContainer>
 			{position === HistoryPosition.next && (
 				<HistoryLogHeader>
-					Showing 10 lines before match
-					<Button size="small" onClick={addMoreLogs}>
-						Show 10 more lines
-					</Button>
+					Showing {logs?.length} lines before match
+					{logs?.length && logs.length % 10 === 0 && (
+						<Button size="small" onClick={addMoreLogs}>
+							Show 10 more lines
+						</Button>
+					)}
 				</HistoryLogHeader>
 			)}
 		</>

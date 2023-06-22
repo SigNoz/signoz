@@ -19,6 +19,7 @@ export interface ILogV3 {
 	timestamp: number;
 	data: {
 		id: string;
+		timestamp: number;
 		traceId: string;
 		spanId: string;
 		traceFlags: number;
