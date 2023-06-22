@@ -4,7 +4,7 @@ import MetricsApplicationContainer from 'container/MetricsApplication';
 import useResourceAttribute from 'hooks/useResourceAttribute';
 import { convertRawQueriesToTraceSelectedTags } from 'hooks/useResourceAttribute/utils';
 import { useEffect, useMemo } from 'react';
-import { connect, useSelector } from 'react-redux';
+import { connect, useDispatch, useSelector } from 'react-redux';
 import { useParams } from 'react-router-dom';
 import { bindActionCreators } from 'redux';
 import { ThunkDispatch } from 'redux-thunk';
@@ -33,6 +33,17 @@ function MetricsApplication({ getInitialData }: MetricsProps): JSX.Element {
 	const selectedTags = useMemo(
 		() => (convertRawQueriesToTraceSelectedTags(queries) as Tags[]) || [],
 		[queries],
+	);
+
+	const dispatch = useDispatch();
+
+	useEffect(
+		(): (() => void) => (): void => {
+			dispatch({
+				type: 'GET_INITIAL_APPLICATION_LOADING',
+			});
+		},
+		[dispatch],
 	);
 
 	useEffect(() => {
