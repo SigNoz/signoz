@@ -3,6 +3,7 @@ import { PANEL_TYPES } from 'constants/queryBuilder';
 import ListView from 'container/TracesExplorer/ListView';
 import TableView from 'container/TracesExplorer/TableView';
 import TimeSeriesView from 'container/TracesExplorer/TimeSeriesView';
+import TracesView from 'container/TracesExplorer/TracesView';
 
 interface GetTabsItemsProps {
 	isListViewDisabled: boolean;
@@ -18,14 +19,15 @@ export const getTabsItems = ({
 		disabled: isListViewDisabled,
 	},
 	{
+		label: 'Traces',
+		key: PANEL_TYPES.TRACE,
+		children: <TracesView />,
+		disabled: isListViewDisabled,
+	},
+	{
 		label: 'Time Series',
 		key: PANEL_TYPES.TIME_SERIES,
 		children: <TimeSeriesView />,
-	},
-	{
-		label: 'Table View',
-		key: PANEL_TYPES.TABLE,
-		children: <TableView />,
 	},
 	{
 		label: 'Table View',

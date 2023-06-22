@@ -19,7 +19,7 @@ function TracesExplorer(): JSX.Element {
 		redirectWithQueryBuilderData,
 	} = useQueryBuilder();
 
-	const currentTab = panelType || PANEL_TYPES.TIME_SERIES;
+	const currentTab = panelType || PANEL_TYPES.LIST;
 
 	const isMultipleQueries = useMemo(
 		() =>
@@ -32,7 +32,7 @@ function TracesExplorer(): JSX.Element {
 		() =>
 			updateAllQueriesOperators(
 				initialQueriesMap.traces,
-				PANEL_TYPES.TIME_SERIES,
+				PANEL_TYPES.LIST,
 				DataSource.TRACES,
 			),
 		[updateAllQueriesOperators],
@@ -76,7 +76,10 @@ function TracesExplorer(): JSX.Element {
 	useEffect(() => {
 		const shouldChangeView = isMultipleQueries || isGroupByExist;
 
-		if (currentTab === PANEL_TYPES.LIST && shouldChangeView) {
+		if (
+			(currentTab === PANEL_TYPES.LIST || currentTab === PANEL_TYPES.TRACE) &&
+			shouldChangeView
+		) {
 			handleTabChange(PANEL_TYPES.TIME_SERIES);
 		}
 	}, [currentTab, isMultipleQueries, isGroupByExist, handleTabChange]);

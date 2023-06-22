@@ -11,7 +11,7 @@ import { ButtonWrapper, Container } from './styles';
 function QuerySection(): JSX.Element {
 	const { handleRunQuery } = useQueryBuilder();
 
-	const panelTypes = useGetPanelTypesQueryParam(PANEL_TYPES.TIME_SERIES);
+	const panelTypes = useGetPanelTypesQueryParam(PANEL_TYPES.LIST);
 
 	return (
 		<Container>
