@@ -68,7 +68,7 @@ func (q *querier) runBuilderQuery(
 	if !params.NoCache && q.cache != nil {
 		var retrieveStatus status.RetrieveStatus
 		data, retrieveStatus, err := q.cache.Retrieve(cacheKey, true)
-		zap.L().Debug("cache retrieve status", zap.String("status", retrieveStatus.String()))
+		zap.S().Debug("cache retrieve status", zap.String("status", retrieveStatus.String()))
 		if err == nil {
 			cachedData = data
 		}
@@ -106,7 +106,7 @@ func (q *querier) runBuilderQuery(
 		missedSeries = append(missedSeries, series...)
 	}
 	if err := json.Unmarshal(cachedData, &cachedSeries); err != nil && cachedData != nil {
-		zap.L().Error("error unmarshalling cached data", zap.Error(err))
+		zap.S().Error("error unmarshalling cached data", zap.Error(err))
 	}
 	mergedSeries := mergeSerieses(cachedSeries, missedSeries)
 
@@ -119,12 +119,12 @@ func (q *querier) runBuilderQuery(
 	if len(missedSeries) > 0 && !params.NoCache && q.cache != nil {
 		mergedSeriesData, err := json.Marshal(mergedSeries)
 		if err != nil {
-			zap.L().Error("error marshalling merged series", zap.Error(err))
+			zap.S().Error("error marshalling merged series", zap.Error(err))
 			return
 		}
 		err = q.cache.Store(cacheKey, mergedSeriesData, time.Hour)
 		if err != nil {
-			zap.L().Error("error storing merged series", zap.Error(err))
+			zap.S().Error("error storing merged series", zap.Error(err))
 			return
 		}
 	}
@@ -161,7 +161,7 @@ func (q *querier) runBuilderExpression(
 	if !params.NoCache && q.cache != nil {
 		var retrieveStatus status.RetrieveStatus
 		data, retrieveStatus, err := q.cache.Retrieve(cacheKey, true)
-		zap.L().Debug("cache retrieve status", zap.String("status", retrieveStatus.String()))
+		zap.S().Debug("cache retrieve status", zap.String("status", retrieveStatus.String()))
 		if err == nil {
 			cachedData = data
 		}
@@ -187,7 +187,7 @@ func (q *querier) runBuilderExpression(
 		missedSeries = append(missedSeries, series...)
 	}
 	if err := json.Unmarshal(cachedData, &cachedSeries); err != nil && cachedData != nil {
-		zap.L().Error("error unmarshalling cached data", zap.Error(err))
+		zap.S().Error("error unmarshalling cached data", zap.Error(err))
 	}
 	mergedSeries := mergeSerieses(cachedSeries, missedSeries)
 
@@ -200,12 +200,12 @@ func (q *querier) runBuilderExpression(
 	if len(missedSeries) > 0 && !params.NoCache && q.cache != nil {
 		mergedSeriesData, err := json.Marshal(mergedSeries)
 		if err != nil {
-			zap.L().Error("error marshalling merged series", zap.Error(err))
+			zap.S().Error("error marshalling merged series", zap.Error(err))
 			return
 		}
 		err = q.cache.Store(cacheKey, mergedSeriesData, time.Hour)
 		if err != nil {
-			zap.L().Error("error storing merged series", zap.Error(err))
+			zap.S().Error("error storing merged series", zap.Error(err))
 			return
 		}
 	}

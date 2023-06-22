@@ -7,7 +7,6 @@ import (
 	"testing"
 	"time"
 
-	logsV3 "go.signoz.io/signoz/pkg/query-service/app/logs/v3"
 	"go.signoz.io/signoz/pkg/query-service/app/queryBuilder"
 	"go.signoz.io/signoz/pkg/query-service/cache/inmemory"
 	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
@@ -405,13 +404,14 @@ func TestQueryRange(t *testing.T) {
 		{
 			Start: 1675115596722,
 			End:   1675115596722 + 120*60*1000,
-			Step:  5 * time.Minute.Microseconds(),
+			Step:  5 * time.Minute.Milliseconds(),
 			CompositeQuery: &v3.CompositeQuery{
 				QueryType: v3.QueryTypeBuilder,
+				PanelType: v3.PanelTypeGraph,
 				BuilderQueries: map[string]*v3.BuilderQuery{
 					"A": {
 						QueryName:          "A",
-						StepInterval:       5 * time.Minute.Microseconds(),
+						StepInterval:       5 * time.Minute.Milliseconds(),
 						DataSource:         v3.DataSourceMetrics,
 						AggregateAttribute: v3.AttributeKey{Key: "http_server_requests_seconds_count", Type: v3.AttributeKeyTypeUnspecified, DataType: "float64", IsColumn: true},
 						Filters: &v3.FilterSet{
@@ -437,14 +437,15 @@ func TestQueryRange(t *testing.T) {
 		{
 			Start: 1675115596722 + 60*60*1000,
 			End:   1675115596722 + 180*60*1000,
-			Step:  5 * time.Minute.Microseconds(),
+			Step:  5 * time.Minute.Milliseconds(),
 			CompositeQuery: &v3.CompositeQuery{
 				QueryType: v3.QueryTypeBuilder,
+				PanelType: v3.PanelTypeGraph,
 				BuilderQueries: map[string]*v3.BuilderQuery{
 					"A": {
 						QueryName:          "A",
 						AggregateAttribute: v3.AttributeKey{Key: "http_server_requests_seconds_count", Type: v3.AttributeKeyTypeUnspecified, DataType: "float64", IsColumn: true},
-						StepInterval:       5 * time.Minute.Microseconds(),
+						StepInterval:       5 * time.Minute.Milliseconds(),
 						DataSource:         v3.DataSourceMetrics,
 						Filters: &v3.FilterSet{
 							Operator: "AND",
@@ -470,14 +471,15 @@ func TestQueryRange(t *testing.T) {
 		{
 			Start: 1675115596722,
 			End:   1675115596722 + 120*60*1000,
-			Step:  5 * time.Minute.Microseconds(),
+			Step:  5 * time.Minute.Milliseconds(),
 			CompositeQuery: &v3.CompositeQuery{
 				QueryType: v3.QueryTypeBuilder,
+				PanelType: v3.PanelTypeGraph,
 				BuilderQueries: map[string]*v3.BuilderQuery{
 					"A": {
 						QueryName:          "A",
 						AggregateAttribute: v3.AttributeKey{Key: "durationNano", Type: v3.AttributeKeyTypeUnspecified, DataType: "float64", IsColumn: true},
-						StepInterval:       5 * time.Minute.Microseconds(),
+						StepInterval:       5 * time.Minute.Milliseconds(),
 						DataSource:         v3.DataSourceTraces,
 						Filters: &v3.FilterSet{
 							Operator: "AND",
@@ -502,14 +504,15 @@ func TestQueryRange(t *testing.T) {
 		{
 			Start: 1675115596722 + 60*60*1000,
 			End:   1675115596722 + 180*60*1000,
-			Step:  5 * time.Minute.Microseconds(),
+			Step:  5 * time.Minute.Milliseconds(),
 			CompositeQuery: &v3.CompositeQuery{
 				QueryType: v3.QueryTypeBuilder,
+				PanelType: v3.PanelTypeGraph,
 				BuilderQueries: map[string]*v3.BuilderQuery{
 					"A": {
 						QueryName:          "A",
 						AggregateAttribute: v3.AttributeKey{Key: "durationNano", Type: v3.AttributeKeyTypeUnspecified, DataType: "float64", IsColumn: true},
-						StepInterval:       5 * time.Minute.Microseconds(),
+						StepInterval:       5 * time.Minute.Milliseconds(),
 						DataSource:         v3.DataSourceTraces,
 						Filters: &v3.FilterSet{
 							Operator: "AND",
@@ -559,8 +562,8 @@ func TestQueryRange(t *testing.T) {
 	expectedTimeRangeInQueryString := []string{
 		fmt.Sprintf("timestamp_ms >= %d AND timestamp_ms <= %d", 1675115596722, 1675115596722+120*60*1000),
 		fmt.Sprintf("timestamp_ms >= %d AND timestamp_ms <= %d", 1675115596722+120*60*1000+1, 1675115596722+180*60*1000),
-		fmt.Sprintf("timestamp >= '%d' AND timestamp <= '%d'", 1675115596722*1000000, logsV3.GetZerosForEpochNano(1675115596722+120*60*1000)),
-		fmt.Sprintf("timestamp >= '%d' AND timestamp <= '%d'", logsV3.GetZerosForEpochNano(1675115596722+60*60*1000), logsV3.GetZerosForEpochNano(1675115596722+180*60*1000)),
+		fmt.Sprintf("timestamp >= '%d' AND timestamp <= '%d'", 1675115596722*1000000, (1675115596722+120*60*1000)*int64(1000000)),
+		fmt.Sprintf("timestamp >= '%d' AND timestamp <= '%d'", (1675115596722+60*60*1000)*int64(1000000), (1675115596722+180*60*1000)*int64(1000000)),
 	}
 
 	for i, param := range params {
@@ -584,14 +587,14 @@ func TestQueryRangeValueType(t *testing.T) {
 		{
 			Start: 1675115596722,
 			End:   1675115596722 + 120*60*1000,
-			Step:  5 * time.Minute.Microseconds(),
+			Step:  5 * time.Minute.Milliseconds(),
 			CompositeQuery: &v3.CompositeQuery{
 				QueryType: v3.QueryTypeBuilder,
 				PanelType: v3.PanelTypeValue,
 				BuilderQueries: map[string]*v3.BuilderQuery{
 					"A": {
 						QueryName:          "A",
-						StepInterval:       5 * time.Minute.Microseconds(),
+						StepInterval:       5 * time.Minute.Milliseconds(),
 						DataSource:         v3.DataSourceMetrics,
 						AggregateAttribute: v3.AttributeKey{Key: "http_server_requests_seconds_count", Type: v3.AttributeKeyTypeUnspecified, DataType: "float64", IsColumn: true},
 						Filters: &v3.FilterSet{
@@ -614,14 +617,14 @@ func TestQueryRangeValueType(t *testing.T) {
 		{
 			Start: 1675115596722 + 60*60*1000,
 			End:   1675115596722 + 180*60*1000,
-			Step:  5 * time.Minute.Microseconds(),
+			Step:  5 * time.Minute.Milliseconds(),
 			CompositeQuery: &v3.CompositeQuery{
 				QueryType: v3.QueryTypeBuilder,
 				PanelType: v3.PanelTypeValue,
 				BuilderQueries: map[string]*v3.BuilderQuery{
 					"A": {
 						QueryName:          "A",
-						StepInterval:       5 * time.Minute.Microseconds(),
+						StepInterval:       5 * time.Minute.Milliseconds(),
 						DataSource:         v3.DataSourceTraces,
 						AggregateAttribute: v3.AttributeKey{Key: "durationNano", Type: v3.AttributeKeyTypeUnspecified, DataType: "float64", IsColumn: true},
 						Filters: &v3.FilterSet{
@@ -669,7 +672,7 @@ func TestQueryRangeValueType(t *testing.T) {
 	// No caching
 	expectedTimeRangeInQueryString := []string{
 		fmt.Sprintf("timestamp_ms >= %d AND timestamp_ms <= %d", 1675115596722, 1675115596722+120*60*1000),
-		fmt.Sprintf("timestamp_ms >= %d AND timestamp_ms <= %d", 1675115596722+60*60*1000, 1675115596722+180*60*1000),
+		fmt.Sprintf("timestamp >= '%d' AND timestamp <= '%d'", (1675115596722+60*60*1000)*int64(1000000), (1675115596722+180*60*1000)*int64(1000000)),
 	}
 
 	for i, param := range params {
@@ -693,7 +696,7 @@ func TestQueryRangeValueTypePromQueries(t *testing.T) {
 		{
 			Start: 1675115596722,
 			End:   1675115596722 + 120*60*1000,
-			Step:  5 * time.Minute.Microseconds(),
+			Step:  5 * time.Minute.Milliseconds(),
 			CompositeQuery: &v3.CompositeQuery{
 				QueryType: v3.QueryTypeBuilder,
 				PanelType: v3.PanelTypeValue,
@@ -721,7 +724,7 @@ func TestQueryRangeValueTypePromQueries(t *testing.T) {
 		{
 			Start: 1675115596722 + 60*60*1000,
 			End:   1675115596722 + 180*60*1000,
-			Step:  5 * time.Minute.Microseconds(),
+			Step:  5 * time.Minute.Milliseconds(),
 			CompositeQuery: &v3.CompositeQuery{
 				QueryType: v3.QueryTypeBuilder,
 				PanelType: v3.PanelTypeValue,

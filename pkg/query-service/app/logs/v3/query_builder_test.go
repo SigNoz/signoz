@@ -6,6 +6,7 @@ import (
 	. "github.com/smartystreets/goconvey/convey"
 	"go.signoz.io/signoz/pkg/query-service/constants"
 	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
+	"go.signoz.io/signoz/pkg/query-service/utils"
 )
 
 var testGetClickhouseColumnNameData = []struct {
@@ -741,7 +742,7 @@ var testGetZerosForEpochNanoData = []struct {
 func TestGetZerosForEpochNano(t *testing.T) {
 	for _, tt := range testGetZerosForEpochNanoData {
 		Convey("testGetZerosForEpochNanoData", t, func() {
-			multiplier := getZerosForEpochNano(tt.Epoch)
+			multiplier := utils.GetZerosForEpochNano(tt.Epoch)
 			So(multiplier, ShouldEqual, tt.Multiplier)
 			So(tt.Epoch*multiplier, ShouldEqual, tt.Result)
 		})
