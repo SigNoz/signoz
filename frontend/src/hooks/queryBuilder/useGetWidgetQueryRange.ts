@@ -33,7 +33,7 @@ export const useGetWidgetQueryRange = (
 			graphType,
 			selectedTime,
 			globalSelectedInterval,
-			query: JSON.parse(compositeQuery || ''),
+			query: JSON.parse(compositeQuery || '{}'),
 			variables: getDashboardVariables(),
 		},
 		{
