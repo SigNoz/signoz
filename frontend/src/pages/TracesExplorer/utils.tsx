@@ -27,4 +27,9 @@ export const getTabsItems = ({
 		key: PANEL_TYPES.TABLE,
 		children: <TableView />,
 	},
+	{
+		label: 'Table View',
+		key: PANEL_TYPES.TABLE,
+		children: <TableView />,
+	},
 ];
