@@ -20,6 +20,8 @@ import {
 import { AppState } from 'store/reducers';
 import AppActions from 'types/actions';
 import { FLUSH_DASHBOARD } from 'types/actions/dashboard';
+import { EQueryType } from 'types/common/dashboard';
+import { DataSource } from 'types/common/queryBuilder';
 import AppReducer from 'types/reducer/app';
 import DashboardReducer from 'types/reducer/dashboards';
 
@@ -161,15 +163,53 @@ function NewWidget({ selectedGraph, saveSettingOfPanel }: Props): JSX.Element {
 		FeatureKeys.QUERY_BUILDER_PANELS,
 	);
 
+	const isNewTraceLogsAvailable = useMemo(
+		() =>
+			isQueryBuilderActive &&
+			currentQuery.queryType === EQueryType.QUERY_BUILDER &&
+			currentQuery.builder.queryData.find(
+				(query) => query.dataSource !== DataSource.METRICS,
+			) !== undefined,
+		[
+			currentQuery.builder.queryData,
+			currentQuery.queryType,
+			isQueryBuilderActive,
+		],
+	);
+
+	const isSaveDisabled = useMemo(() => {
+		// new created dashboard
+		if (selectedWidget?.id === 'empty') {
+			return isNewTraceLogsAvailable;
+		}
+
+		const isTraceOrLogsQueryBuilder =
+			currentQuery.builder.queryData.find(
+				(query) =>
+					query.dataSource === DataSource.TRACES ||
+					query.dataSource === DataSource.LOGS,
+			) !== undefined;
+
+		if (isTraceOrLogsQueryBuilder) {
+			return false;
+		}
+
+		return isNewTraceLogsAvailable;
+	}, [
+		currentQuery.builder.queryData,
+		selectedWidget?.id,
+		isNewTraceLogsAvailable,
+	]);
+
 	return (
 		<Container>
 			<ButtonContainer>
-				{isQueryBuilderActive && (
+				{isSaveDisabled && (
 					<Tooltip title={MESSAGE.PANEL}>
 						<Button
 							icon={<LockFilled />}
 							type="primary"
-							disabled={isQueryBuilderActive}
+							disabled={isSaveDisabled}
 							onClick={onSaveDashboard}
 						>
 							Save
@@ -177,12 +217,8 @@ function NewWidget({ selectedGraph, saveSettingOfPanel }: Props): JSX.Element {
 					</Tooltip>
 				)}
 
-				{!isQueryBuilderActive && (
-					<Button
-						type="primary"
-						disabled={isQueryBuilderActive}
-						onClick={onSaveDashboard}
-					>
+				{!isSaveDisabled && (
+					<Button type="primary" disabled={isSaveDisabled} onClick={onSaveDashboard}>
 						Save
 					</Button>
 				)}
