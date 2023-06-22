@@ -95,7 +95,7 @@ func enrichKeyWithMetadata(key v3.AttributeKey, keys map[string]v3.AttributeKey)
 }
 
 // getSelectLabels returns the select labels for the query based on groupBy and aggregateOperator
-func getSelectLabels(aggregatorOperator v3.AggregateOperator, groupBy []v3.AttributeKey, keys map[string]v3.AttributeKey) (string, error) {
+func getSelectLabels(aggregatorOperator v3.AggregateOperator, groupBy []v3.AttributeKey, keys map[string]v3.AttributeKey) string {
 	var selectLabels string
 	if aggregatorOperator == v3.AggregateOperatorNoOp {
 		selectLabels = ""
@@ -105,7 +105,16 @@ func getSelectLabels(aggregatorOperator v3.AggregateOperator, groupBy []v3.Attri
 			selectLabels += fmt.Sprintf(", %s as `%s`", filterName, tag.Key)
 		}
 	}
-	return selectLabels, nil
+	return selectLabels
+}
+
+func getSelectColumns(sc []v3.AttributeKey, keys map[string]v3.AttributeKey) string {
+	var columns []string
+	for _, tag := range sc {
+		columnName := getColumnName(tag, keys)
+		columns = append(columns, fmt.Sprintf("%s as `%s` ", columnName, tag.Key))
+	}
+	return strings.Join(columns, ",")
 }
 
 // getZerosForEpochNano returns the number of zeros to be appended to the epoch time for converting it to nanoseconds
@@ -217,10 +226,7 @@ func buildTracesQuery(start, end, step int64, mq *v3.BuilderQuery, tableName str
 	// timerange will be sent in epoch millisecond
 	spanIndexTableTimeFilter := fmt.Sprintf("(timestamp >= '%d' AND timestamp <= '%d')", start*getZerosForEpochNano(start), end*getZerosForEpochNano(end))
 
-	selectLabels, err := getSelectLabels(mq.AggregateOperator, mq.GroupBy, keys)
-	if err != nil {
-		return "", err
-	}
+	selectLabels := getSelectLabels(mq.AggregateOperator, mq.GroupBy, keys)
 
 	having := having(mq.Having)
 	if having != "" {
@@ -305,9 +311,12 @@ func buildTracesQuery(start, end, step int64, mq *v3.BuilderQuery, tableName str
 				withSubQuery = addOffsetToQuery(withSubQuery, mq.Offset)
 			}
 			query = withSubQuery + ") " + constants.TracesExplorerViewSQLSelectQuery
-		} else {
-			queryNoOpTmpl := constants.TracesListViewSQLSelect + "from " + constants.SIGNOZ_TRACE_DBNAME + "." + constants.SIGNOZ_SPAN_INDEX_TABLENAME + " where %s %s"
+		} else if panelType == v3.PanelTypeList {
+			selectColumns := getSelectColumns(mq.SelectColumns, keys)
+			queryNoOpTmpl := fmt.Sprintf(constants.TracesListViewSQLSelect, selectColumns) + "from " + constants.SIGNOZ_TRACE_DBNAME + "." + constants.SIGNOZ_SPAN_INDEX_TABLENAME + " where %s %s"
 			query = fmt.Sprintf(queryNoOpTmpl, spanIndexTableTimeFilter, filterSubQuery)
+		} else {
+			return "", fmt.Errorf("unsupported aggregate operator for panelType %s", panelType)
 		}
 		return query, nil
 	default:
@@ -402,9 +411,9 @@ func addLimitToQuery(query string, limit uint64, panelType v3.PanelType) string 
 	if limit == 0 {
 		limit = 100
 	}
-	// if panelType == v3.PanelTypeList || panelType == v3.PanelTypeTrace {
+	if panelType == v3.PanelTypeList || panelType == v3.PanelTypeTrace {
 		return fmt.Sprintf("%s LIMIT %d", query, limit)
-	// }
+	}
 	return query
 }
 
@@ -427,6 +436,5 @@ func PrepareTracesQuery(start, end int64, queryType v3.QueryType, panelType v3.P
 			query = addOffsetToQuery(query, mq.Offset)
 		}
 	}
-	fmt.Println(query)
 	return query, err
 }
