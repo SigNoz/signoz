@@ -5,49 +5,42 @@ import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import LogsExplorerList from 'container/LogsExplorerList';
 import LogsExplorerTable from 'container/LogsExplorerTable';
 import { GRAPH_TYPES } from 'container/NewDashboard/ComponentsSlider';
-import { useGetPanelTypesQueryParam } from 'hooks/queryBuilder/useGetPanelTypesQueryParam';
 import { useGetQueryRange } from 'hooks/queryBuilder/useGetQueryRange';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
-import useUrlQuery from 'hooks/useUrlQuery';
 import { memo, useCallback, useEffect, useMemo } from 'react';
 import { useSelector } from 'react-redux';
-import { useHistory, useLocation } from 'react-router-dom';
 import { AppState } from 'store/reducers';
+import { DataSource } from 'types/common/queryBuilder';
 import { GlobalReducer } from 'types/reducer/globalTime';
 
 import { TabsStyled } from './LogsExplorerViews.styled';
 
 function LogsExplorerViews(): JSX.Element {
-	const location = useLocation();
-	const urlQuery = useUrlQuery();
-	const history = useHistory();
-	const { currentQuery, stagedQuery } = useQueryBuilder();
+	const {
+		currentQuery,
+		stagedQuery,
+		panelType,
+		isEnabledQuery,
+		updateAllQueriesOperators,
+		redirectWithQueryBuilderData,
+	} = useQueryBuilder();
 
 	const { selectedTime } = useSelector<AppState, GlobalReducer>(
 		(state) => state.globalTime,
 	);
 
-	const panelTypeParam = useGetPanelTypesQueryParam(PANEL_TYPES.LIST);
-
 	const { data, isFetching } = useGetQueryRange(
 		{
 			query: stagedQuery || initialQueriesMap.metrics,
-			graphType: panelTypeParam,
+			graphType: panelType || PANEL_TYPES.LIST,
 			globalSelectedInterval: selectedTime,
 			selectedTime: 'GLOBAL_TIME',
 		},
 		{
-			queryKey: [
-				REACT_QUERY_KEY.GET_QUERY_RANGE,
-				selectedTime,
-				stagedQuery,
-				panelTypeParam,
-			],
-			enabled: !!stagedQuery,
+			queryKey: [REACT_QUERY_KEY.GET_QUERY_RANGE, selectedTime, stagedQuery],
+			enabled: isEnabledQuery,
 		},
 	);
-
-	const panelTypeParams = useGetPanelTypesQueryParam(PANEL_TYPES.LIST);
 
 	const isMultipleQueries = useMemo(
 		() =>
@@ -89,37 +82,39 @@ function LogsExplorerViews(): JSX.Element {
 	);
 
 	const handleChangeView = useCallback(
-		(panelType: string) => {
-			urlQuery.set(PANEL_TYPES_QUERY, JSON.stringify(panelType) as GRAPH_TYPES);
-			const path = `${location.pathname}?${urlQuery}`;
+		(newPanelType: string) => {
+			if (newPanelType === panelType) return;
 
-			history.push(path);
+			const query = updateAllQueriesOperators(
+				currentQuery,
+				newPanelType as GRAPH_TYPES,
+				DataSource.LOGS,
+			);
+
+			redirectWithQueryBuilderData(query, { [PANEL_TYPES_QUERY]: newPanelType });
 		},
-		[history, location, urlQuery],
-	);
-
-	const currentTabKey = useMemo(
-		() =>
-			Object.values(PANEL_TYPES).includes(panelTypeParams)
-				? panelTypeParams
-				: PANEL_TYPES.LIST,
-		[panelTypeParams],
+		[
+			currentQuery,
+			panelType,
+			updateAllQueriesOperators,
+			redirectWithQueryBuilderData,
+		],
 	);
 
 	useEffect(() => {
 		const shouldChangeView = isMultipleQueries || isGroupByExist;
 
-		if (panelTypeParams === 'list' && shouldChangeView) {
+		if (panelType === 'list' && shouldChangeView) {
 			handleChangeView(PANEL_TYPES.TIME_SERIES);
 		}
-	}, [panelTypeParams, isMultipleQueries, isGroupByExist, handleChangeView]);
+	}, [panelType, isMultipleQueries, isGroupByExist, handleChangeView]);
 
 	return (
 		<div>
 			<TabsStyled
 				items={tabsItems}
-				defaultActiveKey={currentTabKey}
-				activeKey={currentTabKey}
+				defaultActiveKey={panelType || PANEL_TYPES.LIST}
+				activeKey={panelType || PANEL_TYPES.LIST}
 				onChange={handleChangeView}
 			/>
 		</div>

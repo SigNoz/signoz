@@ -107,6 +107,8 @@ function LogsExplorerList({
 				</Heading>
 			)}
 
+			{logs.length === 0 && <Typography>No logs lines found</Typography>}
+
 			{renderContent}
 		</Container>
 	);

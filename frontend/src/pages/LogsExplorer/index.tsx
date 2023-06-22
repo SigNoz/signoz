@@ -6,16 +6,27 @@ import { QueryBuilder } from 'container/QueryBuilder';
 import { useGetPanelTypesQueryParam } from 'hooks/queryBuilder/useGetPanelTypesQueryParam';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useShareBuilderUrl } from 'hooks/queryBuilder/useShareBuilderUrl';
+import { useMemo } from 'react';
 import { DataSource } from 'types/common/queryBuilder';
 
 // ** Styles
 import { ButtonWrapperStyled, WrapperStyled } from './styles';
 
 function LogsExporer(): JSX.Element {
-	const { handleRunQuery } = useQueryBuilder();
+	const { handleRunQuery, updateAllQueriesOperators } = useQueryBuilder();
 	const panelTypes = useGetPanelTypesQueryParam(PANEL_TYPES.LIST);
 
-	useShareBuilderUrl({ defaultValue: initialQueriesMap.logs });
+	const defaultValue = useMemo(
+		() =>
+			updateAllQueriesOperators(
+				initialQueriesMap.logs,
+				PANEL_TYPES.LIST,
+				DataSource.LOGS,
+			),
+		[updateAllQueriesOperators],
+	);
+
+	useShareBuilderUrl(defaultValue);
 
 	return (
 		<WrapperStyled>
