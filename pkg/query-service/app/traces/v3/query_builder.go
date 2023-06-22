@@ -312,15 +312,18 @@ func buildTracesQuery(start, end, step int64, mq *v3.BuilderQuery, tableName str
 			}
 			query = withSubQuery + ") " + constants.TracesExplorerViewSQLSelectQuery
 		} else if panelType == v3.PanelTypeList {
+			if len(mq.SelectColumns) == 0 {
+				return "", fmt.Errorf("select columns cannot be empty for panelType %s", panelType)
+			}
 			selectColumns := getSelectColumns(mq.SelectColumns, keys)
-			queryNoOpTmpl := fmt.Sprintf(constants.TracesListViewSQLSelect, selectColumns) + "from " + constants.SIGNOZ_TRACE_DBNAME + "." + constants.SIGNOZ_SPAN_INDEX_TABLENAME + " where %s %s"
+			queryNoOpTmpl := fmt.Sprintf("SELECT "+"%s ", selectColumns) + "from " + constants.SIGNOZ_TRACE_DBNAME + "." + constants.SIGNOZ_SPAN_INDEX_TABLENAME + " where %s %s"
 			query = fmt.Sprintf(queryNoOpTmpl, spanIndexTableTimeFilter, filterSubQuery)
 		} else {
-			return "", fmt.Errorf("unsupported aggregate operator for panelType %s", panelType)
+			return "", fmt.Errorf("unsupported aggregate operator %s for panelType %s", mq.AggregateOperator, panelType)
 		}
 		return query, nil
 	default:
-		return "", fmt.Errorf("unsupported aggregate operator")
+		return "", fmt.Errorf("unsupported aggregate operator %s", mq.AggregateOperator)
 	}
 }
 
