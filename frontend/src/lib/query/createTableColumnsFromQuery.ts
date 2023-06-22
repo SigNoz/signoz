@@ -8,8 +8,6 @@ import { IBuilderQuery, Query } from 'types/api/queryBuilder/queryBuilderData';
 import { ListItem, QueryDataV3, SeriesItem } from 'types/api/widgets/getQuery';
 import { v4 as uuid } from 'uuid';
 
-import { ListItem } from '../../types/api/widgets/getQuery';
-
 type CreateTableDataFromQueryParams = Pick<
 	QueryTableProps,
 	'queryTableData' | 'query' | 'renderActionCell'

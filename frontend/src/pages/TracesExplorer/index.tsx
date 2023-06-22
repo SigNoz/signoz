@@ -5,8 +5,8 @@ import { GRAPH_TYPES } from 'container/NewDashboard/ComponentsSlider';
 import QuerySection from 'container/TracesExplorer/QuerySection';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useShareBuilderUrl } from 'hooks/queryBuilder/useShareBuilderUrl';
-import { DataSource } from 'types/common/queryBuilder';
 import { useCallback, useEffect, useMemo } from 'react';
+import { DataSource } from 'types/common/queryBuilder';
 
 import { Container } from './styles';
 import { getTabsItems } from './utils';
@@ -47,7 +47,9 @@ function TracesExplorer(): JSX.Element {
 		return groupByCount > 0;
 	}, [currentQuery]);
 
-	const tabsItems = getTabsItems(isMultipleQueries || isGroupByExist);
+	const tabsItems = getTabsItems({
+		isListViewDisabled: isMultipleQueries || isGroupByExist,
+	});
 
 	const handleTabChange = useCallback(
 		(newPanelType: string): void => {
