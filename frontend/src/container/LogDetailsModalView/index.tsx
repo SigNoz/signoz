@@ -67,15 +67,22 @@ function LogDetailsModalView(): JSX.Element {
 	});
 
 	useEffect(() => {
-		if (prevData.status === 'success' && prevData.data?.status === 200) {
+		if (
+			prevData.status === 'success' &&
+			prevData.data?.status === 200 &&
+			prevData.data.data?.result
+		) {
 			setPrevLogs(prevData.data.data?.result[0].list);
 		}
 	}, [prevData]);
 
 	useEffect(() => {
-		if (nextData.status === 'success' && nextData.data?.status === 200) {
+		if (
+			nextData.status === 'success' &&
+			nextData.data?.status === 200 &&
+			nextData.data.data?.result
+		) {
 			setNextLogs(nextData.data?.data?.result[0].list);
-			console.log(nextData.data.data);
 		}
 	}, [nextData]);
 

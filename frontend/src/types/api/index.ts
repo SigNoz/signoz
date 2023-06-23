@@ -35,6 +35,7 @@ export interface ErrorResponseV3 extends ErrorResponse {
 		payload: null;
 		error: string;
 		message: null;
+		result: null;
 	};
 	status?: number;
 }

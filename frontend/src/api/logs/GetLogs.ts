@@ -7,7 +7,7 @@ import {
 	SuccessResponse,
 	SuccessResponseV3,
 } from 'types/api';
-import { PayloadProps, Props } from 'types/api/logs/getLogs';
+import { PayloadProps, PayloadPropsV3, Props } from 'types/api/logs/getLogs';
 
 const GetLogs = async (
 	props: Props,
@@ -34,7 +34,7 @@ export const GetLogsV3 = async ({
 	limit,
 	id,
 	idGt,
-}: Props): Promise<SuccessResponseV3<PayloadProps> | ErrorResponseV3> => {
+}: Props): Promise<SuccessResponseV3<PayloadPropsV3> | ErrorResponseV3> => {
 	try {
 		const data = await ApiV3Instance.post(`query_range`, {
 			start: timestampStart,
