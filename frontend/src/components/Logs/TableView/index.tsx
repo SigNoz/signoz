@@ -1,21 +1,32 @@
-import { ExpandAltOutlined } from '@ant-design/icons';
+import {
+	ExpandAltOutlined,
+	LinkOutlined,
+	MonitorOutlined,
+} from '@ant-design/icons';
 import Convert from 'ansi-to-html';
-import { Table, Typography } from 'antd';
+import { Button, Table, Tooltip, Typography } from 'antd';
 import { ColumnsType, ColumnType } from 'antd/es/table';
 import dayjs from 'dayjs';
 import dompurify from 'dompurify';
+import { useNotifications } from 'hooks/useNotifications';
 // utils
 import { FlatLogData } from 'lib/logs/flatLogData';
-import { useMemo } from 'react';
+import { useEffect, useMemo } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
+import { useCopyToClipboard } from 'react-use';
+import { AppState } from 'store/reducers';
+import { SET_CURRENT_LOG } from 'types/actions/logs';
 import { IField } from 'types/api/logs/fields';
 // interfaces
 import { ILog } from 'types/api/logs/log';
+import { GlobalReducer } from 'types/reducer/globalTime';
+import ILogsReducer from 'types/reducer/logs';
 
 // styles
 import { ExpandIconWrapper } from '../RawLogView/styles';
 // config
 import { defaultCellStyle, defaultTableStyle, tableScroll } from './config';
-import { TableBodyContent } from './styles';
+import { AddButtonWrapper, TableBodyContent } from './styles';
 
 type ColumnTypeRender<T = unknown> = ReturnType<
 	NonNullable<ColumnType<T>['render']>
@@ -32,12 +43,43 @@ const convert = new Convert();
 
 function LogsTableView(props: LogsTableViewProps): JSX.Element {
 	const { logs, fields, linesPerRow, onClickExpand } = props;
+	const [value, copyToClipboard] = useCopyToClipboard();
+	const dispatch = useDispatch();
+	const { notifications } = useNotifications();
+
+	useEffect(() => {
+		if (value.value) {
+			notifications.success({
+				message: 'Copied to clipboard',
+			});
+		}
+	}, [value, notifications]);
+	const { minTime, maxTime } = useSelector<AppState, GlobalReducer>(
+		(state) => state.globalTime,
+	);
+
+	const { searchFilter } = useSelector<AppState, ILogsReducer>(
+		(state) => state.logs,
+	);
 
 	const flattenLogData = useMemo(() => logs.map((log) => FlatLogData(log)), [
 		logs,
 	]);
 
 	const columns: ColumnsType<Record<string, unknown>> = useMemo(() => {
+		const showContextHandler = (log: ILog): void => {
+			dispatch({
+				type: SET_CURRENT_LOG,
+				payload: log,
+			});
+		};
+
+		const copyLinkHandler = (log: ILog): void => {
+			copyToClipboard(`
+				${window.location.origin}/logs?q=${searchFilter.queryString}&startTime=${minTime}&endTime=${maxTime}&selectedLogId=${log.id}
+			`);
+		};
+
 		const fieldColumns: ColumnsType<Record<string, unknown>> = fields
 			.filter((e) => e.name !== 'id')
 			.map(({ name }) => ({
@@ -108,8 +150,45 @@ function LogsTableView(props: LogsTableViewProps): JSX.Element {
 					),
 				}),
 			},
+			{
+				title: 'action',
+				dataIndex: 'action',
+				key: 'action',
+				render: (_, item): ColumnTypeRender<Record<string, unknown>> => ({
+					props: {
+						style: defaultTableStyle,
+					},
+					children: (
+						<AddButtonWrapper>
+							<Tooltip title="Show context">
+								<Button
+									onClick={(): void => showContextHandler((item as unknown) as ILog)}
+								>
+									<MonitorOutlined />
+								</Button>
+							</Tooltip>
+							<Tooltip title="Copy link">
+								<Button
+									onClick={(): void => copyLinkHandler((item as unknown) as ILog)}
+								>
+									<LinkOutlined />
+								</Button>
+							</Tooltip>
+						</AddButtonWrapper>
+					),
+				}),
+			},
 		];
-	}, [fields, linesPerRow, onClickExpand]);
+	}, [
+		fields,
+		linesPerRow,
+		onClickExpand,
+		dispatch,
+		maxTime,
+		minTime,
+		searchFilter,
+		copyToClipboard,
+	]);
 
 	return (
 		<Table

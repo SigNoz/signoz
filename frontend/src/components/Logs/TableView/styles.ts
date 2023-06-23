@@ -17,3 +17,17 @@ export const TableBodyContent = styled.div<TableBodyContentProps>`
 
 	line-height: 2rem;
 `;
+
+export const AddButtonWrapper = styled.div`
+	display: flex;
+	gap: 6px;
+
+	button {
+		border-radius: 5px;
+		width: 32px;
+		height: 32px;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+	}
+`;
