@@ -37,7 +37,7 @@ function TracesExplorer(): JSX.Element {
 		[redirectWithCurrentTab],
 	);
 
-	useShareBuilderUrl({ defaultValue: initialQueriesMap.traces });
+	useShareBuilderUrl(initialQueriesMap.traces);
 
 	useEffect(() => {
 		if (currentUrlTab) return;

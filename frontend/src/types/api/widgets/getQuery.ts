@@ -1,7 +1,11 @@
+import { ILog } from '../logs/log';
+
 export interface PayloadProps {
 	status: 'success' | 'error';
 	result: QueryData[];
 }
+
+type ListItem = { timestamp: string; data: Omit<ILog, 'timestamp'> };
 
 export interface QueryData {
 	metric: {
@@ -20,7 +24,7 @@ export interface SeriesItem {
 }
 
 export interface QueryDataV3 {
-	list: null;
+	list: ListItem[] | null;
 	queryName: string;
 	legend?: string;
 	series: SeriesItem[] | null;
