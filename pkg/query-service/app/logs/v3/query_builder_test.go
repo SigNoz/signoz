@@ -1,6 +1,7 @@
 package v3
 
 import (
+	"fmt"
 	"testing"
 
 	. "github.com/smartystreets/goconvey/convey"
@@ -59,13 +60,13 @@ var testGetSelectLabelsData = []struct {
 		Name:              "select fields for groupBy attribute",
 		AggregateOperator: v3.AggregateOperatorCount,
 		GroupByTags:       []v3.AttributeKey{{Key: "user_name", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag}},
-		SelectLabels:      ", attributes_string_value[indexOf(attributes_string_key, 'user_name')] as user_name",
+		SelectLabels:      " attributes_string_value[indexOf(attributes_string_key, 'user_name')] as user_name,",
 	},
 	{
 		Name:              "select fields for groupBy resource",
 		AggregateOperator: v3.AggregateOperatorCount,
 		GroupByTags:       []v3.AttributeKey{{Key: "user_name", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeResource}},
-		SelectLabels:      ", resources_string_value[indexOf(resources_string_key, 'user_name')] as user_name",
+		SelectLabels:      " resources_string_value[indexOf(resources_string_key, 'user_name')] as user_name,",
 	},
 	{
 		Name:              "select fields for groupBy attribute and resource",
@@ -74,19 +75,19 @@ var testGetSelectLabelsData = []struct {
 			{Key: "user_name", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeResource},
 			{Key: "host", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag},
 		},
-		SelectLabels: ", resources_string_value[indexOf(resources_string_key, 'user_name')] as user_name, attributes_string_value[indexOf(attributes_string_key, 'host')] as host",
+		SelectLabels: " resources_string_value[indexOf(resources_string_key, 'user_name')] as user_name, attributes_string_value[indexOf(attributes_string_key, 'host')] as host,",
 	},
 	{
 		Name:              "select fields for groupBy materialized columns",
 		AggregateOperator: v3.AggregateOperatorCount,
 		GroupByTags:       []v3.AttributeKey{{Key: "host", IsColumn: true}},
-		SelectLabels:      ", host as host",
+		SelectLabels:      " host as host,",
 	},
 	{
 		Name:              "trace_id field as an attribute",
 		AggregateOperator: v3.AggregateOperatorCount,
 		GroupByTags:       []v3.AttributeKey{{Key: "trace_id", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag}},
-		SelectLabels:      ", attributes_string_value[indexOf(attributes_string_key, 'trace_id')] as trace_id",
+		SelectLabels:      " attributes_string_value[indexOf(attributes_string_key, 'trace_id')] as trace_id,",
 	},
 }
 
@@ -238,6 +239,7 @@ var testBuildLogsQueryData = []struct {
 	TableName         string
 	AggregateOperator v3.AggregateOperator
 	ExpectedQuery     string
+	Type              int
 }{
 	{
 		Name:      "Test aggregate count on select field",
@@ -710,7 +712,8 @@ var testBuildLogsQueryData = []struct {
 func TestBuildLogsQuery(t *testing.T) {
 	for _, tt := range testBuildLogsQueryData {
 		Convey("TestBuildLogsQuery", t, func() {
-			query, err := buildLogsQuery(tt.PanelType, tt.Start, tt.End, tt.Step, tt.BuilderQuery)
+			query, err := buildLogsQuery(tt.PanelType, tt.Start, tt.End, tt.Step, tt.BuilderQuery, "")
+			fmt.Println(query)
 			So(err, ShouldBeNil)
 			So(query, ShouldEqual, tt.ExpectedQuery)
 
@@ -841,6 +844,81 @@ func TestOrderBy(t *testing.T) {
 		Convey("testOrderBy", t, func() {
 			res := orderBy(tt.PanelType, tt.Items, tt.Tags)
 			So(res, ShouldResemble, tt.Result)
+		})
+	}
+}
+
+// if there is no group by then there is no point of limit in ts and table queries
+// since the above will result in a single ts
+
+// handle only when there is a group by something.
+
+var testPrepLogsQueryData = []struct {
+	Name              string
+	PanelType         v3.PanelType
+	Start             int64
+	End               int64
+	Step              int64
+	BuilderQuery      *v3.BuilderQuery
+	GroupByTags       []v3.AttributeKey
+	TableName         string
+	AggregateOperator v3.AggregateOperator
+	ExpectedQuery     string
+	Type              string
+}{
+	{
+		Name:      "Test TS with limit- first",
+		PanelType: v3.PanelTypeGraph,
+		Start:     1680066360726210000,
+		End:       1680066458000000000,
+		Step:      60,
+		BuilderQuery: &v3.BuilderQuery{
+			QueryName:          "A",
+			AggregateAttribute: v3.AttributeKey{Key: "name", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag},
+			AggregateOperator:  v3.AggregateOperatorCountDistinct,
+			Expression:         "A",
+			Filters: &v3.FilterSet{Operator: "AND", Items: []v3.FilterItem{
+				{Key: v3.AttributeKey{Key: "method", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag}, Value: "GET", Operator: "="},
+			},
+			},
+			Limit:   10,
+			GroupBy: []v3.AttributeKey{{Key: "method", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag}},
+		},
+		TableName:     "logs",
+		ExpectedQuery: "SELECT attributes_string_value[indexOf(attributes_string_key, 'method')] as method, toFloat64(count(distinct(attributes_string_value[indexOf(attributes_string_key, 'name')]))) as value from signoz_logs.distributed_logs where (timestamp >= 1680066360726210000 AND timestamp <= 1680066458000000000) AND attributes_string_value[indexOf(attributes_string_key, 'method')] = 'GET' AND indexOf(attributes_string_key, 'method') > 0 group by method order by method ASC LIMIT 10",
+		Type:          constants.PreQueryMultiLogType,
+	},
+	{
+		Name:      "Test TS with limit- second",
+		PanelType: v3.PanelTypeGraph,
+		Start:     1680066360726210000,
+		End:       1680066458000000000,
+		Step:      60,
+		BuilderQuery: &v3.BuilderQuery{
+			QueryName:          "A",
+			AggregateAttribute: v3.AttributeKey{Key: "name", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag},
+			AggregateOperator:  v3.AggregateOperatorCountDistinct,
+			Expression:         "A",
+			Filters: &v3.FilterSet{Operator: "AND", Items: []v3.FilterItem{
+				{Key: v3.AttributeKey{Key: "method", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag}, Value: "GET", Operator: "="},
+			},
+			},
+			GroupBy: []v3.AttributeKey{{Key: "method", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag}},
+		},
+		TableName:     "logs",
+		ExpectedQuery: "SELECT toStartOfInterval(fromUnixTimestamp64Nano(timestamp), INTERVAL 0 SECOND) AS ts, attributes_string_value[indexOf(attributes_string_key, 'method')] as method, toFloat64(count(distinct(attributes_string_value[indexOf(attributes_string_key, 'name')]))) as value from signoz_logs.distributed_logs where (timestamp >= 1680066360726210000 AND timestamp <= 1680066458000000000) AND attributes_string_value[indexOf(attributes_string_key, 'method')] = 'GET' AND indexOf(attributes_string_key, 'method') > 0 AND attributes_string_value[indexOf(attributes_string_key, 'method')] IN %s group by method,ts order by method ASC,ts",
+		Type:          constants.MainQueryMultiLogType,
+	},
+}
+
+func TestPrepareLogsQuery(t *testing.T) {
+	for _, tt := range testPrepLogsQueryData {
+		Convey("TestBuildLogsQuery", t, func() {
+			query, err := PrepareLogsQuery(tt.Start, tt.End, "", tt.PanelType, tt.BuilderQuery, tt.Type)
+			fmt.Println(query)
+			So(err, ShouldBeNil)
+			So(query, ShouldEqual, tt.ExpectedQuery)
+
 		})
 	}
 }

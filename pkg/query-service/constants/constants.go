@@ -296,3 +296,9 @@ var StaticFieldsLogsV3 = map[string]v3.AttributeKey{
 const SigNozOrderByValue = "#SIGNOZ_VALUE"
 
 const TIMESTAMP = "timestamp"
+
+const PreQueryMultiLogType = "pre_query_multi_query_type"
+const MainQueryMultiLogType = "main_query_multi_query_type"
+
+const PreQuerySuffix = "-$#pre"
+const MainQuerySuffix = "-$#main"

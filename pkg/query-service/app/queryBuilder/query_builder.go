@@ -6,6 +6,7 @@ import (
 
 	"github.com/SigNoz/govaluate"
 	"go.signoz.io/signoz/pkg/query-service/cache"
+	"go.signoz.io/signoz/pkg/query-service/constants"
 	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
 	"go.uber.org/zap"
 )
@@ -37,7 +38,7 @@ var SupportedFunctions = []string{
 var EvalFuncs = map[string]govaluate.ExpressionFunction{}
 
 type prepareTracesQueryFunc func(start, end int64, queryType v3.QueryType, panelType v3.PanelType, bq *v3.BuilderQuery, keys map[string]v3.AttributeKey) (string, error)
-type prepareLogsQueryFunc func(start, end int64, queryType v3.QueryType, panelType v3.PanelType, bq *v3.BuilderQuery) (string, error)
+type prepareLogsQueryFunc func(start, end int64, queryType v3.QueryType, panelType v3.PanelType, bq *v3.BuilderQuery, typeQ string) (string, error)
 type prepareMetricQueryFunc func(start, end int64, queryType v3.QueryType, panelType v3.PanelType, bq *v3.BuilderQuery) (string, error)
 
 type QueryBuilder struct {
@@ -150,11 +151,28 @@ func (qb *QueryBuilder) PrepareQueries(params *v3.QueryRangeParamsV3, args ...in
 					}
 					queries[queryName] = queryString
 				case v3.DataSourceLogs:
-					queryString, err := qb.options.BuildLogQuery(params.Start, params.End, compositeQuery.QueryType, compositeQuery.PanelType, query)
-					if err != nil {
-						return nil, err
+					// if panel type is timeseries/ table, handle limit differently using two queries
+					if (compositeQuery.PanelType == v3.PanelTypeGraph || compositeQuery.PanelType == v3.PanelTypeTable) && query.Limit > 0 && len(query.GroupBy) > 0 {
+						// return two queries
+						limitQuery, err := qb.options.BuildLogQuery(params.Start, params.End, compositeQuery.QueryType, compositeQuery.PanelType, query, constants.PreQueryMultiLogType)
+						if err != nil {
+							return nil, err
+						}
+
+						placeholderQuery, err := qb.options.BuildLogQuery(params.Start, params.End, compositeQuery.QueryType, compositeQuery.PanelType, query, constants.MainQueryMultiLogType)
+						if err != nil {
+							return nil, err
+						}
+						queries[queryName+constants.PreQuerySuffix] = limitQuery
+						queries[queryName+constants.MainQuerySuffix] = placeholderQuery
+					} else {
+
+						queryString, err := qb.options.BuildLogQuery(params.Start, params.End, compositeQuery.QueryType, compositeQuery.PanelType, query, "")
+						if err != nil {
+							return nil, err
+						}
+						queries[queryName] = queryString
 					}
-					queries[queryName] = queryString
 				case v3.DataSourceMetrics:
 					queryString, err := qb.options.BuildMetricQuery(params.Start, params.End, compositeQuery.QueryType, compositeQuery.PanelType, query)
 					if err != nil {
@@ -183,6 +201,9 @@ func (qb *QueryBuilder) PrepareQueries(params *v3.QueryRangeParamsV3, args ...in
 
 	// filter out disabled queries
 	for queryName := range queries {
+		if strings.HasSuffix(queryName, constants.PreQuerySuffix) || strings.HasSuffix(queryName, constants.MainQuerySuffix) {
+			continue
+		}
 		if compositeQuery.BuilderQueries[queryName].Disabled {
 			delete(queries, queryName)
 		}

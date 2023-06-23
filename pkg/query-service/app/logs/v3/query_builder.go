@@ -96,7 +96,7 @@ func getSelectLabels(aggregatorOperator v3.AggregateOperator, groupBy []v3.Attri
 	} else {
 		for _, tag := range groupBy {
 			columnName := getClickhouseColumnName(tag)
-			selectLabels += fmt.Sprintf(", %s as %s", columnName, tag.Key)
+			selectLabels += fmt.Sprintf(" %s as %s,", columnName, tag.Key)
 		}
 	}
 	return selectLabels, nil
@@ -163,7 +163,7 @@ func getZerosForEpochNano(epoch int64) int64 {
 	return int64(math.Pow(10, float64(19-count)))
 }
 
-func buildLogsQuery(panelType v3.PanelType, start, end, step int64, mq *v3.BuilderQuery) (string, error) {
+func buildLogsQuery(panelType v3.PanelType, start, end, step int64, mq *v3.BuilderQuery, typeQ string) (string, error) {
 
 	filterSubQuery, err := buildLogsTimeSeriesFilterQuery(mq.Filters, mq.GroupBy)
 	if err != nil {
@@ -183,16 +183,28 @@ func buildLogsQuery(panelType v3.PanelType, start, end, step int64, mq *v3.Build
 		having = " having " + having
 	}
 
-	queryTmpl :=
-		"SELECT toStartOfInterval(fromUnixTimestamp64Nano(timestamp), INTERVAL %d SECOND) AS ts" + selectLabels +
-			", %s as value " +
+	queryTmpl := ""
+	if typeQ == constants.PreQueryMultiLogType {
+		queryTmpl = "SELECT"
+	} else {
+		queryTmpl = fmt.Sprintf("SELECT toStartOfInterval(fromUnixTimestamp64Nano(timestamp), INTERVAL %d SECOND) AS ts,", step)
+	}
+
+	queryTmpl =
+		queryTmpl + selectLabels +
+			" %s as value " +
 			"from signoz_logs.distributed_logs " +
 			"where " + timeFilter + "%s " +
 			"group by %s%s " +
 			"order by %s"
 
-	groupBy := groupByAttributeKeyTags(mq.GroupBy...)
-	orderBy := orderByAttributeKeyTags(panelType, mq.AggregateOperator, mq.OrderBy, mq.GroupBy)
+	groupBy := groupByAttributeKeyTags(typeQ, mq.GroupBy...)
+	orderBy := orderByAttributeKeyTags(panelType, mq.AggregateOperator, mq.OrderBy, mq.GroupBy, typeQ)
+
+	if typeQ == constants.MainQueryMultiLogType {
+		// only support for 1 groupby as of now
+		filterSubQuery = filterSubQuery + " AND " + getClickhouseColumnName(mq.GroupBy[0]) + " IN %s"
+	}
 
 	aggregationKey := ""
 	if mq.AggregateAttribute.Key != "" {
@@ -202,7 +214,7 @@ func buildLogsQuery(panelType v3.PanelType, start, end, step int64, mq *v3.Build
 	switch mq.AggregateOperator {
 	case v3.AggregateOperatorRate:
 		op := fmt.Sprintf("count(%s)/%d", aggregationKey, step)
-		query := fmt.Sprintf(queryTmpl, step, op, filterSubQuery, groupBy, having, orderBy)
+		query := fmt.Sprintf(queryTmpl, op, filterSubQuery, groupBy, having, orderBy)
 		return query, nil
 	case
 		v3.AggregateOperatorRateSum,
@@ -210,7 +222,7 @@ func buildLogsQuery(panelType v3.PanelType, start, end, step int64, mq *v3.Build
 		v3.AggregateOperatorRateAvg,
 		v3.AggregateOperatorRateMin:
 		op := fmt.Sprintf("%s(%s)/%d", aggregateOperatorToSQLFunc[mq.AggregateOperator], aggregationKey, step)
-		query := fmt.Sprintf(queryTmpl, step, op, filterSubQuery, groupBy, having, orderBy)
+		query := fmt.Sprintf(queryTmpl, op, filterSubQuery, groupBy, having, orderBy)
 		return query, nil
 	case
 		v3.AggregateOperatorP05,
@@ -223,11 +235,11 @@ func buildLogsQuery(panelType v3.PanelType, start, end, step int64, mq *v3.Build
 		v3.AggregateOperatorP95,
 		v3.AggregateOperatorP99:
 		op := fmt.Sprintf("quantile(%v)(%s)", aggregateOperatorToPercentile[mq.AggregateOperator], aggregationKey)
-		query := fmt.Sprintf(queryTmpl, step, op, filterSubQuery, groupBy, having, orderBy)
+		query := fmt.Sprintf(queryTmpl, op, filterSubQuery, groupBy, having, orderBy)
 		return query, nil
 	case v3.AggregateOperatorAvg, v3.AggregateOperatorSum, v3.AggregateOperatorMin, v3.AggregateOperatorMax:
 		op := fmt.Sprintf("%s(%s)", aggregateOperatorToSQLFunc[mq.AggregateOperator], aggregationKey)
-		query := fmt.Sprintf(queryTmpl, step, op, filterSubQuery, groupBy, having, orderBy)
+		query := fmt.Sprintf(queryTmpl, op, filterSubQuery, groupBy, having, orderBy)
 		return query, nil
 	case v3.AggregateOperatorCount:
 		if mq.AggregateAttribute.Key != "" {
@@ -237,11 +249,17 @@ func buildLogsQuery(panelType v3.PanelType, start, end, step int64, mq *v3.Build
 		}
 
 		op := "toFloat64(count(*))"
-		query := fmt.Sprintf(queryTmpl, step, op, filterSubQuery, groupBy, having, orderBy)
+		// if typeQ == 1 {
+		// 	return fmt.Sprintf(queryTmpl, op, filterSubQuery, groupBy, having, orderBy), nil
+		// }
+		query := fmt.Sprintf(queryTmpl, op, filterSubQuery, groupBy, having, orderBy)
 		return query, nil
 	case v3.AggregateOperatorCountDistinct:
 		op := fmt.Sprintf("toFloat64(count(distinct(%s)))", aggregationKey)
-		query := fmt.Sprintf(queryTmpl, step, op, filterSubQuery, groupBy, having, orderBy)
+		// if typeQ == 1 {
+		// 	return fmt.Sprintf(queryTmpl, op, filterSubQuery, groupBy, having, orderBy), nil
+		// }
+		query := fmt.Sprintf(queryTmpl, op, filterSubQuery, groupBy, having, orderBy)
 		return query, nil
 	case v3.AggregateOperatorNoOp:
 		queryTmpl := constants.LogsSQLSelect + "from signoz_logs.distributed_logs where %s %sorder by %s"
@@ -254,17 +272,19 @@ func buildLogsQuery(panelType v3.PanelType, start, end, step int64, mq *v3.Build
 
 // groupBy returns a string of comma separated tags for group by clause
 // `ts` is always added to the group by clause
-func groupBy(tags ...string) string {
-	tags = append(tags, "ts")
+func groupBy(typeQ string, tags ...string) string {
+	if typeQ != constants.PreQueryMultiLogType {
+		tags = append(tags, "ts")
+	}
 	return strings.Join(tags, ",")
 }
 
-func groupByAttributeKeyTags(tags ...v3.AttributeKey) string {
+func groupByAttributeKeyTags(typeQ string, tags ...v3.AttributeKey) string {
 	groupTags := []string{}
 	for _, tag := range tags {
 		groupTags = append(groupTags, tag.Key)
 	}
-	return groupBy(groupTags...)
+	return groupBy(typeQ, groupTags...)
 }
 
 // orderBy returns a string of comma separated tags for order by clause
@@ -314,7 +334,7 @@ func orderBy(panelType v3.PanelType, items []v3.OrderBy, tags []string) []string
 	return orderBy
 }
 
-func orderByAttributeKeyTags(panelType v3.PanelType, aggregatorOperator v3.AggregateOperator, items []v3.OrderBy, tags []v3.AttributeKey) string {
+func orderByAttributeKeyTags(panelType v3.PanelType, aggregatorOperator v3.AggregateOperator, items []v3.OrderBy, tags []v3.AttributeKey, typeQ string) string {
 	var groupTags []string
 	for _, tag := range tags {
 		groupTags = append(groupTags, tag.Key)
@@ -328,7 +348,7 @@ func orderByAttributeKeyTags(panelType v3.PanelType, aggregatorOperator v3.Aggre
 			break
 		}
 	}
-	if !found {
+	if !found && typeQ != constants.PreQueryMultiLogType {
 		if aggregatorOperator == v3.AggregateOperatorNoOp {
 			orderByArray = append(orderByArray, constants.TIMESTAMP)
 		} else {
@@ -377,8 +397,30 @@ func addOffsetToQuery(query string, offset uint64) string {
 	return fmt.Sprintf("%s OFFSET %d", query, offset)
 }
 
-func PrepareLogsQuery(start, end int64, queryType v3.QueryType, panelType v3.PanelType, mq *v3.BuilderQuery) (string, error) {
-	query, err := buildLogsQuery(panelType, start, end, mq.StepInterval, mq)
+func PrepareLogsQuery(start, end int64, queryType v3.QueryType, panelType v3.PanelType, mq *v3.BuilderQuery, typeQ string) (string, error) {
+
+	// 0 menas give me first
+	if typeQ == constants.PreQueryMultiLogType {
+		// give me just the groupby names
+		query, err := buildLogsQuery(panelType, start, end, mq.StepInterval, mq, typeQ)
+		if err != nil {
+			return "", err
+		}
+		query = addLimitToQuery(query, mq.Limit)
+
+		return query, nil
+	}
+	if typeQ == constants.MainQueryMultiLogType {
+		query, err := buildLogsQuery(panelType, start, end, mq.StepInterval, mq, typeQ)
+		if err != nil {
+			return "", err
+		}
+		return query, nil
+	}
+
+	// 2 means give me normal
+
+	query, err := buildLogsQuery(panelType, start, end, mq.StepInterval, mq, typeQ)
 	if err != nil {
 		return "", err
 	}
@@ -399,4 +441,5 @@ func PrepareLogsQuery(start, end int64, queryType v3.QueryType, panelType v3.Pan
 	}
 
 	return query, err
+
 }

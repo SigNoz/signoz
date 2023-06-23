@@ -2461,13 +2461,49 @@ func (aH *APIHandler) execClickHouseGraphQueries(ctx context.Context, queries ma
 		wg.Add(1)
 		go func(name, query string) {
 			defer wg.Done()
-			seriesList, err := aH.reader.GetTimeSeriesResultV3(ctx, query)
 
-			if err != nil {
-				ch <- channelResult{Err: fmt.Errorf("error in query-%s: %v", name, err), Name: name, Query: query}
+			// skip if it a pre
+			if strings.HasSuffix(name, constants.PreQuerySuffix) {
 				return
 			}
-			ch <- channelResult{Series: seriesList, Name: name, Query: query}
+			if strings.HasSuffix(name, constants.MainQuerySuffix) {
+				// find the prequery and execute it
+				actualName := strings.ReplaceAll(name, constants.MainQuerySuffix, "")
+				list, err := aH.reader.GetListResultV3(ctx, queries[actualName+constants.PreQuerySuffix])
+				if err != nil {
+					ch <- channelResult{Err: fmt.Errorf("error in query-%s: %v", name, err), Name: name, Query: query}
+					return
+				}
+
+				limitFilter := []string{}
+				for _, v := range list {
+					for n, v := range v.Data {
+						if strings.Compare(n, "value") != 0 {
+							limitFilter = append(limitFilter, "'"+*v.(*string)+"'")
+							break
+						}
+					}
+				}
+				filterStr := strings.Join(limitFilter, ",")
+				filterStr = "(" + filterStr + ")"
+
+				finalQuery := fmt.Sprintf(query, filterStr)
+				seriesList, err := aH.reader.GetTimeSeriesResultV3(ctx, finalQuery)
+				if err != nil {
+					ch <- channelResult{Err: fmt.Errorf("error in query-%s: %v", name, err), Name: name, Query: query}
+					return
+				}
+
+				ch <- channelResult{Series: seriesList, Name: name, Query: query}
+			} else {
+				seriesList, err := aH.reader.GetTimeSeriesResultV3(ctx, query)
+
+				if err != nil {
+					ch <- channelResult{Err: fmt.Errorf("error in query-%s: %v", name, err), Name: name, Query: query}
+					return
+				}
+				ch <- channelResult{Series: seriesList, Name: name, Query: query}
+			}
 		}(name, query)
 	}
 
@@ -2715,7 +2751,6 @@ func (aH *APIHandler) queryRangeV3(ctx context.Context, queryRangeParams *v3.Que
 			RespondError(w, apiErrObj, errQuriesByName)
 			return
 		}
-
 		queries, err = aH.queryBuilder.PrepareQueries(queryRangeParams, spanKeys)
 		if err != nil {
 			RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
