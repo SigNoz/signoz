@@ -1,6 +1,7 @@
 import { TabsProps } from 'antd';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { PANEL_TYPES_QUERY } from 'constants/queryBuilderQueryNames';
+import { LogsExplorerTable } from 'container/LogsExplorerTable';
 import { GRAPH_TYPES } from 'container/NewDashboard/ComponentsSlider';
 import { useGetPanelTypesQueryParam } from 'hooks/queryBuilder/useGetPanelTypesQueryParam';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
@@ -25,17 +26,26 @@ export function LogsExplorerViews(): JSX.Element {
 		[currentQuery],
 	);
 
+	const isGroupByExist = useMemo(() => {
+		const groupByCount: number = currentQuery.builder.queryData.reduce<number>(
+			(acc, query) => acc + query.groupBy.length,
+			0,
+		);
+
+		return groupByCount > 0;
+	}, [currentQuery]);
+
 	const tabsItems: TabsProps['items'] = useMemo(
 		() => [
 			{
 				label: 'List View',
 				key: PANEL_TYPES.LIST,
-				disabled: isMultipleQueries,
+				disabled: isMultipleQueries || isGroupByExist,
 			},
 			{ label: 'TimeSeries', key: PANEL_TYPES.TIME_SERIES },
-			{ label: 'Table', key: PANEL_TYPES.TABLE },
+			{ label: 'Table', key: PANEL_TYPES.TABLE, children: <LogsExplorerTable /> },
 		],
-		[isMultipleQueries],
+		[isMultipleQueries, isGroupByExist],
 	);
 
 	const handleChangeView = useCallback(
@@ -57,10 +67,12 @@ export function LogsExplorerViews(): JSX.Element {
 	);
 
 	useEffect(() => {
-		if (panelTypeParams === 'list' && isMultipleQueries) {
+		const shouldChangeView = isMultipleQueries || isGroupByExist;
+
+		if (panelTypeParams === 'list' && shouldChangeView) {
 			handleChangeView(PANEL_TYPES.TIME_SERIES);
 		}
-	}, [panelTypeParams, isMultipleQueries, handleChangeView]);
+	}, [panelTypeParams, isMultipleQueries, isGroupByExist, handleChangeView]);
 
 	return (
 		<div>
