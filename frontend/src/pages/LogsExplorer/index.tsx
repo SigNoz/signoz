@@ -12,7 +12,7 @@ import { DataSource } from 'types/common/queryBuilder';
 // ** Styles
 import { ButtonWrapperStyled, WrapperStyled } from './styles';
 
-function LogsExporer(): JSX.Element {
+function LogsExplorer(): JSX.Element {
 	const { handleRunQuery, updateAllQueriesOperators } = useQueryBuilder();
 	const panelTypes = useGetPanelTypesQueryParam(PANEL_TYPES.LIST);
 
@@ -53,4 +53,4 @@ function LogsExporer(): JSX.Element {
 	);
 }
 
-export default LogsExporer;
+export default LogsExplorer;

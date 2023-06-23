@@ -1,56 +1,71 @@
 import { Tabs } from 'antd';
-import { initialQueriesMap } from 'constants/queryBuilder';
+import { initialQueriesMap, PANEL_TYPES } from 'constants/queryBuilder';
+import { PANEL_TYPES_QUERY } from 'constants/queryBuilderQueryNames';
+import { GRAPH_TYPES } from 'container/NewDashboard/ComponentsSlider';
 import QuerySection from 'container/TracesExplorer/QuerySection';
+import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useShareBuilderUrl } from 'hooks/queryBuilder/useShareBuilderUrl';
-import useUrlQuery from 'hooks/useUrlQuery';
-import { useCallback, useEffect } from 'react';
-import { useHistory, useLocation } from 'react-router-dom';
+import { useCallback, useMemo } from 'react';
+import { DataSource } from 'types/common/queryBuilder';
 
-import { CURRENT_TRACES_EXPLORER_TAB, TracesExplorerTabs } from './constants';
 import { Container } from './styles';
 import { getTabsItems } from './utils';
 
 function TracesExplorer(): JSX.Element {
-	const urlQuery = useUrlQuery();
-	const history = useHistory();
-	const location = useLocation();
+	const {
+		updateAllQueriesOperators,
+		redirectWithQueryBuilderData,
+		currentQuery,
+		panelType,
+	} = useQueryBuilder();
 
-	const currentUrlTab = urlQuery.get(
-		CURRENT_TRACES_EXPLORER_TAB,
-	) as TracesExplorerTabs;
-	const currentTab = currentUrlTab || TracesExplorerTabs.TIME_SERIES;
 	const tabsItems = getTabsItems();
 
-	const redirectWithCurrentTab = useCallback(
-		(tabKey: string): void => {
-			urlQuery.set(CURRENT_TRACES_EXPLORER_TAB, tabKey);
-			const generatedUrl = `${location.pathname}?${urlQuery.toString()}`;
-			history.push(generatedUrl);
-		},
-		[history, location, urlQuery],
-	);
+	const currentTab = panelType || PANEL_TYPES.TIME_SERIES;
 
 	const handleTabChange = useCallback(
-		(tabKey: string): void => {
-			redirectWithCurrentTab(tabKey);
+		(newPanelType: string): void => {
+			if (panelType === newPanelType) return;
+
+			const query = updateAllQueriesOperators(
+				currentQuery,
+				newPanelType as GRAPH_TYPES,
+				DataSource.TRACES,
+			);
+
+			redirectWithQueryBuilderData(query, { [PANEL_TYPES_QUERY]: newPanelType });
 		},
-		[redirectWithCurrentTab],
+		[
+			currentQuery,
+			panelType,
+			redirectWithQueryBuilderData,
+			updateAllQueriesOperators,
+		],
 	);
 
-	useShareBuilderUrl(initialQueriesMap.traces);
+	const defaultValue = useMemo(
+		() =>
+			updateAllQueriesOperators(
+				initialQueriesMap.traces,
+				PANEL_TYPES.TIME_SERIES,
+				DataSource.TRACES,
+			),
+		[updateAllQueriesOperators],
+	);
 
-	useEffect(() => {
-		if (currentUrlTab) return;
-
-		redirectWithCurrentTab(TracesExplorerTabs.TIME_SERIES);
-	}, [currentUrlTab, redirectWithCurrentTab]);
+	useShareBuilderUrl(defaultValue);
 
 	return (
 		<>
 			<QuerySection />
 
 			<Container>
-				<Tabs activeKey={currentTab} items={tabsItems} onChange={handleTabChange} />
+				<Tabs
+					defaultActiveKey={currentTab}
+					activeKey={currentTab}
+					items={tabsItems}
+					onChange={handleTabChange}
+				/>
 			</Container>
 		</>
 	);

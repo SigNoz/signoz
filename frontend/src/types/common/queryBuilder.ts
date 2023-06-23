@@ -143,7 +143,8 @@ export type PanelTypeKeys =
 	| 'VALUE'
 	| 'TABLE'
 	| 'LIST'
-	| 'EMPTY_WIDGET';
+	| 'EMPTY_WIDGET'
+	| 'TRACE';
 
 export type ReduceOperators = 'last' | 'sum' | 'avg' | 'max' | 'min';
 
