@@ -1,5 +1,10 @@
 import { blue, grey, orange } from '@ant-design/colors';
-import { CopyFilled, ExpandAltOutlined } from '@ant-design/icons';
+import {
+	CopyFilled,
+	ExpandAltOutlined,
+	LinkOutlined,
+	MonitorOutlined,
+} from '@ant-design/icons';
 import Convert from 'ansi-to-html';
 import { Button, Divider, Row, Typography } from 'antd';
 import dayjs from 'dayjs';
@@ -7,13 +12,14 @@ import dompurify from 'dompurify';
 import { useNotifications } from 'hooks/useNotifications';
 // utils
 import { FlatLogData } from 'lib/logs/flatLogData';
-import { useCallback, useMemo } from 'react';
+import { MouseEventHandler, useCallback, useEffect, useMemo } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useCopyToClipboard } from 'react-use';
 // interfaces
 import { AppState } from 'store/reducers';
-import { SET_DETAILED_LOG_DATA } from 'types/actions/logs';
+import { SET_CURRENT_LOG, SET_DETAILED_LOG_DATA } from 'types/actions/logs';
 import { ILog } from 'types/api/logs/log';
+import { GlobalReducer } from 'types/reducer/globalTime';
 import { ILogsReducer } from 'types/reducer/logs';
 
 // components
@@ -84,12 +90,27 @@ function ListLogView({ logData }: ListLogViewProps): JSX.Element {
 	const {
 		fields: { selected },
 	} = useSelector<AppState, ILogsReducer>((state) => state.logs);
+	const [value, copyToClipboard] = useCopyToClipboard();
 
 	const dispatch = useDispatch();
 	const flattenLogData = useMemo(() => FlatLogData(logData), [logData]);
 
+	const { minTime, maxTime } = useSelector<AppState, GlobalReducer>(
+		(state) => state.globalTime,
+	);
 	const [, setCopy] = useCopyToClipboard();
 	const { notifications } = useNotifications();
+	useEffect(() => {
+		if (value.value) {
+			notifications.success({
+				message: 'Copied to clipboard',
+			});
+		}
+	}, [value, notifications]);
+
+	const { searchFilter } = useSelector<AppState, ILogsReducer>(
+		(state) => state.logs,
+	);
 
 	const handleDetailedView = useCallback(() => {
 		dispatch({
@@ -103,6 +124,23 @@ function ListLogView({ logData }: ListLogViewProps): JSX.Element {
 		notifications.success({
 			message: 'Copied to clipboard',
 		});
+	};
+
+	const showContextHandler: MouseEventHandler<Element> = (event) => {
+		event.preventDefault();
+		event.stopPropagation();
+		dispatch({
+			type: SET_CURRENT_LOG,
+			payload: logData,
+		});
+	};
+
+	const copyLinkHandler: MouseEventHandler<Element> = (event) => {
+		event.preventDefault();
+		event.stopPropagation();
+		copyToClipboard(`
+			${window.location.origin}/logs?q=${searchFilter.queryString}&startTime=${minTime}&endTime=${maxTime}&selectedLogId=${logData.id}
+		`);
 	};
 
 	const updatedSelecedFields = useMemo(
@@ -156,6 +194,24 @@ function ListLogView({ logData }: ListLogViewProps): JSX.Element {
 					icon={<CopyFilled />}
 				>
 					Copy JSON
+				</Button>
+				<Button
+					onClick={showContextHandler}
+					size="small"
+					type="text"
+					style={{ color: grey[1] }}
+					icon={<MonitorOutlined />}
+				>
+					Show in Context
+				</Button>
+				<Button
+					size="small"
+					type="text"
+					style={{ color: grey[1] }}
+					icon={<LinkOutlined />}
+					onClick={copyLinkHandler}
+				>
+					Copy Link
 				</Button>
 			</Row>
 		</Container>
