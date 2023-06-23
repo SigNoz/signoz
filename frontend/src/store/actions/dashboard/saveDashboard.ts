@@ -1,3 +1,4 @@
+import { notification } from 'antd';
 import updateDashboardApi from 'api/dashboard/update';
 import { AxiosError } from 'axios';
 import { COMPOSITE_QUERY } from 'constants/queryBuilderQueryNames';
@@ -129,10 +130,16 @@ export const SaveDashboard = ({
 				});
 				history.push(generatePath(ROUTES.DASHBOARD, { dashboardId }));
 			} else {
+				const error = 'Something went wrong';
+
+				notification.error({
+					message: response.error || error,
+				});
+
 				dispatch({
 					type: 'SAVE_SETTING_TO_PANEL_ERROR',
 					payload: {
-						errorMessage: response.error || 'Something went wrong',
+						errorMessage: response.error || error,
 					},
 				});
 			}
