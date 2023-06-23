@@ -54,7 +54,7 @@ function GridCardGraph({
 	const { ref: graphRef, inView: isGraphVisible } = useInView({
 		threshold: 0,
 		triggerOnce: true,
-		initialInView: true,
+		initialInView: false,
 	});
 
 	const { notifications } = useNotifications();

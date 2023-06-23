@@ -32,7 +32,7 @@ function TableView({ logData }: TableViewProps): JSX.Element | null {
 
 	const dispatch = useDispatch<Dispatch<AppActions>>();
 
-	const flattenLogData: Record<string, any> | null = useMemo(
+	const flattenLogData: Record<string, string> | null = useMemo(
 		() => (logData ? flattenObject(logData) : null),
 		[logData],
 	);
