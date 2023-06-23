@@ -70,7 +70,7 @@ function FormAlertRules({
 
 	const sq = useMemo(() => mapQueryDataFromApi(initQuery), [initQuery]);
 
-	useShareBuilderUrl({ defaultValue: sq });
+	useShareBuilderUrl(sq);
 
 	useEffect(() => {
 		setAlertDef(initialValue);
