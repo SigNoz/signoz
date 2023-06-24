@@ -124,8 +124,7 @@ function GridGraph(props: Props): JSX.Element {
 				}
 			}
 		})();
-		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, []);
+	}, [dispatch, isAddWidget, layouts, selectedDashboard, widgets]);
 
 	const { featureResponse } = useSelector<AppState, AppReducer>(
 		(state) => state.app,

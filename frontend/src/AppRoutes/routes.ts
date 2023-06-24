@@ -16,6 +16,7 @@ import {
 	ListAllALertsPage,
 	Login,
 	Logs,
+	LogsExplorer,
 	MySettings,
 	NewDashboardPage,
 	OrganizationSettings,
@@ -29,6 +30,7 @@ import {
 	StatusPage,
 	TraceDetail,
 	TraceFilter,
+	TracesExplorer,
 	UnAuthorized,
 	UsageExplorerPage,
 } from './pageComponents';
@@ -140,6 +142,13 @@ const routes: AppRoutes[] = [
 		key: 'TRACE',
 	},
 	{
+		path: ROUTES.TRACES_EXPLORER,
+		exact: true,
+		component: TracesExplorer,
+		isPrivate: true,
+		key: 'TRACES_EXPLORER',
+	},
+	{
 		path: ROUTES.CHANNELS_NEW,
 		exact: true,
 		component: CreateAlertChannelAlerts,
@@ -207,6 +216,13 @@ const routes: AppRoutes[] = [
 		exact: true,
 		component: Logs,
 		key: 'LOGS',
+		isPrivate: true,
+	},
+	{
+		path: ROUTES.LOGS_EXPLORER,
+		exact: true,
+		component: LogsExplorer,
+		key: 'LOGS_EXPLORER',
 		isPrivate: true,
 	},
 	{
