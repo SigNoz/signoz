@@ -15,26 +15,36 @@ import { ActionsWrapperStyled } from './QueryBuilder.styled';
 
 export const QueryBuilder = memo(function QueryBuilder({
 	config,
-	panelType,
+	panelType: newPanelType,
 	actions,
 }: QueryBuilderProps): JSX.Element {
 	const {
 		currentQuery,
-		setupInitialDataSource,
 		addNewBuilderQuery,
 		addNewFormula,
-		handleSetPanelType,
+		handleSetConfig,
+		panelType,
+		initialDataSource,
 	} = useQueryBuilder();
 
-	useEffect(() => {
-		if (config && config.queryVariant === 'static') {
-			setupInitialDataSource(config.initialDataSource);
-		}
-	}, [config, setupInitialDataSource]);
+	const currentDataSource = useMemo(
+		() =>
+			(config && config.queryVariant === 'static' && config.initialDataSource) ||
+			null,
+		[config],
+	);
 
 	useEffect(() => {
-		handleSetPanelType(panelType);
-	}, [handleSetPanelType, panelType]);
+		if (currentDataSource !== initialDataSource || newPanelType !== panelType) {
+			handleSetConfig(newPanelType, currentDataSource);
+		}
+	}, [
+		handleSetConfig,
+		panelType,
+		initialDataSource,
+		currentDataSource,
+		newPanelType,
+	]);
 
 	const isDisabledQueryButton = useMemo(
 		() => currentQuery.builder.queryData.length >= MAX_QUERIES,
@@ -54,7 +64,7 @@ export const QueryBuilder = memo(function QueryBuilder({
 	);
 
 	return (
-		<Row gutter={[0, 20]} justify="start">
+		<Row style={{ width: '100%' }} gutter={[0, 20]} justify="start">
 			<Col span={24}>
 				<Row gutter={[0, 50]}>
 					{currentQuery.builder.queryData.map((query, index) => (

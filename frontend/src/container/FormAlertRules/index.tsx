@@ -70,7 +70,7 @@ function FormAlertRules({
 
 	const sq = useMemo(() => mapQueryDataFromApi(initQuery), [initQuery]);
 
-	useShareBuilderUrl({ defaultValue: sq });
+	useShareBuilderUrl(sq);
 
 	useEffect(() => {
 		setAlertDef(initialValue);
@@ -380,8 +380,8 @@ function FormAlertRules({
 
 	const isAlertAvialableToSave =
 		isAlertAvialable &&
-		isNewRule &&
-		currentQuery.queryType === EQueryType.QUERY_BUILDER;
+		currentQuery.queryType === EQueryType.QUERY_BUILDER &&
+		alertType !== AlertTypes.METRICS_BASED_ALERT;
 
 	return (
 		<>

@@ -15,6 +15,11 @@ export const ServiceMapPage = Loadable(
 	() => import(/* webpackChunkName: "ServiceMapPage" */ 'modules/Servicemap'),
 );
 
+export const TracesExplorer = Loadable(
+	() =>
+		import(/* webpackChunkName: "Traces Explorer Page" */ 'pages/TracesExplorer'),
+);
+
 export const TraceFilter = Loadable(
 	() => import(/* webpackChunkName: "Trace Filter Page" */ 'pages/Trace'),
 );

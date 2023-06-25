@@ -1,5 +1,4 @@
-import GetMinMax from 'lib/getMinMax';
-import GetStartAndEndTime from 'lib/getStartAndEndTime';
+import getStartEndRangeTime from 'lib/getStartEndRangeTime';
 import store from 'store';
 
 export const getDashboardVariables = (): Record<string, unknown> => {
@@ -13,16 +12,11 @@ export const getDashboardVariables = (): Record<string, unknown> => {
 			data: { variables = {} },
 		} = selectedDashboard;
 
-		const minMax = GetMinMax(globalTime.selectedTime, [
-			globalTime.minTime / 1000000,
-			globalTime.maxTime / 1000000,
-		]);
-
-		const { start, end } = GetStartAndEndTime({
+		const { start, end } = getStartEndRangeTime({
 			type: 'GLOBAL_TIME',
-			minTime: minMax.minTime,
-			maxTime: minMax.maxTime,
+			interval: globalTime.selectedTime,
 		});
+
 		const variablesTuple: Record<string, unknown> = {
 			SIGNOZ_START_TIME: parseInt(start, 10) * 1e3,
 			SIGNOZ_END_TIME: parseInt(end, 10) * 1e3,
