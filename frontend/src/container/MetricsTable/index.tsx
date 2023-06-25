@@ -14,23 +14,17 @@ import ROUTES from 'constants/routes';
 import { routeConfig } from 'container/SideNav/config';
 import { getQueryString } from 'container/SideNav/helper';
 import { useCallback, useMemo, useState } from 'react';
-import { useSelector } from 'react-redux';
 import { Link, useLocation } from 'react-router-dom';
-import { AppState } from 'store/reducers';
 import { ServicesList } from 'types/api/metrics/getService';
-import MetricReducer from 'types/reducer/metrics';
 
+import MatricsTableProp from './MetricsTable';
 import SkipBoardModal from './SkipOnBoardModal';
 import { Container, Name } from './styles';
 
-function Metrics(): JSX.Element {
+function Metrics({ services, loading, error }: MatricsTableProp): JSX.Element {
 	const { search } = useLocation();
 	const [skipOnboarding, setSkipOnboarding] = useState(
 		localStorageGet(SKIP_ONBOARDING) === 'true',
-	);
-
-	const { services, loading, error } = useSelector<AppState, MetricReducer>(
-		(state) => state.metrics,
 	);
 
 	const onContinueClick = (): void => {
