@@ -8,21 +8,26 @@ export const updateStepInterval = (
 	query: Widgets['query'],
 	maxTime: number,
 	minTime: number,
-): Widgets['query'] => ({
-	...query,
-	builder: {
-		...query?.builder,
-		queryData:
-			query?.builder?.queryData?.map((item) => ({
-				...item,
-				stepInterval: getStep({
-					end: maxTime,
-					inputFormat: 'ns',
-					start: minTime,
-				}),
-			})) || [],
-	},
-});
+): Widgets['query'] => {
+	const stepInterval = getStep({
+		start: minTime,
+		end: maxTime,
+		inputFormat: 'ns',
+	});
+
+	return {
+		...query,
+		builder: {
+			...query?.builder,
+			queryData:
+				query?.builder?.queryData?.map((item) => ({
+					...item,
+					stepInterval:
+						item.stepInterval < stepInterval ? stepInterval : item.stepInterval,
+				})) || [],
+		},
+	};
+};
 
 export const useStepInterval = (query: Widgets['query']): Widgets['query'] => {
 	const { maxTime, minTime } = useSelector<AppState, GlobalReducer>(
