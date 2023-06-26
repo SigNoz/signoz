@@ -26,9 +26,14 @@ describe('get dynamic step size', () => {
 			inputFormat: 'ms',
 		});
 
+		// the expected step size should be no less than DefaultStepSize
 		const diffSec = Math.abs(dayjs(end).diff(dayjs(start), 's'));
+		const expectedStep = Math.max(
+			Math.floor(diffSec / MaxDataPoints),
+			DefaultStepSize,
+		);
 
-		expect(step).toBe(Math.floor(diffSec / MaxDataPoints));
+		expect(step).toBe(expectedStep);
 	});
 
 	test('should correctly handle different input formats', () => {
@@ -42,8 +47,12 @@ describe('get dynamic step size', () => {
 		});
 
 		const diffSec = Math.abs(dayjs.unix(endSec).diff(dayjs.unix(startSec), 's'));
+		const expectedStep = Math.max(
+			Math.floor(diffSec / MaxDataPoints),
+			DefaultStepSize,
+		);
 
-		expect(stepSec).toBe(Math.floor(diffSec / MaxDataPoints));
+		expect(stepSec).toBe(expectedStep);
 
 		const startNs = startSec * 1e9; // convert to nanoseconds
 		const endNs = endSec * 1e9; // convert to nanoseconds
@@ -54,7 +63,7 @@ describe('get dynamic step size', () => {
 			inputFormat: 'ns',
 		});
 
-		expect(stepNs).toBe(stepSec); // Expect the same result as 's' inputFormat
+		expect(stepNs).toBe(expectedStep); // Expect the same result as 's' inputFormat
 	});
 
 	test('should throw an error for invalid input format', () => {
