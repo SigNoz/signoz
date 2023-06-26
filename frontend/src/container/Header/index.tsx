@@ -91,7 +91,7 @@ function HeaderContainer(): JSX.Element {
 
 	const onClickSignozCloud = (): void => {
 		window.open(
-			'https://signoz.io/pricing/?utm_source=product_navbar&utm_medium=frontend',
+			'https://signoz.io/oss-to-cloud/?utm_source=product_navbar&utm_medium=frontend&utm_campaign=oss_users',
 			'_blank',
 		);
 	};

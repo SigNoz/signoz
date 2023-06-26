@@ -36,8 +36,8 @@ const (
 	DESC            = "desc"
 )
 
-var tokenRegex, _ = regexp.Compile(`(?i)(and( )*?|or( )*?)?(([\w.-]+( )+(in|nin)( )+\([^(]+\))|([\w.]+( )+(gt|lt|gte|lte)( )+(')?[\S]+(')?)|([\w.]+( )+(contains|ncontains))( )+[^\\]?'(.*?[^\\])')`)
-var operatorRegex, _ = regexp.Compile(`(?i)(?: )(in|nin|gt|lt|gte|lte|contains|ncontains)(?: )`)
+var tokenRegex, _ = regexp.Compile(`(?i)(and( )*?|or( )*?)?(([\w.-]+( )+(in|nin)( )+\([^(]+\))|([\w.]+( )+(gt|lt|gte|lte)( )+(')?[\S]+(')?)|([\w.]+( )+(contains|ncontains))( )+[^\\]?'(.*?[^\\])'|([\w.]+( )+(exists|nexists)( )?))`)
+var operatorRegex, _ = regexp.Compile(`(?i)(?: )(in|nin|gte|lte|gt|lt|contains|ncontains|exists|nexists)(?: )?`)
 
 func ParseLogFilterParams(r *http.Request) (*model.LogsFilterParams, error) {
 	res := model.LogsFilterParams{
@@ -191,13 +191,18 @@ func parseLogQuery(query string) ([]string, error) {
 			sqlQueryTokens = append(sqlQueryTokens, f)
 		} else {
 			symbol := operatorMapping[strings.ToLower(op)]
-			sqlExpr := strings.Replace(v, " "+op+" ", " "+symbol+" ", 1)
-			splittedExpr := strings.Split(sqlExpr, symbol)
-			if len(splittedExpr) != 2 {
-				return nil, fmt.Errorf("error while splitting expression: %s", sqlExpr)
+			if symbol != "" {
+				sqlExpr := strings.Replace(v, " "+op+" ", " "+symbol+" ", 1)
+				splittedExpr := strings.Split(sqlExpr, symbol)
+				if len(splittedExpr) != 2 {
+					return nil, fmt.Errorf("error while splitting expression: %s", sqlExpr)
+				}
+				trimmedSqlExpr := fmt.Sprintf("%s %s %s ", strings.Join(strings.Fields(splittedExpr[0]), " "), symbol, strings.TrimSpace(splittedExpr[1]))
+				sqlQueryTokens = append(sqlQueryTokens, trimmedSqlExpr)
+			} else {
+				// for exists|nexists don't process it here since we don't have metadata
+				sqlQueryTokens = append(sqlQueryTokens, v)
 			}
-			trimmedSqlExpr := fmt.Sprintf("%s %s %s ", strings.Join(strings.Fields(splittedExpr[0]), " "), symbol, strings.TrimSpace(splittedExpr[1]))
-			sqlQueryTokens = append(sqlQueryTokens, trimmedSqlExpr)
 		}
 	}
 
@@ -209,9 +214,6 @@ func parseColumn(s string) (*string, error) {
 
 	// if has and/or as prefix
 	filter := strings.Split(s, " ")
-	if len(filter) < 3 {
-		return nil, fmt.Errorf("incorrect filter")
-	}
 
 	first := strings.ToLower(filter[0])
 	if first == AND || first == OR {
@@ -247,6 +249,9 @@ func replaceInterestingFields(allFields *model.GetFieldsResponse, queryTokens []
 }
 
 func replaceFieldInToken(queryToken string, selectedFieldsLookup map[string]model.LogField, interestingFieldLookup map[string]model.LogField) (string, error) {
+	op := strings.TrimSpace(operatorRegex.FindString(queryToken))
+	opLower := strings.ToLower(op)
+
 	col, err := parseColumn(queryToken)
 	if err != nil {
 		return "", err
@@ -254,6 +259,42 @@ func replaceFieldInToken(queryToken string, selectedFieldsLookup map[string]mode
 
 	sqlColName := *col
 	lowerColName := strings.ToLower(*col)
+
+	if opLower == "exists" || opLower == "nexists" {
+		var result string
+
+		// handle static fields which are columns, timestamp and id is not required but added them regardless
+		defaultValue := ""
+		if lowerColName == "trace_id" || lowerColName == "span_id" || lowerColName == "severity_text" || lowerColName == "id" {
+			defaultValue = "''"
+		}
+		if lowerColName == "trace_flags" || lowerColName == "severity_number" || lowerColName == "timestamp" {
+			defaultValue = "0"
+		}
+
+		if defaultValue != "" {
+			if opLower == "exists" {
+				result = fmt.Sprintf("%s != %s", sqlColName, defaultValue)
+			} else {
+				result = fmt.Sprintf("%s = %s", sqlColName, defaultValue)
+			}
+		} else {
+			// creating the query token here as we have the metadata
+			field := model.LogField{}
+
+			if sfield, ok := selectedFieldsLookup[sqlColName]; ok {
+				field = sfield
+			} else if ifield, ok := interestingFieldLookup[sqlColName]; ok {
+				field = ifield
+			}
+			result = fmt.Sprintf("has(%s_%s_key, '%s')", field.Type, strings.ToLower(field.DataType), field.Name)
+			if opLower == "nexists" {
+				result = "NOT " + result
+			}
+		}
+		return strings.Replace(queryToken, sqlColName+" "+op, result, 1), nil
+	}
+
 	if lowerColName != "body" {
 		if _, ok := selectedFieldsLookup[sqlColName]; !ok {
 			if field, ok := interestingFieldLookup[sqlColName]; ok {

@@ -21,6 +21,7 @@ import { AppState } from 'store/reducers';
 import { Widgets } from 'types/api/dashboard/getAll';
 import { EQueryType } from 'types/common/dashboard';
 import MetricReducer from 'types/reducer/metrics';
+import { v4 as uuid } from 'uuid';
 
 import {
 	errorPercentage,
@@ -91,6 +92,7 @@ function Application({ getWidgetQueryBuilder }: DashboardProps): JSX.Element {
 					topLevelOperations,
 				}),
 				clickhouse_sql: [],
+				id: uuid(),
 			}),
 		[getWidgetQueryBuilder, servicename, topLevelOperations, tagFilterItems],
 	);
@@ -106,6 +108,7 @@ function Application({ getWidgetQueryBuilder }: DashboardProps): JSX.Element {
 					topLevelOperations,
 				}),
 				clickhouse_sql: [],
+				id: uuid(),
 			}),
 		[servicename, topLevelOperations, tagFilterItems, getWidgetQueryBuilder],
 	);
