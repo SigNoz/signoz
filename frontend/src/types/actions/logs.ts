@@ -1,4 +1,5 @@
 import { LogViewMode } from 'container/LogsTable';
+import { Pagination } from 'hooks/queryPagination';
 import { ILogQLParsedQueryItem } from 'lib/logql/types';
 import { IField, IFieldMoveToSelected, IFields } from 'types/api/logs/fields';
 import { TLogsLiveTailState } from 'types/api/logs/liveTail';
@@ -70,7 +71,7 @@ export interface UpdateLogs {
 export interface SetLogsLinesPerPage {
 	type: typeof SET_LOG_LINES_PER_PAGE;
 	payload: {
-		logsLinesPerPage: number;
+		logsLinesPerPage: Pagination['limit'];
 	};
 }
 
