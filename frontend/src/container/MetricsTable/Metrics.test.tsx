@@ -51,16 +51,14 @@ describe('Metrics Component', () => {
 		});
 	});
 
-	it('renders loading when required conditions are met', async () => {
-		const { container } = render(
+	it('renders if the data is loaded in the table', async () => {
+		render(
 			<BrowserRouter>
-				<Metrics services={services} loading error={false} />
+				<Metrics services={services} loading={false} error={false} />
 			</BrowserRouter>,
 		);
 
-		const spinner = container.querySelector('.ant-spin-nested-loading');
-
-		expect(spinner).toBeInTheDocument();
+		expect(screen.getByText('frontend')).toBeInTheDocument();
 	});
 
 	it('renders no data when required conditions are met', async () => {
