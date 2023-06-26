@@ -30,7 +30,7 @@ function Metrics(): JSX.Element {
 	);
 
 	const { data, error, isLoading } = useQuery(
-		[minTime, maxTime, selectedTime],
+		[minTime, maxTime, selectedTime, selectedTags],
 		() =>
 			getService({
 				end: maxTime,

@@ -1,34 +1,47 @@
-import { render, RenderResult, screen, waitFor } from '@testing-library/react';
-import { ReactElement } from 'react';
-import { Provider } from 'react-redux';
+import { render, screen, waitFor } from '@testing-library/react';
 import { BrowserRouter } from 'react-router-dom';
-import {
-	combineReducers,
-	legacy_createStore as createStore,
-	Store,
-} from 'redux';
 
-import { InitialValue } from '../../store/reducers/metric';
 import Metrics from './index';
 
-const rootReducer = combineReducers({
-	metrics: (state = InitialValue) => state,
-});
+jest.mock('react-router-dom', () => ({
+	...jest.requireActual('react-router-dom'),
+	useLocation: (): { pathname: string } => ({
+		pathname: 'localhost:3001/services/',
+	}),
+}));
 
-const mockStore = createStore(rootReducer);
-
-const renderWithReduxAndRouter = (mockStore: Store) => (
-	component: ReactElement,
-): RenderResult =>
-	render(
-		<BrowserRouter>
-			<Provider store={mockStore}>{component}</Provider>
-		</BrowserRouter>,
-	);
+const services = [
+	{
+		serviceName: 'frontend',
+		p99: 1261498140,
+		avgDuration: 768497850.9803921,
+		numCalls: 255,
+		callRate: 0.9444444444444444,
+		numErrors: 0,
+		errorRate: 0,
+		num4XX: 0,
+		fourXXRate: 0,
+	},
+	{
+		serviceName: 'customer',
+		p99: 890150740.0000001,
+		avgDuration: 369612035.2941176,
+		numCalls: 255,
+		callRate: 0.9444444444444444,
+		numErrors: 0,
+		errorRate: 0,
+		num4XX: 0,
+		fourXXRate: 0,
+	},
+];
 
 describe('Metrics Component', () => {
 	it('renders without errors', async () => {
-		renderWithReduxAndRouter(mockStore)(<Metrics />);
+		render(
+			<BrowserRouter>
+				<Metrics services={services} loading={false} error={false} />
+			</BrowserRouter>,
+		);
 
 		await waitFor(() => {
 			expect(screen.getByText(/application/i)).toBeInTheDocument();
@@ -39,15 +52,11 @@ describe('Metrics Component', () => {
 	});
 
 	it('renders loading when required conditions are met', async () => {
-		const customStore = createStore(rootReducer, {
-			metrics: {
-				services: [],
-				loading: true,
-				error: false,
-			},
-		});
-
-		const { container } = renderWithReduxAndRouter(customStore)(<Metrics />);
+		const { container } = render(
+			<BrowserRouter>
+				<Metrics services={services} loading error={false} />
+			</BrowserRouter>,
+		);
 
 		const spinner = container.querySelector('.ant-spin-nested-loading');
 
@@ -55,15 +64,11 @@ describe('Metrics Component', () => {
 	});
 
 	it('renders no data when required conditions are met', async () => {
-		const customStore = createStore(rootReducer, {
-			metrics: {
-				services: [],
-				loading: false,
-				error: false,
-			},
-		});
-
-		renderWithReduxAndRouter(customStore)(<Metrics />);
+		render(
+			<BrowserRouter>
+				<Metrics services={[]} loading={false} error={false} />
+			</BrowserRouter>,
+		);
 
 		expect(screen.getByText('No data')).toBeInTheDocument();
 	});
