@@ -143,7 +143,8 @@ export type PanelTypeKeys =
 	| 'VALUE'
 	| 'TABLE'
 	| 'LIST'
-	| 'EMPTY_WIDGET';
+	| 'EMPTY_WIDGET'
+	| 'TRACE';
 
 export type ReduceOperators = 'last' | 'sum' | 'avg' | 'max' | 'min';
 
@@ -156,7 +157,8 @@ export type QueryBuilderContextType = {
 	currentQuery: Query;
 	stagedQuery: Query | null;
 	initialDataSource: DataSource | null;
-	panelType: GRAPH_TYPES;
+	panelType: GRAPH_TYPES | null;
+	isEnabledQuery: boolean;
 	handleSetQueryData: (index: number, queryData: IBuilderQuery) => void;
 	handleSetFormulaData: (index: number, formulaData: IBuilderFormula) => void;
 	handleSetQueryItemData: (
@@ -164,8 +166,10 @@ export type QueryBuilderContextType = {
 		type: EQueryType.PROM | EQueryType.CLICKHOUSE,
 		newQueryData: IPromQLQuery | IClickHouseQuery,
 	) => void;
-	handleSetPanelType: (newPanelType: GRAPH_TYPES) => void;
-	setupInitialDataSource: (newInitialDataSource: DataSource | null) => void;
+	handleSetConfig: (
+		newPanelType: GRAPH_TYPES,
+		dataSource: DataSource | null,
+	) => void;
 	removeQueryBuilderEntityByIndex: (
 		type: keyof QueryBuilderData,
 		index: number,
@@ -183,6 +187,11 @@ export type QueryBuilderContextType = {
 	) => void;
 	handleRunQuery: () => void;
 	resetStagedQuery: () => void;
+	updateAllQueriesOperators: (
+		queryData: Query,
+		panelType: GRAPH_TYPES,
+		dataSource: DataSource,
+	) => Query;
 };
 
 export type QueryAdditionalFilter = {
