@@ -1,6 +1,6 @@
 import {
 	initialFormulaBuilderFormValues,
-	initialQueryBuilderFormValues,
+	initialQueryBuilderFormValuesMap,
 } from 'constants/queryBuilder';
 import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { TagFilterItem } from 'types/api/queryBuilder/queryBuilderData';
@@ -18,7 +18,7 @@ export const getQueryBuilderQueries = ({
 	queryFormulas: [],
 	queryData: [
 		{
-			...initialQueryBuilderFormValues,
+			...initialQueryBuilderFormValuesMap.metrics,
 			aggregateOperator: MetricAggregateOperator.SUM_RATE,
 			disabled: false,
 			groupBy,
@@ -53,7 +53,7 @@ export const getQueryBuilderQuerieswithFormula = ({
 	],
 	queryData: [
 		{
-			...initialQueryBuilderFormValues,
+			...initialQueryBuilderFormValuesMap.metrics,
 			aggregateOperator: MetricAggregateOperator.SUM_RATE,
 			disabled,
 			groupBy,
@@ -66,7 +66,7 @@ export const getQueryBuilderQuerieswithFormula = ({
 			},
 		},
 		{
-			...initialQueryBuilderFormValues,
+			...initialQueryBuilderFormValuesMap.metrics,
 			aggregateOperator: MetricAggregateOperator.SUM_RATE,
 			disabled,
 			groupBy,

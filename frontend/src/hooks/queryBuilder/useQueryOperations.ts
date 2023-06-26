@@ -1,7 +1,8 @@
 import {
 	initialAutocompleteData,
-	initialQueryBuilderFormValues,
+	initialQueryBuilderFormValuesMap,
 	mapOfFilters,
+	PANEL_TYPES,
 } from 'constants/queryBuilder';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { getOperatorsBySourceAndPanelType } from 'lib/newQueryBuilder/getOperatorsBySourceAndPanelType';
@@ -21,6 +22,7 @@ export const useQueryOperations: UseQueryOperations = ({ query, index }) => {
 		handleSetQueryData,
 		removeQueryBuilderEntityByIndex,
 		panelType,
+		initialDataSource,
 	} = useQueryBuilder();
 	const [operators, setOperators] = useState<SelectOption<string, string>[]>([]);
 	const [listOfAdditionalFilters, setListOfAdditionalFilters] = useState<
@@ -77,12 +79,12 @@ export const useQueryOperations: UseQueryOperations = ({ query, index }) => {
 		(nextSource: DataSource): void => {
 			const newOperators = getOperatorsBySourceAndPanelType({
 				dataSource: nextSource,
-				panelType,
+				panelType: panelType || PANEL_TYPES.TIME_SERIES,
 			});
 
-			const entries = Object.entries(initialQueryBuilderFormValues).filter(
-				([key]) => key !== 'queryName' && key !== 'expression',
-			);
+			const entries = Object.entries(
+				initialQueryBuilderFormValuesMap.metrics,
+			).filter(([key]) => key !== 'queryName' && key !== 'expression');
 
 			const initCopyResult = Object.fromEntries(entries);
 
@@ -121,12 +123,17 @@ export const useQueryOperations: UseQueryOperations = ({ query, index }) => {
 	);
 
 	useEffect(() => {
+		if (initialDataSource && dataSource !== initialDataSource) return;
+
 		const initialOperators = getOperatorsBySourceAndPanelType({
 			dataSource,
-			panelType,
+			panelType: panelType || PANEL_TYPES.TIME_SERIES,
 		});
+
+		if (JSON.stringify(operators) === JSON.stringify(initialOperators)) return;
+
 		setOperators(initialOperators);
-	}, [dataSource, panelType]);
+	}, [dataSource, initialDataSource, panelType, operators]);
 
 	useEffect(() => {
 		const additionalFilters = getNewListOfAdditionalFilters(dataSource);

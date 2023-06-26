@@ -196,7 +196,54 @@ export const Query = memo(function Query({
 			}
 
 			default: {
-				return null;
+				return (
+					<>
+						<Col span={11}>
+							<Row gutter={[11, 5]}>
+								<Col flex="5.93rem">
+									<FilterLabel label="Limit" />
+								</Col>
+								<Col flex="1 1 12.5rem">
+									<LimitFilter query={query} onChange={handleChangeLimit} />
+								</Col>
+							</Row>
+						</Col>
+						<Col span={11}>
+							<Row gutter={[11, 5]}>
+								<Col flex="5.93rem">
+									<FilterLabel label="HAVING" />
+								</Col>
+								<Col flex="1 1 12.5rem">
+									<HavingFilter onChange={handleChangeHavingFilter} query={query} />
+								</Col>
+							</Row>
+						</Col>
+						<Col span={11}>
+							<Row gutter={[11, 5]}>
+								<Col flex="5.93rem">
+									<FilterLabel label="Order by" />
+								</Col>
+								<Col flex="1 1 12.5rem">
+									<OrderByFilter query={query} onChange={handleChangeOrderByKeys} />
+								</Col>
+							</Row>
+						</Col>
+
+						<Col span={11}>
+							<Row gutter={[11, 5]}>
+								<Col flex="5.93rem">
+									<FilterLabel label="Aggregate Every" />
+								</Col>
+								<Col flex="1 1 6rem">
+									<AggregateEveryFilter
+										query={query}
+										onChange={handleChangeAggregateEvery}
+									/>
+								</Col>
+							</Row>
+						</Col>
+					</>
+				);
 			}
 		}
 	}, [
