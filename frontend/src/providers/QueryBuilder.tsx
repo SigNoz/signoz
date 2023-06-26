@@ -365,7 +365,6 @@ export function QueryBuilderProvider({
 	) => T[] = useCallback(
 		(arr, index, newQueryItem) =>
 			arr.map((item, idx) => (index === idx ? newQueryItem : item)),
-
 		[],
 	);
 
@@ -462,7 +461,10 @@ export function QueryBuilderProvider({
 				id: uuid(),
 			};
 
-			urlQuery.set(COMPOSITE_QUERY, JSON.stringify(currentGeneratedQuery));
+			urlQuery.set(
+				COMPOSITE_QUERY,
+				JSON.stringify(updateStepInterval(currentGeneratedQuery, maxTime, minTime)),
+			);
 
 			if (searchParams) {
 				Object.keys(searchParams).forEach((param) =>
@@ -474,7 +476,7 @@ export function QueryBuilderProvider({
 
 			history.push(generatedUrl);
 		},
-		[history, location, urlQuery],
+		[history, location.pathname, maxTime, minTime, urlQuery],
 	);
 
 	const handleSetConfig = useCallback(

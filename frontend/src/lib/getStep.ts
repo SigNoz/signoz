@@ -30,7 +30,7 @@ const convertToMs = (
 };
 
 export const DefaultStepSize = 60;
-export const MaxDataPoints = 200;
+export const MaxDataPoints = 300;
 
 /**
  *	Returns relevant step size based on given start and end date.
