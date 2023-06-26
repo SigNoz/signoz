@@ -1,6 +1,8 @@
 import { Select, Spin } from 'antd';
 import { getAggregateKeys } from 'api/queryBuilder/getAttributeKeys';
 import { QueryBuilderKeys } from 'constants/queryBuilder';
+import { IOption } from 'hooks/useResourceAttribute/types';
+import { uniqWith } from 'lodash-es';
 import * as Papa from 'papaparse';
 import { useCallback, useMemo, useState } from 'react';
 import { useQuery } from 'react-query';
@@ -22,7 +24,7 @@ export function OrderByFilter({
 	onChange,
 }: OrderByFilterProps): JSX.Element {
 	const [searchText, setSearchText] = useState<string>('');
-	const [selectedValue, setSelectedValue] = useState<string[]>([]);
+	const [selectedValue, setSelectedValue] = useState<IOption[]>([]);
 
 	const { data, isFetching } = useQuery(
 		[QueryBuilderKeys.GET_AGGREGATE_KEYS, searchText],
@@ -66,12 +68,30 @@ export function OrderByFilter({
 		[query.aggregateAttribute.key, query.aggregateOperator, query.groupBy],
 	);
 
+	const customValue: IOption[] = useMemo(() => {
+		if (!searchText) return [];
+
+		return [
+			{
+				label: `${searchText} asc`,
+				value: `${searchText}${orderByValueDelimiter}asc`,
+			},
+			{
+				label: `${searchText} desc`,
+				value: `${searchText}${orderByValueDelimiter}desc`,
+			},
+		];
+	}, [searchText]);
+
 	const optionsData = useMemo(() => {
 		const options =
 			query.aggregateOperator === MetricAggregateOperator.NOOP
 				? noAggregationOptions
 				: aggregationOptions;
-		return options.filter(
+
+		const resultOption = [...customValue, ...options];
+
+		return resultOption.filter(
 			(option) =>
 				!getLabelFromValue(selectedValue).includes(
 					getRemoveOrderFromValue(option.value),
@@ -79,30 +99,58 @@ export function OrderByFilter({
 		);
 	}, [
 		aggregationOptions,
+		customValue,
 		noAggregationOptions,
 		query.aggregateOperator,
 		selectedValue,
 	]);
 
-	const handleChange = (values: string[]): void => {
-		setSelectedValue(values);
-		const orderByValues: OrderByPayload[] = values.map((item) => {
-			const match = Papa.parse(item, { delimiter: '|' });
+	const getUniqValues = useCallback((values: IOption[]): IOption[] => {
+		const modifiedValues = values.map((item) => {
+			const match = Papa.parse(item.value, { delimiter: orderByValueDelimiter });
+			if (!match) return { label: item.label, value: item.value };
+			// eslint-disable-next-line @typescript-eslint/naming-convention, @typescript-eslint/no-unused-vars
+			const [_, order] = match.data.flat() as string[];
+			if (order) return { label: item.label, value: item.value };
+
+			return {
+				label: `${item.value} asc`,
+				value: `${item.value}${orderByValueDelimiter}asc`,
+			};
+		});
+
+		return uniqWith(
+			modifiedValues,
+			(current, next) =>
+				getRemoveOrderFromValue(current.value) ===
+				getRemoveOrderFromValue(next.value),
+		);
+	}, []);
+
+	const handleChange = (values: IOption[]): void => {
+		const result = getUniqValues(values);
+
+		setSelectedValue(result);
+		const orderByValues: OrderByPayload[] = result.map((item) => {
+			const match = Papa.parse(item.value, { delimiter: orderByValueDelimiter });
+
 			if (match) {
 				const [columnName, order] = match.data.flat() as string[];
 				return {
 					columnName: checkIfKeyPresent(columnName, query.aggregateAttribute.key)
 						? '#SIGNOZ_VALUE'
 						: columnName,
-					order,
+					order: order ?? 'asc',
 				};
 			}
 
 			return {
-				columnName: item,
-				order: '',
+				columnName: item.value,
+				order: 'asc',
 			};
 		});
+
+		setSearchText('');
 		onChange(orderByValues);
 	};
 
@@ -126,6 +174,8 @@ export function OrderByFilter({
 			showSearch
 			disabled={isMetricsDataSource && isDisabledSelect}
 			showArrow={false}
+			value={selectedValue}
+			labelInValue
 			filterOption={false}
 			options={optionsData}
 			notFoundContent={isFetching ? <Spin size="small" /> : null}
