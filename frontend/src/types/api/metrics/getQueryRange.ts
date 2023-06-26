@@ -5,6 +5,7 @@ export interface MetricRangePayloadProps {
 	data: {
 		result: QueryData[];
 		resultType: string;
+		newResult: MetricRangePayloadV3;
 	};
 }
 
