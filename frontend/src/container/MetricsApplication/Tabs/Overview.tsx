@@ -56,8 +56,6 @@ function Application({ getWidgetQueryBuilder }: DashboardProps): JSX.Element {
 		globalTime.maxTime / 1000000,
 	]);
 
-	console.log('MaxTime', maxTime / 100000, 'MinTime', minTime / 1000000);
-
 	const { servicename } = useParams<{ servicename?: string }>();
 	const [selectedTimeStamp, setSelectedTimeStamp] = useState<number>(0);
 	const [serviceError, setServiceError] = useState<string>('');
