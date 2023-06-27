@@ -123,6 +123,7 @@ function Application({ getWidgetQueryBuilder }: DashboardProps): JSX.Element {
 		data: topOperations,
 		error: topOperationsError,
 		isError: topOperationsIsError,
+		isLoading: topOperationsLoading,
 	} = useQuery(
 		[
 			`topOperation`,
@@ -144,6 +145,7 @@ function Application({ getWidgetQueryBuilder }: DashboardProps): JSX.Element {
 		data: topLevelOperations,
 		error: topLevelOperationsError,
 		isError: topLevelOperationsIsError,
+		isLoading: topLevelOperationsLoading,
 	} = useQuery(
 		[
 			`topLevelOperation`,
@@ -367,7 +369,7 @@ function Application({ getWidgetQueryBuilder }: DashboardProps): JSX.Element {
 					</Button>
 					<Card>
 						{topLevelOperationsIsError && <Typography>{topLevelOpsError}</Typography>}
-						{!topLevelOperationsIsError && (
+						{!topLevelOperationsIsError && !topLevelOperationsLoading && (
 							<>
 								<GraphTitle>Rate (ops/s)</GraphTitle>
 								<GraphContainer>
@@ -400,7 +402,7 @@ function Application({ getWidgetQueryBuilder }: DashboardProps): JSX.Element {
 
 					<Card>
 						{topLevelOperationsIsError && <Typography>{topLevelOpsError}</Typography>}
-						{!topLevelOperationsIsError && (
+						{!topLevelOperationsIsError && !topLevelOperationsLoading && (
 							<>
 								<GraphTitle>Error Percentage</GraphTitle>
 								<GraphContainer>
@@ -421,7 +423,7 @@ function Application({ getWidgetQueryBuilder }: DashboardProps): JSX.Element {
 				<Col span={12}>
 					<Card>
 						{topOperationsIsError && <Typography>{topOpsError}</Typography>}
-						{!topOperationsIsError && (
+						{!topOperationsIsError && !topOperationsLoading && (
 							<TopOperationsTable data={topOperations || []} />
 						)}
 					</Card>
