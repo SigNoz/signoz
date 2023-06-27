@@ -56,6 +56,8 @@ function Application({ getWidgetQueryBuilder }: DashboardProps): JSX.Element {
 		globalTime.maxTime / 1000000,
 	]);
 
+	console.log('MaxTime', maxTime / 100000, 'MinTime', minTime / 1000000);
+
 	const { servicename } = useParams<{ servicename?: string }>();
 	const [selectedTimeStamp, setSelectedTimeStamp] = useState<number>(0);
 	const [serviceError, setServiceError] = useState<string>('');
@@ -102,6 +104,8 @@ function Application({ getWidgetQueryBuilder }: DashboardProps): JSX.Element {
 			servicename,
 			getStep({ start: minTime, end: maxTime, inputFormat: 'ns' }),
 			selectedTags,
+			globalTime.minTime,
+			globalTime.maxTime,
 		],
 		() =>
 			getServiceOverview({
@@ -121,23 +125,39 @@ function Application({ getWidgetQueryBuilder }: DashboardProps): JSX.Element {
 		data: topOperations,
 		error: topOperationsError,
 		isError: topOperationsIsError,
-	} = useQuery([`topOperation`, servicename, selectedTags], () =>
-		getTopOperations({
-			service: servicename || '',
-			start: minTime,
-			end: maxTime,
+	} = useQuery(
+		[
+			`topOperation`,
+			servicename,
 			selectedTags,
-		}),
+			globalTime.minTime,
+			globalTime.maxTime,
+		],
+		() =>
+			getTopOperations({
+				service: servicename || '',
+				start: minTime,
+				end: maxTime,
+				selectedTags,
+			}),
 	);
 
 	const {
 		data: topLevelOperations,
 		error: topLevelOperationsError,
 		isError: topLevelOperationsIsError,
-	} = useQuery([`topLevelOperation`, servicename, selectedTags], () =>
-		getTopLevelOperations({
-			service: servicename || '',
-		}),
+	} = useQuery(
+		[
+			`topLevelOperation`,
+			servicename,
+			selectedTags,
+			globalTime.minTime,
+			globalTime.maxTime,
+		],
+		() =>
+			getTopLevelOperations({
+				service: servicename || '',
+			}),
 	);
 
 	useEffect(() => {
