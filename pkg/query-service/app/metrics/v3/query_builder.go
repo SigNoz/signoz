@@ -183,9 +183,8 @@ func buildMetricQuery(start, end, step int64, mq *v3.BuilderQuery, tableName str
 		}
 	}
 
-	// groupByWithoutLe := groupBy(tagsWithoutLe...)
+	groupByWithoutLe := groupBy(tagsWithoutLe...)
 	groupTagsWithoutLe := groupSelect(tagsWithoutLe...)
-	groupSetsWithoutLe := groupingSets(tagsWithoutLe...)
 	orderWithoutLe := orderBy(mq.OrderBy, tagsWithoutLe)
 
 	groupBy := groupByAttributeKeyTags(metricQueryGroupBy...)
@@ -259,10 +258,10 @@ func buildMetricQuery(start, end, step int64, mq *v3.BuilderQuery, tableName str
 		) // labels will be same so any should be fine
 		query := `SELECT %s ts, ` + rateWithoutNegative + ` as value FROM(%s) WHERE isNaN(value) = 0`
 		query = fmt.Sprintf(query, groupTags, subQuery)
-		query = fmt.Sprintf(`SELECT %s ts, sum(value) as value FROM (%s) GROUP BY %s HAVING isNaN(value) = 0 ORDER BY %s ts`, groupTags, query, groupBy, orderBy)
+		query = fmt.Sprintf(`SELECT %s ts, sum(value) as value FROM (%s) GROUP BY %s HAVING isNaN(value) = 0 ORDER BY %s ts`, groupTags, query, groupSets, orderBy)
 		value := aggregateOperatorToPercentile[mq.AggregateOperator]
 
-		query = fmt.Sprintf(`SELECT %s ts, histogramQuantile(arrayMap(x -> toFloat64(x), groupArray(le)), groupArray(value), %.3f) as value FROM (%s) GROUP BY %s ORDER BY %s ts`, groupTagsWithoutLe, value, query, groupSetsWithoutLe, orderWithoutLe)
+		query = fmt.Sprintf(`SELECT %s ts, histogramQuantile(arrayMap(x -> toFloat64(x), groupArray(le)), groupArray(value), %.3f) as value FROM (%s) GROUP BY %s ORDER BY %s ts`, groupTagsWithoutLe, value, query, groupByWithoutLe, orderWithoutLe)
 		return query, nil
 	case v3.AggregateOperatorAvg, v3.AggregateOperatorSum, v3.AggregateOperatorMin, v3.AggregateOperatorMax:
 		op := fmt.Sprintf("%s(value)", aggregateOperatorToSQLFunc[mq.AggregateOperator])
