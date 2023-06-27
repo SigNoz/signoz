@@ -70,6 +70,7 @@ export const QueryBuilderContext = createContext<QueryBuilderContextType>({
 	handleRunQuery: () => {},
 	resetStagedQuery: () => {},
 	updateAllQueriesOperators: () => initialQueriesMap.metrics,
+	initQueryBuilderData: () => {},
 });
 
 export function QueryBuilderProvider({
@@ -202,13 +203,11 @@ export function QueryBuilderProvider({
 
 			const nextQuery: Query = { ...newQueryState, queryType: type };
 
-			setStagedQuery(updateStepInterval(nextQuery, maxTime, minTime));
-			setCurrentQuery(
-				updateStepInterval({ ...newQueryState, queryType: type }, maxTime, minTime),
-			);
+			setStagedQuery(nextQuery);
+			setCurrentQuery(newQueryState);
 			setQueryType(type);
 		},
-		[prepareQueryBuilderData, maxTime, minTime],
+		[prepareQueryBuilderData],
 	);
 
 	const updateAllQueriesOperators = useCallback(
@@ -461,10 +460,7 @@ export function QueryBuilderProvider({
 				id: uuid(),
 			};
 
-			urlQuery.set(
-				COMPOSITE_QUERY,
-				JSON.stringify(updateStepInterval(currentGeneratedQuery, maxTime, minTime)),
-			);
+			urlQuery.set(COMPOSITE_QUERY, JSON.stringify(currentGeneratedQuery));
 
 			if (searchParams) {
 				Object.keys(searchParams).forEach((param) =>
@@ -476,7 +472,7 @@ export function QueryBuilderProvider({
 
 			history.push(generatedUrl);
 		},
-		[history, location.pathname, maxTime, minTime, urlQuery],
+		[history, location.pathname, urlQuery],
 	);
 
 	const handleSetConfig = useCallback(
@@ -568,6 +564,7 @@ export function QueryBuilderProvider({
 			handleRunQuery,
 			resetStagedQuery,
 			updateAllQueriesOperators,
+			initQueryBuilderData,
 		}),
 		[
 			query,
@@ -588,6 +585,7 @@ export function QueryBuilderProvider({
 			handleRunQuery,
 			resetStagedQuery,
 			updateAllQueriesOperators,
+			initQueryBuilderData,
 		],
 	);
 
