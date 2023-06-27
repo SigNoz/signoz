@@ -141,22 +141,11 @@ function VariableItem({
 			}
 	};
 
-	const getSelectValue = (): string | number | (number | string)[] => {
-		if (
-			typeof variableData.selectedValue === 'boolean' ||
-			variableData.selectedValue == null
-		) {
-			return variableData.selectedValue?.toString() || '';
-		}
+	const getSelectValue = (): string | string[] => {
 		if (Array.isArray(variableData.selectedValue)) {
-			return variableData.selectedValue.map((item) => {
-				if (typeof item === 'boolean') {
-					return item.toString();
-				}
-				return item;
-			});
+			return variableData.selectedValue.map((item) => item.toString());
 		}
-		return variableData.selectedValue;
+		return variableData.selectedValue?.toString() || '';
 	};
 
 	const selectValue = variableData.allSelected ? 'ALL' : getSelectValue();
