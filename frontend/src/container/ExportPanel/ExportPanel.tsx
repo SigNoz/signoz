@@ -18,7 +18,7 @@ import {
 } from './styles';
 import { getSelectOptions } from './utils';
 
-function ExportPanel({ onExport }: ExportPanelProps): JSX.Element {
+function ExportPanel({ isLoading, onExport }: ExportPanelProps): JSX.Element {
 	const { notifications } = useNotifications();
 	const { t } = useTranslation(['dashboard']);
 
@@ -26,7 +26,7 @@ function ExportPanel({ onExport }: ExportPanelProps): JSX.Element {
 		null,
 	);
 
-	const { data, isLoading, refetch } = useQuery({
+	const { data, isLoading: isAllDashboardsLoading, refetch } = useQuery({
 		queryFn: getAll,
 		queryKey: REACT_QUERY_KEY.GET_ALL_DASHBOARDS,
 	});
@@ -35,7 +35,8 @@ function ExportPanel({ onExport }: ExportPanelProps): JSX.Element {
 		mutate: createNewDashboard,
 		isLoading: createDashboardLoading,
 	} = useMutation(createDashboard, {
-		onSuccess: () => {
+		onSuccess: (data) => {
+			onExport(data?.payload || null);
 			refetch();
 		},
 		onError: (error) => {
@@ -81,14 +82,20 @@ function ExportPanel({ onExport }: ExportPanelProps): JSX.Element {
 				<DashboardSelect
 					placeholder="Select Dashboard"
 					options={options}
-					loading={isLoading || createDashboardLoading}
-					disabled={isLoading || createDashboardLoading}
+					loading={isAllDashboardsLoading || createDashboardLoading}
+					disabled={isAllDashboardsLoading || createDashboardLoading}
 					value={selectedDashboardId}
 					onSelect={handleSelect}
 				/>
 				<Button
 					type="primary"
-					disabled={isLoading || !options?.length || !selectedDashboardId}
+					loading={isLoading}
+					disabled={
+						isAllDashboardsLoading ||
+						!options?.length ||
+						!selectedDashboardId ||
+						isLoading
+					}
 					onClick={handleExportClick}
 				>
 					Export
