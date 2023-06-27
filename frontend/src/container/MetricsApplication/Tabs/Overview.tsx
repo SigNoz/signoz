@@ -1,3 +1,6 @@
+import getServiceOverview from 'api/metrics/getServiceOverview';
+import getTopLevelOperations from 'api/metrics/getTopLevelOperations';
+import getTopOperations from 'api/metrics/getTopOperations';
 import { ActiveElement, Chart, ChartData, ChartEvent } from 'chart.js';
 import Graph from 'components/Graph';
 import { QueryParams } from 'constants/query';
@@ -11,16 +14,20 @@ import {
 	resourceAttributesToTagFilterItems,
 } from 'hooks/useResourceAttribute/utils';
 import convertToNanoSecondsToSecond from 'lib/convertToNanoSecondsToSecond';
+import GetMinMax from 'lib/getMinMax';
 import { colors } from 'lib/getRandomColor';
+import getStep from 'lib/getStep';
 import history from 'lib/history';
 import { useCallback, useMemo, useState } from 'react';
+import { useQuery } from 'react-query';
 import { useDispatch, useSelector } from 'react-redux';
 import { useLocation, useParams } from 'react-router-dom';
 import { UpdateTimeInterval } from 'store/actions';
 import { AppState } from 'store/reducers';
 import { Widgets } from 'types/api/dashboard/getAll';
 import { EQueryType } from 'types/common/dashboard';
-import MetricReducer from 'types/reducer/metrics';
+import { GlobalReducer } from 'types/reducer/globalTime';
+import { Tags } from 'types/reducer/trace';
 import { v4 as uuid } from 'uuid';
 
 import {
@@ -37,9 +44,23 @@ import {
 } from './util';
 
 function Application({ getWidgetQueryBuilder }: DashboardProps): JSX.Element {
+	const globalTime = useSelector<AppState, GlobalReducer>(
+		(state) => state.globalTime,
+	);
+
+	const { maxTime, minTime } = GetMinMax(globalTime.selectedTime, [
+		globalTime.minTime / 1000000,
+		globalTime.maxTime / 1000000,
+	]);
+
 	const { servicename } = useParams<{ servicename?: string }>();
 	const [selectedTimeStamp, setSelectedTimeStamp] = useState<number>(0);
 	const { search } = useLocation();
+	const { queries } = useResourceAttribute();
+	const selectedTags = useMemo(
+		() => (convertRawQueriesToTraceSelectedTags(queries) as Tags[]) || [],
+		[queries],
+	);
 
 	const handleSetTimeStamp = useCallback((selectTime: number) => {
 		setSelectedTimeStamp(selectTime);
@@ -64,12 +85,45 @@ function Application({ getWidgetQueryBuilder }: DashboardProps): JSX.Element {
 		[handleSetTimeStamp],
 	);
 
-	const { topOperations, serviceOverview, topLevelOperations } = useSelector<
-		AppState,
-		MetricReducer
-	>((state) => state.metrics);
+	const { data: serviceOverview } = useQuery(
+		[
+			`getServiceOverview`,
+			servicename,
+			getStep({ start: minTime, end: maxTime, inputFormat: 'ns' }),
+			selectedTags,
+		],
+		() =>
+			getServiceOverview({
+				service: servicename || '',
+				start: minTime,
+				end: maxTime,
+				step: getStep({
+					start: minTime,
+					end: maxTime,
+					inputFormat: 'ns',
+				}),
+				selectedTags,
+			}),
+	);
 
-	const { queries } = useResourceAttribute();
+	const { data: topOperations } = useQuery(
+		[`topOperation`, servicename, selectedTags],
+		() =>
+			getTopOperations({
+				service: servicename || '',
+				start: minTime,
+				end: maxTime,
+				selectedTags,
+			}),
+	);
+
+	const { data: topLevelOperations } = useQuery(
+		[`topLevelOperation`, servicename, selectedTags],
+		() =>
+			getTopLevelOperations({
+				service: servicename || '',
+			}),
+	);
 
 	const selectedTraceTags: string = JSON.stringify(
 		convertRawQueriesToTraceSelectedTags(queries) || [],
@@ -89,7 +143,7 @@ function Application({ getWidgetQueryBuilder }: DashboardProps): JSX.Element {
 				builder: operationPerSec({
 					servicename,
 					tagFilterItems,
-					topLevelOperations,
+					topLevelOperations: topLevelOperations?.payload || [],
 				}),
 				clickhouse_sql: [],
 				id: uuid(),
@@ -105,7 +159,7 @@ function Application({ getWidgetQueryBuilder }: DashboardProps): JSX.Element {
 				builder: errorPercentage({
 					servicename,
 					tagFilterItems,
-					topLevelOperations,
+					topLevelOperations: topLevelOperations?.payload || [],
 				}),
 				clickhouse_sql: [],
 				id: uuid(),
@@ -158,39 +212,48 @@ function Application({ getWidgetQueryBuilder }: DashboardProps): JSX.Element {
 		[],
 	);
 
-	const dataSets = useMemo(
-		() => [
+	const dataSets = useMemo(() => {
+		if (!serviceOverview?.payload) {
+			return [];
+		}
+		return [
 			{
-				data: serviceOverview.map((e) =>
+				data: serviceOverview.payload.map((e) =>
 					parseFloat(convertToNanoSecondsToSecond(e.p99)),
 				),
 				...generalChartDataProperties('p99 Latency', 0),
 			},
 			{
-				data: serviceOverview.map((e) =>
+				data: serviceOverview.payload.map((e) =>
 					parseFloat(convertToNanoSecondsToSecond(e.p95)),
 				),
 				...generalChartDataProperties('p95 Latency', 1),
 			},
 			{
-				data: serviceOverview.map((e) =>
+				data: serviceOverview.payload.map((e) =>
 					parseFloat(convertToNanoSecondsToSecond(e.p50)),
 				),
 				...generalChartDataProperties('p50 Latency', 2),
 			},
-		],
-		[generalChartDataProperties, serviceOverview],
-	);
+		];
+	}, [generalChartDataProperties, serviceOverview]);
 
-	const data = useMemo(
-		() => ({
+	const data = useMemo(() => {
+		if (!serviceOverview?.payload) {
+			return {
+				datasets: [],
+				labels: [],
+			};
+		}
+
+		return {
 			datasets: dataSets,
-			labels: serviceOverview.map(
+			labels: serviceOverview.payload.map(
 				(e) => new Date(parseFloat(convertToNanoSecondsToSecond(e.timestamp))),
 			),
-		}),
-		[serviceOverview, dataSets],
-	);
+		};
+	}, [serviceOverview, dataSets]);
+
 	return (
 		<>
 			<Row gutter={24}>
@@ -281,7 +344,7 @@ function Application({ getWidgetQueryBuilder }: DashboardProps): JSX.Element {
 
 				<Col span={12}>
 					<Card>
-						<TopOperationsTable data={topOperations} />
+						<TopOperationsTable data={topOperations?.payload || []} />
 					</Card>
 				</Col>
 			</Row>
