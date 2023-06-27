@@ -1,24 +1,9 @@
 import axios from 'api';
-import { ErrorResponseHandler } from 'api/ErrorResponseHandler';
-import { AxiosError } from 'axios';
-import { ErrorResponse, SuccessResponse } from 'types/api';
 import { PayloadProps, Props } from 'types/api/metrics/getTopLevelOperations';
 
-const getTopLevelOperations = async (
-	props: Props,
-): Promise<SuccessResponse<PayloadProps> | ErrorResponse> => {
-	try {
-		const response = await axios.post(`/service/top_level_operations`);
-
-		return {
-			statusCode: 200,
-			error: null,
-			message: response.data.status,
-			payload: response.data[props.service],
-		};
-	} catch (error) {
-		return ErrorResponseHandler(error as AxiosError);
-	}
+const getTopLevelOperations = async (props: Props): Promise<PayloadProps> => {
+	const response = await axios.post(`/service/top_level_operations`);
+	return response.data[props.service];
 };
 
 export default getTopLevelOperations;

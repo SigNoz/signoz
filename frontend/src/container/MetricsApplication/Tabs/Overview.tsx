@@ -2,8 +2,10 @@ import { Typography } from 'antd';
 import getServiceOverview from 'api/metrics/getServiceOverview';
 import getTopLevelOperations from 'api/metrics/getTopLevelOperations';
 import getTopOperations from 'api/metrics/getTopOperations';
+import { AxiosError } from 'axios';
 import { ActiveElement, Chart, ChartData, ChartEvent } from 'chart.js';
 import Graph from 'components/Graph';
+import Spinner from 'components/Spinner';
 import { QueryParams } from 'constants/query';
 import ROUTES from 'constants/routes';
 import FullView from 'container/GridGraphLayout/Graph/FullView/index.metricsBuilder';
@@ -19,7 +21,7 @@ import GetMinMax from 'lib/getMinMax';
 import { colors } from 'lib/getRandomColor';
 import getStep from 'lib/getStep';
 import history from 'lib/history';
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useQuery } from 'react-query';
 import { useDispatch, useSelector } from 'react-redux';
 import { useLocation, useParams } from 'react-router-dom';
@@ -56,6 +58,9 @@ function Application({ getWidgetQueryBuilder }: DashboardProps): JSX.Element {
 
 	const { servicename } = useParams<{ servicename?: string }>();
 	const [selectedTimeStamp, setSelectedTimeStamp] = useState<number>(0);
+	const [serviceError, setServiceError] = useState<string>('');
+	const [topLevelOpsError, setTopLevelOpsError] = useState<string>('');
+	const [topOpsError, setTopOpsError] = useState<string>('');
 	const { search } = useLocation();
 	const { queries } = useResourceAttribute();
 	const selectedTags = useMemo(
@@ -86,7 +91,12 @@ function Application({ getWidgetQueryBuilder }: DashboardProps): JSX.Element {
 		[handleSetTimeStamp],
 	);
 
-	const { data: serviceOverview, error: serviceOverviewError } = useQuery(
+	const {
+		data: serviceOverview,
+		error: serviceOverviewError,
+		isError: serviceOverviewIsError,
+		isLoading: serviceOverviewIsLoading,
+	} = useQuery(
 		[
 			`getServiceOverview`,
 			servicename,
@@ -107,24 +117,50 @@ function Application({ getWidgetQueryBuilder }: DashboardProps): JSX.Element {
 			}),
 	);
 
-	const { data: topOperations, error: topOperationsError } = useQuery(
-		[`topOperation`, servicename, selectedTags],
-		() =>
-			getTopOperations({
-				service: servicename || '',
-				start: minTime,
-				end: maxTime,
-				selectedTags,
-			}),
+	const {
+		data: topOperations,
+		error: topOperationsError,
+		isError: topOperationsIsError,
+	} = useQuery([`topOperation`, servicename, selectedTags], () =>
+		getTopOperations({
+			service: servicename || '',
+			start: minTime,
+			end: maxTime,
+			selectedTags,
+		}),
 	);
 
-	const { data: topLevelOperations, error: topLevelOperationsError } = useQuery(
-		[`topLevelOperation`, servicename, selectedTags],
-		() =>
-			getTopLevelOperations({
-				service: servicename || '',
-			}),
+	const {
+		data: topLevelOperations,
+		error: topLevelOperationsError,
+		isError: topLevelOperationsIsError,
+	} = useQuery([`topLevelOperation`, servicename, selectedTags], () =>
+		getTopLevelOperations({
+			service: servicename || '',
+		}),
 	);
+
+	useEffect(() => {
+		if (serviceOverviewIsError) {
+			const { response } = serviceOverviewError as AxiosError;
+			setServiceError(response?.data);
+		}
+		if (topOperationsIsError) {
+			const { response } = topOperationsError as AxiosError;
+			setTopOpsError(response?.data);
+		}
+		if (topLevelOperationsIsError) {
+			const { response } = topLevelOperationsError as AxiosError;
+			setTopLevelOpsError(response?.data);
+		}
+	}, [
+		serviceOverviewIsError,
+		topOperationsIsError,
+		topLevelOperationsIsError,
+		serviceOverviewError,
+		topOperationsError,
+		topLevelOperationsError,
+	]);
 
 	const selectedTraceTags: string = JSON.stringify(
 		convertRawQueriesToTraceSelectedTags(queries) || [],
@@ -144,7 +180,7 @@ function Application({ getWidgetQueryBuilder }: DashboardProps): JSX.Element {
 				builder: operationPerSec({
 					servicename,
 					tagFilterItems,
-					topLevelOperations: topLevelOperations?.payload || [],
+					topLevelOperations: topLevelOperations || [],
 				}),
 				clickhouse_sql: [],
 				id: uuid(),
@@ -160,7 +196,7 @@ function Application({ getWidgetQueryBuilder }: DashboardProps): JSX.Element {
 				builder: errorPercentage({
 					servicename,
 					tagFilterItems,
-					topLevelOperations: topLevelOperations?.payload || [],
+					topLevelOperations: topLevelOperations || [],
 				}),
 				clickhouse_sql: [],
 				id: uuid(),
@@ -214,26 +250,25 @@ function Application({ getWidgetQueryBuilder }: DashboardProps): JSX.Element {
 	);
 
 	const dataSets = useMemo(() => {
-		if (!serviceOverview?.payload) {
+		if (!serviceOverview) {
 			return [];
 		}
 
-		console.log('ServiceOverview', serviceOverview.payload);
 		return [
 			{
-				data: serviceOverview.payload.map((e) =>
+				data: serviceOverview.map((e) =>
 					parseFloat(convertToNanoSecondsToSecond(e.p99)),
 				),
 				...generalChartDataProperties('p99 Latency', 0),
 			},
 			{
-				data: serviceOverview.payload.map((e) =>
+				data: serviceOverview.map((e) =>
 					parseFloat(convertToNanoSecondsToSecond(e.p95)),
 				),
 				...generalChartDataProperties('p95 Latency', 1),
 			},
 			{
-				data: serviceOverview.payload.map((e) =>
+				data: serviceOverview.map((e) =>
 					parseFloat(convertToNanoSecondsToSecond(e.p50)),
 				),
 				...generalChartDataProperties('p50 Latency', 2),
@@ -242,7 +277,7 @@ function Application({ getWidgetQueryBuilder }: DashboardProps): JSX.Element {
 	}, [generalChartDataProperties, serviceOverview]);
 
 	const data = useMemo(() => {
-		if (!serviceOverview?.payload) {
+		if (!serviceOverview) {
 			return {
 				datasets: [],
 				labels: [],
@@ -251,23 +286,11 @@ function Application({ getWidgetQueryBuilder }: DashboardProps): JSX.Element {
 
 		return {
 			datasets: dataSets,
-			labels: serviceOverview.payload.map(
+			labels: serviceOverview.map(
 				(e) => new Date(parseFloat(convertToNanoSecondsToSecond(e.timestamp))),
 			),
 		};
 	}, [serviceOverview, dataSets]);
-
-	if (serviceOverviewError) {
-		return <Typography>{serviceOverview?.error}</Typography>;
-	}
-
-	if (topLevelOperationsError) {
-		return <Typography>{topLevelOperations?.error}</Typography>;
-	}
-
-	if (topOperationsError) {
-		return <Typography>{topOperations?.error}</Typography>;
-	}
 
 	return (
 		<>
@@ -286,18 +309,28 @@ function Application({ getWidgetQueryBuilder }: DashboardProps): JSX.Element {
 						View Traces
 					</Button>
 					<Card>
-						<GraphTitle>Latency</GraphTitle>
-						<GraphContainer>
-							<Graph
-								animate={false}
-								onClickHandler={handleGraphClick('Service')}
-								name="service_latency"
-								type="line"
-								data={data}
-								yAxisUnit="ms"
-								onDragSelect={onDragSelect}
-							/>
-						</GraphContainer>
+						{serviceOverviewIsError && <Typography>{serviceError}</Typography>}
+						{!serviceOverviewIsError && (
+							<>
+								<GraphTitle>Latency</GraphTitle>
+								{serviceOverviewIsLoading && (
+									<Spinner size="large" tip="Loading..." height="40vh" />
+								)}
+								{!serviceOverviewIsLoading && (
+									<GraphContainer>
+										<Graph
+											animate={false}
+											onClickHandler={handleGraphClick('Service')}
+											name="service_latency"
+											type="line"
+											data={data}
+											yAxisUnit="ms"
+											onDragSelect={onDragSelect}
+										/>
+									</GraphContainer>
+								)}
+							</>
+						)}
 					</Card>
 				</Col>
 
@@ -315,17 +348,22 @@ function Application({ getWidgetQueryBuilder }: DashboardProps): JSX.Element {
 						View Traces
 					</Button>
 					<Card>
-						<GraphTitle>Rate (ops/s)</GraphTitle>
-						<GraphContainer>
-							<FullView
-								name="operations_per_sec"
-								fullViewOptions={false}
-								onClickHandler={handleGraphClick('Rate')}
-								widget={operationPerSecWidget}
-								yAxisUnit="ops"
-								onDragSelect={onDragSelect}
-							/>
-						</GraphContainer>
+						{topLevelOperationsIsError && <Typography>{topLevelOpsError}</Typography>}
+						{!topLevelOperationsIsError && (
+							<>
+								<GraphTitle>Rate (ops/s)</GraphTitle>
+								<GraphContainer>
+									<FullView
+										name="operations_per_sec"
+										fullViewOptions={false}
+										onClickHandler={handleGraphClick('Rate')}
+										widget={operationPerSecWidget}
+										yAxisUnit="ops"
+										onDragSelect={onDragSelect}
+									/>
+								</GraphContainer>
+							</>
+						)}
 					</Card>
 				</Col>
 			</Row>
@@ -343,23 +381,31 @@ function Application({ getWidgetQueryBuilder }: DashboardProps): JSX.Element {
 					</Button>
 
 					<Card>
-						<GraphTitle>Error Percentage</GraphTitle>
-						<GraphContainer>
-							<FullView
-								name="error_percentage_%"
-								fullViewOptions={false}
-								onClickHandler={handleGraphClick('Error')}
-								widget={errorPercentageWidget}
-								yAxisUnit="%"
-								onDragSelect={onDragSelect}
-							/>
-						</GraphContainer>
+						{topLevelOperationsIsError && <Typography>{topLevelOpsError}</Typography>}
+						{!topLevelOperationsIsError && (
+							<>
+								<GraphTitle>Error Percentage</GraphTitle>
+								<GraphContainer>
+									<FullView
+										name="error_percentage_%"
+										fullViewOptions={false}
+										onClickHandler={handleGraphClick('Error')}
+										widget={errorPercentageWidget}
+										yAxisUnit="%"
+										onDragSelect={onDragSelect}
+									/>
+								</GraphContainer>
+							</>
+						)}
 					</Card>
 				</Col>
 
 				<Col span={12}>
 					<Card>
-						<TopOperationsTable data={topOperations?.payload || []} />
+						{topOperationsIsError && <Typography>{topOpsError}</Typography>}
+						{!topOperationsIsError && (
+							<TopOperationsTable data={topOperations || []} />
+						)}
 					</Card>
 				</Col>
 			</Row>
