@@ -1,18 +1,17 @@
-import Graph from 'components/Graph';
-import Spinner from 'components/Spinner';
 import { initialQueriesMap } from 'constants/queryBuilder';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import { useGetQueryRange } from 'hooks/queryBuilder/useGetQueryRange';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
-import getChartData from 'lib/getChartData';
-import { useMemo } from 'react';
 import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
+import { DataSource } from 'types/common/queryBuilder';
 import { GlobalReducer } from 'types/reducer/globalTime';
 
-import { Container, ErrorText } from './styles';
+import TimeSeriesView from './TimeSeriesView';
 
-function TimeSeriesView(): JSX.Element {
+function TimeSeriesViewContainer({
+	dataSource = DataSource.TRACES,
+}: TimeSeriesViewProps): JSX.Element {
 	const { stagedQuery } = useQueryBuilder();
 
 	const { selectedTime: globalSelectedTime, maxTime, minTime } = useSelector<
@@ -22,12 +21,12 @@ function TimeSeriesView(): JSX.Element {
 
 	const { data, isLoading, isError } = useGetQueryRange(
 		{
-			query: stagedQuery || initialQueriesMap.traces,
+			query: stagedQuery || initialQueriesMap[dataSource],
 			graphType: 'graph',
 			selectedTime: 'GLOBAL_TIME',
 			globalSelectedInterval: globalSelectedTime,
 			params: {
-				dataSource: 'traces',
+				dataSource,
 			},
 		},
 		{
@@ -42,32 +41,15 @@ function TimeSeriesView(): JSX.Element {
 		},
 	);
 
-	const chartData = useMemo(
-		() =>
-			getChartData({
-				queryData: [
-					{
-						queryData: data?.payload?.data?.result || [],
-					},
-				],
-			}),
-		[data],
-	);
-
-	return (
-		<Container>
-			{isLoading && <Spinner height="50vh" size="small" tip="Loading..." />}
-			{isError && <ErrorText>{data?.error || 'Something went wrong'}</ErrorText>}
-			{!isLoading && !isError && (
-				<Graph
-					animate={false}
-					data={chartData}
-					name="tracesExplorerGraph"
-					type="line"
-				/>
-			)}
-		</Container>
-	);
+	return <TimeSeriesView isError={isError} isLoading={isLoading} data={data} />;
 }
 
-export default TimeSeriesView;
+interface TimeSeriesViewProps {
+	dataSource?: DataSource;
+}
+
+TimeSeriesViewContainer.defaultProps = {
+	dataSource: DataSource.TRACES,
+};
+
+export default TimeSeriesViewContainer;
