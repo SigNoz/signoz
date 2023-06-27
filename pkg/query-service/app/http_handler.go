@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"sort"
 	"strconv"
 	"strings"
 	"sync"
@@ -2750,6 +2751,8 @@ func (aH *APIHandler) queryRangeV3(ctx context.Context, queryRangeParams *v3.Que
 		return
 	}
 
+	applyMetricLimit(result, queryRangeParams)
+
 	resp := v3.QueryRangeResponse{
 		Result: result,
 	}
@@ -2766,4 +2769,23 @@ func (aH *APIHandler) QueryRangeV3(w http.ResponseWriter, r *http.Request) {
 	}
 
 	aH.queryRangeV3(r.Context(), queryRangeParams, w, r)
+}
+
+func applyMetricLimit(results []*v3.Result, queryRangeParams *v3.QueryRangeParamsV3) {
+	// apply limit if any for metrics
+	// use the grouping set points to apply the limit
+
+	for _, result := range results {
+		if queryRangeParams.CompositeQuery.BuilderQueries[result.QueryName].DataSource == v3.DataSourceMetrics {
+			limit := queryRangeParams.CompositeQuery.BuilderQueries[result.QueryName].Limit
+			if limit != 0 {
+				sort.Slice(result.Series, func(i, j int) bool {
+					return result.Series[i].GroupingSetsPoint.Value > result.Series[j].GroupingSetsPoint.Value
+				})
+				if len(result.Series) > int(limit) {
+					result.Series = result.Series[:limit]
+				}
+			}
+		}
+	}
 }
