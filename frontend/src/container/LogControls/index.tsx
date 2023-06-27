@@ -5,6 +5,7 @@ import Controls from 'container/Controls';
 import { getGlobalTime } from 'container/LogsSearchFilter/utils';
 import { getMinMax } from 'container/TopNav/AutoRefresh/config';
 import dayjs from 'dayjs';
+import { Pagination } from 'hooks/queryPagination';
 import { FlatLogData } from 'lib/logs/flatLogData';
 import * as Papa from 'papaparse';
 import { memo, useCallback, useMemo } from 'react';
@@ -37,7 +38,7 @@ function LogControls(): JSX.Element | null {
 
 	const dispatch = useDispatch<Dispatch<AppActions>>();
 
-	const handleLogLinesPerPageChange = (e: number): void => {
+	const handleLogLinesPerPageChange = (e: Pagination['limit']): void => {
 		dispatch({
 			type: SET_LOG_LINES_PER_PAGE,
 			payload: {
@@ -166,7 +167,7 @@ function LogControls(): JSX.Element | null {
 			<Divider type="vertical" />
 			<Controls
 				isLoading={isLoading}
-				count={logs.length}
+				totalCount={logs.length}
 				countPerPage={logLinesPerPage}
 				handleNavigatePrevious={handleNavigatePrevious}
 				handleNavigateNext={handleNavigateNext}
