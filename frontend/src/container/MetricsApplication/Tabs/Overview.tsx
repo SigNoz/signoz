@@ -1,3 +1,4 @@
+import { Typography } from 'antd';
 import getServiceOverview from 'api/metrics/getServiceOverview';
 import getTopLevelOperations from 'api/metrics/getTopLevelOperations';
 import getTopOperations from 'api/metrics/getTopOperations';
@@ -85,7 +86,7 @@ function Application({ getWidgetQueryBuilder }: DashboardProps): JSX.Element {
 		[handleSetTimeStamp],
 	);
 
-	const { data: serviceOverview } = useQuery(
+	const { data: serviceOverview, error: serviceOverviewError } = useQuery(
 		[
 			`getServiceOverview`,
 			servicename,
@@ -106,7 +107,7 @@ function Application({ getWidgetQueryBuilder }: DashboardProps): JSX.Element {
 			}),
 	);
 
-	const { data: topOperations } = useQuery(
+	const { data: topOperations, error: topOperationsError } = useQuery(
 		[`topOperation`, servicename, selectedTags],
 		() =>
 			getTopOperations({
@@ -117,7 +118,7 @@ function Application({ getWidgetQueryBuilder }: DashboardProps): JSX.Element {
 			}),
 	);
 
-	const { data: topLevelOperations } = useQuery(
+	const { data: topLevelOperations, error: topLevelOperationsError } = useQuery(
 		[`topLevelOperation`, servicename, selectedTags],
 		() =>
 			getTopLevelOperations({
@@ -216,6 +217,8 @@ function Application({ getWidgetQueryBuilder }: DashboardProps): JSX.Element {
 		if (!serviceOverview?.payload) {
 			return [];
 		}
+
+		console.log('ServiceOverview', serviceOverview.payload);
 		return [
 			{
 				data: serviceOverview.payload.map((e) =>
@@ -253,6 +256,18 @@ function Application({ getWidgetQueryBuilder }: DashboardProps): JSX.Element {
 			),
 		};
 	}, [serviceOverview, dataSets]);
+
+	if (serviceOverviewError) {
+		return <Typography>{serviceOverview?.error}</Typography>;
+	}
+
+	if (topLevelOperationsError) {
+		return <Typography>{topLevelOperations?.error}</Typography>;
+	}
+
+	if (topOperationsError) {
+		return <Typography>{topOperations?.error}</Typography>;
+	}
 
 	return (
 		<>
