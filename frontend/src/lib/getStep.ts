@@ -40,10 +40,13 @@ const getStep = ({ start, end, inputFormat = 'ms' }: GetStepInput): number => {
 	const endDate = dayjs(convertToMs(Number(end), inputFormat));
 	const diffSec = Math.abs(endDate.diff(startDate, 's'));
 
-	return (
+	let result =
 		Math.max(Math.floor(diffSec / MaxDataPoints), DefaultStepSize) ||
-		DefaultStepSize
-	);
+		DefaultStepSize;
+
+	result -= result % 60;
+
+	return result;
 };
 
 export default getStep;

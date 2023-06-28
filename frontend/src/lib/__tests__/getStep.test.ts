@@ -39,10 +39,12 @@ describe('lib/getStep', () => {
 		const startUnix = start.valueOf();
 		const endUnix = end.valueOf();
 
-		const expectedStepSize = Math.max(
+		let expectedStepSize = Math.max(
 			Math.floor(end.diff(start, 's') / MaxDataPoints),
 			DefaultStepSize,
 		);
+
+		expectedStepSize -= expectedStepSize % 60;
 
 		expect(
 			getStep({
