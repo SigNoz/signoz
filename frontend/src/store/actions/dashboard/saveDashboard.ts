@@ -92,7 +92,7 @@ export const SaveDashboard = ({
 			const { maxTime, minTime } = store.getState().globalTime;
 			const query = compositeQuery
 				? updateStepInterval(JSON.parse(compositeQuery), maxTime, minTime)
-				: selectedWidget.query;
+				: updateStepInterval(selectedWidget.query, maxTime, minTime);
 
 			const response = await updateDashboardApi({
 				data: {
