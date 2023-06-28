@@ -159,6 +159,7 @@ export type QueryBuilderContextType = {
 	initialDataSource: DataSource | null;
 	panelType: GRAPH_TYPES | null;
 	isEnabledQuery: boolean;
+	isQueryStaged: boolean;
 	handleSetQueryData: (index: number, queryData: IBuilderQuery) => void;
 	handleSetFormulaData: (index: number, formulaData: IBuilderFormula) => void;
 	handleSetQueryItemData: (

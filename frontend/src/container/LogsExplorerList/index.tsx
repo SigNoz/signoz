@@ -4,36 +4,112 @@ import ListLogView from 'components/Logs/ListLogView';
 import RawLogView from 'components/Logs/RawLogView';
 import LogsTableView from 'components/Logs/TableView';
 import Spinner from 'components/Spinner';
+import { PAGE_SIZE } from 'constants/queryBuilderQueryNames';
 import { LogViewMode } from 'container/LogsTable';
 import { Container, Heading } from 'container/LogsTable/styles';
 import { contentStyle } from 'container/Trace/Search/config';
+import { useGetExplorerQueryRange } from 'hooks/queryBuilder/useGetExplorerQueryRange';
+import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import useFontFaceObserver from 'hooks/useFontObserver';
-import { memo, useCallback, useMemo, useState } from 'react';
+import useUrlQuery from 'hooks/useUrlQuery';
+import { getPaginationQueryData } from 'lib/newQueryBuilder/getPaginationQueryData';
+import { memo, useCallback, useEffect, useMemo, useState } from 'react';
 import { Virtuoso } from 'react-virtuoso';
 // interfaces
 import { ILog } from 'types/api/logs/log';
+import { Query } from 'types/api/queryBuilder/queryBuilderData';
 
-import { LogsExplorerListProps } from './LogsExplorerList.interfaces';
+function Footer(): JSX.Element {
+	return <Spinner height={20} tip="Getting Logs" />;
+}
 
-function LogsExplorerList({
-	data,
-	isLoading,
-}: LogsExplorerListProps): JSX.Element {
+function LogsExplorerList(): JSX.Element {
+	const urlQuery = useUrlQuery();
+	const { stagedQuery, isQueryStaged, handleSetQueryData } = useQueryBuilder();
+	const [currentLog, setCurrentLog] = useState<ILog | null>(null);
 	const [viewMode] = useState<LogViewMode>('raw');
+
 	const [linesPerRow] = useState<number>(20);
+	const [page, setPage] = useState<number>(1);
+	const [logs, setLogs] = useState<ILog[]>([]);
 
-	const logs: ILog[] = useMemo(() => {
-		if (data.length > 0 && data[0].list) {
-			const logs: ILog[] = data[0].list.map((item) => ({
-				timestamp: +item.timestamp,
-				...item.data,
-			}));
+	const pageSizeParam = urlQuery.get(PAGE_SIZE);
+	const pageSize = pageSizeParam ? JSON.parse(pageSizeParam) : 25;
 
-			return logs;
-		}
+	const currentStagedQueryData = useMemo(() => {
+		if (!stagedQuery || stagedQuery.builder.queryData.length !== 1) return null;
 
-		return [];
-	}, [data]);
+		return stagedQuery.builder.queryData[0];
+	}, [stagedQuery]);
+
+	const isTimeStampPresent: boolean = useMemo(() => {
+		const timestampOrderBy = currentStagedQueryData?.orderBy.find(
+			(item) => item.columnName === 'timestamp',
+		);
+
+		return !!timestampOrderBy;
+	}, [currentStagedQueryData]);
+
+	const paginationQueryData = useMemo(() => {
+		if (!stagedQuery) return null;
+
+		return getPaginationQueryData({
+			query: stagedQuery,
+			listItemId: currentLog ? currentLog.id : null,
+			isTimeStampPresent,
+			page,
+			pageSize,
+		});
+	}, [stagedQuery, currentLog, isTimeStampPresent, page, pageSize]);
+
+	const requestData: Query | null = useMemo(() => {
+		if (!stagedQuery || !paginationQueryData) return null;
+
+		const data: Query = {
+			...stagedQuery,
+			builder: {
+				...stagedQuery.builder,
+				queryData: stagedQuery.builder.queryData.map((item) => ({
+					...item,
+					...paginationQueryData,
+					pageSize,
+				})),
+			},
+		};
+
+		return data;
+	}, [stagedQuery, paginationQueryData, pageSize]);
+
+	const isLimit: boolean = useMemo(() => {
+		if (!paginationQueryData) return false;
+
+		const limit = paginationQueryData.limit || 100;
+		const offset = paginationQueryData.offset || 1;
+
+		return offset >= limit;
+	}, [paginationQueryData]);
+
+	useGetExplorerQueryRange(requestData, {
+		onSuccess: (data) => {
+			const currentData = data.payload.data.newResult.data.result;
+
+			if (currentData.length > 0 && currentData[0].list) {
+				const logs: ILog[] = currentData[0].list.map((item) => ({
+					timestamp: +item.timestamp,
+					...item.data,
+				}));
+
+				setLogs((prevLogs) => [...prevLogs, ...logs]);
+			}
+		},
+		enabled: !isLimit,
+	});
+
+	const handleResetPagination = useCallback(() => {
+		setPage(1);
+		setCurrentLog(null);
+		setLogs([]);
+	}, []);
 
 	useFontFaceObserver(
 		[
@@ -47,12 +123,25 @@ function LogsExplorerList({
 			timeout: 5000,
 		},
 	);
-	// TODO: implement here linesPerRow, mode like in useSelectedLogView
+
+	const handleEndReached = useCallback(
+		(index: number) => {
+			const lastLog = logs[index];
+			if (isLimit) return;
+
+			if (isTimeStampPresent) {
+				setCurrentLog((prevLog) =>
+					prevLog?.id === lastLog.id ? prevLog : lastLog,
+				);
+			}
+
+			setPage((prevPage) => prevPage + 1);
+		},
+		[logs, isLimit, isTimeStampPresent],
+	);
 
 	const getItemContent = useCallback(
-		(index: number): JSX.Element => {
-			const log = logs[index];
-
+		(_: number, log: ILog): JSX.Element => {
 			if (viewMode === 'raw') {
 				return (
 					<RawLogView
@@ -67,7 +156,7 @@ function LogsExplorerList({
 
 			return <ListLogView key={log.id} logData={log} />;
 		},
-		[logs, linesPerRow, viewMode],
+		[linesPerRow, viewMode],
 	);
 
 	const renderContent = useMemo(() => {
@@ -84,20 +173,41 @@ function LogsExplorerList({
 			);
 		}
 
+		const components = isLimit
+			? {}
+			: {
+					Footer,
+			  };
+
 		return (
 			<Card bodyStyle={contentStyle}>
 				<Virtuoso
 					useWindowScroll
+					data={logs}
+					endReached={handleEndReached}
 					totalCount={logs.length}
 					itemContent={getItemContent}
+					components={components}
 				/>
 			</Card>
 		);
-	}, [getItemContent, linesPerRow, logs, viewMode]);
+	}, [viewMode, logs, handleEndReached, getItemContent, isLimit, linesPerRow]);
 
-	if (isLoading) {
-		return <Spinner height={20} tip="Getting Logs" />;
-	}
+	useEffect(() => {
+		if (isQueryStaged) {
+			handleResetPagination();
+		}
+	}, [isQueryStaged, handleResetPagination]);
+
+	useEffect(() => {
+		if (!requestData) return;
+		const {
+			offset,
+			pageSize,
+			...restQueryData
+		} = requestData.builder.queryData[0];
+		handleSetQueryData(0, restQueryData);
+	}, [requestData, handleSetQueryData]);
 
 	return (
 		<Container>

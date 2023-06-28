@@ -1,46 +1,22 @@
 import { TabsProps } from 'antd';
-import { initialQueriesMap, PANEL_TYPES } from 'constants/queryBuilder';
+import { PANEL_TYPES } from 'constants/queryBuilder';
 import { PANEL_TYPES_QUERY } from 'constants/queryBuilderQueryNames';
-import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import LogsExplorerList from 'container/LogsExplorerList';
 import LogsExplorerTable from 'container/LogsExplorerTable';
 import { GRAPH_TYPES } from 'container/NewDashboard/ComponentsSlider';
-import { useGetQueryRange } from 'hooks/queryBuilder/useGetQueryRange';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { memo, useCallback, useEffect, useMemo } from 'react';
-import { useSelector } from 'react-redux';
-import { AppState } from 'store/reducers';
 import { DataSource } from 'types/common/queryBuilder';
-import { GlobalReducer } from 'types/reducer/globalTime';
 
 import { TabsStyled } from './LogsExplorerViews.styled';
 
 function LogsExplorerViews(): JSX.Element {
 	const {
 		currentQuery,
-		stagedQuery,
 		panelType,
-		isEnabledQuery,
 		updateAllQueriesOperators,
 		redirectWithQueryBuilderData,
 	} = useQueryBuilder();
-
-	const { selectedTime } = useSelector<AppState, GlobalReducer>(
-		(state) => state.globalTime,
-	);
-
-	const { data, isFetching } = useGetQueryRange(
-		{
-			query: stagedQuery || initialQueriesMap.metrics,
-			graphType: panelType || PANEL_TYPES.LIST,
-			globalSelectedInterval: selectedTime,
-			selectedTime: 'GLOBAL_TIME',
-		},
-		{
-			queryKey: [REACT_QUERY_KEY.GET_QUERY_RANGE, selectedTime, stagedQuery],
-			enabled: isEnabledQuery,
-		},
-	);
 
 	const isMultipleQueries = useMemo(
 		() =>
@@ -58,27 +34,22 @@ function LogsExplorerViews(): JSX.Element {
 		return groupByCount > 0;
 	}, [currentQuery]);
 
-	const currentData = useMemo(
-		() => data?.payload.data.newResult.data.result || [],
-		[data],
-	);
-
 	const tabsItems: TabsProps['items'] = useMemo(
 		() => [
 			{
 				label: 'List View',
 				key: PANEL_TYPES.LIST,
 				disabled: isMultipleQueries || isGroupByExist,
-				children: <LogsExplorerList data={currentData} isLoading={isFetching} />,
+				children: <LogsExplorerList />,
 			},
 			{ label: 'TimeSeries', key: PANEL_TYPES.TIME_SERIES },
 			{
 				label: 'Table',
 				key: PANEL_TYPES.TABLE,
-				children: <LogsExplorerTable data={currentData} isLoading={isFetching} />,
+				children: <LogsExplorerTable />,
 			},
 		],
-		[isMultipleQueries, isGroupByExist, currentData, isFetching],
+		[isMultipleQueries, isGroupByExist],
 	);
 
 	const handleChangeView = useCallback(
@@ -116,6 +87,7 @@ function LogsExplorerViews(): JSX.Element {
 				defaultActiveKey={panelType || PANEL_TYPES.LIST}
 				activeKey={panelType || PANEL_TYPES.LIST}
 				onChange={handleChangeView}
+				destroyInactiveTabPane
 			/>
 		</div>
 	);

@@ -1,21 +1,23 @@
 import { initialQueriesMap } from 'constants/queryBuilder';
 import { QueryTable } from 'container/QueryTable';
+import { useGetExplorerQueryRange } from 'hooks/queryBuilder/useGetExplorerQueryRange';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
-import { memo } from 'react';
+import { memo, useMemo } from 'react';
 
-import { LogsExplorerTableProps } from './LogsExplorerTable.interfaces';
-
-function LogsExplorerTable({
-	isLoading,
-	data,
-}: LogsExplorerTableProps): JSX.Element {
+function LogsExplorerTable(): JSX.Element {
 	const { stagedQuery } = useQueryBuilder();
+	const { data, isFetching } = useGetExplorerQueryRange(stagedQuery);
+
+	const currentData = useMemo(
+		() => data?.payload.data.newResult.data.result || [],
+		[data],
+	);
 
 	return (
 		<QueryTable
 			query={stagedQuery || initialQueriesMap.metrics}
-			queryTableData={data}
-			loading={isLoading}
+			queryTableData={currentData}
+			loading={isFetching}
 		/>
 	);
 }

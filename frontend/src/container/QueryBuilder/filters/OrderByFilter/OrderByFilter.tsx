@@ -23,8 +23,27 @@ export function OrderByFilter({
 	query,
 	onChange,
 }: OrderByFilterProps): JSX.Element {
+	const prepareSelectedValue: IOption[] = useMemo(
+		() =>
+			query.orderBy.reduce<IOption[]>((acc, item) => {
+				if (item.columnName === '#SIGNOZ_VALUE') return acc;
+
+				const option: IOption = {
+					label: `${item.columnName} ${item.order}`,
+					value: `${item.columnName}${orderByValueDelimiter}${item.order}`,
+				};
+
+				acc.push(option);
+
+				return acc;
+			}, []),
+		[query.orderBy],
+	);
+
 	const [searchText, setSearchText] = useState<string>('');
-	const [selectedValue, setSelectedValue] = useState<IOption[]>([]);
+	const [selectedValue, setSelectedValue] = useState<IOption[]>(
+		prepareSelectedValue,
+	);
 
 	const { data, isFetching } = useQuery(
 		[QueryBuilderKeys.GET_AGGREGATE_KEYS, searchText],
