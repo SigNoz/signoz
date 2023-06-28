@@ -21,6 +21,8 @@ interface Props {
 }
 
 export const CardContainer = styled.div<Props>`
+	overflow: scroll;
+	
 	:hover {
 		.react-resizable-handle {
 			position: absolute;

@@ -12,7 +12,7 @@ function PlotTag({ queryType }: IPlotTagProps): JSX.Element | null {
 	}
 
 	return (
-		<div style={{ marginLeft: '2rem', position: 'absolute', top: '1rem' }}>
+		<div style={{ marginLeft: '2rem', marginTop: '1rem' }}>
 			Plotted using <QueryTypeTag queryType={queryType} />
 		</div>
 	);

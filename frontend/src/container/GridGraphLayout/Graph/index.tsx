@@ -1,8 +1,10 @@
 import { Typography } from 'antd';
 import { ChartData } from 'chart.js';
 import Spinner from 'components/Spinner';
+import { PANEL_TYPES } from 'constants/queryBuilder';
 import GridGraphComponent from 'container/GridGraphComponent';
 import { UpdateDashboard } from 'container/GridGraphLayout/utils';
+import { QueryTable } from 'container/QueryTable';
 import { useGetQueryRange } from 'hooks/queryBuilder/useGetQueryRange';
 import { useStepInterval } from 'hooks/queryBuilder/useStepInterval';
 import { useNotifications } from 'hooks/useNotifications';
@@ -157,6 +159,11 @@ function GridCardGraph({
 		t,
 	]);
 
+	const tableData = useMemo(
+		() => queryResponse.data?.payload.data.newResult.data.result || [],
+		[queryResponse.data?.payload.data.newResult.data.result],
+	);
+
 	const onCloneHandler = async (): Promise<void> => {
 		const uuid = v4();
 
@@ -304,6 +311,8 @@ function GridCardGraph({
 		);
 	}
 
+	const isVisible = !isEmpty(widget) && !!queryResponse.data?.payload;
+
 	return (
 		<span
 			ref={graphRef}
@@ -337,7 +346,7 @@ function GridCardGraph({
 
 			{!isEmptyLayout && getModals()}
 
-			{!isEmpty(widget) && !!queryResponse.data?.payload && (
+			{isVisible && widget.panelTypes !== PANEL_TYPES.TABLE && (
 				<GridGraphComponent
 					GRAPH_TYPES={widget.panelTypes}
 					data={chartData}
@@ -347,6 +356,20 @@ function GridCardGraph({
 					name={name}
 					yAxisUnit={yAxisUnit}
 					onDragSelect={onDragSelect}
+				/>
+			)}
+
+			{isVisible && widget.panelTypes === PANEL_TYPES.TABLE && (
+				<QueryTable
+					size="small"
+					sticky
+					query={widget.query}
+					queryTableData={tableData}
+					bordered={false}
+					scroll={{
+						x: 'max-content',
+						y: 'max-content',
+					}}
 				/>
 			)}
 

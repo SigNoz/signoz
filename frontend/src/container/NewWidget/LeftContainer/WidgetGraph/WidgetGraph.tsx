@@ -1,9 +1,13 @@
 import { Card, Typography } from 'antd';
 import Spinner from 'components/Spinner';
+import { PANEL_TYPES } from 'constants/queryBuilder';
 import GridGraphComponent from 'container/GridGraphComponent';
 import { WidgetGraphProps } from 'container/NewWidget/types';
+import { QueryTable } from 'container/QueryTable';
 import { useGetWidgetQueryRange } from 'hooks/queryBuilder/useGetWidgetQueryRange';
+import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import getChartData from 'lib/getChartData';
+import { useMemo } from 'react';
 import { useSelector } from 'react-redux';
 import { useLocation } from 'react-router-dom';
 import { AppState } from 'store/reducers';
@@ -30,10 +34,17 @@ function WidgetGraph({
 
 	const selectedWidget = widgets.find((e) => e.id === widgetId);
 
+	const { stagedQuery } = useQueryBuilder();
+
 	const getWidgetQueryRange = useGetWidgetQueryRange({
 		graphType: selectedGraph,
 		selectedTime: selectedTime.enum,
 	});
+
+	const currentData = useMemo(
+		() => getWidgetQueryRange.data?.payload.data.newResult.data.result || [],
+		[getWidgetQueryRange.data?.payload.data.newResult.data.result],
+	);
 
 	if (selectedWidget === undefined) {
 		return <Card>Invalid widget</Card>;
@@ -64,6 +75,22 @@ function WidgetGraph({
 			{ queryData: getWidgetQueryRange.data?.payload.data.result ?? [] },
 		],
 	});
+
+	if (selectedGraph === PANEL_TYPES.TABLE && stagedQuery) {
+		return (
+			<QueryTable
+				sticky
+				size="small"
+				query={stagedQuery}
+				queryTableData={currentData}
+				bordered={false}
+				scroll={{
+					x: 'max-content',
+					y: 'max-content',
+				}}
+			/>
+		);
+	}
 
 	return (
 		<GridGraphComponent

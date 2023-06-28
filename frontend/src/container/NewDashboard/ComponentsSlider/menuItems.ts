@@ -14,6 +14,11 @@ const Items: ItemsProps[] = [
 		Icon: ValueIcon,
 		display: 'Value',
 	},
+	{
+		name: PANEL_TYPES.TABLE,
+		Icon: TimeSeries,
+		display: 'Table',
+	},
 ];
 
 export type ITEMS =

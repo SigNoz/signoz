@@ -45,7 +45,7 @@ function WidgetGraph({
 	}
 
 	return (
-		<Container>
+		<Container panelType={selectedWidget.panelTypes}>
 			<PlotTag queryType={currentQuery.queryType} />
 			{getWidgetQueryRange.error && (
 				<AlertIconContainer color="red" title={getWidgetQueryRange.error.message}>
