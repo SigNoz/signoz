@@ -48,6 +48,7 @@ function ExportPanel({ isLoading, onExport }: ExportPanelProps): JSX.Element {
 				<Button>Actions</Button>
 			</Dropdown>
 			<Modal
+				footer={null}
 				onOk={onCancel(false)}
 				onCancel={onCancel(false)}
 				open={isExport}

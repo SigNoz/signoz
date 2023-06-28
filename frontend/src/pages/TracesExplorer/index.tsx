@@ -1,6 +1,6 @@
 import { Tabs } from 'antd';
-import update from 'api/dashboard/update';
 import axios from 'axios';
+import { QueryParams } from 'constants/query';
 import { initialQueriesMap, PANEL_TYPES } from 'constants/queryBuilder';
 import {
 	COMPOSITE_QUERY,
@@ -10,18 +10,19 @@ import ROUTES from 'constants/routes';
 import ExportPanel from 'container/ExportPanel';
 import { GRAPH_TYPES } from 'container/NewDashboard/ComponentsSlider';
 import QuerySection from 'container/TracesExplorer/QuerySection';
+import { useUpdateDashboard } from 'hooks/dashboard/useUpdateDashboard';
+import { addEmptyWidgetInDashboardJSONWithQuery } from 'hooks/dashboard/utils';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useShareBuilderUrl } from 'hooks/queryBuilder/useShareBuilderUrl';
 import { useNotifications } from 'hooks/useNotifications';
 import history from 'lib/history';
 import { useCallback, useMemo } from 'react';
-import { useMutation } from 'react-query';
 import { generatePath } from 'react-router-dom';
 import { Dashboard } from 'types/api/dashboard/getAll';
 import { DataSource } from 'types/common/queryBuilder';
 
 import { ActionsWrapper, Container } from './styles';
-import { getTabsItems, getUpdatedDashboard } from './utils';
+import { getTabsItems } from './utils';
 
 function TracesExplorer(): JSX.Element {
 	const { notifications } = useNotifications();
@@ -56,34 +57,37 @@ function TracesExplorer(): JSX.Element {
 		[stagedQuery, updateAllQueriesOperators],
 	);
 
-	const { mutate: updateDashboard, isLoading } = useMutation(update, {
-		onSuccess: (data) => {
-			const dashboardEditView = `${generatePath(ROUTES.DASHBOARD, {
-				dashboardId: data?.payload?.uuid,
-			})}/new?graphType=graph&widgetId=empty&${COMPOSITE_QUERY}=${JSON.stringify(
-				exportDefaultQuery,
-			)}`;
-
-			history.push(dashboardEditView);
-		},
-		onError: (error) => {
-			if (axios.isAxiosError(error)) {
-				notifications.error({
-					message: error.message,
-				});
-			}
-		},
-	});
+	const { mutate: updateDashboard, isLoading } = useUpdateDashboard();
 
 	const handleExport = useCallback(
 		(dashboard: Dashboard | null): void => {
 			if (!dashboard) return;
 
-			const updatedDashboard = getUpdatedDashboard(dashboard, exportDefaultQuery);
+			const updatedDashboard = addEmptyWidgetInDashboardJSONWithQuery(
+				dashboard,
+				exportDefaultQuery,
+			);
 
-			updateDashboard(updatedDashboard);
+			updateDashboard(updatedDashboard, {
+				onSuccess: (data) => {
+					const dashboardEditView = `${generatePath(ROUTES.DASHBOARD, {
+						dashboardId: data?.payload?.uuid,
+					})}/new?${QueryParams.graphType}=graph&${
+						QueryParams.widgetId
+					}=empty&${COMPOSITE_QUERY}=${JSON.stringify(exportDefaultQuery)}`;
+
+					history.push(dashboardEditView);
+				},
+				onError: (error) => {
+					if (axios.isAxiosError(error)) {
+						notifications.error({
+							message: error.message,
+						});
+					}
+				},
+			});
 		},
-		[exportDefaultQuery, updateDashboard],
+		[exportDefaultQuery, notifications, updateDashboard],
 	);
 
 	const handleTabChange = useCallback(
