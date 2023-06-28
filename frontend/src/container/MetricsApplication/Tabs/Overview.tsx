@@ -26,7 +26,6 @@ import { useDispatch, useSelector } from 'react-redux';
 import { useLocation, useParams } from 'react-router-dom';
 import { UpdateTimeInterval } from 'store/actions';
 import { AppState } from 'store/reducers';
-import { Widgets } from 'types/api/dashboard/getAll';
 import { PayloadProps } from 'types/api/metrics/getServiceOverview';
 import { ServiceDataProps } from 'types/api/metrics/getTopLevelOperations';
 import { PayloadProps as PayloadPropsTopOpertions } from 'types/api/metrics/getTopOperations';
@@ -50,7 +49,7 @@ import {
 } from './util';
 
 function Application(): JSX.Element {
-  const { maxTime, minTime } = useSelector<AppState, GlobalReducer>(
+	const { maxTime, minTime } = useSelector<AppState, GlobalReducer>(
 		(state) => state.globalTime,
 	);
 	const { servicename } = useParams<{ servicename?: string }>();
