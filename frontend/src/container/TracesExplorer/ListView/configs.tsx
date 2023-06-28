@@ -22,9 +22,10 @@ export const modifiedColumns = (
 		const key = column.key as string;
 
 		const getHttpMethodOrStatus = (value: string): JSX.Element => {
-			if (value.length === 0) {
-				return <Typography>-</Typography>;
+			if (value === 'N/A') {
+				return <Typography>{value}</Typography>;
 			}
+
 			return <Tag color="magenta">{value}</Tag>;
 		};
 
