@@ -86,7 +86,7 @@ function Application({ getWidgetQueryBuilder }: DashboardProps): JSX.Element {
 	);
 
 	const serviceOverviewQuery = {
-		queryKey: [`getServiceOverview`, servicename, selectedTags, minTime, maxTime],
+		queryKey: [servicename, selectedTags, minTime, maxTime],
 		queryFn: (): Promise<PayloadProps> =>
 			getServiceOverview({
 				service: servicename || '',
@@ -102,7 +102,7 @@ function Application({ getWidgetQueryBuilder }: DashboardProps): JSX.Element {
 	};
 
 	const topOperationsQuery = {
-		queryKey: [`topOperation`, servicename, selectedTags, minTime, maxTime],
+		queryKey: [minTime, maxTime, servicename, selectedTags],
 		queryFn: (): Promise<PayloadPropsTopOpertions> =>
 			getTopOperations({
 				service: servicename || '',
@@ -113,7 +113,7 @@ function Application({ getWidgetQueryBuilder }: DashboardProps): JSX.Element {
 	};
 
 	const topLevelOperationsQuery = {
-		queryKey: [`topLevelOperation`, servicename, selectedTags, minTime, maxTime],
+		queryKey: [servicename, minTime, maxTime, selectedTags],
 		queryFn: (): Promise<ServiceDataProps> => getTopLevelOperations(),
 	};
 
