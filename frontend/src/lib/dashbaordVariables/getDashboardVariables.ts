@@ -8,7 +8,7 @@ export const getDashboardVariables = (): Record<string, unknown> => {
 			dashboards: { dashboards },
 		} = store.getState();
 		if (dashboards.length > 0) {
-			const [selectedDashboard] = dashboards;
+			const [selectedDashboard] = dashboards || [];
 			const {
 				data: { variables = {} },
 			} = selectedDashboard;
