@@ -35,6 +35,7 @@ import { GlobalReducer } from 'types/reducer/globalTime';
 import { Tags } from 'types/reducer/trace';
 import { v4 as uuid } from 'uuid';
 
+import { getWidgetQueryBuilder } from '../MetricsApplication.factory';
 import {
 	errorPercentage,
 	operationPerSec,
@@ -48,11 +49,10 @@ import {
 	onViewTracePopupClick,
 } from './util';
 
-function Application({ getWidgetQueryBuilder }: DashboardProps): JSX.Element {
-	const { maxTime, minTime } = useSelector<AppState, GlobalReducer>(
+function Application(): JSX.Element {
+  const { maxTime, minTime } = useSelector<AppState, GlobalReducer>(
 		(state) => state.globalTime,
 	);
-
 	const { servicename } = useParams<{ servicename?: string }>();
 	const [selectedTimeStamp, setSelectedTimeStamp] = useState<number>(0);
 	const { search } = useLocation();
@@ -164,7 +164,7 @@ function Application({ getWidgetQueryBuilder }: DashboardProps): JSX.Element {
 				clickhouse_sql: [],
 				id: uuid(),
 			}),
-		[getWidgetQueryBuilder, servicename, topLevelOperations, tagFilterItems],
+		[servicename, topLevelOperations, tagFilterItems],
 	);
 
 	const errorPercentageWidget = useMemo(
@@ -182,7 +182,7 @@ function Application({ getWidgetQueryBuilder }: DashboardProps): JSX.Element {
 				clickhouse_sql: [],
 				id: uuid(),
 			}),
-		[servicename, topLevelOperations, tagFilterItems, getWidgetQueryBuilder],
+		[servicename, topLevelOperations, tagFilterItems],
 	);
 
 	const onDragSelect = useCallback(
@@ -408,10 +408,6 @@ function Application({ getWidgetQueryBuilder }: DashboardProps): JSX.Element {
 			</Row>
 		</>
 	);
-}
-
-interface DashboardProps {
-	getWidgetQueryBuilder: (query: Widgets['query']) => Widgets;
 }
 
 type ClickHandlerType = (

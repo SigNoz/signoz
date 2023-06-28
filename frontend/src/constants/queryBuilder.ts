@@ -125,7 +125,7 @@ const initialQueryBuilderFormValues: IBuilderQuery = {
 	}),
 	disabled: false,
 	having: [],
-	stepInterval: 30,
+	stepInterval: 60,
 	limit: null,
 	orderBy: [],
 	groupBy: [],

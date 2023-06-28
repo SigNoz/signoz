@@ -12,4 +12,6 @@ export enum QueryParams {
 	aggregationOption = 'aggregationOption',
 	entity = 'entity',
 	resourceAttributes = 'resourceAttribute',
+	graphType = 'graphType',
+	widgetId = 'widgetId',
 }
