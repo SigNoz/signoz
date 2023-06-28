@@ -21,12 +21,15 @@ import { colors } from 'lib/getRandomColor';
 import getStep from 'lib/getStep';
 import history from 'lib/history';
 import { useCallback, useMemo, useState } from 'react';
-import { useQuery } from 'react-query';
+import { useQueries, UseQueryResult } from 'react-query';
 import { useDispatch, useSelector } from 'react-redux';
 import { useLocation, useParams } from 'react-router-dom';
 import { UpdateTimeInterval } from 'store/actions';
 import { AppState } from 'store/reducers';
 import { Widgets } from 'types/api/dashboard/getAll';
+import { PayloadProps } from 'types/api/metrics/getServiceOverview';
+import { ServiceDataProps } from 'types/api/metrics/getTopLevelOperations';
+import { PayloadProps as PayloadPropsTopOpertions } from 'types/api/metrics/getTopOperations';
 import { EQueryType } from 'types/common/dashboard';
 import { GlobalReducer } from 'types/reducer/globalTime';
 import { Tags } from 'types/reducer/trace';
@@ -82,21 +85,9 @@ function Application({ getWidgetQueryBuilder }: DashboardProps): JSX.Element {
 		[handleSetTimeStamp],
 	);
 
-	const {
-		data: serviceOverview,
-		error: serviceOverviewError,
-		isError: serviceOverviewIsError,
-		isLoading: serviceOverviewIsLoading,
-	} = useQuery(
-		[
-			`getServiceOverview`,
-			servicename,
-			getStep({ start: minTime, end: maxTime, inputFormat: 'ns' }),
-			selectedTags,
-			minTime,
-			maxTime,
-		],
-		() =>
+	const serviceOverviewQuery = {
+		queryKey: [`getServiceOverview`, servicename, selectedTags, minTime, maxTime],
+		queryFn: (): Promise<PayloadProps> =>
 			getServiceOverview({
 				service: servicename || '',
 				start: minTime,
@@ -108,33 +99,45 @@ function Application({ getWidgetQueryBuilder }: DashboardProps): JSX.Element {
 				}),
 				selectedTags,
 			}),
-	);
+	};
 
-	const {
-		data: topOperations,
-		error: topOperationsError,
-		isError: topOperationsIsError,
-		isLoading: topOperationsLoading,
-	} = useQuery(
-		[`topOperation`, servicename, selectedTags, minTime, maxTime],
-		() =>
+	const topOperationsQuery = {
+		queryKey: [`topOperation`, servicename, selectedTags, minTime, maxTime],
+		queryFn: (): Promise<PayloadPropsTopOpertions> =>
 			getTopOperations({
 				service: servicename || '',
 				start: minTime,
 				end: maxTime,
 				selectedTags,
 			}),
-	);
+	};
 
-	const {
-		data: topLevelOperations,
-		error: topLevelOperationsError,
-		isError: topLevelOperationsIsError,
-		isLoading: topLevelOperationsLoading,
-	} = useQuery(
-		[`topLevelOperation`, servicename, selectedTags, minTime, maxTime],
-		() => getTopLevelOperations(),
-	);
+	const topLevelOperationsQuery = {
+		queryKey: [`topLevelOperation`, servicename, selectedTags, minTime, maxTime],
+		queryFn: (): Promise<ServiceDataProps> => getTopLevelOperations(),
+	};
+
+	const queryResult: UseQueryResult[] = useQueries([
+		serviceOverviewQuery,
+		topOperationsQuery,
+		topLevelOperationsQuery,
+	]);
+
+	const serviceOverview = queryResult[0].data as PayloadProps;
+	const serviceOverviewError = queryResult[0].error;
+	const serviceOverviewIsError = queryResult[0].isError;
+	const serviceOverviewIsLoading = queryResult[0].isLoading;
+
+	const topOperations = queryResult[1].data as PayloadPropsTopOpertions;
+	const topOperationsError = queryResult[1].error;
+	const topOperationsIsError = queryResult[1].isError;
+	const topOperationsLoading = queryResult[1].isLoading;
+
+	const topLevelOperations: ServiceDataProps = queryResult[2]
+		.data as ServiceDataProps;
+	const topLevelOperationsError = queryResult[2].error;
+	const topLevelOperationsIsError = queryResult[2].isError;
+	const topLevelOperationsLoading = queryResult[2].isLoading;
 
 	const selectedTraceTags: string = JSON.stringify(
 		convertRawQueriesToTraceSelectedTags(queries) || [],
