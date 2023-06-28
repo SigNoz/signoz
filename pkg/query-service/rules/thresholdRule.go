@@ -22,7 +22,6 @@ import (
 	querytemplate "go.signoz.io/signoz/pkg/query-service/utils/queryTemplate"
 	"go.signoz.io/signoz/pkg/query-service/utils/times"
 	"go.signoz.io/signoz/pkg/query-service/utils/timestamp"
-	"go.signoz.io/signoz/pkg/query-service/utils/value"
 
 	logsv3 "go.signoz.io/signoz/pkg/query-service/app/logs/v3"
 	metricsv3 "go.signoz.io/signoz/pkg/query-service/app/metrics/v3"
@@ -327,7 +326,7 @@ func (r *ThresholdRule) SendAlerts(ctx context.Context, ts time.Time, resendDela
 }
 func (r *ThresholdRule) CheckCondition(v float64) bool {
 
-	if value.IsNaN(v) {
+	if math.IsNaN(v) {
 		zap.S().Debugf("msg:", "found NaN in rule condition", "\t rule name:", r.Name())
 		return false
 	}
@@ -476,9 +475,10 @@ func (r *ThresholdRule) runChQuery(ctx context.Context, db clickhouse.Conn, quer
 			}
 		}
 
-		if value.IsNaN(sample.Point.V) {
+		if math.IsNaN(sample.Point.V) {
 			continue
 		}
+		zap.S().Infof("ruleid: %s, sample value %.6f, labels %s with hash %s", r.ID(), sample.Point.V, lbls.Labels(), lbls.Labels().Hash())
 
 		// capture lables in result
 		sample.Metric = lbls.Labels()
@@ -544,6 +544,9 @@ func (r *ThresholdRule) runChQuery(ctx context.Context, db clickhouse.Conn, quer
 		if r.opts.SendUnmatched || r.CheckCondition(sample.Point.V) {
 			result = append(result, sample)
 		}
+	}
+	if len(result) != 0 {
+		zap.S().Infof("For rule %s, with ClickHouseQuery %s, found %d alerts", r.ID(), query, len(result))
 	}
 	zap.S().Debugf("ruleid:", r.ID(), "\t result (found alerts):", len(result))
 	return result, nil
