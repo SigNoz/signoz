@@ -1,9 +1,9 @@
 import axios from 'api';
-import { PayloadProps, Props } from 'types/api/metrics/getTopLevelOperations';
+import { ServiceDataProps } from 'types/api/metrics/getTopLevelOperations';
 
-const getTopLevelOperations = async (props: Props): Promise<PayloadProps> => {
+const getTopLevelOperations = async (): Promise<ServiceDataProps> => {
 	const response = await axios.post(`/service/top_level_operations`);
-	return response.data[props.service];
+	return response.data;
 };
 
 export default getTopLevelOperations;

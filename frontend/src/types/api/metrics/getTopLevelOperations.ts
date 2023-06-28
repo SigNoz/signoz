@@ -5,3 +5,7 @@ export interface Props {
 }
 
 export type PayloadProps = TopLevelOperations;
+
+export type ServiceDataProps = {
+	[serviceName: string]: string[];
+};

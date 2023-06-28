@@ -151,10 +151,7 @@ function Application({ getWidgetQueryBuilder }: DashboardProps): JSX.Element {
 			globalTime.minTime,
 			globalTime.maxTime,
 		],
-		() =>
-			getTopLevelOperations({
-				service: servicename || '',
-			}),
+		() => getTopLevelOperations(),
 	);
 
 	const selectedTraceTags: string = JSON.stringify(
@@ -175,7 +172,9 @@ function Application({ getWidgetQueryBuilder }: DashboardProps): JSX.Element {
 				builder: operationPerSec({
 					servicename,
 					tagFilterItems,
-					topLevelOperations: topLevelOperations || [],
+					topLevelOperations: topLevelOperations
+						? topLevelOperations[servicename || '']
+						: [],
 				}),
 				clickhouse_sql: [],
 				id: uuid(),
@@ -191,7 +190,9 @@ function Application({ getWidgetQueryBuilder }: DashboardProps): JSX.Element {
 				builder: errorPercentage({
 					servicename,
 					tagFilterItems,
-					topLevelOperations: topLevelOperations || [],
+					topLevelOperations: topLevelOperations
+						? topLevelOperations[servicename || '']
+						: [],
 				}),
 				clickhouse_sql: [],
 				id: uuid(),
