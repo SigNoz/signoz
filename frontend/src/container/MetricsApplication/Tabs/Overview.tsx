@@ -17,7 +17,6 @@ import {
 	resourceAttributesToTagFilterItems,
 } from 'hooks/useResourceAttribute/utils';
 import convertToNanoSecondsToSecond from 'lib/convertToNanoSecondsToSecond';
-import GetMinMax from 'lib/getMinMax';
 import { colors } from 'lib/getRandomColor';
 import getStep from 'lib/getStep';
 import history from 'lib/history';
@@ -47,14 +46,9 @@ import {
 } from './util';
 
 function Application({ getWidgetQueryBuilder }: DashboardProps): JSX.Element {
-	const globalTime = useSelector<AppState, GlobalReducer>(
+	const { maxTime, minTime } = useSelector<AppState, GlobalReducer>(
 		(state) => state.globalTime,
 	);
-
-	const { maxTime, minTime } = GetMinMax(globalTime.selectedTime, [
-		globalTime.minTime / 1000000,
-		globalTime.maxTime / 1000000,
-	]);
 
 	const { servicename } = useParams<{ servicename?: string }>();
 	const [selectedTimeStamp, setSelectedTimeStamp] = useState<number>(0);
@@ -99,8 +93,8 @@ function Application({ getWidgetQueryBuilder }: DashboardProps): JSX.Element {
 			servicename,
 			getStep({ start: minTime, end: maxTime, inputFormat: 'ns' }),
 			selectedTags,
-			globalTime.minTime,
-			globalTime.maxTime,
+			minTime,
+			maxTime,
 		],
 		() =>
 			getServiceOverview({
@@ -122,13 +116,7 @@ function Application({ getWidgetQueryBuilder }: DashboardProps): JSX.Element {
 		isError: topOperationsIsError,
 		isLoading: topOperationsLoading,
 	} = useQuery(
-		[
-			`topOperation`,
-			servicename,
-			selectedTags,
-			globalTime.minTime,
-			globalTime.maxTime,
-		],
+		[`topOperation`, servicename, selectedTags, minTime, maxTime],
 		() =>
 			getTopOperations({
 				service: servicename || '',
@@ -144,13 +132,7 @@ function Application({ getWidgetQueryBuilder }: DashboardProps): JSX.Element {
 		isError: topLevelOperationsIsError,
 		isLoading: topLevelOperationsLoading,
 	} = useQuery(
-		[
-			`topLevelOperation`,
-			servicename,
-			selectedTags,
-			globalTime.minTime,
-			globalTime.maxTime,
-		],
+		[`topLevelOperation`, servicename, selectedTags, minTime, maxTime],
 		() => getTopLevelOperations(),
 	);
 
