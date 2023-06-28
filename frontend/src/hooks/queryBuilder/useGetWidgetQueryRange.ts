@@ -9,8 +9,8 @@ import { SuccessResponse } from 'types/api';
 import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
 import { GlobalReducer } from 'types/reducer/globalTime';
 
-import { useGetCompositeQueryParam } from './useGetCompositeQueryParam';
 import { useGetQueryRange } from './useGetQueryRange';
+import { useQueryBuilder } from './useQueryBuilder';
 
 export const useGetWidgetQueryRange = (
 	{
@@ -24,24 +24,24 @@ export const useGetWidgetQueryRange = (
 		GlobalReducer
 	>((state) => state.globalTime);
 
-	const compositeQuery = useGetCompositeQueryParam();
+	const { stagedQuery } = useQueryBuilder();
 
 	return useGetQueryRange(
 		{
 			graphType,
 			selectedTime,
 			globalSelectedInterval,
-			query: compositeQuery || initialQueriesMap.metrics,
+			query: stagedQuery || initialQueriesMap.metrics,
 			variables: getDashboardVariables(),
 		},
 		{
-			enabled: !!compositeQuery,
+			enabled: !!stagedQuery,
 			retry: false,
 			queryKey: [
 				REACT_QUERY_KEY.GET_QUERY_RANGE,
 				selectedTime,
 				globalSelectedInterval,
-				compositeQuery,
+				stagedQuery,
 			],
 			...options,
 		},
