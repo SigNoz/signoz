@@ -4,6 +4,7 @@ import { AxiosError } from 'axios';
 import { COMPOSITE_QUERY } from 'constants/queryBuilderQueryNames';
 import ROUTES from 'constants/routes';
 import { ITEMS } from 'container/NewDashboard/ComponentsSlider/menuItems';
+import { updateStepInterval } from 'hooks/queryBuilder/useStepInterval';
 import history from 'lib/history';
 import { Layout } from 'react-grid-layout';
 import { generatePath } from 'react-router-dom';
@@ -88,8 +89,9 @@ export const SaveDashboard = ({
 			const allLayout = getAllLayout();
 			const params = new URLSearchParams(window.location.search);
 			const compositeQuery = params.get(COMPOSITE_QUERY);
+			const { maxTime, minTime } = store.getState().globalTime;
 			const query = compositeQuery
-				? JSON.parse(compositeQuery)
+				? updateStepInterval(JSON.parse(compositeQuery), maxTime, minTime)
 				: selectedWidget.query;
 
 			const response = await updateDashboardApi({
