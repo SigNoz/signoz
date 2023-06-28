@@ -112,13 +112,23 @@ function TracesExplorer(): JSX.Element {
 
 	useShareBuilderUrl(defaultQuery);
 
+	const onCreateAlertsHandler = useCallback(() => {
+		history.push(
+			`${ROUTES.ALERTS_NEW}?${COMPOSITE_QUERY}=${JSON.stringify(stagedQuery)}`,
+		);
+	}, [stagedQuery]);
+
 	return (
 		<>
 			<QuerySection />
 
 			<Container>
 				<ActionsWrapper>
-					<ExportPanel isLoading={isLoading} onExport={handleExport} />
+					<ExportPanel
+						onCreateAlerts={onCreateAlertsHandler}
+						isLoading={isLoading}
+						onExport={handleExport}
+					/>
 				</ActionsWrapper>
 
 				<Tabs

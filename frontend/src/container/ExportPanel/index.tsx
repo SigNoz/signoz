@@ -5,7 +5,11 @@ import { Dashboard } from 'types/api/dashboard/getAll';
 import { MENU_KEY, MENU_LABEL } from './config';
 import ExportPanelContainer from './ExportPanel';
 
-function ExportPanel({ isLoading, onExport }: ExportPanelProps): JSX.Element {
+function ExportPanel({
+	isLoading,
+	onExport,
+	onCreateAlerts,
+}: ExportPanelProps): JSX.Element {
 	const [isExport, setIsExport] = useState<boolean>(false);
 
 	const onModalToggle = useCallback((value: boolean) => {
@@ -17,8 +21,12 @@ function ExportPanel({ isLoading, onExport }: ExportPanelProps): JSX.Element {
 			if (e.key === MENU_KEY.EXPORT) {
 				onModalToggle(true);
 			}
+
+			if (e.key === MENU_KEY.CREATE_ALERTS) {
+				onCreateAlerts();
+			}
 		},
-		[onModalToggle],
+		[onModalToggle, onCreateAlerts],
 	);
 
 	const menu: MenuProps = useMemo(
@@ -54,7 +62,11 @@ function ExportPanel({ isLoading, onExport }: ExportPanelProps): JSX.Element {
 				open={isExport}
 				centered
 			>
-				<ExportPanelContainer isLoading={isLoading} onExport={onExport} />
+				<ExportPanelContainer
+					onCreateAlerts={onCreateAlerts}
+					isLoading={isLoading}
+					onExport={onExport}
+				/>
 			</Modal>
 		</>
 	);
@@ -71,6 +83,7 @@ interface OnClickProps {
 export interface ExportPanelProps {
 	isLoading?: boolean;
 	onExport: (dashboard: Dashboard | null) => void;
+	onCreateAlerts: VoidFunction;
 }
 
 export default ExportPanel;
