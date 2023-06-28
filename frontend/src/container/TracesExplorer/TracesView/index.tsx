@@ -1,17 +1,19 @@
+import Typography from 'antd/es/typography/Typography';
+import { ResizeTable } from 'components/ResizeTable';
 import { initialQueriesMap, PANEL_TYPES } from 'constants/queryBuilder';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
-import { QueryTable } from 'container/QueryTable';
 import { useGetQueryRange } from 'hooks/queryBuilder/useGetQueryRange';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { Pagination, URL_PAGINATION } from 'hooks/queryPagination';
 import useUrlQueryData from 'hooks/useUrlQueryData';
+import { useMemo } from 'react';
 import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
 import { GlobalReducer } from 'types/reducer/globalTime';
 
 import TraceExplorerControls from '../Controls';
-import { modifiedColumns, PER_PAGE_OPTIONS } from './configs';
-import { Container } from './styles';
+import { columns, PER_PAGE_OPTIONS } from './configs';
+import { ActionsContainer, Container } from './styles';
 
 function TracesView(): JSX.Element {
 	const { stagedQuery, panelType } = useQueryBuilder();
@@ -52,21 +54,31 @@ function TracesView(): JSX.Element {
 		},
 	);
 
+	const responseData = data?.payload?.data?.newResult?.data?.result[0]?.list;
+	const tableData = useMemo(
+		() => responseData?.map((listItem) => listItem.data),
+		[responseData],
+	);
+
 	return (
 		<Container>
-			<TraceExplorerControls
-				isLoading={isLoading}
-				totalCount={
-					data?.payload?.data?.newResult?.data?.result[0]?.list?.length || 0
-				}
-				perPageOptions={PER_PAGE_OPTIONS}
-			/>
-			<QueryTable
-				query={stagedQuery || initialQueriesMap.traces}
-				queryTableData={data?.payload.data.newResult.data.result || []}
+			<ActionsContainer>
+				<Typography>
+					Showing up to X of the slowest traces form the selected time range
+				</Typography>
+				<TraceExplorerControls
+					isLoading={isLoading}
+					totalCount={responseData?.length || 0}
+					perPageOptions={PER_PAGE_OPTIONS}
+				/>
+			</ActionsContainer>
+			<ResizeTable
 				loading={isLoading}
+				columns={columns}
+				tableLayout="fixed"
+				dataSource={tableData}
+				scroll={{ x: true }}
 				pagination={false}
-				modifyColumns={modifiedColumns}
 			/>
 		</Container>
 	);

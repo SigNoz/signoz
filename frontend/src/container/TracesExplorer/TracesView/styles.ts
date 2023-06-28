@@ -5,3 +5,9 @@ export const Container = styled.div`
 	flex-direction: column;
 	gap: 15px;
 `;
+
+export const ActionsContainer = styled.div`
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+`;
