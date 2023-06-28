@@ -21,7 +21,7 @@ import GetMinMax from 'lib/getMinMax';
 import { colors } from 'lib/getRandomColor';
 import getStep from 'lib/getStep';
 import history from 'lib/history';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { useQuery } from 'react-query';
 import { useDispatch, useSelector } from 'react-redux';
 import { useLocation, useParams } from 'react-router-dom';
@@ -58,9 +58,6 @@ function Application({ getWidgetQueryBuilder }: DashboardProps): JSX.Element {
 
 	const { servicename } = useParams<{ servicename?: string }>();
 	const [selectedTimeStamp, setSelectedTimeStamp] = useState<number>(0);
-	const [serviceError, setServiceError] = useState<string>('');
-	const [topLevelOpsError, setTopLevelOpsError] = useState<string>('');
-	const [topOpsError, setTopOpsError] = useState<string>('');
 	const { search } = useLocation();
 	const { queries } = useResourceAttribute();
 	const selectedTags = useMemo(
@@ -159,28 +156,6 @@ function Application({ getWidgetQueryBuilder }: DashboardProps): JSX.Element {
 				service: servicename || '',
 			}),
 	);
-
-	useEffect(() => {
-		if (serviceOverviewIsError) {
-			const { response } = serviceOverviewError as AxiosError;
-			setServiceError(response?.data);
-		}
-		if (topOperationsIsError) {
-			const { response } = topOperationsError as AxiosError;
-			setTopOpsError(response?.data);
-		}
-		if (topLevelOperationsIsError) {
-			const { response } = topLevelOperationsError as AxiosError;
-			setTopLevelOpsError(response?.data);
-		}
-	}, [
-		serviceOverviewIsError,
-		topOperationsIsError,
-		topLevelOperationsIsError,
-		serviceOverviewError,
-		topOperationsError,
-		topLevelOperationsError,
-	]);
 
 	const selectedTraceTags: string = JSON.stringify(
 		convertRawQueriesToTraceSelectedTags(queries) || [],
@@ -329,7 +304,11 @@ function Application({ getWidgetQueryBuilder }: DashboardProps): JSX.Element {
 						View Traces
 					</Button>
 					<Card>
-						{serviceOverviewIsError && <Typography>{serviceError}</Typography>}
+						{serviceOverviewIsError && (
+							<Typography>
+								{(serviceOverviewError as AxiosError)?.response?.data}
+							</Typography>
+						)}
 						{!serviceOverviewIsError && (
 							<>
 								<GraphTitle>Latency</GraphTitle>
@@ -368,7 +347,11 @@ function Application({ getWidgetQueryBuilder }: DashboardProps): JSX.Element {
 						View Traces
 					</Button>
 					<Card>
-						{topLevelOperationsIsError && <Typography>{topLevelOpsError}</Typography>}
+						{topLevelOperationsIsError && (
+							<Typography>
+								{(topLevelOperationsError as AxiosError).response?.data}
+							</Typography>
+						)}
 						{!topLevelOperationsIsError && !topLevelOperationsLoading && (
 							<>
 								<GraphTitle>Rate (ops/s)</GraphTitle>
@@ -401,7 +384,11 @@ function Application({ getWidgetQueryBuilder }: DashboardProps): JSX.Element {
 					</Button>
 
 					<Card>
-						{topLevelOperationsIsError && <Typography>{topLevelOpsError}</Typography>}
+						{topLevelOperationsIsError && (
+							<Typography>
+								{(topLevelOperationsError as AxiosError).response?.data}
+							</Typography>
+						)}
 						{!topLevelOperationsIsError && !topLevelOperationsLoading && (
 							<>
 								<GraphTitle>Error Percentage</GraphTitle>
@@ -422,7 +409,11 @@ function Application({ getWidgetQueryBuilder }: DashboardProps): JSX.Element {
 
 				<Col span={12}>
 					<Card>
-						{topOperationsIsError && <Typography>{topOpsError}</Typography>}
+						{topOperationsIsError && (
+							<Typography>
+								{(topOperationsError as AxiosError).response?.data}
+							</Typography>
+						)}
 						{!topOperationsIsError && !topOperationsLoading && (
 							<TopOperationsTable data={topOperations || []} />
 						)}
