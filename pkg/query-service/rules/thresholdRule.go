@@ -353,22 +353,33 @@ func (r *ThresholdRule) CheckCondition(v float64) bool {
 
 func (r *ThresholdRule) prepareQueryRange(ts time.Time) *v3.QueryRangeParamsV3 {
 	// todo(amol): add 30 seconds to evalWindow for rate calc
+	start := ts.Add(-time.Duration(r.evalWindow)).UnixMilli() - 2*60*1000
+	end := ts.UnixMilli() - 2*60*1000
+
+	start = start - (start % (60 * 1000))
+	end = end - (end % (60 * 1000))
 
 	if r.ruleCondition.QueryType() == v3.QueryTypeClickHouseSQL {
 		return &v3.QueryRangeParamsV3{
-			Start:          ts.Add(-time.Duration(r.evalWindow)).UnixMilli(),
-			End:            ts.UnixMilli(),
-			Step:           30,
+			Start:          start,
+			End:            end,
+			Step:           60,
 			CompositeQuery: r.ruleCondition.CompositeQuery,
 			Variables:      make(map[string]interface{}, 0),
 		}
 	}
 
+	if r.ruleCondition.CompositeQuery != nil && r.ruleCondition.CompositeQuery.BuilderQueries != nil {
+		for _, q := range r.ruleCondition.CompositeQuery.BuilderQueries {
+			q.StepInterval = 60
+		}
+	}
+
 	// default mode
 	return &v3.QueryRangeParamsV3{
-		Start:          ts.Add(-time.Duration(r.evalWindow)).UnixMilli(),
-		End:            ts.UnixMilli(),
-		Step:           30,
+		Start:          start,
+		End:            end,
+		Step:           60,
 		CompositeQuery: r.ruleCondition.CompositeQuery,
 	}
 }
