@@ -6,7 +6,6 @@ import { useGetQueryRange } from 'hooks/queryBuilder/useGetQueryRange';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { Pagination, URL_PAGINATION } from 'hooks/queryPagination';
 import useUrlQueryData from 'hooks/useUrlQueryData';
-import debounce from 'lodash-es/debounce';
 import { memo, useMemo } from 'react';
 import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
@@ -37,11 +36,6 @@ function ListView(): JSX.Element {
 		URL_PAGINATION,
 	);
 
-	const debouncedSelectedColumns = useMemo(
-		() => debounce(() => [options?.selectColumns], 300),
-		[options?.selectColumns],
-	);
-
 	const { data, isLoading } = useGetQueryRange(
 		{
 			query: stagedQuery || initialQueriesMap.traces,
@@ -65,7 +59,7 @@ function ListView(): JSX.Element {
 				stagedQuery,
 				panelType,
 				paginationQueryData,
-				debouncedSelectedColumns(),
+				options?.selectColumns,
 			],
 			enabled: !!stagedQuery && panelType === PANEL_TYPES.LIST,
 		},
