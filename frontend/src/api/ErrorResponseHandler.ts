@@ -16,7 +16,7 @@ export function ErrorResponseHandler(error: AxiosError): ErrorResponse {
 				return {
 					statusCode,
 					payload: null,
-					error: data,
+					error: data.errorType,
 					message: null,
 				};
 			}
