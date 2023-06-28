@@ -23,7 +23,7 @@ type DynamicColumn = {
 	key: keyof RowData;
 	data: (string | number)[];
 	type: 'field' | 'operator';
-	sortable: boolean;
+	// sortable: boolean;
 };
 
 type DynamicColumns = DynamicColumn[];
@@ -84,15 +84,15 @@ const createLabels = <T extends ListItemData | SeriesItemLabels>(
 	if (isColumnExist(label as string, dynamicColumns)) return;
 	if (isFormula(label as string)) return;
 
-	const labelValue = labels[label];
+	// const labelValue = labels[label];
 
-	const isNumber = !Number.isNaN(parseFloat(String(labelValue)));
+	// const isNumber = !Number.isNaN(parseFloat(String(labelValue)));
 
 	const fieldObj: DynamicColumn = {
 		key: label as string,
 		data: [],
 		type: 'field',
-		sortable: isNumber,
+		// sortable: isNumber,
 	};
 
 	dynamicColumns.push(fieldObj);
@@ -120,7 +120,7 @@ const getDynamicColumns: GetDynamicColumns = (queryTableData, query) => {
 					key: 'timestamp',
 					data: [],
 					type: 'field',
-					sortable: true,
+					// sortable: true,
 				});
 			}
 
@@ -143,7 +143,7 @@ const getDynamicColumns: GetDynamicColumns = (queryTableData, query) => {
 					key: operator,
 					data: [],
 					type: 'operator',
-					sortable: true,
+					// sortable: true,
 				};
 				dynamicColumns.push(operatorColumn);
 			}
@@ -298,10 +298,10 @@ const generateTableColumns = (
 			dataIndex: item.key,
 			key: item.key,
 			title: prepareColumnTitle(item.key as string),
-			sorter: item.sortable
-				? (a: RowData, b: RowData): number =>
-						(a[item.key] as number) - (b[item.key] as number)
-				: false,
+			// sorter: item.sortable
+			// 	? (a: RowData, b: RowData): number =>
+			// 			(a[item.key] as number) - (b[item.key] as number)
+			// 	: false,
 		};
 
 		return [...acc, column];

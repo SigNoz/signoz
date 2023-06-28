@@ -13,7 +13,7 @@ import { DataSource } from 'types/common/queryBuilder';
 import { GlobalReducer } from 'types/reducer/globalTime';
 
 import TraceExplorerControls from '../Controls';
-import { PER_PAGE_OPTIONS, selectedColumns } from './configs';
+import { modifiedColumns, PER_PAGE_OPTIONS, selectedColumns } from './configs';
 import { Container } from './styles';
 
 function ListView(): JSX.Element {
@@ -85,6 +85,7 @@ function ListView(): JSX.Element {
 			<QueryTable
 				query={stagedQuery || initialQueriesMap.traces}
 				queryTableData={queryTableData}
+				modifyColumns={modifiedColumns}
 				loading={isLoading || isOptionsMenuLoading}
 				pagination={false}
 			/>
