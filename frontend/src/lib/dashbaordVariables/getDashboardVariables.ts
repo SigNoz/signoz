@@ -7,7 +7,7 @@ export const getDashboardVariables = (): Record<string, unknown> => {
 			globalTime,
 			dashboards: { dashboards },
 		} = store.getState();
-		const [selectedDashboard] = dashboards;
+		const [selectedDashboard] = dashboards || [];
 		const {
 			data: { variables = {} },
 		} = selectedDashboard;
