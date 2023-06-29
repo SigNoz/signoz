@@ -22,7 +22,9 @@ function ExportPanel({
 
 	const onCreateAlertsHandler = useCallback(() => {
 		history.push(
-			`${ROUTES.ALERTS_NEW}?${COMPOSITE_QUERY}=${JSON.stringify(query)}`,
+			`${ROUTES.ALERTS_NEW}?${COMPOSITE_QUERY}=${encodeURIComponent(
+				JSON.stringify(query),
+			)}`,
 		);
 	}, [query]);
 
@@ -93,7 +95,7 @@ interface OnClickProps {
 export interface ExportPanelProps {
 	isLoading?: boolean;
 	onExport: (dashboard: Dashboard | null) => void;
-	query: Query;
+	query: Query | null;
 }
 
 export default ExportPanel;
