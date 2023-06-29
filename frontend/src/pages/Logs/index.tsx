@@ -1,4 +1,5 @@
 import { Button, Col, Divider, Popover, Row, Select, Space } from 'antd';
+import { QueryParams } from 'constants/query';
 import LogControls from 'container/LogControls';
 import LogDetailedView from 'container/LogDetailedView';
 import LogLiveTail from 'container/LogLiveTail';
@@ -84,7 +85,7 @@ function Logs(): JSX.Element {
 			payload: value,
 		});
 		const params = new URLSearchParams(location.search);
-		params.set('order', value);
+		params.set(QueryParams.order, value);
 		history.push({ search: params.toString() });
 	};
 
