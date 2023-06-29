@@ -3,18 +3,19 @@
 // @ts-nocheck
 
 import { getMetricsQueryRange } from 'api/metrics/getQueryRange';
+import { GRAPH_TYPES } from 'container/NewDashboard/ComponentsSlider';
 import { timePreferenceType } from 'container/NewWidget/RightContainer/timeItems';
 import { Time } from 'container/TopNav/DateTimeSelection/config';
+import getStartEndRangeTime from 'lib/getStartEndRangeTime';
 import getStep from 'lib/getStep';
+import { convertNewDataToOld } from 'lib/newQueryBuilder/convertNewDataToOld';
 import { mapQueryDataToApi } from 'lib/newQueryBuilder/queryBuilderMappers/mapQueryDataToApi';
 import { isEmpty } from 'lodash-es';
-import { GRAPH_TYPES } from 'container/NewDashboard/ComponentsSlider';
+import store from 'store';
 import { SuccessResponse } from 'types/api';
-import { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
+import { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { EQueryType } from 'types/common/dashboard';
-import { convertNewDataToOld } from 'lib/newQueryBuilder/convertNewDataToOld';
-import getStartEndRangeTime from 'lib/getStartEndRangeTime';
 
 export async function GetMetricQueryRange({
 	query,
@@ -89,7 +90,11 @@ export async function GetMetricQueryRange({
 	const response = await getMetricsQueryRange({
 		start: parseInt(start, 10) * 1e3,
 		end: parseInt(end, 10) * 1e3,
-		step: getStep({ start, end, inputFormat: 'ms' }),
+		step: getStep({
+			start: store.getState().globalTime.minTime,
+			end: store.getState().globalTime.maxTime,
+			inputFormat: 'ns',
+		}),
 		variables,
 		...QueryPayload,
 		...params,
