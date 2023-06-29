@@ -2,7 +2,6 @@ import { Card, Typography } from 'antd';
 // components
 import ListLogView from 'components/Logs/ListLogView';
 import RawLogView from 'components/Logs/RawLogView';
-import LogsTableView from 'components/Logs/TableView';
 import Spinner from 'components/Spinner';
 import { PAGE_SIZE } from 'constants/queryBuilderQueryNames';
 import { LogViewMode } from 'container/LogsTable';
@@ -19,6 +18,8 @@ import { Virtuoso } from 'react-virtuoso';
 import { ILog } from 'types/api/logs/log';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 
+import InfinityTableView from './InfinityTableView';
+
 function Footer(): JSX.Element {
 	return <Spinner height={20} tip="Getting Logs" />;
 }
@@ -29,7 +30,7 @@ function LogsExplorerList(): JSX.Element {
 	const [currentLog, setCurrentLog] = useState<ILog | null>(null);
 	const [viewMode] = useState<LogViewMode>('raw');
 
-	const [linesPerRow] = useState<number>(20);
+	const [linesPerRow] = useState<number>(2);
 	const [page, setPage] = useState<number>(1);
 	const [logs, setLogs] = useState<ILog[]>([]);
 
@@ -89,7 +90,7 @@ function LogsExplorerList(): JSX.Element {
 		return offset >= limit;
 	}, [paginationQueryData]);
 
-	useGetExplorerQueryRange(requestData, {
+	const { isLoading } = useGetExplorerQueryRange(requestData, {
 		onSuccess: (data) => {
 			const currentData = data.payload.data.newResult.data.result;
 
@@ -103,6 +104,7 @@ function LogsExplorerList(): JSX.Element {
 			}
 		},
 		enabled: !isLimit,
+		keepPreviousData: true,
 	});
 
 	const handleResetPagination = useCallback(() => {
@@ -160,24 +162,25 @@ function LogsExplorerList(): JSX.Element {
 	);
 
 	const renderContent = useMemo(() => {
-		if (viewMode === 'table') {
-			return (
-				<LogsTableView
-					logs={logs}
-					// TODO: write new selected logic
-					fields={[]}
-					linesPerRow={linesPerRow}
-					// TODO: write new onClickExpanded logic
-					onClickExpand={(): void => {}}
-				/>
-			);
-		}
-
 		const components = isLimit
 			? {}
 			: {
 					Footer,
 			  };
+
+		if (viewMode === 'table') {
+			return (
+				<InfinityTableView
+					tableViewProps={{
+						logs,
+						fields: [],
+						linesPerRow,
+						onClickExpand: (): void => {},
+					}}
+					infitiyTableProps={{ onEndReached: handleEndReached, isLoading }}
+				/>
+			);
+		}
 
 		return (
 			<Card bodyStyle={contentStyle}>
@@ -191,7 +194,15 @@ function LogsExplorerList(): JSX.Element {
 				/>
 			</Card>
 		);
-	}, [viewMode, logs, handleEndReached, getItemContent, isLimit, linesPerRow]);
+	}, [
+		isLimit,
+		viewMode,
+		logs,
+		handleEndReached,
+		getItemContent,
+		linesPerRow,
+		isLoading,
+	]);
 
 	useEffect(() => {
 		if (isQueryStaged) {
