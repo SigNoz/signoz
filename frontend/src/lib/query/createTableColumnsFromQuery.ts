@@ -1,6 +1,5 @@
 import { ColumnsType } from 'antd/es/table';
 import { ColumnType } from 'antd/lib/table';
-import { FORMULA_REGEXP } from 'constants/regExp';
 import { QueryTableProps } from 'container/QueryTable/QueryTable.intefaces';
 import { toCapitalize } from 'lib/toCapitalize';
 import { ReactNode } from 'react';
@@ -47,9 +46,6 @@ type GetDynamicColumns = (
 	query: Query,
 ) => DynamicColumns;
 
-const isFormula = (queryName: string): boolean =>
-	FORMULA_REGEXP.test(queryName);
-
 const isColumnExist = (
 	columnName: string,
 	columns: DynamicColumns,
@@ -90,7 +86,6 @@ const getDynamicColumns: GetDynamicColumns = (queryTableData, query) => {
 		currentQuery.series.forEach((seria) => {
 			Object.keys(seria.labels).forEach((label) => {
 				if (isColumnExist(label, dynamicColumns)) return;
-				if (isFormula(label)) return;
 
 				const labelValue = seria.labels[label];
 
@@ -107,23 +102,21 @@ const getDynamicColumns: GetDynamicColumns = (queryTableData, query) => {
 			});
 		});
 
-		if (!isFormula(currentQuery.queryName)) {
-			const builderQuery = query.builder.queryData.find(
-				(q) => q.queryName === currentQuery.queryName,
-			);
+		const builderQuery = query.builder.queryData.find(
+			(q) => q.queryName === currentQuery.queryName,
+		);
 
-			const operator = builderQuery ? builderQuery.aggregateOperator : '';
+		const operator = builderQuery ? builderQuery.aggregateOperator : '';
 
-			if (isColumnExist(operator, dynamicColumns)) return;
+		if (isColumnExist(operator, dynamicColumns)) return;
 
-			const operatorColumn: DynamicColumn = {
-				key: operator,
-				data: [],
-				type: 'operator',
-				sortable: true,
-			};
-			dynamicColumns.push(operatorColumn);
-		}
+		const operatorColumn: DynamicColumn = {
+			key: operator,
+			data: [],
+			type: 'operator',
+			sortable: true,
+		};
+		dynamicColumns.push(operatorColumn);
 	});
 
 	return dynamicColumns;
@@ -168,8 +161,6 @@ const fillDataFromSeria = (
 		);
 
 		columns.forEach((column) => {
-			if (isFormula(column.key as string)) return;
-
 			if (column.key === 'timestamp') {
 				column.data.push(value.timestamp);
 				unusedColumnsKeys.delete('timestamp');
