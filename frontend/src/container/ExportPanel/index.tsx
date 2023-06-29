@@ -1,6 +1,10 @@
 import { Button, Dropdown, MenuProps, Modal } from 'antd';
+import { COMPOSITE_QUERY } from 'constants/queryBuilderQueryNames';
+import ROUTES from 'constants/routes';
+import history from 'lib/history';
 import { useCallback, useMemo, useState } from 'react';
 import { Dashboard } from 'types/api/dashboard/getAll';
+import { Query } from 'types/api/queryBuilder/queryBuilderData';
 
 import { MENU_KEY, MENU_LABEL } from './config';
 import ExportPanelContainer from './ExportPanel';
@@ -8,13 +12,19 @@ import ExportPanelContainer from './ExportPanel';
 function ExportPanel({
 	isLoading,
 	onExport,
-	onCreateAlerts,
+	query,
 }: ExportPanelProps): JSX.Element {
 	const [isExport, setIsExport] = useState<boolean>(false);
 
 	const onModalToggle = useCallback((value: boolean) => {
 		setIsExport(value);
 	}, []);
+
+	const onCreateAlertsHandler = useCallback(() => {
+		history.push(
+			`${ROUTES.ALERTS_NEW}?${COMPOSITE_QUERY}=${JSON.stringify(query)}`,
+		);
+	}, [query]);
 
 	const onMenuClickHandler: MenuProps['onClick'] = useCallback(
 		(e: OnClickProps) => {
@@ -23,10 +33,10 @@ function ExportPanel({
 			}
 
 			if (e.key === MENU_KEY.CREATE_ALERTS) {
-				onCreateAlerts();
+				onCreateAlertsHandler();
 			}
 		},
-		[onModalToggle, onCreateAlerts],
+		[onModalToggle, onCreateAlertsHandler],
 	);
 
 	const menu: MenuProps = useMemo(
@@ -63,7 +73,7 @@ function ExportPanel({
 				centered
 			>
 				<ExportPanelContainer
-					onCreateAlerts={onCreateAlerts}
+					query={query}
 					isLoading={isLoading}
 					onExport={onExport}
 				/>
@@ -83,7 +93,7 @@ interface OnClickProps {
 export interface ExportPanelProps {
 	isLoading?: boolean;
 	onExport: (dashboard: Dashboard | null) => void;
-	onCreateAlerts: VoidFunction;
+	query: Query;
 }
 
 export default ExportPanel;
