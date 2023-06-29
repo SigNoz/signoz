@@ -1,4 +1,5 @@
 import { Button, Col, Divider, Popover, Row, Select, Space } from 'antd';
+import { QueryParams } from 'constants/query';
 import LogControls from 'container/LogControls';
 import LogDetailedView from 'container/LogDetailedView';
 import LogLiveTail from 'container/LogLiveTail';
@@ -6,20 +7,31 @@ import LogsAggregate from 'container/LogsAggregate';
 import LogsFilters from 'container/LogsFilters';
 import LogsSearchFilter from 'container/LogsSearchFilter';
 import LogsTable from 'container/LogsTable';
+import history from 'lib/history';
 import { useCallback, useMemo } from 'react';
-import { useDispatch } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
+import { useLocation } from 'react-router-dom';
 import { Dispatch } from 'redux';
+import { AppState } from 'store/reducers';
 import AppActions from 'types/actions';
-import { SET_DETAILED_LOG_DATA } from 'types/actions/logs';
+import { SET_DETAILED_LOG_DATA, SET_LOGS_ORDER } from 'types/actions/logs';
 import { ILog } from 'types/api/logs/log';
+import { ILogsReducer } from 'types/reducer/logs';
 
-import { defaultSelectStyle, logsOptions } from './config';
+import {
+	defaultSelectStyle,
+	logsOptions,
+	orderItems,
+	OrderPreferenceItems,
+} from './config';
 import { useSelectedLogView } from './hooks';
 import PopoverContent from './PopoverContent';
 import SpaceContainer from './styles';
 
 function Logs(): JSX.Element {
 	const dispatch = useDispatch<Dispatch<AppActions>>();
+	const { order } = useSelector<AppState, ILogsReducer>((store) => store.logs);
+	const location = useLocation();
 
 	const showExpandedLog = useCallback(
 		(logData: ILog) => {
@@ -67,6 +79,16 @@ function Logs(): JSX.Element {
 		[handleViewModeOptionChange],
 	);
 
+	const handleChangeOrder = (value: OrderPreferenceItems): void => {
+		dispatch({
+			type: SET_LOGS_ORDER,
+			payload: value,
+		});
+		const params = new URLSearchParams(location.search);
+		params.set(QueryParams.order, value);
+		history.push({ search: params.toString() });
+	};
+
 	return (
 		<>
 			<SpaceContainer
@@ -101,6 +123,16 @@ function Logs(): JSX.Element {
 										<Button>Format</Button>
 									</Popover>
 								)}
+
+								<Select
+									style={defaultSelectStyle}
+									defaultValue={order}
+									onChange={handleChangeOrder}
+								>
+									{orderItems.map((item) => (
+										<Select.Option key={item.enum}>{item.name}</Select.Option>
+									))}
+								</Select>
 							</Space>
 						</Col>
 

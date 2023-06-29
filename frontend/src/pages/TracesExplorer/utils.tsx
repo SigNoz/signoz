@@ -1,26 +1,14 @@
 import { TabsProps } from 'antd';
 import { PANEL_TYPES } from 'constants/queryBuilder';
-import ListView from 'container/TracesExplorer/ListView';
+import TimeSeriesView from 'container/TimeSeriesView';
 import TableView from 'container/TracesExplorer/TableView';
-import TimeSeriesView from 'container/TracesExplorer/TimeSeriesView';
+import { DataSource } from 'types/common/queryBuilder';
 
-interface GetTabsItemsProps {
-	isListViewDisabled: boolean;
-}
-
-export const getTabsItems = ({
-	isListViewDisabled,
-}: GetTabsItemsProps): TabsProps['items'] => [
-	{
-		label: 'List View',
-		key: PANEL_TYPES.LIST,
-		children: <ListView />,
-		disabled: isListViewDisabled,
-	},
+export const getTabsItems = (): TabsProps['items'] => [
 	{
 		label: 'Time Series',
 		key: PANEL_TYPES.TIME_SERIES,
-		children: <TimeSeriesView />,
+		children: <TimeSeriesView dataSource={DataSource.TRACES} />,
 	},
 	{
 		label: 'Table View',

@@ -5,7 +5,7 @@ import { Dashboard } from 'types/api/dashboard/getAll';
 import { MENU_KEY, MENU_LABEL } from './config';
 import ExportPanelContainer from './ExportPanel';
 
-function ExportPanel({ onExport }: ExportPanelProps): JSX.Element {
+function ExportPanel({ isLoading, onExport }: ExportPanelProps): JSX.Element {
 	const [isExport, setIsExport] = useState<boolean>(false);
 
 	const onModalToggle = useCallback((value: boolean) => {
@@ -48,22 +48,28 @@ function ExportPanel({ onExport }: ExportPanelProps): JSX.Element {
 				<Button>Actions</Button>
 			</Dropdown>
 			<Modal
+				footer={null}
 				onOk={onCancel(false)}
 				onCancel={onCancel(false)}
 				open={isExport}
 				centered
 			>
-				<ExportPanelContainer onExport={onExport} />
+				<ExportPanelContainer isLoading={isLoading} onExport={onExport} />
 			</Modal>
 		</>
 	);
 }
+
+ExportPanel.defaultProps = {
+	isLoading: false,
+};
 
 interface OnClickProps {
 	key: string;
 }
 
 export interface ExportPanelProps {
+	isLoading?: boolean;
 	onExport: (dashboard: Dashboard | null) => void;
 }
 
