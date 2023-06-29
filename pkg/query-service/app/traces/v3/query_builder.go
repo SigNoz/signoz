@@ -316,7 +316,7 @@ func buildTracesQuery(start, end, step int64, mq *v3.BuilderQuery, tableName str
 				return "", fmt.Errorf("select columns cannot be empty for panelType %s", panelType)
 			}
 			selectColumns := getSelectColumns(mq.SelectColumns, keys)
-			queryNoOpTmpl := fmt.Sprintf("SELECT "+"%s ", selectColumns) + "from " + constants.SIGNOZ_TRACE_DBNAME + "." + constants.SIGNOZ_SPAN_INDEX_TABLENAME + " where %s %s"
+			queryNoOpTmpl := fmt.Sprintf("SELECT timestamp as timestamp_datetime, spanID, traceID, "+"%s ", selectColumns) + "from " + constants.SIGNOZ_TRACE_DBNAME + "." + constants.SIGNOZ_SPAN_INDEX_TABLENAME + " where %s %s"
 			query = fmt.Sprintf(queryNoOpTmpl, spanIndexTableTimeFilter, filterSubQuery)
 		} else {
 			return "", fmt.Errorf("unsupported aggregate operator %s for panelType %s", mq.AggregateOperator, panelType)
