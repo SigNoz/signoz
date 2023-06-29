@@ -11,6 +11,7 @@ import { DataSource, MetricAggregateOperator } from 'types/common/queryBuilder';
 
 import { selectStyle } from '../QueryBuilderSearch/config';
 import { getRemoveOrderFromValue } from '../QueryBuilderSearch/utils';
+import { FILTERS } from './config';
 import { OrderByFilterProps } from './OrderByFilter.interfaces';
 import {
 	checkIfKeyPresent,
@@ -57,12 +58,12 @@ export function OrderByFilter({
 				.flat()
 				.concat([
 					{
-						label: `${query.aggregateOperator}(${query.aggregateAttribute.key}) asc`,
-						value: `${query.aggregateOperator}(${query.aggregateAttribute.key})${orderByValueDelimiter}asc`,
+						label: `${query.aggregateOperator}(${query.aggregateAttribute.key}) ${FILTERS.ASC}`,
+						value: `${query.aggregateOperator}(${query.aggregateAttribute.key})${orderByValueDelimiter}${FILTERS.ASC}`,
 					},
 					{
-						label: `${query.aggregateOperator}(${query.aggregateAttribute.key}) desc`,
-						value: `${query.aggregateOperator}(${query.aggregateAttribute.key})${orderByValueDelimiter}desc`,
+						label: `${query.aggregateOperator}(${query.aggregateAttribute.key}) ${FILTERS.DESC}`,
+						value: `${query.aggregateOperator}(${query.aggregateAttribute.key})${orderByValueDelimiter}${FILTERS.DESC}`,
 					},
 				]),
 		[query.aggregateAttribute.key, query.aggregateOperator, query.groupBy],
@@ -73,12 +74,12 @@ export function OrderByFilter({
 
 		return [
 			{
-				label: `${searchText} asc`,
-				value: `${searchText}${orderByValueDelimiter}asc`,
+				label: `${searchText} ${FILTERS.ASC}`,
+				value: `${searchText}${orderByValueDelimiter}${FILTERS.ASC}`,
 			},
 			{
-				label: `${searchText} desc`,
-				value: `${searchText}${orderByValueDelimiter}desc`,
+				label: `${searchText} ${FILTERS.DESC}`,
+				value: `${searchText}${orderByValueDelimiter}${FILTERS.DESC}`,
 			},
 		];
 	}, [searchText]);
@@ -114,8 +115,8 @@ export function OrderByFilter({
 			if (order) return { label: item.label, value: item.value };
 
 			return {
-				label: `${item.value} asc`,
-				value: `${item.value}${orderByValueDelimiter}asc`,
+				label: `${item.value} ${FILTERS.ASC}`,
+				value: `${item.value}${orderByValueDelimiter}${FILTERS.ASC}`,
 			};
 		});
 
