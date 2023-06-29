@@ -2,6 +2,7 @@ import { MinusCircleOutlined, PlusCircleOutlined } from '@ant-design/icons';
 import { Button, Col, Popover } from 'antd';
 import getStep from 'lib/getStep';
 import { generateFilterQuery } from 'lib/logs/generateFilterQuery';
+import { getIdConditions } from 'pages/Logs/utils';
 import { memo, useMemo } from 'react';
 import { connect, useDispatch, useSelector } from 'react-redux';
 import { bindActionCreators, Dispatch } from 'redux';
@@ -69,19 +70,6 @@ function ActionItem({
 		});
 
 		if (liveTail === 'STOPPED') {
-			const idConditions: Record<string, string> = {};
-
-			if (idStart && order === 'asc') {
-				idConditions.idLt = idStart;
-			} else if (idStart) {
-				idConditions.idGt = idStart;
-			}
-
-			if (idEnd && order === 'asc') {
-				idConditions.idGt = idEnd;
-			} else if (idEnd) {
-				idConditions.idLt = idEnd;
-			}
 			getLogs({
 				q: updatedQueryString,
 				limit: logLinesPerPage,
@@ -89,7 +77,7 @@ function ActionItem({
 				order,
 				timestampStart: minTime,
 				timestampEnd: maxTime,
-				...idConditions,
+				...getIdConditions(idStart, idEnd, order),
 			});
 			getLogsAggregate({
 				timestampStart: minTime,

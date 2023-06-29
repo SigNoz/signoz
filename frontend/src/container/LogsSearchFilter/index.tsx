@@ -2,6 +2,7 @@ import { Input, InputRef, Popover } from 'antd';
 import useUrlQuery from 'hooks/useUrlQuery';
 import getStep from 'lib/getStep';
 import debounce from 'lodash-es/debounce';
+import { getIdConditions } from 'pages/Logs/utils';
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { connect, useDispatch, useSelector } from 'react-redux';
 import { bindActionCreators, Dispatch } from 'redux';
@@ -95,20 +96,6 @@ function SearchFilter({
 					...(idEnd ? { idLt: idEnd } : {}),
 				});
 			} else {
-				const idConditions: Record<string, string> = {};
-
-				if (idStart && order === 'asc') {
-					idConditions.idLt = idStart;
-				} else if (idStart) {
-					idConditions.idGt = idStart;
-				}
-
-				if (idEnd && order === 'asc') {
-					idConditions.idGt = idEnd;
-				} else if (idEnd) {
-					idConditions.idLt = idEnd;
-				}
-
 				getLogs({
 					q: customQuery,
 					limit: logLinesPerPage,
@@ -116,7 +103,7 @@ function SearchFilter({
 					order,
 					timestampStart: minTime,
 					timestampEnd: maxTime,
-					...idConditions,
+					...getIdConditions(idStart, idEnd, order),
 				});
 
 				getLogsAggregate({

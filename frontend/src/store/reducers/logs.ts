@@ -1,4 +1,5 @@
 import { parseQuery } from 'lib/logql';
+import { OrderPreferenceItems } from 'pages/Logs/config';
 import {
 	ADD_SEARCH_FIELD_QUERY_STRING,
 	FLUSH_LOGS,
@@ -53,7 +54,7 @@ const initialState: ILogsReducer = {
 	order:
 		(new URLSearchParams(window.location.search).get(
 			'order',
-		) as ILogsReducer['order']) ?? 'desc',
+		) as ILogsReducer['order']) ?? OrderPreferenceItems.DESC,
 };
 
 export const LogsReducer = (

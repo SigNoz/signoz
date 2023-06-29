@@ -1,3 +1,4 @@
+import { QueryParams } from 'constants/query';
 import { getMinMax } from 'container/TopNav/AutoRefresh/config';
 import useUrlQuery from 'hooks/useUrlQuery';
 import history from 'lib/history';
@@ -40,7 +41,7 @@ export function useSearchParser(): {
 		(updatedQueryString: string) => {
 			history.replace({
 				pathname: history.location.pathname,
-				search: `?q=${updatedQueryString}&order=${order}`,
+				search: `?${QueryParams.q}=${updatedQueryString}&${QueryParams.order}=${order}`,
 			});
 
 			const globalTime = getMinMax(selectedTime, minTime, maxTime);

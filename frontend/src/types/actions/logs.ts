@@ -1,6 +1,7 @@
 import { LogViewMode } from 'container/LogsTable';
 import { Pagination } from 'hooks/queryPagination';
 import { ILogQLParsedQueryItem } from 'lib/logql/types';
+import { OrderPreferenceItems } from 'pages/Logs/config';
 import { IField, IFieldMoveToSelected, IFields } from 'types/api/logs/fields';
 import { TLogsLiveTailState } from 'types/api/logs/liveTail';
 import { ILog } from 'types/api/logs/log';
@@ -144,7 +145,7 @@ export interface UpdateSelectedInterestFields {
 
 export interface SetLogsOrder {
 	type: typeof SET_LOGS_ORDER;
-	payload: 'desc' | 'asc';
+	payload: OrderPreferenceItems;
 }
 
 export type LogsActions =

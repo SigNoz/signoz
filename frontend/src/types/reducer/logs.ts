@@ -1,6 +1,7 @@
 import { LogViewMode } from 'container/LogsTable';
 import { Pagination } from 'hooks/queryPagination';
 import { ILogQLParsedQueryItem } from 'lib/logql/types';
+import { OrderPreferenceItems } from 'pages/Logs/config';
 import { IFields } from 'types/api/logs/fields';
 import { TLogsLiveTailState } from 'types/api/logs/liveTail';
 import { ILog } from 'types/api/logs/log';
@@ -25,7 +26,7 @@ export interface ILogsReducer {
 	detailedLog: null | ILog;
 	liveTail: TLogsLiveTailState;
 	liveTailStartRange: number; // time in minutes
-	order: 'desc' | 'asc';
+	order: OrderPreferenceItems;
 }
 
 export default ILogsReducer;
