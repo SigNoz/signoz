@@ -1,3 +1,4 @@
+import { ColumnsType } from 'antd/es/table';
 import { initialQueriesMap, PANEL_TYPES } from 'constants/queryBuilder';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import { useOptionsMenu } from 'container/OptionsMenu';
@@ -6,15 +7,18 @@ import { useGetQueryRange } from 'hooks/queryBuilder/useGetQueryRange';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { Pagination, URL_PAGINATION } from 'hooks/queryPagination';
 import useUrlQueryData from 'hooks/useUrlQueryData';
-import { memo, useMemo } from 'react';
+import history from 'lib/history';
+import { RowData } from 'lib/query/createTableColumnsFromQuery';
+import { HTMLAttributes, memo, useCallback, useMemo } from 'react';
 import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
 import { DataSource } from 'types/common/queryBuilder';
 import { GlobalReducer } from 'types/reducer/globalTime';
 
 import TraceExplorerControls from '../Controls';
-import { modifiedColumns, PER_PAGE_OPTIONS, selectedColumns } from './configs';
-import { Container } from './styles';
+import { defaultSelectedColumns, PER_PAGE_OPTIONS } from './configs';
+import { Container, tableStyles } from './styles';
+import { getTraceLink, modifyColumns, transformDataWithDate } from './utils';
 
 function ListView(): JSX.Element {
 	const { stagedQuery, panelType } = useQueryBuilder();
@@ -28,9 +32,21 @@ function ListView(): JSX.Element {
 		dataSource: DataSource.TRACES,
 		aggregateOperator: 'count',
 		initialOptions: {
-			selectColumns: selectedColumns,
+			selectColumns: defaultSelectedColumns,
 		},
 	});
+
+	// TODO: temporary solution, waiting for traceID and spanID attribute keys to be updated
+	const selectedColumns = useMemo(
+		() =>
+			options?.selectColumns.filter(({ key }) => {
+				let isValidColumn = true;
+
+				if (key === 'traceId' || key === 'spanId') isValidColumn = false;
+				return isValidColumn;
+			}),
+		[options?.selectColumns],
+	);
 
 	const { queryData: paginationQueryData } = useUrlQueryData<Pagination>(
 		URL_PAGINATION,
@@ -47,7 +63,7 @@ function ListView(): JSX.Element {
 			},
 			tableParams: {
 				pagination: paginationQueryData,
-				selectColumns: options?.selectColumns,
+				selectColumns: selectedColumns,
 			},
 		},
 		{
@@ -74,6 +90,32 @@ function ListView(): JSX.Element {
 		queryTableDataResult,
 	]);
 
+	const transformedQueryTableData = useMemo(
+		() => transformDataWithDate(queryTableData),
+		[queryTableData],
+	);
+
+	const handleModifyColumns = useCallback(
+		(columns: ColumnsType<RowData>) =>
+			modifyColumns(columns, options?.selectColumns || []),
+		[options?.selectColumns],
+	);
+
+	const handleRow = useCallback(
+		(record: RowData): HTMLAttributes<RowData> => ({
+			onClick: (event): void => {
+				event.preventDefault();
+				event.stopPropagation();
+				if (event.metaKey || event.ctrlKey) {
+					window.open(getTraceLink(record), '_blank');
+				} else {
+					history.push(getTraceLink(record));
+				}
+			},
+		}),
+		[],
+	);
+
 	return (
 		<Container>
 			<TraceExplorerControls
@@ -84,10 +126,12 @@ function ListView(): JSX.Element {
 			/>
 			<QueryTable
 				query={stagedQuery || initialQueriesMap.traces}
-				queryTableData={queryTableData}
-				modifyColumns={modifiedColumns}
+				queryTableData={transformedQueryTableData}
+				modifyColumns={handleModifyColumns}
 				loading={isLoading || isOptionsMenuLoading}
 				pagination={false}
+				style={tableStyles}
+				onRow={handleRow}
 			/>
 		</Container>
 	);
