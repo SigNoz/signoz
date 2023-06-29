@@ -1,6 +1,6 @@
 import { Tabs } from 'antd';
 import { initialQueriesMap, PANEL_TYPES } from 'constants/queryBuilder';
-import { PANEL_TYPES_QUERY } from 'constants/queryBuilderQueryNames';
+import { queryParamNamesMap } from 'constants/queryBuilderQueryNames';
 import { GRAPH_TYPES } from 'container/NewDashboard/ComponentsSlider';
 import QuerySection from 'container/TracesExplorer/QuerySection';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
@@ -33,7 +33,9 @@ function TracesExplorer(): JSX.Element {
 				DataSource.TRACES,
 			);
 
-			redirectWithQueryBuilderData(query, { [PANEL_TYPES_QUERY]: newPanelType });
+			redirectWithQueryBuilderData(query, {
+				[queryParamNamesMap.panelTypes]: newPanelType,
+			});
 		},
 		[
 			currentQuery,

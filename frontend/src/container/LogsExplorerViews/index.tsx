@@ -1,6 +1,6 @@
 import { TabsProps } from 'antd';
 import { PANEL_TYPES } from 'constants/queryBuilder';
-import { PANEL_TYPES_QUERY } from 'constants/queryBuilderQueryNames';
+import { queryParamNamesMap } from 'constants/queryBuilderQueryNames';
 import LogsExplorerList from 'container/LogsExplorerList';
 import LogsExplorerTable from 'container/LogsExplorerTable';
 import { GRAPH_TYPES } from 'container/NewDashboard/ComponentsSlider';
@@ -62,7 +62,9 @@ function LogsExplorerViews(): JSX.Element {
 				DataSource.LOGS,
 			);
 
-			redirectWithQueryBuilderData(query, { [PANEL_TYPES_QUERY]: newPanelType });
+			redirectWithQueryBuilderData(query, {
+				[queryParamNamesMap.panelTypes]: newPanelType,
+			});
 		},
 		[
 			currentQuery,

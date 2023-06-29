@@ -3,45 +3,58 @@ import { Card, Typography } from 'antd';
 import ListLogView from 'components/Logs/ListLogView';
 import RawLogView from 'components/Logs/RawLogView';
 import Spinner from 'components/Spinner';
-import { PAGE_SIZE } from 'constants/queryBuilderQueryNames';
-import { LogViewMode } from 'container/LogsTable';
+import { queryParamNamesMap } from 'constants/queryBuilderQueryNames';
+import { ITEMS_PER_PAGE_OPTIONS } from 'container/Controls/config';
+import ExplorerControlPanel from 'container/ExplorerControlPanel';
 import { Container, Heading } from 'container/LogsTable/styles';
+import { useOptionsMenu } from 'container/OptionsMenu';
 import { contentStyle } from 'container/Trace/Search/config';
 import { useGetExplorerQueryRange } from 'hooks/queryBuilder/useGetExplorerQueryRange';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import useFontFaceObserver from 'hooks/useFontObserver';
-import useUrlQuery from 'hooks/useUrlQuery';
+import useUrlQueryData from 'hooks/useUrlQueryData';
 import { getPaginationQueryData } from 'lib/newQueryBuilder/getPaginationQueryData';
 import { memo, useCallback, useEffect, useMemo, useState } from 'react';
 import { Virtuoso } from 'react-virtuoso';
 // interfaces
 import { ILog } from 'types/api/logs/log';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
+import { DataSource, StringOperators } from 'types/common/queryBuilder';
 
 import InfinityTableView from './InfinityTableView';
+import { InfinityWrapperStyled } from './styles';
 
 function Footer(): JSX.Element {
 	return <Spinner height={20} tip="Getting Logs" />;
 }
 
 function LogsExplorerList(): JSX.Element {
-	const urlQuery = useUrlQuery();
-	const { stagedQuery, isQueryStaged, handleSetQueryData } = useQueryBuilder();
+	const { queryData: pageSize } = useUrlQueryData(
+		queryParamNamesMap.pageSize,
+		ITEMS_PER_PAGE_OPTIONS[0],
+	);
+	const {
+		stagedQuery,
+		isQueryStaged,
+		handleSetQueryData,
+		initialDataSource,
+	} = useQueryBuilder();
 	const [currentLog, setCurrentLog] = useState<ILog | null>(null);
-	const [viewMode] = useState<LogViewMode>('raw');
 
-	const [linesPerRow] = useState<number>(2);
 	const [page, setPage] = useState<number>(1);
 	const [logs, setLogs] = useState<ILog[]>([]);
-
-	const pageSizeParam = urlQuery.get(PAGE_SIZE);
-	const pageSize = pageSizeParam ? JSON.parse(pageSizeParam) : 25;
 
 	const currentStagedQueryData = useMemo(() => {
 		if (!stagedQuery || stagedQuery.builder.queryData.length !== 1) return null;
 
 		return stagedQuery.builder.queryData[0];
 	}, [stagedQuery]);
+
+	const { options, config } = useOptionsMenu({
+		dataSource: initialDataSource || DataSource.METRICS,
+		aggregateOperator:
+			currentStagedQueryData?.aggregateOperator || StringOperators.NOOP,
+	});
 
 	const isTimeStampPresent: boolean = useMemo(() => {
 		const timestampOrderBy = currentStagedQueryData?.orderBy.find(
@@ -104,7 +117,6 @@ function LogsExplorerList(): JSX.Element {
 			}
 		},
 		enabled: !isLimit,
-		keepPreviousData: true,
 	});
 
 	const handleResetPagination = useCallback(() => {
@@ -120,7 +132,7 @@ function LogsExplorerList(): JSX.Element {
 				weight: '300',
 			},
 		],
-		viewMode === 'raw',
+		options.format === 'raw',
 		{
 			timeout: 5000,
 		},
@@ -144,12 +156,12 @@ function LogsExplorerList(): JSX.Element {
 
 	const getItemContent = useCallback(
 		(_: number, log: ILog): JSX.Element => {
-			if (viewMode === 'raw') {
+			if (options.format === 'raw') {
 				return (
 					<RawLogView
 						key={log.id}
 						data={log}
-						linesPerRow={linesPerRow}
+						linesPerRow={options.maxLines}
 						// TODO: write new onClickExpanded logic
 						onClickExpand={(): void => {}}
 					/>
@@ -158,7 +170,7 @@ function LogsExplorerList(): JSX.Element {
 
 			return <ListLogView key={log.id} logData={log} />;
 		},
-		[linesPerRow, viewMode],
+		[options],
 	);
 
 	const renderContent = useMemo(() => {
@@ -168,22 +180,26 @@ function LogsExplorerList(): JSX.Element {
 					Footer,
 			  };
 
-		if (viewMode === 'table') {
+		if (options.format === 'table') {
 			return (
 				<InfinityTableView
 					tableViewProps={{
 						logs,
-						fields: [],
-						linesPerRow,
+						fields: options.selectColumns.map((item) => ({
+							dataType: item.dataType as string,
+							name: item.key,
+							type: item.type as string,
+						})),
+						linesPerRow: options.maxLines,
 						onClickExpand: (): void => {},
 					}}
-					infitiyTableProps={{ onEndReached: handleEndReached, isLoading }}
+					infitiyTableProps={{ onEndReached: handleEndReached }}
 				/>
 			);
 		}
 
 		return (
-			<Card bodyStyle={contentStyle}>
+			<Card style={{ width: '100%' }} bodyStyle={{ ...contentStyle }}>
 				<Virtuoso
 					useWindowScroll
 					data={logs}
@@ -196,12 +212,12 @@ function LogsExplorerList(): JSX.Element {
 		);
 	}, [
 		isLimit,
-		viewMode,
+		options.format,
+		options.selectColumns,
+		options.maxLines,
 		logs,
 		handleEndReached,
 		getItemContent,
-		linesPerRow,
-		isLoading,
 	]);
 
 	useEffect(() => {
@@ -222,15 +238,18 @@ function LogsExplorerList(): JSX.Element {
 
 	return (
 		<Container>
-			{viewMode !== 'table' && (
+			<ExplorerControlPanel
+				isLoading={isLoading}
+				isShowPageSize
+				optionsMenuConfig={config}
+			/>
+			{options.format !== 'table' && (
 				<Heading>
 					<Typography.Text>Event</Typography.Text>
 				</Heading>
 			)}
-
 			{logs.length === 0 && <Typography>No logs lines found</Typography>}
-
-			{renderContent}
+			<InfinityWrapperStyled>{renderContent}</InfinityWrapperStyled>
 		</Container>
 	);
 }

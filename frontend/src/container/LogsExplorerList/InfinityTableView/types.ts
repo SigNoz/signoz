@@ -4,6 +4,5 @@ export type InfinityTableProps = {
 	tableViewProps: LogsTableViewProps;
 	infitiyTableProps: {
 		onEndReached: (index: number) => void;
-		isLoading: boolean;
 	};
 };

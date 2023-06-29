@@ -18,7 +18,7 @@ export const TableCellStyled = styled.td`
 	background-color: ${themeColors.lightBlack};
 `;
 
-export const TableRow = styled.tr`
+export const TableRowStyled = styled.tr`
 	&:hover {
 		${TableCellStyled} {
 			background-color: #1d1d1d;
