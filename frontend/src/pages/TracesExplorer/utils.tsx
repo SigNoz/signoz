@@ -1,7 +1,8 @@
 import { TabsProps } from 'antd';
 import { PANEL_TYPES } from 'constants/queryBuilder';
-import TimeSeriesView from 'container/TracesExplorer/TimeSeriesView';
+import TimeSeriesView from 'container/TimeSeriesView';
 import TracesView from 'container/TracesExplorer/TracesView';
+import { DataSource } from 'types/common/queryBuilder';
 
 interface GetTabsItemsProps {
 	isListViewDisabled: boolean;
@@ -19,6 +20,6 @@ export const getTabsItems = ({
 	{
 		label: 'Time Series',
 		key: PANEL_TYPES.TIME_SERIES,
-		children: <TimeSeriesView />,
+		children: <TimeSeriesView dataSource={DataSource.TRACES} />,
 	},
 ];
