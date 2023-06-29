@@ -4296,6 +4296,8 @@ func (r *ClickHouseReader) GetTraceAggregateAttributes(ctx context.Context, req 
 		if err := rows.Scan(&tagKey, &tagType, &dataType, &isColumn); err != nil {
 			return nil, fmt.Errorf("error while scanning rows: %s", err.Error())
 		}
+		// TODO: Remove this once the column name are updated in the table
+		tagKey = tempHandleFixedColumns(tagKey)
 		key := v3.AttributeKey{
 			Key:      tagKey,
 			DataType: v3.AttributeKeyDataType(dataType),
@@ -4335,6 +4337,8 @@ func (r *ClickHouseReader) GetTraceAttributeKeys(ctx context.Context, req *v3.Fi
 		if err := rows.Scan(&tagKey, &tagType, &dataType, &isColumn); err != nil {
 			return nil, fmt.Errorf("error while scanning rows: %s", err.Error())
 		}
+		// TODO: Remove this once the column name are updated in the table
+		tagKey = tempHandleFixedColumns(tagKey)
 		key := v3.AttributeKey{
 			Key:      tagKey,
 			DataType: v3.AttributeKeyDataType(dataType),
@@ -4344,6 +4348,19 @@ func (r *ClickHouseReader) GetTraceAttributeKeys(ctx context.Context, req *v3.Fi
 		response.AttributeKeys = append(response.AttributeKeys, key)
 	}
 	return &response, nil
+}
+
+// tempHandleFixedColumns is a temporary function to handle the fixed columns whose name has been changed in AttributeKeys Table
+func tempHandleFixedColumns(tagKey string) string {
+	switch {
+	case tagKey == "traceId":
+		tagKey = "traceID"
+	case tagKey == "spanId":
+		tagKey = "spanID"
+	case tagKey == "parentSpanId":
+		tagKey = "parentSpanID"
+	}
+	return tagKey
 }
 
 func (r *ClickHouseReader) GetTraceAttributeValues(ctx context.Context, req *v3.FilterAttributeValueRequest) (*v3.FilterAttributeValueResponse, error) {
