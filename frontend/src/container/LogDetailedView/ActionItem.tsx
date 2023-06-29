@@ -2,6 +2,7 @@ import { MinusCircleOutlined, PlusCircleOutlined } from '@ant-design/icons';
 import { Button, Col, Popover } from 'antd';
 import getStep from 'lib/getStep';
 import { generateFilterQuery } from 'lib/logs/generateFilterQuery';
+import { getIdConditions } from 'pages/Logs/utils';
 import { memo, useMemo } from 'react';
 import { connect, useDispatch, useSelector } from 'react-redux';
 import { bindActionCreators, Dispatch } from 'redux';
@@ -45,6 +46,7 @@ function ActionItem({
 		idStart,
 		liveTail,
 		idEnd,
+		order,
 	} = useSelector<AppState, ILogsReducer>((store) => store.logs);
 	const dispatch = useDispatch<Dispatch<AppActions>>();
 
@@ -72,11 +74,10 @@ function ActionItem({
 				q: updatedQueryString,
 				limit: logLinesPerPage,
 				orderBy: 'timestamp',
-				order: 'desc',
+				order,
 				timestampStart: minTime,
 				timestampEnd: maxTime,
-				...(idStart ? { idGt: idStart } : {}),
-				...(idEnd ? { idLt: idEnd } : {}),
+				...getIdConditions(idStart, idEnd, order),
 			});
 			getLogsAggregate({
 				timestampStart: minTime,
