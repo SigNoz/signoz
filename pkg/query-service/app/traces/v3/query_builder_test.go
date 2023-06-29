@@ -244,9 +244,47 @@ var testGetSelectLabelsData = []struct {
 func TestGetSelectLabels(t *testing.T) {
 	for _, tt := range testGetSelectLabelsData {
 		Convey("testGetSelectLabelsData", t, func() {
-			selectLabels, err := getSelectLabels(tt.AggregateOperator, tt.GroupByTags, map[string]v3.AttributeKey{})
-			So(err, ShouldBeNil)
+			selectLabels := getSelectLabels(tt.AggregateOperator, tt.GroupByTags, map[string]v3.AttributeKey{})
 			So(selectLabels, ShouldEqual, tt.SelectLabels)
+		})
+	}
+}
+
+var testGetSelectColumnsData = []struct {
+	Name          string
+	sc            []v3.AttributeKey
+	SelectColumns string
+}{
+	{
+		Name:          "select columns attribute",
+		sc:            []v3.AttributeKey{{Key: "user.name", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag}},
+		SelectColumns: "stringTagMap['user.name'] as `user.name` ",
+	},
+	{
+		Name:          "select columns resource",
+		sc:            []v3.AttributeKey{{Key: "user.name", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeResource}},
+		SelectColumns: "resourceTagsMap['user.name'] as `user.name` ",
+	},
+	{
+		Name: "select columns attribute and resource",
+		sc: []v3.AttributeKey{
+			{Key: "user.name", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeResource},
+			{Key: "host", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag},
+		},
+		SelectColumns: "resourceTagsMap['user.name'] as `user.name` ,stringTagMap['host'] as `host` ",
+	},
+	{
+		Name:          "select columns fixed column",
+		sc:            []v3.AttributeKey{{Key: "host", IsColumn: true, DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag}},
+		SelectColumns: "host as `host` ",
+	},
+}
+
+func TestGetSelectColumns(t *testing.T) {
+	for _, tt := range testGetSelectColumnsData {
+		Convey("testGetSelectColumnsData", t, func() {
+			selectColumns := getSelectColumns(tt.sc, map[string]v3.AttributeKey{})
+			So(selectColumns, ShouldEqual, tt.SelectColumns)
 		})
 	}
 }
@@ -357,6 +395,7 @@ var testBuildTracesQueryData = []struct {
 	TableName         string
 	AggregateOperator v3.AggregateOperator
 	ExpectedQuery     string
+	PanelType         v3.PanelType
 }{
 	{
 		Name:  "Test aggregate count on fixed column of float64 type",
@@ -373,6 +412,7 @@ var testBuildTracesQueryData = []struct {
 		ExpectedQuery: "SELECT toStartOfInterval(timestamp, INTERVAL 60 SECOND) AS ts, toFloat64(count()) as value" +
 			" from signoz_traces.distributed_signoz_index_v2 where (timestamp >= '1680066360726210000' AND timestamp <= '1680066458000000000')" +
 			" group by ts order by ts",
+		PanelType: v3.PanelTypeGraph,
 	},
 	{
 		Name:  "Test aggregate rate without aggregate attribute",
@@ -388,6 +428,7 @@ var testBuildTracesQueryData = []struct {
 		ExpectedQuery: "SELECT toStartOfInterval(timestamp, INTERVAL 60 SECOND) AS ts, count()/60 as value from" +
 			" signoz_traces.distributed_signoz_index_v2 where (timestamp >= '1680066360726210000' AND timestamp <=" +
 			" '1680066458000000000') group by ts order by ts",
+		PanelType: v3.PanelTypeGraph,
 	},
 	{
 		Name:  "Test aggregate count on fixed column of float64 type with filter",
@@ -406,6 +447,7 @@ var testBuildTracesQueryData = []struct {
 			" toFloat64(count()) as value from signoz_traces.distributed_signoz_index_v2" +
 			" where (timestamp >= '1680066360726210000' AND timestamp <= '1680066458000000000')" +
 			" AND stringTagMap['customer_id'] = '10001' group by ts order by ts",
+		PanelType: v3.PanelTypeGraph,
 	},
 	{
 		Name:  "Test aggregate count on fixed column of bool type",
@@ -422,6 +464,7 @@ var testBuildTracesQueryData = []struct {
 		ExpectedQuery: "SELECT toStartOfInterval(timestamp, INTERVAL 60 SECOND) AS ts, toFloat64(count()) as value" +
 			" from signoz_traces.distributed_signoz_index_v2 where (timestamp >= '1680066360726210000' AND timestamp <= '1680066458000000000')" +
 			" group by ts order by ts",
+		PanelType: v3.PanelTypeGraph,
 	},
 	{
 		Name:  "Test aggregate count on a attribute",
@@ -438,6 +481,7 @@ var testBuildTracesQueryData = []struct {
 		ExpectedQuery: "SELECT toStartOfInterval(timestamp, INTERVAL 60 SECOND) AS ts, toFloat64(count()) as value" +
 			" from signoz_traces.distributed_signoz_index_v2 where (timestamp >= '1680066360726210000' AND timestamp <= '1680066458000000000')" +
 			" AND has(stringTagMap, 'user_name') group by ts order by ts",
+		PanelType: v3.PanelTypeGraph,
 	},
 	{
 		Name:  "Test aggregate count on a fixed column of string type",
@@ -454,6 +498,7 @@ var testBuildTracesQueryData = []struct {
 		ExpectedQuery: "SELECT toStartOfInterval(timestamp, INTERVAL 60 SECOND) AS ts, toFloat64(count()) as value" +
 			" from signoz_traces.distributed_signoz_index_v2 where (timestamp >= '1680066360726210000' AND timestamp <= '1680066458000000000')" +
 			" AND name != '' group by ts order by ts",
+		PanelType: v3.PanelTypeGraph,
 	},
 	{
 		Name:  "Test aggregate count with filter",
@@ -473,6 +518,7 @@ var testBuildTracesQueryData = []struct {
 		ExpectedQuery: "SELECT toStartOfInterval(timestamp, INTERVAL 60 SECOND) AS ts, toFloat64(count()) as value" +
 			" from signoz_traces.distributed_signoz_index_v2 where (timestamp >= '1680066360726210000' AND timestamp <= '1680066458000000000')" +
 			" AND numberTagMap['bytes'] > 100.000000 AND has(stringTagMap, 'user_name') group by ts order by ts",
+		PanelType: v3.PanelTypeGraph,
 	},
 	{
 		Name:  "Test aggregate count distinct and order by value",
@@ -490,6 +536,7 @@ var testBuildTracesQueryData = []struct {
 		ExpectedQuery: "SELECT toStartOfInterval(timestamp, INTERVAL 60 SECOND) AS ts, toFloat64(count(distinct(name))) as value" +
 			" from signoz_traces.distributed_signoz_index_v2 where (timestamp >= '1680066360726210000' AND timestamp <= '1680066458000000000')" +
 			" group by ts order by value ASC,ts",
+		PanelType: v3.PanelTypeGraph,
 	},
 	{
 		Name:  "Test aggregate count distinct on string key",
@@ -506,6 +553,7 @@ var testBuildTracesQueryData = []struct {
 		ExpectedQuery: "SELECT toStartOfInterval(timestamp, INTERVAL 60 SECOND) AS ts, toFloat64(count(distinct(stringTagMap['name'])))" +
 			" as value from signoz_traces.distributed_signoz_index_v2 where" +
 			" (timestamp >= '1680066360726210000' AND timestamp <= '1680066458000000000') group by ts order by ts",
+		PanelType: v3.PanelTypeGraph,
 	},
 	{
 		Name:  "Test aggregate count distinct with filter and groupBy",
@@ -533,6 +581,7 @@ var testBuildTracesQueryData = []struct {
 			"AND stringTagMap['http.method'] = 'GET' AND resourceTagsMap['x'] != 'abc' " +
 			"AND has(stringTagMap, 'http.method') group by http.method,ts " +
 			"order by http.method ASC,ts",
+		PanelType: v3.PanelTypeGraph,
 	},
 	{
 		Name:  "Test aggregate count with multiple filter,groupBy and orderBy",
@@ -564,6 +613,7 @@ var testBuildTracesQueryData = []struct {
 			"AND stringTagMap['method'] = 'GET' AND resourceTagsMap['x'] != 'abc' " +
 			"AND has(stringTagMap, 'method') AND has(resourceTagsMap, 'x') group by method,x,ts " +
 			"order by method ASC,x ASC,ts",
+		PanelType: v3.PanelTypeGraph,
 	},
 	{
 		Name:  "Test aggregate avg",
@@ -591,6 +641,7 @@ var testBuildTracesQueryData = []struct {
 			"AND stringTagMap['method'] = 'GET' " +
 			"AND has(stringTagMap, 'method') group by method,ts " +
 			"order by method ASC,ts",
+		PanelType: v3.PanelTypeGraph,
 	},
 	{
 		Name:  "Test aggregate sum",
@@ -618,6 +669,7 @@ var testBuildTracesQueryData = []struct {
 			"AND stringTagMap['method'] = 'GET' " +
 			"AND has(stringTagMap, 'method') group by method,ts " +
 			"order by method ASC,ts",
+		PanelType: v3.PanelTypeGraph,
 	},
 	{
 		Name:  "Test aggregate min",
@@ -645,6 +697,7 @@ var testBuildTracesQueryData = []struct {
 			"AND stringTagMap['method'] = 'GET' " +
 			"AND has(stringTagMap, 'method') group by method,ts " +
 			"order by method ASC,ts",
+		PanelType: v3.PanelTypeGraph,
 	},
 	{
 		Name:  "Test aggregate max",
@@ -672,6 +725,7 @@ var testBuildTracesQueryData = []struct {
 			"AND stringTagMap['method'] = 'GET' " +
 			"AND has(stringTagMap, 'method') group by method,ts " +
 			"order by method ASC,ts",
+		PanelType: v3.PanelTypeGraph,
 	},
 	{
 		Name:  "Test aggregate PXX",
@@ -695,6 +749,7 @@ var testBuildTracesQueryData = []struct {
 			"where (timestamp >= '1680066360726210000' AND timestamp <= '1680066458000000000') " +
 			"AND has(stringTagMap, 'method') group by method,ts " +
 			"order by method ASC,ts",
+		PanelType: v3.PanelTypeGraph,
 	},
 	{
 		Name:  "Test aggregate RateSum",
@@ -715,6 +770,7 @@ var testBuildTracesQueryData = []struct {
 			", sum(bytes)/60 as value from signoz_traces.distributed_signoz_index_v2 " +
 			"where (timestamp >= '1680066360726210000' AND timestamp <= '1680066458000000000')" +
 			" AND has(stringTagMap, 'method') group by method,ts order by method ASC,ts",
+		PanelType: v3.PanelTypeGraph,
 	},
 	{
 		Name:  "Test aggregate rate",
@@ -736,6 +792,7 @@ var testBuildTracesQueryData = []struct {
 			"from signoz_traces.distributed_signoz_index_v2 where (timestamp >= '1680066360726210000' AND timestamp <= '1680066458000000000') " +
 			"AND has(stringTagMap, 'method') group by method,ts " +
 			"order by method ASC,ts",
+		PanelType: v3.PanelTypeGraph,
 	},
 	{
 		Name:  "Test aggregate RateSum without fixed column",
@@ -758,6 +815,7 @@ var testBuildTracesQueryData = []struct {
 			"from signoz_traces.distributed_signoz_index_v2 where (timestamp >= '1680066360726210000' AND timestamp <= '1680066458000000000') " +
 			"AND has(stringTagMap, 'method') group by method,ts " +
 			"order by method ASC,ts",
+		PanelType: v3.PanelTypeGraph,
 	},
 	{
 		Name:  "Test aggregate with having clause",
@@ -781,6 +839,7 @@ var testBuildTracesQueryData = []struct {
 		ExpectedQuery: "SELECT toStartOfInterval(timestamp, INTERVAL 60 SECOND) AS ts, toFloat64(count(distinct(stringTagMap['name']))) as value" +
 			" from signoz_traces.distributed_signoz_index_v2 where (timestamp >= '1680066360726210000' AND timestamp <= '1680066458000000000')" +
 			" group by ts having value > 10 order by ts",
+		PanelType: v3.PanelTypeGraph,
 	},
 	{
 		Name:  "Test count aggregate with having clause and filters",
@@ -808,6 +867,7 @@ var testBuildTracesQueryData = []struct {
 		ExpectedQuery: "SELECT toStartOfInterval(timestamp, INTERVAL 60 SECOND) AS ts, toFloat64(count()) as value from " +
 			"signoz_traces.distributed_signoz_index_v2 where (timestamp >= '1680066360726210000' AND timestamp <= '1680066458000000000') " +
 			"AND stringTagMap['method'] = 'GET' AND has(stringTagMap, 'name') group by ts having value > 10 order by ts",
+		PanelType: v3.PanelTypeGraph,
 	},
 	{
 		Name:  "Test count distinct aggregate with having clause and filters",
@@ -835,32 +895,59 @@ var testBuildTracesQueryData = []struct {
 		ExpectedQuery: "SELECT toStartOfInterval(timestamp, INTERVAL 60 SECOND) AS ts, toFloat64(count(distinct(stringTagMap['name']))) as value" +
 			" from signoz_traces.distributed_signoz_index_v2 where (timestamp >= '1680066360726210000' AND timestamp <= '1680066458000000000') " +
 			"AND stringTagMap['method'] = 'GET' group by ts having value > 10 order by ts",
+		PanelType: v3.PanelTypeGraph,
 	},
-	// {
-	// 	Name:  "Test Noop",
-	// 	Start: 1680066360726210000,
-	// 	End:   1680066458000000000,
-	// 	Step:  60,
-	// 	BuilderQuery: &v3.BuilderQuery{
-	// 		SelectColumns:     []v3.AttributeKey{},
-	// 		QueryName:         "A",
-	// 		AggregateOperator: v3.AggregateOperatorNoOp,
-	// 		Expression:        "A",
-	// 		Filters:           &v3.FilterSet{Operator: "AND", Items: []v3.FilterItem{}},
-	// 		// GroupBy:           []v3.AttributeKey{{Key: "method", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag}},
-	// 		// OrderBy:           []v3.OrderBy{{ColumnName: "method", Order: "ASC"}},
-	// 	},
-	// 	ExpectedQuery: "",
-	// },
+	{
+		Name:  "Test Noop list view",
+		Start: 1680066360726210000,
+		End:   1680066458000000000,
+		Step:  60,
+		BuilderQuery: &v3.BuilderQuery{
+			SelectColumns: []v3.AttributeKey{
+				{Key: "name", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag, IsColumn: true},
+			},
+			QueryName:         "A",
+			AggregateOperator: v3.AggregateOperatorNoOp,
+			Expression:        "A",
+			Filters:           &v3.FilterSet{Operator: "AND", Items: []v3.FilterItem{}},
+		},
+		ExpectedQuery: "SELECT timestamp as timestamp_datetime, spanID, traceID," +
+			" name as `name`  from signoz_traces.distributed_signoz_index_v2 where " +
+			"(timestamp >= '1680066360726210000' AND timestamp <= '1680066458000000000') ",
+		PanelType: v3.PanelTypeList,
+	},
+	{
+		Name:  "Test Noop trace view",
+		Start: 1680066360726210000,
+		End:   1680066458000000000,
+		Step:  60,
+		BuilderQuery: &v3.BuilderQuery{
+			QueryName:         "A",
+			AggregateOperator: v3.AggregateOperatorNoOp,
+			Expression:        "A",
+			Filters: &v3.FilterSet{
+				Operator: "AND", Items: []v3.FilterItem{
+					{Key: v3.AttributeKey{Key: "method", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag}, Value: "GET", Operator: "="},
+				},
+			},
+		},
+		ExpectedQuery: "WITH subQuery AS ( SELECT distinct on (traceID) traceID, durationNano, serviceName," +
+			" name FROM signoz_traces.distributed_signoz_index_v2 WHERE (timestamp >= '1680066360726210000' AND " +
+			"timestamp <= '1680066458000000000')  AND stringTagMap['method'] = 'GET' ORDER BY durationNano DESC  LIMIT 100)" +
+			" SELECT subQuery.serviceName, subQuery.name, count() AS span_count, subQuery.durationNano, traceID" +
+			" FROM signoz_traces.distributed_signoz_index_v2 INNER JOIN subQuery ON distributed_signoz_index_v2.traceID" +
+			" = subQuery.traceID GROUP BY traceID, subQuery.durationNano, subQuery.name, subQuery.serviceName " +
+			"ORDER BY subQuery.durationNano desc;",
+		PanelType: v3.PanelTypeTrace,
+	},
 }
 
 func TestBuildTracesQuery(t *testing.T) {
 	for _, tt := range testBuildTracesQueryData {
 		Convey("TestBuildTracesQuery", t, func() {
-			query, err := buildTracesQuery(tt.Start, tt.End, tt.Step, tt.BuilderQuery, tt.TableName, map[string]v3.AttributeKey{})
+			query, err := buildTracesQuery(tt.Start, tt.End, tt.Step, tt.BuilderQuery, tt.TableName, map[string]v3.AttributeKey{}, tt.PanelType)
 			So(err, ShouldBeNil)
 			So(query, ShouldEqual, tt.ExpectedQuery)
-
 		})
 	}
 }
