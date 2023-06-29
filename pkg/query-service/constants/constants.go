@@ -236,10 +236,6 @@ const (
 		"CAST((attributes_int64_key, attributes_int64_value), 'Map(String, Int64)') as  attributes_int64," +
 		"CAST((attributes_float64_key, attributes_float64_value), 'Map(String, Float64)') as  attributes_float64," +
 		"CAST((resources_string_key, resources_string_value), 'Map(String, String)') as resources_string "
-	TracesListViewSQLSelect = "SELECT " +
-		"traceID, spanID, parentSpanID, name, serviceName, kind, durationNano, statusCode, hasError, externalHttpMethod, " +
-		"externalHttpUrl, component, dbSystem, dbName, dbOperation, peerService, httpMethod, httpUrl, httpRoute, httpHost, " +
-		"msgSystem, msgOperation, rpcSystem, rpcService, rpcMethod, responseStatusCode, timestamp as timestamp_datetime "
 	TracesExplorerViewSQLSelectWithSubQuery = "WITH subQuery AS ( " +
 		"SELECT distinct on (traceID) traceID, durationNano, serviceName, name " +
 		"FROM " + SIGNOZ_TRACE_DBNAME + "." + SIGNOZ_SPAN_INDEX_TABLENAME +
