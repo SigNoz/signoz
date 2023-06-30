@@ -716,7 +716,7 @@ func (r *ClickHouseReader) GetServicesList(ctx context.Context) (*[]string, erro
 	return &services, nil
 }
 
-func (r *ClickHouseReader) GetTopLevelOperations(ctx context.Context) (*map[string][]string, *model.ApiError) {
+func (r *ClickHouseReader) GetTopLevelOperations(ctx context.Context, skipConfig *model.SkipConfig) (*map[string][]string, *model.ApiError) {
 
 	operations := map[string][]string{}
 	query := fmt.Sprintf(`SELECT DISTINCT name, serviceName FROM %s.%s`, r.TraceDB, r.topLevelOperationsTable)
@@ -737,18 +737,21 @@ func (r *ClickHouseReader) GetTopLevelOperations(ctx context.Context) (*map[stri
 		if _, ok := operations[serviceName]; !ok {
 			operations[serviceName] = []string{}
 		}
+		if skipConfig.ShouldSkip(serviceName, name) {
+			continue
+		}
 		operations[serviceName] = append(operations[serviceName], name)
 	}
 	return &operations, nil
 }
 
-func (r *ClickHouseReader) GetServices(ctx context.Context, queryParams *model.GetServicesParams) (*[]model.ServiceItem, *model.ApiError) {
+func (r *ClickHouseReader) GetServices(ctx context.Context, queryParams *model.GetServicesParams, skipConfig *model.SkipConfig) (*[]model.ServiceItem, *model.ApiError) {
 
 	if r.indexTable == "" {
 		return nil, &model.ApiError{Typ: model.ErrorExec, Err: ErrNoIndexTable}
 	}
 
-	topLevelOps, apiErr := r.GetTopLevelOperations(ctx)
+	topLevelOps, apiErr := r.GetTopLevelOperations(ctx, skipConfig)
 	if apiErr != nil {
 		return nil, apiErr
 	}
@@ -839,9 +842,9 @@ func (r *ClickHouseReader) GetServices(ctx context.Context, queryParams *model.G
 	return &serviceItems, nil
 }
 
-func (r *ClickHouseReader) GetServiceOverview(ctx context.Context, queryParams *model.GetServiceOverviewParams) (*[]model.ServiceOverviewItem, *model.ApiError) {
+func (r *ClickHouseReader) GetServiceOverview(ctx context.Context, queryParams *model.GetServiceOverviewParams, skipConfig *model.SkipConfig) (*[]model.ServiceOverviewItem, *model.ApiError) {
 
-	topLevelOps, apiErr := r.GetTopLevelOperations(ctx)
+	topLevelOps, apiErr := r.GetTopLevelOperations(ctx, skipConfig)
 	if apiErr != nil {
 		return nil, apiErr
 	}
