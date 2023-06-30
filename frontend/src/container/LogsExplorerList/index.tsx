@@ -18,6 +18,7 @@ import { DataSource, StringOperators } from 'types/common/queryBuilder';
 import InfinityTableView from './InfinityTableView';
 import { LogsExplorerListProps } from './LogsExplorerList.interfaces';
 import { InfinityWrapperStyled } from './styles';
+import { convertKeysToColumnFields } from './utils';
 
 function Footer(): JSX.Element {
 	return <Spinner height={20} tip="Getting Logs" />;
@@ -28,7 +29,9 @@ function LogsExplorerList({
 	currentStagedQueryData,
 	logs,
 	isLimit,
+	onOpenDetailedView,
 	onEndReached,
+	onExpand,
 }: LogsExplorerListProps): JSX.Element {
 	const { initialDataSource } = useQueryBuilder();
 
@@ -51,6 +54,11 @@ function LogsExplorerList({
 		},
 	);
 
+	const selectedFields = useMemo(
+		() => convertKeysToColumnFields(options.selectColumns),
+		[options],
+	);
+
 	const getItemContent = useCallback(
 		(_: number, log: ILog): JSX.Element => {
 			if (options.format === 'raw') {
@@ -59,15 +67,27 @@ function LogsExplorerList({
 						key={log.id}
 						data={log}
 						linesPerRow={options.maxLines}
-						// TODO: write new onClickExpanded logic
-						onClickExpand={(): void => {}}
+						onClickExpand={onExpand}
 					/>
 				);
 			}
 
-			return <ListLogView key={log.id} logData={log} />;
+			return (
+				<ListLogView
+					key={log.id}
+					logData={log}
+					selectedFields={selectedFields}
+					onOpenDetailedView={onOpenDetailedView}
+				/>
+			);
 		},
-		[options],
+		[
+			options.format,
+			options.maxLines,
+			selectedFields,
+			onOpenDetailedView,
+			onExpand,
+		],
 	);
 
 	const renderContent = useMemo(() => {
@@ -82,13 +102,9 @@ function LogsExplorerList({
 				<InfinityTableView
 					tableViewProps={{
 						logs,
-						fields: options.selectColumns.map((item) => ({
-							dataType: item.dataType as string,
-							name: item.key,
-							type: item.type as string,
-						})),
+						fields: selectedFields,
 						linesPerRow: options.maxLines,
-						onClickExpand: (): void => {},
+						onClickExpand: onExpand,
 					}}
 					infitiyTableProps={{ onEndReached }}
 				/>
@@ -110,11 +126,12 @@ function LogsExplorerList({
 	}, [
 		isLimit,
 		options.format,
-		options.selectColumns,
 		options.maxLines,
 		logs,
 		onEndReached,
 		getItemContent,
+		selectedFields,
+		onExpand,
 	]);
 
 	return (

@@ -2,6 +2,7 @@ import { TabsProps } from 'antd';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { queryParamNamesMap } from 'constants/queryBuilderQueryNames';
 import { ITEMS_PER_PAGE_OPTIONS } from 'container/Controls/config';
+import LogExplorerDetailedView from 'container/LogExplorerDetailedView';
 import LogsExplorerChart from 'container/LogsExplorerChart';
 import LogsExplorerList from 'container/LogsExplorerList';
 import LogsExplorerTable from 'container/LogsExplorerTable';
@@ -38,6 +39,7 @@ function LogsExplorerViews(): JSX.Element {
 	const [currentScrolledLog, setCurrentScrolledLog] = useState<ILog | null>(
 		null,
 	);
+	const [activeLog, setActiveLog] = useState<ILog | null>(null);
 	const [page, setPage] = useState<number>(1);
 	const [logs, setLogs] = useState<ILog[]>([]);
 
@@ -72,8 +74,6 @@ function LogsExplorerViews(): JSX.Element {
 		if (stagedQuery && panelType !== PANEL_TYPES.LIST) return stagedQuery;
 
 		if (!paginationQueryData) return null;
-
-		console.log({ paginationQueryData });
 
 		const data: Query = {
 			...stagedQuery,
@@ -135,6 +135,14 @@ function LogsExplorerViews(): JSX.Element {
 		[logs, isLimit, isTimeStampPresent],
 	);
 
+	const handleSetActiveLog = useCallback((nextActiveLog: ILog) => {
+		setActiveLog(nextActiveLog);
+	}, []);
+
+	const handleClearActiveLog = useCallback(() => {
+		setActiveLog(null);
+	}, []);
+
 	const handleResetPagination = useCallback(() => {
 		setPage(1);
 		setCurrentScrolledLog(null);
@@ -184,7 +192,6 @@ function LogsExplorerViews(): JSX.Element {
 
 	useEffect(() => {
 		if (isQueryStaged && panelType === PANEL_TYPES.LIST) {
-			console.log('fire');
 			handleResetPagination();
 		}
 	}, [handleResetPagination, isQueryStaged, panelType]);
@@ -214,7 +221,9 @@ function LogsExplorerViews(): JSX.Element {
 						currentStagedQueryData={currentStagedQueryData}
 						logs={logs}
 						isLimit={isLimit}
+						onOpenDetailedView={handleSetActiveLog}
 						onEndReached={handleEndReached}
+						onExpand={handleSetActiveLog}
 					/>
 				),
 			},
@@ -238,7 +247,8 @@ function LogsExplorerViews(): JSX.Element {
 			logs,
 			isLimit,
 			handleEndReached,
-			data?.payload.data.newResult.data.result,
+			handleSetActiveLog,
+			data,
 		],
 	);
 
@@ -255,6 +265,7 @@ function LogsExplorerViews(): JSX.Element {
 				onChange={handleChangeView}
 				destroyInactiveTabPane
 			/>
+			<LogExplorerDetailedView log={activeLog} onClose={handleClearActiveLog} />
 		</>
 	);
 }

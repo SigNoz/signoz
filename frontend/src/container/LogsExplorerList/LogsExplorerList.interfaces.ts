@@ -7,4 +7,6 @@ export type LogsExplorerListProps = {
 	logs: ILog[];
 	isLimit: boolean;
 	onEndReached: (index: number) => void;
+	onExpand: (log: ILog) => void;
+	onOpenDetailedView: (log: ILog) => void;
 };
