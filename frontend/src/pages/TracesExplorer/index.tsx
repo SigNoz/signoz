@@ -75,7 +75,9 @@ function TracesExplorer(): JSX.Element {
 						dashboardId: data?.payload?.uuid,
 					})}/new?${QueryParams.graphType}=graph&${
 						QueryParams.widgetId
-					}=empty&${COMPOSITE_QUERY}=${JSON.stringify(exportDefaultQuery)}`;
+					}=empty&${COMPOSITE_QUERY}=${encodeURIComponent(
+						JSON.stringify(exportDefaultQuery),
+					)}`;
 
 					history.push(dashboardEditView);
 				},
@@ -119,7 +121,11 @@ function TracesExplorer(): JSX.Element {
 
 			<Container>
 				<ActionsWrapper>
-					<ExportPanel isLoading={isLoading} onExport={handleExport} />
+					<ExportPanel
+						query={stagedQuery}
+						isLoading={isLoading}
+						onExport={handleExport}
+					/>
 				</ActionsWrapper>
 
 				<Tabs
