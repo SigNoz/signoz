@@ -1,6 +1,7 @@
 import Graph from 'components/Graph';
 import Spinner from 'components/Spinner';
-import { getExplorerChartData } from 'lib/explorer/getExplorerChartData';
+import getChartData, { GetChartDataProps } from 'lib/getChartData';
+import { colors } from 'lib/getRandomColor';
 import { memo, useMemo } from 'react';
 
 import { LogsExplorerChartProps } from './LogsExplorerChart.interfaces';
@@ -10,7 +11,29 @@ function LogsExplorerChart({
 	data,
 	isLoading,
 }: LogsExplorerChartProps): JSX.Element {
-	const graphData = useMemo(() => getExplorerChartData(data), [data]);
+	const handleCreateDatasets: Required<GetChartDataProps>['createDataset'] = (
+		element,
+		index,
+		allLabels,
+	) => ({
+		label: allLabels[index],
+		data: element,
+		backgroundColor: colors[index % colors.length] || 'red',
+		borderColor: colors[index % colors.length] || 'red',
+	});
+
+	const graphData = useMemo(
+		() =>
+			getChartData({
+				queryData: [
+					{
+						queryData: data,
+					},
+				],
+				createDataset: handleCreateDatasets,
+			}),
+		[data],
+	);
 
 	return (
 		<CardStyled>
