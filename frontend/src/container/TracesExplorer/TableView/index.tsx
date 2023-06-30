@@ -6,6 +6,7 @@ import { QueryTable } from 'container/QueryTable';
 import { useGetQueryRange } from 'hooks/queryBuilder/useGetQueryRange';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import useUrlQueryData from 'hooks/useUrlQueryData';
+import { memo } from 'react';
 import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
 import { GlobalReducer } from 'types/reducer/globalTime';
@@ -59,4 +60,4 @@ function TableView(): JSX.Element {
 	);
 }
 
-export default TableView;
+export default memo(TableView);
