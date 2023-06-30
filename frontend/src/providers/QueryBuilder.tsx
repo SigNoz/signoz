@@ -460,7 +460,10 @@ export function QueryBuilderProvider({
 				id: uuid(),
 			};
 
-			urlQuery.set(COMPOSITE_QUERY, JSON.stringify(currentGeneratedQuery));
+			urlQuery.set(
+				COMPOSITE_QUERY,
+				encodeURIComponent(JSON.stringify(currentGeneratedQuery)),
+			);
 
 			if (searchParams) {
 				Object.keys(searchParams).forEach((param) =>
