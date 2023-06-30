@@ -6,21 +6,20 @@ import { memo, useMemo } from 'react';
 import { generatePath, useParams } from 'react-router-dom';
 import { useLocation } from 'react-use';
 
-import { getWidgetQueryBuilder } from './MetricsApplication.factory';
 import DBCall from './Tabs/DBCall';
 import External from './Tabs/External';
 import Overview from './Tabs/Overview';
 
 function OverViewTab(): JSX.Element {
-	return <Overview getWidgetQueryBuilder={getWidgetQueryBuilder} />;
+	return <Overview />;
 }
 
 function DbCallTab(): JSX.Element {
-	return <DBCall getWidgetQueryBuilder={getWidgetQueryBuilder} />;
+	return <DBCall />;
 }
 
 function ExternalTab(): JSX.Element {
-	return <External getWidgetQueryBuilder={getWidgetQueryBuilder} />;
+	return <External />;
 }
 
 function ServiceMetrics(): JSX.Element {
