@@ -63,6 +63,7 @@ type APIHandler struct {
 	basePath     string
 	apiPrefix    string
 	reader       interfaces.Reader
+	skipConfig   *model.SkipConfig
 	appDao       dao.ModelDao
 	alertManager am.Manager
 	ruleManager  *rules.Manager
@@ -81,6 +82,7 @@ type APIHandlerOpts struct {
 	// business data reader e.g. clickhouse
 	Reader interfaces.Reader
 
+	SkipConfig *model.SkipConfig
 	// dao layer to perform crud on app objects like dashboard, alerts etc
 	AppDao dao.ModelDao
 
@@ -102,6 +104,7 @@ func NewAPIHandler(opts APIHandlerOpts) (*APIHandler, error) {
 	aH := &APIHandler{
 		reader:       opts.Reader,
 		appDao:       opts.AppDao,
+		skipConfig:   opts.SkipConfig,
 		alertManager: alertManager,
 		ruleManager:  opts.RuleManager,
 		featureFlags: opts.FeatureFlags,
@@ -1316,7 +1319,7 @@ func (aH *APIHandler) getServiceOverview(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	result, apiErr := aH.reader.GetServiceOverview(r.Context(), query)
+	result, apiErr := aH.reader.GetServiceOverview(r.Context(), query, aH.skipConfig)
 	if apiErr != nil && aH.HandleError(w, apiErr.Err, http.StatusInternalServerError) {
 		return
 	}
@@ -1327,7 +1330,7 @@ func (aH *APIHandler) getServiceOverview(w http.ResponseWriter, r *http.Request)
 
 func (aH *APIHandler) getServicesTopLevelOps(w http.ResponseWriter, r *http.Request) {
 
-	result, apiErr := aH.reader.GetTopLevelOperations(r.Context())
+	result, apiErr := aH.reader.GetTopLevelOperations(r.Context(), aH.skipConfig)
 	if apiErr != nil {
 		RespondError(w, apiErr, nil)
 		return
@@ -1343,7 +1346,7 @@ func (aH *APIHandler) getServices(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	result, apiErr := aH.reader.GetServices(r.Context(), query)
+	result, apiErr := aH.reader.GetServices(r.Context(), query, aH.skipConfig)
 	if apiErr != nil && aH.HandleError(w, apiErr.Err, http.StatusInternalServerError) {
 		return
 	}
