@@ -77,8 +77,8 @@ function ListAlert({ allAlertRules, refetch }: ListAlertProps): JSX.Element {
 				history.push(
 					`${
 						ROUTES.EDIT_ALERTS
-					}?ruleId=${record.id.toString()}&${COMPOSITE_QUERY}=${JSON.stringify(
-						compositeQuery,
+					}?ruleId=${record.id.toString()}&${COMPOSITE_QUERY}=${encodeURIComponent(
+						JSON.stringify(compositeQuery),
 					)}`,
 				);
 			})
