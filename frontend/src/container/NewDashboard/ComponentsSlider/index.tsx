@@ -47,7 +47,9 @@ function DashboardGraphSlider({ toggleAddWidget }: Props): JSX.Element {
 				history.push(
 					`${history.location.pathname}/new?graphType=${name}&widgetId=${
 						emptyLayout.i
-					}&${COMPOSITE_QUERY}=${JSON.stringify(initialQueriesMap.metrics)}`,
+					}&${COMPOSITE_QUERY}=${encodeURIComponent(
+						JSON.stringify(initialQueriesMap.metrics),
+					)}`,
 				);
 			} catch (error) {
 				notifications.error({
