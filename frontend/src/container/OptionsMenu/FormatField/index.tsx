@@ -1,7 +1,7 @@
 import { useTranslation } from 'react-i18next';
 
-import { OptionsMenuConfig } from '..';
 import { FieldTitle } from '../styles';
+import { OptionsMenuConfig } from '../types';
 import { FormatFieldWrapper, RadioButton, RadioGroup } from './styles';
 
 function FormatField({ config }: FormatFieldProps): JSX.Element | null {

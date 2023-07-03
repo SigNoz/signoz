@@ -12,8 +12,8 @@ function TraceExplorerControls(): JSX.Element | null {
 		<Container>
 			<Controls
 				isLoading={false}
-				count={0}
-				countPerPage={0}
+				totalCount={0}
+				countPerPage={25}
 				handleNavigatePrevious={handleNavigatePrevious}
 				handleNavigateNext={handleNavigateNext}
 				handleCountItemsPerPageChange={handleCountItemsPerPageChange}

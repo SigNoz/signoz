@@ -16,7 +16,13 @@ const Items: ItemsProps[] = [
 	},
 ];
 
-export type ITEMS = 'graph' | 'value' | 'list' | 'table' | 'EMPTY_WIDGET';
+export type ITEMS =
+	| 'graph'
+	| 'value'
+	| 'list'
+	| 'table'
+	| 'EMPTY_WIDGET'
+	| 'trace';
 
 interface ItemsProps {
 	name: ITEMS;
