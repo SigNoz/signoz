@@ -37,6 +37,10 @@ var aggregateOperatorToSQLFunc = map[v3.AggregateOperator]string{
 	v3.AggregateOperatorRateAvg: "avg",
 	v3.AggregateOperatorRateMax: "max",
 	v3.AggregateOperatorRateMin: "min",
+	v3.AggregateOperatorSumRate: "sum",
+	v3.AggregateOperatorAvgRate: "avg",
+	v3.AggregateOperatorMaxRate: "max",
+	v3.AggregateOperatorMinRate: "min",
 }
 
 // See https://github.com/SigNoz/signoz/issues/2151#issuecomment-1467249056
@@ -212,7 +216,7 @@ func buildMetricQuery(start, end, step int64, mq *v3.BuilderQuery, tableName str
 
 		query = fmt.Sprintf(query, "labels as fullLabels,", subQuery)
 		return query, nil
-	case v3.AggregateOperatorSumRate:
+	case v3.AggregateOperatorSumRate, v3.AggregateOperatorAvgRate, v3.AggregateOperatorMaxRate, v3.AggregateOperatorMinRate:
 		rateGroupBy := "fingerprint, " + groupBy
 		rateGroupTags := "fingerprint, " + groupTags
 		rateOrderBy := "fingerprint, " + orderBy
@@ -222,7 +226,7 @@ func buildMetricQuery(start, end, step int64, mq *v3.BuilderQuery, tableName str
 		) // labels will be same so any should be fine
 		query := `SELECT %s ts, ` + rateWithoutNegative + `as value FROM(%s) WHERE isNaN(value) = 0`
 		query = fmt.Sprintf(query, groupTags, subQuery)
-		query = fmt.Sprintf(`SELECT %s ts, sum(value) as value FROM (%s) GROUP BY %s ORDER BY %s ts`, groupTags, query, groupBy, orderBy)
+		query = fmt.Sprintf(`SELECT %s ts, %s(value) as value FROM (%s) GROUP BY %s ORDER BY %s ts`, groupTags, aggregateOperatorToSQLFunc[mq.AggregateOperator], query, groupBy, orderBy)
 		return query, nil
 	case
 		v3.AggregateOperatorRateSum,
