@@ -219,7 +219,7 @@ services:
      - JAEGER_ENDPOINT=http://otel-collector:14268/api/traces
 
   load-hotrod:
-    image: "grubykarol/locust:1.2.3-python3.9-alpine3.12"
+    image: "signoz/locust:1.2.3"
     container_name: load-hotrod
     hostname: load-hotrod
     environment:

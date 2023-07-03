@@ -1,17 +1,17 @@
 import { TabsProps } from 'antd';
-import TimeSeriesView from 'container/TracesExplorer/TimeSeriesView';
-
-import { TracesExplorerTabs } from './constants';
+import { PANEL_TYPES } from 'constants/queryBuilder';
+import TimeSeriesView from 'container/TimeSeriesView';
+import { DataSource } from 'types/common/queryBuilder';
 
 export const getTabsItems = (): TabsProps['items'] => [
 	{
 		label: 'Time Series',
-		key: TracesExplorerTabs.TIME_SERIES,
-		children: <TimeSeriesView />,
+		key: PANEL_TYPES.TIME_SERIES,
+		children: <TimeSeriesView dataSource={DataSource.TRACES} />,
 	},
 	{
 		label: 'Traces',
-		key: TracesExplorerTabs.TRACES,
+		key: PANEL_TYPES.TRACE,
 		children: <div>Traces tab</div>,
 	},
 ];
