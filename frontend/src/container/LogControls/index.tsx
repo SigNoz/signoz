@@ -7,6 +7,7 @@ import { getMinMax } from 'container/TopNav/AutoRefresh/config';
 import dayjs from 'dayjs';
 import { Pagination } from 'hooks/queryPagination';
 import { FlatLogData } from 'lib/logs/flatLogData';
+import { OrderPreferenceItems } from 'pages/Logs/config';
 import * as Papa from 'papaparse';
 import { memo, useCallback, useMemo } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
@@ -31,6 +32,7 @@ function LogControls(): JSX.Element | null {
 		isLoading: isLogsLoading,
 		isLoadingAggregate,
 		logs,
+		order,
 	} = useSelector<AppState, ILogsReducer>((state) => state.logs);
 	const globalTime = useSelector<AppState, GlobalReducer>(
 		(state) => state.globalTime,
@@ -160,6 +162,7 @@ function LogControls(): JSX.Element | null {
 				loading={isLoading}
 				size="small"
 				type="link"
+				disabled={order === OrderPreferenceItems.ASC}
 				onClick={handleGoToLatest}
 			>
 				<FastBackwardOutlined /> Go to latest

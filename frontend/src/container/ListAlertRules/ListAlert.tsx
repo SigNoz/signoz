@@ -77,7 +77,7 @@ function ListAlert({ allAlertRules, refetch }: ListAlertProps): JSX.Element {
 				history.push(
 					`${ROUTES.EDIT_ALERTS}?ruleId=${record.id.toString()}&${
 						queryParamNamesMap.compositeQuery
-					}=${JSON.stringify(compositeQuery)}`,
+					}=${encodeURIComponent(JSON.stringify(compositeQuery))}`,
 				);
 			})
 			.catch(handleError);

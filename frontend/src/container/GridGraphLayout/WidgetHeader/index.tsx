@@ -64,7 +64,9 @@ function WidgetHeader({
 		history.push(
 			`${window.location.pathname}/new?widgetId=${widgetId}&graphType=${
 				widget.panelTypes
-			}&${queryParamNamesMap.compositeQuery}=${JSON.stringify(widget.query)}`,
+			}&${queryParamNamesMap.compositeQuery}=${encodeURIComponent(
+				JSON.stringify(widget.query),
+			)}`,
 		);
 	}, [widget.id, widget.panelTypes, widget.query]);
 

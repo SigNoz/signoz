@@ -466,7 +466,7 @@ export function QueryBuilderProvider({
 
 			urlQuery.set(
 				queryParamNamesMap.compositeQuery,
-				JSON.stringify(currentGeneratedQuery),
+				encodeURIComponent(JSON.stringify(currentGeneratedQuery)),
 			);
 
 			if (searchParams) {
