@@ -1,28 +1,40 @@
-import { TabsProps } from 'antd';
-import { PANEL_TYPES } from 'constants/queryBuilder';
+import { Col, Row, TabsProps } from 'antd';
+import axios from 'axios';
+import { QueryParams } from 'constants/query';
+import { initialQueriesMap, PANEL_TYPES } from 'constants/queryBuilder';
 import { queryParamNamesMap } from 'constants/queryBuilderQueryNames';
+import ROUTES from 'constants/routes';
 import { ITEMS_PER_PAGE_OPTIONS } from 'container/Controls/config';
+import ExportPanel from 'container/ExportPanel';
 import LogsExplorerChart from 'container/LogsExplorerChart';
 import LogsExplorerList from 'container/LogsExplorerList';
 import LogsExplorerTable from 'container/LogsExplorerTable';
 import { GRAPH_TYPES } from 'container/NewDashboard/ComponentsSlider';
 import TimeSeriesView from 'container/TimeSeriesView/TimeSeriesView';
+import { useUpdateDashboard } from 'hooks/dashboard/useUpdateDashboard';
+import { addEmptyWidgetInDashboardJSONWithQuery } from 'hooks/dashboard/utils';
 import { useGetExplorerQueryRange } from 'hooks/queryBuilder/useGetExplorerQueryRange';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
+import { useNotifications } from 'hooks/useNotifications';
 import useUrlQueryData from 'hooks/useUrlQueryData';
 import { getPaginationQueryData } from 'lib/newQueryBuilder/getPaginationQueryData';
 import { memo, useCallback, useEffect, useMemo, useState } from 'react';
+import { generatePath, useHistory } from 'react-router-dom';
+import { Dashboard } from 'types/api/dashboard/getAll';
 import { ILog } from 'types/api/logs/log';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource } from 'types/common/queryBuilder';
 
-import { TabsStyled } from './LogsExplorerViews.styled';
+import { ContainerStyled, TabsStyled } from './LogsExplorerViews.styled';
 
 function LogsExplorerViews(): JSX.Element {
+	const history = useHistory();
 	const { queryData: pageSize } = useUrlQueryData(
 		queryParamNamesMap.pageSize,
 		ITEMS_PER_PAGE_OPTIONS[0],
 	);
+
+	const { notifications } = useNotifications();
 
 	// Context
 	const {
@@ -74,8 +86,6 @@ function LogsExplorerViews(): JSX.Element {
 
 		if (!paginationQueryData) return null;
 
-		console.log({ paginationQueryData });
-
 		const data: Query = {
 			...stagedQuery,
 			builder: {
@@ -115,8 +125,32 @@ function LogsExplorerViews(): JSX.Element {
 		return groupByCount > 0;
 	}, [currentQuery]);
 
+	const exportDefaultQuery = useMemo(
+		() =>
+			updateAllQueriesOperators(
+				stagedQuery || initialQueriesMap.traces,
+				PANEL_TYPES.TIME_SERIES,
+				DataSource.TRACES,
+			),
+		[stagedQuery, updateAllQueriesOperators],
+	);
+
+	const { mutate: updateDashboard, isLoading } = useUpdateDashboard();
+
+	const handleError = useCallback(
+		(error: unknown): void => {
+			if (axios.isAxiosError(error)) {
+				notifications.error({
+					message: error.message,
+				});
+			}
+		},
+		[notifications],
+	);
+
 	const { data, isFetching, isError } = useGetExplorerQueryRange(requestData, {
 		keepPreviousData: true,
+		onError: handleError,
 		...(isLimit ? { enabled: !isLimit } : {}),
 	});
 
@@ -141,6 +175,31 @@ function LogsExplorerViews(): JSX.Element {
 		setCurrentScrolledLog(null);
 		setLogs([]);
 	}, []);
+
+	const handleExport = useCallback(
+		(dashboard: Dashboard | null): void => {
+			if (!dashboard) return;
+
+			const updatedDashboard = addEmptyWidgetInDashboardJSONWithQuery(
+				dashboard,
+				exportDefaultQuery,
+			);
+
+			updateDashboard(updatedDashboard, {
+				onSuccess: (data) => {
+					const dashboardEditView = `${generatePath(ROUTES.DASHBOARD, {
+						dashboardId: data?.payload?.uuid,
+					})}/new?${QueryParams.graphType}=graph&${QueryParams.widgetId}=empty&${
+						queryParamNamesMap.compositeQuery
+					}=${encodeURIComponent(JSON.stringify(exportDefaultQuery))}`;
+
+					history.push(dashboardEditView);
+				},
+				onError: handleError,
+			});
+		},
+		[exportDefaultQuery, handleError, history, updateDashboard],
+	);
 
 	const handleChangeView = useCallback(
 		(newPanelType: string) => {
@@ -185,7 +244,6 @@ function LogsExplorerViews(): JSX.Element {
 
 	useEffect(() => {
 		if (isQueryStaged && panelType === PANEL_TYPES.LIST) {
-			console.log('fire');
 			handleResetPagination();
 		}
 	}, [handleResetPagination, isQueryStaged, panelType]);
@@ -256,6 +314,19 @@ function LogsExplorerViews(): JSX.Element {
 				isLoading={isFetching}
 				data={data?.payload.data.result[0] ? [data?.payload.data.result[0]] : []}
 			/>
+
+			<Row justify="end">
+				<Col>
+					<ContainerStyled>
+						<ExportPanel
+							query={stagedQuery}
+							isLoading={isLoading}
+							onExport={handleExport}
+						/>
+					</ContainerStyled>
+				</Col>
+			</Row>
+
 			<TabsStyled
 				items={tabsItems}
 				defaultActiveKey={panelType || PANEL_TYPES.LIST}

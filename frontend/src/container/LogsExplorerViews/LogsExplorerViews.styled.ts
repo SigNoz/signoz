@@ -7,3 +7,7 @@ export const TabsStyled = styled(Tabs)`
 		background-color: ${themeColors.lightBlack};
 	}
 `;
+
+export const ContainerStyled = styled.div`
+	margin-bottom: 1rem;
+`;
