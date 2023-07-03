@@ -320,13 +320,15 @@ func TestGetZerosForEpochNano(t *testing.T) {
 }
 
 var testOrderBy = []struct {
-	Name   string
-	Items  []v3.OrderBy
-	Tags   []string
-	Result string
+	Name      string
+	PanelType v3.PanelType
+	Items     []v3.OrderBy
+	Tags      []string
+	Result    []string
 }{
 	{
-		Name: "Test 1",
+		Name:      "Test 1",
+		PanelType: v3.PanelTypeGraph,
 		Items: []v3.OrderBy{
 			{
 				ColumnName: "name",
@@ -338,10 +340,11 @@ var testOrderBy = []struct {
 			},
 		},
 		Tags:   []string{"name"},
-		Result: "name asc,value desc",
+		Result: []string{"name asc", "value desc"},
 	},
 	{
-		Name: "Test 2",
+		Name:      "Test 2",
+		PanelType: v3.PanelTypeList,
 		Items: []v3.OrderBy{
 			{
 				ColumnName: "name",
@@ -353,10 +356,11 @@ var testOrderBy = []struct {
 			},
 		},
 		Tags:   []string{"name", "bytes"},
-		Result: "name asc,bytes asc",
+		Result: []string{"name asc", "bytes asc"},
 	},
 	{
-		Name: "Test 3",
+		Name:      "Test 3",
+		PanelType: v3.PanelTypeList,
 		Items: []v3.OrderBy{
 			{
 				ColumnName: "name",
@@ -372,15 +376,38 @@ var testOrderBy = []struct {
 			},
 		},
 		Tags:   []string{"name", "bytes"},
-		Result: "name asc,bytes asc,value asc",
+		Result: []string{"name asc", "bytes asc", "value asc"},
+	},
+	{
+		Name:      "Test 4",
+		PanelType: v3.PanelTypeList,
+		Items: []v3.OrderBy{
+			{
+				ColumnName: "name",
+				Order:      "asc",
+			},
+			{
+				ColumnName: "bytes",
+				Order:      "asc",
+			},
+			{
+				ColumnName: "response_time",
+				Order:      "desc",
+				Key:        "response_time",
+				Type:       v3.AttributeKeyTypeTag,
+				DataType:   v3.AttributeKeyDataTypeString,
+			},
+		},
+		Tags:   []string{"name", "bytes"},
+		Result: []string{"name asc", "bytes asc", "stringTagMap['response_time'] desc"},
 	},
 }
 
 func TestOrderBy(t *testing.T) {
 	for _, tt := range testOrderBy {
 		Convey("testOrderBy", t, func() {
-			res := orderBy(tt.Items, tt.Tags)
-			So(res, ShouldEqual, tt.Result)
+			res := orderBy(tt.PanelType, tt.Items, tt.Tags, map[string]v3.AttributeKey{})
+			So(res, ShouldResemble, tt.Result)
 		})
 	}
 }
@@ -931,8 +958,8 @@ var testBuildTracesQueryData = []struct {
 				},
 			},
 		},
-		ExpectedQuery: "WITH subQuery AS ( SELECT distinct on (traceID) traceID, durationNano, serviceName," +
-			" name FROM signoz_traces.distributed_signoz_index_v2 WHERE (timestamp >= '1680066360726210000' AND " +
+		ExpectedQuery: "WITH subQuery AS (SELECT distinct on (traceID) traceID, durationNano, serviceName," +
+			" name FROM signoz_traces.distributed_signoz_index_v2 WHERE parentSpanID = '' AND (timestamp >= '1680066360726210000' AND " +
 			"timestamp <= '1680066458000000000')  AND stringTagMap['method'] = 'GET' ORDER BY durationNano DESC  LIMIT 100)" +
 			" SELECT subQuery.serviceName, subQuery.name, count() AS span_count, subQuery.durationNano, traceID" +
 			" FROM signoz_traces.distributed_signoz_index_v2 INNER JOIN subQuery ON distributed_signoz_index_v2.traceID" +

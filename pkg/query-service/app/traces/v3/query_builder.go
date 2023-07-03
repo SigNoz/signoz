@@ -240,7 +240,7 @@ func buildTracesQuery(start, end, step int64, mq *v3.BuilderQuery, tableName str
 			"from " + constants.SIGNOZ_TRACE_DBNAME + "." + constants.SIGNOZ_SPAN_INDEX_TABLENAME +
 			" where " + spanIndexTableTimeFilter + "%s " +
 			"group by %s%s " +
-			"order by %sts"
+			"order by %s"
 
 	emptyValuesInGroupByFilter, err := handleEmptyValuesInGroupBy(keys, mq.GroupBy)
 	if err != nil {
@@ -249,7 +249,8 @@ func buildTracesQuery(start, end, step int64, mq *v3.BuilderQuery, tableName str
 	filterSubQuery += emptyValuesInGroupByFilter
 
 	groupBy := groupByAttributeKeyTags(keys, mq.GroupBy...)
-	orderBy := orderByAttributeKeyTags(mq.OrderBy, mq.GroupBy)
+	enrichedOrderBy := enrichOrderBy(mq.OrderBy, keys)
+	orderBy := orderByAttributeKeyTags(panelType, mq.AggregateOperator, enrichedOrderBy, mq.GroupBy, keys)
 
 	aggregationKey := ""
 	if mq.AggregateAttribute.Key != "" {
@@ -305,19 +306,19 @@ func buildTracesQuery(start, end, step int64, mq *v3.BuilderQuery, tableName str
 	case v3.AggregateOperatorNoOp:
 		var query string
 		if panelType == v3.PanelTypeTrace {
-			withSubQuery := fmt.Sprintf(constants.TracesExplorerViewSQLSelectWithSubQuery, spanIndexTableTimeFilter, filterSubQuery)
+			withSubQuery := fmt.Sprintf(constants.TracesExplorerViewSQLSelectWithSubQuery, constants.SIGNOZ_TRACE_DBNAME, constants.SIGNOZ_SPAN_INDEX_TABLENAME, spanIndexTableTimeFilter, filterSubQuery)
 			withSubQuery = addLimitToQuery(withSubQuery, mq.Limit, panelType)
 			if mq.Offset != 0 {
 				withSubQuery = addOffsetToQuery(withSubQuery, mq.Offset)
 			}
-			query = withSubQuery + ") " + constants.TracesExplorerViewSQLSelectQuery
+			query = withSubQuery + ") " + fmt.Sprintf(constants.TracesExplorerViewSQLSelectQuery, constants.SIGNOZ_TRACE_DBNAME, constants.SIGNOZ_SPAN_INDEX_TABLENAME, constants.SIGNOZ_SPAN_INDEX_TABLENAME)
 		} else if panelType == v3.PanelTypeList {
 			if len(mq.SelectColumns) == 0 {
 				return "", fmt.Errorf("select columns cannot be empty for panelType %s", panelType)
 			}
 			selectColumns := getSelectColumns(mq.SelectColumns, keys)
-			queryNoOpTmpl := fmt.Sprintf("SELECT timestamp as timestamp_datetime, spanID, traceID, "+"%s ", selectColumns) + "from " + constants.SIGNOZ_TRACE_DBNAME + "." + constants.SIGNOZ_SPAN_INDEX_TABLENAME + " where %s %s"
-			query = fmt.Sprintf(queryNoOpTmpl, spanIndexTableTimeFilter, filterSubQuery)
+			queryNoOpTmpl := fmt.Sprintf("SELECT timestamp as timestamp_datetime, spanID, traceID, "+"%s ", selectColumns) + "from " + constants.SIGNOZ_TRACE_DBNAME + "." + constants.SIGNOZ_SPAN_INDEX_TABLENAME + " where %s %s" + " order by %s"
+			query = fmt.Sprintf(queryNoOpTmpl, spanIndexTableTimeFilter, filterSubQuery, orderBy)
 		} else {
 			return "", fmt.Errorf("unsupported aggregate operator %s for panelType %s", mq.AggregateOperator, panelType)
 		}
@@ -325,6 +326,24 @@ func buildTracesQuery(start, end, step int64, mq *v3.BuilderQuery, tableName str
 	default:
 		return "", fmt.Errorf("unsupported aggregate operator %s", mq.AggregateOperator)
 	}
+}
+
+func enrichOrderBy(items []v3.OrderBy, keys map[string]v3.AttributeKey) []v3.OrderBy {
+	enrichedItems := []v3.OrderBy{}
+	for i := 0; i < len(items); i++ {
+		attributeKey := enrichKeyWithMetadata(v3.AttributeKey{
+			Key: items[i].Key,
+		}, keys)
+		enrichedItems = append(enrichedItems, v3.OrderBy{
+			ColumnName: items[i].ColumnName,
+			Order:      items[i].Order,
+			Key:        attributeKey.Key,
+			DataType:   attributeKey.DataType,
+			Type:       attributeKey.Type,
+			IsColumn:   attributeKey.IsColumn,
+		})
+	}
+	return enrichedItems
 }
 
 // groupBy returns a string of comma separated tags for group by clause
@@ -343,19 +362,25 @@ func groupByAttributeKeyTags(keys map[string]v3.AttributeKey, tags ...v3.Attribu
 }
 
 // orderBy returns a string of comma separated tags for order by clause
+// if there are remaining items which are not present in tags they are also added
 // if the order is not specified, it defaults to ASC
-func orderBy(items []v3.OrderBy, tags []string) string {
+func orderBy(panelType v3.PanelType, items []v3.OrderBy, tags []string, keys map[string]v3.AttributeKey) []string {
 	var orderBy []string
+
+	// create a lookup
+	addedToOrderBy := map[string]bool{}
+	itemsLookup := map[string]v3.OrderBy{}
+
+	for i := 0; i < len(items); i++ {
+		addedToOrderBy[items[i].ColumnName] = false
+		itemsLookup[items[i].ColumnName] = items[i]
+	}
+
 	for _, tag := range tags {
-		found := false
-		for _, item := range items {
-			if item.ColumnName == tag {
-				found = true
-				orderBy = append(orderBy, fmt.Sprintf("%s %s", item.ColumnName, item.Order))
-				break
-			}
-		}
-		if !found {
+		if item, ok := itemsLookup[tag]; ok {
+			orderBy = append(orderBy, fmt.Sprintf("%s %s", item.ColumnName, item.Order))
+			addedToOrderBy[item.ColumnName] = true
+		} else {
 			orderBy = append(orderBy, fmt.Sprintf("%s ASC", tag))
 		}
 	}
@@ -364,20 +389,48 @@ func orderBy(items []v3.OrderBy, tags []string) string {
 	for _, item := range items {
 		if item.ColumnName == constants.SigNozOrderByValue {
 			orderBy = append(orderBy, fmt.Sprintf("value %s", item.Order))
+			addedToOrderBy[item.ColumnName] = true
 		}
 	}
-	return strings.Join(orderBy, ",")
+
+	// add the remaining items
+	if panelType == v3.PanelTypeList {
+		for _, item := range items {
+			// since these are not present in tags we will have to select them correctly
+			// for list view there is no need to check if it was added since they wont be added yet but this is just for safety
+			if !addedToOrderBy[item.ColumnName] {
+				attr := v3.AttributeKey{Key: item.ColumnName, DataType: item.DataType, Type: item.Type, IsColumn: item.IsColumn}
+				name := getColumnName(attr, keys)
+				orderBy = append(orderBy, fmt.Sprintf("%s %s", name, item.Order))
+			}
+		}
+	}
+	return orderBy
 }
 
-func orderByAttributeKeyTags(items []v3.OrderBy, tags []v3.AttributeKey) string {
+func orderByAttributeKeyTags(panelType v3.PanelType, aggregatorOperator v3.AggregateOperator, items []v3.OrderBy, tags []v3.AttributeKey, keys map[string]v3.AttributeKey) string {
 	var groupTags []string
 	for _, tag := range tags {
 		groupTags = append(groupTags, tag.Key)
 	}
-	str := orderBy(items, groupTags)
-	if len(str) > 0 {
-		str = str + ","
+	orderByArray := orderBy(panelType, items, groupTags, keys)
+
+	found := false
+	for i := 0; i < len(orderByArray); i++ {
+		if strings.Compare(orderByArray[i], constants.TIMESTAMP) == 0 {
+			orderByArray[i] = "ts"
+			break
+		}
 	}
+	if !found {
+		if aggregatorOperator == v3.AggregateOperatorNoOp {
+			orderByArray = append(orderByArray, constants.TIMESTAMP)
+		} else {
+			orderByArray = append(orderByArray, "ts")
+		}
+	}
+
+	str := strings.Join(orderByArray, ",")
 	return str
 }
 
@@ -414,10 +467,7 @@ func addLimitToQuery(query string, limit uint64, panelType v3.PanelType) string 
 	if limit == 0 {
 		limit = 100
 	}
-	if panelType == v3.PanelTypeList || panelType == v3.PanelTypeTrace {
-		return fmt.Sprintf("%s LIMIT %d", query, limit)
-	}
-	return query
+	return fmt.Sprintf("%s LIMIT %d", query, limit)
 }
 
 func addOffsetToQuery(query string, offset uint64) string {
@@ -432,7 +482,7 @@ func PrepareTracesQuery(start, end int64, queryType v3.QueryType, panelType v3.P
 	if panelType == v3.PanelTypeValue {
 		query, err = reduceToQuery(query, mq.ReduceTo, mq.AggregateOperator)
 	}
-	if panelType != v3.PanelTypeTrace {
+	if panelType == v3.PanelTypeList {
 		query = addLimitToQuery(query, mq.Limit, panelType)
 
 		if mq.Offset != 0 {
