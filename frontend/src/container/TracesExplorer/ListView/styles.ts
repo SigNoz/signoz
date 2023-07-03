@@ -1,3 +1,4 @@
+import { Typography } from 'antd';
 import { CSSProperties } from 'react';
 import styled from 'styled-components';
 
@@ -9,4 +10,8 @@ export const Container = styled.div`
 	display: flex;
 	flex-direction: column;
 	gap: 15px;
+`;
+
+export const ErrorText = styled(Typography)`
+	text-align: center;
 `;

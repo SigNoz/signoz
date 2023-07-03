@@ -227,8 +227,8 @@ const fillDataFromList = (
 
 		Object.keys(listItem.data).forEach((label) => {
 			if (column.key === label) {
-				if (listItem.data[label as ListItemKey]) {
-					column.data.push(listItem.data[label as ListItemKey] as string | number);
+				if (listItem.data[label as ListItemKey] !== '') {
+					column.data.push(listItem.data[label as ListItemKey].toString());
 				} else {
 					column.data.push('N/A');
 				}

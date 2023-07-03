@@ -17,7 +17,7 @@ import { GlobalReducer } from 'types/reducer/globalTime';
 
 import TraceExplorerControls from '../Controls';
 import { defaultSelectedColumns, PER_PAGE_OPTIONS } from './configs';
-import { Container, tableStyles } from './styles';
+import { Container, ErrorText, tableStyles } from './styles';
 import { getTraceLink, modifyColumns, transformDataWithDate } from './utils';
 
 function ListView(): JSX.Element {
@@ -28,7 +28,7 @@ function ListView(): JSX.Element {
 		GlobalReducer
 	>((state) => state.globalTime);
 
-	const { options, config, isLoading: isOptionsMenuLoading } = useOptionsMenu({
+	const { options, config } = useOptionsMenu({
 		dataSource: DataSource.TRACES,
 		aggregateOperator: 'count',
 		initialOptions: {
@@ -36,23 +36,11 @@ function ListView(): JSX.Element {
 		},
 	});
 
-	// TODO: temporary solution, waiting for traceID and spanID attribute keys to be updated
-	const selectedColumns = useMemo(
-		() =>
-			options?.selectColumns.filter(({ key }) => {
-				let isValidColumn = true;
-
-				if (key === 'traceId' || key === 'spanId') isValidColumn = false;
-				return isValidColumn;
-			}),
-		[options?.selectColumns],
-	);
-
 	const { queryData: paginationQueryData } = useUrlQueryData<Pagination>(
 		URL_PAGINATION,
 	);
 
-	const { data, isLoading } = useGetQueryRange(
+	const { data, isFetching, isError } = useGetQueryRange(
 		{
 			query: stagedQuery || initialQueriesMap.traces,
 			graphType: panelType || PANEL_TYPES.LIST,
@@ -63,7 +51,7 @@ function ListView(): JSX.Element {
 			},
 			tableParams: {
 				pagination: paginationQueryData,
-				selectColumns: selectedColumns,
+				selectColumns: options?.selectColumns,
 			},
 		},
 		{
@@ -119,20 +107,25 @@ function ListView(): JSX.Element {
 	return (
 		<Container>
 			<TraceExplorerControls
-				isLoading={isLoading}
+				isLoading={isFetching}
 				totalCount={totalCount}
 				config={config}
 				perPageOptions={PER_PAGE_OPTIONS}
 			/>
-			<QueryTable
-				query={stagedQuery || initialQueriesMap.traces}
-				queryTableData={transformedQueryTableData}
-				modifyColumns={handleModifyColumns}
-				loading={isLoading || isOptionsMenuLoading}
-				pagination={false}
-				style={tableStyles}
-				onRow={handleRow}
-			/>
+
+			{isError && <ErrorText>{data?.error || 'Something went wrong'}</ErrorText>}
+
+			{!isError && (
+				<QueryTable
+					query={stagedQuery || initialQueriesMap.traces}
+					queryTableData={transformedQueryTableData}
+					modifyColumns={handleModifyColumns}
+					loading={isFetching}
+					pagination={false}
+					style={tableStyles}
+					onRow={handleRow}
+				/>
+			)}
 		</Container>
 	);
 }

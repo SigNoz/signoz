@@ -29,16 +29,12 @@ export const modifyColumns = (
 	const initialColumns = columns.filter(({ key }) => {
 		let isValidColumn = true;
 
-		const checkIsExistColumnByKey = (
-			attributeKey: string,
-			columnKey: string,
-		): boolean =>
+		const checkIsExistColumnByKey = (attributeKey: string): boolean =>
 			!selectedColumns.find(({ key }) => key === attributeKey) &&
-			key === columnKey;
+			attributeKey === key;
 
-		// TODO: remove spanID and traceID as second prop after updating API attributes
-		const isSelectedSpanId = checkIsExistColumnByKey('spanId', 'spanID');
-		const isSelectedTraceId = checkIsExistColumnByKey('traceId', 'traceID');
+		const isSelectedSpanId = checkIsExistColumnByKey('spanID');
+		const isSelectedTraceId = checkIsExistColumnByKey('traceID');
 
 		if (isSelectedSpanId || isSelectedTraceId || key === 'date')
 			isValidColumn = false;
