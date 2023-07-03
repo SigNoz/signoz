@@ -6,6 +6,7 @@ import LogsExplorerChart from 'container/LogsExplorerChart';
 import LogsExplorerList from 'container/LogsExplorerList';
 import LogsExplorerTable from 'container/LogsExplorerTable';
 import { GRAPH_TYPES } from 'container/NewDashboard/ComponentsSlider';
+import TimeSeriesView from 'container/TimeSeriesView/TimeSeriesView';
 import { useGetExplorerQueryRange } from 'hooks/queryBuilder/useGetExplorerQueryRange';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import useUrlQueryData from 'hooks/useUrlQueryData';
@@ -114,7 +115,7 @@ function LogsExplorerViews(): JSX.Element {
 		return groupByCount > 0;
 	}, [currentQuery]);
 
-	const { data, isFetching } = useGetExplorerQueryRange(requestData, {
+	const { data, isFetching, isError } = useGetExplorerQueryRange(requestData, {
 		keepPreviousData: true,
 		...(isLimit ? { enabled: !isLimit } : {}),
 	});
@@ -218,7 +219,13 @@ function LogsExplorerViews(): JSX.Element {
 					/>
 				),
 			},
-			{ label: 'TimeSeries', key: PANEL_TYPES.TIME_SERIES },
+			{
+				label: 'TimeSeries',
+				key: PANEL_TYPES.TIME_SERIES,
+				children: (
+					<TimeSeriesView isLoading={isFetching} data={data} isError={isError} />
+				),
+			},
 			{
 				label: 'Table',
 				key: PANEL_TYPES.TABLE,
@@ -238,7 +245,8 @@ function LogsExplorerViews(): JSX.Element {
 			logs,
 			isLimit,
 			handleEndReached,
-			data?.payload.data.newResult.data.result,
+			data,
+			isError,
 		],
 	);
 
