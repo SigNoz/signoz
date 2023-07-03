@@ -192,6 +192,7 @@ export type QueryBuilderContextType = {
 		panelType: GRAPH_TYPES,
 		dataSource: DataSource,
 	) => Query;
+	initQueryBuilderData: (query: Query) => void;
 };
 
 export type QueryAdditionalFilter = {

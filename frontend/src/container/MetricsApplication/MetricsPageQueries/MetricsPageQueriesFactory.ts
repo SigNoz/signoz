@@ -2,6 +2,8 @@ import {
 	initialFormulaBuilderFormValues,
 	initialQueryBuilderFormValuesMap,
 } from 'constants/queryBuilder';
+import getStep from 'lib/getStep';
+import store from 'store';
 import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { TagFilterItem } from 'types/api/queryBuilder/queryBuilderData';
 import {
@@ -24,6 +26,11 @@ export const getQueryBuilderQueries = ({
 			groupBy,
 			aggregateAttribute: metricName,
 			legend,
+			stepInterval: getStep({
+				end: store.getState().globalTime.maxTime,
+				inputFormat: 'ns',
+				start: store.getState().globalTime.minTime,
+			}),
 			reduceTo: 'sum',
 			filters: {
 				items: itemsA,
@@ -64,6 +71,11 @@ export const getQueryBuilderQuerieswithFormula = ({
 				items: additionalItemsA,
 				op: 'AND',
 			},
+			stepInterval: getStep({
+				end: store.getState().globalTime.maxTime,
+				inputFormat: 'ns',
+				start: store.getState().globalTime.minTime,
+			}),
 		},
 		{
 			...initialQueryBuilderFormValuesMap.metrics,
@@ -79,6 +91,11 @@ export const getQueryBuilderQuerieswithFormula = ({
 				items: additionalItemsB,
 				op: 'AND',
 			},
+			stepInterval: getStep({
+				end: store.getState().globalTime.maxTime,
+				inputFormat: 'ns',
+				start: store.getState().globalTime.minTime,
+			}),
 		},
 	],
 });

@@ -8,6 +8,7 @@ import {
 	timePreferance,
 } from 'container/NewWidget/RightContainer/timeItems';
 import { useGetQueryRange } from 'hooks/queryBuilder/useGetQueryRange';
+import { useStepInterval } from 'hooks/queryBuilder/useStepInterval';
 import { getDashboardVariables } from 'lib/dashbaordVariables/getDashboardVariables';
 import getChartData from 'lib/getChartData';
 import { useCallback, useMemo, useState } from 'react';
@@ -48,11 +49,13 @@ function FullView({
 		[selectedTime, globalSelectedTime, widget],
 	);
 
+	const updatedQuery = useStepInterval(widget?.query);
+
 	const response = useGetQueryRange(
 		{
 			selectedTime: selectedTime.enum,
 			graphType: widget.panelTypes,
-			query: widget.query,
+			query: updatedQuery,
 			globalSelectedInterval: globalSelectedTime,
 			variables: getDashboardVariables(),
 		},
@@ -84,10 +87,8 @@ function FullView({
 			{fullViewOptions && (
 				<TimeContainer>
 					<TimePreference
-						{...{
-							selectedTime,
-							setSelectedTime,
-						}}
+						selectedTime={selectedTime}
+						setSelectedTime={setSelectedTime}
 					/>
 					<Button
 						onClick={(): void => {
