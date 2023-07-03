@@ -1,10 +1,11 @@
 import { InputNumberProps, RadioProps, SelectProps } from 'antd';
+import { LogViewMode } from 'container/LogsTable';
 import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
 
 export interface OptionsQuery {
 	selectColumns: BaseAutocompleteData[];
 	maxLines: number;
-	format: 'default' | 'row' | 'column';
+	format: LogViewMode;
 }
 
 export interface InitialOptions

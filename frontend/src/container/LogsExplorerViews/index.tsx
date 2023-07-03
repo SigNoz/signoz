@@ -1,22 +1,102 @@
 import { TabsProps } from 'antd';
 import { PANEL_TYPES } from 'constants/queryBuilder';
-import { PANEL_TYPES_QUERY } from 'constants/queryBuilderQueryNames';
+import { queryParamNamesMap } from 'constants/queryBuilderQueryNames';
+import { ITEMS_PER_PAGE_OPTIONS } from 'container/Controls/config';
+import LogsExplorerChart from 'container/LogsExplorerChart';
 import LogsExplorerList from 'container/LogsExplorerList';
 import LogsExplorerTable from 'container/LogsExplorerTable';
 import { GRAPH_TYPES } from 'container/NewDashboard/ComponentsSlider';
+import { useGetExplorerQueryRange } from 'hooks/queryBuilder/useGetExplorerQueryRange';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
-import { memo, useCallback, useEffect, useMemo } from 'react';
+import useUrlQueryData from 'hooks/useUrlQueryData';
+import { getPaginationQueryData } from 'lib/newQueryBuilder/getPaginationQueryData';
+import { memo, useCallback, useEffect, useMemo, useState } from 'react';
+import { ILog } from 'types/api/logs/log';
+import { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource } from 'types/common/queryBuilder';
 
 import { TabsStyled } from './LogsExplorerViews.styled';
 
 function LogsExplorerViews(): JSX.Element {
+	const { queryData: pageSize } = useUrlQueryData(
+		queryParamNamesMap.pageSize,
+		ITEMS_PER_PAGE_OPTIONS[0],
+	);
+
+	// Context
 	const {
 		currentQuery,
+		isQueryStaged,
+		stagedQuery,
 		panelType,
 		updateAllQueriesOperators,
+		handleSetQueryData,
 		redirectWithQueryBuilderData,
 	} = useQueryBuilder();
+
+	// State
+	const [currentScrolledLog, setCurrentScrolledLog] = useState<ILog | null>(
+		null,
+	);
+	const [page, setPage] = useState<number>(1);
+	const [logs, setLogs] = useState<ILog[]>([]);
+
+	const currentStagedQueryData = useMemo(() => {
+		if (!stagedQuery || stagedQuery.builder.queryData.length !== 1) return null;
+
+		return stagedQuery.builder.queryData[0];
+	}, [stagedQuery]);
+
+	const isTimeStampPresent: boolean = useMemo(() => {
+		const timestampOrderBy = currentStagedQueryData?.orderBy.find(
+			(item) => item.columnName === 'timestamp',
+		);
+
+		return !!timestampOrderBy;
+	}, [currentStagedQueryData]);
+
+	const paginationQueryData = useMemo(() => {
+		if (!stagedQuery) return null;
+
+		return getPaginationQueryData({
+			query: stagedQuery,
+			listItemId: currentScrolledLog ? currentScrolledLog.id : null,
+			isTimeStampPresent,
+			page,
+			pageSize,
+		});
+	}, [stagedQuery, currentScrolledLog, isTimeStampPresent, page, pageSize]);
+
+	const requestData: Query | null = useMemo(() => {
+		if (!stagedQuery) return null;
+		if (stagedQuery && panelType !== PANEL_TYPES.LIST) return stagedQuery;
+
+		if (!paginationQueryData) return null;
+
+		console.log({ paginationQueryData });
+
+		const data: Query = {
+			...stagedQuery,
+			builder: {
+				...stagedQuery.builder,
+				queryData: stagedQuery.builder.queryData.map((item) => ({
+					...item,
+					...paginationQueryData,
+					pageSize,
+				})),
+			},
+		};
+
+		return data;
+	}, [stagedQuery, panelType, paginationQueryData, pageSize]);
+
+	const isLimit: boolean = useMemo(() => {
+		if (!paginationQueryData) return false;
+
+		const limit = paginationQueryData.limit || 100;
+
+		return logs.length >= limit;
+	}, [logs.length, paginationQueryData]);
 
 	const isMultipleQueries = useMemo(
 		() =>
@@ -34,23 +114,32 @@ function LogsExplorerViews(): JSX.Element {
 		return groupByCount > 0;
 	}, [currentQuery]);
 
-	const tabsItems: TabsProps['items'] = useMemo(
-		() => [
-			{
-				label: 'List View',
-				key: PANEL_TYPES.LIST,
-				disabled: isMultipleQueries || isGroupByExist,
-				children: <LogsExplorerList />,
-			},
-			{ label: 'TimeSeries', key: PANEL_TYPES.TIME_SERIES },
-			{
-				label: 'Table',
-				key: PANEL_TYPES.TABLE,
-				children: <LogsExplorerTable />,
-			},
-		],
-		[isMultipleQueries, isGroupByExist],
+	const { data, isFetching } = useGetExplorerQueryRange(requestData, {
+		keepPreviousData: true,
+		...(isLimit ? { enabled: !isLimit } : {}),
+	});
+
+	const handleEndReached = useCallback(
+		(index: number) => {
+			const lastLog = logs[index];
+			if (isLimit) return;
+
+			if (isTimeStampPresent) {
+				setCurrentScrolledLog((prevLog) =>
+					prevLog?.id === lastLog.id ? prevLog : lastLog,
+				);
+			}
+
+			setPage((prevPage) => prevPage + 1);
+		},
+		[logs, isLimit, isTimeStampPresent],
 	);
+
+	const handleResetPagination = useCallback(() => {
+		setPage(1);
+		setCurrentScrolledLog(null);
+		setLogs([]);
+	}, []);
 
 	const handleChangeView = useCallback(
 		(newPanelType: string) => {
@@ -62,7 +151,9 @@ function LogsExplorerViews(): JSX.Element {
 				DataSource.LOGS,
 			);
 
-			redirectWithQueryBuilderData(query, { [PANEL_TYPES_QUERY]: newPanelType });
+			redirectWithQueryBuilderData(query, {
+				[queryParamNamesMap.panelTypes]: newPanelType,
+			});
 		},
 		[
 			currentQuery,
@@ -80,8 +171,83 @@ function LogsExplorerViews(): JSX.Element {
 		}
 	}, [panelType, isMultipleQueries, isGroupByExist, handleChangeView]);
 
+	useEffect(() => {
+		const currentData = data?.payload.data.newResult.data.result || [];
+		if (currentData.length > 0 && currentData[0].list) {
+			const currentLogs: ILog[] = currentData[0].list.map((item) => ({
+				timestamp: +item.timestamp,
+				...item.data,
+			}));
+			setLogs((prevLogs) => [...prevLogs, ...currentLogs]);
+		}
+	}, [data]);
+
+	useEffect(() => {
+		if (isQueryStaged && panelType === PANEL_TYPES.LIST) {
+			console.log('fire');
+			handleResetPagination();
+		}
+	}, [handleResetPagination, isQueryStaged, panelType]);
+
+	useEffect(() => {
+		if (!requestData) return;
+		if (panelType !== PANEL_TYPES.LIST) return;
+
+		const {
+			offset,
+			pageSize,
+			...restQueryData
+		} = requestData.builder.queryData[0];
+
+		handleSetQueryData(0, restQueryData);
+	}, [handleSetQueryData, panelType, requestData]);
+
+	const tabsItems: TabsProps['items'] = useMemo(
+		() => [
+			{
+				label: 'List View',
+				key: PANEL_TYPES.LIST,
+				disabled: isMultipleQueries || isGroupByExist,
+				children: (
+					<LogsExplorerList
+						isLoading={isFetching}
+						currentStagedQueryData={currentStagedQueryData}
+						logs={logs}
+						isLimit={isLimit}
+						onEndReached={handleEndReached}
+					/>
+				),
+			},
+			{ label: 'TimeSeries', key: PANEL_TYPES.TIME_SERIES },
+			{
+				label: 'Table',
+				key: PANEL_TYPES.TABLE,
+				children: (
+					<LogsExplorerTable
+						data={data?.payload.data.newResult.data.result || []}
+						isLoading={isFetching}
+					/>
+				),
+			},
+		],
+		[
+			isMultipleQueries,
+			isGroupByExist,
+			isFetching,
+			currentStagedQueryData,
+			logs,
+			isLimit,
+			handleEndReached,
+			data?.payload.data.newResult.data.result,
+		],
+	);
+
 	return (
-		<div>
+		<>
+			<LogsExplorerChart
+				isLoading={isFetching}
+				data={data?.payload.data.result[0] ? [data?.payload.data.result[0]] : []}
+			/>
 			<TabsStyled
 				items={tabsItems}
 				defaultActiveKey={panelType || PANEL_TYPES.LIST}
@@ -89,7 +255,7 @@ function LogsExplorerViews(): JSX.Element {
 				onChange={handleChangeView}
 				destroyInactiveTabPane
 			/>
-		</div>
+		</>
 	);
 }
 

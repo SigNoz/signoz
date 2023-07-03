@@ -1,15 +1,13 @@
 import { ColumnTypeRender } from 'components/Logs/TableView/types';
 import { useTableView } from 'components/Logs/TableView/useTableView';
-import Spinner from 'components/Spinner';
 import { cloneElement, ReactElement, ReactNode, useCallback } from 'react';
 import { TableComponents, TableVirtuoso } from 'react-virtuoso';
-import { ILog } from 'types/api/logs/log';
 
 import { infinityDefaultStyles } from './config';
 import {
 	TableCellStyled,
 	TableHeaderCellStyled,
-	TableRow,
+	TableRowStyled,
 	TableStyled,
 } from './styles';
 import { InfinityTableProps } from './types';
@@ -25,23 +23,23 @@ const CustomTableRow: TableComponents['TableRow'] = ({
 	context,
 	...props
 	// eslint-disable-next-line react/jsx-props-no-spreading
-}) => <TableRow {...props}>{children}</TableRow>;
+}) => <TableRowStyled {...props}>{children}</TableRowStyled>;
 
 function InfinityTable({
 	tableViewProps,
 	infitiyTableProps,
 }: InfinityTableProps): JSX.Element | null {
-	const { onEndReached, isLoading } = infitiyTableProps;
+	const { onEndReached } = infitiyTableProps;
 	const { dataSource, columns } = useTableView(tableViewProps);
 
 	const itemContent = useCallback(
-		(index: number, log: Record<string, string>): JSX.Element => (
+		(index: number, log: Record<string, unknown>): JSX.Element => (
 			<>
 				{columns.map((column) => {
 					if (!column.render) return <td>Empty</td>;
 
 					const element: ColumnTypeRender<Record<string, unknown>> = column.render(
-						log[column.key as keyof ILog],
+						log[column.key as keyof Record<string, unknown>],
 						log,
 						index,
 					);
@@ -77,10 +75,6 @@ function InfinityTable({
 		),
 		[columns],
 	);
-
-	if (isLoading) {
-		return <Spinner height={20} tip="Getting Logs" />;
-	}
 
 	return (
 		<TableVirtuoso
