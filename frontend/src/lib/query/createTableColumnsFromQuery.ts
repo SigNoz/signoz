@@ -108,7 +108,7 @@ const getDynamicColumns: GetDynamicColumns = (queryTableData, query) => {
 
 		const operator = builderQuery ? builderQuery.aggregateOperator : '';
 
-		if (isColumnExist(operator, dynamicColumns)) return;
+		if (operator === '' || isColumnExist(operator, dynamicColumns)) return;
 
 		const operatorColumn: DynamicColumn = {
 			key: operator,
