@@ -2,6 +2,7 @@ import {
 	initialAutocompleteData,
 	initialQueryBuilderFormValuesMap,
 	mapOfFilters,
+	PANEL_TYPES,
 } from 'constants/queryBuilder';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { getOperatorsBySourceAndPanelType } from 'lib/newQueryBuilder/getOperatorsBySourceAndPanelType';
@@ -78,7 +79,7 @@ export const useQueryOperations: UseQueryOperations = ({ query, index }) => {
 		(nextSource: DataSource): void => {
 			const newOperators = getOperatorsBySourceAndPanelType({
 				dataSource: nextSource,
-				panelType,
+				panelType: panelType || PANEL_TYPES.TIME_SERIES,
 			});
 
 			const entries = Object.entries(
@@ -126,28 +127,13 @@ export const useQueryOperations: UseQueryOperations = ({ query, index }) => {
 
 		const initialOperators = getOperatorsBySourceAndPanelType({
 			dataSource,
-			panelType,
+			panelType: panelType || PANEL_TYPES.TIME_SERIES,
 		});
 
 		if (JSON.stringify(operators) === JSON.stringify(initialOperators)) return;
 
 		setOperators(initialOperators);
-
-		const isCurrentOperatorAvailableInList = initialOperators
-			.map((operator) => operator.value)
-			.includes(aggregateOperator);
-
-		if (!isCurrentOperatorAvailableInList) {
-			handleChangeOperator(initialOperators[0].value);
-		}
-	}, [
-		dataSource,
-		initialDataSource,
-		panelType,
-		operators,
-		aggregateOperator,
-		handleChangeOperator,
-	]);
+	}, [dataSource, initialDataSource, panelType, operators]);
 
 	useEffect(() => {
 		const additionalFilters = getNewListOfAdditionalFilters(dataSource);

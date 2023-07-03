@@ -6,6 +6,7 @@ import { QueryBuilder } from 'container/QueryBuilder';
 import { useGetWidgetQueryRange } from 'hooks/queryBuilder/useGetWidgetQueryRange';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useShareBuilderUrl } from 'hooks/queryBuilder/useShareBuilderUrl';
+import { updateStepInterval } from 'hooks/queryBuilder/useStepInterval';
 import useUrlQuery from 'hooks/useUrlQuery';
 import { useCallback } from 'react';
 import { connect, useSelector } from 'react-redux';
@@ -20,7 +21,9 @@ import AppActions from 'types/actions';
 import { Widgets } from 'types/api/dashboard/getAll';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { EQueryType } from 'types/common/dashboard';
+import AppReducer from 'types/reducer/app';
 import DashboardReducer from 'types/reducer/dashboards';
+import { GlobalReducer } from 'types/reducer/globalTime';
 
 import ClickHouseQueryContainer from './QueryBuilder/clickHouse';
 import PromQLQueryContainer from './QueryBuilder/promQL';
@@ -32,6 +35,14 @@ function QuerySection({
 }: QueryProps): JSX.Element {
 	const { currentQuery, redirectWithQueryBuilderData } = useQueryBuilder();
 	const urlQuery = useUrlQuery();
+
+	const { minTime, maxTime } = useSelector<AppState, GlobalReducer>(
+		(state) => state.globalTime,
+	);
+
+	const { featureResponse } = useSelector<AppState, AppReducer>(
+		(state) => state.app,
+	);
 
 	const { dashboards } = useSelector<AppState, DashboardReducer>(
 		(state) => state.dashboards,
@@ -54,7 +65,7 @@ function QuerySection({
 
 	const { query } = selectedWidget;
 
-	useShareBuilderUrl({ defaultValue: query });
+	useShareBuilderUrl(query);
 
 	const handleStageQuery = useCallback(
 		(updatedQuery: Query): void => {
@@ -63,16 +74,27 @@ function QuerySection({
 				yAxisUnit: selectedWidget.yAxisUnit,
 			});
 
-			redirectWithQueryBuilderData(updatedQuery);
+			redirectWithQueryBuilderData(
+				updateStepInterval(updatedQuery, maxTime, minTime),
+			);
 		},
 
-		[urlQuery, selectedWidget, updateQuery, redirectWithQueryBuilderData],
+		[
+			updateQuery,
+			urlQuery,
+			selectedWidget.yAxisUnit,
+			redirectWithQueryBuilderData,
+			maxTime,
+			minTime,
+		],
 	);
 
 	const handleQueryCategoryChange = (qCategory: string): void => {
 		const currentQueryType = qCategory as EQueryType;
 
-		handleStageQuery({ ...currentQuery, queryType: currentQueryType });
+		featureResponse.refetch().then(() => {
+			handleStageQuery({ ...currentQuery, queryType: currentQueryType });
+		});
 	};
 
 	const handleRunQuery = (): void => {
