@@ -10,7 +10,7 @@ const useUrlQueryData = <T>(
 	const location = useLocation();
 	const urlQuery = useUrlQuery();
 
-	const query = urlQuery.get(queryKey);
+	const query = useMemo(() => urlQuery.get(queryKey), [queryKey, urlQuery]);
 
 	const queryData: T = useMemo(() => (query ? JSON.parse(query) : defaultData), [
 		query,

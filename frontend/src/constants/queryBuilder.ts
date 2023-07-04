@@ -232,8 +232,8 @@ export const PANEL_TYPES: Record<PanelTypeKeys, GRAPH_TYPES> = {
 	VALUE: 'value',
 	TABLE: 'table',
 	LIST: 'list',
-	EMPTY_WIDGET: 'EMPTY_WIDGET',
 	TRACE: 'trace',
+	EMPTY_WIDGET: 'EMPTY_WIDGET',
 };
 
 export type IQueryBuilderState = 'search';
