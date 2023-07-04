@@ -230,19 +230,21 @@ export const Query = memo(function Query({
 							</Row>
 						</Col>
 
-						<Col span={11}>
-							<Row gutter={[11, 5]}>
-								<Col flex="5.93rem">
-									<FilterLabel label="Aggregate Every" />
-								</Col>
-								<Col flex="1 1 6rem">
-									<AggregateEveryFilter
-										query={query}
-										onChange={handleChangeAggregateEvery}
-									/>
-								</Col>
-							</Row>
-						</Col>
+						{panelType !== PANEL_TYPES.LIST && (
+							<Col span={11}>
+								<Row gutter={[11, 5]}>
+									<Col flex="5.93rem">
+										<FilterLabel label="Aggregate Every" />
+									</Col>
+									<Col flex="1 1 6rem">
+										<AggregateEveryFilter
+											query={query}
+											onChange={handleChangeAggregateEvery}
+										/>
+									</Col>
+								</Row>
+							</Col>
+						)}
 					</>
 				);
 			}
@@ -326,8 +328,11 @@ export const Query = memo(function Query({
 						</Col>
 						<Col flex="1 1 12.5rem">
 							<AggregatorFilter
-								onChange={handleChangeAggregatorAttribute}
 								query={query}
+								onChange={handleChangeAggregatorAttribute}
+								disabled={
+									panelType === PANEL_TYPES.LIST || panelType === PANEL_TYPES.TRACE
+								}
 							/>
 						</Col>
 					</Row>
@@ -362,14 +367,16 @@ export const Query = memo(function Query({
 					</AdditionalFiltersToggler>
 				</Col>
 			)}
-			<Row style={{ width: '100%' }}>
-				<Input
-					onChange={handleChangeQueryLegend}
-					size="middle"
-					value={query.legend}
-					addonBefore="Legend Format"
-				/>
-			</Row>
+			{panelType !== PANEL_TYPES.LIST && panelType !== PANEL_TYPES.TRACE && (
+				<Row style={{ width: '100%' }}>
+					<Input
+						onChange={handleChangeQueryLegend}
+						size="middle"
+						value={query.legend}
+						addonBefore="Legend Format"
+					/>
+				</Row>
+			)}
 		</ListItemWrapper>
 	);
 });

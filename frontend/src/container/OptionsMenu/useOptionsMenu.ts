@@ -63,13 +63,14 @@ const useOptionsMenu = ({
 		[initialOptions, attributeKeys],
 	);
 
-	const options = useMemo(() => getOptionsFromKeys(attributeKeys), [
-		attributeKeys,
-	]);
-
 	const selectedColumnKeys = useMemo(
 		() => optionsQueryData?.selectColumns?.map(({ id }) => id) || [],
 		[optionsQueryData],
+	);
+
+	const addColumnOptions = useMemo(
+		() => getOptionsFromKeys(attributeKeys, selectedColumnKeys),
+		[attributeKeys, selectedColumnKeys],
 	);
 
 	const handleSelectedColumnsChange = useCallback(
@@ -135,8 +136,8 @@ const useOptionsMenu = ({
 	const optionsMenuConfig: Required<OptionsMenuConfig> = useMemo(
 		() => ({
 			addColumn: {
-				value: selectedColumnKeys || defaultOptionsQuery.selectColumns,
-				options: options || [],
+				value: optionsQueryData?.selectColumns || defaultOptionsQuery.selectColumns,
+				options: addColumnOptions || [],
 				onChange: handleSelectedColumnsChange,
 				onRemove: handleRemoveSelectedColumn,
 			},
@@ -150,10 +151,10 @@ const useOptionsMenu = ({
 			},
 		}),
 		[
-			options,
-			selectedColumnKeys,
+			addColumnOptions,
 			optionsQueryData?.maxLines,
 			optionsQueryData?.format,
+			optionsQueryData?.selectColumns,
 			handleSelectedColumnsChange,
 			handleRemoveSelectedColumn,
 			handleFormatChange,
