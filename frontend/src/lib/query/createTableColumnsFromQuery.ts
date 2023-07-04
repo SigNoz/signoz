@@ -1,5 +1,6 @@
 import { ColumnsType } from 'antd/es/table';
 import { ColumnType } from 'antd/lib/table';
+import { FORMULA_REGEXP } from 'constants/regExp';
 import { QueryTableProps } from 'container/QueryTable/QueryTable.intefaces';
 import { toCapitalize } from 'lib/toCapitalize';
 import { ReactNode } from 'react';
@@ -45,6 +46,9 @@ type GetDynamicColumns = (
 	queryTableData: QueryDataV3[],
 	query: Query,
 ) => DynamicColumns;
+
+const isFormula = (queryName: string): boolean =>
+	FORMULA_REGEXP.test(queryName);
 
 const isColumnExist = (
 	columnName: string,
@@ -152,6 +156,7 @@ const fillDataFromSeria = (
 	seria: SeriesItem,
 	columns: DynamicColumns,
 	currentOperator: string,
+	query: Query,
 ): void => {
 	const labelEntries = Object.entries(seria.labels);
 
@@ -174,6 +179,16 @@ const fillDataFromSeria = (
 			}
 
 			labelEntries.forEach(([key, currentValue]) => {
+				if (isFormula(key) && column.key === key) {
+					const currentFormulaExpression =
+						query.builder.queryFormulas.find((formula) => formula.queryName === key)
+							?.expression || '';
+
+					column.data.push(currentFormulaExpression);
+					unusedColumnsKeys.delete(key);
+					return;
+				}
+
 				if (column.key === key) {
 					column.data.push(currentValue);
 					unusedColumnsKeys.delete(key);
@@ -199,7 +214,7 @@ const fillColumnsData: FillColumnData = (queryTableData, cols, query) => {
 		);
 
 		currentQuery.series.forEach((seria) => {
-			fillDataFromSeria(seria, resultColumns, currentOperator);
+			fillDataFromSeria(seria, resultColumns, currentOperator, query);
 		});
 	});
 
