@@ -21,7 +21,8 @@ function TraceExplorerControls({
 
 	return (
 		<Container>
-			<OptionsMenu config={{ addColumn: config?.addColumn }} />
+			{config && <OptionsMenu config={{ addColumn: config?.addColumn }} />}
+
 			<Controls
 				isLoading={isLoading}
 				totalCount={totalCount}
@@ -36,11 +37,15 @@ function TraceExplorerControls({
 	);
 }
 
+TraceExplorerControls.defaultProps = {
+	config: null,
+};
+
 type TraceExplorerControlsProps = Pick<
 	ControlsProps,
 	'isLoading' | 'totalCount' | 'perPageOptions'
 > & {
-	config: OptionsMenuConfig;
+	config?: OptionsMenuConfig | null;
 };
 
 export default memo(TraceExplorerControls);

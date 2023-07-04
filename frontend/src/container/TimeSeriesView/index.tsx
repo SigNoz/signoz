@@ -30,7 +30,7 @@ function TimeSeriesViewContainer({
 	const { data, isLoading, isError } = useGetQueryRange(
 		{
 			query: stagedQuery || initialQueriesMap[dataSource],
-			graphType: 'graph',
+			graphType: panelTypeParam,
 			selectedTime: 'GLOBAL_TIME',
 			globalSelectedInterval: globalSelectedTime,
 			params: {
@@ -44,7 +44,6 @@ function TimeSeriesViewContainer({
 				maxTime,
 				minTime,
 				stagedQuery,
-				panelTypeParam,
 			],
 			enabled: !!stagedQuery && panelTypeParam === PANEL_TYPES.TIME_SERIES,
 		},
