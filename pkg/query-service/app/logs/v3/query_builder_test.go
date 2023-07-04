@@ -589,7 +589,7 @@ var testBuildLogsQueryData = []struct {
 	},
 	{
 		Name:      "Test Noop",
-		PanelType: v3.PanelTypeGraph,
+		PanelType: v3.PanelTypeList,
 		Start:     1680066360726210000,
 		End:       1680066458000000000,
 		Step:      60,
