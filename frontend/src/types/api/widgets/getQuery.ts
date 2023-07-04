@@ -5,7 +5,7 @@ export interface PayloadProps {
 	result: QueryData[];
 }
 
-type ListItem = { timestamp: string; data: Omit<ILog, 'timestamp'> };
+export type ListItem = { timestamp: string; data: Omit<ILog, 'timestamp'> };
 
 export interface QueryData {
 	metric: {

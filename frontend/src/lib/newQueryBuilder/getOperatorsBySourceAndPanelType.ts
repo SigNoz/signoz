@@ -15,12 +15,16 @@ export const getOperatorsBySourceAndPanelType = ({
 }: GetQueryOperatorsParams): SelectOption<string, string>[] => {
 	let operatorsByDataSource = mapOfOperators[dataSource];
 
-	if (panelType === PANEL_TYPES.LIST) {
+	if (panelType === PANEL_TYPES.LIST || panelType === PANEL_TYPES.TRACE) {
 		operatorsByDataSource = operatorsByDataSource.filter(
 			(operator) => operator.value === StringOperators.NOOP,
 		);
 	}
-	if (dataSource !== DataSource.METRICS && panelType !== PANEL_TYPES.LIST) {
+	if (
+		dataSource !== DataSource.METRICS &&
+		panelType !== PANEL_TYPES.LIST &&
+		panelType !== PANEL_TYPES.TRACE
+	) {
 		operatorsByDataSource = operatorsByDataSource.filter(
 			(operator) => operator.value !== StringOperators.NOOP,
 		);
