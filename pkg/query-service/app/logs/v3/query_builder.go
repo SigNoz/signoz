@@ -330,7 +330,10 @@ func orderByAttributeKeyTags(panelType v3.PanelType, aggregatorOperator v3.Aggre
 	}
 	if !found {
 		if aggregatorOperator == v3.AggregateOperatorNoOp {
-			orderByArray = append(orderByArray, constants.TIMESTAMP)
+			// only add order by timestamp if there is no order by specified for noop
+			if len(orderByArray) == 0 {
+				orderByArray = append(orderByArray, constants.TIMESTAMP)
+			}
 		} else {
 			orderByArray = append(orderByArray, "ts")
 		}
