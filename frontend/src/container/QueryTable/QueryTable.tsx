@@ -13,6 +13,7 @@ export function QueryTable({
 	queryTableData,
 	query,
 	renderActionCell,
+	modifyColumns,
 	...props
 }: QueryTableProps): JSX.Element {
 	const { columns, dataSource } = useMemo(
@@ -39,9 +40,13 @@ export function QueryTable({
 		return currentColumns;
 	}, [columns]);
 
+	const tableColumns = modifyColumns
+		? modifyColumns(modifiedColumns)
+		: modifiedColumns;
+
 	return (
 		<ResizeTable
-			columns={modifiedColumns}
+			columns={tableColumns}
 			tableLayout="fixed"
 			dataSource={dataSource}
 			scroll={{ x: true }}
