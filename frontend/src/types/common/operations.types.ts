@@ -18,6 +18,7 @@ export type HandleChangeQueryData = <
 export type UseQueryOperations = (
 	params: UseQueryOperationsParams,
 ) => {
+	isTracePanelType: boolean;
 	isMetricsDataSource: boolean;
 	operators: SelectOption<string, string>[];
 	listOfAdditionalFilters: string[];
