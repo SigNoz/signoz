@@ -122,6 +122,10 @@ export const useQueryOperations: UseQueryOperations = ({ query, index }) => {
 		[query.dataSource],
 	);
 
+	const isTracePanelType = useMemo(() => panelType === PANEL_TYPES.TRACE, [
+		panelType,
+	]);
+
 	useEffect(() => {
 		if (initialDataSource && dataSource !== initialDataSource) return;
 
@@ -142,6 +146,7 @@ export const useQueryOperations: UseQueryOperations = ({ query, index }) => {
 	}, [dataSource, aggregateOperator, getNewListOfAdditionalFilters]);
 
 	return {
+		isTracePanelType,
 		isMetricsDataSource,
 		operators,
 		listOfAdditionalFilters,
