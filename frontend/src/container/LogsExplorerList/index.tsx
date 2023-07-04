@@ -91,11 +91,12 @@ function LogsExplorerList({
 	);
 
 	const renderContent = useMemo(() => {
-		const components = isLimit
-			? {}
-			: {
-					Footer,
-			  };
+		const components =
+			isLimit || logs.length === 0
+				? {}
+				: {
+						Footer,
+				  };
 
 		if (options.format === 'table') {
 			return (
