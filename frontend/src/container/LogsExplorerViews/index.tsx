@@ -1,7 +1,7 @@
 import { TabsProps } from 'antd';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { queryParamNamesMap } from 'constants/queryBuilderQueryNames';
-import { ITEMS_PER_PAGE_OPTIONS } from 'container/Controls/config';
+import { DEFAULT_PER_PAGE_VALUE } from 'container/Controls/config';
 import LogsExplorerChart from 'container/LogsExplorerChart';
 import LogsExplorerList from 'container/LogsExplorerList';
 import LogsExplorerTable from 'container/LogsExplorerTable';
@@ -21,7 +21,7 @@ import { TabsStyled } from './LogsExplorerViews.styled';
 function LogsExplorerViews(): JSX.Element {
 	const { queryData: pageSize } = useUrlQueryData(
 		queryParamNamesMap.pageSize,
-		ITEMS_PER_PAGE_OPTIONS[0],
+		DEFAULT_PER_PAGE_VALUE,
 	);
 
 	// Context
@@ -31,7 +31,6 @@ function LogsExplorerViews(): JSX.Element {
 		stagedQuery,
 		panelType,
 		updateAllQueriesOperators,
-		handleSetQueryData,
 		redirectWithQueryBuilderData,
 	} = useQueryBuilder();
 
@@ -73,8 +72,6 @@ function LogsExplorerViews(): JSX.Element {
 		if (stagedQuery && panelType !== PANEL_TYPES.LIST) return stagedQuery;
 
 		if (!paginationQueryData) return null;
-
-		console.log({ paginationQueryData });
 
 		const data: Query = {
 			...stagedQuery,
@@ -185,23 +182,9 @@ function LogsExplorerViews(): JSX.Element {
 
 	useEffect(() => {
 		if (isQueryStaged && panelType === PANEL_TYPES.LIST) {
-			console.log('fire');
 			handleResetPagination();
 		}
 	}, [handleResetPagination, isQueryStaged, panelType]);
-
-	useEffect(() => {
-		if (!requestData) return;
-		if (panelType !== PANEL_TYPES.LIST) return;
-
-		const {
-			offset,
-			pageSize,
-			...restQueryData
-		} = requestData.builder.queryData[0];
-
-		handleSetQueryData(0, restQueryData);
-	}, [handleSetQueryData, panelType, requestData]);
 
 	const tabsItems: TabsProps['items'] = useMemo(
 		() => [
@@ -214,7 +197,6 @@ function LogsExplorerViews(): JSX.Element {
 						isLoading={isFetching}
 						currentStagedQueryData={currentStagedQueryData}
 						logs={logs}
-						isLimit={isLimit}
 						onEndReached={handleEndReached}
 					/>
 				),
@@ -243,7 +225,6 @@ function LogsExplorerViews(): JSX.Element {
 			isFetching,
 			currentStagedQueryData,
 			logs,
-			isLimit,
 			handleEndReached,
 			data,
 			isError,

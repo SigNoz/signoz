@@ -5,6 +5,5 @@ export type LogsExplorerListProps = {
 	isLoading: boolean;
 	currentStagedQueryData: IBuilderQuery | null;
 	logs: ILog[];
-	isLimit: boolean;
 	onEndReached: (index: number) => void;
 };
