@@ -250,7 +250,7 @@ func buildTracesQuery(start, end, step int64, mq *v3.BuilderQuery, tableName str
 
 	groupBy := groupByAttributeKeyTags(keys, mq.GroupBy...)
 	enrichedOrderBy := enrichOrderBy(mq.OrderBy, keys)
-	orderBy := orderByAttributeKeyTags(panelType, mq.AggregateOperator, enrichedOrderBy, mq.GroupBy, keys)
+	orderBy := orderByAttributeKeyTags(panelType, enrichedOrderBy, mq.GroupBy, keys)
 
 	aggregationKey := ""
 	if mq.AggregateAttribute.Key != "" {
@@ -408,7 +408,7 @@ func orderBy(panelType v3.PanelType, items []v3.OrderBy, tags []string, keys map
 	return orderBy
 }
 
-func orderByAttributeKeyTags(panelType v3.PanelType, aggregatorOperator v3.AggregateOperator, items []v3.OrderBy, tags []v3.AttributeKey, keys map[string]v3.AttributeKey) string {
+func orderByAttributeKeyTags(panelType v3.PanelType, items []v3.OrderBy, tags []v3.AttributeKey, keys map[string]v3.AttributeKey) string {
 	var groupTags []string
 	for _, tag := range tags {
 		groupTags = append(groupTags, tag.Key)
