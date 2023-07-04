@@ -16,7 +16,7 @@ import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useShareBuilderUrl } from 'hooks/queryBuilder/useShareBuilderUrl';
 import { useNotifications } from 'hooks/useNotifications';
 import history from 'lib/history';
-import { useCallback, useMemo } from 'react';
+import { useCallback, useEffect, useMemo } from 'react';
 import { generatePath } from 'react-router-dom';
 import { Dashboard } from 'types/api/dashboard/getAll';
 import { DataSource } from 'types/common/queryBuilder';
@@ -34,18 +34,37 @@ function TracesExplorer(): JSX.Element {
 		redirectWithQueryBuilderData,
 	} = useQueryBuilder();
 
-	const tabsItems = getTabsItems();
-	const currentTab = panelType || PANEL_TYPES.TIME_SERIES;
+	const currentTab = panelType || PANEL_TYPES.LIST;
+
+	const isMultipleQueries = useMemo(
+		() =>
+			currentQuery.builder.queryData.length > 1 ||
+			currentQuery.builder.queryFormulas.length > 0,
+		[currentQuery],
+	);
 
 	const defaultQuery = useMemo(
 		() =>
 			updateAllQueriesOperators(
 				initialQueriesMap.traces,
-				PANEL_TYPES.TIME_SERIES,
+				PANEL_TYPES.LIST,
 				DataSource.TRACES,
 			),
 		[updateAllQueriesOperators],
 	);
+
+	const isGroupByExist = useMemo(() => {
+		const groupByCount: number = currentQuery.builder.queryData.reduce<number>(
+			(acc, query) => acc + query.groupBy.length,
+			0,
+		);
+
+		return groupByCount > 0;
+	}, [currentQuery]);
+
+	const tabsItems = getTabsItems({
+		isListViewDisabled: isMultipleQueries || isGroupByExist,
+	});
 
 	const exportDefaultQuery = useMemo(
 		() =>
@@ -113,6 +132,17 @@ function TracesExplorer(): JSX.Element {
 	);
 
 	useShareBuilderUrl(defaultQuery);
+
+	useEffect(() => {
+		const shouldChangeView = isMultipleQueries || isGroupByExist;
+
+		if (
+			(currentTab === PANEL_TYPES.LIST || currentTab === PANEL_TYPES.TRACE) &&
+			shouldChangeView
+		) {
+			handleTabChange(PANEL_TYPES.TIME_SERIES);
+		}
+	}, [currentTab, isMultipleQueries, isGroupByExist, handleTabChange]);
 
 	return (
 		<>

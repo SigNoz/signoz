@@ -75,8 +75,8 @@ function ListOfAllDashboard(): JSX.Element {
 		errorMessage: '',
 	});
 
-	const columns: TableColumnProps<Data>[] = useMemo(
-		() => [
+	const columns = useMemo(() => {
+		const tableColumns: TableColumnProps<Data>[] = [
 			{
 				title: 'Name',
 				dataIndex: 'name',
@@ -118,19 +118,19 @@ function ListOfAllDashboard(): JSX.Element {
 				},
 				render: DateComponent,
 			},
-		],
-		[],
-	);
+		];
 
-	if (action) {
-		columns.push({
-			title: 'Action',
-			dataIndex: '',
-			key: 'x',
-			width: 40,
-			render: DeleteButton,
-		});
-	}
+		if (action) {
+			tableColumns.push({
+				title: 'Action',
+				dataIndex: '',
+				width: 40,
+				render: DeleteButton,
+			});
+		}
+
+		return tableColumns;
+	}, [action]);
 
 	const data: Data[] = (filteredDashboards || dashboards).map((e) => ({
 		createdBy: e.created_at,

@@ -1,4 +1,5 @@
 import { TableProps } from 'antd';
+import { ColumnsType } from 'antd/es/table';
 import { RowData } from 'lib/query/createTableColumnsFromQuery';
 import { ReactNode } from 'react';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
@@ -11,4 +12,5 @@ export type QueryTableProps = Omit<
 	queryTableData: QueryDataV3[];
 	query: Query;
 	renderActionCell?: (record: RowData) => ReactNode;
+	modifyColumns?: (columns: ColumnsType<RowData>) => ColumnsType<RowData>;
 };

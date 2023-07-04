@@ -1,13 +1,14 @@
 import { LeftOutlined, RightOutlined } from '@ant-design/icons';
 import { Button, Select } from 'antd';
-import { Pagination } from 'hooks/queryPagination';
+import { DEFAULT_PER_PAGE_OPTIONS, Pagination } from 'hooks/queryPagination';
 import { memo, useMemo } from 'react';
 
-import { defaultSelectStyle, ITEMS_PER_PAGE_OPTIONS } from './config';
+import { defaultSelectStyle } from './config';
 import { Container } from './styles';
 
 function Controls({
 	offset = 0,
+	perPageOptions = DEFAULT_PER_PAGE_OPTIONS,
 	isLoading,
 	totalCount,
 	countPerPage,
@@ -51,7 +52,7 @@ function Controls({
 				value={countPerPage}
 				onChange={handleCountItemsPerPageChange}
 			>
-				{ITEMS_PER_PAGE_OPTIONS.map((count) => (
+				{perPageOptions.map((count) => (
 					<Select.Option
 						key={count}
 						value={count}
@@ -64,10 +65,12 @@ function Controls({
 
 Controls.defaultProps = {
 	offset: 0,
+	perPageOptions: DEFAULT_PER_PAGE_OPTIONS,
 };
 
 export interface ControlsProps {
 	offset?: Pagination['offset'];
+	perPageOptions?: number[];
 	totalCount: number;
 	countPerPage: Pagination['limit'];
 	isLoading: boolean;
