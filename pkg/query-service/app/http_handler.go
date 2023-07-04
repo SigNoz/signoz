@@ -2684,6 +2684,11 @@ func (aH *APIHandler) getSpanKeysV3(ctx context.Context, queryRangeParams *v3.Qu
 			if err != nil {
 				return nil, err
 			}
+			// Add timestamp as a span key to allow ordering by timestamp
+			spanKeys["timestamp"] = v3.AttributeKey{
+				Key:      "timestamp",
+				IsColumn: true,
+			}
 			return spanKeys, nil
 		}
 	}

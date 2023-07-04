@@ -415,19 +415,10 @@ func orderByAttributeKeyTags(panelType v3.PanelType, aggregatorOperator v3.Aggre
 	}
 	orderByArray := orderBy(panelType, items, groupTags, keys)
 
-	found := false
-	for i := 0; i < len(orderByArray); i++ {
-		if strings.Compare(orderByArray[i], constants.TIMESTAMP) == 0 {
-			orderByArray[i] = "ts"
-			break
-		}
-	}
-	if !found {
-		if aggregatorOperator == v3.AggregateOperatorNoOp {
-			orderByArray = append(orderByArray, constants.TIMESTAMP)
-		} else {
-			orderByArray = append(orderByArray, "ts")
-		}
+	if panelType == v3.PanelTypeList && len(orderByArray) == 0 {
+		orderByArray = append(orderByArray, constants.TIMESTAMP+" DESC")
+	} else if panelType == v3.PanelTypeGraph || panelType == v3.PanelTypeTable {
+		orderByArray = append(orderByArray, "ts")
 	}
 
 	str := strings.Join(orderByArray, ",")
