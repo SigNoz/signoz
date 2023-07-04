@@ -33,9 +33,9 @@ function TimeSeriesViewContainer({
 			queryKey: [
 				REACT_QUERY_KEY.GET_QUERY_RANGE,
 				globalSelectedTime,
-				stagedQuery,
 				maxTime,
 				minTime,
+				stagedQuery,
 			],
 			enabled: !!stagedQuery,
 		},

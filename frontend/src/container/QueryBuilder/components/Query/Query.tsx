@@ -40,6 +40,7 @@ export const Query = memo(function Query({
 	const {
 		operators,
 		isMetricsDataSource,
+		isTracePanelType,
 		listOfAdditionalFilters,
 		handleChangeAggregatorAttribute,
 		handleChangeDataSource,
@@ -352,13 +353,15 @@ export const Query = memo(function Query({
 					</Col>
 				</Row>
 			</Col>
-			<Col span={24}>
-				<AdditionalFiltersToggler listOfAdditionalFilter={listOfAdditionalFilters}>
-					<Row gutter={[0, 11]} justify="space-between">
-						{renderAdditionalFilters()}
-					</Row>
-				</AdditionalFiltersToggler>
-			</Col>
+			{!isTracePanelType && (
+				<Col span={24}>
+					<AdditionalFiltersToggler listOfAdditionalFilter={listOfAdditionalFilters}>
+						<Row gutter={[0, 11]} justify="space-between">
+							{renderAdditionalFilters()}
+						</Row>
+					</AdditionalFiltersToggler>
+				</Col>
+			)}
 			<Row style={{ width: '100%' }}>
 				<Input
 					onChange={handleChangeQueryLegend}
