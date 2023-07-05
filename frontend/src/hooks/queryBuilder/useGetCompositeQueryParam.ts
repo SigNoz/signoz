@@ -8,7 +8,16 @@ export const useGetCompositeQueryParam = (): Query | null => {
 
 	return useMemo(() => {
 		const compositeQuery = urlQuery.get(COMPOSITE_QUERY);
+		let parsedCompositeQuery: Query | null = null;
 
-		return compositeQuery ? JSON.parse(compositeQuery) : null;
+		try {
+			if (!compositeQuery) return null;
+
+			parsedCompositeQuery = JSON.parse(decodeURIComponent(compositeQuery));
+		} catch (e) {
+			parsedCompositeQuery = null;
+		}
+
+		return parsedCompositeQuery;
 	}, [urlQuery]);
 };

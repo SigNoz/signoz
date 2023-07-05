@@ -125,7 +125,7 @@ const initialQueryBuilderFormValues: IBuilderQuery = {
 	}),
 	disabled: false,
 	having: [],
-	stepInterval: 30,
+	stepInterval: 60,
 	limit: null,
 	orderBy: [],
 	groupBy: [],
@@ -232,6 +232,7 @@ export const PANEL_TYPES: Record<PanelTypeKeys, GRAPH_TYPES> = {
 	VALUE: 'value',
 	TABLE: 'table',
 	LIST: 'list',
+	TRACE: 'trace',
 	EMPTY_WIDGET: 'EMPTY_WIDGET',
 };
 

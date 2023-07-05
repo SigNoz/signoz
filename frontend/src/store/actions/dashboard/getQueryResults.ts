@@ -3,24 +3,27 @@
 // @ts-nocheck
 
 import { getMetricsQueryRange } from 'api/metrics/getQueryRange';
+import { GRAPH_TYPES } from 'container/NewDashboard/ComponentsSlider';
 import { timePreferenceType } from 'container/NewWidget/RightContainer/timeItems';
 import { Time } from 'container/TopNav/DateTimeSelection/config';
+import getStartEndRangeTime from 'lib/getStartEndRangeTime';
 import getStep from 'lib/getStep';
+import { convertNewDataToOld } from 'lib/newQueryBuilder/convertNewDataToOld';
 import { mapQueryDataToApi } from 'lib/newQueryBuilder/queryBuilderMappers/mapQueryDataToApi';
 import { isEmpty } from 'lodash-es';
-import { GRAPH_TYPES } from 'container/NewDashboard/ComponentsSlider';
+import store from 'store';
 import { SuccessResponse } from 'types/api';
-import { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
+import { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { EQueryType } from 'types/common/dashboard';
-import { convertNewDataToOld } from 'lib/newQueryBuilder/convertNewDataToOld';
-import getStartEndRangeTime from 'lib/getStartEndRangeTime';
+import { Pagination } from 'hooks/queryPagination';
 
 export async function GetMetricQueryRange({
 	query,
 	globalSelectedInterval,
 	graphType,
 	selectedTime,
+	tableParams,
 	variables = {},
 	params = {},
 }: GetQueryResultsProps): Promise<SuccessResponse<MetricRangePayloadProps>> {
@@ -37,8 +40,9 @@ export async function GetMetricQueryRange({
 	switch (query.queryType) {
 		case EQueryType.QUERY_BUILDER: {
 			const { queryData: data, queryFormulas } = query.builder;
-			const currentQueryData = mapQueryDataToApi(data, 'queryName');
+			const currentQueryData = mapQueryDataToApi(data, 'queryName', tableParams);
 			const currentFormulas = mapQueryDataToApi(queryFormulas, 'queryName');
+
 			const builderQueries = {
 				...currentQueryData.data,
 				...currentFormulas.data,
@@ -89,7 +93,11 @@ export async function GetMetricQueryRange({
 	const response = await getMetricsQueryRange({
 		start: parseInt(start, 10) * 1e3,
 		end: parseInt(end, 10) * 1e3,
-		step: getStep({ start, end, inputFormat: 'ms' }),
+		step: getStep({
+			start: store.getState().globalTime.minTime,
+			end: store.getState().globalTime.maxTime,
+			inputFormat: 'ns',
+		}),
 		variables,
 		...QueryPayload,
 		...params,
@@ -135,4 +143,8 @@ export interface GetQueryResultsProps {
 	globalSelectedInterval: Time;
 	variables?: Record<string, unknown>;
 	params?: Record<string, unknown>;
+	tableParams?: {
+		pagination?: Pagination;
+		selectColumns?: any;
+	};
 }

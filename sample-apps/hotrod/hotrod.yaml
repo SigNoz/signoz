@@ -96,7 +96,7 @@ spec:
         role: locust-master
     spec:
       containers:
-      - image: grubykarol/locust:0.8.1-py3.6
+      - image: signoz/locust:1.2.3
         imagePullPolicy: IfNotPresent
         name: locust-master
         env:
@@ -173,7 +173,7 @@ spec:
         role: locust-slave
     spec:
       containers:
-      - image: grubykarol/locust:0.8.1-py3.6
+      - image: signoz/locust:1.2.3
         imagePullPolicy: IfNotPresent
         name: locust-slave
         env:

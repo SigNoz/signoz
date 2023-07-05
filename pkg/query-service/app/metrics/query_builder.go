@@ -45,7 +45,7 @@ var AggregateOperatorToSQLFunc = map[model.AggregateOperator]string{
 }
 
 // See https://github.com/SigNoz/signoz/issues/2151#issuecomment-1467249056
-var rateWithoutNegative = `if (runningDifference(value) < 0 OR runningDifference(ts) < 0, nan, runningDifference(value)/runningDifference(ts))`
+var rateWithoutNegative = `if (runningDifference(value) < 0 OR runningDifference(ts) <= 0, nan, runningDifference(value)/runningDifference(ts))`
 
 var SupportedFunctions = []string{"exp", "log", "ln", "exp2", "log2", "exp10", "log10", "sqrt", "cbrt", "erf", "erfc", "lgamma", "tgamma", "sin", "cos", "tan", "asin", "acos", "atan", "degrees", "radians"}
 
