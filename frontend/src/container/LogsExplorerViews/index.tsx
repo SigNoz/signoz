@@ -83,6 +83,14 @@ function LogsExplorerViews(): JSX.Element {
 		enabled: !isLimit,
 	});
 
+	const handleSetActiveLog = useCallback((nextActiveLog: ILog) => {
+		setActiveLog(nextActiveLog);
+	}, []);
+
+	const handleClearActiveLog = useCallback(() => {
+		setActiveLog(null);
+	}, []);
+
 	const handleChangeView = useCallback(
 		(newPanelType: string) => {
 			if (newPanelType === panelType) return;
@@ -104,14 +112,6 @@ function LogsExplorerViews(): JSX.Element {
 			redirectWithQueryBuilderData,
 		],
 	);
-
-	const handleSetActiveLog = useCallback((nextActiveLog: ILog) => {
-		setActiveLog(nextActiveLog);
-	}, []);
-
-	const handleClearActiveLog = useCallback(() => {
-		setActiveLog(null);
-	}, []);
 
 	const getRequestData = useCallback(
 		(
@@ -262,12 +262,23 @@ function LogsExplorerViews(): JSX.Element {
 		],
 	);
 
+	const chartData = useMemo(() => {
+		if (!stagedQuery) return [];
+
+		if (!data || data.payload.data.result.length === 0) return [];
+
+		const isGroupByExist = stagedQuery.builder.queryData.some(
+			(queryData) => queryData.groupBy.length > 0,
+		);
+
+		return isGroupByExist
+			? data.payload.data.result
+			: [data.payload.data.result[0]];
+	}, [stagedQuery, data]);
+
 	return (
 		<>
-			<LogsExplorerChart
-				isLoading={isFetching}
-				data={data?.payload.data.result[0] ? [data?.payload.data.result[0]] : []}
-			/>
+			<LogsExplorerChart isLoading={isFetching} data={chartData} />
 			<TabsStyled
 				items={tabsItems}
 				defaultActiveKey={panelType || PANEL_TYPES.LIST}
