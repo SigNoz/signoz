@@ -1,4 +1,4 @@
-import { initialQueriesMap } from 'constants/queryBuilder';
+import { initialQueriesMap, PANEL_TYPES } from 'constants/queryBuilder';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import { useGetQueryRange } from 'hooks/queryBuilder/useGetQueryRange';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
@@ -12,7 +12,7 @@ import TimeSeriesView from './TimeSeriesView';
 function TimeSeriesViewContainer({
 	dataSource = DataSource.TRACES,
 }: TimeSeriesViewProps): JSX.Element {
-	const { stagedQuery } = useQueryBuilder();
+	const { stagedQuery, panelType } = useQueryBuilder();
 
 	const { selectedTime: globalSelectedTime, maxTime, minTime } = useSelector<
 		AppState,
@@ -22,7 +22,7 @@ function TimeSeriesViewContainer({
 	const { data, isLoading, isError } = useGetQueryRange(
 		{
 			query: stagedQuery || initialQueriesMap[dataSource],
-			graphType: 'graph',
+			graphType: panelType || PANEL_TYPES.TIME_SERIES,
 			selectedTime: 'GLOBAL_TIME',
 			globalSelectedInterval: globalSelectedTime,
 			params: {
@@ -33,11 +33,11 @@ function TimeSeriesViewContainer({
 			queryKey: [
 				REACT_QUERY_KEY.GET_QUERY_RANGE,
 				globalSelectedTime,
-				stagedQuery,
 				maxTime,
 				minTime,
+				stagedQuery,
 			],
-			enabled: !!stagedQuery,
+			enabled: !!stagedQuery && panelType === PANEL_TYPES.TIME_SERIES,
 		},
 	);
 

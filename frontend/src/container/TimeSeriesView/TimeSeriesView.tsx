@@ -21,7 +21,7 @@ function TimeSeriesView({
 					},
 				],
 			}),
-		[data],
+		[data?.payload?.data?.result],
 	);
 
 	return (
