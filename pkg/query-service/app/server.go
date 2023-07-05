@@ -41,9 +41,10 @@ import (
 )
 
 type ServerOptions struct {
-	PromConfigPath  string
-	HTTPHostPort    string
-	PrivateHostPort string
+	PromConfigPath    string
+	SkipTopLvlOpsPath string
+	HTTPHostPort      string
+	PrivateHostPort   string
 	// alert specific params
 	DisableRules bool
 	RuleRepoURL  string
@@ -105,6 +106,14 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 	} else {
 		return nil, fmt.Errorf("Storage type: %s is not supported in query service", storage)
 	}
+	var skipConfig *model.SkipConfig
+	if serverOptions.SkipTopLvlOpsPath != "" {
+		// read skip config
+		skipConfig, err = model.ReadSkipConfig(serverOptions.SkipTopLvlOpsPath)
+		if err != nil {
+			return nil, err
+		}
+	}
 
 	<-readerReady
 	rm, err := makeRulesManager(serverOptions.PromConfigPath, constants.GetAlertManagerApiPrefix(), serverOptions.RuleRepoURL, localDB, reader, serverOptions.DisableRules, fm)
@@ -115,6 +124,7 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 	telemetry.GetInstance().SetReader(reader)
 	apiHandler, err := NewAPIHandler(APIHandlerOpts{
 		Reader:       reader,
+		SkipConfig:   skipConfig,
 		AppDao:       dao.DB(),
 		RuleManager:  rm,
 		FeatureFlags: fm,
@@ -220,7 +230,7 @@ func loggingMiddleware(next http.Handler) http.Handler {
 		path, _ := route.GetPathTemplate()
 		startTime := time.Now()
 		next.ServeHTTP(w, r)
-		zap.S().Info(path, "\ttimeTaken: ", time.Now().Sub(startTime))
+		zap.S().Info(path+"\ttimeTaken:"+time.Now().Sub(startTime).String(), zap.Duration("timeTaken", time.Now().Sub(startTime)), zap.String("path", path))
 	})
 }
 
@@ -232,7 +242,7 @@ func loggingMiddlewarePrivate(next http.Handler) http.Handler {
 		path, _ := route.GetPathTemplate()
 		startTime := time.Now()
 		next.ServeHTTP(w, r)
-		zap.S().Info(path, "\tprivatePort: true", "\ttimeTaken: ", time.Now().Sub(startTime))
+		zap.S().Info(path+"\tprivatePort: true \ttimeTaken"+time.Now().Sub(startTime).String(), zap.Duration("timeTaken", time.Now().Sub(startTime)), zap.String("path", path), zap.Bool("tprivatePort", true))
 	})
 }
 
