@@ -57,7 +57,6 @@ export const QueryBuilderContext = createContext<QueryBuilderContextType>({
 	initialDataSource: null,
 	panelType: PANEL_TYPES.TIME_SERIES,
 	isEnabledQuery: false,
-	isQueryStaged: false,
 	handleSetQueryData: () => {},
 	handleSetFormulaData: () => {},
 	handleSetQueryItemData: () => {},
@@ -93,8 +92,6 @@ export function QueryBuilderProvider({
 	);
 
 	const [panelType, setPanelType] = useState<GRAPH_TYPES | null>(null);
-
-	const [isQueryStaged, setIsQueryStaged] = useState<boolean>(false);
 
 	const [currentQuery, setCurrentQuery] = useState<QueryState>(
 		queryState || initialQueryState,
@@ -209,7 +206,6 @@ export function QueryBuilderProvider({
 			setStagedQuery(nextQuery);
 			setCurrentQuery(newQueryState);
 			setQueryType(type);
-			setIsQueryStaged(true);
 		},
 		[prepareQueryBuilderData],
 	);
@@ -518,7 +514,6 @@ export function QueryBuilderProvider({
 		if (!compositeQueryParam) return;
 
 		if (stagedQuery && stagedQuery.id === compositeQueryParam.id) {
-			setIsQueryStaged(false);
 			return;
 		}
 
@@ -559,7 +554,6 @@ export function QueryBuilderProvider({
 			initialDataSource,
 			panelType,
 			isEnabledQuery,
-			isQueryStaged,
 			handleSetQueryData,
 			handleSetFormulaData,
 			handleSetQueryItemData,
@@ -581,7 +575,6 @@ export function QueryBuilderProvider({
 			initialDataSource,
 			panelType,
 			isEnabledQuery,
-			isQueryStaged,
 			handleSetQueryData,
 			handleSetFormulaData,
 			handleSetQueryItemData,

@@ -30,6 +30,15 @@ export const useGetExplorerQueryRange = (
 		[options?.queryKey],
 	);
 
+	const isEnabled = useMemo(() => {
+		if (!options) return isEnabledQuery;
+		if (typeof options.enabled === 'boolean') {
+			return isEnabledQuery && options.enabled;
+		}
+
+		return isEnabledQuery;
+	}, [options, isEnabledQuery]);
+
 	return useGetQueryRange(
 		{
 			graphType: panelType || PANEL_TYPES.LIST,
@@ -41,7 +50,7 @@ export const useGetExplorerQueryRange = (
 			...options,
 			retry: false,
 			queryKey: [key, globalSelectedInterval, requestData],
-			enabled: isEnabledQuery && options?.enabled,
+			enabled: isEnabled,
 		},
 	);
 };

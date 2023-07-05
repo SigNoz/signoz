@@ -16,6 +16,7 @@ import { ILog } from 'types/api/logs/log';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource } from 'types/common/queryBuilder';
 
+import { DEFAULT_QUERY_LIMIT } from './constants';
 import { TabsStyled } from './LogsExplorerViews.styled';
 
 function LogsExplorerViews(): JSX.Element {
@@ -27,19 +28,15 @@ function LogsExplorerViews(): JSX.Element {
 	// Context
 	const {
 		currentQuery,
-		isQueryStaged,
 		stagedQuery,
 		panelType,
 		updateAllQueriesOperators,
 		redirectWithQueryBuilderData,
 	} = useQueryBuilder();
 
-	// State
-	const [currentScrolledLog, setCurrentScrolledLog] = useState<ILog | null>(
-		null,
-	);
 	const [page, setPage] = useState<number>(1);
 	const [logs, setLogs] = useState<ILog[]>([]);
+	const [requestData, setRequestData] = useState<Query | null>(null);
 
 	const currentStagedQueryData = useMemo(() => {
 		if (!stagedQuery || stagedQuery.builder.queryData.length !== 1) return null;
@@ -54,47 +51,6 @@ function LogsExplorerViews(): JSX.Element {
 
 		return !!timestampOrderBy;
 	}, [currentStagedQueryData]);
-
-	const paginationQueryData = useMemo(() => {
-		if (!stagedQuery) return null;
-
-		return getPaginationQueryData({
-			query: stagedQuery,
-			listItemId: currentScrolledLog ? currentScrolledLog.id : null,
-			isTimeStampPresent,
-			page,
-			pageSize,
-		});
-	}, [stagedQuery, currentScrolledLog, isTimeStampPresent, page, pageSize]);
-
-	const requestData: Query | null = useMemo(() => {
-		if (!stagedQuery) return null;
-		if (stagedQuery && panelType !== PANEL_TYPES.LIST) return stagedQuery;
-
-		if (!paginationQueryData) return null;
-
-		const data: Query = {
-			...stagedQuery,
-			builder: {
-				...stagedQuery.builder,
-				queryData: stagedQuery.builder.queryData.map((item) => ({
-					...item,
-					...paginationQueryData,
-					pageSize,
-				})),
-			},
-		};
-
-		return data;
-	}, [stagedQuery, panelType, paginationQueryData, pageSize]);
-
-	const isLimit: boolean = useMemo(() => {
-		if (!paginationQueryData) return false;
-
-		const limit = paginationQueryData.limit || 100;
-
-		return logs.length >= limit;
-	}, [logs.length, paginationQueryData]);
 
 	const isMultipleQueries = useMemo(
 		() =>
@@ -112,32 +68,17 @@ function LogsExplorerViews(): JSX.Element {
 		return groupByCount > 0;
 	}, [currentQuery]);
 
+	const isLimit: boolean = useMemo(() => {
+		if (!currentStagedQueryData) return false;
+		const limit = currentStagedQueryData.limit || DEFAULT_QUERY_LIMIT;
+
+		return logs.length >= limit;
+	}, [logs.length, currentStagedQueryData]);
+
 	const { data, isFetching, isError } = useGetExplorerQueryRange(requestData, {
 		keepPreviousData: true,
-		...(isLimit ? { enabled: !isLimit } : {}),
+		enabled: !isLimit,
 	});
-
-	const handleEndReached = useCallback(
-		(index: number) => {
-			const lastLog = logs[index];
-			if (isLimit) return;
-
-			if (isTimeStampPresent) {
-				setCurrentScrolledLog((prevLog) =>
-					prevLog?.id === lastLog.id ? prevLog : lastLog,
-				);
-			}
-
-			setPage((prevPage) => prevPage + 1);
-		},
-		[logs, isLimit, isTimeStampPresent],
-	);
-
-	const handleResetPagination = useCallback(() => {
-		setPage(1);
-		setCurrentScrolledLog(null);
-		setLogs([]);
-	}, []);
 
 	const handleChangeView = useCallback(
 		(newPanelType: string) => {
@@ -161,6 +102,75 @@ function LogsExplorerViews(): JSX.Element {
 		],
 	);
 
+	const getRequestData = useCallback(
+		(
+			query: Query | null,
+			params: { page: number; log: ILog | null; pageSize: number },
+		): Query | null => {
+			if (!query) return null;
+
+			const paginateData = getPaginationQueryData({
+				currentStagedQueryData,
+				listItemId: params.log ? params.log.id : null,
+				isTimeStampPresent,
+				page: params.page,
+				pageSize: params.pageSize,
+			});
+
+			const data: Query = {
+				...query,
+				builder: {
+					...query.builder,
+					queryData: query.builder.queryData.map((item) => ({
+						...item,
+						...paginateData,
+						limit: item.limit || DEFAULT_QUERY_LIMIT,
+						pageSize: params.pageSize,
+					})),
+				},
+			};
+
+			return data;
+		},
+		[currentStagedQueryData, isTimeStampPresent],
+	);
+
+	const handleEndReached = useCallback(
+		(index: number) => {
+			if (isLimit) return;
+
+			const lastLog = logs[index];
+
+			const limit = currentStagedQueryData?.limit || DEFAULT_QUERY_LIMIT;
+
+			const nextLogsLenth = logs.length + pageSize;
+
+			const nextPageSize = nextLogsLenth >= limit ? limit - logs.length : pageSize;
+
+			if (!stagedQuery) return;
+
+			const newRequestData = getRequestData(stagedQuery, {
+				page: page + 1,
+				log: isTimeStampPresent ? lastLog : null,
+				pageSize: nextPageSize,
+			});
+
+			setPage((prevPage) => prevPage + 1);
+
+			setRequestData(newRequestData);
+		},
+		[
+			isLimit,
+			logs,
+			currentStagedQueryData?.limit,
+			pageSize,
+			stagedQuery,
+			getRequestData,
+			page,
+			isTimeStampPresent,
+		],
+	);
+
 	useEffect(() => {
 		const shouldChangeView = isMultipleQueries || isGroupByExist;
 
@@ -181,10 +191,17 @@ function LogsExplorerViews(): JSX.Element {
 	}, [data]);
 
 	useEffect(() => {
-		if (isQueryStaged && panelType === PANEL_TYPES.LIST) {
-			handleResetPagination();
+		if (requestData?.id !== stagedQuery?.id) {
+			const newRequestData = getRequestData(stagedQuery, {
+				page: 1,
+				log: null,
+				pageSize,
+			});
+			setLogs([]);
+			setPage(1);
+			setRequestData(newRequestData);
 		}
-	}, [handleResetPagination, isQueryStaged, panelType]);
+	}, [stagedQuery, requestData, getRequestData, pageSize]);
 
 	const tabsItems: TabsProps['items'] = useMemo(
 		() => [
