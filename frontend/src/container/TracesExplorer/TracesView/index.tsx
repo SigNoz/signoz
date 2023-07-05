@@ -6,7 +6,7 @@ import { useGetQueryRange } from 'hooks/queryBuilder/useGetQueryRange';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { Pagination, URL_PAGINATION } from 'hooks/queryPagination';
 import useUrlQueryData from 'hooks/useUrlQueryData';
-import { useMemo } from 'react';
+import { memo, useMemo } from 'react';
 import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
 import { GlobalReducer } from 'types/reducer/globalTime';
@@ -84,4 +84,4 @@ function TracesView(): JSX.Element {
 	);
 }
 
-export default TracesView;
+export default memo(TracesView);
