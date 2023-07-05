@@ -28,8 +28,9 @@ import { selectStyle } from '../QueryBuilderSearch/config';
 import { AgregatorFilterProps } from './AggregatorFilter.intefaces';
 
 export const AggregatorFilter = memo(function AggregatorFilter({
-	onChange,
 	query,
+	disabled,
+	onChange,
 }: AgregatorFilterProps): JSX.Element {
 	const [optionsData, setOptionsData] = useState<ExtendedSelectOption[]>([]);
 	const debouncedValue = useDebounce(query.aggregateAttribute.key, 300);
@@ -119,6 +120,7 @@ export const AggregatorFilter = memo(function AggregatorFilter({
 			options={optionsData}
 			value={value}
 			onChange={handleChangeAttribute}
+			disabled={disabled}
 		/>
 	);
 });

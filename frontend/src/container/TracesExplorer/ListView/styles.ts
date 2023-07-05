@@ -15,3 +15,7 @@ export const Container = styled.div`
 export const ErrorText = styled(Typography)`
 	text-align: center;
 `;
+
+export const DateText = styled(Typography)`
+	min-width: 145px;
+`;
