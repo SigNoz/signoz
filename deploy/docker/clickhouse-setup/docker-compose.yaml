@@ -193,7 +193,7 @@ services:
       - ../common/nginx-config.conf:/etc/nginx/conf.d/default.conf
 
   otel-collector:
-    image: signoz/signoz-otel-collector:${OTELCOL_TAG:-0.79.1}
+    image: signoz/signoz-otel-collector:${OTELCOL_TAG:-0.79.2}
     command: ["--config=/etc/otel-collector-config.yaml", "--feature-gates=-pkg.translator.prometheus.NormalizeName"]
     user: root # required for reading docker container logs
     volumes:
@@ -219,7 +219,7 @@ services:
     <<: *clickhouse-depend
 
   otel-collector-metrics:
-    image: signoz/signoz-otel-collector:${OTELCOL_TAG:-0.79.1}
+    image: signoz/signoz-otel-collector:${OTELCOL_TAG:-0.79.2}
     command: ["--config=/etc/otel-collector-metrics-config.yaml", "--feature-gates=-pkg.translator.prometheus.NormalizeName"]
     volumes:
       - ./otel-collector-metrics-config.yaml:/etc/otel-collector-metrics-config.yaml
