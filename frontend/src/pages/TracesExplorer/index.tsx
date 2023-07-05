@@ -40,6 +40,15 @@ function TracesExplorer(): JSX.Element {
 		[currentQuery],
 	);
 
+	const isGroupByExist = useMemo(() => {
+		const groupByCount: number = currentQuery.builder.queryData.reduce<number>(
+			(acc, query) => acc + query.groupBy.length,
+			0,
+		);
+
+		return groupByCount > 0;
+	}, [currentQuery]);
+
 	const defaultQuery = useMemo(
 		() =>
 			updateAllQueriesOperators(
@@ -49,15 +58,6 @@ function TracesExplorer(): JSX.Element {
 			),
 		[updateAllQueriesOperators],
 	);
-
-	const isGroupByExist = useMemo(() => {
-		const groupByCount: number = currentQuery.builder.queryData.reduce<number>(
-			(acc, query) => acc + query.groupBy.length,
-			0,
-		);
-
-		return groupByCount > 0;
-	}, [currentQuery]);
 
 	const tabsItems = getTabsItems({
 		isListViewDisabled: isMultipleQueries || isGroupByExist,

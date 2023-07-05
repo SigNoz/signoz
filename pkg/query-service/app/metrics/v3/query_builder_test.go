@@ -238,7 +238,7 @@ func TestBuildQueryOperators(t *testing.T) {
 func TestBuildQueryXRate(t *testing.T) {
 	t.Run("TestBuildQueryXRate", func(t *testing.T) {
 
-		tmpl := `SELECT  ts, %s(value) as value FROM (SELECT  ts, if (runningDifference(value) < 0 OR runningDifference(ts) < 0, nan, runningDifference(value)/runningDifference(ts))as value FROM(SELECT fingerprint,  toStartOfInterval(toDateTime(intDiv(timestamp_ms, 1000)), INTERVAL 0 SECOND) as ts, max(value) as value FROM signoz_metrics.distributed_samples_v2 GLOBAL INNER JOIN (SELECT  fingerprint FROM signoz_metrics.distributed_time_series_v2 WHERE metric_name = 'name') as filtered_time_series USING fingerprint WHERE metric_name = 'name' AND timestamp_ms >= 1650991982000 AND timestamp_ms <= 1651078382000 GROUP BY fingerprint, ts ORDER BY fingerprint,  ts) WHERE isNaN(value) = 0) GROUP BY ts ORDER BY  ts`
+		tmpl := `SELECT  ts, %s(value) as value FROM (SELECT  ts, if (runningDifference(value) < 0 OR runningDifference(ts) <= 0, nan, runningDifference(value)/runningDifference(ts))as value FROM(SELECT fingerprint,  toStartOfInterval(toDateTime(intDiv(timestamp_ms, 1000)), INTERVAL 0 SECOND) as ts, max(value) as value FROM signoz_metrics.distributed_samples_v2 GLOBAL INNER JOIN (SELECT  fingerprint FROM signoz_metrics.distributed_time_series_v2 WHERE metric_name = 'name') as filtered_time_series USING fingerprint WHERE metric_name = 'name' AND timestamp_ms >= 1650991982000 AND timestamp_ms <= 1651078382000 GROUP BY fingerprint, ts ORDER BY fingerprint,  ts) WHERE isNaN(value) = 0) GROUP BY ts ORDER BY  ts`
 
 		cases := []struct {
 			aggregateOperator v3.AggregateOperator
