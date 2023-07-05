@@ -14,10 +14,9 @@ import useUrlQueryData from 'hooks/useUrlQueryData';
 import { getPaginationQueryData } from 'lib/newQueryBuilder/getPaginationQueryData';
 import { memo, useCallback, useEffect, useMemo, useState } from 'react';
 import { ILog } from 'types/api/logs/log';
-import { Query } from 'types/api/queryBuilder/queryBuilderData';
+import { OrderByPayload, Query } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource } from 'types/common/queryBuilder';
 
-import { DEFAULT_QUERY_LIMIT } from './constants';
 import { TabsStyled } from './LogsExplorerViews.styled';
 
 function LogsExplorerViews(): JSX.Element {
@@ -47,12 +46,12 @@ function LogsExplorerViews(): JSX.Element {
 		return stagedQuery.builder.queryData[0];
 	}, [stagedQuery]);
 
-	const isTimeStampPresent: boolean = useMemo(() => {
+	const orderByTimestamp: OrderByPayload | null = useMemo(() => {
 		const timestampOrderBy = currentStagedQueryData?.orderBy.find(
 			(item) => item.columnName === 'timestamp',
 		);
 
-		return !!timestampOrderBy;
+		return timestampOrderBy || null;
 	}, [currentStagedQueryData]);
 
 	const isMultipleQueries = useMemo(
@@ -73,9 +72,9 @@ function LogsExplorerViews(): JSX.Element {
 
 	const isLimit: boolean = useMemo(() => {
 		if (!currentStagedQueryData) return false;
-		const limit = currentStagedQueryData.limit || DEFAULT_QUERY_LIMIT;
+		if (!currentStagedQueryData.limit) return false;
 
-		return logs.length >= limit;
+		return logs.length >= currentStagedQueryData.limit;
 	}, [logs.length, currentStagedQueryData]);
 
 	const { data, isFetching, isError } = useGetExplorerQueryRange(requestData, {
@@ -123,7 +122,7 @@ function LogsExplorerViews(): JSX.Element {
 			const paginateData = getPaginationQueryData({
 				currentStagedQueryData,
 				listItemId: params.log ? params.log.id : null,
-				isTimeStampPresent,
+				orderByTimestamp,
 				page: params.page,
 				pageSize: params.pageSize,
 			});
@@ -135,7 +134,6 @@ function LogsExplorerViews(): JSX.Element {
 					queryData: query.builder.queryData.map((item) => ({
 						...item,
 						...paginateData,
-						limit: item.limit || DEFAULT_QUERY_LIMIT,
 						pageSize: params.pageSize,
 					})),
 				},
@@ -143,7 +141,7 @@ function LogsExplorerViews(): JSX.Element {
 
 			return data;
 		},
-		[currentStagedQueryData, isTimeStampPresent],
+		[currentStagedQueryData, orderByTimestamp],
 	);
 
 	const handleEndReached = useCallback(
@@ -152,17 +150,18 @@ function LogsExplorerViews(): JSX.Element {
 
 			const lastLog = logs[index];
 
-			const limit = currentStagedQueryData?.limit || DEFAULT_QUERY_LIMIT;
+			const limit = currentStagedQueryData?.limit;
 
 			const nextLogsLenth = logs.length + pageSize;
 
-			const nextPageSize = nextLogsLenth >= limit ? limit - logs.length : pageSize;
+			const nextPageSize =
+				limit && nextLogsLenth >= limit ? limit - logs.length : pageSize;
 
 			if (!stagedQuery) return;
 
 			const newRequestData = getRequestData(stagedQuery, {
 				page: page + 1,
-				log: isTimeStampPresent ? lastLog : null,
+				log: orderByTimestamp ? lastLog : null,
 				pageSize: nextPageSize,
 			});
 
@@ -178,7 +177,7 @@ function LogsExplorerViews(): JSX.Element {
 			stagedQuery,
 			getRequestData,
 			page,
-			isTimeStampPresent,
+			orderByTimestamp,
 		],
 	);
 
@@ -194,8 +193,8 @@ function LogsExplorerViews(): JSX.Element {
 		const currentData = data?.payload.data.newResult.data.result || [];
 		if (currentData.length > 0 && currentData[0].list) {
 			const currentLogs: ILog[] = currentData[0].list.map((item) => ({
-				timestamp: +item.timestamp,
 				...item.data,
+				timestamp: item.timestamp,
 			}));
 			setLogs((prevLogs) => [...prevLogs, ...currentLogs]);
 		}

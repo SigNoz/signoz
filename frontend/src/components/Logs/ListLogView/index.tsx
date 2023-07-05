@@ -105,6 +105,14 @@ function ListLogView({
 		[selectedFields],
 	);
 
+	const timestampValue = useMemo(
+		() =>
+			typeof flattenLogData.timestamp === 'string'
+				? dayjs(flattenLogData.timestamp).format()
+				: dayjs(flattenLogData.timestamp / 1e6).format(),
+		[flattenLogData.timestamp],
+	);
+
 	return (
 		<Container>
 			<div>
@@ -114,10 +122,7 @@ function ListLogView({
 						{flattenLogData.stream && (
 							<LogGeneralField fieldKey="stream" fieldValue={flattenLogData.stream} />
 						)}
-						<LogGeneralField
-							fieldKey="timestamp"
-							fieldValue={dayjs((flattenLogData.timestamp as never) / 1e6).format()}
-						/>
+						<LogGeneralField fieldKey="timestamp" fieldValue={timestampValue} />
 					</>
 				</LogContainer>
 				<div>

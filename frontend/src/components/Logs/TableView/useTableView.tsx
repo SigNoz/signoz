@@ -73,7 +73,10 @@ export const useTableView = (props: LogsTableViewProps): UseTableViewResult => {
 				key: 'timestamp',
 				// https://github.com/ant-design/ant-design/discussions/36886
 				render: (field): ColumnTypeRender<Record<string, unknown>> => {
-					const date = dayjs(field / 1e6).format();
+					const date =
+						typeof field === 'string'
+							? dayjs(field).format()
+							: dayjs(field / 1e6).format();
 					return {
 						children: <Typography.Paragraph ellipsis>{date}</Typography.Paragraph>,
 					};
