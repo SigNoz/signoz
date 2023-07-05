@@ -4,6 +4,7 @@ import Spinner from 'components/Spinner';
 import GridGraphComponent from 'container/GridGraphComponent';
 import { UpdateDashboard } from 'container/GridGraphLayout/utils';
 import { useGetQueryRange } from 'hooks/queryBuilder/useGetQueryRange';
+import { useStepInterval } from 'hooks/queryBuilder/useStepInterval';
 import { useNotifications } from 'hooks/useNotifications';
 import usePreviousValue from 'hooks/usePreviousValue';
 import { getDashboardVariables } from 'lib/dashbaordVariables/getDashboardVariables';
@@ -54,7 +55,7 @@ function GridCardGraph({
 	const { ref: graphRef, inView: isGraphVisible } = useInView({
 		threshold: 0,
 		triggerOnce: true,
-		initialInView: true,
+		initialInView: false,
 	});
 
 	const { notifications } = useNotifications();
@@ -80,17 +81,19 @@ function GridCardGraph({
 	const selectedData = selectedDashboard?.data;
 	const { variables } = selectedData;
 
+	const updatedQuery = useStepInterval(widget?.query);
+
 	const queryResponse = useGetQueryRange(
 		{
 			selectedTime: widget?.timePreferance,
-			graphType: widget.panelTypes,
-			query: widget.query,
+			graphType: widget?.panelTypes,
+			query: updatedQuery,
 			globalSelectedInterval,
 			variables: getDashboardVariables(),
 		},
 		{
 			queryKey: [
-				`GetMetricsQueryRange-${widget?.timePreferance}-${globalSelectedInterval}-${widget.id}`,
+				`GetMetricsQueryRange-${widget?.timePreferance}-${globalSelectedInterval}-${widget?.id}`,
 				widget,
 				maxTime,
 				minTime,
@@ -173,7 +176,7 @@ function GridCardGraph({
 				{
 					data: selectedDashboard.data,
 					generateWidgetId: uuid,
-					graphType: widget.panelTypes,
+					graphType: widget?.panelTypes,
 					selectedDashboard,
 					layout,
 					widgetData: widget,
@@ -187,7 +190,7 @@ function GridCardGraph({
 
 				setTimeout(() => {
 					history.push(
-						`${history.location.pathname}/new?graphType=${widget.panelTypes}&widgetId=${uuid}`,
+						`${history.location.pathname}/new?graphType=${widget?.panelTypes}&widgetId=${uuid}`,
 					);
 				}, 1500);
 			});
@@ -253,10 +256,10 @@ function GridCardGraph({
 							/>
 						</div>
 						<GridGraphComponent
-							GRAPH_TYPES={widget.panelTypes}
+							GRAPH_TYPES={widget?.panelTypes}
 							data={prevChartDataSetRef}
-							isStacked={widget.isStacked}
-							opacity={widget.opacity}
+							isStacked={widget?.isStacked}
+							opacity={widget?.opacity}
 							title={' '}
 							name={name}
 							yAxisUnit={yAxisUnit}

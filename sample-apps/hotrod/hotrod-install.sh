@@ -15,7 +15,7 @@ fi
 
 # Locust's docker image
 if [[ -z $LOCUST_IMAGE ]]; then
-    LOCUST_REPO="${LOCUST_REPO:-grubykarol/locust}"
+    LOCUST_REPO="${LOCUST_REPO:-signoz/locust}"
     LOCUST_TAG="${LOCUST_TAG:-0.8.1-py3.6}"
     LOCUST_IMAGE="${LOCUST_REPO}:${LOCUST_TAG}"
 fi

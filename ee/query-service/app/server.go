@@ -49,9 +49,10 @@ import (
 const AppDbEngine = "sqlite"
 
 type ServerOptions struct {
-	PromConfigPath  string
-	HTTPHostPort    string
-	PrivateHostPort string
+	PromConfigPath    string
+	SkipTopLvlOpsPath string
+	HTTPHostPort      string
+	PrivateHostPort   string
 	// alert specific params
 	DisableRules bool
 	RuleRepoURL  string
@@ -119,7 +120,15 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 		go qb.Start(readerReady)
 		reader = qb
 	} else {
-		return nil, fmt.Errorf("Storage type: %s is not supported in query service", storage)
+		return nil, fmt.Errorf("storage type: %s is not supported in query service", storage)
+	}
+	skipConfig := &basemodel.SkipConfig{}
+	if serverOptions.SkipTopLvlOpsPath != "" {
+		// read skip config
+		skipConfig, err = basemodel.ReadSkipConfig(serverOptions.SkipTopLvlOpsPath)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	<-readerReady
@@ -160,6 +169,7 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 
 	apiOpts := api.APIHandlerOptions{
 		DataConnector:  reader,
+		SkipConfig:     skipConfig,
 		AppDao:         modelDao,
 		RulesManager:   rm,
 		FeatureFlags:   lm,
@@ -277,7 +287,7 @@ func loggingMiddleware(next http.Handler) http.Handler {
 		path, _ := route.GetPathTemplate()
 		startTime := time.Now()
 		next.ServeHTTP(w, r)
-		zap.S().Info(path, "\ttimeTaken: ", time.Now().Sub(startTime))
+		zap.L().Info(path+"\ttimeTaken:"+time.Now().Sub(startTime).String(), zap.Duration("timeTaken", time.Now().Sub(startTime)), zap.String("path", path))
 	})
 }
 
@@ -289,7 +299,7 @@ func loggingMiddlewarePrivate(next http.Handler) http.Handler {
 		path, _ := route.GetPathTemplate()
 		startTime := time.Now()
 		next.ServeHTTP(w, r)
-		zap.S().Info(path, "\tprivatePort: true", "\ttimeTaken: ", time.Now().Sub(startTime))
+		zap.L().Info(path+"\tprivatePort: true \ttimeTaken"+time.Now().Sub(startTime).String(), zap.Duration("timeTaken", time.Now().Sub(startTime)), zap.String("path", path), zap.Bool("tprivatePort", true))
 	})
 }
 
