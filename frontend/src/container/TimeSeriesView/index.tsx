@@ -1,7 +1,10 @@
-import { initialQueriesMap } from 'constants/queryBuilder';
+import { initialQueriesMap, PANEL_TYPES } from 'constants/queryBuilder';
+import { PANEL_TYPES_QUERY } from 'constants/queryBuilderQueryNames';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
+import { GRAPH_TYPES } from 'container/NewDashboard/ComponentsSlider';
 import { useGetQueryRange } from 'hooks/queryBuilder/useGetQueryRange';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
+import useUrlQueryData from 'hooks/useUrlQueryData';
 import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
 import { DataSource } from 'types/common/queryBuilder';
@@ -19,10 +22,15 @@ function TimeSeriesViewContainer({
 		GlobalReducer
 	>((state) => state.globalTime);
 
+	const { queryData: panelTypeParam } = useUrlQueryData<GRAPH_TYPES>(
+		PANEL_TYPES_QUERY,
+		PANEL_TYPES.TIME_SERIES,
+	);
+
 	const { data, isLoading, isError } = useGetQueryRange(
 		{
 			query: stagedQuery || initialQueriesMap[dataSource],
-			graphType: 'graph',
+			graphType: panelTypeParam,
 			selectedTime: 'GLOBAL_TIME',
 			globalSelectedInterval: globalSelectedTime,
 			params: {
@@ -37,7 +45,7 @@ function TimeSeriesViewContainer({
 				minTime,
 				stagedQuery,
 			],
-			enabled: !!stagedQuery,
+			enabled: !!stagedQuery && panelTypeParam === PANEL_TYPES.TIME_SERIES,
 		},
 	);
 
