@@ -1,3 +1,4 @@
+import { DeleteOutlined } from '@ant-design/icons';
 import { Card, Select, SelectProps, Space } from 'antd';
 import { themeColors } from 'constants/theme';
 import { FunctionComponent } from 'react';
@@ -25,4 +26,14 @@ export const AddColumnSelect: FunctionComponent<SelectProps> = styled(
 
 export const AddColumnWrapper = styled(Space)`
 	width: 100%;
+`;
+
+export const AddColumnItem = styled(Space)`
+	width: 100%;
+	display: flex;
+	justify-content: space-between;
+`;
+
+export const DeleteOutlinedIcon = styled(DeleteOutlined)`
+	color: red;
 `;

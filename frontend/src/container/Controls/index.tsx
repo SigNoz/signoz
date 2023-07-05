@@ -1,33 +1,30 @@
 import { LeftOutlined, RightOutlined } from '@ant-design/icons';
 import { Button, Select } from 'antd';
+import { DEFAULT_PER_PAGE_OPTIONS, Pagination } from 'hooks/queryPagination';
 import { memo, useMemo } from 'react';
 
-import { defaultSelectStyle, ITEMS_PER_PAGE_OPTIONS } from './config';
+import { defaultSelectStyle } from './config';
 import { Container } from './styles';
 
-interface ControlsProps {
-	count: number;
-	countPerPage: number;
-	isLoading: boolean;
-	handleNavigatePrevious: () => void;
-	handleNavigateNext: () => void;
-	handleCountItemsPerPageChange: (e: number) => void;
-}
-
-function Controls(props: ControlsProps): JSX.Element | null {
-	const {
-		count,
-		isLoading,
-		countPerPage,
-		handleNavigatePrevious,
-		handleNavigateNext,
-		handleCountItemsPerPageChange,
-	} = props;
-
+function Controls({
+	offset = 0,
+	perPageOptions = DEFAULT_PER_PAGE_OPTIONS,
+	isLoading,
+	totalCount,
+	countPerPage,
+	handleNavigatePrevious,
+	handleNavigateNext,
+	handleCountItemsPerPageChange,
+}: ControlsProps): JSX.Element | null {
 	const isNextAndPreviousDisabled = useMemo(
-		() => isLoading || countPerPage === 0 || count === 0 || count < countPerPage,
-		[isLoading, countPerPage, count],
+		() => isLoading || countPerPage < 0 || totalCount === 0,
+		[isLoading, countPerPage, totalCount],
 	);
+	const isPreviousDisabled = useMemo(() => offset <= 0, [offset]);
+	const isNextDisabled = useMemo(() => totalCount < countPerPage, [
+		countPerPage,
+		totalCount,
+	]);
 
 	return (
 		<Container>
@@ -35,7 +32,7 @@ function Controls(props: ControlsProps): JSX.Element | null {
 				loading={isLoading}
 				size="small"
 				type="link"
-				disabled={isNextAndPreviousDisabled}
+				disabled={isPreviousDisabled || isNextAndPreviousDisabled}
 				onClick={handleNavigatePrevious}
 			>
 				<LeftOutlined /> Previous
@@ -44,18 +41,18 @@ function Controls(props: ControlsProps): JSX.Element | null {
 				loading={isLoading}
 				size="small"
 				type="link"
-				disabled={isNextAndPreviousDisabled}
+				disabled={isNextDisabled || isNextAndPreviousDisabled}
 				onClick={handleNavigateNext}
 			>
 				Next <RightOutlined />
 			</Button>
-			<Select
+			<Select<Pagination['limit']>
 				style={defaultSelectStyle}
 				loading={isLoading}
 				value={countPerPage}
 				onChange={handleCountItemsPerPageChange}
 			>
-				{ITEMS_PER_PAGE_OPTIONS.map((count) => (
+				{perPageOptions.map((count) => (
 					<Select.Option
 						key={count}
 						value={count}
@@ -64,6 +61,22 @@ function Controls(props: ControlsProps): JSX.Element | null {
 			</Select>
 		</Container>
 	);
+}
+
+Controls.defaultProps = {
+	offset: 0,
+	perPageOptions: DEFAULT_PER_PAGE_OPTIONS,
+};
+
+export interface ControlsProps {
+	offset?: Pagination['offset'];
+	perPageOptions?: number[];
+	totalCount: number;
+	countPerPage: Pagination['limit'];
+	isLoading: boolean;
+	handleNavigatePrevious: () => void;
+	handleNavigateNext: () => void;
+	handleCountItemsPerPageChange: (value: Pagination['limit']) => void;
 }
 
 export default memo(Controls);

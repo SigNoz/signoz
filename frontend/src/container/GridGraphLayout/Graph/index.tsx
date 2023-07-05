@@ -4,6 +4,7 @@ import Spinner from 'components/Spinner';
 import GridGraphComponent from 'container/GridGraphComponent';
 import { UpdateDashboard } from 'container/GridGraphLayout/utils';
 import { useGetQueryRange } from 'hooks/queryBuilder/useGetQueryRange';
+import { useStepInterval } from 'hooks/queryBuilder/useStepInterval';
 import { useNotifications } from 'hooks/useNotifications';
 import usePreviousValue from 'hooks/usePreviousValue';
 import { getDashboardVariables } from 'lib/dashbaordVariables/getDashboardVariables';
@@ -80,11 +81,13 @@ function GridCardGraph({
 	const selectedData = selectedDashboard?.data;
 	const { variables } = selectedData;
 
+	const updatedQuery = useStepInterval(widget?.query);
+
 	const queryResponse = useGetQueryRange(
 		{
 			selectedTime: widget?.timePreferance,
 			graphType: widget?.panelTypes,
-			query: widget?.query,
+			query: updatedQuery,
 			globalSelectedInterval,
 			variables: getDashboardVariables(),
 		},
