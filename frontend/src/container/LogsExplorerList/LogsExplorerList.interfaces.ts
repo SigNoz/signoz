@@ -6,4 +6,6 @@ export type LogsExplorerListProps = {
 	currentStagedQueryData: IBuilderQuery | null;
 	logs: ILog[];
 	onEndReached: (index: number) => void;
+	onExpand: (log: ILog) => void;
+	onOpenDetailedView: (log: ILog) => void;
 };

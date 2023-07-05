@@ -2,6 +2,7 @@ import { TabsProps } from 'antd';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { queryParamNamesMap } from 'constants/queryBuilderQueryNames';
 import { DEFAULT_PER_PAGE_VALUE } from 'container/Controls/config';
+import LogExplorerDetailedView from 'container/LogExplorerDetailedView';
 import LogsExplorerChart from 'container/LogsExplorerChart';
 import LogsExplorerList from 'container/LogsExplorerList';
 import LogsExplorerTable from 'container/LogsExplorerTable';
@@ -34,6 +35,8 @@ function LogsExplorerViews(): JSX.Element {
 		redirectWithQueryBuilderData,
 	} = useQueryBuilder();
 
+	// State
+	const [activeLog, setActiveLog] = useState<ILog | null>(null);
 	const [page, setPage] = useState<number>(1);
 	const [logs, setLogs] = useState<ILog[]>([]);
 	const [requestData, setRequestData] = useState<Query | null>(null);
@@ -101,6 +104,14 @@ function LogsExplorerViews(): JSX.Element {
 			redirectWithQueryBuilderData,
 		],
 	);
+
+	const handleSetActiveLog = useCallback((nextActiveLog: ILog) => {
+		setActiveLog(nextActiveLog);
+	}, []);
+
+	const handleClearActiveLog = useCallback(() => {
+		setActiveLog(null);
+	}, []);
 
 	const getRequestData = useCallback(
 		(
@@ -214,7 +225,9 @@ function LogsExplorerViews(): JSX.Element {
 						isLoading={isFetching}
 						currentStagedQueryData={currentStagedQueryData}
 						logs={logs}
+						onOpenDetailedView={handleSetActiveLog}
 						onEndReached={handleEndReached}
+						onExpand={handleSetActiveLog}
 					/>
 				),
 			},
@@ -242,6 +255,7 @@ function LogsExplorerViews(): JSX.Element {
 			isFetching,
 			currentStagedQueryData,
 			logs,
+			handleSetActiveLog,
 			handleEndReached,
 			data,
 			isError,
@@ -261,6 +275,7 @@ function LogsExplorerViews(): JSX.Element {
 				onChange={handleChangeView}
 				destroyInactiveTabPane
 			/>
+			<LogExplorerDetailedView log={activeLog} onClose={handleClearActiveLog} />
 		</>
 	);
 }
