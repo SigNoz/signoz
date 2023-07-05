@@ -1,3 +1,4 @@
+import { QueryParams } from 'constants/query';
 import { getMinMax } from 'container/TopNav/AutoRefresh/config';
 import useUrlQuery from 'hooks/useUrlQuery';
 import history from 'lib/history';
@@ -25,6 +26,7 @@ export function useSearchParser(): {
 	const dispatch = useDispatch<Dispatch<AppActions>>();
 	const {
 		searchFilter: { parsedQuery, queryString },
+		order,
 	} = useSelector<AppState, ILogsReducer>((store) => store.logs);
 
 	const urlQuery = useUrlQuery();
@@ -39,7 +41,7 @@ export function useSearchParser(): {
 		(updatedQueryString: string) => {
 			history.replace({
 				pathname: history.location.pathname,
-				search: `?q=${updatedQueryString}`,
+				search: `?${QueryParams.q}=${updatedQueryString}&${QueryParams.order}=${order}`,
 			});
 
 			const globalTime = getMinMax(selectedTime, minTime, maxTime);

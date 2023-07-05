@@ -4,7 +4,7 @@ import ListLogView from 'components/Logs/ListLogView';
 import RawLogView from 'components/Logs/RawLogView';
 import Spinner from 'components/Spinner';
 import ExplorerControlPanel from 'container/ExplorerControlPanel';
-import { Container, Heading } from 'container/LogsTable/styles';
+import { Heading } from 'container/LogsTable/styles';
 import { useOptionsMenu } from 'container/OptionsMenu';
 import { contentStyle } from 'container/Trace/Search/config';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
@@ -28,7 +28,6 @@ function LogsExplorerList({
 	isLoading,
 	currentStagedQueryData,
 	logs,
-	isLimit,
 	onOpenDetailedView,
 	onEndReached,
 	onExpand,
@@ -91,11 +90,11 @@ function LogsExplorerList({
 	);
 
 	const renderContent = useMemo(() => {
-		const components = isLimit
-			? {}
-			: {
+		const components = isLoading
+			? {
 					Footer,
-			  };
+			  }
+			: {};
 
 		if (options.format === 'table') {
 			return (
@@ -124,10 +123,10 @@ function LogsExplorerList({
 			</Card>
 		);
 	}, [
-		isLimit,
+		isLoading,
+		logs,
 		options.format,
 		options.maxLines,
-		logs,
 		onEndReached,
 		getItemContent,
 		selectedFields,
@@ -135,10 +134,10 @@ function LogsExplorerList({
 	]);
 
 	return (
-		<Container>
+		<>
 			<ExplorerControlPanel
 				isLoading={isLoading}
-				isShowPageSize
+				isShowPageSize={false}
 				optionsMenuConfig={config}
 			/>
 			{options.format !== 'table' && (
@@ -148,7 +147,7 @@ function LogsExplorerList({
 			)}
 			{logs.length === 0 && <Typography>No logs lines found</Typography>}
 			<InfinityWrapperStyled>{renderContent}</InfinityWrapperStyled>
-		</Container>
+		</>
 	);
 }
 

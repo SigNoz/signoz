@@ -1,12 +1,13 @@
 import { TabsProps } from 'antd';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { queryParamNamesMap } from 'constants/queryBuilderQueryNames';
-import { ITEMS_PER_PAGE_OPTIONS } from 'container/Controls/config';
+import { DEFAULT_PER_PAGE_VALUE } from 'container/Controls/config';
 import LogExplorerDetailedView from 'container/LogExplorerDetailedView';
 import LogsExplorerChart from 'container/LogsExplorerChart';
 import LogsExplorerList from 'container/LogsExplorerList';
 import LogsExplorerTable from 'container/LogsExplorerTable';
 import { GRAPH_TYPES } from 'container/NewDashboard/ComponentsSlider';
+import TimeSeriesView from 'container/TimeSeriesView/TimeSeriesView';
 import { useGetExplorerQueryRange } from 'hooks/queryBuilder/useGetExplorerQueryRange';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import useUrlQueryData from 'hooks/useUrlQueryData';
@@ -16,32 +17,29 @@ import { ILog } from 'types/api/logs/log';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource } from 'types/common/queryBuilder';
 
+import { DEFAULT_QUERY_LIMIT } from './constants';
 import { TabsStyled } from './LogsExplorerViews.styled';
 
 function LogsExplorerViews(): JSX.Element {
 	const { queryData: pageSize } = useUrlQueryData(
 		queryParamNamesMap.pageSize,
-		ITEMS_PER_PAGE_OPTIONS[0],
+		DEFAULT_PER_PAGE_VALUE,
 	);
 
 	// Context
 	const {
 		currentQuery,
-		isQueryStaged,
 		stagedQuery,
 		panelType,
 		updateAllQueriesOperators,
-		handleSetQueryData,
 		redirectWithQueryBuilderData,
 	} = useQueryBuilder();
 
 	// State
-	const [currentScrolledLog, setCurrentScrolledLog] = useState<ILog | null>(
-		null,
-	);
 	const [activeLog, setActiveLog] = useState<ILog | null>(null);
 	const [page, setPage] = useState<number>(1);
 	const [logs, setLogs] = useState<ILog[]>([]);
+	const [requestData, setRequestData] = useState<Query | null>(null);
 
 	const currentStagedQueryData = useMemo(() => {
 		if (!stagedQuery || stagedQuery.builder.queryData.length !== 1) return null;
@@ -56,47 +54,6 @@ function LogsExplorerViews(): JSX.Element {
 
 		return !!timestampOrderBy;
 	}, [currentStagedQueryData]);
-
-	const paginationQueryData = useMemo(() => {
-		if (!stagedQuery) return null;
-
-		return getPaginationQueryData({
-			query: stagedQuery,
-			listItemId: currentScrolledLog ? currentScrolledLog.id : null,
-			isTimeStampPresent,
-			page,
-			pageSize,
-		});
-	}, [stagedQuery, currentScrolledLog, isTimeStampPresent, page, pageSize]);
-
-	const requestData: Query | null = useMemo(() => {
-		if (!stagedQuery) return null;
-		if (stagedQuery && panelType !== PANEL_TYPES.LIST) return stagedQuery;
-
-		if (!paginationQueryData) return null;
-
-		const data: Query = {
-			...stagedQuery,
-			builder: {
-				...stagedQuery.builder,
-				queryData: stagedQuery.builder.queryData.map((item) => ({
-					...item,
-					...paginationQueryData,
-					pageSize,
-				})),
-			},
-		};
-
-		return data;
-	}, [stagedQuery, panelType, paginationQueryData, pageSize]);
-
-	const isLimit: boolean = useMemo(() => {
-		if (!paginationQueryData) return false;
-
-		const limit = paginationQueryData.limit || 100;
-
-		return logs.length >= limit;
-	}, [logs.length, paginationQueryData]);
 
 	const isMultipleQueries = useMemo(
 		() =>
@@ -114,26 +71,17 @@ function LogsExplorerViews(): JSX.Element {
 		return groupByCount > 0;
 	}, [currentQuery]);
 
-	const { data, isFetching } = useGetExplorerQueryRange(requestData, {
+	const isLimit: boolean = useMemo(() => {
+		if (!currentStagedQueryData) return false;
+		const limit = currentStagedQueryData.limit || DEFAULT_QUERY_LIMIT;
+
+		return logs.length >= limit;
+	}, [logs.length, currentStagedQueryData]);
+
+	const { data, isFetching, isError } = useGetExplorerQueryRange(requestData, {
 		keepPreviousData: true,
-		...(isLimit ? { enabled: !isLimit } : {}),
+		enabled: !isLimit,
 	});
-
-	const handleEndReached = useCallback(
-		(index: number) => {
-			const lastLog = logs[index];
-			if (isLimit) return;
-
-			if (isTimeStampPresent) {
-				setCurrentScrolledLog((prevLog) =>
-					prevLog?.id === lastLog.id ? prevLog : lastLog,
-				);
-			}
-
-			setPage((prevPage) => prevPage + 1);
-		},
-		[logs, isLimit, isTimeStampPresent],
-	);
 
 	const handleSetActiveLog = useCallback((nextActiveLog: ILog) => {
 		setActiveLog(nextActiveLog);
@@ -141,12 +89,6 @@ function LogsExplorerViews(): JSX.Element {
 
 	const handleClearActiveLog = useCallback(() => {
 		setActiveLog(null);
-	}, []);
-
-	const handleResetPagination = useCallback(() => {
-		setPage(1);
-		setCurrentScrolledLog(null);
-		setLogs([]);
 	}, []);
 
 	const handleChangeView = useCallback(
@@ -171,6 +113,75 @@ function LogsExplorerViews(): JSX.Element {
 		],
 	);
 
+	const getRequestData = useCallback(
+		(
+			query: Query | null,
+			params: { page: number; log: ILog | null; pageSize: number },
+		): Query | null => {
+			if (!query) return null;
+
+			const paginateData = getPaginationQueryData({
+				currentStagedQueryData,
+				listItemId: params.log ? params.log.id : null,
+				isTimeStampPresent,
+				page: params.page,
+				pageSize: params.pageSize,
+			});
+
+			const data: Query = {
+				...query,
+				builder: {
+					...query.builder,
+					queryData: query.builder.queryData.map((item) => ({
+						...item,
+						...paginateData,
+						limit: item.limit || DEFAULT_QUERY_LIMIT,
+						pageSize: params.pageSize,
+					})),
+				},
+			};
+
+			return data;
+		},
+		[currentStagedQueryData, isTimeStampPresent],
+	);
+
+	const handleEndReached = useCallback(
+		(index: number) => {
+			if (isLimit) return;
+
+			const lastLog = logs[index];
+
+			const limit = currentStagedQueryData?.limit || DEFAULT_QUERY_LIMIT;
+
+			const nextLogsLenth = logs.length + pageSize;
+
+			const nextPageSize = nextLogsLenth >= limit ? limit - logs.length : pageSize;
+
+			if (!stagedQuery) return;
+
+			const newRequestData = getRequestData(stagedQuery, {
+				page: page + 1,
+				log: isTimeStampPresent ? lastLog : null,
+				pageSize: nextPageSize,
+			});
+
+			setPage((prevPage) => prevPage + 1);
+
+			setRequestData(newRequestData);
+		},
+		[
+			isLimit,
+			logs,
+			currentStagedQueryData?.limit,
+			pageSize,
+			stagedQuery,
+			getRequestData,
+			page,
+			isTimeStampPresent,
+		],
+	);
+
 	useEffect(() => {
 		const shouldChangeView = isMultipleQueries || isGroupByExist;
 
@@ -191,23 +202,17 @@ function LogsExplorerViews(): JSX.Element {
 	}, [data]);
 
 	useEffect(() => {
-		if (isQueryStaged && panelType === PANEL_TYPES.LIST) {
-			handleResetPagination();
+		if (requestData?.id !== stagedQuery?.id) {
+			const newRequestData = getRequestData(stagedQuery, {
+				page: 1,
+				log: null,
+				pageSize,
+			});
+			setLogs([]);
+			setPage(1);
+			setRequestData(newRequestData);
 		}
-	}, [handleResetPagination, isQueryStaged, panelType]);
-
-	useEffect(() => {
-		if (!requestData) return;
-		if (panelType !== PANEL_TYPES.LIST) return;
-
-		const {
-			offset,
-			pageSize,
-			...restQueryData
-		} = requestData.builder.queryData[0];
-
-		handleSetQueryData(0, restQueryData);
-	}, [handleSetQueryData, panelType, requestData]);
+	}, [stagedQuery, requestData, getRequestData, pageSize]);
 
 	const tabsItems: TabsProps['items'] = useMemo(
 		() => [
@@ -220,14 +225,19 @@ function LogsExplorerViews(): JSX.Element {
 						isLoading={isFetching}
 						currentStagedQueryData={currentStagedQueryData}
 						logs={logs}
-						isLimit={isLimit}
 						onOpenDetailedView={handleSetActiveLog}
 						onEndReached={handleEndReached}
 						onExpand={handleSetActiveLog}
 					/>
 				),
 			},
-			{ label: 'TimeSeries', key: PANEL_TYPES.TIME_SERIES },
+			{
+				label: 'TimeSeries',
+				key: PANEL_TYPES.TIME_SERIES,
+				children: (
+					<TimeSeriesView isLoading={isFetching} data={data} isError={isError} />
+				),
+			},
 			{
 				label: 'Table',
 				key: PANEL_TYPES.TABLE,
@@ -245,10 +255,10 @@ function LogsExplorerViews(): JSX.Element {
 			isFetching,
 			currentStagedQueryData,
 			logs,
-			isLimit,
-			handleEndReached,
 			handleSetActiveLog,
+			handleEndReached,
 			data,
+			isError,
 		],
 	);
 
