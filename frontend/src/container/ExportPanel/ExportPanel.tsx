@@ -1,12 +1,11 @@
 import { Button, Typography } from 'antd';
 import createDashboard from 'api/dashboard/create';
-import getAll from 'api/dashboard/getAll';
 import axios from 'axios';
-import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
+import { useGetAllDashboard } from 'hooks/dashboard/useGetAllDashboard';
 import { useNotifications } from 'hooks/useNotifications';
 import { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useMutation, useQuery } from 'react-query';
+import { useMutation } from 'react-query';
 
 import { ExportPanelProps } from '.';
 import {
@@ -18,7 +17,7 @@ import {
 } from './styles';
 import { getSelectOptions } from './utils';
 
-function ExportPanel({ onExport }: ExportPanelProps): JSX.Element {
+function ExportPanel({ isLoading, onExport }: ExportPanelProps): JSX.Element {
 	const { notifications } = useNotifications();
 	const { t } = useTranslation(['dashboard']);
 
@@ -26,16 +25,18 @@ function ExportPanel({ onExport }: ExportPanelProps): JSX.Element {
 		null,
 	);
 
-	const { data, isLoading, refetch } = useQuery({
-		queryFn: getAll,
-		queryKey: REACT_QUERY_KEY.GET_ALL_DASHBOARDS,
-	});
+	const {
+		data,
+		isLoading: isAllDashboardsLoading,
+		refetch,
+	} = useGetAllDashboard();
 
 	const {
 		mutate: createNewDashboard,
 		isLoading: createDashboardLoading,
 	} = useMutation(createDashboard, {
-		onSuccess: () => {
+		onSuccess: (data) => {
+			onExport(data?.payload || null);
 			refetch();
 		},
 		onError: (error) => {
@@ -73,6 +74,14 @@ function ExportPanel({ onExport }: ExportPanelProps): JSX.Element {
 		});
 	}, [t, createNewDashboard]);
 
+	const isDashboardLoading = isAllDashboardsLoading || createDashboardLoading;
+
+	const isDisabled =
+		isAllDashboardsLoading ||
+		!options?.length ||
+		!selectedDashboardId ||
+		isLoading;
+
 	return (
 		<Wrapper direction="vertical">
 			<Title>Export Panel</Title>
@@ -81,14 +90,15 @@ function ExportPanel({ onExport }: ExportPanelProps): JSX.Element {
 				<DashboardSelect
 					placeholder="Select Dashboard"
 					options={options}
-					loading={isLoading || createDashboardLoading}
-					disabled={isLoading || createDashboardLoading}
+					loading={isDashboardLoading}
+					disabled={isDashboardLoading}
 					value={selectedDashboardId}
 					onSelect={handleSelect}
 				/>
 				<Button
 					type="primary"
-					disabled={isLoading || !options?.length || !selectedDashboardId}
+					loading={isLoading}
+					disabled={isDisabled}
 					onClick={handleExportClick}
 				>
 					Export

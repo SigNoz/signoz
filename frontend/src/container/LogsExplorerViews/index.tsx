@@ -5,6 +5,7 @@ import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import LogsExplorerList from 'container/LogsExplorerList';
 import LogsExplorerTable from 'container/LogsExplorerTable';
 import { GRAPH_TYPES } from 'container/NewDashboard/ComponentsSlider';
+import TimeSeriesView from 'container/TimeSeriesView/TimeSeriesView';
 import { useGetQueryRange } from 'hooks/queryBuilder/useGetQueryRange';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { memo, useCallback, useEffect, useMemo } from 'react';
@@ -29,12 +30,15 @@ function LogsExplorerViews(): JSX.Element {
 		(state) => state.globalTime,
 	);
 
-	const { data, isFetching } = useGetQueryRange(
+	const { data, isFetching, isError } = useGetQueryRange(
 		{
 			query: stagedQuery || initialQueriesMap.metrics,
 			graphType: panelType || PANEL_TYPES.LIST,
 			globalSelectedInterval: selectedTime,
 			selectedTime: 'GLOBAL_TIME',
+			params: {
+				dataSource: DataSource.LOGS,
+			},
 		},
 		{
 			queryKey: [REACT_QUERY_KEY.GET_QUERY_RANGE, selectedTime, stagedQuery],
@@ -71,14 +75,20 @@ function LogsExplorerViews(): JSX.Element {
 				disabled: isMultipleQueries || isGroupByExist,
 				children: <LogsExplorerList data={currentData} isLoading={isFetching} />,
 			},
-			{ label: 'TimeSeries', key: PANEL_TYPES.TIME_SERIES },
+			{
+				label: 'TimeSeries',
+				key: PANEL_TYPES.TIME_SERIES,
+				children: (
+					<TimeSeriesView isLoading={isFetching} data={data} isError={isError} />
+				),
+			},
 			{
 				label: 'Table',
 				key: PANEL_TYPES.TABLE,
 				children: <LogsExplorerTable data={currentData} isLoading={isFetching} />,
 			},
 		],
-		[isMultipleQueries, isGroupByExist, currentData, isFetching],
+		[isMultipleQueries, isGroupByExist, currentData, isFetching, data, isError],
 	);
 
 	const handleChangeView = useCallback(

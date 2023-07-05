@@ -178,11 +178,12 @@ const (
 	PanelTypeGraph PanelType = "graph"
 	PanelTypeTable PanelType = "table"
 	PanelTypeList  PanelType = "list"
+	PanelTypeTrace PanelType = "trace"
 )
 
 func (p PanelType) Validate() error {
 	switch p {
-	case PanelTypeValue, PanelTypeGraph, PanelTypeTable, PanelTypeList:
+	case PanelTypeValue, PanelTypeGraph, PanelTypeTable, PanelTypeList, PanelTypeTrace:
 		return nil
 	default:
 		return fmt.Errorf("invalid panel type: %s", p)
