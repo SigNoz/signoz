@@ -2,6 +2,7 @@ import {
 	initialAutocompleteData,
 	initialQueryBuilderFormValuesMap,
 	mapOfFilters,
+	PANEL_TYPES,
 } from 'constants/queryBuilder';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { getOperatorsBySourceAndPanelType } from 'lib/newQueryBuilder/getOperatorsBySourceAndPanelType';
@@ -56,9 +57,16 @@ export const useQueryOperations: UseQueryOperations = ({ query, index }) => {
 	);
 
 	const getNewListOfAdditionalFilters = useCallback(
-		(dataSource: DataSource): string[] =>
-			mapOfFilters[dataSource].map((item) => item.text),
-		[],
+		(dataSource: DataSource): string[] => {
+			const listOfFilters = mapOfFilters[dataSource].map((item) => item.text);
+
+			if (panelType === PANEL_TYPES.LIST) {
+				return listOfFilters.filter((filter) => filter !== 'Aggregation interval');
+			}
+
+			return listOfFilters;
+		},
+		[panelType],
 	);
 
 	const handleChangeAggregatorAttribute = useCallback(
@@ -78,7 +86,7 @@ export const useQueryOperations: UseQueryOperations = ({ query, index }) => {
 		(nextSource: DataSource): void => {
 			const newOperators = getOperatorsBySourceAndPanelType({
 				dataSource: nextSource,
-				panelType,
+				panelType: panelType || PANEL_TYPES.TIME_SERIES,
 			});
 
 			const entries = Object.entries(
@@ -121,33 +129,22 @@ export const useQueryOperations: UseQueryOperations = ({ query, index }) => {
 		[query.dataSource],
 	);
 
+	const isTracePanelType = useMemo(() => panelType === PANEL_TYPES.TRACE, [
+		panelType,
+	]);
+
 	useEffect(() => {
 		if (initialDataSource && dataSource !== initialDataSource) return;
 
 		const initialOperators = getOperatorsBySourceAndPanelType({
 			dataSource,
-			panelType,
+			panelType: panelType || PANEL_TYPES.TIME_SERIES,
 		});
 
 		if (JSON.stringify(operators) === JSON.stringify(initialOperators)) return;
 
 		setOperators(initialOperators);
-
-		const isCurrentOperatorAvailableInList = initialOperators
-			.map((operator) => operator.value)
-			.includes(aggregateOperator);
-
-		if (!isCurrentOperatorAvailableInList) {
-			handleChangeOperator(initialOperators[0].value);
-		}
-	}, [
-		dataSource,
-		initialDataSource,
-		panelType,
-		operators,
-		aggregateOperator,
-		handleChangeOperator,
-	]);
+	}, [dataSource, initialDataSource, panelType, operators]);
 
 	useEffect(() => {
 		const additionalFilters = getNewListOfAdditionalFilters(dataSource);
@@ -156,6 +153,7 @@ export const useQueryOperations: UseQueryOperations = ({ query, index }) => {
 	}, [dataSource, aggregateOperator, getNewListOfAdditionalFilters]);
 
 	return {
+		isTracePanelType,
 		isMetricsDataSource,
 		operators,
 		listOfAdditionalFilters,

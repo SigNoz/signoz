@@ -15,26 +15,36 @@ import { ActionsWrapperStyled } from './QueryBuilder.styled';
 
 export const QueryBuilder = memo(function QueryBuilder({
 	config,
-	panelType,
+	panelType: newPanelType,
 	actions,
 }: QueryBuilderProps): JSX.Element {
 	const {
 		currentQuery,
-		setupInitialDataSource,
 		addNewBuilderQuery,
 		addNewFormula,
-		handleSetPanelType,
+		handleSetConfig,
+		panelType,
+		initialDataSource,
 	} = useQueryBuilder();
 
-	useEffect(() => {
-		if (config && config.queryVariant === 'static') {
-			setupInitialDataSource(config.initialDataSource);
-		}
-	}, [config, setupInitialDataSource]);
+	const currentDataSource = useMemo(
+		() =>
+			(config && config.queryVariant === 'static' && config.initialDataSource) ||
+			null,
+		[config],
+	);
 
 	useEffect(() => {
-		handleSetPanelType(panelType);
-	}, [handleSetPanelType, panelType]);
+		if (currentDataSource !== initialDataSource || newPanelType !== panelType) {
+			handleSetConfig(newPanelType, currentDataSource);
+		}
+	}, [
+		handleSetConfig,
+		panelType,
+		initialDataSource,
+		currentDataSource,
+		newPanelType,
+	]);
 
 	const isDisabledQueryButton = useMemo(
 		() => currentQuery.builder.queryData.length >= MAX_QUERIES,
@@ -48,7 +58,7 @@ export const QueryBuilder = memo(function QueryBuilder({
 
 	const isAvailableToDisableQuery = useMemo(
 		() =>
-			currentQuery.builder.queryData.length > 1 ||
+			currentQuery.builder.queryData.length > 0 ||
 			currentQuery.builder.queryFormulas.length > 0,
 		[currentQuery],
 	);
