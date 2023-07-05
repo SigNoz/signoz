@@ -321,8 +321,6 @@ function LogsExplorerViews(): JSX.Element {
 			: [data.payload.data.result[0]];
 	}, [stagedQuery, data, panelType, listChartData]);
 
-	console.log({ chartData });
-
 	return (
 		<>
 			<LogsExplorerChart isLoading={isFetching} data={chartData} />
