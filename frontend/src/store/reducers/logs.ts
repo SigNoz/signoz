@@ -39,7 +39,7 @@ const initialState: ILogsReducer = {
 		parsedQuery: [],
 	},
 	logs: [],
-	logLinesPerPage: 25,
+	logLinesPerPage: 200,
 	linesPerRow: 2,
 	viewMode: 'raw',
 	idEnd: '',
