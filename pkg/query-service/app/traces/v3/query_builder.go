@@ -148,7 +148,9 @@ func buildTracesFilterQuery(fs *v3.FilterSet, keys map[string]v3.AttributeKey) (
 					return "", fmt.Errorf("invalid value for key %s: %v", item.Key.Key, err)
 				}
 			}
-			fmtVal = utils.ClickHouseFormattedValue(val)
+			if val != nil {
+				fmtVal = utils.ClickHouseFormattedValue(val)
+			}
 			if operator, ok := tracesOperatorMappingV3[item.Operator]; ok {
 				switch item.Operator {
 				case v3.FilterOperatorContains, v3.FilterOperatorNotContains:
@@ -356,7 +358,7 @@ func groupBy(tags ...string) string {
 func groupByAttributeKeyTags(keys map[string]v3.AttributeKey, tags ...v3.AttributeKey) string {
 	groupTags := []string{}
 	for _, tag := range tags {
-		groupTags = append(groupTags, tag.Key)
+		groupTags = append(groupTags, fmt.Sprintf("`%s`", tag.Key))
 	}
 	return groupBy(groupTags...)
 }
@@ -378,10 +380,10 @@ func orderBy(panelType v3.PanelType, items []v3.OrderBy, tags []string, keys map
 
 	for _, tag := range tags {
 		if item, ok := itemsLookup[tag]; ok {
-			orderBy = append(orderBy, fmt.Sprintf("%s %s", item.ColumnName, item.Order))
+			orderBy = append(orderBy, fmt.Sprintf("`%s` %s", item.ColumnName, item.Order))
 			addedToOrderBy[item.ColumnName] = true
 		} else {
-			orderBy = append(orderBy, fmt.Sprintf("%s ASC", tag))
+			orderBy = append(orderBy, fmt.Sprintf("`%s` ASC", tag))
 		}
 	}
 
@@ -401,7 +403,12 @@ func orderBy(panelType v3.PanelType, items []v3.OrderBy, tags []string, keys map
 			if !addedToOrderBy[item.ColumnName] {
 				attr := v3.AttributeKey{Key: item.ColumnName, DataType: item.DataType, Type: item.Type, IsColumn: item.IsColumn}
 				name := getColumnName(attr, keys)
-				orderBy = append(orderBy, fmt.Sprintf("%s %s", name, item.Order))
+				
+				if item.IsColumn {
+					orderBy = append(orderBy, fmt.Sprintf("`%s` %s", name, item.Order))
+				} else {
+					orderBy = append(orderBy, fmt.Sprintf("%s %s", name, item.Order))
+				}
 			}
 		}
 	}

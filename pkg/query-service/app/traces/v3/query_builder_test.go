@@ -340,7 +340,7 @@ var testOrderBy = []struct {
 			},
 		},
 		Tags:   []string{"name"},
-		Result: []string{"name asc", "value desc"},
+		Result: []string{"`name` asc", "value desc"},
 	},
 	{
 		Name:      "Test 2",
@@ -356,7 +356,7 @@ var testOrderBy = []struct {
 			},
 		},
 		Tags:   []string{"name", "bytes"},
-		Result: []string{"name asc", "bytes asc"},
+		Result: []string{"`name` asc", "`bytes` asc"},
 	},
 	{
 		Name:      "Test 3",
@@ -376,7 +376,7 @@ var testOrderBy = []struct {
 			},
 		},
 		Tags:   []string{"name", "bytes"},
-		Result: []string{"name asc", "bytes asc", "value asc"},
+		Result: []string{"`name` asc", "`bytes` asc", "value asc"},
 	},
 	{
 		Name:      "Test 4",
@@ -399,19 +399,27 @@ var testOrderBy = []struct {
 			},
 		},
 		Tags:   []string{"name", "bytes"},
-		Result: []string{"name asc", "bytes asc", "stringTagMap['response_time'] desc"},
+		Result: []string{"`name` asc", "`bytes` asc", "stringTagMap['response_time'] desc"},
 	},
 	{
-		Name:      "Test 4",
+		Name:      "Test 5",
 		PanelType: v3.PanelTypeList,
 		Items: []v3.OrderBy{
 			{
 				ColumnName: "name",
 				Order:      "asc",
+				Key:        "name",
+				Type:       v3.AttributeKeyTypeTag,
+				DataType:   v3.AttributeKeyDataTypeString,
+				IsColumn:   true,
 			},
 			{
 				ColumnName: "bytes",
 				Order:      "asc",
+				Key:        "bytes",
+				Type:       v3.AttributeKeyTypeTag,
+				DataType:   v3.AttributeKeyDataTypeString,
+				IsColumn:   true,
 			},
 			{
 				ColumnName: "response_time",
@@ -419,7 +427,7 @@ var testOrderBy = []struct {
 			},
 		},
 		Tags:   []string{},
-		Result: []string{"name asc", "bytes asc", "stringTagMap['response_time'] desc"},
+		Result: []string{"`name` asc", "`bytes` asc", "stringTagMap['response_time'] desc"},
 	},
 }
 
@@ -630,8 +638,8 @@ var testBuildTracesQueryData = []struct {
 			"toFloat64(count(distinct(name))) as value from signoz_traces.distributed_signoz_index_v2 " +
 			"where (timestamp >= '1680066360726210000' AND timestamp <= '1680066458000000000') " +
 			"AND stringTagMap['http.method'] = 'GET' AND resourceTagsMap['x'] != 'abc' " +
-			"AND has(stringTagMap, 'http.method') group by http.method,ts " +
-			"order by http.method ASC,ts",
+			"AND has(stringTagMap, 'http.method') group by `http.method`,ts " +
+			"order by `http.method` ASC,ts",
 		PanelType: v3.PanelTypeGraph,
 	},
 	{
@@ -662,8 +670,8 @@ var testBuildTracesQueryData = []struct {
 			"toFloat64(count(distinct(name))) as value from signoz_traces.distributed_signoz_index_v2 " +
 			"where (timestamp >= '1680066360726210000' AND timestamp <= '1680066458000000000') " +
 			"AND stringTagMap['method'] = 'GET' AND resourceTagsMap['x'] != 'abc' " +
-			"AND has(stringTagMap, 'method') AND has(resourceTagsMap, 'x') group by method,x,ts " +
-			"order by method ASC,x ASC,ts",
+			"AND has(stringTagMap, 'method') AND has(resourceTagsMap, 'x') group by `method`,`x`,ts " +
+			"order by `method` ASC,`x` ASC,ts",
 		PanelType: v3.PanelTypeGraph,
 	},
 	{
@@ -690,8 +698,8 @@ var testBuildTracesQueryData = []struct {
 			"from signoz_traces.distributed_signoz_index_v2 " +
 			"where (timestamp >= '1680066360726210000' AND timestamp <= '1680066458000000000') " +
 			"AND stringTagMap['method'] = 'GET' " +
-			"AND has(stringTagMap, 'method') group by method,ts " +
-			"order by method ASC,ts",
+			"AND has(stringTagMap, 'method') group by `method`,ts " +
+			"order by `method` ASC,ts",
 		PanelType: v3.PanelTypeGraph,
 	},
 	{
@@ -718,8 +726,8 @@ var testBuildTracesQueryData = []struct {
 			"from signoz_traces.distributed_signoz_index_v2 " +
 			"where (timestamp >= '1680066360726210000' AND timestamp <= '1680066458000000000') " +
 			"AND stringTagMap['method'] = 'GET' " +
-			"AND has(stringTagMap, 'method') group by method,ts " +
-			"order by method ASC,ts",
+			"AND has(stringTagMap, 'method') group by `method`,ts " +
+			"order by `method` ASC,ts",
 		PanelType: v3.PanelTypeGraph,
 	},
 	{
@@ -746,8 +754,8 @@ var testBuildTracesQueryData = []struct {
 			"from signoz_traces.distributed_signoz_index_v2 " +
 			"where (timestamp >= '1680066360726210000' AND timestamp <= '1680066458000000000') " +
 			"AND stringTagMap['method'] = 'GET' " +
-			"AND has(stringTagMap, 'method') group by method,ts " +
-			"order by method ASC,ts",
+			"AND has(stringTagMap, 'method') group by `method`,ts " +
+			"order by `method` ASC,ts",
 		PanelType: v3.PanelTypeGraph,
 	},
 	{
@@ -774,8 +782,8 @@ var testBuildTracesQueryData = []struct {
 			"from signoz_traces.distributed_signoz_index_v2 " +
 			"where (timestamp >= '1680066360726210000' AND timestamp <= '1680066458000000000') " +
 			"AND stringTagMap['method'] = 'GET' " +
-			"AND has(stringTagMap, 'method') group by method,ts " +
-			"order by method ASC,ts",
+			"AND has(stringTagMap, 'method') group by `method`,ts " +
+			"order by `method` ASC,ts",
 		PanelType: v3.PanelTypeGraph,
 	},
 	{
@@ -798,8 +806,8 @@ var testBuildTracesQueryData = []struct {
 			"quantile(0.05)(bytes) as value " +
 			"from signoz_traces.distributed_signoz_index_v2 " +
 			"where (timestamp >= '1680066360726210000' AND timestamp <= '1680066458000000000') " +
-			"AND has(stringTagMap, 'method') group by method,ts " +
-			"order by method ASC,ts",
+			"AND has(stringTagMap, 'method') group by `method`,ts " +
+			"order by `method` ASC,ts",
 		PanelType: v3.PanelTypeGraph,
 	},
 	{
@@ -820,7 +828,7 @@ var testBuildTracesQueryData = []struct {
 		ExpectedQuery: "SELECT toStartOfInterval(timestamp, INTERVAL 60 SECOND) AS ts, stringTagMap['method'] as `method`" +
 			", sum(bytes)/60 as value from signoz_traces.distributed_signoz_index_v2 " +
 			"where (timestamp >= '1680066360726210000' AND timestamp <= '1680066458000000000')" +
-			" AND has(stringTagMap, 'method') group by method,ts order by method ASC,ts",
+			" AND has(stringTagMap, 'method') group by `method`,ts order by `method` ASC,ts",
 		PanelType: v3.PanelTypeGraph,
 	},
 	{
@@ -841,8 +849,8 @@ var testBuildTracesQueryData = []struct {
 		ExpectedQuery: "SELECT toStartOfInterval(timestamp, INTERVAL 60 SECOND) AS ts, stringTagMap['method'] as `method`" +
 			", count(numberTagMap['bytes'])/60 as value " +
 			"from signoz_traces.distributed_signoz_index_v2 where (timestamp >= '1680066360726210000' AND timestamp <= '1680066458000000000') " +
-			"AND has(stringTagMap, 'method') group by method,ts " +
-			"order by method ASC,ts",
+			"AND has(stringTagMap, 'method') group by `method`,ts " +
+			"order by `method` ASC,ts",
 		PanelType: v3.PanelTypeGraph,
 	},
 	{
@@ -864,8 +872,8 @@ var testBuildTracesQueryData = []struct {
 			"stringTagMap['method'] as `method`, " +
 			"sum(numberTagMap['bytes'])/60 as value " +
 			"from signoz_traces.distributed_signoz_index_v2 where (timestamp >= '1680066360726210000' AND timestamp <= '1680066458000000000') " +
-			"AND has(stringTagMap, 'method') group by method,ts " +
-			"order by method ASC,ts",
+			"AND has(stringTagMap, 'method') group by `method`,ts " +
+			"order by `method` ASC,ts",
 		PanelType: v3.PanelTypeGraph,
 	},
 	{
@@ -984,7 +992,7 @@ var testBuildTracesQueryData = []struct {
 		},
 		ExpectedQuery: "SELECT timestamp as timestamp_datetime, spanID, traceID," +
 			" name as `name`  from signoz_traces.distributed_signoz_index_v2 where " +
-			"(timestamp >= '1680066360726210000' AND timestamp <= '1680066458000000000')  order by name ASC",
+			"(timestamp >= '1680066360726210000' AND timestamp <= '1680066458000000000')  order by `name` ASC",
 		PanelType: v3.PanelTypeList,
 	},
 	{
@@ -1006,8 +1014,8 @@ var testBuildTracesQueryData = []struct {
 		},
 		ExpectedQuery: "SELECT timestamp as timestamp_datetime, spanID, traceID," +
 			" name as `name`  from signoz_traces.distributed_signoz_index_v2 where " +
-			"(timestamp >= '1680066360726210000' AND timestamp <= '1680066458000000000')" + 
-			"  AND stringTagMap['method'] = 'GET' order by name ASC",
+			"(timestamp >= '1680066360726210000' AND timestamp <= '1680066458000000000')" +
+			"  AND stringTagMap['method'] = 'GET' order by `name` ASC",
 		PanelType: v3.PanelTypeList,
 	},
 	{
