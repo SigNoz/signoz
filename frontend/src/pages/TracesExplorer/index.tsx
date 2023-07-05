@@ -52,15 +52,26 @@ function TracesExplorer(): JSX.Element {
 		return groupByCount > 0;
 	}, [currentQuery]);
 
-	const defaultQuery = useMemo(
-		() =>
-			updateAllQueriesOperators(
-				initialQueriesMap.traces,
-				PANEL_TYPES.LIST,
-				DataSource.TRACES,
-			),
-		[updateAllQueriesOperators],
-	);
+	const defaultQuery = useMemo(() => {
+		const query = updateAllQueriesOperators(
+			initialQueriesMap.traces,
+			PANEL_TYPES.LIST,
+			DataSource.TRACES,
+		);
+
+		return {
+			...query,
+			builder: {
+				...query.builder,
+				queryData: [
+					{
+						...query.builder.queryData[0],
+						orderBy: [{ columnName: 'timestamp', order: 'desc' }],
+					},
+				],
+			},
+		};
+	}, [updateAllQueriesOperators]);
 
 	const tabsItems = getTabsItems({
 		isListViewDisabled: isMultipleQueries || isGroupByExist,
