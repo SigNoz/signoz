@@ -1,13 +1,13 @@
 import { initialFilters } from 'constants/queryBuilder';
+import { DEFAULT_QUERY_LIMIT } from 'container/LogsExplorerViews/constants';
 import {
 	IBuilderQuery,
-	Query,
 	TagFilter,
 } from 'types/api/queryBuilder/queryBuilderData';
 import { v4 as uuid } from 'uuid';
 
 type SetupPaginationQueryDataParams = {
-	query: Query;
+	currentStagedQueryData: IBuilderQuery | null;
 	listItemId: string | null;
 	isTimeStampPresent: boolean;
 	page: number;
@@ -16,36 +16,29 @@ type SetupPaginationQueryDataParams = {
 
 type SetupPaginationQueryData = (
 	params: SetupPaginationQueryDataParams,
-) => Pick<IBuilderQuery, 'filters' | 'orderBy' | 'limit' | 'offset'>;
+) => Pick<IBuilderQuery, 'filters' | 'offset'>;
 
 export const getPaginationQueryData: SetupPaginationQueryData = ({
-	query,
+	currentStagedQueryData,
 	listItemId,
 	isTimeStampPresent,
 	page,
 	pageSize,
 }) => {
-	if (
-		query.builder.queryData.length === 0 ||
-		query.builder.queryData.length > 1
-	) {
-		return { limit: 100, filters: initialFilters, orderBy: [] };
+	if (!currentStagedQueryData) {
+		return { limit: DEFAULT_QUERY_LIMIT, filters: initialFilters };
 	}
 
-	const queryData = query.builder.queryData[0];
-
-	const orderBy = queryData.orderBy || [];
-	const filters = queryData.filters || initialFilters;
-	const limit = queryData.limit || 100;
-	const offset = (page - 1) * pageSize + 1;
+	const filters = currentStagedQueryData.filters || initialFilters;
+	const offset = (page - 1) * pageSize;
 
 	const queryProps =
-		(isTimeStampPresent && queryData.orderBy.length > 1) || !isTimeStampPresent
+		(isTimeStampPresent && currentStagedQueryData.orderBy.length > 1) ||
+		!isTimeStampPresent
 			? {
 					offset,
-					limit,
 			  }
-			: { limit };
+			: {};
 
 	const updatedFilters: TagFilter = {
 		...filters,
@@ -74,9 +67,8 @@ export const getPaginationQueryData: SetupPaginationQueryData = ({
 
 	const chunkOfQueryData: Partial<IBuilderQuery> = {
 		filters: isTimeStampPresent ? tagFilters : updatedFilters,
-		orderBy,
 		...queryProps,
 	};
 
-	return { ...queryData, ...chunkOfQueryData };
+	return { ...currentStagedQueryData, ...chunkOfQueryData };
 };

@@ -1,4 +1,5 @@
 export interface ILog {
+	date: string;
 	timestamp: number;
 	id: string;
 	traceId: string;
