@@ -399,19 +399,27 @@ var testOrderBy = []struct {
 			},
 		},
 		Tags:   []string{"name", "bytes"},
-		Result: []string{"`name` asc", "`bytes` asc", "`stringTagMap['response_time']` desc"},
+		Result: []string{"`name` asc", "`bytes` asc", "stringTagMap['response_time'] desc"},
 	},
 	{
-		Name:      "Test 4",
+		Name:      "Test 5",
 		PanelType: v3.PanelTypeList,
 		Items: []v3.OrderBy{
 			{
 				ColumnName: "name",
 				Order:      "asc",
+				Key:        "name",
+				Type:       v3.AttributeKeyTypeTag,
+				DataType:   v3.AttributeKeyDataTypeString,
+				IsColumn:   true,
 			},
 			{
 				ColumnName: "bytes",
 				Order:      "asc",
+				Key:        "bytes",
+				Type:       v3.AttributeKeyTypeTag,
+				DataType:   v3.AttributeKeyDataTypeString,
+				IsColumn:   true,
 			},
 			{
 				ColumnName: "response_time",
@@ -419,7 +427,7 @@ var testOrderBy = []struct {
 			},
 		},
 		Tags:   []string{},
-		Result: []string{"`name` asc", "`bytes` asc", "`stringTagMap['response_time']` desc"},
+		Result: []string{"`name` asc", "`bytes` asc", "stringTagMap['response_time'] desc"},
 	},
 }
 
@@ -1006,7 +1014,7 @@ var testBuildTracesQueryData = []struct {
 		},
 		ExpectedQuery: "SELECT timestamp as timestamp_datetime, spanID, traceID," +
 			" name as `name`  from signoz_traces.distributed_signoz_index_v2 where " +
-			"(timestamp >= '1680066360726210000' AND timestamp <= '1680066458000000000')" + 
+			"(timestamp >= '1680066360726210000' AND timestamp <= '1680066458000000000')" +
 			"  AND stringTagMap['method'] = 'GET' order by `name` ASC",
 		PanelType: v3.PanelTypeList,
 	},

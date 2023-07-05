@@ -403,7 +403,11 @@ func orderBy(panelType v3.PanelType, items []v3.OrderBy, tags []string, keys map
 			if !addedToOrderBy[item.ColumnName] {
 				attr := v3.AttributeKey{Key: item.ColumnName, DataType: item.DataType, Type: item.Type, IsColumn: item.IsColumn}
 				name := getColumnName(attr, keys)
-				orderBy = append(orderBy, fmt.Sprintf("`%s` %s", name, item.Order))
+				if item.IsColumn {
+					orderBy = append(orderBy, fmt.Sprintf("`%s` %s", name, item.Order))
+				} else {
+					orderBy = append(orderBy, fmt.Sprintf("%s %s", name, item.Order))
+				}
 			}
 		}
 	}
