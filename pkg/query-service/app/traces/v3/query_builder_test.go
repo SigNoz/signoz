@@ -401,12 +401,36 @@ var testOrderBy = []struct {
 		Tags:   []string{"name", "bytes"},
 		Result: []string{"name asc", "bytes asc", "stringTagMap['response_time'] desc"},
 	},
+	{
+		Name:      "Test 4",
+		PanelType: v3.PanelTypeList,
+		Items: []v3.OrderBy{
+			{
+				ColumnName: "name",
+				Order:      "asc",
+			},
+			{
+				ColumnName: "bytes",
+				Order:      "asc",
+			},
+			{
+				ColumnName: "response_time",
+				Order:      "desc",
+			},
+		},
+		Tags:   []string{},
+		Result: []string{"name asc", "bytes asc", "stringTagMap['response_time'] desc"},
+	},
 }
 
 func TestOrderBy(t *testing.T) {
 	for _, tt := range testOrderBy {
 		Convey("testOrderBy", t, func() {
-			res := orderBy(tt.PanelType, tt.Items, tt.Tags, map[string]v3.AttributeKey{})
+			res := orderBy(tt.PanelType, tt.Items, tt.Tags, map[string]v3.AttributeKey{
+				"name":          {Key: "name", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag, IsColumn: true},
+				"bytes":         {Key: "bytes", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag, IsColumn: true},
+				"response_time": {Key: "response_time", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag, IsColumn: false},
+			})
 			So(res, ShouldResemble, tt.Result)
 		})
 	}
@@ -940,7 +964,50 @@ var testBuildTracesQueryData = []struct {
 		},
 		ExpectedQuery: "SELECT timestamp as timestamp_datetime, spanID, traceID," +
 			" name as `name`  from signoz_traces.distributed_signoz_index_v2 where " +
-			"(timestamp >= '1680066360726210000' AND timestamp <= '1680066458000000000') ",
+			"(timestamp >= '1680066360726210000' AND timestamp <= '1680066458000000000')  order by timestamp DESC",
+		PanelType: v3.PanelTypeList,
+	},
+	{
+		Name:  "Test Noop list view with order by",
+		Start: 1680066360726210000,
+		End:   1680066458000000000,
+		Step:  60,
+		BuilderQuery: &v3.BuilderQuery{
+			SelectColumns: []v3.AttributeKey{
+				{Key: "name", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag, IsColumn: true},
+			},
+			QueryName:         "A",
+			AggregateOperator: v3.AggregateOperatorNoOp,
+			Expression:        "A",
+			Filters:           &v3.FilterSet{Operator: "AND", Items: []v3.FilterItem{}},
+			OrderBy:           []v3.OrderBy{{ColumnName: "name", Order: "ASC"}},
+		},
+		ExpectedQuery: "SELECT timestamp as timestamp_datetime, spanID, traceID," +
+			" name as `name`  from signoz_traces.distributed_signoz_index_v2 where " +
+			"(timestamp >= '1680066360726210000' AND timestamp <= '1680066458000000000')  order by name ASC",
+		PanelType: v3.PanelTypeList,
+	},
+	{
+		Name:  "Test Noop list view with order by and filter",
+		Start: 1680066360726210000,
+		End:   1680066458000000000,
+		Step:  60,
+		BuilderQuery: &v3.BuilderQuery{
+			SelectColumns: []v3.AttributeKey{
+				{Key: "name", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag, IsColumn: true},
+			},
+			QueryName:         "A",
+			AggregateOperator: v3.AggregateOperatorNoOp,
+			Expression:        "A",
+			Filters: &v3.FilterSet{Operator: "AND", Items: []v3.FilterItem{
+				{Key: v3.AttributeKey{Key: "method", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag}, Value: "GET", Operator: "="},
+			}},
+			OrderBy: []v3.OrderBy{{ColumnName: "name", Order: "ASC"}},
+		},
+		ExpectedQuery: "SELECT timestamp as timestamp_datetime, spanID, traceID," +
+			" name as `name`  from signoz_traces.distributed_signoz_index_v2 where " +
+			"(timestamp >= '1680066360726210000' AND timestamp <= '1680066458000000000')" + 
+			"  AND stringTagMap['method'] = 'GET' order by name ASC",
 		PanelType: v3.PanelTypeList,
 	},
 	{
@@ -972,7 +1039,9 @@ var testBuildTracesQueryData = []struct {
 func TestBuildTracesQuery(t *testing.T) {
 	for _, tt := range testBuildTracesQueryData {
 		Convey("TestBuildTracesQuery", t, func() {
-			query, err := buildTracesQuery(tt.Start, tt.End, tt.Step, tt.BuilderQuery, tt.TableName, map[string]v3.AttributeKey{}, tt.PanelType)
+			query, err := buildTracesQuery(tt.Start, tt.End, tt.Step, tt.BuilderQuery, tt.TableName, map[string]v3.AttributeKey{
+				"name": {Key: "name", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag, IsColumn: true},
+			}, tt.PanelType)
 			So(err, ShouldBeNil)
 			So(query, ShouldEqual, tt.ExpectedQuery)
 		})

@@ -334,7 +334,7 @@ func enrichOrderBy(items []v3.OrderBy, keys map[string]v3.AttributeKey) []v3.Ord
 	enrichedItems := []v3.OrderBy{}
 	for i := 0; i < len(items); i++ {
 		attributeKey := enrichKeyWithMetadata(v3.AttributeKey{
-			Key: items[i].Key,
+			Key: items[i].ColumnName,
 		}, keys)
 		enrichedItems = append(enrichedItems, v3.OrderBy{
 			ColumnName: items[i].ColumnName,
