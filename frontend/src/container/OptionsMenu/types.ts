@@ -15,7 +15,8 @@ export interface InitialOptions
 export type OptionsMenuConfig = {
 	format?: Pick<RadioProps, 'value' | 'onChange'>;
 	maxLines?: Pick<InputNumberProps, 'value' | 'onChange'>;
-	addColumn?: Pick<SelectProps, 'options' | 'value' | 'onChange'> & {
+	addColumn?: Pick<SelectProps, 'options' | 'onChange'> & {
+		value: BaseAutocompleteData[];
 		onRemove: (key: string) => void;
 	};
 };

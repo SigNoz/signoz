@@ -38,20 +38,12 @@ function AddColumnField({ config }: AddColumnFieldProps): JSX.Element | null {
 				</SearchIconWrapper>
 			</Input.Group>
 
-			{config.value.map((selectedValue: string) => {
-				const option = config?.options?.find(
-					({ value }) => value === selectedValue,
-				);
-
-				return (
-					<AddColumnItem direction="horizontal" key={option?.value}>
-						<Typography>{option?.label}</Typography>
-						<DeleteOutlinedIcon
-							onClick={(): void => config.onRemove(selectedValue)}
-						/>
-					</AddColumnItem>
-				);
-			})}
+			{config.value?.map(({ key, id }) => (
+				<AddColumnItem direction="horizontal" key={id}>
+					<Typography>{key}</Typography>
+					<DeleteOutlinedIcon onClick={(): void => config.onRemove(id as string)} />
+				</AddColumnItem>
+			))}
 		</AddColumnWrapper>
 	);
 }

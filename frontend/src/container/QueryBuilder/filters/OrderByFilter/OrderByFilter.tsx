@@ -18,6 +18,7 @@ import {
 	getLabelFromValue,
 	mapLabelValuePairs,
 	orderByValueDelimiter,
+	transformToOrderByStringValues,
 } from './utils';
 
 export function OrderByFilter({
@@ -25,7 +26,9 @@ export function OrderByFilter({
 	onChange,
 }: OrderByFilterProps): JSX.Element {
 	const [searchText, setSearchText] = useState<string>('');
-	const [selectedValue, setSelectedValue] = useState<IOption[]>([]);
+	const [selectedValue, setSelectedValue] = useState<IOption[]>(
+		transformToOrderByStringValues(query.orderBy) || [],
+	);
 
 	const { data, isFetching } = useQuery(
 		[QueryBuilderKeys.GET_AGGREGATE_KEYS, searchText],

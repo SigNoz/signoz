@@ -1,6 +1,7 @@
 import { RadioChangeEvent } from 'antd';
 import { getAggregateKeys } from 'api/queryBuilder/getAttributeKeys';
 import { QueryBuilderKeys } from 'constants/queryBuilder';
+import { useNotifications } from 'hooks/useNotifications';
 import useUrlQueryData from 'hooks/useUrlQueryData';
 import { useCallback, useEffect, useMemo } from 'react';
 import { useQuery } from 'react-query';
@@ -28,6 +29,8 @@ const useOptionsMenu = ({
 	aggregateOperator,
 	initialOptions = {},
 }: UseOptionsMenuProps): UseOptionsMenu => {
+	const { notifications } = useNotifications();
+
 	const {
 		query: optionsQuery,
 		queryData: optionsQueryData,
@@ -60,13 +63,14 @@ const useOptionsMenu = ({
 		[initialOptions, attributeKeys],
 	);
 
-	const options = useMemo(() => getOptionsFromKeys(attributeKeys), [
-		attributeKeys,
-	]);
-
 	const selectedColumnKeys = useMemo(
 		() => optionsQueryData?.selectColumns?.map(({ id }) => id) || [],
 		[optionsQueryData],
+	);
+
+	const addColumnOptions = useMemo(
+		() => getOptionsFromKeys(attributeKeys, selectedColumnKeys),
+		[attributeKeys, selectedColumnKeys],
 	);
 
 	const handleSelectedColumnsChange = useCallback(
@@ -91,14 +95,22 @@ const useOptionsMenu = ({
 
 	const handleRemoveSelectedColumn = useCallback(
 		(columnKey: string) => {
-			redirectWithOptionsData({
-				...defaultOptionsQuery,
-				selectColumns: optionsQueryData?.selectColumns?.filter(
-					({ id }) => id !== columnKey,
-				),
-			});
+			const newSelectedColumns = optionsQueryData?.selectColumns?.filter(
+				({ id }) => id !== columnKey,
+			);
+
+			if (!newSelectedColumns.length) {
+				notifications.error({
+					message: 'There must be at least one selected column',
+				});
+			} else {
+				redirectWithOptionsData({
+					...defaultOptionsQuery,
+					selectColumns: newSelectedColumns,
+				});
+			}
 		},
-		[optionsQueryData, redirectWithOptionsData],
+		[optionsQueryData, notifications, redirectWithOptionsData],
 	);
 
 	const handleFormatChange = useCallback(
@@ -124,8 +136,8 @@ const useOptionsMenu = ({
 	const optionsMenuConfig: Required<OptionsMenuConfig> = useMemo(
 		() => ({
 			addColumn: {
-				value: selectedColumnKeys || defaultOptionsQuery.selectColumns,
-				options: options || [],
+				value: optionsQueryData?.selectColumns || defaultOptionsQuery.selectColumns,
+				options: addColumnOptions || [],
 				onChange: handleSelectedColumnsChange,
 				onRemove: handleRemoveSelectedColumn,
 			},
@@ -139,10 +151,10 @@ const useOptionsMenu = ({
 			},
 		}),
 		[
-			options,
-			selectedColumnKeys,
+			addColumnOptions,
 			optionsQueryData?.maxLines,
 			optionsQueryData?.format,
+			optionsQueryData?.selectColumns,
 			handleSelectedColumnsChange,
 			handleRemoveSelectedColumn,
 			handleFormatChange,
