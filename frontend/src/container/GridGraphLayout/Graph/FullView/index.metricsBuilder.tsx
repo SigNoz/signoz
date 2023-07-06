@@ -17,7 +17,7 @@ import { AppState } from 'store/reducers';
 import { Widgets } from 'types/api/dashboard/getAll';
 import { GlobalReducer } from 'types/reducer/globalTime';
 
-import GraphManager from './MetricGraphTable';
+import GraphManager from './GraphManager';
 import { GraphContainer, TimeContainer } from './styles';
 
 function FullView({
@@ -36,6 +36,10 @@ function FullView({
 	const [graphsVisibility, setGraphsVisility] = useState<boolean[]>();
 
 	const graphVisibilityHandler = (graphsVisiblityArray: boolean[]): void => {
+		console.log(
+			'🚀 ~ file: index.metricsBuilder.tsx:39 ~ graphVisibilityHandler ~ graphsVisiblityArray:',
+			graphsVisiblityArray,
+		);
 		setGraphsVisility([...graphsVisiblityArray]);
 	};
 

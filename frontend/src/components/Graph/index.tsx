@@ -24,7 +24,7 @@ import {
 } from 'chart.js';
 import * as chartjsAdapter from 'chartjs-adapter-date-fns';
 import annotationPlugin from 'chartjs-plugin-annotation';
-import { LegendEntryProps } from 'container/GridGraphLayout/Graph/FullView/MetricGraphTable';
+import { LegendEntryProps } from 'container/GridGraphLayout/Graph/FullView/GraphManager';
 import dayjs from 'dayjs';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import isEqual from 'lodash-es/isEqual';
