@@ -4,7 +4,6 @@ import setToLocalstorage from 'api/browser/localstorage/set';
 import { getAggregateKeys } from 'api/queryBuilder/getAttributeKeys';
 import { LOCALSTORAGE } from 'constants/localStorage';
 import { QueryBuilderKeys } from 'constants/queryBuilder';
-import { useNotifications } from 'hooks/useNotifications';
 import useUrlQueryData from 'hooks/useUrlQueryData';
 import { useCallback, useEffect, useMemo } from 'react';
 import { useQuery } from 'react-query';
@@ -32,8 +31,6 @@ const useOptionsMenu = ({
 	aggregateOperator,
 	initialOptions = {},
 }: UseOptionsMenuProps): UseOptionsMenu => {
-	const { notifications } = useNotifications();
-
 	const localStorageOptionsQuery = getFromLocalstorage(
 		LOCALSTORAGE.LIST_OPTIONS,
 	);
@@ -123,20 +120,14 @@ const useOptionsMenu = ({
 				({ id }) => id !== columnKey,
 			);
 
-			if (!newSelectedColumns.length) {
-				notifications.error({
-					message: 'There must be at least one selected column',
-				});
-			} else {
-				const optionsData: OptionsQuery = {
-					...optionsQueryData,
-					selectColumns: newSelectedColumns,
-				};
+			const optionsData: OptionsQuery = {
+				...optionsQueryData,
+				selectColumns: newSelectedColumns,
+			};
 
-				handleRedirectWithOptionsData(optionsData);
-			}
+			handleRedirectWithOptionsData(optionsData);
 		},
-		[optionsQueryData, notifications, handleRedirectWithOptionsData],
+		[optionsQueryData, handleRedirectWithOptionsData],
 	);
 
 	const handleFormatChange = useCallback(
