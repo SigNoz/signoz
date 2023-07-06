@@ -57,9 +57,16 @@ export const useQueryOperations: UseQueryOperations = ({ query, index }) => {
 	);
 
 	const getNewListOfAdditionalFilters = useCallback(
-		(dataSource: DataSource): string[] =>
-			mapOfFilters[dataSource].map((item) => item.text),
-		[],
+		(dataSource: DataSource): string[] => {
+			const listOfFilters = mapOfFilters[dataSource].map((item) => item.text);
+
+			if (panelType === PANEL_TYPES.LIST) {
+				return listOfFilters.filter((filter) => filter !== 'Aggregation interval');
+			}
+
+			return listOfFilters;
+		},
+		[panelType],
 	);
 
 	const handleChangeAggregatorAttribute = useCallback(
