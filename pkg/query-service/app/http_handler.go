@@ -2684,6 +2684,11 @@ func (aH *APIHandler) getSpanKeysV3(ctx context.Context, queryRangeParams *v3.Qu
 			if err != nil {
 				return nil, err
 			}
+			// Add timestamp as a span key to allow ordering by timestamp
+			spanKeys["timestamp"] = v3.AttributeKey{
+				Key:      "timestamp",
+				IsColumn: true,
+			}
 			return spanKeys, nil
 		}
 	}
@@ -2725,7 +2730,7 @@ func (aH *APIHandler) queryRangeV3(ctx context.Context, queryRangeParams *v3.Que
 			return
 		}
 
-		if queryRangeParams.CompositeQuery.PanelType == v3.PanelTypeList {
+		if queryRangeParams.CompositeQuery.PanelType == v3.PanelTypeList || queryRangeParams.CompositeQuery.PanelType == v3.PanelTypeTrace {
 			result, err, errQuriesByName = aH.execClickHouseListQueries(r.Context(), queries)
 		} else {
 			result, err, errQuriesByName = aH.execClickHouseGraphQueries(r.Context(), queries)
