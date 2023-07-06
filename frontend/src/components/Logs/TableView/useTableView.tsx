@@ -2,7 +2,6 @@ import { ExpandAltOutlined } from '@ant-design/icons';
 import Convert from 'ansi-to-html';
 import { Typography } from 'antd';
 import { ColumnsType } from 'antd/es/table';
-import dayjs from 'dayjs';
 import dompurify from 'dompurify';
 import { FlatLogData } from 'lib/logs/flatLogData';
 import { useMemo } from 'react';
@@ -66,21 +65,6 @@ export const useTableView = (props: LogsTableViewProps): UseTableViewResult => {
 						</ExpandIconWrapper>
 					),
 				}),
-			},
-			{
-				title: 'timestamp',
-				dataIndex: 'timestamp',
-				key: 'timestamp',
-				// https://github.com/ant-design/ant-design/discussions/36886
-				render: (field): ColumnTypeRender<Record<string, unknown>> => {
-					const date =
-						typeof field === 'string'
-							? dayjs(field).format()
-							: dayjs(field / 1e6).format();
-					return {
-						children: <Typography.Paragraph ellipsis>{date}</Typography.Paragraph>,
-					};
-				},
 			},
 			...fieldColumns,
 			{
