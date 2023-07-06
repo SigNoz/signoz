@@ -145,12 +145,33 @@ function GraphManager({
 		</ConfigProvider>
 	);
 
-	const getLabel = (label: string): React.ReactElement => {
+	const labelClickedHandler = (labelIndex: number): void => {
+		const newGraphVisibilityArray = Array(data.datasets.length).fill(false);
+		newGraphVisibilityArray[labelIndex] = true;
+		setGraphVisibilityArray([...newGraphVisibilityArray]);
+		graphVisibilityHandler(newGraphVisibilityArray);
+	};
+
+	const getLabel = (label: string, labelIndex: number): React.ReactElement => {
+		let newLebal = label;
 		if (label.length > 30) {
-			const newLebal = `${label.substring(0, 30)}...`;
-			return <span style={{ maxWidth: '300px' }}>{newLebal}</span>;
+			newLebal = `${label.substring(0, 30)}...`;
 		}
-		return <span style={{ maxWidth: '300px' }}>{label}</span>;
+		return (
+			<button
+				type="button"
+				style={{
+					maxWidth: '300px',
+					cursor: 'pointer',
+					border: 'none',
+					backgroundColor: 'transparent',
+					color: 'white',
+				}}
+				onClick={(): void => labelClickedHandler(labelIndex)}
+			>
+				{newLebal}
+			</button>
+		);
 	};
 
 	const columns: ColumnType<DataSetProps>[] = [
@@ -166,7 +187,7 @@ function GraphManager({
 			width: 300,
 			dataIndex: 'label',
 			key: 'label',
-			render: (label: string): JSX.Element => getLabel(label),
+			render: (label: string, _, index): JSX.Element => getLabel(label, index),
 		},
 		{
 			title: 'Avg',
