@@ -104,6 +104,7 @@ function LogsExplorerList({
 						fields: selectedFields,
 						linesPerRow: options.maxLines,
 						onClickExpand: onExpand,
+						appendTo: 'end',
 					}}
 					infitiyTableProps={{ onEndReached }}
 				/>
