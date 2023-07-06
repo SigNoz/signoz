@@ -62,7 +62,6 @@ export const useQueryOperations: UseQueryOperations = ({
 
 	const getNewListOfAdditionalFilters = useCallback(
 		(dataSource: DataSource): string[] => {
-			console.log({ inactiveFilters });
 			const result: string[] = mapOfFilters[dataSource].reduce<string[]>(
 				(acc, item) => {
 					if (inactiveFilters && inactiveFilters[item.field]) {
