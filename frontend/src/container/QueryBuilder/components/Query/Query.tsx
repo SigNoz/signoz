@@ -35,6 +35,7 @@ export const Query = memo(function Query({
 	isAvailableToDisable,
 	queryVariant,
 	query,
+	inactiveFilters,
 }: QueryProps): JSX.Element {
 	const { panelType } = useQueryBuilder();
 	const {
@@ -47,7 +48,7 @@ export const Query = memo(function Query({
 		handleChangeQueryData,
 		handleChangeOperator,
 		handleDeleteQuery,
-	} = useQueryOperations({ index, query });
+	} = useQueryOperations({ index, query, inactiveFilters });
 
 	const handleChangeAggregateEvery = useCallback(
 		(value: IBuilderQuery['stepInterval']) => {
@@ -109,6 +110,24 @@ export const Query = memo(function Query({
 		[handleChangeQueryData],
 	);
 
+	const renderAggregateEveryFilter = useCallback(
+		(): JSX.Element | null =>
+			!inactiveFilters?.stepInterval ? (
+				<Row gutter={[11, 5]}>
+					<Col flex="5.93rem">
+						<FilterLabel label="Aggregate Every" />
+					</Col>
+					<Col flex="1 1 6rem">
+						<AggregateEveryFilter
+							query={query}
+							onChange={handleChangeAggregateEvery}
+						/>
+					</Col>
+				</Row>
+			) : null,
+		[inactiveFilters?.stepInterval, query, handleChangeAggregateEvery],
+	);
+
 	const renderAdditionalFilters = useCallback((): ReactNode => {
 		switch (panelType) {
 			case PANEL_TYPES.TIME_SERIES: {
@@ -149,19 +168,7 @@ export const Query = memo(function Query({
 							</Col>
 						)}
 
-						<Col span={11}>
-							<Row gutter={[11, 5]}>
-								<Col flex="5.93rem">
-									<FilterLabel label="Aggregate Every" />
-								</Col>
-								<Col flex="1 1 6rem">
-									<AggregateEveryFilter
-										query={query}
-										onChange={handleChangeAggregateEvery}
-									/>
-								</Col>
-							</Row>
-						</Col>
+						<Col span={11}>{renderAggregateEveryFilter()}</Col>
 					</>
 				);
 			}
@@ -179,19 +186,7 @@ export const Query = memo(function Query({
 								</Col>
 							</Row>
 						</Col>
-						<Col span={11}>
-							<Row gutter={[11, 5]}>
-								<Col flex="5.93rem">
-									<FilterLabel label="Aggregate Every" />
-								</Col>
-								<Col flex="1 1 6rem">
-									<AggregateEveryFilter
-										query={query}
-										onChange={handleChangeAggregateEvery}
-									/>
-								</Col>
-							</Row>
-						</Col>
+						<Col span={11}>{renderAggregateEveryFilter()}</Col>
 					</>
 				);
 			}
@@ -230,21 +225,7 @@ export const Query = memo(function Query({
 							</Row>
 						</Col>
 
-						{panelType !== PANEL_TYPES.LIST && (
-							<Col span={11}>
-								<Row gutter={[11, 5]}>
-									<Col flex="5.93rem">
-										<FilterLabel label="Aggregate Every" />
-									</Col>
-									<Col flex="1 1 6rem">
-										<AggregateEveryFilter
-											query={query}
-											onChange={handleChangeAggregateEvery}
-										/>
-									</Col>
-								</Row>
-							</Col>
-						)}
+						<Col span={11}>{renderAggregateEveryFilter()}</Col>
 					</>
 				);
 			}
@@ -253,10 +234,10 @@ export const Query = memo(function Query({
 		panelType,
 		query,
 		isMetricsDataSource,
-		handleChangeAggregateEvery,
 		handleChangeHavingFilter,
 		handleChangeLimit,
 		handleChangeOrderByKeys,
+		renderAggregateEveryFilter,
 	]);
 
 	return (

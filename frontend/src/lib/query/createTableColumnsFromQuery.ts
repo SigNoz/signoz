@@ -39,6 +39,7 @@ type CreateTableDataFromQuery = (
 type FillColumnData = (
 	queryTableData: QueryDataV3[],
 	dynamicColumns: DynamicColumns,
+	query: Query,
 ) => { filledDynamicColumns: DynamicColumns; rowsLength: number };
 
 type GetDynamicColumns = (
@@ -177,7 +178,8 @@ const fillEmptyRowCells = (
 const fillDataFromSeria = (
 	seria: SeriesItem,
 	columns: DynamicColumns,
-	currentQueryName: string,
+	queryName: string,
+	operator: string,
 ): void => {
 	const labelEntries = Object.entries(seria.labels);
 
@@ -193,7 +195,13 @@ const fillDataFromSeria = (
 				return;
 			}
 
-			if (currentQueryName === column.key) {
+			if (isFormula(queryName) && queryName === column.key) {
+				column.data.push(parseFloat(value.value).toFixed(2));
+				unusedColumnsKeys.delete(column.key);
+				return;
+			}
+
+			if (!isFormula(queryName) && operator === column.key) {
 				column.data.push(parseFloat(value.value).toFixed(2));
 				unusedColumnsKeys.delete(column.key);
 				return;
@@ -230,20 +238,25 @@ const fillDataFromList = (
 	});
 };
 
-const fillColumnsData: FillColumnData = (queryTableData, cols) => {
+const fillColumnsData: FillColumnData = (queryTableData, cols, query) => {
 	const fields = cols.filter((item) => item.type === 'field');
 	const operators = cols.filter((item) => item.type === 'operator');
 	const resultColumns = [...fields, ...operators];
 
 	queryTableData.forEach((currentQuery) => {
-		// const currentOperator = getQueryOperator(
-		// 	query.builder.queryData,
-		// 	currentQuery.queryName,
-		// );
-
 		if (currentQuery.series) {
 			currentQuery.series.forEach((seria) => {
-				fillDataFromSeria(seria, resultColumns, currentQuery.queryName);
+				const currentOperator = getQueryOperator(
+					query.builder.queryData,
+					currentQuery.queryName,
+				);
+
+				fillDataFromSeria(
+					seria,
+					resultColumns,
+					currentQuery.queryName,
+					currentOperator,
+				);
 			});
 		}
 
@@ -313,6 +326,7 @@ export const createTableColumnsFromQuery: CreateTableDataFromQuery = ({
 	const { filledDynamicColumns, rowsLength } = fillColumnsData(
 		queryTableData,
 		dynamicColumns,
+		query,
 	);
 
 	const dataSource = generateData(filledDynamicColumns, rowsLength);
