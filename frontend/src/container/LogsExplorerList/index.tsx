@@ -2,38 +2,43 @@ import { Card, Typography } from 'antd';
 // components
 import ListLogView from 'components/Logs/ListLogView';
 import RawLogView from 'components/Logs/RawLogView';
-import LogsTableView from 'components/Logs/TableView';
 import Spinner from 'components/Spinner';
-import { LogViewMode } from 'container/LogsTable';
-import { Container, Heading } from 'container/LogsTable/styles';
+import ExplorerControlPanel from 'container/ExplorerControlPanel';
+import { Heading } from 'container/LogsTable/styles';
+import { useOptionsMenu } from 'container/OptionsMenu';
 import { contentStyle } from 'container/Trace/Search/config';
+import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import useFontFaceObserver from 'hooks/useFontObserver';
-import { memo, useCallback, useMemo, useState } from 'react';
+import { memo, useCallback, useMemo } from 'react';
 import { Virtuoso } from 'react-virtuoso';
 // interfaces
 import { ILog } from 'types/api/logs/log';
+import { DataSource, StringOperators } from 'types/common/queryBuilder';
 
+import InfinityTableView from './InfinityTableView';
 import { LogsExplorerListProps } from './LogsExplorerList.interfaces';
+import { InfinityWrapperStyled } from './styles';
+import { convertKeysToColumnFields } from './utils';
+
+function Footer(): JSX.Element {
+	return <Spinner height={20} tip="Getting Logs" />;
+}
 
 function LogsExplorerList({
-	data,
 	isLoading,
+	currentStagedQueryData,
+	logs,
+	onOpenDetailedView,
+	onEndReached,
+	onExpand,
 }: LogsExplorerListProps): JSX.Element {
-	const [viewMode] = useState<LogViewMode>('raw');
-	const [linesPerRow] = useState<number>(20);
+	const { initialDataSource } = useQueryBuilder();
 
-	const logs: ILog[] = useMemo(() => {
-		if (data.length > 0 && data[0].list) {
-			const logs: ILog[] = data[0].list.map((item) => ({
-				timestamp: +item.timestamp,
-				...item.data,
-			}));
-
-			return logs;
-		}
-
-		return [];
-	}, [data]);
+	const { options, config } = useOptionsMenu({
+		dataSource: initialDataSource || DataSource.METRICS,
+		aggregateOperator:
+			currentStagedQueryData?.aggregateOperator || StringOperators.NOOP,
+	});
 
 	useFontFaceObserver(
 		[
@@ -42,75 +47,107 @@ function LogsExplorerList({
 				weight: '300',
 			},
 		],
-		viewMode === 'raw',
+		options.format === 'raw',
 		{
 			timeout: 5000,
 		},
 	);
-	// TODO: implement here linesPerRow, mode like in useSelectedLogView
+
+	const selectedFields = useMemo(
+		() => convertKeysToColumnFields(options.selectColumns),
+		[options],
+	);
 
 	const getItemContent = useCallback(
-		(index: number): JSX.Element => {
-			const log = logs[index];
-
-			if (viewMode === 'raw') {
+		(_: number, log: ILog): JSX.Element => {
+			if (options.format === 'raw') {
 				return (
 					<RawLogView
 						key={log.id}
 						data={log}
-						linesPerRow={linesPerRow}
-						// TODO: write new onClickExpanded logic
-						onClickExpand={(): void => {}}
+						linesPerRow={options.maxLines}
+						onClickExpand={onExpand}
 					/>
 				);
 			}
 
-			return <ListLogView key={log.id} logData={log} />;
+			return (
+				<ListLogView
+					key={log.id}
+					logData={log}
+					selectedFields={selectedFields}
+					onOpenDetailedView={onOpenDetailedView}
+				/>
+			);
 		},
-		[logs, linesPerRow, viewMode],
+		[
+			options.format,
+			options.maxLines,
+			selectedFields,
+			onOpenDetailedView,
+			onExpand,
+		],
 	);
 
 	const renderContent = useMemo(() => {
-		if (viewMode === 'table') {
+		const components = isLoading
+			? {
+					Footer,
+			  }
+			: {};
+
+		if (options.format === 'table') {
 			return (
-				<LogsTableView
-					logs={logs}
-					// TODO: write new selected logic
-					fields={[]}
-					linesPerRow={linesPerRow}
-					// TODO: write new onClickExpanded logic
-					onClickExpand={(): void => {}}
+				<InfinityTableView
+					tableViewProps={{
+						logs,
+						fields: selectedFields,
+						linesPerRow: options.maxLines,
+						onClickExpand: onExpand,
+					}}
+					infitiyTableProps={{ onEndReached }}
 				/>
 			);
 		}
 
 		return (
-			<Card bodyStyle={contentStyle}>
+			<Card style={{ width: '100%' }} bodyStyle={{ ...contentStyle }}>
 				<Virtuoso
 					useWindowScroll
+					data={logs}
+					endReached={onEndReached}
 					totalCount={logs.length}
 					itemContent={getItemContent}
+					components={components}
 				/>
 			</Card>
 		);
-	}, [getItemContent, linesPerRow, logs, viewMode]);
-
-	if (isLoading) {
-		return <Spinner height={20} tip="Getting Logs" />;
-	}
+	}, [
+		isLoading,
+		logs,
+		options.format,
+		options.maxLines,
+		onEndReached,
+		getItemContent,
+		selectedFields,
+		onExpand,
+	]);
 
 	return (
-		<Container>
-			{viewMode !== 'table' && (
+		<>
+			<ExplorerControlPanel
+				isLoading={isLoading}
+				isShowPageSize={false}
+				optionsMenuConfig={config}
+			/>
+			{options.format !== 'table' && (
 				<Heading>
 					<Typography.Text>Event</Typography.Text>
 				</Heading>
 			)}
-
 			{logs.length === 0 && <Typography>No logs lines found</Typography>}
-
-			{renderContent}
-		</Container>
+			<InfinityWrapperStyled>{renderContent}</InfinityWrapperStyled>
+		</>
 	);
 }
 

@@ -1,48 +1,43 @@
 import Graph from 'components/Graph';
 import Spinner from 'components/Spinner';
-import { initialQueriesMap, PANEL_TYPES } from 'constants/queryBuilder';
-import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
-import { useGetQueryRange } from 'hooks/queryBuilder/useGetQueryRange';
-import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
-import { getExplorerChartData } from 'lib/explorer/getExplorerChartData';
+import getChartData, { GetChartDataProps } from 'lib/getChartData';
+import { colors } from 'lib/getRandomColor';
 import { memo, useMemo } from 'react';
-import { useSelector } from 'react-redux';
-import { AppState } from 'store/reducers';
-import { GlobalReducer } from 'types/reducer/globalTime';
 
+import { LogsExplorerChartProps } from './LogsExplorerChart.interfaces';
 import { CardStyled } from './LogsExplorerChart.styled';
 
-function LogsExplorerChart(): JSX.Element {
-	const { stagedQuery, panelType, isEnabledQuery } = useQueryBuilder();
+function LogsExplorerChart({
+	data,
+	isLoading,
+}: LogsExplorerChartProps): JSX.Element {
+	const handleCreateDatasets: Required<GetChartDataProps>['createDataset'] = (
+		element,
+		index,
+		allLabels,
+	) => ({
+		label: allLabels[index],
+		data: element,
+		backgroundColor: colors[index % colors.length] || 'red',
+		borderColor: colors[index % colors.length] || 'red',
+	});
 
-	const { selectedTime } = useSelector<AppState, GlobalReducer>(
-		(state) => state.globalTime,
+	const graphData = useMemo(
+		() =>
+			getChartData({
+				queryData: [
+					{
+						queryData: data,
+					},
+				],
+				createDataset: handleCreateDatasets,
+			}),
+		[data],
 	);
-
-	const { data, isFetching } = useGetQueryRange(
-		{
-			query: stagedQuery || initialQueriesMap.metrics,
-			graphType: panelType || PANEL_TYPES.LIST,
-			globalSelectedInterval: selectedTime,
-			selectedTime: 'GLOBAL_TIME',
-		},
-		{
-			queryKey: [REACT_QUERY_KEY.GET_QUERY_RANGE, selectedTime, stagedQuery],
-			enabled: isEnabledQuery,
-		},
-	);
-
-	const graphData = useMemo(() => {
-		if (data?.payload.data && data.payload.data.result.length > 0) {
-			return getExplorerChartData([data.payload.data.result[0]]);
-		}
-
-		return getExplorerChartData([]);
-	}, [data]);
 
 	return (
 		<CardStyled>
-			{isFetching ? (
+			{isLoading ? (
 				<Spinner size="default" height="100%" />
 			) : (
 				<Graph

@@ -18,9 +18,9 @@ function FormatField({ config }: FormatFieldProps): JSX.Element | null {
 				value={config.value}
 				onChange={config.onChange}
 			>
-				<RadioButton value="row">{t('options_menu.row')}</RadioButton>
-				<RadioButton value="default">{t('options_menu.default')}</RadioButton>
-				<RadioButton value="column">{t('options_menu.column')}</RadioButton>
+				<RadioButton value="raw">{t('options_menu.row')}</RadioButton>
+				<RadioButton value="list">{t('options_menu.default')}</RadioButton>
+				<RadioButton value="table">{t('options_menu.column')}</RadioButton>
 			</RadioGroup>
 		</FormatFieldWrapper>
 	);
