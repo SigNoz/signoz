@@ -28,21 +28,18 @@ export const modifyColumns = (
 	columns: ColumnsType<RowData>,
 	selectedColumns: BaseAutocompleteData[],
 ): ColumnsType<RowData> => {
-	const initialColumns = columns.filter(({ key }) => {
-		let isValidColumn = true;
+	const initialColumns = selectedColumns.reduce(
+		(acc, { key: selectedColumnKey }) => {
+			const column = columns.find(({ key }) => selectedColumnKey === key);
 
-		const checkIsExistColumnByKey = (attributeKey: string): boolean =>
-			!selectedColumns.find(({ key }) => key === attributeKey) &&
-			attributeKey === key;
+			if (column) {
+				return [...acc, column];
+			}
 
-		const isSelectedSpanId = checkIsExistColumnByKey('spanID');
-		const isSelectedTraceId = checkIsExistColumnByKey('traceID');
-
-		if (isSelectedSpanId || isSelectedTraceId || key === 'date')
-			isValidColumn = false;
-
-		return isValidColumn;
-	});
+			return acc;
+		},
+		[] as ColumnsType<RowData>,
+	);
 
 	const dateColumn = columns.find(({ key }) => key === 'date');
 
