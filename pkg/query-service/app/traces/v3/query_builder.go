@@ -479,7 +479,9 @@ func PrepareTracesQuery(start, end int64, queryType v3.QueryType, panelType v3.P
 	if panelType == v3.PanelTypeTable {
 		stepInterval = (end - start)/1000
 	}
-
+	// adjust the start and end time to the step interval
+	start = start - (start % (stepInterval * 1000))
+	end = end - (end % (stepInterval * 1000))
 	query, err := buildTracesQuery(start, end, stepInterval, mq, constants.SIGNOZ_SPAN_INDEX_TABLENAME, keys, panelType)
 	if err != nil {
 		return "", err
