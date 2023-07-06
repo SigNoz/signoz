@@ -1,6 +1,6 @@
 export interface ILog {
 	date: string;
-	timestamp: number;
+	timestamp: number | string;
 	id: string;
 	traceId: string;
 	spanId: string;
