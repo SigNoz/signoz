@@ -9,6 +9,8 @@ import { RowData } from 'lib/query/createTableColumnsFromQuery';
 import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { QueryDataV3 } from 'types/api/widgets/getQuery';
 
+import { DateText } from './styles';
+
 export const transformDataWithDate = (data: QueryDataV3[]): QueryDataV3[] =>
 	data.map((query) => ({
 		...query,
@@ -78,9 +80,10 @@ export const modifyColumns = (
 		if (key === 'date') {
 			return {
 				...column,
+				width: 145,
 				render: (date: string): JSX.Element => {
 					const day = dayjs(date);
-					return <Typography>{day.format('YYYY/MM/DD HH:mm:ss')}</Typography>;
+					return <DateText>{day.format('YYYY/MM/DD HH:mm:ss')}</DateText>;
 				},
 			};
 		}

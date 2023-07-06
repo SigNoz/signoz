@@ -65,7 +65,8 @@ function ListView(): JSX.Element {
 				paginationQueryData,
 				options?.selectColumns,
 			],
-			enabled: !!stagedQuery && panelType === PANEL_TYPES.LIST,
+			enabled:
+				!!stagedQuery && panelType === PANEL_TYPES.LIST && !!options?.selectColumns,
 		},
 	);
 

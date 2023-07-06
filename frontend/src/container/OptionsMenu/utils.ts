@@ -3,11 +3,17 @@ import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteRe
 
 export const getOptionsFromKeys = (
 	keys: BaseAutocompleteData[],
-): SelectProps['options'] =>
-	keys.map(({ id, key }) => ({
+	selectedKeys: (string | undefined)[],
+): SelectProps['options'] => {
+	const options = keys.map(({ id, key }) => ({
 		label: key,
 		value: id,
 	}));
+
+	return options.filter(
+		({ value }) => !selectedKeys.find((key) => key === value),
+	);
+};
 
 export const getInitialColumns = (
 	initialColumnTitles: string[],

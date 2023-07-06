@@ -8,11 +8,25 @@ export const orderByValueDelimiter = '|';
 
 export const transformToOrderByStringValues = (
 	orderBy: OrderByPayload[],
-): IOption[] =>
-	orderBy.map((item) => ({
-		label: `${item.columnName} ${item.order}`,
-		value: `${item.columnName}${orderByValueDelimiter}${item.order}`,
-	}));
+): IOption[] => {
+	const prepareSelectedValue: IOption[] = orderBy.reduce<IOption[]>(
+		(acc, item) => {
+			if (item.columnName === '#SIGNOZ_VALUE') return acc;
+
+			const option: IOption = {
+				label: `${item.columnName} ${item.order}`,
+				value: `${item.columnName}${orderByValueDelimiter}${item.order}`,
+			};
+
+			acc.push(option);
+
+			return acc;
+		},
+		[],
+	);
+
+	return prepareSelectedValue;
+};
 
 export function mapLabelValuePairs(
 	arr: BaseAutocompleteData[],
