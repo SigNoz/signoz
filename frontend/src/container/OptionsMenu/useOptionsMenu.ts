@@ -129,18 +129,14 @@ const useOptionsMenu = ({
 				});
 			} else {
 				const optionsData: OptionsQuery = {
-					...defaultOptionsQuery,
+					...optionsQueryData,
 					selectColumns: newSelectedColumns,
 				};
 
 				handleRedirectWithOptionsData(optionsData);
 			}
 		},
-		[
-			optionsQueryData?.selectColumns,
-			notifications,
-			handleRedirectWithOptionsData,
-		],
+		[optionsQueryData, notifications, handleRedirectWithOptionsData],
 	);
 
 	const handleFormatChange = useCallback(
