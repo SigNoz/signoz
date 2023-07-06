@@ -28,7 +28,7 @@ export const useTableView = (props: LogsTableViewProps): UseTableViewResult => {
 
 	const columns: ColumnsType<Record<string, unknown>> = useMemo(() => {
 		const fieldColumns: ColumnsType<Record<string, unknown>> = fields
-			.filter((e) => e.name !== 'id')
+			.filter((e) => e.name !== 'id' && e.name !== 'timestamp')
 			.map(({ name }) => ({
 				title: name,
 				dataIndex: name,
