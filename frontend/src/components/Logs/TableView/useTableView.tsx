@@ -11,17 +11,22 @@ import { ILog } from 'types/api/logs/log';
 import { ExpandIconWrapper } from '../RawLogView/styles';
 import { defaultCellStyle, defaultTableStyle } from './config';
 import { TableBodyContent } from './styles';
-import { ColumnTypeRender, LogsTableViewProps } from './types';
-
-export type UseTableViewResult = {
-	columns: ColumnsType<Record<string, unknown>>;
-	dataSource: Record<string, string>[];
-};
+import {
+	ColumnTypeRender,
+	UseTableViewProps,
+	UseTableViewResult,
+} from './types';
 
 const convert = new Convert();
 
-export const useTableView = (props: LogsTableViewProps): UseTableViewResult => {
-	const { logs, fields, linesPerRow, onClickExpand } = props;
+export const useTableView = (props: UseTableViewProps): UseTableViewResult => {
+	const {
+		logs,
+		fields,
+		linesPerRow,
+		onClickExpand,
+		appendTo = 'center',
+	} = props;
 
 	const flattenLogData = useMemo(() => logs.map((log) => FlatLogData(log)), [
 		logs,
@@ -82,7 +87,7 @@ export const useTableView = (props: LogsTableViewProps): UseTableViewResult => {
 					};
 				},
 			},
-			...fieldColumns,
+			...(appendTo === 'center' ? fieldColumns : []),
 			{
 				title: 'body',
 				dataIndex: 'body',
@@ -101,8 +106,9 @@ export const useTableView = (props: LogsTableViewProps): UseTableViewResult => {
 					),
 				}),
 			},
+			...(appendTo === 'end' ? fieldColumns : []),
 		];
-	}, [fields, linesPerRow, onClickExpand]);
+	}, [fields, linesPerRow, appendTo, onClickExpand]);
 
 	return { columns, dataSource: flattenLogData };
 };
