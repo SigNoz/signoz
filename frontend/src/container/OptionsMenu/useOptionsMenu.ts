@@ -1,5 +1,8 @@
 import { RadioChangeEvent } from 'antd';
+import getFromLocalstorage from 'api/browser/localstorage/get';
+import setToLocalstorage from 'api/browser/localstorage/set';
 import { getAggregateKeys } from 'api/queryBuilder/getAttributeKeys';
+import { LOCALSTORAGE } from 'constants/localStorage';
 import { QueryBuilderKeys } from 'constants/queryBuilder';
 import { useNotifications } from 'hooks/useNotifications';
 import useUrlQueryData from 'hooks/useUrlQueryData';
@@ -30,6 +33,10 @@ const useOptionsMenu = ({
 	initialOptions = {},
 }: UseOptionsMenuProps): UseOptionsMenu => {
 	const { notifications } = useNotifications();
+
+	const localStorageOptionsQuery = getFromLocalstorage(
+		LOCALSTORAGE.LIST_OPTIONS,
+	);
 
 	const {
 		query: optionsQuery,
@@ -74,6 +81,15 @@ const useOptionsMenu = ({
 		[attributeKeys, selectedColumnKeys],
 	);
 
+	const handleRedirectWithOptionsData = useCallback(
+		(newQueryData: OptionsQuery) => {
+			redirectWithOptionsData(newQueryData);
+
+			setToLocalstorage(LOCALSTORAGE.LIST_OPTIONS, JSON.stringify(newQueryData));
+		},
+		[redirectWithOptionsData],
+	);
+
 	const handleSelectedColumnsChange = useCallback(
 		(value: string[]) => {
 			const newSelectedColumnKeys = [
@@ -86,15 +102,17 @@ const useOptionsMenu = ({
 				return [...acc, column];
 			}, [] as BaseAutocompleteData[]);
 
-			redirectWithOptionsData({
+			const optionsData: OptionsQuery = {
 				...optionsQueryData,
 				selectColumns: newSelectedColumns,
-			});
+			};
+
+			handleRedirectWithOptionsData(optionsData);
 		},
 		[
 			selectedColumnKeys,
-			redirectWithOptionsData,
 			optionsQueryData,
+			handleRedirectWithOptionsData,
 			attributeKeys,
 		],
 	);
@@ -110,49 +128,59 @@ const useOptionsMenu = ({
 					message: 'There must be at least one selected column',
 				});
 			} else {
-				redirectWithOptionsData({
+				const optionsData: OptionsQuery = {
 					...defaultOptionsQuery,
 					selectColumns: newSelectedColumns,
-				});
+				};
+
+				handleRedirectWithOptionsData(optionsData);
 			}
 		},
-		[optionsQueryData, notifications, redirectWithOptionsData],
+		[
+			optionsQueryData?.selectColumns,
+			notifications,
+			handleRedirectWithOptionsData,
+		],
 	);
 
 	const handleFormatChange = useCallback(
 		(event: RadioChangeEvent) => {
-			redirectWithOptionsData({
+			const optionsData: OptionsQuery = {
 				...optionsQueryData,
 				format: event.target.value,
-			});
+			};
+
+			handleRedirectWithOptionsData(optionsData);
 		},
-		[optionsQueryData, redirectWithOptionsData],
+		[handleRedirectWithOptionsData, optionsQueryData],
 	);
 
 	const handleMaxLinesChange = useCallback(
 		(value: string | number | null) => {
-			redirectWithOptionsData({
+			const optionsData: OptionsQuery = {
 				...optionsQueryData,
 				maxLines: value as number,
-			});
+			};
+
+			handleRedirectWithOptionsData(optionsData);
 		},
-		[optionsQueryData, redirectWithOptionsData],
+		[handleRedirectWithOptionsData, optionsQueryData],
 	);
 
 	const optionsMenuConfig: Required<OptionsMenuConfig> = useMemo(
 		() => ({
 			addColumn: {
-				value: optionsQueryData?.selectColumns || defaultOptionsQuery.selectColumns,
+				value: optionsQueryData.selectColumns || defaultOptionsQuery.selectColumns,
 				options: addColumnOptions || [],
 				onChange: handleSelectedColumnsChange,
 				onRemove: handleRemoveSelectedColumn,
 			},
 			format: {
-				value: optionsQueryData?.format || defaultOptionsQuery.format,
+				value: optionsQueryData.format || defaultOptionsQuery.format,
 				onChange: handleFormatChange,
 			},
 			maxLines: {
-				value: optionsQueryData?.maxLines || defaultOptionsQuery.maxLines,
+				value: optionsQueryData.maxLines || defaultOptionsQuery.maxLines,
 				onChange: handleMaxLinesChange,
 			},
 		}),
@@ -171,8 +199,18 @@ const useOptionsMenu = ({
 	useEffect(() => {
 		if (optionsQuery || !isFetched) return;
 
-		redirectWithOptionsData(initialOptionsQuery);
-	}, [isFetched, optionsQuery, initialOptionsQuery, redirectWithOptionsData]);
+		const nextOptionsQuery = localStorageOptionsQuery
+			? JSON.parse(localStorageOptionsQuery)
+			: initialOptionsQuery;
+
+		redirectWithOptionsData(nextOptionsQuery);
+	}, [
+		isFetched,
+		optionsQuery,
+		initialOptionsQuery,
+		redirectWithOptionsData,
+		localStorageOptionsQuery,
+	]);
 
 	return {
 		isLoading,
