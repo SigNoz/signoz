@@ -1,11 +1,13 @@
 import { QueryProps } from 'container/QueryBuilder/components/Query/Query.interfaces';
+import { QueryBuilderProps } from 'container/QueryBuilder/QueryBuilder.interfaces';
 import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource } from 'types/common/queryBuilder';
 
 import { SelectOption } from './select';
 
-type UseQueryOperationsParams = Pick<QueryProps, 'index' | 'query'>;
+type UseQueryOperationsParams = Pick<QueryProps, 'index' | 'query'> &
+	Pick<QueryBuilderProps, 'inactiveFilters'>;
 
 export type HandleChangeQueryData = <
 	Key extends keyof IBuilderQuery,

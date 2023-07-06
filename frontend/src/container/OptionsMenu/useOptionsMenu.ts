@@ -37,6 +37,7 @@ const useOptionsMenu = ({
 		() => ({
 			searchText: '',
 			aggregateAttribute: '',
+			tagType: null,
 			dataSource,
 			aggregateOperator,
 		}),
@@ -49,7 +50,7 @@ const useOptionsMenu = ({
 		query: optionsQuery,
 		queryData: optionsQueryData,
 		redirectWithQuery: redirectWithOptionsData,
-	} = useUrlQueryData<OptionsQuery>(URL_OPTIONS);
+	} = useUrlQueryData<OptionsQuery>(URL_OPTIONS, defaultOptionsQuery);
 
 	const initialQueries = useMemo(
 		() =>
@@ -96,7 +97,7 @@ const useOptionsMenu = ({
 	]);
 
 	const { data: attributesData, isLoading } = useQuery(
-		[QueryBuilderKeys.GET_ATTRIBUTE_KEY],
+		[QueryBuilderKeys.GET_ATTRIBUTE_KEY, dataSource, aggregateOperator],
 		async () =>
 			getAggregateKeys({
 				...initialQueryParams,
@@ -141,11 +142,16 @@ const useOptionsMenu = ({
 			}, [] as BaseAutocompleteData[]);
 
 			redirectWithOptionsData({
-				...defaultOptionsQuery,
+				...optionsQueryData,
 				selectColumns: newSelectedColumns,
 			});
 		},
-		[attributeKeys, selectedColumnKeys, redirectWithOptionsData],
+		[
+			selectedColumnKeys,
+			redirectWithOptionsData,
+			optionsQueryData,
+			attributeKeys,
+		],
 	);
 
 	const handleRemoveSelectedColumn = useCallback(
@@ -171,21 +177,21 @@ const useOptionsMenu = ({
 	const handleFormatChange = useCallback(
 		(event: RadioChangeEvent) => {
 			redirectWithOptionsData({
-				...defaultOptionsQuery,
+				...optionsQueryData,
 				format: event.target.value,
 			});
 		},
-		[redirectWithOptionsData],
+		[optionsQueryData, redirectWithOptionsData],
 	);
 
 	const handleMaxLinesChange = useCallback(
 		(value: string | number | null) => {
 			redirectWithOptionsData({
-				...defaultOptionsQuery,
+				...optionsQueryData,
 				maxLines: value as number,
 			});
 		},
-		[redirectWithOptionsData],
+		[optionsQueryData, redirectWithOptionsData],
 	);
 
 	const optionsMenuConfig: Required<OptionsMenuConfig> = useMemo(
