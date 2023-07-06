@@ -1,8 +1,3 @@
-import { Pagination } from './types';
-
 export const URL_PAGINATION = 'pagination';
 
-export const defaultPaginationConfig: Pagination = {
-	offset: 0,
-	limit: 25,
-};
+export const DEFAULT_PER_PAGE_OPTIONS: number[] = [25, 50, 100, 200];

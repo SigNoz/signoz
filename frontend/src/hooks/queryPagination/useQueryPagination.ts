@@ -1,12 +1,23 @@
 import { ControlsProps } from 'container/Controls';
 import useUrlQueryData from 'hooks/useUrlQueryData';
-import { useCallback, useEffect } from 'react';
+import { useCallback, useEffect, useMemo } from 'react';
 
-import { defaultPaginationConfig, URL_PAGINATION } from './config';
+import { DEFAULT_PER_PAGE_OPTIONS, URL_PAGINATION } from './config';
 import { Pagination } from './types';
-import { checkIsValidPaginationData } from './utils';
+import {
+	checkIsValidPaginationData,
+	getDefaultPaginationConfig,
+} from './utils';
 
-const useQueryPagination = (totalCount: number): UseQueryPagination => {
+const useQueryPagination = (
+	totalCount: number,
+	perPageOptions: number[] = DEFAULT_PER_PAGE_OPTIONS,
+): UseQueryPagination => {
+	const defaultPaginationConfig = useMemo(
+		() => getDefaultPaginationConfig(perPageOptions),
+		[perPageOptions],
+	);
+
 	const {
 		query: paginationQuery,
 		queryData: paginationQueryData,
@@ -45,12 +56,19 @@ const useQueryPagination = (totalCount: number): UseQueryPagination => {
 	useEffect(() => {
 		const isValidPaginationData = checkIsValidPaginationData(
 			paginationQueryData || defaultPaginationConfig,
+			perPageOptions,
 		);
 
 		if (paginationQuery && isValidPaginationData) return;
 
 		redirectWithCurrentPagination(defaultPaginationConfig);
-	}, [paginationQuery, paginationQueryData, redirectWithCurrentPagination]);
+	}, [
+		defaultPaginationConfig,
+		perPageOptions,
+		paginationQuery,
+		paginationQueryData,
+		redirectWithCurrentPagination,
+	]);
 
 	return {
 		pagination: paginationQueryData || defaultPaginationConfig,

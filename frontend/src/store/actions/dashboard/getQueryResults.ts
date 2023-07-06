@@ -16,12 +16,14 @@ import { SuccessResponse } from 'types/api';
 import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { EQueryType } from 'types/common/dashboard';
+import { Pagination } from 'hooks/queryPagination';
 
 export async function GetMetricQueryRange({
 	query,
 	globalSelectedInterval,
 	graphType,
 	selectedTime,
+	tableParams,
 	variables = {},
 	params = {},
 }: GetQueryResultsProps): Promise<SuccessResponse<MetricRangePayloadProps>> {
@@ -38,8 +40,9 @@ export async function GetMetricQueryRange({
 	switch (query.queryType) {
 		case EQueryType.QUERY_BUILDER: {
 			const { queryData: data, queryFormulas } = query.builder;
-			const currentQueryData = mapQueryDataToApi(data, 'queryName');
+			const currentQueryData = mapQueryDataToApi(data, 'queryName', tableParams);
 			const currentFormulas = mapQueryDataToApi(queryFormulas, 'queryName');
+
 			const builderQueries = {
 				...currentQueryData.data,
 				...currentFormulas.data,
@@ -140,4 +143,8 @@ export interface GetQueryResultsProps {
 	globalSelectedInterval: Time;
 	variables?: Record<string, unknown>;
 	params?: Record<string, unknown>;
+	tableParams?: {
+		pagination?: Pagination;
+		selectColumns?: any;
+	};
 }
