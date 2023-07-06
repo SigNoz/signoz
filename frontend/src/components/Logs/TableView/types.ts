@@ -1,4 +1,4 @@
-import { ColumnType } from 'antd/es/table';
+import { ColumnsType, ColumnType } from 'antd/es/table';
 import { IField } from 'types/api/logs/fields';
 import { ILog } from 'types/api/logs/log';
 
@@ -12,3 +12,12 @@ export type LogsTableViewProps = {
 	linesPerRow: number;
 	onClickExpand: (log: ILog) => void;
 };
+
+export type UseTableViewResult = {
+	columns: ColumnsType<Record<string, unknown>>;
+	dataSource: Record<string, string>[];
+};
+
+export type UseTableViewProps = {
+	appendTo?: 'center' | 'end';
+} & LogsTableViewProps;
