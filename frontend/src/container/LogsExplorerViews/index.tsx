@@ -14,8 +14,12 @@ import useUrlQueryData from 'hooks/useUrlQueryData';
 import { getPaginationQueryData } from 'lib/newQueryBuilder/getPaginationQueryData';
 import { memo, useCallback, useEffect, useMemo, useState } from 'react';
 import { ILog } from 'types/api/logs/log';
-import { OrderByPayload, Query } from 'types/api/queryBuilder/queryBuilderData';
-import { DataSource } from 'types/common/queryBuilder';
+import {
+	IBuilderQuery,
+	OrderByPayload,
+	Query,
+} from 'types/api/queryBuilder/queryBuilderData';
+import { DataSource, StringOperators } from 'types/common/queryBuilder';
 
 import { TabsStyled } from './LogsExplorerViews.styled';
 
@@ -77,10 +81,41 @@ function LogsExplorerViews(): JSX.Element {
 		return logs.length >= currentStagedQueryData.limit;
 	}, [logs.length, currentStagedQueryData]);
 
-	const { data, isFetching, isError } = useGetExplorerQueryRange(requestData, {
-		keepPreviousData: true,
-		enabled: !isLimit,
-	});
+	const listChartQuery = useMemo(() => {
+		if (!stagedQuery || !currentStagedQueryData) return null;
+
+		const modifiedQueryData: IBuilderQuery = {
+			...currentStagedQueryData,
+			aggregateOperator: StringOperators.COUNT,
+		};
+
+		const modifiedQuery: Query = {
+			...stagedQuery,
+			builder: {
+				...stagedQuery.builder,
+				queryData: stagedQuery.builder.queryData.map((item) => ({
+					...item,
+					...modifiedQueryData,
+				})),
+			},
+		};
+
+		return modifiedQuery;
+	}, [stagedQuery, currentStagedQueryData]);
+
+	const listChartData = useGetExplorerQueryRange(
+		listChartQuery,
+		PANEL_TYPES.TIME_SERIES,
+	);
+
+	const { data, isFetching, isError } = useGetExplorerQueryRange(
+		requestData,
+		panelType,
+		{
+			keepPreviousData: true,
+			enabled: !isLimit,
+		},
+	);
 
 	const handleSetActiveLog = useCallback((nextActiveLog: ILog) => {
 		setActiveLog(nextActiveLog);
@@ -264,6 +299,17 @@ function LogsExplorerViews(): JSX.Element {
 	const chartData = useMemo(() => {
 		if (!stagedQuery) return [];
 
+		if (panelType === PANEL_TYPES.LIST) {
+			if (
+				listChartData &&
+				listChartData.data &&
+				listChartData.data.payload.data.result.length > 0
+			) {
+				return listChartData.data.payload.data.result;
+			}
+			return [];
+		}
+
 		if (!data || data.payload.data.result.length === 0) return [];
 
 		const isGroupByExist = stagedQuery.builder.queryData.some(
@@ -273,7 +319,7 @@ function LogsExplorerViews(): JSX.Element {
 		return isGroupByExist
 			? data.payload.data.result
 			: [data.payload.data.result[0]];
-	}, [stagedQuery, data]);
+	}, [stagedQuery, data, panelType, listChartData]);
 
 	return (
 		<>

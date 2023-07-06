@@ -1,5 +1,6 @@
 import { initialQueriesMap, PANEL_TYPES } from 'constants/queryBuilder';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
+import { GRAPH_TYPES } from 'container/NewDashboard/ComponentsSlider';
 import { useMemo } from 'react';
 import { UseQueryOptions, UseQueryResult } from 'react-query';
 import { useSelector } from 'react-redux';
@@ -14,9 +15,10 @@ import { useQueryBuilder } from './useQueryBuilder';
 
 export const useGetExplorerQueryRange = (
 	requestData: Query | null,
+	panelType: GRAPH_TYPES | null,
 	options?: UseQueryOptions<SuccessResponse<MetricRangePayloadProps>, Error>,
 ): UseQueryResult<SuccessResponse<MetricRangePayloadProps>, Error> => {
-	const { isEnabledQuery, panelType } = useQueryBuilder();
+	const { isEnabledQuery } = useQueryBuilder();
 	const { selectedTime: globalSelectedInterval } = useSelector<
 		AppState,
 		GlobalReducer
