@@ -12,53 +12,55 @@ import {
 	SaveContainer,
 } from './styles';
 
-function MetricGraphTable({
+function GraphManager({
 	data,
-	showDataIndexHandler,
+	graphVisibilityHandler,
 	name,
 }: MetricGraphTableProps): JSX.Element {
-	const [displayGraph, setDisplayGraph] = useState<boolean[]>(
+	const [graphVisibilityArray, setGraphVisibilityArray] = useState<boolean[]>(
 		Array(data.datasets.length).fill(true),
 	);
-	const [dataSet, setDataSet] = useState<IndexSelectedProps[]>(
+	const [tableDataSet, setTableDataSet] = useState<ExtendedChartDataset[]>(
 		data.datasets.map(
 			(item: ChartDataset) =>
 				({
 					...item,
 					show: true,
-					sum: (item.data as number[]).reduce((a, b) => a + b, 0),
-					avg: (item.data as number[]).reduce((a, b) => a + b, 0) / item.data.length,
-					max: Math.max(...(item.data as number[])),
-					min: Math.min(...(item.data as number[])),
-				} as IndexSelectedProps),
+					sum: parseFloat(
+						(item.data as number[]).reduce((a, b) => a + b, 0).toFixed(0),
+					),
+					avg: parseFloat(
+						(
+							(item.data as number[]).reduce((a, b) => a + b, 0) / item.data.length
+						).toFixed(0),
+					),
+					max: parseFloat(Math.max(...(item.data as number[])).toFixed(0)),
+					min: parseFloat(Math.min(...(item.data as number[])).toFixed(0)),
+				} as ExtendedChartDataset),
 		),
 	);
-	const [labelAndDisplayData, setLabelAndDisplayData] = useState<
-		ShowLegendProps[]
-	>([]);
+	const [legendEntries, setLegendEntries] = useState<LegendEntryProps[]>([]);
 
-	const showAllDataSet = (data: ChartData): ShowLegendProps[] =>
+	const showAllDataSet = (data: ChartData): LegendEntryProps[] =>
 		data.datasets.map(
 			(item) =>
 				({
 					label: item.label,
 					show: true,
-				} as ShowLegendProps),
+				} as LegendEntryProps),
 		);
 
 	useEffect(() => {
-		showDataIndexHandler([...displayGraph]);
-	}, [displayGraph, showDataIndexHandler]);
+		graphVisibilityHandler([...graphVisibilityArray]);
+	}, [graphVisibilityArray, graphVisibilityHandler]);
 
 	const [chartDataSet, setChartDataSet] = useState<ChartData>(data);
-	console.log(
-		'🚀 ~ file: MetricGraphTable.tsx:34 ~ chartDataSet:',
-		chartDataSet,
-	);
 
 	useEffect(() => {
-		const sequenceArray: boolean[] = Array(data.datasets.length).fill(true);
-		setDataSet(
+		const graphDisplayStatusArray: boolean[] = Array(data.datasets.length).fill(
+			true,
+		);
+		setTableDataSet(
 			data.datasets.map((item: ChartDataset) => ({
 				...item,
 				show: true,
@@ -69,61 +71,61 @@ function MetricGraphTable({
 			})),
 		);
 		data.datasets.forEach((d, i) => {
-			const index = labelAndDisplayData.findIndex((di) => di.label === d.label);
+			const index = legendEntries.findIndex((di) => di.label === d.label);
 			if (index !== -1) {
-				sequenceArray[i] = labelAndDisplayData[index].show;
+				graphDisplayStatusArray[i] = legendEntries[index].show;
 			}
 		});
 		setChartDataSet(data);
-		setDisplayGraph(sequenceArray);
-	}, [data, labelAndDisplayData]);
+		setGraphVisibilityArray(graphDisplayStatusArray);
+	}, [data, legendEntries]);
 
 	useEffect(() => {
 		if (localStorage.getItem('LEGEND_GRAPH') !== null) {
 			const legendGraphFromLocalStore = localStorage.getItem('LEGEND_GRAPH');
 			const legendFromLocalStore: [
-				{ name: string; dataIndex: ShowLegendProps[] },
+				{ name: string; dataIndex: LegendEntryProps[] },
 			] = JSON.parse(legendGraphFromLocalStore as string);
 			let isfound = false;
-			const sequenceArray = Array(data.datasets.length).fill(true);
+			const graphDisplayStatusArray = Array(data.datasets.length).fill(true);
 			legendFromLocalStore.forEach((item) => {
 				if (item.name === name) {
-					setLabelAndDisplayData(item.dataIndex);
+					setLegendEntries(item.dataIndex);
 					data.datasets.forEach((d, i) => {
 						const index = item.dataIndex.findIndex((di) => di.label === d.label);
 						if (index !== -1) {
-							sequenceArray[i] = item.dataIndex[index].show;
+							graphDisplayStatusArray[i] = item.dataIndex[index].show;
 						}
 					});
-					setDisplayGraph(sequenceArray);
+					setGraphVisibilityArray(graphDisplayStatusArray);
 					isfound = true;
 				}
 			});
 			if (!isfound) {
-				setDisplayGraph(Array(data.datasets.length).fill(true));
-				setLabelAndDisplayData(showAllDataSet(data));
+				setGraphVisibilityArray(Array(data.datasets.length).fill(true));
+				setLegendEntries(showAllDataSet(data));
 			}
 		} else {
-			setDisplayGraph(Array(data.datasets.length).fill(true));
-			setLabelAndDisplayData(showAllDataSet(data));
+			setGraphVisibilityArray(Array(data.datasets.length).fill(true));
+			setLegendEntries(showAllDataSet(data));
 		}
 	}, [data, name]);
 
 	useEffect((): void => {
 		setChartDataSet((prevState) => {
 			const newChartDataSet: ChartData = { ...prevState };
-			newChartDataSet.datasets = dataSet.filter((item) => item.hidden);
+			newChartDataSet.datasets = tableDataSet.filter((item) => item.hidden);
 			return newChartDataSet;
 		});
-	}, [dataSet, setChartDataSet]);
+	}, [tableDataSet, setChartDataSet]);
 
 	const checkBoxOnChangeHandler = (
 		e: CheckboxChangeEvent,
 		index: number,
 	): void => {
-		displayGraph[index] = e.target.checked;
-		setDisplayGraph([...displayGraph]);
-		showDataIndexHandler(displayGraph);
+		graphVisibilityArray[index] = e.target.checked;
+		setGraphVisibilityArray([...graphVisibilityArray]);
+		graphVisibilityHandler(graphVisibilityArray);
 	};
 
 	const getCheckBox = (index: number): React.ReactElement => (
@@ -138,7 +140,7 @@ function MetricGraphTable({
 		>
 			<Checkbox
 				onChange={(e): void => checkBoxOnChangeHandler(e, index)}
-				checked={displayGraph[index]}
+				checked={graphVisibilityArray[index]}
 			/>
 		</ConfigProvider>
 	);
@@ -194,44 +196,44 @@ function MetricGraphTable({
 
 	const filterHandler = (event: React.ChangeEvent<HTMLInputElement>): void => {
 		const value = event.target.value.toString().toLowerCase();
-		const updatedDataSet = dataSet.map((item) => {
+		const updatedDataSet = tableDataSet.map((item) => {
 			if (item.label?.toLocaleLowerCase().includes(value)) {
 				return { ...item, show: true };
 			}
 			return { ...item, show: false };
 		});
-		setDataSet(updatedDataSet);
-		chartDataSet.datasets = dataSet;
+		setTableDataSet(updatedDataSet);
+		chartDataSet.datasets = tableDataSet;
 		setChartDataSet({ ...chartDataSet });
 	};
 
 	const saveHandler = (): void => {
-		const newLegendData = {
+		const legendEntry = {
 			name,
 			dataIndex: data.datasets.map(
 				(item, index) =>
 					({
 						label: item.label,
-						show: displayGraph[index],
-					} as ShowLegendProps),
+						show: graphVisibilityArray[index],
+					} as LegendEntryProps),
 			),
 		};
 		if (localStorage.getItem('LEGEND_GRAPH')) {
-			const legendData: {
+			const legendEntryData: {
 				name: string;
-				dataIndex: ShowLegendProps[];
+				dataIndex: LegendEntryProps[];
 			}[] = JSON.parse(localStorage.getItem('LEGEND_GRAPH') as string);
-			const legendIndex = legendData.findIndex((val) => val.name === name);
+			const index = legendEntryData.findIndex((val) => val.name === name);
 			localStorage.removeItem('LEGEND_GRAPH');
-			if (legendIndex !== -1) {
-				legendData[legendIndex] = newLegendData;
+			if (index !== -1) {
+				legendEntryData[index] = legendEntry;
 			} else {
-				legendData.push(newLegendData);
+				legendEntryData.push(legendEntry);
 			}
-			localStorage.setItem('LEGEND_GRAPH', JSON.stringify(legendData));
+			localStorage.setItem('LEGEND_GRAPH', JSON.stringify(legendEntryData));
 		} else {
-			const legendArray = [newLegendData];
-			localStorage.setItem('LEGEND_GRAPH', JSON.stringify(legendArray));
+			const legendEntryArray = [legendEntry];
+			localStorage.setItem('LEGEND_GRAPH', JSON.stringify(legendEntryArray));
 		}
 	};
 
@@ -241,7 +243,7 @@ function MetricGraphTable({
 				<Input onChange={filterHandler} placeholder="Filter Series" />
 				<ResizeTable
 					columns={columns}
-					dataSource={dataSet.filter((item) => item.show)}
+					dataSource={tableDataSet.filter((item) => item.show)}
 					rowKey="index"
 					pagination={false}
 				/>
@@ -270,16 +272,16 @@ interface DataSetProps {
 
 interface MetricGraphTableProps {
 	data: ChartData;
-	showDataIndexHandler: (showLegendArray: boolean[]) => void;
+	graphVisibilityHandler: (graphVisibilityArray: boolean[]) => void;
 	name: string;
 }
 
-export interface ShowLegendProps {
+export interface LegendEntryProps {
 	label: string;
 	show: boolean;
 }
 
-type IndexSelectedProps = ChartDataset & {
+type ExtendedChartDataset = ChartDataset & {
 	show: boolean;
 	sum: number;
 	avg: number;
@@ -288,7 +290,7 @@ type IndexSelectedProps = ChartDataset & {
 };
 
 export default memo(
-	MetricGraphTable,
+	GraphManager,
 	(prevProps, nextProps) =>
 		isEqual(prevProps.data, nextProps.data) && prevProps.name === nextProps.name,
 );

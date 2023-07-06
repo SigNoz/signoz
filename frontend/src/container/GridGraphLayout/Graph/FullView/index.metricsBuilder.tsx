@@ -17,7 +17,7 @@ import { AppState } from 'store/reducers';
 import { Widgets } from 'types/api/dashboard/getAll';
 import { GlobalReducer } from 'types/reducer/globalTime';
 
-import MetricGraphTable from './MetricGraphTable';
+import GraphManager from './MetricGraphTable';
 import { GraphContainer, TimeContainer } from './styles';
 
 function FullView({
@@ -33,10 +33,10 @@ function FullView({
 		GlobalReducer
 	>((state) => state.globalTime);
 
-	const [showDataIndexArray, setShowDataIndexArray] = useState<boolean[]>();
+	const [graphsVisibility, setGraphsVisility] = useState<boolean[]>();
 
-	const showDataIndexHandler = (showLegendArr: boolean[]): void => {
-		setShowDataIndexArray([...showLegendArr]);
+	const graphVisibilityHandler = (graphsVisiblityArray: boolean[]): void => {
+		setGraphsVisility([...graphsVisiblityArray]);
 	};
 
 	const getSelectedTime = useCallback(
@@ -119,13 +119,13 @@ function FullView({
 					name={name}
 					yAxisUnit={yAxisUnit}
 					onDragSelect={onDragSelect}
-					showDataIndexArray={showDataIndexArray}
+					graphsVisibility={graphsVisibility}
 				/>
 			</GraphContainer>
 
-			<MetricGraphTable
+			<GraphManager
 				data={chartDataSet}
-				showDataIndexHandler={showDataIndexHandler}
+				graphVisibilityHandler={graphVisibilityHandler}
 				name={name}
 			/>
 		</>

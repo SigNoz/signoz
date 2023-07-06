@@ -24,7 +24,7 @@ import {
 } from 'chart.js';
 import * as chartjsAdapter from 'chartjs-adapter-date-fns';
 import annotationPlugin from 'chartjs-plugin-annotation';
-import { ShowLegendProps } from 'container/GridGraphLayout/Graph/FullView/MetricGraphTable';
+import { LegendEntryProps } from 'container/GridGraphLayout/Graph/FullView/MetricGraphTable';
 import dayjs from 'dayjs';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import isEqual from 'lodash-es/isEqual';
@@ -86,7 +86,7 @@ function Graph({
 	containerHeight,
 	onDragSelect,
 	dragSelectColor,
-	showDataIndexArray,
+	graphsVisibility,
 }: GraphProps): JSX.Element {
 	const nearestDatasetIndex = useRef<null | number>(null);
 	const chartRef = useRef<HTMLCanvasElement>(null);
@@ -330,7 +330,7 @@ function Graph({
 		if (localStorage.getItem('LEGEND_GRAPH') !== null) {
 			const legendGraphFromLocalStore = localStorage.getItem('LEGEND_GRAPH');
 			const legendFromLocalStore: [
-				{ name: string; dataIndex: ShowLegendProps[] },
+				{ name: string; dataIndex: LegendEntryProps[] },
 			] = JSON.parse(legendGraphFromLocalStore as string);
 			const sequenceArray = Array(data.datasets.length).fill(true);
 			legendFromLocalStore.forEach((item) => {
@@ -356,20 +356,20 @@ function Graph({
 	}, [data, name]);
 
 	useEffect(() => {
-		if (showDataIndexArray && lineChartRef.current !== undefined) {
+		if (graphsVisibility && lineChartRef.current !== undefined) {
 			const { type } = lineChartRef.current?.config as ChartConfiguration;
 			if (type === 'pie' || type === 'doughnut') {
-				showDataIndexArray?.forEach((item, index) =>
+				graphsVisibility?.forEach((item, index) =>
 					lineChartRef.current?.toggleDataVisibility(index),
 				);
 			} else {
-				showDataIndexArray?.forEach((item, index) =>
+				graphsVisibility?.forEach((item, index) =>
 					lineChartRef.current?.setDatasetVisibility(index, item),
 				);
 			}
 			lineChartRef.current?.update();
 		}
-	}, [showDataIndexArray]);
+	}, [graphsVisibility]);
 
 	return (
 		<div style={{ height: containerHeight }}>
@@ -406,7 +406,7 @@ export interface GraphProps {
 	containerHeight?: string | number;
 	onDragSelect?: (start: number, end: number) => void;
 	dragSelectColor?: string;
-	showDataIndexArray?: boolean[];
+	graphsVisibility?: boolean[];
 }
 
 export interface StaticLineProps {
@@ -436,12 +436,12 @@ Graph.defaultProps = {
 	containerHeight: '90%',
 	onDragSelect: undefined,
 	dragSelectColor: undefined,
-	showDataIndexArray: undefined,
+	graphsVisibility: undefined,
 };
 
 export default memo(
 	Graph,
 	(prevProps, nextProps) =>
 		isEqual(prevProps.data, nextProps.data) &&
-		prevProps.showDataIndexArray === nextProps.showDataIndexArray,
+		prevProps.graphsVisibility === nextProps.graphsVisibility,
 );

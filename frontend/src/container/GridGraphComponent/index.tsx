@@ -20,7 +20,7 @@ function GridGraphComponent({
 	yAxisUnit,
 	staticLine,
 	onDragSelect,
-	showDataIndexArray,
+	graphsVisibility,
 }: GridGraphComponentProps): JSX.Element | null {
 	const location = history.location.pathname;
 
@@ -41,7 +41,7 @@ function GridGraphComponent({
 					yAxisUnit,
 					staticLine,
 					onDragSelect,
-					showDataIndexArray,
+					graphsVisibility,
 				}}
 			/>
 		);
@@ -90,7 +90,7 @@ export interface GridGraphComponentProps {
 	yAxisUnit?: string;
 	staticLine?: StaticLineProps;
 	onDragSelect?: (start: number, end: number) => void;
-	showDataIndexArray?: boolean[];
+	graphsVisibility?: boolean[];
 }
 
 GridGraphComponent.defaultProps = {
@@ -101,7 +101,7 @@ GridGraphComponent.defaultProps = {
 	yAxisUnit: undefined,
 	staticLine: undefined,
 	onDragSelect: undefined,
-	showDataIndexArray: undefined,
+	graphsVisibility: undefined,
 };
 
 export default GridGraphComponent;
