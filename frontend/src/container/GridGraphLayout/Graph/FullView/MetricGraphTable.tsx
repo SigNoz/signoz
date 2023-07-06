@@ -57,8 +57,6 @@ function GraphManager({
 		graphVisibilityHandler([...graphVisibilityArray]);
 	}, [graphVisibilityArray, graphVisibilityHandler]);
 
-	const [chartDataSet, setChartDataSet] = useState<ChartData>(data);
-
 	useEffect(() => {
 		const graphDisplayStatusArray: boolean[] = Array(data.datasets.length).fill(
 			true,
@@ -81,7 +79,6 @@ function GraphManager({
 				graphDisplayStatusArray[i] = legendEntries[index].show;
 			}
 		});
-		setChartDataSet(data);
 		setGraphVisibilityArray(graphDisplayStatusArray);
 	}, [data, legendEntries]);
 
@@ -115,14 +112,6 @@ function GraphManager({
 			setLegendEntries(showAllDataSet(data));
 		}
 	}, [data, name]);
-
-	useEffect((): void => {
-		setChartDataSet((prevState) => {
-			const newChartDataSet: ChartData = { ...prevState };
-			newChartDataSet.datasets = tableDataSet.filter((item) => item.hidden);
-			return newChartDataSet;
-		});
-	}, [tableDataSet, setChartDataSet]);
 
 	const checkBoxOnChangeHandler = (
 		e: CheckboxChangeEvent,
@@ -229,8 +218,6 @@ function GraphManager({
 			return { ...item, show: false };
 		});
 		setTableDataSet(updatedDataSet);
-		chartDataSet.datasets = tableDataSet;
-		setChartDataSet({ ...chartDataSet });
 	};
 
 	const saveHandler = (): void => {
