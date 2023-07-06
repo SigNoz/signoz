@@ -17,7 +17,11 @@ import {
 import { DataSource } from 'types/common/queryBuilder';
 import { SelectOption } from 'types/common/select';
 
-export const useQueryOperations: UseQueryOperations = ({ query, index }) => {
+export const useQueryOperations: UseQueryOperations = ({
+	query,
+	index,
+	inactiveFilters,
+}) => {
 	const {
 		handleSetQueryData,
 		removeQueryBuilderEntityByIndex,
@@ -57,9 +61,25 @@ export const useQueryOperations: UseQueryOperations = ({ query, index }) => {
 	);
 
 	const getNewListOfAdditionalFilters = useCallback(
-		(dataSource: DataSource): string[] =>
-			mapOfFilters[dataSource].map((item) => item.text),
-		[],
+		(dataSource: DataSource): string[] => {
+			console.log({ inactiveFilters });
+			const result: string[] = mapOfFilters[dataSource].reduce<string[]>(
+				(acc, item) => {
+					if (inactiveFilters && inactiveFilters[item.field]) {
+						return acc;
+					}
+
+					acc.push(item.text);
+
+					return acc;
+				},
+				[],
+			);
+
+			return result;
+		},
+
+		[inactiveFilters],
 	);
 
 	const handleChangeAggregatorAttribute = useCallback(

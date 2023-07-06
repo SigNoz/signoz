@@ -48,7 +48,7 @@ export const Query = memo(function Query({
 		handleChangeQueryData,
 		handleChangeOperator,
 		handleDeleteQuery,
-	} = useQueryOperations({ index, query });
+	} = useQueryOperations({ index, query, inactiveFilters });
 
 	const handleChangeAggregateEvery = useCallback(
 		(value: IBuilderQuery['stepInterval']) => {
