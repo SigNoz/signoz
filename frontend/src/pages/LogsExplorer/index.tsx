@@ -2,6 +2,7 @@ import { Button, Col, Row } from 'antd';
 import { initialQueriesMap, PANEL_TYPES } from 'constants/queryBuilder';
 import LogsExplorerViews from 'container/LogsExplorerViews';
 import { QueryBuilder } from 'container/QueryBuilder';
+import { QueryBuilderProps } from 'container/QueryBuilder/QueryBuilder.interfaces';
 import { useGetPanelTypesQueryParam } from 'hooks/queryBuilder/useGetPanelTypesQueryParam';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useShareBuilderUrl } from 'hooks/queryBuilder/useShareBuilderUrl';
@@ -27,6 +28,16 @@ function LogsExplorer(): JSX.Element {
 
 	useShareBuilderUrl(defaultValue);
 
+	const inactiveLogsFilters: QueryBuilderProps['inactiveFilters'] = useMemo(() => {
+		if (panelTypes === PANEL_TYPES.TABLE) {
+			const result: QueryBuilderProps['inactiveFilters'] = { stepInterval: true };
+
+			return result;
+		}
+
+		return {};
+	}, [panelTypes]);
+
 	return (
 		<WrapperStyled>
 			<Row gutter={[0, 28]}>
@@ -34,6 +45,7 @@ function LogsExplorer(): JSX.Element {
 					<QueryBuilder
 						panelType={panelTypes}
 						config={{ initialDataSource: DataSource.LOGS, queryVariant: 'static' }}
+						inactiveFilters={inactiveLogsFilters}
 						actions={
 							<ButtonWrapperStyled>
 								<Button type="primary" onClick={handleRunQuery}>
