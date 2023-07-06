@@ -6,8 +6,8 @@ import { memo } from 'react';
 import { LogsExplorerTableProps } from './LogsExplorerTable.interfaces';
 
 function LogsExplorerTable({
-	isLoading,
 	data,
+	isLoading,
 }: LogsExplorerTableProps): JSX.Element {
 	const { stagedQuery } = useQueryBuilder();
 

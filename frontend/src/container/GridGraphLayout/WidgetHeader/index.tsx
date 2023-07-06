@@ -9,7 +9,7 @@ import {
 import { Dropdown, MenuProps, Tooltip, Typography } from 'antd';
 import { MenuItemType } from 'antd/es/menu/hooks/useItems';
 import Spinner from 'components/Spinner';
-import { COMPOSITE_QUERY } from 'constants/queryBuilderQueryNames';
+import { queryParamNamesMap } from 'constants/queryBuilderQueryNames';
 import useComponentPermission from 'hooks/useComponentPermission';
 import history from 'lib/history';
 import { useCallback, useMemo, useState } from 'react';
@@ -64,7 +64,9 @@ function WidgetHeader({
 		history.push(
 			`${window.location.pathname}/new?widgetId=${widgetId}&graphType=${
 				widget.panelTypes
-			}&${COMPOSITE_QUERY}=${encodeURIComponent(JSON.stringify(widget.query))}`,
+			}&${queryParamNamesMap.compositeQuery}=${encodeURIComponent(
+				JSON.stringify(widget.query),
+			)}`,
 		);
 	}, [widget.id, widget.panelTypes, widget.query]);
 

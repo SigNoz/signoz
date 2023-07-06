@@ -27,7 +27,7 @@ export function OrderByFilter({
 }: OrderByFilterProps): JSX.Element {
 	const [searchText, setSearchText] = useState<string>('');
 	const [selectedValue, setSelectedValue] = useState<IOption[]>(
-		transformToOrderByStringValues(query.orderBy) || [],
+		transformToOrderByStringValues(query.orderBy),
 	);
 
 	const { data, isFetching } = useQuery(
