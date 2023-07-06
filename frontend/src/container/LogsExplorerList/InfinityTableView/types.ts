@@ -1,7 +1,7 @@
-import { LogsTableViewProps } from 'components/Logs/TableView/types';
+import { UseTableViewProps } from 'components/Logs/TableView/types';
 
 export type InfinityTableProps = {
-	tableViewProps: LogsTableViewProps;
+	tableViewProps: UseTableViewProps;
 	infitiyTableProps: {
 		onEndReached: (index: number) => void;
 	};
