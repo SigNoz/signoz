@@ -1,5 +1,6 @@
 import { ITEMS } from 'container/NewDashboard/ComponentsSlider/menuItems';
 import { ReactNode } from 'react';
+import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource } from 'types/common/queryBuilder';
 
 export type QueryBuilderConfig =
@@ -13,4 +14,5 @@ export type QueryBuilderProps = {
 	config?: QueryBuilderConfig;
 	panelType: ITEMS;
 	actions?: ReactNode;
+	inactiveFilters?: Partial<Record<keyof IBuilderQuery, boolean>>;
 };

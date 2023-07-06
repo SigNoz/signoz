@@ -17,6 +17,7 @@ export const QueryBuilder = memo(function QueryBuilder({
 	config,
 	panelType: newPanelType,
 	actions,
+	inactiveFilters = {},
 }: QueryBuilderProps): JSX.Element {
 	const {
 		currentQuery,
@@ -74,6 +75,7 @@ export const QueryBuilder = memo(function QueryBuilder({
 								isAvailableToDisable={isAvailableToDisableQuery}
 								queryVariant={config?.queryVariant || 'dropdown'}
 								query={query}
+								inactiveFilters={inactiveFilters}
 							/>
 						</Col>
 					))}
