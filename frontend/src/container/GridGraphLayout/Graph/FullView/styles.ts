@@ -28,4 +28,10 @@ export const FilterTableContainer = styled.div`
 
 export const SaveContainer = styled.div`
 	flex-basis: 20%;
+	display: flex;
+	justify-content: flex-end;
+
+	> button {
+		margin: 0 5px;
+	}
 `;
