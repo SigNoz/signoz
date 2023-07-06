@@ -73,10 +73,13 @@ const useOptionsMenu = ({
 		[optionsQueryData],
 	);
 
-	const addColumnOptions = useMemo(
-		() => getOptionsFromKeys(attributeKeys, selectedColumnKeys),
-		[attributeKeys, selectedColumnKeys],
-	);
+	const addColumnOptions = useMemo(() => {
+		const filteredAttributeKeys = attributeKeys.filter(
+			(item) => item.key !== 'body',
+		);
+
+		return getOptionsFromKeys(filteredAttributeKeys, selectedColumnKeys);
+	}, [attributeKeys, selectedColumnKeys]);
 
 	const handleRedirectWithOptionsData = useCallback(
 		(newQueryData: OptionsQuery) => {
