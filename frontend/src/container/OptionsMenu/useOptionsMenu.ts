@@ -1,8 +1,10 @@
 import { RadioChangeEvent } from 'antd';
+import getFromLocalstorage from 'api/browser/localstorage/get';
+import setToLocalstorage from 'api/browser/localstorage/set';
 import { getAggregateKeys } from 'api/queryBuilder/getAttributeKeys';
+import { LOCALSTORAGE } from 'constants/localStorage';
 import { QueryBuilderKeys } from 'constants/queryBuilder';
 import useDebounce from 'hooks/useDebounce';
-import { useNotifications } from 'hooks/useNotifications';
 import useUrlQueryData from 'hooks/useUrlQueryData';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useQueries, useQuery } from 'react-query';
@@ -35,9 +37,11 @@ const useOptionsMenu = ({
 }: UseOptionsMenuProps): UseOptionsMenu => {
 	const [searchText, setSearchText] = useState<string>('');
 	const [isFocused, setIsFocused] = useState<boolean>(false);
-
 	const debouncedSearchText = useDebounce(searchText, 300);
-	const { notifications } = useNotifications();
+
+	const localStorageOptionsQuery = getFromLocalstorage(
+		LOCALSTORAGE.LIST_OPTIONS,
+	);
 
 	const initialQueryParams = useMemo(
 		() => ({
@@ -138,9 +142,21 @@ const useOptionsMenu = ({
 		[optionsQueryData],
 	);
 
-	const optionsFromAttributeKeys = useMemo(
-		() => getOptionsFromKeys(searchedAttributeKeys, selectedColumnKeys),
-		[searchedAttributeKeys, selectedColumnKeys],
+	const optionsFromAttributeKeys = useMemo(() => {
+		const filteredAttributeKeys = searchedAttributeKeys.filter(
+			(item) => item.key !== 'body',
+		);
+
+		return getOptionsFromKeys(filteredAttributeKeys, selectedColumnKeys);
+	}, [searchedAttributeKeys, selectedColumnKeys]);
+
+	const handleRedirectWithOptionsData = useCallback(
+		(newQueryData: OptionsQuery) => {
+			redirectWithOptionsData(newQueryData);
+
+			setToLocalstorage(LOCALSTORAGE.LIST_OPTIONS, JSON.stringify(newQueryData));
+		},
+		[redirectWithOptionsData],
 	);
 
 	const handleSelectColumns = useCallback(
@@ -156,16 +172,18 @@ const useOptionsMenu = ({
 				return [...acc, column];
 			}, [] as BaseAutocompleteData[]);
 
-			redirectWithOptionsData({
+			const optionsData: OptionsQuery = {
 				...optionsQueryData,
 				selectColumns: newSelectedColumns,
-			});
+			};
+
+			handleRedirectWithOptionsData(optionsData);
 		},
 		[
 			searchedAttributeKeys,
 			selectedColumnKeys,
 			optionsQueryData,
-			redirectWithOptionsData,
+			handleRedirectWithOptionsData,
 		],
 	);
 
@@ -175,38 +193,38 @@ const useOptionsMenu = ({
 				({ id }) => id !== columnKey,
 			);
 
-			if (!newSelectedColumns.length) {
-				notifications.error({
-					message: 'There must be at least one selected column',
-				});
-			} else {
-				redirectWithOptionsData({
-					...defaultOptionsQuery,
-					selectColumns: newSelectedColumns,
-				});
-			}
+			const optionsData: OptionsQuery = {
+				...optionsQueryData,
+				selectColumns: newSelectedColumns,
+			};
+
+			handleRedirectWithOptionsData(optionsData);
 		},
-		[optionsQueryData, notifications, redirectWithOptionsData],
+		[optionsQueryData, handleRedirectWithOptionsData],
 	);
 
 	const handleFormatChange = useCallback(
 		(event: RadioChangeEvent) => {
-			redirectWithOptionsData({
+			const optionsData: OptionsQuery = {
 				...optionsQueryData,
 				format: event.target.value,
-			});
+			};
+
+			handleRedirectWithOptionsData(optionsData);
 		},
-		[optionsQueryData, redirectWithOptionsData],
+		[handleRedirectWithOptionsData, optionsQueryData],
 	);
 
 	const handleMaxLinesChange = useCallback(
 		(value: string | number | null) => {
-			redirectWithOptionsData({
+			const optionsData: OptionsQuery = {
 				...optionsQueryData,
 				maxLines: value as number,
-			});
+			};
+
+			handleRedirectWithOptionsData(optionsData);
 		},
-		[optionsQueryData, redirectWithOptionsData],
+		[handleRedirectWithOptionsData, optionsQueryData],
 	);
 
 	const handleSearchAttribute = useCallback((value: string) => {
@@ -235,11 +253,11 @@ const useOptionsMenu = ({
 				onSearch: handleSearchAttribute,
 			},
 			format: {
-				value: optionsQueryData?.format || defaultOptionsQuery.format,
+				value: optionsQueryData.format || defaultOptionsQuery.format,
 				onChange: handleFormatChange,
 			},
 			maxLines: {
-				value: optionsQueryData?.maxLines || defaultOptionsQuery.maxLines,
+				value: optionsQueryData.maxLines || defaultOptionsQuery.maxLines,
 				onChange: handleMaxLinesChange,
 			},
 		}),
@@ -260,11 +278,16 @@ const useOptionsMenu = ({
 	useEffect(() => {
 		if (optionsQuery || !isFetchedInitialAttributes) return;
 
-		redirectWithOptionsData(initialOptionsQuery);
+		const nextOptionsQuery = localStorageOptionsQuery
+			? JSON.parse(localStorageOptionsQuery)
+			: initialOptionsQuery;
+
+		redirectWithOptionsData(nextOptionsQuery);
 	}, [
 		isFetchedInitialAttributes,
 		optionsQuery,
 		initialOptionsQuery,
+		localStorageOptionsQuery,
 		redirectWithOptionsData,
 	]);
 
