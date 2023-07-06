@@ -3,6 +3,7 @@ import { CheckboxChangeEvent } from 'antd/es/checkbox';
 import { ColumnType } from 'antd/es/table';
 import { ChartData, ChartDataset } from 'chart.js';
 import { ResizeTable } from 'components/ResizeTable';
+import { useNotifications } from 'hooks/useNotifications';
 import isEqual from 'lodash-es/isEqual';
 import { memo, useEffect, useState } from 'react';
 
@@ -40,6 +41,8 @@ function GraphManager({
 		),
 	);
 	const [legendEntries, setLegendEntries] = useState<LegendEntryProps[]>([]);
+
+	const { notifications } = useNotifications();
 
 	const showAllDataSet = (data: ChartData): LegendEntryProps[] =>
 		data.datasets.map(
@@ -258,6 +261,9 @@ function GraphManager({
 			const legendEntryArray = [legendEntry];
 			localStorage.setItem('LEGEND_GRAPH', JSON.stringify(legendEntryArray));
 		}
+		notifications.success({
+			message: 'Saved successfully!',
+		});
 	};
 
 	return (
