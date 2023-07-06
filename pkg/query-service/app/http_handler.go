@@ -2784,11 +2784,22 @@ func applyMetricLimit(results []*v3.Result, queryRangeParams *v3.QueryRangeParam
 	// use the grouping set points to apply the limit
 
 	for _, result := range results {
-		if queryRangeParams.CompositeQuery.BuilderQueries[result.QueryName].DataSource == v3.DataSourceMetrics {
-			limit := queryRangeParams.CompositeQuery.BuilderQueries[result.QueryName].Limit
+		builderQueries := queryRangeParams.CompositeQuery.BuilderQueries
+		if builderQueries != nil && builderQueries[result.QueryName].DataSource == v3.DataSourceMetrics {
+			limit := builderQueries[result.QueryName].Limit
+			var orderAsc bool
+			for _, item := range builderQueries[result.QueryName].OrderBy {
+				if item.ColumnName == constants.SigNozOrderByValue {
+					orderAsc = strings.ToLower(item.Order) == "asc"
+					break
+				}
+			}
 			if limit != 0 {
 				sort.Slice(result.Series, func(i, j int) bool {
-					return result.Series[i].GroupingSetsPoint.Value > result.Series[j].GroupingSetsPoint.Value
+					if orderAsc {
+						return result.Series[i].Points[0].Value < result.Series[j].Points[0].Value
+					}
+					return result.Series[i].Points[0].Value > result.Series[j].Points[0].Value
 				})
 				if len(result.Series) > int(limit) {
 					result.Series = result.Series[:limit]

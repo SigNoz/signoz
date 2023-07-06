@@ -362,12 +362,6 @@ func orderBy(items []v3.OrderBy, tags []string) string {
 			orderBy = append(orderBy, fmt.Sprintf("%s ASC", tag))
 		}
 	}
-	// users might want to order by value of aggreagation
-	for _, item := range items {
-		if item.ColumnName == constants.SigNozOrderByValue {
-			orderBy = append(orderBy, fmt.Sprintf("value %s", item.Order))
-		}
-	}
 
 	return strings.Join(orderBy, ",")
 }
