@@ -4,6 +4,8 @@ import * as Papa from 'papaparse';
 import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { OrderByPayload } from 'types/api/queryBuilder/queryBuilderData';
 
+import { FILTERS } from './config';
+
 export const orderByValueDelimiter = '|';
 
 export const transformToOrderByStringValues = (
@@ -65,4 +67,18 @@ export function getLabelFromValue(arr: IOption[]): string[] {
 
 export function checkIfKeyPresent(str: string, valueToCheck: string): boolean {
 	return new RegExp(`\\(${valueToCheck}\\)`).test(str);
+}
+
+export function omitOrderFromString(str: string): string {
+	const regexpAsc = new RegExp(FILTERS.ASC, 'ig');
+	const regexpDesc = new RegExp(FILTERS.DESC, 'ig');
+
+	if (regexpAsc.test(str) || regexpDesc.test(str)) {
+		const splittedString = str.split(' ');
+		splittedString.pop();
+
+		return splittedString.join(' ');
+	}
+
+	return str;
 }

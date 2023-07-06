@@ -17,6 +17,7 @@ import {
 	checkIfKeyPresent,
 	getLabelFromValue,
 	mapLabelValuePairs,
+	omitOrderFromString,
 	orderByValueDelimiter,
 	transformToOrderByStringValues,
 } from './utils';
@@ -115,7 +116,11 @@ export function OrderByFilter({
 			if (!match) return { label: item.label, value: item.value };
 			// eslint-disable-next-line @typescript-eslint/naming-convention, @typescript-eslint/no-unused-vars
 			const [_, order] = match.data.flat() as string[];
-			if (order) return { label: item.label, value: item.value };
+			if (order)
+				return {
+					label: item.label,
+					value: item.value,
+				};
 
 			return {
 				label: `${item.value} ${FILTERS.ASC}`,
@@ -134,25 +139,45 @@ export function OrderByFilter({
 	const handleChange = (values: IOption[]): void => {
 		const result = getUniqValues(values);
 
-		setSelectedValue(result);
 		const orderByValues: OrderByPayload[] = result.map((item) => {
 			const match = Papa.parse(item.value, { delimiter: orderByValueDelimiter });
 
-			if (match) {
-				const [columnName, order] = match.data.flat() as string[];
+			if (!match) {
 				return {
-					columnName: checkIfKeyPresent(columnName, query.aggregateAttribute.key)
-						? '#SIGNOZ_VALUE'
-						: columnName,
-					order: order ?? 'asc',
+					columnName: item.value,
+					order: 'asc',
 				};
 			}
 
+			const [columnName, order] = match.data.flat() as string[];
+
+			const columnNameValue = checkIfKeyPresent(
+				columnName,
+				query.aggregateAttribute.key,
+			)
+				? '#SIGNOZ_VALUE'
+				: columnName;
+
+			const orderValue = order ?? 'asc';
+
+			if (columnName.includes(FILTERS.ASC) || columnName.includes(FILTERS.DESC)) {
+				return {
+					columnName: omitOrderFromString(columnNameValue),
+					order: orderValue,
+				};
+			}
 			return {
-				columnName: item.value,
-				order: 'asc',
+				columnName: columnNameValue,
+				order: orderValue,
 			};
 		});
+
+		const selectedValue: IOption[] = orderByValues.map((item) => ({
+			label: `${item.columnName} ${item.order}`,
+			value: `${item.columnName} ${item.order}`,
+		}));
+
+		setSelectedValue(selectedValue);
 
 		setSearchText('');
 		onChange(orderByValues);
