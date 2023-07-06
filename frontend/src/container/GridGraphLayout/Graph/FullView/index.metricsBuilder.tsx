@@ -17,7 +17,8 @@ import { AppState } from 'store/reducers';
 import { Widgets } from 'types/api/dashboard/getAll';
 import { GlobalReducer } from 'types/reducer/globalTime';
 
-import { TimeContainer } from './styles';
+import MetricGraphTable from './MetricGraphTable';
+import { GraphContainer, TimeContainer } from './styles';
 
 function FullView({
 	widget,
@@ -31,6 +32,12 @@ function FullView({
 		AppState,
 		GlobalReducer
 	>((state) => state.globalTime);
+
+	const [showDataIndexArray, setShowDataIndexArray] = useState<boolean[]>();
+
+	const showDataIndexHandler = (showLegendArr: boolean[]): void => {
+		setShowDataIndexArray([...showLegendArr]);
+	};
 
 	const getSelectedTime = useCallback(
 		() =>
@@ -101,16 +108,25 @@ function FullView({
 				</TimeContainer>
 			)}
 
-			<GridGraphComponent
-				GRAPH_TYPES={widget.panelTypes}
+			<GraphContainer>
+				<GridGraphComponent
+					GRAPH_TYPES={widget.panelTypes}
+					data={chartDataSet}
+					isStacked={widget.isStacked}
+					opacity={widget.opacity}
+					title={widget.title}
+					onClickHandler={onClickHandler}
+					name={name}
+					yAxisUnit={yAxisUnit}
+					onDragSelect={onDragSelect}
+					showDataIndexArray={showDataIndexArray}
+				/>
+			</GraphContainer>
+
+			<MetricGraphTable
 				data={chartDataSet}
-				isStacked={widget.isStacked}
-				opacity={widget.opacity}
-				title={widget.title}
-				onClickHandler={onClickHandler}
+				showDataIndexHandler={showDataIndexHandler}
 				name={name}
-				yAxisUnit={yAxisUnit}
-				onDragSelect={onDragSelect}
 			/>
 		</>
 	);

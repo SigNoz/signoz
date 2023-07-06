@@ -61,6 +61,7 @@ const getChartData = ({ queryData }: GetChartDataProps): ChartData => {
 
 	return {
 		datasets: alldata.map((e, index) => ({
+			index,
 			data: e,
 			label: allLabels[index],
 			borderWidth: 1.5,

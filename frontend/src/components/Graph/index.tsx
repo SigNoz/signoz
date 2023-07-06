@@ -4,6 +4,7 @@ import {
 	BarElement,
 	CategoryScale,
 	Chart,
+	ChartConfiguration,
 	ChartData,
 	ChartEvent,
 	ChartOptions,
@@ -23,6 +24,7 @@ import {
 } from 'chart.js';
 import * as chartjsAdapter from 'chartjs-adapter-date-fns';
 import annotationPlugin from 'chartjs-plugin-annotation';
+import { ShowLegendProps } from 'container/GridGraphLayout/Graph/FullView/MetricGraphTable';
 import dayjs from 'dayjs';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import isEqual from 'lodash-es/isEqual';
@@ -84,6 +86,7 @@ function Graph({
 	containerHeight,
 	onDragSelect,
 	dragSelectColor,
+	showDataIndexArray,
 }: GraphProps): JSX.Element {
 	const nearestDatasetIndex = useRef<null | number>(null);
 	const chartRef = useRef<HTMLCanvasElement>(null);
@@ -323,6 +326,51 @@ function Graph({
 		buildChart();
 	}, [buildChart, forceReRender]);
 
+	useEffect(() => {
+		if (localStorage.getItem('LEGEND_GRAPH') !== null) {
+			const legendGraphFromLocalStore = localStorage.getItem('LEGEND_GRAPH');
+			const legendFromLocalStore: [
+				{ name: string; dataIndex: ShowLegendProps[] },
+			] = JSON.parse(legendGraphFromLocalStore as string);
+			const sequenceArray = Array(data.datasets.length).fill(true);
+			legendFromLocalStore.forEach((item) => {
+				if (item.name === name) {
+					data.datasets.forEach((d, i) => {
+						const index = item.dataIndex.findIndex((di) => di.label === d.label);
+						if (index !== -1) {
+							sequenceArray[i] = item.dataIndex[index].show;
+						}
+					});
+				}
+			});
+			sequenceArray.forEach((showLegendData, index) => {
+				const { type } = lineChartRef.current?.config as ChartConfiguration;
+				if (type === 'pie' || type === 'doughnut') {
+					lineChartRef.current?.toggleDataVisibility(index);
+				} else {
+					lineChartRef.current?.setDatasetVisibility(index, showLegendData);
+				}
+				lineChartRef.current?.update();
+			});
+		}
+	}, [data, name]);
+
+	useEffect(() => {
+		if (showDataIndexArray && lineChartRef.current !== undefined) {
+			const { type } = lineChartRef.current?.config as ChartConfiguration;
+			if (type === 'pie' || type === 'doughnut') {
+				showDataIndexArray?.forEach((item, index) =>
+					lineChartRef.current?.toggleDataVisibility(index),
+				);
+			} else {
+				showDataIndexArray?.forEach((item, index) =>
+					lineChartRef.current?.setDatasetVisibility(index, item),
+				);
+			}
+			lineChartRef.current?.update();
+		}
+	}, [showDataIndexArray]);
+
 	return (
 		<div style={{ height: containerHeight }}>
 			<canvas ref={chartRef} />
@@ -344,7 +392,7 @@ type CustomChartOptions = ChartOptions & {
 	};
 };
 
-interface GraphProps {
+export interface GraphProps {
 	animate?: boolean;
 	type: ChartType;
 	data: Chart['data'];
@@ -358,6 +406,7 @@ interface GraphProps {
 	containerHeight?: string | number;
 	onDragSelect?: (start: number, end: number) => void;
 	dragSelectColor?: string;
+	showDataIndexArray?: boolean[];
 }
 
 export interface StaticLineProps {
@@ -387,8 +436,12 @@ Graph.defaultProps = {
 	containerHeight: '90%',
 	onDragSelect: undefined,
 	dragSelectColor: undefined,
+	showDataIndexArray: undefined,
 };
 
-export default memo(Graph, (prevProps, nextProps) =>
-	isEqual(prevProps.data, nextProps.data),
+export default memo(
+	Graph,
+	(prevProps, nextProps) =>
+		isEqual(prevProps.data, nextProps.data) &&
+		prevProps.showDataIndexArray === nextProps.showDataIndexArray,
 );

@@ -11,3 +11,21 @@ export const TimeContainer = styled.div`
 	display: flex;
 	justify-content: flex-end;
 `;
+
+export const GraphContainer = styled.div`
+	height: 50%;
+`;
+
+export const FilterTableAndSaveContainer = styled.div`
+	margin-top: 30px;
+	display: flex;
+	align-items: flex-end;
+`;
+
+export const FilterTableContainer = styled.div`
+	flex-basis: 80%;
+`;
+
+export const SaveContainer = styled.div`
+	flex-basis: 20%;
+`;
