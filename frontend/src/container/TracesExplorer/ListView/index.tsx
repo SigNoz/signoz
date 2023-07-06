@@ -66,7 +66,9 @@ function ListView(): JSX.Element {
 				options?.selectColumns,
 			],
 			enabled:
-				!!stagedQuery && panelType === PANEL_TYPES.LIST && !!options?.selectColumns,
+				!!stagedQuery &&
+				panelType === PANEL_TYPES.LIST &&
+				!!options?.selectColumns?.length,
 		},
 	);
 

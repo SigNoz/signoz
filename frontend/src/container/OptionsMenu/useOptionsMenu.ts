@@ -4,13 +4,17 @@ import { QueryBuilderKeys } from 'constants/queryBuilder';
 import { useNotifications } from 'hooks/useNotifications';
 import useUrlQueryData from 'hooks/useUrlQueryData';
 import { useCallback, useEffect, useMemo } from 'react';
-import { useQuery } from 'react-query';
-import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
+import { useQueries, useQuery } from 'react-query';
+import { ErrorResponse, SuccessResponse } from 'types/api';
+import {
+	BaseAutocompleteData,
+	IQueryAutocompleteResponse,
+} from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { DataSource } from 'types/common/queryBuilder';
 
 import { defaultOptionsQuery, URL_OPTIONS } from './constants';
 import { InitialOptions, OptionsMenuConfig, OptionsQuery } from './types';
-import { getInitialColumns, getOptionsFromKeys } from './utils';
+import { getOptionsFromKeys } from './utils';
 
 interface UseOptionsMenuProps {
 	dataSource: DataSource;
@@ -29,6 +33,16 @@ const useOptionsMenu = ({
 	aggregateOperator,
 	initialOptions = {},
 }: UseOptionsMenuProps): UseOptionsMenu => {
+	const initialQueryParams = useMemo(
+		() => ({
+			searchText: '',
+			aggregateAttribute: '',
+			dataSource,
+			aggregateOperator,
+		}),
+		[dataSource, aggregateOperator],
+	);
+
 	const { notifications } = useNotifications();
 
 	const {
@@ -37,30 +51,73 @@ const useOptionsMenu = ({
 		redirectWithQuery: redirectWithOptionsData,
 	} = useUrlQueryData<OptionsQuery>(URL_OPTIONS);
 
-	const { data, isFetched, isLoading } = useQuery(
+	const initialQueries = useMemo(
+		() =>
+			initialOptions?.selectColumns?.map((column) => ({
+				queryKey: column,
+				queryFn: (): Promise<
+					SuccessResponse<IQueryAutocompleteResponse> | ErrorResponse
+				> =>
+					getAggregateKeys({
+						...initialQueryParams,
+						searchText: column,
+					}),
+				enabled: !!column && !optionsQuery,
+			})) || [],
+		[initialOptions?.selectColumns, initialQueryParams, optionsQuery],
+	);
+	const initialAttributesResult = useQueries(initialQueries);
+
+	const isFetchedInitialAttributes = useMemo(
+		() => initialAttributesResult.every((result) => result.isFetched),
+		[initialAttributesResult],
+	);
+	const initialSelectedColumns = useMemo(() => {
+		if (!isFetchedInitialAttributes) return [];
+
+		const attributesData = initialAttributesResult?.reduce(
+			(acc, attributeResponse) => {
+				const data = attributeResponse?.data?.payload?.attributeKeys || [];
+
+				return [...acc, ...data];
+			},
+			[] as BaseAutocompleteData[],
+		);
+
+		return (
+			(initialOptions.selectColumns
+				?.map((column) => attributesData.find(({ key }) => key === column))
+				.filter(Boolean) as BaseAutocompleteData[]) || []
+		);
+	}, [
+		isFetchedInitialAttributes,
+		initialOptions?.selectColumns,
+		initialAttributesResult,
+	]);
+
+	const { data: attributesData, isLoading } = useQuery(
 		[QueryBuilderKeys.GET_ATTRIBUTE_KEY],
 		async () =>
 			getAggregateKeys({
+				...initialQueryParams,
 				searchText: '',
-				dataSource,
-				aggregateOperator,
-				aggregateAttribute: '',
 			}),
 	);
 
-	const attributeKeys = useMemo(() => data?.payload?.attributeKeys || [], [
-		data?.payload?.attributeKeys,
-	]);
+	const attributeKeys = useMemo(
+		() => attributesData?.payload?.attributeKeys || [],
+		[attributesData?.payload?.attributeKeys],
+	);
 
 	const initialOptionsQuery: OptionsQuery = useMemo(
 		() => ({
 			...defaultOptionsQuery,
 			...initialOptions,
 			selectColumns: initialOptions?.selectColumns
-				? getInitialColumns(initialOptions?.selectColumns || [], attributeKeys)
+				? initialSelectedColumns
 				: defaultOptionsQuery.selectColumns,
 		}),
-		[initialOptions, attributeKeys],
+		[initialOptions, initialSelectedColumns],
 	);
 
 	const selectedColumnKeys = useMemo(
@@ -68,16 +125,14 @@ const useOptionsMenu = ({
 		[optionsQueryData],
 	);
 
-	const addColumnOptions = useMemo(
+	const optionsFromAttributeKeys = useMemo(
 		() => getOptionsFromKeys(attributeKeys, selectedColumnKeys),
 		[attributeKeys, selectedColumnKeys],
 	);
 
-	const handleSelectedColumnsChange = useCallback(
-		(value: string[]) => {
-			const newSelectedColumnKeys = [
-				...new Set([...selectedColumnKeys, ...value]),
-			];
+	const handleSelectColumns = useCallback(
+		(value: string) => {
+			const newSelectedColumnKeys = [...new Set([...selectedColumnKeys, value])];
 			const newSelectedColumns = newSelectedColumnKeys.reduce((acc, key) => {
 				const column = attributeKeys.find(({ id }) => id === key);
 
@@ -137,8 +192,8 @@ const useOptionsMenu = ({
 		() => ({
 			addColumn: {
 				value: optionsQueryData?.selectColumns || defaultOptionsQuery.selectColumns,
-				options: addColumnOptions || [],
-				onChange: handleSelectedColumnsChange,
+				options: optionsFromAttributeKeys,
+				onSelect: handleSelectColumns,
 				onRemove: handleRemoveSelectedColumn,
 			},
 			format: {
@@ -151,11 +206,11 @@ const useOptionsMenu = ({
 			},
 		}),
 		[
-			addColumnOptions,
+			optionsFromAttributeKeys,
 			optionsQueryData?.maxLines,
 			optionsQueryData?.format,
 			optionsQueryData?.selectColumns,
-			handleSelectedColumnsChange,
+			handleSelectColumns,
 			handleRemoveSelectedColumn,
 			handleFormatChange,
 			handleMaxLinesChange,
@@ -163,10 +218,15 @@ const useOptionsMenu = ({
 	);
 
 	useEffect(() => {
-		if (optionsQuery || !isFetched) return;
+		if (optionsQuery || !isFetchedInitialAttributes) return;
 
 		redirectWithOptionsData(initialOptionsQuery);
-	}, [isFetched, optionsQuery, initialOptionsQuery, redirectWithOptionsData]);
+	}, [
+		isFetchedInitialAttributes,
+		optionsQuery,
+		initialOptionsQuery,
+		redirectWithOptionsData,
+	]);
 
 	return {
 		isLoading,

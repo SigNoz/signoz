@@ -31,7 +31,7 @@ function AddColumnField({ config }: AddColumnFieldProps): JSX.Element | null {
 					placeholder="Search"
 					options={config.options}
 					value={[]}
-					onChange={config.onChange}
+					onSelect={config.onSelect}
 				/>
 				<SearchIconWrapper $isDarkMode={isDarkMode}>
 					<SearchOutlined />
