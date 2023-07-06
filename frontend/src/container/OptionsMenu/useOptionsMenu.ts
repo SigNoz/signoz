@@ -1,9 +1,10 @@
 import { RadioChangeEvent } from 'antd';
 import { getAggregateKeys } from 'api/queryBuilder/getAttributeKeys';
 import { QueryBuilderKeys } from 'constants/queryBuilder';
+import useDebounce from 'hooks/useDebounce';
 import { useNotifications } from 'hooks/useNotifications';
 import useUrlQueryData from 'hooks/useUrlQueryData';
-import { useCallback, useEffect, useMemo } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useQueries, useQuery } from 'react-query';
 import { ErrorResponse, SuccessResponse } from 'types/api';
 import {
@@ -23,7 +24,6 @@ interface UseOptionsMenuProps {
 }
 
 interface UseOptionsMenu {
-	isLoading: boolean;
 	options: OptionsQuery;
 	config: OptionsMenuConfig;
 }
@@ -33,6 +33,12 @@ const useOptionsMenu = ({
 	aggregateOperator,
 	initialOptions = {},
 }: UseOptionsMenuProps): UseOptionsMenu => {
+	const [searchText, setSearchText] = useState<string>('');
+	const [isFocused, setIsFocused] = useState<boolean>(false);
+
+	const debouncedSearchText = useDebounce(searchText, 300);
+	const { notifications } = useNotifications();
+
 	const initialQueryParams = useMemo(
 		() => ({
 			searchText: '',
@@ -43,8 +49,6 @@ const useOptionsMenu = ({
 		}),
 		[dataSource, aggregateOperator],
 	);
-
-	const { notifications } = useNotifications();
 
 	const {
 		query: optionsQuery,
@@ -67,12 +71,14 @@ const useOptionsMenu = ({
 			})) || [],
 		[initialOptions?.selectColumns, initialQueryParams, optionsQuery],
 	);
+
 	const initialAttributesResult = useQueries(initialQueries);
 
 	const isFetchedInitialAttributes = useMemo(
 		() => initialAttributesResult.every((result) => result.isFetched),
 		[initialAttributesResult],
 	);
+
 	const initialSelectedColumns = useMemo(() => {
 		if (!isFetchedInitialAttributes) return [];
 
@@ -96,18 +102,24 @@ const useOptionsMenu = ({
 		initialAttributesResult,
 	]);
 
-	const { data: attributesData, isLoading } = useQuery(
-		[QueryBuilderKeys.GET_ATTRIBUTE_KEY, dataSource, aggregateOperator],
+	const {
+		data: searchedAttributesData,
+		isFetching: isSearchedAttributesFetching,
+	} = useQuery(
+		[QueryBuilderKeys.GET_AGGREGATE_KEYS, debouncedSearchText, isFocused],
 		async () =>
 			getAggregateKeys({
 				...initialQueryParams,
-				searchText: '',
+				searchText: debouncedSearchText,
 			}),
+		{
+			enabled: isFocused,
+		},
 	);
 
-	const attributeKeys = useMemo(
-		() => attributesData?.payload?.attributeKeys || [],
-		[attributesData?.payload?.attributeKeys],
+	const searchedAttributeKeys = useMemo(
+		() => searchedAttributesData?.payload?.attributeKeys || [],
+		[searchedAttributesData?.payload?.attributeKeys],
 	);
 
 	const initialOptionsQuery: OptionsQuery = useMemo(
@@ -127,15 +139,18 @@ const useOptionsMenu = ({
 	);
 
 	const optionsFromAttributeKeys = useMemo(
-		() => getOptionsFromKeys(attributeKeys, selectedColumnKeys),
-		[attributeKeys, selectedColumnKeys],
+		() => getOptionsFromKeys(searchedAttributeKeys, selectedColumnKeys),
+		[searchedAttributeKeys, selectedColumnKeys],
 	);
 
 	const handleSelectColumns = useCallback(
 		(value: string) => {
 			const newSelectedColumnKeys = [...new Set([...selectedColumnKeys, value])];
 			const newSelectedColumns = newSelectedColumnKeys.reduce((acc, key) => {
-				const column = attributeKeys.find(({ id }) => id === key);
+				const column = [
+					...searchedAttributeKeys,
+					...optionsQueryData.selectColumns,
+				].find(({ id }) => id === key);
 
 				if (!column) return acc;
 				return [...acc, column];
@@ -147,10 +162,10 @@ const useOptionsMenu = ({
 			});
 		},
 		[
+			searchedAttributeKeys,
 			selectedColumnKeys,
-			redirectWithOptionsData,
 			optionsQueryData,
-			attributeKeys,
+			redirectWithOptionsData,
 		],
 	);
 
@@ -194,13 +209,30 @@ const useOptionsMenu = ({
 		[optionsQueryData, redirectWithOptionsData],
 	);
 
+	const handleSearchAttribute = useCallback((value: string) => {
+		setSearchText(value);
+	}, []);
+
+	const handleFocus = (): void => {
+		setIsFocused(true);
+	};
+
+	const handleBlur = (): void => {
+		setIsFocused(false);
+		setSearchText('');
+	};
+
 	const optionsMenuConfig: Required<OptionsMenuConfig> = useMemo(
 		() => ({
 			addColumn: {
+				isFetching: isSearchedAttributesFetching,
 				value: optionsQueryData?.selectColumns || defaultOptionsQuery.selectColumns,
-				options: optionsFromAttributeKeys,
+				options: optionsFromAttributeKeys || [],
+				onFocus: handleFocus,
+				onBlur: handleBlur,
 				onSelect: handleSelectColumns,
 				onRemove: handleRemoveSelectedColumn,
+				onSearch: handleSearchAttribute,
 			},
 			format: {
 				value: optionsQueryData?.format || defaultOptionsQuery.format,
@@ -216,6 +248,8 @@ const useOptionsMenu = ({
 			optionsQueryData?.maxLines,
 			optionsQueryData?.format,
 			optionsQueryData?.selectColumns,
+			isSearchedAttributesFetching,
+			handleSearchAttribute,
 			handleSelectColumns,
 			handleRemoveSelectedColumn,
 			handleFormatChange,
@@ -235,7 +269,6 @@ const useOptionsMenu = ({
 	]);
 
 	return {
-		isLoading,
 		options: optionsQueryData,
 		config: optionsMenuConfig,
 	};
