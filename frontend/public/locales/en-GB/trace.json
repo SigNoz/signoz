@@ -2,7 +2,7 @@
 	"options_menu": {
 		"options": "Options",
 		"format": "Format",
-		"row": "Row",
+		"raw": "Raw",
 		"default": "Default",
 		"column": "Column",
 		"maxLines": "Max lines per Row",
