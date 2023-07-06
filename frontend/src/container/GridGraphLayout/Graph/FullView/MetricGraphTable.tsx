@@ -64,10 +64,12 @@ function GraphManager({
 			data.datasets.map((item: ChartDataset) => ({
 				...item,
 				show: true,
-				sum: (item.data as number[]).reduce((a, b) => a + b, 0),
-				avg: (item.data as number[]).reduce((a, b) => a + b, 0) / item.data.length,
-				max: Math.max(...(item.data as number[])),
-				min: Math.min(...(item.data as number[])),
+				sum: Math.floor((item.data as number[]).reduce((a, b) => a + b, 0)),
+				avg: Math.floor(
+					(item.data as number[]).reduce((a, b) => a + b, 0) / item.data.length,
+				),
+				max: Math.floor(Math.max(...(item.data as number[]))),
+				min: Math.floor(Math.min(...(item.data as number[]))),
 			})),
 		);
 		data.datasets.forEach((d, i) => {
@@ -191,25 +193,25 @@ function GraphManager({
 		},
 		{
 			title: 'Avg',
-			width: 10,
+			width: 50,
 			dataIndex: 'avg',
 			key: 'avg',
 		},
 		{
 			title: 'Sum',
-			width: 10,
+			width: 50,
 			dataIndex: 'sum',
 			key: 'sum',
 		},
 		{
 			title: 'Max',
-			width: 10,
+			width: 50,
 			dataIndex: 'max',
 			key: 'max',
 		},
 		{
 			title: 'Min',
-			width: 10,
+			width: 50,
 			dataIndex: 'min',
 			key: 'min',
 		},
@@ -267,6 +269,7 @@ function GraphManager({
 					dataSource={tableDataSet.filter((item) => item.show)}
 					rowKey="index"
 					pagination={false}
+					scroll={{ y: 240 }}
 				/>
 			</FilterTableContainer>
 			<SaveContainer>
