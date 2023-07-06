@@ -473,7 +473,14 @@ func addOffsetToQuery(query string, offset uint64) string {
 }
 
 func PrepareTracesQuery(start, end int64, queryType v3.QueryType, panelType v3.PanelType, mq *v3.BuilderQuery, keys map[string]v3.AttributeKey) (string, error) {
-	query, err := buildTracesQuery(start, end, mq.StepInterval, mq, constants.SIGNOZ_SPAN_INDEX_TABLENAME, keys, panelType)
+
+	stepInterval := mq.StepInterval
+	// update step interval for table view
+	if panelType == v3.PanelTypeTable {
+		stepInterval = (end - start)/1000
+	}
+
+	query, err := buildTracesQuery(start, end, stepInterval, mq, constants.SIGNOZ_SPAN_INDEX_TABLENAME, keys, panelType)
 	if err != nil {
 		return "", err
 	}
