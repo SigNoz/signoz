@@ -12,7 +12,6 @@ function LogsExplorer(): JSX.Element {
 				<Col xs={24}>
 					<LogExplorerQuerySection />
 				</Col>
-
 				<Col xs={24}>
 					<LogsExplorerViews />
 				</Col>
