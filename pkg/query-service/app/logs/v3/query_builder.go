@@ -175,7 +175,7 @@ func getZerosForEpochNano(epoch int64) int64 {
 	return int64(math.Pow(10, float64(19-count)))
 }
 
-func buildLogsQuery(panelType v3.PanelType, start, end, step int64, mq *v3.BuilderQuery, typeQ string) (string, error) {
+func buildLogsQuery(panelType v3.PanelType, start, end, step int64, mq *v3.BuilderQuery, graphLimitQtype string) (string, error) {
 
 	filterSubQuery, err := buildLogsTimeSeriesFilterQuery(mq.Filters, mq.GroupBy)
 	if err != nil {
@@ -193,7 +193,7 @@ func buildLogsQuery(panelType v3.PanelType, start, end, step int64, mq *v3.Build
 	}
 
 	queryTmpl := ""
-	if typeQ == constants.FirstQueryGraphLimit {
+	if graphLimitQtype == constants.FirstQueryGraphLimit {
 		queryTmpl = "SELECT"
 	} else {
 		queryTmpl = fmt.Sprintf("SELECT toStartOfInterval(fromUnixTimestamp64Nano(timestamp), INTERVAL %d SECOND) AS ts,", step)
@@ -209,14 +209,14 @@ func buildLogsQuery(panelType v3.PanelType, start, end, step int64, mq *v3.Build
 
 	// we dont need value for first query
 	// going with this route as for a cleaner approach on implementation
-	if typeQ == constants.FirstQueryGraphLimit {
+	if graphLimitQtype == constants.FirstQueryGraphLimit {
 		queryTmpl = "SELECT " + strings.TrimRight(getSelectKeys(mq.AggregateOperator, mq.GroupBy), ",") + " from (" + queryTmpl + ")"
 	}
 
-	groupBy := groupByAttributeKeyTags(typeQ, mq.GroupBy...)
-	orderBy := orderByAttributeKeyTags(panelType, mq.AggregateOperator, mq.OrderBy, mq.GroupBy, typeQ)
+	groupBy := groupByAttributeKeyTags(graphLimitQtype, mq.GroupBy...)
+	orderBy := orderByAttributeKeyTags(panelType, mq.AggregateOperator, mq.OrderBy, mq.GroupBy, graphLimitQtype)
 
-	if typeQ == constants.SecondQueryGraphLimit {
+	if graphLimitQtype == constants.SecondQueryGraphLimit {
 		filterSubQuery = filterSubQuery + " AND " + "%s"
 	}
 
@@ -280,19 +280,19 @@ func buildLogsQuery(panelType v3.PanelType, start, end, step int64, mq *v3.Build
 
 // groupBy returns a string of comma separated tags for group by clause
 // `ts` is always added to the group by clause
-func groupBy(typeQ string, tags ...string) string {
-	if typeQ != constants.FirstQueryGraphLimit {
+func groupBy(graphLimitQtype string, tags ...string) string {
+	if graphLimitQtype != constants.FirstQueryGraphLimit {
 		tags = append(tags, "ts")
 	}
 	return strings.Join(tags, ",")
 }
 
-func groupByAttributeKeyTags(typeQ string, tags ...v3.AttributeKey) string {
+func groupByAttributeKeyTags(graphLimitQtype string, tags ...v3.AttributeKey) string {
 	groupTags := []string{}
 	for _, tag := range tags {
 		groupTags = append(groupTags, tag.Key)
 	}
-	return groupBy(typeQ, groupTags...)
+	return groupBy(graphLimitQtype, groupTags...)
 }
 
 // orderBy returns a string of comma separated tags for order by clause
@@ -342,7 +342,7 @@ func orderBy(panelType v3.PanelType, items []v3.OrderBy, tags []string) []string
 	return orderBy
 }
 
-func orderByAttributeKeyTags(panelType v3.PanelType, aggregatorOperator v3.AggregateOperator, items []v3.OrderBy, tags []v3.AttributeKey, typeQ string) string {
+func orderByAttributeKeyTags(panelType v3.PanelType, aggregatorOperator v3.AggregateOperator, items []v3.OrderBy, tags []v3.AttributeKey, graphLimitQtype string) string {
 	var groupTags []string
 	for _, tag := range tags {
 		groupTags = append(groupTags, tag.Key)
@@ -350,7 +350,7 @@ func orderByAttributeKeyTags(panelType v3.PanelType, aggregatorOperator v3.Aggre
 	orderByArray := orderBy(panelType, items, groupTags)
 
 	// for multi query the first query doesnt require timestamp in order by
-	if typeQ != constants.FirstQueryGraphLimit {
+	if graphLimitQtype != constants.FirstQueryGraphLimit {
 		if panelType == v3.PanelTypeList {
 			if len(orderByArray) == 0 {
 				orderByArray = append(orderByArray, constants.TIMESTAMP)
@@ -402,21 +402,19 @@ func addOffsetToQuery(query string, offset uint64) string {
 	return fmt.Sprintf("%s OFFSET %d", query, offset)
 }
 
-func PrepareLogsQuery(start, end int64, queryType v3.QueryType, panelType v3.PanelType, mq *v3.BuilderQuery, typeQ string) (string, error) {
+func PrepareLogsQuery(start, end int64, queryType v3.QueryType, panelType v3.PanelType, mq *v3.BuilderQuery, graphLimitQtype string) (string, error) {
 
-	// 0 menas give me first
-	if typeQ == constants.FirstQueryGraphLimit {
+	if graphLimitQtype == constants.FirstQueryGraphLimit {
 		// give me just the groupby names
-		query, err := buildLogsQuery(panelType, start, end, mq.StepInterval, mq, typeQ)
+		query, err := buildLogsQuery(panelType, start, end, mq.StepInterval, mq, graphLimitQtype)
 		if err != nil {
 			return "", err
 		}
 		query = addLimitToQuery(query, mq.Limit)
 
 		return query, nil
-	}
-	if typeQ == constants.SecondQueryGraphLimit {
-		query, err := buildLogsQuery(panelType, start, end, mq.StepInterval, mq, typeQ)
+	} else if graphLimitQtype == constants.SecondQueryGraphLimit {
+		query, err := buildLogsQuery(panelType, start, end, mq.StepInterval, mq, graphLimitQtype)
 		if err != nil {
 			return "", err
 		}
@@ -425,7 +423,7 @@ func PrepareLogsQuery(start, end int64, queryType v3.QueryType, panelType v3.Pan
 
 	// 2 means give me normal
 
-	query, err := buildLogsQuery(panelType, start, end, mq.StepInterval, mq, typeQ)
+	query, err := buildLogsQuery(panelType, start, end, mq.StepInterval, mq, graphLimitQtype)
 	if err != nil {
 		return "", err
 	}
