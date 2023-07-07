@@ -30,7 +30,10 @@ function RawLogView(props: RawLogViewProps): JSX.Element {
 	const isDarkMode = useIsDarkMode();
 
 	const text = useMemo(
-		() => `${dayjs(data.timestamp / 1e6).format()} | ${data.body}`,
+		() =>
+			typeof data.timestamp === 'string'
+				? `${dayjs(data.timestamp).format()} | ${data.body}`
+				: `${dayjs(data.timestamp / 1e6).format()} | ${data.body}`,
 		[data.timestamp, data.body],
 	);
 
