@@ -1,16 +1,13 @@
-import {
-	CloudDownloadOutlined,
-	FastBackwardOutlined,
-	LeftOutlined,
-	RightOutlined,
-} from '@ant-design/icons';
-import { Button, Divider, Dropdown, MenuProps, Select } from 'antd';
+import { CloudDownloadOutlined, FastBackwardOutlined } from '@ant-design/icons';
+import { Button, Divider, Dropdown, MenuProps } from 'antd';
 import { Excel } from 'antd-table-saveas-excel';
+import Controls from 'container/Controls';
 import { getGlobalTime } from 'container/LogsSearchFilter/utils';
 import { getMinMax } from 'container/TopNav/AutoRefresh/config';
 import dayjs from 'dayjs';
+import { Pagination } from 'hooks/queryPagination';
 import { FlatLogData } from 'lib/logs/flatLogData';
-import { defaultSelectStyle } from 'pages/Logs/config';
+import { OrderPreferenceItems } from 'pages/Logs/config';
 import * as Papa from 'papaparse';
 import { memo, useCallback, useMemo } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
@@ -26,7 +23,6 @@ import {
 import { GlobalReducer } from 'types/reducer/globalTime';
 import { ILogsReducer } from 'types/reducer/logs';
 
-import { ITEMS_PER_PAGE_OPTIONS } from './config';
 import { Container, DownloadLogButton } from './styles';
 
 function LogControls(): JSX.Element | null {
@@ -36,6 +32,7 @@ function LogControls(): JSX.Element | null {
 		isLoading: isLogsLoading,
 		isLoadingAggregate,
 		logs,
+		order,
 	} = useSelector<AppState, ILogsReducer>((state) => state.logs);
 	const globalTime = useSelector<AppState, GlobalReducer>(
 		(state) => state.globalTime,
@@ -43,7 +40,7 @@ function LogControls(): JSX.Element | null {
 
 	const dispatch = useDispatch<Dispatch<AppActions>>();
 
-	const handleLogLinesPerPageChange = (e: number): void => {
+	const handleLogLinesPerPageChange = (e: Pagination['limit']): void => {
 		dispatch({
 			type: SET_LOG_LINES_PER_PAGE,
 			payload: {
@@ -86,12 +83,17 @@ function LogControls(): JSX.Element | null {
 
 	const flattenLogData = useMemo(
 		() =>
-			logs.map((log) =>
-				FlatLogData({
+			logs.map((log) => {
+				const timestamp =
+					typeof log.timestamp === 'string'
+						? dayjs(log.timestamp).format()
+						: dayjs(log.timestamp / 1e6).format();
+
+				return FlatLogData({
 					...log,
-					timestamp: (dayjs(log.timestamp / 1e6).format() as unknown) as number,
-				}),
-			),
+					timestamp,
+				});
+			}),
 		[logs],
 	);
 
@@ -149,15 +151,6 @@ function LogControls(): JSX.Element | null {
 
 	const isLoading = isLogsLoading || isLoadingAggregate;
 
-	const isNextAndPreviousDisabled = useMemo(
-		() =>
-			isLoading ||
-			logLinesPerPage === 0 ||
-			logs.length === 0 ||
-			logs.length < logLinesPerPage,
-		[isLoading, logLinesPerPage, logs.length],
-	);
-
 	if (liveTail !== 'STOPPED') {
 		return null;
 	}
@@ -174,42 +167,20 @@ function LogControls(): JSX.Element | null {
 				loading={isLoading}
 				size="small"
 				type="link"
+				disabled={order === OrderPreferenceItems.ASC}
 				onClick={handleGoToLatest}
 			>
 				<FastBackwardOutlined /> Go to latest
 			</Button>
 			<Divider type="vertical" />
-			<Button
-				loading={isLoading}
-				size="small"
-				type="link"
-				disabled={isNextAndPreviousDisabled}
-				onClick={handleNavigatePrevious}
-			>
-				<LeftOutlined /> Previous
-			</Button>
-			<Button
-				loading={isLoading}
-				size="small"
-				type="link"
-				disabled={isNextAndPreviousDisabled}
-				onClick={handleNavigateNext}
-			>
-				Next <RightOutlined />
-			</Button>
-			<Select
-				style={defaultSelectStyle}
-				loading={isLoading}
-				value={logLinesPerPage}
-				onChange={handleLogLinesPerPageChange}
-			>
-				{ITEMS_PER_PAGE_OPTIONS.map((count) => (
-					<Select.Option
-						key={count}
-						value={count}
-					>{`${count} / page`}</Select.Option>
-				))}
-			</Select>
+			<Controls
+				isLoading={isLoading}
+				totalCount={logs.length}
+				countPerPage={logLinesPerPage}
+				handleNavigatePrevious={handleNavigatePrevious}
+				handleNavigateNext={handleNavigateNext}
+				handleCountItemsPerPageChange={handleLogLinesPerPageChange}
+			/>
 		</Container>
 	);
 }

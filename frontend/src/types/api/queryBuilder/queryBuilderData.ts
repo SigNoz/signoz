@@ -59,6 +59,8 @@ export type IBuilderQuery = {
 	orderBy: OrderByPayload[];
 	reduceTo: ReduceOperators;
 	legend: string;
+	pageSize?: number;
+	offset?: number;
 };
 
 export interface IClickHouseQuery {
@@ -79,6 +81,7 @@ export interface Query {
 	promql: IPromQLQuery[];
 	builder: QueryBuilderData;
 	clickhouse_sql: IClickHouseQuery[];
+	id: string;
 }
 
 export type QueryState = Omit<Query, 'queryType'>;

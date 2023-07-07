@@ -1,3 +1,4 @@
+import { QueryBuilderProps } from 'container/QueryBuilder/QueryBuilder.interfaces';
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 
 export type QueryProps = {
@@ -5,4 +6,4 @@ export type QueryProps = {
 	isAvailableToDisable: boolean;
 	query: IBuilderQuery;
 	queryVariant: 'static' | 'dropdown';
-};
+} & Pick<QueryBuilderProps, 'inactiveFilters'>;

@@ -1,5 +1,6 @@
 // ** Helpers
 import { GRAPH_TYPES } from 'container/NewDashboard/ComponentsSlider';
+import { createIdFromObjectFields } from 'lib/createIdFromObjectFields';
 import { createNewBuilderItemName } from 'lib/newQueryBuilder/createNewBuilderItemName';
 import {
 	BaseAutocompleteData,
@@ -13,11 +14,13 @@ import {
 	IPromQLQuery,
 	Query,
 	QueryState,
+	TagFilter,
 } from 'types/api/queryBuilder/queryBuilderData';
 import { EQueryType } from 'types/common/dashboard';
 import {
 	BoolOperators,
 	DataSource,
+	LogsAggregatorOperator,
 	MetricAggregateOperator,
 	NumberOperators,
 	PanelTypeKeys,
@@ -25,6 +28,7 @@ import {
 	QueryBuilderData,
 	ReduceOperators,
 	StringOperators,
+	TracesAggregatorOperator,
 } from 'types/common/queryBuilder';
 import { SelectOption } from 'types/common/select';
 import { v4 as uuid } from 'uuid';
@@ -100,14 +104,22 @@ export const initialHavingValues: HavingForm = {
 };
 
 export const initialAutocompleteData: BaseAutocompleteData = {
-	id: uuid(),
+	id: createIdFromObjectFields(
+		{ dataType: null, key: '', isColumn: null, type: null },
+		baseAutoCompleteIdKeysOrder,
+	),
 	dataType: null,
 	key: '',
 	isColumn: null,
 	type: null,
 };
 
-export const initialQueryBuilderFormValues: IBuilderQuery = {
+export const initialFilters: TagFilter = {
+	items: [],
+	op: 'AND',
+};
+
+const initialQueryBuilderFormValues: IBuilderQuery = {
 	dataSource: DataSource.METRICS,
 	queryName: createNewBuilderItemName({ existNames: [], sourceNames: alphabet }),
 	aggregateOperator: MetricAggregateOperator.NOOP,
@@ -119,12 +131,33 @@ export const initialQueryBuilderFormValues: IBuilderQuery = {
 	}),
 	disabled: false,
 	having: [],
-	stepInterval: 30,
+	stepInterval: 60,
 	limit: null,
 	orderBy: [],
 	groupBy: [],
 	legend: '',
 	reduceTo: 'sum',
+};
+
+const initialQueryBuilderFormLogsValues: IBuilderQuery = {
+	...initialQueryBuilderFormValues,
+	aggregateOperator: LogsAggregatorOperator.COUNT,
+	dataSource: DataSource.LOGS,
+};
+
+const initialQueryBuilderFormTracesValues: IBuilderQuery = {
+	...initialQueryBuilderFormValues,
+	aggregateOperator: TracesAggregatorOperator.COUNT,
+	dataSource: DataSource.TRACES,
+};
+
+export const initialQueryBuilderFormValuesMap: Record<
+	DataSource,
+	IBuilderQuery
+> = {
+	metrics: initialQueryBuilderFormValues,
+	logs: initialQueryBuilderFormLogsValues,
+	traces: initialQueryBuilderFormTracesValues,
 };
 
 export const initialFormulaBuilderFormValues: IBuilderFormula = {
@@ -161,15 +194,37 @@ export const initialSingleQueryMap: Record<
 	IClickHouseQuery | IPromQLQuery
 > = { clickhouse_sql: initialClickHouseData, promql: initialQueryPromQLData };
 
-export const initialQuery: QueryState = {
+export const initialQueryState: QueryState = {
+	id: uuid(),
 	builder: initialQueryBuilderData,
 	clickhouse_sql: [initialClickHouseData],
 	promql: [initialQueryPromQLData],
 };
 
-export const initialQueryWithType: Query = {
-	...initialQuery,
+const initialQueryWithType: Query = {
+	...initialQueryState,
 	queryType: EQueryType.QUERY_BUILDER,
+};
+
+const initialQueryLogsWithType: Query = {
+	...initialQueryWithType,
+	builder: {
+		...initialQueryWithType.builder,
+		queryData: [initialQueryBuilderFormValuesMap.logs],
+	},
+};
+const initialQueryTracesWithType: Query = {
+	...initialQueryWithType,
+	builder: {
+		...initialQueryWithType.builder,
+		queryData: [initialQueryBuilderFormValuesMap.traces],
+	},
+};
+
+export const initialQueriesMap: Record<DataSource, Query> = {
+	metrics: initialQueryWithType,
+	logs: initialQueryLogsWithType,
+	traces: initialQueryTracesWithType,
 };
 
 export const operatorsByTypes: Record<LocalDataType, string[]> = {
@@ -183,6 +238,7 @@ export const PANEL_TYPES: Record<PanelTypeKeys, GRAPH_TYPES> = {
 	VALUE: 'value',
 	TABLE: 'table',
 	LIST: 'list',
+	TRACE: 'trace',
 	EMPTY_WIDGET: 'EMPTY_WIDGET',
 };
 

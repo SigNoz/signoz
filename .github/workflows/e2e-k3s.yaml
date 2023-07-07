@@ -13,7 +13,7 @@ jobs:
       DOCKER_TAG: pull-${{ github.event.number }}
     steps:
       - name: Checkout code
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
 
       - name: Build query-service image
         env:
@@ -69,12 +69,14 @@ jobs:
             --restart='OnFailure' -i --rm --command -- curl -X POST -F \
             'locust_count=6' -F 'hatch_rate=2' http://locust-master:8089/swarm
 
-      - name: Get short commit SHA and display tunnel URL
+      - name: Get short commit SHA, display tunnel URL and IP Address of the worker node
         id: get-subdomain
         run: |
           subdomain="pr-$(git rev-parse --short HEAD)"
           echo "URL for tunnelling: https://$subdomain.loca.lt"
-          echo "::set-output name=subdomain::$subdomain"
+          echo "subdomain=$subdomain" >> $GITHUB_OUTPUT
+          worker_ip="$(curl -4 -s ipconfig.io/ip)"
+          echo "Worker node IP address: $worker_ip"
 
       - name: Start tunnel
         env:

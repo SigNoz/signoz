@@ -1,7 +1,8 @@
 import {
 	initialAutocompleteData,
-	initialQueryBuilderFormValues,
+	initialQueryBuilderFormValuesMap,
 	mapOfFilters,
+	PANEL_TYPES,
 } from 'constants/queryBuilder';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { getOperatorsBySourceAndPanelType } from 'lib/newQueryBuilder/getOperatorsBySourceAndPanelType';
@@ -16,11 +17,16 @@ import {
 import { DataSource } from 'types/common/queryBuilder';
 import { SelectOption } from 'types/common/select';
 
-export const useQueryOperations: UseQueryOperations = ({ query, index }) => {
+export const useQueryOperations: UseQueryOperations = ({
+	query,
+	index,
+	inactiveFilters,
+}) => {
 	const {
 		handleSetQueryData,
 		removeQueryBuilderEntityByIndex,
 		panelType,
+		initialDataSource,
 	} = useQueryBuilder();
 	const [operators, setOperators] = useState<SelectOption<string, string>[]>([]);
 	const [listOfAdditionalFilters, setListOfAdditionalFilters] = useState<
@@ -55,9 +61,24 @@ export const useQueryOperations: UseQueryOperations = ({ query, index }) => {
 	);
 
 	const getNewListOfAdditionalFilters = useCallback(
-		(dataSource: DataSource): string[] =>
-			mapOfFilters[dataSource].map((item) => item.text),
-		[],
+		(dataSource: DataSource): string[] => {
+			const result: string[] = mapOfFilters[dataSource].reduce<string[]>(
+				(acc, item) => {
+					if (inactiveFilters && inactiveFilters[item.field]) {
+						return acc;
+					}
+
+					acc.push(item.text);
+
+					return acc;
+				},
+				[],
+			);
+
+			return result;
+		},
+
+		[inactiveFilters],
 	);
 
 	const handleChangeAggregatorAttribute = useCallback(
@@ -77,12 +98,12 @@ export const useQueryOperations: UseQueryOperations = ({ query, index }) => {
 		(nextSource: DataSource): void => {
 			const newOperators = getOperatorsBySourceAndPanelType({
 				dataSource: nextSource,
-				panelType,
+				panelType: panelType || PANEL_TYPES.TIME_SERIES,
 			});
 
-			const entries = Object.entries(initialQueryBuilderFormValues).filter(
-				([key]) => key !== 'queryName' && key !== 'expression',
-			);
+			const entries = Object.entries(
+				initialQueryBuilderFormValuesMap.metrics,
+			).filter(([key]) => key !== 'queryName' && key !== 'expression');
 
 			const initCopyResult = Object.fromEntries(entries);
 
@@ -120,13 +141,22 @@ export const useQueryOperations: UseQueryOperations = ({ query, index }) => {
 		[query.dataSource],
 	);
 
+	const isTracePanelType = useMemo(() => panelType === PANEL_TYPES.TRACE, [
+		panelType,
+	]);
+
 	useEffect(() => {
+		if (initialDataSource && dataSource !== initialDataSource) return;
+
 		const initialOperators = getOperatorsBySourceAndPanelType({
 			dataSource,
-			panelType,
+			panelType: panelType || PANEL_TYPES.TIME_SERIES,
 		});
+
+		if (JSON.stringify(operators) === JSON.stringify(initialOperators)) return;
+
 		setOperators(initialOperators);
-	}, [dataSource, panelType]);
+	}, [dataSource, initialDataSource, panelType, operators]);
 
 	useEffect(() => {
 		const additionalFilters = getNewListOfAdditionalFilters(dataSource);
@@ -135,6 +165,7 @@ export const useQueryOperations: UseQueryOperations = ({ query, index }) => {
 	}, [dataSource, aggregateOperator, getNewListOfAdditionalFilters]);
 
 	return {
+		isTracePanelType,
 		isMetricsDataSource,
 		operators,
 		listOfAdditionalFilters,

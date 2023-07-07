@@ -1,3 +1,5 @@
+import { Typography } from 'antd';
+import NotFound from 'components/NotFound';
 import Spinner from 'components/Spinner';
 import NewDashboard from 'container/NewDashboard';
 import { useEffect } from 'react';
@@ -8,6 +10,7 @@ import { ThunkDispatch } from 'redux-thunk';
 import { GetDashboard, GetDashboardProps } from 'store/actions/dashboard';
 import { AppState } from 'store/reducers';
 import AppActions from 'types/actions';
+import { ErrorType } from 'types/common';
 import DashboardReducer from 'types/reducer/dashboards';
 
 function NewDashboardPage({ getDashboard }: NewDashboardProps): JSX.Element {
@@ -26,8 +29,17 @@ function NewDashboardPage({ getDashboard }: NewDashboardProps): JSX.Element {
 		}
 	}, [getDashboard, dashboardId, dashboards.length]);
 
+	if (
+		error &&
+		!loading &&
+		dashboards.length === 0 &&
+		errorMessage === ErrorType.NotFound
+	) {
+		return <NotFound />;
+	}
+
 	if (error && !loading && dashboards.length === 0) {
-		return <div>{errorMessage}</div>;
+		return <Typography>{errorMessage}</Typography>;
 	}
 
 	// when user comes from dashboard page. dashboard array is populated with some dashboard as dashboard is populated
