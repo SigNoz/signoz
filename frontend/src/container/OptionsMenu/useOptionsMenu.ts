@@ -5,6 +5,7 @@ import { getAggregateKeys } from 'api/queryBuilder/getAttributeKeys';
 import { LOCALSTORAGE } from 'constants/localStorage';
 import { QueryBuilderKeys } from 'constants/queryBuilder';
 import useDebounce from 'hooks/useDebounce';
+import { useNotifications } from 'hooks/useNotifications';
 import useUrlQueryData from 'hooks/useUrlQueryData';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useQueries, useQuery } from 'react-query';
@@ -35,6 +36,8 @@ const useOptionsMenu = ({
 	aggregateOperator,
 	initialOptions = {},
 }: UseOptionsMenuProps): UseOptionsMenu => {
+	const { notifications } = useNotifications();
+
 	const [searchText, setSearchText] = useState<string>('');
 	const [isFocused, setIsFocused] = useState<boolean>(false);
 	const debouncedSearchText = useDebounce(searchText, 300);
@@ -117,7 +120,7 @@ const useOptionsMenu = ({
 				searchText: debouncedSearchText,
 			}),
 		{
-			enabled: isFocused && !!debouncedSearchText.length,
+			enabled: isFocused,
 		},
 	);
 
@@ -193,14 +196,20 @@ const useOptionsMenu = ({
 				({ id }) => id !== columnKey,
 			);
 
-			const optionsData: OptionsQuery = {
-				...optionsQueryData,
-				selectColumns: newSelectedColumns,
-			};
+			if (!newSelectedColumns.length && dataSource !== DataSource.LOGS) {
+				notifications.error({
+					message: 'There must be at least one selected column',
+				});
+			} else {
+				const optionsData: OptionsQuery = {
+					...optionsQueryData,
+					selectColumns: newSelectedColumns,
+				};
 
-			handleRedirectWithOptionsData(optionsData);
+				handleRedirectWithOptionsData(optionsData);
+			}
 		},
-		[optionsQueryData, handleRedirectWithOptionsData],
+		[dataSource, notifications, optionsQueryData, handleRedirectWithOptionsData],
 	);
 
 	const handleFormatChange = useCallback(
