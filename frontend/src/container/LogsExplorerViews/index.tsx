@@ -241,9 +241,15 @@ function LogsExplorerViews(): JSX.Element {
 
 			const query = stagedQuery || initialQueriesMap.logs;
 
+			const modifiedQuery = updateAllQueriesOperators(
+				query,
+				PANEL_TYPES.TIME_SERIES,
+				DataSource.LOGS,
+			);
+
 			const updatedDashboard = addEmptyWidgetInDashboardJSONWithQuery(
 				dashboard,
-				query,
+				modifiedQuery,
 			);
 
 			updateDashboard(updatedDashboard, {
@@ -276,7 +282,7 @@ function LogsExplorerViews(): JSX.Element {
 						dashboardId: data?.payload?.uuid,
 					})}/new?${QueryParams.graphType}=graph&${QueryParams.widgetId}=empty&${
 						queryParamNamesMap.compositeQuery
-					}=${encodeURIComponent(JSON.stringify(query))}`;
+					}=${encodeURIComponent(JSON.stringify(modifiedQuery))}`;
 
 					history.push(dashboardEditView);
 				},
@@ -289,7 +295,13 @@ function LogsExplorerViews(): JSX.Element {
 				},
 			});
 		},
-		[history, notifications, stagedQuery, updateDashboard],
+		[
+			history,
+			notifications,
+			stagedQuery,
+			updateAllQueriesOperators,
+			updateDashboard,
+		],
 	);
 
 	useEffect(() => {
