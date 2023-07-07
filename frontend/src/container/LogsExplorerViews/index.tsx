@@ -320,7 +320,7 @@ function LogsExplorerViews(): JSX.Element {
 	}, [data]);
 
 	useEffect(() => {
-		if (requestData?.id !== stagedQuery?.id) {
+		if (requestData?.id !== stagedQuery?.id || isFetching) {
 			const newRequestData = getRequestData(stagedQuery, {
 				page: 1,
 				log: null,
@@ -330,7 +330,7 @@ function LogsExplorerViews(): JSX.Element {
 			setPage(1);
 			setRequestData(newRequestData);
 		}
-	}, [stagedQuery, requestData, getRequestData, pageSize]);
+	}, [stagedQuery, requestData, getRequestData, pageSize, isFetching]);
 
 	const tabsItems: TabsProps['items'] = useMemo(
 		() => [
