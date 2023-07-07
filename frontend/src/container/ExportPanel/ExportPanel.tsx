@@ -48,6 +48,8 @@ function ExportPanel({ isLoading, onExport }: ExportPanelProps): JSX.Element {
 		},
 	});
 
+	console.log('fire');
+
 	const options = useMemo(() => getSelectOptions(data?.payload || []), [data]);
 
 	const handleExportClick = useCallback((): void => {
