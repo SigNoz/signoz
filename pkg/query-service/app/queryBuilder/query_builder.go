@@ -156,17 +156,17 @@ func (qb *QueryBuilder) PrepareQueries(params *v3.QueryRangeParamsV3, args ...in
 					// if panel type is timeseries/ table, handle limit differently using two queries
 					if (compositeQuery.PanelType == v3.PanelTypeGraph || compositeQuery.PanelType == v3.PanelTypeTable) && query.Limit > 0 && len(query.GroupBy) > 0 {
 						// return two queries
-						limitQuery, err := qb.options.BuildLogQuery(params.Start, params.End, compositeQuery.QueryType, compositeQuery.PanelType, query, constants.PreQueryMultiLogType)
+						limitQuery, err := qb.options.BuildLogQuery(params.Start, params.End, compositeQuery.QueryType, compositeQuery.PanelType, query, constants.FirstQueryGraphLimit)
 						if err != nil {
 							return nil, err
 						}
 
-						placeholderQuery, err := qb.options.BuildLogQuery(params.Start, params.End, compositeQuery.QueryType, compositeQuery.PanelType, query, constants.MainQueryMultiLogType)
+						placeholderQuery, err := qb.options.BuildLogQuery(params.Start, params.End, compositeQuery.QueryType, compositeQuery.PanelType, query, constants.SecondQueryGraphLimit)
 						if err != nil {
 							return nil, err
 						}
-						queries[queryName+constants.PreQuerySuffix] = limitQuery
-						queries[queryName+constants.MainQuerySuffix] = placeholderQuery
+						queries[queryName+constants.FirstQuerySuffix] = limitQuery
+						queries[queryName+constants.SecondQuerySuffix] = placeholderQuery
 					} else {
 
 						queryString, err := qb.options.BuildLogQuery(params.Start, params.End, compositeQuery.QueryType, compositeQuery.PanelType, query, "")
@@ -203,7 +203,7 @@ func (qb *QueryBuilder) PrepareQueries(params *v3.QueryRangeParamsV3, args ...in
 
 	// filter out disabled queries
 	for queryName := range queries {
-		if strings.HasSuffix(queryName, constants.PreQuerySuffix) || strings.HasSuffix(queryName, constants.MainQuerySuffix) {
+		if strings.HasSuffix(queryName, constants.FirstQuerySuffix) || strings.HasSuffix(queryName, constants.SecondQuerySuffix) {
 			continue
 		}
 		if compositeQuery.BuilderQueries[queryName].Disabled {

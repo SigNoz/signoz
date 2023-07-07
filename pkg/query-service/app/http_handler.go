@@ -2465,32 +2465,39 @@ func (aH *APIHandler) execClickHouseGraphQueries(ctx context.Context, queries ma
 		go func(name, query string) {
 			defer wg.Done()
 
-			// skip if it a pre
-			if strings.HasSuffix(name, constants.PreQuerySuffix) {
+			if strings.HasSuffix(name, constants.FirstQuerySuffix) {
+				// Graph query with limit - first query skip
 				return
-			}
-			if strings.HasSuffix(name, constants.MainQuerySuffix) {
-				// find the prequery and execute it
-				actualName := strings.ReplaceAll(name, constants.MainQuerySuffix, "")
-				list, err := aH.reader.GetListResultV3(ctx, queries[actualName+constants.PreQuerySuffix])
+			} else if strings.HasSuffix(name, constants.SecondQuerySuffix) {
+				// Graph query with limit - second query
+
+				// get the first query result
+				actualName := strings.ReplaceAll(name, constants.SecondQuerySuffix, "")
+				list, err := aH.reader.GetListResultV3(ctx, queries[actualName+constants.FirstQuerySuffix])
 				if err != nil {
-					ch <- channelResult{Err: fmt.Errorf("error in query-%s: %v", name, err), Name: name, Query: query}
+					ch <- channelResult{Err: fmt.Errorf("error in query-%s: %v", name, err), Name: actualName + constants.FirstQuerySuffix, Query: queries[actualName+constants.FirstQuerySuffix]}
 					return
 				}
 
-				limitFilter := []string{}
-				for _, v := range list {
+				// create the filterset from the first query result
+				/*
+					put | error
+					put | debug
+				*/
+				// filter : ( method = 'put' AND level = 'error' ) OR ( method = 'put' AND level = 'debug' )
+				res := ""
+				for i, v := range list {
+					t := ""
 					for n, v := range v.Data {
-						if strings.Compare(n, "value") != 0 {
-							limitFilter = append(limitFilter, "'"+*v.(*string)+"'")
-							break
-						}
+						t = t + fmt.Sprintf("%s = '%s' AND ", n, *v.(*string))
+					}
+					res = res + "( " + strings.TrimRight(t, "AND ") + " )"
+					if i != len(list)-1 {
+						res = res + " OR "
 					}
 				}
-				filterStr := strings.Join(limitFilter, ",")
-				filterStr = "(" + filterStr + ")"
 
-				finalQuery := fmt.Sprintf(query, filterStr)
+				finalQuery := fmt.Sprintf(query, res)
 				seriesList, err := aH.reader.GetTimeSeriesResultV3(ctx, finalQuery)
 				if err != nil {
 					ch <- channelResult{Err: fmt.Errorf("error in query-%s: %v", name, err), Name: name, Query: query}
@@ -2499,6 +2506,7 @@ func (aH *APIHandler) execClickHouseGraphQueries(ctx context.Context, queries ma
 
 				ch <- channelResult{Series: seriesList, Name: name, Query: query}
 			} else {
+				// Graph query without limit
 				seriesList, err := aH.reader.GetTimeSeriesResultV3(ctx, query)
 
 				if err != nil {

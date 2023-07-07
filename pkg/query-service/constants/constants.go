@@ -302,8 +302,8 @@ const SigNozOrderByValue = "#SIGNOZ_VALUE"
 
 const TIMESTAMP = "timestamp"
 
-const PreQueryMultiLogType = "pre_query_multi_query_type"
-const MainQueryMultiLogType = "main_query_multi_query_type"
+const FirstQueryGraphLimit = "first_query_graph_limit"
+const SecondQueryGraphLimit = "second_query_graph_limit"
 
-const PreQuerySuffix = "-$#pre"
-const MainQuerySuffix = "-$#main"
+const FirstQuerySuffix = "-#first"
+const SecondQuerySuffix = "-#second"

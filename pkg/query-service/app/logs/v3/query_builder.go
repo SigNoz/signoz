@@ -89,7 +89,7 @@ func getClickhouseColumnName(key v3.AttributeKey) string {
 }
 
 // getSelectLabels returns the select labels for the query based on groupBy and aggregateOperator
-func getSelectLabels(aggregatorOperator v3.AggregateOperator, groupBy []v3.AttributeKey) (string, error) {
+func getSelectLabels(aggregatorOperator v3.AggregateOperator, groupBy []v3.AttributeKey) string {
 	var selectLabels string
 	if aggregatorOperator == v3.AggregateOperatorNoOp {
 		selectLabels = ""
@@ -99,7 +99,19 @@ func getSelectLabels(aggregatorOperator v3.AggregateOperator, groupBy []v3.Attri
 			selectLabels += fmt.Sprintf(" %s as %s,", columnName, tag.Key)
 		}
 	}
-	return selectLabels, nil
+	return selectLabels
+}
+
+func getSelectKeys(aggregatorOperator v3.AggregateOperator, groupBy []v3.AttributeKey) string {
+	var selectLabels string
+	if aggregatorOperator == v3.AggregateOperatorNoOp {
+		selectLabels = ""
+	} else {
+		for _, tag := range groupBy {
+			selectLabels += fmt.Sprintf("%s,", tag.Key)
+		}
+	}
+	return selectLabels
 }
 
 func buildLogsTimeSeriesFilterQuery(fs *v3.FilterSet, groupBy []v3.AttributeKey) (string, error) {
@@ -173,10 +185,7 @@ func buildLogsQuery(panelType v3.PanelType, start, end, step int64, mq *v3.Build
 	// timerange will be sent in epoch millisecond
 	timeFilter := fmt.Sprintf("(timestamp >= %d AND timestamp <= %d)", start*getZerosForEpochNano(start), end*getZerosForEpochNano(end))
 
-	selectLabels, err := getSelectLabels(mq.AggregateOperator, mq.GroupBy)
-	if err != nil {
-		return "", err
-	}
+	selectLabels := getSelectLabels(mq.AggregateOperator, mq.GroupBy)
 
 	having := having(mq.Having)
 	if having != "" {
@@ -184,7 +193,7 @@ func buildLogsQuery(panelType v3.PanelType, start, end, step int64, mq *v3.Build
 	}
 
 	queryTmpl := ""
-	if typeQ == constants.PreQueryMultiLogType {
+	if typeQ == constants.FirstQueryGraphLimit {
 		queryTmpl = "SELECT"
 	} else {
 		queryTmpl = fmt.Sprintf("SELECT toStartOfInterval(fromUnixTimestamp64Nano(timestamp), INTERVAL %d SECOND) AS ts,", step)
@@ -198,12 +207,17 @@ func buildLogsQuery(panelType v3.PanelType, start, end, step int64, mq *v3.Build
 			"group by %s%s " +
 			"order by %s"
 
+	// we dont need value for first query
+	// going with this route as for a cleaner approach on implementation
+	if typeQ == constants.FirstQueryGraphLimit {
+		queryTmpl = "SELECT " + strings.TrimRight(getSelectKeys(mq.AggregateOperator, mq.GroupBy), ",") + " from (" + queryTmpl + ")"
+	}
+
 	groupBy := groupByAttributeKeyTags(typeQ, mq.GroupBy...)
 	orderBy := orderByAttributeKeyTags(panelType, mq.AggregateOperator, mq.OrderBy, mq.GroupBy, typeQ)
 
-	if typeQ == constants.MainQueryMultiLogType {
-		// only support for 1 groupby as of now
-		filterSubQuery = filterSubQuery + " AND " + getClickhouseColumnName(mq.GroupBy[0]) + " IN %s"
+	if typeQ == constants.SecondQueryGraphLimit {
+		filterSubQuery = filterSubQuery + " AND " + "%s"
 	}
 
 	aggregationKey := ""
@@ -249,16 +263,10 @@ func buildLogsQuery(panelType v3.PanelType, start, end, step int64, mq *v3.Build
 		}
 
 		op := "toFloat64(count(*))"
-		// if typeQ == 1 {
-		// 	return fmt.Sprintf(queryTmpl, op, filterSubQuery, groupBy, having, orderBy), nil
-		// }
 		query := fmt.Sprintf(queryTmpl, op, filterSubQuery, groupBy, having, orderBy)
 		return query, nil
 	case v3.AggregateOperatorCountDistinct:
 		op := fmt.Sprintf("toFloat64(count(distinct(%s)))", aggregationKey)
-		// if typeQ == 1 {
-		// 	return fmt.Sprintf(queryTmpl, op, filterSubQuery, groupBy, having, orderBy), nil
-		// }
 		query := fmt.Sprintf(queryTmpl, op, filterSubQuery, groupBy, having, orderBy)
 		return query, nil
 	case v3.AggregateOperatorNoOp:
@@ -273,7 +281,7 @@ func buildLogsQuery(panelType v3.PanelType, start, end, step int64, mq *v3.Build
 // groupBy returns a string of comma separated tags for group by clause
 // `ts` is always added to the group by clause
 func groupBy(typeQ string, tags ...string) string {
-	if typeQ != constants.PreQueryMultiLogType {
+	if typeQ != constants.FirstQueryGraphLimit {
 		tags = append(tags, "ts")
 	}
 	return strings.Join(tags, ",")
@@ -342,7 +350,7 @@ func orderByAttributeKeyTags(panelType v3.PanelType, aggregatorOperator v3.Aggre
 	orderByArray := orderBy(panelType, items, groupTags)
 
 	// for multi query the first query doesnt require timestamp in order by
-	if typeQ != constants.PreQueryMultiLogType {
+	if typeQ != constants.FirstQueryGraphLimit {
 		if panelType == v3.PanelTypeList {
 			if len(orderByArray) == 0 {
 				orderByArray = append(orderByArray, constants.TIMESTAMP)
@@ -397,7 +405,7 @@ func addOffsetToQuery(query string, offset uint64) string {
 func PrepareLogsQuery(start, end int64, queryType v3.QueryType, panelType v3.PanelType, mq *v3.BuilderQuery, typeQ string) (string, error) {
 
 	// 0 menas give me first
-	if typeQ == constants.PreQueryMultiLogType {
+	if typeQ == constants.FirstQueryGraphLimit {
 		// give me just the groupby names
 		query, err := buildLogsQuery(panelType, start, end, mq.StepInterval, mq, typeQ)
 		if err != nil {
@@ -407,7 +415,7 @@ func PrepareLogsQuery(start, end int64, queryType v3.QueryType, panelType v3.Pan
 
 		return query, nil
 	}
-	if typeQ == constants.MainQueryMultiLogType {
+	if typeQ == constants.SecondQueryGraphLimit {
 		query, err := buildLogsQuery(panelType, start, end, mq.StepInterval, mq, typeQ)
 		if err != nil {
 			return "", err
