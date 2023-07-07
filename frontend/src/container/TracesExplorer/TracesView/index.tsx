@@ -65,7 +65,10 @@ function TracesView(): JSX.Element {
 			<ActionsContainer>
 				<Typography>
 					This tab only shows Root Spans. More details
-					<Typography.Link href={TRACES_DETAILS_LINK}> here</Typography.Link>
+					<Typography.Link href={TRACES_DETAILS_LINK} target="_blank">
+						{' '}
+						here
+					</Typography.Link>
 				</Typography>
 				<TraceExplorerControls
 					isLoading={isLoading}
