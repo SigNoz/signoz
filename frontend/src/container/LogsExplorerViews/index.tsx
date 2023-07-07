@@ -5,7 +5,8 @@ import { DEFAULT_PER_PAGE_VALUE } from 'container/Controls/config';
 import LogExplorerDetailedView from 'container/LogExplorerDetailedView';
 import LogsExplorerChart from 'container/LogsExplorerChart';
 import LogsExplorerList from 'container/LogsExplorerList';
-import LogsExplorerTable from 'container/LogsExplorerTable';
+// TODO: temporary hide table view
+// import LogsExplorerTable from 'container/LogsExplorerTable';
 import { GRAPH_TYPES } from 'container/NewDashboard/ComponentsSlider';
 import TimeSeriesView from 'container/TimeSeriesView/TimeSeriesView';
 import { useGetExplorerQueryRange } from 'hooks/queryBuilder/useGetExplorerQueryRange';
@@ -272,16 +273,17 @@ function LogsExplorerViews(): JSX.Element {
 					<TimeSeriesView isLoading={isFetching} data={data} isError={isError} />
 				),
 			},
-			{
-				label: 'Table',
-				key: PANEL_TYPES.TABLE,
-				children: (
-					<LogsExplorerTable
-						data={data?.payload.data.newResult.data.result || []}
-						isLoading={isFetching}
-					/>
-				),
-			},
+			// TODO: temporary hide table view
+			// {
+			// 	label: 'Table',
+			// 	key: PANEL_TYPES.TABLE,
+			// 	children: (
+			// 		<LogsExplorerTable
+			// 			data={data?.payload.data.newResult.data.result || []}
+			// 			isLoading={isFetching}
+			// 		/>
+			// 	),
+			// },
 		],
 		[
 			isMultipleQueries,
