@@ -1,8 +1,7 @@
-import { ColumnsType } from 'antd/es/table';
+import { ResizeTable } from 'components/ResizeTable';
 import { initialQueriesMap, PANEL_TYPES } from 'constants/queryBuilder';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import { useOptionsMenu } from 'container/OptionsMenu';
-import { QueryTable } from 'container/QueryTable';
 import { useGetQueryRange } from 'hooks/queryBuilder/useGetQueryRange';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { Pagination, URL_PAGINATION } from 'hooks/queryPagination';
@@ -18,7 +17,7 @@ import { GlobalReducer } from 'types/reducer/globalTime';
 import TraceExplorerControls from '../Controls';
 import { defaultSelectedColumns, PER_PAGE_OPTIONS } from './configs';
 import { Container, ErrorText, tableStyles } from './styles';
-import { getTraceLink, modifyColumns, transformDataWithDate } from './utils';
+import { getListColumns, getTraceLink, transformDataWithDate } from './utils';
 
 function ListView(): JSX.Element {
 	const { stagedQuery, panelType } = useQueryBuilder();
@@ -79,15 +78,13 @@ function ListView(): JSX.Element {
 		queryTableDataResult,
 	]);
 
-	const transformedQueryTableData = useMemo(
-		() => transformDataWithDate(queryTableData),
-		[queryTableData],
-	);
+	const columns = useMemo(() => getListColumns(options?.selectColumns || []), [
+		options?.selectColumns,
+	]);
 
-	const handleModifyColumns = useCallback(
-		(columns: ColumnsType<RowData>) =>
-			modifyColumns(columns, options?.selectColumns || []),
-		[options?.selectColumns],
+	const transformedQueryTableData = useMemo(
+		() => transformDataWithDate(queryTableData) || [],
+		[queryTableData],
 	);
 
 	const handleRow = useCallback(
@@ -117,13 +114,14 @@ function ListView(): JSX.Element {
 			{isError && <ErrorText>{data?.error || 'Something went wrong'}</ErrorText>}
 
 			{!isError && (
-				<QueryTable
-					query={stagedQuery || initialQueriesMap.traces}
-					queryTableData={transformedQueryTableData}
-					modifyColumns={handleModifyColumns}
-					loading={isFetching}
+				<ResizeTable
+					tableLayout="fixed"
 					pagination={false}
+					scroll={{ x: true }}
+					loading={isFetching}
 					style={tableStyles}
+					dataSource={transformedQueryTableData}
+					columns={columns}
 					onRow={handleRow}
 				/>
 			)}
