@@ -1,4 +1,5 @@
 import { TabsProps } from 'antd';
+import TabLabel from 'components/TabLabel';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { queryParamNamesMap } from 'constants/queryBuilderQueryNames';
 import { DEFAULT_PER_PAGE_VALUE } from 'container/Controls/config';
@@ -252,7 +253,13 @@ function LogsExplorerViews(): JSX.Element {
 	const tabsItems: TabsProps['items'] = useMemo(
 		() => [
 			{
-				label: 'List View',
+				label: (
+					<TabLabel
+						label="List View"
+						tooltipText="Please remove attributes from Group By filter to switch to List View tab"
+						isDisabled={isMultipleQueries || isGroupByExist}
+					/>
+				),
 				key: PANEL_TYPES.LIST,
 				disabled: isMultipleQueries || isGroupByExist,
 				children: (
@@ -267,7 +274,7 @@ function LogsExplorerViews(): JSX.Element {
 				),
 			},
 			{
-				label: 'TimeSeries',
+				label: <TabLabel label="Time Series" isDisabled={false} />,
 				key: PANEL_TYPES.TIME_SERIES,
 				children: (
 					<TimeSeriesView isLoading={isFetching} data={data} isError={isError} />
