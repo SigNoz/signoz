@@ -1,7 +1,9 @@
 import { RadioChangeEvent } from 'antd';
+import getFromLocalstorage from 'api/browser/localstorage/get';
+import setToLocalstorage from 'api/browser/localstorage/set';
 import { getAggregateKeys } from 'api/queryBuilder/getAttributeKeys';
+import { LOCALSTORAGE } from 'constants/localStorage';
 import { QueryBuilderKeys } from 'constants/queryBuilder';
-import { useNotifications } from 'hooks/useNotifications';
 import useUrlQueryData from 'hooks/useUrlQueryData';
 import { useCallback, useEffect, useMemo } from 'react';
 import { useQuery } from 'react-query';
@@ -29,22 +31,25 @@ const useOptionsMenu = ({
 	aggregateOperator,
 	initialOptions = {},
 }: UseOptionsMenuProps): UseOptionsMenu => {
-	const { notifications } = useNotifications();
+	const localStorageOptionsQuery = getFromLocalstorage(
+		LOCALSTORAGE.LIST_OPTIONS,
+	);
 
 	const {
 		query: optionsQuery,
 		queryData: optionsQueryData,
 		redirectWithQuery: redirectWithOptionsData,
-	} = useUrlQueryData<OptionsQuery>(URL_OPTIONS);
+	} = useUrlQueryData<OptionsQuery>(URL_OPTIONS, defaultOptionsQuery);
 
 	const { data, isFetched, isLoading } = useQuery(
-		[QueryBuilderKeys.GET_ATTRIBUTE_KEY],
+		[QueryBuilderKeys.GET_ATTRIBUTE_KEY, dataSource, aggregateOperator],
 		async () =>
 			getAggregateKeys({
 				searchText: '',
 				dataSource,
 				aggregateOperator,
 				aggregateAttribute: '',
+				tagType: null,
 			}),
 	);
 
@@ -68,9 +73,21 @@ const useOptionsMenu = ({
 		[optionsQueryData],
 	);
 
-	const addColumnOptions = useMemo(
-		() => getOptionsFromKeys(attributeKeys, selectedColumnKeys),
-		[attributeKeys, selectedColumnKeys],
+	const addColumnOptions = useMemo(() => {
+		const filteredAttributeKeys = attributeKeys.filter(
+			(item) => item.key !== 'body',
+		);
+
+		return getOptionsFromKeys(filteredAttributeKeys, selectedColumnKeys);
+	}, [attributeKeys, selectedColumnKeys]);
+
+	const handleRedirectWithOptionsData = useCallback(
+		(newQueryData: OptionsQuery) => {
+			redirectWithOptionsData(newQueryData);
+
+			setToLocalstorage(LOCALSTORAGE.LIST_OPTIONS, JSON.stringify(newQueryData));
+		},
+		[redirectWithOptionsData],
 	);
 
 	const handleSelectedColumnsChange = useCallback(
@@ -85,12 +102,19 @@ const useOptionsMenu = ({
 				return [...acc, column];
 			}, [] as BaseAutocompleteData[]);
 
-			redirectWithOptionsData({
-				...defaultOptionsQuery,
+			const optionsData: OptionsQuery = {
+				...optionsQueryData,
 				selectColumns: newSelectedColumns,
-			});
+			};
+
+			handleRedirectWithOptionsData(optionsData);
 		},
-		[attributeKeys, selectedColumnKeys, redirectWithOptionsData],
+		[
+			selectedColumnKeys,
+			optionsQueryData,
+			handleRedirectWithOptionsData,
+			attributeKeys,
+		],
 	);
 
 	const handleRemoveSelectedColumn = useCallback(
@@ -99,54 +123,54 @@ const useOptionsMenu = ({
 				({ id }) => id !== columnKey,
 			);
 
-			if (!newSelectedColumns.length) {
-				notifications.error({
-					message: 'There must be at least one selected column',
-				});
-			} else {
-				redirectWithOptionsData({
-					...defaultOptionsQuery,
-					selectColumns: newSelectedColumns,
-				});
-			}
+			const optionsData: OptionsQuery = {
+				...optionsQueryData,
+				selectColumns: newSelectedColumns,
+			};
+
+			handleRedirectWithOptionsData(optionsData);
 		},
-		[optionsQueryData, notifications, redirectWithOptionsData],
+		[optionsQueryData, handleRedirectWithOptionsData],
 	);
 
 	const handleFormatChange = useCallback(
 		(event: RadioChangeEvent) => {
-			redirectWithOptionsData({
-				...defaultOptionsQuery,
+			const optionsData: OptionsQuery = {
+				...optionsQueryData,
 				format: event.target.value,
-			});
+			};
+
+			handleRedirectWithOptionsData(optionsData);
 		},
-		[redirectWithOptionsData],
+		[handleRedirectWithOptionsData, optionsQueryData],
 	);
 
 	const handleMaxLinesChange = useCallback(
 		(value: string | number | null) => {
-			redirectWithOptionsData({
-				...defaultOptionsQuery,
+			const optionsData: OptionsQuery = {
+				...optionsQueryData,
 				maxLines: value as number,
-			});
+			};
+
+			handleRedirectWithOptionsData(optionsData);
 		},
-		[redirectWithOptionsData],
+		[handleRedirectWithOptionsData, optionsQueryData],
 	);
 
 	const optionsMenuConfig: Required<OptionsMenuConfig> = useMemo(
 		() => ({
 			addColumn: {
-				value: optionsQueryData?.selectColumns || defaultOptionsQuery.selectColumns,
+				value: optionsQueryData.selectColumns || defaultOptionsQuery.selectColumns,
 				options: addColumnOptions || [],
 				onChange: handleSelectedColumnsChange,
 				onRemove: handleRemoveSelectedColumn,
 			},
 			format: {
-				value: optionsQueryData?.format || defaultOptionsQuery.format,
+				value: optionsQueryData.format || defaultOptionsQuery.format,
 				onChange: handleFormatChange,
 			},
 			maxLines: {
-				value: optionsQueryData?.maxLines || defaultOptionsQuery.maxLines,
+				value: optionsQueryData.maxLines || defaultOptionsQuery.maxLines,
 				onChange: handleMaxLinesChange,
 			},
 		}),
@@ -165,8 +189,18 @@ const useOptionsMenu = ({
 	useEffect(() => {
 		if (optionsQuery || !isFetched) return;
 
-		redirectWithOptionsData(initialOptionsQuery);
-	}, [isFetched, optionsQuery, initialOptionsQuery, redirectWithOptionsData]);
+		const nextOptionsQuery = localStorageOptionsQuery
+			? JSON.parse(localStorageOptionsQuery)
+			: initialOptionsQuery;
+
+		redirectWithOptionsData(nextOptionsQuery);
+	}, [
+		isFetched,
+		optionsQuery,
+		initialOptionsQuery,
+		redirectWithOptionsData,
+		localStorageOptionsQuery,
+	]);
 
 	return {
 		isLoading,

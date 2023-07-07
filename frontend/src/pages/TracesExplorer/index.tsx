@@ -2,10 +2,7 @@ import { Tabs } from 'antd';
 import axios from 'axios';
 import { QueryParams } from 'constants/query';
 import { initialQueriesMap, PANEL_TYPES } from 'constants/queryBuilder';
-import {
-	COMPOSITE_QUERY,
-	PANEL_TYPES_QUERY,
-} from 'constants/queryBuilderQueryNames';
+import { queryParamNamesMap } from 'constants/queryBuilderQueryNames';
 import ROUTES from 'constants/routes';
 import ExportPanel from 'container/ExportPanel';
 import { GRAPH_TYPES } from 'container/NewDashboard/ComponentsSlider';
@@ -102,11 +99,9 @@ function TracesExplorer(): JSX.Element {
 				onSuccess: (data) => {
 					const dashboardEditView = `${generatePath(ROUTES.DASHBOARD, {
 						dashboardId: data?.payload?.uuid,
-					})}/new?${QueryParams.graphType}=graph&${
-						QueryParams.widgetId
-					}=empty&${COMPOSITE_QUERY}=${encodeURIComponent(
-						JSON.stringify(exportDefaultQuery),
-					)}`;
+					})}/new?${QueryParams.graphType}=graph&${QueryParams.widgetId}=empty&${
+						queryParamNamesMap.compositeQuery
+					}=${encodeURIComponent(JSON.stringify(exportDefaultQuery))}`;
 
 					history.push(dashboardEditView);
 				},
@@ -132,7 +127,9 @@ function TracesExplorer(): JSX.Element {
 				DataSource.TRACES,
 			);
 
-			redirectWithQueryBuilderData(query, { [PANEL_TYPES_QUERY]: newPanelType });
+			redirectWithQueryBuilderData(query, {
+				[queryParamNamesMap.panelTypes]: newPanelType,
+			});
 		},
 		[
 			currentQuery,
