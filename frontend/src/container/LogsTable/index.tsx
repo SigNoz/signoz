@@ -7,10 +7,11 @@ import Spinner from 'components/Spinner';
 import { contentStyle } from 'container/Trace/Search/config';
 import useFontFaceObserver from 'hooks/useFontObserver';
 import { memo, useCallback, useMemo } from 'react';
-import { useSelector } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import { Virtuoso } from 'react-virtuoso';
-// interfaces
 import { AppState } from 'store/reducers';
+// interfaces
+import { SET_DETAILED_LOG_DATA } from 'types/actions/logs';
 import { ILog } from 'types/api/logs/log';
 import { ILogsReducer } from 'types/reducer/logs';
 
@@ -27,6 +28,8 @@ type LogsTableProps = {
 
 function LogsTable(props: LogsTableProps): JSX.Element {
 	const { viewMode, onClickExpand, linesPerRow } = props;
+
+	const dispatch = useDispatch();
 
 	useFontFaceObserver(
 		[
@@ -58,6 +61,16 @@ function LogsTable(props: LogsTableProps): JSX.Element {
 		liveTail,
 	]);
 
+	const handleOpenDetailedView = useCallback(
+		(logData: ILog) => {
+			dispatch({
+				type: SET_DETAILED_LOG_DATA,
+				payload: logData,
+			});
+		},
+		[dispatch],
+	);
+
 	const getItemContent = useCallback(
 		(index: number): JSX.Element => {
 			const log = logs[index];
@@ -73,9 +86,23 @@ function LogsTable(props: LogsTableProps): JSX.Element {
 				);
 			}
 
-			return <ListLogView key={log.id} logData={log} />;
+			return (
+				<ListLogView
+					key={log.id}
+					logData={log}
+					selectedFields={selected}
+					onOpenDetailedView={handleOpenDetailedView}
+				/>
+			);
 		},
-		[logs, linesPerRow, viewMode, onClickExpand],
+		[
+			logs,
+			viewMode,
+			selected,
+			handleOpenDetailedView,
+			linesPerRow,
+			onClickExpand,
+		],
 	);
 
 	const renderContent = useMemo(() => {
