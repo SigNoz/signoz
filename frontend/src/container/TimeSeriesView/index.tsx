@@ -67,7 +67,12 @@ function TimeSeriesViewContainer({
 	);
 
 	return (
-		<TimeSeriesView isError={isError} isLoading={isLoading} data={responseData} />
+		<TimeSeriesView
+			isError={isError}
+			isLoading={isLoading}
+			data={responseData}
+			yAxisUnit={isValidToConvertToMs ? 'ms' : 'short'}
+		/>
 	);
 }
 
