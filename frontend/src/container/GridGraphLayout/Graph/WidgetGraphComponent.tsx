@@ -54,9 +54,6 @@ function WidgetGraphComponent({
 }: WidgetGraphComponentProps): JSX.Element {
 	const [deleteModal, setDeleteModal] = useState(false);
 	const [modal, setModal] = useState<boolean>(false);
-	const [legendEntries, setLegendEntries] = useState<LegendEntryProps[]>([]);
-	// TODO: to be removed
-	console.log(legendEntries);
 	const [hovered, setHovered] = useState(false);
 	const { notifications } = useNotifications();
 	const { t } = useTranslation(['common']);
@@ -154,15 +151,6 @@ function WidgetGraphComponent({
 		onToggleModal(setDeleteModal);
 	};
 
-	const showAllDataSet = (data: ChartData): LegendEntryProps[] =>
-		data.datasets.map(
-			(item) =>
-				({
-					label: item.label,
-					show: true,
-				} as LegendEntryProps),
-		);
-
 	useEffect(() => {
 		if (localStorage.getItem('LEGEND_GRAPH') !== null) {
 			const legendGraphFromLocalStore = localStorage.getItem('LEGEND_GRAPH');
@@ -173,7 +161,6 @@ function WidgetGraphComponent({
 			const graphDisplayStatusArray = Array(data.datasets.length).fill(true);
 			legendFromLocalStore.forEach((item) => {
 				if (item.name === `${name}expanded`) {
-					setLegendEntries(item.dataIndex);
 					data.datasets.forEach((d, i) => {
 						const index = item.dataIndex.findIndex((di) => di.label === d.label);
 						if (index !== -1) {
@@ -186,11 +173,9 @@ function WidgetGraphComponent({
 			});
 			if (!isfound) {
 				setGraphsVisility(Array(data.datasets.length).fill(true));
-				setLegendEntries(showAllDataSet(data));
 			}
 		} else {
 			setGraphsVisility(Array(data.datasets.length).fill(true));
-			setLegendEntries(showAllDataSet(data));
 		}
 	}, [data, name]);
 

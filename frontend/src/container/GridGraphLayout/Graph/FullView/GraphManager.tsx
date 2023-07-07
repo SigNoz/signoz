@@ -251,6 +251,7 @@ function GraphManager({
 		notifications.success({
 			message: 'Saved successfully!',
 		});
+		graphVisibilityHandler(graphVisibilityArray);
 	};
 
 	return (
