@@ -7,7 +7,7 @@ import { DataSource } from 'types/common/queryBuilder';
 import { SelectOption } from './select';
 
 type UseQueryOperationsParams = Pick<QueryProps, 'index' | 'query'> &
-	Pick<QueryBuilderProps, 'inactiveFilters'>;
+	Pick<QueryBuilderProps, 'filterConfigs'>;
 
 export type HandleChangeQueryData = <
 	Key extends keyof IBuilderQuery,

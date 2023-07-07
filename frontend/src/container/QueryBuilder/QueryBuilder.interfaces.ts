@@ -14,5 +14,7 @@ export type QueryBuilderProps = {
 	config?: QueryBuilderConfig;
 	panelType: ITEMS;
 	actions?: ReactNode;
-	inactiveFilters?: Partial<Record<keyof IBuilderQuery, boolean>>;
+	filterConfigs?: Partial<
+		Record<keyof IBuilderQuery, { isHidden: boolean; isDisabled: boolean }>
+	>;
 };
