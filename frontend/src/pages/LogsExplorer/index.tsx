@@ -8,7 +8,7 @@ import { WrapperStyled } from './styles';
 function LogsExplorer(): JSX.Element {
 	return (
 		<WrapperStyled>
-			<Row gutter={[0, 28]}>
+			<Row gutter={[0, 16]}>
 				<Col xs={24}>
 					<LogExplorerQuerySection />
 				</Col>
