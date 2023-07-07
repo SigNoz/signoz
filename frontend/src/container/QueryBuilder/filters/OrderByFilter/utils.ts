@@ -69,16 +69,12 @@ export function checkIfKeyPresent(str: string, valueToCheck: string): boolean {
 	return new RegExp(`\\(${valueToCheck}\\)`).test(str);
 }
 
-export function omitOrderFromString(str: string): string {
-	const regexpAsc = new RegExp(FILTERS.ASC, 'ig');
-	const regexpDesc = new RegExp(FILTERS.DESC, 'ig');
+export function splitOrderByFromString(str: string): OrderByPayload | null {
+	const splittedStr = str.split(' ');
+	const order = splittedStr.pop() || FILTERS.ASC;
+	const columnName = splittedStr.join(' ');
 
-	if (regexpAsc.test(str) || regexpDesc.test(str)) {
-		const splittedString = str.split(' ');
-		splittedString.pop();
+	if (!columnName) return null;
 
-		return splittedString.join(' ');
-	}
-
-	return str;
+	return { columnName, order };
 }

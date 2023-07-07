@@ -17,8 +17,8 @@ import {
 	checkIfKeyPresent,
 	getLabelFromValue,
 	mapLabelValuePairs,
-	omitOrderFromString,
 	orderByValueDelimiter,
+	splitOrderByFromString,
 	transformToOrderByStringValues,
 } from './utils';
 
@@ -136,8 +136,34 @@ export function OrderByFilter({
 		);
 	}, []);
 
+	const getValidResult = useCallback(
+		(result: IOption[]): IOption[] =>
+			result.reduce<IOption[]>((acc, item) => {
+				if (item.value === FILTERS.ASC || item.value === FILTERS.DESC) return acc;
+
+				if (item.value.includes(FILTERS.ASC) || item.value.includes(FILTERS.DESC)) {
+					const splittedOrderBy = splitOrderByFromString(item.value);
+
+					if (splittedOrderBy) {
+						acc.push({
+							label: `${splittedOrderBy.columnName} ${splittedOrderBy.order}`,
+							value: `${splittedOrderBy.columnName}${orderByValueDelimiter}${splittedOrderBy.order}`,
+						});
+
+						return acc;
+					}
+				}
+
+				acc.push(item);
+
+				return acc;
+			}, []),
+		[],
+	);
+
 	const handleChange = (values: IOption[]): void => {
-		const result = getUniqValues(values);
+		const validResult = getValidResult(values);
+		const result = getUniqValues(validResult);
 
 		const orderByValues: OrderByPayload[] = result.map((item) => {
 			const match = Papa.parse(item.value, { delimiter: orderByValueDelimiter });
@@ -160,12 +186,6 @@ export function OrderByFilter({
 
 			const orderValue = order ?? 'asc';
 
-			if (columnName.includes(FILTERS.ASC) || columnName.includes(FILTERS.DESC)) {
-				return {
-					columnName: omitOrderFromString(columnNameValue),
-					order: orderValue,
-				};
-			}
 			return {
 				columnName: columnNameValue,
 				order: orderValue,
