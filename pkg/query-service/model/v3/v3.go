@@ -578,7 +578,7 @@ type Result struct {
 type Series struct {
 	Labels            map[string]string `json:"labels"`
 	Points            []Point           `json:"values"`
-	GroupingSetsPoint *Point            `json:"groupingSetPoint"`
+	GroupingSetsPoint *Point            `json:"-"`
 }
 
 func (s *Series) SortPoints() {
