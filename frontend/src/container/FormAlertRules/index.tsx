@@ -8,6 +8,7 @@ import QueryTypeTag from 'container/NewWidget/LeftContainer/QueryTypeTag';
 import PlotTag from 'container/NewWidget/LeftContainer/WidgetGraph/PlotTag';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useShareBuilderUrl } from 'hooks/queryBuilder/useShareBuilderUrl';
+import { updateStepInterval } from 'hooks/queryBuilder/useStepInterval';
 import { MESSAGE, useIsFeatureDisabled } from 'hooks/useFeatureFlag';
 import { useNotifications } from 'hooks/useNotifications';
 import history from 'lib/history';
@@ -16,6 +17,8 @@ import { mapQueryDataToApi } from 'lib/newQueryBuilder/queryBuilderMappers/mapQu
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useQueryClient } from 'react-query';
+import { useSelector } from 'react-redux';
+import { AppState } from 'store/reducers';
 import { AlertTypes } from 'types/api/alerts/alertTypes';
 import {
 	AlertDef,
@@ -24,6 +27,7 @@ import {
 } from 'types/api/alerts/def';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { EQueryType } from 'types/common/dashboard';
+import { GlobalReducer } from 'types/reducer/globalTime';
 
 import BasicInfo from './BasicInfo';
 import ChartPreview from './ChartPreview';
@@ -48,6 +52,10 @@ function FormAlertRules({
 	// init namespace for translations
 	const { t } = useTranslation('alerts');
 
+	const { minTime, maxTime } = useSelector<AppState, GlobalReducer>(
+		(state) => state.globalTime,
+	);
+
 	const {
 		currentQuery,
 		stagedQuery,
@@ -70,15 +78,11 @@ function FormAlertRules({
 
 	const sq = useMemo(() => mapQueryDataFromApi(initQuery), [initQuery]);
 
-	useShareBuilderUrl({ defaultValue: sq });
+	useShareBuilderUrl(sq);
 
 	useEffect(() => {
 		setAlertDef(initialValue);
 	}, [initialValue]);
-
-	const onRunQuery = (): void => {
-		handleRunQuery();
-	};
 
 	const onCancelHandler = useCallback(() => {
 		history.replace(ROUTES.LIST_ALL_ALERT);
@@ -99,7 +103,7 @@ function FormAlertRules({
 		}
 		const query: Query = { ...currentQuery, queryType: val };
 
-		redirectWithQueryBuilderData(query);
+		redirectWithQueryBuilderData(updateStepInterval(query, maxTime, minTime));
 	};
 	const { notifications } = useNotifications();
 
@@ -402,7 +406,7 @@ function FormAlertRules({
 							queryCategory={currentQuery.queryType}
 							setQueryCategory={onQueryCategoryChange}
 							alertType={alertType || AlertTypes.METRICS_BASED_ALERT}
-							runQuery={onRunQuery}
+							runQuery={handleRunQuery}
 						/>
 
 						<RuleOptions

@@ -341,17 +341,14 @@ func orderByAttributeKeyTags(panelType v3.PanelType, aggregatorOperator v3.Aggre
 	}
 	orderByArray := orderBy(panelType, items, groupTags)
 
-	found := false
-	for i := 0; i < len(orderByArray); i++ {
-		if strings.Compare(orderByArray[i], constants.TIMESTAMP) == 0 {
-			orderByArray[i] = "ts"
-			break
-		}
-	}
-	if !found && typeQ != constants.PreQueryMultiLogType {
-		if aggregatorOperator == v3.AggregateOperatorNoOp {
-			orderByArray = append(orderByArray, constants.TIMESTAMP)
+	// for multi query the first query doesnt require timestamp in order by
+	if typeQ != constants.PreQueryMultiLogType {
+		if panelType == v3.PanelTypeList {
+			if len(orderByArray) == 0 {
+				orderByArray = append(orderByArray, constants.TIMESTAMP)
+			}
 		} else {
+			// since in other aggregation operator we will have to add ts as it will not be present in group by
 			orderByArray = append(orderByArray, "ts")
 		}
 	}

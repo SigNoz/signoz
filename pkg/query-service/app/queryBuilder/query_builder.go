@@ -33,6 +33,8 @@ var SupportedFunctions = []string{
 	"atan",
 	"degrees",
 	"radians",
+	"now",
+	"toUnixTimestamp",
 }
 
 var EvalFuncs = map[string]govaluate.ExpressionFunction{}

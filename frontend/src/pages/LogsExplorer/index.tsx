@@ -1,21 +1,42 @@
 import { Button, Col, Row } from 'antd';
 import { initialQueriesMap, PANEL_TYPES } from 'constants/queryBuilder';
-import { LogsExplorerChart } from 'container/LogsExplorerChart';
-import { LogsExplorerViews } from 'container/LogsExplorerViews';
+import LogsExplorerViews from 'container/LogsExplorerViews';
 import { QueryBuilder } from 'container/QueryBuilder';
+import { QueryBuilderProps } from 'container/QueryBuilder/QueryBuilder.interfaces';
 import { useGetPanelTypesQueryParam } from 'hooks/queryBuilder/useGetPanelTypesQueryParam';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useShareBuilderUrl } from 'hooks/queryBuilder/useShareBuilderUrl';
+import { useMemo } from 'react';
 import { DataSource } from 'types/common/queryBuilder';
 
 // ** Styles
 import { ButtonWrapperStyled, WrapperStyled } from './styles';
+import { prepareQueryWithDefaultTimestamp } from './utils';
 
-function LogsExporer(): JSX.Element {
-	const { handleRunQuery } = useQueryBuilder();
+function LogsExplorer(): JSX.Element {
+	const { handleRunQuery, updateAllQueriesOperators } = useQueryBuilder();
 	const panelTypes = useGetPanelTypesQueryParam(PANEL_TYPES.LIST);
 
-	useShareBuilderUrl({ defaultValue: initialQueriesMap.logs });
+	const defaultValue = useMemo(() => {
+		const updatedQuery = updateAllQueriesOperators(
+			initialQueriesMap.logs,
+			PANEL_TYPES.LIST,
+			DataSource.LOGS,
+		);
+		return prepareQueryWithDefaultTimestamp(updatedQuery);
+	}, [updateAllQueriesOperators]);
+
+	useShareBuilderUrl(defaultValue);
+
+	const inactiveLogsFilters: QueryBuilderProps['inactiveFilters'] = useMemo(() => {
+		if (panelTypes === PANEL_TYPES.TABLE) {
+			const result: QueryBuilderProps['inactiveFilters'] = { stepInterval: true };
+
+			return result;
+		}
+
+		return {};
+	}, [panelTypes]);
 
 	return (
 		<WrapperStyled>
@@ -24,6 +45,7 @@ function LogsExporer(): JSX.Element {
 					<QueryBuilder
 						panelType={panelTypes}
 						config={{ initialDataSource: DataSource.LOGS, queryVariant: 'static' }}
+						inactiveFilters={inactiveLogsFilters}
 						actions={
 							<ButtonWrapperStyled>
 								<Button type="primary" onClick={handleRunQuery}>
@@ -34,7 +56,6 @@ function LogsExporer(): JSX.Element {
 					/>
 				</Col>
 				<Col xs={24}>
-					<LogsExplorerChart />
 					<LogsExplorerViews />
 				</Col>
 			</Row>
@@ -42,4 +63,4 @@ function LogsExporer(): JSX.Element {
 	);
 }
 
-export default LogsExporer;
+export default LogsExplorer;

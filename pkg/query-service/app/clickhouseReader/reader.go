@@ -716,7 +716,7 @@ func (r *ClickHouseReader) GetServicesList(ctx context.Context) (*[]string, erro
 	return &services, nil
 }
 
-func (r *ClickHouseReader) GetTopLevelOperations(ctx context.Context) (*map[string][]string, *model.ApiError) {
+func (r *ClickHouseReader) GetTopLevelOperations(ctx context.Context, skipConfig *model.SkipConfig) (*map[string][]string, *model.ApiError) {
 
 	operations := map[string][]string{}
 	query := fmt.Sprintf(`SELECT DISTINCT name, serviceName FROM %s.%s`, r.TraceDB, r.topLevelOperationsTable)
@@ -737,18 +737,21 @@ func (r *ClickHouseReader) GetTopLevelOperations(ctx context.Context) (*map[stri
 		if _, ok := operations[serviceName]; !ok {
 			operations[serviceName] = []string{}
 		}
+		if skipConfig.ShouldSkip(serviceName, name) {
+			continue
+		}
 		operations[serviceName] = append(operations[serviceName], name)
 	}
 	return &operations, nil
 }
 
-func (r *ClickHouseReader) GetServices(ctx context.Context, queryParams *model.GetServicesParams) (*[]model.ServiceItem, *model.ApiError) {
+func (r *ClickHouseReader) GetServices(ctx context.Context, queryParams *model.GetServicesParams, skipConfig *model.SkipConfig) (*[]model.ServiceItem, *model.ApiError) {
 
 	if r.indexTable == "" {
 		return nil, &model.ApiError{Typ: model.ErrorExec, Err: ErrNoIndexTable}
 	}
 
-	topLevelOps, apiErr := r.GetTopLevelOperations(ctx)
+	topLevelOps, apiErr := r.GetTopLevelOperations(ctx, skipConfig)
 	if apiErr != nil {
 		return nil, apiErr
 	}
@@ -839,9 +842,9 @@ func (r *ClickHouseReader) GetServices(ctx context.Context, queryParams *model.G
 	return &serviceItems, nil
 }
 
-func (r *ClickHouseReader) GetServiceOverview(ctx context.Context, queryParams *model.GetServiceOverviewParams) (*[]model.ServiceOverviewItem, *model.ApiError) {
+func (r *ClickHouseReader) GetServiceOverview(ctx context.Context, queryParams *model.GetServiceOverviewParams, skipConfig *model.SkipConfig) (*[]model.ServiceOverviewItem, *model.ApiError) {
 
-	topLevelOps, apiErr := r.GetTopLevelOperations(ctx)
+	topLevelOps, apiErr := r.GetTopLevelOperations(ctx, skipConfig)
 	if apiErr != nil {
 		return nil, apiErr
 	}
@@ -4220,8 +4223,11 @@ func (r *ClickHouseReader) GetListResultV3(ctx context.Context, query string) ([
 		for idx, v := range vars {
 			if columnNames[idx] == "timestamp" {
 				t = time.Unix(0, int64(*v.(*uint64)))
+			} else if columnNames[idx] == "timestamp_datetime" {
+				t = *v.(*time.Time)
+			} else {
+				row[columnNames[idx]] = v
 			}
-			row[columnNames[idx]] = v
 		}
 		rowList = append(rowList, &v3.Row{Timestamp: t, Data: row})
 	}
@@ -4296,6 +4302,8 @@ func (r *ClickHouseReader) GetTraceAggregateAttributes(ctx context.Context, req 
 		if err := rows.Scan(&tagKey, &tagType, &dataType, &isColumn); err != nil {
 			return nil, fmt.Errorf("error while scanning rows: %s", err.Error())
 		}
+		// TODO: Remove this once the column name are updated in the table
+		tagKey = tempHandleFixedColumns(tagKey)
 		key := v3.AttributeKey{
 			Key:      tagKey,
 			DataType: v3.AttributeKeyDataType(dataType),
@@ -4335,6 +4343,8 @@ func (r *ClickHouseReader) GetTraceAttributeKeys(ctx context.Context, req *v3.Fi
 		if err := rows.Scan(&tagKey, &tagType, &dataType, &isColumn); err != nil {
 			return nil, fmt.Errorf("error while scanning rows: %s", err.Error())
 		}
+		// TODO: Remove this once the column name are updated in the table
+		tagKey = tempHandleFixedColumns(tagKey)
 		key := v3.AttributeKey{
 			Key:      tagKey,
 			DataType: v3.AttributeKeyDataType(dataType),
@@ -4344,6 +4354,19 @@ func (r *ClickHouseReader) GetTraceAttributeKeys(ctx context.Context, req *v3.Fi
 		response.AttributeKeys = append(response.AttributeKeys, key)
 	}
 	return &response, nil
+}
+
+// tempHandleFixedColumns is a temporary function to handle the fixed columns whose name has been changed in AttributeKeys Table
+func tempHandleFixedColumns(tagKey string) string {
+	switch {
+	case tagKey == "traceId":
+		tagKey = "traceID"
+	case tagKey == "spanId":
+		tagKey = "spanID"
+	case tagKey == "parentSpanId":
+		tagKey = "parentSpanID"
+	}
+	return tagKey
 }
 
 func (r *ClickHouseReader) GetTraceAttributeValues(ctx context.Context, req *v3.FilterAttributeValueRequest) (*v3.FilterAttributeValueResponse, error) {
