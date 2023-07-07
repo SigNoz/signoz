@@ -23,6 +23,7 @@ import { getTabsItems } from './utils';
 
 function TracesExplorer(): JSX.Element {
 	const { notifications } = useNotifications();
+
 	const {
 		currentQuery,
 		stagedQuery,
@@ -97,6 +98,29 @@ function TracesExplorer(): JSX.Element {
 
 			updateDashboard(updatedDashboard, {
 				onSuccess: (data) => {
+					if (data.error) {
+						const message =
+							data.error === 'feature usage exceeded' ? (
+								<span>
+									Panel limit exceeded for {DataSource.TRACES} in community edition.
+									Please checkout our paid plans{' '}
+									<a
+										href="https://signoz.io/pricing"
+										rel="noreferrer noopener"
+										target="_blank"
+									>
+										here
+									</a>
+								</span>
+							) : (
+								data.error
+							);
+						notifications.error({
+							message,
+						});
+
+						return;
+					}
 					const dashboardEditView = `${generatePath(ROUTES.DASHBOARD, {
 						dashboardId: data?.payload?.uuid,
 					})}/new?${QueryParams.graphType}=graph&${QueryParams.widgetId}=empty&${
