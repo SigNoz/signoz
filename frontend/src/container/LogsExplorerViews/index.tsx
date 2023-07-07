@@ -1,8 +1,12 @@
 import { TabsProps } from 'antd';
+import axios from 'axios';
 import TabLabel from 'components/TabLabel';
-import { PANEL_TYPES } from 'constants/queryBuilder';
+import { QueryParams } from 'constants/query';
+import { initialQueriesMap, PANEL_TYPES } from 'constants/queryBuilder';
 import { queryParamNamesMap } from 'constants/queryBuilderQueryNames';
+import ROUTES from 'constants/routes';
 import { DEFAULT_PER_PAGE_VALUE } from 'container/Controls/config';
+import ExportPanel from 'container/ExportPanel';
 import LogExplorerDetailedView from 'container/LogExplorerDetailedView';
 import LogsExplorerChart from 'container/LogsExplorerChart';
 import LogsExplorerList from 'container/LogsExplorerList';
@@ -10,11 +14,16 @@ import LogsExplorerList from 'container/LogsExplorerList';
 // import LogsExplorerTable from 'container/LogsExplorerTable';
 import { GRAPH_TYPES } from 'container/NewDashboard/ComponentsSlider';
 import TimeSeriesView from 'container/TimeSeriesView/TimeSeriesView';
+import { useUpdateDashboard } from 'hooks/dashboard/useUpdateDashboard';
+import { addEmptyWidgetInDashboardJSONWithQuery } from 'hooks/dashboard/utils';
 import { useGetExplorerQueryRange } from 'hooks/queryBuilder/useGetExplorerQueryRange';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
+import { useNotifications } from 'hooks/useNotifications';
 import useUrlQueryData from 'hooks/useUrlQueryData';
 import { getPaginationQueryData } from 'lib/newQueryBuilder/getPaginationQueryData';
 import { memo, useCallback, useEffect, useMemo, useState } from 'react';
+import { generatePath, useHistory } from 'react-router-dom';
+import { Dashboard } from 'types/api/dashboard/getAll';
 import { ILog } from 'types/api/logs/log';
 import {
 	IBuilderQuery,
@@ -23,9 +32,12 @@ import {
 } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource, StringOperators } from 'types/common/queryBuilder';
 
-import { TabsStyled } from './LogsExplorerViews.styled';
+import { ActionsWrapper, TabsStyled } from './LogsExplorerViews.styled';
 
 function LogsExplorerViews(): JSX.Element {
+	const { notifications } = useNotifications();
+	const history = useHistory();
+
 	const { queryData: pageSize } = useUrlQueryData(
 		queryParamNamesMap.pageSize,
 		DEFAULT_PER_PAGE_VALUE,
@@ -104,6 +116,16 @@ function LogsExplorerViews(): JSX.Element {
 
 		return modifiedQuery;
 	}, [stagedQuery, currentStagedQueryData]);
+
+	const exportDefaultQuery = useMemo(
+		() =>
+			updateAllQueriesOperators(
+				currentQuery || initialQueriesMap.logs,
+				PANEL_TYPES.TIME_SERIES,
+				DataSource.LOGS,
+			),
+		[currentQuery, updateAllQueriesOperators],
+	);
 
 	const listChartData = useGetExplorerQueryRange(
 		listChartQuery,
@@ -218,6 +240,66 @@ function LogsExplorerViews(): JSX.Element {
 		],
 	);
 
+	const {
+		mutate: updateDashboard,
+		isLoading: isUpdateDashboardLoading,
+	} = useUpdateDashboard();
+
+	const handleExport = useCallback(
+		(dashboard: Dashboard | null): void => {
+			if (!dashboard) return;
+
+			const updatedDashboard = addEmptyWidgetInDashboardJSONWithQuery(
+				dashboard,
+				exportDefaultQuery,
+			);
+
+			updateDashboard(updatedDashboard, {
+				onSuccess: (data) => {
+					if (data.error) {
+						const message =
+							data.error === 'feature usage exceeded' ? (
+								<span>
+									Panel limit exceeded for {DataSource.LOGS} in community edition. Please
+									checkout our paid plans{' '}
+									<a
+										href="https://signoz.io/pricing"
+										rel="noreferrer noopener"
+										target="_blank"
+									>
+										here
+									</a>
+								</span>
+							) : (
+								data.error
+							);
+						notifications.error({
+							message,
+						});
+
+						return;
+					}
+
+					const dashboardEditView = `${generatePath(ROUTES.DASHBOARD, {
+						dashboardId: data?.payload?.uuid,
+					})}/new?${QueryParams.graphType}=graph&${QueryParams.widgetId}=empty&${
+						queryParamNamesMap.compositeQuery
+					}=${encodeURIComponent(JSON.stringify(exportDefaultQuery))}`;
+
+					history.push(dashboardEditView);
+				},
+				onError: (error) => {
+					if (axios.isAxiosError(error)) {
+						notifications.error({
+							message: error.message,
+						});
+					}
+				},
+			});
+		},
+		[exportDefaultQuery, history, notifications, updateDashboard],
+	);
+
 	useEffect(() => {
 		const shouldChangeView = isMultipleQueries || isGroupByExist;
 
@@ -238,7 +320,7 @@ function LogsExplorerViews(): JSX.Element {
 	}, [data]);
 
 	useEffect(() => {
-		if (requestData?.id !== stagedQuery?.id) {
+		if (requestData?.id !== stagedQuery?.id || isFetching) {
 			const newRequestData = getRequestData(stagedQuery, {
 				page: 1,
 				log: null,
@@ -248,7 +330,7 @@ function LogsExplorerViews(): JSX.Element {
 			setPage(1);
 			setRequestData(newRequestData);
 		}
-	}, [stagedQuery, requestData, getRequestData, pageSize]);
+	}, [stagedQuery, requestData, getRequestData, pageSize, isFetching]);
 
 	const tabsItems: TabsProps['items'] = useMemo(
 		() => [
@@ -333,6 +415,15 @@ function LogsExplorerViews(): JSX.Element {
 	return (
 		<>
 			<LogsExplorerChart isLoading={isFetching} data={chartData} />
+			{stagedQuery && (
+				<ActionsWrapper>
+					<ExportPanel
+						query={exportDefaultQuery}
+						isLoading={isUpdateDashboardLoading}
+						onExport={handleExport}
+					/>
+				</ActionsWrapper>
+			)}
 			<TabsStyled
 				items={tabsItems}
 				defaultActiveKey={panelType || PANEL_TYPES.LIST}
