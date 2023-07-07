@@ -26,7 +26,6 @@ function TracesExplorer(): JSX.Element {
 
 	const {
 		currentQuery,
-		stagedQuery,
 		panelType,
 		updateAllQueriesOperators,
 		redirectWithQueryBuilderData,
@@ -78,11 +77,11 @@ function TracesExplorer(): JSX.Element {
 	const exportDefaultQuery = useMemo(
 		() =>
 			updateAllQueriesOperators(
-				stagedQuery || initialQueriesMap.traces,
+				currentQuery || initialQueriesMap.traces,
 				PANEL_TYPES.TIME_SERIES,
 				DataSource.TRACES,
 			),
-		[stagedQuery, updateAllQueriesOperators],
+		[currentQuery, updateAllQueriesOperators],
 	);
 
 	const { mutate: updateDashboard, isLoading } = useUpdateDashboard();
@@ -183,7 +182,7 @@ function TracesExplorer(): JSX.Element {
 			<Container>
 				<ActionsWrapper>
 					<ExportPanel
-						query={stagedQuery}
+						query={exportDefaultQuery}
 						isLoading={isLoading}
 						onExport={handleExport}
 					/>

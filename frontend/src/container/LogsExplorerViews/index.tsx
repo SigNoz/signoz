@@ -117,6 +117,16 @@ function LogsExplorerViews(): JSX.Element {
 		return modifiedQuery;
 	}, [stagedQuery, currentStagedQueryData]);
 
+	const exportDefaultQuery = useMemo(
+		() =>
+			updateAllQueriesOperators(
+				currentQuery || initialQueriesMap.logs,
+				PANEL_TYPES.TIME_SERIES,
+				DataSource.LOGS,
+			),
+		[currentQuery, updateAllQueriesOperators],
+	);
+
 	const listChartData = useGetExplorerQueryRange(
 		listChartQuery,
 		PANEL_TYPES.TIME_SERIES,
@@ -239,17 +249,9 @@ function LogsExplorerViews(): JSX.Element {
 		(dashboard: Dashboard | null): void => {
 			if (!dashboard) return;
 
-			const query = stagedQuery || initialQueriesMap.logs;
-
-			const modifiedQuery = updateAllQueriesOperators(
-				query,
-				PANEL_TYPES.TIME_SERIES,
-				DataSource.LOGS,
-			);
-
 			const updatedDashboard = addEmptyWidgetInDashboardJSONWithQuery(
 				dashboard,
-				modifiedQuery,
+				exportDefaultQuery,
 			);
 
 			updateDashboard(updatedDashboard, {
@@ -282,7 +284,7 @@ function LogsExplorerViews(): JSX.Element {
 						dashboardId: data?.payload?.uuid,
 					})}/new?${QueryParams.graphType}=graph&${QueryParams.widgetId}=empty&${
 						queryParamNamesMap.compositeQuery
-					}=${encodeURIComponent(JSON.stringify(modifiedQuery))}`;
+					}=${encodeURIComponent(JSON.stringify(exportDefaultQuery))}`;
 
 					history.push(dashboardEditView);
 				},
@@ -295,13 +297,7 @@ function LogsExplorerViews(): JSX.Element {
 				},
 			});
 		},
-		[
-			history,
-			notifications,
-			stagedQuery,
-			updateAllQueriesOperators,
-			updateDashboard,
-		],
+		[exportDefaultQuery, history, notifications, updateDashboard],
 	);
 
 	useEffect(() => {
@@ -422,7 +418,7 @@ function LogsExplorerViews(): JSX.Element {
 			{stagedQuery && (
 				<ActionsWrapper>
 					<ExportPanel
-						query={stagedQuery}
+						query={exportDefaultQuery}
 						isLoading={isUpdateDashboardLoading}
 						onExport={handleExport}
 					/>
