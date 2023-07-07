@@ -117,7 +117,7 @@ const useOptionsMenu = ({
 				searchText: debouncedSearchText,
 			}),
 		{
-			enabled: isFocused,
+			enabled: isFocused && !!debouncedSearchText.length,
 		},
 	);
 
