@@ -1,4 +1,5 @@
 import { ResizeTable } from 'components/ResizeTable';
+import { LOCALSTORAGE } from 'constants/localStorage';
 import { initialQueriesMap, PANEL_TYPES } from 'constants/queryBuilder';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import { useOptionsMenu } from 'container/OptionsMenu';
@@ -28,6 +29,7 @@ function ListView(): JSX.Element {
 	>((state) => state.globalTime);
 
 	const { options, config } = useOptionsMenu({
+		storageKey: LOCALSTORAGE.TRACES_LIST_OPTIONS,
 		dataSource: DataSource.TRACES,
 		aggregateOperator: 'count',
 		initialOptions: {
