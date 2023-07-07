@@ -27,21 +27,13 @@ function FullView({
 	name,
 	yAxisUnit,
 	onDragSelect,
+	graphVisibilityHandler,
+	graphsVisibility,
 }: FullViewProps): JSX.Element {
 	const { selectedTime: globalSelectedTime } = useSelector<
 		AppState,
 		GlobalReducer
 	>((state) => state.globalTime);
-
-	const [graphsVisibility, setGraphsVisility] = useState<boolean[]>();
-
-	const graphVisibilityHandler = (graphsVisiblityArray: boolean[]): void => {
-		console.log(
-			'🚀 ~ file: index.metricsBuilder.tsx:39 ~ graphVisibilityHandler ~ graphsVisiblityArray:',
-			graphsVisiblityArray,
-		);
-		setGraphsVisility([...graphsVisiblityArray]);
-	};
 
 	const getSelectedTime = useCallback(
 		() =>
@@ -143,6 +135,8 @@ interface FullViewProps {
 	name: string;
 	yAxisUnit?: string;
 	onDragSelect?: (start: number, end: number) => void;
+	graphVisibilityHandler: (graphsVisiblityArray: boolean[]) => void;
+	graphsVisibility?: boolean[];
 }
 
 FullView.defaultProps = {
@@ -150,6 +144,7 @@ FullView.defaultProps = {
 	onClickHandler: undefined,
 	yAxisUnit: undefined,
 	onDragSelect: undefined,
+	graphsVisibility: undefined,
 };
 
 export default FullView;
