@@ -22,7 +22,6 @@ import (
 	querytemplate "go.signoz.io/signoz/pkg/query-service/utils/queryTemplate"
 	"go.signoz.io/signoz/pkg/query-service/utils/times"
 	"go.signoz.io/signoz/pkg/query-service/utils/timestamp"
-	"go.signoz.io/signoz/pkg/query-service/utils/value"
 
 	logsv3 "go.signoz.io/signoz/pkg/query-service/app/logs/v3"
 	metricsv3 "go.signoz.io/signoz/pkg/query-service/app/metrics/v3"
@@ -327,7 +326,7 @@ func (r *ThresholdRule) SendAlerts(ctx context.Context, ts time.Time, resendDela
 }
 func (r *ThresholdRule) CheckCondition(v float64) bool {
 
-	if value.IsNaN(v) {
+	if math.IsNaN(v) {
 		zap.S().Debugf("msg:", "found NaN in rule condition", "\t rule name:", r.Name())
 		return false
 	}
@@ -355,21 +354,37 @@ func (r *ThresholdRule) CheckCondition(v float64) bool {
 func (r *ThresholdRule) prepareQueryRange(ts time.Time) *v3.QueryRangeParamsV3 {
 	// todo(amol): add 30 seconds to evalWindow for rate calc
 
+	// todo(srikanthccv): make this configurable
+	// 2 minutes is reasonable time to wait for data to be available
+	// 60 seconds (SDK) + 10 seconds (batch) + rest for n/w + serialization + write to disk etc..
+	start := ts.Add(-time.Duration(r.evalWindow)).UnixMilli() - 2*60*1000
+	end := ts.UnixMilli() - 2*60*1000
+
+	// round to minute otherwise we could potentially miss data
+	start = start - (start % (60 * 1000))
+	end = end - (end % (60 * 1000))
+
 	if r.ruleCondition.QueryType() == v3.QueryTypeClickHouseSQL {
 		return &v3.QueryRangeParamsV3{
-			Start:          ts.Add(-time.Duration(r.evalWindow)).UnixMilli(),
-			End:            ts.UnixMilli(),
-			Step:           30,
+			Start:          start,
+			End:            end,
+			Step:           60,
 			CompositeQuery: r.ruleCondition.CompositeQuery,
 			Variables:      make(map[string]interface{}, 0),
 		}
 	}
 
+	if r.ruleCondition.CompositeQuery != nil && r.ruleCondition.CompositeQuery.BuilderQueries != nil {
+		for _, q := range r.ruleCondition.CompositeQuery.BuilderQueries {
+			q.StepInterval = 60
+		}
+	}
+
 	// default mode
 	return &v3.QueryRangeParamsV3{
-		Start:          ts.Add(-time.Duration(r.evalWindow)).UnixMilli(),
-		End:            ts.UnixMilli(),
-		Step:           30,
+		Start:          start,
+		End:            end,
+		Step:           60,
 		CompositeQuery: r.ruleCondition.CompositeQuery,
 	}
 }
@@ -476,7 +491,7 @@ func (r *ThresholdRule) runChQuery(ctx context.Context, db clickhouse.Conn, quer
 			}
 		}
 
-		if value.IsNaN(sample.Point.V) {
+		if math.IsNaN(sample.Point.V) {
 			continue
 		}
 
@@ -521,7 +536,7 @@ func (r *ThresholdRule) runChQuery(ctx context.Context, db clickhouse.Conn, quer
 				// we skip the first record to support rate cases correctly
 				// improvement(amol): explore approaches to limit this only for
 				// rate uses cases
-				if exists, _ := skipFirstRecord[labelHash]; exists {
+				if exists := skipFirstRecord[labelHash]; exists {
 					resultMap[labelHash] = sample
 				} else {
 					// looks like the first record for this label combo, skip it
@@ -545,7 +560,9 @@ func (r *ThresholdRule) runChQuery(ctx context.Context, db clickhouse.Conn, quer
 			result = append(result, sample)
 		}
 	}
-	zap.S().Debugf("ruleid:", r.ID(), "\t result (found alerts):", len(result))
+	if len(result) != 0 {
+		zap.S().Infof("For rule %s, with ClickHouseQuery %s, found %d alerts", r.ID(), query, len(result))
+	}
 	return result, nil
 }
 

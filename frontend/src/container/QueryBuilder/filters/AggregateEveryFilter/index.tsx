@@ -1,61 +1,37 @@
-import { Input } from 'antd';
-import getStep from 'lib/getStep';
+import { InputNumber, InputNumberProps } from 'antd';
 import { useMemo } from 'react';
-import { useSelector } from 'react-redux';
-import { AppState } from 'store/reducers';
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource } from 'types/common/queryBuilder';
-import { GlobalReducer } from 'types/reducer/globalTime';
 
 import { selectStyle } from '../QueryBuilderSearch/config';
 
 function AggregateEveryFilter({
 	onChange,
 	query,
+	disabled,
 }: AggregateEveryFilterProps): JSX.Element {
-	const { maxTime, minTime } = useSelector<AppState, GlobalReducer>(
-		(state) => state.globalTime,
-	);
-
-	const stepInterval = useMemo(
-		() =>
-			getStep({
-				start: minTime,
-				end: maxTime,
-				inputFormat: 'ns',
-			}),
-		[maxTime, minTime],
-	);
-
-	const handleKeyDown = (event: {
-		keyCode: number;
-		which: number;
-		preventDefault: () => void;
-	}): void => {
-		const keyCode = event.keyCode || event.which;
-		const isBackspace = keyCode === 8;
-		const isNumeric =
-			(keyCode >= 48 && keyCode <= 57) || (keyCode >= 96 && keyCode <= 105);
-
-		if (!isNumeric && !isBackspace) {
-			event.preventDefault();
-		}
-	};
-
 	const isMetricsDataSource = useMemo(
 		() => query.dataSource === DataSource.METRICS,
 		[query.dataSource],
 	);
 
+	const onChangeHandler: InputNumberProps<number>['onChange'] = (event) => {
+		if (event && event >= 0) {
+			onChange(event);
+		}
+	};
+
+	const isDisabled =
+		(isMetricsDataSource && !query.aggregateAttribute.key) || disabled;
+
 	return (
-		<Input
-			type="text"
+		<InputNumber
 			placeholder="Enter in seconds"
-			disabled={isMetricsDataSource && !query.aggregateAttribute.key}
+			disabled={isDisabled}
 			style={selectStyle}
-			defaultValue={query.stepInterval ?? stepInterval}
-			onChange={(event): void => onChange(Number(event.target.value))}
-			onKeyDown={handleKeyDown}
+			value={query.stepInterval}
+			onChange={onChangeHandler}
+			min={0}
 		/>
 	);
 }
@@ -63,6 +39,7 @@ function AggregateEveryFilter({
 interface AggregateEveryFilterProps {
 	onChange: (values: number) => void;
 	query: IBuilderQuery;
+	disabled: boolean;
 }
 
 export default AggregateEveryFilter;
