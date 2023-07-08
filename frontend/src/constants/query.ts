@@ -14,4 +14,6 @@ export enum QueryParams {
 	resourceAttributes = 'resourceAttribute',
 	graphType = 'graphType',
 	widgetId = 'widgetId',
+	order = 'order',
+	q = 'q',
 }

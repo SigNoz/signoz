@@ -1,24 +1,44 @@
 import { Button, Dropdown, MenuProps, Modal } from 'antd';
+import { queryParamNamesMap } from 'constants/queryBuilderQueryNames';
+import ROUTES from 'constants/routes';
+import history from 'lib/history';
 import { useCallback, useMemo, useState } from 'react';
 import { Dashboard } from 'types/api/dashboard/getAll';
+import { Query } from 'types/api/queryBuilder/queryBuilderData';
 
 import { MENU_KEY, MENU_LABEL } from './config';
 import ExportPanelContainer from './ExportPanel';
 
-function ExportPanel({ isLoading, onExport }: ExportPanelProps): JSX.Element {
+function ExportPanel({
+	isLoading,
+	onExport,
+	query,
+}: ExportPanelProps): JSX.Element {
 	const [isExport, setIsExport] = useState<boolean>(false);
 
 	const onModalToggle = useCallback((value: boolean) => {
 		setIsExport(value);
 	}, []);
 
+	const onCreateAlertsHandler = useCallback(() => {
+		history.push(
+			`${ROUTES.ALERTS_NEW}?${
+				queryParamNamesMap.compositeQuery
+			}=${encodeURIComponent(JSON.stringify(query))}`,
+		);
+	}, [query]);
+
 	const onMenuClickHandler: MenuProps['onClick'] = useCallback(
 		(e: OnClickProps) => {
 			if (e.key === MENU_KEY.EXPORT) {
 				onModalToggle(true);
 			}
+
+			if (e.key === MENU_KEY.CREATE_ALERTS) {
+				onCreateAlertsHandler();
+			}
 		},
-		[onModalToggle],
+		[onModalToggle, onCreateAlertsHandler],
 	);
 
 	const menu: MenuProps = useMemo(
@@ -54,15 +74,15 @@ function ExportPanel({ isLoading, onExport }: ExportPanelProps): JSX.Element {
 				open={isExport}
 				centered
 			>
-				<ExportPanelContainer isLoading={isLoading} onExport={onExport} />
+				<ExportPanelContainer
+					query={query}
+					isLoading={isLoading}
+					onExport={onExport}
+				/>
 			</Modal>
 		</>
 	);
 }
-
-ExportPanel.defaultProps = {
-	isLoading: false,
-};
 
 interface OnClickProps {
 	key: string;
@@ -71,6 +91,9 @@ interface OnClickProps {
 export interface ExportPanelProps {
 	isLoading?: boolean;
 	onExport: (dashboard: Dashboard | null) => void;
+	query: Query | null;
 }
+
+ExportPanel.defaultProps = { isLoading: false };
 
 export default ExportPanel;

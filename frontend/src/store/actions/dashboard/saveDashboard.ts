@@ -1,7 +1,7 @@
 import { notification } from 'antd';
 import updateDashboardApi from 'api/dashboard/update';
 import { AxiosError } from 'axios';
-import { COMPOSITE_QUERY } from 'constants/queryBuilderQueryNames';
+import { queryParamNamesMap } from 'constants/queryBuilderQueryNames';
 import ROUTES from 'constants/routes';
 import { ITEMS } from 'container/NewDashboard/ComponentsSlider/menuItems';
 import { updateStepInterval } from 'hooks/queryBuilder/useStepInterval';
@@ -88,10 +88,14 @@ export const SaveDashboard = ({
 			};
 			const allLayout = getAllLayout();
 			const params = new URLSearchParams(window.location.search);
-			const compositeQuery = params.get(COMPOSITE_QUERY);
+			const compositeQuery = params.get(queryParamNamesMap.compositeQuery);
 			const { maxTime, minTime } = store.getState().globalTime;
 			const query = compositeQuery
-				? updateStepInterval(JSON.parse(compositeQuery), maxTime, minTime)
+				? updateStepInterval(
+						JSON.parse(decodeURIComponent(compositeQuery)),
+						maxTime,
+						minTime,
+				  )
 				: updateStepInterval(selectedWidget.query, maxTime, minTime);
 
 			const response = await updateDashboardApi({

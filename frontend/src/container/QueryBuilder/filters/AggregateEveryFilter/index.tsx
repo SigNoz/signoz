@@ -8,6 +8,7 @@ import { selectStyle } from '../QueryBuilderSearch/config';
 function AggregateEveryFilter({
 	onChange,
 	query,
+	disabled,
 }: AggregateEveryFilterProps): JSX.Element {
 	const isMetricsDataSource = useMemo(
 		() => query.dataSource === DataSource.METRICS,
@@ -20,7 +21,8 @@ function AggregateEveryFilter({
 		}
 	};
 
-	const isDisabled = isMetricsDataSource && !query.aggregateAttribute.key;
+	const isDisabled =
+		(isMetricsDataSource && !query.aggregateAttribute.key) || disabled;
 
 	return (
 		<InputNumber
@@ -37,6 +39,7 @@ function AggregateEveryFilter({
 interface AggregateEveryFilterProps {
 	onChange: (values: number) => void;
 	query: IBuilderQuery;
+	disabled: boolean;
 }
 
 export default AggregateEveryFilter;
