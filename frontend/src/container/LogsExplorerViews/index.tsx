@@ -21,8 +21,10 @@ import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useNotifications } from 'hooks/useNotifications';
 import useUrlQueryData from 'hooks/useUrlQueryData';
 import { getPaginationQueryData } from 'lib/newQueryBuilder/getPaginationQueryData';
-import { memo, useCallback, useEffect, useMemo, useState } from 'react';
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useSelector } from 'react-redux';
 import { generatePath, useHistory } from 'react-router-dom';
+import { AppState } from 'store/reducers';
 import { Dashboard } from 'types/api/dashboard/getAll';
 import { ILog } from 'types/api/logs/log';
 import {
@@ -31,6 +33,7 @@ import {
 	Query,
 } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource, StringOperators } from 'types/common/queryBuilder';
+import { GlobalReducer } from 'types/reducer/globalTime';
 
 import { ActionsWrapper, TabsStyled } from './LogsExplorerViews.styled';
 
@@ -42,6 +45,12 @@ function LogsExplorerViews(): JSX.Element {
 		queryParamNamesMap.pageSize,
 		DEFAULT_PER_PAGE_VALUE,
 	);
+
+	const { minTime } = useSelector<AppState, GlobalReducer>(
+		(state) => state.globalTime,
+	);
+
+	const currentMinTimeRef = useRef<number>(minTime);
 
 	// Context
 	const {
@@ -320,7 +329,10 @@ function LogsExplorerViews(): JSX.Element {
 	}, [data]);
 
 	useEffect(() => {
-		if (requestData?.id !== stagedQuery?.id || isFetching) {
+		if (
+			requestData?.id !== stagedQuery?.id ||
+			currentMinTimeRef.current !== minTime
+		) {
 			const newRequestData = getRequestData(stagedQuery, {
 				page: 1,
 				log: null,
@@ -329,8 +341,9 @@ function LogsExplorerViews(): JSX.Element {
 			setLogs([]);
 			setPage(1);
 			setRequestData(newRequestData);
+			currentMinTimeRef.current = minTime;
 		}
-	}, [stagedQuery, requestData, getRequestData, pageSize, isFetching]);
+	}, [stagedQuery, requestData, getRequestData, pageSize, minTime]);
 
 	const tabsItems: TabsProps['items'] = useMemo(
 		() => [
