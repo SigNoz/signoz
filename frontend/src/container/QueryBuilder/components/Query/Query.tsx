@@ -35,7 +35,7 @@ export const Query = memo(function Query({
 	isAvailableToDisable,
 	queryVariant,
 	query,
-	inactiveFilters,
+	filterConfigs,
 }: QueryProps): JSX.Element {
 	const { panelType } = useQueryBuilder();
 	const {
@@ -48,7 +48,7 @@ export const Query = memo(function Query({
 		handleChangeQueryData,
 		handleChangeOperator,
 		handleDeleteQuery,
-	} = useQueryOperations({ index, query, inactiveFilters });
+	} = useQueryOperations({ index, query, filterConfigs });
 
 	const handleChangeAggregateEvery = useCallback(
 		(value: IBuilderQuery['stepInterval']) => {
@@ -112,7 +112,7 @@ export const Query = memo(function Query({
 
 	const renderAggregateEveryFilter = useCallback(
 		(): JSX.Element | null =>
-			!inactiveFilters?.stepInterval ? (
+			!filterConfigs?.stepInterval?.isHidden ? (
 				<Row gutter={[11, 5]}>
 					<Col flex="5.93rem">
 						<FilterLabel label="Aggregate Every" />
@@ -120,12 +120,18 @@ export const Query = memo(function Query({
 					<Col flex="1 1 6rem">
 						<AggregateEveryFilter
 							query={query}
+							disabled={filterConfigs?.stepInterval?.isDisabled || false}
 							onChange={handleChangeAggregateEvery}
 						/>
 					</Col>
 				</Row>
 			) : null,
-		[inactiveFilters?.stepInterval, query, handleChangeAggregateEvery],
+		[
+			filterConfigs?.stepInterval?.isHidden,
+			filterConfigs?.stepInterval?.isDisabled,
+			query,
+			handleChangeAggregateEvery,
+		],
 	);
 
 	const renderAdditionalFilters = useCallback((): ReactNode => {
