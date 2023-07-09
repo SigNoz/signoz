@@ -17,7 +17,7 @@ function GraphManager({
 	data,
 	graphVisibilityHandler,
 	name,
-}: MetricGraphTableProps): JSX.Element {
+}: GraphManagerProps): JSX.Element {
 	const [graphVisibilityArray, setGraphVisibilityArray] = useState<boolean[]>(
 		Array(data.datasets.length).fill(true),
 	);
@@ -54,7 +54,9 @@ function GraphManager({
 		);
 
 	useEffect(() => {
-		graphVisibilityHandler([...graphVisibilityArray]);
+		if (graphVisibilityHandler) {
+			graphVisibilityHandler([...graphVisibilityArray]);
+		}
 	}, [graphVisibilityArray, graphVisibilityHandler]);
 
 	useEffect(() => {
@@ -119,7 +121,9 @@ function GraphManager({
 	): void => {
 		graphVisibilityArray[index] = e.target.checked;
 		setGraphVisibilityArray([...graphVisibilityArray]);
-		graphVisibilityHandler(graphVisibilityArray);
+		if (graphVisibilityHandler) {
+			graphVisibilityHandler(graphVisibilityArray);
+		}
 	};
 
 	const getCheckBox = (index: number): React.ReactElement => (
@@ -143,7 +147,9 @@ function GraphManager({
 		const newGraphVisibilityArray = Array(data.datasets.length).fill(false);
 		newGraphVisibilityArray[labelIndex] = true;
 		setGraphVisibilityArray([...newGraphVisibilityArray]);
-		graphVisibilityHandler(newGraphVisibilityArray);
+		if (graphVisibilityHandler) {
+			graphVisibilityHandler(newGraphVisibilityArray);
+		}
 	};
 
 	const getLabel = (label: string, labelIndex: number): React.ReactElement => {
@@ -251,7 +257,9 @@ function GraphManager({
 		notifications.success({
 			message: 'Saved successfully!',
 		});
-		graphVisibilityHandler(graphVisibilityArray);
+		if (graphVisibilityHandler) {
+			graphVisibilityHandler(graphVisibilityArray);
+		}
 	};
 
 	return (
@@ -288,11 +296,15 @@ interface DataSetProps {
 	pointRadius: number;
 }
 
-interface MetricGraphTableProps {
+interface GraphManagerProps {
 	data: ChartData;
-	graphVisibilityHandler: (graphVisibilityArray: boolean[]) => void;
+	graphVisibilityHandler?: (graphVisibilityArray: boolean[]) => void;
 	name: string;
 }
+
+GraphManager.defaultProps = {
+	graphVisibilityHandler: undefined,
+};
 
 export interface LegendEntryProps {
 	label: string;

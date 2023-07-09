@@ -135,7 +135,7 @@ interface FullViewProps {
 	name: string;
 	yAxisUnit?: string;
 	onDragSelect?: (start: number, end: number) => void;
-	graphVisibilityHandler: (graphsVisiblityArray: boolean[]) => void;
+	graphVisibilityHandler?: (graphsVisiblityArray: boolean[]) => void;
 	graphsVisibility?: boolean[];
 }
 
@@ -145,6 +145,7 @@ FullView.defaultProps = {
 	yAxisUnit: undefined,
 	onDragSelect: undefined,
 	graphsVisibility: undefined,
+	graphVisibilityHandler: undefined,
 };
 
 export default FullView;
