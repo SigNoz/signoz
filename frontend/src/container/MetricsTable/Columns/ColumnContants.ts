@@ -20,3 +20,5 @@ export enum ColumnWidth {
 }
 
 export const SORTING_ORDER = 'descend';
+
+export const SEARCH_PLACEHOLDER = 'Search by service';
