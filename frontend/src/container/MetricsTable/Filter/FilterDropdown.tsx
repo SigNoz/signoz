@@ -14,15 +14,17 @@ export const filterDropdown = ({
 		confirm();
 	};
 
+	const selectedKeysHandler = (e: React.ChangeEvent<HTMLInputElement>): void => {
+		setSelectedKeys(e.target.value ? [e.target.value] : []);
+	};
+
 	return (
 		<Card size="small">
 			<Space align="start" direction="vertical">
 				<Input
 					placeholder="Search by service"
 					value={selectedKeys[0]}
-					onChange={(e): void =>
-						setSelectedKeys(e.target.value ? [e.target.value] : [])
-					}
+					onChange={selectedKeysHandler}
 					allowClear
 					onPressEnter={(): void => handleSearch(confirm)}
 				/>
