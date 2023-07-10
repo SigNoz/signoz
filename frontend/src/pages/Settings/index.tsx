@@ -5,7 +5,6 @@ import GeneralSettings from 'container/GeneralSettings';
 import OrganizationSettings from 'container/OrganizationSettings';
 import useComponentPermission from 'hooks/useComponentPermission';
 import history from 'lib/history';
-import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
@@ -53,10 +52,9 @@ function SettingsPage(): JSX.Element {
 
 	return (
 		<RouteTab
-			{...{
-				routes: common,
-				activeKey: getActiveKey(pathName),
-			}}
+			routes={common}
+			activeKey={getActiveKey(pathName)}
+			history={history}
 		/>
 	);
 }

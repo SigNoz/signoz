@@ -5,7 +5,7 @@ import dayjs from 'dayjs';
 import dompurify from 'dompurify';
 // hooks
 import { useIsDarkMode } from 'hooks/useDarkMode';
-import React, { useCallback, useMemo } from 'react';
+import { useCallback, useMemo } from 'react';
 // interfaces
 import { ILog } from 'types/api/logs/log';
 
@@ -30,7 +30,10 @@ function RawLogView(props: RawLogViewProps): JSX.Element {
 	const isDarkMode = useIsDarkMode();
 
 	const text = useMemo(
-		() => `${dayjs(data.timestamp / 1e6).format()} | ${data.body}`,
+		() =>
+			typeof data.timestamp === 'string'
+				? `${dayjs(data.timestamp).format()} | ${data.body}`
+				: `${dayjs(data.timestamp / 1e6).format()} | ${data.body}`,
 		[data.timestamp, data.body],
 	);
 

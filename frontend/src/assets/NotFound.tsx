@@ -1,5 +1,3 @@
-import React from 'react';
-
 function NotFound(): JSX.Element {
 	return (
 		<svg

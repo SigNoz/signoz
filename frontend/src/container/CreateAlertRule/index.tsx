@@ -1,8 +1,11 @@
 import { Form, Row } from 'antd';
 import FormAlertRules from 'container/FormAlertRules';
-import React, { useState } from 'react';
+import { useGetCompositeQueryParam } from 'hooks/queryBuilder/useGetCompositeQueryParam';
+import { useEffect, useState } from 'react';
 import { AlertTypes } from 'types/api/alerts/alertTypes';
+import { AlertDef } from 'types/api/alerts/def';
 
+import { ALERT_TYPE_VS_SOURCE_MAPPING } from './config';
 import {
 	alertDefaults,
 	exceptionAlertDefaults,
@@ -12,11 +15,13 @@ import {
 import SelectAlertType from './SelectAlertType';
 
 function CreateRules(): JSX.Element {
-	const [initValues, setInitValues] = useState(alertDefaults);
-	const [step, setStep] = useState(0);
+	const [initValues, setInitValues] = useState<AlertDef | null>(null);
 	const [alertType, setAlertType] = useState<AlertTypes>(
 		AlertTypes.METRICS_BASED_ALERT,
 	);
+
+	const compositeQuery = useGetCompositeQueryParam();
+
 	const [formInstance] = Form.useForm();
 
 	const onSelectType = (typ: AlertTypes): void => {
@@ -34,16 +39,29 @@ function CreateRules(): JSX.Element {
 			default:
 				setInitValues(alertDefaults);
 		}
-		setStep(1);
 	};
 
-	if (step === 0) {
+	useEffect(() => {
+		if (!compositeQuery) {
+			return;
+		}
+		const dataSource = compositeQuery?.builder?.queryData[0]?.dataSource;
+
+		const alertType = ALERT_TYPE_VS_SOURCE_MAPPING[dataSource];
+
+		if (alertType) {
+			onSelectType(alertType);
+		}
+	}, [compositeQuery]);
+
+	if (!initValues) {
 		return (
 			<Row wrap={false}>
 				<SelectAlertType onSelect={onSelectType} />
 			</Row>
 		);
 	}
+
 	return (
 		<FormAlertRules
 			alertType={alertType}

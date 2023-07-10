@@ -96,6 +96,11 @@ func (lm *Manager) SetActive(l *model.License) {
 	lm.activeFeatures = l.FeatureSet
 	// set default features
 	setDefaultFeatures(lm)
+
+	err := lm.InitFeatures(lm.activeFeatures)
+	if err != nil {
+		zap.S().Panicf("Couldn't activate features: %v", err)
+	}
 	if !lm.validatorRunning {
 		// we want to make sure only one validator runs,
 		// we already have lock() so good to go
@@ -106,9 +111,7 @@ func (lm *Manager) SetActive(l *model.License) {
 }
 
 func setDefaultFeatures(lm *Manager) {
-	for k, v := range baseconstants.DEFAULT_FEATURE_SET {
-		lm.activeFeatures[k] = v
-	}
+	lm.activeFeatures = append(lm.activeFeatures, baseconstants.DEFAULT_FEATURE_SET...)
 }
 
 // LoadActiveLicense loads the most recent active license
@@ -123,8 +126,13 @@ func (lm *Manager) LoadActiveLicense() error {
 	} else {
 		zap.S().Info("No active license found, defaulting to basic plan")
 		// if no active license is found, we default to basic(free) plan with all default features
-		lm.activeFeatures = basemodel.BasicPlan
+		lm.activeFeatures = model.BasicPlan
 		setDefaultFeatures(lm)
+		err := lm.InitFeatures(lm.activeFeatures)
+		if err != nil {
+			zap.S().Error("Couldn't initialize features: ", err)
+			return err
+		}
 	}
 
 	return nil
@@ -291,18 +299,31 @@ func (lm *Manager) Activate(ctx context.Context, key string) (licenseResponse *m
 // CheckFeature will be internally used by backend routines
 // for feature gating
 func (lm *Manager) CheckFeature(featureKey string) error {
-	if value, ok := lm.activeFeatures[featureKey]; ok {
-		if value {
-			return nil
-		}
-		return basemodel.ErrFeatureUnavailable{Key: featureKey}
+	feature, err := lm.repo.GetFeature(featureKey)
+	if err != nil {
+		return err
+	}
+	if feature.Active {
+		return nil
 	}
 	return basemodel.ErrFeatureUnavailable{Key: featureKey}
 }
 
 // GetFeatureFlags returns current active features
-func (lm *Manager) GetFeatureFlags() basemodel.FeatureSet {
-	return lm.activeFeatures
+func (lm *Manager) GetFeatureFlags() (basemodel.FeatureSet, error) {
+	return lm.repo.GetAllFeatures()
+}
+
+func (lm *Manager) InitFeatures(features basemodel.FeatureSet) error {
+	return lm.repo.InitFeatures(features)
+}
+
+func (lm *Manager) UpdateFeatureFlag(feature basemodel.Feature) error {
+	return lm.repo.UpdateFeature(feature)
+}
+
+func (lm *Manager) GetFeatureFlag(key string) (basemodel.Feature, error) {
+	return lm.repo.GetFeature(key)
 }
 
 // GetRepo return the license repo

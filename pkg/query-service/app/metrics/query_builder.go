@@ -44,15 +44,8 @@ var AggregateOperatorToSQLFunc = map[model.AggregateOperator]string{
 	model.RATE_MIN: "min",
 }
 
-var (
-	// See https://github.com/SigNoz/signoz/issues/2151#issuecomment-1467249056
-	rateWithoutNegativeCumulative = `if (runningDifference(value) < 0 OR runningDifference(ts) < 0, nan, runningDifference(value)/runningDifference(ts))`
-	rateWithoutNegativeDelta      = `if (value < 0 OR runningDifference(ts) < 0, nan, value/runningDifference(ts))`
-	queryCumulative               = `SELECT %s ts, ` + rateWithoutNegativeCumulative + ` as value FROM(%s)`
-	queryDelta                    = `SELECT %s ts, ` + rateWithoutNegativeDelta + ` as value FROM(%s)`
-	opCumulative                  = `max(value)`
-	opDelta                       = `sum(value)`
-)
+// See https://github.com/SigNoz/signoz/issues/2151#issuecomment-1467249056
+var rateWithoutNegative = `if (runningDifference(value) < 0 OR runningDifference(ts) <= 0, nan, runningDifference(value)/runningDifference(ts))`
 
 var SupportedFunctions = []string{"exp", "log", "ln", "exp2", "log2", "exp10", "log10", "sqrt", "cbrt", "erf", "erfc", "lgamma", "tgamma", "sin", "cos", "tan", "asin", "acos", "atan", "degrees", "radians"}
 
@@ -218,6 +211,7 @@ func BuildMetricQuery(qp *model.QueryRangeParamsV2, mq *model.MetricQuery, table
 		subQuery := fmt.Sprintf(
 			queryTmpl, "any(labels) as labels, "+groupTags, qp.Step, rateOp, filterSubQuery, groupBy, groupTags,
 		) // labels will be same so any should be fine
+		query := `SELECT %s ts, ` + rateWithoutNegative + ` as value FROM(%s) WHERE isNaN(value) = 0`
 
 		query := fmt.Sprintf(rateQuery, "labels as fullLabels,", subQuery)
 		return query, nil
@@ -227,15 +221,15 @@ func BuildMetricQuery(qp *model.QueryRangeParamsV2, mq *model.MetricQuery, table
 		subQuery := fmt.Sprintf(
 			queryTmpl, rateGroupTags, qp.Step, rateOp, filterSubQuery, rateGroupBy, rateGroupTags,
 		) // labels will be same so any should be fine
-
-		query := fmt.Sprintf(rateQuery, groupTags, subQuery)
+		query := `SELECT %s ts, ` + rateWithoutNegative + `as value FROM(%s) WHERE isNaN(value) = 0`
+		query = fmt.Sprintf(query, groupTags, subQuery)
 		query = fmt.Sprintf(`SELECT %s ts, sum(value) as value FROM (%s) GROUP BY %s ORDER BY %s ts`, groupTags, query, groupBy, groupTags)
 		return query, nil
 	case model.RATE_SUM, model.RATE_MAX, model.RATE_AVG, model.RATE_MIN:
 		op := fmt.Sprintf("%s(value)", AggregateOperatorToSQLFunc[mq.AggregateOperator])
 		subQuery := fmt.Sprintf(queryTmpl, groupTags, qp.Step, op, filterSubQuery, groupBy, groupTags)
-
-		query := fmt.Sprintf(rateQuery, groupTags, subQuery)
+		query := `SELECT %s ts, ` + rateWithoutNegative + `as value FROM(%s) WHERE isNaN(value) = 0`
+		query = fmt.Sprintf(query, groupTags, subQuery)
 		return query, nil
 	case model.P05, model.P10, model.P20, model.P25, model.P50, model.P75, model.P90, model.P95, model.P99:
 		op := fmt.Sprintf("quantile(%v)(value)", AggregateOperatorToPercentile[mq.AggregateOperator])
@@ -247,8 +241,8 @@ func BuildMetricQuery(qp *model.QueryRangeParamsV2, mq *model.MetricQuery, table
 		subQuery := fmt.Sprintf(
 			queryTmpl, rateGroupTags, qp.Step, rateOp, filterSubQuery, rateGroupBy, rateGroupTags,
 		) // labels will be same so any should be fine
-
-		query := fmt.Sprintf(rateQuery, groupTags, subQuery)
+		query := `SELECT %s ts, ` + rateWithoutNegative + ` as value FROM(%s) WHERE isNaN(value) = 0`
+		query = fmt.Sprintf(query, groupTags, subQuery)
 		// filter out NaN values from the rate query as histogramQuantile doesn't support NaN values
 		query = fmt.Sprintf(`SELECT %s ts, sum(value) as value FROM (%s) GROUP BY %s HAVING isNaN(value) = 0 ORDER BY %s ts`, groupTags, query, groupBy, groupTags)
 		value := AggregateOperatorToPercentile[mq.AggregateOperator]

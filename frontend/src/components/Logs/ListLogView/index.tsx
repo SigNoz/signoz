@@ -2,20 +2,16 @@ import { blue, grey, orange } from '@ant-design/colors';
 import { CopyFilled, ExpandAltOutlined } from '@ant-design/icons';
 import Convert from 'ansi-to-html';
 import { Button, Divider, Row, Typography } from 'antd';
-import { map } from 'd3';
 import dayjs from 'dayjs';
 import dompurify from 'dompurify';
 import { useNotifications } from 'hooks/useNotifications';
 // utils
 import { FlatLogData } from 'lib/logs/flatLogData';
-import React, { useCallback, useMemo } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
+import { useCallback, useMemo } from 'react';
 import { useCopyToClipboard } from 'react-use';
 // interfaces
-import { AppState } from 'store/reducers';
-import { SET_DETAILED_LOG_DATA } from 'types/actions/logs';
+import { IField } from 'types/api/logs/fields';
 import { ILog } from 'types/api/logs/log';
-import { ILogsReducer } from 'types/reducer/logs';
 
 // components
 import AddToQueryHOC from '../AddToQueryHOC';
@@ -80,24 +76,22 @@ function LogSelectedField({
 
 interface ListLogViewProps {
 	logData: ILog;
+	onOpenDetailedView: (log: ILog) => void;
+	selectedFields: IField[];
 }
-function ListLogView({ logData }: ListLogViewProps): JSX.Element {
-	const {
-		fields: { selected },
-	} = useSelector<AppState, ILogsReducer>((state) => state.logs);
-
-	const dispatch = useDispatch();
+function ListLogView({
+	logData,
+	selectedFields,
+	onOpenDetailedView,
+}: ListLogViewProps): JSX.Element {
 	const flattenLogData = useMemo(() => FlatLogData(logData), [logData]);
 
 	const [, setCopy] = useCopyToClipboard();
 	const { notifications } = useNotifications();
 
 	const handleDetailedView = useCallback(() => {
-		dispatch({
-			type: SET_DETAILED_LOG_DATA,
-			payload: logData,
-		});
-	}, [dispatch, logData]);
+		onOpenDetailedView(logData);
+	}, [logData, onOpenDetailedView]);
 
 	const handleCopyJSON = (): void => {
 		setCopy(JSON.stringify(logData, null, 2));
@@ -107,8 +101,16 @@ function ListLogView({ logData }: ListLogViewProps): JSX.Element {
 	};
 
 	const updatedSelecedFields = useMemo(
-		() => selected.filter((e) => e.name !== 'id'),
-		[selected],
+		() => selectedFields.filter((e) => e.name !== 'id'),
+		[selectedFields],
+	);
+
+	const timestampValue = useMemo(
+		() =>
+			typeof flattenLogData.timestamp === 'string'
+				? dayjs(flattenLogData.timestamp).format()
+				: dayjs(flattenLogData.timestamp / 1e6).format(),
+		[flattenLogData.timestamp],
 	);
 
 	return (
@@ -120,14 +122,11 @@ function ListLogView({ logData }: ListLogViewProps): JSX.Element {
 						{flattenLogData.stream && (
 							<LogGeneralField fieldKey="stream" fieldValue={flattenLogData.stream} />
 						)}
-						<LogGeneralField
-							fieldKey="timestamp"
-							fieldValue={dayjs((flattenLogData.timestamp as never) / 1e6).format()}
-						/>
+						<LogGeneralField fieldKey="timestamp" fieldValue={timestampValue} />
 					</>
 				</LogContainer>
 				<div>
-					{map(updatedSelecedFields, (field) =>
+					{updatedSelecedFields.map((field) =>
 						isValidLogField(flattenLogData[field.name] as never) ? (
 							<LogSelectedField
 								key={field.name}

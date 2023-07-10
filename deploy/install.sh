@@ -125,7 +125,7 @@ check_ports_occupied() {
 
         echo "+++++++++++ ERROR ++++++++++++++++++++++"
         echo "SigNoz requires ports 3301 & 4317 to be open. Please shut down any other service(s) that may be running on these ports."
-        echo "You can run SigNoz on another port following this guide https://signoz.io/docs/deployment/docker#troubleshooting"
+        echo "You can run SigNoz on another port following this guide https://signoz.io/docs/install/troubleshooting/"
         echo "++++++++++++++++++++++++++++++++++++++++"
         echo ""
         exit 1
@@ -249,7 +249,7 @@ bye() {  # Prints a friendly good bye message and exits the script.
         echo ""
         echo -e "$sudo_cmd docker-compose -f ./docker/clickhouse-setup/docker-compose.yaml ps -a"
 
-        # echo "Please read our troubleshooting guide https://signoz.io/docs/deployment/docker#troubleshooting"
+        echo "Please read our troubleshooting guide https://signoz.io/docs/install/troubleshooting/"
         echo "or reach us for support in #help channel in our Slack Community https://signoz.io/slack"
         echo "++++++++++++++++++++++++++++++++++++++++"
 
@@ -277,7 +277,7 @@ request_sudo() {
         echo -e "\n\n🙇 We will need sudo access to complete the installation."
         if (( $EUID != 0 )); then
             sudo_cmd="sudo"
-            echo -e "Please enter your sudo password, if prompt."
+            echo -e "Please enter your sudo password, if prompted."
             # $sudo_cmd -l | grep -e "NOPASSWD: ALL" > /dev/null
             # if [[ $? -ne 0 ]] && ! $sudo_cmd -v; then
             #     echo "Need sudo privileges to proceed with the installation."
@@ -500,7 +500,7 @@ if [[ $status_code -ne 200 ]]; then
 
     echo -e "$sudo_cmd docker-compose -f ./docker/clickhouse-setup/docker-compose.yaml ps -a"
 
-    echo "Please read our troubleshooting guide https://signoz.io/docs/deployment/docker/#troubleshooting-of-common-issues"
+    echo "Please read our troubleshooting guide https://signoz.io/docs/install/troubleshooting/"
     echo "or reach us on SigNoz for support https://signoz.io/slack"
     echo "++++++++++++++++++++++++++++++++++++++++"
 

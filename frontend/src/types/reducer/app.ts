@@ -1,3 +1,4 @@
+import { QueryObserverBaseResult } from 'react-query';
 import { PayloadProps as ConfigPayload } from 'types/api/dynamicConfigs/getDynamicConfigs';
 import { PayloadProps as FeatureFlagPayload } from 'types/api/features/getFeaturesFlags';
 import { PayloadProps as OrgPayload } from 'types/api/user/getOrganization';
@@ -26,9 +27,12 @@ export default interface AppReducer {
 	isUserFetchingError: boolean;
 	role: ROLES | null;
 	org: OrgPayload | null;
-	featureFlags: null | FeatureFlagPayload;
 	configs: ConfigPayload;
 	userFlags: null | UserFlags;
 	ee: 'Y' | 'N';
 	setupCompleted: boolean;
+	featureResponse: {
+		data: FeatureFlagPayload | null;
+		refetch: QueryObserverBaseResult['refetch'];
+	};
 }

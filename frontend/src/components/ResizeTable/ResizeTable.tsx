@@ -1,18 +1,24 @@
 import { Table } from 'antd';
 import type { TableProps } from 'antd/es/table';
 import { ColumnsType } from 'antd/lib/table';
-import React, { useCallback, useMemo, useState } from 'react';
+import {
+	SyntheticEvent,
+	useCallback,
+	useEffect,
+	useMemo,
+	useState,
+} from 'react';
 import { ResizeCallbackData } from 'react-resizable';
 
 import ResizableHeader from './ResizableHeader';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function ResizeTable({ columns, ...restprops }: TableProps<any>): JSX.Element {
-	const [columnsData, setColumns] = useState<ColumnsType>(columns || []);
+	const [columnsData, setColumns] = useState<ColumnsType>([]);
 
 	const handleResize = useCallback(
 		(index: number) => (
-			_e: React.SyntheticEvent<Element>,
+			_e: SyntheticEvent<Element>,
 			{ size }: ResizeCallbackData,
 		): void => {
 			const newColumns = [...columnsData];
@@ -36,6 +42,12 @@ function ResizeTable({ columns, ...restprops }: TableProps<any>): JSX.Element {
 			})),
 		[columnsData, handleResize],
 	);
+
+	useEffect(() => {
+		if (columns) {
+			setColumns(columns);
+		}
+	}, [columns]);
 
 	return (
 		<Table

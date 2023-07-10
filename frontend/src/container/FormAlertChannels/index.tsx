@@ -11,7 +11,7 @@ import {
 	WebhookType,
 } from 'container/CreateAlertChannels/config';
 import history from 'lib/history';
-import React from 'react';
+import { Dispatch, ReactElement, SetStateAction } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import PagerSettings from './Settings/Pager';
@@ -37,7 +37,7 @@ function FormAlertChannels({
 }: FormAlertChannelsProps): JSX.Element {
 	const { t } = useTranslation('channels');
 
-	const renderSettings = (): React.ReactElement | null => {
+	const renderSettings = (): ReactElement | null => {
 		switch (type) {
 			case SlackType:
 				return <SlackSettings setSelectedConfig={setSelectedConfig} />;
@@ -115,8 +115,8 @@ function FormAlertChannels({
 interface FormAlertChannelsProps {
 	formInstance: FormInstance;
 	type: ChannelType;
-	setSelectedConfig: React.Dispatch<
-		React.SetStateAction<Partial<SlackChannel & WebhookChannel & PagerChannel>>
+	setSelectedConfig: Dispatch<
+		SetStateAction<Partial<SlackChannel & WebhookChannel & PagerChannel>>
 	>;
 	onTypeChangeHandler: (value: ChannelType) => void;
 	onSaveHandler: (props: ChannelType) => void;

@@ -14,7 +14,6 @@ const signup = async (
 		const response = await axios.post(`/register`, {
 			...props,
 		});
-		console.log(' response.data.data', response.data.data);
 		return {
 			statusCode: 200,
 			error: null,
