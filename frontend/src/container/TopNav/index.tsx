@@ -1,4 +1,4 @@
-import { Col } from 'antd';
+import { Col, Row, Space } from 'antd';
 import ROUTES from 'constants/routes';
 import { useMemo } from 'react';
 import { matchPath, useHistory } from 'react-router-dom';
@@ -6,6 +6,7 @@ import { matchPath, useHistory } from 'react-router-dom';
 import ShowBreadcrumbs from './Breadcrumbs';
 import DateTimeSelector from './DateTimeSelection';
 import { routesToSkip } from './DateTimeSelection/config';
+import NewExplorerCTA from './NewExplorerCTA';
 import { Container } from './styles';
 
 function TopNav(): JSX.Element | null {
@@ -36,7 +37,15 @@ function TopNav(): JSX.Element | null {
 
 			{!isRouteToSkip && (
 				<Col span={8}>
-					<DateTimeSelector />
+					<Row justify="end">
+						<Space align="start" size={60} direction="horizontal">
+							<NewExplorerCTA />
+
+							<div>
+								<DateTimeSelector />
+							</div>
+						</Space>
+					</Row>
 				</Col>
 			)}
 		</Container>
