@@ -21,7 +21,7 @@ import { colors } from 'lib/getRandomColor';
 import getStep from 'lib/getStep';
 import history from 'lib/history';
 import { useCallback, useMemo, useState } from 'react';
-import { useQueries, UseQueryResult } from 'react-query';
+import { useQueries } from 'react-query';
 import { useDispatch, useSelector } from 'react-redux';
 import { useLocation, useParams } from 'react-router-dom';
 import { UpdateTimeInterval } from 'store/actions';
@@ -116,7 +116,7 @@ function Application(): JSX.Element {
 		queryFn: (): Promise<ServiceDataProps> => getTopLevelOperations(),
 	};
 
-	const queryResult: UseQueryResult[] = useQueries([
+	const queryResult = useQueries([
 		serviceOverviewQuery,
 		topOperationsQuery,
 		topLevelOperationsQuery,
