@@ -6,11 +6,11 @@ import { useState } from 'react';
 import { useLocation } from 'react-router-dom';
 
 import { columns } from './Columns/MetricsColumn';
-import MatricsTableProp from './MetricsTable';
+import MetricsTableProp from './MetricsTable';
 import SkipBoardModal from './SkipOnBoardModal';
 import { Container } from './styles';
 
-function Metrics({ services, loading, error }: MatricsTableProp): JSX.Element {
+function Metrics({ services, loading, error }: MetricsTableProp): JSX.Element {
 	const { search } = useLocation();
 	const [skipOnboarding, setSkipOnboarding] = useState(
 		localStorageGet(SKIP_ONBOARDING) === 'true',
