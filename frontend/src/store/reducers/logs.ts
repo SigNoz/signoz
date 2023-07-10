@@ -1,4 +1,5 @@
 import { parseQuery } from 'lib/logql';
+import { OrderPreferenceItems } from 'pages/Logs/config';
 import {
 	ADD_SEARCH_FIELD_QUERY_STRING,
 	FLUSH_LOGS,
@@ -17,6 +18,7 @@ import {
 	SET_LOG_LINES_PER_PAGE,
 	SET_LOGS,
 	SET_LOGS_AGGREGATE_SERIES,
+	SET_LOGS_ORDER,
 	SET_SEARCH_QUERY_PARSED_PAYLOAD,
 	SET_SEARCH_QUERY_STRING,
 	SET_VIEW_MODE,
@@ -37,7 +39,7 @@ const initialState: ILogsReducer = {
 		parsedQuery: [],
 	},
 	logs: [],
-	logLinesPerPage: 25,
+	logLinesPerPage: 200,
 	linesPerRow: 2,
 	viewMode: 'raw',
 	idEnd: '',
@@ -49,6 +51,10 @@ const initialState: ILogsReducer = {
 	liveTailStartRange: 15,
 	selectedLogId: null,
 	detailedLog: null,
+	order:
+		(new URLSearchParams(window.location.search).get(
+			'order',
+		) as ILogsReducer['order']) ?? OrderPreferenceItems.DESC,
 };
 
 export const LogsReducer = (
@@ -129,6 +135,17 @@ export const LogsReducer = (
 				logs: logsData,
 			};
 		}
+
+		case SET_LOGS_ORDER: {
+			const order = action.payload;
+			return {
+				...state,
+				order,
+				idStart: '',
+				idEnd: '',
+			};
+		}
+
 		case SET_LOG_LINES_PER_PAGE: {
 			return {
 				...state,

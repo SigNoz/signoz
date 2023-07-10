@@ -35,18 +35,20 @@ export const Query = memo(function Query({
 	isAvailableToDisable,
 	queryVariant,
 	query,
+	filterConfigs,
 }: QueryProps): JSX.Element {
 	const { panelType } = useQueryBuilder();
 	const {
 		operators,
 		isMetricsDataSource,
+		isTracePanelType,
 		listOfAdditionalFilters,
 		handleChangeAggregatorAttribute,
 		handleChangeDataSource,
 		handleChangeQueryData,
 		handleChangeOperator,
 		handleDeleteQuery,
-	} = useQueryOperations({ index, query });
+	} = useQueryOperations({ index, query, filterConfigs });
 
 	const handleChangeAggregateEvery = useCallback(
 		(value: IBuilderQuery['stepInterval']) => {
@@ -108,6 +110,30 @@ export const Query = memo(function Query({
 		[handleChangeQueryData],
 	);
 
+	const renderAggregateEveryFilter = useCallback(
+		(): JSX.Element | null =>
+			!filterConfigs?.stepInterval?.isHidden ? (
+				<Row gutter={[11, 5]}>
+					<Col flex="5.93rem">
+						<FilterLabel label="Aggregate Every" />
+					</Col>
+					<Col flex="1 1 6rem">
+						<AggregateEveryFilter
+							query={query}
+							disabled={filterConfigs?.stepInterval?.isDisabled || false}
+							onChange={handleChangeAggregateEvery}
+						/>
+					</Col>
+				</Row>
+			) : null,
+		[
+			filterConfigs?.stepInterval?.isHidden,
+			filterConfigs?.stepInterval?.isDisabled,
+			query,
+			handleChangeAggregateEvery,
+		],
+	);
+
 	const renderAdditionalFilters = useCallback((): ReactNode => {
 		switch (panelType) {
 			case PANEL_TYPES.TIME_SERIES: {
@@ -148,19 +174,7 @@ export const Query = memo(function Query({
 							</Col>
 						)}
 
-						<Col span={11}>
-							<Row gutter={[11, 5]}>
-								<Col flex="5.93rem">
-									<FilterLabel label="Aggregate Every" />
-								</Col>
-								<Col flex="1 1 6rem">
-									<AggregateEveryFilter
-										query={query}
-										onChange={handleChangeAggregateEvery}
-									/>
-								</Col>
-							</Row>
-						</Col>
+						<Col span={11}>{renderAggregateEveryFilter()}</Col>
 					</>
 				);
 			}
@@ -178,19 +192,7 @@ export const Query = memo(function Query({
 								</Col>
 							</Row>
 						</Col>
-						<Col span={11}>
-							<Row gutter={[11, 5]}>
-								<Col flex="5.93rem">
-									<FilterLabel label="Aggregate Every" />
-								</Col>
-								<Col flex="1 1 6rem">
-									<AggregateEveryFilter
-										query={query}
-										onChange={handleChangeAggregateEvery}
-									/>
-								</Col>
-							</Row>
-						</Col>
+						<Col span={11}>{renderAggregateEveryFilter()}</Col>
 					</>
 				);
 			}
@@ -229,19 +231,7 @@ export const Query = memo(function Query({
 							</Row>
 						</Col>
 
-						<Col span={11}>
-							<Row gutter={[11, 5]}>
-								<Col flex="5.93rem">
-									<FilterLabel label="Aggregate Every" />
-								</Col>
-								<Col flex="1 1 6rem">
-									<AggregateEveryFilter
-										query={query}
-										onChange={handleChangeAggregateEvery}
-									/>
-								</Col>
-							</Row>
-						</Col>
+						<Col span={11}>{renderAggregateEveryFilter()}</Col>
 					</>
 				);
 			}
@@ -250,10 +240,10 @@ export const Query = memo(function Query({
 		panelType,
 		query,
 		isMetricsDataSource,
-		handleChangeAggregateEvery,
 		handleChangeHavingFilter,
 		handleChangeLimit,
 		handleChangeOrderByKeys,
+		renderAggregateEveryFilter,
 	]);
 
 	return (
@@ -325,8 +315,11 @@ export const Query = memo(function Query({
 						</Col>
 						<Col flex="1 1 12.5rem">
 							<AggregatorFilter
-								onChange={handleChangeAggregatorAttribute}
 								query={query}
+								onChange={handleChangeAggregatorAttribute}
+								disabled={
+									panelType === PANEL_TYPES.LIST || panelType === PANEL_TYPES.TRACE
+								}
 							/>
 						</Col>
 					</Row>
@@ -352,21 +345,25 @@ export const Query = memo(function Query({
 					</Col>
 				</Row>
 			</Col>
-			<Col span={24}>
-				<AdditionalFiltersToggler listOfAdditionalFilter={listOfAdditionalFilters}>
-					<Row gutter={[0, 11]} justify="space-between">
-						{renderAdditionalFilters()}
-					</Row>
-				</AdditionalFiltersToggler>
-			</Col>
-			<Row style={{ width: '100%' }}>
-				<Input
-					onChange={handleChangeQueryLegend}
-					size="middle"
-					value={query.legend}
-					addonBefore="Legend Format"
-				/>
-			</Row>
+			{!isTracePanelType && (
+				<Col span={24}>
+					<AdditionalFiltersToggler listOfAdditionalFilter={listOfAdditionalFilters}>
+						<Row gutter={[0, 11]} justify="space-between">
+							{renderAdditionalFilters()}
+						</Row>
+					</AdditionalFiltersToggler>
+				</Col>
+			)}
+			{panelType !== PANEL_TYPES.LIST && panelType !== PANEL_TYPES.TRACE && (
+				<Row style={{ width: '100%' }}>
+					<Input
+						onChange={handleChangeQueryLegend}
+						size="middle"
+						value={query.legend}
+						addonBefore="Legend Format"
+					/>
+				</Row>
+			)}
 		</ListItemWrapper>
 	);
 });
