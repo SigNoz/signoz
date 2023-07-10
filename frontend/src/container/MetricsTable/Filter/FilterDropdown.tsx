@@ -1,16 +1,13 @@
 import { SearchOutlined } from '@ant-design/icons';
 import { Button, Card, Input, Space } from 'antd';
-import type {
-	FilterConfirmProps,
-	FilterDropdownProps,
-} from 'antd/es/table/interface';
+import type { FilterDropdownProps } from 'antd/es/table/interface';
 
 export const filterDropdown = ({
 	setSelectedKeys,
 	selectedKeys,
 	confirm,
 }: FilterDropdownProps): JSX.Element => {
-	const handleSearch = (confirm: (param?: FilterConfirmProps) => void): void => {
+	const handleSearch = (): void => {
 		confirm();
 	};
 
@@ -26,11 +23,11 @@ export const filterDropdown = ({
 					value={selectedKeys[0]}
 					onChange={selectedKeysHandler}
 					allowClear
-					onPressEnter={(): void => handleSearch(confirm)}
+					onPressEnter={handleSearch}
 				/>
 				<Button
 					type="primary"
-					onClick={(): void => handleSearch(confirm)}
+					onClick={handleSearch}
 					icon={<SearchOutlined />}
 					size="small"
 				>
