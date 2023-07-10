@@ -30,10 +30,12 @@ function Metrics({ services, loading, error }: MetricsTableProp): JSX.Element {
 		return <SkipBoardModal onContinueClick={onContinueClick} />;
 	}
 
+	const tableColumns = columns(search);
+
 	return (
 		<Container>
 			<ResizeTable
-				columns={columns(search)}
+				columns={tableColumns}
 				loading={loading}
 				dataSource={services}
 				rowKey="serviceName"
