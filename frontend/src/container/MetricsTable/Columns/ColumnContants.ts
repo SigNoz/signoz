@@ -5,13 +5,6 @@ export enum ColumnTitle {
 	Operations = 'Operations Per Second',
 }
 
-export enum ColumnDataIndex {
-	Application = 'serviceName',
-	P99 = 'p99',
-	ErrorRate = 'errorRate',
-	Operations = 'callRate',
-}
-
 export enum ColumnKey {
 	Application = 'serviceName',
 	P99 = 'p99',
