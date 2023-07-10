@@ -38,16 +38,16 @@ export const GetService = (
 			selectedTags: props.selectedTags,
 		});
 
-		if (response.statusCode === 200) {
+		if (response.length > 0) {
 			dispatch({
 				type: 'GET_SERVICE_LIST_SUCCESS',
-				payload: response.payload,
+				payload: response,
 			});
 		} else {
 			dispatch({
 				type: 'GET_SERVICE_LIST_ERROR',
 				payload: {
-					errorMessage: response.error || 'Something went wrong',
+					errorMessage: 'Something went wrong',
 				},
 			});
 		}
