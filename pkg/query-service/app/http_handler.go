@@ -70,6 +70,7 @@ type APIHandler struct {
 	featureFlags interfaces.FeatureLookup
 	ready        func(http.HandlerFunc) http.HandlerFunc
 	queryBuilder *queryBuilder.QueryBuilder
+	preferDelta  bool
 
 	// SetupCompleted indicates if SigNoz is ready for general use.
 	// at the moment, we mark the app ready when the first user
@@ -83,6 +84,8 @@ type APIHandlerOpts struct {
 	Reader interfaces.Reader
 
 	SkipConfig *model.SkipConfig
+
+	PerferDelta bool
 	// dao layer to perform crud on app objects like dashboard, alerts etc
 	AppDao dao.ModelDao
 
@@ -105,6 +108,7 @@ func NewAPIHandler(opts APIHandlerOpts) (*APIHandler, error) {
 		reader:       opts.Reader,
 		appDao:       opts.AppDao,
 		skipConfig:   opts.SkipConfig,
+		preferDelta:  opts.PerferDelta,
 		alertManager: alertManager,
 		ruleManager:  opts.RuleManager,
 		featureFlags: opts.FeatureFlags,
@@ -451,12 +455,14 @@ func (aH *APIHandler) metricAutocompleteTagValue(w http.ResponseWriter, r *http.
 	aH.Respond(w, tagValueList)
 }
 
-func (aH *APIHandler) addTemporality(ctx context.Context, qp *model.QueryRangeParamsV2) error {
+func (aH *APIHandler) addTemporality(ctx context.Context, qp *v3.QueryRangeParamsV3) error {
 
 	metricNames := make([]string, 0)
-	if qp.CompositeMetricQuery != nil && len(qp.CompositeMetricQuery.BuilderQueries) > 0 {
-		for name := range qp.CompositeMetricQuery.BuilderQueries {
-			metricNames = append(metricNames, qp.CompositeMetricQuery.BuilderQueries[name].MetricName)
+	if qp.CompositeQuery != nil && len(qp.CompositeQuery.BuilderQueries) > 0 {
+		for _, query := range qp.CompositeQuery.BuilderQueries {
+			if query.DataSource == v3.DataSourceMetrics {
+				metricNames = append(metricNames, query.AggregateAttribute.Key)
+			}
 		}
 	}
 	metricNameToTemporality, err := aH.reader.FetchTemporality(ctx, metricNames)
@@ -464,10 +470,18 @@ func (aH *APIHandler) addTemporality(ctx context.Context, qp *model.QueryRangePa
 		return err
 	}
 
-	if qp.CompositeMetricQuery != nil && len(qp.CompositeMetricQuery.BuilderQueries) > 0 {
-		for name := range qp.CompositeMetricQuery.BuilderQueries {
-			mq := qp.CompositeMetricQuery.BuilderQueries[name]
-			mq.Temporaltiy = metricNameToTemporality[mq.MetricName]
+	if qp.CompositeQuery != nil && len(qp.CompositeQuery.BuilderQueries) > 0 {
+		for name := range qp.CompositeQuery.BuilderQueries {
+			query := qp.CompositeQuery.BuilderQueries[name]
+			if query.DataSource == v3.DataSourceMetrics {
+				if aH.preferDelta && metricNameToTemporality[query.AggregateAttribute.Key][v3.Delta] {
+					query.Temporality = v3.Delta
+				} else if metricNameToTemporality[query.AggregateAttribute.Key][v3.Cumulative] {
+					query.Temporality = v3.Cumulative
+				} else {
+					query.Temporality = v3.Unspecified
+				}
+			}
 		}
 	}
 	return nil
@@ -493,15 +507,6 @@ func (aH *APIHandler) QueryRangeMetricsV2(w http.ResponseWriter, r *http.Request
 		end := (metricsQueryRangeParams.End) / 1000
 		step := metricsQueryRangeParams.Step
 		metricsQueryRangeParams.End = (end / step * step) * 1000
-	}
-
-	// add temporality for each metric
-
-	temporalityErr := aH.addTemporality(r.Context(), metricsQueryRangeParams)
-	if temporalityErr != nil {
-		zap.S().Errorf("Error while adding temporality for metrics: %v", temporalityErr)
-		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: temporalityErr}, nil)
-		return
 	}
 
 	type channelResult struct {
@@ -2801,6 +2806,15 @@ func (aH *APIHandler) QueryRangeV3(w http.ResponseWriter, r *http.Request) {
 	if apiErrorObj != nil {
 		zap.S().Errorf(apiErrorObj.Err.Error())
 		RespondError(w, apiErrorObj, nil)
+		return
+	}
+
+	// add temporality for each metric
+
+	temporalityErr := aH.addTemporality(r.Context(), queryRangeParams)
+	if temporalityErr != nil {
+		zap.S().Errorf("Error while adding temporality for metrics: %v", temporalityErr)
+		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: temporalityErr}, nil)
 		return
 	}
 

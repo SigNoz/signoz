@@ -3249,23 +3249,28 @@ func (r *ClickHouseReader) GetSpansInLastHeartBeatInterval(ctx context.Context) 
 	return spansInLastHeartBeatInterval, nil
 }
 
-func (r *ClickHouseReader) FetchTemporality(ctx context.Context, metricNames []string) (map[string]model.Temporality, error) {
+func (r *ClickHouseReader) FetchTemporality(ctx context.Context, metricNames []string) (map[string]map[v3.Temporality]bool, error) {
 
-	metricNameToTemporality := make(map[string]model.Temporality)
+	metricNameToTemporality := make(map[string]map[v3.Temporality]bool)
 
-	query := fmt.Sprintf(`SELECT CAST(temporality, 'Int8') FROM %s.%s WHERE metric_name = $1 LIMIT 1`, signozMetricDBName, signozTSTableName)
-	for _, name := range metricNames {
-		var temporality int8
-		err := r.db.QueryRow(ctx, query, name).Scan(&temporality)
+	query := fmt.Sprintf(`SELECT DISTINCT metric_name, temporality FROM %s.%s WHERE metric_name IN [$1]`, signozMetricDBName, signozTSTableName)
+
+	rows, err := r.db.Query(ctx, query, metricNames)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var metricName, temporality string
+		err := rows.Scan(&metricName, &temporality)
 		if err != nil {
-			if err == sql.ErrNoRows {
-				metricNameToTemporality[name] = model.Unspecified
-				continue
-			}
-			zap.S().Error("unexpected error", zap.Error(err))
 			return nil, err
 		}
-		metricNameToTemporality[name] = model.Temporality(temporality)
+		if _, ok := metricNameToTemporality[metricName]; !ok {
+			metricNameToTemporality[metricName] = make(map[v3.Temporality]bool)
+		}
+		metricNameToTemporality[metricName][v3.Temporality(temporality)] = true
 	}
 	return metricNameToTemporality, nil
 }

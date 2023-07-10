@@ -194,32 +194,25 @@ func BuildMetricQuery(qp *model.QueryRangeParamsV2, mq *model.MetricQuery, table
 	groupBy := groupBy(mq.GroupingTags...)
 	groupTags := groupSelect(mq.GroupingTags...)
 
-	var rateQuery, rateOp string
-	if mq.Temporaltiy == model.Delta {
-		rateQuery = queryDelta
-		rateOp = opDelta
-	} else {
-		rateQuery = queryCumulative
-		rateOp = opCumulative
-	}
-
 	switch mq.AggregateOperator {
 	case model.RATE:
 		// Calculate rate of change of metric for each unique time series
 		groupBy = "fingerprint, ts"
 		groupTags = "fingerprint,"
+		op := "max(value)" // max value should be the closest value for point in time
 		subQuery := fmt.Sprintf(
-			queryTmpl, "any(labels) as labels, "+groupTags, qp.Step, rateOp, filterSubQuery, groupBy, groupTags,
+			queryTmpl, "any(labels) as labels, "+groupTags, qp.Step, op, filterSubQuery, groupBy, groupTags,
 		) // labels will be same so any should be fine
 		query := `SELECT %s ts, ` + rateWithoutNegative + ` as value FROM(%s) WHERE isNaN(value) = 0`
 
-		query := fmt.Sprintf(rateQuery, "labels as fullLabels,", subQuery)
+		query = fmt.Sprintf(query, "labels as fullLabels,", subQuery)
 		return query, nil
 	case model.SUM_RATE:
 		rateGroupBy := "fingerprint, " + groupBy
 		rateGroupTags := "fingerprint, " + groupTags
+		op := "max(value)"
 		subQuery := fmt.Sprintf(
-			queryTmpl, rateGroupTags, qp.Step, rateOp, filterSubQuery, rateGroupBy, rateGroupTags,
+			queryTmpl, rateGroupTags, qp.Step, op, filterSubQuery, rateGroupBy, rateGroupTags,
 		) // labels will be same so any should be fine
 		query := `SELECT %s ts, ` + rateWithoutNegative + `as value FROM(%s) WHERE isNaN(value) = 0`
 		query = fmt.Sprintf(query, groupTags, subQuery)
@@ -238,8 +231,9 @@ func BuildMetricQuery(qp *model.QueryRangeParamsV2, mq *model.MetricQuery, table
 	case model.HIST_QUANTILE_50, model.HIST_QUANTILE_75, model.HIST_QUANTILE_90, model.HIST_QUANTILE_95, model.HIST_QUANTILE_99:
 		rateGroupBy := "fingerprint, " + groupBy
 		rateGroupTags := "fingerprint, " + groupTags
+		op := "max(value)"
 		subQuery := fmt.Sprintf(
-			queryTmpl, rateGroupTags, qp.Step, rateOp, filterSubQuery, rateGroupBy, rateGroupTags,
+			queryTmpl, rateGroupTags, qp.Step, op, filterSubQuery, rateGroupBy, rateGroupTags,
 		) // labels will be same so any should be fine
 		query := `SELECT %s ts, ` + rateWithoutNegative + ` as value FROM(%s) WHERE isNaN(value) = 0`
 		query = fmt.Sprintf(query, groupTags, subQuery)

@@ -228,7 +228,12 @@ func TestBuildQueryOperators(t *testing.T) {
 
 	for i, tc := range testCases {
 		t.Run(fmt.Sprintf("case %d", i), func(t *testing.T) {
-			whereClause, err := buildMetricsTimeSeriesFilterQuery(&tc.filterSet, []v3.AttributeKey{}, "signoz_calls_total", "sum")
+			mq := v3.BuilderQuery{
+				QueryName:          "A",
+				AggregateAttribute: v3.AttributeKey{Key: "signoz_calls_total"},
+				AggregateOperator:  v3.AggregateOperatorSum,
+			}
+			whereClause, err := buildMetricsTimeSeriesFilterQuery(&tc.filterSet, []v3.AttributeKey{}, &mq)
 			require.NoError(t, err)
 			require.Contains(t, whereClause, tc.expectedWhereClause)
 		})
