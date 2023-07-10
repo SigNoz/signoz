@@ -2,7 +2,7 @@ import { Typography } from 'antd';
 import getServiceOverview from 'api/metrics/getServiceOverview';
 import getTopLevelOperations from 'api/metrics/getTopLevelOperations';
 import getTopOperations from 'api/metrics/getTopOperations';
-import { AxiosError } from 'axios';
+import axios, { AxiosError } from 'axios';
 import { ActiveElement, Chart, ChartData, ChartEvent } from 'chart.js';
 import Graph from 'components/Graph';
 import Spinner from 'components/Spinner';
@@ -27,7 +27,6 @@ import { useLocation, useParams } from 'react-router-dom';
 import { UpdateTimeInterval } from 'store/actions';
 import { AppState } from 'store/reducers';
 import { PayloadProps } from 'types/api/metrics/getServiceOverview';
-import { ServiceDataProps } from 'types/api/metrics/getTopLevelOperations';
 import { PayloadProps as PayloadPropsTopOpertions } from 'types/api/metrics/getTopOperations';
 import { EQueryType } from 'types/common/dashboard';
 import { GlobalReducer } from 'types/reducer/globalTime';
@@ -289,7 +288,7 @@ function Application(): JSX.Element {
 						View Traces
 					</Button>
 					<Card>
-						{serviceOverviewIsError && (
+						{axios.isAxiosError(serviceOverviewError) && (
 							<Typography>
 								{(serviceOverviewError as AxiosError)?.response?.data}
 							</Typography>
@@ -416,5 +415,9 @@ type ClickHandlerType = (
 	data: ChartData,
 	type?: string,
 ) => void;
+
+export type ServiceDataProps = {
+	[serviceName: string]: string[];
+};
 
 export default Application;

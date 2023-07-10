@@ -1,5 +1,5 @@
 import axios from 'api';
-import { ServiceDataProps } from 'types/api/metrics/getTopLevelOperations';
+import { ServiceDataProps } from 'container/MetricsApplication/Tabs/Overview';
 
 const getTopLevelOperations = async (): Promise<ServiceDataProps> => {
 	const response = await axios.post(`/service/top_level_operations`);
