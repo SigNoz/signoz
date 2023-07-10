@@ -1,17 +1,18 @@
 import { Space } from 'antd';
-import getService from 'api/metrics/getService';
+import { AxiosError } from 'axios';
 import ReleaseNote from 'components/ReleaseNote';
 import Spinner from 'components/Spinner';
 import MetricTable from 'container/MetricsTable';
 import ResourceAttributesFilter from 'container/ResourceAttributesFilter';
 import { useNotifications } from 'hooks/useNotifications';
+import { useQueryService } from 'hooks/useQueryService';
 import useResourceAttribute from 'hooks/useResourceAttribute';
 import { convertRawQueriesToTraceSelectedTags } from 'hooks/useResourceAttribute/utils';
 import { useEffect, useMemo } from 'react';
-import { useQuery } from 'react-query';
 import { useSelector } from 'react-redux';
 import { useLocation } from 'react-router-dom';
 import { AppState } from 'store/reducers';
+import { PayloadProps } from 'types/api/metrics/getService';
 import { GlobalReducer } from 'types/reducer/globalTime';
 import { Tags } from 'types/reducer/trace';
 
@@ -29,14 +30,11 @@ function Metrics(): JSX.Element {
 		[queries],
 	);
 
-	const { data, error, isLoading } = useQuery(
-		[minTime, maxTime, selectedTime, selectedTags],
-		() =>
-			getService({
-				end: maxTime,
-				start: minTime,
-				selectedTags,
-			}),
+	const { data, error, isLoading }: QueryServiceProps = useQueryService(
+		minTime,
+		maxTime,
+		selectedTime,
+		selectedTags,
 	);
 
 	const { notifications } = useNotifications();
@@ -44,10 +42,10 @@ function Metrics(): JSX.Element {
 	useEffect(() => {
 		if (error) {
 			notifications.error({
-				message: data?.error,
+				message: error.message,
 			});
 		}
-	}, [error, data?.error, notifications]);
+	}, [error, notifications]);
 
 	if (isLoading) {
 		return <Spinner tip="Loading..." />;
@@ -58,13 +56,15 @@ function Metrics(): JSX.Element {
 			<ReleaseNote path={location.pathname} />
 
 			<ResourceAttributesFilter />
-			<MetricTable
-				services={data?.payload || []}
-				loading={isLoading}
-				error={!!data?.error}
-			/>
+			<MetricTable services={data || []} loading={isLoading} error={!!error} />
 		</Space>
 	);
+}
+
+export interface QueryServiceProps {
+	data: PayloadProps | undefined;
+	error: AxiosError;
+	isLoading: boolean;
 }
 
 export default Metrics;
