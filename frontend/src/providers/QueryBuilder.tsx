@@ -13,7 +13,7 @@ import {
 	MAX_QUERIES,
 	PANEL_TYPES,
 } from 'constants/queryBuilder';
-import { COMPOSITE_QUERY } from 'constants/queryBuilderQueryNames';
+import { queryParamNamesMap } from 'constants/queryBuilderQueryNames';
 import { GRAPH_TYPES } from 'container/NewDashboard/ComponentsSlider';
 import { useGetCompositeQueryParam } from 'hooks/queryBuilder/useGetCompositeQueryParam';
 import { updateStepInterval } from 'hooks/queryBuilder/useStepInterval';
@@ -460,7 +460,10 @@ export function QueryBuilderProvider({
 				id: uuid(),
 			};
 
-			urlQuery.set(COMPOSITE_QUERY, JSON.stringify(currentGeneratedQuery));
+			urlQuery.set(
+				queryParamNamesMap.compositeQuery,
+				encodeURIComponent(JSON.stringify(currentGeneratedQuery)),
+			);
 
 			if (searchParams) {
 				Object.keys(searchParams).forEach((param) =>

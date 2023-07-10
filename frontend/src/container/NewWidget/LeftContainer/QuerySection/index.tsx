@@ -3,12 +3,13 @@ import TextToolTip from 'components/TextToolTip';
 import { GRAPH_TYPES } from 'container/NewDashboard/ComponentsSlider';
 import { WidgetGraphProps } from 'container/NewWidget/types';
 import { QueryBuilder } from 'container/QueryBuilder';
+import { QueryBuilderProps } from 'container/QueryBuilder/QueryBuilder.interfaces';
 import { useGetWidgetQueryRange } from 'hooks/queryBuilder/useGetWidgetQueryRange';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useShareBuilderUrl } from 'hooks/queryBuilder/useShareBuilderUrl';
 import { updateStepInterval } from 'hooks/queryBuilder/useStepInterval';
 import useUrlQuery from 'hooks/useUrlQuery';
-import { useCallback } from 'react';
+import { useCallback, useMemo } from 'react';
 import { connect, useSelector } from 'react-redux';
 import { bindActionCreators, Dispatch } from 'redux';
 import { ThunkDispatch } from 'redux-thunk';
@@ -101,12 +102,22 @@ function QuerySection({
 		handleStageQuery(currentQuery);
 	};
 
+	const filterConfigs: QueryBuilderProps['filterConfigs'] = useMemo(() => {
+		const config: QueryBuilderProps['filterConfigs'] = {
+			stepInterval: { isHidden: false, isDisabled: true },
+		};
+
+		return config;
+	}, []);
+
 	const items = [
 		{
 			key: EQueryType.QUERY_BUILDER,
 			label: 'Query Builder',
 			tab: <Typography>Query Builder</Typography>,
-			children: <QueryBuilder panelType={selectedGraph} />,
+			children: (
+				<QueryBuilder panelType={selectedGraph} filterConfigs={filterConfigs} />
+			),
 		},
 		{
 			key: EQueryType.CLICKHOUSE,
