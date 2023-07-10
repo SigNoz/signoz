@@ -102,7 +102,7 @@ func getSelectLabels(aggregatorOperator v3.AggregateOperator, groupBy []v3.Attri
 	} else {
 		for _, tag := range groupBy {
 			filterName := getColumnName(tag, keys)
-			selectLabels += fmt.Sprintf(", %s as `%s`", filterName, tag.Key)
+			selectLabels += fmt.Sprintf(" %s as `%s`,", filterName, tag.Key)
 		}
 	}
 	return selectLabels
@@ -235,14 +235,26 @@ func buildTracesQuery(start, end, step int64, mq *v3.BuilderQuery, tableName str
 		having = " having " + having
 	}
 
-	// Select the aggregate value for interval
-	queryTmpl :=
-		"SELECT toStartOfInterval(timestamp, INTERVAL %d SECOND) AS ts" + selectLabels +
-			", %s as value " +
-			"from " + constants.SIGNOZ_TRACE_DBNAME + "." + constants.SIGNOZ_SPAN_INDEX_TABLENAME +
-			" where " + spanIndexTableTimeFilter + "%s " +
-			"group by %s%s " +
-			"order by %s"
+	var queryTmpl string
+
+	if panelType == v3.PanelTypeTable {
+		queryTmpl =
+			"SELECT" + selectLabels +
+				" %s as value " +
+				"from " + constants.SIGNOZ_TRACE_DBNAME + "." + constants.SIGNOZ_SPAN_INDEX_TABLENAME +
+				" where " + spanIndexTableTimeFilter + "%s" +
+				"%s%s " +
+				"order by %s"
+	} else if panelType == v3.PanelTypeGraph {
+		// Select the aggregate value for interval
+		queryTmpl =
+			fmt.Sprintf("SELECT toStartOfInterval(timestamp, INTERVAL %d SECOND) AS ts,", step) + selectLabels +
+				" %s as value " +
+				"from " + constants.SIGNOZ_TRACE_DBNAME + "." + constants.SIGNOZ_SPAN_INDEX_TABLENAME +
+				" where " + spanIndexTableTimeFilter + "%s" +
+				"%s%s " +
+				"order by %s"
+	}
 
 	emptyValuesInGroupByFilter, err := handleEmptyValuesInGroupBy(keys, mq.GroupBy)
 	if err != nil {
@@ -250,7 +262,10 @@ func buildTracesQuery(start, end, step int64, mq *v3.BuilderQuery, tableName str
 	}
 	filterSubQuery += emptyValuesInGroupByFilter
 
-	groupBy := groupByAttributeKeyTags(keys, mq.GroupBy...)
+	groupBy := groupByAttributeKeyTags(keys, panelType, mq.GroupBy...)
+	if groupBy != "" {
+		groupBy = " group by " + groupBy
+	}
 	enrichedOrderBy := enrichOrderBy(mq.OrderBy, keys)
 	orderBy := orderByAttributeKeyTags(panelType, enrichedOrderBy, mq.GroupBy, keys)
 
@@ -266,7 +281,7 @@ func buildTracesQuery(start, end, step int64, mq *v3.BuilderQuery, tableName str
 		v3.AggregateOperatorRateMin,
 		v3.AggregateOperatorRate:
 		op := fmt.Sprintf("%s(%s)/%d", aggregateOperatorToSQLFunc[mq.AggregateOperator], aggregationKey, step)
-		query := fmt.Sprintf(queryTmpl, step, op, filterSubQuery, groupBy, having, orderBy)
+		query := fmt.Sprintf(queryTmpl, op, filterSubQuery, groupBy, having, orderBy)
 		return query, nil
 	case
 		v3.AggregateOperatorP05,
@@ -279,11 +294,11 @@ func buildTracesQuery(start, end, step int64, mq *v3.BuilderQuery, tableName str
 		v3.AggregateOperatorP95,
 		v3.AggregateOperatorP99:
 		op := fmt.Sprintf("quantile(%v)(%s)", aggregateOperatorToPercentile[mq.AggregateOperator], aggregationKey)
-		query := fmt.Sprintf(queryTmpl, step, op, filterSubQuery, groupBy, having, orderBy)
+		query := fmt.Sprintf(queryTmpl, op, filterSubQuery, groupBy, having, orderBy)
 		return query, nil
 	case v3.AggregateOperatorAvg, v3.AggregateOperatorSum, v3.AggregateOperatorMin, v3.AggregateOperatorMax:
 		op := fmt.Sprintf("%s(%s)", aggregateOperatorToSQLFunc[mq.AggregateOperator], aggregationKey)
-		query := fmt.Sprintf(queryTmpl, step, op, filterSubQuery, groupBy, having, orderBy)
+		query := fmt.Sprintf(queryTmpl, op, filterSubQuery, groupBy, having, orderBy)
 		return query, nil
 	case v3.AggregateOperatorCount:
 		if mq.AggregateAttribute.Key != "" {
@@ -299,11 +314,11 @@ func buildTracesQuery(start, end, step int64, mq *v3.BuilderQuery, tableName str
 			}
 		}
 		op := "toFloat64(count())"
-		query := fmt.Sprintf(queryTmpl, step, op, filterSubQuery, groupBy, having, orderBy)
+		query := fmt.Sprintf(queryTmpl, op, filterSubQuery, groupBy, having, orderBy)
 		return query, nil
 	case v3.AggregateOperatorCountDistinct:
 		op := fmt.Sprintf("toFloat64(count(distinct(%s)))", aggregationKey)
-		query := fmt.Sprintf(queryTmpl, step, op, filterSubQuery, groupBy, having, orderBy)
+		query := fmt.Sprintf(queryTmpl, op, filterSubQuery, groupBy, having, orderBy)
 		return query, nil
 	case v3.AggregateOperatorNoOp:
 		var query string
@@ -350,17 +365,19 @@ func enrichOrderBy(items []v3.OrderBy, keys map[string]v3.AttributeKey) []v3.Ord
 
 // groupBy returns a string of comma separated tags for group by clause
 // `ts` is always added to the group by clause
-func groupBy(tags ...string) string {
-	tags = append(tags, "ts")
+func groupBy(panelType v3.PanelType, tags ...string) string {
+	if panelType == v3.PanelTypeGraph {
+		tags = append(tags, "ts")
+	}
 	return strings.Join(tags, ",")
 }
 
-func groupByAttributeKeyTags(keys map[string]v3.AttributeKey, tags ...v3.AttributeKey) string {
+func groupByAttributeKeyTags(keys map[string]v3.AttributeKey, panelType v3.PanelType, tags ...v3.AttributeKey) string {
 	groupTags := []string{}
 	for _, tag := range tags {
 		groupTags = append(groupTags, fmt.Sprintf("`%s`", tag.Key))
 	}
-	return groupBy(groupTags...)
+	return groupBy(panelType, groupTags...)
 }
 
 // orderBy returns a string of comma separated tags for order by clause
@@ -403,7 +420,7 @@ func orderBy(panelType v3.PanelType, items []v3.OrderBy, tags []string, keys map
 			if !addedToOrderBy[item.ColumnName] {
 				attr := v3.AttributeKey{Key: item.ColumnName, DataType: item.DataType, Type: item.Type, IsColumn: item.IsColumn}
 				name := getColumnName(attr, keys)
-				
+
 				if item.IsColumn {
 					orderBy = append(orderBy, fmt.Sprintf("`%s` %s", name, item.Order))
 				} else {
@@ -424,7 +441,7 @@ func orderByAttributeKeyTags(panelType v3.PanelType, items []v3.OrderBy, tags []
 
 	if panelType == v3.PanelTypeList && len(orderByArray) == 0 {
 		orderByArray = append(orderByArray, constants.TIMESTAMP+" DESC")
-	} else if panelType == v3.PanelTypeGraph || panelType == v3.PanelTypeTable {
+	} else if panelType == v3.PanelTypeGraph {
 		orderByArray = append(orderByArray, "ts")
 	}
 
@@ -473,16 +490,7 @@ func addOffsetToQuery(query string, offset uint64) string {
 }
 
 func PrepareTracesQuery(start, end int64, queryType v3.QueryType, panelType v3.PanelType, mq *v3.BuilderQuery, keys map[string]v3.AttributeKey) (string, error) {
-
-	stepInterval := mq.StepInterval
-	// update step interval for table view
-	if panelType == v3.PanelTypeTable {
-		stepInterval = (end - start)/1000
-	}
-	// adjust the start and end time to the step interval
-	start = start - (start % (stepInterval * 1000))
-	end = end - (end % (stepInterval * 1000))
-	query, err := buildTracesQuery(start, end, stepInterval, mq, constants.SIGNOZ_SPAN_INDEX_TABLENAME, keys, panelType)
+	query, err := buildTracesQuery(start, end, mq.StepInterval, mq, constants.SIGNOZ_SPAN_INDEX_TABLENAME, keys, panelType)
 	if err != nil {
 		return "", err
 	}
