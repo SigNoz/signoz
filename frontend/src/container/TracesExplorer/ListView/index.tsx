@@ -1,8 +1,10 @@
+import { ColumnsType } from 'antd/es/table';
 import { ResizeTable } from 'components/ResizeTable';
 import { LOCALSTORAGE } from 'constants/localStorage';
 import { initialQueriesMap, PANEL_TYPES } from 'constants/queryBuilder';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import { useOptionsMenu } from 'container/OptionsMenu';
+import { OptionsQuery } from 'container/OptionsMenu/types';
 import { useGetQueryRange } from 'hooks/queryBuilder/useGetQueryRange';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { Pagination, URL_PAGINATION } from 'hooks/queryPagination';
@@ -28,7 +30,7 @@ function ListView(): JSX.Element {
 		GlobalReducer
 	>((state) => state.globalTime);
 
-	const { options, config } = useOptionsMenu({
+	const { options, config, handleOptionsChange } = useOptionsMenu({
 		storageKey: LOCALSTORAGE.TRACES_LIST_OPTIONS,
 		dataSource: DataSource.TRACES,
 		aggregateOperator: 'count',
@@ -106,6 +108,20 @@ function ListView(): JSX.Element {
 		[],
 	);
 
+	const handleDragColumn = useCallback(
+		(columns: ColumnsType) => {
+			const newSelectedColumns = columns.reduce((acc, { title }) => {
+				const column = options.selectColumns.find(({ key }) => title === key);
+
+				if (!column) return acc;
+				return [...acc, column];
+			}, [] as OptionsQuery['selectColumns']);
+
+			handleOptionsChange({ ...options, selectColumns: newSelectedColumns });
+		},
+		[options, handleOptionsChange],
+	);
+
 	return (
 		<Container>
 			<TraceExplorerControls
@@ -119,6 +135,7 @@ function ListView(): JSX.Element {
 
 			{!isError && (
 				<ResizeTable
+					withDragColumn
 					tableLayout="fixed"
 					pagination={false}
 					scroll={{ x: true }}
@@ -127,6 +144,7 @@ function ListView(): JSX.Element {
 					dataSource={transformedQueryTableData}
 					columns={columns}
 					onRow={handleRow}
+					onDragColumn={handleDragColumn}
 				/>
 			)}
 		</Container>

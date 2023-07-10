@@ -9,3 +9,9 @@ export const SpanStyle = styled.span`
 	height: 100%;
 	cursor: col-resize;
 `;
+
+export const DragSpanStyle = styled.span`
+	display: flex;
+	margin: -16px;
+	padding: 16px;
+`;
