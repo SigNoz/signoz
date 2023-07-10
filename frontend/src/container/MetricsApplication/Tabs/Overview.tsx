@@ -2,7 +2,7 @@ import { Typography } from 'antd';
 import getServiceOverview from 'api/metrics/getServiceOverview';
 import getTopLevelOperations from 'api/metrics/getTopLevelOperations';
 import getTopOperations from 'api/metrics/getTopOperations';
-import axios, { AxiosError } from 'axios';
+import { AxiosError } from 'axios';
 import { ActiveElement, Chart, ChartData, ChartEvent } from 'chart.js';
 import Graph from 'components/Graph';
 import Spinner from 'components/Spinner';
@@ -288,7 +288,7 @@ function Application(): JSX.Element {
 						View Traces
 					</Button>
 					<Card>
-						{axios.isAxiosError(serviceOverviewError) && (
+						{serviceOverviewIsError && (
 							<Typography>
 								{(serviceOverviewError as AxiosError)?.response?.data}
 							</Typography>
