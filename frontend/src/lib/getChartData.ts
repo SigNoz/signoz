@@ -1,11 +1,14 @@
-import { ChartData } from 'chart.js';
+import { ChartData, ChartDataset } from 'chart.js';
 import getLabelName from 'lib/getLabelName';
 import { QueryData } from 'types/api/widgets/getQuery';
 
 import convertIntoEpoc from './covertIntoEpoc';
 import { colors } from './getRandomColor';
 
-const getChartData = ({ queryData }: GetChartDataProps): ChartData => {
+const getChartData = ({
+	queryData,
+	createDataset,
+}: GetChartDataProps): ChartData => {
 	const uniqueTimeLabels = new Set<number>();
 	queryData.forEach((data) => {
 		data.queryData.forEach((query) => {
@@ -60,28 +63,39 @@ const getChartData = ({ queryData }: GetChartDataProps): ChartData => {
 		.reduce((a, b) => [...a, ...b], []);
 
 	return {
-		datasets: alldata.map((e, index) => ({
-			data: e,
-			label: allLabels[index],
-			borderWidth: 1.5,
-			spanGaps: true,
-			animations: false,
-			borderColor: colors[index % colors.length] || 'red',
-			showLine: true,
-			pointRadius: 0,
-		})),
+		datasets: alldata.map((e, index) => {
+			const datasetBaseConfig = {
+				label: allLabels[index],
+				borderColor: colors[index % colors.length] || 'red',
+				data: e,
+				borderWidth: 1.5,
+				spanGaps: true,
+				animations: false,
+				showLine: true,
+				pointRadius: 0,
+			};
+
+			return createDataset
+				? createDataset(e, index, allLabels)
+				: datasetBaseConfig;
+		}),
 		labels: response
 			.map((e) => e.map((e) => e.first))
 			.reduce((a, b) => [...a, ...b], [])[0],
 	};
 };
 
-interface GetChartDataProps {
+export interface GetChartDataProps {
 	queryData: {
 		query?: string;
 		legend?: string;
 		queryData: QueryData[];
 	}[];
+	createDataset?: (
+		element: (number | null)[],
+		index: number,
+		allLabels: string[],
+	) => ChartDataset;
 }
 
 export default getChartData;

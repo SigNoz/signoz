@@ -1,5 +1,5 @@
 import { Button, Dropdown, MenuProps, Modal } from 'antd';
-import { COMPOSITE_QUERY } from 'constants/queryBuilderQueryNames';
+import { queryParamNamesMap } from 'constants/queryBuilderQueryNames';
 import ROUTES from 'constants/routes';
 import history from 'lib/history';
 import { useCallback, useMemo, useState } from 'react';
@@ -22,9 +22,9 @@ function ExportPanel({
 
 	const onCreateAlertsHandler = useCallback(() => {
 		history.push(
-			`${ROUTES.ALERTS_NEW}?${COMPOSITE_QUERY}=${encodeURIComponent(
-				JSON.stringify(query),
-			)}`,
+			`${ROUTES.ALERTS_NEW}?${
+				queryParamNamesMap.compositeQuery
+			}=${encodeURIComponent(JSON.stringify(query))}`,
 		);
 	}, [query]);
 
@@ -84,10 +84,6 @@ function ExportPanel({
 	);
 }
 
-ExportPanel.defaultProps = {
-	isLoading: false,
-};
-
 interface OnClickProps {
 	key: string;
 }
@@ -97,5 +93,7 @@ export interface ExportPanelProps {
 	onExport: (dashboard: Dashboard | null) => void;
 	query: Query | null;
 }
+
+ExportPanel.defaultProps = { isLoading: false };
 
 export default ExportPanel;

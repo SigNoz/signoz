@@ -14,6 +14,7 @@ import {
 	IPromQLQuery,
 	Query,
 	QueryState,
+	TagFilter,
 } from 'types/api/queryBuilder/queryBuilderData';
 import { EQueryType } from 'types/common/dashboard';
 import {
@@ -111,6 +112,11 @@ export const initialAutocompleteData: BaseAutocompleteData = {
 	key: '',
 	isColumn: null,
 	type: null,
+};
+
+export const initialFilters: TagFilter = {
+	items: [],
+	op: 'AND',
 };
 
 const initialQueryBuilderFormValues: IBuilderQuery = {
@@ -232,8 +238,8 @@ export const PANEL_TYPES: Record<PanelTypeKeys, GRAPH_TYPES> = {
 	VALUE: 'value',
 	TABLE: 'table',
 	LIST: 'list',
-	EMPTY_WIDGET: 'EMPTY_WIDGET',
 	TRACE: 'trace',
+	EMPTY_WIDGET: 'EMPTY_WIDGET',
 };
 
 export type IQueryBuilderState = 'search';
