@@ -1,5 +1,5 @@
 import { SearchOutlined } from '@ant-design/icons';
-import { Input } from 'antd';
+import { Input, Spin } from 'antd';
 import Typography from 'antd/es/typography/Typography';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { useTranslation } from 'react-i18next';
@@ -26,12 +26,17 @@ function AddColumnField({ config }: AddColumnFieldProps): JSX.Element | null {
 
 			<Input.Group compact>
 				<AddColumnSelect
+					loading={config.isFetching}
 					size="small"
 					mode="multiple"
 					placeholder="Search"
 					options={config.options}
 					value={[]}
-					onChange={config.onChange}
+					onSelect={config.onSelect}
+					onSearch={config.onSearch}
+					onFocus={config.onFocus}
+					onBlur={config.onBlur}
+					notFoundContent={config.isFetching ? <Spin size="small" /> : null}
 				/>
 				<SearchIconWrapper $isDarkMode={isDarkMode}>
 					<SearchOutlined />

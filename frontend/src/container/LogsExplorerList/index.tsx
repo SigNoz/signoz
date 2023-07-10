@@ -3,6 +3,7 @@ import { Card, Typography } from 'antd';
 import ListLogView from 'components/Logs/ListLogView';
 import RawLogView from 'components/Logs/RawLogView';
 import Spinner from 'components/Spinner';
+import { LOCALSTORAGE } from 'constants/localStorage';
 import ExplorerControlPanel from 'container/ExplorerControlPanel';
 import { Heading } from 'container/LogsTable/styles';
 import { useOptionsMenu } from 'container/OptionsMenu';
@@ -35,6 +36,7 @@ function LogsExplorerList({
 	const { initialDataSource } = useQueryBuilder();
 
 	const { options, config } = useOptionsMenu({
+		storageKey: LOCALSTORAGE.LOGS_LIST_OPTIONS,
 		dataSource: initialDataSource || DataSource.METRICS,
 		aggregateOperator:
 			currentStagedQueryData?.aggregateOperator || StringOperators.NOOP,
