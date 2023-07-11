@@ -45,6 +45,9 @@ interface IWidgetHeaderProps {
 		SuccessResponse<MetricRangePayloadProps> | ErrorResponse
 	>;
 	errorMessage: string | undefined;
+	allowDelete?: boolean;
+	allowClone?: boolean;
+	allowEdit?: boolean;
 }
 function WidgetHeader({
 	title,
@@ -55,6 +58,9 @@ function WidgetHeader({
 	parentHover,
 	queryResponse,
 	errorMessage,
+	allowClone = true,
+	allowDelete = true,
+	allowEdit = true,
 }: IWidgetHeaderProps): JSX.Element {
 	const [localHover, setLocalHover] = useState(false);
 	const [isOpen, setIsOpen] = useState<boolean>(false);
@@ -119,25 +125,37 @@ function WidgetHeader({
 				disabled: queryResponse.isLoading,
 				label: 'View',
 			},
-			{
-				key: keyMethodMapping.edit.key,
-				icon: <EditFilled />,
-				disabled: !editWidget,
-				label: 'Edit',
-			},
-			{
-				key: keyMethodMapping.clone.key,
-				icon: <CopyOutlined />,
-				disabled: !editWidget,
-				label: 'Clone',
-			},
-			{
-				key: keyMethodMapping.delete.key,
-				icon: <DeleteOutlined />,
-				disabled: !deleteWidget,
-				danger: true,
-				label: 'Delete',
-			},
+			...(allowEdit
+				? [
+						{
+							key: keyMethodMapping.edit.key,
+							icon: <EditFilled />,
+							disabled: !editWidget,
+							label: 'Edit',
+						},
+				  ]
+				: []),
+			...(allowClone
+				? [
+						{
+							key: keyMethodMapping.clone.key,
+							icon: <CopyOutlined />,
+							disabled: !editWidget,
+							label: 'Clone',
+						},
+				  ]
+				: []),
+			...(allowDelete
+				? [
+						{
+							key: keyMethodMapping.delete.key,
+							icon: <DeleteOutlined />,
+							disabled: !deleteWidget,
+							danger: true,
+							label: 'Delete',
+						},
+				  ]
+				: []),
 		],
 		[
 			deleteWidget,
@@ -147,6 +165,9 @@ function WidgetHeader({
 			keyMethodMapping.view.key,
 			keyMethodMapping.clone.key,
 			queryResponse.isLoading,
+			allowClone,
+			allowDelete,
+			allowEdit,
 		],
 	);
 
@@ -199,5 +220,11 @@ function WidgetHeader({
 		</div>
 	);
 }
+
+WidgetHeader.defaultProps = {
+	allowDelete: undefined,
+	allowClone: undefined,
+	allowEdit: undefined,
+};
 
 export default WidgetHeader;

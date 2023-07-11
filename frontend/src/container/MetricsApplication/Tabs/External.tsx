@@ -1,5 +1,5 @@
 import { Col } from 'antd';
-import FullView from 'container/GridGraphLayout/Graph/FullView/index.metricsBuilder';
+import Graph from 'container/GridGraphLayout/Graph/GraphWithoutDashboard';
 import {
 	externalCallDuration,
 	externalCallDurationByAddress,
@@ -17,8 +17,14 @@ import { EQueryType } from 'types/common/dashboard';
 import { v4 as uuid } from 'uuid';
 
 import { getWidgetQueryBuilder } from '../MetricsApplication.factory';
-import { Card, GraphContainer, GraphTitle, Row } from '../styles';
-import { legend } from './constant';
+import { Card, GraphContainer, Row } from '../styles';
+import {
+	EXTERNAL_CALL_DURATION,
+	EXTERNAL_CALL_DURATION_BY_ADDRESS,
+	EXTERNAL_CALL_ERROR_PERCENTAGE,
+	EXTERNAL_CALL_RPS_BY_ADDRESS,
+	legend,
+} from './constant';
 import { Button } from './styles';
 import {
 	handleNonInQueryRange,
@@ -106,6 +112,11 @@ function External(): JSX.Element {
 		[servicename, tagFilterItems],
 	);
 
+	externalCallErrorWidget.title = EXTERNAL_CALL_ERROR_PERCENTAGE;
+	externalCallDurationWidget.title = EXTERNAL_CALL_DURATION;
+	externalCallRPSWidget.title = EXTERNAL_CALL_RPS_BY_ADDRESS;
+	externalCallDurationAddressWidget.title = EXTERNAL_CALL_DURATION_BY_ADDRESS;
+
 	return (
 		<>
 			<Row gutter={24}>
@@ -124,11 +135,9 @@ function External(): JSX.Element {
 						View Traces
 					</Button>
 					<Card>
-						<GraphTitle>External Call Error Percentage</GraphTitle>
 						<GraphContainer>
-							<FullView
+							<Graph
 								name="external_call_error_percentage"
-								fullViewOptions={false}
 								widget={externalCallErrorWidget}
 								yAxisUnit="%"
 								onClickHandler={(ChartEvent, activeElements, chart, data): void => {
@@ -161,11 +170,9 @@ function External(): JSX.Element {
 					</Button>
 
 					<Card>
-						<GraphTitle>External Call duration</GraphTitle>
 						<GraphContainer>
-							<FullView
+							<Graph
 								name="external_call_duration"
-								fullViewOptions={false}
 								widget={externalCallDurationWidget}
 								yAxisUnit="ms"
 								onClickHandler={(ChartEvent, activeElements, chart, data): void => {
@@ -199,11 +206,9 @@ function External(): JSX.Element {
 						View Traces
 					</Button>
 					<Card>
-						<GraphTitle>External Call RPS(by Address)</GraphTitle>
 						<GraphContainer>
-							<FullView
+							<Graph
 								name="external_call_rps_by_address"
-								fullViewOptions={false}
 								widget={externalCallRPSWidget}
 								yAxisUnit="reqps"
 								onClickHandler={(ChartEvent, activeElements, chart, data): void => {
@@ -236,11 +241,9 @@ function External(): JSX.Element {
 					</Button>
 
 					<Card>
-						<GraphTitle>External Call duration(by Address)</GraphTitle>
 						<GraphContainer>
-							<FullView
+							<Graph
 								name="external_call_duration_by_address"
-								fullViewOptions={false}
 								widget={externalCallDurationAddressWidget}
 								yAxisUnit="ms"
 								onClickHandler={(ChartEvent, activeElements, chart, data): void => {

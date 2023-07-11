@@ -1,7 +1,7 @@
 import { ActiveElement, Chart, ChartData, ChartEvent } from 'chart.js';
 import { QueryParams } from 'constants/query';
 import ROUTES from 'constants/routes';
-import FullView from 'container/GridGraphLayout/Graph/FullView/index.metricsBuilder';
+import Graph from 'container/GridGraphLayout/Graph/GraphWithoutDashboard';
 import { routeConfig } from 'container/SideNav/config';
 import { getQueryString } from 'container/SideNav/helper';
 import useResourceAttribute from 'hooks/useResourceAttribute';
@@ -25,8 +25,9 @@ import {
 	letency,
 	operationPerSec,
 } from '../MetricsPageQueries/OverviewQueries';
-import { Card, Col, GraphContainer, GraphTitle, Row } from '../styles';
+import { Card, Col, GraphContainer, Row } from '../styles';
 import TopOperationsTable from '../TopOperationsTable';
+import { ERROR_PERCENTAGE, LATENCY, RATE_PER_OPS } from './constant';
 import { Button } from './styles';
 import {
 	handleNonInQueryRange,
@@ -126,6 +127,10 @@ function Application(): JSX.Element {
 		[servicename, topLevelOperations, tagFilterItems],
 	);
 
+	latencyWidget.title = LATENCY;
+	operationPerSecWidget.title = RATE_PER_OPS;
+	errorPercentageWidget.title = ERROR_PERCENTAGE;
+
 	const onDragSelect = useCallback(
 		(start: number, end: number) => {
 			const startTimestamp = Math.trunc(start);
@@ -175,15 +180,13 @@ function Application(): JSX.Element {
 						View Traces
 					</Button>
 					<Card>
-						<GraphTitle>Latency</GraphTitle>
 						<GraphContainer>
-							<FullView
+							<Graph
 								name="service_latency"
-								fullViewOptions={false}
-								onClickHandler={handleGraphClick('Service')}
+								onDragSelect={onDragSelect}
 								widget={latencyWidget}
 								yAxisUnit="ms"
-								onDragSelect={onDragSelect}
+								onClickHandler={handleGraphClick('Service')}
 							/>
 						</GraphContainer>
 					</Card>
@@ -203,13 +206,11 @@ function Application(): JSX.Element {
 						View Traces
 					</Button>
 					<Card>
-						<GraphTitle>Rate (ops/s)</GraphTitle>
 						<GraphContainer>
-							<FullView
+							<Graph
 								name="operations_per_sec"
-								fullViewOptions={false}
-								onClickHandler={handleGraphClick('Rate')}
 								widget={operationPerSecWidget}
+								onClickHandler={handleGraphClick('Rate')}
 								yAxisUnit="ops"
 								onDragSelect={onDragSelect}
 							/>
@@ -231,11 +232,9 @@ function Application(): JSX.Element {
 					</Button>
 
 					<Card>
-						<GraphTitle>Error Percentage</GraphTitle>
 						<GraphContainer>
-							<FullView
+							<Graph
 								name="error_percentage_%"
-								fullViewOptions={false}
 								onClickHandler={handleGraphClick('Error')}
 								widget={errorPercentageWidget}
 								yAxisUnit="%"

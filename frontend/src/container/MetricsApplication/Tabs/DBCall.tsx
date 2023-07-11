@@ -1,5 +1,5 @@
 import { Col } from 'antd';
-import FullView from 'container/GridGraphLayout/Graph/FullView/index.metricsBuilder';
+import Graph from 'container/GridGraphLayout/Graph/GraphWithoutDashboard';
 import {
 	databaseCallsAvgDuration,
 	databaseCallsRPS,
@@ -16,7 +16,8 @@ import { EQueryType } from 'types/common/dashboard';
 import { v4 as uuid } from 'uuid';
 
 import { getWidgetQueryBuilder } from '../MetricsApplication.factory';
-import { Card, GraphContainer, GraphTitle, Row } from '../styles';
+import { Card, GraphContainer, Row } from '../styles';
+import { DATABASE_CALLS_AVG_DURATION, DATABASE_CALLS_RPS } from './constant';
 import { Button } from './styles';
 import {
 	dbSystemTags,
@@ -76,6 +77,9 @@ function DBCall(): JSX.Element {
 		[servicename, tagFilterItems],
 	);
 
+	databaseCallsRPSWidget.title = DATABASE_CALLS_RPS;
+	databaseCallsAverageDurationWidget.title = DATABASE_CALLS_AVG_DURATION;
+
 	return (
 		<Row gutter={24}>
 			<Col span={12}>
@@ -92,11 +96,9 @@ function DBCall(): JSX.Element {
 					View Traces
 				</Button>
 				<Card>
-					<GraphTitle>Database Calls RPS</GraphTitle>
 					<GraphContainer>
-						<FullView
+						<Graph
 							name="database_call_rps"
-							fullViewOptions={false}
 							widget={databaseCallsRPSWidget}
 							yAxisUnit="reqps"
 							onClickHandler={(ChartEvent, activeElements, chart, data): void => {
@@ -127,11 +129,9 @@ function DBCall(): JSX.Element {
 					View Traces
 				</Button>
 				<Card>
-					<GraphTitle>Database Calls Avg Duration</GraphTitle>
 					<GraphContainer>
-						<FullView
+						<Graph
 							name="database_call_avg_duration"
-							fullViewOptions={false}
 							widget={databaseCallsAverageDurationWidget}
 							yAxisUnit="ms"
 							onClickHandler={(ChartEvent, activeElements, chart, data): void => {
