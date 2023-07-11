@@ -245,7 +245,7 @@ func buildTracesQuery(start, end, step int64, mq *v3.BuilderQuery, tableName str
 				" where " + spanIndexTableTimeFilter + "%s" +
 				"%s%s " +
 				"order by %s"
-	} else if panelType == v3.PanelTypeGraph {
+	} else if panelType == v3.PanelTypeGraph || panelType == v3.PanelTypeValue {
 		// Select the aggregate value for interval
 		queryTmpl =
 			fmt.Sprintf("SELECT toStartOfInterval(timestamp, INTERVAL %d SECOND) AS ts,", step) + selectLabels +
@@ -366,7 +366,7 @@ func enrichOrderBy(items []v3.OrderBy, keys map[string]v3.AttributeKey) []v3.Ord
 // groupBy returns a string of comma separated tags for group by clause
 // `ts` is always added to the group by clause
 func groupBy(panelType v3.PanelType, tags ...string) string {
-	if panelType == v3.PanelTypeGraph {
+	if panelType == v3.PanelTypeGraph || panelType == v3.PanelTypeValue {
 		tags = append(tags, "ts")
 	}
 	return strings.Join(tags, ",")
@@ -441,7 +441,7 @@ func orderByAttributeKeyTags(panelType v3.PanelType, items []v3.OrderBy, tags []
 
 	if panelType == v3.PanelTypeList && len(orderByArray) == 0 {
 		orderByArray = append(orderByArray, constants.TIMESTAMP+" DESC")
-	} else if panelType == v3.PanelTypeGraph {
+	} else if panelType == v3.PanelTypeGraph || panelType == v3.PanelTypeValue {
 		orderByArray = append(orderByArray, "ts")
 	}
 

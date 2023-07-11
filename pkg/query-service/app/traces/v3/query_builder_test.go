@@ -957,6 +957,34 @@ var testBuildTracesQueryData = []struct {
 		PanelType: v3.PanelTypeGraph,
 	},
 	{
+		Name:  "Test count with having clause and filters",
+		Start: 1680066360726210000,
+		End:   1680066458000000000,
+		Step:  60,
+		BuilderQuery: &v3.BuilderQuery{
+			QueryName:          "A",
+			AggregateAttribute: v3.AttributeKey{Key: "name", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag},
+			AggregateOperator:  v3.AggregateOperatorCount,
+			Expression:         "A",
+			Filters: &v3.FilterSet{Operator: "AND", Items: []v3.FilterItem{
+				{Key: v3.AttributeKey{Key: "method", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag}, Value: "GET", Operator: "="},
+			},
+			},
+			Having: []v3.Having{
+				{
+					ColumnName: "name",
+					Operator:   ">",
+					Value:      10,
+				},
+			},
+		},
+		TableName: "signoz_traces.distributed_signoz_index_v2",
+		ExpectedQuery: "SELECT toStartOfInterval(timestamp, INTERVAL 60 SECOND) AS ts, toFloat64(count()) as value" +
+			" from signoz_traces.distributed_signoz_index_v2 where (timestamp >= '1680066360726210000' AND timestamp <= '1680066458000000000') " +
+			"AND stringTagMap['method'] = 'GET' AND has(stringTagMap, 'name') group by ts having value > 10 order by ts",
+		PanelType: v3.PanelTypeValue,
+	},
+	{
 		Name:  "Test aggregate PXX",
 		Start: 1680066360726210000,
 		End:   1680066458000000000,
