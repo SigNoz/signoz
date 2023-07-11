@@ -1,5 +1,6 @@
 import { Tabs } from 'antd';
 import axios from 'axios';
+import ExplorerCard from 'components/ExplorerCard';
 import { QueryParams } from 'constants/query';
 import { initialQueriesMap, PANEL_TYPES } from 'constants/queryBuilder';
 import { queryParamNamesMap } from 'constants/queryBuilderQueryNames';
@@ -177,7 +178,9 @@ function TracesExplorer(): JSX.Element {
 
 	return (
 		<>
-			<QuerySection />
+			<ExplorerCard>
+				<QuerySection />
+			</ExplorerCard>
 
 			<Container>
 				<ActionsWrapper>
