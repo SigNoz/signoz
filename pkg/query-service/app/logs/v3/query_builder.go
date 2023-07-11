@@ -103,15 +103,15 @@ func getSelectLabels(aggregatorOperator v3.AggregateOperator, groupBy []v3.Attri
 }
 
 func getSelectKeys(aggregatorOperator v3.AggregateOperator, groupBy []v3.AttributeKey) string {
-	var selectLabels string
+	var selectLabels []string
 	if aggregatorOperator == v3.AggregateOperatorNoOp {
-		selectLabels = ""
+		return ""
 	} else {
 		for _, tag := range groupBy {
-			selectLabels += fmt.Sprintf("%s,", tag.Key)
+			selectLabels = append(selectLabels, tag.Key)
 		}
 	}
-	return selectLabels
+	return strings.Join(selectLabels, ",")
 }
 
 func buildLogsTimeSeriesFilterQuery(fs *v3.FilterSet, groupBy []v3.AttributeKey) (string, error) {
@@ -210,7 +210,7 @@ func buildLogsQuery(panelType v3.PanelType, start, end, step int64, mq *v3.Build
 	// we dont need value for first query
 	// going with this route as for a cleaner approach on implementation
 	if graphLimitQtype == constants.FirstQueryGraphLimit {
-		queryTmpl = "SELECT " + strings.TrimRight(getSelectKeys(mq.AggregateOperator, mq.GroupBy), ",") + " from (" + queryTmpl + ")"
+		queryTmpl = "SELECT " + getSelectKeys(mq.AggregateOperator, mq.GroupBy) + " from (" + queryTmpl + ")"
 	}
 
 	groupBy := groupByAttributeKeyTags(graphLimitQtype, mq.GroupBy...)

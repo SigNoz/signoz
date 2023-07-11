@@ -203,10 +203,17 @@ func (qb *QueryBuilder) PrepareQueries(params *v3.QueryRangeParamsV3, args ...in
 
 	// filter out disabled queries
 	for queryName := range queries {
-		if strings.HasSuffix(queryName, constants.FirstQuerySuffix) || strings.HasSuffix(queryName, constants.SecondQuerySuffix) {
-			continue
+		lookupName := queryName
+
+		//  if it a graph limit query, get the actual query name
+		if strings.HasSuffix(queryName, constants.FirstQuerySuffix) {
+			lookupName = strings.ReplaceAll(queryName, constants.FirstQuerySuffix, "")
+		} else if strings.HasSuffix(queryName, constants.SecondQuerySuffix) {
+			lookupName = strings.ReplaceAll(queryName, constants.SecondQuerySuffix, "")
 		}
-		if compositeQuery.BuilderQueries[queryName].Disabled {
+
+		// check if the query is disabled
+		if compositeQuery.BuilderQueries[lookupName].Disabled {
 			delete(queries, queryName)
 		}
 	}
