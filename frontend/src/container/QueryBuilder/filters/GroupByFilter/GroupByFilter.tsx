@@ -7,17 +7,21 @@ import {
 	QueryBuilderKeys,
 	selectValueDivider,
 } from 'constants/queryBuilder';
+import { DEBOUNCE_DELAY } from 'constants/queryBuilderFilterConfig';
 import useDebounce from 'hooks/useDebounce';
+import { chooseAutocompleteFromCustomValue } from 'lib/newQueryBuilder/chooseAutocompleteFromCustomValue';
 // ** Components
 // ** Helpers
 import { transformStringWithPrefix } from 'lib/query/transformStringWithPrefix';
 import { isEqual, uniqWith } from 'lodash-es';
 import { memo, useCallback, useEffect, useState } from 'react';
-import { useQuery } from 'react-query';
+import { useQuery, useQueryClient } from 'react-query';
+import { SuccessResponse } from 'types/api';
 import {
 	AutocompleteType,
 	BaseAutocompleteData,
 	DataType,
+	IQueryAutocompleteResponse,
 } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { SelectOption } from 'types/common/select';
 
@@ -29,6 +33,7 @@ export const GroupByFilter = memo(function GroupByFilter({
 	onChange,
 	disabled,
 }: GroupByFilterProps): JSX.Element {
+	const queryClient = useQueryClient();
 	const [searchText, setSearchText] = useState<string>('');
 	const [optionsData, setOptionsData] = useState<SelectOption<string, string>[]>(
 		[],
@@ -38,7 +43,7 @@ export const GroupByFilter = memo(function GroupByFilter({
 	);
 	const [isFocused, setIsFocused] = useState<boolean>(false);
 
-	const debouncedValue = useDebounce(searchText, 300);
+	const debouncedValue = useDebounce(searchText, DEBOUNCE_DELAY);
 
 	const { isFetching } = useQuery(
 		[QueryBuilderKeys.GET_AGGREGATE_KEYS, debouncedValue, isFocused],
@@ -111,7 +116,14 @@ export const GroupByFilter = memo(function GroupByFilter({
 				};
 			}
 
-			return { ...initialAutocompleteData, key: currentValue };
+			const groupBySuggestions =
+				queryClient.getQueryData<SuccessResponse<IQueryAutocompleteResponse>>([
+					QueryBuilderKeys.GET_AGGREGATE_KEYS,
+					debouncedValue,
+					isFocused,
+				])?.payload.attributeKeys || [];
+
+			return chooseAutocompleteFromCustomValue(groupBySuggestions, currentValue);
 		});
 
 		const result = uniqWith(groupByValues, isEqual);

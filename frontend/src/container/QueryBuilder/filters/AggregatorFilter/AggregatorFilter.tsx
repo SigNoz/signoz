@@ -9,6 +9,7 @@ import {
 	QueryBuilderKeys,
 	selectValueDivider,
 } from 'constants/queryBuilder';
+import { DEBOUNCE_DELAY } from 'constants/queryBuilderFilterConfig';
 import useDebounce from 'hooks/useDebounce';
 import { createIdFromObjectFields } from 'lib/createIdFromObjectFields';
 import { chooseAutocompleteFromCustomValue } from 'lib/newQueryBuilder/chooseAutocompleteFromCustomValue';
@@ -41,9 +42,9 @@ export const AggregatorFilter = memo(function AggregatorFilter({
 
 	const handleChangeAttribute = useCallback(
 		(data: BaseAutocompleteData[]) => {
-			const attribute = chooseAutocompleteFromCustomValue(data, [searchText]);
+			const attribute = chooseAutocompleteFromCustomValue(data, searchText);
 
-			onChange(attribute[0]);
+			onChange(attribute);
 		},
 		[onChange, searchText],
 	);
@@ -55,7 +56,7 @@ export const AggregatorFilter = memo(function AggregatorFilter({
 		return value;
 	}, [searchText]);
 
-	const debouncedValue = useDebounce(debouncedSearchText, 300);
+	const debouncedValue = useDebounce(debouncedSearchText, DEBOUNCE_DELAY);
 	const { isFetching } = useQuery(
 		[
 			QueryBuilderKeys.GET_AGGREGATE_ATTRIBUTE,
