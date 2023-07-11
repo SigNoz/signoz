@@ -2450,6 +2450,24 @@ func (aH *APIHandler) autoCompleteAttributeValues(w http.ResponseWriter, r *http
 	aH.Respond(w, response)
 }
 
+func createFilterForGraphQuery(data []*v3.Row) string {
+	// create the filter from the first query result
+	/*
+		put | error
+		put | debug
+	*/
+	// filter : ( method = 'put' AND level = 'error' ) OR ( method = 'put' AND level = 'debug' )
+	filterarr := []string{}
+	for _, row := range data {
+		tempFilter := []string{}
+		for name, val := range row.Data {
+			tempFilter = append(tempFilter, fmt.Sprintf("%s = %s", name, utils.ClickHouseFormattedValue(val)))
+		}
+		filterarr = append(filterarr, "( "+strings.Join(tempFilter, " AND ")+" )")
+	}
+	return strings.Join(filterarr, " OR ")
+}
+
 func (aH *APIHandler) execClickHouseGraphQueries(ctx context.Context, queries map[string]string) ([]*v3.Result, error, map[string]string) {
 	type channelResult struct {
 		Series []*v3.Series
@@ -2476,34 +2494,22 @@ func (aH *APIHandler) execClickHouseGraphQueries(ctx context.Context, queries ma
 				actualName := strings.ReplaceAll(name, constants.SecondQuerySuffix, "")
 				list, err := aH.reader.GetListResultV3(ctx, queries[actualName+constants.FirstQuerySuffix])
 				if err != nil {
-					ch <- channelResult{Err: fmt.Errorf("error in query-%s: %v", name, err), Name: actualName + constants.FirstQuerySuffix, Query: queries[actualName+constants.FirstQuerySuffix]}
+					ch <- channelResult{Err: fmt.Errorf("error in query-%s: %v", actualName+constants.FirstQuerySuffix, err), Name: actualName, Query: queries[actualName+constants.FirstQuerySuffix]}
 					return
 				}
 
-				// create the filterset from the first query result
-				/*
-					put | error
-					put | debug
-				*/
-				// filter : ( method = 'put' AND level = 'error' ) OR ( method = 'put' AND level = 'debug' )
-				filterarr := []string{}
-				for _, row := range list {
-					tempFilter := []string{}
-					for name, val := range row.Data {
-						tempFilter = append(tempFilter, fmt.Sprintf("%s = %s", name, utils.ClickHouseFormattedValue(val)))
-					}
-					filterarr = append(filterarr, "( "+strings.Join(tempFilter, " AND ")+" )")
-				}
-				filterString := strings.Join(filterarr, " OR ")
+				// create the filter string
+				filterString := createFilterForGraphQuery(list)
 
+				// add the filter string to the query
 				finalQuery := fmt.Sprintf(query, filterString)
 				seriesList, err := aH.reader.GetTimeSeriesResultV3(ctx, finalQuery)
 				if err != nil {
-					ch <- channelResult{Err: fmt.Errorf("error in query-%s: %v", name, err), Name: name, Query: query}
+					ch <- channelResult{Err: fmt.Errorf("error in query-%s: %v", actualName, err), Name: actualName, Query: query}
 					return
 				}
 
-				ch <- channelResult{Series: seriesList, Name: name, Query: query}
+				ch <- channelResult{Series: seriesList, Name: actualName, Query: query}
 			} else {
 				// Graph query without limit
 				seriesList, err := aH.reader.GetTimeSeriesResultV3(ctx, query)

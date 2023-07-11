@@ -369,7 +369,7 @@ func TestClickHouseFormattedValue(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			got := ClickHouseFormattedValue(tt.value)
 			if !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("ValidateAndCastValue() = %v, want %v", got, tt.want)
+				t.Errorf("ClickHouseFormattedValue() = %v, want %v", got, tt.want)
 			}
 		})
 	}

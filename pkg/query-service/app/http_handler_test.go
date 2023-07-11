@@ -5,10 +5,13 @@ import (
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
+	"reflect"
 	"strings"
 	"testing"
+	"time"
 
 	"go.signoz.io/signoz/pkg/query-service/model"
+	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
 )
 
 func TestPrepareQuery(t *testing.T) {
@@ -126,6 +129,55 @@ func TestPrepareQuery(t *testing.T) {
 				if query != tc.query {
 					t.Errorf("expected query: %s, but got: %s", tc.query, query)
 				}
+			}
+		})
+	}
+}
+
+var testCreateFilterForGraphQuery = []struct {
+	name string
+	data []*v3.Row
+	want string
+}{
+	{
+		name: "test for or",
+		data: []*v3.Row{
+			{
+				Timestamp: time.Now(),
+				Data: map[string]interface{}{
+					"method": "put",
+				},
+			},
+			{
+				Timestamp: time.Now(),
+				Data: map[string]interface{}{
+					"method": "post",
+				},
+			},
+		},
+		want: `( method = 'put' ) OR ( method = 'post' )`,
+	},
+	{
+		name: "test for and",
+		data: []*v3.Row{
+			{
+				Timestamp: time.Now(),
+				Data: map[string]interface{}{
+					"method": "put",
+					"level":  "debug",
+				},
+			},
+		},
+		want: `( method = 'put' AND level = 'debug' )`,
+	},
+}
+
+func TestCreateFilterForGraphQuery(t *testing.T) {
+	for _, tt := range testCreateFilterForGraphQuery {
+		t.Run(tt.name, func(t *testing.T) {
+			got := createFilterForGraphQuery(tt.data)
+			if !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("createFilterForGraphQuery() = %v, want %v", got, tt.want)
 			}
 		})
 	}
