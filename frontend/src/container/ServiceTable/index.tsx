@@ -5,12 +5,12 @@ import { SKIP_ONBOARDING } from 'constants/onboarding';
 import { useState } from 'react';
 import { useLocation } from 'react-router-dom';
 
-import { columns } from './Columns/MetricsColumn';
-import MetricsTableProp from './MetricsTable';
+import { columns } from './Columns/ServiceColumn';
+import ServiceTableProp from './ServiceTable';
 import SkipBoardModal from './SkipOnBoardModal';
 import { Container } from './styles';
 
-function Metrics({ services, loading, error }: MetricsTableProp): JSX.Element {
+function Metrics({ services, loading, error }: ServiceTableProp): JSX.Element {
 	const { search } = useLocation();
 	const [skipOnboarding, setSkipOnboarding] = useState(
 		localStorageGet(SKIP_ONBOARDING) === 'true',

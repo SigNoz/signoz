@@ -1,6 +1,6 @@
 import { ServicesList } from 'types/api/metrics/getService';
 
-export default interface MetricsTableProp {
+export default interface ServiceTableProp {
 	services: ServicesList[];
 	loading: boolean;
 	error: boolean;
