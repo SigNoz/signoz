@@ -1,6 +1,6 @@
 import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { TagFilterItem } from 'types/api/queryBuilder/queryBuilderData';
-import { QueryBuilderData } from 'types/common/queryBuilder';
+import { DataSource, QueryBuilderData } from 'types/common/queryBuilder';
 
 import {
 	getQueryBuilderQueries,
@@ -12,35 +12,42 @@ export const databaseCallsRPS = ({
 	legend,
 	tagFilterItems,
 }: DatabaseCallsRPSProps): QueryBuilderData => {
-	const metricName: BaseAutocompleteData = {
-		dataType: 'float64',
-		isColumn: true,
-		key: 'signoz_db_latency_count',
-		type: null,
-	};
+	const metricNames: BaseAutocompleteData[] = [
+		{
+			dataType: 'float64',
+			isColumn: true,
+			key: 'signoz_db_latency_count',
+			type: null,
+		},
+	];
 	const groupBy: BaseAutocompleteData[] = [
 		{ dataType: 'string', isColumn: false, key: 'db_system', type: 'tag' },
 	];
-	const itemsA: TagFilterItem[] = [
-		{
-			id: '',
-			key: {
-				dataType: 'string',
-				isColumn: false,
-				key: 'service_name',
-				type: 'resource',
+	const filterItems: TagFilterItem[][] = [
+		[
+			{
+				id: '',
+				key: {
+					dataType: 'string',
+					isColumn: false,
+					key: 'service_name',
+					type: 'resource',
+				},
+				op: 'IN',
+				value: [`${servicename}`],
 			},
-			op: 'IN',
-			value: [`${servicename}`],
-		},
-		...tagFilterItems,
+			...tagFilterItems,
+		],
 	];
 
+	const legends = [legend];
+
 	return getQueryBuilderQueries({
-		metricName,
+		metricNames,
 		groupBy,
-		legend,
-		itemsA,
+		legends,
+		filterItems,
+		dataSource: DataSource.METRICS,
 	});
 };
 

@@ -1,5 +1,4 @@
 import { ActiveElement, Chart, ChartData, ChartEvent } from 'chart.js';
-import Graph from 'components/Graph';
 import { QueryParams } from 'constants/query';
 import ROUTES from 'constants/routes';
 import FullView from 'container/GridGraphLayout/Graph/FullView/index.metricsBuilder';
@@ -10,8 +9,6 @@ import {
 	convertRawQueriesToTraceSelectedTags,
 	resourceAttributesToTagFilterItems,
 } from 'hooks/useResourceAttribute/utils';
-import convertToNanoSecondsToSecond from 'lib/convertToNanoSecondsToSecond';
-import { colors } from 'lib/getRandomColor';
 import history from 'lib/history';
 import { useCallback, useMemo, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
@@ -25,6 +22,7 @@ import { v4 as uuid } from 'uuid';
 import { getWidgetQueryBuilder } from '../MetricsApplication.factory';
 import {
 	errorPercentage,
+	letency,
 	operationPerSec,
 } from '../MetricsPageQueries/OverviewQueries';
 import { Card, Col, GraphContainer, GraphTitle, Row } from '../styles';
@@ -64,7 +62,7 @@ function Application(): JSX.Element {
 		[handleSetTimeStamp],
 	);
 
-	const { topOperations, serviceOverview, topLevelOperations } = useSelector<
+	const { topOperations, topLevelOperations } = useSelector<
 		AppState,
 		MetricReducer
 	>((state) => state.metrics);
@@ -79,6 +77,21 @@ function Application(): JSX.Element {
 		() =>
 			handleNonInQueryRange(resourceAttributesToTagFilterItems(queries)) || [],
 		[queries],
+	);
+
+	const latencyWidget = useMemo(
+		() =>
+			getWidgetQueryBuilder({
+				queryType: EQueryType.QUERY_BUILDER,
+				promql: [],
+				builder: letency({
+					servicename,
+					tagFilterItems,
+				}),
+				clickhouse_sql: [],
+				id: uuid(),
+			}),
+		[servicename, tagFilterItems],
 	);
 
 	const operationPerSecWidget = useMemo(
@@ -145,52 +158,6 @@ function Application(): JSX.Element {
 		);
 	};
 
-	const generalChartDataProperties = useCallback(
-		(title: string, colorIndex: number) => ({
-			borderColor: colors[colorIndex],
-			label: title,
-			showLine: true,
-			borderWidth: 1.5,
-			spanGaps: true,
-			pointRadius: 2,
-			pointHoverRadius: 4,
-		}),
-		[],
-	);
-
-	const dataSets = useMemo(
-		() => [
-			{
-				data: serviceOverview.map((e) =>
-					parseFloat(convertToNanoSecondsToSecond(e.p99)),
-				),
-				...generalChartDataProperties('p99 Latency', 0),
-			},
-			{
-				data: serviceOverview.map((e) =>
-					parseFloat(convertToNanoSecondsToSecond(e.p95)),
-				),
-				...generalChartDataProperties('p95 Latency', 1),
-			},
-			{
-				data: serviceOverview.map((e) =>
-					parseFloat(convertToNanoSecondsToSecond(e.p50)),
-				),
-				...generalChartDataProperties('p50 Latency', 2),
-			},
-		],
-		[generalChartDataProperties, serviceOverview],
-	);
-
-	const data = useMemo(
-		() => ({
-			datasets: dataSets,
-			labels: serviceOverview.map(
-				(e) => new Date(parseFloat(convertToNanoSecondsToSecond(e.timestamp))),
-			),
-		}),
-		[serviceOverview, dataSets],
-	);
 	return (
 		<>
 			<Row gutter={24}>
@@ -210,12 +177,11 @@ function Application(): JSX.Element {
 					<Card>
 						<GraphTitle>Latency</GraphTitle>
 						<GraphContainer>
-							<Graph
-								animate={false}
-								onClickHandler={handleGraphClick('Service')}
+							<FullView
 								name="service_latency"
-								type="line"
-								data={data}
+								fullViewOptions={false}
+								onClickHandler={handleGraphClick('Service')}
+								widget={latencyWidget}
 								yAxisUnit="ms"
 								onDragSelect={onDragSelect}
 							/>

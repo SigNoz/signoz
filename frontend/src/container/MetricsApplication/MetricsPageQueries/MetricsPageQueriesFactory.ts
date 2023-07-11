@@ -5,27 +5,40 @@ import {
 import getStep from 'lib/getStep';
 import store from 'store';
 import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
-import { TagFilterItem } from 'types/api/queryBuilder/queryBuilderData';
 import {
+	IBuilderQuery,
+	TagFilterItem,
+} from 'types/api/queryBuilder/queryBuilderData';
+import {
+	DataSource,
 	MetricAggregateOperator,
 	QueryBuilderData,
 } from 'types/common/queryBuilder';
 
 export const getQueryBuilderQueries = ({
-	metricName,
+	metricNames,
 	groupBy = [],
-	legend,
-	itemsA,
+	legends,
+	filterItems,
+	aggregateOperator,
+	dataSource,
+	queryName,
+	expression,
 }: BuilderQueriesProps): QueryBuilderData => ({
 	queryFormulas: [],
-	queryData: [
-		{
+	queryData: metricNames.map((item, index) => {
+		const obj = {
 			...initialQueryBuilderFormValuesMap.metrics,
-			aggregateOperator: MetricAggregateOperator.SUM_RATE,
+			aggregateOperator: (function (): string {
+				if (aggregateOperator) {
+					return aggregateOperator[index];
+				}
+				return MetricAggregateOperator.SUM_RATE;
+			})(),
 			disabled: false,
 			groupBy,
-			aggregateAttribute: metricName,
-			legend,
+			aggregateAttribute: item,
+			legend: legends[index],
 			stepInterval: getStep({
 				end: store.getState().globalTime.maxTime,
 				inputFormat: 'ns',
@@ -33,11 +46,22 @@ export const getQueryBuilderQueries = ({
 			}),
 			reduceTo: 'sum',
 			filters: {
-				items: itemsA,
+				items: filterItems[index],
 				op: 'AND',
 			},
-		},
-	],
+			dataSource,
+		} as IBuilderQuery;
+
+		if (queryName) {
+			obj.queryName = queryName[index];
+		}
+
+		if (expression) {
+			obj.expression = expression[index];
+		}
+
+		return obj;
+	}),
 });
 
 export const getQueryBuilderQuerieswithFormula = ({
@@ -101,10 +125,14 @@ export const getQueryBuilderQuerieswithFormula = ({
 });
 
 interface BuilderQueriesProps {
-	metricName: BaseAutocompleteData;
+	metricNames: BaseAutocompleteData[];
 	groupBy?: BaseAutocompleteData[];
-	legend: string;
-	itemsA: TagFilterItem[];
+	legends: string[];
+	filterItems: TagFilterItem[][];
+	aggregateOperator?: string[];
+	dataSource: DataSource;
+	queryName?: string[];
+	expression?: string[];
 }
 
 interface BuilderQuerieswithFormulaProps {

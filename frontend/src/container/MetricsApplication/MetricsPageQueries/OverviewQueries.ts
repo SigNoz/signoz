@@ -1,55 +1,147 @@
 import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { TagFilterItem } from 'types/api/queryBuilder/queryBuilderData';
-import { QueryBuilderData } from 'types/common/queryBuilder';
+import { DataSource, QueryBuilderData } from 'types/common/queryBuilder';
 
 import {
 	getQueryBuilderQueries,
 	getQueryBuilderQuerieswithFormula,
 } from './MetricsPageQueriesFactory';
 
+export const letency = ({
+	servicename,
+	tagFilterItems,
+}: LetencyProps): QueryBuilderData => {
+	const metricNames: BaseAutocompleteData[] = [
+		{
+			dataType: 'float64',
+			isColumn: true,
+			key: 'durationNano',
+			type: 'tag',
+		},
+		{
+			key: 'durationNano',
+			dataType: 'float64',
+			type: 'tag',
+			isColumn: true,
+		},
+		{
+			key: 'durationNano',
+			dataType: 'float64',
+			type: 'tag',
+			isColumn: true,
+		},
+	];
+
+	const legends = ['p50', 'p90', 'p99'];
+	const aggregateOperator = ['p50', 'p90', 'p99'];
+
+	const filterItems: TagFilterItem[][] = [
+		[
+			{
+				id: '',
+				key: {
+					key: 'serviceName',
+					dataType: 'string',
+					type: 'tag',
+					isColumn: true,
+				},
+				op: '=',
+				value: `${servicename}`,
+			},
+			...tagFilterItems,
+		],
+		[
+			{
+				id: '',
+				key: {
+					key: 'serviceName',
+					dataType: 'string',
+					type: 'tag',
+					isColumn: true,
+				},
+				op: '=',
+				value: `${servicename}`,
+			},
+			...tagFilterItems,
+		],
+		[
+			{
+				id: '',
+				key: {
+					key: 'serviceName',
+					dataType: 'string',
+					type: 'tag',
+					isColumn: true,
+				},
+				op: '=',
+				value: `${servicename}`,
+			},
+			...tagFilterItems,
+		],
+	];
+
+	const queryName = ['A', 'B', 'C'];
+	const expression = ['A', 'B', 'C'];
+
+	return getQueryBuilderQueries({
+		metricNames,
+		legends,
+		filterItems,
+		aggregateOperator,
+		dataSource: DataSource.TRACES,
+		queryName,
+		expression,
+	});
+};
+
 export const operationPerSec = ({
 	servicename,
 	tagFilterItems,
 	topLevelOperations,
 }: OperationPerSecProps): QueryBuilderData => {
-	const metricName: BaseAutocompleteData = {
-		dataType: 'float64',
-		isColumn: true,
-		key: 'signoz_latency_count',
-		type: null,
-	};
-	const legend = 'Operations';
+	const metricNames: BaseAutocompleteData[] = [
+		{
+			dataType: 'float64',
+			isColumn: true,
+			key: 'signoz_latency_count',
+			type: null,
+		},
+	];
+	const legends = ['Operations'];
 
-	const itemsA: TagFilterItem[] = [
-		{
-			id: '',
-			key: {
-				dataType: 'string',
-				isColumn: false,
-				key: 'service_name',
-				type: 'resource',
+	const filterItems: TagFilterItem[][] = [
+		[
+			{
+				id: '',
+				key: {
+					dataType: 'string',
+					isColumn: false,
+					key: 'service_name',
+					type: 'resource',
+				},
+				op: 'IN',
+				value: [`${servicename}`],
 			},
-			op: 'IN',
-			value: [`${servicename}`],
-		},
-		{
-			id: '',
-			key: {
-				dataType: 'string',
-				isColumn: false,
-				key: 'operation',
-				type: 'tag',
+			{
+				id: '',
+				key: {
+					dataType: 'string',
+					isColumn: false,
+					key: 'operation',
+					type: 'tag',
+				},
+				op: 'IN',
+				value: topLevelOperations,
 			},
-			op: 'IN',
-			value: topLevelOperations,
-		},
-		...tagFilterItems,
+			...tagFilterItems,
+		],
 	];
 
 	return getQueryBuilderQueries({
-		metricName,
-		legend,
-		itemsA,
+		metricNames,
+		legends,
+		filterItems,
+		dataSource: DataSource.METRICS,
 	});
 };
 
@@ -153,4 +245,9 @@ export interface OperationPerSecProps {
 	servicename: string | undefined;
 	tagFilterItems: TagFilterItem[];
 	topLevelOperations: string[];
+}
+
+export interface LetencyProps {
+	servicename: string | undefined;
+	tagFilterItems: TagFilterItem[];
 }
