@@ -30,6 +30,7 @@ import (
 	"go.signoz.io/signoz/pkg/query-service/auth"
 	"go.signoz.io/signoz/pkg/query-service/constants"
 	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
+	"go.signoz.io/signoz/pkg/query-service/utils"
 	querytemplate "go.signoz.io/signoz/pkg/query-service/utils/queryTemplate"
 
 	"go.signoz.io/signoz/pkg/query-service/dao"
@@ -2490,7 +2491,7 @@ func (aH *APIHandler) execClickHouseGraphQueries(ctx context.Context, queries ma
 				for i, row := range list {
 					tFilter := ""
 					for name, val := range row.Data {
-						tFilter = tFilter + fmt.Sprintf("%s = '%s' AND ", name, *val.(*string))
+						tFilter = tFilter + fmt.Sprintf("%s = %s AND ", name, utils.ClickHouseFormattedValue(val))
 					}
 					filterString = filterString + "( " + strings.TrimRight(tFilter, "AND ") + " )"
 					if i != l-1 {
