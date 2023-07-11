@@ -66,7 +66,6 @@ export const alphabet: string[] = alpha.map((str) => String.fromCharCode(str));
 export enum QueryBuilderKeys {
 	GET_AGGREGATE_ATTRIBUTE = 'GET_AGGREGATE_ATTRIBUTE',
 	GET_AGGREGATE_KEYS = 'GET_AGGREGATE_KEYS',
-	GET_ATTRIBUTE_KEY = 'GET_ATTRIBUTE_KEY',
 }
 
 export const mapOfOperators = {
