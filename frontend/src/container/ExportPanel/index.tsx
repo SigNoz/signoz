@@ -58,6 +58,7 @@ function ExportPanel({
 				onCancel={onCancel(false)}
 				open={isExport}
 				centered
+				destroyOnClose
 			>
 				<ExportPanelContainer
 					query={query}
