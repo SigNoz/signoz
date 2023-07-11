@@ -3,7 +3,6 @@ import { getAggregateKeys } from 'api/queryBuilder/getAttributeKeys';
 // ** Constants
 import {
 	idDivider,
-	initialAutocompleteData,
 	QueryBuilderKeys,
 	selectValueDivider,
 } from 'constants/queryBuilder';
@@ -18,9 +17,7 @@ import { memo, useCallback, useEffect, useState } from 'react';
 import { useQuery, useQueryClient } from 'react-query';
 import { SuccessResponse } from 'types/api';
 import {
-	AutocompleteType,
 	BaseAutocompleteData,
-	DataType,
 	IQueryAutocompleteResponse,
 } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { SelectOption } from 'types/common/select';
@@ -86,6 +83,15 @@ export const GroupByFilter = memo(function GroupByFilter({
 		},
 	);
 
+	const getAttributeKeys = useCallback(
+		(): BaseAutocompleteData[] =>
+			queryClient.getQueryData<SuccessResponse<IQueryAutocompleteResponse>>(
+				[QueryBuilderKeys.GET_AGGREGATE_KEYS],
+				{ exact: false },
+			)?.payload.attributeKeys || [],
+		[queryClient],
+	);
+
 	const handleSearchKeys = (searchText: string): void => {
 		setSearchText(searchText);
 	};
@@ -102,28 +108,17 @@ export const GroupByFilter = memo(function GroupByFilter({
 	const handleChange = (values: SelectOption<string, string>[]): void => {
 		const groupByValues: BaseAutocompleteData[] = values.map((item) => {
 			const [currentValue, id] = item.value.split(selectValueDivider);
-			if (id && id.includes(idDivider)) {
-				const [key, dataType, type, isColumn] = id.split(idDivider);
+			const keys = getAttributeKeys();
 
-				return {
-					id,
-					key: key || currentValue,
-					dataType: (dataType as DataType) || initialAutocompleteData.dataType,
-					type: (type as AutocompleteType) || initialAutocompleteData.type,
-					isColumn: isColumn
-						? isColumn === 'true'
-						: initialAutocompleteData.isColumn,
-				};
+			if (id && id.includes(idDivider)) {
+				const attribute = keys.find((item) => item.id === id);
+
+				if (attribute) {
+					return attribute;
+				}
 			}
 
-			const groupBySuggestions =
-				queryClient.getQueryData<SuccessResponse<IQueryAutocompleteResponse>>([
-					QueryBuilderKeys.GET_AGGREGATE_KEYS,
-					debouncedValue,
-					isFocused,
-				])?.payload.attributeKeys || [];
-
-			return chooseAutocompleteFromCustomValue(groupBySuggestions, currentValue);
+			return chooseAutocompleteFromCustomValue(keys, currentValue);
 		});
 
 		const result = uniqWith(groupByValues, isEqual);
