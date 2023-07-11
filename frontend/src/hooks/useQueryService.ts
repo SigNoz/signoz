@@ -1,6 +1,6 @@
 import getService from 'api/metrics/getService';
 import { Time } from 'container/TopNav/DateTimeSelection/config';
-import { QueryServiceProps } from 'pages/Metrics';
+import { QueryServiceProps } from 'pages/Services';
 import { useQuery } from 'react-query';
 import { Tags } from 'types/reducer/trace';
 

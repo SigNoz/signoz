@@ -10,7 +10,7 @@ import ServiceTableProp from './ServiceTable';
 import SkipBoardModal from './SkipOnBoardModal';
 import { Container } from './styles';
 
-function Metrics({ services, loading, error }: ServiceTableProp): JSX.Element {
+function Services({ services, loading, error }: ServiceTableProp): JSX.Element {
 	const { search } = useLocation();
 	const [skipOnboarding, setSkipOnboarding] = useState(
 		localStorageGet(SKIP_ONBOARDING) === 'true',
@@ -44,4 +44,4 @@ function Metrics({ services, loading, error }: ServiceTableProp): JSX.Element {
 	);
 }
 
-export default Metrics;
+export default Services;

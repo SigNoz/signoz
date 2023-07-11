@@ -3,7 +3,7 @@ import { AxiosError } from 'axios';
 import ReleaseNote from 'components/ReleaseNote';
 import Spinner from 'components/Spinner';
 import ResourceAttributesFilter from 'container/ResourceAttributesFilter';
-import MetricTable from 'container/ServiceTable';
+import ServicesTable from 'container/ServiceTable';
 import { useNotifications } from 'hooks/useNotifications';
 import { useQueryService } from 'hooks/useQueryService';
 import useResourceAttribute from 'hooks/useResourceAttribute';
@@ -56,7 +56,7 @@ function Metrics(): JSX.Element {
 			<ReleaseNote path={location.pathname} />
 
 			<ResourceAttributesFilter />
-			<MetricTable services={data || []} loading={isLoading} error={!!error} />
+			<ServicesTable services={data || []} loading={isLoading} error={!!error} />
 		</Space>
 	);
 }
