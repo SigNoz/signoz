@@ -20,13 +20,9 @@ function LogExplorerDetailedView({
 }: LogExplorerDetailedViewProps): JSX.Element {
 	const queryClient = useQueryClient();
 	const { redirectWithQueryBuilderData, currentQuery } = useQueryBuilder();
-	const onDrawerClose = (): void => {
-		onClose();
-	};
 
 	const handleAddQuery = useCallback(
 		(fieldKey: string, fieldValue: string): void => {
-			console.log({ queryData: currentQuery.builder.queryData });
 			const keysAutocomplete: BaseAutocompleteData[] =
 				queryClient.getQueryData<SuccessResponse<IQueryAutocompleteResponse>>(
 					[QueryBuilderKeys.GET_AGGREGATE_KEYS],
@@ -67,9 +63,7 @@ function LogExplorerDetailedView({
 		[currentQuery, queryClient, redirectWithQueryBuilderData],
 	);
 
-	return (
-		<LogDetail log={log} onClose={onDrawerClose} onAddToQuery={handleAddQuery} />
-	);
+	return <LogDetail log={log} onClose={onClose} onAddToQuery={handleAddQuery} />;
 }
 
 export default LogExplorerDetailedView;
