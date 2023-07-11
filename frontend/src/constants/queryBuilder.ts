@@ -3,6 +3,7 @@ import { GRAPH_TYPES } from 'container/NewDashboard/ComponentsSlider';
 import { createIdFromObjectFields } from 'lib/createIdFromObjectFields';
 import { createNewBuilderItemName } from 'lib/newQueryBuilder/createNewBuilderItemName';
 import {
+	AutocompleteType,
 	BaseAutocompleteData,
 	LocalDataType,
 } from 'types/api/queryBuilder/queryAutocompleteResponse';
@@ -49,6 +50,11 @@ export const baseAutoCompleteIdKeysOrder: (keyof Omit<
 	BaseAutocompleteData,
 	'id'
 >)[] = ['key', 'dataType', 'type', 'isColumn'];
+
+export const autocompleteType: Record<AutocompleteType, AutocompleteType> = {
+	resource: 'resource',
+	tag: 'tag',
+};
 
 export const formulasNames: string[] = Array.from(
 	Array(MAX_FORMULAS),
