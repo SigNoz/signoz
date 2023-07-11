@@ -6,8 +6,8 @@ import {
 	getTagToken,
 	isInNInOperator,
 } from 'container/QueryBuilder/filters/QueryBuilderSearch/utils';
+import useDebounceValue from 'hooks/useDebounce';
 import { isEqual, uniqWith } from 'lodash-es';
-import debounce from 'lodash-es/debounce';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useQuery } from 'react-query';
 import { useDebounce } from 'react-use';
@@ -39,24 +39,22 @@ export const useFetchKeysAndValues = (
 	const [sourceKeys, setSourceKeys] = useState<BaseAutocompleteData[]>([]);
 	const [results, setResults] = useState<string[]>([]);
 
-	const searchParams = useMemo(
-		() =>
-			debounce(
-				() => [
-					searchKey,
-					query.dataSource,
-					query.aggregateOperator,
-					query.aggregateAttribute.key,
-				],
-				300,
-			),
-		[
-			query.aggregateAttribute.key,
-			query.aggregateOperator,
-			query.dataSource,
+	const memoizedSearchParams = useMemo(
+		() => [
 			searchKey,
+			query.dataSource,
+			query.aggregateOperator,
+			query.aggregateAttribute.key,
+		],
+		[
+			searchKey,
+			query.dataSource,
+			query.aggregateOperator,
+			query.aggregateAttribute.key,
 		],
 	);
+
+	const searchParams = useDebounceValue(memoizedSearchParams, 300);
 
 	const isQueryEnabled = useMemo(
 		() =>
@@ -73,7 +71,7 @@ export const useFetchKeysAndValues = (
 	);
 
 	const { data, isFetching, status } = useQuery(
-		[QueryBuilderKeys.GET_ATTRIBUTE_KEY, searchParams()],
+		[QueryBuilderKeys.GET_AGGREGATE_KEYS, searchParams],
 		async () =>
 			getAggregateKeys({
 				searchText: searchKey,
