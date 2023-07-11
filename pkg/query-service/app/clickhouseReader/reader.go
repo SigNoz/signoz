@@ -3958,10 +3958,7 @@ func (r *ClickHouseReader) GetLogAttributeValues(ctx context.Context, req *v3.Fi
 
 	// if dataType or tagType is not present return empty response
 	if len(req.FilterAttributeKeyDataType) == 0 || len(req.TagType) == 0 || req.FilterAttributeKey == "body" {
-		// also check if it is not a top level key
-		if _, ok := constants.StaticFieldsLogsV3[req.FilterAttributeKey]; !ok {
-			return &v3.FilterAttributeValueResponse{}, nil
-		}
+		return &v3.FilterAttributeValueResponse{}, nil
 	}
 
 	// if data type is bool, return true and false
