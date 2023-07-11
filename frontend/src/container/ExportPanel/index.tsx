@@ -84,10 +84,6 @@ function ExportPanel({
 	);
 }
 
-ExportPanel.defaultProps = {
-	isLoading: false,
-};
-
 interface OnClickProps {
 	key: string;
 }
@@ -97,5 +93,7 @@ export interface ExportPanelProps {
 	onExport: (dashboard: Dashboard | null) => void;
 	query: Query | null;
 }
+
+ExportPanel.defaultProps = { isLoading: false };
 
 export default ExportPanel;
