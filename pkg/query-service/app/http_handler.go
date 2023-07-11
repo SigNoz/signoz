@@ -2486,18 +2486,15 @@ func (aH *APIHandler) execClickHouseGraphQueries(ctx context.Context, queries ma
 					put | debug
 				*/
 				// filter : ( method = 'put' AND level = 'error' ) OR ( method = 'put' AND level = 'debug' )
-				filterString := ""
-				l := len(list)
-				for i, row := range list {
-					tFilter := ""
+				filterarr := []string{}
+				for _, row := range list {
+					tempFilter := []string{}
 					for name, val := range row.Data {
-						tFilter = tFilter + fmt.Sprintf("%s = %s AND ", name, utils.ClickHouseFormattedValue(val))
+						tempFilter = append(tempFilter, fmt.Sprintf("%s = %s", name, utils.ClickHouseFormattedValue(val)))
 					}
-					filterString = filterString + "( " + strings.TrimRight(tFilter, "AND ") + " )"
-					if i != l-1 {
-						filterString = filterString + " OR "
-					}
+					filterarr = append(filterarr, "( "+strings.Join(tempFilter, " AND ")+" )")
 				}
+				filterString := strings.Join(filterarr, " OR ")
 
 				finalQuery := fmt.Sprintf(query, filterString)
 				seriesList, err := aH.reader.GetTimeSeriesResultV3(ctx, finalQuery)
