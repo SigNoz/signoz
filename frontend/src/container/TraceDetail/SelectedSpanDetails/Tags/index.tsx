@@ -6,7 +6,6 @@ import {
 	Dispatch,
 	SetStateAction,
 	useCallback,
-	useEffect,
 	useMemo,
 	useState,
 } from 'react';
@@ -24,12 +23,8 @@ function Tags({
 	setText,
 }: TagsProps): JSX.Element {
 	const { t } = useTranslation(['traceDetails']);
-	const [allRenderedTags, setAllRenderedTags] = useState(tags);
+	const [searchText, setSearchText] = useState('');
 	const isSearchVisible = useMemo(() => tags.length > 5, [tags]);
-
-	useEffect(() => {
-		setAllRenderedTags(tags);
-	}, [tags]);
 
 	const getLink = useCallback(
 		(item: Record<string, string>) =>
@@ -41,14 +36,12 @@ function Tags({
 		[],
 	);
 
-	const onChangeHandler = useCallback(
-		(e: ChangeEvent<HTMLInputElement>): void => {
-			const { value } = e.target;
-			const filteredTags = tags.filter((tag) => tag.key.includes(value));
-			setAllRenderedTags(filteredTags);
-		},
-		[tags],
-	);
+	const onChangeHandler = (e: ChangeEvent<HTMLInputElement>): void => {
+		const { value } = e.target;
+		setSearchText(value);
+	};
+
+	const filteredTags = tags.filter((tag) => tag.key.includes(searchText));
 
 	if (tags.length === 0) {
 		return <Typography>No tags in selected span</Typography>;
@@ -61,9 +54,10 @@ function Tags({
 					placeholder={t('traceDetails:search_tags')}
 					allowClear
 					onChange={onChangeHandler}
+					value={searchText}
 				/>
 			)}
-			{allRenderedTags.map((tag) => (
+			{filteredTags.map((tag) => (
 				<Tag
 					key={JSON.stringify(tag)}
 					{...{
