@@ -105,7 +105,7 @@ function TracesExplorer(): JSX.Element {
 									Panel limit exceeded for {DataSource.TRACES} in community edition.
 									Please checkout our paid plans{' '}
 									<a
-										href="https://signoz.io/pricing"
+										href="https://signoz.io/pricing/?utm_source=product&utm_medium=dashboard-limit"
 										rel="noreferrer noopener"
 										target="_blank"
 									>
