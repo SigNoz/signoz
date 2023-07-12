@@ -14,6 +14,7 @@ import (
 	"go.signoz.io/signoz/pkg/query-service/constants"
 	"go.signoz.io/signoz/pkg/query-service/interfaces"
 	"go.signoz.io/signoz/pkg/query-service/model"
+	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
 	"go.signoz.io/signoz/pkg/query-service/version"
 	"gopkg.in/segmentio/analytics-go.v3"
 )
@@ -34,7 +35,7 @@ const (
 	TELEMETRY_EVENT_LANGUAGE              = "Language"
 	TELEMETRY_EVENT_LOGS_FILTERS          = "Logs Filters"
 	TELEMETRY_EVENT_DISTRIBUTED           = "Distributed"
-	TELEMETRY_EVENT_DASHBOARDS_METADATA   = "Dashboards Metadata"
+	TELEMETRY_EVENT_DASHBOARDS_METADATA   = "Query Range V3 Metadata"
 	TELEMETRY_EVENT_ACTIVE_USER           = "Active User"
 	TELEMETRY_EVENT_ACTIVE_USER_PH        = "Active User V2"
 )
@@ -73,28 +74,41 @@ func (a *Telemetry) IsSampled() bool {
 
 }
 
-func (telemetry *Telemetry) CheckSigNozMetricsV2(compositeQuery *model.CompositeMetricQuery) bool {
+func (telemetry *Telemetry) CheckSigNozSignals(postData *v3.QueryRangeParamsV3) (bool, bool, bool) {
+	signozLogsUsed := false
+	signozTracesUsed := false
+	signozMetricsUsed := false
 
-	signozMetricsNotFound := false
-
-	if compositeQuery.BuilderQueries != nil && len(compositeQuery.BuilderQueries) > 0 {
-		if !strings.Contains(compositeQuery.BuilderQueries["A"].MetricName, "signoz_") && len(compositeQuery.BuilderQueries["A"].MetricName) > 0 {
-			signozMetricsNotFound = true
+	if postData.CompositeQuery.QueryType == v3.QueryTypeBuilder {
+		for _, query := range postData.CompositeQuery.BuilderQueries {
+			if query.DataSource == v3.DataSourceLogs {
+				signozLogsUsed = true
+			} else if query.DataSource == v3.DataSourceTraces {
+				signozTracesUsed = true
+			} else if query.DataSource == v3.DataSourceMetrics {
+				signozMetricsUsed = true
+			}
+		}
+	} else if postData.CompositeQuery.QueryType == v3.QueryTypePromQL {
+		for _, query := range postData.CompositeQuery.PromQueries {
+			if strings.Contains(query.Query, "signoz_") && len(query.Query) > 0 {
+				signozMetricsUsed = true
+			}
+		}
+	} else if postData.CompositeQuery.QueryType == v3.QueryTypeClickHouseSQL {
+		for _, query := range postData.CompositeQuery.ClickHouseQueries {
+			if strings.Contains(query.Query, "signoz_metrics") && len(query.Query) > 0 {
+				signozMetricsUsed = true
+			}
+			if strings.Contains(query.Query, "signoz_logs") && len(query.Query) > 0 {
+				signozLogsUsed = true
+			}
+			if strings.Contains(query.Query, "signoz_traces") && len(query.Query) > 0 {
+				signozTracesUsed = true
+			}
 		}
 	}
-
-	if compositeQuery.PromQueries != nil && len(compositeQuery.PromQueries) > 0 {
-		if !strings.Contains(compositeQuery.PromQueries["A"].Query, "signoz_") && len(compositeQuery.PromQueries["A"].Query) > 0 {
-			signozMetricsNotFound = true
-		}
-	}
-	if compositeQuery.ClickHouseQueries != nil && len(compositeQuery.ClickHouseQueries) > 0 {
-		if !strings.Contains(compositeQuery.ClickHouseQueries["A"].Query, "signoz_") && len(compositeQuery.ClickHouseQueries["A"].Query) > 0 {
-			signozMetricsNotFound = true
-		}
-	}
-
-	return signozMetricsNotFound
+	return signozLogsUsed, signozTracesUsed, signozMetricsUsed
 }
 
 func (telemetry *Telemetry) AddActiveTracesUser() {

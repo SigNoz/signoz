@@ -23,6 +23,7 @@ import (
 	"go.signoz.io/signoz/ee/query-service/dao"
 	"go.signoz.io/signoz/ee/query-service/interfaces"
 	baseInterface "go.signoz.io/signoz/pkg/query-service/interfaces"
+	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
 
 	licensepkg "go.signoz.io/signoz/ee/query-service/license"
 	"go.signoz.io/signoz/ee/query-service/usage"
@@ -325,10 +326,10 @@ func (lrw *loggingResponseWriter) Flush() {
 }
 
 func extractDashboardMetaData(path string, r *http.Request) (map[string]interface{}, bool) {
-	pathToExtractBodyFrom := "/api/v2/metrics/query_range"
+	pathToExtractBodyFrom := "/api/v3/query_range"
 
 	data := map[string]interface{}{}
-	var postData *basemodel.QueryRangeParamsV2
+	var postData *v3.QueryRangeParamsV3
 
 	if path == pathToExtractBodyFrom && (r.Method == "POST") {
 		if r.Body != nil {
@@ -348,24 +349,36 @@ func extractDashboardMetaData(path string, r *http.Request) (map[string]interfac
 		return nil, false
 	}
 
-	signozMetricNotFound := false
-
+	signozMetricsUsed := false
+	signozTracesUsed := false
+	signozLogsUsed := false
+	dataSources := []string{}
 	if postData != nil {
-		signozMetricNotFound = telemetry.GetInstance().CheckSigNozMetricsV2(postData.CompositeMetricQuery)
 
-		if postData.CompositeMetricQuery != nil {
-			data["queryType"] = postData.CompositeMetricQuery.QueryType
-			data["panelType"] = postData.CompositeMetricQuery.PanelType
+		if postData.CompositeQuery != nil {
+			data["queryType"] = postData.CompositeQuery.QueryType
+			data["panelType"] = postData.CompositeQuery.PanelType
+
+			signozLogsUsed, signozTracesUsed, signozMetricsUsed = telemetry.GetInstance().CheckSigNozSignals(postData)
 		}
-
-		data["datasource"] = postData.DataSource
 	}
 
-	if signozMetricNotFound {
-		telemetry.GetInstance().AddActiveMetricsUser()
+	if signozMetricsUsed || signozTracesUsed || signozLogsUsed {
+		if signozMetricsUsed {
+			dataSources = append(dataSources, "metrics")
+			telemetry.GetInstance().AddActiveMetricsUser()
+		}
+		if signozTracesUsed {
+			dataSources = append(dataSources, "traces")
+			telemetry.GetInstance().AddActiveTracesUser()
+		}
+		if signozLogsUsed {
+			dataSources = append(dataSources, "logs")
+			telemetry.GetInstance().AddActiveLogsUser()
+		}
+		data["dataSources"] = dataSources
 		telemetry.GetInstance().SendEvent(telemetry.TELEMETRY_EVENT_DASHBOARDS_METADATA, data, true)
 	}
-
 	return data, true
 }
 
