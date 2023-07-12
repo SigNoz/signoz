@@ -126,11 +126,7 @@ function Application(): JSX.Element {
 	const serviceOverviewError = queryResult[0].error;
 	const serviceOverviewIsError = queryResult[0].isError;
 	const serviceOverviewIsLoading = queryResult[0].isLoading;
-
 	const topOperations = queryResult[1].data;
-	const topOperationsError = queryResult[1].error;
-	const topOperationsIsError = queryResult[1].isError;
-
 	const topLevelOperations = queryResult[2].data;
 	const topLevelOperationsError = queryResult[2].error;
 	const topLevelOperationsIsError = queryResult[2].isError;
@@ -286,14 +282,13 @@ function Application(): JSX.Element {
 						View Traces
 					</Button>
 					<Card>
-						{serviceOverviewIsError && (
+						{serviceOverviewIsError ? (
 							<Typography>
 								{axios.isAxiosError(serviceOverviewError)
 									? serviceOverviewError.response?.data
 									: ERROR_MESSAGE}
 							</Typography>
-						)}
-						{!serviceOverviewIsError && (
+						) : (
 							<>
 								<GraphTitle>Latency</GraphTitle>
 								{serviceOverviewIsLoading && (
@@ -331,19 +326,27 @@ function Application(): JSX.Element {
 						View Traces
 					</Button>
 					<Card>
-						<>
-							<GraphTitle>Rate (ops/s)</GraphTitle>
-							<GraphContainer>
-								<FullView
-									name="operations_per_sec"
-									fullViewOptions={false}
-									onClickHandler={handleGraphClick('Rate')}
-									widget={operationPerSecWidget}
-									yAxisUnit="ops"
-									onDragSelect={onDragSelect}
-								/>
-							</GraphContainer>
-						</>
+						{topLevelOperationsIsError ? (
+							<Typography>
+								{axios.isAxiosError(topLevelOperationsError)
+									? topLevelOperationsError.response?.data
+									: ERROR_MESSAGE}
+							</Typography>
+						) : (
+							<>
+								<GraphTitle>Rate (ops/s)</GraphTitle>
+								<GraphContainer>
+									<FullView
+										name="operations_per_sec"
+										fullViewOptions={false}
+										onClickHandler={handleGraphClick('Rate')}
+										widget={operationPerSecWidget}
+										yAxisUnit="ops"
+										onDragSelect={onDragSelect}
+									/>
+								</GraphContainer>
+							</>
+						)}
 					</Card>
 				</Col>
 			</Row>
@@ -361,14 +364,13 @@ function Application(): JSX.Element {
 					</Button>
 
 					<Card>
-						{topLevelOperationsIsError && (
+						{topLevelOperationsIsError ? (
 							<Typography>
 								{axios.isAxiosError(topLevelOperationsError)
 									? topLevelOperationsError.response?.data
 									: ERROR_MESSAGE}
 							</Typography>
-						)}
-						{!topLevelOperationsIsError && (
+						) : (
 							<>
 								<GraphTitle>Error Percentage</GraphTitle>
 								<GraphContainer>
@@ -388,16 +390,7 @@ function Application(): JSX.Element {
 
 				<Col span={12}>
 					<Card>
-						{topOperationsIsError && (
-							<Typography>
-								{axios.isAxiosError(topOperationsError)
-									? topOperationsError.response?.data
-									: ERROR_MESSAGE}
-							</Typography>
-						)}
-						{!topOperationsIsError && (
-							<TopOperationsTable data={topOperations || []} />
-						)}
+						<TopOperationsTable data={topOperations || []} />
 					</Card>
 				</Col>
 			</Row>
