@@ -271,6 +271,7 @@ function LogsExplorerViews(): JSX.Element {
 	const handleEndReached = useCallback(
 		(index: number) => {
 			if (isLimit) return;
+			if (logs.length < pageSize) return;
 
 			const lastLog = logs[index];
 
@@ -368,7 +369,7 @@ function LogsExplorerViews(): JSX.Element {
 	useEffect(() => {
 		const shouldChangeView = isMultipleQueries || isGroupByExist;
 
-		if (panelType === 'list' && shouldChangeView) {
+		if (panelType === PANEL_TYPES.LIST && shouldChangeView) {
 			handleChangeView(PANEL_TYPES.TIME_SERIES);
 		}
 	}, [panelType, isMultipleQueries, isGroupByExist, handleChangeView]);
