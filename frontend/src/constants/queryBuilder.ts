@@ -3,6 +3,7 @@ import { GRAPH_TYPES } from 'container/NewDashboard/ComponentsSlider';
 import { createIdFromObjectFields } from 'lib/createIdFromObjectFields';
 import { createNewBuilderItemName } from 'lib/newQueryBuilder/createNewBuilderItemName';
 import {
+	AutocompleteType,
 	BaseAutocompleteData,
 	LocalDataType,
 } from 'types/api/queryBuilder/queryAutocompleteResponse';
@@ -50,6 +51,11 @@ export const baseAutoCompleteIdKeysOrder: (keyof Omit<
 	'id'
 >)[] = ['key', 'dataType', 'type', 'isColumn'];
 
+export const autocompleteType: Record<AutocompleteType, AutocompleteType> = {
+	resource: 'resource',
+	tag: 'tag',
+};
+
 export const formulasNames: string[] = Array.from(
 	Array(MAX_FORMULAS),
 	(_, i) => `F${i + 1}`,
@@ -60,7 +66,6 @@ export const alphabet: string[] = alpha.map((str) => String.fromCharCode(str));
 export enum QueryBuilderKeys {
 	GET_AGGREGATE_ATTRIBUTE = 'GET_AGGREGATE_ATTRIBUTE',
 	GET_AGGREGATE_KEYS = 'GET_AGGREGATE_KEYS',
-	GET_ATTRIBUTE_KEY = 'GET_ATTRIBUTE_KEY',
 }
 
 export const mapOfOperators = {
