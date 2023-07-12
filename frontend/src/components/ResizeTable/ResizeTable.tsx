@@ -4,6 +4,8 @@
 import { Table } from 'antd';
 import type { TableProps } from 'antd/es/table';
 import { ColumnsType } from 'antd/lib/table';
+import useDragColumns from 'hooks/useDragColumns';
+import { dragColumnParams } from 'hooks/useDragColumns/configs';
 import {
 	SyntheticEvent,
 	useCallback,
@@ -14,7 +16,6 @@ import {
 import ReactDragListView from 'react-drag-listview';
 import { ResizeCallbackData } from 'react-resizable';
 
-import { dragColumnParams } from './config';
 import ResizableHeader from './ResizableHeader';
 import { DragSpanStyle } from './styles';
 
@@ -25,6 +26,7 @@ function ResizeTable({
 	...restProps
 }: ResizeTableProps): JSX.Element {
 	const [columnsData, setColumns] = useState<ColumnsType>([]);
+	const handleDragColumn = useDragColumns(columnsData);
 
 	const handleResize = useCallback(
 		(index: number) => (
@@ -43,16 +45,14 @@ function ResizeTable({
 
 	const handleDragEnd = useCallback(
 		(fromIndex: number, toIndex: number): void => {
-			const columns = [...columnsData];
-			const item = columns.splice(fromIndex, 1)[0];
-			columns.splice(toIndex, 0, item);
+			const columns = handleDragColumn(fromIndex, toIndex);
 			setColumns(columns);
 
 			if (!onDragColumn) return;
 
 			onDragColumn(columns, fromIndex, toIndex);
 		},
-		[columnsData, onDragColumn],
+		[onDragColumn, handleDragColumn],
 	);
 
 	const mergedColumns = useMemo(

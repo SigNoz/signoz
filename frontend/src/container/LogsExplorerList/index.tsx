@@ -1,4 +1,5 @@
 import { Card, Typography } from 'antd';
+import { ColumnsType } from 'antd/es/table';
 // components
 import ListLogView from 'components/Logs/ListLogView';
 import RawLogView from 'components/Logs/RawLogView';
@@ -7,6 +8,7 @@ import { LOCALSTORAGE } from 'constants/localStorage';
 import ExplorerControlPanel from 'container/ExplorerControlPanel';
 import { Heading } from 'container/LogsTable/styles';
 import { useOptionsMenu } from 'container/OptionsMenu';
+import { OptionsQuery } from 'container/OptionsMenu/types';
 import { contentStyle } from 'container/Trace/Search/config';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import useFontFaceObserver from 'hooks/useFontObserver';
@@ -35,7 +37,7 @@ function LogsExplorerList({
 }: LogsExplorerListProps): JSX.Element {
 	const { initialDataSource } = useQueryBuilder();
 
-	const { options, config } = useOptionsMenu({
+	const { options, config, handleOptionsChange } = useOptionsMenu({
 		storageKey: LOCALSTORAGE.LOGS_LIST_OPTIONS,
 		dataSource: initialDataSource || DataSource.METRICS,
 		aggregateOperator:
@@ -58,6 +60,20 @@ function LogsExplorerList({
 	const selectedFields = useMemo(
 		() => convertKeysToColumnFields(options.selectColumns),
 		[options],
+	);
+
+	const handleColumnsChange = useCallback(
+		(columns: ColumnsType) => {
+			const newSelectedColumns = columns.reduce((acc, { title }) => {
+				const column = options.selectColumns.find(({ key }) => title === key);
+
+				if (!column) return acc;
+				return [...acc, column];
+			}, [] as OptionsQuery['selectColumns']);
+
+			handleOptionsChange({ ...options, selectColumns: newSelectedColumns });
+		},
+		[options, handleOptionsChange],
 	);
 
 	const getItemContent = useCallback(
@@ -109,6 +125,7 @@ function LogsExplorerList({
 						appendTo: 'end',
 					}}
 					infitiyTableProps={{ onEndReached }}
+					onColumnsChange={handleColumnsChange}
 				/>
 			);
 		}
@@ -134,6 +151,7 @@ function LogsExplorerList({
 		getItemContent,
 		selectedFields,
 		onExpand,
+		handleColumnsChange,
 	]);
 
 	return (
