@@ -2,7 +2,7 @@ import { Typography } from 'antd';
 import getServiceOverview from 'api/metrics/getServiceOverview';
 import getTopLevelOperations from 'api/metrics/getTopLevelOperations';
 import getTopOperations from 'api/metrics/getTopOperations';
-import { AxiosError } from 'axios';
+import axios, { AxiosError } from 'axios';
 import { ActiveElement, Chart, ChartData, ChartEvent } from 'chart.js';
 import Graph from 'components/Graph';
 import Spinner from 'components/Spinner';
@@ -21,7 +21,7 @@ import { colors } from 'lib/getRandomColor';
 import getStep from 'lib/getStep';
 import history from 'lib/history';
 import { useCallback, useMemo, useState } from 'react';
-import { useQueries } from 'react-query';
+import { useQueries, UseQueryResult } from 'react-query';
 import { useDispatch, useSelector } from 'react-redux';
 import { useLocation, useParams } from 'react-router-dom';
 import { UpdateTimeInterval } from 'store/actions';
@@ -83,56 +83,53 @@ function Application(): JSX.Element {
 		[handleSetTimeStamp],
 	);
 
-	const serviceOverviewQuery = {
-		queryKey: [servicename, selectedTags, minTime, maxTime],
-		queryFn: (): Promise<PayloadProps> =>
-			getServiceOverview({
-				service: servicename || '',
-				start: minTime,
-				end: maxTime,
-				step: getStep({
+	const queryResult: [
+		UseQueryResult<PayloadProps>,
+		UseQueryResult<PayloadPropsTopOpertions>,
+		UseQueryResult<ServiceDataProps>,
+	] = useQueries([
+		{
+			queryKey: [servicename, selectedTags, minTime, maxTime],
+			queryFn: (): Promise<PayloadProps> =>
+				getServiceOverview({
+					service: servicename || '',
 					start: minTime,
 					end: maxTime,
-					inputFormat: 'ns',
+					step: getStep({
+						start: minTime,
+						end: maxTime,
+						inputFormat: 'ns',
+					}),
+					selectedTags,
 				}),
-				selectedTags,
-			}),
-	};
-
-	const topOperationsQuery = {
-		queryKey: [minTime, maxTime, servicename, selectedTags],
-		queryFn: (): Promise<PayloadPropsTopOpertions> =>
-			getTopOperations({
-				service: servicename || '',
-				start: minTime,
-				end: maxTime,
-				selectedTags,
-			}),
-	};
-
-	const topLevelOperationsQuery = {
-		queryKey: [servicename, minTime, maxTime, selectedTags],
-		queryFn: (): Promise<ServiceDataProps> => getTopLevelOperations(),
-	};
-
-	const queryResult = useQueries([
-		serviceOverviewQuery,
-		topOperationsQuery,
-		topLevelOperationsQuery,
+		},
+		{
+			queryKey: [minTime, maxTime, servicename, selectedTags],
+			queryFn: (): Promise<PayloadPropsTopOpertions> =>
+				getTopOperations({
+					service: servicename || '',
+					start: minTime,
+					end: maxTime,
+					selectedTags,
+				}),
+		},
+		{
+			queryKey: [servicename, minTime, maxTime, selectedTags],
+			queryFn: (): Promise<ServiceDataProps> => getTopLevelOperations(),
+		},
 	]);
 
-	const serviceOverview = queryResult[0].data as PayloadProps;
+	const serviceOverview = queryResult[0].data;
 	const serviceOverviewError = queryResult[0].error;
 	const serviceOverviewIsError = queryResult[0].isError;
 	const serviceOverviewIsLoading = queryResult[0].isLoading;
 
-	const topOperations = queryResult[1].data as PayloadPropsTopOpertions;
+	const topOperations = queryResult[1].data;
 	const topOperationsError = queryResult[1].error;
 	const topOperationsIsError = queryResult[1].isError;
 	const topOperationsLoading = queryResult[1].isLoading;
 
-	const topLevelOperations: ServiceDataProps = queryResult[2]
-		.data as ServiceDataProps;
+	const topLevelOperations = queryResult[2].data;
 	const topLevelOperationsError = queryResult[2].error;
 	const topLevelOperationsIsError = queryResult[2].isError;
 	const topLevelOperationsLoading = queryResult[2].isLoading;
@@ -290,7 +287,8 @@ function Application(): JSX.Element {
 					<Card>
 						{serviceOverviewIsError && (
 							<Typography>
-								{(serviceOverviewError as AxiosError)?.response?.data}
+								{axios.isAxiosError(serviceOverviewError) &&
+									serviceOverviewError.response?.data}
 							</Typography>
 						)}
 						{!serviceOverviewIsError && (
@@ -370,7 +368,8 @@ function Application(): JSX.Element {
 					<Card>
 						{topLevelOperationsIsError && (
 							<Typography>
-								{(topLevelOperationsError as AxiosError).response?.data}
+								{axios.isAxiosError(topLevelOperationsError) &&
+									topLevelOperationsError.response?.data}
 							</Typography>
 						)}
 						{!topLevelOperationsIsError && !topLevelOperationsLoading && (
@@ -395,7 +394,8 @@ function Application(): JSX.Element {
 					<Card>
 						{topOperationsIsError && (
 							<Typography>
-								{(topOperationsError as AxiosError).response?.data}
+								{axios.isAxiosError(topOperationsError) &&
+									topOperationsError.response?.data}
 							</Typography>
 						)}
 						{!topOperationsIsError && !topOperationsLoading && (
