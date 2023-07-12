@@ -262,7 +262,7 @@ func buildTracesQuery(start, end, step int64, mq *v3.BuilderQuery, tableName str
 	}
 	filterSubQuery += emptyValuesInGroupByFilter
 
-	groupBy := groupByAttributeKeyTags(keys, panelType, mq.GroupBy...)
+	groupBy := groupByAttributeKeyTags(panelType, mq.GroupBy...)
 	if groupBy != "" {
 		groupBy = " group by " + groupBy
 	}
@@ -374,7 +374,7 @@ func groupBy(panelType v3.PanelType, tags ...string) string {
 	return strings.Join(tags, ",")
 }
 
-func groupByAttributeKeyTags(keys map[string]v3.AttributeKey, panelType v3.PanelType, tags ...v3.AttributeKey) string {
+func groupByAttributeKeyTags(panelType v3.PanelType, tags ...v3.AttributeKey) string {
 	groupTags := []string{}
 	for _, tag := range tags {
 		groupTags = append(groupTags, fmt.Sprintf("`%s`", tag.Key))
