@@ -1,5 +1,6 @@
 import { Tabs } from 'antd';
 import axios from 'axios';
+import ExplorerCard from 'components/ExplorerCard';
 import { QueryParams } from 'constants/query';
 import { initialQueriesMap, PANEL_TYPES } from 'constants/queryBuilder';
 import { queryParamNamesMap } from 'constants/queryBuilderQueryNames';
@@ -104,7 +105,7 @@ function TracesExplorer(): JSX.Element {
 									Panel limit exceeded for {DataSource.TRACES} in community edition.
 									Please checkout our paid plans{' '}
 									<a
-										href="https://signoz.io/pricing"
+										href="https://signoz.io/pricing/?utm_source=product&utm_medium=dashboard-limit"
 										rel="noreferrer noopener"
 										target="_blank"
 									>
@@ -177,7 +178,9 @@ function TracesExplorer(): JSX.Element {
 
 	return (
 		<>
-			<QuerySection />
+			<ExplorerCard>
+				<QuerySection />
+			</ExplorerCard>
 
 			<Container>
 				<ActionsWrapper>

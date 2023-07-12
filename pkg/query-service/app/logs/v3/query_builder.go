@@ -270,7 +270,7 @@ func buildLogsQuery(panelType v3.PanelType, start, end, step int64, mq *v3.Build
 		query := fmt.Sprintf(queryTmpl, op, filterSubQuery, groupBy, having, orderBy)
 		return query, nil
 	case v3.AggregateOperatorNoOp:
-		queryTmpl := constants.LogsSQLSelect + "from signoz_logs.distributed_logs where %s %sorder by %s"
+		queryTmpl := constants.LogsSQLSelect + "from signoz_logs.distributed_logs where %s%s order by %s"
 		query := fmt.Sprintf(queryTmpl, timeFilter, filterSubQuery, orderBy)
 		return query, nil
 	default:
