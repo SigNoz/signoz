@@ -34,20 +34,14 @@ function MetricsApplication(): JSX.Element {
 	const externalMetrics = EXTERNAL_METRICS;
 
 	const getActiveKey = (): string => {
-		switch (tab) {
-			case null: {
-				return overMetrics;
-			}
-			case dbCallMetrics: {
-				return dbCallMetrics;
-			}
-			case externalMetrics: {
-				return externalMetrics;
-			}
-			default: {
-				return overMetrics;
-			}
+		const metricsMap = {
+			[dbCallMetrics]: dbCallMetrics,
+			[externalMetrics]: externalMetrics,
+		};
+		if (tab) {
+			return metricsMap[tab] || overMetrics;
 		}
+		return overMetrics;
 	};
 
 	const activeKey = getActiveKey();

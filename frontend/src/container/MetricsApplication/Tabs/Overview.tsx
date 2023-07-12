@@ -33,6 +33,7 @@ import { GlobalReducer } from 'types/reducer/globalTime';
 import { Tags } from 'types/reducer/trace';
 import { v4 as uuid } from 'uuid';
 
+import { ERROR_MESSAGE } from '../../../constants/api';
 import { getWidgetQueryBuilder } from '../MetricsApplication.factory';
 import {
 	errorPercentage,
@@ -40,7 +41,6 @@ import {
 } from '../MetricsPageQueries/OverviewQueries';
 import { Card, Col, GraphContainer, GraphTitle, Row } from '../styles';
 import TopOperationsTable from '../TopOperationsTable';
-import { ERROR_MESSAGE } from './constant';
 import { Button } from './styles';
 import {
 	handleNonInQueryRange,
