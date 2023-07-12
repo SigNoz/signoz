@@ -59,13 +59,13 @@ var testGetSelectLabelsData = []struct {
 		Name:              "select fields for groupBy attribute",
 		AggregateOperator: v3.AggregateOperatorCount,
 		GroupByTags:       []v3.AttributeKey{{Key: "user_name", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag}},
-		SelectLabels:      ", attributes_string_value[indexOf(attributes_string_key, 'user_name')] as user_name",
+		SelectLabels:      " attributes_string_value[indexOf(attributes_string_key, 'user_name')] as user_name,",
 	},
 	{
 		Name:              "select fields for groupBy resource",
 		AggregateOperator: v3.AggregateOperatorCount,
 		GroupByTags:       []v3.AttributeKey{{Key: "user_name", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeResource}},
-		SelectLabels:      ", resources_string_value[indexOf(resources_string_key, 'user_name')] as user_name",
+		SelectLabels:      " resources_string_value[indexOf(resources_string_key, 'user_name')] as user_name,",
 	},
 	{
 		Name:              "select fields for groupBy attribute and resource",
@@ -74,19 +74,19 @@ var testGetSelectLabelsData = []struct {
 			{Key: "user_name", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeResource},
 			{Key: "host", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag},
 		},
-		SelectLabels: ", resources_string_value[indexOf(resources_string_key, 'user_name')] as user_name, attributes_string_value[indexOf(attributes_string_key, 'host')] as host",
+		SelectLabels: " resources_string_value[indexOf(resources_string_key, 'user_name')] as user_name, attributes_string_value[indexOf(attributes_string_key, 'host')] as host,",
 	},
 	{
 		Name:              "select fields for groupBy materialized columns",
 		AggregateOperator: v3.AggregateOperatorCount,
 		GroupByTags:       []v3.AttributeKey{{Key: "host", IsColumn: true}},
-		SelectLabels:      ", host as host",
+		SelectLabels:      " host as host,",
 	},
 	{
 		Name:              "trace_id field as an attribute",
 		AggregateOperator: v3.AggregateOperatorCount,
 		GroupByTags:       []v3.AttributeKey{{Key: "trace_id", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag}},
-		SelectLabels:      ", attributes_string_value[indexOf(attributes_string_key, 'trace_id')] as trace_id",
+		SelectLabels:      " attributes_string_value[indexOf(attributes_string_key, 'trace_id')] as trace_id,",
 	},
 }
 
@@ -743,6 +743,59 @@ var testBuildLogsQueryData = []struct {
 		},
 		TableName:     "logs",
 		ExpectedQuery: "SELECT toStartOfInterval(fromUnixTimestamp64Nano(timestamp), INTERVAL 60 SECOND) AS ts, toFloat64(count(distinct(attributes_string_value[indexOf(attributes_string_key, 'name')]))) as value from signoz_logs.distributed_logs where (timestamp >= 1680066360726210000 AND timestamp <= 1680066458000000000) AND attributes_string_value[indexOf(attributes_string_key, 'body')] ILIKE '%test%' group by ts having value > 10 order by ts",
+	},
+
+	// Tests for table panel type
+	{
+		Name:      "TABLE: Test count",
+		PanelType: v3.PanelTypeTable,
+		Start:     1680066360726210000,
+		End:       1680066458000000000,
+		Step:      60,
+		BuilderQuery: &v3.BuilderQuery{
+			QueryName:         "A",
+			AggregateOperator: v3.AggregateOperatorCount,
+			Expression:        "A",
+		},
+		TableName:     "logs",
+		ExpectedQuery: "SELECT  toFloat64(count(*)) as value from signoz_logs.distributed_logs where (timestamp >= 1680066360726210000 AND timestamp <= 1680066458000000000)",
+	},
+	{
+		Name:      "TABLE: Test count with groupBy",
+		PanelType: v3.PanelTypeTable,
+		Start:     1680066360726210000,
+		End:       1680066458000000000,
+		Step:      60,
+		BuilderQuery: &v3.BuilderQuery{
+			QueryName:         "A",
+			AggregateOperator: v3.AggregateOperatorCount,
+			Expression:        "A",
+			GroupBy: []v3.AttributeKey{
+				{Key: "name", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag},
+			},
+		},
+		TableName:     "logs",
+		ExpectedQuery: "SELECT  attributes_string_value[indexOf(attributes_string_key, 'name')] as name, toFloat64(count(*)) as value from signoz_logs.distributed_logs where (timestamp >= 1680066360726210000 AND timestamp <= 1680066458000000000) AND indexOf(attributes_string_key, 'name') > 0 group by name order by name ASC",
+	},
+	{
+		Name:      "TABLE: Test count with groupBy, orderBy",
+		PanelType: v3.PanelTypeTable,
+		Start:     1680066360726210000,
+		End:       1680066458000000000,
+		Step:      60,
+		BuilderQuery: &v3.BuilderQuery{
+			QueryName:         "A",
+			AggregateOperator: v3.AggregateOperatorCount,
+			Expression:        "A",
+			GroupBy: []v3.AttributeKey{
+				{Key: "name", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag},
+			},
+			OrderBy: []v3.OrderBy{
+				{ColumnName: "name", Order: "DESC"},
+			},
+		},
+		TableName:     "logs",
+		ExpectedQuery: "SELECT  attributes_string_value[indexOf(attributes_string_key, 'name')] as name, toFloat64(count(*)) as value from signoz_logs.distributed_logs where (timestamp >= 1680066360726210000 AND timestamp <= 1680066458000000000) AND indexOf(attributes_string_key, 'name') > 0 group by name order by name DESC",
 	},
 }
 
