@@ -11,9 +11,14 @@ import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
 type UseGetQueryRange = (
 	requestData: GetQueryResultsProps,
 	options?: UseQueryOptions<SuccessResponse<MetricRangePayloadProps>, Error>,
+	isDependedDataLoaded?: boolean,
 ) => UseQueryResult<SuccessResponse<MetricRangePayloadProps>, Error>;
 
-export const useGetQueryRange: UseGetQueryRange = (requestData, options) => {
+export const useGetQueryRange: UseGetQueryRange = (
+	requestData,
+	options,
+	isDependedDataLoaded = false,
+) => {
 	const queryKey = useMemo(() => {
 		if (options?.queryKey) {
 			return [...options.queryKey];
@@ -25,5 +30,6 @@ export const useGetQueryRange: UseGetQueryRange = (requestData, options) => {
 		queryFn: async () => GetMetricQueryRange(requestData),
 		...options,
 		queryKey,
+		enabled: !isDependedDataLoaded,
 	});
 };

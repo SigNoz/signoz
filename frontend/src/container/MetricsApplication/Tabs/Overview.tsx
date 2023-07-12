@@ -130,6 +130,7 @@ function Application(): JSX.Element {
 	const topLevelOperations = queryResult[2].data;
 	const topLevelOperationsError = queryResult[2].error;
 	const topLevelOperationsIsError = queryResult[2].isError;
+	const topLevelOperationsIsLoading = queryResult[2].isLoading;
 
 	const selectedTraceTags: string = JSON.stringify(
 		convertRawQueriesToTraceSelectedTags(queries) || [],
@@ -343,6 +344,7 @@ function Application(): JSX.Element {
 										widget={operationPerSecWidget}
 										yAxisUnit="ops"
 										onDragSelect={onDragSelect}
+										loading={topLevelOperationsIsLoading}
 									/>
 								</GraphContainer>
 							</>
@@ -381,6 +383,7 @@ function Application(): JSX.Element {
 										widget={errorPercentageWidget}
 										yAxisUnit="%"
 										onDragSelect={onDragSelect}
+										loading={topLevelOperationsIsLoading}
 									/>
 								</GraphContainer>
 							</>
