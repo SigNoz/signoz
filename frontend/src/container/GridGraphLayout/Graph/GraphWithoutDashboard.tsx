@@ -152,8 +152,6 @@ function GraphWithoutDashboard({
 								title={widget?.title}
 								widget={widget}
 								onView={handleOnView}
-								onDelete={(): void => {}}
-								onClone={(): void => {}}
 								queryResponse={queryResponse}
 								errorMessage={errorMessage}
 								allowClone={false}
@@ -188,8 +186,6 @@ function GraphWithoutDashboard({
 								title={widget?.title}
 								widget={widget}
 								onView={handleOnView}
-								onDelete={(): void => {}}
-								onClone={(): void => {}}
 								queryResponse={queryResponse}
 								errorMessage={errorMessage}
 								allowClone={false}
@@ -238,8 +234,6 @@ function GraphWithoutDashboard({
 						title={widget?.title}
 						widget={widget}
 						onView={handleOnView}
-						onDelete={(): void => {}}
-						onClone={(): void => {}}
 						queryResponse={queryResponse}
 						errorMessage={errorMessage}
 						allowClone={false}

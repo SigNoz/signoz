@@ -38,8 +38,8 @@ interface IWidgetHeaderProps {
 	title: string;
 	widget: Widgets;
 	onView: VoidFunction;
-	onDelete: VoidFunction;
-	onClone: VoidFunction;
+	onDelete?: VoidFunction;
+	onClone?: VoidFunction;
 	parentHover: boolean;
 	queryResponse: UseQueryResult<
 		SuccessResponse<MetricRangePayloadProps> | ErrorResponse
@@ -77,7 +77,10 @@ function WidgetHeader({
 	}, [widget.id, widget.panelTypes, widget.query]);
 
 	const keyMethodMapping: {
-		[K in TWidgetOptions]: { key: TWidgetOptions; method: VoidFunction };
+		[K in TWidgetOptions]: {
+			key: TWidgetOptions;
+			method: VoidFunction | undefined;
+		};
 	} = useMemo(
 		() => ({
 			view: {
@@ -222,6 +225,8 @@ function WidgetHeader({
 }
 
 WidgetHeader.defaultProps = {
+	onDelete: undefined,
+	onClone: undefined,
 	allowDelete: undefined,
 	allowClone: undefined,
 	allowEdit: undefined,
