@@ -1,8 +1,7 @@
 import { Button, Typography } from 'antd';
 import createDashboard from 'api/dashboard/create';
-import axios from 'axios';
 import { useGetAllDashboard } from 'hooks/dashboard/useGetAllDashboard';
-import { useNotifications } from 'hooks/useNotifications';
+import useAxiosError from 'hooks/useAxiosError';
 import { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useMutation } from 'react-query';
@@ -15,10 +14,9 @@ import {
 	Title,
 	Wrapper,
 } from './styles';
-import { getSelectOptions } from './utils';
+import { filterOptions, getSelectOptions } from './utils';
 
 function ExportPanel({ isLoading, onExport }: ExportPanelProps): JSX.Element {
-	const { notifications } = useNotifications();
 	const { t } = useTranslation(['dashboard']);
 
 	const [selectedDashboardId, setSelectedDashboardId] = useState<string | null>(
@@ -31,21 +29,19 @@ function ExportPanel({ isLoading, onExport }: ExportPanelProps): JSX.Element {
 		refetch,
 	} = useGetAllDashboard();
 
+	const handleError = useAxiosError();
+
 	const {
 		mutate: createNewDashboard,
 		isLoading: createDashboardLoading,
 	} = useMutation(createDashboard, {
 		onSuccess: (data) => {
-			onExport(data?.payload || null);
+			if (data.payload) {
+				onExport(data?.payload);
+			}
 			refetch();
 		},
-		onError: (error) => {
-			if (axios.isAxiosError(error)) {
-				notifications.error({
-					message: error.message,
-				});
-			}
-		},
+		onError: handleError,
 	});
 
 	const options = useMemo(() => getSelectOptions(data?.payload || []), [data]);
@@ -90,10 +86,12 @@ function ExportPanel({ isLoading, onExport }: ExportPanelProps): JSX.Element {
 				<DashboardSelect
 					placeholder="Select Dashboard"
 					options={options}
+					showSearch
 					loading={isDashboardLoading}
 					disabled={isDashboardLoading}
 					value={selectedDashboardId}
 					onSelect={handleSelect}
+					filterOption={filterOptions}
 				/>
 				<Button
 					type="primary"

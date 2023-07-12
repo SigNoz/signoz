@@ -3,7 +3,9 @@ import { LinkOutlined } from '@ant-design/icons';
 import { Input, Space, Tooltip } from 'antd';
 import { ColumnsType } from 'antd/es/table';
 import Editor from 'components/Editor';
-import AddToQueryHOC from 'components/Logs/AddToQueryHOC';
+import AddToQueryHOC, {
+	AddToQueryHOCProps,
+} from 'components/Logs/AddToQueryHOC';
 import CopyClipboardHOC from 'components/Logs/CopyClipboardHOC';
 import { ResizeTable } from 'components/ResizeTable';
 import ROUTES from 'constants/routes';
@@ -27,7 +29,10 @@ const RESTRICTED_FIELDS = ['timestamp'];
 interface TableViewProps {
 	logData: ILog;
 }
-function TableView({ logData }: TableViewProps): JSX.Element | null {
+
+type Props = TableViewProps & Pick<AddToQueryHOCProps, 'onAddToQuery'>;
+
+function TableView({ logData, onAddToQuery }: Props): JSX.Element | null {
 	const [fieldSearchInput, setFieldSearchInput] = useState<string>('');
 
 	const dispatch = useDispatch<Dispatch<AppActions>>();
@@ -128,7 +133,11 @@ function TableView({ logData }: TableViewProps): JSX.Element | null {
 
 				if (!RESTRICTED_FIELDS.includes(fieldKey[0])) {
 					return (
-						<AddToQueryHOC fieldKey={fieldKey[0]} fieldValue={flattenLogData[field]}>
+						<AddToQueryHOC
+							fieldKey={fieldKey[0]}
+							fieldValue={flattenLogData[field]}
+							onAddToQuery={onAddToQuery}
+						>
 							{renderedField}
 						</AddToQueryHOC>
 					);

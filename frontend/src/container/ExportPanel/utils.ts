@@ -8,3 +8,11 @@ export const getSelectOptions = (
 		label: data.title,
 		value: uuid,
 	}));
+
+export const filterOptions: SelectProps['filterOption'] = (
+	input,
+	options,
+): boolean =>
+	(options?.label?.toString() ?? '')
+		?.toLowerCase()
+		.includes(input.toLowerCase());

@@ -4,10 +4,13 @@ import ListLogView from 'components/Logs/ListLogView';
 import RawLogView from 'components/Logs/RawLogView';
 import LogsTableView from 'components/Logs/TableView';
 import Spinner from 'components/Spinner';
+import ROUTES from 'constants/routes';
 import { contentStyle } from 'container/Trace/Search/config';
 import useFontFaceObserver from 'hooks/useFontObserver';
+import { generateFilterQuery } from 'lib/logs/generateFilterQuery';
 import { memo, useCallback, useMemo } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
+import { useHistory } from 'react-router-dom';
 import { Virtuoso } from 'react-virtuoso';
 import { AppState } from 'store/reducers';
 // interfaces
@@ -29,6 +32,8 @@ type LogsTableProps = {
 function LogsTable(props: LogsTableProps): JSX.Element {
 	const { viewMode, onClickExpand, linesPerRow } = props;
 
+	const history = useHistory();
+
 	const dispatch = useDispatch();
 
 	useFontFaceObserver(
@@ -47,6 +52,7 @@ function LogsTable(props: LogsTableProps): JSX.Element {
 	const {
 		logs,
 		fields: { selected },
+		searchFilter: { queryString },
 		isLoading,
 		liveTail,
 	} = useSelector<AppState, ILogsReducer>((state) => state.logs);
@@ -71,6 +77,25 @@ function LogsTable(props: LogsTableProps): JSX.Element {
 		[dispatch],
 	);
 
+	const handleQueryAdd = useCallback(
+		(fieldKey: string, fieldValue: string) => {
+			const generatedQuery = generateFilterQuery({
+				fieldKey,
+				fieldValue,
+				type: 'IN',
+			});
+
+			let updatedQueryString = queryString || '';
+			if (updatedQueryString.length === 0) {
+				updatedQueryString += `${generatedQuery}`;
+			} else {
+				updatedQueryString += ` AND ${generatedQuery}`;
+			}
+			history.replace(`${ROUTES.LOGS}?q=${updatedQueryString}`);
+		},
+		[history, queryString],
+	);
+
 	const getItemContent = useCallback(
 		(index: number): JSX.Element => {
 			const log = logs[index];
@@ -92,6 +117,7 @@ function LogsTable(props: LogsTableProps): JSX.Element {
 					logData={log}
 					selectedFields={selected}
 					onOpenDetailedView={handleOpenDetailedView}
+					onAddToQuery={handleQueryAdd}
 				/>
 			);
 		},
@@ -99,9 +125,10 @@ function LogsTable(props: LogsTableProps): JSX.Element {
 			logs,
 			viewMode,
 			selected,
-			handleOpenDetailedView,
 			linesPerRow,
 			onClickExpand,
+			handleOpenDetailedView,
+			handleQueryAdd,
 		],
 	);
 
