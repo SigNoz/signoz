@@ -34,6 +34,7 @@ function LogsExplorerList({
 	onOpenDetailedView,
 	onEndReached,
 	onExpand,
+	onAddToQuery,
 }: LogsExplorerListProps): JSX.Element {
 	const { initialDataSource } = useQueryBuilder();
 
@@ -95,6 +96,7 @@ function LogsExplorerList({
 					logData={log}
 					selectedFields={selectedFields}
 					onOpenDetailedView={onOpenDetailedView}
+					onAddToQuery={onAddToQuery}
 				/>
 			);
 		},
@@ -103,6 +105,7 @@ function LogsExplorerList({
 			options.maxLines,
 			selectedFields,
 			onOpenDetailedView,
+			onAddToQuery,
 			onExpand,
 		],
 	);
