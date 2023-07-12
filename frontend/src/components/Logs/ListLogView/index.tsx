@@ -2,25 +2,19 @@ import { blue, grey, orange } from '@ant-design/colors';
 import { CopyFilled, ExpandAltOutlined } from '@ant-design/icons';
 import Convert from 'ansi-to-html';
 import { Button, Divider, Row, Typography } from 'antd';
-import ROUTES from 'constants/routes';
 import dayjs from 'dayjs';
 import dompurify from 'dompurify';
 import { useNotifications } from 'hooks/useNotifications';
 // utils
 import { FlatLogData } from 'lib/logs/flatLogData';
-import { generateFilterQuery } from 'lib/logs/generateFilterQuery';
 import { useCallback, useMemo } from 'react';
-import { useSelector } from 'react-redux';
-import { useHistory } from 'react-router-dom';
 import { useCopyToClipboard } from 'react-use';
-import { AppState } from 'store/reducers';
 // interfaces
 import { IField } from 'types/api/logs/fields';
 import { ILog } from 'types/api/logs/log';
-import { ILogsReducer } from 'types/reducer/logs';
 
 // components
-import AddToQueryHOC from '../AddToQueryHOC';
+import AddToQueryHOC, { AddToQueryHOCProps } from '../AddToQueryHOC';
 import CopyClipboardHOC from '../CopyClipboardHOC';
 // styles
 import {
@@ -39,6 +33,10 @@ interface LogFieldProps {
 	fieldKey: string;
 	fieldValue: string;
 }
+
+type LogSelectedFieldProps = LogFieldProps &
+	Pick<AddToQueryHOCProps, 'onAddToQuery'>;
+
 function LogGeneralField({ fieldKey, fieldValue }: LogFieldProps): JSX.Element {
 	const html = useMemo(
 		() => ({
@@ -62,37 +60,14 @@ function LogGeneralField({ fieldKey, fieldValue }: LogFieldProps): JSX.Element {
 function LogSelectedField({
 	fieldKey = '',
 	fieldValue = '',
-}: LogFieldProps): JSX.Element {
-	const history = useHistory();
-	const {
-		searchFilter: { queryString },
-	} = useSelector<AppState, ILogsReducer>((state) => state.logs);
-
-	const handleQueryAdd = useCallback(
-		(fieldKey: string, fieldValue: string) => {
-			const generatedQuery = generateFilterQuery({
-				fieldKey,
-				fieldValue,
-				type: 'IN',
-			});
-
-			let updatedQueryString = queryString || '';
-			if (updatedQueryString.length === 0) {
-				updatedQueryString += `${generatedQuery}`;
-			} else {
-				updatedQueryString += ` AND ${generatedQuery}`;
-			}
-			history.replace(`${ROUTES.LOGS}?q=${updatedQueryString}`);
-		},
-		[history, queryString],
-	);
-
+	onAddToQuery,
+}: LogSelectedFieldProps): JSX.Element {
 	return (
 		<SelectedLog>
 			<AddToQueryHOC
 				fieldKey={fieldKey}
 				fieldValue={fieldValue}
-				onAddToQuery={handleQueryAdd}
+				onAddToQuery={onAddToQuery}
 			>
 				<Typography.Text>
 					<span style={{ color: blue[4] }}>{fieldKey}</span>
@@ -108,15 +83,17 @@ function LogSelectedField({
 	);
 }
 
-interface ListLogViewProps {
+type ListLogViewProps = {
 	logData: ILog;
 	onOpenDetailedView: (log: ILog) => void;
 	selectedFields: IField[];
-}
+} & Pick<AddToQueryHOCProps, 'onAddToQuery'>;
+
 function ListLogView({
 	logData,
 	selectedFields,
 	onOpenDetailedView,
+	onAddToQuery,
 }: ListLogViewProps): JSX.Element {
 	const flattenLogData = useMemo(() => FlatLogData(logData), [logData]);
 
@@ -166,6 +143,7 @@ function ListLogView({
 								key={field.name}
 								fieldKey={field.name}
 								fieldValue={flattenLogData[field.name] as never}
+								onAddToQuery={onAddToQuery}
 							/>
 						) : null,
 					)}
