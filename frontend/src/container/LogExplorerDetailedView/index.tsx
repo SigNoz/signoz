@@ -31,8 +31,8 @@ function LogExplorerDetailedView({
 
 			const existAutocompleteKey = chooseAutocompleteFromCustomValue(
 				keysAutocomplete,
-				[fieldKey],
-			)[0];
+				fieldKey,
+			);
 
 			const nextQuery: Query = {
 				...currentQuery,
