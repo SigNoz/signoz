@@ -8,6 +8,7 @@ import { generatePath, useLocation, useParams } from 'react-router-dom';
 import DBCall from '../../container/MetricsApplication/Tabs/DBCall';
 import External from '../../container/MetricsApplication/Tabs/External';
 import Overview from '../../container/MetricsApplication/Tabs/Overview';
+import { DB_CALL_METRICS, EXTERNAL_METRICS, OVER_METRICS } from './contants';
 
 function OverViewTab(): JSX.Element {
 	return <Overview />;
@@ -28,9 +29,9 @@ function MetricsApplication(): JSX.Element {
 	const searchParams = new URLSearchParams(search);
 	const tab = searchParams.get('tab');
 
-	const overMetrics = 'Overview Metrics';
-	const dbCallMetrics = 'Database Calls';
-	const externalMetrics = 'External Calls';
+	const overMetrics = OVER_METRICS;
+	const dbCallMetrics = DB_CALL_METRICS;
+	const externalMetrics = EXTERNAL_METRICS;
 
 	const getActiveKey = (): string => {
 		switch (tab) {
@@ -75,7 +76,7 @@ function MetricsApplication(): JSX.Element {
 				})}?tab=${externalMetrics}`,
 			},
 		],
-		[servicename],
+		[servicename, overMetrics, dbCallMetrics, externalMetrics],
 	);
 
 	return (

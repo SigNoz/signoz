@@ -12,7 +12,7 @@ import {
 } from 'types/actions/logs';
 import { GlobalReducer } from 'types/reducer/globalTime';
 
-export const initialState: GlobalReducer = {
+const initialState: GlobalReducer = {
 	maxTime: Date.now() * 1000000,
 	minTime: (Date.now() - 15 * 60 * 1000) * 1000000,
 	loading: true,

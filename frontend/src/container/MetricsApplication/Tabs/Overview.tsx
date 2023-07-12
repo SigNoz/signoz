@@ -2,7 +2,7 @@ import { Typography } from 'antd';
 import getServiceOverview from 'api/metrics/getServiceOverview';
 import getTopLevelOperations from 'api/metrics/getTopLevelOperations';
 import getTopOperations from 'api/metrics/getTopOperations';
-import axios, { AxiosError } from 'axios';
+import axios from 'axios';
 import { ActiveElement, Chart, ChartData, ChartEvent } from 'chart.js';
 import Graph from 'components/Graph';
 import Spinner from 'components/Spinner';
@@ -40,6 +40,7 @@ import {
 } from '../MetricsPageQueries/OverviewQueries';
 import { Card, Col, GraphContainer, GraphTitle, Row } from '../styles';
 import TopOperationsTable from '../TopOperationsTable';
+import { ERROR_MESSAGE } from './constant';
 import { Button } from './styles';
 import {
 	handleNonInQueryRange,
@@ -83,11 +84,13 @@ function Application(): JSX.Element {
 		[handleSetTimeStamp],
 	);
 
-	const queryResult: [
-		UseQueryResult<PayloadProps>,
-		UseQueryResult<PayloadPropsTopOpertions>,
-		UseQueryResult<ServiceDataProps>,
-	] = useQueries([
+	const queryResult = useQueries<
+		[
+			UseQueryResult<PayloadProps>,
+			UseQueryResult<PayloadPropsTopOpertions>,
+			UseQueryResult<ServiceDataProps>,
+		]
+	>([
 		{
 			queryKey: [servicename, selectedTags, minTime, maxTime],
 			queryFn: (): Promise<PayloadProps> =>
@@ -127,12 +130,10 @@ function Application(): JSX.Element {
 	const topOperations = queryResult[1].data;
 	const topOperationsError = queryResult[1].error;
 	const topOperationsIsError = queryResult[1].isError;
-	const topOperationsLoading = queryResult[1].isLoading;
 
 	const topLevelOperations = queryResult[2].data;
 	const topLevelOperationsError = queryResult[2].error;
 	const topLevelOperationsIsError = queryResult[2].isError;
-	const topLevelOperationsLoading = queryResult[2].isLoading;
 
 	const selectedTraceTags: string = JSON.stringify(
 		convertRawQueriesToTraceSelectedTags(queries) || [],
@@ -287,8 +288,9 @@ function Application(): JSX.Element {
 					<Card>
 						{serviceOverviewIsError && (
 							<Typography>
-								{axios.isAxiosError(serviceOverviewError) &&
-									serviceOverviewError.response?.data}
+								{axios.isAxiosError(serviceOverviewError)
+									? serviceOverviewError.response?.data
+									: ERROR_MESSAGE}
 							</Typography>
 						)}
 						{!serviceOverviewIsError && (
@@ -329,26 +331,19 @@ function Application(): JSX.Element {
 						View Traces
 					</Button>
 					<Card>
-						{topLevelOperationsIsError && (
-							<Typography>
-								{(topLevelOperationsError as AxiosError).response?.data}
-							</Typography>
-						)}
-						{!topLevelOperationsIsError && !topLevelOperationsLoading && (
-							<>
-								<GraphTitle>Rate (ops/s)</GraphTitle>
-								<GraphContainer>
-									<FullView
-										name="operations_per_sec"
-										fullViewOptions={false}
-										onClickHandler={handleGraphClick('Rate')}
-										widget={operationPerSecWidget}
-										yAxisUnit="ops"
-										onDragSelect={onDragSelect}
-									/>
-								</GraphContainer>
-							</>
-						)}
+						<>
+							<GraphTitle>Rate (ops/s)</GraphTitle>
+							<GraphContainer>
+								<FullView
+									name="operations_per_sec"
+									fullViewOptions={false}
+									onClickHandler={handleGraphClick('Rate')}
+									widget={operationPerSecWidget}
+									yAxisUnit="ops"
+									onDragSelect={onDragSelect}
+								/>
+							</GraphContainer>
+						</>
 					</Card>
 				</Col>
 			</Row>
@@ -368,11 +363,12 @@ function Application(): JSX.Element {
 					<Card>
 						{topLevelOperationsIsError && (
 							<Typography>
-								{axios.isAxiosError(topLevelOperationsError) &&
-									topLevelOperationsError.response?.data}
+								{axios.isAxiosError(topLevelOperationsError)
+									? topLevelOperationsError.response?.data
+									: ERROR_MESSAGE}
 							</Typography>
 						)}
-						{!topLevelOperationsIsError && !topLevelOperationsLoading && (
+						{!topLevelOperationsIsError && (
 							<>
 								<GraphTitle>Error Percentage</GraphTitle>
 								<GraphContainer>
@@ -394,11 +390,12 @@ function Application(): JSX.Element {
 					<Card>
 						{topOperationsIsError && (
 							<Typography>
-								{axios.isAxiosError(topOperationsError) &&
-									topOperationsError.response?.data}
+								{axios.isAxiosError(topOperationsError)
+									? topOperationsError.response?.data
+									: ERROR_MESSAGE}
 							</Typography>
 						)}
-						{!topOperationsIsError && !topOperationsLoading && (
+						{!topOperationsIsError && (
 							<TopOperationsTable data={topOperations || []} />
 						)}
 					</Card>
