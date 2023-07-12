@@ -239,7 +239,7 @@ func buildTracesQuery(start, end, step int64, mq *v3.BuilderQuery, tableName str
 
 	if panelType == v3.PanelTypeTable {
 		queryTmpl =
-			"SELECT" + selectLabels +
+			"SELECT now() as ts," + selectLabels +
 				" %s as value " +
 				"from " + constants.SIGNOZ_TRACE_DBNAME + "." + constants.SIGNOZ_SPAN_INDEX_TABLENAME +
 				" where " + spanIndexTableTimeFilter + "%s" +
