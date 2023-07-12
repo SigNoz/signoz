@@ -29,9 +29,9 @@ function MetricsApplication(): JSX.Element {
 	const searchParams = new URLSearchParams(search);
 	const tab = searchParams.get('tab');
 
-	const overMetrics = OVER_METRICS;
-	const dbCallMetrics = DB_CALL_METRICS;
-	const externalMetrics = EXTERNAL_METRICS;
+	const overMetrics: string = OVER_METRICS;
+	const dbCallMetrics: string = DB_CALL_METRICS;
+	const externalMetrics: string = EXTERNAL_METRICS;
 
 	const getActiveKey = (): string => {
 		const metricsMap = {
