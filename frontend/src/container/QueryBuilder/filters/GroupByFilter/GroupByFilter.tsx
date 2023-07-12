@@ -85,11 +85,12 @@ export const GroupByFilter = memo(function GroupByFilter({
 
 	const getAttributeKeys = useCallback(
 		(): BaseAutocompleteData[] =>
-			queryClient.getQueryData<SuccessResponse<IQueryAutocompleteResponse>>(
-				[QueryBuilderKeys.GET_AGGREGATE_KEYS],
-				{ exact: false },
-			)?.payload.attributeKeys || [],
-		[queryClient],
+			queryClient.getQueryData<SuccessResponse<IQueryAutocompleteResponse>>([
+				QueryBuilderKeys.GET_AGGREGATE_KEYS,
+				debouncedValue,
+				isFocused,
+			])?.payload.attributeKeys || [],
+		[debouncedValue, isFocused, queryClient],
 	);
 
 	const handleSearchKeys = (searchText: string): void => {
@@ -106,15 +107,21 @@ export const GroupByFilter = memo(function GroupByFilter({
 	};
 
 	const handleChange = (values: SelectOption<string, string>[]): void => {
+		const keys = getAttributeKeys();
+
 		const groupByValues: BaseAutocompleteData[] = values.map((item) => {
 			const [currentValue, id] = item.value.split(selectValueDivider);
-			const keys = getAttributeKeys();
 
 			if (id && id.includes(idDivider)) {
 				const attribute = keys.find((item) => item.id === id);
+				const existAttribute = query.groupBy.find((item) => item.id === id);
 
 				if (attribute) {
 					return attribute;
+				}
+
+				if (existAttribute) {
+					return existAttribute;
 				}
 			}
 

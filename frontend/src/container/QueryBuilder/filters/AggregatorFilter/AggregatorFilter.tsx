@@ -91,11 +91,13 @@ export const AggregatorFilter = memo(function AggregatorFilter({
 
 	const getAttributes = useCallback(
 		(): BaseAutocompleteData[] =>
-			queryClient.getQueryData<SuccessResponse<IQueryAutocompleteResponse>>(
-				[QueryBuilderKeys.GET_AGGREGATE_ATTRIBUTE],
-				{ exact: false },
-			)?.payload.attributeKeys || [],
-		[queryClient],
+			queryClient.getQueryData<SuccessResponse<IQueryAutocompleteResponse>>([
+				QueryBuilderKeys.GET_AGGREGATE_ATTRIBUTE,
+				debouncedValue,
+				query.aggregateOperator,
+				query.dataSource,
+			])?.payload.attributeKeys || [],
+		[debouncedValue, query.aggregateOperator, query.dataSource, queryClient],
 	);
 
 	const handleChangeCustomValue = useCallback(
