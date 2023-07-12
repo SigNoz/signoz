@@ -243,8 +243,8 @@ func buildTracesQuery(start, end, step int64, mq *v3.BuilderQuery, tableName str
 				" %s as value " +
 				"from " + constants.SIGNOZ_TRACE_DBNAME + "." + constants.SIGNOZ_SPAN_INDEX_TABLENAME +
 				" where " + spanIndexTableTimeFilter + "%s" +
-				"%s%s " +
-				"order by %s"
+				"%s%s" +
+				"%s"
 	} else if panelType == v3.PanelTypeGraph || panelType == v3.PanelTypeValue {
 		// Select the aggregate value for interval
 		queryTmpl =
@@ -252,8 +252,8 @@ func buildTracesQuery(start, end, step int64, mq *v3.BuilderQuery, tableName str
 				" %s as value " +
 				"from " + constants.SIGNOZ_TRACE_DBNAME + "." + constants.SIGNOZ_SPAN_INDEX_TABLENAME +
 				" where " + spanIndexTableTimeFilter + "%s" +
-				"%s%s " +
-				"order by %s"
+				"%s%s" +
+				"%s"
 	}
 
 	emptyValuesInGroupByFilter, err := handleEmptyValuesInGroupBy(keys, mq.GroupBy)
@@ -268,7 +268,9 @@ func buildTracesQuery(start, end, step int64, mq *v3.BuilderQuery, tableName str
 	}
 	enrichedOrderBy := enrichOrderBy(mq.OrderBy, keys)
 	orderBy := orderByAttributeKeyTags(panelType, enrichedOrderBy, mq.GroupBy, keys)
-
+	if orderBy != "" {
+		orderBy = " order by " + orderBy
+	}
 	aggregationKey := ""
 	if mq.AggregateAttribute.Key != "" {
 		aggregationKey = getColumnName(mq.AggregateAttribute, keys)
@@ -334,7 +336,7 @@ func buildTracesQuery(start, end, step int64, mq *v3.BuilderQuery, tableName str
 				return "", fmt.Errorf("select columns cannot be empty for panelType %s", panelType)
 			}
 			selectColumns := getSelectColumns(mq.SelectColumns, keys)
-			queryNoOpTmpl := fmt.Sprintf("SELECT timestamp as timestamp_datetime, spanID, traceID, "+"%s ", selectColumns) + "from " + constants.SIGNOZ_TRACE_DBNAME + "." + constants.SIGNOZ_SPAN_INDEX_TABLENAME + " where %s %s" + " order by %s"
+			queryNoOpTmpl := fmt.Sprintf("SELECT timestamp as timestamp_datetime, spanID, traceID, "+"%s ", selectColumns) + "from " + constants.SIGNOZ_TRACE_DBNAME + "." + constants.SIGNOZ_SPAN_INDEX_TABLENAME + " where %s %s" + "%s"
 			query = fmt.Sprintf(queryNoOpTmpl, spanIndexTableTimeFilter, filterSubQuery, orderBy)
 		} else {
 			return "", fmt.Errorf("unsupported aggregate operator %s for panelType %s", mq.AggregateOperator, panelType)

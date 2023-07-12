@@ -1008,6 +1008,26 @@ var testBuildTracesQueryData = []struct {
 		PanelType: v3.PanelTypeTable,
 	},
 	{
+		Name:  "Test aggregate PXX",
+		Start: 1680066360726210000,
+		End:   1680066458000000000,
+		Step:  60,
+		BuilderQuery: &v3.BuilderQuery{
+			QueryName:          "A",
+			AggregateAttribute: v3.AttributeKey{Key: "durationNano", IsColumn: true, DataType: v3.AttributeKeyDataTypeFloat64, Type: v3.AttributeKeyTypeTag},
+			AggregateOperator:  v3.AggregateOperatorP05,
+			Expression:         "A",
+			Filters:            &v3.FilterSet{Operator: "AND", Items: []v3.FilterItem{}},
+			GroupBy:            []v3.AttributeKey{},
+			OrderBy:            []v3.OrderBy{},
+		},
+		TableName: "signoz_traces.distributed_signoz_index_v2",
+		ExpectedQuery: "SELECT quantile(0.05)(durationNano) as value " +
+			"from signoz_traces.distributed_signoz_index_v2 " +
+			"where (timestamp >= '1680066360726210000' AND timestamp <= '1680066458000000000')",
+		PanelType: v3.PanelTypeTable,
+	},
+	{
 		Name:  "Test Noop list view",
 		Start: 1680066360726210000,
 		End:   1680066458000000000,
