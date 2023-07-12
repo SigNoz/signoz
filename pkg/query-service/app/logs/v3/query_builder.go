@@ -96,7 +96,7 @@ func getSelectLabels(aggregatorOperator v3.AggregateOperator, groupBy []v3.Attri
 	} else {
 		for _, tag := range groupBy {
 			columnName := getClickhouseColumnName(tag)
-			selectLabels += fmt.Sprintf(" %s as %s,", columnName, tag.Key)
+			selectLabels += fmt.Sprintf(", %s as %s", columnName, tag.Key)
 		}
 	}
 	return selectLabels, nil
@@ -187,8 +187,8 @@ func buildLogsQuery(panelType v3.PanelType, start, end, step int64, mq *v3.Build
 
 	if panelType == v3.PanelTypeTable {
 		queryTmpl =
-			"SELECT " + selectLabels +
-				" %s as value " +
+			"SELECT now() as ts" + selectLabels +
+				", %s as value " +
 				"from signoz_logs.distributed_logs " +
 				"where " + timeFilter + "%s" +
 				"%s%s" +
@@ -196,8 +196,8 @@ func buildLogsQuery(panelType v3.PanelType, start, end, step int64, mq *v3.Build
 	} else if panelType == v3.PanelTypeGraph || panelType == v3.PanelTypeValue {
 		// Select the aggregate value for interval
 		queryTmpl =
-			fmt.Sprintf("SELECT toStartOfInterval(fromUnixTimestamp64Nano(timestamp), INTERVAL %d SECOND) AS ts,", step) + selectLabels +
-				" %s as value " +
+			fmt.Sprintf("SELECT toStartOfInterval(fromUnixTimestamp64Nano(timestamp), INTERVAL %d SECOND) AS ts", step) + selectLabels +
+				", %s as value " +
 				"from signoz_logs.distributed_logs " +
 				"where " + timeFilter + "%s" +
 				"%s%s" +
