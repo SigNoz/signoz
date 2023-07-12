@@ -4,22 +4,21 @@ import { AutoComplete, Spin } from 'antd';
 import { getAggregateAttribute } from 'api/queryBuilder/getAggregateAttribute';
 import {
 	baseAutoCompleteIdKeysOrder,
-	idDivider,
-	initialAutocompleteData,
 	QueryBuilderKeys,
 	selectValueDivider,
 } from 'constants/queryBuilder';
+import { DEBOUNCE_DELAY } from 'constants/queryBuilderFilterConfig';
 import useDebounce from 'hooks/useDebounce';
 import { createIdFromObjectFields } from 'lib/createIdFromObjectFields';
 import { chooseAutocompleteFromCustomValue } from 'lib/newQueryBuilder/chooseAutocompleteFromCustomValue';
 import { getAutocompleteValueAndType } from 'lib/newQueryBuilder/getAutocompleteValueAndType';
 import { transformStringWithPrefix } from 'lib/query/transformStringWithPrefix';
 import { memo, useCallback, useMemo, useState } from 'react';
-import { useQuery } from 'react-query';
+import { useQuery, useQueryClient } from 'react-query';
+import { SuccessResponse } from 'types/api';
 import {
-	AutocompleteType,
 	BaseAutocompleteData,
-	DataType,
+	IQueryAutocompleteResponse,
 } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { DataSource } from 'types/common/queryBuilder';
 import { ExtendedSelectOption } from 'types/common/select';
@@ -34,19 +33,9 @@ export const AggregatorFilter = memo(function AggregatorFilter({
 	disabled,
 	onChange,
 }: AgregatorFilterProps): JSX.Element {
+	const queryClient = useQueryClient();
 	const [optionsData, setOptionsData] = useState<ExtendedSelectOption[]>([]);
-	const [searchText, setSearchText] = useState<string>(
-		query.aggregateAttribute.key,
-	);
-
-	const handleChangeAttribute = useCallback(
-		(data: BaseAutocompleteData[]) => {
-			const attribute = chooseAutocompleteFromCustomValue(data, [searchText]);
-
-			onChange(attribute[0]);
-		},
-		[onChange, searchText],
-	);
+	const [searchText, setSearchText] = useState<string>('');
 
 	const debouncedSearchText = useMemo(() => {
 		// eslint-disable-next-line @typescript-eslint/naming-convention, @typescript-eslint/no-unused-vars
@@ -55,7 +44,7 @@ export const AggregatorFilter = memo(function AggregatorFilter({
 		return value;
 	}, [searchText]);
 
-	const debouncedValue = useDebounce(debouncedSearchText, 300);
+	const debouncedValue = useDebounce(debouncedSearchText, DEBOUNCE_DELAY);
 	const { isFetching } = useQuery(
 		[
 			QueryBuilderKeys.GET_AGGREGATE_ATTRIBUTE,
@@ -86,8 +75,6 @@ export const AggregatorFilter = memo(function AggregatorFilter({
 						key: createIdFromObjectFields(item, baseAutoCompleteIdKeysOrder),
 					})) || [];
 
-				handleChangeAttribute(data.payload?.attributeKeys || []);
-
 				setOptionsData(options);
 			},
 		},
@@ -102,60 +89,79 @@ export const AggregatorFilter = memo(function AggregatorFilter({
 			? `${transformToUpperCase(query.dataSource)} name`
 			: 'Aggregate attribute';
 
-	const handleSelect = (
-		value: string,
-		option: ExtendedSelectOption | ExtendedSelectOption[],
-	): void => {
-		const currentOption = option as ExtendedSelectOption;
+	const getAttributes = useCallback(
+		(): BaseAutocompleteData[] =>
+			queryClient.getQueryData<SuccessResponse<IQueryAutocompleteResponse>>(
+				[QueryBuilderKeys.GET_AGGREGATE_ATTRIBUTE],
+				{ exact: false },
+			)?.payload.attributeKeys || [],
+		[queryClient],
+	);
 
-		if (currentOption.key) {
-			const [key, dataType, type, isColumn] = currentOption.key.split(idDivider);
-			const attribute: BaseAutocompleteData = {
-				key,
-				dataType: dataType as DataType,
-				type: type as AutocompleteType,
-				isColumn: isColumn === 'true',
-			};
+	const handleChangeCustomValue = useCallback(
+		(value: string) => {
+			const aggregateAttributes = getAttributes();
 
-			const text = transformStringWithPrefix({
-				str: attribute.key,
-				prefix: attribute.type || '',
-				condition: !attribute.isColumn,
-			});
-
-			setSearchText(text);
-
-			onChange(attribute);
-		} else {
-			const customAttribute: BaseAutocompleteData = {
-				...initialAutocompleteData,
-				key: value,
-			};
-
-			const text = transformStringWithPrefix({
-				str: customAttribute.key,
-				prefix: customAttribute.type || '',
-				condition: !customAttribute.isColumn,
-			});
-
-			setSearchText(text);
+			const customAttribute: BaseAutocompleteData = chooseAutocompleteFromCustomValue(
+				aggregateAttributes,
+				value,
+			);
 
 			onChange(customAttribute);
+		},
+		[getAttributes, onChange],
+	);
+
+	const handleBlur = useCallback(() => {
+		if (searchText) {
+			handleChangeCustomValue(searchText);
 		}
-	};
+	}, [handleChangeCustomValue, searchText]);
+
+	const handleChange = useCallback(
+		(
+			value: string,
+			option: ExtendedSelectOption | ExtendedSelectOption[],
+		): void => {
+			const currentOption = option as ExtendedSelectOption;
+
+			const aggregateAttributes = getAttributes();
+
+			if (currentOption.key) {
+				const attribute = aggregateAttributes.find(
+					(item) => item.id === currentOption.key,
+				);
+
+				if (attribute) {
+					onChange(attribute);
+				}
+			} else {
+				handleChangeCustomValue(value);
+			}
+
+			setSearchText('');
+		},
+		[getAttributes, handleChangeCustomValue, onChange],
+	);
+
+	const value = transformStringWithPrefix({
+		str: query.aggregateAttribute.key,
+		prefix: query.aggregateAttribute.type || '',
+		condition: !query.aggregateAttribute.isColumn,
+	});
 
 	return (
 		<AutoComplete
 			placeholder={placeholder}
 			style={selectStyle}
 			showArrow={false}
-			searchValue={searchText}
-			onSearch={handleSearchText}
 			filterOption={false}
+			onSearch={handleSearchText}
 			notFoundContent={isFetching ? <Spin size="small" /> : null}
 			options={optionsData}
-			value={searchText}
-			onSelect={handleSelect}
+			value={value}
+			onBlur={handleBlur}
+			onChange={handleChange}
 			disabled={disabled}
 		/>
 	);
