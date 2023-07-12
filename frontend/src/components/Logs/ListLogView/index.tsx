@@ -2,17 +2,20 @@ import { blue, grey, orange } from '@ant-design/colors';
 import { CopyFilled, ExpandAltOutlined } from '@ant-design/icons';
 import Convert from 'ansi-to-html';
 import { Button, Divider, Row, Typography } from 'antd';
+import ROUTES from 'constants/routes';
 import dayjs from 'dayjs';
 import dompurify from 'dompurify';
 import { useNotifications } from 'hooks/useNotifications';
 // utils
 import { FlatLogData } from 'lib/logs/flatLogData';
+import { generateFilterQuery } from 'lib/logs/generateFilterQuery';
 import { useCallback, useMemo } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
+import { useSelector } from 'react-redux';
+import { useHistory } from 'react-router-dom';
 import { useCopyToClipboard } from 'react-use';
-// interfaces
 import { AppState } from 'store/reducers';
-import { SET_DETAILED_LOG_DATA } from 'types/actions/logs';
+// interfaces
+import { IField } from 'types/api/logs/fields';
 import { ILog } from 'types/api/logs/log';
 import { ILogsReducer } from 'types/reducer/logs';
 
@@ -60,9 +63,37 @@ function LogSelectedField({
 	fieldKey = '',
 	fieldValue = '',
 }: LogFieldProps): JSX.Element {
+	const history = useHistory();
+	const {
+		searchFilter: { queryString },
+	} = useSelector<AppState, ILogsReducer>((state) => state.logs);
+
+	const handleQueryAdd = useCallback(
+		(fieldKey: string, fieldValue: string) => {
+			const generatedQuery = generateFilterQuery({
+				fieldKey,
+				fieldValue,
+				type: 'IN',
+			});
+
+			let updatedQueryString = queryString || '';
+			if (updatedQueryString.length === 0) {
+				updatedQueryString += `${generatedQuery}`;
+			} else {
+				updatedQueryString += ` AND ${generatedQuery}`;
+			}
+			history.replace(`${ROUTES.LOGS}?q=${updatedQueryString}`);
+		},
+		[history, queryString],
+	);
+
 	return (
 		<SelectedLog>
-			<AddToQueryHOC fieldKey={fieldKey} fieldValue={fieldValue}>
+			<AddToQueryHOC
+				fieldKey={fieldKey}
+				fieldValue={fieldValue}
+				onAddToQuery={handleQueryAdd}
+			>
 				<Typography.Text>
 					<span style={{ color: blue[4] }}>{fieldKey}</span>
 				</Typography.Text>
@@ -79,24 +110,22 @@ function LogSelectedField({
 
 interface ListLogViewProps {
 	logData: ILog;
+	onOpenDetailedView: (log: ILog) => void;
+	selectedFields: IField[];
 }
-function ListLogView({ logData }: ListLogViewProps): JSX.Element {
-	const {
-		fields: { selected },
-	} = useSelector<AppState, ILogsReducer>((state) => state.logs);
-
-	const dispatch = useDispatch();
+function ListLogView({
+	logData,
+	selectedFields,
+	onOpenDetailedView,
+}: ListLogViewProps): JSX.Element {
 	const flattenLogData = useMemo(() => FlatLogData(logData), [logData]);
 
 	const [, setCopy] = useCopyToClipboard();
 	const { notifications } = useNotifications();
 
 	const handleDetailedView = useCallback(() => {
-		dispatch({
-			type: SET_DETAILED_LOG_DATA,
-			payload: logData,
-		});
-	}, [dispatch, logData]);
+		onOpenDetailedView(logData);
+	}, [logData, onOpenDetailedView]);
 
 	const handleCopyJSON = (): void => {
 		setCopy(JSON.stringify(logData, null, 2));
@@ -106,8 +135,16 @@ function ListLogView({ logData }: ListLogViewProps): JSX.Element {
 	};
 
 	const updatedSelecedFields = useMemo(
-		() => selected.filter((e) => e.name !== 'id'),
-		[selected],
+		() => selectedFields.filter((e) => e.name !== 'id'),
+		[selectedFields],
+	);
+
+	const timestampValue = useMemo(
+		() =>
+			typeof flattenLogData.timestamp === 'string'
+				? dayjs(flattenLogData.timestamp).format()
+				: dayjs(flattenLogData.timestamp / 1e6).format(),
+		[flattenLogData.timestamp],
 	);
 
 	return (
@@ -119,10 +156,7 @@ function ListLogView({ logData }: ListLogViewProps): JSX.Element {
 						{flattenLogData.stream && (
 							<LogGeneralField fieldKey="stream" fieldValue={flattenLogData.stream} />
 						)}
-						<LogGeneralField
-							fieldKey="timestamp"
-							fieldValue={dayjs((flattenLogData.timestamp as never) / 1e6).format()}
-						/>
+						<LogGeneralField fieldKey="timestamp" fieldValue={timestampValue} />
 					</>
 				</LogContainer>
 				<div>

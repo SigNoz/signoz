@@ -1,12 +1,12 @@
-import { Button, Dropdown, MenuProps, Modal } from 'antd';
-import { COMPOSITE_QUERY } from 'constants/queryBuilderQueryNames';
+import { AlertOutlined, AreaChartOutlined } from '@ant-design/icons';
+import { Button, Modal, Space } from 'antd';
+import { queryParamNamesMap } from 'constants/queryBuilderQueryNames';
 import ROUTES from 'constants/routes';
 import history from 'lib/history';
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useState } from 'react';
 import { Dashboard } from 'types/api/dashboard/getAll';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 
-import { MENU_KEY, MENU_LABEL } from './config';
 import ExportPanelContainer from './ExportPanel';
 
 function ExportPanel({
@@ -22,57 +22,43 @@ function ExportPanel({
 
 	const onCreateAlertsHandler = useCallback(() => {
 		history.push(
-			`${ROUTES.ALERTS_NEW}?${COMPOSITE_QUERY}=${encodeURIComponent(
-				JSON.stringify(query),
-			)}`,
+			`${ROUTES.ALERTS_NEW}?${
+				queryParamNamesMap.compositeQuery
+			}=${encodeURIComponent(JSON.stringify(query))}`,
 		);
 	}, [query]);
-
-	const onMenuClickHandler: MenuProps['onClick'] = useCallback(
-		(e: OnClickProps) => {
-			if (e.key === MENU_KEY.EXPORT) {
-				onModalToggle(true);
-			}
-
-			if (e.key === MENU_KEY.CREATE_ALERTS) {
-				onCreateAlertsHandler();
-			}
-		},
-		[onModalToggle, onCreateAlertsHandler],
-	);
-
-	const menu: MenuProps = useMemo(
-		() => ({
-			items: [
-				{
-					key: MENU_KEY.EXPORT,
-					label: MENU_LABEL.EXPORT,
-				},
-				{
-					key: MENU_KEY.CREATE_ALERTS,
-					label: MENU_LABEL.CREATE_ALERTS,
-				},
-			],
-			onClick: onMenuClickHandler,
-		}),
-		[onMenuClickHandler],
-	);
 
 	const onCancel = (value: boolean) => (): void => {
 		onModalToggle(value);
 	};
 
+	const onAddToDashboard = (): void => {
+		setIsExport(true);
+	};
+
 	return (
 		<>
-			<Dropdown trigger={['click']} menu={menu}>
-				<Button>Actions</Button>
-			</Dropdown>
+			<Space size={24}>
+				<Button
+					icon={<AreaChartOutlined />}
+					onClick={onAddToDashboard}
+					type="primary"
+				>
+					Add to Dashboard
+				</Button>
+
+				<Button onClick={onCreateAlertsHandler} icon={<AlertOutlined />}>
+					Setup Alerts
+				</Button>
+			</Space>
+
 			<Modal
 				footer={null}
 				onOk={onCancel(false)}
 				onCancel={onCancel(false)}
 				open={isExport}
 				centered
+				destroyOnClose
 			>
 				<ExportPanelContainer
 					query={query}
@@ -84,18 +70,12 @@ function ExportPanel({
 	);
 }
 
-ExportPanel.defaultProps = {
-	isLoading: false,
-};
-
-interface OnClickProps {
-	key: string;
-}
-
 export interface ExportPanelProps {
 	isLoading?: boolean;
 	onExport: (dashboard: Dashboard | null) => void;
 	query: Query | null;
 }
+
+ExportPanel.defaultProps = { isLoading: false };
 
 export default ExportPanel;

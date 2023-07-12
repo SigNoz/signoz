@@ -10,13 +10,12 @@ import { memo, useEffect, useMemo } from 'react';
 import { Formula, Query } from './components';
 // ** Types
 import { QueryBuilderProps } from './QueryBuilder.interfaces';
-// ** Styles
-import { ActionsWrapperStyled } from './QueryBuilder.styled';
 
 export const QueryBuilder = memo(function QueryBuilder({
 	config,
 	panelType: newPanelType,
 	actions,
+	filterConfigs = {},
 }: QueryBuilderProps): JSX.Element {
 	const {
 		currentQuery,
@@ -74,6 +73,7 @@ export const QueryBuilder = memo(function QueryBuilder({
 								isAvailableToDisable={isAvailableToDisableQuery}
 								queryVariant={config?.queryVariant || 'dropdown'}
 								query={query}
+								filterConfigs={filterConfigs}
 							/>
 						</Col>
 					))}
@@ -85,7 +85,7 @@ export const QueryBuilder = memo(function QueryBuilder({
 				</Row>
 			</Col>
 
-			<ActionsWrapperStyled span={24}>
+			<Col span={24}>
 				<Row gutter={[20, 0]}>
 					<Col>
 						<Button
@@ -109,7 +109,7 @@ export const QueryBuilder = memo(function QueryBuilder({
 					</Col>
 					{actions}
 				</Row>
-			</ActionsWrapperStyled>
+			</Col>
 		</Row>
 	);
 });

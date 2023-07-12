@@ -1,18 +1,21 @@
-import { Drawer, Tabs } from 'antd';
+import LogDetail from 'components/LogDetail';
+import ROUTES from 'constants/routes';
+import { generateFilterQuery } from 'lib/logs/generateFilterQuery';
+import { useCallback } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
+import { useHistory } from 'react-router-dom';
 import { Dispatch } from 'redux';
 import { AppState } from 'store/reducers';
 import AppActions from 'types/actions';
 import { SET_DETAILED_LOG_DATA } from 'types/actions/logs';
 import { ILogsReducer } from 'types/reducer/logs';
 
-import JSONView from './JsonView';
-import TableView from './TableView';
-
 function LogDetailedView(): JSX.Element {
-	const { detailedLog } = useSelector<AppState, ILogsReducer>(
-		(state) => state.logs,
-	);
+	const history = useHistory();
+	const {
+		detailedLog,
+		searchFilter: { queryString },
+	} = useSelector<AppState, ILogsReducer>((state) => state.logs);
 
 	const dispatch = useDispatch<Dispatch<AppActions>>();
 
@@ -23,32 +26,31 @@ function LogDetailedView(): JSX.Element {
 		});
 	};
 
-	const items = [
-		{
-			label: 'Table',
-			key: '1',
-			children: detailedLog && <TableView logData={detailedLog} />,
+	const handleQueryAdd = useCallback(
+		(fieldKey: string, fieldValue: string) => {
+			const generatedQuery = generateFilterQuery({
+				fieldKey,
+				fieldValue,
+				type: 'IN',
+			});
+
+			let updatedQueryString = queryString || '';
+			if (updatedQueryString.length === 0) {
+				updatedQueryString += `${generatedQuery}`;
+			} else {
+				updatedQueryString += ` AND ${generatedQuery}`;
+			}
+			history.replace(`${ROUTES.LOGS}?q=${updatedQueryString}`);
 		},
-		{
-			label: 'JSON',
-			key: '2',
-			children: detailedLog && <JSONView logData={detailedLog} />,
-		},
-	];
+		[history, queryString],
+	);
 
 	return (
-		<Drawer
-			width="60%"
-			title="Log Details"
-			placement="right"
-			closable
+		<LogDetail
+			log={detailedLog}
 			onClose={onDrawerClose}
-			open={detailedLog !== null}
-			style={{ overscrollBehavior: 'contain' }}
-			destroyOnClose
-		>
-			<Tabs defaultActiveKey="1" items={items} />
-		</Drawer>
+			onAddToQuery={handleQueryAdd}
+		/>
 	);
 }
 

@@ -617,12 +617,32 @@ var testBuildLogsQueryData = []struct {
 			AggregateOperator: v3.AggregateOperatorNoOp,
 			Expression:        "A",
 			Filters:           &v3.FilterSet{Operator: "AND", Items: []v3.FilterItem{}},
-			OrderBy:           []v3.OrderBy{{ColumnName: "method", Order: "ASC", IsColumn: true}},
+			OrderBy:           []v3.OrderBy{{ColumnName: "method", DataType: v3.AttributeKeyDataTypeString, Order: "ASC", IsColumn: true}},
 		},
 		ExpectedQuery: "SELECT timestamp, id, trace_id, span_id, trace_flags, severity_text, severity_number, body,CAST((attributes_string_key, attributes_string_value), 'Map(String, String)') as  attributes_string," +
 			"CAST((attributes_int64_key, attributes_int64_value), 'Map(String, Int64)') as  attributes_int64,CAST((attributes_float64_key, attributes_float64_value), 'Map(String, Float64)') as  attributes_float64," +
 			"CAST((resources_string_key, resources_string_value), 'Map(String, String)') as resources_string " +
 			"from signoz_logs.distributed_logs where (timestamp >= 1680066360726210000 AND timestamp <= 1680066458000000000) order by method ASC",
+	},
+	{
+		Name:      "Test Noop with filter",
+		PanelType: v3.PanelTypeList,
+		Start:     1680066360726210000,
+		End:       1680066458000000000,
+		Step:      60,
+		BuilderQuery: &v3.BuilderQuery{
+			SelectColumns:     []v3.AttributeKey{},
+			QueryName:         "A",
+			AggregateOperator: v3.AggregateOperatorNoOp,
+			Expression:        "A",
+			Filters: &v3.FilterSet{Operator: "AND", Items: []v3.FilterItem{
+				{Key: v3.AttributeKey{Key: "severity_number", DataType: v3.AttributeKeyDataTypeInt64, IsColumn: true}, Operator: "!=", Value: 0},
+			}},
+		},
+		ExpectedQuery: "SELECT timestamp, id, trace_id, span_id, trace_flags, severity_text, severity_number, body,CAST((attributes_string_key, attributes_string_value), 'Map(String, String)') as  attributes_string," +
+			"CAST((attributes_int64_key, attributes_int64_value), 'Map(String, Int64)') as  attributes_int64,CAST((attributes_float64_key, attributes_float64_value), 'Map(String, Float64)') as  attributes_float64," +
+			"CAST((resources_string_key, resources_string_value), 'Map(String, String)') as resources_string " +
+			"from signoz_logs.distributed_logs where (timestamp >= 1680066360726210000 AND timestamp <= 1680066458000000000) AND severity_number != 0 order by timestamp",
 	},
 	{
 		Name:      "Test aggregate with having clause",
@@ -723,6 +743,59 @@ var testBuildLogsQueryData = []struct {
 		},
 		TableName:     "logs",
 		ExpectedQuery: "SELECT toStartOfInterval(fromUnixTimestamp64Nano(timestamp), INTERVAL 60 SECOND) AS ts, toFloat64(count(distinct(attributes_string_value[indexOf(attributes_string_key, 'name')]))) as value from signoz_logs.distributed_logs where (timestamp >= 1680066360726210000 AND timestamp <= 1680066458000000000) AND attributes_string_value[indexOf(attributes_string_key, 'body')] ILIKE '%test%' group by ts having value > 10 order by ts",
+	},
+
+	// Tests for table panel type
+	{
+		Name:      "TABLE: Test count",
+		PanelType: v3.PanelTypeTable,
+		Start:     1680066360726210000,
+		End:       1680066458000000000,
+		Step:      60,
+		BuilderQuery: &v3.BuilderQuery{
+			QueryName:         "A",
+			AggregateOperator: v3.AggregateOperatorCount,
+			Expression:        "A",
+		},
+		TableName:     "logs",
+		ExpectedQuery: "SELECT now() as ts, toFloat64(count(*)) as value from signoz_logs.distributed_logs where (timestamp >= 1680066360726210000 AND timestamp <= 1680066458000000000)",
+	},
+	{
+		Name:      "TABLE: Test count with groupBy",
+		PanelType: v3.PanelTypeTable,
+		Start:     1680066360726210000,
+		End:       1680066458000000000,
+		Step:      60,
+		BuilderQuery: &v3.BuilderQuery{
+			QueryName:         "A",
+			AggregateOperator: v3.AggregateOperatorCount,
+			Expression:        "A",
+			GroupBy: []v3.AttributeKey{
+				{Key: "name", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag},
+			},
+		},
+		TableName:     "logs",
+		ExpectedQuery: "SELECT now() as ts, attributes_string_value[indexOf(attributes_string_key, 'name')] as name, toFloat64(count(*)) as value from signoz_logs.distributed_logs where (timestamp >= 1680066360726210000 AND timestamp <= 1680066458000000000) AND indexOf(attributes_string_key, 'name') > 0 group by name order by name ASC",
+	},
+	{
+		Name:      "TABLE: Test count with groupBy, orderBy",
+		PanelType: v3.PanelTypeTable,
+		Start:     1680066360726210000,
+		End:       1680066458000000000,
+		Step:      60,
+		BuilderQuery: &v3.BuilderQuery{
+			QueryName:         "A",
+			AggregateOperator: v3.AggregateOperatorCount,
+			Expression:        "A",
+			GroupBy: []v3.AttributeKey{
+				{Key: "name", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag},
+			},
+			OrderBy: []v3.OrderBy{
+				{ColumnName: "name", Order: "DESC"},
+			},
+		},
+		TableName:     "logs",
+		ExpectedQuery: "SELECT now() as ts, attributes_string_value[indexOf(attributes_string_key, 'name')] as name, toFloat64(count(*)) as value from signoz_logs.distributed_logs where (timestamp >= 1680066360726210000 AND timestamp <= 1680066458000000000) AND indexOf(attributes_string_key, 'name') > 0 group by name order by name DESC",
 	},
 }
 
