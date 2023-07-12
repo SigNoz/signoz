@@ -999,7 +999,7 @@ var testBuildTracesQueryData = []struct {
 			OrderBy:            []v3.OrderBy{{ColumnName: "method", Order: "ASC"}},
 		},
 		TableName: "signoz_traces.distributed_signoz_index_v2",
-		ExpectedQuery: "SELECT stringTagMap['method'] as `method`, " +
+		ExpectedQuery: "SELECT now() as ts, stringTagMap['method'] as `method`, " +
 			"quantile(0.05)(durationNano) as value " +
 			"from signoz_traces.distributed_signoz_index_v2 " +
 			"where (timestamp >= '1680066360726210000' AND timestamp <= '1680066458000000000') " +
@@ -1022,7 +1022,7 @@ var testBuildTracesQueryData = []struct {
 			OrderBy:            []v3.OrderBy{},
 		},
 		TableName: "signoz_traces.distributed_signoz_index_v2",
-		ExpectedQuery: "SELECT quantile(0.05)(durationNano) as value " +
+		ExpectedQuery: "SELECT now() as ts, quantile(0.05)(durationNano) as value " +
 			"from signoz_traces.distributed_signoz_index_v2 " +
 			"where (timestamp >= '1680066360726210000' AND timestamp <= '1680066458000000000')",
 		PanelType: v3.PanelTypeTable,
