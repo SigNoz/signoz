@@ -344,7 +344,7 @@ function Application(): JSX.Element {
 										widget={operationPerSecWidget}
 										yAxisUnit="ops"
 										onDragSelect={onDragSelect}
-										loading={topLevelOperationsIsLoading}
+										isDependedDataLoaded={topLevelOperationsIsLoading}
 									/>
 								</GraphContainer>
 							</>
@@ -383,7 +383,7 @@ function Application(): JSX.Element {
 										widget={errorPercentageWidget}
 										yAxisUnit="%"
 										onDragSelect={onDragSelect}
-										loading={topLevelOperationsIsLoading}
+										isDependedDataLoaded={topLevelOperationsIsLoading}
 									/>
 								</GraphContainer>
 							</>
