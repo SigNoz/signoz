@@ -12,7 +12,7 @@ import Spinner from 'components/Spinner';
 import { queryParamNamesMap } from 'constants/queryBuilderQueryNames';
 import useComponentPermission from 'hooks/useComponentPermission';
 import history from 'lib/history';
-import { useCallback, useMemo, useState } from 'react';
+import { ReactNode, useCallback, useMemo, useState } from 'react';
 import { UseQueryResult } from 'react-query';
 import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
@@ -120,58 +120,62 @@ function WidgetHeader({
 		role,
 	);
 
-	const menuList: MenuItemType[] = useMemo(
-		() => [
+	const actions = useMemo(
+		(): MenuItem[] => [
 			{
-				key: keyMethodMapping.view.key,
+				key: 'view',
 				icon: <FullscreenOutlined />,
-				disabled: queryResponse.isLoading,
 				label: 'View',
+				condition: true,
+				disabled: queryResponse.isLoading,
 			},
-			...(allowEdit
-				? [
-						{
-							key: keyMethodMapping.edit.key,
-							icon: <EditFilled />,
-							disabled: !editWidget,
-							label: 'Edit',
-						},
-				  ]
-				: []),
-			...(allowClone
-				? [
-						{
-							key: keyMethodMapping.clone.key,
-							icon: <CopyOutlined />,
-							disabled: !editWidget,
-							label: 'Clone',
-						},
-				  ]
-				: []),
-			...(allowDelete
-				? [
-						{
-							key: keyMethodMapping.delete.key,
-							icon: <DeleteOutlined />,
-							disabled: !deleteWidget,
-							danger: true,
-							label: 'Delete',
-						},
-				  ]
-				: []),
+			{
+				key: 'edit',
+				icon: <EditFilled />,
+				label: 'Edit',
+				condition: allowEdit,
+				disabled: !editWidget,
+			},
+			{
+				key: 'clone',
+				icon: <CopyOutlined />,
+				label: 'Clone',
+				condition: allowClone,
+				disabled: !editWidget,
+			},
+			{
+				key: 'delete',
+				icon: <DeleteOutlined />,
+				label: 'Delete',
+				condition: allowDelete,
+				disabled: !deleteWidget,
+				danger: true,
+			},
 		],
 		[
-			deleteWidget,
-			editWidget,
-			keyMethodMapping.delete.key,
-			keyMethodMapping.edit.key,
-			keyMethodMapping.view.key,
-			keyMethodMapping.clone.key,
-			queryResponse.isLoading,
+			allowEdit,
 			allowClone,
 			allowDelete,
-			allowEdit,
+			queryResponse.isLoading,
+			deleteWidget,
+			editWidget,
 		],
+	);
+
+	const menuList: MenuItemType[] = useMemo(
+		(): MenuItemType[] =>
+			actions
+				.filter((action: MenuItem): boolean => action.condition)
+				.map(
+					({ key, icon: Icon, label, disabled, ...rest }): MenuItemType => ({
+						key: keyMethodMapping[key].key,
+						icon: Icon,
+						label,
+						disabled,
+						...rest,
+					}),
+				),
+		[keyMethodMapping, actions],
 	);
 
 	const onClickHandler = useCallback(() => {
@@ -231,5 +235,14 @@ WidgetHeader.defaultProps = {
 	allowClone: undefined,
 	allowEdit: undefined,
 };
+
+interface MenuItem {
+	key: string;
+	icon: ReactNode;
+	label: string;
+	condition: boolean;
+	disabled: boolean;
+	danger?: boolean;
+}
 
 export default WidgetHeader;
