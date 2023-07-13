@@ -10,7 +10,7 @@ function AddToQueryHOC({
 	children,
 }: AddToQueryHOCProps): JSX.Element {
 	const handleQueryAdd = useCallback(() => {
-		onAddToQuery(fieldKey, fieldValue);
+		onAddToQuery(fieldKey, fieldValue, 'IN');
 	}, [fieldKey, fieldValue, onAddToQuery]);
 
 	const popOverContent = useMemo(() => <span>Add to query: {fieldKey}</span>, [
@@ -29,7 +29,7 @@ function AddToQueryHOC({
 export interface AddToQueryHOCProps {
 	fieldKey: string;
 	fieldValue: string;
-	onAddToQuery: (fieldKey: string, fieldValue: string) => void;
+	onAddToQuery: (fieldKey: string, fieldValue: string, operator: string) => void;
 	children: ReactNode;
 }
 
