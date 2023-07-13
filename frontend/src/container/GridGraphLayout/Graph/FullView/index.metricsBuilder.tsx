@@ -26,6 +26,7 @@ function FullView({
 	name,
 	yAxisUnit,
 	onDragSelect,
+	isDependedDataLoaded = false,
 }: FullViewProps): JSX.Element {
 	const { selectedTime: globalSelectedTime } = useSelector<
 		AppState,
@@ -61,6 +62,7 @@ function FullView({
 		},
 		{
 			queryKey,
+			enabled: !isDependedDataLoaded,
 		},
 	);
 
@@ -76,9 +78,7 @@ function FullView({
 		[response],
 	);
 
-	const isLoading = response.isLoading === true;
-
-	if (isLoading) {
+	if (response.status === 'idle' || response.status === 'loading') {
 		return <Spinner height="100%" size="large" tip="Loading..." />;
 	}
 
@@ -123,6 +123,7 @@ interface FullViewProps {
 	name: string;
 	yAxisUnit?: string;
 	onDragSelect?: (start: number, end: number) => void;
+	isDependedDataLoaded?: boolean;
 }
 
 FullView.defaultProps = {
@@ -130,6 +131,7 @@ FullView.defaultProps = {
 	onClickHandler: undefined,
 	yAxisUnit: undefined,
 	onDragSelect: undefined,
+	isDependedDataLoaded: undefined,
 };
 
 export default FullView;

@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"sort"
 	"strconv"
 	"strings"
 	"sync"
@@ -2758,6 +2759,8 @@ func (aH *APIHandler) queryRangeV3(ctx context.Context, queryRangeParams *v3.Que
 		return
 	}
 
+	applyMetricLimit(result, queryRangeParams)
+
 	resp := v3.QueryRangeResponse{
 		Result: result,
 	}
@@ -2774,4 +2777,34 @@ func (aH *APIHandler) QueryRangeV3(w http.ResponseWriter, r *http.Request) {
 	}
 
 	aH.queryRangeV3(r.Context(), queryRangeParams, w, r)
+}
+
+func applyMetricLimit(results []*v3.Result, queryRangeParams *v3.QueryRangeParamsV3) {
+	// apply limit if any for metrics
+	// use the grouping set points to apply the limit
+
+	for _, result := range results {
+		builderQueries := queryRangeParams.CompositeQuery.BuilderQueries
+		if builderQueries != nil && builderQueries[result.QueryName].DataSource == v3.DataSourceMetrics {
+			limit := builderQueries[result.QueryName].Limit
+			var orderAsc bool
+			for _, item := range builderQueries[result.QueryName].OrderBy {
+				if item.ColumnName == constants.SigNozOrderByValue {
+					orderAsc = strings.ToLower(item.Order) == "asc"
+					break
+				}
+			}
+			if limit != 0 {
+				sort.Slice(result.Series, func(i, j int) bool {
+					if orderAsc {
+						return result.Series[i].Points[0].Value < result.Series[j].Points[0].Value
+					}
+					return result.Series[i].Points[0].Value > result.Series[j].Points[0].Value
+				})
+				if len(result.Series) > int(limit) {
+					result.Series = result.Series[:limit]
+				}
+			}
+		}
+	}
 }
