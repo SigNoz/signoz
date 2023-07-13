@@ -56,6 +56,7 @@ type ServerOptions struct {
 	// alert specific params
 	DisableRules bool
 	RuleRepoURL  string
+	PreferDelta  bool
 }
 
 // Server runs HTTP api service
@@ -170,6 +171,7 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 	apiOpts := api.APIHandlerOptions{
 		DataConnector:  reader,
 		SkipConfig:     skipConfig,
+		PreferDelta:    serverOptions.PreferDelta,
 		AppDao:         modelDao,
 		RulesManager:   rm,
 		FeatureFlags:   lm,

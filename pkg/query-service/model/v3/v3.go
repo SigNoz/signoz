@@ -417,12 +417,21 @@ func (c *CompositeQuery) Validate() error {
 	return nil
 }
 
+type Temporality string
+
+const (
+	Unspecified Temporality = "Unspecified"
+	Delta       Temporality = "Delta"
+	Cumulative  Temporality = "Cumulative"
+)
+
 type BuilderQuery struct {
 	QueryName          string            `json:"queryName"`
 	StepInterval       int64             `json:"stepInterval"`
 	DataSource         DataSource        `json:"dataSource"`
 	AggregateOperator  AggregateOperator `json:"aggregateOperator"`
 	AggregateAttribute AttributeKey      `json:"aggregateAttribute,omitempty"`
+	Temporality        Temporality       `json:"temporality,omitempty"`
 	Filters            *FilterSet        `json:"filters,omitempty"`
 	GroupBy            []AttributeKey    `json:"groupBy,omitempty"`
 	Expression         string            `json:"expression"`
@@ -576,8 +585,9 @@ type Result struct {
 }
 
 type Series struct {
-	Labels map[string]string `json:"labels"`
-	Points []Point           `json:"values"`
+	Labels            map[string]string `json:"labels"`
+	Points            []Point           `json:"values"`
+	GroupingSetsPoint *Point            `json:"-"`
 }
 
 func (s *Series) SortPoints() {

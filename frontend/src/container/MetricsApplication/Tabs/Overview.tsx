@@ -1,5 +1,13 @@
+import { Typography } from 'antd';
+import getServiceOverview from 'api/metrics/getServiceOverview';
+import getTopLevelOperations, {
+	ServiceDataProps,
+} from 'api/metrics/getTopLevelOperations';
+import getTopOperations from 'api/metrics/getTopOperations';
+import axios from 'axios';
 import { ActiveElement, Chart, ChartData, ChartEvent } from 'chart.js';
 import Graph from 'components/Graph';
+import Spinner from 'components/Spinner';
 import { QueryParams } from 'constants/query';
 import ROUTES from 'constants/routes';
 import FullView from 'container/GridGraphLayout/Graph/FullView/index.metricsBuilder';
@@ -12,16 +20,22 @@ import {
 } from 'hooks/useResourceAttribute/utils';
 import convertToNanoSecondsToSecond from 'lib/convertToNanoSecondsToSecond';
 import { colors } from 'lib/getRandomColor';
+import getStep from 'lib/getStep';
 import history from 'lib/history';
 import { useCallback, useMemo, useState } from 'react';
+import { useQueries, UseQueryResult } from 'react-query';
 import { useDispatch, useSelector } from 'react-redux';
 import { useLocation, useParams } from 'react-router-dom';
 import { UpdateTimeInterval } from 'store/actions';
 import { AppState } from 'store/reducers';
+import { PayloadProps } from 'types/api/metrics/getServiceOverview';
+import { PayloadProps as PayloadPropsTopOpertions } from 'types/api/metrics/getTopOperations';
 import { EQueryType } from 'types/common/dashboard';
-import MetricReducer from 'types/reducer/metrics';
+import { GlobalReducer } from 'types/reducer/globalTime';
+import { Tags } from 'types/reducer/trace';
 import { v4 as uuid } from 'uuid';
 
+import { SOMETHING_WENT_WRONG } from '../../../constants/api';
 import { getWidgetQueryBuilder } from '../MetricsApplication.factory';
 import {
 	errorPercentage,
@@ -37,9 +51,17 @@ import {
 } from './util';
 
 function Application(): JSX.Element {
+	const { maxTime, minTime } = useSelector<AppState, GlobalReducer>(
+		(state) => state.globalTime,
+	);
 	const { servicename } = useParams<{ servicename?: string }>();
 	const [selectedTimeStamp, setSelectedTimeStamp] = useState<number>(0);
 	const { search } = useLocation();
+	const { queries } = useResourceAttribute();
+	const selectedTags = useMemo(
+		() => (convertRawQueriesToTraceSelectedTags(queries) as Tags[]) || [],
+		[queries],
+	);
 
 	const handleSetTimeStamp = useCallback((selectTime: number) => {
 		setSelectedTimeStamp(selectTime);
@@ -64,12 +86,53 @@ function Application(): JSX.Element {
 		[handleSetTimeStamp],
 	);
 
-	const { topOperations, serviceOverview, topLevelOperations } = useSelector<
-		AppState,
-		MetricReducer
-	>((state) => state.metrics);
+	const queryResult = useQueries<
+		[
+			UseQueryResult<PayloadProps>,
+			UseQueryResult<PayloadPropsTopOpertions>,
+			UseQueryResult<ServiceDataProps>,
+		]
+	>([
+		{
+			queryKey: [servicename, selectedTags, minTime, maxTime],
+			queryFn: (): Promise<PayloadProps> =>
+				getServiceOverview({
+					service: servicename || '',
+					start: minTime,
+					end: maxTime,
+					step: getStep({
+						start: minTime,
+						end: maxTime,
+						inputFormat: 'ns',
+					}),
+					selectedTags,
+				}),
+		},
+		{
+			queryKey: [minTime, maxTime, servicename, selectedTags],
+			queryFn: (): Promise<PayloadPropsTopOpertions> =>
+				getTopOperations({
+					service: servicename || '',
+					start: minTime,
+					end: maxTime,
+					selectedTags,
+				}),
+		},
+		{
+			queryKey: [servicename, minTime, maxTime, selectedTags],
+			queryFn: (): Promise<ServiceDataProps> => getTopLevelOperations(),
+		},
+	]);
 
-	const { queries } = useResourceAttribute();
+	const serviceOverview = queryResult[0].data;
+	const serviceOverviewError = queryResult[0].error;
+	const serviceOverviewIsError = queryResult[0].isError;
+	const serviceOverviewIsLoading = queryResult[0].isLoading;
+	const topOperations = queryResult[1].data;
+	const topLevelOperations = queryResult[2].data;
+	const topLevelOperationsError = queryResult[2].error;
+	const topLevelOperationsIsError = queryResult[2].isError;
+	const topLevelOperationsIsLoading = queryResult[2].isLoading;
 
 	const selectedTraceTags: string = JSON.stringify(
 		convertRawQueriesToTraceSelectedTags(queries) || [],
@@ -89,7 +152,9 @@ function Application(): JSX.Element {
 				builder: operationPerSec({
 					servicename,
 					tagFilterItems,
-					topLevelOperations,
+					topLevelOperations: topLevelOperations
+						? topLevelOperations[servicename || '']
+						: [],
 				}),
 				clickhouse_sql: [],
 				id: uuid(),
@@ -105,7 +170,9 @@ function Application(): JSX.Element {
 				builder: errorPercentage({
 					servicename,
 					tagFilterItems,
-					topLevelOperations,
+					topLevelOperations: topLevelOperations
+						? topLevelOperations[servicename || '']
+						: [],
 				}),
 				clickhouse_sql: [],
 				id: uuid(),
@@ -158,8 +225,12 @@ function Application(): JSX.Element {
 		[],
 	);
 
-	const dataSets = useMemo(
-		() => [
+	const dataSets = useMemo(() => {
+		if (!serviceOverview) {
+			return [];
+		}
+
+		return [
 			{
 				data: serviceOverview.map((e) =>
 					parseFloat(convertToNanoSecondsToSecond(e.p99)),
@@ -178,19 +249,25 @@ function Application(): JSX.Element {
 				),
 				...generalChartDataProperties('p50 Latency', 2),
 			},
-		],
-		[generalChartDataProperties, serviceOverview],
-	);
+		];
+	}, [generalChartDataProperties, serviceOverview]);
 
-	const data = useMemo(
-		() => ({
+	const data = useMemo(() => {
+		if (!serviceOverview) {
+			return {
+				datasets: [],
+				labels: [],
+			};
+		}
+
+		return {
 			datasets: dataSets,
 			labels: serviceOverview.map(
 				(e) => new Date(parseFloat(convertToNanoSecondsToSecond(e.timestamp))),
 			),
-		}),
-		[serviceOverview, dataSets],
-	);
+		};
+	}, [serviceOverview, dataSets]);
+
 	return (
 		<>
 			<Row gutter={24}>
@@ -208,18 +285,33 @@ function Application(): JSX.Element {
 						View Traces
 					</Button>
 					<Card>
-						<GraphTitle>Latency</GraphTitle>
-						<GraphContainer>
-							<Graph
-								animate={false}
-								onClickHandler={handleGraphClick('Service')}
-								name="service_latency"
-								type="line"
-								data={data}
-								yAxisUnit="ms"
-								onDragSelect={onDragSelect}
-							/>
-						</GraphContainer>
+						{serviceOverviewIsError ? (
+							<Typography>
+								{axios.isAxiosError(serviceOverviewError)
+									? serviceOverviewError.response?.data
+									: SOMETHING_WENT_WRONG}
+							</Typography>
+						) : (
+							<>
+								<GraphTitle>Latency</GraphTitle>
+								{serviceOverviewIsLoading && (
+									<Spinner size="large" tip="Loading..." height="40vh" />
+								)}
+								{!serviceOverviewIsLoading && (
+									<GraphContainer>
+										<Graph
+											animate={false}
+											onClickHandler={handleGraphClick('Service')}
+											name="service_latency"
+											type="line"
+											data={data}
+											yAxisUnit="ms"
+											onDragSelect={onDragSelect}
+										/>
+									</GraphContainer>
+								)}
+							</>
+						)}
 					</Card>
 				</Col>
 
@@ -237,17 +329,28 @@ function Application(): JSX.Element {
 						View Traces
 					</Button>
 					<Card>
-						<GraphTitle>Rate (ops/s)</GraphTitle>
-						<GraphContainer>
-							<FullView
-								name="operations_per_sec"
-								fullViewOptions={false}
-								onClickHandler={handleGraphClick('Rate')}
-								widget={operationPerSecWidget}
-								yAxisUnit="ops"
-								onDragSelect={onDragSelect}
-							/>
-						</GraphContainer>
+						{topLevelOperationsIsError ? (
+							<Typography>
+								{axios.isAxiosError(topLevelOperationsError)
+									? topLevelOperationsError.response?.data
+									: SOMETHING_WENT_WRONG}
+							</Typography>
+						) : (
+							<>
+								<GraphTitle>Rate (ops/s)</GraphTitle>
+								<GraphContainer>
+									<FullView
+										name="operations_per_sec"
+										fullViewOptions={false}
+										onClickHandler={handleGraphClick('Rate')}
+										widget={operationPerSecWidget}
+										yAxisUnit="ops"
+										onDragSelect={onDragSelect}
+										isDependedDataLoaded={topLevelOperationsIsLoading}
+									/>
+								</GraphContainer>
+							</>
+						)}
 					</Card>
 				</Col>
 			</Row>
@@ -265,23 +368,34 @@ function Application(): JSX.Element {
 					</Button>
 
 					<Card>
-						<GraphTitle>Error Percentage</GraphTitle>
-						<GraphContainer>
-							<FullView
-								name="error_percentage_%"
-								fullViewOptions={false}
-								onClickHandler={handleGraphClick('Error')}
-								widget={errorPercentageWidget}
-								yAxisUnit="%"
-								onDragSelect={onDragSelect}
-							/>
-						</GraphContainer>
+						{topLevelOperationsIsError ? (
+							<Typography>
+								{axios.isAxiosError(topLevelOperationsError)
+									? topLevelOperationsError.response?.data
+									: SOMETHING_WENT_WRONG}
+							</Typography>
+						) : (
+							<>
+								<GraphTitle>Error Percentage</GraphTitle>
+								<GraphContainer>
+									<FullView
+										name="error_percentage_%"
+										fullViewOptions={false}
+										onClickHandler={handleGraphClick('Error')}
+										widget={errorPercentageWidget}
+										yAxisUnit="%"
+										onDragSelect={onDragSelect}
+										isDependedDataLoaded={topLevelOperationsIsLoading}
+									/>
+								</GraphContainer>
+							</>
+						)}
 					</Card>
 				</Col>
 
 				<Col span={12}>
 					<Card>
-						<TopOperationsTable data={topOperations} />
+						<TopOperationsTable data={topOperations || []} />
 					</Card>
 				</Col>
 			</Row>
