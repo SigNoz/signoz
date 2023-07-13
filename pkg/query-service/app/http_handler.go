@@ -458,16 +458,26 @@ func (aH *APIHandler) metricAutocompleteTagValue(w http.ResponseWriter, r *http.
 func (aH *APIHandler) addTemporality(ctx context.Context, qp *v3.QueryRangeParamsV3) error {
 
 	metricNames := make([]string, 0)
+	metricNameToTemporality := make(map[string]map[v3.Temporality]bool)
 	if qp.CompositeQuery != nil && len(qp.CompositeQuery.BuilderQueries) > 0 {
 		for _, query := range qp.CompositeQuery.BuilderQueries {
 			if query.DataSource == v3.DataSourceMetrics {
 				metricNames = append(metricNames, query.AggregateAttribute.Key)
+				if _, ok := metricNameToTemporality[query.AggregateAttribute.Key]; !ok {
+					metricNameToTemporality[query.AggregateAttribute.Key] = make(map[v3.Temporality]bool)
+				}
 			}
 		}
 	}
-	metricNameToTemporality, err := aH.reader.FetchTemporality(ctx, metricNames)
-	if err != nil {
-		return err
+
+	var err error
+
+	if aH.preferDelta {
+		zap.S().Debug("fetching metric temporality")
+		metricNameToTemporality, err = aH.reader.FetchTemporality(ctx, metricNames)
+		if err != nil {
+			return err
+		}
 	}
 
 	if qp.CompositeQuery != nil && len(qp.CompositeQuery.BuilderQueries) > 0 {
