@@ -255,7 +255,7 @@ function GraphManager({
 			localStorage.setItem('LEGEND_GRAPH', JSON.stringify(legendEntryArray));
 		}
 		notifications.success({
-			message: 'Saved successfully!',
+			message: 'The updated graphs & legends are saved',
 		});
 		if (graphVisibilityHandler) {
 			graphVisibilityHandler(graphVisibilityArray);
