@@ -1,34 +1,70 @@
 import { TabsProps } from 'antd';
-import { PANEL_TYPES } from 'constants/queryBuilder';
+import axios from 'axios';
+import LogDetail from 'components/LogDetail';
+import TabLabel from 'components/TabLabel';
+import { QueryParams } from 'constants/query';
+import {
+	initialQueriesMap,
+	PANEL_TYPES,
+	QueryBuilderKeys,
+} from 'constants/queryBuilder';
 import { queryParamNamesMap } from 'constants/queryBuilderQueryNames';
+import ROUTES from 'constants/routes';
 import { DEFAULT_PER_PAGE_VALUE } from 'container/Controls/config';
-import LogExplorerDetailedView from 'container/LogExplorerDetailedView';
+import ExportPanel from 'container/ExportPanel';
 import LogsExplorerChart from 'container/LogsExplorerChart';
 import LogsExplorerList from 'container/LogsExplorerList';
 // TODO: temporary hide table view
 // import LogsExplorerTable from 'container/LogsExplorerTable';
 import { GRAPH_TYPES } from 'container/NewDashboard/ComponentsSlider';
 import TimeSeriesView from 'container/TimeSeriesView/TimeSeriesView';
+import { useUpdateDashboard } from 'hooks/dashboard/useUpdateDashboard';
+import { addEmptyWidgetInDashboardJSONWithQuery } from 'hooks/dashboard/utils';
 import { useGetExplorerQueryRange } from 'hooks/queryBuilder/useGetExplorerQueryRange';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
+import { useNotifications } from 'hooks/useNotifications';
 import useUrlQueryData from 'hooks/useUrlQueryData';
+import { chooseAutocompleteFromCustomValue } from 'lib/newQueryBuilder/chooseAutocompleteFromCustomValue';
 import { getPaginationQueryData } from 'lib/newQueryBuilder/getPaginationQueryData';
-import { memo, useCallback, useEffect, useMemo, useState } from 'react';
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useQueryClient } from 'react-query';
+import { useSelector } from 'react-redux';
+import { generatePath, useHistory } from 'react-router-dom';
+import { AppState } from 'store/reducers';
+import { SuccessResponse } from 'types/api';
+import { Dashboard } from 'types/api/dashboard/getAll';
 import { ILog } from 'types/api/logs/log';
+import {
+	BaseAutocompleteData,
+	IQueryAutocompleteResponse,
+} from 'types/api/queryBuilder/queryAutocompleteResponse';
 import {
 	IBuilderQuery,
 	OrderByPayload,
 	Query,
 } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource, StringOperators } from 'types/common/queryBuilder';
+import { GlobalReducer } from 'types/reducer/globalTime';
+import { v4 as uuid } from 'uuid';
 
-import { TabsStyled } from './LogsExplorerViews.styled';
+import { ActionsWrapper, TabsStyled } from './LogsExplorerViews.styled';
 
 function LogsExplorerViews(): JSX.Element {
+	const { notifications } = useNotifications();
+	const history = useHistory();
+
+	const queryClient = useQueryClient();
+
 	const { queryData: pageSize } = useUrlQueryData(
 		queryParamNamesMap.pageSize,
 		DEFAULT_PER_PAGE_VALUE,
 	);
+
+	const { minTime } = useSelector<AppState, GlobalReducer>(
+		(state) => state.globalTime,
+	);
+
+	const currentMinTimeRef = useRef<number>(minTime);
 
 	// Context
 	const {
@@ -103,6 +139,16 @@ function LogsExplorerViews(): JSX.Element {
 
 		return modifiedQuery;
 	}, [stagedQuery, currentStagedQueryData]);
+
+	const exportDefaultQuery = useMemo(
+		() =>
+			updateAllQueriesOperators(
+				currentQuery || initialQueriesMap.logs,
+				PANEL_TYPES.TIME_SERIES,
+				DataSource.LOGS,
+			),
+		[currentQuery, updateAllQueriesOperators],
+	);
 
 	const listChartData = useGetExplorerQueryRange(
 		listChartQuery,
@@ -180,9 +226,52 @@ function LogsExplorerViews(): JSX.Element {
 		[currentStagedQueryData, orderByTimestamp],
 	);
 
+	const handleAddQuery = useCallback(
+		(fieldKey: string, fieldValue: string): void => {
+			const keysAutocomplete: BaseAutocompleteData[] =
+				queryClient.getQueryData<SuccessResponse<IQueryAutocompleteResponse>>(
+					[QueryBuilderKeys.GET_AGGREGATE_KEYS],
+					{ exact: false },
+				)?.payload.attributeKeys || [];
+
+			const existAutocompleteKey = chooseAutocompleteFromCustomValue(
+				keysAutocomplete,
+				fieldKey,
+			);
+
+			const nextQuery: Query = {
+				...currentQuery,
+				builder: {
+					...currentQuery.builder,
+					queryData: currentQuery.builder.queryData.map((item) => ({
+						...item,
+						filters: {
+							...item.filters,
+							items: [
+								...item.filters.items.filter(
+									(item) => item.key?.id !== existAutocompleteKey.id,
+								),
+								{
+									id: uuid(),
+									key: existAutocompleteKey,
+									op: '=',
+									value: fieldValue,
+								},
+							],
+						},
+					})),
+				},
+			};
+
+			redirectWithQueryBuilderData(nextQuery);
+		},
+		[currentQuery, queryClient, redirectWithQueryBuilderData],
+	);
+
 	const handleEndReached = useCallback(
 		(index: number) => {
 			if (isLimit) return;
+			if (logs.length < pageSize) return;
 
 			const lastLog = logs[index];
 
@@ -217,10 +306,70 @@ function LogsExplorerViews(): JSX.Element {
 		],
 	);
 
+	const {
+		mutate: updateDashboard,
+		isLoading: isUpdateDashboardLoading,
+	} = useUpdateDashboard();
+
+	const handleExport = useCallback(
+		(dashboard: Dashboard | null): void => {
+			if (!dashboard) return;
+
+			const updatedDashboard = addEmptyWidgetInDashboardJSONWithQuery(
+				dashboard,
+				exportDefaultQuery,
+			);
+
+			updateDashboard(updatedDashboard, {
+				onSuccess: (data) => {
+					if (data.error) {
+						const message =
+							data.error === 'feature usage exceeded' ? (
+								<span>
+									Panel limit exceeded for {DataSource.LOGS} in community edition. Please
+									checkout our paid plans{' '}
+									<a
+										href="https://signoz.io/pricing/?utm_source=product&utm_medium=dashboard-limit"
+										rel="noreferrer noopener"
+										target="_blank"
+									>
+										here
+									</a>
+								</span>
+							) : (
+								data.error
+							);
+						notifications.error({
+							message,
+						});
+
+						return;
+					}
+
+					const dashboardEditView = `${generatePath(ROUTES.DASHBOARD, {
+						dashboardId: data?.payload?.uuid,
+					})}/new?${QueryParams.graphType}=graph&${QueryParams.widgetId}=empty&${
+						queryParamNamesMap.compositeQuery
+					}=${encodeURIComponent(JSON.stringify(exportDefaultQuery))}`;
+
+					history.push(dashboardEditView);
+				},
+				onError: (error) => {
+					if (axios.isAxiosError(error)) {
+						notifications.error({
+							message: error.message,
+						});
+					}
+				},
+			});
+		},
+		[exportDefaultQuery, history, notifications, updateDashboard],
+	);
+
 	useEffect(() => {
 		const shouldChangeView = isMultipleQueries || isGroupByExist;
 
-		if (panelType === 'list' && shouldChangeView) {
+		if (panelType === PANEL_TYPES.LIST && shouldChangeView) {
 			handleChangeView(PANEL_TYPES.TIME_SERIES);
 		}
 	}, [panelType, isMultipleQueries, isGroupByExist, handleChangeView]);
@@ -237,7 +386,10 @@ function LogsExplorerViews(): JSX.Element {
 	}, [data]);
 
 	useEffect(() => {
-		if (requestData?.id !== stagedQuery?.id) {
+		if (
+			requestData?.id !== stagedQuery?.id ||
+			currentMinTimeRef.current !== minTime
+		) {
 			const newRequestData = getRequestData(stagedQuery, {
 				page: 1,
 				log: null,
@@ -246,13 +398,20 @@ function LogsExplorerViews(): JSX.Element {
 			setLogs([]);
 			setPage(1);
 			setRequestData(newRequestData);
+			currentMinTimeRef.current = minTime;
 		}
-	}, [stagedQuery, requestData, getRequestData, pageSize]);
+	}, [stagedQuery, requestData, getRequestData, pageSize, minTime]);
 
 	const tabsItems: TabsProps['items'] = useMemo(
 		() => [
 			{
-				label: 'List View',
+				label: (
+					<TabLabel
+						label="List View"
+						tooltipText="Please remove attributes from Group By filter to switch to List View tab"
+						isDisabled={isMultipleQueries || isGroupByExist}
+					/>
+				),
 				key: PANEL_TYPES.LIST,
 				disabled: isMultipleQueries || isGroupByExist,
 				children: (
@@ -263,11 +422,12 @@ function LogsExplorerViews(): JSX.Element {
 						onOpenDetailedView={handleSetActiveLog}
 						onEndReached={handleEndReached}
 						onExpand={handleSetActiveLog}
+						onAddToQuery={handleAddQuery}
 					/>
 				),
 			},
 			{
-				label: 'TimeSeries',
+				label: <TabLabel label="Time Series" isDisabled={false} />,
 				key: PANEL_TYPES.TIME_SERIES,
 				children: (
 					<TimeSeriesView isLoading={isFetching} data={data} isError={isError} />
@@ -293,6 +453,7 @@ function LogsExplorerViews(): JSX.Element {
 			logs,
 			handleSetActiveLog,
 			handleEndReached,
+			handleAddQuery,
 			data,
 			isError,
 		],
@@ -326,6 +487,15 @@ function LogsExplorerViews(): JSX.Element {
 	return (
 		<>
 			<LogsExplorerChart isLoading={isFetching} data={chartData} />
+			{stagedQuery && (
+				<ActionsWrapper>
+					<ExportPanel
+						query={exportDefaultQuery}
+						isLoading={isUpdateDashboardLoading}
+						onExport={handleExport}
+					/>
+				</ActionsWrapper>
+			)}
 			<TabsStyled
 				items={tabsItems}
 				defaultActiveKey={panelType || PANEL_TYPES.LIST}
@@ -333,7 +503,11 @@ function LogsExplorerViews(): JSX.Element {
 				onChange={handleChangeView}
 				destroyInactiveTabPane
 			/>
-			<LogExplorerDetailedView log={activeLog} onClose={handleClearActiveLog} />
+			<LogDetail
+				log={activeLog}
+				onClose={handleClearActiveLog}
+				onAddToQuery={handleAddQuery}
+			/>
 		</>
 	);
 }

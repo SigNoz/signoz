@@ -24,6 +24,7 @@ interface UseOptionsMenuProps {
 	dataSource: DataSource;
 	aggregateOperator: string;
 	initialOptions?: InitialOptions;
+	storageKey: LOCALSTORAGE;
 }
 
 interface UseOptionsMenu {
@@ -32,6 +33,7 @@ interface UseOptionsMenu {
 }
 
 const useOptionsMenu = ({
+	storageKey,
 	dataSource,
 	aggregateOperator,
 	initialOptions = {},
@@ -42,8 +44,9 @@ const useOptionsMenu = ({
 	const [isFocused, setIsFocused] = useState<boolean>(false);
 	const debouncedSearchText = useDebounce(searchText, 300);
 
-	const localStorageOptionsQuery = getFromLocalstorage(
-		LOCALSTORAGE.LIST_OPTIONS,
+	const localStorageOptionsQuery = useMemo(
+		() => getFromLocalstorage(storageKey),
+		[storageKey],
 	);
 
 	const initialQueryParams = useMemo(
@@ -157,9 +160,9 @@ const useOptionsMenu = ({
 		(newQueryData: OptionsQuery) => {
 			redirectWithOptionsData(newQueryData);
 
-			setToLocalstorage(LOCALSTORAGE.LIST_OPTIONS, JSON.stringify(newQueryData));
+			setToLocalstorage(storageKey, JSON.stringify(newQueryData));
 		},
-		[redirectWithOptionsData],
+		[storageKey, redirectWithOptionsData],
 	);
 
 	const handleSelectColumns = useCallback(
