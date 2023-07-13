@@ -1,17 +1,9 @@
 import { MinusCircleOutlined, PlusCircleOutlined } from '@ant-design/icons';
 import { Button, Col, Popover } from 'antd';
+import { OPERATORS } from 'constants/queryBuilder';
 import { removeJSONStringifyQuotes } from 'lib/removeJSONStringifyQuotes';
 import { memo, useCallback, useMemo } from 'react';
 
-export interface ActionItemProps {
-	fieldKey: string;
-	fieldValue: string;
-	onClickActionItem: (
-		fieldKey: string,
-		fieldValue: string,
-		operator: string,
-	) => void;
-}
 function ActionItem({
 	fieldKey,
 	fieldValue,
@@ -26,19 +18,26 @@ function ActionItem({
 		[onClickActionItem, fieldKey, fieldValue],
 	);
 
+	const onClickHandler = useCallback(
+		(operator: string) => (): void => {
+			handleClick(operator);
+		},
+		[handleClick],
+	);
+
 	const PopOverMenuContent = useMemo(
 		() => (
 			<Col>
-				<Button type="text" size="small" onClick={(): void => handleClick('IN')}>
+				<Button type="text" size="small" onClick={onClickHandler(OPERATORS.IN)}>
 					<PlusCircleOutlined /> Filter for value
 				</Button>
 				<br />
-				<Button type="text" size="small" onClick={(): void => handleClick('NIN')}>
+				<Button type="text" size="small" onClick={onClickHandler(OPERATORS.NIN)}>
 					<MinusCircleOutlined /> Filter out value
 				</Button>
 			</Col>
 		),
-		[handleClick],
+		[onClickHandler],
 	);
 	return (
 		<Popover placement="bottomLeft" content={PopOverMenuContent} trigger="click">
@@ -47,6 +46,16 @@ function ActionItem({
 			</Button>
 		</Popover>
 	);
+}
+
+export interface ActionItemProps {
+	fieldKey: string;
+	fieldValue: string;
+	onClickActionItem: (
+		fieldKey: string,
+		fieldValue: string,
+		operator: string,
+	) => void;
 }
 
 export default memo(ActionItem);
