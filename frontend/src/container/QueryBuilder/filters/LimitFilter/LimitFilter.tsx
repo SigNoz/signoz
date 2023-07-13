@@ -1,8 +1,8 @@
-import { InputNumber } from 'antd';
-import { useMemo } from 'react';
+import { InputNumber, Tooltip } from 'antd';
+// import { useMemo } from 'react';
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
-import { DataSource } from 'types/common/queryBuilder';
 
+// import { DataSource } from 'types/common/queryBuilder';
 import { selectStyle } from '../QueryBuilderSearch/config';
 
 function LimitFilter({ onChange, query }: LimitFilterProps): JSX.Element {
@@ -21,21 +21,25 @@ function LimitFilter({ onChange, query }: LimitFilterProps): JSX.Element {
 		}
 	};
 
-	const isMetricsDataSource = useMemo(
-		() => query.dataSource === DataSource.METRICS,
-		[query.dataSource],
-	);
+	// const isMetricsDataSource = useMemo(
+	// 	() => query.dataSource === DataSource.METRICS,
+	// 	[query.dataSource],
+	// );
+
+	// const isDisabled = isMetricsDataSource && !query.aggregateAttribute.key;
 
 	return (
-		<InputNumber
-			min={1}
-			type="number"
-			value={query.limit}
-			disabled={isMetricsDataSource && !query.aggregateAttribute.key}
-			style={selectStyle}
-			onChange={onChange}
-			onKeyDown={handleKeyDown}
-		/>
+		<Tooltip placement="top" title="coming soon">
+			<InputNumber
+				min={1}
+				type="number"
+				readOnly
+				value={query.limit}
+				style={selectStyle}
+				onChange={onChange}
+				onKeyDown={handleKeyDown}
+			/>
+		</Tooltip>
 	);
 }
 

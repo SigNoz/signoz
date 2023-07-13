@@ -193,6 +193,7 @@ func buildMetricQuery(start, end, step int64, mq *v3.BuilderQuery, tableName str
 
 	groupBy := groupByAttributeKeyTags(metricQueryGroupBy...)
 	groupTags := groupSelectAttributeKeyTags(metricQueryGroupBy...)
+	groupSets := groupingSetsByAttributeKeyTags(metricQueryGroupBy...)
 	orderBy := orderByAttributeKeyTags(mq.OrderBy, metricQueryGroupBy)
 
 	if len(orderBy) != 0 {
@@ -226,7 +227,7 @@ func buildMetricQuery(start, end, step int64, mq *v3.BuilderQuery, tableName str
 		) // labels will be same so any should be fine
 		query := `SELECT %s ts, ` + rateWithoutNegative + `as value FROM(%s) WHERE isNaN(value) = 0`
 		query = fmt.Sprintf(query, groupTags, subQuery)
-		query = fmt.Sprintf(`SELECT %s ts, %s(value) as value FROM (%s) GROUP BY %s ORDER BY %s ts`, groupTags, aggregateOperatorToSQLFunc[mq.AggregateOperator], query, groupBy, orderBy)
+		query = fmt.Sprintf(`SELECT %s ts, %s(value) as value FROM (%s) GROUP BY %s ORDER BY %s ts`, groupTags, aggregateOperatorToSQLFunc[mq.AggregateOperator], query, groupSets, orderBy)
 		return query, nil
 	case
 		v3.AggregateOperatorRateSum,
@@ -234,7 +235,7 @@ func buildMetricQuery(start, end, step int64, mq *v3.BuilderQuery, tableName str
 		v3.AggregateOperatorRateAvg,
 		v3.AggregateOperatorRateMin:
 		op := fmt.Sprintf("%s(value)", aggregateOperatorToSQLFunc[mq.AggregateOperator])
-		subQuery := fmt.Sprintf(queryTmpl, groupTags, step, op, filterSubQuery, groupBy, orderBy)
+		subQuery := fmt.Sprintf(queryTmpl, groupTags, step, op, filterSubQuery, groupSets, orderBy)
 		query := `SELECT %s ts, ` + rateWithoutNegative + `as value FROM(%s) WHERE isNaN(value) = 0`
 		query = fmt.Sprintf(query, groupTags, subQuery)
 		return query, nil
@@ -249,7 +250,7 @@ func buildMetricQuery(start, end, step int64, mq *v3.BuilderQuery, tableName str
 		v3.AggregateOperatorP95,
 		v3.AggregateOperatorP99:
 		op := fmt.Sprintf("quantile(%v)(value)", aggregateOperatorToPercentile[mq.AggregateOperator])
-		query := fmt.Sprintf(queryTmpl, groupTags, step, op, filterSubQuery, groupBy, orderBy)
+		query := fmt.Sprintf(queryTmpl, groupTags, step, op, filterSubQuery, groupSets, orderBy)
 		return query, nil
 	case v3.AggregateOperatorHistQuant50, v3.AggregateOperatorHistQuant75, v3.AggregateOperatorHistQuant90, v3.AggregateOperatorHistQuant95, v3.AggregateOperatorHistQuant99:
 		rateGroupBy := "fingerprint, " + groupBy
@@ -261,22 +262,22 @@ func buildMetricQuery(start, end, step int64, mq *v3.BuilderQuery, tableName str
 		) // labels will be same so any should be fine
 		query := `SELECT %s ts, ` + rateWithoutNegative + ` as value FROM(%s) WHERE isNaN(value) = 0`
 		query = fmt.Sprintf(query, groupTags, subQuery)
-		query = fmt.Sprintf(`SELECT %s ts, sum(value) as value FROM (%s) GROUP BY %s HAVING isNaN(value) = 0 ORDER BY %s ts`, groupTags, query, groupBy, orderBy)
+		query = fmt.Sprintf(`SELECT %s ts, sum(value) as value FROM (%s) GROUP BY %s HAVING isNaN(value) = 0 ORDER BY %s ts`, groupTags, query, groupSets, orderBy)
 		value := aggregateOperatorToPercentile[mq.AggregateOperator]
 
 		query = fmt.Sprintf(`SELECT %s ts, histogramQuantile(arrayMap(x -> toFloat64(x), groupArray(le)), groupArray(value), %.3f) as value FROM (%s) GROUP BY %s ORDER BY %s ts`, groupTagsWithoutLe, value, query, groupByWithoutLe, orderWithoutLe)
 		return query, nil
 	case v3.AggregateOperatorAvg, v3.AggregateOperatorSum, v3.AggregateOperatorMin, v3.AggregateOperatorMax:
 		op := fmt.Sprintf("%s(value)", aggregateOperatorToSQLFunc[mq.AggregateOperator])
-		query := fmt.Sprintf(queryTmpl, groupTags, step, op, filterSubQuery, groupBy, orderBy)
+		query := fmt.Sprintf(queryTmpl, groupTags, step, op, filterSubQuery, groupSets, orderBy)
 		return query, nil
 	case v3.AggregateOperatorCount:
 		op := "toFloat64(count(*))"
-		query := fmt.Sprintf(queryTmpl, groupTags, step, op, filterSubQuery, groupBy, orderBy)
+		query := fmt.Sprintf(queryTmpl, groupTags, step, op, filterSubQuery, groupSets, orderBy)
 		return query, nil
 	case v3.AggregateOperatorCountDistinct:
 		op := "toFloat64(count(distinct(value)))"
-		query := fmt.Sprintf(queryTmpl, groupTags, step, op, filterSubQuery, groupBy, orderBy)
+		query := fmt.Sprintf(queryTmpl, groupTags, step, op, filterSubQuery, groupSets, orderBy)
 		return query, nil
 	case v3.AggregateOperatorNoOp:
 		queryTmpl :=
@@ -297,6 +298,13 @@ func buildMetricQuery(start, end, step int64, mq *v3.BuilderQuery, tableName str
 	}
 }
 
+// groupingSets returns a string of comma separated tags for group by clause
+// `ts` is always added to the group by clause
+func groupingSets(tags ...string) string {
+	withTs := append(tags, "ts")
+	return fmt.Sprintf(`GROUPING SETS ( (%s), (%s) )`, strings.Join(withTs, ", "), strings.Join(tags, ", "))
+}
+
 // groupBy returns a string of comma separated tags for group by clause
 // `ts` is always added to the group by clause
 func groupBy(tags ...string) string {
@@ -311,6 +319,14 @@ func groupSelect(tags ...string) string {
 		groupTags += ", "
 	}
 	return groupTags
+}
+
+func groupingSetsByAttributeKeyTags(tags ...v3.AttributeKey) string {
+	groupTags := []string{}
+	for _, tag := range tags {
+		groupTags = append(groupTags, tag.Key)
+	}
+	return groupingSets(groupTags...)
 }
 
 func groupByAttributeKeyTags(tags ...v3.AttributeKey) string {
@@ -346,6 +362,7 @@ func orderBy(items []v3.OrderBy, tags []string) string {
 			orderBy = append(orderBy, fmt.Sprintf("%s ASC", tag))
 		}
 	}
+
 	return strings.Join(orderBy, ",")
 }
 
