@@ -20,7 +20,7 @@ import AppActions from 'types/actions';
 import { SET_DETAILED_LOG_DATA } from 'types/actions/logs';
 import { ILog } from 'types/api/logs/log';
 
-import ActionItem from './ActionItem';
+import ActionItem, { ActionItemProps } from './ActionItem';
 import { flattenObject, recursiveParseJSON } from './utils';
 
 // Fields which should be restricted from adding it to query
@@ -30,9 +30,15 @@ interface TableViewProps {
 	logData: ILog;
 }
 
-type Props = TableViewProps & Pick<AddToQueryHOCProps, 'onAddToQuery'>;
+type Props = TableViewProps &
+	Pick<AddToQueryHOCProps, 'onAddToQuery'> &
+	Pick<ActionItemProps, 'onClickActionItem'>;
 
-function TableView({ logData, onAddToQuery }: Props): JSX.Element | null {
+function TableView({
+	logData,
+	onAddToQuery,
+	onClickActionItem,
+}: Props): JSX.Element | null {
 	const [fieldSearchInput, setFieldSearchInput] = useState<string>('');
 
 	const dispatch = useDispatch<Dispatch<AppActions>>();
@@ -89,7 +95,13 @@ function TableView({ logData, onAddToQuery }: Props): JSX.Element | null {
 			render: (fieldData: Record<string, string>): JSX.Element | null => {
 				const fieldKey = fieldData.field.split('.').slice(-1);
 				if (!RESTRICTED_FIELDS.includes(fieldKey[0])) {
-					return <ActionItem fieldKey={fieldKey} fieldValue={fieldData.value} />;
+					return (
+						<ActionItem
+							fieldKey={fieldKey[0]}
+							fieldValue={fieldData.value}
+							onClickActionItem={onClickActionItem}
+						/>
+					);
 				}
 				return null;
 			},
