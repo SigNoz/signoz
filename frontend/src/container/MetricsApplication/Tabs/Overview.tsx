@@ -35,7 +35,7 @@ import { GlobalReducer } from 'types/reducer/globalTime';
 import { Tags } from 'types/reducer/trace';
 import { v4 as uuid } from 'uuid';
 
-import { ERROR_MESSAGE } from '../../../constants/api';
+import { SOMETHING_WENT_WRONG } from '../../../constants/api';
 import { getWidgetQueryBuilder } from '../MetricsApplication.factory';
 import {
 	errorPercentage,
@@ -289,7 +289,7 @@ function Application(): JSX.Element {
 							<Typography>
 								{axios.isAxiosError(serviceOverviewError)
 									? serviceOverviewError.response?.data
-									: ERROR_MESSAGE}
+									: SOMETHING_WENT_WRONG}
 							</Typography>
 						) : (
 							<>
@@ -333,7 +333,7 @@ function Application(): JSX.Element {
 							<Typography>
 								{axios.isAxiosError(topLevelOperationsError)
 									? topLevelOperationsError.response?.data
-									: ERROR_MESSAGE}
+									: SOMETHING_WENT_WRONG}
 							</Typography>
 						) : (
 							<>
@@ -372,7 +372,7 @@ function Application(): JSX.Element {
 							<Typography>
 								{axios.isAxiosError(topLevelOperationsError)
 									? topLevelOperationsError.response?.data
-									: ERROR_MESSAGE}
+									: SOMETHING_WENT_WRONG}
 							</Typography>
 						) : (
 							<>
