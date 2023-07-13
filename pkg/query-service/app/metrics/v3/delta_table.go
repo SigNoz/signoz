@@ -2,6 +2,7 @@ package v3
 
 import (
 	"fmt"
+	"math"
 
 	"go.signoz.io/signoz/pkg/query-service/constants"
 	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
@@ -10,7 +11,8 @@ import (
 
 func buildDeltaMetricQueryForTable(start, end, _ int64, mq *v3.BuilderQuery, tableName string) (string, error) {
 
-	step := ((end - start + 1) / 1000)
+	// round up to the nearest multiple of 60
+	step := int64(math.Ceil(float64(end-start+1)/1000/60) * 60)
 
 	metricQueryGroupBy := mq.GroupBy
 
@@ -41,15 +43,6 @@ func buildDeltaMetricQueryForTable(start, end, _ int64, mq *v3.BuilderQuery, tab
 		}
 	}
 
-	// Additional filter for delta
-	if mq.Filters != nil {
-		mq.Filters.Items = append(mq.Filters.Items, v3.FilterItem{
-			Key:      v3.AttributeKey{Key: "__temporality__"},
-			Operator: v3.FilterOperatorEqual,
-			Value:    "Delta",
-		})
-	}
-
 	filterSubQuery, err := buildMetricsTimeSeriesFilterQuery(mq.Filters, metricQueryGroupBy, mq)
 	if err != nil {
 		return "", err
@@ -57,9 +50,8 @@ func buildDeltaMetricQueryForTable(start, end, _ int64, mq *v3.BuilderQuery, tab
 
 	samplesTableTimeFilter := fmt.Sprintf("metric_name = %s AND timestamp_ms >= %d AND timestamp_ms <= %d", utils.ClickHouseFormattedValue(mq.AggregateAttribute.Key), start, end)
 
-	// Select the aggregate value for interval
 	queryTmpl :=
-		"SELECT %s toStartOfHour(now()) as ts," +
+		"SELECT %s toStartOfHour(now()) as ts," + // now() has no menaing & used as a placeholder for ts
 			" %s as value" +
 			" FROM " + constants.SIGNOZ_METRIC_DBNAME + "." + constants.SIGNOZ_SAMPLES_TABLENAME +
 			" GLOBAL INNER JOIN" +
@@ -79,8 +71,6 @@ func buildDeltaMetricQueryForTable(start, end, _ int64, mq *v3.BuilderQuery, tab
 		}
 	}
 
-	orderWithoutLe := orderBy(mq.OrderBy, tagsWithoutLe)
-
 	groupByWithoutLeTable := groupBy(tagsWithoutLe...)
 	groupTagsWithoutLeTable := groupSelect(tagsWithoutLe...)
 	orderWithoutLeTable := orderBy(mq.OrderBy, tagsWithoutLe)
@@ -92,12 +82,13 @@ func buildDeltaMetricQueryForTable(start, end, _ int64, mq *v3.BuilderQuery, tab
 	if len(orderBy) != 0 {
 		orderBy += ","
 	}
-	if len(orderWithoutLe) != 0 {
-		orderWithoutLe += ","
+	if len(orderWithoutLeTable) != 0 {
+		orderWithoutLeTable += ","
 	}
 
 	switch mq.AggregateOperator {
 	case v3.AggregateOperatorRate:
+		// TODO(srikanthccv): what should be the expected behavior here for metrics?
 		return "", fmt.Errorf("rate is not supported for table view")
 	case v3.AggregateOperatorSumRate, v3.AggregateOperatorAvgRate, v3.AggregateOperatorMaxRate, v3.AggregateOperatorMinRate:
 		op := fmt.Sprintf("%s(value)/%d", aggregateOperatorToSQLFunc[mq.AggregateOperator], step)
@@ -135,7 +126,7 @@ func buildDeltaMetricQueryForTable(start, end, _ int64, mq *v3.BuilderQuery, tab
 		) // labels will be same so any should be fine
 		value := aggregateOperatorToPercentile[mq.AggregateOperator]
 
-		query = fmt.Sprintf(`SELECT %s ts, histogramQuantile(arrayMap(x -> toFloat64(x), groupArray(le)), groupArray(value), %.3f) as value FROM (%s) GROUP BY %s ORDER BY %s`, groupTagsWithoutLeTable, value, query, groupByWithoutLeTable, orderWithoutLeTable)
+		query = fmt.Sprintf(`SELECT %s ts, histogramQuantile(arrayMap(x -> toFloat64(x), groupArray(le)), groupArray(value), %.3f) as value FROM (%s) GROUP BY %s ORDER BY %s ts`, groupTagsWithoutLeTable, value, query, groupByWithoutLeTable, orderWithoutLeTable)
 		return query, nil
 	case v3.AggregateOperatorAvg, v3.AggregateOperatorSum, v3.AggregateOperatorMin, v3.AggregateOperatorMax:
 		op := fmt.Sprintf("%s(value)", aggregateOperatorToSQLFunc[mq.AggregateOperator])

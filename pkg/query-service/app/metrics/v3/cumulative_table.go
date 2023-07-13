@@ -2,13 +2,31 @@ package v3
 
 import (
 	"fmt"
+	"math"
 
 	"go.signoz.io/signoz/pkg/query-service/constants"
 	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
 	"go.signoz.io/signoz/pkg/query-service/utils"
 )
 
-func buildMetricQueryForTable(start, end, step int64, mq *v3.BuilderQuery, tableName string) (string, error) {
+// This logic is little convoluted for a reason.
+// When we work with cumulative metrics, the table view need to show the data for the entire time range.
+// In some cases, we could take the points at the start and end of the time range and divide it by the
+// duration. But, the problem is there is no guarantee that the trend will be linear between the start and end.
+// We can sum the rate of change for some interval X, this interval can be step size of time series.
+// However, the speed of query depends on the number of timestamps, so we bump up the 5x the step size.
+// This should be a good balance between speed and accuracy.
+// TODO: find a better way to do this
+func stepForTableCumulative(start, end int64) int64 {
+	// round up to the nearest multiple of 60
+	duration := (end - start + 1) / 1000
+	step := math.Max(math.Floor(float64(duration)/150), 60) // assuming 150 max points
+	return int64(step) * 5
+}
+
+func buildMetricQueryForTable(start, end, _ int64, mq *v3.BuilderQuery, tableName string) (string, error) {
+
+	step := stepForTableCumulative(start, end)
 
 	points := ((end - start + 1) / 1000) / step
 
@@ -64,7 +82,7 @@ func buildMetricQueryForTable(start, end, step int64, mq *v3.BuilderQuery, table
 	// Select the aggregate value for interval
 	queryTmpl :=
 		"SELECT %s" +
-			" toStartOfHour(now()) as ts," + // hack to make the join work
+			" toStartOfHour(now()) as ts," + // now() has no menaing & used as a placeholder for ts
 			" %s as value" +
 			" FROM " + constants.SIGNOZ_METRIC_DBNAME + "." + constants.SIGNOZ_SAMPLES_TABLENAME +
 			" GLOBAL INNER JOIN" +
