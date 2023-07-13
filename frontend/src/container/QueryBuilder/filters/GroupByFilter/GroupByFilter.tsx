@@ -15,11 +15,7 @@ import { transformStringWithPrefix } from 'lib/query/transformStringWithPrefix';
 import { isEqual, uniqWith } from 'lodash-es';
 import { memo, useCallback, useEffect, useState } from 'react';
 import { useQuery, useQueryClient } from 'react-query';
-import { SuccessResponse } from 'types/api';
-import {
-	BaseAutocompleteData,
-	IQueryAutocompleteResponse,
-} from 'types/api/queryBuilder/queryAutocompleteResponse';
+import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { SelectOption } from 'types/common/select';
 
 import { selectStyle } from '../QueryBuilderSearch/config';
@@ -83,14 +79,27 @@ export const GroupByFilter = memo(function GroupByFilter({
 		},
 	);
 
-	const getAttributeKeys = useCallback(
-		(): BaseAutocompleteData[] =>
-			queryClient.getQueryData<SuccessResponse<IQueryAutocompleteResponse>>(
-				[QueryBuilderKeys.GET_AGGREGATE_KEYS],
-				{ exact: false },
-			)?.payload.attributeKeys || [],
-		[queryClient],
-	);
+	const getAttributeKeys = useCallback(async () => {
+		const response = await queryClient.fetchQuery(
+			[QueryBuilderKeys.GET_AGGREGATE_KEYS, searchText, isFocused],
+			async () =>
+				getAggregateKeys({
+					aggregateAttribute: query.aggregateAttribute.key,
+					dataSource: query.dataSource,
+					aggregateOperator: query.aggregateOperator,
+					searchText,
+				}),
+		);
+
+		return response.payload?.attributeKeys || [];
+	}, [
+		isFocused,
+		query.aggregateAttribute.key,
+		query.aggregateOperator,
+		query.dataSource,
+		queryClient,
+		searchText,
+	]);
 
 	const handleSearchKeys = (searchText: string): void => {
 		setSearchText(searchText);
@@ -105,26 +114,35 @@ export const GroupByFilter = memo(function GroupByFilter({
 		setIsFocused(true);
 	};
 
-	const handleChange = (values: SelectOption<string, string>[]): void => {
-		const groupByValues: BaseAutocompleteData[] = values.map((item) => {
-			const [currentValue, id] = item.value.split(selectValueDivider);
-			const keys = getAttributeKeys();
+	const handleChange = useCallback(
+		async (values: SelectOption<string, string>[]): Promise<void> => {
+			const keys = await getAttributeKeys();
 
-			if (id && id.includes(idDivider)) {
-				const attribute = keys.find((item) => item.id === id);
+			const groupByValues: BaseAutocompleteData[] = values.map((item) => {
+				const [currentValue, id] = item.value.split(selectValueDivider);
 
-				if (attribute) {
-					return attribute;
+				if (id && id.includes(idDivider)) {
+					const attribute = keys.find((item) => item.id === id);
+					const existAttribute = query.groupBy.find((item) => item.id === id);
+
+					if (attribute) {
+						return attribute;
+					}
+
+					if (existAttribute) {
+						return existAttribute;
+					}
 				}
-			}
 
-			return chooseAutocompleteFromCustomValue(keys, currentValue);
-		});
+				return chooseAutocompleteFromCustomValue(keys, currentValue);
+			});
 
-		const result = uniqWith(groupByValues, isEqual);
+			const result = uniqWith(groupByValues, isEqual);
 
-		onChange(result);
-	};
+			onChange(result);
+		},
+		[getAttributeKeys, onChange, query.groupBy],
+	);
 
 	const clearSearch = useCallback(() => {
 		setSearchText('');

@@ -183,16 +183,35 @@ func buildLogsQuery(panelType v3.PanelType, start, end, step int64, mq *v3.Build
 		having = " having " + having
 	}
 
-	queryTmpl :=
-		"SELECT toStartOfInterval(fromUnixTimestamp64Nano(timestamp), INTERVAL %d SECOND) AS ts" + selectLabels +
-			", %s as value " +
-			"from signoz_logs.distributed_logs " +
-			"where " + timeFilter + "%s " +
-			"group by %s%s " +
-			"order by %s"
+	var queryTmpl string
 
-	groupBy := groupByAttributeKeyTags(mq.GroupBy...)
+	if panelType == v3.PanelTypeTable {
+		queryTmpl =
+			"SELECT now() as ts" + selectLabels +
+				", %s as value " +
+				"from signoz_logs.distributed_logs " +
+				"where " + timeFilter + "%s" +
+				"%s%s" +
+				"%s"
+	} else if panelType == v3.PanelTypeGraph || panelType == v3.PanelTypeValue {
+		// Select the aggregate value for interval
+		queryTmpl =
+			fmt.Sprintf("SELECT toStartOfInterval(fromUnixTimestamp64Nano(timestamp), INTERVAL %d SECOND) AS ts", step) + selectLabels +
+				", %s as value " +
+				"from signoz_logs.distributed_logs " +
+				"where " + timeFilter + "%s" +
+				"%s%s" +
+				"%s"
+	}
+
+	groupBy := groupByAttributeKeyTags(panelType, mq.GroupBy...)
+	if panelType != v3.PanelTypeList && groupBy != "" {
+		groupBy = " group by " + groupBy
+	}
 	orderBy := orderByAttributeKeyTags(panelType, mq.AggregateOperator, mq.OrderBy, mq.GroupBy)
+	if panelType != v3.PanelTypeList && orderBy != "" {
+		orderBy = " order by " + orderBy
+	}
 
 	aggregationKey := ""
 	if mq.AggregateAttribute.Key != "" {
@@ -202,7 +221,7 @@ func buildLogsQuery(panelType v3.PanelType, start, end, step int64, mq *v3.Build
 	switch mq.AggregateOperator {
 	case v3.AggregateOperatorRate:
 		op := fmt.Sprintf("count(%s)/%d", aggregationKey, step)
-		query := fmt.Sprintf(queryTmpl, step, op, filterSubQuery, groupBy, having, orderBy)
+		query := fmt.Sprintf(queryTmpl, op, filterSubQuery, groupBy, having, orderBy)
 		return query, nil
 	case
 		v3.AggregateOperatorRateSum,
@@ -210,7 +229,7 @@ func buildLogsQuery(panelType v3.PanelType, start, end, step int64, mq *v3.Build
 		v3.AggregateOperatorRateAvg,
 		v3.AggregateOperatorRateMin:
 		op := fmt.Sprintf("%s(%s)/%d", aggregateOperatorToSQLFunc[mq.AggregateOperator], aggregationKey, step)
-		query := fmt.Sprintf(queryTmpl, step, op, filterSubQuery, groupBy, having, orderBy)
+		query := fmt.Sprintf(queryTmpl, op, filterSubQuery, groupBy, having, orderBy)
 		return query, nil
 	case
 		v3.AggregateOperatorP05,
@@ -223,11 +242,11 @@ func buildLogsQuery(panelType v3.PanelType, start, end, step int64, mq *v3.Build
 		v3.AggregateOperatorP95,
 		v3.AggregateOperatorP99:
 		op := fmt.Sprintf("quantile(%v)(%s)", aggregateOperatorToPercentile[mq.AggregateOperator], aggregationKey)
-		query := fmt.Sprintf(queryTmpl, step, op, filterSubQuery, groupBy, having, orderBy)
+		query := fmt.Sprintf(queryTmpl, op, filterSubQuery, groupBy, having, orderBy)
 		return query, nil
 	case v3.AggregateOperatorAvg, v3.AggregateOperatorSum, v3.AggregateOperatorMin, v3.AggregateOperatorMax:
 		op := fmt.Sprintf("%s(%s)", aggregateOperatorToSQLFunc[mq.AggregateOperator], aggregationKey)
-		query := fmt.Sprintf(queryTmpl, step, op, filterSubQuery, groupBy, having, orderBy)
+		query := fmt.Sprintf(queryTmpl, op, filterSubQuery, groupBy, having, orderBy)
 		return query, nil
 	case v3.AggregateOperatorCount:
 		if mq.AggregateAttribute.Key != "" {
@@ -237,11 +256,11 @@ func buildLogsQuery(panelType v3.PanelType, start, end, step int64, mq *v3.Build
 		}
 
 		op := "toFloat64(count(*))"
-		query := fmt.Sprintf(queryTmpl, step, op, filterSubQuery, groupBy, having, orderBy)
+		query := fmt.Sprintf(queryTmpl, op, filterSubQuery, groupBy, having, orderBy)
 		return query, nil
 	case v3.AggregateOperatorCountDistinct:
 		op := fmt.Sprintf("toFloat64(count(distinct(%s)))", aggregationKey)
-		query := fmt.Sprintf(queryTmpl, step, op, filterSubQuery, groupBy, having, orderBy)
+		query := fmt.Sprintf(queryTmpl, op, filterSubQuery, groupBy, having, orderBy)
 		return query, nil
 	case v3.AggregateOperatorNoOp:
 		queryTmpl := constants.LogsSQLSelect + "from signoz_logs.distributed_logs where %s%s order by %s"
@@ -254,17 +273,19 @@ func buildLogsQuery(panelType v3.PanelType, start, end, step int64, mq *v3.Build
 
 // groupBy returns a string of comma separated tags for group by clause
 // `ts` is always added to the group by clause
-func groupBy(tags ...string) string {
-	tags = append(tags, "ts")
+func groupBy(panelType v3.PanelType, tags ...string) string {
+	if panelType == v3.PanelTypeGraph || panelType == v3.PanelTypeValue {
+		tags = append(tags, "ts")
+	}
 	return strings.Join(tags, ",")
 }
 
-func groupByAttributeKeyTags(tags ...v3.AttributeKey) string {
+func groupByAttributeKeyTags(panelType v3.PanelType, tags ...v3.AttributeKey) string {
 	groupTags := []string{}
 	for _, tag := range tags {
 		groupTags = append(groupTags, tag.Key)
 	}
-	return groupBy(groupTags...)
+	return groupBy(panelType, groupTags...)
 }
 
 // orderBy returns a string of comma separated tags for order by clause
@@ -325,7 +346,7 @@ func orderByAttributeKeyTags(panelType v3.PanelType, aggregatorOperator v3.Aggre
 		if len(orderByArray) == 0 {
 			orderByArray = append(orderByArray, constants.TIMESTAMP)
 		}
-	} else {
+	} else if panelType == v3.PanelTypeGraph || panelType == v3.PanelTypeValue {
 		// since in other aggregation operator we will have to add ts as it will not be present in group by
 		orderByArray = append(orderByArray, "ts")
 	}
