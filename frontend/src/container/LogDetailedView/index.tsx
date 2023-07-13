@@ -1,21 +1,49 @@
 import LogDetail from 'components/LogDetail';
 import ROUTES from 'constants/routes';
-import { generateFilterQuery } from 'lib/logs/generateFilterQuery';
-import { useCallback } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
+import { getGeneratedFilterQueryString } from 'lib/getGeneratedFilterQueryString';
+import getStep from 'lib/getStep';
+import { getIdConditions } from 'pages/Logs/utils';
+import { memo, useCallback } from 'react';
+import { connect, useDispatch, useSelector } from 'react-redux';
 import { useHistory } from 'react-router-dom';
-import { Dispatch } from 'redux';
+import { bindActionCreators, Dispatch } from 'redux';
+import { ThunkDispatch } from 'redux-thunk';
+import { getLogs } from 'store/actions/logs/getLogs';
+import { getLogsAggregate } from 'store/actions/logs/getLogsAggregate';
 import { AppState } from 'store/reducers';
 import AppActions from 'types/actions';
-import { SET_DETAILED_LOG_DATA } from 'types/actions/logs';
+import {
+	SET_DETAILED_LOG_DATA,
+	SET_SEARCH_QUERY_STRING,
+	TOGGLE_LIVE_TAIL,
+} from 'types/actions/logs';
+import { GlobalReducer } from 'types/reducer/globalTime';
 import { ILogsReducer } from 'types/reducer/logs';
 
-function LogDetailedView(): JSX.Element {
+type LogDetailedViewProps = {
+	getLogs: (props: Parameters<typeof getLogs>[0]) => ReturnType<typeof getLogs>;
+	getLogsAggregate: (
+		props: Parameters<typeof getLogsAggregate>[0],
+	) => ReturnType<typeof getLogsAggregate>;
+};
+
+function LogDetailedView({
+	getLogs,
+	getLogsAggregate,
+}: LogDetailedViewProps): JSX.Element {
 	const history = useHistory();
 	const {
 		detailedLog,
 		searchFilter: { queryString },
+		logLinesPerPage,
+		idStart,
+		liveTail,
+		idEnd,
+		order,
 	} = useSelector<AppState, ILogsReducer>((state) => state.logs);
+	const { maxTime, minTime } = useSelector<AppState, GlobalReducer>(
+		(state) => state.globalTime,
+	);
 
 	const dispatch = useDispatch<Dispatch<AppActions>>();
 
@@ -26,32 +54,109 @@ function LogDetailedView(): JSX.Element {
 		});
 	};
 
-	const handleQueryAdd = useCallback(
-		(fieldKey: string, fieldValue: string) => {
-			const generatedQuery = generateFilterQuery({
+	const handleAddToQuery = useCallback(
+		(fieldKey: string, fieldValue: string, operator: string) => {
+			const updatedQueryString = getGeneratedFilterQueryString(
 				fieldKey,
 				fieldValue,
-				type: 'IN',
-			});
+				operator,
+				queryString,
+			);
 
-			let updatedQueryString = queryString || '';
-			if (updatedQueryString.length === 0) {
-				updatedQueryString += `${generatedQuery}`;
-			} else {
-				updatedQueryString += ` AND ${generatedQuery}`;
-			}
 			history.replace(`${ROUTES.LOGS}?q=${updatedQueryString}`);
 		},
 		[history, queryString],
+	);
+
+	const handleClickActionItem = useCallback(
+		(fieldKey: string, fieldValue: string, operator: string): void => {
+			const updatedQueryString = getGeneratedFilterQueryString(
+				fieldKey,
+				fieldValue,
+				operator,
+				queryString,
+			);
+
+			dispatch({
+				type: SET_SEARCH_QUERY_STRING,
+				payload: {
+					searchQueryString: updatedQueryString,
+				},
+			});
+
+			if (liveTail === 'STOPPED') {
+				getLogs({
+					q: updatedQueryString,
+					limit: logLinesPerPage,
+					orderBy: 'timestamp',
+					order,
+					timestampStart: minTime,
+					timestampEnd: maxTime,
+					...getIdConditions(idStart, idEnd, order),
+				});
+				getLogsAggregate({
+					timestampStart: minTime,
+					timestampEnd: maxTime,
+					step: getStep({
+						start: minTime,
+						end: maxTime,
+						inputFormat: 'ns',
+					}),
+					q: updatedQueryString,
+				});
+			} else if (liveTail === 'PLAYING') {
+				dispatch({
+					type: TOGGLE_LIVE_TAIL,
+					payload: 'PAUSED',
+				});
+				setTimeout(
+					() =>
+						dispatch({
+							type: TOGGLE_LIVE_TAIL,
+							payload: liveTail,
+						}),
+					0,
+				);
+			}
+		},
+		[
+			dispatch,
+			getLogs,
+			getLogsAggregate,
+			idEnd,
+			idStart,
+			liveTail,
+			logLinesPerPage,
+			maxTime,
+			minTime,
+			order,
+			queryString,
+		],
 	);
 
 	return (
 		<LogDetail
 			log={detailedLog}
 			onClose={onDrawerClose}
-			onAddToQuery={handleQueryAdd}
+			onAddToQuery={handleAddToQuery}
+			onClickActionItem={handleClickActionItem}
 		/>
 	);
 }
 
-export default LogDetailedView;
+interface DispatchProps {
+	getLogs: (props: Parameters<typeof getLogs>[0]) => (dispatch: never) => void;
+	getLogsAggregate: (
+		props: Parameters<typeof getLogsAggregate>[0],
+	) => (dispatch: never) => void;
+}
+
+const mapDispatchToProps = (
+	dispatch: ThunkDispatch<unknown, unknown, AppActions>,
+): DispatchProps => ({
+	getLogs: bindActionCreators(getLogs, dispatch),
+	getLogsAggregate: bindActionCreators(getLogsAggregate, dispatch),
+});
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export default connect(null, mapDispatchToProps)(memo(LogDetailedView as any));
