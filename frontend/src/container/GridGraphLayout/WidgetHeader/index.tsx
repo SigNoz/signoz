@@ -27,13 +27,18 @@ import {
 	spinnerStyles,
 	tooltipStyles,
 } from './config';
+import { MenuItemKeys, MenuItemLabels } from './contants';
 import {
 	ArrowContainer,
 	HeaderContainer,
 	HeaderContentContainer,
 } from './styles';
 
-type TWidgetOptions = 'view' | 'edit' | 'delete' | string;
+type TWidgetOptions =
+	| MenuItemKeys.View
+	| MenuItemKeys.Edit
+	| MenuItemKeys.Delete
+	| string;
 interface IWidgetHeaderProps {
 	title: string;
 	widget: Widgets;
@@ -84,19 +89,19 @@ function WidgetHeader({
 	} = useMemo(
 		() => ({
 			view: {
-				key: 'view',
+				key: MenuItemKeys.View,
 				method: onView,
 			},
 			edit: {
-				key: 'edit',
+				key: MenuItemKeys.Edit,
 				method: onEditHandler,
 			},
 			delete: {
-				key: 'delete',
+				key: MenuItemKeys.Delete,
 				method: onDelete,
 			},
 			clone: {
-				key: 'clone',
+				key: MenuItemKeys.Clone,
 				method: onClone,
 			},
 		}),
@@ -123,30 +128,30 @@ function WidgetHeader({
 	const actions = useMemo(
 		(): MenuItem[] => [
 			{
-				key: 'view',
+				key: MenuItemKeys.View,
 				icon: <FullscreenOutlined />,
-				label: 'View',
+				label: MenuItemLabels.View,
 				condition: true,
 				disabled: queryResponse.isLoading,
 			},
 			{
-				key: 'edit',
+				key: MenuItemKeys.Edit,
 				icon: <EditFilled />,
-				label: 'Edit',
+				label: MenuItemLabels.Edit,
 				condition: allowEdit,
 				disabled: !editWidget,
 			},
 			{
-				key: 'clone',
+				key: MenuItemKeys.Clone,
 				icon: <CopyOutlined />,
-				label: 'Clone',
+				label: MenuItemLabels.Clone,
 				condition: allowClone,
 				disabled: !editWidget,
 			},
 			{
-				key: 'delete',
+				key: MenuItemKeys.Delete,
 				icon: <DeleteOutlined />,
-				label: 'Delete',
+				label: MenuItemLabels.Delete,
 				condition: allowDelete,
 				disabled: !deleteWidget,
 				danger: true,
