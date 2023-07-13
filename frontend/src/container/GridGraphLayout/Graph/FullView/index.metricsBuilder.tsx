@@ -62,6 +62,7 @@ function FullView({
 		},
 		{
 			queryKey,
+			enabled: !isDependedDataLoaded,
 		},
 	);
 

@@ -11,7 +11,6 @@ import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
 type UseGetQueryRange = (
 	requestData: GetQueryResultsProps,
 	options?: UseQueryOptions<SuccessResponse<MetricRangePayloadProps>, Error>,
-	isQueryEnabled?: boolean,
 ) => UseQueryResult<SuccessResponse<MetricRangePayloadProps>, Error>;
 
 export const useGetQueryRange: UseGetQueryRange = (requestData, options) => {
