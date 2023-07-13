@@ -6,4 +6,4 @@ export type QueryProps = {
 	isAvailableToDisable: boolean;
 	query: IBuilderQuery;
 	queryVariant: 'static' | 'dropdown';
-} & Pick<QueryBuilderProps, 'inactiveFilters'>;
+} & Pick<QueryBuilderProps, 'filterConfigs'>;
