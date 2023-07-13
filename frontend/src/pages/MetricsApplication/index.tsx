@@ -1,14 +1,14 @@
 import RouteTab from 'components/RouteTab';
 import ROUTES from 'constants/routes';
+import DBCall from 'container/MetricsApplication/Tabs/DBCall';
+import External from 'container/MetricsApplication/Tabs/External';
+import Overview from 'container/MetricsApplication/Tabs/Overview';
 import ResourceAttributesFilter from 'container/ResourceAttributesFilter';
 import useUrlQuery from 'hooks/useUrlQuery';
 import history from 'lib/history';
 import { useMemo } from 'react';
 import { generatePath, useParams } from 'react-router-dom';
 
-import DBCall from '../../container/MetricsApplication/Tabs/DBCall';
-import External from '../../container/MetricsApplication/Tabs/External';
-import Overview from '../../container/MetricsApplication/Tabs/Overview';
 import { DB_CALL_METRICS, EXTERNAL_METRICS, OVER_METRICS } from './contants';
 
 function MetricsApplication(): JSX.Element {
