@@ -429,8 +429,6 @@ func PrepareLogsQuery(start, end int64, queryType v3.QueryType, panelType v3.Pan
 		return query, nil
 	}
 
-	// 2 means give me normal
-
 	query, err := buildLogsQuery(panelType, start, end, mq.StepInterval, mq, graphLimitQtype)
 	if err != nil {
 		return "", err
