@@ -29,6 +29,7 @@ function FullView({
 	onDragSelect,
 	graphVisibilityHandler,
 	graphsVisibility,
+	isDependedDataLoaded = false,
 }: FullViewProps): JSX.Element {
 	const { selectedTime: globalSelectedTime } = useSelector<
 		AppState,
@@ -64,6 +65,7 @@ function FullView({
 		},
 		{
 			queryKey,
+			enabled: !isDependedDataLoaded,
 		},
 	);
 
@@ -79,9 +81,7 @@ function FullView({
 		[response],
 	);
 
-	const isLoading = response.isLoading === true;
-
-	if (isLoading) {
+	if (response.status === 'idle' || response.status === 'loading') {
 		return <Spinner height="100%" size="large" tip="Loading..." />;
 	}
 
@@ -137,6 +137,7 @@ interface FullViewProps {
 	onDragSelect?: (start: number, end: number) => void;
 	graphVisibilityHandler?: (graphsVisiblityArray: boolean[]) => void;
 	graphsVisibility?: boolean[];
+	isDependedDataLoaded?: boolean;
 }
 
 FullView.defaultProps = {
@@ -146,6 +147,7 @@ FullView.defaultProps = {
 	onDragSelect: undefined,
 	graphsVisibility: undefined,
 	graphVisibilityHandler: undefined,
+	isDependedDataLoaded: undefined,
 };
 
 export default FullView;
