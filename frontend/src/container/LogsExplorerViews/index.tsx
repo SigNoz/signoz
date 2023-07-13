@@ -1,13 +1,18 @@
 import { TabsProps } from 'antd';
 import axios from 'axios';
+import LogDetail from 'components/LogDetail';
 import TabLabel from 'components/TabLabel';
 import { QueryParams } from 'constants/query';
-import { initialQueriesMap, PANEL_TYPES } from 'constants/queryBuilder';
+import {
+	initialQueriesMap,
+	OPERATORS,
+	PANEL_TYPES,
+	QueryBuilderKeys,
+} from 'constants/queryBuilder';
 import { queryParamNamesMap } from 'constants/queryBuilderQueryNames';
 import ROUTES from 'constants/routes';
 import { DEFAULT_PER_PAGE_VALUE } from 'container/Controls/config';
 import ExportPanel from 'container/ExportPanel';
-import LogExplorerDetailedView from 'container/LogExplorerDetailedView';
 import LogsExplorerChart from 'container/LogsExplorerChart';
 import LogsExplorerList from 'container/LogsExplorerList';
 // TODO: temporary hide table view
@@ -20,13 +25,20 @@ import { useGetExplorerQueryRange } from 'hooks/queryBuilder/useGetExplorerQuery
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useNotifications } from 'hooks/useNotifications';
 import useUrlQueryData from 'hooks/useUrlQueryData';
+import { chooseAutocompleteFromCustomValue } from 'lib/newQueryBuilder/chooseAutocompleteFromCustomValue';
 import { getPaginationQueryData } from 'lib/newQueryBuilder/getPaginationQueryData';
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useQueryClient } from 'react-query';
 import { useSelector } from 'react-redux';
 import { generatePath, useHistory } from 'react-router-dom';
 import { AppState } from 'store/reducers';
+import { SuccessResponse } from 'types/api';
 import { Dashboard } from 'types/api/dashboard/getAll';
 import { ILog } from 'types/api/logs/log';
+import {
+	BaseAutocompleteData,
+	IQueryAutocompleteResponse,
+} from 'types/api/queryBuilder/queryAutocompleteResponse';
 import {
 	IBuilderQuery,
 	OrderByPayload,
@@ -34,12 +46,15 @@ import {
 } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource, StringOperators } from 'types/common/queryBuilder';
 import { GlobalReducer } from 'types/reducer/globalTime';
+import { v4 as uuid } from 'uuid';
 
 import { ActionsWrapper, TabsStyled } from './LogsExplorerViews.styled';
 
 function LogsExplorerViews(): JSX.Element {
 	const { notifications } = useNotifications();
 	const history = useHistory();
+
+	const queryClient = useQueryClient();
 
 	const { queryData: pageSize } = useUrlQueryData(
 		queryParamNamesMap.pageSize,
@@ -212,9 +227,55 @@ function LogsExplorerViews(): JSX.Element {
 		[currentStagedQueryData, orderByTimestamp],
 	);
 
+	const handleAddToQuery = useCallback(
+		(fieldKey: string, fieldValue: string, operator: string): void => {
+			const keysAutocomplete: BaseAutocompleteData[] =
+				queryClient.getQueryData<SuccessResponse<IQueryAutocompleteResponse>>(
+					[QueryBuilderKeys.GET_AGGREGATE_KEYS],
+					{ exact: false },
+				)?.payload.attributeKeys || [];
+
+			const existAutocompleteKey = chooseAutocompleteFromCustomValue(
+				keysAutocomplete,
+				fieldKey,
+			);
+
+			const currentOperator =
+				Object.keys(OPERATORS).find((op) => op === operator) || '';
+
+			const nextQuery: Query = {
+				...currentQuery,
+				builder: {
+					...currentQuery.builder,
+					queryData: currentQuery.builder.queryData.map((item) => ({
+						...item,
+						filters: {
+							...item.filters,
+							items: [
+								...item.filters.items.filter(
+									(item) => item.key?.id !== existAutocompleteKey.id,
+								),
+								{
+									id: uuid(),
+									key: existAutocompleteKey,
+									op: currentOperator,
+									value: fieldValue,
+								},
+							],
+						},
+					})),
+				},
+			};
+
+			redirectWithQueryBuilderData(nextQuery);
+		},
+		[currentQuery, queryClient, redirectWithQueryBuilderData],
+	);
+
 	const handleEndReached = useCallback(
 		(index: number) => {
 			if (isLimit) return;
+			if (logs.length < pageSize) return;
 
 			const lastLog = logs[index];
 
@@ -272,7 +333,7 @@ function LogsExplorerViews(): JSX.Element {
 									Panel limit exceeded for {DataSource.LOGS} in community edition. Please
 									checkout our paid plans{' '}
 									<a
-										href="https://signoz.io/pricing"
+										href="https://signoz.io/pricing/?utm_source=product&utm_medium=dashboard-limit"
 										rel="noreferrer noopener"
 										target="_blank"
 									>
@@ -312,7 +373,7 @@ function LogsExplorerViews(): JSX.Element {
 	useEffect(() => {
 		const shouldChangeView = isMultipleQueries || isGroupByExist;
 
-		if (panelType === 'list' && shouldChangeView) {
+		if (panelType === PANEL_TYPES.LIST && shouldChangeView) {
 			handleChangeView(PANEL_TYPES.TIME_SERIES);
 		}
 	}, [panelType, isMultipleQueries, isGroupByExist, handleChangeView]);
@@ -365,6 +426,7 @@ function LogsExplorerViews(): JSX.Element {
 						onOpenDetailedView={handleSetActiveLog}
 						onEndReached={handleEndReached}
 						onExpand={handleSetActiveLog}
+						onAddToQuery={handleAddToQuery}
 					/>
 				),
 			},
@@ -395,6 +457,7 @@ function LogsExplorerViews(): JSX.Element {
 			logs,
 			handleSetActiveLog,
 			handleEndReached,
+			handleAddToQuery,
 			data,
 			isError,
 		],
@@ -444,7 +507,12 @@ function LogsExplorerViews(): JSX.Element {
 				onChange={handleChangeView}
 				destroyInactiveTabPane
 			/>
-			<LogExplorerDetailedView log={activeLog} onClose={handleClearActiveLog} />
+			<LogDetail
+				log={activeLog}
+				onClose={handleClearActiveLog}
+				onAddToQuery={handleAddToQuery}
+				onClickActionItem={handleAddToQuery}
+			/>
 		</>
 	);
 }

@@ -3,22 +3,19 @@ import { getAggregateKeys } from 'api/queryBuilder/getAttributeKeys';
 // ** Constants
 import {
 	idDivider,
-	initialAutocompleteData,
 	QueryBuilderKeys,
 	selectValueDivider,
 } from 'constants/queryBuilder';
+import { DEBOUNCE_DELAY } from 'constants/queryBuilderFilterConfig';
 import useDebounce from 'hooks/useDebounce';
+import { chooseAutocompleteFromCustomValue } from 'lib/newQueryBuilder/chooseAutocompleteFromCustomValue';
 // ** Components
 // ** Helpers
 import { transformStringWithPrefix } from 'lib/query/transformStringWithPrefix';
 import { isEqual, uniqWith } from 'lodash-es';
 import { memo, useCallback, useEffect, useState } from 'react';
-import { useQuery } from 'react-query';
-import {
-	AutocompleteType,
-	BaseAutocompleteData,
-	DataType,
-} from 'types/api/queryBuilder/queryAutocompleteResponse';
+import { useQuery, useQueryClient } from 'react-query';
+import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { SelectOption } from 'types/common/select';
 
 import { selectStyle } from '../QueryBuilderSearch/config';
@@ -29,6 +26,7 @@ export const GroupByFilter = memo(function GroupByFilter({
 	onChange,
 	disabled,
 }: GroupByFilterProps): JSX.Element {
+	const queryClient = useQueryClient();
 	const [searchText, setSearchText] = useState<string>('');
 	const [optionsData, setOptionsData] = useState<SelectOption<string, string>[]>(
 		[],
@@ -38,7 +36,7 @@ export const GroupByFilter = memo(function GroupByFilter({
 	);
 	const [isFocused, setIsFocused] = useState<boolean>(false);
 
-	const debouncedValue = useDebounce(searchText, 300);
+	const debouncedValue = useDebounce(searchText, DEBOUNCE_DELAY);
 
 	const { isFetching } = useQuery(
 		[QueryBuilderKeys.GET_AGGREGATE_KEYS, debouncedValue, isFocused],
@@ -81,6 +79,28 @@ export const GroupByFilter = memo(function GroupByFilter({
 		},
 	);
 
+	const getAttributeKeys = useCallback(async () => {
+		const response = await queryClient.fetchQuery(
+			[QueryBuilderKeys.GET_AGGREGATE_KEYS, searchText, isFocused],
+			async () =>
+				getAggregateKeys({
+					aggregateAttribute: query.aggregateAttribute.key,
+					dataSource: query.dataSource,
+					aggregateOperator: query.aggregateOperator,
+					searchText,
+				}),
+		);
+
+		return response.payload?.attributeKeys || [];
+	}, [
+		isFocused,
+		query.aggregateAttribute.key,
+		query.aggregateOperator,
+		query.dataSource,
+		queryClient,
+		searchText,
+	]);
+
 	const handleSearchKeys = (searchText: string): void => {
 		setSearchText(searchText);
 	};
@@ -94,30 +114,35 @@ export const GroupByFilter = memo(function GroupByFilter({
 		setIsFocused(true);
 	};
 
-	const handleChange = (values: SelectOption<string, string>[]): void => {
-		const groupByValues: BaseAutocompleteData[] = values.map((item) => {
-			const [currentValue, id] = item.value.split(selectValueDivider);
-			if (id && id.includes(idDivider)) {
-				const [key, dataType, type, isColumn] = id.split(idDivider);
+	const handleChange = useCallback(
+		async (values: SelectOption<string, string>[]): Promise<void> => {
+			const keys = await getAttributeKeys();
 
-				return {
-					id,
-					key: key || currentValue,
-					dataType: (dataType as DataType) || initialAutocompleteData.dataType,
-					type: (type as AutocompleteType) || initialAutocompleteData.type,
-					isColumn: isColumn
-						? isColumn === 'true'
-						: initialAutocompleteData.isColumn,
-				};
-			}
+			const groupByValues: BaseAutocompleteData[] = values.map((item) => {
+				const [currentValue, id] = item.value.split(selectValueDivider);
 
-			return { ...initialAutocompleteData, key: currentValue };
-		});
+				if (id && id.includes(idDivider)) {
+					const attribute = keys.find((item) => item.id === id);
+					const existAttribute = query.groupBy.find((item) => item.id === id);
 
-		const result = uniqWith(groupByValues, isEqual);
+					if (attribute) {
+						return attribute;
+					}
 
-		onChange(result);
-	};
+					if (existAttribute) {
+						return existAttribute;
+					}
+				}
+
+				return chooseAutocompleteFromCustomValue(keys, currentValue);
+			});
+
+			const result = uniqWith(groupByValues, isEqual);
+
+			onChange(result);
+		},
+		[getAttributeKeys, onChange, query.groupBy],
+	);
 
 	const clearSearch = useCallback(() => {
 		setSearchText('');

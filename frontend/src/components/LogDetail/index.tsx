@@ -4,7 +4,12 @@ import TableView from 'container/LogDetailedView/TableView';
 
 import { LogDetailProps } from './LogDetail.interfaces';
 
-function LogDetail({ log, onClose }: LogDetailProps): JSX.Element {
+function LogDetail({
+	log,
+	onClose,
+	onAddToQuery,
+	onClickActionItem,
+}: LogDetailProps): JSX.Element {
 	const onDrawerClose = (): void => {
 		onClose();
 	};
@@ -13,7 +18,13 @@ function LogDetail({ log, onClose }: LogDetailProps): JSX.Element {
 		{
 			label: 'Table',
 			key: '1',
-			children: log && <TableView logData={log} />,
+			children: log && (
+				<TableView
+					logData={log}
+					onAddToQuery={onAddToQuery}
+					onClickActionItem={onClickActionItem}
+				/>
+			),
 		},
 		{
 			label: 'JSON',
