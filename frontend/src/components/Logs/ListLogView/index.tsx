@@ -14,7 +14,7 @@ import { IField } from 'types/api/logs/fields';
 import { ILog } from 'types/api/logs/log';
 
 // components
-import AddToQueryHOC from '../AddToQueryHOC';
+import AddToQueryHOC, { AddToQueryHOCProps } from '../AddToQueryHOC';
 import CopyClipboardHOC from '../CopyClipboardHOC';
 // styles
 import {
@@ -33,6 +33,10 @@ interface LogFieldProps {
 	fieldKey: string;
 	fieldValue: string;
 }
+
+type LogSelectedFieldProps = LogFieldProps &
+	Pick<AddToQueryHOCProps, 'onAddToQuery'>;
+
 function LogGeneralField({ fieldKey, fieldValue }: LogFieldProps): JSX.Element {
 	const html = useMemo(
 		() => ({
@@ -56,10 +60,15 @@ function LogGeneralField({ fieldKey, fieldValue }: LogFieldProps): JSX.Element {
 function LogSelectedField({
 	fieldKey = '',
 	fieldValue = '',
-}: LogFieldProps): JSX.Element {
+	onAddToQuery,
+}: LogSelectedFieldProps): JSX.Element {
 	return (
 		<SelectedLog>
-			<AddToQueryHOC fieldKey={fieldKey} fieldValue={fieldValue}>
+			<AddToQueryHOC
+				fieldKey={fieldKey}
+				fieldValue={fieldValue}
+				onAddToQuery={onAddToQuery}
+			>
 				<Typography.Text>
 					<span style={{ color: blue[4] }}>{fieldKey}</span>
 				</Typography.Text>
@@ -74,15 +83,17 @@ function LogSelectedField({
 	);
 }
 
-interface ListLogViewProps {
+type ListLogViewProps = {
 	logData: ILog;
 	onOpenDetailedView: (log: ILog) => void;
 	selectedFields: IField[];
-}
+} & Pick<AddToQueryHOCProps, 'onAddToQuery'>;
+
 function ListLogView({
 	logData,
 	selectedFields,
 	onOpenDetailedView,
+	onAddToQuery,
 }: ListLogViewProps): JSX.Element {
 	const flattenLogData = useMemo(() => FlatLogData(logData), [logData]);
 
@@ -132,6 +143,7 @@ function ListLogView({
 								key={field.name}
 								fieldKey={field.name}
 								fieldValue={flattenLogData[field.name] as never}
+								onAddToQuery={onAddToQuery}
 							/>
 						) : null,
 					)}
