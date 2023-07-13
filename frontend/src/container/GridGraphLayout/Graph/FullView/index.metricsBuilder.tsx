@@ -78,9 +78,7 @@ function FullView({
 		[response],
 	);
 
-	const isLoading = response.isLoading === true;
-
-	if (isLoading || isDependedDataLoaded) {
+	if (response.status === 'idle' || response.status === 'loading') {
 		return <Spinner height="100%" size="large" tip="Loading..." />;
 	}
 
