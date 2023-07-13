@@ -18,6 +18,7 @@ import { DataSource } from 'types/common/queryBuilder';
 import { v4 as uuid } from 'uuid';
 
 import { selectStyle } from './config';
+import { PLACEHOLDER } from './constant';
 import { StyledCheckOutlined, TypographyText } from './style';
 import {
 	getOperatorValue,
@@ -155,7 +156,7 @@ function QueryBuilderSearch({
 			filterOption={false}
 			autoClearSearchValue={false}
 			mode="multiple"
-			placeholder="Search Filter"
+			placeholder={PLACEHOLDER}
 			value={queryTags}
 			searchValue={searchValue}
 			disabled={isMetricsDataSource && !query.aggregateAttribute.key}
