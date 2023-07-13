@@ -4,54 +4,40 @@ import DBCall from 'container/MetricsApplication/Tabs/DBCall';
 import External from 'container/MetricsApplication/Tabs/External';
 import Overview from 'container/MetricsApplication/Tabs/Overview';
 import ResourceAttributesFilter from 'container/ResourceAttributesFilter';
-import useUrlQuery from 'hooks/useUrlQuery';
 import history from 'lib/history';
 import { useMemo } from 'react';
 import { generatePath, useParams } from 'react-router-dom';
 
-import { DB_CALL_METRICS, EXTERNAL_METRICS, OVER_METRICS } from './contants';
+import { MetricsApplicationTab, TAB_KEY_VS_LABEL } from './types';
+import useMetricsApplicationTabKey from './useMetricsApplicationTabKey';
 
 function MetricsApplication(): JSX.Element {
 	const { servicename } = useParams<{ servicename: string }>();
 
-	const urlParams = useUrlQuery();
-
-	const tab = urlParams.get('tab');
-
-	const getActiveKey = (): string => {
-		const metricsMap: {
-			[key: string]: string;
-		} = {
-			[DB_CALL_METRICS]: DB_CALL_METRICS,
-			[EXTERNAL_METRICS]: EXTERNAL_METRICS,
-		};
-		return metricsMap[tab || ''] || OVER_METRICS;
-	};
-
-	const activeKey = getActiveKey();
+	const activeKey = useMetricsApplicationTabKey();
 
 	const routes = useMemo(
 		() => [
 			{
 				Component: Overview,
-				name: OVER_METRICS,
+				name: TAB_KEY_VS_LABEL[MetricsApplicationTab.OVER_METRICS],
 				route: `${generatePath(ROUTES.SERVICE_METRICS, {
 					servicename,
-				})}?tab=${OVER_METRICS}`,
+				})}?tab=${MetricsApplicationTab.OVER_METRICS}`,
 			},
 			{
 				Component: DBCall,
-				name: DB_CALL_METRICS,
+				name: TAB_KEY_VS_LABEL[MetricsApplicationTab.DB_CALL_METRICS],
 				route: `${generatePath(ROUTES.SERVICE_METRICS, {
 					servicename,
-				})}?tab=${DB_CALL_METRICS}`,
+				})}?tab=${MetricsApplicationTab.DB_CALL_METRICS}`,
 			},
 			{
 				Component: External,
-				name: EXTERNAL_METRICS,
+				name: TAB_KEY_VS_LABEL[MetricsApplicationTab.EXTERNAL_METRICS],
 				route: `${generatePath(ROUTES.SERVICE_METRICS, {
 					servicename,
-				})}?tab=${EXTERNAL_METRICS}`,
+				})}?tab=${MetricsApplicationTab.EXTERNAL_METRICS}`,
 			},
 		],
 		[servicename],
