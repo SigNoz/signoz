@@ -1,6 +1,7 @@
 import { getAggregateKeys } from 'api/queryBuilder/getAttributeKeys';
 import { getAttributesValues } from 'api/queryBuilder/getAttributesValues';
 import { QueryBuilderKeys } from 'constants/queryBuilder';
+import { DEBOUNCE_DELAY } from 'constants/queryBuilderFilterConfig';
 import {
 	getRemovePrefixFromKey,
 	getTagToken,
@@ -54,7 +55,7 @@ export const useFetchKeysAndValues = (
 		],
 	);
 
-	const searchParams = useDebounceValue(memoizedSearchParams, 300);
+	const searchParams = useDebounceValue(memoizedSearchParams, DEBOUNCE_DELAY);
 
 	const isQueryEnabled = useMemo(
 		() =>
