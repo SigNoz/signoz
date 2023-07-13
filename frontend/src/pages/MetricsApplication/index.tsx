@@ -18,6 +18,18 @@ function MetricsApplication(): JSX.Element {
 
 	const tab = urlParams.get('tab');
 
+	const getActiveKey = (): string => {
+		const metricsMap: {
+			[key: string]: string;
+		} = {
+			[DB_CALL_METRICS]: DB_CALL_METRICS,
+			[EXTERNAL_METRICS]: EXTERNAL_METRICS,
+		};
+		return metricsMap[tab || ''] || OVER_METRICS;
+	};
+
+	const activeKey = getActiveKey();
+
 	const routes = useMemo(
 		() => [
 			{
@@ -48,11 +60,7 @@ function MetricsApplication(): JSX.Element {
 	return (
 		<>
 			<ResourceAttributesFilter />
-			<RouteTab
-				routes={routes}
-				history={history}
-				activeKey={tab || OVER_METRICS}
-			/>
+			<RouteTab routes={routes} history={history} activeKey={activeKey} />
 		</>
 	);
 }
