@@ -27,6 +27,7 @@ export const useQueryOperations: UseQueryOperations = ({
 		removeQueryBuilderEntityByIndex,
 		panelType,
 		initialDataSource,
+		currentQuery,
 	} = useQueryBuilder();
 	const [operators, setOperators] = useState<SelectOption<string, string>[]>([]);
 	const [listOfAdditionalFilters, setListOfAdditionalFilters] = useState<
@@ -121,8 +122,10 @@ export const useQueryOperations: UseQueryOperations = ({
 	);
 
 	const handleDeleteQuery = useCallback(() => {
-		removeQueryBuilderEntityByIndex('queryData', index);
-	}, [removeQueryBuilderEntityByIndex, index]);
+		if (currentQuery.builder.queryData.length > 1) {
+			removeQueryBuilderEntityByIndex('queryData', index);
+		}
+	}, [removeQueryBuilderEntityByIndex, index, currentQuery]);
 
 	const handleChangeQueryData: HandleChangeQueryData = useCallback(
 		(key, value) => {

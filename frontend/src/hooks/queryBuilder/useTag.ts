@@ -34,8 +34,12 @@ export const useTag = (
 		() =>
 			(query?.filters?.items || []).map((ele) => {
 				if (isInNInOperator(getOperatorFromValue(ele.op))) {
-					const csvString = Papa.unparse([ele.value]);
-					return `${ele.key?.key} ${getOperatorFromValue(ele.op)} ${csvString}`;
+					try {
+						const csvString = Papa.unparse([ele.value]);
+						return `${ele.key?.key} ${getOperatorFromValue(ele.op)} ${csvString}`;
+					} catch {
+						return `${ele.key?.key} ${getOperatorFromValue(ele.op)} ${ele.value}`;
+					}
 				}
 				return `${ele.key?.key} ${getOperatorFromValue(ele.op)} ${ele.value}`;
 			}),
