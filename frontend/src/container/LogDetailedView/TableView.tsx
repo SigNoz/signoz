@@ -3,7 +3,9 @@ import { LinkOutlined } from '@ant-design/icons';
 import { Input, Space, Tooltip } from 'antd';
 import { ColumnsType } from 'antd/es/table';
 import Editor from 'components/Editor';
-import AddToQueryHOC from 'components/Logs/AddToQueryHOC';
+import AddToQueryHOC, {
+	AddToQueryHOCProps,
+} from 'components/Logs/AddToQueryHOC';
 import CopyClipboardHOC from 'components/Logs/CopyClipboardHOC';
 import { ResizeTable } from 'components/ResizeTable';
 import ROUTES from 'constants/routes';
@@ -18,7 +20,7 @@ import AppActions from 'types/actions';
 import { SET_DETAILED_LOG_DATA } from 'types/actions/logs';
 import { ILog } from 'types/api/logs/log';
 
-import ActionItem from './ActionItem';
+import ActionItem, { ActionItemProps } from './ActionItem';
 import { flattenObject, recursiveParseJSON } from './utils';
 
 // Fields which should be restricted from adding it to query
@@ -27,7 +29,16 @@ const RESTRICTED_FIELDS = ['timestamp'];
 interface TableViewProps {
 	logData: ILog;
 }
-function TableView({ logData }: TableViewProps): JSX.Element | null {
+
+type Props = TableViewProps &
+	Pick<AddToQueryHOCProps, 'onAddToQuery'> &
+	Pick<ActionItemProps, 'onClickActionItem'>;
+
+function TableView({
+	logData,
+	onAddToQuery,
+	onClickActionItem,
+}: Props): JSX.Element | null {
 	const [fieldSearchInput, setFieldSearchInput] = useState<string>('');
 
 	const dispatch = useDispatch<Dispatch<AppActions>>();
@@ -84,7 +95,13 @@ function TableView({ logData }: TableViewProps): JSX.Element | null {
 			render: (fieldData: Record<string, string>): JSX.Element | null => {
 				const fieldKey = fieldData.field.split('.').slice(-1);
 				if (!RESTRICTED_FIELDS.includes(fieldKey[0])) {
-					return <ActionItem fieldKey={fieldKey} fieldValue={fieldData.value} />;
+					return (
+						<ActionItem
+							fieldKey={fieldKey[0]}
+							fieldValue={fieldData.value}
+							onClickActionItem={onClickActionItem}
+						/>
+					);
 				}
 				return null;
 			},
@@ -128,7 +145,11 @@ function TableView({ logData }: TableViewProps): JSX.Element | null {
 
 				if (!RESTRICTED_FIELDS.includes(fieldKey[0])) {
 					return (
-						<AddToQueryHOC fieldKey={fieldKey[0]} fieldValue={flattenLogData[field]}>
+						<AddToQueryHOC
+							fieldKey={fieldKey[0]}
+							fieldValue={flattenLogData[field]}
+							onAddToQuery={onAddToQuery}
+						>
 							{renderedField}
 						</AddToQueryHOC>
 					);

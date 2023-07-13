@@ -3249,6 +3249,32 @@ func (r *ClickHouseReader) GetSpansInLastHeartBeatInterval(ctx context.Context) 
 	return spansInLastHeartBeatInterval, nil
 }
 
+func (r *ClickHouseReader) FetchTemporality(ctx context.Context, metricNames []string) (map[string]map[v3.Temporality]bool, error) {
+
+	metricNameToTemporality := make(map[string]map[v3.Temporality]bool)
+
+	query := fmt.Sprintf(`SELECT DISTINCT metric_name, temporality FROM %s.%s WHERE metric_name IN [$1]`, signozMetricDBName, signozTSTableName)
+
+	rows, err := r.db.Query(ctx, query, metricNames)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var metricName, temporality string
+		err := rows.Scan(&metricName, &temporality)
+		if err != nil {
+			return nil, err
+		}
+		if _, ok := metricNameToTemporality[metricName]; !ok {
+			metricNameToTemporality[metricName] = make(map[v3.Temporality]bool)
+		}
+		metricNameToTemporality[metricName][v3.Temporality(temporality)] = true
+	}
+	return metricNameToTemporality, nil
+}
+
 // func sum(array []tsByMetricName) uint64 {
 // 	var result uint64
 // 	result = 0
@@ -3958,7 +3984,10 @@ func (r *ClickHouseReader) GetLogAttributeValues(ctx context.Context, req *v3.Fi
 
 	// if dataType or tagType is not present return empty response
 	if len(req.FilterAttributeKeyDataType) == 0 || len(req.TagType) == 0 || req.FilterAttributeKey == "body" {
-		return &v3.FilterAttributeValueResponse{}, nil
+		// also check if it is not a top level key
+		if _, ok := constants.StaticFieldsLogsV3[req.FilterAttributeKey]; !ok {
+			return &v3.FilterAttributeValueResponse{}, nil
+		}
 	}
 
 	// if data type is bool, return true and false
@@ -4159,7 +4188,22 @@ func readRowsForTimeSeriesResult(rows driver.Rows, vars []interface{}, columnNam
 
 	var seriesList []*v3.Series
 	for key := range seriesToPoints {
-		series := v3.Series{Labels: seriesToAttrs[key], Points: seriesToPoints[key]}
+		points := seriesToPoints[key]
+
+		// find the grouping sets point for the series
+		// this is the point with the zero timestamp
+		// if there is no such point, then the series is not grouped
+		// and we can skip this step
+		var groupingSetsPoint *v3.Point
+		for idx, point := range points {
+			if point.Timestamp <= 0 {
+				groupingSetsPoint = &point
+				// remove the grouping sets point from the list of points
+				points = append(points[:idx], points[idx+1:]...)
+				break
+			}
+		}
+		series := v3.Series{Labels: seriesToAttrs[key], Points: points, GroupingSetsPoint: groupingSetsPoint}
 		seriesList = append(seriesList, &series)
 	}
 	return seriesList, nil
