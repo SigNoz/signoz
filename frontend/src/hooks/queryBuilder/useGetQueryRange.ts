@@ -14,11 +14,7 @@ type UseGetQueryRange = (
 	isQueryEnabled?: boolean,
 ) => UseQueryResult<SuccessResponse<MetricRangePayloadProps>, Error>;
 
-export const useGetQueryRange: UseGetQueryRange = (
-	requestData,
-	options,
-	isQueryEnabled = false,
-) => {
+export const useGetQueryRange: UseGetQueryRange = (requestData, options) => {
 	const queryKey = useMemo(() => {
 		if (options?.queryKey) {
 			return [...options.queryKey];
@@ -30,6 +26,5 @@ export const useGetQueryRange: UseGetQueryRange = (
 		queryFn: async () => GetMetricQueryRange(requestData),
 		...options,
 		queryKey,
-		enabled: !isQueryEnabled,
 	});
 };

@@ -63,7 +63,6 @@ function FullView({
 		{
 			queryKey,
 		},
-		isDependedDataLoaded,
 	);
 
 	const chartDataSet = useMemo(
