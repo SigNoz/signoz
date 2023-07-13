@@ -1,6 +1,8 @@
 import { Typography } from 'antd';
 import getServiceOverview from 'api/metrics/getServiceOverview';
-import getTopLevelOperations from 'api/metrics/getTopLevelOperations';
+import getTopLevelOperations, {
+	ServiceDataProps,
+} from 'api/metrics/getTopLevelOperations';
 import getTopOperations from 'api/metrics/getTopOperations';
 import axios from 'axios';
 import { ActiveElement, Chart, ChartData, ChartEvent } from 'chart.js';
@@ -408,9 +410,5 @@ type ClickHandlerType = (
 	data: ChartData,
 	type?: string,
 ) => void;
-
-export type ServiceDataProps = {
-	[serviceName: string]: string[];
-};
 
 export default Application;
