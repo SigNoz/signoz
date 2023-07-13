@@ -89,34 +89,54 @@ export const AggregatorFilter = memo(function AggregatorFilter({
 			? `${transformToUpperCase(query.dataSource)} name`
 			: 'Aggregate attribute';
 
-	const getAttributes = useCallback(
+	const getAttributesData = useCallback(
 		(): BaseAutocompleteData[] =>
-			queryClient.getQueryData<SuccessResponse<IQueryAutocompleteResponse>>(
-				[QueryBuilderKeys.GET_AGGREGATE_ATTRIBUTE],
-				{ exact: false },
-			)?.payload.attributeKeys || [],
-		[queryClient],
+			queryClient.getQueryData<SuccessResponse<IQueryAutocompleteResponse>>([
+				QueryBuilderKeys.GET_AGGREGATE_ATTRIBUTE,
+				debouncedValue,
+				query.aggregateOperator,
+				query.dataSource,
+			])?.payload.attributeKeys || [],
+		[debouncedValue, query.aggregateOperator, query.dataSource, queryClient],
 	);
 
-	const handleChangeCustomValue = useCallback(
-		(value: string) => {
-			const aggregateAttributes = getAttributes();
+	const getResponseAttributes = useCallback(async () => {
+		const response = await queryClient.fetchQuery(
+			[
+				QueryBuilderKeys.GET_AGGREGATE_ATTRIBUTE,
+				searchText,
+				query.aggregateOperator,
+				query.dataSource,
+			],
+			async () =>
+				getAggregateAttribute({
+					searchText,
+					aggregateOperator: query.aggregateOperator,
+					dataSource: query.dataSource,
+				}),
+		);
 
+		return response.payload?.attributeKeys || [];
+	}, [query.aggregateOperator, query.dataSource, queryClient, searchText]);
+
+	const handleChangeCustomValue = useCallback(
+		async (value: string, attributes: BaseAutocompleteData[]) => {
 			const customAttribute: BaseAutocompleteData = chooseAutocompleteFromCustomValue(
-				aggregateAttributes,
+				attributes,
 				value,
 			);
 
 			onChange(customAttribute);
 		},
-		[getAttributes, onChange],
+		[onChange],
 	);
 
-	const handleBlur = useCallback(() => {
+	const handleBlur = useCallback(async () => {
 		if (searchText) {
-			handleChangeCustomValue(searchText);
+			const aggregateAttributes = await getResponseAttributes();
+			handleChangeCustomValue(searchText, aggregateAttributes);
 		}
-	}, [handleChangeCustomValue, searchText]);
+	}, [getResponseAttributes, handleChangeCustomValue, searchText]);
 
 	const handleChange = useCallback(
 		(
@@ -125,7 +145,7 @@ export const AggregatorFilter = memo(function AggregatorFilter({
 		): void => {
 			const currentOption = option as ExtendedSelectOption;
 
-			const aggregateAttributes = getAttributes();
+			const aggregateAttributes = getAttributesData();
 
 			if (currentOption.key) {
 				const attribute = aggregateAttributes.find(
@@ -136,12 +156,12 @@ export const AggregatorFilter = memo(function AggregatorFilter({
 					onChange(attribute);
 				}
 			} else {
-				handleChangeCustomValue(value);
+				handleChangeCustomValue(value, aggregateAttributes);
 			}
 
 			setSearchText('');
 		},
-		[getAttributes, handleChangeCustomValue, onChange],
+		[getAttributesData, handleChangeCustomValue, onChange],
 	);
 
 	const value = transformStringWithPrefix({
