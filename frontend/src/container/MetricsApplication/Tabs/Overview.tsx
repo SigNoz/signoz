@@ -6,6 +6,7 @@ import getTopLevelOperations, {
 import getTopOperations from 'api/metrics/getTopOperations';
 import axios from 'axios';
 import { ActiveElement, Chart, ChartData, ChartEvent } from 'chart.js';
+import Spinner from 'components/Spinner';
 import { SOMETHING_WENT_WRONG } from 'constants/api';
 import { QueryParams } from 'constants/query';
 import ROUTES from 'constants/routes';
@@ -122,6 +123,7 @@ function Application(): JSX.Element {
 		},
 	]);
 
+	const serviceOverviewIsLoading = queryResult[0].isLoading;
 	const topOperations = queryResult[1].data;
 	const topLevelOperations = queryResult[2].data;
 	const topLevelOperationsLoading = queryResult[2].isLoading;
@@ -248,13 +250,18 @@ function Application(): JSX.Element {
 					</Button>
 					<Card>
 						<GraphContainer>
-							<Graph
-								name="service_latency"
-								onDragSelect={onDragSelect}
-								widget={latencyWidget}
-								yAxisUnit="ms"
-								onClickHandler={handleGraphClick('Service')}
-							/>
+							{serviceOverviewIsLoading && (
+								<Spinner size="large" tip="Loading..." height="40vh" />
+							)}
+							{!serviceOverviewIsLoading && (
+								<Graph
+									name="service_latency"
+									onDragSelect={onDragSelect}
+									widget={latencyWidget}
+									yAxisUnit="ms"
+									onClickHandler={handleGraphClick('Service')}
+								/>
+							)}
 						</GraphContainer>
 					</Card>
 				</Col>
@@ -281,6 +288,9 @@ function Application(): JSX.Element {
 							</Typography>
 						) : (
 							<GraphContainer>
+								{topLevelOperationsLoading && (
+									<Spinner size="large" tip="Loading..." height="40vh" />
+								)}
 								{!topLevelOperationsLoading && (
 									<Graph
 										name="operations_per_sec"
@@ -317,6 +327,9 @@ function Application(): JSX.Element {
 							</Typography>
 						) : (
 							<GraphContainer>
+								{topLevelOperationsLoading && (
+									<Spinner size="large" tip="Loading..." height="40vh" />
+								)}
 								{!topLevelOperationsLoading && (
 									<Graph
 										name="error_percentage_%"
