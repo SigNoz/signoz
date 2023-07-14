@@ -6,7 +6,6 @@ import getTopLevelOperations, {
 import getTopOperations from 'api/metrics/getTopOperations';
 import axios from 'axios';
 import { ActiveElement, Chart, ChartData, ChartEvent } from 'chart.js';
-import Spinner from 'components/Spinner';
 import { SOMETHING_WENT_WRONG } from 'constants/api';
 import { QueryParams } from 'constants/query';
 import ROUTES from 'constants/routes';
@@ -123,11 +122,9 @@ function Application(): JSX.Element {
 		},
 	]);
 
-	const serviceOverviewError = queryResult[0].error;
-	const serviceOverviewIsError = queryResult[0].isError;
-	const serviceOverviewIsLoading = queryResult[0].isLoading;
 	const topOperations = queryResult[1].data;
 	const topLevelOperations = queryResult[2].data;
+	const topLevelOperationsLoading = queryResult[2].isLoading;
 	const topLevelOperationsError = queryResult[2].error;
 	const topLevelOperationsIsError = queryResult[2].isError;
 
@@ -250,30 +247,15 @@ function Application(): JSX.Element {
 						View Traces
 					</Button>
 					<Card>
-						{serviceOverviewIsError ? (
-							<Typography>
-								{axios.isAxiosError(serviceOverviewError)
-									? serviceOverviewError.response?.data
-									: SOMETHING_WENT_WRONG}
-							</Typography>
-						) : (
-							<>
-								{serviceOverviewIsLoading && (
-									<Spinner size="large" tip="Loading..." height="40vh" />
-								)}
-								{!serviceOverviewIsLoading && (
-									<GraphContainer>
-										<Graph
-											name="service_latency"
-											onDragSelect={onDragSelect}
-											widget={latencyWidget}
-											yAxisUnit="ms"
-											onClickHandler={handleGraphClick('Service')}
-										/>
-									</GraphContainer>
-								)}
-							</>
-						)}
+						<GraphContainer>
+							<Graph
+								name="service_latency"
+								onDragSelect={onDragSelect}
+								widget={latencyWidget}
+								yAxisUnit="ms"
+								onClickHandler={handleGraphClick('Service')}
+							/>
+						</GraphContainer>
 					</Card>
 				</Col>
 
@@ -299,13 +281,15 @@ function Application(): JSX.Element {
 							</Typography>
 						) : (
 							<GraphContainer>
-								<Graph
-									name="operations_per_sec"
-									widget={operationPerSecWidget}
-									onClickHandler={handleGraphClick('Rate')}
-									yAxisUnit="ops"
-									onDragSelect={onDragSelect}
-								/>
+								{!topLevelOperationsLoading && (
+									<Graph
+										name="operations_per_sec"
+										widget={operationPerSecWidget}
+										onClickHandler={handleGraphClick('Rate')}
+										yAxisUnit="ops"
+										onDragSelect={onDragSelect}
+									/>
+								)}
 							</GraphContainer>
 						)}
 					</Card>
@@ -333,13 +317,15 @@ function Application(): JSX.Element {
 							</Typography>
 						) : (
 							<GraphContainer>
-								<Graph
-									name="error_percentage_%"
-									onClickHandler={handleGraphClick('Error')}
-									widget={errorPercentageWidget}
-									yAxisUnit="%"
-									onDragSelect={onDragSelect}
-								/>
+								{!topLevelOperationsLoading && (
+									<Graph
+										name="error_percentage_%"
+										onClickHandler={handleGraphClick('Error')}
+										widget={errorPercentageWidget}
+										yAxisUnit="%"
+										onDragSelect={onDragSelect}
+									/>
+								)}
 							</GraphContainer>
 						)}
 					</Card>
