@@ -1,16 +1,9 @@
-import { Typography } from 'antd';
-import getServiceOverview from 'api/metrics/getServiceOverview';
 import getTopLevelOperations, {
 	ServiceDataProps,
 } from 'api/metrics/getTopLevelOperations';
-import getTopOperations from 'api/metrics/getTopOperations';
-import axios from 'axios';
 import { ActiveElement, Chart, ChartData, ChartEvent } from 'chart.js';
-import Spinner from 'components/Spinner';
-import { SOMETHING_WENT_WRONG } from 'constants/api';
 import { QueryParams } from 'constants/query';
 import ROUTES from 'constants/routes';
-import Graph from 'container/GridGraphLayout/Graph/GraphWithoutDashboard';
 import { routeConfig } from 'container/SideNav/config';
 import { getQueryString } from 'container/SideNav/helper';
 import useResourceAttribute from 'hooks/useResourceAttribute';
@@ -18,16 +11,13 @@ import {
 	convertRawQueriesToTraceSelectedTags,
 	resourceAttributesToTagFilterItems,
 } from 'hooks/useResourceAttribute/utils';
-import getStep from 'lib/getStep';
 import history from 'lib/history';
 import { useCallback, useMemo, useState } from 'react';
-import { useQueries, UseQueryResult } from 'react-query';
+import { useQuery } from 'react-query';
 import { useDispatch, useSelector } from 'react-redux';
 import { useLocation, useParams } from 'react-router-dom';
 import { UpdateTimeInterval } from 'store/actions';
 import { AppState } from 'store/reducers';
-import { PayloadProps } from 'types/api/metrics/getServiceOverview';
-import { PayloadProps as PayloadPropsTopOpertions } from 'types/api/metrics/getTopOperations';
 import { EQueryType } from 'types/common/dashboard';
 import { GlobalReducer } from 'types/reducer/globalTime';
 import { Tags } from 'types/reducer/trace';
@@ -37,11 +27,12 @@ import { GraphTitle } from '../constant';
 import { getWidgetQueryBuilder } from '../MetricsApplication.factory';
 import {
 	errorPercentage,
-	letency,
 	operationPerSec,
 } from '../MetricsPageQueries/OverviewQueries';
-import { Card, Col, GraphContainer, Row } from '../styles';
-import TopOperationsTable from '../TopOperationsTable';
+import { Col, Row } from '../styles';
+import ServiceOverview from './Overview/ServiceOverview';
+import TopLevelOperation from './Overview/TopLevelOperations';
+import TopOperation from './Overview/TopOperation';
 import { Button } from './styles';
 import {
 	handleNonInQueryRange,
@@ -85,50 +76,15 @@ function Application(): JSX.Element {
 		[handleSetTimeStamp],
 	);
 
-	const queryResult = useQueries<
-		[
-			UseQueryResult<PayloadProps>,
-			UseQueryResult<PayloadPropsTopOpertions>,
-			UseQueryResult<ServiceDataProps>,
-		]
-	>([
-		{
-			queryKey: [servicename, selectedTags, minTime, maxTime],
-			queryFn: (): Promise<PayloadProps> =>
-				getServiceOverview({
-					service: servicename || '',
-					start: minTime,
-					end: maxTime,
-					step: getStep({
-						start: minTime,
-						end: maxTime,
-						inputFormat: 'ns',
-					}),
-					selectedTags,
-				}),
-		},
-		{
-			queryKey: [minTime, maxTime, servicename, selectedTags],
-			queryFn: (): Promise<PayloadPropsTopOpertions> =>
-				getTopOperations({
-					service: servicename || '',
-					start: minTime,
-					end: maxTime,
-					selectedTags,
-				}),
-		},
-		{
-			queryKey: [servicename, minTime, maxTime, selectedTags],
-			queryFn: (): Promise<ServiceDataProps> => getTopLevelOperations(),
-		},
-	]);
-
-	const serviceOverviewIsLoading = queryResult[0].isLoading;
-	const topOperations = queryResult[1].data;
-	const topLevelOperations = queryResult[2].data;
-	const topLevelOperationsLoading = queryResult[2].isLoading;
-	const topLevelOperationsError = queryResult[2].error;
-	const topLevelOperationsIsError = queryResult[2].isError;
+	const {
+		data: topLevelOperations,
+		isLoading: topLevelOperationsLoading,
+		error: topLevelOperationsError,
+		isError: topLevelOperationsIsError,
+	} = useQuery<ServiceDataProps>({
+		queryKey: [servicename, minTime, maxTime, selectedTags],
+		queryFn: (): Promise<ServiceDataProps> => getTopLevelOperations(),
+	});
 
 	const selectedTraceTags: string = JSON.stringify(
 		convertRawQueriesToTraceSelectedTags(queries) || [],
@@ -138,24 +94,6 @@ function Application(): JSX.Element {
 		() =>
 			handleNonInQueryRange(resourceAttributesToTagFilterItems(queries)) || [],
 		[queries],
-	);
-
-	const latencyWidget = useMemo(
-		() =>
-			getWidgetQueryBuilder(
-				{
-					queryType: EQueryType.QUERY_BUILDER,
-					promql: [],
-					builder: letency({
-						servicename,
-						tagFilterItems,
-					}),
-					clickhouse_sql: [],
-					id: uuid(),
-				},
-				GraphTitle.LATENCY,
-			),
-		[servicename, tagFilterItems],
 	);
 
 	const operationPerSecWidget = useMemo(
@@ -236,34 +174,13 @@ function Application(): JSX.Element {
 		<>
 			<Row gutter={24}>
 				<Col span={12}>
-					<Button
-						type="default"
-						size="small"
-						id="Service_button"
-						onClick={onViewTracePopupClick({
-							servicename,
-							selectedTraceTags,
-							timestamp: selectedTimeStamp,
-						})}
-					>
-						View Traces
-					</Button>
-					<Card>
-						<GraphContainer>
-							{serviceOverviewIsLoading && (
-								<Spinner size="large" tip="Loading..." height="40vh" />
-							)}
-							{!serviceOverviewIsLoading && (
-								<Graph
-									name="service_latency"
-									onDragSelect={onDragSelect}
-									widget={latencyWidget}
-									yAxisUnit="ms"
-									onClickHandler={handleGraphClick('Service')}
-								/>
-							)}
-						</GraphContainer>
-					</Card>
+					<ServiceOverview
+						onDragSelect={onDragSelect}
+						handleGraphClick={handleGraphClick}
+						selectedTimeStamp={selectedTimeStamp}
+						selectedTraceTags={selectedTraceTags}
+						tagFilterItems={tagFilterItems}
+					/>
 				</Col>
 
 				<Col span={12}>
@@ -279,30 +196,17 @@ function Application(): JSX.Element {
 					>
 						View Traces
 					</Button>
-					<Card>
-						{topLevelOperationsIsError ? (
-							<Typography>
-								{axios.isAxiosError(topLevelOperationsError)
-									? topLevelOperationsError.response?.data
-									: SOMETHING_WENT_WRONG}
-							</Typography>
-						) : (
-							<GraphContainer>
-								{topLevelOperationsLoading && (
-									<Spinner size="large" tip="Loading..." height="40vh" />
-								)}
-								{!topLevelOperationsLoading && (
-									<Graph
-										name="operations_per_sec"
-										widget={operationPerSecWidget}
-										onClickHandler={handleGraphClick('Rate')}
-										yAxisUnit="ops"
-										onDragSelect={onDragSelect}
-									/>
-								)}
-							</GraphContainer>
-						)}
-					</Card>
+					<TopLevelOperation
+						handleGraphClick={handleGraphClick}
+						onDragSelect={onDragSelect}
+						topLevelOperationsError={topLevelOperationsError}
+						topLevelOperationsLoading={topLevelOperationsLoading}
+						topLevelOperationsIsError={topLevelOperationsIsError}
+						name="operations_per_sec"
+						widget={operationPerSecWidget}
+						yAxisUnit="ops"
+						opName="Rate"
+					/>
 				</Col>
 			</Row>
 			<Row gutter={24}>
@@ -318,43 +222,28 @@ function Application(): JSX.Element {
 						View Traces
 					</Button>
 
-					<Card>
-						{topLevelOperationsIsError ? (
-							<Typography>
-								{axios.isAxiosError(topLevelOperationsError)
-									? topLevelOperationsError.response?.data
-									: SOMETHING_WENT_WRONG}
-							</Typography>
-						) : (
-							<GraphContainer>
-								{topLevelOperationsLoading && (
-									<Spinner size="large" tip="Loading..." height="40vh" />
-								)}
-								{!topLevelOperationsLoading && (
-									<Graph
-										name="error_percentage_%"
-										onClickHandler={handleGraphClick('Error')}
-										widget={errorPercentageWidget}
-										yAxisUnit="%"
-										onDragSelect={onDragSelect}
-									/>
-								)}
-							</GraphContainer>
-						)}
-					</Card>
+					<TopLevelOperation
+						handleGraphClick={handleGraphClick}
+						onDragSelect={onDragSelect}
+						topLevelOperationsError={topLevelOperationsError}
+						topLevelOperationsLoading={topLevelOperationsLoading}
+						topLevelOperationsIsError={topLevelOperationsIsError}
+						name="error_percentage_%"
+						widget={errorPercentageWidget}
+						yAxisUnit="%"
+						opName="Error"
+					/>
 				</Col>
 
 				<Col span={12}>
-					<Card>
-						<TopOperationsTable data={topOperations || []} />
-					</Card>
+					<TopOperation />
 				</Col>
 			</Row>
 		</>
 	);
 }
 
-type ClickHandlerType = (
+export type ClickHandlerType = (
 	ChartEvent: ChartEvent,
 	activeElements: ActiveElement[],
 	chart: Chart,
