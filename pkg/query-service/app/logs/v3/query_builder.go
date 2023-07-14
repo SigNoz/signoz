@@ -354,6 +354,18 @@ func orderBy(panelType v3.PanelType, items []v3.OrderBy, tags []string) []string
 }
 
 func orderByAttributeKeyTags(panelType v3.PanelType, aggregatorOperator v3.AggregateOperator, items []v3.OrderBy, tags []v3.AttributeKey, graphLimitQtype string) string {
+	// for first query in TS limit we just need to order by value because ordering won't make sense in graph by any other key
+	if graphLimitQtype == constants.FirstQueryGraphLimit {
+		// check if order by value is present if yes then add it
+		for _, item := range items {
+			if item.ColumnName == constants.SigNozOrderByValue {
+				return fmt.Sprintf("value %s", item.Order)
+			}
+		}
+		// order by value desc is default since users will be most interested in this
+		return "value DESC"
+	}
+
 	var groupTags []string
 	for _, tag := range tags {
 		groupTags = append(groupTags, tag.Key)
@@ -364,7 +376,7 @@ func orderByAttributeKeyTags(panelType v3.PanelType, aggregatorOperator v3.Aggre
 		if len(orderByArray) == 0 {
 			orderByArray = append(orderByArray, constants.TIMESTAMP)
 		}
-	} else if (graphLimitQtype != constants.FirstQueryGraphLimit) && (panelType == v3.PanelTypeGraph || panelType == v3.PanelTypeValue) {
+	} else if panelType == v3.PanelTypeGraph || panelType == v3.PanelTypeValue {
 		// since in other aggregation operator we will have to add ts as it will not be present in group by
 		orderByArray = append(orderByArray, "ts")
 	}
