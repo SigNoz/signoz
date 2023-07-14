@@ -60,6 +60,13 @@ var BasicPlan = basemodel.FeatureSet{
 		UsageLimit: 5,
 		Route:      "",
 	},
+	basemodel.Feature{
+		Name:       basemodel.UseSpanMetrics,
+		Active:     false,
+		Usage:      0,
+		UsageLimit: -1,
+		Route:      "",
+	},
 }
 
 var ProPlan = basemodel.FeatureSet{
@@ -105,6 +112,13 @@ var ProPlan = basemodel.FeatureSet{
 		UsageLimit: -1,
 		Route:      "",
 	},
+	basemodel.Feature{
+		Name:       basemodel.UseSpanMetrics,
+		Active:     false,
+		Usage:      0,
+		UsageLimit: -1,
+		Route:      "",
+	},
 }
 
 var EnterprisePlan = basemodel.FeatureSet{
@@ -146,6 +160,13 @@ var EnterprisePlan = basemodel.FeatureSet{
 	basemodel.Feature{
 		Name:       basemodel.QueryBuilderAlerts,
 		Active:     true,
+		Usage:      0,
+		UsageLimit: -1,
+		Route:      "",
+	},
+	basemodel.Feature{
+		Name:       basemodel.UseSpanMetrics,
+		Active:     false,
 		Usage:      0,
 		UsageLimit: -1,
 		Route:      "",

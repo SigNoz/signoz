@@ -61,17 +61,18 @@ func NewRouter() *mux.Router {
 type APIHandler struct {
 	// queryService *querysvc.QueryService
 	// queryParser  queryParser
-	basePath     string
-	apiPrefix    string
-	reader       interfaces.Reader
-	skipConfig   *model.SkipConfig
-	appDao       dao.ModelDao
-	alertManager am.Manager
-	ruleManager  *rules.Manager
-	featureFlags interfaces.FeatureLookup
-	ready        func(http.HandlerFunc) http.HandlerFunc
-	queryBuilder *queryBuilder.QueryBuilder
-	preferDelta  bool
+	basePath          string
+	apiPrefix         string
+	reader            interfaces.Reader
+	skipConfig        *model.SkipConfig
+	appDao            dao.ModelDao
+	alertManager      am.Manager
+	ruleManager       *rules.Manager
+	featureFlags      interfaces.FeatureLookup
+	ready             func(http.HandlerFunc) http.HandlerFunc
+	queryBuilder      *queryBuilder.QueryBuilder
+	preferDelta       bool
+	preferSpanMetrics bool
 
 	// SetupCompleted indicates if SigNoz is ready for general use.
 	// at the moment, we mark the app ready when the first user
@@ -86,7 +87,8 @@ type APIHandlerOpts struct {
 
 	SkipConfig *model.SkipConfig
 
-	PerferDelta bool
+	PerferDelta       bool
+	PreferSpanMetrics bool
 	// dao layer to perform crud on app objects like dashboard, alerts etc
 	AppDao dao.ModelDao
 
@@ -106,13 +108,14 @@ func NewAPIHandler(opts APIHandlerOpts) (*APIHandler, error) {
 	}
 
 	aH := &APIHandler{
-		reader:       opts.Reader,
-		appDao:       opts.AppDao,
-		skipConfig:   opts.SkipConfig,
-		preferDelta:  opts.PerferDelta,
-		alertManager: alertManager,
-		ruleManager:  opts.RuleManager,
-		featureFlags: opts.FeatureFlags,
+		reader:            opts.Reader,
+		appDao:            opts.AppDao,
+		skipConfig:        opts.SkipConfig,
+		preferDelta:       opts.PerferDelta,
+		preferSpanMetrics: opts.PreferSpanMetrics,
+		alertManager:      alertManager,
+		ruleManager:       opts.RuleManager,
+		featureFlags:      opts.FeatureFlags,
 	}
 
 	builderOpts := queryBuilder.QueryBuilderOptions{
@@ -1667,6 +1670,14 @@ func (aH *APIHandler) getFeatureFlags(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		aH.HandleError(w, err, http.StatusInternalServerError)
 		return
+	}
+	if aH.preferSpanMetrics {
+		for idx := range featureSet {
+			feature := &featureSet[idx]
+			if feature.Name == model.UseSpanMetrics {
+				featureSet[idx].Active = true
+			}
+		}
 	}
 	aH.Respond(w, featureSet)
 }
