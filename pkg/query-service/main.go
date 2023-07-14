@@ -35,11 +35,13 @@ func main() {
 	var ruleRepoURL string
 
 	var preferDelta bool
+	var preferSpanMetrics bool
 
 	flag.StringVar(&promConfigPath, "config", "./config/prometheus.yml", "(prometheus config to read metrics)")
 	flag.StringVar(&skipTopLvlOpsPath, "skip-top-level-ops", "", "(config file to skip top level operations)")
 	flag.BoolVar(&disableRules, "rules.disable", false, "(disable rule evaluation)")
-	flag.BoolVar(&preferDelta, "prefer-delta", false, "(prefer delta over gauge)")
+	flag.BoolVar(&preferDelta, "prefer-delta", false, "(prefer delta over cumulative metrics)")
+	flag.BoolVar(&preferSpanMetrics, "prefer-span-metrics", false, "(prefer span metrics for service level metrics)")
 	flag.StringVar(&ruleRepoURL, "rules.repo-url", constants.AlertHelpPage, "(host address used to build rule link in alert messages)")
 	flag.Parse()
 
@@ -55,6 +57,7 @@ func main() {
 		PromConfigPath:    promConfigPath,
 		SkipTopLvlOpsPath: skipTopLvlOpsPath,
 		PreferDelta:       preferDelta,
+		PreferSpanMetrics: preferSpanMetrics,
 		PrivateHostPort:   constants.PrivateHostPort,
 		DisableRules:      disableRules,
 		RuleRepoURL:       ruleRepoURL,

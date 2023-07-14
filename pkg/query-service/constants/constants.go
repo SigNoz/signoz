@@ -87,6 +87,13 @@ var DEFAULT_FEATURE_SET = model.FeatureSet{
 		UsageLimit: -1,
 		Route:      "",
 	},
+	model.Feature{
+		Name:       model.UseSpanMetrics,
+		Active:     false,
+		Usage:      0,
+		UsageLimit: -1,
+		Route:      "",
+	},
 }
 
 func GetContextTimeout() time.Duration {
