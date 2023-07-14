@@ -19,6 +19,7 @@ import { EQueryType } from 'types/common/dashboard';
 import MetricReducer from 'types/reducer/metrics';
 import { v4 as uuid } from 'uuid';
 
+import { ERROR_PERCENTAGE, LATENCY, RATE_PER_OPS } from '../constant';
 import { getWidgetQueryBuilder } from '../MetricsApplication.factory';
 import {
 	errorPercentage,
@@ -27,7 +28,6 @@ import {
 } from '../MetricsPageQueries/OverviewQueries';
 import { Card, Col, GraphContainer, Row } from '../styles';
 import TopOperationsTable from '../TopOperationsTable';
-import { ERROR_PERCENTAGE, LATENCY, RATE_PER_OPS } from './constant';
 import { Button } from './styles';
 import {
 	handleNonInQueryRange,

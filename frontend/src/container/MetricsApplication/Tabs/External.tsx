@@ -16,15 +16,15 @@ import { useParams } from 'react-router-dom';
 import { EQueryType } from 'types/common/dashboard';
 import { v4 as uuid } from 'uuid';
 
-import { getWidgetQueryBuilder } from '../MetricsApplication.factory';
-import { Card, GraphContainer, Row } from '../styles';
 import {
 	EXTERNAL_CALL_DURATION,
 	EXTERNAL_CALL_DURATION_BY_ADDRESS,
 	EXTERNAL_CALL_ERROR_PERCENTAGE,
 	EXTERNAL_CALL_RPS_BY_ADDRESS,
 	legend,
-} from './constant';
+} from '../constant';
+import { getWidgetQueryBuilder } from '../MetricsApplication.factory';
+import { Card, GraphContainer, Row } from '../styles';
 import { Button } from './styles';
 import {
 	handleNonInQueryRange,

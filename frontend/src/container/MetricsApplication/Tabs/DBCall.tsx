@@ -15,9 +15,9 @@ import { TagFilterItem } from 'types/api/queryBuilder/queryBuilderData';
 import { EQueryType } from 'types/common/dashboard';
 import { v4 as uuid } from 'uuid';
 
+import { DATABASE_CALLS_AVG_DURATION, DATABASE_CALLS_RPS } from '../constant';
 import { getWidgetQueryBuilder } from '../MetricsApplication.factory';
 import { Card, GraphContainer, Row } from '../styles';
-import { DATABASE_CALLS_AVG_DURATION, DATABASE_CALLS_RPS } from './constant';
 import { Button } from './styles';
 import {
 	dbSystemTags,
