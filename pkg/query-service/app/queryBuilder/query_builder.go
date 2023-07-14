@@ -200,7 +200,6 @@ func (qb *QueryBuilder) PrepareQueries(params *v3.QueryRangeParamsV3, args ...in
 
 	// filter out disabled queries
 	for queryName := range queries {
-		// check if the query is disabled
 		if compositeQuery.BuilderQueries[queryName].Disabled {
 			delete(queries, queryName)
 		}

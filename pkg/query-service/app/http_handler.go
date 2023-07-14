@@ -30,7 +30,6 @@ import (
 	"go.signoz.io/signoz/pkg/query-service/auth"
 	"go.signoz.io/signoz/pkg/query-service/constants"
 	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
-	"go.signoz.io/signoz/pkg/query-service/utils"
 	querytemplate "go.signoz.io/signoz/pkg/query-service/utils/queryTemplate"
 
 	"go.signoz.io/signoz/pkg/query-service/dao"
@@ -2448,24 +2447,6 @@ func (aH *APIHandler) autoCompleteAttributeValues(w http.ResponseWriter, r *http
 	}
 
 	aH.Respond(w, response)
-}
-
-func createFilterForGraphQuery(data []*v3.Row) string {
-	// create the filter from the first query result
-	/*
-		put | error
-		put | debug
-	*/
-	// filter : ( method = 'put' AND level = 'error' ) OR ( method = 'put' AND level = 'debug' )
-	filterarr := []string{}
-	for _, row := range data {
-		tempFilter := []string{}
-		for name, val := range row.Data {
-			tempFilter = append(tempFilter, fmt.Sprintf("%s = %s", name, utils.ClickHouseFormattedValue(val)))
-		}
-		filterarr = append(filterarr, "( "+strings.Join(tempFilter, " AND ")+" )")
-	}
-	return strings.Join(filterarr, " OR ")
 }
 
 func (aH *APIHandler) execClickHouseGraphQueries(ctx context.Context, queries map[string]string) ([]*v3.Result, error, map[string]string) {
