@@ -222,7 +222,7 @@ func buildLogsQuery(panelType v3.PanelType, start, end, step int64, mq *v3.Build
 	if panelType != v3.PanelTypeList && groupBy != "" {
 		groupBy = " group by " + groupBy
 	}
-	orderBy := orderByAttributeKeyTags(panelType, mq.AggregateOperator, mq.OrderBy, mq.GroupBy, graphLimitQtype)
+	orderBy := orderByAttributeKeyTags(panelType, mq.OrderBy, mq.GroupBy)
 	if panelType != v3.PanelTypeList && orderBy != "" {
 		orderBy = " order by " + orderBy
 	}
@@ -309,76 +309,38 @@ func groupByAttributeKeyTags(panelType v3.PanelType, graphLimitQtype string, tag
 // orderBy returns a string of comma separated tags for order by clause
 // if there are remaining items which are not present in tags they are also added
 // if the order is not specified, it defaults to ASC
-func orderBy(panelType v3.PanelType, items []v3.OrderBy, tags []string) []string {
+func orderBy(panelType v3.PanelType, items []v3.OrderBy, tagLookup map[string]struct{}) []string {
 	var orderBy []string
 
-	// create a lookup
-	addedToOrderBy := map[string]bool{}
-	itemsLookup := map[string]v3.OrderBy{}
-
-	for i := 0; i < len(items); i++ {
-		addedToOrderBy[items[i].ColumnName] = false
-		itemsLookup[items[i].ColumnName] = items[i]
-	}
-
-	for _, tag := range tags {
-		if item, ok := itemsLookup[tag]; ok {
-			orderBy = append(orderBy, fmt.Sprintf("%s %s", item.ColumnName, item.Order))
-			addedToOrderBy[item.ColumnName] = true
-		} else {
-			orderBy = append(orderBy, fmt.Sprintf("%s ASC", tag))
-		}
-	}
-
-	// users might want to order by value of aggreagation
 	for _, item := range items {
 		if item.ColumnName == constants.SigNozOrderByValue {
 			orderBy = append(orderBy, fmt.Sprintf("value %s", item.Order))
-			addedToOrderBy[item.ColumnName] = true
-		}
-	}
-
-	// add the remaining items
-	if panelType == v3.PanelTypeList {
-		for _, item := range items {
-			// since these are not present in tags we will have to select them correctly
-			// for list view there is no need to check if it was added since they wont be added yet but this is just for safety
-			if !addedToOrderBy[item.ColumnName] {
-				attr := v3.AttributeKey{Key: item.ColumnName, DataType: item.DataType, Type: item.Type, IsColumn: item.IsColumn}
-				name := getClickhouseColumnName(attr)
-				orderBy = append(orderBy, fmt.Sprintf("%s %s", name, item.Order))
-			}
+		} else if _, ok := tagLookup[item.ColumnName]; ok {
+			orderBy = append(orderBy, fmt.Sprintf("%s %s", item.ColumnName, item.Order))
+		} else if panelType == v3.PanelTypeList {
+			attr := v3.AttributeKey{Key: item.ColumnName, DataType: item.DataType, Type: item.Type, IsColumn: item.IsColumn}
+			name := getClickhouseColumnName(attr)
+			orderBy = append(orderBy, fmt.Sprintf("%s %s", name, item.Order))
 		}
 	}
 	return orderBy
 }
 
-func orderByAttributeKeyTags(panelType v3.PanelType, aggregatorOperator v3.AggregateOperator, items []v3.OrderBy, tags []v3.AttributeKey, graphLimitQtype string) string {
-	// for first query in TS limit we just need to order by value because ordering won't make sense in graph by any other key
-	if graphLimitQtype == constants.FirstQueryGraphLimit {
-		// check if order by value is present if yes then add it
-		for _, item := range items {
-			if item.ColumnName == constants.SigNozOrderByValue {
-				return fmt.Sprintf("value %s", item.Order)
-			}
-		}
-		// order by value desc is default since users will be most interested in this
-		return "value DESC"
+func orderByAttributeKeyTags(panelType v3.PanelType, items []v3.OrderBy, tags []v3.AttributeKey) string {
+
+	tagLookup := map[string]struct{}{}
+	for _, v := range tags {
+		tagLookup[v.Key] = struct{}{}
 	}
 
-	var groupTags []string
-	for _, tag := range tags {
-		groupTags = append(groupTags, tag.Key)
-	}
-	orderByArray := orderBy(panelType, items, groupTags)
+	orderByArray := orderBy(panelType, items, tagLookup)
 
-	if panelType == v3.PanelTypeList {
-		if len(orderByArray) == 0 {
-			orderByArray = append(orderByArray, constants.TIMESTAMP)
+	if len(orderByArray) == 0 {
+		if panelType == v3.PanelTypeList {
+			orderByArray = append(orderByArray, constants.TIMESTAMP+" DESC")
+		} else {
+			orderByArray = append(orderByArray, "value DESC")
 		}
-	} else if panelType == v3.PanelTypeGraph || panelType == v3.PanelTypeValue {
-		// since in other aggregation operator we will have to add ts as it will not be present in group by
-		orderByArray = append(orderByArray, "ts")
 	}
 
 	str := strings.Join(orderByArray, ",")
@@ -449,7 +411,7 @@ func PrepareLogsQuery(start, end int64, queryType v3.QueryType, panelType v3.Pan
 		query, err = reduceQuery(query, mq.ReduceTo, mq.AggregateOperator)
 	}
 
-	if panelType == v3.PanelTypeList {
+	if panelType == v3.PanelTypeList || panelType == v3.PanelTypeTable {
 		if mq.PageSize > 0 {
 			if mq.Limit > 0 && mq.Offset > mq.Limit {
 				return "", fmt.Errorf("max limit exceeded")
