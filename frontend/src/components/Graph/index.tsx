@@ -24,11 +24,17 @@ import {
 } from 'chart.js';
 import * as chartjsAdapter from 'chartjs-adapter-date-fns';
 import annotationPlugin from 'chartjs-plugin-annotation';
-import { LegendEntryProps } from 'container/GridGraphLayout/Graph/FullView/GraphManager';
 import dayjs from 'dayjs';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import isEqual from 'lodash-es/isEqual';
-import { memo, useCallback, useEffect, useRef } from 'react';
+import {
+	forwardRef,
+	memo,
+	useCallback,
+	useEffect,
+	useImperativeHandle,
+	useRef,
+} from 'react';
 
 import { hasData } from './hasData';
 import { getAxisLabelColor } from './helpers';
@@ -72,312 +78,290 @@ Chart.register(
 
 Tooltip.positioners.custom = TooltipPositionHandler;
 
-function Graph({
-	animate = true,
-	data,
-	type,
-	title,
-	isStacked,
-	onClickHandler,
-	name,
-	yAxisUnit = 'short',
-	forceReRender,
-	staticLine,
-	containerHeight,
-	onDragSelect,
-	dragSelectColor,
-	graphsVisibility,
-}: GraphProps): JSX.Element {
-	const nearestDatasetIndex = useRef<null | number>(null);
-	const chartRef = useRef<HTMLCanvasElement>(null);
-	const isDarkMode = useIsDarkMode();
+const Graph = forwardRef<ToggleGraphProps | undefined, GraphProps>(
+	(
+		{
+			animate = true,
+			data,
+			type,
+			title,
+			isStacked,
+			onClickHandler,
+			name,
+			yAxisUnit = 'short',
+			forceReRender,
+			staticLine,
+			containerHeight,
+			onDragSelect,
+			dragSelectColor,
+		},
+		ref,
+		// eslint-disable-next-line sonarjs/cognitive-complexity
+	): JSX.Element => {
+		const nearestDatasetIndex = useRef<null | number>(null);
+		const chartRef = useRef<HTMLCanvasElement>(null);
+		const isDarkMode = useIsDarkMode();
 
-	const currentTheme = isDarkMode ? 'dark' : 'light';
-	const xAxisTimeUnit = useXAxisTimeUnit(data); // Computes the relevant time unit for x axis by analyzing the time stamp data
+		const currentTheme = isDarkMode ? 'dark' : 'light';
+		const xAxisTimeUnit = useXAxisTimeUnit(data); // Computes the relevant time unit for x axis by analyzing the time stamp data
 
-	const lineChartRef = useRef<Chart>();
-	const getGridColor = useCallback(() => {
-		if (currentTheme === undefined) {
-			return 'rgba(231,233,237,0.1)';
-		}
+		const lineChartRef = useRef<Chart>();
 
-		if (currentTheme === 'dark') {
-			return 'rgba(231,233,237,0.1)';
-		}
-
-		return 'rgba(231,233,237,0.8)';
-	}, [currentTheme]);
-
-	// eslint-disable-next-line sonarjs/cognitive-complexity
-	const buildChart = useCallback(() => {
-		if (lineChartRef.current !== undefined) {
-			lineChartRef.current.destroy();
-		}
-
-		if (chartRef.current !== null) {
-			const options: CustomChartOptions = {
-				animation: {
-					duration: animate ? 200 : 0,
+		useImperativeHandle(
+			ref,
+			(): ToggleGraphProps => ({
+				toggleGraph(graphIndex: number, isVisible: boolean): void {
+					if (lineChartRef.current) {
+						const { type } = lineChartRef.current?.config as ChartConfiguration;
+						if (type === 'pie' || type === 'doughnut') {
+							lineChartRef.current?.toggleDataVisibility(graphIndex);
+						} else {
+							lineChartRef.current?.setDatasetVisibility(graphIndex, isVisible);
+						}
+						lineChartRef.current?.update();
+					}
 				},
-				responsive: true,
-				maintainAspectRatio: false,
-				interaction: {
-					mode: 'index',
-					intersect: false,
-				},
-				plugins: {
-					annotation: staticLine
-						? {
-								annotations: [
-									{
-										type: 'line',
-										yMin: staticLine.yMin,
-										yMax: staticLine.yMax,
-										borderColor: staticLine.borderColor,
-										borderWidth: staticLine.borderWidth,
-										label: {
-											content: staticLine.lineText,
-											enabled: true,
-											font: {
-												size: 10,
+			}),
+		);
+
+		const getGridColor = useCallback(() => {
+			if (currentTheme === undefined) {
+				return 'rgba(231,233,237,0.1)';
+			}
+
+			if (currentTheme === 'dark') {
+				return 'rgba(231,233,237,0.1)';
+			}
+
+			return 'rgba(231,233,237,0.8)';
+		}, [currentTheme]);
+
+		// eslint-disable-next-line sonarjs/cognitive-complexity
+		const buildChart = useCallback(() => {
+			if (lineChartRef.current !== undefined) {
+				lineChartRef.current.destroy();
+			}
+
+			if (chartRef.current !== null) {
+				const options: CustomChartOptions = {
+					animation: {
+						duration: animate ? 200 : 0,
+					},
+					responsive: true,
+					maintainAspectRatio: false,
+					interaction: {
+						mode: 'index',
+						intersect: false,
+					},
+					plugins: {
+						annotation: staticLine
+							? {
+									annotations: [
+										{
+											type: 'line',
+											yMin: staticLine.yMin,
+											yMax: staticLine.yMax,
+											borderColor: staticLine.borderColor,
+											borderWidth: staticLine.borderWidth,
+											label: {
+												content: staticLine.lineText,
+												enabled: true,
+												font: {
+													size: 10,
+												},
+												borderWidth: 0,
+												position: 'start',
+												backgroundColor: 'transparent',
+												color: staticLine.textColor,
 											},
-											borderWidth: 0,
-											position: 'start',
-											backgroundColor: 'transparent',
-											color: staticLine.textColor,
 										},
-									},
-								],
-						  }
-						: undefined,
-					title: {
-						display: title !== undefined,
-						text: title,
-					},
-					legend: {
-						display: false,
-					},
-					tooltip: {
-						callbacks: {
-							title(context) {
-								const date = dayjs(context[0].parsed.x);
-								return date.format('MMM DD, YYYY, HH:mm:ss');
+									],
+							  }
+							: undefined,
+						title: {
+							display: title !== undefined,
+							text: title,
+						},
+						legend: {
+							display: false,
+						},
+						tooltip: {
+							callbacks: {
+								title(context) {
+									const date = dayjs(context[0].parsed.x);
+									return date.format('MMM DD, YYYY, HH:mm:ss');
+								},
+								label(context) {
+									let label = context.dataset.label || '';
+
+									if (label) {
+										label += ': ';
+									}
+									if (context.parsed.y !== null) {
+										label += getToolTipValue(context.parsed.y.toString(), yAxisUnit);
+									}
+
+									return label;
+								},
+								labelTextColor(labelData) {
+									if (labelData.datasetIndex === nearestDatasetIndex.current) {
+										return 'rgba(255, 255, 255, 1)';
+									}
+
+									return 'rgba(255, 255, 255, 0.75)';
+								},
 							},
-							label(context) {
-								let label = context.dataset.label || '';
-
-								if (label) {
-									label += ': ';
-								}
-								if (context.parsed.y !== null) {
-									label += getToolTipValue(context.parsed.y.toString(), yAxisUnit);
-								}
-
-								return label;
-							},
-							labelTextColor(labelData) {
-								if (labelData.datasetIndex === nearestDatasetIndex.current) {
-									return 'rgba(255, 255, 255, 1)';
-								}
-
-								return 'rgba(255, 255, 255, 0.75)';
+							position: 'custom',
+							itemSort(item1, item2) {
+								return item2.parsed.y - item1.parsed.y;
 							},
 						},
-						position: 'custom',
-						itemSort(item1, item2) {
-							return item2.parsed.y - item1.parsed.y;
-						},
+						[dragSelectPluginId]: createDragSelectPluginOptions(
+							!!onDragSelect,
+							onDragSelect,
+							dragSelectColor,
+						),
+						[intersectionCursorPluginId]: createIntersectionCursorPluginOptions(
+							!!onDragSelect,
+							currentTheme === 'dark' ? 'white' : 'black',
+						),
 					},
-					[dragSelectPluginId]: createDragSelectPluginOptions(
-						!!onDragSelect,
-						onDragSelect,
-						dragSelectColor,
-					),
-					[intersectionCursorPluginId]: createIntersectionCursorPluginOptions(
-						!!onDragSelect,
-						currentTheme === 'dark' ? 'white' : 'black',
-					),
-				},
-				layout: {
-					padding: 0,
-				},
-				scales: {
-					x: {
-						grid: {
+					layout: {
+						padding: 0,
+					},
+					scales: {
+						x: {
+							grid: {
+								display: true,
+								color: getGridColor(),
+								drawTicks: true,
+							},
+							adapters: {
+								date: chartjsAdapter,
+							},
+							time: {
+								unit: xAxisTimeUnit?.unitName || 'minute',
+								stepSize: xAxisTimeUnit?.stepSize || 1,
+								displayFormats: {
+									millisecond: 'HH:mm:ss',
+									second: 'HH:mm:ss',
+									minute: 'HH:mm',
+									hour: 'MM/dd HH:mm',
+									day: 'MM/dd',
+									week: 'MM/dd',
+									month: 'yy-MM',
+									year: 'yy',
+								},
+							},
+							type: 'time',
+							ticks: { color: getAxisLabelColor(currentTheme) },
+						},
+						y: {
 							display: true,
-							color: getGridColor(),
-							drawTicks: true,
-						},
-						adapters: {
-							date: chartjsAdapter,
-						},
-						time: {
-							unit: xAxisTimeUnit?.unitName || 'minute',
-							stepSize: xAxisTimeUnit?.stepSize || 1,
-							displayFormats: {
-								millisecond: 'HH:mm:ss',
-								second: 'HH:mm:ss',
-								minute: 'HH:mm',
-								hour: 'MM/dd HH:mm',
-								day: 'MM/dd',
-								week: 'MM/dd',
-								month: 'yy-MM',
-								year: 'yy',
+							grid: {
+								display: true,
+								color: getGridColor(),
+							},
+							ticks: {
+								color: getAxisLabelColor(currentTheme),
+								// Include a dollar sign in the ticks
+								callback(value) {
+									return getYAxisFormattedValue(value.toString(), yAxisUnit);
+								},
 							},
 						},
-						type: 'time',
-						ticks: { color: getAxisLabelColor(currentTheme) },
-					},
-					y: {
-						display: true,
-						grid: {
-							display: true,
-							color: getGridColor(),
+						stacked: {
+							display: isStacked === undefined ? false : 'auto',
 						},
-						ticks: {
-							color: getAxisLabelColor(currentTheme),
-							// Include a dollar sign in the ticks
-							callback(value) {
-								return getYAxisFormattedValue(value.toString(), yAxisUnit);
+					},
+					elements: {
+						line: {
+							tension: 0,
+							cubicInterpolationMode: 'monotone',
+						},
+						point: {
+							// eslint-disable-next-line @typescript-eslint/no-explicit-any
+							hoverBackgroundColor: (ctx: any) => {
+								if (ctx?.element?.options?.borderColor) {
+									return ctx.element.options.borderColor;
+								}
+								return 'rgba(0,0,0,0.1)';
 							},
+							hoverRadius: 5,
 						},
 					},
-					stacked: {
-						display: isStacked === undefined ? false : 'auto',
+					onClick: (event, element, chart) => {
+						if (onClickHandler) {
+							onClickHandler(event, element, chart, data);
+						}
 					},
-				},
-				elements: {
-					line: {
-						tension: 0,
-						cubicInterpolationMode: 'monotone',
-					},
-					point: {
-						// eslint-disable-next-line @typescript-eslint/no-explicit-any
-						hoverBackgroundColor: (ctx: any) => {
-							if (ctx?.element?.options?.borderColor) {
-								return ctx.element.options.borderColor;
+					onHover: (event, _, chart) => {
+						if (event.native) {
+							const interactions = chart.getElementsAtEventForMode(
+								event.native,
+								'nearest',
+								{
+									intersect: false,
+								},
+								true,
+							);
+
+							if (interactions[0]) {
+								nearestDatasetIndex.current = interactions[0].datasetIndex;
 							}
-							return 'rgba(0,0,0,0.1)';
-						},
-						hoverRadius: 5,
+						}
 					},
-				},
-				onClick: (event, element, chart) => {
-					if (onClickHandler) {
-						onClickHandler(event, element, chart, data);
-					}
-				},
-				onHover: (event, _, chart) => {
-					if (event.native) {
-						const interactions = chart.getElementsAtEventForMode(
-							event.native,
-							'nearest',
-							{
-								intersect: false,
-							},
-							true,
-						);
+				};
 
-						if (interactions[0]) {
-							nearestDatasetIndex.current = interactions[0].datasetIndex;
-						}
-					}
-				},
-			};
+				const chartHasData = hasData(data);
+				const chartPlugins = [];
 
-			const chartHasData = hasData(data);
-			const chartPlugins = [];
-
-			if (chartHasData) {
-				chartPlugins.push(createIntersectionCursorPlugin());
-				chartPlugins.push(createDragSelectPlugin());
-			} else {
-				chartPlugins.push(emptyGraph);
-			}
-
-			chartPlugins.push(legend(name, data.datasets.length > 3));
-
-			lineChartRef.current = new Chart(chartRef.current, {
-				type,
-				data,
-				options,
-				plugins: chartPlugins,
-			});
-		}
-	}, [
-		animate,
-		title,
-		getGridColor,
-		xAxisTimeUnit?.unitName,
-		xAxisTimeUnit?.stepSize,
-		isStacked,
-		type,
-		data,
-		name,
-		yAxisUnit,
-		onClickHandler,
-		staticLine,
-		onDragSelect,
-		dragSelectColor,
-		currentTheme,
-	]);
-
-	useEffect(() => {
-		buildChart();
-	}, [buildChart, forceReRender]);
-
-	useEffect(() => {
-		if (localStorage.getItem('LEGEND_GRAPH') !== null) {
-			const legendGraphFromLocalStore = localStorage.getItem('LEGEND_GRAPH');
-			const legendFromLocalStore: [
-				{ name: string; dataIndex: LegendEntryProps[] },
-			] = JSON.parse(legendGraphFromLocalStore as string);
-			const sequenceArray = Array(data.datasets.length).fill(true);
-			legendFromLocalStore.forEach((item) => {
-				if (item.name === name) {
-					data.datasets.forEach((d, i) => {
-						const index = item.dataIndex.findIndex((di) => di.label === d.label);
-						if (index !== -1) {
-							sequenceArray[i] = item.dataIndex[index].show;
-						}
-					});
-				}
-			});
-			sequenceArray.forEach((showLegendData, index) => {
-				const { type } = lineChartRef.current?.config as ChartConfiguration;
-				if (type === 'pie' || type === 'doughnut') {
-					lineChartRef.current?.toggleDataVisibility(index);
+				if (chartHasData) {
+					chartPlugins.push(createIntersectionCursorPlugin());
+					chartPlugins.push(createDragSelectPlugin());
 				} else {
-					lineChartRef.current?.setDatasetVisibility(index, showLegendData);
+					chartPlugins.push(emptyGraph);
 				}
-				lineChartRef.current?.update();
-			});
-		}
-	}, [data, name]);
 
-	useEffect(() => {
-		if (graphsVisibility && lineChartRef.current !== undefined) {
-			const { type } = lineChartRef.current?.config as ChartConfiguration;
-			if (type === 'pie' || type === 'doughnut') {
-				graphsVisibility?.forEach((item, index) =>
-					lineChartRef.current?.toggleDataVisibility(index),
-				);
-			} else {
-				graphsVisibility?.forEach((item, index) =>
-					lineChartRef.current?.setDatasetVisibility(index, item),
-				);
+				chartPlugins.push(legend(name, data.datasets.length > 3));
+
+				lineChartRef.current = new Chart(chartRef.current, {
+					type,
+					data,
+					options,
+					plugins: chartPlugins,
+				});
 			}
-			lineChartRef.current?.update();
-		}
-	}, [graphsVisibility]);
+		}, [
+			animate,
+			title,
+			getGridColor,
+			xAxisTimeUnit?.unitName,
+			xAxisTimeUnit?.stepSize,
+			isStacked,
+			type,
+			data,
+			name,
+			yAxisUnit,
+			onClickHandler,
+			staticLine,
+			onDragSelect,
+			dragSelectColor,
+			currentTheme,
+		]);
 
-	return (
-		<div style={{ height: containerHeight }}>
-			<canvas ref={chartRef} />
-			<LegendsContainer id={name} />
-		</div>
-	);
-}
+		useEffect(() => {
+			buildChart();
+		}, [buildChart, forceReRender]);
+
+		return (
+			<div style={{ height: containerHeight }}>
+				<canvas ref={chartRef} />
+				<LegendsContainer id={name} />
+			</div>
+		);
+	},
+);
 
 declare module 'chart.js' {
 	interface TooltipPositionerMap {
@@ -406,7 +390,6 @@ export interface GraphProps {
 	containerHeight?: string | number;
 	onDragSelect?: (start: number, end: number) => void;
 	dragSelectColor?: string;
-	graphsVisibility?: boolean[];
 }
 
 export interface StaticLineProps {
@@ -425,6 +408,10 @@ export type GraphOnClickHandler = (
 	data: ChartData,
 ) => void;
 
+export type ToggleGraphProps = {
+	toggleGraph(graphIndex: number, isVisible: boolean): void;
+};
+
 Graph.defaultProps = {
 	animate: undefined,
 	title: undefined,
@@ -436,12 +423,10 @@ Graph.defaultProps = {
 	containerHeight: '90%',
 	onDragSelect: undefined,
 	dragSelectColor: undefined,
-	graphsVisibility: undefined,
 };
 
-export default memo(
-	Graph,
-	(prevProps, nextProps) =>
-		isEqual(prevProps.data, nextProps.data) &&
-		prevProps.graphsVisibility === nextProps.graphsVisibility,
+Graph.displayName = 'Graph';
+
+export default memo(Graph, (prevProps, nextProps) =>
+	isEqual(prevProps.data, nextProps.data),
 );

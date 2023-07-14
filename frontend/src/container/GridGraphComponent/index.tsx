@@ -1,11 +1,16 @@
 import { Typography } from 'antd';
 import { ChartData } from 'chart.js';
-import Graph, { GraphOnClickHandler, StaticLineProps } from 'components/Graph';
+import Graph, {
+	GraphOnClickHandler,
+	StaticLineProps,
+	ToggleGraphProps,
+} from 'components/Graph';
 import { getYAxisFormattedValue } from 'components/Graph/yAxisConfig';
 import ValueGraph from 'components/ValueGraph';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { GRAPH_TYPES } from 'container/NewDashboard/ComponentsSlider';
-import history from 'lib/history';
+import { useEffect, useRef } from 'react';
+import { useLocation } from 'react-router-dom';
 
 import { TitleContainer, ValueContainer } from './styles';
 
@@ -22,9 +27,19 @@ function GridGraphComponent({
 	onDragSelect,
 	graphsVisibility,
 }: GridGraphComponentProps): JSX.Element | null {
-	const location = history.location.pathname;
+	const { pathname } = useLocation();
 
-	const isDashboardPage = location.split('/').length === 3;
+	const isDashboardPage = pathname.split('/').length === 3;
+
+	const lineChartRef = useRef<ToggleGraphProps>();
+
+	useEffect(() => {
+		if (lineChartRef.current) {
+			graphsVisibility?.forEach((showLegendData, index) => {
+				lineChartRef?.current?.toggleGraph(index, showLegendData);
+			});
+		}
+	}, [graphsVisibility]);
 
 	if (GRAPH_TYPES === PANEL_TYPES.TIME_SERIES) {
 		return (
@@ -41,8 +56,8 @@ function GridGraphComponent({
 					yAxisUnit,
 					staticLine,
 					onDragSelect,
-					graphsVisibility,
 				}}
+				ref={lineChartRef}
 			/>
 		);
 	}
