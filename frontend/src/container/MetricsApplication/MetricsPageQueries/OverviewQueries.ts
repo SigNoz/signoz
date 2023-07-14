@@ -3,6 +3,17 @@ import { TagFilterItem } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource, QueryBuilderData } from 'types/common/queryBuilder';
 
 import {
+	DataType,
+	ERROR_PERCENTAGE_FORMULA,
+	GraphTitle,
+	LETENCY_LEGENDS_AGGREGATEOPERATOR,
+	MetricsType,
+	OPERATION_LEGENDS,
+	OPERATOR,
+	QUERYNAME_AND_EXPRESSION,
+	WidgetKeys,
+} from '../constant';
+import {
 	getQueryBuilderQueries,
 	getQueryBuilderQuerieswithFormula,
 } from './MetricsPageQueriesFactory';
@@ -13,39 +24,36 @@ export const letency = ({
 }: LetencyProps): QueryBuilderData => {
 	const metricNames: BaseAutocompleteData[] = [
 		{
-			dataType: 'float64',
+			key: WidgetKeys.DurationNano,
+			dataType: DataType.FLOAT64,
 			isColumn: true,
-			key: 'durationNano',
-			type: 'tag',
+			type: MetricsType.Tag,
 		},
 		{
-			key: 'durationNano',
-			dataType: 'float64',
-			type: 'tag',
+			key: WidgetKeys.DurationNano,
+			dataType: DataType.FLOAT64,
 			isColumn: true,
+			type: MetricsType.Tag,
 		},
 		{
-			key: 'durationNano',
-			dataType: 'float64',
-			type: 'tag',
+			key: WidgetKeys.DurationNano,
+			dataType: DataType.FLOAT64,
 			isColumn: true,
+			type: MetricsType.Tag,
 		},
 	];
-
-	const legends = ['p50', 'p90', 'p99'];
-	const aggregateOperator = ['p50', 'p90', 'p99'];
 
 	const filterItems: TagFilterItem[][] = [
 		[
 			{
 				id: '',
 				key: {
-					key: 'serviceName',
-					dataType: 'string',
-					type: 'tag',
+					key: WidgetKeys.ServiceName,
+					dataType: DataType.STRING,
+					type: MetricsType.Tag,
 					isColumn: true,
 				},
-				op: '=',
+				op: OPERATOR.EQUAL,
 				value: `${servicename}`,
 			},
 			...tagFilterItems,
@@ -54,12 +62,12 @@ export const letency = ({
 			{
 				id: '',
 				key: {
-					key: 'serviceName',
-					dataType: 'string',
-					type: 'tag',
+					key: WidgetKeys.ServiceName,
+					dataType: DataType.STRING,
+					type: MetricsType.Tag,
 					isColumn: true,
 				},
-				op: '=',
+				op: OPERATOR.EQUAL,
 				value: `${servicename}`,
 			},
 			...tagFilterItems,
@@ -68,29 +76,25 @@ export const letency = ({
 			{
 				id: '',
 				key: {
-					key: 'serviceName',
-					dataType: 'string',
-					type: 'tag',
+					key: WidgetKeys.ServiceName,
+					dataType: DataType.STRING,
+					type: MetricsType.Tag,
 					isColumn: true,
 				},
-				op: '=',
+				op: OPERATOR.EQUAL,
 				value: `${servicename}`,
 			},
 			...tagFilterItems,
 		],
 	];
 
-	const queryName = ['A', 'B', 'C'];
-	const expression = ['A', 'B', 'C'];
-
 	return getQueryBuilderQueries({
 		metricNames,
-		legends,
+		legends: LETENCY_LEGENDS_AGGREGATEOPERATOR,
 		filterItems,
-		aggregateOperator,
+		aggregateOperator: LETENCY_LEGENDS_AGGREGATEOPERATOR,
 		dataSource: DataSource.TRACES,
-		queryName,
-		expression,
+		queryNameAndExpression: QUERYNAME_AND_EXPRESSION,
 	});
 };
 
@@ -101,36 +105,35 @@ export const operationPerSec = ({
 }: OperationPerSecProps): QueryBuilderData => {
 	const metricNames: BaseAutocompleteData[] = [
 		{
-			dataType: 'float64',
+			key: WidgetKeys.SignozLatencyCount,
+			dataType: DataType.FLOAT64,
 			isColumn: true,
-			key: 'signoz_latency_count',
 			type: null,
 		},
 	];
-	const legends = ['Operations'];
 
 	const filterItems: TagFilterItem[][] = [
 		[
 			{
 				id: '',
 				key: {
-					dataType: 'string',
+					key: WidgetKeys.Service_name,
+					dataType: DataType.STRING,
 					isColumn: false,
-					key: 'service_name',
-					type: 'resource',
+					type: MetricsType.Resource,
 				},
-				op: 'IN',
+				op: OPERATOR.IN,
 				value: [`${servicename}`],
 			},
 			{
 				id: '',
 				key: {
-					dataType: 'string',
+					key: WidgetKeys.Operation,
+					dataType: DataType.STRING,
 					isColumn: false,
-					key: 'operation',
-					type: 'tag',
+					type: MetricsType.Tag,
 				},
-				op: 'IN',
+				op: OPERATOR.IN,
 				value: topLevelOperations,
 			},
 			...tagFilterItems,
@@ -139,7 +142,7 @@ export const operationPerSec = ({
 
 	return getQueryBuilderQueries({
 		metricNames,
-		legends,
+		legends: OPERATION_LEGENDS,
 		filterItems,
 		dataSource: DataSource.METRICS,
 	});
@@ -151,49 +154,49 @@ export const errorPercentage = ({
 	topLevelOperations,
 }: OperationPerSecProps): QueryBuilderData => {
 	const metricNameA: BaseAutocompleteData = {
-		dataType: 'float64',
+		key: WidgetKeys.SignozCallsTotal,
+		dataType: DataType.FLOAT64,
 		isColumn: true,
-		key: 'signoz_calls_total',
 		type: null,
 	};
 	const metricNameB: BaseAutocompleteData = {
-		dataType: 'float64',
+		key: WidgetKeys.SignozCallsTotal,
+		dataType: DataType.FLOAT64,
 		isColumn: true,
-		key: 'signoz_calls_total',
 		type: null,
 	};
 	const additionalItemsA: TagFilterItem[] = [
 		{
 			id: '',
 			key: {
-				dataType: 'string',
+				key: WidgetKeys.Service_name,
+				dataType: DataType.STRING,
 				isColumn: false,
-				key: 'service_name',
-				type: 'resource',
+				type: MetricsType.Resource,
 			},
-			op: 'IN',
+			op: OPERATOR.IN,
 			value: [`${servicename}`],
 		},
 		{
 			id: '',
 			key: {
-				dataType: 'string',
+				key: WidgetKeys.Operation,
+				dataType: DataType.STRING,
 				isColumn: false,
-				key: 'operation',
-				type: 'tag',
+				type: MetricsType.Tag,
 			},
-			op: 'IN',
+			op: OPERATOR.IN,
 			value: topLevelOperations,
 		},
 		{
 			id: '',
 			key: {
-				dataType: 'int64',
+				key: WidgetKeys.StatusCode,
+				dataType: DataType.INT64,
 				isColumn: false,
-				key: 'status_code',
-				type: 'tag',
+				type: MetricsType.Tag,
 			},
-			op: 'IN',
+			op: OPERATOR.IN,
 			value: ['STATUS_CODE_ERROR'],
 		},
 		...tagFilterItems,
@@ -203,41 +206,37 @@ export const errorPercentage = ({
 		{
 			id: '',
 			key: {
-				dataType: 'string',
+				key: WidgetKeys.Service_name,
+				dataType: DataType.STRING,
 				isColumn: false,
-				key: 'service_name',
-				type: 'resource',
+				type: MetricsType.Resource,
 			},
-			op: 'IN',
+			op: OPERATOR.IN,
 			value: [`${servicename}`],
 		},
 		{
 			id: '',
 			key: {
-				dataType: 'string',
+				key: WidgetKeys.Operation,
+				dataType: DataType.STRING,
 				isColumn: false,
-				key: 'operation',
-				type: 'tag',
+				type: MetricsType.Tag,
 			},
-			op: 'IN',
+			op: OPERATOR.IN,
 			value: topLevelOperations,
 		},
 		...tagFilterItems,
 	];
 
-	const legendFormula = 'Error Percentage';
-	const legend = legendFormula;
-	const expression = 'A*100/B';
-	const disabled = true;
 	return getQueryBuilderQuerieswithFormula({
 		metricNameA,
 		metricNameB,
 		additionalItemsA,
 		additionalItemsB,
-		legend,
-		disabled,
-		expression,
-		legendFormula,
+		legend: GraphTitle.ERROR_PERCENTAGE,
+		disabled: true,
+		expression: ERROR_PERCENTAGE_FORMULA,
+		legendFormula: GraphTitle.ERROR_PERCENTAGE,
 	});
 };
 

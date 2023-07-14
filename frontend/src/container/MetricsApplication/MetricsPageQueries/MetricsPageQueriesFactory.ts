@@ -22,14 +22,13 @@ export const getQueryBuilderQueries = ({
 	filterItems,
 	aggregateOperator,
 	dataSource,
-	queryName,
-	expression,
+	queryNameAndExpression,
 }: BuilderQueriesProps): QueryBuilderData => ({
 	queryFormulas: [],
 	queryData: metricNames.map((item, index) => {
-		const obj = {
+		const newQueryData = {
 			...initialQueryBuilderFormValuesMap.metrics,
-			aggregateOperator: (function (): string {
+			aggregateOperator: ((): string => {
 				if (aggregateOperator) {
 					return aggregateOperator[index];
 				}
@@ -52,15 +51,12 @@ export const getQueryBuilderQueries = ({
 			dataSource,
 		} as IBuilderQuery;
 
-		if (queryName) {
-			obj.queryName = queryName[index];
+		if (queryNameAndExpression) {
+			newQueryData.queryName = queryNameAndExpression[index];
+			newQueryData.expression = queryNameAndExpression[index];
 		}
 
-		if (expression) {
-			obj.expression = expression[index];
-		}
-
-		return obj;
+		return newQueryData;
 	}),
 });
 
@@ -131,8 +127,7 @@ interface BuilderQueriesProps {
 	filterItems: TagFilterItem[][];
 	aggregateOperator?: string[];
 	dataSource: DataSource;
-	queryName?: string[];
-	expression?: string[];
+	queryNameAndExpression?: string[];
 }
 
 interface BuilderQuerieswithFormulaProps {

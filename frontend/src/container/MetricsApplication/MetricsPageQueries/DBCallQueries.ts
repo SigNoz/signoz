@@ -2,6 +2,7 @@ import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteRe
 import { TagFilterItem } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource, QueryBuilderData } from 'types/common/queryBuilder';
 
+import { DataType } from '../constant';
 import {
 	getQueryBuilderQueries,
 	getQueryBuilderQuerieswithFormula,
@@ -14,23 +15,23 @@ export const databaseCallsRPS = ({
 }: DatabaseCallsRPSProps): QueryBuilderData => {
 	const metricNames: BaseAutocompleteData[] = [
 		{
-			dataType: 'float64',
-			isColumn: true,
 			key: 'signoz_db_latency_count',
+			dataType: DataType.FLOAT64,
+			isColumn: true,
 			type: null,
 		},
 	];
 	const groupBy: BaseAutocompleteData[] = [
-		{ dataType: 'string', isColumn: false, key: 'db_system', type: 'tag' },
+		{ dataType: DataType.STRING, isColumn: false, key: 'db_system', type: 'tag' },
 	];
 	const filterItems: TagFilterItem[][] = [
 		[
 			{
 				id: '',
 				key: {
-					dataType: 'string',
-					isColumn: false,
 					key: 'service_name',
+					dataType: DataType.STRING,
+					isColumn: false,
 					type: 'resource',
 				},
 				op: 'IN',
@@ -56,15 +57,15 @@ export const databaseCallsAvgDuration = ({
 	tagFilterItems,
 }: DatabaseCallProps): QueryBuilderData => {
 	const metricNameA: BaseAutocompleteData = {
-		dataType: 'float64',
-		isColumn: true,
 		key: 'signoz_db_latency_sum',
+		dataType: DataType.FLOAT64,
+		isColumn: true,
 		type: null,
 	};
 	const metricNameB: BaseAutocompleteData = {
-		dataType: 'float64',
-		isColumn: true,
 		key: 'signoz_db_latency_count',
+		dataType: DataType.FLOAT64,
+		isColumn: true,
 		type: null,
 	};
 	const expression = 'A/B';
@@ -75,9 +76,9 @@ export const databaseCallsAvgDuration = ({
 		{
 			id: '',
 			key: {
-				dataType: 'string',
-				isColumn: false,
 				key: 'service_name',
+				dataType: DataType.STRING,
+				isColumn: false,
 				type: 'resource',
 			},
 			op: 'IN',

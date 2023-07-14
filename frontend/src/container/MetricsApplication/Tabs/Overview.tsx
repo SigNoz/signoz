@@ -33,7 +33,7 @@ import { GlobalReducer } from 'types/reducer/globalTime';
 import { Tags } from 'types/reducer/trace';
 import { v4 as uuid } from 'uuid';
 
-import { ERROR_PERCENTAGE, LATENCY, RATE_PER_OPS } from '../constant';
+import { GraphTitle } from '../constant';
 import { getWidgetQueryBuilder } from '../MetricsApplication.factory';
 import {
 	errorPercentage,
@@ -143,58 +143,63 @@ function Application(): JSX.Element {
 
 	const latencyWidget = useMemo(
 		() =>
-			getWidgetQueryBuilder({
-				queryType: EQueryType.QUERY_BUILDER,
-				promql: [],
-				builder: letency({
-					servicename,
-					tagFilterItems,
-				}),
-				clickhouse_sql: [],
-				id: uuid(),
-			}),
+			getWidgetQueryBuilder(
+				{
+					queryType: EQueryType.QUERY_BUILDER,
+					promql: [],
+					builder: letency({
+						servicename,
+						tagFilterItems,
+					}),
+					clickhouse_sql: [],
+					id: uuid(),
+				},
+				GraphTitle.LATENCY,
+			),
 		[servicename, tagFilterItems],
 	);
 
 	const operationPerSecWidget = useMemo(
 		() =>
-			getWidgetQueryBuilder({
-				queryType: EQueryType.QUERY_BUILDER,
-				promql: [],
-				builder: operationPerSec({
-					servicename,
-					tagFilterItems,
-					topLevelOperations: topLevelOperations
-						? topLevelOperations[servicename || '']
-						: [],
-				}),
-				clickhouse_sql: [],
-				id: uuid(),
-			}),
+			getWidgetQueryBuilder(
+				{
+					queryType: EQueryType.QUERY_BUILDER,
+					promql: [],
+					builder: operationPerSec({
+						servicename,
+						tagFilterItems,
+						topLevelOperations: topLevelOperations
+							? topLevelOperations[servicename || '']
+							: [],
+					}),
+					clickhouse_sql: [],
+					id: uuid(),
+				},
+				GraphTitle.RATE_PER_OPS,
+			),
 		[servicename, topLevelOperations, tagFilterItems],
 	);
 
 	const errorPercentageWidget = useMemo(
 		() =>
-			getWidgetQueryBuilder({
-				queryType: EQueryType.QUERY_BUILDER,
-				promql: [],
-				builder: errorPercentage({
-					servicename,
-					tagFilterItems,
-					topLevelOperations: topLevelOperations
-						? topLevelOperations[servicename || '']
-						: [],
-				}),
-				clickhouse_sql: [],
-				id: uuid(),
-			}),
+			getWidgetQueryBuilder(
+				{
+					queryType: EQueryType.QUERY_BUILDER,
+					promql: [],
+					builder: errorPercentage({
+						servicename,
+						tagFilterItems,
+						topLevelOperations: topLevelOperations
+							? topLevelOperations[servicename || '']
+							: [],
+					}),
+					clickhouse_sql: [],
+					id: uuid(),
+				},
+				GraphTitle.ERROR_PERCENTAGE,
+			),
 		[servicename, topLevelOperations, tagFilterItems],
 	);
-
-	latencyWidget.title = LATENCY;
-	operationPerSecWidget.title = RATE_PER_OPS;
-	errorPercentageWidget.title = ERROR_PERCENTAGE;
 
 	const onDragSelect = useCallback(
 		(start: number, end: number) => {

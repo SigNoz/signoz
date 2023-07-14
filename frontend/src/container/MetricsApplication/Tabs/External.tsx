@@ -16,13 +16,7 @@ import { useParams } from 'react-router-dom';
 import { EQueryType } from 'types/common/dashboard';
 import { v4 as uuid } from 'uuid';
 
-import {
-	EXTERNAL_CALL_DURATION,
-	EXTERNAL_CALL_DURATION_BY_ADDRESS,
-	EXTERNAL_CALL_ERROR_PERCENTAGE,
-	EXTERNAL_CALL_RPS_BY_ADDRESS,
-	legend,
-} from '../constant';
+import { GraphTitle, legend } from '../constant';
 import { getWidgetQueryBuilder } from '../MetricsApplication.factory';
 import { Card, GraphContainer, Row } from '../styles';
 import { Button } from './styles';
@@ -46,17 +40,20 @@ function External(): JSX.Element {
 
 	const externalCallErrorWidget = useMemo(
 		() =>
-			getWidgetQueryBuilder({
-				queryType: EQueryType.QUERY_BUILDER,
-				promql: [],
-				builder: externalCallErrorPercent({
-					servicename,
-					legend: legend.address,
-					tagFilterItems,
-				}),
-				clickhouse_sql: [],
-				id: uuid(),
-			}),
+			getWidgetQueryBuilder(
+				{
+					queryType: EQueryType.QUERY_BUILDER,
+					promql: [],
+					builder: externalCallErrorPercent({
+						servicename,
+						legend: legend.address,
+						tagFilterItems,
+					}),
+					clickhouse_sql: [],
+					id: uuid(),
+				},
+				GraphTitle.EXTERNAL_CALL_ERROR_PERCENTAGE,
+			),
 		[servicename, tagFilterItems],
 	);
 
@@ -67,55 +64,59 @@ function External(): JSX.Element {
 
 	const externalCallDurationWidget = useMemo(
 		() =>
-			getWidgetQueryBuilder({
-				queryType: EQueryType.QUERY_BUILDER,
-				promql: [],
-				builder: externalCallDuration({
-					servicename,
-					tagFilterItems,
-				}),
-				clickhouse_sql: [],
-				id: uuid(),
-			}),
+			getWidgetQueryBuilder(
+				{
+					queryType: EQueryType.QUERY_BUILDER,
+					promql: [],
+					builder: externalCallDuration({
+						servicename,
+						tagFilterItems,
+					}),
+					clickhouse_sql: [],
+					id: uuid(),
+				},
+				GraphTitle.EXTERNAL_CALL_DURATION,
+			),
 		[servicename, tagFilterItems],
 	);
 
 	const externalCallRPSWidget = useMemo(
 		() =>
-			getWidgetQueryBuilder({
-				queryType: EQueryType.QUERY_BUILDER,
-				promql: [],
-				builder: externalCallRpsByAddress({
-					servicename,
-					legend: legend.address,
-					tagFilterItems,
-				}),
-				clickhouse_sql: [],
-				id: uuid(),
-			}),
+			getWidgetQueryBuilder(
+				{
+					queryType: EQueryType.QUERY_BUILDER,
+					promql: [],
+					builder: externalCallRpsByAddress({
+						servicename,
+						legend: legend.address,
+						tagFilterItems,
+					}),
+					clickhouse_sql: [],
+					id: uuid(),
+				},
+				GraphTitle.EXTERNAL_CALL_RPS_BY_ADDRESS,
+			),
 		[servicename, tagFilterItems],
 	);
 
 	const externalCallDurationAddressWidget = useMemo(
 		() =>
-			getWidgetQueryBuilder({
-				queryType: EQueryType.QUERY_BUILDER,
-				promql: [],
-				builder: externalCallDurationByAddress({
-					servicename,
-					legend: legend.address,
-					tagFilterItems,
-				}),
-				clickhouse_sql: [],
-				id: uuid(),
-			}),
+			getWidgetQueryBuilder(
+				{
+					queryType: EQueryType.QUERY_BUILDER,
+					promql: [],
+					builder: externalCallDurationByAddress({
+						servicename,
+						legend: legend.address,
+						tagFilterItems,
+					}),
+					clickhouse_sql: [],
+					id: uuid(),
+				},
+				GraphTitle.EXTERNAL_CALL_DURATION_BY_ADDRESS,
+			),
 		[servicename, tagFilterItems],
 	);
-
-	externalCallErrorWidget.title = EXTERNAL_CALL_ERROR_PERCENTAGE;
-	externalCallDurationWidget.title = EXTERNAL_CALL_DURATION;
-	externalCallRPSWidget.title = EXTERNAL_CALL_RPS_BY_ADDRESS;
-	externalCallDurationAddressWidget.title = EXTERNAL_CALL_DURATION_BY_ADDRESS;
 
 	return (
 		<>
