@@ -2,14 +2,25 @@ import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteRe
 import { TagFilterItem } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource, QueryBuilderData } from 'types/common/queryBuilder';
 
-import { DataType } from '../constant';
+import {
+	DataType,
+	FORMULA,
+	MetricsType,
+	OPERATOR,
+	WidgetKeys,
+} from '../constant';
 import {
 	getQueryBuilderQueries,
 	getQueryBuilderQuerieswithFormula,
 } from './MetricsPageQueriesFactory';
 
 const groupBy: BaseAutocompleteData[] = [
-	{ dataType: DataType.STRING, isColumn: false, key: 'address', type: 'tag' },
+	{
+		dataType: DataType.STRING,
+		isColumn: false,
+		key: WidgetKeys.Address,
+		type: MetricsType.Tag,
+	},
 ];
 
 export const externalCallErrorPercent = ({
@@ -18,38 +29,38 @@ export const externalCallErrorPercent = ({
 	tagFilterItems,
 }: ExternalCallDurationByAddressProps): QueryBuilderData => {
 	const metricNameA: BaseAutocompleteData = {
+		key: WidgetKeys.SignozExternalCallLatencyCount,
 		dataType: DataType.FLOAT64,
 		isColumn: true,
-		key: 'signoz_external_call_latency_count',
 		type: null,
 	};
 	const metricNameB: BaseAutocompleteData = {
+		key: WidgetKeys.SignozExternalCallLatencyCount,
 		dataType: DataType.FLOAT64,
 		isColumn: true,
-		key: 'signoz_external_call_latency_count',
 		type: null,
 	};
 	const additionalItemsA: TagFilterItem[] = [
 		{
 			id: '',
 			key: {
+				key: WidgetKeys.Service_name,
 				dataType: DataType.STRING,
 				isColumn: false,
-				key: 'service_name',
-				type: 'resource',
+				type: MetricsType.Resource,
 			},
-			op: 'IN',
+			op: OPERATOR.IN,
 			value: [`${servicename}`],
 		},
 		{
 			id: '',
 			key: {
-				dataType: 'int64',
+				key: WidgetKeys.StatusCode,
+				dataType: DataType.INT64,
 				isColumn: false,
-				key: 'status_code',
-				type: 'tag',
+				type: MetricsType.Tag,
 			},
-			op: 'IN',
+			op: OPERATOR.IN,
 			value: ['STATUS_CODE_ERROR'],
 		},
 		...tagFilterItems,
@@ -58,18 +69,18 @@ export const externalCallErrorPercent = ({
 		{
 			id: '',
 			key: {
+				key: WidgetKeys.Service_name,
 				dataType: DataType.STRING,
 				isColumn: false,
-				key: 'service_name',
-				type: 'resource',
+				type: MetricsType.Resource,
 			},
-			op: 'IN',
+			op: OPERATOR.IN,
 			value: [`${servicename}`],
 		},
 		...tagFilterItems,
 	];
 	const legendFormula = legend;
-	const expression = 'A*100/B';
+	const expression = FORMULA.ERROR_PERCENTAGE;
 	const disabled = true;
 	return getQueryBuilderQuerieswithFormula({
 		metricNameA,
@@ -91,16 +102,16 @@ export const externalCallDuration = ({
 	const metricNameA: BaseAutocompleteData = {
 		dataType: DataType.FLOAT64,
 		isColumn: true,
-		key: 'signoz_external_call_latency_sum',
+		key: WidgetKeys.SignozExternalCallLatencySum,
 		type: null,
 	};
 	const metricNameB: BaseAutocompleteData = {
 		dataType: DataType.FLOAT64,
 		isColumn: true,
-		key: 'signoz_external_call_latency_count',
+		key: WidgetKeys.SignozExternalCallLatencyCount,
 		type: null,
 	};
-	const expression = 'A/B';
+	const expression = FORMULA.DATABASE_CALLS_AVG_DURATION;
 	const legendFormula = 'Average Duration';
 	const legend = '';
 	const disabled = true;
@@ -110,10 +121,10 @@ export const externalCallDuration = ({
 			key: {
 				dataType: DataType.STRING,
 				isColumn: false,
-				key: 'service_name',
-				type: 'resource',
+				key: WidgetKeys.Service_name,
+				type: MetricsType.Resource,
 			},
-			op: 'IN',
+			op: OPERATOR.IN,
 			value: [`${servicename}`],
 		},
 		...tagFilterItems,
@@ -141,7 +152,7 @@ export const externalCallRpsByAddress = ({
 		{
 			dataType: DataType.FLOAT64,
 			isColumn: true,
-			key: 'signoz_external_call_latency_count',
+			key: WidgetKeys.SignozExternalCallLatencyCount,
 			type: null,
 		},
 	];
@@ -152,10 +163,10 @@ export const externalCallRpsByAddress = ({
 				key: {
 					dataType: DataType.STRING,
 					isColumn: false,
-					key: 'service_name',
-					type: 'resource',
+					key: WidgetKeys.Service_name,
+					type: MetricsType.Resource,
 				},
-				op: 'IN',
+				op: OPERATOR.IN,
 				value: [`${servicename}`],
 			},
 			...tagFilterItems,
@@ -180,16 +191,16 @@ export const externalCallDurationByAddress = ({
 	const metricNameA: BaseAutocompleteData = {
 		dataType: DataType.FLOAT64,
 		isColumn: true,
-		key: 'signoz_external_call_latency_sum',
+		key: WidgetKeys.SignozExternalCallLatencySum,
 		type: null,
 	};
 	const metricNameB: BaseAutocompleteData = {
 		dataType: DataType.FLOAT64,
 		isColumn: true,
-		key: 'signoz_external_call_latency_count',
+		key: WidgetKeys.SignozExternalCallLatencyCount,
 		type: null,
 	};
-	const expression = 'A/B';
+	const expression = FORMULA.DATABASE_CALLS_AVG_DURATION;
 	const legendFormula = legend;
 	const disabled = true;
 	const additionalItemsA: TagFilterItem[] = [
@@ -198,10 +209,10 @@ export const externalCallDurationByAddress = ({
 			key: {
 				dataType: DataType.STRING,
 				isColumn: false,
-				key: 'service_name',
-				type: 'resource',
+				key: WidgetKeys.Service_name,
+				type: MetricsType.Resource,
 			},
-			op: 'IN',
+			op: OPERATOR.IN,
 			value: [`${servicename}`],
 		},
 		...tagFilterItems,

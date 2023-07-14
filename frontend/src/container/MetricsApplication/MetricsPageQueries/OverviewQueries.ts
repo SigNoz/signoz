@@ -4,7 +4,7 @@ import { DataSource, QueryBuilderData } from 'types/common/queryBuilder';
 
 import {
 	DataType,
-	ERROR_PERCENTAGE_FORMULA,
+	FORMULA,
 	GraphTitle,
 	LETENCY_LEGENDS_AGGREGATEOPERATOR,
 	MetricsType,
@@ -235,7 +235,7 @@ export const errorPercentage = ({
 		additionalItemsB,
 		legend: GraphTitle.ERROR_PERCENTAGE,
 		disabled: true,
-		expression: ERROR_PERCENTAGE_FORMULA,
+		expression: FORMULA.ERROR_PERCENTAGE,
 		legendFormula: GraphTitle.ERROR_PERCENTAGE,
 	});
 };

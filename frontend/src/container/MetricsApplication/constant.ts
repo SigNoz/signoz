@@ -2,10 +2,14 @@ export const legend = {
 	address: '{{address}}',
 };
 
-export const ERROR_PERCENTAGE_FORMULA = 'A*100/B';
 export const QUERYNAME_AND_EXPRESSION = ['A', 'B', 'C'];
 export const LETENCY_LEGENDS_AGGREGATEOPERATOR = ['p50', 'p90', 'p99'];
 export const OPERATION_LEGENDS = ['Operations'];
+
+export enum FORMULA {
+	ERROR_PERCENTAGE = 'A*100/B',
+	DATABASE_CALLS_AVG_DURATION = 'A/B',
+}
 
 export enum GraphTitle {
 	LATENCY = 'Latency',
@@ -36,6 +40,7 @@ export enum MetricsType {
 }
 
 export enum WidgetKeys {
+	Address = 'address',
 	DurationNano = 'durationNano',
 	StatusCode = 'status_code',
 	Operation = 'operation',
@@ -43,8 +48,11 @@ export enum WidgetKeys {
 	Service_name = 'service_name',
 	ServiceName = 'serviceName',
 	SignozLatencyCount = 'signoz_latency_count',
+	SignozDBLatencyCount = 'signoz_db_latency_count',
 	DatabaseCallCount = 'signoz_database_call_count',
 	DatabaseCallLatencySum = 'signoz_database_call_latency_sum',
 	SignozDbLatencySum = 'signoz_db_latency_sum',
 	SignozCallsTotal = 'signoz_calls_total',
+	SignozExternalCallLatencyCount = 'signoz_external_call_latency_count',
+	SignozExternalCallLatencySum = 'signoz_external_call_latency_sum',
 }

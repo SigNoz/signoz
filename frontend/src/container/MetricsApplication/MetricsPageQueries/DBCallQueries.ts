@@ -2,7 +2,13 @@ import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteRe
 import { TagFilterItem } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource, QueryBuilderData } from 'types/common/queryBuilder';
 
-import { DataType } from '../constant';
+import {
+	DataType,
+	FORMULA,
+	MetricsType,
+	OPERATOR,
+	WidgetKeys,
+} from '../constant';
 import {
 	getQueryBuilderQueries,
 	getQueryBuilderQuerieswithFormula,
@@ -15,7 +21,7 @@ export const databaseCallsRPS = ({
 }: DatabaseCallsRPSProps): QueryBuilderData => {
 	const metricNames: BaseAutocompleteData[] = [
 		{
-			key: 'signoz_db_latency_count',
+			key: WidgetKeys.SignozDBLatencyCount,
 			dataType: DataType.FLOAT64,
 			isColumn: true,
 			type: null,
@@ -29,12 +35,12 @@ export const databaseCallsRPS = ({
 			{
 				id: '',
 				key: {
-					key: 'service_name',
+					key: WidgetKeys.Service_name,
 					dataType: DataType.STRING,
 					isColumn: false,
-					type: 'resource',
+					type: MetricsType.Resource,
 				},
-				op: 'IN',
+				op: OPERATOR.IN,
 				value: [`${servicename}`],
 			},
 			...tagFilterItems,
@@ -57,31 +63,28 @@ export const databaseCallsAvgDuration = ({
 	tagFilterItems,
 }: DatabaseCallProps): QueryBuilderData => {
 	const metricNameA: BaseAutocompleteData = {
-		key: 'signoz_db_latency_sum',
+		key: WidgetKeys.SignozDbLatencySum,
 		dataType: DataType.FLOAT64,
 		isColumn: true,
 		type: null,
 	};
 	const metricNameB: BaseAutocompleteData = {
-		key: 'signoz_db_latency_count',
+		key: WidgetKeys.SignozDBLatencyCount,
 		dataType: DataType.FLOAT64,
 		isColumn: true,
 		type: null,
 	};
-	const expression = 'A/B';
-	const legendFormula = 'Average Duration';
-	const legend = '';
-	const disabled = true;
+
 	const additionalItemsA: TagFilterItem[] = [
 		{
 			id: '',
 			key: {
-				key: 'service_name',
+				key: WidgetKeys.Service_name,
 				dataType: DataType.STRING,
 				isColumn: false,
-				type: 'resource',
+				type: MetricsType.Resource,
 			},
-			op: 'IN',
+			op: OPERATOR.IN,
 			value: [`${servicename}`],
 		},
 		...tagFilterItems,
@@ -93,10 +96,10 @@ export const databaseCallsAvgDuration = ({
 		metricNameB,
 		additionalItemsA,
 		additionalItemsB,
-		legend,
-		disabled,
-		expression,
-		legendFormula,
+		legend: '',
+		disabled: true,
+		expression: FORMULA.DATABASE_CALLS_AVG_DURATION,
+		legendFormula: 'Average Duration',
 	});
 };
 
