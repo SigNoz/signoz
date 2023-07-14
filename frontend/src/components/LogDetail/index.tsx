@@ -8,6 +8,7 @@ function LogDetail({
 	log,
 	onClose,
 	onAddToQuery,
+	onClickActionItem,
 }: LogDetailProps): JSX.Element {
 	const onDrawerClose = (): void => {
 		onClose();
@@ -17,7 +18,13 @@ function LogDetail({
 		{
 			label: 'Table',
 			key: '1',
-			children: log && <TableView logData={log} onAddToQuery={onAddToQuery} />,
+			children: log && (
+				<TableView
+					logData={log}
+					onAddToQuery={onAddToQuery}
+					onClickActionItem={onClickActionItem}
+				/>
+			),
 		},
 		{
 			label: 'JSON',

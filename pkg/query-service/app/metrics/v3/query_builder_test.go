@@ -57,7 +57,7 @@ func TestBuildQueryWithFilters(t *testing.T) {
 		query, err := PrepareMetricQuery(q.Start, q.End, q.CompositeQuery.QueryType, q.CompositeQuery.PanelType, q.CompositeQuery.BuilderQueries["A"])
 		require.NoError(t, err)
 
-		require.Contains(t, query, "WHERE metric_name = 'name' AND JSONExtractString(labels, 'a') != 'b'")
+		require.Contains(t, query, "WHERE metric_name = 'name' AND temporality IN ['Cumulative', 'Unspecified'] AND JSONExtractString(labels, 'a') != 'b'")
 		require.Contains(t, query, rateWithoutNegative)
 		require.Contains(t, query, "not match(JSONExtractString(labels, 'code'), 'ERROR_*')")
 	})
@@ -93,7 +93,7 @@ func TestBuildQueryWithMultipleQueries(t *testing.T) {
 		query, err := PrepareMetricQuery(q.Start, q.End, q.CompositeQuery.QueryType, q.CompositeQuery.PanelType, q.CompositeQuery.BuilderQueries["A"])
 		require.NoError(t, err)
 
-		require.Contains(t, query, "WHERE metric_name = 'name' AND JSONExtractString(labels, 'in') IN ['a','b','c']")
+		require.Contains(t, query, "WHERE metric_name = 'name' AND temporality IN ['Cumulative', 'Unspecified'] AND JSONExtractString(labels, 'in') IN ['a','b','c']")
 		require.Contains(t, query, rateWithoutNegative)
 	})
 }
@@ -228,7 +228,12 @@ func TestBuildQueryOperators(t *testing.T) {
 
 	for i, tc := range testCases {
 		t.Run(fmt.Sprintf("case %d", i), func(t *testing.T) {
-			whereClause, err := buildMetricsTimeSeriesFilterQuery(&tc.filterSet, []v3.AttributeKey{}, "signoz_calls_total", "sum")
+			mq := v3.BuilderQuery{
+				QueryName:          "A",
+				AggregateAttribute: v3.AttributeKey{Key: "signoz_calls_total"},
+				AggregateOperator:  v3.AggregateOperatorSum,
+			}
+			whereClause, err := buildMetricsTimeSeriesFilterQuery(&tc.filterSet, []v3.AttributeKey{}, &mq)
 			require.NoError(t, err)
 			require.Contains(t, whereClause, tc.expectedWhereClause)
 		})
@@ -238,7 +243,7 @@ func TestBuildQueryOperators(t *testing.T) {
 func TestBuildQueryXRate(t *testing.T) {
 	t.Run("TestBuildQueryXRate", func(t *testing.T) {
 
-		tmpl := `SELECT  ts, %s(value) as value FROM (SELECT  ts, if (runningDifference(value) < 0 OR runningDifference(ts) <= 0, nan, runningDifference(value)/runningDifference(ts))as value FROM(SELECT fingerprint,  toStartOfInterval(toDateTime(intDiv(timestamp_ms, 1000)), INTERVAL 0 SECOND) as ts, max(value) as value FROM signoz_metrics.distributed_samples_v2 GLOBAL INNER JOIN (SELECT  fingerprint FROM signoz_metrics.distributed_time_series_v2 WHERE metric_name = 'name') as filtered_time_series USING fingerprint WHERE metric_name = 'name' AND timestamp_ms >= 1650991982000 AND timestamp_ms <= 1651078382000 GROUP BY fingerprint, ts ORDER BY fingerprint,  ts) WHERE isNaN(value) = 0) GROUP BY GROUPING SETS ( (ts), () ) ORDER BY  ts`
+		tmpl := `SELECT  ts, %s(value) as value FROM (SELECT  ts, if(runningDifference(ts) <= 0, nan, if(runningDifference(value) < 0, (value) / runningDifference(ts), runningDifference(value) / runningDifference(ts))) as value FROM(SELECT fingerprint,  toStartOfInterval(toDateTime(intDiv(timestamp_ms, 1000)), INTERVAL 0 SECOND) as ts, max(value) as value FROM signoz_metrics.distributed_samples_v2 GLOBAL INNER JOIN (SELECT  fingerprint FROM signoz_metrics.distributed_time_series_v2 WHERE metric_name = 'name' AND temporality IN ['Cumulative', 'Unspecified']) as filtered_time_series USING fingerprint WHERE metric_name = 'name' AND timestamp_ms >= 1650991982000 AND timestamp_ms <= 1651078382000 GROUP BY fingerprint, ts ORDER BY fingerprint,  ts) WHERE isNaN(value) = 0) GROUP BY GROUPING SETS ( (ts), () ) ORDER BY  ts`
 
 		cases := []struct {
 			aggregateOperator v3.AggregateOperator

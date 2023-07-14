@@ -51,8 +51,8 @@ func TestBuildQueryWithMultipleQueriesAndFormula(t *testing.T) {
 		require.NoError(t, err)
 
 		require.Contains(t, queries["C"], "SELECT A.ts as ts, A.value / B.value")
-		require.Contains(t, queries["C"], "WHERE metric_name = 'name' AND JSONExtractString(labels, 'in') IN ['a','b','c']")
-		require.Contains(t, queries["C"], "runningDifference(value)/runningDifference(ts)")
+		require.Contains(t, queries["C"], "WHERE metric_name = 'name' AND temporality IN ['Cumulative', 'Unspecified'] AND JSONExtractString(labels, 'in') IN ['a','b','c']")
+		require.Contains(t, queries["C"], "runningDifference(value) / runningDifference(ts)")
 	})
 }
 
@@ -204,4 +204,165 @@ func TestBuildQueryWithThreeOrMoreQueriesRefAndFormula(t *testing.T) {
 		// So(queries["F5"], ShouldContainSubstring, "SELECT A.ts as ts, ((A.value - B.value) / B.value) * 100")
 		// So(strings.Count(queries["F5"], " ON "), ShouldEqual, 1)
 	})
+}
+
+func TestDeltaQueryBuilder(t *testing.T) {
+	cases := []struct {
+		name        string
+		query       *v3.QueryRangeParamsV3
+		queryToTest string
+		expected    string
+	}{
+		{
+			name: "TestQueryWithName - Request rate",
+			query: &v3.QueryRangeParamsV3{
+				Start: 1650991982000,
+				End:   1651078382000,
+				Step:  60,
+				CompositeQuery: &v3.CompositeQuery{
+					QueryType: v3.QueryTypeBuilder,
+					PanelType: v3.PanelTypeGraph,
+					BuilderQueries: map[string]*v3.BuilderQuery{
+						"A": {
+							DataSource:         v3.DataSourceMetrics,
+							QueryName:          "A",
+							AggregateAttribute: v3.AttributeKey{Key: "signoz_latency_count"},
+							StepInterval:       60,
+							AggregateOperator:  v3.AggregateOperatorSumRate,
+							Expression:         "A",
+							Temporality:        v3.Delta,
+							Filters: &v3.FilterSet{
+								Items: []v3.FilterItem{
+									{
+										Key:      v3.AttributeKey{Key: "service_name"},
+										Operator: v3.FilterOperatorIn,
+										Value:    []interface{}{"frontend"},
+									},
+									{
+										Key:      v3.AttributeKey{Key: "operation"},
+										Operator: v3.FilterOperatorIn,
+										Value:    []interface{}{"HTTP GET /dispatch"},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			queryToTest: "A",
+			expected:    "SELECT  toStartOfInterval(toDateTime(intDiv(timestamp_ms, 1000)), INTERVAL 60 SECOND) as ts, sum(value)/60 as value FROM signoz_metrics.distributed_samples_v2 GLOBAL INNER JOIN (SELECT  fingerprint FROM signoz_metrics.distributed_time_series_v2 WHERE metric_name = 'signoz_latency_count' AND temporality = 'Delta'  AND JSONExtractString(labels, 'service_name') IN ['frontend'] AND JSONExtractString(labels, 'operation') IN ['HTTP GET /dispatch'] AND JSONExtractString(labels, '__temporality__') = 'Delta') as filtered_time_series USING fingerprint WHERE metric_name = 'signoz_latency_count' AND timestamp_ms >= 1650991982000 AND timestamp_ms <= 1651078382000 GROUP BY ts ORDER BY  ts",
+		},
+		{
+			name: "TestQueryWithExpression - Error rate",
+			query: &v3.QueryRangeParamsV3{
+				Start: 1650991982000,
+				End:   1651078382000,
+				Step:  60,
+				CompositeQuery: &v3.CompositeQuery{
+					QueryType: v3.QueryTypeBuilder,
+					PanelType: v3.PanelTypeGraph,
+					BuilderQueries: map[string]*v3.BuilderQuery{
+						"A": {
+							QueryName:          "A",
+							DataSource:         v3.DataSourceMetrics,
+							AggregateAttribute: v3.AttributeKey{Key: "signoz_latency_count"},
+							StepInterval:       60,
+							AggregateOperator:  v3.AggregateOperatorSumRate,
+							Expression:         "A",
+							Temporality:        v3.Delta,
+							Filters: &v3.FilterSet{
+								Items: []v3.FilterItem{
+									{
+										Key:      v3.AttributeKey{Key: "service_name"},
+										Operator: v3.FilterOperatorIn,
+										Value:    []interface{}{"frontend"},
+									},
+									{
+										Key:      v3.AttributeKey{Key: "operation"},
+										Operator: v3.FilterOperatorIn,
+										Value:    []interface{}{"HTTP GET /dispatch"},
+									},
+									{
+										Key:      v3.AttributeKey{Key: "status_code"},
+										Operator: v3.FilterOperatorIn,
+										Value:    []interface{}{"STATUS_CODE_ERROR"},
+									},
+								},
+							},
+						},
+						"B": {
+							QueryName:          "B",
+							DataSource:         v3.DataSourceMetrics,
+							AggregateAttribute: v3.AttributeKey{Key: "signoz_latency_count"},
+							StepInterval:       60,
+							AggregateOperator:  v3.AggregateOperatorSumRate,
+							Expression:         "B",
+							Temporality:        v3.Delta,
+							Filters: &v3.FilterSet{
+								Items: []v3.FilterItem{
+									{
+										Key:      v3.AttributeKey{Key: "service_name"},
+										Operator: v3.FilterOperatorIn,
+										Value:    []interface{}{"frontend"},
+									},
+									{
+										Key:      v3.AttributeKey{Key: "operation"},
+										Operator: v3.FilterOperatorIn,
+										Value:    []interface{}{"HTTP GET /dispatch"},
+									},
+								},
+							},
+						},
+						"C": {
+							QueryName:  "C",
+							Expression: "A*100/B",
+						},
+					},
+				},
+			},
+			queryToTest: "C",
+			expected:    "SELECT A.ts as ts, A.value * 100 / B.value as value FROM (SELECT  toStartOfInterval(toDateTime(intDiv(timestamp_ms, 1000)), INTERVAL 60 SECOND) as ts, sum(value)/60 as value FROM signoz_metrics.distributed_samples_v2 GLOBAL INNER JOIN (SELECT  fingerprint FROM signoz_metrics.distributed_time_series_v2 WHERE metric_name = 'signoz_latency_count' AND temporality = 'Delta'  AND JSONExtractString(labels, 'service_name') IN ['frontend'] AND JSONExtractString(labels, 'operation') IN ['HTTP GET /dispatch'] AND JSONExtractString(labels, 'status_code') IN ['STATUS_CODE_ERROR'] AND JSONExtractString(labels, '__temporality__') = 'Delta') as filtered_time_series USING fingerprint WHERE metric_name = 'signoz_latency_count' AND timestamp_ms >= 1650991982000 AND timestamp_ms <= 1651078382000 GROUP BY ts ORDER BY  ts) as A  GLOBAL INNER JOIN(SELECT  toStartOfInterval(toDateTime(intDiv(timestamp_ms, 1000)), INTERVAL 60 SECOND) as ts, sum(value)/60 as value FROM signoz_metrics.distributed_samples_v2 GLOBAL INNER JOIN (SELECT  fingerprint FROM signoz_metrics.distributed_time_series_v2 WHERE metric_name = 'signoz_latency_count' AND temporality = 'Delta'  AND JSONExtractString(labels, 'service_name') IN ['frontend'] AND JSONExtractString(labels, 'operation') IN ['HTTP GET /dispatch'] AND JSONExtractString(labels, '__temporality__') = 'Delta') as filtered_time_series USING fingerprint WHERE metric_name = 'signoz_latency_count' AND timestamp_ms >= 1650991982000 AND timestamp_ms <= 1651078382000 GROUP BY ts ORDER BY  ts) as B  ON A.ts = B.ts",
+		},
+		{
+			name: "TestQuery - Quantile",
+			query: &v3.QueryRangeParamsV3{
+				Start: 1650991982000,
+				End:   1651078382000,
+				Step:  60,
+				CompositeQuery: &v3.CompositeQuery{
+					QueryType: v3.QueryTypeBuilder,
+					PanelType: v3.PanelTypeGraph,
+					BuilderQueries: map[string]*v3.BuilderQuery{
+						"A": {
+							QueryName:          "A",
+							DataSource:         v3.DataSourceMetrics,
+							AggregateAttribute: v3.AttributeKey{Key: "signoz_latency_bucket"},
+							StepInterval:       60,
+							AggregateOperator:  v3.AggregateOperatorHistQuant95,
+							Expression:         "A",
+							Temporality:        v3.Delta,
+							GroupBy: []v3.AttributeKey{
+								{Key: "service_name"},
+							},
+						},
+					},
+				},
+			},
+			queryToTest: "A",
+			expected:    "SELECT service_name,  ts, histogramQuantile(arrayMap(x -> toFloat64(x), groupArray(le)), groupArray(value), 0.950) as value FROM (SELECT service_name,le,  toStartOfInterval(toDateTime(intDiv(timestamp_ms, 1000)), INTERVAL 60 SECOND) as ts, sum(value)/60 as value FROM signoz_metrics.distributed_samples_v2 GLOBAL INNER JOIN (SELECT  JSONExtractString(labels, 'service_name') as service_name, JSONExtractString(labels, 'le') as le, fingerprint FROM signoz_metrics.distributed_time_series_v2 WHERE metric_name = 'signoz_latency_bucket' AND temporality = 'Delta' ) as filtered_time_series USING fingerprint WHERE metric_name = 'signoz_latency_bucket' AND timestamp_ms >= 1650991982000 AND timestamp_ms <= 1651078382000 GROUP BY service_name,le,ts ORDER BY service_name ASC,le ASC, ts) GROUP BY service_name,ts ORDER BY service_name ASC, ts",
+		},
+	}
+
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			qbOptions := QueryBuilderOptions{
+				BuildMetricQuery: metricsv3.PrepareMetricQuery,
+			}
+			qb := NewQueryBuilder(qbOptions)
+			queries, err := qb.PrepareQueries(c.query)
+
+			require.NoError(t, err)
+			require.Equal(t, c.expected, queries[c.queryToTest])
+		})
+	}
 }
