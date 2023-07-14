@@ -228,7 +228,7 @@ func buildLogsQuery(panelType v3.PanelType, start, end, step int64, mq *v3.Build
 	}
 
 	if graphLimitQtype == constants.SecondQueryGraphLimit {
-		filterSubQuery = filterSubQuery + " AND " + "%s"
+		filterSubQuery = filterSubQuery + " AND " + fmt.Sprintf("(%s) IN (", getSelectKeys(mq.AggregateOperator, mq.GroupBy)) + "%s)"
 	}
 
 	aggregationKey := ""

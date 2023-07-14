@@ -568,7 +568,7 @@ func (r *ThresholdRule) runChQuery(ctx context.Context, db clickhouse.Conn, quer
 
 func (r *ThresholdRule) prepareBuilderQueries(ts time.Time) (map[string]string, error) {
 	params := r.prepareQueryRange(ts)
-	runQueries, err := r.queryBuilder.PrepareQueries(nil, params)
+	runQueries, err := r.queryBuilder.PrepareQueries(params)
 
 	return runQueries, err
 }

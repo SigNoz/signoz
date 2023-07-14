@@ -131,43 +131,7 @@ func expressionToQuery(qp *v3.QueryRangeParamsV3, varToQuery map[string]string, 
 	return formulaQuery, nil
 }
 
-func (qb *QueryBuilder) PrepareGraphLimitQueries(params *v3.QueryRangeParamsV3, args ...interface{}) (map[string]string, error) {
-	queries := make(map[string]string)
-
-	compositeQuery := params.CompositeQuery
-
-	if compositeQuery != nil {
-		// Build queries for each builder query
-		for queryName, query := range compositeQuery.BuilderQueries {
-			if query.Expression == queryName {
-				switch query.DataSource {
-				case v3.DataSourceLogs:
-					// if panel type is timeseries/ table, handle limit differently using two queries
-					if (compositeQuery.PanelType == v3.PanelTypeGraph || compositeQuery.PanelType == v3.PanelTypeTable) && query.Limit > 0 && len(query.GroupBy) > 0 {
-						// return two queries
-						limitQuery, err := qb.options.BuildLogQuery(params.Start, params.End, compositeQuery.QueryType, compositeQuery.PanelType, query, constants.FirstQueryGraphLimit)
-						if err != nil {
-							return nil, err
-						}
-
-						placeholderQuery, err := qb.options.BuildLogQuery(params.Start, params.End, compositeQuery.QueryType, compositeQuery.PanelType, query, constants.SecondQueryGraphLimit)
-						if err != nil {
-							return nil, err
-						}
-						queries[queryName+constants.FirstQuerySuffix] = limitQuery
-						queries[queryName+constants.SecondQuerySuffix] = placeholderQuery
-					}
-				default:
-					zap.S().Errorf("Unknown data source %s", query.DataSource)
-				}
-			}
-		}
-	}
-
-	return queries, nil
-}
-
-func (qb *QueryBuilder) PrepareQueries(limitQueries map[string]string, params *v3.QueryRangeParamsV3, args ...interface{}) (map[string]string, error) {
+func (qb *QueryBuilder) PrepareQueries(params *v3.QueryRangeParamsV3, args ...interface{}) (map[string]string, error) {
 	queries := make(map[string]string)
 
 	compositeQuery := params.CompositeQuery
@@ -191,7 +155,16 @@ func (qb *QueryBuilder) PrepareQueries(limitQueries map[string]string, params *v
 				case v3.DataSourceLogs:
 					// for ts query with limit replace it as it is already formed
 					if compositeQuery.PanelType == v3.PanelTypeGraph && query.Limit > 0 && len(query.GroupBy) > 0 {
-						queries[queryName] = limitQueries[queryName]
+						limitQuery, err := qb.options.BuildLogQuery(params.Start, params.End, compositeQuery.QueryType, compositeQuery.PanelType, query, constants.FirstQueryGraphLimit)
+						if err != nil {
+							return nil, err
+						}
+						placeholderQuery, err := qb.options.BuildLogQuery(params.Start, params.End, compositeQuery.QueryType, compositeQuery.PanelType, query, constants.SecondQueryGraphLimit)
+						if err != nil {
+							return nil, err
+						}
+						query := fmt.Sprintf(placeholderQuery, limitQuery)
+						queries[queryName] = query
 					} else {
 						queryString, err := qb.options.BuildLogQuery(params.Start, params.End, compositeQuery.QueryType, compositeQuery.PanelType, query, "")
 						if err != nil {
@@ -227,17 +200,8 @@ func (qb *QueryBuilder) PrepareQueries(limitQueries map[string]string, params *v
 
 	// filter out disabled queries
 	for queryName := range queries {
-		lookupName := queryName
-
-		// //  if it a graph limit query, get the actual query name
-		// if strings.HasSuffix(queryName, constants.FirstQuerySuffix) {
-		// 	lookupName = strings.ReplaceAll(queryName, constants.FirstQuerySuffix, "")
-		// } else if strings.HasSuffix(queryName, constants.SecondQuerySuffix) {
-		// 	lookupName = strings.ReplaceAll(queryName, constants.SecondQuerySuffix, "")
-		// }
-
 		// check if the query is disabled
-		if compositeQuery.BuilderQueries[lookupName].Disabled {
+		if compositeQuery.BuilderQueries[queryName].Disabled {
 			delete(queries, queryName)
 		}
 	}

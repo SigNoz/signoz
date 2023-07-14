@@ -2468,67 +2468,6 @@ func createFilterForGraphQuery(data []*v3.Row) string {
 	return strings.Join(filterarr, " OR ")
 }
 
-func (aH *APIHandler) getClickhouseGraphLimitQueries(ctx context.Context, queries map[string]string) (map[string]string, error, map[string]string) {
-	type channelResult struct {
-		NewQuery string
-		Err      error
-		Name     string
-		Query    string
-	}
-
-	ch := make(chan channelResult, len(queries))
-	var wg sync.WaitGroup
-
-	for name, query := range queries {
-		wg.Add(1)
-		go func(name, query string) {
-			defer wg.Done()
-			if strings.HasSuffix(name, constants.FirstQuerySuffix) {
-				// Graph query with limit - first query skip
-				return
-			} else if strings.HasSuffix(name, constants.SecondQuerySuffix) {
-				// Graph query with limit - second query
-
-				// get the first query result
-				actualName := strings.ReplaceAll(name, constants.SecondQuerySuffix, "")
-				list, err := aH.reader.GetListResultV3(ctx, queries[actualName+constants.FirstQuerySuffix])
-				if err != nil {
-					ch <- channelResult{Err: fmt.Errorf("error in query-%s: %v", actualName+constants.FirstQuerySuffix, err), Name: actualName, Query: queries[actualName+constants.FirstQuerySuffix]}
-					return
-				}
-				// create the filter string
-				filterString := createFilterForGraphQuery(list)
-
-				// add the filter string to the query
-				finalQuery := fmt.Sprintf(query, filterString)
-
-				ch <- channelResult{NewQuery: finalQuery, Name: actualName, Query: query}
-			}
-		}(name, query)
-	}
-
-	wg.Wait()
-	close(ch)
-
-	var errs []error
-	errQuriesByName := make(map[string]string)
-	res := make(map[string]string)
-	// read values from the channel
-	for r := range ch {
-		if r.Err != nil {
-			errs = append(errs, r.Err)
-			errQuriesByName[r.Name] = r.Query
-			continue
-		}
-		res[r.Name] = r.NewQuery
-	}
-	if len(errs) != 0 {
-		return nil, fmt.Errorf("encountered multiple errors: %s", multierr.Combine(errs...)), errQuriesByName
-	}
-	return res, nil, nil
-
-}
-
 func (aH *APIHandler) execClickHouseGraphQueries(ctx context.Context, queries map[string]string) ([]*v3.Result, error, map[string]string) {
 	type channelResult struct {
 		Series []*v3.Series
@@ -2545,42 +2484,13 @@ func (aH *APIHandler) execClickHouseGraphQueries(ctx context.Context, queries ma
 		go func(name, query string) {
 			defer wg.Done()
 
-			if strings.HasSuffix(name, constants.FirstQuerySuffix) {
-				// Graph query with limit - first query skip
+			seriesList, err := aH.reader.GetTimeSeriesResultV3(ctx, query)
+
+			if err != nil {
+				ch <- channelResult{Err: fmt.Errorf("error in query-%s: %v", name, err), Name: name, Query: query}
 				return
-			} else if strings.HasSuffix(name, constants.SecondQuerySuffix) {
-				// Graph query with limit - second query
-
-				// get the first query result
-				actualName := strings.ReplaceAll(name, constants.SecondQuerySuffix, "")
-				list, err := aH.reader.GetListResultV3(ctx, queries[actualName+constants.FirstQuerySuffix])
-				if err != nil {
-					ch <- channelResult{Err: fmt.Errorf("error in query-%s: %v", actualName+constants.FirstQuerySuffix, err), Name: actualName, Query: queries[actualName+constants.FirstQuerySuffix]}
-					return
-				}
-
-				// create the filter string
-				filterString := createFilterForGraphQuery(list)
-
-				// add the filter string to the query
-				finalQuery := fmt.Sprintf(query, filterString)
-				seriesList, err := aH.reader.GetTimeSeriesResultV3(ctx, finalQuery)
-				if err != nil {
-					ch <- channelResult{Err: fmt.Errorf("error in query-%s: %v", actualName, err), Name: actualName, Query: query}
-					return
-				}
-
-				ch <- channelResult{Series: seriesList, Name: actualName, Query: query}
-			} else {
-				// Graph query without limit
-				seriesList, err := aH.reader.GetTimeSeriesResultV3(ctx, query)
-
-				if err != nil {
-					ch <- channelResult{Err: fmt.Errorf("error in query-%s: %v", name, err), Name: name, Query: query}
-					return
-				}
-				ch <- channelResult{Series: seriesList, Name: name, Query: query}
 			}
+			ch <- channelResult{Series: seriesList, Name: name, Query: query}
 		}(name, query)
 	}
 
@@ -2833,20 +2743,8 @@ func (aH *APIHandler) queryRangeV3(ctx context.Context, queryRangeParams *v3.Que
 			RespondError(w, apiErrObj, errQuriesByName)
 			return
 		}
-		// prepare pre queries and run them to get the data
-		var limitQueries map[string]string
-		limitQueries, err := aH.queryBuilder.PrepareGraphLimitQueries(queryRangeParams, spanKeys)
-		if err != nil {
-			RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
-			return
-		}
 
-		var finalLimitQueries map[string]string
-		if len(limitQueries) > 0 {
-			finalLimitQueries, err, errQuriesByName = aH.getClickhouseGraphLimitQueries(r.Context(), limitQueries)
-		}
-
-		queries, err = aH.queryBuilder.PrepareQueries(finalLimitQueries, queryRangeParams, spanKeys)
+		queries, err = aH.queryBuilder.PrepareQueries(queryRangeParams, spanKeys)
 		if err != nil {
 			RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
 			return

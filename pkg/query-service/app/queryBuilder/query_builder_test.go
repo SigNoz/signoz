@@ -46,7 +46,7 @@ func TestBuildQueryWithMultipleQueriesAndFormula(t *testing.T) {
 		}
 		qb := NewQueryBuilder(qbOptions)
 
-		queries, err := qb.PrepareQueries(nil, q)
+		queries, err := qb.PrepareQueries(q)
 
 		require.NoError(t, err)
 
@@ -87,7 +87,7 @@ func TestBuildQueryWithIncorrectQueryRef(t *testing.T) {
 		}
 		qb := NewQueryBuilder(qbOptions)
 
-		_, err := qb.PrepareQueries(nil, q)
+		_, err := qb.PrepareQueries(q)
 
 		require.NoError(t, err)
 	})
@@ -159,7 +159,7 @@ func TestBuildQueryWithThreeOrMoreQueriesRefAndFormula(t *testing.T) {
 		}
 		qb := NewQueryBuilder(qbOptions)
 
-		queries, err := qb.PrepareQueries(nil, q)
+		queries, err := qb.PrepareQueries(q)
 
 		require.NoError(t, err)
 
