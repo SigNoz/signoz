@@ -14,14 +14,17 @@ import (
 // In some cases, we could take the points at the start and end of the time range and divide it by the
 // duration. But, the problem is there is no guarantee that the trend will be linear between the start and end.
 // We can sum the rate of change for some interval X, this interval can be step size of time series.
-// However, the speed of query depends on the number of timestamps, so we bump up the 5x the step size.
+// However, the speed of query depends on the number of timestamps, so we bump up the xx the step size.
 // This should be a good balance between speed and accuracy.
 // TODO: find a better way to do this
 func stepForTableCumulative(start, end int64) int64 {
 	// round up to the nearest multiple of 60
 	duration := (end - start + 1) / 1000
-	step := math.Max(math.Floor(float64(duration)/150), 60) // assuming 150 max points
-	return int64(step) * 5
+	step := math.Max(math.Floor(float64(duration)/120), 60) // assuming 120 max points
+	if duration > 1800 {                                    // bump for longer duration
+		step = step * 5
+	}
+	return int64(step)
 }
 
 func buildMetricQueryForTable(start, end, _ int64, mq *v3.BuilderQuery, tableName string) (string, error) {
