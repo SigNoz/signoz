@@ -23,7 +23,7 @@ type DynamicColumn = {
 	key: keyof RowData;
 	data: (string | number)[];
 	type: 'field' | 'operator';
-	sortable: boolean;
+	// sortable: boolean;
 };
 
 type DynamicColumns = DynamicColumn[];
@@ -76,23 +76,31 @@ const prepareColumnTitle = (title: string): string => {
 	return toCapitalize(title);
 };
 
+const getQueryOperator = (
+	queryData: IBuilderQuery[],
+	currentQueryName: string,
+): string => {
+	const builderQuery = queryData.find((q) => q.queryName === currentQueryName);
+
+	return builderQuery ? builderQuery.aggregateOperator : '';
+};
+
 const createLabels = <T extends ListItemData | SeriesItemLabels>(
 	labels: T,
 	label: keyof T,
 	dynamicColumns: DynamicColumns,
 ): void => {
 	if (isColumnExist(label as string, dynamicColumns)) return;
-	if (isFormula(label as string)) return;
 
-	const labelValue = labels[label];
+	// const labelValue = labels[label];
 
-	const isNumber = !Number.isNaN(parseFloat(String(labelValue)));
+	// const isNumber = !Number.isNaN(parseFloat(String(labelValue)));
 
 	const fieldObj: DynamicColumn = {
 		key: label as string,
 		data: [],
 		type: 'field',
-		sortable: isNumber,
+		// sortable: isNumber,
 	};
 
 	dynamicColumns.push(fieldObj);
@@ -120,7 +128,7 @@ const getDynamicColumns: GetDynamicColumns = (queryTableData, query) => {
 					key: 'timestamp',
 					data: [],
 					type: 'field',
-					sortable: true,
+					// sortable: true,
 				});
 			}
 
@@ -130,36 +138,24 @@ const getDynamicColumns: GetDynamicColumns = (queryTableData, query) => {
 				});
 			});
 
-			if (!isFormula(currentQuery.queryName)) {
-				const builderQuery = query.builder.queryData.find(
-					(q) => q.queryName === currentQuery.queryName,
-				);
+			const operator = getQueryOperator(
+				query.builder.queryData,
+				currentQuery.queryName,
+			);
 
-				const operator = builderQuery ? builderQuery.aggregateOperator : '';
+			if (operator === '' || isColumnExist(operator, dynamicColumns)) return;
 
-				if (isColumnExist(operator, dynamicColumns)) return;
-
-				const operatorColumn: DynamicColumn = {
-					key: operator,
-					data: [],
-					type: 'operator',
-					sortable: true,
-				};
-				dynamicColumns.push(operatorColumn);
-			}
+			const operatorColumn: DynamicColumn = {
+				key: operator,
+				data: [],
+				type: 'operator',
+				// sortable: true,
+			};
+			dynamicColumns.push(operatorColumn);
 		}
 	});
 
 	return dynamicColumns;
-};
-
-const getQueryOperator = (
-	queryData: IBuilderQuery[],
-	currentQueryName: string,
-): string => {
-	const builderQuery = queryData.find((q) => q.queryName === currentQueryName);
-
-	return builderQuery ? builderQuery.aggregateOperator : '';
 };
 
 const fillEmptyRowCells = (
@@ -182,7 +178,8 @@ const fillEmptyRowCells = (
 const fillDataFromSeria = (
 	seria: SeriesItem,
 	columns: DynamicColumns,
-	currentOperator: string,
+	queryName: string,
+	operator: string,
 ): void => {
 	const labelEntries = Object.entries(seria.labels);
 
@@ -192,15 +189,19 @@ const fillDataFromSeria = (
 		);
 
 		columns.forEach((column) => {
-			if (isFormula(column.key as string)) return;
-
 			if (column.key === 'timestamp') {
 				column.data.push(value.timestamp);
 				unusedColumnsKeys.delete('timestamp');
 				return;
 			}
 
-			if (column.key === currentOperator) {
+			if (isFormula(queryName) && queryName === column.key) {
+				column.data.push(parseFloat(value.value).toFixed(2));
+				unusedColumnsKeys.delete(column.key);
+				return;
+			}
+
+			if (!isFormula(queryName) && operator === column.key) {
 				column.data.push(parseFloat(value.value).toFixed(2));
 				unusedColumnsKeys.delete(column.key);
 				return;
@@ -227,8 +228,8 @@ const fillDataFromList = (
 
 		Object.keys(listItem.data).forEach((label) => {
 			if (column.key === label) {
-				if (listItem.data[label as ListItemKey]) {
-					column.data.push(listItem.data[label as ListItemKey] as string | number);
+				if (listItem.data[label as ListItemKey] !== '') {
+					column.data.push(listItem.data[label as ListItemKey].toString());
 				} else {
 					column.data.push('N/A');
 				}
@@ -243,14 +244,19 @@ const fillColumnsData: FillColumnData = (queryTableData, cols, query) => {
 	const resultColumns = [...fields, ...operators];
 
 	queryTableData.forEach((currentQuery) => {
-		const currentOperator = getQueryOperator(
-			query.builder.queryData,
-			currentQuery.queryName,
-		);
-
 		if (currentQuery.series) {
 			currentQuery.series.forEach((seria) => {
-				fillDataFromSeria(seria, resultColumns, currentOperator);
+				const currentOperator = getQueryOperator(
+					query.builder.queryData,
+					currentQuery.queryName,
+				);
+
+				fillDataFromSeria(
+					seria,
+					resultColumns,
+					currentQuery.queryName,
+					currentOperator,
+				);
 			});
 		}
 
@@ -298,10 +304,10 @@ const generateTableColumns = (
 			dataIndex: item.key,
 			key: item.key,
 			title: prepareColumnTitle(item.key as string),
-			sorter: item.sortable
-				? (a: RowData, b: RowData): number =>
-						(a[item.key] as number) - (b[item.key] as number)
-				: false,
+			// sorter: item.sortable
+			// 	? (a: RowData, b: RowData): number =>
+			// 			(a[item.key] as number) - (b[item.key] as number)
+			// 	: false,
 		};
 
 		return [...acc, column];

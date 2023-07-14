@@ -3,6 +3,7 @@ import { GRAPH_TYPES } from 'container/NewDashboard/ComponentsSlider';
 import { createIdFromObjectFields } from 'lib/createIdFromObjectFields';
 import { createNewBuilderItemName } from 'lib/newQueryBuilder/createNewBuilderItemName';
 import {
+	AutocompleteType,
 	BaseAutocompleteData,
 	LocalDataType,
 } from 'types/api/queryBuilder/queryAutocompleteResponse';
@@ -14,6 +15,7 @@ import {
 	IPromQLQuery,
 	Query,
 	QueryState,
+	TagFilter,
 } from 'types/api/queryBuilder/queryBuilderData';
 import { EQueryType } from 'types/common/dashboard';
 import {
@@ -49,6 +51,11 @@ export const baseAutoCompleteIdKeysOrder: (keyof Omit<
 	'id'
 >)[] = ['key', 'dataType', 'type', 'isColumn'];
 
+export const autocompleteType: Record<AutocompleteType, AutocompleteType> = {
+	resource: 'resource',
+	tag: 'tag',
+};
+
 export const formulasNames: string[] = Array.from(
 	Array(MAX_FORMULAS),
 	(_, i) => `F${i + 1}`,
@@ -59,7 +66,6 @@ export const alphabet: string[] = alpha.map((str) => String.fromCharCode(str));
 export enum QueryBuilderKeys {
 	GET_AGGREGATE_ATTRIBUTE = 'GET_AGGREGATE_ATTRIBUTE',
 	GET_AGGREGATE_KEYS = 'GET_AGGREGATE_KEYS',
-	GET_ATTRIBUTE_KEY = 'GET_ATTRIBUTE_KEY',
 }
 
 export const mapOfOperators = {
@@ -111,6 +117,11 @@ export const initialAutocompleteData: BaseAutocompleteData = {
 	key: '',
 	isColumn: null,
 	type: null,
+};
+
+export const initialFilters: TagFilter = {
+	items: [],
+	op: 'AND',
 };
 
 const initialQueryBuilderFormValues: IBuilderQuery = {

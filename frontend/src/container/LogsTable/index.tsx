@@ -4,13 +4,17 @@ import ListLogView from 'components/Logs/ListLogView';
 import RawLogView from 'components/Logs/RawLogView';
 import LogsTableView from 'components/Logs/TableView';
 import Spinner from 'components/Spinner';
+import ROUTES from 'constants/routes';
 import { contentStyle } from 'container/Trace/Search/config';
 import useFontFaceObserver from 'hooks/useFontObserver';
+import { getGeneratedFilterQueryString } from 'lib/getGeneratedFilterQueryString';
 import { memo, useCallback, useMemo } from 'react';
-import { useSelector } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
+import { useHistory } from 'react-router-dom';
 import { Virtuoso } from 'react-virtuoso';
-// interfaces
 import { AppState } from 'store/reducers';
+// interfaces
+import { SET_DETAILED_LOG_DATA } from 'types/actions/logs';
 import { ILog } from 'types/api/logs/log';
 import { ILogsReducer } from 'types/reducer/logs';
 
@@ -28,6 +32,10 @@ type LogsTableProps = {
 function LogsTable(props: LogsTableProps): JSX.Element {
 	const { viewMode, onClickExpand, linesPerRow } = props;
 
+	const history = useHistory();
+
+	const dispatch = useDispatch();
+
 	useFontFaceObserver(
 		[
 			{
@@ -44,6 +52,7 @@ function LogsTable(props: LogsTableProps): JSX.Element {
 	const {
 		logs,
 		fields: { selected },
+		searchFilter: { queryString },
 		isLoading,
 		liveTail,
 	} = useSelector<AppState, ILogsReducer>((state) => state.logs);
@@ -57,6 +66,30 @@ function LogsTable(props: LogsTableProps): JSX.Element {
 		logs?.length,
 		liveTail,
 	]);
+
+	const handleOpenDetailedView = useCallback(
+		(logData: ILog) => {
+			dispatch({
+				type: SET_DETAILED_LOG_DATA,
+				payload: logData,
+			});
+		},
+		[dispatch],
+	);
+
+	const handleAddToQuery = useCallback(
+		(fieldKey: string, fieldValue: string, operator: string) => {
+			const updatedQueryString = getGeneratedFilterQueryString(
+				fieldKey,
+				fieldValue,
+				operator,
+				queryString,
+			);
+
+			history.replace(`${ROUTES.LOGS}?q=${updatedQueryString}`);
+		},
+		[history, queryString],
+	);
 
 	const getItemContent = useCallback(
 		(index: number): JSX.Element => {
@@ -73,9 +106,25 @@ function LogsTable(props: LogsTableProps): JSX.Element {
 				);
 			}
 
-			return <ListLogView key={log.id} logData={log} />;
+			return (
+				<ListLogView
+					key={log.id}
+					logData={log}
+					selectedFields={selected}
+					onOpenDetailedView={handleOpenDetailedView}
+					onAddToQuery={handleAddToQuery}
+				/>
+			);
 		},
-		[logs, linesPerRow, viewMode, onClickExpand],
+		[
+			logs,
+			viewMode,
+			selected,
+			linesPerRow,
+			onClickExpand,
+			handleOpenDetailedView,
+			handleAddToQuery,
+		],
 	);
 
 	const renderContent = useMemo(() => {

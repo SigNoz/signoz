@@ -45,6 +45,7 @@ import WidgetHeader from '../WidgetHeader';
 import FullView from './FullView/index.metricsBuilder';
 import { FullViewContainer, Modal } from './styles';
 
+// eslint-disable-next-line sonarjs/cognitive-complexity
 function GridCardGraph({
 	widget,
 	deleteWidget,
@@ -85,6 +86,11 @@ function GridCardGraph({
 
 	const updatedQuery = useStepInterval(widget?.query);
 
+	const isEmptyWidget = useMemo(
+		() => widget?.id === 'empty' || isEmpty(widget),
+		[widget],
+	);
+
 	const queryResponse = useGetQueryRange(
 		{
 			selectedTime: widget?.timePreferance,
@@ -103,7 +109,7 @@ function GridCardGraph({
 				variables,
 			],
 			keepPreviousData: true,
-			enabled: isGraphVisible,
+			enabled: isGraphVisible && !isEmptyWidget,
 			refetchOnMount: false,
 			onError: (error) => {
 				setErrorMessage(error.message);
@@ -133,8 +139,6 @@ function GridCardGraph({
 	);
 
 	const onDeleteHandler = useCallback(() => {
-		const isEmptyWidget = widget?.id === 'empty' || isEmpty(widget);
-
 		const widgetId = isEmptyWidget ? layout[0].i : widget?.id;
 
 		featureResponse
@@ -149,7 +153,8 @@ function GridCardGraph({
 				});
 			});
 	}, [
-		widget,
+		isEmptyWidget,
+		widget?.id,
 		layout,
 		featureResponse,
 		deleteWidget,

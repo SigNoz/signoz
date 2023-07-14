@@ -5,7 +5,7 @@ import { ColumnsType } from 'antd/lib/table';
 import saveAlertApi from 'api/alerts/save';
 import { ResizeTable } from 'components/ResizeTable';
 import TextToolTip from 'components/TextToolTip';
-import { COMPOSITE_QUERY } from 'constants/queryBuilderQueryNames';
+import { queryParamNamesMap } from 'constants/queryBuilderQueryNames';
 import ROUTES from 'constants/routes';
 import useComponentPermission from 'hooks/useComponentPermission';
 import useInterval from 'hooks/useInterval';
@@ -75,11 +75,9 @@ function ListAlert({ allAlertRules, refetch }: ListAlertProps): JSX.Element {
 				const compositeQuery = mapQueryDataFromApi(record.condition.compositeQuery);
 
 				history.push(
-					`${
-						ROUTES.EDIT_ALERTS
-					}?ruleId=${record.id.toString()}&${COMPOSITE_QUERY}=${encodeURIComponent(
-						JSON.stringify(compositeQuery),
-					)}`,
+					`${ROUTES.EDIT_ALERTS}?ruleId=${record.id.toString()}&${
+						queryParamNamesMap.compositeQuery
+					}=${encodeURIComponent(JSON.stringify(compositeQuery))}`,
 				);
 			})
 			.catch(handleError);

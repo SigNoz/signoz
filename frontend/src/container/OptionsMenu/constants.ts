@@ -4,6 +4,6 @@ export const URL_OPTIONS = 'options';
 
 export const defaultOptionsQuery: OptionsQuery = {
 	selectColumns: [],
-	maxLines: 0,
-	format: 'default',
+	maxLines: 2,
+	format: 'list',
 };
