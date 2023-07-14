@@ -5,6 +5,7 @@ import TabLabel from 'components/TabLabel';
 import { QueryParams } from 'constants/query';
 import {
 	initialQueriesMap,
+	OPERATORS,
 	PANEL_TYPES,
 	QueryBuilderKeys,
 } from 'constants/queryBuilder';
@@ -226,8 +227,8 @@ function LogsExplorerViews(): JSX.Element {
 		[currentStagedQueryData, orderByTimestamp],
 	);
 
-	const handleAddQuery = useCallback(
-		(fieldKey: string, fieldValue: string): void => {
+	const handleAddToQuery = useCallback(
+		(fieldKey: string, fieldValue: string, operator: string): void => {
 			const keysAutocomplete: BaseAutocompleteData[] =
 				queryClient.getQueryData<SuccessResponse<IQueryAutocompleteResponse>>(
 					[QueryBuilderKeys.GET_AGGREGATE_KEYS],
@@ -238,6 +239,9 @@ function LogsExplorerViews(): JSX.Element {
 				keysAutocomplete,
 				fieldKey,
 			);
+
+			const currentOperator =
+				Object.keys(OPERATORS).find((op) => op === operator) || '';
 
 			const nextQuery: Query = {
 				...currentQuery,
@@ -254,7 +258,7 @@ function LogsExplorerViews(): JSX.Element {
 								{
 									id: uuid(),
 									key: existAutocompleteKey,
-									op: '=',
+									op: currentOperator,
 									value: fieldValue,
 								},
 							],
@@ -422,7 +426,7 @@ function LogsExplorerViews(): JSX.Element {
 						onOpenDetailedView={handleSetActiveLog}
 						onEndReached={handleEndReached}
 						onExpand={handleSetActiveLog}
-						onAddToQuery={handleAddQuery}
+						onAddToQuery={handleAddToQuery}
 					/>
 				),
 			},
@@ -453,7 +457,7 @@ function LogsExplorerViews(): JSX.Element {
 			logs,
 			handleSetActiveLog,
 			handleEndReached,
-			handleAddQuery,
+			handleAddToQuery,
 			data,
 			isError,
 		],
@@ -506,7 +510,8 @@ function LogsExplorerViews(): JSX.Element {
 			<LogDetail
 				log={activeLog}
 				onClose={handleClearActiveLog}
-				onAddToQuery={handleAddQuery}
+				onAddToQuery={handleAddToQuery}
+				onClickActionItem={handleAddToQuery}
 			/>
 		</>
 	);
