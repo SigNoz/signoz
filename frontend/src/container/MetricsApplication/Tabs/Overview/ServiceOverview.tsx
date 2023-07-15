@@ -1,6 +1,6 @@
 import getServiceOverview from 'api/metrics/getServiceOverview';
 import Spinner from 'components/Spinner';
-import Graph from 'container/GridGraphLayout/Graph/GraphWithoutDashboard';
+import Graph from 'container/GridGraphLayout/Graph/';
 import { GraphTitle } from 'container/MetricsApplication/constant';
 import { getWidgetQueryBuilder } from 'container/MetricsApplication/MetricsApplication.factory';
 import { letency } from 'container/MetricsApplication/MetricsPageQueries/OverviewQueries';

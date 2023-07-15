@@ -1,5 +1,5 @@
 import { Col } from 'antd';
-import Graph from 'container/GridGraphLayout/Graph/GraphWithoutDashboard';
+import Graph from 'container/GridGraphLayout/Graph/';
 import {
 	externalCallDuration,
 	externalCallDurationByAddress,
