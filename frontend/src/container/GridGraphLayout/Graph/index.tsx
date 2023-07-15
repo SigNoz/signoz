@@ -32,7 +32,12 @@ import {
 } from 'store/actions/dashboard/deleteWidget';
 import { AppState } from 'store/reducers';
 import AppActions from 'types/actions';
-import { Dashboard, DashboardData, Widgets } from 'types/api/dashboard/getAll';
+import {
+	Dashboard,
+	DashboardData,
+	IDashboardVariable,
+	Widgets,
+} from 'types/api/dashboard/getAll';
 import AppReducer from 'types/reducer/app';
 import DashboardReducer from 'types/reducer/dashboards';
 import { GlobalReducer } from 'types/reducer/globalTime';
@@ -83,7 +88,7 @@ function GridCardGraph({
 
 	let selectedDashboard: Dashboard | undefined;
 	let selectedData: DashboardData | undefined;
-	let variables: unknown | undefined;
+	let variables: Record<string, IDashboardVariable> | undefined;
 	if (dashboards.length > 0) {
 		[selectedDashboard] = dashboards;
 		selectedData = selectedDashboard?.data;
