@@ -48,6 +48,7 @@ type ServerOptions struct {
 	// alert specific params
 	DisableRules bool
 	RuleRepoURL  string
+	PreferDelta  bool
 }
 
 // Server runs HTTP, Mux and a grpc server
@@ -125,6 +126,7 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 	apiHandler, err := NewAPIHandler(APIHandlerOpts{
 		Reader:       reader,
 		SkipConfig:   skipConfig,
+		PerferDelta:  serverOptions.PreferDelta,
 		AppDao:       dao.DB(),
 		RuleManager:  rm,
 		FeatureFlags: fm,

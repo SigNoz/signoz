@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"sort"
 	"strconv"
 	"strings"
 	"sync"
@@ -70,6 +71,7 @@ type APIHandler struct {
 	featureFlags interfaces.FeatureLookup
 	ready        func(http.HandlerFunc) http.HandlerFunc
 	queryBuilder *queryBuilder.QueryBuilder
+	preferDelta  bool
 
 	// SetupCompleted indicates if SigNoz is ready for general use.
 	// at the moment, we mark the app ready when the first user
@@ -83,6 +85,8 @@ type APIHandlerOpts struct {
 	Reader interfaces.Reader
 
 	SkipConfig *model.SkipConfig
+
+	PerferDelta bool
 	// dao layer to perform crud on app objects like dashboard, alerts etc
 	AppDao dao.ModelDao
 
@@ -105,6 +109,7 @@ func NewAPIHandler(opts APIHandlerOpts) (*APIHandler, error) {
 		reader:       opts.Reader,
 		appDao:       opts.AppDao,
 		skipConfig:   opts.SkipConfig,
+		preferDelta:  opts.PerferDelta,
 		alertManager: alertManager,
 		ruleManager:  opts.RuleManager,
 		featureFlags: opts.FeatureFlags,
@@ -449,6 +454,48 @@ func (aH *APIHandler) metricAutocompleteTagValue(w http.ResponseWriter, r *http.
 	}
 
 	aH.Respond(w, tagValueList)
+}
+
+func (aH *APIHandler) addTemporality(ctx context.Context, qp *v3.QueryRangeParamsV3) error {
+
+	metricNames := make([]string, 0)
+	metricNameToTemporality := make(map[string]map[v3.Temporality]bool)
+	if qp.CompositeQuery != nil && len(qp.CompositeQuery.BuilderQueries) > 0 {
+		for _, query := range qp.CompositeQuery.BuilderQueries {
+			if query.DataSource == v3.DataSourceMetrics {
+				metricNames = append(metricNames, query.AggregateAttribute.Key)
+				if _, ok := metricNameToTemporality[query.AggregateAttribute.Key]; !ok {
+					metricNameToTemporality[query.AggregateAttribute.Key] = make(map[v3.Temporality]bool)
+				}
+			}
+		}
+	}
+
+	var err error
+
+	if aH.preferDelta {
+		zap.S().Debug("fetching metric temporality")
+		metricNameToTemporality, err = aH.reader.FetchTemporality(ctx, metricNames)
+		if err != nil {
+			return err
+		}
+	}
+
+	if qp.CompositeQuery != nil && len(qp.CompositeQuery.BuilderQueries) > 0 {
+		for name := range qp.CompositeQuery.BuilderQueries {
+			query := qp.CompositeQuery.BuilderQueries[name]
+			if query.DataSource == v3.DataSourceMetrics {
+				if aH.preferDelta && metricNameToTemporality[query.AggregateAttribute.Key][v3.Delta] {
+					query.Temporality = v3.Delta
+				} else if metricNameToTemporality[query.AggregateAttribute.Key][v3.Cumulative] {
+					query.Temporality = v3.Cumulative
+				} else {
+					query.Temporality = v3.Unspecified
+				}
+			}
+		}
+	}
+	return nil
 }
 
 func (aH *APIHandler) QueryRangeMetricsV2(w http.ResponseWriter, r *http.Request) {
@@ -2758,6 +2805,8 @@ func (aH *APIHandler) queryRangeV3(ctx context.Context, queryRangeParams *v3.Que
 		return
 	}
 
+	applyMetricLimit(result, queryRangeParams)
+
 	resp := v3.QueryRangeResponse{
 		Result: result,
 	}
@@ -2773,5 +2822,44 @@ func (aH *APIHandler) QueryRangeV3(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// add temporality for each metric
+
+	temporalityErr := aH.addTemporality(r.Context(), queryRangeParams)
+	if temporalityErr != nil {
+		zap.S().Errorf("Error while adding temporality for metrics: %v", temporalityErr)
+		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: temporalityErr}, nil)
+		return
+	}
+
 	aH.queryRangeV3(r.Context(), queryRangeParams, w, r)
+}
+
+func applyMetricLimit(results []*v3.Result, queryRangeParams *v3.QueryRangeParamsV3) {
+	// apply limit if any for metrics
+	// use the grouping set points to apply the limit
+
+	for _, result := range results {
+		builderQueries := queryRangeParams.CompositeQuery.BuilderQueries
+		if builderQueries != nil && builderQueries[result.QueryName].DataSource == v3.DataSourceMetrics {
+			limit := builderQueries[result.QueryName].Limit
+			var orderAsc bool
+			for _, item := range builderQueries[result.QueryName].OrderBy {
+				if item.ColumnName == constants.SigNozOrderByValue {
+					orderAsc = strings.ToLower(item.Order) == "asc"
+					break
+				}
+			}
+			if limit != 0 {
+				sort.Slice(result.Series, func(i, j int) bool {
+					if orderAsc {
+						return result.Series[i].Points[0].Value < result.Series[j].Points[0].Value
+					}
+					return result.Series[i].Points[0].Value > result.Series[j].Points[0].Value
+				})
+				if len(result.Series) > int(limit) {
+					result.Series = result.Series[:limit]
+				}
+			}
+		}
+	}
 }
