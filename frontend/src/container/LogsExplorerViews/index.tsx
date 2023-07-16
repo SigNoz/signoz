@@ -5,6 +5,7 @@ import TabLabel from 'components/TabLabel';
 import { QueryParams } from 'constants/query';
 import {
 	initialQueriesMap,
+	OPERATORS,
 	PANEL_TYPES,
 	QueryBuilderKeys,
 } from 'constants/queryBuilder';
@@ -14,8 +15,7 @@ import { DEFAULT_PER_PAGE_VALUE } from 'container/Controls/config';
 import ExportPanel from 'container/ExportPanel';
 import LogsExplorerChart from 'container/LogsExplorerChart';
 import LogsExplorerList from 'container/LogsExplorerList';
-// TODO: temporary hide table view
-// import LogsExplorerTable from 'container/LogsExplorerTable';
+import LogsExplorerTable from 'container/LogsExplorerTable';
 import { GRAPH_TYPES } from 'container/NewDashboard/ComponentsSlider';
 import TimeSeriesView from 'container/TimeSeriesView/TimeSeriesView';
 import { useUpdateDashboard } from 'hooks/dashboard/useUpdateDashboard';
@@ -226,8 +226,8 @@ function LogsExplorerViews(): JSX.Element {
 		[currentStagedQueryData, orderByTimestamp],
 	);
 
-	const handleAddQuery = useCallback(
-		(fieldKey: string, fieldValue: string): void => {
+	const handleAddToQuery = useCallback(
+		(fieldKey: string, fieldValue: string, operator: string): void => {
 			const keysAutocomplete: BaseAutocompleteData[] =
 				queryClient.getQueryData<SuccessResponse<IQueryAutocompleteResponse>>(
 					[QueryBuilderKeys.GET_AGGREGATE_KEYS],
@@ -238,6 +238,9 @@ function LogsExplorerViews(): JSX.Element {
 				keysAutocomplete,
 				fieldKey,
 			);
+
+			const currentOperator =
+				Object.keys(OPERATORS).find((op) => op === operator) || '';
 
 			const nextQuery: Query = {
 				...currentQuery,
@@ -254,7 +257,7 @@ function LogsExplorerViews(): JSX.Element {
 								{
 									id: uuid(),
 									key: existAutocompleteKey,
-									op: '=',
+									op: currentOperator,
 									value: fieldValue,
 								},
 							],
@@ -422,7 +425,7 @@ function LogsExplorerViews(): JSX.Element {
 						onOpenDetailedView={handleSetActiveLog}
 						onEndReached={handleEndReached}
 						onExpand={handleSetActiveLog}
-						onAddToQuery={handleAddQuery}
+						onAddToQuery={handleAddToQuery}
 					/>
 				),
 			},
@@ -433,17 +436,16 @@ function LogsExplorerViews(): JSX.Element {
 					<TimeSeriesView isLoading={isFetching} data={data} isError={isError} />
 				),
 			},
-			// TODO: temporary hide table view
-			// {
-			// 	label: 'Table',
-			// 	key: PANEL_TYPES.TABLE,
-			// 	children: (
-			// 		<LogsExplorerTable
-			// 			data={data?.payload.data.newResult.data.result || []}
-			// 			isLoading={isFetching}
-			// 		/>
-			// 	),
-			// },
+			{
+				label: 'Table',
+				key: PANEL_TYPES.TABLE,
+				children: (
+					<LogsExplorerTable
+						data={data?.payload.data.newResult.data.result || []}
+						isLoading={isFetching}
+					/>
+				),
+			},
 		],
 		[
 			isMultipleQueries,
@@ -453,7 +455,7 @@ function LogsExplorerViews(): JSX.Element {
 			logs,
 			handleSetActiveLog,
 			handleEndReached,
-			handleAddQuery,
+			handleAddToQuery,
 			data,
 			isError,
 		],
@@ -506,7 +508,8 @@ function LogsExplorerViews(): JSX.Element {
 			<LogDetail
 				log={activeLog}
 				onClose={handleClearActiveLog}
-				onAddToQuery={handleAddQuery}
+				onAddToQuery={handleAddToQuery}
+				onClickActionItem={handleAddToQuery}
 			/>
 		</>
 	);

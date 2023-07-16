@@ -7,7 +7,7 @@ import Spinner from 'components/Spinner';
 import ROUTES from 'constants/routes';
 import { contentStyle } from 'container/Trace/Search/config';
 import useFontFaceObserver from 'hooks/useFontObserver';
-import { generateFilterQuery } from 'lib/logs/generateFilterQuery';
+import { getGeneratedFilterQueryString } from 'lib/getGeneratedFilterQueryString';
 import { memo, useCallback, useMemo } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useHistory } from 'react-router-dom';
@@ -77,20 +77,15 @@ function LogsTable(props: LogsTableProps): JSX.Element {
 		[dispatch],
 	);
 
-	const handleQueryAdd = useCallback(
-		(fieldKey: string, fieldValue: string) => {
-			const generatedQuery = generateFilterQuery({
+	const handleAddToQuery = useCallback(
+		(fieldKey: string, fieldValue: string, operator: string) => {
+			const updatedQueryString = getGeneratedFilterQueryString(
 				fieldKey,
 				fieldValue,
-				type: 'IN',
-			});
+				operator,
+				queryString,
+			);
 
-			let updatedQueryString = queryString || '';
-			if (updatedQueryString.length === 0) {
-				updatedQueryString += `${generatedQuery}`;
-			} else {
-				updatedQueryString += ` AND ${generatedQuery}`;
-			}
 			history.replace(`${ROUTES.LOGS}?q=${updatedQueryString}`);
 		},
 		[history, queryString],
@@ -117,7 +112,7 @@ function LogsTable(props: LogsTableProps): JSX.Element {
 					logData={log}
 					selectedFields={selected}
 					onOpenDetailedView={handleOpenDetailedView}
-					onAddToQuery={handleQueryAdd}
+					onAddToQuery={handleAddToQuery}
 				/>
 			);
 		},
@@ -128,7 +123,7 @@ function LogsTable(props: LogsTableProps): JSX.Element {
 			linesPerRow,
 			onClickExpand,
 			handleOpenDetailedView,
-			handleQueryAdd,
+			handleAddToQuery,
 		],
 	);
 
