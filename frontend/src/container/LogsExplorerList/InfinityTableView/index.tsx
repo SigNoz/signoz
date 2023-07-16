@@ -1,16 +1,14 @@
-import { ColumnsType } from 'antd/es/table';
-import {
-	ColumnTypeRender,
-	UseTableViewResult,
-} from 'components/Logs/TableView/types';
+import { ColumnTypeRender } from 'components/Logs/TableView/types';
 import { useTableView } from 'components/Logs/TableView/useTableView';
+import { LOCALSTORAGE } from 'constants/localStorage';
 import useDragColumns from 'hooks/useDragColumns';
+import { getDraggedColumns } from 'hooks/useDragColumns/utils';
 import {
 	cloneElement,
 	ReactElement,
 	ReactNode,
 	useCallback,
-	useState,
+	useMemo,
 } from 'react';
 import { TableComponents, TableVirtuoso } from 'react-virtuoso';
 
@@ -34,28 +32,28 @@ const CustomTableRow: TableComponents['TableRow'] = ({
 function InfinityTable({
 	tableViewProps,
 	infitiyTableProps,
-	onColumnsChange,
 }: InfinityTableProps): JSX.Element | null {
 	const { onEndReached } = infitiyTableProps;
 	const { dataSource, columns } = useTableView(tableViewProps);
-	const handleDragColumn = useDragColumns(columns as ColumnsType);
+	const { draggedColumns, onDragColumns } = useDragColumns<
+		Record<string, unknown>
+	>(LOCALSTORAGE.LOGS_LIST_COLUMNS);
 
-	const [tableColumn, setTableColumns] = useState(columns);
+	const tableColumns = useMemo(
+		() => getDraggedColumns<Record<string, unknown>>(columns, draggedColumns),
+		[columns, draggedColumns],
+	);
 
 	const handleDragEnd = useCallback(
-		(fromIndex: number, toIndex: number): void => {
-			const columns = handleDragColumn(fromIndex, toIndex);
-
-			setTableColumns(columns as UseTableViewResult['columns']);
-			onColumnsChange(columns);
-		},
-		[onColumnsChange, handleDragColumn],
+		(fromIndex: number, toIndex: number) =>
+			onDragColumns(tableColumns, fromIndex, toIndex),
+		[tableColumns, onDragColumns],
 	);
 
 	const itemContent = useCallback(
 		(index: number, log: Record<string, unknown>): JSX.Element => (
 			<>
-				{tableColumn.map((column) => {
+				{tableColumns.map((column) => {
 					if (!column.render) return <td>Empty</td>;
 
 					const element: ColumnTypeRender<Record<string, unknown>> = column.render(
@@ -80,13 +78,13 @@ function InfinityTable({
 				})}
 			</>
 		),
-		[tableColumn],
+		[tableColumns],
 	);
 
 	const tableHeader = useCallback(
 		() => (
 			<tr>
-				{tableColumn.map((column) => {
+				{tableColumns.map((column) => {
 					const isDragColumn = column.key !== 'expand';
 
 					return (
@@ -102,7 +100,7 @@ function InfinityTable({
 				})}
 			</tr>
 		),
-		[tableColumn],
+		[tableColumns],
 	);
 
 	return (
