@@ -308,3 +308,6 @@ var StaticFieldsLogsV3 = map[string]v3.AttributeKey{
 const SigNozOrderByValue = "#SIGNOZ_VALUE"
 
 const TIMESTAMP = "timestamp"
+
+const FirstQueryGraphLimit = "first_query_graph_limit"
+const SecondQueryGraphLimit = "second_query_graph_limit"
