@@ -422,9 +422,17 @@ func PrepareMetricQuery(start, end int64, queryType v3.QueryType, panelType v3.P
 	var query string
 	var err error
 	if mq.Temporality == v3.Delta {
-		query, err = buildDeltaMetricQuery(start, end, mq.StepInterval, mq, constants.SIGNOZ_TIMESERIES_TABLENAME)
+		if panelType == v3.PanelTypeTable {
+			query, err = buildDeltaMetricQueryForTable(start, end, mq.StepInterval, mq, constants.SIGNOZ_TIMESERIES_TABLENAME)
+		} else {
+			query, err = buildDeltaMetricQuery(start, end, mq.StepInterval, mq, constants.SIGNOZ_TIMESERIES_TABLENAME)
+		}
 	} else {
-		query, err = buildMetricQuery(start, end, mq.StepInterval, mq, constants.SIGNOZ_TIMESERIES_TABLENAME)
+		if panelType == v3.PanelTypeTable {
+			query, err = buildMetricQueryForTable(start, end, mq.StepInterval, mq, constants.SIGNOZ_TIMESERIES_TABLENAME)
+		} else {
+			query, err = buildMetricQuery(start, end, mq.StepInterval, mq, constants.SIGNOZ_TIMESERIES_TABLENAME)
+		}
 	}
 	if err != nil {
 		return "", err
