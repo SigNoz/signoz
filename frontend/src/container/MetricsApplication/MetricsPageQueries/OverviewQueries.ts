@@ -21,7 +21,7 @@ import {
 export const latency = ({
 	servicename,
 	tagFilterItems,
-}: LetencyProps): QueryBuilderData => {
+}: LatencyProps): QueryBuilderData => {
 	const autocompleteData: BaseAutocompleteData[] = [
 		{
 			key: WidgetKeys.DurationNano,
@@ -246,7 +246,7 @@ export interface OperationPerSecProps {
 	topLevelOperations: string[];
 }
 
-export interface LetencyProps {
+interface LatencyProps {
 	servicename: string | undefined;
 	tagFilterItems: TagFilterItem[];
 }
