@@ -4161,7 +4161,7 @@ func readRowsForTimeSeriesResult(rows driver.Rows, vars []interface{}, columnNam
 	// ("order", "/fetch/{Id}")
 	// ("order", "/order")
 	seriesToPoints := make(map[string][]v3.Point)
-
+	var keys []string
 	// seriesToAttrs is a mapping of key to a map of attribute key to attribute value
 	// for each series. This is used to populate the series' attributes
 	// For instance, for the above example, the seriesToAttrs will be
@@ -4182,12 +4182,24 @@ func readRowsForTimeSeriesResult(rows driver.Rows, vars []interface{}, columnNam
 		groupBy, groupAttributes, metricPoint := readRow(vars, columnNames)
 		sort.Strings(groupBy)
 		key := strings.Join(groupBy, "")
+		keys = append(keys, key)
 		seriesToAttrs[key] = groupAttributes
 		seriesToPoints[key] = append(seriesToPoints[key], metricPoint)
 	}
 
+	// remove duplicates from keys array
+	encountered := map[string]bool{}
+	uniqKeys := []string{}
+
+	for _, element := range keys {
+		if encountered[element] == false {
+			encountered[element] = true
+			uniqKeys = append(uniqKeys, element)
+		}
+	}
+
 	var seriesList []*v3.Series
-	for key := range seriesToPoints {
+	for _, key := range uniqKeys {
 		points := seriesToPoints[key]
 
 		// find the grouping sets point for the series
