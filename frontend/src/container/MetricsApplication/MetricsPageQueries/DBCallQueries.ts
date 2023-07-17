@@ -4,6 +4,7 @@ import { TagFilterItem } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource, QueryBuilderData } from 'types/common/queryBuilder';
 
 import { DataType, FORMULA, MetricsType, WidgetKeys } from '../constant';
+import { IServiceName } from '../Tabs/types';
 import {
 	getQueryBuilderQueries,
 	getQueryBuilderQuerieswithFormula,
@@ -103,6 +104,6 @@ interface DatabaseCallsRPSProps extends DatabaseCallProps {
 }
 
 interface DatabaseCallProps {
-	servicename: string | undefined;
+	servicename: IServiceName['servicename'];
 	tagFilterItems: TagFilterItem[];
 }

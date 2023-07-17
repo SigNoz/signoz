@@ -11,6 +11,7 @@ import { v4 as uuid } from 'uuid';
 
 import { ClickHandlerType } from '../Overview';
 import { Button } from '../styles';
+import { IServiceName } from '../types';
 import { onViewTracePopupClick } from '../util';
 
 function ServiceOverview({
@@ -20,7 +21,7 @@ function ServiceOverview({
 	selectedTimeStamp,
 	tagFilterItems,
 }: ServiceOverviewProps): JSX.Element {
-	const { servicename } = useParams<{ servicename?: string }>();
+	const { servicename } = useParams<IServiceName>();
 
 	const latencyWidget = useMemo(
 		() =>

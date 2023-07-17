@@ -19,6 +19,7 @@ import { GraphTitle } from '../constant';
 import { getWidgetQueryBuilder } from '../MetricsApplication.factory';
 import { Card, GraphContainer, Row } from '../styles';
 import { Button } from './styles';
+import { IServiceName } from './types';
 import {
 	dbSystemTags,
 	handleNonInQueryRange,
@@ -27,7 +28,7 @@ import {
 } from './util';
 
 function DBCall(): JSX.Element {
-	const { servicename } = useParams<{ servicename?: string }>();
+	const { servicename } = useParams<IServiceName>();
 	const [selectedTimeStamp, setSelectedTimeStamp] = useState<number>(0);
 	const { queries } = useResourceAttribute();
 

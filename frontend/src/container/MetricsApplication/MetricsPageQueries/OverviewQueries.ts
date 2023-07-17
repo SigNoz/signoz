@@ -13,6 +13,7 @@ import {
 	QUERYNAME_AND_EXPRESSION,
 	WidgetKeys,
 } from '../constant';
+import { IServiceName } from '../Tabs/types';
 import {
 	getQueryBuilderQueries,
 	getQueryBuilderQuerieswithFormula,
@@ -241,12 +242,12 @@ export const errorPercentage = ({
 };
 
 export interface OperationPerSecProps {
-	servicename: string | undefined;
+	servicename: IServiceName['servicename'];
 	tagFilterItems: TagFilterItem[];
 	topLevelOperations: string[];
 }
 
-interface LatencyProps {
-	servicename: string | undefined;
+export interface LatencyProps {
+	servicename: IServiceName['servicename'];
 	tagFilterItems: TagFilterItem[];
 }

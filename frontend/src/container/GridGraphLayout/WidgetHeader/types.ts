@@ -20,6 +20,6 @@ export type TWidgetOptions =
 export type KeyMethodMappingProps<T extends TWidgetOptions> = {
 	[K in T]: {
 		key: TWidgetOptions;
-		method: VoidFunction | undefined;
+		method?: VoidFunction;
 	};
 };
