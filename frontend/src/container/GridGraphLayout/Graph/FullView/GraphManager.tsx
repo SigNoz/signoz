@@ -9,6 +9,7 @@ import isEqual from 'lodash-es/isEqual';
 import { memo, useEffect, useState } from 'react';
 
 import CheckBox from './CheckBox';
+import { ColumnsTitle, DataIndexAndKey } from './contants';
 import {
 	FilterTableAndSaveContainer,
 	FilterTableContainer,
@@ -132,40 +133,40 @@ function GraphManager({
 		{
 			title: '',
 			width: 50,
-			dataIndex: 'index',
-			key: 'index',
+			dataIndex: DataIndexAndKey.Index,
+			key: DataIndexAndKey.Index,
 			render: (index: number): JSX.Element => getCheckBox(index),
 		},
 		{
-			title: 'Legend',
+			title: ColumnsTitle.Legend,
 			width: 300,
-			dataIndex: 'label',
-			key: 'label',
+			dataIndex: DataIndexAndKey.Label,
+			key: DataIndexAndKey.Label,
 			render: (label: string, _, index): JSX.Element => getLabel(label, index),
 		},
 		{
-			title: 'Avg',
+			title: ColumnsTitle.Avg,
 			width: 70,
-			dataIndex: 'avg',
-			key: 'avg',
+			dataIndex: DataIndexAndKey.Avg,
+			key: DataIndexAndKey.Avg,
 		},
 		{
-			title: 'Sum',
+			title: ColumnsTitle.Sum,
 			width: 70,
-			dataIndex: 'sum',
-			key: 'sum',
+			dataIndex: DataIndexAndKey.Sum,
+			key: DataIndexAndKey.Sum,
 		},
 		{
-			title: 'Max',
+			title: ColumnsTitle.Max,
 			width: 70,
-			dataIndex: 'max',
-			key: 'max',
+			dataIndex: DataIndexAndKey.Max,
+			key: DataIndexAndKey.Max,
 		},
 		{
-			title: 'Min',
+			title: ColumnsTitle.Min,
 			width: 70,
-			dataIndex: 'min',
-			key: 'min',
+			dataIndex: DataIndexAndKey.Min,
+			key: DataIndexAndKey.Min,
 		},
 	];
 
