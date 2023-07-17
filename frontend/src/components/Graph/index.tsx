@@ -1,11 +1,8 @@
 import {
-	ActiveElement,
 	BarController,
 	BarElement,
 	CategoryScale,
 	Chart,
-	ChartData,
-	ChartEvent,
 	ChartOptions,
 	ChartType,
 	Decimation,
@@ -53,6 +50,11 @@ import {
 } from './Plugin/IntersectionCursor';
 import { TooltipPosition as TooltipPositionHandler } from './Plugin/Tooltip';
 import { LegendsContainer } from './styles';
+import {
+	GraphOnClickHandler,
+	StaticLineProps,
+	ToggleGraphProps,
+} from './types';
 import { toggleGraph } from './utils';
 import { useXAxisTimeUnit } from './xAxisConfig';
 import { getToolTipValue, getYAxisFormattedValue } from './yAxisConfig';
@@ -367,7 +369,7 @@ type CustomChartOptions = ChartOptions & {
 	};
 };
 
-export interface GraphProps {
+interface GraphProps {
 	animate?: boolean;
 	type: ChartType;
 	data: Chart['data'];
@@ -382,26 +384,6 @@ export interface GraphProps {
 	onDragSelect?: (start: number, end: number) => void;
 	dragSelectColor?: string;
 }
-
-export interface StaticLineProps {
-	yMin: number | undefined;
-	yMax: number | undefined;
-	borderColor: string;
-	borderWidth: number;
-	lineText: string;
-	textColor: string;
-}
-
-export type GraphOnClickHandler = (
-	event: ChartEvent,
-	elements: ActiveElement[],
-	chart: Chart,
-	data: ChartData,
-) => void;
-
-export type ToggleGraphProps = {
-	toggleGraph(graphIndex: number, isVisible: boolean): void;
-};
 
 Graph.defaultProps = {
 	animate: undefined,
