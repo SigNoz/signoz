@@ -1,4 +1,19 @@
-import { ActiveElement, Chart, ChartData, ChartEvent } from 'chart.js';
+import {
+	ActiveElement,
+	Chart,
+	ChartData,
+	ChartEvent,
+	ChartOptions,
+} from 'chart.js';
+
+import {
+	dragSelectPluginId,
+	DragSelectPluginOptions,
+} from './Plugin/DragSelect';
+import {
+	intersectionCursorPluginId,
+	IntersectionCursorPluginOptions,
+} from './Plugin/IntersectionCursor';
 
 export interface StaticLineProps {
 	yMin: number | undefined;
@@ -18,4 +33,11 @@ export type GraphOnClickHandler = (
 
 export type ToggleGraphProps = {
 	toggleGraph(graphIndex: number, isVisible: boolean): void;
+};
+
+export type CustomChartOptions = ChartOptions & {
+	plugins: {
+		[dragSelectPluginId]: DragSelectPluginOptions | false;
+		[intersectionCursorPluginId]: IntersectionCursorPluginOptions | false;
+	};
 };
