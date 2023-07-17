@@ -61,7 +61,7 @@ function ServiceOverview({
 						name="service_latency"
 						onDragSelect={onDragSelect}
 						widget={latencyWidget}
-						yAxisUnit="ms"
+						yAxisUnit="ns"
 						onClickHandler={handleGraphClick('Service')}
 						allowClone={false}
 						allowDelete={false}
