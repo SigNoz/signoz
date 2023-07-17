@@ -39,6 +39,9 @@ function TopLevelOperation({
 							onClickHandler={handleGraphClick(opName)}
 							yAxisUnit={yAxisUnit}
 							onDragSelect={onDragSelect}
+							allowClone={false}
+							allowDelete={false}
+							allowEdit={false}
 						/>
 					)}
 				</GraphContainer>

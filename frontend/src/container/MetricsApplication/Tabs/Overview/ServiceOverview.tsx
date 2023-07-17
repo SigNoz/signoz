@@ -62,6 +62,9 @@ function ServiceOverview({
 						widget={latencyWidget}
 						yAxisUnit="ms"
 						onClickHandler={handleGraphClick('Service')}
+						allowClone={false}
+						allowDelete={false}
+						allowEdit={false}
 					/>
 				</GraphContainer>
 			</Card>

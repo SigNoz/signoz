@@ -48,7 +48,6 @@ import WidgetHeader from '../WidgetHeader';
 import FullView from './FullView/index.metricsBuilder';
 import { FullViewContainer, Modal } from './styles';
 
-// eslint-disable-next-line sonarjs/cognitive-complexity
 function GridCardGraph({
 	widget,
 	deleteWidget,
@@ -58,6 +57,9 @@ function GridCardGraph({
 	setLayout,
 	onDragSelect,
 	onClickHandler,
+	allowDelete,
+	allowClone,
+	allowEdit,
 }: GridCardGraphProps): JSX.Element {
 	const { ref: graphRef, inView: isGraphVisible } = useInView({
 		threshold: 0,
@@ -264,6 +266,9 @@ function GridCardGraph({
 								onClone={onCloneHandler}
 								queryResponse={queryResponse}
 								errorMessage={errorMessage}
+								allowClone={allowClone}
+								allowDelete={allowDelete}
+								allowEdit={allowEdit}
 							/>
 						</div>
 						<GridGraphComponent
@@ -297,6 +302,9 @@ function GridCardGraph({
 								onClone={onCloneHandler}
 								queryResponse={queryResponse}
 								errorMessage={errorMessage}
+								allowClone={allowClone}
+								allowDelete={allowDelete}
+								allowEdit={allowEdit}
 							/>
 						</div>
 						<GridGraphComponent
@@ -344,6 +352,9 @@ function GridCardGraph({
 						onClone={onCloneHandler}
 						queryResponse={queryResponse}
 						errorMessage={errorMessage}
+						allowClone={allowClone}
+						allowDelete={allowDelete}
+						allowEdit={allowEdit}
 					/>
 				</div>
 			)}
@@ -385,11 +396,17 @@ interface GridCardGraphProps extends DispatchProps {
 	setLayout?: Dispatch<SetStateAction<LayoutProps[]>>;
 	onDragSelect?: (start: number, end: number) => void;
 	onClickHandler?: GraphOnClickHandler;
+	allowDelete?: boolean;
+	allowClone?: boolean;
+	allowEdit?: boolean;
 }
 
 GridCardGraph.defaultProps = {
 	onDragSelect: undefined,
 	onClickHandler: undefined,
+	allowDelete: undefined,
+	allowClone: undefined,
+	allowEdit: undefined,
 };
 
 const mapDispatchToProps = (
