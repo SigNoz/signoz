@@ -2522,6 +2522,7 @@ func (aH *APIHandler) execClickHouseGraphQueries(ctx context.Context, queries ma
 		wg.Add(1)
 		go func(name, query string) {
 			defer wg.Done()
+
 			seriesList, err := aH.reader.GetTimeSeriesResultV3(ctx, query)
 
 			if err != nil {
