@@ -55,6 +55,8 @@ type ThresholdRule struct {
 	queryBuilder *queryBuilder.QueryBuilder
 
 	opts ThresholdRuleOpts
+
+	lastTimestampWithDatapoints time.Time
 }
 
 type ThresholdRuleOpts struct {
@@ -430,6 +432,7 @@ func (r *ThresholdRule) runChQuery(ctx context.Context, db clickhouse.Conn, quer
 		if err := rows.Scan(vars...); err != nil {
 			return nil, err
 		}
+		r.lastTimestampWithDatapoints = time.Now()
 
 		sample := Sample{}
 		lbls := labels.NewBuilder(labels.Labels{})
@@ -552,6 +555,18 @@ func (r *ThresholdRule) runChQuery(ctx context.Context, db clickhouse.Conn, quer
 		}
 	}
 	zap.S().Debugf("ruleid:", r.ID(), "\t resultmap(potential alerts):", len(resultMap))
+
+	// if the data is missing for `For` duration then we should send alert
+	if r.lastTimestampWithDatapoints.Add(r.Condition().For).Before(time.Now()) {
+		zap.S().Debugf("ruleid:", r.ID(), "\t msg: no data found for rule condition")
+		lbls := labels.NewBuilder(labels.Labels{})
+		lbls.Set("lastSeen", r.lastTimestampWithDatapoints.Format("2006-01-02 15:04:05"))
+
+		resultMap[lbls.Labels().Hash()] = Sample{
+			Metric:    lbls.Labels(),
+			IsMissing: true,
+		}
+	}
 
 	for _, sample := range resultMap {
 		// check alert rule condition before dumping results, if sendUnmatchedResults

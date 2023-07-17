@@ -142,6 +142,8 @@ type RuleCondition struct {
 	CompositeQuery *v3.CompositeQuery `json:"compositeQuery,omitempty" yaml:"compositeQuery,omitempty"`
 	CompareOp      CompareOp          `yaml:"op,omitempty" json:"op,omitempty"`
 	Target         *float64           `yaml:"target,omitempty" json:"target,omitempty"`
+	AlertOnAbsent  bool               `yaml:"alertOnAbsent,omitempty" json:"alertOnAbsent,omitempty"`
+	For            time.Duration      `yaml:"for,omitempty" json:"for,omitempty"`
 	MatchType      `json:"matchType,omitempty"`
 }
 

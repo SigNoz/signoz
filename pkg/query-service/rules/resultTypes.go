@@ -15,7 +15,8 @@ type Vector []Sample
 type Sample struct {
 	Point
 
-	Metric labels.Labels
+	Metric    labels.Labels
+	IsMissing bool
 }
 
 func (s Sample) String() string {
