@@ -34,7 +34,7 @@ import {
 	HeaderContentContainer,
 } from './styles';
 import { KeyMethodMappingProps, MenuItem, TWidgetOptions } from './types';
-import { generateMenuList } from './utils';
+import { generateMenuList, isTWidgetOptions } from './utils';
 
 interface IWidgetHeaderProps {
 	title: string;
@@ -101,11 +101,13 @@ function WidgetHeader({
 	);
 
 	const onMenuItemSelectHandler: MenuProps['onClick'] = useCallback(
-		({ key }: { key: TWidgetOptions }): void => {
-			const functionToCall = keyMethodMapping[key]?.method;
-			if (functionToCall) {
-				functionToCall();
-				setIsOpen(false);
+		({ key }: { key: string }): void => {
+			if (isTWidgetOptions(key)) {
+				const functionToCall = keyMethodMapping[key]?.method;
+				if (functionToCall) {
+					functionToCall();
+					setIsOpen(false);
+				}
 			}
 		},
 		[keyMethodMapping],

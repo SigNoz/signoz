@@ -1,5 +1,6 @@
 import { MenuItemType } from 'antd/es/menu/hooks/useItems';
 
+import { MenuItemKeys } from './contants';
 import { KeyMethodMappingProps, MenuItem, TWidgetOptions } from './types';
 
 export const generateMenuList = (
@@ -15,3 +16,9 @@ export const generateMenuList = (
 			disabled,
 			...rest,
 		}));
+
+export const isTWidgetOptions = (value: string): value is TWidgetOptions =>
+	value === MenuItemKeys.View ||
+	value === MenuItemKeys.Edit ||
+	value === MenuItemKeys.Delete ||
+	value === MenuItemKeys.Clone;
