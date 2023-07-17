@@ -20,6 +20,7 @@ import { GraphTitle, legend } from '../constant';
 import { getWidgetQueryBuilder } from '../MetricsApplication.factory';
 import { Card, GraphContainer, Row } from '../styles';
 import { Button } from './styles';
+import { IServiceName } from './types';
 import {
 	handleNonInQueryRange,
 	onGraphClickHandler,
@@ -29,7 +30,7 @@ import {
 function External(): JSX.Element {
 	const [selectedTimeStamp, setSelectedTimeStamp] = useState<number>(0);
 
-	const { servicename } = useParams<{ servicename?: string }>();
+	const { servicename } = useParams<IServiceName>();
 	const { queries } = useResourceAttribute();
 
 	const tagFilterItems = useMemo(
