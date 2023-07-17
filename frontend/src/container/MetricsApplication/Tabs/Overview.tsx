@@ -34,6 +34,7 @@ import ServiceOverview from './Overview/ServiceOverview';
 import TopLevelOperation from './Overview/TopLevelOperations';
 import TopOperation from './Overview/TopOperation';
 import { Button } from './styles';
+import { IServiceName } from './types';
 import {
 	handleNonInQueryRange,
 	onGraphClickHandler,
@@ -44,7 +45,7 @@ function Application(): JSX.Element {
 	const { maxTime, minTime } = useSelector<AppState, GlobalReducer>(
 		(state) => state.globalTime,
 	);
-	const { servicename } = useParams<{ servicename?: string }>();
+	const { servicename } = useParams<IServiceName>();
 	const [selectedTimeStamp, setSelectedTimeStamp] = useState<number>(0);
 	const { search } = useLocation();
 	const { queries } = useResourceAttribute();
@@ -83,7 +84,7 @@ function Application(): JSX.Element {
 		isError: topLevelOperationsIsError,
 	} = useQuery<ServiceDataProps>({
 		queryKey: [servicename, minTime, maxTime, selectedTags],
-		queryFn: (): Promise<ServiceDataProps> => getTopLevelOperations(),
+		queryFn: getTopLevelOperations,
 	});
 
 	const selectedTraceTags: string = JSON.stringify(
