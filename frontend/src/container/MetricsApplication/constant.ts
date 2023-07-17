@@ -23,11 +23,6 @@ export enum GraphTitle {
 	EXTERNAL_CALL_DURATION_BY_ADDRESS = 'External Call duration(by Address)',
 }
 
-export enum OPERATOR {
-	EQUAL = '=',
-	IN = 'IN',
-}
-
 export enum DataType {
 	STRING = 'string',
 	FLOAT64 = 'float64',

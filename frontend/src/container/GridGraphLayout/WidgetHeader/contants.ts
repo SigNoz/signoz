@@ -5,9 +5,9 @@ export enum MenuItemKeys {
 	Clone = 'clone',
 }
 
-export enum MenuItemLabels {
-	View = 'View',
-	Edit = 'Edit',
-	Delete = 'Delete',
-	Clone = 'Clone',
-}
+export const MENUITEM_KEYS_VS_LABELS = {
+	[MenuItemKeys.View]: 'View',
+	[MenuItemKeys.Edit]: 'Edit',
+	[MenuItemKeys.Delete]: 'Delete',
+	[MenuItemKeys.Clone]: 'Clone',
+};

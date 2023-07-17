@@ -15,6 +15,7 @@ export type TWidgetOptions =
 	| MenuItemKeys.View
 	| MenuItemKeys.Edit
 	| MenuItemKeys.Delete
+	| MenuItemKeys.Clone
 	| string;
 
 export type KeyMethodMappingProps<T extends TWidgetOptions> = {

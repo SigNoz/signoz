@@ -32,15 +32,14 @@ import {
 } from 'store/actions/dashboard/deleteWidget';
 import { AppState } from 'store/reducers';
 import AppActions from 'types/actions';
-import {
-	Dashboard,
-	DashboardData,
-	IDashboardVariable,
-	Widgets,
-} from 'types/api/dashboard/getAll';
+import { Widgets } from 'types/api/dashboard/getAll';
 import AppReducer from 'types/reducer/app';
 import DashboardReducer from 'types/reducer/dashboards';
 import { GlobalReducer } from 'types/reducer/globalTime';
+import {
+	getSelectedDashboard,
+	getSelectedDashboardVariable,
+} from 'utils/dashboard/selectedDashboard';
 import { v4 } from 'uuid';
 
 import { LayoutProps } from '..';
@@ -86,14 +85,8 @@ function GridCardGraph({
 		(state) => state.dashboards,
 	);
 
-	let selectedDashboard: Dashboard | undefined;
-	let selectedData: DashboardData | undefined;
-	let variables: Record<string, IDashboardVariable> | undefined;
-	if (dashboards.length > 0) {
-		[selectedDashboard] = dashboards;
-		selectedData = selectedDashboard?.data;
-		variables = selectedData.variables;
-	}
+	const selectedDashboard = getSelectedDashboard(dashboards);
+	const variables = getSelectedDashboardVariable(dashboards);
 
 	const updatedQuery = useStepInterval(widget?.query);
 
@@ -117,7 +110,7 @@ function GridCardGraph({
 				maxTime,
 				minTime,
 				globalSelectedInterval,
-				variables || {},
+				variables,
 			],
 			keepPreviousData: true,
 			enabled: isGraphVisible && !isEmptyWidget,

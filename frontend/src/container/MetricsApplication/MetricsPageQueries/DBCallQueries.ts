@@ -1,14 +1,9 @@
+import { OPERATORS } from 'constants/queryBuilder';
 import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { TagFilterItem } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource, QueryBuilderData } from 'types/common/queryBuilder';
 
-import {
-	DataType,
-	FORMULA,
-	MetricsType,
-	OPERATOR,
-	WidgetKeys,
-} from '../constant';
+import { DataType, FORMULA, MetricsType, WidgetKeys } from '../constant';
 import {
 	getQueryBuilderQueries,
 	getQueryBuilderQuerieswithFormula,
@@ -40,7 +35,7 @@ export const databaseCallsRPS = ({
 					isColumn: false,
 					type: MetricsType.Resource,
 				},
-				op: OPERATOR.IN,
+				op: OPERATORS.IN,
 				value: [`${servicename}`],
 			},
 			...tagFilterItems,
@@ -84,7 +79,7 @@ export const databaseCallsAvgDuration = ({
 				isColumn: false,
 				type: MetricsType.Resource,
 			},
-			op: OPERATOR.IN,
+			op: OPERATORS.IN,
 			value: [`${servicename}`],
 		},
 		...tagFilterItems,

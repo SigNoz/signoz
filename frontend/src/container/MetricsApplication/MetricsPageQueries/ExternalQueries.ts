@@ -1,14 +1,9 @@
+import { OPERATORS } from 'constants/queryBuilder';
 import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { TagFilterItem } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource, QueryBuilderData } from 'types/common/queryBuilder';
 
-import {
-	DataType,
-	FORMULA,
-	MetricsType,
-	OPERATOR,
-	WidgetKeys,
-} from '../constant';
+import { DataType, FORMULA, MetricsType, WidgetKeys } from '../constant';
 import {
 	getQueryBuilderQueries,
 	getQueryBuilderQuerieswithFormula,
@@ -49,7 +44,7 @@ export const externalCallErrorPercent = ({
 				isColumn: false,
 				type: MetricsType.Resource,
 			},
-			op: OPERATOR.IN,
+			op: OPERATORS.IN,
 			value: [`${servicename}`],
 		},
 		{
@@ -60,7 +55,7 @@ export const externalCallErrorPercent = ({
 				isColumn: false,
 				type: MetricsType.Tag,
 			},
-			op: OPERATOR.IN,
+			op: OPERATORS.IN,
 			value: ['STATUS_CODE_ERROR'],
 		},
 		...tagFilterItems,
@@ -74,7 +69,7 @@ export const externalCallErrorPercent = ({
 				isColumn: false,
 				type: MetricsType.Resource,
 			},
-			op: OPERATOR.IN,
+			op: OPERATORS.IN,
 			value: [`${servicename}`],
 		},
 		...tagFilterItems,
@@ -124,7 +119,7 @@ export const externalCallDuration = ({
 				key: WidgetKeys.Service_name,
 				type: MetricsType.Resource,
 			},
-			op: OPERATOR.IN,
+			op: OPERATORS.IN,
 			value: [`${servicename}`],
 		},
 		...tagFilterItems,
@@ -166,7 +161,7 @@ export const externalCallRpsByAddress = ({
 					key: WidgetKeys.Service_name,
 					type: MetricsType.Resource,
 				},
-				op: OPERATOR.IN,
+				op: OPERATORS.IN,
 				value: [`${servicename}`],
 			},
 			...tagFilterItems,
@@ -212,7 +207,7 @@ export const externalCallDurationByAddress = ({
 				key: WidgetKeys.Service_name,
 				type: MetricsType.Resource,
 			},
-			op: OPERATOR.IN,
+			op: OPERATORS.IN,
 			value: [`${servicename}`],
 		},
 		...tagFilterItems,

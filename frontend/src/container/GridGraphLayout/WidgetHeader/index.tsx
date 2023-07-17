@@ -27,7 +27,7 @@ import {
 	spinnerStyles,
 	tooltipStyles,
 } from './config';
-import { MenuItemKeys, MenuItemLabels } from './contants';
+import { MENUITEM_KEYS_VS_LABELS, MenuItemKeys } from './contants';
 import {
 	ArrowContainer,
 	HeaderContainer,
@@ -122,28 +122,28 @@ function WidgetHeader({
 			{
 				key: MenuItemKeys.View,
 				icon: <FullscreenOutlined />,
-				label: MenuItemLabels.View,
+				label: MENUITEM_KEYS_VS_LABELS[MenuItemKeys.View],
 				isVisible: true,
 				disabled: queryResponse.isLoading,
 			},
 			{
 				key: MenuItemKeys.Edit,
 				icon: <EditFilled />,
-				label: MenuItemLabels.Edit,
+				label: MENUITEM_KEYS_VS_LABELS[MenuItemKeys.Edit],
 				isVisible: allowEdit,
 				disabled: !editWidget,
 			},
 			{
 				key: MenuItemKeys.Clone,
 				icon: <CopyOutlined />,
-				label: MenuItemLabels.Clone,
+				label: MENUITEM_KEYS_VS_LABELS[MenuItemKeys.Clone],
 				isVisible: allowClone,
 				disabled: !editWidget,
 			},
 			{
 				key: MenuItemKeys.Delete,
 				icon: <DeleteOutlined />,
-				label: MenuItemLabels.Delete,
+				label: MENUITEM_KEYS_VS_LABELS[MenuItemKeys.Delete],
 				isVisible: allowDelete,
 				disabled: !deleteWidget,
 				danger: true,
@@ -217,9 +217,9 @@ function WidgetHeader({
 WidgetHeader.defaultProps = {
 	onDelete: undefined,
 	onClone: undefined,
-	allowDelete: undefined,
-	allowClone: undefined,
-	allowEdit: undefined,
+	allowDelete: true,
+	allowClone: true,
+	allowEdit: true,
 };
 
 export default WidgetHeader;

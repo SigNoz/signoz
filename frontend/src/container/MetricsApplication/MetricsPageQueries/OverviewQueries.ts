@@ -1,3 +1,4 @@
+import { OPERATORS } from 'constants/queryBuilder';
 import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { TagFilterItem } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource, QueryBuilderData } from 'types/common/queryBuilder';
@@ -9,7 +10,6 @@ import {
 	LETENCY_LEGENDS_AGGREGATEOPERATOR,
 	MetricsType,
 	OPERATION_LEGENDS,
-	OPERATOR,
 	QUERYNAME_AND_EXPRESSION,
 	WidgetKeys,
 } from '../constant';
@@ -53,7 +53,7 @@ export const letency = ({
 					type: MetricsType.Tag,
 					isColumn: true,
 				},
-				op: OPERATOR.EQUAL,
+				op: OPERATORS['='],
 				value: `${servicename}`,
 			},
 			...tagFilterItems,
@@ -67,7 +67,7 @@ export const letency = ({
 					type: MetricsType.Tag,
 					isColumn: true,
 				},
-				op: OPERATOR.EQUAL,
+				op: OPERATORS['='],
 				value: `${servicename}`,
 			},
 			...tagFilterItems,
@@ -81,7 +81,7 @@ export const letency = ({
 					type: MetricsType.Tag,
 					isColumn: true,
 				},
-				op: OPERATOR.EQUAL,
+				op: OPERATORS['='],
 				value: `${servicename}`,
 			},
 			...tagFilterItems,
@@ -122,7 +122,7 @@ export const operationPerSec = ({
 					isColumn: false,
 					type: MetricsType.Resource,
 				},
-				op: OPERATOR.IN,
+				op: OPERATORS.IN,
 				value: [`${servicename}`],
 			},
 			{
@@ -133,7 +133,7 @@ export const operationPerSec = ({
 					isColumn: false,
 					type: MetricsType.Tag,
 				},
-				op: OPERATOR.IN,
+				op: OPERATORS.IN,
 				value: topLevelOperations,
 			},
 			...tagFilterItems,
@@ -174,7 +174,7 @@ export const errorPercentage = ({
 				isColumn: false,
 				type: MetricsType.Resource,
 			},
-			op: OPERATOR.IN,
+			op: OPERATORS.IN,
 			value: [`${servicename}`],
 		},
 		{
@@ -185,7 +185,7 @@ export const errorPercentage = ({
 				isColumn: false,
 				type: MetricsType.Tag,
 			},
-			op: OPERATOR.IN,
+			op: OPERATORS.IN,
 			value: topLevelOperations,
 		},
 		{
@@ -196,7 +196,7 @@ export const errorPercentage = ({
 				isColumn: false,
 				type: MetricsType.Tag,
 			},
-			op: OPERATOR.IN,
+			op: OPERATORS.IN,
 			value: ['STATUS_CODE_ERROR'],
 		},
 		...tagFilterItems,
@@ -211,7 +211,7 @@ export const errorPercentage = ({
 				isColumn: false,
 				type: MetricsType.Resource,
 			},
-			op: OPERATOR.IN,
+			op: OPERATORS.IN,
 			value: [`${servicename}`],
 		},
 		{
@@ -222,7 +222,7 @@ export const errorPercentage = ({
 				isColumn: false,
 				type: MetricsType.Tag,
 			},
-			op: OPERATOR.IN,
+			op: OPERATORS.IN,
 			value: topLevelOperations,
 		},
 		...tagFilterItems,
