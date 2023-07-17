@@ -1,10 +1,11 @@
 import { Typography } from 'antd';
 import { ChartData } from 'chart.js';
-import Graph, {
+import Graph from 'components/Graph';
+import {
 	GraphOnClickHandler,
 	StaticLineProps,
 	ToggleGraphProps,
-} from 'components/Graph';
+} from 'components/Graph/types';
 import { getYAxisFormattedValue } from 'components/Graph/yAxisConfig';
 import ValueGraph from 'components/ValueGraph';
 import { PANEL_TYPES } from 'constants/queryBuilder';

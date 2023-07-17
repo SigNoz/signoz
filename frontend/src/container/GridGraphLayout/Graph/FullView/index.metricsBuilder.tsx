@@ -1,5 +1,5 @@
 import { Button } from 'antd';
-import { GraphOnClickHandler } from 'components/Graph';
+import { GraphOnClickHandler } from 'components/Graph/types';
 import Spinner from 'components/Spinner';
 import TimePreference from 'components/TimePreferenceDropDown';
 import GridGraphComponent from 'container/GridGraphComponent';
