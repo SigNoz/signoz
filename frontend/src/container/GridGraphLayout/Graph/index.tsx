@@ -404,9 +404,9 @@ interface GridCardGraphProps extends DispatchProps {
 GridCardGraph.defaultProps = {
 	onDragSelect: undefined,
 	onClickHandler: undefined,
-	allowDelete: undefined,
-	allowClone: undefined,
-	allowEdit: undefined,
+	allowDelete: true,
+	allowClone: true,
+	allowEdit: true,
 };
 
 const mapDispatchToProps = (
