@@ -512,7 +512,7 @@ func PrepareTracesQuery(start, end int64, panelType v3.PanelType, mq *v3.Builder
 	if panelType == v3.PanelTypeValue {
 		query, err = reduceToQuery(query, mq.ReduceTo, mq.AggregateOperator)
 	}
-	if panelType == v3.PanelTypeList || panelType == v3.PanelTypeTrace {
+	if panelType == v3.PanelTypeList || panelType == v3.PanelTypeTable {
 		query = addLimitToQuery(query, mq.Limit)
 
 		if mq.Offset != 0 {
