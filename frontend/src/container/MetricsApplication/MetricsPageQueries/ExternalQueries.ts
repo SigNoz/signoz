@@ -23,13 +23,13 @@ export const externalCallErrorPercent = ({
 	legend,
 	tagFilterItems,
 }: ExternalCallDurationByAddressProps): QueryBuilderData => {
-	const metricNameA: BaseAutocompleteData = {
+	const autocompleteDataA: BaseAutocompleteData = {
 		key: WidgetKeys.SignozExternalCallLatencyCount,
 		dataType: DataType.FLOAT64,
 		isColumn: true,
 		type: null,
 	};
-	const metricNameB: BaseAutocompleteData = {
+	const autocompleteDataB: BaseAutocompleteData = {
 		key: WidgetKeys.SignozExternalCallLatencyCount,
 		dataType: DataType.FLOAT64,
 		isColumn: true,
@@ -78,8 +78,8 @@ export const externalCallErrorPercent = ({
 	const expression = FORMULA.ERROR_PERCENTAGE;
 	const disabled = true;
 	return getQueryBuilderQuerieswithFormula({
-		metricNameA,
-		metricNameB,
+		autocompleteDataA,
+		autocompleteDataB,
 		additionalItemsA,
 		additionalItemsB,
 		legend,
@@ -94,13 +94,13 @@ export const externalCallDuration = ({
 	servicename,
 	tagFilterItems,
 }: ExternalCallProps): QueryBuilderData => {
-	const metricNameA: BaseAutocompleteData = {
+	const autocompleteDataA: BaseAutocompleteData = {
 		dataType: DataType.FLOAT64,
 		isColumn: true,
 		key: WidgetKeys.SignozExternalCallLatencySum,
 		type: null,
 	};
-	const metricNameB: BaseAutocompleteData = {
+	const autocompleteDataB: BaseAutocompleteData = {
 		dataType: DataType.FLOAT64,
 		isColumn: true,
 		key: WidgetKeys.SignozExternalCallLatencyCount,
@@ -127,8 +127,8 @@ export const externalCallDuration = ({
 	const additionalItemsB = additionalItemsA;
 
 	return getQueryBuilderQuerieswithFormula({
-		metricNameA,
-		metricNameB,
+		autocompleteDataA,
+		autocompleteDataB,
 		additionalItemsA,
 		additionalItemsB,
 		legend,
@@ -143,7 +143,7 @@ export const externalCallRpsByAddress = ({
 	legend,
 	tagFilterItems,
 }: ExternalCallDurationByAddressProps): QueryBuilderData => {
-	const metricNames: BaseAutocompleteData[] = [
+	const autocompleteData: BaseAutocompleteData[] = [
 		{
 			dataType: DataType.FLOAT64,
 			isColumn: true,
@@ -170,7 +170,7 @@ export const externalCallRpsByAddress = ({
 
 	const legends: string[] = [legend];
 	return getQueryBuilderQueries({
-		metricNames,
+		autocompleteData,
 		groupBy,
 		legends,
 		filterItems,
@@ -183,13 +183,13 @@ export const externalCallDurationByAddress = ({
 	legend,
 	tagFilterItems,
 }: ExternalCallDurationByAddressProps): QueryBuilderData => {
-	const metricNameA: BaseAutocompleteData = {
+	const autocompleteDataA: BaseAutocompleteData = {
 		dataType: DataType.FLOAT64,
 		isColumn: true,
 		key: WidgetKeys.SignozExternalCallLatencySum,
 		type: null,
 	};
-	const metricNameB: BaseAutocompleteData = {
+	const autocompleteDataB: BaseAutocompleteData = {
 		dataType: DataType.FLOAT64,
 		isColumn: true,
 		key: WidgetKeys.SignozExternalCallLatencyCount,
@@ -215,8 +215,8 @@ export const externalCallDurationByAddress = ({
 	const additionalItemsB = additionalItemsA;
 
 	return getQueryBuilderQuerieswithFormula({
-		metricNameA,
-		metricNameB,
+		autocompleteDataA,
+		autocompleteDataB,
 		additionalItemsA,
 		additionalItemsB,
 		legend,

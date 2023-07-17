@@ -1,7 +1,7 @@
 import Graph from 'container/GridGraphLayout/Graph/';
 import { GraphTitle } from 'container/MetricsApplication/constant';
 import { getWidgetQueryBuilder } from 'container/MetricsApplication/MetricsApplication.factory';
-import { letency } from 'container/MetricsApplication/MetricsPageQueries/OverviewQueries';
+import { latency } from 'container/MetricsApplication/MetricsPageQueries/OverviewQueries';
 import { Card, GraphContainer } from 'container/MetricsApplication/styles';
 import { useMemo } from 'react';
 import { useParams } from 'react-router-dom';
@@ -28,7 +28,7 @@ function ServiceOverview({
 				{
 					queryType: EQueryType.QUERY_BUILDER,
 					promql: [],
-					builder: letency({
+					builder: latency({
 						servicename,
 						tagFilterItems,
 					}),

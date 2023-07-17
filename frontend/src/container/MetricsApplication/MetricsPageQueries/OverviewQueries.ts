@@ -18,11 +18,11 @@ import {
 	getQueryBuilderQuerieswithFormula,
 } from './MetricsPageQueriesFactory';
 
-export const letency = ({
+export const latency = ({
 	servicename,
 	tagFilterItems,
 }: LetencyProps): QueryBuilderData => {
-	const metricNames: BaseAutocompleteData[] = [
+	const autocompleteData: BaseAutocompleteData[] = [
 		{
 			key: WidgetKeys.DurationNano,
 			dataType: DataType.FLOAT64,
@@ -89,7 +89,7 @@ export const letency = ({
 	];
 
 	return getQueryBuilderQueries({
-		metricNames,
+		autocompleteData,
 		legends: LETENCY_LEGENDS_AGGREGATEOPERATOR,
 		filterItems,
 		aggregateOperator: LETENCY_LEGENDS_AGGREGATEOPERATOR,
@@ -103,7 +103,7 @@ export const operationPerSec = ({
 	tagFilterItems,
 	topLevelOperations,
 }: OperationPerSecProps): QueryBuilderData => {
-	const metricNames: BaseAutocompleteData[] = [
+	const autocompleteData: BaseAutocompleteData[] = [
 		{
 			key: WidgetKeys.SignozLatencyCount,
 			dataType: DataType.FLOAT64,
@@ -141,7 +141,7 @@ export const operationPerSec = ({
 	];
 
 	return getQueryBuilderQueries({
-		metricNames,
+		autocompleteData,
 		legends: OPERATION_LEGENDS,
 		filterItems,
 		dataSource: DataSource.METRICS,
@@ -153,13 +153,13 @@ export const errorPercentage = ({
 	tagFilterItems,
 	topLevelOperations,
 }: OperationPerSecProps): QueryBuilderData => {
-	const metricNameA: BaseAutocompleteData = {
+	const autocompleteDataA: BaseAutocompleteData = {
 		key: WidgetKeys.SignozCallsTotal,
 		dataType: DataType.FLOAT64,
 		isColumn: true,
 		type: null,
 	};
-	const metricNameB: BaseAutocompleteData = {
+	const autocompleteDataB: BaseAutocompleteData = {
 		key: WidgetKeys.SignozCallsTotal,
 		dataType: DataType.FLOAT64,
 		isColumn: true,
@@ -229,8 +229,8 @@ export const errorPercentage = ({
 	];
 
 	return getQueryBuilderQuerieswithFormula({
-		metricNameA,
-		metricNameB,
+		autocompleteDataA,
+		autocompleteDataB,
 		additionalItemsA,
 		additionalItemsB,
 		legend: GraphTitle.ERROR_PERCENTAGE,

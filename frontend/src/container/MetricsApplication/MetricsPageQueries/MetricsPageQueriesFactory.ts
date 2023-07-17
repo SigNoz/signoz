@@ -16,7 +16,7 @@ import {
 } from 'types/common/queryBuilder';
 
 export const getQueryBuilderQueries = ({
-	metricNames,
+	autocompleteData,
 	groupBy = [],
 	legends,
 	filterItems,
@@ -25,8 +25,8 @@ export const getQueryBuilderQueries = ({
 	queryNameAndExpression,
 }: BuilderQueriesProps): QueryBuilderData => ({
 	queryFormulas: [],
-	queryData: metricNames.map((item, index) => {
-		const newQueryData = {
+	queryData: autocompleteData.map((item, index) => {
+		const newQueryData: IBuilderQuery = {
 			...initialQueryBuilderFormValuesMap.metrics,
 			aggregateOperator: ((): string => {
 				if (aggregateOperator) {
@@ -49,7 +49,7 @@ export const getQueryBuilderQueries = ({
 				op: 'AND',
 			},
 			dataSource,
-		} as IBuilderQuery;
+		};
 
 		if (queryNameAndExpression) {
 			newQueryData.queryName = queryNameAndExpression[index];
@@ -61,8 +61,8 @@ export const getQueryBuilderQueries = ({
 });
 
 export const getQueryBuilderQuerieswithFormula = ({
-	metricNameA,
-	metricNameB,
+	autocompleteDataA,
+	autocompleteDataB,
 	additionalItemsA,
 	additionalItemsB,
 	legend,
@@ -85,7 +85,7 @@ export const getQueryBuilderQuerieswithFormula = ({
 			disabled,
 			groupBy,
 			legend,
-			aggregateAttribute: metricNameA,
+			aggregateAttribute: autocompleteDataA,
 			reduceTo: 'sum',
 			filters: {
 				items: additionalItemsA,
@@ -103,7 +103,7 @@ export const getQueryBuilderQuerieswithFormula = ({
 			disabled,
 			groupBy,
 			legend,
-			aggregateAttribute: metricNameB,
+			aggregateAttribute: autocompleteDataB,
 			queryName: 'B',
 			expression: 'B',
 			reduceTo: 'sum',
@@ -121,7 +121,7 @@ export const getQueryBuilderQuerieswithFormula = ({
 });
 
 interface BuilderQueriesProps {
-	metricNames: BaseAutocompleteData[];
+	autocompleteData: BaseAutocompleteData[];
 	groupBy?: BaseAutocompleteData[];
 	legends: string[];
 	filterItems: TagFilterItem[][];
@@ -131,8 +131,8 @@ interface BuilderQueriesProps {
 }
 
 interface BuilderQuerieswithFormulaProps {
-	metricNameA: BaseAutocompleteData;
-	metricNameB: BaseAutocompleteData;
+	autocompleteDataA: BaseAutocompleteData;
+	autocompleteDataB: BaseAutocompleteData;
 	legend: string;
 	disabled: boolean;
 	groupBy?: BaseAutocompleteData[];

@@ -14,7 +14,7 @@ export const databaseCallsRPS = ({
 	legend,
 	tagFilterItems,
 }: DatabaseCallsRPSProps): QueryBuilderData => {
-	const metricNames: BaseAutocompleteData[] = [
+	const autocompleteData: BaseAutocompleteData[] = [
 		{
 			key: WidgetKeys.SignozDBLatencyCount,
 			dataType: DataType.FLOAT64,
@@ -45,7 +45,7 @@ export const databaseCallsRPS = ({
 	const legends = [legend];
 
 	return getQueryBuilderQueries({
-		metricNames,
+		autocompleteData,
 		groupBy,
 		legends,
 		filterItems,
@@ -57,13 +57,13 @@ export const databaseCallsAvgDuration = ({
 	servicename,
 	tagFilterItems,
 }: DatabaseCallProps): QueryBuilderData => {
-	const metricNameA: BaseAutocompleteData = {
+	const autocompleteDataA: BaseAutocompleteData = {
 		key: WidgetKeys.SignozDbLatencySum,
 		dataType: DataType.FLOAT64,
 		isColumn: true,
 		type: null,
 	};
-	const metricNameB: BaseAutocompleteData = {
+	const autocompleteDataB: BaseAutocompleteData = {
 		key: WidgetKeys.SignozDBLatencyCount,
 		dataType: DataType.FLOAT64,
 		isColumn: true,
@@ -87,8 +87,8 @@ export const databaseCallsAvgDuration = ({
 	const additionalItemsB = additionalItemsA;
 
 	return getQueryBuilderQuerieswithFormula({
-		metricNameA,
-		metricNameB,
+		autocompleteDataA,
+		autocompleteDataB,
 		additionalItemsA,
 		additionalItemsB,
 		legend: '',
