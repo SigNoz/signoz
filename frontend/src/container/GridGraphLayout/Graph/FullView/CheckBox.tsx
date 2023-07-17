@@ -5,7 +5,7 @@ import { ChartData } from 'chart.js';
 function CheckBox({
 	data,
 	index,
-	graphVisibilityArray,
+	graphVisibilityState,
 	checkBoxOnChangeHandler,
 }: CheckBoxProps): JSX.Element {
 	const { datasets } = data;
@@ -22,7 +22,7 @@ function CheckBox({
 		>
 			<Checkbox
 				onChange={(e): void => checkBoxOnChangeHandler(e, index)}
-				checked={graphVisibilityArray[index]}
+				checked={graphVisibilityState[index]}
 			/>
 		</ConfigProvider>
 	);
@@ -31,7 +31,7 @@ function CheckBox({
 interface CheckBoxProps {
 	data: ChartData;
 	index: number;
-	graphVisibilityArray: boolean[];
+	graphVisibilityState: boolean[];
 	checkBoxOnChangeHandler: (e: CheckboxChangeEvent, index: number) => void;
 }
 

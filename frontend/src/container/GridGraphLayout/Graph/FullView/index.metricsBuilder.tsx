@@ -27,7 +27,7 @@ function FullView({
 	name,
 	yAxisUnit,
 	onDragSelect,
-	graphVisibilityHandler,
+	graphVisibilityStateHandler,
 	graphsVisibility,
 	isDependedDataLoaded = false,
 }: FullViewProps): JSX.Element {
@@ -115,13 +115,13 @@ function FullView({
 					name={name}
 					yAxisUnit={yAxisUnit}
 					onDragSelect={onDragSelect}
-					graphsVisibility={graphsVisibility}
+					graphsVisibilityStates={graphsVisibility}
 				/>
 			</GraphContainer>
 
 			<GraphManager
 				data={chartDataSet}
-				graphVisibilityHandler={graphVisibilityHandler}
+				graphVisibilityStateHandler={graphVisibilityStateHandler}
 				name={name}
 			/>
 		</>
@@ -135,7 +135,7 @@ interface FullViewProps {
 	name: string;
 	yAxisUnit?: string;
 	onDragSelect?: (start: number, end: number) => void;
-	graphVisibilityHandler?: (graphsVisiblityArray: boolean[]) => void;
+	graphVisibilityStateHandler?: (graphsVisiblityArray: boolean[]) => void;
 	graphsVisibility?: boolean[];
 	isDependedDataLoaded?: boolean;
 }
@@ -146,7 +146,7 @@ FullView.defaultProps = {
 	yAxisUnit: undefined,
 	onDragSelect: undefined,
 	graphsVisibility: undefined,
-	graphVisibilityHandler: undefined,
+	graphVisibilityStateHandler: undefined,
 	isDependedDataLoaded: undefined,
 };
 

@@ -25,7 +25,7 @@ function GridGraphComponent({
 	yAxisUnit,
 	staticLine,
 	onDragSelect,
-	graphsVisibility,
+	graphsVisibilityStates,
 }: GridGraphComponentProps): JSX.Element | null {
 	const { pathname } = useLocation();
 
@@ -35,11 +35,11 @@ function GridGraphComponent({
 
 	useEffect(() => {
 		if (lineChartRef.current) {
-			graphsVisibility?.forEach((showLegendData, index) => {
+			graphsVisibilityStates?.forEach((showLegendData, index) => {
 				lineChartRef?.current?.toggleGraph(index, showLegendData);
 			});
 		}
-	}, [graphsVisibility]);
+	}, [graphsVisibilityStates]);
 
 	if (GRAPH_TYPES === PANEL_TYPES.TIME_SERIES) {
 		return (
@@ -105,7 +105,7 @@ export interface GridGraphComponentProps {
 	yAxisUnit?: string;
 	staticLine?: StaticLineProps;
 	onDragSelect?: (start: number, end: number) => void;
-	graphsVisibility?: boolean[];
+	graphsVisibilityStates?: boolean[];
 }
 
 GridGraphComponent.defaultProps = {
@@ -116,7 +116,7 @@ GridGraphComponent.defaultProps = {
 	yAxisUnit: undefined,
 	staticLine: undefined,
 	onDragSelect: undefined,
-	graphsVisibility: undefined,
+	graphsVisibilityStates: undefined,
 };
 
 export default GridGraphComponent;

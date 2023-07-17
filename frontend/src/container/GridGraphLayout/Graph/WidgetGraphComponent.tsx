@@ -58,14 +58,18 @@ function WidgetGraphComponent({
 	const [hovered, setHovered] = useState(false);
 	const { notifications } = useNotifications();
 	const { t } = useTranslation(['common']);
-	const [graphsVisibility, setGraphsVisility] = useState<boolean[]>();
+	const [graphsVisibilityStates, setGraphsVisilityStates] = useState<
+		boolean[]
+	>();
 	const { dashboards } = useSelector<AppState, DashboardReducer>(
 		(state) => state.dashboards,
 	);
 	const [selectedDashboard] = dashboards;
 
-	const graphVisibilityHandler = (graphsVisiblityArray: boolean[]): void => {
-		setGraphsVisility([...graphsVisiblityArray]);
+	const graphVisibilityStateHandler = (
+		newGraphsVisiblityState: boolean[],
+	): void => {
+		setGraphsVisilityStates([...newGraphsVisiblityState]);
 	};
 
 	const { featureResponse } = useSelector<AppState, AppReducer>(
@@ -161,24 +165,27 @@ function WidgetGraphComponent({
 				{ name: string; dataIndex: LegendEntryProps[] },
 			] = JSON.parse(legendGraphFromLocalStore as string);
 			let isfound = false;
-			const graphDisplayStatusArray = Array(data.datasets.length).fill(true);
+			const newGraphVisibilityStates = Array(data.datasets.length).fill(true);
 			legendFromLocalStore.forEach((item) => {
 				if (item.name === `${name}expanded`) {
-					data.datasets.forEach((d, i) => {
-						const index = item.dataIndex.findIndex((di) => di.label === d.label);
+					data.datasets.forEach((datasets, i) => {
+						const index = item.dataIndex.findIndex(
+							(dataKey) => dataKey.label === datasets.label,
+						);
 						if (index !== -1) {
-							graphDisplayStatusArray[i] = item.dataIndex[index].show;
+							newGraphVisibilityStates[i] = item.dataIndex[index].show;
 						}
 					});
-					setGraphsVisility(graphDisplayStatusArray);
+					setGraphsVisilityStates(newGraphVisibilityStates);
 					isfound = true;
 				}
 			});
+			// if legend is not found in local storage then set all graphs to true
 			if (!isfound) {
-				setGraphsVisility(Array(data.datasets.length).fill(true));
+				setGraphsVisilityStates(Array(data.datasets.length).fill(true));
 			}
 		} else {
-			setGraphsVisility(Array(data.datasets.length).fill(true));
+			setGraphsVisilityStates(Array(data.datasets.length).fill(true));
 		}
 	}, [data, name]);
 
@@ -210,8 +217,8 @@ function WidgetGraphComponent({
 						name={`${name}expanded`}
 						widget={widget}
 						yAxisUnit={yAxisUnit}
-						graphsVisibility={graphsVisibility}
-						graphVisibilityHandler={graphVisibilityHandler}
+						graphsVisibility={graphsVisibilityStates}
+						graphVisibilityStateHandler={graphVisibilityStateHandler}
 					/>
 				</FullViewContainer>
 			</Modal>
@@ -258,7 +265,7 @@ function WidgetGraphComponent({
 						title={' '}
 						name={name}
 						yAxisUnit={yAxisUnit}
-						graphsVisibility={graphsVisibility}
+						graphsVisibilityStates={graphsVisibilityStates}
 						onDragSelect={onDragSelect}
 					/>
 				</>

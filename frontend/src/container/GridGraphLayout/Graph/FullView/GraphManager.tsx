@@ -25,10 +25,10 @@ import {
 
 function GraphManager({
 	data,
-	graphVisibilityHandler,
+	graphVisibilityStateHandler,
 	name,
 }: GraphManagerProps): JSX.Element {
-	const [graphVisibilityArray, setGraphVisibilityArray] = useState<boolean[]>(
+	const [graphVisibilityState, setGraphVisibilityState] = useState<boolean[]>(
 		Array(data.datasets.length).fill(true),
 	);
 	const [tableDataSet, setTableDataSet] = useState<ExtendedChartDataset[]>(
@@ -39,23 +39,23 @@ function GraphManager({
 	const { notifications } = useNotifications();
 
 	useEffect(() => {
-		if (graphVisibilityHandler) {
-			graphVisibilityHandler([...graphVisibilityArray]);
+		if (graphVisibilityStateHandler) {
+			graphVisibilityStateHandler([...graphVisibilityState]);
 		}
-	}, [graphVisibilityArray, graphVisibilityHandler]);
+	}, [graphVisibilityState, graphVisibilityStateHandler]);
 
 	useEffect(() => {
-		const graphDisplayStatusArray: boolean[] = Array(data.datasets.length).fill(
+		const newGraphVisibilityStates: boolean[] = Array(data.datasets.length).fill(
 			true,
 		);
 		setTableDataSet(getDefaultTableDataSet(data));
 		data.datasets.forEach((d, i) => {
 			const index = legendEntries.findIndex((di) => di.label === d.label);
 			if (index !== -1) {
-				graphDisplayStatusArray[i] = legendEntries[index].show;
+				newGraphVisibilityStates[i] = legendEntries[index].show;
 			}
 		});
-		setGraphVisibilityArray(graphDisplayStatusArray);
+		setGraphVisibilityState(newGraphVisibilityStates);
 	}, [data, legendEntries]);
 
 	useEffect(() => {
@@ -65,28 +65,33 @@ function GraphManager({
 			);
 			const legendFromLocalStore: [
 				{ name: string; dataIndex: LegendEntryProps[] },
-			] = JSON.parse(legendGraphFromLocalStore as string);
+			] = JSON.parse(legendGraphFromLocalStore || '[]');
 			let isfound = false;
-			const graphDisplayStatusArray = Array(data.datasets.length).fill(true);
+			const newGraphVisibilityStates = Array(data.datasets.length).fill(true);
 			legendFromLocalStore.forEach((item) => {
+				// if the legend entries are found in the local storage
 				if (item.name === name) {
 					setLegendEntries(item.dataIndex);
-					data.datasets.forEach((d, i) => {
-						const index = item.dataIndex.findIndex((di) => di.label === d.label);
+					data.datasets.forEach((dataset, i) => {
+						const index = item.dataIndex.findIndex(
+							(dataKey) => dataKey.label === dataset.label,
+						);
 						if (index !== -1) {
-							graphDisplayStatusArray[i] = item.dataIndex[index].show;
+							newGraphVisibilityStates[i] = item.dataIndex[index].show;
 						}
 					});
-					setGraphVisibilityArray(graphDisplayStatusArray);
+					setGraphVisibilityState(newGraphVisibilityStates);
 					isfound = true;
 				}
 			});
+			// if the legend entries are not found in the local storage
 			if (!isfound) {
-				setGraphVisibilityArray(Array(data.datasets.length).fill(true));
+				setGraphVisibilityState(Array(data.datasets.length).fill(true));
 				setLegendEntries(showAllDataSet(data));
 			}
 		} else {
-			setGraphVisibilityArray(Array(data.datasets.length).fill(true));
+			// if the legend entries are not found in the local storage
+			setGraphVisibilityState(Array(data.datasets.length).fill(true));
 			setLegendEntries(showAllDataSet(data));
 		}
 	}, [data, name]);
@@ -95,10 +100,10 @@ function GraphManager({
 		e: CheckboxChangeEvent,
 		index: number,
 	): void => {
-		graphVisibilityArray[index] = e.target.checked;
-		setGraphVisibilityArray([...graphVisibilityArray]);
-		if (graphVisibilityHandler) {
-			graphVisibilityHandler(graphVisibilityArray);
+		graphVisibilityState[index] = e.target.checked;
+		setGraphVisibilityState([...graphVisibilityState]);
+		if (graphVisibilityStateHandler) {
+			graphVisibilityStateHandler(graphVisibilityState);
 		}
 	};
 
@@ -106,17 +111,17 @@ function GraphManager({
 		<CheckBox
 			data={data}
 			index={index}
-			graphVisibilityArray={graphVisibilityArray}
+			graphVisibilityState={graphVisibilityState}
 			checkBoxOnChangeHandler={checkBoxOnChangeHandler}
 		/>
 	);
 
 	const labelClickedHandler = (labelIndex: number): void => {
-		const newGraphVisibilityArray = Array(data.datasets.length).fill(false);
-		newGraphVisibilityArray[labelIndex] = true;
-		setGraphVisibilityArray([...newGraphVisibilityArray]);
-		if (graphVisibilityHandler) {
-			graphVisibilityHandler(newGraphVisibilityArray);
+		const newGraphVisibilityStates = Array(data.datasets.length).fill(false);
+		newGraphVisibilityStates[labelIndex] = true;
+		setGraphVisibilityState([...newGraphVisibilityStates]);
+		if (graphVisibilityStateHandler) {
+			graphVisibilityStateHandler(newGraphVisibilityStates);
 		}
 	};
 
@@ -182,12 +187,12 @@ function GraphManager({
 	};
 
 	const saveHandler = (): void => {
-		saveLegendEntriesToLocalStorage(data, graphVisibilityArray, name);
+		saveLegendEntriesToLocalStorage(data, graphVisibilityState, name);
 		notifications.success({
 			message: 'The updated graphs & legends are saved',
 		});
-		if (graphVisibilityHandler) {
-			graphVisibilityHandler(graphVisibilityArray);
+		if (graphVisibilityStateHandler) {
+			graphVisibilityStateHandler(graphVisibilityState);
 		}
 	};
 
@@ -233,12 +238,12 @@ interface DataSetProps {
 
 interface GraphManagerProps {
 	data: ChartData;
-	graphVisibilityHandler?: (graphVisibilityArray: boolean[]) => void;
+	graphVisibilityStateHandler?: (graphVisibilityArray: boolean[]) => void;
 	name: string;
 }
 
 GraphManager.defaultProps = {
-	graphVisibilityHandler: undefined,
+	graphVisibilityStateHandler: undefined,
 };
 
 export interface LegendEntryProps {
