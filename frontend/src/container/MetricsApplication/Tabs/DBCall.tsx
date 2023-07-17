@@ -113,6 +113,9 @@ function DBCall(): JSX.Element {
 									'database_call_rps',
 								);
 							}}
+							allowClone={false}
+							allowDelete={false}
+							allowEdit={false}
 						/>
 					</GraphContainer>
 				</Card>
@@ -146,6 +149,9 @@ function DBCall(): JSX.Element {
 									'database_call_avg_duration',
 								);
 							}}
+							allowClone={false}
+							allowDelete={false}
+							allowEdit={false}
 						/>
 					</GraphContainer>
 				</Card>
