@@ -1,4 +1,5 @@
 import { ChartData, ChartDataset } from 'chart.js';
+import { LOCALSTORAGE } from 'constants/localStorage';
 
 import { ExtendedChartDataset, LegendEntryProps } from './GraphManager';
 
@@ -36,33 +37,43 @@ export const showAllDataSet = (data: ChartData): LegendEntryProps[] =>
 
 export const saveLegendEntriesToLocalStorage = (
 	data: ChartData,
-	graphVisibilityArray: boolean[],
+	graphVisibilityStates: boolean[],
 	name: string,
 ): void => {
-	const legendEntry = {
+	const newLegendEntry = {
 		name,
 		dataIndex: data.datasets.map(
 			(item, index): LegendEntryProps => ({
 				label: item.label || '',
-				show: graphVisibilityArray[index],
+				show: graphVisibilityStates[index],
 			}),
 		),
 	};
-	if (localStorage.getItem('LEGEND_GRAPH')) {
-		const legendEntryData: {
-			name: string;
-			dataIndex: LegendEntryProps[];
-		}[] = JSON.parse(localStorage.getItem('LEGEND_GRAPH') as string);
-		const index = legendEntryData.findIndex((val) => val.name === name);
-		localStorage.removeItem('LEGEND_GRAPH');
-		if (index !== -1) {
-			legendEntryData[index] = legendEntry;
-		} else {
-			legendEntryData.push(legendEntry);
-		}
-		localStorage.setItem('LEGEND_GRAPH', JSON.stringify(legendEntryData));
+
+	let existingEntries: { name: string; dataIndex: LegendEntryProps[] }[] = [];
+
+	try {
+		existingEntries = JSON.parse(
+			localStorage.getItem(LOCALSTORAGE.GRAPH_VISIBILITY_STATES) || '[]',
+		);
+	} catch (error) {
+		console.error('Error parsing LEGEND_GRAPH from local storage', error);
+	}
+
+	const entryIndex = existingEntries.findIndex((entry) => entry.name === name);
+
+	if (entryIndex >= 0) {
+		existingEntries[entryIndex] = newLegendEntry;
 	} else {
-		const legendEntryArray = [legendEntry];
-		localStorage.setItem('LEGEND_GRAPH', JSON.stringify(legendEntryArray));
+		existingEntries = [...existingEntries, newLegendEntry];
+	}
+
+	try {
+		localStorage.setItem(
+			LOCALSTORAGE.GRAPH_VISIBILITY_STATES,
+			JSON.stringify(existingEntries),
+		);
+	} catch (error) {
+		console.error('Error setting LEGEND_GRAPH to local storage', error);
 	}
 };

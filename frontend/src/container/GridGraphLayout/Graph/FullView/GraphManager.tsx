@@ -3,6 +3,7 @@ import { CheckboxChangeEvent } from 'antd/es/checkbox';
 import { ColumnType } from 'antd/es/table';
 import { ChartData, ChartDataset } from 'chart.js';
 import { ResizeTable } from 'components/ResizeTable';
+import { LOCALSTORAGE } from 'constants/localStorage';
 import { useNotifications } from 'hooks/useNotifications';
 import isEqual from 'lodash-es/isEqual';
 import { memo, useEffect, useState } from 'react';
@@ -57,8 +58,10 @@ function GraphManager({
 	}, [data, legendEntries]);
 
 	useEffect(() => {
-		if (localStorage.getItem('LEGEND_GRAPH') !== null) {
-			const legendGraphFromLocalStore = localStorage.getItem('LEGEND_GRAPH');
+		if (localStorage.getItem(LOCALSTORAGE.GRAPH_VISIBILITY_STATES) !== null) {
+			const legendGraphFromLocalStore = localStorage.getItem(
+				LOCALSTORAGE.GRAPH_VISIBILITY_STATES,
+			);
 			const legendFromLocalStore: [
 				{ name: string; dataIndex: LegendEntryProps[] },
 			] = JSON.parse(legendGraphFromLocalStore as string);

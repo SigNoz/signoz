@@ -1,5 +1,6 @@
 import { Typography } from 'antd';
 import { ChartData } from 'chart.js';
+import { LOCALSTORAGE } from 'constants/localStorage';
 import GridGraphComponent from 'container/GridGraphComponent';
 import { useNotifications } from 'hooks/useNotifications';
 import history from 'lib/history';
@@ -152,8 +153,10 @@ function WidgetGraphComponent({
 	};
 
 	useEffect(() => {
-		if (localStorage.getItem('LEGEND_GRAPH') !== null) {
-			const legendGraphFromLocalStore = localStorage.getItem('LEGEND_GRAPH');
+		if (localStorage.getItem(LOCALSTORAGE.GRAPH_VISIBILITY_STATES) !== null) {
+			const legendGraphFromLocalStore = localStorage.getItem(
+				LOCALSTORAGE.GRAPH_VISIBILITY_STATES,
+			);
 			const legendFromLocalStore: [
 				{ name: string; dataIndex: LegendEntryProps[] },
 			] = JSON.parse(legendGraphFromLocalStore as string);
