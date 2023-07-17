@@ -1,7 +1,7 @@
 import { ChartData, ChartDataset } from 'chart.js';
 import { LOCALSTORAGE } from 'constants/localStorage';
 
-import { ExtendedChartDataset, LegendEntryProps } from './GraphManager';
+import { ExtendedChartDataset, LegendEntryProps } from './types';
 
 export const getDefaultTableDataSet = (
 	data: ChartData,

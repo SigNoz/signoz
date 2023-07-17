@@ -35,8 +35,8 @@ import { v4 } from 'uuid';
 import { LayoutProps } from '..';
 import { UpdateDashboard } from '../utils';
 import WidgetHeader from '../WidgetHeader';
-import { LegendEntryProps } from './FullView/GraphManager';
 import FullView from './FullView/index.metricsBuilder';
+import { LegendEntryProps } from './FullView/types';
 import { FullViewContainer, Modal } from './styles';
 
 function WidgetGraphComponent({

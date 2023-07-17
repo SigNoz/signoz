@@ -1,7 +1,7 @@
 import { Button, Input } from 'antd';
 import { CheckboxChangeEvent } from 'antd/es/checkbox';
 import { ColumnType } from 'antd/es/table';
-import { ChartData, ChartDataset } from 'chart.js';
+import { ChartData } from 'chart.js';
 import { ResizeTable } from 'components/ResizeTable';
 import { LOCALSTORAGE } from 'constants/localStorage';
 import { useNotifications } from 'hooks/useNotifications';
@@ -16,6 +16,7 @@ import {
 	LabelContainer,
 	SaveContainer,
 } from './styles';
+import { DataSetProps, ExtendedChartDataset, LegendEntryProps } from './types';
 import {
 	getAbbreviatedLabel,
 	getDefaultTableDataSet,
@@ -224,18 +225,6 @@ function GraphManager({
 	);
 }
 
-interface DataSetProps {
-	index: number;
-	data: number | null;
-	label: string;
-	borderWidth: number;
-	spanGaps: boolean;
-	animations: boolean;
-	borderColor: string;
-	showLine: boolean;
-	pointRadius: number;
-}
-
 interface GraphManagerProps {
 	data: ChartData;
 	graphVisibilityStateHandler?: (graphVisibilityArray: boolean[]) => void;
@@ -244,19 +233,6 @@ interface GraphManagerProps {
 
 GraphManager.defaultProps = {
 	graphVisibilityStateHandler: undefined,
-};
-
-export interface LegendEntryProps {
-	label: string;
-	show: boolean;
-}
-
-export type ExtendedChartDataset = ChartDataset & {
-	show: boolean;
-	sum: number;
-	avg: number;
-	min: number;
-	max: number;
 };
 
 export default memo(
