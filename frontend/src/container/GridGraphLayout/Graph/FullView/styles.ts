@@ -17,7 +17,7 @@ export const GraphContainer = styled.div`
 `;
 
 export const FilterTableAndSaveContainer = styled.div`
-	margin-top: 30px;
+	margin-top: 1.875rem;
 	display: flex;
 	align-items: flex-end;
 `;
@@ -31,7 +31,15 @@ export const SaveContainer = styled.div`
 	display: flex;
 	justify-content: flex-end;
 
-	> button {
-		margin: 0 5px;
+	.save-container-button {
+		margin: 0 0.313rem;
 	}
+`;
+
+export const LabelContainer = styled.button`
+	max-width: 18.75rem;
+	cursor: pointer;
+	border: none;
+	background-color: transparent;
+	color: white;
 `;

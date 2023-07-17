@@ -1,7 +1,8 @@
-import { Button, Checkbox, ConfigProvider, Input } from 'antd';
+import { Button, Input } from 'antd';
 import { CheckboxChangeEvent } from 'antd/es/checkbox';
 import { ColumnType } from 'antd/es/table';
 import { ChartData, ChartDataset } from 'chart.js';
+import CheckBox from 'components/Checkbox';
 import { ResizeTable } from 'components/ResizeTable';
 import { useNotifications } from 'hooks/useNotifications';
 import isEqual from 'lodash-es/isEqual';
@@ -10,8 +11,15 @@ import { memo, useEffect, useState } from 'react';
 import {
 	FilterTableAndSaveContainer,
 	FilterTableContainer,
+	LabelContainer,
 	SaveContainer,
 } from './styles';
+import {
+	getAbbreviatedLabel,
+	getDefaultTableDataSet,
+	saveLegendEntriesToLocalStorage,
+	showAllDataSet,
+} from './utils';
 
 function GraphManager({
 	data,
@@ -22,36 +30,11 @@ function GraphManager({
 		Array(data.datasets.length).fill(true),
 	);
 	const [tableDataSet, setTableDataSet] = useState<ExtendedChartDataset[]>(
-		data.datasets.map(
-			(item: ChartDataset) =>
-				({
-					...item,
-					show: true,
-					sum: parseFloat(
-						(item.data as number[]).reduce((a, b) => a + b, 0).toFixed(0),
-					),
-					avg: parseFloat(
-						(
-							(item.data as number[]).reduce((a, b) => a + b, 0) / item.data.length
-						).toFixed(0),
-					),
-					max: parseFloat(Math.max(...(item.data as number[])).toFixed(0)),
-					min: parseFloat(Math.min(...(item.data as number[])).toFixed(0)),
-				} as ExtendedChartDataset),
-		),
+		getDefaultTableDataSet(data),
 	);
 	const [legendEntries, setLegendEntries] = useState<LegendEntryProps[]>([]);
 
 	const { notifications } = useNotifications();
-
-	const showAllDataSet = (data: ChartData): LegendEntryProps[] =>
-		data.datasets.map(
-			(item) =>
-				({
-					label: item.label,
-					show: true,
-				} as LegendEntryProps),
-		);
 
 	useEffect(() => {
 		if (graphVisibilityHandler) {
@@ -63,18 +46,7 @@ function GraphManager({
 		const graphDisplayStatusArray: boolean[] = Array(data.datasets.length).fill(
 			true,
 		);
-		setTableDataSet(
-			data.datasets.map((item: ChartDataset) => ({
-				...item,
-				show: true,
-				sum: Math.floor((item.data as number[]).reduce((a, b) => a + b, 0)),
-				avg: Math.floor(
-					(item.data as number[]).reduce((a, b) => a + b, 0) / item.data.length,
-				),
-				max: Math.floor(Math.max(...(item.data as number[]))),
-				min: Math.floor(Math.min(...(item.data as number[]))),
-			})),
-		);
+		setTableDataSet(getDefaultTableDataSet(data));
 		data.datasets.forEach((d, i) => {
 			const index = legendEntries.findIndex((di) => di.label === d.label);
 			if (index !== -1) {
@@ -127,20 +99,12 @@ function GraphManager({
 	};
 
 	const getCheckBox = (index: number): React.ReactElement => (
-		<ConfigProvider
-			theme={{
-				token: {
-					colorPrimary: data.datasets[index].borderColor?.toString(),
-					colorBorder: data.datasets[index].borderColor?.toString(),
-					colorBgContainer: data.datasets[index].borderColor?.toString(),
-				},
-			}}
-		>
-			<Checkbox
-				onChange={(e): void => checkBoxOnChangeHandler(e, index)}
-				checked={graphVisibilityArray[index]}
-			/>
-		</ConfigProvider>
+		<CheckBox
+			data={data}
+			index={index}
+			graphVisibilityArray={graphVisibilityArray}
+			checkBoxOnChangeHandler={checkBoxOnChangeHandler}
+		/>
 	);
 
 	const labelClickedHandler = (labelIndex: number): void => {
@@ -152,27 +116,14 @@ function GraphManager({
 		}
 	};
 
-	const getLabel = (label: string, labelIndex: number): React.ReactElement => {
-		let newLebal = label;
-		if (label.length > 30) {
-			newLebal = `${label.substring(0, 30)}...`;
-		}
-		return (
-			<button
-				type="button"
-				style={{
-					maxWidth: '300px',
-					cursor: 'pointer',
-					border: 'none',
-					backgroundColor: 'transparent',
-					color: 'white',
-				}}
-				onClick={(): void => labelClickedHandler(labelIndex)}
-			>
-				{newLebal}
-			</button>
-		);
-	};
+	const getLabel = (label: string, labelIndex: number): React.ReactElement => (
+		<LabelContainer
+			type="button"
+			onClick={(): void => labelClickedHandler(labelIndex)}
+		>
+			{getAbbreviatedLabel(label)}
+		</LabelContainer>
+	);
 
 	const columns: ColumnType<DataSetProps>[] = [
 		{
@@ -227,33 +178,7 @@ function GraphManager({
 	};
 
 	const saveHandler = (): void => {
-		const legendEntry = {
-			name,
-			dataIndex: data.datasets.map(
-				(item, index) =>
-					({
-						label: item.label,
-						show: graphVisibilityArray[index],
-					} as LegendEntryProps),
-			),
-		};
-		if (localStorage.getItem('LEGEND_GRAPH')) {
-			const legendEntryData: {
-				name: string;
-				dataIndex: LegendEntryProps[];
-			}[] = JSON.parse(localStorage.getItem('LEGEND_GRAPH') as string);
-			const index = legendEntryData.findIndex((val) => val.name === name);
-			localStorage.removeItem('LEGEND_GRAPH');
-			if (index !== -1) {
-				legendEntryData[index] = legendEntry;
-			} else {
-				legendEntryData.push(legendEntry);
-			}
-			localStorage.setItem('LEGEND_GRAPH', JSON.stringify(legendEntryData));
-		} else {
-			const legendEntryArray = [legendEntry];
-			localStorage.setItem('LEGEND_GRAPH', JSON.stringify(legendEntryArray));
-		}
+		saveLegendEntriesToLocalStorage(data, graphVisibilityArray, name);
 		notifications.success({
 			message: 'The updated graphs & legends are saved',
 		});
@@ -275,8 +200,14 @@ function GraphManager({
 				/>
 			</FilterTableContainer>
 			<SaveContainer>
-				<Button type="default">Cancel</Button>
-				<Button onClick={saveHandler} type="primary">
+				<Button className="save-container-button" type="default">
+					Cancel
+				</Button>
+				<Button
+					className="save-container-button"
+					onClick={saveHandler}
+					type="primary"
+				>
 					Save
 				</Button>
 			</SaveContainer>
@@ -311,7 +242,7 @@ export interface LegendEntryProps {
 	show: boolean;
 }
 
-type ExtendedChartDataset = ChartDataset & {
+export type ExtendedChartDataset = ChartDataset & {
 	show: boolean;
 	sum: number;
 	avg: number;

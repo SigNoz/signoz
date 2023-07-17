@@ -4,7 +4,6 @@ import {
 	BarElement,
 	CategoryScale,
 	Chart,
-	ChartConfiguration,
 	ChartData,
 	ChartEvent,
 	ChartOptions,
@@ -54,6 +53,7 @@ import {
 } from './Plugin/IntersectionCursor';
 import { TooltipPosition as TooltipPositionHandler } from './Plugin/Tooltip';
 import { LegendsContainer } from './styles';
+import { toggleGraph } from './utils';
 import { useXAxisTimeUnit } from './xAxisConfig';
 import { getToolTipValue, getYAxisFormattedValue } from './yAxisConfig';
 
@@ -111,15 +111,7 @@ const Graph = forwardRef<ToggleGraphProps | undefined, GraphProps>(
 			ref,
 			(): ToggleGraphProps => ({
 				toggleGraph(graphIndex: number, isVisible: boolean): void {
-					if (lineChartRef.current) {
-						const { type } = lineChartRef.current?.config as ChartConfiguration;
-						if (type === 'pie' || type === 'doughnut') {
-							lineChartRef.current?.toggleDataVisibility(graphIndex);
-						} else {
-							lineChartRef.current?.setDatasetVisibility(graphIndex, isVisible);
-						}
-						lineChartRef.current?.update();
-					}
+					toggleGraph(graphIndex, isVisible, lineChartRef);
 				},
 			}),
 		);
@@ -136,7 +128,6 @@ const Graph = forwardRef<ToggleGraphProps | undefined, GraphProps>(
 			return 'rgba(231,233,237,0.8)';
 		}, [currentTheme]);
 
-		// eslint-disable-next-line sonarjs/cognitive-complexity
 		const buildChart = useCallback(() => {
 			if (lineChartRef.current !== undefined) {
 				lineChartRef.current.destroy();
