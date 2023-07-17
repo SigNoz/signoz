@@ -1,5 +1,4 @@
 import { TabsProps } from 'antd';
-import axios from 'axios';
 import LogDetail from 'components/LogDetail';
 import TabLabel from 'components/TabLabel';
 import { QueryParams } from 'constants/query';
@@ -13,16 +12,17 @@ import { queryParamNamesMap } from 'constants/queryBuilderQueryNames';
 import ROUTES from 'constants/routes';
 import { DEFAULT_PER_PAGE_VALUE } from 'container/Controls/config';
 import ExportPanel from 'container/ExportPanel';
+import GoToTop from 'container/GoToTop';
 import LogsExplorerChart from 'container/LogsExplorerChart';
 import LogsExplorerList from 'container/LogsExplorerList';
-// TODO: temporary hide table view
-// import LogsExplorerTable from 'container/LogsExplorerTable';
+import LogsExplorerTable from 'container/LogsExplorerTable';
 import { GRAPH_TYPES } from 'container/NewDashboard/ComponentsSlider';
 import TimeSeriesView from 'container/TimeSeriesView/TimeSeriesView';
 import { useUpdateDashboard } from 'hooks/dashboard/useUpdateDashboard';
 import { addEmptyWidgetInDashboardJSONWithQuery } from 'hooks/dashboard/utils';
 import { useGetExplorerQueryRange } from 'hooks/queryBuilder/useGetExplorerQueryRange';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
+import useAxiosError from 'hooks/useAxiosError';
 import { useNotifications } from 'hooks/useNotifications';
 import useUrlQueryData from 'hooks/useUrlQueryData';
 import { chooseAutocompleteFromCustomValue } from 'lib/newQueryBuilder/chooseAutocompleteFromCustomValue';
@@ -81,6 +81,8 @@ function LogsExplorerViews(): JSX.Element {
 	const [page, setPage] = useState<number>(1);
 	const [logs, setLogs] = useState<ILog[]>([]);
 	const [requestData, setRequestData] = useState<Query | null>(null);
+
+	const handleAxisError = useAxiosError();
 
 	const currentStagedQueryData = useMemo(() => {
 		if (!stagedQuery || stagedQuery.builder.queryData.length !== 1) return null;
@@ -358,16 +360,16 @@ function LogsExplorerViews(): JSX.Element {
 
 					history.push(dashboardEditView);
 				},
-				onError: (error) => {
-					if (axios.isAxiosError(error)) {
-						notifications.error({
-							message: error.message,
-						});
-					}
-				},
+				onError: handleAxisError,
 			});
 		},
-		[exportDefaultQuery, history, notifications, updateDashboard],
+		[
+			exportDefaultQuery,
+			history,
+			notifications,
+			updateDashboard,
+			handleAxisError,
+		],
 	);
 
 	useEffect(() => {
@@ -437,17 +439,16 @@ function LogsExplorerViews(): JSX.Element {
 					<TimeSeriesView isLoading={isFetching} data={data} isError={isError} />
 				),
 			},
-			// TODO: temporary hide table view
-			// {
-			// 	label: 'Table',
-			// 	key: PANEL_TYPES.TABLE,
-			// 	children: (
-			// 		<LogsExplorerTable
-			// 			data={data?.payload.data.newResult.data.result || []}
-			// 			isLoading={isFetching}
-			// 		/>
-			// 	),
-			// },
+			{
+				label: 'Table',
+				key: PANEL_TYPES.TABLE,
+				children: (
+					<LogsExplorerTable
+						data={data?.payload.data.newResult.data.result || []}
+						isLoading={isFetching}
+					/>
+				),
+			},
 		],
 		[
 			isMultipleQueries,
@@ -513,6 +514,8 @@ function LogsExplorerViews(): JSX.Element {
 				onAddToQuery={handleAddToQuery}
 				onClickActionItem={handleAddToQuery}
 			/>
+
+			<GoToTop />
 		</>
 	);
 }

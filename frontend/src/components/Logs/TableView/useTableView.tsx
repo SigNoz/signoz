@@ -6,7 +6,6 @@ import dayjs from 'dayjs';
 import dompurify from 'dompurify';
 import { FlatLogData } from 'lib/logs/flatLogData';
 import { useMemo } from 'react';
-import { ILog } from 'types/api/logs/log';
 
 import { ExpandIconWrapper } from '../RawLogView/styles';
 import { defaultCellStyle, defaultTableStyle } from './config';
@@ -57,14 +56,14 @@ export const useTableView = (props: UseTableViewProps): UseTableViewResult => {
 				dataIndex: 'id',
 				key: 'expand',
 				// https://github.com/ant-design/ant-design/discussions/36886
-				render: (_, item): ColumnTypeRender<Record<string, unknown>> => ({
+				render: (_, item, index): ColumnTypeRender<Record<string, unknown>> => ({
 					props: {
 						style: defaultCellStyle,
 					},
 					children: (
 						<ExpandIconWrapper
 							onClick={(): void => {
-								onClickExpand((item as unknown) as ILog);
+								onClickExpand(logs[index]);
 							}}
 						>
 							<ExpandAltOutlined />
@@ -108,7 +107,7 @@ export const useTableView = (props: UseTableViewProps): UseTableViewResult => {
 			},
 			...(appendTo === 'end' ? fieldColumns : []),
 		];
-	}, [fields, linesPerRow, appendTo, onClickExpand]);
+	}, [fields, appendTo, linesPerRow, onClickExpand, logs]);
 
 	return { columns, dataSource: flattenLogData };
 };
