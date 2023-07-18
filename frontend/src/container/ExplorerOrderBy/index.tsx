@@ -1,11 +1,8 @@
 import { Select, Spin } from 'antd';
 import { OrderByFilterProps } from 'container/QueryBuilder/filters/OrderByFilter/OrderByFilter.interfaces';
 import { useOrderByFilter } from 'container/QueryBuilder/filters/OrderByFilter/useOrderByFilter';
-import { getLabelFromValue } from 'container/QueryBuilder/filters/OrderByFilter/utils';
 import { selectStyle } from 'container/QueryBuilder/filters/QueryBuilderSearch/config';
-import { getRemoveOrderFromValue } from 'container/QueryBuilder/filters/QueryBuilderSearch/utils';
 import { useGetAggregateKeys } from 'hooks/queryBuilder/useGetAggregateKeys';
-import { isEqual, uniqWith } from 'lodash-es';
 import { memo, useMemo } from 'react';
 import { StringOperators } from 'types/common/queryBuilder';
 
@@ -13,8 +10,8 @@ function ExplorerOrderBy({ query, onChange }: OrderByFilterProps): JSX.Element {
 	const {
 		debouncedSearchText,
 		selectedValue,
-		customValue,
 		aggregationOptions,
+		generateOptions,
 		createOptions,
 		handleChange,
 		handleSearchKeys,
@@ -47,30 +44,13 @@ function ExplorerOrderBy({ query, onChange }: OrderByFilterProps): JSX.Element {
 			...keysOptions,
 		];
 
-		const currentCustomValue = baseOptions.find((keyOption) =>
-			getRemoveOrderFromValue(keyOption.value).includes(debouncedSearchText),
-		)
-			? []
-			: customValue;
-
-		const result = [...currentCustomValue, ...baseOptions];
-
-		const uniqResult = uniqWith(result, isEqual);
-
-		return uniqResult.filter(
-			(option) =>
-				!getLabelFromValue(selectedValue).includes(
-					getRemoveOrderFromValue(option.value),
-				),
-		);
+		return generateOptions(baseOptions);
 	}, [
 		aggregationOptions,
 		createOptions,
-		customValue,
 		data?.payload?.attributeKeys,
-		debouncedSearchText,
+		generateOptions,
 		query.aggregateOperator,
-		selectedValue,
 	]);
 
 	return (

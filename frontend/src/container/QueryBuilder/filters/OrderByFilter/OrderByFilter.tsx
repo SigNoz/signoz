@@ -4,10 +4,8 @@ import { useMemo } from 'react';
 import { DataSource, MetricAggregateOperator } from 'types/common/queryBuilder';
 
 import { selectStyle } from '../QueryBuilderSearch/config';
-import { getRemoveOrderFromValue } from '../QueryBuilderSearch/utils';
 import { OrderByFilterProps } from './OrderByFilter.interfaces';
 import { useOrderByFilter } from './useOrderByFilter';
-import { getLabelFromValue } from './utils';
 
 export function OrderByFilter({
 	query,
@@ -16,8 +14,8 @@ export function OrderByFilter({
 	const {
 		debouncedSearchText,
 		selectedValue,
-		customValue,
 		aggregationOptions,
+		generateOptions,
 		createOptions,
 		handleChange,
 		handleSearchKeys,
@@ -44,29 +42,14 @@ export function OrderByFilter({
 				? keyOptions
 				: [...groupByOptions, ...aggregationOptions];
 
-		const currentCustomValue = options.find((keyOption) =>
-			getRemoveOrderFromValue(keyOption.value).includes(debouncedSearchText),
-		)
-			? []
-			: customValue;
-
-		const resultOption = [...currentCustomValue, ...options];
-
-		return resultOption.filter(
-			(option) =>
-				!getLabelFromValue(selectedValue).includes(
-					getRemoveOrderFromValue(option.value),
-				),
-		);
+		return generateOptions(options);
 	}, [
 		aggregationOptions,
 		createOptions,
-		customValue,
 		data?.payload?.attributeKeys,
-		debouncedSearchText,
+		generateOptions,
 		query.aggregateOperator,
 		query.groupBy,
-		selectedValue,
 	]);
 
 	const isDisabledSelect = useMemo(

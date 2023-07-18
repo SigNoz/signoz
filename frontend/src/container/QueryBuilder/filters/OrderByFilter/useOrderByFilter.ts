@@ -1,7 +1,7 @@
 import { DEBOUNCE_DELAY } from 'constants/queryBuilderFilterConfig';
 import useDebounce from 'hooks/useDebounce';
 import { IOption } from 'hooks/useResourceAttribute/types';
-import { uniqWith } from 'lodash-es';
+import { isEqual, uniqWith } from 'lodash-es';
 import * as Papa from 'papaparse';
 import { useCallback, useMemo, useState } from 'react';
 import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
@@ -11,6 +11,8 @@ import { getRemoveOrderFromValue } from '../QueryBuilderSearch/utils';
 import { FILTERS } from './config';
 import { OrderByFilterProps } from './OrderByFilter.interfaces';
 import {
+	checkIfKeyPresent,
+	getLabelFromValue,
 	mapLabelValuePairs,
 	orderByValueDelimiter,
 	splitOrderByFromString,
@@ -22,7 +24,7 @@ type UseOrderByFilterResult = {
 	debouncedSearchText: string;
 	selectedValue: IOption[];
 	aggregationOptions: IOption[];
-	customValue: IOption[];
+	generateOptions: (options: IOption[]) => IOption[];
 	createOptions: (data: BaseAutocompleteData[]) => IOption[];
 	handleChange: (values: IOption[]) => void;
 	handleSearchKeys: (search: string) => void;
@@ -70,6 +72,44 @@ export const useOrderByFilter = ({
 		);
 	}, []);
 
+	const customValue: IOption[] = useMemo(() => {
+		if (!searchText) return [];
+
+		return [
+			{
+				label: `${searchText} ${FILTERS.ASC}`,
+				value: `${searchText}${orderByValueDelimiter}${FILTERS.ASC}`,
+			},
+			{
+				label: `${searchText} ${FILTERS.DESC}`,
+				value: `${searchText}${orderByValueDelimiter}${FILTERS.DESC}`,
+			},
+		];
+	}, [searchText]);
+
+	const generateOptions = useCallback(
+		(options: IOption[]): IOption[] => {
+			const currentCustomValue = options.find((keyOption) =>
+				getRemoveOrderFromValue(keyOption.value).includes(debouncedSearchText),
+			)
+				? []
+				: customValue;
+
+			const result = [...currentCustomValue, ...options];
+
+			const uniqResult = uniqWith(result, isEqual);
+
+			// TODO: make it reusable
+			return uniqResult.filter(
+				(option) =>
+					!getLabelFromValue(selectedValue).includes(
+						getRemoveOrderFromValue(option.value),
+					),
+			);
+		},
+		[customValue, debouncedSearchText, selectedValue],
+	);
+
 	const getValidResult = useCallback(
 		(result: IOption[]): IOption[] =>
 			result.reduce<IOption[]>((acc, item) => {
@@ -111,10 +151,17 @@ export const useOrderByFilter = ({
 
 			const [columnName, order] = match.data.flat() as string[];
 
+			const columnNameValue = checkIfKeyPresent(
+				columnName,
+				query.aggregateAttribute.key,
+			)
+				? '#SIGNOZ_VALUE'
+				: columnName;
+
 			const orderValue = order ?? 'asc';
 
 			return {
-				columnName,
+				columnName: columnNameValue,
 				order: orderValue,
 			};
 		});
@@ -149,29 +196,14 @@ export const useOrderByFilter = ({
 		[query],
 	);
 
-	const customValue: IOption[] = useMemo(() => {
-		if (!searchText) return [];
-
-		return [
-			{
-				label: `${searchText} ${FILTERS.ASC}`,
-				value: `${searchText}${orderByValueDelimiter}${FILTERS.ASC}`,
-			},
-			{
-				label: `${searchText} ${FILTERS.DESC}`,
-				value: `${searchText}${orderByValueDelimiter}${FILTERS.DESC}`,
-			},
-		];
-	}, [searchText]);
-
 	return {
 		searchText,
 		debouncedSearchText,
 		selectedValue,
-		customValue,
 		aggregationOptions,
 		createOptions,
 		handleChange,
 		handleSearchKeys,
+		generateOptions,
 	};
 };

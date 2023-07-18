@@ -36,10 +36,17 @@ function LogExplorerQuerySection(): JSX.Element {
 	}, [panelTypes]);
 
 	const renderOrderBy = useCallback(
-		({ query, onChange }: OrderByFilterProps) => (
+		({ query, onChange }: OrderByFilterProps): JSX.Element => (
 			<ExplorerOrderBy query={query} onChange={onChange} />
 		),
 		[],
+	);
+
+	const queryComponents = useMemo(
+		(): QueryBuilderProps['queryComponents'] => ({
+			...(panelTypes === PANEL_TYPES.LIST ? { renderOrderBy } : {}),
+		}),
+		[panelTypes, renderOrderBy],
 	);
 
 	return (
@@ -47,7 +54,7 @@ function LogExplorerQuerySection(): JSX.Element {
 			panelType={panelTypes}
 			config={{ initialDataSource: DataSource.LOGS, queryVariant: 'static' }}
 			filterConfigs={filterConfigs}
-			queryComponents={{ renderOrderBy }}
+			queryComponents={queryComponents}
 			actions={
 				<ButtonWrapperStyled>
 					<Button type="primary" onClick={handleRunQuery}>

@@ -31,6 +31,15 @@ function QuerySection(): JSX.Element {
 		[],
 	);
 
+	const queryComponents = useMemo((): QueryBuilderProps['queryComponents'] => {
+		const shouldRenderCustomOrderBy =
+			panelTypes === PANEL_TYPES.LIST || panelTypes === PANEL_TYPES.TRACE;
+
+		return {
+			...(shouldRenderCustomOrderBy ? { renderOrderBy } : {}),
+		};
+	}, [panelTypes, renderOrderBy]);
+
 	return (
 		<Container>
 			<QueryBuilder
@@ -40,7 +49,7 @@ function QuerySection(): JSX.Element {
 					initialDataSource: DataSource.TRACES,
 				}}
 				filterConfigs={filterConfigs}
-				queryComponents={{ renderOrderBy }}
+				queryComponents={queryComponents}
 				actions={
 					<ButtonWrapper>
 						<Button onClick={handleRunQuery} type="primary">
