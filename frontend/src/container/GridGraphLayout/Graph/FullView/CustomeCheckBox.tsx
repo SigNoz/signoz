@@ -2,7 +2,7 @@ import { Checkbox, ConfigProvider } from 'antd';
 import { CheckboxChangeEvent } from 'antd/es/checkbox';
 import { ChartData } from 'chart.js';
 
-function CheckBox({
+function CustomCheckBox({
 	data,
 	index,
 	graphVisibilityState,
@@ -35,4 +35,4 @@ interface CheckBoxProps {
 	checkBoxOnChangeHandler: (e: CheckboxChangeEvent, index: number) => void;
 }
 
-export default CheckBox;
+export default CustomCheckBox;

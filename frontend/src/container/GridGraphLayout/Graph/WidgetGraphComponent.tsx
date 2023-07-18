@@ -2,6 +2,7 @@ import { Typography } from 'antd';
 import { ChartData } from 'chart.js';
 import { GraphOnClickHandler } from 'components/Graph/types';
 import GridGraphComponent from 'container/GridGraphComponent';
+import { useChartMutable } from 'hooks/useChartMutable';
 import { useNotifications } from 'hooks/useNotifications';
 import history from 'lib/history';
 import { isEmpty, isEqual } from 'lodash-es';
@@ -37,7 +38,7 @@ import { UpdateDashboard } from '../utils';
 import WidgetHeader from '../WidgetHeader';
 import FullView from './FullView';
 import { FullViewContainer, Modal } from './styles';
-import { getGraphVisiblityStateOnDataChange } from './utils';
+import { getGraphVisibilityStateOnDataChange } from './utils';
 
 function WidgetGraphComponent({
 	enableModel,
@@ -69,6 +70,8 @@ function WidgetGraphComponent({
 		(state) => state.dashboards,
 	);
 	const [selectedDashboard] = dashboards;
+
+	const canModifyChart = useChartMutable(widget.panelTypes);
 
 	const graphVisibilityStateHandler = (
 		newGraphsVisiblityState: boolean[],
@@ -161,13 +164,15 @@ function WidgetGraphComponent({
 	};
 
 	useEffect(() => {
-		const visibilityStateAndLegendEntry = getGraphVisiblityStateOnDataChange(
-			data,
-			true,
-			name,
-		);
-		setGraphsVisilityStates(visibilityStateAndLegendEntry.graphVisibilityStates);
-	}, [data, name]);
+		if (canModifyChart) {
+			const visibilityStateAndLegendEntry = getGraphVisibilityStateOnDataChange(
+				data,
+				true,
+				name,
+			);
+			setGraphsVisilityStates(visibilityStateAndLegendEntry.graphVisibilityStates);
+		}
+	}, [data, name, canModifyChart]);
 
 	const getModals = (): JSX.Element => (
 		<>

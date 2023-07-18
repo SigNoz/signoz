@@ -5,7 +5,7 @@ import { LegendEntryProps } from './FullView/types';
 import { showAllDataSet } from './FullView/utils';
 import { GraphVisibilityLegendEntryProps } from './types';
 
-export const getGraphVisiblityStateOnDataChange = (
+export const getGraphVisibilityStateOnDataChange = (
 	data: ChartData,
 	isExpandedName: boolean,
 	name: string,
@@ -20,8 +20,7 @@ export const getGraphVisiblityStateOnDataChange = (
 		);
 		const legendFromLocalStore: [
 			{ name: string; dataIndex: LegendEntryProps[] },
-		] = JSON.parse(legendGraphFromLocalStore as string);
-		// let isfound = false;
+		] = JSON.parse(legendGraphFromLocalStore || '[]');
 		const newGraphVisibilityStates = Array(data.datasets.length).fill(true);
 		legendFromLocalStore.forEach((item) => {
 			const newName = isExpandedName ? `${name}expanded` : name;
@@ -35,19 +34,10 @@ export const getGraphVisiblityStateOnDataChange = (
 						newGraphVisibilityStates[i] = item.dataIndex[index].show;
 					}
 				});
-				// setGraphsVisilityStates(newGraphVisibilityStates);
 				visibilityStateAndLegendEntry.graphVisibilityStates = newGraphVisibilityStates;
-				// isfound = true;
 			}
 		});
-		// // if legend is not found in local storage then set all graphs to true
-		// if (!isfound) {
-		// 	setGraphsVisilityStates(Array(data.datasets.length).fill(true));
-		// }
 	}
-	// else {
-	// 	setGraphsVisilityStates(Array(data.datasets.length).fill(true));
-	// }
 
 	return visibilityStateAndLegendEntry;
 };

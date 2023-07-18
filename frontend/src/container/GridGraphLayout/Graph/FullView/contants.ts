@@ -1,4 +1,4 @@
-import { PanelTypeKeys } from 'types/common/queryBuilder';
+import { PANEL_TYPES } from 'constants/queryBuilder';
 
 export enum ColumnsTitle {
 	Index = 'Index',
@@ -20,7 +20,7 @@ export const DataIndexAndKey = {
 };
 
 export const PanelTypeAndGraphManagerVisibility: {
-	[key in PanelTypeKeys]: boolean;
+	[key in keyof typeof PANEL_TYPES]: boolean;
 } = {
 	TIME_SERIES: true,
 	VALUE: false,

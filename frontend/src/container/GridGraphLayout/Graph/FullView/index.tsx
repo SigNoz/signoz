@@ -9,6 +9,7 @@ import {
 } from 'container/NewWidget/RightContainer/timeItems';
 import { useGetQueryRange } from 'hooks/queryBuilder/useGetQueryRange';
 import { useStepInterval } from 'hooks/queryBuilder/useStepInterval';
+import { useChartMutable } from 'hooks/useChartMutable';
 import { getDashboardVariables } from 'lib/dashbaordVariables/getDashboardVariables';
 import getChartData from 'lib/getChartData';
 import { useCallback, useMemo, useState } from 'react';
@@ -18,7 +19,6 @@ import { Widgets } from 'types/api/dashboard/getAll';
 import { GlobalReducer } from 'types/reducer/globalTime';
 
 import GraphManager from './GraphManager';
-import { useShowGraphManager } from './hooks';
 import { GraphContainer, TimeContainer } from './styles';
 
 function FullView({
@@ -43,7 +43,7 @@ function FullView({
 		[widget],
 	);
 
-	const showGraphManager = useShowGraphManager(widget.panelTypes);
+	const canModifyChart = useChartMutable(widget.panelTypes);
 
 	const [selectedTime, setSelectedTime] = useState<timePreferance>({
 		name: getSelectedTime()?.name || '',
@@ -122,7 +122,7 @@ function FullView({
 				/>
 			</GraphContainer>
 
-			{showGraphManager && (
+			{canModifyChart && (
 				<GraphManager
 					data={chartDataSet}
 					graphVisibilityStateHandler={graphVisibilityStateHandler}

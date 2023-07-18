@@ -10,6 +10,7 @@ import { getYAxisFormattedValue } from 'components/Graph/yAxisConfig';
 import ValueGraph from 'components/ValueGraph';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { GRAPH_TYPES } from 'container/NewDashboard/ComponentsSlider';
+import { useChartMutable } from 'hooks/useChartMutable';
 import { useEffect, useRef } from 'react';
 import { useLocation } from 'react-router-dom';
 
@@ -34,13 +35,15 @@ function GridGraphComponent({
 
 	const lineChartRef = useRef<ToggleGraphProps>();
 
+	const canModifyChart = useChartMutable(GRAPH_TYPES);
+
 	useEffect(() => {
-		if (lineChartRef.current) {
+		if (canModifyChart && lineChartRef.current) {
 			graphsVisibilityStates?.forEach((showLegendData, index) => {
 				lineChartRef?.current?.toggleGraph(index, showLegendData);
 			});
 		}
-	}, [graphsVisibilityStates]);
+	}, [graphsVisibilityStates, canModifyChart]);
 
 	if (GRAPH_TYPES === PANEL_TYPES.TIME_SERIES) {
 		return (

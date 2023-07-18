@@ -7,18 +7,17 @@ import { useNotifications } from 'hooks/useNotifications';
 import isEqual from 'lodash-es/isEqual';
 import { memo, useEffect, useState } from 'react';
 
-import { getGraphVisiblityStateOnDataChange } from '../utils';
-import CheckBox from './CheckBox';
+import { getGraphVisibilityStateOnDataChange } from '../utils';
 import { ColumnsTitle, DataIndexAndKey } from './contants';
+import CustomCheckBox from './CustomeCheckBox';
+import Label from './Label';
 import {
 	FilterTableAndSaveContainer,
 	FilterTableContainer,
-	LabelContainer,
 	SaveContainer,
 } from './styles';
 import { DataSetProps, ExtendedChartDataset, LegendEntryProps } from './types';
 import {
-	getAbbreviatedLabel,
 	getDefaultTableDataSet,
 	saveLegendEntriesToLocalStorage,
 } from './utils';
@@ -61,7 +60,7 @@ function GraphManager({
 	}, [data, legendEntries]);
 
 	useEffect(() => {
-		const visibilityStateAndLegendEntry = getGraphVisiblityStateOnDataChange(
+		const visibilityStateAndLegendEntry = getGraphVisibilityStateOnDataChange(
 			data,
 			false,
 			name,
@@ -82,11 +81,11 @@ function GraphManager({
 	};
 
 	const getCheckBox = (index: number): React.ReactElement => (
-		<CheckBox
+		<CustomCheckBox
 			data={data}
 			index={index}
-			graphVisibilityState={graphVisibilityState}
 			checkBoxOnChangeHandler={checkBoxOnChangeHandler}
+			graphVisibilityState={graphVisibilityState}
 		/>
 	);
 
@@ -100,12 +99,11 @@ function GraphManager({
 	};
 
 	const getLabel = (label: string, labelIndex: number): React.ReactElement => (
-		<LabelContainer
-			type="button"
-			onClick={(): void => labelClickedHandler(labelIndex)}
-		>
-			{getAbbreviatedLabel(label)}
-		</LabelContainer>
+		<Label
+			label={label}
+			labelIndex={labelIndex}
+			labelClickedHandler={labelClickedHandler}
+		/>
 	);
 
 	const columns: ColumnType<DataSetProps>[] = [
