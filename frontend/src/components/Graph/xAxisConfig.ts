@@ -9,7 +9,7 @@ interface IAxisTimeUintConfig {
 	multiplier: number;
 }
 
-interface IAxisTimeConfig {
+export interface IAxisTimeConfig {
 	unitName: TimeUnit;
 	stepSize: number;
 }
