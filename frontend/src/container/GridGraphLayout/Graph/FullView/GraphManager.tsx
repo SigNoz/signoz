@@ -49,8 +49,10 @@ function GraphManager({
 			true,
 		);
 		setTableDataSet(getDefaultTableDataSet(data));
-		data.datasets.forEach((d, i) => {
-			const index = legendEntries.findIndex((di) => di.label === d.label);
+		data.datasets.forEach((dataset, i) => {
+			const index = legendEntries.findIndex(
+				(legendEntry) => legendEntry.label === dataset.label,
+			);
 			if (index !== -1) {
 				newGraphVisibilityStates[i] = legendEntries[index].show;
 			}
