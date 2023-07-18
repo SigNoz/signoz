@@ -23,6 +23,7 @@ export const getQueryBuilderQueries = ({
 	aggregateOperator,
 	dataSource,
 	queryNameAndExpression,
+	spanMetricFlg = false,
 }: BuilderQueriesProps): QueryBuilderData => ({
 	queryFormulas: [],
 	queryData: autocompleteData.map((item, index) => {
@@ -43,13 +44,16 @@ export const getQueryBuilderQueries = ({
 				inputFormat: 'ns',
 				start: store.getState().globalTime.minTime,
 			}),
-			reduceTo: 'sum',
 			filters: {
 				items: filterItems[index],
 				op: 'AND',
 			},
 			dataSource,
 		};
+
+		if (!spanMetricFlg) {
+			newQueryData.reduceTo = 'sum';
+		}
 
 		if (queryNameAndExpression) {
 			newQueryData.queryName = queryNameAndExpression[index];
@@ -128,6 +132,7 @@ interface BuilderQueriesProps {
 	aggregateOperator?: string[];
 	dataSource: DataSource;
 	queryNameAndExpression?: string[];
+	spanMetricFlg?: boolean;
 }
 
 interface BuilderQuerieswithFormulaProps {

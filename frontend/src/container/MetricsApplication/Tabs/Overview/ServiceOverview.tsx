@@ -1,8 +1,10 @@
+import { FeatureKeys } from 'constants/features';
 import Graph from 'container/GridGraphLayout/Graph/';
 import { GraphTitle } from 'container/MetricsApplication/constant';
 import { getWidgetQueryBuilder } from 'container/MetricsApplication/MetricsApplication.factory';
 import { latency } from 'container/MetricsApplication/MetricsPageQueries/OverviewQueries';
 import { Card, GraphContainer } from 'container/MetricsApplication/styles';
+import useFeatureFlag from 'hooks/useFeatureFlag';
 import { useMemo } from 'react';
 import { useParams } from 'react-router-dom';
 import { TagFilterItem } from 'types/api/queryBuilder/queryBuilderData';
@@ -22,7 +24,7 @@ function ServiceOverview({
 	tagFilterItems,
 }: ServiceOverviewProps): JSX.Element {
 	const { servicename } = useParams<IServiceName>();
-
+	const SpanMetricFlg = useFeatureFlag(FeatureKeys.USE_SPAN_METRICS);
 	const latencyWidget = useMemo(
 		() =>
 			getWidgetQueryBuilder(
@@ -32,13 +34,14 @@ function ServiceOverview({
 					builder: latency({
 						servicename,
 						tagFilterItems,
+						spanMetricFlg: SpanMetricFlg?.active,
 					}),
 					clickhouse_sql: [],
 					id: uuid(),
 				},
 				GraphTitle.LATENCY,
 			),
-		[servicename, tagFilterItems],
+		[servicename, tagFilterItems, SpanMetricFlg],
 	);
 
 	return (
