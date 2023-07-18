@@ -3,6 +3,7 @@ import TabLabel from 'components/TabLabel';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import TimeSeriesView from 'container/TimeSeriesView';
 import ListView from 'container/TracesExplorer/ListView';
+import TableView from 'container/TracesExplorer/TableView';
 import TracesView from 'container/TracesExplorer/TracesView';
 import { DataSource } from 'types/common/queryBuilder';
 
@@ -41,5 +42,10 @@ export const getTabsItems = ({
 		label: <TabLabel label="Time Series" isDisabled={false} />,
 		key: PANEL_TYPES.TIME_SERIES,
 		children: <TimeSeriesView dataSource={DataSource.TRACES} />,
+	},
+	{
+		label: 'Table View',
+		key: PANEL_TYPES.TABLE,
+		children: <TableView />,
 	},
 ];
