@@ -5,27 +5,39 @@ import {
 import getStep from 'lib/getStep';
 import store from 'store';
 import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
-import { TagFilterItem } from 'types/api/queryBuilder/queryBuilderData';
 import {
+	IBuilderQuery,
+	TagFilterItem,
+} from 'types/api/queryBuilder/queryBuilderData';
+import {
+	DataSource,
 	MetricAggregateOperator,
 	QueryBuilderData,
 } from 'types/common/queryBuilder';
 
 export const getQueryBuilderQueries = ({
-	metricName,
+	autocompleteData,
 	groupBy = [],
-	legend,
-	itemsA,
+	legends,
+	filterItems,
+	aggregateOperator,
+	dataSource,
+	queryNameAndExpression,
 }: BuilderQueriesProps): QueryBuilderData => ({
 	queryFormulas: [],
-	queryData: [
-		{
+	queryData: autocompleteData.map((item, index) => {
+		const newQueryData: IBuilderQuery = {
 			...initialQueryBuilderFormValuesMap.metrics,
-			aggregateOperator: MetricAggregateOperator.SUM_RATE,
+			aggregateOperator: ((): string => {
+				if (aggregateOperator) {
+					return aggregateOperator[index];
+				}
+				return MetricAggregateOperator.SUM_RATE;
+			})(),
 			disabled: false,
 			groupBy,
-			aggregateAttribute: metricName,
-			legend,
+			aggregateAttribute: item,
+			legend: legends[index],
 			stepInterval: getStep({
 				end: store.getState().globalTime.maxTime,
 				inputFormat: 'ns',
@@ -33,16 +45,24 @@ export const getQueryBuilderQueries = ({
 			}),
 			reduceTo: 'sum',
 			filters: {
-				items: itemsA,
+				items: filterItems[index],
 				op: 'AND',
 			},
-		},
-	],
+			dataSource,
+		};
+
+		if (queryNameAndExpression) {
+			newQueryData.queryName = queryNameAndExpression[index];
+			newQueryData.expression = queryNameAndExpression[index];
+		}
+
+		return newQueryData;
+	}),
 });
 
 export const getQueryBuilderQuerieswithFormula = ({
-	metricNameA,
-	metricNameB,
+	autocompleteDataA,
+	autocompleteDataB,
 	additionalItemsA,
 	additionalItemsB,
 	legend,
@@ -65,7 +85,7 @@ export const getQueryBuilderQuerieswithFormula = ({
 			disabled,
 			groupBy,
 			legend,
-			aggregateAttribute: metricNameA,
+			aggregateAttribute: autocompleteDataA,
 			reduceTo: 'sum',
 			filters: {
 				items: additionalItemsA,
@@ -83,7 +103,7 @@ export const getQueryBuilderQuerieswithFormula = ({
 			disabled,
 			groupBy,
 			legend,
-			aggregateAttribute: metricNameB,
+			aggregateAttribute: autocompleteDataB,
 			queryName: 'B',
 			expression: 'B',
 			reduceTo: 'sum',
@@ -101,15 +121,18 @@ export const getQueryBuilderQuerieswithFormula = ({
 });
 
 interface BuilderQueriesProps {
-	metricName: BaseAutocompleteData;
+	autocompleteData: BaseAutocompleteData[];
 	groupBy?: BaseAutocompleteData[];
-	legend: string;
-	itemsA: TagFilterItem[];
+	legends: string[];
+	filterItems: TagFilterItem[][];
+	aggregateOperator?: string[];
+	dataSource: DataSource;
+	queryNameAndExpression?: string[];
 }
 
 interface BuilderQuerieswithFormulaProps {
-	metricNameA: BaseAutocompleteData;
-	metricNameB: BaseAutocompleteData;
+	autocompleteDataA: BaseAutocompleteData;
+	autocompleteDataB: BaseAutocompleteData;
 	legend: string;
 	disabled: boolean;
 	groupBy?: BaseAutocompleteData[];
