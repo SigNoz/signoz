@@ -11,7 +11,6 @@ import { getRemoveOrderFromValue } from '../QueryBuilderSearch/utils';
 import { FILTERS } from './config';
 import { OrderByFilterProps } from './OrderByFilter.interfaces';
 import {
-	checkIfKeyPresent,
 	mapLabelValuePairs,
 	orderByValueDelimiter,
 	splitOrderByFromString,
@@ -112,17 +111,10 @@ export const useOrderByFilter = ({
 
 			const [columnName, order] = match.data.flat() as string[];
 
-			const columnNameValue = checkIfKeyPresent(
-				columnName,
-				query.aggregateAttribute.key,
-			)
-				? '#SIGNOZ_VALUE'
-				: columnName;
-
 			const orderValue = order ?? 'asc';
 
 			return {
-				columnName: columnNameValue,
+				columnName,
 				order: orderValue,
 			};
 		});
