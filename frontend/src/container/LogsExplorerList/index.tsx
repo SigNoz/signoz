@@ -146,12 +146,17 @@ function LogsExplorerList({
 				isShowPageSize={false}
 				optionsMenuConfig={config}
 			/>
+
 			{options.format !== 'table' && (
 				<Heading>
 					<Typography.Text>Event</Typography.Text>
 				</Heading>
 			)}
-			{logs.length === 0 && <Typography>No logs lines found</Typography>}
+
+			{!isLoading && logs.length === 0 && (
+				<Typography>No logs lines found</Typography>
+			)}
+
 			<InfinityWrapperStyled>{renderContent}</InfinityWrapperStyled>
 		</>
 	);
