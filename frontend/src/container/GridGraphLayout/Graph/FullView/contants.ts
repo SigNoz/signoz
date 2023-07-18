@@ -1,3 +1,5 @@
+import { GRAPH_TYPES } from 'container/NewDashboard/ComponentsSlider';
+
 export enum ColumnsTitle {
 	Index = 'Index',
 	Legend = 'Legend',
@@ -15,4 +17,15 @@ export const DataIndexAndKey = {
 	[ColumnsTitle.Sum]: 'sum',
 	[ColumnsTitle.Max]: 'max',
 	[ColumnsTitle.Min]: 'min',
+};
+
+export const ShowGraphManager: {
+	[key in GRAPH_TYPES]: boolean;
+} = {
+	graph: true,
+	value: false,
+	table: false,
+	EMPTY_WIDGET: false,
+	list: false,
+	trace: false,
 };

@@ -17,6 +17,7 @@ import { AppState } from 'store/reducers';
 import { Widgets } from 'types/api/dashboard/getAll';
 import { GlobalReducer } from 'types/reducer/globalTime';
 
+import { ShowGraphManager } from './contants';
 import GraphManager from './GraphManager';
 import { GraphContainer, TimeContainer } from './styles';
 
@@ -119,11 +120,13 @@ function FullView({
 				/>
 			</GraphContainer>
 
-			<GraphManager
-				data={chartDataSet}
-				graphVisibilityStateHandler={graphVisibilityStateHandler}
-				name={name}
-			/>
+			{ShowGraphManager[widget.panelTypes] && (
+				<GraphManager
+					data={chartDataSet}
+					graphVisibilityStateHandler={graphVisibilityStateHandler}
+					name={name}
+				/>
+			)}
 		</>
 	);
 }

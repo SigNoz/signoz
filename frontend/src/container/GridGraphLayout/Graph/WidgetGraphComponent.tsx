@@ -35,7 +35,7 @@ import { v4 } from 'uuid';
 import { LayoutProps } from '..';
 import { UpdateDashboard } from '../utils';
 import WidgetHeader from '../WidgetHeader';
-import FullView from './FullView/index.metricsBuilder';
+import FullView from './FullView';
 import { FullViewContainer, Modal } from './styles';
 import { getGraphVisiblityStateOnDataChange } from './utils';
 
