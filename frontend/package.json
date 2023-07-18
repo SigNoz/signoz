@@ -69,6 +69,7 @@
 		"papaparse": "5.4.1",
 		"react": "18.2.0",
 		"react-dom": "18.2.0",
+		"react-drag-listview": "2.0.0",
 		"react-force-graph": "^1.41.0",
 		"react-grid-layout": "^1.3.4",
 		"react-i18next": "^11.16.1",
