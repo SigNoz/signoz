@@ -1,6 +1,10 @@
 import { themeColors } from 'constants/theme';
 import styled from 'styled-components';
 
+interface TableHeaderCellStyledProps {
+	isDragColumn: boolean;
+}
+
 export const TableStyled = styled.table`
 	width: 100%;
 	border-top: 1px solid rgba(253, 253, 253, 0.12);
@@ -26,10 +30,12 @@ export const TableRowStyled = styled.tr`
 	}
 `;
 
-export const TableHeaderCellStyled = styled.th`
+export const TableHeaderCellStyled = styled.th<TableHeaderCellStyledProps>`
 	padding: 0.5rem;
 	border-inline-end: 1px solid rgba(253, 253, 253, 0.12);
 	background-color: #1d1d1d;
+	${({ isDragColumn }): string => (isDragColumn ? 'cursor: col-resize;' : '')}
+
 	&:first-child {
 		border-start-start-radius: 2px;
 	}
