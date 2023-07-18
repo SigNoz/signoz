@@ -6,6 +6,8 @@ import { useOptionsMenu } from 'container/OptionsMenu';
 import { useGetQueryRange } from 'hooks/queryBuilder/useGetQueryRange';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { Pagination, URL_PAGINATION } from 'hooks/queryPagination';
+import useDragColumns from 'hooks/useDragColumns';
+import { getDraggedColumns } from 'hooks/useDragColumns/utils';
 import useUrlQueryData from 'hooks/useUrlQueryData';
 import history from 'lib/history';
 import { RowData } from 'lib/query/createTableColumnsFromQuery';
@@ -36,6 +38,10 @@ function ListView(): JSX.Element {
 			selectColumns: defaultSelectedColumns,
 		},
 	});
+
+	const { draggedColumns, onDragColumns } = useDragColumns<RowData>(
+		LOCALSTORAGE.TRACES_LIST_COLUMNS,
+	);
 
 	const { queryData: paginationQueryData } = useUrlQueryData<Pagination>(
 		URL_PAGINATION,
@@ -82,9 +88,10 @@ function ListView(): JSX.Element {
 		queryTableDataResult,
 	]);
 
-	const columns = useMemo(() => getListColumns(options?.selectColumns || []), [
-		options?.selectColumns,
-	]);
+	const columns = useMemo(() => {
+		const updatedColumns = getListColumns(options?.selectColumns || []);
+		return getDraggedColumns(updatedColumns, draggedColumns);
+	}, [options?.selectColumns, draggedColumns]);
 
 	const transformedQueryTableData = useMemo(
 		() => transformDataWithDate(queryTableData) || [],
@@ -104,6 +111,12 @@ function ListView(): JSX.Element {
 			},
 		}),
 		[],
+	);
+
+	const handleDragColumn = useCallback(
+		(fromIndex: number, toIndex: number) =>
+			onDragColumns(columns, fromIndex, toIndex),
+		[columns, onDragColumns],
 	);
 
 	return (
@@ -127,6 +140,7 @@ function ListView(): JSX.Element {
 					dataSource={transformedQueryTableData}
 					columns={columns}
 					onRow={handleRow}
+					onDragColumn={handleDragColumn}
 				/>
 			)}
 		</Container>
