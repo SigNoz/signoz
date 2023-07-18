@@ -40,18 +40,30 @@ const useDragColumns = <T>(storageKey: LOCALSTORAGE): UseDragColumns<T> => {
 		[handleRedirectWithDraggedColumns],
 	);
 
+	const redirectWithNewDraggedColumns = useCallback(
+		async (localStorageColumns: string) => {
+			let nextDraggedColumns: ColumnsType<T> = [];
+
+			try {
+				const parsedDraggedColumns = await JSON.parse(localStorageColumns);
+				nextDraggedColumns = parsedDraggedColumns;
+			} catch (e) {
+				console.log('error while parsing json');
+			} finally {
+				redirectWithDraggedColumns(nextDraggedColumns);
+			}
+		},
+		[redirectWithDraggedColumns],
+	);
+
 	useEffect(() => {
-		if (draggedColumnsQuery) return;
+		if (draggedColumnsQuery || !localStorageDraggedColumns) return;
 
-		const nextDraggedColumns = localStorageDraggedColumns
-			? JSON.parse(localStorageDraggedColumns)
-			: [];
-
-		redirectWithDraggedColumns(nextDraggedColumns);
+		redirectWithNewDraggedColumns(localStorageDraggedColumns);
 	}, [
 		draggedColumnsQuery,
 		localStorageDraggedColumns,
-		redirectWithDraggedColumns,
+		redirectWithNewDraggedColumns,
 	]);
 
 	return {
