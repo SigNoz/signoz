@@ -1,4 +1,4 @@
-import { GRAPH_TYPES } from 'container/NewDashboard/ComponentsSlider';
+import { PanelTypeKeys } from 'types/common/queryBuilder';
 
 export enum ColumnsTitle {
 	Index = 'Index',
@@ -19,13 +19,13 @@ export const DataIndexAndKey = {
 	[ColumnsTitle.Min]: 'min',
 };
 
-export const ShowGraphManager: {
-	[key in GRAPH_TYPES]: boolean;
+export const PanelTypeAndGraphManagerVisibility: {
+	[key in PanelTypeKeys]: boolean;
 } = {
-	graph: true,
-	value: false,
-	table: false,
+	TIME_SERIES: true,
+	VALUE: false,
+	TABLE: false,
+	LIST: false,
+	TRACE: false,
 	EMPTY_WIDGET: false,
-	list: false,
-	trace: false,
 };

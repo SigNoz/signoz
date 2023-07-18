@@ -17,8 +17,8 @@ import { AppState } from 'store/reducers';
 import { Widgets } from 'types/api/dashboard/getAll';
 import { GlobalReducer } from 'types/reducer/globalTime';
 
-import { ShowGraphManager } from './contants';
 import GraphManager from './GraphManager';
+import { useShowGraphManager } from './hooks';
 import { GraphContainer, TimeContainer } from './styles';
 
 function FullView({
@@ -42,6 +42,8 @@ function FullView({
 			timeItems.find((e) => e.enum === (widget?.timePreferance || 'GLOBAL_TIME')),
 		[widget],
 	);
+
+	const showGraphManager = useShowGraphManager(widget.panelTypes);
 
 	const [selectedTime, setSelectedTime] = useState<timePreferance>({
 		name: getSelectedTime()?.name || '',
@@ -120,7 +122,7 @@ function FullView({
 				/>
 			</GraphContainer>
 
-			{ShowGraphManager[widget.panelTypes] && (
+			{showGraphManager && (
 				<GraphManager
 					data={chartDataSet}
 					graphVisibilityStateHandler={graphVisibilityStateHandler}
