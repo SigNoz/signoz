@@ -1,6 +1,5 @@
 import { Typography } from 'antd';
 import { ChartData } from 'chart.js';
-import { LOCALSTORAGE } from 'constants/localStorage';
 import GridGraphComponent from 'container/GridGraphComponent';
 import { useNotifications } from 'hooks/useNotifications';
 import history from 'lib/history';
@@ -36,8 +35,8 @@ import { LayoutProps } from '..';
 import { UpdateDashboard } from '../utils';
 import WidgetHeader from '../WidgetHeader';
 import FullView from './FullView/index.metricsBuilder';
-import { LegendEntryProps } from './FullView/types';
 import { FullViewContainer, Modal } from './styles';
+import { getGraphVisiblityStateOnDataChange } from './utils';
 
 function WidgetGraphComponent({
 	enableModel,
@@ -157,36 +156,12 @@ function WidgetGraphComponent({
 	};
 
 	useEffect(() => {
-		if (localStorage.getItem(LOCALSTORAGE.GRAPH_VISIBILITY_STATES) !== null) {
-			const legendGraphFromLocalStore = localStorage.getItem(
-				LOCALSTORAGE.GRAPH_VISIBILITY_STATES,
-			);
-			const legendFromLocalStore: [
-				{ name: string; dataIndex: LegendEntryProps[] },
-			] = JSON.parse(legendGraphFromLocalStore as string);
-			let isfound = false;
-			const newGraphVisibilityStates = Array(data.datasets.length).fill(true);
-			legendFromLocalStore.forEach((item) => {
-				if (item.name === `${name}expanded`) {
-					data.datasets.forEach((datasets, i) => {
-						const index = item.dataIndex.findIndex(
-							(dataKey) => dataKey.label === datasets.label,
-						);
-						if (index !== -1) {
-							newGraphVisibilityStates[i] = item.dataIndex[index].show;
-						}
-					});
-					setGraphsVisilityStates(newGraphVisibilityStates);
-					isfound = true;
-				}
-			});
-			// if legend is not found in local storage then set all graphs to true
-			if (!isfound) {
-				setGraphsVisilityStates(Array(data.datasets.length).fill(true));
-			}
-		} else {
-			setGraphsVisilityStates(Array(data.datasets.length).fill(true));
-		}
+		const visibilityStateAndLegendEntry = getGraphVisiblityStateOnDataChange(
+			data,
+			true,
+			name,
+		);
+		setGraphsVisilityStates(visibilityStateAndLegendEntry.graphVisibilityStates);
 	}, [data, name]);
 
 	const getModals = (): JSX.Element => (

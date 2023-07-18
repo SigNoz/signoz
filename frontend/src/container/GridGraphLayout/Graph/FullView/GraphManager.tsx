@@ -3,11 +3,11 @@ import { CheckboxChangeEvent } from 'antd/es/checkbox';
 import { ColumnType } from 'antd/es/table';
 import { ChartData } from 'chart.js';
 import { ResizeTable } from 'components/ResizeTable';
-import { LOCALSTORAGE } from 'constants/localStorage';
 import { useNotifications } from 'hooks/useNotifications';
 import isEqual from 'lodash-es/isEqual';
 import { memo, useEffect, useState } from 'react';
 
+import { getGraphVisiblityStateOnDataChange } from '../utils';
 import CheckBox from './CheckBox';
 import { ColumnsTitle, DataIndexAndKey } from './contants';
 import {
@@ -21,7 +21,6 @@ import {
 	getAbbreviatedLabel,
 	getDefaultTableDataSet,
 	saveLegendEntriesToLocalStorage,
-	showAllDataSet,
 } from './utils';
 
 function GraphManager({
@@ -60,41 +59,13 @@ function GraphManager({
 	}, [data, legendEntries]);
 
 	useEffect(() => {
-		if (localStorage.getItem(LOCALSTORAGE.GRAPH_VISIBILITY_STATES) !== null) {
-			const legendGraphFromLocalStore = localStorage.getItem(
-				LOCALSTORAGE.GRAPH_VISIBILITY_STATES,
-			);
-			const legendFromLocalStore: [
-				{ name: string; dataIndex: LegendEntryProps[] },
-			] = JSON.parse(legendGraphFromLocalStore || '[]');
-			let isfound = false;
-			const newGraphVisibilityStates = Array(data.datasets.length).fill(true);
-			legendFromLocalStore.forEach((item) => {
-				// if the legend entries are found in the local storage
-				if (item.name === name) {
-					setLegendEntries(item.dataIndex);
-					data.datasets.forEach((dataset, i) => {
-						const index = item.dataIndex.findIndex(
-							(dataKey) => dataKey.label === dataset.label,
-						);
-						if (index !== -1) {
-							newGraphVisibilityStates[i] = item.dataIndex[index].show;
-						}
-					});
-					setGraphVisibilityState(newGraphVisibilityStates);
-					isfound = true;
-				}
-			});
-			// if the legend entries are not found in the local storage
-			if (!isfound) {
-				setGraphVisibilityState(Array(data.datasets.length).fill(true));
-				setLegendEntries(showAllDataSet(data));
-			}
-		} else {
-			// if the legend entries are not found in the local storage
-			setGraphVisibilityState(Array(data.datasets.length).fill(true));
-			setLegendEntries(showAllDataSet(data));
-		}
+		const visibilityStateAndLegendEntry = getGraphVisiblityStateOnDataChange(
+			data,
+			false,
+			name,
+		);
+		setGraphVisibilityState(visibilityStateAndLegendEntry.graphVisibilityStates);
+		setLegendEntries(visibilityStateAndLegendEntry.legendEntry);
 	}, [data, name]);
 
 	const checkBoxOnChangeHandler = (
@@ -139,39 +110,39 @@ function GraphManager({
 		{
 			title: '',
 			width: 50,
-			dataIndex: DataIndexAndKey.Index,
+			dataIndex: DataIndexAndKey[ColumnsTitle.Index],
 			key: DataIndexAndKey.Index,
 			render: (index: number): JSX.Element => getCheckBox(index),
 		},
 		{
 			title: ColumnsTitle.Legend,
 			width: 300,
-			dataIndex: DataIndexAndKey.Label,
+			dataIndex: DataIndexAndKey[ColumnsTitle.Label],
 			key: DataIndexAndKey.Label,
 			render: (label: string, _, index): JSX.Element => getLabel(label, index),
 		},
 		{
 			title: ColumnsTitle.Avg,
 			width: 70,
-			dataIndex: DataIndexAndKey.Avg,
+			dataIndex: DataIndexAndKey[ColumnsTitle.Avg],
 			key: DataIndexAndKey.Avg,
 		},
 		{
 			title: ColumnsTitle.Sum,
 			width: 70,
-			dataIndex: DataIndexAndKey.Sum,
+			dataIndex: DataIndexAndKey[ColumnsTitle.Sum],
 			key: DataIndexAndKey.Sum,
 		},
 		{
 			title: ColumnsTitle.Max,
 			width: 70,
-			dataIndex: DataIndexAndKey.Max,
+			dataIndex: DataIndexAndKey[ColumnsTitle.Max],
 			key: DataIndexAndKey.Max,
 		},
 		{
 			title: ColumnsTitle.Min,
 			width: 70,
-			dataIndex: DataIndexAndKey.Min,
+			dataIndex: DataIndexAndKey[ColumnsTitle.Min],
 			key: DataIndexAndKey.Min,
 		},
 	];

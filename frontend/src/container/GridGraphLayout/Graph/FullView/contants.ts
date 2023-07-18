@@ -1,16 +1,18 @@
 export enum ColumnsTitle {
+	Index = 'Index',
 	Legend = 'Legend',
+	Label = 'Label',
 	Avg = 'Avg',
 	Sum = 'Sum',
 	Max = 'Max',
 	Min = 'Min',
 }
 
-export enum DataIndexAndKey {
-	Index = 'index',
-	Label = 'label',
-	Avg = 'avg',
-	Sum = 'sum',
-	Max = 'max',
-	Min = 'min',
-}
+export const DataIndexAndKey = {
+	[ColumnsTitle.Index]: 'index',
+	[ColumnsTitle.Label]: 'label',
+	[ColumnsTitle.Avg]: 'avg',
+	[ColumnsTitle.Sum]: 'sum',
+	[ColumnsTitle.Max]: 'max',
+	[ColumnsTitle.Min]: 'min',
+};
