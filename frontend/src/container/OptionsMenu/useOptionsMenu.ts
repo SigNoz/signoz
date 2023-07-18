@@ -30,6 +30,7 @@ interface UseOptionsMenuProps {
 interface UseOptionsMenu {
 	options: OptionsQuery;
 	config: OptionsMenuConfig;
+	handleOptionsChange: (newQueryData: OptionsQuery) => void;
 }
 
 const useOptionsMenu = ({
@@ -302,6 +303,7 @@ const useOptionsMenu = ({
 	return {
 		options: optionsQueryData,
 		config: optionsMenuConfig,
+		handleOptionsChange: handleRedirectWithOptionsData,
 	};
 };
 
