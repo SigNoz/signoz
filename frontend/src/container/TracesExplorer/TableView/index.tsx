@@ -1,3 +1,4 @@
+import { Space } from 'antd';
 import { initialQueriesMap, PANEL_TYPES } from 'constants/queryBuilder';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import { QueryTable } from 'container/QueryTable';
@@ -7,8 +8,6 @@ import { memo } from 'react';
 import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
 import { GlobalReducer } from 'types/reducer/globalTime';
-
-import { Container } from './styles';
 
 function TableView(): JSX.Element {
 	const { stagedQuery, panelType } = useQueryBuilder();
@@ -41,13 +40,13 @@ function TableView(): JSX.Element {
 	);
 
 	return (
-		<Container>
+		<Space.Compact block direction="vertical">
 			<QueryTable
 				query={stagedQuery || initialQueriesMap.traces}
 				queryTableData={data?.payload.data.newResult.data.result || []}
 				loading={isLoading}
 			/>
-		</Container>
+		</Space.Compact>
 	);
 }
 
