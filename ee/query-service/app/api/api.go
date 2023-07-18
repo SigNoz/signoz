@@ -15,13 +15,14 @@ import (
 )
 
 type APIHandlerOptions struct {
-	DataConnector  interfaces.DataConnector
-	SkipConfig     *basemodel.SkipConfig
-	PreferDelta    bool
-	AppDao         dao.ModelDao
-	RulesManager   *rules.Manager
-	FeatureFlags   baseint.FeatureLookup
-	LicenseManager *license.Manager
+	DataConnector     interfaces.DataConnector
+	SkipConfig        *basemodel.SkipConfig
+	PreferDelta       bool
+	PreferSpanMetrics bool
+	AppDao            dao.ModelDao
+	RulesManager      *rules.Manager
+	FeatureFlags      baseint.FeatureLookup
+	LicenseManager    *license.Manager
 }
 
 type APIHandler struct {
@@ -33,12 +34,13 @@ type APIHandler struct {
 func NewAPIHandler(opts APIHandlerOptions) (*APIHandler, error) {
 
 	baseHandler, err := baseapp.NewAPIHandler(baseapp.APIHandlerOpts{
-		Reader:       opts.DataConnector,
-		SkipConfig:   opts.SkipConfig,
-		PerferDelta:  opts.PreferDelta,
-		AppDao:       opts.AppDao,
-		RuleManager:  opts.RulesManager,
-		FeatureFlags: opts.FeatureFlags})
+		Reader:            opts.DataConnector,
+		SkipConfig:        opts.SkipConfig,
+		PerferDelta:       opts.PreferDelta,
+		PreferSpanMetrics: opts.PreferSpanMetrics,
+		AppDao:            opts.AppDao,
+		RuleManager:       opts.RulesManager,
+		FeatureFlags:      opts.FeatureFlags})
 
 	if err != nil {
 		return nil, err
