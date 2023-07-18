@@ -6,6 +6,7 @@ import useUrlQueryData from 'hooks/useUrlQueryData';
 import { useCallback, useEffect, useMemo } from 'react';
 
 import { COLUMNS } from './configs';
+import { UseDragColumns } from './types';
 
 const useDragColumns = <T>(storageKey: LOCALSTORAGE): UseDragColumns<T> => {
 	const {
@@ -57,15 +58,6 @@ const useDragColumns = <T>(storageKey: LOCALSTORAGE): UseDragColumns<T> => {
 		draggedColumns,
 		onDragColumns,
 	};
-};
-
-type UseDragColumns<T> = {
-	draggedColumns: ColumnsType<T>;
-	onDragColumns: (
-		columns: ColumnsType<T>,
-		fromIndex: number,
-		toIndex: number,
-	) => void;
 };
 
 export default useDragColumns;

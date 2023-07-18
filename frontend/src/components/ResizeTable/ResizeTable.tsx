@@ -1,8 +1,6 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable react/jsx-props-no-spreading */
 
 import { Table } from 'antd';
-import type { TableProps } from 'antd/es/table';
 import { ColumnsType } from 'antd/lib/table';
 import { dragColumnParams } from 'hooks/useDragColumns/configs';
 import {
@@ -17,6 +15,7 @@ import { ResizeCallbackData } from 'react-resizable';
 
 import ResizableHeader from './ResizableHeader';
 import { DragSpanStyle } from './styles';
+import { ResizeTableProps } from './types';
 
 function ResizeTable({
 	columns,
@@ -86,9 +85,5 @@ function ResizeTable({
 ResizeTable.defaultProps = {
 	onDragColumn: undefined,
 };
-
-export interface ResizeTableProps extends TableProps<any> {
-	onDragColumn?: (fromIndex: number, toIndex: number) => void;
-}
 
 export default ResizeTable;
