@@ -4182,24 +4182,15 @@ func readRowsForTimeSeriesResult(rows driver.Rows, vars []interface{}, columnNam
 		groupBy, groupAttributes, metricPoint := readRow(vars, columnNames)
 		sort.Strings(groupBy)
 		key := strings.Join(groupBy, "")
-		keys = append(keys, key)
+		if _, exists := seriesToAttrs[key]; !exists {
+			keys = append(keys, key)
+		}
 		seriesToAttrs[key] = groupAttributes
 		seriesToPoints[key] = append(seriesToPoints[key], metricPoint)
 	}
 
-	// remove duplicates from keys array
-	encountered := map[string]bool{}
-	uniqKeys := []string{}
-
-	for _, element := range keys {
-		if encountered[element] == false {
-			encountered[element] = true
-			uniqKeys = append(uniqKeys, element)
-		}
-	}
-
 	var seriesList []*v3.Series
-	for _, key := range uniqKeys {
+	for _, key := range keys {
 		points := seriesToPoints[key]
 
 		// find the grouping sets point for the series
