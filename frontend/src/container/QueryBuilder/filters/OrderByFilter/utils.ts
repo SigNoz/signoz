@@ -10,21 +10,10 @@ export const orderByValueDelimiter = '|';
 export const transformToOrderByStringValues = (
 	orderBy: OrderByPayload[],
 ): IOption[] => {
-	const prepareSelectedValue: IOption[] = orderBy.reduce<IOption[]>(
-		(acc, item) => {
-			if (item.columnName === '#SIGNOZ_VALUE') return acc;
-
-			const option: IOption = {
-				label: `${item.columnName} ${item.order}`,
-				value: `${item.columnName}${orderByValueDelimiter}${item.order}`,
-			};
-
-			acc.push(option);
-
-			return acc;
-		},
-		[],
-	);
+	const prepareSelectedValue: IOption[] = orderBy.map((item) => ({
+		label: `${item.columnName} ${item.order}`,
+		value: `${item.columnName}${orderByValueDelimiter}${item.order}`,
+	}));
 
 	return prepareSelectedValue;
 };
