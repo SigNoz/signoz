@@ -62,7 +62,6 @@ function ExplorerOrderBy({ query, onChange }: OrderByFilterProps): JSX.Element {
 			showArrow={false}
 			value={selectedValue}
 			labelInValue
-			filterOption={false}
 			options={options}
 			notFoundContent={isFetching ? <Spin size="small" /> : null}
 			onChange={handleChange}

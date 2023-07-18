@@ -9,9 +9,9 @@ import { OrderByPayload } from 'types/api/queryBuilder/queryBuilderData';
 
 import { getRemoveOrderFromValue } from '../QueryBuilderSearch/utils';
 import { FILTERS } from './config';
+import { SIGNOZ_VALUE } from './constants';
 import { OrderByFilterProps } from './OrderByFilter.interfaces';
 import {
-	checkIfKeyPresent,
 	getLabelFromValue,
 	mapLabelValuePairs,
 	orderByValueDelimiter,
@@ -35,9 +35,6 @@ export const useOrderByFilter = ({
 	onChange,
 }: OrderByFilterProps): UseOrderByFilterResult => {
 	const [searchText, setSearchText] = useState<string>('');
-	const [selectedValue, setSelectedValue] = useState<IOption[]>(
-		transformToOrderByStringValues(query.orderBy),
-	);
 
 	const debouncedSearchText = useDebounce(searchText, DEBOUNCE_DELAY);
 
@@ -87,10 +84,15 @@ export const useOrderByFilter = ({
 		];
 	}, [searchText]);
 
+	const selectedValue = useMemo(() => transformToOrderByStringValues(query), [
+		query,
+	]);
+
 	const generateOptions = useCallback(
 		(options: IOption[]): IOption[] => {
-			const currentCustomValue = options.find((keyOption) =>
-				getRemoveOrderFromValue(keyOption.value).includes(debouncedSearchText),
+			const currentCustomValue = options.find(
+				(keyOption) =>
+					getRemoveOrderFromValue(keyOption.value) === debouncedSearchText,
 			)
 				? []
 				: customValue;
@@ -99,7 +101,6 @@ export const useOrderByFilter = ({
 
 			const uniqResult = uniqWith(result, isEqual);
 
-			// TODO: make it reusable
 			return uniqResult.filter(
 				(option) =>
 					!getLabelFromValue(selectedValue).includes(
@@ -151,12 +152,8 @@ export const useOrderByFilter = ({
 
 			const [columnName, order] = match.data.flat() as string[];
 
-			const columnNameValue = checkIfKeyPresent(
-				columnName,
-				query.aggregateAttribute.key,
-			)
-				? '#SIGNOZ_VALUE'
-				: columnName;
+			const columnNameValue =
+				columnName === SIGNOZ_VALUE ? SIGNOZ_VALUE : columnName;
 
 			const orderValue = order ?? 'asc';
 
@@ -165,13 +162,6 @@ export const useOrderByFilter = ({
 				order: orderValue,
 			};
 		});
-
-		const selectedValue: IOption[] = orderByValues.map((item) => ({
-			label: `${item.columnName} ${item.order}`,
-			value: `${item.columnName}${orderByValueDelimiter}${item.order}`,
-		}));
-
-		setSelectedValue(selectedValue);
 
 		setSearchText('');
 		onChange(orderByValues);
@@ -186,11 +176,11 @@ export const useOrderByFilter = ({
 		() => [
 			{
 				label: `${query.aggregateOperator}(${query.aggregateAttribute.key}) ${FILTERS.ASC}`,
-				value: `${query.aggregateOperator}(${query.aggregateAttribute.key})${orderByValueDelimiter}${FILTERS.ASC}`,
+				value: `${SIGNOZ_VALUE}${orderByValueDelimiter}${FILTERS.ASC}`,
 			},
 			{
 				label: `${query.aggregateOperator}(${query.aggregateAttribute.key}) ${FILTERS.DESC}`,
-				value: `${query.aggregateOperator}(${query.aggregateAttribute.key})${orderByValueDelimiter}${FILTERS.DESC}`,
+				value: `${SIGNOZ_VALUE}${orderByValueDelimiter}${FILTERS.DESC}`,
 			},
 		],
 		[query],

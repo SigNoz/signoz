@@ -1,19 +1,32 @@
 import { IOption } from 'hooks/useResourceAttribute/types';
 import * as Papa from 'papaparse';
 import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
-import { OrderByPayload } from 'types/api/queryBuilder/queryBuilderData';
+import {
+	IBuilderQuery,
+	OrderByPayload,
+} from 'types/api/queryBuilder/queryBuilderData';
 
 import { FILTERS } from './config';
+import { SIGNOZ_VALUE } from './constants';
 
 export const orderByValueDelimiter = '|';
 
 export const transformToOrderByStringValues = (
-	orderBy: OrderByPayload[],
+	query: IBuilderQuery,
 ): IOption[] => {
-	const prepareSelectedValue: IOption[] = orderBy.map((item) => ({
-		label: `${item.columnName} ${item.order}`,
-		value: `${item.columnName}${orderByValueDelimiter}${item.order}`,
-	}));
+	const prepareSelectedValue: IOption[] = query.orderBy.map((item) => {
+		if (item.columnName === SIGNOZ_VALUE) {
+			return {
+				label: `${query.aggregateOperator}(${query.aggregateAttribute.key}) ${item.order}`,
+				value: `${item.columnName}${orderByValueDelimiter}${item.order}`,
+			};
+		}
+
+		return {
+			label: `${item.columnName} ${item.order}`,
+			value: `${item.columnName}${orderByValueDelimiter}${item.order}`,
+		};
+	});
 
 	return prepareSelectedValue;
 };
