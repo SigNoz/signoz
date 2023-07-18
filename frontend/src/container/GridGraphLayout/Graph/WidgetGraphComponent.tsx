@@ -1,5 +1,6 @@
 import { Typography } from 'antd';
 import { ChartData } from 'chart.js';
+import { GraphOnClickHandler } from 'components/Graph/types';
 import GridGraphComponent from 'container/GridGraphComponent';
 import { useNotifications } from 'hooks/useNotifications';
 import history from 'lib/history';
@@ -51,6 +52,10 @@ function WidgetGraphComponent({
 	deleteWidget,
 	setLayout,
 	onDragSelect,
+	onClickHandler,
+	allowClone = true,
+	allowDelete = true,
+	allowEdit = true,
 }: WidgetGraphComponentProps): JSX.Element {
 	const [deleteModal, setDeleteModal] = useState(false);
 	const [modal, setModal] = useState<boolean>(false);
@@ -229,6 +234,9 @@ function WidgetGraphComponent({
 								onClone={onCloneHandler}
 								queryResponse={queryResponse}
 								errorMessage={errorMessage}
+								allowClone={allowClone}
+								allowDelete={allowDelete}
+								allowEdit={allowEdit}
 							/>
 						</div>
 					)}
@@ -242,6 +250,7 @@ function WidgetGraphComponent({
 						yAxisUnit={yAxisUnit}
 						graphsVisibilityStates={graphsVisibilityStates}
 						onDragSelect={onDragSelect}
+						onClickHandler={onClickHandler}
 					/>
 				</>
 			)}
@@ -269,6 +278,10 @@ interface WidgetGraphComponentProps extends DispatchProps {
 	layout?: Layout[];
 	setLayout?: Dispatch<SetStateAction<LayoutProps[]>>;
 	onDragSelect?: (start: number, end: number) => void;
+	onClickHandler?: GraphOnClickHandler;
+	allowDelete?: boolean;
+	allowClone?: boolean;
+	allowEdit?: boolean;
 }
 
 WidgetGraphComponent.defaultProps = {
@@ -276,6 +289,10 @@ WidgetGraphComponent.defaultProps = {
 	layout: undefined,
 	setLayout: undefined,
 	onDragSelect: undefined,
+	onClickHandler: undefined,
+	allowDelete: true,
+	allowClone: true,
+	allowEdit: true,
 };
 
 const mapDispatchToProps = (

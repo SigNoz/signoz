@@ -1,4 +1,5 @@
 import { ChartData } from 'chart.js';
+import { GraphOnClickHandler } from 'components/Graph/types';
 import Spinner from 'components/Spinner';
 import { useGetQueryRange } from 'hooks/queryBuilder/useGetQueryRange';
 import { useStepInterval } from 'hooks/queryBuilder/useStepInterval';
@@ -14,6 +15,7 @@ import { AppState } from 'store/reducers';
 import { Widgets } from 'types/api/dashboard/getAll';
 import DashboardReducer from 'types/reducer/dashboards';
 import { GlobalReducer } from 'types/reducer/globalTime';
+import { getSelectedDashboardVariable } from 'utils/dashboard/selectedDashboard';
 
 import { LayoutProps } from '..';
 import EmptyWidget from '../EmptyWidget';
@@ -26,6 +28,10 @@ function GridCardGraph({
 	layout = [],
 	setLayout,
 	onDragSelect,
+	onClickHandler,
+	allowDelete,
+	allowClone,
+	allowEdit,
 }: GridCardGraphProps): JSX.Element {
 	const { ref: graphRef, inView: isGraphVisible } = useInView({
 		threshold: 0,
@@ -42,9 +48,8 @@ function GridCardGraph({
 	const { dashboards } = useSelector<AppState, DashboardReducer>(
 		(state) => state.dashboards,
 	);
-	const [selectedDashboard] = dashboards;
-	const selectedData = selectedDashboard?.data;
-	const { variables } = selectedData;
+
+	const variables = getSelectedDashboardVariable(dashboards);
 
 	const updatedQuery = useStepInterval(widget?.query);
 
@@ -110,6 +115,9 @@ function GridCardGraph({
 						yAxisUnit={yAxisUnit}
 						layout={layout}
 						setLayout={setLayout}
+						allowClone={allowClone}
+						allowDelete={allowDelete}
+						allowEdit={allowEdit}
 					/>
 				)}
 			</span>
@@ -131,6 +139,10 @@ function GridCardGraph({
 						yAxisUnit={yAxisUnit}
 						layout={layout}
 						setLayout={setLayout}
+						allowClone={allowClone}
+						allowDelete={allowDelete}
+						allowEdit={allowEdit}
+						onClickHandler={onClickHandler}
 					/>
 				) : (
 					<Spinner height="20vh" tip="Loading..." />
@@ -152,6 +164,9 @@ function GridCardGraph({
 					name={name}
 					yAxisUnit={yAxisUnit}
 					onDragSelect={onDragSelect}
+					allowClone={allowClone}
+					allowDelete={allowDelete}
+					allowEdit={allowEdit}
 				/>
 			)}
 
@@ -169,10 +184,18 @@ interface GridCardGraphProps {
 	// eslint-disable-next-line react/require-default-props
 	setLayout?: Dispatch<SetStateAction<LayoutProps[]>>;
 	onDragSelect?: (start: number, end: number) => void;
+	onClickHandler?: GraphOnClickHandler;
+	allowDelete?: boolean;
+	allowClone?: boolean;
+	allowEdit?: boolean;
 }
 
 GridCardGraph.defaultProps = {
 	onDragSelect: undefined,
+	onClickHandler: undefined,
+	allowDelete: true,
+	allowClone: true,
+	allowEdit: true,
 };
 
 export default memo(GridCardGraph);
