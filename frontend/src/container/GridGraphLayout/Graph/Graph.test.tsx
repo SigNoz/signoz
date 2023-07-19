@@ -52,19 +52,19 @@ describe('getGraphVisibilityStateOnDataChange', () => {
 			.spyOn(window.localStorage, 'getItem')
 			.mockReturnValue(JSON.stringify(mockLocalStorageData));
 
-		const result1 = getGraphVisibilityStateOnDataChange(
-			testData,
-			true,
-			'example',
-		);
+		const result1 = getGraphVisibilityStateOnDataChange({
+			data: testData,
+			isExpandedName: true,
+			name: 'example',
+		});
 		expect(result1.graphVisibilityStates).toEqual([true, false]);
 		expect(result1.legendEntry).toEqual(legendEntryResult);
 
-		const result2 = getGraphVisibilityStateOnDataChange(
-			testData,
-			false,
-			'example',
-		);
+		const result2 = getGraphVisibilityStateOnDataChange({
+			data: testData,
+			isExpandedName: false,
+			name: 'example',
+		});
 		expect(result2.graphVisibilityStates).toEqual(
 			Array(testData.datasets.length).fill(true),
 		);
@@ -75,7 +75,11 @@ describe('getGraphVisibilityStateOnDataChange', () => {
 		// Mock the localStorage behavior to return null
 		jest.spyOn(window.localStorage, 'getItem').mockReturnValue(null);
 
-		const result = getGraphVisibilityStateOnDataChange(testData, true, 'example');
+		const result = getGraphVisibilityStateOnDataChange({
+			data: testData,
+			isExpandedName: true,
+			name: 'example',
+		});
 		expect(result.graphVisibilityStates).toEqual(
 			Array(testData.datasets.length).fill(true),
 		);
