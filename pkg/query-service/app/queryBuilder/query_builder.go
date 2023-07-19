@@ -147,7 +147,7 @@ func (qb *QueryBuilder) PrepareQueries(params *v3.QueryRangeParamsV3, args ...in
 					if len(args) > 0 {
 						keys = args[0].(map[string]v3.AttributeKey)
 					}
-					// for ts or table query with group by and limit form two queries
+					// for ts query with group by and limit form two queries
 					if compositeQuery.PanelType == v3.PanelTypeGraph && query.Limit > 0 && len(query.GroupBy) > 0 {
 						limitQuery, err := qb.options.BuildTraceQuery(params.Start, params.End, compositeQuery.PanelType, query, keys, constants.FirstQueryGraphLimit)
 						if err != nil {

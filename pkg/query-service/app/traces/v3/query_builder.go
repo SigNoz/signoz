@@ -438,7 +438,7 @@ func orderByAttributeKeyTags(panelType v3.PanelType, items []v3.OrderBy, tags []
 	if len(orderByArray) == 0 {
 		if panelType == v3.PanelTypeList {
 			orderByArray = append(orderByArray, constants.TIMESTAMP+" DESC")
-		} else if panelType == v3.PanelTypeGraph || panelType == v3.PanelTypeValue {
+		} else if panelType == v3.PanelTypeGraph {
 			orderByArray = append(orderByArray, "value DESC")
 		}
 	}
