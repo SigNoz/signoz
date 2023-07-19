@@ -1,6 +1,6 @@
 import { Card, Typography } from 'antd';
 import Spinner from 'components/Spinner';
-import GridGraphComponent from 'container/GridGraphComponent';
+import GridPanelSwitch from 'container/GridPanelSwitch';
 import { WidgetGraphProps } from 'container/NewWidget/types';
 import { useGetWidgetQueryRange } from 'hooks/queryBuilder/useGetWidgetQueryRange';
 import getChartData from 'lib/getChartData';
@@ -66,7 +66,7 @@ function WidgetGraph({
 	});
 
 	return (
-		<GridGraphComponent
+		<GridPanelSwitch
 			title={title}
 			isStacked={isStacked}
 			opacity={opacity}

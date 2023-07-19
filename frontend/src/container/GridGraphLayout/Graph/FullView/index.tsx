@@ -2,7 +2,7 @@ import { Button } from 'antd';
 import { GraphOnClickHandler } from 'components/Graph';
 import Spinner from 'components/Spinner';
 import TimePreference from 'components/TimePreferenceDropDown';
-import GridGraphComponent from 'container/GridGraphComponent';
+import GridPanelSwitch from 'container/GridPanelSwitch';
 import {
 	timeItems,
 	timePreferance,
@@ -101,7 +101,7 @@ function FullView({
 				</TimeContainer>
 			)}
 
-			<GridGraphComponent
+			<GridPanelSwitch
 				GRAPH_TYPES={widget.panelTypes}
 				data={chartDataSet}
 				isStacked={widget.isStacked}

@@ -2,8 +2,8 @@ import { Typography } from 'antd';
 import { ChartData } from 'chart.js';
 import { GraphOnClickHandler } from 'components/Graph';
 import Spinner from 'components/Spinner';
-import GridGraphComponent from 'container/GridGraphComponent';
 import { UpdateDashboard } from 'container/GridGraphLayout/utils';
+import GridPanelSwitch from 'container/GridPanelSwitch';
 import { useGetQueryRange } from 'hooks/queryBuilder/useGetQueryRange';
 import { useStepInterval } from 'hooks/queryBuilder/useStepInterval';
 import { useNotifications } from 'hooks/useNotifications';
@@ -272,7 +272,7 @@ function GridCardGraph({
 								allowEdit={allowEdit}
 							/>
 						</div>
-						<GridGraphComponent
+						<GridPanelSwitch
 							GRAPH_TYPES={widget?.panelTypes}
 							data={prevChartDataSetRef}
 							isStacked={widget?.isStacked}
@@ -308,7 +308,7 @@ function GridCardGraph({
 								allowEdit={allowEdit}
 							/>
 						</div>
-						<GridGraphComponent
+						<GridPanelSwitch
 							GRAPH_TYPES={widget.panelTypes}
 							data={prevChartDataSetRef}
 							isStacked={widget.isStacked}
@@ -363,7 +363,7 @@ function GridCardGraph({
 			{!isEmptyLayout && getModals()}
 
 			{!isEmpty(widget) && !!queryResponse.data?.payload && (
-				<GridGraphComponent
+				<GridPanelSwitch
 					GRAPH_TYPES={widget.panelTypes}
 					data={chartData}
 					isStacked={widget.isStacked}
