@@ -1,55 +1,151 @@
+import { OPERATORS } from 'constants/queryBuilder';
 import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { TagFilterItem } from 'types/api/queryBuilder/queryBuilderData';
-import { QueryBuilderData } from 'types/common/queryBuilder';
+import { DataSource, QueryBuilderData } from 'types/common/queryBuilder';
 
+import {
+	DataType,
+	FORMULA,
+	GraphTitle,
+	LETENCY_LEGENDS_AGGREGATEOPERATOR,
+	MetricsType,
+	OPERATION_LEGENDS,
+	QUERYNAME_AND_EXPRESSION,
+	WidgetKeys,
+} from '../constant';
+import { IServiceName } from '../Tabs/types';
 import {
 	getQueryBuilderQueries,
 	getQueryBuilderQuerieswithFormula,
 } from './MetricsPageQueriesFactory';
+
+export const latency = ({
+	servicename,
+	tagFilterItems,
+}: LatencyProps): QueryBuilderData => {
+	const autocompleteData: BaseAutocompleteData[] = [
+		{
+			key: WidgetKeys.DurationNano,
+			dataType: DataType.FLOAT64,
+			isColumn: true,
+			type: MetricsType.Tag,
+		},
+		{
+			key: WidgetKeys.DurationNano,
+			dataType: DataType.FLOAT64,
+			isColumn: true,
+			type: MetricsType.Tag,
+		},
+		{
+			key: WidgetKeys.DurationNano,
+			dataType: DataType.FLOAT64,
+			isColumn: true,
+			type: MetricsType.Tag,
+		},
+	];
+
+	const filterItems: TagFilterItem[][] = [
+		[
+			{
+				id: '',
+				key: {
+					key: WidgetKeys.ServiceName,
+					dataType: DataType.STRING,
+					type: MetricsType.Tag,
+					isColumn: true,
+				},
+				op: OPERATORS['='],
+				value: `${servicename}`,
+			},
+			...tagFilterItems,
+		],
+		[
+			{
+				id: '',
+				key: {
+					key: WidgetKeys.ServiceName,
+					dataType: DataType.STRING,
+					type: MetricsType.Tag,
+					isColumn: true,
+				},
+				op: OPERATORS['='],
+				value: `${servicename}`,
+			},
+			...tagFilterItems,
+		],
+		[
+			{
+				id: '',
+				key: {
+					key: WidgetKeys.ServiceName,
+					dataType: DataType.STRING,
+					type: MetricsType.Tag,
+					isColumn: true,
+				},
+				op: OPERATORS['='],
+				value: `${servicename}`,
+			},
+			...tagFilterItems,
+		],
+	];
+
+	return getQueryBuilderQueries({
+		autocompleteData,
+		legends: LETENCY_LEGENDS_AGGREGATEOPERATOR,
+		filterItems,
+		aggregateOperator: LETENCY_LEGENDS_AGGREGATEOPERATOR,
+		dataSource: DataSource.TRACES,
+		queryNameAndExpression: QUERYNAME_AND_EXPRESSION,
+	});
+};
 
 export const operationPerSec = ({
 	servicename,
 	tagFilterItems,
 	topLevelOperations,
 }: OperationPerSecProps): QueryBuilderData => {
-	const metricName: BaseAutocompleteData = {
-		dataType: 'float64',
-		isColumn: true,
-		key: 'signoz_latency_count',
-		type: null,
-	};
-	const legend = 'Operations';
+	const autocompleteData: BaseAutocompleteData[] = [
+		{
+			key: WidgetKeys.SignozLatencyCount,
+			dataType: DataType.FLOAT64,
+			isColumn: true,
+			type: null,
+		},
+	];
 
-	const itemsA: TagFilterItem[] = [
-		{
-			id: '',
-			key: {
-				dataType: 'string',
-				isColumn: false,
-				key: 'service_name',
-				type: 'resource',
+	const filterItems: TagFilterItem[][] = [
+		[
+			{
+				id: '',
+				key: {
+					key: WidgetKeys.Service_name,
+					dataType: DataType.STRING,
+					isColumn: false,
+					type: MetricsType.Resource,
+				},
+				op: OPERATORS.IN,
+				value: [`${servicename}`],
 			},
-			op: 'IN',
-			value: [`${servicename}`],
-		},
-		{
-			id: '',
-			key: {
-				dataType: 'string',
-				isColumn: false,
-				key: 'operation',
-				type: 'tag',
+			{
+				id: '',
+				key: {
+					key: WidgetKeys.Operation,
+					dataType: DataType.STRING,
+					isColumn: false,
+					type: MetricsType.Tag,
+				},
+				op: OPERATORS.IN,
+				value: topLevelOperations,
 			},
-			op: 'IN',
-			value: topLevelOperations,
-		},
-		...tagFilterItems,
+			...tagFilterItems,
+		],
 	];
 
 	return getQueryBuilderQueries({
-		metricName,
-		legend,
-		itemsA,
+		autocompleteData,
+		legends: OPERATION_LEGENDS,
+		filterItems,
+		dataSource: DataSource.METRICS,
 	});
 };
 
@@ -58,50 +154,50 @@ export const errorPercentage = ({
 	tagFilterItems,
 	topLevelOperations,
 }: OperationPerSecProps): QueryBuilderData => {
-	const metricNameA: BaseAutocompleteData = {
-		dataType: 'float64',
+	const autocompleteDataA: BaseAutocompleteData = {
+		key: WidgetKeys.SignozCallsTotal,
+		dataType: DataType.FLOAT64,
 		isColumn: true,
-		key: 'signoz_calls_total',
 		type: null,
 	};
-	const metricNameB: BaseAutocompleteData = {
-		dataType: 'float64',
+	const autocompleteDataB: BaseAutocompleteData = {
+		key: WidgetKeys.SignozCallsTotal,
+		dataType: DataType.FLOAT64,
 		isColumn: true,
-		key: 'signoz_calls_total',
 		type: null,
 	};
 	const additionalItemsA: TagFilterItem[] = [
 		{
 			id: '',
 			key: {
-				dataType: 'string',
+				key: WidgetKeys.Service_name,
+				dataType: DataType.STRING,
 				isColumn: false,
-				key: 'service_name',
-				type: 'resource',
+				type: MetricsType.Resource,
 			},
-			op: 'IN',
+			op: OPERATORS.IN,
 			value: [`${servicename}`],
 		},
 		{
 			id: '',
 			key: {
-				dataType: 'string',
+				key: WidgetKeys.Operation,
+				dataType: DataType.STRING,
 				isColumn: false,
-				key: 'operation',
-				type: 'tag',
+				type: MetricsType.Tag,
 			},
-			op: 'IN',
+			op: OPERATORS.IN,
 			value: topLevelOperations,
 		},
 		{
 			id: '',
 			key: {
-				dataType: 'int64',
+				key: WidgetKeys.StatusCode,
+				dataType: DataType.INT64,
 				isColumn: false,
-				key: 'status_code',
-				type: 'tag',
+				type: MetricsType.Tag,
 			},
-			op: 'IN',
+			op: OPERATORS.IN,
 			value: ['STATUS_CODE_ERROR'],
 		},
 		...tagFilterItems,
@@ -111,46 +207,47 @@ export const errorPercentage = ({
 		{
 			id: '',
 			key: {
-				dataType: 'string',
+				key: WidgetKeys.Service_name,
+				dataType: DataType.STRING,
 				isColumn: false,
-				key: 'service_name',
-				type: 'resource',
+				type: MetricsType.Resource,
 			},
-			op: 'IN',
+			op: OPERATORS.IN,
 			value: [`${servicename}`],
 		},
 		{
 			id: '',
 			key: {
-				dataType: 'string',
+				key: WidgetKeys.Operation,
+				dataType: DataType.STRING,
 				isColumn: false,
-				key: 'operation',
-				type: 'tag',
+				type: MetricsType.Tag,
 			},
-			op: 'IN',
+			op: OPERATORS.IN,
 			value: topLevelOperations,
 		},
 		...tagFilterItems,
 	];
 
-	const legendFormula = 'Error Percentage';
-	const legend = legendFormula;
-	const expression = 'A*100/B';
-	const disabled = true;
 	return getQueryBuilderQuerieswithFormula({
-		metricNameA,
-		metricNameB,
+		autocompleteDataA,
+		autocompleteDataB,
 		additionalItemsA,
 		additionalItemsB,
-		legend,
-		disabled,
-		expression,
-		legendFormula,
+		legend: GraphTitle.ERROR_PERCENTAGE,
+		disabled: true,
+		expression: FORMULA.ERROR_PERCENTAGE,
+		legendFormula: GraphTitle.ERROR_PERCENTAGE,
 	});
 };
 
 export interface OperationPerSecProps {
-	servicename: string | undefined;
+	servicename: IServiceName['servicename'];
 	tagFilterItems: TagFilterItem[];
 	topLevelOperations: string[];
+}
+
+export interface LatencyProps {
+	servicename: IServiceName['servicename'];
+	tagFilterItems: TagFilterItem[];
 }

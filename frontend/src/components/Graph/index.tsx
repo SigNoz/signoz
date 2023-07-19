@@ -181,6 +181,9 @@ function Graph({
 							},
 						},
 						position: 'custom',
+						itemSort(item1, item2) {
+							return item2.parsed.y - item1.parsed.y;
+						},
 					},
 					[dragSelectPluginId]: createDragSelectPluginOptions(
 						!!onDragSelect,
@@ -285,11 +288,10 @@ function Graph({
 			if (chartHasData) {
 				chartPlugins.push(createIntersectionCursorPlugin());
 				chartPlugins.push(createDragSelectPlugin());
+				chartPlugins.push(legend(name, data.datasets.length > 3));
 			} else {
 				chartPlugins.push(emptyGraph);
 			}
-
-			chartPlugins.push(legend(name, data.datasets.length > 3));
 
 			lineChartRef.current = new Chart(chartRef.current, {
 				type,

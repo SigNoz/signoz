@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"sort"
 	"strconv"
 	"strings"
 	"sync"
@@ -60,15 +61,18 @@ func NewRouter() *mux.Router {
 type APIHandler struct {
 	// queryService *querysvc.QueryService
 	// queryParser  queryParser
-	basePath     string
-	apiPrefix    string
-	reader       interfaces.Reader
-	appDao       dao.ModelDao
-	alertManager am.Manager
-	ruleManager  *rules.Manager
-	featureFlags interfaces.FeatureLookup
-	ready        func(http.HandlerFunc) http.HandlerFunc
-	queryBuilder *queryBuilder.QueryBuilder
+	basePath          string
+	apiPrefix         string
+	reader            interfaces.Reader
+	skipConfig        *model.SkipConfig
+	appDao            dao.ModelDao
+	alertManager      am.Manager
+	ruleManager       *rules.Manager
+	featureFlags      interfaces.FeatureLookup
+	ready             func(http.HandlerFunc) http.HandlerFunc
+	queryBuilder      *queryBuilder.QueryBuilder
+	preferDelta       bool
+	preferSpanMetrics bool
 
 	// SetupCompleted indicates if SigNoz is ready for general use.
 	// at the moment, we mark the app ready when the first user
@@ -81,6 +85,10 @@ type APIHandlerOpts struct {
 	// business data reader e.g. clickhouse
 	Reader interfaces.Reader
 
+	SkipConfig *model.SkipConfig
+
+	PerferDelta       bool
+	PreferSpanMetrics bool
 	// dao layer to perform crud on app objects like dashboard, alerts etc
 	AppDao dao.ModelDao
 
@@ -100,11 +108,14 @@ func NewAPIHandler(opts APIHandlerOpts) (*APIHandler, error) {
 	}
 
 	aH := &APIHandler{
-		reader:       opts.Reader,
-		appDao:       opts.AppDao,
-		alertManager: alertManager,
-		ruleManager:  opts.RuleManager,
-		featureFlags: opts.FeatureFlags,
+		reader:            opts.Reader,
+		appDao:            opts.AppDao,
+		skipConfig:        opts.SkipConfig,
+		preferDelta:       opts.PerferDelta,
+		preferSpanMetrics: opts.PreferSpanMetrics,
+		alertManager:      alertManager,
+		ruleManager:       opts.RuleManager,
+		featureFlags:      opts.FeatureFlags,
 	}
 
 	builderOpts := queryBuilder.QueryBuilderOptions{
@@ -446,6 +457,48 @@ func (aH *APIHandler) metricAutocompleteTagValue(w http.ResponseWriter, r *http.
 	}
 
 	aH.Respond(w, tagValueList)
+}
+
+func (aH *APIHandler) addTemporality(ctx context.Context, qp *v3.QueryRangeParamsV3) error {
+
+	metricNames := make([]string, 0)
+	metricNameToTemporality := make(map[string]map[v3.Temporality]bool)
+	if qp.CompositeQuery != nil && len(qp.CompositeQuery.BuilderQueries) > 0 {
+		for _, query := range qp.CompositeQuery.BuilderQueries {
+			if query.DataSource == v3.DataSourceMetrics {
+				metricNames = append(metricNames, query.AggregateAttribute.Key)
+				if _, ok := metricNameToTemporality[query.AggregateAttribute.Key]; !ok {
+					metricNameToTemporality[query.AggregateAttribute.Key] = make(map[v3.Temporality]bool)
+				}
+			}
+		}
+	}
+
+	var err error
+
+	if aH.preferDelta {
+		zap.S().Debug("fetching metric temporality")
+		metricNameToTemporality, err = aH.reader.FetchTemporality(ctx, metricNames)
+		if err != nil {
+			return err
+		}
+	}
+
+	if qp.CompositeQuery != nil && len(qp.CompositeQuery.BuilderQueries) > 0 {
+		for name := range qp.CompositeQuery.BuilderQueries {
+			query := qp.CompositeQuery.BuilderQueries[name]
+			if query.DataSource == v3.DataSourceMetrics {
+				if aH.preferDelta && metricNameToTemporality[query.AggregateAttribute.Key][v3.Delta] {
+					query.Temporality = v3.Delta
+				} else if metricNameToTemporality[query.AggregateAttribute.Key][v3.Cumulative] {
+					query.Temporality = v3.Cumulative
+				} else {
+					query.Temporality = v3.Unspecified
+				}
+			}
+		}
+	}
+	return nil
 }
 
 func (aH *APIHandler) QueryRangeMetricsV2(w http.ResponseWriter, r *http.Request) {
@@ -1316,7 +1369,7 @@ func (aH *APIHandler) getServiceOverview(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	result, apiErr := aH.reader.GetServiceOverview(r.Context(), query)
+	result, apiErr := aH.reader.GetServiceOverview(r.Context(), query, aH.skipConfig)
 	if apiErr != nil && aH.HandleError(w, apiErr.Err, http.StatusInternalServerError) {
 		return
 	}
@@ -1327,7 +1380,7 @@ func (aH *APIHandler) getServiceOverview(w http.ResponseWriter, r *http.Request)
 
 func (aH *APIHandler) getServicesTopLevelOps(w http.ResponseWriter, r *http.Request) {
 
-	result, apiErr := aH.reader.GetTopLevelOperations(r.Context())
+	result, apiErr := aH.reader.GetTopLevelOperations(r.Context(), aH.skipConfig)
 	if apiErr != nil {
 		RespondError(w, apiErr, nil)
 		return
@@ -1343,7 +1396,7 @@ func (aH *APIHandler) getServices(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	result, apiErr := aH.reader.GetServices(r.Context(), query)
+	result, apiErr := aH.reader.GetServices(r.Context(), query, aH.skipConfig)
 	if apiErr != nil && aH.HandleError(w, apiErr.Err, http.StatusInternalServerError) {
 		return
 	}
@@ -1617,6 +1670,14 @@ func (aH *APIHandler) getFeatureFlags(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		aH.HandleError(w, err, http.StatusInternalServerError)
 		return
+	}
+	if aH.preferSpanMetrics {
+		for idx := range featureSet {
+			feature := &featureSet[idx]
+			if feature.Name == model.UseSpanMetrics {
+				featureSet[idx].Active = true
+			}
+		}
 	}
 	aH.Respond(w, featureSet)
 }
@@ -2461,6 +2522,7 @@ func (aH *APIHandler) execClickHouseGraphQueries(ctx context.Context, queries ma
 		wg.Add(1)
 		go func(name, query string) {
 			defer wg.Done()
+
 			seriesList, err := aH.reader.GetTimeSeriesResultV3(ctx, query)
 
 			if err != nil {
@@ -2681,6 +2743,11 @@ func (aH *APIHandler) getSpanKeysV3(ctx context.Context, queryRangeParams *v3.Qu
 			if err != nil {
 				return nil, err
 			}
+			// Add timestamp as a span key to allow ordering by timestamp
+			spanKeys["timestamp"] = v3.AttributeKey{
+				Key:      "timestamp",
+				IsColumn: true,
+			}
 			return spanKeys, nil
 		}
 	}
@@ -2722,7 +2789,7 @@ func (aH *APIHandler) queryRangeV3(ctx context.Context, queryRangeParams *v3.Que
 			return
 		}
 
-		if queryRangeParams.CompositeQuery.PanelType == v3.PanelTypeList {
+		if queryRangeParams.CompositeQuery.PanelType == v3.PanelTypeList || queryRangeParams.CompositeQuery.PanelType == v3.PanelTypeTrace {
 			result, err, errQuriesByName = aH.execClickHouseListQueries(r.Context(), queries)
 		} else {
 			result, err, errQuriesByName = aH.execClickHouseGraphQueries(r.Context(), queries)
@@ -2750,6 +2817,8 @@ func (aH *APIHandler) queryRangeV3(ctx context.Context, queryRangeParams *v3.Que
 		return
 	}
 
+	applyMetricLimit(result, queryRangeParams)
+
 	resp := v3.QueryRangeResponse{
 		Result: result,
 	}
@@ -2765,5 +2834,72 @@ func (aH *APIHandler) QueryRangeV3(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// add temporality for each metric
+
+	temporalityErr := aH.addTemporality(r.Context(), queryRangeParams)
+	if temporalityErr != nil {
+		zap.S().Errorf("Error while adding temporality for metrics: %v", temporalityErr)
+		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: temporalityErr}, nil)
+		return
+	}
+
 	aH.queryRangeV3(r.Context(), queryRangeParams, w, r)
+}
+
+func applyMetricLimit(results []*v3.Result, queryRangeParams *v3.QueryRangeParamsV3) {
+	// apply limit if any for metrics
+	// use the grouping set points to apply the limit
+
+	for _, result := range results {
+		builderQueries := queryRangeParams.CompositeQuery.BuilderQueries
+		if builderQueries != nil && builderQueries[result.QueryName].DataSource == v3.DataSourceMetrics {
+			limit := builderQueries[result.QueryName].Limit
+
+			orderByList := builderQueries[result.QueryName].OrderBy
+			if limit != 0 {
+				if len(orderByList) == 0 {
+					// If no orderBy is specified, sort by value in descending order
+					orderByList = []v3.OrderBy{{ColumnName: constants.SigNozOrderByValue, Order: "desc"}}
+				}
+				sort.SliceStable(result.Series, func(i, j int) bool {
+					for _, orderBy := range orderByList {
+						if orderBy.ColumnName == constants.SigNozOrderByValue {
+							if result.Series[i].GroupingSetsPoint == nil || result.Series[j].GroupingSetsPoint == nil {
+								// Handle nil GroupingSetsPoint, if needed
+								// Here, we assume non-nil values are always less than nil values
+								return result.Series[i].GroupingSetsPoint != nil
+							}
+							if orderBy.Order == "asc" {
+								return result.Series[i].GroupingSetsPoint.Value < result.Series[j].GroupingSetsPoint.Value
+							} else if orderBy.Order == "desc" {
+								return result.Series[i].GroupingSetsPoint.Value > result.Series[j].GroupingSetsPoint.Value
+							}
+						} else {
+							// Sort based on Labels map
+							labelI, existsI := result.Series[i].Labels[orderBy.ColumnName]
+							labelJ, existsJ := result.Series[j].Labels[orderBy.ColumnName]
+
+							if !existsI || !existsJ {
+								// Handle missing labels, if needed
+								// Here, we assume non-existent labels are always less than existing ones
+								return existsI
+							}
+
+							if orderBy.Order == "asc" {
+								return strings.Compare(labelI, labelJ) < 0
+							} else if orderBy.Order == "desc" {
+								return strings.Compare(labelI, labelJ) > 0
+							}
+						}
+					}
+					// Preserve original order if no matching orderBy is found
+					return i < j
+				})
+
+				if len(result.Series) > int(limit) {
+					result.Series = result.Series[:limit]
+				}
+			}
+		}
+	}
 }

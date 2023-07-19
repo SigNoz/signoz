@@ -41,12 +41,15 @@ import (
 )
 
 type ServerOptions struct {
-	PromConfigPath  string
-	HTTPHostPort    string
-	PrivateHostPort string
+	PromConfigPath    string
+	SkipTopLvlOpsPath string
+	HTTPHostPort      string
+	PrivateHostPort   string
 	// alert specific params
-	DisableRules bool
-	RuleRepoURL  string
+	DisableRules      bool
+	RuleRepoURL       string
+	PreferDelta       bool
+	PreferSpanMetrics bool
 }
 
 // Server runs HTTP, Mux and a grpc server
@@ -105,6 +108,14 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 	} else {
 		return nil, fmt.Errorf("Storage type: %s is not supported in query service", storage)
 	}
+	var skipConfig *model.SkipConfig
+	if serverOptions.SkipTopLvlOpsPath != "" {
+		// read skip config
+		skipConfig, err = model.ReadSkipConfig(serverOptions.SkipTopLvlOpsPath)
+		if err != nil {
+			return nil, err
+		}
+	}
 
 	<-readerReady
 	rm, err := makeRulesManager(serverOptions.PromConfigPath, constants.GetAlertManagerApiPrefix(), serverOptions.RuleRepoURL, localDB, reader, serverOptions.DisableRules, fm)
@@ -114,10 +125,13 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 
 	telemetry.GetInstance().SetReader(reader)
 	apiHandler, err := NewAPIHandler(APIHandlerOpts{
-		Reader:       reader,
-		AppDao:       dao.DB(),
-		RuleManager:  rm,
-		FeatureFlags: fm,
+		Reader:            reader,
+		SkipConfig:        skipConfig,
+		PerferDelta:       serverOptions.PreferDelta,
+		PreferSpanMetrics: serverOptions.PreferSpanMetrics,
+		AppDao:            dao.DB(),
+		RuleManager:       rm,
+		FeatureFlags:      fm,
 	})
 	if err != nil {
 		return nil, err

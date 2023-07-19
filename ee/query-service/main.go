@@ -74,7 +74,7 @@ func initZapLog(enableQueryServiceLogOTLPExport bool) *zap.Logger {
 }
 
 func main() {
-	var promConfigPath string
+	var promConfigPath, skipTopLvlOpsPath string
 
 	// disables rule execution but allows change to the rule definition
 	var disableRules bool
@@ -83,9 +83,14 @@ func main() {
 	var ruleRepoURL string
 
 	var enableQueryServiceLogOTLPExport bool
+	var preferDelta bool
+	var preferSpanMetrics bool
 
 	flag.StringVar(&promConfigPath, "config", "./config/prometheus.yml", "(prometheus config to read metrics)")
+	flag.StringVar(&skipTopLvlOpsPath, "skip-top-level-ops", "", "(config file to skip top level operations)")
 	flag.BoolVar(&disableRules, "rules.disable", false, "(disable rule evaluation)")
+	flag.BoolVar(&preferDelta, "prefer-delta", false, "(prefer delta over cumulative metrics)")
+	flag.BoolVar(&preferSpanMetrics, "prefer-span-metrics", false, "(prefer span metrics for service level metrics)")
 	flag.StringVar(&ruleRepoURL, "rules.repo-url", baseconst.AlertHelpPage, "(host address used to build rule link in alert messages)")
 	flag.BoolVar(&enableQueryServiceLogOTLPExport, "enable.query.service.log.otlp.export", false, "(enable query service log otlp export)")
 	flag.Parse()
@@ -98,11 +103,14 @@ func main() {
 	version.PrintVersion()
 
 	serverOptions := &app.ServerOptions{
-		HTTPHostPort:    baseconst.HTTPHostPort,
-		PromConfigPath:  promConfigPath,
-		PrivateHostPort: baseconst.PrivateHostPort,
-		DisableRules:    disableRules,
-		RuleRepoURL:     ruleRepoURL,
+		HTTPHostPort:      baseconst.HTTPHostPort,
+		PromConfigPath:    promConfigPath,
+		SkipTopLvlOpsPath: skipTopLvlOpsPath,
+		PreferDelta:       preferDelta,
+		PreferSpanMetrics: preferSpanMetrics,
+		PrivateHostPort:   baseconst.PrivateHostPort,
+		DisableRules:      disableRules,
+		RuleRepoURL:       ruleRepoURL,
 	}
 
 	// Read the jwt secret key
