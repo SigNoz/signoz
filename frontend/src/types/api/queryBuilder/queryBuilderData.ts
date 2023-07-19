@@ -59,6 +59,8 @@ export type IBuilderQuery = {
 	orderBy: OrderByPayload[];
 	reduceTo: ReduceOperators;
 	legend: string;
+	pageSize?: number;
+	offset?: number;
 };
 
 export interface IClickHouseQuery {

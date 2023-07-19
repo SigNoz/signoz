@@ -216,13 +216,13 @@ var testGetSelectLabelsData = []struct {
 		Name:              "select keys for groupBy attribute",
 		AggregateOperator: v3.AggregateOperatorCount,
 		GroupByTags:       []v3.AttributeKey{{Key: "user.name", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag}},
-		SelectLabels:      ", stringTagMap['user.name'] as `user.name`",
+		SelectLabels:      " stringTagMap['user.name'] as `user.name`,",
 	},
 	{
 		Name:              "select keys for groupBy resource",
 		AggregateOperator: v3.AggregateOperatorCount,
 		GroupByTags:       []v3.AttributeKey{{Key: "user.name", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeResource}},
-		SelectLabels:      ", resourceTagsMap['user.name'] as `user.name`",
+		SelectLabels:      " resourceTagsMap['user.name'] as `user.name`,",
 	},
 	{
 		Name:              "select keys for groupBy attribute and resource",
@@ -231,13 +231,13 @@ var testGetSelectLabelsData = []struct {
 			{Key: "user.name", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeResource},
 			{Key: "host", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag},
 		},
-		SelectLabels: ", resourceTagsMap['user.name'] as `user.name`, stringTagMap['host'] as `host`",
+		SelectLabels: " resourceTagsMap['user.name'] as `user.name`, stringTagMap['host'] as `host`,",
 	},
 	{
 		Name:              "select keys for groupBy fixed columns",
 		AggregateOperator: v3.AggregateOperatorCount,
 		GroupByTags:       []v3.AttributeKey{{Key: "host", IsColumn: true, DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag}},
-		SelectLabels:      ", host as `host`",
+		SelectLabels:      " host as `host`,",
 	},
 }
 
@@ -957,6 +957,77 @@ var testBuildTracesQueryData = []struct {
 		PanelType: v3.PanelTypeGraph,
 	},
 	{
+		Name:  "Test count with having clause and filters",
+		Start: 1680066360726210000,
+		End:   1680066458000000000,
+		Step:  60,
+		BuilderQuery: &v3.BuilderQuery{
+			QueryName:          "A",
+			AggregateAttribute: v3.AttributeKey{Key: "name", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag},
+			AggregateOperator:  v3.AggregateOperatorCount,
+			Expression:         "A",
+			Filters: &v3.FilterSet{Operator: "AND", Items: []v3.FilterItem{
+				{Key: v3.AttributeKey{Key: "method", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag}, Value: "GET", Operator: "="},
+			},
+			},
+			Having: []v3.Having{
+				{
+					ColumnName: "name",
+					Operator:   ">",
+					Value:      10,
+				},
+			},
+		},
+		TableName: "signoz_traces.distributed_signoz_index_v2",
+		ExpectedQuery: "SELECT toStartOfInterval(timestamp, INTERVAL 60 SECOND) AS ts, toFloat64(count()) as value" +
+			" from signoz_traces.distributed_signoz_index_v2 where (timestamp >= '1680066360726210000' AND timestamp <= '1680066458000000000') " +
+			"AND stringTagMap['method'] = 'GET' AND has(stringTagMap, 'name') group by ts having value > 10 order by ts",
+		PanelType: v3.PanelTypeValue,
+	},
+	{
+		Name:  "Test aggregate PXX",
+		Start: 1680066360726210000,
+		End:   1680066458000000000,
+		Step:  60,
+		BuilderQuery: &v3.BuilderQuery{
+			QueryName:          "A",
+			AggregateAttribute: v3.AttributeKey{Key: "durationNano", IsColumn: true, DataType: v3.AttributeKeyDataTypeFloat64, Type: v3.AttributeKeyTypeTag},
+			AggregateOperator:  v3.AggregateOperatorP05,
+			Expression:         "A",
+			Filters:            &v3.FilterSet{Operator: "AND", Items: []v3.FilterItem{}},
+			GroupBy:            []v3.AttributeKey{{Key: "method", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag}},
+			OrderBy:            []v3.OrderBy{{ColumnName: "method", Order: "ASC"}},
+		},
+		TableName: "signoz_traces.distributed_signoz_index_v2",
+		ExpectedQuery: "SELECT now() as ts, stringTagMap['method'] as `method`, " +
+			"quantile(0.05)(durationNano) as value " +
+			"from signoz_traces.distributed_signoz_index_v2 " +
+			"where (timestamp >= '1680066360726210000' AND timestamp <= '1680066458000000000') " +
+			"AND has(stringTagMap, 'method') group by `method` " +
+			"order by `method` ASC",
+		PanelType: v3.PanelTypeTable,
+	},
+	{
+		Name:  "Test aggregate PXX",
+		Start: 1680066360726210000,
+		End:   1680066458000000000,
+		Step:  60,
+		BuilderQuery: &v3.BuilderQuery{
+			QueryName:          "A",
+			AggregateAttribute: v3.AttributeKey{Key: "durationNano", IsColumn: true, DataType: v3.AttributeKeyDataTypeFloat64, Type: v3.AttributeKeyTypeTag},
+			AggregateOperator:  v3.AggregateOperatorP05,
+			Expression:         "A",
+			Filters:            &v3.FilterSet{Operator: "AND", Items: []v3.FilterItem{}},
+			GroupBy:            []v3.AttributeKey{},
+			OrderBy:            []v3.OrderBy{},
+		},
+		TableName: "signoz_traces.distributed_signoz_index_v2",
+		ExpectedQuery: "SELECT now() as ts, quantile(0.05)(durationNano) as value " +
+			"from signoz_traces.distributed_signoz_index_v2 " +
+			"where (timestamp >= '1680066360726210000' AND timestamp <= '1680066458000000000')",
+		PanelType: v3.PanelTypeTable,
+	},
+	{
 		Name:  "Test Noop list view",
 		Start: 1680066360726210000,
 		End:   1680066458000000000,
@@ -1037,7 +1108,7 @@ var testBuildTracesQueryData = []struct {
 			" name FROM signoz_traces.distributed_signoz_index_v2 WHERE parentSpanID = '' AND (timestamp >= '1680066360726210000' AND " +
 			"timestamp <= '1680066458000000000')  AND stringTagMap['method'] = 'GET' ORDER BY durationNano DESC  LIMIT 100)" +
 			" SELECT subQuery.serviceName, subQuery.name, count() AS span_count, subQuery.durationNano, traceID" +
-			" FROM signoz_traces.distributed_signoz_index_v2 INNER JOIN subQuery ON distributed_signoz_index_v2.traceID" +
+			" FROM signoz_traces.distributed_signoz_index_v2 GLOBAL INNER JOIN subQuery ON distributed_signoz_index_v2.traceID" +
 			" = subQuery.traceID GROUP BY traceID, subQuery.durationNano, subQuery.name, subQuery.serviceName " +
 			"ORDER BY subQuery.durationNano desc;",
 		PanelType: v3.PanelTypeTrace,
