@@ -1,22 +1,22 @@
 import { PanelTypeAndGraphManagerVisibilityProps } from './types';
 
-export enum ColumnsTitle {
-	Index = 'Index',
-	Legend = 'Legend',
-	Label = 'Label',
-	Avg = 'Avg',
-	Sum = 'Sum',
-	Max = 'Max',
-	Min = 'Min',
+export enum ColumnsKeyAndDataIndex {
+	Index = 'index',
+	Legend = 'legend',
+	Label = 'label',
+	Avg = 'avg',
+	Sum = 'sum',
+	Max = 'max',
+	Min = 'min',
 }
 
-export const DataIndexAndKey = {
-	[ColumnsTitle.Index]: 'index',
-	[ColumnsTitle.Label]: 'label',
-	[ColumnsTitle.Avg]: 'avg',
-	[ColumnsTitle.Sum]: 'sum',
-	[ColumnsTitle.Max]: 'max',
-	[ColumnsTitle.Min]: 'min',
+export const ColumnsTitle = {
+	[ColumnsKeyAndDataIndex.Index]: 'Index',
+	[ColumnsKeyAndDataIndex.Label]: 'Label',
+	[ColumnsKeyAndDataIndex.Avg]: 'Avg',
+	[ColumnsKeyAndDataIndex.Sum]: 'Sum',
+	[ColumnsKeyAndDataIndex.Max]: 'Max',
+	[ColumnsKeyAndDataIndex.Min]: 'Min',
 };
 
 export const PANEL_TYPES_VS_FULL_VIEW_TABLE: PanelTypeAndGraphManagerVisibilityProps = {

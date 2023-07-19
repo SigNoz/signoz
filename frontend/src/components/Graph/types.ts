@@ -5,6 +5,7 @@ import {
 	ChartEvent,
 	ChartOptions,
 	ChartType,
+	TimeUnit,
 } from 'chart.js';
 
 import {
@@ -57,4 +58,19 @@ export interface GraphProps {
 	containerHeight?: string | number;
 	onDragSelect?: (start: number, end: number) => void;
 	dragSelectColor?: string;
+}
+
+export interface IAxisTimeUintConfig {
+	unitName: TimeUnit;
+	multiplier: number;
+}
+
+export interface IAxisTimeConfig {
+	unitName: TimeUnit;
+	stepSize: number;
+}
+
+export interface ITimeRange {
+	minTime: number | null;
+	maxTime: number | null;
 }

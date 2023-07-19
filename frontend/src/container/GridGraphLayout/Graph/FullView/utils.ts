@@ -1,7 +1,11 @@
 import { ChartData, ChartDataset } from 'chart.js';
 import { LOCALSTORAGE } from 'constants/localStorage';
 
-import { ExtendedChartDataset, LegendEntryProps } from './types';
+import {
+	ExtendedChartDataset,
+	LegendEntryProps,
+	SaveLegendEntriesToLocalStoreProps,
+} from './types';
 
 export const getDefaultTableDataSet = (
 	data: ChartData,
@@ -35,17 +39,17 @@ export const showAllDataSet = (data: ChartData): LegendEntryProps[] =>
 		}),
 	);
 
-export const saveLegendEntriesToLocalStorage = (
-	data: ChartData,
-	graphVisibilityStates: boolean[],
-	name: string,
-): void => {
+export const saveLegendEntriesToLocalStorage = ({
+	data,
+	graphVisibilityState,
+	name,
+}: SaveLegendEntriesToLocalStoreProps): void => {
 	const newLegendEntry = {
 		name,
 		dataIndex: data.datasets.map(
 			(item, index): LegendEntryProps => ({
 				label: item.label || '',
-				show: graphVisibilityStates[index],
+				show: graphVisibilityState[index],
 			}),
 		),
 	};

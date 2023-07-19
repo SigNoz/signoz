@@ -1,5 +1,4 @@
 import { Button } from 'antd';
-import { GraphOnClickHandler } from 'components/Graph/types';
 import Spinner from 'components/Spinner';
 import TimePreference from 'components/TimePreferenceDropDown';
 import GridGraphComponent from 'container/GridGraphComponent';
@@ -15,12 +14,12 @@ import getChartData from 'lib/getChartData';
 import { useCallback, useMemo, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
-import { Widgets } from 'types/api/dashboard/getAll';
 import { GlobalReducer } from 'types/reducer/globalTime';
 
 import { PANEL_TYPES_VS_FULL_VIEW_TABLE } from './contants';
 import GraphManager from './GraphManager';
 import { GraphContainer, TimeContainer } from './styles';
+import { FullViewProps } from './types';
 
 function FullView({
 	widget,
@@ -135,18 +134,6 @@ function FullView({
 			)}
 		</>
 	);
-}
-
-interface FullViewProps {
-	widget: Widgets;
-	fullViewOptions?: boolean;
-	onClickHandler?: GraphOnClickHandler;
-	name: string;
-	yAxisUnit?: string;
-	onDragSelect?: (start: number, end: number) => void;
-	graphVisibilityStateHandler?: (graphsVisiblityArray: boolean[]) => void;
-	graphsVisibility?: boolean[];
-	isDependedDataLoaded?: boolean;
 }
 
 FullView.defaultProps = {

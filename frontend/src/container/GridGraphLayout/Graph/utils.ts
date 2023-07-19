@@ -1,9 +1,11 @@
-import { ChartData } from 'chart.js';
 import { LOCALSTORAGE } from 'constants/localStorage';
 
 import { LegendEntryProps } from './FullView/types';
 import { showAllDataSet } from './FullView/utils';
-import { GraphVisibilityLegendEntryProps } from './types';
+import {
+	GetGraphVisibilityStateOnLegendClickProps,
+	GraphVisibilityLegendEntryProps,
+} from './types';
 
 export const getGraphVisibilityStateOnDataChange = ({
 	data,
@@ -52,9 +54,3 @@ export const getGraphVisibilityStateOnDataChange = ({
 
 	return visibilityStateAndLegendEntry;
 };
-
-interface GetGraphVisibilityStateOnLegendClickProps {
-	data: ChartData;
-	isExpandedName: boolean;
-	name: string;
-}

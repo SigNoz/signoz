@@ -1,14 +1,13 @@
 import { Button, Input } from 'antd';
 import { CheckboxChangeEvent } from 'antd/es/checkbox';
 import { ColumnType } from 'antd/es/table';
-import { ChartData } from 'chart.js';
 import { ResizeTable } from 'components/ResizeTable';
 import { useNotifications } from 'hooks/useNotifications';
 import isEqual from 'lodash-es/isEqual';
 import { memo, useEffect, useState } from 'react';
 
 import { getGraphVisibilityStateOnDataChange } from '../utils';
-import { ColumnsTitle, DataIndexAndKey } from './contants';
+import { ColumnsKeyAndDataIndex, ColumnsTitle } from './contants';
 import {
 	FilterTableAndSaveContainer,
 	FilterTableContainer,
@@ -16,7 +15,12 @@ import {
 } from './styles';
 import CustomCheckBox from './TableRender/CustomCheckBox';
 import Label from './TableRender/Label';
-import { DataSetProps, ExtendedChartDataset, LegendEntryProps } from './types';
+import {
+	DataSetProps,
+	ExtendedChartDataset,
+	GraphManagerProps,
+	LegendEntryProps,
+} from './types';
 import {
 	getDefaultTableDataSet,
 	saveLegendEntriesToLocalStorage,
@@ -102,15 +106,15 @@ function GraphManager({
 		{
 			title: '',
 			width: 50,
-			dataIndex: DataIndexAndKey[ColumnsTitle.Index],
-			key: DataIndexAndKey.Index,
+			dataIndex: ColumnsKeyAndDataIndex.Index,
+			key: ColumnsKeyAndDataIndex.Index,
 			render: (index: number): JSX.Element => getCheckBox(index),
 		},
 		{
-			title: ColumnsTitle.Legend,
+			title: ColumnsTitle[ColumnsKeyAndDataIndex.Label],
 			width: 300,
-			dataIndex: DataIndexAndKey[ColumnsTitle.Label],
-			key: DataIndexAndKey.Label,
+			dataIndex: ColumnsKeyAndDataIndex.Label,
+			key: ColumnsKeyAndDataIndex.Label,
 			render: (label: string, _, index): JSX.Element => (
 				<Label
 					label={label}
@@ -120,28 +124,28 @@ function GraphManager({
 			),
 		},
 		{
-			title: ColumnsTitle.Avg,
+			title: ColumnsTitle[ColumnsKeyAndDataIndex.Avg],
 			width: 70,
-			dataIndex: DataIndexAndKey[ColumnsTitle.Avg],
-			key: DataIndexAndKey.Avg,
+			dataIndex: ColumnsKeyAndDataIndex.Avg,
+			key: ColumnsKeyAndDataIndex.Avg,
 		},
 		{
-			title: ColumnsTitle.Sum,
+			title: ColumnsTitle[ColumnsKeyAndDataIndex.Sum],
 			width: 70,
-			dataIndex: DataIndexAndKey[ColumnsTitle.Sum],
-			key: DataIndexAndKey.Sum,
+			dataIndex: ColumnsKeyAndDataIndex.Sum,
+			key: ColumnsKeyAndDataIndex.Sum,
 		},
 		{
-			title: ColumnsTitle.Max,
+			title: ColumnsTitle[ColumnsKeyAndDataIndex.Max],
 			width: 70,
-			dataIndex: DataIndexAndKey[ColumnsTitle.Max],
-			key: DataIndexAndKey.Max,
+			dataIndex: ColumnsKeyAndDataIndex.Max,
+			key: ColumnsKeyAndDataIndex.Max,
 		},
 		{
-			title: ColumnsTitle.Min,
+			title: ColumnsTitle[ColumnsKeyAndDataIndex.Min],
 			width: 70,
-			dataIndex: DataIndexAndKey[ColumnsTitle.Min],
-			key: DataIndexAndKey.Min,
+			dataIndex: ColumnsKeyAndDataIndex.Min,
+			key: ColumnsKeyAndDataIndex.Min,
 		},
 	];
 
@@ -157,7 +161,11 @@ function GraphManager({
 	};
 
 	const saveHandler = (): void => {
-		saveLegendEntriesToLocalStorage(data, graphVisibilityState, name);
+		saveLegendEntriesToLocalStorage({
+			data,
+			graphVisibilityState,
+			name,
+		});
 		notifications.success({
 			message: 'The updated graphs & legends are saved',
 		});
@@ -192,12 +200,6 @@ function GraphManager({
 			</SaveContainer>
 		</FilterTableAndSaveContainer>
 	);
-}
-
-interface GraphManagerProps {
-	data: ChartData;
-	graphVisibilityStateHandler?: (graphVisibilityArray: boolean[]) => void;
-	name: string;
 }
 
 GraphManager.defaultProps = {

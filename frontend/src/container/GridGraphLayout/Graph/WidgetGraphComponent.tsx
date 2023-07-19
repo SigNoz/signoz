@@ -1,6 +1,4 @@
 import { Typography } from 'antd';
-import { ChartData } from 'chart.js';
-import { GraphOnClickHandler } from 'components/Graph/types';
 import GridGraphComponent from 'container/GridGraphComponent';
 import { useChartMutable } from 'hooks/useChartMutable';
 import { useNotifications } from 'hooks/useNotifications';
@@ -14,31 +12,23 @@ import {
 	useEffect,
 	useState,
 } from 'react';
-import { Layout } from 'react-grid-layout';
 import { useTranslation } from 'react-i18next';
-import { UseQueryResult } from 'react-query';
 import { connect, useSelector } from 'react-redux';
 import { bindActionCreators } from 'redux';
 import { ThunkDispatch } from 'redux-thunk';
-import {
-	DeleteWidget,
-	DeleteWidgetProps,
-} from 'store/actions/dashboard/deleteWidget';
+import { DeleteWidget } from 'store/actions/dashboard/deleteWidget';
 import { AppState } from 'store/reducers';
 import AppActions from 'types/actions';
-import { ErrorResponse, SuccessResponse } from 'types/api';
-import { Widgets } from 'types/api/dashboard/getAll';
-import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
 import AppReducer from 'types/reducer/app';
 import DashboardReducer from 'types/reducer/dashboards';
 import { v4 } from 'uuid';
 
-import { LayoutProps } from '..';
 import { UpdateDashboard } from '../utils';
 import WidgetHeader from '../WidgetHeader';
 import FullView from './FullView';
 import { PANEL_TYPES_VS_FULL_VIEW_TABLE } from './FullView/contants';
 import { FullViewContainer, Modal } from './styles';
+import { DispatchProps, WidgetGraphComponentProps } from './types';
 import { getGraphVisibilityStateOnDataChange } from './utils';
 
 function WidgetGraphComponent({
@@ -265,32 +255,6 @@ function WidgetGraphComponent({
 			)}
 		</span>
 	);
-}
-
-interface DispatchProps {
-	deleteWidget: ({
-		widgetId,
-	}: DeleteWidgetProps) => (dispatch: Dispatch<AppActions>) => void;
-}
-
-interface WidgetGraphComponentProps extends DispatchProps {
-	enableModel: boolean;
-	enableWidgetHeader: boolean;
-	widget: Widgets;
-	queryResponse: UseQueryResult<
-		SuccessResponse<MetricRangePayloadProps> | ErrorResponse
-	>;
-	errorMessage: string | undefined;
-	data: ChartData;
-	name: string;
-	yAxisUnit?: string;
-	layout?: Layout[];
-	setLayout?: Dispatch<SetStateAction<LayoutProps[]>>;
-	onDragSelect?: (start: number, end: number) => void;
-	onClickHandler?: GraphOnClickHandler;
-	allowDelete?: boolean;
-	allowClone?: boolean;
-	allowEdit?: boolean;
 }
 
 WidgetGraphComponent.defaultProps = {

@@ -15,9 +15,9 @@ import {
 import {
 	CustomChartOptions,
 	GraphOnClickHandler,
+	IAxisTimeConfig,
 	StaticLineProps,
 } from './types';
-import { IAxisTimeConfig } from './xAxisConfig';
 import { getToolTipValue, getYAxisFormattedValue } from './yAxisConfig';
 
 export const toggleGraph = (
