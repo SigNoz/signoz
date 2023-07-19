@@ -36,6 +36,7 @@ export const Query = memo(function Query({
 	queryVariant,
 	query,
 	filterConfigs,
+	queryComponents,
 }: QueryProps): JSX.Element {
 	const { panelType } = useQueryBuilder();
 	const {
@@ -110,6 +111,17 @@ export const Query = memo(function Query({
 		[handleChangeQueryData],
 	);
 
+	const renderOrderByFilter = useCallback((): ReactNode => {
+		if (queryComponents?.renderOrderBy) {
+			return queryComponents.renderOrderBy({
+				query,
+				onChange: handleChangeOrderByKeys,
+			});
+		}
+
+		return <OrderByFilter query={query} onChange={handleChangeOrderByKeys} />;
+	}, [queryComponents, query, handleChangeOrderByKeys]);
+
 	const renderAggregateEveryFilter = useCallback(
 		(): JSX.Element | null =>
 			!filterConfigs?.stepInterval?.isHidden ? (
@@ -167,9 +179,7 @@ export const Query = memo(function Query({
 									<Col flex="5.93rem">
 										<FilterLabel label="Order by" />
 									</Col>
-									<Col flex="1 1 12.5rem">
-										<OrderByFilter query={query} onChange={handleChangeOrderByKeys} />
-									</Col>
+									<Col flex="1 1 12.5rem">{renderOrderByFilter()}</Col>
 								</Row>
 							</Col>
 						)}
@@ -225,9 +235,7 @@ export const Query = memo(function Query({
 								<Col flex="5.93rem">
 									<FilterLabel label="Order by" />
 								</Col>
-								<Col flex="1 1 12.5rem">
-									<OrderByFilter query={query} onChange={handleChangeOrderByKeys} />
-								</Col>
+								<Col flex="1 1 12.5rem">{renderOrderByFilter()}</Col>
 							</Row>
 						</Col>
 
@@ -238,11 +246,11 @@ export const Query = memo(function Query({
 		}
 	}, [
 		panelType,
-		query,
 		isMetricsDataSource,
-		handleChangeHavingFilter,
+		query,
 		handleChangeLimit,
-		handleChangeOrderByKeys,
+		handleChangeHavingFilter,
+		renderOrderByFilter,
 		renderAggregateEveryFilter,
 	]);
 
