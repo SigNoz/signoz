@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/naming-convention */
 
 import { initialQueriesMap } from 'constants/queryBuilder';
-import { COMPOSITE_QUERY } from 'constants/queryBuilderQueryNames';
+import { queryParamNamesMap } from 'constants/queryBuilderQueryNames';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { useNotifications } from 'hooks/useNotifications';
 import history from 'lib/history';
@@ -47,7 +47,9 @@ function DashboardGraphSlider({ toggleAddWidget }: Props): JSX.Element {
 				history.push(
 					`${history.location.pathname}/new?graphType=${name}&widgetId=${
 						emptyLayout.i
-					}&${COMPOSITE_QUERY}=${JSON.stringify(initialQueriesMap.metrics)}`,
+					}&${queryParamNamesMap.compositeQuery}=${encodeURIComponent(
+						JSON.stringify(initialQueriesMap.metrics),
+					)}`,
 				);
 			} catch (error) {
 				notifications.error({

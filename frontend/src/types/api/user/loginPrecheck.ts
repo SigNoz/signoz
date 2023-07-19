@@ -6,6 +6,6 @@ export interface PayloadProps {
 }
 
 export interface Props {
-	email?: string;
+	email: string;
 	path?: string;
 }

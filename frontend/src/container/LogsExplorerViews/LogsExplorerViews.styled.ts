@@ -7,3 +7,9 @@ export const TabsStyled = styled(Tabs)`
 		background-color: ${themeColors.lightBlack};
 	}
 `;
+
+export const ActionsWrapper = styled.div`
+	display: flex;
+	justify-content: flex-end;
+	margin-bottom: 1rem;
+`;

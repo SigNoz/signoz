@@ -8,16 +8,13 @@ import { useNotifications } from 'hooks/useNotifications';
 // utils
 import { FlatLogData } from 'lib/logs/flatLogData';
 import { useCallback, useMemo } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
 import { useCopyToClipboard } from 'react-use';
 // interfaces
-import { AppState } from 'store/reducers';
-import { SET_DETAILED_LOG_DATA } from 'types/actions/logs';
+import { IField } from 'types/api/logs/fields';
 import { ILog } from 'types/api/logs/log';
-import { ILogsReducer } from 'types/reducer/logs';
 
 // components
-import AddToQueryHOC from '../AddToQueryHOC';
+import AddToQueryHOC, { AddToQueryHOCProps } from '../AddToQueryHOC';
 import CopyClipboardHOC from '../CopyClipboardHOC';
 // styles
 import {
@@ -36,6 +33,10 @@ interface LogFieldProps {
 	fieldKey: string;
 	fieldValue: string;
 }
+
+type LogSelectedFieldProps = LogFieldProps &
+	Pick<AddToQueryHOCProps, 'onAddToQuery'>;
+
 function LogGeneralField({ fieldKey, fieldValue }: LogFieldProps): JSX.Element {
 	const html = useMemo(
 		() => ({
@@ -59,10 +60,15 @@ function LogGeneralField({ fieldKey, fieldValue }: LogFieldProps): JSX.Element {
 function LogSelectedField({
 	fieldKey = '',
 	fieldValue = '',
-}: LogFieldProps): JSX.Element {
+	onAddToQuery,
+}: LogSelectedFieldProps): JSX.Element {
 	return (
 		<SelectedLog>
-			<AddToQueryHOC fieldKey={fieldKey} fieldValue={fieldValue}>
+			<AddToQueryHOC
+				fieldKey={fieldKey}
+				fieldValue={fieldValue}
+				onAddToQuery={onAddToQuery}
+			>
 				<Typography.Text>
 					<span style={{ color: blue[4] }}>{fieldKey}</span>
 				</Typography.Text>
@@ -77,26 +83,26 @@ function LogSelectedField({
 	);
 }
 
-interface ListLogViewProps {
+type ListLogViewProps = {
 	logData: ILog;
-}
-function ListLogView({ logData }: ListLogViewProps): JSX.Element {
-	const {
-		fields: { selected },
-	} = useSelector<AppState, ILogsReducer>((state) => state.logs);
+	onOpenDetailedView: (log: ILog) => void;
+	selectedFields: IField[];
+} & Pick<AddToQueryHOCProps, 'onAddToQuery'>;
 
-	const dispatch = useDispatch();
+function ListLogView({
+	logData,
+	selectedFields,
+	onOpenDetailedView,
+	onAddToQuery,
+}: ListLogViewProps): JSX.Element {
 	const flattenLogData = useMemo(() => FlatLogData(logData), [logData]);
 
 	const [, setCopy] = useCopyToClipboard();
 	const { notifications } = useNotifications();
 
 	const handleDetailedView = useCallback(() => {
-		dispatch({
-			type: SET_DETAILED_LOG_DATA,
-			payload: logData,
-		});
-	}, [dispatch, logData]);
+		onOpenDetailedView(logData);
+	}, [logData, onOpenDetailedView]);
 
 	const handleCopyJSON = (): void => {
 		setCopy(JSON.stringify(logData, null, 2));
@@ -106,8 +112,16 @@ function ListLogView({ logData }: ListLogViewProps): JSX.Element {
 	};
 
 	const updatedSelecedFields = useMemo(
-		() => selected.filter((e) => e.name !== 'id'),
-		[selected],
+		() => selectedFields.filter((e) => e.name !== 'id'),
+		[selectedFields],
+	);
+
+	const timestampValue = useMemo(
+		() =>
+			typeof flattenLogData.timestamp === 'string'
+				? dayjs(flattenLogData.timestamp).format()
+				: dayjs(flattenLogData.timestamp / 1e6).format(),
+		[flattenLogData.timestamp],
 	);
 
 	return (
@@ -119,10 +133,7 @@ function ListLogView({ logData }: ListLogViewProps): JSX.Element {
 						{flattenLogData.stream && (
 							<LogGeneralField fieldKey="stream" fieldValue={flattenLogData.stream} />
 						)}
-						<LogGeneralField
-							fieldKey="timestamp"
-							fieldValue={dayjs((flattenLogData.timestamp as never) / 1e6).format()}
-						/>
+						<LogGeneralField fieldKey="timestamp" fieldValue={timestampValue} />
 					</>
 				</LogContainer>
 				<div>
@@ -132,6 +143,7 @@ function ListLogView({ logData }: ListLogViewProps): JSX.Element {
 								key={field.name}
 								fieldKey={field.name}
 								fieldValue={flattenLogData[field.name] as never}
+								onAddToQuery={onAddToQuery}
 							/>
 						) : null,
 					)}
