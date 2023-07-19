@@ -19,7 +19,7 @@ export const DataIndexAndKey = {
 	[ColumnsTitle.Min]: 'min',
 };
 
-export const PanelTypeAndGraphManagerVisibility: PanelTypeAndGraphManagerVisibilityProps = {
+export const PANEL_TYPES_VS_FULL_VIEW_TABLE: PanelTypeAndGraphManagerVisibilityProps = {
 	TIME_SERIES: true,
 	VALUE: false,
 	TABLE: false,

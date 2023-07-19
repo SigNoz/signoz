@@ -29,3 +29,9 @@ export type ExtendedChartDataset = ChartDataset & {
 export type PanelTypeAndGraphManagerVisibilityProps = {
 	[key in keyof typeof PANEL_TYPES]: boolean;
 };
+
+export interface LabelProps {
+	labelClickedHandler: (labelIndex: number) => void;
+	labelIndex: number;
+	label: string;
+}

@@ -9,7 +9,7 @@ import {
 import { getYAxisFormattedValue } from 'components/Graph/yAxisConfig';
 import ValueGraph from 'components/ValueGraph';
 import { PANEL_TYPES } from 'constants/queryBuilder';
-import { PanelTypeAndGraphManagerVisibility } from 'container/GridGraphLayout/Graph/FullView/contants';
+import { PANEL_TYPES_VS_FULL_VIEW_TABLE } from 'container/GridGraphLayout/Graph/FullView/contants';
 import { GRAPH_TYPES } from 'container/NewDashboard/ComponentsSlider';
 import { useChartMutable } from 'hooks/useChartMutable';
 import { useEffect, useRef } from 'react';
@@ -38,7 +38,7 @@ function GridGraphComponent({
 
 	const canModifyChart = useChartMutable({
 		panelType: GRAPH_TYPES,
-		panelTypeAndGraphManagerVisibility: PanelTypeAndGraphManagerVisibility,
+		panelTypeAndGraphManagerVisibility: PANEL_TYPES_VS_FULL_VIEW_TABLE,
 	});
 
 	useEffect(() => {

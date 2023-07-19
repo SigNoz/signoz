@@ -4,32 +4,32 @@ import { LegendEntryProps } from './FullView/types';
 import { showAllDataSet } from './FullView/utils';
 import { getGraphVisibilityStateOnDataChange } from './utils';
 
-describe('getGraphVisibilityStateOnDataChange', () => {
-	const testData: ChartData = {
-		labels: ['test1', 'test2'],
-		datasets: [
-			{
-				label: 'customer',
-				data: [481.60377358490564, 730.0000000000002],
-			},
-			{
-				label: 'demo-app',
-				data: [4471.4285714285725],
-			},
-		],
-	};
-
-	const legendEntryResult: LegendEntryProps[] = [
+const mockTestData: ChartData = {
+	labels: ['test1', 'test2'],
+	datasets: [
 		{
 			label: 'customer',
-			show: true,
+			data: [481.60377358490564, 730.0000000000002],
 		},
 		{
 			label: 'demo-app',
-			show: false,
+			data: [4471.4285714285725],
 		},
-	];
+	],
+};
 
+const mocklegendEntryResult: LegendEntryProps[] = [
+	{
+		label: 'customer',
+		show: true,
+	},
+	{
+		label: 'demo-app',
+		show: false,
+	},
+];
+
+describe('getGraphVisibilityStateOnDataChange', () => {
 	beforeEach(() => {
 		const localStorageMock = {
 			getItem: jest.fn(),
@@ -53,22 +53,22 @@ describe('getGraphVisibilityStateOnDataChange', () => {
 			.mockReturnValue(JSON.stringify(mockLocalStorageData));
 
 		const result1 = getGraphVisibilityStateOnDataChange({
-			data: testData,
+			data: mockTestData,
 			isExpandedName: true,
 			name: 'example',
 		});
 		expect(result1.graphVisibilityStates).toEqual([true, false]);
-		expect(result1.legendEntry).toEqual(legendEntryResult);
+		expect(result1.legendEntry).toEqual(mocklegendEntryResult);
 
 		const result2 = getGraphVisibilityStateOnDataChange({
-			data: testData,
+			data: mockTestData,
 			isExpandedName: false,
 			name: 'example',
 		});
 		expect(result2.graphVisibilityStates).toEqual(
-			Array(testData.datasets.length).fill(true),
+			Array(mockTestData.datasets.length).fill(true),
 		);
-		expect(result2.legendEntry).toEqual(showAllDataSet(testData));
+		expect(result2.legendEntry).toEqual(showAllDataSet(mockTestData));
 	});
 
 	it('should return default values if localStorage data is not available', () => {
@@ -76,13 +76,13 @@ describe('getGraphVisibilityStateOnDataChange', () => {
 		jest.spyOn(window.localStorage, 'getItem').mockReturnValue(null);
 
 		const result = getGraphVisibilityStateOnDataChange({
-			data: testData,
+			data: mockTestData,
 			isExpandedName: true,
 			name: 'example',
 		});
 		expect(result.graphVisibilityStates).toEqual(
-			Array(testData.datasets.length).fill(true),
+			Array(mockTestData.datasets.length).fill(true),
 		);
-		expect(result.legendEntry).toEqual(showAllDataSet(testData));
+		expect(result.legendEntry).toEqual(showAllDataSet(mockTestData));
 	});
 });

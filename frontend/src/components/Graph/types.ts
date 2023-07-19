@@ -4,6 +4,7 @@ import {
 	ChartData,
 	ChartEvent,
 	ChartOptions,
+	ChartType,
 } from 'chart.js';
 
 import {
@@ -41,3 +42,19 @@ export type CustomChartOptions = ChartOptions & {
 		[intersectionCursorPluginId]: IntersectionCursorPluginOptions | false;
 	};
 };
+
+export interface GraphProps {
+	animate?: boolean;
+	type: ChartType;
+	data: Chart['data'];
+	title?: string;
+	isStacked?: boolean;
+	onClickHandler?: GraphOnClickHandler;
+	name: string;
+	yAxisUnit?: string;
+	forceReRender?: boolean | null | number;
+	staticLine?: StaticLineProps | undefined;
+	containerHeight?: string | number;
+	onDragSelect?: (start: number, end: number) => void;
+	dragSelectColor?: string;
+}

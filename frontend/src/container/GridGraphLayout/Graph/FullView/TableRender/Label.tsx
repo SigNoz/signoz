@@ -1,5 +1,6 @@
-import { LabelContainer } from './styles';
-import { getAbbreviatedLabel } from './utils';
+import { LabelContainer } from '../styles';
+import { LabelProps } from '../types';
+import { getAbbreviatedLabel } from '../utils';
 
 function Label({
 	labelClickedHandler,
@@ -15,12 +16,6 @@ function Label({
 			{getAbbreviatedLabel(label)}
 		</LabelContainer>
 	);
-}
-
-interface LabelProps {
-	labelClickedHandler: (labelIndex: number) => void;
-	labelIndex: number;
-	label: string;
 }
 
 export default Label;

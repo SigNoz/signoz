@@ -36,12 +36,7 @@ import { emptyGraph } from './Plugin/EmptyGraph';
 import { createIntersectionCursorPlugin } from './Plugin/IntersectionCursor';
 import { TooltipPosition as TooltipPositionHandler } from './Plugin/Tooltip';
 import { LegendsContainer } from './styles';
-import {
-	CustomChartOptions,
-	GraphOnClickHandler,
-	StaticLineProps,
-	ToggleGraphProps,
-} from './types';
+import { CustomChartOptions, GraphProps, ToggleGraphProps } from './types';
 import { getGraphOptions, toggleGraph } from './utils';
 import { useXAxisTimeUnit } from './xAxisConfig';
 
@@ -190,22 +185,6 @@ declare module 'chart.js' {
 	interface TooltipPositionerMap {
 		custom: TooltipPositionerFunction<ChartType>;
 	}
-}
-
-interface GraphProps {
-	animate?: boolean;
-	type: ChartType;
-	data: Chart['data'];
-	title?: string;
-	isStacked?: boolean;
-	onClickHandler?: GraphOnClickHandler;
-	name: string;
-	yAxisUnit?: string;
-	forceReRender?: boolean | null | number;
-	staticLine?: StaticLineProps | undefined;
-	containerHeight?: string | number;
-	onDragSelect?: (start: number, end: number) => void;
-	dragSelectColor?: string;
 }
 
 Graph.defaultProps = {

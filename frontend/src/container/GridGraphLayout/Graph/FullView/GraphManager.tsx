@@ -9,13 +9,13 @@ import { memo, useEffect, useState } from 'react';
 
 import { getGraphVisibilityStateOnDataChange } from '../utils';
 import { ColumnsTitle, DataIndexAndKey } from './contants';
-import CustomCheckBox from './CustomCheckBox';
-import Label from './Label';
 import {
 	FilterTableAndSaveContainer,
 	FilterTableContainer,
 	SaveContainer,
 } from './styles';
+import CustomCheckBox from './TableRender/CustomCheckBox';
+import Label from './TableRender/Label';
 import { DataSetProps, ExtendedChartDataset, LegendEntryProps } from './types';
 import {
 	getDefaultTableDataSet,
