@@ -7,12 +7,11 @@ import {
 	DataType,
 	FORMULA,
 	GraphTitle,
-	LETENCY_LEGENDS_AGGREGATEOPERATOR,
-	LETENCY_LEGENDS_AGGREGATEOPERATOR_SPAN_METRICS,
+	LATENCY_LEGENDS_AGGREGATEOPERATOR,
+	LATENCY_LEGENDS_AGGREGATEOPERATOR_SPAN_METRICS,
 	MetricsType,
 	OPERATION_LEGENDS,
 	QUERYNAME_AND_EXPRESSION,
-	RequestMethods,
 	WidgetKeys,
 } from '../constant';
 import { IServiceName } from '../Tabs/types';
@@ -24,15 +23,16 @@ import {
 export const latency = ({
 	servicename,
 	tagFilterItems,
-	spanMetricFlg = false,
+	isSpanMetricEnable = false,
+	topLevelOperationsRoute,
 }: LatencyProps): QueryBuilderData => {
 	const newAutoCompleteData: BaseAutocompleteData = {
-		key: spanMetricFlg
+		key: isSpanMetricEnable
 			? WidgetKeys.Signoz_latency_bucket
 			: WidgetKeys.DurationNano,
 		dataType: DataType.FLOAT64,
 		isColumn: true,
-		type: spanMetricFlg ? null : MetricsType.Tag,
+		type: isSpanMetricEnable ? null : MetricsType.Tag,
 	};
 
 	const autocompleteData: BaseAutocompleteData[] = Array(3).fill(
@@ -43,43 +43,38 @@ export const latency = ({
 		{
 			id: '',
 			key: {
-				key: spanMetricFlg ? WidgetKeys.Service_name : WidgetKeys.ServiceName,
+				key: isSpanMetricEnable ? WidgetKeys.Service_name : WidgetKeys.ServiceName,
 				dataType: DataType.STRING,
-				type: spanMetricFlg ? MetricsType.Resource : MetricsType.Tag,
-				isColumn: !spanMetricFlg,
+				type: isSpanMetricEnable ? MetricsType.Resource : MetricsType.Tag,
+				isColumn: !isSpanMetricEnable,
 			},
-			op: spanMetricFlg ? OPERATORS.IN : OPERATORS['='],
-			value: spanMetricFlg ? [servicename] : servicename,
+			op: isSpanMetricEnable ? OPERATORS.IN : OPERATORS['='],
+			value: isSpanMetricEnable ? [servicename] : servicename,
+		},
+		{
+			id: '',
+			key: {
+				dataType: DataType.STRING,
+				isColumn: !isSpanMetricEnable,
+				key: isSpanMetricEnable ? WidgetKeys.Operation : WidgetKeys.Name,
+				type: MetricsType.Tag,
+			},
+			op: OPERATORS.IN.toLowerCase(), // TODO: need to remove toLowerCase() this once backend is changed
+			value: [...topLevelOperationsRoute],
 		},
 		...tagFilterItems,
 	];
 
-	if (spanMetricFlg) {
-		filterItem.push({
-			id: '',
-			key: {
-				dataType: DataType.STRING,
-				isColumn: false,
-				key: WidgetKeys.Operation,
-				type: MetricsType.Tag,
-			},
-			op: OPERATORS.IN,
-			value: [RequestMethods.GETDISPATCHER],
-		});
-	}
-
 	const filterItems: TagFilterItem[][] = Array(3).fill([...filterItem]);
-
-	console.log('SpanMEtricFlg', filterItems);
 
 	return getQueryBuilderQueries({
 		autocompleteData,
-		legends: LETENCY_LEGENDS_AGGREGATEOPERATOR,
+		legends: LATENCY_LEGENDS_AGGREGATEOPERATOR,
 		filterItems,
-		aggregateOperator: spanMetricFlg
-			? LETENCY_LEGENDS_AGGREGATEOPERATOR_SPAN_METRICS
-			: LETENCY_LEGENDS_AGGREGATEOPERATOR,
-		dataSource: spanMetricFlg ? DataSource.METRICS : DataSource.TRACES,
+		aggregateOperator: isSpanMetricEnable
+			? LATENCY_LEGENDS_AGGREGATEOPERATOR_SPAN_METRICS
+			: LATENCY_LEGENDS_AGGREGATEOPERATOR,
+		dataSource: isSpanMetricEnable ? DataSource.METRICS : DataSource.TRACES,
 		queryNameAndExpression: QUERYNAME_AND_EXPRESSION,
 	});
 };
@@ -235,5 +230,6 @@ export interface OperationPerSecProps {
 export interface LatencyProps {
 	servicename: IServiceName['servicename'];
 	tagFilterItems: TagFilterItem[];
-	spanMetricFlg?: boolean;
+	isSpanMetricEnable?: boolean;
+	topLevelOperationsRoute: string[];
 }

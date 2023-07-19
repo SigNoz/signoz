@@ -181,6 +181,9 @@ function Application(): JSX.Element {
 						selectedTimeStamp={selectedTimeStamp}
 						selectedTraceTags={selectedTraceTags}
 						tagFilterItems={tagFilterItems}
+						topLevelOperationsRoute={
+							topLevelOperations ? topLevelOperations[servicename || ''] : []
+						}
 					/>
 				</Col>
 

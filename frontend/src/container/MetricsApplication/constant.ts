@@ -3,8 +3,8 @@ export const legend = {
 };
 
 export const QUERYNAME_AND_EXPRESSION = ['A', 'B', 'C'];
-export const LETENCY_LEGENDS_AGGREGATEOPERATOR = ['p50', 'p90', 'p99'];
-export const LETENCY_LEGENDS_AGGREGATEOPERATOR_SPAN_METRICS = [
+export const LATENCY_LEGENDS_AGGREGATEOPERATOR = ['p50', 'p90', 'p99'];
+export const LATENCY_LEGENDS_AGGREGATEOPERATOR_SPAN_METRICS = [
 	'hist_quantile_50',
 	'hist_quantile_90',
 	'hist_quantile_99',
@@ -39,11 +39,8 @@ export enum MetricsType {
 	Resource = 'resource',
 }
 
-export enum RequestMethods {
-	GETDISPATCHER = 'HTTP GET /dispatch',
-}
-
 export enum WidgetKeys {
+	Name = 'name',
 	Address = 'address',
 	DurationNano = 'durationNano',
 	StatusCode = 'status_code',

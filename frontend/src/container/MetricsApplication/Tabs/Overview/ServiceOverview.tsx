@@ -22,6 +22,7 @@ function ServiceOverview({
 	selectedTraceTags,
 	selectedTimeStamp,
 	tagFilterItems,
+	topLevelOperationsRoute,
 }: ServiceOverviewProps): JSX.Element {
 	const { servicename } = useParams<IServiceName>();
 	const SpanMetricFlg = useFeatureFlag(FeatureKeys.USE_SPAN_METRICS);
@@ -34,14 +35,15 @@ function ServiceOverview({
 					builder: latency({
 						servicename,
 						tagFilterItems,
-						spanMetricFlg: SpanMetricFlg?.active,
+						isSpanMetricEnable: SpanMetricFlg?.active,
+						topLevelOperationsRoute,
 					}),
 					clickhouse_sql: [],
 					id: uuid(),
 				},
 				GraphTitle.LATENCY,
 			),
-		[servicename, tagFilterItems, SpanMetricFlg],
+		[servicename, tagFilterItems, SpanMetricFlg, topLevelOperationsRoute],
 	);
 
 	return (
@@ -82,6 +84,7 @@ interface ServiceOverviewProps {
 	onDragSelect: (start: number, end: number) => void;
 	handleGraphClick: (type: string) => ClickHandlerType;
 	tagFilterItems: TagFilterItem[];
+	topLevelOperationsRoute: string[];
 }
 
 export default ServiceOverview;
