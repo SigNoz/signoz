@@ -165,11 +165,11 @@ function WidgetGraphComponent({
 
 	useEffect(() => {
 		if (canModifyChart) {
-			const visibilityStateAndLegendEntry = getGraphVisibilityStateOnDataChange(
+			const visibilityStateAndLegendEntry = getGraphVisibilityStateOnDataChange({
 				data,
-				true,
+				isExpandedName: true,
 				name,
-			);
+			});
 			setGraphsVisilityStates(visibilityStateAndLegendEntry.graphVisibilityStates);
 		}
 	}, [data, name, canModifyChart]);

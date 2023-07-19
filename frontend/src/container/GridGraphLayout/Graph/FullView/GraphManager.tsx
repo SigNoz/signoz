@@ -9,7 +9,7 @@ import { memo, useEffect, useState } from 'react';
 
 import { getGraphVisibilityStateOnDataChange } from '../utils';
 import { ColumnsTitle, DataIndexAndKey } from './contants';
-import CustomCheckBox from './CustomeCheckBox';
+import CustomCheckBox from './CustomCheckBox';
 import Label from './Label';
 import {
 	FilterTableAndSaveContainer,
@@ -60,11 +60,11 @@ function GraphManager({
 	}, [data, legendEntries]);
 
 	useEffect(() => {
-		const visibilityStateAndLegendEntry = getGraphVisibilityStateOnDataChange(
+		const visibilityStateAndLegendEntry = getGraphVisibilityStateOnDataChange({
 			data,
-			false,
+			isExpandedName: false,
 			name,
-		);
+		});
 		setGraphVisibilityState(visibilityStateAndLegendEntry.graphVisibilityStates);
 		setLegendEntries(visibilityStateAndLegendEntry.legendEntry);
 	}, [data, name]);
@@ -98,14 +98,6 @@ function GraphManager({
 		}
 	};
 
-	const getLabel = (label: string, labelIndex: number): React.ReactElement => (
-		<Label
-			label={label}
-			labelIndex={labelIndex}
-			labelClickedHandler={labelClickedHandler}
-		/>
-	);
-
 	const columns: ColumnType<DataSetProps>[] = [
 		{
 			title: '',
@@ -119,7 +111,13 @@ function GraphManager({
 			width: 300,
 			dataIndex: DataIndexAndKey[ColumnsTitle.Label],
 			key: DataIndexAndKey.Label,
-			render: (label: string, _, index): JSX.Element => getLabel(label, index),
+			render: (label: string, _, index): JSX.Element => (
+				<Label
+					label={label}
+					labelIndex={index}
+					labelClickedHandler={labelClickedHandler}
+				/>
+			),
 		},
 		{
 			title: ColumnsTitle.Avg,

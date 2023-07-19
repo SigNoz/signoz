@@ -6,11 +6,12 @@ function Label({
 	labelIndex,
 	label,
 }: LabelProps): JSX.Element {
+	const onClickHandler = (): void => {
+		labelClickedHandler(labelIndex);
+	};
+
 	return (
-		<LabelContainer
-			type="button"
-			onClick={(): void => labelClickedHandler(labelIndex)}
-		>
+		<LabelContainer type="button" onClick={onClickHandler}>
 			{getAbbreviatedLabel(label)}
 		</LabelContainer>
 	);

@@ -5,11 +5,11 @@ import { LegendEntryProps } from './FullView/types';
 import { showAllDataSet } from './FullView/utils';
 import { GraphVisibilityLegendEntryProps } from './types';
 
-export const getGraphVisibilityStateOnDataChange = (
-	data: ChartData,
-	isExpandedName: boolean,
-	name: string,
-): GraphVisibilityLegendEntryProps => {
+export const getGraphVisibilityStateOnDataChange = ({
+	data,
+	isExpandedName,
+	name,
+}: GetGraphVisibilityStateOnLegendClickProps): GraphVisibilityLegendEntryProps => {
 	const visibilityStateAndLegendEntry: GraphVisibilityLegendEntryProps = {
 		graphVisibilityStates: Array(data.datasets.length).fill(true),
 		legendEntry: showAllDataSet(data),
@@ -18,9 +18,20 @@ export const getGraphVisibilityStateOnDataChange = (
 		const legendGraphFromLocalStore = localStorage.getItem(
 			LOCALSTORAGE.GRAPH_VISIBILITY_STATES,
 		);
-		const legendFromLocalStore: [
-			{ name: string; dataIndex: LegendEntryProps[] },
-		] = JSON.parse(legendGraphFromLocalStore || '[]');
+		let legendFromLocalStore: {
+			name: string;
+			dataIndex: LegendEntryProps[];
+		}[] = [];
+
+		try {
+			legendFromLocalStore = JSON.parse(legendGraphFromLocalStore || '[]');
+		} catch (error) {
+			console.error(
+				'Error parsing GRAPH_VISIBILITY_STATES from local storage',
+				error,
+			);
+		}
+
 		const newGraphVisibilityStates = Array(data.datasets.length).fill(true);
 		legendFromLocalStore.forEach((item) => {
 			const newName = isExpandedName ? `${name}expanded` : name;
@@ -41,3 +52,9 @@ export const getGraphVisibilityStateOnDataChange = (
 
 	return visibilityStateAndLegendEntry;
 };
+
+interface GetGraphVisibilityStateOnLegendClickProps {
+	data: ChartData;
+	isExpandedName: boolean;
+	name: string;
+}
