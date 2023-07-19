@@ -4,15 +4,31 @@ import * as Papa from 'papaparse';
 import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { OrderByPayload } from 'types/api/queryBuilder/queryBuilderData';
 
+import { FILTERS } from './config';
+
 export const orderByValueDelimiter = '|';
 
 export const transformToOrderByStringValues = (
 	orderBy: OrderByPayload[],
-): IOption[] =>
-	orderBy.map((item) => ({
-		label: `${item.columnName} ${item.order}`,
-		value: `${item.columnName}${orderByValueDelimiter}${item.order}`,
-	}));
+): IOption[] => {
+	const prepareSelectedValue: IOption[] = orderBy.reduce<IOption[]>(
+		(acc, item) => {
+			if (item.columnName === '#SIGNOZ_VALUE') return acc;
+
+			const option: IOption = {
+				label: `${item.columnName} ${item.order}`,
+				value: `${item.columnName}${orderByValueDelimiter}${item.order}`,
+			};
+
+			acc.push(option);
+
+			return acc;
+		},
+		[],
+	);
+
+	return prepareSelectedValue;
+};
 
 export function mapLabelValuePairs(
 	arr: BaseAutocompleteData[],
@@ -51,4 +67,14 @@ export function getLabelFromValue(arr: IOption[]): string[] {
 
 export function checkIfKeyPresent(str: string, valueToCheck: string): boolean {
 	return new RegExp(`\\(${valueToCheck}\\)`).test(str);
+}
+
+export function splitOrderByFromString(str: string): OrderByPayload | null {
+	const splittedStr = str.split(' ');
+	const order = splittedStr.pop() || FILTERS.ASC;
+	const columnName = splittedStr.join(' ');
+
+	if (!columnName) return null;
+
+	return { columnName, order };
 }

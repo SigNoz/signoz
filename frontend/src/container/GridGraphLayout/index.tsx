@@ -324,6 +324,13 @@ function GridGraph(props: Props): JSX.Element {
 		errorMessage,
 	]);
 
+	useEffect(
+		() => (): void => {
+			toggleAddWidget(false);
+		},
+		[toggleAddWidget],
+	);
+
 	return (
 		<GraphLayoutContainer
 			addPanelLoading={addPanelLoading}

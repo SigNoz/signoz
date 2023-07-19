@@ -54,8 +54,10 @@ type ServerOptions struct {
 	HTTPHostPort      string
 	PrivateHostPort   string
 	// alert specific params
-	DisableRules bool
-	RuleRepoURL  string
+	DisableRules      bool
+	RuleRepoURL       string
+	PreferDelta       bool
+	PreferSpanMetrics bool
 }
 
 // Server runs HTTP api service
@@ -168,12 +170,14 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 	telemetry.GetInstance().SetReader(reader)
 
 	apiOpts := api.APIHandlerOptions{
-		DataConnector:  reader,
-		SkipConfig:     skipConfig,
-		AppDao:         modelDao,
-		RulesManager:   rm,
-		FeatureFlags:   lm,
-		LicenseManager: lm,
+		DataConnector:     reader,
+		SkipConfig:        skipConfig,
+		PreferDelta:       serverOptions.PreferDelta,
+		PreferSpanMetrics: serverOptions.PreferSpanMetrics,
+		AppDao:            modelDao,
+		RulesManager:      rm,
+		FeatureFlags:      lm,
+		LicenseManager:    lm,
 	}
 
 	apiHandler, err := api.NewAPIHandler(apiOpts)

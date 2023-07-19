@@ -83,12 +83,17 @@ function LogControls(): JSX.Element | null {
 
 	const flattenLogData = useMemo(
 		() =>
-			logs.map((log) =>
-				FlatLogData({
+			logs.map((log) => {
+				const timestamp =
+					typeof log.timestamp === 'string'
+						? dayjs(log.timestamp).format()
+						: dayjs(log.timestamp / 1e6).format();
+
+				return FlatLogData({
 					...log,
-					timestamp: (dayjs(log.timestamp / 1e6).format() as unknown) as number,
-				}),
-			),
+					timestamp,
+				});
+			}),
 		[logs],
 	);
 
