@@ -7,6 +7,7 @@ import {
 	selectValueDivider,
 } from 'constants/queryBuilder';
 import { DEBOUNCE_DELAY } from 'constants/queryBuilderFilterConfig';
+import { useGetAggregateKeys } from 'hooks/queryBuilder/useGetAggregateKeys';
 import useDebounce from 'hooks/useDebounce';
 import { chooseAutocompleteFromCustomValue } from 'lib/newQueryBuilder/chooseAutocompleteFromCustomValue';
 // ** Components
@@ -14,7 +15,7 @@ import { chooseAutocompleteFromCustomValue } from 'lib/newQueryBuilder/chooseAut
 import { transformStringWithPrefix } from 'lib/query/transformStringWithPrefix';
 import { isEqual, uniqWith } from 'lodash-es';
 import { memo, useCallback, useEffect, useState } from 'react';
-import { useQuery, useQueryClient } from 'react-query';
+import { useQueryClient } from 'react-query';
 import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { SelectOption } from 'types/common/select';
 
@@ -38,16 +39,15 @@ export const GroupByFilter = memo(function GroupByFilter({
 
 	const debouncedValue = useDebounce(searchText, DEBOUNCE_DELAY);
 
-	const { isFetching } = useQuery(
-		[QueryBuilderKeys.GET_AGGREGATE_KEYS, debouncedValue, isFocused],
-		async () =>
-			getAggregateKeys({
-				aggregateAttribute: query.aggregateAttribute.key,
-				dataSource: query.dataSource,
-				aggregateOperator: query.aggregateOperator,
-				searchText: debouncedValue,
-			}),
+	const { isFetching } = useGetAggregateKeys(
 		{
+			aggregateAttribute: query.aggregateAttribute.key,
+			dataSource: query.dataSource,
+			aggregateOperator: query.aggregateOperator,
+			searchText: debouncedValue,
+		},
+		{
+			queryKey: [debouncedValue, isFocused],
 			enabled: !disabled && isFocused,
 			onSuccess: (data) => {
 				const keys = query.groupBy.reduce<string[]>((acc, item) => {
