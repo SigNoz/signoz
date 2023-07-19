@@ -6,7 +6,7 @@ export const useChartMutable = ({
 	panelType,
 	panelTypeAndGraphManagerVisibility,
 }: UseChartMutableProps): boolean => {
-	const panelKeys = Object.keys(PANEL_TYPES) as PanelTypeKeys[];
+	const panelKeys: PanelTypeKeys[] = [].slice.call(Object.keys(PANEL_TYPES));
 	const graphType = panelKeys.find(
 		(key: PanelTypeKeys) => PANEL_TYPES[key] === panelType,
 	);
