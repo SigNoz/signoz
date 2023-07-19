@@ -3,8 +3,8 @@ export const legend = {
 };
 
 export const QUERYNAME_AND_EXPRESSION = ['A', 'B', 'C'];
-export const LATENCY_LEGENDS_AGGREGATEOPERATOR = ['p50', 'p90', 'p99'];
-export const LATENCY_LEGENDS_AGGREGATEOPERATOR_SPAN_METRICS = [
+export const LATENCY_AGGREGATEOPERATOR = ['p50', 'p90', 'p99'];
+export const LATENCY_AGGREGATEOPERATOR_SPAN_METRICS = [
 	'hist_quantile_50',
 	'hist_quantile_90',
 	'hist_quantile_99',
