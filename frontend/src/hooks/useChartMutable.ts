@@ -1,8 +1,11 @@
 import { PANEL_TYPES } from 'constants/queryBuilder';
-import { PanelTypeAndGraphManagerVisibility } from 'container/GridGraphLayout/Graph/FullView/contants';
+import { PanelTypeAndGraphManagerVisibilityProps } from 'container/GridGraphLayout/Graph/FullView/types';
 import { PanelTypeKeys } from 'types/common/queryBuilder';
 
-export const useChartMutable = (panelType: string): boolean => {
+export const useChartMutable = ({
+	panelType,
+	panelTypeAndGraphManagerVisibility,
+}: UseChartMutableProps): boolean => {
 	const panelKeys = Object.keys(PANEL_TYPES) as PanelTypeKeys[];
 	const graphType = panelKeys.find(
 		(key: PanelTypeKeys) => PANEL_TYPES[key] === panelType,
@@ -10,5 +13,10 @@ export const useChartMutable = (panelType: string): boolean => {
 	if (!graphType) {
 		return false;
 	}
-	return PanelTypeAndGraphManagerVisibility[graphType];
+	return panelTypeAndGraphManagerVisibility[graphType];
 };
+
+interface UseChartMutableProps {
+	panelType: string;
+	panelTypeAndGraphManagerVisibility: PanelTypeAndGraphManagerVisibilityProps;
+}

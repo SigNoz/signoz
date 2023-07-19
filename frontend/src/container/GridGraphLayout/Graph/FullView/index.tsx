@@ -18,6 +18,7 @@ import { AppState } from 'store/reducers';
 import { Widgets } from 'types/api/dashboard/getAll';
 import { GlobalReducer } from 'types/reducer/globalTime';
 
+import { PanelTypeAndGraphManagerVisibility } from './contants';
 import GraphManager from './GraphManager';
 import { GraphContainer, TimeContainer } from './styles';
 
@@ -43,7 +44,10 @@ function FullView({
 		[widget],
 	);
 
-	const canModifyChart = useChartMutable(widget.panelTypes);
+	const canModifyChart = useChartMutable({
+		panelType: widget.panelTypes,
+		panelTypeAndGraphManagerVisibility: PanelTypeAndGraphManagerVisibility,
+	});
 
 	const [selectedTime, setSelectedTime] = useState<timePreferance>({
 		name: getSelectedTime()?.name || '',

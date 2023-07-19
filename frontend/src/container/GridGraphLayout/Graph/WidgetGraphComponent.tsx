@@ -37,6 +37,7 @@ import { LayoutProps } from '..';
 import { UpdateDashboard } from '../utils';
 import WidgetHeader from '../WidgetHeader';
 import FullView from './FullView';
+import { PanelTypeAndGraphManagerVisibility } from './FullView/contants';
 import { FullViewContainer, Modal } from './styles';
 import { getGraphVisibilityStateOnDataChange } from './utils';
 
@@ -71,7 +72,10 @@ function WidgetGraphComponent({
 	);
 	const [selectedDashboard] = dashboards;
 
-	const canModifyChart = useChartMutable(widget.panelTypes);
+	const canModifyChart = useChartMutable({
+		panelType: widget.panelTypes,
+		panelTypeAndGraphManagerVisibility: PanelTypeAndGraphManagerVisibility,
+	});
 
 	const graphVisibilityStateHandler = (
 		newGraphsVisiblityState: boolean[],

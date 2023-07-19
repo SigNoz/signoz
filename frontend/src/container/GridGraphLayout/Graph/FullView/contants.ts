@@ -1,4 +1,4 @@
-import { PANEL_TYPES } from 'constants/queryBuilder';
+import { PanelTypeAndGraphManagerVisibilityProps } from './types';
 
 export enum ColumnsTitle {
 	Index = 'Index',
@@ -19,9 +19,7 @@ export const DataIndexAndKey = {
 	[ColumnsTitle.Min]: 'min',
 };
 
-export const PanelTypeAndGraphManagerVisibility: {
-	[key in keyof typeof PANEL_TYPES]: boolean;
-} = {
+export const PanelTypeAndGraphManagerVisibility: PanelTypeAndGraphManagerVisibilityProps = {
 	TIME_SERIES: true,
 	VALUE: false,
 	TABLE: false,

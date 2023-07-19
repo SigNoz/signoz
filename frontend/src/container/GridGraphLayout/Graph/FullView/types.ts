@@ -1,4 +1,5 @@
 import { ChartDataset } from 'chart.js';
+import { PANEL_TYPES } from 'constants/queryBuilder';
 
 export interface DataSetProps {
 	index: number;
@@ -23,4 +24,8 @@ export type ExtendedChartDataset = ChartDataset & {
 	avg: number;
 	min: number;
 	max: number;
+};
+
+export type PanelTypeAndGraphManagerVisibilityProps = {
+	[key in keyof typeof PANEL_TYPES]: boolean;
 };
