@@ -2,11 +2,16 @@ import { Tabs } from 'antd';
 import axios from 'axios';
 import ExplorerCard from 'components/ExplorerCard';
 import { QueryParams } from 'constants/query';
-import { initialQueriesMap, PANEL_TYPES } from 'constants/queryBuilder';
+import {
+	initialAutocompleteData,
+	initialQueriesMap,
+	PANEL_TYPES,
+} from 'constants/queryBuilder';
 import { queryParamNamesMap } from 'constants/queryBuilderQueryNames';
 import ROUTES from 'constants/routes';
 import ExportPanel from 'container/ExportPanel';
 import { GRAPH_TYPES } from 'container/NewDashboard/ComponentsSlider';
+import { SIGNOZ_VALUE } from 'container/QueryBuilder/filters/OrderByFilter/constants';
 import QuerySection from 'container/TracesExplorer/QuerySection';
 import { useUpdateDashboard } from 'hooks/dashboard/useUpdateDashboard';
 import { addEmptyWidgetInDashboardJSONWithQuery } from 'hooks/dashboard/utils';
@@ -17,6 +22,7 @@ import history from 'lib/history';
 import { useCallback, useEffect, useMemo } from 'react';
 import { generatePath } from 'react-router-dom';
 import { Dashboard } from 'types/api/dashboard/getAll';
+import { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource } from 'types/common/queryBuilder';
 
 import { ActionsWrapper, Container } from './styles';
@@ -29,6 +35,7 @@ function TracesExplorer(): JSX.Element {
 		currentQuery,
 		panelType,
 		updateAllQueriesOperators,
+		updateQueriesData,
 		redirectWithQueryBuilderData,
 	} = useQueryBuilder();
 
@@ -141,26 +148,42 @@ function TracesExplorer(): JSX.Element {
 		[exportDefaultQuery, notifications, updateDashboard],
 	);
 
-	const handleTabChange = useCallback(
-		(newPanelType: string): void => {
-			if (panelType === newPanelType) return;
-
-			const query = updateAllQueriesOperators(
+	const getUpdateQuery = useCallback(
+		(newPanelType: GRAPH_TYPES): Query => {
+			let query = updateAllQueriesOperators(
 				currentQuery,
-				newPanelType as GRAPH_TYPES,
+				newPanelType,
 				DataSource.TRACES,
 			);
+
+			if (
+				newPanelType === PANEL_TYPES.LIST ||
+				newPanelType === PANEL_TYPES.TRACE
+			) {
+				query = updateQueriesData(query, 'queryData', (item) => ({
+					...item,
+					orderBy: item.orderBy.filter((item) => item.columnName !== SIGNOZ_VALUE),
+					aggregateAttribute: initialAutocompleteData,
+				}));
+			}
+
+			return query;
+		},
+		[currentQuery, updateAllQueriesOperators, updateQueriesData],
+	);
+
+	const handleTabChange = useCallback(
+		(type: string): void => {
+			const newPanelType = type as GRAPH_TYPES;
+			if (panelType === newPanelType) return;
+
+			const query = getUpdateQuery(newPanelType);
 
 			redirectWithQueryBuilderData(query, {
 				[queryParamNamesMap.panelTypes]: newPanelType,
 			});
 		},
-		[
-			currentQuery,
-			panelType,
-			redirectWithQueryBuilderData,
-			updateAllQueriesOperators,
-		],
+		[getUpdateQuery, panelType, redirectWithQueryBuilderData],
 	);
 
 	useShareBuilderUrl(defaultQuery);
