@@ -412,7 +412,6 @@ type Options struct {
 
 func PrepareLogsQuery(start, end int64, queryType v3.QueryType, panelType v3.PanelType, mq *v3.BuilderQuery, options Options) (string, error) {
 	if options.IsLivetailQuery {
-		// give me just the groupby names
 		query, err := buildLogsLiveTailQuery(mq)
 		if err != nil {
 			return "", err

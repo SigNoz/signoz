@@ -4531,6 +4531,7 @@ func (r *ClickHouseReader) LiveTailLogsV3(ctx context.Context, query string, tim
 
 			// zap.S().Debug(tmpQuery)
 
+			// using the old structure since we can directly read it to the struct as use it.
 			response := []model.GetLogsResponse{}
 			err := r.db.Select(ctx, &response, tmpQuery)
 			if err != nil {
@@ -4539,18 +4540,10 @@ func (r *ClickHouseReader) LiveTailLogsV3(ctx context.Context, query string, tim
 				return
 			}
 			for i := len(response) - 1; i >= 0; i-- {
-				select {
-				case <-ctx.Done():
-					done := true
-					client.Done <- &done
-					zap.S().Debug("closing go routine while sending logs : " + client.Name)
-					return
-				default:
-					client.Logs <- &response[i]
-					if i == 0 {
-						timestampStart = response[i].Timestamp
-						idStart = response[i].ID
-					}
+				client.Logs <- &response[i]
+				if i == 0 {
+					timestampStart = response[i].Timestamp
+					idStart = response[i].ID
 				}
 			}
 		}
