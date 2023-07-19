@@ -31,6 +31,7 @@ function FullView({
 	graphVisibilityStateHandler,
 	graphsVisibility,
 	isDependedDataLoaded = false,
+	onToggleModelHandler,
 }: FullViewProps): JSX.Element {
 	const { selectedTime: globalSelectedTime } = useSelector<
 		AppState,
@@ -130,6 +131,7 @@ function FullView({
 					data={chartDataSet}
 					graphVisibilityStateHandler={graphVisibilityStateHandler}
 					name={name}
+					onToggleModelHandler={onToggleModelHandler}
 				/>
 			)}
 		</>

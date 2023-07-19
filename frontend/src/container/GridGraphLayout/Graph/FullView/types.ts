@@ -43,6 +43,7 @@ export interface GraphManagerProps {
 	data: ChartData;
 	graphVisibilityStateHandler?: (graphVisibilityArray: boolean[]) => void;
 	name: string;
+	onToggleModelHandler?: () => void;
 }
 
 export interface CheckBoxProps {
@@ -62,6 +63,7 @@ export interface FullViewProps {
 	graphVisibilityStateHandler?: (graphsVisiblityArray: boolean[]) => void;
 	graphsVisibility?: boolean[];
 	isDependedDataLoaded?: boolean;
+	onToggleModelHandler?: () => void;
 }
 
 export interface SaveLegendEntriesToLocalStoreProps {

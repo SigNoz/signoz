@@ -1,4 +1,5 @@
 import { Checkbox, ConfigProvider } from 'antd';
+import { CheckboxChangeEvent } from 'antd/es/checkbox';
 
 import { CheckBoxProps } from '../types';
 
@@ -10,6 +11,10 @@ function CustomCheckBox({
 }: CheckBoxProps): JSX.Element {
 	const { datasets } = data;
 
+	const onChangeHandler = (e: CheckboxChangeEvent): void => {
+		checkBoxOnChangeHandler(e, index);
+	};
+
 	return (
 		<ConfigProvider
 			theme={{
@@ -20,10 +25,7 @@ function CustomCheckBox({
 				},
 			}}
 		>
-			<Checkbox
-				onChange={(e): void => checkBoxOnChangeHandler(e, index)}
-				checked={graphVisibilityState[index]}
-			/>
+			<Checkbox onChange={onChangeHandler} checked={graphVisibilityState[index]} />
 		</ConfigProvider>
 	);
 }

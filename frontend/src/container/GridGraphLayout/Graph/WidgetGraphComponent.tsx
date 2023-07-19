@@ -168,11 +168,19 @@ function WidgetGraphComponent({
 		}
 	}, [data, name, canModifyChart]);
 
+	const onDeleteModelHandler = (): void => {
+		onToggleModal(setDeleteModal);
+	};
+
+	const onToggleModelHandler = (): void => {
+		onToggleModal(setModal);
+	};
+
 	const getModals = (): JSX.Element => (
 		<>
 			<Modal
 				destroyOnClose
-				onCancel={(): void => onToggleModal(setDeleteModal)}
+				onCancel={onDeleteModelHandler}
 				open={deleteModal}
 				title="Delete"
 				height="10vh"
@@ -187,7 +195,7 @@ function WidgetGraphComponent({
 				footer={[]}
 				centered
 				open={modal}
-				onCancel={(): void => onToggleModal(setModal)}
+				onCancel={onToggleModelHandler}
 				width="85%"
 				destroyOnClose
 			>
@@ -198,6 +206,7 @@ function WidgetGraphComponent({
 						yAxisUnit={yAxisUnit}
 						graphsVisibility={graphsVisibilityStates}
 						graphVisibilityStateHandler={graphVisibilityStateHandler}
+						onToggleModelHandler={onToggleModelHandler}
 					/>
 				</FullViewContainer>
 			</Modal>

@@ -30,6 +30,7 @@ function GraphManager({
 	data,
 	graphVisibilityStateHandler,
 	name,
+	onToggleModelHandler,
 }: GraphManagerProps): JSX.Element {
 	const [graphVisibilityState, setGraphVisibilityState] = useState<boolean[]>(
 		Array(data.datasets.length).fill(true),
@@ -174,20 +175,26 @@ function GraphManager({
 		}
 	};
 
+	const dataSource = tableDataSet.filter((item) => item.show);
+
 	return (
 		<FilterTableAndSaveContainer>
 			<FilterTableContainer>
 				<Input onChange={filterHandler} placeholder="Filter Series" />
 				<ResizeTable
 					columns={columns}
-					dataSource={tableDataSet.filter((item) => item.show)}
+					dataSource={dataSource}
 					rowKey="index"
 					pagination={false}
 					scroll={{ y: 240 }}
 				/>
 			</FilterTableContainer>
 			<SaveContainer>
-				<Button className="save-container-button" type="default">
+				<Button
+					className="save-container-button"
+					type="default"
+					onClick={onToggleModelHandler}
+				>
 					Cancel
 				</Button>
 				<Button
