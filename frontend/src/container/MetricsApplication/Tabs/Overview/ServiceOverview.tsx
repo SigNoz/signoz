@@ -74,6 +74,7 @@ function ServiceOverview({
 						allowClone={false}
 						allowDelete={false}
 						allowEdit={false}
+						isQueryEnabled={topLevelOperationsRoute.length > 0}
 					/>
 				</GraphContainer>
 			</Card>
