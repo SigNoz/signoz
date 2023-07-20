@@ -3,7 +3,12 @@ export const legend = {
 };
 
 export const QUERYNAME_AND_EXPRESSION = ['A', 'B', 'C'];
-export const LETENCY_LEGENDS_AGGREGATEOPERATOR = ['p50', 'p90', 'p99'];
+export const LATENCY_AGGREGATEOPERATOR = ['p50', 'p90', 'p99'];
+export const LATENCY_AGGREGATEOPERATOR_SPAN_METRICS = [
+	'hist_quantile_50',
+	'hist_quantile_90',
+	'hist_quantile_99',
+];
 export const OPERATION_LEGENDS = ['Operations'];
 
 export enum FORMULA {
@@ -35,6 +40,7 @@ export enum MetricsType {
 }
 
 export enum WidgetKeys {
+	Name = 'name',
 	Address = 'address',
 	DurationNano = 'durationNano',
 	StatusCode = 'status_code',
@@ -50,4 +56,5 @@ export enum WidgetKeys {
 	SignozCallsTotal = 'signoz_calls_total',
 	SignozExternalCallLatencyCount = 'signoz_external_call_latency_count',
 	SignozExternalCallLatencySum = 'signoz_external_call_latency_sum',
+	Signoz_latency_bucket = 'signoz_latency_bucket',
 }
