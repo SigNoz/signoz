@@ -1,5 +1,5 @@
 import { Col } from 'antd';
-import FullView from 'container/GridGraphLayout/Graph/FullView/index.metricsBuilder';
+import Graph from 'container/GridGraphLayout/Graph/';
 import {
 	externalCallDuration,
 	externalCallDurationByAddress,
@@ -13,23 +13,24 @@ import {
 } from 'hooks/useResourceAttribute/utils';
 import { useMemo, useState } from 'react';
 import { useParams } from 'react-router-dom';
-import { Widgets } from 'types/api/dashboard/getAll';
 import { EQueryType } from 'types/common/dashboard';
 import { v4 as uuid } from 'uuid';
 
-import { Card, GraphContainer, GraphTitle, Row } from '../styles';
-import { legend } from './constant';
+import { GraphTitle, legend } from '../constant';
+import { getWidgetQueryBuilder } from '../MetricsApplication.factory';
+import { Card, GraphContainer, Row } from '../styles';
 import { Button } from './styles';
+import { IServiceName } from './types';
 import {
 	handleNonInQueryRange,
 	onGraphClickHandler,
 	onViewTracePopupClick,
 } from './util';
 
-function External({ getWidgetQueryBuilder }: ExternalProps): JSX.Element {
+function External(): JSX.Element {
 	const [selectedTimeStamp, setSelectedTimeStamp] = useState<number>(0);
 
-	const { servicename } = useParams<{ servicename?: string }>();
+	const { servicename } = useParams<IServiceName>();
 	const { queries } = useResourceAttribute();
 
 	const tagFilterItems = useMemo(
@@ -40,18 +41,21 @@ function External({ getWidgetQueryBuilder }: ExternalProps): JSX.Element {
 
 	const externalCallErrorWidget = useMemo(
 		() =>
-			getWidgetQueryBuilder({
-				queryType: EQueryType.QUERY_BUILDER,
-				promql: [],
-				builder: externalCallErrorPercent({
-					servicename,
-					legend: legend.address,
-					tagFilterItems,
-				}),
-				clickhouse_sql: [],
-				id: uuid(),
-			}),
-		[getWidgetQueryBuilder, servicename, tagFilterItems],
+			getWidgetQueryBuilder(
+				{
+					queryType: EQueryType.QUERY_BUILDER,
+					promql: [],
+					builder: externalCallErrorPercent({
+						servicename,
+						legend: legend.address,
+						tagFilterItems,
+					}),
+					clickhouse_sql: [],
+					id: uuid(),
+				},
+				GraphTitle.EXTERNAL_CALL_ERROR_PERCENTAGE,
+			),
+		[servicename, tagFilterItems],
 	);
 
 	const selectedTraceTags = useMemo(
@@ -61,49 +65,58 @@ function External({ getWidgetQueryBuilder }: ExternalProps): JSX.Element {
 
 	const externalCallDurationWidget = useMemo(
 		() =>
-			getWidgetQueryBuilder({
-				queryType: EQueryType.QUERY_BUILDER,
-				promql: [],
-				builder: externalCallDuration({
-					servicename,
-					tagFilterItems,
-				}),
-				clickhouse_sql: [],
-				id: uuid(),
-			}),
-		[getWidgetQueryBuilder, servicename, tagFilterItems],
+			getWidgetQueryBuilder(
+				{
+					queryType: EQueryType.QUERY_BUILDER,
+					promql: [],
+					builder: externalCallDuration({
+						servicename,
+						tagFilterItems,
+					}),
+					clickhouse_sql: [],
+					id: uuid(),
+				},
+				GraphTitle.EXTERNAL_CALL_DURATION,
+			),
+		[servicename, tagFilterItems],
 	);
 
 	const externalCallRPSWidget = useMemo(
 		() =>
-			getWidgetQueryBuilder({
-				queryType: EQueryType.QUERY_BUILDER,
-				promql: [],
-				builder: externalCallRpsByAddress({
-					servicename,
-					legend: legend.address,
-					tagFilterItems,
-				}),
-				clickhouse_sql: [],
-				id: uuid(),
-			}),
-		[getWidgetQueryBuilder, servicename, tagFilterItems],
+			getWidgetQueryBuilder(
+				{
+					queryType: EQueryType.QUERY_BUILDER,
+					promql: [],
+					builder: externalCallRpsByAddress({
+						servicename,
+						legend: legend.address,
+						tagFilterItems,
+					}),
+					clickhouse_sql: [],
+					id: uuid(),
+				},
+				GraphTitle.EXTERNAL_CALL_RPS_BY_ADDRESS,
+			),
+		[servicename, tagFilterItems],
 	);
 
 	const externalCallDurationAddressWidget = useMemo(
 		() =>
-			getWidgetQueryBuilder({
-				queryType: EQueryType.QUERY_BUILDER,
-				promql: [],
-				builder: externalCallDurationByAddress({
-					servicename,
-					legend: legend.address,
-					tagFilterItems,
-				}),
-				clickhouse_sql: [],
-				id: uuid(),
-			}),
-		[getWidgetQueryBuilder, servicename, tagFilterItems],
+			getWidgetQueryBuilder(
+				{
+					queryType: EQueryType.QUERY_BUILDER,
+					promql: [],
+					builder: externalCallDurationByAddress({
+						servicename,
+						legend: legend.address,
+						tagFilterItems,
+					}),
+					clickhouse_sql: [],
+					id: uuid(),
+				},
+				GraphTitle.EXTERNAL_CALL_DURATION_BY_ADDRESS,
+			),
+		[servicename, tagFilterItems],
 	);
 
 	return (
@@ -124,11 +137,9 @@ function External({ getWidgetQueryBuilder }: ExternalProps): JSX.Element {
 						View Traces
 					</Button>
 					<Card>
-						<GraphTitle>External Call Error Percentage</GraphTitle>
 						<GraphContainer>
-							<FullView
+							<Graph
 								name="external_call_error_percentage"
-								fullViewOptions={false}
 								widget={externalCallErrorWidget}
 								yAxisUnit="%"
 								onClickHandler={(ChartEvent, activeElements, chart, data): void => {
@@ -140,6 +151,9 @@ function External({ getWidgetQueryBuilder }: ExternalProps): JSX.Element {
 										'external_call_error_percentage',
 									);
 								}}
+								allowClone={false}
+								allowDelete={false}
+								allowEdit={false}
 							/>
 						</GraphContainer>
 					</Card>
@@ -161,11 +175,9 @@ function External({ getWidgetQueryBuilder }: ExternalProps): JSX.Element {
 					</Button>
 
 					<Card>
-						<GraphTitle>External Call duration</GraphTitle>
 						<GraphContainer>
-							<FullView
+							<Graph
 								name="external_call_duration"
-								fullViewOptions={false}
 								widget={externalCallDurationWidget}
 								yAxisUnit="ms"
 								onClickHandler={(ChartEvent, activeElements, chart, data): void => {
@@ -177,6 +189,9 @@ function External({ getWidgetQueryBuilder }: ExternalProps): JSX.Element {
 										'external_call_duration',
 									);
 								}}
+								allowClone={false}
+								allowDelete={false}
+								allowEdit={false}
 							/>
 						</GraphContainer>
 					</Card>
@@ -199,11 +214,9 @@ function External({ getWidgetQueryBuilder }: ExternalProps): JSX.Element {
 						View Traces
 					</Button>
 					<Card>
-						<GraphTitle>External Call RPS(by Address)</GraphTitle>
 						<GraphContainer>
-							<FullView
+							<Graph
 								name="external_call_rps_by_address"
-								fullViewOptions={false}
 								widget={externalCallRPSWidget}
 								yAxisUnit="reqps"
 								onClickHandler={(ChartEvent, activeElements, chart, data): void => {
@@ -215,6 +228,9 @@ function External({ getWidgetQueryBuilder }: ExternalProps): JSX.Element {
 										'external_call_rps_by_address',
 									);
 								}}
+								allowClone={false}
+								allowDelete={false}
+								allowEdit={false}
 							/>
 						</GraphContainer>
 					</Card>
@@ -236,11 +252,9 @@ function External({ getWidgetQueryBuilder }: ExternalProps): JSX.Element {
 					</Button>
 
 					<Card>
-						<GraphTitle>External Call duration(by Address)</GraphTitle>
 						<GraphContainer>
-							<FullView
+							<Graph
 								name="external_call_duration_by_address"
-								fullViewOptions={false}
 								widget={externalCallDurationAddressWidget}
 								yAxisUnit="ms"
 								onClickHandler={(ChartEvent, activeElements, chart, data): void => {
@@ -252,6 +266,9 @@ function External({ getWidgetQueryBuilder }: ExternalProps): JSX.Element {
 										'external_call_duration_by_address',
 									);
 								}}
+								allowClone={false}
+								allowDelete={false}
+								allowEdit={false}
 							/>
 						</GraphContainer>
 					</Card>
@@ -259,10 +276,6 @@ function External({ getWidgetQueryBuilder }: ExternalProps): JSX.Element {
 			</Row>
 		</>
 	);
-}
-
-interface ExternalProps {
-	getWidgetQueryBuilder: (query: Widgets['query']) => Widgets;
 }
 
 export default External;
