@@ -305,6 +305,12 @@ var StaticFieldsLogsV3 = map[string]v3.AttributeKey{
 	},
 }
 
+var LogsDataTypeDefaultValue = map[string]string{
+	"string":  "'#SIGNOZ_MAX'",
+	"int64":   "toInt64(9223372036854775807)",
+	"float64": "inf",
+}
+
 const SigNozOrderByValue = "#SIGNOZ_VALUE"
 
 const TIMESTAMP = "timestamp"

@@ -189,11 +189,35 @@ var timeSeriesFilterQueryData = []struct {
 		ExpectedFilter: " AND attributes_string_value[indexOf(attributes_string_key, 'host')] NOT ILIKE '%102.%' AND indexOf(attributes_string_key, 'host') > 0",
 	},
 	{
-		Name: "Test groupBy isColumn",
+		Name: "Test groupBy isColumn - string",
 		FilterSet: &v3.FilterSet{Operator: "AND", Items: []v3.FilterItem{
 			{Key: v3.AttributeKey{Key: "host", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag}, Value: "102.", Operator: "ncontains"},
 		}},
 		GroupBy:        []v3.AttributeKey{{Key: "host", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag, IsColumn: true}},
+		ExpectedFilter: " AND attributes_string_value[indexOf(attributes_string_key, 'host')] NOT ILIKE '%102.%' AND host != '#SIGNOZ_MAX'",
+	},
+	{
+		Name: "Test groupBy isColumn - int",
+		FilterSet: &v3.FilterSet{Operator: "AND", Items: []v3.FilterItem{
+			{Key: v3.AttributeKey{Key: "host", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag}, Value: "102.", Operator: "ncontains"},
+		}},
+		GroupBy:        []v3.AttributeKey{{Key: "status", DataType: v3.AttributeKeyDataTypeInt64, Type: v3.AttributeKeyTypeTag, IsColumn: true}},
+		ExpectedFilter: " AND attributes_string_value[indexOf(attributes_string_key, 'host')] NOT ILIKE '%102.%' AND status != toInt64(9223372036854775807)",
+	},
+	{
+		Name: "Test groupBy isColumn - float",
+		FilterSet: &v3.FilterSet{Operator: "AND", Items: []v3.FilterItem{
+			{Key: v3.AttributeKey{Key: "host", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag}, Value: "102.", Operator: "ncontains"},
+		}},
+		GroupBy:        []v3.AttributeKey{{Key: "duration", DataType: v3.AttributeKeyDataTypeFloat64, Type: v3.AttributeKeyTypeTag, IsColumn: true}},
+		ExpectedFilter: " AND attributes_string_value[indexOf(attributes_string_key, 'host')] NOT ILIKE '%102.%' AND duration != inf",
+	},
+	{
+		Name: "Test groupBy top level column - groupBy skipped",
+		FilterSet: &v3.FilterSet{Operator: "AND", Items: []v3.FilterItem{
+			{Key: v3.AttributeKey{Key: "host", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag}, Value: "102.", Operator: "ncontains"},
+		}},
+		GroupBy:        []v3.AttributeKey{{Key: "severity_number", DataType: v3.AttributeKeyDataTypeInt64, Type: v3.AttributeKeyTypeUnspecified, IsColumn: true}},
 		ExpectedFilter: " AND attributes_string_value[indexOf(attributes_string_key, 'host')] NOT ILIKE '%102.%'",
 	},
 	{

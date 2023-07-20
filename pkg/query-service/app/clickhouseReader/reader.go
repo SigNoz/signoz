@@ -3443,9 +3443,21 @@ func (r *ClickHouseReader) UpdateLogField(ctx context.Context, field *model.Upda
 	if field.Selected {
 		// if the type is attribute or resource, create the materialized column first
 		if field.Type == constants.Attributes || field.Type == constants.Resources {
-			// create materialized
-			query := fmt.Sprintf("ALTER TABLE %s.%s ON CLUSTER %s ADD COLUMN IF NOT EXISTS %s %s MATERIALIZED %s_%s_value[indexOf(%s_%s_key, '%s')] CODEC(LZ4)", r.logsDB, r.logsLocalTable, cluster, field.Name, field.DataType, field.Type, strings.ToLower(field.DataType), field.Type, strings.ToLower(field.DataType), field.Name)
+			defaultValue := ""
+			if value, ok := constants.LogsDataTypeDefaultValue[strings.ToLower(field.DataType)]; ok {
+				defaultValue = value
+			} else {
+				return &model.ApiError{Err: errors.New("dataType not correct"), Typ: model.ErrorBadData}
+			}
 
+			// create materialized
+			query := fmt.Sprintf("ALTER TABLE %s.%s ON CLUSTER %s ADD COLUMN IF NOT EXISTS %s %s MATERIALIZED "+
+				"if(indexOf(%s_%s_key, '%s') !=0, %s_%s_value[indexOf(%s_%s_key, '%s')], %s) CODEC(LZ4)",
+				r.logsDB, r.logsLocalTable, cluster, field.Name, field.DataType,
+				field.Type, strings.ToLower(field.DataType), field.Name,
+				field.Type, strings.ToLower(field.DataType),
+				field.Type, strings.ToLower(field.DataType), field.Name,
+				defaultValue)
 			err := r.db.Exec(ctx, query)
 			if err != nil {
 				return &model.ApiError{Err: err, Typ: model.ErrorInternal}

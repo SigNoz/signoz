@@ -146,7 +146,22 @@ func buildLogsTimeSeriesFilterQuery(fs *v3.FilterSet, groupBy []v3.AttributeKey)
 
 	// add group by conditions to filter out log lines which doesn't have the key
 	for _, attr := range groupBy {
-		if !attr.IsColumn {
+		if attr.IsColumn {
+			var defaultValue string
+			// if it is a static field get the corresonding default data type.
+			if _, ok := constants.StaticFieldsLogsV3[attr.Key]; ok {
+				// skip for top level static fields as the protocol handles them.
+				// i.e severity_number 0 means it is unspecified
+				// i.e trace_flags 0 means it is unspecified
+				continue
+			} else if val, ok := constants.LogsDataTypeDefaultValue[string(attr.DataType)]; ok {
+				defaultValue = val
+			} else {
+				return "", fmt.Errorf("data type not valid: %s", attr.DataType)
+			}
+			filter := fmt.Sprintf("%s != %s", attr.Key, defaultValue)
+			conditions = append(conditions, filter)
+		} else {
 			columnType := getClickhouseLogsColumnType(attr.Type)
 			columnDataType := getClickhouseLogsColumnDataType(attr.DataType)
 			conditions = append(conditions, fmt.Sprintf("indexOf(%s_%s_key, '%s') > 0", columnType, columnDataType, attr.Key))
