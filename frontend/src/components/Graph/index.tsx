@@ -288,11 +288,10 @@ function Graph({
 			if (chartHasData) {
 				chartPlugins.push(createIntersectionCursorPlugin());
 				chartPlugins.push(createDragSelectPlugin());
+				chartPlugins.push(legend(name, data.datasets.length > 3));
 			} else {
 				chartPlugins.push(emptyGraph);
 			}
-
-			chartPlugins.push(legend(name, data.datasets.length > 3));
 
 			lineChartRef.current = new Chart(chartRef.current, {
 				type,

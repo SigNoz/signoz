@@ -1,21 +1,25 @@
 import { ColumnTypeRender } from 'components/Logs/TableView/types';
 import { useTableView } from 'components/Logs/TableView/useTableView';
-import { cloneElement, ReactElement, ReactNode, useCallback } from 'react';
+import { LOCALSTORAGE } from 'constants/localStorage';
+import useDragColumns from 'hooks/useDragColumns';
+import { getDraggedColumns } from 'hooks/useDragColumns/utils';
+import {
+	cloneElement,
+	ReactElement,
+	ReactNode,
+	useCallback,
+	useMemo,
+} from 'react';
 import { TableComponents, TableVirtuoso } from 'react-virtuoso';
 
 import { infinityDefaultStyles } from './config';
+import { LogsCustomTable } from './LogsCustomTable';
 import {
 	TableCellStyled,
 	TableHeaderCellStyled,
 	TableRowStyled,
-	TableStyled,
 } from './styles';
 import { InfinityTableProps } from './types';
-
-// eslint-disable-next-line react/function-component-definition
-const CustomTable: TableComponents['Table'] = ({ style, children }) => (
-	<TableStyled style={style}>{children}</TableStyled>
-);
 
 // eslint-disable-next-line react/function-component-definition
 const CustomTableRow: TableComponents['TableRow'] = ({
@@ -31,11 +35,25 @@ function InfinityTable({
 }: InfinityTableProps): JSX.Element | null {
 	const { onEndReached } = infitiyTableProps;
 	const { dataSource, columns } = useTableView(tableViewProps);
+	const { draggedColumns, onDragColumns } = useDragColumns<
+		Record<string, unknown>
+	>(LOCALSTORAGE.LOGS_LIST_COLUMNS);
+
+	const tableColumns = useMemo(
+		() => getDraggedColumns<Record<string, unknown>>(columns, draggedColumns),
+		[columns, draggedColumns],
+	);
+
+	const handleDragEnd = useCallback(
+		(fromIndex: number, toIndex: number) =>
+			onDragColumns(tableColumns, fromIndex, toIndex),
+		[tableColumns, onDragColumns],
+	);
 
 	const itemContent = useCallback(
 		(index: number, log: Record<string, unknown>): JSX.Element => (
 			<>
-				{columns.map((column) => {
+				{tableColumns.map((column) => {
 					if (!column.render) return <td>Empty</td>;
 
 					const element: ColumnTypeRender<Record<string, unknown>> = column.render(
@@ -60,20 +78,29 @@ function InfinityTable({
 				})}
 			</>
 		),
-		[columns],
+		[tableColumns],
 	);
 
 	const tableHeader = useCallback(
 		() => (
 			<tr>
-				{columns.map((column) => (
-					<TableHeaderCellStyled key={column.key}>
-						{column.title as string}
-					</TableHeaderCellStyled>
-				))}
+				{tableColumns.map((column) => {
+					const isDragColumn = column.key !== 'expand';
+
+					return (
+						<TableHeaderCellStyled
+							isDragColumn={isDragColumn}
+							key={column.key}
+							// eslint-disable-next-line react/jsx-props-no-spreading
+							{...(isDragColumn && { className: 'dragHandler' })}
+						>
+							{column.title as string}
+						</TableHeaderCellStyled>
+					);
+				})}
 			</tr>
 		),
-		[columns],
+		[tableColumns],
 	);
 
 	return (
@@ -81,7 +108,8 @@ function InfinityTable({
 			style={infinityDefaultStyles}
 			data={dataSource}
 			components={{
-				Table: CustomTable,
+				// eslint-disable-next-line react/jsx-props-no-spreading
+				Table: LogsCustomTable({ handleDragEnd }),
 				// TODO: fix it in the future
 				// eslint-disable-next-line @typescript-eslint/ban-ts-comment
 				// @ts-ignore
