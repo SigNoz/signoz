@@ -19,7 +19,7 @@ export const useGetExplorerQueryRange = (
 	options?: UseQueryOptions<SuccessResponse<MetricRangePayloadProps>, Error>,
 ): UseQueryResult<SuccessResponse<MetricRangePayloadProps>, Error> => {
 	const { isEnabledQuery } = useQueryBuilder();
-	const { selectedTime: globalSelectedInterval } = useSelector<
+	const { selectedTime: globalSelectedInterval, minTime, maxTime } = useSelector<
 		AppState,
 		GlobalReducer
 	>((state) => state.globalTime);
@@ -51,7 +51,7 @@ export const useGetExplorerQueryRange = (
 		{
 			...options,
 			retry: false,
-			queryKey: [key, globalSelectedInterval, requestData],
+			queryKey: [key, globalSelectedInterval, requestData, minTime, maxTime],
 			enabled: isEnabled,
 		},
 	);

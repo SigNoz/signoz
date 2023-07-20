@@ -3,6 +3,7 @@ import { Card, Typography } from 'antd';
 import ListLogView from 'components/Logs/ListLogView';
 import RawLogView from 'components/Logs/RawLogView';
 import Spinner from 'components/Spinner';
+import { LOCALSTORAGE } from 'constants/localStorage';
 import ExplorerControlPanel from 'container/ExplorerControlPanel';
 import { Heading } from 'container/LogsTable/styles';
 import { useOptionsMenu } from 'container/OptionsMenu';
@@ -31,10 +32,12 @@ function LogsExplorerList({
 	onOpenDetailedView,
 	onEndReached,
 	onExpand,
+	onAddToQuery,
 }: LogsExplorerListProps): JSX.Element {
 	const { initialDataSource } = useQueryBuilder();
 
 	const { options, config } = useOptionsMenu({
+		storageKey: LOCALSTORAGE.LOGS_LIST_OPTIONS,
 		dataSource: initialDataSource || DataSource.METRICS,
 		aggregateOperator:
 			currentStagedQueryData?.aggregateOperator || StringOperators.NOOP,
@@ -77,6 +80,7 @@ function LogsExplorerList({
 					logData={log}
 					selectedFields={selectedFields}
 					onOpenDetailedView={onOpenDetailedView}
+					onAddToQuery={onAddToQuery}
 				/>
 			);
 		},
@@ -85,6 +89,7 @@ function LogsExplorerList({
 			options.maxLines,
 			selectedFields,
 			onOpenDetailedView,
+			onAddToQuery,
 			onExpand,
 		],
 	);
@@ -141,12 +146,17 @@ function LogsExplorerList({
 				isShowPageSize={false}
 				optionsMenuConfig={config}
 			/>
+
 			{options.format !== 'table' && (
 				<Heading>
 					<Typography.Text>Event</Typography.Text>
 				</Heading>
 			)}
-			{logs.length === 0 && <Typography>No logs lines found</Typography>}
+
+			{!isLoading && logs.length === 0 && (
+				<Typography>No logs lines found</Typography>
+			)}
+
 			<InfinityWrapperStyled>{renderContent}</InfinityWrapperStyled>
 		</>
 	);

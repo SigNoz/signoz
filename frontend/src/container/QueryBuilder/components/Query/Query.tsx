@@ -35,7 +35,8 @@ export const Query = memo(function Query({
 	isAvailableToDisable,
 	queryVariant,
 	query,
-	inactiveFilters,
+	filterConfigs,
+	queryComponents,
 }: QueryProps): JSX.Element {
 	const { panelType } = useQueryBuilder();
 	const {
@@ -48,7 +49,7 @@ export const Query = memo(function Query({
 		handleChangeQueryData,
 		handleChangeOperator,
 		handleDeleteQuery,
-	} = useQueryOperations({ index, query, inactiveFilters });
+	} = useQueryOperations({ index, query, filterConfigs });
 
 	const handleChangeAggregateEvery = useCallback(
 		(value: IBuilderQuery['stepInterval']) => {
@@ -110,9 +111,20 @@ export const Query = memo(function Query({
 		[handleChangeQueryData],
 	);
 
+	const renderOrderByFilter = useCallback((): ReactNode => {
+		if (queryComponents?.renderOrderBy) {
+			return queryComponents.renderOrderBy({
+				query,
+				onChange: handleChangeOrderByKeys,
+			});
+		}
+
+		return <OrderByFilter query={query} onChange={handleChangeOrderByKeys} />;
+	}, [queryComponents, query, handleChangeOrderByKeys]);
+
 	const renderAggregateEveryFilter = useCallback(
 		(): JSX.Element | null =>
-			!inactiveFilters?.stepInterval ? (
+			!filterConfigs?.stepInterval?.isHidden ? (
 				<Row gutter={[11, 5]}>
 					<Col flex="5.93rem">
 						<FilterLabel label="Aggregate Every" />
@@ -120,12 +132,18 @@ export const Query = memo(function Query({
 					<Col flex="1 1 6rem">
 						<AggregateEveryFilter
 							query={query}
+							disabled={filterConfigs?.stepInterval?.isDisabled || false}
 							onChange={handleChangeAggregateEvery}
 						/>
 					</Col>
 				</Row>
 			) : null,
-		[inactiveFilters?.stepInterval, query, handleChangeAggregateEvery],
+		[
+			filterConfigs?.stepInterval?.isHidden,
+			filterConfigs?.stepInterval?.isDisabled,
+			query,
+			handleChangeAggregateEvery,
+		],
 	);
 
 	const renderAdditionalFilters = useCallback((): ReactNode => {
@@ -161,9 +179,7 @@ export const Query = memo(function Query({
 									<Col flex="5.93rem">
 										<FilterLabel label="Order by" />
 									</Col>
-									<Col flex="1 1 12.5rem">
-										<OrderByFilter query={query} onChange={handleChangeOrderByKeys} />
-									</Col>
+									<Col flex="1 1 12.5rem">{renderOrderByFilter()}</Col>
 								</Row>
 							</Col>
 						)}
@@ -219,9 +235,7 @@ export const Query = memo(function Query({
 								<Col flex="5.93rem">
 									<FilterLabel label="Order by" />
 								</Col>
-								<Col flex="1 1 12.5rem">
-									<OrderByFilter query={query} onChange={handleChangeOrderByKeys} />
-								</Col>
+								<Col flex="1 1 12.5rem">{renderOrderByFilter()}</Col>
 							</Row>
 						</Col>
 
@@ -232,11 +246,11 @@ export const Query = memo(function Query({
 		}
 	}, [
 		panelType,
-		query,
 		isMetricsDataSource,
-		handleChangeHavingFilter,
+		query,
 		handleChangeLimit,
-		handleChangeOrderByKeys,
+		handleChangeHavingFilter,
+		renderOrderByFilter,
 		renderAggregateEveryFilter,
 	]);
 

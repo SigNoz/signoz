@@ -1,26 +1,41 @@
 import { Drawer, Tabs } from 'antd';
 import JSONView from 'container/LogDetailedView/JsonView';
 import TableView from 'container/LogDetailedView/TableView';
+import { useMemo } from 'react';
 
 import { LogDetailProps } from './LogDetail.interfaces';
 
-function LogDetail({ log, onClose }: LogDetailProps): JSX.Element {
+function LogDetail({
+	log,
+	onClose,
+	onAddToQuery,
+	onClickActionItem,
+}: LogDetailProps): JSX.Element {
 	const onDrawerClose = (): void => {
 		onClose();
 	};
 
-	const items = [
-		{
-			label: 'Table',
-			key: '1',
-			children: log && <TableView logData={log} />,
-		},
-		{
-			label: 'JSON',
-			key: '2',
-			children: log && <JSONView logData={log} />,
-		},
-	];
+	const items = useMemo(
+		() => [
+			{
+				label: 'Table',
+				key: '1',
+				children: log && (
+					<TableView
+						logData={log}
+						onAddToQuery={onAddToQuery}
+						onClickActionItem={onClickActionItem}
+					/>
+				),
+			},
+			{
+				label: 'JSON',
+				key: '2',
+				children: log && <JSONView logData={log} />,
+			},
+		],
+		[log, onAddToQuery, onClickActionItem],
+	);
 
 	return (
 		<Drawer
