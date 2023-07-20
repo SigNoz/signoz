@@ -104,6 +104,7 @@ export const externalCallErrorPercent = ({
 			MetricAggregateOperator.SUM,
 			MetricAggregateOperator.SUM,
 		],
+		dataSource: DataSource.METRICS,
 	});
 };
 
@@ -163,6 +164,7 @@ export const externalCallDuration = ({
 			MetricAggregateOperator.SUM,
 			MetricAggregateOperator.SUM,
 		],
+		dataSource: DataSource.METRICS,
 	});
 };
 
@@ -263,6 +265,7 @@ export const externalCallDurationByAddress = ({
 			MetricAggregateOperator.SUM_RATE,
 			MetricAggregateOperator.SUM_RATE,
 		],
+		dataSource: DataSource.METRICS,
 	});
 };
 

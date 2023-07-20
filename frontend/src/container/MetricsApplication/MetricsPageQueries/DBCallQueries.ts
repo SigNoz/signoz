@@ -112,6 +112,7 @@ export const databaseCallsAvgDuration = ({
 			MetricAggregateOperator.SUM,
 			MetricAggregateOperator.SUM,
 		],
+		dataSource: DataSource.METRICS,
 	});
 };
 

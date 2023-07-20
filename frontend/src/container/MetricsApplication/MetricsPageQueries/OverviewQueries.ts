@@ -235,6 +235,7 @@ export const errorPercentage = ({
 			MetricAggregateOperator.SUM_RATE,
 			MetricAggregateOperator.SUM_RATE,
 		],
+		dataSource: DataSource.METRICS,
 	});
 
 	console.log('a', a);

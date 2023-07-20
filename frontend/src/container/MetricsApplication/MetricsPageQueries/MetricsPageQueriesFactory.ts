@@ -70,6 +70,7 @@ export const getQueryBuilderQuerieswithFormula = ({
 	expression,
 	legendFormula,
 	aggregateOperators,
+	dataSource,
 }: BuilderQuerieswithFormulaProps): QueryBuilderData => ({
 	queryFormulas: [
 		{
@@ -97,6 +98,7 @@ export const getQueryBuilderQuerieswithFormula = ({
 			inputFormat: 'ns',
 			start: store.getState().globalTime.minTime,
 		}),
+		dataSource,
 	})),
 });
 
@@ -119,4 +121,5 @@ interface BuilderQuerieswithFormulaProps {
 	legendFormula: string;
 	additionalItems: TagFilterItem[][];
 	aggregateOperators: MetricAggregateOperator[];
+	dataSource: DataSource;
 }
