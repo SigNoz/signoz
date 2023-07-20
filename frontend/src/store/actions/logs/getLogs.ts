@@ -1,7 +1,12 @@
 import GetLogs from 'api/logs/GetLogs';
 import { Dispatch } from 'redux';
+import store from 'store/index';
 import AppActions from 'types/actions';
-import { SET_LOADING, SET_LOGS } from 'types/actions/logs';
+import {
+	SET_IS_INITIAL_LOG_QUERY,
+	SET_LOADING,
+	SET_LOGS,
+} from 'types/actions/logs';
 import { Props } from 'types/api/logs/getLogs';
 
 export const getLogs = (
@@ -9,10 +14,12 @@ export const getLogs = (
 ): ((dispatch: Dispatch<AppActions>) => void) => async (
 	dispatch,
 ): Promise<void> => {
-	dispatch({
-		type: SET_LOADING,
-		payload: true,
-	});
+	if (store.getState().logs.isInitialLogQuery) {
+		dispatch({
+			type: SET_LOADING,
+			payload: true,
+		});
+	}
 
 	const response = await GetLogs(props);
 
@@ -29,6 +36,11 @@ export const getLogs = (
 
 	dispatch({
 		type: SET_LOADING,
+		payload: false,
+	});
+
+	dispatch({
+		type: SET_IS_INITIAL_LOG_QUERY,
 		payload: false,
 	});
 };

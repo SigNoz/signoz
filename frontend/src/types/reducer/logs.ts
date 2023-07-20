@@ -22,6 +22,8 @@ export interface ILogsReducer {
 	isLoading: boolean;
 	isLoadingAggregate: boolean;
 	logsAggregate: ILogsAggregate[];
+	isInitialLogQuery: boolean;
+	isInitialLogAggregateQuery: boolean;
 	selectedLogId: string | null;
 	detailedLog: null | ILog;
 	liveTail: TLogsLiveTailState;

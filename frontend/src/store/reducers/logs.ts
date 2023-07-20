@@ -11,6 +11,8 @@ import {
 	RESET_ID_START_AND_END,
 	SET_DETAILED_LOG_DATA,
 	SET_FIELDS,
+	SET_IS_INITIAL_LOG_AGGREGATE_QUERY,
+	SET_IS_INITIAL_LOG_QUERY,
 	SET_LINES_PER_ROW,
 	SET_LIVE_TAIL_START_TIME,
 	SET_LOADING,
@@ -55,6 +57,8 @@ const initialState: ILogsReducer = {
 		(new URLSearchParams(window.location.search).get(
 			'order',
 		) as ILogsReducer['order']) ?? OrderPreferenceItems.DESC,
+	isInitialLogQuery: true,
+	isInitialLogAggregateQuery: true,
 };
 
 export const LogsReducer = (
@@ -257,6 +261,20 @@ export const LogsReducer = (
 					...state.fields,
 					selected: action.payload.field,
 				},
+			};
+		}
+
+		case SET_IS_INITIAL_LOG_QUERY: {
+			return {
+				...state,
+				isInitialLogQuery: action.payload,
+			};
+		}
+
+		case SET_IS_INITIAL_LOG_AGGREGATE_QUERY: {
+			return {
+				...state,
+				isInitialLogAggregateQuery: action.payload,
 			};
 		}
 
