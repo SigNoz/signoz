@@ -25,7 +25,10 @@ function ServiceOverview({
 	topLevelOperationsRoute,
 }: ServiceOverviewProps): JSX.Element {
 	const { servicename } = useParams<IServiceName>();
-	const SpanMetricFlg = useFeatureFlag(FeatureKeys.USE_SPAN_METRICS);
+
+	const isSpanMetricEnable = useFeatureFlag(FeatureKeys.USE_SPAN_METRICS)
+		?.active;
+
 	const latencyWidget = useMemo(
 		() =>
 			getWidgetQueryBuilder(
@@ -35,7 +38,7 @@ function ServiceOverview({
 					builder: latency({
 						servicename,
 						tagFilterItems,
-						isSpanMetricEnable: SpanMetricFlg?.active,
+						isSpanMetricEnable,
 						topLevelOperationsRoute,
 					}),
 					clickhouse_sql: [],
@@ -43,7 +46,7 @@ function ServiceOverview({
 				},
 				GraphTitle.LATENCY,
 			),
-		[servicename, tagFilterItems, SpanMetricFlg, topLevelOperationsRoute],
+		[servicename, tagFilterItems, isSpanMetricEnable, topLevelOperationsRoute],
 	);
 
 	return (
