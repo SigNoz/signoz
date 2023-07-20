@@ -17,6 +17,7 @@ export const useGetExplorerQueryRange = (
 	requestData: Query | null,
 	panelType: GRAPH_TYPES | null,
 	options?: UseQueryOptions<SuccessResponse<MetricRangePayloadProps>, Error>,
+	params?: Record<string, unknown>,
 ): UseQueryResult<SuccessResponse<MetricRangePayloadProps>, Error> => {
 	const { isEnabledQuery } = useQueryBuilder();
 	const { selectedTime: globalSelectedInterval, minTime, maxTime } = useSelector<
@@ -47,6 +48,7 @@ export const useGetExplorerQueryRange = (
 			selectedTime: 'GLOBAL_TIME',
 			globalSelectedInterval,
 			query: requestData || initialQueriesMap.metrics,
+			params,
 		},
 		{
 			...options,

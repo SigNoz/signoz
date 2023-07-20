@@ -1,8 +1,9 @@
 import { blue } from '@ant-design/colors';
-import { Col, Row } from 'antd';
+import { Button, Col, Row } from 'antd';
 import styled from 'styled-components';
 
 export const RawLogViewContainer = styled(Row)<{ $isDarkMode: boolean }>`
+	position: relative;
 	width: 100%;
 	font-weight: 700;
 	font-size: 0.625rem;
@@ -42,5 +43,13 @@ export const RawLogContent = styled.div<RawLogContentProps>`
 	font-size: 1rem;
 	line-height: 2rem;
 
+	cursor: pointer;
+`;
+
+export const CopyButton = styled(Button)`
+	position: absolute;
+	transform: translate(-50%, -50%);
+	top: 50%;
+	right: 0;
 	cursor: pointer;
 `;

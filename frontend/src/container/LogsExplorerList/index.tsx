@@ -10,12 +10,16 @@ import { useOptionsMenu } from 'container/OptionsMenu';
 import { contentStyle } from 'container/Trace/Search/config';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import useFontFaceObserver from 'hooks/useFontObserver';
-import { memo, useCallback, useMemo } from 'react';
-import { Virtuoso } from 'react-virtuoso';
+import { useNotifications } from 'hooks/useNotifications';
+import useUrlQueryData from 'hooks/useUrlQueryData';
+import { memo, useCallback, useEffect, useMemo, useRef } from 'react';
+import { useCopyToClipboard } from 'react-use';
+import { Virtuoso, VirtuosoHandle } from 'react-virtuoso';
 // interfaces
 import { ILog } from 'types/api/logs/log';
 import { DataSource, StringOperators } from 'types/common/queryBuilder';
 
+import { LogLinkQueryParams } from './constants';
 import InfinityTableView from './InfinityTableView';
 import { LogsExplorerListProps } from './LogsExplorerList.interfaces';
 import { InfinityWrapperStyled } from './styles';
@@ -28,13 +32,27 @@ function Footer(): JSX.Element {
 function LogsExplorerList({
 	isLoading,
 	currentStagedQueryData,
+	copiedTimeRange,
 	logs,
 	onOpenDetailedView,
 	onEndReached,
 	onExpand,
 	onAddToQuery,
 }: LogsExplorerListProps): JSX.Element {
+	const ref = useRef<VirtuosoHandle>(null);
+
+	const { queryData: activeLogId } = useUrlQueryData(
+		LogLinkQueryParams.activeLogId,
+		null,
+	);
+	const activeLogIndex = useMemo(
+		() => logs.findIndex(({ id }) => id === activeLogId),
+		[logs, activeLogId],
+	);
+
 	const { initialDataSource } = useQueryBuilder();
+	const [, setCopy] = useCopyToClipboard();
+	const { notifications } = useNotifications();
 
 	const { options, config } = useOptionsMenu({
 		storageKey: LOCALSTORAGE.LOGS_LIST_OPTIONS,
@@ -61,6 +79,28 @@ function LogsExplorerList({
 		[options],
 	);
 
+	const handleCopyLogLink = useCallback(
+		(id: string) => {
+			const timeRange = JSON.stringify(copiedTimeRange);
+			const params = new URLSearchParams(window.location.search);
+
+			params.delete(LogLinkQueryParams.activeLogId);
+			params.delete(LogLinkQueryParams.timeRange);
+			params.set(LogLinkQueryParams.activeLogId, `"${id}"`);
+			params.set(LogLinkQueryParams.timeRange, timeRange);
+
+			const link = `${window.location.origin}${
+				window.location.pathname
+			}?${params.toString()}`;
+
+			setCopy(link);
+			notifications.success({
+				message: 'Copied to clipboard',
+			});
+		},
+		[notifications, copiedTimeRange, setCopy],
+	);
+
 	const getItemContent = useCallback(
 		(_: number, log: ILog): JSX.Element => {
 			if (options.format === 'raw') {
@@ -70,6 +110,7 @@ function LogsExplorerList({
 						data={log}
 						linesPerRow={options.maxLines}
 						onClickExpand={onExpand}
+						onCopyLogLink={handleCopyLogLink}
 					/>
 				);
 			}
@@ -81,6 +122,7 @@ function LogsExplorerList({
 					selectedFields={selectedFields}
 					onOpenDetailedView={onOpenDetailedView}
 					onAddToQuery={onAddToQuery}
+					onCopyLogLink={handleCopyLogLink}
 				/>
 			);
 		},
@@ -91,8 +133,19 @@ function LogsExplorerList({
 			onOpenDetailedView,
 			onAddToQuery,
 			onExpand,
+			handleCopyLogLink,
 		],
 	);
+
+	useEffect(() => {
+		if (!activeLogId || activeLogIndex < 0) return;
+
+		ref?.current?.scrollToIndex({
+			index: activeLogIndex,
+			align: 'start',
+			behavior: 'smooth',
+		});
+	}, [activeLogId, activeLogIndex]);
 
 	const renderContent = useMemo(() => {
 		const components = isLoading
@@ -104,11 +157,13 @@ function LogsExplorerList({
 		if (options.format === 'table') {
 			return (
 				<InfinityTableView
+					ref={ref}
 					tableViewProps={{
 						logs,
 						fields: selectedFields,
 						linesPerRow: options.maxLines,
 						onClickExpand: onExpand,
+						onCopyLogLink: handleCopyLogLink,
 						appendTo: 'end',
 					}}
 					infitiyTableProps={{ onEndReached }}
@@ -119,6 +174,7 @@ function LogsExplorerList({
 		return (
 			<Card style={{ width: '100%' }} bodyStyle={{ ...contentStyle }}>
 				<Virtuoso
+					ref={ref}
 					useWindowScroll
 					data={logs}
 					endReached={onEndReached}
@@ -137,6 +193,7 @@ function LogsExplorerList({
 		getItemContent,
 		selectedFields,
 		onExpand,
+		handleCopyLogLink,
 	]);
 
 	return (

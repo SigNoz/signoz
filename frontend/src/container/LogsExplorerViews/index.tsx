@@ -15,6 +15,8 @@ import ExportPanel from 'container/ExportPanel';
 import GoToTop from 'container/GoToTop';
 import LogsExplorerChart from 'container/LogsExplorerChart';
 import LogsExplorerList from 'container/LogsExplorerList';
+import { LogLinkQueryParams } from 'container/LogsExplorerList/constants';
+import { CopiedTimeRange } from 'container/LogsExplorerList/LogsExplorerList.interfaces';
 import LogsExplorerTable from 'container/LogsExplorerTable';
 import { GRAPH_TYPES } from 'container/NewDashboard/ComponentsSlider';
 import TimeSeriesView from 'container/TimeSeriesView/TimeSeriesView';
@@ -48,6 +50,7 @@ import { DataSource, StringOperators } from 'types/common/queryBuilder';
 import { GlobalReducer } from 'types/reducer/globalTime';
 import { v4 as uuid } from 'uuid';
 
+import { initialTimeRange } from './configs';
 import { ActionsWrapper, TabsStyled } from './LogsExplorerViews.styled';
 
 function LogsExplorerViews(): JSX.Element {
@@ -59,6 +62,11 @@ function LogsExplorerViews(): JSX.Element {
 	const { queryData: pageSize } = useUrlQueryData(
 		queryParamNamesMap.pageSize,
 		DEFAULT_PER_PAGE_VALUE,
+	);
+
+	const { queryData: timeRange } = useUrlQueryData<CopiedTimeRange | null>(
+		LogLinkQueryParams.timeRange,
+		null,
 	);
 
 	const { minTime } = useSelector<AppState, GlobalReducer>(
@@ -81,6 +89,9 @@ function LogsExplorerViews(): JSX.Element {
 	const [page, setPage] = useState<number>(1);
 	const [logs, setLogs] = useState<ILog[]>([]);
 	const [requestData, setRequestData] = useState<Query | null>(null);
+	const [copiedTimeRange, setCopiedTimeRange] = useState<CopiedTimeRange>(
+		initialTimeRange,
+	);
 
 	const handleAxisError = useAxiosError();
 
@@ -165,7 +176,26 @@ function LogsExplorerViews(): JSX.Element {
 			keepPreviousData: true,
 			enabled: !isLimit,
 		},
+		{
+			...(timeRange &&
+				!logs.length && {
+					start: timeRange.start,
+					end: timeRange.end,
+				}),
+		},
 	);
+
+	useEffect(() => {
+		const params = data?.params as Omit<CopiedTimeRange, 'timeRange'>;
+
+		if (!params || logs.length <= 0) return;
+
+		setCopiedTimeRange((prevData) => ({
+			start: params.start,
+			end: prevData.end || params.end,
+			pageSize: logs.length,
+		}));
+	}, [logs.length, data?.params]);
 
 	const handleSetActiveLog = useCallback((nextActiveLog: ILog) => {
 		setActiveLog(nextActiveLog);
@@ -399,14 +429,14 @@ function LogsExplorerViews(): JSX.Element {
 			const newRequestData = getRequestData(stagedQuery, {
 				page: 1,
 				log: null,
-				pageSize,
+				pageSize: timeRange?.pageSize || pageSize,
 			});
 			setLogs([]);
 			setPage(1);
 			setRequestData(newRequestData);
 			currentMinTimeRef.current = minTime;
 		}
-	}, [stagedQuery, requestData, getRequestData, pageSize, minTime]);
+	}, [stagedQuery, requestData, getRequestData, pageSize, minTime, timeRange]);
 
 	const tabsItems: TabsProps['items'] = useMemo(
 		() => [
@@ -429,6 +459,7 @@ function LogsExplorerViews(): JSX.Element {
 						onEndReached={handleEndReached}
 						onExpand={handleSetActiveLog}
 						onAddToQuery={handleAddToQuery}
+						copiedTimeRange={copiedTimeRange}
 					/>
 				),
 			},
@@ -455,6 +486,7 @@ function LogsExplorerViews(): JSX.Element {
 			isGroupByExist,
 			isFetching,
 			currentStagedQueryData,
+			copiedTimeRange,
 			logs,
 			handleSetActiveLog,
 			handleEndReached,

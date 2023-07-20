@@ -1,5 +1,5 @@
 import { blue, grey, orange } from '@ant-design/colors';
-import { CopyFilled, ExpandAltOutlined } from '@ant-design/icons';
+import { CopyFilled, ExpandAltOutlined, LinkOutlined } from '@ant-design/icons';
 import Convert from 'ansi-to-html';
 import { Button, Divider, Row, Typography } from 'antd';
 import dayjs from 'dayjs';
@@ -86,6 +86,7 @@ function LogSelectedField({
 type ListLogViewProps = {
 	logData: ILog;
 	onOpenDetailedView: (log: ILog) => void;
+	onCopyLogLink?: (id: string) => void;
 	selectedFields: IField[];
 } & Pick<AddToQueryHOCProps, 'onAddToQuery'>;
 
@@ -93,6 +94,7 @@ function ListLogView({
 	logData,
 	selectedFields,
 	onOpenDetailedView,
+	onCopyLogLink,
 	onAddToQuery,
 }: ListLogViewProps): JSX.Element {
 	const flattenLogData = useMemo(() => FlatLogData(logData), [logData]);
@@ -110,6 +112,12 @@ function ListLogView({
 			message: 'Copied to clipboard',
 		});
 	};
+
+	const handleCopyLink = useCallback((): void => {
+		if (!onCopyLogLink) return;
+
+		onCopyLogLink(logData.id);
+	}, [logData.id, onCopyLogLink]);
 
 	const updatedSelecedFields = useMemo(
 		() => selectedFields.filter((e) => e.name !== 'id'),
@@ -169,9 +177,24 @@ function ListLogView({
 				>
 					Copy JSON
 				</Button>
+				{onCopyLogLink && (
+					<Button
+						size="small"
+						type="text"
+						onClick={handleCopyLink}
+						style={{ color: grey[1] }}
+						icon={<LinkOutlined />}
+					>
+						Copy Link
+					</Button>
+				)}
 			</Row>
 		</Container>
 	);
 }
+
+ListLogView.defaultProps = {
+	onCopyLogLink: undefined,
+};
 
 export default ListLogView;

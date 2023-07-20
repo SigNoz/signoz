@@ -1,11 +1,11 @@
-import { ExpandAltOutlined } from '@ant-design/icons';
+import { ExpandAltOutlined, LinkOutlined } from '@ant-design/icons';
 import Convert from 'ansi-to-html';
-import { Typography } from 'antd';
+import { Button, Typography } from 'antd';
 import { ColumnsType } from 'antd/es/table';
 import dayjs from 'dayjs';
 import dompurify from 'dompurify';
 import { FlatLogData } from 'lib/logs/flatLogData';
-import { useMemo } from 'react';
+import { useCallback, useMemo } from 'react';
 import { ILog } from 'types/api/logs/log';
 
 import { ExpandIconWrapper } from '../RawLogView/styles';
@@ -25,12 +25,22 @@ export const useTableView = (props: UseTableViewProps): UseTableViewResult => {
 		fields,
 		linesPerRow,
 		onClickExpand,
+		onCopyLogLink,
 		appendTo = 'center',
 	} = props;
 
 	const flattenLogData = useMemo(() => logs.map((log) => FlatLogData(log)), [
 		logs,
 	]);
+
+	const handleCopyLink = useCallback(
+		(id: string) => {
+			if (!onCopyLogLink) return;
+
+			onCopyLogLink(id);
+		},
+		[onCopyLogLink],
+	);
 
 	const columns: ColumnsType<Record<string, unknown>> = useMemo(() => {
 		const fieldColumns: ColumnsType<Record<string, unknown>> = fields
@@ -107,8 +117,33 @@ export const useTableView = (props: UseTableViewProps): UseTableViewResult => {
 				}),
 			},
 			...(appendTo === 'end' ? fieldColumns : []),
+			...(onCopyLogLink
+				? ([
+						{
+							title: 'actions',
+							dataIndex: 'actions',
+							key: 'actions',
+							render: (_, { id }): ColumnTypeRender<Record<string, unknown>> => ({
+								children: (
+									<Button
+										size="small"
+										onClick={(): void => handleCopyLink(id as string)}
+										icon={<LinkOutlined />}
+									/>
+								),
+							}),
+						},
+				  ] as ColumnsType<Record<string, unknown>>)
+				: []),
 		];
-	}, [fields, linesPerRow, appendTo, onClickExpand]);
+	}, [
+		fields,
+		linesPerRow,
+		appendTo,
+		onClickExpand,
+		onCopyLogLink,
+		handleCopyLink,
+	]);
 
 	return { columns, dataSource: flattenLogData };
 };
