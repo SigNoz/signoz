@@ -2945,12 +2945,6 @@ func (aH *APIHandler) liveTailLogs(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err != nil {
-		apiErrObj := &model.ApiError{Typ: model.ErrorBadData, Err: err}
-		RespondError(w, apiErrObj, nil)
-		return
-	}
-
 	// create the client
 	client := &v3.LogsLiveTailClient{Name: r.RemoteAddr, Logs: make(chan *model.GetLogsResponse, 1000), Done: make(chan *bool), Error: make(chan error)}
 	go aH.reader.LiveTailLogsV3(r.Context(), queryString, uint64(queryRangeParams.Start), "", client)

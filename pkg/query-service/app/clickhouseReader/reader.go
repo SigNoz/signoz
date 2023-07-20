@@ -4529,8 +4529,6 @@ func (r *ClickHouseReader) LiveTailLogsV3(ctx context.Context, query string, tim
 			// the reason we are doing desc is that we need the latest logs first
 			tmpQuery = fmt.Sprintf("%s order by timestamp desc, id desc limit 100", tmpQuery)
 
-			// zap.S().Debug(tmpQuery)
-
 			// using the old structure since we can directly read it to the struct as use it.
 			response := []model.GetLogsResponse{}
 			err := r.db.Select(ctx, &response, tmpQuery)
