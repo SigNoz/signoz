@@ -102,7 +102,7 @@ function FullView({
 			)}
 
 			<GridPanelSwitch
-				GRAPH_TYPES={widget.panelTypes}
+				panelType={widget.panelTypes}
 				data={chartDataSet}
 				isStacked={widget.isStacked}
 				opacity={widget.opacity}
