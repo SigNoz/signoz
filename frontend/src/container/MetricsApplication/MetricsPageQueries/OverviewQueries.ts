@@ -1,7 +1,11 @@
 import { OPERATORS } from 'constants/queryBuilder';
 import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { TagFilterItem } from 'types/api/queryBuilder/queryBuilderData';
-import { DataSource, QueryBuilderData } from 'types/common/queryBuilder';
+import {
+	DataSource,
+	MetricAggregateOperator,
+	QueryBuilderData,
+} from 'types/common/queryBuilder';
 
 import {
 	DataType,
@@ -146,6 +150,12 @@ export const errorPercentage = ({
 		isColumn: true,
 		type: null,
 	};
+
+	const autocompleteData: BaseAutocompleteData[] = [
+		autocompleteDataA,
+		autocompleteDataB,
+	];
+
 	const additionalItemsA: TagFilterItem[] = [
 		{
 			id: '',
@@ -209,16 +219,27 @@ export const errorPercentage = ({
 		...tagFilterItems,
 	];
 
-	return getQueryBuilderQuerieswithFormula({
-		autocompleteDataA,
-		autocompleteDataB,
+	const additionalItems: TagFilterItem[][] = [
 		additionalItemsA,
 		additionalItemsB,
+	];
+
+	const a = getQueryBuilderQuerieswithFormula({
+		autocompleteData,
+		additionalItems,
 		legend: GraphTitle.ERROR_PERCENTAGE,
 		disabled: true,
 		expression: FORMULA.ERROR_PERCENTAGE,
 		legendFormula: GraphTitle.ERROR_PERCENTAGE,
+		aggregateOperators: [
+			MetricAggregateOperator.SUM_RATE,
+			MetricAggregateOperator.SUM_RATE,
+		],
 	});
+
+	console.log('a', a);
+
+	return a;
 };
 
 export interface OperationPerSecProps {

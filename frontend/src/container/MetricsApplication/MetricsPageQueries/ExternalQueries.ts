@@ -1,7 +1,11 @@
 import { OPERATORS } from 'constants/queryBuilder';
 import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { TagFilterItem } from 'types/api/queryBuilder/queryBuilderData';
-import { DataSource, QueryBuilderData } from 'types/common/queryBuilder';
+import {
+	DataSource,
+	MetricAggregateOperator,
+	QueryBuilderData,
+} from 'types/common/queryBuilder';
 
 import { DataType, FORMULA, MetricsType, WidgetKeys } from '../constant';
 import { IServiceName } from '../Tabs/types';
@@ -78,16 +82,28 @@ export const externalCallErrorPercent = ({
 	const legendFormula = legend;
 	const expression = FORMULA.ERROR_PERCENTAGE;
 	const disabled = true;
-	return getQueryBuilderQuerieswithFormula({
+	const autocompleteData: BaseAutocompleteData[] = [
 		autocompleteDataA,
 		autocompleteDataB,
+	];
+
+	const additionalItems: TagFilterItem[][] = [
 		additionalItemsA,
 		additionalItemsB,
+	];
+
+	return getQueryBuilderQuerieswithFormula({
+		autocompleteData,
+		additionalItems,
 		legend,
 		groupBy,
 		disabled,
 		expression,
 		legendFormula,
+		aggregateOperators: [
+			MetricAggregateOperator.SUM,
+			MetricAggregateOperator.SUM,
+		],
 	});
 };
 
@@ -125,17 +141,28 @@ export const externalCallDuration = ({
 		},
 		...tagFilterItems,
 	];
-	const additionalItemsB = additionalItemsA;
 
-	return getQueryBuilderQuerieswithFormula({
+	const autocompleteData: BaseAutocompleteData[] = [
 		autocompleteDataA,
 		autocompleteDataB,
+	];
+
+	const additionalItems: TagFilterItem[][] = [
 		additionalItemsA,
-		additionalItemsB,
+		additionalItemsA,
+	];
+
+	return getQueryBuilderQuerieswithFormula({
+		autocompleteData,
+		additionalItems,
 		legend,
 		disabled,
 		expression,
 		legendFormula,
+		aggregateOperators: [
+			MetricAggregateOperator.SUM,
+			MetricAggregateOperator.SUM,
+		],
 	});
 };
 
@@ -213,18 +240,29 @@ export const externalCallDurationByAddress = ({
 		},
 		...tagFilterItems,
 	];
-	const additionalItemsB = additionalItemsA;
 
-	return getQueryBuilderQuerieswithFormula({
+	const autocompleteData: BaseAutocompleteData[] = [
 		autocompleteDataA,
 		autocompleteDataB,
+	];
+
+	const additionalItems: TagFilterItem[][] = [
 		additionalItemsA,
-		additionalItemsB,
+		additionalItemsA,
+	];
+
+	return getQueryBuilderQuerieswithFormula({
+		autocompleteData,
+		additionalItems,
 		legend,
 		groupBy,
 		disabled,
 		expression,
 		legendFormula,
+		aggregateOperators: [
+			MetricAggregateOperator.SUM_RATE,
+			MetricAggregateOperator.SUM_RATE,
+		],
 	});
 };
 
