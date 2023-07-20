@@ -2969,13 +2969,15 @@ func (aH *APIHandler) liveTailLogs(w http.ResponseWriter, r *http.Request) {
 			var buf bytes.Buffer
 			enc := json.NewEncoder(&buf)
 			enc.Encode(log)
-			fmt.Fprintf(w, "data: %v\n\n", buf.String())
+			fmt.Fprintf(w, "event: log\ndata: %v\n\n", buf.String())
 			flusher.Flush()
 		case <-client.Done:
 			zap.S().Debug("done!")
 			return
 		case err := <-client.Error:
 			zap.S().Error("error occured!", err)
+			fmt.Fprintf(w, "event: error\ndata: %v\n\n", err.Error())
+			flusher.Flush()
 			return
 		}
 	}
