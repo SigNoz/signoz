@@ -114,7 +114,7 @@ function ChartPreview({
 			)}
 			{chartDataSet && !queryResponse.isError && (
 				<GridPanelSwitch
-					GRAPH_TYPES={graphType}
+					panelType={graphType}
 					title={name}
 					data={chartDataSet}
 					isStacked
