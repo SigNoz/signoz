@@ -273,7 +273,7 @@ function GridCardGraph({
 							/>
 						</div>
 						<GridPanelSwitch
-							GRAPH_TYPES={widget?.panelTypes}
+							panelType={widget?.panelTypes}
 							data={prevChartDataSetRef}
 							isStacked={widget?.isStacked}
 							opacity={widget?.opacity}
@@ -309,7 +309,7 @@ function GridCardGraph({
 							/>
 						</div>
 						<GridPanelSwitch
-							GRAPH_TYPES={widget.panelTypes}
+							panelType={widget.panelTypes}
 							data={prevChartDataSetRef}
 							isStacked={widget.isStacked}
 							opacity={widget.opacity}
@@ -364,7 +364,7 @@ function GridCardGraph({
 
 			{!isEmpty(widget) && !!queryResponse.data?.payload && (
 				<GridPanelSwitch
-					GRAPH_TYPES={widget.panelTypes}
+					panelType={widget.panelTypes}
 					data={chartData}
 					isStacked={widget.isStacked}
 					opacity={widget.opacity}

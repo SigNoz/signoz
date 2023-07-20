@@ -1,12 +1,11 @@
-import Graph from 'components/Graph';
+import { PANEL_TYPES_COMPONENT_MAP } from 'constants/panelTypes';
 import { PANEL_TYPES } from 'constants/queryBuilder';
-import GridValueComponent from 'container/GridValueComponent';
-import { memo } from 'react';
+import { FC, memo, useMemo } from 'react';
 
-import { GridPanelSwitchProps } from './types';
+import { GridPanelSwitchProps, PropsTypePropsMap } from './types';
 
 function GridPanelSwitch({
-	GRAPH_TYPES,
+	panelType,
 	data,
 	title,
 	opacity,
@@ -17,40 +16,52 @@ function GridPanelSwitch({
 	staticLine,
 	onDragSelect,
 }: GridPanelSwitchProps): JSX.Element | null {
-	switch (GRAPH_TYPES) {
-		case PANEL_TYPES.TIME_SERIES: {
-			return (
-				<Graph
-					// eslint-disable-next-line react/jsx-props-no-spreading
-					{...{
-						type: 'line',
-						data,
-						opacity,
-						isStacked,
-						onClickHandler,
-						name,
-						yAxisUnit,
-						staticLine,
-						onDragSelect,
-					}}
-				/>
-			);
-		}
+	const currentProps: PropsTypePropsMap = useMemo(() => {
+		const result: PropsTypePropsMap = {
+			[PANEL_TYPES.TIME_SERIES]: {
+				data,
+				title,
+				opacity,
+				isStacked,
+				onClickHandler,
+				name,
+				yAxisUnit,
+				staticLine,
+				onDragSelect,
+			},
+			[PANEL_TYPES.VALUE]: {
+				title,
+				data,
+				yAxisUnit,
+			},
+			[PANEL_TYPES.TABLE]: null,
+			[PANEL_TYPES.LIST]: null,
+			[PANEL_TYPES.TRACE]: null,
+			[PANEL_TYPES.EMPTY_WIDGET]: null,
+		};
 
-		case PANEL_TYPES.VALUE: {
-			return (
-				<GridValueComponent title={title} yAxisUnit={yAxisUnit} data={data} />
-			);
-		}
+		return result;
+	}, [
+		data,
+		isStacked,
+		name,
+		onClickHandler,
+		onDragSelect,
+		opacity,
+		staticLine,
+		title,
+		yAxisUnit,
+	]);
 
-		case PANEL_TYPES.TABLE: {
-			return null;
-		}
+	const Component = PANEL_TYPES_COMPONENT_MAP[panelType] as FC<
+		PropsTypePropsMap[typeof panelType]
+	>;
+	const componentProps = currentProps[panelType];
 
-		default: {
-			return null;
-		}
-	}
+	if (!Component || !componentProps) return null;
+
+	// eslint-disable-next-line react/jsx-props-no-spreading
+	return <Component {...componentProps} />;
 }
 
 export default memo(GridPanelSwitch);
