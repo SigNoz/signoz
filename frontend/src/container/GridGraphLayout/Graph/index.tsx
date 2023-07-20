@@ -1,5 +1,6 @@
 import { Typography } from 'antd';
 import { ChartData } from 'chart.js';
+import { GraphOnClickHandler } from 'components/Graph';
 import Spinner from 'components/Spinner';
 import GridGraphComponent from 'container/GridGraphComponent';
 import { UpdateDashboard } from 'container/GridGraphLayout/utils';
@@ -35,12 +36,16 @@ import { Widgets } from 'types/api/dashboard/getAll';
 import AppReducer from 'types/reducer/app';
 import DashboardReducer from 'types/reducer/dashboards';
 import { GlobalReducer } from 'types/reducer/globalTime';
+import {
+	getSelectedDashboard,
+	getSelectedDashboardVariable,
+} from 'utils/dashboard/selectedDashboard';
 import { v4 } from 'uuid';
 
 import { LayoutProps } from '..';
 import EmptyWidget from '../EmptyWidget';
 import WidgetHeader from '../WidgetHeader';
-import FullView from './FullView/index.metricsBuilder';
+import FullView from './FullView';
 import { FullViewContainer, Modal } from './styles';
 
 function GridCardGraph({
@@ -51,6 +56,10 @@ function GridCardGraph({
 	layout = [],
 	setLayout,
 	onDragSelect,
+	onClickHandler,
+	allowDelete,
+	allowClone,
+	allowEdit,
 }: GridCardGraphProps): JSX.Element {
 	const { ref: graphRef, inView: isGraphVisible } = useInView({
 		threshold: 0,
@@ -77,11 +86,16 @@ function GridCardGraph({
 	const { dashboards } = useSelector<AppState, DashboardReducer>(
 		(state) => state.dashboards,
 	);
-	const [selectedDashboard] = dashboards;
-	const selectedData = selectedDashboard?.data;
-	const { variables } = selectedData;
+
+	const selectedDashboard = getSelectedDashboard(dashboards);
+	const variables = getSelectedDashboardVariable(dashboards);
 
 	const updatedQuery = useStepInterval(widget?.query);
+
+	const isEmptyWidget = useMemo(
+		() => widget?.id === 'empty' || isEmpty(widget),
+		[widget],
+	);
 
 	const queryResponse = useGetQueryRange(
 		{
@@ -101,7 +115,7 @@ function GridCardGraph({
 				variables,
 			],
 			keepPreviousData: true,
-			enabled: isGraphVisible,
+			enabled: isGraphVisible && !isEmptyWidget,
 			refetchOnMount: false,
 			onError: (error) => {
 				setErrorMessage(error.message);
@@ -131,8 +145,6 @@ function GridCardGraph({
 	);
 
 	const onDeleteHandler = useCallback(() => {
-		const isEmptyWidget = widget?.id === 'empty' || isEmpty(widget);
-
 		const widgetId = isEmptyWidget ? layout[0].i : widget?.id;
 
 		featureResponse
@@ -147,7 +159,8 @@ function GridCardGraph({
 				});
 			});
 	}, [
-		widget,
+		isEmptyWidget,
+		widget?.id,
 		layout,
 		featureResponse,
 		deleteWidget,
@@ -168,10 +181,10 @@ function GridCardGraph({
 				h: 2,
 				y: 0,
 			},
-			...(selectedDashboard.data.layout || []),
+			...(selectedDashboard?.data.layout || []),
 		];
 
-		if (widget) {
+		if (widget && selectedDashboard) {
 			await UpdateDashboard(
 				{
 					data: selectedDashboard.data,
@@ -253,6 +266,9 @@ function GridCardGraph({
 								onClone={onCloneHandler}
 								queryResponse={queryResponse}
 								errorMessage={errorMessage}
+								allowClone={allowClone}
+								allowDelete={allowDelete}
+								allowEdit={allowEdit}
 							/>
 						</div>
 						<GridGraphComponent
@@ -263,6 +279,7 @@ function GridCardGraph({
 							title={' '}
 							name={name}
 							yAxisUnit={yAxisUnit}
+							onClickHandler={onClickHandler}
 						/>
 					</>
 				)}
@@ -285,6 +302,9 @@ function GridCardGraph({
 								onClone={onCloneHandler}
 								queryResponse={queryResponse}
 								errorMessage={errorMessage}
+								allowClone={allowClone}
+								allowDelete={allowDelete}
+								allowEdit={allowEdit}
 							/>
 						</div>
 						<GridGraphComponent
@@ -295,6 +315,7 @@ function GridCardGraph({
 							title={' '}
 							name={name}
 							yAxisUnit={yAxisUnit}
+							onClickHandler={onClickHandler}
 						/>
 					</>
 				) : (
@@ -331,6 +352,9 @@ function GridCardGraph({
 						onClone={onCloneHandler}
 						queryResponse={queryResponse}
 						errorMessage={errorMessage}
+						allowClone={allowClone}
+						allowDelete={allowDelete}
+						allowEdit={allowEdit}
 					/>
 				</div>
 			)}
@@ -347,6 +371,7 @@ function GridCardGraph({
 					name={name}
 					yAxisUnit={yAxisUnit}
 					onDragSelect={onDragSelect}
+					onClickHandler={onClickHandler}
 				/>
 			)}
 
@@ -370,10 +395,18 @@ interface GridCardGraphProps extends DispatchProps {
 	// eslint-disable-next-line react/require-default-props
 	setLayout?: Dispatch<SetStateAction<LayoutProps[]>>;
 	onDragSelect?: (start: number, end: number) => void;
+	onClickHandler?: GraphOnClickHandler;
+	allowDelete?: boolean;
+	allowClone?: boolean;
+	allowEdit?: boolean;
 }
 
 GridCardGraph.defaultProps = {
 	onDragSelect: undefined,
+	onClickHandler: undefined,
+	allowDelete: true,
+	allowClone: true,
+	allowEdit: true,
 };
 
 const mapDispatchToProps = (

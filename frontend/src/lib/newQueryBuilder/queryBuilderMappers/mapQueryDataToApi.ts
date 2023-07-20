@@ -1,3 +1,4 @@
+import { GetQueryResultsProps } from 'store/actions/dashboard/getQueryResults';
 import {
 	MapData,
 	MapQueryDataToApiResult,
@@ -6,6 +7,7 @@ import {
 export const mapQueryDataToApi = <Data extends MapData, Key extends keyof Data>(
 	data: Data[],
 	nameField: Key,
+	tableParams?: GetQueryResultsProps['tableParams'],
 ): MapQueryDataToApiResult<Record<string, Data>> => {
 	const newLegendMap: Record<string, string> = {};
 
@@ -14,6 +16,10 @@ export const mapQueryDataToApi = <Data extends MapData, Key extends keyof Data>(
 			...acc,
 			[query[nameField] as string]: {
 				...query,
+				...tableParams?.pagination,
+				...(tableParams?.selectColumns
+					? { selectColumns: tableParams?.selectColumns }
+					: null),
 			},
 		};
 

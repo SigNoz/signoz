@@ -143,8 +143,8 @@ export type PanelTypeKeys =
 	| 'VALUE'
 	| 'TABLE'
 	| 'LIST'
-	| 'EMPTY_WIDGET'
-	| 'TRACE';
+	| 'TRACE'
+	| 'EMPTY_WIDGET';
 
 export type ReduceOperators = 'last' | 'sum' | 'avg' | 'max' | 'min';
 
@@ -191,6 +191,14 @@ export type QueryBuilderContextType = {
 		queryData: Query,
 		panelType: GRAPH_TYPES,
 		dataSource: DataSource,
+	) => Query;
+	updateQueriesData: <T extends keyof QueryBuilderData>(
+		query: Query,
+		type: T,
+		updateCallback: (
+			item: QueryBuilderData[T][number],
+			index: number,
+		) => QueryBuilderData[T][number],
 	) => Query;
 	initQueryBuilderData: (query: Query) => void;
 };
