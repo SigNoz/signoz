@@ -61,17 +61,18 @@ func NewRouter() *mux.Router {
 type APIHandler struct {
 	// queryService *querysvc.QueryService
 	// queryParser  queryParser
-	basePath     string
-	apiPrefix    string
-	reader       interfaces.Reader
-	skipConfig   *model.SkipConfig
-	appDao       dao.ModelDao
-	alertManager am.Manager
-	ruleManager  *rules.Manager
-	featureFlags interfaces.FeatureLookup
-	ready        func(http.HandlerFunc) http.HandlerFunc
-	queryBuilder *queryBuilder.QueryBuilder
-	preferDelta  bool
+	basePath          string
+	apiPrefix         string
+	reader            interfaces.Reader
+	skipConfig        *model.SkipConfig
+	appDao            dao.ModelDao
+	alertManager      am.Manager
+	ruleManager       *rules.Manager
+	featureFlags      interfaces.FeatureLookup
+	ready             func(http.HandlerFunc) http.HandlerFunc
+	queryBuilder      *queryBuilder.QueryBuilder
+	preferDelta       bool
+	preferSpanMetrics bool
 
 	// SetupCompleted indicates if SigNoz is ready for general use.
 	// at the moment, we mark the app ready when the first user
@@ -86,7 +87,8 @@ type APIHandlerOpts struct {
 
 	SkipConfig *model.SkipConfig
 
-	PerferDelta bool
+	PerferDelta       bool
+	PreferSpanMetrics bool
 	// dao layer to perform crud on app objects like dashboard, alerts etc
 	AppDao dao.ModelDao
 
@@ -106,13 +108,14 @@ func NewAPIHandler(opts APIHandlerOpts) (*APIHandler, error) {
 	}
 
 	aH := &APIHandler{
-		reader:       opts.Reader,
-		appDao:       opts.AppDao,
-		skipConfig:   opts.SkipConfig,
-		preferDelta:  opts.PerferDelta,
-		alertManager: alertManager,
-		ruleManager:  opts.RuleManager,
-		featureFlags: opts.FeatureFlags,
+		reader:            opts.Reader,
+		appDao:            opts.AppDao,
+		skipConfig:        opts.SkipConfig,
+		preferDelta:       opts.PerferDelta,
+		preferSpanMetrics: opts.PreferSpanMetrics,
+		alertManager:      alertManager,
+		ruleManager:       opts.RuleManager,
+		featureFlags:      opts.FeatureFlags,
 	}
 
 	builderOpts := queryBuilder.QueryBuilderOptions{
@@ -269,6 +272,9 @@ func (aH *APIHandler) RegisterQueryRangeV3Routes(router *mux.Router, am *AuthMid
 	subRouter.HandleFunc("/autocomplete/attribute_values", am.ViewAccess(
 		withCacheControl(AutoCompleteCacheControlAge, aH.autoCompleteAttributeValues))).Methods(http.MethodGet)
 	subRouter.HandleFunc("/query_range", am.ViewAccess(aH.QueryRangeV3)).Methods(http.MethodPost)
+
+	// live logs
+	subRouter.HandleFunc("/logs/livetail", am.ViewAccess(aH.liveTailLogs)).Methods(http.MethodPost)
 }
 
 func (aH *APIHandler) Respond(w http.ResponseWriter, data interface{}) {
@@ -1668,6 +1674,14 @@ func (aH *APIHandler) getFeatureFlags(w http.ResponseWriter, r *http.Request) {
 		aH.HandleError(w, err, http.StatusInternalServerError)
 		return
 	}
+	if aH.preferSpanMetrics {
+		for idx := range featureSet {
+			feature := &featureSet[idx]
+			if feature.Name == model.UseSpanMetrics {
+				featureSet[idx].Active = true
+			}
+		}
+	}
 	aH.Respond(w, featureSet)
 }
 
@@ -2511,6 +2525,7 @@ func (aH *APIHandler) execClickHouseGraphQueries(ctx context.Context, queries ma
 		wg.Add(1)
 		go func(name, query string) {
 			defer wg.Done()
+
 			seriesList, err := aH.reader.GetTimeSeriesResultV3(ctx, query)
 
 			if err != nil {
@@ -2842,24 +2857,128 @@ func applyMetricLimit(results []*v3.Result, queryRangeParams *v3.QueryRangeParam
 		builderQueries := queryRangeParams.CompositeQuery.BuilderQueries
 		if builderQueries != nil && builderQueries[result.QueryName].DataSource == v3.DataSourceMetrics {
 			limit := builderQueries[result.QueryName].Limit
-			var orderAsc bool
-			for _, item := range builderQueries[result.QueryName].OrderBy {
-				if item.ColumnName == constants.SigNozOrderByValue {
-					orderAsc = strings.ToLower(item.Order) == "asc"
-					break
-				}
-			}
+
+			orderByList := builderQueries[result.QueryName].OrderBy
 			if limit != 0 {
-				sort.Slice(result.Series, func(i, j int) bool {
-					if orderAsc {
-						return result.Series[i].Points[0].Value < result.Series[j].Points[0].Value
+				if len(orderByList) == 0 {
+					// If no orderBy is specified, sort by value in descending order
+					orderByList = []v3.OrderBy{{ColumnName: constants.SigNozOrderByValue, Order: "desc"}}
+				}
+				sort.SliceStable(result.Series, func(i, j int) bool {
+					for _, orderBy := range orderByList {
+						if orderBy.ColumnName == constants.SigNozOrderByValue {
+							if result.Series[i].GroupingSetsPoint == nil || result.Series[j].GroupingSetsPoint == nil {
+								// Handle nil GroupingSetsPoint, if needed
+								// Here, we assume non-nil values are always less than nil values
+								return result.Series[i].GroupingSetsPoint != nil
+							}
+							if orderBy.Order == "asc" {
+								return result.Series[i].GroupingSetsPoint.Value < result.Series[j].GroupingSetsPoint.Value
+							} else if orderBy.Order == "desc" {
+								return result.Series[i].GroupingSetsPoint.Value > result.Series[j].GroupingSetsPoint.Value
+							}
+						} else {
+							// Sort based on Labels map
+							labelI, existsI := result.Series[i].Labels[orderBy.ColumnName]
+							labelJ, existsJ := result.Series[j].Labels[orderBy.ColumnName]
+
+							if !existsI || !existsJ {
+								// Handle missing labels, if needed
+								// Here, we assume non-existent labels are always less than existing ones
+								return existsI
+							}
+
+							if orderBy.Order == "asc" {
+								return strings.Compare(labelI, labelJ) < 0
+							} else if orderBy.Order == "desc" {
+								return strings.Compare(labelI, labelJ) > 0
+							}
+						}
 					}
-					return result.Series[i].Points[0].Value > result.Series[j].Points[0].Value
+					// Preserve original order if no matching orderBy is found
+					return i < j
 				})
+
 				if len(result.Series) > int(limit) {
 					result.Series = result.Series[:limit]
 				}
 			}
+		}
+	}
+}
+
+func (aH *APIHandler) liveTailLogs(w http.ResponseWriter, r *http.Request) {
+
+	queryRangeParams, apiErrorObj := ParseQueryRangeParams(r)
+	if apiErrorObj != nil {
+		zap.S().Errorf(apiErrorObj.Err.Error())
+		RespondError(w, apiErrorObj, nil)
+		return
+	}
+
+	var err error
+	var queryString string
+	switch queryRangeParams.CompositeQuery.QueryType {
+	case v3.QueryTypeBuilder:
+		// check if any enrichment is required for logs if yes then enrich them
+		if logsv3.EnrichmentRequired(queryRangeParams) {
+			// get the fields if any logs query is present
+			var fields map[string]v3.AttributeKey
+			fields, err = aH.getLogFieldsV3(r.Context(), queryRangeParams)
+			if err != nil {
+				apiErrObj := &model.ApiError{Typ: model.ErrorInternal, Err: err}
+				RespondError(w, apiErrObj, nil)
+				return
+			}
+			logsv3.Enrich(queryRangeParams, fields)
+		}
+
+		queryString, err = aH.queryBuilder.PrepareLiveTailQuery(queryRangeParams)
+		if err != nil {
+			RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
+			return
+		}
+
+	default:
+		err = fmt.Errorf("invalid query type")
+		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
+		return
+	}
+
+	// create the client
+	client := &v3.LogsLiveTailClient{Name: r.RemoteAddr, Logs: make(chan *model.GetLogsResponse, 1000), Done: make(chan *bool), Error: make(chan error)}
+	go aH.reader.LiveTailLogsV3(r.Context(), queryString, uint64(queryRangeParams.Start), "", client)
+
+	w.Header().Set("Connection", "keep-alive")
+	w.Header().Set("Content-Type", "text/event-stream")
+	w.Header().Set("Cache-Control", "no-cache")
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+	w.WriteHeader(200)
+
+	flusher, ok := w.(http.Flusher)
+	if !ok {
+		err := model.ApiError{Typ: model.ErrorStreamingNotSupported, Err: nil}
+		RespondError(w, &err, "streaming is not supported")
+		return
+	}
+	// flush the headers
+	flusher.Flush()
+	for {
+		select {
+		case log := <-client.Logs:
+			var buf bytes.Buffer
+			enc := json.NewEncoder(&buf)
+			enc.Encode(log)
+			fmt.Fprintf(w, "event: log\ndata: %v\n\n", buf.String())
+			flusher.Flush()
+		case <-client.Done:
+			zap.S().Debug("done!")
+			return
+		case err := <-client.Error:
+			zap.S().Error("error occured!", err)
+			fmt.Fprintf(w, "event: error\ndata: %v\n\n", err.Error())
+			flusher.Flush()
+			return
 		}
 	}
 }

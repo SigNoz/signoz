@@ -87,6 +87,13 @@ var DEFAULT_FEATURE_SET = model.FeatureSet{
 		UsageLimit: -1,
 		Route:      "",
 	},
+	model.Feature{
+		Name:       model.UseSpanMetrics,
+		Active:     false,
+		Usage:      0,
+		UsageLimit: -1,
+		Route:      "",
+	},
 }
 
 func GetContextTimeout() time.Duration {
@@ -239,7 +246,7 @@ const (
 	TracesExplorerViewSQLSelectWithSubQuery = "WITH subQuery AS (SELECT distinct on (traceID) traceID, durationNano, " +
 		"serviceName, name FROM %s.%s WHERE parentSpanID = '' AND %s %s ORDER BY durationNano DESC "
 	TracesExplorerViewSQLSelectQuery = "SELECT subQuery.serviceName, subQuery.name, count() AS " +
-		"span_count, subQuery.durationNano, traceID FROM %s.%s INNER JOIN subQuery ON %s.traceID = subQuery.traceID GROUP " +
+		"span_count, subQuery.durationNano, traceID FROM %s.%s GLOBAL INNER JOIN subQuery ON %s.traceID = subQuery.traceID GROUP " +
 		"BY traceID, subQuery.durationNano, subQuery.name, subQuery.serviceName ORDER BY subQuery.durationNano desc;"
 )
 
@@ -301,3 +308,6 @@ var StaticFieldsLogsV3 = map[string]v3.AttributeKey{
 const SigNozOrderByValue = "#SIGNOZ_VALUE"
 
 const TIMESTAMP = "timestamp"
+
+const FirstQueryGraphLimit = "first_query_graph_limit"
+const SecondQueryGraphLimit = "second_query_graph_limit"

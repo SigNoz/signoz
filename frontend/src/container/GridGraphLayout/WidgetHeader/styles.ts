@@ -9,6 +9,8 @@ export const HeaderContainer = styled.div<{ hover: boolean }>`
 	font-size: 0.8rem;
 	cursor: all-scroll;
 	position: absolute;
+	top: 0;
+	left: 0;
 `;
 
 export const HeaderContentContainer = styled.span`

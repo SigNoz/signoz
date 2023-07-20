@@ -403,15 +403,15 @@ func reduceQuery(query string, reduceTo v3.ReduceToOperator, aggregateOperator v
 	// chart with just the query value. For the quer
 	switch reduceTo {
 	case v3.ReduceToOperatorLast:
-		query = fmt.Sprintf("SELECT anyLast(value) as value, any(ts) as ts %s FROM (%s) %s", selectLabels, query, groupBy)
+		query = fmt.Sprintf("SELECT anyLastIf(value, toUnixTimestamp(ts) != 0) as value, anyIf(ts, toUnixTimestamp(ts) != 0) AS timestamp %s FROM (%s) %s", selectLabels, query, groupBy)
 	case v3.ReduceToOperatorSum:
-		query = fmt.Sprintf("SELECT sum(value) as value, any(ts) as ts %s FROM (%s) %s", selectLabels, query, groupBy)
+		query = fmt.Sprintf("SELECT sumIf(value, toUnixTimestamp(ts) != 0) as value, anyIf(ts, toUnixTimestamp(ts) != 0) AS timestamp %s FROM (%s) %s", selectLabels, query, groupBy)
 	case v3.ReduceToOperatorAvg:
-		query = fmt.Sprintf("SELECT avg(value) as value, any(ts) as ts %s FROM (%s) %s", selectLabels, query, groupBy)
+		query = fmt.Sprintf("SELECT avgIf(value, toUnixTimestamp(ts) != 0) as value, anyIf(ts, toUnixTimestamp(ts) != 0) AS timestamp %s FROM (%s) %s", selectLabels, query, groupBy)
 	case v3.ReduceToOperatorMax:
-		query = fmt.Sprintf("SELECT max(value) as value, any(ts) as ts %s FROM (%s) %s", selectLabels, query, groupBy)
+		query = fmt.Sprintf("SELECT maxIf(value, toUnixTimestamp(ts) != 0) as value, anyIf(ts, toUnixTimestamp(ts) != 0) AS timestamp %s FROM (%s) %s", selectLabels, query, groupBy)
 	case v3.ReduceToOperatorMin:
-		query = fmt.Sprintf("SELECT min(value) as value, any(ts) as ts %s FROM (%s) %s", selectLabels, query, groupBy)
+		query = fmt.Sprintf("SELECT minIf(value, toUnixTimestamp(ts) != 0) as value, anyIf(ts, toUnixTimestamp(ts) != 0) AS timestamp %s FROM (%s) %s", selectLabels, query, groupBy)
 	default:
 		return "", fmt.Errorf("unsupported reduce operator")
 	}
@@ -422,9 +422,17 @@ func PrepareMetricQuery(start, end int64, queryType v3.QueryType, panelType v3.P
 	var query string
 	var err error
 	if mq.Temporality == v3.Delta {
-		query, err = buildDeltaMetricQuery(start, end, mq.StepInterval, mq, constants.SIGNOZ_TIMESERIES_TABLENAME)
+		if panelType == v3.PanelTypeTable {
+			query, err = buildDeltaMetricQueryForTable(start, end, mq.StepInterval, mq, constants.SIGNOZ_TIMESERIES_TABLENAME)
+		} else {
+			query, err = buildDeltaMetricQuery(start, end, mq.StepInterval, mq, constants.SIGNOZ_TIMESERIES_TABLENAME)
+		}
 	} else {
-		query, err = buildMetricQuery(start, end, mq.StepInterval, mq, constants.SIGNOZ_TIMESERIES_TABLENAME)
+		if panelType == v3.PanelTypeTable {
+			query, err = buildMetricQueryForTable(start, end, mq.StepInterval, mq, constants.SIGNOZ_TIMESERIES_TABLENAME)
+		} else {
+			query, err = buildMetricQuery(start, end, mq.StepInterval, mq, constants.SIGNOZ_TIMESERIES_TABLENAME)
+		}
 	}
 	if err != nil {
 		return "", err
