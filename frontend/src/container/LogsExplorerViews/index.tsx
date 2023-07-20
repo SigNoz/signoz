@@ -3,6 +3,7 @@ import LogDetail from 'components/LogDetail';
 import TabLabel from 'components/TabLabel';
 import { QueryParams } from 'constants/query';
 import {
+	initialAutocompleteData,
 	initialQueriesMap,
 	OPERATORS,
 	PANEL_TYPES,
@@ -19,6 +20,7 @@ import { LogLinkQueryParams } from 'container/LogsExplorerList/constants';
 import { CopiedTimeRange } from 'container/LogsExplorerList/LogsExplorerList.interfaces';
 import LogsExplorerTable from 'container/LogsExplorerTable';
 import { GRAPH_TYPES } from 'container/NewDashboard/ComponentsSlider';
+import { SIGNOZ_VALUE } from 'container/QueryBuilder/filters/OrderByFilter/constants';
 import TimeSeriesView from 'container/TimeSeriesView/TimeSeriesView';
 import { useUpdateDashboard } from 'hooks/dashboard/useUpdateDashboard';
 import { addEmptyWidgetInDashboardJSONWithQuery } from 'hooks/dashboard/utils';
@@ -81,6 +83,7 @@ function LogsExplorerViews(): JSX.Element {
 		stagedQuery,
 		panelType,
 		updateAllQueriesOperators,
+		updateQueriesData,
 		redirectWithQueryBuilderData,
 	} = useQueryBuilder();
 
@@ -205,26 +208,40 @@ function LogsExplorerViews(): JSX.Element {
 		setActiveLog(null);
 	}, []);
 
+	const getUpdateQuery = useCallback(
+		(newPanelType: GRAPH_TYPES): Query => {
+			let query = updateAllQueriesOperators(
+				currentQuery,
+				newPanelType,
+				DataSource.TRACES,
+			);
+
+			if (newPanelType === PANEL_TYPES.LIST) {
+				query = updateQueriesData(query, 'queryData', (item) => ({
+					...item,
+					orderBy: item.orderBy.filter((item) => item.columnName !== SIGNOZ_VALUE),
+					aggregateAttribute: initialAutocompleteData,
+				}));
+			}
+
+			return query;
+		},
+		[currentQuery, updateAllQueriesOperators, updateQueriesData],
+	);
+
 	const handleChangeView = useCallback(
-		(newPanelType: string) => {
+		(type: string) => {
+			const newPanelType = type as GRAPH_TYPES;
+
 			if (newPanelType === panelType) return;
 
-			const query = updateAllQueriesOperators(
-				currentQuery,
-				newPanelType as GRAPH_TYPES,
-				DataSource.LOGS,
-			);
+			const query = getUpdateQuery(newPanelType);
 
 			redirectWithQueryBuilderData(query, {
 				[queryParamNamesMap.panelTypes]: newPanelType,
 			});
 		},
-		[
-			currentQuery,
-			panelType,
-			updateAllQueriesOperators,
-			redirectWithQueryBuilderData,
-		],
+		[panelType, getUpdateQuery, redirectWithQueryBuilderData],
 	);
 
 	const getRequestData = useCallback(

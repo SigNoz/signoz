@@ -1,13 +1,15 @@
 import { Button } from 'antd';
 import { initialQueriesMap, PANEL_TYPES } from 'constants/queryBuilder';
+import ExplorerOrderBy from 'container/ExplorerOrderBy';
 import { QueryBuilder } from 'container/QueryBuilder';
+import { OrderByFilterProps } from 'container/QueryBuilder/filters/OrderByFilter/OrderByFilter.interfaces';
 import { QueryBuilderProps } from 'container/QueryBuilder/QueryBuilder.interfaces';
 import { useGetPanelTypesQueryParam } from 'hooks/queryBuilder/useGetPanelTypesQueryParam';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useShareBuilderUrl } from 'hooks/queryBuilder/useShareBuilderUrl';
 import { ButtonWrapperStyled } from 'pages/LogsExplorer/styles';
 import { prepareQueryWithDefaultTimestamp } from 'pages/LogsExplorer/utils';
-import { memo, useMemo } from 'react';
+import { memo, useCallback, useMemo } from 'react';
 import { DataSource } from 'types/common/queryBuilder';
 
 function LogExplorerQuerySection(): JSX.Element {
@@ -23,6 +25,7 @@ function LogExplorerQuerySection(): JSX.Element {
 	}, [updateAllQueriesOperators]);
 
 	useShareBuilderUrl(defaultValue);
+
 	const filterConfigs: QueryBuilderProps['filterConfigs'] = useMemo(() => {
 		const isTable = panelTypes === PANEL_TYPES.TABLE;
 		const config: QueryBuilderProps['filterConfigs'] = {
@@ -32,11 +35,26 @@ function LogExplorerQuerySection(): JSX.Element {
 		return config;
 	}, [panelTypes]);
 
+	const renderOrderBy = useCallback(
+		({ query, onChange }: OrderByFilterProps): JSX.Element => (
+			<ExplorerOrderBy query={query} onChange={onChange} />
+		),
+		[],
+	);
+
+	const queryComponents = useMemo(
+		(): QueryBuilderProps['queryComponents'] => ({
+			...(panelTypes === PANEL_TYPES.LIST ? { renderOrderBy } : {}),
+		}),
+		[panelTypes, renderOrderBy],
+	);
+
 	return (
 		<QueryBuilder
 			panelType={panelTypes}
 			config={{ initialDataSource: DataSource.LOGS, queryVariant: 'static' }}
 			filterConfigs={filterConfigs}
+			queryComponents={queryComponents}
 			actions={
 				<ButtonWrapperStyled>
 					<Button type="primary" onClick={handleRunQuery}>
