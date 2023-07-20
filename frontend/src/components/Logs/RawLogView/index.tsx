@@ -89,7 +89,7 @@ function RawLogView(props: RawLogViewProps): JSX.Element {
 			<RawLogContent linesPerRow={linesPerRow} dangerouslySetInnerHTML={html} />
 
 			{hasCopyLink && (
-				<Tooltip title="Copy link">
+				<Tooltip title="Copy Link">
 					<CopyButton
 						size="small"
 						onClick={handleCopyLink}
