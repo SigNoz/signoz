@@ -3,12 +3,12 @@ import getFromLocalstorage from 'api/browser/localstorage/get';
 import setToLocalstorage from 'api/browser/localstorage/set';
 import { getAggregateKeys } from 'api/queryBuilder/getAttributeKeys';
 import { LOCALSTORAGE } from 'constants/localStorage';
-import { QueryBuilderKeys } from 'constants/queryBuilder';
+import { useGetAggregateKeys } from 'hooks/queryBuilder/useGetAggregateKeys';
 import useDebounce from 'hooks/useDebounce';
 import { useNotifications } from 'hooks/useNotifications';
 import useUrlQueryData from 'hooks/useUrlQueryData';
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { useQueries, useQuery } from 'react-query';
+import { useQueries } from 'react-query';
 import { ErrorResponse, SuccessResponse } from 'types/api';
 import {
 	BaseAutocompleteData,
@@ -30,6 +30,7 @@ interface UseOptionsMenuProps {
 interface UseOptionsMenu {
 	options: OptionsQuery;
 	config: OptionsMenuConfig;
+	handleOptionsChange: (newQueryData: OptionsQuery) => void;
 }
 
 const useOptionsMenu = ({
@@ -115,16 +116,12 @@ const useOptionsMenu = ({
 	const {
 		data: searchedAttributesData,
 		isFetching: isSearchedAttributesFetching,
-	} = useQuery(
-		[QueryBuilderKeys.GET_AGGREGATE_KEYS, debouncedSearchText, isFocused],
-		async () =>
-			getAggregateKeys({
-				...initialQueryParams,
-				searchText: debouncedSearchText,
-			}),
+	} = useGetAggregateKeys(
 		{
-			enabled: isFocused,
+			...initialQueryParams,
+			searchText: debouncedSearchText,
 		},
+		{ queryKey: [debouncedSearchText, isFocused], enabled: isFocused },
 	);
 
 	const searchedAttributeKeys = useMemo(
@@ -306,6 +303,7 @@ const useOptionsMenu = ({
 	return {
 		options: optionsQueryData,
 		config: optionsMenuConfig,
+		handleOptionsChange: handleRedirectWithOptionsData,
 	};
 };
 
