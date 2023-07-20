@@ -181,8 +181,7 @@ func buildMetricQuery(start, end, step int64, mq *v3.BuilderQuery, tableName str
 			" USING fingerprint" +
 			" WHERE " + samplesTableTimeFilter +
 			" GROUP BY %s" +
-			" ORDER BY %s ts" +
-			" SETTINGS optimize_aggregation_in_order = 1, distributed_group_by_no_merge = 1"
+			" ORDER BY %s ts"
 
 	// tagsWithoutLe is used to group by all tags except le
 	// This is done because we want to group by le only when we are calculating quantile
