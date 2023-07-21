@@ -2,11 +2,13 @@ import getTopLevelOperations, {
 	ServiceDataProps,
 } from 'api/metrics/getTopLevelOperations';
 import { ActiveElement, Chart, ChartData, ChartEvent } from 'chart.js';
+import { FeatureKeys } from 'constants/features';
 import { QueryParams } from 'constants/query';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import ROUTES from 'constants/routes';
 import { routeConfig } from 'container/SideNav/config';
 import { getQueryString } from 'container/SideNav/helper';
+import useFeatureFlag from 'hooks/useFeatureFlag';
 import useResourceAttribute from 'hooks/useResourceAttribute';
 import {
 	convertRawQueriesToTraceSelectedTags,
@@ -30,10 +32,10 @@ import {
 	errorPercentage,
 	operationPerSec,
 } from '../MetricsPageQueries/OverviewQueries';
-import { Col, Row } from '../styles';
+import { Card, Col, Row } from '../styles';
 import ServiceOverview from './Overview/ServiceOverview';
 import TopLevelOperation from './Overview/TopLevelOperations';
-// import TopOperation from './Overview/TopOperation';
+import TopOperation from './Overview/TopOperation';
 import TopOperationMetrics from './Overview/TopOperationMetrics';
 import { Button } from './styles';
 import { IServiceName } from './types';
@@ -55,6 +57,8 @@ function Application(): JSX.Element {
 		() => (convertRawQueriesToTraceSelectedTags(queries) as Tags[]) || [],
 		[queries],
 	);
+	const isSpanMetricEnabled = useFeatureFlag(FeatureKeys.USE_SPAN_METRICS)
+		?.active;
 
 	const handleSetTimeStamp = useCallback((selectTime: number) => {
 		setSelectedTimeStamp(selectTime);
@@ -243,8 +247,9 @@ function Application(): JSX.Element {
 				</Col>
 
 				<Col span={12}>
-					{/* <TopOperation /> */}
-					<TopOperationMetrics />
+					<Card>
+						{isSpanMetricEnabled ? <TopOperationMetrics /> : <TopOperation />}
+					</Card>
 				</Col>
 			</Row>
 		</>

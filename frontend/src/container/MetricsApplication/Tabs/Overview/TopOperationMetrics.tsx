@@ -1,3 +1,4 @@
+import Spinner from 'components/Spinner';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { getWidgetQueryBuilder } from 'container/MetricsApplication/MetricsApplication.factory';
 import { topOperationQueryFactory } from 'container/MetricsApplication/MetricsPageQueries/TopOperationQueryFactory';
@@ -49,7 +50,7 @@ function TopOperationMetrics(): JSX.Element {
 		[keyOperationWidget],
 	);
 
-	const queryResponse = useGetQueryRange(
+	const { data, isLoading } = useGetQueryRange(
 		{
 			selectedTime: keyOperationWidget?.timePreferance,
 			graphType: keyOperationWidget?.panelTypes,
@@ -74,10 +75,10 @@ function TopOperationMetrics(): JSX.Element {
 		},
 	);
 
-	console.log('QueryResponse', updatedQuery);
+	const queryTableData = data?.payload.data.newResult.data.result || [];
 
-	if (queryResponse.isLoading && queryResponse.data === undefined) {
-		return <div>Loading...</div>;
+	if (isLoading) {
+		return <Spinner size="large" tip="Loading..." height="40vh" />;
 	}
 
 	if (errorMessage) {
@@ -87,8 +88,8 @@ function TopOperationMetrics(): JSX.Element {
 	return (
 		<QueryTable
 			query={updatedQuery}
-			queryTableData={queryResponse.data?.payload.data.newResult.data.result || []}
-			loading={queryResponse.isLoading}
+			queryTableData={queryTableData}
+			loading={isLoading}
 		/>
 	);
 }
