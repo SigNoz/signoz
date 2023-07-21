@@ -60,6 +60,7 @@ function GridCardGraph({
 	allowDelete,
 	allowClone,
 	allowEdit,
+	isQueryEnabled,
 }: GridCardGraphProps): JSX.Element {
 	const { ref: graphRef, inView: isGraphVisible } = useInView({
 		threshold: 0,
@@ -115,7 +116,7 @@ function GridCardGraph({
 				variables,
 			],
 			keepPreviousData: true,
-			enabled: isGraphVisible && !isEmptyWidget,
+			enabled: isGraphVisible && !isEmptyWidget && isQueryEnabled,
 			refetchOnMount: false,
 			onError: (error) => {
 				setErrorMessage(error.message);
@@ -287,7 +288,7 @@ function GridCardGraph({
 		);
 	}
 
-	if (prevChartDataSetRef?.labels === undefined && queryResponse.isLoading) {
+	if (queryResponse.status === 'loading' || queryResponse.status === 'idle') {
 		return (
 			<span ref={graphRef}>
 				{!isEmpty(widget) && prevChartDataSetRef?.labels ? (
@@ -399,6 +400,7 @@ interface GridCardGraphProps extends DispatchProps {
 	allowDelete?: boolean;
 	allowClone?: boolean;
 	allowEdit?: boolean;
+	isQueryEnabled?: boolean;
 }
 
 GridCardGraph.defaultProps = {
@@ -407,6 +409,7 @@ GridCardGraph.defaultProps = {
 	allowDelete: true,
 	allowClone: true,
 	allowEdit: true,
+	isQueryEnabled: true,
 };
 
 const mapDispatchToProps = (
