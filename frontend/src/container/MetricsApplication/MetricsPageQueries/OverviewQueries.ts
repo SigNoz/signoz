@@ -227,7 +227,7 @@ export const errorPercentage = ({
 	const a = getQueryBuilderQuerieswithFormula({
 		autocompleteData,
 		additionalItems,
-		legend: GraphTitle.ERROR_PERCENTAGE,
+		legends: [GraphTitle.ERROR_PERCENTAGE],
 		disabled: [true, true],
 		expression: FORMULA.ERROR_PERCENTAGE,
 		legendFormula: GraphTitle.ERROR_PERCENTAGE,

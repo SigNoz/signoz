@@ -104,7 +104,7 @@ export const databaseCallsAvgDuration = ({
 	return getQueryBuilderQuerieswithFormula({
 		autocompleteData,
 		additionalItems,
-		legend: '',
+		legends: ['', ''],
 		disabled: [true, true],
 		expression: FORMULA.DATABASE_CALLS_AVG_DURATION,
 		legendFormula: 'Average Duration',

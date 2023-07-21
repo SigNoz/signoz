@@ -95,7 +95,7 @@ export const externalCallErrorPercent = ({
 	return getQueryBuilderQuerieswithFormula({
 		autocompleteData,
 		additionalItems,
-		legend,
+		legends: [legend, legend],
 		groupBy,
 		disabled,
 		expression,
@@ -156,7 +156,7 @@ export const externalCallDuration = ({
 	return getQueryBuilderQuerieswithFormula({
 		autocompleteData,
 		additionalItems,
-		legend,
+		legends: [legend, legend],
 		disabled,
 		expression,
 		legendFormula,
@@ -256,7 +256,7 @@ export const externalCallDurationByAddress = ({
 	return getQueryBuilderQuerieswithFormula({
 		autocompleteData,
 		additionalItems,
-		legend,
+		legends: [legend, legend],
 		groupBy,
 		disabled,
 		expression,

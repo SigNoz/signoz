@@ -64,7 +64,7 @@ export const getQueryBuilderQueries = ({
 export const getQueryBuilderQuerieswithFormula = ({
 	autocompleteData,
 	additionalItems,
-	legend,
+	legends,
 	groupBy = [],
 	disabled,
 	expression,
@@ -84,7 +84,7 @@ export const getQueryBuilderQuerieswithFormula = ({
 		aggregateOperator: aggregateOperators[index],
 		disabled: disabled[index],
 		groupBy,
-		legend,
+		legend: legends[index],
 		aggregateAttribute: autocompleteData[index],
 		queryName: alphabet[index],
 		expression: alphabet[index],
@@ -114,7 +114,7 @@ interface BuilderQueriesProps {
 
 interface BuilderQuerieswithFormulaProps {
 	autocompleteData: BaseAutocompleteData[];
-	legend: string;
+	legends: string[];
 	disabled: boolean[];
 	groupBy?: BaseAutocompleteData[];
 	expression: string;
