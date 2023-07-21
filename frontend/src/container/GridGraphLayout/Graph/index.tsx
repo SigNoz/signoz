@@ -288,10 +288,7 @@ function GridCardGraph({
 		);
 	}
 
-	if (
-		prevChartDataSetRef?.labels === undefined &&
-		(queryResponse.status === 'loading' || queryResponse.status === 'idle')
-	) {
+	if (queryResponse.status === 'loading' || queryResponse.status === 'idle') {
 		return (
 			<span ref={graphRef}>
 				{!isEmpty(widget) && prevChartDataSetRef?.labels ? (
