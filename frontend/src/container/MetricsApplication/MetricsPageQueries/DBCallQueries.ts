@@ -105,7 +105,7 @@ export const databaseCallsAvgDuration = ({
 		autocompleteData,
 		additionalItems,
 		legend: '',
-		disabled: true,
+		disabled: [true, true],
 		expression: FORMULA.DATABASE_CALLS_AVG_DURATION,
 		legendFormula: 'Average Duration',
 		aggregateOperators: [

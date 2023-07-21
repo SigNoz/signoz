@@ -81,7 +81,7 @@ export const externalCallErrorPercent = ({
 	];
 	const legendFormula = legend;
 	const expression = FORMULA.ERROR_PERCENTAGE;
-	const disabled = true;
+	const disabled = [true, true];
 	const autocompleteData: BaseAutocompleteData[] = [
 		autocompleteDataA,
 		autocompleteDataB,
@@ -127,7 +127,7 @@ export const externalCallDuration = ({
 	const expression = FORMULA.DATABASE_CALLS_AVG_DURATION;
 	const legendFormula = 'Average Duration';
 	const legend = '';
-	const disabled = true;
+	const disabled = [true, true];
 	const additionalItemsA: TagFilterItem[] = [
 		{
 			id: '',
@@ -227,7 +227,7 @@ export const externalCallDurationByAddress = ({
 	};
 	const expression = FORMULA.DATABASE_CALLS_AVG_DURATION;
 	const legendFormula = legend;
-	const disabled = true;
+	const disabled = [true, true];
 	const additionalItemsA: TagFilterItem[] = [
 		{
 			id: '',

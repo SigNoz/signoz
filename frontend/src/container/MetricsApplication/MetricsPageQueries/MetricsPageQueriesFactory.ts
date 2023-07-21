@@ -82,7 +82,7 @@ export const getQueryBuilderQuerieswithFormula = ({
 	queryData: autocompleteData.map((_, index) => ({
 		...initialQueryBuilderFormValuesMap.metrics,
 		aggregateOperator: aggregateOperators[index],
-		disabled,
+		disabled: disabled[index],
 		groupBy,
 		legend,
 		aggregateAttribute: autocompleteData[index],
@@ -115,7 +115,7 @@ interface BuilderQueriesProps {
 interface BuilderQuerieswithFormulaProps {
 	autocompleteData: BaseAutocompleteData[];
 	legend: string;
-	disabled: boolean;
+	disabled: boolean[];
 	groupBy?: BaseAutocompleteData[];
 	expression: string;
 	legendFormula: string;

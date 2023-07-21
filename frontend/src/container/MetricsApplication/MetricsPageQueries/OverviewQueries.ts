@@ -228,7 +228,7 @@ export const errorPercentage = ({
 		autocompleteData,
 		additionalItems,
 		legend: GraphTitle.ERROR_PERCENTAGE,
-		disabled: true,
+		disabled: [true, true],
 		expression: FORMULA.ERROR_PERCENTAGE,
 		legendFormula: GraphTitle.ERROR_PERCENTAGE,
 		aggregateOperators: [
