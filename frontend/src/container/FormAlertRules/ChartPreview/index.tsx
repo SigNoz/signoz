@@ -120,6 +120,7 @@ function ChartPreview({
 					isStacked
 					name={name || 'Chart Preview'}
 					staticLine={staticLine}
+					panelData={queryResponse.data?.payload.data.newResult.data.result || []}
 				/>
 			)}
 		</ChartContainer>

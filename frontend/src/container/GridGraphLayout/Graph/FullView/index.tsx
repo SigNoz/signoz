@@ -85,7 +85,7 @@ function FullView({
 	return (
 		<>
 			{fullViewOptions && (
-				<TimeContainer>
+				<TimeContainer panelType={widget.panelTypes}>
 					<TimePreference
 						selectedTime={selectedTime}
 						setSelectedTime={setSelectedTime}
@@ -111,6 +111,7 @@ function FullView({
 				name={name}
 				yAxisUnit={yAxisUnit}
 				onDragSelect={onDragSelect}
+				panelData={response.data?.payload.data.newResult.data.result || []}
 			/>
 		</>
 	);

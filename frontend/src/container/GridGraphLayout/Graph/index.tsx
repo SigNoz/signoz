@@ -281,6 +281,7 @@ function GridCardGraph({
 							name={name}
 							yAxisUnit={yAxisUnit}
 							onClickHandler={onClickHandler}
+							panelData={[]}
 						/>
 					</>
 				)}
@@ -317,6 +318,7 @@ function GridCardGraph({
 							name={name}
 							yAxisUnit={yAxisUnit}
 							onClickHandler={onClickHandler}
+							panelData={[]}
 						/>
 					</>
 				) : (
@@ -373,6 +375,7 @@ function GridCardGraph({
 					yAxisUnit={yAxisUnit}
 					onDragSelect={onDragSelect}
 					onClickHandler={onClickHandler}
+					panelData={queryResponse.data?.payload.data.newResult.data.result || []}
 				/>
 			)}
 

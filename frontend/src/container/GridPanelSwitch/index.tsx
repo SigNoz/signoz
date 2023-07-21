@@ -1,5 +1,6 @@
 import { PANEL_TYPES_COMPONENT_MAP } from 'constants/panelTypes';
 import { PANEL_TYPES } from 'constants/queryBuilder';
+import { GRID_TABLE_CONFIG } from 'container/GridTableComponent/config';
 import { FC, memo, useMemo } from 'react';
 
 import { GridPanelSwitchProps, PropsTypePropsMap } from './types';
@@ -15,6 +16,7 @@ function GridPanelSwitch({
 	yAxisUnit,
 	staticLine,
 	onDragSelect,
+	panelData,
 }: GridPanelSwitchProps): JSX.Element | null {
 	const currentProps: PropsTypePropsMap = useMemo(() => {
 		const result: PropsTypePropsMap = {
@@ -34,7 +36,7 @@ function GridPanelSwitch({
 				data,
 				yAxisUnit,
 			},
-			[PANEL_TYPES.TABLE]: null,
+			[PANEL_TYPES.TABLE]: { ...GRID_TABLE_CONFIG, data: panelData },
 			[PANEL_TYPES.LIST]: null,
 			[PANEL_TYPES.TRACE]: null,
 			[PANEL_TYPES.EMPTY_WIDGET]: null,
@@ -51,12 +53,16 @@ function GridPanelSwitch({
 		staticLine,
 		title,
 		yAxisUnit,
+		panelData,
 	]);
 
 	const Component = PANEL_TYPES_COMPONENT_MAP[panelType] as FC<
 		PropsTypePropsMap[typeof panelType]
 	>;
-	const componentProps = currentProps[panelType];
+	const componentProps = useMemo(() => currentProps[panelType], [
+		panelType,
+		currentProps,
+	]);
 
 	if (!Component || !componentProps) return null;
 
