@@ -4,13 +4,15 @@ import { Button, Typography } from 'antd';
 import { ColumnsType } from 'antd/es/table';
 import dayjs from 'dayjs';
 import dompurify from 'dompurify';
+import useCopyLogLink from 'hooks/useCopyLogLink';
 import { FlatLogData } from 'lib/logs/flatLogData';
-import { useCallback, useMemo } from 'react';
+import { useMemo } from 'react';
 
 import { ExpandIconWrapper } from '../RawLogView/styles';
 import { defaultCellStyle, defaultTableStyle } from './config';
 import { TableBodyContent } from './styles';
 import {
+	ActionsColumnProps,
 	ColumnTypeRender,
 	UseTableViewProps,
 	UseTableViewResult,
@@ -18,28 +20,25 @@ import {
 
 const convert = new Convert();
 
+function ActionsColumn({ id }: ActionsColumnProps): JSX.Element {
+	const { onLogCopy } = useCopyLogLink(id);
+
+	return <Button size="small" onClick={onLogCopy} icon={<LinkOutlined />} />;
+}
+
 export const useTableView = (props: UseTableViewProps): UseTableViewResult => {
 	const {
 		logs,
 		fields,
 		linesPerRow,
 		onClickExpand,
-		onCopyLogLink,
 		appendTo = 'center',
 	} = props;
+	const { isLogsExplorerPage } = useCopyLogLink();
 
 	const flattenLogData = useMemo(() => logs.map((log) => FlatLogData(log)), [
 		logs,
 	]);
-
-	const handleCopyLink = useCallback(
-		(id: string) => {
-			if (!onCopyLogLink) return;
-
-			onCopyLogLink(id);
-		},
-		[onCopyLogLink],
-	);
 
 	const columns: ColumnsType<Record<string, unknown>> = useMemo(() => {
 		const fieldColumns: ColumnsType<Record<string, unknown>> = fields
@@ -116,34 +115,20 @@ export const useTableView = (props: UseTableViewProps): UseTableViewResult => {
 				}),
 			},
 			...(appendTo === 'end' ? fieldColumns : []),
-			...(onCopyLogLink
+			...(isLogsExplorerPage
 				? ([
 						{
 							title: 'actions',
 							dataIndex: 'actions',
 							key: 'actions',
 							render: (_, { id }): ColumnTypeRender<Record<string, unknown>> => ({
-								children: (
-									<Button
-										size="small"
-										onClick={(): void => handleCopyLink(id as string)}
-										icon={<LinkOutlined />}
-									/>
-								),
+								children: <ActionsColumn id={id as string} />,
 							}),
 						},
 				  ] as ColumnsType<Record<string, unknown>>)
 				: []),
 		];
-	}, [
-		logs,
-		fields,
-		appendTo,
-		linesPerRow,
-		onClickExpand,
-		onCopyLogLink,
-		handleCopyLink,
-	]);
+	}, [logs, fields, appendTo, linesPerRow, isLogsExplorerPage, onClickExpand]);
 
 	return { columns, dataSource: flattenLogData };
 };

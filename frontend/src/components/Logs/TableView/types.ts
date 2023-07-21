@@ -20,5 +20,8 @@ export type UseTableViewResult = {
 
 export type UseTableViewProps = {
 	appendTo?: 'center' | 'end';
-	onCopyLogLink?: (id: string) => void;
 } & LogsTableViewProps;
+
+export type ActionsColumnProps = {
+	id: string;
+};

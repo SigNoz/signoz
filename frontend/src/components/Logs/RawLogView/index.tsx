@@ -4,9 +4,10 @@ import Convert from 'ansi-to-html';
 import { Tooltip } from 'antd';
 import dayjs from 'dayjs';
 import dompurify from 'dompurify';
+import useCopyLogLink from 'hooks/useCopyLogLink';
 // hooks
 import { useIsDarkMode } from 'hooks/useDarkMode';
-import { MouseEventHandler, useCallback, useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 // interfaces
 import { ILog } from 'types/api/logs/log';
 
@@ -24,11 +25,12 @@ interface RawLogViewProps {
 	data: ILog;
 	linesPerRow: number;
 	onClickExpand: (log: ILog) => void;
-	onCopyLogLink?: (id: string) => void;
 }
 
 function RawLogView(props: RawLogViewProps): JSX.Element {
-	const { data, linesPerRow, onClickExpand, onCopyLogLink } = props;
+	const { data, linesPerRow, onClickExpand } = props;
+
+	const { isLogsExplorerPage, onLogCopy } = useCopyLogLink(data.id);
 
 	const [hasCopyLink, setHasCopyLink] = useState(false);
 
@@ -47,20 +49,10 @@ function RawLogView(props: RawLogViewProps): JSX.Element {
 	}, [onClickExpand, data]);
 
 	const handleMouseAction = useCallback(() => {
+		if (!isLogsExplorerPage) return;
+
 		setHasCopyLink(!hasCopyLink);
-	}, [hasCopyLink]);
-
-	const handleCopyLink: MouseEventHandler<HTMLElement> = useCallback(
-		(event) => {
-			event.preventDefault();
-			event.stopPropagation();
-
-			if (!onCopyLogLink) return;
-
-			onCopyLogLink(data.id);
-		},
-		[data.id, onCopyLogLink],
-	);
+	}, [isLogsExplorerPage, hasCopyLink]);
 
 	const html = useMemo(
 		() => ({
@@ -81,7 +73,7 @@ function RawLogView(props: RawLogViewProps): JSX.Element {
 			align="middle"
 			$isDarkMode={isDarkMode}
 			// eslint-disable-next-line react/jsx-props-no-spreading
-			{...(onCopyLogLink && { ...mouseActions })}
+			{...mouseActions}
 		>
 			<ExpandIconWrapper flex="30px">
 				<ExpandAltOutlined />
@@ -90,19 +82,11 @@ function RawLogView(props: RawLogViewProps): JSX.Element {
 
 			{hasCopyLink && (
 				<Tooltip title="Copy Link">
-					<CopyButton
-						size="small"
-						onClick={handleCopyLink}
-						icon={<LinkOutlined />}
-					/>
+					<CopyButton size="small" onClick={onLogCopy} icon={<LinkOutlined />} />
 				</Tooltip>
 			)}
 		</RawLogViewContainer>
 	);
 }
-
-RawLogView.defaultProps = {
-	onCopyLogLink: undefined,
-};
 
 export default RawLogView;

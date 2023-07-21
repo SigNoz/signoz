@@ -4,18 +4,14 @@ import ListLogView from 'components/Logs/ListLogView';
 import RawLogView from 'components/Logs/RawLogView';
 import Spinner from 'components/Spinner';
 import { LOCALSTORAGE } from 'constants/localStorage';
-import { QueryParams } from 'constants/query';
 import ExplorerControlPanel from 'container/ExplorerControlPanel';
 import { Heading } from 'container/LogsTable/styles';
 import { useOptionsMenu } from 'container/OptionsMenu';
 import { contentStyle } from 'container/Trace/Search/config';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
+import useCopyLogLink from 'hooks/useCopyLogLink';
 import useFontFaceObserver from 'hooks/useFontObserver';
-import { useNotifications } from 'hooks/useNotifications';
-import useUrlQuery from 'hooks/useUrlQuery';
-import useUrlQueryData from 'hooks/useUrlQueryData';
 import { memo, useCallback, useEffect, useMemo, useRef } from 'react';
-import { useCopyToClipboard } from 'react-use';
 import { Virtuoso, VirtuosoHandle } from 'react-virtuoso';
 // interfaces
 import { ILog } from 'types/api/logs/log';
@@ -33,7 +29,6 @@ function Footer(): JSX.Element {
 function LogsExplorerList({
 	isLoading,
 	currentStagedQueryData,
-	copiedTimeRange,
 	logs,
 	onOpenDetailedView,
 	onEndReached,
@@ -41,20 +36,9 @@ function LogsExplorerList({
 	onAddToQuery,
 }: LogsExplorerListProps): JSX.Element {
 	const ref = useRef<VirtuosoHandle>(null);
-	const urlQuery = useUrlQuery();
-
-	const { queryData: activeLogId } = useUrlQueryData(
-		QueryParams.activeLogId,
-		null,
-	);
-	const activeLogIndex = useMemo(
-		() => logs.findIndex(({ id }) => id === activeLogId),
-		[logs, activeLogId],
-	);
-
 	const { initialDataSource } = useQueryBuilder();
-	const [, setCopy] = useCopyToClipboard();
-	const { notifications } = useNotifications();
+
+	const { activeLogId } = useCopyLogLink();
 
 	const { options, config } = useOptionsMenu({
 		storageKey: LOCALSTORAGE.LOGS_LIST_OPTIONS,
@@ -62,6 +46,11 @@ function LogsExplorerList({
 		aggregateOperator:
 			currentStagedQueryData?.aggregateOperator || StringOperators.NOOP,
 	});
+
+	const activeLogIndex = useMemo(
+		() => logs.findIndex(({ id }) => id === activeLogId),
+		[logs, activeLogId],
+	);
 
 	useFontFaceObserver(
 		[
@@ -81,27 +70,6 @@ function LogsExplorerList({
 		[options],
 	);
 
-	const handleCopyLogLink = useCallback(
-		(id: string) => {
-			const timeRange = JSON.stringify(copiedTimeRange);
-
-			urlQuery.delete(QueryParams.activeLogId);
-			urlQuery.delete(QueryParams.timeRange);
-			urlQuery.set(QueryParams.activeLogId, `"${id}"`);
-			urlQuery.set(QueryParams.timeRange, timeRange);
-
-			const link = `${window.location.origin}${
-				window.location.pathname
-			}?${urlQuery.toString()}`;
-
-			setCopy(link);
-			notifications.success({
-				message: 'Copied to clipboard',
-			});
-		},
-		[notifications, copiedTimeRange, urlQuery, setCopy],
-	);
-
 	const getItemContent = useCallback(
 		(_: number, log: ILog): JSX.Element => {
 			if (options.format === 'raw') {
@@ -111,7 +79,6 @@ function LogsExplorerList({
 						data={log}
 						linesPerRow={options.maxLines}
 						onClickExpand={onExpand}
-						onCopyLogLink={handleCopyLogLink}
 					/>
 				);
 			}
@@ -123,7 +90,6 @@ function LogsExplorerList({
 					selectedFields={selectedFields}
 					onOpenDetailedView={onOpenDetailedView}
 					onAddToQuery={onAddToQuery}
-					onCopyLogLink={handleCopyLogLink}
 				/>
 			);
 		},
@@ -134,7 +100,6 @@ function LogsExplorerList({
 			onOpenDetailedView,
 			onAddToQuery,
 			onExpand,
-			handleCopyLogLink,
 		],
 	);
 
@@ -164,7 +129,6 @@ function LogsExplorerList({
 						fields: selectedFields,
 						linesPerRow: options.maxLines,
 						onClickExpand: onExpand,
-						onCopyLogLink: handleCopyLogLink,
 						appendTo: 'end',
 					}}
 					infitiyTableProps={{ onEndReached }}
@@ -194,7 +158,6 @@ function LogsExplorerList({
 		getItemContent,
 		selectedFields,
 		onExpand,
-		handleCopyLogLink,
 	]);
 
 	return (
