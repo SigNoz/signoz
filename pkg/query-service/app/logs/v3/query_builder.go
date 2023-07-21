@@ -146,26 +146,14 @@ func buildLogsTimeSeriesFilterQuery(fs *v3.FilterSet, groupBy []v3.AttributeKey)
 
 	// add group by conditions to filter out log lines which doesn't have the key
 	for _, attr := range groupBy {
-		if attr.IsColumn {
-			var defaultValue string
-			// if it is a static field get the corresonding default data type.
-			if _, ok := constants.StaticFieldsLogsV3[attr.Key]; ok {
-				// skip for top level static fields as the protocol handles them.
-				// i.e severity_number 0 means it is unspecified
-				// i.e trace_flags 0 means it is unspecified
-				continue
-			} else if val, ok := constants.LogsDataTypeDefaultValue[string(attr.DataType)]; ok {
-				defaultValue = val
-			} else {
-				return "", fmt.Errorf("data type not valid: %s", attr.DataType)
-			}
-			filter := fmt.Sprintf("%s != %s", attr.Key, defaultValue)
-			conditions = append(conditions, filter)
-		} else {
-			columnType := getClickhouseLogsColumnType(attr.Type)
-			columnDataType := getClickhouseLogsColumnDataType(attr.DataType)
-			conditions = append(conditions, fmt.Sprintf("indexOf(%s_%s_key, '%s') > 0", columnType, columnDataType, attr.Key))
+		filter, skip, err := getExistsFilter(attr)
+		if err != nil {
+			return "", err
 		}
+		if skip {
+			continue
+		}
+		conditions = append(conditions, filter)
 	}
 
 	queryString := strings.Join(conditions, " AND ")
@@ -174,6 +162,27 @@ func buildLogsTimeSeriesFilterQuery(fs *v3.FilterSet, groupBy []v3.AttributeKey)
 		queryString = " AND " + queryString
 	}
 	return queryString, nil
+}
+
+func getExistsFilter(attr v3.AttributeKey) (filter string, skip bool, err error) {
+	if attr.IsColumn {
+		var defaultValue string
+		if _, ok := constants.StaticFieldsLogsV3[attr.Key]; ok {
+			// for top level fields the defaults are decided by the protocol
+			return "", true, nil
+		} else if val, ok := constants.LogsDataTypeDefaultValue[string(attr.DataType)]; ok {
+			defaultValue = val
+		} else {
+			return "", false, fmt.Errorf("data type not valid: %s", attr.DataType)
+		}
+		filter := fmt.Sprintf("%s != %s", attr.Key, defaultValue)
+		return filter, false, nil
+	}
+
+	columnType := getClickhouseLogsColumnType(attr.Type)
+	columnDataType := getClickhouseLogsColumnDataType(attr.DataType)
+	filter = fmt.Sprintf("has(%s_%s_key, '%s')", columnType, columnDataType, attr.Key)
+	return filter, false, nil
 }
 
 // getZerosForEpochNano returns the number of zeros to be appended to the epoch time for converting it to nanoseconds
@@ -242,6 +251,18 @@ func buildLogsQuery(panelType v3.PanelType, start, end, step int64, mq *v3.Build
 		orderBy = " order by " + orderBy
 	}
 
+	// if any aggregation operation is performed we need to ignore the default values added
+	if mq.AggregateAttribute.Key != "" {
+		// this filter is added so that default values are not considered
+		filter, skip, err := getExistsFilter(mq.AggregateAttribute)
+		if err != nil {
+			return "", err
+		}
+		if !skip {
+			filterSubQuery = fmt.Sprintf("%s AND %s", filterSubQuery, filter)
+		}
+	}
+
 	if graphLimitQtype == constants.SecondQueryGraphLimit {
 		filterSubQuery = filterSubQuery + " AND " + fmt.Sprintf("(%s) IN (", getSelectKeys(mq.AggregateOperator, mq.GroupBy)) + "%s)"
 	}
@@ -282,12 +303,6 @@ func buildLogsQuery(panelType v3.PanelType, start, end, step int64, mq *v3.Build
 		query := fmt.Sprintf(queryTmpl, op, filterSubQuery, groupBy, having, orderBy)
 		return query, nil
 	case v3.AggregateOperatorCount:
-		if mq.AggregateAttribute.Key != "" {
-			columnType := getClickhouseLogsColumnType(mq.AggregateAttribute.Type)
-			columnDataType := getClickhouseLogsColumnDataType(mq.AggregateAttribute.DataType)
-			filterSubQuery = fmt.Sprintf("%s AND has(%s_%s_key, '%s')", filterSubQuery, columnType, columnDataType, mq.AggregateAttribute.Key)
-		}
-
 		op := "toFloat64(count(*))"
 		query := fmt.Sprintf(queryTmpl, op, filterSubQuery, groupBy, having, orderBy)
 		return query, nil
