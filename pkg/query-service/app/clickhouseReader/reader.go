@@ -4504,3 +4504,46 @@ func (r *ClickHouseReader) GetSpanAttributeKeys(ctx context.Context) (map[string
 	}
 	return response, nil
 }
+
+func (r *ClickHouseReader) LiveTailLogsV3(ctx context.Context, query string, timestampStart uint64, idStart string, client *v3.LogsLiveTailClient) {
+	if timestampStart == 0 {
+		timestampStart = uint64(time.Now().UnixNano())
+	}
+
+	ticker := time.NewTicker(time.Duration(r.liveTailRefreshSeconds) * time.Second)
+	defer ticker.Stop()
+	for {
+		select {
+		case <-ctx.Done():
+			done := true
+			client.Done <- &done
+			zap.S().Debug("closing go routine : " + client.Name)
+			return
+		case <-ticker.C:
+			// get the new 100 logs as anything more older won't make sense
+			tmpQuery := fmt.Sprintf("timestamp >='%d'", timestampStart)
+			if idStart != "" {
+				tmpQuery = fmt.Sprintf("%s AND id > '%s'", tmpQuery, idStart)
+			}
+			tmpQuery = fmt.Sprintf(query, tmpQuery)
+			// the reason we are doing desc is that we need the latest logs first
+			tmpQuery = fmt.Sprintf("%s order by timestamp desc, id desc limit 100", tmpQuery)
+
+			// using the old structure since we can directly read it to the struct as use it.
+			response := []model.GetLogsResponse{}
+			err := r.db.Select(ctx, &response, tmpQuery)
+			if err != nil {
+				zap.S().Error(err)
+				client.Error <- err
+				return
+			}
+			for i := len(response) - 1; i >= 0; i-- {
+				client.Logs <- &response[i]
+				if i == 0 {
+					timestampStart = response[i].Timestamp
+					idStart = response[i].ID
+				}
+			}
+		}
+	}
+}
