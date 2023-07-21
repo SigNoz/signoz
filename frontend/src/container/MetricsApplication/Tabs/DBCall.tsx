@@ -1,4 +1,5 @@
 import { Col } from 'antd';
+import { PANEL_TYPES } from 'constants/queryBuilder';
 import Graph from 'container/GridGraphLayout/Graph/';
 import {
 	databaseCallsAvgDuration,
@@ -50,8 +51,8 @@ function DBCall(): JSX.Element {
 
 	const databaseCallsRPSWidget = useMemo(
 		() =>
-			getWidgetQueryBuilder(
-				{
+			getWidgetQueryBuilder({
+				query: {
 					queryType: EQueryType.QUERY_BUILDER,
 					promql: [],
 					builder: databaseCallsRPS({
@@ -62,14 +63,15 @@ function DBCall(): JSX.Element {
 					clickhouse_sql: [],
 					id: uuid(),
 				},
-				GraphTitle.DATABASE_CALLS_RPS,
-			),
+				title: GraphTitle.DATABASE_CALLS_RPS,
+				panelTypes: PANEL_TYPES.TIME_SERIES,
+			}),
 		[servicename, tagFilterItems],
 	);
 	const databaseCallsAverageDurationWidget = useMemo(
 		() =>
-			getWidgetQueryBuilder(
-				{
+			getWidgetQueryBuilder({
+				query: {
 					queryType: EQueryType.QUERY_BUILDER,
 					promql: [],
 					builder: databaseCallsAvgDuration({
@@ -79,8 +81,9 @@ function DBCall(): JSX.Element {
 					clickhouse_sql: [],
 					id: uuid(),
 				},
-				GraphTitle.DATABASE_CALLS_AVG_DURATION,
-			),
+				title: GraphTitle.DATABASE_CALLS_AVG_DURATION,
+				panelTypes: PANEL_TYPES.TIME_SERIES,
+			}),
 		[servicename, tagFilterItems],
 	);
 

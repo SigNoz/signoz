@@ -3,6 +3,7 @@ import getTopLevelOperations, {
 } from 'api/metrics/getTopLevelOperations';
 import { ActiveElement, Chart, ChartData, ChartEvent } from 'chart.js';
 import { QueryParams } from 'constants/query';
+import { PANEL_TYPES } from 'constants/queryBuilder';
 import ROUTES from 'constants/routes';
 import { routeConfig } from 'container/SideNav/config';
 import { getQueryString } from 'container/SideNav/helper';
@@ -32,7 +33,8 @@ import {
 import { Col, Row } from '../styles';
 import ServiceOverview from './Overview/ServiceOverview';
 import TopLevelOperation from './Overview/TopLevelOperations';
-import TopOperation from './Overview/TopOperation';
+// import TopOperation from './Overview/TopOperation';
+import TopOperationMetrics from './Overview/TopOperationMetrics';
 import { Button } from './styles';
 import { IServiceName } from './types';
 import {
@@ -104,8 +106,8 @@ function Application(): JSX.Element {
 
 	const operationPerSecWidget = useMemo(
 		() =>
-			getWidgetQueryBuilder(
-				{
+			getWidgetQueryBuilder({
+				query: {
 					queryType: EQueryType.QUERY_BUILDER,
 					promql: [],
 					builder: operationPerSec({
@@ -116,15 +118,16 @@ function Application(): JSX.Element {
 					clickhouse_sql: [],
 					id: uuid(),
 				},
-				GraphTitle.RATE_PER_OPS,
-			),
+				title: GraphTitle.RATE_PER_OPS,
+				panelTypes: PANEL_TYPES.TIME_SERIES,
+			}),
 		[servicename, tagFilterItems, topLevelOperationsRoute],
 	);
 
 	const errorPercentageWidget = useMemo(
 		() =>
-			getWidgetQueryBuilder(
-				{
+			getWidgetQueryBuilder({
+				query: {
 					queryType: EQueryType.QUERY_BUILDER,
 					promql: [],
 					builder: errorPercentage({
@@ -135,8 +138,9 @@ function Application(): JSX.Element {
 					clickhouse_sql: [],
 					id: uuid(),
 				},
-				GraphTitle.ERROR_PERCENTAGE,
-			),
+				title: GraphTitle.ERROR_PERCENTAGE,
+				panelTypes: PANEL_TYPES.TIME_SERIES,
+			}),
 		[servicename, tagFilterItems, topLevelOperationsRoute],
 	);
 
@@ -239,7 +243,8 @@ function Application(): JSX.Element {
 				</Col>
 
 				<Col span={12}>
-					<TopOperation />
+					{/* <TopOperation /> */}
+					<TopOperationMetrics />
 				</Col>
 			</Row>
 		</>

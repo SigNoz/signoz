@@ -224,7 +224,7 @@ export const errorPercentage = ({
 		additionalItemsB,
 	];
 
-	const a = getQueryBuilderQuerieswithFormula({
+	return getQueryBuilderQuerieswithFormula({
 		autocompleteData,
 		additionalItems,
 		legends: [GraphTitle.ERROR_PERCENTAGE],
@@ -237,10 +237,6 @@ export const errorPercentage = ({
 		],
 		dataSource: DataSource.METRICS,
 	});
-
-	console.log('a', a);
-
-	return a;
 };
 
 export interface OperationPerSecProps {
