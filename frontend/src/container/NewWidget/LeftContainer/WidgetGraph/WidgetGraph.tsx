@@ -74,6 +74,9 @@ function WidgetGraph({
 			panelType={selectedGraph}
 			name={widgetId || 'legend_widget'}
 			yAxisUnit={yAxisUnit}
+			panelData={
+				getWidgetQueryRange.data?.payload.data.newResult.data.result || []
+			}
 		/>
 	);
 }
