@@ -4,6 +4,7 @@ import ListLogView from 'components/Logs/ListLogView';
 import RawLogView from 'components/Logs/RawLogView';
 import Spinner from 'components/Spinner';
 import { LOCALSTORAGE } from 'constants/localStorage';
+import { QueryParams } from 'constants/query';
 import ExplorerControlPanel from 'container/ExplorerControlPanel';
 import { Heading } from 'container/LogsTable/styles';
 import { useOptionsMenu } from 'container/OptionsMenu';
@@ -11,6 +12,7 @@ import { contentStyle } from 'container/Trace/Search/config';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import useFontFaceObserver from 'hooks/useFontObserver';
 import { useNotifications } from 'hooks/useNotifications';
+import useUrlQuery from 'hooks/useUrlQuery';
 import useUrlQueryData from 'hooks/useUrlQueryData';
 import { memo, useCallback, useEffect, useMemo, useRef } from 'react';
 import { useCopyToClipboard } from 'react-use';
@@ -19,7 +21,6 @@ import { Virtuoso, VirtuosoHandle } from 'react-virtuoso';
 import { ILog } from 'types/api/logs/log';
 import { DataSource, StringOperators } from 'types/common/queryBuilder';
 
-import { LogLinkQueryParams } from './constants';
 import InfinityTableView from './InfinityTableView';
 import { LogsExplorerListProps } from './LogsExplorerList.interfaces';
 import { InfinityWrapperStyled } from './styles';
@@ -40,9 +41,10 @@ function LogsExplorerList({
 	onAddToQuery,
 }: LogsExplorerListProps): JSX.Element {
 	const ref = useRef<VirtuosoHandle>(null);
+	const urlQuery = useUrlQuery();
 
 	const { queryData: activeLogId } = useUrlQueryData(
-		LogLinkQueryParams.activeLogId,
+		QueryParams.activeLogId,
 		null,
 	);
 	const activeLogIndex = useMemo(
@@ -82,23 +84,22 @@ function LogsExplorerList({
 	const handleCopyLogLink = useCallback(
 		(id: string) => {
 			const timeRange = JSON.stringify(copiedTimeRange);
-			const params = new URLSearchParams(window.location.search);
 
-			params.delete(LogLinkQueryParams.activeLogId);
-			params.delete(LogLinkQueryParams.timeRange);
-			params.set(LogLinkQueryParams.activeLogId, `"${id}"`);
-			params.set(LogLinkQueryParams.timeRange, timeRange);
+			urlQuery.delete(QueryParams.activeLogId);
+			urlQuery.delete(QueryParams.timeRange);
+			urlQuery.set(QueryParams.activeLogId, `"${id}"`);
+			urlQuery.set(QueryParams.timeRange, timeRange);
 
 			const link = `${window.location.origin}${
 				window.location.pathname
-			}?${params.toString()}`;
+			}?${urlQuery.toString()}`;
 
 			setCopy(link);
 			notifications.success({
 				message: 'Copied to clipboard',
 			});
 		},
-		[notifications, copiedTimeRange, setCopy],
+		[notifications, copiedTimeRange, urlQuery, setCopy],
 	);
 
 	const getItemContent = useCallback(

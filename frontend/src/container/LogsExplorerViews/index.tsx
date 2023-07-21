@@ -16,7 +16,6 @@ import ExportPanel from 'container/ExportPanel';
 import GoToTop from 'container/GoToTop';
 import LogsExplorerChart from 'container/LogsExplorerChart';
 import LogsExplorerList from 'container/LogsExplorerList';
-import { LogLinkQueryParams } from 'container/LogsExplorerList/constants';
 import { CopiedTimeRange } from 'container/LogsExplorerList/LogsExplorerList.interfaces';
 import LogsExplorerTable from 'container/LogsExplorerTable';
 import { GRAPH_TYPES } from 'container/NewDashboard/ComponentsSlider';
@@ -67,7 +66,7 @@ function LogsExplorerViews(): JSX.Element {
 	);
 
 	const { queryData: timeRange } = useUrlQueryData<CopiedTimeRange | null>(
-		LogLinkQueryParams.timeRange,
+		QueryParams.timeRange,
 		null,
 	);
 
