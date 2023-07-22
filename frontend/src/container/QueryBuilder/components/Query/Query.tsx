@@ -376,7 +376,10 @@ export const Query = memo(function Query({
 			</Col>
 			{!isTracePanelType && (
 				<Col span={24}>
-					<AdditionalFiltersToggler listOfAdditionalFilter={listOfAdditionalFilters}>
+					<AdditionalFiltersToggler
+						listOfAdditionalFilter={listOfAdditionalFilters}
+						hideLimit={panelType === PANEL_TYPES.LIST}
+					>
 						<Row gutter={[0, 11]} justify="space-between">
 							{renderAdditionalFilters()}
 						</Row>

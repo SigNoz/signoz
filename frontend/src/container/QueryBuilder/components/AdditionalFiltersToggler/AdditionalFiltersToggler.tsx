@@ -14,6 +14,7 @@ import {
 export const AdditionalFiltersToggler = memo(function AdditionalFiltersToggler({
 	children,
 	listOfAdditionalFilter,
+	hideLimit,
 }: AdditionalFiltersProps): JSX.Element {
 	const [isOpenedFilters, setIsOpenedFilters] = useState<boolean>(false);
 
@@ -23,7 +24,6 @@ export const AdditionalFiltersToggler = memo(function AdditionalFiltersToggler({
 
 	const filtersTexts: ReactNode = listOfAdditionalFilter.map((str, index) => {
 		const isNextLast = index + 1 === listOfAdditionalFilter.length - 1;
-
 		if (index === listOfAdditionalFilter.length - 1) {
 			return (
 				<Fragment key={str}>
