@@ -289,6 +289,27 @@ func buildLogsQuery(panelType v3.PanelType, start, end, step int64, mq *v3.Build
 	}
 }
 
+func buildLogsLiveTailQuery(mq *v3.BuilderQuery) (string, error) {
+	filterSubQuery, err := buildLogsTimeSeriesFilterQuery(mq.Filters, mq.GroupBy)
+	if err != nil {
+		return "", err
+	}
+
+	switch mq.AggregateOperator {
+	case v3.AggregateOperatorNoOp:
+		queryTmpl := constants.LogsSQLSelect + "from signoz_logs.distributed_logs where %s"
+		if len(filterSubQuery) == 0 {
+			filterSubQuery = "%s"
+		} else {
+			filterSubQuery = "%s " + filterSubQuery
+		}
+		query := fmt.Sprintf(queryTmpl, filterSubQuery)
+		return query, nil
+	default:
+		return "", fmt.Errorf("unsupported aggregate operator in live tail")
+	}
+}
+
 // groupBy returns a string of comma separated tags for group by clause
 // `ts` is always added to the group by clause
 func groupBy(panelType v3.PanelType, graphLimitQtype string, tags ...string) string {
@@ -384,26 +405,36 @@ func addOffsetToQuery(query string, offset uint64) string {
 	return fmt.Sprintf("%s OFFSET %d", query, offset)
 }
 
-func PrepareLogsQuery(start, end int64, queryType v3.QueryType, panelType v3.PanelType, mq *v3.BuilderQuery, graphLimitQtype string) (string, error) {
+type Options struct {
+	GraphLimitQtype string
+	IsLivetailQuery bool
+}
 
-	if graphLimitQtype == constants.FirstQueryGraphLimit {
+func PrepareLogsQuery(start, end int64, queryType v3.QueryType, panelType v3.PanelType, mq *v3.BuilderQuery, options Options) (string, error) {
+	if options.IsLivetailQuery {
+		query, err := buildLogsLiveTailQuery(mq)
+		if err != nil {
+			return "", err
+		}
+		return query, nil
+	} else if options.GraphLimitQtype == constants.FirstQueryGraphLimit {
 		// give me just the groupby names
-		query, err := buildLogsQuery(panelType, start, end, mq.StepInterval, mq, graphLimitQtype)
+		query, err := buildLogsQuery(panelType, start, end, mq.StepInterval, mq, options.GraphLimitQtype)
 		if err != nil {
 			return "", err
 		}
 		query = addLimitToQuery(query, mq.Limit)
 
 		return query, nil
-	} else if graphLimitQtype == constants.SecondQueryGraphLimit {
-		query, err := buildLogsQuery(panelType, start, end, mq.StepInterval, mq, graphLimitQtype)
+	} else if options.GraphLimitQtype == constants.SecondQueryGraphLimit {
+		query, err := buildLogsQuery(panelType, start, end, mq.StepInterval, mq, options.GraphLimitQtype)
 		if err != nil {
 			return "", err
 		}
 		return query, nil
 	}
 
-	query, err := buildLogsQuery(panelType, start, end, mq.StepInterval, mq, graphLimitQtype)
+	query, err := buildLogsQuery(panelType, start, end, mq.StepInterval, mq, options.GraphLimitQtype)
 	if err != nil {
 		return "", err
 	}

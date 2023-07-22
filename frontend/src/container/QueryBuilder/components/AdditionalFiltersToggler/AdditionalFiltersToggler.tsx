@@ -22,7 +22,7 @@ export const AdditionalFiltersToggler = memo(function AdditionalFiltersToggler({
 		setIsOpenedFilters((prevState) => !prevState);
 	};
 
-	const filtersTexts: ReactNode = listOfAdditionalFilter.map((str, index) => {
+	const filtersTexts: ReactNode = listOfAdditionalFilter.filter((str) => !(hideLimit && str === 'Limit')).map((str, index) => {
 		const isNextLast = index + 1 === listOfAdditionalFilter.length - 1;
 		if (index === listOfAdditionalFilter.length - 1) {
 			return (

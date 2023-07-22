@@ -43,11 +43,11 @@ export const getQueryBuilderQueries = ({
 				inputFormat: 'ns',
 				start: store.getState().globalTime.minTime,
 			}),
-			reduceTo: 'sum',
 			filters: {
 				items: filterItems[index],
 				op: 'AND',
 			},
+			reduceTo: 'sum',
 			dataSource,
 		};
 

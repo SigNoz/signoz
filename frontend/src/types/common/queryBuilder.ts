@@ -192,6 +192,14 @@ export type QueryBuilderContextType = {
 		panelType: GRAPH_TYPES,
 		dataSource: DataSource,
 	) => Query;
+	updateQueriesData: <T extends keyof QueryBuilderData>(
+		query: Query,
+		type: T,
+		updateCallback: (
+			item: QueryBuilderData[T][number],
+			index: number,
+		) => QueryBuilderData[T][number],
+	) => Query;
 	initQueryBuilderData: (query: Query) => void;
 };
 
