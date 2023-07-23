@@ -1,7 +1,7 @@
 import Spinner from 'components/Spinner';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { getWidgetQueryBuilder } from 'container/MetricsApplication/MetricsApplication.factory';
-import { topOperationQueryFactory } from 'container/MetricsApplication/MetricsPageQueries/TopOperationQueryFactory';
+import { topOperationQueries } from 'container/MetricsApplication/MetricsPageQueries/TopOperationQueries';
 import { QueryTable } from 'container/QueryTable';
 import { useGetQueryRange } from 'hooks/queryBuilder/useGetQueryRange';
 import { useStepInterval } from 'hooks/queryBuilder/useStepInterval';
@@ -32,7 +32,7 @@ function TopOperationMetrics(): JSX.Element {
 				query: {
 					queryType: EQueryType.QUERY_BUILDER,
 					promql: [],
-					builder: topOperationQueryFactory({
+					builder: topOperationQueries({
 						servicename,
 					}),
 					clickhouse_sql: [],

@@ -14,10 +14,10 @@ import {
 	MetricsType,
 	WidgetKeys,
 } from '../constant';
-import { IServiceName } from '../Tabs/types';
+import { TopOperationQueryFactoryProps } from '../Tabs/types';
 import { getQueryBuilderQuerieswithFormula } from './MetricsPageQueriesFactory';
 
-export const topOperationQueryFactory = ({
+export const topOperationQueries = ({
 	servicename,
 }: TopOperationQueryFactoryProps): QueryBuilderData => {
 	const latencyAutoCompleteData: BaseAutocompleteData = {
@@ -51,7 +51,7 @@ export const topOperationQueryFactory = ({
 				type: MetricsType.Resource,
 			},
 			value: [servicename],
-			op: 'IN',
+			op: OPERATORS.IN,
 		},
 	];
 
@@ -139,7 +139,3 @@ export const topOperationQueryFactory = ({
 		groupBy,
 	});
 };
-
-interface TopOperationQueryFactoryProps {
-	servicename: IServiceName['servicename'];
-}
