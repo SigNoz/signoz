@@ -34,7 +34,7 @@ export const topOperationQueryFactory = ({
 		type: null,
 	};
 
-	const numOfCountAutoCompleteData: BaseAutocompleteData = {
+	const numOfCallAutoCompleteData: BaseAutocompleteData = {
 		key: WidgetKeys.SignozLatencyCount,
 		dataType: DataType.FLOAT64,
 		isColumn: true,
@@ -97,7 +97,7 @@ export const topOperationQueryFactory = ({
 		latencyAutoCompleteData,
 		errorRateAutoCompleteData,
 		errorRateAutoCompleteData,
-		numOfCountAutoCompleteData,
+		numOfCallAutoCompleteData,
 	];
 	const additionalItems = [
 		latencyAndNumberOfCallAdditionalItems,

@@ -1,6 +1,8 @@
 import { Widgets } from 'types/api/dashboard/getAll';
 import { v4 } from 'uuid';
 
+import { GetWidgetQueryBuilderProps } from './types';
+
 export const getWidgetQueryBuilder = ({
 	query,
 	title = '',
@@ -16,9 +18,3 @@ export const getWidgetQueryBuilder = ({
 	timePreferance: 'GLOBAL_TIME',
 	title,
 });
-
-export interface GetWidgetQueryBuilderProps {
-	query: Widgets['query'];
-	title?: string;
-	panelTypes: Widgets['panelTypes'];
-}
