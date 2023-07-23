@@ -34,10 +34,12 @@ function TopOperation(): JSX.Element {
 			}),
 	});
 
+	const topOperationData = data || [];
+
 	return (
 		<>
 			{isLoading && <Spinner size="large" tip="Loading..." height="40vh" />}
-			{!isLoading && <TopOperationsTable data={data || []} />}
+			{!isLoading && <TopOperationsTable data={topOperationData} />}
 		</>
 	);
 }
