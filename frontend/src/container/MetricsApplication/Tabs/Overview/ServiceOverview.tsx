@@ -51,6 +51,8 @@ function ServiceOverview({
 		[servicename, tagFilterItems, isSpanMetricEnable, topLevelOperationsRoute],
 	);
 
+	const isQueryEnabled = topLevelOperationsRoute.length > 0;
+
 	return (
 		<>
 			<Button
@@ -76,6 +78,7 @@ function ServiceOverview({
 						allowClone={false}
 						allowDelete={false}
 						allowEdit={false}
+						isQueryEnabled={isQueryEnabled}
 					/>
 				</GraphContainer>
 			</Card>
