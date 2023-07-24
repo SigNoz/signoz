@@ -124,7 +124,7 @@ export const initialFilters: TagFilter = {
 	op: 'AND',
 };
 
-const initialQueryBuilderFormValues: IBuilderQuery = {
+export const initialQueryBuilderFormValues: IBuilderQuery = {
 	dataSource: DataSource.METRICS,
 	queryName: createNewBuilderItemName({ existNames: [], sourceNames: alphabet }),
 	aggregateOperator: MetricAggregateOperator.NOOP,
