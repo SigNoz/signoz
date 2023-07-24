@@ -1,7 +1,11 @@
 import { OPERATORS } from 'constants/queryBuilder';
 import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { TagFilterItem } from 'types/api/queryBuilder/queryBuilderData';
-import { DataSource, QueryBuilderData } from 'types/common/queryBuilder';
+import {
+	DataSource,
+	MetricAggregateOperator,
+	QueryBuilderData,
+} from 'types/common/queryBuilder';
 
 import { DataType, FORMULA, MetricsType, WidgetKeys } from '../constant';
 import { IServiceName } from '../Tabs/types';
@@ -77,17 +81,30 @@ export const externalCallErrorPercent = ({
 	];
 	const legendFormula = legend;
 	const expression = FORMULA.ERROR_PERCENTAGE;
-	const disabled = true;
-	return getQueryBuilderQuerieswithFormula({
+	const disabled = [true, true];
+	const autocompleteData: BaseAutocompleteData[] = [
 		autocompleteDataA,
 		autocompleteDataB,
+	];
+
+	const additionalItems: TagFilterItem[][] = [
 		additionalItemsA,
 		additionalItemsB,
-		legend,
+	];
+
+	return getQueryBuilderQuerieswithFormula({
+		autocompleteData,
+		additionalItems,
+		legends: [legend, legend],
 		groupBy,
 		disabled,
 		expression,
 		legendFormula,
+		aggregateOperators: [
+			MetricAggregateOperator.SUM,
+			MetricAggregateOperator.SUM,
+		],
+		dataSource: DataSource.METRICS,
 	});
 };
 
@@ -110,7 +127,7 @@ export const externalCallDuration = ({
 	const expression = FORMULA.DATABASE_CALLS_AVG_DURATION;
 	const legendFormula = 'Average Duration';
 	const legend = '';
-	const disabled = true;
+	const disabled = [true, true];
 	const additionalItemsA: TagFilterItem[] = [
 		{
 			id: '',
@@ -125,17 +142,29 @@ export const externalCallDuration = ({
 		},
 		...tagFilterItems,
 	];
-	const additionalItemsB = additionalItemsA;
 
-	return getQueryBuilderQuerieswithFormula({
+	const autocompleteData: BaseAutocompleteData[] = [
 		autocompleteDataA,
 		autocompleteDataB,
+	];
+
+	const additionalItems: TagFilterItem[][] = [
 		additionalItemsA,
-		additionalItemsB,
-		legend,
+		additionalItemsA,
+	];
+
+	return getQueryBuilderQuerieswithFormula({
+		autocompleteData,
+		additionalItems,
+		legends: [legend, legend],
 		disabled,
 		expression,
 		legendFormula,
+		aggregateOperators: [
+			MetricAggregateOperator.SUM,
+			MetricAggregateOperator.SUM,
+		],
+		dataSource: DataSource.METRICS,
 	});
 };
 
@@ -198,7 +227,7 @@ export const externalCallDurationByAddress = ({
 	};
 	const expression = FORMULA.DATABASE_CALLS_AVG_DURATION;
 	const legendFormula = legend;
-	const disabled = true;
+	const disabled = [true, true];
 	const additionalItemsA: TagFilterItem[] = [
 		{
 			id: '',
@@ -213,18 +242,30 @@ export const externalCallDurationByAddress = ({
 		},
 		...tagFilterItems,
 	];
-	const additionalItemsB = additionalItemsA;
 
-	return getQueryBuilderQuerieswithFormula({
+	const autocompleteData: BaseAutocompleteData[] = [
 		autocompleteDataA,
 		autocompleteDataB,
+	];
+
+	const additionalItems: TagFilterItem[][] = [
 		additionalItemsA,
-		additionalItemsB,
-		legend,
+		additionalItemsA,
+	];
+
+	return getQueryBuilderQuerieswithFormula({
+		autocompleteData,
+		additionalItems,
+		legends: [legend, legend],
 		groupBy,
 		disabled,
 		expression,
 		legendFormula,
+		aggregateOperators: [
+			MetricAggregateOperator.SUM_RATE,
+			MetricAggregateOperator.SUM_RATE,
+		],
+		dataSource: DataSource.METRICS,
 	});
 };
 
