@@ -5,12 +5,15 @@ import { SKIP_ONBOARDING } from 'constants/onboarding';
 import { useState } from 'react';
 import { useLocation } from 'react-router-dom';
 
-import { columns } from './Columns/ServiceColumn';
-import SkipBoardModal from './SkipOnBoardModal';
-import { Container } from './styles';
-import ServiceTableProp from './types';
+import { columns } from '../Columns/ServiceColumn';
+import SkipOnBoardingModal from '../SkipOnBoardModal';
+import ServiceTableProp from '../types';
 
-function Services({ services, loading, error }: ServiceTableProp): JSX.Element {
+function ServiceTraceTable({
+	services,
+	loading,
+	error,
+}: ServiceTableProp): JSX.Element {
 	const { search } = useLocation();
 	const [skipOnboarding, setSkipOnboarding] = useState(
 		localStorageGet(SKIP_ONBOARDING) === 'true',
@@ -27,21 +30,19 @@ function Services({ services, loading, error }: ServiceTableProp): JSX.Element {
 		!skipOnboarding &&
 		error === true
 	) {
-		return <SkipBoardModal onContinueClick={onContinueClick} />;
+		return <SkipOnBoardingModal onContinueClick={onContinueClick} />;
 	}
 
 	const tableColumns = columns(search);
 
 	return (
-		<Container>
-			<ResizeTable
-				columns={tableColumns}
-				loading={loading}
-				dataSource={services}
-				rowKey="serviceName"
-			/>
-		</Container>
+		<ResizeTable
+			columns={tableColumns}
+			loading={loading}
+			dataSource={services}
+			rowKey="serviceName"
+		/>
 	);
 }
 
-export default Services;
+export default ServiceTraceTable;

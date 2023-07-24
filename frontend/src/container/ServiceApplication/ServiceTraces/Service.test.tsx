@@ -1,7 +1,7 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import { BrowserRouter } from 'react-router-dom';
 
-import Metrics from './index';
+import ServiceTraceTable from './ServiceTraceTable';
 
 jest.mock('react-router-dom', () => ({
 	...jest.requireActual('react-router-dom'),
@@ -39,7 +39,7 @@ describe('Metrics Component', () => {
 	it('renders without errors', async () => {
 		render(
 			<BrowserRouter>
-				<Metrics services={services} loading={false} error={false} />
+				<ServiceTraceTable services={services} loading={false} error={false} />
 			</BrowserRouter>,
 		);
 
@@ -54,7 +54,7 @@ describe('Metrics Component', () => {
 	it('renders if the data is loaded in the table', async () => {
 		render(
 			<BrowserRouter>
-				<Metrics services={services} loading={false} error={false} />
+				<ServiceTraceTable services={services} loading={false} error={false} />
 			</BrowserRouter>,
 		);
 
@@ -64,7 +64,7 @@ describe('Metrics Component', () => {
 	it('renders no data when required conditions are met', async () => {
 		render(
 			<BrowserRouter>
-				<Metrics services={[]} loading={false} error={false} />
+				<ServiceTraceTable services={[]} loading={false} error={false} />
 			</BrowserRouter>,
 		);
 
