@@ -7,13 +7,13 @@ import { useLocation } from 'react-router-dom';
 
 import { columns } from '../Columns/ServiceColumn';
 import SkipOnBoardingModal from '../SkipOnBoardModal';
-import ServiceTableProp from '../types';
+import ServiceTracesTableProps from '../types';
 
 function ServiceTraceTable({
 	services,
 	loading,
 	error,
-}: ServiceTableProp): JSX.Element {
+}: ServiceTracesTableProps): JSX.Element {
 	const { search } = useLocation();
 	const [skipOnboarding, setSkipOnboarding] = useState(
 		localStorageGet(SKIP_ONBOARDING) === 'true',
