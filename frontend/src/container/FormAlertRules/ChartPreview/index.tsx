@@ -121,6 +121,7 @@ function ChartPreview({
 					name={name || 'Chart Preview'}
 					staticLine={staticLine}
 					panelData={queryResponse.data?.payload.data.newResult.data.result || []}
+					query={query || initialQueriesMap.metrics}
 				/>
 			)}
 		</ChartContainer>

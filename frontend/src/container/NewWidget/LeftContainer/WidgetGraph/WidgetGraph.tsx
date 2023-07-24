@@ -39,7 +39,7 @@ function WidgetGraph({
 		return <Card>Invalid widget</Card>;
 	}
 
-	const { title, opacity, isStacked } = selectedWidget;
+	const { title, opacity, isStacked, query } = selectedWidget;
 
 	if (getWidgetQueryRange.error) {
 		return (
@@ -77,6 +77,7 @@ function WidgetGraph({
 			panelData={
 				getWidgetQueryRange.data?.payload.data.newResult.data.result || []
 			}
+			query={query}
 		/>
 	);
 }
