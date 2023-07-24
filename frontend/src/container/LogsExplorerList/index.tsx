@@ -38,6 +38,7 @@ function LogsExplorerList({
 	onEndReached,
 	onExpand,
 	onAddToQuery,
+	onOpenLogsContext,
 }: LogsExplorerListProps): JSX.Element {
 	const ref = useRef<VirtuosoHandle>(null);
 
@@ -111,6 +112,7 @@ function LogsExplorerList({
 						linesPerRow={options.maxLines}
 						onClickExpand={onExpand}
 						onCopyLogLink={handleCopyLogLink}
+						onOpenLogsContext={onOpenLogsContext}
 					/>
 				);
 			}
@@ -134,6 +136,7 @@ function LogsExplorerList({
 			onAddToQuery,
 			onExpand,
 			handleCopyLogLink,
+			onOpenLogsContext,
 		],
 	);
 

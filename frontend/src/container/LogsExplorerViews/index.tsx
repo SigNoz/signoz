@@ -15,6 +15,7 @@ import { DEFAULT_PER_PAGE_VALUE } from 'container/Controls/config';
 import ExportPanel from 'container/ExportPanel';
 import GoToTop from 'container/GoToTop';
 import LogsExplorerChart from 'container/LogsExplorerChart';
+import LogsExplorerContext from 'container/LogsExplorerContext';
 import LogsExplorerList from 'container/LogsExplorerList';
 import { LogLinkQueryParams } from 'container/LogsExplorerList/constants';
 import { CopiedTimeRange } from 'container/LogsExplorerList/LogsExplorerList.interfaces';
@@ -89,6 +90,7 @@ function LogsExplorerViews(): JSX.Element {
 
 	// State
 	const [activeLog, setActiveLog] = useState<ILog | null>(null);
+	const [activeContextLog, setActiveContextLog] = useState<ILog | null>(null);
 	const [page, setPage] = useState<number>(1);
 	const [logs, setLogs] = useState<ILog[]>([]);
 	const [requestData, setRequestData] = useState<Query | null>(null);
@@ -206,6 +208,14 @@ function LogsExplorerViews(): JSX.Element {
 
 	const handleClearActiveLog = useCallback(() => {
 		setActiveLog(null);
+	}, []);
+
+	const handleSetActiveContextLog = useCallback((log: ILog) => {
+		setActiveContextLog(log);
+	}, []);
+
+	const handleClearActiveContextLog = useCallback(() => {
+		setActiveContextLog(null);
 	}, []);
 
 	const getUpdateQuery = useCallback(
@@ -476,6 +486,7 @@ function LogsExplorerViews(): JSX.Element {
 						onEndReached={handleEndReached}
 						onExpand={handleSetActiveLog}
 						onAddToQuery={handleAddToQuery}
+						onOpenLogsContext={handleSetActiveContextLog}
 						copiedTimeRange={copiedTimeRange}
 					/>
 				),
@@ -508,6 +519,7 @@ function LogsExplorerViews(): JSX.Element {
 			handleSetActiveLog,
 			handleEndReached,
 			handleAddToQuery,
+			handleSetActiveContextLog,
 			data,
 			isError,
 		],
@@ -563,6 +575,12 @@ function LogsExplorerViews(): JSX.Element {
 				onAddToQuery={handleAddToQuery}
 				onClickActionItem={handleAddToQuery}
 			/>
+			{activeContextLog && (
+				<LogsExplorerContext
+					log={activeContextLog}
+					onClose={handleClearActiveContextLog}
+				/>
+			)}
 
 			<GoToTop />
 		</>

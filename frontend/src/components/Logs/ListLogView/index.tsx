@@ -1,5 +1,10 @@
 import { blue, grey, orange } from '@ant-design/colors';
-import { CopyFilled, ExpandAltOutlined, LinkOutlined } from '@ant-design/icons';
+import {
+	CopyFilled,
+	ExpandAltOutlined,
+	LinkOutlined,
+	MonitorOutlined,
+} from '@ant-design/icons';
 import Convert from 'ansi-to-html';
 import { Button, Divider, Row, Typography } from 'antd';
 import dayjs from 'dayjs';
@@ -176,6 +181,15 @@ function ListLogView({
 					icon={<CopyFilled />}
 				>
 					Copy JSON
+				</Button>
+				<Button
+					size="small"
+					type="text"
+					onClick={handleCopyLink}
+					style={{ color: grey[1] }}
+					icon={<MonitorOutlined />}
+				>
+					Show in Context
 				</Button>
 				{onCopyLogLink && (
 					<Button

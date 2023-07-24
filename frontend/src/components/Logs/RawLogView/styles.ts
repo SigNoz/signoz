@@ -1,8 +1,12 @@
 import { blue } from '@ant-design/colors';
-import { Button, Col, Row } from 'antd';
+import { Col, Row, Space } from 'antd';
 import styled from 'styled-components';
 
-export const RawLogViewContainer = styled(Row)<{ $isDarkMode: boolean }>`
+export const RawLogViewContainer = styled(Row)<{
+	$isDarkMode: boolean;
+	$isReadOnly: boolean;
+	$isActiveLog: boolean;
+}>`
 	position: relative;
 	width: 100%;
 	font-weight: 700;
@@ -11,10 +15,22 @@ export const RawLogViewContainer = styled(Row)<{ $isDarkMode: boolean }>`
 
 	transition: background-color 0.2s ease-in;
 
-	&:hover {
-		background-color: ${({ $isDarkMode }): string =>
-			$isDarkMode ? 'rgba(255,255,255,0.1)' : 'rgba(0, 0, 0, 0.1)'};
-	}
+	${({ $isReadOnly, $isDarkMode }): string =>
+		$isReadOnly ? `background-color: ${$isDarkMode ? '#262626' : '#ddd'};` : ''}
+
+	${({ $isActiveLog, $isDarkMode }): string =>
+		$isActiveLog
+			? `background-color: ${$isDarkMode ? '#1f1f1f' : 'initial'};`
+			: ''}
+
+	${({ $isReadOnly, $isDarkMode }): string =>
+		!$isReadOnly
+			? `&:hover {
+			background-color: ${
+				$isDarkMode ? 'rgba(255,255,255,0.1)' : 'rgba(0, 0, 0, 0.1)'
+			};
+		}`
+			: ''}
 `;
 
 export const ExpandIconWrapper = styled(Col)`
@@ -26,6 +42,8 @@ export const ExpandIconWrapper = styled(Col)`
 
 interface RawLogContentProps {
 	linesPerRow: number;
+	$isReadOnly: boolean;
+	$isActiveLog: boolean;
 }
 
 export const RawLogContent = styled.div<RawLogContentProps>`
@@ -43,10 +61,14 @@ export const RawLogContent = styled.div<RawLogContentProps>`
 	font-size: 1rem;
 	line-height: 2rem;
 
-	cursor: pointer;
+	cursor: ${(props): string =>
+		props.$isActiveLog || props.$isReadOnly ? 'initial' : 'pointer'};
+
+	${(props): string =>
+		props.$isReadOnly && !props.$isActiveLog ? 'padding: 0 24px;' : ''}
 `;
 
-export const CopyButton = styled(Button)`
+export const ActionButtonsWrapper = styled(Space)`
 	position: absolute;
 	transform: translate(-50%, -50%);
 	top: 50%;

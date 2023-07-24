@@ -16,4 +16,5 @@ export type LogsExplorerListProps = {
 	onEndReached: (index: number) => void;
 	onExpand: (log: ILog) => void;
 	onOpenDetailedView: (log: ILog) => void;
+	onOpenLogsContext: (log: ILog) => void;
 } & Pick<AddToQueryHOCProps, 'onAddToQuery'>;

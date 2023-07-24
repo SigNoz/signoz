@@ -1,6 +1,10 @@
-import { ExpandAltOutlined, LinkOutlined } from '@ant-design/icons';
+import {
+	ExpandAltOutlined,
+	LinkOutlined,
+	MonitorOutlined,
+} from '@ant-design/icons';
 import Convert from 'ansi-to-html';
-import { Button, Typography } from 'antd';
+import { Button, Space, Typography } from 'antd';
 import { ColumnsType } from 'antd/es/table';
 import dayjs from 'dayjs';
 import dompurify from 'dompurify';
@@ -124,11 +128,18 @@ export const useTableView = (props: UseTableViewProps): UseTableViewResult => {
 							key: 'actions',
 							render: (_, { id }): ColumnTypeRender<Record<string, unknown>> => ({
 								children: (
-									<Button
-										size="small"
-										onClick={(): void => handleCopyLink(id as string)}
-										icon={<LinkOutlined />}
-									/>
+									<Space>
+										<Button
+											size="small"
+											onClick={(): void => handleCopyLink(id as string)}
+											icon={<MonitorOutlined />}
+										/>
+										<Button
+											size="small"
+											onClick={(): void => handleCopyLink(id as string)}
+											icon={<LinkOutlined />}
+										/>
+									</Space>
 								),
 							}),
 						},
