@@ -51,10 +51,33 @@ function TableView({
 		return null;
 	}
 
+	const fieldOrder = [
+		'timestamp',
+		'id',
+		'trace_id',
+		'span_id',
+		'trace_flags',
+		'severity_number',
+		'severity_text',
+		'body',
+		'attributes_string.container_id',
+		'attributes_string.log_file_path',
+		'attributes_string.stream',
+	];
+
 	const dataSource =
 		flattenLogData !== null &&
 		Object.keys(flattenLogData)
 			.filter((field) => fieldSearchFilter(field, fieldSearchInput))
+			.sort((a, b) => {
+				const indexA = fieldOrder.indexOf(a);
+				const indexB = fieldOrder.indexOf(b);
+
+				if (indexA === -1) return 1;
+				if (indexB === -1) return -1;
+
+				return indexA - indexB;
+			})
 			.map((key) => ({
 				key,
 				field: key,
