@@ -3,6 +3,7 @@ import Spinner from 'components/Spinner';
 import GridPanelSwitch from 'container/GridPanelSwitch';
 import { WidgetGraphProps } from 'container/NewWidget/types';
 import { useGetWidgetQueryRange } from 'hooks/queryBuilder/useGetWidgetQueryRange';
+import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import getChartData from 'lib/getChartData';
 import { useSelector } from 'react-redux';
 import { useLocation } from 'react-router-dom';
@@ -16,6 +17,7 @@ function WidgetGraph({
 	yAxisUnit,
 	selectedTime,
 }: WidgetGraphProps): JSX.Element {
+	const { stagedQuery } = useQueryBuilder();
 	const { dashboards } = useSelector<AppState, DashboardReducer>(
 		(state) => state.dashboards,
 	);
@@ -77,7 +79,7 @@ function WidgetGraph({
 			panelData={
 				getWidgetQueryRange.data?.payload.data.newResult.data.result || []
 			}
-			query={query}
+			query={stagedQuery || query}
 		/>
 	);
 }

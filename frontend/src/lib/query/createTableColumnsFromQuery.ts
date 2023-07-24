@@ -289,40 +289,56 @@ const fillEmptyRowCells = (
 	});
 };
 
+const fillData = (
+	seria: SeriesItem,
+	columns: DynamicColumns,
+	queryName: string,
+	value?: SeriesItem['values'][number],
+): void => {
+	const labelEntries = Object.entries(seria.labels);
+
+	const unusedColumnsKeys = new Set<keyof RowData>(
+		columns.map((item) => item.field),
+	);
+
+	columns.forEach((column) => {
+		// Hidden column
+		// if (column.dataIndex === 'timestamp') {
+		// 	column.data.push(value.timestamp);
+		// 	unusedColumnsKeys.delete('timestamp');
+		// 	return;
+		// }
+
+		if (queryName === column.field && value) {
+			column.data.push(parseFloat(value.value).toFixed(2));
+			unusedColumnsKeys.delete(column.field);
+			return;
+		}
+
+		labelEntries.forEach(([key, currentValue]) => {
+			if (column.field === key) {
+				column.data.push(currentValue);
+				unusedColumnsKeys.delete(key);
+			}
+		});
+
+		fillEmptyRowCells(unusedColumnsKeys, columns, column);
+	});
+};
+
 const fillDataFromSeria = (
 	seria: SeriesItem,
 	columns: DynamicColumns,
 	queryName: string,
 ): void => {
-	const labelEntries = Object.entries(seria.labels);
+	if (seria.values.length === 0) {
+		fillData(seria, columns, queryName);
+
+		return;
+	}
+
 	seria.values.forEach((value) => {
-		const unusedColumnsKeys = new Set<keyof RowData>(
-			columns.map((item) => item.field),
-		);
-
-		columns.forEach((column) => {
-			// Hidden column
-			// if (column.dataIndex === 'timestamp') {
-			// 	column.data.push(value.timestamp);
-			// 	unusedColumnsKeys.delete('timestamp');
-			// 	return;
-			// }
-
-			if (queryName === column.field) {
-				column.data.push(parseFloat(value.value).toFixed(2));
-				unusedColumnsKeys.delete(column.field);
-				return;
-			}
-
-			labelEntries.forEach(([key, currentValue]) => {
-				if (column.field === key) {
-					column.data.push(currentValue);
-					unusedColumnsKeys.delete(key);
-				}
-			});
-
-			fillEmptyRowCells(unusedColumnsKeys, columns, column);
-		});
+		fillData(seria, columns, queryName, value);
 	});
 };
 
