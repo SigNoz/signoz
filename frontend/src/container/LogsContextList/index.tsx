@@ -40,8 +40,8 @@ function LogsContextList({ log, order }: LogsContextListProps): JSX.Element {
 				currentStagedQueryData,
 				listItemId: log.id,
 				orderByTimestamp: getOrderByTimestamp(order),
-				page,
 				pageSize: PAGE_SIZE,
+				page,
 			});
 
 			const data: Query = {
@@ -98,6 +98,9 @@ function LogsContextList({ log, order }: LogsContextListProps): JSX.Element {
 
 	useEffect(() => {
 		const nextRequestData = getRequestData(1);
+
+		setLogs([]);
+		setPage(1);
 		setRequestData(nextRequestData);
 	}, [currentQuery, getRequestData]);
 

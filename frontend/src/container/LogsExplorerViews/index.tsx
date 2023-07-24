@@ -17,8 +17,6 @@ import GoToTop from 'container/GoToTop';
 import LogsExplorerChart from 'container/LogsExplorerChart';
 import LogsExplorerContext from 'container/LogsExplorerContext';
 import LogsExplorerList from 'container/LogsExplorerList';
-import { LogLinkQueryParams } from 'container/LogsExplorerList/constants';
-import { CopiedTimeRange } from 'container/LogsExplorerList/LogsExplorerList.interfaces';
 import LogsExplorerTable from 'container/LogsExplorerTable';
 import { GRAPH_TYPES } from 'container/NewDashboard/ComponentsSlider';
 import { SIGNOZ_VALUE } from 'container/QueryBuilder/filters/OrderByFilter/constants';
@@ -28,6 +26,8 @@ import { addEmptyWidgetInDashboardJSONWithQuery } from 'hooks/dashboard/utils';
 import { useGetExplorerQueryRange } from 'hooks/queryBuilder/useGetExplorerQueryRange';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import useAxiosError from 'hooks/useAxiosError';
+import useCopyLogLink from 'hooks/useCopyLogLink';
+import { LogTimeRange } from 'hooks/useCopyLogLink/types';
 import { useNotifications } from 'hooks/useNotifications';
 import useUrlQueryData from 'hooks/useUrlQueryData';
 import { chooseAutocompleteFromCustomValue } from 'lib/newQueryBuilder/chooseAutocompleteFromCustomValue';
@@ -53,23 +53,17 @@ import { DataSource, StringOperators } from 'types/common/queryBuilder';
 import { GlobalReducer } from 'types/reducer/globalTime';
 import { v4 as uuid } from 'uuid';
 
-import { initialTimeRange } from './configs';
 import { ActionsWrapper, TabsStyled } from './LogsExplorerViews.styled';
 
 function LogsExplorerViews(): JSX.Element {
 	const { notifications } = useNotifications();
 	const history = useHistory();
-
 	const queryClient = useQueryClient();
 
+	const { activeLogId, timeRange, onTimeRangeChange } = useCopyLogLink();
 	const { queryData: pageSize } = useUrlQueryData(
 		queryParamNamesMap.pageSize,
 		DEFAULT_PER_PAGE_VALUE,
-	);
-
-	const { queryData: timeRange } = useUrlQueryData<CopiedTimeRange | null>(
-		LogLinkQueryParams.timeRange,
-		null,
 	);
 
 	const { minTime } = useSelector<AppState, GlobalReducer>(
@@ -94,9 +88,6 @@ function LogsExplorerViews(): JSX.Element {
 	const [page, setPage] = useState<number>(1);
 	const [logs, setLogs] = useState<ILog[]>([]);
 	const [requestData, setRequestData] = useState<Query | null>(null);
-	const [copiedTimeRange, setCopiedTimeRange] = useState<CopiedTimeRange>(
-		initialTimeRange,
-	);
 
 	const handleAxisError = useAxiosError();
 
@@ -183,24 +174,13 @@ function LogsExplorerViews(): JSX.Element {
 		},
 		{
 			...(timeRange &&
+				activeLogId &&
 				!logs.length && {
 					start: timeRange.start,
 					end: timeRange.end,
 				}),
 		},
 	);
-
-	useEffect(() => {
-		const params = data?.params as Omit<CopiedTimeRange, 'timeRange'>;
-
-		if (!params || logs.length <= 0) return;
-
-		setCopiedTimeRange((prevData) => ({
-			start: params.start,
-			end: prevData.end || params.end,
-			pageSize: logs.length,
-		}));
-	}, [logs.length, data?.params]);
 
 	const handleSetActiveLog = useCallback((nextActiveLog: ILog) => {
 		setActiveLog(nextActiveLog);
@@ -438,14 +418,24 @@ function LogsExplorerViews(): JSX.Element {
 	}, [panelType, isMultipleQueries, isGroupByExist, handleChangeView]);
 
 	useEffect(() => {
+		const currentParams = data?.params as Omit<LogTimeRange, 'pageSize'>;
 		const currentData = data?.payload.data.newResult.data.result || [];
 		if (currentData.length > 0 && currentData[0].list) {
 			const currentLogs: ILog[] = currentData[0].list.map((item) => ({
 				...item.data,
 				timestamp: item.timestamp,
 			}));
-			setLogs((prevLogs) => [...prevLogs, ...currentLogs]);
+			const newLogs = [...logs, ...currentLogs];
+
+			setLogs(newLogs);
+			onTimeRangeChange({
+				start: currentParams?.start,
+				end: timeRange?.end || currentParams?.end,
+				pageSize: newLogs.length,
+			});
 		}
+
+		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [data]);
 
 	useEffect(() => {
@@ -456,14 +446,28 @@ function LogsExplorerViews(): JSX.Element {
 			const newRequestData = getRequestData(stagedQuery, {
 				page: 1,
 				log: null,
-				pageSize: timeRange?.pageSize || pageSize,
+				pageSize:
+					timeRange?.pageSize && activeLogId ? timeRange?.pageSize : pageSize,
 			});
 			setLogs([]);
 			setPage(1);
 			setRequestData(newRequestData);
 			currentMinTimeRef.current = minTime;
+
+			if (!activeLogId) {
+				onTimeRangeChange(null);
+			}
 		}
-	}, [stagedQuery, requestData, getRequestData, pageSize, minTime, timeRange]);
+	}, [
+		stagedQuery,
+		requestData,
+		getRequestData,
+		pageSize,
+		minTime,
+		timeRange,
+		activeLogId,
+		onTimeRangeChange,
+	]);
 
 	const tabsItems: TabsProps['items'] = useMemo(
 		() => [
@@ -487,7 +491,6 @@ function LogsExplorerViews(): JSX.Element {
 						onExpand={handleSetActiveLog}
 						onAddToQuery={handleAddToQuery}
 						onOpenLogsContext={handleSetActiveContextLog}
-						copiedTimeRange={copiedTimeRange}
 					/>
 				),
 			},
@@ -514,7 +517,6 @@ function LogsExplorerViews(): JSX.Element {
 			isGroupByExist,
 			isFetching,
 			currentStagedQueryData,
-			copiedTimeRange,
 			logs,
 			handleSetActiveLog,
 			handleEndReached,

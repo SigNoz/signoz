@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"go.signoz.io/signoz/pkg/query-service/model"
 )
 
 type DataSource string
@@ -582,6 +583,13 @@ type Result struct {
 	QueryName string    `json:"queryName"`
 	Series    []*Series `json:"series"`
 	List      []*Row    `json:"list"`
+}
+
+type LogsLiveTailClient struct {
+	Name  string
+	Logs  chan *model.GetLogsResponse
+	Done  chan *bool
+	Error chan error
 }
 
 type Series struct {

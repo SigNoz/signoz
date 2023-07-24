@@ -8,13 +8,16 @@ import { Button, Space, Typography } from 'antd';
 import { ColumnsType } from 'antd/es/table';
 import dayjs from 'dayjs';
 import dompurify from 'dompurify';
+import useCopyLogLink from 'hooks/useCopyLogLink';
 import { FlatLogData } from 'lib/logs/flatLogData';
 import { useCallback, useMemo } from 'react';
+import { ILog } from 'types/api/logs/log';
 
 import { ExpandIconWrapper } from '../RawLogView/styles';
 import { defaultCellStyle, defaultTableStyle } from './config';
 import { TableBodyContent } from './styles';
 import {
+	ActionsColumnProps,
 	ColumnTypeRender,
 	UseTableViewProps,
 	UseTableViewResult,
@@ -22,28 +25,44 @@ import {
 
 const convert = new Convert();
 
+function ActionsColumn({
+	log,
+	onOpenLogsContext,
+}: ActionsColumnProps): JSX.Element {
+	const { onLogCopy } = useCopyLogLink(log.id);
+
+	const handleShowContext = useCallback(() => {
+		if (!onOpenLogsContext) return;
+
+		onOpenLogsContext(log);
+	}, [log, onOpenLogsContext]);
+
+	return (
+		<Space>
+			<Button
+				size="small"
+				onClick={handleShowContext}
+				icon={<MonitorOutlined />}
+			/>
+			<Button size="small" onClick={onLogCopy} icon={<LinkOutlined />} />
+		</Space>
+	);
+}
+
 export const useTableView = (props: UseTableViewProps): UseTableViewResult => {
 	const {
 		logs,
 		fields,
 		linesPerRow,
 		onClickExpand,
-		onCopyLogLink,
+		onOpenLogsContext,
 		appendTo = 'center',
 	} = props;
+	const { isLogsExplorerPage } = useCopyLogLink();
 
 	const flattenLogData = useMemo(() => logs.map((log) => FlatLogData(log)), [
 		logs,
 	]);
-
-	const handleCopyLink = useCallback(
-		(id: string) => {
-			if (!onCopyLogLink) return;
-
-			onCopyLogLink(id);
-		},
-		[onCopyLogLink],
-	);
 
 	const columns: ColumnsType<Record<string, unknown>> = useMemo(() => {
 		const fieldColumns: ColumnsType<Record<string, unknown>> = fields
@@ -120,26 +139,18 @@ export const useTableView = (props: UseTableViewProps): UseTableViewResult => {
 				}),
 			},
 			...(appendTo === 'end' ? fieldColumns : []),
-			...(onCopyLogLink
+			...(isLogsExplorerPage
 				? ([
 						{
 							title: 'actions',
 							dataIndex: 'actions',
 							key: 'actions',
-							render: (_, { id }): ColumnTypeRender<Record<string, unknown>> => ({
+							render: (_, log): ColumnTypeRender<Record<string, unknown>> => ({
 								children: (
-									<Space>
-										<Button
-											size="small"
-											onClick={(): void => handleCopyLink(id as string)}
-											icon={<MonitorOutlined />}
-										/>
-										<Button
-											size="small"
-											onClick={(): void => handleCopyLink(id as string)}
-											icon={<LinkOutlined />}
-										/>
-									</Space>
+									<ActionsColumn
+										log={(log as unknown) as ILog}
+										onOpenLogsContext={onOpenLogsContext}
+									/>
 								),
 							}),
 						},
@@ -151,9 +162,9 @@ export const useTableView = (props: UseTableViewProps): UseTableViewResult => {
 		fields,
 		appendTo,
 		linesPerRow,
+		isLogsExplorerPage,
 		onClickExpand,
-		onCopyLogLink,
-		handleCopyLink,
+		onOpenLogsContext,
 	]);
 
 	return { columns, dataSource: flattenLogData };

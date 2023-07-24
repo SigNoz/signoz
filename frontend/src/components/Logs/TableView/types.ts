@@ -11,6 +11,7 @@ export type LogsTableViewProps = {
 	fields: IField[];
 	linesPerRow: number;
 	onClickExpand: (log: ILog) => void;
+	onOpenLogsContext?: (log: ILog) => void;
 };
 
 export type UseTableViewResult = {
@@ -20,5 +21,9 @@ export type UseTableViewResult = {
 
 export type UseTableViewProps = {
 	appendTo?: 'center' | 'end';
-	onCopyLogLink?: (id: string) => void;
 } & LogsTableViewProps;
+
+export type ActionsColumnProps = {
+	log: ILog;
+	onOpenLogsContext?: (log: ILog) => void;
+};

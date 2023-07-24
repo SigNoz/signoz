@@ -9,6 +9,7 @@ import Convert from 'ansi-to-html';
 import { Button, Divider, Row, Typography } from 'antd';
 import dayjs from 'dayjs';
 import dompurify from 'dompurify';
+import useCopyLogLink from 'hooks/useCopyLogLink';
 import { useNotifications } from 'hooks/useNotifications';
 // utils
 import { FlatLogData } from 'lib/logs/flatLogData';
@@ -91,7 +92,7 @@ function LogSelectedField({
 type ListLogViewProps = {
 	logData: ILog;
 	onOpenDetailedView: (log: ILog) => void;
-	onCopyLogLink?: (id: string) => void;
+	onOpenLogsContext?: (log: ILog) => void;
 	selectedFields: IField[];
 } & Pick<AddToQueryHOCProps, 'onAddToQuery'>;
 
@@ -99,17 +100,24 @@ function ListLogView({
 	logData,
 	selectedFields,
 	onOpenDetailedView,
-	onCopyLogLink,
+	onOpenLogsContext,
 	onAddToQuery,
 }: ListLogViewProps): JSX.Element {
 	const flattenLogData = useMemo(() => FlatLogData(logData), [logData]);
 
 	const [, setCopy] = useCopyToClipboard();
 	const { notifications } = useNotifications();
+	const { isLogsExplorerPage, onLogCopy } = useCopyLogLink(logData.id);
 
 	const handleDetailedView = useCallback(() => {
 		onOpenDetailedView(logData);
 	}, [logData, onOpenDetailedView]);
+
+	const handleShowContext = useCallback(() => {
+		if (!onOpenLogsContext) return;
+
+		onOpenLogsContext(logData);
+	}, [logData, onOpenLogsContext]);
 
 	const handleCopyJSON = (): void => {
 		setCopy(JSON.stringify(logData, null, 2));
@@ -117,12 +125,6 @@ function ListLogView({
 			message: 'Copied to clipboard',
 		});
 	};
-
-	const handleCopyLink = useCallback((): void => {
-		if (!onCopyLogLink) return;
-
-		onCopyLogLink(logData.id);
-	}, [logData.id, onCopyLogLink]);
 
 	const updatedSelecedFields = useMemo(
 		() => selectedFields.filter((e) => e.name !== 'id'),
@@ -182,25 +184,28 @@ function ListLogView({
 				>
 					Copy JSON
 				</Button>
-				<Button
-					size="small"
-					type="text"
-					onClick={handleCopyLink}
-					style={{ color: grey[1] }}
-					icon={<MonitorOutlined />}
-				>
-					Show in Context
-				</Button>
-				{onCopyLogLink && (
-					<Button
-						size="small"
-						type="text"
-						onClick={handleCopyLink}
-						style={{ color: grey[1] }}
-						icon={<LinkOutlined />}
-					>
-						Copy Link
-					</Button>
+
+				{isLogsExplorerPage && (
+					<>
+						<Button
+							size="small"
+							type="text"
+							onClick={handleShowContext}
+							style={{ color: grey[1] }}
+							icon={<MonitorOutlined />}
+						>
+							Show in Context
+						</Button>
+						<Button
+							size="small"
+							type="text"
+							onClick={onLogCopy}
+							style={{ color: grey[1] }}
+							icon={<LinkOutlined />}
+						>
+							Copy Link
+						</Button>
+					</>
 				)}
 			</Row>
 		</Container>
@@ -208,7 +213,7 @@ function ListLogView({
 }
 
 ListLogView.defaultProps = {
-	onCopyLogLink: undefined,
+	onOpenLogsContext: undefined,
 };
 
 export default ListLogView;

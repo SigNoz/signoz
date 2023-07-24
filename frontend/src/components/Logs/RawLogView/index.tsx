@@ -8,6 +8,7 @@ import Convert from 'ansi-to-html';
 import { Button, Tooltip } from 'antd';
 import dayjs from 'dayjs';
 import dompurify from 'dompurify';
+import useCopyLogLink from 'hooks/useCopyLogLink';
 // hooks
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { MouseEventHandler, useCallback, useMemo, useState } from 'react';
@@ -25,27 +26,27 @@ import {
 const convert = new Convert();
 
 interface RawLogViewProps {
+	isActiveLog?: boolean;
+	isReadOnly?: boolean;
 	data: ILog;
 	linesPerRow: number;
-	isReadOnly?: boolean;
-	isActiveLog?: boolean;
 	onClickExpand?: (log: ILog) => void;
 	onOpenLogsContext?: (log: ILog) => void;
-	onCopyLogLink?: (id: string) => void;
 }
 
 function RawLogView(props: RawLogViewProps): JSX.Element {
 	const {
+		isActiveLog = false,
+		isReadOnly = false,
 		data,
 		linesPerRow,
-		isReadOnly = false,
-		isActiveLog = false,
 		onClickExpand,
-		onCopyLogLink,
 		onOpenLogsContext,
 	} = props;
 
-	const [hasActionButtons, setHasActionButtons] = useState(false);
+	const { isLogsExplorerPage, onLogCopy } = useCopyLogLink(data.id);
+
+	const [hasActionButtons, setHasActionButtons] = useState<boolean>(false);
 
 	const isDarkMode = useIsDarkMode();
 
@@ -64,20 +65,10 @@ function RawLogView(props: RawLogViewProps): JSX.Element {
 	}, [onClickExpand, data]);
 
 	const handleMouseAction = useCallback(() => {
+		if (!isLogsExplorerPage || isReadOnly) return;
+
 		setHasActionButtons(!hasActionButtons);
-	}, [hasActionButtons]);
-
-	const handleCopyLink: MouseEventHandler<HTMLElement> = useCallback(
-		(event) => {
-			event.preventDefault();
-			event.stopPropagation();
-
-			if (!onCopyLogLink) return;
-
-			onCopyLogLink(data.id);
-		},
-		[data.id, onCopyLogLink],
-	);
+	}, [isLogsExplorerPage, isReadOnly, hasActionButtons]);
 
 	const handleShowContext: MouseEventHandler<HTMLElement> = useCallback(
 		(event) => {
@@ -112,7 +103,7 @@ function RawLogView(props: RawLogViewProps): JSX.Element {
 			$isReadOnly={isReadOnly}
 			$isActiveLog={isActiveLog}
 			// eslint-disable-next-line react/jsx-props-no-spreading
-			{...(onCopyLogLink && { ...mouseActions })}
+			{...mouseActions}
 		>
 			{onClickExpand && (
 				<ExpandIconWrapper flex="30px">
@@ -137,7 +128,7 @@ function RawLogView(props: RawLogViewProps): JSX.Element {
 						/>
 					</Tooltip>
 					<Tooltip title="Copy Link">
-						<Button size="small" icon={<LinkOutlined />} onClick={handleCopyLink} />
+						<Button size="small" icon={<LinkOutlined />} onClick={onLogCopy} />
 					</Tooltip>
 				</ActionButtonsWrapper>
 			)}
@@ -146,9 +137,8 @@ function RawLogView(props: RawLogViewProps): JSX.Element {
 }
 
 RawLogView.defaultProps = {
-	isReadOnly: false,
 	isActiveLog: false,
-	onCopyLogLink: undefined,
+	isReadOnly: false,
 	onClickExpand: undefined,
 	onOpenLogsContext: undefined,
 };

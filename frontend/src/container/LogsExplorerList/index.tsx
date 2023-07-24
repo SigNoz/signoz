@@ -9,17 +9,14 @@ import { Heading } from 'container/LogsTable/styles';
 import { useOptionsMenu } from 'container/OptionsMenu';
 import { contentStyle } from 'container/Trace/Search/config';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
+import useCopyLogLink from 'hooks/useCopyLogLink';
 import useFontFaceObserver from 'hooks/useFontObserver';
-import { useNotifications } from 'hooks/useNotifications';
-import useUrlQueryData from 'hooks/useUrlQueryData';
 import { memo, useCallback, useEffect, useMemo, useRef } from 'react';
-import { useCopyToClipboard } from 'react-use';
 import { Virtuoso, VirtuosoHandle } from 'react-virtuoso';
 // interfaces
 import { ILog } from 'types/api/logs/log';
 import { DataSource, StringOperators } from 'types/common/queryBuilder';
 
-import { LogLinkQueryParams } from './constants';
 import InfinityTableView from './InfinityTableView';
 import { LogsExplorerListProps } from './LogsExplorerList.interfaces';
 import { InfinityWrapperStyled } from './styles';
@@ -32,7 +29,6 @@ function Footer(): JSX.Element {
 function LogsExplorerList({
 	isLoading,
 	currentStagedQueryData,
-	copiedTimeRange,
 	logs,
 	onOpenDetailedView,
 	onEndReached,
@@ -41,19 +37,9 @@ function LogsExplorerList({
 	onOpenLogsContext,
 }: LogsExplorerListProps): JSX.Element {
 	const ref = useRef<VirtuosoHandle>(null);
-
-	const { queryData: activeLogId } = useUrlQueryData(
-		LogLinkQueryParams.activeLogId,
-		null,
-	);
-	const activeLogIndex = useMemo(
-		() => logs.findIndex(({ id }) => id === activeLogId),
-		[logs, activeLogId],
-	);
-
 	const { initialDataSource } = useQueryBuilder();
-	const [, setCopy] = useCopyToClipboard();
-	const { notifications } = useNotifications();
+
+	const { activeLogId } = useCopyLogLink();
 
 	const { options, config } = useOptionsMenu({
 		storageKey: LOCALSTORAGE.LOGS_LIST_OPTIONS,
@@ -61,6 +47,11 @@ function LogsExplorerList({
 		aggregateOperator:
 			currentStagedQueryData?.aggregateOperator || StringOperators.NOOP,
 	});
+
+	const activeLogIndex = useMemo(
+		() => logs.findIndex(({ id }) => id === activeLogId),
+		[logs, activeLogId],
+	);
 
 	useFontFaceObserver(
 		[
@@ -80,28 +71,6 @@ function LogsExplorerList({
 		[options],
 	);
 
-	const handleCopyLogLink = useCallback(
-		(id: string) => {
-			const timeRange = JSON.stringify(copiedTimeRange);
-			const params = new URLSearchParams(window.location.search);
-
-			params.delete(LogLinkQueryParams.activeLogId);
-			params.delete(LogLinkQueryParams.timeRange);
-			params.set(LogLinkQueryParams.activeLogId, `"${id}"`);
-			params.set(LogLinkQueryParams.timeRange, timeRange);
-
-			const link = `${window.location.origin}${
-				window.location.pathname
-			}?${params.toString()}`;
-
-			setCopy(link);
-			notifications.success({
-				message: 'Copied to clipboard',
-			});
-		},
-		[notifications, copiedTimeRange, setCopy],
-	);
-
 	const getItemContent = useCallback(
 		(_: number, log: ILog): JSX.Element => {
 			if (options.format === 'raw') {
@@ -111,7 +80,6 @@ function LogsExplorerList({
 						data={log}
 						linesPerRow={options.maxLines}
 						onClickExpand={onExpand}
-						onCopyLogLink={handleCopyLogLink}
 						onOpenLogsContext={onOpenLogsContext}
 					/>
 				);
@@ -124,7 +92,7 @@ function LogsExplorerList({
 					selectedFields={selectedFields}
 					onOpenDetailedView={onOpenDetailedView}
 					onAddToQuery={onAddToQuery}
-					onCopyLogLink={handleCopyLogLink}
+					onOpenLogsContext={onOpenLogsContext}
 				/>
 			);
 		},
@@ -135,7 +103,6 @@ function LogsExplorerList({
 			onOpenDetailedView,
 			onAddToQuery,
 			onExpand,
-			handleCopyLogLink,
 			onOpenLogsContext,
 		],
 	);
@@ -166,7 +133,7 @@ function LogsExplorerList({
 						fields: selectedFields,
 						linesPerRow: options.maxLines,
 						onClickExpand: onExpand,
-						onCopyLogLink: handleCopyLogLink,
+						onOpenLogsContext,
 						appendTo: 'end',
 					}}
 					infitiyTableProps={{ onEndReached }}
@@ -196,7 +163,7 @@ function LogsExplorerList({
 		getItemContent,
 		selectedFields,
 		onExpand,
-		handleCopyLogLink,
+		onOpenLogsContext,
 	]);
 
 	return (
