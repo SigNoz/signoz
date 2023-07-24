@@ -64,15 +64,12 @@ type ListItemKey = keyof ListItemData;
 const isFormula = (queryName: string): boolean =>
 	FORMULA_REGEXP.test(queryName);
 
-const isColumnExist = (
-	label: string,
-	query: IBuilderQuery | IBuilderFormula,
+const isValueExist = (
+	field: keyof DynamicColumn,
+	value: string,
 	columns: DynamicColumns,
 ): boolean => {
-	const existColumns = columns.find(
-		(item) =>
-			item.query.queryName === query.queryName && item.dataIndex === label,
-	);
+	const existColumns = columns.find((item) => item[field] === value);
 
 	return !!existColumns;
 };
@@ -99,7 +96,7 @@ const addListLabels = (
 	label: ListItemKey,
 	dynamicColumns: DynamicColumns,
 ): void => {
-	if (isColumnExist(label as string, query, dynamicColumns)) return;
+	if (isValueExist('dataIndex', label, dynamicColumns)) return;
 
 	const fieldObj: DynamicColumn = {
 		query,
@@ -119,9 +116,7 @@ const addSeriaLabels = (
 	dynamicColumns: DynamicColumns,
 	query: IBuilderQuery | IBuilderFormula,
 ): void => {
-	const currentLabel = `${label} - ${query.legend || query.queryName}`;
-
-	if (isColumnExist(currentLabel, query, dynamicColumns)) return;
+	if (isValueExist('dataIndex', label, dynamicColumns)) return;
 
 	// const labelValue = labels[label];
 
@@ -129,10 +124,9 @@ const addSeriaLabels = (
 
 	const fieldObj: DynamicColumn = {
 		query,
-
 		field: label as string,
-		dataIndex: currentLabel,
-		title: currentLabel,
+		dataIndex: label,
+		title: label,
 		data: [],
 		type: 'field',
 		// sortable: isNumber,
@@ -144,6 +138,7 @@ const addSeriaLabels = (
 const addOperatorFormulaColumns = (
 	query: IBuilderFormula | IBuilderQuery,
 	dynamicColumns: DynamicColumns,
+	customLabel?: string,
 ): void => {
 	if (isFormula(query.queryName)) {
 		const formulaQuery = query as IBuilderFormula;
@@ -157,7 +152,7 @@ const addOperatorFormulaColumns = (
 			query,
 			field: formulaQuery.queryName,
 			dataIndex: formulaQuery.queryName,
-			title: formulaLabel,
+			title: customLabel || formulaLabel,
 			data: [],
 			type: 'formula',
 			// sortable: isNumber,
@@ -187,7 +182,7 @@ const addOperatorFormulaColumns = (
 		query,
 		field: currentQueryData.queryName,
 		dataIndex: currentQueryData.queryName,
-		title: resultValue,
+		title: customLabel || resultValue,
 		data: [],
 		type: 'operator',
 		// sortable: isNumber,
@@ -238,7 +233,7 @@ const getDynamicColumns: GetDynamicColumns = (queryTableData, query) => {
 
 		if (currentQuery.series) {
 			// Hidden column
-			// if (!isColumnExist('dataIndex', 'timestamp', dynamicColumns)) {
+			// if (!isValueExist('dataIndex', 'timestamp', dynamicColumns)) {
 			// 	dynamicColumns.push({
 			// 		query: currentStagedQuery,
 			// 		dataIndex: 'timestamp',
@@ -249,7 +244,20 @@ const getDynamicColumns: GetDynamicColumns = (queryTableData, query) => {
 			// 	});
 			// }
 
-			addOperatorFormulaColumns(currentStagedQuery, dynamicColumns);
+			const isValuesColumnExist = currentQuery.series.some(
+				(item) => item.values.length > 0,
+			);
+			const isEveryValuesExist = currentQuery.series.every(
+				(item) => item.values.length > 0,
+			);
+
+			if (isValuesColumnExist) {
+				addOperatorFormulaColumns(
+					currentStagedQuery,
+					dynamicColumns,
+					isEveryValuesExist ? undefined : currentStagedQuery.queryName,
+				);
+			}
 
 			currentQuery.series.forEach((seria) => {
 				Object.keys(seria.labels).forEach((label) => {
