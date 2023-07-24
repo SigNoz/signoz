@@ -1,3 +1,4 @@
+import { SearchOutlined } from '@ant-design/icons';
 import type { ColumnType } from 'antd/es/table';
 import ROUTES from 'constants/routes';
 import { routeConfig } from 'container/SideNav/config';
@@ -6,16 +7,15 @@ import { Link } from 'react-router-dom';
 import { ServicesList } from 'types/api/metrics/getService';
 
 import { filterDropdown } from '../Filter/FilterDropdown';
-import FilterIcon from '../Filter/FilterIcon';
 import { Name } from '../styles';
 
 export const getColumnSearchProps = (
-	dataIndex: DataIndex,
+	dataIndex: keyof ServicesList,
 	search: string,
-): ColumnType<DataProps> => ({
+): ColumnType<ServicesList> => ({
 	filterDropdown,
-	filterIcon: <FilterIcon filtered={false} />,
-	onFilter: (value: string | number | boolean, record: DataProps): boolean =>
+	filterIcon: <SearchOutlined />,
+	onFilter: (value: string | number | boolean, record: ServicesList): boolean =>
 		record[dataIndex]
 			.toString()
 			.toLowerCase()
@@ -32,6 +32,3 @@ export const getColumnSearchProps = (
 		);
 	},
 });
-
-type DataIndex = keyof ServicesList;
-type DataProps = ServicesList;

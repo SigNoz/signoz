@@ -9,39 +9,38 @@ import {
 } from './ColumnContants';
 import { getColumnSearchProps } from './GetColumnSearchProps';
 
-export const columns = (search: string): ColumnsType<DataProps> => [
+export const columns = (search: string): ColumnsType<ServicesList> => [
 	{
-		title: ColumnTitle.Application,
+		title: ColumnTitle[ColumnKey.Application],
 		dataIndex: ColumnKey.Application,
 		width: ColumnWidth.Application,
 		key: ColumnKey.Application,
 		...getColumnSearchProps('serviceName', search),
 	},
 	{
-		title: ColumnTitle.P99,
+		title: ColumnTitle[ColumnKey.P99],
 		dataIndex: ColumnKey.P99,
 		key: ColumnKey.P99,
 		width: ColumnWidth.P99,
 		defaultSortOrder: SORTING_ORDER,
-		sorter: (a: DataProps, b: DataProps): number => a.p99 - b.p99,
+		sorter: (a: ServicesList, b: ServicesList): number => a.p99 - b.p99,
 		render: (value: number): string => (value / 1000000).toFixed(2),
 	},
 	{
-		title: ColumnTitle.ErrorRate,
+		title: ColumnTitle[ColumnKey.ErrorRate],
 		dataIndex: ColumnKey.ErrorRate,
 		key: ColumnKey.ErrorRate,
 		width: 150,
-		sorter: (a: DataProps, b: DataProps): number => a.errorRate - b.errorRate,
+		sorter: (a: ServicesList, b: ServicesList): number =>
+			a.errorRate - b.errorRate,
 		render: (value: number): string => value.toFixed(2),
 	},
 	{
-		title: ColumnTitle.Operations,
+		title: ColumnTitle[ColumnKey.Operations],
 		dataIndex: ColumnKey.Operations,
 		key: ColumnKey.Operations,
 		width: ColumnWidth.Operations,
-		sorter: (a: DataProps, b: DataProps): number => a.callRate - b.callRate,
+		sorter: (a: ServicesList, b: ServicesList): number => a.callRate - b.callRate,
 		render: (value: number): string => value.toFixed(2),
 	},
 ];
-
-type DataProps = ServicesList;

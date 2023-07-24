@@ -1,16 +1,18 @@
-export enum ColumnTitle {
-	Application = 'Application',
-	P99 = 'P99 latency (in ms)',
-	ErrorRate = 'Error Rate (% of total)',
-	Operations = 'Operations Per Second',
-}
-
 export enum ColumnKey {
 	Application = 'serviceName',
 	P99 = 'p99',
 	ErrorRate = 'errorRate',
 	Operations = 'callRate',
 }
+
+export const ColumnTitle: {
+	[key in ColumnKey]: string;
+} = {
+	[ColumnKey.Application]: 'Application',
+	[ColumnKey.P99]: 'P99 latency (in ms)',
+	[ColumnKey.ErrorRate]: 'Error Rate (% of total)',
+	[ColumnKey.Operations]: 'Operations Per Second',
+};
 
 export enum ColumnWidth {
 	Application = 200,

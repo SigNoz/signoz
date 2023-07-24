@@ -6,9 +6,9 @@ import { useState } from 'react';
 import { useLocation } from 'react-router-dom';
 
 import { columns } from './Columns/ServiceColumn';
-import ServiceTableProp from './ServiceTable';
 import SkipBoardModal from './SkipOnBoardModal';
 import { Container } from './styles';
+import ServiceTableProp from './types';
 
 function Services({ services, loading, error }: ServiceTableProp): JSX.Element {
 	const { search } = useLocation();

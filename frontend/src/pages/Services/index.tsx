@@ -63,7 +63,7 @@ function Metrics(): JSX.Element {
 
 export interface QueryServiceProps {
 	data: PayloadProps | undefined;
-	error: AxiosError;
+	error: AxiosError | null;
 	isLoading: boolean;
 }
 
