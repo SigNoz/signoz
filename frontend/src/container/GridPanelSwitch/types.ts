@@ -4,6 +4,7 @@ import { GridGraphComponentProps } from 'container/GridGraphComponent/types';
 import { GridTableComponentProps } from 'container/GridTableComponent/types';
 import { GridValueComponentProps } from 'container/GridValueComponent/types';
 import { ITEMS } from 'container/NewDashboard/ComponentsSlider/menuItems';
+import { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { QueryDataV3 } from 'types/api/widgets/getQuery';
 
 import { PANEL_TYPES } from '../../constants/queryBuilder';
@@ -20,6 +21,7 @@ export type GridPanelSwitchProps = {
 	staticLine?: StaticLineProps;
 	onDragSelect?: (start: number, end: number) => void;
 	panelData: QueryDataV3[];
+	query: Query;
 };
 
 export type PropsTypePropsMap = {

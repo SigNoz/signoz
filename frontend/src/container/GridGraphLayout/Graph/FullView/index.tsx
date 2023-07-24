@@ -112,6 +112,7 @@ function FullView({
 				yAxisUnit={yAxisUnit}
 				onDragSelect={onDragSelect}
 				panelData={response.data?.payload.data.newResult.data.result || []}
+				query={widget.query}
 			/>
 		</>
 	);
