@@ -97,6 +97,11 @@ function Application(): JSX.Element {
 		[queries],
 	);
 
+	const topLevelOperationsRoute = useMemo(
+		() => (topLevelOperations ? topLevelOperations[servicename || ''] : []),
+		[servicename, topLevelOperations],
+	);
+
 	const operationPerSecWidget = useMemo(
 		() =>
 			getWidgetQueryBuilder(
@@ -106,16 +111,14 @@ function Application(): JSX.Element {
 					builder: operationPerSec({
 						servicename,
 						tagFilterItems,
-						topLevelOperations: topLevelOperations
-							? topLevelOperations[servicename || '']
-							: [],
+						topLevelOperations: topLevelOperationsRoute,
 					}),
 					clickhouse_sql: [],
 					id: uuid(),
 				},
 				GraphTitle.RATE_PER_OPS,
 			),
-		[servicename, topLevelOperations, tagFilterItems],
+		[servicename, tagFilterItems, topLevelOperationsRoute],
 	);
 
 	const errorPercentageWidget = useMemo(
@@ -127,16 +130,14 @@ function Application(): JSX.Element {
 					builder: errorPercentage({
 						servicename,
 						tagFilterItems,
-						topLevelOperations: topLevelOperations
-							? topLevelOperations[servicename || '']
-							: [],
+						topLevelOperations: topLevelOperationsRoute,
 					}),
 					clickhouse_sql: [],
 					id: uuid(),
 				},
 				GraphTitle.ERROR_PERCENTAGE,
 			),
-		[servicename, topLevelOperations, tagFilterItems],
+		[servicename, tagFilterItems, topLevelOperationsRoute],
 	);
 
 	const onDragSelect = useCallback(
@@ -181,6 +182,7 @@ function Application(): JSX.Element {
 						selectedTimeStamp={selectedTimeStamp}
 						selectedTraceTags={selectedTraceTags}
 						tagFilterItems={tagFilterItems}
+						topLevelOperationsRoute={topLevelOperationsRoute}
 					/>
 				</Col>
 

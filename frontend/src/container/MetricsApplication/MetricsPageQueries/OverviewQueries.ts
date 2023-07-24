@@ -7,7 +7,8 @@ import {
 	DataType,
 	FORMULA,
 	GraphTitle,
-	LETENCY_LEGENDS_AGGREGATEOPERATOR,
+	LATENCY_AGGREGATEOPERATOR,
+	LATENCY_AGGREGATEOPERATOR_SPAN_METRICS,
 	MetricsType,
 	OPERATION_LEGENDS,
 	QUERYNAME_AND_EXPRESSION,
@@ -22,79 +23,58 @@ import {
 export const latency = ({
 	servicename,
 	tagFilterItems,
+	isSpanMetricEnable = false,
+	topLevelOperationsRoute,
 }: LatencyProps): QueryBuilderData => {
-	const autocompleteData: BaseAutocompleteData[] = [
+	const newAutoCompleteData: BaseAutocompleteData = {
+		key: isSpanMetricEnable
+			? WidgetKeys.Signoz_latency_bucket
+			: WidgetKeys.DurationNano,
+		dataType: DataType.FLOAT64,
+		isColumn: true,
+		type: isSpanMetricEnable ? null : MetricsType.Tag,
+	};
+
+	const autocompleteData: BaseAutocompleteData[] = Array(3).fill(
+		newAutoCompleteData,
+	);
+
+	const filterItem: TagFilterItem[] = [
 		{
-			key: WidgetKeys.DurationNano,
-			dataType: DataType.FLOAT64,
-			isColumn: true,
-			type: MetricsType.Tag,
+			id: '',
+			key: {
+				key: isSpanMetricEnable ? WidgetKeys.Service_name : WidgetKeys.ServiceName,
+				dataType: DataType.STRING,
+				type: isSpanMetricEnable ? MetricsType.Resource : MetricsType.Tag,
+				isColumn: !isSpanMetricEnable,
+			},
+			op: isSpanMetricEnable ? OPERATORS.IN : OPERATORS['='],
+			value: isSpanMetricEnable ? [servicename] : servicename,
 		},
 		{
-			key: WidgetKeys.DurationNano,
-			dataType: DataType.FLOAT64,
-			isColumn: true,
-			type: MetricsType.Tag,
+			id: '',
+			key: {
+				dataType: DataType.STRING,
+				isColumn: !isSpanMetricEnable,
+				key: isSpanMetricEnable ? WidgetKeys.Operation : WidgetKeys.Name,
+				type: MetricsType.Tag,
+			},
+			op: OPERATORS.IN.toLowerCase(), // TODO: need to remove toLowerCase() this once backend is changed
+			value: [...topLevelOperationsRoute],
 		},
-		{
-			key: WidgetKeys.DurationNano,
-			dataType: DataType.FLOAT64,
-			isColumn: true,
-			type: MetricsType.Tag,
-		},
+		...tagFilterItems,
 	];
 
-	const filterItems: TagFilterItem[][] = [
-		[
-			{
-				id: '',
-				key: {
-					key: WidgetKeys.ServiceName,
-					dataType: DataType.STRING,
-					type: MetricsType.Tag,
-					isColumn: true,
-				},
-				op: OPERATORS['='],
-				value: `${servicename}`,
-			},
-			...tagFilterItems,
-		],
-		[
-			{
-				id: '',
-				key: {
-					key: WidgetKeys.ServiceName,
-					dataType: DataType.STRING,
-					type: MetricsType.Tag,
-					isColumn: true,
-				},
-				op: OPERATORS['='],
-				value: `${servicename}`,
-			},
-			...tagFilterItems,
-		],
-		[
-			{
-				id: '',
-				key: {
-					key: WidgetKeys.ServiceName,
-					dataType: DataType.STRING,
-					type: MetricsType.Tag,
-					isColumn: true,
-				},
-				op: OPERATORS['='],
-				value: `${servicename}`,
-			},
-			...tagFilterItems,
-		],
-	];
+	const filterItems: TagFilterItem[][] = Array(3).fill([...filterItem]);
 
 	return getQueryBuilderQueries({
 		autocompleteData,
-		legends: LETENCY_LEGENDS_AGGREGATEOPERATOR,
+		legends: LATENCY_AGGREGATEOPERATOR,
 		filterItems,
-		aggregateOperator: LETENCY_LEGENDS_AGGREGATEOPERATOR,
-		dataSource: DataSource.TRACES,
+		aggregateOperator: isSpanMetricEnable
+			? LATENCY_AGGREGATEOPERATOR_SPAN_METRICS
+			: LATENCY_AGGREGATEOPERATOR,
+		dataSource: isSpanMetricEnable ? DataSource.METRICS : DataSource.TRACES,
 		queryNameAndExpression: QUERYNAME_AND_EXPRESSION,
 	});
 };
@@ -250,4 +230,6 @@ export interface OperationPerSecProps {
 export interface LatencyProps {
 	servicename: IServiceName['servicename'];
 	tagFilterItems: TagFilterItem[];
+	isSpanMetricEnable?: boolean;
+	topLevelOperationsRoute: string[];
 }
