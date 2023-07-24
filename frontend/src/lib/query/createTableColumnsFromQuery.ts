@@ -164,7 +164,10 @@ const addOperatorFormulaColumns = (
 		};
 
 		dynamicColumns.push(formulaColumn);
+
+		return;
 	}
+
 	const currentQueryData = query as IBuilderQuery;
 
 	let operatorLabel = `${currentQueryData.aggregateOperator}`;
