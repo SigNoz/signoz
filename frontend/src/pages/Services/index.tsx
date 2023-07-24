@@ -1,5 +1,4 @@
 import { Space } from 'antd';
-import { AxiosError } from 'axios';
 import ReleaseNote from 'components/ReleaseNote';
 import Spinner from 'components/Spinner';
 import ResourceAttributesFilter from 'container/ResourceAttributesFilter';
@@ -12,7 +11,7 @@ import { useEffect, useMemo } from 'react';
 import { useSelector } from 'react-redux';
 import { useLocation } from 'react-router-dom';
 import { AppState } from 'store/reducers';
-import { PayloadProps } from 'types/api/metrics/getService';
+import { QueryServiceProps } from 'types/api/metrics/getService';
 import { GlobalReducer } from 'types/reducer/globalTime';
 import { Tags } from 'types/reducer/trace';
 
@@ -59,12 +58,6 @@ function Metrics(): JSX.Element {
 			<ServicesTable services={data || []} loading={isLoading} error={!!error} />
 		</Space>
 	);
-}
-
-export interface QueryServiceProps {
-	data: PayloadProps | undefined;
-	error: AxiosError | null;
-	isLoading: boolean;
 }
 
 export default Metrics;
