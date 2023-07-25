@@ -1,17 +1,20 @@
 import { Space } from 'antd';
+import localStorageGet from 'api/browser/localstorage/get';
+import localStorageSet from 'api/browser/localstorage/set';
 import ReleaseNote from 'components/ReleaseNote';
 import Spinner from 'components/Spinner';
+import { SKIP_ONBOARDING } from 'constants/onboarding';
 import ResourceAttributesFilter from 'container/ResourceAttributesFilter';
 import ServicesTable from 'container/ServiceTable';
-import { useNotifications } from 'hooks/useNotifications';
+import SkipOnBoardingModal from 'container/ServiceTable/SkipOnBoardModal';
+import useErrorNotification from 'hooks/useErrorNotification';
 import { useQueryService } from 'hooks/useQueryService';
 import useResourceAttribute from 'hooks/useResourceAttribute';
 import { convertRawQueriesToTraceSelectedTags } from 'hooks/useResourceAttribute/utils';
-import { useEffect, useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { useLocation } from 'react-router-dom';
 import { AppState } from 'store/reducers';
-import { QueryServiceProps } from 'types/api/metrics/getService';
 import { GlobalReducer } from 'types/reducer/globalTime';
 import { Tags } from 'types/reducer/trace';
 
@@ -23,28 +26,37 @@ function Metrics(): JSX.Element {
 
 	const location = useLocation();
 	const { queries } = useResourceAttribute();
+	const [skipOnboarding, setSkipOnboarding] = useState(
+		localStorageGet(SKIP_ONBOARDING) === 'true',
+	);
+
+	const onContinueClick = (): void => {
+		localStorageSet(SKIP_ONBOARDING, 'true');
+		setSkipOnboarding(true);
+	};
 
 	const selectedTags = useMemo(
 		() => (convertRawQueriesToTraceSelectedTags(queries, '') as Tags[]) || [],
 		[queries],
 	);
 
-	const { data, error, isLoading }: QueryServiceProps = useQueryService(
+	const { data, error, isLoading, isError } = useQueryService({
 		minTime,
 		maxTime,
 		selectedTime,
 		selectedTags,
-	);
+	});
 
-	const { notifications } = useNotifications();
+	useErrorNotification(error);
 
-	useEffect(() => {
-		if (error) {
-			notifications.error({
-				message: error.message,
-			});
-		}
-	}, [error, notifications]);
+	if (
+		data?.length === 0 &&
+		isLoading === false &&
+		!skipOnboarding &&
+		isError === true
+	) {
+		return <SkipOnBoardingModal onContinueClick={onContinueClick} />;
+	}
 
 	if (isLoading) {
 		return <Spinner tip="Loading..." />;
@@ -55,7 +67,7 @@ function Metrics(): JSX.Element {
 			<ReleaseNote path={location.pathname} />
 
 			<ResourceAttributesFilter />
-			<ServicesTable services={data || []} loading={isLoading} error={!!error} />
+			<ServicesTable services={data || []} />
 		</Space>
 	);
 }

@@ -1,6 +1,7 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import { BrowserRouter } from 'react-router-dom';
 
+import { Services } from './__mock__/servicesListMock';
 import Metrics from './index';
 
 jest.mock('react-router-dom', () => ({
@@ -10,36 +11,11 @@ jest.mock('react-router-dom', () => ({
 	}),
 }));
 
-const services = [
-	{
-		serviceName: 'frontend',
-		p99: 1261498140,
-		avgDuration: 768497850.9803921,
-		numCalls: 255,
-		callRate: 0.9444444444444444,
-		numErrors: 0,
-		errorRate: 0,
-		num4XX: 0,
-		fourXXRate: 0,
-	},
-	{
-		serviceName: 'customer',
-		p99: 890150740.0000001,
-		avgDuration: 369612035.2941176,
-		numCalls: 255,
-		callRate: 0.9444444444444444,
-		numErrors: 0,
-		errorRate: 0,
-		num4XX: 0,
-		fourXXRate: 0,
-	},
-];
-
 describe('Metrics Component', () => {
 	it('renders without errors', async () => {
 		render(
 			<BrowserRouter>
-				<Metrics services={services} loading={false} error={false} />
+				<Metrics services={Services} loading={false} error={false} />
 			</BrowserRouter>,
 		);
 
@@ -54,7 +30,7 @@ describe('Metrics Component', () => {
 	it('renders if the data is loaded in the table', async () => {
 		render(
 			<BrowserRouter>
-				<Metrics services={services} loading={false} error={false} />
+				<Metrics services={Services} loading={false} error={false} />
 			</BrowserRouter>,
 		);
 
