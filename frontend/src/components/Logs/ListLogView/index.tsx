@@ -5,6 +5,7 @@ import { Button, Divider, Row, Typography } from 'antd';
 import dayjs from 'dayjs';
 import dompurify from 'dompurify';
 import useCopyLogLink from 'hooks/useCopyLogLink';
+import { useIsDarkMode } from 'hooks/useDarkMode';
 import { useNotifications } from 'hooks/useNotifications';
 // utils
 import { FlatLogData } from 'lib/logs/flatLogData';
@@ -98,9 +99,12 @@ function ListLogView({
 }: ListLogViewProps): JSX.Element {
 	const flattenLogData = useMemo(() => FlatLogData(logData), [logData]);
 
+	const isDarkMode = useIsDarkMode();
 	const [, setCopy] = useCopyToClipboard();
 	const { notifications } = useNotifications();
-	const { isLogsExplorerPage, onLogCopy } = useCopyLogLink(logData.id);
+	const { isHighlighted, isLogsExplorerPage, onLogCopy } = useCopyLogLink(
+		logData.id,
+	);
 
 	const handleDetailedView = useCallback(() => {
 		onOpenDetailedView(logData);
@@ -127,7 +131,7 @@ function ListLogView({
 	);
 
 	return (
-		<Container>
+		<Container $isActiveLog={isHighlighted} $isDarkMode={isDarkMode}>
 			<div>
 				<LogContainer>
 					<>

@@ -2,7 +2,10 @@ import { blue } from '@ant-design/colors';
 import { Button, Col, Row } from 'antd';
 import styled from 'styled-components';
 
-export const RawLogViewContainer = styled(Row)<{ $isDarkMode: boolean }>`
+export const RawLogViewContainer = styled(Row)<{
+	$isDarkMode: boolean;
+	$isActiveLog: boolean;
+}>`
 	position: relative;
 	width: 100%;
 	font-weight: 700;
@@ -10,6 +13,13 @@ export const RawLogViewContainer = styled(Row)<{ $isDarkMode: boolean }>`
 	line-height: 1.25rem;
 
 	transition: background-color 0.2s ease-in;
+
+	${({ $isDarkMode, $isActiveLog }): string =>
+		$isActiveLog
+			? `background-color: ${
+					$isDarkMode ? 'rgba(255,255,255,0.1)' : 'rgba(0, 0, 0, 0.1)'
+			  };`
+			: ''}
 
 	&:hover {
 		background-color: ${({ $isDarkMode }): string =>

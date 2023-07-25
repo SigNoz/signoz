@@ -7,6 +7,7 @@ export type LogTimeRange = {
 };
 
 export type UseCopyLogLink = {
+	isHighlighted: boolean;
 	isLogsExplorerPage: boolean;
 	activeLogId: string | null;
 	timeRange: LogTimeRange | null;

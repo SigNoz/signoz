@@ -1,12 +1,22 @@
 import { Card, Typography } from 'antd';
 import styled from 'styled-components';
 
-export const Container = styled(Card)`
+export const Container = styled(Card)<{
+	$isDarkMode: boolean;
+	$isActiveLog: boolean;
+}>`
 	width: 100% !important;
 	margin-bottom: 0.3rem;
 	.ant-card-body {
 		padding: 0.3rem 0.6rem;
 	}
+
+	${({ $isDarkMode, $isActiveLog }): string =>
+		$isActiveLog
+			? `background-color: ${
+					$isDarkMode ? 'rgba(255,255,255,0.1)' : 'rgba(0, 0, 0, 0.1)'
+			  };`
+			: ''}
 `;
 
 export const Text = styled(Typography.Text)`

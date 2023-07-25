@@ -30,7 +30,9 @@ interface RawLogViewProps {
 function RawLogView(props: RawLogViewProps): JSX.Element {
 	const { data, linesPerRow, onClickExpand } = props;
 
-	const { isLogsExplorerPage, onLogCopy } = useCopyLogLink(data.id);
+	const { isHighlighted, isLogsExplorerPage, onLogCopy } = useCopyLogLink(
+		data.id,
+	);
 
 	const [hasCopyLink, setHasCopyLink] = useState(false);
 
@@ -72,6 +74,7 @@ function RawLogView(props: RawLogViewProps): JSX.Element {
 			wrap={false}
 			align="middle"
 			$isDarkMode={isDarkMode}
+			$isActiveLog={isHighlighted}
 			// eslint-disable-next-line react/jsx-props-no-spreading
 			{...mouseActions}
 		>

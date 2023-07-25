@@ -1,6 +1,8 @@
 import { ColumnTypeRender } from 'components/Logs/TableView/types';
 import { useTableView } from 'components/Logs/TableView/useTableView';
 import { LOCALSTORAGE } from 'constants/localStorage';
+import useCopyLogLink from 'hooks/useCopyLogLink';
+import { useIsDarkMode } from 'hooks/useDarkMode';
 import useDragColumns from 'hooks/useDragColumns';
 import { getDraggedColumns } from 'hooks/useDragColumns/utils';
 import {
@@ -16,6 +18,7 @@ import {
 	TableVirtuoso,
 	TableVirtuosoHandle,
 } from 'react-virtuoso';
+import { ILog } from 'types/api/logs/log';
 
 import { infinityDefaultStyles } from './config';
 import { LogsCustomTable } from './LogsCustomTable';
@@ -27,12 +30,25 @@ import {
 import { InfinityTableProps } from './types';
 
 // eslint-disable-next-line react/function-component-definition
-const CustomTableRow: TableComponents['TableRow'] = ({
+const CustomTableRow: TableComponents<ILog>['TableRow'] = ({
 	children,
 	context,
 	...props
-	// eslint-disable-next-line react/jsx-props-no-spreading
-}) => <TableRowStyled {...props}>{children}</TableRowStyled>;
+}) => {
+	const isDarkMode = useIsDarkMode();
+	const { isHighlighted } = useCopyLogLink(props.item.id);
+
+	return (
+		<TableRowStyled
+			$isDarkMode={isDarkMode}
+			$isActiveLog={isHighlighted}
+			// eslint-disable-next-line react/jsx-props-no-spreading
+			{...props}
+		>
+			{children}
+		</TableRowStyled>
+	);
+};
 
 const InfinityTable = forwardRef<TableVirtuosoHandle, InfinityTableProps>(
 	function InfinityTableView(
