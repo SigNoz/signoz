@@ -232,18 +232,6 @@ const getDynamicColumns: GetDynamicColumns = (queryTableData, query) => {
 		}
 
 		if (currentQuery.series) {
-			// Hidden column
-			// if (!isValueExist('dataIndex', 'timestamp', dynamicColumns)) {
-			// 	dynamicColumns.push({
-			// 		query: currentStagedQuery,
-			// 		dataIndex: 'timestamp',
-			// 		title: 'Timestamp',
-			// 		data: [],
-			// 		type: 'field',
-			// 		// sortable: true,
-			// 	});
-			// }
-
 			const isValuesColumnExist = currentQuery.series.some(
 				(item) => item.values.length > 0,
 			);
@@ -302,13 +290,6 @@ const fillData = (
 	);
 
 	columns.forEach((column) => {
-		// Hidden column
-		// if (column.dataIndex === 'timestamp') {
-		// 	column.data.push(value.timestamp);
-		// 	unusedColumnsKeys.delete('timestamp');
-		// 	return;
-		// }
-
 		if (queryName === column.field && value) {
 			column.data.push(parseFloat(value.value).toFixed(2));
 			unusedColumnsKeys.delete(column.field);
@@ -418,7 +399,7 @@ const generateTableColumns = (
 		const column: ColumnType<RowData> = {
 			dataIndex: item.dataIndex,
 			title: item.title,
-			render: renderColumnCell && renderColumnCell[item.key],
+			render: renderColumnCell && renderColumnCell[item.dataIndex],
 			// sorter: item.sortable
 			// 	? (a: RowData, b: RowData): number =>
 			// 			(a[item.key] as number) - (b[item.key] as number)
