@@ -22,6 +22,7 @@ export type UseQueryOperations = (
 ) => {
 	isTracePanelType: boolean;
 	isMetricsDataSource: boolean;
+	isTracesDataSource : boolean;
 	operators: SelectOption<string, string>[];
 	listOfAdditionalFilters: string[];
 	handleChangeOperator: (value: string) => void;

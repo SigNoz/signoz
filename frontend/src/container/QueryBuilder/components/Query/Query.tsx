@@ -42,6 +42,7 @@ export const Query = memo(function Query({
 	const {
 		operators,
 		isMetricsDataSource,
+		isTracesDataSource,
 		isTracePanelType,
 		listOfAdditionalFilters,
 		handleChangeAggregatorAttribute,
@@ -210,6 +211,18 @@ export const Query = memo(function Query({
 			case PANEL_TYPES.LIST: {
 				return (
 					<>
+					{!isTracesDataSource && (
+						<Col span={11}>
+							<Row gutter={[11, 5]}>
+								<Col flex="5.93rem">
+									<FilterLabel label="Limit" />
+								</Col>
+								<Col flex="1 1 12.5rem">
+									<LimitFilter query={query} onChange={handleChangeLimit} />
+								</Col>
+							</Row>
+						</Col>
+					)}
 						<Col span={11}>
 							<Row gutter={[11, 5]}>
 								<Col flex="5.93rem">
@@ -387,6 +400,7 @@ export const Query = memo(function Query({
 					<AdditionalFiltersToggler
 						listOfAdditionalFilter={listOfAdditionalFilters}
 						hideLimit={panelType === PANEL_TYPES.LIST}
+						queryname={query?.dataSource}
 					>
 						<Row gutter={[0, 11]} justify="space-between">
 							{renderAdditionalFilters()}

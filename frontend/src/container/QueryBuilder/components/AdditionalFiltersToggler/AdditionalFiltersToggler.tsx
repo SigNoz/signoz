@@ -15,19 +15,22 @@ export const AdditionalFiltersToggler = memo(function AdditionalFiltersToggler({
 	children,
 	listOfAdditionalFilter,
 	hideLimit,
+	queryname,
 }: AdditionalFiltersProps): JSX.Element {
 	const [isOpenedFilters, setIsOpenedFilters] = useState<boolean>(false);
 
 	const handleToggleOpenFilters = (): void => {
 		setIsOpenedFilters((prevState) => !prevState);
 	};
-
-	const filtersTexts: ReactNode = listOfAdditionalFilter.filter((str) => !(hideLimit && str === 'Limit')).map((str, index) => {
-		const isNextLast = index + 1 === listOfAdditionalFilter.length - 1;
-		if (index === listOfAdditionalFilter.length - 1) {
+	const filtersToDisplay = listOfAdditionalFilter.filter(
+		(str) => !(hideLimit && queryname === 'traces' && str === 'Limit'),
+	);
+	const filtersTexts: ReactNode = filtersToDisplay.map((str, index) => {
+		const isNextLast = index + 1 === filtersToDisplay.length - 1;
+		if (index === filtersToDisplay.length - 1) {
 			return (
 				<Fragment key={str}>
-					{listOfAdditionalFilter.length > 1 && 'and'}{' '}
+					{filtersToDisplay.length > 1 && 'and'}{' '}
 					<StyledLink>{str.toUpperCase()}</StyledLink>
 				</Fragment>
 			);

@@ -144,6 +144,10 @@ export const useQueryOperations: UseQueryOperations = ({
 		[query.dataSource],
 	);
 
+	const isTracesDataSource = useMemo(
+		() => query.dataSource === DataSource.TRACES,
+		[query.dataSource],
+	);
 	const isTracePanelType = useMemo(() => panelType === PANEL_TYPES.TRACE, [
 		panelType,
 	]);
@@ -170,6 +174,7 @@ export const useQueryOperations: UseQueryOperations = ({
 	return {
 		isTracePanelType,
 		isMetricsDataSource,
+		isTracesDataSource,
 		operators,
 		listOfAdditionalFilters,
 		handleChangeOperator,
