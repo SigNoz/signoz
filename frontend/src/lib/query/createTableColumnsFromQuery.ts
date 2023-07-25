@@ -15,7 +15,7 @@ import { v4 as uuid } from 'uuid';
 
 type CreateTableDataFromQueryParams = Pick<
 	QueryTableProps,
-	'queryTableData' | 'query' | 'renderActionCell'
+	'queryTableData' | 'query' | 'renderActionCell' | 'renderColumnCell'
 >;
 
 export type RowData = {
@@ -347,6 +347,7 @@ const generateData = (
 
 const generateTableColumns = (
 	dynamicColumns: DynamicColumns,
+	renderColumnCell?: QueryTableProps['renderColumnCell'],
 ): ColumnsType<RowData> => {
 	const columns: ColumnsType<RowData> = dynamicColumns.reduce<
 		ColumnsType<RowData>
@@ -355,6 +356,7 @@ const generateTableColumns = (
 			dataIndex: item.key,
 			key: item.key,
 			title: item.title,
+			render: renderColumnCell && renderColumnCell[item.key],
 			// sorter: item.sortable
 			// 	? (a: RowData, b: RowData): number =>
 			// 			(a[item.key] as number) - (b[item.key] as number)
@@ -371,6 +373,7 @@ export const createTableColumnsFromQuery: CreateTableDataFromQuery = ({
 	query,
 	queryTableData,
 	renderActionCell,
+	renderColumnCell,
 }) => {
 	const dynamicColumns = getDynamicColumns(queryTableData, query);
 
@@ -381,7 +384,7 @@ export const createTableColumnsFromQuery: CreateTableDataFromQuery = ({
 
 	const dataSource = generateData(filledDynamicColumns, rowsLength);
 
-	const columns = generateTableColumns(filledDynamicColumns);
+	const columns = generateTableColumns(filledDynamicColumns, renderColumnCell);
 
 	const actionsCell: ColumnType<RowData> | null = renderActionCell
 		? {
