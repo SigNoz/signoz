@@ -343,7 +343,7 @@ type CustomChartOptions = ChartOptions & {
 	};
 };
 
-interface GraphProps {
+export interface GraphProps {
 	animate?: boolean;
 	type: ChartType;
 	data: Chart['data'];

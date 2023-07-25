@@ -1,8 +1,9 @@
 import { Card, Typography } from 'antd';
 import Spinner from 'components/Spinner';
-import GridGraphComponent from 'container/GridGraphComponent';
+import GridPanelSwitch from 'container/GridPanelSwitch';
 import { WidgetGraphProps } from 'container/NewWidget/types';
 import { useGetWidgetQueryRange } from 'hooks/queryBuilder/useGetWidgetQueryRange';
+import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import getChartData from 'lib/getChartData';
 import { useSelector } from 'react-redux';
 import { useLocation } from 'react-router-dom';
@@ -16,6 +17,7 @@ function WidgetGraph({
 	yAxisUnit,
 	selectedTime,
 }: WidgetGraphProps): JSX.Element {
+	const { stagedQuery } = useQueryBuilder();
 	const { dashboards } = useSelector<AppState, DashboardReducer>(
 		(state) => state.dashboards,
 	);
@@ -39,7 +41,7 @@ function WidgetGraph({
 		return <Card>Invalid widget</Card>;
 	}
 
-	const { title, opacity, isStacked } = selectedWidget;
+	const { title, opacity, isStacked, query } = selectedWidget;
 
 	if (getWidgetQueryRange.error) {
 		return (
@@ -66,14 +68,18 @@ function WidgetGraph({
 	});
 
 	return (
-		<GridGraphComponent
+		<GridPanelSwitch
 			title={title}
 			isStacked={isStacked}
 			opacity={opacity}
 			data={chartDataSet}
-			GRAPH_TYPES={selectedGraph}
+			panelType={selectedGraph}
 			name={widgetId || 'legend_widget'}
 			yAxisUnit={yAxisUnit}
+			panelData={
+				getWidgetQueryRange.data?.payload.data.newResult.data.result || []
+			}
+			query={stagedQuery || query}
 		/>
 	);
 }
