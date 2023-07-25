@@ -1,4 +1,5 @@
 import { render, screen, waitFor } from '@testing-library/react';
+import ROUTES from 'constants/routes';
 import { BrowserRouter } from 'react-router-dom';
 
 import { Services } from './__mock__/servicesListMock';
@@ -7,7 +8,7 @@ import Metrics from './index';
 jest.mock('react-router-dom', () => ({
 	...jest.requireActual('react-router-dom'),
 	useLocation: (): { pathname: string } => ({
-		pathname: 'localhost:3001/services/',
+		pathname: `${process.env.FRONTEND_API_ENDPOINT}/${ROUTES.APPLICATION}/`,
 	}),
 }));
 
