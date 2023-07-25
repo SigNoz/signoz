@@ -15,7 +15,7 @@ describe('Metrics Component', () => {
 	it('renders without errors', async () => {
 		render(
 			<BrowserRouter>
-				<Metrics services={Services} loading={false} error={false} />
+				<Metrics services={Services} />
 			</BrowserRouter>,
 		);
 
@@ -30,7 +30,7 @@ describe('Metrics Component', () => {
 	it('renders if the data is loaded in the table', async () => {
 		render(
 			<BrowserRouter>
-				<Metrics services={Services} loading={false} error={false} />
+				<Metrics services={Services} />
 			</BrowserRouter>,
 		);
 
@@ -40,7 +40,7 @@ describe('Metrics Component', () => {
 	it('renders no data when required conditions are met', async () => {
 		render(
 			<BrowserRouter>
-				<Metrics services={[]} loading={false} error={false} />
+				<Metrics services={[]} />
 			</BrowserRouter>,
 		);
 
