@@ -1,13 +1,19 @@
+import { Tooltip, Typography } from 'antd';
 import Spinner from 'components/Spinner';
+import { QueryParams } from 'constants/query';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { getWidgetQueryBuilder } from 'container/MetricsApplication/MetricsApplication.factory';
 import { topOperationQueries } from 'container/MetricsApplication/MetricsPageQueries/TopOperationQueries';
+import { navigateToTrace } from 'container/MetricsApplication/utils';
 import { QueryTable } from 'container/QueryTable';
 import { useGetQueryRange } from 'hooks/queryBuilder/useGetQueryRange';
 import { useStepInterval } from 'hooks/queryBuilder/useStepInterval';
+import useResourceAttribute from 'hooks/useResourceAttribute';
+import { convertRawQueriesToTraceSelectedTags } from 'hooks/useResourceAttribute/utils';
 import { getDashboardVariables } from 'lib/dashbaordVariables/getDashboardVariables';
+import { RowData } from 'lib/query/createTableColumnsFromQuery';
 import { isEmpty } from 'lodash-es';
-import { useMemo, useState } from 'react';
+import { ReactNode, useMemo, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { useParams } from 'react-router-dom';
 import { AppState } from 'store/reducers';
@@ -25,6 +31,11 @@ function TopOperationMetrics(): JSX.Element {
 		AppState,
 		GlobalReducer
 	>((state) => state.globalTime);
+	const { queries } = useResourceAttribute();
+
+	const selectedTraceTags: string = JSON.stringify(
+		convertRawQueriesToTraceSelectedTags(queries) || [],
+	);
 
 	const keyOperationWidget = useMemo(
 		() =>
@@ -77,6 +88,32 @@ function TopOperationMetrics(): JSX.Element {
 
 	const queryTableData = data?.payload.data.newResult.data.result || [];
 
+	const handleOnClick = (operation: string): void => {
+		const urlParams = new URLSearchParams();
+		urlParams.set(QueryParams.startTime, (minTime / 1000000).toString());
+		urlParams.set(QueryParams.endTime, (maxTime / 1000000).toString());
+		navigateToTrace({
+			servicename,
+			operation,
+			urlParams,
+			selectedTraceTags,
+		});
+	};
+
+	const generateLink = (record: RowData): ReactNode => {
+		const urlParams = new URLSearchParams();
+		urlParams.set(QueryParams.startTime, (minTime / 1000000).toString());
+		urlParams.set(QueryParams.endTime, (maxTime / 1000000).toString());
+		const text = record.toString();
+		return (
+			<Tooltip placement="topLeft" title={text}>
+				<Typography.Link onClick={(): void => handleOnClick(text)}>
+					{text}
+				</Typography.Link>
+			</Tooltip>
+		);
+	};
+
 	if (isLoading) {
 		return <Spinner size="large" tip="Loading..." height="40vh" />;
 	}
@@ -90,6 +127,7 @@ function TopOperationMetrics(): JSX.Element {
 			query={updatedQuery}
 			queryTableData={queryTableData}
 			loading={isLoading}
+			renderColumnCell={{ operation: generateLink }}
 		/>
 	);
 }

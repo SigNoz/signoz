@@ -2,16 +2,14 @@ import { Tooltip, Typography } from 'antd';
 import { ColumnsType } from 'antd/lib/table';
 import { ResizeTable } from 'components/ResizeTable';
 import { QueryParams } from 'constants/query';
-import ROUTES from 'constants/routes';
 import useResourceAttribute from 'hooks/useResourceAttribute';
 import { convertRawQueriesToTraceSelectedTags } from 'hooks/useResourceAttribute/utils';
-import history from 'lib/history';
 import { useSelector } from 'react-redux';
 import { useParams } from 'react-router-dom';
 import { AppState } from 'store/reducers';
 import { GlobalReducer } from 'types/reducer/globalTime';
 
-import { getErrorRate } from './utils';
+import { getErrorRate, navigateToTrace } from './utils';
 
 function TopOperationsTable(props: TopOperationsTableProps): JSX.Element {
 	const { minTime, maxTime } = useSelector<AppState, GlobalReducer>(
@@ -33,11 +31,18 @@ function TopOperationsTable(props: TopOperationsTableProps): JSX.Element {
 		urlParams.set(QueryParams.startTime, (minTime / 1000000).toString());
 		urlParams.set(QueryParams.endTime, (maxTime / 1000000).toString());
 
-		history.push(
-			`${
-				ROUTES.TRACE
-			}?${urlParams.toString()}&selected={"serviceName":["${servicename}"],"operation":["${operation}"]}&filterToFetchData=["duration","status","serviceName","operation"]&spanAggregateCurrentPage=1&selectedTags=${selectedTraceTags}&&isFilterExclude={"serviceName":false,"operation":false}&userSelectedFilter={"status":["error","ok"],"serviceName":["${servicename}"],"operation":["${operation}"]}&spanAggregateCurrentPage=1`,
-		);
+		navigateToTrace({
+			servicename,
+			operation,
+			urlParams,
+			selectedTraceTags,
+		});
+
+		// history.push(
+		// 	`${
+		// 		ROUTES.TRACE
+		// 	}?${urlParams.toString()}&selected={"serviceName":["${servicename}"],"operation":["${operation}"]}&filterToFetchData=["duration","status","serviceName","operation"]&spanAggregateCurrentPage=1&selectedTags=${selectedTraceTags}&&isFilterExclude={"serviceName":false,"operation":false}&userSelectedFilter={"status":["error","ok"],"serviceName":["${servicename}"],"operation":["${operation}"]}&spanAggregateCurrentPage=1`,
+		// );
 	};
 
 	const columns: ColumnsType<TopOperationList> = [
