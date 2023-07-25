@@ -1,8 +1,8 @@
 import { Typography } from 'antd';
 import { getYAxisFormattedValue } from 'components/Graph/yAxisConfig';
 import ValueGraph from 'components/ValueGraph';
-import history from 'lib/history';
 import { memo } from 'react';
+import { useLocation } from 'react-router-dom';
 
 import { TitleContainer, ValueContainer } from './styles';
 import { GridValueComponentProps } from './types';
@@ -14,9 +14,9 @@ function GridValueComponent({
 }: GridValueComponentProps): JSX.Element {
 	const value = (((data.datasets[0] || []).data || [])[0] || 0) as number;
 
-	const location = history.location.pathname;
+	const location = useLocation();
 
-	const isDashboardPage = location.split('/').length === 3;
+	const isDashboardPage = location.pathname.split('/').length === 3;
 
 	if (data.datasets.length === 0) {
 		return (

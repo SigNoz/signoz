@@ -8,7 +8,7 @@ import styled, { css, FlattenSimpleInterpolation } from 'styled-components';
 const ReactGridLayoutComponent = WidthProvider(RGL);
 
 interface CardProps {
-	panelType: ITEMS;
+	$panelType: ITEMS;
 }
 
 export const Card = styled(CardComponent)<CardProps>`
@@ -19,8 +19,8 @@ export const Card = styled(CardComponent)<CardProps>`
 	.ant-card-body {
 		height: 95%;
 		padding: 0;
-		${({ panelType }): FlattenSimpleInterpolation =>
-			panelType === PANEL_TYPES.TABLE
+		${({ $panelType }): FlattenSimpleInterpolation =>
+			$panelType === PANEL_TYPES.TABLE
 				? css`
 						padding-top: 1.8rem;
 				  `

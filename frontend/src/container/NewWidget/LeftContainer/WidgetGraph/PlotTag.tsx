@@ -15,7 +15,7 @@ function PlotTag({ queryType, panelType }: IPlotTagProps): JSX.Element | null {
 	}
 
 	return (
-		<PlotTagWrapperStyled panelType={panelType}>
+		<PlotTagWrapperStyled $panelType={panelType}>
 			Plotted using <QueryTypeTag queryType={queryType} />
 		</PlotTagWrapperStyled>
 	);

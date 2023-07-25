@@ -1,6 +1,9 @@
 import { ChartData } from 'chart.js';
-import { GraphOnClickHandler, StaticLineProps } from 'components/Graph';
-import { GridGraphComponentProps } from 'container/GridGraphComponent/types';
+import {
+	GraphOnClickHandler,
+	GraphProps,
+	StaticLineProps,
+} from 'components/Graph';
 import { GridTableComponentProps } from 'container/GridTableComponent/types';
 import { GridValueComponentProps } from 'container/GridValueComponent/types';
 import { ITEMS } from 'container/NewDashboard/ComponentsSlider/menuItems';
@@ -25,7 +28,7 @@ export type GridPanelSwitchProps = {
 };
 
 export type PropsTypePropsMap = {
-	[PANEL_TYPES.TIME_SERIES]: GridGraphComponentProps;
+	[PANEL_TYPES.TIME_SERIES]: GraphProps;
 	[PANEL_TYPES.VALUE]: GridValueComponentProps;
 	[PANEL_TYPES.TABLE]: GridTableComponentProps;
 	[PANEL_TYPES.TRACE]: null;

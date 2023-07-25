@@ -9,7 +9,6 @@ function GridPanelSwitch({
 	panelType,
 	data,
 	title,
-	opacity,
 	isStacked,
 	onClickHandler,
 	name,
@@ -22,9 +21,9 @@ function GridPanelSwitch({
 	const currentProps: PropsTypePropsMap = useMemo(() => {
 		const result: PropsTypePropsMap = {
 			[PANEL_TYPES.TIME_SERIES]: {
+				type: 'line',
 				data,
 				title,
-				opacity,
 				isStacked,
 				onClickHandler,
 				name,
@@ -50,7 +49,6 @@ function GridPanelSwitch({
 		name,
 		onClickHandler,
 		onDragSelect,
-		opacity,
 		staticLine,
 		title,
 		yAxisUnit,

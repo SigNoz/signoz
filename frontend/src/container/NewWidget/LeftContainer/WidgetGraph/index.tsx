@@ -41,11 +41,11 @@ function WidgetGraph({
 	});
 
 	if (selectedWidget === undefined) {
-		return <Card panelType={selectedGraph}>Invalid widget</Card>;
+		return <Card $panelType={selectedGraph}>Invalid widget</Card>;
 	}
 
 	return (
-		<Container panelType={selectedGraph}>
+		<Container $panelType={selectedGraph}>
 			<PlotTag queryType={currentQuery.queryType} panelType={selectedGraph} />
 			{getWidgetQueryRange.error && (
 				<AlertIconContainer color="red" title={getWidgetQueryRange.error.message}>

@@ -4,7 +4,7 @@ import { ITEMS } from 'container/NewDashboard/ComponentsSlider/menuItems';
 import styled from 'styled-components';
 
 interface Props {
-	panelType: ITEMS;
+	$panelType: ITEMS;
 }
 
 export const Container = styled(Card)<Props>`
@@ -13,8 +13,8 @@ export const Container = styled(Card)<Props>`
 	}
 
 	.ant-card-body {
-		padding: ${({ panelType }): string =>
-			panelType === PANEL_TYPES.TABLE ? '0 0' : '1.5rem 0'};
+		padding: ${({ $panelType }): string =>
+			$panelType === PANEL_TYPES.TABLE ? '0 0' : '1.5rem 0'};
 		height: 57vh;
 		overflow: auto;
 		display: flex;
@@ -37,9 +37,9 @@ export const NotFoundContainer = styled.div`
 
 export const PlotTagWrapperStyled = styled.div<Props>`
 	margin-left: 2rem;
-	margin-top: ${({ panelType }): string =>
-		panelType === PANEL_TYPES.TABLE ? '1rem' : '0'};
+	margin-top: ${({ $panelType }): string =>
+		$panelType === PANEL_TYPES.TABLE ? '1rem' : '0'};
 
-	margin-bottom: ${({ panelType }): string =>
-		panelType === PANEL_TYPES.TABLE ? '1rem' : '0'};
+	margin-bottom: ${({ $panelType }): string =>
+		$panelType === PANEL_TYPES.TABLE ? '1rem' : '0'};
 `;

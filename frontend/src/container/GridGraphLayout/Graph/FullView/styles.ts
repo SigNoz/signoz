@@ -3,7 +3,7 @@ import { ITEMS } from 'container/NewDashboard/ComponentsSlider/menuItems';
 import styled, { css, FlattenSimpleInterpolation } from 'styled-components';
 
 interface Props {
-	panelType: ITEMS;
+	$panelType: ITEMS;
 }
 
 export const NotFoundContainer = styled.div`
@@ -16,8 +16,8 @@ export const NotFoundContainer = styled.div`
 export const TimeContainer = styled.div<Props>`
 	display: flex;
 	justify-content: flex-end;
-	${({ panelType }): FlattenSimpleInterpolation =>
-		panelType === PANEL_TYPES.TABLE
+	${({ $panelType }): FlattenSimpleInterpolation =>
+		$panelType === PANEL_TYPES.TABLE
 			? css`
 					margin-bottom: 1rem;
 			  `

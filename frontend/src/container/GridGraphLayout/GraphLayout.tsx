@@ -84,7 +84,7 @@ function GraphLayout({
 							key={currentWidget?.id || 'empty'} // don't change this key
 							data-grid={rest}
 						>
-							<Card panelType={currentWidget?.panelTypes || PANEL_TYPES.TIME_SERIES}>
+							<Card $panelType={currentWidget?.panelTypes || PANEL_TYPES.TIME_SERIES}>
 								<Component setLayout={setLayout} />
 							</Card>
 						</CardContainer>

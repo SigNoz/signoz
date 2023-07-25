@@ -85,7 +85,7 @@ function FullView({
 	return (
 		<>
 			{fullViewOptions && (
-				<TimeContainer panelType={widget.panelTypes}>
+				<TimeContainer $panelType={widget.panelTypes}>
 					<TimePreference
 						selectedTime={selectedTime}
 						setSelectedTime={setSelectedTime}
