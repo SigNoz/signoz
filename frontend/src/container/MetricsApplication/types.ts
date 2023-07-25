@@ -5,3 +5,10 @@ export interface GetWidgetQueryBuilderProps {
 	title?: string;
 	panelTypes: Widgets['panelTypes'];
 }
+
+export interface NavigateToTraceProps {
+	servicename: string;
+	operation: string;
+	urlParams: URLSearchParams;
+	selectedTraceTags: string;
+}

@@ -2,6 +2,7 @@ import ROUTES from 'constants/routes';
 import history from 'lib/history';
 
 import { TopOperationList } from './TopOperationsTable';
+import { NavigateToTraceProps } from './types';
 
 export const getErrorRate = (list: TopOperationList): number =>
 	(list.errorCount / list.numCalls) * 100;
@@ -18,10 +19,3 @@ export const navigateToTrace = ({
 		}?${urlParams.toString()}&selected={"serviceName":["${servicename}"],"operation":["${operation}"]}&filterToFetchData=["duration","status","serviceName","operation"]&spanAggregateCurrentPage=1&selectedTags=${selectedTraceTags}&&isFilterExclude={"serviceName":false,"operation":false}&userSelectedFilter={"status":["error","ok"],"serviceName":["${servicename}"],"operation":["${operation}"]}&spanAggregateCurrentPage=1`,
 	);
 };
-
-interface NavigateToTraceProps {
-	servicename: string;
-	operation: string;
-	urlParams: URLSearchParams;
-	selectedTraceTags: string;
-}
