@@ -5,7 +5,7 @@ import query from 'api/dashboard/variables/query';
 import { commaValuesParser } from 'lib/dashbaordVariables/customCommaValuesParser';
 import sortValues from 'lib/dashbaordVariables/sortVariableValues';
 import map from 'lodash-es/map';
-import { memo, useCallback, useEffect, useState } from 'react';
+import { memo, useCallback, useEffect, useMemo, useState } from 'react';
 import { IDashboardVariable } from 'types/api/dashboard/getAll';
 
 import { variablePropsToPayloadVariables } from '../utils';
@@ -24,6 +24,16 @@ interface VariableItemProps {
 	onAllSelectedUpdate: (name: string, arg1: boolean) => void;
 	lastUpdatedVar: string;
 }
+
+const getSelectValue = (
+	selectedValue: IDashboardVariable['selectedValue'],
+): string | string[] => {
+	if (Array.isArray(selectedValue)) {
+		return selectedValue.map((item) => item.toString());
+	}
+	return selectedValue?.toString() || '';
+};
+
 function VariableItem({
 	variableData,
 	existingVariables,
@@ -141,14 +151,14 @@ function VariableItem({
 			}
 	};
 
-	const getSelectValue = (): string | string[] => {
-		if (Array.isArray(variableData.selectedValue)) {
-			return variableData.selectedValue.map((item) => item.toString());
-		}
-		return variableData.selectedValue?.toString() || '';
-	};
+	const { selectedValue } = variableData;
+	const selectedValueStringified = useMemo(() => getSelectValue(selectedValue), [
+		selectedValue,
+	]);
 
-	const selectValue = variableData.allSelected ? 'ALL' : getSelectValue();
+	const selectValue = variableData.allSelected
+		? 'ALL'
+		: selectedValueStringified;
 
 	const mode =
 		variableData.multiSelect && !variableData.allSelected
