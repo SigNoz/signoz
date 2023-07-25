@@ -2,7 +2,7 @@ import { InfoCircleOutlined } from '@ant-design/icons';
 import { StaticLineProps } from 'components/Graph';
 import Spinner from 'components/Spinner';
 import { initialQueriesMap, PANEL_TYPES } from 'constants/queryBuilder';
-import GridGraphComponent from 'container/GridGraphComponent';
+import GridPanelSwitch from 'container/GridPanelSwitch';
 import { GRAPH_TYPES } from 'container/NewDashboard/ComponentsSlider';
 import { timePreferenceType } from 'container/NewWidget/RightContainer/timeItems';
 import { Time } from 'container/TopNav/DateTimeSelection/config';
@@ -113,13 +113,15 @@ function ChartPreview({
 				<Spinner size="large" tip="Loading..." height="70vh" />
 			)}
 			{chartDataSet && !queryResponse.isError && (
-				<GridGraphComponent
+				<GridPanelSwitch
+					panelType={graphType}
 					title={name}
 					data={chartDataSet}
 					isStacked
-					GRAPH_TYPES={graphType || PANEL_TYPES.TIME_SERIES}
 					name={name || 'Chart Preview'}
 					staticLine={staticLine}
+					panelData={queryResponse.data?.payload.data.newResult.data.result || []}
+					query={query || initialQueriesMap.metrics}
 				/>
 			)}
 		</ChartContainer>

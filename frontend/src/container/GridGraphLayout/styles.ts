@@ -1,11 +1,17 @@
 import { Button as ButtonComponent, Card as CardComponent, Space } from 'antd';
+import { PANEL_TYPES } from 'constants/queryBuilder';
 import { StyledCSS } from 'container/GantChart/Trace/styles';
+import { ITEMS } from 'container/NewDashboard/ComponentsSlider/menuItems';
 import RGL, { WidthProvider } from 'react-grid-layout';
-import styled, { css } from 'styled-components';
+import styled, { css, FlattenSimpleInterpolation } from 'styled-components';
 
 const ReactGridLayoutComponent = WidthProvider(RGL);
 
-export const Card = styled(CardComponent)`
+interface CardProps {
+	$panelType: ITEMS;
+}
+
+export const Card = styled(CardComponent)<CardProps>`
 	&&& {
 		height: 100%;
 	}
@@ -13,6 +19,12 @@ export const Card = styled(CardComponent)`
 	.ant-card-body {
 		height: 95%;
 		padding: 0;
+		${({ $panelType }): FlattenSimpleInterpolation =>
+			$panelType === PANEL_TYPES.TABLE
+				? css`
+						padding-top: 1.8rem;
+				  `
+				: css``}
 	}
 `;
 
@@ -21,6 +33,8 @@ interface Props {
 }
 
 export const CardContainer = styled.div<Props>`
+	overflow: auto;
+
 	:hover {
 		.react-resizable-handle {
 			position: absolute;
@@ -44,6 +58,7 @@ export const CardContainer = styled.div<Props>`
 					background-image: ${(): string => `url("${uri}")`};
 				`;
 			}}
+		}
 	}
 `;
 
