@@ -9,7 +9,7 @@ import {
 } from './ColumnContants';
 import { getColumnSearchProps } from './GetColumnSearchProps';
 
-export const columns = (search: string): ColumnsType<ServicesList> => [
+export const getColumns = (search: string): ColumnsType<ServicesList> => [
 	{
 		title: ColumnTitle[ColumnKey.Application],
 		dataIndex: ColumnKey.Application,

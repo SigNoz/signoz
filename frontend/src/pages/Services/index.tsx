@@ -2,7 +2,6 @@ import { Space } from 'antd';
 import localStorageGet from 'api/browser/localstorage/get';
 import localStorageSet from 'api/browser/localstorage/set';
 import ReleaseNote from 'components/ReleaseNote';
-import Spinner from 'components/Spinner';
 import { SKIP_ONBOARDING } from 'constants/onboarding';
 import ResourceAttributesFilter from 'container/ResourceAttributesFilter';
 import ServicesTable from 'container/ServiceTable';
@@ -58,16 +57,12 @@ function Metrics(): JSX.Element {
 		return <SkipOnBoardingModal onContinueClick={onContinueClick} />;
 	}
 
-	if (isLoading) {
-		return <Spinner tip="Loading..." />;
-	}
-
 	return (
 		<Space direction="vertical" style={{ width: '100%' }}>
 			<ReleaseNote path={location.pathname} />
 
 			<ResourceAttributesFilter />
-			<ServicesTable services={data || []} />
+			<ServicesTable services={data || []} isLoading={isLoading} />
 		</Space>
 	);
 }
