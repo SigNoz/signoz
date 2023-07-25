@@ -1,18 +1,28 @@
 import Spinner from 'components/Spinner';
 import { useNotifications } from 'hooks/useNotifications';
 import { useQueryService } from 'hooks/useQueryService';
-import { useEffect } from 'react';
+import useResourceAttribute from 'hooks/useResourceAttribute';
+import { convertRawQueriesToTraceSelectedTags } from 'hooks/useResourceAttribute/utils';
+import { useEffect, useMemo } from 'react';
+import { useSelector } from 'react-redux';
+import { AppState } from 'store/reducers';
 import { QueryServiceProps } from 'types/api/metrics/getService';
+import { GlobalReducer } from 'types/reducer/globalTime';
+import { Tags } from 'types/reducer/trace';
 
-import { ServiceTableProps } from '../types';
-import ServiceTraceTable from './ServiceTraceTable';
+import ServiceTraceTable from './ServiceTracesTable';
 
-function ServiceTraces({
-	minTime,
-	maxTime,
-	selectedTime,
-	selectedTags,
-}: ServiceTableProps): JSX.Element {
+function ServiceTraces(): JSX.Element {
+	const { maxTime, minTime, selectedTime } = useSelector<
+		AppState,
+		GlobalReducer
+	>((state) => state.globalTime);
+	const { queries } = useResourceAttribute();
+	const selectedTags = useMemo(
+		() => (convertRawQueriesToTraceSelectedTags(queries) as Tags[]) || [],
+		[queries],
+	);
+
 	const { data, error, isLoading }: QueryServiceProps = useQueryService(
 		minTime,
 		maxTime,

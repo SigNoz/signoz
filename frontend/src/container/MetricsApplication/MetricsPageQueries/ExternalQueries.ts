@@ -79,8 +79,8 @@ export const externalCallErrorPercent = ({
 		},
 		...tagFilterItems,
 	];
-	const legendFormula = legend;
-	const expression = FORMULA.ERROR_PERCENTAGE;
+	const legendFormulas = [legend];
+	const expressions = [FORMULA.ERROR_PERCENTAGE];
 	const disabled = [true, true];
 	const autocompleteData: BaseAutocompleteData[] = [
 		autocompleteDataA,
@@ -98,8 +98,8 @@ export const externalCallErrorPercent = ({
 		legends: [legend, legend],
 		groupBy,
 		disabled,
-		expression,
-		legendFormula,
+		expressions,
+		legendFormulas,
 		aggregateOperators: [
 			MetricAggregateOperator.SUM,
 			MetricAggregateOperator.SUM,
@@ -124,8 +124,8 @@ export const externalCallDuration = ({
 		key: WidgetKeys.SignozExternalCallLatencyCount,
 		type: null,
 	};
-	const expression = FORMULA.DATABASE_CALLS_AVG_DURATION;
-	const legendFormula = 'Average Duration';
+	const expressions = [FORMULA.DATABASE_CALLS_AVG_DURATION];
+	const legendFormulas = ['Average Duration'];
 	const legend = '';
 	const disabled = [true, true];
 	const additionalItemsA: TagFilterItem[] = [
@@ -158,8 +158,8 @@ export const externalCallDuration = ({
 		additionalItems,
 		legends: [legend, legend],
 		disabled,
-		expression,
-		legendFormula,
+		expressions,
+		legendFormulas,
 		aggregateOperators: [
 			MetricAggregateOperator.SUM,
 			MetricAggregateOperator.SUM,
@@ -225,8 +225,8 @@ export const externalCallDurationByAddress = ({
 		key: WidgetKeys.SignozExternalCallLatencyCount,
 		type: null,
 	};
-	const expression = FORMULA.DATABASE_CALLS_AVG_DURATION;
-	const legendFormula = legend;
+	const expressions = [FORMULA.DATABASE_CALLS_AVG_DURATION];
+	const legendFormulas = [legend];
 	const disabled = [true, true];
 	const additionalItemsA: TagFilterItem[] = [
 		{
@@ -259,8 +259,8 @@ export const externalCallDurationByAddress = ({
 		legends: [legend, legend],
 		groupBy,
 		disabled,
-		expression,
-		legendFormula,
+		expressions,
+		legendFormulas,
 		aggregateOperators: [
 			MetricAggregateOperator.SUM_RATE,
 			MetricAggregateOperator.SUM_RATE,

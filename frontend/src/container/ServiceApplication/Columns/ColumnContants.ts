@@ -9,7 +9,7 @@ export const ColumnTitle: {
 	[key in ColumnKey]: string;
 } = {
 	[ColumnKey.Application]: 'Application',
-	[ColumnKey.P99]: 'P99 latency (in ms)',
+	[ColumnKey.P99]: 'P99 latency',
 	[ColumnKey.ErrorRate]: 'Error Rate (% of total)',
 	[ColumnKey.Operations]: 'Operations Per Second',
 };

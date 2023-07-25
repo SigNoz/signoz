@@ -229,8 +229,8 @@ export const errorPercentage = ({
 		additionalItems,
 		legends: [GraphTitle.ERROR_PERCENTAGE],
 		disabled: [true, true],
-		expression: FORMULA.ERROR_PERCENTAGE,
-		legendFormula: GraphTitle.ERROR_PERCENTAGE,
+		expressions: [FORMULA.ERROR_PERCENTAGE],
+		legendFormulas: [GraphTitle.ERROR_PERCENTAGE],
 		aggregateOperators: [
 			MetricAggregateOperator.SUM_RATE,
 			MetricAggregateOperator.SUM_RATE,

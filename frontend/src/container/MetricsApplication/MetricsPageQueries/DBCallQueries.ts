@@ -106,8 +106,8 @@ export const databaseCallsAvgDuration = ({
 		additionalItems,
 		legends: ['', ''],
 		disabled: [true, true],
-		expression: FORMULA.DATABASE_CALLS_AVG_DURATION,
-		legendFormula: 'Average Duration',
+		expressions: [FORMULA.DATABASE_CALLS_AVG_DURATION],
+		legendFormulas: ['Average Duration'],
 		aggregateOperators: [
 			MetricAggregateOperator.SUM,
 			MetricAggregateOperator.SUM,

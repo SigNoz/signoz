@@ -9,7 +9,10 @@ import {
 } from './ColumnContants';
 import { getColumnSearchProps } from './GetColumnSearchProps';
 
-export const columns = (search: string): ColumnsType<ServicesList> => [
+export const columns = (
+	search: string,
+	isMetricData: boolean,
+): ColumnsType<ServicesList> => [
 	{
 		title: ColumnTitle[ColumnKey.Application],
 		dataIndex: ColumnKey.Application,
@@ -18,13 +21,18 @@ export const columns = (search: string): ColumnsType<ServicesList> => [
 		...getColumnSearchProps('serviceName', search),
 	},
 	{
-		title: ColumnTitle[ColumnKey.P99],
+		title: `${ColumnTitle[ColumnKey.P99]}${
+			isMetricData ? ' (in ns)' : ' (in ms)'
+		}`,
 		dataIndex: ColumnKey.P99,
 		key: ColumnKey.P99,
 		width: ColumnWidth.P99,
 		defaultSortOrder: SORTING_ORDER,
 		sorter: (a: ServicesList, b: ServicesList): number => a.p99 - b.p99,
-		render: (value: number): string => (value / 1000000).toFixed(2),
+		render: (value: number): string => {
+			if (Number.isNaN(value)) return '0.00';
+			return isMetricData ? value.toFixed(2) : (value / 1000000).toFixed(2);
+		},
 	},
 	{
 		title: ColumnTitle[ColumnKey.ErrorRate],

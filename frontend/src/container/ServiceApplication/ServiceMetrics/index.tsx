@@ -1,28 +1,41 @@
-import getTopLevelOperations, {
-	ServiceDataProps,
-} from 'api/metrics/getTopLevelOperations';
-import { useQuery } from 'react-query';
+import Spinner from 'components/Spinner';
+import useGetTopLevelOperations from 'hooks/useGetTopLevelOperations';
+import useResourceAttribute from 'hooks/useResourceAttribute';
+import { convertRawQueriesToTraceSelectedTags } from 'hooks/useResourceAttribute/utils';
+import { useMemo } from 'react';
+import { QueryKey } from 'react-query';
+import { useSelector } from 'react-redux';
+import { AppState } from 'store/reducers';
+import { GlobalReducer } from 'types/reducer/globalTime';
+import { Tags } from 'types/reducer/trace';
 
-import { ServiceTableProps } from '../types';
+import ServiceMetricsApplication from './ServiceMetricsApplication';
 
-function ServiceMetrics({
-	servicename,
-	minTime,
-	maxTime,
-	selectedTags,
-}: ServiceTableProps): JSX.Element {
-	const { data, isLoading, error, isError } = useQuery<ServiceDataProps>({
-		queryKey: [servicename, minTime, maxTime, selectedTags],
-		queryFn: getTopLevelOperations,
-	});
+function ServicesUsingMetrics(): JSX.Element {
+	const { maxTime, minTime, selectedTime } = useSelector<
+		AppState,
+		GlobalReducer
+	>((state) => state.globalTime);
+	const { queries } = useResourceAttribute();
+	const selectedTags = useMemo(
+		() => (convertRawQueriesToTraceSelectedTags(queries) as Tags[]) || [],
+		[queries],
+	);
 
-	console.log(data, isLoading, error, isError);
+	const queryKey: QueryKey = [minTime, maxTime, selectedTags, selectedTime];
+	const { data, isLoading, isError } = useGetTopLevelOperations(queryKey);
+
+	if (isLoading) {
+		return <Spinner tip="Loading..." />;
+	}
 
 	return (
-		<div>
-			<h1>ServiceMetrics</h1>
-		</div>
+		<ServiceMetricsApplication
+			topLevelOperations={Object.entries(data || {})}
+			loading={isLoading}
+			error={isError}
+		/>
 	);
 }
 
-export default ServiceMetrics;
+export default ServicesUsingMetrics;

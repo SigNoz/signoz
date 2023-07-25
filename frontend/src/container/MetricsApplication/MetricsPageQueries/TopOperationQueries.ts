@@ -133,8 +133,8 @@ export const topOperationQueries = ({
 		disabled,
 		legends,
 		aggregateOperators,
-		expression,
-		legendFormula,
+		expressions: [expression],
+		legendFormulas: [legendFormula],
 		dataSource: DataSource.METRICS,
 		groupBy,
 	});

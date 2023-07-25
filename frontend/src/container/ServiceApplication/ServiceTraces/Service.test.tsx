@@ -1,7 +1,7 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import { BrowserRouter } from 'react-router-dom';
 
-import ServiceTraceTable from './ServiceTraceTable';
+import ServiceTraceTable from './ServiceTracesTable';
 
 jest.mock('react-router-dom', () => ({
 	...jest.requireActual('react-router-dom'),
