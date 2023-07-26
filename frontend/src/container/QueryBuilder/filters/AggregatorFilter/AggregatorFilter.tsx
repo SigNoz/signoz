@@ -1,5 +1,5 @@
 // ** Components
-import { AutoComplete, Spin } from 'antd';
+import { AutoComplete, Spin, Tooltip } from 'antd';
 // ** Api
 import { getAggregateAttribute } from 'api/queryBuilder/getAggregateAttribute';
 import {
@@ -169,8 +169,7 @@ export const AggregatorFilter = memo(function AggregatorFilter({
 		prefix: query.aggregateAttribute.type || '',
 		condition: !query.aggregateAttribute.isColumn,
 	});
-
-	return (
+	const component = (
 		<AutoComplete
 			placeholder={placeholder}
 			style={selectStyle}
@@ -185,4 +184,12 @@ export const AggregatorFilter = memo(function AggregatorFilter({
 			disabled={disabled}
 		/>
 	);
+	if (disabled) {
+		return (
+			<Tooltip title="Aggregate options are not available in the list and trace panels.">
+				{component}
+			</Tooltip>
+		);
+	}
+	return component;
 });

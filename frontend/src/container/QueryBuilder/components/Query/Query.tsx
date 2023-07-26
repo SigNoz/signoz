@@ -311,8 +311,28 @@ export const Query = memo(function Query({
 					</Col>
 				</Row>
 			</Col>
+			<Col span={11}>
+				<Row gutter={[11, 5]}>
+					<Col flex="5.93rem">
+						<FilterLabel
+							label={panelType === PANEL_TYPES.VALUE ? 'Reduce to' : 'Group by'}
+						/>
+					</Col>
+					<Col flex="1 1 12.5rem">
+						{panelType === PANEL_TYPES.VALUE ? (
+							<ReduceToFilter query={query} onChange={handleChangeReduceTo} />
+						) : (
+							<GroupByFilter
+								disabled={isMetricsDataSource && !query.aggregateAttribute.key}
+								query={query}
+								onChange={handleChangeGroupByKeys}
+							/>
+						)}
+					</Col>
+				</Row>
+			</Col>
 			{!isMetricsDataSource && (
-				<Col span={11}>
+				<Col offset={2} span={11}>
 					<Row gutter={[11, 5]}>
 						<Col flex="5.93rem">
 							<OperatorsSelect
@@ -333,26 +353,6 @@ export const Query = memo(function Query({
 					</Row>
 				</Col>
 			)}
-			<Col span={11} offset={isMetricsDataSource ? 0 : 2}>
-				<Row gutter={[11, 5]}>
-					<Col flex="5.93rem">
-						<FilterLabel
-							label={panelType === PANEL_TYPES.VALUE ? 'Reduce to' : 'Group by'}
-						/>
-					</Col>
-					<Col flex="1 1 12.5rem">
-						{panelType === PANEL_TYPES.VALUE ? (
-							<ReduceToFilter query={query} onChange={handleChangeReduceTo} />
-						) : (
-							<GroupByFilter
-								disabled={isMetricsDataSource && !query.aggregateAttribute.key}
-								query={query}
-								onChange={handleChangeGroupByKeys}
-							/>
-						)}
-					</Col>
-				</Row>
-			</Col>
 			{!isTracePanelType && (
 				<Col span={24}>
 					<AdditionalFiltersToggler listOfAdditionalFilter={listOfAdditionalFilters}>
