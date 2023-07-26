@@ -59,14 +59,6 @@ export const useOptions = (
 		(key: string, results: string[], searchValue: string) => {
 			const hasAllResults = results.every((value) => result.includes(value));
 			const values = getKeyOpValue(results);
-			if (whereClauseConfig && whereClauseConfig.customKey === key) {
-				return [
-					{
-						label: searchValue,
-						value: searchValue,
-					},
-				];
-			}
 
 			return hasAllResults
 				? [
@@ -83,7 +75,7 @@ export const useOptions = (
 						...values,
 				  ];
 		},
-		[getKeyOpValue, result, whereClauseConfig],
+		[getKeyOpValue, result],
 	);
 
 	const getKeyOperatorOptions = useCallback(
