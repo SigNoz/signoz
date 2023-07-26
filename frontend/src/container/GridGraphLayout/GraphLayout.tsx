@@ -1,4 +1,5 @@
 import { PlusOutlined, SaveFilled } from '@ant-design/icons';
+import { PANEL_TYPES } from 'constants/queryBuilder';
 import useComponentPermission from 'hooks/useComponentPermission';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { Dispatch, SetStateAction } from 'react';
@@ -83,7 +84,7 @@ function GraphLayout({
 							key={currentWidget?.id || 'empty'} // don't change this key
 							data-grid={rest}
 						>
-							<Card>
+							<Card $panelType={currentWidget?.panelTypes || PANEL_TYPES.TIME_SERIES}>
 								<Component setLayout={setLayout} />
 							</Card>
 						</CardContainer>
