@@ -9,6 +9,7 @@ export interface GetWidgetQueryBuilderProps {
 export interface NavigateToTraceProps {
 	servicename: string;
 	operation: string;
-	urlParams: URLSearchParams;
+	minTime: number;
+	maxTime: number;
 	selectedTraceTags: string;
 }

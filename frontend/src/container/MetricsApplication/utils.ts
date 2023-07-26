@@ -1,3 +1,4 @@
+import { QueryParams } from 'constants/query';
 import ROUTES from 'constants/routes';
 import history from 'lib/history';
 
@@ -10,9 +11,13 @@ export const getErrorRate = (list: TopOperationList): number =>
 export const navigateToTrace = ({
 	servicename,
 	operation,
-	urlParams,
+	minTime,
+	maxTime,
 	selectedTraceTags,
 }: NavigateToTraceProps): void => {
+	const urlParams = new URLSearchParams();
+	urlParams.set(QueryParams.startTime, (minTime / 1000000).toString());
+	urlParams.set(QueryParams.endTime, (maxTime / 1000000).toString());
 	history.push(
 		`${
 			ROUTES.TRACE

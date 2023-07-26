@@ -1,5 +1,4 @@
 import { Tooltip, Typography } from 'antd';
-import { QueryParams } from 'constants/query';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { getWidgetQueryBuilder } from 'container/MetricsApplication/MetricsApplication.factory';
 import { topOperationQueries } from 'container/MetricsApplication/MetricsPageQueries/TopOperationQueries';
@@ -88,13 +87,11 @@ function TopOperationMetrics(): JSX.Element {
 	const queryTableData = data?.payload.data.newResult.data.result || [];
 
 	const handleOnClick = (operation: string): void => {
-		const urlParams = new URLSearchParams();
-		urlParams.set(QueryParams.startTime, (minTime / 1000000).toString());
-		urlParams.set(QueryParams.endTime, (maxTime / 1000000).toString());
 		navigateToTrace({
 			servicename,
 			operation,
-			urlParams,
+			minTime,
+			maxTime,
 			selectedTraceTags,
 		});
 	};

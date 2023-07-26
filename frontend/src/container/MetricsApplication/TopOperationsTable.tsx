@@ -1,7 +1,6 @@
 import { Tooltip, Typography } from 'antd';
 import { ColumnsType } from 'antd/lib/table';
 import { ResizeTable } from 'components/ResizeTable';
-import { QueryParams } from 'constants/query';
 import useResourceAttribute from 'hooks/useResourceAttribute';
 import { convertRawQueriesToTraceSelectedTags } from 'hooks/useResourceAttribute/utils';
 import { useSelector } from 'react-redux';
@@ -26,15 +25,13 @@ function TopOperationsTable(props: TopOperationsTableProps): JSX.Element {
 	const params = useParams<{ servicename: string }>();
 
 	const handleOnClick = (operation: string): void => {
-		const urlParams = new URLSearchParams();
 		const { servicename } = params;
-		urlParams.set(QueryParams.startTime, (minTime / 1000000).toString());
-		urlParams.set(QueryParams.endTime, (maxTime / 1000000).toString());
 
 		navigateToTrace({
 			servicename,
 			operation,
-			urlParams,
+			minTime,
+			maxTime,
 			selectedTraceTags,
 		});
 	};
