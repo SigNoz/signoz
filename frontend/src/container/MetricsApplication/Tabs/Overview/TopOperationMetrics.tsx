@@ -1,5 +1,4 @@
 import { Tooltip, Typography } from 'antd';
-import Spinner from 'components/Spinner';
 import { QueryParams } from 'constants/query';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { getWidgetQueryBuilder } from 'container/MetricsApplication/MetricsApplication.factory';
@@ -33,7 +32,7 @@ function TopOperationMetrics(): JSX.Element {
 	>((state) => state.globalTime);
 	const { queries } = useResourceAttribute();
 
-	const selectedTraceTags: string = JSON.stringify(
+	const selectedTraceTags = JSON.stringify(
 		convertRawQueriesToTraceSelectedTags(queries) || [],
 	);
 
@@ -100,10 +99,7 @@ function TopOperationMetrics(): JSX.Element {
 		});
 	};
 
-	const generateLink = (record: RowData): ReactNode => {
-		const urlParams = new URLSearchParams();
-		urlParams.set(QueryParams.startTime, (minTime / 1000000).toString());
-		urlParams.set(QueryParams.endTime, (maxTime / 1000000).toString());
+	const linkGenerator = (record: RowData): ReactNode => {
 		const text = record.toString();
 		return (
 			<Tooltip placement="topLeft" title={text}>
@@ -114,9 +110,9 @@ function TopOperationMetrics(): JSX.Element {
 		);
 	};
 
-	if (isLoading) {
-		return <Spinner size="large" tip="Loading..." height="40vh" />;
-	}
+	const renderColumnCell = {
+		operation: linkGenerator,
+	};
 
 	if (errorMessage) {
 		return <div>{errorMessage}</div>;
@@ -127,7 +123,7 @@ function TopOperationMetrics(): JSX.Element {
 			query={updatedQuery}
 			queryTableData={queryTableData}
 			loading={isLoading}
-			renderColumnCell={{ operation: generateLink }}
+			renderColumnCell={renderColumnCell}
 		/>
 	);
 }
