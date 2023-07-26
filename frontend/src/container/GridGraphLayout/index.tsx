@@ -1,6 +1,7 @@
 /* eslint-disable react/no-unstable-nested-components */
 
 import updateDashboardApi from 'api/dashboard/update';
+import { PANEL_TYPES } from 'constants/queryBuilder';
 import useComponentPermission from 'hooks/useComponentPermission';
 import { useNotifications } from 'hooks/useNotifications';
 import {
@@ -260,7 +261,7 @@ function GridGraph(props: Props): JSX.Element {
 				{
 					data,
 					generateWidgetId: id,
-					graphType: 'EMPTY_WIDGET',
+					graphType: PANEL_TYPES.EMPTY_WIDGET,
 					selectedDashboard,
 					layout,
 					isRedirected: false,
