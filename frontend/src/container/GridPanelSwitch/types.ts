@@ -6,14 +6,13 @@ import {
 } from 'components/Graph';
 import { GridTableComponentProps } from 'container/GridTableComponent/types';
 import { GridValueComponentProps } from 'container/GridValueComponent/types';
-import { ITEMS } from 'container/NewDashboard/ComponentsSlider/menuItems';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { QueryDataV3 } from 'types/api/widgets/getQuery';
 
 import { PANEL_TYPES } from '../../constants/queryBuilder';
 
 export type GridPanelSwitchProps = {
-	panelType: ITEMS;
+	panelType: PANEL_TYPES;
 	data: ChartData;
 	title?: string;
 	opacity?: string;
