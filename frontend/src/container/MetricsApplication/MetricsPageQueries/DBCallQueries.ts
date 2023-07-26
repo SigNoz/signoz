@@ -48,13 +48,14 @@ export const databaseCallsRPS = ({
 	];
 
 	const legends = [legend];
+	const dataSource = DataSource.METRICS;
 
 	return getQueryBuilderQueries({
 		autocompleteData,
 		groupBy,
 		legends,
 		filterItems,
-		dataSource: DataSource.METRICS,
+		dataSource,
 	});
 };
 
@@ -89,7 +90,6 @@ export const databaseCallsAvgDuration = ({
 		},
 		...tagFilterItems,
 	];
-	const additionalItemsB = additionalItemsA;
 
 	const autocompleteData: BaseAutocompleteData[] = [
 		autocompleteDataA,
@@ -98,21 +98,28 @@ export const databaseCallsAvgDuration = ({
 
 	const additionalItems: TagFilterItem[][] = [
 		additionalItemsA,
-		additionalItemsB,
+		additionalItemsA,
 	];
+
+	const legends = ['', ''];
+	const disabled = [true, true];
+	const legendFormula = 'Average Duration';
+	const expression = FORMULA.DATABASE_CALLS_AVG_DURATION;
+	const aggregateOperators = [
+		MetricAggregateOperator.SUM,
+		MetricAggregateOperator.SUM,
+	];
+	const dataSource = DataSource.METRICS;
 
 	return getQueryBuilderQuerieswithFormula({
 		autocompleteData,
 		additionalItems,
-		legends: ['', ''],
-		disabled: [true, true],
-		expression: FORMULA.DATABASE_CALLS_AVG_DURATION,
-		legendFormula: 'Average Duration',
-		aggregateOperators: [
-			MetricAggregateOperator.SUM,
-			MetricAggregateOperator.SUM,
-		],
-		dataSource: DataSource.METRICS,
+		legends,
+		disabled,
+		expression,
+		legendFormula,
+		aggregateOperators,
+		dataSource,
 	});
 };
 
