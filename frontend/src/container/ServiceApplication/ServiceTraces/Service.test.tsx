@@ -1,45 +1,22 @@
 import { render, screen, waitFor } from '@testing-library/react';
+import ROUTES from 'constants/routes';
 import { BrowserRouter } from 'react-router-dom';
 
+import { services } from './__mocks__/getServices';
 import ServiceTraceTable from './ServiceTracesTable';
 
 jest.mock('react-router-dom', () => ({
 	...jest.requireActual('react-router-dom'),
 	useLocation: (): { pathname: string } => ({
-		pathname: 'localhost:3001/services/',
+		pathname: `${process.env.FRONTEND_API_ENDPOINT}${ROUTES.APPLICATION}/`,
 	}),
 }));
-
-const services = [
-	{
-		serviceName: 'frontend',
-		p99: 1261498140,
-		avgDuration: 768497850.9803921,
-		numCalls: 255,
-		callRate: 0.9444444444444444,
-		numErrors: 0,
-		errorRate: 0,
-		num4XX: 0,
-		fourXXRate: 0,
-	},
-	{
-		serviceName: 'customer',
-		p99: 890150740.0000001,
-		avgDuration: 369612035.2941176,
-		numCalls: 255,
-		callRate: 0.9444444444444444,
-		numErrors: 0,
-		errorRate: 0,
-		num4XX: 0,
-		fourXXRate: 0,
-	},
-];
 
 describe('Metrics Component', () => {
 	it('renders without errors', async () => {
 		render(
 			<BrowserRouter>
-				<ServiceTraceTable services={services} loading={false} error={false} />
+				<ServiceTraceTable services={services} loading={false} />
 			</BrowserRouter>,
 		);
 
@@ -54,7 +31,7 @@ describe('Metrics Component', () => {
 	it('renders if the data is loaded in the table', async () => {
 		render(
 			<BrowserRouter>
-				<ServiceTraceTable services={services} loading={false} error={false} />
+				<ServiceTraceTable services={services} loading={false} />
 			</BrowserRouter>,
 		);
 
@@ -64,7 +41,7 @@ describe('Metrics Component', () => {
 	it('renders no data when required conditions are met', async () => {
 		render(
 			<BrowserRouter>
-				<ServiceTraceTable services={[]} loading={false} error={false} />
+				<ServiceTraceTable services={[]} loading={false} />
 			</BrowserRouter>,
 		);
 
