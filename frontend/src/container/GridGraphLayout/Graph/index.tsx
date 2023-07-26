@@ -2,8 +2,8 @@ import { Typography } from 'antd';
 import { ChartData } from 'chart.js';
 import { GraphOnClickHandler } from 'components/Graph';
 import Spinner from 'components/Spinner';
-import GridGraphComponent from 'container/GridGraphComponent';
 import { UpdateDashboard } from 'container/GridGraphLayout/utils';
+import GridPanelSwitch from 'container/GridPanelSwitch';
 import { useGetQueryRange } from 'hooks/queryBuilder/useGetQueryRange';
 import { useStepInterval } from 'hooks/queryBuilder/useStepInterval';
 import { useNotifications } from 'hooks/useNotifications';
@@ -272,8 +272,8 @@ function GridCardGraph({
 								allowEdit={allowEdit}
 							/>
 						</div>
-						<GridGraphComponent
-							GRAPH_TYPES={widget?.panelTypes}
+						<GridPanelSwitch
+							panelType={widget?.panelTypes}
 							data={prevChartDataSetRef}
 							isStacked={widget?.isStacked}
 							opacity={widget?.opacity}
@@ -281,6 +281,8 @@ function GridCardGraph({
 							name={name}
 							yAxisUnit={yAxisUnit}
 							onClickHandler={onClickHandler}
+							panelData={[]}
+							query={widget.query}
 						/>
 					</>
 				)}
@@ -308,8 +310,8 @@ function GridCardGraph({
 								allowEdit={allowEdit}
 							/>
 						</div>
-						<GridGraphComponent
-							GRAPH_TYPES={widget.panelTypes}
+						<GridPanelSwitch
+							panelType={widget.panelTypes}
 							data={prevChartDataSetRef}
 							isStacked={widget.isStacked}
 							opacity={widget.opacity}
@@ -317,6 +319,8 @@ function GridCardGraph({
 							name={name}
 							yAxisUnit={yAxisUnit}
 							onClickHandler={onClickHandler}
+							panelData={[]}
+							query={widget.query}
 						/>
 					</>
 				) : (
@@ -363,8 +367,8 @@ function GridCardGraph({
 			{!isEmptyLayout && getModals()}
 
 			{!isEmpty(widget) && !!queryResponse.data?.payload && (
-				<GridGraphComponent
-					GRAPH_TYPES={widget.panelTypes}
+				<GridPanelSwitch
+					panelType={widget.panelTypes}
 					data={chartData}
 					isStacked={widget.isStacked}
 					opacity={widget.opacity}
@@ -373,6 +377,8 @@ function GridCardGraph({
 					yAxisUnit={yAxisUnit}
 					onDragSelect={onDragSelect}
 					onClickHandler={onClickHandler}
+					panelData={queryResponse.data?.payload.data.newResult.data.result || []}
+					query={widget.query}
 				/>
 			)}
 

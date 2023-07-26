@@ -23,11 +23,7 @@ export function QueryTable({
 		[query, queryTableData, renderColumnCell, renderActionCell],
 	);
 
-	const filteredColumns = columns.filter((item) => item.key !== 'timestamp');
-
-	const tableColumns = modifyColumns
-		? modifyColumns(filteredColumns)
-		: filteredColumns;
+	const tableColumns = modifyColumns ? modifyColumns(columns) : columns;
 
 	return (
 		<ResizeTable
