@@ -1,4 +1,4 @@
-import { ITEMS } from 'container/NewDashboard/ComponentsSlider/menuItems';
+import { PANEL_TYPES } from 'constants/queryBuilder';
 import { WhereClauseConfig } from 'hooks/queryBuilder/useAutoComplete';
 import { ReactNode } from 'react';
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
@@ -22,7 +22,7 @@ export type QueryBuilderConfig =
 
 export type QueryBuilderProps = {
 	config?: QueryBuilderConfig;
-	panelType: ITEMS;
+	panelType: PANEL_TYPES;
 	actions?: ReactNode;
 	filterConfigs?: Partial<FilterConfigs>;
 	queryComponents?: { renderOrderBy?: (props: OrderByFilterProps) => ReactNode };

@@ -1,4 +1,4 @@
-import { GRAPH_TYPES } from 'container/NewDashboard/ComponentsSlider';
+import { PANEL_TYPES } from 'constants/queryBuilder';
 import {
 	IBuilderFormula,
 	IBuilderQuery,
@@ -157,7 +157,7 @@ export type QueryBuilderContextType = {
 	currentQuery: Query;
 	stagedQuery: Query | null;
 	initialDataSource: DataSource | null;
-	panelType: GRAPH_TYPES | null;
+	panelType: PANEL_TYPES | null;
 	isEnabledQuery: boolean;
 	handleSetQueryData: (index: number, queryData: IBuilderQuery) => void;
 	handleSetFormulaData: (index: number, formulaData: IBuilderFormula) => void;
@@ -167,7 +167,7 @@ export type QueryBuilderContextType = {
 		newQueryData: IPromQLQuery | IClickHouseQuery,
 	) => void;
 	handleSetConfig: (
-		newPanelType: GRAPH_TYPES,
+		newPanelType: PANEL_TYPES,
 		dataSource: DataSource | null,
 	) => void;
 	removeQueryBuilderEntityByIndex: (
@@ -189,7 +189,7 @@ export type QueryBuilderContextType = {
 	resetStagedQuery: () => void;
 	updateAllQueriesOperators: (
 		queryData: Query,
-		panelType: GRAPH_TYPES,
+		panelType: PANEL_TYPES,
 		dataSource: DataSource,
 	) => Query;
 	updateQueriesData: <T extends keyof QueryBuilderData>(
