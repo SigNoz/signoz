@@ -1,11 +1,11 @@
 import localStorageGet from 'api/browser/localstorage/get';
 import localStorageSet from 'api/browser/localstorage/set';
 import { SKIP_ONBOARDING } from 'constants/onboarding';
-import { useNotifications } from 'hooks/useNotifications';
+import useErrorNotification from 'hooks/useErrorNotification';
 import { useQueryService } from 'hooks/useQueryService';
 import useResourceAttribute from 'hooks/useResourceAttribute';
 import { convertRawQueriesToTraceSelectedTags } from 'hooks/useResourceAttribute/utils';
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
 import { GlobalReducer } from 'types/reducer/globalTime';
@@ -32,15 +32,7 @@ function ServiceTraces(): JSX.Element {
 		selectedTags,
 	});
 
-	const { notifications } = useNotifications();
-
-	useEffect(() => {
-		if (error) {
-			notifications.error({
-				message: error.message,
-			});
-		}
-	}, [error, notifications]);
+	useErrorNotification(error);
 
 	const services = data || [];
 
