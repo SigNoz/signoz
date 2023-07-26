@@ -80,7 +80,7 @@ export const topOperationQueries = ({
 		},
 	];
 
-	const errorRateAdditionalItemsB: TagFilterItem[] = latencyAndNumberOfCallAdditionalItems;
+	const errorRateAdditionalItemsB = latencyAndNumberOfCallAdditionalItems;
 
 	const groupBy: BaseAutocompleteData[] = [
 		{
