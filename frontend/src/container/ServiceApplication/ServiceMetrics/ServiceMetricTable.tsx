@@ -1,5 +1,6 @@
 import { ResizeTable } from 'components/ResizeTable';
 import { useGetQueriesRange } from 'hooks/queryBuilder/useGetQueriesRange';
+import { useMemo } from 'react';
 import { useSelector } from 'react-redux';
 import { useLocation } from 'react-router-dom';
 import { AppState } from 'store/reducers';
@@ -34,13 +35,18 @@ function ServiceMetricTable({
 		},
 	});
 
-	const isloading = queries.some((query) => query.isLoading);
+	const isLoading = queries.some((query) => query.isLoading);
 	const isError = queries.some((query) => query.isError);
-	const services: ServicesList[] = [];
-
-	if (!isloading && !isError) {
-		services.push(...getServiceListFromQuery(queries, topLevelOperations));
-	}
+	const services: ServicesList[] = useMemo(
+		() =>
+			getServiceListFromQuery({
+				queries,
+				topLevelOperations,
+				isLoading,
+				isError,
+			}),
+		[isError, isLoading, queries, topLevelOperations],
+	);
 
 	const { search } = useLocation();
 	const tableColumns = getColumns(search, true);
@@ -48,7 +54,7 @@ function ServiceMetricTable({
 	return (
 		<ResizeTable
 			columns={tableColumns}
-			loading={isloading}
+			loading={isLoading}
 			dataSource={services}
 			rowKey="serviceName"
 		/>

@@ -1,6 +1,9 @@
 import { ServiceDataProps } from 'api/metrics/getTopLevelOperations';
 import { Time } from 'container/TopNav/DateTimeSelection/config';
+import { UseQueryResult } from 'react-query';
 import { GetQueryResultsProps } from 'store/actions/dashboard/getQueryResults';
+import { SuccessResponse } from 'types/api';
+import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
 import { ServicesList } from 'types/api/metrics/getService';
 
 export default interface ServiceTableProps {
@@ -26,4 +29,11 @@ export interface GetQueryRangeRequestDataProps {
 	maxTime: number;
 	minTime: number;
 	globalSelectedInterval: Time;
+}
+
+export interface GetServiceListFromQueryProps {
+	queries: UseQueryResult<SuccessResponse<MetricRangePayloadProps>, Error>[];
+	topLevelOperations: [keyof ServiceDataProps, string[]][];
+	isLoading: boolean;
+	isError: boolean;
 }
