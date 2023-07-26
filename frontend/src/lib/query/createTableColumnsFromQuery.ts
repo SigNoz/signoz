@@ -6,7 +6,6 @@ import {
 } from 'constants/queryBuilder';
 import { FORMULA_REGEXP } from 'constants/regExp';
 import { QueryTableProps } from 'container/QueryTable/QueryTable.intefaces';
-import { toCapitalize } from 'lib/toCapitalize';
 import { ReactNode } from 'react';
 import {
 	IBuilderFormula,
@@ -145,7 +144,7 @@ const addOperatorFormulaColumns = (
 		let formulaLabel = `${formulaQuery.queryName}(${formulaQuery.expression})`;
 
 		if (formulaQuery.legend) {
-			formulaLabel += ` - ${formulaQuery.legend}`;
+			formulaLabel = formulaQuery.legend;
 		}
 
 		const formulaColumn: DynamicColumn = {
@@ -171,18 +170,14 @@ const addOperatorFormulaColumns = (
 	}
 
 	if (currentQueryData.legend) {
-		operatorLabel += ` - ${currentQueryData.legend}`;
-	} else {
-		operatorLabel += ` - ${currentQueryData.queryName}`;
+		operatorLabel = currentQueryData.legend;
 	}
-
-	const resultValue = `${toCapitalize(operatorLabel)}`;
 
 	const operatorColumn: DynamicColumn = {
 		query,
 		field: currentQueryData.queryName,
 		dataIndex: currentQueryData.queryName,
-		title: customLabel || resultValue,
+		title: customLabel || operatorLabel,
 		data: [],
 		type: 'operator',
 		// sortable: isNumber,
@@ -218,26 +213,24 @@ const getDynamicColumns: GetDynamicColumns = (queryTableData, query) => {
 	const dynamicColumns: DynamicColumns = [];
 
 	queryTableData.forEach((currentQuery) => {
+		const { series, queryName, list } = currentQuery;
+
 		const currentStagedQuery = getQueryByName(
 			query.builder,
-			currentQuery.queryName,
-			isFormula(currentQuery.queryName) ? 'queryFormulas' : 'queryData',
+			queryName,
+			isFormula(queryName) ? 'queryFormulas' : 'queryData',
 		);
-		if (currentQuery.list) {
-			currentQuery.list.forEach((listItem) => {
+		if (list) {
+			list.forEach((listItem) => {
 				Object.keys(listItem.data).forEach((label) => {
 					addListLabels(currentStagedQuery, label as ListItemKey, dynamicColumns);
 				});
 			});
 		}
 
-		if (currentQuery.series) {
-			const isValuesColumnExist = currentQuery.series.some(
-				(item) => item.values.length > 0,
-			);
-			const isEveryValuesExist = currentQuery.series.every(
-				(item) => item.values.length > 0,
-			);
+		if (series) {
+			const isValuesColumnExist = series.some((item) => item.values.length > 0);
+			const isEveryValuesExist = series.every((item) => item.values.length > 0);
 
 			if (isValuesColumnExist) {
 				addOperatorFormulaColumns(
@@ -247,7 +240,7 @@ const getDynamicColumns: GetDynamicColumns = (queryTableData, query) => {
 				);
 			}
 
-			currentQuery.series.forEach((seria) => {
+			series.forEach((seria) => {
 				Object.keys(seria.labels).forEach((label) => {
 					if (label === currentQuery?.queryName) return;
 
@@ -277,13 +270,46 @@ const fillEmptyRowCells = (
 	});
 };
 
+// TODO: try to serialize data
+// const serializeData = () => {
+// 	{A: {availableLabels: ['service_name']}
+// 	B: {
+// 		['service_name']: [['timestamp', value]]
+// 		['operation']: [['timestamp', value]]
+// 	}
+// }
+// };
+
+// const isLabelPresent = (
+// 	queryLabels: Record<string, string[]>,
+// 	name: string,
+// 	label: string,
+// ): boolean => {
+// 	const queryIndex = Object.entries(queryLabels).findIndex(
+// 		([key]) => key === name,
+// 	);
+
+// 	// const queryIndex = restQueryLabels.findIndex(([_, value]) =>
+// 	// 	value.includes(label),
+// 	// );
+
+// 	const newQueryLabels = [...Object.entries(queryLabels)].slice(queryIndex);
+
+// 	console.log({ restQueryLabels });
+// };
+
+// const groupTableColumns =
+
 const fillData = (
 	seria: SeriesItem,
+	queryLabels: Record<string, string[]>,
 	columns: DynamicColumns,
 	queryName: string,
 	value?: SeriesItem['values'][number],
 ): void => {
 	const labelEntries = Object.entries(seria.labels);
+
+	// pass as argument object {[queryName]: [labels] }
 
 	const unusedColumnsKeys = new Set<keyof RowData>(
 		columns.map((item) => item.field),
@@ -303,23 +329,26 @@ const fillData = (
 			}
 		});
 
+		// if (keys.includes(column.field))
 		fillEmptyRowCells(unusedColumnsKeys, columns, column);
 	});
 };
 
 const fillDataFromSeria = (
+	queryLabels: Record<string, string[]>,
 	seria: SeriesItem,
 	columns: DynamicColumns,
 	queryName: string,
 ): void => {
 	if (seria.values.length === 0) {
-		fillData(seria, columns, queryName);
+		fillData(seria, queryLabels, columns, queryName);
 
 		return;
 	}
 
+	// TODO: different values
 	seria.values.forEach((value) => {
-		fillData(seria, columns, queryName, value);
+		fillData(seria, queryLabels, columns, queryName, value);
 	});
 };
 
@@ -342,21 +371,52 @@ const fillDataFromList = (
 	});
 };
 
+const getQueriesLabels = (
+	queryTableData: QueryDataV3[],
+): Record<string, string[]> => {
+	const queryLabels: Record<string, string[]> = {};
+
+	queryTableData.forEach((currentQuery) => {
+		const { series, queryName } = currentQuery;
+		if (!series) return;
+
+		if (!queryLabels[queryName]) {
+			queryLabels[queryName] = [];
+		}
+
+		series.forEach((item) => {
+			Object.keys(item.labels).forEach((currentLabel) => {
+				if (!queryLabels[queryName].includes(currentLabel)) {
+					queryLabels[queryName].push(currentLabel);
+				}
+			});
+		});
+	});
+
+	return queryLabels;
+};
+
 const fillColumnsData: FillColumnData = (queryTableData, cols) => {
 	const fields = cols.filter((item) => item.type === 'field');
 	const operators = cols.filter((item) => item.type === 'operator');
 	const formulas = cols.filter((item) => item.type === 'formula');
 	const resultColumns = [...fields, ...operators, ...formulas];
 
+	const queryLabels = getQueriesLabels(queryTableData);
+
+	console.log({ queryLabels });
+
 	queryTableData.forEach((currentQuery) => {
-		if (currentQuery.series) {
-			currentQuery.series.forEach((seria) => {
-				fillDataFromSeria(seria, resultColumns, currentQuery.queryName);
+		const { series, queryName, list } = currentQuery;
+
+		if (series) {
+			series.forEach((seria) => {
+				fillDataFromSeria(queryLabels, seria, resultColumns, queryName);
 			});
 		}
 
-		if (currentQuery.list) {
-			currentQuery.list.forEach((listItem) => {
+		if (list) {
+			list.forEach((listItem) => {
 				fillDataFromList(listItem, resultColumns);
 			});
 		}
@@ -424,6 +484,8 @@ export const createTableColumnsFromQuery: CreateTableDataFromQuery = ({
 		queryTableData,
 		dynamicColumns,
 	);
+
+	console.log({ filledDynamicColumns });
 
 	const dataSource = generateData(filledDynamicColumns, rowsLength);
 
