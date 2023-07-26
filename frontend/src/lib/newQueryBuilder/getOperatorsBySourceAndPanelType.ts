@@ -1,11 +1,10 @@
 import { mapOfOperators, PANEL_TYPES } from 'constants/queryBuilder';
-import { GRAPH_TYPES } from 'container/NewDashboard/ComponentsSlider';
 import { DataSource, StringOperators } from 'types/common/queryBuilder';
 import { SelectOption } from 'types/common/select';
 
 type GetQueryOperatorsParams = {
 	dataSource: DataSource;
-	panelType: GRAPH_TYPES;
+	panelType: PANEL_TYPES;
 };
 
 // Modify this function if need special conditions for filtering of the operators
