@@ -3,7 +3,6 @@ import { StaticLineProps } from 'components/Graph';
 import Spinner from 'components/Spinner';
 import { initialQueriesMap, PANEL_TYPES } from 'constants/queryBuilder';
 import GridPanelSwitch from 'container/GridPanelSwitch';
-import { GRAPH_TYPES } from 'container/NewDashboard/ComponentsSlider';
 import { timePreferenceType } from 'container/NewWidget/RightContainer/timeItems';
 import { Time } from 'container/TopNav/DateTimeSelection/config';
 import { useGetQueryRange } from 'hooks/queryBuilder/useGetQueryRange';
@@ -18,7 +17,7 @@ import { ChartContainer, FailedMessageContainer } from './styles';
 export interface ChartPreviewProps {
 	name: string;
 	query: Query | null;
-	graphType?: GRAPH_TYPES;
+	graphType?: PANEL_TYPES;
 	selectedTime?: timePreferenceType;
 	selectedInterval?: Time;
 	headline?: JSX.Element;

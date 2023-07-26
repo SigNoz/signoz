@@ -1,10 +1,10 @@
-import { GRAPH_TYPES } from 'container/NewDashboard/ComponentsSlider';
+import { PANEL_TYPES } from 'constants/queryBuilder';
 import { Widgets } from 'types/api/dashboard/getAll';
 
 import { timePreferance } from './RightContainer/timeItems';
 
 export interface NewWidgetProps {
-	selectedGraph: GRAPH_TYPES;
+	selectedGraph: PANEL_TYPES;
 	yAxisUnit: Widgets['yAxisUnit'];
 }
 
