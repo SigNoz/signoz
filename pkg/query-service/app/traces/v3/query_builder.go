@@ -288,7 +288,7 @@ func buildTracesQuery(start, end, step int64, mq *v3.BuilderQuery, tableName str
 	}
 
 	if graphLimitQtype == constants.SecondQueryGraphLimit {
-		filterSubQuery = filterSubQuery + " AND " + fmt.Sprintf("(%s) GLOBAL IN (", getSelectKeys(mq.AggregateOperator, mq.GroupBy)) + "{{.FilterQuery}})"
+		filterSubQuery = filterSubQuery + " AND " + fmt.Sprintf("(%s) GLOBAL IN (", getSelectKeys(mq.AggregateOperator, mq.GroupBy)) + "{{.FilterSubQuery}})"
 	}
 
 	aggregationKey := ""

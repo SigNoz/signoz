@@ -183,12 +183,12 @@ func (qb *QueryBuilder) PrepareQueries(params *v3.QueryRangeParamsV3, args ...in
 							return nil, err
 						}
 						data := map[string]string{
-							"FilterQuery": limitQuery,
+							"FilterSubQuery": limitQuery,
 						}
 						t := template.Must(template.New("query").Parse(placeholderQuery))
 						builder := &strings.Builder{}
 						if err := t.Execute(builder, data); err != nil {
-							panic(err)
+							return nil, err
 						}
 						query := builder.String()
 
@@ -212,12 +212,12 @@ func (qb *QueryBuilder) PrepareQueries(params *v3.QueryRangeParamsV3, args ...in
 							return nil, err
 						}
 						data := map[string]string{
-							"FilterQuery": limitQuery,
+							"FilterSubQuery": limitQuery,
 						}
 						t := template.Must(template.New("query").Parse(placeholderQuery))
 						builder := &strings.Builder{}
 						if err := t.Execute(builder, data); err != nil {
-							panic(err)
+							return nil, err
 						}
 						query := builder.String()
 						queries[queryName] = query
