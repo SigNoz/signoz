@@ -1,3 +1,4 @@
+import { useMemo } from 'react';
 import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
 import { GlobalReducer } from 'types/reducer/globalTime';
@@ -14,13 +15,16 @@ function ServiceMetricsApplication({
 		GlobalReducer
 	>((state) => state.globalTime);
 
-	const queryRangeRequestData = getQueryRangeRequestData({
-		topLevelOperations,
-		minTime,
-		maxTime,
-		globalSelectedInterval,
-	});
-
+	const queryRangeRequestData = useMemo(
+		() =>
+			getQueryRangeRequestData({
+				topLevelOperations,
+				minTime,
+				maxTime,
+				globalSelectedInterval,
+			}),
+		[globalSelectedInterval, maxTime, minTime, topLevelOperations],
+	);
 	return (
 		<ServiceMetricTable
 			topLevelOperations={topLevelOperations}
