@@ -40,3 +40,16 @@ export interface BuilderQuerieswithFormulaProps {
 	aggregateOperators: MetricAggregateOperator[];
 	dataSource: DataSource;
 }
+
+export interface OperationPerSecProps {
+	servicename: IServiceName['servicename'];
+	tagFilterItems: TagFilterItem[];
+	topLevelOperations: string[];
+}
+
+export interface LatencyProps {
+	servicename: IServiceName['servicename'];
+	tagFilterItems: TagFilterItem[];
+	isSpanMetricEnable?: boolean;
+	topLevelOperationsRoute: string[];
+}

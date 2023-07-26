@@ -18,7 +18,7 @@ import {
 	QUERYNAME_AND_EXPRESSION,
 	WidgetKeys,
 } from '../constant';
-import { IServiceName } from '../Tabs/types';
+import { LatencyProps, OperationPerSecProps } from '../Tabs/types';
 import {
 	getQueryBuilderQueries,
 	getQueryBuilderQuerieswithFormula,
@@ -39,9 +39,7 @@ export const latency = ({
 		type: isSpanMetricEnable ? null : MetricsType.Tag,
 	};
 
-	const autocompleteData: BaseAutocompleteData[] = Array(3).fill(
-		newAutoCompleteData,
-	);
+	const autocompleteData = Array(3).fill(newAutoCompleteData);
 
 	const filterItem: TagFilterItem[] = [
 		{
@@ -69,17 +67,21 @@ export const latency = ({
 		...tagFilterItems,
 	];
 
-	const filterItems: TagFilterItem[][] = Array(3).fill([...filterItem]);
+	const filterItems = Array(3).fill([...filterItem]);
+	const legends = LATENCY_AGGREGATEOPERATOR;
+	const aggregateOperator = isSpanMetricEnable
+		? LATENCY_AGGREGATEOPERATOR_SPAN_METRICS
+		: LATENCY_AGGREGATEOPERATOR;
+	const dataSource = isSpanMetricEnable ? DataSource.METRICS : DataSource.TRACES;
+	const queryNameAndExpression = QUERYNAME_AND_EXPRESSION;
 
 	return getQueryBuilderQueries({
 		autocompleteData,
-		legends: LATENCY_AGGREGATEOPERATOR,
+		legends,
 		filterItems,
-		aggregateOperator: isSpanMetricEnable
-			? LATENCY_AGGREGATEOPERATOR_SPAN_METRICS
-			: LATENCY_AGGREGATEOPERATOR,
-		dataSource: isSpanMetricEnable ? DataSource.METRICS : DataSource.TRACES,
-		queryNameAndExpression: QUERYNAME_AND_EXPRESSION,
+		aggregateOperator,
+		dataSource,
+		queryNameAndExpression,
 	});
 };
 
@@ -125,11 +127,14 @@ export const operationPerSec = ({
 		],
 	];
 
+	const legends = OPERATION_LEGENDS;
+	const dataSource = DataSource.METRICS;
+
 	return getQueryBuilderQueries({
 		autocompleteData,
-		legends: OPERATION_LEGENDS,
+		legends,
 		filterItems,
-		dataSource: DataSource.METRICS,
+		dataSource,
 	});
 };
 
@@ -151,10 +156,7 @@ export const errorPercentage = ({
 		type: null,
 	};
 
-	const autocompleteData: BaseAutocompleteData[] = [
-		autocompleteDataA,
-		autocompleteDataB,
-	];
+	const autocompleteData = [autocompleteDataA, autocompleteDataB];
 
 	const additionalItemsA: TagFilterItem[] = [
 		{
@@ -219,35 +221,25 @@ export const errorPercentage = ({
 		...tagFilterItems,
 	];
 
-	const additionalItems: TagFilterItem[][] = [
-		additionalItemsA,
-		additionalItemsB,
+	const additionalItems = [additionalItemsA, additionalItemsB];
+	const legends = [GraphTitle.ERROR_PERCENTAGE];
+	const disabled = [true, true];
+	const expression = FORMULA.ERROR_PERCENTAGE;
+	const legendFormula = GraphTitle.ERROR_PERCENTAGE;
+	const aggregateOperators = [
+		MetricAggregateOperator.SUM_RATE,
+		MetricAggregateOperator.SUM_RATE,
 	];
+	const dataSource = DataSource.METRICS;
 
 	return getQueryBuilderQuerieswithFormula({
 		autocompleteData,
 		additionalItems,
-		legends: [GraphTitle.ERROR_PERCENTAGE],
-		disabled: [true, true],
-		expression: FORMULA.ERROR_PERCENTAGE,
-		legendFormula: GraphTitle.ERROR_PERCENTAGE,
-		aggregateOperators: [
-			MetricAggregateOperator.SUM_RATE,
-			MetricAggregateOperator.SUM_RATE,
-		],
-		dataSource: DataSource.METRICS,
+		legends,
+		disabled,
+		expression,
+		legendFormula,
+		aggregateOperators,
+		dataSource,
 	});
 };
-
-export interface OperationPerSecProps {
-	servicename: IServiceName['servicename'];
-	tagFilterItems: TagFilterItem[];
-	topLevelOperations: string[];
-}
-
-export interface LatencyProps {
-	servicename: IServiceName['servicename'];
-	tagFilterItems: TagFilterItem[];
-	isSpanMetricEnable?: boolean;
-	topLevelOperationsRoute: string[];
-}
