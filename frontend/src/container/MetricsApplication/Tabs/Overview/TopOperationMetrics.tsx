@@ -7,8 +7,9 @@ import { useStepInterval } from 'hooks/queryBuilder/useStepInterval';
 import useResourceAttribute from 'hooks/useResourceAttribute';
 import { convertRawQueriesToTraceSelectedTags } from 'hooks/useResourceAttribute/utils';
 import { getDashboardVariables } from 'lib/dashbaordVariables/getDashboardVariables';
+import { RowData } from 'lib/query/createTableColumnsFromQuery';
 import { isEmpty } from 'lodash-es';
-import { useMemo, useState } from 'react';
+import { ReactNode, useMemo, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { useParams } from 'react-router-dom';
 import { AppState } from 'store/reducers';
@@ -17,7 +18,8 @@ import { GlobalReducer } from 'types/reducer/globalTime';
 import { v4 as uuid } from 'uuid';
 
 import { IServiceName } from '../types';
-import { TableColumnRenderer } from './TableRenderer/TableColumnRenderer';
+import ColumnWithLink from './TableRenderer/ColumnWithLink';
+import { getTableColumnRenderer } from './TableRenderer/TableColumnRenderer';
 
 function TopOperationMetrics(): JSX.Element {
 	const { servicename } = useParams<IServiceName>();
@@ -86,12 +88,17 @@ function TopOperationMetrics(): JSX.Element {
 
 	const renderColumnCell = useMemo(
 		() =>
-			TableColumnRenderer({
-				servicename,
-				minTime,
-				maxTime,
-				selectedTraceTags,
+			getTableColumnRenderer({
 				columnName: 'operation',
+				renderFunction: (record: RowData): ReactNode => (
+					<ColumnWithLink
+						servicename={servicename}
+						minTime={minTime}
+						maxTime={maxTime}
+						selectedTraceTags={selectedTraceTags}
+						record={record}
+					/>
+				),
 			}),
 		[servicename, minTime, maxTime, selectedTraceTags],
 	);

@@ -1,3 +1,5 @@
+import { RowData } from 'lib/query/createTableColumnsFromQuery';
+import { ReactNode } from 'react';
 import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { TagFilterItem } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource, MetricAggregateOperator } from 'types/common/queryBuilder';
@@ -55,9 +57,6 @@ export interface LatencyProps {
 }
 
 export interface TableRendererProps {
-	servicename: string;
-	minTime: number;
-	maxTime: number;
-	selectedTraceTags: string;
 	columnName: string;
+	renderFunction: (record: RowData) => ReactNode;
 }
