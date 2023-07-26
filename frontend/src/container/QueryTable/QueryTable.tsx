@@ -9,6 +9,7 @@ export function QueryTable({
 	query,
 	renderActionCell,
 	modifyColumns,
+	renderColumnCell,
 	...props
 }: QueryTableProps): JSX.Element {
 	const { columns, dataSource } = useMemo(
@@ -17,15 +18,12 @@ export function QueryTable({
 				query,
 				queryTableData,
 				renderActionCell,
+				renderColumnCell,
 			}),
-		[query, queryTableData, renderActionCell],
+		[query, queryTableData, renderColumnCell, renderActionCell],
 	);
 
-	const filteredColumns = columns.filter((item) => item.key !== 'timestamp');
-
-	const tableColumns = modifyColumns
-		? modifyColumns(filteredColumns)
-		: filteredColumns;
+	const tableColumns = modifyColumns ? modifyColumns(columns) : columns;
 
 	return (
 		<ResizeTable

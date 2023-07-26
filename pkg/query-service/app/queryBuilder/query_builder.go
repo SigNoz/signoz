@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/SigNoz/govaluate"
+	logsV3 "go.signoz.io/signoz/pkg/query-service/app/logs/v3"
 	"go.signoz.io/signoz/pkg/query-service/cache"
 	"go.signoz.io/signoz/pkg/query-service/constants"
 	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
@@ -40,7 +41,7 @@ var SupportedFunctions = []string{
 var EvalFuncs = map[string]govaluate.ExpressionFunction{}
 
 type prepareTracesQueryFunc func(start, end int64, panelType v3.PanelType, bq *v3.BuilderQuery, keys map[string]v3.AttributeKey, graphLimitQtype string) (string, error)
-type prepareLogsQueryFunc func(start, end int64, queryType v3.QueryType, panelType v3.PanelType, bq *v3.BuilderQuery, graphLimitQtype string) (string, error)
+type prepareLogsQueryFunc func(start, end int64, queryType v3.QueryType, panelType v3.PanelType, bq *v3.BuilderQuery, options logsV3.Options) (string, error)
 type prepareMetricQueryFunc func(start, end int64, queryType v3.QueryType, panelType v3.PanelType, bq *v3.BuilderQuery) (string, error)
 
 type QueryBuilder struct {
@@ -123,12 +124,35 @@ func expressionToQuery(qp *v3.QueryRangeParamsV3, varToQuery map[string]string, 
 			formulaSubQuery = strings.TrimSuffix(formulaSubQuery, " AND ")
 		}
 		if idx < len(variables)-1 {
-			formulaSubQuery += " GLOBAL INNER JOIN"
+			formulaSubQuery += " INNER JOIN "
 		}
 		prevVar = variable
 	}
 	formulaQuery = fmt.Sprintf("SELECT %s, %s as value FROM ", joinUsing, formula.ExpressionString()) + formulaSubQuery
 	return formulaQuery, nil
+}
+
+func (qb *QueryBuilder) PrepareLiveTailQuery(params *v3.QueryRangeParamsV3) (string, error) {
+	var queryStr string
+	var err error
+	compositeQuery := params.CompositeQuery
+
+	if compositeQuery != nil {
+		// There can only be a signle query and there is no concept of disabling queries
+		if len(compositeQuery.BuilderQueries) != 1 {
+			return "", fmt.Errorf("live tail is only supported for single query")
+		}
+		for queryName, query := range compositeQuery.BuilderQueries {
+			if query.Expression == queryName {
+				queryStr, err = qb.options.BuildLogQuery(params.Start, params.End, compositeQuery.QueryType, compositeQuery.PanelType, query, logsV3.Options{IsLivetailQuery: true})
+				if err != nil {
+					return "", err
+				}
+			}
+		}
+
+	}
+	return queryStr, nil
 }
 
 func (qb *QueryBuilder) PrepareQueries(params *v3.QueryRangeParamsV3, args ...interface{}) (map[string]string, error) {
@@ -169,18 +193,18 @@ func (qb *QueryBuilder) PrepareQueries(params *v3.QueryRangeParamsV3, args ...in
 				case v3.DataSourceLogs:
 					// for ts query with limit replace it as it is already formed
 					if compositeQuery.PanelType == v3.PanelTypeGraph && query.Limit > 0 && len(query.GroupBy) > 0 {
-						limitQuery, err := qb.options.BuildLogQuery(params.Start, params.End, compositeQuery.QueryType, compositeQuery.PanelType, query, constants.FirstQueryGraphLimit)
+						limitQuery, err := qb.options.BuildLogQuery(params.Start, params.End, compositeQuery.QueryType, compositeQuery.PanelType, query, logsV3.Options{GraphLimitQtype: constants.FirstQueryGraphLimit})
 						if err != nil {
 							return nil, err
 						}
-						placeholderQuery, err := qb.options.BuildLogQuery(params.Start, params.End, compositeQuery.QueryType, compositeQuery.PanelType, query, constants.SecondQueryGraphLimit)
+						placeholderQuery, err := qb.options.BuildLogQuery(params.Start, params.End, compositeQuery.QueryType, compositeQuery.PanelType, query, logsV3.Options{GraphLimitQtype: constants.SecondQueryGraphLimit})
 						if err != nil {
 							return nil, err
 						}
 						query := fmt.Sprintf(placeholderQuery, limitQuery)
 						queries[queryName] = query
 					} else {
-						queryString, err := qb.options.BuildLogQuery(params.Start, params.End, compositeQuery.QueryType, compositeQuery.PanelType, query, "")
+						queryString, err := qb.options.BuildLogQuery(params.Start, params.End, compositeQuery.QueryType, compositeQuery.PanelType, query, logsV3.Options{})
 						if err != nil {
 							return nil, err
 						}
