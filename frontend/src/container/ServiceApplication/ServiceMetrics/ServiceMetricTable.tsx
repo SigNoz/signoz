@@ -6,7 +6,7 @@ import { AppState } from 'store/reducers';
 import { ServicesList } from 'types/api/metrics/getService';
 import { GlobalReducer } from 'types/reducer/globalTime';
 
-import { columns } from '../Columns/ServiceColumn';
+import { getColumns } from '../Columns/ServiceColumn';
 import { ServiceMetricsTableProps } from '../types';
 import { getServiceListFromQuery } from '../utils';
 
@@ -43,7 +43,7 @@ function ServiceMetricTable({
 	}
 
 	const { search } = useLocation();
-	const tableColumns = columns(search, true);
+	const tableColumns = getColumns(search, true);
 
 	return (
 		<ResizeTable

@@ -9,7 +9,7 @@ import {
 } from './ColumnContants';
 import { getColumnSearchProps } from './GetColumnSearchProps';
 
-export const columns = (
+export const getColumns = (
 	search: string,
 	isMetricData: boolean,
 ): ColumnsType<ServicesList> => [
