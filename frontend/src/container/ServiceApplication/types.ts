@@ -5,7 +5,6 @@ import { ServicesList } from 'types/api/metrics/getService';
 export default interface ServiceTableProps {
 	services: ServicesList[];
 	loading: boolean;
-	error: boolean;
 }
 
 export interface ServiceApplicationProps {
@@ -14,8 +13,6 @@ export interface ServiceApplicationProps {
 
 export interface ServiceMetricsProps {
 	topLevelOperations: [keyof ServiceDataProps, string[]][];
-	loading: boolean;
-	error: boolean;
 }
 
 export interface ServiceMetricsTableProps {

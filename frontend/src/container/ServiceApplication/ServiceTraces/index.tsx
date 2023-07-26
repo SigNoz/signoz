@@ -1,15 +1,17 @@
-import Spinner from 'components/Spinner';
+import localStorageGet from 'api/browser/localstorage/get';
+import localStorageSet from 'api/browser/localstorage/set';
+import { SKIP_ONBOARDING } from 'constants/onboarding';
 import { useNotifications } from 'hooks/useNotifications';
 import { useQueryService } from 'hooks/useQueryService';
 import useResourceAttribute from 'hooks/useResourceAttribute';
 import { convertRawQueriesToTraceSelectedTags } from 'hooks/useResourceAttribute/utils';
-import { useEffect, useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
-import { QueryServiceProps } from 'types/api/metrics/getService';
 import { GlobalReducer } from 'types/reducer/globalTime';
 import { Tags } from 'types/reducer/trace';
 
+import SkipOnBoardingModal from '../SkipOnBoardModal';
 import ServiceTraceTable from './ServiceTracesTable';
 
 function ServiceTraces(): JSX.Element {
@@ -23,12 +25,12 @@ function ServiceTraces(): JSX.Element {
 		[queries],
 	);
 
-	const { data, error, isLoading }: QueryServiceProps = useQueryService(
+	const { data, error, isLoading, isError } = useQueryService({
 		minTime,
 		maxTime,
 		selectedTime,
 		selectedTags,
-	);
+	});
 
 	const { notifications } = useNotifications();
 
@@ -40,17 +42,27 @@ function ServiceTraces(): JSX.Element {
 		}
 	}, [error, notifications]);
 
-	if (isLoading) {
-		return <Spinner tip="Loading..." />;
+	const services = data || [];
+
+	const [skipOnboarding, setSkipOnboarding] = useState(
+		localStorageGet(SKIP_ONBOARDING) === 'true',
+	);
+
+	const onContinueClick = (): void => {
+		localStorageSet(SKIP_ONBOARDING, 'true');
+		setSkipOnboarding(true);
+	};
+
+	if (
+		services.length === 0 &&
+		isLoading === false &&
+		!skipOnboarding &&
+		isError === true
+	) {
+		return <SkipOnBoardingModal onContinueClick={onContinueClick} />;
 	}
 
-	return (
-		<ServiceTraceTable
-			services={data || []}
-			loading={isLoading}
-			error={!!error}
-		/>
-	);
+	return <ServiceTraceTable services={services} loading={isLoading} />;
 }
 
 export default ServiceTraces;
