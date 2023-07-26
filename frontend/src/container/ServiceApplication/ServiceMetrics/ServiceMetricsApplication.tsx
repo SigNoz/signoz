@@ -14,12 +14,12 @@ function ServiceMetricsApplication({
 		GlobalReducer
 	>((state) => state.globalTime);
 
-	const queryRangeRequestData = getQueryRangeRequestData(
+	const queryRangeRequestData = getQueryRangeRequestData({
 		topLevelOperations,
 		minTime,
 		maxTime,
 		globalSelectedInterval,
-	);
+	});
 
 	return (
 		<ServiceMetricTable

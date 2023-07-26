@@ -1,7 +1,6 @@
 import { ServiceDataProps } from 'api/metrics/getTopLevelOperations';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { getWidgetQueryBuilder } from 'container/MetricsApplication/MetricsApplication.factory';
-import { Time } from 'container/TopNav/DateTimeSelection/config';
 import { updateStepInterval } from 'hooks/queryBuilder/useStepInterval';
 import { getDashboardVariables } from 'lib/dashbaordVariables/getDashboardVariables';
 import { UseQueryResult } from 'react-query';
@@ -14,6 +13,7 @@ import { EQueryType } from 'types/common/dashboard';
 import { v4 as uuid } from 'uuid';
 
 import { serviceMetricsQuery } from './ServiceMetrics/ServiceMetricsQuery';
+import { GetQueryRangeRequestDataProps } from './types';
 
 export function getSeriesValue(
 	queryArray: QueryDataV3[],
@@ -24,12 +24,12 @@ export function getSeriesValue(
 	return series ? series[0].values[0].value : '0';
 }
 
-export const getQueryRangeRequestData = (
-	topLevelOperations: [keyof ServiceDataProps, string[]][],
-	maxTime: number,
-	minTime: number,
-	globalSelectedInterval: Time,
-): GetQueryResultsProps[] => {
+export const getQueryRangeRequestData = ({
+	topLevelOperations,
+	maxTime,
+	minTime,
+	globalSelectedInterval,
+}: GetQueryRangeRequestDataProps): GetQueryResultsProps[] => {
 	const requestData: GetQueryResultsProps[] = [];
 	topLevelOperations.forEach((operation) => {
 		const serviceMetricsWidget = getWidgetQueryBuilder({
