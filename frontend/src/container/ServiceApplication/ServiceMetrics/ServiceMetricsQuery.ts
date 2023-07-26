@@ -1,5 +1,11 @@
 import { ServiceDataProps } from 'api/metrics/getTopLevelOperations';
-import { KeyOperationTableHeader } from 'container/MetricsApplication/constant';
+import { OPERATORS } from 'constants/queryBuilder';
+import {
+	DataType,
+	KeyOperationTableHeader,
+	MetricsType,
+	WidgetKeys,
+} from 'container/MetricsApplication/constant';
 import { getQueryBuilderQuerieswithFormula } from 'container/MetricsApplication/MetricsPageQueries/MetricsPageQueriesFactory';
 import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { TagFilterItem } from 'types/api/queryBuilder/queryBuilderData';
@@ -13,27 +19,27 @@ export const serviceMetricsQuery = (
 	topLevelOperation: [keyof ServiceDataProps, string[]],
 ): QueryBuilderData => {
 	const p99AutoCompleteData: BaseAutocompleteData = {
-		dataType: 'float64',
+		dataType: DataType.FLOAT64,
 		isColumn: true,
-		key: 'signoz_latency_bucket',
+		key: WidgetKeys.Signoz_latency_bucket,
 		type: null,
 	};
 
 	const errorRateAutoCompleteData: BaseAutocompleteData = {
-		dataType: 'float64',
+		dataType: DataType.FLOAT64,
 		isColumn: true,
-		key: 'signoz_calls_total',
+		key: WidgetKeys.SignozCallsTotal,
 		type: null,
 	};
 
 	const operationPrSecondAutoCompleteData: BaseAutocompleteData = {
-		dataType: 'float64',
+		dataType: DataType.FLOAT64,
 		isColumn: true,
-		key: 'signoz_calls_total',
+		key: WidgetKeys.SignozCallsTotal,
 		type: null,
 	};
 
-	const autocompleteData: BaseAutocompleteData[] = [
+	const autocompleteData = [
 		p99AutoCompleteData,
 		errorRateAutoCompleteData,
 		errorRateAutoCompleteData,
@@ -44,23 +50,23 @@ export const serviceMetricsQuery = (
 		{
 			id: '',
 			key: {
-				dataType: 'string',
+				dataType: DataType.STRING,
 				isColumn: false,
-				key: 'service_name',
-				type: 'resource',
+				key: WidgetKeys.Service_name,
+				type: MetricsType.Resource,
 			},
-			op: 'IN',
+			op: OPERATORS.IN,
 			value: [topLevelOperation[0].toString()],
 		},
 		{
 			id: '',
 			key: {
-				dataType: 'string',
+				dataType: DataType.STRING,
 				isColumn: false,
-				key: 'operation',
-				type: 'tag',
+				key: WidgetKeys.Operation,
+				type: MetricsType.Tag,
 			},
-			op: 'IN',
+			op: OPERATORS.IN,
 			value: [...topLevelOperation[1]],
 		},
 	];
@@ -69,35 +75,35 @@ export const serviceMetricsQuery = (
 		{
 			id: '',
 			key: {
-				dataType: 'string',
+				dataType: DataType.STRING,
 				isColumn: false,
-				key: 'service_name',
-				type: 'resource',
+				key: WidgetKeys.Service_name,
+				type: MetricsType.Resource,
 			},
-			op: 'IN',
+			op: OPERATORS.IN,
 			value: [topLevelOperation[0].toString()],
 		},
 		{
 			id: '',
 			key: {
-				dataType: 'int64',
+				dataType: DataType.INT64,
 				isColumn: false,
-				key: 'status_code',
-				type: 'tag',
+				key: WidgetKeys.StatusCode,
+				type: MetricsType.Tag,
 			},
-			op: 'IN',
+			op: OPERATORS.IN,
 			value: ['STATUS_CODE_ERROR'],
 		},
 		{
 			id: '',
 			key: {
-				dataType: 'string',
+				dataType: DataType.STRING,
 				isColumn: false,
-				key: 'operation',
-				type: 'tag',
+				key: WidgetKeys.Operation,
+				type: MetricsType.Tag,
 			},
-			op: 'IN',
-			value: ['FindDriverIDs', 'GetDriver'],
+			op: OPERATORS.IN,
+			value: [...topLevelOperation[1]],
 		},
 	];
 
@@ -105,24 +111,24 @@ export const serviceMetricsQuery = (
 		{
 			id: '',
 			key: {
-				dataType: 'string',
+				dataType: DataType.STRING,
 				isColumn: false,
-				key: 'service_name',
-				type: 'resource',
+				key: WidgetKeys.Service_name,
+				type: MetricsType.Resource,
 			},
-			op: 'IN',
+			op: OPERATORS.IN,
 			value: [topLevelOperation[0].toString()],
 		},
 		{
 			id: '',
 			key: {
-				dataType: 'string',
+				dataType: DataType.STRING,
 				isColumn: false,
-				key: 'operation',
-				type: 'tag',
+				key: WidgetKeys.Operation,
+				type: MetricsType.Tag,
 			},
-			op: 'IN',
-			value: ['FindDriverIDs', 'GetDriver'],
+			op: OPERATORS.IN,
+			value: [...topLevelOperation[1]],
 		},
 	];
 
@@ -130,28 +136,28 @@ export const serviceMetricsQuery = (
 		{
 			id: '',
 			key: {
-				dataType: 'string',
+				dataType: DataType.STRING,
 				isColumn: false,
-				key: 'service_name',
-				type: 'resource',
+				key: WidgetKeys.Service_name,
+				type: MetricsType.Resource,
 			},
-			op: 'IN',
+			op: OPERATORS.IN,
 			value: [topLevelOperation[0].toString()],
 		},
 		{
 			id: '',
 			key: {
-				dataType: 'string',
+				dataType: DataType.STRING,
 				isColumn: false,
-				key: 'operation',
-				type: 'tag',
+				key: WidgetKeys.Operation,
+				type: MetricsType.Tag,
 			},
-			op: 'IN',
+			op: OPERATORS.IN,
 			value: [...topLevelOperation[1]],
 		},
 	];
 
-	const additionalItems: TagFilterItem[][] = [
+	const additionalItems = [
 		p99AdditionalItems,
 		errorRateAdditionalItemsA,
 		errorRateAdditionalItemsB,
@@ -179,12 +185,14 @@ export const serviceMetricsQuery = (
 
 	const groupBy: BaseAutocompleteData[] = [
 		{
-			dataType: 'string',
+			dataType: DataType.STRING,
 			isColumn: false,
-			key: 'service_name',
-			type: 'tag',
+			key: WidgetKeys.Service_name,
+			type: MetricsType.Tag,
 		},
 	];
+
+	const dataSource = DataSource.METRICS;
 
 	return getQueryBuilderQuerieswithFormula({
 		autocompleteData,
@@ -195,6 +203,6 @@ export const serviceMetricsQuery = (
 		expressions,
 		legendFormulas,
 		groupBy,
-		dataSource: DataSource.METRICS,
+		dataSource,
 	});
 };
