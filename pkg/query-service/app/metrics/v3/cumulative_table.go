@@ -27,7 +27,14 @@ func stepForTableCumulative(start, end int64) int64 {
 	return int64(step)
 }
 
-func buildMetricQueryForTable(start, end, _ int64, mq *v3.BuilderQuery, tableName string) (string, error) {
+func buildMetricQueryForTable(start, end, _ int64, mq *v3.BuilderQuery, tableName string, checkFeature func(string) error) (string, error) {
+
+	err := checkFeature(constants.PreferRPM)
+	PreferRPMFeatureEnabled := err == nil
+
+	if PreferRPMFeatureEnabled {
+		rateWithoutNegative = rateWithoutNegativeMinute
+	}
 
 	step := stepForTableCumulative(start, end)
 

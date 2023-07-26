@@ -509,6 +509,7 @@ func (m *Manager) prepareTask(acquireLock bool, r *PostableRule, taskName string
 			ruleId,
 			r,
 			ThresholdRuleOpts{},
+			m.featureFlags,
 		)
 
 		if err != nil {
@@ -856,6 +857,7 @@ func (m *Manager) TestNotification(ctx context.Context, ruleStr string) (int, *m
 				SendUnmatched: true,
 				SendAlways:    true,
 			},
+			m.featureFlags,
 		)
 
 		if err != nil {

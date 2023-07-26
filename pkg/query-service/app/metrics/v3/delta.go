@@ -8,7 +8,7 @@ import (
 	"go.signoz.io/signoz/pkg/query-service/utils"
 )
 
-func buildDeltaMetricQuery(start, end, step int64, mq *v3.BuilderQuery, tableName string) (string, error) {
+func buildDeltaMetricQuery(start, end, step int64, mq *v3.BuilderQuery, tableName string, checkFeature func(string) error) (string, error) {
 
 	metricQueryGroupBy := mq.GroupBy
 
@@ -92,20 +92,27 @@ func buildDeltaMetricQuery(start, end, step int64, mq *v3.BuilderQuery, tableNam
 		orderWithoutLe += ","
 	}
 
+	err = checkFeature(constants.PreferRPM)
+	PreferRPMFeatureEnabled := err == nil
+	rate := float64(step)
+	if PreferRPMFeatureEnabled {
+		rate = rate / 60.0
+	}
+
 	switch mq.AggregateOperator {
 	case v3.AggregateOperatorRate:
 		// Calculate rate of change of metric for each unique time series
 		groupBy = "fingerprint, ts"
 		orderBy = "fingerprint, "
 		groupTags = "fingerprint,"
-		op := fmt.Sprintf("sum(value)/%d", step)
+		op := fmt.Sprintf("sum(value)/%f", rate)
 		query := fmt.Sprintf(
 			queryTmpl, "any(labels) as fullLabels, "+groupTags, step, op, filterSubQuery, groupBy, orderBy,
 		) // labels will be same so any should be fine
 
 		return query, nil
 	case v3.AggregateOperatorSumRate, v3.AggregateOperatorAvgRate, v3.AggregateOperatorMaxRate, v3.AggregateOperatorMinRate:
-		op := fmt.Sprintf("%s(value)/%d", aggregateOperatorToSQLFunc[mq.AggregateOperator], step)
+		op := fmt.Sprintf("%s(value)/%f", aggregateOperatorToSQLFunc[mq.AggregateOperator], rate)
 		query := fmt.Sprintf(
 			queryTmpl, groupTags, step, op, filterSubQuery, groupBy, orderBy,
 		)
@@ -115,7 +122,7 @@ func buildDeltaMetricQuery(start, end, step int64, mq *v3.BuilderQuery, tableNam
 		v3.AggregateOperatorRateMax,
 		v3.AggregateOperatorRateAvg,
 		v3.AggregateOperatorRateMin:
-		op := fmt.Sprintf("%s(value)/%d", aggregateOperatorToSQLFunc[mq.AggregateOperator], step)
+		op := fmt.Sprintf("%s(value)/%f", aggregateOperatorToSQLFunc[mq.AggregateOperator], rate)
 		query := fmt.Sprintf(
 			queryTmpl, groupTags, step, op, filterSubQuery, groupBy, orderBy,
 		)
@@ -134,7 +141,7 @@ func buildDeltaMetricQuery(start, end, step int64, mq *v3.BuilderQuery, tableNam
 		query := fmt.Sprintf(queryTmpl, groupTags, step, op, filterSubQuery, groupBy, orderBy)
 		return query, nil
 	case v3.AggregateOperatorHistQuant50, v3.AggregateOperatorHistQuant75, v3.AggregateOperatorHistQuant90, v3.AggregateOperatorHistQuant95, v3.AggregateOperatorHistQuant99:
-		op := fmt.Sprintf("sum(value)/%d", step)
+		op := fmt.Sprintf("sum(value)/%f", rate)
 		query := fmt.Sprintf(
 			queryTmpl, groupTags, step, op, filterSubQuery, groupBy, orderBy,
 		) // labels will be same so any should be fine

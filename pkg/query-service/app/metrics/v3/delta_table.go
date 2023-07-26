@@ -9,7 +9,7 @@ import (
 	"go.signoz.io/signoz/pkg/query-service/utils"
 )
 
-func buildDeltaMetricQueryForTable(start, end, _ int64, mq *v3.BuilderQuery, tableName string) (string, error) {
+func buildDeltaMetricQueryForTable(start, end, _ int64, mq *v3.BuilderQuery, tableName string, checkFeature func(string) error) (string, error) {
 
 	// round up to the nearest multiple of 60
 	step := int64(math.Ceil(float64(end-start+1)/1000/60) * 60)
@@ -86,12 +86,19 @@ func buildDeltaMetricQueryForTable(start, end, _ int64, mq *v3.BuilderQuery, tab
 		orderWithoutLeTable += ","
 	}
 
+	err = checkFeature(constants.PreferRPM)
+	PreferRPMFeatureEnabled := err == nil
+	rate := float64(step)
+	if PreferRPMFeatureEnabled {
+		rate = rate / 60.0
+	}
+
 	switch mq.AggregateOperator {
 	case v3.AggregateOperatorRate:
 		// TODO(srikanthccv): what should be the expected behavior here for metrics?
 		return "", fmt.Errorf("rate is not supported for table view")
 	case v3.AggregateOperatorSumRate, v3.AggregateOperatorAvgRate, v3.AggregateOperatorMaxRate, v3.AggregateOperatorMinRate:
-		op := fmt.Sprintf("%s(value)/%d", aggregateOperatorToSQLFunc[mq.AggregateOperator], step)
+		op := fmt.Sprintf("%s(value)/%f", aggregateOperatorToSQLFunc[mq.AggregateOperator], rate)
 		query := fmt.Sprintf(
 			queryTmpl, groupTags, op, filterSubQuery, groupBy, orderBy,
 		)
@@ -101,7 +108,7 @@ func buildDeltaMetricQueryForTable(start, end, _ int64, mq *v3.BuilderQuery, tab
 		v3.AggregateOperatorRateMax,
 		v3.AggregateOperatorRateAvg,
 		v3.AggregateOperatorRateMin:
-		op := fmt.Sprintf("%s(value)/%d", aggregateOperatorToSQLFunc[mq.AggregateOperator], step)
+		op := fmt.Sprintf("%s(value)/%f", aggregateOperatorToSQLFunc[mq.AggregateOperator], rate)
 		query := fmt.Sprintf(
 			queryTmpl, groupTags, op, filterSubQuery, groupBy, orderBy,
 		)
@@ -120,7 +127,7 @@ func buildDeltaMetricQueryForTable(start, end, _ int64, mq *v3.BuilderQuery, tab
 		query := fmt.Sprintf(queryTmpl, groupTags, op, filterSubQuery, groupBy, orderBy)
 		return query, nil
 	case v3.AggregateOperatorHistQuant50, v3.AggregateOperatorHistQuant75, v3.AggregateOperatorHistQuant90, v3.AggregateOperatorHistQuant95, v3.AggregateOperatorHistQuant99:
-		op := fmt.Sprintf("sum(value)/%d", step)
+		op := fmt.Sprintf("sum(value)/%f", rate)
 		query := fmt.Sprintf(
 			queryTmpl, groupTags, op, filterSubQuery, groupBy, orderBy,
 		) // labels will be same so any should be fine

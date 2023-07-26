@@ -17,6 +17,7 @@ import (
 
 	"go.signoz.io/signoz/pkg/query-service/app/queryBuilder"
 	"go.signoz.io/signoz/pkg/query-service/constants"
+	"go.signoz.io/signoz/pkg/query-service/interfaces"
 	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
 	"go.signoz.io/signoz/pkg/query-service/utils/labels"
 	querytemplate "go.signoz.io/signoz/pkg/query-service/utils/queryTemplate"
@@ -72,6 +73,7 @@ func NewThresholdRule(
 	id string,
 	p *PostableRule,
 	opts ThresholdRuleOpts,
+	featureFlags interfaces.FeatureLookup,
 ) (*ThresholdRule, error) {
 
 	if p.RuleCondition == nil {
@@ -103,7 +105,7 @@ func NewThresholdRule(
 		BuildTraceQuery:  tracesV3.PrepareTracesQuery,
 		BuildLogQuery:    logsv3.PrepareLogsQuery,
 	}
-	t.queryBuilder = queryBuilder.NewQueryBuilder(builderOpts)
+	t.queryBuilder = queryBuilder.NewQueryBuilder(builderOpts, featureFlags)
 
 	zap.S().Info("msg:", "creating new alerting rule", "\t name:", t.name, "\t condition:", t.ruleCondition.String(), "\t generatorURL:", t.GeneratorURL())
 

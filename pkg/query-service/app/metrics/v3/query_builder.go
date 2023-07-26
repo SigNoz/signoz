@@ -45,6 +45,7 @@ var aggregateOperatorToSQLFunc = map[v3.AggregateOperator]string{
 
 // See https://github.com/SigNoz/signoz/issues/2151#issuecomment-1467249056
 var rateWithoutNegative = `if(runningDifference(ts) <= 0, nan, if(runningDifference(value) < 0, (value) / runningDifference(ts), runningDifference(value) / runningDifference(ts))) `
+var rateWithoutNegativeMinute = `if(runningDifference(ts) <= 0, nan, if(runningDifference(value) < 0, (value*60) / runningDifference(ts), runningDifference(value*60) / runningDifference(ts))) `
 
 // buildMetricsTimeSeriesFilterQuery builds the sub-query to be used for filtering
 // timeseries based on search criteria
@@ -132,9 +133,16 @@ func buildMetricsTimeSeriesFilterQuery(fs *v3.FilterSet, groupTags []v3.Attribut
 	return filterSubQuery, nil
 }
 
-func buildMetricQuery(start, end, step int64, mq *v3.BuilderQuery, tableName string) (string, error) {
+func buildMetricQuery(start, end, step int64, mq *v3.BuilderQuery, tableName string, checkFeature func(string) error) (string, error) {
 
 	metricQueryGroupBy := mq.GroupBy
+
+	err := checkFeature(constants.PreferRPM)
+	PreferRPMFeatureEnabled := err == nil
+
+	if PreferRPMFeatureEnabled {
+		rateWithoutNegative = rateWithoutNegativeMinute
+	}
 
 	// if the aggregate operator is a histogram quantile, and user has not forgotten
 	// the le tag in the group by then add the le tag to the group by
@@ -418,20 +426,20 @@ func reduceQuery(query string, reduceTo v3.ReduceToOperator, aggregateOperator v
 	return query, nil
 }
 
-func PrepareMetricQuery(start, end int64, queryType v3.QueryType, panelType v3.PanelType, mq *v3.BuilderQuery) (string, error) {
+func PrepareMetricQuery(start, end int64, queryType v3.QueryType, panelType v3.PanelType, mq *v3.BuilderQuery, checkFeature func(string) error) (string, error) {
 	var query string
 	var err error
 	if mq.Temporality == v3.Delta {
 		if panelType == v3.PanelTypeTable {
-			query, err = buildDeltaMetricQueryForTable(start, end, mq.StepInterval, mq, constants.SIGNOZ_TIMESERIES_TABLENAME)
+			query, err = buildDeltaMetricQueryForTable(start, end, mq.StepInterval, mq, constants.SIGNOZ_TIMESERIES_TABLENAME, checkFeature)
 		} else {
-			query, err = buildDeltaMetricQuery(start, end, mq.StepInterval, mq, constants.SIGNOZ_TIMESERIES_TABLENAME)
+			query, err = buildDeltaMetricQuery(start, end, mq.StepInterval, mq, constants.SIGNOZ_TIMESERIES_TABLENAME, checkFeature)
 		}
 	} else {
 		if panelType == v3.PanelTypeTable {
-			query, err = buildMetricQueryForTable(start, end, mq.StepInterval, mq, constants.SIGNOZ_TIMESERIES_TABLENAME)
+			query, err = buildMetricQueryForTable(start, end, mq.StepInterval, mq, constants.SIGNOZ_TIMESERIES_TABLENAME, checkFeature)
 		} else {
-			query, err = buildMetricQuery(start, end, mq.StepInterval, mq, constants.SIGNOZ_TIMESERIES_TABLENAME)
+			query, err = buildMetricQuery(start, end, mq.StepInterval, mq, constants.SIGNOZ_TIMESERIES_TABLENAME, checkFeature)
 		}
 	}
 	if err != nil {
