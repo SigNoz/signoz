@@ -3,6 +3,7 @@ package queryBuilder
 import (
 	"fmt"
 	"strings"
+	"text/template"
 
 	"github.com/SigNoz/govaluate"
 	logsV3 "go.signoz.io/signoz/pkg/query-service/app/logs/v3"
@@ -181,7 +182,16 @@ func (qb *QueryBuilder) PrepareQueries(params *v3.QueryRangeParamsV3, args ...in
 						if err != nil {
 							return nil, err
 						}
-						query := fmt.Sprintf(placeholderQuery, limitQuery)
+						data := map[string]string{
+							"FilterQuery": limitQuery,
+						}
+						t := template.Must(template.New("query").Parse(placeholderQuery))
+						builder := &strings.Builder{}
+						if err := t.Execute(builder, data); err != nil {
+							panic(err)
+						}
+						query := builder.String()
+
 						queries[queryName] = query
 					} else {
 						queryString, err := qb.options.BuildTraceQuery(params.Start, params.End, compositeQuery.PanelType, query, keys, "")
@@ -201,7 +211,15 @@ func (qb *QueryBuilder) PrepareQueries(params *v3.QueryRangeParamsV3, args ...in
 						if err != nil {
 							return nil, err
 						}
-						query := fmt.Sprintf(placeholderQuery, limitQuery)
+						data := map[string]string{
+							"FilterQuery": limitQuery,
+						}
+						t := template.Must(template.New("query").Parse(placeholderQuery))
+						builder := &strings.Builder{}
+						if err := t.Execute(builder, data); err != nil {
+							panic(err)
+						}
+						query := builder.String()
 						queries[queryName] = query
 					} else {
 						queryString, err := qb.options.BuildLogQuery(params.Start, params.End, compositeQuery.QueryType, compositeQuery.PanelType, query, logsV3.Options{})
