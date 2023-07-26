@@ -1,6 +1,6 @@
 import { Button, Tabs, Typography } from 'antd';
 import TextToolTip from 'components/TextToolTip';
-import { GRAPH_TYPES } from 'container/NewDashboard/ComponentsSlider';
+import { PANEL_TYPES } from 'constants/queryBuilder';
 import { WidgetGraphProps } from 'container/NewWidget/types';
 import { QueryBuilder } from 'container/QueryBuilder';
 import { QueryBuilderProps } from 'container/QueryBuilder/QueryBuilder.interfaces';
@@ -170,7 +170,7 @@ const mapDispatchToProps = (
 });
 
 interface QueryProps extends DispatchProps {
-	selectedGraph: GRAPH_TYPES;
+	selectedGraph: PANEL_TYPES;
 	selectedTime: WidgetGraphProps['selectedTime'];
 }
 

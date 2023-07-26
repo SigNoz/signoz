@@ -14,7 +14,6 @@ import {
 	PANEL_TYPES,
 } from 'constants/queryBuilder';
 import { queryParamNamesMap } from 'constants/queryBuilderQueryNames';
-import { GRAPH_TYPES } from 'container/NewDashboard/ComponentsSlider';
 import { useGetCompositeQueryParam } from 'hooks/queryBuilder/useGetCompositeQueryParam';
 import { updateStepInterval } from 'hooks/queryBuilder/useStepInterval';
 import useUrlQuery from 'hooks/useUrlQuery';
@@ -92,7 +91,7 @@ export function QueryBuilderProvider({
 		null,
 	);
 
-	const [panelType, setPanelType] = useState<GRAPH_TYPES | null>(null);
+	const [panelType, setPanelType] = useState<PANEL_TYPES | null>(null);
 
 	const [currentQuery, setCurrentQuery] = useState<QueryState>(
 		queryState || initialQueryState,
@@ -105,7 +104,7 @@ export function QueryBuilderProvider({
 		(
 			queryData: IBuilderQuery,
 			dataSource: DataSource,
-			currentPanelType: GRAPH_TYPES,
+			currentPanelType: PANEL_TYPES,
 		): IBuilderQuery => {
 			const initialOperators = getOperatorsBySourceAndPanelType({
 				dataSource,
@@ -212,7 +211,7 @@ export function QueryBuilderProvider({
 	);
 
 	const updateAllQueriesOperators = useCallback(
-		(query: Query, panelType: GRAPH_TYPES, dataSource: DataSource): Query => {
+		(query: Query, panelType: PANEL_TYPES, dataSource: DataSource): Query => {
 			const queryData = query.builder.queryData.map((item) =>
 				getElementWithActualOperator(item, dataSource, panelType),
 			);
@@ -496,7 +495,7 @@ export function QueryBuilderProvider({
 	);
 
 	const handleSetConfig = useCallback(
-		(newPanelType: GRAPH_TYPES, dataSource: DataSource | null) => {
+		(newPanelType: PANEL_TYPES, dataSource: DataSource | null) => {
 			setPanelType(newPanelType);
 			setInitialDataSource(dataSource);
 		},
