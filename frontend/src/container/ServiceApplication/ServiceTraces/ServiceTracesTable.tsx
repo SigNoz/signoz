@@ -1,4 +1,5 @@
 import { ResizeTable } from 'components/ResizeTable';
+import { useMemo } from 'react';
 import { useLocation } from 'react-router-dom';
 
 import { getColumns } from '../Columns/ServiceColumn';
@@ -10,7 +11,7 @@ function ServiceTraceTable({
 }: ServiceTableProps): JSX.Element {
 	const { search } = useLocation();
 
-	const tableColumns = getColumns(search, false);
+	const tableColumns = useMemo(() => getColumns(search, true), [search]);
 
 	return (
 		<ResizeTable

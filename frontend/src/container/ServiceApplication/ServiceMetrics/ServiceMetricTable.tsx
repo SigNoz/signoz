@@ -49,7 +49,7 @@ function ServiceMetricTable({
 	);
 
 	const { search } = useLocation();
-	const tableColumns = getColumns(search, true);
+	const tableColumns = useMemo(() => getColumns(search, true), [search]);
 
 	return (
 		<ResizeTable
