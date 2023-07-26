@@ -7,7 +7,10 @@ import { transformStringWithPrefix } from 'lib/query/transformStringWithPrefix';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
 
+import { WhereClauseConfig } from './useAutoComplete';
 import { useOperators } from './useOperators';
+
+export const WHERE_CLAUSE_CUSTOM_SUFFIX = '-custom';
 
 export const useOptions = (
 	key: string,
@@ -19,6 +22,7 @@ export const useOptions = (
 	isExist: boolean,
 	results: string[],
 	result: string[],
+	whereClauseConfig?: WhereClauseConfig,
 ): Option[] => {
 	const [options, setOptions] = useState<Option[]>([]);
 	const operators = useOperators(key, keys);
@@ -51,21 +55,72 @@ export const useOptions = (
 		[key, operator],
 	);
 
+	const getOptionsWithValidOperator = useCallback(
+		(key: string, results: string[], searchValue: string) => {
+			const hasAllResults = results.every((value) => result.includes(value));
+			const values = getKeyOpValue(results);
+			if (whereClauseConfig && whereClauseConfig.customKey === key) {
+				return [
+					{
+						label: searchValue,
+						value: searchValue,
+					},
+				];
+			}
+
+			return hasAllResults
+				? [
+						{
+							label: searchValue,
+							value: searchValue,
+						},
+				  ]
+				: [
+						{
+							label: searchValue,
+							value: searchValue,
+						},
+						...values,
+				  ];
+		},
+		[getKeyOpValue, result, whereClauseConfig],
+	);
+
+	const getKeyOperatorOptions = useCallback(
+		(key: string) => {
+			const operatorsOptions = operators?.map((operator) => ({
+				value: `${key} ${operator} `,
+				label: `${key} ${operator} `,
+			}));
+			if (whereClauseConfig) {
+				return [
+					{
+						label: `${searchValue} `,
+						value: `${searchValue}${WHERE_CLAUSE_CUSTOM_SUFFIX}`,
+					},
+					...operatorsOptions,
+				];
+			}
+			return operatorsOptions;
+		},
+		[operators, searchValue, whereClauseConfig],
+	);
+
 	useEffect(() => {
 		let newOptions: Option[] = [];
 
 		if (!key) {
 			newOptions = searchValue
 				? [
-						{ label: `${searchValue} `, value: `${searchValue} ` },
+						{
+							label: `${searchValue} `,
+							value: `${searchValue} `,
+						},
 						...getOptionsFromKeys(keys),
 				  ]
 				: getOptionsFromKeys(keys);
 		} else if (key && !operator) {
-			newOptions = operators?.map((operator) => ({
-				value: `${key} ${operator} `,
-				label: `${key} ${operator} `,
-			}));
+			newOptions = getKeyOperatorOptions(key);
 		} else if (key && operator) {
 			if (isMulti) {
 				newOptions = results.map((item) => ({
@@ -75,17 +130,14 @@ export const useOptions = (
 			} else if (isExist) {
 				newOptions = [];
 			} else if (isValidOperator) {
-				const hasAllResults = results.every((value) => result.includes(value));
-				const values = getKeyOpValue(results);
-				newOptions = hasAllResults
-					? [{ label: searchValue, value: searchValue }]
-					: [{ label: searchValue, value: searchValue }, ...values];
+				newOptions = getOptionsWithValidOperator(key, results, searchValue);
 			}
 		}
 		if (newOptions.length > 0) {
 			setOptions(newOptions);
 		}
 	}, [
+		whereClauseConfig,
 		getKeyOpValue,
 		getOptionsFromKeys,
 		isExist,
@@ -98,6 +150,8 @@ export const useOptions = (
 		result,
 		results,
 		searchValue,
+		getKeyOperatorOptions,
+		getOptionsWithValidOperator,
 	]);
 
 	return useMemo(
