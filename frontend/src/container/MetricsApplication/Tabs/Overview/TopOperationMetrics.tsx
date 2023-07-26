@@ -91,6 +91,7 @@ function TopOperationMetrics(): JSX.Element {
 				minTime,
 				maxTime,
 				selectedTraceTags,
+				columnName: 'operation',
 			}),
 		[servicename, minTime, maxTime, selectedTraceTags],
 	);

@@ -59,4 +59,5 @@ export interface TableRendererProps {
 	minTime: number;
 	maxTime: number;
 	selectedTraceTags: string;
+	columnName: string;
 }

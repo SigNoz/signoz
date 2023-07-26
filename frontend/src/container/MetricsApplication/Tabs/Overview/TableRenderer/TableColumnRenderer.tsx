@@ -9,8 +9,9 @@ export const TableColumnRenderer = ({
 	minTime,
 	maxTime,
 	selectedTraceTags,
+	columnName,
 }: TableRendererProps): Record<string, (record: RowData) => ReactNode> => ({
-	operation: (record: RowData): ReactNode => (
+	[columnName]: (record: RowData): ReactNode => (
 		<ColumnWithLink
 			servicename={servicename}
 			minTime={minTime}
