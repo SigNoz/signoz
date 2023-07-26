@@ -17,7 +17,6 @@ import GoToTop from 'container/GoToTop';
 import LogsExplorerChart from 'container/LogsExplorerChart';
 import LogsExplorerList from 'container/LogsExplorerList';
 import LogsExplorerTable from 'container/LogsExplorerTable';
-import { GRAPH_TYPES } from 'container/NewDashboard/ComponentsSlider';
 import { SIGNOZ_VALUE } from 'container/QueryBuilder/filters/OrderByFilter/constants';
 import TimeSeriesView from 'container/TimeSeriesView/TimeSeriesView';
 import { useUpdateDashboard } from 'hooks/dashboard/useUpdateDashboard';
@@ -179,7 +178,7 @@ function LogsExplorerViews(): JSX.Element {
 	}, []);
 
 	const getUpdateQuery = useCallback(
-		(newPanelType: GRAPH_TYPES): Query => {
+		(newPanelType: PANEL_TYPES): Query => {
 			let query = updateAllQueriesOperators(
 				currentQuery,
 				newPanelType,
@@ -201,7 +200,7 @@ function LogsExplorerViews(): JSX.Element {
 
 	const handleChangeView = useCallback(
 		(type: string) => {
-			const newPanelType = type as GRAPH_TYPES;
+			const newPanelType = type as PANEL_TYPES;
 
 			if (newPanelType === panelType) return;
 

@@ -1,9 +1,8 @@
 import { PANEL_TYPES } from 'constants/queryBuilder';
-import { ITEMS } from 'container/NewDashboard/ComponentsSlider/menuItems';
 import styled, { css, FlattenSimpleInterpolation } from 'styled-components';
 
 interface Props {
-	$panelType: ITEMS;
+	$panelType: PANEL_TYPES;
 }
 
 export const NotFoundContainer = styled.div`

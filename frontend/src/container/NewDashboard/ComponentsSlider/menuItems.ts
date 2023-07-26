@@ -1,4 +1,5 @@
-import TimeSeries from 'assets/Dashboard/TimeSeries';
+import TableIcon from 'assets/Dashboard/Table';
+import TimeSeriesIcon from 'assets/Dashboard/TimeSeries';
 import ValueIcon from 'assets/Dashboard/Value';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { CSSProperties } from 'react';
@@ -6,7 +7,7 @@ import { CSSProperties } from 'react';
 const Items: ItemsProps[] = [
 	{
 		name: PANEL_TYPES.TIME_SERIES,
-		Icon: TimeSeries,
+		Icon: TimeSeriesIcon,
 		display: 'Time Series',
 	},
 	{
@@ -14,19 +15,11 @@ const Items: ItemsProps[] = [
 		Icon: ValueIcon,
 		display: 'Value',
 	},
-	{ name: PANEL_TYPES.TABLE, Icon: TimeSeries, display: 'Table' },
+	{ name: PANEL_TYPES.TABLE, Icon: TableIcon, display: 'Table' },
 ];
 
-export type ITEMS =
-	| 'graph'
-	| 'value'
-	| 'list'
-	| 'table'
-	| 'EMPTY_WIDGET'
-	| 'trace';
-
 interface ItemsProps {
-	name: ITEMS;
+	name: PANEL_TYPES;
 	Icon: (props: IconProps) => JSX.Element;
 	display: string;
 }
