@@ -1,3 +1,7 @@
+import { fieldSearchFilter } from 'lib/logs/fieldSearch';
+import { useMemo } from 'react';
+import { ILog } from 'types/api/logs/log';
+
 export const recursiveParseJSON = (obj: string): Record<string, unknown> => {
 	try {
 		const value = JSON.parse(obj);
@@ -31,4 +35,43 @@ export function flattenObject(obj: AnyObject, prefix = ''): AnyObject {
 		}
 		return acc;
 	}, {});
+}
+
+type UseLogDataReturnType = {
+	sortDataByField: (searchInput: string) => SortDataByFieldReturnType;
+	flattenLogData: AnyObject | null;
+};
+
+type SortDataByFieldReturnType =
+	| { key: string; field: string; value: string }[]
+	| null;
+
+export function useLogData(logData: ILog): UseLogDataReturnType {
+	const flattenLogData = useMemo(
+		() => (logData ? flattenObject(logData) : null),
+		[logData],
+	);
+
+	function sortDataByField(searchInput: string): SortDataByFieldReturnType {
+		if (flattenLogData === null) {
+			return null;
+		}
+
+		return Object.keys(flattenLogData)
+			.filter((field) => fieldSearchFilter(field, searchInput))
+			.sort((a, b) => {
+				if (a === 'timestamp') return -1;
+				if (b === 'timestamp') return 1;
+				if (a === 'id') return -1;
+				if (b === 'id') return 1;
+				return 0;
+			})
+			.map((key) => ({
+				key,
+				field: key,
+				value: JSON.stringify(flattenLogData[key]),
+			}));
+	}
+
+	return { sortDataByField, flattenLogData };
 }

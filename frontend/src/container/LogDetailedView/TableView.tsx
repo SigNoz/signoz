@@ -10,9 +10,8 @@ import CopyClipboardHOC from 'components/Logs/CopyClipboardHOC';
 import { ResizeTable } from 'components/ResizeTable';
 import ROUTES from 'constants/routes';
 import history from 'lib/history';
-import { fieldSearchFilter } from 'lib/logs/fieldSearch';
 import { isEmpty } from 'lodash-es';
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
 import { useDispatch } from 'react-redux';
 import { generatePath } from 'react-router-dom';
 import { Dispatch } from 'redux';
@@ -21,7 +20,7 @@ import { SET_DETAILED_LOG_DATA } from 'types/actions/logs';
 import { ILog } from 'types/api/logs/log';
 
 import ActionItem, { ActionItemProps } from './ActionItem';
-import { flattenObject, recursiveParseJSON } from './utils';
+import { recursiveParseJSON, useLogData } from './utils';
 
 // Fields which should be restricted from adding it to query
 const RESTRICTED_FIELDS = ['timestamp'];
@@ -40,49 +39,15 @@ function TableView({
 	onClickActionItem,
 }: Props): JSX.Element | null {
 	const [fieldSearchInput, setFieldSearchInput] = useState<string>('');
+	const { sortDataByField, flattenLogData } = useLogData(logData);
 
 	const dispatch = useDispatch<Dispatch<AppActions>>();
 
-	const flattenLogData: Record<string, string> | null = useMemo(
-		() => (logData ? flattenObject(logData) : null),
-		[logData],
-	);
-	if (logData === null) {
+	if (!flattenLogData) {
 		return null;
 	}
 
-	const fieldOrder = [
-		'timestamp',
-		'id',
-		'trace_id',
-		'span_id',
-		'trace_flags',
-		'severity_number',
-		'severity_text',
-		'body',
-		'attributes_string.container_id',
-		'attributes_string.log_file_path',
-		'attributes_string.stream',
-	];
-
-	const dataSource =
-		flattenLogData !== null &&
-		Object.keys(flattenLogData)
-			.filter((field) => fieldSearchFilter(field, fieldSearchInput))
-			.sort((a, b) => {
-				const indexA = fieldOrder.indexOf(a);
-				const indexB = fieldOrder.indexOf(b);
-
-				if (indexA === -1) return 1;
-				if (indexB === -1) return -1;
-
-				return indexA - indexB;
-			})
-			.map((key) => ({
-				key,
-				field: key,
-				value: JSON.stringify(flattenLogData[key]),
-			}));
+	const dataSource = sortDataByField(fieldSearchInput);
 
 	const onTraceHandler = (record: DataType) => (): void => {
 		if (flattenLogData === null) return;
