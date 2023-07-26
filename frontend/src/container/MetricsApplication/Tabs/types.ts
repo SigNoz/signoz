@@ -1,4 +1,6 @@
+import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { TagFilterItem } from 'types/api/queryBuilder/queryBuilderData';
+import { DataSource, MetricAggregateOperator } from 'types/common/queryBuilder';
 
 export interface IServiceName {
 	servicename: string;
@@ -15,4 +17,26 @@ export interface ExternalCallDurationByAddressProps extends ExternalCallProps {
 export interface ExternalCallProps {
 	servicename: IServiceName['servicename'];
 	tagFilterItems: TagFilterItem[];
+}
+
+export interface BuilderQueriesProps {
+	autocompleteData: BaseAutocompleteData[];
+	groupBy?: BaseAutocompleteData[];
+	legends: string[];
+	filterItems: TagFilterItem[][];
+	aggregateOperator?: string[];
+	dataSource: DataSource;
+	queryNameAndExpression?: string[];
+}
+
+export interface BuilderQuerieswithFormulaProps {
+	autocompleteData: BaseAutocompleteData[];
+	legends: string[];
+	disabled: boolean[];
+	groupBy?: BaseAutocompleteData[];
+	expression: string;
+	legendFormula: string;
+	additionalItems: TagFilterItem[][];
+	aggregateOperators: MetricAggregateOperator[];
+	dataSource: DataSource;
 }
