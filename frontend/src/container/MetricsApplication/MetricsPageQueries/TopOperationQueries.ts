@@ -126,6 +126,7 @@ export const topOperationQueries = ({
 	];
 	const expression = 'D*100/E';
 	const legendFormula = GraphTitle.ERROR_PERCENTAGE;
+	const dataSource = DataSource.METRICS;
 
 	return getQueryBuilderQuerieswithFormula({
 		autocompleteData,
@@ -135,7 +136,7 @@ export const topOperationQueries = ({
 		aggregateOperators,
 		expression,
 		legendFormula,
-		dataSource: DataSource.METRICS,
+		dataSource,
 		groupBy,
 	});
 };
