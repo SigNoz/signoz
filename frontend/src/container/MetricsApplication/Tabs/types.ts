@@ -53,3 +53,10 @@ export interface LatencyProps {
 	isSpanMetricEnable?: boolean;
 	topLevelOperationsRoute: string[];
 }
+
+export interface TableRendererProps {
+	servicename: string;
+	minTime: number;
+	maxTime: number;
+	selectedTraceTags: string;
+}

@@ -1,17 +1,14 @@
-import { Tooltip, Typography } from 'antd';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { getWidgetQueryBuilder } from 'container/MetricsApplication/MetricsApplication.factory';
 import { topOperationQueries } from 'container/MetricsApplication/MetricsPageQueries/TopOperationQueries';
-import { navigateToTrace } from 'container/MetricsApplication/utils';
 import { QueryTable } from 'container/QueryTable';
 import { useGetQueryRange } from 'hooks/queryBuilder/useGetQueryRange';
 import { useStepInterval } from 'hooks/queryBuilder/useStepInterval';
 import useResourceAttribute from 'hooks/useResourceAttribute';
 import { convertRawQueriesToTraceSelectedTags } from 'hooks/useResourceAttribute/utils';
 import { getDashboardVariables } from 'lib/dashbaordVariables/getDashboardVariables';
-import { RowData } from 'lib/query/createTableColumnsFromQuery';
 import { isEmpty } from 'lodash-es';
-import { ReactNode, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { useParams } from 'react-router-dom';
 import { AppState } from 'store/reducers';
@@ -20,6 +17,7 @@ import { GlobalReducer } from 'types/reducer/globalTime';
 import { v4 as uuid } from 'uuid';
 
 import { IServiceName } from '../types';
+import { TableColumnRenderer } from './TableRenderer/TableColumnRenderer';
 
 function TopOperationMetrics(): JSX.Element {
 	const { servicename } = useParams<IServiceName>();
@@ -86,30 +84,16 @@ function TopOperationMetrics(): JSX.Element {
 
 	const queryTableData = data?.payload.data.newResult.data.result || [];
 
-	const handleOnClick = (operation: string): void => {
-		navigateToTrace({
-			servicename,
-			operation,
-			minTime,
-			maxTime,
-			selectedTraceTags,
-		});
-	};
-
-	const linkGenerator = (record: RowData): ReactNode => {
-		const text = record.toString();
-		return (
-			<Tooltip placement="topLeft" title={text}>
-				<Typography.Link onClick={(): void => handleOnClick(text)}>
-					{text}
-				</Typography.Link>
-			</Tooltip>
-		);
-	};
-
-	const renderColumnCell = {
-		operation: linkGenerator,
-	};
+	const renderColumnCell = useMemo(
+		() =>
+			TableColumnRenderer({
+				servicename,
+				minTime,
+				maxTime,
+				selectedTraceTags,
+			}),
+		[servicename, minTime, maxTime, selectedTraceTags],
+	);
 
 	if (errorMessage) {
 		return <div>{errorMessage}</div>;
