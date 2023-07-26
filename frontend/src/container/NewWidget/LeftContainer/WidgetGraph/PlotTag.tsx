@@ -1,4 +1,4 @@
-import { ITEMS } from 'container/NewDashboard/ComponentsSlider/menuItems';
+import { PANEL_TYPES } from 'constants/queryBuilder';
 import { EQueryType } from 'types/common/dashboard';
 
 import QueryTypeTag from '../QueryTypeTag';
@@ -6,7 +6,7 @@ import { PlotTagWrapperStyled } from './styles';
 
 interface IPlotTagProps {
 	queryType: EQueryType;
-	panelType: ITEMS;
+	panelType: PANEL_TYPES;
 }
 
 function PlotTag({ queryType, panelType }: IPlotTagProps): JSX.Element | null {
