@@ -49,6 +49,7 @@ function RawLogView(props: RawLogViewProps): JSX.Element {
 	const [hasActionButtons, setHasActionButtons] = useState<boolean>(false);
 
 	const isDarkMode = useIsDarkMode();
+	const isReadOnlyLog = !isLogsExplorerPage || isReadOnly;
 
 	const text = useMemo(
 		() =>
@@ -64,11 +65,17 @@ function RawLogView(props: RawLogViewProps): JSX.Element {
 		onClickExpand(data);
 	}, [onClickExpand, data]);
 
-	const handleMouseAction = useCallback(() => {
-		if (!isLogsExplorerPage || isReadOnly) return;
+	const handleMouseEnter = useCallback(() => {
+		if (isReadOnlyLog) return;
 
-		setHasActionButtons(!hasActionButtons);
-	}, [isLogsExplorerPage, isReadOnly, hasActionButtons]);
+		setHasActionButtons(true);
+	}, [isReadOnlyLog]);
+
+	const handleMouseLeave = useCallback(() => {
+		if (isReadOnlyLog) return;
+
+		setHasActionButtons(false);
+	}, [isReadOnlyLog]);
 
 	const handleShowContext: MouseEventHandler<HTMLElement> = useCallback(
 		(event) => {
@@ -90,8 +97,8 @@ function RawLogView(props: RawLogViewProps): JSX.Element {
 	);
 
 	const mouseActions = useMemo(
-		() => ({ onMouseEnter: handleMouseAction, onMouseLeave: handleMouseAction }),
-		[handleMouseAction],
+		() => ({ onMouseEnter: handleMouseEnter, onMouseLeave: handleMouseLeave }),
+		[handleMouseEnter, handleMouseLeave],
 	);
 
 	return (

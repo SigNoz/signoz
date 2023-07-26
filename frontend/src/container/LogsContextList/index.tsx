@@ -4,71 +4,101 @@ import Spinner from 'components/Spinner';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { FILTERS } from 'container/QueryBuilder/filters/OrderByFilter/config';
 import { useGetExplorerQueryRange } from 'hooks/queryBuilder/useGetExplorerQueryRange';
-import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { getPaginationQueryData } from 'lib/newQueryBuilder/getPaginationQueryData';
 import { memo, useCallback, useEffect, useMemo, useState } from 'react';
 import { ILog } from 'types/api/logs/log';
-import { Query } from 'types/api/queryBuilder/queryBuilderData';
+import {
+	IBuilderQuery,
+	Query,
+	TagFilter,
+} from 'types/api/queryBuilder/queryBuilderData';
 
 import { getOrderByTimestamp, PAGE_SIZE } from './configs';
 import { EmptyText, ListContainer, ShowButtonWrapper } from './styles';
+import { getFiltersFromResources } from './utils';
 
 interface LogsContextListProps {
+	isEdit: boolean;
+	query: Query;
 	log: ILog;
 	order: string;
+	filters: TagFilter | null;
 }
 
-function LogsContextList({ log, order }: LogsContextListProps): JSX.Element {
+function LogsContextList({
+	isEdit,
+	query,
+	log,
+	order,
+	filters,
+}: LogsContextListProps): JSX.Element {
 	const isDarkMode = useIsDarkMode();
-	const { currentQuery } = useQueryBuilder();
-
-	const [page, setPage] = useState<number>(1);
 	const [logs, setLogs] = useState<ILog[]>([]);
+	const [page, setPage] = useState<number>(1);
+
+	const lastLog = useMemo(() => logs[logs.length - 1], [logs]);
+	const orderByTimestamp = useMemo(() => getOrderByTimestamp(order), [order]);
 
 	const currentStagedQueryData = useMemo(() => {
-		if (!currentQuery || currentQuery.builder.queryData.length !== 1) return null;
+		if (!query || query.builder.queryData.length !== 1) return null;
 
-		return currentQuery.builder.queryData[0];
-	}, [currentQuery]);
+		return query.builder.queryData[0];
+	}, [query]);
 
 	const getRequestData = useCallback(
-		(page: number): Query | null => {
-			if (!currentQuery) return null;
+		(query: Query | null, page: number, log: ILog): Query | null => {
+			if (!query) return null;
+
+			const resourcesFilters = getFiltersFromResources(log.resources_string);
+
+			const currentQuery: IBuilderQuery | null = currentStagedQueryData
+				? {
+						...currentStagedQueryData,
+						filters: {
+							...currentStagedQueryData.filters,
+							items: [...currentStagedQueryData.filters.items, ...resourcesFilters],
+						},
+				  }
+				: null;
 
 			const paginateData = getPaginationQueryData({
-				currentStagedQueryData,
-				listItemId: log.id,
-				orderByTimestamp: getOrderByTimestamp(order),
-				pageSize: PAGE_SIZE,
+				currentStagedQueryData: currentQuery,
+				listItemId: log ? log.id : null,
+				orderByTimestamp,
 				page,
+				pageSize: PAGE_SIZE,
 			});
 
 			const data: Query = {
-				...currentQuery,
+				...query,
 				builder: {
-					...currentQuery.builder,
-					queryData: currentQuery.builder.queryData.map((item) => ({
+					...query.builder,
+					queryData: query.builder.queryData.map((item) => ({
 						...item,
 						...paginateData,
 						pageSize: PAGE_SIZE,
-						orderBy: [getOrderByTimestamp(order)],
+						orderBy: [orderByTimestamp],
 					})),
 				},
 			};
 
 			return data;
 		},
-		[currentStagedQueryData, currentQuery, order, log.id],
+		[currentStagedQueryData, orderByTimestamp],
 	);
 
-	const initialLogsRequest = useMemo(() => getRequestData(1), [getRequestData]);
+	const initialLogsRequest = useMemo(() => getRequestData(query, 1, log), [
+		log,
+		query,
+		getRequestData,
+	]);
 
 	const [requestData, setRequestData] = useState<Query | null>(
 		initialLogsRequest,
 	);
 
-	const { data: logsData, error, isFetching } = useGetExplorerQueryRange(
+	const { data: logsData, isError, isFetching } = useGetExplorerQueryRange(
 		requestData,
 		PANEL_TYPES.LIST,
 		{
@@ -77,12 +107,13 @@ function LogsContextList({ log, order }: LogsContextListProps): JSX.Element {
 	);
 
 	const handleShowNextLines = useCallback(() => {
-		const newRequestData = getRequestData(page + 1);
+		if (logs.length < PAGE_SIZE || logs.length < page * PAGE_SIZE) return;
+
+		const newRequestData = getRequestData(query, page + 1, lastLog);
 
 		setPage((prevPage) => prevPage + 1);
-
 		setRequestData(newRequestData);
-	}, [page, getRequestData]);
+	}, [query, logs, lastLog, page, getRequestData]);
 
 	useEffect(() => {
 		const currentData = logsData?.payload.data.newResult.data.result || [];
@@ -91,18 +122,23 @@ function LogsContextList({ log, order }: LogsContextListProps): JSX.Element {
 				...item.data,
 				timestamp: item.timestamp,
 			}));
+			const newLogs = [...logs, ...currentLogs];
 
-			setLogs((prevLogs) => [...prevLogs, ...currentLogs]);
+			setLogs(newLogs);
 		}
+		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [logsData]);
 
 	useEffect(() => {
-		const nextRequestData = getRequestData(1);
+		if (!isEdit) return;
 
-		setLogs([]);
+		const newRequestData = getRequestData(query, 1, log);
+
 		setPage(1);
-		setRequestData(nextRequestData);
-	}, [currentQuery, getRequestData]);
+		setLogs([]);
+		setRequestData(newRequestData);
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [filters]);
 
 	const renderedShowButton = useMemo(
 		() => (
@@ -131,7 +167,7 @@ function LogsContextList({ log, order }: LogsContextListProps): JSX.Element {
 				{!logs.length && !isFetching && <EmptyText>No Data</EmptyText>}
 				{isFetching && <Spinner size="large" height="10rem" />}
 
-				{!error &&
+				{!isError &&
 					!!logs.length &&
 					!isFetching &&
 					logs.map((log) => (
