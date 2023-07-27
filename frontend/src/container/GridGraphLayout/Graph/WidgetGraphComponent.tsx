@@ -10,6 +10,7 @@ import {
 	SetStateAction,
 	useCallback,
 	useEffect,
+	useMemo,
 	useState,
 } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -55,9 +56,21 @@ function WidgetGraphComponent({
 	const [hovered, setHovered] = useState(false);
 	const { notifications } = useNotifications();
 	const { t } = useTranslation(['common']);
-	const [graphsVisibilityStates, setGraphsVisilityStates] = useState<
-		boolean[]
-	>();
+
+	const visibilityStateAndLegendEntry = useMemo(
+		() =>
+			getGraphVisibilityStateOnDataChange({
+				data,
+				isExpandedName: true,
+				name,
+			}),
+		[data, name],
+	);
+
+	const [graphsVisibilityStates, setGraphsVisilityStates] = useState<boolean[]>([
+		...visibilityStateAndLegendEntry.graphVisibilityStates,
+	]);
+
 	const { dashboards } = useSelector<AppState, DashboardReducer>(
 		(state) => state.dashboards,
 	);
@@ -72,7 +85,7 @@ function WidgetGraphComponent({
 		const eventListener = eventEmitter.on(
 			'UPDATE_GRAPH_VISIBILITY_STATE',
 			(data) => {
-				if (data.name === `${name}expanded`) {
+				if (data.name === `${name}expanded` && canModifyChart) {
 					setGraphsVisilityStates([...data.graphVisibilityStates]);
 				}
 			},
@@ -80,7 +93,7 @@ function WidgetGraphComponent({
 		return (): void => {
 			eventListener.off('UPDATE_GRAPH_VISIBILITY_STATE');
 		};
-	}, [name]);
+	}, [canModifyChart, name]);
 
 	const { featureResponse } = useSelector<AppState, AppReducer>(
 		(state) => state.app,
@@ -165,17 +178,6 @@ function WidgetGraphComponent({
 	const handleOnDelete = (): void => {
 		onToggleModal(setDeleteModal);
 	};
-
-	useEffect(() => {
-		if (canModifyChart) {
-			const visibilityStateAndLegendEntry = getGraphVisibilityStateOnDataChange({
-				data,
-				isExpandedName: true,
-				name,
-			});
-			setGraphsVisilityStates(visibilityStateAndLegendEntry.graphVisibilityStates);
-		}
-	}, [data, name, canModifyChart]);
 
 	const onDeleteModelHandler = (): void => {
 		onToggleModal(setDeleteModal);

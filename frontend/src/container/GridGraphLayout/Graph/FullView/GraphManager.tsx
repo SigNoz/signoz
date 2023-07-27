@@ -4,7 +4,7 @@ import { ColumnType } from 'antd/es/table';
 import { ResizeTable } from 'components/ResizeTable';
 import { useNotifications } from 'hooks/useNotifications';
 import isEqual from 'lodash-es/isEqual';
-import { memo, useEffect, useState } from 'react';
+import { memo, useEffect, useMemo, useState } from 'react';
 import { eventEmitter } from 'utils/getEventEmitter';
 
 import { getGraphVisibilityStateOnDataChange } from '../utils';
@@ -16,12 +16,7 @@ import {
 } from './styles';
 import CustomCheckBox from './TableRender/CustomCheckBox';
 import Label from './TableRender/Label';
-import {
-	DataSetProps,
-	ExtendedChartDataset,
-	GraphManagerProps,
-	LegendEntryProps,
-} from './types';
+import { DataSetProps, ExtendedChartDataset, GraphManagerProps } from './types';
 import {
 	getDefaultTableDataSet,
 	saveLegendEntriesToLocalStorage,
@@ -32,13 +27,22 @@ function GraphManager({
 	name,
 	onToggleModelHandler,
 }: GraphManagerProps): JSX.Element {
+	const { graphVisibilityStates: storedVisibilityStates, legendEntry } = useMemo(
+		() =>
+			getGraphVisibilityStateOnDataChange({
+				data,
+				isExpandedName: false,
+				name,
+			}),
+		[data, name],
+	);
+
 	const [graphVisibilityState, setGraphVisibilityState] = useState<boolean[]>(
-		Array(data.datasets.length).fill(true),
+		storedVisibilityStates,
 	);
 	const [tableDataSet, setTableDataSet] = useState<ExtendedChartDataset[]>(
 		getDefaultTableDataSet(data),
 	);
-	const [legendEntries, setLegendEntries] = useState<LegendEntryProps[]>([]);
 
 	const { notifications } = useNotifications();
 
@@ -46,35 +50,20 @@ function GraphManager({
 		const newGraphVisibilityStates: boolean[] = Array(data.datasets.length).fill(
 			true,
 		);
-		setTableDataSet(getDefaultTableDataSet(data));
 		data.datasets.forEach((dataset, i) => {
-			const index = legendEntries.findIndex(
-				(legendEntry) => legendEntry.label === dataset.label,
+			const index = legendEntry.findIndex(
+				(entry) => entry.label === dataset.label,
 			);
 			if (index !== -1) {
-				newGraphVisibilityStates[i] = legendEntries[index].show;
+				newGraphVisibilityStates[i] = legendEntry[index].show;
 			}
 		});
-		setGraphVisibilityState(newGraphVisibilityStates);
 		eventEmitter.emit('UPDATE_GRAPH_VISIBILITY_STATE', {
 			name,
 			graphVisibilityStates: newGraphVisibilityStates,
 		});
-	}, [data, name, legendEntries]);
-
-	useEffect(() => {
-		const visibilityStateAndLegendEntry = getGraphVisibilityStateOnDataChange({
-			data,
-			isExpandedName: false,
-			name,
-		});
-		setGraphVisibilityState(visibilityStateAndLegendEntry.graphVisibilityStates);
-		eventEmitter.emit('UPDATE_GRAPH_VISIBILITY_STATE', {
-			name,
-			graphVisibilityStates: visibilityStateAndLegendEntry.graphVisibilityStates,
-		});
-		setLegendEntries(visibilityStateAndLegendEntry.legendEntry);
-	}, [data, name]);
+		setGraphVisibilityState(newGraphVisibilityStates);
+	}, [data, name, legendEntry]);
 
 	const checkBoxOnChangeHandler = (
 		e: CheckboxChangeEvent,
