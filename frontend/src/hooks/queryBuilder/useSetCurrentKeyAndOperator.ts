@@ -15,17 +15,14 @@ export const useSetCurrentKeyAndOperator = (
 		let key = '';
 		let operator = '';
 		let result: string[] = [];
-
-		if (value) {
-			const { tagKey, tagOperator, tagValue } = getTagToken(value);
-			const isSuggestKey = keys?.some(
-				(el) => el?.key === getRemovePrefixFromKey(tagKey),
-			);
-			if (isSuggestKey || keys.length === 0) {
-				key = tagKey || '';
-				operator = tagOperator || '';
-				result = tagValue || [];
-			}
+		const { tagKey, tagOperator, tagValue } = getTagToken(value);
+		const isSuggestKey = keys?.some(
+			(el) => el?.key === getRemovePrefixFromKey(tagKey),
+		);
+		if (isSuggestKey || keys.length === 0) {
+			key = tagKey || '';
+			operator = tagOperator || '';
+			result = tagValue || [];
 		}
 
 		return [key, operator, result];

@@ -1,5 +1,6 @@
 import {
 	getOperatorFromValue,
+	getTagToken,
 	isExistsNotExistsOperator,
 	isInNInOperator,
 } from 'container/QueryBuilder/filters/QueryBuilderSearch/utils';
@@ -7,6 +8,8 @@ import {
 import * as Papa from 'papaparse';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
+
+import { WhereClauseConfig } from './useAutoComplete';
 
 type IUseTag = {
 	handleAddTag: (value: string) => void;
@@ -24,11 +27,11 @@ type IUseTag = {
  */
 
 export const useTag = (
-	key: string,
 	isValidTag: boolean,
 	handleSearch: (value: string) => void,
 	query: IBuilderQuery,
 	setSearchKey: (value: string) => void,
+	whereClauseConfig?: WhereClauseConfig,
 ): IUseTag => {
 	const initTagsData = useMemo(
 		() =>
@@ -57,15 +60,31 @@ export const useTag = (
 	 * Adds a new tag to the tag list.
 	 * @param {string} value - The tag value to be added.
 	 */
+
 	const handleAddTag = useCallback(
 		(value: string): void => {
+			const { tagKey } = getTagToken(value);
+			const [key, id] = tagKey.split('-');
+
+			if (id === 'custom') {
+				const customValue = whereClauseConfig
+					? `${whereClauseConfig.customKey} ${whereClauseConfig.customOp} ${key}`
+					: '';
+				setTags((prevTags) =>
+					prevTags.includes(customValue) ? prevTags : [...prevTags, customValue],
+				);
+				handleSearch('');
+				setSearchKey('');
+				return;
+			}
+
 			if ((value && key && isValidTag) || isExistsNotExistsOperator(value)) {
 				setTags((prevTags) => [...prevTags, value]);
 				handleSearch('');
 				setSearchKey('');
 			}
 		},
-		[key, isValidTag, handleSearch, setSearchKey],
+		[whereClauseConfig, isValidTag, handleSearch, setSearchKey],
 	);
 
 	/**
