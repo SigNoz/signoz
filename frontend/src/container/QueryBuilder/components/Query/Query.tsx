@@ -250,6 +250,7 @@ export const Query = memo(function Query({
 		panelType,
 		isMetricsDataSource,
 		query,
+		filterConfigs?.limit?.isHidden,
 		handleChangeLimit,
 		handleChangeHavingFilter,
 		renderOrderByFilter,
