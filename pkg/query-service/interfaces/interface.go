@@ -95,6 +95,8 @@ type Reader interface {
 
 	QueryDashboardVars(ctx context.Context, query string) (*model.DashboardVar, error)
 	CheckClickHouse(ctx context.Context) error
+
+	GetLatencyMetricMetadata(context.Context, string, bool) (*v3.LatencyMetricMetadataResponse, error)
 }
 
 type Querier interface {
