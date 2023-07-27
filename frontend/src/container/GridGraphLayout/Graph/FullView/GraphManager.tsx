@@ -5,6 +5,7 @@ import { ResizeTable } from 'components/ResizeTable';
 import { useNotifications } from 'hooks/useNotifications';
 import isEqual from 'lodash-es/isEqual';
 import { memo, useEffect, useState } from 'react';
+import { eventEmitter } from 'utils/getEventEmitter';
 
 import { getGraphVisibilityStateOnDataChange } from '../utils';
 import { ColumnsKeyAndDataIndex, ColumnsTitle } from './contants';
@@ -28,7 +29,6 @@ import {
 
 function GraphManager({
 	data,
-	graphVisibilityStateHandler,
 	name,
 	onToggleModelHandler,
 }: GraphManagerProps): JSX.Element {
@@ -41,12 +41,6 @@ function GraphManager({
 	const [legendEntries, setLegendEntries] = useState<LegendEntryProps[]>([]);
 
 	const { notifications } = useNotifications();
-
-	useEffect(() => {
-		if (graphVisibilityStateHandler) {
-			graphVisibilityStateHandler([...graphVisibilityState]);
-		}
-	}, [graphVisibilityState, graphVisibilityStateHandler]);
 
 	useEffect(() => {
 		const newGraphVisibilityStates: boolean[] = Array(data.datasets.length).fill(
@@ -62,6 +56,7 @@ function GraphManager({
 			}
 		});
 		setGraphVisibilityState(newGraphVisibilityStates);
+		eventEmitter.emit('UPDATE_GRAPH_VISIBILITY_STATE', newGraphVisibilityStates);
 	}, [data, legendEntries]);
 
 	useEffect(() => {
@@ -71,6 +66,10 @@ function GraphManager({
 			name,
 		});
 		setGraphVisibilityState(visibilityStateAndLegendEntry.graphVisibilityStates);
+		eventEmitter.emit(
+			'UPDATE_GRAPH_VISIBILITY_STATE',
+			visibilityStateAndLegendEntry.graphVisibilityStates,
+		);
 		setLegendEntries(visibilityStateAndLegendEntry.legendEntry);
 	}, [data, name]);
 
@@ -80,9 +79,7 @@ function GraphManager({
 	): void => {
 		graphVisibilityState[index] = e.target.checked;
 		setGraphVisibilityState([...graphVisibilityState]);
-		if (graphVisibilityStateHandler) {
-			graphVisibilityStateHandler(graphVisibilityState);
-		}
+		eventEmitter.emit('UPDATE_GRAPH_VISIBILITY_STATE', graphVisibilityState);
 	};
 
 	const getCheckBox = (index: number): React.ReactElement => (
@@ -95,12 +92,12 @@ function GraphManager({
 	);
 
 	const labelClickedHandler = (labelIndex: number): void => {
-		const newGraphVisibilityStates = Array(data.datasets.length).fill(false);
+		const newGraphVisibilityStates = Array<boolean>(data.datasets.length).fill(
+			false,
+		);
 		newGraphVisibilityStates[labelIndex] = true;
 		setGraphVisibilityState([...newGraphVisibilityStates]);
-		if (graphVisibilityStateHandler) {
-			graphVisibilityStateHandler(newGraphVisibilityStates);
-		}
+		eventEmitter.emit('UPDATE_GRAPH_VISIBILITY_STATE', newGraphVisibilityStates);
 	};
 
 	const columns: ColumnType<DataSetProps>[] = [
@@ -170,9 +167,6 @@ function GraphManager({
 		notifications.success({
 			message: 'The updated graphs & legends are saved',
 		});
-		if (graphVisibilityStateHandler) {
-			graphVisibilityStateHandler(graphVisibilityState);
-		}
 	};
 
 	const dataSource = tableDataSet.filter((item) => item.show);

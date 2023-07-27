@@ -28,8 +28,7 @@ function FullView({
 	name,
 	yAxisUnit,
 	onDragSelect,
-	graphVisibilityStateHandler,
-	graphsVisibility,
+	graphsVisibilityStates,
 	isDependedDataLoaded = false,
 	onToggleModelHandler,
 }: FullViewProps): JSX.Element {
@@ -124,14 +123,13 @@ function FullView({
 					onDragSelect={onDragSelect}
 					panelData={response.data?.payload.data.newResult.data.result || []}
 					query={widget.query}
-					graphsVisibilityStates={graphsVisibility}
+					graphsVisibilityStates={graphsVisibilityStates}
 				/>
 			</GraphContainer>
 
 			{canModifyChart && (
 				<GraphManager
 					data={chartDataSet}
-					graphVisibilityStateHandler={graphVisibilityStateHandler}
 					name={name}
 					onToggleModelHandler={onToggleModelHandler}
 				/>
@@ -145,7 +143,7 @@ FullView.defaultProps = {
 	onClickHandler: undefined,
 	yAxisUnit: undefined,
 	onDragSelect: undefined,
-	graphsVisibility: undefined,
+	graphsVisibilityStates: undefined,
 	graphVisibilityStateHandler: undefined,
 	isDependedDataLoaded: undefined,
 };

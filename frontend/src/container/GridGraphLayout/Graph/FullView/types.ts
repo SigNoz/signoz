@@ -41,7 +41,6 @@ export interface LabelProps {
 
 export interface GraphManagerProps {
 	data: ChartData;
-	graphVisibilityStateHandler?: (graphVisibilityArray: boolean[]) => void;
 	name: string;
 	onToggleModelHandler?: () => void;
 }
@@ -60,8 +59,7 @@ export interface FullViewProps {
 	name: string;
 	yAxisUnit?: string;
 	onDragSelect?: (start: number, end: number) => void;
-	graphVisibilityStateHandler?: (graphsVisiblityArray: boolean[]) => void;
-	graphsVisibility?: boolean[];
+	graphsVisibilityStates?: boolean[];
 	isDependedDataLoaded?: boolean;
 	onToggleModelHandler?: () => void;
 }

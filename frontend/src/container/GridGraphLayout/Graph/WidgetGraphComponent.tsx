@@ -21,6 +21,7 @@ import { AppState } from 'store/reducers';
 import AppActions from 'types/actions';
 import AppReducer from 'types/reducer/app';
 import DashboardReducer from 'types/reducer/dashboards';
+import { eventEmitter } from 'utils/getEventEmitter';
 import { v4 } from 'uuid';
 
 import { UpdateDashboard } from '../utils';
@@ -67,11 +68,18 @@ function WidgetGraphComponent({
 		panelTypeAndGraphManagerVisibility: PANEL_TYPES_VS_FULL_VIEW_TABLE,
 	});
 
-	const graphVisibilityStateHandler = (
-		newGraphsVisiblityState: boolean[],
-	): void => {
-		setGraphsVisilityStates([...newGraphsVisiblityState]);
-	};
+	useEffect(() => {
+		const eventListener = eventEmitter.on(
+			'UPDATE_GRAPH_VISIBILITY_STATE',
+			(data) => {
+				console.log('data', data);
+				setGraphsVisilityStates([...data]);
+			},
+		);
+		return (): void => {
+			eventListener.off('UPDATE_GRAPH_VISIBILITY_STATE');
+		};
+	}, []);
 
 	const { featureResponse } = useSelector<AppState, AppReducer>(
 		(state) => state.app,
@@ -204,8 +212,7 @@ function WidgetGraphComponent({
 						name={`${name}expanded`}
 						widget={widget}
 						yAxisUnit={yAxisUnit}
-						graphsVisibility={graphsVisibilityStates}
-						graphVisibilityStateHandler={graphVisibilityStateHandler}
+						graphsVisibilityStates={graphsVisibilityStates}
 						onToggleModelHandler={onToggleModelHandler}
 					/>
 				</FullViewContainer>
