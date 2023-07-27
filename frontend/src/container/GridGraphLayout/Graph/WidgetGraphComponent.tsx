@@ -72,14 +72,15 @@ function WidgetGraphComponent({
 		const eventListener = eventEmitter.on(
 			'UPDATE_GRAPH_VISIBILITY_STATE',
 			(data) => {
-				console.log('data', data);
-				setGraphsVisilityStates([...data]);
+				if (data.name === `${name}expanded`) {
+					setGraphsVisilityStates([...data.graphVisibilityStates]);
+				}
 			},
 		);
 		return (): void => {
 			eventListener.off('UPDATE_GRAPH_VISIBILITY_STATE');
 		};
-	}, []);
+	}, [name]);
 
 	const { featureResponse } = useSelector<AppState, AppReducer>(
 		(state) => state.app,

@@ -56,8 +56,11 @@ function GraphManager({
 			}
 		});
 		setGraphVisibilityState(newGraphVisibilityStates);
-		eventEmitter.emit('UPDATE_GRAPH_VISIBILITY_STATE', newGraphVisibilityStates);
-	}, [data, legendEntries]);
+		eventEmitter.emit('UPDATE_GRAPH_VISIBILITY_STATE', {
+			name,
+			graphVisibilityStates: newGraphVisibilityStates,
+		});
+	}, [data, name, legendEntries]);
 
 	useEffect(() => {
 		const visibilityStateAndLegendEntry = getGraphVisibilityStateOnDataChange({
@@ -66,10 +69,10 @@ function GraphManager({
 			name,
 		});
 		setGraphVisibilityState(visibilityStateAndLegendEntry.graphVisibilityStates);
-		eventEmitter.emit(
-			'UPDATE_GRAPH_VISIBILITY_STATE',
-			visibilityStateAndLegendEntry.graphVisibilityStates,
-		);
+		eventEmitter.emit('UPDATE_GRAPH_VISIBILITY_STATE', {
+			name,
+			graphVisibilityStates: visibilityStateAndLegendEntry.graphVisibilityStates,
+		});
 		setLegendEntries(visibilityStateAndLegendEntry.legendEntry);
 	}, [data, name]);
 
@@ -79,7 +82,10 @@ function GraphManager({
 	): void => {
 		graphVisibilityState[index] = e.target.checked;
 		setGraphVisibilityState([...graphVisibilityState]);
-		eventEmitter.emit('UPDATE_GRAPH_VISIBILITY_STATE', graphVisibilityState);
+		eventEmitter.emit('UPDATE_GRAPH_VISIBILITY_STATE', {
+			name,
+			graphVisibilityStates: [...graphVisibilityState],
+		});
 	};
 
 	const getCheckBox = (index: number): React.ReactElement => (
@@ -97,7 +103,10 @@ function GraphManager({
 		);
 		newGraphVisibilityStates[labelIndex] = true;
 		setGraphVisibilityState([...newGraphVisibilityStates]);
-		eventEmitter.emit('UPDATE_GRAPH_VISIBILITY_STATE', newGraphVisibilityStates);
+		eventEmitter.emit('UPDATE_GRAPH_VISIBILITY_STATE', {
+			name,
+			graphVisibilityStates: newGraphVisibilityStates,
+		});
 	};
 
 	const columns: ColumnType<DataSetProps>[] = [
