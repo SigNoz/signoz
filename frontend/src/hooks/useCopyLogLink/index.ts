@@ -3,10 +3,17 @@ import ROUTES from 'constants/routes';
 import { useNotifications } from 'hooks/useNotifications';
 import useUrlQuery from 'hooks/useUrlQuery';
 import useUrlQueryData from 'hooks/useUrlQueryData';
-import { MouseEventHandler, useCallback, useMemo } from 'react';
+import {
+	MouseEventHandler,
+	useCallback,
+	useEffect,
+	useMemo,
+	useState,
+} from 'react';
 import { useLocation } from 'react-router-dom';
 import { useCopyToClipboard } from 'react-use';
 
+import { HIGHLIGHTED_DELAY } from './configs';
 import { LogTimeRange, UseCopyLogLink } from './types';
 
 const useCopyLogLink = (logId?: string): UseCopyLogLink => {
@@ -24,6 +31,9 @@ const useCopyLogLink = (logId?: string): UseCopyLogLink => {
 		QueryParams.activeLogId,
 		null,
 	);
+
+	const isActiveLog = useMemo(() => activeLogId === logId, [activeLogId, logId]);
+	const [isHighlighted, setIsHighlighted] = useState<boolean>(isActiveLog);
 
 	const isLogsExplorerPage = useMemo(() => pathname === ROUTES.LOGS_EXPLORER, [
 		pathname,
@@ -55,7 +65,19 @@ const useCopyLogLink = (logId?: string): UseCopyLogLink => {
 		[logId, notifications, timeRange, urlQuery, setCopy],
 	);
 
+	useEffect(() => {
+		if (!isActiveLog) return;
+
+		const timer = setTimeout(() => setIsHighlighted(false), HIGHLIGHTED_DELAY);
+
+		// eslint-disable-next-line consistent-return
+		return (): void => {
+			clearTimeout(timer);
+		};
+	}, [isActiveLog]);
+
 	return {
+		isHighlighted,
 		isLogsExplorerPage,
 		activeLogId,
 		timeRange,

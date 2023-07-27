@@ -305,7 +305,11 @@ export const Query = memo(function Query({
 								</Col>
 							)}
 							<Col flex="1">
-								<QueryBuilderSearch query={query} onChange={handleChangeTagFilters} />
+								<QueryBuilderSearch
+									query={query}
+									onChange={handleChangeTagFilters}
+									whereClauseConfig={filterConfigs?.filters}
+								/>
 							</Col>
 						</Row>
 					</Col>

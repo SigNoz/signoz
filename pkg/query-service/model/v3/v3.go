@@ -663,3 +663,8 @@ func (eq *ExplorerQuery) Validate() error {
 	}
 	return eq.CompositeQuery.Validate()
 }
+
+type LatencyMetricMetadataResponse struct {
+	Delta bool      `json:"delta"`
+	Le    []float64 `json:"le"`
+}

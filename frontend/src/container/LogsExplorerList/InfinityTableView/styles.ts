@@ -22,7 +22,19 @@ export const TableCellStyled = styled.td`
 	background-color: ${themeColors.lightBlack};
 `;
 
-export const TableRowStyled = styled.tr`
+export const TableRowStyled = styled.tr<{
+	$isDarkMode: boolean;
+	$isActiveLog: boolean;
+}>`
+	td {
+		${({ $isDarkMode, $isActiveLog }): string =>
+			$isActiveLog
+				? `background-color: ${
+						$isDarkMode ? 'rgba(255,255,255,0.1)' : 'rgba(0, 0, 0, 0.1)'
+				  };`
+				: ''}
+	}
+
 	&:hover {
 		${TableCellStyled} {
 			background-color: #1d1d1d;
