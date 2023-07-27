@@ -19,7 +19,7 @@ function QuerySection(): JSX.Element {
 	const filterConfigs: QueryBuilderProps['filterConfigs'] = useMemo(() => {
 		const isList = panelTypes === PANEL_TYPES.LIST;
 		const config: QueryBuilderProps['filterConfigs'] = {
-			stepInterval: { isHidden: !isList, isDisabled: false },
+			stepInterval: { isHidden: false, isDisabled: true },
 			limit: { isHidden: isList, isDisabled: true },
 		};
 
