@@ -110,9 +110,6 @@ export const Query = memo(function Query({
 		},
 		[handleChangeQueryData],
 	);
-	const additionalFiltersToShow = listOfAdditionalFilters.filter(
-		(filter) => !filterConfigs?.limit?.isHidden || filter !== 'Limit',
-	);
 
 	const renderOrderByFilter = useCallback((): ReactNode => {
 		if (queryComponents?.renderOrderBy) {
@@ -360,7 +357,7 @@ export const Query = memo(function Query({
 			</Col>
 			{!isTracePanelType && (
 				<Col span={24}>
-					<AdditionalFiltersToggler listOfAdditionalFilter={additionalFiltersToShow}>
+					<AdditionalFiltersToggler listOfAdditionalFilter={listOfAdditionalFilters}>
 						<Row gutter={[0, 11]} justify="space-between">
 							{renderAdditionalFilters()}
 						</Row>
