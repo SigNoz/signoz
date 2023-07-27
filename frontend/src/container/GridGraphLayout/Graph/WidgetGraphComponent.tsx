@@ -1,5 +1,5 @@
 import { Typography } from 'antd';
-import GridGraphComponent from 'container/GridGraphComponent';
+import GridPanelSwitch from 'container/GridPanelSwitch';
 import { useChartMutable } from 'hooks/useChartMutable';
 import { useNotifications } from 'hooks/useNotifications';
 import history from 'lib/history';
@@ -248,17 +248,19 @@ function WidgetGraphComponent({
 							/>
 						</div>
 					)}
-					<GridGraphComponent
-						GRAPH_TYPES={widget?.panelTypes}
+					<GridPanelSwitch
+						panelType={widget.panelTypes}
 						data={data}
-						isStacked={widget?.isStacked}
-						opacity={widget?.opacity}
+						isStacked={widget.isStacked}
+						opacity={widget.opacity}
 						title={' '}
 						name={name}
 						yAxisUnit={yAxisUnit}
-						graphsVisibilityStates={graphsVisibilityStates}
-						onDragSelect={onDragSelect}
 						onClickHandler={onClickHandler}
+						onDragSelect={onDragSelect}
+						panelData={[]}
+						query={widget.query}
+						graphsVisibilityStates={graphsVisibilityStates}
 					/>
 				</>
 			)}

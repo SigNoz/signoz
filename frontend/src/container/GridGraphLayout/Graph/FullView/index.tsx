@@ -1,7 +1,7 @@
 import { Button } from 'antd';
 import Spinner from 'components/Spinner';
 import TimePreference from 'components/TimePreferenceDropDown';
-import GridGraphComponent from 'container/GridGraphComponent';
+import GridPanelSwitch from 'container/GridPanelSwitch';
 import {
 	timeItems,
 	timePreferance,
@@ -95,7 +95,7 @@ function FullView({
 	return (
 		<>
 			{fullViewOptions && (
-				<TimeContainer>
+				<TimeContainer $panelType={widget.panelTypes}>
 					<TimePreference
 						selectedTime={selectedTime}
 						setSelectedTime={setSelectedTime}
@@ -112,8 +112,8 @@ function FullView({
 			)}
 
 			<GraphContainer>
-				<GridGraphComponent
-					GRAPH_TYPES={widget.panelTypes}
+				<GridPanelSwitch
+					panelType={widget.panelTypes}
 					data={chartDataSet}
 					isStacked={widget.isStacked}
 					opacity={widget.opacity}
@@ -122,6 +122,8 @@ function FullView({
 					name={name}
 					yAxisUnit={yAxisUnit}
 					onDragSelect={onDragSelect}
+					panelData={response.data?.payload.data.newResult.data.result || []}
+					query={widget.query}
 					graphsVisibilityStates={graphsVisibility}
 				/>
 			</GraphContainer>

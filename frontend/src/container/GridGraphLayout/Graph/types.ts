@@ -56,6 +56,7 @@ export interface GridCardGraphProps {
 	allowDelete?: boolean;
 	allowClone?: boolean;
 	allowEdit?: boolean;
+	isQueryEnabled?: boolean;
 }
 
 export interface GetGraphVisibilityStateOnLegendClickProps {
