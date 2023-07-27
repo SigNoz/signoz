@@ -10,7 +10,6 @@ import {
 import { queryParamNamesMap } from 'constants/queryBuilderQueryNames';
 import ROUTES from 'constants/routes';
 import ExportPanel from 'container/ExportPanel';
-import { GRAPH_TYPES } from 'container/NewDashboard/ComponentsSlider';
 import { SIGNOZ_VALUE } from 'container/QueryBuilder/filters/OrderByFilter/constants';
 import QuerySection from 'container/TracesExplorer/QuerySection';
 import { useUpdateDashboard } from 'hooks/dashboard/useUpdateDashboard';
@@ -149,7 +148,7 @@ function TracesExplorer(): JSX.Element {
 	);
 
 	const getUpdateQuery = useCallback(
-		(newPanelType: GRAPH_TYPES): Query => {
+		(newPanelType: PANEL_TYPES): Query => {
 			let query = updateAllQueriesOperators(
 				currentQuery,
 				newPanelType,
@@ -174,7 +173,7 @@ function TracesExplorer(): JSX.Element {
 
 	const handleTabChange = useCallback(
 		(type: string): void => {
-			const newPanelType = type as GRAPH_TYPES;
+			const newPanelType = type as PANEL_TYPES;
 			if (panelType === newPanelType) return;
 
 			const query = getUpdateQuery(newPanelType);

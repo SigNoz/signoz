@@ -1,11 +1,11 @@
+import { PANEL_TYPES } from 'constants/queryBuilder';
 import { queryParamNamesMap } from 'constants/queryBuilderQueryNames';
-import { GRAPH_TYPES } from 'container/NewDashboard/ComponentsSlider';
 import useUrlQuery from 'hooks/useUrlQuery';
 import { useMemo } from 'react';
 
-export const useGetPanelTypesQueryParam = <T extends GRAPH_TYPES | undefined>(
+export const useGetPanelTypesQueryParam = <T extends PANEL_TYPES | undefined>(
 	defaultPanelType?: T,
-): T extends undefined ? GRAPH_TYPES | null : GRAPH_TYPES => {
+): T extends undefined ? PANEL_TYPES | null : PANEL_TYPES => {
 	const urlQuery = useUrlQuery();
 
 	return useMemo(() => {
