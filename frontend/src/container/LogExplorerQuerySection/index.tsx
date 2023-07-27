@@ -25,8 +25,10 @@ function LogExplorerQuerySection(): JSX.Element {
 	useShareBuilderUrl(defaultValue);
 	const filterConfigs: QueryBuilderProps['filterConfigs'] = useMemo(() => {
 		const isTable = panelTypes === PANEL_TYPES.TABLE;
+		const isList = panelTypes === PANEL_TYPES.LIST;
 		const config: QueryBuilderProps['filterConfigs'] = {
 			stepInterval: { isHidden: isTable, isDisabled: true },
+			having: { isHidden: isList, isDisabled: true },
 		};
 
 		return config;
