@@ -173,5 +173,10 @@ func (lm *Manager) UploadUsageWithExponentalBackOff(ctx context.Context, payload
 
 func (lm *Manager) Stop() {
 	lm.scheduler.Stop()
+
+	zap.S().Debug("sending usage data before shutting down")
+	// send usage before shutting down
+	lm.UploadUsage()
+
 	atomic.StoreUint32(&locker, stateUnlocked)
 }
