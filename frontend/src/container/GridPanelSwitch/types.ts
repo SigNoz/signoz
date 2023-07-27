@@ -3,7 +3,7 @@ import {
 	GraphOnClickHandler,
 	GraphProps,
 	StaticLineProps,
-} from 'components/Graph';
+} from 'components/Graph/types';
 import { GridTableComponentProps } from 'container/GridTableComponent/types';
 import { GridValueComponentProps } from 'container/GridValueComponent/types';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
@@ -24,6 +24,7 @@ export type GridPanelSwitchProps = {
 	onDragSelect?: (start: number, end: number) => void;
 	panelData: QueryDataV3[];
 	query: Query;
+	graphsVisibilityStates?: boolean[];
 };
 
 export type PropsTypePropsMap = {
