@@ -33,6 +33,7 @@ function LogsContextList({
 	const [logs, setLogs] = useState<ILog[]>([]);
 	const [page, setPage] = useState<number>(1);
 
+	const firstLog = useMemo(() => logs[0], [logs]);
 	const lastLog = useMemo(() => logs[logs.length - 1], [logs]);
 	const orderByTimestamp = useMemo(() => getOrderByTimestamp(order), [order]);
 
@@ -93,11 +94,13 @@ function LogsContextList({
 	const handleShowNextLines = useCallback(() => {
 		if (logs.length < PAGE_SIZE || logs.length < page * PAGE_SIZE) return;
 
-		const newRequestData = getRequestData(query, page + 1, lastLog);
+		const log = order === FILTERS.ASC ? firstLog : lastLog;
+
+		const newRequestData = getRequestData(query, page + 1, log);
 
 		setPage((prevPage) => prevPage + 1);
 		setRequestData(newRequestData);
-	}, [query, logs, lastLog, page, getRequestData]);
+	}, [query, logs, firstLog, lastLog, page, order, getRequestData]);
 
 	useEffect(() => {
 		const currentData = logsData?.payload.data.newResult.data.result || [];
