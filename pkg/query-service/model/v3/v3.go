@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"go.signoz.io/signoz/pkg/query-service/model"
 )
 
 type DataSource string
@@ -584,6 +585,13 @@ type Result struct {
 	List      []*Row    `json:"list"`
 }
 
+type LogsLiveTailClient struct {
+	Name  string
+	Logs  chan *model.GetLogsResponse
+	Done  chan *bool
+	Error chan error
+}
+
 type Series struct {
 	Labels            map[string]string `json:"labels"`
 	Points            []Point           `json:"values"`
@@ -654,4 +662,9 @@ func (eq *ExplorerQuery) Validate() error {
 		eq.UUID = uuid.New().String()
 	}
 	return eq.CompositeQuery.Validate()
+}
+
+type LatencyMetricMetadataResponse struct {
+	Delta bool      `json:"delta"`
+	Le    []float64 `json:"le"`
 }

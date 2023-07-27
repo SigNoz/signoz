@@ -1,6 +1,4 @@
-import { getAggregateKeys } from 'api/queryBuilder/getAttributeKeys';
 import { getAttributesValues } from 'api/queryBuilder/getAttributesValues';
-import { QueryBuilderKeys } from 'constants/queryBuilder';
 import { DEBOUNCE_DELAY } from 'constants/queryBuilderFilterConfig';
 import {
 	getRemovePrefixFromKey,
@@ -10,11 +8,12 @@ import {
 import useDebounceValue from 'hooks/useDebounce';
 import { isEqual, uniqWith } from 'lodash-es';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { useQuery } from 'react-query';
 import { useDebounce } from 'react-use';
 import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource } from 'types/common/queryBuilder';
+
+import { useGetAggregateKeys } from './useGetAggregateKeys';
 
 type IuseFetchKeysAndValues = {
 	keys: BaseAutocompleteData[];
@@ -71,19 +70,15 @@ export const useFetchKeysAndValues = (
 		],
 	);
 
-	const { data, isFetching, status } = useQuery(
-		[QueryBuilderKeys.GET_AGGREGATE_KEYS, searchParams],
-		async () =>
-			getAggregateKeys({
-				searchText: searchKey,
-				dataSource: query.dataSource,
-				aggregateOperator: query.aggregateOperator,
-				aggregateAttribute: query.aggregateAttribute.key,
-				tagType: query.aggregateAttribute.type ?? null,
-			}),
+	const { data, isFetching, status } = useGetAggregateKeys(
 		{
-			enabled: isQueryEnabled,
+			searchText: searchKey,
+			dataSource: query.dataSource,
+			aggregateOperator: query.aggregateOperator,
+			aggregateAttribute: query.aggregateAttribute.key,
+			tagType: query.aggregateAttribute.type ?? null,
 		},
+		{ queryKey: [searchParams], enabled: isQueryEnabled },
 	);
 
 	/**
