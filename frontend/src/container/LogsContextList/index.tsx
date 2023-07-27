@@ -7,16 +7,12 @@ import { useGetExplorerQueryRange } from 'hooks/queryBuilder/useGetExplorerQuery
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { getPaginationQueryData } from 'lib/newQueryBuilder/getPaginationQueryData';
 import { memo, useCallback, useEffect, useMemo, useState } from 'react';
+import { Virtuoso } from 'react-virtuoso';
 import { ILog } from 'types/api/logs/log';
-import {
-	IBuilderQuery,
-	Query,
-	TagFilter,
-} from 'types/api/queryBuilder/queryBuilderData';
+import { Query, TagFilter } from 'types/api/queryBuilder/queryBuilderData';
 
 import { getOrderByTimestamp, PAGE_SIZE } from './configs';
 import { EmptyText, ListContainer, ShowButtonWrapper } from './styles';
-import { getFiltersFromResources } from './utils';
 
 interface LogsContextListProps {
 	isEdit: boolean;
@@ -50,20 +46,8 @@ function LogsContextList({
 		(query: Query | null, page: number, log: ILog): Query | null => {
 			if (!query) return null;
 
-			const resourcesFilters = getFiltersFromResources(log.resources_string);
-
-			const currentQuery: IBuilderQuery | null = currentStagedQueryData
-				? {
-						...currentStagedQueryData,
-						filters: {
-							...currentStagedQueryData.filters,
-							items: [...currentStagedQueryData.filters.items, ...resourcesFilters],
-						},
-				  }
-				: null;
-
 			const paginateData = getPaginationQueryData({
-				currentStagedQueryData: currentQuery,
+				currentStagedQueryData,
 				listItemId: log ? log.id : null,
 				orderByTimestamp,
 				page,
@@ -117,17 +101,21 @@ function LogsContextList({
 
 	useEffect(() => {
 		const currentData = logsData?.payload.data.newResult.data.result || [];
+
 		if (currentData.length > 0 && currentData[0].list) {
 			const currentLogs: ILog[] = currentData[0].list.map((item) => ({
 				...item.data,
 				timestamp: item.timestamp,
 			}));
-			const newLogs = [...logs, ...currentLogs];
 
-			setLogs(newLogs);
+			if (order === FILTERS.ASC) {
+				const reversedCurrentLogs = currentLogs.reverse();
+				setLogs((prevLogs) => [...prevLogs, ...reversedCurrentLogs]);
+			} else {
+				setLogs((prevLogs) => [...prevLogs, ...currentLogs]);
+			}
 		}
-		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [logsData]);
+	}, [logsData, order]);
 
 	useEffect(() => {
 		if (!isEdit) return;
@@ -159,20 +147,29 @@ function LogsContextList({
 		[isFetching, order, handleShowNextLines],
 	);
 
+	const getItemContent = useCallback(
+		(_: number, log: ILog): JSX.Element => (
+			<RawLogView isReadOnly key={log.id} data={log} linesPerRow={1} />
+		),
+		[],
+	);
+
 	return (
 		<>
 			{order === FILTERS.ASC && renderedShowButton}
 
 			<ListContainer $isDarkMode={isDarkMode}>
-				{!logs.length && !isFetching && <EmptyText>No Data</EmptyText>}
+				{((!logs.length && !isFetching) || isError) && (
+					<EmptyText>No Data</EmptyText>
+				)}
 				{isFetching && <Spinner size="large" height="10rem" />}
 
-				{!isError &&
-					!!logs.length &&
-					!isFetching &&
-					logs.map((log) => (
-						<RawLogView isReadOnly key={log.id} data={log} linesPerRow={1} />
-					))}
+				<Virtuoso
+					initialTopMostItemIndex={0}
+					data={logs}
+					itemContent={getItemContent}
+					followOutput
+				/>
 			</ListContainer>
 
 			{order === FILTERS.DESC && renderedShowButton}

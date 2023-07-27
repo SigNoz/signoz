@@ -14,6 +14,7 @@ import { Query, TagFilter } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource } from 'types/common/queryBuilder';
 
 import { EditButton, TitleWrapper } from './styles';
+import { getFiltersFromResources } from './utils';
 
 interface LogsExplorerContextProps {
 	log: ILog;
@@ -26,15 +27,31 @@ function LogsExplorerContext({
 }: LogsExplorerContextProps): JSX.Element {
 	const { updateAllQueriesOperators } = useQueryBuilder();
 
-	const initialContextQuery = useMemo(
-		() =>
-			updateAllQueriesOperators(
-				initialQueriesMap.logs,
-				PANEL_TYPES.LIST,
-				DataSource.LOGS,
-			),
-		[updateAllQueriesOperators],
-	);
+	const initialContextQuery = useMemo(() => {
+		const resourcesFilters = getFiltersFromResources(log.resources_string);
+
+		const updatedAllQueriesOperator = updateAllQueriesOperators(
+			initialQueriesMap.logs,
+			PANEL_TYPES.LIST,
+			DataSource.LOGS,
+		);
+
+		const data: Query = {
+			...updatedAllQueriesOperator,
+			builder: {
+				...updatedAllQueriesOperator.builder,
+				queryData: updatedAllQueriesOperator.builder.queryData.map((item) => ({
+					...item,
+					filters: {
+						...item.filters,
+						items: [...item.filters.items, ...resourcesFilters],
+					},
+				})),
+			},
+		};
+
+		return data;
+	}, [log, updateAllQueriesOperators]);
 
 	const [contextQuery, setContextQuery] = useState<Query>(initialContextQuery);
 	const [filters, setFilters] = useState<TagFilter | null>(null);
