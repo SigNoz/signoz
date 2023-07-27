@@ -42,7 +42,6 @@ export const Query = memo(function Query({
 	const {
 		operators,
 		isMetricsDataSource,
-		isTracesDataSource,
 		isTracePanelType,
 		listOfAdditionalFilters,
 		handleChangeAggregatorAttribute,
@@ -111,6 +110,8 @@ export const Query = memo(function Query({
 		},
 		[handleChangeQueryData],
 	);
+	const additionalFiltersToShow = listOfAdditionalFilters .filter(
+		(filter) => !filterConfigs?.limit?.isHidden || filter !== 'Limit');
 
 	const renderOrderByFilter = useCallback((): ReactNode => {
 		if (queryComponents?.renderOrderBy) {
@@ -208,10 +209,10 @@ export const Query = memo(function Query({
 				);
 			}
 
-			case PANEL_TYPES.LIST: {
+			default: {
 				return (
 					<>
-					{!isTracesDataSource && (
+					{!filterConfigs?.limit?.isHidden && (
 						<Col span={11}>
 							<Row gutter={[11, 5]}>
 								<Col flex="5.93rem">
@@ -223,45 +224,6 @@ export const Query = memo(function Query({
 							</Row>
 						</Col>
 					)}
-						<Col span={11}>
-							<Row gutter={[11, 5]}>
-								<Col flex="5.93rem">
-									<FilterLabel label="HAVING" />
-								</Col>
-								<Col flex="1 1 12.5rem">
-									<HavingFilter onChange={handleChangeHavingFilter} query={query} />
-								</Col>
-							</Row>
-						</Col>
-						<Col span={11}>
-							<Row gutter={[11, 5]}>
-								<Col flex="5.93rem">
-									<FilterLabel label="Order by" />
-								</Col>
-								<Col flex="1 1 12.5rem">
-									<OrderByFilter query={query} onChange={handleChangeOrderByKeys} />
-								</Col>
-							</Row>
-						</Col>
-
-						<Col span={11}>{renderAggregateEveryFilter()}</Col>
-					</>
-				);
-			}
-
-			default: {
-				return (
-					<>
-						<Col span={11}>
-							<Row gutter={[11, 5]}>
-								<Col flex="5.93rem">
-									<FilterLabel label="Limit" />
-								</Col>
-								<Col flex="1 1 12.5rem">
-									<LimitFilter query={query} onChange={handleChangeLimit} />
-								</Col>
-							</Row>
-						</Col>
 						<Col span={11}>
 							<Row gutter={[11, 5]}>
 								<Col flex="5.93rem">
@@ -397,11 +359,7 @@ export const Query = memo(function Query({
 			</Col>
 			{!isTracePanelType && (
 				<Col span={24}>
-					<AdditionalFiltersToggler
-						listOfAdditionalFilter={listOfAdditionalFilters}
-						hideLimit={panelType === PANEL_TYPES.LIST}
-						queryname={query?.dataSource}
-					>
+					<AdditionalFiltersToggler listOfAdditionalFilter={additionalFiltersToShow}>
 						<Row gutter={[0, 11]} justify="space-between">
 							{renderAdditionalFilters()}
 						</Row>

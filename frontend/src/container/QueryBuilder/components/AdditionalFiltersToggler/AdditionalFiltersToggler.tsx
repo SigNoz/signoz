@@ -14,23 +14,20 @@ import {
 export const AdditionalFiltersToggler = memo(function AdditionalFiltersToggler({
 	children,
 	listOfAdditionalFilter,
-	hideLimit,
-	queryname,
 }: AdditionalFiltersProps): JSX.Element {
 	const [isOpenedFilters, setIsOpenedFilters] = useState<boolean>(false);
 
 	const handleToggleOpenFilters = (): void => {
 		setIsOpenedFilters((prevState) => !prevState);
 	};
-	const filtersToDisplay = listOfAdditionalFilter.filter(
-		(str) => !(hideLimit && queryname === 'traces' && str === 'Limit'),
-	);
-	const filtersTexts: ReactNode = filtersToDisplay.map((str, index) => {
-		const isNextLast = index + 1 === filtersToDisplay.length - 1;
-		if (index === filtersToDisplay.length - 1) {
+
+	const filtersTexts: ReactNode = listOfAdditionalFilter.map((str, index) => {
+		const isNextLast = index + 1 === listOfAdditionalFilter.length - 1;
+
+		if (index === listOfAdditionalFilter.length - 1) {
 			return (
 				<Fragment key={str}>
-					{filtersToDisplay.length > 1 && 'and'}{' '}
+					{listOfAdditionalFilter.length > 1 && 'and'}{' '}
 					<StyledLink>{str.toUpperCase()}</StyledLink>
 				</Fragment>
 			);
