@@ -457,7 +457,7 @@ func PrepareLogsQuery(start, end int64, queryType v3.QueryType, panelType v3.Pan
 		query, err = reduceQuery(query, mq.ReduceTo, mq.AggregateOperator)
 	}
 
-	if panelType == v3.PanelTypeList || panelType == v3.PanelTypeTable {
+	if panelType == v3.PanelTypeList {
 		if mq.PageSize > 0 {
 			if mq.Limit > 0 && mq.Offset > mq.Limit {
 				return "", fmt.Errorf("max limit exceeded")
@@ -467,8 +467,9 @@ func PrepareLogsQuery(start, end int64, queryType v3.QueryType, panelType v3.Pan
 		} else {
 			query = addLimitToQuery(query, mq.Limit)
 		}
+	} else if panelType == v3.PanelTypeTable {
+		query = addLimitToQuery(query, mq.Limit)
 	}
 
 	return query, err
-
 }
