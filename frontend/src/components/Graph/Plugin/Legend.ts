@@ -19,6 +19,7 @@ const getOrCreateLegendList = (
 		listContainer.style.overflowY = 'scroll';
 		listContainer.style.justifyContent = isLonger ? 'start' : 'center';
 		listContainer.style.alignItems = isLonger ? 'start' : 'center';
+		listContainer.style.minHeight = '2rem';
 		listContainer.style.height = '100%';
 		listContainer.style.flexWrap = 'wrap';
 		listContainer.style.justifyContent = 'center';
