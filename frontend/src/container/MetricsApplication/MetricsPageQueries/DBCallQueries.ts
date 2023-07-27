@@ -1,7 +1,10 @@
+import { OPERATORS } from 'constants/queryBuilder';
 import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { TagFilterItem } from 'types/api/queryBuilder/queryBuilderData';
-import { QueryBuilderData } from 'types/common/queryBuilder';
+import { DataSource, QueryBuilderData } from 'types/common/queryBuilder';
 
+import { DataType, FORMULA, MetricsType, WidgetKeys } from '../constant';
+import { IServiceName } from '../Tabs/types';
 import {
 	getQueryBuilderQueries,
 	getQueryBuilderQuerieswithFormula,
@@ -12,35 +15,42 @@ export const databaseCallsRPS = ({
 	legend,
 	tagFilterItems,
 }: DatabaseCallsRPSProps): QueryBuilderData => {
-	const metricName: BaseAutocompleteData = {
-		dataType: 'float64',
-		isColumn: true,
-		key: 'signoz_db_latency_count',
-		type: null,
-	};
-	const groupBy: BaseAutocompleteData[] = [
-		{ dataType: 'string', isColumn: false, key: 'db_system', type: 'tag' },
-	];
-	const itemsA: TagFilterItem[] = [
+	const autocompleteData: BaseAutocompleteData[] = [
 		{
-			id: '',
-			key: {
-				dataType: 'string',
-				isColumn: false,
-				key: 'service_name',
-				type: 'resource',
-			},
-			op: 'IN',
-			value: [`${servicename}`],
+			key: WidgetKeys.SignozDBLatencyCount,
+			dataType: DataType.FLOAT64,
+			isColumn: true,
+			type: null,
 		},
-		...tagFilterItems,
+	];
+	const groupBy: BaseAutocompleteData[] = [
+		{ dataType: DataType.STRING, isColumn: false, key: 'db_system', type: 'tag' },
+	];
+	const filterItems: TagFilterItem[][] = [
+		[
+			{
+				id: '',
+				key: {
+					key: WidgetKeys.Service_name,
+					dataType: DataType.STRING,
+					isColumn: false,
+					type: MetricsType.Resource,
+				},
+				op: OPERATORS.IN,
+				value: [`${servicename}`],
+			},
+			...tagFilterItems,
+		],
 	];
 
+	const legends = [legend];
+
 	return getQueryBuilderQueries({
-		metricName,
+		autocompleteData,
 		groupBy,
-		legend,
-		itemsA,
+		legends,
+		filterItems,
+		dataSource: DataSource.METRICS,
 	});
 };
 
@@ -48,32 +58,29 @@ export const databaseCallsAvgDuration = ({
 	servicename,
 	tagFilterItems,
 }: DatabaseCallProps): QueryBuilderData => {
-	const metricNameA: BaseAutocompleteData = {
-		dataType: 'float64',
+	const autocompleteDataA: BaseAutocompleteData = {
+		key: WidgetKeys.SignozDbLatencySum,
+		dataType: DataType.FLOAT64,
 		isColumn: true,
-		key: 'signoz_db_latency_sum',
 		type: null,
 	};
-	const metricNameB: BaseAutocompleteData = {
-		dataType: 'float64',
+	const autocompleteDataB: BaseAutocompleteData = {
+		key: WidgetKeys.SignozDBLatencyCount,
+		dataType: DataType.FLOAT64,
 		isColumn: true,
-		key: 'signoz_db_latency_count',
 		type: null,
 	};
-	const expression = 'A/B';
-	const legendFormula = 'Average Duration';
-	const legend = '';
-	const disabled = true;
+
 	const additionalItemsA: TagFilterItem[] = [
 		{
 			id: '',
 			key: {
-				dataType: 'string',
+				key: WidgetKeys.Service_name,
+				dataType: DataType.STRING,
 				isColumn: false,
-				key: 'service_name',
-				type: 'resource',
+				type: MetricsType.Resource,
 			},
-			op: 'IN',
+			op: OPERATORS.IN,
 			value: [`${servicename}`],
 		},
 		...tagFilterItems,
@@ -81,14 +88,14 @@ export const databaseCallsAvgDuration = ({
 	const additionalItemsB = additionalItemsA;
 
 	return getQueryBuilderQuerieswithFormula({
-		metricNameA,
-		metricNameB,
+		autocompleteDataA,
+		autocompleteDataB,
 		additionalItemsA,
 		additionalItemsB,
-		legend,
-		disabled,
-		expression,
-		legendFormula,
+		legend: '',
+		disabled: true,
+		expression: FORMULA.DATABASE_CALLS_AVG_DURATION,
+		legendFormula: 'Average Duration',
 	});
 };
 
@@ -97,6 +104,6 @@ interface DatabaseCallsRPSProps extends DatabaseCallProps {
 }
 
 interface DatabaseCallProps {
-	servicename: string | undefined;
+	servicename: IServiceName['servicename'];
 	tagFilterItems: TagFilterItem[];
 }
