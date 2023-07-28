@@ -1,22 +1,18 @@
 import RouteTab from 'components/RouteTab';
 import history from 'lib/history';
+import { useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useLocation } from 'react-router-dom';
 
-import { logsSettingsRoute, tabsExtraConfig } from './config';
+import { logsSettingsRoute } from './config';
 
 function LogsSettings(): JSX.Element {
 	const { pathname } = useLocation();
-	const tabsConfig = tabsExtraConfig[pathname];
+	const { t } = useTranslation();
 
-	return (
-		<RouteTab
-			activeKey={pathname}
-			routes={logsSettingsRoute}
-			history={history}
-			// eslint-disable-next-line react/jsx-props-no-spreading
-			{...tabsConfig}
-		/>
-	);
+	const routes = useMemo(() => logsSettingsRoute(t), [t]);
+
+	return <RouteTab activeKey={pathname} routes={routes} history={history} />;
 }
 
 export default LogsSettings;

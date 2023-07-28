@@ -1,17 +1,20 @@
-import { TabsProps, Typography } from 'antd';
+import { RouteTabProps } from 'components/RouteTab/types';
 import ROUTES from 'constants/routes';
 import LogsIndexToFields from 'container/LogsIndexToFields';
+import { TFunction } from 'react-i18next';
 
-import { TABS_TITLE } from './constant';
+import TabLabel from './components/TabLabel';
+import { TABS_KEY, TABS_TITLE } from './constant';
 
-export const tabsExtraConfig: Record<string, TabsProps> = {
-	[TABS_TITLE.LOGS_INDEX_FIELDS]: {},
-};
-
-export const logsSettingsRoute = [
+export const logsSettingsRoute = (t: TFunction): RouteTabProps['routes'] => [
 	{
 		Component: LogsIndexToFields,
-		name: <Typography>{TABS_TITLE.LOGS_INDEX_FIELDS}</Typography>,
+		name: (
+			<TabLabel
+				label={TABS_TITLE(t)[TABS_KEY.LOGS_INDEX_FIELDS]}
+				routeKey={ROUTES.LOGS_INDEX_FIELDS}
+			/>
+		),
 		route: ROUTES.LOGS_INDEX_FIELDS,
 		key: ROUTES.LOGS_INDEX_FIELDS,
 	},
