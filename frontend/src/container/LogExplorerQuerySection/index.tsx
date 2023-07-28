@@ -1,5 +1,9 @@
 import { Button } from 'antd';
-import { initialQueriesMap, PANEL_TYPES } from 'constants/queryBuilder';
+import {
+	initialQueriesMap,
+	OPERATORS,
+	PANEL_TYPES,
+} from 'constants/queryBuilder';
 import ExplorerOrderBy from 'container/ExplorerOrderBy';
 import { QueryBuilder } from 'container/QueryBuilder';
 import { OrderByFilterProps } from 'container/QueryBuilder/filters/OrderByFilter/OrderByFilter.interfaces';
@@ -30,6 +34,10 @@ function LogExplorerQuerySection(): JSX.Element {
 		const isTable = panelTypes === PANEL_TYPES.TABLE;
 		const config: QueryBuilderProps['filterConfigs'] = {
 			stepInterval: { isHidden: isTable, isDisabled: true },
+			filters: {
+				customKey: 'body',
+				customOp: OPERATORS.CONTAINS,
+			},
 		};
 
 		return config;
