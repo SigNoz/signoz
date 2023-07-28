@@ -342,8 +342,6 @@ const fillDataFromSeries = (
 					nextQueryData,
 				);
 
-				console.log({ targetSeria });
-
 				if (targetSeria) {
 					const isEqual = isEqualQueriesByLabel(equalQueriesByLabels, column.field);
 					if (!isEqual) {
