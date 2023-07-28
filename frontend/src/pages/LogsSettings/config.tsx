@@ -6,7 +6,7 @@ import { TFunction } from 'react-i18next';
 import TabLabel from './components/TabLabel';
 import { TABS_KEY, TABS_TITLE } from './constant';
 
-export const logsSettingsRoute = (t: TFunction): RouteTabProps['routes'] => [
+export const getLogsSettingsRoute = (t: TFunction): RouteTabProps['routes'] => [
 	{
 		Component: LogsIndexToFields,
 		name: (
