@@ -220,16 +220,19 @@ export const Query = memo(function Query({
 								</Col>
 							</Row>
 						</Col>
-						<Col span={11}>
-							<Row gutter={[11, 5]}>
-								<Col flex="5.93rem">
-									<FilterLabel label="HAVING" />
-								</Col>
-								<Col flex="1 1 12.5rem">
-									<HavingFilter onChange={handleChangeHavingFilter} query={query} />
-								</Col>
-							</Row>
-						</Col>
+						{!filterConfigs?.having?.isHidden && (
+							<Col span={11}>
+								<Row gutter={[11, 5]}>
+									<Col flex="5.93rem">
+										<FilterLabel label="HAVING" />
+									</Col>
+									<Col flex="1 1 12.5rem">
+										<HavingFilter onChange={handleChangeHavingFilter} query={query} />
+									</Col>
+								</Row>
+							</Col>
+						)}
+
 						<Col span={11}>
 							<Row gutter={[11, 5]}>
 								<Col flex="5.93rem">
@@ -248,6 +251,7 @@ export const Query = memo(function Query({
 		panelType,
 		isMetricsDataSource,
 		query,
+		filterConfigs?.having?.isHidden,
 		handleChangeLimit,
 		handleChangeHavingFilter,
 		renderOrderByFilter,
@@ -305,7 +309,11 @@ export const Query = memo(function Query({
 								</Col>
 							)}
 							<Col flex="1">
-								<QueryBuilderSearch query={query} onChange={handleChangeTagFilters} />
+								<QueryBuilderSearch
+									query={query}
+									onChange={handleChangeTagFilters}
+									whereClauseConfig={filterConfigs?.filters}
+								/>
 							</Col>
 						</Row>
 					</Col>

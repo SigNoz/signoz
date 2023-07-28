@@ -1140,6 +1140,39 @@ var testPrepLogsQueryData = []struct {
 		ExpectedQuery: "SELECT timestamp, id, trace_id, span_id, trace_flags, severity_text, severity_number, body,CAST((attributes_string_key, attributes_string_value), 'Map(String, String)') as  attributes_string,CAST((attributes_int64_key, attributes_int64_value), 'Map(String, Int64)') as  attributes_int64,CAST((attributes_float64_key, attributes_float64_value), 'Map(String, Float64)') as  attributes_float64,CAST((resources_string_key, resources_string_value), 'Map(String, String)') as resources_string from signoz_logs.distributed_logs where %s",
 		Options:       Options{IsLivetailQuery: true},
 	},
+	{
+		Name:      "Table query w/o limit",
+		PanelType: v3.PanelTypeTable,
+		Start:     1680066360726210000,
+		End:       1680066458000000000,
+		Step:      60,
+		BuilderQuery: &v3.BuilderQuery{
+			QueryName:         "A",
+			AggregateOperator: v3.AggregateOperatorCount,
+			Expression:        "A",
+			Filters:           &v3.FilterSet{Operator: "AND", Items: []v3.FilterItem{}},
+		},
+		TableName:     "logs",
+		ExpectedQuery: "SELECT now() as ts, toFloat64(count(*)) as value from signoz_logs.distributed_logs where (timestamp >= 1680066360726210000 AND timestamp <= 1680066458000000000) order by value DESC",
+		Options:       Options{},
+	},
+	{
+		Name:      "Table query with limit",
+		PanelType: v3.PanelTypeTable,
+		Start:     1680066360726210000,
+		End:       1680066458000000000,
+		Step:      60,
+		BuilderQuery: &v3.BuilderQuery{
+			QueryName:         "A",
+			AggregateOperator: v3.AggregateOperatorCount,
+			Expression:        "A",
+			Filters:           &v3.FilterSet{Operator: "AND", Items: []v3.FilterItem{}},
+			Limit:             10,
+		},
+		TableName:     "logs",
+		ExpectedQuery: "SELECT now() as ts, toFloat64(count(*)) as value from signoz_logs.distributed_logs where (timestamp >= 1680066360726210000 AND timestamp <= 1680066458000000000) order by value DESC LIMIT 10",
+		Options:       Options{},
+	},
 }
 
 func TestPrepareLogsQuery(t *testing.T) {
