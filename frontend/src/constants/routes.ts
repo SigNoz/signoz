@@ -32,6 +32,7 @@ const ROUTES = {
 	HOME_PAGE: '/',
 	PASSWORD_RESET: '/password-reset',
 	LIST_LICENSES: '/licenses',
+	LOGS_INDEX_FIELDS: '/logs-explorer/index-fields',
 };
 
 export default ROUTES;
