@@ -16,7 +16,7 @@ import { useCopyToClipboard } from 'react-use';
 import { HIGHLIGHTED_DELAY } from './configs';
 import { LogTimeRange, UseCopyLogLink } from './types';
 
-const useCopyLogLink = (logId?: string): UseCopyLogLink => {
+export const useCopyLogLink = (logId?: string): UseCopyLogLink => {
 	const urlQuery = useUrlQuery();
 	const { pathname } = useLocation();
 	const [, setCopy] = useCopyToClipboard();
@@ -53,16 +53,14 @@ const useCopyLogLink = (logId?: string): UseCopyLogLink => {
 			urlQuery.set(QueryParams.activeLogId, `"${logId}"`);
 			urlQuery.set(QueryParams.timeRange, range);
 
-			const link = `${window.location.origin}${
-				window.location.pathname
-			}?${urlQuery.toString()}`;
+			const link = `${window.location.origin}${pathname}?${urlQuery.toString()}`;
 
 			setCopy(link);
 			notifications.success({
 				message: 'Copied to clipboard',
 			});
 		},
-		[logId, notifications, timeRange, urlQuery, setCopy],
+		[logId, notifications, timeRange, urlQuery, pathname, setCopy],
 	);
 
 	useEffect(() => {
@@ -85,5 +83,3 @@ const useCopyLogLink = (logId?: string): UseCopyLogLink => {
 		onTimeRangeChange,
 	};
 };
-
-export default useCopyLogLink;

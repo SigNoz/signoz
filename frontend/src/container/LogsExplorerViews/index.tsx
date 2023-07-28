@@ -1,13 +1,10 @@
 import { TabsProps } from 'antd';
-import LogDetail from 'components/LogDetail';
 import TabLabel from 'components/TabLabel';
 import { QueryParams } from 'constants/query';
 import {
 	initialAutocompleteData,
 	initialQueriesMap,
-	OPERATORS,
 	PANEL_TYPES,
-	QueryBuilderKeys,
 } from 'constants/queryBuilder';
 import { queryParamNamesMap } from 'constants/queryBuilderQueryNames';
 import ROUTES from 'constants/routes';
@@ -15,34 +12,26 @@ import { DEFAULT_PER_PAGE_VALUE } from 'container/Controls/config';
 import ExportPanel from 'container/ExportPanel';
 import GoToTop from 'container/GoToTop';
 import LogsExplorerChart from 'container/LogsExplorerChart';
-import LogsExplorerContext from 'container/LogsExplorerContext';
 import LogsExplorerList from 'container/LogsExplorerList';
 import LogsExplorerTable from 'container/LogsExplorerTable';
 import { SIGNOZ_VALUE } from 'container/QueryBuilder/filters/OrderByFilter/constants';
 import TimeSeriesView from 'container/TimeSeriesView/TimeSeriesView';
 import { useUpdateDashboard } from 'hooks/dashboard/useUpdateDashboard';
 import { addEmptyWidgetInDashboardJSONWithQuery } from 'hooks/dashboard/utils';
+import { LogTimeRange } from 'hooks/logs/types';
+import { useCopyLogLink } from 'hooks/logs/useCopyLogLink';
 import { useGetExplorerQueryRange } from 'hooks/queryBuilder/useGetExplorerQueryRange';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import useAxiosError from 'hooks/useAxiosError';
-import useCopyLogLink from 'hooks/useCopyLogLink';
-import { LogTimeRange } from 'hooks/useCopyLogLink/types';
 import { useNotifications } from 'hooks/useNotifications';
 import useUrlQueryData from 'hooks/useUrlQueryData';
-import { chooseAutocompleteFromCustomValue } from 'lib/newQueryBuilder/chooseAutocompleteFromCustomValue';
 import { getPaginationQueryData } from 'lib/newQueryBuilder/getPaginationQueryData';
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { useQueryClient } from 'react-query';
 import { useSelector } from 'react-redux';
 import { generatePath, useHistory } from 'react-router-dom';
 import { AppState } from 'store/reducers';
-import { SuccessResponse } from 'types/api';
 import { Dashboard } from 'types/api/dashboard/getAll';
 import { ILog } from 'types/api/logs/log';
-import {
-	BaseAutocompleteData,
-	IQueryAutocompleteResponse,
-} from 'types/api/queryBuilder/queryAutocompleteResponse';
 import {
 	IBuilderQuery,
 	OrderByPayload,
@@ -50,14 +39,12 @@ import {
 } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource, StringOperators } from 'types/common/queryBuilder';
 import { GlobalReducer } from 'types/reducer/globalTime';
-import { v4 as uuid } from 'uuid';
 
 import { ActionsWrapper, TabsStyled } from './LogsExplorerViews.styled';
 
 function LogsExplorerViews(): JSX.Element {
 	const { notifications } = useNotifications();
 	const history = useHistory();
-	const queryClient = useQueryClient();
 
 	const { activeLogId, timeRange, onTimeRangeChange } = useCopyLogLink();
 	const { queryData: pageSize } = useUrlQueryData(
@@ -82,8 +69,6 @@ function LogsExplorerViews(): JSX.Element {
 	} = useQueryBuilder();
 
 	// State
-	const [activeLog, setActiveLog] = useState<ILog | null>(null);
-	const [activeContextLog, setActiveContextLog] = useState<ILog | null>(null);
 	const [page, setPage] = useState<number>(1);
 	const [logs, setLogs] = useState<ILog[]>([]);
 	const [requestData, setRequestData] = useState<Query | null>(null);
@@ -181,22 +166,6 @@ function LogsExplorerViews(): JSX.Element {
 		},
 	);
 
-	const handleSetActiveLog = useCallback((nextActiveLog: ILog) => {
-		setActiveLog(nextActiveLog);
-	}, []);
-
-	const handleClearActiveLog = useCallback(() => {
-		setActiveLog(null);
-	}, []);
-
-	const handleSetActiveContextLog = useCallback((log: ILog) => {
-		setActiveContextLog(log);
-	}, []);
-
-	const handleClearActiveContextLog = useCallback(() => {
-		setActiveContextLog(null);
-	}, []);
-
 	const getUpdateQuery = useCallback(
 		(newPanelType: PANEL_TYPES): Query => {
 			let query = updateAllQueriesOperators(
@@ -263,51 +232,6 @@ function LogsExplorerViews(): JSX.Element {
 			return data;
 		},
 		[currentStagedQueryData, orderByTimestamp],
-	);
-
-	const handleAddToQuery = useCallback(
-		(fieldKey: string, fieldValue: string, operator: string): void => {
-			const keysAutocomplete: BaseAutocompleteData[] =
-				queryClient.getQueryData<SuccessResponse<IQueryAutocompleteResponse>>(
-					[QueryBuilderKeys.GET_AGGREGATE_KEYS],
-					{ exact: false },
-				)?.payload.attributeKeys || [];
-
-			const existAutocompleteKey = chooseAutocompleteFromCustomValue(
-				keysAutocomplete,
-				fieldKey,
-			);
-
-			const currentOperator =
-				Object.keys(OPERATORS).find((op) => op === operator) || '';
-
-			const nextQuery: Query = {
-				...currentQuery,
-				builder: {
-					...currentQuery.builder,
-					queryData: currentQuery.builder.queryData.map((item) => ({
-						...item,
-						filters: {
-							...item.filters,
-							items: [
-								...item.filters.items.filter(
-									(item) => item.key?.id !== existAutocompleteKey.id,
-								),
-								{
-									id: uuid(),
-									key: existAutocompleteKey,
-									op: currentOperator,
-									value: fieldValue,
-								},
-							],
-						},
-					})),
-				},
-			};
-
-			redirectWithQueryBuilderData(nextQuery);
-		},
-		[currentQuery, queryClient, redirectWithQueryBuilderData],
 	);
 
 	const handleEndReached = useCallback(
@@ -485,11 +409,7 @@ function LogsExplorerViews(): JSX.Element {
 						isLoading={isFetching}
 						currentStagedQueryData={currentStagedQueryData}
 						logs={logs}
-						onOpenDetailedView={handleSetActiveLog}
 						onEndReached={handleEndReached}
-						onExpand={handleSetActiveLog}
-						onAddToQuery={handleAddToQuery}
-						onOpenLogsContext={handleSetActiveContextLog}
 					/>
 				),
 			},
@@ -517,10 +437,7 @@ function LogsExplorerViews(): JSX.Element {
 			isFetching,
 			currentStagedQueryData,
 			logs,
-			handleSetActiveLog,
 			handleEndReached,
-			handleAddToQuery,
-			handleSetActiveContextLog,
 			data,
 			isError,
 		],
@@ -570,18 +487,6 @@ function LogsExplorerViews(): JSX.Element {
 				onChange={handleChangeView}
 				destroyInactiveTabPane
 			/>
-			<LogDetail
-				log={activeLog}
-				onClose={handleClearActiveLog}
-				onAddToQuery={handleAddToQuery}
-				onClickActionItem={handleAddToQuery}
-			/>
-			{activeContextLog && (
-				<LogsExplorerContext
-					log={activeContextLog}
-					onClose={handleClearActiveContextLog}
-				/>
-			)}
 
 			<GoToTop />
 		</>

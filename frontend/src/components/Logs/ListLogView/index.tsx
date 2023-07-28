@@ -7,9 +7,12 @@ import {
 } from '@ant-design/icons';
 import Convert from 'ansi-to-html';
 import { Button, Divider, Row, Typography } from 'antd';
+import LogDetail from 'components/LogDetail';
+import LogsExplorerContext from 'container/LogsExplorerContext';
 import dayjs from 'dayjs';
 import dompurify from 'dompurify';
-import useCopyLogLink from 'hooks/useCopyLogLink';
+import { useActiveLog } from 'hooks/logs/useActiveLog';
+import { useCopyLogLink } from 'hooks/logs/useCopyLogLink';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { useNotifications } from 'hooks/useNotifications';
 // utils
@@ -92,17 +95,12 @@ function LogSelectedField({
 
 type ListLogViewProps = {
 	logData: ILog;
-	onOpenDetailedView: (log: ILog) => void;
-	onOpenLogsContext?: (log: ILog) => void;
 	selectedFields: IField[];
-} & Pick<AddToQueryHOCProps, 'onAddToQuery'>;
+};
 
 function ListLogView({
 	logData,
 	selectedFields,
-	onOpenDetailedView,
-	onOpenLogsContext,
-	onAddToQuery,
 }: ListLogViewProps): JSX.Element {
 	const flattenLogData = useMemo(() => FlatLogData(logData), [logData]);
 
@@ -112,16 +110,25 @@ function ListLogView({
 	const { isHighlighted, isLogsExplorerPage, onLogCopy } = useCopyLogLink(
 		logData.id,
 	);
+	const {
+		activeLog: activeContextLog,
+		onSetActiveLog: handleSetActiveContextLog,
+		onClearActiveLog: handleClearActiveContextLog,
+	} = useActiveLog();
+	const {
+		activeLog,
+		onSetActiveLog,
+		onClearActiveLog,
+		onAddToQuery,
+	} = useActiveLog();
 
 	const handleDetailedView = useCallback(() => {
-		onOpenDetailedView(logData);
-	}, [logData, onOpenDetailedView]);
+		onSetActiveLog(logData);
+	}, [logData, onSetActiveLog]);
 
 	const handleShowContext = useCallback(() => {
-		if (!onOpenLogsContext) return;
-
-		onOpenLogsContext(logData);
-	}, [logData, onOpenLogsContext]);
+		handleSetActiveContextLog(logData);
+	}, [logData, handleSetActiveContextLog]);
 
 	const handleCopyJSON = (): void => {
 		setCopy(JSON.stringify(logData, null, 2));
@@ -211,13 +218,22 @@ function ListLogView({
 						</Button>
 					</>
 				)}
+
+				{activeContextLog && (
+					<LogsExplorerContext
+						log={activeContextLog}
+						onClose={handleClearActiveContextLog}
+					/>
+				)}
+				<LogDetail
+					log={activeLog}
+					onClose={onClearActiveLog}
+					onAddToQuery={onAddToQuery}
+					onClickActionItem={onAddToQuery}
+				/>
 			</Row>
 		</Container>
 	);
 }
-
-ListLogView.defaultProps = {
-	onOpenLogsContext: undefined,
-};
 
 export default ListLogView;

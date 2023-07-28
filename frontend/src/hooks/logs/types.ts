@@ -1,4 +1,5 @@
 import { MouseEventHandler } from 'react';
+import { ILog } from 'types/api/logs/log';
 
 export type LogTimeRange = {
 	start: number;
@@ -13,4 +14,11 @@ export type UseCopyLogLink = {
 	timeRange: LogTimeRange | null;
 	onLogCopy: MouseEventHandler<HTMLElement>;
 	onTimeRangeChange: (newTimeRange: LogTimeRange | null) => void;
+};
+
+export type UseActiveLog = {
+	activeLog: ILog | null;
+	onSetActiveLog: (log: ILog) => void;
+	onClearActiveLog: () => void;
+	onAddToQuery: (fieldKey: string, fieldValue: string, operator: string) => void;
 };

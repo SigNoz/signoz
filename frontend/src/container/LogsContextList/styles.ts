@@ -1,4 +1,5 @@
 import { Space, Typography } from 'antd';
+import { themeColors } from 'constants/theme';
 import styled from 'styled-components';
 
 export const ListContainer = styled.div<{ $isDarkMode: boolean }>`
@@ -8,7 +9,7 @@ export const ListContainer = styled.div<{ $isDarkMode: boolean }>`
 	overflow-y: scroll;
 
 	background-color: ${({ $isDarkMode }): string =>
-		$isDarkMode ? '#262626' : '#ddd'};
+		$isDarkMode ? themeColors.darkGrey : themeColors.lightgrey};
 `;
 
 export const ShowButtonWrapper = styled(Space)`

@@ -1,3 +1,4 @@
+import { OPERATORS } from 'constants/queryBuilder';
 import { ILog } from 'types/api/logs/log';
 import { TagFilterItem } from 'types/api/queryBuilder/queryBuilderData';
 import { v4 as uuid } from 'uuid';
@@ -15,7 +16,7 @@ export const getFiltersFromResources = (
 				type: 'resource',
 				isColumn: false,
 			},
-			op: '=',
+			op: OPERATORS['='],
 			value: resourceValue,
 		};
 	});

@@ -5,13 +5,23 @@ import {
 } from '@ant-design/icons';
 // const Convert = require('ansi-to-html');
 import Convert from 'ansi-to-html';
-import { Button, Tooltip } from 'antd';
+import { Button, DrawerProps, Tooltip } from 'antd';
+import LogDetail from 'components/LogDetail';
+import LogsExplorerContext from 'container/LogsExplorerContext';
 import dayjs from 'dayjs';
 import dompurify from 'dompurify';
-import useCopyLogLink from 'hooks/useCopyLogLink';
+import { useActiveLog } from 'hooks/logs/useActiveLog';
+import { useCopyLogLink } from 'hooks/logs/useCopyLogLink';
 // hooks
 import { useIsDarkMode } from 'hooks/useDarkMode';
-import { MouseEventHandler, useCallback, useMemo, useState } from 'react';
+import {
+	KeyboardEvent,
+	MouseEvent,
+	MouseEventHandler,
+	useCallback,
+	useMemo,
+	useState,
+} from 'react';
 // interfaces
 import { ILog } from 'types/api/logs/log';
 
@@ -30,23 +40,25 @@ interface RawLogViewProps {
 	isReadOnly?: boolean;
 	data: ILog;
 	linesPerRow: number;
-	onClickExpand?: (log: ILog) => void;
-	onOpenLogsContext?: (log: ILog) => void;
 }
 
 function RawLogView(props: RawLogViewProps): JSX.Element {
-	const {
-		isActiveLog = false,
-		isReadOnly = false,
-		data,
-		linesPerRow,
-		onClickExpand,
-		onOpenLogsContext,
-	} = props;
+	const { isActiveLog = false, isReadOnly = false, data, linesPerRow } = props;
 
 	const { isHighlighted, isLogsExplorerPage, onLogCopy } = useCopyLogLink(
 		data.id,
 	);
+	const {
+		activeLog: activeContextLog,
+		onSetActiveLog: handleSetActiveContextLog,
+		onClearActiveLog: handleClearActiveContextLog,
+	} = useActiveLog();
+	const {
+		activeLog,
+		onSetActiveLog,
+		onClearActiveLog,
+		onAddToQuery,
+	} = useActiveLog();
 
 	const [hasActionButtons, setHasActionButtons] = useState<boolean>(false);
 
@@ -62,10 +74,22 @@ function RawLogView(props: RawLogViewProps): JSX.Element {
 	);
 
 	const handleClickExpand = useCallback(() => {
-		if (!onClickExpand) return;
+		if (activeContextLog || isReadOnly) return;
 
-		onClickExpand(data);
-	}, [onClickExpand, data]);
+		onSetActiveLog(data);
+	}, [activeContextLog, isReadOnly, data, onSetActiveLog]);
+
+	const handleCloseLogDetail: DrawerProps['onClose'] = useCallback(
+		(
+			event: MouseEvent<Element, globalThis.MouseEvent> | KeyboardEvent<Element>,
+		) => {
+			event.preventDefault();
+			event.stopPropagation();
+
+			onClearActiveLog();
+		},
+		[onClearActiveLog],
+	);
 
 	const handleMouseEnter = useCallback(() => {
 		if (isReadOnlyLog) return;
@@ -83,12 +107,9 @@ function RawLogView(props: RawLogViewProps): JSX.Element {
 		(event) => {
 			event.preventDefault();
 			event.stopPropagation();
-
-			if (!onOpenLogsContext) return;
-
-			onOpenLogsContext(data);
+			handleSetActiveContextLog(data);
 		},
-		[data, onOpenLogsContext],
+		[data, handleSetActiveContextLog],
 	);
 
 	const html = useMemo(
@@ -114,7 +135,7 @@ function RawLogView(props: RawLogViewProps): JSX.Element {
 			// eslint-disable-next-line react/jsx-props-no-spreading
 			{...mouseActions}
 		>
-			{onClickExpand && (
+			{!isReadOnly && (
 				<ExpandIconWrapper flex="30px">
 					<ExpandAltOutlined />
 				</ExpandIconWrapper>
@@ -141,6 +162,19 @@ function RawLogView(props: RawLogViewProps): JSX.Element {
 					</Tooltip>
 				</ActionButtonsWrapper>
 			)}
+
+			{activeContextLog && (
+				<LogsExplorerContext
+					log={activeContextLog}
+					onClose={handleClearActiveContextLog}
+				/>
+			)}
+			<LogDetail
+				log={activeLog}
+				onClose={handleCloseLogDetail}
+				onAddToQuery={onAddToQuery}
+				onClickActionItem={onAddToQuery}
+			/>
 		</RawLogViewContainer>
 	);
 }
@@ -148,8 +182,6 @@ function RawLogView(props: RawLogViewProps): JSX.Element {
 RawLogView.defaultProps = {
 	isActiveLog: false,
 	isReadOnly: false,
-	onClickExpand: undefined,
-	onOpenLogsContext: undefined,
 };
 
 export default RawLogView;

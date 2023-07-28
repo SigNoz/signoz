@@ -1,5 +1,7 @@
 import { Card, Typography } from 'antd';
+import { themeColors } from 'constants/theme';
 import styled from 'styled-components';
+import getAlphaColor from 'utils/getAlphaColor';
 
 export const Container = styled(Card)<{
 	$isDarkMode: boolean;
@@ -14,7 +16,9 @@ export const Container = styled(Card)<{
 	${({ $isDarkMode, $isActiveLog }): string =>
 		$isActiveLog
 			? `background-color: ${
-					$isDarkMode ? 'rgba(255,255,255,0.1)' : 'rgba(0, 0, 0, 0.1)'
+					$isDarkMode
+						? getAlphaColor(themeColors.white)[10]
+						: getAlphaColor(themeColors.black)[10]
 			  };`
 			: ''}
 `;

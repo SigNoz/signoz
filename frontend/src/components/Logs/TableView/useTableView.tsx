@@ -8,10 +8,9 @@ import { Button, Space, Typography } from 'antd';
 import { ColumnsType } from 'antd/es/table';
 import dayjs from 'dayjs';
 import dompurify from 'dompurify';
-import useCopyLogLink from 'hooks/useCopyLogLink';
+import { useCopyLogLink } from 'hooks/logs/useCopyLogLink';
 import { FlatLogData } from 'lib/logs/flatLogData';
 import { useCallback, useMemo } from 'react';
-import { ILog } from 'types/api/logs/log';
 
 import { ExpandIconWrapper } from '../RawLogView/styles';
 import { defaultCellStyle, defaultTableStyle } from './config';
@@ -26,16 +25,22 @@ import {
 const convert = new Convert();
 
 function ActionsColumn({
-	log,
+	logId,
+	logs,
 	onOpenLogsContext,
 }: ActionsColumnProps): JSX.Element {
-	const { onLogCopy } = useCopyLogLink(log.id);
+	const currentLog = useMemo(() => logs.find(({ id }) => id === logId), [
+		logs,
+		logId,
+	]);
+
+	const { onLogCopy } = useCopyLogLink(currentLog?.id);
 
 	const handleShowContext = useCallback(() => {
-		if (!onOpenLogsContext) return;
+		if (!onOpenLogsContext || !currentLog) return;
 
-		onOpenLogsContext(log);
-	}, [log, onOpenLogsContext]);
+		onOpenLogsContext(currentLog);
+	}, [currentLog, onOpenLogsContext]);
 
 	return (
 		<Space>
@@ -54,15 +59,24 @@ export const useTableView = (props: UseTableViewProps): UseTableViewResult => {
 		logs,
 		fields,
 		linesPerRow,
-		onClickExpand,
-		onOpenLogsContext,
 		appendTo = 'center',
+		onOpenLogsContext,
+		onClickExpand,
 	} = props;
 	const { isLogsExplorerPage } = useCopyLogLink();
 
 	const flattenLogData = useMemo(() => logs.map((log) => FlatLogData(log)), [
 		logs,
 	]);
+
+	const handleClickExpand = useCallback(
+		(index: number): void => {
+			if (!onClickExpand) return;
+
+			onClickExpand(logs[index]);
+		},
+		[logs, onClickExpand],
+	);
 
 	const columns: ColumnsType<Record<string, unknown>> = useMemo(() => {
 		const fieldColumns: ColumnsType<Record<string, unknown>> = fields
@@ -96,7 +110,7 @@ export const useTableView = (props: UseTableViewProps): UseTableViewResult => {
 					children: (
 						<ExpandIconWrapper
 							onClick={(): void => {
-								onClickExpand(logs[index]);
+								handleClickExpand(index);
 							}}
 						>
 							<ExpandAltOutlined />
@@ -148,7 +162,8 @@ export const useTableView = (props: UseTableViewProps): UseTableViewResult => {
 							render: (_, log): ColumnTypeRender<Record<string, unknown>> => ({
 								children: (
 									<ActionsColumn
-										log={(log as unknown) as ILog}
+										logId={(log.id as unknown) as string}
+										logs={logs}
 										onOpenLogsContext={onOpenLogsContext}
 									/>
 								),
@@ -163,7 +178,7 @@ export const useTableView = (props: UseTableViewProps): UseTableViewResult => {
 		appendTo,
 		linesPerRow,
 		isLogsExplorerPage,
-		onClickExpand,
+		handleClickExpand,
 		onOpenLogsContext,
 	]);
 

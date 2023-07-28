@@ -8,8 +8,8 @@ import ExplorerControlPanel from 'container/ExplorerControlPanel';
 import { Heading } from 'container/LogsTable/styles';
 import { useOptionsMenu } from 'container/OptionsMenu';
 import { contentStyle } from 'container/Trace/Search/config';
+import { useCopyLogLink } from 'hooks/logs/useCopyLogLink';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
-import useCopyLogLink from 'hooks/useCopyLogLink';
 import useFontFaceObserver from 'hooks/useFontObserver';
 import { memo, useCallback, useEffect, useMemo, useRef } from 'react';
 import { Virtuoso, VirtuosoHandle } from 'react-virtuoso';
@@ -30,11 +30,7 @@ function LogsExplorerList({
 	isLoading,
 	currentStagedQueryData,
 	logs,
-	onOpenDetailedView,
 	onEndReached,
-	onExpand,
-	onAddToQuery,
-	onOpenLogsContext,
 }: LogsExplorerListProps): JSX.Element {
 	const ref = useRef<VirtuosoHandle>(null);
 	const { initialDataSource } = useQueryBuilder();
@@ -75,36 +71,15 @@ function LogsExplorerList({
 		(_: number, log: ILog): JSX.Element => {
 			if (options.format === 'raw') {
 				return (
-					<RawLogView
-						key={log.id}
-						data={log}
-						linesPerRow={options.maxLines}
-						onClickExpand={onExpand}
-						onOpenLogsContext={onOpenLogsContext}
-					/>
+					<RawLogView key={log.id} data={log} linesPerRow={options.maxLines} />
 				);
 			}
 
 			return (
-				<ListLogView
-					key={log.id}
-					logData={log}
-					selectedFields={selectedFields}
-					onOpenDetailedView={onOpenDetailedView}
-					onAddToQuery={onAddToQuery}
-					onOpenLogsContext={onOpenLogsContext}
-				/>
+				<ListLogView key={log.id} logData={log} selectedFields={selectedFields} />
 			);
 		},
-		[
-			options.format,
-			options.maxLines,
-			selectedFields,
-			onOpenDetailedView,
-			onAddToQuery,
-			onExpand,
-			onOpenLogsContext,
-		],
+		[options.format, options.maxLines, selectedFields],
 	);
 
 	useEffect(() => {
@@ -128,12 +103,11 @@ function LogsExplorerList({
 			return (
 				<InfinityTableView
 					ref={ref}
+					isLoading={isLoading}
 					tableViewProps={{
 						logs,
 						fields: selectedFields,
 						linesPerRow: options.maxLines,
-						onClickExpand: onExpand,
-						onOpenLogsContext,
 						appendTo: 'end',
 					}}
 					infitiyTableProps={{ onEndReached }}
@@ -162,8 +136,6 @@ function LogsExplorerList({
 		onEndReached,
 		getItemContent,
 		selectedFields,
-		onExpand,
-		onOpenLogsContext,
 	]);
 
 	return (

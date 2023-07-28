@@ -24,7 +24,7 @@ interface LogsExplorerContextProps {
 function LogsExplorerContext({
 	log,
 	onClose,
-}: LogsExplorerContextProps): JSX.Element {
+}: LogsExplorerContextProps): JSX.Element | null {
 	const { updateAllQueriesOperators } = useQueryBuilder();
 
 	const initialContextQuery = useMemo(() => {

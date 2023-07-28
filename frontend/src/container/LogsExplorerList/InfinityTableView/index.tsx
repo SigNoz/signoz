@@ -1,7 +1,10 @@
+import LogDetail from 'components/LogDetail';
 import { ColumnTypeRender } from 'components/Logs/TableView/types';
 import { useTableView } from 'components/Logs/TableView/useTableView';
 import { LOCALSTORAGE } from 'constants/localStorage';
-import useCopyLogLink from 'hooks/useCopyLogLink';
+import LogsExplorerContext from 'container/LogsExplorerContext';
+import { useActiveLog } from 'hooks/logs/useActiveLog';
+import { useCopyLogLink } from 'hooks/logs/useCopyLogLink';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import useDragColumns from 'hooks/useDragColumns';
 import { getDraggedColumns } from 'hooks/useDragColumns/utils';
@@ -52,11 +55,27 @@ const CustomTableRow: TableComponents<ILog>['TableRow'] = ({
 
 const InfinityTable = forwardRef<TableVirtuosoHandle, InfinityTableProps>(
 	function InfinityTableView(
-		{ tableViewProps, infitiyTableProps },
+		{ isLoading, tableViewProps, infitiyTableProps },
 		ref,
 	): JSX.Element | null {
+		const {
+			activeLog: activeContextLog,
+			onSetActiveLog: handleSetActiveContextLog,
+			onClearActiveLog: handleClearActiveContextLog,
+		} = useActiveLog();
+		const {
+			activeLog,
+			onSetActiveLog,
+			onClearActiveLog,
+			onAddToQuery,
+		} = useActiveLog();
+
 		const { onEndReached } = infitiyTableProps;
-		const { dataSource, columns } = useTableView(tableViewProps);
+		const { dataSource, columns } = useTableView({
+			...tableViewProps,
+			onClickExpand: onSetActiveLog,
+			onOpenLogsContext: handleSetActiveContextLog,
+		});
 		const { draggedColumns, onDragColumns } = useDragColumns<
 			Record<string, unknown>
 		>(LOCALSTORAGE.LOGS_LIST_COLUMNS);
@@ -126,24 +145,39 @@ const InfinityTable = forwardRef<TableVirtuosoHandle, InfinityTableProps>(
 		);
 
 		return (
-			<TableVirtuoso
-				useWindowScroll
-				ref={ref}
-				style={infinityDefaultStyles}
-				data={dataSource}
-				components={{
-					// eslint-disable-next-line react/jsx-props-no-spreading
-					Table: LogsCustomTable({ handleDragEnd }),
-					// TODO: fix it in the future
-					// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-					// @ts-ignore
-					TableRow: CustomTableRow,
-				}}
-				itemContent={itemContent}
-				fixedHeaderContent={tableHeader}
-				endReached={onEndReached}
-				totalCount={dataSource.length}
-			/>
+			<>
+				<TableVirtuoso
+					useWindowScroll
+					ref={ref}
+					style={infinityDefaultStyles}
+					data={dataSource}
+					components={{
+						// eslint-disable-next-line react/jsx-props-no-spreading
+						Table: LogsCustomTable({ isLoading, handleDragEnd }),
+						// TODO: fix it in the future
+						// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+						// @ts-ignore
+						TableRow: CustomTableRow,
+					}}
+					itemContent={itemContent}
+					fixedHeaderContent={tableHeader}
+					endReached={onEndReached}
+					totalCount={dataSource.length}
+				/>
+
+				{activeContextLog && (
+					<LogsExplorerContext
+						log={activeContextLog}
+						onClose={handleClearActiveContextLog}
+					/>
+				)}
+				<LogDetail
+					log={activeLog}
+					onClose={onClearActiveLog}
+					onAddToQuery={onAddToQuery}
+					onClickActionItem={onAddToQuery}
+				/>
+			</>
 		);
 	},
 );

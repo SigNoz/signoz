@@ -1,6 +1,8 @@
 import { blue, orange } from '@ant-design/colors';
 import { Col, Row, Space } from 'antd';
+import { themeColors } from 'constants/theme';
 import styled from 'styled-components';
+import getAlphaColor from 'utils/getAlphaColor';
 
 export const RawLogViewContainer = styled(Row)<{
 	$isDarkMode: boolean;
@@ -22,7 +24,9 @@ export const RawLogViewContainer = styled(Row)<{
 		!$isReadOnly
 			? `&:hover {
 			background-color: ${
-				$isDarkMode ? 'rgba(255,255,255,0.1)' : 'rgba(0, 0, 0, 0.1)'
+				$isDarkMode
+					? getAlphaColor(themeColors.white)[10]
+					: getAlphaColor(themeColors.black)[10]
 			};
 		}`
 			: ''}
@@ -60,7 +64,7 @@ export const RawLogContent = styled.div<RawLogContentProps>`
 		props.$isActiveLog || props.$isReadOnly ? 'initial' : 'pointer'};
 
 	${(props): string =>
-		props.$isReadOnly && !props.$isActiveLog ? 'padding: 0 24px;' : ''}
+		props.$isReadOnly && !props.$isActiveLog ? 'padding: 0 1.5rem;' : ''}
 `;
 
 export const ActionButtonsWrapper = styled(Space)`
