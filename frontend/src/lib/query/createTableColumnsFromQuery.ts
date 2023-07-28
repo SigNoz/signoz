@@ -5,6 +5,7 @@ import {
 	initialQueryBuilderFormValues,
 } from 'constants/queryBuilder';
 import { FORMULA_REGEXP } from 'constants/regExp';
+import { QUERY_TABLE_CONFIG } from 'container/QueryTable/config';
 import { QueryTableProps } from 'container/QueryTable/QueryTable.intefaces';
 import { ReactNode } from 'react';
 import {
@@ -453,6 +454,7 @@ const generateTableColumns = (
 		const column: ColumnType<RowData> = {
 			dataIndex: item.dataIndex,
 			title: item.title,
+			width: QUERY_TABLE_CONFIG.width,
 			render: renderColumnCell && renderColumnCell[item.dataIndex],
 			// sorter: item.sortable
 			// 	? (a: RowData, b: RowData): number =>
