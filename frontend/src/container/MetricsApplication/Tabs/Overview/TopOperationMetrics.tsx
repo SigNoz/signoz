@@ -18,6 +18,7 @@ import { GlobalReducer } from 'types/reducer/globalTime';
 import { v4 as uuid } from 'uuid';
 
 import { IServiceName } from '../types';
+import { title } from './config';
 import ColumnWithLink from './TableRenderer/ColumnWithLink';
 import { getTableColumnRenderer } from './TableRenderer/TableColumnRenderer';
 
@@ -109,6 +110,7 @@ function TopOperationMetrics(): JSX.Element {
 
 	return (
 		<QueryTable
+			title={title}
 			query={updatedQuery}
 			queryTableData={queryTableData}
 			loading={isLoading}
