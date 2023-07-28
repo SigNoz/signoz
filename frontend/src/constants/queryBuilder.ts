@@ -21,6 +21,7 @@ import {
 	BoolOperators,
 	DataSource,
 	LogsAggregatorOperator,
+	MetricAggregateOperator,
 	NumberOperators,
 	QueryAdditionalFilter,
 	QueryBuilderData,
@@ -124,7 +125,7 @@ export const initialFilters: TagFilter = {
 export const initialQueryBuilderFormValues: IBuilderQuery = {
 	dataSource: DataSource.METRICS,
 	queryName: createNewBuilderItemName({ existNames: [], sourceNames: alphabet }),
-	aggregateOperator: mapOfOperators.metrics[0].value,
+	aggregateOperator: MetricAggregateOperator.COUNT,
 	aggregateAttribute: initialAutocompleteData,
 	filters: { items: [], op: 'AND' },
 	expression: createNewBuilderItemName({
