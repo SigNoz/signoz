@@ -7,6 +7,10 @@ import { SelectOption } from 'types/common/select';
 
 export const metricAggregateOperatorOptions: SelectOption<string, string>[] = [
 	{
+		value: MetricAggregateOperator.NOOP,
+		label: 'NOOP',
+	},
+	{
 		value: MetricAggregateOperator.COUNT,
 		label: 'Count',
 	},
@@ -66,6 +70,10 @@ export const metricAggregateOperatorOptions: SelectOption<string, string>[] = [
 	{
 		value: MetricAggregateOperator.P99,
 		label: 'P99',
+	},
+	{
+		value: MetricAggregateOperator.RATE,
+		label: 'Rate',
 	},
 	{
 		value: MetricAggregateOperator.SUM_RATE,
