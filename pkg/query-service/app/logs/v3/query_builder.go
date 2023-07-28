@@ -398,6 +398,9 @@ func reduceQuery(query string, reduceTo v3.ReduceToOperator, aggregateOperator v
 }
 
 func addLimitToQuery(query string, limit uint64) string {
+	if limit == 0 {
+		return query
+	}
 	return fmt.Sprintf("%s LIMIT %d", query, limit)
 }
 
@@ -452,7 +455,7 @@ func PrepareLogsQuery(start, end int64, queryType v3.QueryType, panelType v3.Pan
 		} else {
 			query = addLimitToQuery(query, mq.Limit)
 		}
-	} else if panelType == v3.PanelTypeTable && mq.Limit > 0 {
+	} else if panelType == v3.PanelTypeTable {
 		query = addLimitToQuery(query, mq.Limit)
 	}
 
