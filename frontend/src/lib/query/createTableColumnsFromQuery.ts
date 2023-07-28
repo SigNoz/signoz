@@ -322,14 +322,14 @@ const fillDataFromSeries = (
 
 	if (!series) return;
 
-	series.forEach((seria) => {
+	series.forEach((seria, seriaIndex) => {
 		const labelEntries = Object.entries(seria.labels);
 
 		const unusedColumnsKeys = new Set<keyof RowData>(
 			columns.map((item) => item.field),
 		);
 
-		columns.forEach((column, index) => {
+		columns.forEach((column) => {
 			if (queryName === column.field) {
 				if (seria.values.length === 0) return;
 
@@ -357,11 +357,11 @@ const fillDataFromSeries = (
 						equalQueriesByLabels.push(column.field);
 					}
 
-					if (!querySeries[index]) return;
-					if (querySeries[index].values.length === 0) return;
+					if (!querySeries[seriaIndex]) return;
+					if (querySeries[seriaIndex].values.length === 0) return;
 
 					column.data.push(
-						parseFloat(querySeries[index].values[0].value).toFixed(2),
+						parseFloat(querySeries[seriaIndex].values[0].value).toFixed(2),
 					);
 				} else {
 					column.data.push('N/A');
