@@ -452,7 +452,7 @@ func PrepareLogsQuery(start, end int64, queryType v3.QueryType, panelType v3.Pan
 		} else {
 			query = addLimitToQuery(query, mq.Limit)
 		}
-	} else if panelType == v3.PanelTypeTable {
+	} else if panelType == v3.PanelTypeTable && mq.Limit > 0 {
 		query = addLimitToQuery(query, mq.Limit)
 	}
 
