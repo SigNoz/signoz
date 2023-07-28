@@ -12,7 +12,7 @@ import {
 	IBuilderQuery,
 	Query,
 } from 'types/api/queryBuilder/queryBuilderData';
-import { ListItem, QueryDataV3, SeriesItem } from 'types/api/widgets/getQuery';
+import { ListItem, QueryDataV3 } from 'types/api/widgets/getQuery';
 import { QueryBuilderData } from 'types/common/queryBuilder';
 import { v4 as uuid } from 'uuid';
 
@@ -270,85 +270,119 @@ const fillEmptyRowCells = (
 	});
 };
 
-// TODO: try to serialize data
-// const serializeData = () => {
-// 	{A: {availableLabels: ['service_name']}
-// 	B: {
-// 		['service_name']: [['timestamp', value]]
-// 		['operation']: [['timestamp', value]]
-// 	}
-// }
-// };
+const getIsLabelsEqual = (
+	sourceLabels: string[],
+	targetLabels: string[],
+): boolean => {
+	let isEqual = false;
 
-// const isLabelPresent = (
-// 	queryLabels: Record<string, string[]>,
-// 	name: string,
-// 	label: string,
-// ): boolean => {
-// 	const queryIndex = Object.entries(queryLabels).findIndex(
-// 		([key]) => key === name,
-// 	);
+	if (sourceLabels.length !== targetLabels.length) return isEqual;
 
-// 	// const queryIndex = restQueryLabels.findIndex(([_, value]) =>
-// 	// 	value.includes(label),
-// 	// );
-
-// 	const newQueryLabels = [...Object.entries(queryLabels)].slice(queryIndex);
-
-// 	console.log({ restQueryLabels });
-// };
-
-// const groupTableColumns =
-
-const fillData = (
-	seria: SeriesItem,
-	queryLabels: Record<string, string[]>,
-	columns: DynamicColumns,
-	queryName: string,
-	value?: SeriesItem['values'][number],
-): void => {
-	const labelEntries = Object.entries(seria.labels);
-
-	// pass as argument object {[queryName]: [labels] }
-
-	const unusedColumnsKeys = new Set<keyof RowData>(
-		columns.map((item) => item.field),
-	);
-
-	columns.forEach((column) => {
-		if (queryName === column.field && value) {
-			column.data.push(parseFloat(value.value).toFixed(2));
-			unusedColumnsKeys.delete(column.field);
+	sourceLabels.forEach((label) => {
+		if (targetLabels.includes(label)) {
+			isEqual = true;
 			return;
 		}
 
-		labelEntries.forEach(([key, currentValue]) => {
-			if (column.field === key) {
-				column.data.push(currentValue);
-				unusedColumnsKeys.delete(key);
-			}
-		});
-
-		// if (keys.includes(column.field))
-		fillEmptyRowCells(unusedColumnsKeys, columns, column);
+		isEqual = false;
 	});
+
+	return isEqual;
 };
 
-const fillDataFromSeria = (
-	queryLabels: Record<string, string[]>,
-	seria: SeriesItem,
-	columns: DynamicColumns,
+const isEqualQueriesByLabel = (
+	equalQueries: string[],
 	queryName: string,
+): boolean => equalQueries.includes(queryName);
+
+const fillDataFromSeries = (
+	currentQuery: QueryDataV3,
+	queryTableData: QueryDataV3[],
+	queryLabels: Record<string, string[]>,
+	columns: DynamicColumns,
+	equalQueriesByLabels: string[],
+	// TODO: fix it
+	// eslint-disable-next-line sonarjs/cognitive-complexity
 ): void => {
-	if (seria.values.length === 0) {
-		fillData(seria, queryLabels, columns, queryName);
+	const { series, queryName } = currentQuery;
 
-		return;
-	}
+	const isEqualQuery = isEqualQueriesByLabel(equalQueriesByLabels, queryName);
 
-	// TODO: different values
-	seria.values.forEach((value) => {
-		fillData(seria, queryLabels, columns, queryName, value);
+	const currentLabels = queryLabels[queryName];
+
+	const labelEntries = Object.entries(queryLabels);
+
+	const currentQueryLabelsIndex = labelEntries.findIndex(
+		([qName]) => qName === queryName,
+	);
+
+	const restQueryLabels = Object.fromEntries(
+		labelEntries.filter((_, index) => index > currentQueryLabelsIndex),
+	);
+
+	if (!series) return;
+
+	series.forEach((seria) => {
+		const labelEntries = Object.entries(seria.labels);
+
+		const unusedColumnsKeys = new Set<keyof RowData>(
+			columns.map((item) => item.field),
+		);
+
+		columns.forEach((column, index) => {
+			if (queryName === column.field) {
+				if (seria.values.length === 0) return;
+
+				column.data.push(parseFloat(seria.values[0].value).toFixed(2));
+				unusedColumnsKeys.delete(column.field);
+				return;
+			}
+
+			if (column.type !== 'field' && column.field !== queryName) {
+				const nextLabel = restQueryLabels[column.field];
+
+				if (!nextLabel) {
+					column.data.push('N/A');
+					return;
+				}
+
+				const isLabelsEqual = getIsLabelsEqual(currentLabels, nextLabel);
+
+				const querySeries =
+					queryTableData.find((q) => q.queryName === column.field)?.series || [];
+
+				if (isLabelsEqual) {
+					const isEqual = isEqualQueriesByLabel(equalQueriesByLabels, column.field);
+					if (!isEqual) {
+						equalQueriesByLabels.push(column.field);
+					}
+
+					if (!querySeries[index]) return;
+					if (querySeries[index].values.length === 0) return;
+
+					column.data.push(
+						parseFloat(querySeries[index].values[0].value).toFixed(2),
+					);
+				} else {
+					column.data.push('N/A');
+				}
+
+				unusedColumnsKeys.delete(column.field);
+
+				return;
+			}
+
+			if (isEqualQuery) return;
+
+			labelEntries.forEach(([key, currentValue]) => {
+				if (column.field === key) {
+					column.data.push(currentValue);
+					unusedColumnsKeys.delete(key);
+				}
+			});
+
+			fillEmptyRowCells(unusedColumnsKeys, columns, column);
+		});
 	});
 };
 
@@ -404,16 +438,18 @@ const fillColumnsData: FillColumnData = (queryTableData, cols) => {
 
 	const queryLabels = getQueriesLabels(queryTableData);
 
-	console.log({ queryLabels });
+	const equalQueriesByLabels: string[] = [];
 
 	queryTableData.forEach((currentQuery) => {
-		const { series, queryName, list } = currentQuery;
+		const { list } = currentQuery;
 
-		if (series) {
-			series.forEach((seria) => {
-				fillDataFromSeria(queryLabels, seria, resultColumns, queryName);
-			});
-		}
+		fillDataFromSeries(
+			currentQuery,
+			queryTableData,
+			queryLabels,
+			resultColumns,
+			equalQueriesByLabels,
+		);
 
 		if (list) {
 			list.forEach((listItem) => {
@@ -484,8 +520,6 @@ export const createTableColumnsFromQuery: CreateTableDataFromQuery = ({
 		queryTableData,
 		dynamicColumns,
 	);
-
-	console.log({ filledDynamicColumns });
 
 	const dataSource = generateData(filledDynamicColumns, rowsLength);
 
