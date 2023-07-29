@@ -5,6 +5,7 @@ import AppLayout from 'container/AppLayout';
 import { useThemeConfig } from 'hooks/useDarkMode';
 import { NotificationProvider } from 'hooks/useNotifications';
 import { ResourceProvider } from 'hooks/useResourceAttribute';
+import Head from 'layout/index';
 import history from 'lib/history';
 import { QueryBuilderProvider } from 'providers/QueryBuilder';
 import { Suspense } from 'react';
@@ -24,6 +25,7 @@ function App(): JSX.Element {
 						<ResourceProvider>
 							<QueryBuilderProvider>
 								<AppLayout>
+									<Head />
 									<Suspense fallback={<Spinner size="large" tip="Loading..." />}>
 										<Switch>
 											{routes.map(({ path, component, exact }) => (
