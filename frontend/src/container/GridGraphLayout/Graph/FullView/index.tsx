@@ -87,7 +87,11 @@ function FullView({
 		[response],
 	);
 
-	if (response.status === 'idle' || response.status === 'loading') {
+	if (
+		response.status === 'idle' ||
+		response.status === 'loading' ||
+		response.isFetching
+	) {
 		return <Spinner height="100%" size="large" tip="Loading..." />;
 	}
 
