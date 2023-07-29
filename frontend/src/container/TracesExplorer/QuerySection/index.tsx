@@ -17,12 +17,14 @@ function QuerySection(): JSX.Element {
 	const panelTypes = useGetPanelTypesQueryParam(PANEL_TYPES.LIST);
 
 	const filterConfigs: QueryBuilderProps['filterConfigs'] = useMemo(() => {
+		const isList = panelTypes === PANEL_TYPES.LIST;
 		const config: QueryBuilderProps['filterConfigs'] = {
 			stepInterval: { isHidden: false, isDisabled: true },
+			having: { isHidden: isList, isDisabled: true },
 		};
 
 		return config;
-	}, []);
+	}, [panelTypes]);
 
 	const renderOrderBy = useCallback(
 		({ query, onChange }: OrderByFilterProps) => (

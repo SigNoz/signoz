@@ -989,7 +989,7 @@ var testPrepLogsQueryData = []struct {
 	TableName         string
 	AggregateOperator v3.AggregateOperator
 	ExpectedQuery     string
-	Type              string
+	Options           Options
 }{
 	{
 		Name:      "Test TS with limit- first",
@@ -1011,7 +1011,7 @@ var testPrepLogsQueryData = []struct {
 		},
 		TableName:     "logs",
 		ExpectedQuery: "SELECT method from (SELECT attributes_string_value[indexOf(attributes_string_key, 'method')] as method, toFloat64(count(distinct(attributes_string_value[indexOf(attributes_string_key, 'name')]))) as value from signoz_logs.distributed_logs where (timestamp >= 1680066360726210000 AND timestamp <= 1680066458000000000) AND attributes_string_value[indexOf(attributes_string_key, 'method')] = 'GET' AND indexOf(attributes_string_key, 'method') > 0 group by method order by value DESC) LIMIT 10",
-		Type:          constants.FirstQueryGraphLimit,
+		Options:       Options{GraphLimitQtype: constants.FirstQueryGraphLimit},
 	},
 	{
 		Name:      "Test TS with limit- first - with order by value",
@@ -1034,7 +1034,7 @@ var testPrepLogsQueryData = []struct {
 		},
 		TableName:     "logs",
 		ExpectedQuery: "SELECT method from (SELECT attributes_string_value[indexOf(attributes_string_key, 'method')] as method, toFloat64(count(distinct(attributes_string_value[indexOf(attributes_string_key, 'name')]))) as value from signoz_logs.distributed_logs where (timestamp >= 1680066360726210000 AND timestamp <= 1680066458000000000) AND attributes_string_value[indexOf(attributes_string_key, 'method')] = 'GET' AND indexOf(attributes_string_key, 'method') > 0 group by method order by value ASC) LIMIT 10",
-		Type:          constants.FirstQueryGraphLimit,
+		Options:       Options{GraphLimitQtype: constants.FirstQueryGraphLimit},
 	},
 	{
 		Name:      "Test TS with limit- first - with order by attribute",
@@ -1057,7 +1057,7 @@ var testPrepLogsQueryData = []struct {
 		},
 		TableName:     "logs",
 		ExpectedQuery: "SELECT method from (SELECT attributes_string_value[indexOf(attributes_string_key, 'method')] as method, toFloat64(count(distinct(attributes_string_value[indexOf(attributes_string_key, 'name')]))) as value from signoz_logs.distributed_logs where (timestamp >= 1680066360726210000 AND timestamp <= 1680066458000000000) AND attributes_string_value[indexOf(attributes_string_key, 'method')] = 'GET' AND indexOf(attributes_string_key, 'method') > 0 group by method order by method ASC) LIMIT 10",
-		Type:          constants.FirstQueryGraphLimit,
+		Options:       Options{GraphLimitQtype: constants.FirstQueryGraphLimit},
 	},
 	{
 		Name:      "Test TS with limit- second",
@@ -1078,8 +1078,8 @@ var testPrepLogsQueryData = []struct {
 			Limit:   2,
 		},
 		TableName:     "logs",
-		ExpectedQuery: "SELECT toStartOfInterval(fromUnixTimestamp64Nano(timestamp), INTERVAL 0 SECOND) AS ts, attributes_string_value[indexOf(attributes_string_key, 'method')] as method, toFloat64(count(distinct(attributes_string_value[indexOf(attributes_string_key, 'name')]))) as value from signoz_logs.distributed_logs where (timestamp >= 1680066360726210000 AND timestamp <= 1680066458000000000) AND attributes_string_value[indexOf(attributes_string_key, 'method')] = 'GET' AND indexOf(attributes_string_key, 'method') > 0 AND (method) IN (%s) group by method,ts order by value DESC",
-		Type:          constants.SecondQueryGraphLimit,
+		ExpectedQuery: "SELECT toStartOfInterval(fromUnixTimestamp64Nano(timestamp), INTERVAL 0 SECOND) AS ts, attributes_string_value[indexOf(attributes_string_key, 'method')] as method, toFloat64(count(distinct(attributes_string_value[indexOf(attributes_string_key, 'name')]))) as value from signoz_logs.distributed_logs where (timestamp >= 1680066360726210000 AND timestamp <= 1680066458000000000) AND attributes_string_value[indexOf(attributes_string_key, 'method')] = 'GET' AND indexOf(attributes_string_key, 'method') > 0 AND (method) GLOBAL IN (%s) group by method,ts order by value DESC",
+		Options:       Options{GraphLimitQtype: constants.SecondQueryGraphLimit},
 	},
 	{
 		Name:      "Test TS with limit- second - with order by",
@@ -1101,15 +1101,84 @@ var testPrepLogsQueryData = []struct {
 			Limit:   2,
 		},
 		TableName:     "logs",
-		ExpectedQuery: "SELECT toStartOfInterval(fromUnixTimestamp64Nano(timestamp), INTERVAL 0 SECOND) AS ts, attributes_string_value[indexOf(attributes_string_key, 'method')] as method, toFloat64(count(distinct(attributes_string_value[indexOf(attributes_string_key, 'name')]))) as value from signoz_logs.distributed_logs where (timestamp >= 1680066360726210000 AND timestamp <= 1680066458000000000) AND attributes_string_value[indexOf(attributes_string_key, 'method')] = 'GET' AND indexOf(attributes_string_key, 'method') > 0 AND (method) IN (%s) group by method,ts order by method ASC",
-		Type:          constants.SecondQueryGraphLimit,
+		ExpectedQuery: "SELECT toStartOfInterval(fromUnixTimestamp64Nano(timestamp), INTERVAL 0 SECOND) AS ts, attributes_string_value[indexOf(attributes_string_key, 'method')] as method, toFloat64(count(distinct(attributes_string_value[indexOf(attributes_string_key, 'name')]))) as value from signoz_logs.distributed_logs where (timestamp >= 1680066360726210000 AND timestamp <= 1680066458000000000) AND attributes_string_value[indexOf(attributes_string_key, 'method')] = 'GET' AND indexOf(attributes_string_key, 'method') > 0 AND (method) GLOBAL IN (%s) group by method,ts order by method ASC",
+		Options:       Options{GraphLimitQtype: constants.SecondQueryGraphLimit},
+	},
+	// Live tail
+	{
+		Name:      "Live Tail Query",
+		PanelType: v3.PanelTypeList,
+		Start:     1680066360726210000,
+		End:       1680066458000000000,
+		Step:      60,
+		BuilderQuery: &v3.BuilderQuery{
+			QueryName:         "A",
+			AggregateOperator: v3.AggregateOperatorNoOp,
+			Expression:        "A",
+			Filters: &v3.FilterSet{Operator: "AND", Items: []v3.FilterItem{
+				{Key: v3.AttributeKey{Key: "method", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag}, Value: "GET", Operator: "="},
+			},
+			},
+		},
+		TableName:     "logs",
+		ExpectedQuery: "SELECT timestamp, id, trace_id, span_id, trace_flags, severity_text, severity_number, body,CAST((attributes_string_key, attributes_string_value), 'Map(String, String)') as  attributes_string,CAST((attributes_int64_key, attributes_int64_value), 'Map(String, Int64)') as  attributes_int64,CAST((attributes_float64_key, attributes_float64_value), 'Map(String, Float64)') as  attributes_float64,CAST((resources_string_key, resources_string_value), 'Map(String, String)') as resources_string from signoz_logs.distributed_logs where %s  AND attributes_string_value[indexOf(attributes_string_key, 'method')] = 'GET'",
+		Options:       Options{IsLivetailQuery: true},
+	},
+	{
+		Name:      "Live Tail Query W/O filter",
+		PanelType: v3.PanelTypeList,
+		Start:     1680066360726210000,
+		End:       1680066458000000000,
+		Step:      60,
+		BuilderQuery: &v3.BuilderQuery{
+			QueryName:         "A",
+			AggregateOperator: v3.AggregateOperatorNoOp,
+			Expression:        "A",
+			Filters:           &v3.FilterSet{Operator: "AND", Items: []v3.FilterItem{}},
+		},
+		TableName:     "logs",
+		ExpectedQuery: "SELECT timestamp, id, trace_id, span_id, trace_flags, severity_text, severity_number, body,CAST((attributes_string_key, attributes_string_value), 'Map(String, String)') as  attributes_string,CAST((attributes_int64_key, attributes_int64_value), 'Map(String, Int64)') as  attributes_int64,CAST((attributes_float64_key, attributes_float64_value), 'Map(String, Float64)') as  attributes_float64,CAST((resources_string_key, resources_string_value), 'Map(String, String)') as resources_string from signoz_logs.distributed_logs where %s",
+		Options:       Options{IsLivetailQuery: true},
+	},
+	{
+		Name:      "Table query w/o limit",
+		PanelType: v3.PanelTypeTable,
+		Start:     1680066360726210000,
+		End:       1680066458000000000,
+		Step:      60,
+		BuilderQuery: &v3.BuilderQuery{
+			QueryName:         "A",
+			AggregateOperator: v3.AggregateOperatorCount,
+			Expression:        "A",
+			Filters:           &v3.FilterSet{Operator: "AND", Items: []v3.FilterItem{}},
+		},
+		TableName:     "logs",
+		ExpectedQuery: "SELECT now() as ts, toFloat64(count(*)) as value from signoz_logs.distributed_logs where (timestamp >= 1680066360726210000 AND timestamp <= 1680066458000000000) order by value DESC",
+		Options:       Options{},
+	},
+	{
+		Name:      "Table query with limit",
+		PanelType: v3.PanelTypeTable,
+		Start:     1680066360726210000,
+		End:       1680066458000000000,
+		Step:      60,
+		BuilderQuery: &v3.BuilderQuery{
+			QueryName:         "A",
+			AggregateOperator: v3.AggregateOperatorCount,
+			Expression:        "A",
+			Filters:           &v3.FilterSet{Operator: "AND", Items: []v3.FilterItem{}},
+			Limit:             10,
+		},
+		TableName:     "logs",
+		ExpectedQuery: "SELECT now() as ts, toFloat64(count(*)) as value from signoz_logs.distributed_logs where (timestamp >= 1680066360726210000 AND timestamp <= 1680066458000000000) order by value DESC LIMIT 10",
+		Options:       Options{},
 	},
 }
 
 func TestPrepareLogsQuery(t *testing.T) {
 	for _, tt := range testPrepLogsQueryData {
 		Convey("TestBuildLogsQuery", t, func() {
-			query, err := PrepareLogsQuery(tt.Start, tt.End, "", tt.PanelType, tt.BuilderQuery, tt.Type)
+			query, err := PrepareLogsQuery(tt.Start, tt.End, "", tt.PanelType, tt.BuilderQuery, tt.Options)
 			So(err, ShouldBeNil)
 			So(query, ShouldEqual, tt.ExpectedQuery)
 

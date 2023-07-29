@@ -2,8 +2,8 @@ import { Typography } from 'antd';
 import { ChartData } from 'chart.js';
 import { GraphOnClickHandler } from 'components/Graph';
 import Spinner from 'components/Spinner';
-import GridGraphComponent from 'container/GridGraphComponent';
 import { UpdateDashboard } from 'container/GridGraphLayout/utils';
+import GridPanelSwitch from 'container/GridPanelSwitch';
 import { useGetQueryRange } from 'hooks/queryBuilder/useGetQueryRange';
 import { useStepInterval } from 'hooks/queryBuilder/useStepInterval';
 import { useNotifications } from 'hooks/useNotifications';
@@ -60,6 +60,7 @@ function GridCardGraph({
 	allowDelete,
 	allowClone,
 	allowEdit,
+	isQueryEnabled,
 }: GridCardGraphProps): JSX.Element {
 	const { ref: graphRef, inView: isGraphVisible } = useInView({
 		threshold: 0,
@@ -115,7 +116,7 @@ function GridCardGraph({
 				variables,
 			],
 			keepPreviousData: true,
-			enabled: isGraphVisible && !isEmptyWidget,
+			enabled: isGraphVisible && !isEmptyWidget && isQueryEnabled,
 			refetchOnMount: false,
 			onError: (error) => {
 				setErrorMessage(error.message);
@@ -271,8 +272,8 @@ function GridCardGraph({
 								allowEdit={allowEdit}
 							/>
 						</div>
-						<GridGraphComponent
-							GRAPH_TYPES={widget?.panelTypes}
+						<GridPanelSwitch
+							panelType={widget?.panelTypes}
 							data={prevChartDataSetRef}
 							isStacked={widget?.isStacked}
 							opacity={widget?.opacity}
@@ -280,6 +281,8 @@ function GridCardGraph({
 							name={name}
 							yAxisUnit={yAxisUnit}
 							onClickHandler={onClickHandler}
+							panelData={[]}
+							query={widget.query}
 						/>
 					</>
 				)}
@@ -287,7 +290,7 @@ function GridCardGraph({
 		);
 	}
 
-	if (prevChartDataSetRef?.labels === undefined && queryResponse.isLoading) {
+	if (queryResponse.status === 'loading' || queryResponse.status === 'idle') {
 		return (
 			<span ref={graphRef}>
 				{!isEmpty(widget) && prevChartDataSetRef?.labels ? (
@@ -307,8 +310,8 @@ function GridCardGraph({
 								allowEdit={allowEdit}
 							/>
 						</div>
-						<GridGraphComponent
-							GRAPH_TYPES={widget.panelTypes}
+						<GridPanelSwitch
+							panelType={widget.panelTypes}
 							data={prevChartDataSetRef}
 							isStacked={widget.isStacked}
 							opacity={widget.opacity}
@@ -316,6 +319,8 @@ function GridCardGraph({
 							name={name}
 							yAxisUnit={yAxisUnit}
 							onClickHandler={onClickHandler}
+							panelData={[]}
+							query={widget.query}
 						/>
 					</>
 				) : (
@@ -362,8 +367,8 @@ function GridCardGraph({
 			{!isEmptyLayout && getModals()}
 
 			{!isEmpty(widget) && !!queryResponse.data?.payload && (
-				<GridGraphComponent
-					GRAPH_TYPES={widget.panelTypes}
+				<GridPanelSwitch
+					panelType={widget.panelTypes}
 					data={chartData}
 					isStacked={widget.isStacked}
 					opacity={widget.opacity}
@@ -372,6 +377,8 @@ function GridCardGraph({
 					yAxisUnit={yAxisUnit}
 					onDragSelect={onDragSelect}
 					onClickHandler={onClickHandler}
+					panelData={queryResponse.data?.payload.data.newResult.data.result || []}
+					query={widget.query}
 				/>
 			)}
 
@@ -399,6 +406,7 @@ interface GridCardGraphProps extends DispatchProps {
 	allowDelete?: boolean;
 	allowClone?: boolean;
 	allowEdit?: boolean;
+	isQueryEnabled?: boolean;
 }
 
 GridCardGraph.defaultProps = {
@@ -407,6 +415,7 @@ GridCardGraph.defaultProps = {
 	allowDelete: true,
 	allowClone: true,
 	allowEdit: true,
+	isQueryEnabled: true,
 };
 
 const mapDispatchToProps = (
