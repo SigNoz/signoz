@@ -11,10 +11,6 @@ function LogDetail({
 	onAddToQuery,
 	onClickActionItem,
 }: LogDetailProps): JSX.Element {
-	const onDrawerClose = (): void => {
-		onClose();
-	};
-
 	const items = useMemo(
 		() => [
 			{
@@ -43,7 +39,7 @@ function LogDetail({
 			title="Log Details"
 			placement="right"
 			closable
-			onClose={onDrawerClose}
+			onClose={onClose}
 			open={log !== null}
 			style={{ overscrollBehavior: 'contain' }}
 			destroyOnClose

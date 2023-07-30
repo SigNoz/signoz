@@ -1,15 +1,23 @@
 import { Card, Tooltip } from 'antd';
+import { PANEL_TYPES } from 'constants/queryBuilder';
 import styled from 'styled-components';
 
-export const Container = styled(Card)`
+interface Props {
+	$panelType: PANEL_TYPES;
+}
+
+export const Container = styled(Card)<Props>`
 	&&& {
 		position: relative;
 	}
 
 	.ant-card-body {
-		padding: 1.5rem 0;
+		padding: ${({ $panelType }): string =>
+			$panelType === PANEL_TYPES.TABLE ? '0 0' : '1.5rem 0'};
 		height: 57vh;
-		/* padding-bottom: 2rem; */
+		overflow: auto;
+		display: flex;
+		flex-direction: column;
 	}
 `;
 
@@ -23,5 +31,14 @@ export const NotFoundContainer = styled.div`
 	display: flex;
 	justify-content: center;
 	align-items: center;
-	min-height: 55vh;
+	min-height: 47vh;
+`;
+
+export const PlotTagWrapperStyled = styled.div<Props>`
+	margin-left: 2rem;
+	margin-top: ${({ $panelType }): string =>
+		$panelType === PANEL_TYPES.TABLE ? '1rem' : '0'};
+
+	margin-bottom: ${({ $panelType }): string =>
+		$panelType === PANEL_TYPES.TABLE ? '1rem' : '0'};
 `;
