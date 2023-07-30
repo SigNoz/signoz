@@ -1,7 +1,7 @@
 import { Card, Typography } from 'antd';
 import Spinner from 'components/Spinner';
+import { PANEL_TYPES } from 'constants/queryBuilder';
 import ROUTES from 'constants/routes';
-import { GRAPH_TYPES } from 'container/NewDashboard/ComponentsSlider';
 import NewWidget from 'container/NewWidget';
 import history from 'lib/history';
 import { useEffect, useRef, useState } from 'react';
@@ -18,7 +18,7 @@ function DashboardWidget({ getDashboard }: NewDashboardProps): JSX.Element {
 	const { search } = useLocation();
 	const { dashboardId } = useParams<DashboardWidgetPageParams>();
 
-	const [selectedGraph, setSelectedGraph] = useState<GRAPH_TYPES>();
+	const [selectedGraph, setSelectedGraph] = useState<PANEL_TYPES>();
 	const { loading, dashboards, error, errorMessage } = useSelector<
 		AppState,
 		DashboardReducer
@@ -34,7 +34,7 @@ function DashboardWidget({ getDashboard }: NewDashboardProps): JSX.Element {
 
 	useEffect(() => {
 		const params = new URLSearchParams(search);
-		const graphType = params.get('graphType') as GRAPH_TYPES | null;
+		const graphType = params.get('graphType') as PANEL_TYPES | null;
 
 		if (graphType === null) {
 			history.push(generatePath(ROUTES.DASHBOARD, { dashboardId }));

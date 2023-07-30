@@ -28,6 +28,14 @@ export enum GraphTitle {
 	EXTERNAL_CALL_DURATION_BY_ADDRESS = 'External Call duration(by Address)',
 }
 
+export enum KeyOperationTableHeader {
+	P50 = 'P50',
+	P90 = 'P90',
+	P99 = 'P99',
+	NUM_OF_CALLS = 'Number of Calls',
+	ERROR_RATE = 'Error Rate',
+}
+
 export enum DataType {
 	STRING = 'string',
 	FLOAT64 = 'float64',

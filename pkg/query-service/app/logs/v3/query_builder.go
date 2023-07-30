@@ -228,7 +228,7 @@ func buildLogsQuery(panelType v3.PanelType, start, end, step int64, mq *v3.Build
 	}
 
 	if graphLimitQtype == constants.SecondQueryGraphLimit {
-		filterSubQuery = filterSubQuery + " AND " + fmt.Sprintf("(%s) IN (", getSelectKeys(mq.AggregateOperator, mq.GroupBy)) + "%s)"
+		filterSubQuery = filterSubQuery + " AND " + fmt.Sprintf("(%s) GLOBAL IN (", getSelectKeys(mq.AggregateOperator, mq.GroupBy)) + "%s)"
 	}
 
 	aggregationKey := ""
@@ -398,6 +398,9 @@ func reduceQuery(query string, reduceTo v3.ReduceToOperator, aggregateOperator v
 }
 
 func addLimitToQuery(query string, limit uint64) string {
+	if limit == 0 {
+		return query
+	}
 	return fmt.Sprintf("%s LIMIT %d", query, limit)
 }
 
@@ -442,7 +445,7 @@ func PrepareLogsQuery(start, end int64, queryType v3.QueryType, panelType v3.Pan
 		query, err = reduceQuery(query, mq.ReduceTo, mq.AggregateOperator)
 	}
 
-	if panelType == v3.PanelTypeList || panelType == v3.PanelTypeTable {
+	if panelType == v3.PanelTypeList {
 		if mq.PageSize > 0 {
 			if mq.Limit > 0 && mq.Offset > mq.Limit {
 				return "", fmt.Errorf("max limit exceeded")
@@ -452,8 +455,9 @@ func PrepareLogsQuery(start, end int64, queryType v3.QueryType, panelType v3.Pan
 		} else {
 			query = addLimitToQuery(query, mq.Limit)
 		}
+	} else if panelType == v3.PanelTypeTable {
+		query = addLimitToQuery(query, mq.Limit)
 	}
 
 	return query, err
-
 }
