@@ -3,7 +3,6 @@ import {
 	LinkOutlined,
 	MonitorOutlined,
 } from '@ant-design/icons';
-// const Convert = require('ansi-to-html');
 import Convert from 'ansi-to-html';
 import { Button, DrawerProps, Tooltip } from 'antd';
 import LogDetail from 'components/LogDetail';

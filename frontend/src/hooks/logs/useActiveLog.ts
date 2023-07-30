@@ -16,7 +16,7 @@ import {
 	IQueryAutocompleteResponse,
 } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
-import ILogsReducer from 'types/reducer/logs';
+import { ILogsReducer } from 'types/reducer/logs';
 import { v4 as uuid } from 'uuid';
 
 import { UseActiveLog } from './types';

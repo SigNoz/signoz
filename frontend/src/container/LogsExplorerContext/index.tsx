@@ -2,56 +2,22 @@ import { EditFilled } from '@ant-design/icons';
 import { Typography } from 'antd';
 import Modal from 'antd/es/modal/Modal';
 import RawLogView from 'components/Logs/RawLogView';
-import { initialQueriesMap, PANEL_TYPES } from 'constants/queryBuilder';
 import LogsContextList from 'container/LogsContextList';
 import { FILTERS } from 'container/QueryBuilder/filters/OrderByFilter/config';
 import QueryBuilderSearch from 'container/QueryBuilder/filters/QueryBuilderSearch';
-import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { memo, useCallback, useMemo, useState } from 'react';
-import { ILog } from 'types/api/logs/log';
 import { Query, TagFilter } from 'types/api/queryBuilder/queryBuilderData';
-import { DataSource } from 'types/common/queryBuilder';
 
 import { EditButton, TitleWrapper } from './styles';
-import { getFiltersFromResources } from './utils';
-
-interface LogsExplorerContextProps {
-	log: ILog;
-	onClose: () => void;
-}
+import { LogsExplorerContextProps } from './types';
+import useInitialQuery from './useInitialQuery';
 
 function LogsExplorerContext({
 	log,
 	onClose,
 }: LogsExplorerContextProps): JSX.Element | null {
-	const { updateAllQueriesOperators } = useQueryBuilder();
-
-	const initialContextQuery = useMemo(() => {
-		const resourcesFilters = getFiltersFromResources(log.resources_string);
-
-		const updatedAllQueriesOperator = updateAllQueriesOperators(
-			initialQueriesMap.logs,
-			PANEL_TYPES.LIST,
-			DataSource.LOGS,
-		);
-
-		const data: Query = {
-			...updatedAllQueriesOperator,
-			builder: {
-				...updatedAllQueriesOperator.builder,
-				queryData: updatedAllQueriesOperator.builder.queryData.map((item) => ({
-					...item,
-					filters: {
-						...item.filters,
-						items: [...item.filters.items, ...resourcesFilters],
-					},
-				})),
-			},
-		};
-
-		return data;
-	}, [log, updateAllQueriesOperators]);
+	const initialContextQuery = useInitialQuery(log);
 
 	const [contextQuery, setContextQuery] = useState<Query>(initialContextQuery);
 	const [filters, setFilters] = useState<TagFilter | null>(null);

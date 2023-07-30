@@ -1,5 +1,7 @@
 import { Button, Space } from 'antd';
+import { themeColors } from 'constants/theme';
 import styled from 'styled-components';
+import getAlphaColor from 'utils/getAlphaColor';
 
 export const TitleWrapper = styled(Space.Compact)`
 	justify-content: space-between;
@@ -11,12 +13,18 @@ export const EditButton = styled(Button)<{ $isDarkMode: boolean }>`
 	width: 1.375rem !important;
 	height: 1.375rem;
 	position: absolute;
+
 	top: 1rem;
 	right: 1.563rem;
 	padding: 0;
+
 	border-radius: 0.125rem;
+
 	border-start-start-radius: 0.125rem !important;
 	border-end-start-radius: 0.125rem !important;
+
 	color: ${({ $isDarkMode }): string =>
-		$isDarkMode ? 'rgba(255, 255, 255, 0.45)' : 'rgba(0, 0, 0, 0.45)'};
+		$isDarkMode
+			? getAlphaColor(themeColors.white)[45]
+			: getAlphaColor(themeColors.black)[45]};
 `;
