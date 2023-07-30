@@ -1,7 +1,11 @@
 import { OPERATORS } from 'constants/queryBuilder';
 import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { TagFilterItem } from 'types/api/queryBuilder/queryBuilderData';
-import { DataSource, QueryBuilderData } from 'types/common/queryBuilder';
+import {
+	DataSource,
+	MetricAggregateOperator,
+	QueryBuilderData,
+} from 'types/common/queryBuilder';
 
 import { DataType, FORMULA, MetricsType, WidgetKeys } from '../constant';
 import { IServiceName } from '../Tabs/types';
@@ -44,13 +48,14 @@ export const databaseCallsRPS = ({
 	];
 
 	const legends = [legend];
+	const dataSource = DataSource.METRICS;
 
 	return getQueryBuilderQueries({
 		autocompleteData,
 		groupBy,
 		legends,
 		filterItems,
-		dataSource: DataSource.METRICS,
+		dataSource,
 	});
 };
 
@@ -85,17 +90,36 @@ export const databaseCallsAvgDuration = ({
 		},
 		...tagFilterItems,
 	];
-	const additionalItemsB = additionalItemsA;
 
-	return getQueryBuilderQuerieswithFormula({
+	const autocompleteData: BaseAutocompleteData[] = [
 		autocompleteDataA,
 		autocompleteDataB,
+	];
+
+	const additionalItems: TagFilterItem[][] = [
 		additionalItemsA,
-		additionalItemsB,
-		legend: '',
-		disabled: true,
-		expression: FORMULA.DATABASE_CALLS_AVG_DURATION,
-		legendFormula: 'Average Duration',
+		additionalItemsA,
+	];
+
+	const legends = ['', ''];
+	const disabled = [true, true];
+	const legendFormula = 'Average Duration';
+	const expression = FORMULA.DATABASE_CALLS_AVG_DURATION;
+	const aggregateOperators = [
+		MetricAggregateOperator.SUM,
+		MetricAggregateOperator.SUM,
+	];
+	const dataSource = DataSource.METRICS;
+
+	return getQueryBuilderQuerieswithFormula({
+		autocompleteData,
+		additionalItems,
+		legends,
+		disabled,
+		expression,
+		legendFormula,
+		aggregateOperators,
+		dataSource,
 	});
 };
 

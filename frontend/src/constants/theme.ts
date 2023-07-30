@@ -38,6 +38,7 @@ const themeColors = {
 	whiteCream: '#ffffffd5',
 	white: '#ffffff',
 	black: '#000000',
+	darkGrey: '#262626',
 	lightBlack: '#141414',
 	lightgrey: '#ddd',
 	lightWhite: '#ffffffd9',

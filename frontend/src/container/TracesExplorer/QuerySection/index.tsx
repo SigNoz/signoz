@@ -21,6 +21,7 @@ function QuerySection(): JSX.Element {
 		const config: QueryBuilderProps['filterConfigs'] = {
 			stepInterval: { isHidden: false, isDisabled: true },
 			limit: { isHidden: isList, isDisabled: true },
+			having: { isHidden: isList, isDisabled: true },
 		};
 
 		return config;
