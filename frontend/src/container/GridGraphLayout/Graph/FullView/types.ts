@@ -69,3 +69,7 @@ export interface SaveLegendEntriesToLocalStoreProps {
 	graphVisibilityState: boolean[];
 	name: string;
 }
+
+export interface GraphContainerProps {
+	isPanelTypeGraph: boolean;
+}

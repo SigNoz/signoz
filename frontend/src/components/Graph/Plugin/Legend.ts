@@ -1,6 +1,8 @@
 import { Chart, ChartType, Plugin } from 'chart.js';
+import { Events } from 'constants/events';
 import { colors } from 'lib/getRandomColor';
 import { get } from 'lodash-es';
+import { eventEmitter } from 'utils/getEventEmitter';
 
 const getOrCreateLegendList = (
 	chart: Chart,
@@ -74,6 +76,10 @@ export const legend = (id: string, isLonger: boolean): Plugin<ChartType> => ({
 						item.datasetIndex,
 						!chart.isDatasetVisible(item.datasetIndex),
 					);
+					eventEmitter.emit(Events.UPDATE_GRAPH_MANAGER_TABLE, {
+						name: id,
+						index: item.datasetIndex,
+					});
 				}
 				chart.update();
 			};

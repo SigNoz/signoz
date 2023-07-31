@@ -1,6 +1,8 @@
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import styled, { css, FlattenSimpleInterpolation } from 'styled-components';
 
+import { GraphContainerProps } from './types';
+
 interface Props {
 	$panelType: PANEL_TYPES;
 }
@@ -23,8 +25,8 @@ export const TimeContainer = styled.div<Props>`
 			: css``}
 `;
 
-export const GraphContainer = styled.div`
-	height: 50%;
+export const GraphContainer = styled.div<GraphContainerProps>`
+	height: ${(props): string => (props.isPanelTypeGraph ? '50%' : '100%')};
 `;
 
 export const FilterTableAndSaveContainer = styled.div`

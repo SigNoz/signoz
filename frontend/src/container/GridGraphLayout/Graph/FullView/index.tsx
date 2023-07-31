@@ -1,6 +1,7 @@
 import { Button } from 'antd';
 import Spinner from 'components/Spinner';
 import TimePreference from 'components/TimePreferenceDropDown';
+import { PANEL_TYPES } from 'constants/queryBuilder';
 import GridPanelSwitch from 'container/GridPanelSwitch';
 import {
 	timeItems,
@@ -87,6 +88,8 @@ function FullView({
 		[response],
 	);
 
+	console.log('Panel Type: ', widget.panelTypes);
+
 	if (
 		response.status === 'idle' ||
 		response.status === 'loading' ||
@@ -114,7 +117,9 @@ function FullView({
 				</TimeContainer>
 			)}
 
-			<GraphContainer>
+			<GraphContainer
+				isPanelTypeGraph={widget.panelTypes === PANEL_TYPES.TIME_SERIES}
+			>
 				<GridPanelSwitch
 					panelType={widget.panelTypes}
 					data={chartDataSet}

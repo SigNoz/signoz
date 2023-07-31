@@ -1,22 +1,20 @@
 import { Button, Input } from 'antd';
 import { CheckboxChangeEvent } from 'antd/es/checkbox';
-import { ColumnType } from 'antd/es/table';
 import { ResizeTable } from 'components/ResizeTable';
+import { Events } from 'constants/events';
 import { useNotifications } from 'hooks/useNotifications';
 import isEqual from 'lodash-es/isEqual';
-import { memo, useEffect, useMemo, useState } from 'react';
+import { memo, useCallback, useEffect, useMemo, useState } from 'react';
 import { eventEmitter } from 'utils/getEventEmitter';
 
 import { getGraphVisibilityStateOnDataChange } from '../utils';
-import { ColumnsKeyAndDataIndex, ColumnsTitle } from './contants';
 import {
 	FilterTableAndSaveContainer,
 	FilterTableContainer,
 	SaveContainer,
 } from './styles';
-import CustomCheckBox from './TableRender/CustomCheckBox';
-import Label from './TableRender/Label';
-import { DataSetProps, ExtendedChartDataset, GraphManagerProps } from './types';
+import { getGraphManagerTableColumns } from './TableRender/GraphManagerColumns';
+import { ExtendedChartDataset, GraphManagerProps } from './types';
 import {
 	getDefaultTableDataSet,
 	saveLegendEntriesToLocalStorage,
@@ -27,7 +25,10 @@ function GraphManager({
 	name,
 	onToggleModelHandler,
 }: GraphManagerProps): JSX.Element {
-	const { graphVisibilityStates: storedVisibilityStates, legendEntry } = useMemo(
+	const {
+		graphVisibilityStates: localstoredVisibilityStates,
+		legendEntry,
+	} = useMemo(
 		() =>
 			getGraphVisibilityStateOnDataChange({
 				data,
@@ -38,16 +39,18 @@ function GraphManager({
 	);
 
 	const [graphVisibilityState, setGraphVisibilityState] = useState<boolean[]>(
-		storedVisibilityStates,
+		localstoredVisibilityStates,
 	);
+
 	const [tableDataSet, setTableDataSet] = useState<ExtendedChartDataset[]>(
 		getDefaultTableDataSet(data),
 	);
 
 	const { notifications } = useNotifications();
 
+	// useEffect for updating graph visibility state on data change
 	useEffect(() => {
-		const newGraphVisibilityStates: boolean[] = Array(data.datasets.length).fill(
+		const newGraphVisibilityStates = Array<boolean>(data.datasets.length).fill(
 			true,
 		);
 		data.datasets.forEach((dataset, i) => {
@@ -58,105 +61,89 @@ function GraphManager({
 				newGraphVisibilityStates[i] = legendEntry[index].show;
 			}
 		});
-		eventEmitter.emit('UPDATE_GRAPH_VISIBILITY_STATE', {
+		eventEmitter.emit(Events.UPDATE_GRAPH_VISIBILITY_STATE, {
 			name,
 			graphVisibilityStates: newGraphVisibilityStates,
 		});
 		setGraphVisibilityState(newGraphVisibilityStates);
 	}, [data, name, legendEntry]);
 
-	const checkBoxOnChangeHandler = (
-		e: CheckboxChangeEvent,
-		index: number,
-	): void => {
-		graphVisibilityState[index] = e.target.checked;
-		setGraphVisibilityState([...graphVisibilityState]);
-		eventEmitter.emit('UPDATE_GRAPH_VISIBILITY_STATE', {
-			name,
-			graphVisibilityStates: [...graphVisibilityState],
-		});
-	};
+	// useEffect for listening to events event graph legend is clicked
+	useEffect(() => {
+		const eventListener = eventEmitter.on(
+			Events.UPDATE_GRAPH_MANAGER_TABLE,
+			(data) => {
+				if (data.name === name) {
+					const newGraphVisibilityStates = graphVisibilityState;
+					newGraphVisibilityStates[data.index] = !newGraphVisibilityStates[
+						data.index
+					];
+					eventEmitter.emit(Events.UPDATE_GRAPH_VISIBILITY_STATE, {
+						name,
+						graphVisibilityStates: newGraphVisibilityStates,
+					});
+					setGraphVisibilityState([...newGraphVisibilityStates]);
+				}
+			},
+		);
+		return (): void => {
+			eventListener.off(Events.UPDATE_GRAPH_MANAGER_TABLE);
+		};
+	}, [graphVisibilityState, name]);
 
-	const getCheckBox = (index: number): React.ReactElement => (
-		<CustomCheckBox
-			data={data}
-			index={index}
-			checkBoxOnChangeHandler={checkBoxOnChangeHandler}
-			graphVisibilityState={graphVisibilityState}
-		/>
+	const checkBoxOnChangeHandler = useCallback(
+		(e: CheckboxChangeEvent, index: number): void => {
+			graphVisibilityState[index] = e.target.checked;
+			setGraphVisibilityState([...graphVisibilityState]);
+			eventEmitter.emit(Events.UPDATE_GRAPH_VISIBILITY_STATE, {
+				name,
+				graphVisibilityStates: [...graphVisibilityState],
+			});
+		},
+		[graphVisibilityState, name],
 	);
 
-	const labelClickedHandler = (labelIndex: number): void => {
-		const newGraphVisibilityStates = Array<boolean>(data.datasets.length).fill(
-			false,
-		);
-		newGraphVisibilityStates[labelIndex] = true;
-		setGraphVisibilityState([...newGraphVisibilityStates]);
-		eventEmitter.emit('UPDATE_GRAPH_VISIBILITY_STATE', {
-			name,
-			graphVisibilityStates: newGraphVisibilityStates,
-		});
-	};
+	const labelClickedHandler = useCallback(
+		(labelIndex: number): void => {
+			const newGraphVisibilityStates = Array<boolean>(data.datasets.length).fill(
+				false,
+			);
+			newGraphVisibilityStates[labelIndex] = true;
+			setGraphVisibilityState([...newGraphVisibilityStates]);
+			eventEmitter.emit(Events.UPDATE_GRAPH_VISIBILITY_STATE, {
+				name,
+				graphVisibilityStates: newGraphVisibilityStates,
+			});
+		},
+		[data.datasets.length, name],
+	);
 
-	const columns: ColumnType<DataSetProps>[] = [
-		{
-			title: '',
-			width: 50,
-			dataIndex: ColumnsKeyAndDataIndex.Index,
-			key: ColumnsKeyAndDataIndex.Index,
-			render: (index: number): JSX.Element => getCheckBox(index),
-		},
-		{
-			title: ColumnsTitle[ColumnsKeyAndDataIndex.Label],
-			width: 300,
-			dataIndex: ColumnsKeyAndDataIndex.Label,
-			key: ColumnsKeyAndDataIndex.Label,
-			render: (label: string, _, index): JSX.Element => (
-				<Label
-					label={label}
-					labelIndex={index}
-					labelClickedHandler={labelClickedHandler}
-				/>
-			),
-		},
-		{
-			title: ColumnsTitle[ColumnsKeyAndDataIndex.Avg],
-			width: 70,
-			dataIndex: ColumnsKeyAndDataIndex.Avg,
-			key: ColumnsKeyAndDataIndex.Avg,
-		},
-		{
-			title: ColumnsTitle[ColumnsKeyAndDataIndex.Sum],
-			width: 70,
-			dataIndex: ColumnsKeyAndDataIndex.Sum,
-			key: ColumnsKeyAndDataIndex.Sum,
-		},
-		{
-			title: ColumnsTitle[ColumnsKeyAndDataIndex.Max],
-			width: 70,
-			dataIndex: ColumnsKeyAndDataIndex.Max,
-			key: ColumnsKeyAndDataIndex.Max,
-		},
-		{
-			title: ColumnsTitle[ColumnsKeyAndDataIndex.Min],
-			width: 70,
-			dataIndex: ColumnsKeyAndDataIndex.Min,
-			key: ColumnsKeyAndDataIndex.Min,
-		},
-	];
+	const columns = useMemo(
+		() =>
+			getGraphManagerTableColumns({
+				data,
+				checkBoxOnChangeHandler,
+				graphVisibilityState,
+				labelClickedHandler,
+			}),
+		[checkBoxOnChangeHandler, data, graphVisibilityState, labelClickedHandler],
+	);
 
-	const filterHandler = (event: React.ChangeEvent<HTMLInputElement>): void => {
-		const value = event.target.value.toString().toLowerCase();
-		const updatedDataSet = tableDataSet.map((item) => {
-			if (item.label?.toLocaleLowerCase().includes(value)) {
-				return { ...item, show: true };
-			}
-			return { ...item, show: false };
-		});
-		setTableDataSet(updatedDataSet);
-	};
+	const filterHandler = useCallback(
+		(event: React.ChangeEvent<HTMLInputElement>): void => {
+			const value = event.target.value.toString().toLowerCase();
+			const updatedDataSet = tableDataSet.map((item) => {
+				if (item.label?.toLocaleLowerCase().includes(value)) {
+					return { ...item, show: true };
+				}
+				return { ...item, show: false };
+			});
+			setTableDataSet(updatedDataSet);
+		},
+		[tableDataSet],
+	);
 
-	const saveHandler = (): void => {
+	const saveHandler = useCallback((): void => {
 		saveLegendEntriesToLocalStorage({
 			data,
 			graphVisibilityState,
@@ -165,7 +152,7 @@ function GraphManager({
 		notifications.success({
 			message: 'The updated graphs & legends are saved',
 		});
-	};
+	}, [data, graphVisibilityState, name, notifications]);
 
 	const dataSource = tableDataSet.filter((item) => item.show);
 

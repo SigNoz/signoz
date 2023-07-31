@@ -1,4 +1,5 @@
 import { Typography } from 'antd';
+import { Events } from 'constants/events';
 import GridPanelSwitch from 'container/GridPanelSwitch';
 import { useChartMutable } from 'hooks/useChartMutable';
 import { useNotifications } from 'hooks/useNotifications';
@@ -83,7 +84,7 @@ function WidgetGraphComponent({
 
 	useEffect(() => {
 		const eventListener = eventEmitter.on(
-			'UPDATE_GRAPH_VISIBILITY_STATE',
+			Events.UPDATE_GRAPH_VISIBILITY_STATE,
 			(data) => {
 				if (data.name === `${name}expanded` && canModifyChart) {
 					setGraphsVisilityStates([...data.graphVisibilityStates]);
@@ -91,7 +92,7 @@ function WidgetGraphComponent({
 			},
 		);
 		return (): void => {
-			eventListener.off('UPDATE_GRAPH_VISIBILITY_STATE');
+			eventListener.off(Events.UPDATE_GRAPH_VISIBILITY_STATE);
 		};
 	}, [canModifyChart, name]);
 
