@@ -8,7 +8,7 @@ import {
 } from 'types/common/queryBuilder';
 
 import { DataType, FORMULA, MetricsType, WidgetKeys } from '../constant';
-import { IServiceName } from '../Tabs/types';
+import { DatabaseCallProps, DatabaseCallsRPSProps } from '../types';
 import {
 	getQueryBuilderQueries,
 	getQueryBuilderQuerieswithFormula,
@@ -98,29 +98,27 @@ export const databaseCallsAvgDuration = ({
 
 	const additionalItems: TagFilterItem[][] = [
 		additionalItemsA,
-		additionalItemsB,
+		additionalItemsA,
 	];
+
+	const legends = ['', ''];
+	const disabled = [true, true];
+	const legendFormulas = ['Average Duration'];
+	const expressions = [FORMULA.DATABASE_CALLS_AVG_DURATION];
+	const aggregateOperators = [
+		MetricAggregateOperator.SUM,
+		MetricAggregateOperator.SUM,
+	];
+	const dataSource = DataSource.METRICS;
 
 	return getQueryBuilderQuerieswithFormula({
 		autocompleteData,
 		additionalItems,
-		legends: ['', ''],
-		disabled: [true, true],
-		expressions: [FORMULA.DATABASE_CALLS_AVG_DURATION],
-		legendFormulas: ['Average Duration'],
-		aggregateOperators: [
-			MetricAggregateOperator.SUM,
-			MetricAggregateOperator.SUM,
-		],
-		dataSource: DataSource.METRICS,
+		legends,
+		disabled,
+		expressions,
+		legendFormulas,
+		aggregateOperators,
+		dataSource,
 	});
 };
-
-interface DatabaseCallsRPSProps extends DatabaseCallProps {
-	legend: '{{db_system}}';
-}
-
-interface DatabaseCallProps {
-	servicename: IServiceName['servicename'];
-	tagFilterItems: TagFilterItem[];
-}

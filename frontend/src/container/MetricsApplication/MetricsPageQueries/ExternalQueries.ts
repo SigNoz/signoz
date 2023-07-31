@@ -86,29 +86,27 @@ export const externalCallErrorPercent = ({
 	const legendFormulas = [legend];
 	const expressions = [FORMULA.ERROR_PERCENTAGE];
 	const disabled = [true, true];
-	const autocompleteData: BaseAutocompleteData[] = [
-		autocompleteDataA,
-		autocompleteDataB,
-	];
+	const autocompleteData = [autocompleteDataA, autocompleteDataB];
 
-	const additionalItems: TagFilterItem[][] = [
-		additionalItemsA,
-		additionalItemsB,
+	const additionalItems = [additionalItemsA, additionalItemsB];
+
+	const aggregateOperators = [
+		MetricAggregateOperator.SUM,
+		MetricAggregateOperator.SUM,
 	];
+	const legends = [legend, legend];
+	const dataSource = DataSource.METRICS;
 
 	return getQueryBuilderQuerieswithFormula({
 		autocompleteData,
 		additionalItems,
-		legends: [legend, legend],
+		legends,
 		groupBy,
 		disabled,
 		expressions,
 		legendFormulas,
-		aggregateOperators: [
-			MetricAggregateOperator.SUM,
-			MetricAggregateOperator.SUM,
-		],
-		dataSource: DataSource.METRICS,
+		aggregateOperators,
+		dataSource,
 	});
 };
 
@@ -147,28 +145,25 @@ export const externalCallDuration = ({
 		...tagFilterItems,
 	];
 
-	const autocompleteData: BaseAutocompleteData[] = [
-		autocompleteDataA,
-		autocompleteDataB,
-	];
+	const autocompleteData = [autocompleteDataA, autocompleteDataB];
 
-	const additionalItems: TagFilterItem[][] = [
-		additionalItemsA,
-		additionalItemsA,
+	const additionalItems = [additionalItemsA, additionalItemsA];
+	const legends = [legend, legend];
+	const aggregateOperators = [
+		MetricAggregateOperator.SUM,
+		MetricAggregateOperator.SUM,
 	];
+	const dataSource = DataSource.METRICS;
 
 	return getQueryBuilderQuerieswithFormula({
 		autocompleteData,
 		additionalItems,
-		legends: [legend, legend],
+		legends,
 		disabled,
 		expressions,
 		legendFormulas,
-		aggregateOperators: [
-			MetricAggregateOperator.SUM,
-			MetricAggregateOperator.SUM,
-		],
-		dataSource: DataSource.METRICS,
+		aggregateOperators,
+		dataSource,
 	});
 };
 
@@ -249,28 +244,24 @@ export const externalCallDurationByAddress = ({
 		...tagFilterItems,
 	];
 
-	const autocompleteData: BaseAutocompleteData[] = [
-		autocompleteDataA,
-		autocompleteDataB,
+	const autocompleteData = [autocompleteDataA, autocompleteDataB];
+	const additionalItems = [additionalItemsA, additionalItemsA];
+	const legends = [legend, legend];
+	const aggregateOperators = [
+		MetricAggregateOperator.SUM,
+		MetricAggregateOperator.SUM,
 	];
-
-	const additionalItems: TagFilterItem[][] = [
-		additionalItemsA,
-		additionalItemsA,
-	];
+	const dataSource = DataSource.METRICS;
 
 	return getQueryBuilderQuerieswithFormula({
 		autocompleteData,
 		additionalItems,
-		legends: [legend, legend],
+		legends,
 		groupBy,
 		disabled,
 		expressions,
 		legendFormulas,
-		aggregateOperators: [
-			MetricAggregateOperator.SUM_RATE,
-			MetricAggregateOperator.SUM_RATE,
-		],
-		dataSource: DataSource.METRICS,
+		aggregateOperators,
+		dataSource,
 	});
 };

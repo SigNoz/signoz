@@ -156,10 +156,7 @@ export const errorPercentage = ({
 		type: null,
 	};
 
-	const autocompleteData: BaseAutocompleteData[] = [
-		autocompleteDataA,
-		autocompleteDataB,
-	];
+	const autocompleteData = [autocompleteDataA, autocompleteDataB];
 
 	const additionalItemsA: TagFilterItem[] = [
 		{
@@ -224,22 +221,25 @@ export const errorPercentage = ({
 		...tagFilterItems,
 	];
 
-	const additionalItems: TagFilterItem[][] = [
-		additionalItemsA,
-		additionalItemsB,
+	const additionalItems = [additionalItemsA, additionalItemsB];
+	const legends = [GraphTitle.ERROR_PERCENTAGE];
+	const disabled = [true, true];
+	const expressions = [FORMULA.ERROR_PERCENTAGE];
+	const legendFormulas = [GraphTitle.ERROR_PERCENTAGE];
+	const aggregateOperators = [
+		MetricAggregateOperator.SUM_RATE,
+		MetricAggregateOperator.SUM_RATE,
 	];
+	const dataSource = DataSource.METRICS;
 
 	return getQueryBuilderQuerieswithFormula({
 		autocompleteData,
 		additionalItems,
-		legends: [GraphTitle.ERROR_PERCENTAGE],
-		disabled: [true, true],
-		expressions: [FORMULA.ERROR_PERCENTAGE],
-		legendFormulas: [GraphTitle.ERROR_PERCENTAGE],
-		aggregateOperators: [
-			MetricAggregateOperator.SUM_RATE,
-			MetricAggregateOperator.SUM_RATE,
-		],
-		dataSource: DataSource.METRICS,
+		legends,
+		disabled,
+		expressions,
+		legendFormulas,
+		aggregateOperators,
+		dataSource,
 	});
 };

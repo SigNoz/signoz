@@ -80,7 +80,7 @@ export const topOperationQueries = ({
 		},
 	];
 
-	const errorRateAdditionalItemsB: TagFilterItem[] = latencyAndNumberOfCallAdditionalItems;
+	const errorRateAdditionalItemsB = latencyAndNumberOfCallAdditionalItems;
 
 	const groupBy: BaseAutocompleteData[] = [
 		{
@@ -124,8 +124,9 @@ export const topOperationQueries = ({
 		MetricAggregateOperator.SUM_RATE,
 		MetricAggregateOperator.SUM_RATE,
 	];
-	const expression = 'D*100/E';
-	const legendFormula = GraphTitle.ERROR_PERCENTAGE;
+	const expressions = ['D*100/E'];
+	const legendFormulas = [GraphTitle.ERROR_PERCENTAGE];
+	const dataSource = DataSource.METRICS;
 
 	return getQueryBuilderQuerieswithFormula({
 		autocompleteData,
@@ -133,9 +134,9 @@ export const topOperationQueries = ({
 		disabled,
 		legends,
 		aggregateOperators,
-		expressions: [expression],
-		legendFormulas: [legendFormula],
-		dataSource: DataSource.METRICS,
+		expressions,
+		legendFormulas,
+		dataSource,
 		groupBy,
 	});
 };
