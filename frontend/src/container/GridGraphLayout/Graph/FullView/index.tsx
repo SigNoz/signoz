@@ -88,8 +88,6 @@ function FullView({
 		[response],
 	);
 
-	console.log('Panel Type: ', widget.panelTypes);
-
 	if (
 		response.status === 'idle' ||
 		response.status === 'loading' ||
