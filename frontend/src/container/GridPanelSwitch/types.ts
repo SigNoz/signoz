@@ -24,7 +24,6 @@ export type GridPanelSwitchProps = {
 	onDragSelect?: (start: number, end: number) => void;
 	panelData: QueryDataV3[];
 	query: Query;
-	graphsVisibilityStates?: boolean[];
 };
 
 export type PropsTypePropsMap = {

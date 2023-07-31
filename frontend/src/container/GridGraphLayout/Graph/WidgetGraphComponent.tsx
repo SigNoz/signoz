@@ -1,4 +1,5 @@
 import { Typography } from 'antd';
+import { ToggleGraphProps } from 'components/Graph/types';
 import { Events } from 'constants/events';
 import GridPanelSwitch from 'container/GridPanelSwitch';
 import { useChartMutable } from 'hooks/useChartMutable';
@@ -12,6 +13,7 @@ import {
 	useCallback,
 	useEffect,
 	useMemo,
+	useRef,
 	useState,
 } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -82,6 +84,8 @@ function WidgetGraphComponent({
 		panelTypeAndGraphManagerVisibility: PANEL_TYPES_VS_FULL_VIEW_TABLE,
 	});
 
+	const lineChartRef = useRef<ToggleGraphProps>();
+
 	// Updating the visibility state of the graph on data change according to global time range
 	useEffect(() => {
 		if (canModifyChart) {
@@ -107,6 +111,14 @@ function WidgetGraphComponent({
 			eventListener.off(Events.UPDATE_GRAPH_VISIBILITY_STATE);
 		};
 	}, [canModifyChart, name]);
+
+	useEffect(() => {
+		if (canModifyChart && lineChartRef.current) {
+			graphsVisibilityStates?.forEach((showLegendData, index) => {
+				lineChartRef?.current?.toggleGraph(index, showLegendData);
+			});
+		}
+	}, [graphsVisibilityStates, canModifyChart]);
 
 	const { featureResponse } = useSelector<AppState, AppReducer>(
 		(state) => state.app,
@@ -228,8 +240,8 @@ function WidgetGraphComponent({
 						name={`${name}expanded`}
 						widget={widget}
 						yAxisUnit={yAxisUnit}
-						graphsVisibilityStates={graphsVisibilityStates}
 						onToggleModelHandler={onToggleModelHandler}
+						ref={lineChartRef}
 					/>
 				</FullViewContainer>
 			</Modal>
@@ -283,7 +295,7 @@ function WidgetGraphComponent({
 						onDragSelect={onDragSelect}
 						panelData={[]}
 						query={widget.query}
-						graphsVisibilityStates={graphsVisibilityStates}
+						ref={lineChartRef}
 					/>
 				</>
 			)}
