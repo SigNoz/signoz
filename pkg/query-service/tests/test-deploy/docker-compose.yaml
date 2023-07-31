@@ -45,6 +45,7 @@ x-clickhouse-depends:
 services:
   zookeeper-1:
     image: bitnami/zookeeper:3.7.1
+    container_name: signoz-zookeeper-1
     user: root
     ports:
       - "2181:2181"
@@ -91,7 +92,7 @@ services:
 
   clickhouse:
     <<: *clickhouse-defaults
-    container_name: clickhouse
+    container_name: signoz-clickhouse
     hostname: clickhouse
     ports:
       - "9000:9000"
@@ -136,6 +137,7 @@ services:
 
   alertmanager:
     image: signoz/alertmanager:0.23.1
+    container_name: signoz-alertmanager
     volumes:
       - ./data/alertmanager:/data
     depends_on:
@@ -150,7 +152,7 @@ services:
 
   query-service:
     image: signoz/query-service:latest
-    container_name: query-service
+    container_name: signoz-query-service
     command: [ "-config=/root/config/prometheus.yml" ]
     # ports:
     #   - "6060:6060"     # pprof port
@@ -185,6 +187,7 @@ services:
 
   otel-collector:
     image: signoz/signoz-otel-collector:0.79.4
+    container_name: signoz-otel-collector
     command:
       [
         "--config=/etc/otel-collector-config.yaml",
@@ -215,6 +218,7 @@ services:
 
   otel-collector-metrics:
     image: signoz/signoz-otel-collector:0.79.4
+    container_name: signoz-otel-collector-metrics
     command:
       [
         "--config=/etc/otel-collector-metrics-config.yaml",
@@ -232,7 +236,7 @@ services:
 
   logspout:
     image: "gliderlabs/logspout:v3.2.14"
-    container_name: logspout
+    container_name: signoz-logspout
     volumes:
       - /etc/hostname:/etc/host_hostname:ro
       - /var/run/docker.sock:/var/run/docker.sock

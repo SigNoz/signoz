@@ -3,7 +3,7 @@ version: "2.4"
 services:
   clickhouse:
     image: clickhouse/clickhouse-server:22.8.8-alpine
-    container_name: clickhouse
+    container_name: signoz-clickhouse
     # ports:
     # - "9000:9000"
     # - "8123:8123"
@@ -33,7 +33,7 @@ services:
       retries: 3
 
   alertmanager:
-    container_name: alertmanager
+    container_name: signoz-alertmanager
     image: signoz/alertmanager:0.23.1
     volumes:
       - ./data/alertmanager:/data
@@ -47,7 +47,7 @@ services:
 
   # Notes for Maintainers/Contributors who will change Line Numbers of Frontend & Query-Section. Please Update Line Numbers in `./scripts/commentLinesForSetup.sh` & `./CONTRIBUTING.md`
   otel-collector:
-    container_name: otel-collector
+    container_name: signoz-otel-collector
     image: signoz/signoz-otel-collector:0.79.4
     command:
       [
@@ -77,7 +77,7 @@ services:
         condition: service_healthy
 
   otel-collector-metrics:
-    container_name: otel-collector-metrics
+    container_name: signoz-otel-collector-metrics
     image: signoz/signoz-otel-collector:0.79.4
     command:
       [
@@ -98,7 +98,7 @@ services:
 
   logspout:
     image: "gliderlabs/logspout:v3.2.14"
-    container_name: logspout
+    container_name: signoz-logspout
     volumes:
       - /etc/hostname:/etc/host_hostname:ro
       - /var/run/docker.sock:/var/run/docker.sock

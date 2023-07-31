@@ -12,9 +12,10 @@ receivers:
         to: body
       - type: remove
         field: attributes.timestamp
-        # please add name of containers here if you want to exclude them from logs
+        # please remove names from below if you want to collect logs from them
       - type: filter
-        expr: 'attributes.container_name matches "^(logspout|frontend|clickhouse-setup-alertmanager-1|query-service|clickhouse-setup-otel-collector-1|clickhouse-setup-otel-collector-metrics-1|clickhouse|zookeeper-1)$"'
+        id: signoz_logs_filter
+        expr: 'attributes.container_name matches "^signoz-(logspout|frontend|alertmanager|query-service|otel-collector|otel-collector-metrics|clickhouse|zookeeper-1)$"'
   opencensus:
     endpoint: 0.0.0.0:55678
   otlp/spanmetrics:
