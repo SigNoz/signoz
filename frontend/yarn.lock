@@ -4226,6 +4226,13 @@ collection-visit@^1.0.0:
     map-visit "^1.0.0"
     object-visit "^1.0.0"
 
+color-alpha@1.1.3:
+  version "1.1.3"
+  resolved "https://registry.yarnpkg.com/color-alpha/-/color-alpha-1.1.3.tgz#71250189e9f02bba8261a94d5e7d5f5606d1749a"
+  integrity sha512-krPYBO1RSO5LH4AGb/b6z70O1Ip2o0F0+0cVFN5FN99jfQtZFT08rQyg+9oOBNJYAn3SRwJIFC8jUEOKz7PisA==
+  dependencies:
+    color-parse "^1.4.1"
+
 color-convert@^1.9.0:
   version "1.9.3"
   resolved "https://registry.npmjs.org/color-convert/-/color-convert-1.9.3.tgz"
@@ -4249,6 +4256,13 @@ color-name@^1.0.0, color-name@~1.1.4:
   version "1.1.4"
   resolved "https://registry.npmjs.org/color-name/-/color-name-1.1.4.tgz"
   integrity sha512-dOy+3AuW3a2wNbZHIuMZpTcgjGuLU/uBL/ubcZF9OXbDo8ff4O8yVp5Bf0efS8uEoYo5q4Fx7dY9OgQGXgAsQA==
+
+color-parse@^1.4.1:
+  version "1.4.2"
+  resolved "https://registry.yarnpkg.com/color-parse/-/color-parse-1.4.2.tgz#78651f5d34df1a57f997643d86f7f87268ad4eb5"
+  integrity sha512-RI7s49/8yqDj3fECFZjUI1Yi0z/Gq1py43oNJivAIIDSyJiOZLfYCRQEgn8HEVAj++PcRe8AnL2XF0fRJ3BTnA==
+  dependencies:
+    color-name "^1.0.0"
 
 color-string@^1.9.0:
   version "1.9.1"

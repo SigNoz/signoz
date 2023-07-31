@@ -1,4 +1,5 @@
 import { FeatureKeys } from 'constants/features';
+import { PANEL_TYPES } from 'constants/queryBuilder';
 import Graph from 'container/GridGraphLayout/Graph/';
 import { GraphTitle } from 'container/MetricsApplication/constant';
 import { getWidgetQueryBuilder } from 'container/MetricsApplication/MetricsApplication.factory';
@@ -31,8 +32,8 @@ function ServiceOverview({
 
 	const latencyWidget = useMemo(
 		() =>
-			getWidgetQueryBuilder(
-				{
+			getWidgetQueryBuilder({
+				query: {
 					queryType: EQueryType.QUERY_BUILDER,
 					promql: [],
 					builder: latency({
@@ -44,8 +45,9 @@ function ServiceOverview({
 					clickhouse_sql: [],
 					id: uuid(),
 				},
-				GraphTitle.LATENCY,
-			),
+				title: GraphTitle.LATENCY,
+				panelTypes: PANEL_TYPES.TIME_SERIES,
+			}),
 		[servicename, tagFilterItems, isSpanMetricEnable, topLevelOperationsRoute],
 	);
 
