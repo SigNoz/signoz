@@ -1,33 +1,7 @@
-import { ChartData } from 'chart.js';
-
-import { LegendEntryProps } from './FullView/types';
+import { mockTestData } from './__mock__/mockChartData';
+import { mocklegendEntryResult } from './__mock__/mockLegendEntryData';
 import { showAllDataSet } from './FullView/utils';
 import { getGraphVisibilityStateOnDataChange } from './utils';
-
-const mockTestData: ChartData = {
-	labels: ['test1', 'test2'],
-	datasets: [
-		{
-			label: 'customer',
-			data: [481.60377358490564, 730.0000000000002],
-		},
-		{
-			label: 'demo-app',
-			data: [4471.4285714285725],
-		},
-	],
-};
-
-const mocklegendEntryResult: LegendEntryProps[] = [
-	{
-		label: 'customer',
-		show: true,
-	},
-	{
-		label: 'demo-app',
-		show: false,
-	},
-];
 
 describe('getGraphVisibilityStateOnDataChange', () => {
 	beforeEach(() => {
