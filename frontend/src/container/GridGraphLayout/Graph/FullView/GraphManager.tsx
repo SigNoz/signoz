@@ -11,6 +11,7 @@ import { getGraphVisibilityStateOnDataChange } from '../utils';
 import {
 	FilterTableAndSaveContainer,
 	FilterTableContainer,
+	SaveCancelButtonContainer,
 	SaveContainer,
 } from './styles';
 import { getGraphManagerTableColumns } from './TableRender/GraphManagerColumns';
@@ -169,20 +170,16 @@ function GraphManager({
 				/>
 			</FilterTableContainer>
 			<SaveContainer>
-				<Button
-					className="save-container-button"
-					type="default"
-					onClick={onToggleModelHandler}
-				>
-					Cancel
-				</Button>
-				<Button
-					className="save-container-button"
-					onClick={saveHandler}
-					type="primary"
-				>
-					Save
-				</Button>
+				<SaveCancelButtonContainer>
+					<Button type="default" onClick={onToggleModelHandler}>
+						Cancel
+					</Button>
+				</SaveCancelButtonContainer>
+				<SaveCancelButtonContainer>
+					<Button onClick={saveHandler} type="primary">
+						Save
+					</Button>
+				</SaveCancelButtonContainer>
 			</SaveContainer>
 		</FilterTableAndSaveContainer>
 	);

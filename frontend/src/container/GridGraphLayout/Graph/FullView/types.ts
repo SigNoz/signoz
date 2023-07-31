@@ -29,9 +29,10 @@ export type ExtendedChartDataset = ChartDataset & {
 	max: number;
 };
 
-export type PanelTypeAndGraphManagerVisibilityProps = {
-	[key in keyof typeof PANEL_TYPES]: boolean;
-};
+export type PanelTypeAndGraphManagerVisibilityProps = Record<
+	keyof typeof PANEL_TYPES,
+	boolean
+>;
 
 export interface LabelProps {
 	labelClickedHandler: (labelIndex: number) => void;
@@ -71,5 +72,5 @@ export interface SaveLegendEntriesToLocalStoreProps {
 }
 
 export interface GraphContainerProps {
-	isPanelTypeGraph: boolean;
+	isGraphLegendToggleAvailable: boolean;
 }

@@ -116,7 +116,7 @@ function FullView({
 			)}
 
 			<GraphContainer
-				isPanelTypeGraph={widget.panelTypes === PANEL_TYPES.TIME_SERIES}
+				isGraphLegendToggleAvailable={widget.panelTypes === PANEL_TYPES.TIME_SERIES}
 			>
 				<GridPanelSwitch
 					panelType={widget.panelTypes}

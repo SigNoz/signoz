@@ -1,4 +1,5 @@
 import { PANEL_TYPES } from 'constants/queryBuilder';
+import { themeColors } from 'constants/theme';
 import styled, { css, FlattenSimpleInterpolation } from 'styled-components';
 
 import { GraphContainerProps } from './types';
@@ -26,8 +27,8 @@ export const TimeContainer = styled.div<Props>`
 `;
 
 export const GraphContainer = styled.div<GraphContainerProps>`
-	height: ${({ isPanelTypeGraph }): string =>
-		isPanelTypeGraph ? '50%' : '100%'};
+	height: ${({ isGraphLegendToggleAvailable }): string =>
+		isGraphLegendToggleAvailable ? '50%' : '100%'};
 `;
 
 export const FilterTableAndSaveContainer = styled.div`
@@ -44,10 +45,10 @@ export const SaveContainer = styled.div`
 	flex-basis: 20%;
 	display: flex;
 	justify-content: flex-end;
+`;
 
-	.save-container-button {
-		margin: 0 0.313rem;
-	}
+export const SaveCancelButtonContainer = styled.span`
+	margin: 0 0.313rem;
 `;
 
 export const LabelContainer = styled.button`
@@ -55,5 +56,5 @@ export const LabelContainer = styled.button`
 	cursor: pointer;
 	border: none;
 	background-color: transparent;
-	color: white;
+	color: ${themeColors.white};
 `;

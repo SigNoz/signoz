@@ -24,11 +24,11 @@ export const getDefaultTableDataSet = (
 	);
 
 export const getAbbreviatedLabel = (label: string): string => {
-	let newLebal = label;
+	let newLabel = label;
 	if (label.length > 30) {
-		newLebal = `${label.substring(0, 30)}...`;
+		newLabel = `${label.substring(0, 30)}...`;
 	}
-	return newLebal;
+	return newLabel;
 };
 
 export const showAllDataSet = (data: ChartData): LegendEntryProps[] =>
