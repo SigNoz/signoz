@@ -11,10 +11,6 @@ export default interface ServiceTableProps {
 	loading: boolean;
 }
 
-export interface ServiceApplicationProps {
-	servicename: string;
-}
-
 export interface ServiceMetricsProps {
 	topLevelOperations: [keyof ServiceDataProps, string[]][];
 }

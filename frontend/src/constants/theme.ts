@@ -45,6 +45,7 @@ const themeColors = {
 	borderLightGrey: '#d9d9d9',
 	borderDarkGrey: '#424242',
 	bckgGrey: '#1d1d1d',
+	lightBlue: '#177ddc',
 };
 
 export { themeColors };

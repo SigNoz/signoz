@@ -5,9 +5,7 @@ export enum ColumnKey {
 	Operations = 'callRate',
 }
 
-export const ColumnTitle: {
-	[key in ColumnKey]: string;
-} = {
+export const ColumnTitle: Record<ColumnKey, string> = {
 	[ColumnKey.Application]: 'Application',
 	[ColumnKey.P99]: 'P99 latency',
 	[ColumnKey.ErrorRate]: 'Error Rate (% of total)',

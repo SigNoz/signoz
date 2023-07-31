@@ -1,5 +1,6 @@
 import { ResizeTable } from 'components/ResizeTable';
 import { useGetQueriesRange } from 'hooks/queryBuilder/useGetQueriesRange';
+import { useNotifications } from 'hooks/useNotifications';
 import { useMemo } from 'react';
 import { useSelector } from 'react-redux';
 import { useLocation } from 'react-router-dom';
@@ -20,6 +21,8 @@ function ServiceMetricTable({
 		GlobalReducer
 	>((state) => state.globalTime);
 
+	const { notifications } = useNotifications();
+
 	const queries = useGetQueriesRange(queryRangeRequestData, {
 		queryKey: [
 			`GetMetricsQueryRange-${queryRangeRequestData[0].selectedTime}-${globalSelectedInterval}`,
@@ -31,7 +34,9 @@ function ServiceMetricTable({
 		enabled: true,
 		refetchOnMount: false,
 		onError: (error) => {
-			console.error(error);
+			notifications.error({
+				message: error.message,
+			});
 		},
 	});
 
