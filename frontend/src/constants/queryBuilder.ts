@@ -1,5 +1,4 @@
 // ** Helpers
-import { GRAPH_TYPES } from 'container/NewDashboard/ComponentsSlider';
 import { createIdFromObjectFields } from 'lib/createIdFromObjectFields';
 import { createNewBuilderItemName } from 'lib/newQueryBuilder/createNewBuilderItemName';
 import {
@@ -24,7 +23,6 @@ import {
 	LogsAggregatorOperator,
 	MetricAggregateOperator,
 	NumberOperators,
-	PanelTypeKeys,
 	QueryAdditionalFilter,
 	QueryBuilderData,
 	ReduceOperators,
@@ -124,10 +122,10 @@ export const initialFilters: TagFilter = {
 	op: 'AND',
 };
 
-const initialQueryBuilderFormValues: IBuilderQuery = {
+export const initialQueryBuilderFormValues: IBuilderQuery = {
 	dataSource: DataSource.METRICS,
 	queryName: createNewBuilderItemName({ existNames: [], sourceNames: alphabet }),
-	aggregateOperator: MetricAggregateOperator.NOOP,
+	aggregateOperator: MetricAggregateOperator.COUNT,
 	aggregateAttribute: initialAutocompleteData,
 	filters: { items: [], op: 'AND' },
 	expression: createNewBuilderItemName({
@@ -238,14 +236,15 @@ export const operatorsByTypes: Record<LocalDataType, string[]> = {
 	bool: Object.values(BoolOperators),
 };
 
-export const PANEL_TYPES: Record<PanelTypeKeys, GRAPH_TYPES> = {
-	TIME_SERIES: 'graph',
-	VALUE: 'value',
-	TABLE: 'table',
-	LIST: 'list',
-	TRACE: 'trace',
-	EMPTY_WIDGET: 'EMPTY_WIDGET',
-};
+// eslint-disable-next-line @typescript-eslint/naming-convention
+export enum PANEL_TYPES {
+	TIME_SERIES = 'graph',
+	VALUE = 'value',
+	TABLE = 'table',
+	LIST = 'list',
+	TRACE = 'trace',
+	EMPTY_WIDGET = 'EMPTY_WIDGET',
+}
 
 export type IQueryBuilderState = 'search';
 

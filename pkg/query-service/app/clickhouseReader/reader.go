@@ -5,6 +5,7 @@ import (
 	"context"
 	"database/sql"
 	"encoding/json"
+	"math"
 
 	"fmt"
 	"io/ioutil"
@@ -3829,6 +3830,52 @@ func (r *ClickHouseReader) GetMetricAttributeValues(ctx context.Context, req *v3
 	return &attributeValues, nil
 }
 
+func (r *ClickHouseReader) GetLatencyMetricMetadata(ctx context.Context, metricName string, preferDelta bool) (*v3.LatencyMetricMetadataResponse, error) {
+	query := fmt.Sprintf("SELECT DISTINCT(temporality) from %s.%s WHERE metric_name='%s'", signozMetricDBName, signozTSTableName, metricName)
+	rows, err := r.db.Query(ctx, query, metricName)
+	if err != nil {
+		zap.S().Error(err)
+		return nil, fmt.Errorf("error while executing query: %s", err.Error())
+	}
+	defer rows.Close()
+
+	var deltaExists bool
+	for rows.Next() {
+		var temporality string
+		if err := rows.Scan(&temporality); err != nil {
+			return nil, fmt.Errorf("error while scanning rows: %s", err.Error())
+		}
+		if temporality == string(v3.Delta) {
+			deltaExists = true
+		}
+	}
+
+	query = fmt.Sprintf("SELECT DISTINCT(toFloat64(JSONExtractString(labels, 'le'))) as le from %s.%s WHERE metric_name='%s' ORDER BY le", signozMetricDBName, signozTSTableName, metricName)
+	rows, err = r.db.Query(ctx, query, metricName)
+	if err != nil {
+		zap.S().Error(err)
+		return nil, fmt.Errorf("error while executing query: %s", err.Error())
+	}
+	defer rows.Close()
+
+	var leFloat64 []float64
+	for rows.Next() {
+		var le float64
+		if err := rows.Scan(&le); err != nil {
+			return nil, fmt.Errorf("error while scanning rows: %s", err.Error())
+		}
+		if math.IsInf(le, 0) {
+			continue
+		}
+		leFloat64 = append(leFloat64, le)
+	}
+
+	return &v3.LatencyMetricMetadataResponse{
+		Delta: deltaExists && preferDelta,
+		Le:    leFloat64,
+	}, nil
+}
+
 func isColumn(tableStatement, field string) bool {
 	return strings.Contains(tableStatement, fmt.Sprintf("`%s` ", field))
 }
@@ -3983,11 +4030,16 @@ func (r *ClickHouseReader) GetLogAttributeValues(ctx context.Context, req *v3.Fi
 	var attributeValues v3.FilterAttributeValueResponse
 
 	// if dataType or tagType is not present return empty response
-	if len(req.FilterAttributeKeyDataType) == 0 || len(req.TagType) == 0 || req.FilterAttributeKey == "body" {
+	if len(req.FilterAttributeKeyDataType) == 0 || len(req.TagType) == 0 {
 		// also check if it is not a top level key
 		if _, ok := constants.StaticFieldsLogsV3[req.FilterAttributeKey]; !ok {
 			return &v3.FilterAttributeValueResponse{}, nil
 		}
+	}
+
+	// ignore autocomplete request for body
+	if req.FilterAttributeKey == "body" {
+		return &v3.FilterAttributeValueResponse{}, nil
 	}
 
 	// if data type is bool, return true and false
@@ -4076,7 +4128,7 @@ func (r *ClickHouseReader) GetLogAttributeValues(ctx context.Context, req *v3.Fi
 
 }
 
-func readRow(vars []interface{}, columnNames []string) ([]string, map[string]string, v3.Point) {
+func readRow(vars []interface{}, columnNames []string) ([]string, map[string]string, []map[string]string, v3.Point) {
 	// Each row will have a value and a timestamp, and an optional list of label values
 	// example: {Timestamp: ..., Value: ...}
 	// The timestamp may also not present in some cases where the time series is reduced to single value
@@ -4086,6 +4138,7 @@ func readRow(vars []interface{}, columnNames []string) ([]string, map[string]str
 	// example: ["frontend", "/fetch"]
 	var groupBy []string
 
+	var groupAttributesArray []map[string]string
 	// groupAttributes is a container to hold the key-value pairs for the current
 	// metric point.
 	// example: {"serviceName": "frontend", "operation": "/fetch"}
@@ -4104,10 +4157,16 @@ func readRow(vars []interface{}, columnNames []string) ([]string, map[string]str
 				}
 				for key, val := range metric {
 					groupBy = append(groupBy, val)
+					if _, ok := groupAttributes[key]; !ok {
+						groupAttributesArray = append(groupAttributesArray, map[string]string{key: val})
+					}
 					groupAttributes[key] = val
 				}
 			} else {
 				groupBy = append(groupBy, *v)
+				if _, ok := groupAttributes[colName]; !ok {
+					groupAttributesArray = append(groupAttributesArray, map[string]string{colName: *v})
+				}
 				groupAttributes[colName] = *v
 			}
 		case *time.Time:
@@ -4117,6 +4176,9 @@ func readRow(vars []interface{}, columnNames []string) ([]string, map[string]str
 				point.Value = float64(reflect.ValueOf(v).Elem().Float())
 			} else {
 				groupBy = append(groupBy, fmt.Sprintf("%v", reflect.ValueOf(v).Elem().Float()))
+				if _, ok := groupAttributes[colName]; !ok {
+					groupAttributesArray = append(groupAttributesArray, map[string]string{colName: fmt.Sprintf("%v", reflect.ValueOf(v).Elem().Float())})
+				}
 				groupAttributes[colName] = fmt.Sprintf("%v", reflect.ValueOf(v).Elem().Float())
 			}
 		case *uint8, *uint64, *uint16, *uint32:
@@ -4124,6 +4186,9 @@ func readRow(vars []interface{}, columnNames []string) ([]string, map[string]str
 				point.Value = float64(reflect.ValueOf(v).Elem().Uint())
 			} else {
 				groupBy = append(groupBy, fmt.Sprintf("%v", reflect.ValueOf(v).Elem().Uint()))
+				if _, ok := groupAttributes[colName]; !ok {
+					groupAttributesArray = append(groupAttributesArray, map[string]string{colName: fmt.Sprintf("%v", reflect.ValueOf(v).Elem().Uint())})
+				}
 				groupAttributes[colName] = fmt.Sprintf("%v", reflect.ValueOf(v).Elem().Uint())
 			}
 		case *int8, *int16, *int32, *int64:
@@ -4131,17 +4196,23 @@ func readRow(vars []interface{}, columnNames []string) ([]string, map[string]str
 				point.Value = float64(reflect.ValueOf(v).Elem().Int())
 			} else {
 				groupBy = append(groupBy, fmt.Sprintf("%v", reflect.ValueOf(v).Elem().Int()))
+				if _, ok := groupAttributes[colName]; !ok {
+					groupAttributesArray = append(groupAttributesArray, map[string]string{colName: fmt.Sprintf("%v", reflect.ValueOf(v).Elem().Int())})
+				}
 				groupAttributes[colName] = fmt.Sprintf("%v", reflect.ValueOf(v).Elem().Int())
 			}
 		case *bool:
 			groupBy = append(groupBy, fmt.Sprintf("%v", *v))
+			if _, ok := groupAttributes[colName]; !ok {
+				groupAttributesArray = append(groupAttributesArray, map[string]string{colName: fmt.Sprintf("%v", *v)})
+			}
 			groupAttributes[colName] = fmt.Sprintf("%v", *v)
 
 		default:
 			zap.S().Errorf("unsupported var type %v found in query builder query result for column %s", v, colName)
 		}
 	}
-	return groupBy, groupAttributes, point
+	return groupBy, groupAttributes, groupAttributesArray, point
 }
 
 func readRowsForTimeSeriesResult(rows driver.Rows, vars []interface{}, columnNames []string) ([]*v3.Series, error) {
@@ -4174,25 +4245,25 @@ func readRowsForTimeSeriesResult(rows driver.Rows, vars []interface{}, columnNam
 	//   "order,/order": {"serviceName": "order", "operation": "/order"},
 	// }
 	seriesToAttrs := make(map[string]map[string]string)
-
+	labelsArray := make(map[string][]map[string]string)
 	for rows.Next() {
 		if err := rows.Scan(vars...); err != nil {
 			return nil, err
 		}
-		groupBy, groupAttributes, metricPoint := readRow(vars, columnNames)
+		groupBy, groupAttributes, groupAttributesArray, metricPoint := readRow(vars, columnNames)
 		sort.Strings(groupBy)
 		key := strings.Join(groupBy, "")
 		if _, exists := seriesToAttrs[key]; !exists {
 			keys = append(keys, key)
 		}
 		seriesToAttrs[key] = groupAttributes
+		labelsArray[key] = groupAttributesArray
 		seriesToPoints[key] = append(seriesToPoints[key], metricPoint)
 	}
 
 	var seriesList []*v3.Series
 	for _, key := range keys {
 		points := seriesToPoints[key]
-
 		// find the grouping sets point for the series
 		// this is the point with the zero timestamp
 		// if there is no such point, then the series is not grouped
@@ -4206,7 +4277,7 @@ func readRowsForTimeSeriesResult(rows driver.Rows, vars []interface{}, columnNam
 				break
 			}
 		}
-		series := v3.Series{Labels: seriesToAttrs[key], Points: points, GroupingSetsPoint: groupingSetsPoint}
+		series := v3.Series{Labels: seriesToAttrs[key], Points: points, GroupingSetsPoint: groupingSetsPoint, LabelsArray: labelsArray[key]}
 		seriesList = append(seriesList, &series)
 	}
 	return seriesList, nil
@@ -4503,4 +4574,47 @@ func (r *ClickHouseReader) GetSpanAttributeKeys(ctx context.Context) (map[string
 		response[tagKey] = key
 	}
 	return response, nil
+}
+
+func (r *ClickHouseReader) LiveTailLogsV3(ctx context.Context, query string, timestampStart uint64, idStart string, client *v3.LogsLiveTailClient) {
+	if timestampStart == 0 {
+		timestampStart = uint64(time.Now().UnixNano())
+	}
+
+	ticker := time.NewTicker(time.Duration(r.liveTailRefreshSeconds) * time.Second)
+	defer ticker.Stop()
+	for {
+		select {
+		case <-ctx.Done():
+			done := true
+			client.Done <- &done
+			zap.S().Debug("closing go routine : " + client.Name)
+			return
+		case <-ticker.C:
+			// get the new 100 logs as anything more older won't make sense
+			tmpQuery := fmt.Sprintf("timestamp >='%d'", timestampStart)
+			if idStart != "" {
+				tmpQuery = fmt.Sprintf("%s AND id > '%s'", tmpQuery, idStart)
+			}
+			tmpQuery = fmt.Sprintf(query, tmpQuery)
+			// the reason we are doing desc is that we need the latest logs first
+			tmpQuery = fmt.Sprintf("%s order by timestamp desc, id desc limit 100", tmpQuery)
+
+			// using the old structure since we can directly read it to the struct as use it.
+			response := []model.GetLogsResponse{}
+			err := r.db.Select(ctx, &response, tmpQuery)
+			if err != nil {
+				zap.S().Error(err)
+				client.Error <- err
+				return
+			}
+			for i := len(response) - 1; i >= 0; i-- {
+				client.Logs <- &response[i]
+				if i == 0 {
+					timestampStart = response[i].Timestamp
+					idStart = response[i].ID
+				}
+			}
+		}
+	}
 }
