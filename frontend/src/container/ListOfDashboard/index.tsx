@@ -224,6 +224,7 @@ function ListOfAllDashboard(): JSX.Element {
 			key: t('import_grafana_json').toString(),
 			label: t('import_grafana_json'),
 			onClick: (): void => onModalHandler(true),
+			disabled: true,
 		});
 
 		return menuItems;

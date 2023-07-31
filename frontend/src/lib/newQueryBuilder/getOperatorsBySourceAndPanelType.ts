@@ -1,5 +1,9 @@
 import { mapOfOperators, PANEL_TYPES } from 'constants/queryBuilder';
-import { DataSource, StringOperators } from 'types/common/queryBuilder';
+import {
+	DataSource,
+	MetricAggregateOperator,
+	StringOperators,
+} from 'types/common/queryBuilder';
 import { SelectOption } from 'types/common/select';
 
 type GetQueryOperatorsParams = {
@@ -17,6 +21,13 @@ export const getOperatorsBySourceAndPanelType = ({
 	if (panelType === PANEL_TYPES.LIST || panelType === PANEL_TYPES.TRACE) {
 		operatorsByDataSource = operatorsByDataSource.filter(
 			(operator) => operator.value === StringOperators.NOOP,
+		);
+	}
+	if (panelType === PANEL_TYPES.TABLE && dataSource === DataSource.METRICS) {
+		operatorsByDataSource = operatorsByDataSource.filter(
+			(operator) =>
+				operator.value !== MetricAggregateOperator.NOOP &&
+				operator.value !== MetricAggregateOperator.RATE,
 		);
 	}
 	if (
