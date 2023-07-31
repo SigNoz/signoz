@@ -11,7 +11,7 @@ function ServiceTraceTable({
 }: ServiceTableProps): JSX.Element {
 	const { search } = useLocation();
 
-	const tableColumns = useMemo(() => getColumns(search, true), [search]);
+	const tableColumns = useMemo(() => getColumns(search, false), [search]);
 
 	return (
 		<ResizeTable

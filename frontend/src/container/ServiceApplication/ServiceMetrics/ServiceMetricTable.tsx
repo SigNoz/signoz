@@ -36,16 +36,14 @@ function ServiceMetricTable({
 	});
 
 	const isLoading = queries.some((query) => query.isLoading);
-	const isError = queries.some((query) => query.isError);
 	const services: ServicesList[] = useMemo(
 		() =>
 			getServiceListFromQuery({
 				queries,
 				topLevelOperations,
 				isLoading,
-				isError,
 			}),
-		[isError, isLoading, queries, topLevelOperations],
+		[isLoading, queries, topLevelOperations],
 	);
 
 	const { search } = useLocation();

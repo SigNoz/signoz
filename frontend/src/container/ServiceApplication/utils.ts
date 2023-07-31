@@ -63,11 +63,23 @@ export const getServiceListFromQuery = ({
 	queries,
 	topLevelOperations,
 	isLoading,
-	isError,
 }: GetServiceListFromQueryProps): ServicesList[] => {
 	const services: ServicesList[] = [];
-	if (!isLoading && !isError) {
+	if (!isLoading) {
 		queries.forEach((query, index) => {
+			// handling error case if query fails
+			if (query.isError) {
+				const serviceData: ServicesList = {
+					serviceName: topLevelOperations[index][0].toString(),
+					p99: 0,
+					callRate: 0,
+					errorRate: 0,
+					avgDuration: 0,
+					numCalls: 0,
+					numErrors: 0,
+				};
+				services.push(serviceData);
+			}
 			if (query.data) {
 				const queryArray = query.data.payload.data.newResult.data.result;
 				const serviceData: ServicesList = {

@@ -35,5 +35,4 @@ export interface GetServiceListFromQueryProps {
 	queries: UseQueryResult<SuccessResponse<MetricRangePayloadProps>, Error>[];
 	topLevelOperations: [keyof ServiceDataProps, string[]][];
 	isLoading: boolean;
-	isError: boolean;
 }
