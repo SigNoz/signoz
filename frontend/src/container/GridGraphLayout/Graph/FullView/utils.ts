@@ -1,5 +1,6 @@
 import { ChartData, ChartDataset } from 'chart.js';
 import { LOCALSTORAGE } from 'constants/localStorage';
+import { PANEL_TYPES } from 'constants/queryBuilder';
 
 import {
 	ExtendedChartDataset,
@@ -81,3 +82,7 @@ export const saveLegendEntriesToLocalStorage = ({
 		console.error('Error setting LEGEND_GRAPH to local storage', error);
 	}
 };
+
+export const getIsGraphLegendToggleAvailable = (
+	panelType: PANEL_TYPES,
+): boolean => panelType === PANEL_TYPES.TIME_SERIES;

@@ -1,7 +1,6 @@
 import { Button } from 'antd';
 import Spinner from 'components/Spinner';
 import TimePreference from 'components/TimePreferenceDropDown';
-import { PANEL_TYPES } from 'constants/queryBuilder';
 import GridPanelSwitch from 'container/GridPanelSwitch';
 import {
 	timeItems,
@@ -21,6 +20,7 @@ import { PANEL_TYPES_VS_FULL_VIEW_TABLE } from './contants';
 import GraphManager from './GraphManager';
 import { GraphContainer, TimeContainer } from './styles';
 import { FullViewProps } from './types';
+import { getIsGraphLegendToggleAvailable } from './utils';
 
 function FullView({
 	widget,
@@ -88,6 +88,10 @@ function FullView({
 		[response],
 	);
 
+	const isGraphLegendToggleAvailable = getIsGraphLegendToggleAvailable(
+		widget.panelTypes,
+	);
+
 	if (response.isFetching) {
 		return <Spinner height="100%" size="large" tip="Loading..." />;
 	}
@@ -111,9 +115,7 @@ function FullView({
 				</TimeContainer>
 			)}
 
-			<GraphContainer
-				isGraphLegendToggleAvailable={widget.panelTypes === PANEL_TYPES.TIME_SERIES}
-			>
+			<GraphContainer isGraphLegendToggleAvailable={isGraphLegendToggleAvailable}>
 				<GridPanelSwitch
 					panelType={widget.panelTypes}
 					data={chartDataSet}
