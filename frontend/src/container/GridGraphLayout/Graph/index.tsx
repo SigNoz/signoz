@@ -98,6 +98,10 @@ function GridCardGraph({
 
 	const isEmptyLayout = widget?.id === 'empty' || isEmpty(widget);
 
+	if (queryResponse.isRefetching) {
+		return <Spinner height="20vh" tip="Loading..." />;
+	}
+
 	if (queryResponse.isError && !isEmptyLayout) {
 		return (
 			<span ref={graphRef}>

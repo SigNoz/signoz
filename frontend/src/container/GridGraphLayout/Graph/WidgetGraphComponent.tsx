@@ -58,7 +58,7 @@ function WidgetGraphComponent({
 	const { notifications } = useNotifications();
 	const { t } = useTranslation(['common']);
 
-	const visibilityStateAndLegendEntry = useMemo(
+	const { graphVisibilityStates: localstoredVisibilityStates } = useMemo(
 		() =>
 			getGraphVisibilityStateOnDataChange({
 				data,
@@ -68,9 +68,9 @@ function WidgetGraphComponent({
 		[data, name],
 	);
 
-	const [graphsVisibilityStates, setGraphsVisilityStates] = useState<boolean[]>([
-		...visibilityStateAndLegendEntry.graphVisibilityStates,
-	]);
+	const [graphsVisibilityStates, setGraphsVisilityStates] = useState<boolean[]>(
+		localstoredVisibilityStates,
+	);
 
 	const { dashboards } = useSelector<AppState, DashboardReducer>(
 		(state) => state.dashboards,
@@ -81,6 +81,18 @@ function WidgetGraphComponent({
 		panelType: widget.panelTypes,
 		panelTypeAndGraphManagerVisibility: PANEL_TYPES_VS_FULL_VIEW_TABLE,
 	});
+
+	// Updating the visibility state of the graph on data change according to global time range
+	useEffect(() => {
+		if (canModifyChart) {
+			const newGraphVisibilityState = getGraphVisibilityStateOnDataChange({
+				data,
+				isExpandedName: true,
+				name,
+			});
+			setGraphsVisilityStates(newGraphVisibilityState.graphVisibilityStates);
+		}
+	}, [canModifyChart, data, name]);
 
 	useEffect(() => {
 		const eventListener = eventEmitter.on(
