@@ -26,7 +26,8 @@ export const TimeContainer = styled.div<Props>`
 `;
 
 export const GraphContainer = styled.div<GraphContainerProps>`
-	height: ${(props): string => (props.isPanelTypeGraph ? '50%' : '100%')};
+	height: ${({ isPanelTypeGraph }): string =>
+		isPanelTypeGraph ? '50%' : '100%'};
 `;
 
 export const FilterTableAndSaveContainer = styled.div`
