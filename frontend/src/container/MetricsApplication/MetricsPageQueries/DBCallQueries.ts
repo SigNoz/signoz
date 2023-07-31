@@ -48,13 +48,14 @@ export const databaseCallsRPS = ({
 	];
 
 	const legends = [legend];
+	const dataSource = DataSource.METRICS;
 
 	return getQueryBuilderQueries({
 		autocompleteData,
 		groupBy,
 		legends,
 		filterItems,
-		dataSource: DataSource.METRICS,
+		dataSource,
 	});
 };
 
@@ -89,7 +90,6 @@ export const databaseCallsAvgDuration = ({
 		},
 		...tagFilterItems,
 	];
-	const additionalItemsB = additionalItemsA;
 
 	const autocompleteData: BaseAutocompleteData[] = [
 		autocompleteDataA,

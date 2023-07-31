@@ -8,7 +8,10 @@ import {
 } from 'types/common/queryBuilder';
 
 import { DataType, FORMULA, MetricsType, WidgetKeys } from '../constant';
-import { IServiceName } from '../Tabs/types';
+import {
+	ExternalCallDurationByAddressProps,
+	ExternalCallProps,
+} from '../Tabs/types';
 import {
 	getQueryBuilderQueries,
 	getQueryBuilderQuerieswithFormula,
@@ -40,6 +43,7 @@ export const externalCallErrorPercent = ({
 		isColumn: true,
 		type: null,
 	};
+
 	const additionalItemsA: TagFilterItem[] = [
 		{
 			id: '',
@@ -75,7 +79,7 @@ export const externalCallErrorPercent = ({
 				type: MetricsType.Resource,
 			},
 			op: OPERATORS.IN,
-			value: [`${servicename}`],
+			value: [servicename],
 		},
 		...tagFilterItems,
 	];
@@ -198,13 +202,15 @@ export const externalCallRpsByAddress = ({
 		],
 	];
 
-	const legends: string[] = [legend];
+	const legends = [legend];
+	const dataSource = DataSource.METRICS;
+
 	return getQueryBuilderQueries({
 		autocompleteData,
 		groupBy,
 		legends,
 		filterItems,
-		dataSource: DataSource.METRICS,
+		dataSource,
 	});
 };
 
@@ -268,12 +274,3 @@ export const externalCallDurationByAddress = ({
 		dataSource: DataSource.METRICS,
 	});
 };
-
-interface ExternalCallDurationByAddressProps extends ExternalCallProps {
-	legend: string;
-}
-
-export interface ExternalCallProps {
-	servicename: IServiceName['servicename'];
-	tagFilterItems: TagFilterItem[];
-}

@@ -5,16 +5,16 @@ import {
 } from 'constants/queryBuilder';
 import getStep from 'lib/getStep';
 import store from 'store';
-import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
+import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 import {
-	IBuilderQuery,
-	TagFilterItem,
-} from 'types/api/queryBuilder/queryBuilderData';
-import {
-	DataSource,
 	MetricAggregateOperator,
 	QueryBuilderData,
 } from 'types/common/queryBuilder';
+
+import {
+	BuilderQueriesProps,
+	BuilderQuerieswithFormulaProps,
+} from '../Tabs/types';
 
 export const getQueryBuilderQueries = ({
 	autocompleteData,
@@ -99,25 +99,3 @@ export const getQueryBuilderQuerieswithFormula = ({
 		dataSource,
 	})),
 });
-
-interface BuilderQueriesProps {
-	autocompleteData: BaseAutocompleteData[];
-	groupBy?: BaseAutocompleteData[];
-	legends: string[];
-	filterItems: TagFilterItem[][];
-	aggregateOperator?: string[];
-	dataSource: DataSource;
-	queryNameAndExpression?: string[];
-}
-
-interface BuilderQuerieswithFormulaProps {
-	autocompleteData: BaseAutocompleteData[];
-	legends: string[];
-	disabled: boolean[];
-	groupBy?: BaseAutocompleteData[];
-	expressions: string[];
-	legendFormulas: string[];
-	additionalItems: TagFilterItem[][];
-	aggregateOperators: MetricAggregateOperator[];
-	dataSource: DataSource;
-}
