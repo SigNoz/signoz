@@ -1,8 +1,7 @@
-import { blue, orange } from '@ant-design/colors';
+import { blue } from '@ant-design/colors';
 import { Col, Row, Space } from 'antd';
-import { themeColors } from 'constants/theme';
 import styled from 'styled-components';
-import getAlphaColor from 'utils/getAlphaColor';
+import { getActiveLogBackground, getDefaultLogBackground } from 'utils/logs';
 
 export const RawLogViewContainer = styled(Row)<{
 	$isDarkMode: boolean;
@@ -17,19 +16,12 @@ export const RawLogViewContainer = styled(Row)<{
 
 	transition: background-color 0.2s ease-in;
 
-	${({ $isActiveLog }): string =>
-		$isActiveLog ? `background-color: ${orange[3]};` : ''}
+	${({ $isActiveLog }): string => getActiveLogBackground($isActiveLog)}
 
-	${({ $isReadOnly, $isDarkMode }): string =>
-		!$isReadOnly
-			? `&:hover {
-			background-color: ${
-				$isDarkMode
-					? getAlphaColor(themeColors.white)[10]
-					: getAlphaColor(themeColors.black)[10]
-			};
-		}`
-			: ''}
+	${({ $isReadOnly, $isDarkMode, $isActiveLog }): string =>
+		$isActiveLog
+			? getActiveLogBackground()
+			: getDefaultLogBackground($isReadOnly, $isDarkMode)}
 `;
 
 export const ExpandIconWrapper = styled(Col)`

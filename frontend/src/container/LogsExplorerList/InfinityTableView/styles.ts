@@ -1,5 +1,6 @@
 import { themeColors } from 'constants/theme';
 import styled from 'styled-components';
+import { getActiveLogBackground } from 'utils/logs';
 
 interface TableHeaderCellStyledProps {
 	isDragColumn: boolean;
@@ -23,21 +24,16 @@ export const TableCellStyled = styled.td`
 `;
 
 export const TableRowStyled = styled.tr<{
-	$isDarkMode: boolean;
 	$isActiveLog: boolean;
 }>`
 	td {
-		${({ $isDarkMode, $isActiveLog }): string =>
-			$isActiveLog
-				? `background-color: ${
-						$isDarkMode ? 'rgba(255,255,255,0.1)' : 'rgba(0, 0, 0, 0.1)'
-				  };`
-				: ''}
+		${({ $isActiveLog }): string => getActiveLogBackground($isActiveLog)}
 	}
 
 	&:hover {
 		${TableCellStyled} {
-			background-color: #1d1d1d;
+			${({ $isActiveLog }): string =>
+				$isActiveLog ? getActiveLogBackground() : 'background-color: #1d1d1d;'}
 		}
 	}
 `;
