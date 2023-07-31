@@ -18,6 +18,7 @@ import (
 	"go.uber.org/multierr"
 
 	"go.signoz.io/signoz/pkg/query-service/app/metrics"
+	"go.signoz.io/signoz/pkg/query-service/app/queryBuilder"
 	"go.signoz.io/signoz/pkg/query-service/auth"
 	"go.signoz.io/signoz/pkg/query-service/constants"
 	"go.signoz.io/signoz/pkg/query-service/model"
@@ -720,6 +721,16 @@ func parseInviteRequest(r *http.Request) (*model.InviteRequest, error) {
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		return nil, err
 	}
+	// Trim spaces from email
+	req.Email = strings.TrimSpace(req.Email)
+	return &req, nil
+}
+
+func parseSetApdexScoreRequest(r *http.Request) (*model.ApdexSettings, error) {
+	var req model.ApdexSettings
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		return nil, err
+	}
 	return &req, nil
 }
 
@@ -833,7 +844,6 @@ func parseFilterAttributeKeyRequest(r *http.Request) (*v3.FilterAttributeKeyRequ
 	dataSource := v3.DataSource(r.URL.Query().Get("dataSource"))
 	aggregateOperator := v3.AggregateOperator(r.URL.Query().Get("aggregateOperator"))
 	aggregateAttribute := r.URL.Query().Get("aggregateAttribute")
-	tagType := v3.TagType(r.URL.Query().Get("tagType"))
 
 	limit, err := strconv.Atoi(r.URL.Query().Get("limit"))
 	if err != nil {
@@ -848,15 +858,10 @@ func parseFilterAttributeKeyRequest(r *http.Request) (*v3.FilterAttributeKeyRequ
 		return nil, err
 	}
 
-	if err := tagType.Validate(); err != nil && tagType != v3.TagType("") {
-		return nil, err
-	}
-
 	req = v3.FilterAttributeKeyRequest{
 		DataSource:         dataSource,
 		AggregateOperator:  aggregateOperator,
 		AggregateAttribute: aggregateAttribute,
-		TagType:            tagType,
 		Limit:              limit,
 		SearchText:         r.URL.Query().Get("searchText"),
 	}
@@ -909,7 +914,7 @@ func validateQueryRangeParamsV3(qp *v3.QueryRangeParamsV3) error {
 	for _, q := range qp.CompositeQuery.BuilderQueries {
 		expressions = append(expressions, q.Expression)
 	}
-	errs := validateExpressions(expressions, evalFuncs, qp.CompositeQuery)
+	errs := validateExpressions(expressions, queryBuilder.EvalFuncs, qp.CompositeQuery)
 	if len(errs) > 0 {
 		return multierr.Combine(errs...)
 	}

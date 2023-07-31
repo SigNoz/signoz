@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"sort"
 	"strconv"
 	"strings"
 	"sync"
@@ -27,6 +28,8 @@ import (
 	"go.signoz.io/signoz/pkg/query-service/app/metrics"
 	metricsv3 "go.signoz.io/signoz/pkg/query-service/app/metrics/v3"
 	"go.signoz.io/signoz/pkg/query-service/app/parser"
+	"go.signoz.io/signoz/pkg/query-service/app/queryBuilder"
+	tracesV3 "go.signoz.io/signoz/pkg/query-service/app/traces/v3"
 	"go.signoz.io/signoz/pkg/query-service/auth"
 	"go.signoz.io/signoz/pkg/query-service/constants"
 	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
@@ -61,15 +64,18 @@ func NewRouter() *mux.Router {
 type APIHandler struct {
 	// queryService *querysvc.QueryService
 	// queryParser  queryParser
-	basePath     string
-	apiPrefix    string
-	reader       interfaces.Reader
-	appDao       dao.ModelDao
-	alertManager am.Manager
-	ruleManager  *rules.Manager
-	featureFlags interfaces.FeatureLookup
-	ready        func(http.HandlerFunc) http.HandlerFunc
-	queryBuilder *queryBuilder
+	basePath          string
+	apiPrefix         string
+	reader            interfaces.Reader
+	skipConfig        *model.SkipConfig
+	appDao            dao.ModelDao
+	alertManager      am.Manager
+	ruleManager       *rules.Manager
+	featureFlags      interfaces.FeatureLookup
+	ready             func(http.HandlerFunc) http.HandlerFunc
+	queryBuilder      *queryBuilder.QueryBuilder
+	preferDelta       bool
+	preferSpanMetrics bool
 
 	LogsParsingPipelineController *logparsingpipeline.LogParsingPipelineController
 
@@ -84,6 +90,10 @@ type APIHandlerOpts struct {
 	// business data reader e.g. clickhouse
 	Reader interfaces.Reader
 
+	SkipConfig *model.SkipConfig
+
+	PerferDelta       bool
+	PreferSpanMetrics bool
 	// dao layer to perform crud on app objects like dashboard, alerts etc
 	AppDao dao.ModelDao
 
@@ -108,24 +118,25 @@ func NewAPIHandler(opts APIHandlerOpts) (*APIHandler, error) {
 	aH := &APIHandler{
 		reader:                        opts.Reader,
 		appDao:                        opts.AppDao,
+		skipConfig:                    opts.SkipConfig,
+		preferDelta:                   opts.PerferDelta,
+		preferSpanMetrics:             opts.PreferSpanMetrics,
 		alertManager:                  alertManager,
 		ruleManager:                   opts.RuleManager,
 		featureFlags:                  opts.FeatureFlags,
 		LogsParsingPipelineController: opts.LogsParsingPipelineController,
 	}
 
-	builderOpts := queryBuilderOptions{
+	builderOpts := queryBuilder.QueryBuilderOptions{
 		BuildMetricQuery: metricsv3.PrepareMetricQuery,
-		BuildTraceQuery: func(start, end int64, queryType v3.QueryType, panelType v3.PanelType, bq *v3.BuilderQuery) (string, error) {
-			return "", errors.New("not implemented")
-		},
-		BuildLogQuery: logsv3.PrepareLogsQuery,
+		BuildTraceQuery:  tracesV3.PrepareTracesQuery,
+		BuildLogQuery:    logsv3.PrepareLogsQuery,
 	}
-	aH.queryBuilder = NewQueryBuilder(builderOpts)
+	aH.queryBuilder = queryBuilder.NewQueryBuilder(builderOpts)
 
 	aH.ready = aH.testReady
 
-	dashboards.LoadDashboardFiles()
+	dashboards.LoadDashboardFiles(aH.featureFlags)
 	// if errReadingDashboards != nil {
 	// 	return nil, errReadingDashboards
 	// }
@@ -270,6 +281,9 @@ func (aH *APIHandler) RegisterQueryRangeV3Routes(router *mux.Router, am *AuthMid
 	subRouter.HandleFunc("/autocomplete/attribute_values", am.ViewAccess(
 		withCacheControl(AutoCompleteCacheControlAge, aH.autoCompleteAttributeValues))).Methods(http.MethodGet)
 	subRouter.HandleFunc("/query_range", am.ViewAccess(aH.QueryRangeV3)).Methods(http.MethodPost)
+
+	// live logs
+	subRouter.HandleFunc("/logs/livetail", am.ViewAccess(aH.liveTailLogs)).Methods(http.MethodPost)
 }
 
 func (aH *APIHandler) Respond(w http.ResponseWriter, data interface{}) {
@@ -327,6 +341,10 @@ func (aH *APIHandler) RegisterRoutes(router *mux.Router, am *AuthMiddleware) {
 	router.HandleFunc("/api/v1/dependency_graph", am.ViewAccess(aH.dependencyGraph)).Methods(http.MethodPost)
 	router.HandleFunc("/api/v1/settings/ttl", am.AdminAccess(aH.setTTL)).Methods(http.MethodPost)
 	router.HandleFunc("/api/v1/settings/ttl", am.ViewAccess(aH.getTTL)).Methods(http.MethodGet)
+	router.HandleFunc("/api/v1/settings/apdex", am.AdminAccess(aH.setApdexSettings)).Methods(http.MethodPost)
+	router.HandleFunc("/api/v1/settings/apdex", am.ViewAccess(aH.getApdexSettings)).Methods(http.MethodGet)
+
+	router.HandleFunc("/api/v1/metric_meta", am.ViewAccess(aH.getLatencyMetricMetadata)).Methods(http.MethodGet)
 
 	router.HandleFunc("/api/v1/version", am.OpenAccess(aH.getVersion)).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/featureFlags", am.OpenAccess(aH.getFeatureFlags)).Methods(http.MethodGet)
@@ -455,6 +473,48 @@ func (aH *APIHandler) metricAutocompleteTagValue(w http.ResponseWriter, r *http.
 	}
 
 	aH.Respond(w, tagValueList)
+}
+
+func (aH *APIHandler) addTemporality(ctx context.Context, qp *v3.QueryRangeParamsV3) error {
+
+	metricNames := make([]string, 0)
+	metricNameToTemporality := make(map[string]map[v3.Temporality]bool)
+	if qp.CompositeQuery != nil && len(qp.CompositeQuery.BuilderQueries) > 0 {
+		for _, query := range qp.CompositeQuery.BuilderQueries {
+			if query.DataSource == v3.DataSourceMetrics {
+				metricNames = append(metricNames, query.AggregateAttribute.Key)
+				if _, ok := metricNameToTemporality[query.AggregateAttribute.Key]; !ok {
+					metricNameToTemporality[query.AggregateAttribute.Key] = make(map[v3.Temporality]bool)
+				}
+			}
+		}
+	}
+
+	var err error
+
+	if aH.preferDelta {
+		zap.S().Debug("fetching metric temporality")
+		metricNameToTemporality, err = aH.reader.FetchTemporality(ctx, metricNames)
+		if err != nil {
+			return err
+		}
+	}
+
+	if qp.CompositeQuery != nil && len(qp.CompositeQuery.BuilderQueries) > 0 {
+		for name := range qp.CompositeQuery.BuilderQueries {
+			query := qp.CompositeQuery.BuilderQueries[name]
+			if query.DataSource == v3.DataSourceMetrics {
+				if aH.preferDelta && metricNameToTemporality[query.AggregateAttribute.Key][v3.Delta] {
+					query.Temporality = v3.Delta
+				} else if metricNameToTemporality[query.AggregateAttribute.Key][v3.Cumulative] {
+					query.Temporality = v3.Cumulative
+				} else {
+					query.Temporality = v3.Unspecified
+				}
+			}
+		}
+	}
+	return nil
 }
 
 func (aH *APIHandler) QueryRangeMetricsV2(w http.ResponseWriter, r *http.Request) {
@@ -732,7 +792,7 @@ func (aH *APIHandler) getDashboards(w http.ResponseWriter, r *http.Request) {
 func (aH *APIHandler) deleteDashboard(w http.ResponseWriter, r *http.Request) {
 
 	uuid := mux.Vars(r)["uuid"]
-	err := dashboards.DeleteDashboard(uuid)
+	err := dashboards.DeleteDashboard(uuid, aH.featureFlags)
 
 	if err != nil {
 		RespondError(w, err, nil)
@@ -838,7 +898,7 @@ func (aH *APIHandler) updateDashboard(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	dashboard, apiError := dashboards.UpdateDashboard(uuid, postData)
+	dashboard, apiError := dashboards.UpdateDashboard(uuid, postData, aH.featureFlags)
 	if apiError != nil {
 		RespondError(w, apiError, nil)
 		return
@@ -872,7 +932,7 @@ func (aH *APIHandler) saveAndReturn(w http.ResponseWriter, signozDashboard model
 	toSave["widgets"] = signozDashboard.Widgets
 	toSave["variables"] = signozDashboard.Variables
 
-	dashboard, apiError := dashboards.CreateDashboard(toSave)
+	dashboard, apiError := dashboards.CreateDashboard(toSave, aH.featureFlags)
 	if apiError != nil {
 		RespondError(w, apiError, nil)
 		return
@@ -913,7 +973,7 @@ func (aH *APIHandler) createDashboards(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	dash, apiErr := dashboards.CreateDashboard(postData)
+	dash, apiErr := dashboards.CreateDashboard(postData, aH.featureFlags)
 
 	if apiErr != nil {
 		RespondError(w, apiErr, nil)
@@ -1325,7 +1385,7 @@ func (aH *APIHandler) getServiceOverview(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	result, apiErr := aH.reader.GetServiceOverview(r.Context(), query)
+	result, apiErr := aH.reader.GetServiceOverview(r.Context(), query, aH.skipConfig)
 	if apiErr != nil && aH.HandleError(w, apiErr.Err, http.StatusInternalServerError) {
 		return
 	}
@@ -1336,7 +1396,7 @@ func (aH *APIHandler) getServiceOverview(w http.ResponseWriter, r *http.Request)
 
 func (aH *APIHandler) getServicesTopLevelOps(w http.ResponseWriter, r *http.Request) {
 
-	result, apiErr := aH.reader.GetTopLevelOperations(r.Context())
+	result, apiErr := aH.reader.GetTopLevelOperations(r.Context(), aH.skipConfig)
 	if apiErr != nil {
 		RespondError(w, apiErr, nil)
 		return
@@ -1352,7 +1412,7 @@ func (aH *APIHandler) getServices(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	result, apiErr := aH.reader.GetServices(r.Context(), query)
+	result, apiErr := aH.reader.GetServices(r.Context(), query, aH.skipConfig)
 	if apiErr != nil && aH.HandleError(w, apiErr.Err, http.StatusInternalServerError) {
 		return
 	}
@@ -1622,7 +1682,19 @@ func (aH *APIHandler) getVersion(w http.ResponseWriter, r *http.Request) {
 }
 
 func (aH *APIHandler) getFeatureFlags(w http.ResponseWriter, r *http.Request) {
-	featureSet := aH.FF().GetFeatureFlags()
+	featureSet, err := aH.FF().GetFeatureFlags()
+	if err != nil {
+		aH.HandleError(w, err, http.StatusInternalServerError)
+		return
+	}
+	if aH.preferSpanMetrics {
+		for idx := range featureSet {
+			feature := &featureSet[idx]
+			if feature.Name == model.UseSpanMetrics {
+				featureSet[idx].Active = true
+			}
+		}
+	}
 	aH.Respond(w, featureSet)
 }
 
@@ -2508,7 +2580,7 @@ func (aH *APIHandler) autocompleteAggregateAttributes(w http.ResponseWriter, r *
 	case v3.DataSourceLogs:
 		response, err = aH.reader.GetLogAggregateAttributes(r.Context(), req)
 	case v3.DataSourceTraces:
-		// TODO: implement
+		response, err = aH.reader.GetTraceAggregateAttributes(r.Context(), req)
 	default:
 		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: fmt.Errorf("invalid data source")}, nil)
 		return
@@ -2537,7 +2609,7 @@ func (aH *APIHandler) autoCompleteAttributeKeys(w http.ResponseWriter, r *http.R
 	case v3.DataSourceLogs:
 		response, err = aH.reader.GetLogAttributeKeys(r.Context(), req)
 	case v3.DataSourceTraces:
-		// TODO: implement
+		response, err = aH.reader.GetTraceAttributeKeys(r.Context(), req)
 	default:
 		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: fmt.Errorf("invalid data source")}, nil)
 		return
@@ -2566,7 +2638,7 @@ func (aH *APIHandler) autoCompleteAttributeValues(w http.ResponseWriter, r *http
 	case v3.DataSourceLogs:
 		response, err = aH.reader.GetLogAttributeValues(r.Context(), req)
 	case v3.DataSourceTraces:
-		// TODO: implement
+		response, err = aH.reader.GetTraceAttributeValues(r.Context(), req)
 	default:
 		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: fmt.Errorf("invalid data source")}, nil)
 		return
@@ -2595,6 +2667,7 @@ func (aH *APIHandler) execClickHouseGraphQueries(ctx context.Context, queries ma
 		wg.Add(1)
 		go func(name, query string) {
 			defer wg.Done()
+
 			seriesList, err := aH.reader.GetTimeSeriesResultV3(ctx, query)
 
 			if err != nil {
@@ -2807,6 +2880,25 @@ func (aH *APIHandler) getLogFieldsV3(ctx context.Context, queryRangeParams *v3.Q
 	return data, nil
 }
 
+func (aH *APIHandler) getSpanKeysV3(ctx context.Context, queryRangeParams *v3.QueryRangeParamsV3) (map[string]v3.AttributeKey, error) {
+	data := map[string]v3.AttributeKey{}
+	for _, query := range queryRangeParams.CompositeQuery.BuilderQueries {
+		if query.DataSource == v3.DataSourceTraces {
+			spanKeys, err := aH.reader.GetSpanAttributeKeys(ctx)
+			if err != nil {
+				return nil, err
+			}
+			// Add timestamp as a span key to allow ordering by timestamp
+			spanKeys["timestamp"] = v3.AttributeKey{
+				Key:      "timestamp",
+				IsColumn: true,
+			}
+			return spanKeys, nil
+		}
+	}
+	return data, nil
+}
+
 func (aH *APIHandler) queryRangeV3(ctx context.Context, queryRangeParams *v3.QueryRangeParamsV3, w http.ResponseWriter, r *http.Request) {
 
 	var result []*v3.Result
@@ -2815,22 +2907,34 @@ func (aH *APIHandler) queryRangeV3(ctx context.Context, queryRangeParams *v3.Que
 	var queries map[string]string
 	switch queryRangeParams.CompositeQuery.QueryType {
 	case v3.QueryTypeBuilder:
-		// get the fields if any logs query is present
-		var fields map[string]v3.AttributeKey
-		fields, err = aH.getLogFieldsV3(ctx, queryRangeParams)
+		// check if any enrichment is required for logs if yes then enrich them
+		if logsv3.EnrichmentRequired(queryRangeParams) {
+			// get the fields if any logs query is present
+			var fields map[string]v3.AttributeKey
+			fields, err = aH.getLogFieldsV3(ctx, queryRangeParams)
+			if err != nil {
+				apiErrObj := &model.ApiError{Typ: model.ErrorInternal, Err: err}
+				RespondError(w, apiErrObj, errQuriesByName)
+				return
+			}
+			logsv3.Enrich(queryRangeParams, fields)
+		}
+
+		var spanKeys map[string]v3.AttributeKey
+		spanKeys, err = aH.getSpanKeysV3(ctx, queryRangeParams)
 		if err != nil {
 			apiErrObj := &model.ApiError{Typ: model.ErrorInternal, Err: err}
 			RespondError(w, apiErrObj, errQuriesByName)
 			return
 		}
 
-		queries, err = aH.queryBuilder.prepareQueries(queryRangeParams, fields)
+		queries, err = aH.queryBuilder.PrepareQueries(queryRangeParams, spanKeys)
 		if err != nil {
 			RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
 			return
 		}
 
-		if queryRangeParams.CompositeQuery.PanelType == v3.PanelTypeList {
+		if queryRangeParams.CompositeQuery.PanelType == v3.PanelTypeList || queryRangeParams.CompositeQuery.PanelType == v3.PanelTypeTrace {
 			result, err, errQuriesByName = aH.execClickHouseListQueries(r.Context(), queries)
 		} else {
 			result, err, errQuriesByName = aH.execClickHouseGraphQueries(r.Context(), queries)
@@ -2858,6 +2962,8 @@ func (aH *APIHandler) queryRangeV3(ctx context.Context, queryRangeParams *v3.Que
 		return
 	}
 
+	applyMetricLimit(result, queryRangeParams)
+
 	resp := v3.QueryRangeResponse{
 		Result: result,
 	}
@@ -2873,5 +2979,148 @@ func (aH *APIHandler) QueryRangeV3(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// add temporality for each metric
+
+	temporalityErr := aH.addTemporality(r.Context(), queryRangeParams)
+	if temporalityErr != nil {
+		zap.S().Errorf("Error while adding temporality for metrics: %v", temporalityErr)
+		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: temporalityErr}, nil)
+		return
+	}
+
 	aH.queryRangeV3(r.Context(), queryRangeParams, w, r)
+}
+
+func applyMetricLimit(results []*v3.Result, queryRangeParams *v3.QueryRangeParamsV3) {
+	// apply limit if any for metrics
+	// use the grouping set points to apply the limit
+
+	for _, result := range results {
+		builderQueries := queryRangeParams.CompositeQuery.BuilderQueries
+		if builderQueries != nil && builderQueries[result.QueryName].DataSource == v3.DataSourceMetrics {
+			limit := builderQueries[result.QueryName].Limit
+
+			orderByList := builderQueries[result.QueryName].OrderBy
+			if limit != 0 {
+				if len(orderByList) == 0 {
+					// If no orderBy is specified, sort by value in descending order
+					orderByList = []v3.OrderBy{{ColumnName: constants.SigNozOrderByValue, Order: "desc"}}
+				}
+				sort.SliceStable(result.Series, func(i, j int) bool {
+					for _, orderBy := range orderByList {
+						if orderBy.ColumnName == constants.SigNozOrderByValue {
+							if result.Series[i].GroupingSetsPoint == nil || result.Series[j].GroupingSetsPoint == nil {
+								// Handle nil GroupingSetsPoint, if needed
+								// Here, we assume non-nil values are always less than nil values
+								return result.Series[i].GroupingSetsPoint != nil
+							}
+							if orderBy.Order == "asc" {
+								return result.Series[i].GroupingSetsPoint.Value < result.Series[j].GroupingSetsPoint.Value
+							} else if orderBy.Order == "desc" {
+								return result.Series[i].GroupingSetsPoint.Value > result.Series[j].GroupingSetsPoint.Value
+							}
+						} else {
+							// Sort based on Labels map
+							labelI, existsI := result.Series[i].Labels[orderBy.ColumnName]
+							labelJ, existsJ := result.Series[j].Labels[orderBy.ColumnName]
+
+							if !existsI || !existsJ {
+								// Handle missing labels, if needed
+								// Here, we assume non-existent labels are always less than existing ones
+								return existsI
+							}
+
+							if orderBy.Order == "asc" {
+								return strings.Compare(labelI, labelJ) < 0
+							} else if orderBy.Order == "desc" {
+								return strings.Compare(labelI, labelJ) > 0
+							}
+						}
+					}
+					// Preserve original order if no matching orderBy is found
+					return i < j
+				})
+
+				if len(result.Series) > int(limit) {
+					result.Series = result.Series[:limit]
+				}
+			}
+		}
+	}
+}
+
+func (aH *APIHandler) liveTailLogs(w http.ResponseWriter, r *http.Request) {
+
+	queryRangeParams, apiErrorObj := ParseQueryRangeParams(r)
+	if apiErrorObj != nil {
+		zap.S().Errorf(apiErrorObj.Err.Error())
+		RespondError(w, apiErrorObj, nil)
+		return
+	}
+
+	var err error
+	var queryString string
+	switch queryRangeParams.CompositeQuery.QueryType {
+	case v3.QueryTypeBuilder:
+		// check if any enrichment is required for logs if yes then enrich them
+		if logsv3.EnrichmentRequired(queryRangeParams) {
+			// get the fields if any logs query is present
+			var fields map[string]v3.AttributeKey
+			fields, err = aH.getLogFieldsV3(r.Context(), queryRangeParams)
+			if err != nil {
+				apiErrObj := &model.ApiError{Typ: model.ErrorInternal, Err: err}
+				RespondError(w, apiErrObj, nil)
+				return
+			}
+			logsv3.Enrich(queryRangeParams, fields)
+		}
+
+		queryString, err = aH.queryBuilder.PrepareLiveTailQuery(queryRangeParams)
+		if err != nil {
+			RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
+			return
+		}
+
+	default:
+		err = fmt.Errorf("invalid query type")
+		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
+		return
+	}
+
+	// create the client
+	client := &v3.LogsLiveTailClient{Name: r.RemoteAddr, Logs: make(chan *model.GetLogsResponse, 1000), Done: make(chan *bool), Error: make(chan error)}
+	go aH.reader.LiveTailLogsV3(r.Context(), queryString, uint64(queryRangeParams.Start), "", client)
+
+	w.Header().Set("Connection", "keep-alive")
+	w.Header().Set("Content-Type", "text/event-stream")
+	w.Header().Set("Cache-Control", "no-cache")
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+	w.WriteHeader(200)
+
+	flusher, ok := w.(http.Flusher)
+	if !ok {
+		err := model.ApiError{Typ: model.ErrorStreamingNotSupported, Err: nil}
+		RespondError(w, &err, "streaming is not supported")
+		return
+	}
+	// flush the headers
+	flusher.Flush()
+	for {
+		select {
+		case log := <-client.Logs:
+			var buf bytes.Buffer
+			enc := json.NewEncoder(&buf)
+			enc.Encode(log)
+			fmt.Fprintf(w, "event: log\ndata: %v\n\n", buf.String())
+			flusher.Flush()
+		case <-client.Done:
+			zap.S().Debug("done!")
+			return
+		case err := <-client.Error:
+			zap.S().Error("error occured!", err)
+			fmt.Fprintf(w, "event: error\ndata: %v\n\n", err.Error())
+			flusher.Flush()
+			return
+		}
+	}
 }

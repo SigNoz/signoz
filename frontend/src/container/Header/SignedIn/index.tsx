@@ -1,7 +1,7 @@
 import { Avatar, Typography } from 'antd';
 import ROUTES from 'constants/routes';
 import history from 'lib/history';
-import React, { useCallback } from 'react';
+import { useCallback } from 'react';
 import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
 import AppReducer from 'types/reducer/app';

@@ -30,7 +30,7 @@ func TestParseFilterSingleFilter(t *testing.T) {
 		req, _ := http.NewRequest("POST", "", bytes.NewReader(postBody))
 		res, _ := parseFilterSet(req)
 		query, _ := metrics.BuildMetricsTimeSeriesFilterQuery(res, []string{}, "table", model.NOOP)
-		So(query, ShouldContainSubstring, "signoz_metrics.distributed_time_series_v2 WHERE metric_name = 'table' AND JSONExtractString(labels, 'namespace') = 'a'")
+		So(query, ShouldContainSubstring, "WHERE metric_name = 'table' AND JSONExtractString(labels, 'namespace') = 'a'")
 	})
 }
 
@@ -518,7 +518,7 @@ func TestParseQueryRangeParamsCompositeQuery(t *testing.T) {
 				BuilderQueries: map[string]*v3.BuilderQuery{
 					"A": {
 						QueryName:          "A",
-						DataSource:         "traces",
+						DataSource:         "metrics",
 						AggregateOperator:  "sum",
 						AggregateAttribute: v3.AttributeKey{},
 						Expression:         "A",

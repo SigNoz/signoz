@@ -1,61 +1,37 @@
-import { Button, Popover } from 'antd';
-import { generateFilterQuery } from 'lib/logs/generateFilterQuery';
-import React, { memo, useCallback, useMemo } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
-import { Dispatch } from 'redux';
-import { AppState } from 'store/reducers';
-import AppActions from 'types/actions';
-import { SET_SEARCH_QUERY_STRING } from 'types/actions/logs';
-import { ILogsReducer } from 'types/reducer/logs';
+import { Popover } from 'antd';
+import { OPERATORS } from 'constants/queryBuilder';
+import { memo, ReactNode, useCallback, useMemo } from 'react';
+
+import { ButtonContainer } from './styles';
 
 function AddToQueryHOC({
 	fieldKey,
 	fieldValue,
+	onAddToQuery,
 	children,
 }: AddToQueryHOCProps): JSX.Element {
-	const {
-		searchFilter: { queryString },
-	} = useSelector<AppState, ILogsReducer>((store) => store.logs);
-	const dispatch = useDispatch<Dispatch<AppActions>>();
-
-	const generatedQuery = useMemo(
-		() => generateFilterQuery({ fieldKey, fieldValue, type: 'IN' }),
-		[fieldKey, fieldValue],
-	);
-
 	const handleQueryAdd = useCallback(() => {
-		let updatedQueryString = queryString || '';
-
-		if (updatedQueryString.length === 0) {
-			updatedQueryString += `${generatedQuery}`;
-		} else {
-			updatedQueryString += ` AND ${generatedQuery}`;
-		}
-		dispatch({
-			type: SET_SEARCH_QUERY_STRING,
-			payload: {
-				searchQueryString: updatedQueryString,
-			},
-		});
-	}, [dispatch, generatedQuery, queryString]);
+		onAddToQuery(fieldKey, fieldValue, OPERATORS.IN);
+	}, [fieldKey, fieldValue, onAddToQuery]);
 
 	const popOverContent = useMemo(() => <span>Add to query: {fieldKey}</span>, [
 		fieldKey,
 	]);
 
 	return (
-		<Button size="small" type="text" onClick={handleQueryAdd}>
+		<ButtonContainer size="small" type="text" onClick={handleQueryAdd}>
 			<Popover placement="top" content={popOverContent}>
 				{children}
 			</Popover>
-		</Button>
+		</ButtonContainer>
 	);
 }
 
-interface AddToQueryHOCProps {
+export interface AddToQueryHOCProps {
 	fieldKey: string;
 	fieldValue: string;
-	children: React.ReactNode;
+	onAddToQuery: (fieldKey: string, fieldValue: string, operator: string) => void;
+	children: ReactNode;
 }
 
 export default memo(AddToQueryHOC);

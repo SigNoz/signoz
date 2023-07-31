@@ -36,8 +36,15 @@ const themeColors = {
 	royalGrey: '#888888',
 	matterhornGrey: '#555555',
 	whiteCream: '#ffffffd5',
+	white: '#ffffff',
 	black: '#000000',
+	darkGrey: '#262626',
+	lightBlack: '#141414',
 	lightgrey: '#ddd',
+	lightWhite: '#ffffffd9',
+	borderLightGrey: '#d9d9d9',
+	borderDarkGrey: '#424242',
+	bckgGrey: '#1d1d1d',
 };
 
 export { themeColors };

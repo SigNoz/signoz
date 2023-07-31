@@ -28,13 +28,15 @@ const (
 	defaultSpansTable              string        = "distributed_signoz_spans"
 	defaultDependencyGraphTable    string        = "distributed_dependency_graph_minutes_v2"
 	defaultTopLevelOperationsTable string        = "distributed_top_level_operations"
+	defaultSpanAttributeTable      string        = "distributed_span_attributes"
+	defaultSpanAttributeKeysTable  string        = "distributed_span_attributes_keys"
 	defaultLogsDB                  string        = "signoz_logs"
 	defaultLogsTable               string        = "distributed_logs"
 	defaultLogsLocalTable          string        = "logs"
 	defaultLogAttributeKeysTable   string        = "distributed_logs_attribute_keys"
 	defaultLogResourceKeysTable    string        = "distributed_logs_resource_keys"
 	defaultLogTagAttributeTable    string        = "distributed_tag_attributes"
-	defaultLiveTailRefreshSeconds  int           = 10
+	defaultLiveTailRefreshSeconds  int           = 5
 	defaultWriteBatchDelay         time.Duration = 5 * time.Second
 	defaultWriteBatchSize          int           = 10000
 	defaultEncoding                Encoding      = EncodingJSON
@@ -63,6 +65,8 @@ type namespaceConfig struct {
 	UsageExplorerTable      string
 	SpansTable              string
 	ErrorTable              string
+	SpanAttributeTable      string
+	SpanAttributeKeysTable  string
 	DependencyGraphTable    string
 	TopLevelOperationsTable string
 	LogsDB                  string
@@ -132,6 +136,8 @@ func NewOptions(datasource string, primaryNamespace string, otherNamespaces ...s
 			DurationTable:           defaultDurationTable,
 			UsageExplorerTable:      defaultUsageExplorerTable,
 			SpansTable:              defaultSpansTable,
+			SpanAttributeTable:      defaultSpanAttributeTable,
+			SpanAttributeKeysTable:  defaultSpanAttributeKeysTable,
 			DependencyGraphTable:    defaultDependencyGraphTable,
 			TopLevelOperationsTable: defaultTopLevelOperationsTable,
 			LogsDB:                  defaultLogsDB,

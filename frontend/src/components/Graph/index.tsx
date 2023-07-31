@@ -26,7 +26,7 @@ import annotationPlugin from 'chartjs-plugin-annotation';
 import dayjs from 'dayjs';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import isEqual from 'lodash-es/isEqual';
-import React, { memo, useCallback, useEffect, useRef } from 'react';
+import { memo, useCallback, useEffect, useRef } from 'react';
 
 import { hasData } from './hasData';
 import { getAxisLabelColor } from './helpers';
@@ -181,6 +181,9 @@ function Graph({
 							},
 						},
 						position: 'custom',
+						itemSort(item1, item2) {
+							return item2.parsed.y - item1.parsed.y;
+						},
 					},
 					[dragSelectPluginId]: createDragSelectPluginOptions(
 						!!onDragSelect,
@@ -285,11 +288,10 @@ function Graph({
 			if (chartHasData) {
 				chartPlugins.push(createIntersectionCursorPlugin());
 				chartPlugins.push(createDragSelectPlugin());
+				chartPlugins.push(legend(name, data.datasets.length > 3));
 			} else {
 				chartPlugins.push(emptyGraph);
 			}
-
-			chartPlugins.push(legend(name, data.datasets.length > 3));
 
 			lineChartRef.current = new Chart(chartRef.current, {
 				type,
@@ -341,7 +343,7 @@ type CustomChartOptions = ChartOptions & {
 	};
 };
 
-interface GraphProps {
+export interface GraphProps {
 	animate?: boolean;
 	type: ChartType;
 	data: Chart['data'];

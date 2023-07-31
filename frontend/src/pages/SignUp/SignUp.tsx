@@ -8,7 +8,7 @@ import WelcomeLeftContainer from 'components/WelcomeLeftContainer';
 import ROUTES from 'constants/routes';
 import { useNotifications } from 'hooks/useNotifications';
 import history from 'lib/history';
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useQuery } from 'react-query';
 import { useLocation } from 'react-router-dom';
@@ -62,7 +62,7 @@ function SignUp({ version }: SignUpProps): JSX.Element {
 			getInviteDetails({
 				inviteId: token || '',
 			}),
-		queryKey: 'getInviteDetails',
+		queryKey: ['getInviteDetails', token],
 		enabled: token !== null,
 	});
 
@@ -81,6 +81,13 @@ function SignUp({ version }: SignUpProps): JSX.Element {
 			form.setFieldValue('organizationName', responseDetails.organization);
 			setIsDetailsDisable(true);
 		}
+	}, [
+		getInviteDetailsResponse.data?.payload,
+		form,
+		getInviteDetailsResponse.status,
+	]);
+
+	useEffect(() => {
 		if (
 			getInviteDetailsResponse.status === 'success' &&
 			getInviteDetailsResponse.data?.error
@@ -91,19 +98,19 @@ function SignUp({ version }: SignUpProps): JSX.Element {
 			});
 		}
 	}, [
-		getInviteDetailsResponse.data?.payload,
-		getInviteDetailsResponse.data?.error,
+		getInviteDetailsResponse.data,
 		getInviteDetailsResponse.status,
-		getInviteDetailsResponse,
 		notifications,
-		form,
 	]);
 
 	const isPreferenceVisible = token === null;
 
 	const commonHandler = async (
 		values: FormValues,
-		callback: (e: SuccessResponse<PayloadProps>) => Promise<void> | VoidFunction,
+		callback: (
+			e: SuccessResponse<PayloadProps>,
+			values: FormValues,
+		) => Promise<void> | VoidFunction,
 	): Promise<void> => {
 		try {
 			const { organizationName, password, firstName, email } = values;
@@ -129,7 +136,7 @@ function SignUp({ version }: SignUpProps): JSX.Element {
 						payload.refreshJwt,
 					);
 					if (userResponse) {
-						callback(userResponse);
+						callback(userResponse, values);
 					}
 				} else {
 					notifications.error({
@@ -150,16 +157,12 @@ function SignUp({ version }: SignUpProps): JSX.Element {
 
 	const onAdminAfterLogin = async (
 		userResponse: SuccessResponse<PayloadProps>,
+		values: FormValues,
 	): Promise<void> => {
-		const {
-			organizationName,
-			isAnonymous,
-			hasOptedUpdates,
-		} = form.getFieldsValue();
 		const editResponse = await editOrg({
-			isAnonymous,
-			name: organizationName,
-			hasOptedUpdates,
+			isAnonymous: values.isAnonymous,
+			name: values.organizationName,
+			hasOptedUpdates: values.hasOptedUpdates,
 			orgId: userResponse.payload.orgId,
 		});
 		if (editResponse.statusCode === 200) {

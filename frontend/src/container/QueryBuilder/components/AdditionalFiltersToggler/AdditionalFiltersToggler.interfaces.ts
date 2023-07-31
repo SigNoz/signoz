@@ -1,5 +1,6 @@
-import { PropsWithChildren } from 'react';
+import { ReactNode } from 'react';
 
-export type AdditionalFiltersProps = PropsWithChildren & {
+export type AdditionalFiltersProps = {
 	listOfAdditionalFilter: string[];
+	children: ReactNode;
 };

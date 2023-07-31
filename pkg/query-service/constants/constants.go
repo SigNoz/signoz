@@ -3,6 +3,7 @@ package constants
 import (
 	"os"
 	"strconv"
+	"time"
 
 	"go.signoz.io/signoz/pkg/query-service/model"
 	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
@@ -45,6 +46,9 @@ func GetAlertManagerApiPrefix() string {
 // Alert manager channel subpath
 var AmChannelApiPath = GetOrDefaultEnv("ALERTMANAGER_API_CHANNEL_PATH", "v1/routes")
 
+var OTLPTarget = GetOrDefaultEnv("OTLP_TARGET", "")
+var LogExportBatchSize = GetOrDefaultEnv("LOG_EXPORT_BATCH_SIZE", "1000")
+
 var RELATIONAL_DATASOURCE_PATH = GetOrDefaultEnv("SIGNOZ_LOCAL_DB_PATH", "/var/lib/signoz/signoz.db")
 
 var DurationSortFeature = GetOrDefaultEnv("DURATION_SORT_FEATURE", "true")
@@ -70,9 +74,38 @@ func IsTimestampSortFeatureEnabled() bool {
 }
 
 var DEFAULT_FEATURE_SET = model.FeatureSet{
-	DurationSort:  IsDurationSortFeatureEnabled(),
-	TimestampSort: IsTimestampSortFeatureEnabled(),
+	model.Feature{
+		Name:       DurationSort,
+		Active:     IsDurationSortFeatureEnabled(),
+		Usage:      0,
+		UsageLimit: -1,
+		Route:      "",
+	}, model.Feature{
+		Name:       TimestampSort,
+		Active:     IsTimestampSortFeatureEnabled(),
+		Usage:      0,
+		UsageLimit: -1,
+		Route:      "",
+	},
+	model.Feature{
+		Name:       model.UseSpanMetrics,
+		Active:     false,
+		Usage:      0,
+		UsageLimit: -1,
+		Route:      "",
+	},
 }
+
+func GetContextTimeout() time.Duration {
+	contextTimeoutStr := GetOrDefaultEnv("CONTEXT_TIMEOUT", "60")
+	contextTimeoutDuration, err := time.ParseDuration(contextTimeoutStr + "s")
+	if err != nil {
+		return time.Minute
+	}
+	return contextTimeoutDuration
+}
+
+var ContextTimeout = GetContextTimeout()
 
 const (
 	TraceID                        = "traceID"
@@ -97,7 +130,6 @@ const (
 	ResponseStatusCode             = "responseStatusCode"
 	Descending                     = "descending"
 	Ascending                      = "ascending"
-	ContextTimeout                 = 60 // seconds
 	StatusPending                  = "pending"
 	StatusFailed                   = "failed"
 	StatusSuccess                  = "success"
@@ -130,9 +162,12 @@ var GroupByColMap = map[string]struct{}{
 }
 
 const (
-	SIGNOZ_METRIC_DBNAME        = "signoz_metrics"
-	SIGNOZ_SAMPLES_TABLENAME    = "distributed_samples_v2"
-	SIGNOZ_TIMESERIES_TABLENAME = "distributed_time_series_v2"
+	SIGNOZ_METRIC_DBNAME              = "signoz_metrics"
+	SIGNOZ_SAMPLES_TABLENAME          = "distributed_samples_v2"
+	SIGNOZ_TIMESERIES_TABLENAME       = "distributed_time_series_v2"
+	SIGNOZ_TRACE_DBNAME               = "signoz_traces"
+	SIGNOZ_SPAN_INDEX_TABLENAME       = "distributed_signoz_index_v2"
+	SIGNOZ_TIMESERIES_LOCAL_TABLENAME = "time_series_v2"
 )
 
 var TimeoutExcludedRoutes = map[string]bool{
@@ -209,6 +244,11 @@ const (
 		"CAST((attributes_int64_key, attributes_int64_value), 'Map(String, Int64)') as  attributes_int64," +
 		"CAST((attributes_float64_key, attributes_float64_value), 'Map(String, Float64)') as  attributes_float64," +
 		"CAST((resources_string_key, resources_string_value), 'Map(String, String)') as resources_string "
+	TracesExplorerViewSQLSelectWithSubQuery = "WITH subQuery AS (SELECT distinct on (traceID) traceID, durationNano, " +
+		"serviceName, name FROM %s.%s WHERE parentSpanID = '' AND %s %s ORDER BY durationNano DESC "
+	TracesExplorerViewSQLSelectQuery = "SELECT subQuery.serviceName, subQuery.name, count() AS " +
+		"span_count, subQuery.durationNano, traceID FROM %s.%s GLOBAL INNER JOIN subQuery ON %s.traceID = subQuery.traceID GROUP " +
+		"BY traceID, subQuery.durationNano, subQuery.name, subQuery.serviceName ORDER BY subQuery.durationNano desc;"
 )
 
 // ReservedColumnTargetAliases identifies result value from a user
@@ -224,47 +264,51 @@ var ReservedColumnTargetAliases = map[string]struct{}{
 const LogsPPLPfx = "logstransform/pipeline_"
 
 // The datatype present here doesn't represent the actual datatype of column in the logs table.
-var StaticFieldsLogsV3 = []v3.AttributeKey{
-	{
+
+var StaticFieldsLogsV3 = map[string]v3.AttributeKey{
+	"timestamp": {},
+	"id":        {},
+	"trace_id": {
 		Key:      "trace_id",
 		DataType: v3.AttributeKeyDataTypeString,
-		Type:     v3.AttributeKeyTypeTag,
+		Type:     v3.AttributeKeyTypeUnspecified,
+		IsColumn: true,
 	},
-	{
+	"span_id": {
 		Key:      "span_id",
 		DataType: v3.AttributeKeyDataTypeString,
-		Type:     v3.AttributeKeyTypeTag,
+		Type:     v3.AttributeKeyTypeUnspecified,
+		IsColumn: true,
 	},
-	{
+	"trace_flags": {
 		Key:      "trace_flags",
 		DataType: v3.AttributeKeyDataTypeInt64,
-		Type:     v3.AttributeKeyTypeTag,
+		Type:     v3.AttributeKeyTypeUnspecified,
+		IsColumn: true,
 	},
-	{
+	"severity_text": {
 		Key:      "severity_text",
 		DataType: v3.AttributeKeyDataTypeString,
-		Type:     v3.AttributeKeyTypeTag,
+		Type:     v3.AttributeKeyTypeUnspecified,
+		IsColumn: true,
 	},
-	{
+	"severity_number": {
 		Key:      "severity_number",
 		DataType: v3.AttributeKeyDataTypeInt64,
-		Type:     v3.AttributeKeyTypeTag,
+		Type:     v3.AttributeKeyTypeUnspecified,
+		IsColumn: true,
 	},
-	{
+	"body": {
 		Key:      "body",
 		DataType: v3.AttributeKeyDataTypeString,
-		Type:     v3.AttributeKeyTypeTag,
+		Type:     v3.AttributeKeyTypeUnspecified,
+		IsColumn: true,
 	},
-}
-
-var LogsTopLevelColumnsV3 = map[string]struct{}{
-	"trace_id":        {},
-	"span_id":         {},
-	"trace_flags":     {},
-	"severity_text":   {},
-	"severity_number": {},
-	"timestamp":       {},
-	"id":              {},
 }
 
 const SigNozOrderByValue = "#SIGNOZ_VALUE"
+
+const TIMESTAMP = "timestamp"
+
+const FirstQueryGraphLimit = "first_query_graph_limit"
+const SecondQueryGraphLimit = "second_query_graph_limit"

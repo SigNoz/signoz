@@ -17,6 +17,9 @@ import (
 
 type APIHandlerOptions struct {
 	DataConnector                 interfaces.DataConnector
+	SkipConfig                    *basemodel.SkipConfig
+	PreferDelta                   bool
+	PreferSpanMetrics             bool
 	AppDao                        dao.ModelDao
 	RulesManager                  *rules.Manager
 	FeatureFlags                  baseint.FeatureLookup
@@ -34,6 +37,9 @@ func NewAPIHandler(opts APIHandlerOptions) (*APIHandler, error) {
 
 	baseHandler, err := baseapp.NewAPIHandler(baseapp.APIHandlerOpts{
 		Reader:                        opts.DataConnector,
+		SkipConfig:                    opts.SkipConfig,
+		PerferDelta:                   opts.PreferDelta,
+		PreferSpanMetrics:             opts.PreferSpanMetrics,
 		AppDao:                        opts.AppDao,
 		RuleManager:                   opts.RulesManager,
 		FeatureFlags:                  opts.FeatureFlags,

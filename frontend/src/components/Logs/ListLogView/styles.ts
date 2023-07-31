@@ -1,20 +1,17 @@
 import { Card, Typography } from 'antd';
-import styled, { keyframes } from 'styled-components';
+import styled from 'styled-components';
+import { getActiveLogBackground } from 'utils/logs';
 
-const fadeInAnimation = keyframes`
- 0% { opacity: 0; }
- 100% { opacity: 1;}
-`;
-
-export const Container = styled(Card)`
+export const Container = styled(Card)<{
+	$isActiveLog: boolean;
+}>`
 	width: 100% !important;
 	margin-bottom: 0.3rem;
 	.ant-card-body {
 		padding: 0.3rem 0.6rem;
 	}
-	animation-name: ${fadeInAnimation};
-	animation-duration: 0.2s;
-	animation-timing-function: ease-in;
+
+	${({ $isActiveLog }): string => getActiveLogBackground($isActiveLog)}
 `;
 
 export const Text = styled(Typography.Text)`

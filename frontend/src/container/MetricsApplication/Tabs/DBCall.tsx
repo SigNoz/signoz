@@ -1,5 +1,6 @@
 import { Col } from 'antd';
-import FullView from 'container/GridGraphLayout/Graph/FullView/index.metricsBuilder';
+import { PANEL_TYPES } from 'constants/queryBuilder';
+import Graph from 'container/GridGraphLayout/Graph/';
 import {
 	databaseCallsAvgDuration,
 	databaseCallsRPS,
@@ -9,12 +10,17 @@ import {
 	convertRawQueriesToTraceSelectedTags,
 	resourceAttributesToTagFilterItems,
 } from 'hooks/useResourceAttribute/utils';
-import React, { useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useParams } from 'react-router-dom';
-import { Widgets } from 'types/api/dashboard/getAll';
+import { TagFilterItem } from 'types/api/queryBuilder/queryBuilderData';
+import { EQueryType } from 'types/common/dashboard';
+import { v4 as uuid } from 'uuid';
 
-import { Card, GraphContainer, GraphTitle, Row } from '../styles';
+import { GraphTitle } from '../constant';
+import { getWidgetQueryBuilder } from '../MetricsApplication.factory';
+import { Card, GraphContainer, Row } from '../styles';
 import { Button } from './styles';
+import { IServiceName } from './types';
 import {
 	dbSystemTags,
 	handleNonInQueryRange,
@@ -22,12 +28,12 @@ import {
 	onViewTracePopupClick,
 } from './util';
 
-function DBCall({ getWidgetQueryBuilder }: DBCallProps): JSX.Element {
-	const { servicename } = useParams<{ servicename?: string }>();
+function DBCall(): JSX.Element {
+	const { servicename } = useParams<IServiceName>();
 	const [selectedTimeStamp, setSelectedTimeStamp] = useState<number>(0);
 	const { queries } = useResourceAttribute();
 
-	const tagFilterItems = useMemo(
+	const tagFilterItems: TagFilterItem[] = useMemo(
 		() =>
 			handleNonInQueryRange(resourceAttributesToTagFilterItems(queries)) || [],
 		[queries],
@@ -46,29 +52,39 @@ function DBCall({ getWidgetQueryBuilder }: DBCallProps): JSX.Element {
 	const databaseCallsRPSWidget = useMemo(
 		() =>
 			getWidgetQueryBuilder({
-				queryType: 1,
-				promQL: [],
-				metricsBuilder: databaseCallsRPS({
-					servicename,
-					legend,
-					tagFilterItems,
-				}),
-				clickHouse: [],
+				query: {
+					queryType: EQueryType.QUERY_BUILDER,
+					promql: [],
+					builder: databaseCallsRPS({
+						servicename,
+						legend,
+						tagFilterItems,
+					}),
+					clickhouse_sql: [],
+					id: uuid(),
+				},
+				title: GraphTitle.DATABASE_CALLS_RPS,
+				panelTypes: PANEL_TYPES.TIME_SERIES,
 			}),
-		[getWidgetQueryBuilder, servicename, tagFilterItems],
+		[servicename, tagFilterItems],
 	);
 	const databaseCallsAverageDurationWidget = useMemo(
 		() =>
 			getWidgetQueryBuilder({
-				queryType: 1,
-				promQL: [],
-				metricsBuilder: databaseCallsAvgDuration({
-					servicename,
-					tagFilterItems,
-				}),
-				clickHouse: [],
+				query: {
+					queryType: EQueryType.QUERY_BUILDER,
+					promql: [],
+					builder: databaseCallsAvgDuration({
+						servicename,
+						tagFilterItems,
+					}),
+					clickhouse_sql: [],
+					id: uuid(),
+				},
+				title: GraphTitle.DATABASE_CALLS_AVG_DURATION,
+				panelTypes: PANEL_TYPES.TIME_SERIES,
 			}),
-		[getWidgetQueryBuilder, servicename, tagFilterItems],
+		[servicename, tagFilterItems],
 	);
 
 	return (
@@ -87,11 +103,9 @@ function DBCall({ getWidgetQueryBuilder }: DBCallProps): JSX.Element {
 					View Traces
 				</Button>
 				<Card>
-					<GraphTitle>Database Calls RPS</GraphTitle>
 					<GraphContainer>
-						<FullView
+						<Graph
 							name="database_call_rps"
-							fullViewOptions={false}
 							widget={databaseCallsRPSWidget}
 							yAxisUnit="reqps"
 							onClickHandler={(ChartEvent, activeElements, chart, data): void => {
@@ -103,6 +117,9 @@ function DBCall({ getWidgetQueryBuilder }: DBCallProps): JSX.Element {
 									'database_call_rps',
 								);
 							}}
+							allowClone={false}
+							allowDelete={false}
+							allowEdit={false}
 						/>
 					</GraphContainer>
 				</Card>
@@ -122,11 +139,9 @@ function DBCall({ getWidgetQueryBuilder }: DBCallProps): JSX.Element {
 					View Traces
 				</Button>
 				<Card>
-					<GraphTitle>Database Calls Avg Duration</GraphTitle>
 					<GraphContainer>
-						<FullView
+						<Graph
 							name="database_call_avg_duration"
-							fullViewOptions={false}
 							widget={databaseCallsAverageDurationWidget}
 							yAxisUnit="ms"
 							onClickHandler={(ChartEvent, activeElements, chart, data): void => {
@@ -138,16 +153,15 @@ function DBCall({ getWidgetQueryBuilder }: DBCallProps): JSX.Element {
 									'database_call_avg_duration',
 								);
 							}}
+							allowClone={false}
+							allowDelete={false}
+							allowEdit={false}
 						/>
 					</GraphContainer>
 				</Card>
 			</Col>
 		</Row>
 	);
-}
-
-interface DBCallProps {
-	getWidgetQueryBuilder: (query: Widgets['query']) => Widgets;
 }
 
 export default DBCall;

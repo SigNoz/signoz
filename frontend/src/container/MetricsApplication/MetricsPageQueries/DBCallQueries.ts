@@ -1,9 +1,14 @@
+import { OPERATORS } from 'constants/queryBuilder';
+import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
+import { TagFilterItem } from 'types/api/queryBuilder/queryBuilderData';
 import {
-	IMetricsBuilderFormula,
-	IMetricsBuilderQuery,
-	IQueryBuilderTagFilterItems,
-} from 'types/api/dashboard/getAll';
+	DataSource,
+	MetricAggregateOperator,
+	QueryBuilderData,
+} from 'types/common/queryBuilder';
 
+import { DataType, FORMULA, MetricsType, WidgetKeys } from '../constant';
+import { IServiceName } from '../Tabs/types';
 import {
 	getQueryBuilderQueries,
 	getQueryBuilderQuerieswithFormula,
@@ -13,63 +18,108 @@ export const databaseCallsRPS = ({
 	servicename,
 	legend,
 	tagFilterItems,
-}: DatabaseCallsRPSProps): {
-	formulas: IMetricsBuilderFormula[];
-	queryBuilder: IMetricsBuilderQuery[];
-} => {
-	const metricName = 'signoz_db_latency_count';
-	const groupBy = ['db_system'];
-	const itemsA = [
+}: DatabaseCallsRPSProps): QueryBuilderData => {
+	const autocompleteData: BaseAutocompleteData[] = [
 		{
-			id: '',
-			key: 'service_name',
-			op: 'IN',
-			value: [`${servicename}`],
+			key: WidgetKeys.SignozDBLatencyCount,
+			dataType: DataType.FLOAT64,
+			isColumn: true,
+			type: null,
 		},
-		...tagFilterItems,
+	];
+	const groupBy: BaseAutocompleteData[] = [
+		{ dataType: DataType.STRING, isColumn: false, key: 'db_system', type: 'tag' },
+	];
+	const filterItems: TagFilterItem[][] = [
+		[
+			{
+				id: '',
+				key: {
+					key: WidgetKeys.Service_name,
+					dataType: DataType.STRING,
+					isColumn: false,
+					type: MetricsType.Resource,
+				},
+				op: OPERATORS.IN,
+				value: [`${servicename}`],
+			},
+			...tagFilterItems,
+		],
 	];
 
+	const legends = [legend];
+	const dataSource = DataSource.METRICS;
+
 	return getQueryBuilderQueries({
-		metricName,
+		autocompleteData,
 		groupBy,
-		legend,
-		itemsA,
+		legends,
+		filterItems,
+		dataSource,
 	});
 };
 
 export const databaseCallsAvgDuration = ({
 	servicename,
 	tagFilterItems,
-}: DatabaseCallProps): {
-	formulas: IMetricsBuilderFormula[];
-	queryBuilder: IMetricsBuilderQuery[];
-} => {
-	const metricNameA = 'signoz_db_latency_sum';
-	const metricNameB = 'signoz_db_latency_count';
-	const expression = 'A/B';
-	const legendFormula = 'Average Duration';
-	const legend = '';
-	const disabled = true;
-	const additionalItemsA = [
+}: DatabaseCallProps): QueryBuilderData => {
+	const autocompleteDataA: BaseAutocompleteData = {
+		key: WidgetKeys.SignozDbLatencySum,
+		dataType: DataType.FLOAT64,
+		isColumn: true,
+		type: null,
+	};
+	const autocompleteDataB: BaseAutocompleteData = {
+		key: WidgetKeys.SignozDBLatencyCount,
+		dataType: DataType.FLOAT64,
+		isColumn: true,
+		type: null,
+	};
+
+	const additionalItemsA: TagFilterItem[] = [
 		{
 			id: '',
-			key: 'service_name',
-			op: 'IN',
+			key: {
+				key: WidgetKeys.Service_name,
+				dataType: DataType.STRING,
+				isColumn: false,
+				type: MetricsType.Resource,
+			},
+			op: OPERATORS.IN,
 			value: [`${servicename}`],
 		},
 		...tagFilterItems,
 	];
-	const additionalItemsB = additionalItemsA;
+
+	const autocompleteData: BaseAutocompleteData[] = [
+		autocompleteDataA,
+		autocompleteDataB,
+	];
+
+	const additionalItems: TagFilterItem[][] = [
+		additionalItemsA,
+		additionalItemsA,
+	];
+
+	const legends = ['', ''];
+	const disabled = [true, true];
+	const legendFormula = 'Average Duration';
+	const expression = FORMULA.DATABASE_CALLS_AVG_DURATION;
+	const aggregateOperators = [
+		MetricAggregateOperator.SUM,
+		MetricAggregateOperator.SUM,
+	];
+	const dataSource = DataSource.METRICS;
 
 	return getQueryBuilderQuerieswithFormula({
-		metricNameA,
-		metricNameB,
-		additionalItemsA,
-		additionalItemsB,
-		legend,
+		autocompleteData,
+		additionalItems,
+		legends,
 		disabled,
 		expression,
 		legendFormula,
+		aggregateOperators,
+		dataSource,
 	});
 };
 
@@ -78,6 +128,6 @@ interface DatabaseCallsRPSProps extends DatabaseCallProps {
 }
 
 interface DatabaseCallProps {
-	servicename: string | undefined;
-	tagFilterItems: IQueryBuilderTagFilterItems[] | [];
+	servicename: IServiceName['servicename'];
+	tagFilterItems: TagFilterItem[];
 }

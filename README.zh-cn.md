@@ -80,9 +80,9 @@ SigNoz帮助开发人员监控应用并排查已部署应用中的问题。SigNo
 
 ### 使用Docker部署
 
-请按照[这里](https://signoz.io/docs/deployment/docker/)列出的步骤使用Docker来安装
+请按照[这里](https://signoz.io/docs/install/docker/)列出的步骤使用Docker来安装
 
-如果你遇到任何问题，这个[排查指南](https://signoz.io/docs/deployment/troubleshooting)会对你有帮助。
+如果你遇到任何问题，这个[排查指南](https://signoz.io/docs/install/troubleshooting/)会对你有帮助。
 
 <p>&nbsp  </p>
 

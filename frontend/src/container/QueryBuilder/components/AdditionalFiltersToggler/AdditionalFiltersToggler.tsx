@@ -1,5 +1,5 @@
-import { Row } from 'antd';
-import React, { Fragment, memo, ReactNode, useState } from 'react';
+import { Col, Row, Typography } from 'antd';
+import { Fragment, memo, ReactNode, useState } from 'react';
 
 // ** Types
 import { AdditionalFiltersProps } from './AdditionalFiltersToggler.interfaces';
@@ -9,7 +9,6 @@ import {
 	StyledIconOpen,
 	StyledInner,
 	StyledLink,
-	StyledWrapper,
 } from './AdditionalFiltersToggler.styled';
 
 export const AdditionalFiltersToggler = memo(function AdditionalFiltersToggler({
@@ -24,10 +23,12 @@ export const AdditionalFiltersToggler = memo(function AdditionalFiltersToggler({
 
 	const filtersTexts: ReactNode = listOfAdditionalFilter.map((str, index) => {
 		const isNextLast = index + 1 === listOfAdditionalFilter.length - 1;
+
 		if (index === listOfAdditionalFilter.length - 1) {
 			return (
 				<Fragment key={str}>
-					and <StyledLink>{str.toUpperCase()}</StyledLink>
+					{listOfAdditionalFilter.length > 1 && 'and'}{' '}
+					<StyledLink>{str.toUpperCase()}</StyledLink>
 				</Fragment>
 			);
 		}
@@ -41,12 +42,16 @@ export const AdditionalFiltersToggler = memo(function AdditionalFiltersToggler({
 	});
 
 	return (
-		<StyledWrapper>
-			<StyledInner onClick={handleToggleOpenFilters}>
-				{isOpenedFilters ? <StyledIconClose /> : <StyledIconOpen />}
-				{!isOpenedFilters && <span>Add conditions for {filtersTexts}</span>}
-			</StyledInner>
-			{isOpenedFilters && <Row>{children}</Row>}
-		</StyledWrapper>
+		<Row>
+			<Col span={24}>
+				<StyledInner onClick={handleToggleOpenFilters}>
+					{isOpenedFilters ? <StyledIconClose /> : <StyledIconOpen />}
+					{!isOpenedFilters && (
+						<Typography>Add conditions for {filtersTexts}</Typography>
+					)}
+				</StyledInner>
+			</Col>
+			{isOpenedFilters && <Col span={24}>{children}</Col>}
+		</Row>
 	);
 });

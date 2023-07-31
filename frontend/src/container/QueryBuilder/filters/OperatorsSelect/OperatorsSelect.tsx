@@ -1,10 +1,8 @@
 import { Select } from 'antd';
-import React, { memo } from 'react';
-// ** Types
-import { SelectOption } from 'types/common/select';
-// ** Helpers
-import { transformToUpperCase } from 'utils/transformToUpperCase';
+import { memo } from 'react';
 
+// ** Types
+import { selectStyle } from '../QueryBuilderSearch/config';
 import { OperatorsSelectProps } from './OperatorsSelect.interfaces';
 
 export const OperatorsSelect = memo(function OperatorsSelect({
@@ -13,19 +11,13 @@ export const OperatorsSelect = memo(function OperatorsSelect({
 	onChange,
 	...props
 }: OperatorsSelectProps): JSX.Element {
-	const operatorsOptions: SelectOption<string, string>[] = operators.map(
-		(operator) => ({
-			label: transformToUpperCase(operator),
-			value: operator,
-		}),
-	);
-
 	return (
 		<Select
-			options={operatorsOptions}
+			options={operators}
 			value={value}
 			onChange={onChange}
-			style={{ width: '100%' }}
+			style={selectStyle}
+			showSearch
 			// eslint-disable-next-line react/jsx-props-no-spreading
 			{...props}
 		/>

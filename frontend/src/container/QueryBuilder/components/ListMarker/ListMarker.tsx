@@ -1,6 +1,6 @@
 import { EyeFilled, EyeInvisibleFilled } from '@ant-design/icons';
 import { ButtonProps } from 'antd';
-import React, { memo } from 'react';
+import { memo } from 'react';
 
 // ** Types
 import { ListMarkerProps } from './ListMarker.interfaces';
@@ -11,16 +11,16 @@ export const ListMarker = memo(function ListMarker({
 	isDisabled,
 	labelName,
 	index,
-	isAvailableToDisable,
+	isAvailableToDisable = true,
 	className,
-	toggleDisabled,
+	onDisable,
 	style,
 }: ListMarkerProps): JSX.Element {
 	const buttonProps: Partial<ButtonProps> = isAvailableToDisable
 		? {
 				type: isDisabled ? 'default' : 'primary',
 				icon: isDisabled ? <EyeInvisibleFilled /> : <EyeFilled />,
-				onClick: (): void => toggleDisabled(index),
+				onClick: (): void => onDisable(index),
 		  }
 		: { type: 'primary' };
 

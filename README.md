@@ -70,7 +70,6 @@ SigNoz helps developers monitor applications and troubleshoot problems in their 
 
 <br /><br />
 
-<img align="left" src="https://signoz-public.s3.us-east-2.amazonaws.com/Contributing.svg" width="50px" />
 
 ## Join our Slack community
 
@@ -78,7 +77,6 @@ Come say Hi to us on [Slack](https://signoz.io/slack) 👋
 
 <br /><br />
 
-<img align="left" src="https://signoz-public.s3.us-east-2.amazonaws.com/Features.svg" width="50px" />
 
 ## Features:
 
@@ -89,13 +87,12 @@ Come say Hi to us on [Slack](https://signoz.io/slack) 👋
 - Filter traces by service name, operation, latency, error, tags/annotations.
 - Run aggregates on trace data (events/spans) to get business relevant metrics. e.g. You can get error rate and 99th percentile latency of `customer_type: gold` or `deployment_version: v2` or `external_call: paypal`
 - Native support for OpenTelemetry Logs, advanced log query builder, and automatic log collection from k8s cluster
-- Lightening quick log analytics ([Logs Perf. Benchmark](https://signoz.io/blog/logs-performance-benchmark/))
+- Lightning quick log analytics ([Logs Perf. Benchmark](https://signoz.io/blog/logs-performance-benchmark/))
 - End-to-End visibility into infrastructure performance, ingest metrics from all kinds of host environments
 - Easy to set alerts with DIY query builder
 
 <br /><br />
 
-<img align="left" src="https://signoz-public.s3.us-east-2.amazonaws.com/WhatsCool.svg" width="50px" />
 
 ## Why SigNoz?
 
@@ -124,15 +121,14 @@ You can find the complete list of languages here - https://opentelemetry.io/docs
 
 <br /><br />
 
-<img align="left" src="https://signoz-public.s3.us-east-2.amazonaws.com/Philosophy.svg" width="50px" />
 
 ## Getting Started
 
 ### Deploy using Docker
 
-Please follow the steps listed [here](https://signoz.io/docs/deployment/docker/) to install using docker
+Please follow the steps listed [here](https://signoz.io/docs/install/docker/) to install using docker
 
-The [troubleshooting instructions](https://signoz.io/docs/deployment/troubleshooting) may be helpful if you face any issues.
+The [troubleshooting instructions](https://signoz.io/docs/install/troubleshooting/) may be helpful if you face any issues.
 
 <p>&nbsp  </p>
   
@@ -143,7 +139,6 @@ Please follow the steps listed [here](https://signoz.io/docs/deployment/helm_cha
 
 <br /><br />
 
-<img align="left" src="https://signoz-public.s3.us-east-2.amazonaws.com/UseSigNoz.svg" width="50px" />
 
 ## Comparisons to Familiar Tools
 
@@ -185,7 +180,6 @@ We have published benchmarks comparing Loki with SigNoz. Check it out [here](htt
 
 <br /><br />
 
-<img align="left" src="https://signoz-public.s3.us-east-2.amazonaws.com/Contributors.svg" width="50px" />
 
 ## Contributing
 
@@ -212,7 +206,6 @@ Not sure how to get started? Just ping us on `#contributing` in our [slack commu
 
 <br /><br />
 
-<img align="left" src="https://signoz-public.s3.us-east-2.amazonaws.com/DevelopingLocally.svg" width="50px" />
 
 ## Documentation
 
@@ -220,7 +213,6 @@ You can find docs at https://signoz.io/docs/. If you need any clarification or f
 
 <br /><br />
 
-<img align="left" src="https://signoz-public.s3.us-east-2.amazonaws.com/Contributing.svg" width="50px" />
 
 ## Community
 

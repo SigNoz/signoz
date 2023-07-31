@@ -1,87 +1,117 @@
 import { PlusOutlined } from '@ant-design/icons';
 import { Button, Col, Row } from 'antd';
+import { MAX_FORMULAS, MAX_QUERIES } from 'constants/queryBuilder';
 // ** Hooks
-import { useQueryBuilder } from 'hooks/useQueryBuilder';
-import { MAX_FORMULAS } from 'lib/newQueryBuilder/createNewFormulaName';
+import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 // ** Constants
-import { MAX_QUERIES } from 'lib/newQueryBuilder/createNewQueryName';
-import React, { memo, useEffect, useMemo } from 'react';
+import { memo, useEffect, useMemo } from 'react';
 
 // ** Components
-import { Query } from './components';
+import { Formula, Query } from './components';
 // ** Types
 import { QueryBuilderProps } from './QueryBuilder.interfaces';
-// ** Styles
 
 export const QueryBuilder = memo(function QueryBuilder({
 	config,
-	panelType,
+	panelType: newPanelType,
+	actions,
+	filterConfigs = {},
+	queryComponents,
 }: QueryBuilderProps): JSX.Element {
 	const {
-		queryBuilderData,
-		setupInitialDataSource,
-		addNewQuery,
+		currentQuery,
+		addNewBuilderQuery,
+		addNewFormula,
+		handleSetConfig,
+		panelType,
+		initialDataSource,
 	} = useQueryBuilder();
 
-	useEffect(() => {
-		if (config && config.queryVariant === 'static') {
-			setupInitialDataSource(config.initialDataSource);
-		}
+	const currentDataSource = useMemo(
+		() =>
+			(config && config.queryVariant === 'static' && config.initialDataSource) ||
+			null,
+		[config],
+	);
 
-		return (): void => {
-			setupInitialDataSource(null);
-		};
-	}, [config, setupInitialDataSource]);
+	useEffect(() => {
+		if (currentDataSource !== initialDataSource || newPanelType !== panelType) {
+			handleSetConfig(newPanelType, currentDataSource);
+		}
+	}, [
+		handleSetConfig,
+		panelType,
+		initialDataSource,
+		currentDataSource,
+		newPanelType,
+	]);
 
 	const isDisabledQueryButton = useMemo(
-		() => queryBuilderData.queryData.length >= MAX_QUERIES,
-		[queryBuilderData],
+		() => currentQuery.builder.queryData.length >= MAX_QUERIES,
+		[currentQuery],
 	);
 
 	const isDisabledFormulaButton = useMemo(
-		() => queryBuilderData.queryData.length >= MAX_FORMULAS,
-		[queryBuilderData],
+		() => currentQuery.builder.queryFormulas.length >= MAX_FORMULAS,
+		[currentQuery],
+	);
+
+	const isAvailableToDisableQuery = useMemo(
+		() =>
+			currentQuery.builder.queryData.length > 0 ||
+			currentQuery.builder.queryFormulas.length > 0,
+		[currentQuery],
 	);
 
 	return (
-		<Row gutter={[0, 20]} justify="start">
+		<Row style={{ width: '100%' }} gutter={[0, 20]} justify="start">
 			<Col span={24}>
 				<Row gutter={[0, 50]}>
-					{queryBuilderData.queryData.map((query, index) => (
+					{currentQuery.builder.queryData.map((query, index) => (
 						<Col key={query.queryName} span={24}>
 							<Query
 								index={index}
-								isAvailableToDisable={queryBuilderData.queryData.length > 1}
+								isAvailableToDisable={isAvailableToDisableQuery}
 								queryVariant={config?.queryVariant || 'dropdown'}
 								query={query}
-								panelType={panelType}
+								filterConfigs={filterConfigs}
+								queryComponents={queryComponents}
 							/>
+						</Col>
+					))}
+					{currentQuery.builder.queryFormulas.map((formula, index) => (
+						<Col key={formula.queryName} span={24}>
+							<Formula formula={formula} index={index} />
 						</Col>
 					))}
 				</Row>
 			</Col>
 
-			<Row gutter={[20, 0]}>
-				<Col>
-					<Button
-						disabled={isDisabledQueryButton}
-						type="primary"
-						icon={<PlusOutlined />}
-						onClick={addNewQuery}
-					>
-						Query
-					</Button>
-				</Col>
-				<Col>
-					<Button
-						disabled={isDisabledFormulaButton}
-						type="primary"
-						icon={<PlusOutlined />}
-					>
-						Formula
-					</Button>
-				</Col>
-			</Row>
+			<Col span={24}>
+				<Row gutter={[20, 0]}>
+					<Col>
+						<Button
+							disabled={isDisabledQueryButton}
+							type="primary"
+							icon={<PlusOutlined />}
+							onClick={addNewBuilderQuery}
+						>
+							Query
+						</Button>
+					</Col>
+					<Col>
+						<Button
+							disabled={isDisabledFormulaButton}
+							onClick={addNewFormula}
+							type="primary"
+							icon={<PlusOutlined />}
+						>
+							Formula
+						</Button>
+					</Col>
+					{actions}
+				</Row>
+			</Col>
 		</Row>
 	);
 });

@@ -2,14 +2,8 @@ import { Input, InputRef, Popover } from 'antd';
 import useUrlQuery from 'hooks/useUrlQuery';
 import getStep from 'lib/getStep';
 import debounce from 'lodash-es/debounce';
-import React, {
-	memo,
-	useCallback,
-	useEffect,
-	useMemo,
-	useRef,
-	useState,
-} from 'react';
+import { getIdConditions } from 'pages/Logs/utils';
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { connect, useDispatch, useSelector } from 'react-redux';
 import { bindActionCreators, Dispatch } from 'redux';
 import { ThunkDispatch } from 'redux-thunk';
@@ -36,15 +30,11 @@ function SearchFilter({
 	getLogsAggregate,
 	getLogsFields,
 }: SearchFilterProps): JSX.Element {
-	const {
-		updateParsedQuery,
-		updateQueryString,
-		queryString,
-	} = useSearchParser();
+	const { updateQueryString, queryString } = useSearchParser();
 	const [searchText, setSearchText] = useState(queryString);
 	const [showDropDown, setShowDropDown] = useState(false);
 	const searchRef = useRef<InputRef>(null);
-	const { logLinesPerPage, idEnd, idStart, liveTail } = useSelector<
+	const { logLinesPerPage, idEnd, idStart, liveTail, order } = useSelector<
 		AppState,
 		ILogsReducer
 	>((state) => state.logs);
@@ -110,11 +100,10 @@ function SearchFilter({
 					q: customQuery,
 					limit: logLinesPerPage,
 					orderBy: 'timestamp',
-					order: 'desc',
+					order,
 					timestampStart: minTime,
 					timestampEnd: maxTime,
-					...(idStart ? { idGt: idStart } : {}),
-					...(idEnd ? { idLt: idEnd } : {}),
+					...getIdConditions(idStart, idEnd, order),
 				});
 
 				getLogsAggregate({
@@ -139,6 +128,7 @@ function SearchFilter({
 			logLinesPerPage,
 			globalTime,
 			getLogsFields,
+			order,
 		],
 	);
 
@@ -171,6 +161,7 @@ function SearchFilter({
 		dispatch,
 		globalTime.maxTime,
 		globalTime.minTime,
+		order,
 	]);
 
 	const onPopOverChange = useCallback(
@@ -187,8 +178,8 @@ function SearchFilter({
 				content={
 					<DropDownContainer>
 						<SearchFields
+							updateQueryString={updateQueryString}
 							onDropDownToggleHandler={onDropDownToggleHandler}
-							updateParsedQuery={updateParsedQuery as never}
 						/>
 					</DropDownContainer>
 				}

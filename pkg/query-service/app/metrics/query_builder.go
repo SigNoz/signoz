@@ -45,7 +45,7 @@ var AggregateOperatorToSQLFunc = map[model.AggregateOperator]string{
 }
 
 // See https://github.com/SigNoz/signoz/issues/2151#issuecomment-1467249056
-var rateWithoutNegative = `if (runningDifference(value) < 0 OR runningDifference(ts) < 0, nan, runningDifference(value)/runningDifference(ts))`
+var rateWithoutNegative = `if (runningDifference(value) < 0 OR runningDifference(ts) <= 0, nan, runningDifference(value)/runningDifference(ts))`
 
 var SupportedFunctions = []string{"exp", "log", "ln", "exp2", "log2", "exp10", "log10", "sqrt", "cbrt", "erf", "erfc", "lgamma", "tgamma", "sin", "cos", "tan", "asin", "acos", "atan", "degrees", "radians"}
 
@@ -150,7 +150,7 @@ func BuildMetricsTimeSeriesFilterQuery(fs *model.FilterSet, groupTags []string, 
 		}
 	}
 
-	filterSubQuery := fmt.Sprintf("SELECT %s fingerprint FROM %s.%s WHERE %s", selectLabels, constants.SIGNOZ_METRIC_DBNAME, constants.SIGNOZ_TIMESERIES_TABLENAME, queryString)
+	filterSubQuery := fmt.Sprintf("SELECT %s fingerprint FROM %s.%s WHERE %s", selectLabels, constants.SIGNOZ_METRIC_DBNAME, constants.SIGNOZ_TIMESERIES_LOCAL_TABLENAME, queryString)
 
 	return filterSubQuery, nil
 }
@@ -174,7 +174,7 @@ func BuildMetricQuery(qp *model.QueryRangeParamsV2, mq *model.MetricQuery, table
 			" toStartOfInterval(toDateTime(intDiv(timestamp_ms, 1000)), INTERVAL %d SECOND) as ts," +
 			" %s as value" +
 			" FROM " + constants.SIGNOZ_METRIC_DBNAME + "." + constants.SIGNOZ_SAMPLES_TABLENAME +
-			" GLOBAL INNER JOIN" +
+			" INNER JOIN" +
 			" (%s) as filtered_time_series" +
 			" USING fingerprint" +
 			" WHERE " + samplesTableTimeFilter +
@@ -203,7 +203,7 @@ func BuildMetricQuery(qp *model.QueryRangeParamsV2, mq *model.MetricQuery, table
 		subQuery := fmt.Sprintf(
 			queryTmpl, "any(labels) as labels, "+groupTags, qp.Step, op, filterSubQuery, groupBy, groupTags,
 		) // labels will be same so any should be fine
-		query := `SELECT %s ts, ` + rateWithoutNegative + ` as value FROM(%s)`
+		query := `SELECT %s ts, ` + rateWithoutNegative + ` as value FROM(%s) WHERE isNaN(value) = 0`
 
 		query = fmt.Sprintf(query, "labels as fullLabels,", subQuery)
 		return query, nil
@@ -214,14 +214,14 @@ func BuildMetricQuery(qp *model.QueryRangeParamsV2, mq *model.MetricQuery, table
 		subQuery := fmt.Sprintf(
 			queryTmpl, rateGroupTags, qp.Step, op, filterSubQuery, rateGroupBy, rateGroupTags,
 		) // labels will be same so any should be fine
-		query := `SELECT %s ts, ` + rateWithoutNegative + `as value FROM(%s)`
+		query := `SELECT %s ts, ` + rateWithoutNegative + `as value FROM(%s) WHERE isNaN(value) = 0`
 		query = fmt.Sprintf(query, groupTags, subQuery)
 		query = fmt.Sprintf(`SELECT %s ts, sum(value) as value FROM (%s) GROUP BY %s ORDER BY %s ts`, groupTags, query, groupBy, groupTags)
 		return query, nil
 	case model.RATE_SUM, model.RATE_MAX, model.RATE_AVG, model.RATE_MIN:
 		op := fmt.Sprintf("%s(value)", AggregateOperatorToSQLFunc[mq.AggregateOperator])
 		subQuery := fmt.Sprintf(queryTmpl, groupTags, qp.Step, op, filterSubQuery, groupBy, groupTags)
-		query := `SELECT %s ts, ` + rateWithoutNegative + `as value FROM(%s)`
+		query := `SELECT %s ts, ` + rateWithoutNegative + `as value FROM(%s) WHERE isNaN(value) = 0`
 		query = fmt.Sprintf(query, groupTags, subQuery)
 		return query, nil
 	case model.P05, model.P10, model.P20, model.P25, model.P50, model.P75, model.P90, model.P95, model.P99:
@@ -235,7 +235,7 @@ func BuildMetricQuery(qp *model.QueryRangeParamsV2, mq *model.MetricQuery, table
 		subQuery := fmt.Sprintf(
 			queryTmpl, rateGroupTags, qp.Step, op, filterSubQuery, rateGroupBy, rateGroupTags,
 		) // labels will be same so any should be fine
-		query := `SELECT %s ts, ` + rateWithoutNegative + ` as value FROM(%s)`
+		query := `SELECT %s ts, ` + rateWithoutNegative + ` as value FROM(%s) WHERE isNaN(value) = 0`
 		query = fmt.Sprintf(query, groupTags, subQuery)
 		// filter out NaN values from the rate query as histogramQuantile doesn't support NaN values
 		query = fmt.Sprintf(`SELECT %s ts, sum(value) as value FROM (%s) GROUP BY %s HAVING isNaN(value) = 0 ORDER BY %s ts`, groupTags, query, groupBy, groupTags)
@@ -261,7 +261,7 @@ func BuildMetricQuery(qp *model.QueryRangeParamsV2, mq *model.MetricQuery, table
 				" toStartOfInterval(toDateTime(intDiv(timestamp_ms, 1000)), INTERVAL %d SECOND) as ts," +
 				" any(value) as value" +
 				" FROM " + constants.SIGNOZ_METRIC_DBNAME + "." + constants.SIGNOZ_SAMPLES_TABLENAME +
-				" GLOBAL INNER JOIN" +
+				" INNER JOIN" +
 				" (%s) as filtered_time_series" +
 				" USING fingerprint" +
 				" WHERE " + samplesTableTimeFilter +
@@ -435,7 +435,7 @@ func expressionToQuery(qp *model.QueryRangeParamsV2, varToQuery map[string]strin
 			formulaSubQuery = strings.TrimSuffix(formulaSubQuery, " AND ")
 		}
 		if idx < len(vars)-1 {
-			formulaSubQuery += " GLOBAL INNER JOIN"
+			formulaSubQuery += " INNER JOIN"
 		}
 		prevVar = var_
 	}

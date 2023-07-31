@@ -1,18 +1,23 @@
 import Loadable from 'components/Loadable';
 
 export const ServicesTablePage = Loadable(
-	() => import(/* webpackChunkName: "ServicesTablePage" */ 'pages/Metrics'),
+	() => import(/* webpackChunkName: "ServicesTablePage" */ 'pages/Services'),
 );
 
 export const ServiceMetricsPage = Loadable(
 	() =>
 		import(
-			/* webpackChunkName: "ServiceMetricsPage" */ 'pages/MetricApplication'
+			/* webpackChunkName: "ServiceMetricsPage" */ 'pages/MetricsApplication'
 		),
 );
 
 export const ServiceMapPage = Loadable(
 	() => import(/* webpackChunkName: "ServiceMapPage" */ 'modules/Servicemap'),
+);
+
+export const TracesExplorer = Loadable(
+	() =>
+		import(/* webpackChunkName: "Traces Explorer Page" */ 'pages/TracesExplorer'),
 );
 
 export const TraceFilter = Loadable(
@@ -99,6 +104,10 @@ export const MySettings = Loadable(
 
 export const Logs = Loadable(
 	() => import(/* webpackChunkName: "Logs" */ 'pages/Logs'),
+);
+
+export const LogsExplorer = Loadable(
+	() => import(/* webpackChunkName: "Logs Explorer" */ 'pages/LogsExplorer'),
 );
 
 export const Login = Loadable(

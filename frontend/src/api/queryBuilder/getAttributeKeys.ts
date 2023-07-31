@@ -1,10 +1,16 @@
 import { ApiV3Instance } from 'api';
 import { ErrorResponseHandler } from 'api/ErrorResponseHandler';
 import { AxiosError, AxiosResponse } from 'axios';
+import { baseAutoCompleteIdKeysOrder } from 'constants/queryBuilder';
+import { createIdFromObjectFields } from 'lib/createIdFromObjectFields';
+import createQueryParams from 'lib/createQueryParams';
 import { ErrorResponse, SuccessResponse } from 'types/api';
 // ** Types
 import { IGetAttributeKeysPayload } from 'types/api/queryBuilder/getAttributeKeys';
-import { IQueryAutocompleteResponse } from 'types/api/queryBuilder/queryAutocompleteResponse';
+import {
+	BaseAutocompleteData,
+	IQueryAutocompleteResponse,
+} from 'types/api/queryBuilder/queryAutocompleteResponse';
 
 export const getAggregateKeys = async ({
 	aggregateOperator,
@@ -19,14 +25,25 @@ export const getAggregateKeys = async ({
 		const response: AxiosResponse<{
 			data: IQueryAutocompleteResponse;
 		}> = await ApiV3Instance.get(
-			`autocomplete/attribute_keys?aggregateOperator=${aggregateOperator}&dataSource=${dataSource}&aggregateAttribute=${aggregateAttribute}&tagType=${tagType}&searchText=${searchText}`,
+			`autocomplete/attribute_keys?${createQueryParams({
+				aggregateOperator,
+				searchText,
+				dataSource,
+				aggregateAttribute,
+			})}&tagType=${tagType}`,
 		);
+
+		const payload: BaseAutocompleteData[] =
+			response.data.data.attributeKeys?.map(({ id: _, ...item }) => ({
+				...item,
+				id: createIdFromObjectFields(item, baseAutoCompleteIdKeysOrder),
+			})) || [];
 
 		return {
 			statusCode: 200,
 			error: null,
 			message: response.statusText,
-			payload: response.data.data,
+			payload: { attributeKeys: payload },
 		};
 	} catch (e) {
 		return ErrorResponseHandler(e as AxiosError);

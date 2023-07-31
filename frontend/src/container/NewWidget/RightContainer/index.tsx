@@ -1,11 +1,9 @@
 import { Input, Select } from 'antd';
 import InputComponent from 'components/Input';
 import TimePreference from 'components/TimePreferenceDropDown';
-import { GRAPH_TYPES } from 'container/NewDashboard/ComponentsSlider';
-import GraphTypes, {
-	ITEMS,
-} from 'container/NewDashboard/ComponentsSlider/menuItems';
-import React, { useCallback } from 'react';
+import { PANEL_TYPES } from 'constants/queryBuilder';
+import GraphTypes from 'container/NewDashboard/ComponentsSlider/menuItems';
+import { Dispatch, SetStateAction, useCallback } from 'react';
 
 import { Container, Title } from './styles';
 import { timePreferance } from './timeItems';
@@ -27,7 +25,7 @@ function RightContainer({
 	setGraphHandler,
 }: RightContainerProps): JSX.Element {
 	const onChangeHandler = useCallback(
-		(setFunc: React.Dispatch<React.SetStateAction<string>>, value: string) => {
+		(setFunc: Dispatch<SetStateAction<string>>, value: string) => {
 			setFunc(value);
 		},
 		[],
@@ -135,21 +133,21 @@ function RightContainer({
 
 interface RightContainerProps {
 	title: string;
-	setTitle: React.Dispatch<React.SetStateAction<string>>;
+	setTitle: Dispatch<SetStateAction<string>>;
 	description: string;
-	setDescription: React.Dispatch<React.SetStateAction<string>>;
+	setDescription: Dispatch<SetStateAction<string>>;
 	stacked: boolean;
-	setStacked: React.Dispatch<React.SetStateAction<boolean>>;
+	setStacked: Dispatch<SetStateAction<boolean>>;
 	opacity: string;
-	setOpacity: React.Dispatch<React.SetStateAction<string>>;
+	setOpacity: Dispatch<SetStateAction<string>>;
 	selectedNullZeroValue: string;
-	setSelectedNullZeroValue: React.Dispatch<React.SetStateAction<string>>;
-	selectedGraph: GRAPH_TYPES;
-	setSelectedTime: React.Dispatch<React.SetStateAction<timePreferance>>;
+	setSelectedNullZeroValue: Dispatch<SetStateAction<string>>;
+	selectedGraph: PANEL_TYPES;
+	setSelectedTime: Dispatch<SetStateAction<timePreferance>>;
 	selectedTime: timePreferance;
 	yAxisUnit: string;
-	setYAxisUnit: React.Dispatch<React.SetStateAction<string>>;
-	setGraphHandler: (type: ITEMS) => void;
+	setYAxisUnit: Dispatch<SetStateAction<string>>;
+	setGraphHandler: (type: PANEL_TYPES) => void;
 }
 
 export default RightContainer;

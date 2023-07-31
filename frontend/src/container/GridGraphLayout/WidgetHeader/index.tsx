@@ -1,4 +1,5 @@
 import {
+	CopyOutlined,
 	DeleteOutlined,
 	DownOutlined,
 	EditFilled,
@@ -8,9 +9,10 @@ import {
 import { Dropdown, MenuProps, Tooltip, Typography } from 'antd';
 import { MenuItemType } from 'antd/es/menu/hooks/useItems';
 import Spinner from 'components/Spinner';
+import { queryParamNamesMap } from 'constants/queryBuilderQueryNames';
 import useComponentPermission from 'hooks/useComponentPermission';
 import history from 'lib/history';
-import React, { useCallback, useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { UseQueryResult } from 'react-query';
 import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
@@ -25,32 +27,42 @@ import {
 	spinnerStyles,
 	tooltipStyles,
 } from './config';
+import { MENUITEM_KEYS_VS_LABELS, MenuItemKeys } from './contants';
 import {
 	ArrowContainer,
 	HeaderContainer,
 	HeaderContentContainer,
 } from './styles';
+import { KeyMethodMappingProps, MenuItem, TWidgetOptions } from './types';
+import { generateMenuList, isTWidgetOptions } from './utils';
 
-type TWidgetOptions = 'view' | 'edit' | 'delete' | string;
 interface IWidgetHeaderProps {
 	title: string;
 	widget: Widgets;
 	onView: VoidFunction;
-	onDelete: VoidFunction;
+	onDelete?: VoidFunction;
+	onClone?: VoidFunction;
 	parentHover: boolean;
 	queryResponse: UseQueryResult<
 		SuccessResponse<MetricRangePayloadProps> | ErrorResponse
 	>;
 	errorMessage: string | undefined;
+	allowDelete?: boolean;
+	allowClone?: boolean;
+	allowEdit?: boolean;
 }
 function WidgetHeader({
 	title,
 	widget,
 	onView,
 	onDelete,
+	onClone,
 	parentHover,
 	queryResponse,
 	errorMessage,
+	allowClone = true,
+	allowDelete = true,
+	allowEdit = true,
 }: IWidgetHeaderProps): JSX.Element {
 	const [localHover, setLocalHover] = useState(false);
 	const [isOpen, setIsOpen] = useState<boolean>(false);
@@ -58,36 +70,44 @@ function WidgetHeader({
 	const onEditHandler = useCallback((): void => {
 		const widgetId = widget.id;
 		history.push(
-			`${window.location.pathname}/new?widgetId=${widgetId}&graphType=${widget.panelTypes}`,
+			`${window.location.pathname}/new?widgetId=${widgetId}&graphType=${
+				widget.panelTypes
+			}&${queryParamNamesMap.compositeQuery}=${encodeURIComponent(
+				JSON.stringify(widget.query),
+			)}`,
 		);
-	}, [widget.id, widget.panelTypes]);
+	}, [widget.id, widget.panelTypes, widget.query]);
 
-	const keyMethodMapping: {
-		[K in TWidgetOptions]: { key: TWidgetOptions; method: VoidFunction };
-	} = useMemo(
+	const keyMethodMapping: KeyMethodMappingProps<TWidgetOptions> = useMemo(
 		() => ({
 			view: {
-				key: 'view',
+				key: MenuItemKeys.View,
 				method: onView,
 			},
 			edit: {
-				key: 'edit',
+				key: MenuItemKeys.Edit,
 				method: onEditHandler,
 			},
 			delete: {
-				key: 'delete',
+				key: MenuItemKeys.Delete,
 				method: onDelete,
 			},
+			clone: {
+				key: MenuItemKeys.Clone,
+				method: onClone,
+			},
 		}),
-		[onDelete, onEditHandler, onView],
+		[onDelete, onEditHandler, onView, onClone],
 	);
 
 	const onMenuItemSelectHandler: MenuProps['onClick'] = useCallback(
-		({ key }: { key: TWidgetOptions }): void => {
-			const functionToCall = keyMethodMapping[key]?.method;
-			if (functionToCall) {
-				functionToCall();
-				setIsOpen(false);
+		({ key }: { key: string }): void => {
+			if (isTWidgetOptions(key)) {
+				const functionToCall = keyMethodMapping[key]?.method;
+				if (functionToCall) {
+					functionToCall();
+					setIsOpen(false);
+				}
 			}
 		},
 		[keyMethodMapping],
@@ -99,36 +119,51 @@ function WidgetHeader({
 		role,
 	);
 
-	const menuList: MenuItemType[] = useMemo(
-		() => [
+	const actions = useMemo(
+		(): MenuItem[] => [
 			{
-				key: keyMethodMapping.view.key,
+				key: MenuItemKeys.View,
 				icon: <FullscreenOutlined />,
+				label: MENUITEM_KEYS_VS_LABELS[MenuItemKeys.View],
+				isVisible: true,
 				disabled: queryResponse.isLoading,
-				label: 'View',
 			},
 			{
-				key: keyMethodMapping.edit.key,
+				key: MenuItemKeys.Edit,
 				icon: <EditFilled />,
+				label: MENUITEM_KEYS_VS_LABELS[MenuItemKeys.Edit],
+				isVisible: allowEdit,
 				disabled: !editWidget,
-				label: 'Edit',
 			},
 			{
-				key: keyMethodMapping.delete.key,
+				key: MenuItemKeys.Clone,
+				icon: <CopyOutlined />,
+				label: MENUITEM_KEYS_VS_LABELS[MenuItemKeys.Clone],
+				isVisible: allowClone,
+				disabled: !editWidget,
+			},
+			{
+				key: MenuItemKeys.Delete,
 				icon: <DeleteOutlined />,
+				label: MENUITEM_KEYS_VS_LABELS[MenuItemKeys.Delete],
+				isVisible: allowDelete,
 				disabled: !deleteWidget,
 				danger: true,
-				label: 'Delete',
 			},
 		],
 		[
+			allowEdit,
+			allowClone,
+			allowDelete,
+			queryResponse.isLoading,
 			deleteWidget,
 			editWidget,
-			keyMethodMapping.delete.key,
-			keyMethodMapping.edit.key,
-			keyMethodMapping.view.key,
-			queryResponse.isLoading,
 		],
+	);
+
+	const menuList: MenuItemType[] = useMemo(
+		(): MenuItemType[] => generateMenuList(actions, keyMethodMapping),
+		[actions, keyMethodMapping],
 	);
 
 	const onClickHandler = useCallback(() => {
@@ -180,5 +215,13 @@ function WidgetHeader({
 		</div>
 	);
 }
+
+WidgetHeader.defaultProps = {
+	onDelete: undefined,
+	onClone: undefined,
+	allowDelete: true,
+	allowClone: true,
+	allowEdit: true,
+};
 
 export default WidgetHeader;

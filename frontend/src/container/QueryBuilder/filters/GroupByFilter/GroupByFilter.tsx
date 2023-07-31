@@ -1,98 +1,187 @@
 import { Select, Spin } from 'antd';
-// ** Api
 import { getAggregateKeys } from 'api/queryBuilder/getAttributeKeys';
 // ** Constants
-import { QueryBuilderKeys } from 'constants/queryBuilder';
+import {
+	idDivider,
+	QueryBuilderKeys,
+	selectValueDivider,
+} from 'constants/queryBuilder';
+import { DEBOUNCE_DELAY } from 'constants/queryBuilderFilterConfig';
+import { useGetAggregateKeys } from 'hooks/queryBuilder/useGetAggregateKeys';
+import useDebounce from 'hooks/useDebounce';
+import { chooseAutocompleteFromCustomValue } from 'lib/newQueryBuilder/chooseAutocompleteFromCustomValue';
 // ** Components
 // ** Helpers
 import { transformStringWithPrefix } from 'lib/query/transformStringWithPrefix';
-import React, { memo, useState } from 'react';
-import { useQuery } from 'react-query';
+import { isEqual, uniqWith } from 'lodash-es';
+import { memo, useCallback, useEffect, useState } from 'react';
+import { useQueryClient } from 'react-query';
 import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { SelectOption } from 'types/common/select';
 
-// ** Types
-import {
-	GroupByFilterProps,
-	GroupByFilterValue,
-} from './GroupByFilter.interfaces';
+import { selectStyle } from '../QueryBuilderSearch/config';
+import { GroupByFilterProps } from './GroupByFilter.interfaces';
 
 export const GroupByFilter = memo(function GroupByFilter({
 	query,
 	onChange,
+	disabled,
 }: GroupByFilterProps): JSX.Element {
+	const queryClient = useQueryClient();
 	const [searchText, setSearchText] = useState<string>('');
-
-	const { data, isFetching } = useQuery(
-		[QueryBuilderKeys.GET_AGGREGATE_KEYS, searchText],
-		async () =>
-			getAggregateKeys({
-				aggregateAttribute: query.aggregateAttribute.key,
-				tagType: query.aggregateAttribute.type,
-				dataSource: query.dataSource,
-				aggregateOperator: query.aggregateOperator,
-				searchText,
-			}),
-		{ enabled: !!query.aggregateAttribute.key, keepPreviousData: true },
+	const [optionsData, setOptionsData] = useState<SelectOption<string, string>[]>(
+		[],
 	);
+	const [localValues, setLocalValues] = useState<SelectOption<string, string>[]>(
+		[],
+	);
+	const [isFocused, setIsFocused] = useState<boolean>(false);
+
+	const debouncedValue = useDebounce(searchText, DEBOUNCE_DELAY);
+
+	const { isFetching } = useGetAggregateKeys(
+		{
+			aggregateAttribute: query.aggregateAttribute.key,
+			dataSource: query.dataSource,
+			aggregateOperator: query.aggregateOperator,
+			searchText: debouncedValue,
+		},
+		{
+			queryKey: [debouncedValue, isFocused],
+			enabled: !disabled && isFocused,
+			onSuccess: (data) => {
+				const keys = query.groupBy.reduce<string[]>((acc, item) => {
+					acc.push(item.key);
+					return acc;
+				}, []);
+
+				const filteredOptions: BaseAutocompleteData[] =
+					data?.payload?.attributeKeys?.filter(
+						(attrKey) => !keys.includes(attrKey.key),
+					) || [];
+
+				const options: SelectOption<string, string>[] =
+					filteredOptions.map((item) => ({
+						label: transformStringWithPrefix({
+							str: item.key,
+							prefix: item.type || '',
+							condition: !item.isColumn,
+						}),
+						value: `${transformStringWithPrefix({
+							str: item.key,
+							prefix: item.type || '',
+							condition: !item.isColumn,
+						})}${selectValueDivider}${item.id}`,
+					})) || [];
+
+				setOptionsData(options);
+			},
+		},
+	);
+
+	const getAttributeKeys = useCallback(async () => {
+		const response = await queryClient.fetchQuery(
+			[QueryBuilderKeys.GET_AGGREGATE_KEYS, searchText, isFocused],
+			async () =>
+				getAggregateKeys({
+					aggregateAttribute: query.aggregateAttribute.key,
+					dataSource: query.dataSource,
+					aggregateOperator: query.aggregateOperator,
+					searchText,
+				}),
+		);
+
+		return response.payload?.attributeKeys || [];
+	}, [
+		isFocused,
+		query.aggregateAttribute.key,
+		query.aggregateOperator,
+		query.dataSource,
+		queryClient,
+		searchText,
+	]);
 
 	const handleSearchKeys = (searchText: string): void => {
 		setSearchText(searchText);
 	};
 
-	const optionsData: SelectOption<string, string>[] =
-		data?.payload?.attributeKeys?.map((item) => ({
-			label: transformStringWithPrefix({
-				str: item.key,
-				prefix: item.type || '',
-				condition: !item.isColumn,
-			}),
-			value: item.key,
-		})) || [];
-
-	const handleChange = (values: GroupByFilterValue[]): void => {
-		const groupByValues: BaseAutocompleteData[] = values.map((item) => {
-			const iterationArray = data?.payload?.attributeKeys || query.groupBy;
-			const existGroup = iterationArray.find((group) => group.key === item.value);
-			if (existGroup) {
-				return existGroup;
-			}
-
-			return {
-				isColumn: null,
-				key: item.value,
-				dataType: null,
-				type: null,
-			};
-		});
-
-		onChange(groupByValues);
+	const handleBlur = (): void => {
+		setIsFocused(false);
+		setSearchText('');
 	};
 
-	const values: GroupByFilterValue[] = query.groupBy.map((item) => ({
-		label: transformStringWithPrefix({
-			str: item.key,
-			prefix: item.type || '',
-			condition: !item.isColumn,
-		}),
-		key: item.key,
-		value: item.key,
-		disabled: undefined,
-		title: undefined,
-	}));
+	const handleFocus = (): void => {
+		setIsFocused(true);
+	};
+
+	const handleChange = useCallback(
+		async (values: SelectOption<string, string>[]): Promise<void> => {
+			const keys = await getAttributeKeys();
+
+			const groupByValues: BaseAutocompleteData[] = values.map((item) => {
+				const [currentValue, id] = item.value.split(selectValueDivider);
+
+				if (id && id.includes(idDivider)) {
+					const attribute = keys.find((item) => item.id === id);
+					const existAttribute = query.groupBy.find((item) => item.id === id);
+
+					if (attribute) {
+						return attribute;
+					}
+
+					if (existAttribute) {
+						return existAttribute;
+					}
+				}
+
+				return chooseAutocompleteFromCustomValue(keys, currentValue);
+			});
+
+			const result = uniqWith(groupByValues, isEqual);
+
+			onChange(result);
+		},
+		[getAttributeKeys, onChange, query.groupBy],
+	);
+
+	const clearSearch = useCallback(() => {
+		setSearchText('');
+	}, []);
+
+	useEffect(() => {
+		const currentValues: SelectOption<string, string>[] = query.groupBy.map(
+			(item) => ({
+				label: `${transformStringWithPrefix({
+					str: item.key,
+					prefix: item.type || '',
+					condition: !item.isColumn,
+				})}`,
+				value: `${transformStringWithPrefix({
+					str: item.key,
+					prefix: item.type || '',
+					condition: !item.isColumn,
+				})}${selectValueDivider}${item.id}`,
+			}),
+		);
+
+		setLocalValues(currentValues);
+	}, [query]);
 
 	return (
 		<Select
 			mode="tags"
-			style={{ width: '100%' }}
+			style={selectStyle}
 			onSearch={handleSearchKeys}
 			showSearch
-			disabled={!query.aggregateAttribute.key}
+			disabled={disabled}
 			showArrow={false}
 			filterOption={false}
+			onBlur={handleBlur}
+			onFocus={handleFocus}
+			onDeselect={clearSearch}
 			options={optionsData}
+			value={localValues}
 			labelInValue
-			value={values}
 			notFoundContent={isFetching ? <Spin size="small" /> : null}
 			onChange={handleChange}
 		/>
