@@ -46,6 +46,7 @@
 		"chartjs-adapter-date-fns": "^2.0.0",
 		"chartjs-plugin-annotation": "^1.4.0",
 		"color": "^4.2.1",
+		"color-alpha": "1.1.3",
 		"cross-env": "^7.0.3",
 		"css-loader": "4.3.0",
 		"css-minimizer-webpack-plugin": "^3.2.0",
