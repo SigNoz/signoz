@@ -5,7 +5,6 @@ import { LOCALSTORAGE } from 'constants/localStorage';
 import LogsExplorerContext from 'container/LogsExplorerContext';
 import { useActiveLog } from 'hooks/logs/useActiveLog';
 import { useCopyLogLink } from 'hooks/logs/useCopyLogLink';
-import { useIsDarkMode } from 'hooks/useDarkMode';
 import useDragColumns from 'hooks/useDragColumns';
 import { getDraggedColumns } from 'hooks/useDragColumns/utils';
 import {
@@ -38,12 +37,10 @@ const CustomTableRow: TableComponents<ILog>['TableRow'] = ({
 	context,
 	...props
 }) => {
-	const isDarkMode = useIsDarkMode();
 	const { isHighlighted } = useCopyLogLink(props.item.id);
 
 	return (
 		<TableRowStyled
-			$isDarkMode={isDarkMode}
 			$isActiveLog={isHighlighted}
 			// eslint-disable-next-line react/jsx-props-no-spreading
 			{...props}
