@@ -33,7 +33,9 @@ export const TableRowStyled = styled.tr<{
 	&:hover {
 		${TableCellStyled} {
 			${({ $isActiveLog }): string =>
-				$isActiveLog ? getActiveLogBackground() : 'background-color: #1d1d1d;'}
+				$isActiveLog
+					? getActiveLogBackground()
+					: `background-color: ${themeColors.bckgGrey};`}
 		}
 	}
 `;
@@ -41,7 +43,7 @@ export const TableRowStyled = styled.tr<{
 export const TableHeaderCellStyled = styled.th<TableHeaderCellStyledProps>`
 	padding: 0.5rem;
 	border-inline-end: 1px solid rgba(253, 253, 253, 0.12);
-	background-color: #1d1d1d;
+	background-color: ${themeColors.bckgGrey};
 	${({ isDragColumn }): string => (isDragColumn ? 'cursor: col-resize;' : '')}
 
 	&:first-child {
