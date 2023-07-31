@@ -1,6 +1,7 @@
 package logparsingpipeline
 
 import (
+	"errors"
 	"fmt"
 	"regexp"
 	"strings"
@@ -95,7 +96,9 @@ func (p *PostablePipeline) IsValid() error {
 }
 
 func isValidOperator(op model.PipelineOperator) error {
-	valueErrStr := "value should have prefix of body, attributes, resource"
+	if op.ID == "" {
+		return errors.New("PipelineOperator.ID is required.")
+	}
 
 	switch op.Type {
 	case "json_parser":
@@ -160,7 +163,8 @@ func isValidOperator(op model.PipelineOperator) error {
 		!isValidOtelValue(op.From) ||
 		!isValidOtelValue(op.To) ||
 		!isValidOtelValue(op.Field) {
-		return fmt.Errorf(fmt.Sprintf("%s  for operator Id %s", valueErrStr, op.ID))
+		valueErrStr := "value should have prefix of body, attributes, resource"
+		return fmt.Errorf(fmt.Sprintf("%s for operator Id %s", valueErrStr, op.ID))
 	}
 	return nil
 }

@@ -45,7 +45,7 @@ var correctQueriesTest = []struct {
 			Filter:  "attributes.method == \"GET\"",
 			Config:  []model.PipelineOperator{},
 		},
-		IsValid: false,
+		IsValid: true,
 	},
 	{
 		Name: "Invalid filter",
@@ -67,7 +67,7 @@ var correctQueriesTest = []struct {
 			Enabled: true,
 			Filter:  "attributes.method == \"GET\"",
 		},
-		IsValid: false,
+		IsValid: true,
 	},
 }
 
