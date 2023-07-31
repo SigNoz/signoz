@@ -3,7 +3,7 @@ import { History } from 'history';
 
 export interface RouteTabProps {
 	routes: {
-		name: React.ReactNode | string;
+		name: React.ReactNode;
 		route: string;
 		Component: () => JSX.Element;
 		key: string;
