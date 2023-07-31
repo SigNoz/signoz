@@ -14,7 +14,7 @@ receivers:
         field: attributes.timestamp
         # please add name of containers here if you want to exclude them from logs
       - type: filter
-        expr: 'attributes.container_name matches "((^|, )(logspout|frontend|clickhouse-setup-alertmanager-1|query-service|clickhouse-setup-otel-collector-1|clickhouse-setup-otel-collector-metrics-1|clickhouse|zookeeper-1))+$"'
+        expr: 'attributes.container_name matches "^(logspout|frontend|clickhouse-setup-alertmanager-1|query-service|clickhouse-setup-otel-collector-1|clickhouse-setup-otel-collector-metrics-1|clickhouse|zookeeper-1)$"'
   opencensus:
     endpoint: 0.0.0.0:55678
   otlp/spanmetrics:
