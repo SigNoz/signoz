@@ -62,7 +62,7 @@ export interface FullViewProps {
 	onDragSelect?: (start: number, end: number) => void;
 	graphsVisibilityStates?: boolean[];
 	isDependedDataLoaded?: boolean;
-	onToggleModelHandler?: () => void;
+	onToggleModelHandler?: GraphManagerProps['onToggleModelHandler'];
 }
 
 export interface SaveLegendEntriesToLocalStoreProps {
