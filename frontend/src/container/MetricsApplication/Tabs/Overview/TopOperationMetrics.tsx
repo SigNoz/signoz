@@ -5,9 +5,12 @@ import { QueryTable } from 'container/QueryTable';
 import { useGetQueryRange } from 'hooks/queryBuilder/useGetQueryRange';
 import { useStepInterval } from 'hooks/queryBuilder/useStepInterval';
 import { useNotifications } from 'hooks/useNotifications';
+import useResourceAttribute from 'hooks/useResourceAttribute';
+import { convertRawQueriesToTraceSelectedTags } from 'hooks/useResourceAttribute/utils';
 import { getDashboardVariables } from 'lib/dashbaordVariables/getDashboardVariables';
+import { RowData } from 'lib/query/createTableColumnsFromQuery';
 import { isEmpty } from 'lodash-es';
-import { useMemo } from 'react';
+import { ReactNode, useMemo } from 'react';
 import { useSelector } from 'react-redux';
 import { useParams } from 'react-router-dom';
 import { AppState } from 'store/reducers';
@@ -16,6 +19,8 @@ import { GlobalReducer } from 'types/reducer/globalTime';
 import { v4 as uuid } from 'uuid';
 
 import { IServiceName } from '../types';
+import ColumnWithLink from './TableRenderer/ColumnWithLink';
+import { getTableColumnRenderer } from './TableRenderer/TableColumnRenderer';
 
 function TopOperationMetrics(): JSX.Element {
 	const { servicename } = useParams<IServiceName>();
@@ -26,6 +31,12 @@ function TopOperationMetrics(): JSX.Element {
 		AppState,
 		GlobalReducer
 	>((state) => state.globalTime);
+
+	const { queries } = useResourceAttribute();
+
+	const selectedTraceTags = JSON.stringify(
+		convertRawQueriesToTraceSelectedTags(queries) || [],
+	);
 
 	const keyOperationWidget = useMemo(
 		() =>
@@ -78,11 +89,29 @@ function TopOperationMetrics(): JSX.Element {
 
 	const queryTableData = data?.payload.data.newResult.data.result || [];
 
+	const renderColumnCell = useMemo(
+		() =>
+			getTableColumnRenderer({
+				columnName: 'operation',
+				renderFunction: (record: RowData): ReactNode => (
+					<ColumnWithLink
+						servicename={servicename}
+						minTime={minTime}
+						maxTime={maxTime}
+						selectedTraceTags={selectedTraceTags}
+						record={record}
+					/>
+				),
+			}),
+		[servicename, minTime, maxTime, selectedTraceTags],
+	);
+
 	return (
 		<QueryTable
 			query={updatedQuery}
 			queryTableData={queryTableData}
 			loading={isLoading}
+			renderColumnCell={renderColumnCell}
 		/>
 	);
 }
