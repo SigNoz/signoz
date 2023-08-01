@@ -13,7 +13,6 @@ import dayjs from 'dayjs';
 import dompurify from 'dompurify';
 import { useActiveLog } from 'hooks/logs/useActiveLog';
 import { useCopyLogLink } from 'hooks/logs/useCopyLogLink';
-import { useIsDarkMode } from 'hooks/useDarkMode';
 import { useNotifications } from 'hooks/useNotifications';
 // utils
 import { FlatLogData } from 'lib/logs/flatLogData';
@@ -104,7 +103,6 @@ function ListLogView({
 }: ListLogViewProps): JSX.Element {
 	const flattenLogData = useMemo(() => FlatLogData(logData), [logData]);
 
-	const isDarkMode = useIsDarkMode();
 	const [, setCopy] = useCopyToClipboard();
 	const { notifications } = useNotifications();
 	const { isHighlighted, isLogsExplorerPage, onLogCopy } = useCopyLogLink(
@@ -151,7 +149,7 @@ function ListLogView({
 	);
 
 	return (
-		<Container $isActiveLog={isHighlighted} $isDarkMode={isDarkMode}>
+		<Container $isActiveLog={isHighlighted}>
 			<div>
 				<LogContainer>
 					<>

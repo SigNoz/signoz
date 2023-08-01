@@ -31,6 +31,7 @@ import (
 	baseapp "go.signoz.io/signoz/pkg/query-service/app"
 	"go.signoz.io/signoz/pkg/query-service/app/dashboards"
 	baseexplorer "go.signoz.io/signoz/pkg/query-service/app/explorer"
+	"go.signoz.io/signoz/pkg/query-service/app/logparsingpipeline"
 	"go.signoz.io/signoz/pkg/query-service/app/opamp"
 	opAmpModel "go.signoz.io/signoz/pkg/query-service/app/opamp/model"
 	baseauth "go.signoz.io/signoz/pkg/query-service/auth"
@@ -157,6 +158,12 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 		return nil, err
 	}
 
+	// ingestion pipelines manager
+	logParsingPipelineController, err := logparsingpipeline.NewLogParsingPipelinesController(localDB, "sqlite")
+	if err != nil {
+		return nil, err
+	}
+
 	// start the usagemanager
 	usageManager, err := usage.New("sqlite", localDB, lm.GetRepo(), reader.GetConn())
 	if err != nil {
@@ -170,14 +177,15 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 	telemetry.GetInstance().SetReader(reader)
 
 	apiOpts := api.APIHandlerOptions{
-		DataConnector:     reader,
-		SkipConfig:        skipConfig,
-		PreferDelta:       serverOptions.PreferDelta,
-		PreferSpanMetrics: serverOptions.PreferSpanMetrics,
-		AppDao:            modelDao,
-		RulesManager:      rm,
-		FeatureFlags:      lm,
-		LicenseManager:    lm,
+		DataConnector:                 reader,
+		SkipConfig:                    skipConfig,
+		PreferDelta:                   serverOptions.PreferDelta,
+		PreferSpanMetrics:             serverOptions.PreferSpanMetrics,
+		AppDao:                        modelDao,
+		RulesManager:                  rm,
+		FeatureFlags:                  lm,
+		LicenseManager:                lm,
+		LogsParsingPipelineController: logParsingPipelineController,
 	}
 
 	apiHandler, err := api.NewAPIHandler(apiOpts)
