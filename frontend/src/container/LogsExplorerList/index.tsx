@@ -8,10 +8,11 @@ import ExplorerControlPanel from 'container/ExplorerControlPanel';
 import { Heading } from 'container/LogsTable/styles';
 import { useOptionsMenu } from 'container/OptionsMenu';
 import { contentStyle } from 'container/Trace/Search/config';
+import { useCopyLogLink } from 'hooks/logs/useCopyLogLink';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import useFontFaceObserver from 'hooks/useFontObserver';
-import { memo, useCallback, useMemo } from 'react';
-import { Virtuoso } from 'react-virtuoso';
+import { memo, useCallback, useEffect, useMemo, useRef } from 'react';
+import { Virtuoso, VirtuosoHandle } from 'react-virtuoso';
 // interfaces
 import { ILog } from 'types/api/logs/log';
 import { DataSource, StringOperators } from 'types/common/queryBuilder';
@@ -29,12 +30,12 @@ function LogsExplorerList({
 	isLoading,
 	currentStagedQueryData,
 	logs,
-	onOpenDetailedView,
 	onEndReached,
-	onExpand,
-	onAddToQuery,
 }: LogsExplorerListProps): JSX.Element {
+	const ref = useRef<VirtuosoHandle>(null);
 	const { initialDataSource } = useQueryBuilder();
+
+	const { activeLogId } = useCopyLogLink();
 
 	const { options, config } = useOptionsMenu({
 		storageKey: LOCALSTORAGE.LOGS_LIST_OPTIONS,
@@ -42,6 +43,11 @@ function LogsExplorerList({
 		aggregateOperator:
 			currentStagedQueryData?.aggregateOperator || StringOperators.NOOP,
 	});
+
+	const activeLogIndex = useMemo(
+		() => logs.findIndex(({ id }) => id === activeLogId),
+		[logs, activeLogId],
+	);
 
 	useFontFaceObserver(
 		[
@@ -65,34 +71,26 @@ function LogsExplorerList({
 		(_: number, log: ILog): JSX.Element => {
 			if (options.format === 'raw') {
 				return (
-					<RawLogView
-						key={log.id}
-						data={log}
-						linesPerRow={options.maxLines}
-						onClickExpand={onExpand}
-					/>
+					<RawLogView key={log.id} data={log} linesPerRow={options.maxLines} />
 				);
 			}
 
 			return (
-				<ListLogView
-					key={log.id}
-					logData={log}
-					selectedFields={selectedFields}
-					onOpenDetailedView={onOpenDetailedView}
-					onAddToQuery={onAddToQuery}
-				/>
+				<ListLogView key={log.id} logData={log} selectedFields={selectedFields} />
 			);
 		},
-		[
-			options.format,
-			options.maxLines,
-			selectedFields,
-			onOpenDetailedView,
-			onAddToQuery,
-			onExpand,
-		],
+		[options.format, options.maxLines, selectedFields],
 	);
+
+	useEffect(() => {
+		if (!activeLogId || activeLogIndex < 0) return;
+
+		ref?.current?.scrollToIndex({
+			index: activeLogIndex,
+			align: 'start',
+			behavior: 'smooth',
+		});
+	}, [activeLogId, activeLogIndex]);
 
 	const renderContent = useMemo(() => {
 		const components = isLoading
@@ -104,11 +102,12 @@ function LogsExplorerList({
 		if (options.format === 'table') {
 			return (
 				<InfinityTableView
+					ref={ref}
+					isLoading={isLoading}
 					tableViewProps={{
 						logs,
 						fields: selectedFields,
 						linesPerRow: options.maxLines,
-						onClickExpand: onExpand,
 						appendTo: 'end',
 					}}
 					infitiyTableProps={{ onEndReached }}
@@ -119,6 +118,7 @@ function LogsExplorerList({
 		return (
 			<Card style={{ width: '100%' }} bodyStyle={{ ...contentStyle }}>
 				<Virtuoso
+					ref={ref}
 					useWindowScroll
 					data={logs}
 					endReached={onEndReached}
@@ -136,7 +136,6 @@ function LogsExplorerList({
 		onEndReached,
 		getItemContent,
 		selectedFields,
-		onExpand,
 	]);
 
 	return (
