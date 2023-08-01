@@ -34,7 +34,10 @@ import FullView from './FullView';
 import { PANEL_TYPES_VS_FULL_VIEW_TABLE } from './FullView/contants';
 import { FullViewContainer, Modal } from './styles';
 import { DispatchProps, WidgetGraphComponentProps } from './types';
-import { getGraphVisibilityStateOnDataChange } from './utils';
+import {
+	getGraphVisibilityStateOnDataChange,
+	toggleGraphsVisibilityInChart,
+} from './utils';
 
 function WidgetGraphComponent({
 	enableModel,
@@ -114,8 +117,9 @@ function WidgetGraphComponent({
 
 	useEffect(() => {
 		if (canModifyChart && lineChartRef.current) {
-			graphsVisibilityStates?.forEach((showLegendData, index) => {
-				lineChartRef?.current?.toggleGraph(index, showLegendData);
+			toggleGraphsVisibilityInChart({
+				graphsVisibilityStates,
+				lineChartRef,
 			});
 		}
 	}, [graphsVisibilityStates, canModifyChart]);

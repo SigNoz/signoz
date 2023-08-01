@@ -17,6 +17,7 @@ import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
 import { GlobalReducer } from 'types/reducer/globalTime';
 
+import { toggleGraphsVisibilityInChart } from '../utils';
 import { PANEL_TYPES_VS_FULL_VIEW_TABLE } from './contants';
 import GraphManager from './GraphManager';
 import { GraphContainer, TimeContainer } from './styles';
@@ -53,9 +54,10 @@ function FullView({
 	const lineChartRef = useRef<ToggleGraphProps>();
 
 	useEffect(() => {
-		if (canModifyChart && lineChartRef.current) {
-			graphsVisibilityStates?.forEach((showLegendData, index) => {
-				lineChartRef?.current?.toggleGraph(index, showLegendData);
+		if (graphsVisibilityStates && canModifyChart && lineChartRef.current) {
+			toggleGraphsVisibilityInChart({
+				graphsVisibilityStates,
+				lineChartRef,
 			});
 		}
 	}, [graphsVisibilityStates, canModifyChart]);

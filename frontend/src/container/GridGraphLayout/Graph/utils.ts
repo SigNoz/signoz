@@ -5,6 +5,7 @@ import { showAllDataSet } from './FullView/utils';
 import {
 	GetGraphVisibilityStateOnLegendClickProps,
 	GraphVisibilityLegendEntryProps,
+	ToggleGraphsVisibilityInChartProps,
 } from './types';
 
 export const getGraphVisibilityStateOnDataChange = ({
@@ -53,4 +54,13 @@ export const getGraphVisibilityStateOnDataChange = ({
 	}
 
 	return visibilityStateAndLegendEntry;
+};
+
+export const toggleGraphsVisibilityInChart = ({
+	graphsVisibilityStates,
+	lineChartRef,
+}: ToggleGraphsVisibilityInChartProps): void => {
+	graphsVisibilityStates?.forEach((showLegendData, index) => {
+		lineChartRef?.current?.toggleGraph(index, showLegendData);
+	});
 };

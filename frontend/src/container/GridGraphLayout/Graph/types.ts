@@ -1,6 +1,6 @@
 import { ChartData } from 'chart.js';
-import { GraphOnClickHandler } from 'components/Graph/types';
-import { Dispatch, SetStateAction } from 'react';
+import { GraphOnClickHandler, ToggleGraphProps } from 'components/Graph/types';
+import { Dispatch, MutableRefObject, SetStateAction } from 'react';
 import { Layout } from 'react-grid-layout';
 import { UseQueryResult } from 'react-query';
 import { DeleteWidgetProps } from 'store/actions/dashboard/deleteWidget';
@@ -63,4 +63,9 @@ export interface GetGraphVisibilityStateOnLegendClickProps {
 	data: ChartData;
 	isExpandedName: boolean;
 	name: string;
+}
+
+export interface ToggleGraphsVisibilityInChartProps {
+	graphsVisibilityStates: GraphVisibilityLegendEntryProps['graphVisibilityStates'];
+	lineChartRef: MutableRefObject<ToggleGraphProps | undefined>;
 }
