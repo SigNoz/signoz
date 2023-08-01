@@ -240,8 +240,8 @@ function WidgetGraphComponent({
 						name={`${name}expanded`}
 						widget={widget}
 						yAxisUnit={yAxisUnit}
+						graphsVisibilityStates={graphsVisibilityStates}
 						onToggleModelHandler={onToggleModelHandler}
-						ref={lineChartRef}
 					/>
 				</FullViewContainer>
 			</Modal>
