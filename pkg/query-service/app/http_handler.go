@@ -3,6 +3,7 @@ package app
 import (
 	"bytes"
 	"context"
+	"database/sql"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -19,6 +20,7 @@ import (
 	jsoniter "github.com/json-iterator/go"
 	_ "github.com/mattn/go-sqlite3"
 	"github.com/prometheus/prometheus/promql"
+	"go.signoz.io/signoz/pkg/query-service/agentConf"
 	"go.signoz.io/signoz/pkg/query-service/app/dashboards"
 	"go.signoz.io/signoz/pkg/query-service/app/explorer"
 	"go.signoz.io/signoz/pkg/query-service/app/logs"
@@ -33,6 +35,7 @@ import (
 	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
 	querytemplate "go.signoz.io/signoz/pkg/query-service/utils/queryTemplate"
 
+	"go.signoz.io/signoz/pkg/query-service/app/logparsingpipeline"
 	"go.signoz.io/signoz/pkg/query-service/dao"
 	am "go.signoz.io/signoz/pkg/query-service/integrations/alertManager"
 	signozio "go.signoz.io/signoz/pkg/query-service/integrations/signozio"
@@ -74,6 +77,8 @@ type APIHandler struct {
 	preferDelta       bool
 	preferSpanMetrics bool
 
+	LogsParsingPipelineController *logparsingpipeline.LogParsingPipelineController
+
 	// SetupCompleted indicates if SigNoz is ready for general use.
 	// at the moment, we mark the app ready when the first user
 	// is registers.
@@ -97,6 +102,9 @@ type APIHandlerOpts struct {
 
 	// feature flags querier
 	FeatureFlags interfaces.FeatureLookup
+
+	// Log parsing pipelines
+	LogsParsingPipelineController *logparsingpipeline.LogParsingPipelineController
 }
 
 // NewAPIHandler returns an APIHandler
@@ -108,14 +116,15 @@ func NewAPIHandler(opts APIHandlerOpts) (*APIHandler, error) {
 	}
 
 	aH := &APIHandler{
-		reader:            opts.Reader,
-		appDao:            opts.AppDao,
-		skipConfig:        opts.SkipConfig,
-		preferDelta:       opts.PerferDelta,
-		preferSpanMetrics: opts.PreferSpanMetrics,
-		alertManager:      alertManager,
-		ruleManager:       opts.RuleManager,
-		featureFlags:      opts.FeatureFlags,
+		reader:                        opts.Reader,
+		appDao:                        opts.AppDao,
+		skipConfig:                    opts.SkipConfig,
+		preferDelta:                   opts.PerferDelta,
+		preferSpanMetrics:             opts.PreferSpanMetrics,
+		alertManager:                  alertManager,
+		ruleManager:                   opts.RuleManager,
+		featureFlags:                  opts.FeatureFlags,
+		LogsParsingPipelineController: opts.LogsParsingPipelineController,
 	}
 
 	builderOpts := queryBuilder.QueryBuilderOptions{
@@ -2240,6 +2249,10 @@ func (aH *APIHandler) RegisterLogsRoutes(router *mux.Router, am *AuthMiddleware)
 	subRouter.HandleFunc("/fields", am.ViewAccess(aH.logFields)).Methods(http.MethodGet)
 	subRouter.HandleFunc("/fields", am.EditAccess(aH.logFieldUpdate)).Methods(http.MethodPost)
 	subRouter.HandleFunc("/aggregate", am.ViewAccess(aH.logAggregate)).Methods(http.MethodGet)
+
+	// log pipelines
+	subRouter.HandleFunc("/pipelines/{version}", am.ViewAccess(aH.listLogsPipelinesHandler)).Methods(http.MethodGet)
+	subRouter.HandleFunc("/pipelines", am.EditAccess(aH.createLogsPipeline)).Methods(http.MethodPost)
 }
 
 func (aH *APIHandler) logFields(w http.ResponseWriter, r *http.Request) {
@@ -2349,6 +2362,131 @@ func (aH *APIHandler) logAggregate(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	aH.WriteJSON(w, r, res)
+}
+
+const logPipelines = "log_pipelines"
+
+func parseAgentConfigVersion(r *http.Request) (int, *model.ApiError) {
+	versionString := mux.Vars(r)["version"]
+
+	if versionString == "latest" {
+		return -1, nil
+	}
+
+	version64, err := strconv.ParseInt(versionString, 0, 8)
+
+	if err != nil {
+		return 0, model.BadRequestStr("invalid version number")
+	}
+
+	if version64 <= 0 {
+		return 0, model.BadRequestStr("invalid version number")
+	}
+
+	return int(version64), nil
+}
+
+func (ah *APIHandler) listLogsPipelinesHandler(w http.ResponseWriter, r *http.Request) {
+
+	version, err := parseAgentConfigVersion(r)
+	if err != nil {
+		RespondError(w, err, nil)
+		return
+	}
+
+	var payload *logparsingpipeline.PipelinesResponse
+	var apierr *model.ApiError
+
+	if version != -1 {
+		payload, apierr = ah.listLogsPipelinesByVersion(context.Background(), version)
+	} else {
+		payload, apierr = ah.listLogsPipelines(context.Background())
+	}
+
+	if apierr != nil {
+		RespondError(w, apierr, payload)
+		return
+	}
+	ah.Respond(w, payload)
+}
+
+// listLogsPipelines lists logs piplines for latest version
+func (ah *APIHandler) listLogsPipelines(ctx context.Context) (*logparsingpipeline.PipelinesResponse, *model.ApiError) {
+	// get lateset agent config
+	lastestConfig, err := agentConf.GetLatestVersion(ctx, logPipelines)
+	if err != nil {
+		if err != sql.ErrNoRows {
+			return nil, model.InternalError(fmt.Errorf("failed to get latest agent config version with error %w", err))
+		} else {
+			return nil, nil
+		}
+	}
+
+	payload, err := ah.LogsParsingPipelineController.GetPipelinesByVersion(ctx, lastestConfig.Version)
+	if err != nil {
+		return nil, model.InternalError(fmt.Errorf("failed to get pipelines with error %w", err))
+	}
+
+	// todo(Nitya): make a new API for history pagination
+	limit := 10
+	history, err := agentConf.GetConfigHistory(ctx, logPipelines, limit)
+	if err != nil {
+		return nil, model.InternalError(fmt.Errorf("failed to get config history with error %w", err))
+	}
+	payload.History = history
+	return payload, nil
+}
+
+// listLogsPipelinesByVersion lists pipelines along with config version history
+func (ah *APIHandler) listLogsPipelinesByVersion(ctx context.Context, version int) (*logparsingpipeline.PipelinesResponse, *model.ApiError) {
+	payload, err := ah.LogsParsingPipelineController.GetPipelinesByVersion(ctx, version)
+	if err != nil {
+		return nil, model.InternalError(err)
+	}
+
+	// todo(Nitya): make a new API for history pagination
+	limit := 10
+	history, err := agentConf.GetConfigHistory(ctx, logPipelines, limit)
+	if err != nil {
+		return nil, model.InternalError(fmt.Errorf("failed to retrieve agent config history with error %w", err))
+	}
+
+	payload.History = history
+	return payload, nil
+}
+
+func (ah *APIHandler) createLogsPipeline(w http.ResponseWriter, r *http.Request) {
+
+	req := logparsingpipeline.PostablePipelines{}
+
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		RespondError(w, model.BadRequest(err), nil)
+		return
+	}
+
+	ctx := auth.AttachJwtToContext(context.Background(), r)
+
+	createPipeline := func(ctx context.Context, postable []logparsingpipeline.PostablePipeline) (*logparsingpipeline.PipelinesResponse, error) {
+		if len(postable) == 0 {
+			zap.S().Warnf("found no pipelines in the http request, this will delete all the pipelines")
+		}
+
+		for _, p := range postable {
+			if err := p.IsValid(); err != nil {
+				return nil, model.BadRequestStr(err.Error())
+			}
+		}
+
+		return ah.LogsParsingPipelineController.ApplyPipelines(ctx, postable)
+	}
+
+	res, err := createPipeline(ctx, req.Pipelines)
+	if err != nil {
+		RespondError(w, model.InternalError(err), nil)
+		return
+	}
+
+	ah.Respond(w, res)
 }
 
 func (aH *APIHandler) getExplorerQueries(w http.ResponseWriter, r *http.Request) {

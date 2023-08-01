@@ -1,10 +1,17 @@
 import { OPERATORS } from 'constants/queryBuilder';
 import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { TagFilterItem } from 'types/api/queryBuilder/queryBuilderData';
-import { DataSource, QueryBuilderData } from 'types/common/queryBuilder';
+import {
+	DataSource,
+	MetricAggregateOperator,
+	QueryBuilderData,
+} from 'types/common/queryBuilder';
 
 import { DataType, FORMULA, MetricsType, WidgetKeys } from '../constant';
-import { IServiceName } from '../Tabs/types';
+import {
+	ExternalCallDurationByAddressProps,
+	ExternalCallProps,
+} from '../Tabs/types';
 import {
 	getQueryBuilderQueries,
 	getQueryBuilderQuerieswithFormula,
@@ -36,6 +43,7 @@ export const externalCallErrorPercent = ({
 		isColumn: true,
 		type: null,
 	};
+
 	const additionalItemsA: TagFilterItem[] = [
 		{
 			id: '',
@@ -71,23 +79,38 @@ export const externalCallErrorPercent = ({
 				type: MetricsType.Resource,
 			},
 			op: OPERATORS.IN,
-			value: [`${servicename}`],
+			value: [servicename],
 		},
 		...tagFilterItems,
 	];
+
 	const legendFormula = legend;
 	const expression = FORMULA.ERROR_PERCENTAGE;
-	const disabled = true;
-	return getQueryBuilderQuerieswithFormula({
+	const autocompleteData: BaseAutocompleteData[] = [
 		autocompleteDataA,
 		autocompleteDataB,
+	];
+
+	const additionalItems: TagFilterItem[][] = [
 		additionalItemsA,
 		additionalItemsB,
-		legend,
+	];
+
+	const legends = Array(2).fill(legend);
+	const aggregateOperators = Array(2).fill(MetricAggregateOperator.SUM);
+	const disabled = Array(2).fill(true);
+	const dataSource = DataSource.METRICS;
+
+	return getQueryBuilderQuerieswithFormula({
+		autocompleteData,
+		additionalItems,
+		legends,
 		groupBy,
 		disabled,
 		expression,
 		legendFormula,
+		aggregateOperators,
+		dataSource,
 	});
 };
 
@@ -107,10 +130,11 @@ export const externalCallDuration = ({
 		key: WidgetKeys.SignozExternalCallLatencyCount,
 		type: null,
 	};
+
 	const expression = FORMULA.DATABASE_CALLS_AVG_DURATION;
 	const legendFormula = 'Average Duration';
 	const legend = '';
-	const disabled = true;
+	const disabled = Array(2).fill(true);
 	const additionalItemsA: TagFilterItem[] = [
 		{
 			id: '',
@@ -125,17 +149,29 @@ export const externalCallDuration = ({
 		},
 		...tagFilterItems,
 	];
-	const additionalItemsB = additionalItemsA;
 
-	return getQueryBuilderQuerieswithFormula({
+	const autocompleteData: BaseAutocompleteData[] = [
 		autocompleteDataA,
 		autocompleteDataB,
+	];
+
+	const additionalItems: TagFilterItem[][] = [
 		additionalItemsA,
-		additionalItemsB,
-		legend,
+		additionalItemsA,
+	];
+
+	const legends = Array(2).fill(legend);
+	const aggregateOperators = Array(2).fill(MetricAggregateOperator.SUM);
+
+	return getQueryBuilderQuerieswithFormula({
+		autocompleteData,
+		additionalItems,
+		legends,
 		disabled,
 		expression,
 		legendFormula,
+		aggregateOperators,
+		dataSource: DataSource.METRICS,
 	});
 };
 
@@ -169,13 +205,15 @@ export const externalCallRpsByAddress = ({
 		],
 	];
 
-	const legends: string[] = [legend];
+	const legends = [legend];
+	const dataSource = DataSource.METRICS;
+
 	return getQueryBuilderQueries({
 		autocompleteData,
 		groupBy,
 		legends,
 		filterItems,
-		dataSource: DataSource.METRICS,
+		dataSource,
 	});
 };
 
@@ -198,7 +236,7 @@ export const externalCallDurationByAddress = ({
 	};
 	const expression = FORMULA.DATABASE_CALLS_AVG_DURATION;
 	const legendFormula = legend;
-	const disabled = true;
+	const disabled = [true, true];
 	const additionalItemsA: TagFilterItem[] = [
 		{
 			id: '',
@@ -213,26 +251,30 @@ export const externalCallDurationByAddress = ({
 		},
 		...tagFilterItems,
 	];
-	const additionalItemsB = additionalItemsA;
 
-	return getQueryBuilderQuerieswithFormula({
+	const autocompleteData: BaseAutocompleteData[] = [
 		autocompleteDataA,
 		autocompleteDataB,
+	];
+
+	const additionalItems: TagFilterItem[][] = [
 		additionalItemsA,
-		additionalItemsB,
-		legend,
+		additionalItemsA,
+	];
+
+	const legends = Array(2).fill(legend);
+	const aggregateOperators = Array(2).fill(MetricAggregateOperator.SUM_RATE);
+	const dataSource = DataSource.METRICS;
+
+	return getQueryBuilderQuerieswithFormula({
+		autocompleteData,
+		additionalItems,
+		legends,
 		groupBy,
 		disabled,
 		expression,
 		legendFormula,
+		aggregateOperators,
+		dataSource,
 	});
 };
-
-interface ExternalCallDurationByAddressProps extends ExternalCallProps {
-	legend: string;
-}
-
-export interface ExternalCallProps {
-	servicename: IServiceName['servicename'];
-	tagFilterItems: TagFilterItem[];
-}
