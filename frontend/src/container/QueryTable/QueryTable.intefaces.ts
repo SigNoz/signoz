@@ -13,4 +13,5 @@ export type QueryTableProps = Omit<
 	query: Query;
 	renderActionCell?: (record: RowData) => ReactNode;
 	modifyColumns?: (columns: ColumnsType<RowData>) => ColumnsType<RowData>;
+	renderColumnCell?: Record<string, (record: RowData) => ReactNode>;
 };

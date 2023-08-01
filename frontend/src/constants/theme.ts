@@ -38,6 +38,7 @@ const themeColors = {
 	whiteCream: '#ffffffd5',
 	white: '#ffffff',
 	black: '#000000',
+	darkGrey: '#262626',
 	lightBlack: '#141414',
 	lightgrey: '#ddd',
 	lightWhite: '#ffffffd9',
@@ -49,6 +50,7 @@ const themeColors = {
 	neroBlack: '#1d1d1d',
 	snowWhite: '#fafafa',
 	gamboge: '#D89614',
+	bckgGrey: '#1d1d1d',
 };
 
 export { themeColors };

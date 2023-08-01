@@ -1,10 +1,8 @@
 import { Input, Select } from 'antd';
 import InputComponent from 'components/Input';
 import TimePreference from 'components/TimePreferenceDropDown';
-import { GRAPH_TYPES } from 'container/NewDashboard/ComponentsSlider';
-import GraphTypes, {
-	ITEMS,
-} from 'container/NewDashboard/ComponentsSlider/menuItems';
+import { PANEL_TYPES } from 'constants/queryBuilder';
+import GraphTypes from 'container/NewDashboard/ComponentsSlider/menuItems';
 import { Dispatch, SetStateAction, useCallback } from 'react';
 
 import { Container, Title } from './styles';
@@ -144,12 +142,12 @@ interface RightContainerProps {
 	setOpacity: Dispatch<SetStateAction<string>>;
 	selectedNullZeroValue: string;
 	setSelectedNullZeroValue: Dispatch<SetStateAction<string>>;
-	selectedGraph: GRAPH_TYPES;
+	selectedGraph: PANEL_TYPES;
 	setSelectedTime: Dispatch<SetStateAction<timePreferance>>;
 	selectedTime: timePreferance;
 	yAxisUnit: string;
 	setYAxisUnit: Dispatch<SetStateAction<string>>;
-	setGraphHandler: (type: ITEMS) => void;
+	setGraphHandler: (type: PANEL_TYPES) => void;
 }
 
 export default RightContainer;
