@@ -8,20 +8,46 @@ import {
 	SaveLegendEntriesToLocalStoreProps,
 } from './types';
 
+function convertToTwoDecimalsOrZero(value: number): number {
+	if (
+		typeof value === 'number' &&
+		!Number.isNaN(value) &&
+		value !== Infinity &&
+		value !== -Infinity
+	) {
+		return parseFloat(value.toFixed(2));
+	}
+	return 0;
+}
+
 export const getDefaultTableDataSet = (
 	data: ChartData,
 ): ExtendedChartDataset[] =>
 	data.datasets.map(
-		(item: ChartDataset): ExtendedChartDataset => ({
-			...item,
-			show: true,
-			sum: Math.floor((item.data as number[]).reduce((a, b) => a + b, 0)),
-			avg: Math.floor(
-				(item.data as number[]).reduce((a, b) => a + b, 0) / item.data.length,
-			),
-			max: Math.floor(Math.max(...(item.data as number[]))),
-			min: Math.floor(Math.min(...(item.data as number[]))),
-		}),
+		(item: ChartDataset): ExtendedChartDataset => {
+			if (item.data.length === 0) {
+				return {
+					...item,
+					show: true,
+					sum: 0,
+					avg: 0,
+					max: 0,
+					min: 0,
+				};
+			}
+			return {
+				...item,
+				show: true,
+				sum: convertToTwoDecimalsOrZero(
+					(item.data as number[]).reduce((a, b) => a + b, 0),
+				),
+				avg: convertToTwoDecimalsOrZero(
+					(item.data as number[]).reduce((a, b) => a + b, 0) / item.data.length,
+				),
+				max: convertToTwoDecimalsOrZero(Math.max(...(item.data as number[]))),
+				min: convertToTwoDecimalsOrZero(Math.min(...(item.data as number[]))),
+			};
+		},
 	);
 
 export const getAbbreviatedLabel = (label: string): string => {

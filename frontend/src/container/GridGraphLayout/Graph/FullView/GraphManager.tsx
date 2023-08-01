@@ -153,7 +153,10 @@ function GraphManager({
 		notifications.success({
 			message: 'The updated graphs & legends are saved',
 		});
-	}, [data, graphVisibilityState, name, notifications]);
+		if (onToggleModelHandler) {
+			onToggleModelHandler();
+		}
+	}, [data, graphVisibilityState, name, notifications, onToggleModelHandler]);
 
 	const dataSource = tableDataSet.filter((item) => item.show);
 
