@@ -57,22 +57,22 @@ const menus: SidebarMenu[] = [
 		key: ROUTES.LOGS,
 		label: 'Logs',
 		icon: <AlignLeftOutlined />,
-		children: [
-			{
-				key: ROUTES.LOGS,
-				label: 'Search',
-			},
-			// TODO: uncomment when will be ready explorer
-			// {
-			// 	key: ROUTES.LOGS_EXPLORER,
-			// 	label: 'Views',
-			// },
-			// ],
-			{
-				key: ROUTES.PIPELINES,
-				label: 'Pipelines',
-			},
-		],
+		// children: [
+		// {
+		// 	key: ROUTES.LOGS,
+		// 	label: 'Search',
+		// },
+		// TODO: uncomment when will be ready explorer
+		// {
+		// 	key: ROUTES.LOGS_EXPLORER,
+		// 	label: 'Views',
+		// },
+		// ],
+		// {
+		// 	key: ROUTES.PIPELINES,
+		// 	label: 'Pipelines',
+		// },
+		// ],
 	},
 	{
 		key: ROUTES.ALL_DASHBOARD,
