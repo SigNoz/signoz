@@ -144,6 +144,7 @@ func main() {
 			logger.Info("Received HealthCheck status: ", zap.Int("status", int(status)))
 		case <-signalsChannel:
 			logger.Fatal("Received OS Interrupt Signal ... ")
+			server.Stop()
 		}
 	}
 }
