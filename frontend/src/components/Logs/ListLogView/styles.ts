@@ -1,12 +1,17 @@
 import { Card, Typography } from 'antd';
 import styled from 'styled-components';
+import { getActiveLogBackground } from 'utils/logs';
 
-export const Container = styled(Card)`
+export const Container = styled(Card)<{
+	$isActiveLog: boolean;
+}>`
 	width: 100% !important;
 	margin-bottom: 0.3rem;
 	.ant-card-body {
 		padding: 0.3rem 0.6rem;
 	}
+
+	${({ $isActiveLog }): string => getActiveLogBackground($isActiveLog)}
 `;
 
 export const Text = styled(Typography.Text)`

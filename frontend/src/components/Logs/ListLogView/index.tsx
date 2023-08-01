@@ -1,9 +1,18 @@
 import { blue, grey, orange } from '@ant-design/colors';
-import { CopyFilled, ExpandAltOutlined } from '@ant-design/icons';
+import {
+	CopyFilled,
+	ExpandAltOutlined,
+	LinkOutlined,
+	MonitorOutlined,
+} from '@ant-design/icons';
 import Convert from 'ansi-to-html';
 import { Button, Divider, Row, Typography } from 'antd';
+import LogDetail from 'components/LogDetail';
+import LogsExplorerContext from 'container/LogsExplorerContext';
 import dayjs from 'dayjs';
 import dompurify from 'dompurify';
+import { useActiveLog } from 'hooks/logs/useActiveLog';
+import { useCopyLogLink } from 'hooks/logs/useCopyLogLink';
 import { useNotifications } from 'hooks/useNotifications';
 // utils
 import { FlatLogData } from 'lib/logs/flatLogData';
@@ -85,24 +94,39 @@ function LogSelectedField({
 
 type ListLogViewProps = {
 	logData: ILog;
-	onOpenDetailedView: (log: ILog) => void;
 	selectedFields: IField[];
-} & Pick<AddToQueryHOCProps, 'onAddToQuery'>;
+};
 
 function ListLogView({
 	logData,
 	selectedFields,
-	onOpenDetailedView,
-	onAddToQuery,
 }: ListLogViewProps): JSX.Element {
 	const flattenLogData = useMemo(() => FlatLogData(logData), [logData]);
 
 	const [, setCopy] = useCopyToClipboard();
 	const { notifications } = useNotifications();
+	const { isHighlighted, isLogsExplorerPage, onLogCopy } = useCopyLogLink(
+		logData.id,
+	);
+	const {
+		activeLog: activeContextLog,
+		onSetActiveLog: handleSetActiveContextLog,
+		onClearActiveLog: handleClearActiveContextLog,
+	} = useActiveLog();
+	const {
+		activeLog,
+		onSetActiveLog,
+		onClearActiveLog,
+		onAddToQuery,
+	} = useActiveLog();
 
 	const handleDetailedView = useCallback(() => {
-		onOpenDetailedView(logData);
-	}, [logData, onOpenDetailedView]);
+		onSetActiveLog(logData);
+	}, [logData, onSetActiveLog]);
+
+	const handleShowContext = useCallback(() => {
+		handleSetActiveContextLog(logData);
+	}, [logData, handleSetActiveContextLog]);
 
 	const handleCopyJSON = (): void => {
 		setCopy(JSON.stringify(logData, null, 2));
@@ -125,7 +149,7 @@ function ListLogView({
 	);
 
 	return (
-		<Container>
+		<Container $isActiveLog={isHighlighted}>
 			<div>
 				<LogContainer>
 					<>
@@ -169,6 +193,42 @@ function ListLogView({
 				>
 					Copy JSON
 				</Button>
+
+				{isLogsExplorerPage && (
+					<>
+						<Button
+							size="small"
+							type="text"
+							onClick={handleShowContext}
+							style={{ color: grey[1] }}
+							icon={<MonitorOutlined />}
+						>
+							Show in Context
+						</Button>
+						<Button
+							size="small"
+							type="text"
+							onClick={onLogCopy}
+							style={{ color: grey[1] }}
+							icon={<LinkOutlined />}
+						>
+							Copy Link
+						</Button>
+					</>
+				)}
+
+				{activeContextLog && (
+					<LogsExplorerContext
+						log={activeContextLog}
+						onClose={handleClearActiveContextLog}
+					/>
+				)}
+				<LogDetail
+					log={activeLog}
+					onClose={onClearActiveLog}
+					onAddToQuery={onAddToQuery}
+					onClickActionItem={onAddToQuery}
+				/>
 			</Row>
 		</Container>
 	);

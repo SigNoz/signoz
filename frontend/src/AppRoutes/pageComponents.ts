@@ -1,7 +1,7 @@
 import Loadable from 'components/Loadable';
 
 export const ServicesTablePage = Loadable(
-	() => import(/* webpackChunkName: "ServicesTablePage" */ 'pages/Metrics'),
+	() => import(/* webpackChunkName: "ServicesTablePage" */ 'pages/Services'),
 );
 
 export const ServiceMetricsPage = Loadable(
