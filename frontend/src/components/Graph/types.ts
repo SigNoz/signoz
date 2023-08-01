@@ -7,6 +7,7 @@ import {
 	ChartType,
 	TimeUnit,
 } from 'chart.js';
+import { ForwardedRef } from 'react';
 
 import {
 	dragSelectPluginId,
@@ -58,6 +59,7 @@ export interface GraphProps {
 	containerHeight?: string | number;
 	onDragSelect?: (start: number, end: number) => void;
 	dragSelectColor?: string;
+	ref?: ForwardedRef<ToggleGraphProps | undefined>;
 }
 
 export interface IAxisTimeUintConfig {

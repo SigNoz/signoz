@@ -2,7 +2,7 @@ import { ToggleGraphProps } from 'components/Graph/types';
 import { PANEL_TYPES_COMPONENT_MAP } from 'constants/panelTypes';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { GRID_TABLE_CONFIG } from 'container/GridTableComponent/config';
-import { FC, ForwardedRef, forwardRef, memo, useMemo } from 'react';
+import { FC, forwardRef, memo, useMemo } from 'react';
 
 import { GridPanelSwitchProps, PropsTypePropsMap } from './types';
 
@@ -38,6 +38,7 @@ const GridPanelSwitch = forwardRef<
 					yAxisUnit,
 					staticLine,
 					onDragSelect,
+					ref,
 				},
 				[PANEL_TYPES.VALUE]: {
 					title,
@@ -62,22 +63,16 @@ const GridPanelSwitch = forwardRef<
 			yAxisUnit,
 			panelData,
 			query,
+			ref,
 		]);
 
 		const Component = PANEL_TYPES_COMPONENT_MAP[panelType] as FC<
-			| PropsTypePropsMap[typeof panelType]
-			| { ref: ForwardedRef<ToggleGraphProps | undefined> }
+			PropsTypePropsMap[typeof panelType]
 		>;
-		const componentProps = useMemo(() => {
-			const result = currentProps[panelType];
-			if (panelType === PANEL_TYPES.TIME_SERIES) {
-				return {
-					...result,
-					ref,
-				};
-			}
-			return result;
-		}, [panelType, currentProps, ref]);
+		const componentProps = useMemo(() => currentProps[panelType], [
+			panelType,
+			currentProps,
+		]);
 
 		if (!Component || !componentProps) return null;
 
