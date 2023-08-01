@@ -11,7 +11,6 @@ export const Container = styled.div<Props>`
 	height: 25vh !important;
 	margin-top: 1rem;
 	margin-bottom: 1rem;
-	overflow: auto;
 	width: 100% !important;
 
 	${({ center }): StyledCSS =>
