@@ -14,8 +14,7 @@ import { useLocation } from 'react-router-dom';
 import { Dispatch } from 'redux';
 import { AppState } from 'store/reducers';
 import AppActions from 'types/actions';
-import { SET_DETAILED_LOG_DATA, SET_LOGS_ORDER } from 'types/actions/logs';
-import { ILog } from 'types/api/logs/log';
+import { SET_LOGS_ORDER } from 'types/actions/logs';
 import { ILogsReducer } from 'types/reducer/logs';
 
 import {
@@ -32,16 +31,6 @@ function Logs(): JSX.Element {
 	const dispatch = useDispatch<Dispatch<AppActions>>();
 	const { order } = useSelector<AppState, ILogsReducer>((store) => store.logs);
 	const location = useLocation();
-
-	const showExpandedLog = useCallback(
-		(logData: ILog) => {
-			dispatch({
-				type: SET_DETAILED_LOG_DATA,
-				payload: logData,
-			});
-		},
-		[dispatch],
-	);
 
 	const {
 		viewModeOptionList,
@@ -141,11 +130,7 @@ function Logs(): JSX.Element {
 						</Col>
 					</Row>
 
-					<LogsTable
-						viewMode={viewMode}
-						linesPerRow={linesPerRow}
-						onClickExpand={showExpandedLog}
-					/>
+					<LogsTable viewMode={viewMode} linesPerRow={linesPerRow} />
 				</Col>
 			</Row>
 
