@@ -79,6 +79,9 @@ type Server struct {
 	// feature flags
 	featureLookup baseint.FeatureLookup
 
+	// Usage manager
+	usageManager *usage.Manager
+
 	unavailableChannel chan healthcheck.Status
 }
 
@@ -199,6 +202,7 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 		ruleManager:        rm,
 		serverOptions:      serverOptions,
 		unavailableChannel: make(chan healthcheck.Status),
+		usageManager:       usageManager,
 	}
 
 	httpServer, err := s.createPublicServer(apiHandler)
@@ -559,6 +563,9 @@ func (s *Server) Stop() error {
 	if s.ruleManager != nil {
 		s.ruleManager.Stop()
 	}
+
+	// stop usage manager
+	s.usageManager.Stop()
 
 	return nil
 }
