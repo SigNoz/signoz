@@ -527,14 +527,7 @@ else
     echo "👉 Need help in Getting Started?"
     echo -e "Join us on Slack https://signoz.io/slack"
     echo ""
-    echo -e "\n📨 Please share your email to receive support & updates about SigNoz!"
-    read -rp 'Email: ' email
 
-    while [[ $email == "" ]]
-    do
-        read -rp 'Email: ' email
-    done
-    
     send_event "identify_successful_installation"
 fi
 
