@@ -1,7 +1,15 @@
 import { QueryParams } from 'constants/query';
 import ROUTES from 'constants/routes';
+import { themeColors } from 'constants/theme';
 
 export const styles = { background: '#1f1f1f' };
+
+export const subMenuStyles = {
+	background: '#1f1f1f',
+	margin: '0rem',
+	width: '100%',
+	color: themeColors.gainsboro,
+};
 
 export const routeConfig: Record<string, QueryParams[]> = {
 	[ROUTES.SERVICE_METRICS]: [QueryParams.resourceAttributes],
@@ -36,4 +44,6 @@ export const routeConfig: Record<string, QueryParams[]> = {
 	[ROUTES.UN_AUTHORIZED]: [QueryParams.resourceAttributes],
 	[ROUTES.USAGE_EXPLORER]: [QueryParams.resourceAttributes],
 	[ROUTES.VERSION]: [QueryParams.resourceAttributes],
+	[ROUTES.TRACE_EXPLORER]: [QueryParams.resourceAttributes],
+	[ROUTES.PIPELINES]: [QueryParams.resourceAttributes],
 };
