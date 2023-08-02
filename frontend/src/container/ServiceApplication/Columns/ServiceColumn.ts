@@ -1,46 +1,15 @@
 import type { ColumnsType, ColumnType } from 'antd/es/table';
+import { generatorResizeTableColumns } from 'components/TableRenderer/utils';
 import { ServicesList } from 'types/api/metrics/getService';
-import { generatorResizeTableColumns } from 'utils/generateResizeTableColumns';
 
-import {
-	ColumnKey,
-	ColumnTitle,
-	ColumnWidth,
-	SORTING_ORDER,
-} from './ColumnContants';
+import { baseColumnOptions } from './BaseColumnOptions';
+import { ColumnKey, ColumnTitle } from './ColumnContants';
 import { getColumnSearchProps } from './GetColumnSearchProps';
 
 export const getColumns = (
 	search: string,
 	isMetricData: boolean,
 ): ColumnsType<ServicesList> => {
-	const baseColumnOptions: ColumnsType<ServicesList> = [
-		{
-			title: ColumnTitle[ColumnKey.Application],
-			dataIndex: ColumnKey.Application,
-			width: ColumnWidth.Application,
-			key: ColumnKey.Application,
-		},
-		{
-			dataIndex: ColumnKey.P99,
-			key: ColumnKey.P99,
-			width: ColumnWidth.P99,
-			defaultSortOrder: SORTING_ORDER,
-		},
-		{
-			title: ColumnTitle[ColumnKey.ErrorRate],
-			dataIndex: ColumnKey.ErrorRate,
-			key: ColumnKey.ErrorRate,
-			width: 150,
-		},
-		{
-			title: ColumnTitle[ColumnKey.Operations],
-			dataIndex: ColumnKey.Operations,
-			key: ColumnKey.Operations,
-			width: ColumnWidth.Operations,
-		},
-	];
-
 	const dynamicColumnOption: {
 		key: string;
 		columnOption: ColumnType<ServicesList>;
