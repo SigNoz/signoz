@@ -1,5 +1,5 @@
 import { Button } from 'antd';
-import { GraphOnClickHandler } from 'components/Graph';
+import { ToggleGraphProps } from 'components/Graph/types';
 import Spinner from 'components/Spinner';
 import TimePreference from 'components/TimePreferenceDropDown';
 import GridPanelSwitch from 'container/GridPanelSwitch';
@@ -9,15 +9,20 @@ import {
 } from 'container/NewWidget/RightContainer/timeItems';
 import { useGetQueryRange } from 'hooks/queryBuilder/useGetQueryRange';
 import { useStepInterval } from 'hooks/queryBuilder/useStepInterval';
+import { useChartMutable } from 'hooks/useChartMutable';
 import { getDashboardVariables } from 'lib/dashbaordVariables/getDashboardVariables';
 import getChartData from 'lib/getChartData';
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
-import { Widgets } from 'types/api/dashboard/getAll';
 import { GlobalReducer } from 'types/reducer/globalTime';
 
-import { TimeContainer } from './styles';
+import { toggleGraphsVisibilityInChart } from '../utils';
+import { PANEL_TYPES_VS_FULL_VIEW_TABLE } from './contants';
+import GraphManager from './GraphManager';
+import { GraphContainer, TimeContainer } from './styles';
+import { FullViewProps } from './types';
+import { getIsGraphLegendToggleAvailable } from './utils';
 
 function FullView({
 	widget,
@@ -27,6 +32,8 @@ function FullView({
 	yAxisUnit,
 	onDragSelect,
 	isDependedDataLoaded = false,
+	graphsVisibilityStates,
+	onToggleModelHandler,
 }: FullViewProps): JSX.Element {
 	const { selectedTime: globalSelectedTime } = useSelector<
 		AppState,
@@ -38,6 +45,22 @@ function FullView({
 			timeItems.find((e) => e.enum === (widget?.timePreferance || 'GLOBAL_TIME')),
 		[widget],
 	);
+
+	const canModifyChart = useChartMutable({
+		panelType: widget.panelTypes,
+		panelTypeAndGraphManagerVisibility: PANEL_TYPES_VS_FULL_VIEW_TABLE,
+	});
+
+	const lineChartRef = useRef<ToggleGraphProps>();
+
+	useEffect(() => {
+		if (graphsVisibilityStates && canModifyChart && lineChartRef.current) {
+			toggleGraphsVisibilityInChart({
+				graphsVisibilityStates,
+				lineChartRef,
+			});
+		}
+	}, [graphsVisibilityStates, canModifyChart]);
 
 	const [selectedTime, setSelectedTime] = useState<timePreferance>({
 		name: getSelectedTime()?.name || '',
@@ -78,7 +101,11 @@ function FullView({
 		[response],
 	);
 
-	if (response.status === 'idle' || response.status === 'loading') {
+	const isGraphLegendToggleAvailable = getIsGraphLegendToggleAvailable(
+		widget.panelTypes,
+	);
+
+	if (response.isFetching) {
 		return <Spinner height="100%" size="large" tip="Loading..." />;
 	}
 
@@ -101,31 +128,33 @@ function FullView({
 				</TimeContainer>
 			)}
 
-			<GridPanelSwitch
-				panelType={widget.panelTypes}
-				data={chartDataSet}
-				isStacked={widget.isStacked}
-				opacity={widget.opacity}
-				title={widget.title}
-				onClickHandler={onClickHandler}
-				name={name}
-				yAxisUnit={yAxisUnit}
-				onDragSelect={onDragSelect}
-				panelData={response.data?.payload.data.newResult.data.result || []}
-				query={widget.query}
-			/>
+			<GraphContainer isGraphLegendToggleAvailable={isGraphLegendToggleAvailable}>
+				<GridPanelSwitch
+					panelType={widget.panelTypes}
+					data={chartDataSet}
+					isStacked={widget.isStacked}
+					opacity={widget.opacity}
+					title={widget.title}
+					onClickHandler={onClickHandler}
+					name={name}
+					yAxisUnit={yAxisUnit}
+					onDragSelect={onDragSelect}
+					panelData={response.data?.payload.data.newResult.data.result || []}
+					query={widget.query}
+					ref={lineChartRef}
+				/>
+			</GraphContainer>
+
+			{canModifyChart && (
+				<GraphManager
+					data={chartDataSet}
+					name={name}
+					yAxisUnit={yAxisUnit}
+					onToggleModelHandler={onToggleModelHandler}
+				/>
+			)}
 		</>
 	);
-}
-
-interface FullViewProps {
-	widget: Widgets;
-	fullViewOptions?: boolean;
-	onClickHandler?: GraphOnClickHandler;
-	name: string;
-	yAxisUnit?: string;
-	onDragSelect?: (start: number, end: number) => void;
-	isDependedDataLoaded?: boolean;
 }
 
 FullView.defaultProps = {
@@ -135,5 +164,7 @@ FullView.defaultProps = {
 	onDragSelect: undefined,
 	isDependedDataLoaded: undefined,
 };
+
+FullView.displayName = 'FullView';
 
 export default FullView;
