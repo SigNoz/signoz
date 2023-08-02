@@ -1,10 +1,8 @@
 import { Card, Typography } from 'antd';
-import { themeColors } from 'constants/theme';
 import styled from 'styled-components';
-import getAlphaColor from 'utils/getAlphaColor';
+import { getActiveLogBackground } from 'utils/logs';
 
 export const Container = styled(Card)<{
-	$isDarkMode: boolean;
 	$isActiveLog: boolean;
 }>`
 	width: 100% !important;
@@ -13,14 +11,7 @@ export const Container = styled(Card)<{
 		padding: 0.3rem 0.6rem;
 	}
 
-	${({ $isDarkMode, $isActiveLog }): string =>
-		$isActiveLog
-			? `background-color: ${
-					$isDarkMode
-						? getAlphaColor(themeColors.white)[10]
-						: getAlphaColor(themeColors.black)[10]
-			  };`
-			: ''}
+	${({ $isActiveLog }): string => getActiveLogBackground($isActiveLog)}
 `;
 
 export const Text = styled(Typography.Text)`
