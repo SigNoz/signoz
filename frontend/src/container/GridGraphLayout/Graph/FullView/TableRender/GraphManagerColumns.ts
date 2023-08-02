@@ -12,6 +12,7 @@ export const getGraphManagerTableColumns = ({
 	checkBoxOnChangeHandler,
 	graphVisibilityState,
 	labelClickedHandler,
+	yAxisUnit,
 }: GetGraphManagerTableColumnsProps): ColumnType<DataSetProps>[] => [
 	{
 		title: '',
@@ -32,26 +33,34 @@ export const getGraphManagerTableColumns = ({
 		...getLabel(labelClickedHandler),
 	},
 	{
-		title: ColumnsTitle[ColumnsKeyAndDataIndex.Avg],
-		width: 70,
+		title: `${ColumnsTitle[ColumnsKeyAndDataIndex.Avg]} ${
+			yAxisUnit ? `(in ${yAxisUnit})` : ''
+		}`,
+		width: 90,
 		dataIndex: ColumnsKeyAndDataIndex.Avg,
 		key: ColumnsKeyAndDataIndex.Avg,
 	},
 	{
-		title: ColumnsTitle[ColumnsKeyAndDataIndex.Sum],
-		width: 70,
+		title: `${ColumnsTitle[ColumnsKeyAndDataIndex.Sum]} ${
+			yAxisUnit ? `(in ${yAxisUnit})` : ''
+		}`,
+		width: 90,
 		dataIndex: ColumnsKeyAndDataIndex.Sum,
 		key: ColumnsKeyAndDataIndex.Sum,
 	},
 	{
-		title: ColumnsTitle[ColumnsKeyAndDataIndex.Max],
-		width: 70,
+		title: `${ColumnsTitle[ColumnsKeyAndDataIndex.Max]} ${
+			yAxisUnit ? `(in ${yAxisUnit})` : ''
+		}`,
+		width: 90,
 		dataIndex: ColumnsKeyAndDataIndex.Max,
 		key: ColumnsKeyAndDataIndex.Max,
 	},
 	{
-		title: ColumnsTitle[ColumnsKeyAndDataIndex.Min],
-		width: 70,
+		title: `${ColumnsTitle[ColumnsKeyAndDataIndex.Min]} ${
+			yAxisUnit ? `(in ${yAxisUnit})` : ''
+		}`,
+		width: 90,
 		dataIndex: ColumnsKeyAndDataIndex.Min,
 		key: ColumnsKeyAndDataIndex.Min,
 	},
@@ -62,4 +71,5 @@ interface GetGraphManagerTableColumnsProps {
 	checkBoxOnChangeHandler: (e: CheckboxChangeEvent, index: number) => void;
 	labelClickedHandler: (labelIndex: number) => void;
 	graphVisibilityState: boolean[];
+	yAxisUnit?: string;
 }

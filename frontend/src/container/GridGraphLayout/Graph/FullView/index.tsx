@@ -149,6 +149,7 @@ function FullView({
 				<GraphManager
 					data={chartDataSet}
 					name={name}
+					yAxisUnit={yAxisUnit}
 					onToggleModelHandler={onToggleModelHandler}
 				/>
 			)}

@@ -43,6 +43,7 @@ export interface LabelProps {
 export interface GraphManagerProps {
 	data: ChartData;
 	name: string;
+	yAxisUnit?: string;
 	onToggleModelHandler?: () => void;
 }
 

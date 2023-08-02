@@ -24,6 +24,7 @@ import {
 function GraphManager({
 	data,
 	name,
+	yAxisUnit,
 	onToggleModelHandler,
 }: GraphManagerProps): JSX.Element {
 	const {
@@ -126,8 +127,15 @@ function GraphManager({
 				checkBoxOnChangeHandler,
 				graphVisibilityState,
 				labelClickedHandler,
+				yAxisUnit,
 			}),
-		[checkBoxOnChangeHandler, data, graphVisibilityState, labelClickedHandler],
+		[
+			checkBoxOnChangeHandler,
+			data,
+			graphVisibilityState,
+			labelClickedHandler,
+			yAxisUnit,
+		],
 	);
 
 	const filterHandler = useCallback(
