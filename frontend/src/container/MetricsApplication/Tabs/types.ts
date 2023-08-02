@@ -36,8 +36,8 @@ export interface BuilderQuerieswithFormulaProps {
 	legends: string[];
 	disabled: boolean[];
 	groupBy?: BaseAutocompleteData[];
-	expression: string;
-	legendFormula: string;
+	expressions: string[];
+	legendFormulas: string[];
 	additionalItems: TagFilterItem[][];
 	aggregateOperators: MetricAggregateOperator[];
 	dataSource: DataSource;

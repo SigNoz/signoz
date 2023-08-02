@@ -16,4 +16,6 @@ export enum QueryParams {
 	widgetId = 'widgetId',
 	order = 'order',
 	q = 'q',
+	activeLogId = 'activeLogId',
+	timeRange = 'timeRange',
 }
