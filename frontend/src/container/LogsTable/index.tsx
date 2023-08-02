@@ -7,12 +7,10 @@ import Spinner from 'components/Spinner';
 import { contentStyle } from 'container/Trace/Search/config';
 import useFontFaceObserver from 'hooks/useFontObserver';
 import { memo, useCallback, useMemo } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
+import { useSelector } from 'react-redux';
 import { Virtuoso } from 'react-virtuoso';
 import { AppState } from 'store/reducers';
 // interfaces
-import { SET_DETAILED_LOG_DATA } from 'types/actions/logs';
-import { ILog } from 'types/api/logs/log';
 import { ILogsReducer } from 'types/reducer/logs';
 
 // styles
@@ -23,13 +21,10 @@ export type LogViewMode = 'raw' | 'table' | 'list';
 type LogsTableProps = {
 	viewMode: LogViewMode;
 	linesPerRow: number;
-	onClickExpand: (logData: ILog) => void;
 };
 
 function LogsTable(props: LogsTableProps): JSX.Element {
-	const { viewMode, onClickExpand, linesPerRow } = props;
-
-	const dispatch = useDispatch();
+	const { viewMode, linesPerRow } = props;
 
 	useFontFaceObserver(
 		[
@@ -61,59 +56,23 @@ function LogsTable(props: LogsTableProps): JSX.Element {
 		liveTail,
 	]);
 
-	const handleOpenDetailedView = useCallback(
-		(logData: ILog) => {
-			dispatch({
-				type: SET_DETAILED_LOG_DATA,
-				payload: logData,
-			});
-		},
-		[dispatch],
-	);
-
 	const getItemContent = useCallback(
 		(index: number): JSX.Element => {
 			const log = logs[index];
 
 			if (viewMode === 'raw') {
-				return (
-					<RawLogView
-						key={log.id}
-						data={log}
-						linesPerRow={linesPerRow}
-						onClickExpand={onClickExpand}
-					/>
-				);
+				return <RawLogView key={log.id} data={log} linesPerRow={linesPerRow} />;
 			}
 
-			return (
-				<ListLogView
-					key={log.id}
-					logData={log}
-					selectedFields={selected}
-					onOpenDetailedView={handleOpenDetailedView}
-				/>
-			);
+			return <ListLogView key={log.id} logData={log} selectedFields={selected} />;
 		},
-		[
-			logs,
-			viewMode,
-			selected,
-			handleOpenDetailedView,
-			linesPerRow,
-			onClickExpand,
-		],
+		[logs, viewMode, selected, linesPerRow],
 	);
 
 	const renderContent = useMemo(() => {
 		if (viewMode === 'table') {
 			return (
-				<LogsTableView
-					logs={logs}
-					fields={selected}
-					linesPerRow={linesPerRow}
-					onClickExpand={onClickExpand}
-				/>
+				<LogsTableView logs={logs} fields={selected} linesPerRow={linesPerRow} />
 			);
 		}
 
@@ -126,7 +85,7 @@ function LogsTable(props: LogsTableProps): JSX.Element {
 				/>
 			</Card>
 		);
-	}, [getItemContent, linesPerRow, logs, onClickExpand, selected, viewMode]);
+	}, [getItemContent, linesPerRow, logs, selected, viewMode]);
 
 	if (isLoading) {
 		return <Spinner height={20} tip="Getting Logs" />;

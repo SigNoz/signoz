@@ -1,5 +1,8 @@
 import { Select, Spin, Tag, Tooltip } from 'antd';
-import { useAutoComplete } from 'hooks/queryBuilder/useAutoComplete';
+import {
+	useAutoComplete,
+	WhereClauseConfig,
+} from 'hooks/queryBuilder/useAutoComplete';
 import { useFetchKeysAndValues } from 'hooks/queryBuilder/useFetchKeysAndValues';
 import {
 	KeyboardEvent,
@@ -18,6 +21,7 @@ import { DataSource } from 'types/common/queryBuilder';
 import { v4 as uuid } from 'uuid';
 
 import { selectStyle } from './config';
+import { PLACEHOLDER } from './constant';
 import { StyledCheckOutlined, TypographyText } from './style';
 import {
 	getOperatorValue,
@@ -30,6 +34,7 @@ import {
 function QueryBuilderSearch({
 	query,
 	onChange,
+	whereClauseConfig,
 }: QueryBuilderSearchProps): JSX.Element {
 	const {
 		updateTag,
@@ -44,7 +49,7 @@ function QueryBuilderSearch({
 		isFetching,
 		setSearchKey,
 		searchKey,
-	} = useAutoComplete(query);
+	} = useAutoComplete(query, whereClauseConfig);
 
 	const { sourceKeys, handleRemoveSourceKey } = useFetchKeysAndValues(
 		searchValue,
@@ -155,7 +160,7 @@ function QueryBuilderSearch({
 			filterOption={false}
 			autoClearSearchValue={false}
 			mode="multiple"
-			placeholder="Search Filter"
+			placeholder={PLACEHOLDER}
 			value={queryTags}
 			searchValue={searchValue}
 			disabled={isMetricsDataSource && !query.aggregateAttribute.key}
@@ -168,7 +173,7 @@ function QueryBuilderSearch({
 			notFoundContent={isFetching ? <Spin size="small" /> : null}
 		>
 			{options.map((option) => (
-				<Select.Option key={option.label} value={option.label}>
+				<Select.Option key={option.label} value={option.value}>
 					{option.label}
 					{option.selected && <StyledCheckOutlined />}
 				</Select.Option>
@@ -180,7 +185,12 @@ function QueryBuilderSearch({
 interface QueryBuilderSearchProps {
 	query: IBuilderQuery;
 	onChange: (value: TagFilter) => void;
+	whereClauseConfig?: WhereClauseConfig;
 }
+
+QueryBuilderSearch.defaultProps = {
+	whereClauseConfig: undefined,
+};
 
 export interface CustomTagProps {
 	label: ReactNode;

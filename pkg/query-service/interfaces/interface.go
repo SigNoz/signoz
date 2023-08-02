@@ -56,6 +56,7 @@ type Reader interface {
 	// Setter Interfaces
 	SetTTL(ctx context.Context, ttlParams *model.TTLParams) (*model.SetTTLResponseItem, *model.ApiError)
 
+	FetchTemporality(ctx context.Context, metricNames []string) (map[string]map[v3.Temporality]bool, error)
 	GetMetricAutocompleteMetricNames(ctx context.Context, matchText string, limit int) (*[]string, *model.ApiError)
 	GetMetricAutocompleteTagKey(ctx context.Context, params *model.MetricAutocompleteTagParams) (*[]string, *model.ApiError)
 	GetMetricAutocompleteTagValue(ctx context.Context, params *model.MetricAutocompleteTagParams) (*[]string, *model.ApiError)
@@ -68,6 +69,7 @@ type Reader interface {
 	// QB V3 metrics/traces/logs
 	GetTimeSeriesResultV3(ctx context.Context, query string) ([]*v3.Series, error)
 	GetListResultV3(ctx context.Context, query string) ([]*v3.Row, error)
+	LiveTailLogsV3(ctx context.Context, query string, timestampStart uint64, idStart string, client *v3.LogsLiveTailClient)
 
 	GetTotalSpans(ctx context.Context) (uint64, error)
 	GetSpansInLastHeartBeatInterval(ctx context.Context) (uint64, error)
@@ -93,6 +95,8 @@ type Reader interface {
 
 	QueryDashboardVars(ctx context.Context, query string) (*model.DashboardVar, error)
 	CheckClickHouse(ctx context.Context) error
+
+	GetLatencyMetricMetadata(context.Context, string, bool) (*v3.LatencyMetricMetadataResponse, error)
 }
 
 type Querier interface {

@@ -27,6 +27,7 @@ export const useQueryOperations: UseQueryOperations = ({
 		removeQueryBuilderEntityByIndex,
 		panelType,
 		initialDataSource,
+		currentQuery,
 	} = useQueryBuilder();
 	const [operators, setOperators] = useState<SelectOption<string, string>[]>([]);
 	const [listOfAdditionalFilters, setListOfAdditionalFilters] = useState<
@@ -62,9 +63,18 @@ export const useQueryOperations: UseQueryOperations = ({
 
 	const getNewListOfAdditionalFilters = useCallback(
 		(dataSource: DataSource): string[] => {
+			const additionalFiltersKeys: (keyof Pick<
+				IBuilderQuery,
+				'orderBy' | 'limit' | 'having' | 'stepInterval'
+			>)[] = ['having', 'limit', 'orderBy', 'stepInterval'];
+
 			const result: string[] = mapOfFilters[dataSource].reduce<string[]>(
 				(acc, item) => {
-					if (filterConfigs && filterConfigs[item.field]?.isHidden) {
+					if (
+						filterConfigs &&
+						filterConfigs[item.field as typeof additionalFiltersKeys[number]]
+							?.isHidden
+					) {
 						return acc;
 					}
 
@@ -121,8 +131,10 @@ export const useQueryOperations: UseQueryOperations = ({
 	);
 
 	const handleDeleteQuery = useCallback(() => {
-		removeQueryBuilderEntityByIndex('queryData', index);
-	}, [removeQueryBuilderEntityByIndex, index]);
+		if (currentQuery.builder.queryData.length > 1) {
+			removeQueryBuilderEntityByIndex('queryData', index);
+		}
+	}, [removeQueryBuilderEntityByIndex, index, currentQuery]);
 
 	const handleChangeQueryData: HandleChangeQueryData = useCallback(
 		(key, value) => {
@@ -140,7 +152,6 @@ export const useQueryOperations: UseQueryOperations = ({
 		() => query.dataSource === DataSource.METRICS,
 		[query.dataSource],
 	);
-
 	const isTracePanelType = useMemo(() => panelType === PANEL_TYPES.TRACE, [
 		panelType,
 	]);

@@ -7,9 +7,10 @@ export interface ErrorResponse {
 	message: null;
 }
 
-export interface SuccessResponse<T> {
+export interface SuccessResponse<T, P = unknown> {
 	statusCode: SuccessStatusCode;
 	message: string;
 	payload: T;
 	error: null;
+	params?: P;
 }

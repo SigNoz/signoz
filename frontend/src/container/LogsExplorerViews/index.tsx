@@ -1,23 +1,28 @@
 import { TabsProps } from 'antd';
-import axios from 'axios';
 import TabLabel from 'components/TabLabel';
 import { QueryParams } from 'constants/query';
-import { initialQueriesMap, PANEL_TYPES } from 'constants/queryBuilder';
+import {
+	initialAutocompleteData,
+	initialQueriesMap,
+	PANEL_TYPES,
+} from 'constants/queryBuilder';
 import { queryParamNamesMap } from 'constants/queryBuilderQueryNames';
 import ROUTES from 'constants/routes';
 import { DEFAULT_PER_PAGE_VALUE } from 'container/Controls/config';
 import ExportPanel from 'container/ExportPanel';
-import LogExplorerDetailedView from 'container/LogExplorerDetailedView';
+import GoToTop from 'container/GoToTop';
 import LogsExplorerChart from 'container/LogsExplorerChart';
 import LogsExplorerList from 'container/LogsExplorerList';
-// TODO: temporary hide table view
-// import LogsExplorerTable from 'container/LogsExplorerTable';
-import { GRAPH_TYPES } from 'container/NewDashboard/ComponentsSlider';
+import LogsExplorerTable from 'container/LogsExplorerTable';
+import { SIGNOZ_VALUE } from 'container/QueryBuilder/filters/OrderByFilter/constants';
 import TimeSeriesView from 'container/TimeSeriesView/TimeSeriesView';
 import { useUpdateDashboard } from 'hooks/dashboard/useUpdateDashboard';
 import { addEmptyWidgetInDashboardJSONWithQuery } from 'hooks/dashboard/utils';
+import { LogTimeRange } from 'hooks/logs/types';
+import { useCopyLogLink } from 'hooks/logs/useCopyLogLink';
 import { useGetExplorerQueryRange } from 'hooks/queryBuilder/useGetExplorerQueryRange';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
+import useAxiosError from 'hooks/useAxiosError';
 import { useNotifications } from 'hooks/useNotifications';
 import useUrlQueryData from 'hooks/useUrlQueryData';
 import { getPaginationQueryData } from 'lib/newQueryBuilder/getPaginationQueryData';
@@ -41,6 +46,7 @@ function LogsExplorerViews(): JSX.Element {
 	const { notifications } = useNotifications();
 	const history = useHistory();
 
+	const { activeLogId, timeRange, onTimeRangeChange } = useCopyLogLink();
 	const { queryData: pageSize } = useUrlQueryData(
 		queryParamNamesMap.pageSize,
 		DEFAULT_PER_PAGE_VALUE,
@@ -58,14 +64,16 @@ function LogsExplorerViews(): JSX.Element {
 		stagedQuery,
 		panelType,
 		updateAllQueriesOperators,
+		updateQueriesData,
 		redirectWithQueryBuilderData,
 	} = useQueryBuilder();
 
 	// State
-	const [activeLog, setActiveLog] = useState<ILog | null>(null);
 	const [page, setPage] = useState<number>(1);
 	const [logs, setLogs] = useState<ILog[]>([]);
 	const [requestData, setRequestData] = useState<Query | null>(null);
+
+	const handleAxisError = useAxiosError();
 
 	const currentStagedQueryData = useMemo(() => {
 		if (!stagedQuery || stagedQuery.builder.queryData.length !== 1) return null;
@@ -148,36 +156,50 @@ function LogsExplorerViews(): JSX.Element {
 			keepPreviousData: true,
 			enabled: !isLimit,
 		},
+		{
+			...(timeRange &&
+				activeLogId &&
+				!logs.length && {
+					start: timeRange.start,
+					end: timeRange.end,
+				}),
+		},
 	);
 
-	const handleSetActiveLog = useCallback((nextActiveLog: ILog) => {
-		setActiveLog(nextActiveLog);
-	}, []);
+	const getUpdateQuery = useCallback(
+		(newPanelType: PANEL_TYPES): Query => {
+			let query = updateAllQueriesOperators(
+				currentQuery,
+				newPanelType,
+				DataSource.TRACES,
+			);
 
-	const handleClearActiveLog = useCallback(() => {
-		setActiveLog(null);
-	}, []);
+			if (newPanelType === PANEL_TYPES.LIST) {
+				query = updateQueriesData(query, 'queryData', (item) => ({
+					...item,
+					orderBy: item.orderBy.filter((item) => item.columnName !== SIGNOZ_VALUE),
+					aggregateAttribute: initialAutocompleteData,
+				}));
+			}
+
+			return query;
+		},
+		[currentQuery, updateAllQueriesOperators, updateQueriesData],
+	);
 
 	const handleChangeView = useCallback(
-		(newPanelType: string) => {
+		(type: string) => {
+			const newPanelType = type as PANEL_TYPES;
+
 			if (newPanelType === panelType) return;
 
-			const query = updateAllQueriesOperators(
-				currentQuery,
-				newPanelType as GRAPH_TYPES,
-				DataSource.LOGS,
-			);
+			const query = getUpdateQuery(newPanelType);
 
 			redirectWithQueryBuilderData(query, {
 				[queryParamNamesMap.panelTypes]: newPanelType,
 			});
 		},
-		[
-			currentQuery,
-			panelType,
-			updateAllQueriesOperators,
-			redirectWithQueryBuilderData,
-		],
+		[panelType, getUpdateQuery, redirectWithQueryBuilderData],
 	);
 
 	const getRequestData = useCallback(
@@ -215,6 +237,7 @@ function LogsExplorerViews(): JSX.Element {
 	const handleEndReached = useCallback(
 		(index: number) => {
 			if (isLimit) return;
+			if (logs.length < pageSize) return;
 
 			const lastLog = logs[index];
 
@@ -272,7 +295,7 @@ function LogsExplorerViews(): JSX.Element {
 									Panel limit exceeded for {DataSource.LOGS} in community edition. Please
 									checkout our paid plans{' '}
 									<a
-										href="https://signoz.io/pricing"
+										href="https://signoz.io/pricing/?utm_source=product&utm_medium=dashboard-limit"
 										rel="noreferrer noopener"
 										target="_blank"
 									>
@@ -297,35 +320,45 @@ function LogsExplorerViews(): JSX.Element {
 
 					history.push(dashboardEditView);
 				},
-				onError: (error) => {
-					if (axios.isAxiosError(error)) {
-						notifications.error({
-							message: error.message,
-						});
-					}
-				},
+				onError: handleAxisError,
 			});
 		},
-		[exportDefaultQuery, history, notifications, updateDashboard],
+		[
+			exportDefaultQuery,
+			history,
+			notifications,
+			updateDashboard,
+			handleAxisError,
+		],
 	);
 
 	useEffect(() => {
 		const shouldChangeView = isMultipleQueries || isGroupByExist;
 
-		if (panelType === 'list' && shouldChangeView) {
+		if (panelType === PANEL_TYPES.LIST && shouldChangeView) {
 			handleChangeView(PANEL_TYPES.TIME_SERIES);
 		}
 	}, [panelType, isMultipleQueries, isGroupByExist, handleChangeView]);
 
 	useEffect(() => {
+		const currentParams = data?.params as Omit<LogTimeRange, 'pageSize'>;
 		const currentData = data?.payload.data.newResult.data.result || [];
 		if (currentData.length > 0 && currentData[0].list) {
 			const currentLogs: ILog[] = currentData[0].list.map((item) => ({
 				...item.data,
 				timestamp: item.timestamp,
 			}));
-			setLogs((prevLogs) => [...prevLogs, ...currentLogs]);
+			const newLogs = [...logs, ...currentLogs];
+
+			setLogs(newLogs);
+			onTimeRangeChange({
+				start: currentParams?.start,
+				end: timeRange?.end || currentParams?.end,
+				pageSize: newLogs.length,
+			});
 		}
+
+		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [data]);
 
 	useEffect(() => {
@@ -336,14 +369,28 @@ function LogsExplorerViews(): JSX.Element {
 			const newRequestData = getRequestData(stagedQuery, {
 				page: 1,
 				log: null,
-				pageSize,
+				pageSize:
+					timeRange?.pageSize && activeLogId ? timeRange?.pageSize : pageSize,
 			});
 			setLogs([]);
 			setPage(1);
 			setRequestData(newRequestData);
 			currentMinTimeRef.current = minTime;
+
+			if (!activeLogId) {
+				onTimeRangeChange(null);
+			}
 		}
-	}, [stagedQuery, requestData, getRequestData, pageSize, minTime]);
+	}, [
+		stagedQuery,
+		requestData,
+		getRequestData,
+		pageSize,
+		minTime,
+		timeRange,
+		activeLogId,
+		onTimeRangeChange,
+	]);
 
 	const tabsItems: TabsProps['items'] = useMemo(
 		() => [
@@ -362,9 +409,7 @@ function LogsExplorerViews(): JSX.Element {
 						isLoading={isFetching}
 						currentStagedQueryData={currentStagedQueryData}
 						logs={logs}
-						onOpenDetailedView={handleSetActiveLog}
 						onEndReached={handleEndReached}
-						onExpand={handleSetActiveLog}
 					/>
 				),
 			},
@@ -375,17 +420,16 @@ function LogsExplorerViews(): JSX.Element {
 					<TimeSeriesView isLoading={isFetching} data={data} isError={isError} />
 				),
 			},
-			// TODO: temporary hide table view
-			// {
-			// 	label: 'Table',
-			// 	key: PANEL_TYPES.TABLE,
-			// 	children: (
-			// 		<LogsExplorerTable
-			// 			data={data?.payload.data.newResult.data.result || []}
-			// 			isLoading={isFetching}
-			// 		/>
-			// 	),
-			// },
+			{
+				label: 'Table',
+				key: PANEL_TYPES.TABLE,
+				children: (
+					<LogsExplorerTable
+						data={data?.payload.data.newResult.data.result || []}
+						isLoading={isFetching}
+					/>
+				),
+			},
 		],
 		[
 			isMultipleQueries,
@@ -393,7 +437,6 @@ function LogsExplorerViews(): JSX.Element {
 			isFetching,
 			currentStagedQueryData,
 			logs,
-			handleSetActiveLog,
 			handleEndReached,
 			data,
 			isError,
@@ -444,7 +487,8 @@ function LogsExplorerViews(): JSX.Element {
 				onChange={handleChangeView}
 				destroyInactiveTabPane
 			/>
-			<LogExplorerDetailedView log={activeLog} onClose={handleClearActiveLog} />
+
+			<GoToTop />
 		</>
 	);
 }

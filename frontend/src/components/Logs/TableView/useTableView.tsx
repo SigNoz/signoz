@@ -1,17 +1,22 @@
-import { ExpandAltOutlined } from '@ant-design/icons';
+import {
+	ExpandAltOutlined,
+	LinkOutlined,
+	MonitorOutlined,
+} from '@ant-design/icons';
 import Convert from 'ansi-to-html';
-import { Typography } from 'antd';
+import { Button, Space, Typography } from 'antd';
 import { ColumnsType } from 'antd/es/table';
 import dayjs from 'dayjs';
 import dompurify from 'dompurify';
+import { useCopyLogLink } from 'hooks/logs/useCopyLogLink';
 import { FlatLogData } from 'lib/logs/flatLogData';
-import { useMemo } from 'react';
-import { ILog } from 'types/api/logs/log';
+import { useCallback, useMemo } from 'react';
 
 import { ExpandIconWrapper } from '../RawLogView/styles';
 import { defaultCellStyle, defaultTableStyle } from './config';
 import { TableBodyContent } from './styles';
 import {
+	ActionsColumnProps,
 	ColumnTypeRender,
 	UseTableViewProps,
 	UseTableViewResult,
@@ -19,18 +24,59 @@ import {
 
 const convert = new Convert();
 
+function ActionsColumn({
+	logId,
+	logs,
+	onOpenLogsContext,
+}: ActionsColumnProps): JSX.Element {
+	const currentLog = useMemo(() => logs.find(({ id }) => id === logId), [
+		logs,
+		logId,
+	]);
+
+	const { onLogCopy } = useCopyLogLink(currentLog?.id);
+
+	const handleShowContext = useCallback(() => {
+		if (!onOpenLogsContext || !currentLog) return;
+
+		onOpenLogsContext(currentLog);
+	}, [currentLog, onOpenLogsContext]);
+
+	return (
+		<Space>
+			<Button
+				size="small"
+				onClick={handleShowContext}
+				icon={<MonitorOutlined />}
+			/>
+			<Button size="small" onClick={onLogCopy} icon={<LinkOutlined />} />
+		</Space>
+	);
+}
+
 export const useTableView = (props: UseTableViewProps): UseTableViewResult => {
 	const {
 		logs,
 		fields,
 		linesPerRow,
-		onClickExpand,
 		appendTo = 'center',
+		onOpenLogsContext,
+		onClickExpand,
 	} = props;
+	const { isLogsExplorerPage } = useCopyLogLink();
 
 	const flattenLogData = useMemo(() => logs.map((log) => FlatLogData(log)), [
 		logs,
 	]);
+
+	const handleClickExpand = useCallback(
+		(index: number): void => {
+			if (!onClickExpand) return;
+
+			onClickExpand(logs[index]);
+		},
+		[logs, onClickExpand],
+	);
 
 	const columns: ColumnsType<Record<string, unknown>> = useMemo(() => {
 		const fieldColumns: ColumnsType<Record<string, unknown>> = fields
@@ -57,14 +103,14 @@ export const useTableView = (props: UseTableViewProps): UseTableViewResult => {
 				dataIndex: 'id',
 				key: 'expand',
 				// https://github.com/ant-design/ant-design/discussions/36886
-				render: (_, item): ColumnTypeRender<Record<string, unknown>> => ({
+				render: (_, item, index): ColumnTypeRender<Record<string, unknown>> => ({
 					props: {
 						style: defaultCellStyle,
 					},
 					children: (
 						<ExpandIconWrapper
 							onClick={(): void => {
-								onClickExpand((item as unknown) as ILog);
+								handleClickExpand(index);
 							}}
 						>
 							<ExpandAltOutlined />
@@ -107,8 +153,34 @@ export const useTableView = (props: UseTableViewProps): UseTableViewResult => {
 				}),
 			},
 			...(appendTo === 'end' ? fieldColumns : []),
+			...(isLogsExplorerPage
+				? ([
+						{
+							title: 'actions',
+							dataIndex: 'actions',
+							key: 'actions',
+							render: (_, log): ColumnTypeRender<Record<string, unknown>> => ({
+								children: (
+									<ActionsColumn
+										logId={(log.id as unknown) as string}
+										logs={logs}
+										onOpenLogsContext={onOpenLogsContext}
+									/>
+								),
+							}),
+						},
+				  ] as ColumnsType<Record<string, unknown>>)
+				: []),
 		];
-	}, [fields, linesPerRow, appendTo, onClickExpand]);
+	}, [
+		logs,
+		fields,
+		appendTo,
+		linesPerRow,
+		isLogsExplorerPage,
+		handleClickExpand,
+		onOpenLogsContext,
+	]);
 
 	return { columns, dataSource: flattenLogData };
 };

@@ -31,6 +31,7 @@ import (
 	baseapp "go.signoz.io/signoz/pkg/query-service/app"
 	"go.signoz.io/signoz/pkg/query-service/app/dashboards"
 	baseexplorer "go.signoz.io/signoz/pkg/query-service/app/explorer"
+	"go.signoz.io/signoz/pkg/query-service/app/logparsingpipeline"
 	"go.signoz.io/signoz/pkg/query-service/app/opamp"
 	opAmpModel "go.signoz.io/signoz/pkg/query-service/app/opamp/model"
 	baseauth "go.signoz.io/signoz/pkg/query-service/auth"
@@ -54,8 +55,10 @@ type ServerOptions struct {
 	HTTPHostPort      string
 	PrivateHostPort   string
 	// alert specific params
-	DisableRules bool
-	RuleRepoURL  string
+	DisableRules      bool
+	RuleRepoURL       string
+	PreferDelta       bool
+	PreferSpanMetrics bool
 }
 
 // Server runs HTTP api service
@@ -75,6 +78,9 @@ type Server struct {
 
 	// feature flags
 	featureLookup baseint.FeatureLookup
+
+	// Usage manager
+	usageManager *usage.Manager
 
 	unavailableChannel chan healthcheck.Status
 }
@@ -155,6 +161,12 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 		return nil, err
 	}
 
+	// ingestion pipelines manager
+	logParsingPipelineController, err := logparsingpipeline.NewLogParsingPipelinesController(localDB, "sqlite")
+	if err != nil {
+		return nil, err
+	}
+
 	// start the usagemanager
 	usageManager, err := usage.New("sqlite", localDB, lm.GetRepo(), reader.GetConn())
 	if err != nil {
@@ -168,12 +180,15 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 	telemetry.GetInstance().SetReader(reader)
 
 	apiOpts := api.APIHandlerOptions{
-		DataConnector:  reader,
-		SkipConfig:     skipConfig,
-		AppDao:         modelDao,
-		RulesManager:   rm,
-		FeatureFlags:   lm,
-		LicenseManager: lm,
+		DataConnector:                 reader,
+		SkipConfig:                    skipConfig,
+		PreferDelta:                   serverOptions.PreferDelta,
+		PreferSpanMetrics:             serverOptions.PreferSpanMetrics,
+		AppDao:                        modelDao,
+		RulesManager:                  rm,
+		FeatureFlags:                  lm,
+		LicenseManager:                lm,
+		LogsParsingPipelineController: logParsingPipelineController,
 	}
 
 	apiHandler, err := api.NewAPIHandler(apiOpts)
@@ -187,6 +202,7 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 		ruleManager:        rm,
 		serverOptions:      serverOptions,
 		unavailableChannel: make(chan healthcheck.Status),
+		usageManager:       usageManager,
 	}
 
 	httpServer, err := s.createPublicServer(apiHandler)
@@ -547,6 +563,9 @@ func (s *Server) Stop() error {
 	if s.ruleManager != nil {
 		s.ruleManager.Stop()
 	}
+
+	// stop usage manager
+	s.usageManager.Stop()
 
 	return nil
 }
