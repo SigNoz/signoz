@@ -21,6 +21,7 @@ import {
 	NewDashboardPage,
 	OrganizationSettings,
 	PasswordReset,
+	PipelinePage,
 	ServiceMapPage,
 	ServiceMetricsPage,
 	ServicesTablePage,
@@ -252,6 +253,13 @@ const routes: AppRoutes[] = [
 		component: SomethingWentWrong,
 		key: 'SOMETHING_WENT_WRONG',
 		isPrivate: false,
+	},
+	{
+		path: ROUTES.PIPELINES,
+		exact: true,
+		component: PipelinePage,
+		key: 'PIPELINES',
+		isPrivate: true,
 	},
 ];
 
