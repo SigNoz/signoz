@@ -243,39 +243,33 @@ function GridGraph(props: Props): JSX.Element {
 	);
 
 	const onEmptyWidgetHandler = useCallback(async () => {
-		try {
-			const id = 'empty';
+		const id = 'empty';
 
-			const layout = [
-				{
-					i: id,
-					w: 6,
-					x: 0,
-					h: 2,
-					y: 0,
-				},
-				...(data.layout || []),
-			];
+		const layout = [
+			{
+				i: id,
+				w: 6,
+				x: 0,
+				h: 2,
+				y: 0,
+			},
+			...(data.layout || []),
+		];
 
-			await UpdateDashboard(
-				{
-					data,
-					generateWidgetId: id,
-					graphType: PANEL_TYPES.EMPTY_WIDGET,
-					selectedDashboard,
-					layout,
-					isRedirected: false,
-				},
-				notifications,
-			);
-
+		return UpdateDashboard(
+			{
+				data,
+				generateWidgetId: id,
+				graphType: PANEL_TYPES.EMPTY_WIDGET,
+				selectedDashboard,
+				layout,
+				isRedirected: false,
+			},
+			notifications,
+		).then(() => {
 			setLayoutFunction(layout);
-		} catch (error) {
-			notifications.error({
-				message: error instanceof Error ? error.toString() : errorMessage,
-			});
-		}
-	}, [data, selectedDashboard, setLayoutFunction, notifications, errorMessage]);
+		});
+	}, [data, selectedDashboard, setLayoutFunction, notifications]);
 
 	const onLayoutChangeHandler = async (layout: Layout[]): Promise<void> => {
 		setLayoutFunction(layout);
@@ -295,13 +289,17 @@ function GridGraph(props: Props): JSX.Element {
 					if (!isEmptyLayoutPresent) {
 						onEmptyWidgetHandler()
 							.then(() => {
-								setAddPanelLoading(false);
 								toggleAddWidget(true);
 							})
 							.catch(() => {
+								toggleAddWidget(false);
+
 								notifications.error({
 									message: errorMessage,
 								});
+							})
+							.finally(() => {
+								setAddPanelLoading(false);
 							});
 					} else {
 						toggleAddWidget(true);

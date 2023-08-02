@@ -16,6 +16,7 @@ export const UpdateDashboard = async (
 		widgetData,
 	}: UpdateDashboardProps,
 	notify: NotificationInstance,
+	// eslint-disable-next-line consistent-return
 ): Promise<Dashboard | undefined> => {
 	const copyTitle = `${widgetData?.title} - Copy`;
 	const updatedSelectedDashboard: Dashboard = {
@@ -58,12 +59,15 @@ export const UpdateDashboard = async (
 		if (response.statusCode === 200) {
 			return response.payload;
 		}
+
 		notify.error({
 			message: response.error || 'Something went wrong',
 		});
-		return undefined;
 	}
-	return undefined;
+
+	if (response.error) {
+		throw Error(response.error);
+	}
 };
 
 interface UpdateDashboardProps {
