@@ -112,3 +112,11 @@ export const saveLegendEntriesToLocalStorage = ({
 export const getIsGraphLegendToggleAvailable = (
 	panelType: PANEL_TYPES,
 ): boolean => panelType === PANEL_TYPES.TIME_SERIES;
+
+export const getGraphManagerTableHeaderTitle = (
+	title: string,
+	yAxisUnit?: string,
+): string => {
+	const yAxisUnitText = yAxisUnit ? `(in ${yAxisUnit})` : '';
+	return `${title} ${yAxisUnitText}`;
+};
