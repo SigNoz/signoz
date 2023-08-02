@@ -26,6 +26,9 @@ if (process.env.BUNDLE_ANALYSER === 'true') {
 	plugins.push(new BundleAnalyzerPlugin({ analyzerMode: 'server' }));
 }
 
+/**
+ * @type {import('webpack').Configuration}
+ */
 const config = {
 	mode: 'development',
 	devtool: 'source-map',
@@ -51,6 +54,7 @@ const config = {
 	resolve: {
 		extensions: ['.ts', '.tsx', '.js', '.jsx'],
 		plugins: [new TsconfigPathsPlugin({})],
+		fallback: { 'process/browser': require.resolve('process/browser') },
 	},
 	module: {
 		rules: [

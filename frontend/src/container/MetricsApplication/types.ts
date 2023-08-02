@@ -1,4 +1,7 @@
 import { Widgets } from 'types/api/dashboard/getAll';
+import { TagFilterItem } from 'types/api/queryBuilder/queryBuilderData';
+
+import { IServiceName } from './Tabs/types';
 
 export interface GetWidgetQueryBuilderProps {
 	query: Widgets['query'];
@@ -12,4 +15,13 @@ export interface NavigateToTraceProps {
 	minTime: number;
 	maxTime: number;
 	selectedTraceTags: string;
+}
+
+export interface DatabaseCallsRPSProps extends DatabaseCallProps {
+	legend: '{{db_system}}';
+}
+
+export interface DatabaseCallProps {
+	servicename: IServiceName['servicename'];
+	tagFilterItems: TagFilterItem[];
 }

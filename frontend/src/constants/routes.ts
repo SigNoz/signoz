@@ -34,6 +34,8 @@ const ROUTES = {
 	LIST_LICENSES: '/licenses',
 	LOGS_INDEX_FIELDS: '/logs-explorer/index-fields',
 	LOGS_PIPELINE: '/logs-explorer/pipeline',
+	TRACE_EXPLORER: '/trace-explorer',
+	PIPELINES: '/pipelines',
 };
 
 export default ROUTES;
