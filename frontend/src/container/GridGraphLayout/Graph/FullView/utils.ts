@@ -15,7 +15,8 @@ function convertToTwoDecimalsOrZero(value: number): number {
 		value !== Infinity &&
 		value !== -Infinity
 	) {
-		return parseFloat(value.toFixed(2));
+		const result = value ? value.toFixed(20).match(/^-?\d*\.?0*\d{0,2}/) : null;
+		return result ? parseFloat(result[0]) : 0;
 	}
 	return 0;
 }
