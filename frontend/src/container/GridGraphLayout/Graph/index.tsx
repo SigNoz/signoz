@@ -31,6 +31,10 @@ function GridCardGraph({
 	allowEdit,
 	isQueryEnabled,
 }: GridCardGraphProps): JSX.Element {
+	const { isAddWidget } = useSelector<AppState, DashboardReducer>(
+		(state) => state.dashboards,
+	);
+
 	const { ref: graphRef, inView: isGraphVisible } = useInView({
 		threshold: 0,
 		triggerOnce: true,
@@ -74,7 +78,7 @@ function GridCardGraph({
 				variables,
 			],
 			keepPreviousData: true,
-			enabled: isGraphVisible && !isEmptyWidget && isQueryEnabled,
+			enabled: isGraphVisible && !isEmptyWidget && isQueryEnabled && !isAddWidget,
 			refetchOnMount: false,
 			onError: (error) => {
 				setErrorMessage(error.message);
