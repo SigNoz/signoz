@@ -1,4 +1,4 @@
-import type { ColumnsType } from 'antd/es/table';
+import type { ColumnsType, ColumnType } from 'antd/es/table';
 import { ServicesList } from 'types/api/metrics/getService';
 import { generatorResizeTableColumns } from 'utils/generateResizeTableColumns';
 
@@ -14,49 +14,76 @@ export const getColumns = (
 	search: string,
 	isMetricData: boolean,
 ): ColumnsType<ServicesList> => {
-	const columnKey = Object.values(ColumnKey);
-
-	const columnConfig: ColumnsType<ServicesList> = [
+	const baseConfig: ColumnsType<ServicesList> = [
 		{
 			title: ColumnTitle[ColumnKey.Application],
 			dataIndex: ColumnKey.Application,
 			width: ColumnWidth.Application,
 			key: ColumnKey.Application,
-			...getColumnSearchProps('serviceName', search),
 		},
 		{
-			title: `${ColumnTitle[ColumnKey.P99]}${
-				isMetricData ? ' (in ns)' : ' (in ms)'
-			}`,
 			dataIndex: ColumnKey.P99,
 			key: ColumnKey.P99,
 			width: ColumnWidth.P99,
 			defaultSortOrder: SORTING_ORDER,
-			sorter: (a: ServicesList, b: ServicesList): number => a.p99 - b.p99,
-			render: (value: number): string => {
-				if (Number.isNaN(value)) return '0.00';
-				return isMetricData ? value.toFixed(2) : (value / 1000000).toFixed(2);
-			},
 		},
 		{
 			title: ColumnTitle[ColumnKey.ErrorRate],
 			dataIndex: ColumnKey.ErrorRate,
 			key: ColumnKey.ErrorRate,
 			width: 150,
-			sorter: (a: ServicesList, b: ServicesList): number =>
-				a.errorRate - b.errorRate,
-			render: (value: number): string => value.toFixed(2),
 		},
 		{
 			title: ColumnTitle[ColumnKey.Operations],
 			dataIndex: ColumnKey.Operations,
 			key: ColumnKey.Operations,
 			width: ColumnWidth.Operations,
-			sorter: (a: ServicesList, b: ServicesList): number =>
-				a.callRate - b.callRate,
-			render: (value: number): string => value.toFixed(2),
 		},
 	];
 
-	return generatorResizeTableColumns<ServicesList>({ columnKey, columnConfig });
+	const dynamicConfig: {
+		key: string;
+		extraConfig: ColumnType<ServicesList>;
+	}[] = [
+		{
+			key: ColumnKey.Application,
+			extraConfig: {
+				...getColumnSearchProps('serviceName', search),
+			},
+		},
+		{
+			key: ColumnKey.P99,
+			extraConfig: {
+				title: `${ColumnTitle[ColumnKey.P99]}${
+					isMetricData ? ' (in ns)' : ' (in ms)'
+				}`,
+				sorter: (a: ServicesList, b: ServicesList): number => a.p99 - b.p99,
+				render: (value: number): string => {
+					if (Number.isNaN(value)) return '0.00';
+					return isMetricData ? value.toFixed(2) : (value / 1000000).toFixed(2);
+				},
+			},
+		},
+		{
+			key: ColumnKey.ErrorRate,
+			extraConfig: {
+				sorter: (a: ServicesList, b: ServicesList): number =>
+					a.errorRate - b.errorRate,
+				render: (value: number): string => value.toFixed(2),
+			},
+		},
+		{
+			key: ColumnKey.Operations,
+			extraConfig: {
+				sorter: (a: ServicesList, b: ServicesList): number =>
+					a.callRate - b.callRate,
+				render: (value: number): string => value.toFixed(2),
+			},
+		},
+	];
+
+	return generatorResizeTableColumns<ServicesList>({
+		baseConfig,
+		dynamicConfig,
+	});
 };

@@ -2,20 +2,21 @@ import { ColumnType } from 'antd/es/table';
 import { ColumnsType } from 'antd/lib/table';
 
 export const generatorResizeTableColumns = <T>({
-	columnKey,
-	columnConfig,
+	baseConfig,
+	dynamicConfig,
 }: GeneratorResizeTableColumnsProp<T>): ColumnsType<T> =>
-	columnKey.map((key: string) => {
-		const column = columnConfig.find(
-			(config: ColumnType<T>) => config.key === key,
-		) as ColumnType<T>;
+	baseConfig.map((config: ColumnType<T>) => {
+		const { key } = config;
+		const extraConfig = dynamicConfig.find(
+			(dynamicConfigItem) => dynamicConfigItem.key === key,
+		);
 		return {
-			key,
-			...column,
+			...config,
+			...extraConfig?.extraConfig,
 		};
 	});
 
 interface GeneratorResizeTableColumnsProp<T> {
-	columnKey: string[];
-	columnConfig: ColumnsType<T>;
+	baseConfig: ColumnsType<T>;
+	dynamicConfig: { key: string; extraConfig: ColumnType<T> }[];
 }
