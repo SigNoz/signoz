@@ -8,6 +8,7 @@ import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
 import { Widgets } from 'types/api/dashboard/getAll';
 import AppReducer from 'types/reducer/app';
+import DashboardReducer from 'types/reducer/dashboards';
 
 import { LayoutProps, State } from '.';
 import {
@@ -28,6 +29,9 @@ function GraphLayout({
 	widgets,
 	setLayout,
 }: GraphLayoutProps): JSX.Element {
+	const { isAddWidget } = useSelector<AppState, DashboardReducer>(
+		(state) => state.dashboards,
+	);
 	const { role } = useSelector<AppState, AppReducer>((state) => state.app);
 	const isDarkMode = useIsDarkMode();
 
@@ -53,7 +57,7 @@ function GraphLayout({
 				{addPanelPermission && (
 					<Button
 						loading={addPanelLoading}
-						disabled={addPanelLoading}
+						disabled={addPanelLoading || isAddWidget}
 						onClick={onAddPanelHandler}
 						icon={<PlusOutlined />}
 					>

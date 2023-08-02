@@ -4,12 +4,13 @@ import { topOperationQueries } from 'container/MetricsApplication/MetricsPageQue
 import { QueryTable } from 'container/QueryTable';
 import { useGetQueryRange } from 'hooks/queryBuilder/useGetQueryRange';
 import { useStepInterval } from 'hooks/queryBuilder/useStepInterval';
+import { useNotifications } from 'hooks/useNotifications';
 import useResourceAttribute from 'hooks/useResourceAttribute';
 import { convertRawQueriesToTraceSelectedTags } from 'hooks/useResourceAttribute/utils';
 import { getDashboardVariables } from 'lib/dashbaordVariables/getDashboardVariables';
 import { RowData } from 'lib/query/createTableColumnsFromQuery';
 import { isEmpty } from 'lodash-es';
-import { ReactNode, useMemo, useState } from 'react';
+import { ReactNode, useMemo } from 'react';
 import { useSelector } from 'react-redux';
 import { useParams } from 'react-router-dom';
 import { AppState } from 'store/reducers';
@@ -18,18 +19,19 @@ import { GlobalReducer } from 'types/reducer/globalTime';
 import { v4 as uuid } from 'uuid';
 
 import { IServiceName } from '../types';
-import { title } from './config';
 import ColumnWithLink from './TableRenderer/ColumnWithLink';
 import { getTableColumnRenderer } from './TableRenderer/TableColumnRenderer';
 
 function TopOperationMetrics(): JSX.Element {
 	const { servicename } = useParams<IServiceName>();
 
-	const [errorMessage, setErrorMessage] = useState<string | undefined>('');
+	const { notifications } = useNotifications();
+
 	const { minTime, maxTime, selectedTime: globalSelectedInterval } = useSelector<
 		AppState,
 		GlobalReducer
 	>((state) => state.globalTime);
+
 	const { queries } = useResourceAttribute();
 
 	const selectedTraceTags = JSON.stringify(
@@ -80,7 +82,7 @@ function TopOperationMetrics(): JSX.Element {
 			enabled: !isEmptyWidget,
 			refetchOnMount: false,
 			onError: (error) => {
-				setErrorMessage(error.message);
+				notifications.error({ message: error.message });
 			},
 		},
 	);
@@ -104,13 +106,8 @@ function TopOperationMetrics(): JSX.Element {
 		[servicename, minTime, maxTime, selectedTraceTags],
 	);
 
-	if (errorMessage) {
-		return <div>{errorMessage}</div>;
-	}
-
 	return (
 		<QueryTable
-			title={title}
 			query={updatedQuery}
 			queryTableData={queryTableData}
 			loading={isLoading}
