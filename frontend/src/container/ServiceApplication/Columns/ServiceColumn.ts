@@ -14,7 +14,7 @@ export const getColumns = (
 	search: string,
 	isMetricData: boolean,
 ): ColumnsType<ServicesList> => {
-	const baseConfig: ColumnsType<ServicesList> = [
+	const baseColumnOptions: ColumnsType<ServicesList> = [
 		{
 			title: ColumnTitle[ColumnKey.Application],
 			dataIndex: ColumnKey.Application,
@@ -41,19 +41,19 @@ export const getColumns = (
 		},
 	];
 
-	const dynamicConfig: {
+	const dynamicColumnOption: {
 		key: string;
-		extraConfig: ColumnType<ServicesList>;
+		columnOption: ColumnType<ServicesList>;
 	}[] = [
 		{
 			key: ColumnKey.Application,
-			extraConfig: {
+			columnOption: {
 				...getColumnSearchProps('serviceName', search),
 			},
 		},
 		{
 			key: ColumnKey.P99,
-			extraConfig: {
+			columnOption: {
 				title: `${ColumnTitle[ColumnKey.P99]}${
 					isMetricData ? ' (in ns)' : ' (in ms)'
 				}`,
@@ -66,7 +66,7 @@ export const getColumns = (
 		},
 		{
 			key: ColumnKey.ErrorRate,
-			extraConfig: {
+			columnOption: {
 				sorter: (a: ServicesList, b: ServicesList): number =>
 					a.errorRate - b.errorRate,
 				render: (value: number): string => value.toFixed(2),
@@ -74,7 +74,7 @@ export const getColumns = (
 		},
 		{
 			key: ColumnKey.Operations,
-			extraConfig: {
+			columnOption: {
 				sorter: (a: ServicesList, b: ServicesList): number =>
 					a.callRate - b.callRate,
 				render: (value: number): string => value.toFixed(2),
@@ -83,7 +83,7 @@ export const getColumns = (
 	];
 
 	return generatorResizeTableColumns<ServicesList>({
-		baseConfig,
-		dynamicConfig,
+		baseColumnOptions,
+		dynamicColumnOption,
 	});
 };
