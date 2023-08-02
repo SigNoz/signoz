@@ -6,7 +6,8 @@ import Header from 'container/Header';
 import SideNav from 'container/SideNav';
 import TopNav from 'container/TopNav';
 import { useNotifications } from 'hooks/useNotifications';
-import { ReactNode, useEffect, useRef } from 'react';
+import { ReactNode, useEffect, useMemo, useRef } from 'react';
+import { Helmet } from 'react-helmet-async';
 import { useTranslation } from 'react-i18next';
 import { useQueries } from 'react-query';
 import { useDispatch, useSelector } from 'react-redux';
@@ -25,13 +26,14 @@ import {
 import AppReducer from 'types/reducer/app';
 
 import { ChildrenContainer, Layout } from './styles';
+import { getRouteKey } from './utils';
 
 function AppLayout(props: AppLayoutProps): JSX.Element {
 	const { isLoggedIn, user } = useSelector<AppState, AppReducer>(
 		(state) => state.app,
 	);
 	const { pathname } = useLocation();
-	const { t } = useTranslation();
+	const { t } = useTranslation(['titles']);
 
 	const [
 		getUserVersionResponse,
@@ -226,8 +228,15 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 
 	const isToDisplayLayout = isLoggedIn;
 
+	const routeKey = useMemo(() => getRouteKey(pathname), [pathname]);
+	const pageTitle = t(routeKey);
+
 	return (
 		<Layout>
+			<Helmet>
+				<title>{pageTitle}</title>
+			</Helmet>
+
 			{isToDisplayLayout && <Header />}
 			<Layout>
 				{isToDisplayLayout && <SideNav />}
