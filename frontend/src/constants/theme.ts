@@ -51,6 +51,7 @@ const themeColors = {
 	snowWhite: '#fafafa',
 	gamboge: '#D89614',
 	bckgGrey: '#1d1d1d',
+	lightBlue: '#177ddc',
 };
 
 export { themeColors };

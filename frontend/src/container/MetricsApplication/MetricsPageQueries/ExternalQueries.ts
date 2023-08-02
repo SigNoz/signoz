@@ -83,22 +83,18 @@ export const externalCallErrorPercent = ({
 		},
 		...tagFilterItems,
 	];
+	const legendFormulas = [legend];
+	const expressions = [FORMULA.ERROR_PERCENTAGE];
+	const disabled = [true, true];
+	const autocompleteData = [autocompleteDataA, autocompleteDataB];
 
-	const legendFormula = legend;
-	const expression = FORMULA.ERROR_PERCENTAGE;
-	const autocompleteData: BaseAutocompleteData[] = [
-		autocompleteDataA,
-		autocompleteDataB,
+	const additionalItems = [additionalItemsA, additionalItemsB];
+
+	const aggregateOperators = [
+		MetricAggregateOperator.SUM,
+		MetricAggregateOperator.SUM,
 	];
-
-	const additionalItems: TagFilterItem[][] = [
-		additionalItemsA,
-		additionalItemsB,
-	];
-
-	const legends = Array(2).fill(legend);
-	const aggregateOperators = Array(2).fill(MetricAggregateOperator.SUM);
-	const disabled = Array(2).fill(true);
+	const legends = [legend, legend];
 	const dataSource = DataSource.METRICS;
 
 	return getQueryBuilderQuerieswithFormula({
@@ -107,8 +103,8 @@ export const externalCallErrorPercent = ({
 		legends,
 		groupBy,
 		disabled,
-		expression,
-		legendFormula,
+		expressions,
+		legendFormulas,
 		aggregateOperators,
 		dataSource,
 	});
@@ -130,11 +126,10 @@ export const externalCallDuration = ({
 		key: WidgetKeys.SignozExternalCallLatencyCount,
 		type: null,
 	};
-
-	const expression = FORMULA.DATABASE_CALLS_AVG_DURATION;
-	const legendFormula = 'Average Duration';
+	const expressions = [FORMULA.DATABASE_CALLS_AVG_DURATION];
+	const legendFormulas = ['Average Duration'];
 	const legend = '';
-	const disabled = Array(2).fill(true);
+	const disabled = [true, true];
 	const additionalItemsA: TagFilterItem[] = [
 		{
 			id: '',
@@ -150,28 +145,25 @@ export const externalCallDuration = ({
 		...tagFilterItems,
 	];
 
-	const autocompleteData: BaseAutocompleteData[] = [
-		autocompleteDataA,
-		autocompleteDataB,
-	];
+	const autocompleteData = [autocompleteDataA, autocompleteDataB];
 
-	const additionalItems: TagFilterItem[][] = [
-		additionalItemsA,
-		additionalItemsA,
+	const additionalItems = [additionalItemsA, additionalItemsA];
+	const legends = [legend, legend];
+	const aggregateOperators = [
+		MetricAggregateOperator.SUM,
+		MetricAggregateOperator.SUM,
 	];
-
-	const legends = Array(2).fill(legend);
-	const aggregateOperators = Array(2).fill(MetricAggregateOperator.SUM);
+	const dataSource = DataSource.METRICS;
 
 	return getQueryBuilderQuerieswithFormula({
 		autocompleteData,
 		additionalItems,
 		legends,
 		disabled,
-		expression,
-		legendFormula,
+		expressions,
+		legendFormulas,
 		aggregateOperators,
-		dataSource: DataSource.METRICS,
+		dataSource,
 	});
 };
 
@@ -234,8 +226,8 @@ export const externalCallDurationByAddress = ({
 		key: WidgetKeys.SignozExternalCallLatencyCount,
 		type: null,
 	};
-	const expression = FORMULA.DATABASE_CALLS_AVG_DURATION;
-	const legendFormula = legend;
+	const expressions = [FORMULA.DATABASE_CALLS_AVG_DURATION];
+	const legendFormulas = [legend];
 	const disabled = [true, true];
 	const additionalItemsA: TagFilterItem[] = [
 		{
@@ -252,18 +244,13 @@ export const externalCallDurationByAddress = ({
 		...tagFilterItems,
 	];
 
-	const autocompleteData: BaseAutocompleteData[] = [
-		autocompleteDataA,
-		autocompleteDataB,
+	const autocompleteData = [autocompleteDataA, autocompleteDataB];
+	const additionalItems = [additionalItemsA, additionalItemsA];
+	const legends = [legend, legend];
+	const aggregateOperators = [
+		MetricAggregateOperator.SUM,
+		MetricAggregateOperator.SUM,
 	];
-
-	const additionalItems: TagFilterItem[][] = [
-		additionalItemsA,
-		additionalItemsA,
-	];
-
-	const legends = Array(2).fill(legend);
-	const aggregateOperators = Array(2).fill(MetricAggregateOperator.SUM_RATE);
 	const dataSource = DataSource.METRICS;
 
 	return getQueryBuilderQuerieswithFormula({
@@ -272,8 +259,8 @@ export const externalCallDurationByAddress = ({
 		legends,
 		groupBy,
 		disabled,
-		expression,
-		legendFormula,
+		expressions,
+		legendFormulas,
 		aggregateOperators,
 		dataSource,
 	});
