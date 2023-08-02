@@ -124,8 +124,8 @@ export const topOperationQueries = ({
 		MetricAggregateOperator.SUM_RATE,
 		MetricAggregateOperator.SUM_RATE,
 	];
-	const expression = 'D*100/E';
-	const legendFormula = GraphTitle.ERROR_PERCENTAGE;
+	const expressions = ['D*100/E'];
+	const legendFormulas = [GraphTitle.ERROR_PERCENTAGE];
 	const dataSource = DataSource.METRICS;
 
 	return getQueryBuilderQuerieswithFormula({
@@ -134,8 +134,8 @@ export const topOperationQueries = ({
 		disabled,
 		legends,
 		aggregateOperators,
-		expression,
-		legendFormula,
+		expressions,
+		legendFormulas,
 		dataSource,
 		groupBy,
 	});
