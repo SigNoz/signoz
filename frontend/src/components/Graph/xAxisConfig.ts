@@ -4,20 +4,7 @@ import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
 import { GlobalReducer } from 'types/reducer/globalTime';
 
-interface IAxisTimeUintConfig {
-	unitName: TimeUnit;
-	multiplier: number;
-}
-
-interface IAxisTimeConfig {
-	unitName: TimeUnit;
-	stepSize: number;
-}
-
-export interface ITimeRange {
-	minTime: number | null;
-	maxTime: number | null;
-}
+import { IAxisTimeConfig, IAxisTimeUintConfig, ITimeRange } from './types';
 
 export const TIME_UNITS: Record<TimeUnit, TimeUnit> = {
 	millisecond: 'millisecond',

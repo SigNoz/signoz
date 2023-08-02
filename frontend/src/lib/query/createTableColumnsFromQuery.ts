@@ -305,13 +305,61 @@ const isEqualQueriesByLabel = (
 	queryName: string,
 ): boolean => equalQueries.includes(queryName);
 
+const fillAggregationData = (
+	column: DynamicColumn,
+	value: string,
+	unusedColumnsKeys: Set<keyof RowData>,
+): void => {
+	column.data.push(parseFloat(value).toFixed(2));
+	unusedColumnsKeys.delete(column.field);
+};
+
+const fillRestAggregationData = (
+	column: DynamicColumn,
+	queryTableData: QueryDataV3[],
+	seria: SeriesItem,
+	equalQueriesByLabels: string[],
+): void => {
+	const nextQueryData =
+		queryTableData.find((q) => q.queryName === column.field) || null;
+
+	const targetSeria = findSeriaValueFromAnotherQuery(
+		seria.labels,
+		nextQueryData,
+	);
+
+	if (targetSeria) {
+		const isEqual = isEqualQueriesByLabel(equalQueriesByLabels, column.field);
+		if (!isEqual) {
+			equalQueriesByLabels.push(column.field);
+		}
+
+		column.data.push(parseFloat(targetSeria.values[0].value).toFixed(2));
+	} else {
+		column.data.push('N/A');
+	}
+};
+
+const fillLabelsData = (
+	column: DynamicColumn,
+	seria: SeriesItem,
+	unusedColumnsKeys: Set<keyof RowData>,
+): void => {
+	const labelEntries = Object.entries(seria.labels);
+
+	labelEntries.forEach(([key, currentValue]) => {
+		if (column.field === key) {
+			column.data.push(currentValue);
+			unusedColumnsKeys.delete(key);
+		}
+	});
+};
+
 const fillDataFromSeries = (
 	currentQuery: QueryDataV3,
 	queryTableData: QueryDataV3[],
 	columns: DynamicColumns,
 	equalQueriesByLabels: string[],
-	// TODO: fix it
-	// eslint-disable-next-line sonarjs/cognitive-complexity
 ): void => {
 	const { series, queryName } = currentQuery;
 	const isEqualQuery = isEqualQueriesByLabel(equalQueriesByLabels, queryName);
@@ -319,8 +367,6 @@ const fillDataFromSeries = (
 	if (!series) return;
 
 	series.forEach((seria) => {
-		const labelEntries = Object.entries(seria.labels);
-
 		const unusedColumnsKeys = new Set<keyof RowData>(
 			columns.map((item) => item.field),
 		);
@@ -329,44 +375,28 @@ const fillDataFromSeries = (
 			if (queryName === column.field) {
 				if (seria.values.length === 0) return;
 
-				column.data.push(parseFloat(seria.values[0].value).toFixed(2));
-				unusedColumnsKeys.delete(column.field);
+				fillAggregationData(
+					column,
+					parseFloat(seria.values[0].value).toFixed(2),
+					unusedColumnsKeys,
+				);
 				return;
 			}
 
 			if (column.type !== 'field' && column.field !== queryName) {
-				const nextQueryData =
-					queryTableData.find((q) => q.queryName === column.field) || null;
-
-				const targetSeria = findSeriaValueFromAnotherQuery(
-					seria.labels,
-					nextQueryData,
+				fillRestAggregationData(
+					column,
+					queryTableData,
+					seria,
+					equalQueriesByLabels,
 				);
-
-				if (targetSeria) {
-					const isEqual = isEqualQueriesByLabel(equalQueriesByLabels, column.field);
-					if (!isEqual) {
-						equalQueriesByLabels.push(column.field);
-					}
-
-					column.data.push(parseFloat(targetSeria.values[0].value).toFixed(2));
-				} else {
-					column.data.push('N/A');
-				}
-
-				unusedColumnsKeys.delete(column.field);
 
 				return;
 			}
 
 			if (isEqualQuery) return;
 
-			labelEntries.forEach(([key, currentValue]) => {
-				if (column.field === key) {
-					column.data.push(currentValue);
-					unusedColumnsKeys.delete(key);
-				}
-			});
+			fillLabelsData(column, seria, unusedColumnsKeys);
 
 			fillEmptyRowCells(unusedColumnsKeys, columns, column);
 		});

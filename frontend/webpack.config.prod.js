@@ -53,6 +53,7 @@ const config = {
 	resolve: {
 		extensions: ['.ts', '.tsx', '.js', '.jsx'],
 		plugins: [new TsconfigPathsPlugin({})],
+		fallback: { 'process/browser': require.resolve('process/browser') },
 	},
 	cache: {
 		type: 'filesystem',
