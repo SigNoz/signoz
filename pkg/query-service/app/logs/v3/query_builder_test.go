@@ -1185,3 +1185,109 @@ func TestPrepareLogsQuery(t *testing.T) {
 		})
 	}
 }
+
+var testPrepLogsQueryLimitOffsetData = []struct {
+	Name              string
+	PanelType         v3.PanelType
+	Start             int64
+	End               int64
+	Step              int64
+	BuilderQuery      *v3.BuilderQuery
+	GroupByTags       []v3.AttributeKey
+	TableName         string
+	AggregateOperator v3.AggregateOperator
+	ExpectedQuery     string
+	Options           Options
+}{
+	{
+		Name:      "Test limit less than pageSize - order by ts",
+		PanelType: v3.PanelTypeList,
+		Start:     1680518666000000000,
+		End:       1691618704365000000,
+		Step:      60,
+		BuilderQuery: &v3.BuilderQuery{
+			QueryName:         "A",
+			AggregateOperator: v3.AggregateOperatorNoOp,
+			Expression:        "A",
+			Filters:           &v3.FilterSet{Operator: "AND", Items: []v3.FilterItem{}},
+			OrderBy:           []v3.OrderBy{{ColumnName: constants.TIMESTAMP, Order: "desc", Key: constants.TIMESTAMP, DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeUnspecified, IsColumn: true}},
+			Limit:             1,
+			Offset:            0,
+			PageSize:          5,
+		},
+		TableName:     "logs",
+		ExpectedQuery: "SELECT timestamp, id, trace_id, span_id, trace_flags, severity_text, severity_number, body,CAST((attributes_string_key, attributes_string_value), 'Map(String, String)') as  attributes_string,CAST((attributes_int64_key, attributes_int64_value), 'Map(String, Int64)') as  attributes_int64,CAST((attributes_float64_key, attributes_float64_value), 'Map(String, Float64)') as  attributes_float64,CAST((resources_string_key, resources_string_value), 'Map(String, String)') as resources_string from signoz_logs.distributed_logs where (timestamp >= 1680518666000000000 AND timestamp <= 1691618704365000000) order by timestamp desc LIMIT 1",
+	},
+	{
+		Name:      "Test limit greater than pageSize - order by ts",
+		PanelType: v3.PanelTypeList,
+		Start:     1680518666000000000,
+		End:       1691618704365000000,
+		Step:      60,
+		BuilderQuery: &v3.BuilderQuery{
+			QueryName:         "A",
+			AggregateOperator: v3.AggregateOperatorNoOp,
+			Expression:        "A",
+			Filters: &v3.FilterSet{Operator: "AND", Items: []v3.FilterItem{
+				{Key: v3.AttributeKey{Key: "id", Type: v3.AttributeKeyTypeUnspecified, DataType: v3.AttributeKeyDataTypeString, IsColumn: true}, Operator: v3.FilterOperatorLessThan, Value: "2TNh4vp2TpiWyLt3SzuadLJF2s4"},
+			}},
+			OrderBy:  []v3.OrderBy{{ColumnName: constants.TIMESTAMP, Order: "desc", Key: constants.TIMESTAMP, DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeUnspecified, IsColumn: true}},
+			Limit:    100,
+			Offset:   10,
+			PageSize: 10,
+		},
+		TableName:     "logs",
+		ExpectedQuery: "SELECT timestamp, id, trace_id, span_id, trace_flags, severity_text, severity_number, body,CAST((attributes_string_key, attributes_string_value), 'Map(String, String)') as  attributes_string,CAST((attributes_int64_key, attributes_int64_value), 'Map(String, Int64)') as  attributes_int64,CAST((attributes_float64_key, attributes_float64_value), 'Map(String, Float64)') as  attributes_float64,CAST((resources_string_key, resources_string_value), 'Map(String, String)') as resources_string from signoz_logs.distributed_logs where (timestamp >= 1680518666000000000 AND timestamp <= 1691618704365000000) AND id < '2TNh4vp2TpiWyLt3SzuadLJF2s4' order by timestamp desc LIMIT 10",
+	},
+	{
+		Name:      "Test limit less than pageSize  - order by custom",
+		PanelType: v3.PanelTypeList,
+		Start:     1680518666000000000,
+		End:       1691618704365000000,
+		Step:      60,
+		BuilderQuery: &v3.BuilderQuery{
+			QueryName:         "A",
+			AggregateOperator: v3.AggregateOperatorNoOp,
+			Expression:        "A",
+			Filters:           &v3.FilterSet{Operator: "AND", Items: []v3.FilterItem{}},
+			OrderBy:           []v3.OrderBy{{ColumnName: "method", Order: "desc", Key: "method", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag}},
+			Limit:             1,
+			Offset:            0,
+			PageSize:          5,
+		},
+		TableName:     "logs",
+		ExpectedQuery: "SELECT timestamp, id, trace_id, span_id, trace_flags, severity_text, severity_number, body,CAST((attributes_string_key, attributes_string_value), 'Map(String, String)') as  attributes_string,CAST((attributes_int64_key, attributes_int64_value), 'Map(String, Int64)') as  attributes_int64,CAST((attributes_float64_key, attributes_float64_value), 'Map(String, Float64)') as  attributes_float64,CAST((resources_string_key, resources_string_value), 'Map(String, String)') as resources_string from signoz_logs.distributed_logs where (timestamp >= 1680518666000000000 AND timestamp <= 1691618704365000000) order by attributes_string_value[indexOf(attributes_string_key, 'method')] desc LIMIT 1 OFFSET 0",
+	},
+	{
+		Name:      "Test limit greater than pageSize - order by custom",
+		PanelType: v3.PanelTypeList,
+		Start:     1680518666000000000,
+		End:       1691618704365000000,
+		Step:      60,
+		BuilderQuery: &v3.BuilderQuery{
+			QueryName:         "A",
+			AggregateOperator: v3.AggregateOperatorNoOp,
+			Expression:        "A",
+			Filters: &v3.FilterSet{Operator: "AND", Items: []v3.FilterItem{
+				{Key: v3.AttributeKey{Key: "id", Type: v3.AttributeKeyTypeUnspecified, DataType: v3.AttributeKeyDataTypeString, IsColumn: true}, Operator: v3.FilterOperatorLessThan, Value: "2TNh4vp2TpiWyLt3SzuadLJF2s4"},
+			}},
+			OrderBy:  []v3.OrderBy{{ColumnName: "method", Order: "desc", Key: "method", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag}},
+			Limit:    100,
+			Offset:   50,
+			PageSize: 50,
+		},
+		TableName:     "logs",
+		ExpectedQuery: "SELECT timestamp, id, trace_id, span_id, trace_flags, severity_text, severity_number, body,CAST((attributes_string_key, attributes_string_value), 'Map(String, String)') as  attributes_string,CAST((attributes_int64_key, attributes_int64_value), 'Map(String, Int64)') as  attributes_int64,CAST((attributes_float64_key, attributes_float64_value), 'Map(String, Float64)') as  attributes_float64,CAST((resources_string_key, resources_string_value), 'Map(String, String)') as resources_string from signoz_logs.distributed_logs where (timestamp >= 1680518666000000000 AND timestamp <= 1691618704365000000) AND id < '2TNh4vp2TpiWyLt3SzuadLJF2s4' order by attributes_string_value[indexOf(attributes_string_key, 'method')] desc LIMIT 50 OFFSET 50",
+	},
+}
+
+func TestPrepareLogsQueryLimitOffset(t *testing.T) {
+	for _, tt := range testPrepLogsQueryLimitOffsetData {
+		Convey("TestBuildLogsQuery", t, func() {
+			query, err := PrepareLogsQuery(tt.Start, tt.End, "", tt.PanelType, tt.BuilderQuery, tt.Options)
+			So(err, ShouldBeNil)
+			So(query, ShouldEqual, tt.ExpectedQuery)
+
+		})
+	}
+}
