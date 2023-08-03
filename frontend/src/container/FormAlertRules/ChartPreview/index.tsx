@@ -1,5 +1,5 @@
 import { InfoCircleOutlined } from '@ant-design/icons';
-import { StaticLineProps } from 'components/Graph';
+import { StaticLineProps } from 'components/Graph/types';
 import Spinner from 'components/Spinner';
 import { initialQueriesMap, PANEL_TYPES } from 'constants/queryBuilder';
 import GridPanelSwitch from 'container/GridPanelSwitch';

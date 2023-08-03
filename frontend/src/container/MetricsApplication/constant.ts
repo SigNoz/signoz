@@ -34,6 +34,7 @@ export enum KeyOperationTableHeader {
 	P99 = 'P99',
 	NUM_OF_CALLS = 'Number of Calls',
 	ERROR_RATE = 'Error Rate',
+	OPERATION_PR_SECOND = 'Op/s',
 }
 
 export enum DataType {

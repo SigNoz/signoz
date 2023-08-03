@@ -3,7 +3,7 @@ import {
 	GraphOnClickHandler,
 	GraphProps,
 	StaticLineProps,
-} from 'components/Graph';
+} from 'components/Graph/types';
 import { GridTableComponentProps } from 'container/GridTableComponent/types';
 import { GridValueComponentProps } from 'container/GridValueComponent/types';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
