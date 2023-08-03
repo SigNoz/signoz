@@ -1,5 +1,5 @@
+import { initialQueriesMap } from 'constants/queryBuilder';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
-import { initialQuery } from 'container/NewDashboard/ComponentsSlider/configs';
 import { getDashboardVariables } from 'lib/dashbaordVariables/getDashboardVariables';
 import { UseQueryOptions, UseQueryResult } from 'react-query';
 import { useSelector } from 'react-redux';
@@ -31,7 +31,7 @@ export const useGetWidgetQueryRange = (
 			graphType,
 			selectedTime,
 			globalSelectedInterval,
-			query: stagedQuery || initialQuery,
+			query: stagedQuery || initialQueriesMap.metrics,
 			variables: getDashboardVariables(),
 		},
 		{
