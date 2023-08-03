@@ -188,12 +188,20 @@ install_docker() {
 
 }
 
+compose_version () {
+    local compose_version
+    compose_version="$(curl -s https://api.github.com/repos/docker/compose/releases/latest | grep 'tag_name' | cut -d\" -f4)"
+    echo "${compose_version:-v2.18.1}"
+}
+
 install_docker_compose() {
     if [[ $package_manager == "apt-get" || $package_manager == "zypper" || $package_manager == "yum" ]]; then
         if [[ ! -f /usr/bin/docker-compose ]];then
             echo "++++++++++++++++++++++++"
             echo "Installing docker-compose"
-            $sudo_cmd curl -L "https://github.com/docker/compose/releases/download/1.26.0/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+            compose_url="https://github.com/docker/compose/releases/download/$(compose_version)/docker-compose-$platform-$arch_official"
+            echo "Downloading docker-compose from $compose_url"
+            $sudo_cmd curl -L "$compose_url" -o /usr/local/bin/docker-compose
             $sudo_cmd chmod +x /usr/local/bin/docker-compose
             $sudo_cmd ln -s /usr/local/bin/docker-compose /usr/bin/docker-compose
             echo "docker-compose installed!"
