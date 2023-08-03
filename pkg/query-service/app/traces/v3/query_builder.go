@@ -12,7 +12,7 @@ import (
 
 type Options struct {
 	GraphLimitQtype string
-	CheckFeature    func(string) error
+	PreferRPM       bool
 }
 
 var aggregateOperatorToPercentile = map[v3.AggregateOperator]float64{
@@ -308,10 +308,8 @@ func buildTracesQuery(start, end, step int64, mq *v3.BuilderQuery, tableName str
 		v3.AggregateOperatorRateMin,
 		v3.AggregateOperatorRate:
 
-		err := options.CheckFeature(constants.PreferRPM)
-		PreferRPMFeatureEnabled := err == nil
 		rate := float64(step)
-		if PreferRPMFeatureEnabled {
+		if options.PreferRPM {
 			rate = rate / 60.0
 		}
 

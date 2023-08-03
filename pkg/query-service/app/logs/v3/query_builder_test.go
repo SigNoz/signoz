@@ -5,7 +5,6 @@ import (
 
 	. "github.com/smartystreets/goconvey/convey"
 	"go.signoz.io/signoz/pkg/query-service/constants"
-	"go.signoz.io/signoz/pkg/query-service/model"
 	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
 )
 
@@ -239,7 +238,7 @@ var testBuildLogsQueryData = []struct {
 	AggregateOperator v3.AggregateOperator
 	ExpectedQuery     string
 	Type              int
-	CheckFeature      func(string) error
+	PreferRPM         bool
 }{
 	{
 		Name:      "Test aggregate count on select field",
@@ -536,9 +535,7 @@ var testBuildLogsQueryData = []struct {
 			OrderBy:            []v3.OrderBy{{ColumnName: "method", Order: "ASC"}},
 		},
 		TableName: "logs",
-		CheckFeature: func(s string) error {
-			return nil
-		},
+		PreferRPM: true,
 		ExpectedQuery: "SELECT toStartOfInterval(fromUnixTimestamp64Nano(timestamp), INTERVAL 60 SECOND) AS ts, attributes_string_value[indexOf(attributes_string_key, 'method')] as method" +
 			", sum(bytes)/1.000000 as value from signoz_logs.distributed_logs " +
 			"where (timestamp >= 1680066360726210000 AND timestamp <= 1680066458000000000) " +
@@ -561,9 +558,7 @@ var testBuildLogsQueryData = []struct {
 			OrderBy:            []v3.OrderBy{{ColumnName: "method", Order: "ASC"}},
 		},
 		TableName: "logs",
-		CheckFeature: func(s string) error {
-			return model.ErrFeatureUnavailable{Key: "PreferRPM"}
-		},
+		PreferRPM: false,
 		ExpectedQuery: "SELECT toStartOfInterval(fromUnixTimestamp64Nano(timestamp), INTERVAL 60 SECOND) AS ts, attributes_string_value[indexOf(attributes_string_key, 'method')] as method" +
 			", count(attributes_float64_value[indexOf(attributes_float64_key, 'bytes')])/60.000000 as value " +
 			"from signoz_logs.distributed_logs where (timestamp >= 1680066360726210000 AND timestamp <= 1680066458000000000) " +
@@ -587,9 +582,7 @@ var testBuildLogsQueryData = []struct {
 			OrderBy:            []v3.OrderBy{{ColumnName: "method", Order: "ASC"}},
 		},
 		TableName: "logs",
-		CheckFeature: func(s string) error {
-			return nil
-		},
+		PreferRPM: true,
 		ExpectedQuery: "SELECT toStartOfInterval(fromUnixTimestamp64Nano(timestamp), INTERVAL 60 SECOND) AS ts, " +
 			"attributes_string_value[indexOf(attributes_string_key, 'method')] as method, " +
 			"sum(attributes_float64_value[indexOf(attributes_float64_key, 'bytes')])/1.000000 as value " +
@@ -813,7 +806,7 @@ var testBuildLogsQueryData = []struct {
 func TestBuildLogsQuery(t *testing.T) {
 	for _, tt := range testBuildLogsQueryData {
 		Convey("TestBuildLogsQuery", t, func() {
-			query, err := buildLogsQuery(tt.PanelType, tt.Start, tt.End, tt.Step, tt.BuilderQuery, "", tt.CheckFeature)
+			query, err := buildLogsQuery(tt.PanelType, tt.Start, tt.End, tt.Step, tt.BuilderQuery, "", tt.PreferRPM)
 			So(err, ShouldBeNil)
 			So(query, ShouldEqual, tt.ExpectedQuery)
 
@@ -1020,7 +1013,7 @@ var testPrepLogsQueryData = []struct {
 		},
 		TableName:     "logs",
 		ExpectedQuery: "SELECT method from (SELECT attributes_string_value[indexOf(attributes_string_key, 'method')] as method, toFloat64(count(distinct(attributes_string_value[indexOf(attributes_string_key, 'name')]))) as value from signoz_logs.distributed_logs where (timestamp >= 1680066360726210000 AND timestamp <= 1680066458000000000) AND attributes_string_value[indexOf(attributes_string_key, 'method')] = 'GET' AND indexOf(attributes_string_key, 'method') > 0 group by method order by value DESC) LIMIT 10",
-		Options:       Options{GraphLimitQtype: constants.FirstQueryGraphLimit, CheckFeature: func(s string) error { return nil }},
+		Options:       Options{GraphLimitQtype: constants.FirstQueryGraphLimit, PreferRPM: true},
 	},
 	{
 		Name:      "Test TS with limit- first - with order by value",
@@ -1043,7 +1036,7 @@ var testPrepLogsQueryData = []struct {
 		},
 		TableName:     "logs",
 		ExpectedQuery: "SELECT method from (SELECT attributes_string_value[indexOf(attributes_string_key, 'method')] as method, toFloat64(count(distinct(attributes_string_value[indexOf(attributes_string_key, 'name')]))) as value from signoz_logs.distributed_logs where (timestamp >= 1680066360726210000 AND timestamp <= 1680066458000000000) AND attributes_string_value[indexOf(attributes_string_key, 'method')] = 'GET' AND indexOf(attributes_string_key, 'method') > 0 group by method order by value ASC) LIMIT 10",
-		Options:       Options{GraphLimitQtype: constants.FirstQueryGraphLimit, CheckFeature: func(s string) error { return nil }},
+		Options:       Options{GraphLimitQtype: constants.FirstQueryGraphLimit, PreferRPM: true},
 	},
 	{
 		Name:      "Test TS with limit- first - with order by attribute",
@@ -1066,7 +1059,7 @@ var testPrepLogsQueryData = []struct {
 		},
 		TableName:     "logs",
 		ExpectedQuery: "SELECT method from (SELECT attributes_string_value[indexOf(attributes_string_key, 'method')] as method, toFloat64(count(distinct(attributes_string_value[indexOf(attributes_string_key, 'name')]))) as value from signoz_logs.distributed_logs where (timestamp >= 1680066360726210000 AND timestamp <= 1680066458000000000) AND attributes_string_value[indexOf(attributes_string_key, 'method')] = 'GET' AND indexOf(attributes_string_key, 'method') > 0 group by method order by method ASC) LIMIT 10",
-		Options:       Options{GraphLimitQtype: constants.FirstQueryGraphLimit, CheckFeature: func(s string) error { return nil }},
+		Options:       Options{GraphLimitQtype: constants.FirstQueryGraphLimit, PreferRPM: true},
 	},
 	{
 		Name:      "Test TS with limit- second",

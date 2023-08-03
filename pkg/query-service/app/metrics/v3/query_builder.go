@@ -11,6 +11,10 @@ import (
 	"go.signoz.io/signoz/pkg/query-service/utils"
 )
 
+type Options struct {
+	PreferRPM    bool
+}
+
 var aggregateOperatorToPercentile = map[v3.AggregateOperator]float64{
 	v3.AggregateOperatorP05:         0.05,
 	v3.AggregateOperatorP10:         0.10,
@@ -45,7 +49,6 @@ var aggregateOperatorToSQLFunc = map[v3.AggregateOperator]string{
 
 // See https://github.com/SigNoz/signoz/issues/2151#issuecomment-1467249056
 var rateWithoutNegative = `if(runningDifference(ts) <= 0, nan, if(runningDifference(value) < 0, (value) / runningDifference(ts), runningDifference(value) / runningDifference(ts))) `
-var rateWithoutNegativeMinute = `if(runningDifference(ts) <= 0, nan, if(runningDifference(value) < 0, (value*60) / runningDifference(ts), runningDifference(value*60) / runningDifference(ts))) `
 
 // buildMetricsTimeSeriesFilterQuery builds the sub-query to be used for filtering
 // timeseries based on search criteria
@@ -133,16 +136,9 @@ func buildMetricsTimeSeriesFilterQuery(fs *v3.FilterSet, groupTags []v3.Attribut
 	return filterSubQuery, nil
 }
 
-func buildMetricQuery(start, end, step int64, mq *v3.BuilderQuery, tableName string, checkFeature func(string) error) (string, error) {
+func buildMetricQuery(start, end, step int64, mq *v3.BuilderQuery, tableName string) (string, error) {
 
 	metricQueryGroupBy := mq.GroupBy
-
-	err := checkFeature(constants.PreferRPM)
-	PreferRPMFeatureEnabled := err == nil
-
-	if PreferRPMFeatureEnabled {
-		rateWithoutNegative = rateWithoutNegativeMinute
-	}
 
 	// if the aggregate operator is a histogram quantile, and user has not forgotten
 	// the le tag in the group by then add the le tag to the group by
@@ -426,22 +422,26 @@ func reduceQuery(query string, reduceTo v3.ReduceToOperator, aggregateOperator v
 	return query, nil
 }
 
-func PrepareMetricQuery(start, end int64, queryType v3.QueryType, panelType v3.PanelType, mq *v3.BuilderQuery, checkFeature func(string) error) (string, error) {
+func PrepareMetricQuery(start, end int64, queryType v3.QueryType, panelType v3.PanelType, mq *v3.BuilderQuery, options Options) (string, error) {
 	var query string
 	var err error
 	if mq.Temporality == v3.Delta {
 		if panelType == v3.PanelTypeTable {
-			query, err = buildDeltaMetricQueryForTable(start, end, mq.StepInterval, mq, constants.SIGNOZ_TIMESERIES_TABLENAME, checkFeature)
+			query, err = buildDeltaMetricQueryForTable(start, end, mq.StepInterval, mq, constants.SIGNOZ_TIMESERIES_TABLENAME)
 		} else {
-			query, err = buildDeltaMetricQuery(start, end, mq.StepInterval, mq, constants.SIGNOZ_TIMESERIES_TABLENAME, checkFeature)
+			query, err = buildDeltaMetricQuery(start, end, mq.StepInterval, mq, constants.SIGNOZ_TIMESERIES_TABLENAME)
 		}
 	} else {
 		if panelType == v3.PanelTypeTable {
-			query, err = buildMetricQueryForTable(start, end, mq.StepInterval, mq, constants.SIGNOZ_TIMESERIES_TABLENAME, checkFeature)
+			query, err = buildMetricQueryForTable(start, end, mq.StepInterval, mq, constants.SIGNOZ_TIMESERIES_TABLENAME)
 		} else {
-			query, err = buildMetricQuery(start, end, mq.StepInterval, mq, constants.SIGNOZ_TIMESERIES_TABLENAME, checkFeature)
+			query, err = buildMetricQuery(start, end, mq.StepInterval, mq, constants.SIGNOZ_TIMESERIES_TABLENAME)
 		}
 	}
+	if options.PreferRPM{
+		query = `SELECT ts, value * 60 as value FROM (` + query + `)`
+	}
+
 	if err != nil {
 		return "", err
 	}

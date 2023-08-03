@@ -5,7 +5,6 @@ import (
 
 	. "github.com/smartystreets/goconvey/convey"
 	"go.signoz.io/signoz/pkg/query-service/constants"
-	"go.signoz.io/signoz/pkg/query-service/model"
 	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
 )
 
@@ -501,7 +500,7 @@ var testBuildTracesQueryData = []struct {
 			" signoz_traces.distributed_signoz_index_v2 where (timestamp >= '1680066360726210000' AND timestamp <=" +
 			" '1680066458000000000') group by ts order by value DESC",
 		PanelType: v3.PanelTypeGraph,
-		Options:   Options{GraphLimitQtype: "", CheckFeature: func(s string) error { return nil }},
+		Options:   Options{GraphLimitQtype: "", PreferRPM: true},
 	},
 	{
 		Name:  "Test aggregate count on fixed column of float64 type with filter",
@@ -845,9 +844,7 @@ var testBuildTracesQueryData = []struct {
 			" AND has(stringTagMap, 'method') group by `method`,ts order by `method` ASC",
 		PanelType: v3.PanelTypeGraph,
 		Options: Options{GraphLimitQtype: "",
-			CheckFeature: func(s string) error {
-				return model.ErrFeatureUnavailable{Key: "PreferRPM"}
-			},
+			PreferRPM: false,
 		},
 	},
 	{
@@ -871,7 +868,7 @@ var testBuildTracesQueryData = []struct {
 			"AND has(stringTagMap, 'method') group by `method`,ts " +
 			"order by `method` ASC",
 		PanelType: v3.PanelTypeGraph,
-		Options:   Options{GraphLimitQtype: "", CheckFeature: func(s string) error { return nil }},
+		Options:   Options{GraphLimitQtype: "", PreferRPM: true},
 	},
 	{
 		Name:  "Test aggregate RateSum without fixed column",
@@ -895,7 +892,7 @@ var testBuildTracesQueryData = []struct {
 			"AND has(stringTagMap, 'method') group by `method`,ts " +
 			"order by `method` ASC",
 		PanelType: v3.PanelTypeGraph,
-		Options:   Options{GraphLimitQtype: "", CheckFeature: func(s string) error { return nil }},
+		Options:   Options{GraphLimitQtype: "", PreferRPM: true},
 	},
 	{
 		Name:  "Test aggregate with having clause",
