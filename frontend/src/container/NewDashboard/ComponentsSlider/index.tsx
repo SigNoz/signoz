@@ -1,4 +1,4 @@
-import { initialQueriesMap, PANEL_TYPES } from 'constants/queryBuilder';
+import { PANEL_TYPES } from 'constants/queryBuilder';
 import { queryParamNamesMap } from 'constants/queryBuilderQueryNames';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { useNotifications } from 'hooks/useNotifications';
@@ -15,6 +15,7 @@ import { AppState } from 'store/reducers';
 import AppActions from 'types/actions';
 import DashboardReducer from 'types/reducer/dashboards';
 
+import { initialQuery } from './configs';
 import menuItems from './menuItems';
 import { Card, Container, Text } from './styles';
 
@@ -46,7 +47,7 @@ function DashboardGraphSlider({ toggleAddWidget }: Props): JSX.Element {
 					`${history.location.pathname}/new?graphType=${name}&widgetId=${
 						emptyLayout.i
 					}&${queryParamNamesMap.compositeQuery}=${encodeURIComponent(
-						JSON.stringify(initialQueriesMap.metrics),
+						JSON.stringify(initialQuery),
 					)}`,
 				);
 			} catch (error) {
