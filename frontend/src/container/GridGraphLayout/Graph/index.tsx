@@ -173,6 +173,7 @@ function GridCardGraph({
 					allowClone={allowClone}
 					allowDelete={allowDelete}
 					allowEdit={allowEdit}
+					onClickHandler={onClickHandler}
 				/>
 			)}
 
