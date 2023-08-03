@@ -1,4 +1,5 @@
 import { grey } from '@ant-design/colors';
+import { themeColors } from 'constants/theme';
 import styled from 'styled-components';
 
 export const HeaderContainer = styled.div<{ hover: boolean }>`
@@ -23,4 +24,9 @@ export const ArrowContainer = styled.span<{ hover: boolean }>`
 	visibility: ${({ hover }): string => (hover ? 'visible' : 'hidden')};
 	position: absolute;
 	right: -1rem;
+`;
+
+export const ThesholdContainer = styled.span`
+	margin-top: -0.3rem;
+	color: ${themeColors.lightGrey};
 `;

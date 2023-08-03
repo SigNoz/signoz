@@ -29,6 +29,10 @@ export const Col = styled(ColComponent)`
 	}
 `;
 
+export const ColContainer = styled.div`
+	padding: 2rem 0;
+`;
+
 export const GraphContainer = styled.div`
 	height: 40vh;
 `;

@@ -30,6 +30,7 @@ function GridCardGraph({
 	allowClone,
 	allowEdit,
 	isQueryEnabled,
+	allowThreshold,
 }: GridCardGraphProps): JSX.Element {
 	const { isAddWidget } = useSelector<AppState, DashboardReducer>(
 		(state) => state.dashboards,
@@ -124,6 +125,7 @@ function GridCardGraph({
 						allowClone={allowClone}
 						allowDelete={allowDelete}
 						allowEdit={allowEdit}
+						allowThreshold={allowThreshold}
 					/>
 				)}
 			</span>
@@ -149,6 +151,7 @@ function GridCardGraph({
 						allowDelete={allowDelete}
 						allowEdit={allowEdit}
 						onClickHandler={onClickHandler}
+						allowThreshold={allowThreshold}
 					/>
 				) : (
 					<Spinner height="20vh" tip="Loading..." />
@@ -173,6 +176,7 @@ function GridCardGraph({
 					allowClone={allowClone}
 					allowDelete={allowDelete}
 					allowEdit={allowEdit}
+					allowThreshold={allowThreshold}
 				/>
 			)}
 
@@ -188,6 +192,8 @@ GridCardGraph.defaultProps = {
 	allowClone: true,
 	allowEdit: true,
 	isQueryEnabled: true,
+	allowThreshold: false,
+	theadholdValue: undefined,
 };
 
 export default memo(GridCardGraph);

@@ -42,6 +42,7 @@ function TopLevelOperation({
 							allowClone={false}
 							allowDelete={false}
 							allowEdit={false}
+							allowThreshold={false}
 						/>
 					)}
 				</GraphContainer>

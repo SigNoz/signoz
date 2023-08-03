@@ -32,7 +32,8 @@ import {
 	errorPercentage,
 	operationPerSec,
 } from '../MetricsPageQueries/OverviewQueries';
-import { Card, Col, Row } from '../styles';
+import { Card, Col, ColContainer, Row } from '../styles';
+import ApDex from './Overview/ApDex';
 import ServiceOverview from './Overview/ServiceOverview';
 import TopLevelOperation from './Overview/TopLevelOperations';
 import TopOperation from './Overview/TopOperation';
@@ -222,28 +223,44 @@ function Application(): JSX.Element {
 			</Row>
 			<Row gutter={24}>
 				<Col span={12}>
-					<Button
-						type="default"
-						size="small"
-						id="Error_button"
-						onClick={(): void => {
-							onErrorTrackHandler(selectedTimeStamp);
-						}}
-					>
-						View Traces
-					</Button>
+					<>
+						<Button
+							type="default"
+							size="small"
+							id="Error_button"
+							onClick={(): void => {
+								onErrorTrackHandler(selectedTimeStamp);
+							}}
+						>
+							View Traces
+						</Button>
 
-					<TopLevelOperation
-						handleGraphClick={handleGraphClick}
-						onDragSelect={onDragSelect}
-						topLevelOperationsError={topLevelOperationsError}
-						topLevelOperationsLoading={topLevelOperationsLoading}
-						topLevelOperationsIsError={topLevelOperationsIsError}
-						name="error_percentage_%"
-						widget={errorPercentageWidget}
-						yAxisUnit="%"
-						opName="Error"
-					/>
+						<ApDex />
+					</>
+					<ColContainer>
+						<Button
+							type="default"
+							size="small"
+							id="Error_button"
+							onClick={(): void => {
+								onErrorTrackHandler(selectedTimeStamp);
+							}}
+						>
+							View Traces
+						</Button>
+
+						<TopLevelOperation
+							handleGraphClick={handleGraphClick}
+							onDragSelect={onDragSelect}
+							topLevelOperationsError={topLevelOperationsError}
+							topLevelOperationsLoading={topLevelOperationsLoading}
+							topLevelOperationsIsError={topLevelOperationsIsError}
+							name="error_percentage_%"
+							widget={errorPercentageWidget}
+							yAxisUnit="%"
+							opName="Error"
+						/>
+					</ColContainer>
 				</Col>
 
 				<Col span={12}>

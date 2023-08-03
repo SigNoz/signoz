@@ -10,9 +10,11 @@ import { Dropdown, MenuProps, Tooltip, Typography } from 'antd';
 import { MenuItemType } from 'antd/es/menu/hooks/useItems';
 import Spinner from 'components/Spinner';
 import { queryParamNamesMap } from 'constants/queryBuilderQueryNames';
+import { themeColors } from 'constants/theme';
 import useComponentPermission from 'hooks/useComponentPermission';
+import { useThresholdDataHandler } from 'hooks/useThresholdDataHandler';
 import history from 'lib/history';
-import { useCallback, useMemo, useState } from 'react';
+import { ReactNode, useCallback, useMemo, useState } from 'react';
 import { UseQueryResult } from 'react-query';
 import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
@@ -32,12 +34,13 @@ import {
 	ArrowContainer,
 	HeaderContainer,
 	HeaderContentContainer,
+	ThesholdContainer,
 } from './styles';
 import { KeyMethodMappingProps, MenuItem, TWidgetOptions } from './types';
 import { generateMenuList, isTWidgetOptions } from './utils';
 
 interface IWidgetHeaderProps {
-	title: string;
+	title: ReactNode;
 	widget: Widgets;
 	onView: VoidFunction;
 	onDelete?: VoidFunction;
@@ -50,6 +53,7 @@ interface IWidgetHeaderProps {
 	allowDelete?: boolean;
 	allowClone?: boolean;
 	allowEdit?: boolean;
+	allowThreshold?: boolean;
 }
 function WidgetHeader({
 	title,
@@ -63,9 +67,12 @@ function WidgetHeader({
 	allowClone = true,
 	allowDelete = true,
 	allowEdit = true,
+	allowThreshold = false,
 }: IWidgetHeaderProps): JSX.Element {
 	const [localHover, setLocalHover] = useState(false);
 	const [isOpen, setIsOpen] = useState<boolean>(false);
+
+	const thresholdValue = useThresholdDataHandler();
 
 	const onEditHandler = useCallback((): void => {
 		const widgetId = widget.id;
@@ -179,7 +186,13 @@ function WidgetHeader({
 	);
 
 	return (
-		<div>
+		<div
+			style={{
+				display: 'flex',
+				flexDirection: 'row-reverse',
+				alignItems: 'center',
+			}}
+		>
 			<Dropdown
 				destroyPopupOnHide
 				open={isOpen}
@@ -204,6 +217,16 @@ function WidgetHeader({
 					</HeaderContentContainer>
 				</HeaderContainer>
 			</Dropdown>
+			<ThesholdContainer>
+				{allowThreshold && (
+					<>
+						Threshold{' '}
+						<Typography.Text style={{ color: themeColors.white }}>
+							{thresholdValue}
+						</Typography.Text>
+					</>
+				)}
+			</ThesholdContainer>
 			{queryResponse.isFetching && !queryResponse.isError && (
 				<Spinner height="5vh" style={spinnerStyles} />
 			)}
@@ -222,6 +245,7 @@ WidgetHeader.defaultProps = {
 	allowDelete: true,
 	allowClone: true,
 	allowEdit: true,
+	allowThreshold: false,
 };
 
 export default WidgetHeader;

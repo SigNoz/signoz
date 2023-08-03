@@ -56,6 +56,7 @@ function WidgetGraphComponent({
 	allowClone = true,
 	allowDelete = true,
 	allowEdit = true,
+	allowThreshold = false,
 }: WidgetGraphComponentProps): JSX.Element {
 	const [deleteModal, setDeleteModal] = useState(false);
 	const [modal, setModal] = useState<boolean>(false);
@@ -284,6 +285,7 @@ function WidgetGraphComponent({
 								allowClone={allowClone}
 								allowDelete={allowDelete}
 								allowEdit={allowEdit}
+								allowThreshold={allowThreshold}
 							/>
 						</div>
 					)}
@@ -316,6 +318,7 @@ WidgetGraphComponent.defaultProps = {
 	allowDelete: true,
 	allowClone: true,
 	allowEdit: true,
+	allowThreshold: false,
 };
 
 const mapDispatchToProps = (
