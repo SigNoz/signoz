@@ -1,5 +1,6 @@
 import { Tabs, TabsProps } from 'antd';
-import { History } from 'history';
+
+import { RouteTabProps } from './types';
 
 function RouteTab({
 	routes,
@@ -13,16 +14,16 @@ function RouteTab({
 			onChangeHandler();
 		}
 
-		const selectedRoute = routes.find((e) => e.name === activeRoute);
+		const selectedRoute = routes.find((e) => e.key === activeRoute);
 
 		if (selectedRoute) {
 			history.push(selectedRoute.route);
 		}
 	};
 
-	const items = routes.map(({ Component, name, route }) => ({
+	const items = routes.map(({ Component, name, route, key }) => ({
 		label: name,
-		key: name,
+		key,
 		tabKey: route,
 		children: <Component />,
 	}));
@@ -32,23 +33,13 @@ function RouteTab({
 			onChange={onChange}
 			destroyInactiveTabPane
 			activeKey={activeKey}
+			defaultActiveKey={activeKey}
 			animated
 			items={items}
 			// eslint-disable-next-line react/jsx-props-no-spreading
 			{...rest}
 		/>
 	);
-}
-
-interface RouteTabProps {
-	routes: {
-		name: string;
-		route: string;
-		Component: () => JSX.Element;
-	}[];
-	activeKey: TabsProps['activeKey'];
-	onChangeHandler?: VoidFunction;
-	history: History<unknown>;
 }
 
 RouteTab.defaultProps = {
