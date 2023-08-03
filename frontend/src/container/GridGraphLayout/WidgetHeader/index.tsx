@@ -10,9 +10,7 @@ import { Dropdown, MenuProps, Tooltip, Typography } from 'antd';
 import { MenuItemType } from 'antd/es/menu/hooks/useItems';
 import Spinner from 'components/Spinner';
 import { queryParamNamesMap } from 'constants/queryBuilderQueryNames';
-import { themeColors } from 'constants/theme';
 import useComponentPermission from 'hooks/useComponentPermission';
-import { useThresholdDataHandler } from 'hooks/useThresholdDataHandler';
 import history from 'lib/history';
 import { ReactNode, useCallback, useMemo, useState } from 'react';
 import { UseQueryResult } from 'react-query';
@@ -30,6 +28,7 @@ import {
 	tooltipStyles,
 } from './config';
 import { MENUITEM_KEYS_VS_LABELS, MenuItemKeys } from './contants';
+import DisplayThreshold from './DisplayThreshold';
 import {
 	ArrowContainer,
 	HeaderContainer,
@@ -71,8 +70,6 @@ function WidgetHeader({
 }: IWidgetHeaderProps): JSX.Element {
 	const [localHover, setLocalHover] = useState(false);
 	const [isOpen, setIsOpen] = useState<boolean>(false);
-
-	const thresholdValue = useThresholdDataHandler();
 
 	const onEditHandler = useCallback((): void => {
 		const widgetId = widget.id;
@@ -218,14 +215,7 @@ function WidgetHeader({
 				</HeaderContainer>
 			</Dropdown>
 			<ThesholdContainer>
-				{allowThreshold && (
-					<>
-						Threshold{' '}
-						<Typography.Text style={{ color: themeColors.white }}>
-							{thresholdValue}
-						</Typography.Text>
-					</>
-				)}
+				{allowThreshold && <DisplayThreshold />}
 			</ThesholdContainer>
 			{queryResponse.isFetching && !queryResponse.isError && (
 				<Spinner height="5vh" style={spinnerStyles} />
