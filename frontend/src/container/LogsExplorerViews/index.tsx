@@ -1,4 +1,4 @@
-import { TabsProps } from 'antd';
+import { Tabs, TabsProps } from 'antd';
 import TabLabel from 'components/TabLabel';
 import { QueryParams } from 'constants/query';
 import {
@@ -40,7 +40,7 @@ import {
 import { DataSource, StringOperators } from 'types/common/queryBuilder';
 import { GlobalReducer } from 'types/reducer/globalTime';
 
-import { ActionsWrapper, TabsStyled } from './LogsExplorerViews.styled';
+import { ActionsWrapper } from './LogsExplorerViews.styled';
 
 function LogsExplorerViews(): JSX.Element {
 	const { notifications } = useNotifications();
@@ -480,7 +480,7 @@ function LogsExplorerViews(): JSX.Element {
 					/>
 				</ActionsWrapper>
 			)}
-			<TabsStyled
+			<Tabs
 				items={tabsItems}
 				defaultActiveKey={panelType || PANEL_TYPES.LIST}
 				activeKey={panelType || PANEL_TYPES.LIST}
