@@ -154,7 +154,7 @@ function LogsExplorerViews(): JSX.Element {
 		panelType,
 		{
 			keepPreviousData: true,
-			enabled: !isLimit,
+			enabled: !isLimit && !!requestData,
 		},
 		{
 			...(timeRange &&
