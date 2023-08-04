@@ -413,6 +413,13 @@ type Options struct {
 	IsLivetailQuery bool
 }
 
+func isOrderByTs(orderBy []v3.OrderBy) bool {
+	if len(orderBy) == 1 && orderBy[0].Key == constants.TIMESTAMP {
+		return true
+	}
+	return false
+}
+
 func PrepareLogsQuery(start, end int64, queryType v3.QueryType, panelType v3.PanelType, mq *v3.BuilderQuery, options Options) (string, error) {
 	if options.IsLivetailQuery {
 		query, err := buildLogsLiveTailQuery(mq)
@@ -446,12 +453,23 @@ func PrepareLogsQuery(start, end int64, queryType v3.QueryType, panelType v3.Pan
 	}
 
 	if panelType == v3.PanelTypeList {
+		// check if limit exceeded
+		if mq.Limit > 0 && mq.Offset >= mq.Limit {
+			return "", fmt.Errorf("max limit exceeded")
+		}
+
 		if mq.PageSize > 0 {
-			if mq.Limit > 0 && mq.Offset > mq.Limit {
-				return "", fmt.Errorf("max limit exceeded")
+			if mq.Limit > 0 && mq.Offset+mq.PageSize > mq.Limit {
+				query = addLimitToQuery(query, mq.Limit-mq.Offset)
+			} else {
+				query = addLimitToQuery(query, mq.PageSize)
 			}
-			query = addLimitToQuery(query, mq.PageSize)
-			query = addOffsetToQuery(query, mq.Offset)
+
+			// add offset to the query only if it is not orderd by timestamp.
+			if !isOrderByTs(mq.OrderBy) {
+				query = addOffsetToQuery(query, mq.Offset)
+			}
+
 		} else {
 			query = addLimitToQuery(query, mq.Limit)
 		}

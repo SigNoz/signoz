@@ -224,8 +224,8 @@ export const errorPercentage = ({
 	const additionalItems = [additionalItemsA, additionalItemsB];
 	const legends = [GraphTitle.ERROR_PERCENTAGE];
 	const disabled = [true, true];
-	const expression = FORMULA.ERROR_PERCENTAGE;
-	const legendFormula = GraphTitle.ERROR_PERCENTAGE;
+	const expressions = [FORMULA.ERROR_PERCENTAGE];
+	const legendFormulas = [GraphTitle.ERROR_PERCENTAGE];
 	const aggregateOperators = [
 		MetricAggregateOperator.SUM_RATE,
 		MetricAggregateOperator.SUM_RATE,
@@ -237,8 +237,8 @@ export const errorPercentage = ({
 		additionalItems,
 		legends,
 		disabled,
-		expression,
-		legendFormula,
+		expressions,
+		legendFormulas,
 		aggregateOperators,
 		dataSource,
 	});
