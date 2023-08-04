@@ -103,6 +103,7 @@ function LogsContextList({
 		PANEL_TYPES.LIST,
 		{
 			keepPreviousData: true,
+			enabled: !!requestData,
 			onSuccess: handleSuccess,
 		},
 	);
