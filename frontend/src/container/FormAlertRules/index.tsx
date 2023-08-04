@@ -7,6 +7,7 @@ import { PANEL_TYPES } from 'constants/queryBuilder';
 import ROUTES from 'constants/routes';
 import QueryTypeTag from 'container/NewWidget/LeftContainer/QueryTypeTag';
 import PlotTag from 'container/NewWidget/LeftContainer/WidgetGraph/PlotTag';
+import { BuilderUnitsFilter } from 'container/QueryBuilder/filters';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useShareBuilderUrl } from 'hooks/queryBuilder/useShareBuilderUrl';
 import { updateStepInterval } from 'hooks/queryBuilder/useStepInterval';
@@ -39,6 +40,7 @@ import {
 	ButtonContainer,
 	MainFormContainer,
 	PanelContainer,
+	StepContainer,
 	StyledLeftContainer,
 } from './styles';
 import UserGuide from './UserGuide';
@@ -361,9 +363,9 @@ function FormAlertRules({
 				/>
 			}
 			name=""
-			threshold={alertDef.condition?.target}
 			query={stagedQuery}
 			selectedInterval={toChartInterval(alertDef.evalWindow)}
+			alertDef={alertDef}
 		/>
 	);
 
@@ -376,8 +378,8 @@ function FormAlertRules({
 				/>
 			}
 			name="Chart Preview"
-			threshold={alertDef.condition?.target}
 			query={stagedQuery}
+			alertDef={alertDef}
 		/>
 	);
 
@@ -390,8 +392,8 @@ function FormAlertRules({
 				/>
 			}
 			name="Chart Preview"
-			threshold={alertDef.condition?.target}
 			query={stagedQuery}
+			alertDef={alertDef}
 			selectedInterval={toChartInterval(alertDef.evalWindow)}
 		/>
 	);
@@ -408,6 +410,7 @@ function FormAlertRules({
 	return (
 		<>
 			{Element}
+
 			<PanelContainer>
 				<StyledLeftContainer flex="5 1 600px" md={18}>
 					<MainFormContainer
@@ -420,6 +423,11 @@ function FormAlertRules({
 						{currentQuery.queryType === EQueryType.PROM && renderPromChartPreview()}
 						{currentQuery.queryType === EQueryType.CLICKHOUSE &&
 							renderChQueryChartPreview()}
+
+						<StepContainer>
+							<BuilderUnitsFilter />
+						</StepContainer>
+
 						<QuerySection
 							queryCategory={currentQuery.queryType}
 							setQueryCategory={onQueryCategoryChange}

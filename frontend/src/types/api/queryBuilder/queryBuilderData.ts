@@ -83,7 +83,7 @@ export interface Query {
 	builder: QueryBuilderData;
 	clickhouse_sql: IClickHouseQuery[];
 	id: string;
-	unit: Format['id'] | null;
+	unit?: Format['id'];
 }
 
 export type QueryState = Omit<Query, 'queryType'>;

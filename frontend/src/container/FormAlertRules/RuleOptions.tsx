@@ -1,4 +1,13 @@
-import { Form, InputNumber, InputNumberProps, Select, Typography } from 'antd';
+import {
+	Form,
+	InputNumber,
+	InputNumberProps,
+	Select,
+	SelectProps,
+	Space,
+	Typography,
+} from 'antd';
+import { getCategorySelectOptionByName } from 'container/NewWidget/RightContainer/dataFormatCategories';
 import { useTranslation } from 'react-i18next';
 import {
 	AlertDef,
@@ -11,7 +20,6 @@ import { EQueryType } from 'types/common/dashboard';
 import { FormContainer, InlineSelect, StepHeading } from './styles';
 
 const { Option } = Select;
-const FormItem = Form.Item;
 
 function RuleOptions({
 	alertDef,
@@ -105,20 +113,20 @@ function RuleOptions({
 	);
 
 	const renderThresholdRuleOpts = (): JSX.Element => (
-		<FormItem>
+		<Form.Item>
 			<Typography.Text>
 				{t('text_condition1')} {renderCompareOps()} {t('text_condition2')}{' '}
 				{renderThresholdMatchOpts()} {t('text_condition3')} {renderEvalWindows()}
 			</Typography.Text>
-		</FormItem>
+		</Form.Item>
 	);
 	const renderPromRuleOptions = (): JSX.Element => (
-		<FormItem>
+		<Form.Item>
 			<Typography.Text>
 				{t('text_condition1')} {renderCompareOps()} {t('text_condition2')}{' '}
 				{renderPromMatchOpts()}
 			</Typography.Text>
-		</FormItem>
+		</Form.Item>
 	);
 
 	const onChange: InputNumberProps['onChange'] = (value): void => {
@@ -133,6 +141,16 @@ function RuleOptions({
 		});
 	};
 
+	const onChangeAlertUnit: SelectProps['onChange'] = (value) => {
+		setAlertDef({
+			...alertDef,
+			condition: {
+				...alertDef.condition,
+				targetUnit: value as string,
+			},
+		});
+	};
+
 	return (
 		<>
 			<StepHeading>{t('alert_form_step2')}</StepHeading>
@@ -140,14 +158,26 @@ function RuleOptions({
 				{queryCategory === EQueryType.PROM
 					? renderPromRuleOptions()
 					: renderThresholdRuleOpts()}
-				<Form.Item name={['condition', 'target']}>
-					<InputNumber
-						addonBefore={t('field_threshold')}
-						value={alertDef?.condition?.target}
-						onChange={onChange}
-						type="number"
-					/>
-				</Form.Item>
+
+				<Space align="start">
+					<Form.Item noStyle name={['condition', 'target']}>
+						<InputNumber
+							addonBefore={t('field_threshold')}
+							value={alertDef?.condition?.target}
+							onChange={onChange}
+							type="number"
+						/>
+					</Form.Item>
+
+					<Form.Item>
+						<Select
+							style={{ minWidth: '10rem' }}
+							options={getCategorySelectOptionByName('Data')}
+							value={alertDef.condition.targetUnit}
+							onChange={onChangeAlertUnit}
+						/>
+					</Form.Item>
+				</Space>
 			</FormContainer>
 		</>
 	);
