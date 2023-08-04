@@ -187,6 +187,7 @@ export type QueryBuilderContextType = {
 	) => void;
 	handleRunQuery: () => void;
 	resetStagedQuery: () => void;
+	handleOnUnitsChange: (units: string) => void;
 	updateAllQueriesOperators: (
 		queryData: Query,
 		panelType: PANEL_TYPES,

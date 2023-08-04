@@ -176,6 +176,7 @@ export function QueryBuilderProvider({
 					queryData: setupedQueryData,
 				},
 				id: query.id,
+				unit: query.unit,
 			};
 
 			const nextQuery: Query = {
@@ -474,6 +475,7 @@ export function QueryBuilderProvider({
 				promql,
 				clickhouse_sql: clickhouseSql,
 				id: uuid(),
+				unit: query.unit || initialQueryState.unit,
 			};
 
 			urlQuery.set(
@@ -513,6 +515,7 @@ export function QueryBuilderProvider({
 						promql: currentQuery.promql,
 						id: currentQuery.id,
 						queryType,
+						unit: currentQuery.unit,
 					},
 					maxTime,
 					minTime,
@@ -550,6 +553,16 @@ export function QueryBuilderProvider({
 		stagedQuery,
 	]);
 
+	const handleOnUnitsChange = useCallback(
+		(unit: string) => {
+			setCurrentQuery((prevState) => ({
+				...prevState,
+				unit,
+			}));
+		},
+		[setCurrentQuery],
+	);
+
 	const query: Query = useMemo(
 		() => ({
 			...currentQuery,
@@ -585,6 +598,7 @@ export function QueryBuilderProvider({
 			updateAllQueriesOperators,
 			updateQueriesData,
 			initQueryBuilderData,
+			handleOnUnitsChange,
 		}),
 		[
 			query,
@@ -607,6 +621,7 @@ export function QueryBuilderProvider({
 			updateAllQueriesOperators,
 			updateQueriesData,
 			initQueryBuilderData,
+			handleOnUnitsChange,
 		],
 	);
 

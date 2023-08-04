@@ -1,6 +1,8 @@
 import { flattenDeep } from 'lodash-es';
 
-export const dataTypeCategories = [
+import { DataTypeCategories } from './types';
+
+export const dataTypeCategories: DataTypeCategories = [
 	{
 		name: 'Time',
 		formats: [

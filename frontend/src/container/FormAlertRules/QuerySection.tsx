@@ -2,6 +2,7 @@ import { Button, Tabs } from 'antd';
 import { ALERTS_DATA_SOURCE_MAP } from 'constants/alerts';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { QueryBuilder } from 'container/QueryBuilder';
+import { BuilderUnitsFilter } from 'container/QueryBuilder/filters';
 import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useSelector } from 'react-redux';
@@ -12,7 +13,7 @@ import AppReducer from 'types/reducer/app';
 
 import ChQuerySection from './ChQuerySection';
 import PromqlSection from './PromqlSection';
-import { FormContainer, StepHeading } from './styles';
+import { FormContainer, StepContainer, StepHeading } from './styles';
 
 function QuerySection({
 	queryCategory,
@@ -122,14 +123,16 @@ function QuerySection({
 				return null;
 		}
 	};
+
 	return (
-		<>
+		<StepContainer>
+			<BuilderUnitsFilter />
 			<StepHeading> {t('alert_form_step1')}</StepHeading>
 			<FormContainer>
 				<div style={{ display: 'flex' }}>{renderTabs(alertType)}</div>
 				{renderQuerySection(queryCategory)}
 			</FormContainer>
-		</>
+		</StepContainer>
 	);
 }
 
