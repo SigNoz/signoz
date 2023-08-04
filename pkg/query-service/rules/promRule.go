@@ -258,6 +258,13 @@ func (r *PromRule) ActiveAlerts() []*Alert {
 	return res
 }
 
+func (r *PromRule) Unit() string {
+	if r.ruleCondition != nil && r.ruleCondition.CompositeQuery != nil {
+		return r.ruleCondition.CompositeQuery.Unit
+	}
+	return ""
+}
+
 // ForEachActiveAlert runs the given function on each alert.
 // This should be used when you want to use the actual alerts from the ThresholdRule
 // and not on its copy.
@@ -300,7 +307,7 @@ func (r *PromRule) getPqlQuery() (string, error) {
 				}
 				if r.ruleCondition.Target != nil && r.ruleCondition.CompareOp != CompareOpNone {
 					unitConverter := converter.FromUnit(converter.Unit(r.ruleCondition.TargetUnit))
-					value := unitConverter.Convert(converter.Value{F: *r.ruleCondition.Target, U: converter.Unit(r.ruleCondition.TargetUnit)}, converter.Unit(r.ruleCondition.YAxis))
+					value := unitConverter.Convert(converter.Value{F: *r.ruleCondition.Target, U: converter.Unit(r.ruleCondition.TargetUnit)}, converter.Unit(r.Unit()))
 					query = fmt.Sprintf("%s %s %f", query, ResolveCompareOp(r.ruleCondition.CompareOp), value.F)
 					return query, nil
 				} else {
@@ -315,7 +322,7 @@ func (r *PromRule) getPqlQuery() (string, error) {
 
 func (r *PromRule) Eval(ctx context.Context, ts time.Time, queriers *Queriers) (interface{}, error) {
 
-	valueFormatter := formatter.FromUnit(r.ruleCondition.YAxis)
+	valueFormatter := formatter.FromUnit(r.Unit())
 
 	q, err := r.getPqlQuery()
 	if err != nil {
@@ -342,7 +349,7 @@ func (r *PromRule) Eval(ctx context.Context, ts time.Time, queriers *Queriers) (
 			l[lbl.Name] = lbl.Value
 		}
 
-		tmplData := AlertTemplateData(l, valueFormatter.Format(smpl.V, r.ruleCondition.YAxis), strconv.FormatFloat(r.targetVal(), 'f', 2, 64)+r.ruleCondition.TargetUnit)
+		tmplData := AlertTemplateData(l, valueFormatter.Format(smpl.V, r.Unit()), strconv.FormatFloat(r.targetVal(), 'f', 2, 64)+r.ruleCondition.TargetUnit)
 		// Inject some convenience variables that are easier to remember for users
 		// who are not used to Go's templating system.
 		defs := "{{$labels := .Labels}}{{$value := .Value}}{{$threshold := .Threshold}}"

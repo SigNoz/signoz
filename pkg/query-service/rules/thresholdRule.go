@@ -327,6 +327,14 @@ func (r *ThresholdRule) SendAlerts(ctx context.Context, ts time.Time, resendDela
 	})
 	notifyFunc(ctx, "", alerts...)
 }
+
+func (r *ThresholdRule) Unit() string {
+	if r.ruleCondition != nil && r.ruleCondition.CompositeQuery != nil {
+		return r.ruleCondition.CompositeQuery.Unit
+	}
+	return ""
+}
+
 func (r *ThresholdRule) CheckCondition(v float64) bool {
 
 	if math.IsNaN(v) {
@@ -341,7 +349,7 @@ func (r *ThresholdRule) CheckCondition(v float64) bool {
 
 	unitConverter := converter.FromUnit(converter.Unit(r.ruleCondition.TargetUnit))
 
-	value := unitConverter.Convert(converter.Value{F: *r.ruleCondition.Target, U: converter.Unit(r.ruleCondition.TargetUnit)}, converter.Unit(r.ruleCondition.YAxis))
+	value := unitConverter.Convert(converter.Value{F: *r.ruleCondition.Target, U: converter.Unit(r.ruleCondition.TargetUnit)}, converter.Unit(r.Unit()))
 
 	zap.S().Debugf("Checking condition for rule: %s, Converter=%s, Value=%f, Target=%f, CompareOp=%s", r.Name(), unitConverter.Name(), v, value.F, r.ruleCondition.CompareOp)
 	switch r.ruleCondition.CompareOp {
@@ -690,7 +698,7 @@ func (r *ThresholdRule) buildAndRunQuery(ctx context.Context, ts time.Time, ch c
 
 func (r *ThresholdRule) Eval(ctx context.Context, ts time.Time, queriers *Queriers) (interface{}, error) {
 
-	valueFormatter := formatter.FromUnit(r.ruleCondition.YAxis)
+	valueFormatter := formatter.FromUnit(r.Unit())
 	res, err := r.buildAndRunQuery(ctx, ts, queriers.Ch)
 
 	if err != nil {
@@ -712,7 +720,7 @@ func (r *ThresholdRule) Eval(ctx context.Context, ts time.Time, queriers *Querie
 			l[lbl.Name] = lbl.Value
 		}
 
-		value := valueFormatter.Format(smpl.V, r.ruleCondition.YAxis)
+		value := valueFormatter.Format(smpl.V, r.Unit())
 		threshold := strconv.FormatFloat(r.targetVal(), 'f', 2, 64) + r.ruleCondition.TargetUnit
 		zap.S().Debugf("Alert template data for rule %s: Formatter=%s, Value=%s, Threshold=%s", r.Name(), valueFormatter.Name(), value, threshold)
 
