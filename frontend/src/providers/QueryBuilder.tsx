@@ -71,6 +71,7 @@ export const QueryBuilderContext = createContext<QueryBuilderContextType>({
 	updateAllQueriesOperators: () => initialQueriesMap.metrics,
 	updateQueriesData: () => initialQueriesMap.metrics,
 	initQueryBuilderData: () => {},
+	handleOnUnitsChange: () => {},
 });
 
 export function QueryBuilderProvider({

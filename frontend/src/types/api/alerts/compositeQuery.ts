@@ -3,6 +3,7 @@ import {
 	BuilderClickHouseResource,
 	BuilderPromQLResource,
 	BuilderQueryDataResourse,
+	Query,
 } from 'types/api/queryBuilder/queryBuilderData';
 import { EQueryType } from 'types/common/dashboard';
 
@@ -12,4 +13,5 @@ export interface ICompositeMetricQuery {
 	chQueries: BuilderClickHouseResource;
 	queryType: EQueryType;
 	panelType: PANEL_TYPES;
+	unit: Query['unit'];
 }

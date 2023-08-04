@@ -34,6 +34,7 @@ export async function GetMetricQueryRange({
 		compositeQuery: {
 			queryType: query.queryType,
 			panelType: graphType,
+			unit: query?.unit,
 		},
 	};
 

@@ -224,6 +224,7 @@ function FormAlertRules({
 					chQueries: mapQueryDataToApi(currentQuery.clickhouse_sql, 'name').data,
 					queryType: currentQuery.queryType,
 					panelType: initQuery.panelType,
+					unit: currentQuery.unit,
 				},
 			},
 		};
