@@ -193,7 +193,8 @@ function PipelineExpandView({
 	}, [setActionType]);
 
 	const footer = useCallback((): JSX.Element | undefined => {
-		if (prevPipelineData.length === 0 || isEditingActionMode) {
+		const prevPipelinesCount = prevPipelineData?.length || 0;
+		if (prevPipelinesCount === 0 || isEditingActionMode) {
 			return (
 				<FooterButton type="link" onClick={addNewProcessorHandler}>
 					<PlusCircleOutlined />
