@@ -12,6 +12,8 @@
 	"routes": {
 		"general": "General",
 		"alert_channels": "Alert Channels",
-		"all_errors": "All Exceptions"
+		"all_errors": "All Exceptions",
+		"index_fields": "Index Fields",
+		"pipelines": "Pipelines"
 	}
 }

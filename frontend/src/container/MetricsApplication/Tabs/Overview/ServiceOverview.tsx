@@ -1,8 +1,11 @@
+import { FeatureKeys } from 'constants/features';
+import { PANEL_TYPES } from 'constants/queryBuilder';
 import Graph from 'container/GridGraphLayout/Graph/';
 import { GraphTitle } from 'container/MetricsApplication/constant';
 import { getWidgetQueryBuilder } from 'container/MetricsApplication/MetricsApplication.factory';
 import { latency } from 'container/MetricsApplication/MetricsPageQueries/OverviewQueries';
 import { Card, GraphContainer } from 'container/MetricsApplication/styles';
+import useFeatureFlag from 'hooks/useFeatureFlag';
 import { useMemo } from 'react';
 import { useParams } from 'react-router-dom';
 import { TagFilterItem } from 'types/api/queryBuilder/queryBuilderData';
@@ -20,26 +23,35 @@ function ServiceOverview({
 	selectedTraceTags,
 	selectedTimeStamp,
 	tagFilterItems,
+	topLevelOperationsRoute,
 }: ServiceOverviewProps): JSX.Element {
 	const { servicename } = useParams<IServiceName>();
 
+	const isSpanMetricEnable = useFeatureFlag(FeatureKeys.USE_SPAN_METRICS)
+		?.active;
+
 	const latencyWidget = useMemo(
 		() =>
-			getWidgetQueryBuilder(
-				{
+			getWidgetQueryBuilder({
+				query: {
 					queryType: EQueryType.QUERY_BUILDER,
 					promql: [],
 					builder: latency({
 						servicename,
 						tagFilterItems,
+						isSpanMetricEnable,
+						topLevelOperationsRoute,
 					}),
 					clickhouse_sql: [],
 					id: uuid(),
 				},
-				GraphTitle.LATENCY,
-			),
-		[servicename, tagFilterItems],
+				title: GraphTitle.LATENCY,
+				panelTypes: PANEL_TYPES.TIME_SERIES,
+			}),
+		[servicename, tagFilterItems, isSpanMetricEnable, topLevelOperationsRoute],
 	);
+
+	const isQueryEnabled = topLevelOperationsRoute.length > 0;
 
 	return (
 		<>
@@ -66,6 +78,7 @@ function ServiceOverview({
 						allowClone={false}
 						allowDelete={false}
 						allowEdit={false}
+						isQueryEnabled={isQueryEnabled}
 					/>
 				</GraphContainer>
 			</Card>
@@ -79,6 +92,7 @@ interface ServiceOverviewProps {
 	onDragSelect: (start: number, end: number) => void;
 	handleGraphClick: (type: string) => ClickHandlerType;
 	tagFilterItems: TagFilterItem[];
+	topLevelOperationsRoute: string[];
 }
 
 export default ServiceOverview;

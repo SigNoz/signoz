@@ -10,7 +10,6 @@ export type LogsTableViewProps = {
 	logs: ILog[];
 	fields: IField[];
 	linesPerRow: number;
-	onClickExpand: (log: ILog) => void;
 };
 
 export type UseTableViewResult = {
@@ -20,4 +19,12 @@ export type UseTableViewResult = {
 
 export type UseTableViewProps = {
 	appendTo?: 'center' | 'end';
+	onOpenLogsContext?: (log: ILog) => void;
+	onClickExpand?: (log: ILog) => void;
 } & LogsTableViewProps;
+
+export type ActionsColumnProps = {
+	logId: string;
+	logs: ILog[];
+	onOpenLogsContext?: (log: ILog) => void;
+};

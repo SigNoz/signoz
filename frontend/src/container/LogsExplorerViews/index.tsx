@@ -1,12 +1,10 @@
-import { TabsProps } from 'antd';
-import LogDetail from 'components/LogDetail';
+import { Tabs, TabsProps } from 'antd';
 import TabLabel from 'components/TabLabel';
 import { QueryParams } from 'constants/query';
 import {
+	initialAutocompleteData,
 	initialQueriesMap,
-	OPERATORS,
 	PANEL_TYPES,
-	QueryBuilderKeys,
 } from 'constants/queryBuilder';
 import { queryParamNamesMap } from 'constants/queryBuilderQueryNames';
 import ROUTES from 'constants/routes';
@@ -16,29 +14,24 @@ import GoToTop from 'container/GoToTop';
 import LogsExplorerChart from 'container/LogsExplorerChart';
 import LogsExplorerList from 'container/LogsExplorerList';
 import LogsExplorerTable from 'container/LogsExplorerTable';
-import { GRAPH_TYPES } from 'container/NewDashboard/ComponentsSlider';
+import { SIGNOZ_VALUE } from 'container/QueryBuilder/filters/OrderByFilter/constants';
 import TimeSeriesView from 'container/TimeSeriesView/TimeSeriesView';
 import { useUpdateDashboard } from 'hooks/dashboard/useUpdateDashboard';
 import { addEmptyWidgetInDashboardJSONWithQuery } from 'hooks/dashboard/utils';
+import { LogTimeRange } from 'hooks/logs/types';
+import { useCopyLogLink } from 'hooks/logs/useCopyLogLink';
 import { useGetExplorerQueryRange } from 'hooks/queryBuilder/useGetExplorerQueryRange';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import useAxiosError from 'hooks/useAxiosError';
 import { useNotifications } from 'hooks/useNotifications';
 import useUrlQueryData from 'hooks/useUrlQueryData';
-import { chooseAutocompleteFromCustomValue } from 'lib/newQueryBuilder/chooseAutocompleteFromCustomValue';
 import { getPaginationQueryData } from 'lib/newQueryBuilder/getPaginationQueryData';
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { useQueryClient } from 'react-query';
 import { useSelector } from 'react-redux';
 import { generatePath, useHistory } from 'react-router-dom';
 import { AppState } from 'store/reducers';
-import { SuccessResponse } from 'types/api';
 import { Dashboard } from 'types/api/dashboard/getAll';
 import { ILog } from 'types/api/logs/log';
-import {
-	BaseAutocompleteData,
-	IQueryAutocompleteResponse,
-} from 'types/api/queryBuilder/queryAutocompleteResponse';
 import {
 	IBuilderQuery,
 	OrderByPayload,
@@ -46,16 +39,14 @@ import {
 } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource, StringOperators } from 'types/common/queryBuilder';
 import { GlobalReducer } from 'types/reducer/globalTime';
-import { v4 as uuid } from 'uuid';
 
-import { ActionsWrapper, TabsStyled } from './LogsExplorerViews.styled';
+import { ActionsWrapper } from './LogsExplorerViews.styled';
 
 function LogsExplorerViews(): JSX.Element {
 	const { notifications } = useNotifications();
 	const history = useHistory();
 
-	const queryClient = useQueryClient();
-
+	const { activeLogId, timeRange, onTimeRangeChange } = useCopyLogLink();
 	const { queryData: pageSize } = useUrlQueryData(
 		queryParamNamesMap.pageSize,
 		DEFAULT_PER_PAGE_VALUE,
@@ -73,11 +64,11 @@ function LogsExplorerViews(): JSX.Element {
 		stagedQuery,
 		panelType,
 		updateAllQueriesOperators,
+		updateQueriesData,
 		redirectWithQueryBuilderData,
 	} = useQueryBuilder();
 
 	// State
-	const [activeLog, setActiveLog] = useState<ILog | null>(null);
 	const [page, setPage] = useState<number>(1);
 	const [logs, setLogs] = useState<ILog[]>([]);
 	const [requestData, setRequestData] = useState<Query | null>(null);
@@ -163,38 +154,52 @@ function LogsExplorerViews(): JSX.Element {
 		panelType,
 		{
 			keepPreviousData: true,
-			enabled: !isLimit,
+			enabled: !isLimit && !!requestData,
+		},
+		{
+			...(timeRange &&
+				activeLogId &&
+				!logs.length && {
+					start: timeRange.start,
+					end: timeRange.end,
+				}),
 		},
 	);
 
-	const handleSetActiveLog = useCallback((nextActiveLog: ILog) => {
-		setActiveLog(nextActiveLog);
-	}, []);
+	const getUpdateQuery = useCallback(
+		(newPanelType: PANEL_TYPES): Query => {
+			let query = updateAllQueriesOperators(
+				currentQuery,
+				newPanelType,
+				DataSource.TRACES,
+			);
 
-	const handleClearActiveLog = useCallback(() => {
-		setActiveLog(null);
-	}, []);
+			if (newPanelType === PANEL_TYPES.LIST) {
+				query = updateQueriesData(query, 'queryData', (item) => ({
+					...item,
+					orderBy: item.orderBy.filter((item) => item.columnName !== SIGNOZ_VALUE),
+					aggregateAttribute: initialAutocompleteData,
+				}));
+			}
+
+			return query;
+		},
+		[currentQuery, updateAllQueriesOperators, updateQueriesData],
+	);
 
 	const handleChangeView = useCallback(
-		(newPanelType: string) => {
+		(type: string) => {
+			const newPanelType = type as PANEL_TYPES;
+
 			if (newPanelType === panelType) return;
 
-			const query = updateAllQueriesOperators(
-				currentQuery,
-				newPanelType as GRAPH_TYPES,
-				DataSource.LOGS,
-			);
+			const query = getUpdateQuery(newPanelType);
 
 			redirectWithQueryBuilderData(query, {
 				[queryParamNamesMap.panelTypes]: newPanelType,
 			});
 		},
-		[
-			currentQuery,
-			panelType,
-			updateAllQueriesOperators,
-			redirectWithQueryBuilderData,
-		],
+		[panelType, getUpdateQuery, redirectWithQueryBuilderData],
 	);
 
 	const getRequestData = useCallback(
@@ -227,51 +232,6 @@ function LogsExplorerViews(): JSX.Element {
 			return data;
 		},
 		[currentStagedQueryData, orderByTimestamp],
-	);
-
-	const handleAddToQuery = useCallback(
-		(fieldKey: string, fieldValue: string, operator: string): void => {
-			const keysAutocomplete: BaseAutocompleteData[] =
-				queryClient.getQueryData<SuccessResponse<IQueryAutocompleteResponse>>(
-					[QueryBuilderKeys.GET_AGGREGATE_KEYS],
-					{ exact: false },
-				)?.payload.attributeKeys || [];
-
-			const existAutocompleteKey = chooseAutocompleteFromCustomValue(
-				keysAutocomplete,
-				fieldKey,
-			);
-
-			const currentOperator =
-				Object.keys(OPERATORS).find((op) => op === operator) || '';
-
-			const nextQuery: Query = {
-				...currentQuery,
-				builder: {
-					...currentQuery.builder,
-					queryData: currentQuery.builder.queryData.map((item) => ({
-						...item,
-						filters: {
-							...item.filters,
-							items: [
-								...item.filters.items.filter(
-									(item) => item.key?.id !== existAutocompleteKey.id,
-								),
-								{
-									id: uuid(),
-									key: existAutocompleteKey,
-									op: currentOperator,
-									value: fieldValue,
-								},
-							],
-						},
-					})),
-				},
-			};
-
-			redirectWithQueryBuilderData(nextQuery);
-		},
-		[currentQuery, queryClient, redirectWithQueryBuilderData],
 	);
 
 	const handleEndReached = useCallback(
@@ -381,14 +341,24 @@ function LogsExplorerViews(): JSX.Element {
 	}, [panelType, isMultipleQueries, isGroupByExist, handleChangeView]);
 
 	useEffect(() => {
+		const currentParams = data?.params as Omit<LogTimeRange, 'pageSize'>;
 		const currentData = data?.payload.data.newResult.data.result || [];
 		if (currentData.length > 0 && currentData[0].list) {
 			const currentLogs: ILog[] = currentData[0].list.map((item) => ({
 				...item.data,
 				timestamp: item.timestamp,
 			}));
-			setLogs((prevLogs) => [...prevLogs, ...currentLogs]);
+			const newLogs = [...logs, ...currentLogs];
+
+			setLogs(newLogs);
+			onTimeRangeChange({
+				start: currentParams?.start,
+				end: timeRange?.end || currentParams?.end,
+				pageSize: newLogs.length,
+			});
 		}
+
+		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [data]);
 
 	useEffect(() => {
@@ -399,14 +369,28 @@ function LogsExplorerViews(): JSX.Element {
 			const newRequestData = getRequestData(stagedQuery, {
 				page: 1,
 				log: null,
-				pageSize,
+				pageSize:
+					timeRange?.pageSize && activeLogId ? timeRange?.pageSize : pageSize,
 			});
 			setLogs([]);
 			setPage(1);
 			setRequestData(newRequestData);
 			currentMinTimeRef.current = minTime;
+
+			if (!activeLogId) {
+				onTimeRangeChange(null);
+			}
 		}
-	}, [stagedQuery, requestData, getRequestData, pageSize, minTime]);
+	}, [
+		stagedQuery,
+		requestData,
+		getRequestData,
+		pageSize,
+		minTime,
+		timeRange,
+		activeLogId,
+		onTimeRangeChange,
+	]);
 
 	const tabsItems: TabsProps['items'] = useMemo(
 		() => [
@@ -425,10 +409,7 @@ function LogsExplorerViews(): JSX.Element {
 						isLoading={isFetching}
 						currentStagedQueryData={currentStagedQueryData}
 						logs={logs}
-						onOpenDetailedView={handleSetActiveLog}
 						onEndReached={handleEndReached}
-						onExpand={handleSetActiveLog}
-						onAddToQuery={handleAddToQuery}
 					/>
 				),
 			},
@@ -456,9 +437,7 @@ function LogsExplorerViews(): JSX.Element {
 			isFetching,
 			currentStagedQueryData,
 			logs,
-			handleSetActiveLog,
 			handleEndReached,
-			handleAddToQuery,
 			data,
 			isError,
 		],
@@ -501,18 +480,12 @@ function LogsExplorerViews(): JSX.Element {
 					/>
 				</ActionsWrapper>
 			)}
-			<TabsStyled
+			<Tabs
 				items={tabsItems}
 				defaultActiveKey={panelType || PANEL_TYPES.LIST}
 				activeKey={panelType || PANEL_TYPES.LIST}
 				onChange={handleChangeView}
 				destroyInactiveTabPane
-			/>
-			<LogDetail
-				log={activeLog}
-				onClose={handleClearActiveLog}
-				onAddToQuery={handleAddToQuery}
-				onClickActionItem={handleAddToQuery}
 			/>
 
 			<GoToTop />
