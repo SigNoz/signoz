@@ -1,9 +1,8 @@
 import axios from 'api';
+import { AxiosResponse } from 'axios';
 import { ApDexPayloadProps } from 'types/api/metrics/getApDex';
 
-export const getApDexSettings = async (
+export const getApDexSettings = (
 	servicename: string,
-): Promise<ApDexPayloadProps> => {
-	const response = await axios.get(`settings/apdex?services=${servicename}`);
-	return response.data[0];
-};
+): Promise<AxiosResponse<ApDexPayloadProps[]>> =>
+	axios.get(`settings/apdex?services=${servicename}`);

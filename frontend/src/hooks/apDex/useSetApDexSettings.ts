@@ -6,7 +6,7 @@ import {
 } from 'types/api/metrics/getApDex';
 
 export const useSetApDexSettings = ({
-	serviceName,
+	servicename,
 	threshold,
 	excludeStatusCode,
 }: SetApDexSettingsProps): UseMutationResult<
@@ -14,10 +14,10 @@ export const useSetApDexSettings = ({
 	Error,
 	SetApDexSettingsProps
 > => {
-	const queryKey = [serviceName, threshold, excludeStatusCode];
+	const queryKey = [servicename, threshold.toString(), excludeStatusCode];
 	return useMutation<SetApDexPayloadProps, Error, SetApDexSettingsProps>({
 		mutationKey: queryKey,
 		mutationFn: async () =>
-			setApDexSettings({ serviceName, threshold, excludeStatusCode }),
+			setApDexSettings({ servicename, threshold, excludeStatusCode }),
 	});
 };

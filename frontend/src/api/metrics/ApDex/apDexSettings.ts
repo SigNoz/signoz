@@ -5,15 +5,12 @@ import {
 } from 'types/api/metrics/getApDex';
 
 export const setApDexSettings = async ({
-	serviceName,
+	servicename,
 	threshold,
 	excludeStatusCode,
-}: SetApDexSettingsProps): Promise<SetApDexPayloadProps> => {
-	const response = await axios.post('/settings/apdex', {
-		serviceName,
+}: SetApDexSettingsProps): Promise<SetApDexPayloadProps> =>
+	axios.post('/settings/apdex', {
+		servicename,
 		threshold,
 		excludeStatusCode,
 	});
-
-	return response.data;
-};

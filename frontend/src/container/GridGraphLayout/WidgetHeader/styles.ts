@@ -30,3 +30,10 @@ export const ThesholdContainer = styled.span`
 	margin-top: -0.3rem;
 	color: ${themeColors.lightGrey};
 `;
+
+export const DisplayThresholdContainer = styled.div`
+	display: flex;
+	align-items: center;
+	width: 5.625rem;
+	justify-content: space-between;
+`;

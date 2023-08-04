@@ -8,7 +8,7 @@ import history from 'lib/history';
 import { useMemo } from 'react';
 import { generatePath, useParams } from 'react-router-dom';
 
-import DumpyComponent from './DumpyComponent';
+import ApDexApplication from './ApDex/ApDexApplication';
 import { MetricsApplicationTab, TAB_KEY_VS_LABEL } from './types';
 import useMetricsApplicationTabKey from './useMetricsApplicationTabKey';
 
@@ -49,8 +49,8 @@ function MetricsApplication(): JSX.Element {
 
 	return (
 		<>
-			<DumpyComponent servicename={servicename} />
 			<ResourceAttributesFilter />
+			<ApDexApplication />
 			<RouteTab routes={routes} history={history} activeKey={activeKey} />
 		</>
 	);
