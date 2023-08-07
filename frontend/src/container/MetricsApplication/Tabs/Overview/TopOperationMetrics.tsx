@@ -10,7 +10,7 @@ import { convertRawQueriesToTraceSelectedTags } from 'hooks/useResourceAttribute
 import { getDashboardVariables } from 'lib/dashbaordVariables/getDashboardVariables';
 import { RowData } from 'lib/query/createTableColumnsFromQuery';
 import { isEmpty } from 'lodash-es';
-import { ReactNode, useCallback, useMemo } from 'react';
+import { ReactNode, useMemo } from 'react';
 import { useSelector } from 'react-redux';
 import { useParams } from 'react-router-dom';
 import { AppState } from 'store/reducers';
@@ -19,6 +19,7 @@ import { GlobalReducer } from 'types/reducer/globalTime';
 import { v4 as uuid } from 'uuid';
 
 import { IServiceName } from '../types';
+import { title } from './config';
 import ColumnWithLink from './TableRenderer/ColumnWithLink';
 import { getTableColumnRenderer } from './TableRenderer/TableColumnRenderer';
 
@@ -106,11 +107,9 @@ function TopOperationMetrics(): JSX.Element {
 		[servicename, minTime, maxTime, selectedTraceTags],
 	);
 
-	const getTitle = useCallback((): string => 'Key Operations', []);
-
 	return (
 		<QueryTable
-			title={getTitle}
+			title={title}
 			query={updatedQuery}
 			queryTableData={queryTableData}
 			loading={isLoading}
