@@ -414,7 +414,7 @@ function PipelineListsView({
 			<Container>
 				<ModeAndConfiguration
 					isActionMode={isActionMode}
-					verison={pipelineData?.version}
+					version={pipelineData?.version}
 				/>
 				<DndProvider backend={HTML5Backend}>
 					<Table

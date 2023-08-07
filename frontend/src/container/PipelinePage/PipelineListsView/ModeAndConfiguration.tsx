@@ -4,21 +4,21 @@ import { ModeAndConfigWrapper } from './styles';
 
 function ModeAndConfiguration({
 	isActionMode,
-	verison,
+	version,
 }: ModeAndConfigurationType): JSX.Element {
 	const actionMode = isActionMode === ActionMode.Editing;
 
 	return (
 		<ModeAndConfigWrapper>
 			Mode: <span>{actionMode ? 'Editing' : 'Viewing'}</span>
-			<div>Configuration Version: {verison}</div>
+			<div>Configuration Version: {version}</div>
 		</ModeAndConfigWrapper>
 	);
 }
 
 export interface ModeAndConfigurationType {
 	isActionMode: string;
-	verison: string | number;
+	version: string | number;
 }
 
 export default ModeAndConfiguration;
