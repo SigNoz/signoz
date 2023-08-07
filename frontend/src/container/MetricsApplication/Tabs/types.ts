@@ -59,7 +59,6 @@ export interface LatencyProps {
 export interface ApDexProps {
 	servicename: IServiceName['servicename'];
 	tagFilterItems: TagFilterItem[];
-	isSpanMetricEnable?: boolean;
 	topLevelOperationsRoute: string[];
 	threashold: number;
 }
