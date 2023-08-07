@@ -11,13 +11,13 @@ function CreatePipelineButton({
 	setActionType,
 	isActionMode,
 	setActionMode,
-	piplineData,
+	pipelineData,
 }: CreatePipelineButtonProps): JSX.Element {
 	const { t } = useTranslation(['pipeline']);
 
 	const isAddNewPipelineVisible = useMemo(
-		() => checkDataLength(piplineData?.pipelines),
-		[piplineData?.pipelines],
+		() => checkDataLength(pipelineData?.pipelines),
+		[pipelineData?.pipelines],
 	);
 	const isDisabled = isActionMode === ActionMode.Editing;
 
@@ -56,7 +56,7 @@ interface CreatePipelineButtonProps {
 	setActionType: (actionType: string) => void;
 	isActionMode: string;
 	setActionMode: (actionMode: string) => void;
-	piplineData: Pipeline;
+	pipelineData: Pipeline;
 }
 
 export default CreatePipelineButton;

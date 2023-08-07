@@ -15,7 +15,7 @@ function Pipelines(): JSX.Element {
 	const { notifications } = useNotifications();
 	const {
 		isLoading,
-		data: piplineData,
+		data: pipelineData,
 		isError,
 		refetch: refetchPipelineLists,
 	} = useQuery(['version', 'latest', 'pipeline'], {
@@ -33,26 +33,31 @@ function Pipelines(): JSX.Element {
 				children: (
 					<PipelinePage
 						refetchPipelineLists={refetchPipelineLists}
-						piplineData={piplineData?.payload as Pipeline}
+						pipelineData={pipelineData?.payload as Pipeline}
 					/>
 				),
 			},
 			{
 				key: 'change-history',
 				label: `Change History`,
-				children: <ChangeHistory pipelineData={piplineData?.payload as Pipeline} />,
+				children: (
+					<ChangeHistory
+						refetchPipelineLists={refetchPipelineLists}
+						pipelineData={pipelineData?.payload as Pipeline}
+					/>
+				),
 			},
 		],
-		[piplineData?.payload, refetchPipelineLists],
+		[pipelineData?.payload, refetchPipelineLists],
 	);
 
 	useEffect(() => {
-		if (piplineData?.error && isError) {
+		if (pipelineData?.error && isError) {
 			notifications.error({
-				message: piplineData?.error || t('something_went_wrong'),
+				message: pipelineData?.error || t('something_went_wrong'),
 			});
 		}
-	}, [isError, notifications, piplineData?.error, t]);
+	}, [isError, notifications, pipelineData?.error, t]);
 
 	if (isLoading) {
 		return <Spinner height="75vh" tip="Loading Pipelines..." />;
