@@ -3977,8 +3977,15 @@ func (r *ClickHouseReader) GetLatencyMetricMetadata(ctx context.Context, metricN
 	}, nil
 }
 
-func isColumn(tableStatement, field string) bool {
-	return strings.Contains(tableStatement, fmt.Sprintf("`%s` ", field))
+func isColumn(tableStatement, attrType, field, datType string) bool {
+	// value of attrType will be `resource` or `tag`, if `tag` change it to `attribute`
+	prefix := attrType
+	if attrType == string(v3.AttributeKeyTypeTag) {
+		prefix = constants.Attributes[:len(constants.Attributes)-1]
+	}
+	name := fmt.Sprintf("%s_%s_%s", strings.ToLower(prefix), field, strings.ToLower(datType))
+
+	return strings.Contains(tableStatement, fmt.Sprintf("`%s` ", name))
 }
 
 func (r *ClickHouseReader) GetLogAggregateAttributes(ctx context.Context, req *v3.AggregateAttributeRequest) (*v3.AggregateAttributeResponse, error) {
@@ -4050,7 +4057,7 @@ func (r *ClickHouseReader) GetLogAggregateAttributes(ctx context.Context, req *v
 			Key:      tagKey,
 			DataType: v3.AttributeKeyDataType(dataType),
 			Type:     v3.AttributeKeyType(attType),
-			IsColumn: isColumn(statements[0].Statement, tagKey),
+			IsColumn: isColumn(statements[0].Statement, attType, tagKey, dataType),
 		}
 		response.AttributeKeys = append(response.AttributeKeys, key)
 	}
@@ -4105,7 +4112,7 @@ func (r *ClickHouseReader) GetLogAttributeKeys(ctx context.Context, req *v3.Filt
 			Key:      attributeKey,
 			DataType: v3.AttributeKeyDataType(attributeDataType),
 			Type:     v3.AttributeKeyType(tagType),
-			IsColumn: isColumn(statements[0].Statement, attributeKey),
+			IsColumn: isColumn(statements[0].Statement, tagType, attributeKey, attributeDataType),
 		}
 
 		response.AttributeKeys = append(response.AttributeKeys, key)
