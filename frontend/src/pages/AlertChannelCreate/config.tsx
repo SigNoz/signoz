@@ -13,7 +13,7 @@ export const alertsRoutesConfig = [
 	{
 		Component: (): JSX.Element => <CreateAlertChannels preType="slack" />,
 		name: t('routes.alert_channels'),
-		route: ROUTES.ALL_CHANNELS,
-		key: ROUTES.ALL_CHANNELS,
+		route: ROUTES.CHANNELS_NEW,
+		key: ROUTES.CHANNELS_NEW,
 	},
 ];
