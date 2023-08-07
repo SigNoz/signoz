@@ -40,11 +40,11 @@ function ChartPreview({
 	const { t } = useTranslation('alerts');
 	const threshold = alertDef?.condition.target || 0;
 
-	const thresholdValue = convertData(
-		threshold,
-		query?.unit,
-		alertDef?.condition.targetUnit,
-	);
+	const thresholdValue = convertData({
+		value: threshold,
+		sourceUnit: alertDef?.condition.targetUnit,
+		targetUnit: query?.unit,
+	});
 
 	console.log({ thresholdValue, threshold });
 
