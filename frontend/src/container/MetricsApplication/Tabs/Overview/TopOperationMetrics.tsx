@@ -106,8 +106,11 @@ function TopOperationMetrics(): JSX.Element {
 		[servicename, minTime, maxTime, selectedTraceTags],
 	);
 
+	const getTitle = useMemo(() => (): string => 'Key Operations', []);
+
 	return (
 		<QueryTable
+			title={getTitle}
 			query={updatedQuery}
 			queryTableData={queryTableData}
 			loading={isLoading}
