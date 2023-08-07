@@ -46,8 +46,6 @@ function ChartPreview({
 		targetUnit: query?.unit,
 	});
 
-	console.log({ thresholdValue, threshold });
-
 	const staticLine: StaticLineProps | undefined =
 		threshold !== undefined
 			? {

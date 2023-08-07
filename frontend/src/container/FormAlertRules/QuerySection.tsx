@@ -122,7 +122,6 @@ function QuerySection({
 				return null;
 		}
 	};
-
 	return (
 		<>
 			<StepHeading> {t('alert_form_step1')}</StepHeading>

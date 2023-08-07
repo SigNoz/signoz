@@ -20,8 +20,6 @@ import { EQueryType } from 'types/common/dashboard';
 
 import { FormContainer, InlineSelect, StepHeading } from './styles';
 
-const { Option } = Select;
-
 function RuleOptions({
 	alertDef,
 	setAlertDef,
@@ -59,10 +57,10 @@ function RuleOptions({
 				});
 			}}
 		>
-			<Option value="1">{t('option_above')}</Option>
-			<Option value="2">{t('option_below')}</Option>
-			<Option value="3">{t('option_equal')}</Option>
-			<Option value="4">{t('option_notequal')}</Option>
+			<Select.Option value="1">{t('option_above')}</Select.Option>
+			<Select.Option value="2">{t('option_below')}</Select.Option>
+			<Select.Option value="3">{t('option_equal')}</Select.Option>
+			<Select.Option value="4">{t('option_notequal')}</Select.Option>
 		</InlineSelect>
 	);
 
@@ -73,10 +71,10 @@ function RuleOptions({
 			value={alertDef.condition?.matchType}
 			onChange={(value: string | unknown): void => handleMatchOptChange(value)}
 		>
-			<Option value="1">{t('option_atleastonce')}</Option>
-			<Option value="2">{t('option_allthetimes')}</Option>
-			<Option value="3">{t('option_onaverage')}</Option>
-			<Option value="4">{t('option_intotal')}</Option>
+			<Select.Option value="1">{t('option_atleastonce')}</Select.Option>
+			<Select.Option value="2">{t('option_allthetimes')}</Select.Option>
+			<Select.Option value="3">{t('option_onaverage')}</Select.Option>
+			<Select.Option value="4">{t('option_intotal')}</Select.Option>
 		</InlineSelect>
 	);
 
@@ -87,7 +85,7 @@ function RuleOptions({
 			value={alertDef.condition?.matchType}
 			onChange={(value: string | unknown): void => handleMatchOptChange(value)}
 		>
-			<Option value="1">{t('option_atleastonce')}</Option>
+			<Select.Option value="1">{t('option_atleastonce')}</Select.Option>
 		</InlineSelect>
 	);
 
@@ -104,13 +102,12 @@ function RuleOptions({
 				});
 			}}
 		>
-			{' '}
-			<Option value="5m0s">{t('option_5min')}</Option>
-			<Option value="10m0s">{t('option_10min')}</Option>
-			<Option value="15m0s">{t('option_15min')}</Option>
-			<Option value="1h0m0s">{t('option_60min')}</Option>
-			<Option value="4h0m0s">{t('option_4hours')}</Option>
-			<Option value="24h0m0s">{t('option_24hours')}</Option>
+			<Select.Option value="5m0s">{t('option_5min')}</Select.Option>
+			<Select.Option value="10m0s">{t('option_10min')}</Select.Option>
+			<Select.Option value="15m0s">{t('option_15min')}</Select.Option>
+			<Select.Option value="1h0m0s">{t('option_60min')}</Select.Option>
+			<Select.Option value="4h0m0s">{t('option_4hours')}</Select.Option>
+			<Select.Option value="24h0m0s">{t('option_24hours')}</Select.Option>
 		</InlineSelect>
 	);
 
