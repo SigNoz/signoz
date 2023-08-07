@@ -56,6 +56,14 @@ export interface LatencyProps {
 	topLevelOperationsRoute: string[];
 }
 
+export interface ApDexProps {
+	servicename: IServiceName['servicename'];
+	tagFilterItems: TagFilterItem[];
+	isSpanMetricEnable?: boolean;
+	topLevelOperationsRoute: string[];
+	threashold: number;
+}
+
 export interface TableRendererProps {
 	columnName: string;
 	renderFunction: (record: RowData) => ReactNode;

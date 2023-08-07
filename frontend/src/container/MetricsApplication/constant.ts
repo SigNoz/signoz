@@ -14,9 +14,11 @@ export const OPERATION_LEGENDS = ['Operations'];
 export enum FORMULA {
 	ERROR_PERCENTAGE = 'A*100/B',
 	DATABASE_CALLS_AVG_DURATION = 'A/B',
+	APDEX_TRACES = '((B + C)/2)/A',
 }
 
 export enum GraphTitle {
+	APDEX = 'Apdex',
 	LATENCY = 'Latency',
 	RATE_PER_OPS = 'Rate (ops/s)',
 	ERROR_PERCENTAGE = 'Error Percentage',

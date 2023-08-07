@@ -33,7 +33,7 @@ import {
 	operationPerSec,
 } from '../MetricsPageQueries/OverviewQueries';
 import { Card, Col, ColContainer, Row } from '../styles';
-import ApDex from './Overview/ApDex';
+import ApDex from './Overview/ApDex/ApDex';
 import ServiceOverview from './Overview/ServiceOverview';
 import TopLevelOperation from './Overview/TopLevelOperations';
 import TopOperation from './Overview/TopOperation';
@@ -223,20 +223,11 @@ function Application(): JSX.Element {
 			</Row>
 			<Row gutter={24}>
 				<Col span={12}>
-					<>
-						<Button
-							type="default"
-							size="small"
-							id="Error_button"
-							onClick={(): void => {
-								onErrorTrackHandler(selectedTimeStamp);
-							}}
-						>
-							View Traces
-						</Button>
-
-						<ApDex />
-					</>
+					<ApDex
+						onDragSelect={onDragSelect}
+						topLevelOperationsRoute={topLevelOperationsRoute}
+						tagFilterItems={tagFilterItems}
+					/>
 					<ColContainer>
 						<Button
 							type="default"

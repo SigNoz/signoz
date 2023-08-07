@@ -18,7 +18,7 @@ import {
 	QUERYNAME_AND_EXPRESSION,
 	WidgetKeys,
 } from '../constant';
-import { LatencyProps, OperationPerSecProps } from '../Tabs/types';
+import { ApDexProps, LatencyProps, OperationPerSecProps } from '../Tabs/types';
 import {
 	getQueryBuilderQueries,
 	getQueryBuilderQuerieswithFormula,
@@ -82,6 +82,183 @@ export const latency = ({
 		aggregateOperator,
 		dataSource,
 		queryNameAndExpression,
+	});
+};
+
+export const apDexTracesQueryBuilderQueries = ({
+	servicename,
+	tagFilterItems,
+	isSpanMetricEnable = false,
+	topLevelOperationsRoute,
+	threashold,
+}: ApDexProps): QueryBuilderData => {
+	const autoCompleteDataA: BaseAutocompleteData = {
+		dataType: 'float64',
+		isColumn: true,
+		key: '',
+		type: null,
+	};
+
+	const autoCompleteDataB: BaseAutocompleteData = {
+		dataType: 'float64',
+		isColumn: true,
+		key: '',
+		type: null,
+	};
+
+	const autoCompleteDataC: BaseAutocompleteData = {
+		dataType: 'float64',
+		isColumn: true,
+		key: '',
+		type: null,
+	};
+
+	const filterItemA: TagFilterItem[] = [
+		{
+			id: '',
+			key: {
+				dataType: 'string',
+				isColumn: true,
+				key: 'serviceName',
+				type: 'tag',
+			},
+			op: '=',
+			value: servicename,
+		},
+		{
+			id: '',
+			key: {
+				key: 'name',
+				dataType: 'string',
+				isColumn: true,
+				type: 'tag',
+			},
+			op: 'in',
+			value: [...topLevelOperationsRoute],
+		},
+		...tagFilterItems,
+	];
+
+	const filterItemB: TagFilterItem[] = [
+		{
+			id: '',
+			key: {
+				dataType: 'bool',
+				isColumn: true,
+				key: 'hasError',
+				type: 'tag',
+			},
+			op: '=',
+			value: false,
+		},
+		{
+			id: '',
+			key: {
+				dataType: 'float64',
+				isColumn: true,
+				key: 'durationNano',
+				type: 'tag',
+			},
+			op: '<=',
+			value: threashold * 1000000000,
+		},
+		{
+			id: '',
+			key: {
+				dataType: 'string',
+				isColumn: true,
+				key: 'serviceName',
+				type: 'tag',
+			},
+			op: '=',
+			value: servicename,
+		},
+		{
+			id: '',
+			key: {
+				key: 'name',
+				dataType: 'string',
+				isColumn: true,
+				type: 'tag',
+			},
+			op: 'in',
+			value: [...topLevelOperationsRoute],
+		},
+	];
+
+	const filterItemC: TagFilterItem[] = [
+		{
+			id: '',
+			key: {
+				dataType: 'float64',
+				isColumn: true,
+				key: 'durationNano',
+				type: 'tag',
+			},
+			op: '<=',
+			value: threashold * 4 * 1000000000,
+		},
+		{
+			id: '',
+			key: {
+				dataType: 'bool',
+				isColumn: true,
+				key: 'hasError',
+				type: 'tag',
+			},
+			op: '=',
+			value: false,
+		},
+		{
+			id: '',
+			key: {
+				dataType: 'string',
+				isColumn: true,
+				key: 'serviceName',
+				type: 'tag',
+			},
+			op: '=',
+			value: servicename,
+		},
+		{
+			id: '',
+			key: {
+				key: 'name',
+				dataType: 'string',
+				isColumn: true,
+				type: 'tag',
+			},
+			op: 'in',
+			value: [...topLevelOperationsRoute],
+		},
+	];
+
+	const autocompleteData = [
+		autoCompleteDataA,
+		autoCompleteDataB,
+		autoCompleteDataC,
+	];
+	const additionalItems = [filterItemA, filterItemB, filterItemC];
+	const legends = [GraphTitle.APDEX];
+	const disabled = Array(3).fill(true);
+	const expressions = [FORMULA.APDEX_TRACES];
+	const legendFormulas = [GraphTitle.APDEX];
+	const aggregateOperators = [
+		MetricAggregateOperator.COUNT,
+		MetricAggregateOperator.COUNT,
+		MetricAggregateOperator.COUNT,
+	];
+	const dataSource = isSpanMetricEnable ? DataSource.METRICS : DataSource.TRACES;
+
+	return getQueryBuilderQuerieswithFormula({
+		autocompleteData,
+		additionalItems,
+		legends,
+		disabled,
+		expressions,
+		legendFormulas,
+		aggregateOperators,
+		dataSource,
 	});
 };
 

@@ -5,6 +5,7 @@ import {
 	EditFilled,
 	ExclamationCircleOutlined,
 	FullscreenOutlined,
+	InfoCircleOutlined,
 } from '@ant-design/icons';
 import { Dropdown, MenuProps, Tooltip, Typography } from 'antd';
 import { MenuItemType } from 'antd/es/menu/hooks/useItems';
@@ -53,6 +54,7 @@ interface IWidgetHeaderProps {
 	allowClone?: boolean;
 	allowEdit?: boolean;
 	allowThreshold?: boolean;
+	threshold?: number;
 }
 function WidgetHeader({
 	title,
@@ -67,6 +69,7 @@ function WidgetHeader({
 	allowDelete = true,
 	allowEdit = true,
 	allowThreshold = false,
+	threshold,
 }: IWidgetHeaderProps): JSX.Element {
 	const [localHover, setLocalHover] = useState(false);
 	const [isOpen, setIsOpen] = useState<boolean>(false);
@@ -215,7 +218,9 @@ function WidgetHeader({
 				</HeaderContainer>
 			</Dropdown>
 			<ThesholdContainer>
-				{allowThreshold && <DisplayThreshold />}
+				{allowThreshold && (
+					<DisplayThreshold threshold={threshold || <InfoCircleOutlined />} />
+				)}
 			</ThesholdContainer>
 			{queryResponse.isFetching && !queryResponse.isError && (
 				<Spinner height="5vh" style={spinnerStyles} />
@@ -236,6 +241,7 @@ WidgetHeader.defaultProps = {
 	allowClone: true,
 	allowEdit: true,
 	allowThreshold: false,
+	threshold: undefined,
 };
 
 export default WidgetHeader;

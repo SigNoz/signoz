@@ -31,6 +31,7 @@ function GridCardGraph({
 	allowEdit,
 	isQueryEnabled,
 	allowThreshold,
+	threshold,
 }: GridCardGraphProps): JSX.Element {
 	const { isAddWidget } = useSelector<AppState, DashboardReducer>(
 		(state) => state.dashboards,
@@ -126,6 +127,7 @@ function GridCardGraph({
 						allowDelete={allowDelete}
 						allowEdit={allowEdit}
 						allowThreshold={allowThreshold}
+						threshold={threshold}
 					/>
 				)}
 			</span>
@@ -152,6 +154,7 @@ function GridCardGraph({
 						allowEdit={allowEdit}
 						onClickHandler={onClickHandler}
 						allowThreshold={allowThreshold}
+						threshold={threshold}
 					/>
 				) : (
 					<Spinner height="20vh" tip="Loading..." />
@@ -177,6 +180,7 @@ function GridCardGraph({
 					allowDelete={allowDelete}
 					allowEdit={allowEdit}
 					allowThreshold={allowThreshold}
+					threshold={threshold}
 				/>
 			)}
 

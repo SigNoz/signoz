@@ -57,6 +57,7 @@ function WidgetGraphComponent({
 	allowDelete = true,
 	allowEdit = true,
 	allowThreshold = false,
+	threshold,
 }: WidgetGraphComponentProps): JSX.Element {
 	const [deleteModal, setDeleteModal] = useState(false);
 	const [modal, setModal] = useState<boolean>(false);
@@ -286,6 +287,7 @@ function WidgetGraphComponent({
 								allowDelete={allowDelete}
 								allowEdit={allowEdit}
 								allowThreshold={allowThreshold}
+								threshold={threshold}
 							/>
 						</div>
 					)}

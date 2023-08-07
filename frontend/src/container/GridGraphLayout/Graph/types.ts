@@ -42,6 +42,7 @@ export interface WidgetGraphComponentProps extends DispatchProps {
 	allowClone?: boolean;
 	allowEdit?: boolean;
 	allowThreshold?: boolean;
+	threshold?: number;
 }
 
 export interface GridCardGraphProps {
@@ -59,6 +60,7 @@ export interface GridCardGraphProps {
 	allowEdit?: boolean;
 	isQueryEnabled?: boolean;
 	allowThreshold?: boolean;
+	threshold?: number;
 }
 
 export interface GetGraphVisibilityStateOnLegendClickProps {
