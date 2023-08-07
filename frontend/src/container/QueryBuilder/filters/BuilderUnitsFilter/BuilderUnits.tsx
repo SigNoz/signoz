@@ -17,6 +17,7 @@ function BuilderUnitsFilter(): JSX.Element {
 				onChange={handleOnUnitsChange}
 				value={selectedValue}
 				options={getAllUnits}
+				placeholder="Select unit"
 			/>
 		</Space>
 	);

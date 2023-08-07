@@ -8,6 +8,7 @@ import {
 	Typography,
 } from 'antd';
 import { getCategorySelectOptionByName } from 'container/NewWidget/RightContainer/dataFormatCategories';
+import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useTranslation } from 'react-i18next';
 import {
 	AlertDef,
@@ -28,6 +29,7 @@ function RuleOptions({
 }: RuleOptionsProps): JSX.Element {
 	// init namespace for translations
 	const { t } = useTranslation('alerts');
+	const { currentQuery } = useQueryBuilder();
 
 	const handleMatchOptChange = (value: string | unknown): void => {
 		const m = (value as string) || alertDef.condition?.matchType;
@@ -171,10 +173,11 @@ function RuleOptions({
 
 					<Form.Item>
 						<Select
-							style={{ minWidth: '10rem' }}
 							options={getCategorySelectOptionByName('Data')}
+							placeholder={t('field_unit')}
 							value={alertDef.condition.targetUnit}
 							onChange={onChangeAlertUnit}
+							defaultValue={currentQuery?.unit}
 						/>
 					</Form.Item>
 				</Space>
