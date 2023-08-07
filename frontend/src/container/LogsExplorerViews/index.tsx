@@ -463,9 +463,15 @@ function LogsExplorerViews(): JSX.Element {
 			(queryData) => queryData.groupBy.length > 0,
 		);
 
-		return isGroupByExist
-			? data.payload.data.result
-			: [data.payload.data.result[0]];
+		const firstStagedQuery = stagedQuery.builder.queryData[0];
+
+		const firstPayloadQuery = data.payload.data.result.find(
+			(item) => item.queryName === firstStagedQuery.queryName,
+		);
+
+		const firstPayloadQueryArray = firstPayloadQuery ? [firstPayloadQuery] : [];
+
+		return isGroupByExist ? data.payload.data.result : firstPayloadQueryArray;
 	}, [stagedQuery, data, panelType, listChartData]);
 
 	return (
