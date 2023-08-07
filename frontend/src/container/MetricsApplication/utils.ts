@@ -24,3 +24,11 @@ export const navigateToTrace = ({
 		}?${urlParams.toString()}&selected={"serviceName":["${servicename}"],"operation":["${operation}"]}&filterToFetchData=["duration","status","serviceName","operation"]&spanAggregateCurrentPage=1&selectedTags=${selectedTraceTags}&&isFilterExclude={"serviceName":false,"operation":false}&userSelectedFilter={"status":["error","ok"],"serviceName":["${servicename}"],"operation":["${operation}"]}&spanAggregateCurrentPage=1`,
 	);
 };
+
+export const getNearestHighestBucketValue = (
+	value: number,
+	buckets: number[],
+): number => {
+	const nearestBucket = buckets.find((bucket) => bucket >= value);
+	return nearestBucket || Infinity;
+};

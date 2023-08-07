@@ -18,7 +18,13 @@ import {
 	QUERYNAME_AND_EXPRESSION,
 	WidgetKeys,
 } from '../constant';
-import { ApDexProps, LatencyProps, OperationPerSecProps } from '../Tabs/types';
+import {
+	ApDexMetricsQueryBuilderQueriesProps,
+	ApDexProps,
+	LatencyProps,
+	OperationPerSecProps,
+} from '../Tabs/types';
+import { getNearestHighestBucketValue } from '../utils';
 import {
 	getQueryBuilderQueries,
 	getQueryBuilderQuerieswithFormula,
@@ -248,6 +254,189 @@ export const apDexTracesQueryBuilderQueries = ({
 		MetricAggregateOperator.COUNT,
 	];
 	const dataSource = DataSource.TRACES;
+
+	return getQueryBuilderQuerieswithFormula({
+		autocompleteData,
+		additionalItems,
+		legends,
+		disabled,
+		expressions,
+		legendFormulas,
+		aggregateOperators,
+		dataSource,
+	});
+};
+
+export const apDexMetricsQueryBuilderQueries = ({
+	servicename,
+	tagFilterItems,
+	topLevelOperationsRoute,
+	threashold,
+	delta,
+	le,
+}: ApDexMetricsQueryBuilderQueriesProps): QueryBuilderData => {
+	const autoCompleteDataA: BaseAutocompleteData = {
+		dataType: 'float64',
+		isColumn: true,
+		key: 'signoz_latency_count',
+		type: null,
+	};
+
+	const autoCompleteDataB: BaseAutocompleteData = {
+		dataType: 'float64',
+		isColumn: true,
+		key: 'signoz_latency_bucket',
+		type: null,
+	};
+
+	const autoCompleteDataC: BaseAutocompleteData = {
+		dataType: 'float64',
+		isColumn: true,
+		key: 'signoz_latency_bucket',
+		type: null,
+	};
+
+	const filterItemA: TagFilterItem[] = [
+		{
+			id: '',
+			key: {
+				dataType: 'string',
+				isColumn: false,
+				key: 'service_name',
+				type: 'tag',
+			},
+			op: '=',
+			value: servicename,
+		},
+		{
+			id: '',
+			key: {
+				key: 'operation',
+				dataType: 'string',
+				isColumn: false,
+				type: 'tag',
+			},
+			op: 'IN',
+			value: [...topLevelOperationsRoute],
+		},
+		...tagFilterItems,
+	];
+
+	const filterItemB: TagFilterItem[] = [
+		{
+			id: '',
+			key: {
+				dataType: 'string',
+				isColumn: false,
+				key: 'status_code',
+				type: 'tag',
+			},
+			op: '=',
+			value: 'STATUS_CODE_UNSET',
+		},
+		{
+			id: '',
+			key: {
+				dataType: 'string',
+				isColumn: false,
+				key: 'le',
+				type: 'tag',
+			},
+			op: '=',
+			value: getNearestHighestBucketValue(threashold, le).toString(),
+		},
+		{
+			id: '',
+			key: {
+				dataType: 'string',
+				isColumn: false,
+				key: 'service_name',
+				type: 'tag',
+			},
+			op: '=',
+			value: servicename,
+		},
+		{
+			id: '',
+			key: {
+				key: 'operation',
+				dataType: 'string',
+				isColumn: false,
+				type: 'tag',
+			},
+			op: 'IN',
+			value: [...topLevelOperationsRoute],
+		},
+		...tagFilterItems,
+	];
+
+	const filterItemC: TagFilterItem[] = [
+		{
+			id: '',
+			key: {
+				dataType: 'string',
+				isColumn: false,
+				key: 'le',
+				type: 'tag',
+			},
+			op: '=',
+			value: getNearestHighestBucketValue(threashold * 4, le).toString(),
+		},
+		{
+			id: '',
+			key: {
+				dataType: 'string',
+				isColumn: false,
+				key: 'status_code',
+				type: 'tag',
+			},
+			op: '=',
+			value: 'STATUS_CODE_UNSET',
+		},
+		{
+			id: '',
+			key: {
+				dataType: 'string',
+				isColumn: false,
+				key: 'service_name',
+				type: 'tag',
+			},
+			op: '=',
+			value: servicename,
+		},
+		{
+			id: '',
+			key: {
+				key: 'operation',
+				dataType: 'string',
+				isColumn: false,
+				type: 'tag',
+			},
+			op: 'IN',
+			value: [...topLevelOperationsRoute],
+		},
+		...tagFilterItems,
+	];
+
+	const autocompleteData = [
+		autoCompleteDataA,
+		autoCompleteDataB,
+		autoCompleteDataC,
+	];
+
+	const additionalItems = [filterItemA, filterItemB, filterItemC];
+	const legends = [GraphTitle.APDEX];
+	const disabled = Array(3).fill(true);
+	const expressions = delta
+		? [FORMULA.APDEX_DELTA_SPAN_METRICS]
+		: [FORMULA.APDEX_CUMULATIVE_SPAN_METRICS];
+	const legendFormulas = [GraphTitle.APDEX];
+	const aggregateOperators = [
+		MetricAggregateOperator.SUM_RATE,
+		MetricAggregateOperator.SUM_RATE,
+		MetricAggregateOperator.SUM_RATE,
+	];
+	const dataSource = DataSource.METRICS;
 
 	return getQueryBuilderQuerieswithFormula({
 		autocompleteData,

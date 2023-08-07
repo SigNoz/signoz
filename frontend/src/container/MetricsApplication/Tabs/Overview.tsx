@@ -109,6 +109,8 @@ function Application(): JSX.Element {
 		[servicename, topLevelOperations],
 	);
 
+	console.log('topLevelOperationsRoute', topLevelOperationsRoute);
+
 	const operationPerSecWidget = useMemo(
 		() =>
 			getWidgetQueryBuilder({

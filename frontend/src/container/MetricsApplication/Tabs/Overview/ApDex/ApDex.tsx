@@ -31,7 +31,7 @@ function ApDex({
 		<Card>
 			<GraphContainer>
 				{isLoading || isRefetching ? (
-					<Spinner height="10vh" />
+					<Spinner height="40vh" tip="Loading..." />
 				) : (
 					<ApDexDataSwitcher
 						onDragSelect={onDragSelect}

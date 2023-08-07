@@ -25,7 +25,7 @@ function ApDexTraces({
 }: ApDexTracesProps): JSX.Element {
 	const { servicename } = useParams<IServiceName>();
 
-	const apDexWidget = getWidgetQueryBuilder({
+	const apDexTracesWidget = getWidgetQueryBuilder({
 		query: {
 			queryType: EQueryType.QUERY_BUILDER,
 			promql: [],
@@ -42,10 +42,12 @@ function ApDexTraces({
 		panelTypes: PANEL_TYPES.TIME_SERIES,
 	});
 
+	const isQueryEnabled = topLevelOperationsRoute.length > 0;
+
 	return (
 		<Graph
 			name="apdex"
-			widget={apDexWidget}
+			widget={apDexTracesWidget}
 			onDragSelect={onDragSelect}
 			yAxisUnit=""
 			allowClone={false}
@@ -53,6 +55,7 @@ function ApDexTraces({
 			allowEdit={false}
 			allowThreshold
 			threshold={thresholdValue}
+			isQueryEnabled={isQueryEnabled}
 		/>
 	);
 }

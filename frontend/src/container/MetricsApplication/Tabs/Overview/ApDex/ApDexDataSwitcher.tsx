@@ -2,7 +2,7 @@ import { FeatureKeys } from 'constants/features';
 import useFeatureFlag from 'hooks/useFeatureFlag';
 import { TagFilterItem } from 'types/api/queryBuilder/queryBuilderData';
 
-import ApDexMetrics from './ApDexMetrics';
+import ApDexMetricsApplication from './ApDexMetricsApplication';
 import ApDexTraces from './ApDexTraces';
 
 interface ApDexApplicationProps {
@@ -22,7 +22,12 @@ function ApDexDataSwitcher({
 		?.active;
 
 	return isSpanMetricEnable ? (
-		<ApDexMetrics />
+		<ApDexMetricsApplication
+			onDragSelect={onDragSelect}
+			topLevelOperationsRoute={topLevelOperationsRoute}
+			tagFilterItems={tagFilterItems}
+			thresholdValue={thresholdValue}
+		/>
 	) : (
 		<ApDexTraces
 			onDragSelect={onDragSelect}

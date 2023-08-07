@@ -13,3 +13,8 @@ export interface SetApDexSettingsProps {
 export interface SetApDexPayloadProps {
 	data: string;
 }
+
+export interface MetricMetaProps {
+	delta: boolean;
+	le: number[];
+}

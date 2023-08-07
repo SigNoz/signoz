@@ -15,6 +15,8 @@ export enum FORMULA {
 	ERROR_PERCENTAGE = 'A*100/B',
 	DATABASE_CALLS_AVG_DURATION = 'A/B',
 	APDEX_TRACES = '((B + C)/2)/A',
+	APDEX_DELTA_SPAN_METRICS = '(B + C/2)/A',
+	APDEX_CUMULATIVE_SPAN_METRICS = '((B + C)/2)/A',
 }
 
 export enum GraphTitle {

@@ -67,3 +67,8 @@ export interface TableRendererProps {
 	columnName: string;
 	renderFunction: (record: RowData) => ReactNode;
 }
+
+export interface ApDexMetricsQueryBuilderQueriesProps extends ApDexProps {
+	delta: boolean;
+	le: number[];
+}
