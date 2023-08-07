@@ -40,7 +40,7 @@ function Pipelines(): JSX.Element {
 			{
 				key: 'change-history',
 				label: `Change History`,
-				children: <ChangeHistory piplineData={piplineData?.payload as Pipeline} />,
+				children: <ChangeHistory pipelineData={piplineData?.payload as Pipeline} />,
 			},
 		],
 		[piplineData?.payload, refetchPipelineLists],
