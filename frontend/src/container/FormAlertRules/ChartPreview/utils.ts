@@ -2,7 +2,7 @@ import { DataFormats } from 'container/NewWidget/RightContainer/types';
 
 import { unitsConfig } from './config';
 
-export function convertData({
+export function covertIntoDataFormats({
 	value,
 	sourceUnit = DataFormats.BitsIEC,
 	targetUnit = DataFormats.BitsIEC,

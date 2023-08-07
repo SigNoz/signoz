@@ -14,7 +14,7 @@ import { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { EQueryType } from 'types/common/dashboard';
 
 import { ChartContainer, FailedMessageContainer } from './styles';
-import { convertData } from './utils';
+import { covertIntoDataFormats } from './utils';
 
 export interface ChartPreviewProps {
 	name: string;
@@ -40,7 +40,7 @@ function ChartPreview({
 	const { t } = useTranslation('alerts');
 	const threshold = alertDef?.condition.target || 0;
 
-	const thresholdValue = convertData({
+	const thresholdValue = covertIntoDataFormats({
 		value: threshold,
 		sourceUnit: alertDef?.condition.targetUnit,
 		targetUnit: query?.unit,

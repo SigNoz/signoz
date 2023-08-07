@@ -1,10 +1,10 @@
 import { DataFormats } from 'container/NewWidget/RightContainer/types';
 
-import { convertData } from './utils';
+import { covertIntoDataFormats } from './utils';
 
 describe('Convert One Unit to another unit', () => {
 	it('should convert from BitsIEC to BytesIEC', () => {
-		const result = convertData({
+		const result = covertIntoDataFormats({
 			value: 8,
 			sourceUnit: DataFormats.BitsIEC,
 			targetUnit: DataFormats.BytesIEC,
@@ -14,7 +14,7 @@ describe('Convert One Unit to another unit', () => {
 
 	// for KibiBytes to MebiBytes conversion
 	it('should convert from KibiBytes to MebiBytes', () => {
-		const result = convertData({
+		const result = covertIntoDataFormats({
 			value: 1024,
 			sourceUnit: DataFormats.KibiBytes,
 			targetUnit: DataFormats.MebiBytes,
@@ -24,7 +24,7 @@ describe('Convert One Unit to another unit', () => {
 
 	// for MegaBytes to GigaBytes conversion (SI units)
 	it('should convert from MegaBytes to GigaBytes (SI)', () => {
-		const result = convertData({
+		const result = covertIntoDataFormats({
 			value: 1000,
 			sourceUnit: DataFormats.MegaBytes,
 			targetUnit: DataFormats.GigaBytes,
@@ -34,7 +34,7 @@ describe('Convert One Unit to another unit', () => {
 
 	// for identity conversion
 	it('should handle identity conversion', () => {
-		const result = convertData({
+		const result = covertIntoDataFormats({
 			value: 100,
 			sourceUnit: DataFormats.KibiBytes,
 			targetUnit: DataFormats.KibiBytes,
@@ -44,7 +44,7 @@ describe('Convert One Unit to another unit', () => {
 
 	// BytesIEC to BitsIEC conversion
 	it('should convert from BytesIEC to BitsIEC', () => {
-		const result = convertData({
+		const result = covertIntoDataFormats({
 			value: 1,
 			sourceUnit: DataFormats.BytesIEC,
 			targetUnit: DataFormats.BitsIEC,
@@ -54,7 +54,7 @@ describe('Convert One Unit to another unit', () => {
 
 	// for GibiBytes to TebiBytes conversion
 	it('should convert from GibiBytes to TebiBytes', () => {
-		const result = convertData({
+		const result = covertIntoDataFormats({
 			value: 1024,
 			sourceUnit: DataFormats.GibiBytes,
 			targetUnit: DataFormats.TebiBytes,
@@ -64,7 +64,7 @@ describe('Convert One Unit to another unit', () => {
 
 	// for GigaBytes to TeraBytes conversion (SI units)
 	it('should convert from GigaBytes to TeraBytes (SI)', () => {
-		const result = convertData({
+		const result = covertIntoDataFormats({
 			value: 1000,
 			sourceUnit: DataFormats.GigaBytes,
 			targetUnit: DataFormats.TeraBytes,
@@ -74,7 +74,7 @@ describe('Convert One Unit to another unit', () => {
 
 	// for GigaBytes to GibiBytes conversion (cross conversion)
 	it('should convert from GigaBytes to GibiBytes', () => {
-		const result = convertData({
+		const result = covertIntoDataFormats({
 			value: 1,
 			sourceUnit: DataFormats.GigaBytes,
 			targetUnit: DataFormats.GibiBytes,
@@ -85,7 +85,7 @@ describe('Convert One Unit to another unit', () => {
 
 	//  for a large number conversion
 	it('should handle large number conversion from PebiBytes to BitsIEC', () => {
-		const result = convertData({
+		const result = covertIntoDataFormats({
 			value: 1,
 			sourceUnit: DataFormats.PebiBytes,
 			targetUnit: DataFormats.BitsIEC,
@@ -95,7 +95,7 @@ describe('Convert One Unit to another unit', () => {
 
 	// Negative value conversion
 	it('should handle negative values', () => {
-		const result = convertData({
+		const result = covertIntoDataFormats({
 			value: -1,
 			sourceUnit: DataFormats.KibiBytes,
 			targetUnit: DataFormats.BytesIEC,
