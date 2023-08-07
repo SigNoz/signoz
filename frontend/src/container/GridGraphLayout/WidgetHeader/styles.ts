@@ -1,4 +1,5 @@
 import { grey } from '@ant-design/colors';
+import { Typography as TypographyComponent } from 'antd';
 import { themeColors } from 'constants/theme';
 import styled from 'styled-components';
 
@@ -34,6 +35,20 @@ export const ThesholdContainer = styled.span`
 export const DisplayThresholdContainer = styled.div`
 	display: flex;
 	align-items: center;
-	width: 5.625rem;
+	width: auto;
 	justify-content: space-between;
+`;
+
+export const WidgetHeaderContainer = styled.div`
+	display: flex;
+	flex-direction: row-reverse;
+	align-items: center;
+`;
+
+export const Typography = styled(TypographyComponent)`
+	&&& {
+		color: ${themeColors.white};
+		width: auto;
+		margin-left: 0.2rem;
+	}
 `;

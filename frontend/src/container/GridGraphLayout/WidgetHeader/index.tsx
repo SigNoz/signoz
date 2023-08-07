@@ -35,6 +35,7 @@ import {
 	HeaderContainer,
 	HeaderContentContainer,
 	ThesholdContainer,
+	WidgetHeaderContainer,
 } from './styles';
 import { KeyMethodMappingProps, MenuItem, TWidgetOptions } from './types';
 import { generateMenuList, isTWidgetOptions } from './utils';
@@ -186,13 +187,7 @@ function WidgetHeader({
 	);
 
 	return (
-		<div
-			style={{
-				display: 'flex',
-				flexDirection: 'row-reverse',
-				alignItems: 'center',
-			}}
-		>
+		<WidgetHeaderContainer>
 			<Dropdown
 				destroyPopupOnHide
 				open={isOpen}
@@ -230,7 +225,7 @@ function WidgetHeader({
 					<ExclamationCircleOutlined style={tooltipStyles} />
 				</Tooltip>
 			)}
-		</div>
+		</WidgetHeaderContainer>
 	);
 }
 
