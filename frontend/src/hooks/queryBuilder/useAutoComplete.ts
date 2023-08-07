@@ -27,11 +27,13 @@ export const useAutoComplete = (
 	const [searchValue, setSearchValue] = useState<string>('');
 	const [searchKey, setSearchKey] = useState<string>('');
 
-	const { keys, results, isFetching } = useFetchKeysAndValues(
-		searchValue,
-		query,
-		searchKey,
-	);
+	const {
+		keys,
+		results,
+		isFetching,
+		isValuesLoading,
+		isError,
+	} = useFetchKeysAndValues(searchValue, query, searchKey);
 
 	const [key, operator, result] = useSetCurrentKeyAndOperator(searchValue, keys);
 
@@ -122,6 +124,8 @@ export const useAutoComplete = (
 		searchValue,
 		isMulti,
 		isFetching,
+		isValuesLoading,
+		isError,
 		setSearchKey,
 		searchKey,
 	};
@@ -138,6 +142,8 @@ interface IAutoComplete {
 	searchValue: string;
 	isMulti: boolean;
 	isFetching: boolean;
+	isValuesLoading: boolean;
+	isError: boolean;
 	setSearchKey: (value: string) => void;
 	searchKey: string;
 }

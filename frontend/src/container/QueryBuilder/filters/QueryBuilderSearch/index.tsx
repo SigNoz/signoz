@@ -47,6 +47,8 @@ function QueryBuilderSearch({
 		searchValue,
 		isMulti,
 		isFetching,
+		isValuesLoading,
+		isError,
 		setSearchKey,
 		searchKey,
 	} = useAutoComplete(query, whereClauseConfig);
@@ -152,8 +154,11 @@ function QueryBuilderSearch({
 		/* eslint-disable react-hooks/exhaustive-deps */
 	}, [sourceKeys]);
 
+	const selectStatus = useMemo(() => (isError ? 'error' : ''), [isError]);
+
 	return (
 		<Select
+			status={selectStatus}
 			virtual
 			showSearch
 			tagRender={onTagRender}
@@ -176,6 +181,8 @@ function QueryBuilderSearch({
 				<Select.Option key={option.label} value={option.value}>
 					{option.label}
 					{option.selected && <StyledCheckOutlined />}
+
+					{isValuesLoading && <Spin size="small" />}
 				</Select.Option>
 			))}
 		</Select>

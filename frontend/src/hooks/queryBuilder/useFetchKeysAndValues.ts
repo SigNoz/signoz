@@ -19,6 +19,8 @@ type IuseFetchKeysAndValues = {
 	keys: BaseAutocompleteData[];
 	results: string[];
 	isFetching: boolean;
+	isError: boolean;
+	isValuesLoading: boolean;
 	sourceKeys: BaseAutocompleteData[];
 	handleRemoveSourceKey: (newSourceKey: string) => void;
 };
@@ -38,6 +40,8 @@ export const useFetchKeysAndValues = (
 	const [keys, setKeys] = useState<BaseAutocompleteData[]>([]);
 	const [sourceKeys, setSourceKeys] = useState<BaseAutocompleteData[]>([]);
 	const [results, setResults] = useState<string[]>([]);
+	const [isValuesLoading, setIsValuesLoading] = useState<boolean>(false);
+	const [isError, setIsError] = useState<boolean>(false);
 
 	const memoizedSearchParams = useMemo(
 		() => [
@@ -98,13 +102,14 @@ export const useFetchKeysAndValues = (
 		const filterAttributeKey = keys.find(
 			(item) => item.key === getRemovePrefixFromKey(tagKey),
 		);
-		setResults([]);
 
 		if (!tagKey || !tagOperator) {
 			return;
 		}
 
-		const { payload } = await getAttributesValues({
+		setIsValuesLoading(true);
+
+		const { payload, error } = await getAttributesValues({
 			aggregateOperator: query.aggregateOperator,
 			dataSource: query.dataSource,
 			aggregateAttribute: query.aggregateAttribute.key,
@@ -120,6 +125,13 @@ export const useFetchKeysAndValues = (
 			const values = Object.values(payload).find((el) => !!el) || [];
 			setResults(values);
 		}
+
+		if (error) {
+			console.error(error);
+			setIsError(true);
+		}
+
+		setIsValuesLoading(false);
 	};
 
 	const handleRemoveSourceKey = useCallback((sourceKey: string) => {
@@ -151,10 +163,19 @@ export const useFetchKeysAndValues = (
 		}
 	}, [data?.payload?.attributeKeys, status]);
 
+	useEffect(() => {
+		if (!searchValue) return;
+
+		setResults([]);
+		setIsError(false);
+	}, [searchValue]);
+
 	return {
 		keys,
 		results,
 		isFetching,
+		isError,
+		isValuesLoading,
 		sourceKeys,
 		handleRemoveSourceKey,
 	};
