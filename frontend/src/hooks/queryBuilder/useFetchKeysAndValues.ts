@@ -23,6 +23,7 @@ type IuseFetchKeysAndValues = {
 	isValuesLoading: boolean;
 	sourceKeys: BaseAutocompleteData[];
 	handleRemoveSourceKey: (newSourceKey: string) => void;
+	handleResetValues: () => void;
 };
 
 /**
@@ -127,7 +128,6 @@ export const useFetchKeysAndValues = (
 		}
 
 		if (error) {
-			console.error(error);
 			setIsError(true);
 		}
 
@@ -163,12 +163,10 @@ export const useFetchKeysAndValues = (
 		}
 	}, [data?.payload?.attributeKeys, status]);
 
-	useEffect(() => {
-		if (!searchValue) return;
-
-		setResults([]);
-		setIsError(false);
-	}, [searchValue]);
+	const handleResetValues = useCallback(() => {
+		if (results.length) setResults([]);
+		if (isError) setIsError(false);
+	}, [results, isError]);
 
 	return {
 		keys,
@@ -178,5 +176,6 @@ export const useFetchKeysAndValues = (
 		isValuesLoading,
 		sourceKeys,
 		handleRemoveSourceKey,
+		handleResetValues,
 	};
 };

@@ -33,15 +33,23 @@ export const useAutoComplete = (
 		isFetching,
 		isValuesLoading,
 		isError,
+		handleResetValues,
 	} = useFetchKeysAndValues(searchValue, query, searchKey);
 
 	const [key, operator, result] = useSetCurrentKeyAndOperator(searchValue, keys);
 
-	const handleSearch = (value: string): void => {
-		const prefixFreeValue = getRemovePrefixFromKey(getTagToken(value).tagKey);
-		setSearchValue(value);
-		setSearchKey(prefixFreeValue);
-	};
+	const handleSearch = useCallback(
+		(value: string): void => {
+			const prefixFreeValue = getRemovePrefixFromKey(getTagToken(value).tagKey);
+
+			setSearchValue(value);
+			setSearchKey(prefixFreeValue);
+
+			if (!searchValue) return;
+			handleResetValues();
+		},
+		[searchValue, handleResetValues],
+	);
 
 	const { isValidTag, isExist, isValidOperator, isMulti } = useTagValidation(
 		operator,
