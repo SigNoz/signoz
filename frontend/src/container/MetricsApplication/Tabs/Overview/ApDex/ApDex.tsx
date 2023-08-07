@@ -7,7 +7,7 @@ import { useParams } from 'react-router-dom';
 import { TagFilterItem } from 'types/api/queryBuilder/queryBuilderData';
 
 import { IServiceName } from '../../types';
-import ApDexTraces from './ApDexTraces';
+import ApDexDataSwitcher from './ApDexDataSwitcher';
 
 function ApDex({
 	onDragSelect,
@@ -33,7 +33,7 @@ function ApDex({
 				{isLoading || isRefetching ? (
 					<Spinner height="10vh" />
 				) : (
-					<ApDexTraces
+					<ApDexDataSwitcher
 						onDragSelect={onDragSelect}
 						topLevelOperationsRoute={topLevelOperationsRoute}
 						tagFilterItems={tagFilterItems}

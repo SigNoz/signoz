@@ -1,10 +1,8 @@
-import { FeatureKeys } from 'constants/features';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import Graph from 'container/GridGraphLayout/Graph';
 import { GraphTitle } from 'container/MetricsApplication/constant';
 import { getWidgetQueryBuilder } from 'container/MetricsApplication/MetricsApplication.factory';
 import { apDexTracesQueryBuilderQueries } from 'container/MetricsApplication/MetricsPageQueries/OverviewQueries';
-import useFeatureFlag from 'hooks/useFeatureFlag';
 import { useParams } from 'react-router-dom';
 import { TagFilterItem } from 'types/api/queryBuilder/queryBuilderData';
 import { EQueryType } from 'types/common/dashboard';
@@ -27,9 +25,6 @@ function ApDexTraces({
 }: ApDexTracesProps): JSX.Element {
 	const { servicename } = useParams<IServiceName>();
 
-	const isSpanMetricEnable = useFeatureFlag(FeatureKeys.USE_SPAN_METRICS)
-		?.active;
-
 	const apDexWidget = getWidgetQueryBuilder({
 		query: {
 			queryType: EQueryType.QUERY_BUILDER,
@@ -37,7 +32,6 @@ function ApDexTraces({
 			builder: apDexTracesQueryBuilderQueries({
 				servicename,
 				tagFilterItems,
-				isSpanMetricEnable,
 				topLevelOperationsRoute,
 				threashold: thresholdValue || 0,
 			}),

@@ -88,7 +88,6 @@ export const latency = ({
 export const apDexTracesQueryBuilderQueries = ({
 	servicename,
 	tagFilterItems,
-	isSpanMetricEnable = false,
 	topLevelOperationsRoute,
 	threashold,
 }: ApDexProps): QueryBuilderData => {
@@ -248,7 +247,7 @@ export const apDexTracesQueryBuilderQueries = ({
 		MetricAggregateOperator.COUNT,
 		MetricAggregateOperator.COUNT,
 	];
-	const dataSource = isSpanMetricEnable ? DataSource.METRICS : DataSource.TRACES;
+	const dataSource = DataSource.TRACES;
 
 	return getQueryBuilderQuerieswithFormula({
 		autocompleteData,
