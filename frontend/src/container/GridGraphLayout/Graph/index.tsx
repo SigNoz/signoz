@@ -181,6 +181,7 @@ function GridCardGraph({
 					allowEdit={allowEdit}
 					allowThreshold={allowThreshold}
 					threshold={threshold}
+					onClickHandler={onClickHandler}
 				/>
 			)}
 

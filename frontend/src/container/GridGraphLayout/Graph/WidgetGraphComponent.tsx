@@ -301,7 +301,7 @@ function WidgetGraphComponent({
 						yAxisUnit={yAxisUnit}
 						onClickHandler={onClickHandler}
 						onDragSelect={onDragSelect}
-						panelData={[]}
+						panelData={queryResponse.data?.payload?.data.newResult.data.result || []}
 						query={widget.query}
 						ref={lineChartRef}
 					/>
