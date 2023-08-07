@@ -6,7 +6,6 @@ import useGetTopLevelOperations from 'hooks/useGetTopLevelOperations';
 import useResourceAttribute from 'hooks/useResourceAttribute';
 import { convertRawQueriesToTraceSelectedTags } from 'hooks/useResourceAttribute/utils';
 import { useMemo, useState } from 'react';
-import { QueryKey } from 'react-query';
 import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
 import { GlobalReducer } from 'types/reducer/globalTime';
@@ -26,13 +25,12 @@ function ServicesUsingMetrics(): JSX.Element {
 		[queries],
 	);
 
-	const queryKey: QueryKey = [
+	const { data, isLoading, isError } = useGetTopLevelOperations([
 		minTime,
 		maxTime,
 		selectedTags,
 		globalSelectedInterval,
-	];
-	const { data, isLoading, isError } = useGetTopLevelOperations(queryKey);
+	]);
 
 	const [skipOnboarding, setSkipOnboarding] = useState(
 		localStorageGet(SKIP_ONBOARDING) === 'true',

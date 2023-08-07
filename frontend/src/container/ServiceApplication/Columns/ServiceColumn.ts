@@ -6,10 +6,11 @@ import { baseColumnOptions } from './BaseColumnOptions';
 import { ColumnKey, ColumnTitle } from './ColumnContants';
 import { getColumnSearchProps } from './GetColumnSearchProps';
 
-export const getColumns = (
-	search: string,
-	isMetricData: boolean,
-): ColumnsType<ServicesList> => {
+export const getColumns = ({
+	isMetricData,
+	search,
+	isPreferRPMDisabled,
+}: ITableColumnProps): ColumnsType<ServicesList> => {
 	const dynamicColumnOption: {
 		key: string;
 		columnOption: ColumnType<ServicesList>;
@@ -18,12 +19,13 @@ export const getColumns = (
 			key: ColumnKey.Application,
 			columnOption: {
 				...getColumnSearchProps('serviceName', search),
+				title: ColumnTitle(isPreferRPMDisabled)[ColumnKey.Application],
 			},
 		},
 		{
 			key: ColumnKey.P99,
 			columnOption: {
-				title: `${ColumnTitle[ColumnKey.P99]}${
+				title: `${ColumnTitle(isPreferRPMDisabled)[ColumnKey.P99]}${
 					isMetricData ? ' (in ns)' : ' (in ms)'
 				}`,
 				sorter: (a: ServicesList, b: ServicesList): number => a.p99 - b.p99,
@@ -39,6 +41,7 @@ export const getColumns = (
 				sorter: (a: ServicesList, b: ServicesList): number =>
 					a.errorRate - b.errorRate,
 				render: (value: number): string => value.toFixed(2),
+				title: ColumnTitle(isPreferRPMDisabled)[ColumnKey.ErrorRate],
 			},
 		},
 		{
@@ -47,6 +50,7 @@ export const getColumns = (
 				sorter: (a: ServicesList, b: ServicesList): number =>
 					a.callRate - b.callRate,
 				render: (value: number): string => value.toFixed(2),
+				title: ColumnTitle(isPreferRPMDisabled)[ColumnKey.Operations],
 			},
 		},
 	];
@@ -56,3 +60,9 @@ export const getColumns = (
 		dynamicColumnOption,
 	});
 };
+
+interface ITableColumnProps {
+	search: string;
+	isMetricData: boolean;
+	isPreferRPMDisabled: boolean;
+}

@@ -23,12 +23,15 @@ export enum GraphTitle {
 	APDEX = 'Apdex',
 	LATENCY = 'Latency',
 	RATE_PER_OPS = 'Rate (ops/s)',
+	RATE_PER_OPS_MIN = 'Rate (ops/min)',
 	ERROR_PERCENTAGE = 'Error Percentage',
 	DATABASE_CALLS_RPS = 'Database Calls RPS',
+	DATABASE_CALLS_RPM = 'Database Calls RPM',
 	DATABASE_CALLS_AVG_DURATION = 'Database Calls Avg Duration',
 	EXTERNAL_CALL_ERROR_PERCENTAGE = 'External Call Error Percentage',
 	EXTERNAL_CALL_DURATION = 'External Call duration',
 	EXTERNAL_CALL_RPS_BY_ADDRESS = 'External Call RPS(by Address)',
+	EXTERNAL_CALL_RPM_BY_ADDRESS = 'External Call RPM(by Address)',
 	EXTERNAL_CALL_DURATION_BY_ADDRESS = 'External Call duration(by Address)',
 }
 

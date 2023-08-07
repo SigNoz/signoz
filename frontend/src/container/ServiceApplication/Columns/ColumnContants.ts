@@ -5,12 +5,16 @@ export enum ColumnKey {
 	Operations = 'callRate',
 }
 
-export const ColumnTitle: Record<ColumnKey, string> = {
+export const ColumnTitle = (
+	isPreferRPMDisabled: boolean,
+): Record<ColumnKey, string> => ({
 	[ColumnKey.Application]: 'Application',
 	[ColumnKey.P99]: 'P99 latency',
 	[ColumnKey.ErrorRate]: 'Error Rate (% of total)',
-	[ColumnKey.Operations]: 'Operations Per Second',
-};
+	[ColumnKey.Operations]: isPreferRPMDisabled
+		? 'Operation Per Second'
+		: 'Operations Per Minute',
+});
 
 export enum ColumnWidth {
 	Application = 200,
