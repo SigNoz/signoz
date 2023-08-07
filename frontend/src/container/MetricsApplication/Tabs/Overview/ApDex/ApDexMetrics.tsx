@@ -4,7 +4,6 @@ import { GraphTitle } from 'container/MetricsApplication/constant';
 import { getWidgetQueryBuilder } from 'container/MetricsApplication/MetricsApplication.factory';
 import { apDexMetricsQueryBuilderQueries } from 'container/MetricsApplication/MetricsPageQueries/OverviewQueries';
 import { useParams } from 'react-router-dom';
-import { MetricMetaProps } from 'types/api/metrics/getApDex';
 import { TagFilterItem } from 'types/api/queryBuilder/queryBuilderData';
 import { EQueryType } from 'types/common/dashboard';
 import { v4 as uuid } from 'uuid';
@@ -30,8 +29,8 @@ function ApDexMetrics({
 				tagFilterItems,
 				topLevelOperationsRoute,
 				threashold: thresholdValue || 0,
-				delta,
-				le,
+				delta: delta || false,
+				le: le || [],
 			}),
 			clickhouse_sql: [],
 			id: uuid(),
@@ -40,7 +39,11 @@ function ApDexMetrics({
 		panelTypes: PANEL_TYPES.TIME_SERIES,
 	});
 
-	const isQueryEnabled = topLevelOperationsRoute.length > 0;
+	const isQueryEnabled =
+		topLevelOperationsRoute.length > 0 &&
+		le &&
+		le?.length > 0 &&
+		delta !== undefined;
 
 	return (
 		<Graph
@@ -58,11 +61,18 @@ function ApDexMetrics({
 	);
 }
 
-interface ApDexMetricsProps extends MetricMetaProps {
+interface ApDexMetricsProps {
+	delta?: boolean;
+	le?: number[];
 	thresholdValue: number;
 	onDragSelect: (start: number, end: number) => void;
 	topLevelOperationsRoute: string[];
 	tagFilterItems: TagFilterItem[];
 }
+
+ApDexMetrics.defaultProps = {
+	delta: undefined,
+	le: undefined,
+};
 
 export default ApDexMetrics;
