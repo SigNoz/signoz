@@ -33,13 +33,10 @@ export const getPaginationQueryData: SetupPaginationQueryData = ({
 	const filters = currentStagedQueryData.filters || initialFilters;
 	const offset = (page - 1) * pageSize;
 
-	const queryProps =
-		(orderByTimestamp && currentStagedQueryData.orderBy.length > 1) ||
-		!orderByTimestamp
-			? {
-					offset,
-			  }
-			: {};
+	const queryProps = {
+		offset,
+		pageSize,
+	};
 
 	const updatedFilters: TagFilter = {
 		...filters,

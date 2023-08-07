@@ -132,3 +132,12 @@ export const SomethingWentWrong = Loadable(
 export const LicensePage = Loadable(
 	() => import(/* webpackChunkName: "All Channels" */ 'pages/License'),
 );
+
+export const LogsIndexToFields = Loadable(
+	() =>
+		import(/* webpackChunkName: "LogsIndexToFields Page" */ 'pages/LogsSettings'),
+);
+
+export const PipelinePage = Loadable(
+	() => import(/* webpackChunkName: "Pipelines" */ 'pages/Pipelines'),
+);
