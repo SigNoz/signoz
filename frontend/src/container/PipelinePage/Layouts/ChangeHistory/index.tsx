@@ -18,9 +18,7 @@ function ChangeHistory({
 			latestVersion?.deployStatus,
 		);
 		if (latestVersion && !isLatestDeploymentFinished) {
-			intervalId = setInterval(async () => {
-				await refetchPipelineLists();
-			}, 5000);
+			intervalId = setInterval(refetchPipelineLists, 5000);
 		}
 
 		return (): void => {
