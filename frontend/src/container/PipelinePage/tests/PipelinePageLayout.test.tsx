@@ -49,7 +49,7 @@ describe('PipelinePage container test', () => {
 					<Provider store={store}>
 						<I18nextProvider i18n={i18n}>
 							<PipelinePageLayout
-								piplineData={pipelinedata}
+								pipelineData={pipelinedata}
 								refetchPipelineLists={refetchPipelineLists}
 							/>
 						</I18nextProvider>
