@@ -1,6 +1,7 @@
 version: "3.9"
 
-x-clickhouse-defaults: &clickhouse-defaults
+x-clickhouse-defaults:
+  &clickhouse-defaults
   image: clickhouse/clickhouse-server:22.8.8-alpine
   tty: true
   deploy:
@@ -16,7 +17,14 @@ x-clickhouse-defaults: &clickhouse-defaults
       max-file: "3"
   healthcheck:
     # "clickhouse", "client", "-u ${CLICKHOUSE_USER}", "--password ${CLICKHOUSE_PASSWORD}", "-q 'SELECT 1'"
-    test: ["CMD", "wget", "--spider", "-q", "localhost:8123/ping"]
+    test:
+      [
+        "CMD",
+        "wget",
+        "--spider",
+        "-q",
+        "localhost:8123/ping"
+      ]
     interval: 30s
     timeout: 5s
     retries: 3
@@ -26,7 +34,8 @@ x-clickhouse-defaults: &clickhouse-defaults
       soft: 262144
       hard: 262144
 
-x-clickhouse-depend: &clickhouse-depend
+x-clickhouse-depend:
+  &clickhouse-depend
   depends_on:
     - clickhouse
     # - clickhouse-2
@@ -138,7 +147,7 @@ services:
 
   query-service:
     image: signoz/query-service:0.25.3
-    command: ["-config=/root/config/prometheus.yml"]
+    command: [ "-config=/root/config/prometheus.yml" ]
     # ports:
     #   - "6060:6060"     # pprof port
     #   - "8080:8080"     # query-service port
@@ -156,7 +165,14 @@ services:
       - TELEMETRY_ENABLED=true
       - DEPLOYMENT_TYPE=docker-swarm
     healthcheck:
-      test: ["CMD", "wget", "--spider", "-q", "localhost:8080/api/v1/health"]
+      test:
+        [
+          "CMD",
+          "wget",
+          "--spider",
+          "-q",
+          "localhost:8080/api/v1/health"
+        ]
       interval: 30s
       timeout: 5s
       retries: 3
@@ -180,7 +196,11 @@ services:
 
   otel-collector:
     image: signoz/signoz-otel-collector:0.79.4
-    command: ["--config=/etc/otel-collector-config.yaml", "--feature-gates=-pkg.translator.prometheus.NormalizeName"]
+    command:
+      [
+        "--config=/etc/otel-collector-config.yaml",
+        "--feature-gates=-pkg.translator.prometheus.NormalizeName"
+      ]
     user: root # required for reading docker container logs
     volumes:
       - ./otel-collector-config.yaml:/etc/otel-collector-config.yaml
@@ -191,8 +211,8 @@ services:
       - LOW_CARDINAL_EXCEPTION_GROUPING=false
     ports:
       # - "1777:1777"     # pprof extension
-      - "4317:4317"     # OTLP gRPC receiver
-      - "4318:4318"     # OTLP HTTP receiver
+      - "4317:4317" # OTLP gRPC receiver
+      - "4318:4318" # OTLP HTTP receiver
       # - "8888:8888"     # OtelCollector internal metrics
       # - "8889:8889"     # signoz spanmetrics exposed by the agent
       # - "9411:9411"     # Zipkin port
@@ -209,7 +229,11 @@ services:
 
   otel-collector-metrics:
     image: signoz/signoz-otel-collector:0.79.4
-    command: ["--config=/etc/otel-collector-metrics-config.yaml", "--feature-gates=-pkg.translator.prometheus.NormalizeName"]
+    command:
+      [
+        "--config=/etc/otel-collector-metrics-config.yaml",
+        "--feature-gates=-pkg.translator.prometheus.NormalizeName"
+      ]
     volumes:
       - ./otel-collector-metrics-config.yaml:/etc/otel-collector-metrics-config.yaml
     # ports:
@@ -222,9 +246,22 @@ services:
         condition: on-failure
     <<: *clickhouse-depend
 
+  logspout:
+    image: "gliderlabs/logspout:v3.2.14"
+    volumes:
+      - /etc/hostname:/etc/host_hostname:ro
+      - /var/run/docker.sock:/var/run/docker.sock
+    command: syslog+tcp://otel-collector:2255
+    depends_on:
+      - otel-collector
+    deploy:
+      mode: global
+      restart_policy:
+        condition: on-failure
+
   hotrod:
     image: jaegertracing/example-hotrod:1.30
-    command: ["all"]
+    command: [ "all" ]
     environment:
       - JAEGER_ENDPOINT=http://otel-collector:14268/api/traces
     logging:
