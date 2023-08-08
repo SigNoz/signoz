@@ -1,5 +1,5 @@
 import { TableProps } from 'antd';
-import { ColumnsType } from 'antd/es/table';
+import { ColumnsType, ColumnType } from 'antd/es/table';
 import { RowData } from 'lib/query/createTableColumnsFromQuery';
 import { ReactNode } from 'react';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
@@ -14,4 +14,4 @@ export type QueryTableProps = Omit<
 	renderActionCell?: (record: RowData) => ReactNode;
 	modifyColumns?: (columns: ColumnsType<RowData>) => ColumnsType<RowData>;
 	renderColumnCell?: Record<string, (record: RowData) => ReactNode>;
-};
+} & Partial<Pick<ColumnType<RowData>, 'sorter'>>;

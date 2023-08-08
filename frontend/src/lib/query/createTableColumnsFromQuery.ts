@@ -17,10 +17,16 @@ import { ListItem, QueryDataV3, SeriesItem } from 'types/api/widgets/getQuery';
 import { QueryBuilderData } from 'types/common/queryBuilder';
 import { v4 as uuid } from 'uuid';
 
+export type CreateSorter = (
+	column: DynamicColumn,
+) => ColumnType<RowData>['sorter'];
+
 type CreateTableDataFromQueryParams = Pick<
 	QueryTableProps,
 	'queryTableData' | 'query' | 'renderActionCell' | 'renderColumnCell'
->;
+> & {
+	createSorter: CreateSorter;
+};
 
 export type RowData = {
 	timestamp: number;
@@ -28,14 +34,14 @@ export type RowData = {
 	[key: string]: string | number;
 };
 
-type DynamicColumn = {
+export type DynamicColumn = {
 	query: IBuilderQuery | IBuilderFormula;
 	field: string;
 	dataIndex: string;
 	title: string;
 	data: (string | number)[];
 	type: 'field' | 'operator' | 'formula';
-	sortable: boolean;
+	dataType: 'string' | 'number';
 };
 
 type DynamicColumns = DynamicColumn[];
@@ -93,8 +99,8 @@ const getQueryByName = <T extends keyof QueryBuilderData>(
 
 const addLabels = (
 	query: IBuilderQuery | IBuilderFormula,
-	label: string,
 	labels: Record<string, unknown>,
+	label: string,
 	dynamicColumns: DynamicColumns,
 ): void => {
 	if (isValueExist('dataIndex', label, dynamicColumns)) return;
@@ -103,6 +109,8 @@ const addLabels = (
 
 	const isNumber = !Number.isNaN(parseFloat(String(labelValue)));
 
+	const dataType: DynamicColumn['dataType'] = isNumber ? 'number' : 'string';
+
 	const fieldObj: DynamicColumn = {
 		query,
 		field: label as string,
@@ -110,7 +118,7 @@ const addLabels = (
 		title: label,
 		data: [],
 		type: 'field',
-		sortable: isNumber,
+		dataType,
 	};
 
 	dynamicColumns.push(fieldObj);
@@ -136,7 +144,7 @@ const addOperatorFormulaColumns = (
 			title: customLabel || formulaLabel,
 			data: [],
 			type: 'formula',
-			sortable: true,
+			dataType: 'number',
 		};
 
 		dynamicColumns.push(formulaColumn);
@@ -162,7 +170,7 @@ const addOperatorFormulaColumns = (
 		title: customLabel || operatorLabel,
 		data: [],
 		type: 'operator',
-		sortable: true,
+		dataType: 'number',
 	};
 
 	dynamicColumns.push(operatorColumn);
@@ -205,7 +213,7 @@ const getDynamicColumns: GetDynamicColumns = (queryTableData, query) => {
 		if (list) {
 			list.forEach((listItem) => {
 				Object.keys(listItem.data).forEach((label) => {
-					addLabels(currentStagedQuery, label, listItem.data, dynamicColumns);
+					addLabels(currentStagedQuery, listItem.data, label, dynamicColumns);
 				});
 			});
 		}
@@ -226,7 +234,7 @@ const getDynamicColumns: GetDynamicColumns = (queryTableData, query) => {
 				Object.keys(seria.labels).forEach((label) => {
 					if (label === currentQuery?.queryName) return;
 
-					addLabels(currentStagedQuery, label, seria.labels, dynamicColumns);
+					addLabels(currentStagedQuery, seria.labels, label, dynamicColumns);
 				});
 			});
 		}
@@ -457,6 +465,8 @@ const generateData = (
 
 const generateTableColumns = (
 	dynamicColumns: DynamicColumns,
+	dataSource: RowData[],
+	createSorter: CreateSorter,
 	renderColumnCell?: QueryTableProps['renderColumnCell'],
 ): ColumnsType<RowData> => {
 	const columns: ColumnsType<RowData> = dynamicColumns.reduce<
@@ -467,12 +477,7 @@ const generateTableColumns = (
 			title: item.title,
 			width: QUERY_TABLE_CONFIG.width,
 			render: renderColumnCell && renderColumnCell[item.dataIndex],
-			sorter: item.sortable
-				? {
-						compare: (a, b): number =>
-							(a[item.dataIndex] as number) - (b[item.dataIndex] as number),
-				  }
-				: false,
+			sorter: createSorter(item),
 		};
 
 		return [...acc, column];
@@ -486,6 +491,7 @@ export const createTableColumnsFromQuery: CreateTableDataFromQuery = ({
 	queryTableData,
 	renderActionCell,
 	renderColumnCell,
+	createSorter,
 }) => {
 	const sortedQueryTableData = queryTableData.sort((a, b) =>
 		a.queryName < b.queryName ? -1 : 1,
@@ -500,7 +506,12 @@ export const createTableColumnsFromQuery: CreateTableDataFromQuery = ({
 
 	const dataSource = generateData(filledDynamicColumns, rowsLength);
 
-	const columns = generateTableColumns(filledDynamicColumns, renderColumnCell);
+	const columns = generateTableColumns(
+		filledDynamicColumns,
+		dataSource,
+		createSorter,
+		renderColumnCell,
+	);
 
 	const actionsCell: ColumnType<RowData> | null = renderActionCell
 		? {

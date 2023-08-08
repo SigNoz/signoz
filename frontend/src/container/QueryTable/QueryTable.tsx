@@ -1,6 +1,11 @@
 import { ResizeTable } from 'components/ResizeTable';
-import { createTableColumnsFromQuery } from 'lib/query/createTableColumnsFromQuery';
-import { useMemo } from 'react';
+import {
+	CreateSorter,
+	createTableColumnsFromQuery,
+	DynamicColumn,
+	RowData,
+} from 'lib/query/createTableColumnsFromQuery';
+import { useCallback, useMemo } from 'react';
 
 import { QueryTableProps } from './QueryTable.intefaces';
 
@@ -10,8 +15,25 @@ export function QueryTable({
 	renderActionCell,
 	modifyColumns,
 	renderColumnCell,
+	sorter,
 	...props
 }: QueryTableProps): JSX.Element {
+	const createSorter: CreateSorter = useCallback(
+		(column: DynamicColumn): QueryTableProps['sorter'] => {
+			if (sorter) {
+				return sorter;
+			}
+
+			if (column.dataType === 'number') {
+				return (a: RowData, b: RowData): number =>
+					(a[column.dataIndex] as number) - (b[column.dataIndex] as number);
+			}
+
+			return false;
+		},
+		[sorter],
+	);
+
 	const { columns, dataSource } = useMemo(
 		() =>
 			createTableColumnsFromQuery({
@@ -19,8 +41,9 @@ export function QueryTable({
 				queryTableData,
 				renderActionCell,
 				renderColumnCell,
+				createSorter,
 			}),
-		[query, queryTableData, renderColumnCell, renderActionCell],
+		[query, queryTableData, renderActionCell, renderColumnCell, createSorter],
 	);
 
 	const tableColumns = modifyColumns ? modifyColumns(columns) : columns;
