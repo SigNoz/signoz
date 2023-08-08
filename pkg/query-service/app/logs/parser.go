@@ -304,6 +304,13 @@ func replaceFieldInToken(queryToken string, selectedFieldsLookup map[string]mode
 			} else if strings.Compare(strings.ToLower(*col), "fulltext") != 0 && field.Type != constants.Static {
 				return "", fmt.Errorf("field not found for filtering")
 			}
+		} else {
+			field := selectedFieldsLookup[sqlColName]
+			if field.Type != constants.Static {
+				prefix := field.Type[:len(field.Type)-1]
+				// columns name is <type>_<name>_<datatype>
+				sqlColName = fmt.Sprintf("%s_%s_%s", strings.ToLower(prefix), sqlColName, strings.ToLower(field.DataType))
+			}
 		}
 	}
 	return strings.Replace(queryToken, *col, sqlColName, 1), nil
