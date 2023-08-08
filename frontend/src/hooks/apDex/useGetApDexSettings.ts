@@ -5,10 +5,8 @@ import { ApDexPayloadProps } from 'types/api/metrics/getApDex';
 
 export const useGetApDexSettings = (
 	servicename: string,
-): UseQueryResult<AxiosResponse<ApDexPayloadProps[]>, AxiosError> => {
-	const queryKey = [{ servicename }];
-	return useQuery<AxiosResponse<ApDexPayloadProps[]>, AxiosError>({
+): UseQueryResult<AxiosResponse<ApDexPayloadProps[]>, AxiosError> =>
+	useQuery<AxiosResponse<ApDexPayloadProps[]>, AxiosError>({
+		queryKey: [{ servicename }],
 		queryFn: async () => getApDexSettings(servicename),
-		queryKey,
 	});
-};
