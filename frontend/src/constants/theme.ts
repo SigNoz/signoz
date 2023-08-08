@@ -52,7 +52,6 @@ const themeColors = {
 	gamboge: '#D89614',
 	bckgGrey: '#1d1d1d',
 	lightBlue: '#177ddc',
-	lightGrey: '#acacac',
 };
 
 export { themeColors };
