@@ -13,11 +13,9 @@ export const useSetApDexSettings = ({
 	SetApDexPayloadProps,
 	Error,
 	SetApDexSettingsProps
-> => {
-	const queryKey = [servicename, threshold.toString(), excludeStatusCode];
-	return useMutation<SetApDexPayloadProps, Error, SetApDexSettingsProps>({
-		mutationKey: queryKey,
+> =>
+	useMutation<SetApDexPayloadProps, Error, SetApDexSettingsProps>({
+		mutationKey: [servicename, threshold.toString(), excludeStatusCode],
 		mutationFn: async () =>
 			setApDexSettings({ servicename, threshold, excludeStatusCode }),
 	});
-};

@@ -1,10 +1,14 @@
-import { DisplayThresholdContainer, Typography } from './styles';
+import {
+	DisplayThresholdContainer,
+	TypographHeading,
+	Typography,
+} from './styles';
 import { DisplayThresholdProps } from './types';
 
 function DisplayThreshold({ threshold }: DisplayThresholdProps): JSX.Element {
 	return (
 		<DisplayThresholdContainer>
-			<div>Threshold </div>
+			<TypographHeading>Threshold </TypographHeading>
 			<Typography>{threshold}</Typography>
 		</DisplayThresholdContainer>
 	);

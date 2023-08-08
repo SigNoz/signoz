@@ -12,7 +12,7 @@ import { ApDexMetricsProps } from './types';
 
 function ApDexMetrics({
 	delta,
-	le,
+	metricsBuckets,
 	thresholdValue,
 	onDragSelect,
 	tagFilterItems,
@@ -31,7 +31,7 @@ function ApDexMetrics({
 				topLevelOperationsRoute,
 				threashold: thresholdValue || 0,
 				delta: delta || false,
-				le: le || [],
+				metricsBuckets: metricsBuckets || [],
 			}),
 			clickhouse_sql: [],
 			id: uuid(),
@@ -42,8 +42,8 @@ function ApDexMetrics({
 
 	const isQueryEnabled =
 		topLevelOperationsRoute.length > 0 &&
-		le &&
-		le?.length > 0 &&
+		metricsBuckets &&
+		metricsBuckets?.length > 0 &&
 		delta !== undefined;
 
 	return (

@@ -1,8 +1,7 @@
-import axios from 'axios';
 import Spinner from 'components/Spinner';
 import { Card, GraphContainer } from 'container/MetricsApplication/styles';
 import { useGetApDexSettings } from 'hooks/apDex/useGetApDexSettings';
-import { useNotifications } from 'hooks/useNotifications';
+import useErrorNotification from 'hooks/useErrorNotification';
 import { memo } from 'react';
 import { useParams } from 'react-router-dom';
 
@@ -20,20 +19,14 @@ function ApDexApplication({
 	const { data, isLoading, error, isRefetching } = useGetApDexSettings(
 		servicename,
 	);
-	const { notifications } = useNotifications();
-
-	if (error && axios.isAxiosError(error)) {
-		notifications.error({
-			message: error.message,
-		});
-	}
+	useErrorNotification(error);
 
 	return (
 		<Card>
-			<GraphContainer>
-				{isLoading || isRefetching ? (
-					<Spinner height="40vh" tip="Loading..." />
-				) : (
+			{isLoading || isRefetching ? (
+				<Spinner height="40vh" tip="Loading..." />
+			) : (
+				<GraphContainer>
 					<ApDexDataSwitcher
 						handleGraphClick={handleGraphClick}
 						onDragSelect={onDragSelect}
@@ -41,8 +34,8 @@ function ApDexApplication({
 						tagFilterItems={tagFilterItems}
 						thresholdValue={data?.data[0].threshold}
 					/>
-				)}
-			</GraphContainer>
+				</GraphContainer>
+			)}
 		</Card>
 	);
 }

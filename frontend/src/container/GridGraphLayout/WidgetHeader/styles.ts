@@ -29,7 +29,6 @@ export const ArrowContainer = styled.span<{ hover: boolean }>`
 
 export const ThesholdContainer = styled.span`
 	margin-top: -0.3rem;
-	color: ${themeColors.lightGrey};
 `;
 
 export const DisplayThresholdContainer = styled.div`
@@ -50,5 +49,11 @@ export const Typography = styled(TypographyComponent)`
 		color: ${themeColors.white};
 		width: auto;
 		margin-left: 0.2rem;
+	}
+`;
+
+export const TypographHeading = styled(TypographyComponent)`
+	&&& {
+		color: ${grey[2]};
 	}
 `;

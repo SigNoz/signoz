@@ -24,7 +24,7 @@ import {
 	LatencyProps,
 	OperationPerSecProps,
 } from '../Tabs/types';
-import { getNearestHighestBucketValue } from '../utils';
+import { convertMilSecToNanoSec, getNearestHighestBucketValue } from '../utils';
 import {
 	getQueryBuilderQueries,
 	getQueryBuilderQuerieswithFormula,
@@ -165,7 +165,7 @@ export const apDexTracesQueryBuilderQueries = ({
 				type: MetricsType.Tag,
 			},
 			op: OPERATORS['<='],
-			value: threashold * 1000000000,
+			value: convertMilSecToNanoSec(threashold),
 		},
 		{
 			id: '',
@@ -201,7 +201,7 @@ export const apDexTracesQueryBuilderQueries = ({
 				type: MetricsType.Tag,
 			},
 			op: OPERATORS['<='],
-			value: threashold * 4 * 1000000000,
+			value: convertMilSecToNanoSec(threashold * 4),
 		},
 		{
 			id: '',
@@ -273,7 +273,7 @@ export const apDexMetricsQueryBuilderQueries = ({
 	topLevelOperationsRoute,
 	threashold,
 	delta,
-	le,
+	metricsBuckets,
 }: ApDexMetricsQueryBuilderQueriesProps): QueryBuilderData => {
 	const autoCompleteDataA: BaseAutocompleteData = {
 		key: WidgetKeys.SignozLatencyCount,
@@ -343,7 +343,7 @@ export const apDexMetricsQueryBuilderQueries = ({
 				type: MetricsType.Tag,
 			},
 			op: OPERATORS['='],
-			value: getNearestHighestBucketValue(threashold * 1000, le),
+			value: getNearestHighestBucketValue(threashold * 1000, metricsBuckets),
 		},
 		{
 			id: '',
@@ -380,7 +380,7 @@ export const apDexMetricsQueryBuilderQueries = ({
 				type: MetricsType.Tag,
 			},
 			op: OPERATORS['='],
-			value: getNearestHighestBucketValue(threashold * 1000 * 4, le),
+			value: getNearestHighestBucketValue(threashold * 1000 * 4, metricsBuckets),
 		},
 		{
 			id: '',

@@ -161,7 +161,7 @@ function Application(): JSX.Element {
 		[dispatch],
 	);
 
-	const onErrorTrackHandler = (timestamp: number): void => {
+	const onErrorTrackHandler = (timestamp: number): (() => void) => (): void => {
 		const currentTime = timestamp;
 		const tPlusOne = timestamp + 60 * 1000;
 
@@ -247,9 +247,7 @@ function Application(): JSX.Element {
 							type="default"
 							size="small"
 							id="Error_button"
-							onClick={(): void => {
-								onErrorTrackHandler(selectedTimeStamp);
-							}}
+							onClick={onErrorTrackHandler(selectedTimeStamp)}
 						>
 							View Traces
 						</Button>

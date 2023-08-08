@@ -70,5 +70,5 @@ export interface TableRendererProps {
 
 export interface ApDexMetricsQueryBuilderQueriesProps extends ApDexProps {
 	delta: boolean;
-	le: number[];
+	metricsBuckets: number[];
 }

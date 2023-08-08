@@ -5,7 +5,7 @@ import Spinner from 'components/Spinner';
 import { themeColors } from 'constants/theme';
 import { useSetApDexSettings } from 'hooks/apDex/useSetApDexSettings';
 import { useNotifications } from 'hooks/useNotifications';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { ApDexPayloadProps } from 'types/api/metrics/getApDex';
 
 import {
@@ -25,7 +25,12 @@ function ApDexSettings({
 	data,
 	refetch,
 }: ApDexSettingsProps): JSX.Element {
-	const [thresholdValue, setThresholdValue] = useState(0);
+	const [thresholdValue, setThresholdValue] = useState(() => {
+		if (data) {
+			return data.data[0].threshold;
+		}
+		return 0;
+	});
 	const { notifications } = useNotifications();
 
 	const { isLoading: setApDexIsLoading, mutateAsync } = useSetApDexSettings({
@@ -33,12 +38,6 @@ function ApDexSettings({
 		threshold: thresholdValue,
 		excludeStatusCode: '',
 	});
-
-	useEffect(() => {
-		if (data) {
-			setThresholdValue(data.data[0].threshold);
-		}
-	}, [data]);
 
 	const handleThreadholdChange = (
 		e: React.ChangeEvent<HTMLInputElement>,

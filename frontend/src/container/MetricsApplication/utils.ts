@@ -32,3 +32,6 @@ export const getNearestHighestBucketValue = (
 	const nearestBucket = buckets.find((bucket) => bucket >= value);
 	return nearestBucket?.toString() || '+Inf';
 };
+
+export const convertMilSecToNanoSec = (value: number): number =>
+	value * 1000000000;

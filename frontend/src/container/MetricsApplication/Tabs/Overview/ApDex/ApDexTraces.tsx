@@ -17,7 +17,6 @@ function ApDexTraces({
 	tagFilterItems,
 	thresholdValue,
 }: ApDexDataSwitcherProps): JSX.Element {
-	console.log('thresholdValue', thresholdValue);
 	const { servicename } = useParams<IServiceName>();
 
 	const apDexTracesWidget = getWidgetQueryBuilder({
