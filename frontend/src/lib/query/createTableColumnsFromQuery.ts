@@ -24,9 +24,7 @@ export type CreateSorter = (
 type CreateTableDataFromQueryParams = Pick<
 	QueryTableProps,
 	'queryTableData' | 'query' | 'renderActionCell' | 'renderColumnCell'
-> & {
-	createSorter: CreateSorter;
-};
+>;
 
 export type RowData = {
 	timestamp: number;
@@ -465,8 +463,6 @@ const generateData = (
 
 const generateTableColumns = (
 	dynamicColumns: DynamicColumns,
-	dataSource: RowData[],
-	createSorter: CreateSorter,
 	renderColumnCell?: QueryTableProps['renderColumnCell'],
 ): ColumnsType<RowData> => {
 	const columns: ColumnsType<RowData> = dynamicColumns.reduce<
@@ -477,7 +473,6 @@ const generateTableColumns = (
 			title: item.title,
 			width: QUERY_TABLE_CONFIG.width,
 			render: renderColumnCell && renderColumnCell[item.dataIndex],
-			sorter: createSorter(item),
 		};
 
 		return [...acc, column];
@@ -491,7 +486,6 @@ export const createTableColumnsFromQuery: CreateTableDataFromQuery = ({
 	queryTableData,
 	renderActionCell,
 	renderColumnCell,
-	createSorter,
 }) => {
 	const sortedQueryTableData = queryTableData.sort((a, b) =>
 		a.queryName < b.queryName ? -1 : 1,
@@ -506,12 +500,7 @@ export const createTableColumnsFromQuery: CreateTableDataFromQuery = ({
 
 	const dataSource = generateData(filledDynamicColumns, rowsLength);
 
-	const columns = generateTableColumns(
-		filledDynamicColumns,
-		dataSource,
-		createSorter,
-		renderColumnCell,
-	);
+	const columns = generateTableColumns(filledDynamicColumns, renderColumnCell);
 
 	const actionsCell: ColumnType<RowData> | null = renderActionCell
 		? {
