@@ -1,13 +1,19 @@
 import { Select, Space } from 'antd';
+import { getCategorySelectOptionByName } from 'container/NewWidget/RightContainer/dataFormatCategories';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 
+import { categoryToSupport } from './config';
 import { DefaultLabel, selectStyles } from './styles';
-import { getAllUnits } from './utils';
 
 function BuilderUnitsFilter(): JSX.Element {
 	const { currentQuery, handleOnUnitsChange } = useQueryBuilder();
 
 	const selectedValue = currentQuery?.unit;
+
+	const allOptions = categoryToSupport.map((category) => ({
+		label: category,
+		options: getCategorySelectOptionByName(category),
+	}));
 
 	return (
 		<Space>
@@ -16,7 +22,7 @@ function BuilderUnitsFilter(): JSX.Element {
 				style={selectStyles}
 				onChange={handleOnUnitsChange}
 				value={selectedValue}
-				options={getAllUnits}
+				options={allOptions}
 				placeholder="Select unit"
 			/>
 		</Space>

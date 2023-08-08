@@ -6,6 +6,7 @@ import {
 	AngularFormats,
 	AreaFormats,
 	BooleanFormats,
+	CategoryNames,
 	ConcentrationFormats,
 	CurrencyFormats,
 	DataFormats,
@@ -32,7 +33,7 @@ import {
 
 export const dataTypeCategories: DataTypeCategories = [
 	{
-		name: 'Time',
+		name: CategoryNames.Time,
 		formats: [
 			{ name: 'Hertz (1/s)', id: TimeFormats.Hertz },
 			{ name: 'nanoseconds (ns)', id: TimeFormats.Nanoseconds },
@@ -52,7 +53,7 @@ export const dataTypeCategories: DataTypeCategories = [
 		],
 	},
 	{
-		name: 'Throughput',
+		name: CategoryNames.Throughput,
 		formats: [
 			{ name: 'counts/sec (cps)', id: ThroughputFormats.CountsPerSec },
 			{ name: 'ops/sec (ops)', id: ThroughputFormats.OpsPerSec },
@@ -67,7 +68,7 @@ export const dataTypeCategories: DataTypeCategories = [
 		],
 	},
 	{
-		name: 'Data',
+		name: CategoryNames.Data,
 		formats: [
 			{ name: 'bytes(IEC)', id: DataFormats.BytesIEC },
 			{ name: 'bytes(SI)', id: DataFormats.BytesSI },
@@ -86,7 +87,7 @@ export const dataTypeCategories: DataTypeCategories = [
 		],
 	},
 	{
-		name: 'Data rate',
+		name: CategoryNames.DataRate,
 		formats: [
 			{ name: 'packets/sec', id: DataRateFormats.PacketsPerSec },
 			{ name: 'bytes/sec(IEC)', id: DataRateFormats.BytesPerSecIEC },
@@ -116,7 +117,7 @@ export const dataTypeCategories: DataTypeCategories = [
 		],
 	},
 	{
-		name: 'Hash rate',
+		name: CategoryNames.HashRate,
 		formats: [
 			{ name: 'hashes/sec', id: HashRateFormats.HashesPerSec },
 			{ name: 'kilohashes/sec', id: HashRateFormats.KiloHashesPerSec },
@@ -128,7 +129,7 @@ export const dataTypeCategories: DataTypeCategories = [
 		],
 	},
 	{
-		name: 'Misc',
+		name: CategoryNames.Miscellaneous,
 		formats: [
 			{ name: 'none', id: MiscellaneousFormats.None },
 			{ name: 'String', id: MiscellaneousFormats.String },
@@ -145,7 +146,7 @@ export const dataTypeCategories: DataTypeCategories = [
 		],
 	},
 	{
-		name: 'Acceleration',
+		name: CategoryNames.Acceleration,
 		formats: [
 			{ name: 'Meters/sec²', id: AccelerationFormats.MetersPerSecondSquared },
 			{ name: 'Feet/sec²', id: AccelerationFormats.FeetPerSecondSquared },
@@ -153,7 +154,7 @@ export const dataTypeCategories: DataTypeCategories = [
 		],
 	},
 	{
-		name: 'Angle',
+		name: CategoryNames.Angle,
 		formats: [
 			{ name: 'Degrees (°)', id: AngularFormats.Degree },
 			{ name: 'Radians', id: AngularFormats.Radian },
@@ -163,7 +164,7 @@ export const dataTypeCategories: DataTypeCategories = [
 		],
 	},
 	{
-		name: 'Area',
+		name: CategoryNames.Area,
 		formats: [
 			{ name: 'Square Meters (m²)', id: AreaFormats.SquareMeters },
 			{ name: 'Square Feet (ft²)', id: AreaFormats.SquareFeet },
@@ -171,7 +172,7 @@ export const dataTypeCategories: DataTypeCategories = [
 		],
 	},
 	{
-		name: 'Computation',
+		name: CategoryNames.Computation,
 		formats: [
 			{ name: 'FLOP/s', id: FlopsFormats.FLOPs },
 			{ name: 'MFLOP/s', id: FlopsFormats.MFLOPs },
@@ -184,7 +185,7 @@ export const dataTypeCategories: DataTypeCategories = [
 		],
 	},
 	{
-		name: 'Concentration',
+		name: CategoryNames.Concentration,
 		formats: [
 			{ name: 'parts-per-million (ppm)', id: ConcentrationFormats.PPM },
 			{ name: 'parts-per-billion (ppb)', id: ConcentrationFormats.PPB },
@@ -213,7 +214,7 @@ export const dataTypeCategories: DataTypeCategories = [
 		],
 	},
 	{
-		name: 'Currency',
+		name: CategoryNames.Currency,
 		formats: [
 			{ name: 'Dollars ($)', id: CurrencyFormats.USD },
 			{ name: 'Pounds (£)', id: CurrencyFormats.GBP },
@@ -242,7 +243,7 @@ export const dataTypeCategories: DataTypeCategories = [
 	},
 
 	{
-		name: 'Date & time',
+		name: CategoryNames.Datetime,
 		formats: [
 			{ name: 'Datetime ISO', id: DatetimeFormats.ISO },
 			{
@@ -264,7 +265,7 @@ export const dataTypeCategories: DataTypeCategories = [
 		],
 	},
 	{
-		name: 'Energy',
+		name: CategoryNames.Energy,
 		formats: [
 			{ name: 'Watt (W)', id: PowerElectricalFormats.WATT },
 			{ name: 'Kilowatt (kW)', id: PowerElectricalFormats.KWATT },
@@ -316,7 +317,7 @@ export const dataTypeCategories: DataTypeCategories = [
 		],
 	},
 	{
-		name: 'Flow',
+		name: CategoryNames.Flow,
 		formats: [
 			{ name: 'Gallons/min (gpm)', id: FlowFormats.FLOWGPM },
 			{ name: 'Cubic meters/sec (cms)', id: FlowFormats.FLOWCMS },
@@ -329,7 +330,7 @@ export const dataTypeCategories: DataTypeCategories = [
 		],
 	},
 	{
-		name: 'Force',
+		name: CategoryNames.Force,
 		formats: [
 			{ name: 'Newton-meters (Nm)', id: ForceFormats.FORCENM },
 			{ name: 'Kilonewton-meters (kNm)', id: ForceFormats.FORCEKNM },
@@ -338,7 +339,7 @@ export const dataTypeCategories: DataTypeCategories = [
 		],
 	},
 	{
-		name: 'Mass',
+		name: CategoryNames.Mass,
 		formats: [
 			{ name: 'milligram (mg)', id: MassFormats.MASSMG },
 			{ name: 'gram (g)', id: MassFormats.MASSG },
@@ -348,7 +349,7 @@ export const dataTypeCategories: DataTypeCategories = [
 		],
 	},
 	{
-		name: 'Length',
+		name: CategoryNames.Length,
 		formats: [
 			{ name: 'millimeter (mm)', id: LengthFormats.LENGTHMM },
 			{ name: 'inch (in)', id: LengthFormats.LENGTHIN },
@@ -359,7 +360,7 @@ export const dataTypeCategories: DataTypeCategories = [
 		],
 	},
 	{
-		name: 'Pressure',
+		name: CategoryNames.Pressure,
 		formats: [
 			{ name: 'Millibars', id: PressureFormats.PRESSUREMBAR },
 			{ name: 'Bars', id: PressureFormats.PRESSUREBAR },
@@ -372,7 +373,7 @@ export const dataTypeCategories: DataTypeCategories = [
 		],
 	},
 	{
-		name: 'Radiation',
+		name: CategoryNames.Radiation,
 		formats: [
 			{ name: 'Becquerel (Bq)', id: RadiationFormats.RADBQ },
 			{ name: 'curie (Ci)', id: RadiationFormats.RADCI },
@@ -390,7 +391,7 @@ export const dataTypeCategories: DataTypeCategories = [
 		],
 	},
 	{
-		name: 'Rotational Speed',
+		name: CategoryNames.RotationSpeed,
 		formats: [
 			{ name: 'Revolutions per minute (rpm)', id: RotationSpeedFormats.ROTRPM },
 			{ name: 'Hertz (Hz)', id: RotationSpeedFormats.ROTHZ },
@@ -399,7 +400,7 @@ export const dataTypeCategories: DataTypeCategories = [
 		],
 	},
 	{
-		name: 'Temperature',
+		name: CategoryNames.Temperature,
 		formats: [
 			{ name: 'Celsius (°C)', id: TemperatureFormats.CELSIUS },
 			{ name: 'Fahrenheit (°F)', id: TemperatureFormats.FAHRENHEIT },
@@ -407,7 +408,7 @@ export const dataTypeCategories: DataTypeCategories = [
 		],
 	},
 	{
-		name: 'Velocity',
+		name: CategoryNames.Velocity,
 		formats: [
 			{ name: 'meters/second (m/s)', id: VelocityFormats.METERS_PER_SECOND },
 			{ name: 'kilometers/hour (km/h)', id: VelocityFormats.KILOMETERS_PER_HOUR },
@@ -416,7 +417,7 @@ export const dataTypeCategories: DataTypeCategories = [
 		],
 	},
 	{
-		name: 'Volume',
+		name: CategoryNames.Volume,
 		formats: [
 			{ name: 'millilitre (mL)', id: VolumeFormats.MILLILITRE },
 			{ name: 'litre (L)', id: VolumeFormats.LITRE },
@@ -427,7 +428,7 @@ export const dataTypeCategories: DataTypeCategories = [
 		],
 	},
 	{
-		name: 'Boolean',
+		name: CategoryNames.Boolean,
 		formats: [
 			{ name: 'True / False', id: BooleanFormats.TRUE_FALSE },
 			{ name: 'Yes / No', id: BooleanFormats.YES_NO },
@@ -441,7 +442,7 @@ export const flattenedCategories = flattenDeep(
 );
 
 export const getCategorySelectOptionByName = (
-	name: string,
+	name: CategoryNames,
 ): DefaultOptionType[] =>
 	dataTypeCategories
 		.find((category) => category.name === name)
