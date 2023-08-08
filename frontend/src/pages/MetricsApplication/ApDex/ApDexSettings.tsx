@@ -1,8 +1,7 @@
 import { CloseOutlined, QuestionCircleOutlined } from '@ant-design/icons';
 import { Card, Input } from 'antd';
-import axios, { AxiosResponse } from 'axios';
+import { AxiosResponse } from 'axios';
 import Spinner from 'components/Spinner';
-import { SOMETHING_WENT_WRONG } from 'constants/api';
 import { themeColors } from 'constants/theme';
 import { useSetApDexSettings } from 'hooks/apDex/useSetApDexSettings';
 import { useNotifications } from 'hooks/useNotifications';
@@ -17,6 +16,7 @@ import {
 	SaveButton,
 	Typography,
 } from '../styles';
+import { onSaveApDexSettings } from '../utils';
 
 function ApDexSettings({
 	servicename,
@@ -25,62 +25,42 @@ function ApDexSettings({
 	data,
 	refetch,
 }: ApDexSettingsProps): JSX.Element {
-	const [threadholdValue, setThreadholdValue] = useState(0);
+	const [thresholdValue, setThresholdValue] = useState(0);
 	const { notifications } = useNotifications();
 
 	const { isLoading: setApDexIsLoading, mutateAsync } = useSetApDexSettings({
 		servicename,
-		threshold: threadholdValue || 0,
+		threshold: thresholdValue,
 		excludeStatusCode: '',
 	});
 
 	useEffect(() => {
 		if (data) {
-			setThreadholdValue(data.data[0].threshold);
+			setThresholdValue(data.data[0].threshold);
 		}
 	}, [data]);
 
 	const handleThreadholdChange = (
 		e: React.ChangeEvent<HTMLInputElement>,
 	): void => {
-		setThreadholdValue(Number(e.target.value));
+		setThresholdValue(Number(e.target.value));
 	};
 
 	const onSaveHandler = (): void => {
-		if (threadholdValue && refetch) {
-			mutateAsync({
-				servicename,
-				threshold: threadholdValue,
-				excludeStatusCode: '',
-			})
-				.then(() => {
-					refetch();
-				})
-				.catch((err) => {
-					if (axios.isAxiosError(err)) {
-						notifications.error({
-							message: err.message,
-						});
-					} else {
-						notifications.error({
-							message: SOMETHING_WENT_WRONG,
-						});
-					}
-				})
-				.finally(() => {
-					handlePopOverClose();
-				});
-		} else {
-			notifications.error({
-				message: 'Please enter a valid value',
-			});
-		}
+		onSaveApDexSettings({
+			handlePopOverClose,
+			mutateAsync,
+			notifications,
+			refetch,
+			servicename,
+			thresholdValue,
+		});
 	};
 
 	if (isLoading) {
 		return (
 			<Typography.Text style={{ color: themeColors.white }}>
-				<Spinner height="5vh" />
+				<Spinner height="5vh" tip="Loading..." />
 			</Typography.Text>
 		);
 	}
@@ -111,7 +91,7 @@ function ApDexSettings({
 				</Typography>
 				<Input
 					type="number"
-					value={threadholdValue}
+					value={thresholdValue}
 					onChange={handleThreadholdChange}
 					max={1}
 					min={0}

@@ -10,7 +10,7 @@ export interface ApDexApplicationProps {
 }
 
 export interface ApDexDataSwitcherProps extends ApDexApplicationProps {
-	thresholdValue: number;
+	thresholdValue: number | undefined;
 }
 
 export interface ApDexMetricsProps extends ApDexDataSwitcherProps {

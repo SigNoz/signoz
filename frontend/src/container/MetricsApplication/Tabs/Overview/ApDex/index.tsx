@@ -26,7 +26,6 @@ function ApDexApplication({
 		notifications.error({
 			message: error.message,
 		});
-		return <Card>{error.message}</Card>;
 	}
 
 	return (
@@ -40,7 +39,7 @@ function ApDexApplication({
 						onDragSelect={onDragSelect}
 						topLevelOperationsRoute={topLevelOperationsRoute}
 						tagFilterItems={tagFilterItems}
-						thresholdValue={data?.data[0].threshold || 0}
+						thresholdValue={data?.data[0].threshold}
 					/>
 				)}
 			</GraphContainer>

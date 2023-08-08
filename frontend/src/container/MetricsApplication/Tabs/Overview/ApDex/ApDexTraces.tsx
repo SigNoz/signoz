@@ -17,6 +17,7 @@ function ApDexTraces({
 	tagFilterItems,
 	thresholdValue,
 }: ApDexDataSwitcherProps): JSX.Element {
+	console.log('thresholdValue', thresholdValue);
 	const { servicename } = useParams<IServiceName>();
 
 	const apDexTracesWidget = getWidgetQueryBuilder({
@@ -36,7 +37,8 @@ function ApDexTraces({
 		panelTypes: PANEL_TYPES.TIME_SERIES,
 	});
 
-	const isQueryEnabled = topLevelOperationsRoute.length > 0;
+	const isQueryEnabled =
+		topLevelOperationsRoute.length > 0 && thresholdValue !== undefined;
 
 	return (
 		<Graph

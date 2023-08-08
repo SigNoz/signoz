@@ -105,10 +105,10 @@ function GridCardGraph({
 	const isEmptyLayout = widget?.id === 'empty' || isEmpty(widget);
 
 	if (queryResponse.isRefetching) {
-		return <Spinner height="20vh" tip="Loading..." />;
+		return <Spinner height="40vh" tip="Loading..." />;
 	}
 
-	if (queryResponse.isError && !isEmptyLayout) {
+	if ((queryResponse.isError && !isEmptyLayout) || !isQueryEnabled) {
 		return (
 			<span ref={graphRef}>
 				{!isEmpty(widget) && prevChartDataSetRef && (
@@ -157,7 +157,7 @@ function GridCardGraph({
 						threshold={threshold}
 					/>
 				) : (
-					<Spinner height="20vh" tip="Loading..." />
+					<Spinner height="40vh" tip="Loading..." />
 				)}
 			</span>
 		);

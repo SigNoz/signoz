@@ -192,6 +192,7 @@ function Application(): JSX.Element {
 						selectedTraceTags={selectedTraceTags}
 						tagFilterItems={tagFilterItems}
 						topLevelOperationsRoute={topLevelOperationsRoute}
+						topLevelOperationsLoading={topLevelOperationsLoading}
 					/>
 				</Col>
 
