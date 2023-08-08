@@ -47,7 +47,7 @@ function PipelineListsView({
 	setActionType,
 	isActionMode,
 	setActionMode,
-	piplineData,
+	pipelineData,
 	refetchPipelineLists,
 	pipelineSearchValue,
 }: PipelineListsViewProps): JSX.Element {
@@ -55,10 +55,10 @@ function PipelineListsView({
 	const [modal, contextHolder] = Modal.useModal();
 	const { notifications } = useNotifications();
 	const [prevPipelineData, setPrevPipelineData] = useState<Array<PipelineData>>(
-		cloneDeep(piplineData?.pipelines),
+		cloneDeep(pipelineData?.pipelines),
 	);
 	const [currPipelineData, setCurrPipelineData] = useState<Array<PipelineData>>(
-		cloneDeep(piplineData?.pipelines),
+		cloneDeep(pipelineData?.pipelines),
 	);
 	const [
 		expandedPipelineData,
@@ -77,14 +77,14 @@ function PipelineListsView({
 	const isEditingActionMode = isActionMode === ActionMode.Editing;
 
 	useEffect(() => {
-		if (pipelineSearchValue === '') setCurrPipelineData(piplineData?.pipelines);
+		if (pipelineSearchValue === '') setCurrPipelineData(pipelineData?.pipelines);
 		if (pipelineSearchValue !== '') {
-			const filterData = piplineData?.pipelines.filter((data: PipelineData) =>
+			const filterData = pipelineData?.pipelines.filter((data: PipelineData) =>
 				getDataOnSearch(data as never, pipelineSearchValue),
 			);
 			setCurrPipelineData(filterData);
 		}
-	}, [pipelineSearchValue, piplineData?.pipelines]);
+	}, [pipelineSearchValue, pipelineData?.pipelines]);
 
 	const handleAlert = useCallback(
 		({ title, descrition, buttontext, onCancel, onOk }: AlertMessage) => {
@@ -414,7 +414,7 @@ function PipelineListsView({
 			<Container>
 				<ModeAndConfiguration
 					isActionMode={isActionMode}
-					verison={piplineData?.version}
+					version={pipelineData?.version}
 				/>
 				<DndProvider backend={HTML5Backend}>
 					<Table
@@ -445,7 +445,7 @@ interface PipelineListsViewProps {
 	setActionType: (actionType?: ActionType) => void;
 	isActionMode: string;
 	setActionMode: (actionMode: ActionMode) => void;
-	piplineData: Pipeline;
+	pipelineData: Pipeline;
 	refetchPipelineLists: VoidFunction;
 	pipelineSearchValue: string;
 }

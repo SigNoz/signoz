@@ -1,6 +1,6 @@
 import { Pipeline, PipelineData } from 'types/api/pipeline/def';
 
-export const configurationVerison = '1.0';
+export const configurationVersion = '1.0';
 
 export const pipelineMockData: Array<PipelineData> = [
 	{

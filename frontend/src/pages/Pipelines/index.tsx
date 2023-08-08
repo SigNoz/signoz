@@ -8,14 +8,30 @@ import { useNotifications } from 'hooks/useNotifications';
 import { useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useQuery } from 'react-query';
+import { SuccessResponse } from 'types/api';
 import { Pipeline } from 'types/api/pipeline/def';
+
+const pipelineRefetchInterval = (
+	pipelineResponse: SuccessResponse<Pipeline> | undefined,
+): number | false => {
+	// Refetch pipeline data periodically if deployment of
+	// its latest changes is not complete yet.
+	const latestVersion = pipelineResponse?.payload?.history?.[0];
+	const isLatestDeploymentFinished = ['DEPLOYED', 'FAILED'].includes(
+		latestVersion?.deployStatus || '',
+	);
+	if (latestVersion && !isLatestDeploymentFinished) {
+		return 3000;
+	}
+	return false;
+};
 
 function Pipelines(): JSX.Element {
 	const { t } = useTranslation('common');
 	const { notifications } = useNotifications();
 	const {
 		isLoading,
-		data: piplineData,
+		data: pipelineData,
 		isError,
 		refetch: refetchPipelineLists,
 	} = useQuery(['version', 'latest', 'pipeline'], {
@@ -23,6 +39,7 @@ function Pipelines(): JSX.Element {
 			getPipeline({
 				version: 'latest',
 			}),
+		refetchInterval: pipelineRefetchInterval,
 	});
 
 	const tabItems: TabsProps['items'] = useMemo(
@@ -33,26 +50,28 @@ function Pipelines(): JSX.Element {
 				children: (
 					<PipelinePage
 						refetchPipelineLists={refetchPipelineLists}
-						piplineData={piplineData?.payload as Pipeline}
+						pipelineData={pipelineData?.payload as Pipeline}
 					/>
 				),
 			},
 			{
 				key: 'change-history',
 				label: `Change History`,
-				children: <ChangeHistory piplineData={piplineData?.payload as Pipeline} />,
+				children: (
+					<ChangeHistory pipelineData={pipelineData?.payload as Pipeline} />
+				),
 			},
 		],
-		[piplineData?.payload, refetchPipelineLists],
+		[pipelineData?.payload, refetchPipelineLists],
 	);
 
 	useEffect(() => {
-		if (piplineData?.error && isError) {
+		if (pipelineData?.error && isError) {
 			notifications.error({
-				message: piplineData?.error || t('something_went_wrong'),
+				message: pipelineData?.error || t('something_went_wrong'),
 			});
 		}
-	}, [isError, notifications, piplineData?.error, t]);
+	}, [isError, notifications, pipelineData?.error, t]);
 
 	if (isLoading) {
 		return <Spinner height="75vh" tip="Loading Pipelines..." />;
