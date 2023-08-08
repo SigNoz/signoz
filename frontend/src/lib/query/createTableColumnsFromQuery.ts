@@ -39,7 +39,6 @@ export type DynamicColumn = {
 	title: string;
 	data: (string | number)[];
 	type: 'field' | 'operator' | 'formula';
-	dataType: 'string' | 'number';
 };
 
 type DynamicColumns = DynamicColumn[];
@@ -97,17 +96,10 @@ const getQueryByName = <T extends keyof QueryBuilderData>(
 
 const addLabels = (
 	query: IBuilderQuery | IBuilderFormula,
-	labels: Record<string, unknown>,
 	label: string,
 	dynamicColumns: DynamicColumns,
 ): void => {
 	if (isValueExist('dataIndex', label, dynamicColumns)) return;
-
-	const labelValue = labels[label];
-
-	const isNumber = !Number.isNaN(parseFloat(String(labelValue)));
-
-	const dataType: DynamicColumn['dataType'] = isNumber ? 'number' : 'string';
 
 	const fieldObj: DynamicColumn = {
 		query,
@@ -116,7 +108,6 @@ const addLabels = (
 		title: label,
 		data: [],
 		type: 'field',
-		dataType,
 	};
 
 	dynamicColumns.push(fieldObj);
@@ -142,7 +133,6 @@ const addOperatorFormulaColumns = (
 			title: customLabel || formulaLabel,
 			data: [],
 			type: 'formula',
-			dataType: 'number',
 		};
 
 		dynamicColumns.push(formulaColumn);
@@ -168,7 +158,6 @@ const addOperatorFormulaColumns = (
 		title: customLabel || operatorLabel,
 		data: [],
 		type: 'operator',
-		dataType: 'number',
 	};
 
 	dynamicColumns.push(operatorColumn);
@@ -211,7 +200,7 @@ const getDynamicColumns: GetDynamicColumns = (queryTableData, query) => {
 		if (list) {
 			list.forEach((listItem) => {
 				Object.keys(listItem.data).forEach((label) => {
-					addLabels(currentStagedQuery, listItem.data, label, dynamicColumns);
+					addLabels(currentStagedQuery, label, dynamicColumns);
 				});
 			});
 		}
@@ -232,7 +221,7 @@ const getDynamicColumns: GetDynamicColumns = (queryTableData, query) => {
 				Object.keys(seria.labels).forEach((label) => {
 					if (label === currentQuery?.queryName) return;
 
-					addLabels(currentStagedQuery, seria.labels, label, dynamicColumns);
+					addLabels(currentStagedQuery, label, dynamicColumns);
 				});
 			});
 		}
