@@ -463,10 +463,12 @@ function LogsExplorerViews(): JSX.Element {
 			(queryData) => queryData.groupBy.length > 0,
 		);
 
-		const firstStagedQuery = stagedQuery.builder.queryData[0];
+		const firstEnabledQuery = stagedQuery.builder.queryData.find(
+			(item) => !item.disabled,
+		);
 
 		const firstPayloadQuery = data.payload.data.result.find(
-			(item) => item.queryName === firstStagedQuery.queryName,
+			(item) => item.queryName === firstEnabledQuery?.queryName,
 		);
 
 		const firstPayloadQueryArray = firstPayloadQuery ? [firstPayloadQuery] : [];
