@@ -8,6 +8,7 @@ import { TagFilterItem } from 'types/api/queryBuilder/queryBuilderData';
 import { EQueryType } from 'types/common/dashboard';
 import { v4 as uuid } from 'uuid';
 
+import { ClickHandlerType } from '../../Overview';
 import { IServiceName } from '../../types';
 
 function ApDexMetrics({
@@ -17,6 +18,7 @@ function ApDexMetrics({
 	onDragSelect,
 	tagFilterItems,
 	topLevelOperationsRoute,
+	handleGraphClick,
 }: ApDexMetricsProps): JSX.Element {
 	const { servicename } = useParams<IServiceName>();
 
@@ -50,6 +52,7 @@ function ApDexMetrics({
 			name="apdex"
 			widget={apDexMetricsWidget}
 			onDragSelect={onDragSelect}
+			onClickHandler={handleGraphClick('ApDex')}
 			yAxisUnit=""
 			allowClone={false}
 			allowDelete={false}
@@ -66,6 +69,7 @@ interface ApDexMetricsProps {
 	le?: number[];
 	thresholdValue: number;
 	onDragSelect: (start: number, end: number) => void;
+	handleGraphClick: (type: string) => ClickHandlerType;
 	topLevelOperationsRoute: string[];
 	tagFilterItems: TagFilterItem[];
 }

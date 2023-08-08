@@ -223,11 +223,26 @@ function Application(): JSX.Element {
 			</Row>
 			<Row gutter={24}>
 				<Col span={12}>
-					<ApDex
-						onDragSelect={onDragSelect}
-						topLevelOperationsRoute={topLevelOperationsRoute}
-						tagFilterItems={tagFilterItems}
-					/>
+					<ColContainer>
+						<Button
+							type="default"
+							size="small"
+							id="ApDex_button"
+							onClick={onViewTracePopupClick({
+								servicename,
+								selectedTraceTags,
+								timestamp: selectedTimeStamp,
+							})}
+						>
+							View Traces
+						</Button>
+						<ApDex
+							handleGraphClick={handleGraphClick}
+							onDragSelect={onDragSelect}
+							topLevelOperationsRoute={topLevelOperationsRoute}
+							tagFilterItems={tagFilterItems}
+						/>
+					</ColContainer>
 					<ColContainer>
 						<Button
 							type="default"

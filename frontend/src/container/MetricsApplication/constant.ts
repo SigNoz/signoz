@@ -45,6 +45,7 @@ export enum DataType {
 	STRING = 'string',
 	FLOAT64 = 'float64',
 	INT64 = 'int64',
+	BOOL = 'bool',
 }
 
 export enum MetricsType {
@@ -53,7 +54,9 @@ export enum MetricsType {
 }
 
 export enum WidgetKeys {
+	Le = 'le',
 	Name = 'name',
+	HasError = 'hasError',
 	Address = 'address',
 	DurationNano = 'durationNano',
 	StatusCode = 'status_code',

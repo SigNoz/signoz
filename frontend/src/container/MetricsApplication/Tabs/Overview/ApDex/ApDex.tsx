@@ -3,13 +3,16 @@ import Spinner from 'components/Spinner';
 import { Card, GraphContainer } from 'container/MetricsApplication/styles';
 import { useGetApDexSettings } from 'hooks/apDex/useGetApDexSettings';
 import { useNotifications } from 'hooks/useNotifications';
+import { memo } from 'react';
 import { useParams } from 'react-router-dom';
 import { TagFilterItem } from 'types/api/queryBuilder/queryBuilderData';
 
+import { ClickHandlerType } from '../../Overview';
 import { IServiceName } from '../../types';
 import ApDexDataSwitcher from './ApDexDataSwitcher';
 
 function ApDex({
+	handleGraphClick,
 	onDragSelect,
 	topLevelOperationsRoute,
 	tagFilterItems,
@@ -34,6 +37,7 @@ function ApDex({
 					<Spinner height="40vh" tip="Loading..." />
 				) : (
 					<ApDexDataSwitcher
+						handleGraphClick={handleGraphClick}
 						onDragSelect={onDragSelect}
 						topLevelOperationsRoute={topLevelOperationsRoute}
 						tagFilterItems={tagFilterItems}
@@ -46,9 +50,10 @@ function ApDex({
 }
 
 interface ApDexProps {
+	handleGraphClick: (type: string) => ClickHandlerType;
 	onDragSelect: (start: number, end: number) => void;
 	topLevelOperationsRoute: string[];
 	tagFilterItems: TagFilterItem[];
 }
 
-export default ApDex;
+export default memo(ApDex);

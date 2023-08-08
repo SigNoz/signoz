@@ -4,10 +4,12 @@ import { useGetMetricMeta } from 'hooks/apDex/useGetMetricMeta';
 import { useNotifications } from 'hooks/useNotifications';
 import { TagFilterItem } from 'types/api/queryBuilder/queryBuilderData';
 
+import { ClickHandlerType } from '../../Overview';
 import ApDexMetrics from './ApDexMetrics';
 import { metricMeta } from './constants';
 
 function ApDexMetricsApplication({
+	handleGraphClick,
 	onDragSelect,
 	tagFilterItems,
 	topLevelOperationsRoute,
@@ -28,6 +30,7 @@ function ApDexMetricsApplication({
 
 	return (
 		<ApDexMetrics
+			handleGraphClick={handleGraphClick}
 			delta={data?.data.delta}
 			le={data?.data.le}
 			onDragSelect={onDragSelect}
@@ -39,6 +42,7 @@ function ApDexMetricsApplication({
 }
 
 interface ApDexMetricsApplicationProps {
+	handleGraphClick: (type: string) => ClickHandlerType;
 	onDragSelect: (start: number, end: number) => void;
 	topLevelOperationsRoute: string[];
 	tagFilterItems: TagFilterItem[];

@@ -2,10 +2,12 @@ import { FeatureKeys } from 'constants/features';
 import useFeatureFlag from 'hooks/useFeatureFlag';
 import { TagFilterItem } from 'types/api/queryBuilder/queryBuilderData';
 
+import { ClickHandlerType } from '../../Overview';
 import ApDexMetricsApplication from './ApDexMetricsApplication';
 import ApDexTraces from './ApDexTraces';
 
 interface ApDexApplicationProps {
+	handleGraphClick: (type: string) => ClickHandlerType;
 	onDragSelect: (start: number, end: number) => void;
 	topLevelOperationsRoute: string[];
 	tagFilterItems: TagFilterItem[];
@@ -13,6 +15,7 @@ interface ApDexApplicationProps {
 }
 
 function ApDexDataSwitcher({
+	handleGraphClick,
 	onDragSelect,
 	topLevelOperationsRoute,
 	tagFilterItems,
@@ -23,6 +26,7 @@ function ApDexDataSwitcher({
 
 	return isSpanMetricEnable ? (
 		<ApDexMetricsApplication
+			handleGraphClick={handleGraphClick}
 			onDragSelect={onDragSelect}
 			topLevelOperationsRoute={topLevelOperationsRoute}
 			tagFilterItems={tagFilterItems}
@@ -30,6 +34,7 @@ function ApDexDataSwitcher({
 		/>
 	) : (
 		<ApDexTraces
+			handleGraphClick={handleGraphClick}
 			onDragSelect={onDragSelect}
 			topLevelOperationsRoute={topLevelOperationsRoute}
 			tagFilterItems={tagFilterItems}

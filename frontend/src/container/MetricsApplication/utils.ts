@@ -28,7 +28,7 @@ export const navigateToTrace = ({
 export const getNearestHighestBucketValue = (
 	value: number,
 	buckets: number[],
-): number => {
+): string => {
 	const nearestBucket = buckets.find((bucket) => bucket >= value);
-	return nearestBucket || Infinity;
+	return nearestBucket?.toString() || '+Inf';
 };

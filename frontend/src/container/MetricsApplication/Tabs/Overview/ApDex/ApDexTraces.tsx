@@ -8,9 +8,11 @@ import { TagFilterItem } from 'types/api/queryBuilder/queryBuilderData';
 import { EQueryType } from 'types/common/dashboard';
 import { v4 as uuid } from 'uuid';
 
+import { ClickHandlerType } from '../../Overview';
 import { IServiceName } from '../../types';
 
 interface ApDexTracesProps {
+	handleGraphClick: (type: string) => ClickHandlerType;
 	onDragSelect: (start: number, end: number) => void;
 	topLevelOperationsRoute: string[];
 	tagFilterItems: TagFilterItem[];
@@ -18,6 +20,7 @@ interface ApDexTracesProps {
 }
 
 function ApDexTraces({
+	handleGraphClick,
 	onDragSelect,
 	topLevelOperationsRoute,
 	tagFilterItems,
@@ -49,6 +52,7 @@ function ApDexTraces({
 			name="apdex"
 			widget={apDexTracesWidget}
 			onDragSelect={onDragSelect}
+			onClickHandler={handleGraphClick('ApDex')}
 			yAxisUnit=""
 			allowClone={false}
 			allowDelete={false}
