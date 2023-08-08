@@ -29,8 +29,12 @@ export const Col = styled(ColComponent)`
 	}
 `;
 
-export const ColContainer = styled.div`
-	padding: 2rem 0;
+export const ColApDexContainer = styled(ColComponent)`
+	padding: 0 !important;
+`;
+
+export const ColErrorContainer = styled(ColComponent)`
+	padding: 2rem 0 !important;
 `;
 
 export const GraphContainer = styled.div`

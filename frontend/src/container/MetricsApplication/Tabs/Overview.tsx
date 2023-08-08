@@ -32,7 +32,13 @@ import {
 	errorPercentage,
 	operationPerSec,
 } from '../MetricsPageQueries/OverviewQueries';
-import { Card, Col, ColContainer, Row } from '../styles';
+import {
+	Card,
+	Col,
+	ColApDexContainer,
+	ColErrorContainer,
+	Row,
+} from '../styles';
 import ApDex from './Overview/ApDex';
 import ServiceOverview from './Overview/ServiceOverview';
 import TopLevelOperation from './Overview/TopLevelOperations';
@@ -224,25 +230,27 @@ function Application(): JSX.Element {
 			</Row>
 			<Row gutter={24}>
 				<Col span={12}>
-					<Button
-						type="default"
-						size="small"
-						id="ApDex_button"
-						onClick={onViewTracePopupClick({
-							servicename,
-							selectedTraceTags,
-							timestamp: selectedTimeStamp,
-						})}
-					>
-						View Traces
-					</Button>
-					<ApDex
-						handleGraphClick={handleGraphClick}
-						onDragSelect={onDragSelect}
-						topLevelOperationsRoute={topLevelOperationsRoute}
-						tagFilterItems={tagFilterItems}
-					/>
-					<ColContainer>
+					<ColApDexContainer>
+						<Button
+							type="default"
+							size="small"
+							id="ApDex_button"
+							onClick={onViewTracePopupClick({
+								servicename,
+								selectedTraceTags,
+								timestamp: selectedTimeStamp,
+							})}
+						>
+							View Traces
+						</Button>
+						<ApDex
+							handleGraphClick={handleGraphClick}
+							onDragSelect={onDragSelect}
+							topLevelOperationsRoute={topLevelOperationsRoute}
+							tagFilterItems={tagFilterItems}
+						/>
+					</ColApDexContainer>
+					<ColErrorContainer>
 						<Button
 							type="default"
 							size="small"
@@ -263,7 +271,7 @@ function Application(): JSX.Element {
 							yAxisUnit="%"
 							opName="Error"
 						/>
-					</ColContainer>
+					</ColErrorContainer>
 				</Col>
 
 				<Col span={12}>
