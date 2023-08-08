@@ -3,7 +3,8 @@ version: "2.4"
 x-clickhouse-defaults:
   &clickhouse-defaults
   restart: on-failure
-  image: clickhouse/clickhouse-server:22.8.8-alpine
+  # addding non LTS version due to this fix https://github.com/ClickHouse/ClickHouse/commit/32caf8716352f45c1b617274c7508c86b7d1afab
+  image: clickhouse/clickhouse-server:23.7.3-alpine
   tty: true
   depends_on:
     - zookeeper-1
