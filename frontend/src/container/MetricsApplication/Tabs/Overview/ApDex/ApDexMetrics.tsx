@@ -4,12 +4,11 @@ import { GraphTitle } from 'container/MetricsApplication/constant';
 import { getWidgetQueryBuilder } from 'container/MetricsApplication/MetricsApplication.factory';
 import { apDexMetricsQueryBuilderQueries } from 'container/MetricsApplication/MetricsPageQueries/OverviewQueries';
 import { useParams } from 'react-router-dom';
-import { TagFilterItem } from 'types/api/queryBuilder/queryBuilderData';
 import { EQueryType } from 'types/common/dashboard';
 import { v4 as uuid } from 'uuid';
 
-import { ClickHandlerType } from '../../Overview';
 import { IServiceName } from '../../types';
+import { ApDexMetricsProps } from './types';
 
 function ApDexMetrics({
 	delta,
@@ -62,16 +61,6 @@ function ApDexMetrics({
 			isQueryEnabled={isQueryEnabled}
 		/>
 	);
-}
-
-interface ApDexMetricsProps {
-	delta?: boolean;
-	le?: number[];
-	thresholdValue: number;
-	onDragSelect: (start: number, end: number) => void;
-	handleGraphClick: (type: string) => ClickHandlerType;
-	topLevelOperationsRoute: string[];
-	tagFilterItems: TagFilterItem[];
 }
 
 ApDexMetrics.defaultProps = {

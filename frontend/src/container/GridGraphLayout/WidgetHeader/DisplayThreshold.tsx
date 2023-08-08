@@ -1,6 +1,5 @@
-import { ReactNode } from 'react';
-
 import { DisplayThresholdContainer, Typography } from './styles';
+import { DisplayThresholdProps } from './types';
 
 function DisplayThreshold({ threshold }: DisplayThresholdProps): JSX.Element {
 	return (
@@ -9,10 +8,6 @@ function DisplayThreshold({ threshold }: DisplayThresholdProps): JSX.Element {
 			<Typography>{threshold}</Typography>
 		</DisplayThresholdContainer>
 	);
-}
-
-interface DisplayThresholdProps {
-	threshold: ReactNode;
 }
 
 export default DisplayThreshold;

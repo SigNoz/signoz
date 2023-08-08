@@ -5,18 +5,17 @@ import { useGetApDexSettings } from 'hooks/apDex/useGetApDexSettings';
 import { useNotifications } from 'hooks/useNotifications';
 import { memo } from 'react';
 import { useParams } from 'react-router-dom';
-import { TagFilterItem } from 'types/api/queryBuilder/queryBuilderData';
 
-import { ClickHandlerType } from '../../Overview';
 import { IServiceName } from '../../types';
 import ApDexDataSwitcher from './ApDexDataSwitcher';
+import { ApDexApplicationProps } from './types';
 
-function ApDex({
+function ApDexApplication({
 	handleGraphClick,
 	onDragSelect,
 	topLevelOperationsRoute,
 	tagFilterItems,
-}: ApDexProps): JSX.Element {
+}: ApDexApplicationProps): JSX.Element {
 	const { servicename } = useParams<IServiceName>();
 	const { data, isLoading, error, isRefetching } = useGetApDexSettings(
 		servicename,
@@ -49,11 +48,4 @@ function ApDex({
 	);
 }
 
-interface ApDexProps {
-	handleGraphClick: (type: string) => ClickHandlerType;
-	onDragSelect: (start: number, end: number) => void;
-	topLevelOperationsRoute: string[];
-	tagFilterItems: TagFilterItem[];
-}
-
-export default memo(ApDex);
+export default memo(ApDexApplication);

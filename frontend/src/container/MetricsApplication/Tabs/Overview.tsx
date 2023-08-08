@@ -33,7 +33,7 @@ import {
 	operationPerSec,
 } from '../MetricsPageQueries/OverviewQueries';
 import { Card, Col, ColContainer, Row } from '../styles';
-import ApDex from './Overview/ApDex/ApDex';
+import ApDex from './Overview/ApDex';
 import ServiceOverview from './Overview/ServiceOverview';
 import TopLevelOperation from './Overview/TopLevelOperations';
 import TopOperation from './Overview/TopOperation';

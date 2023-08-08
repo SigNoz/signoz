@@ -13,13 +13,9 @@ import Spinner from 'components/Spinner';
 import { queryParamNamesMap } from 'constants/queryBuilderQueryNames';
 import useComponentPermission from 'hooks/useComponentPermission';
 import history from 'lib/history';
-import { ReactNode, useCallback, useMemo, useState } from 'react';
-import { UseQueryResult } from 'react-query';
+import { useCallback, useMemo, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
-import { ErrorResponse, SuccessResponse } from 'types/api';
-import { Widgets } from 'types/api/dashboard/getAll';
-import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
 import AppReducer from 'types/reducer/app';
 
 import {
@@ -37,26 +33,14 @@ import {
 	ThesholdContainer,
 	WidgetHeaderContainer,
 } from './styles';
-import { KeyMethodMappingProps, MenuItem, TWidgetOptions } from './types';
+import {
+	IWidgetHeaderProps,
+	KeyMethodMappingProps,
+	MenuItem,
+	TWidgetOptions,
+} from './types';
 import { generateMenuList, isTWidgetOptions } from './utils';
 
-interface IWidgetHeaderProps {
-	title: ReactNode;
-	widget: Widgets;
-	onView: VoidFunction;
-	onDelete?: VoidFunction;
-	onClone?: VoidFunction;
-	parentHover: boolean;
-	queryResponse: UseQueryResult<
-		SuccessResponse<MetricRangePayloadProps> | ErrorResponse
-	>;
-	errorMessage: string | undefined;
-	allowDelete?: boolean;
-	allowClone?: boolean;
-	allowEdit?: boolean;
-	allowThreshold?: boolean;
-	threshold?: number;
-}
 function WidgetHeader({
 	title,
 	widget,

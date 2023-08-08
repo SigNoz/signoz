@@ -1,18 +1,9 @@
 import { FeatureKeys } from 'constants/features';
 import useFeatureFlag from 'hooks/useFeatureFlag';
-import { TagFilterItem } from 'types/api/queryBuilder/queryBuilderData';
 
-import { ClickHandlerType } from '../../Overview';
 import ApDexMetricsApplication from './ApDexMetricsApplication';
 import ApDexTraces from './ApDexTraces';
-
-interface ApDexApplicationProps {
-	handleGraphClick: (type: string) => ClickHandlerType;
-	onDragSelect: (start: number, end: number) => void;
-	topLevelOperationsRoute: string[];
-	tagFilterItems: TagFilterItem[];
-	thresholdValue: number;
-}
+import { ApDexDataSwitcherProps } from './types';
 
 function ApDexDataSwitcher({
 	handleGraphClick,
@@ -20,7 +11,7 @@ function ApDexDataSwitcher({
 	topLevelOperationsRoute,
 	tagFilterItems,
 	thresholdValue,
-}: ApDexApplicationProps): JSX.Element {
+}: ApDexDataSwitcherProps): JSX.Element {
 	const isSpanMetricEnable = useFeatureFlag(FeatureKeys.USE_SPAN_METRICS)
 		?.active;
 

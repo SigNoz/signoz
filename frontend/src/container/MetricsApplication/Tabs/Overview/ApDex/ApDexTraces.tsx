@@ -4,20 +4,11 @@ import { GraphTitle } from 'container/MetricsApplication/constant';
 import { getWidgetQueryBuilder } from 'container/MetricsApplication/MetricsApplication.factory';
 import { apDexTracesQueryBuilderQueries } from 'container/MetricsApplication/MetricsPageQueries/OverviewQueries';
 import { useParams } from 'react-router-dom';
-import { TagFilterItem } from 'types/api/queryBuilder/queryBuilderData';
 import { EQueryType } from 'types/common/dashboard';
 import { v4 as uuid } from 'uuid';
 
-import { ClickHandlerType } from '../../Overview';
 import { IServiceName } from '../../types';
-
-interface ApDexTracesProps {
-	handleGraphClick: (type: string) => ClickHandlerType;
-	onDragSelect: (start: number, end: number) => void;
-	topLevelOperationsRoute: string[];
-	tagFilterItems: TagFilterItem[];
-	thresholdValue: number;
-}
+import { ApDexDataSwitcherProps } from './types';
 
 function ApDexTraces({
 	handleGraphClick,
@@ -25,7 +16,7 @@ function ApDexTraces({
 	topLevelOperationsRoute,
 	tagFilterItems,
 	thresholdValue,
-}: ApDexTracesProps): JSX.Element {
+}: ApDexDataSwitcherProps): JSX.Element {
 	const { servicename } = useParams<IServiceName>();
 
 	const apDexTracesWidget = getWidgetQueryBuilder({

@@ -2,11 +2,10 @@ import axios from 'axios';
 import Spinner from 'components/Spinner';
 import { useGetMetricMeta } from 'hooks/apDex/useGetMetricMeta';
 import { useNotifications } from 'hooks/useNotifications';
-import { TagFilterItem } from 'types/api/queryBuilder/queryBuilderData';
 
-import { ClickHandlerType } from '../../Overview';
 import ApDexMetrics from './ApDexMetrics';
 import { metricMeta } from './constants';
+import { ApDexDataSwitcherProps } from './types';
 
 function ApDexMetricsApplication({
 	handleGraphClick,
@@ -14,7 +13,7 @@ function ApDexMetricsApplication({
 	tagFilterItems,
 	topLevelOperationsRoute,
 	thresholdValue,
-}: ApDexMetricsApplicationProps): JSX.Element {
+}: ApDexDataSwitcherProps): JSX.Element {
 	const { data, isLoading, error } = useGetMetricMeta(metricMeta);
 	const { notifications } = useNotifications();
 
@@ -39,14 +38,6 @@ function ApDexMetricsApplication({
 			thresholdValue={thresholdValue}
 		/>
 	);
-}
-
-interface ApDexMetricsApplicationProps {
-	handleGraphClick: (type: string) => ClickHandlerType;
-	onDragSelect: (start: number, end: number) => void;
-	topLevelOperationsRoute: string[];
-	tagFilterItems: TagFilterItem[];
-	thresholdValue: number;
 }
 
 export default ApDexMetricsApplication;
