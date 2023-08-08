@@ -3449,72 +3449,70 @@ func isSelectedField(tableStatement string, field model.LogField, isStatic bool)
 }
 
 func (r *ClickHouseReader) UpdateLogField(ctx context.Context, field *model.UpdateField) *model.ApiError {
-	colname := field.Name
+	// don't allow updating static fields
+	if field.Type == constants.Static {
+		err := errors.New("cannot update static fields")
+		return &model.ApiError{Err: err, Typ: model.ErrorBadData}
+	}
+
+	prefix := field.Type[:len(field.Type)-1]
+	// columns name is <type>_<name>_<datatype>
+	colname := fmt.Sprintf("%s_%s_%s", strings.ToLower(prefix), field.Name, strings.ToLower(field.DataType))
 
 	// if a field is selected it means that the field needs to be indexed
 	if field.Selected {
-		// if the type is attribute or resource, create the materialized column first
-		if field.Type == constants.Attributes || field.Type == constants.Resources {
+		keyColName := fmt.Sprintf("%s_%s_key", field.Type, strings.ToLower(field.DataType))
+		valueColName := fmt.Sprintf("%s_%s_value", field.Type, strings.ToLower(field.DataType))
 
-			// converting attributes to attribute and resources to resource
-			prefix := field.Type[:len(field.Type)-1]
+		// create materialized column
+		query := fmt.Sprintf("ALTER TABLE %s.%s ON CLUSTER %s ADD COLUMN IF NOT EXISTS %s %s MATERIALIZED %s[indexOf(%s, '%s')] CODEC(LZ4)",
+			r.logsDB, r.logsLocalTable,
+			cluster,
+			colname, field.DataType,
+			valueColName,
+			keyColName,
+			field.Name,
+		)
 
-			// columns name is <type>_<name>_<datatype>
-			colname = fmt.Sprintf("%s_%s_%s", strings.ToLower(prefix), field.Name, strings.ToLower(field.DataType))
+		// create an exists column
+		err := r.db.Exec(ctx, query)
+		if err != nil {
+			return &model.ApiError{Err: err, Typ: model.ErrorInternal}
+		}
 
-			keyColName := fmt.Sprintf("%s_%s_key", field.Type, strings.ToLower(field.DataType))
-			valueColName := fmt.Sprintf("%s_%s_value", field.Type, strings.ToLower(field.DataType))
+		query = fmt.Sprintf("ALTER TABLE %s.%s ON CLUSTER %s ADD COLUMN IF NOT EXISTS %s %s",
+			r.logsDB, r.logsTable,
+			cluster,
+			colname, field.DataType,
+		)
+		err = r.db.Exec(ctx, query)
+		if err != nil {
+			return &model.ApiError{Err: err, Typ: model.ErrorInternal}
+		}
 
-			// create materialized column
-			query := fmt.Sprintf("ALTER TABLE %s.%s ON CLUSTER %s ADD COLUMN IF NOT EXISTS %s %s MATERIALIZED %s[indexOf(%s, '%s')] CODEC(LZ4)",
-				r.logsDB, r.logsLocalTable,
-				cluster,
-				colname, field.DataType,
-				valueColName,
-				keyColName,
-				field.Name,
-			)
+		// create exists column
+		query = fmt.Sprintf("ALTER TABLE %s.%s ON CLUSTER %s ADD COLUMN IF NOT EXISTS %s_exists bool MATERIALIZED if(indexOf(%s, '%s') != 0, true, false) CODEC(LZ4)",
+			r.logsDB, r.logsLocalTable,
+			cluster,
+			colname,
+			keyColName,
+			field.Name,
+		)
 
-			// create an exists column
-			err := r.db.Exec(ctx, query)
-			if err != nil {
-				return &model.ApiError{Err: err, Typ: model.ErrorInternal}
-			}
+		// create an exists column
+		err = r.db.Exec(ctx, query)
+		if err != nil {
+			return &model.ApiError{Err: err, Typ: model.ErrorInternal}
+		}
 
-			query = fmt.Sprintf("ALTER TABLE %s.%s ON CLUSTER %s ADD COLUMN IF NOT EXISTS %s %s MATERIALIZED -1",
-				r.logsDB, r.logsTable,
-				cluster,
-				colname, field.DataType,
-			)
-			err = r.db.Exec(ctx, query)
-			if err != nil {
-				return &model.ApiError{Err: err, Typ: model.ErrorInternal}
-			}
-
-			// create exists column
-			query = fmt.Sprintf("ALTER TABLE %s.%s ON CLUSTER %s ADD COLUMN IF NOT EXISTS %s_exists bool MATERIALIZED if(indexOf(%s, '%s') != 0, true, false) CODEC(LZ4)",
-				r.logsDB, r.logsLocalTable,
-				cluster,
-				colname,
-				keyColName,
-				field.Name,
-			)
-
-			// create an exists column
-			err = r.db.Exec(ctx, query)
-			if err != nil {
-				return &model.ApiError{Err: err, Typ: model.ErrorInternal}
-			}
-
-			query = fmt.Sprintf("ALTER TABLE %s.%s ON CLUSTER %s ADD COLUMN IF NOT EXISTS %s_exists %s MATERIALIZED -1",
-				r.logsDB, r.logsTable,
-				cluster,
-				colname, field.DataType,
-			)
-			err = r.db.Exec(ctx, query)
-			if err != nil {
-				return &model.ApiError{Err: err, Typ: model.ErrorInternal}
-			}
+		query = fmt.Sprintf("ALTER TABLE %s.%s ON CLUSTER %s ADD COLUMN IF NOT EXISTS %s_exists bool",
+			r.logsDB, r.logsTable,
+			cluster,
+			colname,
+		)
+		err = r.db.Exec(ctx, query)
+		if err != nil {
+			return &model.ApiError{Err: err, Typ: model.ErrorInternal}
 		}
 
 		// create the index
@@ -3524,7 +3522,7 @@ func (r *ClickHouseReader) UpdateLogField(ctx context.Context, field *model.Upda
 		if field.IndexGranularity == 0 {
 			field.IndexGranularity = constants.DefaultLogSkipIndexGranularity
 		}
-		query := fmt.Sprintf("ALTER TABLE %s.%s ON CLUSTER %s ADD INDEX IF NOT EXISTS %s_idx (%s) TYPE %s  GRANULARITY %d",
+		query = fmt.Sprintf("ALTER TABLE %s.%s ON CLUSTER %s ADD INDEX IF NOT EXISTS %s_idx (%s) TYPE %s  GRANULARITY %d",
 			r.logsDB, r.logsLocalTable,
 			cluster,
 			colname,
@@ -3532,55 +3530,44 @@ func (r *ClickHouseReader) UpdateLogField(ctx context.Context, field *model.Upda
 			field.IndexType,
 			field.IndexGranularity,
 		)
-		err := r.db.Exec(ctx, query)
+		err = r.db.Exec(ctx, query)
 		if err != nil {
 			return &model.ApiError{Err: err, Typ: model.ErrorInternal}
 		}
 
 	} else {
-		// Delete the columns and then remove the index
+		// Delete the index first
 		query := fmt.Sprintf("ALTER TABLE %s.%s ON CLUSTER %s DROP INDEX IF EXISTS %s_idx", r.logsDB, r.logsLocalTable, cluster, colname)
 		err := r.db.Exec(ctx, query)
-		// we are ignoring errors with code 341 as it is an error with updating old part https://github.com/SigNoz/engineering-pod/issues/919#issuecomment-1366344346
 		if err != nil {
 			return &model.ApiError{Err: err, Typ: model.ErrorInternal}
 		}
 
-		// remove the columns
-		if field.Type == constants.Attributes || field.Type == constants.Resources {
-			// converting attributes to attribute and resources to resource
-			prefix := field.Type[:len(field.Type)-1]
+		for _, table := range []string{r.logsLocalTable, r.logsTable} {
+			// drop materialized column from logs table
+			query := "ALTER TABLE %s.%s ON CLUSTER %s DROP COLUMN IF EXISTS %s "
+			err := r.db.Exec(ctx, fmt.Sprintf(query,
+				r.logsDB, table,
+				cluster,
+				colname,
+			),
+			)
+			if err != nil {
+				return &model.ApiError{Err: err, Typ: model.ErrorInternal}
+			}
 
-			// columns name is <type>_<name>_<datatype>
-			colname = fmt.Sprintf("%s_%s_%s", strings.ToLower(prefix), field.Name, strings.ToLower(field.DataType))
-
-			for _, table := range []string{r.logsLocalTable, r.logsTable} {
-				// drop materialized column from logs table
-				query := "ALTER TABLE %s.%s ON CLUSTER %s DROP COLUMN IF EXISTS %s "
-				err := r.db.Exec(ctx, fmt.Sprintf(query,
-					r.logsDB, table,
-					cluster,
-					colname,
-				),
-				)
-				if err != nil {
-					return &model.ApiError{Err: err, Typ: model.ErrorInternal}
-				}
-
-				// drop exists column on logs table
-				query = "ALTER TABLE %s.%s ON CLUSTER %s DROP COLUMN IF EXISTS %s_exists "
-				err = r.db.Exec(ctx, fmt.Sprintf(query,
-					r.logsDB, table,
-					cluster,
-					colname,
-				),
-				)
-				if err != nil {
-					return &model.ApiError{Err: err, Typ: model.ErrorInternal}
-				}
+			// drop exists column on logs table
+			query = "ALTER TABLE %s.%s ON CLUSTER %s DROP COLUMN IF EXISTS %s_exists "
+			err = r.db.Exec(ctx, fmt.Sprintf(query,
+				r.logsDB, table,
+				cluster,
+				colname,
+			),
+			)
+			if err != nil {
+				return &model.ApiError{Err: err, Typ: model.ErrorInternal}
 			}
 		}
-
 	}
 	return nil
 }
