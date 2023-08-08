@@ -3,7 +3,7 @@ import {
 	CaretUpFilled,
 	LogoutOutlined,
 } from '@ant-design/icons';
-import { Button, Divider, Dropdown, MenuProps, Space, Typography } from 'antd';
+import { Button, Divider, MenuProps, Space, Typography } from 'antd';
 import { Logout } from 'api/utils';
 import ROUTES from 'constants/routes';
 import Config from 'container/ConfigDropdown';
@@ -33,6 +33,7 @@ import {
 	LogoutContainer,
 	NavLinkWrapper,
 	ToggleButton,
+	UserDropdown,
 } from './styles';
 
 function HeaderContainer(): JSX.Element {
@@ -133,7 +134,7 @@ function HeaderContainer(): JSX.Element {
 						unCheckedChildren="🌞"
 					/>
 
-					<Dropdown
+					<UserDropdown
 						onOpenChange={onToggleHandler(setIsUserDropDownOpen)}
 						trigger={['click']}
 						menu={menu}
@@ -145,7 +146,7 @@ function HeaderContainer(): JSX.Element {
 								{!isUserDropDownOpen ? <CaretDownFilled /> : <CaretUpFilled />}
 							</IconContainer>
 						</Space>
-					</Dropdown>
+					</UserDropdown>
 				</Space>
 			</Container>
 		</Header>
