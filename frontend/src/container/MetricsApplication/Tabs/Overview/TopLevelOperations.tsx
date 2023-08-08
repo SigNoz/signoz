@@ -6,6 +6,7 @@ import Graph from 'container/GridGraphLayout/Graph/';
 import { Card, GraphContainer } from 'container/MetricsApplication/styles';
 import { Widgets } from 'types/api/dashboard/getAll';
 
+import { menuList } from '../config';
 import { ClickHandlerType } from '../Overview';
 
 function TopLevelOperation({
@@ -39,9 +40,7 @@ function TopLevelOperation({
 							onClickHandler={handleGraphClick(opName)}
 							yAxisUnit={yAxisUnit}
 							onDragSelect={onDragSelect}
-							allowClone={false}
-							allowDelete={false}
-							allowEdit={false}
+							menuList={menuList}
 						/>
 					)}
 				</GraphContainer>

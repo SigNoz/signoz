@@ -20,6 +20,7 @@ import { v4 as uuid } from 'uuid';
 import { GraphTitle, legend } from '../constant';
 import { getWidgetQueryBuilder } from '../MetricsApplication.factory';
 import { Card, GraphContainer, Row } from '../styles';
+import { menuList } from './config';
 import { Button } from './styles';
 import { IServiceName } from './types';
 import {
@@ -144,6 +145,7 @@ function External(): JSX.Element {
 					<Card>
 						<GraphContainer>
 							<Graph
+								menuList={menuList}
 								name="external_call_error_percentage"
 								widget={externalCallErrorWidget}
 								yAxisUnit="%"
@@ -156,9 +158,6 @@ function External(): JSX.Element {
 										'external_call_error_percentage',
 									);
 								}}
-								allowClone={false}
-								allowDelete={false}
-								allowEdit={false}
 							/>
 						</GraphContainer>
 					</Card>
@@ -182,6 +181,7 @@ function External(): JSX.Element {
 					<Card>
 						<GraphContainer>
 							<Graph
+								menuList={menuList}
 								name="external_call_duration"
 								widget={externalCallDurationWidget}
 								yAxisUnit="ms"
@@ -194,9 +194,6 @@ function External(): JSX.Element {
 										'external_call_duration',
 									);
 								}}
-								allowClone={false}
-								allowDelete={false}
-								allowEdit={false}
 							/>
 						</GraphContainer>
 					</Card>
@@ -233,9 +230,7 @@ function External(): JSX.Element {
 										'external_call_rps_by_address',
 									);
 								}}
-								allowClone={false}
-								allowDelete={false}
-								allowEdit={false}
+								menuList={menuList}
 							/>
 						</GraphContainer>
 					</Card>
@@ -271,9 +266,7 @@ function External(): JSX.Element {
 										'external_call_duration_by_address',
 									);
 								}}
-								allowClone={false}
-								allowDelete={false}
-								allowEdit={false}
+								menuList={menuList}
 							/>
 						</GraphContainer>
 					</Card>

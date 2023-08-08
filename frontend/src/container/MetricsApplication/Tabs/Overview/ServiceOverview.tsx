@@ -12,6 +12,7 @@ import { TagFilterItem } from 'types/api/queryBuilder/queryBuilderData';
 import { EQueryType } from 'types/common/dashboard';
 import { v4 as uuid } from 'uuid';
 
+import { menuList } from '../config';
 import { ClickHandlerType } from '../Overview';
 import { Button } from '../styles';
 import { IServiceName } from '../types';
@@ -75,9 +76,7 @@ function ServiceOverview({
 						widget={latencyWidget}
 						yAxisUnit="ns"
 						onClickHandler={handleGraphClick('Service')}
-						allowClone={false}
-						allowDelete={false}
-						allowEdit={false}
+						menuList={menuList}
 						isQueryEnabled={isQueryEnabled}
 					/>
 				</GraphContainer>

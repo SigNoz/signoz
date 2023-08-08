@@ -26,9 +26,7 @@ function GridCardGraph({
 	setLayout,
 	onDragSelect,
 	onClickHandler,
-	allowDelete,
-	allowClone,
-	allowEdit,
+	menuList,
 	isQueryEnabled,
 }: GridCardGraphProps): JSX.Element {
 	const { isAddWidget } = useSelector<AppState, DashboardReducer>(
@@ -121,9 +119,7 @@ function GridCardGraph({
 						yAxisUnit={yAxisUnit}
 						layout={layout}
 						setLayout={setLayout}
-						allowClone={allowClone}
-						allowDelete={allowDelete}
-						allowEdit={allowEdit}
+						menuList={menuList}
 					/>
 				)}
 			</span>
@@ -145,9 +141,7 @@ function GridCardGraph({
 						yAxisUnit={yAxisUnit}
 						layout={layout}
 						setLayout={setLayout}
-						allowClone={allowClone}
-						allowDelete={allowDelete}
-						allowEdit={allowEdit}
+						menuList={menuList}
 						onClickHandler={onClickHandler}
 					/>
 				) : (
@@ -170,9 +164,7 @@ function GridCardGraph({
 					name={name}
 					yAxisUnit={yAxisUnit}
 					onDragSelect={onDragSelect}
-					allowClone={allowClone}
-					allowDelete={allowDelete}
-					allowEdit={allowEdit}
+					menuList={menuList}
 					onClickHandler={onClickHandler}
 				/>
 			)}
@@ -185,9 +177,6 @@ function GridCardGraph({
 GridCardGraph.defaultProps = {
 	onDragSelect: undefined,
 	onClickHandler: undefined,
-	allowDelete: true,
-	allowClone: true,
-	allowEdit: true,
 	isQueryEnabled: true,
 };
 
