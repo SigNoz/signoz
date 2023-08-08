@@ -5,6 +5,7 @@ import { ServicesList } from 'types/api/metrics/getService';
 import { baseColumnOptions } from './BaseColumnOptions';
 import { ColumnKey, ColumnTitle } from './ColumnContants';
 import { getColumnSearchProps } from './GetColumnSearchProps';
+import { ITableColumnProps } from './types';
 
 export const getColumns = ({
 	isMetricData,
@@ -60,9 +61,3 @@ export const getColumns = ({
 		dynamicColumnOption,
 	});
 };
-
-interface ITableColumnProps {
-	search: string;
-	isMetricData: boolean;
-	isPreferRPMDisabled: boolean;
-}
