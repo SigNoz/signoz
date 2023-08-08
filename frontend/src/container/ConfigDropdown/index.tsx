@@ -4,7 +4,7 @@ import {
 	QuestionCircleFilled,
 	QuestionCircleOutlined,
 } from '@ant-design/icons';
-import { Dropdown, Space } from 'antd';
+import { Space } from 'antd';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { useMemo, useState } from 'react';
 import { useSelector } from 'react-redux';
@@ -13,6 +13,7 @@ import { ConfigProps } from 'types/api/dynamicConfigs/getDynamicConfigs';
 import AppReducer from 'types/reducer/app';
 
 import HelpToolTip from './Config';
+import { ConfigDropdown } from './styles';
 
 function DynamicConfigDropdown({
 	frontendId,
@@ -53,19 +54,17 @@ function DynamicConfigDropdown({
 	const DropDownIcon = isHelpDropDownOpen ? CaretUpFilled : CaretDownFilled;
 
 	return (
-		<Dropdown
+		<ConfigDropdown
 			onOpenChange={onToggleHandler}
 			trigger={['click']}
 			menu={menu}
 			open={isHelpDropDownOpen}
 		>
 			<Space align="center">
-				<Icon
-					style={{ fontSize: 26, color: 'white', paddingTop: 26, cursor: 'pointer' }}
-				/>
+				<Icon style={{ fontSize: 26, color: 'white', paddingTop: 26 }} />
 				<DropDownIcon style={{ color: 'white' }} />
 			</Space>
-		</Dropdown>
+		</ConfigDropdown>
 	);
 }
 
