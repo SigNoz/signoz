@@ -8,7 +8,23 @@ import { useNotifications } from 'hooks/useNotifications';
 import { useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useQuery } from 'react-query';
+import { SuccessResponse } from 'types/api';
 import { Pipeline } from 'types/api/pipeline/def';
+
+const pipelineRefetchInterval = (
+	pipelineResponse: SuccessResponse<Pipeline> | undefined,
+): number | false => {
+	// Refetch pipeline data periodically if deployment of
+	// its latest changes is not complete yet.
+	const latestVersion = pipelineResponse?.payload?.history?.[0];
+	const isLatestDeploymentFinished = ['DEPLOYED', 'FAILED'].includes(
+		latestVersion?.deployStatus || '',
+	);
+	if (latestVersion && !isLatestDeploymentFinished) {
+		return 3000;
+	}
+	return false;
+};
 
 function Pipelines(): JSX.Element {
 	const { t } = useTranslation('common');
@@ -23,6 +39,7 @@ function Pipelines(): JSX.Element {
 			getPipeline({
 				version: 'latest',
 			}),
+		refetchInterval: pipelineRefetchInterval,
 	});
 
 	const tabItems: TabsProps['items'] = useMemo(
@@ -41,10 +58,7 @@ function Pipelines(): JSX.Element {
 				key: 'change-history',
 				label: `Change History`,
 				children: (
-					<ChangeHistory
-						refetchPipelineLists={refetchPipelineLists}
-						pipelineData={pipelineData?.payload as Pipeline}
-					/>
+					<ChangeHistory pipelineData={pipelineData?.payload as Pipeline} />
 				),
 			},
 		],
