@@ -76,7 +76,6 @@ function WidgetHeader({
 	}, [widget.id, widget.panelTypes, widget.query]);
 
 	const onCreateAlertsHandler = useCallback(() => {
-		console.log('asd');
 		history.push(
 			`${ROUTES.ALERTS_NEW}?${
 				queryParamNamesMap.compositeQuery
