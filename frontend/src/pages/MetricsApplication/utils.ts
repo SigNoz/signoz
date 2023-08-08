@@ -26,7 +26,7 @@ export const onSaveApDexSettings = ({
 	notifications,
 	handlePopOverClose,
 	servicename,
-}: OnSaveApDexSettingsProps): void => {
+}: OnSaveApDexSettingsProps) => (): void => {
 	if (thresholdValue > 0 && thresholdValue < 1 && refetch) {
 		mutateAsync({
 			servicename,

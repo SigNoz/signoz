@@ -46,17 +46,6 @@ function ApDexSettings({
 		setThresholdValue(Number(e.target.value));
 	};
 
-	const onSaveHandler = (): void => {
-		onSaveApDexSettings({
-			handlePopOverClose,
-			mutateAsync,
-			notifications,
-			refetch,
-			servicename,
-			thresholdValue,
-		});
-	};
-
 	if (isLoading) {
 		return (
 			<Typography.Text style={{ color: themeColors.white }}>
@@ -73,7 +62,14 @@ function ApDexSettings({
 				<SaveAndCancelContainer key="SaveAndCancelContainer">
 					<Button onClick={handlePopOverClose}>Cancel</Button>
 					<SaveButton
-						onClick={onSaveHandler}
+						onClick={onSaveApDexSettings({
+							handlePopOverClose,
+							mutateAsync,
+							notifications,
+							refetch,
+							servicename,
+							thresholdValue,
+						})}
 						type="primary"
 						loading={setApDexIsLoading}
 					>
