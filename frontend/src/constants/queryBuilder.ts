@@ -246,6 +246,14 @@ export enum PANEL_TYPES {
 	EMPTY_WIDGET = 'EMPTY_WIDGET',
 }
 
+// eslint-disable-next-line @typescript-eslint/naming-convention
+export enum DISPLAY_TYPES {
+	TIME_SERIES = 'Time Series',
+	VALUE = 'Value',
+	TABLE = 'Table',
+	AREA = 'Area Graph',
+}
+
 export type IQueryBuilderState = 'search';
 
 export const QUERY_BUILDER_SEARCH_VALUES = {

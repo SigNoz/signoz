@@ -4,7 +4,8 @@ import { useGetQueryRange } from 'hooks/queryBuilder/useGetQueryRange';
 import { useStepInterval } from 'hooks/queryBuilder/useStepInterval';
 import usePreviousValue from 'hooks/usePreviousValue';
 import { getDashboardVariables } from 'lib/dashbaordVariables/getDashboardVariables';
-import getChartData from 'lib/getChartData';
+import getChartData, { GetChartDataProps } from 'lib/getChartData';
+import { colors } from 'lib/getRandomColor';
 import isEmpty from 'lodash-es/isEmpty';
 import { memo, useMemo, useState } from 'react';
 import { useInView } from 'react-intersection-observer';
@@ -34,6 +35,22 @@ function GridCardGraph({
 	const { isAddWidget } = useSelector<AppState, DashboardReducer>(
 		(state) => state.dashboards,
 	);
+	const createDataset: Required<GetChartDataProps>['createDataset'] = (
+		element,
+		index,
+		allLabels,
+	) => ({
+		fill: true,
+		label: allLabels[index],
+		borderColor: colors[index % colors.length] || 'red',
+		backgroundColor: colors[index % colors.length] || 'red',
+		data: element,
+		borderWidth: 1.5,
+		spanGaps: true,
+		animations: false,
+		showLine: true,
+		pointRadius: 0,
+	});
 
 	const { ref: graphRef, inView: isGraphVisible } = useInView({
 		threshold: 0,
@@ -94,6 +111,7 @@ function GridCardGraph({
 						queryData: queryResponse?.data?.payload?.data?.result || [],
 					},
 				],
+				createDataset,
 			}),
 		[queryResponse],
 	);

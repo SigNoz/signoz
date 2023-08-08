@@ -1,7 +1,7 @@
 import { Input, Select } from 'antd';
 import InputComponent from 'components/Input';
 import TimePreference from 'components/TimePreferenceDropDown';
-import { PANEL_TYPES } from 'constants/queryBuilder';
+import { DISPLAY_TYPES, PANEL_TYPES } from 'constants/queryBuilder';
 import GraphTypes from 'container/NewDashboard/ComponentsSlider/menuItems';
 import { Dispatch, SetStateAction, useCallback } from 'react';
 
@@ -45,7 +45,9 @@ function RightContainer({
 			>
 				{GraphTypes.map((item) => (
 					<Option key={item.name} value={item.name}>
-						{item.display}
+						{item.display === DISPLAY_TYPES.AREA
+							? DISPLAY_TYPES.TIME_SERIES
+							: item.display}
 					</Option>
 				))}
 			</Select>
