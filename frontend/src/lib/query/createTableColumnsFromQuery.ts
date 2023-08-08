@@ -17,10 +17,6 @@ import { ListItem, QueryDataV3, SeriesItem } from 'types/api/widgets/getQuery';
 import { QueryBuilderData } from 'types/common/queryBuilder';
 import { v4 as uuid } from 'uuid';
 
-export type CreateSorter = (
-	column: DynamicColumn,
-) => ColumnType<RowData>['sorter'];
-
 type CreateTableDataFromQueryParams = Pick<
 	QueryTableProps,
 	'queryTableData' | 'query' | 'renderActionCell' | 'renderColumnCell'
