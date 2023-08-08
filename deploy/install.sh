@@ -36,9 +36,9 @@ is_mac() {
     [[ $OSTYPE == darwin* ]]
 }
 
-# is_arm64(){
-#     [[ `uname -m` == 'arm64' ]]
-# }
+is_arm64(){
+    [[ `uname -m` == 'arm64' || `uname -m` == 'aarch64' ]]
+}
 
 check_os() {
     if is_mac; then
@@ -47,6 +47,16 @@ check_os() {
         os="Mac"
         return
     fi
+
+    if is_arm64; then
+        arch="arm64"
+        arch_official="aarch64"
+    else
+        arch="amd64"
+        arch_official="x86_64"
+    fi
+
+    platform=$(uname -s | tr '[:upper:]' '[:lower:]')
 
     os_name="$(cat /etc/*-release | awk -F= '$1 == "NAME" { gsub(/"/, ""); print $2; exit }')"
 
@@ -143,7 +153,7 @@ install_docker() {
         $apt_cmd install software-properties-common gnupg-agent
         curl -fsSL "https://download.docker.com/linux/$os/gpg" | $sudo_cmd apt-key add -
         $sudo_cmd add-apt-repository \
-            "deb [arch=amd64] https://download.docker.com/linux/$os $(lsb_release -cs) stable"
+            "deb [arch=$arch] https://download.docker.com/linux/$os $(lsb_release -cs) stable"
         $apt_cmd update
         echo "Installing docker"
         $apt_cmd install docker-ce docker-ce-cli containerd.io
@@ -178,12 +188,20 @@ install_docker() {
 
 }
 
+compose_version () {
+    local compose_version
+    compose_version="$(curl -s https://api.github.com/repos/docker/compose/releases/latest | grep 'tag_name' | cut -d\" -f4)"
+    echo "${compose_version:-v2.18.1}"
+}
+
 install_docker_compose() {
     if [[ $package_manager == "apt-get" || $package_manager == "zypper" || $package_manager == "yum" ]]; then
         if [[ ! -f /usr/bin/docker-compose ]];then
             echo "++++++++++++++++++++++++"
             echo "Installing docker-compose"
-            $sudo_cmd curl -L "https://github.com/docker/compose/releases/download/1.26.0/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+            compose_url="https://github.com/docker/compose/releases/download/$(compose_version)/docker-compose-$platform-$arch_official"
+            echo "Downloading docker-compose from $compose_url"
+            $sudo_cmd curl -L "$compose_url" -o /usr/local/bin/docker-compose
             $sudo_cmd chmod +x /usr/local/bin/docker-compose
             $sudo_cmd ln -s /usr/local/bin/docker-compose /usr/bin/docker-compose
             echo "docker-compose installed!"

@@ -10,6 +10,7 @@ export type LogsTableViewProps = {
 	logs: ILog[];
 	fields: IField[];
 	linesPerRow: number;
+	onClickExpand?: (log: ILog) => void;
 };
 
 export type UseTableViewResult = {
