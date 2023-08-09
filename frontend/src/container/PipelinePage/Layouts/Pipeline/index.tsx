@@ -7,7 +7,7 @@ import PipelinesSearchSection from './PipelinesSearchSection';
 
 function PipelinePageLayout({
 	refetchPipelineLists,
-	piplineData,
+	pipelineData,
 }: PipelinePageLayoutProps): JSX.Element {
 	const [isActionType, setActionType] = useState<string>();
 	const [isActionMode, setActionMode] = useState<string>('viewing-mode');
@@ -19,7 +19,7 @@ function PipelinePageLayout({
 				setActionType={setActionType}
 				setActionMode={setActionMode}
 				isActionMode={isActionMode}
-				piplineData={piplineData}
+				pipelineData={pipelineData}
 			/>
 			<PipelinesSearchSection setPipelineSearchValue={setPipelineSearchValue} />
 			<PipelineListsView
@@ -27,7 +27,7 @@ function PipelinePageLayout({
 				setActionType={setActionType}
 				setActionMode={setActionMode}
 				isActionMode={isActionMode}
-				piplineData={piplineData}
+				pipelineData={pipelineData}
 				refetchPipelineLists={refetchPipelineLists}
 				pipelineSearchValue={pipelineSearchValue}
 			/>
@@ -37,7 +37,7 @@ function PipelinePageLayout({
 
 interface PipelinePageLayoutProps {
 	refetchPipelineLists: VoidFunction;
-	piplineData: Pipeline;
+	pipelineData: Pipeline;
 }
 
 export default PipelinePageLayout;
