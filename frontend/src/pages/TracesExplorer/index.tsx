@@ -192,11 +192,18 @@ function TracesExplorer(): JSX.Element {
 
 		if (
 			(currentTab === PANEL_TYPES.LIST || currentTab === PANEL_TYPES.TRACE) &&
-			shouldChangeView
+			shouldChangeView &&
+			panelType
 		) {
 			handleTabChange(PANEL_TYPES.TIME_SERIES);
 		}
-	}, [currentTab, isMultipleQueries, isGroupByExist, handleTabChange]);
+	}, [
+		currentTab,
+		isMultipleQueries,
+		isGroupByExist,
+		panelType,
+		handleTabChange,
+	]);
 
 	return (
 		<>
