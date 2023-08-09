@@ -1,7 +1,5 @@
 import { apiV3 } from 'api/apiV1';
-import getLocalStorageKey from 'api/browser/localstorage/get';
 import { ENVIRONMENT } from 'constants/env';
-import { LOCALSTORAGE } from 'constants/localStorage';
 import { EventListener, EventSourcePolyfill } from 'event-source-polyfill';
 import {
 	createContext,
@@ -12,6 +10,9 @@ import {
 	useRef,
 	useState,
 } from 'react';
+import { useSelector } from 'react-redux';
+import { AppState } from 'store/reducers';
+import AppReducer from 'types/reducer/app';
 
 interface IEventSourceContext {
 	eventSourceInstance: EventSourcePolyfill | null;
@@ -37,6 +38,8 @@ export function EventSourceProvider({
 	const [isConnectionOpen, setIsConnectionOpen] = useState<boolean>(false);
 	const [isConnectionLoading, setIsConnectionLoading] = useState<boolean>(false);
 	const [isConnectionError, setIsConnectionError] = useState<string>('');
+
+	const { user } = useSelector<AppState, AppReducer>((state) => state.app);
 
 	const eventSourceRef = useRef<EventSourcePolyfill | null>(null);
 
@@ -70,7 +73,7 @@ export function EventSourceProvider({
 
 			eventSourceRef.current = new EventSourcePolyfill(eventSourceUrl, {
 				headers: {
-					Authorization: `Bearer ${getLocalStorageKey(LOCALSTORAGE.AUTH_TOKEN)}`,
+					Authorization: `Bearer ${user?.accessJwt}`,
 				},
 				heartbeatTimeout: TIMEOUT_IN_MS,
 			});
@@ -82,7 +85,7 @@ export function EventSourceProvider({
 
 			eventSourceRef.current.addEventListener('open', handleOpenConnection);
 		},
-		[handleErrorConnection, handleOpenConnection],
+		[handleErrorConnection, handleOpenConnection, user?.accessJwt],
 	);
 
 	const contextValue = useMemo(
@@ -102,8 +105,6 @@ export function EventSourceProvider({
 			handleCloseConnection,
 		],
 	);
-
-	console.log({ contextValue });
 
 	return (
 		<EventSourceContext.Provider value={contextValue}>
