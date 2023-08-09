@@ -14,6 +14,7 @@ import {
 	WebhookType,
 } from 'container/CreateAlertChannels/config';
 import useFeatureFlags from 'hooks/useFeatureFlag';
+import { isFeatureKeys } from 'hooks/useFeatureFlag/utils';
 import history from 'lib/history';
 import { Dispatch, ReactElement, SetStateAction } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -23,9 +24,6 @@ import PagerSettings from './Settings/Pager';
 import SlackSettings from './Settings/Slack';
 import WebhookSettings from './Settings/Webhook';
 import { Button } from './styles';
-
-const { Option } = Select;
-const { Title } = Typography;
 
 function FormAlertChannels({
 	formInstance,
@@ -42,10 +40,11 @@ function FormAlertChannels({
 }: FormAlertChannelsProps): JSX.Element {
 	const { t } = useTranslation('channels');
 	const isUserOnEEPlan = useFeatureFlags(FeatureKeys.ENTERPRISE_PLAN);
+
+	const feature = `ALERT_CHANNEL_${type.toUpperCase()}`;
+
 	const hasFeature = useFeatureFlags(
-		'ALERT_CHANNEL_'.concat(
-			String(type).toUpperCase(),
-		) as keyof typeof FeatureKeys,
+		isFeatureKeys(feature) ? feature : FeatureKeys.ALERT_CHANNEL_SLACK,
 	);
 
 	const renderSettings = (): ReactElement | null => {
@@ -70,7 +69,7 @@ function FormAlertChannels({
 
 	return (
 		<>
-			<Title level={3}>{title}</Title>
+			<Typography.Title level={3}>{title}</Typography.Title>
 
 			<Form initialValues={initialValue} layout="vertical" form={formInstance}>
 				<Form.Item label={t('field_channel_name')} labelAlign="left" name="name">
@@ -87,20 +86,20 @@ function FormAlertChannels({
 
 				<Form.Item label={t('field_channel_type')} labelAlign="left" name="type">
 					<Select disabled={editing} onChange={onTypeChangeHandler} value={type}>
-						<Option value="slack" key="slack">
+						<Select.Option value="slack" key="slack">
 							Slack
-						</Option>
-						<Option value="webhook" key="webhook">
+						</Select.Option>
+						<Select.Option value="webhook" key="webhook">
 							Webhook
-						</Option>
-						<Option value="pagerduty" key="pagerduty">
+						</Select.Option>
+						<Select.Option value="pagerduty" key="pagerduty">
 							Pagerduty
-						</Option>
-						<Option value="msteams" key="msteams">
+						</Select.Option>
+						<Select.Option value="msteams" key="msteams">
 							<div>
 								Microsoft Teams {!isUserOnEEPlan && '(Supported in Paid Plans Only)'}{' '}
 							</div>
-						</Option>
+						</Select.Option>
 					</Select>
 				</Form.Item>
 

@@ -106,9 +106,7 @@ function CreateAlertChannels({
 					message: 'Success',
 					description: t('channel_creation_done'),
 				});
-				setTimeout(() => {
-					history.replace(ROUTES.ALL_CHANNELS);
-				}, 2000);
+				history.replace(ROUTES.ALL_CHANNELS);
 			} else {
 				notifications.error({
 					message: 'Error',
@@ -169,9 +167,7 @@ function CreateAlertChannels({
 					message: 'Success',
 					description: t('channel_creation_done'),
 				});
-				setTimeout(() => {
-					history.replace(ROUTES.ALL_CHANNELS);
-				}, 2000);
+				history.replace(ROUTES.ALL_CHANNELS);
 			} else {
 				notifications.error({
 					message: 'Error',
@@ -226,9 +222,7 @@ function CreateAlertChannels({
 						message: 'Success',
 						description: t('channel_creation_done'),
 					});
-					setTimeout(() => {
-						history.replace(ROUTES.ALL_CHANNELS);
-					}, 2000);
+					history.replace(ROUTES.ALL_CHANNELS);
 				} else {
 					notifications.error({
 						message: 'Error',
@@ -267,9 +261,7 @@ function CreateAlertChannels({
 					message: 'Success',
 					description: t('channel_creation_done'),
 				});
-				setTimeout(() => {
-					history.replace(ROUTES.ALL_CHANNELS);
-				}, 2000);
+				history.replace(ROUTES.ALL_CHANNELS);
 			} else {
 				notifications.error({
 					message: 'Error',
@@ -287,33 +279,30 @@ function CreateAlertChannels({
 
 	const onSaveHandler = useCallback(
 		async (value: ChannelType) => {
-			switch (value) {
-				case SlackType:
-					onSlackHandler();
-					break;
-				case WebhookType:
-					onWebhookHandler();
-					break;
-				case PagerType:
-					onPagerHandler();
-					break;
-				case MsTeamsType:
-					onMsTeamsHandler();
-					break;
-				default:
-					notifications.error({
-						message: 'Error',
-						description: t('selected_channel_invalid'),
-					});
+			const functionMapper = {
+				[SlackType]: onSlackHandler,
+				[WebhookType]: onWebhookHandler,
+				[PagerType]: onPagerHandler,
+				[MsTeamsType]: onMsTeamsHandler,
+			};
+			const functionToCall = functionMapper[value];
+
+			if (functionToCall) {
+				functionToCall();
+			} else {
+				notifications.error({
+					message: 'Error',
+					description: t('selected_channel_invalid'),
+				});
 			}
 		},
 		[
 			onSlackHandler,
-			t,
-			onPagerHandler,
 			onWebhookHandler,
+			onPagerHandler,
 			onMsTeamsHandler,
 			notifications,
+			t,
 		],
 	);
 

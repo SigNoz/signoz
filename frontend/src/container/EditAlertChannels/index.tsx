@@ -85,9 +85,7 @@ function EditAlertChannels({
 				description: t('channel_edit_done'),
 			});
 
-			setTimeout(() => {
-				history.replace(ROUTES.ALL_CHANNELS);
-			}, 2000);
+			history.replace(ROUTES.ALL_CHANNELS);
 		} else {
 			notifications.error({
 				message: 'Error',
@@ -140,9 +138,7 @@ function EditAlertChannels({
 				description: t('channel_edit_done'),
 			});
 
-			setTimeout(() => {
-				history.replace(ROUTES.ALL_CHANNELS);
-			}, 2000);
+			history.replace(ROUTES.ALL_CHANNELS);
 		} else {
 			showError(response.error || t('channel_edit_failed'));
 		}
@@ -187,9 +183,7 @@ function EditAlertChannels({
 				description: t('channel_edit_done'),
 			});
 
-			setTimeout(() => {
-				history.replace(ROUTES.ALL_CHANNELS);
-			}, 2000);
+			history.replace(ROUTES.ALL_CHANNELS);
 		} else {
 			notifications.error({
 				message: 'Error',
@@ -231,9 +225,7 @@ function EditAlertChannels({
 				description: t('channel_edit_done'),
 			});
 
-			setTimeout(() => {
-				history.replace(ROUTES.ALL_CHANNELS);
-			}, 2000);
+			history.replace(ROUTES.ALL_CHANNELS);
 		} else {
 			notifications.error({
 				message: 'Error',
