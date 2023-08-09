@@ -1,3 +1,4 @@
+/* eslint-disable react/jsx-no-comment-textnodes */
 import { CloseOutlined, QuestionCircleOutlined } from '@ant-design/icons';
 import { Card, Input } from 'antd';
 import { AxiosResponse } from 'axios';
@@ -11,7 +12,6 @@ import { ApDexPayloadProps } from 'types/api/metrics/getApDex';
 import {
 	AppDexThresholdContainer,
 	Button,
-	ExcludeErrorCodeContainer,
 	SaveAndCancelContainer,
 	SaveButton,
 	Typography,
@@ -92,12 +92,13 @@ function ApDexSettings({
 					min={0}
 				/>
 			</AppDexThresholdContainer>
-			<ExcludeErrorCodeContainer>
+			{/* TODO: Add this feature later when backend is ready to support it. */}
+			{/* <ExcludeErrorCodeContainer>
 				<Typography.Text>
 					Exclude following error codes from error rate calculation
 				</Typography.Text>
 				<Input placeholder="e.g. 406, 418" />
-			</ExcludeErrorCodeContainer>
+			</ExcludeErrorCodeContainer> */}
 		</Card>
 	);
 }
