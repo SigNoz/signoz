@@ -3,27 +3,29 @@
 // @ts-nocheck
 
 import { getMetricsQueryRange } from 'api/metrics/getQueryRange';
+import { GRAPH_TYPES } from 'container/NewDashboard/ComponentsSlider';
 import { timePreferenceType } from 'container/NewWidget/RightContainer/timeItems';
 import { Time } from 'container/TopNav/DateTimeSelection/config';
-import GetMaxMinTime from 'lib/getMaxMinTime';
-import GetMinMax from 'lib/getMinMax';
-import GetStartAndEndTime from 'lib/getStartAndEndTime';
+import getStartEndRangeTime from 'lib/getStartEndRangeTime';
 import getStep from 'lib/getStep';
+import { convertNewDataToOld } from 'lib/newQueryBuilder/convertNewDataToOld';
 import { mapQueryDataToApi } from 'lib/newQueryBuilder/queryBuilderMappers/mapQueryDataToApi';
 import { isEmpty } from 'lodash-es';
 import store from 'store';
 import { SuccessResponse } from 'types/api';
-import { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
+import { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { EQueryType } from 'types/common/dashboard';
-import { convertNewDataToOld } from 'lib/newQueryBuilder/convertNewDataToOld';
+import { Pagination } from 'hooks/queryPagination';
 
 export async function GetMetricQueryRange({
 	query,
 	globalSelectedInterval,
 	graphType,
 	selectedTime,
+	tableParams,
 	variables = {},
+	params = {},
 }: GetQueryResultsProps): Promise<SuccessResponse<MetricRangePayloadProps>> {
 	const queryData = query[query.queryType];
 	let legendMap: Record<string, string> = {};
@@ -38,8 +40,9 @@ export async function GetMetricQueryRange({
 	switch (query.queryType) {
 		case EQueryType.QUERY_BUILDER: {
 			const { queryData: data, queryFormulas } = query.builder;
-			const currentQueryData = mapQueryDataToApi(data, 'queryName');
+			const currentQueryData = mapQueryDataToApi(data, 'queryName', tableParams);
 			const currentFormulas = mapQueryDataToApi(queryFormulas, 'queryName');
+
 			const builderQueries = {
 				...currentQueryData.data,
 				...currentFormulas.data,
@@ -82,30 +85,22 @@ export async function GetMetricQueryRange({
 			return;
 	}
 
-	const { globalTime } = store.getState();
-
-	const minMax = GetMinMax(globalSelectedInterval, [
-		globalTime.minTime / 1000000,
-		globalTime.maxTime / 1000000,
-	]);
-
-	const getMaxMinTime = GetMaxMinTime({
-		graphType: null,
-		maxTime: minMax.maxTime,
-		minTime: minMax.minTime,
-	});
-
-	const { end, start } = GetStartAndEndTime({
+	const { start, end } = getStartEndRangeTime({
 		type: selectedTime,
-		maxTime: getMaxMinTime.maxTime,
-		minTime: getMaxMinTime.minTime,
+		interval: globalSelectedInterval,
 	});
+
 	const response = await getMetricsQueryRange({
 		start: parseInt(start, 10) * 1e3,
 		end: parseInt(end, 10) * 1e3,
-		step: getStep({ start, end, inputFormat: 'ms' }),
+		step: getStep({
+			start: store.getState().globalTime.minTime,
+			end: store.getState().globalTime.maxTime,
+			inputFormat: 'ns',
+		}),
 		variables,
 		...QueryPayload,
+		...params,
 	});
 	if (response.statusCode >= 400) {
 		throw new Error(
@@ -147,4 +142,9 @@ export interface GetQueryResultsProps {
 	selectedTime: timePreferenceType;
 	globalSelectedInterval: Time;
 	variables?: Record<string, unknown>;
+	params?: Record<string, unknown>;
+	tableParams?: {
+		pagination?: Pagination;
+		selectColumns?: any;
+	};
 }

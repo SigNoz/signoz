@@ -14,6 +14,6 @@ jobs:
     name: Ensure Pull Request has a linked issue.
     steps:
       - name: Verify Linked Issue
-        uses: srikanthccv/verify-linked-issue-action@v0.70
+        uses: srikanthccv/verify-linked-issue-action@v0.71
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

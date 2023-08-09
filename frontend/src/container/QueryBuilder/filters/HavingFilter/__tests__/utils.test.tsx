@@ -3,19 +3,17 @@ import userEvent from '@testing-library/user-event';
 // Constants
 import {
 	HAVING_OPERATORS,
-	initialQueryBuilderFormValues,
+	initialQueryBuilderFormValuesMap,
 } from 'constants/queryBuilder';
 import { transformFromStringToHaving } from 'lib/query/transformQueryBuilderData';
 // ** Types
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
-import { DataSource } from 'types/common/queryBuilder';
 
 // ** Components
 import { HavingFilter } from '../HavingFilter';
 
 const valueWithAttributeAndOperator: IBuilderQuery = {
-	...initialQueryBuilderFormValues,
-	dataSource: DataSource.LOGS,
+	...initialQueryBuilderFormValuesMap.logs,
 	aggregateOperator: 'SUM',
 	aggregateAttribute: {
 		isColumn: false,
@@ -29,7 +27,10 @@ describe('Having filter behaviour', () => {
 	test('Having filter render is rendered', () => {
 		const mockFn = jest.fn();
 		const { unmount } = render(
-			<HavingFilter query={initialQueryBuilderFormValues} onChange={mockFn} />,
+			<HavingFilter
+				query={initialQueryBuilderFormValuesMap.metrics}
+				onChange={mockFn}
+			/>,
 		);
 
 		const selectId = 'havingSelect';
@@ -44,7 +45,10 @@ describe('Having filter behaviour', () => {
 	test('Having render is disabled initially', () => {
 		const mockFn = jest.fn();
 		const { unmount } = render(
-			<HavingFilter query={initialQueryBuilderFormValues} onChange={mockFn} />,
+			<HavingFilter
+				query={initialQueryBuilderFormValuesMap.metrics}
+				onChange={mockFn}
+			/>,
 		);
 
 		const input = screen.getByRole('combobox');

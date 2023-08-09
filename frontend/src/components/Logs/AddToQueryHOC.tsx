@@ -1,39 +1,18 @@
 import { Popover } from 'antd';
-import ROUTES from 'constants/routes';
-import history from 'lib/history';
-import { generateFilterQuery } from 'lib/logs/generateFilterQuery';
+import { OPERATORS } from 'constants/queryBuilder';
 import { memo, ReactNode, useCallback, useMemo } from 'react';
-import { useSelector } from 'react-redux';
-import { AppState } from 'store/reducers';
-import { ILogsReducer } from 'types/reducer/logs';
 
 import { ButtonContainer } from './styles';
 
 function AddToQueryHOC({
 	fieldKey,
 	fieldValue,
+	onAddToQuery,
 	children,
 }: AddToQueryHOCProps): JSX.Element {
-	const {
-		searchFilter: { queryString },
-	} = useSelector<AppState, ILogsReducer>((store) => store.logs);
-
-	const generatedQuery = useMemo(
-		() => generateFilterQuery({ fieldKey, fieldValue, type: 'IN' }),
-		[fieldKey, fieldValue],
-	);
-
 	const handleQueryAdd = useCallback(() => {
-		let updatedQueryString = queryString || '';
-
-		if (updatedQueryString.length === 0) {
-			updatedQueryString += `${generatedQuery}`;
-		} else {
-			updatedQueryString += ` AND ${generatedQuery}`;
-		}
-
-		history.replace(`${ROUTES.LOGS}?q=${updatedQueryString}`);
-	}, [generatedQuery, queryString]);
+		onAddToQuery(fieldKey, fieldValue, OPERATORS.IN);
+	}, [fieldKey, fieldValue, onAddToQuery]);
 
 	const popOverContent = useMemo(() => <span>Add to query: {fieldKey}</span>, [
 		fieldKey,
@@ -48,9 +27,10 @@ function AddToQueryHOC({
 	);
 }
 
-interface AddToQueryHOCProps {
+export interface AddToQueryHOCProps {
 	fieldKey: string;
 	fieldValue: string;
+	onAddToQuery: (fieldKey: string, fieldValue: string, operator: string) => void;
 	children: ReactNode;
 }
 

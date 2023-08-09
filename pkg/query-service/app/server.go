@@ -21,6 +21,7 @@ import (
 	"go.signoz.io/signoz/pkg/query-service/agentConf"
 	"go.signoz.io/signoz/pkg/query-service/app/clickhouseReader"
 	"go.signoz.io/signoz/pkg/query-service/app/dashboards"
+	"go.signoz.io/signoz/pkg/query-service/app/logparsingpipeline"
 	opamp "go.signoz.io/signoz/pkg/query-service/app/opamp"
 	opAmpModel "go.signoz.io/signoz/pkg/query-service/app/opamp/model"
 
@@ -41,12 +42,15 @@ import (
 )
 
 type ServerOptions struct {
-	PromConfigPath  string
-	HTTPHostPort    string
-	PrivateHostPort string
+	PromConfigPath    string
+	SkipTopLvlOpsPath string
+	HTTPHostPort      string
+	PrivateHostPort   string
 	// alert specific params
-	DisableRules bool
-	RuleRepoURL  string
+	DisableRules      bool
+	RuleRepoURL       string
+	PreferDelta       bool
+	PreferSpanMetrics bool
 }
 
 // Server runs HTTP, Mux and a grpc server
@@ -105,6 +109,14 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 	} else {
 		return nil, fmt.Errorf("Storage type: %s is not supported in query service", storage)
 	}
+	var skipConfig *model.SkipConfig
+	if serverOptions.SkipTopLvlOpsPath != "" {
+		// read skip config
+		skipConfig, err = model.ReadSkipConfig(serverOptions.SkipTopLvlOpsPath)
+		if err != nil {
+			return nil, err
+		}
+	}
 
 	<-readerReady
 	rm, err := makeRulesManager(serverOptions.PromConfigPath, constants.GetAlertManagerApiPrefix(), serverOptions.RuleRepoURL, localDB, reader, serverOptions.DisableRules, fm)
@@ -112,12 +124,22 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 		return nil, err
 	}
 
+	// ingestion pipelines manager
+	logParsingPipelineController, err := logparsingpipeline.NewLogParsingPipelinesController(localDB, "sqlite")
+	if err != nil {
+		return nil, err
+	}
+
 	telemetry.GetInstance().SetReader(reader)
 	apiHandler, err := NewAPIHandler(APIHandlerOpts{
-		Reader:       reader,
-		AppDao:       dao.DB(),
-		RuleManager:  rm,
-		FeatureFlags: fm,
+		Reader:                        reader,
+		SkipConfig:                    skipConfig,
+		PerferDelta:                   serverOptions.PreferDelta,
+		PreferSpanMetrics:             serverOptions.PreferSpanMetrics,
+		AppDao:                        dao.DB(),
+		RuleManager:                   rm,
+		FeatureFlags:                  fm,
+		LogsParsingPipelineController: logParsingPipelineController,
 	})
 	if err != nil {
 		return nil, err
@@ -220,7 +242,7 @@ func loggingMiddleware(next http.Handler) http.Handler {
 		path, _ := route.GetPathTemplate()
 		startTime := time.Now()
 		next.ServeHTTP(w, r)
-		zap.S().Info(path, "\ttimeTaken: ", time.Now().Sub(startTime))
+		zap.S().Info(path+"\ttimeTaken:"+time.Now().Sub(startTime).String(), zap.Duration("timeTaken", time.Now().Sub(startTime)), zap.String("path", path))
 	})
 }
 
@@ -232,7 +254,7 @@ func loggingMiddlewarePrivate(next http.Handler) http.Handler {
 		path, _ := route.GetPathTemplate()
 		startTime := time.Now()
 		next.ServeHTTP(w, r)
-		zap.S().Info(path, "\tprivatePort: true", "\ttimeTaken: ", time.Now().Sub(startTime))
+		zap.S().Info(path+"\tprivatePort: true \ttimeTaken"+time.Now().Sub(startTime).String(), zap.Duration("timeTaken", time.Now().Sub(startTime)), zap.String("path", path), zap.Bool("tprivatePort", true))
 	})
 }
 

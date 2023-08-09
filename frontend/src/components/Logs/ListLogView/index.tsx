@@ -1,23 +1,29 @@
 import { blue, grey, orange } from '@ant-design/colors';
-import { CopyFilled, ExpandAltOutlined } from '@ant-design/icons';
+import {
+	CopyFilled,
+	ExpandAltOutlined,
+	LinkOutlined,
+	MonitorOutlined,
+} from '@ant-design/icons';
 import Convert from 'ansi-to-html';
 import { Button, Divider, Row, Typography } from 'antd';
+import LogDetail from 'components/LogDetail';
+import LogsExplorerContext from 'container/LogsExplorerContext';
 import dayjs from 'dayjs';
 import dompurify from 'dompurify';
+import { useActiveLog } from 'hooks/logs/useActiveLog';
+import { useCopyLogLink } from 'hooks/logs/useCopyLogLink';
 import { useNotifications } from 'hooks/useNotifications';
 // utils
 import { FlatLogData } from 'lib/logs/flatLogData';
 import { useCallback, useMemo } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
 import { useCopyToClipboard } from 'react-use';
 // interfaces
-import { AppState } from 'store/reducers';
-import { SET_DETAILED_LOG_DATA } from 'types/actions/logs';
+import { IField } from 'types/api/logs/fields';
 import { ILog } from 'types/api/logs/log';
-import { ILogsReducer } from 'types/reducer/logs';
 
 // components
-import AddToQueryHOC from '../AddToQueryHOC';
+import AddToQueryHOC, { AddToQueryHOCProps } from '../AddToQueryHOC';
 import CopyClipboardHOC from '../CopyClipboardHOC';
 // styles
 import {
@@ -36,6 +42,10 @@ interface LogFieldProps {
 	fieldKey: string;
 	fieldValue: string;
 }
+
+type LogSelectedFieldProps = LogFieldProps &
+	Pick<AddToQueryHOCProps, 'onAddToQuery'>;
+
 function LogGeneralField({ fieldKey, fieldValue }: LogFieldProps): JSX.Element {
 	const html = useMemo(
 		() => ({
@@ -59,10 +69,15 @@ function LogGeneralField({ fieldKey, fieldValue }: LogFieldProps): JSX.Element {
 function LogSelectedField({
 	fieldKey = '',
 	fieldValue = '',
-}: LogFieldProps): JSX.Element {
+	onAddToQuery,
+}: LogSelectedFieldProps): JSX.Element {
 	return (
 		<SelectedLog>
-			<AddToQueryHOC fieldKey={fieldKey} fieldValue={fieldValue}>
+			<AddToQueryHOC
+				fieldKey={fieldKey}
+				fieldValue={fieldValue}
+				onAddToQuery={onAddToQuery}
+			>
 				<Typography.Text>
 					<span style={{ color: blue[4] }}>{fieldKey}</span>
 				</Typography.Text>
@@ -77,26 +92,41 @@ function LogSelectedField({
 	);
 }
 
-interface ListLogViewProps {
+type ListLogViewProps = {
 	logData: ILog;
-}
-function ListLogView({ logData }: ListLogViewProps): JSX.Element {
-	const {
-		fields: { selected },
-	} = useSelector<AppState, ILogsReducer>((state) => state.logs);
+	selectedFields: IField[];
+};
 
-	const dispatch = useDispatch();
+function ListLogView({
+	logData,
+	selectedFields,
+}: ListLogViewProps): JSX.Element {
 	const flattenLogData = useMemo(() => FlatLogData(logData), [logData]);
 
 	const [, setCopy] = useCopyToClipboard();
 	const { notifications } = useNotifications();
+	const { isHighlighted, isLogsExplorerPage, onLogCopy } = useCopyLogLink(
+		logData.id,
+	);
+	const {
+		activeLog: activeContextLog,
+		onSetActiveLog: handleSetActiveContextLog,
+		onClearActiveLog: handleClearActiveContextLog,
+	} = useActiveLog();
+	const {
+		activeLog,
+		onSetActiveLog,
+		onClearActiveLog,
+		onAddToQuery,
+	} = useActiveLog();
 
 	const handleDetailedView = useCallback(() => {
-		dispatch({
-			type: SET_DETAILED_LOG_DATA,
-			payload: logData,
-		});
-	}, [dispatch, logData]);
+		onSetActiveLog(logData);
+	}, [logData, onSetActiveLog]);
+
+	const handleShowContext = useCallback(() => {
+		handleSetActiveContextLog(logData);
+	}, [logData, handleSetActiveContextLog]);
 
 	const handleCopyJSON = (): void => {
 		setCopy(JSON.stringify(logData, null, 2));
@@ -106,12 +136,20 @@ function ListLogView({ logData }: ListLogViewProps): JSX.Element {
 	};
 
 	const updatedSelecedFields = useMemo(
-		() => selected.filter((e) => e.name !== 'id'),
-		[selected],
+		() => selectedFields.filter((e) => e.name !== 'id'),
+		[selectedFields],
+	);
+
+	const timestampValue = useMemo(
+		() =>
+			typeof flattenLogData.timestamp === 'string'
+				? dayjs(flattenLogData.timestamp).format()
+				: dayjs(flattenLogData.timestamp / 1e6).format(),
+		[flattenLogData.timestamp],
 	);
 
 	return (
-		<Container>
+		<Container $isActiveLog={isHighlighted}>
 			<div>
 				<LogContainer>
 					<>
@@ -119,10 +157,7 @@ function ListLogView({ logData }: ListLogViewProps): JSX.Element {
 						{flattenLogData.stream && (
 							<LogGeneralField fieldKey="stream" fieldValue={flattenLogData.stream} />
 						)}
-						<LogGeneralField
-							fieldKey="timestamp"
-							fieldValue={dayjs((flattenLogData.timestamp as never) / 1e6).format()}
-						/>
+						<LogGeneralField fieldKey="timestamp" fieldValue={timestampValue} />
 					</>
 				</LogContainer>
 				<div>
@@ -132,6 +167,7 @@ function ListLogView({ logData }: ListLogViewProps): JSX.Element {
 								key={field.name}
 								fieldKey={field.name}
 								fieldValue={flattenLogData[field.name] as never}
+								onAddToQuery={onAddToQuery}
 							/>
 						) : null,
 					)}
@@ -157,6 +193,42 @@ function ListLogView({ logData }: ListLogViewProps): JSX.Element {
 				>
 					Copy JSON
 				</Button>
+
+				{isLogsExplorerPage && (
+					<>
+						<Button
+							size="small"
+							type="text"
+							onClick={handleShowContext}
+							style={{ color: grey[1] }}
+							icon={<MonitorOutlined />}
+						>
+							Show in Context
+						</Button>
+						<Button
+							size="small"
+							type="text"
+							onClick={onLogCopy}
+							style={{ color: grey[1] }}
+							icon={<LinkOutlined />}
+						>
+							Copy Link
+						</Button>
+					</>
+				)}
+
+				{activeContextLog && (
+					<LogsExplorerContext
+						log={activeContextLog}
+						onClose={handleClearActiveContextLog}
+					/>
+				)}
+				<LogDetail
+					log={activeLog}
+					onClose={onClearActiveLog}
+					onAddToQuery={onAddToQuery}
+					onClickActionItem={onAddToQuery}
+				/>
 			</Row>
 		</Container>
 	);

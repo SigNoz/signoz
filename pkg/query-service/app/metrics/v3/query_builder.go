@@ -37,16 +37,26 @@ var aggregateOperatorToSQLFunc = map[v3.AggregateOperator]string{
 	v3.AggregateOperatorRateAvg: "avg",
 	v3.AggregateOperatorRateMax: "max",
 	v3.AggregateOperatorRateMin: "min",
+	v3.AggregateOperatorSumRate: "sum",
+	v3.AggregateOperatorAvgRate: "avg",
+	v3.AggregateOperatorMaxRate: "max",
+	v3.AggregateOperatorMinRate: "min",
 }
 
 // See https://github.com/SigNoz/signoz/issues/2151#issuecomment-1467249056
-var rateWithoutNegative = `if (runningDifference(value) < 0 OR runningDifference(ts) < 0, nan, runningDifference(value)/runningDifference(ts))`
+var rateWithoutNegative = `if(runningDifference(ts) <= 0, nan, if(runningDifference(value) < 0, (value) / runningDifference(ts), runningDifference(value) / runningDifference(ts))) `
 
 // buildMetricsTimeSeriesFilterQuery builds the sub-query to be used for filtering
 // timeseries based on search criteria
-func buildMetricsTimeSeriesFilterQuery(fs *v3.FilterSet, groupTags []v3.AttributeKey, metricName string, aggregateOperator v3.AggregateOperator) (string, error) {
+func buildMetricsTimeSeriesFilterQuery(fs *v3.FilterSet, groupTags []v3.AttributeKey, mq *v3.BuilderQuery) (string, error) {
+	metricName := mq.AggregateAttribute.Key
+	aggregateOperator := mq.AggregateOperator
 	var conditions []string
-	conditions = append(conditions, fmt.Sprintf("metric_name = %s", utils.ClickHouseFormattedValue(metricName)))
+	if mq.Temporality == v3.Delta {
+		conditions = append(conditions, fmt.Sprintf("metric_name = %s AND temporality = '%s' ", utils.ClickHouseFormattedValue(metricName), v3.Delta))
+	} else {
+		conditions = append(conditions, fmt.Sprintf("metric_name = %s AND temporality IN ['%s', '%s']", utils.ClickHouseFormattedValue(metricName), v3.Cumulative, v3.Unspecified))
+	}
 
 	if fs != nil && len(fs.Items) != 0 {
 		for _, item := range fs.Items {
@@ -117,7 +127,7 @@ func buildMetricsTimeSeriesFilterQuery(fs *v3.FilterSet, groupTags []v3.Attribut
 		}
 	}
 
-	filterSubQuery := fmt.Sprintf("SELECT %s fingerprint FROM %s.%s WHERE %s", selectLabels, constants.SIGNOZ_METRIC_DBNAME, constants.SIGNOZ_TIMESERIES_TABLENAME, queryString)
+	filterSubQuery := fmt.Sprintf("SELECT %s fingerprint FROM %s.%s WHERE %s", selectLabels, constants.SIGNOZ_METRIC_DBNAME, constants.SIGNOZ_TIMESERIES_LOCAL_TABLENAME, queryString)
 
 	return filterSubQuery, nil
 }
@@ -153,7 +163,7 @@ func buildMetricQuery(start, end, step int64, mq *v3.BuilderQuery, tableName str
 		}
 	}
 
-	filterSubQuery, err := buildMetricsTimeSeriesFilterQuery(mq.Filters, metricQueryGroupBy, mq.AggregateAttribute.Key, mq.AggregateOperator)
+	filterSubQuery, err := buildMetricsTimeSeriesFilterQuery(mq.Filters, metricQueryGroupBy, mq)
 	if err != nil {
 		return "", err
 	}
@@ -166,7 +176,7 @@ func buildMetricQuery(start, end, step int64, mq *v3.BuilderQuery, tableName str
 			" toStartOfInterval(toDateTime(intDiv(timestamp_ms, 1000)), INTERVAL %d SECOND) as ts," +
 			" %s as value" +
 			" FROM " + constants.SIGNOZ_METRIC_DBNAME + "." + constants.SIGNOZ_SAMPLES_TABLENAME +
-			" GLOBAL INNER JOIN" +
+			" INNER JOIN" +
 			" (%s) as filtered_time_series" +
 			" USING fingerprint" +
 			" WHERE " + samplesTableTimeFilter +
@@ -189,6 +199,7 @@ func buildMetricQuery(start, end, step int64, mq *v3.BuilderQuery, tableName str
 
 	groupBy := groupByAttributeKeyTags(metricQueryGroupBy...)
 	groupTags := groupSelectAttributeKeyTags(metricQueryGroupBy...)
+	groupSets := groupingSetsByAttributeKeyTags(metricQueryGroupBy...)
 	orderBy := orderByAttributeKeyTags(mq.OrderBy, metricQueryGroupBy)
 
 	if len(orderBy) != 0 {
@@ -212,7 +223,7 @@ func buildMetricQuery(start, end, step int64, mq *v3.BuilderQuery, tableName str
 
 		query = fmt.Sprintf(query, "labels as fullLabels,", subQuery)
 		return query, nil
-	case v3.AggregateOperatorSumRate:
+	case v3.AggregateOperatorSumRate, v3.AggregateOperatorAvgRate, v3.AggregateOperatorMaxRate, v3.AggregateOperatorMinRate:
 		rateGroupBy := "fingerprint, " + groupBy
 		rateGroupTags := "fingerprint, " + groupTags
 		rateOrderBy := "fingerprint, " + orderBy
@@ -222,7 +233,7 @@ func buildMetricQuery(start, end, step int64, mq *v3.BuilderQuery, tableName str
 		) // labels will be same so any should be fine
 		query := `SELECT %s ts, ` + rateWithoutNegative + `as value FROM(%s) WHERE isNaN(value) = 0`
 		query = fmt.Sprintf(query, groupTags, subQuery)
-		query = fmt.Sprintf(`SELECT %s ts, sum(value) as value FROM (%s) GROUP BY %s ORDER BY %s ts`, groupTags, query, groupBy, orderBy)
+		query = fmt.Sprintf(`SELECT %s ts, %s(value) as value FROM (%s) GROUP BY %s ORDER BY %s ts`, groupTags, aggregateOperatorToSQLFunc[mq.AggregateOperator], query, groupSets, orderBy)
 		return query, nil
 	case
 		v3.AggregateOperatorRateSum,
@@ -230,7 +241,7 @@ func buildMetricQuery(start, end, step int64, mq *v3.BuilderQuery, tableName str
 		v3.AggregateOperatorRateAvg,
 		v3.AggregateOperatorRateMin:
 		op := fmt.Sprintf("%s(value)", aggregateOperatorToSQLFunc[mq.AggregateOperator])
-		subQuery := fmt.Sprintf(queryTmpl, groupTags, step, op, filterSubQuery, groupBy, orderBy)
+		subQuery := fmt.Sprintf(queryTmpl, groupTags, step, op, filterSubQuery, groupSets, orderBy)
 		query := `SELECT %s ts, ` + rateWithoutNegative + `as value FROM(%s) WHERE isNaN(value) = 0`
 		query = fmt.Sprintf(query, groupTags, subQuery)
 		return query, nil
@@ -245,7 +256,7 @@ func buildMetricQuery(start, end, step int64, mq *v3.BuilderQuery, tableName str
 		v3.AggregateOperatorP95,
 		v3.AggregateOperatorP99:
 		op := fmt.Sprintf("quantile(%v)(value)", aggregateOperatorToPercentile[mq.AggregateOperator])
-		query := fmt.Sprintf(queryTmpl, groupTags, step, op, filterSubQuery, groupBy, orderBy)
+		query := fmt.Sprintf(queryTmpl, groupTags, step, op, filterSubQuery, groupSets, orderBy)
 		return query, nil
 	case v3.AggregateOperatorHistQuant50, v3.AggregateOperatorHistQuant75, v3.AggregateOperatorHistQuant90, v3.AggregateOperatorHistQuant95, v3.AggregateOperatorHistQuant99:
 		rateGroupBy := "fingerprint, " + groupBy
@@ -257,22 +268,22 @@ func buildMetricQuery(start, end, step int64, mq *v3.BuilderQuery, tableName str
 		) // labels will be same so any should be fine
 		query := `SELECT %s ts, ` + rateWithoutNegative + ` as value FROM(%s) WHERE isNaN(value) = 0`
 		query = fmt.Sprintf(query, groupTags, subQuery)
-		query = fmt.Sprintf(`SELECT %s ts, sum(value) as value FROM (%s) GROUP BY %s HAVING isNaN(value) = 0 ORDER BY %s ts`, groupTags, query, groupBy, orderBy)
+		query = fmt.Sprintf(`SELECT %s ts, sum(value) as value FROM (%s) GROUP BY %s HAVING isNaN(value) = 0 ORDER BY %s ts`, groupTags, query, groupSets, orderBy)
 		value := aggregateOperatorToPercentile[mq.AggregateOperator]
 
 		query = fmt.Sprintf(`SELECT %s ts, histogramQuantile(arrayMap(x -> toFloat64(x), groupArray(le)), groupArray(value), %.3f) as value FROM (%s) GROUP BY %s ORDER BY %s ts`, groupTagsWithoutLe, value, query, groupByWithoutLe, orderWithoutLe)
 		return query, nil
 	case v3.AggregateOperatorAvg, v3.AggregateOperatorSum, v3.AggregateOperatorMin, v3.AggregateOperatorMax:
 		op := fmt.Sprintf("%s(value)", aggregateOperatorToSQLFunc[mq.AggregateOperator])
-		query := fmt.Sprintf(queryTmpl, groupTags, step, op, filterSubQuery, groupBy, orderBy)
+		query := fmt.Sprintf(queryTmpl, groupTags, step, op, filterSubQuery, groupSets, orderBy)
 		return query, nil
 	case v3.AggregateOperatorCount:
 		op := "toFloat64(count(*))"
-		query := fmt.Sprintf(queryTmpl, groupTags, step, op, filterSubQuery, groupBy, orderBy)
+		query := fmt.Sprintf(queryTmpl, groupTags, step, op, filterSubQuery, groupSets, orderBy)
 		return query, nil
 	case v3.AggregateOperatorCountDistinct:
 		op := "toFloat64(count(distinct(value)))"
-		query := fmt.Sprintf(queryTmpl, groupTags, step, op, filterSubQuery, groupBy, orderBy)
+		query := fmt.Sprintf(queryTmpl, groupTags, step, op, filterSubQuery, groupSets, orderBy)
 		return query, nil
 	case v3.AggregateOperatorNoOp:
 		queryTmpl :=
@@ -280,7 +291,7 @@ func buildMetricQuery(start, end, step int64, mq *v3.BuilderQuery, tableName str
 				" toStartOfInterval(toDateTime(intDiv(timestamp_ms, 1000)), INTERVAL %d SECOND) as ts," +
 				" any(value) as value" +
 				" FROM " + constants.SIGNOZ_METRIC_DBNAME + "." + constants.SIGNOZ_SAMPLES_TABLENAME +
-				" GLOBAL INNER JOIN" +
+				" INNER JOIN" +
 				" (%s) as filtered_time_series" +
 				" USING fingerprint" +
 				" WHERE " + samplesTableTimeFilter +
@@ -291,6 +302,13 @@ func buildMetricQuery(start, end, step int64, mq *v3.BuilderQuery, tableName str
 	default:
 		return "", fmt.Errorf("unsupported aggregate operator")
 	}
+}
+
+// groupingSets returns a string of comma separated tags for group by clause
+// `ts` is always added to the group by clause
+func groupingSets(tags ...string) string {
+	withTs := append(tags, "ts")
+	return fmt.Sprintf(`GROUPING SETS ( (%s), (%s) )`, strings.Join(withTs, ", "), strings.Join(tags, ", "))
 }
 
 // groupBy returns a string of comma separated tags for group by clause
@@ -307,6 +325,14 @@ func groupSelect(tags ...string) string {
 		groupTags += ", "
 	}
 	return groupTags
+}
+
+func groupingSetsByAttributeKeyTags(tags ...v3.AttributeKey) string {
+	groupTags := []string{}
+	for _, tag := range tags {
+		groupTags = append(groupTags, tag.Key)
+	}
+	return groupingSets(groupTags...)
 }
 
 func groupByAttributeKeyTags(tags ...v3.AttributeKey) string {
@@ -342,6 +368,7 @@ func orderBy(items []v3.OrderBy, tags []string) string {
 			orderBy = append(orderBy, fmt.Sprintf("%s ASC", tag))
 		}
 	}
+
 	return strings.Join(orderBy, ",")
 }
 
@@ -376,15 +403,15 @@ func reduceQuery(query string, reduceTo v3.ReduceToOperator, aggregateOperator v
 	// chart with just the query value. For the quer
 	switch reduceTo {
 	case v3.ReduceToOperatorLast:
-		query = fmt.Sprintf("SELECT anyLast(value) as value, any(ts) as ts %s FROM (%s) %s", selectLabels, query, groupBy)
+		query = fmt.Sprintf("SELECT anyLastIf(value, toUnixTimestamp(ts) != 0) as value, anyIf(ts, toUnixTimestamp(ts) != 0) AS timestamp %s FROM (%s) %s", selectLabels, query, groupBy)
 	case v3.ReduceToOperatorSum:
-		query = fmt.Sprintf("SELECT sum(value) as value, any(ts) as ts %s FROM (%s) %s", selectLabels, query, groupBy)
+		query = fmt.Sprintf("SELECT sumIf(value, toUnixTimestamp(ts) != 0) as value, anyIf(ts, toUnixTimestamp(ts) != 0) AS timestamp %s FROM (%s) %s", selectLabels, query, groupBy)
 	case v3.ReduceToOperatorAvg:
-		query = fmt.Sprintf("SELECT avg(value) as value, any(ts) as ts %s FROM (%s) %s", selectLabels, query, groupBy)
+		query = fmt.Sprintf("SELECT avgIf(value, toUnixTimestamp(ts) != 0) as value, anyIf(ts, toUnixTimestamp(ts) != 0) AS timestamp %s FROM (%s) %s", selectLabels, query, groupBy)
 	case v3.ReduceToOperatorMax:
-		query = fmt.Sprintf("SELECT max(value) as value, any(ts) as ts %s FROM (%s) %s", selectLabels, query, groupBy)
+		query = fmt.Sprintf("SELECT maxIf(value, toUnixTimestamp(ts) != 0) as value, anyIf(ts, toUnixTimestamp(ts) != 0) AS timestamp %s FROM (%s) %s", selectLabels, query, groupBy)
 	case v3.ReduceToOperatorMin:
-		query = fmt.Sprintf("SELECT min(value) as value, any(ts) as ts %s FROM (%s) %s", selectLabels, query, groupBy)
+		query = fmt.Sprintf("SELECT minIf(value, toUnixTimestamp(ts) != 0) as value, anyIf(ts, toUnixTimestamp(ts) != 0) AS timestamp %s FROM (%s) %s", selectLabels, query, groupBy)
 	default:
 		return "", fmt.Errorf("unsupported reduce operator")
 	}
@@ -392,7 +419,21 @@ func reduceQuery(query string, reduceTo v3.ReduceToOperator, aggregateOperator v
 }
 
 func PrepareMetricQuery(start, end int64, queryType v3.QueryType, panelType v3.PanelType, mq *v3.BuilderQuery) (string, error) {
-	query, err := buildMetricQuery(start, end, mq.StepInterval, mq, constants.SIGNOZ_TIMESERIES_TABLENAME)
+	var query string
+	var err error
+	if mq.Temporality == v3.Delta {
+		if panelType == v3.PanelTypeTable {
+			query, err = buildDeltaMetricQueryForTable(start, end, mq.StepInterval, mq, constants.SIGNOZ_TIMESERIES_TABLENAME)
+		} else {
+			query, err = buildDeltaMetricQuery(start, end, mq.StepInterval, mq, constants.SIGNOZ_TIMESERIES_TABLENAME)
+		}
+	} else {
+		if panelType == v3.PanelTypeTable {
+			query, err = buildMetricQueryForTable(start, end, mq.StepInterval, mq, constants.SIGNOZ_TIMESERIES_TABLENAME)
+		} else {
+			query, err = buildMetricQuery(start, end, mq.StepInterval, mq, constants.SIGNOZ_TIMESERIES_TABLENAME)
+		}
+	}
 	if err != nil {
 		return "", err
 	}

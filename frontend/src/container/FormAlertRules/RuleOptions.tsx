@@ -140,12 +140,14 @@ function RuleOptions({
 				{queryCategory === EQueryType.PROM
 					? renderPromRuleOptions()
 					: renderThresholdRuleOpts()}
-				<InputNumber
-					addonBefore={t('field_threshold')}
-					value={alertDef?.condition?.target}
-					onChange={onChange}
-					type="number"
-				/>
+				<Form.Item name={['condition', 'target']}>
+					<InputNumber
+						addonBefore={t('field_threshold')}
+						value={alertDef?.condition?.target}
+						onChange={onChange}
+						type="number"
+					/>
+				</Form.Item>
 			</FormContainer>
 		</>
 	);

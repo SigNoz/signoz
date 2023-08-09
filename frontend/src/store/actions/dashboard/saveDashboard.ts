@@ -1,8 +1,10 @@
+import { notification } from 'antd';
 import updateDashboardApi from 'api/dashboard/update';
 import { AxiosError } from 'axios';
-import { COMPOSITE_QUERY } from 'constants/queryBuilderQueryNames';
+import { PANEL_TYPES } from 'constants/queryBuilder';
+import { queryParamNamesMap } from 'constants/queryBuilderQueryNames';
 import ROUTES from 'constants/routes';
-import { ITEMS } from 'container/NewDashboard/ComponentsSlider/menuItems';
+import { updateStepInterval } from 'hooks/queryBuilder/useStepInterval';
 import history from 'lib/history';
 import { Layout } from 'react-grid-layout';
 import { generatePath } from 'react-router-dom';
@@ -86,10 +88,15 @@ export const SaveDashboard = ({
 			};
 			const allLayout = getAllLayout();
 			const params = new URLSearchParams(window.location.search);
-			const compositeQuery = params.get(COMPOSITE_QUERY);
+			const compositeQuery = params.get(queryParamNamesMap.compositeQuery);
+			const { maxTime, minTime } = store.getState().globalTime;
 			const query = compositeQuery
-				? JSON.parse(compositeQuery)
-				: selectedWidget.query;
+				? updateStepInterval(
+						JSON.parse(decodeURIComponent(compositeQuery)),
+						maxTime,
+						minTime,
+				  )
+				: updateStepInterval(selectedWidget.query, maxTime, minTime);
 
 			const response = await updateDashboardApi({
 				data: {
@@ -129,10 +136,16 @@ export const SaveDashboard = ({
 				});
 				history.push(generatePath(ROUTES.DASHBOARD, { dashboardId }));
 			} else {
+				const error = 'Something went wrong';
+
+				notification.error({
+					message: response.error || error,
+				});
+
 				dispatch({
 					type: 'SAVE_SETTING_TO_PANEL_ERROR',
 					payload: {
-						errorMessage: response.error || 'Something went wrong',
+						errorMessage: response.error || error,
 					},
 				});
 			}
@@ -157,5 +170,5 @@ export interface SaveDashboardProps {
 	widgetId: Widgets['id'];
 	dashboardId: string;
 	yAxisUnit: Widgets['yAxisUnit'];
-	graphType: ITEMS;
+	graphType: PANEL_TYPES;
 }

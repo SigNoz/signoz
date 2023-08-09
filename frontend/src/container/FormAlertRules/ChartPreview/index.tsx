@@ -1,9 +1,8 @@
 import { InfoCircleOutlined } from '@ant-design/icons';
-import { StaticLineProps } from 'components/Graph';
+import { StaticLineProps } from 'components/Graph/types';
 import Spinner from 'components/Spinner';
-import { PANEL_TYPES } from 'constants/queryBuilder';
-import GridGraphComponent from 'container/GridGraphComponent';
-import { GRAPH_TYPES } from 'container/NewDashboard/ComponentsSlider';
+import { initialQueriesMap, PANEL_TYPES } from 'constants/queryBuilder';
+import GridPanelSwitch from 'container/GridPanelSwitch';
 import { timePreferenceType } from 'container/NewWidget/RightContainer/timeItems';
 import { Time } from 'container/TopNav/DateTimeSelection/config';
 import { useGetQueryRange } from 'hooks/queryBuilder/useGetQueryRange';
@@ -17,8 +16,8 @@ import { ChartContainer, FailedMessageContainer } from './styles';
 
 export interface ChartPreviewProps {
 	name: string;
-	query: Query | undefined;
-	graphType?: GRAPH_TYPES;
+	query: Query | null;
+	graphType?: PANEL_TYPES;
 	selectedTime?: timePreferenceType;
 	selectedInterval?: Time;
 	headline?: JSX.Element;
@@ -74,15 +73,7 @@ function ChartPreview({
 
 	const queryResponse = useGetQueryRange(
 		{
-			query: query || {
-				queryType: EQueryType.QUERY_BUILDER,
-				promql: [],
-				builder: {
-					queryFormulas: [],
-					queryData: [],
-				},
-				clickhouse_sql: [],
-			},
+			query: query || initialQueriesMap.metrics,
 			globalSelectedInterval: selectedInterval,
 			graphType,
 			selectedTime,
@@ -121,13 +112,15 @@ function ChartPreview({
 				<Spinner size="large" tip="Loading..." height="70vh" />
 			)}
 			{chartDataSet && !queryResponse.isError && (
-				<GridGraphComponent
+				<GridPanelSwitch
+					panelType={graphType}
 					title={name}
 					data={chartDataSet}
 					isStacked
-					GRAPH_TYPES={graphType || PANEL_TYPES.TIME_SERIES}
 					name={name || 'Chart Preview'}
 					staticLine={staticLine}
+					panelData={queryResponse.data?.payload.data.newResult.data.result || []}
+					query={query || initialQueriesMap.metrics}
 				/>
 			)}
 		</ChartContainer>
