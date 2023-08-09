@@ -8,7 +8,7 @@ import styled from 'styled-components';
 export const Button = styled(ButtonComponent)`
 	&&& {
 		width: min-content;
-		margin: 0.5rem;
+		align-self: flex-end;
 	}
 `;
 
@@ -33,7 +33,7 @@ export const SaveAndCancelContainer = styled.div`
 
 export const SaveButton = styled(ButtonComponent)`
 	&&& {
-		margin: 0.5rem;
+		margin: 0 0.5rem;
 		display: flex;
 		align-items: center;
 	}
