@@ -19,7 +19,6 @@ import { v4 as uuid } from 'uuid';
 import { GraphTitle } from '../constant';
 import { getWidgetQueryBuilder } from '../MetricsApplication.factory';
 import { Card, GraphContainer, Row } from '../styles';
-import { menuList } from './config';
 import { Button } from './styles';
 import { IServiceName } from './types';
 import {
@@ -106,7 +105,7 @@ function DBCall(): JSX.Element {
 				<Card>
 					<GraphContainer>
 						<Graph
-							menuList={menuList}
+							menuList={[]}
 							name="database_call_rps"
 							widget={databaseCallsRPSWidget}
 							yAxisUnit="reqps"
@@ -140,7 +139,7 @@ function DBCall(): JSX.Element {
 				<Card>
 					<GraphContainer>
 						<Graph
-							menuList={menuList}
+							menuList={[]}
 							name="database_call_avg_duration"
 							widget={databaseCallsAverageDurationWidget}
 							yAxisUnit="ms"
