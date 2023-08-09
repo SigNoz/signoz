@@ -144,7 +144,7 @@ function External(): JSX.Element {
 					<Card>
 						<GraphContainer>
 							<Graph
-								menuList={[]}
+								headerMenuList={[]}
 								name="external_call_error_percentage"
 								widget={externalCallErrorWidget}
 								yAxisUnit="%"
@@ -180,7 +180,7 @@ function External(): JSX.Element {
 					<Card>
 						<GraphContainer>
 							<Graph
-								menuList={[]}
+								headerMenuList={[]}
 								name="external_call_duration"
 								widget={externalCallDurationWidget}
 								yAxisUnit="ms"
@@ -229,7 +229,7 @@ function External(): JSX.Element {
 										'external_call_rps_by_address',
 									);
 								}}
-								menuList={[]}
+								headerMenuList={[]}
 							/>
 						</GraphContainer>
 					</Card>
@@ -265,7 +265,7 @@ function External(): JSX.Element {
 										'external_call_duration_by_address',
 									);
 								}}
-								menuList={[]}
+								headerMenuList={[]}
 							/>
 						</GraphContainer>
 					</Card>

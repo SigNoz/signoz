@@ -47,7 +47,7 @@ interface IWidgetHeaderProps {
 		SuccessResponse<MetricRangePayloadProps> | ErrorResponse
 	>;
 	errorMessage: string | undefined;
-	menuList: MenuItemKeys[];
+	headerMenuList: MenuItemKeys[];
 }
 
 function WidgetHeader({
@@ -59,7 +59,7 @@ function WidgetHeader({
 	parentHover,
 	queryResponse,
 	errorMessage,
-	menuList,
+	headerMenuList,
 }: IWidgetHeaderProps): JSX.Element {
 	const [localHover, setLocalHover] = useState(false);
 	const [isOpen, setIsOpen] = useState<boolean>(false);
@@ -127,21 +127,21 @@ function WidgetHeader({
 				key: MenuItemKeys.Edit,
 				icon: <EditFilled />,
 				label: MENUITEM_KEYS_VS_LABELS[MenuItemKeys.Edit],
-				isVisible: menuList.includes(MenuItemKeys.Edit),
+				isVisible: headerMenuList.includes(MenuItemKeys.Edit),
 				disabled: !editWidget,
 			},
 			{
 				key: MenuItemKeys.Clone,
 				icon: <CopyOutlined />,
 				label: MENUITEM_KEYS_VS_LABELS[MenuItemKeys.Clone],
-				isVisible: menuList.includes(MenuItemKeys.Clone),
+				isVisible: headerMenuList.includes(MenuItemKeys.Clone),
 				disabled: !editWidget,
 			},
 			{
 				key: MenuItemKeys.Delete,
 				icon: <DeleteOutlined />,
 				label: MENUITEM_KEYS_VS_LABELS[MenuItemKeys.Delete],
-				isVisible: menuList.includes(MenuItemKeys.Delete),
+				isVisible: headerMenuList.includes(MenuItemKeys.Delete),
 				disabled: !deleteWidget,
 				danger: true,
 			},
@@ -149,11 +149,11 @@ function WidgetHeader({
 				key: MenuItemKeys.CreateAlerts,
 				icon: <DeleteOutlined />,
 				label: MENUITEM_KEYS_VS_LABELS[MenuItemKeys.CreateAlerts],
-				isVisible: menuList.includes(MenuItemKeys.CreateAlerts),
+				isVisible: headerMenuList.includes(MenuItemKeys.CreateAlerts),
 				disabled: false,
 			},
 		],
-		[queryResponse.isLoading, menuList, editWidget, deleteWidget],
+		[queryResponse.isLoading, headerMenuList, editWidget, deleteWidget],
 	);
 
 	const updatedMenuList = useMemo(() => generateMenuList(actions), [actions]);

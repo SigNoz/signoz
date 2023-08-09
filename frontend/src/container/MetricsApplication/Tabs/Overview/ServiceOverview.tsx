@@ -75,7 +75,7 @@ function ServiceOverview({
 						widget={latencyWidget}
 						yAxisUnit="ns"
 						onClickHandler={handleGraphClick('Service')}
-						menuList={[]}
+						headerMenuList={[]}
 						isQueryEnabled={isQueryEnabled}
 					/>
 				</GraphContainer>

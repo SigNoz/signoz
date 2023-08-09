@@ -26,7 +26,7 @@ function GridCardGraph({
 	setLayout,
 	onDragSelect,
 	onClickHandler,
-	menuList,
+	headerMenuList,
 	isQueryEnabled,
 }: GridCardGraphProps): JSX.Element {
 	const { isAddWidget } = useSelector<AppState, DashboardReducer>(
@@ -119,7 +119,7 @@ function GridCardGraph({
 						yAxisUnit={yAxisUnit}
 						layout={layout}
 						setLayout={setLayout}
-						menuList={menuList}
+						headerMenuList={headerMenuList}
 					/>
 				)}
 			</span>
@@ -141,7 +141,7 @@ function GridCardGraph({
 						yAxisUnit={yAxisUnit}
 						layout={layout}
 						setLayout={setLayout}
-						menuList={menuList}
+						headerMenuList={headerMenuList}
 						onClickHandler={onClickHandler}
 					/>
 				) : (
@@ -164,7 +164,7 @@ function GridCardGraph({
 					name={name}
 					yAxisUnit={yAxisUnit}
 					onDragSelect={onDragSelect}
-					menuList={menuList}
+					headerMenuList={headerMenuList}
 					onClickHandler={onClickHandler}
 				/>
 			)}
