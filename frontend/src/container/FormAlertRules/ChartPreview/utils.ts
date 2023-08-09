@@ -1,22 +1,48 @@
-import { dataFormatConfig, throughputConfig } from './config';
+import {
+	BooleanFormats,
+	DataFormats,
+	DataRateFormats,
+	MiscellaneousFormats,
+	ThroughputFormats,
+	TimeFormats,
+} from 'container/NewWidget/RightContainer/types';
 
-const allConfig = {
-	...dataFormatConfig,
-	...throughputConfig,
-};
+import {
+	dataFormatConfig,
+	dataRateUnitsConfig,
+	miscUnitsConfig,
+	throughputConfig,
+	timeUnitsConfig,
+} from './config';
 
 export function covertIntoDataFormats({
 	value,
 	sourceUnit,
 	targetUnit,
 }: IUnit): number {
-	if (!sourceUnit || !targetUnit) {
-		return 0;
+	if (Object.values(BooleanFormats).includes(sourceUnit as BooleanFormats)) {
+		return 1;
 	}
 
-	const sourceValue = value * allConfig[sourceUnit];
+	const sourceMultiplier =
+		dataFormatConfig[sourceUnit as DataFormats] ||
+		timeUnitsConfig[sourceUnit as TimeFormats] ||
+		dataRateUnitsConfig[sourceUnit as DataRateFormats] ||
+		miscUnitsConfig[sourceUnit as MiscellaneousFormats] ||
+		throughputConfig[sourceUnit as ThroughputFormats];
 
-	return sourceValue / allConfig[targetUnit];
+	const targetDivider =
+		dataFormatConfig[targetUnit as DataFormats] ||
+		timeUnitsConfig[targetUnit as TimeFormats] ||
+		dataRateUnitsConfig[targetUnit as DataRateFormats] ||
+		miscUnitsConfig[targetUnit as MiscellaneousFormats] ||
+		throughputConfig[sourceUnit as ThroughputFormats];
+
+	const sourceValue = value * (sourceMultiplier || 0);
+
+	const result = sourceValue / (targetDivider || 0);
+
+	return Number.isNaN(result) ? 0 : result;
 }
 
 interface IUnit {
