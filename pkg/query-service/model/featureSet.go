@@ -13,8 +13,9 @@ const SmartTraceDetail = "SMART_TRACE_DETAIL"
 const CustomMetricsFunction = "CUSTOM_METRICS_FUNCTION"
 const DisableUpsell = "DISABLE_UPSELL"
 const OSS = "OSS"
-const QueryBuilderAlerts = "QUERY_BUILDER_ALERTS"
 const QueryBuilderPanels = "QUERY_BUILDER_PANELS"
+const QueryBuilderAlerts = "QUERY_BUILDER_ALERTS"
+const UseSpanMetrics = "USE_SPAN_METRICS"
 const AlertChannelSlack = "ALERT_CHANNEL_SLACK"
 const AlertChannelWebhook = "ALERT_CHANNEL_WEBHOOK"
 const AlertChannelPagerduty = "ALERT_CHANNEL_PAGERDUTY"
@@ -61,6 +62,13 @@ var BasicPlan = FeatureSet{
 		Active:     true,
 		Usage:      0,
 		UsageLimit: 5,
+		Route:      "",
+	},
+	Feature{
+		Name:       UseSpanMetrics,
+		Active:     false,
+		Usage:      0,
+		UsageLimit: -1,
 		Route:      "",
 	},
 	Feature{
