@@ -407,6 +407,17 @@ function FormAlertRules({
 		currentQuery.queryType === EQueryType.QUERY_BUILDER &&
 		alertType !== AlertTypes.METRICS_BASED_ALERT;
 
+	const onUnitChangeHandler = (): void => {
+		// reset target unit
+		setAlertDef((def) => ({
+			...def,
+			condition: {
+				...def.condition,
+				targetUnit: undefined,
+			},
+		}));
+	};
+
 	return (
 		<>
 			{Element}
@@ -425,7 +436,7 @@ function FormAlertRules({
 							renderChQueryChartPreview()}
 
 						<StepContainer>
-							<BuilderUnitsFilter />
+							<BuilderUnitsFilter onChange={onUnitChangeHandler} />
 						</StepContainer>
 
 						<QuerySection

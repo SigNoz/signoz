@@ -7,7 +7,10 @@ import {
 	Space,
 	Typography,
 } from 'antd';
-import { getCategorySelectOptionByName } from 'container/NewWidget/RightContainer/dataFormatCategories';
+import {
+	getCategoryByOptionId,
+	getCategorySelectOptionByName,
+} from 'container/NewWidget/RightContainer/dataFormatCategories';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useTranslation } from 'react-i18next';
 import {
@@ -150,6 +153,12 @@ function RuleOptions({
 		});
 	};
 
+	const selectedCategory = getCategoryByOptionId(currentQuery?.unit || '');
+
+	const categorySelectOptions = getCategorySelectOptionByName(
+		selectedCategory?.name,
+	);
+
 	return (
 		<>
 			<StepHeading>{t('alert_form_step2')}</StepHeading>
@@ -170,11 +179,10 @@ function RuleOptions({
 
 					<Form.Item>
 						<Select
-							options={getCategorySelectOptionByName('Data')}
+							options={categorySelectOptions}
 							placeholder={t('field_unit')}
 							value={alertDef.condition.targetUnit}
 							onChange={onChangeAlertUnit}
-							defaultValue={currentQuery?.unit}
 						/>
 					</Form.Item>
 				</Space>

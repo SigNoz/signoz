@@ -1,6 +1,9 @@
-import { DataFormats } from 'container/NewWidget/RightContainer/types';
+import {
+	DataFormats,
+	ThroughputFormats,
+} from 'container/NewWidget/RightContainer/types';
 
-export const unitsConfig: { [key in DataFormats]: number } = {
+export const dataFormatConfig: { [key in DataFormats]: number } = {
 	[DataFormats.BytesIEC]: 1,
 	[DataFormats.BytesSI]: 1,
 	[DataFormats.BitsIEC]: 1 / 8,
@@ -15,4 +18,19 @@ export const unitsConfig: { [key in DataFormats]: number } = {
 	[DataFormats.TeraBytes]: 1000 ** 4,
 	[DataFormats.PebiBytes]: 1024 ** 5,
 	[DataFormats.PetaBytes]: 1000 ** 5,
+};
+
+export const throughputConfig: {
+	[key in ThroughputFormats]: number;
+} = {
+	[ThroughputFormats.CountsPerSec]: 1,
+	[ThroughputFormats.OpsPerSec]: 1,
+	[ThroughputFormats.RequestsPerSec]: 1,
+	[ThroughputFormats.ReadsPerSec]: 1,
+	[ThroughputFormats.WritesPerSec]: 1,
+	[ThroughputFormats.IOOpsPerSec]: 1,
+	[ThroughputFormats.CountsPerMin]: 1 / 60,
+	[ThroughputFormats.OpsPerMin]: 1 / 60,
+	[ThroughputFormats.ReadsPerMin]: 1 / 60,
+	[ThroughputFormats.WritesPerMin]: 1 / 60,
 };

@@ -1,18 +1,26 @@
-import { DataFormats } from 'container/NewWidget/RightContainer/types';
+import { dataFormatConfig, throughputConfig } from './config';
 
-import { unitsConfig } from './config';
+const allConfig = {
+	...dataFormatConfig,
+	...throughputConfig,
+};
 
 export function covertIntoDataFormats({
 	value,
-	sourceUnit = DataFormats.BitsIEC,
-	targetUnit = DataFormats.BitsIEC,
+	sourceUnit,
+	targetUnit,
 }: IUnit): number {
-	const bytes = value * unitsConfig[sourceUnit as DataFormats];
-	return bytes / unitsConfig[targetUnit as DataFormats];
+	if (!sourceUnit || !targetUnit) {
+		return 0;
+	}
+
+	const sourceValue = value * allConfig[sourceUnit];
+
+	return sourceValue / allConfig[targetUnit];
 }
 
 interface IUnit {
 	value: number;
-	sourceUnit?: DataFormats | string;
-	targetUnit?: DataFormats | string;
+	sourceUnit?: string;
+	targetUnit?: string;
 }

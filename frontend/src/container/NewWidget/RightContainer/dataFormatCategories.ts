@@ -6,6 +6,7 @@ import {
 	AngularFormats,
 	AreaFormats,
 	BooleanFormats,
+	Category,
 	CategoryNames,
 	ConcentrationFormats,
 	CurrencyFormats,
@@ -442,7 +443,7 @@ export const flattenedCategories = flattenDeep(
 );
 
 export const getCategorySelectOptionByName = (
-	name: CategoryNames,
+	name?: CategoryNames | string,
 ): DefaultOptionType[] =>
 	dataTypeCategories
 		.find((category) => category.name === name)
@@ -450,3 +451,11 @@ export const getCategorySelectOptionByName = (
 			label: format.name,
 			value: format.id,
 		})) || [];
+
+export const getCategoryByOptionId = (id: string): Category | undefined =>
+	dataTypeCategories.find((category) =>
+		category.formats.some((format) => format.id === id),
+	);
+
+export const isCategoryName = (name: string): name is CategoryNames =>
+	dataTypeCategories.some((category) => category.name === name);
