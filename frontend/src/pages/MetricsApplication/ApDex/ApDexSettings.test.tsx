@@ -1,15 +1,7 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
-import { AxiosResponse } from 'axios';
 
+import { axiosResponseThresholdData } from './__mock__/axiosResponseMockThresholdData';
 import ApDexSettings from './ApDexSettings';
-
-const mockData = {
-	data: [
-		{
-			threshold: 0.5,
-		},
-	],
-} as AxiosResponse;
 
 jest.mock('hooks/apDex/useSetApDexSettings', () => ({
 	__esModule: true,
@@ -27,7 +19,7 @@ describe('ApDexSettings', () => {
 				servicename="mockServiceName"
 				handlePopOverClose={jest.fn()}
 				isLoading={false}
-				data={mockData}
+				data={axiosResponseThresholdData}
 				refetch={jest.fn()}
 			/>,
 		);
@@ -41,7 +33,7 @@ describe('ApDexSettings', () => {
 				servicename="mockServiceName"
 				handlePopOverClose={jest.fn()}
 				isLoading
-				data={mockData}
+				data={axiosResponseThresholdData}
 				refetch={jest.fn()}
 			/>,
 		);
@@ -56,7 +48,7 @@ describe('ApDexSettings', () => {
 				servicename="mockServiceName"
 				handlePopOverClose={mockHandlePopOverClose}
 				isLoading={false}
-				data={mockData}
+				data={axiosResponseThresholdData}
 				refetch={jest.fn()}
 			/>,
 		);
