@@ -20,7 +20,7 @@ export function QueryTable({
 				renderActionCell,
 				renderColumnCell,
 			}),
-		[query, queryTableData, renderColumnCell, renderActionCell],
+		[query, queryTableData, renderActionCell, renderColumnCell],
 	);
 
 	const tableColumns = modifyColumns ? modifyColumns(columns) : columns;
