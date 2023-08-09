@@ -6,7 +6,7 @@ import {
 	TimeFormats,
 } from 'container/NewWidget/RightContainer/types';
 
-export const dataFormatConfig: { [key in DataFormats]: number } = {
+export const dataFormatConfig: Record<DataFormats, number> = {
 	[DataFormats.BytesIEC]: 1,
 	[DataFormats.BytesSI]: 1,
 	[DataFormats.BitsIEC]: 1 / 8,
@@ -23,9 +23,7 @@ export const dataFormatConfig: { [key in DataFormats]: number } = {
 	[DataFormats.PetaBytes]: 1000 ** 5,
 };
 
-export const throughputConfig: {
-	[key in ThroughputFormats]: number;
-} = {
+export const throughputConfig: Record<ThroughputFormats, number> = {
 	[ThroughputFormats.CountsPerSec]: 1,
 	[ThroughputFormats.OpsPerSec]: 1,
 	[ThroughputFormats.RequestsPerSec]: 1,
@@ -38,27 +36,26 @@ export const throughputConfig: {
 	[ThroughputFormats.WritesPerMin]: 1 / 60,
 };
 
-export const timeUnitsConfig: { [key in TimeFormats]: number } = {
-	[TimeFormats.Hertz]: 1, // For simplicity; Hertz is typically 1/second
-	[TimeFormats.Nanoseconds]: 1e-9, // 1 second = 1 billion nanoseconds
-	[TimeFormats.Microseconds]: 1e-6, // 1 second = 1 million microseconds
-	[TimeFormats.Milliseconds]: 1e-3, // 1 second = 1000 milliseconds
-	[TimeFormats.Seconds]: 1, // Base unit for time
-	[TimeFormats.Minutes]: 60, // 1 minute = 60 seconds
-	[TimeFormats.Hours]: 3600, // 1 hour = 3600 seconds
-	[TimeFormats.Days]: 86400, // 1 day = 86400 seconds
-	// The following formats might require more specific handling since they could have various representations:
-	[TimeFormats.DurationMs]: 1e-3, // Assuming this represents a duration in milliseconds
-	[TimeFormats.DurationS]: 1, // Assuming this represents a duration in seconds
-	[TimeFormats.DurationHms]: 3600, // Assuming this represents a duration in hours-min-sec format (taking hour as base)
-	[TimeFormats.DurationDhms]: 86400, // Assuming this represents a duration in days-hour-min-sec format (taking day as base)
-	[TimeFormats.Timeticks]: 1e-3, // Assuming 1 timetick = 1 ms, may need adjustment based on actual meaning
-	[TimeFormats.ClockMs]: 1e-3, // Assuming clock time in milliseconds
-	[TimeFormats.ClockS]: 1, // Assuming clock time in seconds
+export const timeUnitsConfig: Record<TimeFormats, number> = {
+	[TimeFormats.Hertz]: 1,
+	[TimeFormats.Nanoseconds]: 1e-9,
+	[TimeFormats.Microseconds]: 1e-6,
+	[TimeFormats.Milliseconds]: 1e-3,
+	[TimeFormats.Seconds]: 1,
+	[TimeFormats.Minutes]: 60,
+	[TimeFormats.Hours]: 3600,
+	[TimeFormats.Days]: 86400,
+	[TimeFormats.DurationMs]: 1e-3,
+	[TimeFormats.DurationS]: 1,
+	[TimeFormats.DurationHms]: 3600,
+	[TimeFormats.DurationDhms]: 86400,
+	[TimeFormats.Timeticks]: 1e-3,
+	[TimeFormats.ClockMs]: 1e-3,
+	[TimeFormats.ClockS]: 1,
 };
 
-export const dataRateUnitsConfig: { [key in DataRateFormats]: number } = {
-	[DataRateFormats.PacketsPerSec]: 1, // Keeping it 1 for simplicity as PacketsPerSec does not specify data size.
+export const dataRateUnitsConfig: Record<DataRateFormats, number> = {
+	[DataRateFormats.PacketsPerSec]: 1,
 	[DataRateFormats.BytesPerSecIEC]: dataFormatConfig[DataFormats.BytesIEC],
 	[DataRateFormats.BytesPerSecSI]: dataFormatConfig[DataFormats.BytesSI],
 	[DataRateFormats.BitsPerSecIEC]: dataFormatConfig[DataFormats.BitsIEC],
@@ -85,19 +82,17 @@ export const dataRateUnitsConfig: { [key in DataRateFormats]: number } = {
 	[DataRateFormats.PetaBitsPerSec]: dataFormatConfig[DataFormats.PetaBytes] * 8,
 };
 
-export const miscUnitsConfig: {
-	[key in MiscellaneousFormats]: number | null;
-} = {
+export const miscUnitsConfig: Record<MiscellaneousFormats, number> = {
 	[MiscellaneousFormats.None]: 1,
-	[MiscellaneousFormats.String]: null, // Cannot be directly converted
-	[MiscellaneousFormats.Short]: 1, // Assuming it's a representation and doesn't affect value
-	[MiscellaneousFormats.Percent]: 0.01, // 1 percent = 0.01 in fraction form
-	[MiscellaneousFormats.PercentUnit]: 1, // Assuming it's just a representation, like "50%"
-	[MiscellaneousFormats.Humidity]: 1, // Assuming it's a percentage representation
-	[MiscellaneousFormats.Decibel]: null, // Decibel conversion is logarithmic and might need a different formula
-	[MiscellaneousFormats.Hexadecimal0x]: null, // Hexadecimal requires specific conversion
-	[MiscellaneousFormats.Hexadecimal]: null, // Hexadecimal requires specific conversion
-	[MiscellaneousFormats.ScientificNotation]: null, // Requires specific conversion
-	[MiscellaneousFormats.LocaleFormat]: null, // Depends on locale settings
-	[MiscellaneousFormats.Pixels]: 1, // Assuming pixel count representation
+	[MiscellaneousFormats.String]: 1,
+	[MiscellaneousFormats.Short]: 1,
+	[MiscellaneousFormats.Percent]: 0.01,
+	[MiscellaneousFormats.PercentUnit]: 1,
+	[MiscellaneousFormats.Humidity]: 1,
+	[MiscellaneousFormats.Decibel]: 1,
+	[MiscellaneousFormats.Hexadecimal0x]: 1,
+	[MiscellaneousFormats.Hexadecimal]: 1,
+	[MiscellaneousFormats.ScientificNotation]: 1,
+	[MiscellaneousFormats.LocaleFormat]: 1,
+	[MiscellaneousFormats.Pixels]: 1,
 };
