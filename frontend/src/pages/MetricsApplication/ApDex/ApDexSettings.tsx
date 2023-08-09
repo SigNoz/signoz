@@ -9,6 +9,7 @@ import { useNotifications } from 'hooks/useNotifications';
 import { useState } from 'react';
 import { ApDexPayloadProps } from 'types/api/metrics/getApDex';
 
+import { APPLICATION_SETTINGS } from '../constants';
 import {
 	AppDexThresholdContainer,
 	Button,
@@ -55,7 +56,7 @@ function ApDexSettings({
 
 	return (
 		<Card
-			title="Application Settings"
+			title={APPLICATION_SETTINGS}
 			extra={<CloseOutlined width={10} height={10} onClick={handlePopOverClose} />}
 			actions={[
 				<SaveAndCancelContainer key="SaveAndCancelContainer">
