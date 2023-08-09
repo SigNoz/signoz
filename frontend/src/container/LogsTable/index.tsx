@@ -5,6 +5,7 @@ import RawLogView from 'components/Logs/RawLogView';
 import LogsTableView from 'components/Logs/TableView';
 import Spinner from 'components/Spinner';
 import { contentStyle } from 'container/Trace/Search/config';
+import { useActiveLog } from 'hooks/logs/useActiveLog';
 import useFontFaceObserver from 'hooks/useFontObserver';
 import { memo, useCallback, useMemo } from 'react';
 import { useSelector } from 'react-redux';
@@ -25,6 +26,8 @@ type LogsTableProps = {
 
 function LogsTable(props: LogsTableProps): JSX.Element {
 	const { viewMode, linesPerRow } = props;
+
+	const { onSetActiveLog } = useActiveLog();
 
 	useFontFaceObserver(
 		[
@@ -72,7 +75,12 @@ function LogsTable(props: LogsTableProps): JSX.Element {
 	const renderContent = useMemo(() => {
 		if (viewMode === 'table') {
 			return (
-				<LogsTableView logs={logs} fields={selected} linesPerRow={linesPerRow} />
+				<LogsTableView
+					onClickExpand={onSetActiveLog}
+					logs={logs}
+					fields={selected}
+					linesPerRow={linesPerRow}
+				/>
 			);
 		}
 
@@ -85,7 +93,7 @@ function LogsTable(props: LogsTableProps): JSX.Element {
 				/>
 			</Card>
 		);
-	}, [getItemContent, linesPerRow, logs, selected, viewMode]);
+	}, [getItemContent, linesPerRow, logs, onSetActiveLog, selected, viewMode]);
 
 	if (isLoading) {
 		return <Spinner height={20} tip="Getting Logs" />;

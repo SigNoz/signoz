@@ -5,12 +5,13 @@ import { changeHistoryColumns } from '../../PipelineListsView/config';
 import { HistoryTableWrapper } from '../../styles';
 import { historyPagination } from '../config';
 
-function ChangeHistory({ piplineData }: ChangeHistoryProps): JSX.Element {
+function ChangeHistory({ pipelineData }: ChangeHistoryProps): JSX.Element {
 	return (
 		<HistoryTableWrapper>
 			<Table
 				columns={changeHistoryColumns}
-				dataSource={piplineData?.history ?? []}
+				dataSource={pipelineData?.history ?? []}
+				rowKey="id"
 				pagination={historyPagination}
 			/>
 		</HistoryTableWrapper>
@@ -18,7 +19,7 @@ function ChangeHistory({ piplineData }: ChangeHistoryProps): JSX.Element {
 }
 
 interface ChangeHistoryProps {
-	piplineData: Pipeline;
+	pipelineData: Pipeline;
 }
 
 export default ChangeHistory;
