@@ -28,14 +28,13 @@ export type RowData = {
 	[key: string]: string | number;
 };
 
-type DynamicColumn = {
+export type DynamicColumn = {
 	query: IBuilderQuery | IBuilderFormula;
 	field: string;
 	dataIndex: string;
 	title: string;
 	data: (string | number)[];
 	type: 'field' | 'operator' | 'formula';
-	// sortable: boolean;
 };
 
 type DynamicColumns = DynamicColumn[];
@@ -91,36 +90,12 @@ const getQueryByName = <T extends keyof QueryBuilderData>(
 	return currentQuery as T extends 'queryData' ? IBuilderQuery : IBuilderFormula;
 };
 
-const addListLabels = (
+const addLabels = (
 	query: IBuilderQuery | IBuilderFormula,
-	label: ListItemKey,
-	dynamicColumns: DynamicColumns,
-): void => {
-	if (isValueExist('dataIndex', label, dynamicColumns)) return;
-
-	const fieldObj: DynamicColumn = {
-		query,
-		field: 'label',
-		dataIndex: label as string,
-		title: label as string,
-		data: [],
-		type: 'field',
-		// sortable: isNumber,
-	};
-
-	dynamicColumns.push(fieldObj);
-};
-
-const addSeriaLabels = (
 	label: string,
 	dynamicColumns: DynamicColumns,
-	query: IBuilderQuery | IBuilderFormula,
 ): void => {
 	if (isValueExist('dataIndex', label, dynamicColumns)) return;
-
-	// const labelValue = labels[label];
-
-	// const isNumber = !Number.isNaN(parseFloat(String(labelValue)));
 
 	const fieldObj: DynamicColumn = {
 		query,
@@ -129,7 +104,6 @@ const addSeriaLabels = (
 		title: label,
 		data: [],
 		type: 'field',
-		// sortable: isNumber,
 	};
 
 	dynamicColumns.push(fieldObj);
@@ -155,7 +129,6 @@ const addOperatorFormulaColumns = (
 			title: customLabel || formulaLabel,
 			data: [],
 			type: 'formula',
-			// sortable: isNumber,
 		};
 
 		dynamicColumns.push(formulaColumn);
@@ -181,7 +154,6 @@ const addOperatorFormulaColumns = (
 		title: customLabel || operatorLabel,
 		data: [],
 		type: 'operator',
-		// sortable: isNumber,
 	};
 
 	dynamicColumns.push(operatorColumn);
@@ -224,7 +196,7 @@ const getDynamicColumns: GetDynamicColumns = (queryTableData, query) => {
 		if (list) {
 			list.forEach((listItem) => {
 				Object.keys(listItem.data).forEach((label) => {
-					addListLabels(currentStagedQuery, label as ListItemKey, dynamicColumns);
+					addLabels(currentStagedQuery, label, dynamicColumns);
 				});
 			});
 		}
@@ -245,7 +217,7 @@ const getDynamicColumns: GetDynamicColumns = (queryTableData, query) => {
 				Object.keys(seria.labels).forEach((label) => {
 					if (label === currentQuery?.queryName) return;
 
-					addSeriaLabels(label as string, dynamicColumns, currentStagedQuery);
+					addLabels(currentStagedQuery, label, dynamicColumns);
 				});
 			});
 		}
@@ -486,10 +458,6 @@ const generateTableColumns = (
 			title: item.title,
 			width: QUERY_TABLE_CONFIG.width,
 			render: renderColumnCell && renderColumnCell[item.dataIndex],
-			// sorter: item.sortable
-			// 	? (a: RowData, b: RowData): number =>
-			// 			(a[item.key] as number) - (b[item.key] as number)
-			// 	: false,
 		};
 
 		return [...acc, column];
@@ -504,10 +472,14 @@ export const createTableColumnsFromQuery: CreateTableDataFromQuery = ({
 	renderActionCell,
 	renderColumnCell,
 }) => {
-	const dynamicColumns = getDynamicColumns(queryTableData, query);
+	const sortedQueryTableData = queryTableData.sort((a, b) =>
+		a.queryName < b.queryName ? -1 : 1,
+	);
+
+	const dynamicColumns = getDynamicColumns(sortedQueryTableData, query);
 
 	const { filledDynamicColumns, rowsLength } = fillColumnsData(
-		queryTableData,
+		sortedQueryTableData,
 		dynamicColumns,
 	);
 
