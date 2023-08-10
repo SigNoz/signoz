@@ -105,7 +105,6 @@ function DBCall(): JSX.Element {
 				<Card>
 					<GraphContainer>
 						<Graph
-							headerMenuList={[]}
 							name="database_call_rps"
 							widget={databaseCallsRPSWidget}
 							yAxisUnit="reqps"
@@ -139,7 +138,6 @@ function DBCall(): JSX.Element {
 				<Card>
 					<GraphContainer>
 						<Graph
-							headerMenuList={[]}
 							name="database_call_avg_duration"
 							widget={databaseCallsAverageDurationWidget}
 							yAxisUnit="ms"

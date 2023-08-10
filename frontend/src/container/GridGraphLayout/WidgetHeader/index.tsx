@@ -47,7 +47,7 @@ interface IWidgetHeaderProps {
 		SuccessResponse<MetricRangePayloadProps> | ErrorResponse
 	>;
 	errorMessage: string | undefined;
-	headerMenuList: MenuItemKeys[];
+	headerMenuList?: MenuItemKeys[];
 }
 
 function WidgetHeader({
@@ -120,28 +120,28 @@ function WidgetHeader({
 				key: MenuItemKeys.View,
 				icon: <FullscreenOutlined />,
 				label: MENUITEM_KEYS_VS_LABELS[MenuItemKeys.View],
-				isVisible: true,
+				isVisible: headerMenuList?.includes(MenuItemKeys.View) || false,
 				disabled: queryResponse.isLoading,
 			},
 			{
 				key: MenuItemKeys.Edit,
 				icon: <EditFilled />,
 				label: MENUITEM_KEYS_VS_LABELS[MenuItemKeys.Edit],
-				isVisible: headerMenuList.includes(MenuItemKeys.Edit),
+				isVisible: headerMenuList?.includes(MenuItemKeys.Edit) || false,
 				disabled: !editWidget,
 			},
 			{
 				key: MenuItemKeys.Clone,
 				icon: <CopyOutlined />,
 				label: MENUITEM_KEYS_VS_LABELS[MenuItemKeys.Clone],
-				isVisible: headerMenuList.includes(MenuItemKeys.Clone),
+				isVisible: headerMenuList?.includes(MenuItemKeys.Clone) || false,
 				disabled: !editWidget,
 			},
 			{
 				key: MenuItemKeys.Delete,
 				icon: <DeleteOutlined />,
 				label: MENUITEM_KEYS_VS_LABELS[MenuItemKeys.Delete],
-				isVisible: headerMenuList.includes(MenuItemKeys.Delete),
+				isVisible: headerMenuList?.includes(MenuItemKeys.Delete) || false,
 				disabled: !deleteWidget,
 				danger: true,
 			},
@@ -149,7 +149,7 @@ function WidgetHeader({
 				key: MenuItemKeys.CreateAlerts,
 				icon: <DeleteOutlined />,
 				label: MENUITEM_KEYS_VS_LABELS[MenuItemKeys.CreateAlerts],
-				isVisible: headerMenuList.includes(MenuItemKeys.CreateAlerts),
+				isVisible: headerMenuList?.includes(MenuItemKeys.CreateAlerts) || false,
 				disabled: false,
 			},
 		],
@@ -211,6 +211,7 @@ function WidgetHeader({
 WidgetHeader.defaultProps = {
 	onDelete: undefined,
 	onClone: undefined,
+	headerMenuList: [MenuItemKeys.View],
 };
 
 export default WidgetHeader;

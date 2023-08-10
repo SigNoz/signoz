@@ -39,7 +39,6 @@ function TopLevelOperation({
 							onClickHandler={handleGraphClick(opName)}
 							yAxisUnit={yAxisUnit}
 							onDragSelect={onDragSelect}
-							headerMenuList={[]}
 						/>
 					)}
 				</GraphContainer>

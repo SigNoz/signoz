@@ -15,6 +15,7 @@ import { GlobalReducer } from 'types/reducer/globalTime';
 import { getSelectedDashboardVariable } from 'utils/dashboard/selectedDashboard';
 
 import EmptyWidget from '../EmptyWidget';
+import { MenuItemKeys } from '../WidgetHeader/contants';
 import { GridCardGraphProps } from './types';
 import WidgetGraphComponent from './WidgetGraphComponent';
 
@@ -26,7 +27,7 @@ function GridCardGraph({
 	setLayout,
 	onDragSelect,
 	onClickHandler,
-	headerMenuList,
+	headerMenuList = [MenuItemKeys.View],
 	isQueryEnabled,
 }: GridCardGraphProps): JSX.Element {
 	const { isAddWidget } = useSelector<AppState, DashboardReducer>(
@@ -178,6 +179,7 @@ GridCardGraph.defaultProps = {
 	onDragSelect: undefined,
 	onClickHandler: undefined,
 	isQueryEnabled: true,
+	headerMenuList: [MenuItemKeys.View],
 };
 
 export default memo(GridCardGraph);

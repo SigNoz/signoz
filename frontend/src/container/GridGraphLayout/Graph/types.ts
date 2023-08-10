@@ -50,7 +50,7 @@ export interface GridCardGraphProps {
 	setLayout?: Dispatch<SetStateAction<LayoutProps[]>>;
 	onDragSelect?: (start: number, end: number) => void;
 	onClickHandler?: GraphOnClickHandler;
-	headerMenuList: WidgetGraphComponentProps['headerMenuList'];
+	headerMenuList?: WidgetGraphComponentProps['headerMenuList'];
 	isQueryEnabled: boolean;
 }
 
