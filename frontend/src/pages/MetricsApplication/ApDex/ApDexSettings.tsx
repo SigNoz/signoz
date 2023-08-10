@@ -79,7 +79,7 @@ function ApDexSettings({
 		>
 			<AppDexThresholdContainer>
 				<Typography>
-					AppDex Threshold{' '}
+					Apdex threshold (in seconds){' '}
 					<Typography.Link>
 						<QuestionCircleOutlined />
 					</Typography.Link>
