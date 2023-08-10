@@ -98,7 +98,7 @@ func getClickhouseColumnName(key v3.AttributeKey) string {
 	if string(key.Type) == string(v3.AttributeKeyTypeTag) {
 		prefix = constants.Attributes[:len(constants.Attributes)-1]
 	}
-	clickhouseColumn = fmt.Sprintf("%s_%s_%s", strings.ToLower(prefix), key.Key, key.DataType)
+	clickhouseColumn = fmt.Sprintf("%s_%s_%s", strings.ToLower(prefix), key.DataType, key.Key)
 	return clickhouseColumn
 }
 

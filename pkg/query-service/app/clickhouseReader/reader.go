@@ -3444,7 +3444,7 @@ func isSelectedField(tableStatement string, field model.LogField, isStatic bool)
 	// in case of attributes and resources, if there is a materialized column present then it is selected
 	// TODO: handle partial change complete eg:- index is removed but materialized column is still present
 	prefix := field.Type[:len(field.Type)-1]
-	name := fmt.Sprintf("%s_%s_%s", strings.ToLower(prefix), field.Name, strings.ToLower(field.DataType))
+	name := fmt.Sprintf("%s_%s_%s", strings.ToLower(prefix), strings.ToLower(field.DataType), field.Name)
 	return strings.Contains(tableStatement, fmt.Sprintf("`%s`", name))
 }
 
@@ -3457,7 +3457,7 @@ func (r *ClickHouseReader) UpdateLogField(ctx context.Context, field *model.Upda
 
 	prefix := field.Type[:len(field.Type)-1]
 	// columns name is <type>_<name>_<datatype>
-	colname := fmt.Sprintf("%s_%s_%s", strings.ToLower(prefix), field.Name, strings.ToLower(field.DataType))
+	colname := fmt.Sprintf("%s_%s_%s", strings.ToLower(prefix), strings.ToLower(field.DataType), field.Name)
 
 	// if a field is selected it means that the field needs to be indexed
 	if field.Selected {

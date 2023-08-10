@@ -309,7 +309,7 @@ func replaceFieldInToken(queryToken string, selectedFieldsLookup map[string]mode
 			if field.Type != constants.Static {
 				prefix := field.Type[:len(field.Type)-1]
 				// columns name is <type>_<name>_<datatype>
-				sqlColName = fmt.Sprintf("%s_%s_%s", strings.ToLower(prefix), sqlColName, strings.ToLower(field.DataType))
+				sqlColName = fmt.Sprintf("%s_%s_%s", strings.ToLower(prefix), strings.ToLower(field.DataType), sqlColName)
 			}
 		}
 	}
