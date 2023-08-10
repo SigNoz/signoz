@@ -456,10 +456,6 @@ func (b *BuilderQuery) Validate() error {
 		return fmt.Errorf("query name is required")
 	}
 
-	if b.StepInterval <= 0 {
-		return fmt.Errorf("step interval must be greater than 0")
-	}
-
 	// if expression is same as query name, it's a simple builder query and not a formula
 	// formula involves more than one data source, aggregate operator, etc.
 	if b.QueryName == b.Expression {
