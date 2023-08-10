@@ -23,6 +23,7 @@ export interface ChartPreviewProps {
 	headline?: JSX.Element;
 	threshold?: number | undefined;
 	userQueryKey?: string;
+	isStepIntervalSelected?: boolean;
 }
 
 function ChartPreview({
@@ -34,6 +35,7 @@ function ChartPreview({
 	headline,
 	threshold,
 	userQueryKey,
+	isStepIntervalSelected = false,
 }: ChartPreviewProps): JSX.Element | null {
 	const { t } = useTranslation('alerts');
 	const staticLine: StaticLineProps | undefined =
@@ -77,6 +79,7 @@ function ChartPreview({
 			globalSelectedInterval: selectedInterval,
 			graphType,
 			selectedTime,
+			isStepIntervalSelected,
 		},
 		{
 			queryKey: [
@@ -134,6 +137,7 @@ ChartPreview.defaultProps = {
 	headline: undefined,
 	threshold: undefined,
 	userQueryKey: '',
+	isStepIntervalSelected: false,
 };
 
 export default ChartPreview;
