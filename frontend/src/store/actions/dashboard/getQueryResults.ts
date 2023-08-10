@@ -26,7 +26,6 @@ export async function GetMetricQueryRange({
 	tableParams,
 	variables = {},
 	params = {},
-	isStepIntervalSelected = false,
 }: GetQueryResultsProps): Promise<SuccessResponse<MetricRangePayloadProps>> {
 	const queryData = query[query.queryType];
 	let legendMap: Record<string, string> = {};
@@ -95,8 +94,8 @@ export async function GetMetricQueryRange({
 		start: parseInt(start, 10) * 1e3,
 		end: parseInt(end, 10) * 1e3,
 		step: getStep({
-			start: isStepIntervalSelected ? start : store.getState().globalTime.minTime,
-			end: isStepIntervalSelected ? end: store.getState().globalTime.maxTime,
+			start: params.allowSelectedIntervalForStepGen ? start : store.getState().globalTime.minTime,
+			end: params.allowSelectedIntervalForStepGen ? end: store.getState().globalTime.maxTime,
 			inputFormat: 'ns',
 		}),
 		variables,
@@ -148,5 +147,4 @@ export interface GetQueryResultsProps {
 		pagination?: Pagination;
 		selectColumns?: any;
 	};
-	isStepIntervalSelected?: boolean;
 }

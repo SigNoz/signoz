@@ -12,8 +12,6 @@ import { useShareBuilderUrl } from 'hooks/queryBuilder/useShareBuilderUrl';
 import { updateStepInterval } from 'hooks/queryBuilder/useStepInterval';
 import { MESSAGE, useIsFeatureDisabled } from 'hooks/useFeatureFlag';
 import { useNotifications } from 'hooks/useNotifications';
-import getStartEndRangeTime from 'lib/getStartEndRangeTime';
-import getStep from 'lib/getStep';
 import history from 'lib/history';
 import { mapQueryDataFromApi } from 'lib/newQueryBuilder/queryBuilderMappers/mapQueryDataFromApi';
 import { mapQueryDataToApi } from 'lib/newQueryBuilder/queryBuilderMappers/mapQueryDataToApi';
@@ -44,7 +42,7 @@ import {
 	StyledLeftContainer,
 } from './styles';
 import UserGuide from './UserGuide';
-import { toChartInterval } from './utils';
+import { getUpdatedStepInterval, toChartInterval } from './utils';
 
 function FormAlertRules({
 	alertType,
@@ -356,16 +354,9 @@ function FormAlertRules({
 	const updatedStagedQuery = useMemo((): Query | null => {
 		const newQuery: Query | null = stagedQuery;
 		if (newQuery) {
-			const { start, end } = getStartEndRangeTime({
-				type: 'GLOBAL_TIME',
-				interval: toChartInterval(alertDef.evalWindow),
-			});
-			const step = getStep({
-				start,
-				end,
-				inputFormat: 'ns',
-			});
-			newQuery.builder.queryData[0].stepInterval = step;
+			newQuery.builder.queryData[0].stepInterval = getUpdatedStepInterval(
+				alertDef.evalWindow,
+			);
 		}
 		return newQuery;
 	}, [alertDef.evalWindow, stagedQuery]);
@@ -382,7 +373,7 @@ function FormAlertRules({
 			threshold={alertDef.condition?.target}
 			query={updatedStagedQuery}
 			selectedInterval={toChartInterval(alertDef.evalWindow)}
-			isStepIntervalSelected
+			allowSelectedIntervalForStepGen
 		/>
 	);
 
