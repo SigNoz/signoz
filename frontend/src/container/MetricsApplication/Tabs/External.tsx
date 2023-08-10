@@ -156,9 +156,6 @@ function External(): JSX.Element {
 										'external_call_error_percentage',
 									);
 								}}
-								allowClone={false}
-								allowDelete={false}
-								allowEdit={false}
 							/>
 						</GraphContainer>
 					</Card>
@@ -194,9 +191,6 @@ function External(): JSX.Element {
 										'external_call_duration',
 									);
 								}}
-								allowClone={false}
-								allowDelete={false}
-								allowEdit={false}
 							/>
 						</GraphContainer>
 					</Card>
@@ -233,9 +227,6 @@ function External(): JSX.Element {
 										'external_call_rps_by_address',
 									);
 								}}
-								allowClone={false}
-								allowDelete={false}
-								allowEdit={false}
 							/>
 						</GraphContainer>
 					</Card>
@@ -271,9 +262,6 @@ function External(): JSX.Element {
 										'external_call_duration_by_address',
 									);
 								}}
-								allowClone={false}
-								allowDelete={false}
-								allowEdit={false}
 							/>
 						</GraphContainer>
 					</Card>
