@@ -88,7 +88,6 @@ function ApDexSettings({
 					type="number"
 					value={thresholdValue}
 					onChange={handleThreadholdChange}
-					max={1}
 					min={0}
 				/>
 			</AppDexThresholdContainer>

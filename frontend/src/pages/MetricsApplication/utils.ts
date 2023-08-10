@@ -27,7 +27,7 @@ export const onSaveApDexSettings = ({
 	handlePopOverClose,
 	servicename,
 }: OnSaveApDexSettingsProps) => (): void => {
-	if (thresholdValue > 0 && thresholdValue < 1 && refetchGetApDexSetting) {
+	if (refetchGetApDexSetting) {
 		mutateAsync({
 			servicename,
 			threshold: thresholdValue,
@@ -50,9 +50,5 @@ export const onSaveApDexSettings = ({
 			.finally(() => {
 				handlePopOverClose();
 			});
-	} else {
-		notifications.error({
-			message: 'Threshold value should be in between 0 and 1',
-		});
 	}
 };
