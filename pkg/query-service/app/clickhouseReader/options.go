@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/ClickHouse/clickhouse-go/v2"
+	"go.uber.org/zap"
 )
 
 type Encoding string
@@ -58,6 +59,9 @@ type namespaceConfig struct {
 	namespace               string
 	Enabled                 bool
 	Datasource              string
+	MaxIdleConns            int
+	MaxOpenConns            int
+	DialTimeout             time.Duration
 	TraceDB                 string
 	OperationsTable         string
 	IndexTable              string
@@ -88,8 +92,14 @@ type Connector func(cfg *namespaceConfig) (clickhouse.Conn, error)
 func defaultConnector(cfg *namespaceConfig) (clickhouse.Conn, error) {
 	ctx := context.Background()
 	dsnURL, err := url.Parse(cfg.Datasource)
+	if err != nil {
+		return nil, err
+	}
 	options := &clickhouse.Options{
-		Addr: []string{dsnURL.Host},
+		Addr:         []string{dsnURL.Host},
+		MaxOpenConns: cfg.MaxOpenConns,
+		MaxIdleConns: cfg.MaxIdleConns,
+		DialTimeout:  cfg.DialTimeout,
 	}
 	if dsnURL.Query().Get("username") != "" {
 		auth := clickhouse.Auth{
@@ -98,6 +108,7 @@ func defaultConnector(cfg *namespaceConfig) (clickhouse.Conn, error) {
 		}
 		options.Auth = auth
 	}
+	zap.S().Infof("Connecting to Clickhouse at %s, MaxIdleConns: %d, MaxOpenConns: %d, DialTimeout: %s", dsnURL.Host, options.MaxIdleConns, options.MaxOpenConns, options.DialTimeout)
 	db, err := clickhouse.Open(options)
 	if err != nil {
 		return nil, err
@@ -118,7 +129,14 @@ type Options struct {
 }
 
 // NewOptions creates a new Options struct.
-func NewOptions(datasource string, primaryNamespace string, otherNamespaces ...string) *Options {
+func NewOptions(
+	datasource string,
+	maxIdleConns int,
+	maxOpenConns int,
+	dialTimeout time.Duration,
+	primaryNamespace string,
+	otherNamespaces ...string,
+) *Options {
 
 	if datasource == "" {
 		datasource = defaultDatasource
@@ -129,6 +147,9 @@ func NewOptions(datasource string, primaryNamespace string, otherNamespaces ...s
 			namespace:               primaryNamespace,
 			Enabled:                 true,
 			Datasource:              datasource,
+			MaxIdleConns:            maxIdleConns,
+			MaxOpenConns:            maxOpenConns,
+			DialTimeout:             dialTimeout,
 			TraceDB:                 defaultTraceDB,
 			OperationsTable:         defaultOperationsTable,
 			IndexTable:              defaultIndexTable,
