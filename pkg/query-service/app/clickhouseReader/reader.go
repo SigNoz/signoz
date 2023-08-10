@@ -3417,17 +3417,18 @@ func (r *ClickHouseReader) GetLogFields(ctx context.Context) (*model.GetFieldsRe
 		return nil, &model.ApiError{Err: err, Typ: model.ErrorInternal}
 	}
 
-	extractSelectedAndInterestingFields(statements[0].Statement, constants.Attributes, &attributes, &response, false)
-	extractSelectedAndInterestingFields(statements[0].Statement, constants.Resources, &resources, &response, false)
-	extractSelectedAndInterestingFields(statements[0].Statement, constants.Static, &constants.StaticInterestingLogFields, &response, true)
+	extractSelectedAndInterestingFields(statements[0].Statement, constants.Attributes, &attributes, &response)
+	extractSelectedAndInterestingFields(statements[0].Statement, constants.Resources, &resources, &response)
+	extractSelectedAndInterestingFields(statements[0].Statement, constants.Static, &constants.StaticInterestingLogFields, &response)
 
 	return &response, nil
 }
 
-func extractSelectedAndInterestingFields(tableStatement string, fieldType string, fields *[]model.LogField, response *model.GetFieldsResponse, isStatic bool) {
+func extractSelectedAndInterestingFields(tableStatement string, fieldType string, fields *[]model.LogField, response *model.GetFieldsResponse) {
 	for _, field := range *fields {
 		field.Type = fieldType
-		if isSelectedField(tableStatement, field, isStatic) {
+		// all static fields are assumeed to be selected as we don't allow changing them
+		if fieldType == constants.Static || isSelectedField(tableStatement, field) {
 			response.Selected = append(response.Selected, field)
 		} else {
 			response.Interesting = append(response.Interesting, field)
@@ -3435,12 +3436,7 @@ func extractSelectedAndInterestingFields(tableStatement string, fieldType string
 	}
 }
 
-func isSelectedField(tableStatement string, field model.LogField, isStatic bool) bool {
-	// in case of static fields, if there is index present then it is selected
-	if isStatic {
-		return strings.Contains(tableStatement, fmt.Sprintf("INDEX %s_idx", field.Name))
-	}
-
+func isSelectedField(tableStatement string, field model.LogField) bool {
 	// in case of attributes and resources, if there is a materialized column present then it is selected
 	// TODO: handle partial change complete eg:- index is removed but materialized column is still present
 	prefix := field.Type[:len(field.Type)-1]
