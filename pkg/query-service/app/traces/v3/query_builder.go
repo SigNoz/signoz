@@ -153,6 +153,7 @@ func buildTracesFilterQuery(fs *v3.FilterSet, keys map[string]v3.AttributeKey) (
 			columnName := getColumnName(item.Key, keys)
 			var fmtVal string
 			key := enrichKeyWithMetadata(item.Key, keys)
+			item.Operator = v3.FilterOperator(strings.ToLower(strings.TrimSpace(string(item.Operator))))
 			if item.Operator != v3.FilterOperatorExists && item.Operator != v3.FilterOperatorNotExists {
 				var err error
 				val, err = utils.ValidateAndCastValue(val, key.DataType)
