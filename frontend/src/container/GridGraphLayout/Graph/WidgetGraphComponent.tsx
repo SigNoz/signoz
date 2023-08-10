@@ -53,9 +53,7 @@ function WidgetGraphComponent({
 	setLayout,
 	onDragSelect,
 	onClickHandler,
-	allowClone = true,
-	allowDelete = true,
-	allowEdit = true,
+	headerMenuList,
 }: WidgetGraphComponentProps): JSX.Element {
 	const [deleteModal, setDeleteModal] = useState(false);
 	const [modal, setModal] = useState<boolean>(false);
@@ -281,9 +279,7 @@ function WidgetGraphComponent({
 								onClone={onCloneHandler}
 								queryResponse={queryResponse}
 								errorMessage={errorMessage}
-								allowClone={allowClone}
-								allowDelete={allowDelete}
-								allowEdit={allowEdit}
+								headerMenuList={headerMenuList}
 							/>
 						</div>
 					)}
@@ -297,7 +293,7 @@ function WidgetGraphComponent({
 						yAxisUnit={yAxisUnit}
 						onClickHandler={onClickHandler}
 						onDragSelect={onDragSelect}
-						panelData={[]}
+						panelData={queryResponse.data?.payload?.data.newResult.data.result || []}
 						query={widget.query}
 						ref={lineChartRef}
 					/>
@@ -313,9 +309,6 @@ WidgetGraphComponent.defaultProps = {
 	setLayout: undefined,
 	onDragSelect: undefined,
 	onClickHandler: undefined,
-	allowDelete: true,
-	allowClone: true,
-	allowEdit: true,
 };
 
 const mapDispatchToProps = (

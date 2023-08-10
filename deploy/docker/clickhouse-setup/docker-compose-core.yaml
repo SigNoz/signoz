@@ -3,7 +3,7 @@ version: "2.4"
 services:
   clickhouse:
     image: clickhouse/clickhouse-server:22.8.8-alpine
-    container_name: clickhouse
+    container_name: signoz-clickhouse
     # ports:
     # - "9000:9000"
     # - "8123:8123"
@@ -20,13 +20,20 @@ services:
         max-file: "3"
     healthcheck:
       # "clickhouse", "client", "-u ${CLICKHOUSE_USER}", "--password ${CLICKHOUSE_PASSWORD}", "-q 'SELECT 1'"
-      test: ["CMD", "wget", "--spider", "-q", "localhost:8123/ping"]
+      test:
+        [
+          "CMD",
+          "wget",
+          "--spider",
+          "-q",
+          "localhost:8123/ping"
+        ]
       interval: 30s
       timeout: 5s
       retries: 3
 
   alertmanager:
-    container_name: alertmanager
+    container_name: signoz-alertmanager
     image: signoz/alertmanager:0.23.1
     volumes:
       - ./data/alertmanager:/data
@@ -40,9 +47,13 @@ services:
 
   # Notes for Maintainers/Contributors who will change Line Numbers of Frontend & Query-Section. Please Update Line Numbers in `./scripts/commentLinesForSetup.sh` & `./CONTRIBUTING.md`
   otel-collector:
-    container_name: otel-collector
-    image: signoz/signoz-otel-collector:0.79.4
-    command: ["--config=/etc/otel-collector-config.yaml", "--feature-gates=-pkg.translator.prometheus.NormalizeName"]
+    container_name: signoz-otel-collector
+    image: signoz/signoz-otel-collector:0.79.5
+    command:
+      [
+        "--config=/etc/otel-collector-config.yaml",
+        "--feature-gates=-pkg.translator.prometheus.NormalizeName"
+      ]
     # user: root # required for reading docker container logs
     volumes:
       - ./otel-collector-config.yaml:/etc/otel-collector-config.yaml
@@ -50,8 +61,8 @@ services:
       - OTEL_RESOURCE_ATTRIBUTES=host.name=signoz-host,os.type=linux
     ports:
       # - "1777:1777"     # pprof extension
-      - "4317:4317"     # OTLP gRPC receiver
-      - "4318:4318"     # OTLP HTTP receiver
+      - "4317:4317" # OTLP gRPC receiver
+      - "4318:4318" # OTLP HTTP receiver
       # - "8888:8888"     # OtelCollector internal metrics
       # - "8889:8889"     # signoz spanmetrics exposed by the agent
       # - "9411:9411"     # Zipkin port
@@ -66,9 +77,13 @@ services:
         condition: service_healthy
 
   otel-collector-metrics:
-    container_name: otel-collector-metrics
-    image: signoz/signoz-otel-collector:0.79.4
-    command: ["--config=/etc/otel-collector-metrics-config.yaml", "--feature-gates=-pkg.translator.prometheus.NormalizeName"]
+    container_name: signoz-otel-collector-metrics
+    image: signoz/signoz-otel-collector:0.79.5
+    command:
+      [
+        "--config=/etc/otel-collector-metrics-config.yaml",
+        "--feature-gates=-pkg.translator.prometheus.NormalizeName"
+      ]
     volumes:
       - ./otel-collector-metrics-config.yaml:/etc/otel-collector-metrics-config.yaml
     # ports:
@@ -81,6 +96,17 @@ services:
       clickhouse:
         condition: service_healthy
 
+  logspout:
+    image: "gliderlabs/logspout:v3.2.14"
+    container_name: signoz-logspout
+    volumes:
+      - /etc/hostname:/etc/host_hostname:ro
+      - /var/run/docker.sock:/var/run/docker.sock
+    command: syslog+tcp://otel-collector:2255
+    depends_on:
+      - otel-collector
+    restart: on-failure
+
   hotrod:
     image: jaegertracing/example-hotrod:1.30
     container_name: hotrod
@@ -88,7 +114,7 @@ services:
       options:
         max-size: 50m
         max-file: "3"
-    command: ["all"]
+    command: [ "all" ]
     environment:
       - JAEGER_ENDPOINT=http://otel-collector:14268/api/traces
 
