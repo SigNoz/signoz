@@ -309,9 +309,6 @@ WidgetGraphComponent.defaultProps = {
 	setLayout: undefined,
 	onDragSelect: undefined,
 	onClickHandler: undefined,
-	allowDelete: true,
-	allowClone: true,
-	allowEdit: true,
 };
 
 const mapDispatchToProps = (
