@@ -15,6 +15,7 @@ import { GlobalReducer } from 'types/reducer/globalTime';
 import { getSelectedDashboardVariable } from 'utils/dashboard/selectedDashboard';
 
 import EmptyWidget from '../EmptyWidget';
+import { MenuItemKeys } from '../WidgetHeader/contants';
 import { GridCardGraphProps } from './types';
 import WidgetGraphComponent from './WidgetGraphComponent';
 
@@ -26,9 +27,7 @@ function GridCardGraph({
 	setLayout,
 	onDragSelect,
 	onClickHandler,
-	allowDelete,
-	allowClone,
-	allowEdit,
+	headerMenuList = [MenuItemKeys.View],
 	isQueryEnabled,
 }: GridCardGraphProps): JSX.Element {
 	const { isAddWidget } = useSelector<AppState, DashboardReducer>(
@@ -121,9 +120,7 @@ function GridCardGraph({
 						yAxisUnit={yAxisUnit}
 						layout={layout}
 						setLayout={setLayout}
-						allowClone={allowClone}
-						allowDelete={allowDelete}
-						allowEdit={allowEdit}
+						headerMenuList={headerMenuList}
 					/>
 				)}
 			</span>
@@ -145,9 +142,7 @@ function GridCardGraph({
 						yAxisUnit={yAxisUnit}
 						layout={layout}
 						setLayout={setLayout}
-						allowClone={allowClone}
-						allowDelete={allowDelete}
-						allowEdit={allowEdit}
+						headerMenuList={headerMenuList}
 						onClickHandler={onClickHandler}
 					/>
 				) : (
@@ -170,9 +165,7 @@ function GridCardGraph({
 					name={name}
 					yAxisUnit={yAxisUnit}
 					onDragSelect={onDragSelect}
-					allowClone={allowClone}
-					allowDelete={allowDelete}
-					allowEdit={allowEdit}
+					headerMenuList={headerMenuList}
 					onClickHandler={onClickHandler}
 				/>
 			)}
@@ -185,10 +178,8 @@ function GridCardGraph({
 GridCardGraph.defaultProps = {
 	onDragSelect: undefined,
 	onClickHandler: undefined,
-	allowDelete: true,
-	allowClone: true,
-	allowEdit: true,
 	isQueryEnabled: true,
+	headerMenuList: [MenuItemKeys.View],
 };
 
 export default memo(GridCardGraph);
