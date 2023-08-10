@@ -21,20 +21,20 @@ export const getMetricsApplicationKey = (
 
 export const onSaveApDexSettings = ({
 	thresholdValue,
-	refetch,
+	refetchGetApDexSetting,
 	mutateAsync,
 	notifications,
 	handlePopOverClose,
 	servicename,
 }: OnSaveApDexSettingsProps) => (): void => {
-	if (thresholdValue > 0 && thresholdValue < 1 && refetch) {
+	if (thresholdValue > 0 && thresholdValue < 1 && refetchGetApDexSetting) {
 		mutateAsync({
 			servicename,
 			threshold: thresholdValue,
 			excludeStatusCode: '',
 		})
 			.then(() => {
-				refetch();
+				refetchGetApDexSetting();
 			})
 			.catch((err) => {
 				if (axios.isAxiosError(err)) {

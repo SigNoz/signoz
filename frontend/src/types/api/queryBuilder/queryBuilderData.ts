@@ -20,7 +20,7 @@ export interface TagFilterItem {
 	id: string;
 	key?: BaseAutocompleteData;
 	op: string;
-	value: string[] | string | number[] | number | boolean[] | boolean;
+	value: string[] | string | number | boolean;
 }
 
 export interface TagFilter {

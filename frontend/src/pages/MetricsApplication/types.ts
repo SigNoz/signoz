@@ -21,7 +21,7 @@ export interface OnSaveApDexSettingsProps {
 	thresholdValue: number;
 	servicename: string;
 	notifications: NotificationInstance;
-	refetch: (() => void) | undefined;
+	refetchGetApDexSetting: (() => void) | undefined;
 	mutateAsync: UseMutateAsyncFunction<
 		SetApDexPayloadProps,
 		Error,

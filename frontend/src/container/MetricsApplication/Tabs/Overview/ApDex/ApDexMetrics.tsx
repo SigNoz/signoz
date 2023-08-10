@@ -3,6 +3,7 @@ import Graph from 'container/GridGraphLayout/Graph';
 import { GraphTitle } from 'container/MetricsApplication/constant';
 import { getWidgetQueryBuilder } from 'container/MetricsApplication/MetricsApplication.factory';
 import { apDexMetricsQueryBuilderQueries } from 'container/MetricsApplication/MetricsPageQueries/OverviewQueries';
+import { useMemo } from 'react';
 import { useParams } from 'react-router-dom';
 import { EQueryType } from 'types/common/dashboard';
 import { v4 as uuid } from 'uuid';
@@ -21,24 +22,35 @@ function ApDexMetrics({
 }: ApDexMetricsProps): JSX.Element {
 	const { servicename } = useParams<IServiceName>();
 
-	const apDexMetricsWidget = getWidgetQueryBuilder({
-		query: {
-			queryType: EQueryType.QUERY_BUILDER,
-			promql: [],
-			builder: apDexMetricsQueryBuilderQueries({
-				servicename,
-				tagFilterItems,
-				topLevelOperationsRoute,
-				threashold: thresholdValue || 0,
-				delta: delta || false,
-				metricsBuckets: metricsBuckets || [],
+	const apDexMetricsWidget = useMemo(
+		() =>
+			getWidgetQueryBuilder({
+				query: {
+					queryType: EQueryType.QUERY_BUILDER,
+					promql: [],
+					builder: apDexMetricsQueryBuilderQueries({
+						servicename,
+						tagFilterItems,
+						topLevelOperationsRoute,
+						threashold: thresholdValue || 0,
+						delta: delta || false,
+						metricsBuckets: metricsBuckets || [],
+					}),
+					clickhouse_sql: [],
+					id: uuid(),
+				},
+				title: GraphTitle.APDEX,
+				panelTypes: PANEL_TYPES.TIME_SERIES,
 			}),
-			clickhouse_sql: [],
-			id: uuid(),
-		},
-		title: GraphTitle.APDEX,
-		panelTypes: PANEL_TYPES.TIME_SERIES,
-	});
+		[
+			delta,
+			metricsBuckets,
+			servicename,
+			tagFilterItems,
+			thresholdValue,
+			topLevelOperationsRoute,
+		],
+	);
 
 	const isQueryEnabled =
 		topLevelOperationsRoute.length > 0 &&

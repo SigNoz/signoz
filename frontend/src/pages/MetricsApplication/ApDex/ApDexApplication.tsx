@@ -10,7 +10,12 @@ import ApDexSettings from './ApDexSettings';
 
 function ApDexApplication(): JSX.Element {
 	const { servicename } = useParams<{ servicename: string }>();
-	const { data, isLoading, error, refetch } = useGetApDexSettings(servicename);
+	const {
+		data,
+		isLoading,
+		error,
+		refetch: refetchGetApDexSetting,
+	} = useGetApDexSettings(servicename);
 	const [isOpen, setIsOpen] = useState<boolean>(false);
 	useErrorNotification(error);
 
@@ -36,7 +41,7 @@ function ApDexApplication(): JSX.Element {
 					handlePopOverClose={handlePopOverClose}
 					isLoading={isLoading}
 					data={data}
-					refetch={refetch}
+					refetchGetApDexSetting={refetchGetApDexSetting}
 				/>
 			}
 		>

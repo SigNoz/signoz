@@ -21,21 +21,25 @@ function ApDexApplication({
 	);
 	useErrorNotification(error);
 
+	if (isLoading || isRefetching) {
+		return (
+			<Card>
+				<Spinner height="40vh" tip="Loading..." />
+			</Card>
+		);
+	}
+
 	return (
 		<Card>
-			{isLoading || isRefetching ? (
-				<Spinner height="40vh" tip="Loading..." />
-			) : (
-				<GraphContainer>
-					<ApDexDataSwitcher
-						handleGraphClick={handleGraphClick}
-						onDragSelect={onDragSelect}
-						topLevelOperationsRoute={topLevelOperationsRoute}
-						tagFilterItems={tagFilterItems}
-						thresholdValue={data?.data[0].threshold}
-					/>
-				</GraphContainer>
-			)}
+			<GraphContainer>
+				<ApDexDataSwitcher
+					handleGraphClick={handleGraphClick}
+					onDragSelect={onDragSelect}
+					topLevelOperationsRoute={topLevelOperationsRoute}
+					tagFilterItems={tagFilterItems}
+					thresholdValue={data?.data[0].threshold}
+				/>
+			</GraphContainer>
 		</Card>
 	);
 }

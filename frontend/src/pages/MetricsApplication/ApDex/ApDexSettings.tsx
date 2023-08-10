@@ -1,13 +1,11 @@
 /* eslint-disable react/jsx-no-comment-textnodes */
 import { CloseOutlined, QuestionCircleOutlined } from '@ant-design/icons';
 import { Card, Input } from 'antd';
-import { AxiosResponse } from 'axios';
 import Spinner from 'components/Spinner';
 import { themeColors } from 'constants/theme';
 import { useSetApDexSettings } from 'hooks/apDex/useSetApDexSettings';
 import { useNotifications } from 'hooks/useNotifications';
 import { useState } from 'react';
-import { ApDexPayloadProps } from 'types/api/metrics/getApDex';
 
 import { APPLICATION_SETTINGS } from '../constants';
 import {
@@ -18,13 +16,14 @@ import {
 	Typography,
 } from '../styles';
 import { onSaveApDexSettings } from '../utils';
+import { ApDexSettingsProps } from './types';
 
 function ApDexSettings({
 	servicename,
 	handlePopOverClose,
 	isLoading,
 	data,
-	refetch,
+	refetchGetApDexSetting,
 }: ApDexSettingsProps): JSX.Element {
 	const [thresholdValue, setThresholdValue] = useState(() => {
 		if (data) {
@@ -66,7 +65,7 @@ function ApDexSettings({
 							handlePopOverClose,
 							mutateAsync,
 							notifications,
-							refetch,
+							refetchGetApDexSetting,
 							servicename,
 							thresholdValue,
 						})}
@@ -104,18 +103,10 @@ function ApDexSettings({
 	);
 }
 
-interface ApDexSettingsProps {
-	servicename: string;
-	handlePopOverClose: () => void;
-	isLoading?: boolean;
-	data?: AxiosResponse<ApDexPayloadProps[]> | undefined;
-	refetch?: () => void;
-}
-
 ApDexSettings.defaultProps = {
 	isLoading: undefined,
 	data: undefined,
-	refetch: undefined,
+	refetchGetApDexSetting: undefined,
 };
 
 export default ApDexSettings;
