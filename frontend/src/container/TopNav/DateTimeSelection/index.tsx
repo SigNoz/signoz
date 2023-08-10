@@ -69,7 +69,7 @@ function DateTimeSelection({
 		false,
 	);
 
-	const { stagedQuery, initQueryBuilderData } = useQueryBuilder();
+	const { stagedQuery, currentQuery, initQueryBuilderData } = useQueryBuilder();
 
 	const { maxTime, minTime, selectedTime } = useSelector<
 		AppState,
@@ -251,6 +251,15 @@ function DateTimeSelection({
 		setRefreshButtonHidden(updatedTime === 'custom');
 
 		updateTimeInterval(updatedTime, [preStartTime, preEndTime]);
+
+		const { maxTime, minTime } = GetMinMax(updatedTime, [
+			preStartTime,
+			preEndTime,
+		]);
+
+		initQueryBuilderData(updateStepInterval(currentQuery, maxTime, minTime));
+
+		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [
 		location.pathname,
 		getTime,

@@ -529,7 +529,10 @@ export function QueryBuilderProvider({
 	useEffect(() => {
 		if (!compositeQueryParam) return;
 
-		if (stagedQuery && stagedQuery.id === compositeQueryParam.id) {
+		if (
+			(stagedQuery && stagedQuery.id === compositeQueryParam.id) ||
+			currentQuery.id === compositeQueryParam.id
+		) {
 			return;
 		}
 
@@ -541,13 +544,26 @@ export function QueryBuilderProvider({
 		if (!isValid) {
 			redirectWithQueryBuilderData(validData);
 		} else {
-			initQueryBuilderData(compositeQueryParam);
+			initQueryBuilderData({
+				...compositeQueryParam,
+				builder: {
+					...compositeQueryParam.builder,
+					queryData: compositeQueryParam.builder.queryData.map((data) => ({
+						...data,
+						stepInterval:
+							stagedQuery?.builder.queryData[0].stepInterval || data.stepInterval,
+					})),
+				},
+			});
 		}
 	}, [
 		initQueryBuilderData,
 		redirectWithQueryBuilderData,
 		compositeQueryParam,
 		stagedQuery,
+		currentQuery,
+		maxTime,
+		minTime,
 	]);
 
 	const query: Query = useMemo(
