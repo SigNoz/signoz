@@ -1,7 +1,8 @@
 /* eslint-disable react/jsx-no-comment-textnodes */
-import { CloseOutlined, QuestionCircleOutlined } from '@ant-design/icons';
+import { CloseOutlined } from '@ant-design/icons';
 import { Card, Input } from 'antd';
 import Spinner from 'components/Spinner';
+import TextToolTip from 'components/TextToolTip';
 import { themeColors } from 'constants/theme';
 import { useSetApDexSettings } from 'hooks/apDex/useSetApDexSettings';
 import { useNotifications } from 'hooks/useNotifications';
@@ -80,9 +81,12 @@ function ApDexSettings({
 			<AppDexThresholdContainer>
 				<Typography>
 					Apdex threshold (in seconds){' '}
-					<Typography.Link>
-						<QuestionCircleOutlined />
-					</Typography.Link>
+					<TextToolTip
+						text="Apdex is a way to measure your users' satisfaction with the response time of your web service. It's represented as a score from 0-1."
+						url="https://signoz.io/docs/userguide/metrics/#apdex?utm_source=product&utm_medium=frontend&utm_campaign=apdex"
+						useFilledIcon={false}
+						urlText="Learn more about Apdex."
+					/>
 				</Typography>
 				<Input
 					type="number"
