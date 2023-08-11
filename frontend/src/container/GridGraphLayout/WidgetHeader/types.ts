@@ -1,8 +1,4 @@
 import { ReactNode } from 'react';
-import { UseQueryResult } from 'react-query';
-import { ErrorResponse, SuccessResponse } from 'types/api';
-import { Widgets } from 'types/api/dashboard/getAll';
-import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
 
 import { MenuItemKeys } from './contants';
 
@@ -13,4 +9,8 @@ export interface MenuItem {
 	isVisible: boolean;
 	disabled: boolean;
 	danger?: boolean;
+}
+
+export interface DisplayThresholdProps {
+	threshold: number;
 }
