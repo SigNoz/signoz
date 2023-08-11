@@ -196,7 +196,6 @@ function Application(): JSX.Element {
 						handleGraphClick={handleGraphClick}
 						selectedTimeStamp={selectedTimeStamp}
 						selectedTraceTags={selectedTraceTags}
-						tagFilterItems={tagFilterItems}
 						topLevelOperationsRoute={topLevelOperationsRoute}
 						topLevelOperationsLoading={topLevelOperationsLoading}
 					/>
