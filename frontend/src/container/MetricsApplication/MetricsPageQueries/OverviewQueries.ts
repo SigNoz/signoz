@@ -67,7 +67,7 @@ export const latency = ({
 		},
 	];
 
-	if (isSpanMetricEnable) {
+	if (!isSpanMetricEnable) {
 		filterItem = [...filterItem, ...tagFilterItems];
 	} else {
 		filterItem = [...filterItem, ...metricFilterItems];
