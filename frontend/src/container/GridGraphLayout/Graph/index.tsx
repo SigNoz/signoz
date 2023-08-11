@@ -188,7 +188,7 @@ GridCardGraph.defaultProps = {
 	onClickHandler: undefined,
 	isQueryEnabled: true,
 	allowThreshold: false,
-	theadholdValue: undefined,
+	threshold: undefined,
 	headerMenuList: [MenuItemKeys.View],
 };
 

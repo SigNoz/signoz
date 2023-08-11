@@ -65,9 +65,6 @@ function ApDexMetrics({
 			onDragSelect={onDragSelect}
 			onClickHandler={handleGraphClick('ApDex')}
 			yAxisUnit=""
-			allowClone={false}
-			allowDelete={false}
-			allowEdit={false}
 			allowThreshold
 			threshold={thresholdValue}
 			isQueryEnabled={isQueryEnabled}

@@ -14,8 +14,12 @@ import ROUTES from 'constants/routes';
 import useComponentPermission from 'hooks/useComponentPermission';
 import history from 'lib/history';
 import { useCallback, useMemo, useState } from 'react';
+import { UseQueryResult } from 'react-query';
 import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
+import { ErrorResponse, SuccessResponse } from 'types/api';
+import { Widgets } from 'types/api/dashboard/getAll';
+import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
 import AppReducer from 'types/reducer/app';
 
 import {
@@ -47,8 +51,8 @@ interface IWidgetHeaderProps {
 		SuccessResponse<MetricRangePayloadProps> | ErrorResponse
 	>;
 	errorMessage: string | undefined;
-  allowThreshold?: boolean;
-  threshold?: number;
+	allowThreshold?: boolean;
+	threshold?: number;
 	headerMenuList?: MenuItemKeys[];
 }
 
