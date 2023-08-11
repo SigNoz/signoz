@@ -147,6 +147,7 @@ function LogsExplorerViews(): JSX.Element {
 	const listChartData = useGetExplorerQueryRange(
 		listChartQuery,
 		PANEL_TYPES.TIME_SERIES,
+		{ enabled: panelType === PANEL_TYPES.LIST },
 	);
 
 	const { data, isFetching, isError } = useGetExplorerQueryRange(
