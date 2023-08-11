@@ -35,7 +35,8 @@ function DBCall(): JSX.Element {
 
 	const tagFilterItems: TagFilterItem[] = useMemo(
 		() =>
-			handleNonInQueryRange(resourceAttributesToTagFilterItems(queries)) || [],
+			handleNonInQueryRange(resourceAttributesToTagFilterItems(queries, false)) ||
+			[],
 		[queries],
 	);
 

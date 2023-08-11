@@ -99,7 +99,15 @@ function Application(): JSX.Element {
 
 	const tagFilterItems = useMemo(
 		() =>
-			handleNonInQueryRange(resourceAttributesToTagFilterItems(queries)) || [],
+			handleNonInQueryRange(resourceAttributesToTagFilterItems(queries, false)) ||
+			[],
+		[queries],
+	);
+
+	const metricsTagFilterItems = useMemo(
+		() =>
+			handleNonInQueryRange(resourceAttributesToTagFilterItems(queries, true)) ||
+			[],
 		[queries],
 	);
 
@@ -190,6 +198,7 @@ function Application(): JSX.Element {
 						selectedTimeStamp={selectedTimeStamp}
 						selectedTraceTags={selectedTraceTags}
 						tagFilterItems={tagFilterItems}
+						metricFilterItems={metricsTagFilterItems}
 						topLevelOperationsRoute={topLevelOperationsRoute}
 					/>
 				</Col>

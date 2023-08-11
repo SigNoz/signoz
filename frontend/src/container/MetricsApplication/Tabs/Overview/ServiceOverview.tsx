@@ -24,6 +24,7 @@ function ServiceOverview({
 	selectedTimeStamp,
 	tagFilterItems,
 	topLevelOperationsRoute,
+	metricFilterItems,
 }: ServiceOverviewProps): JSX.Element {
 	const { servicename } = useParams<IServiceName>();
 
@@ -41,6 +42,7 @@ function ServiceOverview({
 						tagFilterItems,
 						isSpanMetricEnable,
 						topLevelOperationsRoute,
+						metricFilterItems,
 					}),
 					clickhouse_sql: [],
 					id: uuid(),
@@ -48,7 +50,13 @@ function ServiceOverview({
 				title: GraphTitle.LATENCY,
 				panelTypes: PANEL_TYPES.TIME_SERIES,
 			}),
-		[servicename, tagFilterItems, isSpanMetricEnable, topLevelOperationsRoute],
+		[
+			servicename,
+			tagFilterItems,
+			isSpanMetricEnable,
+			topLevelOperationsRoute,
+			metricFilterItems,
+		],
 	);
 
 	const isQueryEnabled = topLevelOperationsRoute.length > 0;
@@ -90,6 +98,7 @@ interface ServiceOverviewProps {
 	handleGraphClick: (type: string) => ClickHandlerType;
 	tagFilterItems: TagFilterItem[];
 	topLevelOperationsRoute: string[];
+	metricFilterItems: TagFilterItem[];
 }
 
 export default ServiceOverview;

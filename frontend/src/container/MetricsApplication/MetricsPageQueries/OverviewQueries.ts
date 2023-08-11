@@ -29,6 +29,7 @@ export const latency = ({
 	tagFilterItems,
 	isSpanMetricEnable = false,
 	topLevelOperationsRoute,
+	metricFilterItems,
 }: LatencyProps): QueryBuilderData => {
 	const newAutoCompleteData: BaseAutocompleteData = {
 		key: isSpanMetricEnable
@@ -41,7 +42,7 @@ export const latency = ({
 
 	const autocompleteData = Array(3).fill(newAutoCompleteData);
 
-	const filterItem: TagFilterItem[] = [
+	let filterItem: TagFilterItem[] = [
 		{
 			id: '',
 			key: {
@@ -64,8 +65,13 @@ export const latency = ({
 			op: OPERATORS.IN.toLowerCase(), // TODO: need to remove toLowerCase() this once backend is changed
 			value: [...topLevelOperationsRoute],
 		},
-		...tagFilterItems,
 	];
+
+	if (isSpanMetricEnable) {
+		filterItem = [...filterItem, ...tagFilterItems];
+	} else {
+		filterItem = [...filterItem, ...metricFilterItems];
+	}
 
 	const filterItems = Array(3).fill([...filterItem]);
 	const legends = LATENCY_AGGREGATEOPERATOR;

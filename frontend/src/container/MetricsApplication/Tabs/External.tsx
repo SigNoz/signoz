@@ -36,7 +36,8 @@ function External(): JSX.Element {
 
 	const tagFilterItems = useMemo(
 		() =>
-			handleNonInQueryRange(resourceAttributesToTagFilterItems(queries)) || [],
+			handleNonInQueryRange(resourceAttributesToTagFilterItems(queries, false)) ||
+			[],
 		[queries],
 	);
 
