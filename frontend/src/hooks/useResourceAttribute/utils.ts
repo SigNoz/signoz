@@ -64,9 +64,8 @@ export const convertRawQueriesToTraceSelectedTags = (
 /* Convert resource attributes to tagFilter items for queryBuilder */
 export const resourceAttributesToTagFilterItems = (
 	queries: IResourceAttribute[],
-	isTraceDataSource: boolean,
+	isTraceDataSource = false,
 ): TagFilterItem[] => {
-	console.log({ isTraceDataSource });
 	if (isTraceDataSource) {
 		return convertRawQueriesToTraceSelectedTags(queries).map((e) => ({
 			id: e.Key,
@@ -80,8 +79,6 @@ export const resourceAttributesToTagFilterItems = (
 			},
 		}));
 	}
-
-	console.log('asdasd');
 
 	return queries.map((res) => ({
 		id: `${res.id}`,
