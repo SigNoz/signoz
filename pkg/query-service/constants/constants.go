@@ -171,7 +171,8 @@ const (
 )
 
 var TimeoutExcludedRoutes = map[string]bool{
-	"/api/v1/logs/tail": true,
+	"/api/v1/logs/tail":     true,
+	"/api/v3/logs/livetail": true,
 }
 
 // alert related constants
