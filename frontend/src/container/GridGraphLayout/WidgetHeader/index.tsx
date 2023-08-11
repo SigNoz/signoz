@@ -13,7 +13,7 @@ import { queryParamNamesMap } from 'constants/queryBuilderQueryNames';
 import ROUTES from 'constants/routes';
 import useComponentPermission from 'hooks/useComponentPermission';
 import history from 'lib/history';
-import { useCallback, useMemo, useState } from 'react';
+import { ReactNode, useCallback, useMemo, useState } from 'react';
 import { UseQueryResult } from 'react-query';
 import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
@@ -41,7 +41,7 @@ import { MenuItem } from './types';
 import { generateMenuList, isTWidgetOptions } from './utils';
 
 interface IWidgetHeaderProps {
-	title: string;
+	title: ReactNode;
 	widget: Widgets;
 	onView: VoidFunction;
 	onDelete?: VoidFunction;
