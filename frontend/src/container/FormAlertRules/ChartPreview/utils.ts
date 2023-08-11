@@ -1,3 +1,4 @@
+import Big from 'big.js';
 import {
 	BooleanFormats,
 	DataFormats,
@@ -38,11 +39,11 @@ export function covertIntoDataFormats({
 		miscUnitsConfig[targetUnit as MiscellaneousFormats] ||
 		throughputConfig[sourceUnit as ThroughputFormats];
 
-	const sourceValue = value * (sourceMultiplier || 0);
+	const result = new Big(value)
+		.times(sourceMultiplier || 0)
+		.div(targetDivider || 0);
 
-	const result = sourceValue / (targetDivider || 0);
-
-	return Number.isNaN(result) ? 0 : result;
+	return Number.isNaN(result) ? 0 : Number(result);
 }
 
 interface IUnit {
