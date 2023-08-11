@@ -54,7 +54,6 @@ export interface LatencyProps {
 	tagFilterItems: TagFilterItem[];
 	isSpanMetricEnable?: boolean;
 	topLevelOperationsRoute: string[];
-	metricFilterItems: TagFilterItem[];
 }
 
 export interface TableRendererProps {

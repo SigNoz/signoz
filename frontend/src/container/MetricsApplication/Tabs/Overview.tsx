@@ -104,13 +104,6 @@ function Application(): JSX.Element {
 		[queries],
 	);
 
-	const metricsTagFilterItems = useMemo(
-		() =>
-			handleNonInQueryRange(resourceAttributesToTagFilterItems(queries, true)) ||
-			[],
-		[queries],
-	);
-
 	const topLevelOperationsRoute = useMemo(
 		() => (topLevelOperations ? topLevelOperations[servicename || ''] : []),
 		[servicename, topLevelOperations],
@@ -197,8 +190,6 @@ function Application(): JSX.Element {
 						handleGraphClick={handleGraphClick}
 						selectedTimeStamp={selectedTimeStamp}
 						selectedTraceTags={selectedTraceTags}
-						tagFilterItems={tagFilterItems}
-						metricFilterItems={metricsTagFilterItems}
 						topLevelOperationsRoute={topLevelOperationsRoute}
 					/>
 				</Col>

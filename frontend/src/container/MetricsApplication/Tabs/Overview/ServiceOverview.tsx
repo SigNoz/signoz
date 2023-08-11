@@ -6,30 +6,39 @@ import { getWidgetQueryBuilder } from 'container/MetricsApplication/MetricsAppli
 import { latency } from 'container/MetricsApplication/MetricsPageQueries/OverviewQueries';
 import { Card, GraphContainer } from 'container/MetricsApplication/styles';
 import useFeatureFlag from 'hooks/useFeatureFlag';
+import useResourceAttribute from 'hooks/useResourceAttribute';
+import { resourceAttributesToTagFilterItems } from 'hooks/useResourceAttribute/utils';
 import { useMemo } from 'react';
 import { useParams } from 'react-router-dom';
-import { TagFilterItem } from 'types/api/queryBuilder/queryBuilderData';
 import { EQueryType } from 'types/common/dashboard';
 import { v4 as uuid } from 'uuid';
 
 import { ClickHandlerType } from '../Overview';
 import { Button } from '../styles';
 import { IServiceName } from '../types';
-import { onViewTracePopupClick } from '../util';
+import { handleNonInQueryRange, onViewTracePopupClick } from '../util';
 
 function ServiceOverview({
 	onDragSelect,
 	handleGraphClick,
 	selectedTraceTags,
 	selectedTimeStamp,
-	tagFilterItems,
 	topLevelOperationsRoute,
-	metricFilterItems,
 }: ServiceOverviewProps): JSX.Element {
 	const { servicename } = useParams<IServiceName>();
 
 	const isSpanMetricEnable = useFeatureFlag(FeatureKeys.USE_SPAN_METRICS)
 		?.active;
+
+	const { queries } = useResourceAttribute();
+
+	const tagFilterItems = useMemo(
+		() =>
+			handleNonInQueryRange(
+				resourceAttributesToTagFilterItems(queries, !isSpanMetricEnable),
+			) || [],
+		[isSpanMetricEnable, queries],
+	);
 
 	const latencyWidget = useMemo(
 		() =>
@@ -42,7 +51,6 @@ function ServiceOverview({
 						tagFilterItems,
 						isSpanMetricEnable,
 						topLevelOperationsRoute,
-						metricFilterItems,
 					}),
 					clickhouse_sql: [],
 					id: uuid(),
@@ -50,13 +58,7 @@ function ServiceOverview({
 				title: GraphTitle.LATENCY,
 				panelTypes: PANEL_TYPES.TIME_SERIES,
 			}),
-		[
-			servicename,
-			tagFilterItems,
-			isSpanMetricEnable,
-			topLevelOperationsRoute,
-			metricFilterItems,
-		],
+		[servicename, isSpanMetricEnable, topLevelOperationsRoute, tagFilterItems],
 	);
 
 	const isQueryEnabled = topLevelOperationsRoute.length > 0;
@@ -96,9 +98,7 @@ interface ServiceOverviewProps {
 	selectedTraceTags: string;
 	onDragSelect: (start: number, end: number) => void;
 	handleGraphClick: (type: string) => ClickHandlerType;
-	tagFilterItems: TagFilterItem[];
 	topLevelOperationsRoute: string[];
-	metricFilterItems: TagFilterItem[];
 }
 
 export default ServiceOverview;
