@@ -101,7 +101,7 @@ function GridCardGraph({
 
 	const isEmptyLayout = widget?.id === 'empty' || isEmpty(widget);
 
-	if (queryResponse.isRefetching) {
+	if (queryResponse.isRefetching || queryResponse.isLoading) {
 		return <Spinner height="20vh" tip="Loading..." />;
 	}
 
@@ -127,27 +127,23 @@ function GridCardGraph({
 		);
 	}
 
-	if (queryResponse.status === 'loading' || queryResponse.status === 'idle') {
+	if (!isEmpty(widget) && prevChartDataSetRef?.labels) {
 		return (
 			<span ref={graphRef}>
-				{!isEmpty(widget) && prevChartDataSetRef?.labels ? (
-					<WidgetGraphComponent
-						enableModel={false}
-						enableWidgetHeader
-						widget={widget}
-						queryResponse={queryResponse}
-						errorMessage={errorMessage}
-						data={prevChartDataSetRef}
-						name={name}
-						yAxisUnit={yAxisUnit}
-						layout={layout}
-						setLayout={setLayout}
-						headerMenuList={headerMenuList}
-						onClickHandler={onClickHandler}
-					/>
-				) : (
-					<Spinner height="20vh" tip="Loading..." />
-				)}
+				<WidgetGraphComponent
+					enableModel={false}
+					enableWidgetHeader
+					widget={widget}
+					queryResponse={queryResponse}
+					errorMessage={errorMessage}
+					data={prevChartDataSetRef}
+					name={name}
+					yAxisUnit={yAxisUnit}
+					layout={layout}
+					setLayout={setLayout}
+					headerMenuList={headerMenuList}
+					onClickHandler={onClickHandler}
+				/>
 			</span>
 		);
 	}
