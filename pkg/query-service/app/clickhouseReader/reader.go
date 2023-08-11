@@ -3427,7 +3427,7 @@ func (r *ClickHouseReader) GetLogFields(ctx context.Context) (*model.GetFieldsRe
 func extractSelectedAndInterestingFields(tableStatement string, fieldType string, fields *[]model.LogField, response *model.GetFieldsResponse) {
 	for _, field := range *fields {
 		field.Type = fieldType
-		// all static fields are assumeed to be selected as we don't allow changing them
+		// all static fields are assumed to be selected as we don't allow changing them
 		if fieldType == constants.Static || isSelectedField(tableStatement, field) {
 			response.Selected = append(response.Selected, field)
 		} else {
@@ -3452,7 +3452,7 @@ func (r *ClickHouseReader) UpdateLogField(ctx context.Context, field *model.Upda
 	}
 
 	prefix := field.Type[:len(field.Type)-1]
-	// columns name is <type>_<name>_<datatype>
+	// columns name is <type>_<datatype>_<name>
 	colname := fmt.Sprintf("%s_%s_%s", strings.ToLower(prefix), strings.ToLower(field.DataType), field.Name)
 
 	// if a field is selected it means that the field needs to be indexed
@@ -3461,7 +3461,7 @@ func (r *ClickHouseReader) UpdateLogField(ctx context.Context, field *model.Upda
 		valueColName := fmt.Sprintf("%s_%s_value", field.Type, strings.ToLower(field.DataType))
 
 		// create materialized column
-		query := fmt.Sprintf("ALTER TABLE %s.%s ON CLUSTER %s ADD COLUMN IF NOT EXISTS %s %s MATERIALIZED %s[indexOf(%s, '%s')] CODEC(LZ4)",
+		query := fmt.Sprintf("ALTER TABLE %s.%s ON CLUSTER %s ADD COLUMN IF NOT EXISTS %s %s MATERIALIZED %s[indexOf(%s, '%s')] CODEC(ZSTD(1))",
 			r.logsDB, r.logsLocalTable,
 			cluster,
 			colname, field.DataType,
@@ -3469,8 +3469,6 @@ func (r *ClickHouseReader) UpdateLogField(ctx context.Context, field *model.Upda
 			keyColName,
 			field.Name,
 		)
-
-		// create an exists column
 		err := r.db.Exec(ctx, query)
 		if err != nil {
 			return &model.ApiError{Err: err, Typ: model.ErrorInternal}
@@ -3487,15 +3485,13 @@ func (r *ClickHouseReader) UpdateLogField(ctx context.Context, field *model.Upda
 		}
 
 		// create exists column
-		query = fmt.Sprintf("ALTER TABLE %s.%s ON CLUSTER %s ADD COLUMN IF NOT EXISTS %s_exists bool MATERIALIZED if(indexOf(%s, '%s') != 0, true, false) CODEC(LZ4)",
+		query = fmt.Sprintf("ALTER TABLE %s.%s ON CLUSTER %s ADD COLUMN IF NOT EXISTS %s_exists bool MATERIALIZED if(indexOf(%s, '%s') != 0, true, false) CODEC(ZSTD(1))",
 			r.logsDB, r.logsLocalTable,
 			cluster,
 			colname,
 			keyColName,
 			field.Name,
 		)
-
-		// create an exists column
 		err = r.db.Exec(ctx, query)
 		if err != nil {
 			return &model.ApiError{Err: err, Typ: model.ErrorInternal}
