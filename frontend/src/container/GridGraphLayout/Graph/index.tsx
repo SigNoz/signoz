@@ -15,6 +15,7 @@ import { GlobalReducer } from 'types/reducer/globalTime';
 import { getSelectedDashboardVariable } from 'utils/dashboard/selectedDashboard';
 
 import EmptyWidget from '../EmptyWidget';
+import { MenuItemKeys } from '../WidgetHeader/contants';
 import { GridCardGraphProps } from './types';
 import WidgetGraphComponent from './WidgetGraphComponent';
 
@@ -26,9 +27,7 @@ function GridCardGraph({
 	setLayout,
 	onDragSelect,
 	onClickHandler,
-	allowDelete,
-	allowClone,
-	allowEdit,
+	headerMenuList = [MenuItemKeys.View],
 	isQueryEnabled,
 	allowThreshold,
 	threshold,
@@ -123,11 +122,9 @@ function GridCardGraph({
 						yAxisUnit={yAxisUnit}
 						layout={layout}
 						setLayout={setLayout}
-						allowClone={allowClone}
-						allowDelete={allowDelete}
-						allowEdit={allowEdit}
 						allowThreshold={allowThreshold}
 						threshold={threshold}
+						headerMenuList={headerMenuList}
 					/>
 				)}
 			</span>
@@ -149,9 +146,7 @@ function GridCardGraph({
 						yAxisUnit={yAxisUnit}
 						layout={layout}
 						setLayout={setLayout}
-						allowClone={allowClone}
-						allowDelete={allowDelete}
-						allowEdit={allowEdit}
+						headerMenuList={headerMenuList}
 						onClickHandler={onClickHandler}
 						allowThreshold={allowThreshold}
 						threshold={threshold}
@@ -176,11 +171,9 @@ function GridCardGraph({
 					name={name}
 					yAxisUnit={yAxisUnit}
 					onDragSelect={onDragSelect}
-					allowClone={allowClone}
-					allowDelete={allowDelete}
-					allowEdit={allowEdit}
 					allowThreshold={allowThreshold}
 					threshold={threshold}
+					headerMenuList={headerMenuList}
 					onClickHandler={onClickHandler}
 				/>
 			)}
@@ -193,12 +186,10 @@ function GridCardGraph({
 GridCardGraph.defaultProps = {
 	onDragSelect: undefined,
 	onClickHandler: undefined,
-	allowDelete: true,
-	allowClone: true,
-	allowEdit: true,
 	isQueryEnabled: true,
 	allowThreshold: false,
 	theadholdValue: undefined,
+	headerMenuList: [MenuItemKeys.View],
 };
 
 export default memo(GridCardGraph);
