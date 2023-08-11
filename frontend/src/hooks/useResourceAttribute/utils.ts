@@ -4,6 +4,7 @@ import {
 } from 'api/metrics/getResourceAttributes';
 import { OperatorConversions } from 'constants/resourceAttributes';
 import ROUTES from 'constants/routes';
+import { DataType, MetricsType } from 'container/MetricsApplication/constant';
 import {
 	IOption,
 	IResourceAttribute,
@@ -63,13 +64,29 @@ export const convertRawQueriesToTraceSelectedTags = (
 /* Convert resource attributes to tagFilter items for queryBuilder */
 export const resourceAttributesToTagFilterItems = (
 	queries: IResourceAttribute[],
-): TagFilterItem[] =>
-	queries.map((res) => ({
+	isTraceDataSource = false,
+): TagFilterItem[] => {
+	if (isTraceDataSource) {
+		return convertRawQueriesToTraceSelectedTags(queries).map((e) => ({
+			id: e.Key,
+			op: e.Operator,
+			value: e.StringValues,
+			key: {
+				dataType: DataType.STRING,
+				type: MetricsType.Resource,
+				isColumn: false,
+				key: e.Key,
+			},
+		}));
+	}
+
+	return queries.map((res) => ({
 		id: `${res.id}`,
 		key: { key: res.tagKey, isColumn: false, type: null, dataType: null },
 		op: `${res.operator}`,
 		value: `${res.tagValue}`.split(','),
 	}));
+};
 
 export const OperatorSchema: IOption[] = OperatorConversions.map(
 	(operator) => ({
