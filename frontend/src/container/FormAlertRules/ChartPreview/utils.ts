@@ -1,4 +1,3 @@
-import Big from 'big.js';
 import {
 	BooleanFormats,
 	DataFormats,
@@ -39,11 +38,13 @@ export function covertIntoDataFormats({
 		miscUnitsConfig[targetUnit as MiscellaneousFormats] ||
 		throughputConfig[sourceUnit as ThroughputFormats];
 
-	const result = new Big(value)
-		.times(sourceMultiplier || 0)
-		.div(targetDivider || 0);
+	const intermediateValue = value * sourceMultiplier;
 
-	return Number.isNaN(result) ? 0 : Number(result);
+	const roundedValue = Math.round(intermediateValue * 1000000) / 1000000;
+
+	const result = roundedValue / targetDivider;
+
+	return Number.isNaN(result) ? 0 : result;
 }
 
 interface IUnit {
