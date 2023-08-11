@@ -67,10 +67,10 @@ export const latency = ({
 		},
 	];
 
-	if (!isSpanMetricEnable) {
-		filterItem = [...filterItem, ...tagFilterItems];
-	} else {
+	if (isSpanMetricEnable) {
 		filterItem = [...filterItem, ...metricFilterItems];
+	} else {
+		filterItem = [...filterItem, ...tagFilterItems];
 	}
 
 	const filterItems = Array(3).fill([...filterItem]);
