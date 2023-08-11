@@ -72,11 +72,12 @@ function GridCardGraph({
 		{
 			queryKey: [
 				`GetMetricsQueryRange-${widget?.timePreferance}-${globalSelectedInterval}-${widget?.id}`,
-				widget,
 				maxTime,
 				minTime,
 				globalSelectedInterval,
 				variables,
+				widget?.query,
+				widget?.panelTypes,
 			],
 			keepPreviousData: true,
 			enabled: isGraphVisible && !isEmptyWidget && isQueryEnabled && !isAddWidget,
