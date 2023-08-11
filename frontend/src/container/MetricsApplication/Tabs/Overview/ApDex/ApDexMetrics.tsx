@@ -1,3 +1,5 @@
+import { QuestionCircleOutlined } from '@ant-design/icons';
+import { Typography } from 'antd';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import Graph from 'container/GridGraphLayout/Graph';
 import { GraphTitle } from 'container/MetricsApplication/constant';
@@ -39,7 +41,14 @@ function ApDexMetrics({
 					clickhouse_sql: [],
 					id: uuid(),
 				},
-				title: GraphTitle.APDEX,
+				title: (
+					<Typography>
+						{GraphTitle.APDEX}
+						<Typography.Link>
+							<QuestionCircleOutlined />
+						</Typography.Link>
+					</Typography>
+				),
 				panelTypes: PANEL_TYPES.TIME_SERIES,
 			}),
 		[
