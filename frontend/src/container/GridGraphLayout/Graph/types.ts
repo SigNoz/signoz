@@ -10,6 +10,7 @@ import { Widgets } from 'types/api/dashboard/getAll';
 import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
 
 import { LayoutProps } from '..';
+import { MenuItemKeys } from '../WidgetHeader/contants';
 import { LegendEntryProps } from './FullView/types';
 
 export interface GraphVisibilityLegendEntryProps {
@@ -38,25 +39,19 @@ export interface WidgetGraphComponentProps extends DispatchProps {
 	setLayout?: Dispatch<SetStateAction<LayoutProps[]>>;
 	onDragSelect?: (start: number, end: number) => void;
 	onClickHandler?: GraphOnClickHandler;
-	allowDelete?: boolean;
-	allowClone?: boolean;
-	allowEdit?: boolean;
+	headerMenuList: MenuItemKeys[];
 }
 
 export interface GridCardGraphProps {
 	widget: Widgets;
 	name: string;
 	yAxisUnit: string | undefined;
-	// eslint-disable-next-line react/require-default-props
 	layout?: Layout[];
-	// eslint-disable-next-line react/require-default-props
 	setLayout?: Dispatch<SetStateAction<LayoutProps[]>>;
 	onDragSelect?: (start: number, end: number) => void;
 	onClickHandler?: GraphOnClickHandler;
-	allowDelete?: boolean;
-	allowClone?: boolean;
-	allowEdit?: boolean;
-	isQueryEnabled?: boolean;
+	headerMenuList?: WidgetGraphComponentProps['headerMenuList'];
+	isQueryEnabled: boolean;
 }
 
 export interface GetGraphVisibilityStateOnLegendClickProps {

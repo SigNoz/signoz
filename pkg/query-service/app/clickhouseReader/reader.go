@@ -119,10 +119,17 @@ type ClickHouseReader struct {
 }
 
 // NewTraceReader returns a TraceReader for the database
-func NewReader(localDB *sqlx.DB, configFile string, featureFlag interfaces.FeatureLookup) *ClickHouseReader {
+func NewReader(
+	localDB *sqlx.DB,
+	configFile string,
+	featureFlag interfaces.FeatureLookup,
+	maxIdleConns int,
+	maxOpenConns int,
+	dialTimeout time.Duration,
+) *ClickHouseReader {
 
 	datasource := os.Getenv("ClickHouseUrl")
-	options := NewOptions(datasource, primaryNamespace, archiveNamespace)
+	options := NewOptions(datasource, maxIdleConns, maxOpenConns, dialTimeout, primaryNamespace, archiveNamespace)
 	db, err := initialize(options)
 
 	if err != nil {
