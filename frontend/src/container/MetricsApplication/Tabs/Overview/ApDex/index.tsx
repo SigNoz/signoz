@@ -6,7 +6,7 @@ import { memo } from 'react';
 import { useParams } from 'react-router-dom';
 
 import { IServiceName } from '../../types';
-import ApDexDataSwitcher from './ApDexDataSwitcher';
+import ApDexMetricsApplication from './ApDexMetricsApplication';
 import { ApDexApplicationProps } from './types';
 
 function ApDexApplication({
@@ -32,7 +32,7 @@ function ApDexApplication({
 	return (
 		<Card>
 			<GraphContainer>
-				<ApDexDataSwitcher
+				<ApDexMetricsApplication
 					handleGraphClick={handleGraphClick}
 					onDragSelect={onDragSelect}
 					topLevelOperationsRoute={topLevelOperationsRoute}

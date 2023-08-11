@@ -1,3 +1,5 @@
+// This component is not been used in the application as we support only metrics for ApDex as of now.
+// This component is been kept for future reference.
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import Graph from 'container/GridGraphLayout/Graph';
 import { GraphTitle } from 'container/MetricsApplication/constant';
