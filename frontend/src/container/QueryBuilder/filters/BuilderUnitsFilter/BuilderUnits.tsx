@@ -34,6 +34,8 @@ function BuilderUnitsFilter({
 				onChange={onChangeHandler}
 				value={selectedValue}
 				options={allOptions}
+				allowClear
+				showSearch
 				placeholder="Select unit"
 			/>
 		</Space>

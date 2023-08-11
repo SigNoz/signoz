@@ -174,11 +174,14 @@ function RuleOptions({
 							value={alertDef?.condition?.target}
 							onChange={onChange}
 							type="number"
+							onWheel={(e): void => e.currentTarget.blur()}
 						/>
 					</Form.Item>
 
 					<Form.Item>
 						<Select
+							allowClear
+							showSearch
 							options={categorySelectOptions}
 							placeholder={t('field_unit')}
 							value={alertDef.condition.targetUnit}

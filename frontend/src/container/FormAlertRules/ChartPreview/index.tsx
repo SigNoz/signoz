@@ -53,7 +53,9 @@ function ChartPreview({
 					yMax: thresholdValue,
 					borderColor: '#f14',
 					borderWidth: 1,
-					lineText: `${t('preview_chart_threshold_label')} (y=${thresholdValue})`,
+					lineText: `${t('preview_chart_threshold_label')} (y=${thresholdValue}${
+						query?.unit || ''
+					})`,
 					textColor: '#f14',
 			  }
 			: undefined;
