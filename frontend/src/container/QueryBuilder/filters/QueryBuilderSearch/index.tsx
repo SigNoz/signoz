@@ -125,7 +125,7 @@ function QueryBuilderSearch({
 
 	useEffect(() => {
 		const initialTagFilters: TagFilter = { items: [], op: 'AND' };
-		const initialSourceKeys = query.filters.items.map(
+		const initialSourceKeys = query.filters.items?.map(
 			(item) => item.key as BaseAutocompleteData,
 		);
 		initialTagFilters.items = tags.map((tag) => {
