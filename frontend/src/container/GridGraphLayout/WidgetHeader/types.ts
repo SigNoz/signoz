@@ -12,5 +12,5 @@ export interface MenuItem {
 }
 
 export interface DisplayThresholdProps {
-	threshold: number;
+	threshold: ReactNode;
 }
