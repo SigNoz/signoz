@@ -1935,18 +1935,18 @@ func (aH *APIHandler) editUser(w http.ResponseWriter, r *http.Request) {
 	if len(update.Name) > 0 {
 		old.Name = update.Name
 	}
-	if len(update.ProfilePirctureURL) > 0 {
-		old.ProfilePirctureURL = update.ProfilePirctureURL
+	if len(update.ProfilePictureURL) > 0 {
+		old.ProfilePictureURL = update.ProfilePictureURL
 	}
 
 	_, apiErr = dao.DB().EditUser(ctx, &model.User{
-		Id:                 old.Id,
-		Name:               old.Name,
-		OrgId:              old.OrgId,
-		Email:              old.Email,
-		Password:           old.Password,
-		CreatedAt:          old.CreatedAt,
-		ProfilePirctureURL: old.ProfilePirctureURL,
+		Id:                old.Id,
+		Name:              old.Name,
+		OrgId:             old.OrgId,
+		Email:             old.Email,
+		Password:          old.Password,
+		CreatedAt:         old.CreatedAt,
+		ProfilePictureURL: old.ProfilePictureURL,
 	})
 	if apiErr != nil {
 		RespondError(w, apiErr, nil)

@@ -26,14 +26,14 @@ type InvitationObject struct {
 }
 
 type User struct {
-	Id                 string `json:"id" db:"id"`
-	Name               string `json:"name" db:"name"`
-	Email              string `json:"email" db:"email"`
-	Password           string `json:"password,omitempty" db:"password"`
-	CreatedAt          int64  `json:"createdAt" db:"created_at"`
-	ProfilePirctureURL string `json:"profilePictureURL" db:"profile_picture_url"`
-	OrgId              string `json:"orgId,omitempty" db:"org_id"`
-	GroupId            string `json:"groupId,omitempty" db:"group_id"`
+	Id                string `json:"id" db:"id"`
+	Name              string `json:"name" db:"name"`
+	Email             string `json:"email" db:"email"`
+	Password          string `json:"password,omitempty" db:"password"`
+	CreatedAt         int64  `json:"createdAt" db:"created_at"`
+	ProfilePictureURL string `json:"profilePictureURL" db:"profile_picture_url"`
+	OrgId             string `json:"orgId,omitempty" db:"org_id"`
+	GroupId           string `json:"groupId,omitempty" db:"group_id"`
 }
 
 type ApdexSettings struct {
