@@ -19,6 +19,12 @@ const useFeatureFlag = (
 
 	const feature = featureResponseData?.find((flag) => flag.name === flagKey);
 
+	if (flagKey === 'USE_SPAN_METRICS') {
+		return {
+			active: true,
+		};
+	}
+
 	if (!feature) {
 		return undefined;
 	}
