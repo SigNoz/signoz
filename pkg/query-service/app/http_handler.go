@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"net/http"
 	"sort"
@@ -295,7 +296,7 @@ func (aH *APIHandler) RegisterQueryRangeV3Routes(router *mux.Router, am *AuthMid
 	subRouter.HandleFunc("/query_range", am.ViewAccess(aH.QueryRangeV3)).Methods(http.MethodPost)
 
 	// live logs
-	subRouter.HandleFunc("/logs/livetail", am.ViewAccess(aH.liveTailLogs)).Methods(http.MethodPost)
+	subRouter.HandleFunc("/logs/livetail", am.ViewAccess(aH.liveTailLogs)).Methods(http.MethodGet)
 }
 
 func (aH *APIHandler) Respond(w http.ResponseWriter, data interface{}) {
@@ -3062,6 +3063,10 @@ func applyMetricLimit(results []*v3.Result, queryRangeParams *v3.QueryRangeParam
 }
 
 func (aH *APIHandler) liveTailLogs(w http.ResponseWriter, r *http.Request) {
+
+	// get the param from url and add it to body
+	stringReader := strings.NewReader(r.URL.Query().Get("q"))
+	r.Body = io.NopCloser(stringReader)
 
 	queryRangeParams, apiErrorObj := ParseQueryRangeParams(r)
 	if apiErrorObj != nil {
