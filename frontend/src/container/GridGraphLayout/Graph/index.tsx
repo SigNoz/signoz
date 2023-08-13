@@ -1,3 +1,4 @@
+import { InfoCircleOutlined } from '@ant-design/icons';
 import { ChartData } from 'chart.js';
 import Spinner from 'components/Spinner';
 import { useGetQueryRange } from 'hooks/queryBuilder/useGetQueryRange';
@@ -6,7 +7,7 @@ import usePreviousValue from 'hooks/usePreviousValue';
 import { getDashboardVariables } from 'lib/dashbaordVariables/getDashboardVariables';
 import getChartData from 'lib/getChartData';
 import isEmpty from 'lodash-es/isEmpty';
-import { memo, useMemo, useState } from 'react';
+import { memo, ReactNode, useMemo, useState } from 'react';
 import { useInView } from 'react-intersection-observer';
 import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
@@ -16,6 +17,7 @@ import { getSelectedDashboardVariable } from 'utils/dashboard/selectedDashboard'
 
 import EmptyWidget from '../EmptyWidget';
 import { MenuItemKeys } from '../WidgetHeader/contants';
+import DisplayThreshold from '../WidgetHeader/DisplayThreshold';
 import { GridCardGraphProps } from './types';
 import WidgetGraphComponent from './WidgetGraphComponent';
 
@@ -104,6 +106,13 @@ function GridCardGraph({
 
 	const isEmptyLayout = widget?.id === 'empty' || isEmpty(widget);
 
+	const thresholdComponent: ReactNode = useMemo(() => {
+		if (allowThreshold) {
+			return <DisplayThreshold threshold={threshold || <InfoCircleOutlined />} />;
+		}
+		return null;
+	}, [allowThreshold, threshold]);
+
 	if (queryResponse.isRefetching || queryResponse.isLoading) {
 		return <Spinner height="20vh" tip="Loading..." />;
 	}
@@ -123,8 +132,7 @@ function GridCardGraph({
 						yAxisUnit={yAxisUnit}
 						layout={layout}
 						setLayout={setLayout}
-						allowThreshold={allowThreshold}
-						threshold={threshold}
+						threshold={thresholdComponent}
 						headerMenuList={headerMenuList}
 					/>
 				)}
@@ -146,6 +154,7 @@ function GridCardGraph({
 					yAxisUnit={yAxisUnit}
 					layout={layout}
 					setLayout={setLayout}
+					threshold={thresholdComponent}
 					headerMenuList={headerMenuList}
 					onClickHandler={onClickHandler}
 				/>
@@ -166,8 +175,7 @@ function GridCardGraph({
 					name={name}
 					yAxisUnit={yAxisUnit}
 					onDragSelect={onDragSelect}
-					allowThreshold={allowThreshold}
-					threshold={threshold}
+					threshold={thresholdComponent}
 					headerMenuList={headerMenuList}
 					onClickHandler={onClickHandler}
 				/>

@@ -5,7 +5,6 @@ import {
 	EditFilled,
 	ExclamationCircleOutlined,
 	FullscreenOutlined,
-	InfoCircleOutlined,
 } from '@ant-design/icons';
 import { Dropdown, MenuProps, Tooltip, Typography } from 'antd';
 import Spinner from 'components/Spinner';
@@ -29,7 +28,6 @@ import {
 	tooltipStyles,
 } from './config';
 import { MENUITEM_KEYS_VS_LABELS, MenuItemKeys } from './contants';
-import DisplayThreshold from './DisplayThreshold';
 import {
 	ArrowContainer,
 	HeaderContainer,
@@ -51,8 +49,7 @@ interface IWidgetHeaderProps {
 		SuccessResponse<MetricRangePayloadProps> | ErrorResponse
 	>;
 	errorMessage: string | undefined;
-	allowThreshold?: boolean;
-	threshold?: number;
+	threshold?: ReactNode;
 	headerMenuList?: MenuItemKeys[];
 }
 
@@ -65,7 +62,6 @@ function WidgetHeader({
 	parentHover,
 	queryResponse,
 	errorMessage,
-	allowThreshold = false,
 	threshold,
 	headerMenuList,
 }: IWidgetHeaderProps): JSX.Element {
@@ -204,11 +200,7 @@ function WidgetHeader({
 					</HeaderContentContainer>
 				</HeaderContainer>
 			</Dropdown>
-			<ThesholdContainer>
-				{allowThreshold && (
-					<DisplayThreshold threshold={threshold || <InfoCircleOutlined />} />
-				)}
-			</ThesholdContainer>
+			<ThesholdContainer>{threshold}</ThesholdContainer>
 			{queryResponse.isFetching && !queryResponse.isError && (
 				<Spinner height="5vh" style={spinnerStyles} />
 			)}
@@ -224,7 +216,6 @@ function WidgetHeader({
 WidgetHeader.defaultProps = {
 	onDelete: undefined,
 	onClone: undefined,
-	allowThreshold: false,
 	threshold: undefined,
 	headerMenuList: [MenuItemKeys.View],
 };

@@ -53,7 +53,6 @@ function WidgetGraphComponent({
 	setLayout,
 	onDragSelect,
 	onClickHandler,
-	allowThreshold = false,
 	threshold,
 	headerMenuList,
 }: WidgetGraphComponentProps): JSX.Element {
@@ -281,7 +280,6 @@ function WidgetGraphComponent({
 								onClone={onCloneHandler}
 								queryResponse={queryResponse}
 								errorMessage={errorMessage}
-								allowThreshold={allowThreshold}
 								threshold={threshold}
 								headerMenuList={headerMenuList}
 							/>
@@ -313,7 +311,6 @@ WidgetGraphComponent.defaultProps = {
 	setLayout: undefined,
 	onDragSelect: undefined,
 	onClickHandler: undefined,
-	allowThreshold: false,
 };
 
 const mapDispatchToProps = (
