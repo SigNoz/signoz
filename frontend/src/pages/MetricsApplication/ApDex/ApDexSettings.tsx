@@ -1,8 +1,12 @@
-/* eslint-disable react/jsx-no-comment-textnodes */
 import { CloseOutlined } from '@ant-design/icons';
-import { Card, Input } from 'antd';
+import { Card, InputNumber } from 'antd';
 import Spinner from 'components/Spinner';
 import TextToolTip from 'components/TextToolTip';
+import {
+	apDexToolTipText,
+	apDexToolTipUrl,
+	apDexToolTipUrlText,
+} from 'constants/apDex';
 import { themeColors } from 'constants/theme';
 import { useSetApDexSettings } from 'hooks/apDex/useSetApDexSettings';
 import { useNotifications } from 'hooks/useNotifications';
@@ -34,16 +38,16 @@ function ApDexSettings({
 	});
 	const { notifications } = useNotifications();
 
-	const { isLoading: setApDexIsLoading, mutateAsync } = useSetApDexSettings({
+	const { isLoading: isApDexLoading, mutateAsync } = useSetApDexSettings({
 		servicename,
 		threshold: thresholdValue,
 		excludeStatusCode: '',
 	});
 
-	const handleThreadholdChange = (
-		e: React.ChangeEvent<HTMLInputElement>,
-	): void => {
-		setThresholdValue(Number(e.target.value));
+	const handleThreadholdChange = (value: string | null): void => {
+		if (value) {
+			setThresholdValue(Number(value));
+		}
 	};
 
 	if (isLoading) {
@@ -71,7 +75,7 @@ function ApDexSettings({
 							thresholdValue,
 						})}
 						type="primary"
-						loading={setApDexIsLoading}
+						loading={isApDexLoading}
 					>
 						Save
 					</SaveButton>
@@ -82,17 +86,18 @@ function ApDexSettings({
 				<Typography>
 					Apdex threshold (in seconds){' '}
 					<TextToolTip
-						text="Apdex is a way to measure your users' satisfaction with the response time of your web service. It's represented as a score from 0-1."
-						url="https://signoz.io/docs/userguide/metrics/#apdex?utm_source=product&utm_medium=frontend&utm_campaign=apdex"
+						text={apDexToolTipText}
+						url={apDexToolTipUrl}
 						useFilledIcon={false}
-						urlText="Learn more about Apdex."
+						urlText={apDexToolTipUrlText}
 					/>
 				</Typography>
-				<Input
-					type="number"
-					value={thresholdValue}
+				<InputNumber
+					value={thresholdValue.toString()}
 					onChange={handleThreadholdChange}
-					min={0}
+					min="0"
+					step={0.1}
+					precision={1}
 				/>
 			</AppDexThresholdContainer>
 			{/* TODO: Add this feature later when backend is ready to support it. */}

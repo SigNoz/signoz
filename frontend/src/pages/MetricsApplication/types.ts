@@ -1,8 +1,8 @@
 import { NotificationInstance } from 'antd/es/notification/interface';
 import { UseMutateAsyncFunction } from 'react-query';
 import {
+	ApDexPayloadAndSettingsProps,
 	SetApDexPayloadProps,
-	SetApDexSettingsProps,
 } from 'types/api/metrics/getApDex';
 
 export enum MetricsApplicationTab {
@@ -21,11 +21,11 @@ export interface OnSaveApDexSettingsProps {
 	thresholdValue: number;
 	servicename: string;
 	notifications: NotificationInstance;
-	refetchGetApDexSetting: (() => void) | undefined;
+	refetchGetApDexSetting?: VoidFunction;
 	mutateAsync: UseMutateAsyncFunction<
 		SetApDexPayloadProps,
 		Error,
-		SetApDexSettingsProps
+		ApDexPayloadAndSettingsProps
 	>;
-	handlePopOverClose: () => void;
+	handlePopOverClose: VoidFunction;
 }

@@ -138,7 +138,7 @@ export const apDexTracesQueryBuilderQueries = ({
 				isColumn: true,
 				type: MetricsType.Tag,
 			},
-			op: OPERATORS.IN.toLowerCase(), // TODO: need to remove toLowerCase() this once backend is changed
+			op: OPERATORS.IN,
 			value: [...topLevelOperationsRoute],
 		},
 		...tagFilterItems,
@@ -186,7 +186,7 @@ export const apDexTracesQueryBuilderQueries = ({
 				isColumn: true,
 				type: MetricsType.Tag,
 			},
-			op: OPERATORS.IN.toLowerCase(), // TODO: need to remove toLowerCase() this once backend is changed
+			op: OPERATORS.IN,
 			value: [...topLevelOperationsRoute],
 		},
 	];
@@ -233,7 +233,7 @@ export const apDexTracesQueryBuilderQueries = ({
 				isColumn: true,
 				type: MetricsType.Tag,
 			},
-			op: OPERATORS.IN.toLowerCase(), // TODO: need to remove toLowerCase() this once backend is changed
+			op: OPERATORS.IN,
 			value: [...topLevelOperationsRoute],
 		},
 	];
@@ -316,7 +316,7 @@ export const apDexMetricsQueryBuilderQueries = ({
 				isColumn: false,
 				type: MetricsType.Tag,
 			},
-			op: OPERATORS.IN.toLowerCase(),
+			op: OPERATORS.IN,
 			value: [...topLevelOperationsRoute],
 		},
 		...tagFilterItems,
@@ -364,7 +364,7 @@ export const apDexMetricsQueryBuilderQueries = ({
 				isColumn: false,
 				type: MetricsType.Tag,
 			},
-			op: OPERATORS.IN.toLowerCase(),
+			op: OPERATORS.IN,
 			value: [...topLevelOperationsRoute],
 		},
 		...tagFilterItems,
@@ -412,7 +412,7 @@ export const apDexMetricsQueryBuilderQueries = ({
 				isColumn: false,
 				type: MetricsType.Tag,
 			},
-			op: OPERATORS.IN.toLowerCase(),
+			op: OPERATORS.IN,
 			value: [...topLevelOperationsRoute],
 		},
 		...tagFilterItems,

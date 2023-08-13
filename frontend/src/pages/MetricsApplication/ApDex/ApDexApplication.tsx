@@ -1,5 +1,6 @@
 import { SettingOutlined } from '@ant-design/icons';
 import { Popover } from 'antd';
+import { IServiceName } from 'container/MetricsApplication/Tabs/types';
 import { useGetApDexSettings } from 'hooks/apDex/useGetApDexSettings';
 import useErrorNotification from 'hooks/useErrorNotification';
 import { useState } from 'react';
@@ -9,7 +10,7 @@ import { Button } from '../styles';
 import ApDexSettings from './ApDexSettings';
 
 function ApDexApplication(): JSX.Element {
-	const { servicename } = useParams<{ servicename: string }>();
+	const { servicename } = useParams<IServiceName>();
 	const {
 		data,
 		isLoading,

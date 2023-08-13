@@ -1,5 +1,10 @@
-import { Typography } from 'antd';
+import { Space, Typography } from 'antd';
 import TextToolTip from 'components/TextToolTip';
+import {
+	apDexToolTipText,
+	apDexToolTipUrl,
+	apDexToolTipUrlText,
+} from 'constants/apDex';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import Graph from 'container/GridGraphLayout/Graph';
 import { GraphTitle } from 'container/MetricsApplication/constant';
@@ -42,17 +47,15 @@ function ApDexMetrics({
 					id: uuid(),
 				},
 				title: (
-					<Typography>
-						{GraphTitle.APDEX}
-						<Typography.Link>
-							<TextToolTip
-								text="Apdex is a way to measure your users' satisfaction with the response time of your web service. It's represented as a score from 0-1."
-								url="https://signoz.io/docs/userguide/metrics/#apdex?utm_source=product&utm_medium=frontend&utm_campaign=apdex"
-								useFilledIcon={false}
-								urlText="Learn more about Apdex."
-							/>
-						</Typography.Link>
-					</Typography>
+					<Space>
+						<Typography>{GraphTitle.APDEX}</Typography>
+						<TextToolTip
+							text={apDexToolTipText}
+							url={apDexToolTipUrl}
+							useFilledIcon={false}
+							urlText={apDexToolTipUrlText}
+						/>
+					</Space>
 				),
 				panelTypes: PANEL_TYPES.TIME_SERIES,
 			}),

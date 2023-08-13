@@ -1,10 +1,4 @@
-export type ApDexPayloadProps = {
-	serviceName: string;
-	threshold: number;
-	excludeStatusCodes: string;
-};
-
-export interface SetApDexSettingsProps {
+export interface ApDexPayloadAndSettingsProps {
 	servicename: string;
 	threshold: number;
 	excludeStatusCode: string;

@@ -26,29 +26,21 @@ export const onSaveApDexSettings = ({
 	notifications,
 	handlePopOverClose,
 	servicename,
-}: OnSaveApDexSettingsProps) => (): void => {
-	if (refetchGetApDexSetting) {
-		mutateAsync({
+}: OnSaveApDexSettingsProps) => async (): Promise<void> => {
+	if (!refetchGetApDexSetting) return;
+
+	try {
+		await mutateAsync({
 			servicename,
 			threshold: thresholdValue,
 			excludeStatusCode: '',
-		})
-			.then(() => {
-				refetchGetApDexSetting();
-			})
-			.catch((err) => {
-				if (axios.isAxiosError(err)) {
-					notifications.error({
-						message: err.message,
-					});
-				} else {
-					notifications.error({
-						message: SOMETHING_WENT_WRONG,
-					});
-				}
-			})
-			.finally(() => {
-				handlePopOverClose();
-			});
+		});
+		await refetchGetApDexSetting();
+	} catch (err) {
+		notifications.error({
+			message: axios.isAxiosError(err) ? err.message : SOMETHING_WENT_WRONG,
+		});
+	} finally {
+		handlePopOverClose();
 	}
 };

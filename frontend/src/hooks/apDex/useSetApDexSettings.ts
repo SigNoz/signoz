@@ -1,20 +1,20 @@
 import { setApDexSettings } from 'api/metrics/ApDex/apDexSettings';
 import { useMutation, UseMutationResult } from 'react-query';
 import {
+	ApDexPayloadAndSettingsProps,
 	SetApDexPayloadProps,
-	SetApDexSettingsProps,
 } from 'types/api/metrics/getApDex';
 
 export const useSetApDexSettings = ({
 	servicename,
 	threshold,
 	excludeStatusCode,
-}: SetApDexSettingsProps): UseMutationResult<
+}: ApDexPayloadAndSettingsProps): UseMutationResult<
 	SetApDexPayloadProps,
 	Error,
-	SetApDexSettingsProps
+	ApDexPayloadAndSettingsProps
 > =>
-	useMutation<SetApDexPayloadProps, Error, SetApDexSettingsProps>({
+	useMutation<SetApDexPayloadProps, Error, ApDexPayloadAndSettingsProps>({
 		mutationKey: [servicename, threshold.toString(), excludeStatusCode],
 		mutationFn: async () =>
 			setApDexSettings({ servicename, threshold, excludeStatusCode }),

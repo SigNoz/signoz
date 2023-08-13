@@ -1,10 +1,10 @@
 import { AxiosResponse } from 'axios';
-import { ApDexPayloadProps } from 'types/api/metrics/getApDex';
+import { ApDexPayloadAndSettingsProps } from 'types/api/metrics/getApDex';
 
 export interface ApDexSettingsProps {
 	servicename: string;
 	handlePopOverClose: () => void;
 	isLoading?: boolean;
-	data?: AxiosResponse<ApDexPayloadProps[]> | undefined;
+	data?: AxiosResponse<ApDexPayloadAndSettingsProps[]>;
 	refetchGetApDexSetting?: () => void;
 }
