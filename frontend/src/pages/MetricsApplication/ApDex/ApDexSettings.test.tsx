@@ -20,7 +20,7 @@ describe('ApDexSettings', () => {
 				handlePopOverClose={jest.fn()}
 				isLoading={false}
 				data={axiosResponseThresholdData}
-				refetch={jest.fn()}
+				refetchGetApDexSetting={jest.fn()}
 			/>,
 		);
 
@@ -34,7 +34,7 @@ describe('ApDexSettings', () => {
 				handlePopOverClose={jest.fn()}
 				isLoading
 				data={axiosResponseThresholdData}
-				refetch={jest.fn()}
+				refetchGetApDexSetting={jest.fn()}
 			/>,
 		);
 
@@ -49,7 +49,7 @@ describe('ApDexSettings', () => {
 				handlePopOverClose={mockHandlePopOverClose}
 				isLoading={false}
 				data={axiosResponseThresholdData}
-				refetch={jest.fn()}
+				refetchGetApDexSetting={jest.fn()}
 			/>,
 		);
 
