@@ -1,8 +1,8 @@
 // ** Helpers
-import { GRAPH_TYPES } from 'container/NewDashboard/ComponentsSlider';
 import { createIdFromObjectFields } from 'lib/createIdFromObjectFields';
 import { createNewBuilderItemName } from 'lib/newQueryBuilder/createNewBuilderItemName';
 import {
+	AutocompleteType,
 	BaseAutocompleteData,
 	LocalDataType,
 } from 'types/api/queryBuilder/queryAutocompleteResponse';
@@ -14,6 +14,7 @@ import {
 	IPromQLQuery,
 	Query,
 	QueryState,
+	TagFilter,
 } from 'types/api/queryBuilder/queryBuilderData';
 import { EQueryType } from 'types/common/dashboard';
 import {
@@ -22,7 +23,6 @@ import {
 	LogsAggregatorOperator,
 	MetricAggregateOperator,
 	NumberOperators,
-	PanelTypeKeys,
 	QueryAdditionalFilter,
 	QueryBuilderData,
 	ReduceOperators,
@@ -49,6 +49,11 @@ export const baseAutoCompleteIdKeysOrder: (keyof Omit<
 	'id'
 >)[] = ['key', 'dataType', 'type', 'isColumn'];
 
+export const autocompleteType: Record<AutocompleteType, AutocompleteType> = {
+	resource: 'resource',
+	tag: 'tag',
+};
+
 export const formulasNames: string[] = Array.from(
 	Array(MAX_FORMULAS),
 	(_, i) => `F${i + 1}`,
@@ -59,7 +64,6 @@ export const alphabet: string[] = alpha.map((str) => String.fromCharCode(str));
 export enum QueryBuilderKeys {
 	GET_AGGREGATE_ATTRIBUTE = 'GET_AGGREGATE_ATTRIBUTE',
 	GET_AGGREGATE_KEYS = 'GET_AGGREGATE_KEYS',
-	GET_ATTRIBUTE_KEY = 'GET_ATTRIBUTE_KEY',
 }
 
 export const mapOfOperators = {
@@ -113,10 +117,15 @@ export const initialAutocompleteData: BaseAutocompleteData = {
 	type: null,
 };
 
-const initialQueryBuilderFormValues: IBuilderQuery = {
+export const initialFilters: TagFilter = {
+	items: [],
+	op: 'AND',
+};
+
+export const initialQueryBuilderFormValues: IBuilderQuery = {
 	dataSource: DataSource.METRICS,
 	queryName: createNewBuilderItemName({ existNames: [], sourceNames: alphabet }),
-	aggregateOperator: MetricAggregateOperator.NOOP,
+	aggregateOperator: MetricAggregateOperator.COUNT,
 	aggregateAttribute: initialAutocompleteData,
 	filters: { items: [], op: 'AND' },
 	expression: createNewBuilderItemName({
@@ -125,7 +134,7 @@ const initialQueryBuilderFormValues: IBuilderQuery = {
 	}),
 	disabled: false,
 	having: [],
-	stepInterval: 30,
+	stepInterval: 60,
 	limit: null,
 	orderBy: [],
 	groupBy: [],
@@ -227,13 +236,15 @@ export const operatorsByTypes: Record<LocalDataType, string[]> = {
 	bool: Object.values(BoolOperators),
 };
 
-export const PANEL_TYPES: Record<PanelTypeKeys, GRAPH_TYPES> = {
-	TIME_SERIES: 'graph',
-	VALUE: 'value',
-	TABLE: 'table',
-	LIST: 'list',
-	EMPTY_WIDGET: 'EMPTY_WIDGET',
-};
+// eslint-disable-next-line @typescript-eslint/naming-convention
+export enum PANEL_TYPES {
+	TIME_SERIES = 'graph',
+	VALUE = 'value',
+	TABLE = 'table',
+	LIST = 'list',
+	TRACE = 'trace',
+	EMPTY_WIDGET = 'EMPTY_WIDGET',
+}
 
 export type IQueryBuilderState = 'search';
 

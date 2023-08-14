@@ -73,6 +73,11 @@ func InitDB(dataSourceName string) (*ModelDaoSqlite, error) {
 			flags TEXT,
 			FOREIGN KEY(user_id) REFERENCES users(id)
 		);
+		CREATE TABLE IF NOT EXISTS apdex_settings (
+			service_name TEXT PRIMARY KEY,
+			threshold FLOAT NOT NULL,
+			exclude_status_codes TEXT NOT NULL
+		);
 	`
 
 	_, err = db.Exec(table_schema)

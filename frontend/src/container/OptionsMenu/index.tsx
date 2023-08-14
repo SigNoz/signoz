@@ -1,11 +1,5 @@
 import { SettingFilled, SettingOutlined } from '@ant-design/icons';
-import {
-	InputNumberProps,
-	Popover,
-	RadioProps,
-	SelectProps,
-	Space,
-} from 'antd';
+import { Popover, Space } from 'antd';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -14,6 +8,12 @@ import AddColumnField from './AddColumnField';
 import FormatField from './FormatField';
 import MaxLinesField from './MaxLinesField';
 import { OptionsContainer, OptionsContentWrapper } from './styles';
+import { OptionsMenuConfig } from './types';
+import useOptionsMenu from './useOptionsMenu';
+
+interface OptionsMenuProps {
+	config: OptionsMenuConfig;
+}
 
 function OptionsMenu({ config }: OptionsMenuProps): JSX.Element {
 	const { t } = useTranslation(['trace']);
@@ -44,14 +44,6 @@ function OptionsMenu({ config }: OptionsMenuProps): JSX.Element {
 	);
 }
 
-export type OptionsMenuConfig = {
-	format?: Pick<RadioProps, 'value' | 'onChange'>;
-	maxLines?: Pick<InputNumberProps, 'value' | 'onChange'>;
-	addColumn?: Pick<SelectProps, 'options' | 'value' | 'onChange'>;
-};
-
-interface OptionsMenuProps {
-	config: OptionsMenuConfig;
-}
-
 export default OptionsMenu;
+
+export { useOptionsMenu };

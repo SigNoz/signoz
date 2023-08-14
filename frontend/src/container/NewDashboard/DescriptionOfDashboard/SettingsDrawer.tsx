@@ -26,7 +26,6 @@ function SettingsDrawer(): JSX.Element {
 				width="70%"
 				onClose={onClose}
 				visible={visible}
-				maskClosable={false}
 			>
 				<DashboardSettingsContent />
 			</DrawerContainer>

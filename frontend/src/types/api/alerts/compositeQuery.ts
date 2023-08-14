@@ -1,4 +1,4 @@
-import { GRAPH_TYPES } from 'container/NewDashboard/ComponentsSlider';
+import { PANEL_TYPES } from 'constants/queryBuilder';
 import {
 	BuilderClickHouseResource,
 	BuilderPromQLResource,
@@ -11,5 +11,5 @@ export interface ICompositeMetricQuery {
 	promQueries: BuilderPromQLResource;
 	chQueries: BuilderClickHouseResource;
 	queryType: EQueryType;
-	panelType: GRAPH_TYPES;
+	panelType: PANEL_TYPES;
 }

@@ -1,18 +1,23 @@
 import Loadable from 'components/Loadable';
 
 export const ServicesTablePage = Loadable(
-	() => import(/* webpackChunkName: "ServicesTablePage" */ 'pages/Metrics'),
+	() => import(/* webpackChunkName: "ServicesTablePage" */ 'pages/Services'),
 );
 
 export const ServiceMetricsPage = Loadable(
 	() =>
 		import(
-			/* webpackChunkName: "ServiceMetricsPage" */ 'pages/MetricApplication'
+			/* webpackChunkName: "ServiceMetricsPage" */ 'pages/MetricsApplication'
 		),
 );
 
 export const ServiceMapPage = Loadable(
 	() => import(/* webpackChunkName: "ServiceMapPage" */ 'modules/Servicemap'),
+);
+
+export const TracesExplorer = Loadable(
+	() =>
+		import(/* webpackChunkName: "Traces Explorer Page" */ 'pages/TracesExplorer'),
 );
 
 export const TraceFilter = Loadable(
@@ -126,4 +131,13 @@ export const SomethingWentWrong = Loadable(
 
 export const LicensePage = Loadable(
 	() => import(/* webpackChunkName: "All Channels" */ 'pages/License'),
+);
+
+export const LogsIndexToFields = Loadable(
+	() =>
+		import(/* webpackChunkName: "LogsIndexToFields Page" */ 'pages/LogsSettings'),
+);
+
+export const PipelinePage = Loadable(
+	() => import(/* webpackChunkName: "Pipelines" */ 'pages/Pipelines'),
 );

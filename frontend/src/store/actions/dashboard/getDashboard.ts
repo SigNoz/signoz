@@ -1,6 +1,5 @@
 import getDashboard from 'api/dashboard/get';
 import { initialQueriesMap, PANEL_TYPES } from 'constants/queryBuilder';
-import { GRAPH_TYPES } from 'container/NewDashboard/ComponentsSlider';
 import { Dispatch } from 'redux';
 import AppActions from 'types/actions';
 import { Props } from 'types/api/dashboard/get';
@@ -65,5 +64,5 @@ export const GetDashboard = ({
 export interface GetDashboardProps {
 	uuid: Props['uuid'];
 	widgetId?: string;
-	graphType?: GRAPH_TYPES;
+	graphType?: PANEL_TYPES;
 }

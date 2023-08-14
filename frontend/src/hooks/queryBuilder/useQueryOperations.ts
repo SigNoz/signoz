@@ -2,6 +2,7 @@ import {
 	initialAutocompleteData,
 	initialQueryBuilderFormValuesMap,
 	mapOfFilters,
+	PANEL_TYPES,
 } from 'constants/queryBuilder';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { getOperatorsBySourceAndPanelType } from 'lib/newQueryBuilder/getOperatorsBySourceAndPanelType';
@@ -16,12 +17,17 @@ import {
 import { DataSource } from 'types/common/queryBuilder';
 import { SelectOption } from 'types/common/select';
 
-export const useQueryOperations: UseQueryOperations = ({ query, index }) => {
+export const useQueryOperations: UseQueryOperations = ({
+	query,
+	index,
+	filterConfigs,
+}) => {
 	const {
 		handleSetQueryData,
 		removeQueryBuilderEntityByIndex,
 		panelType,
 		initialDataSource,
+		currentQuery,
 	} = useQueryBuilder();
 	const [operators, setOperators] = useState<SelectOption<string, string>[]>([]);
 	const [listOfAdditionalFilters, setListOfAdditionalFilters] = useState<
@@ -56,9 +62,33 @@ export const useQueryOperations: UseQueryOperations = ({ query, index }) => {
 	);
 
 	const getNewListOfAdditionalFilters = useCallback(
-		(dataSource: DataSource): string[] =>
-			mapOfFilters[dataSource].map((item) => item.text),
-		[],
+		(dataSource: DataSource): string[] => {
+			const additionalFiltersKeys: (keyof Pick<
+				IBuilderQuery,
+				'orderBy' | 'limit' | 'having' | 'stepInterval'
+			>)[] = ['having', 'limit', 'orderBy', 'stepInterval'];
+
+			const result: string[] = mapOfFilters[dataSource].reduce<string[]>(
+				(acc, item) => {
+					if (
+						filterConfigs &&
+						filterConfigs[item.field as typeof additionalFiltersKeys[number]]
+							?.isHidden
+					) {
+						return acc;
+					}
+
+					acc.push(item.text);
+
+					return acc;
+				},
+				[],
+			);
+
+			return result;
+		},
+
+		[filterConfigs],
 	);
 
 	const handleChangeAggregatorAttribute = useCallback(
@@ -78,7 +108,7 @@ export const useQueryOperations: UseQueryOperations = ({ query, index }) => {
 		(nextSource: DataSource): void => {
 			const newOperators = getOperatorsBySourceAndPanelType({
 				dataSource: nextSource,
-				panelType,
+				panelType: panelType || PANEL_TYPES.TIME_SERIES,
 			});
 
 			const entries = Object.entries(
@@ -101,8 +131,10 @@ export const useQueryOperations: UseQueryOperations = ({ query, index }) => {
 	);
 
 	const handleDeleteQuery = useCallback(() => {
-		removeQueryBuilderEntityByIndex('queryData', index);
-	}, [removeQueryBuilderEntityByIndex, index]);
+		if (currentQuery.builder.queryData.length > 1) {
+			removeQueryBuilderEntityByIndex('queryData', index);
+		}
+	}, [removeQueryBuilderEntityByIndex, index, currentQuery]);
 
 	const handleChangeQueryData: HandleChangeQueryData = useCallback(
 		(key, value) => {
@@ -120,34 +152,22 @@ export const useQueryOperations: UseQueryOperations = ({ query, index }) => {
 		() => query.dataSource === DataSource.METRICS,
 		[query.dataSource],
 	);
+	const isTracePanelType = useMemo(() => panelType === PANEL_TYPES.TRACE, [
+		panelType,
+	]);
 
 	useEffect(() => {
 		if (initialDataSource && dataSource !== initialDataSource) return;
 
 		const initialOperators = getOperatorsBySourceAndPanelType({
 			dataSource,
-			panelType,
+			panelType: panelType || PANEL_TYPES.TIME_SERIES,
 		});
 
 		if (JSON.stringify(operators) === JSON.stringify(initialOperators)) return;
 
 		setOperators(initialOperators);
-
-		const isCurrentOperatorAvailableInList = initialOperators
-			.map((operator) => operator.value)
-			.includes(aggregateOperator);
-
-		if (!isCurrentOperatorAvailableInList) {
-			handleChangeOperator(initialOperators[0].value);
-		}
-	}, [
-		dataSource,
-		initialDataSource,
-		panelType,
-		operators,
-		aggregateOperator,
-		handleChangeOperator,
-	]);
+	}, [dataSource, initialDataSource, panelType, operators]);
 
 	useEffect(() => {
 		const additionalFilters = getNewListOfAdditionalFilters(dataSource);
@@ -156,6 +176,7 @@ export const useQueryOperations: UseQueryOperations = ({ query, index }) => {
 	}, [dataSource, aggregateOperator, getNewListOfAdditionalFilters]);
 
 	return {
+		isTracePanelType,
 		isMetricsDataSource,
 		operators,
 		listOfAdditionalFilters,
