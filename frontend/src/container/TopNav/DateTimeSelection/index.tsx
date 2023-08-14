@@ -4,6 +4,9 @@ import getLocalStorageKey from 'api/browser/localstorage/get';
 import setLocalStorageKey from 'api/browser/localstorage/set';
 import { LOCALSTORAGE } from 'constants/localStorage';
 import dayjs, { Dayjs } from 'dayjs';
+import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
+import { updateStepInterval } from 'hooks/queryBuilder/useStepInterval';
+import GetMinMax from 'lib/getMinMax';
 import getTimeString from 'lib/getTimeString';
 import { useCallback, useEffect, useState } from 'react';
 import { connect, useSelector } from 'react-redux';
@@ -65,6 +68,8 @@ function DateTimeSelection({
 	const [customDateTimeVisible, setCustomDTPickerVisible] = useState<boolean>(
 		false,
 	);
+
+	const { stagedQuery, initQueryBuilderData } = useQueryBuilder();
 
 	const { maxTime, minTime, selectedTime } = useSelector<
 		AppState,
@@ -174,6 +179,14 @@ function DateTimeSelection({
 			setRefreshButtonHidden(true);
 			setCustomDTPickerVisible(true);
 		}
+
+		if (!stagedQuery) {
+			return;
+		}
+
+		const { maxTime, minTime } = GetMinMax(value, getTime());
+
+		initQueryBuilderData(updateStepInterval(stagedQuery, maxTime, minTime));
 	};
 
 	const onRefreshHandler = (): void => {

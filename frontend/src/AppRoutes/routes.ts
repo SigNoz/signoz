@@ -16,10 +16,13 @@ import {
 	ListAllALertsPage,
 	Login,
 	Logs,
+	LogsExplorer,
+	LogsIndexToFields,
 	MySettings,
 	NewDashboardPage,
 	OrganizationSettings,
 	PasswordReset,
+	PipelinePage,
 	ServiceMapPage,
 	ServiceMetricsPage,
 	ServicesTablePage,
@@ -29,6 +32,7 @@ import {
 	StatusPage,
 	TraceDetail,
 	TraceFilter,
+	TracesExplorer,
 	UnAuthorized,
 	UsageExplorerPage,
 } from './pageComponents';
@@ -40,6 +44,13 @@ const routes: AppRoutes[] = [
 		exact: true,
 		isPrivate: false,
 		key: 'SIGN_UP',
+	},
+	{
+		component: LogsIndexToFields,
+		path: ROUTES.LOGS_INDEX_FIELDS,
+		exact: true,
+		isPrivate: true,
+		key: 'LOGS_INDEX_FIELDS',
 	},
 	{
 		component: ServicesTablePage,
@@ -140,6 +151,13 @@ const routes: AppRoutes[] = [
 		key: 'TRACE',
 	},
 	{
+		path: ROUTES.TRACES_EXPLORER,
+		exact: true,
+		component: TracesExplorer,
+		isPrivate: true,
+		key: 'TRACES_EXPLORER',
+	},
+	{
 		path: ROUTES.CHANNELS_NEW,
 		exact: true,
 		component: CreateAlertChannelAlerts,
@@ -210,6 +228,13 @@ const routes: AppRoutes[] = [
 		isPrivate: true,
 	},
 	{
+		path: ROUTES.LOGS_EXPLORER,
+		exact: true,
+		component: LogsExplorer,
+		key: 'LOGS_EXPLORER',
+		isPrivate: true,
+	},
+	{
 		path: ROUTES.LOGIN,
 		exact: true,
 		component: Login,
@@ -236,6 +261,13 @@ const routes: AppRoutes[] = [
 		component: SomethingWentWrong,
 		key: 'SOMETHING_WENT_WRONG',
 		isPrivate: false,
+	},
+	{
+		path: ROUTES.PIPELINES,
+		exact: true,
+		component: PipelinePage,
+		key: 'PIPELINES',
+		isPrivate: true,
 	},
 ];
 

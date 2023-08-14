@@ -1,12 +1,15 @@
 import {
 	getOperatorFromValue,
+	getTagToken,
 	isExistsNotExistsOperator,
 	isInNInOperator,
 } from 'container/QueryBuilder/filters/QueryBuilderSearch/utils';
 // eslint-disable-next-line import/no-extraneous-dependencies
 import * as Papa from 'papaparse';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
+
+import { WhereClauseConfig } from './useAutoComplete';
 
 type IUseTag = {
 	handleAddTag: (value: string) => void;
@@ -24,13 +27,29 @@ type IUseTag = {
  */
 
 export const useTag = (
-	key: string,
 	isValidTag: boolean,
 	handleSearch: (value: string) => void,
 	query: IBuilderQuery,
 	setSearchKey: (value: string) => void,
+	whereClauseConfig?: WhereClauseConfig,
 ): IUseTag => {
-	const [tags, setTags] = useState<string[]>([]);
+	const initTagsData = useMemo(
+		() =>
+			(query?.filters?.items || []).map((ele) => {
+				if (isInNInOperator(getOperatorFromValue(ele.op))) {
+					try {
+						const csvString = Papa.unparse([ele.value]);
+						return `${ele.key?.key} ${getOperatorFromValue(ele.op)} ${csvString}`;
+					} catch {
+						return `${ele.key?.key} ${getOperatorFromValue(ele.op)} ${ele.value}`;
+					}
+				}
+				return `${ele.key?.key} ${getOperatorFromValue(ele.op)} ${ele.value}`;
+			}),
+		[query.filters],
+	);
+
+	const [tags, setTags] = useState<string[]>(initTagsData);
 
 	const updateTag = (value: string): void => {
 		const newTags = tags?.filter((item: string) => item !== value);
@@ -41,15 +60,31 @@ export const useTag = (
 	 * Adds a new tag to the tag list.
 	 * @param {string} value - The tag value to be added.
 	 */
+
 	const handleAddTag = useCallback(
 		(value: string): void => {
+			const { tagKey } = getTagToken(value);
+			const [key, id] = tagKey.split('-');
+
+			if (id === 'custom') {
+				const customValue = whereClauseConfig
+					? `${whereClauseConfig.customKey} ${whereClauseConfig.customOp} ${key}`
+					: '';
+				setTags((prevTags) =>
+					prevTags.includes(customValue) ? prevTags : [...prevTags, customValue],
+				);
+				handleSearch('');
+				setSearchKey('');
+				return;
+			}
+
 			if ((value && key && isValidTag) || isExistsNotExistsOperator(value)) {
 				setTags((prevTags) => [...prevTags, value]);
 				handleSearch('');
 				setSearchKey('');
 			}
 		},
-		[key, isValidTag, handleSearch, setSearchKey],
+		[whereClauseConfig, isValidTag, handleSearch, setSearchKey],
 	);
 
 	/**
@@ -61,16 +96,8 @@ export const useTag = (
 	}, []);
 
 	useEffect(() => {
-		const initialTags = (query?.filters?.items || []).map((ele) => {
-			if (isInNInOperator(getOperatorFromValue(ele.op))) {
-				const csvString = Papa.unparse([ele.value]);
-				return `${ele.key?.key} ${getOperatorFromValue(ele.op)} ${csvString}`;
-			}
-			return `${ele.key?.key} ${getOperatorFromValue(ele.op)} ${ele.value}`;
-		});
-		setTags(initialTags);
-		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, []);
+		setTags(initTagsData);
+	}, [initTagsData]);
 
 	return { handleAddTag, handleClearTag, tags, updateTag };
 };

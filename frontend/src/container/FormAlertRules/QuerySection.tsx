@@ -4,8 +4,11 @@ import { PANEL_TYPES } from 'constants/queryBuilder';
 import { QueryBuilder } from 'container/QueryBuilder';
 import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useSelector } from 'react-redux';
+import { AppState } from 'store/reducers';
 import { AlertTypes } from 'types/api/alerts/alertTypes';
 import { EQueryType } from 'types/common/dashboard';
+import AppReducer from 'types/reducer/app';
 
 import ChQuerySection from './ChQuerySection';
 import PromqlSection from './PromqlSection';
@@ -20,8 +23,14 @@ function QuerySection({
 	// init namespace for translations
 	const { t } = useTranslation('alerts');
 
+	const { featureResponse } = useSelector<AppState, AppReducer>(
+		(state) => state.app,
+	);
+
 	const handleQueryCategoryChange = (queryType: string): void => {
-		setQueryCategory(queryType as EQueryType);
+		featureResponse.refetch().then(() => {
+			setQueryCategory(queryType as EQueryType);
+		});
 	};
 
 	const renderPromqlUI = (): JSX.Element => <PromqlSection />;
@@ -37,10 +46,6 @@ function QuerySection({
 			}}
 		/>
 	);
-
-	const handleRunQuery = (): void => {
-		runQuery();
-	};
 
 	const tabs = [
 		{
@@ -76,7 +81,7 @@ function QuerySection({
 						onChange={handleQueryCategoryChange}
 						tabBarExtraContent={
 							<span style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
-								<Button type="primary" onClick={handleRunQuery}>
+								<Button type="primary" onClick={runQuery}>
 									Run Query
 								</Button>
 							</span>
@@ -95,7 +100,7 @@ function QuerySection({
 						onChange={handleQueryCategoryChange}
 						tabBarExtraContent={
 							<span style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
-								<Button type="primary" onClick={handleRunQuery}>
+								<Button type="primary" onClick={runQuery}>
 									Run Query
 								</Button>
 							</span>
@@ -132,7 +137,7 @@ interface QuerySectionProps {
 	queryCategory: EQueryType;
 	setQueryCategory: (n: EQueryType) => void;
 	alertType: AlertTypes;
-	runQuery: () => void;
+	runQuery: VoidFunction;
 }
 
 export default QuerySection;

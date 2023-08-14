@@ -6,7 +6,5 @@ export default interface DashboardReducer {
 	error: boolean;
 	errorMessage: string;
 	isEditMode: boolean;
-	isQueryFired: boolean;
 	isAddWidget: boolean;
-	isLoadingQueryResult: boolean;
 }

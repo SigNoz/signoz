@@ -26,13 +26,15 @@ function LimitFilter({ onChange, query }: LimitFilterProps): JSX.Element {
 		[query.dataSource],
 	);
 
+	const isDisabled = isMetricsDataSource && !query.aggregateAttribute.key;
+
 	return (
 		<InputNumber
 			min={1}
 			type="number"
-			defaultValue={query.limit ?? 1}
-			disabled={isMetricsDataSource && !query.aggregateAttribute.key}
+			value={query.limit}
 			style={selectStyle}
+			disabled={isDisabled}
 			onChange={onChange}
 			onKeyDown={handleKeyDown}
 		/>

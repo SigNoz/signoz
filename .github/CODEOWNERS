@@ -2,6 +2,12 @@
 # Owners are automatically requested for review for PRs that changes code
 # that they own.
 * @ankitnayan
+
 /frontend/ @palashgdev
 /deploy/ @prashant-shahi
+/sample-apps/ @prashant-shahi
 **/query-service/ @srikanthccv
+Makefile @srikanthccv
+go.* @srikanthccv
+.git* @srikanthccv
+.github @prashant-shahi

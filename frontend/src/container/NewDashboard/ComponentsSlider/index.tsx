@@ -1,5 +1,5 @@
-/* eslint-disable @typescript-eslint/naming-convention */
-
+import { initialQueriesMap, PANEL_TYPES } from 'constants/queryBuilder';
+import { queryParamNamesMap } from 'constants/queryBuilderQueryNames';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { useNotifications } from 'hooks/useNotifications';
 import history from 'lib/history';
@@ -15,7 +15,7 @@ import { AppState } from 'store/reducers';
 import AppActions from 'types/actions';
 import DashboardReducer from 'types/reducer/dashboards';
 
-import menuItems, { ITEMS } from './menuItems';
+import menuItems from './menuItems';
 import { Card, Container, Text } from './styles';
 
 function DashboardGraphSlider({ toggleAddWidget }: Props): JSX.Element {
@@ -29,7 +29,7 @@ function DashboardGraphSlider({ toggleAddWidget }: Props): JSX.Element {
 	const { data } = selectedDashboard;
 
 	const onClickHandler = useCallback(
-		async (name: ITEMS) => {
+		(name: PANEL_TYPES) => (): void => {
 			try {
 				const emptyLayout = data.layout?.find((e) => e.i === 'empty');
 
@@ -43,7 +43,11 @@ function DashboardGraphSlider({ toggleAddWidget }: Props): JSX.Element {
 				toggleAddWidget(false);
 
 				history.push(
-					`${history.location.pathname}/new?graphType=${name}&widgetId=${emptyLayout.i}`,
+					`${history.location.pathname}/new?graphType=${name}&widgetId=${
+						emptyLayout.i
+					}&${queryParamNamesMap.compositeQuery}=${encodeURIComponent(
+						JSON.stringify(initialQueriesMap.metrics),
+					)}`,
 				);
 			} catch (error) {
 				notifications.error({
@@ -59,14 +63,7 @@ function DashboardGraphSlider({ toggleAddWidget }: Props): JSX.Element {
 	return (
 		<Container>
 			{menuItems.map(({ name, Icon, display }) => (
-				<Card
-					onClick={(event): void => {
-						event.preventDefault();
-						onClickHandler(name);
-					}}
-					id={name}
-					key={name}
-				>
+				<Card onClick={onClickHandler(name)} id={name} key={name}>
 					<Icon fillColor={fillColor} />
 					<Text>{display}</Text>
 				</Card>
@@ -74,8 +71,6 @@ function DashboardGraphSlider({ toggleAddWidget }: Props): JSX.Element {
 		</Container>
 	);
 }
-
-export type GRAPH_TYPES = ITEMS;
 
 interface DispatchProps {
 	toggleAddWidget: (

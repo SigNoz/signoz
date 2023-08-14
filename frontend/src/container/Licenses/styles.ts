@@ -23,3 +23,8 @@ export const LicenseInput = styled(Form.Item)`
 		}
 	}
 `;
+
+export const KeyPreview = styled.div`
+	padding-left: 0.5em;
+	color: #666;
+`;

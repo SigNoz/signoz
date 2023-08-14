@@ -16,7 +16,7 @@ export function ErrorResponseHandler(error: AxiosError): ErrorResponse {
 				return {
 					statusCode,
 					payload: null,
-					error: 'Not Found',
+					error: data.errorType,
 					message: null,
 				};
 			}

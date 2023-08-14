@@ -1,26 +1,33 @@
 // ** Helpers
-import { GRAPH_TYPES } from 'container/NewDashboard/ComponentsSlider';
+import { createIdFromObjectFields } from 'lib/createIdFromObjectFields';
 import { createNewBuilderItemName } from 'lib/newQueryBuilder/createNewBuilderItemName';
-import { LocalDataType } from 'types/api/queryBuilder/queryAutocompleteResponse';
+import {
+	AutocompleteType,
+	BaseAutocompleteData,
+	LocalDataType,
+} from 'types/api/queryBuilder/queryAutocompleteResponse';
 import {
 	HavingForm,
 	IBuilderFormula,
 	IBuilderQuery,
 	IClickHouseQuery,
 	IPromQLQuery,
+	Query,
 	QueryState,
+	TagFilter,
 } from 'types/api/queryBuilder/queryBuilderData';
 import { EQueryType } from 'types/common/dashboard';
 import {
 	BoolOperators,
 	DataSource,
+	LogsAggregatorOperator,
 	MetricAggregateOperator,
 	NumberOperators,
-	PanelTypeKeys,
 	QueryAdditionalFilter,
 	QueryBuilderData,
 	ReduceOperators,
 	StringOperators,
+	TracesAggregatorOperator,
 } from 'types/common/queryBuilder';
 import { SelectOption } from 'types/common/select';
 import { v4 as uuid } from 'uuid';
@@ -34,7 +41,18 @@ import {
 export const MAX_FORMULAS = 20;
 export const MAX_QUERIES = 26;
 
-export const selectValueDivider = '--';
+export const idDivider = '--';
+export const selectValueDivider = '__';
+
+export const baseAutoCompleteIdKeysOrder: (keyof Omit<
+	BaseAutocompleteData,
+	'id'
+>)[] = ['key', 'dataType', 'type', 'isColumn'];
+
+export const autocompleteType: Record<AutocompleteType, AutocompleteType> = {
+	resource: 'resource',
+	tag: 'tag',
+};
 
 export const formulasNames: string[] = Array.from(
 	Array(MAX_FORMULAS),
@@ -46,7 +64,6 @@ export const alphabet: string[] = alpha.map((str) => String.fromCharCode(str));
 export enum QueryBuilderKeys {
 	GET_AGGREGATE_ATTRIBUTE = 'GET_AGGREGATE_ATTRIBUTE',
 	GET_AGGREGATE_KEYS = 'GET_AGGREGATE_KEYS',
-	GET_ATTRIBUTE_KEY = 'GET_ATTRIBUTE_KEY',
 }
 
 export const mapOfOperators = {
@@ -89,19 +106,27 @@ export const initialHavingValues: HavingForm = {
 	value: [],
 };
 
-export const initialAggregateAttribute: IBuilderQuery['aggregateAttribute'] = {
-	id: uuid(),
+export const initialAutocompleteData: BaseAutocompleteData = {
+	id: createIdFromObjectFields(
+		{ dataType: null, key: '', isColumn: null, type: null },
+		baseAutoCompleteIdKeysOrder,
+	),
 	dataType: null,
 	key: '',
 	isColumn: null,
 	type: null,
 };
 
+export const initialFilters: TagFilter = {
+	items: [],
+	op: 'AND',
+};
+
 export const initialQueryBuilderFormValues: IBuilderQuery = {
 	dataSource: DataSource.METRICS,
 	queryName: createNewBuilderItemName({ existNames: [], sourceNames: alphabet }),
-	aggregateOperator: MetricAggregateOperator.NOOP,
-	aggregateAttribute: initialAggregateAttribute,
+	aggregateOperator: MetricAggregateOperator.COUNT,
+	aggregateAttribute: initialAutocompleteData,
 	filters: { items: [], op: 'AND' },
 	expression: createNewBuilderItemName({
 		existNames: [],
@@ -109,12 +134,33 @@ export const initialQueryBuilderFormValues: IBuilderQuery = {
 	}),
 	disabled: false,
 	having: [],
-	stepInterval: 30,
+	stepInterval: 60,
 	limit: null,
 	orderBy: [],
 	groupBy: [],
 	legend: '',
 	reduceTo: 'sum',
+};
+
+const initialQueryBuilderFormLogsValues: IBuilderQuery = {
+	...initialQueryBuilderFormValues,
+	aggregateOperator: LogsAggregatorOperator.COUNT,
+	dataSource: DataSource.LOGS,
+};
+
+const initialQueryBuilderFormTracesValues: IBuilderQuery = {
+	...initialQueryBuilderFormValues,
+	aggregateOperator: TracesAggregatorOperator.COUNT,
+	dataSource: DataSource.TRACES,
+};
+
+export const initialQueryBuilderFormValuesMap: Record<
+	DataSource,
+	IBuilderQuery
+> = {
+	metrics: initialQueryBuilderFormValues,
+	logs: initialQueryBuilderFormLogsValues,
+	traces: initialQueryBuilderFormTracesValues,
 };
 
 export const initialFormulaBuilderFormValues: IBuilderFormula = {
@@ -136,7 +182,6 @@ export const initialQueryPromQLData: IPromQLQuery = {
 
 export const initialClickHouseData: IClickHouseQuery = {
 	name: createNewBuilderItemName({ existNames: [], sourceNames: alphabet }),
-	rawQuery: '',
 	legend: '',
 	disabled: false,
 	query: '',
@@ -152,10 +197,37 @@ export const initialSingleQueryMap: Record<
 	IClickHouseQuery | IPromQLQuery
 > = { clickhouse_sql: initialClickHouseData, promql: initialQueryPromQLData };
 
-export const initialQuery: QueryState = {
+export const initialQueryState: QueryState = {
+	id: uuid(),
 	builder: initialQueryBuilderData,
 	clickhouse_sql: [initialClickHouseData],
 	promql: [initialQueryPromQLData],
+};
+
+const initialQueryWithType: Query = {
+	...initialQueryState,
+	queryType: EQueryType.QUERY_BUILDER,
+};
+
+const initialQueryLogsWithType: Query = {
+	...initialQueryWithType,
+	builder: {
+		...initialQueryWithType.builder,
+		queryData: [initialQueryBuilderFormValuesMap.logs],
+	},
+};
+const initialQueryTracesWithType: Query = {
+	...initialQueryWithType,
+	builder: {
+		...initialQueryWithType.builder,
+		queryData: [initialQueryBuilderFormValuesMap.traces],
+	},
+};
+
+export const initialQueriesMap: Record<DataSource, Query> = {
+	metrics: initialQueryWithType,
+	logs: initialQueryLogsWithType,
+	traces: initialQueryTracesWithType,
 };
 
 export const operatorsByTypes: Record<LocalDataType, string[]> = {
@@ -164,13 +236,15 @@ export const operatorsByTypes: Record<LocalDataType, string[]> = {
 	bool: Object.values(BoolOperators),
 };
 
-export const PANEL_TYPES: Record<PanelTypeKeys, GRAPH_TYPES> = {
-	TIME_SERIES: 'graph',
-	VALUE: 'value',
-	TABLE: 'table',
-	LIST: 'list',
-	EMPTY_WIDGET: 'EMPTY_WIDGET',
-};
+// eslint-disable-next-line @typescript-eslint/naming-convention
+export enum PANEL_TYPES {
+	TIME_SERIES = 'graph',
+	VALUE = 'value',
+	TABLE = 'table',
+	LIST = 'list',
+	TRACE = 'trace',
+	EMPTY_WIDGET = 'EMPTY_WIDGET',
+}
 
 export type IQueryBuilderState = 'search';
 

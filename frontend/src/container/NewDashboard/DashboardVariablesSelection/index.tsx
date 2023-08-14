@@ -10,6 +10,7 @@ import { UpdateDashboardVariables } from 'store/actions/dashboard/updatedDashboa
 import { AppState } from 'store/reducers';
 import AppActions from 'types/actions';
 import { IDashboardVariable } from 'types/api/dashboard/getAll';
+import AppReducer from 'types/reducer/app';
 import DashboardReducer from 'types/reducer/dashboards';
 
 import VariableItem from './VariableItem';
@@ -29,6 +30,8 @@ function DashboardVariableSelection({
 	const [lastUpdatedVar, setLastUpdatedVar] = useState<string>('');
 	const { notifications } = useNotifications();
 
+	const { role } = useSelector<AppState, AppReducer>((state) => state.app);
+
 	const onVarChanged = (name: string): void => {
 		setLastUpdatedVar(name);
 		setUpdate(!update);
@@ -36,19 +39,15 @@ function DashboardVariableSelection({
 
 	const onValueUpdate = (
 		name: string,
-		value:
-			| string
-			| string[]
-			| number
-			| number[]
-			| boolean
-			| boolean[]
-			| null
-			| undefined,
+		value: IDashboardVariable['selectedValue'],
 	): void => {
 		const updatedVariablesData = { ...variables };
 		updatedVariablesData[name].selectedValue = value;
-		updateDashboardVariables(updatedVariablesData, notifications);
+
+		if (role !== 'VIEWER') {
+			updateDashboardVariables(updatedVariablesData, notifications);
+		}
+
 		onVarChanged(name);
 	};
 	const onAllSelectedUpdate = (
@@ -57,7 +56,10 @@ function DashboardVariableSelection({
 	): void => {
 		const updatedVariablesData = { ...variables };
 		updatedVariablesData[name].allSelected = value;
-		updateDashboardVariables(updatedVariablesData, notifications);
+
+		if (role !== 'VIEWER') {
+			updateDashboardVariables(updatedVariablesData, notifications);
+		}
 		onVarChanged(name);
 	};
 

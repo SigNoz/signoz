@@ -1,6 +1,9 @@
 import { Card, Typography } from 'antd';
-import GridGraphComponent from 'container/GridGraphComponent';
-import { NewWidgetProps } from 'container/NewWidget';
+import Spinner from 'components/Spinner';
+import GridPanelSwitch from 'container/GridPanelSwitch';
+import { WidgetGraphProps } from 'container/NewWidget/types';
+import { useGetWidgetQueryRange } from 'hooks/queryBuilder/useGetWidgetQueryRange';
+import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import getChartData from 'lib/getChartData';
 import { useSelector } from 'react-redux';
 import { useLocation } from 'react-router-dom';
@@ -12,7 +15,9 @@ import { NotFoundContainer } from './styles';
 function WidgetGraph({
 	selectedGraph,
 	yAxisUnit,
+	selectedTime,
 }: WidgetGraphProps): JSX.Element {
+	const { stagedQuery } = useQueryBuilder();
 	const { dashboards } = useSelector<AppState, DashboardReducer>(
 		(state) => state.dashboards,
 	);
@@ -27,20 +32,28 @@ function WidgetGraph({
 
 	const selectedWidget = widgets.find((e) => e.id === widgetId);
 
+	const getWidgetQueryRange = useGetWidgetQueryRange({
+		graphType: selectedGraph,
+		selectedTime: selectedTime.enum,
+	});
+
 	if (selectedWidget === undefined) {
 		return <Card>Invalid widget</Card>;
 	}
 
-	const { queryData, title, opacity, isStacked } = selectedWidget;
+	const { title, opacity, isStacked, query } = selectedWidget;
 
-	if (queryData.error) {
+	if (getWidgetQueryRange.error) {
 		return (
 			<NotFoundContainer>
-				<Typography>{queryData.errorMessage}</Typography>
+				<Typography>{getWidgetQueryRange.error.message}</Typography>
 			</NotFoundContainer>
 		);
 	}
-	if (queryData.data.queryData.length === 0) {
+	if (getWidgetQueryRange.isLoading) {
+		return <Spinner size="large" tip="Loading..." />;
+	}
+	if (getWidgetQueryRange.data?.payload.data.result.length === 0) {
 		return (
 			<NotFoundContainer>
 				<Typography>No Data</Typography>
@@ -49,22 +62,26 @@ function WidgetGraph({
 	}
 
 	const chartDataSet = getChartData({
-		queryData: [queryData.data],
+		queryData: [
+			{ queryData: getWidgetQueryRange.data?.payload.data.result ?? [] },
+		],
 	});
 
 	return (
-		<GridGraphComponent
+		<GridPanelSwitch
 			title={title}
 			isStacked={isStacked}
 			opacity={opacity}
 			data={chartDataSet}
-			GRAPH_TYPES={selectedGraph}
+			panelType={selectedGraph}
 			name={widgetId || 'legend_widget'}
 			yAxisUnit={yAxisUnit}
+			panelData={
+				getWidgetQueryRange.data?.payload.data.newResult.data.result || []
+			}
+			query={stagedQuery || query}
 		/>
 	);
 }
-
-type WidgetGraphProps = NewWidgetProps;
 
 export default WidgetGraph;

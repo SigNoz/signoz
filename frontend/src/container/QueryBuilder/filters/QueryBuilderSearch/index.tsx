@@ -1,13 +1,18 @@
 import { Select, Spin, Tag, Tooltip } from 'antd';
-import { useAutoComplete } from 'hooks/queryBuilder/useAutoComplete';
+import {
+	useAutoComplete,
+	WhereClauseConfig,
+} from 'hooks/queryBuilder/useAutoComplete';
 import { useFetchKeysAndValues } from 'hooks/queryBuilder/useFetchKeysAndValues';
 import {
 	KeyboardEvent,
 	ReactElement,
 	ReactNode,
+	useCallback,
 	useEffect,
 	useMemo,
 } from 'react';
+import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import {
 	IBuilderQuery,
 	TagFilter,
@@ -16,6 +21,7 @@ import { DataSource } from 'types/common/queryBuilder';
 import { v4 as uuid } from 'uuid';
 
 import { selectStyle } from './config';
+import { PLACEHOLDER } from './constant';
 import { StyledCheckOutlined, TypographyText } from './style';
 import {
 	getOperatorValue,
@@ -28,6 +34,7 @@ import {
 function QueryBuilderSearch({
 	query,
 	onChange,
+	whereClauseConfig,
 }: QueryBuilderSearchProps): JSX.Element {
 	const {
 		updateTag,
@@ -42,9 +49,13 @@ function QueryBuilderSearch({
 		isFetching,
 		setSearchKey,
 		searchKey,
-	} = useAutoComplete(query);
+	} = useAutoComplete(query, whereClauseConfig);
 
-	const { keys } = useFetchKeysAndValues(searchValue, query, searchKey);
+	const { sourceKeys, handleRemoveSourceKey } = useFetchKeysAndValues(
+		searchValue,
+		query,
+		searchKey,
+	);
 
 	const onTagRender = ({
 		value,
@@ -94,6 +105,14 @@ function QueryBuilderSearch({
 		if (isExistsNotExistsOperator(searchValue)) handleKeyDown(event);
 	};
 
+	const handleDeselect = useCallback(
+		(deselectedItem: string) => {
+			handleClearTag(deselectedItem);
+			handleRemoveSourceKey(deselectedItem);
+		},
+		[handleClearTag, handleRemoveSourceKey],
+	);
+
 	const isMetricsDataSource = useMemo(
 		() => query.dataSource === DataSource.METRICS,
 		[query.dataSource],
@@ -106,9 +125,12 @@ function QueryBuilderSearch({
 
 	useEffect(() => {
 		const initialTagFilters: TagFilter = { items: [], op: 'AND' };
+		const initialSourceKeys = query.filters.items?.map(
+			(item) => item.key as BaseAutocompleteData,
+		);
 		initialTagFilters.items = tags.map((tag) => {
 			const { tagKey, tagOperator, tagValue } = getTagToken(tag);
-			const filterAttribute = (keys || []).find(
+			const filterAttribute = [...initialSourceKeys, ...sourceKeys].find(
 				(key) => key.key === getRemovePrefixFromKey(tagKey),
 			);
 			return {
@@ -127,8 +149,8 @@ function QueryBuilderSearch({
 			};
 		});
 		onChange(initialTagFilters);
-		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [keys, tags]);
+		/* eslint-disable react-hooks/exhaustive-deps */
+	}, [sourceKeys]);
 
 	return (
 		<Select
@@ -138,7 +160,7 @@ function QueryBuilderSearch({
 			filterOption={false}
 			autoClearSearchValue={false}
 			mode="multiple"
-			placeholder="Search Filter"
+			placeholder={PLACEHOLDER}
 			value={queryTags}
 			searchValue={searchValue}
 			disabled={isMetricsDataSource && !query.aggregateAttribute.key}
@@ -146,12 +168,12 @@ function QueryBuilderSearch({
 			onSearch={handleSearch}
 			onChange={onChangeHandler}
 			onSelect={handleSelect}
-			onDeselect={handleClearTag}
+			onDeselect={handleDeselect}
 			onInputKeyDown={onInputKeyDownHandler}
 			notFoundContent={isFetching ? <Spin size="small" /> : null}
 		>
 			{options.map((option) => (
-				<Select.Option key={option.label} value={option.label}>
+				<Select.Option key={option.label} value={option.value}>
 					{option.label}
 					{option.selected && <StyledCheckOutlined />}
 				</Select.Option>
@@ -163,7 +185,12 @@ function QueryBuilderSearch({
 interface QueryBuilderSearchProps {
 	query: IBuilderQuery;
 	onChange: (value: TagFilter) => void;
+	whereClauseConfig?: WhereClauseConfig;
 }
+
+QueryBuilderSearch.defaultProps = {
+	whereClauseConfig: undefined,
+};
 
 export interface CustomTagProps {
 	label: ReactNode;

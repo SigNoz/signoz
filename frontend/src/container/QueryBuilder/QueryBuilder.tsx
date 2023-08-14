@@ -10,37 +10,41 @@ import { memo, useEffect, useMemo } from 'react';
 import { Formula, Query } from './components';
 // ** Types
 import { QueryBuilderProps } from './QueryBuilder.interfaces';
-// ** Styles
 
 export const QueryBuilder = memo(function QueryBuilder({
 	config,
-	panelType,
+	panelType: newPanelType,
+	actions,
+	filterConfigs = {},
+	queryComponents,
 }: QueryBuilderProps): JSX.Element {
 	const {
 		currentQuery,
-		setupInitialDataSource,
-		resetQueryBuilderInfo,
 		addNewBuilderQuery,
 		addNewFormula,
-		handleSetPanelType,
+		handleSetConfig,
+		panelType,
+		initialDataSource,
 	} = useQueryBuilder();
 
-	useEffect(() => {
-		if (config && config.queryVariant === 'static') {
-			setupInitialDataSource(config.initialDataSource);
-		}
-	}, [config, setupInitialDataSource]);
-
-	useEffect(() => {
-		handleSetPanelType(panelType);
-	}, [handleSetPanelType, panelType]);
-
-	useEffect(
-		() => (): void => {
-			resetQueryBuilderInfo();
-		},
-		[resetQueryBuilderInfo],
+	const currentDataSource = useMemo(
+		() =>
+			(config && config.queryVariant === 'static' && config.initialDataSource) ||
+			null,
+		[config],
 	);
+
+	useEffect(() => {
+		if (currentDataSource !== initialDataSource || newPanelType !== panelType) {
+			handleSetConfig(newPanelType, currentDataSource);
+		}
+	}, [
+		handleSetConfig,
+		panelType,
+		initialDataSource,
+		currentDataSource,
+		newPanelType,
+	]);
 
 	const isDisabledQueryButton = useMemo(
 		() => currentQuery.builder.queryData.length >= MAX_QUERIES,
@@ -54,13 +58,13 @@ export const QueryBuilder = memo(function QueryBuilder({
 
 	const isAvailableToDisableQuery = useMemo(
 		() =>
-			currentQuery.builder.queryData.length > 1 ||
+			currentQuery.builder.queryData.length > 0 ||
 			currentQuery.builder.queryFormulas.length > 0,
 		[currentQuery],
 	);
 
 	return (
-		<Row gutter={[0, 20]} justify="start">
+		<Row style={{ width: '100%' }} gutter={[0, 20]} justify="start">
 			<Col span={24}>
 				<Row gutter={[0, 50]}>
 					{currentQuery.builder.queryData.map((query, index) => (
@@ -70,6 +74,8 @@ export const QueryBuilder = memo(function QueryBuilder({
 								isAvailableToDisable={isAvailableToDisableQuery}
 								queryVariant={config?.queryVariant || 'dropdown'}
 								query={query}
+								filterConfigs={filterConfigs}
+								queryComponents={queryComponents}
 							/>
 						</Col>
 					))}
@@ -81,28 +87,31 @@ export const QueryBuilder = memo(function QueryBuilder({
 				</Row>
 			</Col>
 
-			<Row gutter={[20, 0]}>
-				<Col>
-					<Button
-						disabled={isDisabledQueryButton}
-						type="primary"
-						icon={<PlusOutlined />}
-						onClick={addNewBuilderQuery}
-					>
-						Query
-					</Button>
-				</Col>
-				<Col>
-					<Button
-						disabled={isDisabledFormulaButton}
-						onClick={addNewFormula}
-						type="primary"
-						icon={<PlusOutlined />}
-					>
-						Formula
-					</Button>
-				</Col>
-			</Row>
+			<Col span={24}>
+				<Row gutter={[20, 0]}>
+					<Col>
+						<Button
+							disabled={isDisabledQueryButton}
+							type="primary"
+							icon={<PlusOutlined />}
+							onClick={addNewBuilderQuery}
+						>
+							Query
+						</Button>
+					</Col>
+					<Col>
+						<Button
+							disabled={isDisabledFormulaButton}
+							onClick={addNewFormula}
+							type="primary"
+							icon={<PlusOutlined />}
+						>
+							Formula
+						</Button>
+					</Col>
+					{actions}
+				</Row>
+			</Col>
 		</Row>
 	);
 });

@@ -1,9 +1,7 @@
-import { GRAPH_TYPES } from 'container/NewDashboard/ComponentsSlider';
+import { PANEL_TYPES } from 'constants/queryBuilder';
 import { timePreferenceType } from 'container/NewWidget/RightContainer/timeItems';
 import { Layout } from 'react-grid-layout';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
-
-import { QueryData } from '../widgets/getQuery';
 
 export type PayloadProps = Dashboard[];
 
@@ -59,22 +57,12 @@ export interface DashboardData {
 export interface IBaseWidget {
 	isStacked: boolean;
 	id: string;
-	panelTypes: GRAPH_TYPES;
+	panelTypes: PANEL_TYPES;
 	title: string;
 	description: string;
 	opacity: string;
 	nullZeroValues: string;
 	timePreferance: timePreferenceType;
-	queryData: {
-		loading: boolean;
-		error: boolean;
-		errorMessage: string;
-		data: {
-			query?: string;
-			legend?: string;
-			queryData: QueryData[];
-		};
-	};
 	stepSize?: number;
 	yAxisUnit?: string;
 }

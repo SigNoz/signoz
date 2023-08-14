@@ -1,4 +1,5 @@
 import { PlusOutlined, SaveFilled } from '@ant-design/icons';
+import { PANEL_TYPES } from 'constants/queryBuilder';
 import useComponentPermission from 'hooks/useComponentPermission';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { Dispatch, SetStateAction } from 'react';
@@ -7,6 +8,7 @@ import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
 import { Widgets } from 'types/api/dashboard/getAll';
 import AppReducer from 'types/reducer/app';
+import DashboardReducer from 'types/reducer/dashboards';
 
 import { LayoutProps, State } from '.';
 import {
@@ -27,6 +29,9 @@ function GraphLayout({
 	widgets,
 	setLayout,
 }: GraphLayoutProps): JSX.Element {
+	const { isAddWidget } = useSelector<AppState, DashboardReducer>(
+		(state) => state.dashboards,
+	);
 	const { role } = useSelector<AppState, AppReducer>((state) => state.app);
 	const isDarkMode = useIsDarkMode();
 
@@ -52,7 +57,7 @@ function GraphLayout({
 				{addPanelPermission && (
 					<Button
 						loading={addPanelLoading}
-						disabled={addPanelLoading}
+						disabled={addPanelLoading || isAddWidget}
 						onClick={onAddPanelHandler}
 						icon={<PlusOutlined />}
 					>
@@ -83,7 +88,7 @@ function GraphLayout({
 							key={currentWidget?.id || 'empty'} // don't change this key
 							data-grid={rest}
 						>
-							<Card>
+							<Card $panelType={currentWidget?.panelTypes || PANEL_TYPES.TIME_SERIES}>
 								<Component setLayout={setLayout} />
 							</Card>
 						</CardContainer>

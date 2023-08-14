@@ -1,27 +1,37 @@
-import { initialQueryBuilderFormValues } from 'constants/queryBuilder';
-import { FORMULA_REGEXP } from 'constants/regExp';
-import {
-	BuilderQueryDataResourse,
-	IBuilderFormula,
-	IBuilderQuery,
-} from 'types/api/queryBuilder/queryBuilderData';
-import { QueryBuilderData } from 'types/common/queryBuilder';
+import { initialQueryState } from 'constants/queryBuilder';
+import { ICompositeMetricQuery } from 'types/api/alerts/compositeQuery';
+import { Query } from 'types/api/queryBuilder/queryBuilderData';
+import { v4 as uuid } from 'uuid';
+
+import { transformQueryBuilderDataModel } from '../transformQueryBuilderDataModel';
 
 export const mapQueryDataFromApi = (
-	data: BuilderQueryDataResourse,
-): QueryBuilderData => {
-	const queryData: QueryBuilderData['queryData'] = [];
-	const queryFormulas: QueryBuilderData['queryFormulas'] = [];
+	compositeQuery: ICompositeMetricQuery,
+): Query => {
+	const builder = compositeQuery.builderQueries
+		? transformQueryBuilderDataModel(compositeQuery.builderQueries)
+		: initialQueryState.builder;
 
-	Object.entries(data).forEach(([, value]) => {
-		if (FORMULA_REGEXP.test(value.queryName)) {
-			const formula = value as IBuilderFormula;
-			queryFormulas.push(formula);
-		} else {
-			const query = value as IBuilderQuery;
-			queryData.push({ ...initialQueryBuilderFormValues, ...query });
-		}
-	});
+	const promql = compositeQuery.promQueries
+		? Object.keys(compositeQuery.promQueries).map((key) => ({
+				...compositeQuery.promQueries[key],
+				name: key,
+		  }))
+		: initialQueryState.promql;
 
-	return { queryData, queryFormulas };
+	const clickhouseSql = compositeQuery.chQueries
+		? Object.keys(compositeQuery.chQueries).map((key) => ({
+				...compositeQuery.chQueries[key],
+				name: key,
+				query: compositeQuery.chQueries[key].query,
+		  }))
+		: initialQueryState.clickhouse_sql;
+
+	return {
+		builder,
+		promql,
+		clickhouse_sql: clickhouseSql,
+		queryType: compositeQuery.queryType,
+		id: uuid(),
+	};
 };

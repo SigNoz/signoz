@@ -59,11 +59,12 @@ export type IBuilderQuery = {
 	orderBy: OrderByPayload[];
 	reduceTo: ReduceOperators;
 	legend: string;
+	pageSize?: number;
+	offset?: number;
 };
 
 export interface IClickHouseQuery {
 	name: string;
-	rawQuery: string;
 	legend: string;
 	disabled: boolean;
 	query: string;
@@ -80,12 +81,11 @@ export interface Query {
 	promql: IPromQLQuery[];
 	builder: QueryBuilderData;
 	clickhouse_sql: IClickHouseQuery[];
+	id: string;
 }
 
 export type QueryState = Omit<Query, 'queryType'>;
 
-export type BuilderQueryResource = Record<string, IBuilderQuery>;
-export type BuilderFormulaResource = Record<string, IBuilderFormula>;
 export type BuilderClickHouseResource = Record<string, IClickHouseQuery>;
 export type BuilderPromQLResource = Record<string, IPromQLQuery>;
 export type BuilderQueryDataResourse = Record<
