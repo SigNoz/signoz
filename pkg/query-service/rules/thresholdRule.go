@@ -550,7 +550,40 @@ func (r *ThresholdRule) runChQuery(ctx context.Context, db clickhouse.Conn, quer
 			}
 
 		}
+
+		if s, ok := resultMap[labelHash]; ok {
+			s.Point.Vs = append(s.Point.Vs, s.Point.V)
+		}
 	}
+
+	for _, s := range resultMap {
+		if r.matchType() == AllTheTimes && r.compareOp() == ValueIsEq {
+			for _, v := range s.Point.Vs {
+				if v != r.targetVal() { // if any of the values is not equal to target, alert shouldn't be sent
+					s.Point.V = v
+				}
+			}
+		} else if r.matchType() == AllTheTimes && r.compareOp() == ValueIsNotEq {
+			for _, v := range s.Point.Vs {
+				if v == r.targetVal() { // if any of the values is equal to target, alert shouldn't be sent
+					s.Point.V = v
+				}
+			}
+		} else if r.matchType() == AtleastOnce && r.compareOp() == ValueIsEq {
+			for _, v := range s.Point.Vs {
+				if v == r.targetVal() { // if any of the values is equal to target, alert should be sent
+					s.Point.V = v
+				}
+			}
+		} else if r.matchType() == AtleastOnce && r.compareOp() == ValueIsNotEq {
+			for _, v := range s.Point.Vs {
+				if v != r.targetVal() { // if any of the values is not equal to target, alert should be sent
+					s.Point.V = v
+				}
+			}
+		}
+	}
+
 	zap.S().Debugf("ruleid:", r.ID(), "\t resultmap(potential alerts):", len(resultMap))
 
 	for _, sample := range resultMap {
