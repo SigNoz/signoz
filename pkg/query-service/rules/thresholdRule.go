@@ -754,7 +754,7 @@ func (r *ThresholdRule) Eval(ctx context.Context, ts time.Time, queriers *Querie
 		}
 
 		value := valueFormatter.Format(smpl.V, r.Unit())
-		threshold := strconv.FormatFloat(r.targetVal(), 'f', 2, 64) + r.ruleCondition.TargetUnit
+		threshold := strconv.FormatFloat(r.targetVal(), 'f', 2, 64) + converter.UnitToName(r.ruleCondition.TargetUnit)
 		zap.S().Debugf("Alert template data for rule %s: Formatter=%s, Value=%s, Threshold=%s", r.Name(), valueFormatter.Name(), value, threshold)
 
 		tmplData := AlertTemplateData(l, value, threshold)

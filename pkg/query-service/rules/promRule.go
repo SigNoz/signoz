@@ -349,7 +349,7 @@ func (r *PromRule) Eval(ctx context.Context, ts time.Time, queriers *Queriers) (
 			l[lbl.Name] = lbl.Value
 		}
 
-		tmplData := AlertTemplateData(l, valueFormatter.Format(smpl.V, r.Unit()), strconv.FormatFloat(r.targetVal(), 'f', 2, 64)+r.ruleCondition.TargetUnit)
+		tmplData := AlertTemplateData(l, valueFormatter.Format(smpl.V, r.Unit()), strconv.FormatFloat(r.targetVal(), 'f', 2, 64)+converter.UnitToName(r.ruleCondition.TargetUnit))
 		// Inject some convenience variables that are easier to remember for users
 		// who are not used to Go's templating system.
 		defs := "{{$labels := .Labels}}{{$value := .Value}}{{$threshold := .Threshold}}"
