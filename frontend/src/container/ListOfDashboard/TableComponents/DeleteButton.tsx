@@ -1,5 +1,6 @@
 import { ExclamationCircleOutlined } from '@ant-design/icons';
 import { Modal } from 'antd';
+import { useCallback } from 'react';
 import { connect } from 'react-redux';
 import { bindActionCreators, Dispatch } from 'redux';
 import { ThunkDispatch } from 'redux-thunk';
@@ -9,11 +10,11 @@ import AppActions from 'types/actions';
 import { Data } from '../index';
 import { TableLinkText } from './styles';
 
-const { confirm } = Modal;
-
 function DeleteButton({ deleteDashboard, id }: DeleteButtonProps): JSX.Element {
-	const openConfirmationDialog = (): void => {
-		confirm({
+	const [modal, contextHolder] = Modal.useModal();
+
+	const openConfirmationDialog = useCallback((): void => {
+		modal.confirm({
 			title: 'Do you really want to delete this dashboard?',
 			icon: <ExclamationCircleOutlined style={{ color: '#e42b35' }} />,
 			onOk() {
@@ -25,12 +26,16 @@ function DeleteButton({ deleteDashboard, id }: DeleteButtonProps): JSX.Element {
 			okButtonProps: { danger: true },
 			centered: true,
 		});
-	};
+	}, [id, modal, deleteDashboard]);
 
 	return (
-		<TableLinkText type="danger" onClick={openConfirmationDialog}>
-			Delete
-		</TableLinkText>
+		<>
+			<TableLinkText type="danger" onClick={openConfirmationDialog}>
+				Delete
+			</TableLinkText>
+
+			{contextHolder}
+		</>
 	);
 }
 

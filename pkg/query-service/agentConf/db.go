@@ -104,7 +104,8 @@ func (r *Repo) GetLatestVersion(ctx context.Context, typ ElementTypeDef) (*Confi
 			FROM agent_config_versions 
 			WHERE element_type=$2)`, typ, typ)
 	if err != nil {
-		zap.S().Error("failed get latest config version for element:", typ, err)
+		// intially the table will be empty
+		return nil, err
 	}
 	return &c, err
 }
@@ -115,8 +116,9 @@ func (r *Repo) insertConfig(ctx context.Context, userId string, c *ConfigVersion
 		return fmt.Errorf("element type is required for creating agent config version")
 	}
 
-	if len(elements) == 0 {
-		zap.S().Error("insert config called with no elements", c.ElementType)
+	// allowing empty elements for logs - use case is deleting all pipelines
+	if len(elements) == 0 && c.ElementType != ElementTypeLogPipelines {
+		zap.S().Error("insert config called with no elements ", c.ElementType)
 		return fmt.Errorf("config must have atleast one element")
 	}
 
@@ -136,7 +138,12 @@ func (r *Repo) insertConfig(ctx context.Context, userId string, c *ConfigVersion
 		}
 	}
 
-	c.Version = updateVersion(configVersion.Version)
+	if configVersion != nil {
+		c.Version = updateVersion(configVersion.Version)
+	} else {
+		// first version
+		c.Version = 1
+	}
 
 	defer func() {
 		if fnerr != nil {

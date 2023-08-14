@@ -1,5 +1,6 @@
 import { Col } from 'antd';
-import FullView from 'container/GridGraphLayout/Graph/FullView/index.metricsBuilder';
+import { PANEL_TYPES } from 'constants/queryBuilder';
+import Graph from 'container/GridGraphLayout/Graph/';
 import {
 	databaseCallsAvgDuration,
 	databaseCallsRPS,
@@ -15,9 +16,11 @@ import { TagFilterItem } from 'types/api/queryBuilder/queryBuilderData';
 import { EQueryType } from 'types/common/dashboard';
 import { v4 as uuid } from 'uuid';
 
+import { GraphTitle } from '../constant';
 import { getWidgetQueryBuilder } from '../MetricsApplication.factory';
-import { Card, GraphContainer, GraphTitle, Row } from '../styles';
+import { Card, GraphContainer, Row } from '../styles';
 import { Button } from './styles';
+import { IServiceName } from './types';
 import {
 	dbSystemTags,
 	handleNonInQueryRange,
@@ -26,7 +29,7 @@ import {
 } from './util';
 
 function DBCall(): JSX.Element {
-	const { servicename } = useParams<{ servicename?: string }>();
+	const { servicename } = useParams<IServiceName>();
 	const [selectedTimeStamp, setSelectedTimeStamp] = useState<number>(0);
 	const { queries } = useResourceAttribute();
 
@@ -49,29 +52,37 @@ function DBCall(): JSX.Element {
 	const databaseCallsRPSWidget = useMemo(
 		() =>
 			getWidgetQueryBuilder({
-				queryType: EQueryType.QUERY_BUILDER,
-				promql: [],
-				builder: databaseCallsRPS({
-					servicename,
-					legend,
-					tagFilterItems,
-				}),
-				clickhouse_sql: [],
-				id: uuid(),
+				query: {
+					queryType: EQueryType.QUERY_BUILDER,
+					promql: [],
+					builder: databaseCallsRPS({
+						servicename,
+						legend,
+						tagFilterItems,
+					}),
+					clickhouse_sql: [],
+					id: uuid(),
+				},
+				title: GraphTitle.DATABASE_CALLS_RPS,
+				panelTypes: PANEL_TYPES.TIME_SERIES,
 			}),
 		[servicename, tagFilterItems],
 	);
 	const databaseCallsAverageDurationWidget = useMemo(
 		() =>
 			getWidgetQueryBuilder({
-				queryType: EQueryType.QUERY_BUILDER,
-				promql: [],
-				builder: databaseCallsAvgDuration({
-					servicename,
-					tagFilterItems,
-				}),
-				clickhouse_sql: [],
-				id: uuid(),
+				query: {
+					queryType: EQueryType.QUERY_BUILDER,
+					promql: [],
+					builder: databaseCallsAvgDuration({
+						servicename,
+						tagFilterItems,
+					}),
+					clickhouse_sql: [],
+					id: uuid(),
+				},
+				title: GraphTitle.DATABASE_CALLS_AVG_DURATION,
+				panelTypes: PANEL_TYPES.TIME_SERIES,
 			}),
 		[servicename, tagFilterItems],
 	);
@@ -92,11 +103,9 @@ function DBCall(): JSX.Element {
 					View Traces
 				</Button>
 				<Card>
-					<GraphTitle>Database Calls RPS</GraphTitle>
 					<GraphContainer>
-						<FullView
+						<Graph
 							name="database_call_rps"
-							fullViewOptions={false}
 							widget={databaseCallsRPSWidget}
 							yAxisUnit="reqps"
 							onClickHandler={(ChartEvent, activeElements, chart, data): void => {
@@ -127,11 +136,9 @@ function DBCall(): JSX.Element {
 					View Traces
 				</Button>
 				<Card>
-					<GraphTitle>Database Calls Avg Duration</GraphTitle>
 					<GraphContainer>
-						<FullView
+						<Graph
 							name="database_call_avg_duration"
-							fullViewOptions={false}
 							widget={databaseCallsAverageDurationWidget}
 							yAxisUnit="ms"
 							onClickHandler={(ChartEvent, activeElements, chart, data): void => {

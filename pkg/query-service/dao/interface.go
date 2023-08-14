@@ -32,6 +32,8 @@ type Queries interface {
 	GetResetPasswordEntry(ctx context.Context, token string) (*model.ResetPasswordEntry, *model.ApiError)
 	GetUsersByOrg(ctx context.Context, orgId string) ([]model.UserPayload, *model.ApiError)
 	GetUsersByGroup(ctx context.Context, groupId string) ([]model.UserPayload, *model.ApiError)
+
+	GetApdexSettings(ctx context.Context, services []string) ([]model.ApdexSettings, *model.ApiError)
 }
 
 type Mutations interface {
@@ -56,4 +58,6 @@ type Mutations interface {
 
 	UpdateUserPassword(ctx context.Context, hash, userId string) *model.ApiError
 	UpdateUserGroup(ctx context.Context, userId, groupId string) *model.ApiError
+
+	SetApdexSettings(ctx context.Context, set *model.ApdexSettings) *model.ApiError
 }

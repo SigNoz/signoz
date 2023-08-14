@@ -1,9 +1,9 @@
 import { notification } from 'antd';
 import updateDashboardApi from 'api/dashboard/update';
 import { AxiosError } from 'axios';
+import { PANEL_TYPES } from 'constants/queryBuilder';
 import { queryParamNamesMap } from 'constants/queryBuilderQueryNames';
 import ROUTES from 'constants/routes';
-import { ITEMS } from 'container/NewDashboard/ComponentsSlider/menuItems';
 import { updateStepInterval } from 'hooks/queryBuilder/useStepInterval';
 import history from 'lib/history';
 import { Layout } from 'react-grid-layout';
@@ -170,5 +170,5 @@ export interface SaveDashboardProps {
 	widgetId: Widgets['id'];
 	dashboardId: string;
 	yAxisUnit: Widgets['yAxisUnit'];
-	graphType: ITEMS;
+	graphType: PANEL_TYPES;
 }

@@ -169,7 +169,7 @@ func (m *Manager) OnConfigUpdate(agentId string, hash string, err error) {
 
 	status := string(Deployed)
 
-	message := "deploy successful"
+	message := "Deployment was successful"
 
 	defer func() {
 		zap.S().Info(status, zap.String("agentId", agentId), zap.String("agentResponse", message))
@@ -225,6 +225,6 @@ func UpsertLogParsingProcessor(ctx context.Context, version int, rawPipelineData
 		return err
 	}
 
-	m.updateDeployStatus(ctx, ElementTypeLogPipelines, version, string(DeployInitiated), "Deployment started", configHash, string(rawPipelineData))
+	m.updateDeployStatus(ctx, ElementTypeLogPipelines, version, string(DeployInitiated), "Deployment has started", configHash, string(rawPipelineData))
 	return nil
 }

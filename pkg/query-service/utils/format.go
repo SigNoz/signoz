@@ -143,8 +143,11 @@ func ValidateAndCastValue(v interface{}, dataType v3.AttributeKeyDataType) (inte
 
 // ClickHouseFormattedValue formats the value to be used in clickhouse query
 func ClickHouseFormattedValue(v interface{}) string {
+	// if it's pointer convert it to a value
+	v = getPointerValue(v)
+
 	switch x := v.(type) {
-	case int, int8, int16, int32, int64:
+	case uint8, uint16, uint32, uint64, int, int8, int16, int32, int64:
 		return fmt.Sprintf("%d", x)
 	case float32, float64:
 		return fmt.Sprintf("%f", x)
@@ -152,6 +155,7 @@ func ClickHouseFormattedValue(v interface{}) string {
 		return fmt.Sprintf("'%s'", x)
 	case bool:
 		return fmt.Sprintf("%v", x)
+
 	case []interface{}:
 		if len(x) == 0 {
 			return ""
@@ -167,7 +171,7 @@ func ClickHouseFormattedValue(v interface{}) string {
 			}
 			str += "]"
 			return str
-		case int, int8, int16, int32, int64, float32, float64, bool:
+		case uint8, uint16, uint32, uint64, int, int8, int16, int32, int64, float32, float64, bool:
 			return strings.Join(strings.Fields(fmt.Sprint(x)), ",")
 		default:
 			zap.S().Error("invalid type for formatted value", zap.Any("type", reflect.TypeOf(x[0])))
@@ -176,5 +180,44 @@ func ClickHouseFormattedValue(v interface{}) string {
 	default:
 		zap.S().Error("invalid type for formatted value", zap.Any("type", reflect.TypeOf(x)))
 		return ""
+	}
+}
+
+func getPointerValue(v interface{}) interface{} {
+	switch x := v.(type) {
+	case *uint8:
+		return *x
+	case *uint16:
+		return *x
+	case *uint32:
+		return *x
+	case *uint64:
+		return *x
+	case *int:
+		return *x
+	case *int8:
+		return *x
+	case *int16:
+		return *x
+	case *int32:
+		return *x
+	case *int64:
+		return *x
+	case *float32:
+		return *x
+	case *float64:
+		return *x
+	case *string:
+		return *x
+	case *bool:
+		return *x
+	case []interface{}:
+		values := []interface{}{}
+		for _, val := range x {
+			values = append(values, getPointerValue(val))
+		}
+		return values
+	default:
+		return v
 	}
 }
