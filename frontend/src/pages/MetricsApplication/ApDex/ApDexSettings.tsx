@@ -44,9 +44,9 @@ function ApDexSettings({
 		excludeStatusCode: '',
 	});
 
-	const handleThreadholdChange = (value: string | null): void => {
-		if (value) {
-			setThresholdValue(Number(value));
+	const handleThreadholdChange = (value: number | null): void => {
+		if (value !== null) {
+			setThresholdValue(value);
 		}
 	};
 
@@ -93,11 +93,10 @@ function ApDexSettings({
 					/>
 				</Typography>
 				<InputNumber
-					value={thresholdValue.toString()}
+					value={thresholdValue}
 					onChange={handleThreadholdChange}
-					min="0"
+					min={0}
 					step={0.1}
-					precision={1}
 				/>
 			</AppDexThresholdContainer>
 			{/* TODO: Add this feature later when backend is ready to support it. */}
