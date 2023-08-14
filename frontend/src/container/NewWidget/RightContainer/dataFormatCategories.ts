@@ -1,4 +1,3 @@
-import { DefaultOptionType } from 'antd/es/select';
 import { flattenDeep } from 'lodash-es';
 
 import {
@@ -6,7 +5,6 @@ import {
 	AngularFormats,
 	AreaFormats,
 	BooleanFormats,
-	Category,
 	CategoryNames,
 	ConcentrationFormats,
 	CurrencyFormats,
@@ -242,7 +240,6 @@ export const dataTypeCategories: DataTypeCategories = [
 			{ name: 'Vietnamese Dong (VND)', id: CurrencyFormats.VND },
 		],
 	},
-
 	{
 		name: CategoryNames.Datetime,
 		formats: [
@@ -441,21 +438,3 @@ export const dataTypeCategories: DataTypeCategories = [
 export const flattenedCategories = flattenDeep(
 	dataTypeCategories.map((category) => category.formats),
 );
-
-export const getCategorySelectOptionByName = (
-	name?: CategoryNames | string,
-): DefaultOptionType[] =>
-	dataTypeCategories
-		.find((category) => category.name === name)
-		?.formats.map((format) => ({
-			label: format.name,
-			value: format.id,
-		})) || [];
-
-export const getCategoryByOptionId = (id: string): Category | undefined =>
-	dataTypeCategories.find((category) =>
-		category.formats.some((format) => format.id === id),
-	);
-
-export const isCategoryName = (name: string): name is CategoryNames =>
-	dataTypeCategories.some((category) => category.name === name);

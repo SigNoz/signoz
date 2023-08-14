@@ -10,7 +10,7 @@ import {
 import {
 	getCategoryByOptionId,
 	getCategorySelectOptionByName,
-} from 'container/NewWidget/RightContainer/dataFormatCategories';
+} from 'container/NewWidget/RightContainer/alertFomatCategories';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useTranslation } from 'react-i18next';
 import {

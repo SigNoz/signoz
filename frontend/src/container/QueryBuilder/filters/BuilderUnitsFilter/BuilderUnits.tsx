@@ -1,10 +1,11 @@
 import { Select, SelectProps, Space } from 'antd';
-import { getCategorySelectOptionByName } from 'container/NewWidget/RightContainer/dataFormatCategories';
+import { getCategorySelectOptionByName } from 'container/NewWidget/RightContainer/alertFomatCategories';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 
 import { categoryToSupport } from './config';
 import { DefaultLabel, selectStyles } from './styles';
 import { IBuilderUnitsFilterProps } from './types';
+import { filterOption } from './utils';
 
 function BuilderUnitsFilter({
 	onChange,
@@ -36,7 +37,9 @@ function BuilderUnitsFilter({
 				options={allOptions}
 				allowClear
 				showSearch
+				optionFilterProp="label"
 				placeholder="Select unit"
+				filterOption={filterOption}
 			/>
 		</Space>
 	);
