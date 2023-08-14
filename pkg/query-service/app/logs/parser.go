@@ -9,6 +9,7 @@ import (
 
 	"go.signoz.io/signoz/pkg/query-service/constants"
 	"go.signoz.io/signoz/pkg/query-service/model"
+	"go.signoz.io/signoz/pkg/query-service/utils"
 )
 
 var operatorMapping = map[string]string{
@@ -307,9 +308,7 @@ func replaceFieldInToken(queryToken string, selectedFieldsLookup map[string]mode
 		} else {
 			field := selectedFieldsLookup[sqlColName]
 			if field.Type != constants.Static {
-				prefix := field.Type[:len(field.Type)-1]
-				// columns name is <type>_<datatype>_<name>
-				sqlColName = fmt.Sprintf("%s_%s_%s", strings.ToLower(prefix), strings.ToLower(field.DataType), sqlColName)
+				sqlColName = utils.GetClickhouseColumnName(field.Type, field.DataType, field.Name)
 			}
 		}
 	}

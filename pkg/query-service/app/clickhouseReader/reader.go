@@ -3446,8 +3446,7 @@ func extractSelectedAndInterestingFields(tableStatement string, fieldType string
 func isSelectedField(tableStatement string, field model.LogField) bool {
 	// in case of attributes and resources, if there is a materialized column present then it is selected
 	// TODO: handle partial change complete eg:- index is removed but materialized column is still present
-	prefix := field.Type[:len(field.Type)-1]
-	name := fmt.Sprintf("%s_%s_%s", strings.ToLower(prefix), strings.ToLower(field.DataType), field.Name)
+	name := utils.GetClickhouseColumnName(field.Type, field.DataType, field.Name)
 	return strings.Contains(tableStatement, fmt.Sprintf("`%s`", name))
 }
 
@@ -3458,9 +3457,7 @@ func (r *ClickHouseReader) UpdateLogField(ctx context.Context, field *model.Upda
 		return &model.ApiError{Err: err, Typ: model.ErrorBadData}
 	}
 
-	prefix := field.Type[:len(field.Type)-1]
-	// columns name is <type>_<datatype>_<name>
-	colname := fmt.Sprintf("%s_%s_%s", strings.ToLower(prefix), strings.ToLower(field.DataType), field.Name)
+	colname := utils.GetClickhouseColumnName(field.Type, field.DataType, field.Name)
 
 	// if a field is selected it means that the field needs to be indexed
 	if field.Selected {
@@ -3965,11 +3962,7 @@ func (r *ClickHouseReader) GetLatencyMetricMetadata(ctx context.Context, metricN
 
 func isColumn(tableStatement, attrType, field, datType string) bool {
 	// value of attrType will be `resource` or `tag`, if `tag` change it to `attribute`
-	prefix := attrType
-	if attrType == string(v3.AttributeKeyTypeTag) {
-		prefix = constants.Attributes[:len(constants.Attributes)-1]
-	}
-	name := fmt.Sprintf("%s_%s_%s", strings.ToLower(prefix), field, strings.ToLower(datType))
+	name := utils.GetClickhouseColumnName(attrType, datType, field)
 
 	return strings.Contains(tableStatement, fmt.Sprintf("`%s` ", name))
 }
