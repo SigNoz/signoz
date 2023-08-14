@@ -51,8 +51,7 @@ export interface GridCardGraphProps {
 	setLayout?: Dispatch<SetStateAction<LayoutProps[]>>;
 	onDragSelect?: (start: number, end: number) => void;
 	onClickHandler?: GraphOnClickHandler;
-	allowThreshold?: boolean;
-	threshold?: number;
+	threshold?: ReactNode;
 	headerMenuList?: WidgetGraphComponentProps['headerMenuList'];
 	isQueryEnabled: boolean;
 }

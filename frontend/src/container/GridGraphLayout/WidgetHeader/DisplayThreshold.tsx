@@ -1,3 +1,5 @@
+import { InfoCircleOutlined } from '@ant-design/icons';
+
 import {
 	DisplayThresholdContainer,
 	TypographHeading,
@@ -9,7 +11,7 @@ function DisplayThreshold({ threshold }: DisplayThresholdProps): JSX.Element {
 	return (
 		<DisplayThresholdContainer>
 			<TypographHeading>Threshold </TypographHeading>
-			<Typography>{threshold}</Typography>
+			<Typography>{threshold || <InfoCircleOutlined />}</Typography>
 		</DisplayThresholdContainer>
 	);
 }

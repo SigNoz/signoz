@@ -7,10 +7,11 @@ import {
 } from 'constants/apDex';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import Graph from 'container/GridGraphLayout/Graph';
+import DisplayThreshold from 'container/GridGraphLayout/WidgetHeader/DisplayThreshold';
 import { GraphTitle } from 'container/MetricsApplication/constant';
 import { getWidgetQueryBuilder } from 'container/MetricsApplication/MetricsApplication.factory';
 import { apDexMetricsQueryBuilderQueries } from 'container/MetricsApplication/MetricsPageQueries/OverviewQueries';
-import { useMemo } from 'react';
+import { ReactNode, useMemo } from 'react';
 import { useParams } from 'react-router-dom';
 import { EQueryType } from 'types/common/dashboard';
 import { v4 as uuid } from 'uuid';
@@ -69,6 +70,11 @@ function ApDexMetrics({
 		],
 	);
 
+	const threshold: ReactNode = useMemo(() => {
+		if (thresholdValue) return <DisplayThreshold threshold={thresholdValue} />;
+		return null;
+	}, [thresholdValue]);
+
 	const isQueryEnabled =
 		topLevelOperationsRoute.length > 0 &&
 		metricsBuckets &&
@@ -82,8 +88,7 @@ function ApDexMetrics({
 			onDragSelect={onDragSelect}
 			onClickHandler={handleGraphClick('ApDex')}
 			yAxisUnit=""
-			allowThreshold
-			threshold={thresholdValue}
+			threshold={threshold}
 			isQueryEnabled={isQueryEnabled}
 		/>
 	);
