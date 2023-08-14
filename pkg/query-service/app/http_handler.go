@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"net/http"
 	"sort"
@@ -77,6 +78,10 @@ type APIHandler struct {
 	preferDelta       bool
 	preferSpanMetrics bool
 
+	maxIdleConns int
+	maxOpenConns int
+	dialTimeout  time.Duration
+
 	LogsParsingPipelineController *logparsingpipeline.LogParsingPipelineController
 
 	// SetupCompleted indicates if SigNoz is ready for general use.
@@ -94,6 +99,11 @@ type APIHandlerOpts struct {
 
 	PerferDelta       bool
 	PreferSpanMetrics bool
+
+	MaxIdleConns int
+	MaxOpenConns int
+	DialTimeout  time.Duration
+
 	// dao layer to perform crud on app objects like dashboard, alerts etc
 	AppDao dao.ModelDao
 
@@ -121,6 +131,9 @@ func NewAPIHandler(opts APIHandlerOpts) (*APIHandler, error) {
 		skipConfig:                    opts.SkipConfig,
 		preferDelta:                   opts.PerferDelta,
 		preferSpanMetrics:             opts.PreferSpanMetrics,
+		maxIdleConns:                  opts.MaxIdleConns,
+		maxOpenConns:                  opts.MaxOpenConns,
+		dialTimeout:                   opts.DialTimeout,
 		alertManager:                  alertManager,
 		ruleManager:                   opts.RuleManager,
 		featureFlags:                  opts.FeatureFlags,
@@ -283,7 +296,7 @@ func (aH *APIHandler) RegisterQueryRangeV3Routes(router *mux.Router, am *AuthMid
 	subRouter.HandleFunc("/query_range", am.ViewAccess(aH.QueryRangeV3)).Methods(http.MethodPost)
 
 	// live logs
-	subRouter.HandleFunc("/logs/livetail", am.ViewAccess(aH.liveTailLogs)).Methods(http.MethodPost)
+	subRouter.HandleFunc("/logs/livetail", am.ViewAccess(aH.liveTailLogs)).Methods(http.MethodGet)
 }
 
 func (aH *APIHandler) Respond(w http.ResponseWriter, data interface{}) {
@@ -1922,18 +1935,18 @@ func (aH *APIHandler) editUser(w http.ResponseWriter, r *http.Request) {
 	if len(update.Name) > 0 {
 		old.Name = update.Name
 	}
-	if len(update.ProfilePirctureURL) > 0 {
-		old.ProfilePirctureURL = update.ProfilePirctureURL
+	if len(update.ProfilePictureURL) > 0 {
+		old.ProfilePictureURL = update.ProfilePictureURL
 	}
 
 	_, apiErr = dao.DB().EditUser(ctx, &model.User{
-		Id:                 old.Id,
-		Name:               old.Name,
-		OrgId:              old.OrgId,
-		Email:              old.Email,
-		Password:           old.Password,
-		CreatedAt:          old.CreatedAt,
-		ProfilePirctureURL: old.ProfilePirctureURL,
+		Id:                old.Id,
+		Name:              old.Name,
+		OrgId:             old.OrgId,
+		Email:             old.Email,
+		Password:          old.Password,
+		CreatedAt:         old.CreatedAt,
+		ProfilePictureURL: old.ProfilePictureURL,
 	})
 	if apiErr != nil {
 		RespondError(w, apiErr, nil)
@@ -3050,6 +3063,10 @@ func applyMetricLimit(results []*v3.Result, queryRangeParams *v3.QueryRangeParam
 }
 
 func (aH *APIHandler) liveTailLogs(w http.ResponseWriter, r *http.Request) {
+
+	// get the param from url and add it to body
+	stringReader := strings.NewReader(r.URL.Query().Get("q"))
+	r.Body = io.NopCloser(stringReader)
 
 	queryRangeParams, apiErrorObj := ParseQueryRangeParams(r)
 	if apiErrorObj != nil {
