@@ -1,6 +1,6 @@
 export interface ILog {
 	date: string;
-	timestamp: number;
+	timestamp: number | string;
 	id: string;
 	traceId: string;
 	spanId: string;
@@ -8,7 +8,7 @@ export interface ILog {
 	severityText: string;
 	severityNumber: number;
 	body: string;
-	resourcesString: Record<string, never>;
+	resources_string: Record<string, never>;
 	attributesString: Record<string, never>;
 	attributesInt: Record<string, never>;
 	attributesFloat: Record<string, never>;

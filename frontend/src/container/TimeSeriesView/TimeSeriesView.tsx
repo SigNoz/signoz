@@ -11,6 +11,7 @@ function TimeSeriesView({
 	data,
 	isLoading,
 	isError,
+	yAxisUnit,
 }: TimeSeriesViewProps): JSX.Element {
 	const chartData = useMemo(
 		() =>
@@ -32,6 +33,7 @@ function TimeSeriesView({
 				<Graph
 					animate={false}
 					data={chartData}
+					yAxisUnit={yAxisUnit}
 					name="tracesExplorerGraph"
 					type="line"
 				/>
@@ -42,12 +44,14 @@ function TimeSeriesView({
 
 interface TimeSeriesViewProps {
 	data?: SuccessResponse<MetricRangePayloadProps>;
+	yAxisUnit?: string;
 	isLoading: boolean;
 	isError: boolean;
 }
 
 TimeSeriesView.defaultProps = {
 	data: undefined,
+	yAxisUnit: 'short',
 };
 
 export default TimeSeriesView;

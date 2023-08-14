@@ -83,10 +83,21 @@ func main() {
 	var ruleRepoURL string
 
 	var enableQueryServiceLogOTLPExport bool
+	var preferDelta bool
+	var preferSpanMetrics bool
+
+	var maxIdleConns int
+	var maxOpenConns int
+	var dialTimeout time.Duration
 
 	flag.StringVar(&promConfigPath, "config", "./config/prometheus.yml", "(prometheus config to read metrics)")
 	flag.StringVar(&skipTopLvlOpsPath, "skip-top-level-ops", "", "(config file to skip top level operations)")
 	flag.BoolVar(&disableRules, "rules.disable", false, "(disable rule evaluation)")
+	flag.BoolVar(&preferDelta, "prefer-delta", false, "(prefer delta over cumulative metrics)")
+	flag.BoolVar(&preferSpanMetrics, "prefer-span-metrics", false, "(prefer span metrics for service level metrics)")
+	flag.IntVar(&maxIdleConns, "max-idle-conns", 50, "(number of connections to maintain in the pool.)")
+	flag.IntVar(&maxOpenConns, "max-open-conns", 100, "(max connections for use at any time.)")
+	flag.DurationVar(&dialTimeout, "dial-timeout", 5*time.Second, "(the maximum time to establish a connection.)")
 	flag.StringVar(&ruleRepoURL, "rules.repo-url", baseconst.AlertHelpPage, "(host address used to build rule link in alert messages)")
 	flag.BoolVar(&enableQueryServiceLogOTLPExport, "enable.query.service.log.otlp.export", false, "(enable query service log otlp export)")
 	flag.Parse()
@@ -102,9 +113,14 @@ func main() {
 		HTTPHostPort:      baseconst.HTTPHostPort,
 		PromConfigPath:    promConfigPath,
 		SkipTopLvlOpsPath: skipTopLvlOpsPath,
+		PreferDelta:       preferDelta,
+		PreferSpanMetrics: preferSpanMetrics,
 		PrivateHostPort:   baseconst.PrivateHostPort,
 		DisableRules:      disableRules,
 		RuleRepoURL:       ruleRepoURL,
+		MaxIdleConns:      maxIdleConns,
+		MaxOpenConns:      maxOpenConns,
+		DialTimeout:       dialTimeout,
 	}
 
 	// Read the jwt secret key
@@ -138,6 +154,7 @@ func main() {
 			logger.Info("Received HealthCheck status: ", zap.Int("status", int(status)))
 		case <-signalsChannel:
 			logger.Fatal("Received OS Interrupt Signal ... ")
+			server.Stop()
 		}
 	}
 }

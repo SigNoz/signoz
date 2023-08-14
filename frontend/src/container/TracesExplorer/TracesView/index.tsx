@@ -1,4 +1,4 @@
-import Typography from 'antd/es/typography/Typography';
+import { Typography } from 'antd';
 import { ResizeTable } from 'components/ResizeTable';
 import { initialQueriesMap, PANEL_TYPES } from 'constants/queryBuilder';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
@@ -12,7 +12,7 @@ import { AppState } from 'store/reducers';
 import { GlobalReducer } from 'types/reducer/globalTime';
 
 import TraceExplorerControls from '../Controls';
-import { columns, PER_PAGE_OPTIONS } from './configs';
+import { columns, PER_PAGE_OPTIONS, TRACES_DETAILS_LINK } from './configs';
 import { ActionsContainer, Container } from './styles';
 
 function TracesView(): JSX.Element {
@@ -64,7 +64,11 @@ function TracesView(): JSX.Element {
 		<Container>
 			<ActionsContainer>
 				<Typography>
-					Showing up to X of the slowest traces form the selected time range
+					This tab only shows Root Spans. More details
+					<Typography.Link href={TRACES_DETAILS_LINK} target="_blank">
+						{' '}
+						here
+					</Typography.Link>
 				</Typography>
 				<TraceExplorerControls
 					isLoading={isLoading}

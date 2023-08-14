@@ -1,14 +1,16 @@
 import { Tabs } from 'antd';
 import axios from 'axios';
+import ExplorerCard from 'components/ExplorerCard';
 import { QueryParams } from 'constants/query';
-import { initialQueriesMap, PANEL_TYPES } from 'constants/queryBuilder';
 import {
-	COMPOSITE_QUERY,
-	PANEL_TYPES_QUERY,
-} from 'constants/queryBuilderQueryNames';
+	initialAutocompleteData,
+	initialQueriesMap,
+	PANEL_TYPES,
+} from 'constants/queryBuilder';
+import { queryParamNamesMap } from 'constants/queryBuilderQueryNames';
 import ROUTES from 'constants/routes';
 import ExportPanel from 'container/ExportPanel';
-import { GRAPH_TYPES } from 'container/NewDashboard/ComponentsSlider';
+import { SIGNOZ_VALUE } from 'container/QueryBuilder/filters/OrderByFilter/constants';
 import QuerySection from 'container/TracesExplorer/QuerySection';
 import { useUpdateDashboard } from 'hooks/dashboard/useUpdateDashboard';
 import { addEmptyWidgetInDashboardJSONWithQuery } from 'hooks/dashboard/utils';
@@ -19,6 +21,7 @@ import history from 'lib/history';
 import { useCallback, useEffect, useMemo } from 'react';
 import { generatePath } from 'react-router-dom';
 import { Dashboard } from 'types/api/dashboard/getAll';
+import { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource } from 'types/common/queryBuilder';
 
 import { ActionsWrapper, Container } from './styles';
@@ -26,11 +29,12 @@ import { getTabsItems } from './utils';
 
 function TracesExplorer(): JSX.Element {
 	const { notifications } = useNotifications();
+
 	const {
 		currentQuery,
-		stagedQuery,
 		panelType,
 		updateAllQueriesOperators,
+		updateQueriesData,
 		redirectWithQueryBuilderData,
 	} = useQueryBuilder();
 
@@ -80,11 +84,11 @@ function TracesExplorer(): JSX.Element {
 	const exportDefaultQuery = useMemo(
 		() =>
 			updateAllQueriesOperators(
-				stagedQuery || initialQueriesMap.traces,
+				currentQuery || initialQueriesMap.traces,
 				PANEL_TYPES.TIME_SERIES,
 				DataSource.TRACES,
 			),
-		[stagedQuery, updateAllQueriesOperators],
+		[currentQuery, updateAllQueriesOperators],
 	);
 
 	const { mutate: updateDashboard, isLoading } = useUpdateDashboard();
@@ -100,13 +104,34 @@ function TracesExplorer(): JSX.Element {
 
 			updateDashboard(updatedDashboard, {
 				onSuccess: (data) => {
+					if (data.error) {
+						const message =
+							data.error === 'feature usage exceeded' ? (
+								<span>
+									Panel limit exceeded for {DataSource.TRACES} in community edition.
+									Please checkout our paid plans{' '}
+									<a
+										href="https://signoz.io/pricing/?utm_source=product&utm_medium=dashboard-limit"
+										rel="noreferrer noopener"
+										target="_blank"
+									>
+										here
+									</a>
+								</span>
+							) : (
+								data.error
+							);
+						notifications.error({
+							message,
+						});
+
+						return;
+					}
 					const dashboardEditView = `${generatePath(ROUTES.DASHBOARD, {
 						dashboardId: data?.payload?.uuid,
-					})}/new?${QueryParams.graphType}=graph&${
-						QueryParams.widgetId
-					}=empty&${COMPOSITE_QUERY}=${encodeURIComponent(
-						JSON.stringify(exportDefaultQuery),
-					)}`;
+					})}/new?${QueryParams.graphType}=graph&${QueryParams.widgetId}=empty&${
+						queryParamNamesMap.compositeQuery
+					}=${encodeURIComponent(JSON.stringify(exportDefaultQuery))}`;
 
 					history.push(dashboardEditView);
 				},
@@ -122,24 +147,42 @@ function TracesExplorer(): JSX.Element {
 		[exportDefaultQuery, notifications, updateDashboard],
 	);
 
-	const handleTabChange = useCallback(
-		(newPanelType: string): void => {
-			if (panelType === newPanelType) return;
-
-			const query = updateAllQueriesOperators(
+	const getUpdateQuery = useCallback(
+		(newPanelType: PANEL_TYPES): Query => {
+			let query = updateAllQueriesOperators(
 				currentQuery,
-				newPanelType as GRAPH_TYPES,
+				newPanelType,
 				DataSource.TRACES,
 			);
 
-			redirectWithQueryBuilderData(query, { [PANEL_TYPES_QUERY]: newPanelType });
+			if (
+				newPanelType === PANEL_TYPES.LIST ||
+				newPanelType === PANEL_TYPES.TRACE
+			) {
+				query = updateQueriesData(query, 'queryData', (item) => ({
+					...item,
+					orderBy: item.orderBy.filter((item) => item.columnName !== SIGNOZ_VALUE),
+					aggregateAttribute: initialAutocompleteData,
+				}));
+			}
+
+			return query;
 		},
-		[
-			currentQuery,
-			panelType,
-			redirectWithQueryBuilderData,
-			updateAllQueriesOperators,
-		],
+		[currentQuery, updateAllQueriesOperators, updateQueriesData],
+	);
+
+	const handleTabChange = useCallback(
+		(type: string): void => {
+			const newPanelType = type as PANEL_TYPES;
+			if (panelType === newPanelType) return;
+
+			const query = getUpdateQuery(newPanelType);
+
+			redirectWithQueryBuilderData(query, {
+				[queryParamNamesMap.panelTypes]: newPanelType,
+			});
+		},
+		[getUpdateQuery, panelType, redirectWithQueryBuilderData],
 	);
 
 	useShareBuilderUrl(defaultQuery);
@@ -157,12 +200,14 @@ function TracesExplorer(): JSX.Element {
 
 	return (
 		<>
-			<QuerySection />
+			<ExplorerCard>
+				<QuerySection />
+			</ExplorerCard>
 
 			<Container>
 				<ActionsWrapper>
 					<ExportPanel
-						query={stagedQuery}
+						query={exportDefaultQuery}
 						isLoading={isLoading}
 						onExport={handleExport}
 					/>

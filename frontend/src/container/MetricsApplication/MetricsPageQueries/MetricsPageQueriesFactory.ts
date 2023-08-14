@@ -1,120 +1,101 @@
 import {
+	alphabet,
 	initialFormulaBuilderFormValues,
 	initialQueryBuilderFormValuesMap,
 } from 'constants/queryBuilder';
 import getStep from 'lib/getStep';
 import store from 'store';
-import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
-import { TagFilterItem } from 'types/api/queryBuilder/queryBuilderData';
+import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 import {
 	MetricAggregateOperator,
 	QueryBuilderData,
 } from 'types/common/queryBuilder';
 
+import {
+	BuilderQueriesProps,
+	BuilderQuerieswithFormulaProps,
+} from '../Tabs/types';
+
 export const getQueryBuilderQueries = ({
-	metricName,
+	autocompleteData,
 	groupBy = [],
-	legend,
-	itemsA,
+	legends,
+	filterItems,
+	aggregateOperator,
+	dataSource,
+	queryNameAndExpression,
 }: BuilderQueriesProps): QueryBuilderData => ({
 	queryFormulas: [],
-	queryData: [
-		{
+	queryData: autocompleteData.map((item, index) => {
+		const newQueryData: IBuilderQuery = {
 			...initialQueryBuilderFormValuesMap.metrics,
-			aggregateOperator: MetricAggregateOperator.SUM_RATE,
+			aggregateOperator: ((): string => {
+				if (aggregateOperator) {
+					return aggregateOperator[index];
+				}
+				return MetricAggregateOperator.SUM_RATE;
+			})(),
 			disabled: false,
 			groupBy,
-			aggregateAttribute: metricName,
-			legend,
+			aggregateAttribute: item,
+			legend: legends[index],
 			stepInterval: getStep({
 				end: store.getState().globalTime.maxTime,
 				inputFormat: 'ns',
 				start: store.getState().globalTime.minTime,
 			}),
-			reduceTo: 'sum',
 			filters: {
-				items: itemsA,
+				items: filterItems[index],
 				op: 'AND',
 			},
-		},
-	],
+			reduceTo: 'sum',
+			dataSource,
+		};
+
+		if (queryNameAndExpression) {
+			newQueryData.queryName = queryNameAndExpression[index];
+			newQueryData.expression = queryNameAndExpression[index];
+		}
+
+		return newQueryData;
+	}),
 });
 
 export const getQueryBuilderQuerieswithFormula = ({
-	metricNameA,
-	metricNameB,
-	additionalItemsA,
-	additionalItemsB,
-	legend,
+	autocompleteData,
+	additionalItems,
+	legends,
 	groupBy = [],
 	disabled,
-	expression,
-	legendFormula,
+	expressions,
+	legendFormulas,
+	aggregateOperators,
+	dataSource,
 }: BuilderQuerieswithFormulaProps): QueryBuilderData => ({
-	queryFormulas: [
-		{
-			...initialFormulaBuilderFormValues,
-			expression,
-			legend: legendFormula,
+	queryFormulas: expressions.map((expression, index) => ({
+		...initialFormulaBuilderFormValues,
+		expression,
+		legend: legendFormulas[index],
+	})),
+	queryData: autocompleteData.map((_, index) => ({
+		...initialQueryBuilderFormValuesMap.metrics,
+		aggregateOperator: aggregateOperators[index],
+		disabled: disabled[index],
+		groupBy,
+		legend: legends[index],
+		aggregateAttribute: autocompleteData[index],
+		queryName: alphabet[index],
+		expression: alphabet[index],
+		reduceTo: 'sum',
+		filters: {
+			items: additionalItems[index],
+			op: 'AND',
 		},
-	],
-	queryData: [
-		{
-			...initialQueryBuilderFormValuesMap.metrics,
-			aggregateOperator: MetricAggregateOperator.SUM_RATE,
-			disabled,
-			groupBy,
-			legend,
-			aggregateAttribute: metricNameA,
-			reduceTo: 'sum',
-			filters: {
-				items: additionalItemsA,
-				op: 'AND',
-			},
-			stepInterval: getStep({
-				end: store.getState().globalTime.maxTime,
-				inputFormat: 'ns',
-				start: store.getState().globalTime.minTime,
-			}),
-		},
-		{
-			...initialQueryBuilderFormValuesMap.metrics,
-			aggregateOperator: MetricAggregateOperator.SUM_RATE,
-			disabled,
-			groupBy,
-			legend,
-			aggregateAttribute: metricNameB,
-			queryName: 'B',
-			expression: 'B',
-			reduceTo: 'sum',
-			filters: {
-				items: additionalItemsB,
-				op: 'AND',
-			},
-			stepInterval: getStep({
-				end: store.getState().globalTime.maxTime,
-				inputFormat: 'ns',
-				start: store.getState().globalTime.minTime,
-			}),
-		},
-	],
+		stepInterval: getStep({
+			end: store.getState().globalTime.maxTime,
+			inputFormat: 'ns',
+			start: store.getState().globalTime.minTime,
+		}),
+		dataSource,
+	})),
 });
-
-interface BuilderQueriesProps {
-	metricName: BaseAutocompleteData;
-	groupBy?: BaseAutocompleteData[];
-	legend: string;
-	itemsA: TagFilterItem[];
-}
-
-interface BuilderQuerieswithFormulaProps {
-	metricNameA: BaseAutocompleteData;
-	metricNameB: BaseAutocompleteData;
-	legend: string;
-	disabled: boolean;
-	groupBy?: BaseAutocompleteData[];
-	expression: string;
-	legendFormula: string;
-	additionalItemsA: TagFilterItem[];
-	additionalItemsB: TagFilterItem[];
-}

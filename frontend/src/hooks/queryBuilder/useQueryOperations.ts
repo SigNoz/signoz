@@ -17,12 +17,17 @@ import {
 import { DataSource } from 'types/common/queryBuilder';
 import { SelectOption } from 'types/common/select';
 
-export const useQueryOperations: UseQueryOperations = ({ query, index }) => {
+export const useQueryOperations: UseQueryOperations = ({
+	query,
+	index,
+	filterConfigs,
+}) => {
 	const {
 		handleSetQueryData,
 		removeQueryBuilderEntityByIndex,
 		panelType,
 		initialDataSource,
+		currentQuery,
 	} = useQueryBuilder();
 	const [operators, setOperators] = useState<SelectOption<string, string>[]>([]);
 	const [listOfAdditionalFilters, setListOfAdditionalFilters] = useState<
@@ -58,15 +63,32 @@ export const useQueryOperations: UseQueryOperations = ({ query, index }) => {
 
 	const getNewListOfAdditionalFilters = useCallback(
 		(dataSource: DataSource): string[] => {
-			const listOfFilters = mapOfFilters[dataSource].map((item) => item.text);
+			const additionalFiltersKeys: (keyof Pick<
+				IBuilderQuery,
+				'orderBy' | 'limit' | 'having' | 'stepInterval'
+			>)[] = ['having', 'limit', 'orderBy', 'stepInterval'];
 
-			if (panelType === PANEL_TYPES.LIST) {
-				return listOfFilters.filter((filter) => filter !== 'Aggregation interval');
-			}
+			const result: string[] = mapOfFilters[dataSource].reduce<string[]>(
+				(acc, item) => {
+					if (
+						filterConfigs &&
+						filterConfigs[item.field as typeof additionalFiltersKeys[number]]
+							?.isHidden
+					) {
+						return acc;
+					}
 
-			return listOfFilters;
+					acc.push(item.text);
+
+					return acc;
+				},
+				[],
+			);
+
+			return result;
 		},
-		[panelType],
+
+		[filterConfigs],
 	);
 
 	const handleChangeAggregatorAttribute = useCallback(
@@ -109,8 +131,10 @@ export const useQueryOperations: UseQueryOperations = ({ query, index }) => {
 	);
 
 	const handleDeleteQuery = useCallback(() => {
-		removeQueryBuilderEntityByIndex('queryData', index);
-	}, [removeQueryBuilderEntityByIndex, index]);
+		if (currentQuery.builder.queryData.length > 1) {
+			removeQueryBuilderEntityByIndex('queryData', index);
+		}
+	}, [removeQueryBuilderEntityByIndex, index, currentQuery]);
 
 	const handleChangeQueryData: HandleChangeQueryData = useCallback(
 		(key, value) => {
@@ -128,7 +152,6 @@ export const useQueryOperations: UseQueryOperations = ({ query, index }) => {
 		() => query.dataSource === DataSource.METRICS,
 		[query.dataSource],
 	);
-
 	const isTracePanelType = useMemo(() => panelType === PANEL_TYPES.TRACE, [
 		panelType,
 	]);

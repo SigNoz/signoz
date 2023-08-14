@@ -36,6 +36,12 @@ type User struct {
 	GroupId            string `json:"groupId,omitempty" db:"group_id"`
 }
 
+type ApdexSettings struct {
+	ServiceName        string  `json:"serviceName" db:"service_name"`
+	Threshold          float64 `json:"threshold" db:"threshold"`
+	ExcludeStatusCodes string  `json:"excludeStatusCodes" db:"exclude_status_codes"` // sqlite doesn't support array type
+}
+
 type UserFlag map[string]string
 
 func (uf UserFlag) Value() (driver.Value, error) {

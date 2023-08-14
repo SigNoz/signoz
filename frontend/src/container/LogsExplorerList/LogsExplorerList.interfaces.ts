@@ -1,3 +1,9 @@
-import { QueryDataV3 } from 'types/api/widgets/getQuery';
+import { ILog } from 'types/api/logs/log';
+import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 
-export type LogsExplorerListProps = { data: QueryDataV3[]; isLoading: boolean };
+export type LogsExplorerListProps = {
+	isLoading: boolean;
+	currentStagedQueryData: IBuilderQuery | null;
+	logs: ILog[];
+	onEndReached: (index: number) => void;
+};

@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"go.signoz.io/signoz/pkg/query-service/model"
 )
 
 type DataSource string
@@ -106,7 +107,8 @@ func (a AggregateOperator) RequireAttribute(dataSource DataSource) bool {
 	switch dataSource {
 	case DataSourceMetrics:
 		switch a {
-		case AggregateOperatorNoOp:
+		case AggregateOperatorNoOp,
+			AggregateOperatorCount:
 			return false
 		default:
 			return true
@@ -417,12 +419,21 @@ func (c *CompositeQuery) Validate() error {
 	return nil
 }
 
+type Temporality string
+
+const (
+	Unspecified Temporality = "Unspecified"
+	Delta       Temporality = "Delta"
+	Cumulative  Temporality = "Cumulative"
+)
+
 type BuilderQuery struct {
 	QueryName          string            `json:"queryName"`
 	StepInterval       int64             `json:"stepInterval"`
 	DataSource         DataSource        `json:"dataSource"`
 	AggregateOperator  AggregateOperator `json:"aggregateOperator"`
 	AggregateAttribute AttributeKey      `json:"aggregateAttribute,omitempty"`
+	Temporality        Temporality       `json:"temporality,omitempty"`
 	Filters            *FilterSet        `json:"filters,omitempty"`
 	GroupBy            []AttributeKey    `json:"groupBy,omitempty"`
 	Expression         string            `json:"expression"`
@@ -575,9 +586,18 @@ type Result struct {
 	List      []*Row    `json:"list"`
 }
 
+type LogsLiveTailClient struct {
+	Name  string
+	Logs  chan *model.GetLogsResponse
+	Done  chan *bool
+	Error chan error
+}
+
 type Series struct {
-	Labels map[string]string `json:"labels"`
-	Points []Point           `json:"values"`
+	Labels            map[string]string   `json:"labels"`
+	LabelsArray       []map[string]string `json:"labelsArray"`
+	Points            []Point             `json:"values"`
+	GroupingSetsPoint *Point              `json:"-"`
 }
 
 func (s *Series) SortPoints() {
@@ -644,4 +664,9 @@ func (eq *ExplorerQuery) Validate() error {
 		eq.UUID = uuid.New().String()
 	}
 	return eq.CompositeQuery.Validate()
+}
+
+type LatencyMetricMetadataResponse struct {
+	Delta bool      `json:"delta"`
+	Le    []float64 `json:"le"`
 }

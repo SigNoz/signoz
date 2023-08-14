@@ -21,6 +21,7 @@ import (
 	"go.signoz.io/signoz/pkg/query-service/agentConf"
 	"go.signoz.io/signoz/pkg/query-service/app/clickhouseReader"
 	"go.signoz.io/signoz/pkg/query-service/app/dashboards"
+	"go.signoz.io/signoz/pkg/query-service/app/logparsingpipeline"
 	opamp "go.signoz.io/signoz/pkg/query-service/app/opamp"
 	opAmpModel "go.signoz.io/signoz/pkg/query-service/app/opamp/model"
 
@@ -46,8 +47,13 @@ type ServerOptions struct {
 	HTTPHostPort      string
 	PrivateHostPort   string
 	// alert specific params
-	DisableRules bool
-	RuleRepoURL  string
+	DisableRules      bool
+	RuleRepoURL       string
+	PreferDelta       bool
+	PreferSpanMetrics bool
+	MaxIdleConns      int
+	MaxOpenConns      int
+	DialTimeout       time.Duration
 }
 
 // Server runs HTTP, Mux and a grpc server
@@ -100,7 +106,14 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 	storage := os.Getenv("STORAGE")
 	if storage == "clickhouse" {
 		zap.S().Info("Using ClickHouse as datastore ...")
-		clickhouseReader := clickhouseReader.NewReader(localDB, serverOptions.PromConfigPath, fm)
+		clickhouseReader := clickhouseReader.NewReader(
+			localDB,
+			serverOptions.PromConfigPath,
+			fm,
+			serverOptions.MaxIdleConns,
+			serverOptions.MaxOpenConns,
+			serverOptions.DialTimeout,
+		)
 		go clickhouseReader.Start(readerReady)
 		reader = clickhouseReader
 	} else {
@@ -121,13 +134,25 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 		return nil, err
 	}
 
+	// ingestion pipelines manager
+	logParsingPipelineController, err := logparsingpipeline.NewLogParsingPipelinesController(localDB, "sqlite")
+	if err != nil {
+		return nil, err
+	}
+
 	telemetry.GetInstance().SetReader(reader)
 	apiHandler, err := NewAPIHandler(APIHandlerOpts{
-		Reader:       reader,
-		SkipConfig:   skipConfig,
-		AppDao:       dao.DB(),
-		RuleManager:  rm,
-		FeatureFlags: fm,
+		Reader:                        reader,
+		SkipConfig:                    skipConfig,
+		PerferDelta:                   serverOptions.PreferDelta,
+		PreferSpanMetrics:             serverOptions.PreferSpanMetrics,
+		MaxIdleConns:                  serverOptions.MaxIdleConns,
+		MaxOpenConns:                  serverOptions.MaxOpenConns,
+		DialTimeout:                   serverOptions.DialTimeout,
+		AppDao:                        dao.DB(),
+		RuleManager:                   rm,
+		FeatureFlags:                  fm,
+		LogsParsingPipelineController: logParsingPipelineController,
 	})
 	if err != nil {
 		return nil, err

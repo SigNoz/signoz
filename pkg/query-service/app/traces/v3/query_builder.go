@@ -102,10 +102,22 @@ func getSelectLabels(aggregatorOperator v3.AggregateOperator, groupBy []v3.Attri
 	} else {
 		for _, tag := range groupBy {
 			filterName := getColumnName(tag, keys)
-			selectLabels += fmt.Sprintf(", %s as `%s`", filterName, tag.Key)
+			selectLabels += fmt.Sprintf(" %s as `%s`,", filterName, tag.Key)
 		}
 	}
 	return selectLabels
+}
+
+func getSelectKeys(aggregatorOperator v3.AggregateOperator, groupBy []v3.AttributeKey) string {
+	var selectLabels []string
+	if aggregatorOperator == v3.AggregateOperatorNoOp {
+		return ""
+	} else {
+		for _, tag := range groupBy {
+			selectLabels = append(selectLabels, fmt.Sprintf("`%s`", tag.Key))
+		}
+	}
+	return strings.Join(selectLabels, ",")
 }
 
 func getSelectColumns(sc []v3.AttributeKey, keys map[string]v3.AttributeKey) string {
@@ -141,6 +153,7 @@ func buildTracesFilterQuery(fs *v3.FilterSet, keys map[string]v3.AttributeKey) (
 			columnName := getColumnName(item.Key, keys)
 			var fmtVal string
 			key := enrichKeyWithMetadata(item.Key, keys)
+			item.Operator = v3.FilterOperator(strings.ToLower(strings.TrimSpace(string(item.Operator))))
 			if item.Operator != v3.FilterOperatorExists && item.Operator != v3.FilterOperatorNotExists {
 				var err error
 				val, err = utils.ValidateAndCastValue(val, key.DataType)
@@ -219,7 +232,7 @@ func handleEmptyValuesInGroupBy(keys map[string]v3.AttributeKey, groupBy []v3.At
 	return "", nil
 }
 
-func buildTracesQuery(start, end, step int64, mq *v3.BuilderQuery, tableName string, keys map[string]v3.AttributeKey, panelType v3.PanelType) (string, error) {
+func buildTracesQuery(start, end, step int64, mq *v3.BuilderQuery, tableName string, keys map[string]v3.AttributeKey, panelType v3.PanelType, graphLimitQtype string) (string, error) {
 
 	filterSubQuery, err := buildTracesFilterQuery(mq.Filters, keys)
 	if err != nil {
@@ -235,14 +248,29 @@ func buildTracesQuery(start, end, step int64, mq *v3.BuilderQuery, tableName str
 		having = " having " + having
 	}
 
-	// Select the aggregate value for interval
-	queryTmpl :=
-		"SELECT toStartOfInterval(timestamp, INTERVAL %d SECOND) AS ts" + selectLabels +
-			", %s as value " +
-			"from " + constants.SIGNOZ_TRACE_DBNAME + "." + constants.SIGNOZ_SPAN_INDEX_TABLENAME +
-			" where " + spanIndexTableTimeFilter + "%s " +
-			"group by %s%s " +
-			"order by %s"
+	var queryTmpl string
+	if graphLimitQtype == constants.FirstQueryGraphLimit {
+		queryTmpl = "SELECT"
+	} else if panelType == v3.PanelTypeTable {
+		queryTmpl =
+			"SELECT now() as ts,"
+	} else if panelType == v3.PanelTypeGraph || panelType == v3.PanelTypeValue {
+		// Select the aggregate value for interval
+		queryTmpl =
+			fmt.Sprintf("SELECT toStartOfInterval(timestamp, INTERVAL %d SECOND) AS ts,", step)
+	}
+
+	queryTmpl = queryTmpl + selectLabels +
+		" %s as value " +
+		"from " + constants.SIGNOZ_TRACE_DBNAME + "." + constants.SIGNOZ_SPAN_INDEX_TABLENAME +
+		" where " + spanIndexTableTimeFilter + "%s" +
+		"%s%s" +
+		"%s"
+
+	// we don't need value for first query
+	if graphLimitQtype == constants.FirstQueryGraphLimit {
+		queryTmpl = "SELECT " + getSelectKeys(mq.AggregateOperator, mq.GroupBy) + " from (" + queryTmpl + ")"
+	}
 
 	emptyValuesInGroupByFilter, err := handleEmptyValuesInGroupBy(keys, mq.GroupBy)
 	if err != nil {
@@ -250,9 +278,19 @@ func buildTracesQuery(start, end, step int64, mq *v3.BuilderQuery, tableName str
 	}
 	filterSubQuery += emptyValuesInGroupByFilter
 
-	groupBy := groupByAttributeKeyTags(keys, mq.GroupBy...)
+	groupBy := groupByAttributeKeyTags(panelType, graphLimitQtype, mq.GroupBy...)
+	if groupBy != "" {
+		groupBy = " group by " + groupBy
+	}
 	enrichedOrderBy := enrichOrderBy(mq.OrderBy, keys)
 	orderBy := orderByAttributeKeyTags(panelType, enrichedOrderBy, mq.GroupBy, keys)
+	if orderBy != "" {
+		orderBy = " order by " + orderBy
+	}
+
+	if graphLimitQtype == constants.SecondQueryGraphLimit {
+		filterSubQuery = filterSubQuery + " AND " + fmt.Sprintf("(%s) GLOBAL IN (", getSelectKeys(mq.AggregateOperator, mq.GroupBy)) + "%s)"
+	}
 
 	aggregationKey := ""
 	if mq.AggregateAttribute.Key != "" {
@@ -266,7 +304,7 @@ func buildTracesQuery(start, end, step int64, mq *v3.BuilderQuery, tableName str
 		v3.AggregateOperatorRateMin,
 		v3.AggregateOperatorRate:
 		op := fmt.Sprintf("%s(%s)/%d", aggregateOperatorToSQLFunc[mq.AggregateOperator], aggregationKey, step)
-		query := fmt.Sprintf(queryTmpl, step, op, filterSubQuery, groupBy, having, orderBy)
+		query := fmt.Sprintf(queryTmpl, op, filterSubQuery, groupBy, having, orderBy)
 		return query, nil
 	case
 		v3.AggregateOperatorP05,
@@ -279,11 +317,11 @@ func buildTracesQuery(start, end, step int64, mq *v3.BuilderQuery, tableName str
 		v3.AggregateOperatorP95,
 		v3.AggregateOperatorP99:
 		op := fmt.Sprintf("quantile(%v)(%s)", aggregateOperatorToPercentile[mq.AggregateOperator], aggregationKey)
-		query := fmt.Sprintf(queryTmpl, step, op, filterSubQuery, groupBy, having, orderBy)
+		query := fmt.Sprintf(queryTmpl, op, filterSubQuery, groupBy, having, orderBy)
 		return query, nil
 	case v3.AggregateOperatorAvg, v3.AggregateOperatorSum, v3.AggregateOperatorMin, v3.AggregateOperatorMax:
 		op := fmt.Sprintf("%s(%s)", aggregateOperatorToSQLFunc[mq.AggregateOperator], aggregationKey)
-		query := fmt.Sprintf(queryTmpl, step, op, filterSubQuery, groupBy, having, orderBy)
+		query := fmt.Sprintf(queryTmpl, op, filterSubQuery, groupBy, having, orderBy)
 		return query, nil
 	case v3.AggregateOperatorCount:
 		if mq.AggregateAttribute.Key != "" {
@@ -299,17 +337,17 @@ func buildTracesQuery(start, end, step int64, mq *v3.BuilderQuery, tableName str
 			}
 		}
 		op := "toFloat64(count())"
-		query := fmt.Sprintf(queryTmpl, step, op, filterSubQuery, groupBy, having, orderBy)
+		query := fmt.Sprintf(queryTmpl, op, filterSubQuery, groupBy, having, orderBy)
 		return query, nil
 	case v3.AggregateOperatorCountDistinct:
 		op := fmt.Sprintf("toFloat64(count(distinct(%s)))", aggregationKey)
-		query := fmt.Sprintf(queryTmpl, step, op, filterSubQuery, groupBy, having, orderBy)
+		query := fmt.Sprintf(queryTmpl, op, filterSubQuery, groupBy, having, orderBy)
 		return query, nil
 	case v3.AggregateOperatorNoOp:
 		var query string
 		if panelType == v3.PanelTypeTrace {
 			withSubQuery := fmt.Sprintf(constants.TracesExplorerViewSQLSelectWithSubQuery, constants.SIGNOZ_TRACE_DBNAME, constants.SIGNOZ_SPAN_INDEX_TABLENAME, spanIndexTableTimeFilter, filterSubQuery)
-			withSubQuery = addLimitToQuery(withSubQuery, mq.Limit, panelType)
+			withSubQuery = addLimitToQuery(withSubQuery, mq.Limit)
 			if mq.Offset != 0 {
 				withSubQuery = addOffsetToQuery(withSubQuery, mq.Offset)
 			}
@@ -319,7 +357,7 @@ func buildTracesQuery(start, end, step int64, mq *v3.BuilderQuery, tableName str
 				return "", fmt.Errorf("select columns cannot be empty for panelType %s", panelType)
 			}
 			selectColumns := getSelectColumns(mq.SelectColumns, keys)
-			queryNoOpTmpl := fmt.Sprintf("SELECT timestamp as timestamp_datetime, spanID, traceID, "+"%s ", selectColumns) + "from " + constants.SIGNOZ_TRACE_DBNAME + "." + constants.SIGNOZ_SPAN_INDEX_TABLENAME + " where %s %s" + " order by %s"
+			queryNoOpTmpl := fmt.Sprintf("SELECT timestamp as timestamp_datetime, spanID, traceID, "+"%s ", selectColumns) + "from " + constants.SIGNOZ_TRACE_DBNAME + "." + constants.SIGNOZ_SPAN_INDEX_TABLENAME + " where %s %s" + "%s"
 			query = fmt.Sprintf(queryNoOpTmpl, spanIndexTableTimeFilter, filterSubQuery, orderBy)
 		} else {
 			return "", fmt.Errorf("unsupported aggregate operator %s for panelType %s", mq.AggregateOperator, panelType)
@@ -350,82 +388,60 @@ func enrichOrderBy(items []v3.OrderBy, keys map[string]v3.AttributeKey) []v3.Ord
 
 // groupBy returns a string of comma separated tags for group by clause
 // `ts` is always added to the group by clause
-func groupBy(tags ...string) string {
-	tags = append(tags, "ts")
+func groupBy(panelType v3.PanelType, graphLimitQtype string, tags ...string) string {
+	if (graphLimitQtype != constants.FirstQueryGraphLimit) && (panelType == v3.PanelTypeGraph || panelType == v3.PanelTypeValue) {
+		tags = append(tags, "ts")
+	}
 	return strings.Join(tags, ",")
 }
 
-func groupByAttributeKeyTags(keys map[string]v3.AttributeKey, tags ...v3.AttributeKey) string {
+func groupByAttributeKeyTags(panelType v3.PanelType, graphLimitQtype string, tags ...v3.AttributeKey) string {
 	groupTags := []string{}
 	for _, tag := range tags {
 		groupTags = append(groupTags, fmt.Sprintf("`%s`", tag.Key))
 	}
-	return groupBy(groupTags...)
+	return groupBy(panelType, graphLimitQtype, groupTags...)
 }
 
 // orderBy returns a string of comma separated tags for order by clause
 // if there are remaining items which are not present in tags they are also added
 // if the order is not specified, it defaults to ASC
-func orderBy(panelType v3.PanelType, items []v3.OrderBy, tags []string, keys map[string]v3.AttributeKey) []string {
+func orderBy(panelType v3.PanelType, items []v3.OrderBy, tagLookup map[string]struct{}, keys map[string]v3.AttributeKey) []string {
 	var orderBy []string
 
-	// create a lookup
-	addedToOrderBy := map[string]bool{}
-	itemsLookup := map[string]v3.OrderBy{}
-
-	for i := 0; i < len(items); i++ {
-		addedToOrderBy[items[i].ColumnName] = false
-		itemsLookup[items[i].ColumnName] = items[i]
-	}
-
-	for _, tag := range tags {
-		if item, ok := itemsLookup[tag]; ok {
-			orderBy = append(orderBy, fmt.Sprintf("`%s` %s", item.ColumnName, item.Order))
-			addedToOrderBy[item.ColumnName] = true
-		} else {
-			orderBy = append(orderBy, fmt.Sprintf("`%s` ASC", tag))
-		}
-	}
-
-	// users might want to order by value of aggregation
 	for _, item := range items {
 		if item.ColumnName == constants.SigNozOrderByValue {
 			orderBy = append(orderBy, fmt.Sprintf("value %s", item.Order))
-			addedToOrderBy[item.ColumnName] = true
-		}
-	}
-
-	// add the remaining items
-	if panelType == v3.PanelTypeList {
-		for _, item := range items {
-			// since these are not present in tags we will have to select them correctly
-			// for list view there is no need to check if it was added since they wont be added yet but this is just for safety
-			if !addedToOrderBy[item.ColumnName] {
-				attr := v3.AttributeKey{Key: item.ColumnName, DataType: item.DataType, Type: item.Type, IsColumn: item.IsColumn}
-				name := getColumnName(attr, keys)
-				
-				if item.IsColumn {
-					orderBy = append(orderBy, fmt.Sprintf("`%s` %s", name, item.Order))
-				} else {
-					orderBy = append(orderBy, fmt.Sprintf("%s %s", name, item.Order))
-				}
+		} else if _, ok := tagLookup[item.ColumnName]; ok {
+			orderBy = append(orderBy, fmt.Sprintf("`%s` %s", item.ColumnName, item.Order))
+		} else if panelType == v3.PanelTypeList {
+			attr := v3.AttributeKey{Key: item.ColumnName, DataType: item.DataType, Type: item.Type, IsColumn: item.IsColumn}
+			name := getColumnName(attr, keys)
+			if item.IsColumn {
+				orderBy = append(orderBy, fmt.Sprintf("`%s` %s", name, item.Order))
+			} else {
+				orderBy = append(orderBy, fmt.Sprintf("%s %s", name, item.Order))
 			}
 		}
 	}
+
 	return orderBy
 }
 
 func orderByAttributeKeyTags(panelType v3.PanelType, items []v3.OrderBy, tags []v3.AttributeKey, keys map[string]v3.AttributeKey) string {
-	var groupTags []string
-	for _, tag := range tags {
-		groupTags = append(groupTags, tag.Key)
+	tagLookup := map[string]struct{}{}
+	for _, v := range tags {
+		tagLookup[v.Key] = struct{}{}
 	}
-	orderByArray := orderBy(panelType, items, groupTags, keys)
 
-	if panelType == v3.PanelTypeList && len(orderByArray) == 0 {
-		orderByArray = append(orderByArray, constants.TIMESTAMP+" DESC")
-	} else if panelType == v3.PanelTypeGraph || panelType == v3.PanelTypeTable {
-		orderByArray = append(orderByArray, "ts")
+	orderByArray := orderBy(panelType, items, tagLookup, keys)
+
+	if len(orderByArray) == 0 {
+		if panelType == v3.PanelTypeList {
+			orderByArray = append(orderByArray, constants.TIMESTAMP+" DESC")
+		} else if panelType == v3.PanelTypeGraph {
+			orderByArray = append(orderByArray, "value DESC")
+		}
 	}
 
 	str := strings.Join(orderByArray, ",")
@@ -461,7 +477,7 @@ func reduceToQuery(query string, reduceTo v3.ReduceToOperator, aggregateOperator
 	return query, nil
 }
 
-func addLimitToQuery(query string, limit uint64, panelType v3.PanelType) string {
+func addLimitToQuery(query string, limit uint64) string {
 	if limit == 0 {
 		limit = 100
 	}
@@ -472,16 +488,33 @@ func addOffsetToQuery(query string, offset uint64) string {
 	return fmt.Sprintf("%s OFFSET %d", query, offset)
 }
 
-func PrepareTracesQuery(start, end int64, queryType v3.QueryType, panelType v3.PanelType, mq *v3.BuilderQuery, keys map[string]v3.AttributeKey) (string, error) {
-	query, err := buildTracesQuery(start, end, mq.StepInterval, mq, constants.SIGNOZ_SPAN_INDEX_TABLENAME, keys, panelType)
+func PrepareTracesQuery(start, end int64, panelType v3.PanelType, mq *v3.BuilderQuery, keys map[string]v3.AttributeKey, graphLimitQtype string) (string, error) {
+	if graphLimitQtype == constants.FirstQueryGraphLimit {
+		// give me just the group by names
+		query, err := buildTracesQuery(start, end, mq.StepInterval, mq, constants.SIGNOZ_SPAN_INDEX_TABLENAME, keys, panelType, graphLimitQtype)
+		if err != nil {
+			return "", err
+		}
+		query = addLimitToQuery(query, mq.Limit)
+
+		return query, nil
+	} else if graphLimitQtype == constants.SecondQueryGraphLimit {
+		query, err := buildTracesQuery(start, end, mq.StepInterval, mq, constants.SIGNOZ_SPAN_INDEX_TABLENAME, keys, panelType, graphLimitQtype)
+		if err != nil {
+			return "", err
+		}
+		return query, nil
+	}
+
+	query, err := buildTracesQuery(start, end, mq.StepInterval, mq, constants.SIGNOZ_SPAN_INDEX_TABLENAME, keys, panelType, graphLimitQtype)
 	if err != nil {
 		return "", err
 	}
 	if panelType == v3.PanelTypeValue {
 		query, err = reduceToQuery(query, mq.ReduceTo, mq.AggregateOperator)
 	}
-	if panelType == v3.PanelTypeList {
-		query = addLimitToQuery(query, mq.Limit, panelType)
+	if panelType == v3.PanelTypeList || panelType == v3.PanelTypeTable {
+		query = addLimitToQuery(query, mq.Limit)
 
 		if mq.Offset != 0 {
 			query = addOffsetToQuery(query, mq.Offset)
