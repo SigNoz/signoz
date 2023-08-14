@@ -65,6 +65,7 @@ const getChartData = ({
 	return {
 		datasets: alldata.map((e, index) => {
 			const datasetBaseConfig = {
+				index,
 				label: allLabels[index],
 				borderColor: colors[index % colors.length] || 'red',
 				data: e,

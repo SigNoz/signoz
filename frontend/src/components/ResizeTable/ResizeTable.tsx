@@ -1,6 +1,8 @@
+/* eslint-disable react/jsx-props-no-spreading */
+
 import { Table } from 'antd';
-import type { TableProps } from 'antd/es/table';
 import { ColumnsType } from 'antd/lib/table';
+import { dragColumnParams } from 'hooks/useDragColumns/configs';
 import {
 	SyntheticEvent,
 	useCallback,
@@ -8,12 +10,18 @@ import {
 	useMemo,
 	useState,
 } from 'react';
+import ReactDragListView from 'react-drag-listview';
 import { ResizeCallbackData } from 'react-resizable';
 
 import ResizableHeader from './ResizableHeader';
+import { DragSpanStyle } from './styles';
+import { ResizeTableProps } from './types';
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-function ResizeTable({ columns, ...restprops }: TableProps<any>): JSX.Element {
+function ResizeTable({
+	columns,
+	onDragColumn,
+	...restProps
+}: ResizeTableProps): JSX.Element {
 	const [columnsData, setColumns] = useState<ColumnsType>([]);
 
 	const handleResize = useCallback(
@@ -31,16 +39,32 @@ function ResizeTable({ columns, ...restprops }: TableProps<any>): JSX.Element {
 		[columnsData],
 	);
 
-	const mergeColumns = useMemo(
+	const mergedColumns = useMemo(
 		() =>
 			columnsData.map((col, index) => ({
 				...col,
+				...(onDragColumn && {
+					title: (
+						<DragSpanStyle className="dragHandler">
+							{col?.title?.toString() || ''}
+						</DragSpanStyle>
+					),
+				}),
 				onHeaderCell: (column: ColumnsType<unknown>[number]): unknown => ({
 					width: column.width,
 					onResize: handleResize(index),
 				}),
-			})),
-		[columnsData, handleResize],
+			})) as ColumnsType<any>,
+		[columnsData, onDragColumn, handleResize],
+	);
+
+	const tableParams = useMemo(
+		() => ({
+			...restProps,
+			components: { header: { cell: ResizableHeader } },
+			columns: mergedColumns,
+		}),
+		[mergedColumns, restProps],
 	);
 
 	useEffect(() => {
@@ -49,15 +73,17 @@ function ResizeTable({ columns, ...restprops }: TableProps<any>): JSX.Element {
 		}
 	}, [columns]);
 
-	return (
-		<Table
-			// eslint-disable-next-line react/jsx-props-no-spreading
-			{...restprops}
-			components={{ header: { cell: ResizableHeader } }}
-			// eslint-disable-next-line @typescript-eslint/no-explicit-any
-			columns={mergeColumns as ColumnsType<any>}
-		/>
+	return onDragColumn ? (
+		<ReactDragListView.DragColumn {...dragColumnParams} onDragEnd={onDragColumn}>
+			<Table {...tableParams} />
+		</ReactDragListView.DragColumn>
+	) : (
+		<Table {...tableParams} />
 	);
 }
+
+ResizeTable.defaultProps = {
+	onDragColumn: undefined,
+};
 
 export default ResizeTable;

@@ -24,6 +24,7 @@ function MetricsApplication(): JSX.Element {
 				route: `${generatePath(ROUTES.SERVICE_METRICS, {
 					servicename,
 				})}?tab=${MetricsApplicationTab.OVER_METRICS}`,
+				key: MetricsApplicationTab.OVER_METRICS,
 			},
 			{
 				Component: DBCall,
@@ -31,6 +32,7 @@ function MetricsApplication(): JSX.Element {
 				route: `${generatePath(ROUTES.SERVICE_METRICS, {
 					servicename,
 				})}?tab=${MetricsApplicationTab.DB_CALL_METRICS}`,
+				key: MetricsApplicationTab.DB_CALL_METRICS,
 			},
 			{
 				Component: External,
@@ -38,6 +40,7 @@ function MetricsApplication(): JSX.Element {
 				route: `${generatePath(ROUTES.SERVICE_METRICS, {
 					servicename,
 				})}?tab=${MetricsApplicationTab.EXTERNAL_METRICS}`,
+				key: MetricsApplicationTab.EXTERNAL_METRICS,
 			},
 		],
 		[servicename],

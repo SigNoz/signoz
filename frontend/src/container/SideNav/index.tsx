@@ -53,14 +53,14 @@ function SideNav(): JSX.Element {
 	}, [collapsed, dispatch]);
 
 	const onClickHandler = useCallback(
-		(to: string) => {
+		(key: string) => {
 			const params = new URLSearchParams(search);
-			const availableParams = routeConfig[to];
+			const availableParams = routeConfig[key];
 
 			const queryString = getQueryString(availableParams || [], params);
 
-			if (pathname !== to) {
-				history.push(`${to}?${queryString.join('&')}`);
+			if (pathname !== key) {
+				history.push(`${key}?${queryString.join('&')}`);
 			}
 		},
 		[pathname, search],

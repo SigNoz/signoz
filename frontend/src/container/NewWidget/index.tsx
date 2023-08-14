@@ -1,8 +1,8 @@
 import { LockFilled } from '@ant-design/icons';
 import { Button, Modal, Tooltip, Typography } from 'antd';
 import { FeatureKeys } from 'constants/features';
+import { PANEL_TYPES } from 'constants/queryBuilder';
 import ROUTES from 'constants/routes';
-import { ITEMS } from 'container/NewDashboard/ComponentsSlider/menuItems';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { MESSAGE, useIsFeatureDisabled } from 'hooks/useFeatureFlag';
 import { useNotifications } from 'hooks/useNotifications';
@@ -148,7 +148,7 @@ function NewWidget({ selectedGraph, saveSettingOfPanel }: Props): JSX.Element {
 		history.push(generatePath(ROUTES.DASHBOARD, { dashboardId }));
 	}, [dashboardId, dispatch]);
 
-	const setGraphHandler = (type: ITEMS): void => {
+	const setGraphHandler = (type: PANEL_TYPES): void => {
 		const params = new URLSearchParams(search);
 		params.set('graphType', type);
 		history.push({ search: params.toString() });

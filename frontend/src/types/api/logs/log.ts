@@ -8,7 +8,7 @@ export interface ILog {
 	severityText: string;
 	severityNumber: number;
 	body: string;
-	resourcesString: Record<string, never>;
+	resources_string: Record<string, never>;
 	attributesString: Record<string, never>;
 	attributesInt: Record<string, never>;
 	attributesFloat: Record<string, never>;

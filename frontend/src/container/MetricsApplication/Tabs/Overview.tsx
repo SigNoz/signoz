@@ -2,10 +2,13 @@ import getTopLevelOperations, {
 	ServiceDataProps,
 } from 'api/metrics/getTopLevelOperations';
 import { ActiveElement, Chart, ChartData, ChartEvent } from 'chart.js';
+import { FeatureKeys } from 'constants/features';
 import { QueryParams } from 'constants/query';
+import { PANEL_TYPES } from 'constants/queryBuilder';
 import ROUTES from 'constants/routes';
 import { routeConfig } from 'container/SideNav/config';
 import { getQueryString } from 'container/SideNav/helper';
+import useFeatureFlag from 'hooks/useFeatureFlag';
 import useResourceAttribute from 'hooks/useResourceAttribute';
 import {
 	convertRawQueriesToTraceSelectedTags,
@@ -29,10 +32,11 @@ import {
 	errorPercentage,
 	operationPerSec,
 } from '../MetricsPageQueries/OverviewQueries';
-import { Col, Row } from '../styles';
+import { Card, Col, Row } from '../styles';
 import ServiceOverview from './Overview/ServiceOverview';
 import TopLevelOperation from './Overview/TopLevelOperations';
 import TopOperation from './Overview/TopOperation';
+import TopOperationMetrics from './Overview/TopOperationMetrics';
 import { Button } from './styles';
 import { IServiceName } from './types';
 import {
@@ -53,6 +57,8 @@ function Application(): JSX.Element {
 		() => (convertRawQueriesToTraceSelectedTags(queries) as Tags[]) || [],
 		[queries],
 	);
+	const isSpanMetricEnabled = useFeatureFlag(FeatureKeys.USE_SPAN_METRICS)
+		?.active;
 
 	const handleSetTimeStamp = useCallback((selectTime: number) => {
 		setSelectedTimeStamp(selectTime);
@@ -97,46 +103,49 @@ function Application(): JSX.Element {
 		[queries],
 	);
 
+	const topLevelOperationsRoute = useMemo(
+		() => (topLevelOperations ? topLevelOperations[servicename || ''] : []),
+		[servicename, topLevelOperations],
+	);
+
 	const operationPerSecWidget = useMemo(
 		() =>
-			getWidgetQueryBuilder(
-				{
+			getWidgetQueryBuilder({
+				query: {
 					queryType: EQueryType.QUERY_BUILDER,
 					promql: [],
 					builder: operationPerSec({
 						servicename,
 						tagFilterItems,
-						topLevelOperations: topLevelOperations
-							? topLevelOperations[servicename || '']
-							: [],
+						topLevelOperations: topLevelOperationsRoute,
 					}),
 					clickhouse_sql: [],
 					id: uuid(),
 				},
-				GraphTitle.RATE_PER_OPS,
-			),
-		[servicename, topLevelOperations, tagFilterItems],
+				title: GraphTitle.RATE_PER_OPS,
+				panelTypes: PANEL_TYPES.TIME_SERIES,
+			}),
+		[servicename, tagFilterItems, topLevelOperationsRoute],
 	);
 
 	const errorPercentageWidget = useMemo(
 		() =>
-			getWidgetQueryBuilder(
-				{
+			getWidgetQueryBuilder({
+				query: {
 					queryType: EQueryType.QUERY_BUILDER,
 					promql: [],
 					builder: errorPercentage({
 						servicename,
 						tagFilterItems,
-						topLevelOperations: topLevelOperations
-							? topLevelOperations[servicename || '']
-							: [],
+						topLevelOperations: topLevelOperationsRoute,
 					}),
 					clickhouse_sql: [],
 					id: uuid(),
 				},
-				GraphTitle.ERROR_PERCENTAGE,
-			),
-		[servicename, topLevelOperations, tagFilterItems],
+				title: GraphTitle.ERROR_PERCENTAGE,
+				panelTypes: PANEL_TYPES.TIME_SERIES,
+			}),
+		[servicename, tagFilterItems, topLevelOperationsRoute],
 	);
 
 	const onDragSelect = useCallback(
@@ -180,7 +189,7 @@ function Application(): JSX.Element {
 						handleGraphClick={handleGraphClick}
 						selectedTimeStamp={selectedTimeStamp}
 						selectedTraceTags={selectedTraceTags}
-						tagFilterItems={tagFilterItems}
+						topLevelOperationsRoute={topLevelOperationsRoute}
 					/>
 				</Col>
 
@@ -237,7 +246,9 @@ function Application(): JSX.Element {
 				</Col>
 
 				<Col span={12}>
-					<TopOperation />
+					<Card>
+						{isSpanMetricEnabled ? <TopOperationMetrics /> : <TopOperation />}
+					</Card>
 				</Col>
 			</Row>
 		</>

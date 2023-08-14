@@ -1,5 +1,10 @@
 import { themeColors } from 'constants/theme';
 import styled from 'styled-components';
+import { getActiveLogBackground } from 'utils/logs';
+
+interface TableHeaderCellStyledProps {
+	isDragColumn: boolean;
+}
 
 export const TableStyled = styled.table`
 	width: 100%;
@@ -18,18 +23,29 @@ export const TableCellStyled = styled.td`
 	background-color: ${themeColors.lightBlack};
 `;
 
-export const TableRowStyled = styled.tr`
+export const TableRowStyled = styled.tr<{
+	$isActiveLog: boolean;
+}>`
+	td {
+		${({ $isActiveLog }): string => getActiveLogBackground($isActiveLog)}
+	}
+
 	&:hover {
 		${TableCellStyled} {
-			background-color: #1d1d1d;
+			${({ $isActiveLog }): string =>
+				$isActiveLog
+					? getActiveLogBackground()
+					: `background-color: ${themeColors.bckgGrey};`}
 		}
 	}
 `;
 
-export const TableHeaderCellStyled = styled.th`
+export const TableHeaderCellStyled = styled.th<TableHeaderCellStyledProps>`
 	padding: 0.5rem;
 	border-inline-end: 1px solid rgba(253, 253, 253, 0.12);
-	background-color: #1d1d1d;
+	background-color: ${themeColors.bckgGrey};
+	${({ isDragColumn }): string => (isDragColumn ? 'cursor: col-resize;' : '')}
+
 	&:first-child {
 		border-start-start-radius: 2px;
 	}

@@ -1,20 +1,23 @@
+import { PANEL_TYPES } from 'constants/queryBuilder';
 import { EQueryType } from 'types/common/dashboard';
 
 import QueryTypeTag from '../QueryTypeTag';
+import { PlotTagWrapperStyled } from './styles';
 
 interface IPlotTagProps {
 	queryType: EQueryType;
+	panelType: PANEL_TYPES;
 }
 
-function PlotTag({ queryType }: IPlotTagProps): JSX.Element | null {
+function PlotTag({ queryType, panelType }: IPlotTagProps): JSX.Element | null {
 	if (queryType === undefined) {
 		return null;
 	}
 
 	return (
-		<div style={{ marginLeft: '2rem', position: 'absolute', top: '1rem' }}>
+		<PlotTagWrapperStyled $panelType={panelType}>
 			Plotted using <QueryTypeTag queryType={queryType} />
-		</div>
+		</PlotTagWrapperStyled>
 	);
 }
 

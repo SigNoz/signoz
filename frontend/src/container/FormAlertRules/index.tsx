@@ -3,6 +3,7 @@ import { Col, FormInstance, Modal, Tooltip, Typography } from 'antd';
 import saveAlertApi from 'api/alerts/save';
 import testAlertApi from 'api/alerts/testAlert';
 import { FeatureKeys } from 'constants/features';
+import { PANEL_TYPES } from 'constants/queryBuilder';
 import ROUTES from 'constants/routes';
 import QueryTypeTag from 'container/NewWidget/LeftContainer/QueryTypeTag';
 import PlotTag from 'container/NewWidget/LeftContainer/WidgetGraph/PlotTag';
@@ -58,6 +59,7 @@ function FormAlertRules({
 
 	const {
 		currentQuery,
+		panelType,
 		stagedQuery,
 		handleRunQuery,
 		redirectWithQueryBuilderData,
@@ -351,7 +353,12 @@ function FormAlertRules({
 
 	const renderQBChartPreview = (): JSX.Element => (
 		<ChartPreview
-			headline={<PlotTag queryType={currentQuery.queryType} />}
+			headline={
+				<PlotTag
+					queryType={currentQuery.queryType}
+					panelType={panelType || PANEL_TYPES.TIME_SERIES}
+				/>
+			}
 			name=""
 			threshold={alertDef.condition?.target}
 			query={stagedQuery}
@@ -361,7 +368,12 @@ function FormAlertRules({
 
 	const renderPromChartPreview = (): JSX.Element => (
 		<ChartPreview
-			headline={<PlotTag queryType={currentQuery.queryType} />}
+			headline={
+				<PlotTag
+					queryType={currentQuery.queryType}
+					panelType={panelType || PANEL_TYPES.TIME_SERIES}
+				/>
+			}
 			name="Chart Preview"
 			threshold={alertDef.condition?.target}
 			query={stagedQuery}
@@ -370,7 +382,12 @@ function FormAlertRules({
 
 	const renderChQueryChartPreview = (): JSX.Element => (
 		<ChartPreview
-			headline={<PlotTag queryType={currentQuery.queryType} />}
+			headline={
+				<PlotTag
+					queryType={currentQuery.queryType}
+					panelType={panelType || PANEL_TYPES.TIME_SERIES}
+				/>
+			}
 			name="Chart Preview"
 			threshold={alertDef.condition?.target}
 			query={stagedQuery}

@@ -68,6 +68,11 @@ const menus: SidebarMenu[] = [
 		// 	label: 'Views',
 		// },
 		// ],
+		// {
+		// 	key: ROUTES.PIPELINES,
+		// 	label: 'Pipelines',
+		// },
+		// ],
 	},
 	{
 		key: ROUTES.ALL_DASHBOARD,
