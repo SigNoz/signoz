@@ -10,6 +10,7 @@ import { useOptionsMenu } from 'container/OptionsMenu';
 import { contentStyle } from 'container/Trace/Search/config';
 import { useCopyLogLink } from 'hooks/logs/useCopyLogLink';
 import useFontFaceObserver from 'hooks/useFontObserver';
+import { useEventSource } from 'providers/EventSource';
 import { memo, useCallback, useEffect, useMemo, useRef } from 'react';
 import { Virtuoso, VirtuosoHandle } from 'react-virtuoso';
 // interfaces
@@ -20,6 +21,8 @@ import { LiveLogsListProps } from './types';
 
 function LiveLogsList({ logs }: LiveLogsListProps): JSX.Element {
 	const ref = useRef<VirtuosoHandle>(null);
+
+	const { isConnectionError } = useEventSource();
 
 	const { activeLogId } = useCopyLogLink();
 
@@ -116,7 +119,9 @@ function LiveLogsList({ logs }: LiveLogsListProps): JSX.Element {
 
 			{logs.length === 0 && <Typography>No logs lines found</Typography>}
 
-			<InfinityWrapperStyled>{renderContent}</InfinityWrapperStyled>
+			{!isConnectionError && (
+				<InfinityWrapperStyled>{renderContent}</InfinityWrapperStyled>
+			)}
 		</>
 	);
 }
