@@ -20,4 +20,7 @@ export const WrapperStyled = styled.div`
 		flex: 1;
 		overflow: auto;
 	}
+	& table {
+		overflow: hidden;
+	}
 `;
