@@ -47,8 +47,15 @@ function FormAlertChannels({
 		isFeatureKeys(feature) ? feature : FeatureKeys.ALERT_CHANNEL_SLACK,
 	);
 
+	const isOssFeature = useFeatureFlags(FeatureKeys.OSS);
+
 	const renderSettings = (): ReactElement | null => {
-		if (!hasFeature || !hasFeature.active) {
+		if (
+			// for ee plan
+			!isOssFeature?.active &&
+			(!hasFeature || !hasFeature.active) &&
+			type === 'msteams'
+		) {
 			// channel type is not available for users plan
 			return <UpgradePrompt />;
 		}
@@ -95,11 +102,13 @@ function FormAlertChannels({
 						<Select.Option value="pagerduty" key="pagerduty">
 							Pagerduty
 						</Select.Option>
-						<Select.Option value="msteams" key="msteams">
-							<div>
-								Microsoft Teams {!isUserOnEEPlan && '(Supported in Paid Plans Only)'}{' '}
-							</div>
-						</Select.Option>
+						{!isOssFeature?.active && (
+							<Select.Option value="msteams" key="msteams">
+								<div>
+									Microsoft Teams {!isUserOnEEPlan && '(Supported in Paid Plans Only)'}{' '}
+								</div>
+							</Select.Option>
+						)}
 					</Select>
 				</Form.Item>
 
