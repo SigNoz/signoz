@@ -187,6 +187,9 @@ export type QueryBuilderContextType = {
 		searchParams?: Record<string, unknown>,
 	) => void;
 	handleRunQuery: () => void;
+	// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+	// @ts-ignore
+	handleOnUnitsChange: (units: FormData['id']) => void;
 	resetQuery: (newCurrentQuery?: QueryState) => void;
 	updateAllQueriesOperators: (
 		queryData: Query,

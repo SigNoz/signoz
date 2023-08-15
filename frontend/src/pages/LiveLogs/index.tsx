@@ -23,5 +23,3 @@ function LiveLogs(): JSX.Element {
 }
 
 export default LiveLogs;
-
-console.log('fire');
