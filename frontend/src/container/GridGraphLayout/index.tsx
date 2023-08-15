@@ -29,6 +29,7 @@ import { Dashboard, Widgets } from 'types/api/dashboard/getAll';
 import AppReducer from 'types/reducer/app';
 import DashboardReducer from 'types/reducer/dashboards';
 
+import { headerMenuList } from './config';
 import Graph from './Graph';
 import GraphLayoutContainer from './GraphLayout';
 import { UpdateDashboard } from './utils';
@@ -49,6 +50,7 @@ export const getPreLayouts = (
 					yAxisUnit={widget?.yAxisUnit}
 					layout={layout}
 					setLayout={setLayout}
+					headerMenuList={headerMenuList}
 				/>
 			);
 		},
@@ -233,6 +235,7 @@ function GridGraph(props: Props): JSX.Element {
 								layout={layout}
 								setLayout={setLayout}
 								onDragSelect={onDragSelect}
+								headerMenuList={headerMenuList}
 							/>
 						),
 					};

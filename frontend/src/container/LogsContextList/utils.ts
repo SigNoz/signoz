@@ -1,3 +1,4 @@
+import { initialFilters } from 'constants/queryBuilder';
 import { getPaginationQueryData } from 'lib/newQueryBuilder/getPaginationQueryData';
 import { ILog } from 'types/api/logs/log';
 import {
@@ -28,7 +29,7 @@ export const getRequestData = ({
 	if (!query) return null;
 
 	const paginateData = getPaginationQueryData({
-		currentStagedQueryData: stagedQueryData,
+		filters: stagedQueryData?.filters || initialFilters,
 		listItemId: log ? log.id : null,
 		orderByTimestamp,
 		page,
