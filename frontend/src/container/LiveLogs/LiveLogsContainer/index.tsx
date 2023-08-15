@@ -134,8 +134,6 @@ function LiveLogsContainer(): JSX.Element {
 		}
 	}, [stagedQuery, initialLoading, compositeQuery, handleStartNewConnection]);
 
-	console.log({ initialLoading });
-
 	return (
 		<>
 			<LiveLogsTopNav onOpenConnection={handleStartNewConnection} />
