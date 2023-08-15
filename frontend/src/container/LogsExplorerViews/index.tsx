@@ -3,9 +3,7 @@ import TabLabel from 'components/TabLabel';
 import { QueryParams } from 'constants/query';
 import {
 	initialAutocompleteData,
-	initialFilters,
 	initialQueriesMap,
-	initialQueryBuilderFormValues,
 	PANEL_TYPES,
 } from 'constants/queryBuilder';
 import { queryParamNamesMap } from 'constants/queryBuilderQueryNames';
@@ -38,9 +36,8 @@ import {
 	IBuilderQuery,
 	OrderByPayload,
 	Query,
-	TagFilter,
 } from 'types/api/queryBuilder/queryBuilderData';
-import { DataSource, StringOperators } from 'types/common/queryBuilder';
+import { DataSource, LogsAggregatorOperator } from 'types/common/queryBuilder';
 import { GlobalReducer } from 'types/reducer/globalTime';
 
 import { ActionsWrapper } from './LogsExplorerViews.styled';
@@ -78,19 +75,19 @@ function LogsExplorerViews(): JSX.Element {
 
 	const handleAxisError = useAxiosError();
 
-	const listQuery = useMemo(() => {
-		if (!stagedQuery || stagedQuery.builder.queryData.length < 1) return null;
+	const currentStagedQueryData = useMemo(() => {
+		if (!stagedQuery || stagedQuery.builder.queryData.length !== 1) return null;
 
-		return stagedQuery.builder.queryData.find((item) => !item.disabled) || null;
+		return stagedQuery.builder.queryData[0];
 	}, [stagedQuery]);
 
 	const orderByTimestamp: OrderByPayload | null = useMemo(() => {
-		const timestampOrderBy = listQuery?.orderBy.find(
+		const timestampOrderBy = currentStagedQueryData?.orderBy.find(
 			(item) => item.columnName === 'timestamp',
 		);
 
 		return timestampOrderBy || null;
-	}, [listQuery]);
+	}, [currentStagedQueryData]);
 
 	const isMultipleQueries = useMemo(
 		() =>
@@ -109,18 +106,18 @@ function LogsExplorerViews(): JSX.Element {
 	}, [currentQuery]);
 
 	const isLimit: boolean = useMemo(() => {
-		if (!listQuery) return false;
-		if (!listQuery.limit) return false;
+		if (!currentStagedQueryData) return false;
+		if (!currentStagedQueryData.limit) return false;
 
-		return logs.length >= listQuery.limit;
-	}, [logs.length, listQuery]);
+		return logs.length >= currentStagedQueryData.limit;
+	}, [logs.length, currentStagedQueryData]);
 
 	const listChartQuery = useMemo(() => {
-		if (!stagedQuery || !listQuery) return null;
+		if (!stagedQuery || !currentStagedQueryData) return null;
 
 		const modifiedQueryData: IBuilderQuery = {
-			...listQuery,
-			aggregateOperator: StringOperators.COUNT,
+			...currentStagedQueryData,
+			aggregateOperator: LogsAggregatorOperator.COUNT,
 		};
 
 		const modifiedQuery: Query = {
@@ -135,7 +132,7 @@ function LogsExplorerViews(): JSX.Element {
 		};
 
 		return modifiedQuery;
-	}, [stagedQuery, listQuery]);
+	}, [stagedQuery, currentStagedQueryData]);
 
 	const exportDefaultQuery = useMemo(
 		() =>
@@ -150,9 +147,7 @@ function LogsExplorerViews(): JSX.Element {
 	const listChartData = useGetExplorerQueryRange(
 		listChartQuery,
 		PANEL_TYPES.TIME_SERIES,
-		{
-			enabled: !!listChartQuery && panelType === PANEL_TYPES.LIST,
-		},
+		{ enabled: panelType === PANEL_TYPES.LIST },
 	);
 
 	const { data, isFetching, isError } = useGetExplorerQueryRange(
@@ -211,66 +206,52 @@ function LogsExplorerViews(): JSX.Element {
 	const getRequestData = useCallback(
 		(
 			query: Query | null,
-			params: {
-				page: number;
-				log: ILog | null;
-				pageSize: number;
-				filters: TagFilter;
-			},
+			params: { page: number; log: ILog | null; pageSize: number },
 		): Query | null => {
 			if (!query) return null;
 
 			const paginateData = getPaginationQueryData({
-				filters: params.filters,
+				currentStagedQueryData,
 				listItemId: params.log ? params.log.id : null,
 				orderByTimestamp,
 				page: params.page,
 				pageSize: params.pageSize,
 			});
 
-			const queryData: IBuilderQuery[] =
-				query.builder.queryData.length > 1
-					? query.builder.queryData
-					: [
-							{
-								...(listQuery || initialQueryBuilderFormValues),
-								...paginateData,
-							},
-					  ];
-
 			const data: Query = {
 				...query,
 				builder: {
 					...query.builder,
-					queryData,
+					queryData: query.builder.queryData.map((item) => ({
+						...item,
+						...paginateData,
+						pageSize: params.pageSize,
+					})),
 				},
 			};
 
 			return data;
 		},
-		[orderByTimestamp, listQuery],
+		[currentStagedQueryData, orderByTimestamp],
 	);
 
 	const handleEndReached = useCallback(
 		(index: number) => {
-			if (!listQuery) return;
-
 			if (isLimit) return;
 			if (logs.length < pageSize) return;
 
-			const { limit, filters } = listQuery;
-
 			const lastLog = logs[index];
 
-			const nextLogsLength = logs.length + pageSize;
+			const limit = currentStagedQueryData?.limit;
+
+			const nextLogsLenth = logs.length + pageSize;
 
 			const nextPageSize =
-				limit && nextLogsLength >= limit ? limit - logs.length : pageSize;
+				limit && nextLogsLenth >= limit ? limit - logs.length : pageSize;
 
 			if (!stagedQuery) return;
 
 			const newRequestData = getRequestData(stagedQuery, {
-				filters,
 				page: page + 1,
 				log: orderByTimestamp ? lastLog : null,
 				pageSize: nextPageSize,
@@ -283,7 +264,7 @@ function LogsExplorerViews(): JSX.Element {
 		[
 			isLimit,
 			logs,
-			listQuery,
+			currentStagedQueryData?.limit,
 			pageSize,
 			stagedQuery,
 			getRequestData,
@@ -387,13 +368,11 @@ function LogsExplorerViews(): JSX.Element {
 			currentMinTimeRef.current !== minTime
 		) {
 			const newRequestData = getRequestData(stagedQuery, {
-				filters: listQuery?.filters || initialFilters,
 				page: 1,
 				log: null,
 				pageSize:
 					timeRange?.pageSize && activeLogId ? timeRange?.pageSize : pageSize,
 			});
-
 			setLogs([]);
 			setPage(1);
 			setRequestData(newRequestData);
@@ -407,13 +386,11 @@ function LogsExplorerViews(): JSX.Element {
 		stagedQuery,
 		requestData,
 		getRequestData,
-		listQuery,
 		pageSize,
 		minTime,
 		timeRange,
 		activeLogId,
 		onTimeRangeChange,
-		panelType,
 	]);
 
 	const tabsItems: TabsProps['items'] = useMemo(
@@ -431,7 +408,7 @@ function LogsExplorerViews(): JSX.Element {
 				children: (
 					<LogsExplorerList
 						isLoading={isFetching}
-						currentStagedQueryData={listQuery}
+						currentStagedQueryData={currentStagedQueryData}
 						logs={logs}
 						onEndReached={handleEndReached}
 					/>
@@ -459,7 +436,7 @@ function LogsExplorerViews(): JSX.Element {
 			isMultipleQueries,
 			isGroupByExist,
 			isFetching,
-			listQuery,
+			currentStagedQueryData,
 			logs,
 			handleEndReached,
 			data,
@@ -487,14 +464,18 @@ function LogsExplorerViews(): JSX.Element {
 			(queryData) => queryData.groupBy.length > 0,
 		);
 
+		const firstEnabledQuery = stagedQuery.builder.queryData.find(
+			(item) => !item.disabled,
+		);
+
 		const firstPayloadQuery = data.payload.data.result.find(
-			(item) => item.queryName === listQuery?.queryName,
+			(item) => item.queryName === firstEnabledQuery?.queryName,
 		);
 
 		const firstPayloadQueryArray = firstPayloadQuery ? [firstPayloadQuery] : [];
 
 		return isGroupByExist ? data.payload.data.result : firstPayloadQueryArray;
-	}, [stagedQuery, panelType, data, listChartData, listQuery]);
+	}, [stagedQuery, data, panelType, listChartData]);
 
 	return (
 		<>

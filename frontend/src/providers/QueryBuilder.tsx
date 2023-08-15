@@ -67,11 +67,10 @@ export const QueryBuilderContext = createContext<QueryBuilderContextType>({
 	addNewQueryItem: () => {},
 	redirectWithQueryBuilderData: () => {},
 	handleRunQuery: () => {},
-	resetStagedQuery: () => {},
+	resetQuery: () => {},
 	updateAllQueriesOperators: () => initialQueriesMap.metrics,
 	updateQueriesData: () => initialQueriesMap.metrics,
 	initQueryBuilderData: () => {},
-	handleOnUnitsChange: () => {},
 });
 
 export function QueryBuilderProvider({
@@ -177,7 +176,6 @@ export function QueryBuilderProvider({
 					queryData: setupedQueryData,
 				},
 				id: query.id,
-				unit: query.unit,
 			};
 
 			const nextQuery: Query = {
@@ -476,7 +474,6 @@ export function QueryBuilderProvider({
 				promql,
 				clickhouse_sql: clickhouseSql,
 				id: uuid(),
-				unit: query.unit || initialQueryState.unit,
 			};
 
 			urlQuery.set(
@@ -516,7 +513,6 @@ export function QueryBuilderProvider({
 						promql: currentQuery.promql,
 						id: currentQuery.id,
 						queryType,
-						unit: currentQuery.unit,
 					},
 					maxTime,
 					minTime,
@@ -526,8 +522,12 @@ export function QueryBuilderProvider({
 		});
 	}, [currentQuery, queryType, maxTime, minTime, redirectWithQueryBuilderData]);
 
-	const resetStagedQuery = useCallback(() => {
+	const resetQuery = useCallback((newCurrentQuery?: QueryState) => {
 		setStagedQuery(null);
+
+		if (newCurrentQuery) {
+			setCurrentQuery(newCurrentQuery);
+		}
 	}, []);
 
 	useEffect(() => {
@@ -553,16 +553,6 @@ export function QueryBuilderProvider({
 		compositeQueryParam,
 		stagedQuery,
 	]);
-
-	const handleOnUnitsChange = useCallback(
-		(unit: string) => {
-			setCurrentQuery((prevState) => ({
-				...prevState,
-				unit,
-			}));
-		},
-		[setCurrentQuery],
-	);
 
 	const query: Query = useMemo(
 		() => ({
@@ -595,11 +585,10 @@ export function QueryBuilderProvider({
 			addNewQueryItem,
 			redirectWithQueryBuilderData,
 			handleRunQuery,
-			resetStagedQuery,
+			resetQuery,
 			updateAllQueriesOperators,
 			updateQueriesData,
 			initQueryBuilderData,
-			handleOnUnitsChange,
 		}),
 		[
 			query,
@@ -618,11 +607,10 @@ export function QueryBuilderProvider({
 			addNewQueryItem,
 			redirectWithQueryBuilderData,
 			handleRunQuery,
-			resetStagedQuery,
+			resetQuery,
 			updateAllQueriesOperators,
 			updateQueriesData,
 			initQueryBuilderData,
-			handleOnUnitsChange,
 		],
 	);
 

@@ -1,3 +1,4 @@
+import { initialFilters } from 'constants/queryBuilder';
 import { FILTERS } from 'container/QueryBuilder/filters/OrderByFilter/config';
 import {
 	IBuilderQuery,
@@ -7,7 +8,7 @@ import {
 import { v4 as uuid } from 'uuid';
 
 type SetupPaginationQueryDataParams = {
-	filters: IBuilderQuery['filters'];
+	currentStagedQueryData: IBuilderQuery | null;
 	listItemId: string | null;
 	orderByTimestamp: OrderByPayload | null;
 	page: number;
@@ -16,15 +17,20 @@ type SetupPaginationQueryDataParams = {
 
 type SetupPaginationQueryData = (
 	params: SetupPaginationQueryDataParams,
-) => Partial<IBuilderQuery>;
+) => Pick<IBuilderQuery, 'filters' | 'offset'>;
 
 export const getPaginationQueryData: SetupPaginationQueryData = ({
-	filters,
+	currentStagedQueryData,
 	listItemId,
 	orderByTimestamp,
 	page,
 	pageSize,
 }) => {
+	if (!currentStagedQueryData) {
+		return { limit: null, filters: initialFilters };
+	}
+
+	const filters = currentStagedQueryData.filters || initialFilters;
 	const offset = (page - 1) * pageSize;
 
 	const queryProps = {
@@ -63,5 +69,5 @@ export const getPaginationQueryData: SetupPaginationQueryData = ({
 		...queryProps,
 	};
 
-	return chunkOfQueryData;
+	return { ...currentStagedQueryData, ...chunkOfQueryData };
 };

@@ -33,6 +33,5 @@ export const mapQueryDataFromApi = (
 		clickhouse_sql: clickhouseSql,
 		queryType: compositeQuery.queryType,
 		id: uuid(),
-		unit: compositeQuery.unit,
 	};
 };

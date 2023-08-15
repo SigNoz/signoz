@@ -9,7 +9,7 @@ export interface BaseAutocompleteData {
 	dataType: DataType | null;
 	isColumn: boolean | null;
 	key: string;
-	type: AutocompleteType | null;
+	type: AutocompleteType | string | null;
 }
 
 export interface IQueryAutocompleteResponse {

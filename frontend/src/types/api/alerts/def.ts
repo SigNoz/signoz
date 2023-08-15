@@ -28,7 +28,6 @@ export interface RuleCondition {
 	op?: string | undefined;
 	target?: number | undefined;
 	matchType?: string | undefined;
-	targetUnit?: string | undefined;
 }
 
 export interface Labels {
