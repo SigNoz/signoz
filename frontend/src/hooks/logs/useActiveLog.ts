@@ -73,7 +73,7 @@ export const useActiveLog = (): UseActiveLog => {
 			);
 
 			const currentOperator =
-				Object.keys(OPERATORS).find((op) => op === operator) || '';
+				Object.values(OPERATORS).find((op) => op === operator) || '';
 
 			const nextQuery: Query = {
 				...currentQuery,
