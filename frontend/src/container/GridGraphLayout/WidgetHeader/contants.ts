@@ -3,6 +3,7 @@ export enum MenuItemKeys {
 	Edit = 'edit',
 	Delete = 'delete',
 	Clone = 'clone',
+	CreateAlerts = 'createAlerts',
 }
 
 export const MENUITEM_KEYS_VS_LABELS = {
@@ -10,4 +11,5 @@ export const MENUITEM_KEYS_VS_LABELS = {
 	[MenuItemKeys.Edit]: 'Edit',
 	[MenuItemKeys.Delete]: 'Delete',
 	[MenuItemKeys.Clone]: 'Clone',
+	[MenuItemKeys.CreateAlerts]: 'Create Alerts',
 };

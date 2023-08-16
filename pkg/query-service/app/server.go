@@ -51,6 +51,9 @@ type ServerOptions struct {
 	RuleRepoURL       string
 	PreferDelta       bool
 	PreferSpanMetrics bool
+	MaxIdleConns      int
+	MaxOpenConns      int
+	DialTimeout       time.Duration
 }
 
 // Server runs HTTP, Mux and a grpc server
@@ -103,7 +106,14 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 	storage := os.Getenv("STORAGE")
 	if storage == "clickhouse" {
 		zap.S().Info("Using ClickHouse as datastore ...")
-		clickhouseReader := clickhouseReader.NewReader(localDB, serverOptions.PromConfigPath, fm)
+		clickhouseReader := clickhouseReader.NewReader(
+			localDB,
+			serverOptions.PromConfigPath,
+			fm,
+			serverOptions.MaxIdleConns,
+			serverOptions.MaxOpenConns,
+			serverOptions.DialTimeout,
+		)
 		go clickhouseReader.Start(readerReady)
 		reader = clickhouseReader
 	} else {
@@ -136,6 +146,9 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 		SkipConfig:                    skipConfig,
 		PerferDelta:                   serverOptions.PreferDelta,
 		PreferSpanMetrics:             serverOptions.PreferSpanMetrics,
+		MaxIdleConns:                  serverOptions.MaxIdleConns,
+		MaxOpenConns:                  serverOptions.MaxOpenConns,
+		DialTimeout:                   serverOptions.DialTimeout,
 		AppDao:                        dao.DB(),
 		RuleManager:                   rm,
 		FeatureFlags:                  fm,

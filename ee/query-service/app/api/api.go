@@ -2,6 +2,7 @@ package api
 
 import (
 	"net/http"
+	"time"
 
 	"github.com/gorilla/mux"
 	"go.signoz.io/signoz/ee/query-service/dao"
@@ -20,6 +21,9 @@ type APIHandlerOptions struct {
 	SkipConfig                    *basemodel.SkipConfig
 	PreferDelta                   bool
 	PreferSpanMetrics             bool
+	MaxIdleConns                  int
+	MaxOpenConns                  int
+	DialTimeout                   time.Duration
 	AppDao                        dao.ModelDao
 	RulesManager                  *rules.Manager
 	FeatureFlags                  baseint.FeatureLookup
@@ -40,6 +44,9 @@ func NewAPIHandler(opts APIHandlerOptions) (*APIHandler, error) {
 		SkipConfig:                    opts.SkipConfig,
 		PerferDelta:                   opts.PreferDelta,
 		PreferSpanMetrics:             opts.PreferSpanMetrics,
+		MaxIdleConns:                  opts.MaxIdleConns,
+		MaxOpenConns:                  opts.MaxOpenConns,
+		DialTimeout:                   opts.DialTimeout,
 		AppDao:                        opts.AppDao,
 		RuleManager:                   opts.RulesManager,
 		FeatureFlags:                  opts.FeatureFlags,
