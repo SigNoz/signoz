@@ -1,3 +1,4 @@
+import { Format } from 'container/NewWidget/RightContainer/types';
 import { EQueryType } from 'types/common/dashboard';
 import {
 	DataSource,
@@ -82,6 +83,7 @@ export interface Query {
 	builder: QueryBuilderData;
 	clickhouse_sql: IClickHouseQuery[];
 	id: string;
+	unit?: Format['id'];
 }
 
 export type QueryState = Omit<Query, 'queryType'>;

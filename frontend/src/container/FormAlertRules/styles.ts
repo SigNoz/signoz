@@ -89,3 +89,7 @@ export const FormItemMedium = styled(Item)`
 export const ChannelSelectTip = styled(Typography.Text)`
 	color: hsla(0, 0%, 100%, 0.3);
 `;
+
+export const StepContainer = styled.div`
+	margin-top: 2rem;
+`;
