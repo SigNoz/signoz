@@ -138,7 +138,7 @@ services:
   #     - ./data/clickhouse-3/:/var/lib/clickhouse/
 
   alertmanager:
-    image: signoz/alertmanager:0.23.1
+    image: signoz/alertmanager:0.23.2
     container_name: signoz-alertmanager
     volumes:
       - ./data/alertmanager:/data
