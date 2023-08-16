@@ -1,7 +1,8 @@
 import { ChartData } from 'chart.js';
+import { ReactNode } from 'react';
 
 export type GridValueComponentProps = {
 	data: ChartData;
-	title?: string;
+	title?: ReactNode;
 	yAxisUnit?: string;
 };
