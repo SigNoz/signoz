@@ -1,6 +1,7 @@
 import { getAggregateKeys } from 'api/queryBuilder/getAttributeKeys';
-import { OPERATORS, QueryBuilderKeys } from 'constants/queryBuilder';
+import { QueryBuilderKeys } from 'constants/queryBuilder';
 import ROUTES from 'constants/routes';
+import { getOperatorValue } from 'container/QueryBuilder/filters/QueryBuilderSearch/utils';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useNotifications } from 'hooks/useNotifications';
 import { getGeneratedFilterQueryString } from 'lib/getGeneratedFilterQueryString';
@@ -88,8 +89,7 @@ export const useActiveLog = (): UseActiveLog => {
 					fieldKey,
 				);
 
-				const currentOperator =
-					Object.values(OPERATORS).find((op) => op === operator) || '';
+				const currentOperator = getOperatorValue(operator);
 
 				const nextQuery: Query = {
 					...currentQuery,
