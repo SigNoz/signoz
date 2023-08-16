@@ -7,6 +7,7 @@ import (
 	"math"
 	"reflect"
 	"sort"
+	"strconv"
 	"sync"
 	"text/template"
 	"time"
@@ -14,6 +15,7 @@ import (
 	"go.uber.org/zap"
 
 	"github.com/ClickHouse/clickhouse-go/v2"
+	"go.signoz.io/signoz/pkg/query-service/converter"
 
 	"go.signoz.io/signoz/pkg/query-service/app/queryBuilder"
 	"go.signoz.io/signoz/pkg/query-service/constants"
@@ -26,6 +28,7 @@ import (
 	logsv3 "go.signoz.io/signoz/pkg/query-service/app/logs/v3"
 	metricsv3 "go.signoz.io/signoz/pkg/query-service/app/metrics/v3"
 	tracesV3 "go.signoz.io/signoz/pkg/query-service/app/traces/v3"
+	"go.signoz.io/signoz/pkg/query-service/formatter"
 
 	yaml "gopkg.in/yaml.v2"
 )
@@ -324,6 +327,14 @@ func (r *ThresholdRule) SendAlerts(ctx context.Context, ts time.Time, resendDela
 	})
 	notifyFunc(ctx, "", alerts...)
 }
+
+func (r *ThresholdRule) Unit() string {
+	if r.ruleCondition != nil && r.ruleCondition.CompositeQuery != nil {
+		return r.ruleCondition.CompositeQuery.Unit
+	}
+	return ""
+}
+
 func (r *ThresholdRule) CheckCondition(v float64) bool {
 
 	if math.IsNaN(v) {
@@ -336,16 +347,20 @@ func (r *ThresholdRule) CheckCondition(v float64) bool {
 		return false
 	}
 
-	zap.S().Debugf("target:", v, *r.ruleCondition.Target)
+	unitConverter := converter.FromUnit(converter.Unit(r.ruleCondition.TargetUnit))
+
+	value := unitConverter.Convert(converter.Value{F: *r.ruleCondition.Target, U: converter.Unit(r.ruleCondition.TargetUnit)}, converter.Unit(r.Unit()))
+
+	zap.S().Debugf("Checking condition for rule: %s, Converter=%s, Value=%f, Target=%f, CompareOp=%s", r.Name(), unitConverter.Name(), v, value.F, r.ruleCondition.CompareOp)
 	switch r.ruleCondition.CompareOp {
 	case ValueIsEq:
-		return v == *r.ruleCondition.Target
+		return v == value.F
 	case ValueIsNotEq:
-		return v != *r.ruleCondition.Target
+		return v != value.F
 	case ValueIsBelow:
-		return v < *r.ruleCondition.Target
+		return v < value.F
 	case ValueIsAbove:
-		return v > *r.ruleCondition.Target
+		return v > value.F
 	default:
 		return false
 	}
@@ -716,6 +731,7 @@ func (r *ThresholdRule) buildAndRunQuery(ctx context.Context, ts time.Time, ch c
 
 func (r *ThresholdRule) Eval(ctx context.Context, ts time.Time, queriers *Queriers) (interface{}, error) {
 
+	valueFormatter := formatter.FromUnit(r.Unit())
 	res, err := r.buildAndRunQuery(ctx, ts, queriers.Ch)
 
 	if err != nil {
@@ -737,7 +753,11 @@ func (r *ThresholdRule) Eval(ctx context.Context, ts time.Time, queriers *Querie
 			l[lbl.Name] = lbl.Value
 		}
 
-		tmplData := AlertTemplateData(l, smpl.V, r.targetVal())
+		value := valueFormatter.Format(smpl.V, r.Unit())
+		threshold := strconv.FormatFloat(r.targetVal(), 'f', 2, 64) + converter.UnitToName(r.ruleCondition.TargetUnit)
+		zap.S().Debugf("Alert template data for rule %s: Formatter=%s, Value=%s, Threshold=%s", r.Name(), valueFormatter.Name(), value, threshold)
+
+		tmplData := AlertTemplateData(l, value, threshold)
 		// Inject some convenience variables that are easier to remember for users
 		// who are not used to Go's templating system.
 		defs := "{{$labels := .Labels}}{{$value := .Value}}{{$threshold := .Threshold}}"
