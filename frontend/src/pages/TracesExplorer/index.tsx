@@ -200,7 +200,7 @@ function TracesExplorer(): JSX.Element {
 
 	return (
 		<>
-			<ExplorerCard>
+			<ExplorerCard sourcepage="traces">
 				<QuerySection />
 			</ExplorerCard>
 

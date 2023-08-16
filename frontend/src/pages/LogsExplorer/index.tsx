@@ -11,7 +11,7 @@ function LogsExplorer(): JSX.Element {
 		<WrapperStyled>
 			<Row gutter={[0, 16]}>
 				<Col xs={24}>
-					<ExplorerCard>
+					<ExplorerCard sourcepage="logs">
 						<LogExplorerQuerySection />
 					</ExplorerCard>
 				</Col>
