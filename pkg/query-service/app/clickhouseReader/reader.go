@@ -3426,7 +3426,6 @@ func (r *ClickHouseReader) GetLogFields(ctx context.Context) (*model.GetFieldsRe
 
 	extractSelectedAndInterestingFields(statements[0].Statement, constants.Attributes, &attributes, &response)
 	extractSelectedAndInterestingFields(statements[0].Statement, constants.Resources, &resources, &response)
-	extractSelectedAndInterestingFields(statements[0].Statement, constants.Static, &constants.StaticInterestingLogFields, &response)
 
 	return &response, nil
 }
@@ -3435,7 +3434,7 @@ func extractSelectedAndInterestingFields(tableStatement string, fieldType string
 	for _, field := range *fields {
 		field.Type = fieldType
 		// all static fields are assumed to be selected as we don't allow changing them
-		if fieldType == constants.Static || isSelectedField(tableStatement, field) {
+		if isSelectedField(tableStatement, field) {
 			response.Selected = append(response.Selected, field)
 		} else {
 			response.Interesting = append(response.Interesting, field)
