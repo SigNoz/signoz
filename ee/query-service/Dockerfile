@@ -39,6 +39,9 @@ COPY --from=builder /go/src/github.com/signoz/signoz/ee/query-service/bin/query-
 # copy prometheus YAML config
 COPY pkg/query-service/config/prometheus.yml /root/config/prometheus.yml
 
+# Make query-service executable for non-root users
+RUN chmod 755 /root /root/query-service
+
 # run the binary
 ENTRYPOINT ["./query-service"]
 
