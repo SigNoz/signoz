@@ -67,7 +67,9 @@ function NewWidget({ selectedGraph, saveSettingOfPanel }: Props): JSX.Element {
 
 	const selectedWidget = getWidget();
 
-	const [title, setTitle] = useState<string>(selectedWidget?.title || '');
+	const [title, setTitle] = useState<string>(
+		selectedWidget?.title?.toString() || '',
+	);
 	const [description, setDescription] = useState<string>(
 		selectedWidget?.description || '',
 	);
