@@ -10,3 +10,7 @@ export interface MenuItem {
 	disabled: boolean;
 	danger?: boolean;
 }
+
+export interface DisplayThresholdProps {
+	threshold: ReactNode;
+}

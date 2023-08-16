@@ -1,7 +1,9 @@
 import { Form } from 'antd';
+import createMsTeamsApi from 'api/channels/createMsTeams';
 import createPagerApi from 'api/channels/createPager';
 import createSlackApi from 'api/channels/createSlack';
 import createWebhookApi from 'api/channels/createWebhook';
+import testMsTeamsApi from 'api/channels/testMsTeams';
 import testPagerApi from 'api/channels/testPager';
 import testSlackApi from 'api/channels/testSlack';
 import testWebhookApi from 'api/channels/testWebhook';
@@ -14,6 +16,8 @@ import { useTranslation } from 'react-i18next';
 
 import {
 	ChannelType,
+	MsTeamsChannel,
+	MsTeamsType,
 	PagerChannel,
 	PagerType,
 	SlackChannel,
@@ -33,7 +37,7 @@ function CreateAlertChannels({
 	const [formInstance] = Form.useForm();
 
 	const [selectedConfig, setSelectedConfig] = useState<
-		Partial<SlackChannel & WebhookChannel & PagerChannel>
+		Partial<SlackChannel & WebhookChannel & PagerChannel & MsTeamsChannel>
 	>({
 		text: `{{ range .Alerts -}}
      *Alert:* {{ .Labels.alertname }}{{ if .Labels.severity }} - {{ .Labels.severity }}{{ end }}
@@ -102,9 +106,7 @@ function CreateAlertChannels({
 					message: 'Success',
 					description: t('channel_creation_done'),
 				});
-				setTimeout(() => {
-					history.replace(ROUTES.SETTINGS);
-				}, 2000);
+				history.replace(ROUTES.ALL_CHANNELS);
 			} else {
 				notifications.error({
 					message: 'Error',
@@ -165,9 +167,7 @@ function CreateAlertChannels({
 					message: 'Success',
 					description: t('channel_creation_done'),
 				});
-				setTimeout(() => {
-					history.replace(ROUTES.SETTINGS);
-				}, 2000);
+				history.replace(ROUTES.ALL_CHANNELS);
 			} else {
 				notifications.error({
 					message: 'Error',
@@ -222,9 +222,7 @@ function CreateAlertChannels({
 						message: 'Success',
 						description: t('channel_creation_done'),
 					});
-					setTimeout(() => {
-						history.replace(ROUTES.SETTINGS);
-					}, 2000);
+					history.replace(ROUTES.ALL_CHANNELS);
 				} else {
 					notifications.error({
 						message: 'Error',
@@ -241,26 +239,71 @@ function CreateAlertChannels({
 		setSavingState(false);
 	}, [t, notifications, preparePagerRequest]);
 
+	const prepareMsTeamsRequest = useCallback(
+		() => ({
+			webhook_url: selectedConfig?.webhook_url || '',
+			name: selectedConfig?.name || '',
+			send_resolved: true,
+			text: selectedConfig?.text || '',
+			title: selectedConfig?.title || '',
+		}),
+		[selectedConfig],
+	);
+
+	const onMsTeamsHandler = useCallback(async () => {
+		setSavingState(true);
+
+		try {
+			const response = await createMsTeamsApi(prepareMsTeamsRequest());
+
+			if (response.statusCode === 200) {
+				notifications.success({
+					message: 'Success',
+					description: t('channel_creation_done'),
+				});
+				history.replace(ROUTES.ALL_CHANNELS);
+			} else {
+				notifications.error({
+					message: 'Error',
+					description: response.error || t('channel_creation_failed'),
+				});
+			}
+		} catch (error) {
+			notifications.error({
+				message: 'Error',
+				description: t('channel_creation_failed'),
+			});
+		}
+		setSavingState(false);
+	}, [prepareMsTeamsRequest, t, notifications]);
+
 	const onSaveHandler = useCallback(
 		async (value: ChannelType) => {
-			switch (value) {
-				case SlackType:
-					onSlackHandler();
-					break;
-				case WebhookType:
-					onWebhookHandler();
-					break;
-				case PagerType:
-					onPagerHandler();
-					break;
-				default:
-					notifications.error({
-						message: 'Error',
-						description: t('selected_channel_invalid'),
-					});
+			const functionMapper = {
+				[SlackType]: onSlackHandler,
+				[WebhookType]: onWebhookHandler,
+				[PagerType]: onPagerHandler,
+				[MsTeamsType]: onMsTeamsHandler,
+			};
+			const functionToCall = functionMapper[value];
+
+			if (functionToCall) {
+				functionToCall();
+			} else {
+				notifications.error({
+					message: 'Error',
+					description: t('selected_channel_invalid'),
+				});
 			}
 		},
-		[onSlackHandler, t, onPagerHandler, onWebhookHandler, notifications],
+		[
+			onSlackHandler,
+			onWebhookHandler,
+			onPagerHandler,
+			onMsTeamsHandler,
+			notifications,
+			t,
+		],
 	);
 
 	const performChannelTest = useCallback(
@@ -281,6 +324,10 @@ function CreateAlertChannels({
 					case PagerType:
 						request = preparePagerRequest();
 						if (request) response = await testPagerApi(request);
+						break;
+					case MsTeamsType:
+						request = prepareMsTeamsRequest();
+						response = await testMsTeamsApi(request);
 						break;
 					default:
 						notifications.error({
@@ -315,6 +362,7 @@ function CreateAlertChannels({
 			t,
 			preparePagerRequest,
 			prepareSlackRequest,
+			prepareMsTeamsRequest,
 			notifications,
 		],
 	);
