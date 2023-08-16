@@ -129,7 +129,9 @@ function LiveLogsContainer(): JSX.Element {
 	]);
 
 	useEffect(() => {
-		if (compositeQuery?.id !== stagedQuery?.id || initialLoading) {
+		if (!compositeQuery || !stagedQuery) return;
+
+		if (compositeQuery.id !== stagedQuery.id || initialLoading) {
 			handleStartNewConnection();
 		}
 	}, [stagedQuery, initialLoading, compositeQuery, handleStartNewConnection]);
