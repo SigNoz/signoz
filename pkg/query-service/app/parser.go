@@ -1,20 +1,30 @@
 package app
 
 import (
+	"bytes"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"math"
 	"net/http"
 	"strconv"
+	"strings"
+	"text/template"
 	"time"
 
+	"github.com/SigNoz/govaluate"
 	"github.com/gorilla/mux"
 	promModel "github.com/prometheus/common/model"
+	"go.uber.org/multierr"
 
+	"go.signoz.io/signoz/pkg/query-service/app/metrics"
+	"go.signoz.io/signoz/pkg/query-service/app/queryBuilder"
 	"go.signoz.io/signoz/pkg/query-service/auth"
 	"go.signoz.io/signoz/pkg/query-service/constants"
 	"go.signoz.io/signoz/pkg/query-service/model"
+	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
+	"go.signoz.io/signoz/pkg/query-service/utils"
+	querytemplate "go.signoz.io/signoz/pkg/query-service/utils/queryTemplate"
 )
 
 var allowedFunctions = []string{"count", "ratePerSec", "sum", "avg", "min", "max", "p50", "p90", "p95", "p99"}
@@ -314,7 +324,11 @@ func parseFilteredSpansRequest(r *http.Request, aH *APIHandler) (*model.GetFilte
 			return nil, model.ErrFeatureUnavailable{Key: constants.TimestampSort}
 		}
 	}
-
+	tags, err := extractTagKeys(postData.Tags)
+	if err != nil {
+		return nil, err
+	}
+	postData.Tags = tags
 	return postData, nil
 }
 
@@ -387,15 +401,40 @@ func parseFilteredSpanAggregatesRequest(r *http.Request) (*model.GetFilteredSpan
 
 	postData.AggregationOption = aggregationOption
 	postData.Dimension = dimension
-	// tags, err := parseTagsV2("tags", r)
-	// if err != nil {
-	// 	return nil, err
-	// }
-	// if len(*tags) != 0 {
-	// 	params.Tags = *tags
-	// }
+	tags, err := extractTagKeys(postData.Tags)
+	if err != nil {
+		return nil, err
+	}
+	postData.Tags = tags
 
 	return postData, nil
+}
+
+func extractTagKeys(tags []model.TagQueryParam) ([]model.TagQueryParam, error) {
+	newTags := make([]model.TagQueryParam, 0)
+	if len(tags) != 0 {
+		for _, tag := range tags {
+			customStr := strings.Split(tag.Key, ".(")
+			if len(customStr) < 2 {
+				return nil, fmt.Errorf("TagKey param is not valid in query")
+			} else {
+				tag.Key = customStr[0]
+			}
+			if tag.Operator == model.ExistsOperator || tag.Operator == model.NotExistsOperator {
+				if customStr[1] == string(model.TagTypeString)+")" {
+					tag.StringValues = []string{" "}
+				} else if customStr[1] == string(model.TagTypeBool)+")" {
+					tag.BoolValues = []bool{true}
+				} else if customStr[1] == string(model.TagTypeNumber)+")" {
+					tag.NumberValues = []float64{0}
+				} else {
+					return nil, fmt.Errorf("TagKey param is not valid in query")
+				}
+			}
+			newTags = append(newTags, tag)
+		}
+	}
+	return newTags, nil
 }
 
 func parseTagFilterRequest(r *http.Request) (*model.TagFilterParams, error) {
@@ -426,8 +465,16 @@ func parseTagValueRequest(r *http.Request) (*model.TagFilterParams, error) {
 	if err != nil {
 		return nil, err
 	}
-	if postData.TagKey == "" {
-		return nil, fmt.Errorf("%s param missing in query", postData.TagKey)
+	if postData.TagKey == (model.TagKey{}) {
+		return nil, fmt.Errorf("TagKey param missing in query")
+	}
+
+	if postData.TagKey.Type != model.TagTypeString && postData.TagKey.Type != model.TagTypeBool && postData.TagKey.Type != model.TagTypeNumber {
+		return nil, fmt.Errorf("tag keys type %s is not supported", postData.TagKey.Type)
+	}
+
+	if postData.Limit == 0 {
+		postData.Limit = 100
 	}
 
 	postData.Start, err = parseTimeStr(postData.StartStr, "start")
@@ -448,68 +495,54 @@ func parseListErrorsRequest(r *http.Request) (*model.ListErrorsParams, error) {
 	var allowedOrderParams = []string{"exceptionType", "exceptionCount", "firstSeen", "lastSeen", "serviceName"}
 	var allowedOrderDirections = []string{"ascending", "descending"}
 
-	startTime, err := parseTime("start", r)
+	var postData *model.ListErrorsParams
+	err := json.NewDecoder(r.Body).Decode(&postData)
+
 	if err != nil {
 		return nil, err
 	}
-	endTime, err := parseTimeMinusBuffer("end", r)
+
+	postData.Start, err = parseTimeStr(postData.StartStr, "start")
 	if err != nil {
 		return nil, err
 	}
-
-	order := r.URL.Query().Get("order")
-	if len(order) > 0 && !DoesExistInSlice(order, allowedOrderDirections) {
-		return nil, errors.New(fmt.Sprintf("given order: %s is not allowed in query", order))
-	}
-	orderParam := r.URL.Query().Get("orderParam")
-	if len(order) > 0 && !DoesExistInSlice(orderParam, allowedOrderParams) {
-		return nil, errors.New(fmt.Sprintf("given orderParam: %s is not allowed in query", orderParam))
-	}
-	limit := r.URL.Query().Get("limit")
-	offset := r.URL.Query().Get("offset")
-
-	if len(offset) == 0 || len(limit) == 0 {
-		return nil, fmt.Errorf("offset or limit param cannot be empty from the query")
-	}
-
-	limitInt, err := strconv.Atoi(limit)
+	postData.End, err = parseTimeMinusBufferStr(postData.EndStr, "end")
 	if err != nil {
-		return nil, errors.New("limit param is not in correct format")
+		return nil, err
 	}
-	offsetInt, err := strconv.Atoi(offset)
-	if err != nil {
-		return nil, errors.New("offset param is not in correct format")
-	}
-
-	params := &model.ListErrorsParams{
-		Start:      startTime,
-		End:        endTime,
-		OrderParam: orderParam,
-		Order:      order,
-		Limit:      int64(limitInt),
-		Offset:     int64(offsetInt),
+	if postData.Limit == 0 {
+		return nil, fmt.Errorf("limit param cannot be empty from the query")
 	}
 
-	return params, nil
+	if len(postData.Order) > 0 && !DoesExistInSlice(postData.Order, allowedOrderDirections) {
+		return nil, errors.New(fmt.Sprintf("given order: %s is not allowed in query", postData.Order))
+	}
+
+	if len(postData.Order) > 0 && !DoesExistInSlice(postData.OrderParam, allowedOrderParams) {
+		return nil, errors.New(fmt.Sprintf("given orderParam: %s is not allowed in query", postData.OrderParam))
+	}
+
+	return postData, nil
 }
 
 func parseCountErrorsRequest(r *http.Request) (*model.CountErrorsParams, error) {
 
-	startTime, err := parseTime("start", r)
-	if err != nil {
-		return nil, err
-	}
-	endTime, err := parseTimeMinusBuffer("end", r)
+	var postData *model.CountErrorsParams
+	err := json.NewDecoder(r.Body).Decode(&postData)
+
 	if err != nil {
 		return nil, err
 	}
 
-	params := &model.CountErrorsParams{
-		Start: startTime,
-		End:   endTime,
+	postData.Start, err = parseTimeStr(postData.StartStr, "start")
+	if err != nil {
+		return nil, err
 	}
-
-	return params, nil
+	postData.End, err = parseTimeMinusBufferStr(postData.EndStr, "end")
+	if err != nil {
+		return nil, err
+	}
+	return postData, nil
 }
 
 func parseGetErrorRequest(r *http.Request) (*model.GetErrorParams, error) {
@@ -688,6 +721,16 @@ func parseInviteRequest(r *http.Request) (*model.InviteRequest, error) {
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		return nil, err
 	}
+	// Trim spaces from email
+	req.Email = strings.TrimSpace(req.Email)
+	return &req, nil
+}
+
+func parseSetApdexScoreRequest(r *http.Request) (*model.ApdexSettings, error) {
+	var req model.ApdexSettings
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		return nil, err
+	}
 	return &req, nil
 }
 
@@ -764,4 +807,243 @@ func parseFilterSet(r *http.Request) (*model.FilterSet, error) {
 		return nil, err
 	}
 	return &filterSet, nil
+}
+
+func parseAggregateAttributeRequest(r *http.Request) (*v3.AggregateAttributeRequest, error) {
+	var req v3.AggregateAttributeRequest
+
+	aggregateOperator := v3.AggregateOperator(r.URL.Query().Get("aggregateOperator"))
+	dataSource := v3.DataSource(r.URL.Query().Get("dataSource"))
+	aggregateAttribute := r.URL.Query().Get("searchText")
+
+	limit, err := strconv.Atoi(r.URL.Query().Get("limit"))
+	if err != nil {
+		limit = 50
+	}
+
+	if err := aggregateOperator.Validate(); err != nil {
+		return nil, err
+	}
+
+	if err := dataSource.Validate(); err != nil {
+		return nil, err
+	}
+
+	req = v3.AggregateAttributeRequest{
+		Operator:   aggregateOperator,
+		SearchText: aggregateAttribute,
+		Limit:      limit,
+		DataSource: dataSource,
+	}
+	return &req, nil
+}
+
+func parseFilterAttributeKeyRequest(r *http.Request) (*v3.FilterAttributeKeyRequest, error) {
+	var req v3.FilterAttributeKeyRequest
+
+	dataSource := v3.DataSource(r.URL.Query().Get("dataSource"))
+	aggregateOperator := v3.AggregateOperator(r.URL.Query().Get("aggregateOperator"))
+	aggregateAttribute := r.URL.Query().Get("aggregateAttribute")
+
+	limit, err := strconv.Atoi(r.URL.Query().Get("limit"))
+	if err != nil {
+		limit = 50
+	}
+
+	if err := dataSource.Validate(); err != nil {
+		return nil, err
+	}
+
+	if err := aggregateOperator.Validate(); err != nil {
+		return nil, err
+	}
+
+	req = v3.FilterAttributeKeyRequest{
+		DataSource:         dataSource,
+		AggregateOperator:  aggregateOperator,
+		AggregateAttribute: aggregateAttribute,
+		Limit:              limit,
+		SearchText:         r.URL.Query().Get("searchText"),
+	}
+	return &req, nil
+}
+
+func parseFilterAttributeValueRequest(r *http.Request) (*v3.FilterAttributeValueRequest, error) {
+
+	var req v3.FilterAttributeValueRequest
+
+	dataSource := v3.DataSource(r.URL.Query().Get("dataSource"))
+	aggregateOperator := v3.AggregateOperator(r.URL.Query().Get("aggregateOperator"))
+	filterAttributeKeyDataType := v3.AttributeKeyDataType(r.URL.Query().Get("filterAttributeKeyDataType")) // can be empty
+	aggregateAttribute := r.URL.Query().Get("aggregateAttribute")
+	tagType := v3.TagType(r.URL.Query().Get("tagType")) // can be empty
+
+	limit, err := strconv.Atoi(r.URL.Query().Get("limit"))
+	if err != nil {
+		limit = 50
+	}
+
+	if err := dataSource.Validate(); err != nil {
+		return nil, err
+	}
+
+	if err := aggregateOperator.Validate(); err != nil {
+		return nil, err
+	}
+
+	req = v3.FilterAttributeValueRequest{
+		DataSource:                 dataSource,
+		AggregateOperator:          aggregateOperator,
+		AggregateAttribute:         aggregateAttribute,
+		TagType:                    tagType,
+		Limit:                      limit,
+		SearchText:                 r.URL.Query().Get("searchText"),
+		FilterAttributeKey:         r.URL.Query().Get("attributeKey"),
+		FilterAttributeKeyDataType: filterAttributeKeyDataType,
+	}
+	return &req, nil
+}
+
+func validateQueryRangeParamsV3(qp *v3.QueryRangeParamsV3) error {
+	err := qp.CompositeQuery.Validate()
+	if err != nil {
+		return err
+	}
+
+	var expressions []string
+	for _, q := range qp.CompositeQuery.BuilderQueries {
+		expressions = append(expressions, q.Expression)
+	}
+	errs := validateExpressions(expressions, queryBuilder.EvalFuncs, qp.CompositeQuery)
+	if len(errs) > 0 {
+		return multierr.Combine(errs...)
+	}
+	return nil
+}
+
+// validateExpressions validates the math expressions using the list of
+// allowed functions.
+func validateExpressions(expressions []string, funcs map[string]govaluate.ExpressionFunction, cq *v3.CompositeQuery) []error {
+	var errs []error
+	for _, exp := range expressions {
+		evalExp, err := govaluate.NewEvaluableExpressionWithFunctions(exp, funcs)
+		if err != nil {
+			errs = append(errs, err)
+			continue
+		}
+		variables := evalExp.Vars()
+		for _, v := range variables {
+			var hasVariable bool
+			for _, q := range cq.BuilderQueries {
+				if q.Expression == v {
+					hasVariable = true
+					break
+				}
+			}
+			if !hasVariable {
+				errs = append(errs, fmt.Errorf("unknown variable %s", v))
+			}
+		}
+	}
+	return errs
+}
+
+func ParseQueryRangeParams(r *http.Request) (*v3.QueryRangeParamsV3, *model.ApiError) {
+
+	var queryRangeParams *v3.QueryRangeParamsV3
+
+	// parse the request body
+	if err := json.NewDecoder(r.Body).Decode(&queryRangeParams); err != nil {
+		return nil, &model.ApiError{Typ: model.ErrorBadData, Err: err}
+	}
+
+	// validate the request body
+	if err := validateQueryRangeParamsV3(queryRangeParams); err != nil {
+		return nil, &model.ApiError{Typ: model.ErrorBadData, Err: err}
+	}
+
+	// prepare the variables for the corrspnding query type
+	formattedVars := make(map[string]interface{})
+	for name, value := range queryRangeParams.Variables {
+		if queryRangeParams.CompositeQuery.QueryType == v3.QueryTypePromQL {
+			formattedVars[name] = metrics.PromFormattedValue(value)
+		} else if queryRangeParams.CompositeQuery.QueryType == v3.QueryTypeClickHouseSQL {
+			formattedVars[name] = utils.ClickHouseFormattedValue(value)
+		}
+	}
+
+	// replace the variables in metrics builder filter item with actual value
+	// example: {"key": "host", "value": "{{ .host }}", "operator": "equals"} with
+	// variables {"host": "test"} will be replaced with {"key": "host", "value": "test", "operator": "equals"}
+
+	if queryRangeParams.CompositeQuery.QueryType == v3.QueryTypeBuilder {
+		for _, query := range queryRangeParams.CompositeQuery.BuilderQueries {
+			if query.Filters == nil || len(query.Filters.Items) == 0 {
+				continue
+			}
+			for idx := range query.Filters.Items {
+				item := &query.Filters.Items[idx]
+				value := item.Value
+				if value != nil {
+					switch x := value.(type) {
+					case string:
+						variableName := strings.Trim(x, "{{ . }}")
+						if _, ok := queryRangeParams.Variables[variableName]; ok {
+							item.Value = queryRangeParams.Variables[variableName]
+						}
+					case []interface{}:
+						if len(x) > 0 {
+							switch x[0].(type) {
+							case string:
+								variableName := strings.Trim(x[0].(string), "{{ . }}")
+								if _, ok := queryRangeParams.Variables[variableName]; ok {
+									item.Value = queryRangeParams.Variables[variableName]
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+	queryRangeParams.Variables = formattedVars
+
+	// prometheus instant query needs same timestamp
+	if queryRangeParams.CompositeQuery.PanelType == v3.PanelTypeValue &&
+		queryRangeParams.CompositeQuery.QueryType == v3.QueryTypePromQL {
+		queryRangeParams.Start = queryRangeParams.End
+	}
+
+	// round up the end to neaerest multiple
+	if queryRangeParams.CompositeQuery.QueryType == v3.QueryTypeBuilder {
+		end := (queryRangeParams.End) / 1000
+		step := queryRangeParams.Step
+		queryRangeParams.End = (end / step * step) * 1000
+	}
+
+	// replace go template variables in clickhouse query
+	if queryRangeParams.CompositeQuery.QueryType == v3.QueryTypeClickHouseSQL {
+		for _, chQuery := range queryRangeParams.CompositeQuery.ClickHouseQueries {
+			if chQuery.Disabled {
+				continue
+			}
+			tmpl := template.New("clickhouse-query")
+			tmpl, err := tmpl.Parse(chQuery.Query)
+			if err != nil {
+				return nil, &model.ApiError{Typ: model.ErrorBadData, Err: err}
+			}
+			var query bytes.Buffer
+
+			// replace go template variables
+			querytemplate.AssignReservedVarsV3(queryRangeParams)
+
+			err = tmpl.Execute(&query, queryRangeParams.Variables)
+			if err != nil {
+				return nil, &model.ApiError{Typ: model.ErrorBadData, Err: err}
+			}
+			chQuery.Query = query.String()
+		}
+	}
+
+	return queryRangeParams, nil
 }

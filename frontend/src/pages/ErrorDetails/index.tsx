@@ -4,7 +4,7 @@ import getById from 'api/errors/getById';
 import Spinner from 'components/Spinner';
 import ROUTES from 'constants/routes';
 import ErrorDetailsContainer from 'container/ErrorDetails';
-import React, { useMemo } from 'react';
+import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useQuery } from 'react-query';
 import { useSelector } from 'react-redux';

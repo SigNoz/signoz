@@ -127,7 +127,7 @@ func NewPostRequestWithCtx(ctx context.Context, url string, contentType string, 
 }
 
 // SendUsage reports the usage of signoz to license server
-func SendUsage(ctx context.Context, usage *model.UsagePayload) *model.ApiError {
+func SendUsage(ctx context.Context, usage model.UsagePayload) *model.ApiError {
 	reqString, _ := json.Marshal(usage)
 	req, err := NewPostRequestWithCtx(ctx, C.Prefix+"/usage", APPLICATION_JSON, bytes.NewBuffer(reqString))
 	if err != nil {

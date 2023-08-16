@@ -8,7 +8,7 @@ import (
 	"time"
 
 	"github.com/pkg/errors"
-	"go.signoz.io/signoz/pkg/query-service/model"
+	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
 	"go.signoz.io/signoz/pkg/query-service/utils/labels"
 )
 
@@ -139,19 +139,19 @@ const (
 )
 
 type RuleCondition struct {
-	CompositeMetricQuery *model.CompositeMetricQuery `json:"compositeMetricQuery,omitempty" yaml:"compositeMetricQuery,omitempty"`
-	CompareOp            CompareOp                   `yaml:"op,omitempty" json:"op,omitempty"`
-	Target               *float64                    `yaml:"target,omitempty" json:"target,omitempty"`
-	MatchType            `json:"matchType,omitempty"`
+	CompositeQuery *v3.CompositeQuery `json:"compositeQuery,omitempty" yaml:"compositeQuery,omitempty"`
+	CompareOp      CompareOp          `yaml:"op,omitempty" json:"op,omitempty"`
+	Target         *float64           `yaml:"target,omitempty" json:"target,omitempty"`
+	MatchType      `json:"matchType,omitempty"`
 }
 
 func (rc *RuleCondition) IsValid() bool {
 
-	if rc.CompositeMetricQuery == nil {
+	if rc.CompositeQuery == nil {
 		return false
 	}
 
-	if rc.QueryType() == model.QUERY_BUILDER {
+	if rc.QueryType() == v3.QueryTypeBuilder {
 		if rc.Target == nil {
 			return false
 		}
@@ -159,9 +159,9 @@ func (rc *RuleCondition) IsValid() bool {
 			return false
 		}
 	}
-	if rc.QueryType() == model.PROM {
+	if rc.QueryType() == v3.QueryTypePromQL {
 
-		if len(rc.CompositeMetricQuery.PromQueries) == 0 {
+		if len(rc.CompositeQuery.PromQueries) == 0 {
 			return false
 		}
 	}
@@ -169,11 +169,11 @@ func (rc *RuleCondition) IsValid() bool {
 }
 
 // QueryType is a short hand method to get query type
-func (rc *RuleCondition) QueryType() model.QueryType {
-	if rc.CompositeMetricQuery != nil {
-		return rc.CompositeMetricQuery.QueryType
+func (rc *RuleCondition) QueryType() v3.QueryType {
+	if rc.CompositeQuery != nil {
+		return rc.CompositeQuery.QueryType
 	}
-	return 0
+	return v3.QueryTypeUnknown
 }
 
 // String is useful in printing rule condition in logs

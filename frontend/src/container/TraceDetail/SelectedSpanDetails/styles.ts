@@ -49,10 +49,11 @@ export const CardContainer = styled.div`
 	height: 100%;
 	width: 100%;
 	flex: 1;
-	overflow-y: auto;
-	overflow-x: hidden;
-	white-space: nowrap;
 	text-overflow: ellipsis;
+	display: -webkit-box;
+	-webkit-line-clamp: 2;
+	-webkit-box-orient: vertical;
+	overflow: auto;
 `;
 
 export const CustomSpace = styled(Space)`

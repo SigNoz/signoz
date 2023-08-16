@@ -1,12 +1,10 @@
-import { Dispatch } from 'react';
+import { Dispatch } from 'redux';
 import AppActions from 'types/actions';
 
 export const ToggleEditMode = (): ((
 	dispatch: Dispatch<AppActions>,
-) => void) => {
-	return (dispatch: Dispatch<AppActions>): void => {
-		dispatch({
-			type: 'TOGGLE_EDIT_MODE',
-		});
-	};
+) => void) => (dispatch: Dispatch<AppActions>): void => {
+	dispatch({
+		type: 'TOGGLE_EDIT_MODE',
+	});
 };

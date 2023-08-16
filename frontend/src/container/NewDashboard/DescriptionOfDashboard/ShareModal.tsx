@@ -1,6 +1,7 @@
-import { Button, Modal, notification, Typography } from 'antd';
+import { Button, Modal, Typography } from 'antd';
 import Editor from 'components/Editor';
-import React, { useEffect, useMemo, useState } from 'react';
+import { useNotifications } from 'hooks/useNotifications';
+import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useCopyToClipboard } from 'react-use';
 import { DashboardData } from 'types/api/dashboard/getAll';
@@ -12,30 +13,17 @@ function ShareModal({
 	onToggleHandler,
 	selectedData,
 }: ShareModalProps): JSX.Element {
-	const getParsedValue = (): string => {
-		const updatedData: DashboardData = {
-			...selectedData,
-			widgets: selectedData.widgets?.map((widget) => ({
-				...widget,
-				queryData: {
-					...widget.queryData,
-					loading: false,
-					error: false,
-					errorMessage: '',
-				},
-			})),
-		};
-		return JSON.stringify(updatedData, null, 2);
-	};
+	const getParsedValue = (): string => JSON.stringify(selectedData, null, 2);
 
 	const [jsonValue, setJSONValue] = useState<string>(getParsedValue());
 	const [isViewJSON, setIsViewJSON] = useState<boolean>(false);
 	const { t } = useTranslation(['dashboard', 'common']);
 	const [state, setCopy] = useCopyToClipboard();
+	const { notifications } = useNotifications();
 
 	useEffect(() => {
 		if (state.error) {
-			notification.error({
+			notifications.error({
 				message: t('something_went_wrong', {
 					ns: 'common',
 				}),
@@ -43,13 +31,13 @@ function ShareModal({
 		}
 
 		if (state.value) {
-			notification.success({
+			notifications.success({
 				message: t('success', {
 					ns: 'common',
 				}),
 			});
 		}
-	}, [state.error, state.value, t]);
+	}, [state.error, state.value, t, notifications]);
 
 	const GetFooterComponent = useMemo(() => {
 		if (!isViewJSON) {
@@ -83,7 +71,7 @@ function ShareModal({
 
 	return (
 		<Modal
-			visible={isJSONModalVisible}
+			open={isJSONModalVisible}
 			onCancel={(): void => {
 				onToggleHandler();
 				setIsViewJSON(false);

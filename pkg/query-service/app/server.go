@@ -1,8 +1,11 @@
 package app
 
 import (
+	"bytes"
 	"context"
+	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"net"
 	"net/http"
 	_ "net/http/pprof" // http profiler
@@ -15,14 +18,22 @@ import (
 
 	"github.com/rs/cors"
 	"github.com/soheilhy/cmux"
+	"go.signoz.io/signoz/pkg/query-service/agentConf"
 	"go.signoz.io/signoz/pkg/query-service/app/clickhouseReader"
 	"go.signoz.io/signoz/pkg/query-service/app/dashboards"
+	"go.signoz.io/signoz/pkg/query-service/app/logparsingpipeline"
+	opamp "go.signoz.io/signoz/pkg/query-service/app/opamp"
+	opAmpModel "go.signoz.io/signoz/pkg/query-service/app/opamp/model"
+
+	"go.signoz.io/signoz/pkg/query-service/app/explorer"
+	"go.signoz.io/signoz/pkg/query-service/auth"
 	"go.signoz.io/signoz/pkg/query-service/constants"
 	"go.signoz.io/signoz/pkg/query-service/dao"
 	"go.signoz.io/signoz/pkg/query-service/featureManager"
 	"go.signoz.io/signoz/pkg/query-service/healthcheck"
 	am "go.signoz.io/signoz/pkg/query-service/integrations/alertManager"
 	"go.signoz.io/signoz/pkg/query-service/interfaces"
+	"go.signoz.io/signoz/pkg/query-service/model"
 	pqle "go.signoz.io/signoz/pkg/query-service/pqlEngine"
 	"go.signoz.io/signoz/pkg/query-service/rules"
 	"go.signoz.io/signoz/pkg/query-service/telemetry"
@@ -31,12 +42,18 @@ import (
 )
 
 type ServerOptions struct {
-	PromConfigPath  string
-	HTTPHostPort    string
-	PrivateHostPort string
+	PromConfigPath    string
+	SkipTopLvlOpsPath string
+	HTTPHostPort      string
+	PrivateHostPort   string
 	// alert specific params
-	DisableRules bool
-	RuleRepoURL  string
+	DisableRules      bool
+	RuleRepoURL       string
+	PreferDelta       bool
+	PreferSpanMetrics bool
+	MaxIdleConns      int
+	MaxOpenConns      int
+	DialTimeout       time.Duration
 }
 
 // Server runs HTTP, Mux and a grpc server
@@ -72,6 +89,7 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 	}
 
 	localDB, err := dashboards.InitDB(constants.RELATIONAL_DATASOURCE_PATH)
+	explorer.InitWithDSN(constants.RELATIONAL_DATASOURCE_PATH)
 
 	if err != nil {
 		return nil, err
@@ -88,25 +106,53 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 	storage := os.Getenv("STORAGE")
 	if storage == "clickhouse" {
 		zap.S().Info("Using ClickHouse as datastore ...")
-		clickhouseReader := clickhouseReader.NewReader(localDB, serverOptions.PromConfigPath, fm)
+		clickhouseReader := clickhouseReader.NewReader(
+			localDB,
+			serverOptions.PromConfigPath,
+			fm,
+			serverOptions.MaxIdleConns,
+			serverOptions.MaxOpenConns,
+			serverOptions.DialTimeout,
+		)
 		go clickhouseReader.Start(readerReady)
 		reader = clickhouseReader
 	} else {
 		return nil, fmt.Errorf("Storage type: %s is not supported in query service", storage)
 	}
+	var skipConfig *model.SkipConfig
+	if serverOptions.SkipTopLvlOpsPath != "" {
+		// read skip config
+		skipConfig, err = model.ReadSkipConfig(serverOptions.SkipTopLvlOpsPath)
+		if err != nil {
+			return nil, err
+		}
+	}
 
 	<-readerReady
-	rm, err := makeRulesManager(serverOptions.PromConfigPath, constants.GetAlertManagerApiPrefix(), serverOptions.RuleRepoURL, localDB, reader, serverOptions.DisableRules)
+	rm, err := makeRulesManager(serverOptions.PromConfigPath, constants.GetAlertManagerApiPrefix(), serverOptions.RuleRepoURL, localDB, reader, serverOptions.DisableRules, fm)
+	if err != nil {
+		return nil, err
+	}
+
+	// ingestion pipelines manager
+	logParsingPipelineController, err := logparsingpipeline.NewLogParsingPipelinesController(localDB, "sqlite")
 	if err != nil {
 		return nil, err
 	}
 
 	telemetry.GetInstance().SetReader(reader)
 	apiHandler, err := NewAPIHandler(APIHandlerOpts{
-		Reader:       reader,
-		AppDao:       dao.DB(),
-		RuleManager:  rm,
-		FeatureFlags: fm,
+		Reader:                        reader,
+		SkipConfig:                    skipConfig,
+		PerferDelta:                   serverOptions.PreferDelta,
+		PreferSpanMetrics:             serverOptions.PreferSpanMetrics,
+		MaxIdleConns:                  serverOptions.MaxIdleConns,
+		MaxOpenConns:                  serverOptions.MaxOpenConns,
+		DialTimeout:                   serverOptions.DialTimeout,
+		AppDao:                        dao.DB(),
+		RuleManager:                   rm,
+		FeatureFlags:                  fm,
+		LogsParsingPipelineController: logParsingPipelineController,
 	})
 	if err != nil {
 		return nil, err
@@ -135,6 +181,14 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 
 	s.privateHTTP = privateServer
 
+	_, err = opAmpModel.InitDB(constants.RELATIONAL_DATASOURCE_PATH)
+	if err != nil {
+		return nil, err
+	}
+
+	if err := agentConf.Initiate(localDB, "sqlite"); err != nil {
+		return nil, err
+	}
 	return s, nil
 }
 
@@ -172,9 +226,12 @@ func (s *Server) createPublicServer(api *APIHandler) (*http.Server, error) {
 	r.Use(s.analyticsMiddleware)
 	r.Use(loggingMiddleware)
 
-	api.RegisterRoutes(r)
-	api.RegisterMetricsRoutes(r)
-	api.RegisterLogsRoutes(r)
+	am := NewAuthMiddleware(auth.GetUserFromRequest)
+
+	api.RegisterRoutes(r, am)
+	api.RegisterMetricsRoutes(r, am)
+	api.RegisterLogsRoutes(r, am)
+	api.RegisterQueryRangeV3Routes(r, am)
 
 	c := cors.New(cors.Options{
 		AllowedOrigins: []string{"*"},
@@ -198,7 +255,7 @@ func loggingMiddleware(next http.Handler) http.Handler {
 		path, _ := route.GetPathTemplate()
 		startTime := time.Now()
 		next.ServeHTTP(w, r)
-		zap.S().Info(path, "\ttimeTaken: ", time.Now().Sub(startTime))
+		zap.S().Info(path+"\ttimeTaken:"+time.Now().Sub(startTime).String(), zap.Duration("timeTaken", time.Now().Sub(startTime)), zap.String("path", path))
 	})
 }
 
@@ -210,7 +267,7 @@ func loggingMiddlewarePrivate(next http.Handler) http.Handler {
 		path, _ := route.GetPathTemplate()
 		startTime := time.Now()
 		next.ServeHTTP(w, r)
-		zap.S().Info(path, "\tprivatePort: true", "\ttimeTaken: ", time.Now().Sub(startTime))
+		zap.S().Info(path+"\tprivatePort: true \ttimeTaken"+time.Now().Sub(startTime).String(), zap.Duration("timeTaken", time.Now().Sub(startTime)), zap.String("path", path), zap.Bool("tprivatePort", true))
 	})
 }
 
@@ -234,21 +291,88 @@ func (lrw *loggingResponseWriter) WriteHeader(code int) {
 func (lrw *loggingResponseWriter) Flush() {
 	lrw.ResponseWriter.(http.Flusher).Flush()
 }
+func extractDashboardMetaData(path string, r *http.Request) (map[string]interface{}, bool) {
+	pathToExtractBodyFrom := "/api/v2/metrics/query_range"
+
+	data := map[string]interface{}{}
+	var postData *model.QueryRangeParamsV2
+
+	if path == pathToExtractBodyFrom && (r.Method == "POST") {
+		if r.Body != nil {
+			bodyBytes, err := ioutil.ReadAll(r.Body)
+			if err != nil {
+				return nil, false
+			}
+			r.Body.Close() //  must close
+			r.Body = ioutil.NopCloser(bytes.NewBuffer(bodyBytes))
+			json.Unmarshal(bodyBytes, &postData)
+
+		} else {
+			return nil, false
+		}
+
+	} else {
+		return nil, false
+	}
+
+	signozMetricNotFound := false
+
+	if postData != nil {
+		signozMetricNotFound = telemetry.GetInstance().CheckSigNozMetricsV2(postData.CompositeMetricQuery)
+
+		if postData.CompositeMetricQuery != nil {
+			data["queryType"] = postData.CompositeMetricQuery.QueryType
+			data["panelType"] = postData.CompositeMetricQuery.PanelType
+		}
+
+		data["datasource"] = postData.DataSource
+	}
+
+	if signozMetricNotFound {
+		telemetry.GetInstance().AddActiveMetricsUser()
+		telemetry.GetInstance().SendEvent(telemetry.TELEMETRY_EVENT_DASHBOARDS_METADATA, data, true)
+	}
+
+	return data, true
+}
+
+func getActiveLogs(path string, r *http.Request) {
+	// if path == "/api/v1/dashboards/{uuid}" {
+	// 	telemetry.GetInstance().AddActiveMetricsUser()
+	// }
+	if path == "/api/v1/logs" {
+		hasFilters := len(r.URL.Query().Get("q"))
+		if hasFilters > 0 {
+			telemetry.GetInstance().AddActiveLogsUser()
+		}
+
+	}
+
+}
 
 func (s *Server) analyticsMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		route := mux.CurrentRoute(r)
 		path, _ := route.GetPathTemplate()
 
+		dashboardMetadata, metadataExists := extractDashboardMetaData(path, r)
+		getActiveLogs(path, r)
+
 		lrw := NewLoggingResponseWriter(w)
 		next.ServeHTTP(lrw, r)
 
 		data := map[string]interface{}{"path": path, "statusCode": lrw.statusCode}
-		if telemetry.GetInstance().IsSampled() {
-			if _, ok := telemetry.IgnoredPaths()[path]; !ok {
-				telemetry.GetInstance().SendEvent(telemetry.TELEMETRY_EVENT_PATH, data)
+		if metadataExists {
+			for key, value := range dashboardMetadata {
+				data[key] = value
 			}
 		}
+
+		// if telemetry.GetInstance().IsSampled() {
+		if _, ok := telemetry.IgnoredPaths()[path]; !ok {
+			telemetry.GetInstance().SendEvent(telemetry.TELEMETRY_EVENT_PATH, data)
+		}
+		// }
 
 	})
 }
@@ -260,7 +384,7 @@ func setTimeoutMiddleware(next http.Handler) http.Handler {
 		// check if route is not excluded
 		url := r.URL.Path
 		if _, ok := constants.TimeoutExcludedRoutes[url]; !ok {
-			ctx, cancel = context.WithTimeout(r.Context(), constants.ContextTimeout*time.Second)
+			ctx, cancel = context.WithTimeout(r.Context(), constants.ContextTimeout)
 			defer cancel()
 		}
 
@@ -362,6 +486,37 @@ func (s *Server) Start() error {
 
 	}()
 
+	go func() {
+		zap.S().Info("Starting OpAmp Websocket server", zap.String("addr", constants.OpAmpWsEndpoint))
+		err := opamp.InitalizeServer(constants.OpAmpWsEndpoint, &opAmpModel.AllAgents)
+		if err != nil {
+			zap.S().Info("opamp ws server failed to start", err)
+			s.unavailableChannel <- healthcheck.Unavailable
+		}
+	}()
+
+	return nil
+}
+
+func (s *Server) Stop() error {
+	if s.httpServer != nil {
+		if err := s.httpServer.Shutdown(context.Background()); err != nil {
+			return err
+		}
+	}
+
+	if s.privateHTTP != nil {
+		if err := s.privateHTTP.Shutdown(context.Background()); err != nil {
+			return err
+		}
+	}
+
+	opamp.StopServer()
+
+	if s.ruleManager != nil {
+		s.ruleManager.Stop()
+	}
+
 	return nil
 }
 
@@ -371,7 +526,8 @@ func makeRulesManager(
 	ruleRepoURL string,
 	db *sqlx.DB,
 	ch interfaces.Reader,
-	disableRules bool) (*rules.Manager, error) {
+	disableRules bool,
+	fm interfaces.FeatureLookup) (*rules.Manager, error) {
 
 	// create engine
 	pqle, err := pqle.FromReader(ch)
@@ -398,6 +554,7 @@ func makeRulesManager(
 		Context:      context.Background(),
 		Logger:       nil,
 		DisableRules: disableRules,
+		FeatureFlags: fm,
 	}
 
 	// create Manager

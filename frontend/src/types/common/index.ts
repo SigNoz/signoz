@@ -25,4 +25,8 @@ export type ErrorStatusCode =
 	| BadRequest
 	| Conflict;
 
+export enum ErrorType {
+	NotFound = 'not_found',
+}
+
 export type StatusCode = SuccessStatusCode | ErrorStatusCode;

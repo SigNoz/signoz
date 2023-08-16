@@ -4,7 +4,7 @@
 		"noImplicitAny": true,
 		"module": "esnext",
 		"target": "es5",
-		"jsx": "react",
+		"jsx": "react-jsx",
 		"allowJs": true,
 		"strict": true,
 		"esModuleInterop": true,
@@ -37,6 +37,6 @@
 		"./webpack.config.js",
 		"./webpack.config.prod.js",
 		"./jest.setup.ts",
-		"./tests/**.ts",
+		"./tests/**.ts"
 	]
 }

@@ -1,5 +1,5 @@
 /* eslint-disable no-param-reassign */
-import { errorColor } from 'lib/getRandomColor';
+import { themeColors } from 'constants/theme';
 import { ITraceForest, ITraceTree } from 'types/api/trace/getTraceItem';
 /**
  * Traverses the Span Tree data and returns the relevant meta data.
@@ -27,7 +27,7 @@ export const getSpanTreeMetadata = (
 			globalEnd = Math.max(globalEnd, endTime);
 		}
 		if (treeNode.hasError) {
-			treeNode.serviceColour = errorColor;
+			treeNode.serviceColour = themeColors.errorColor;
 		} else treeNode.serviceColour = spanServiceColours[treeNode.serviceName];
 		treeNode.children.forEach((childNode) => {
 			traverse(childNode, level + 1);

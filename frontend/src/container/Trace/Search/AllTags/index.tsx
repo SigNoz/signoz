@@ -1,6 +1,6 @@
 import { CaretRightFilled, PlusOutlined } from '@ant-design/icons';
 import { Button, Space, Typography } from 'antd';
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { connect, useSelector } from 'react-redux';
 import { bindActionCreators } from 'redux';
 import { ThunkDispatch } from 'redux-thunk';
@@ -16,7 +16,6 @@ import {
 	Container,
 	CurrentTagsContainer,
 	ErrorContainer,
-	Wrapper,
 } from './styles';
 import Tags from './Tag';
 
@@ -40,9 +39,11 @@ function AllTags({
 		setLocalSelectedTags((tags) => [
 			...tags,
 			{
-				Key: [],
-				Operator: 'in',
-				Values: [],
+				Key: '',
+				Operator: 'Equals',
+				StringValues: [],
+				NumberValues: [],
+				BoolValues: [],
 			},
 		]);
 	};
@@ -88,32 +89,30 @@ function AllTags({
 
 	return (
 		<Container>
-			<Wrapper>
-				<Typography>Tags</Typography>
+			<Typography>Tags</Typography>
 
-				<CurrentTagsContainer>
-					{localSelectedTags.map((tags, index) => (
-						<Tags
-							key={tags.Key.join(',')}
-							tag={tags}
-							index={index}
-							onCloseHandler={(): void => onCloseHandler(index)}
-							setLocalSelectedTags={setLocalSelectedTags}
-						/>
-					))}
-				</CurrentTagsContainer>
+			<CurrentTagsContainer>
+				{localSelectedTags.map((tags, index) => (
+					<Tags
+						key={tags.Key}
+						tag={tags}
+						index={index}
+						onCloseHandler={(): void => onCloseHandler(index)}
+						setLocalSelectedTags={setLocalSelectedTags}
+						localSelectedTags={localSelectedTags}
+					/>
+				))}
+			</CurrentTagsContainer>
 
-				<Space wrap direction="horizontal">
-					<Button type="primary" onClick={onTagAddHandler} icon={<PlusOutlined />}>
-						Add Tags Filter
-					</Button>
+			<Space wrap direction="horizontal">
+				<Button type="primary" onClick={onTagAddHandler} icon={<PlusOutlined />}>
+					Add Tags Filter
+				</Button>
 
-					<Text ellipsis>
-						Results will include spans with ALL the specified tags ( Rows are `anded`
-						)
-					</Text>
-				</Space>
-			</Wrapper>
+				<Text ellipsis>
+					Results will include spans with ALL the specified tags ( Rows are `ANDed` )
+				</Text>
+			</Space>
 
 			<ButtonContainer>
 				<Space align="start">

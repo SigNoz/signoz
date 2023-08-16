@@ -2,7 +2,7 @@ import { blue } from '@ant-design/colors';
 import { CopyFilled } from '@ant-design/icons';
 import { Button, Row } from 'antd';
 import Editor from 'components/Editor';
-import React, { useMemo } from 'react';
+import { useMemo } from 'react';
 import { useCopyToClipboard } from 'react-use';
 import { ILog } from 'types/api/logs/log';
 

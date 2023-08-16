@@ -5,13 +5,11 @@ import { TraceReducer } from 'types/reducer/trace';
 
 export const UpdateTagIsError = (
 	isTagModalError: TraceReducer['isTagModalError'],
-): ((dispatch: Dispatch<AppActions>) => void) => {
-	return (dispatch): void => {
-		dispatch({
-			type: UPDATE_IS_TAG_ERROR,
-			payload: {
-				isTagModalError,
-			},
-		});
-	};
+): ((dispatch: Dispatch<AppActions>) => void) => (dispatch): void => {
+	dispatch({
+		type: UPDATE_IS_TAG_ERROR,
+		payload: {
+			isTagModalError,
+		},
+	});
 };

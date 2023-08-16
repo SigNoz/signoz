@@ -30,9 +30,8 @@ export const TextContainer = styled.div<TextContainerProps>`
 	margin-bottom: 1rem;
 
 	> button {
-		margin-left: ${({ noButtonMargin }): string => {
-			return noButtonMargin ? '0' : '0.5rem';
-		}}
+		margin-left: ${({ noButtonMargin }): string =>
+			noButtonMargin ? '0' : '0.5rem'}
 `;
 
 export const NullButtonContainer = styled.div`

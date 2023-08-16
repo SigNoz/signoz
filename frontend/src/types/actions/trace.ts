@@ -82,6 +82,7 @@ export interface UpdateAllFilters {
 		order: TraceReducer['spansAggregate']['order'];
 		pageSize: TraceReducer['spansAggregate']['pageSize'];
 		orderParam: TraceReducer['spansAggregate']['orderParam'];
+		spanKind?: TraceReducer['spanKind'];
 	};
 }
 

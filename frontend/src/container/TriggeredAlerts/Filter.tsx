@@ -1,7 +1,7 @@
 /* eslint-disable react/no-unstable-nested-components */
 import type { SelectProps } from 'antd';
 import { Tag } from 'antd';
-import React, { useCallback, useMemo } from 'react';
+import { Dispatch, SetStateAction, useCallback, useMemo } from 'react';
 import { Alerts } from 'types/api/alerts/getTriggered';
 
 import { Container, Select } from './styles';
@@ -94,8 +94,8 @@ function Filter({
 }
 
 interface FilterProps {
-	setSelectedFilter: React.Dispatch<React.SetStateAction<Array<Value>>>;
-	setSelectedGroup: React.Dispatch<React.SetStateAction<Array<Value>>>;
+	setSelectedFilter: Dispatch<SetStateAction<Array<Value>>>;
+	setSelectedGroup: Dispatch<SetStateAction<Array<Value>>>;
 	allAlerts: Alerts[];
 	selectedGroup: Array<Value>;
 	selectedFilter: Array<Value>;

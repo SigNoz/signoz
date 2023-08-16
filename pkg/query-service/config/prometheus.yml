@@ -22,4 +22,4 @@ rule_files:
 scrape_configs: []
 
 remote_read:
-  - url: tcp://stagingapp.signoz.io:9000/?database=signoz_metrics
+  - url: tcp://localhost:9000/?database=signoz_metrics

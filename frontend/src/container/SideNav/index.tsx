@@ -1,10 +1,16 @@
 import { CheckCircleTwoTone, WarningOutlined } from '@ant-design/icons';
-import { Menu, Space, Typography } from 'antd';
+import { Menu, MenuProps } from 'antd';
 import getLocalStorageKey from 'api/browser/localstorage/get';
 import { IS_SIDEBAR_COLLAPSED } from 'constants/app';
 import ROUTES from 'constants/routes';
 import history from 'lib/history';
-import React, { useCallback, useLayoutEffect, useState } from 'react';
+import {
+	ReactNode,
+	useCallback,
+	useLayoutEffect,
+	useMemo,
+	useState,
+} from 'react';
 import { useTranslation } from 'react-i18next';
 import { useDispatch, useSelector } from 'react-redux';
 import { useLocation } from 'react-router-dom';
@@ -12,6 +18,8 @@ import { SideBarCollapse } from 'store/actions/app';
 import { AppState } from 'store/reducers';
 import AppReducer from 'types/reducer/app';
 
+import { routeConfig, styles } from './config';
+import { getQueryString } from './helper';
 import menus from './menuItems';
 import Slack from './Slack';
 import {
@@ -19,7 +27,6 @@ import {
 	Sider,
 	SlackButton,
 	SlackMenuItemContainer,
-	Tags,
 	VersionContainer,
 } from './styles';
 
@@ -33,7 +40,8 @@ function SideNav(): JSX.Element {
 		AppReducer
 	>((state) => state.app);
 
-	const { pathname } = useLocation();
+	const { pathname, search } = useLocation();
+
 	const { t } = useTranslation('');
 
 	const onCollapse = useCallback(() => {
@@ -45,13 +53,22 @@ function SideNav(): JSX.Element {
 	}, [collapsed, dispatch]);
 
 	const onClickHandler = useCallback(
-		(to: string) => {
-			if (pathname !== to) {
-				history.push(to);
+		(key: string) => {
+			const params = new URLSearchParams(search);
+			const availableParams = routeConfig[key];
+
+			const queryString = getQueryString(availableParams || [], params);
+
+			if (pathname !== key) {
+				history.push(`${key}?${queryString.join('&')}`);
 			}
 		},
-		[pathname],
+		[pathname, search],
 	);
+
+	const onClickMenuHandler: MenuProps['onClick'] = (e) => {
+		onClickHandler(e.key);
+	};
 
 	const onClickSlackHandler = (): void => {
 		window.open('https://signoz.io/slack', '_blank');
@@ -63,14 +80,16 @@ function SideNav(): JSX.Element {
 
 	const isNotCurrentVersion = currentVersion !== latestVersion;
 
-	const sidebar = [
+	const sidebar: SidebarItem[] = [
 		{
 			onClick: onClickSlackHandler,
 			icon: <Slack />,
 			text: <SlackButton>Support</SlackButton>,
+			key: 'slack',
 		},
 		{
 			onClick: onClickVersionHandler,
+			key: 'version',
 			icon: isNotCurrentVersion ? (
 				<WarningOutlined style={{ color: '#E87040' }} />
 			) : (
@@ -89,49 +108,62 @@ function SideNav(): JSX.Element {
 		},
 	];
 
+	const currentMenu = useMemo(() => {
+		const routeKeys = Object.keys(ROUTES) as (keyof typeof ROUTES)[];
+		const currentRouteKey = routeKeys.find((key) => {
+			const route = ROUTES[key];
+			return pathname === route;
+		});
+
+		if (!currentRouteKey) return null;
+
+		return ROUTES[currentRouteKey];
+	}, [pathname]);
+
+	const sidebarItems = (props: SidebarItem, index: number): SidebarItem => ({
+		key: `${index}`,
+		icon: props.icon,
+		onClick: props.onClick,
+		label: props.text,
+	});
+
 	return (
 		<Sider collapsible collapsed={collapsed} onCollapse={onCollapse} width={200}>
 			<Menu
 				theme="dark"
 				defaultSelectedKeys={[ROUTES.APPLICATION]}
-				selectedKeys={[pathname]}
-				mode="inline"
-			>
-				{menus.map(({ to, Icon, name, tags }) => (
-					<Menu.Item
-						key={to}
-						icon={<Icon />}
-						onClick={(): void => onClickHandler(to)}
-					>
-						<Space>
-							<div>{name}</div>
-							{tags &&
-								tags.map((e) => (
-									<Tags style={{ lineHeight: '1rem' }} color="#177DDC" key={e}>
-										<Typography.Text style={{ fontWeight: '300' }}>{e}</Typography.Text>
-									</Tags>
-								))}
-						</Space>
-					</Menu.Item>
-				))}
-				{sidebar.map((props, index) => (
-					<SlackMenuItemContainer
-						index={index + 1}
-						key={`${index + 1}`}
-						collapsed={collapsed}
-					>
-						<Menu.Item
-							eventKey={index.toString()}
-							onClick={props.onClick}
-							icon={props.icon}
-						>
-							{props.text}
-						</Menu.Item>
-					</SlackMenuItemContainer>
-				))}
-			</Menu>
+				selectedKeys={currentMenu ? [currentMenu] : []}
+				mode="vertical"
+				style={styles}
+				items={menus}
+				onClick={onClickMenuHandler}
+			/>
+			{sidebar.map((props, index) => (
+				<SlackMenuItemContainer
+					index={index + 1}
+					key={`${index + 1}`}
+					collapsed={collapsed}
+				>
+					<Menu
+						theme="dark"
+						defaultSelectedKeys={[ROUTES.APPLICATION]}
+						selectedKeys={currentMenu ? [currentMenu] : []}
+						mode="inline"
+						style={styles}
+						items={[sidebarItems(props, index)]}
+					/>
+				</SlackMenuItemContainer>
+			))}
 		</Sider>
 	);
+}
+
+interface SidebarItem {
+	onClick: VoidFunction;
+	icon?: ReactNode;
+	text?: ReactNode;
+	key: string;
+	label?: ReactNode;
 }
 
 export default SideNav;

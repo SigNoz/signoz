@@ -80,7 +80,7 @@ Before sending us a pull request, please ensure that,
 GitHub provides additional document on [forking a repository](https://help.github.com/articles/fork-a-repo/) and 
 [creating a pull request](https://help.github.com/articles/creating-a-pull-request/).
 
-**Note:** Unless your change is small, **please** consider submitting different Pull Rrequest(s):
+**Note:** Unless your change is small, **please** consider submitting different Pull Request(s):
 
 * 1️⃣ First PR should include the overall structure of the new component:
   * Readme, configuration, interfaces or base classes, etc...
@@ -215,9 +215,26 @@ Please ping us in the [`#contributing`](https://signoz-community.slack.com/archi
 
 # 4. Contribute to Backend (Query-Service) 🌑
 
-[**https://github.com/SigNoz/signoz/tree/develop/pkg/query-service**](https://github.com/SigNoz/signoz/tree/develop/pkg/query-service)
+**Need to Update: [https://github.com/SigNoz/signoz/tree/develop/pkg/query-service](https://github.com/SigNoz/signoz/tree/develop/pkg/query-service)**
 
-## 4.1 To run ClickHouse setup (recommended for local development)
+## 4.1 Prerequisites
+
+### 4.1.1 Install SQLite3
+
+- Run `sqlite3` command to check if you already have SQLite3 installed on your machine.
+
+- If not installed already, Install using below command
+  - on Linux
+    - on Debian / Ubuntu
+      ```
+        sudo apt install sqlite3
+      ```
+    - on CentOS / Fedora / RedHat
+      ```
+        sudo yum install sqlite3
+      ```
+
+## 4.2 To run ClickHouse setup (recommended for local development)
 
 - Clone the SigNoz repository and cd into signoz directory,
     ```
@@ -321,7 +338,7 @@ to make SigNoz UI available at [localhost:3301](http://localhost:3301)
 **5.1.1 To install the HotROD sample app:**
 
 ```bash
-curl -sL https://github.com/SigNoz/signoz/raw/main/sample-apps/hotrod/hotrod-install.sh \
+curl -sL https://github.com/SigNoz/signoz/raw/develop/sample-apps/hotrod/hotrod-install.sh \
   | HELM_RELEASE=my-release SIGNOZ_NAMESPACE=platform bash
 ```
 
@@ -344,7 +361,7 @@ kubectl -n sample-application run strzal --image=djbingham/curl \
 **5.1.4 To delete the HotROD sample app:**
 
 ```bash
-curl -sL https://github.com/SigNoz/signoz/raw/main/sample-apps/hotrod/hotrod-delete.sh \
+curl -sL https://github.com/SigNoz/signoz/raw/develop/sample-apps/hotrod/hotrod-delete.sh \
   | HOTROD_NAMESPACE=sample-application bash
 ```
 

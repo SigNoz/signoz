@@ -16,6 +16,7 @@ module.exports = {
 		'plugin:sonarjs/recommended',
 		'plugin:import/errors',
 		'plugin:import/warnings',
+		'plugin:react/jsx-runtime',
 	],
 	parser: '@typescript-eslint/parser',
 	parserOptions: {
@@ -58,7 +59,7 @@ module.exports = {
 		'react/no-array-index-key': 'error',
 		'linebreak-style': [
 			'error',
-			process.platform === 'win32' ? 'windows' : 'unix',
+			process.env.platform === 'win32' ? 'windows' : 'unix',
 		],
 		'@typescript-eslint/default-param-last': 'off',
 
@@ -102,9 +103,10 @@ module.exports = {
 			},
 		],
 		'@typescript-eslint/no-unused-vars': 'error',
+		'func-style': ['error', 'declaration', { allowArrowFunctions: true }],
+		'arrow-body-style': ['error', 'as-needed'],
 
 		// eslint rules need to remove
-		'no-shadow': 'off',
 		'@typescript-eslint/no-shadow': 'off',
 		'import/no-cycle': 'off',
 

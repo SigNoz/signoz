@@ -4,14 +4,14 @@ import { DeleteQueryProps } from 'types/actions/dashboard';
 
 export const DeleteQuery = (
 	props: DeleteQueryProps,
-): ((dispatch: Dispatch<AppActions>) => void) => {
-	return (dispatch: Dispatch<AppActions>): void => {
-		dispatch({
-			type: 'DELETE_QUERY',
-			payload: {
-				currentIndex: props.currentIndex,
-				widgetId: props.widgetId,
-			},
-		});
-	};
+): ((dispatch: Dispatch<AppActions>) => void) => (
+	dispatch: Dispatch<AppActions>,
+): void => {
+	dispatch({
+		type: 'DELETE_QUERY',
+		payload: {
+			currentIndex: props.currentIndex,
+			widgetId: props.widgetId,
+		},
+	});
 };

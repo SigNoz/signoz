@@ -1,8 +1,7 @@
-import { Select } from 'antd';
-import FormItem from 'antd/lib/form/FormItem';
-import React from 'react';
+import { Form, Select } from 'antd';
 import { useTranslation } from 'react-i18next';
 import { AlertDef, Labels } from 'types/api/alerts/def';
+import { requireErrorMessage } from 'utils/form/requireErrorMessage';
 
 import ChannelSelect from './ChannelSelect';
 import LabelSelect from './labels';
@@ -31,7 +30,7 @@ function BasicInfo({ alertDef, setAlertDef }: BasicInfoProps): JSX.Element {
 		<>
 			<StepHeading> {t('alert_form_step3')} </StepHeading>
 			<FormContainer>
-				<FormItem
+				<Form.Item
 					label={t('field_severity')}
 					labelAlign="left"
 					name={['labels', 'severity']}
@@ -54,9 +53,17 @@ function BasicInfo({ alertDef, setAlertDef }: BasicInfoProps): JSX.Element {
 						<Option value="warning">{t('option_warning')}</Option>
 						<Option value="info">{t('option_info')}</Option>
 					</SeveritySelect>
-				</FormItem>
+				</Form.Item>
 
-				<FormItem label={t('field_alert_name')} labelAlign="left" name="alert">
+				<Form.Item
+					required
+					name="alert"
+					labelAlign="left"
+					label={t('field_alert_name')}
+					rules={[
+						{ required: true, message: requireErrorMessage(t('field_alert_name')) },
+					]}
+				>
 					<InputSmall
 						onChange={(e): void => {
 							setAlertDef({
@@ -65,8 +72,8 @@ function BasicInfo({ alertDef, setAlertDef }: BasicInfoProps): JSX.Element {
 							});
 						}}
 					/>
-				</FormItem>
-				<FormItem
+				</Form.Item>
+				<Form.Item
 					label={t('field_alert_desc')}
 					labelAlign="left"
 					name={['annotations', 'description']}
@@ -82,7 +89,7 @@ function BasicInfo({ alertDef, setAlertDef }: BasicInfoProps): JSX.Element {
 							});
 						}}
 					/>
-				</FormItem>
+				</Form.Item>
 				<FormItemMedium label={t('field_labels')}>
 					<LabelSelect
 						onSetLabels={(l: Labels): void => {
@@ -99,10 +106,10 @@ function BasicInfo({ alertDef, setAlertDef }: BasicInfoProps): JSX.Element {
 				<FormItemMedium label="Notification Channels">
 					<ChannelSelect
 						currentValue={alertDef.preferredChannels}
-						onSelectChannels={(s: string[]): void => {
+						onSelectChannels={(preferredChannels): void => {
 							setAlertDef({
 								...alertDef,
-								preferredChannels: s,
+								preferredChannels,
 							});
 						}}
 					/>

@@ -1,5 +1,4 @@
 import { Form } from 'antd';
-import FormItem from 'antd/lib/form/FormItem';
 import styled from 'styled-components';
 
 export const ApplyFormContainer = styled.div`
@@ -15,7 +14,7 @@ export const ApplyForm = styled(Form)`
 	}
 `;
 
-export const LicenseInput = styled(FormItem)`
+export const LicenseInput = styled(Form.Item)`
 	width: 200px;
 	&:focus {
 		width: 350px;
@@ -23,4 +22,9 @@ export const LicenseInput = styled(FormItem)`
 			width: 350px;
 		}
 	}
+`;
+
+export const KeyPreview = styled.div`
+	padding-left: 0.5em;
+	color: #666;
 `;

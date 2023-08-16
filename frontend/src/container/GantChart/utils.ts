@@ -112,21 +112,19 @@ export const getNodeById = (
 
 const getSpanWithoutChildren = (
 	span: ITraceTree,
-): Omit<ITraceTree, 'children'> => {
-	return {
-		id: span.id,
-		name: span.name,
-		parent: span.parent,
-		serviceColour: span.serviceColour,
-		serviceName: span.serviceName,
-		startTime: span.startTime,
-		tags: span.tags,
-		time: span.time,
-		value: span.value,
-		event: span.event,
-		hasError: span.hasError,
-	};
-};
+): Omit<ITraceTree, 'children'> => ({
+	id: span.id,
+	name: span.name,
+	parent: span.parent,
+	serviceColour: span.serviceColour,
+	serviceName: span.serviceName,
+	startTime: span.startTime,
+	tags: span.tags,
+	time: span.time,
+	value: span.value,
+	event: span.event,
+	hasError: span.hasError,
+});
 
 export const isSpanPresentInSearchString = (
 	searchedString: string,

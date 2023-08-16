@@ -2,20 +2,20 @@ import { blue } from '@ant-design/colors';
 import Graph from 'components/Graph';
 import Spinner from 'components/Spinner';
 import dayjs from 'dayjs';
+import useInterval from 'hooks/useInterval';
 import getStep from 'lib/getStep';
-import React, { memo, useEffect, useRef } from 'react';
+import { useMemo } from 'react';
 import { connect, useSelector } from 'react-redux';
-import { bindActionCreators, Dispatch } from 'redux';
+import { bindActionCreators } from 'redux';
 import { ThunkDispatch } from 'redux-thunk';
 import { getLogsAggregate } from 'store/actions/logs/getLogsAggregate';
 import { AppState } from 'store/reducers';
 import AppActions from 'types/actions';
-import { GlobalReducer } from 'types/reducer/globalTime';
 import { ILogsReducer } from 'types/reducer/logs';
 
 import { Container } from './styles';
 
-function LogsAggregate({ getLogsAggregate }: LogsAggregateProps): JSX.Element {
+function LogsAggregate({ getLogsAggregate }: DispatchProps): JSX.Element {
 	const {
 		searchFilter: { queryString },
 		idEnd,
@@ -26,56 +26,42 @@ function LogsAggregate({ getLogsAggregate }: LogsAggregateProps): JSX.Element {
 		liveTailStartRange,
 	} = useSelector<AppState, ILogsReducer>((state) => state.logs);
 
-	const { maxTime, minTime } = useSelector<AppState, GlobalReducer>(
-		(state) => state.globalTime,
+	useInterval(
+		() => {
+			const startTime =
+				dayjs().subtract(liveTailStartRange, 'minute').valueOf() * 1e6;
+
+			const endTime = dayjs().valueOf() * 1e6;
+
+			getLogsAggregate({
+				timestampStart: startTime,
+				timestampEnd: endTime,
+				step: getStep({
+					start: startTime,
+					end: endTime,
+					inputFormat: 'ns',
+				}),
+				q: queryString,
+				...(idStart ? { idGt: idStart } : {}),
+				...(idEnd ? { idLt: idEnd } : {}),
+			});
+		},
+		60000,
+		liveTail === 'PLAYING',
 	);
 
-	const reFetchIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
-
-	useEffect(() => {
-		switch (liveTail) {
-			case 'STOPPED': {
-				if (reFetchIntervalRef.current) {
-					clearInterval(reFetchIntervalRef.current);
-				}
-				reFetchIntervalRef.current = null;
-				break;
-			}
-
-			case 'PLAYING': {
-				const aggregateCall = (): void => {
-					const startTime =
-						dayjs().subtract(liveTailStartRange, 'minute').valueOf() * 1e6;
-					const endTime = dayjs().valueOf() * 1e6;
-					getLogsAggregate({
-						timestampStart: startTime,
-						timestampEnd: endTime,
-						step: getStep({
-							start: startTime,
-							end: endTime,
-							inputFormat: 'ns',
-						}),
-						q: queryString,
-						...(idStart ? { idGt: idStart } : {}),
-						...(idEnd ? { idLt: idEnd } : {}),
-					});
-				};
-				aggregateCall();
-				reFetchIntervalRef.current = setInterval(aggregateCall, 60000);
-				break;
-			}
-			case 'PAUSED': {
-				if (reFetchIntervalRef.current) {
-					clearInterval(reFetchIntervalRef.current);
-				}
-				break;
-			}
-			default: {
-				break;
-			}
-		}
-		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [getLogsAggregate, maxTime, minTime, liveTail]);
+	const graphData = useMemo(
+		() => ({
+			labels: logsAggregate.map((s) => new Date(s.timestamp / 1000000)),
+			datasets: [
+				{
+					data: logsAggregate.map((s) => s.value),
+					backgroundColor: blue[4],
+				},
+			],
+		}),
+		[logsAggregate],
+	);
 
 	return (
 		<Container>
@@ -84,15 +70,7 @@ function LogsAggregate({ getLogsAggregate }: LogsAggregateProps): JSX.Element {
 			) : (
 				<Graph
 					name="usage"
-					data={{
-						labels: logsAggregate.map((s) => new Date(s.timestamp / 1000000)),
-						datasets: [
-							{
-								data: logsAggregate.map((s) => s.value),
-								backgroundColor: blue[4],
-							},
-						],
-					}}
+					data={graphData}
 					type="bar"
 					containerHeight="100%"
 					animate
@@ -102,14 +80,8 @@ function LogsAggregate({ getLogsAggregate }: LogsAggregateProps): JSX.Element {
 	);
 }
 
-interface LogsAggregateProps {
-	getLogsAggregate: (arg0: Parameters<typeof getLogsAggregate>[0]) => void;
-}
-
 interface DispatchProps {
-	getLogsAggregate: (
-		props: Parameters<typeof getLogsAggregate>[0],
-	) => (dispatch: Dispatch<AppActions>) => void;
+	getLogsAggregate: typeof getLogsAggregate;
 }
 
 const mapDispatchToProps = (
@@ -118,4 +90,4 @@ const mapDispatchToProps = (
 	getLogsAggregate: bindActionCreators(getLogsAggregate, dispatch),
 });
 
-export default connect(null, mapDispatchToProps)(memo(LogsAggregate));
+export default connect(null, mapDispatchToProps)(LogsAggregate);

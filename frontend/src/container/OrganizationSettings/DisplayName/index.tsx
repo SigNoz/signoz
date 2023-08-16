@@ -1,6 +1,7 @@
-import { Button, Input, notification, Space, Typography } from 'antd';
+import { Button, Form, Input } from 'antd';
 import editOrg from 'api/user/editOrg';
-import React, { useState } from 'react';
+import { useNotifications } from 'hooks/useNotifications';
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useDispatch, useSelector } from 'react-redux';
 import { Dispatch } from 'redux';
@@ -8,29 +9,34 @@ import { AppState } from 'store/reducers';
 import AppActions from 'types/actions';
 import { UPDATE_ORG_NAME } from 'types/actions/app';
 import AppReducer, { User } from 'types/reducer/app';
+import { requireErrorMessage } from 'utils/form/requireErrorMessage';
 
 function DisplayName({
 	index,
 	id: orgId,
 	isAnonymous,
 }: DisplayNameProps): JSX.Element {
+	const [form] = Form.useForm<FormValues>();
+	const orgName = Form.useWatch('name', form);
+
 	const { t } = useTranslation(['organizationsettings', 'common']);
 	const { org } = useSelector<AppState, AppReducer>((state) => state.app);
 	const { name } = (org || [])[index];
-	const [orgName, setOrgName] = useState<string>(name);
 	const [isLoading, setIsLoading] = useState<boolean>(false);
 	const dispatch = useDispatch<Dispatch<AppActions>>();
+	const { notifications } = useNotifications();
 
-	const onClickHandler = async (): Promise<void> => {
+	const onSubmit = async (values: FormValues): Promise<void> => {
 		try {
 			setIsLoading(true);
+			const { name } = values;
 			const { statusCode, error } = await editOrg({
 				isAnonymous,
-				name: orgName,
+				name,
 				orgId,
 			});
 			if (statusCode === 200) {
-				notification.success({
+				notifications.success({
 					message: t('success', {
 						ns: 'common',
 					}),
@@ -39,11 +45,11 @@ function DisplayName({
 					type: UPDATE_ORG_NAME,
 					payload: {
 						orgId,
-						name: orgName,
+						name,
 					},
 				});
 			} else {
-				notification.error({
+				notifications.error({
 					message:
 						error ||
 						t('something_went_wrong', {
@@ -54,7 +60,7 @@ function DisplayName({
 			setIsLoading(false);
 		} catch (error) {
 			setIsLoading(false);
-			notification.error({
+			notifications.error({
 				message: t('something_went_wrong', {
 					ns: 'common',
 				}),
@@ -66,27 +72,34 @@ function DisplayName({
 		return <div />;
 	}
 
+	const isDisabled = isLoading || orgName === name || !orgName;
+
 	return (
-		<Space direction="vertical">
-			<Typography.Title level={3}>{t('display_name')}</Typography.Title>
-			<Space direction="vertical" size="middle">
-				<Input
-					value={orgName}
-					onChange={(e): void => setOrgName(e.target.value)}
-					size="large"
-					placeholder={t('signoz')}
-					disabled={isLoading}
-				/>
+		<Form
+			initialValues={{ name }}
+			form={form}
+			layout="vertical"
+			onFinish={onSubmit}
+			autoComplete="off"
+		>
+			<Form.Item
+				name="name"
+				label="Display name"
+				rules={[{ required: true, message: requireErrorMessage('Display name') }]}
+			>
+				<Input size="large" placeholder={t('signoz')} />
+			</Form.Item>
+			<Form.Item>
 				<Button
-					onClick={onClickHandler}
-					disabled={isLoading}
 					loading={isLoading}
+					disabled={isDisabled}
 					type="primary"
+					htmlType="submit"
 				>
-					Change Org Name
+					Submit
 				</Button>
-			</Space>
-		</Space>
+			</Form.Item>
+		</Form>
 	);
 }
 
@@ -94,6 +107,10 @@ interface DisplayNameProps {
 	index: number;
 	id: User['userId'];
 	isAnonymous: boolean;
+}
+
+interface FormValues {
+	name: string;
 }
 
 export default DisplayName;

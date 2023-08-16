@@ -12,6 +12,7 @@ import (
 	"go.signoz.io/signoz/pkg/query-service/constants"
 	"go.signoz.io/signoz/pkg/query-service/dao"
 	"go.signoz.io/signoz/pkg/query-service/model"
+	"go.signoz.io/signoz/pkg/query-service/telemetry"
 	"go.signoz.io/signoz/pkg/query-service/utils"
 	"go.uber.org/zap"
 	"golang.org/x/crypto/bcrypt"
@@ -249,14 +250,14 @@ func RegisterFirstUser(ctx context.Context, req *RegisterRequest) (*model.User, 
 	}
 
 	user := &model.User{
-		Id:                 uuid.NewString(),
-		Name:               req.Name,
-		Email:              req.Email,
-		Password:           hash,
-		CreatedAt:          time.Now().Unix(),
-		ProfilePirctureURL: "", // Currently unused
-		GroupId:            group.Id,
-		OrgId:              org.Id,
+		Id:                uuid.NewString(),
+		Name:              req.Name,
+		Email:             req.Email,
+		Password:          hash,
+		CreatedAt:         time.Now().Unix(),
+		ProfilePictureURL: "", // Currently unused
+		GroupId:           group.Id,
+		OrgId:             org.Id,
 	}
 
 	return dao.DB().CreateUser(ctx, user, true)
@@ -266,7 +267,7 @@ func RegisterFirstUser(ctx context.Context, req *RegisterRequest) (*model.User, 
 func RegisterInvitedUser(ctx context.Context, req *RegisterRequest, nopassword bool) (*model.User, *model.ApiError) {
 
 	if req.InviteToken == "" {
-		return nil, model.BadRequest(fmt.Errorf("invite token is required"))
+		return nil, model.BadRequest(ErrorAskAdmin)
 	}
 
 	if !nopassword && req.Password == "" {
@@ -327,14 +328,14 @@ func RegisterInvitedUser(ctx context.Context, req *RegisterRequest, nopassword b
 	}
 
 	user := &model.User{
-		Id:                 uuid.NewString(),
-		Name:               req.Name,
-		Email:              req.Email,
-		Password:           hash,
-		CreatedAt:          time.Now().Unix(),
-		ProfilePirctureURL: "", // Currently unused
-		GroupId:            group.Id,
-		OrgId:              invite.OrgId,
+		Id:                uuid.NewString(),
+		Name:              req.Name,
+		Email:             req.Email,
+		Password:          hash,
+		CreatedAt:         time.Now().Unix(),
+		ProfilePictureURL: "", // Currently unused
+		GroupId:           group.Id,
+		OrgId:             invite.OrgId,
 	}
 
 	// TODO(Ahsan): Ideally create user and delete invitation should happen in a txn.
@@ -385,6 +386,8 @@ func Login(ctx context.Context, request *model.LoginRequest) (*model.LoginRespon
 		zap.S().Debugf("Failed to generate JWT against login creds, %v", err)
 		return nil, err
 	}
+
+	telemetry.GetInstance().IdentifyUser(&user.User)
 
 	return &model.LoginResponse{
 		UserJwtObject: userjwt,

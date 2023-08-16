@@ -1,7 +1,9 @@
-/* eslint-disable @typescript-eslint/naming-convention */
-import { notification } from 'antd';
+import { initialQueriesMap, PANEL_TYPES } from 'constants/queryBuilder';
+import { queryParamNamesMap } from 'constants/queryBuilderQueryNames';
+import { useIsDarkMode } from 'hooks/useDarkMode';
+import { useNotifications } from 'hooks/useNotifications';
 import history from 'lib/history';
-import React, { useCallback } from 'react';
+import { CSSProperties, useCallback } from 'react';
 import { connect, useSelector } from 'react-redux';
 import { bindActionCreators, Dispatch } from 'redux';
 import { ThunkDispatch } from 'redux-thunk';
@@ -11,10 +13,9 @@ import {
 } from 'store/actions/dashboard/toggleAddWidget';
 import { AppState } from 'store/reducers';
 import AppActions from 'types/actions';
-import AppReducer from 'types/reducer/app';
 import DashboardReducer from 'types/reducer/dashboards';
 
-import menuItems, { ITEMS } from './menuItems';
+import menuItems from './menuItems';
 import { Card, Container, Text } from './styles';
 
 function DashboardGraphSlider({ toggleAddWidget }: Props): JSX.Element {
@@ -22,16 +23,18 @@ function DashboardGraphSlider({ toggleAddWidget }: Props): JSX.Element {
 		(state) => state.dashboards,
 	);
 
+	const { notifications } = useNotifications();
+
 	const [selectedDashboard] = dashboards;
 	const { data } = selectedDashboard;
 
 	const onClickHandler = useCallback(
-		async (name: ITEMS) => {
+		(name: PANEL_TYPES) => (): void => {
 			try {
 				const emptyLayout = data.layout?.find((e) => e.i === 'empty');
 
 				if (emptyLayout === undefined) {
-					notification.error({
+					notifications.error({
 						message: 'Please click on Add Panel Button',
 					});
 					return;
@@ -40,30 +43,27 @@ function DashboardGraphSlider({ toggleAddWidget }: Props): JSX.Element {
 				toggleAddWidget(false);
 
 				history.push(
-					`${history.location.pathname}/new?graphType=${name}&widgetId=${emptyLayout.i}`,
+					`${history.location.pathname}/new?graphType=${name}&widgetId=${
+						emptyLayout.i
+					}&${queryParamNamesMap.compositeQuery}=${encodeURIComponent(
+						JSON.stringify(initialQueriesMap.metrics),
+					)}`,
 				);
 			} catch (error) {
-				notification.error({
+				notifications.error({
 					message: 'Something went wrong',
 				});
 			}
 		},
-		[data, toggleAddWidget],
+		[data, toggleAddWidget, notifications],
 	);
-	const { isDarkMode } = useSelector<AppState, AppReducer>((state) => state.app);
-	const fillColor: React.CSSProperties['color'] = isDarkMode ? 'white' : 'black';
+	const isDarkMode = useIsDarkMode();
+	const fillColor: CSSProperties['color'] = isDarkMode ? 'white' : 'black';
 
 	return (
 		<Container>
 			{menuItems.map(({ name, Icon, display }) => (
-				<Card
-					onClick={(event): void => {
-						event.preventDefault();
-						onClickHandler(name);
-					}}
-					id={name}
-					key={name}
-				>
+				<Card onClick={onClickHandler(name)} id={name} key={name}>
 					<Icon fillColor={fillColor} />
 					<Text>{display}</Text>
 				</Card>
@@ -71,8 +71,6 @@ function DashboardGraphSlider({ toggleAddWidget }: Props): JSX.Element {
 		</Container>
 	);
 }
-
-export type GRAPH_TYPES = ITEMS;
 
 interface DispatchProps {
 	toggleAddWidget: (

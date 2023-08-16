@@ -1,5 +1,4 @@
 import { Tag } from 'antd';
-import React from 'react';
 import { GettableAlert } from 'types/api/alerts/get';
 
 function Status({ status }: StatusProps): JSX.Element {

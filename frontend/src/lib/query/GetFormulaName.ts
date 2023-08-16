@@ -11,9 +11,7 @@ function GetFormulaName(
 		return null;
 	}
 	const formulasNameNumbered = sortBy(
-		formulas.map(({ name }: { name: string }) => {
-			return parseInt(name.slice(1), 10);
-		}),
+		formulas.map(({ name }: { name: string }) => parseInt(name.slice(1), 10)),
 		(e) => e,
 	);
 

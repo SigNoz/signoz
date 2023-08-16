@@ -1,8 +1,8 @@
 const convertObjectIntoParams = (
 	props: Record<string, unknown>,
 	stringify = false,
-): string => {
-	return Object.keys(props)
+): string =>
+	Object.keys(props)
 		.map(
 			(e) =>
 				`${e}=${
@@ -10,6 +10,5 @@ const convertObjectIntoParams = (
 				}`,
 		)
 		.join('&');
-};
 
 export default convertObjectIntoParams;

@@ -49,9 +49,7 @@ export const INTERVAL_UNITS: IIntervalUnit[] = [
 export const resolveTimeFromInterval = (
 	intervalTime: number,
 	intervalUnit: IIntervalUnit,
-): number => {
-	return intervalTime * intervalUnit.multiplier;
-};
+): number => intervalTime * intervalUnit.multiplier;
 
 export const convertTimeToRelevantUnit = (
 	intervalTime: number,
@@ -95,7 +93,12 @@ export const getSortedData = (treeData: ITraceTree): ITraceTree => {
 };
 
 export const getTreeLevelsCount = (tree: ITraceTree): number => {
-	let levels = 0;
+	if (!tree) {
+		return 0;
+	}
+
+	let levels = 1;
+
 	const traverse = (treeNode: ITraceTree, level: number): void => {
 		if (!treeNode) {
 			return;
@@ -112,6 +115,7 @@ export const getTreeLevelsCount = (tree: ITraceTree): number => {
 	return levels;
 };
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const formUrlParams = (params: Record<string, any>): string => {
 	let urlParams = '';
 	Object.entries(params).forEach(([key, value], index) => {

@@ -1,6 +1,5 @@
 import ROUTES from 'constants/routes';
 import history from 'lib/history';
-import React from 'react';
 import { generatePath } from 'react-router-dom';
 
 import { Data } from '..';

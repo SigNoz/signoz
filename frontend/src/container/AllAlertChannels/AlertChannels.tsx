@@ -1,10 +1,12 @@
 /* eslint-disable react/display-name */
-import { Button, notification, Table } from 'antd';
+import { Button } from 'antd';
 import { ColumnsType } from 'antd/lib/table';
+import { ResizeTable } from 'components/ResizeTable';
 import ROUTES from 'constants/routes';
 import useComponentPermission from 'hooks/useComponentPermission';
+import { useNotifications } from 'hooks/useNotifications';
 import history from 'lib/history';
-import React, { useCallback, useState } from 'react';
+import { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useSelector } from 'react-redux';
 import { generatePath } from 'react-router-dom';
@@ -16,7 +18,7 @@ import Delete from './Delete';
 
 function AlertChannels({ allChannels }: AlertChannelsProps): JSX.Element {
 	const { t } = useTranslation(['channels']);
-	const [notifications, Element] = notification.useNotification();
+	const { notifications } = useNotifications();
 	const [channels, setChannels] = useState<Channels[]>(allChannels);
 	const { role } = useSelector<AppState, AppReducer>((state) => state.app);
 	const [action] = useComponentPermission(['new_alert_action'], role);
@@ -34,11 +36,13 @@ function AlertChannels({ allChannels }: AlertChannelsProps): JSX.Element {
 			title: t('column_channel_name'),
 			dataIndex: 'name',
 			key: 'name',
+			width: 100,
 		},
 		{
 			title: t('column_channel_type'),
 			dataIndex: 'type',
 			key: 'type',
+			width: 80,
 		},
 	];
 
@@ -48,6 +52,7 @@ function AlertChannels({ allChannels }: AlertChannelsProps): JSX.Element {
 			dataIndex: 'id',
 			key: 'action',
 			align: 'center',
+			width: 80,
 			render: (id: string): JSX.Element => (
 				<>
 					<Button onClick={(): void => onClickEditHandler(id)} type="link">
@@ -59,13 +64,7 @@ function AlertChannels({ allChannels }: AlertChannelsProps): JSX.Element {
 		});
 	}
 
-	return (
-		<>
-			{Element}
-
-			<Table rowKey="id" dataSource={channels} columns={columns} />
-		</>
-	);
+	return <ResizeTable columns={columns} dataSource={channels} rowKey="id" />;
 }
 
 interface AlertChannelsProps {

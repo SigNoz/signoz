@@ -1,4 +1,4 @@
-import { Select } from 'antd';
+import { Select, Space } from 'antd';
 import styled from 'styled-components';
 
 export const SelectDrawer = styled(Select)`
@@ -11,5 +11,11 @@ export const TitleWrapper = styled.div`
 
 	> article {
 		min-width: 11rem;
+	}
+`;
+
+export const SpaceContainer = styled(Space)`
+	& .ant-form-item {
+		margin-bottom: 0px;
 	}
 `;

@@ -14,7 +14,7 @@ import set from 'api/browser/localstorage/set';
 import { DASHBOARD_TIME_IN_DURATION } from 'constants/app';
 import useUrlQuery from 'hooks/useUrlQuery';
 import _omit from 'lodash-es/omit';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useLocation } from 'react-router-dom';
 import { useInterval } from 'react-use';
@@ -37,8 +37,11 @@ function AutoRefresh({ disabled = false }: AutoRefreshProps): JSX.Element {
 	const { pathname } = useLocation();
 
 	const isDisabled = useMemo(
-		() => disabled || globalTime.isAutoRefreshDisabled,
-		[globalTime.isAutoRefreshDisabled, disabled],
+		() =>
+			disabled ||
+			globalTime.isAutoRefreshDisabled ||
+			globalTime.selectedTime === 'custom',
+		[globalTime.isAutoRefreshDisabled, disabled, globalTime.selectedTime],
 	);
 
 	const localStorageData = JSON.parse(get(DASHBOARD_TIME_IN_DURATION) || '{}');
@@ -131,6 +134,11 @@ function AutoRefresh({ disabled = false }: AutoRefreshProps): JSX.Element {
 		},
 		[localStorageData, pathname],
 	);
+
+	if (globalTime.selectedTime === 'custom') {
+		// eslint-disable-next-line react/jsx-no-useless-fragment
+		return <></>;
+	}
 
 	return (
 		<Popover

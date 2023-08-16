@@ -1,6 +1,5 @@
 import { Form } from 'antd';
 import FormAlertRules from 'container/FormAlertRules';
-import React from 'react';
 import { AlertTypes } from 'types/api/alerts/alertTypes';
 import { AlertDef } from 'types/api/alerts/def';
 

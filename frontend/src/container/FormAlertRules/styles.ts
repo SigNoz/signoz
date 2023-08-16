@@ -1,25 +1,11 @@
-import {
-	Button,
-	Card,
-	Col,
-	Form,
-	Input,
-	InputNumber,
-	Row,
-	Select,
-	Typography,
-} from 'antd';
-import FormItem from 'antd/lib/form/FormItem';
-import TextArea from 'antd/lib/input/TextArea';
+import { Button, Card, Col, Form, Input, Row, Select, Typography } from 'antd';
 import styled from 'styled-components';
+
+const { TextArea } = Input;
+const { Item } = Form;
 
 export const PanelContainer = styled(Row)`
 	flex-wrap: nowrap;
-`;
-
-export const StyledRightContainer = styled(Col)`
-	&&& {
-	}
 `;
 
 export const StyledLeftContainer = styled(Col)`
@@ -86,35 +72,24 @@ export const InputSmall = styled(Input)`
 `;
 
 export const FormContainer = styled(Card)`
-	padding: 2em;
 	margin-top: 1rem;
 	display: flex;
 	flex-direction: column;
 	border-radius: 4px;
 `;
 
-export const ThresholdInput = styled(InputNumber)`
-	& > div {
-		display: flex;
-		align-items: center;
-		& > .ant-input-number-group-addon {
-			width: 130px;
-		}
-		& > .ant-input-number {
-			width: 50%;
-			margin-left: 1em;
-		}
-	}
-`;
-
 export const TextareaMedium = styled(TextArea)`
 	width: 70%;
 `;
 
-export const FormItemMedium = styled(FormItem)`
+export const FormItemMedium = styled(Item)`
 	width: 70%;
 `;
 
 export const ChannelSelectTip = styled(Typography.Text)`
 	color: hsla(0, 0%, 100%, 0.3);
+`;
+
+export const StepContainer = styled.div`
+	margin-top: 2rem;
 `;

@@ -17,3 +17,8 @@ export const VariableName = styled(Typography)`
 	font-style: italic;
 	color: ${grey[0]};
 `;
+
+export const SelectItemStyle = {
+	minWidth: 120,
+	fontSize: '0.8rem',
+};

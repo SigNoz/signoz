@@ -1,5 +1,4 @@
-// eslint-disable-next-line @typescript-eslint/naming-convention
-export enum METRICS_PAGE_QUERY_PARAM {
+export enum QueryParams {
 	interval = 'interval',
 	startTime = 'startTime',
 	endTime = 'endTime',
@@ -12,4 +11,11 @@ export enum METRICS_PAGE_QUERY_PARAM {
 	selectedTags = 'selectedTags',
 	aggregationOption = 'aggregationOption',
 	entity = 'entity',
+	resourceAttributes = 'resourceAttribute',
+	graphType = 'graphType',
+	widgetId = 'widgetId',
+	order = 'order',
+	q = 'q',
+	activeLogId = 'activeLogId',
+	timeRange = 'timeRange',
 }

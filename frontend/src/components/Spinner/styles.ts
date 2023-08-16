@@ -1,8 +1,8 @@
-import React from 'react';
+import { CSSProperties } from 'react';
 import styled from 'styled-components';
 
 interface Props {
-	height: React.CSSProperties['height'];
+	height: CSSProperties['height'];
 }
 
 export const SpinerStyle = styled.div<Props>`

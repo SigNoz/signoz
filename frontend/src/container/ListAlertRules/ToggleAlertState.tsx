@@ -1,7 +1,7 @@
-import { notification } from 'antd';
 import patchAlert from 'api/alerts/patch';
 import { State } from 'hooks/useFetch';
-import React, { useState } from 'react';
+import { useNotifications } from 'hooks/useNotifications';
+import { Dispatch, SetStateAction, useState } from 'react';
 import { GettableAlert } from 'types/api/alerts/get';
 import { PayloadProps as PatchPayloadProps } from 'types/api/alerts/patch';
 
@@ -19,6 +19,8 @@ function ToggleAlertState({
 		success: false,
 		payload: undefined,
 	});
+
+	const { notifications } = useNotifications();
 
 	const defaultErrorMessage = 'Something went wrong';
 
@@ -40,8 +42,8 @@ function ToggleAlertState({
 			});
 
 			if (response.statusCode === 200) {
-				setData((state) => {
-					return state.map((alert) => {
+				setData((state) =>
+					state.map((alert) => {
 						if (alert.id === id) {
 							return {
 								...alert,
@@ -50,15 +52,15 @@ function ToggleAlertState({
 							};
 						}
 						return alert;
-					});
-				});
+					}),
+				);
 
 				setAPIStatus((state) => ({
 					...state,
 					loading: false,
 					payload: response.payload,
 				}));
-				notification.success({
+				notifications.success({
 					message: 'Success',
 				});
 			} else {
@@ -69,7 +71,7 @@ function ToggleAlertState({
 					errorMessage: response.error || defaultErrorMessage,
 				}));
 
-				notification.error({
+				notifications.error({
 					message: response.error || defaultErrorMessage,
 				});
 			}
@@ -81,7 +83,7 @@ function ToggleAlertState({
 				errorMessage: defaultErrorMessage,
 			}));
 
-			notification.error({
+			notifications.error({
 				message: defaultErrorMessage,
 			});
 		}
@@ -102,7 +104,7 @@ function ToggleAlertState({
 interface ToggleAlertStateProps {
 	id: GettableAlert['id'];
 	disabled: boolean;
-	setData: React.Dispatch<React.SetStateAction<GettableAlert[]>>;
+	setData: Dispatch<SetStateAction<GettableAlert[]>>;
 }
 
 export default ToggleAlertState;

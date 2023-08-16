@@ -1,12 +1,5 @@
+import { TopOperationList } from 'container/MetricsApplication/TopOperationsTable';
 import { Tags } from 'types/reducer/trace';
-
-export interface TopOperations {
-	name: string;
-	numCalls: number;
-	p50: number;
-	p95: number;
-	p99: number;
-}
 
 export interface Props {
 	service: string;
@@ -15,4 +8,4 @@ export interface Props {
 	selectedTags: Tags[];
 }
 
-export type PayloadProps = TopOperations[];
+export type PayloadProps = TopOperationList[];

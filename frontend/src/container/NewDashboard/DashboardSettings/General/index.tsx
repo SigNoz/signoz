@@ -1,7 +1,7 @@
 import { SaveOutlined } from '@ant-design/icons';
 import { Col, Divider, Input, Space, Typography } from 'antd';
 import AddTags from 'container/NewDashboard/DashboardSettings/General/AddTags';
-import React, { useCallback, useState } from 'react';
+import { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { connect, useSelector } from 'react-redux';
 import { bindActionCreators, Dispatch } from 'redux';

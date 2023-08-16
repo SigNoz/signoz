@@ -1,15 +1,23 @@
 import { Input, InputRef, Popover } from 'antd';
 import useUrlQuery from 'hooks/useUrlQuery';
 import getStep from 'lib/getStep';
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import debounce from 'lodash-es/debounce';
+import { getIdConditions } from 'pages/Logs/utils';
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { connect, useDispatch, useSelector } from 'react-redux';
 import { bindActionCreators, Dispatch } from 'redux';
 import { ThunkDispatch } from 'redux-thunk';
+import { GetLogsFields } from 'store/actions/logs/getFields';
 import { getLogs } from 'store/actions/logs/getLogs';
 import { getLogsAggregate } from 'store/actions/logs/getLogsAggregate';
 import { AppState } from 'store/reducers';
 import AppActions from 'types/actions';
-import { TOGGLE_LIVE_TAIL } from 'types/actions/logs';
+import {
+	FLUSH_LOGS,
+	SET_LOADING,
+	SET_LOADING_AGGREGATE,
+	TOGGLE_LIVE_TAIL,
+} from 'types/actions/logs';
 import { GlobalReducer } from 'types/reducer/globalTime';
 import { ILogsReducer } from 'types/reducer/logs';
 
@@ -20,14 +28,31 @@ import { useSearchParser } from './useSearchParser';
 function SearchFilter({
 	getLogs,
 	getLogsAggregate,
+	getLogsFields,
 }: SearchFilterProps): JSX.Element {
-	const {
-		queryString,
-		updateParsedQuery,
-		updateQueryString,
-	} = useSearchParser();
+	const { updateQueryString, queryString } = useSearchParser();
+	const [searchText, setSearchText] = useState(queryString);
 	const [showDropDown, setShowDropDown] = useState(false);
 	const searchRef = useRef<InputRef>(null);
+	const { logLinesPerPage, idEnd, idStart, liveTail, order } = useSelector<
+		AppState,
+		ILogsReducer
+	>((state) => state.logs);
+
+	const globalTime = useSelector<AppState, GlobalReducer>(
+		(state) => state.globalTime,
+	);
+	const dispatch = useDispatch<Dispatch<AppActions>>();
+
+	// keep sync with url queryString
+	useEffect(() => {
+		setSearchText(queryString);
+	}, [queryString]);
+
+	const debouncedupdateQueryString = useMemo(
+		() => debounce(updateQueryString, 300),
+		[updateQueryString],
+	);
 
 	const onDropDownToggleHandler = useCallback(
 		(value: boolean) => (): void => {
@@ -36,42 +61,49 @@ function SearchFilter({
 		[],
 	);
 
-	const { logLinesPerPage, idEnd, idStart, liveTail } = useSelector<
-		AppState,
-		ILogsReducer
-	>((state) => state.logs);
-
-	const { maxTime, minTime } = useSelector<AppState, GlobalReducer>(
-		(state) => state.globalTime,
-	);
-
-	const dispatch = useDispatch<Dispatch<AppActions>>();
-
 	const handleSearch = useCallback(
-		(customQuery) => {
+		(customQuery: string) => {
+			getLogsFields();
+			const { maxTime, minTime } = globalTime;
+
 			if (liveTail === 'PLAYING') {
 				dispatch({
 					type: TOGGLE_LIVE_TAIL,
 					payload: 'PAUSED',
 				});
-				setTimeout(
-					() =>
-						dispatch({
-							type: TOGGLE_LIVE_TAIL,
-							payload: liveTail,
-						}),
-					0,
-				);
+				dispatch({
+					type: FLUSH_LOGS,
+				});
+				dispatch({
+					type: TOGGLE_LIVE_TAIL,
+					payload: liveTail,
+				});
+				dispatch({
+					type: SET_LOADING,
+					payload: false,
+				});
+
+				getLogsAggregate({
+					timestampStart: minTime,
+					timestampEnd: maxTime,
+					step: getStep({
+						start: minTime,
+						end: maxTime,
+						inputFormat: 'ns',
+					}),
+					q: customQuery,
+					...(idStart ? { idGt: idStart } : {}),
+					...(idEnd ? { idLt: idEnd } : {}),
+				});
 			} else {
 				getLogs({
 					q: customQuery,
 					limit: logLinesPerPage,
 					orderBy: 'timestamp',
-					order: 'desc',
+					order,
 					timestampStart: minTime,
 					timestampEnd: maxTime,
-					...(idStart ? { idGt: idStart } : {}),
-					...(idEnd ? { idLt: idEnd } : {}),
+					...getIdConditions(idStart, idEnd, order),
 				});
 
 				getLogsAggregate({
@@ -94,8 +126,9 @@ function SearchFilter({
 			idStart,
 			liveTail,
 			logLinesPerPage,
-			maxTime,
-			minTime,
+			globalTime,
+			getLogsFields,
+			order,
 		],
 	);
 
@@ -103,9 +136,40 @@ function SearchFilter({
 	const urlQueryString = urlQuery.get('q');
 
 	useEffect(() => {
-		handleSearch(urlQueryString || '');
+		dispatch({
+			type: SET_LOADING,
+			payload: true,
+		});
+		dispatch({
+			type: SET_LOADING_AGGREGATE,
+			payload: true,
+		});
+
+		const debouncedHandleSearch = debounce(handleSearch, 600);
+
+		debouncedHandleSearch(urlQueryString || '');
+
+		return (): void => {
+			debouncedHandleSearch.cancel();
+		};
 		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [urlQueryString, maxTime, minTime]);
+	}, [
+		urlQueryString,
+		idEnd,
+		idStart,
+		logLinesPerPage,
+		dispatch,
+		globalTime.maxTime,
+		globalTime.minTime,
+		order,
+	]);
+
+	const onPopOverChange = useCallback(
+		(isVisible: boolean) => {
+			onDropDownToggleHandler(isVisible)();
+		},
+		[onDropDownToggleHandler],
+	);
 
 	return (
 		<Container>
@@ -114,8 +178,8 @@ function SearchFilter({
 				content={
 					<DropDownContainer>
 						<SearchFields
+							updateQueryString={updateQueryString}
 							onDropDownToggleHandler={onDropDownToggleHandler}
-							updateParsedQuery={updateParsedQuery as never}
 						/>
 					</DropDownContainer>
 				}
@@ -123,21 +187,20 @@ function SearchFilter({
 				overlayInnerStyle={{
 					width: `${searchRef?.current?.input?.offsetWidth || 0}px`,
 				}}
-				visible={showDropDown}
+				open={showDropDown}
 				destroyTooltipOnHide
-				onVisibleChange={(value): void => {
-					onDropDownToggleHandler(value)();
-				}}
+				onOpenChange={onPopOverChange}
 			>
 				<Input.Search
 					ref={searchRef}
 					placeholder="Search Filter"
-					value={queryString}
+					value={searchText}
 					onChange={(e): void => {
-						updateQueryString(e.target.value);
+						const { value } = e.target;
+						setSearchText(value);
 					}}
+					onSearch={debouncedupdateQueryString}
 					allowClear
-					onSearch={handleSearch}
 				/>
 			</Popover>
 		</Container>
@@ -145,12 +208,9 @@ function SearchFilter({
 }
 
 interface DispatchProps {
-	getLogs: (
-		props: Parameters<typeof getLogs>[0],
-	) => (dispatch: Dispatch<AppActions>) => void;
-	getLogsAggregate: (
-		props: Parameters<typeof getLogsAggregate>[0],
-	) => (dispatch: Dispatch<AppActions>) => void;
+	getLogs: typeof getLogs;
+	getLogsAggregate: typeof getLogsAggregate;
+	getLogsFields: typeof GetLogsFields;
 }
 
 type SearchFilterProps = DispatchProps;
@@ -160,6 +220,7 @@ const mapDispatchToProps = (
 ): DispatchProps => ({
 	getLogs: bindActionCreators(getLogs, dispatch),
 	getLogsAggregate: bindActionCreators(getLogsAggregate, dispatch),
+	getLogsFields: bindActionCreators(GetLogsFields, dispatch),
 });
 
-export default connect(null, mapDispatchToProps)(SearchFilter);
+export default connect(null, mapDispatchToProps)(memo(SearchFilter));

@@ -1,12 +1,12 @@
 import Input from 'components/Input';
-import React, { useCallback } from 'react';
+import { ChangeEvent, Dispatch, SetStateAction, useCallback } from 'react';
 
 function NameOfTheDashboard({
 	setName,
 	name,
 }: NameOfTheDashboardProps): JSX.Element {
 	const onChangeHandler = useCallback(
-		(e: React.ChangeEvent<HTMLInputElement>) => {
+		(e: ChangeEvent<HTMLInputElement>) => {
 			setName(e.target.value);
 		},
 		[setName],
@@ -24,7 +24,7 @@ function NameOfTheDashboard({
 
 interface NameOfTheDashboardProps {
 	name: string;
-	setName: React.Dispatch<React.SetStateAction<string>>;
+	setName: Dispatch<SetStateAction<string>>;
 }
 
 export default NameOfTheDashboard;

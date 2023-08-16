@@ -5,13 +5,11 @@ import { TraceReducer } from 'types/reducer/trace';
 
 export const UpdateSelectedTags = (
 	selectedTags: TraceReducer['selectedTags'],
-): ((dispatch: Dispatch<AppActions>) => void) => {
-	return (dispatch): void => {
-		dispatch({
-			type: UPDATE_SELECTED_TAGS,
-			payload: {
-				selectedTags,
-			},
-		});
-	};
+): ((dispatch: Dispatch<AppActions>) => void) => (dispatch): void => {
+	dispatch({
+		type: UPDATE_SELECTED_TAGS,
+		payload: {
+			selectedTags,
+		},
+	});
 };

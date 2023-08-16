@@ -46,9 +46,10 @@ export interface ITraceTree {
 	hasError?: boolean;
 	event?: ITraceEvents[];
 	isMissing?: boolean;
+	childReferences?: Record<string, string>[];
+	nonChildReferences?: Record<string, string>[];
 	// For internal use
 	isProcessed?: boolean;
-	references?: Record<string, string>[];
 }
 
 export interface ITraceTag {

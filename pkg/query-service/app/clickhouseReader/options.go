@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/ClickHouse/clickhouse-go/v2"
+	"go.uber.org/zap"
 )
 
 type Encoding string
@@ -26,14 +27,17 @@ const (
 	defaultDurationTable           string        = "distributed_durationSort"
 	defaultUsageExplorerTable      string        = "distributed_usage_explorer"
 	defaultSpansTable              string        = "distributed_signoz_spans"
-	defaultDependencyGraphTable    string        = "distributed_dependency_graph_minutes"
+	defaultDependencyGraphTable    string        = "distributed_dependency_graph_minutes_v2"
 	defaultTopLevelOperationsTable string        = "distributed_top_level_operations"
+	defaultSpanAttributeTable      string        = "distributed_span_attributes"
+	defaultSpanAttributeKeysTable  string        = "distributed_span_attributes_keys"
 	defaultLogsDB                  string        = "signoz_logs"
 	defaultLogsTable               string        = "distributed_logs"
 	defaultLogsLocalTable          string        = "logs"
-	defaultLogAttributeKeysTable   string        = "distributed_logs_atrribute_keys"
+	defaultLogAttributeKeysTable   string        = "distributed_logs_attribute_keys"
 	defaultLogResourceKeysTable    string        = "distributed_logs_resource_keys"
-	defaultLiveTailRefreshSeconds  int           = 10
+	defaultLogTagAttributeTable    string        = "distributed_tag_attributes"
+	defaultLiveTailRefreshSeconds  int           = 5
 	defaultWriteBatchDelay         time.Duration = 5 * time.Second
 	defaultWriteBatchSize          int           = 10000
 	defaultEncoding                Encoding      = EncodingJSON
@@ -55,6 +59,9 @@ type namespaceConfig struct {
 	namespace               string
 	Enabled                 bool
 	Datasource              string
+	MaxIdleConns            int
+	MaxOpenConns            int
+	DialTimeout             time.Duration
 	TraceDB                 string
 	OperationsTable         string
 	IndexTable              string
@@ -62,6 +69,8 @@ type namespaceConfig struct {
 	UsageExplorerTable      string
 	SpansTable              string
 	ErrorTable              string
+	SpanAttributeTable      string
+	SpanAttributeKeysTable  string
 	DependencyGraphTable    string
 	TopLevelOperationsTable string
 	LogsDB                  string
@@ -69,6 +78,7 @@ type namespaceConfig struct {
 	LogsLocalTable          string
 	LogsAttributeKeysTable  string
 	LogsResourceKeysTable   string
+	LogsTagAttributeTable   string
 	LiveTailRefreshSeconds  int
 	WriteBatchDelay         time.Duration
 	WriteBatchSize          int
@@ -82,8 +92,14 @@ type Connector func(cfg *namespaceConfig) (clickhouse.Conn, error)
 func defaultConnector(cfg *namespaceConfig) (clickhouse.Conn, error) {
 	ctx := context.Background()
 	dsnURL, err := url.Parse(cfg.Datasource)
+	if err != nil {
+		return nil, err
+	}
 	options := &clickhouse.Options{
-		Addr: []string{dsnURL.Host},
+		Addr:         []string{dsnURL.Host},
+		MaxOpenConns: cfg.MaxOpenConns,
+		MaxIdleConns: cfg.MaxIdleConns,
+		DialTimeout:  cfg.DialTimeout,
 	}
 	if dsnURL.Query().Get("username") != "" {
 		auth := clickhouse.Auth{
@@ -92,6 +108,7 @@ func defaultConnector(cfg *namespaceConfig) (clickhouse.Conn, error) {
 		}
 		options.Auth = auth
 	}
+	zap.S().Infof("Connecting to Clickhouse at %s, MaxIdleConns: %d, MaxOpenConns: %d, DialTimeout: %s", dsnURL.Host, options.MaxIdleConns, options.MaxOpenConns, options.DialTimeout)
 	db, err := clickhouse.Open(options)
 	if err != nil {
 		return nil, err
@@ -112,7 +129,14 @@ type Options struct {
 }
 
 // NewOptions creates a new Options struct.
-func NewOptions(datasource string, primaryNamespace string, otherNamespaces ...string) *Options {
+func NewOptions(
+	datasource string,
+	maxIdleConns int,
+	maxOpenConns int,
+	dialTimeout time.Duration,
+	primaryNamespace string,
+	otherNamespaces ...string,
+) *Options {
 
 	if datasource == "" {
 		datasource = defaultDatasource
@@ -123,6 +147,9 @@ func NewOptions(datasource string, primaryNamespace string, otherNamespaces ...s
 			namespace:               primaryNamespace,
 			Enabled:                 true,
 			Datasource:              datasource,
+			MaxIdleConns:            maxIdleConns,
+			MaxOpenConns:            maxOpenConns,
+			DialTimeout:             dialTimeout,
 			TraceDB:                 defaultTraceDB,
 			OperationsTable:         defaultOperationsTable,
 			IndexTable:              defaultIndexTable,
@@ -130,6 +157,8 @@ func NewOptions(datasource string, primaryNamespace string, otherNamespaces ...s
 			DurationTable:           defaultDurationTable,
 			UsageExplorerTable:      defaultUsageExplorerTable,
 			SpansTable:              defaultSpansTable,
+			SpanAttributeTable:      defaultSpanAttributeTable,
+			SpanAttributeKeysTable:  defaultSpanAttributeKeysTable,
 			DependencyGraphTable:    defaultDependencyGraphTable,
 			TopLevelOperationsTable: defaultTopLevelOperationsTable,
 			LogsDB:                  defaultLogsDB,
@@ -137,6 +166,7 @@ func NewOptions(datasource string, primaryNamespace string, otherNamespaces ...s
 			LogsLocalTable:          defaultLogsLocalTable,
 			LogsAttributeKeysTable:  defaultLogAttributeKeysTable,
 			LogsResourceKeysTable:   defaultLogResourceKeysTable,
+			LogsTagAttributeTable:   defaultLogTagAttributeTable,
 			LiveTailRefreshSeconds:  defaultLiveTailRefreshSeconds,
 			WriteBatchDelay:         defaultWriteBatchDelay,
 			WriteBatchSize:          defaultWriteBatchSize,

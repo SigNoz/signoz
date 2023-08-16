@@ -1,6 +1,5 @@
-const getMicroSeconds = ({ time }: GetMicroSecondsProps): string => {
-	return (time / 1000).toString();
-};
+const getMicroSeconds = ({ time }: GetMicroSecondsProps): string =>
+	(time / 1000).toString();
 
 interface GetMicroSecondsProps {
 	time: number;

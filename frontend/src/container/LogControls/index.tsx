@@ -1,14 +1,17 @@
-import {
-	FastBackwardOutlined,
-	LeftOutlined,
-	RightOutlined,
-} from '@ant-design/icons';
-import { Button, Divider, Select } from 'antd';
-import React, { memo } from 'react';
-import { connect, useDispatch, useSelector } from 'react-redux';
-import { bindActionCreators, Dispatch } from 'redux';
-import { ThunkDispatch } from 'redux-thunk';
-import { getLogs } from 'store/actions/logs/getLogs';
+import { CloudDownloadOutlined, FastBackwardOutlined } from '@ant-design/icons';
+import { Button, Divider, Dropdown, MenuProps } from 'antd';
+import { Excel } from 'antd-table-saveas-excel';
+import Controls from 'container/Controls';
+import { getGlobalTime } from 'container/LogsSearchFilter/utils';
+import { getMinMax } from 'container/TopNav/AutoRefresh/config';
+import dayjs from 'dayjs';
+import { Pagination } from 'hooks/queryPagination';
+import { FlatLogData } from 'lib/logs/flatLogData';
+import { OrderPreferenceItems } from 'pages/Logs/config';
+import * as Papa from 'papaparse';
+import { memo, useCallback, useMemo } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
+import { Dispatch } from 'redux';
 import { AppState } from 'store/reducers';
 import AppActions from 'types/actions';
 import {
@@ -20,51 +23,50 @@ import {
 import { GlobalReducer } from 'types/reducer/globalTime';
 import { ILogsReducer } from 'types/reducer/logs';
 
-import { Container } from './styles';
+import { Container, DownloadLogButton } from './styles';
 
-const { Option } = Select;
-
-const ITEMS_PER_PAGE_OPTIONS = [25, 50, 100, 200];
-
-interface LogControlsProps {
-	getLogs: (props: Parameters<typeof getLogs>[0]) => ReturnType<typeof getLogs>;
-}
-function LogControls({ getLogs }: LogControlsProps): JSX.Element | null {
-	const { maxTime, minTime } = useSelector<AppState, GlobalReducer>(
-		(state) => state.globalTime,
-	);
+function LogControls(): JSX.Element | null {
 	const {
 		logLinesPerPage,
-		idStart,
-		idEnd,
 		liveTail,
-		searchFilter: { queryString },
+		isLoading: isLogsLoading,
+		isLoadingAggregate,
+		logs,
+		order,
 	} = useSelector<AppState, ILogsReducer>((state) => state.logs);
-	const dispatch = useDispatch();
+	const globalTime = useSelector<AppState, GlobalReducer>(
+		(state) => state.globalTime,
+	);
 
-	const handleLogLinesPerPageChange = (e: number): void => {
+	const dispatch = useDispatch<Dispatch<AppActions>>();
+
+	const handleLogLinesPerPageChange = (e: Pagination['limit']): void => {
 		dispatch({
 			type: SET_LOG_LINES_PER_PAGE,
-			payload: e,
+			payload: {
+				logsLinesPerPage: e,
+			},
 		});
 	};
 
 	const handleGoToLatest = (): void => {
-		dispatch({
-			type: RESET_ID_START_AND_END,
+		const { maxTime, minTime } = getMinMax(
+			globalTime.selectedTime,
+			globalTime.minTime,
+			globalTime.maxTime,
+		);
+
+		const updatedGlobalTime = getGlobalTime(globalTime.selectedTime, {
+			maxTime,
+			minTime,
 		});
 
-		if (liveTail === 'STOPPED')
-			getLogs({
-				q: queryString,
-				limit: logLinesPerPage,
-				orderBy: 'timestamp',
-				order: 'desc',
-				timestampStart: minTime,
-				timestampEnd: maxTime,
-				...(idStart ? { idGt: idStart } : {}),
-				...(idEnd ? { idLt: idEnd } : {}),
+		if (updatedGlobalTime) {
+			dispatch({
+				type: RESET_ID_START_AND_END,
+				payload: updatedGlobalTime,
 			});
+		}
 	};
 
 	const handleNavigatePrevious = (): void => {
@@ -72,50 +74,115 @@ function LogControls({ getLogs }: LogControlsProps): JSX.Element | null {
 			type: GET_PREVIOUS_LOG_LINES,
 		});
 	};
+
 	const handleNavigateNext = (): void => {
 		dispatch({
 			type: GET_NEXT_LOG_LINES,
 		});
 	};
 
+	const flattenLogData = useMemo(
+		() =>
+			logs.map((log) => {
+				const timestamp =
+					typeof log.timestamp === 'string'
+						? dayjs(log.timestamp).format()
+						: dayjs(log.timestamp / 1e6).format();
+
+				return FlatLogData({
+					...log,
+					timestamp,
+				});
+			}),
+		[logs],
+	);
+
+	const downloadExcelFile = useCallback((): void => {
+		const headers = Object.keys(Object.assign({}, ...flattenLogData)).map(
+			(item) => {
+				const updatedTitle = item
+					.split('_')
+					.map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+					.join(' ');
+				return {
+					title: updatedTitle,
+					dataIndex: item,
+				};
+			},
+		);
+		const excel = new Excel();
+		excel
+			.addSheet('log_data')
+			.addColumns(headers)
+			.addDataSource(flattenLogData, {
+				str2Percent: true,
+			})
+			.saveAs('log_data.xlsx');
+	}, [flattenLogData]);
+
+	const downloadCsvFile = useCallback((): void => {
+		const csv = Papa.unparse(flattenLogData);
+		const csvBlob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+		const csvUrl = URL.createObjectURL(csvBlob);
+		const downloadLink = document.createElement('a');
+		downloadLink.href = csvUrl;
+		downloadLink.download = 'log_data.csv';
+		downloadLink.click();
+		downloadLink.remove();
+	}, [flattenLogData]);
+
+	const menu: MenuProps = useMemo(
+		() => ({
+			items: [
+				{
+					key: 'download-as-excel',
+					label: 'Excel',
+					onClick: downloadExcelFile,
+				},
+				{
+					key: 'download-as-csv',
+					label: 'CSV',
+					onClick: downloadCsvFile,
+				},
+			],
+		}),
+		[downloadCsvFile, downloadExcelFile],
+	);
+
+	const isLoading = isLogsLoading || isLoadingAggregate;
+
 	if (liveTail !== 'STOPPED') {
 		return null;
 	}
+
 	return (
 		<Container>
-			<Button size="small" type="link" onClick={handleGoToLatest}>
+			<Dropdown menu={menu} trigger={['click']}>
+				<DownloadLogButton loading={isLoading} size="small" type="link">
+					<CloudDownloadOutlined />
+					Download
+				</DownloadLogButton>
+			</Dropdown>
+			<Button
+				loading={isLoading}
+				size="small"
+				type="link"
+				disabled={order === OrderPreferenceItems.ASC}
+				onClick={handleGoToLatest}
+			>
 				<FastBackwardOutlined /> Go to latest
 			</Button>
 			<Divider type="vertical" />
-			<Button size="small" type="link" onClick={handleNavigatePrevious}>
-				<LeftOutlined /> Previous
-			</Button>
-			<Button size="small" type="link" onClick={handleNavigateNext}>
-				Next <RightOutlined />
-			</Button>
-			<Select
-				style={{ width: 120 }}
-				value={logLinesPerPage}
-				onChange={handleLogLinesPerPageChange}
-			>
-				{ITEMS_PER_PAGE_OPTIONS.map((count) => {
-					return <Option key={count} value={count}>{`${count} / page`}</Option>;
-				})}
-			</Select>
+			<Controls
+				isLoading={isLoading}
+				totalCount={logs.length}
+				countPerPage={logLinesPerPage}
+				handleNavigatePrevious={handleNavigatePrevious}
+				handleNavigateNext={handleNavigateNext}
+				handleCountItemsPerPageChange={handleLogLinesPerPageChange}
+			/>
 		</Container>
 	);
 }
 
-interface DispatchProps {
-	getLogs: (
-		props: Parameters<typeof getLogs>[0],
-	) => (dispatch: Dispatch<AppActions>) => void;
-}
-
-const mapDispatchToProps = (
-	dispatch: ThunkDispatch<unknown, unknown, AppActions>,
-): DispatchProps => ({
-	getLogs: bindActionCreators(getLogs, dispatch),
-});
-
-export default connect(null, mapDispatchToProps)(memo(LogControls));
+export default memo(LogControls);

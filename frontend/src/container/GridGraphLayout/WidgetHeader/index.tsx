@@ -1,68 +1,112 @@
 import {
+	CopyOutlined,
 	DeleteOutlined,
 	DownOutlined,
 	EditFilled,
+	ExclamationCircleOutlined,
 	FullscreenOutlined,
 } from '@ant-design/icons';
-import { Dropdown, Menu, Typography } from 'antd';
+import { Dropdown, MenuProps, Tooltip, Typography } from 'antd';
+import Spinner from 'components/Spinner';
+import { queryParamNamesMap } from 'constants/queryBuilderQueryNames';
+import ROUTES from 'constants/routes';
 import useComponentPermission from 'hooks/useComponentPermission';
 import history from 'lib/history';
-import React, { useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
+import { UseQueryResult } from 'react-query';
 import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
+import { ErrorResponse, SuccessResponse } from 'types/api';
 import { Widgets } from 'types/api/dashboard/getAll';
+import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
 import AppReducer from 'types/reducer/app';
 
+import {
+	errorTooltipPosition,
+	overlayStyles,
+	spinnerStyles,
+	tooltipStyles,
+} from './config';
+import { MENUITEM_KEYS_VS_LABELS, MenuItemKeys } from './contants';
 import {
 	ArrowContainer,
 	HeaderContainer,
 	HeaderContentContainer,
-	MenuItemContainer,
 } from './styles';
+import { MenuItem } from './types';
+import { generateMenuList, isTWidgetOptions } from './utils';
 
-type TWidgetOptions = 'view' | 'edit' | 'delete' | string;
 interface IWidgetHeaderProps {
 	title: string;
 	widget: Widgets;
 	onView: VoidFunction;
-	onDelete: VoidFunction;
+	onDelete?: VoidFunction;
+	onClone?: VoidFunction;
 	parentHover: boolean;
+	queryResponse: UseQueryResult<
+		SuccessResponse<MetricRangePayloadProps> | ErrorResponse
+	>;
+	errorMessage: string | undefined;
+	headerMenuList?: MenuItemKeys[];
 }
+
 function WidgetHeader({
 	title,
 	widget,
 	onView,
 	onDelete,
+	onClone,
 	parentHover,
+	queryResponse,
+	errorMessage,
+	headerMenuList,
 }: IWidgetHeaderProps): JSX.Element {
 	const [localHover, setLocalHover] = useState(false);
+	const [isOpen, setIsOpen] = useState<boolean>(false);
 
-	const onEditHandler = (): void => {
+	const onEditHandler = useCallback((): void => {
 		const widgetId = widget.id;
 		history.push(
-			`${window.location.pathname}/new?widgetId=${widgetId}&graphType=${widget.panelTypes}`,
+			`${window.location.pathname}/new?widgetId=${widgetId}&graphType=${
+				widget.panelTypes
+			}&${queryParamNamesMap.compositeQuery}=${encodeURIComponent(
+				JSON.stringify(widget.query),
+			)}`,
 		);
-	};
+	}, [widget.id, widget.panelTypes, widget.query]);
 
-	const keyMethodMapping: {
-		[K in TWidgetOptions]: { key: TWidgetOptions; method: VoidFunction };
-	} = {
-		view: {
-			key: 'view',
-			method: onView,
+	const onCreateAlertsHandler = useCallback(() => {
+		history.push(
+			`${ROUTES.ALERTS_NEW}?${
+				queryParamNamesMap.compositeQuery
+			}=${encodeURIComponent(JSON.stringify(widget.query))}`,
+		);
+	}, [widget]);
+
+	const keyMethodMapping = useMemo(
+		() => ({
+			[MenuItemKeys.View]: onView,
+			[MenuItemKeys.Edit]: onEditHandler,
+			[MenuItemKeys.Delete]: onDelete,
+			[MenuItemKeys.Clone]: onClone,
+			[MenuItemKeys.CreateAlerts]: onCreateAlertsHandler,
+		}),
+		[onDelete, onEditHandler, onView, onClone, onCreateAlertsHandler],
+	);
+
+	const onMenuItemSelectHandler: MenuProps['onClick'] = useCallback(
+		({ key }: { key: string }): void => {
+			if (isTWidgetOptions(key)) {
+				const functionToCall = keyMethodMapping[key];
+
+				if (functionToCall) {
+					functionToCall();
+					setIsOpen(false);
+				}
+			}
 		},
-		edit: {
-			key: 'edit',
-			method: onEditHandler,
-		},
-		delete: {
-			key: 'delete',
-			method: onDelete,
-		},
-	};
-	const onMenuItemSelectHandler = ({ key }: { key: TWidgetOptions }): void => {
-		keyMethodMapping[key]?.method();
-	};
+		[keyMethodMapping],
+	);
 	const { role } = useSelector<AppState, AppReducer>((state) => state.app);
 
 	const [deleteWidget, editWidget] = useComponentPermission(
@@ -70,58 +114,104 @@ function WidgetHeader({
 		role,
 	);
 
-	const menu = (
-		<Menu onClick={onMenuItemSelectHandler}>
-			<Menu.Item key={keyMethodMapping.view.key}>
-				<MenuItemContainer>
-					<span>View</span> <FullscreenOutlined />
-				</MenuItemContainer>
-			</Menu.Item>
+	const actions = useMemo(
+		(): MenuItem[] => [
+			{
+				key: MenuItemKeys.View,
+				icon: <FullscreenOutlined />,
+				label: MENUITEM_KEYS_VS_LABELS[MenuItemKeys.View],
+				isVisible: headerMenuList?.includes(MenuItemKeys.View) || false,
+				disabled: queryResponse.isLoading,
+			},
+			{
+				key: MenuItemKeys.Edit,
+				icon: <EditFilled />,
+				label: MENUITEM_KEYS_VS_LABELS[MenuItemKeys.Edit],
+				isVisible: headerMenuList?.includes(MenuItemKeys.Edit) || false,
+				disabled: !editWidget,
+			},
+			{
+				key: MenuItemKeys.Clone,
+				icon: <CopyOutlined />,
+				label: MENUITEM_KEYS_VS_LABELS[MenuItemKeys.Clone],
+				isVisible: headerMenuList?.includes(MenuItemKeys.Clone) || false,
+				disabled: !editWidget,
+			},
+			{
+				key: MenuItemKeys.Delete,
+				icon: <DeleteOutlined />,
+				label: MENUITEM_KEYS_VS_LABELS[MenuItemKeys.Delete],
+				isVisible: headerMenuList?.includes(MenuItemKeys.Delete) || false,
+				disabled: !deleteWidget,
+				danger: true,
+			},
+			{
+				key: MenuItemKeys.CreateAlerts,
+				icon: <DeleteOutlined />,
+				label: MENUITEM_KEYS_VS_LABELS[MenuItemKeys.CreateAlerts],
+				isVisible: headerMenuList?.includes(MenuItemKeys.CreateAlerts) || false,
+				disabled: false,
+			},
+		],
+		[queryResponse.isLoading, headerMenuList, editWidget, deleteWidget],
+	);
 
-			{editWidget && (
-				<Menu.Item key={keyMethodMapping.edit.key}>
-					<MenuItemContainer>
-						<span>Edit</span> <EditFilled />
-					</MenuItemContainer>
-				</Menu.Item>
-			)}
+	const updatedMenuList = useMemo(() => generateMenuList(actions), [actions]);
 
-			{deleteWidget && (
-				<>
-					<Menu.Divider />
-					<Menu.Item key={keyMethodMapping.delete.key} danger>
-						<MenuItemContainer>
-							<span>Delete</span> <DeleteOutlined />
-						</MenuItemContainer>
-					</Menu.Item>
-				</>
-			)}
-		</Menu>
+	const onClickHandler = useCallback(() => {
+		setIsOpen((open) => !open);
+	}, []);
+
+	const menu = useMemo(
+		() => ({
+			items: updatedMenuList,
+			onClick: onMenuItemSelectHandler,
+		}),
+		[updatedMenuList, onMenuItemSelectHandler],
 	);
 
 	return (
-		<Dropdown
-			overlay={menu}
-			trigger={['click']}
-			overlayStyle={{ minWidth: 100 }}
-			placement="bottom"
-		>
-			<HeaderContainer
-				onMouseOver={(): void => setLocalHover(true)}
-				onMouseOut={(): void => setLocalHover(false)}
-				hover={localHover}
+		<div>
+			<Dropdown
+				destroyPopupOnHide
+				open={isOpen}
+				onOpenChange={setIsOpen}
+				menu={menu}
+				trigger={['click']}
+				overlayStyle={overlayStyles}
 			>
-				<HeaderContentContainer onClick={(e): void => e.preventDefault()}>
-					<Typography.Text style={{ maxWidth: '80%' }} ellipsis>
-						{title}
-					</Typography.Text>
-					<ArrowContainer hover={parentHover}>
-						<DownOutlined />
-					</ArrowContainer>
-				</HeaderContentContainer>
-			</HeaderContainer>
-		</Dropdown>
+				<HeaderContainer
+					onMouseOver={(): void => setLocalHover(true)}
+					onMouseOut={(): void => setLocalHover(false)}
+					hover={localHover}
+					onClick={onClickHandler}
+				>
+					<HeaderContentContainer>
+						<Typography.Text style={{ maxWidth: '80%' }} ellipsis>
+							{title}
+						</Typography.Text>
+						<ArrowContainer hover={parentHover}>
+							<DownOutlined />
+						</ArrowContainer>
+					</HeaderContentContainer>
+				</HeaderContainer>
+			</Dropdown>
+			{queryResponse.isFetching && !queryResponse.isError && (
+				<Spinner height="5vh" style={spinnerStyles} />
+			)}
+			{queryResponse.isError && (
+				<Tooltip title={errorMessage} placement={errorTooltipPosition}>
+					<ExclamationCircleOutlined style={tooltipStyles} />
+				</Tooltip>
+			)}
+		</div>
 	);
 }
+
+WidgetHeader.defaultProps = {
+	onDelete: undefined,
+	onClone: undefined,
+	headerMenuList: [MenuItemKeys.View],
+};
 
 export default WidgetHeader;

@@ -2,6 +2,8 @@ import { Typography } from 'antd';
 import get from 'api/channels/get';
 import Spinner from 'components/Spinner';
 import {
+	MsTeamsChannel,
+	MsTeamsType,
 	PagerChannel,
 	PagerType,
 	SlackChannel,
@@ -10,7 +12,6 @@ import {
 	WebhookType,
 } from 'container/CreateAlertChannels/config';
 import EditAlertChannels from 'container/EditAlertChannels';
-import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { useQuery } from 'react-query';
 import { useParams } from 'react-router-dom';
@@ -40,14 +41,25 @@ function ChannelsEdit(): JSX.Element {
 
 	const prepChannelConfig = (): {
 		type: string;
-		channel: SlackChannel & WebhookChannel & PagerChannel;
+		channel: SlackChannel & WebhookChannel & PagerChannel & MsTeamsChannel;
 	} => {
-		let channel: SlackChannel & WebhookChannel & PagerChannel = { name: '' };
+		let channel: SlackChannel & WebhookChannel & PagerChannel & MsTeamsChannel = {
+			name: '',
+		};
 		if (value && 'slack_configs' in value) {
 			const slackConfig = value.slack_configs[0];
 			channel = slackConfig;
 			return {
 				type: SlackType,
+				channel,
+			};
+		}
+
+		if (value && 'msteams_configs' in value) {
+			const msteamsConfig = value.msteams_configs[0];
+			channel = msteamsConfig;
+			return {
+				type: MsTeamsType,
 				channel,
 			};
 		}

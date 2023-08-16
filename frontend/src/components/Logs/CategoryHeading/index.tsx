@@ -1,9 +1,9 @@
-import React from 'react';
+import { ReactNode } from 'react';
 
 import { CategoryHeadingText } from './styles';
 
 interface ICategoryHeadingProps {
-	children: React.ReactNode;
+	children: ReactNode;
 }
 function CategoryHeading({ children }: ICategoryHeadingProps): JSX.Element {
 	return <CategoryHeadingText type="secondary">{children}</CategoryHeadingText>;

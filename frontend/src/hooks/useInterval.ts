@@ -1,6 +1,10 @@
 import { useEffect, useRef } from 'react';
 
-function useInterval(callback: () => void, delay: number): void {
+function useInterval(
+	callback: () => void,
+	delay: number,
+	enabled = true,
+): void {
 	const savedCallback = useRef<() => void>();
 
 	useEffect(() => {
@@ -14,9 +18,18 @@ function useInterval(callback: () => void, delay: number): void {
 			}
 		}
 
-		const id = setInterval(tick, delay);
-		return (): void => clearInterval(id);
-	}, [delay]);
+		let id: NodeJS.Timer;
+
+		if (enabled) {
+			id = setInterval(tick, delay);
+		}
+
+		return (): void => {
+			if (id) {
+				clearInterval(id);
+			}
+		};
+	}, [delay, enabled]);
 }
 
 export default useInterval;

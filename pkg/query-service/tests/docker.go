@@ -90,7 +90,7 @@ func startCluster() error {
 
 	client := http.Client{}
 	for i := 0; i < 10; i++ {
-		if _, err := client.Get("http://localhost:8180/api/v1/version"); err != nil {
+		if _, err := client.Get("http://localhost:8180/api/v1/health"); err != nil {
 			time.Sleep(2 * time.Second)
 		} else {
 			log.Printf("CLUSTER UP\n")

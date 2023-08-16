@@ -1,5 +1,12 @@
 import { Form, Input, InputProps, InputRef } from 'antd';
-import React from 'react';
+import {
+	ChangeEventHandler,
+	FocusEventHandler,
+	KeyboardEventHandler,
+	LegacyRef,
+	ReactNode,
+	Ref,
+} from 'react';
 
 function InputComponent({
 	value,
@@ -22,7 +29,7 @@ function InputComponent({
 				type={type}
 				onChange={onChangeHandler}
 				value={value}
-				ref={ref as React.Ref<InputRef>}
+				ref={ref as Ref<InputRef>}
 				size={size}
 				addonBefore={addonBefore}
 				onBlur={onBlurHandler}
@@ -37,15 +44,15 @@ function InputComponent({
 interface InputComponentProps extends InputProps {
 	value: InputProps['value'];
 	type?: InputProps['type'];
-	onChangeHandler?: React.ChangeEventHandler<HTMLInputElement>;
+	onChangeHandler?: ChangeEventHandler<HTMLInputElement>;
 	placeholder?: InputProps['placeholder'];
-	ref?: React.LegacyRef<InputRef>;
+	ref?: LegacyRef<InputRef>;
 	size?: InputProps['size'];
-	onBlurHandler?: React.FocusEventHandler<HTMLInputElement>;
-	onPressEnterHandler?: React.KeyboardEventHandler<HTMLInputElement>;
+	onBlurHandler?: FocusEventHandler<HTMLInputElement>;
+	onPressEnterHandler?: KeyboardEventHandler<HTMLInputElement>;
 	label?: string;
 	labelOnTop?: boolean;
-	addonBefore?: React.ReactNode;
+	addonBefore?: ReactNode;
 }
 
 InputComponent.defaultProps = {

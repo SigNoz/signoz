@@ -1,4 +1,4 @@
-import { Card } from 'antd';
+import { Card, Form } from 'antd';
 import styled from 'styled-components';
 
 export const FormWrapper = styled(Card)`
@@ -22,11 +22,15 @@ export const Label = styled.label`
 	line-height: 24px;
 `;
 
-export const FormContainer = styled.form`
+export const FormContainer = styled(Form)`
 	display: flex;
 	flex-direction: column;
 	align-items: flex-start;
 	width: 100%;
+
+	& .ant-form-item {
+		margin-bottom: 0px;
+	}
 `;
 
 export const ParentContainer = styled.div`

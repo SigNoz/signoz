@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"encoding/json"
+	"net/url"
 	"fmt"
 	"strings"
 	"time"
@@ -23,6 +24,34 @@ type StoredDomain struct {
 	Data      string    `db:"data"`
 	CreatedAt int64     `db:"created_at"`
 	UpdatedAt int64     `db:"updated_at"`
+}
+
+// GetDomainFromSsoResponse uses relay state received from IdP to fetch
+// user domain. The domain is further used to process validity of the response.
+// when sending login request to IdP we send relay state as URL (site url) 
+// with domainId as query parameter.   
+func (m *modelDao) GetDomainFromSsoResponse(ctx context.Context, relayState *url.URL) (*model.OrgDomain, error) {
+	// derive domain id from relay state now
+	var domainIdStr string 
+	for k, v := range relayState.Query() {
+		if k == "domainId" && len(v) > 0 {
+			domainIdStr = strings.Replace(v[0], ":", "-", -1)
+		}
+	}
+
+	domainId, err := uuid.Parse(domainIdStr)
+	if err != nil {
+		zap.S().Errorf("failed to parse domain id from relay state", err)
+		return nil, fmt.Errorf("failed to parse response from IdP response")
+	}
+
+	domain, err := m.GetDomain(ctx, domainId)
+	if (err != nil) || domain == nil {
+		zap.S().Errorf("failed to find domain received in IdP response", err.Error())
+		return nil, fmt.Errorf("invalid credentials")
+	}
+
+	return domain, nil
 }
 
 // GetDomain returns org domain for a given domain id

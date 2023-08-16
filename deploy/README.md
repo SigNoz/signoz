@@ -27,12 +27,6 @@ For x86 chip (amd):
 docker-compose -f docker/clickhouse-setup/docker-compose.yaml up -d
 ```
 
-For Mac with Apple chip (arm):
-
-```sh
-docker-compose -f docker/clickhouse-setup/docker-compose.arm.yaml up -d
-```
-
 Open http://localhost:3301 in your favourite browser. In couple of minutes, you should see
 the data generated from hotrod in SigNoz UI.
 
@@ -64,7 +58,7 @@ from the HotROD application, you should see the data generated from hotrod in Si
 ```sh
 kubectl create ns sample-application
 
-kubectl -n sample-application apply -f https://raw.githubusercontent.com/SigNoz/signoz/main/sample-apps/hotrod/hotrod.yaml
+kubectl -n sample-application apply -f https://raw.githubusercontent.com/SigNoz/signoz/develop/sample-apps/hotrod/hotrod.yaml
 ```
 
 To generate load:
@@ -72,7 +66,7 @@ To generate load:
 ```sh
 kubectl -n sample-application run strzal --image=djbingham/curl \
 --restart='OnFailure' -i --tty --rm --command -- curl -X POST -F \
-'locust_count=6' -F 'hatch_rate=2' http://locust-master:8089/swarm
+'user_count=6' -F 'spawn_rate=2' http://locust-master:8089/swarm
 ```
 
 To stop load:

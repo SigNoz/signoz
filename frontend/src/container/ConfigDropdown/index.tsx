@@ -4,20 +4,22 @@ import {
 	QuestionCircleFilled,
 	QuestionCircleOutlined,
 } from '@ant-design/icons';
-import { Dropdown, Menu, Space } from 'antd';
-import React, { useMemo, useState } from 'react';
+import { Space } from 'antd';
+import { useIsDarkMode } from 'hooks/useDarkMode';
+import { useMemo, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
+import { ConfigProps } from 'types/api/dynamicConfigs/getDynamicConfigs';
 import AppReducer from 'types/reducer/app';
 
 import HelpToolTip from './Config';
+import { ConfigDropdown } from './styles';
 
 function DynamicConfigDropdown({
 	frontendId,
 }: DynamicConfigDropdownProps): JSX.Element {
-	const { configs, isDarkMode } = useSelector<AppState, AppReducer>(
-		(state) => state.app,
-	);
+	const { configs } = useSelector<AppState, AppReducer>((state) => state.app);
+	const isDarkMode = useIsDarkMode();
 	const [isHelpDropDownOpen, setIsHelpDropDownOpen] = useState<boolean>(false);
 
 	const config = useMemo(
@@ -32,6 +34,18 @@ function DynamicConfigDropdown({
 		setIsHelpDropDownOpen(!isHelpDropDownOpen);
 	};
 
+	const menu = useMemo(
+		() => ({
+			items: [
+				{
+					key: '1',
+					label: <HelpToolTip config={config as ConfigProps} />,
+				},
+			],
+		}),
+		[config],
+	);
+
 	if (!config) {
 		return <div />;
 	}
@@ -40,23 +54,17 @@ function DynamicConfigDropdown({
 	const DropDownIcon = isHelpDropDownOpen ? CaretUpFilled : CaretDownFilled;
 
 	return (
-		<Dropdown
-			onVisibleChange={onToggleHandler}
+		<ConfigDropdown
+			onOpenChange={onToggleHandler}
 			trigger={['click']}
-			overlay={
-				<Menu>
-					<HelpToolTip config={config} />
-				</Menu>
-			}
-			visible={isHelpDropDownOpen}
+			menu={menu}
+			open={isHelpDropDownOpen}
 		>
 			<Space align="center">
-				<Icon
-					style={{ fontSize: 26, color: 'white', paddingTop: 26, cursor: 'pointer' }}
-				/>
+				<Icon style={{ fontSize: 26, color: 'white', paddingTop: 26 }} />
 				<DropDownIcon style={{ color: 'white' }} />
 			</Space>
-		</Dropdown>
+		</ConfigDropdown>
 	);
 }
 

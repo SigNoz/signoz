@@ -32,6 +32,7 @@ const getTagFilters = async (
 			maxDuration: String((duration.duration || [])[0] || ''),
 			minDuration: String((duration.duration || [])[1] || ''),
 			exclude,
+			spanKind: props.spanKind,
 		});
 
 		return {

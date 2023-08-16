@@ -1,27 +1,19 @@
-/* eslint-disable react/no-array-index-key */
-import { red } from '@ant-design/colors';
 import { CloseOutlined, PlusCircleFilled } from '@ant-design/icons';
-import { Input } from 'antd';
-import AddToSelectedFields from 'api/logs/AddToSelectedField';
-import RemoveSelectedField from 'api/logs/RemoveFromSelectedField';
+import { Col, Input } from 'antd';
 import CategoryHeading from 'components/Logs/CategoryHeading';
 import { fieldSearchFilter } from 'lib/logs/fieldSearch';
-import React, { memo, useState } from 'react';
-import { connect, useSelector } from 'react-redux';
-import { bindActionCreators, Dispatch } from 'redux';
-import { ThunkDispatch } from 'redux-thunk';
-import { GetLogsFields } from 'store/actions/logs/getFields';
+import { ChangeEvent, useCallback, useState } from 'react';
+import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
-import AppActions from 'types/actions';
-import { IInterestingFields, ISelectedFields } from 'types/api/logs/fields';
 import { ILogsReducer } from 'types/reducer/logs';
 
-import { FieldItem } from './FieldItem';
-import { CategoryContainer, Container, FieldContainer } from './styles';
+import { ICON_STYLE, RESTRICTED_SELECTED_FIELDS } from './config';
+import FieldItem from './FieldItem';
+import { CategoryContainer, FieldContainer } from './styles';
+import { IHandleInterestProps, IHandleRemoveInterestProps } from './types';
+import { onHandleAddInterest, onHandleRemoveInterest } from './utils';
 
-const RESTRICTED_SELECTED_FIELDS = ['timestamp', 'id'];
-
-function LogsFilters({ getLogsFields }: LogsFiltersProps): JSX.Element {
+function LogsFilters(): JSX.Element {
 	const {
 		fields: { interesting, selected },
 	} = useSelector<AppState, ILogsReducer>((state) => state.logs);
@@ -32,61 +24,44 @@ function LogsFilters({ getLogsFields }: LogsFiltersProps): JSX.Element {
 	>([]);
 
 	const [filterValuesInput, setFilterValuesInput] = useState('');
-	const handleSearch = (e: React.ChangeEvent<HTMLInputElement>): void => {
+	const handleSearch = (e: ChangeEvent<HTMLInputElement>): void => {
 		setFilterValuesInput((e.target as HTMLInputElement).value);
 	};
 
-	const handleAddInterestingToSelected = async ({
-		fieldData,
-		fieldIndex,
-	}: {
-		fieldData: IInterestingFields;
-		fieldIndex: number;
-	}): Promise<void> => {
-		setInterestingFieldLoading((prevState: number[]) => {
-			prevState.push(fieldIndex);
-			return [...prevState];
-		});
+	const onHandleAddSelectedToInteresting = useCallback(
+		({ fieldData, fieldIndex }: IHandleInterestProps) => (): Promise<void> =>
+			onHandleAddInterest({
+				fieldData,
+				fieldIndex,
+				interesting,
+				interestingFieldLoading,
+				setInterestingFieldLoading,
+				selected,
+			}),
+		[interesting, interestingFieldLoading, selected],
+	);
 
-		await AddToSelectedFields({
-			...fieldData,
-			selected: true,
-		});
-		getLogsFields();
+	const onHandleRemoveSelected = useCallback(
+		({
+			fieldData,
+			fieldIndex,
+		}: IHandleRemoveInterestProps) => (): Promise<void> =>
+			onHandleRemoveInterest({
+				fieldData,
+				fieldIndex,
+				interesting,
+				interestingFieldLoading,
+				selected,
+				setSelectedFieldLoading,
+			}),
+		[interesting, interestingFieldLoading, selected, setSelectedFieldLoading],
+	);
 
-		setInterestingFieldLoading(
-			interestingFieldLoading.filter((e) => e !== fieldIndex),
-		);
-	};
-	const handleRemoveSelectedField = async ({
-		fieldData,
-		fieldIndex,
-	}: {
-		fieldData: ISelectedFields;
-		fieldIndex: number;
-	}): Promise<void> => {
-		setSelectedFieldLoading((prevState) => {
-			prevState.push(fieldIndex);
-			return [...prevState];
-		});
-
-		await RemoveSelectedField({
-			...fieldData,
-			selected: false,
-		});
-
-		getLogsFields();
-
-		setSelectedFieldLoading(
-			interestingFieldLoading.filter((e) => e !== fieldIndex),
-		);
-	};
 	return (
-		<Container flex="450px">
+		<Col flex="250px">
 			<Input
 				placeholder="Filter Values"
 				onInput={handleSearch}
-				style={{ width: '100%' }}
 				value={filterValuesInput}
 				onChange={handleSearch}
 			/>
@@ -96,17 +71,18 @@ function LogsFilters({ getLogsFields }: LogsFiltersProps): JSX.Element {
 				<FieldContainer>
 					{selected
 						.filter((field) => fieldSearchFilter(field.name, filterValuesInput))
+						.filter((field) => RESTRICTED_SELECTED_FIELDS.indexOf(field.name) === -1)
 						.map((field, idx) => (
 							<FieldItem
-								key={`${JSON.stringify(field)}-${idx}`}
+								key={`${JSON.stringify(field)}`}
 								name={field.name}
-								fieldData={field as never}
+								fieldData={field}
 								fieldIndex={idx}
-								buttonIcon={<CloseOutlined style={{ color: red[5] }} />}
-								buttonOnClick={
-									(!RESTRICTED_SELECTED_FIELDS.includes(field.name) &&
-										handleRemoveSelectedField) as never
-								}
+								buttonIcon={<CloseOutlined style={ICON_STYLE.CLOSE} />}
+								buttonOnClick={onHandleRemoveSelected({
+									fieldData: field,
+									fieldIndex: idx,
+								})}
 								isLoading={selectedFieldLoading.includes(idx)}
 								iconHoverText="Remove from Selected Fields"
 							/>
@@ -120,33 +96,23 @@ function LogsFilters({ getLogsFields }: LogsFiltersProps): JSX.Element {
 						.filter((field) => fieldSearchFilter(field.name, filterValuesInput))
 						.map((field, idx) => (
 							<FieldItem
-								key={`${JSON.stringify(field)}-${idx}`}
+								key={`${JSON.stringify(field)}`}
 								name={field.name}
-								fieldData={field as never}
+								fieldData={field}
 								fieldIndex={idx}
-								buttonIcon={<PlusCircleFilled />}
-								buttonOnClick={handleAddInterestingToSelected as never}
+								buttonIcon={<PlusCircleFilled style={ICON_STYLE.PLUS} />}
+								buttonOnClick={onHandleAddSelectedToInteresting({
+									fieldData: field,
+									fieldIndex: idx,
+								})}
 								isLoading={interestingFieldLoading.includes(idx)}
 								iconHoverText="Add to Selected Fields"
 							/>
 						))}
 				</FieldContainer>
 			</CategoryContainer>
-			{/* <ExtractField>Extract Fields</ExtractField> */}
-		</Container>
+		</Col>
 	);
 }
 
-interface DispatchProps {
-	getLogsFields: () => (dispatch: Dispatch<AppActions>) => void;
-}
-
-const mapDispatchToProps = (
-	dispatch: ThunkDispatch<unknown, unknown, AppActions>,
-): DispatchProps => ({
-	getLogsFields: bindActionCreators(GetLogsFields, dispatch),
-});
-
-type LogsFiltersProps = DispatchProps;
-
-export default connect(null, mapDispatchToProps)(memo(LogsFilters));
+export default LogsFilters;

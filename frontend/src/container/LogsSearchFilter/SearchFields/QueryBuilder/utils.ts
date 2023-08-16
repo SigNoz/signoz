@@ -21,17 +21,3 @@ export const parseQuery = (queries: Query): Query => {
 	}
 	return queries;
 };
-
-export const hashCode = (s: string): string => {
-	if (!s) {
-		return '0';
-	}
-	return `${Math.abs(
-		s.split('').reduce((a, b) => {
-			// eslint-disable-next-line no-bitwise, no-param-reassign
-			a = (a << 5) - a + b.charCodeAt(0);
-			// eslint-disable-next-line no-bitwise
-			return a & a;
-		}, 0),
-	)}`;
-};

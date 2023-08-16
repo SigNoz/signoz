@@ -2,23 +2,33 @@ package api
 
 import (
 	"net/http"
+	"time"
 
 	"github.com/gorilla/mux"
 	"go.signoz.io/signoz/ee/query-service/dao"
 	"go.signoz.io/signoz/ee/query-service/interfaces"
 	"go.signoz.io/signoz/ee/query-service/license"
 	baseapp "go.signoz.io/signoz/pkg/query-service/app"
+	"go.signoz.io/signoz/pkg/query-service/app/logparsingpipeline"
 	baseint "go.signoz.io/signoz/pkg/query-service/interfaces"
+	basemodel "go.signoz.io/signoz/pkg/query-service/model"
 	rules "go.signoz.io/signoz/pkg/query-service/rules"
 	"go.signoz.io/signoz/pkg/query-service/version"
 )
 
 type APIHandlerOptions struct {
-	DataConnector  interfaces.DataConnector
-	AppDao         dao.ModelDao
-	RulesManager   *rules.Manager
-	FeatureFlags   baseint.FeatureLookup
-	LicenseManager *license.Manager
+	DataConnector                 interfaces.DataConnector
+	SkipConfig                    *basemodel.SkipConfig
+	PreferDelta                   bool
+	PreferSpanMetrics             bool
+	MaxIdleConns                  int
+	MaxOpenConns                  int
+	DialTimeout                   time.Duration
+	AppDao                        dao.ModelDao
+	RulesManager                  *rules.Manager
+	FeatureFlags                  baseint.FeatureLookup
+	LicenseManager                *license.Manager
+	LogsParsingPipelineController *logparsingpipeline.LogParsingPipelineController
 }
 
 type APIHandler struct {
@@ -30,10 +40,18 @@ type APIHandler struct {
 func NewAPIHandler(opts APIHandlerOptions) (*APIHandler, error) {
 
 	baseHandler, err := baseapp.NewAPIHandler(baseapp.APIHandlerOpts{
-		Reader:       opts.DataConnector,
-		AppDao:       opts.AppDao,
-		RuleManager:  opts.RulesManager,
-		FeatureFlags: opts.FeatureFlags})
+		Reader:                        opts.DataConnector,
+		SkipConfig:                    opts.SkipConfig,
+		PerferDelta:                   opts.PreferDelta,
+		PreferSpanMetrics:             opts.PreferSpanMetrics,
+		MaxIdleConns:                  opts.MaxIdleConns,
+		MaxOpenConns:                  opts.MaxOpenConns,
+		DialTimeout:                   opts.DialTimeout,
+		AppDao:                        opts.AppDao,
+		RuleManager:                   opts.RulesManager,
+		FeatureFlags:                  opts.FeatureFlags,
+		LogsParsingPipelineController: opts.LogsParsingPipelineController,
+	})
 
 	if err != nil {
 		return nil, err
@@ -68,60 +86,75 @@ func (ah *APIHandler) CheckFeature(f string) bool {
 }
 
 // RegisterRoutes registers routes for this handler on the given router
-func (ah *APIHandler) RegisterRoutes(router *mux.Router) {
+func (ah *APIHandler) RegisterRoutes(router *mux.Router, am *baseapp.AuthMiddleware) {
 	// note: add ee override methods first
 
 	// routes available only in ee version
 	router.HandleFunc("/api/v1/licenses",
-		baseapp.AdminAccess(ah.listLicenses)).
+		am.AdminAccess(ah.listLicenses)).
 		Methods(http.MethodGet)
 
 	router.HandleFunc("/api/v1/licenses",
-		baseapp.AdminAccess(ah.applyLicense)).
+		am.AdminAccess(ah.applyLicense)).
 		Methods(http.MethodPost)
 
 	router.HandleFunc("/api/v1/featureFlags",
-		baseapp.OpenAccess(ah.getFeatureFlags)).
+		am.OpenAccess(ah.getFeatureFlags)).
 		Methods(http.MethodGet)
 
 	router.HandleFunc("/api/v1/loginPrecheck",
-		baseapp.OpenAccess(ah.precheckLogin)).
+		am.OpenAccess(ah.precheckLogin)).
 		Methods(http.MethodGet)
 
 	// paid plans specific routes
 	router.HandleFunc("/api/v1/complete/saml",
-		baseapp.OpenAccess(ah.receiveSAML)).
+		am.OpenAccess(ah.receiveSAML)).
 		Methods(http.MethodPost)
 
+	router.HandleFunc("/api/v1/complete/google",
+		am.OpenAccess(ah.receiveGoogleAuth)).
+		Methods(http.MethodGet)
+
 	router.HandleFunc("/api/v1/orgs/{orgId}/domains",
-		baseapp.AdminAccess(ah.listDomainsByOrg)).
+		am.AdminAccess(ah.listDomainsByOrg)).
 		Methods(http.MethodGet)
 
 	router.HandleFunc("/api/v1/domains",
-		baseapp.AdminAccess(ah.postDomain)).
+		am.AdminAccess(ah.postDomain)).
 		Methods(http.MethodPost)
 
 	router.HandleFunc("/api/v1/domains/{id}",
-		baseapp.AdminAccess(ah.putDomain)).
+		am.AdminAccess(ah.putDomain)).
 		Methods(http.MethodPut)
 
 	router.HandleFunc("/api/v1/domains/{id}",
-		baseapp.AdminAccess(ah.deleteDomain)).
+		am.AdminAccess(ah.deleteDomain)).
 		Methods(http.MethodDelete)
 
 	// base overrides
-	router.HandleFunc("/api/v1/version", baseapp.OpenAccess(ah.getVersion)).Methods(http.MethodGet)
-	router.HandleFunc("/api/v1/invite/{token}", baseapp.OpenAccess(ah.getInvite)).Methods(http.MethodGet)
-	router.HandleFunc("/api/v1/register", baseapp.OpenAccess(ah.registerUser)).Methods(http.MethodPost)
-	router.HandleFunc("/api/v1/login", baseapp.OpenAccess(ah.loginUser)).Methods(http.MethodPost)
-	router.HandleFunc("/api/v1/traces/{traceId}", baseapp.ViewAccess(ah.searchTraces)).Methods(http.MethodGet)
-	router.HandleFunc("/api/v2/metrics/query_range", baseapp.ViewAccess(ah.queryRangeMetricsV2)).Methods(http.MethodPost)
+	router.HandleFunc("/api/v1/version", am.OpenAccess(ah.getVersion)).Methods(http.MethodGet)
+	router.HandleFunc("/api/v1/invite/{token}", am.OpenAccess(ah.getInvite)).Methods(http.MethodGet)
+	router.HandleFunc("/api/v1/register", am.OpenAccess(ah.registerUser)).Methods(http.MethodPost)
+	router.HandleFunc("/api/v1/login", am.OpenAccess(ah.loginUser)).Methods(http.MethodPost)
+	router.HandleFunc("/api/v1/traces/{traceId}", am.ViewAccess(ah.searchTraces)).Methods(http.MethodGet)
+	router.HandleFunc("/api/v2/metrics/query_range", am.ViewAccess(ah.queryRangeMetricsV2)).Methods(http.MethodPost)
 
-	ah.APIHandler.RegisterRoutes(router)
+	// PAT APIs
+	router.HandleFunc("/api/v1/pat", am.OpenAccess(ah.createPAT)).Methods(http.MethodPost)
+	router.HandleFunc("/api/v1/pat", am.OpenAccess(ah.getPATs)).Methods(http.MethodGet)
+	router.HandleFunc("/api/v1/pat/{id}", am.OpenAccess(ah.deletePAT)).Methods(http.MethodDelete)
+
+	ah.APIHandler.RegisterRoutes(router, am)
 
 }
 
 func (ah *APIHandler) getVersion(w http.ResponseWriter, r *http.Request) {
 	version := version.GetVersion()
-	ah.WriteJSON(w, r, map[string]string{"version": version, "ee": "Y"})
+	versionResponse := basemodel.GetVersionResponse{
+		Version:        version,
+		EE:             "Y",
+		SetupCompleted: ah.SetupCompleted,
+	}
+
+	ah.WriteJSON(w, r, versionResponse)
 }

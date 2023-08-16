@@ -1,7 +1,6 @@
 import { Typography } from 'antd';
 import convertDateToAmAndPm from 'lib/convertDateToAmAndPm';
 import getFormattedDate from 'lib/getFormatedDate';
-import React from 'react';
 
 import { Data } from '..';
 

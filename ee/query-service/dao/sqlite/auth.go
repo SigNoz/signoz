@@ -10,8 +10,32 @@ import (
 	"go.signoz.io/signoz/ee/query-service/model"
 	baseconst "go.signoz.io/signoz/pkg/query-service/constants"
 	basemodel "go.signoz.io/signoz/pkg/query-service/model"
+	baseauth "go.signoz.io/signoz/pkg/query-service/auth"
 	"go.uber.org/zap"
 )
+
+// PrepareSsoRedirect prepares redirect page link after SSO response 
+// is successfully parsed (i.e. valid email is available)
+func (m *modelDao) PrepareSsoRedirect(ctx context.Context, redirectUri, email string) (redirectURL string, apierr basemodel.BaseApiError) {
+
+	userPayload, apierr := m.GetUserByEmail(ctx, email)
+	if !apierr.IsNil() {
+		zap.S().Errorf(" failed to get user with email received from auth provider", apierr.Error())
+		return "", model.BadRequestStr("invalid user email received from the auth provider")
+	}
+
+	tokenStore, err := baseauth.GenerateJWTForUser(&userPayload.User)
+	if err != nil {
+		zap.S().Errorf("failed to generate token for SSO login user", err)
+		return "", model.InternalErrorStr("failed to generate token for the user")
+	}
+
+	return fmt.Sprintf("%s?jwt=%s&usr=%s&refreshjwt=%s",
+		redirectUri,
+		tokenStore.AccessJwt,
+		userPayload.User.Id,
+		tokenStore.RefreshJwt), nil
+}
 
 func (m *modelDao) CanUsePassword(ctx context.Context, email string) (bool, basemodel.BaseApiError) {
 	domain, apierr := m.GetDomainByEmail(ctx, email)

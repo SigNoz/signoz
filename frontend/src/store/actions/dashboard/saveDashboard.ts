@@ -1,6 +1,10 @@
+import { notification } from 'antd';
 import updateDashboardApi from 'api/dashboard/update';
 import { AxiosError } from 'axios';
+import { PANEL_TYPES } from 'constants/queryBuilder';
+import { queryParamNamesMap } from 'constants/queryBuilderQueryNames';
 import ROUTES from 'constants/routes';
+import { updateStepInterval } from 'hooks/queryBuilder/useStepInterval';
 import history from 'lib/history';
 import { Layout } from 'react-grid-layout';
 import { generatePath } from 'react-router-dom';
@@ -21,12 +25,12 @@ export const SaveDashboard = ({
 	widgetId,
 	dashboardId,
 	yAxisUnit,
-}: SaveDashboardProps): ((dispatch: Dispatch<AppActions>) => void) => {
+	graphType,
+}: SaveDashboardProps): ((dispatch: Dispatch<AppActions>) => void) =>
 	// eslint-disable-next-line sonarjs/cognitive-complexity
-	return async (dispatch: Dispatch<AppActions>): Promise<void> => {
+	async (dispatch: Dispatch<AppActions>): Promise<void> => {
 		try {
 			const dashboard = store.getState();
-			const search = new URLSearchParams(history.location.search);
 
 			const selectedDashboard = dashboard.dashboards.dashboards.find(
 				(e) => e.uuid === uuid,
@@ -83,6 +87,17 @@ export const SaveDashboard = ({
 				];
 			};
 			const allLayout = getAllLayout();
+			const params = new URLSearchParams(window.location.search);
+			const compositeQuery = params.get(queryParamNamesMap.compositeQuery);
+			const { maxTime, minTime } = store.getState().globalTime;
+			const query = compositeQuery
+				? updateStepInterval(
+						JSON.parse(decodeURIComponent(compositeQuery)),
+						maxTime,
+						minTime,
+				  )
+				: updateStepInterval(selectedWidget.query, maxTime, minTime);
+
 			const response = await updateDashboardApi({
 				data: {
 					...selectedDashboard.data,
@@ -97,6 +112,7 @@ export const SaveDashboard = ({
 						...preWidget,
 						{
 							...selectedWidget,
+							query,
 							description: updatedDescription,
 							id: isEmptyWidget ? newWidgetId : widgetId,
 							isStacked: updatedisStacked,
@@ -105,10 +121,7 @@ export const SaveDashboard = ({
 							title: updatedTitle,
 							timePreferance: updatedtimePreferance,
 							yAxisUnit: updatedYAxisUnit,
-							panelTypes: search.get('graphType') as Widgets['panelTypes'],
-							queryData: {
-								...selectedWidget.queryData,
-							},
+							panelTypes: graphType,
 						},
 						...afterWidget,
 					],
@@ -123,10 +136,16 @@ export const SaveDashboard = ({
 				});
 				history.push(generatePath(ROUTES.DASHBOARD, { dashboardId }));
 			} else {
+				const error = 'Something went wrong';
+
+				notification.error({
+					message: response.error || error,
+				});
+
 				dispatch({
 					type: 'SAVE_SETTING_TO_PANEL_ERROR',
 					payload: {
-						errorMessage: response.error || 'Something went wrong',
+						errorMessage: response.error || error,
 					},
 				});
 			}
@@ -139,7 +158,6 @@ export const SaveDashboard = ({
 			});
 		}
 	};
-};
 
 export interface SaveDashboardProps {
 	uuid: Dashboard['uuid'];
@@ -152,4 +170,5 @@ export interface SaveDashboardProps {
 	widgetId: Widgets['id'];
 	dashboardId: string;
 	yAxisUnit: Widgets['yAxisUnit'];
+	graphType: PANEL_TYPES;
 }

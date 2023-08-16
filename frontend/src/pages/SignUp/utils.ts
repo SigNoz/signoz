@@ -6,10 +6,8 @@
  */
 export const isPasswordValid = (value: string): boolean => {
 	// eslint-disable-next-line prefer-regex-literals
-	const pattern = new RegExp(
-		'^(?=.*?[A-Z])(?=.*?[a-z])(?=.*?[0-9])(?=.*?[#?!@$%^&*-]).{8,}$',
-	);
+	const pattern = new RegExp('^.{8,}$');
 	return pattern.test(value);
 };
 
-export const isPasswordNotValidMessage = `Password must a have minimum of 8 characters with at least one lower case, one number ,one upper case and one special character`;
+export const isPasswordNotValidMessage = `Password must a have minimum of 8 characters`;

@@ -1,7 +1,7 @@
 import { green, orange, volcano } from '@ant-design/colors';
 import { InfoCircleOutlined } from '@ant-design/icons';
 import { Card, Col, Row } from 'antd';
-import React, { useMemo } from 'react';
+import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { TStatus } from 'types/api/settings/getRetention';
 

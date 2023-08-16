@@ -1,5 +1,11 @@
 package model
 
+import (
+	"database/sql/driver"
+	"encoding/json"
+	"fmt"
+)
+
 type Organization struct {
 	Id              string `json:"id" db:"id"`
 	Name            string `json:"name" db:"name"`
@@ -20,20 +26,58 @@ type InvitationObject struct {
 }
 
 type User struct {
-	Id                 string `json:"id" db:"id"`
-	Name               string `json:"name" db:"name"`
-	Email              string `json:"email" db:"email"`
-	Password           string `json:"password,omitempty" db:"password"`
-	CreatedAt          int64  `json:"createdAt" db:"created_at"`
-	ProfilePirctureURL string `json:"profilePictureURL" db:"profile_picture_url"`
-	OrgId              string `json:"orgId,omitempty" db:"org_id"`
-	GroupId            string `json:"groupId,omitempty" db:"group_id"`
+	Id                string `json:"id" db:"id"`
+	Name              string `json:"name" db:"name"`
+	Email             string `json:"email" db:"email"`
+	Password          string `json:"password,omitempty" db:"password"`
+	CreatedAt         int64  `json:"createdAt" db:"created_at"`
+	ProfilePictureURL string `json:"profilePictureURL" db:"profile_picture_url"`
+	OrgId             string `json:"orgId,omitempty" db:"org_id"`
+	GroupId           string `json:"groupId,omitempty" db:"group_id"`
+}
+
+type ApdexSettings struct {
+	ServiceName        string  `json:"serviceName" db:"service_name"`
+	Threshold          float64 `json:"threshold" db:"threshold"`
+	ExcludeStatusCodes string  `json:"excludeStatusCodes" db:"exclude_status_codes"` // sqlite doesn't support array type
+}
+
+type UserFlag map[string]string
+
+func (uf UserFlag) Value() (driver.Value, error) {
+	f := make(map[string]string, 0)
+	for k, v := range uf {
+		f[k] = v
+	}
+	return json.Marshal(f)
+}
+
+func (uf *UserFlag) Scan(value interface{}) error {
+	fmt.Println(" value:", value)
+	if value == "" {
+		return nil
+	}
+
+	b, ok := value.(string)
+	if !ok {
+		return fmt.Errorf("type assertion to []byte failed while scanning user flag")
+	}
+	f := make(map[string]string, 0)
+	if err := json.Unmarshal([]byte(b), &f); err != nil {
+		return err
+	}
+	*uf = make(UserFlag, len(f))
+	for k, v := range f {
+		(*uf)[k] = v
+	}
+	return nil
 }
 
 type UserPayload struct {
 	User
-	Role         string `json:"role"`
-	Organization string `json:"organization"`
+	Role         string   `json:"role"`
+	Organization string   `json:"organization"`
+	Flags        UserFlag `json:"flags"`
 }
 
 type Group struct {

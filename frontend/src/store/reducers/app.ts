@@ -1,23 +1,22 @@
 import getLocalStorageKey from 'api/browser/localstorage/get';
 import { IS_SIDEBAR_COLLAPSED } from 'constants/app';
 import { LOCALSTORAGE } from 'constants/localStorage';
-import getTheme from 'lib/theme/getTheme';
 import { getInitialUserTokenRefreshToken } from 'store/utils';
 import {
 	AppAction,
 	LOGGED_IN,
 	SIDEBAR_COLLAPSE,
-	SWITCH_DARK_MODE,
 	UPDATE_CONFIGS,
 	UPDATE_CURRENT_ERROR,
 	UPDATE_CURRENT_VERSION,
-	UPDATE_FEATURE_FLAGS,
+	UPDATE_FEATURE_FLAG_RESPONSE,
 	UPDATE_LATEST_VERSION,
 	UPDATE_LATEST_VERSION_ERROR,
 	UPDATE_ORG,
 	UPDATE_ORG_NAME,
 	UPDATE_USER,
 	UPDATE_USER_ACCESS_REFRESH_ACCESS_TOKEN,
+	UPDATE_USER_FLAG,
 	UPDATE_USER_IS_FETCH,
 	UPDATE_USER_ORG_ROLE,
 } from 'types/actions/app';
@@ -44,12 +43,14 @@ const getInitialUser = (): User | null => {
 };
 
 const InitialValue: InitialValueTypes = {
-	isDarkMode: getTheme() === 'darkMode',
 	isLoggedIn: getLocalStorageKey(LOCALSTORAGE.IS_LOGGED_IN) === 'true',
 	isSideBarCollapsed: getLocalStorageKey(IS_SIDEBAR_COLLAPSED) === 'true',
 	currentVersion: '',
 	latestVersion: '',
-	featureFlags: {},
+	featureResponse: {
+		data: null,
+		refetch: Promise.resolve,
+	},
 	isCurrentVersionError: false,
 	isLatestVersionError: false,
 	user: getInitialUser(),
@@ -58,6 +59,9 @@ const InitialValue: InitialValueTypes = {
 	org: null,
 	role: null,
 	configs: {},
+	userFlags: {},
+	ee: 'Y',
+	setupCompleted: true,
 };
 
 const appReducer = (
@@ -65,13 +69,6 @@ const appReducer = (
 	action: AppAction,
 ): InitialValueTypes => {
 	switch (action.type) {
-		case SWITCH_DARK_MODE: {
-			return {
-				...state,
-				isDarkMode: !state.isDarkMode,
-			};
-		}
-
 		case LOGGED_IN: {
 			return {
 				...state,
@@ -86,10 +83,13 @@ const appReducer = (
 			};
 		}
 
-		case UPDATE_FEATURE_FLAGS: {
+		case UPDATE_FEATURE_FLAG_RESPONSE: {
 			return {
 				...state,
-				featureFlags: { ...action.payload },
+				featureResponse: {
+					data: action.payload.featureFlag,
+					refetch: action.payload.refetch,
+				},
 			};
 		}
 
@@ -97,6 +97,8 @@ const appReducer = (
 			return {
 				...state,
 				currentVersion: action.payload.currentVersion,
+				ee: action.payload.ee,
+				setupCompleted: action.payload.setupCompleted,
 			};
 		}
 
@@ -153,6 +155,7 @@ const appReducer = (
 				ROLE,
 				orgId,
 				orgName,
+				userFlags,
 			} = action.payload;
 			const orgIndex = org.findIndex((e) => e.id === orgId);
 
@@ -179,6 +182,7 @@ const appReducer = (
 				},
 				org: [...updatedOrg],
 				role: ROLE,
+				userFlags,
 			};
 		}
 
@@ -216,6 +220,14 @@ const appReducer = (
 			return {
 				...state,
 				configs: action.payload.configs,
+			};
+		}
+
+		case UPDATE_USER_FLAG: {
+			console.log('herei n update user flag');
+			return {
+				...state,
+				userFlags: { ...state.userFlags, ...action.payload.flags },
 			};
 		}
 

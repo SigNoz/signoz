@@ -1,21 +1,22 @@
-import { Button, Input, notification, Typography } from 'antd';
+import { Button, Form, Input, Typography } from 'antd';
 import resetPasswordApi from 'api/user/resetPassword';
 import { Logout } from 'api/utils';
 import WelcomeLeftContainer from 'components/WelcomeLeftContainer';
 import ROUTES from 'constants/routes';
+import { useNotifications } from 'hooks/useNotifications';
 import history from 'lib/history';
 import { Label } from 'pages/SignUp/styles';
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useLocation } from 'react-use';
 
-import { ButtonContainer, FormWrapper } from './styles';
+import { ButtonContainer, FormContainer, FormWrapper } from './styles';
 
 const { Title } = Typography;
 
+type FormValues = { password: string; confirmPassword: string };
+
 function ResetPassword({ version }: ResetPasswordProps): JSX.Element {
-	const [password, setPassword] = useState<string>('');
-	const [confirmPassword, setConfirmPassword] = useState<string>('');
 	const [confirmPasswordError, setConfirmPasswordError] = useState<boolean>(
 		false,
 	);
@@ -24,7 +25,9 @@ function ResetPassword({ version }: ResetPasswordProps): JSX.Element {
 	const { search } = useLocation();
 	const params = new URLSearchParams(search);
 	const token = params.get('token');
+	const { notifications } = useNotifications();
 
+	const [form] = Form.useForm<FormValues>();
 	useEffect(() => {
 		if (!token) {
 			Logout();
@@ -32,20 +35,10 @@ function ResetPassword({ version }: ResetPasswordProps): JSX.Element {
 		}
 	}, [token]);
 
-	const setState = (
-		value: string,
-		setFunction: React.Dispatch<React.SetStateAction<string>>,
-	): void => {
-		setFunction(value);
-	};
-
-	const handleSubmit: React.FormEventHandler<HTMLFormElement> = async (
-		event,
-	): Promise<void> => {
+	const handleSubmit: () => Promise<void> = async () => {
 		try {
 			setLoading(true);
-			event.preventDefault();
-			event.persist();
+			const { password } = form.getFieldsValue();
 
 			const response = await resetPasswordApi({
 				password,
@@ -53,14 +46,14 @@ function ResetPassword({ version }: ResetPasswordProps): JSX.Element {
 			});
 
 			if (response.statusCode === 200) {
-				notification.success({
+				notifications.success({
 					message: t('success', {
 						ns: 'common',
 					}),
 				});
 				history.push(ROUTES.LOGIN);
 			} else {
-				notification.error({
+				notifications.error({
 					message:
 						response.error ||
 						t('something_went_wrong', {
@@ -72,47 +65,45 @@ function ResetPassword({ version }: ResetPasswordProps): JSX.Element {
 			setLoading(false);
 		} catch (error) {
 			setLoading(false);
-			notification.error({
+			notifications.error({
 				message: t('something_went_wrong', {
 					ns: 'common',
 				}),
 			});
 		}
 	};
+	const handleValuesChange: (changedValues: FormValues) => void = (
+		changedValues,
+	) => {
+		if ('confirmPassword' in changedValues) {
+			const { confirmPassword } = changedValues;
+
+			const isSamePassword = form.getFieldValue('password') === confirmPassword;
+			setConfirmPasswordError(!isSamePassword);
+		}
+	};
 
 	return (
 		<WelcomeLeftContainer version={version}>
 			<FormWrapper>
-				<form onSubmit={handleSubmit}>
+				<FormContainer
+					form={form}
+					onValuesChange={handleValuesChange}
+					onFinish={handleSubmit}
+				>
 					<Title level={4}>Reset Your Password</Title>
 
 					<div>
 						<Label htmlFor="Password">Password</Label>
-						<Input.Password
-							value={password}
-							onChange={(e): void => {
-								setState(e.target.value, setPassword);
-							}}
-							required
-							id="currentPassword"
-						/>
+						<FormContainer.Item noStyle name="password">
+							<Input.Password required id="currentPassword" />
+						</FormContainer.Item>
 					</div>
 					<div>
 						<Label htmlFor="ConfirmPassword">Confirm Password</Label>
-						<Input.Password
-							value={confirmPassword}
-							onChange={(e): void => {
-								const updateValue = e.target.value;
-								setState(updateValue, setConfirmPassword);
-								if (password !== updateValue) {
-									setConfirmPasswordError(true);
-								} else {
-									setConfirmPasswordError(false);
-								}
-							}}
-							required
-							id="UpdatePassword"
-						/>
+						<FormContainer.Item noStyle name="confirmPassword">
+							<Input.Password required id="UpdatePassword" />
+						</FormContainer.Item>
 
 						{confirmPasswordError && (
 							<Typography.Paragraph
@@ -135,8 +126,8 @@ function ResetPassword({ version }: ResetPasswordProps): JSX.Element {
 							loading={loading}
 							disabled={
 								loading ||
-								!password ||
-								!confirmPassword ||
+								!form.getFieldValue('password') ||
+								!form.getFieldValue('confirmPassword') ||
 								confirmPasswordError ||
 								token === null
 							}
@@ -144,7 +135,7 @@ function ResetPassword({ version }: ResetPasswordProps): JSX.Element {
 							Get Started
 						</Button>
 					</ButtonContainer>
-				</form>
+				</FormContainer>
 			</FormWrapper>
 		</WelcomeLeftContainer>
 	);

@@ -1,11 +1,13 @@
-import { Button, Divider, notification, Space, Table, Typography } from 'antd';
+import { Button, Divider, Space, Typography } from 'antd';
 import getNextPrevId from 'api/errors/getNextPrevId';
 import Editor from 'components/Editor';
+import { ResizeTable } from 'components/ResizeTable';
 import { getNanoSeconds } from 'container/AllError/utils';
 import dayjs from 'dayjs';
+import { useNotifications } from 'hooks/useNotifications';
 import history from 'lib/history';
 import { urlKey } from 'pages/ErrorDetails/utils';
-import React, { useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useQuery } from 'react-query';
 import { useLocation } from 'react-router-dom';
@@ -53,12 +55,14 @@ function ErrorDetails(props: ErrorDetailsProps): JSX.Element {
 		() => [
 			{
 				title: 'Key',
+				width: 100,
 				dataIndex: 'key',
 				key: 'key',
 			},
 			{
 				title: 'Value',
 				dataIndex: 'value',
+				width: 100,
 				key: 'value',
 			},
 		],
@@ -77,13 +81,15 @@ function ErrorDetails(props: ErrorDetailsProps): JSX.Element {
 		[],
 	);
 
+	const { notifications } = useNotifications();
+
 	const onClickErrorIdHandler = async (
 		id: string,
 		timestamp: string,
 	): Promise<void> => {
 		try {
 			if (id.length === 0) {
-				notification.error({
+				notifications.error({
 					message: 'Error Id cannot be empty',
 				});
 				return;
@@ -95,7 +101,7 @@ function ErrorDetails(props: ErrorDetailsProps): JSX.Element {
 				}&timestamp=${getNanoSeconds(timestamp)}&errorId=${id}`,
 			);
 		} catch (error) {
-			notification.error({
+			notifications.error({
 				message: t('something_went_wrong'),
 			});
 		}
@@ -167,7 +173,7 @@ function ErrorDetails(props: ErrorDetailsProps): JSX.Element {
 
 			<EditorContainer>
 				<Space direction="vertical">
-					<Table tableLayout="fixed" columns={columns} dataSource={data} />
+					<ResizeTable columns={columns} tableLayout="fixed" dataSource={data} />
 				</Space>
 			</EditorContainer>
 		</>

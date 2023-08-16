@@ -1,18 +1,18 @@
-import { Button, Modal, Typography } from 'antd';
+import { LockFilled } from '@ant-design/icons';
+import { Button, Modal, Tooltip, Typography } from 'antd';
+import { FeatureKeys } from 'constants/features';
+import { PANEL_TYPES } from 'constants/queryBuilder';
 import ROUTES from 'constants/routes';
-import { GRAPH_TYPES } from 'container/NewDashboard/ComponentsSlider';
-import { getDashboardVariables } from 'lib/dashbaordVariables/getDashboardVariables';
+import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
+import { MESSAGE, useIsFeatureDisabled } from 'hooks/useFeatureFlag';
+import { useNotifications } from 'hooks/useNotifications';
 import history from 'lib/history';
 import { DashboardWidgetPageParams } from 'pages/DashboardWidget';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { connect, useDispatch, useSelector } from 'react-redux';
 import { generatePath, useLocation, useParams } from 'react-router-dom';
 import { bindActionCreators, Dispatch } from 'redux';
 import { ThunkDispatch } from 'redux-thunk';
-import {
-	GetQueryResults,
-	GetQueryResultsProps,
-} from 'store/actions/dashboard/getQueryResults';
 import {
 	SaveDashboard,
 	SaveDashboardProps,
@@ -20,9 +20,10 @@ import {
 import { AppState } from 'store/reducers';
 import AppActions from 'types/actions';
 import { FLUSH_DASHBOARD } from 'types/actions/dashboard';
-import { Widgets } from 'types/api/dashboard/getAll';
+import { EQueryType } from 'types/common/dashboard';
+import { DataSource } from 'types/common/queryBuilder';
+import AppReducer from 'types/reducer/app';
 import DashboardReducer from 'types/reducer/dashboards';
-import { GlobalReducer } from 'types/reducer/globalTime';
 
 import LeftContainer from './LeftContainer';
 import QueryTypeTag from './LeftContainer/QueryTypeTag';
@@ -34,22 +35,20 @@ import {
 	LeftContainerWrapper,
 	PanelContainer,
 	RightContainerWrapper,
-	Tag,
 } from './styles';
+import { NewWidgetProps } from './types';
 
-function NewWidget({
-	selectedGraph,
-	saveSettingOfPanel,
-	getQueryResults,
-}: Props): JSX.Element {
+function NewWidget({ selectedGraph, saveSettingOfPanel }: Props): JSX.Element {
 	const dispatch = useDispatch();
 	const { dashboards } = useSelector<AppState, DashboardReducer>(
 		(state) => state.dashboards,
 	);
-	const { selectedTime: globalSelectedInterval } = useSelector<
-		AppState,
-		GlobalReducer
-	>((state) => state.globalTime);
+
+	const { currentQuery } = useQueryBuilder();
+
+	const { featureResponse } = useSelector<AppState, AppReducer>(
+		(state) => state.app,
+	);
 
 	const [selectedDashboard] = dashboards;
 
@@ -57,9 +56,7 @@ function NewWidget({
 
 	const { search } = useLocation();
 
-	const query = useMemo(() => {
-		return new URLSearchParams(search);
-	}, [search]);
+	const query = useMemo(() => new URLSearchParams(search), [search]);
 
 	const { dashboardId } = useParams<DashboardWidgetPageParams>();
 
@@ -86,8 +83,8 @@ function NewWidget({
 		selectedWidget?.nullZeroValues || 'zero',
 	);
 	const [saveModal, setSaveModal] = useState(false);
-	const [hasUnstagedChanges, setHasUnstagedChanges] = useState(false);
 
+	const [graphType, setGraphType] = useState(selectedGraph);
 	const getSelectedTime = useCallback(
 		() =>
 			TimeItems.find(
@@ -101,21 +98,34 @@ function NewWidget({
 		enum: selectedWidget?.timePreferance || 'GLOBAL_TIME',
 	});
 
+	const { notifications } = useNotifications();
+
 	const onClickSaveHandler = useCallback(() => {
 		// update the global state
-		saveSettingOfPanel({
-			uuid: selectedDashboard.uuid,
-			description,
-			isStacked: stacked,
-			nullZeroValues: selectedNullZeroValue,
-			opacity,
-			timePreferance: selectedTime.enum,
-			title,
-			yAxisUnit,
-			widgetId: query.get('widgetId') || '',
-			dashboardId,
-		});
+		featureResponse
+			.refetch()
+			.then(() => {
+				saveSettingOfPanel({
+					uuid: selectedDashboard.uuid,
+					description,
+					isStacked: stacked,
+					nullZeroValues: selectedNullZeroValue,
+					opacity,
+					timePreferance: selectedTime.enum,
+					title,
+					yAxisUnit,
+					widgetId: query.get('widgetId') || '',
+					dashboardId,
+					graphType,
+				});
+			})
+			.catch(() => {
+				notifications.error({
+					message: 'Something went wrong',
+				});
+			});
 	}, [
+		featureResponse,
 		saveSettingOfPanel,
 		selectedDashboard.uuid,
 		description,
@@ -127,6 +137,8 @@ function NewWidget({
 		yAxisUnit,
 		query,
 		dashboardId,
+		graphType,
+		notifications,
 	]);
 
 	const onClickDiscardHandler = useCallback(() => {
@@ -136,52 +148,95 @@ function NewWidget({
 		history.push(generatePath(ROUTES.DASHBOARD, { dashboardId }));
 	}, [dashboardId, dispatch]);
 
-	const getQueryResult = useCallback(() => {
-		if (selectedWidget?.id.length !== 0 && selectedWidget?.query) {
-			getQueryResults({
-				query: selectedWidget?.query,
-				selectedTime: selectedTime.enum,
-				widgetId: selectedWidget?.id || '',
-				graphType: selectedGraph,
-				globalSelectedInterval,
-				variables: getDashboardVariables(),
-			});
-		}
-	}, [
-		selectedWidget?.query,
-		selectedTime.enum,
-		selectedWidget?.id,
-		selectedGraph,
-		getQueryResults,
-		globalSelectedInterval,
-	]);
+	const setGraphHandler = (type: PANEL_TYPES): void => {
+		const params = new URLSearchParams(search);
+		params.set('graphType', type);
+		history.push({ search: params.toString() });
+		setGraphType(type);
+	};
 
-	useEffect(() => {
-		getQueryResult();
-	}, [getQueryResult]);
+	const onSaveDashboard = useCallback((): void => {
+		setSaveModal(true);
+	}, []);
+
+	const isQueryBuilderActive = useIsFeatureDisabled(
+		FeatureKeys.QUERY_BUILDER_PANELS,
+	);
+
+	const isNewTraceLogsAvailable = useMemo(
+		() =>
+			isQueryBuilderActive &&
+			currentQuery.queryType === EQueryType.QUERY_BUILDER &&
+			currentQuery.builder.queryData.find(
+				(query) => query.dataSource !== DataSource.METRICS,
+			) !== undefined,
+		[
+			currentQuery.builder.queryData,
+			currentQuery.queryType,
+			isQueryBuilderActive,
+		],
+	);
+
+	const isSaveDisabled = useMemo(() => {
+		// new created dashboard
+		if (selectedWidget?.id === 'empty') {
+			return isNewTraceLogsAvailable;
+		}
+
+		const isTraceOrLogsQueryBuilder =
+			currentQuery.builder.queryData.find(
+				(query) =>
+					query.dataSource === DataSource.TRACES ||
+					query.dataSource === DataSource.LOGS,
+			) !== undefined;
+
+		if (isTraceOrLogsQueryBuilder) {
+			return false;
+		}
+
+		return isNewTraceLogsAvailable;
+	}, [
+		currentQuery.builder.queryData,
+		selectedWidget?.id,
+		isNewTraceLogsAvailable,
+	]);
 
 	return (
 		<Container>
 			<ButtonContainer>
-				<Button type="primary" onClick={(): void => setSaveModal(true)}>
-					Save
-				</Button>
-				{/* <Button onClick={onClickApplyHandler}>Apply</Button> */}
+				{isSaveDisabled && (
+					<Tooltip title={MESSAGE.PANEL}>
+						<Button
+							icon={<LockFilled />}
+							type="primary"
+							disabled={isSaveDisabled}
+							onClick={onSaveDashboard}
+						>
+							Save
+						</Button>
+					</Tooltip>
+				)}
+
+				{!isSaveDisabled && (
+					<Button type="primary" disabled={isSaveDisabled} onClick={onSaveDashboard}>
+						Save
+					</Button>
+				)}
 				<Button onClick={onClickDiscardHandler}>Discard</Button>
 			</ButtonContainer>
 
 			<PanelContainer>
 				<LeftContainerWrapper flex={5}>
 					<LeftContainer
-						handleUnstagedChanges={setHasUnstagedChanges}
 						selectedTime={selectedTime}
-						selectedGraph={selectedGraph}
+						selectedGraph={graphType}
 						yAxisUnit={yAxisUnit}
 					/>
 				</LeftContainerWrapper>
 
 				<RightContainerWrapper flex={1}>
 					<RightContainer
+						setGraphHandler={setGraphHandler}
 						{...{
 							title,
 							setTitle,
@@ -194,7 +249,7 @@ function NewWidget({
 							setOpacity,
 							selectedNullZeroValue,
 							setSelectedNullZeroValue,
-							selectedGraph,
+							selectedGraph: graphType,
 							setSelectedTime,
 							selectedTime,
 							setYAxisUnit,
@@ -209,42 +264,23 @@ function NewWidget({
 				destroyOnClose
 				closable
 				onCancel={(): void => setSaveModal(false)}
-				onOk={(): void => {
-					onClickSaveHandler();
-				}}
+				onOk={onClickSaveHandler}
 				centered
-				visible={saveModal}
+				open={saveModal}
 				width={600}
 			>
-				{hasUnstagedChanges ? (
-					<Typography>
-						Looks like you have unstaged changes. Would you like to SAVE the last
-						staged changes? If you want to stage new changes - Press{' '}
-						<Tag>Stage & Run Query</Tag> and then try saving again.
-					</Typography>
-				) : (
-					<Typography>
-						Your graph built with{' '}
-						<QueryTypeTag queryType={selectedWidget?.query.queryType} /> query will be
-						saved. Press OK to confirm.
-					</Typography>
-				)}
+				<Typography>
+					Your graph built with <QueryTypeTag queryType={currentQuery.queryType} />{' '}
+					query will be saved. Press OK to confirm.
+				</Typography>
 			</Modal>
 		</Container>
 	);
 }
 
-export interface NewWidgetProps {
-	selectedGraph: GRAPH_TYPES;
-	yAxisUnit: Widgets['yAxisUnit'];
-}
-
 interface DispatchProps {
 	saveSettingOfPanel: (
 		props: SaveDashboardProps,
-	) => (dispatch: Dispatch<AppActions>) => void;
-	getQueryResults: (
-		props: GetQueryResultsProps,
 	) => (dispatch: Dispatch<AppActions>) => void;
 }
 
@@ -252,7 +288,6 @@ const mapDispatchToProps = (
 	dispatch: ThunkDispatch<unknown, unknown, AppActions>,
 ): DispatchProps => ({
 	saveSettingOfPanel: bindActionCreators(SaveDashboard, dispatch),
-	getQueryResults: bindActionCreators(GetQueryResults, dispatch),
 });
 
 type Props = DispatchProps & NewWidgetProps;

@@ -19,18 +19,16 @@ export const getUsageData = (
 	maxTime: number,
 	step: number,
 	service: string,
-) => {
-	return async (dispatch: Dispatch): Promise<void> => {
-		const requesString = `/usage?start=${toUTCEpoch(minTime)}&end=${toUTCEpoch(
-			maxTime,
-		)}&step=${step}&service=${service || ''}`;
-		// Step can only be multiple of 3600
-		const response = await api.get<UsageDataItem[]>(requesString);
+) => async (dispatch: Dispatch): Promise<void> => {
+	const requesString = `/usage?start=${toUTCEpoch(minTime)}&end=${toUTCEpoch(
+		maxTime,
+	)}&step=${step}&service=${service || ''}`;
+	// Step can only be multiple of 3600
+	const response = await api.get<UsageDataItem[]>(requesString);
 
-		dispatch<GetUsageDataAction>({
-			type: ActionTypes.getUsageData,
-			payload: response.data,
-			// PNOTE - response.data in the axios response has the actual API response
-		});
-	};
+	dispatch<GetUsageDataAction>({
+		type: ActionTypes.getUsageData,
+		payload: response.data,
+		// PNOTE - response.data in the axios response has the actual API response
+	});
 };

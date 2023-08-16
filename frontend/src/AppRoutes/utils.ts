@@ -57,6 +57,7 @@ const afterLogin = async (
 				profilePictureURL: payload.profilePictureURL,
 				userId: payload.id,
 				orgId: payload.orgId,
+				userFlags: payload.flags,
 			},
 		});
 

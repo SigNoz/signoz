@@ -68,6 +68,16 @@ func InitDB(dataSourceName string) (*ModelDaoSqlite, error) {
 			token TEXT NOT NULL,
 			FOREIGN KEY(user_id) REFERENCES users(id)
 		);
+		CREATE TABLE IF NOT EXISTS user_flags (
+			user_id TEXT PRIMARY KEY,
+			flags TEXT,
+			FOREIGN KEY(user_id) REFERENCES users(id)
+		);
+		CREATE TABLE IF NOT EXISTS apdex_settings (
+			service_name TEXT PRIMARY KEY,
+			threshold FLOAT NOT NULL,
+			exclude_status_codes TEXT NOT NULL
+		);
 	`
 
 	_, err = db.Exec(table_schema)
@@ -119,6 +129,13 @@ func (mds *ModelDaoSqlite) initializeOrgPreferences(ctx context.Context) error {
 
 	// set telemetry fields from userPreferences
 	telemetry.GetInstance().SetDistinctId(org.Id)
+
+	users, _ := mds.GetUsers(ctx)
+	countUsers := len(users)
+	telemetry.GetInstance().SetCountUsers(int8(countUsers))
+	if countUsers > 0 {
+		telemetry.GetInstance().SetCompanyDomain(users[countUsers-1].Email)
+	}
 
 	return nil
 }

@@ -2,7 +2,6 @@ import { Space, Typography } from 'antd';
 import UnAuthorized from 'assets/UnAuthorized';
 import { Button, Container } from 'components/NotFound/styles';
 import ROUTES from 'constants/routes';
-import React from 'react';
 
 function UnAuthorizePage(): JSX.Element {
 	return (

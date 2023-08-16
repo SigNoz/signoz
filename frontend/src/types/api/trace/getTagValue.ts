@@ -1,13 +1,18 @@
 import { GlobalReducer } from 'types/reducer/globalTime';
+import { TraceReducer } from 'types/reducer/trace';
 
 export interface Props {
 	start: GlobalReducer['minTime'];
 	end: GlobalReducer['maxTime'];
-	tagKey: string;
+	tagKey: {
+		Key: string;
+		Type: string;
+	};
+	spanKind?: TraceReducer['spanKind'];
 }
 
-interface Value {
-	tagValues: string;
+export interface PayloadProps {
+	stringTagValues: string[];
+	numberTagValues: number[];
+	boolTagValues: boolean[];
 }
-
-export type PayloadProps = Value[];

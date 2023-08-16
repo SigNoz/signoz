@@ -1,29 +1,31 @@
-import TimeSeries from 'assets/Dashboard/TimeSeries';
+import TableIcon from 'assets/Dashboard/Table';
+import TimeSeriesIcon from 'assets/Dashboard/TimeSeries';
 import ValueIcon from 'assets/Dashboard/Value';
+import { PANEL_TYPES } from 'constants/queryBuilder';
+import { CSSProperties } from 'react';
 
 const Items: ItemsProps[] = [
 	{
-		name: 'TIME_SERIES',
-		Icon: TimeSeries,
+		name: PANEL_TYPES.TIME_SERIES,
+		Icon: TimeSeriesIcon,
 		display: 'Time Series',
 	},
 	{
-		name: 'VALUE',
+		name: PANEL_TYPES.VALUE,
 		Icon: ValueIcon,
 		display: 'Value',
 	},
+	{ name: PANEL_TYPES.TABLE, Icon: TableIcon, display: 'Table' },
 ];
 
-export type ITEMS = 'TIME_SERIES' | 'VALUE' | 'EMPTY_WIDGET';
-
 interface ItemsProps {
-	name: ITEMS;
+	name: PANEL_TYPES;
 	Icon: (props: IconProps) => JSX.Element;
 	display: string;
 }
 
 interface IconProps {
-	fillColor: React.CSSProperties['color'];
+	fillColor: CSSProperties['color'];
 }
 
 export default Items;

@@ -1,109 +1,182 @@
+import getTopLevelOperations, {
+	ServiceDataProps,
+} from 'api/metrics/getTopLevelOperations';
 import { ActiveElement, Chart, ChartData, ChartEvent } from 'chart.js';
-import Graph from 'components/Graph';
-import { METRICS_PAGE_QUERY_PARAM } from 'constants/query';
+import { FeatureKeys } from 'constants/features';
+import { QueryParams } from 'constants/query';
+import { PANEL_TYPES } from 'constants/queryBuilder';
 import ROUTES from 'constants/routes';
-import FullView from 'container/GridGraphLayout/Graph/FullView';
-import convertToNanoSecondsToSecond from 'lib/convertToNanoSecondsToSecond';
-import { colors } from 'lib/getRandomColor';
+import { routeConfig } from 'container/SideNav/config';
+import { getQueryString } from 'container/SideNav/helper';
+import useFeatureFlag from 'hooks/useFeatureFlag';
+import useResourceAttribute from 'hooks/useResourceAttribute';
+import {
+	convertRawQueriesToTraceSelectedTags,
+	resourceAttributesToTagFilterItems,
+} from 'hooks/useResourceAttribute/utils';
 import history from 'lib/history';
-import { convertRawQueriesToTraceSelectedTags } from 'lib/resourceAttributes';
-import { escapeRegExp } from 'lodash-es';
-import React, { useMemo, useRef } from 'react';
-import { useSelector } from 'react-redux';
-import { useParams } from 'react-router-dom';
+import { useCallback, useMemo, useState } from 'react';
+import { useQuery } from 'react-query';
+import { useDispatch, useSelector } from 'react-redux';
+import { useLocation, useParams } from 'react-router-dom';
+import { UpdateTimeInterval } from 'store/actions';
 import { AppState } from 'store/reducers';
-import { PromQLWidgets } from 'types/api/dashboard/getAll';
-import MetricReducer from 'types/reducer/metrics';
+import { EQueryType } from 'types/common/dashboard';
+import { GlobalReducer } from 'types/reducer/globalTime';
+import { Tags } from 'types/reducer/trace';
+import { v4 as uuid } from 'uuid';
 
-import { Card, Col, GraphContainer, GraphTitle, Row } from '../styles';
-import TopOperationsTable from '../TopOperationsTable';
+import { GraphTitle } from '../constant';
+import { getWidgetQueryBuilder } from '../MetricsApplication.factory';
+import {
+	errorPercentage,
+	operationPerSec,
+} from '../MetricsPageQueries/OverviewQueries';
+import { Card, Col, Row } from '../styles';
+import ServiceOverview from './Overview/ServiceOverview';
+import TopLevelOperation from './Overview/TopLevelOperations';
+import TopOperation from './Overview/TopOperation';
+import TopOperationMetrics from './Overview/TopOperationMetrics';
 import { Button } from './styles';
+import { IServiceName } from './types';
+import {
+	handleNonInQueryRange,
+	onGraphClickHandler,
+	onViewTracePopupClick,
+} from './util';
 
-function Application({ getWidget }: DashboardProps): JSX.Element {
-	const { servicename } = useParams<{ servicename?: string }>();
-	const selectedTimeStamp = useRef(0);
+function Application(): JSX.Element {
+	const { maxTime, minTime } = useSelector<AppState, GlobalReducer>(
+		(state) => state.globalTime,
+	);
+	const { servicename } = useParams<IServiceName>();
+	const [selectedTimeStamp, setSelectedTimeStamp] = useState<number>(0);
+	const { search } = useLocation();
+	const { queries } = useResourceAttribute();
+	const selectedTags = useMemo(
+		() => (convertRawQueriesToTraceSelectedTags(queries) as Tags[]) || [],
+		[queries],
+	);
+	const isSpanMetricEnabled = useFeatureFlag(FeatureKeys.USE_SPAN_METRICS)
+		?.active;
 
-	const {
-		topOperations,
-		serviceOverview,
-		resourceAttributePromQLQuery,
-		resourceAttributeQueries,
-		topLevelOperations,
-	} = useSelector<AppState, MetricReducer>((state) => state.metrics);
-	const operationsRegex = useMemo(() => {
-		return encodeURIComponent(
-			topLevelOperations.map((e) => escapeRegExp(e)).join('|'),
-		);
-	}, [topLevelOperations]);
+	const handleSetTimeStamp = useCallback((selectTime: number) => {
+		setSelectedTimeStamp(selectTime);
+	}, []);
 
-	const selectedTraceTags: string = JSON.stringify(
-		convertRawQueriesToTraceSelectedTags(resourceAttributeQueries, 'array') || [],
+	const dispatch = useDispatch();
+	const handleGraphClick = useCallback(
+		(type: string): ClickHandlerType => (
+			ChartEvent: ChartEvent,
+			activeElements: ActiveElement[],
+			chart: Chart,
+			data: ChartData,
+		): void => {
+			onGraphClickHandler(handleSetTimeStamp)(
+				ChartEvent,
+				activeElements,
+				chart,
+				data,
+				type,
+			);
+		},
+		[handleSetTimeStamp],
 	);
 
-	const onTracePopupClick = (timestamp: number): void => {
-		const currentTime = timestamp;
-		const tPlusOne = timestamp + 1 * 60 * 1000;
+	const {
+		data: topLevelOperations,
+		isLoading: topLevelOperationsLoading,
+		error: topLevelOperationsError,
+		isError: topLevelOperationsIsError,
+	} = useQuery<ServiceDataProps>({
+		queryKey: [servicename, minTime, maxTime, selectedTags],
+		queryFn: getTopLevelOperations,
+	});
 
-		const urlParams = new URLSearchParams();
-		urlParams.set(METRICS_PAGE_QUERY_PARAM.startTime, currentTime.toString());
-		urlParams.set(METRICS_PAGE_QUERY_PARAM.endTime, tPlusOne.toString());
+	const selectedTraceTags: string = JSON.stringify(
+		convertRawQueriesToTraceSelectedTags(queries) || [],
+	);
 
-		history.replace(
-			`${
-				ROUTES.TRACE
-			}?${urlParams.toString()}&selected={"serviceName":["${servicename}"]}&filterToFetchData=["duration","status","serviceName"]&spanAggregateCurrentPage=1&selectedTags=${selectedTraceTags}&&isFilterExclude={"serviceName":false}&userSelectedFilter={"status":["error","ok"],"serviceName":["${servicename}"]}&spanAggregateCurrentPage=1`,
-		);
-	};
+	const tagFilterItems = useMemo(
+		() =>
+			handleNonInQueryRange(resourceAttributesToTagFilterItems(queries)) || [],
+		[queries],
+	);
 
-	const onClickHandler = async (
-		event: ChartEvent,
-		elements: ActiveElement[],
-		chart: Chart,
-		data: ChartData,
-		from: string,
-	): Promise<void> => {
-		if (event.native) {
-			const points = chart.getElementsAtEventForMode(
-				event.native,
-				'nearest',
-				{ intersect: true },
-				true,
-			);
+	const topLevelOperationsRoute = useMemo(
+		() => (topLevelOperations ? topLevelOperations[servicename || ''] : []),
+		[servicename, topLevelOperations],
+	);
 
-			const id = `${from}_button`;
-			const buttonElement = document.getElementById(id);
+	const operationPerSecWidget = useMemo(
+		() =>
+			getWidgetQueryBuilder({
+				query: {
+					queryType: EQueryType.QUERY_BUILDER,
+					promql: [],
+					builder: operationPerSec({
+						servicename,
+						tagFilterItems,
+						topLevelOperations: topLevelOperationsRoute,
+					}),
+					clickhouse_sql: [],
+					id: uuid(),
+				},
+				title: GraphTitle.RATE_PER_OPS,
+				panelTypes: PANEL_TYPES.TIME_SERIES,
+			}),
+		[servicename, tagFilterItems, topLevelOperationsRoute],
+	);
 
-			if (points.length !== 0) {
-				const firstPoint = points[0];
+	const errorPercentageWidget = useMemo(
+		() =>
+			getWidgetQueryBuilder({
+				query: {
+					queryType: EQueryType.QUERY_BUILDER,
+					promql: [],
+					builder: errorPercentage({
+						servicename,
+						tagFilterItems,
+						topLevelOperations: topLevelOperationsRoute,
+					}),
+					clickhouse_sql: [],
+					id: uuid(),
+				},
+				title: GraphTitle.ERROR_PERCENTAGE,
+				panelTypes: PANEL_TYPES.TIME_SERIES,
+			}),
+		[servicename, tagFilterItems, topLevelOperationsRoute],
+	);
 
-				if (data.labels) {
-					const time = data?.labels[firstPoint.index] as Date;
+	const onDragSelect = useCallback(
+		(start: number, end: number) => {
+			const startTimestamp = Math.trunc(start);
+			const endTimestamp = Math.trunc(end);
 
-					if (buttonElement) {
-						buttonElement.style.display = 'block';
-						buttonElement.style.left = `${firstPoint.element.x}px`;
-						buttonElement.style.top = `${firstPoint.element.y}px`;
-						selectedTimeStamp.current = time.getTime();
-					}
-				}
-			} else if (buttonElement && buttonElement.style.display === 'block') {
-				buttonElement.style.display = 'none';
+			if (startTimestamp !== endTimestamp) {
+				dispatch(UpdateTimeInterval('custom', [startTimestamp, endTimestamp]));
 			}
-		}
-	};
+		},
+		[dispatch],
+	);
 
 	const onErrorTrackHandler = (timestamp: number): void => {
 		const currentTime = timestamp;
-		const tPlusOne = timestamp + 1 * 60 * 1000;
+		const tPlusOne = timestamp + 60 * 1000;
 
-		const urlParams = new URLSearchParams();
-		urlParams.set(METRICS_PAGE_QUERY_PARAM.startTime, currentTime.toString());
-		urlParams.set(METRICS_PAGE_QUERY_PARAM.endTime, tPlusOne.toString());
+		const urlParams = new URLSearchParams(search);
+		urlParams.set(QueryParams.startTime, currentTime.toString());
+		urlParams.set(QueryParams.endTime, tPlusOne.toString());
+
+		const avialableParams = routeConfig[ROUTES.TRACE];
+		const queryString = getQueryString(avialableParams, urlParams);
 
 		history.replace(
 			`${
 				ROUTES.TRACE
-			}?${urlParams.toString()}&selected={"serviceName":["${servicename}"],"status":["error"]}&filterToFetchData=["duration","status","serviceName"]&spanAggregateCurrentPage=1&selectedTags=${selectedTraceTags}&isFilterExclude={"serviceName":false,"status":false}&userSelectedFilter={"serviceName":["${servicename}"],"status":["error"]}&spanAggregateCurrentPage=1`,
+			}?selected={"serviceName":["${servicename}"],"status":["error"]}&filterToFetchData=["duration","status","serviceName"]&spanAggregateCurrentPage=1&selectedTags=${selectedTraceTags}&isFilterExclude={"serviceName":false,"status":false}&userSelectedFilter={"serviceName":["${servicename}"],"status":["error"]}&spanAggregateCurrentPage=1&${queryString.join(
+				'',
+			)}`,
 		);
 	};
 
@@ -111,71 +184,13 @@ function Application({ getWidget }: DashboardProps): JSX.Element {
 		<>
 			<Row gutter={24}>
 				<Col span={12}>
-					<Button
-						type="default"
-						size="small"
-						id="Service_button"
-						onClick={(): void => {
-							onTracePopupClick(selectedTimeStamp.current);
-						}}
-					>
-						View Traces
-					</Button>
-					<Card>
-						<GraphTitle>Latency</GraphTitle>
-						<GraphContainer>
-							<Graph
-								onClickHandler={(ChartEvent, activeElements, chart, data): void => {
-									onClickHandler(ChartEvent, activeElements, chart, data, 'Service');
-								}}
-								name="service_latency"
-								type="line"
-								data={{
-									datasets: [
-										{
-											data: serviceOverview.map((e) =>
-												parseFloat(convertToNanoSecondsToSecond(e.p99)),
-											),
-											borderColor: colors[0],
-											label: 'p99 Latency',
-											showLine: true,
-											borderWidth: 1.5,
-											spanGaps: true,
-											pointRadius: 1.5,
-										},
-										{
-											data: serviceOverview.map((e) =>
-												parseFloat(convertToNanoSecondsToSecond(e.p95)),
-											),
-											borderColor: colors[1],
-											label: 'p95 Latency',
-											showLine: true,
-											borderWidth: 1.5,
-											spanGaps: true,
-											pointRadius: 1.5,
-										},
-										{
-											data: serviceOverview.map((e) =>
-												parseFloat(convertToNanoSecondsToSecond(e.p50)),
-											),
-											borderColor: colors[2],
-											label: 'p50 Latency',
-											showLine: true,
-											borderWidth: 1.5,
-											spanGaps: true,
-											pointRadius: 1.5,
-										},
-									],
-									labels: serviceOverview.map((e) => {
-										return new Date(
-											parseFloat(convertToNanoSecondsToSecond(e.timestamp)),
-										);
-									}),
-								}}
-								yAxisUnit="ms"
-							/>
-						</GraphContainer>
-					</Card>
+					<ServiceOverview
+						onDragSelect={onDragSelect}
+						handleGraphClick={handleGraphClick}
+						selectedTimeStamp={selectedTimeStamp}
+						selectedTraceTags={selectedTraceTags}
+						topLevelOperationsRoute={topLevelOperationsRoute}
+					/>
 				</Col>
 
 				<Col span={12}>
@@ -183,31 +198,25 @@ function Application({ getWidget }: DashboardProps): JSX.Element {
 						type="default"
 						size="small"
 						id="Rate_button"
-						onClick={(): void => {
-							onTracePopupClick(selectedTimeStamp.current);
-						}}
+						onClick={onViewTracePopupClick({
+							servicename,
+							selectedTraceTags,
+							timestamp: selectedTimeStamp,
+						})}
 					>
 						View Traces
 					</Button>
-					<Card>
-						<GraphTitle>Rate (ops/s)</GraphTitle>
-						<GraphContainer>
-							<FullView
-								name="operations_per_sec"
-								fullViewOptions={false}
-								onClickHandler={(event, element, chart, data): void => {
-									onClickHandler(event, element, chart, data, 'Rate');
-								}}
-								widget={getWidget([
-									{
-										query: `sum(rate(signoz_latency_count{service_name="${servicename}", operation=~\`${operationsRegex}\`${resourceAttributePromQLQuery}}[5m]))`,
-										legend: 'Operations',
-									},
-								])}
-								yAxisUnit="ops"
-							/>
-						</GraphContainer>
-					</Card>
+					<TopLevelOperation
+						handleGraphClick={handleGraphClick}
+						onDragSelect={onDragSelect}
+						topLevelOperationsError={topLevelOperationsError}
+						topLevelOperationsLoading={topLevelOperationsLoading}
+						topLevelOperationsIsError={topLevelOperationsIsError}
+						name="operations_per_sec"
+						widget={operationPerSecWidget}
+						yAxisUnit="ops"
+						opName="Rate"
+					/>
 				</Col>
 			</Row>
 			<Row gutter={24}>
@@ -217,36 +226,28 @@ function Application({ getWidget }: DashboardProps): JSX.Element {
 						size="small"
 						id="Error_button"
 						onClick={(): void => {
-							onErrorTrackHandler(selectedTimeStamp.current);
+							onErrorTrackHandler(selectedTimeStamp);
 						}}
 					>
 						View Traces
 					</Button>
 
-					<Card>
-						<GraphTitle>Error Percentage</GraphTitle>
-						<GraphContainer>
-							<FullView
-								name="error_percentage_%"
-								fullViewOptions={false}
-								onClickHandler={(ChartEvent, activeElements, chart, data): void => {
-									onClickHandler(ChartEvent, activeElements, chart, data, 'Error');
-								}}
-								widget={getWidget([
-									{
-										query: `max(sum(rate(signoz_calls_total{service_name="${servicename}", operation=~\`${operationsRegex}\`, status_code="STATUS_CODE_ERROR"${resourceAttributePromQLQuery}}[5m]) OR rate(signoz_calls_total{service_name="${servicename}", operation=~\`${operationsRegex}\`, http_status_code=~"5.."${resourceAttributePromQLQuery}}[5m]))*100/sum(rate(signoz_calls_total{service_name="${servicename}", operation=~\`${operationsRegex}\`${resourceAttributePromQLQuery}}[5m]))) < 1000 OR vector(0)`,
-										legend: 'Error Percentage',
-									},
-								])}
-								yAxisUnit="%"
-							/>
-						</GraphContainer>
-					</Card>
+					<TopLevelOperation
+						handleGraphClick={handleGraphClick}
+						onDragSelect={onDragSelect}
+						topLevelOperationsError={topLevelOperationsError}
+						topLevelOperationsLoading={topLevelOperationsLoading}
+						topLevelOperationsIsError={topLevelOperationsIsError}
+						name="error_percentage_%"
+						widget={errorPercentageWidget}
+						yAxisUnit="%"
+						opName="Error"
+					/>
 				</Col>
 
 				<Col span={12}>
 					<Card>
-						<TopOperationsTable data={topOperations} />
+						{isSpanMetricEnabled ? <TopOperationMetrics /> : <TopOperation />}
 					</Card>
 				</Col>
 			</Row>
@@ -254,8 +255,12 @@ function Application({ getWidget }: DashboardProps): JSX.Element {
 	);
 }
 
-interface DashboardProps {
-	getWidget: (query: PromQLWidgets['query']) => PromQLWidgets;
-}
+export type ClickHandlerType = (
+	ChartEvent: ChartEvent,
+	activeElements: ActiveElement[],
+	chart: Chart,
+	data: ChartData,
+	type?: string,
+) => void;
 
 export default Application;

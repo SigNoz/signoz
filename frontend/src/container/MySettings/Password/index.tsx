@@ -1,7 +1,8 @@
-import { Button, notification, Space, Typography } from 'antd';
+import { Button, Space, Typography } from 'antd';
 import changeMyPassword from 'api/user/changeMyPassword';
+import { useNotifications } from 'hooks/useNotifications';
 import { isPasswordNotValidMessage, isPasswordValid } from 'pages/SignUp/utils';
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
@@ -22,6 +23,8 @@ function PasswordContainer(): JSX.Element {
 	const defaultPlaceHolder = t('input_password', {
 		ns: 'settings',
 	});
+
+	const { notifications } = useNotifications();
 
 	useEffect(() => {
 		if (currentPassword && !isPasswordValid(currentPassword)) {
@@ -52,13 +55,13 @@ function PasswordContainer(): JSX.Element {
 			});
 
 			if (statusCode === 200) {
-				notification.success({
+				notifications.success({
 					message: t('success', {
 						ns: 'common',
 					}),
 				});
 			} else {
-				notification.error({
+				notifications.error({
 					message:
 						error ||
 						t('something_went_wrong', {
@@ -70,7 +73,7 @@ function PasswordContainer(): JSX.Element {
 		} catch (error) {
 			setIsLoading(false);
 
-			notification.error({
+			notifications.error({
 				message: t('something_went_wrong', {
 					ns: 'common',
 				}),

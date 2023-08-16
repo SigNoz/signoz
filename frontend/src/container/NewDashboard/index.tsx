@@ -1,5 +1,3 @@
-import React from 'react';
-
 import Description from './DescriptionOfDashboard';
 import GridGraphs from './GridGraphs';
 

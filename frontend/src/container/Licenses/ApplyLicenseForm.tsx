@@ -1,100 +1,102 @@
-import { Button, Input, notification } from 'antd';
-import FormItem from 'antd/lib/form/FormItem';
-import getFeaturesFlags from 'api/features/getFeatureFlags';
+import { Button, Form, Input } from 'antd';
 import apply from 'api/licenses/apply';
-import React, { useState } from 'react';
+import { useNotifications } from 'hooks/useNotifications';
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { QueryObserverResult, RefetchOptions, useQuery } from 'react-query';
-import { useDispatch } from 'react-redux';
-import { Dispatch } from 'redux';
-import { AppAction, UPDATE_FEATURE_FLAGS } from 'types/actions/app';
+import { QueryObserverResult, RefetchOptions } from 'react-query';
+import { useSelector } from 'react-redux';
+import { AppState } from 'store/reducers';
 import { ErrorResponse, SuccessResponse } from 'types/api';
 import { PayloadProps } from 'types/api/licenses/getAll';
+import AppReducer from 'types/reducer/app';
+import { requireErrorMessage } from 'utils/form/requireErrorMessage';
 
-import { ApplyForm, ApplyFormContainer, LicenseInput } from './styles';
+import {
+	ApplyForm,
+	ApplyFormContainer,
+	KeyPreview,
+	LicenseInput,
+} from './styles';
 
 function ApplyLicenseForm({
 	licenseRefetch,
 }: ApplyLicenseFormProps): JSX.Element {
 	const { t } = useTranslation(['licenses']);
-	const [key, setKey] = useState('');
-	const [loading, setLoading] = useState(false);
-	const dispatch = useDispatch<Dispatch<AppAction>>();
-	const { refetch } = useQuery({
-		queryFn: getFeaturesFlags,
-		queryKey: 'getFeatureFlags',
-		enabled: false,
-	});
+	const [isLoading, setIsLoading] = useState(false);
+	const [form] = Form.useForm<FormValues>();
+	const { featureResponse } = useSelector<AppState, AppReducer>(
+		(state) => state.app,
+	);
+
+	const { notifications } = useNotifications();
+	const key = Form.useWatch('key', form);
+
+	const isDisabled = isLoading || !key;
 
 	const onFinish = async (values: unknown | { key: string }): Promise<void> => {
 		const params = values as { key: string };
 		if (params.key === '' || !params.key) {
-			notification.error({
+			notifications.error({
 				message: 'Error',
 				description: t('enter_license_key'),
 			});
 			return;
 		}
 
-		setLoading(true);
+		setIsLoading(true);
 		try {
 			const response = await apply({
 				key: params.key,
 			});
 
 			if (response.statusCode === 200) {
-				const [featureFlagsResponse] = await Promise.all([
-					refetch(),
-					licenseRefetch(),
-				]);
-				if (featureFlagsResponse.data?.payload) {
-					dispatch({
-						type: UPDATE_FEATURE_FLAGS,
-						payload: featureFlagsResponse.data.payload,
-					});
-				}
-				notification.success({
+				await Promise.all([featureResponse?.refetch(), licenseRefetch()]);
+
+				notifications.success({
 					message: 'Success',
 					description: t('license_applied'),
 				});
 			} else {
-				notification.error({
+				notifications.error({
 					message: 'Error',
 					description: response.error || t('unexpected_error'),
 				});
 			}
 		} catch (e) {
-			notification.error({
+			notifications.error({
 				message: 'Error',
 				description: t('unexpected_error'),
 			});
 		}
-		setLoading(false);
+		setIsLoading(false);
 	};
 
 	return (
 		<ApplyFormContainer>
-			<ApplyForm layout="inline" onFinish={onFinish}>
-				<LicenseInput labelAlign="left" name="key">
-					<Input
-						onChange={(e): void => {
-							setKey(e.target.value as string);
-						}}
-						placeholder={t('placeholder_license_key')}
-					/>
+			<ApplyForm
+				form={form}
+				layout="inline"
+				onFinish={onFinish}
+				autoComplete="off"
+			>
+				<LicenseInput
+					name="key"
+					rules={[{ required: true, message: requireErrorMessage('License Key') }]}
+				>
+					<Input placeholder={t('placeholder_license_key')} />
 				</LicenseInput>
-				<FormItem>
+				<Form.Item>
 					<Button
-						loading={loading}
-						disabled={loading}
+						loading={isLoading}
+						disabled={isDisabled}
 						type="primary"
 						htmlType="submit"
 					>
 						{t('button_apply')}
 					</Button>
-				</FormItem>
+				</Form.Item>
 			</ApplyForm>
-			{key && <div style={{ paddingLeft: '0.5em', color: '#666' }}> {key}</div>}
+			{key && <KeyPreview>{key}</KeyPreview>}
 		</ApplyFormContainer>
 	);
 }
@@ -105,6 +107,10 @@ interface ApplyLicenseFormProps {
 	) => Promise<
 		QueryObserverResult<SuccessResponse<PayloadProps> | ErrorResponse, unknown>
 	>;
+}
+
+interface FormValues {
+	key: string;
 }
 
 export default ApplyLicenseForm;

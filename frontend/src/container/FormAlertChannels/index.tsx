@@ -1,9 +1,11 @@
 import { Form, FormInstance, Input, Select, Typography } from 'antd';
-import FormItem from 'antd/lib/form/FormItem';
 import { Store } from 'antd/lib/form/interface';
+import UpgradePrompt from 'components/Upgrade/UpgradePrompt';
+import { FeatureKeys } from 'constants/features';
 import ROUTES from 'constants/routes';
 import {
 	ChannelType,
+	MsTeamsType,
 	PagerChannel,
 	PagerType,
 	SlackChannel,
@@ -11,17 +13,17 @@ import {
 	WebhookChannel,
 	WebhookType,
 } from 'container/CreateAlertChannels/config';
+import useFeatureFlags from 'hooks/useFeatureFlag';
+import { isFeatureKeys } from 'hooks/useFeatureFlag/utils';
 import history from 'lib/history';
-import React from 'react';
+import { Dispatch, ReactElement, SetStateAction } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import MsTeamsSettings from './Settings/MsTeams';
 import PagerSettings from './Settings/Pager';
 import SlackSettings from './Settings/Slack';
 import WebhookSettings from './Settings/Webhook';
 import { Button } from './styles';
-
-const { Option } = Select;
-const { Title } = Typography;
 
 function FormAlertChannels({
 	formInstance,
@@ -32,14 +34,32 @@ function FormAlertChannels({
 	onSaveHandler,
 	savingState,
 	testingState,
-	NotificationElement,
 	title,
 	initialValue,
 	editing = false,
 }: FormAlertChannelsProps): JSX.Element {
 	const { t } = useTranslation('channels');
+	const isUserOnEEPlan = useFeatureFlags(FeatureKeys.ENTERPRISE_PLAN);
 
-	const renderSettings = (): React.ReactElement | null => {
+	const feature = `ALERT_CHANNEL_${type.toUpperCase()}`;
+
+	const hasFeature = useFeatureFlags(
+		isFeatureKeys(feature) ? feature : FeatureKeys.ALERT_CHANNEL_SLACK,
+	);
+
+	const isOssFeature = useFeatureFlags(FeatureKeys.OSS);
+
+	const renderSettings = (): ReactElement | null => {
+		if (
+			// for ee plan
+			!isOssFeature?.active &&
+			(!hasFeature || !hasFeature.active) &&
+			type === 'msteams'
+		) {
+			// channel type is not available for users plan
+			return <UpgradePrompt />;
+		}
+
 		switch (type) {
 			case SlackType:
 				return <SlackSettings setSelectedConfig={setSelectedConfig} />;
@@ -47,19 +67,19 @@ function FormAlertChannels({
 				return <WebhookSettings setSelectedConfig={setSelectedConfig} />;
 			case PagerType:
 				return <PagerSettings setSelectedConfig={setSelectedConfig} />;
-
+			case MsTeamsType:
+				return <MsTeamsSettings setSelectedConfig={setSelectedConfig} />;
 			default:
 				return null;
 		}
 	};
+
 	return (
 		<>
-			{NotificationElement}
-
-			<Title level={3}>{title}</Title>
+			<Typography.Title level={3}>{title}</Typography.Title>
 
 			<Form initialValues={initialValue} layout="vertical" form={formInstance}>
-				<FormItem label={t('field_channel_name')} labelAlign="left" name="name">
+				<Form.Item label={t('field_channel_name')} labelAlign="left" name="name">
 					<Input
 						disabled={editing}
 						onChange={(event): void => {
@@ -69,27 +89,34 @@ function FormAlertChannels({
 							}));
 						}}
 					/>
-				</FormItem>
+				</Form.Item>
 
-				<FormItem label={t('field_channel_type')} labelAlign="left" name="type">
+				<Form.Item label={t('field_channel_type')} labelAlign="left" name="type">
 					<Select disabled={editing} onChange={onTypeChangeHandler} value={type}>
-						<Option value="slack" key="slack">
+						<Select.Option value="slack" key="slack">
 							Slack
-						</Option>
-						<Option value="webhook" key="webhook">
+						</Select.Option>
+						<Select.Option value="webhook" key="webhook">
 							Webhook
-						</Option>
-						<Option value="pagerduty" key="pagerduty">
+						</Select.Option>
+						<Select.Option value="pagerduty" key="pagerduty">
 							Pagerduty
-						</Option>
+						</Select.Option>
+						{!isOssFeature?.active && (
+							<Select.Option value="msteams" key="msteams">
+								<div>
+									Microsoft Teams {!isUserOnEEPlan && '(Supported in Paid Plans Only)'}{' '}
+								</div>
+							</Select.Option>
+						)}
 					</Select>
-				</FormItem>
+				</Form.Item>
 
-				<FormItem>{renderSettings()}</FormItem>
+				<Form.Item>{renderSettings()}</Form.Item>
 
-				<FormItem>
+				<Form.Item>
 					<Button
-						disabled={savingState}
+						disabled={savingState || !hasFeature}
 						loading={savingState}
 						type="primary"
 						onClick={(): void => onSaveHandler(type)}
@@ -97,7 +124,7 @@ function FormAlertChannels({
 						{t('button_save_channel')}
 					</Button>
 					<Button
-						disabled={testingState}
+						disabled={testingState || !hasFeature}
 						loading={testingState}
 						onClick={(): void => onTestHandler(type)}
 					>
@@ -110,7 +137,7 @@ function FormAlertChannels({
 					>
 						{t('button_return')}
 					</Button>
-				</FormItem>
+				</Form.Item>
 			</Form>
 		</>
 	);
@@ -119,18 +146,14 @@ function FormAlertChannels({
 interface FormAlertChannelsProps {
 	formInstance: FormInstance;
 	type: ChannelType;
-	setSelectedConfig: React.Dispatch<
-		React.SetStateAction<Partial<SlackChannel & WebhookChannel & PagerChannel>>
+	setSelectedConfig: Dispatch<
+		SetStateAction<Partial<SlackChannel & WebhookChannel & PagerChannel>>
 	>;
 	onTypeChangeHandler: (value: ChannelType) => void;
 	onSaveHandler: (props: ChannelType) => void;
 	onTestHandler: (props: ChannelType) => void;
 	testingState: boolean;
 	savingState: boolean;
-	NotificationElement: React.ReactElement<
-		unknown,
-		string | React.JSXElementConstructor<unknown>
-	>;
 	title: string;
 	initialValue: Store;
 	// editing indicates if the form is opened in edit mode

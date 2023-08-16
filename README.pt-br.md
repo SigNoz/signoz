@@ -84,9 +84,9 @@ Você pode encontrar a lista completa de linguagens aqui - https://opentelemetry
   
 ### Implantar usando Docker
 
-Siga as etapas listadas [aqui](https://signoz.io/docs/deployment/docker/) para instalar usando o Docker.
+Siga as etapas listadas [aqui](https://signoz.io/docs/install/docker/) para instalar usando o Docker.
 
-Esse [guia para solução de problemas](https://signoz.io/docs/deployment/troubleshooting) pode ser útil se você enfrentar quaisquer problemas. 
+Esse [guia para solução de problemas](https://signoz.io/docs/install/troubleshooting/) pode ser útil se você enfrentar quaisquer problemas. 
 
 <p>&nbsp  </p>
   

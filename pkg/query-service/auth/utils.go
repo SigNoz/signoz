@@ -15,7 +15,7 @@ var (
 	ErrorInvalidRole  = errors.New("Invalid role")
 
 	ErrorInvalidInviteToken = errors.New("Invalid invite token")
-	ErrorAskAdmin           = errors.New("You are not allowed to create an account. Please ask your admin to send an invite link")
+	ErrorAskAdmin           = errors.New("An invitation is needed to create an account. Please ask your admin (the person who has first installed SIgNoz) to send an invite.")
 )
 
 func randomHex(sz int) (string, error) {

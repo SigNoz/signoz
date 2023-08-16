@@ -15,16 +15,19 @@ const config: Config.InitialOptions = {
 			useESM: true,
 		},
 	},
-	testMatch: ['<rootDir>/src/**/?(*.)(test).(ts|js)?(x)'],
+	testMatch: ['<rootDir>/src/**/*?(*.)(test).(ts|js)?(x)'],
 	preset: 'ts-jest/presets/js-with-ts-esm',
 	transform: {
 		'^.+\\.(ts|tsx)?$': 'ts-jest',
 		'^.+\\.(js|jsx)$': 'babel-jest',
 	},
-	transformIgnorePatterns: ['node_modules/(?!(lodash-es)/)'],
+	transformIgnorePatterns: [
+		'node_modules/(?!(lodash-es|react-dnd|core-dnd|@react-dnd|dnd-core|react-dnd-html5-backend)/)',
+	],
 	setupFilesAfterEnv: ['<rootDir>jest.setup.ts'],
 	testPathIgnorePatterns: ['/node_modules/', '/public/'],
 	moduleDirectories: ['node_modules', 'src'],
+	testEnvironment: 'jest-environment-jsdom',
 	testEnvironmentOptions: {
 		'jest-playwright': {
 			browsers: ['chromium', 'firefox', 'webkit'],

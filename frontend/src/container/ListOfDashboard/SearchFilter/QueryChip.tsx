@@ -1,5 +1,3 @@
-import React from 'react';
-
 import { QueryChipContainer, QueryChipItem } from './styles';
 import { IQueryStructure } from './types';
 

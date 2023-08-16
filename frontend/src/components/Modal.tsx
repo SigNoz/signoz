@@ -1,5 +1,5 @@
 import { Modal, ModalProps as Props } from 'antd';
-import React, { ReactElement } from 'react';
+import { ReactElement } from 'react';
 
 function CustomModal({
 	title,
@@ -11,7 +11,7 @@ function CustomModal({
 	return (
 		<Modal
 			title={title}
-			visible={isModalVisible}
+			open={isModalVisible}
 			footer={footer}
 			closable={closable}
 		>

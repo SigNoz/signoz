@@ -24,10 +24,11 @@ export interface AlertDef {
 }
 
 export interface RuleCondition {
-	compositeMetricQuery: ICompositeMetricQuery;
+	compositeQuery: ICompositeMetricQuery;
 	op?: string | undefined;
 	target?: number | undefined;
 	matchType?: string | undefined;
+	targetUnit?: string | undefined;
 }
 
 export interface Labels {

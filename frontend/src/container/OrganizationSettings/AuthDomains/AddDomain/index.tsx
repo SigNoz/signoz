@@ -1,11 +1,12 @@
 /* eslint-disable prefer-regex-literals */
 import { PlusOutlined } from '@ant-design/icons';
-import { Button, Form, Input, Modal, notification, Typography } from 'antd';
+import { Button, Form, Input, Modal, Typography } from 'antd';
 import { useForm } from 'antd/es/form/Form';
 import createDomainApi from 'api/SAML/postDomain';
-import { FeatureKeys } from 'constants/featureKeys';
-import useFeatureFlag from 'hooks/useFeatureFlag';
-import React, { useState } from 'react';
+import { FeatureKeys } from 'constants/features';
+import useFeatureFlag from 'hooks/useFeatureFlag/useFeatureFlag';
+import { useNotifications } from 'hooks/useNotifications';
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
@@ -17,9 +18,11 @@ function AddDomain({ refetch }: Props): JSX.Element {
 	const { t } = useTranslation(['common', 'organizationsettings']);
 	const [isAddDomains, setIsDomain] = useState(false);
 	const [form] = useForm<FormProps>();
-	const SSOFlag = useFeatureFlag(FeatureKeys.SSO);
+	const isSsoFlagEnabled = useFeatureFlag(FeatureKeys.SSO);
 
 	const { org } = useSelector<AppState, AppReducer>((state) => state.app);
+
+	const { notifications } = useNotifications();
 
 	const onCreateHandler = async (): Promise<void> => {
 		try {
@@ -29,19 +32,19 @@ function AddDomain({ refetch }: Props): JSX.Element {
 			});
 
 			if (response.statusCode === 200) {
-				notification.success({
+				notifications.success({
 					message: 'Your domain has been added successfully.',
 					duration: 15,
 				});
 				setIsDomain(false);
 				refetch();
 			} else {
-				notification.error({
+				notifications.error({
 					message: t('common:something_went_wrong'),
 				});
 			}
 		} catch (error) {
-			notification.error({
+			notifications.error({
 				message: t('common:something_went_wrong'),
 			});
 		}
@@ -55,7 +58,7 @@ function AddDomain({ refetch }: Props): JSX.Element {
 						ns: 'organizationsettings',
 					})}
 				</Typography.Title>
-				{SSOFlag && (
+				{isSsoFlagEnabled && (
 					<Button
 						onClick={(): void => setIsDomain(true)}
 						type="primary"
@@ -69,7 +72,7 @@ function AddDomain({ refetch }: Props): JSX.Element {
 				centered
 				title="Add Domain"
 				footer={null}
-				visible={isAddDomains}
+				open={isAddDomains}
 				destroyOnClose
 				onCancel={(): void => setIsDomain(false)}
 			>

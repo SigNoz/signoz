@@ -1,7 +1,5 @@
 
 node_modules
-yarn.lock
-package.json
 
 deploy/docker/environment_tiny/common_test
 frontend/node_modules
@@ -53,3 +51,5 @@ ee/query-service/tests/test-deploy/data/
 /deploy/docker/clickhouse-setup/data/
 /deploy/docker-swarm/clickhouse-setup/data/
 bin/
+
+*/query-service/queries.active

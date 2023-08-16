@@ -10,6 +10,7 @@ export interface Props {
 	order?: TraceReducer['spansAggregate']['order'];
 	isFilterExclude: TraceReducer['isFilterExclude'];
 	orderParam: TraceReducer['spansAggregate']['orderParam'];
+	spanKind?: TraceReducer['spanKind'];
 }
 
 export type PayloadProps = {
