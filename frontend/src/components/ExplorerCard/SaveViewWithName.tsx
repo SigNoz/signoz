@@ -7,6 +7,7 @@ import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useSaveView } from 'hooks/saveViews/useSaveView';
 import { useNotifications } from 'hooks/useNotifications';
 import { mapCompositeQueryFromQuery } from 'lib/newQueryBuilder/queryBuilderMappers/mapCompositeQueryFromQuery';
+import { mapQueryDataFromApi } from 'lib/newQueryBuilder/queryBuilderMappers/mapQueryDataFromApi';
 import { ChangeEvent, useCallback, useState } from 'react';
 import { DataSource } from 'types/common/queryBuilder';
 
@@ -18,7 +19,7 @@ function SaveViewWithName({
 	refetchAllView,
 }: SaveViewWithNameProps): JSX.Element {
 	const [name, setName] = useState('');
-	const { currentQuery } = useQueryBuilder();
+	const { currentQuery, redirectWithQueryBuilderData } = useQueryBuilder();
 	const panelType = useGetPanelTypesQueryParam();
 	const { notifications } = useNotifications();
 	const compositeQuery = mapCompositeQueryFromQuery(currentQuery, panelType);
@@ -47,6 +48,9 @@ function SaveViewWithName({
 			});
 
 			refetchAllView();
+			redirectWithQueryBuilderData(mapQueryDataFromApi(compositeQuery), {
+				viewName: name,
+			});
 			notifications.success({
 				message: 'View Saved Successfully',
 			});
@@ -63,6 +67,7 @@ function SaveViewWithName({
 		mutateAsync,
 		name,
 		notifications,
+		redirectWithQueryBuilderData,
 		refetchAllView,
 		sourcePage,
 	]);

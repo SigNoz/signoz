@@ -39,11 +39,12 @@ function ExplorerCard({ sourcepage, children }: Props): JSX.Element {
 		setIsOpen(newOpen);
 	};
 
-	const viewNameFromQuery = useMemo(() => urlQuery.get('name'), [urlQuery]);
+	const viewNameFromQuery = useMemo(() => urlQuery.get('viewName'), [urlQuery]);
 
-	const viewName = viewNameFromQuery
-		? JSON.parse(viewNameFromQuery)
-		: 'Query Builder';
+	console.log('viewNameFromQuery', viewNameFromQuery);
+
+	const viewName =
+		viewNameFromQuery !== null ? JSON.parse(viewNameFromQuery) : 'Query Builder';
 	const {
 		data,
 		isLoading,
@@ -51,7 +52,22 @@ function ExplorerCard({ sourcepage, children }: Props): JSX.Element {
 		isRefetching,
 		refetch: refetchAllView,
 	} = useGetAllViews(sourcepage);
+
 	const { redirectWithQueryBuilderData } = useQueryBuilder();
+
+	const onMenuItemSelectHandler = useCallback(
+		({ key }: { key: string }): void => {
+			const selectedView = data?.data.data.find((view) => view.uuid === key);
+
+			if (!selectedView) return;
+
+			const { compositeQuery, name } = selectedView;
+			const query = mapQueryDataFromApi(compositeQuery);
+
+			redirectWithQueryBuilderData(query, { viewName: name });
+		},
+		[data?.data.data, redirectWithQueryBuilderData],
+	);
 
 	useErrorNotification(error);
 
@@ -66,11 +82,13 @@ function ExplorerCard({ sourcepage, children }: Props): JSX.Element {
 						viewName={view.name}
 						createdBy={view.createdBy}
 						uuid={view.uuid}
+						refetchAllView={refetchAllView}
+						onMenuItemSelectHandler={onMenuItemSelectHandler}
 					/>
 				),
 			}));
 		},
-		[],
+		[onMenuItemSelectHandler, refetchAllView],
 	);
 
 	const updateMenuList = useMemo(() => generatorMenuItems(data?.data.data), [
@@ -78,27 +96,11 @@ function ExplorerCard({ sourcepage, children }: Props): JSX.Element {
 		generatorMenuItems,
 	]);
 
-	const onMenuItemSelectHandler: MenuProps['onClick'] = useCallback(
-		({ key }: { key: string }): void => {
-			const selectedView = data?.data.data.find((view) => view.uuid === key);
-
-			if (!selectedView) return;
-
-			const { compositeQuery, name } = selectedView;
-			const query = mapQueryDataFromApi(compositeQuery);
-
-			redirectWithQueryBuilderData(query, { name });
-		},
-		[data?.data.data, redirectWithQueryBuilderData],
-	);
-
 	const menu = useMemo(
 		(): MenuProps => ({
 			items: updateMenuList,
-			onClick: onMenuItemSelectHandler,
-			style: { padding: 0 },
 		}),
-		[onMenuItemSelectHandler, updateMenuList],
+		[updateMenuList],
 	);
 
 	return (
