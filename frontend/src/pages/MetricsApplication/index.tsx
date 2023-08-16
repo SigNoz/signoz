@@ -8,6 +8,7 @@ import history from 'lib/history';
 import { useMemo } from 'react';
 import { generatePath, useParams } from 'react-router-dom';
 
+import ApDexApplication from './ApDex/ApDexApplication';
 import { MetricsApplicationTab, TAB_KEY_VS_LABEL } from './types';
 import useMetricsApplicationTabKey from './useMetricsApplicationTabKey';
 
@@ -49,6 +50,7 @@ function MetricsApplication(): JSX.Element {
 	return (
 		<>
 			<ResourceAttributesFilter />
+			<ApDexApplication />
 			<RouteTab routes={routes} history={history} activeKey={activeKey} />
 		</>
 	);
