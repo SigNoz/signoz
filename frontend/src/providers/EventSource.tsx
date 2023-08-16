@@ -27,6 +27,7 @@ interface IEventSourceContext {
 		queryString: string;
 	}) => void;
 	handleCloseConnection: () => void;
+	handleSetInitialLoading: (value: boolean) => void;
 }
 
 const EventSourceContext = createContext<IEventSourceContext>({
@@ -37,6 +38,7 @@ const EventSourceContext = createContext<IEventSourceContext>({
 	isConnectionError: false,
 	handleStartOpenConnection: () => {},
 	handleCloseConnection: () => {},
+	handleSetInitialLoading: () => {},
 });
 
 export function EventSourceProvider({
@@ -51,6 +53,10 @@ export function EventSourceProvider({
 	const { user } = useSelector<AppState, AppReducer>((state) => state.app);
 
 	const eventSourceRef = useRef<EventSourcePolyfill | null>(null);
+
+	const handleSetInitialLoading = useCallback((value: boolean) => {
+		setInitialLoading(value);
+	}, []);
 
 	const handleOpenConnection: EventListener = useCallback(() => {
 		setIsConnectionLoading(false);
@@ -125,6 +131,7 @@ export function EventSourceProvider({
 			initialLoading,
 			handleStartOpenConnection,
 			handleCloseConnection,
+			handleSetInitialLoading,
 		}),
 		[
 			isConnectionError,
@@ -133,6 +140,7 @@ export function EventSourceProvider({
 			initialLoading,
 			handleStartOpenConnection,
 			handleCloseConnection,
+			handleSetInitialLoading,
 		],
 	);
 
