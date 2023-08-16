@@ -1,6 +1,7 @@
 import { Col } from 'antd';
 import { initialQueriesMap } from 'constants/queryBuilder';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
+import { useEventSource } from 'providers/EventSource';
 import { useCallback, useMemo } from 'react';
 import {
 	IBuilderQuery,
@@ -20,6 +21,8 @@ function FiltersInput(): JSX.Element {
 		redirectWithQueryBuilderData,
 		currentQuery,
 	} = useQueryBuilder();
+
+	const { initialLoading, handleSetInitialLoading } = useEventSource();
 
 	const handleChange = useCallback(
 		(filters: TagFilter) => {
@@ -46,8 +49,17 @@ function FiltersInput(): JSX.Element {
 	}, [stagedQuery]);
 
 	const handleSearch = useCallback(() => {
+		if (initialLoading) {
+			handleSetInitialLoading(false);
+		}
+
 		redirectWithQueryBuilderData(currentQuery);
-	}, [redirectWithQueryBuilderData, currentQuery]);
+	}, [
+		initialLoading,
+		redirectWithQueryBuilderData,
+		currentQuery,
+		handleSetInitialLoading,
+	]);
 
 	return (
 		<ContainerStyled>
