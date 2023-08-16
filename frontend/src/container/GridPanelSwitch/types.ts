@@ -6,6 +6,7 @@ import {
 } from 'components/Graph/types';
 import { GridTableComponentProps } from 'container/GridTableComponent/types';
 import { GridValueComponentProps } from 'container/GridValueComponent/types';
+import { Widgets } from 'types/api/dashboard/getAll';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { QueryDataV3 } from 'types/api/widgets/getQuery';
 
@@ -14,7 +15,7 @@ import { PANEL_TYPES } from '../../constants/queryBuilder';
 export type GridPanelSwitchProps = {
 	panelType: PANEL_TYPES;
 	data: ChartData;
-	title?: string;
+	title?: Widgets['title'];
 	opacity?: string;
 	isStacked?: boolean;
 	onClickHandler?: GraphOnClickHandler;

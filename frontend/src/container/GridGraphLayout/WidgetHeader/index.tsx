@@ -12,7 +12,7 @@ import { queryParamNamesMap } from 'constants/queryBuilderQueryNames';
 import ROUTES from 'constants/routes';
 import useComponentPermission from 'hooks/useComponentPermission';
 import history from 'lib/history';
-import { useCallback, useMemo, useState } from 'react';
+import { ReactNode, useCallback, useMemo, useState } from 'react';
 import { UseQueryResult } from 'react-query';
 import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
@@ -32,12 +32,14 @@ import {
 	ArrowContainer,
 	HeaderContainer,
 	HeaderContentContainer,
+	ThesholdContainer,
+	WidgetHeaderContainer,
 } from './styles';
 import { MenuItem } from './types';
 import { generateMenuList, isTWidgetOptions } from './utils';
 
 interface IWidgetHeaderProps {
-	title: string;
+	title: ReactNode;
 	widget: Widgets;
 	onView: VoidFunction;
 	onDelete?: VoidFunction;
@@ -47,6 +49,7 @@ interface IWidgetHeaderProps {
 		SuccessResponse<MetricRangePayloadProps> | ErrorResponse
 	>;
 	errorMessage: string | undefined;
+	threshold?: ReactNode;
 	headerMenuList?: MenuItemKeys[];
 }
 
@@ -59,6 +62,7 @@ function WidgetHeader({
 	parentHover,
 	queryResponse,
 	errorMessage,
+	threshold,
 	headerMenuList,
 }: IWidgetHeaderProps): JSX.Element {
 	const [localHover, setLocalHover] = useState(false);
@@ -171,7 +175,7 @@ function WidgetHeader({
 	);
 
 	return (
-		<div>
+		<WidgetHeaderContainer>
 			<Dropdown
 				destroyPopupOnHide
 				open={isOpen}
@@ -196,6 +200,7 @@ function WidgetHeader({
 					</HeaderContentContainer>
 				</HeaderContainer>
 			</Dropdown>
+			<ThesholdContainer>{threshold}</ThesholdContainer>
 			{queryResponse.isFetching && !queryResponse.isError && (
 				<Spinner height="5vh" style={spinnerStyles} />
 			)}
@@ -204,13 +209,14 @@ function WidgetHeader({
 					<ExclamationCircleOutlined style={tooltipStyles} />
 				</Tooltip>
 			)}
-		</div>
+		</WidgetHeaderContainer>
 	);
 }
 
 WidgetHeader.defaultProps = {
 	onDelete: undefined,
 	onClone: undefined,
+	threshold: undefined,
 	headerMenuList: [MenuItemKeys.View],
 };
 

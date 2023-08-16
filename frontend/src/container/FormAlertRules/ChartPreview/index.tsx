@@ -9,10 +9,12 @@ import { useGetQueryRange } from 'hooks/queryBuilder/useGetQueryRange';
 import getChartData from 'lib/getChartData';
 import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
+import { AlertDef } from 'types/api/alerts/def';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { EQueryType } from 'types/common/dashboard';
 
 import { ChartContainer, FailedMessageContainer } from './styles';
+import { covertIntoDataFormats } from './utils';
 
 export interface ChartPreviewProps {
 	name: string;
@@ -21,7 +23,7 @@ export interface ChartPreviewProps {
 	selectedTime?: timePreferenceType;
 	selectedInterval?: Time;
 	headline?: JSX.Element;
-	threshold?: number | undefined;
+	alertDef?: AlertDef;
 	userQueryKey?: string;
 }
 
@@ -32,18 +34,28 @@ function ChartPreview({
 	selectedTime = 'GLOBAL_TIME',
 	selectedInterval = '5min',
 	headline,
-	threshold,
 	userQueryKey,
+	alertDef,
 }: ChartPreviewProps): JSX.Element | null {
 	const { t } = useTranslation('alerts');
+	const threshold = alertDef?.condition.target || 0;
+
+	const thresholdValue = covertIntoDataFormats({
+		value: threshold,
+		sourceUnit: alertDef?.condition.targetUnit,
+		targetUnit: query?.unit,
+	});
+
 	const staticLine: StaticLineProps | undefined =
 		threshold !== undefined
 			? {
-					yMin: threshold,
-					yMax: threshold,
+					yMin: thresholdValue,
+					yMax: thresholdValue,
 					borderColor: '#f14',
 					borderWidth: 1,
-					lineText: `${t('preview_chart_threshold_label')} (y=${threshold})`,
+					lineText: `${t('preview_chart_threshold_label')} (y=${thresholdValue} ${
+						query?.unit || ''
+					})`,
 					textColor: '#f14',
 			  }
 			: undefined;
@@ -121,6 +133,7 @@ function ChartPreview({
 					staticLine={staticLine}
 					panelData={queryResponse.data?.payload.data.newResult.data.result || []}
 					query={query || initialQueriesMap.metrics}
+					yAxisUnit={query?.unit}
 				/>
 			)}
 		</ChartContainer>
@@ -132,8 +145,8 @@ ChartPreview.defaultProps = {
 	selectedTime: 'GLOBAL_TIME',
 	selectedInterval: '5min',
 	headline: undefined,
-	threshold: undefined,
 	userQueryKey: '',
+	alertDef: undefined,
 };
 
 export default ChartPreview;

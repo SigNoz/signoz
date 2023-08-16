@@ -7,7 +7,7 @@ import {
 	ChartType,
 	TimeUnit,
 } from 'chart.js';
-import { ForwardedRef } from 'react';
+import { ForwardedRef, ReactNode } from 'react';
 
 import {
 	dragSelectPluginId,
@@ -49,7 +49,7 @@ export interface GraphProps {
 	animate?: boolean;
 	type: ChartType;
 	data: Chart['data'];
-	title?: string;
+	title?: ReactNode;
 	isStacked?: boolean;
 	onClickHandler?: GraphOnClickHandler;
 	name: string;

@@ -133,7 +133,7 @@ services:
   #     - ./data/clickhouse-3/:/var/lib/clickhouse/
 
   alertmanager:
-    image: signoz/alertmanager:0.23.1
+    image: signoz/alertmanager:0.23.2
     volumes:
       - ./data/alertmanager:/data
     command:
