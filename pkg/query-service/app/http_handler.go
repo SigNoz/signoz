@@ -2976,6 +2976,19 @@ func (aH *APIHandler) queryRangeV3(ctx context.Context, queryRangeParams *v3.Que
 
 	applyMetricLimit(result, queryRangeParams)
 
+	if queryRangeParams.CompositeQuery.PanelType == v3.PanelTypeGraph {
+		// limit the number of series for graph panel
+		for idx := range result {
+			result[idx].TotalSeriesCount = len(result[idx].Series)
+			if len(result[idx].Series) > constants.MaxSeriesForGraphPanel {
+				result[idx].Series = result[idx].Series[:constants.MaxSeriesForGraphPanel]
+				result[idx].Warning = fmt.Sprintf(
+					"series count exceeded the limit of %d, please use filters to reduce the number of series", constants.MaxSeriesForGraphPanel,
+				)
+			}
+		}
+	}
+
 	resp := v3.QueryRangeResponse{
 		Result: result,
 	}
