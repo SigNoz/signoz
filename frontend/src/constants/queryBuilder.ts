@@ -52,6 +52,7 @@ export const baseAutoCompleteIdKeysOrder: (keyof Omit<
 export const autocompleteType: Record<AutocompleteType, AutocompleteType> = {
 	resource: 'resource',
 	tag: 'tag',
+	'': '',
 };
 
 export const formulasNames: string[] = Array.from(
@@ -111,10 +112,10 @@ export const initialAutocompleteData: BaseAutocompleteData = {
 		{ dataType: null, key: '', isColumn: null, type: null },
 		baseAutoCompleteIdKeysOrder,
 	),
-	dataType: null,
+	dataType: '',
 	key: '',
-	isColumn: null,
-	type: null,
+	isColumn: false,
+	type: '',
 };
 
 export const initialFilters: TagFilter = {
