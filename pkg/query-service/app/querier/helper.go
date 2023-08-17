@@ -3,6 +3,7 @@ package querier
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"sync"
 	"time"
 
@@ -10,6 +11,7 @@ import (
 	metricsV3 "go.signoz.io/signoz/pkg/query-service/app/metrics/v3"
 	tracesV3 "go.signoz.io/signoz/pkg/query-service/app/traces/v3"
 	"go.signoz.io/signoz/pkg/query-service/cache/status"
+	"go.signoz.io/signoz/pkg/query-service/constants"
 	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
 	"go.uber.org/zap"
 )
@@ -28,7 +30,29 @@ func (q *querier) runBuilderQuery(
 
 	// TODO: handle other data sources
 	if builderQuery.DataSource == v3.DataSourceLogs {
-		query, err := logsV3.PrepareLogsQuery(params.Start, params.End, params.CompositeQuery.QueryType, params.CompositeQuery.PanelType, builderQuery)
+		var query string
+		var err error
+		// for ts query with limit replace it as it is already formed
+		if params.CompositeQuery.PanelType == v3.PanelTypeGraph && builderQuery.Limit > 0 && len(builderQuery.GroupBy) > 0 {
+			limitQuery, err := logsV3.PrepareLogsQuery(params.Start, params.End, params.CompositeQuery.QueryType, params.CompositeQuery.PanelType, builderQuery, logsV3.Options{GraphLimitQtype: constants.FirstQueryGraphLimit})
+			if err != nil {
+				ch <- channelResult{Err: err, Name: queryName, Query: limitQuery, Series: nil}
+				return
+			}
+			placeholderQuery, err := logsV3.PrepareLogsQuery(params.Start, params.End, params.CompositeQuery.QueryType, params.CompositeQuery.PanelType, builderQuery, logsV3.Options{GraphLimitQtype: constants.SecondQueryGraphLimit})
+			if err != nil {
+				ch <- channelResult{Err: err, Name: queryName, Query: placeholderQuery, Series: nil}
+				return
+			}
+			query = fmt.Sprintf(placeholderQuery, limitQuery)
+		} else {
+			query, err = logsV3.PrepareLogsQuery(params.Start, params.End, params.CompositeQuery.QueryType, params.CompositeQuery.PanelType, builderQuery, logsV3.Options{})
+			if err != nil {
+				ch <- channelResult{Err: err, Name: queryName, Query: query, Series: nil}
+				return
+			}
+		}
+
 		if err != nil {
 			ch <- channelResult{Err: err, Name: queryName, Query: query, Series: nil}
 			return
@@ -39,10 +63,28 @@ func (q *querier) runBuilderQuery(
 	}
 
 	if builderQuery.DataSource == v3.DataSourceTraces {
-		query, err := tracesV3.PrepareTracesQuery(params.Start, params.End, params.CompositeQuery.QueryType, params.CompositeQuery.PanelType, builderQuery, keys)
-		if err != nil {
-			ch <- channelResult{Err: err, Name: queryName, Query: query, Series: nil}
-			return
+
+		var query string
+		var err error
+		// for ts query with group by and limit form two queries
+		if params.CompositeQuery.PanelType == v3.PanelTypeGraph && builderQuery.Limit > 0 && len(builderQuery.GroupBy) > 0 {
+			limitQuery, err := tracesV3.PrepareTracesQuery(params.Start, params.End, params.CompositeQuery.PanelType, builderQuery, keys, constants.FirstQueryGraphLimit)
+			if err != nil {
+				ch <- channelResult{Err: err, Name: queryName, Query: limitQuery, Series: nil}
+				return
+			}
+			placeholderQuery, err := tracesV3.PrepareTracesQuery(params.Start, params.End, params.CompositeQuery.PanelType, builderQuery, keys, constants.SecondQueryGraphLimit)
+			if err != nil {
+				ch <- channelResult{Err: err, Name: queryName, Query: limitQuery, Series: nil}
+				return
+			}
+			query = fmt.Sprintf(placeholderQuery, limitQuery)
+		} else {
+			query, err = tracesV3.PrepareTracesQuery(params.Start, params.End, params.CompositeQuery.PanelType, builderQuery, keys, "")
+			if err != nil {
+				ch <- channelResult{Err: err, Name: queryName, Query: query, Series: nil}
+				return
+			}
 		}
 
 		series, err := q.execClickHouseQuery(ctx, query)

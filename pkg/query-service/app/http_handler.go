@@ -77,7 +77,7 @@ type APIHandler struct {
 	ruleManager       *rules.Manager
 	featureFlags      interfaces.FeatureLookup
 	ready             func(http.HandlerFunc) http.HandlerFunc
-	qurier       interfaces.Querier
+	qurier            interfaces.Querier
 	queryBuilder      *queryBuilder.QueryBuilder
 	preferDelta       bool
 	preferSpanMetrics bool
@@ -156,7 +156,7 @@ func NewAPIHandler(opts APIHandlerOpts) (*APIHandler, error) {
 		ruleManager:                   opts.RuleManager,
 		featureFlags:                  opts.FeatureFlags,
 		LogsParsingPipelineController: opts.LogsParsingPipelineController,
-		qurier:       querier,
+		qurier:                        querier,
 	}
 
 	builderOpts := queryBuilder.QueryBuilderOptions{
@@ -2956,36 +2956,6 @@ func (aH *APIHandler) queryRangeV3(ctx context.Context, queryRangeParams *v3.Que
 			RespondError(w, apiErrObj, errQuriesByName)
 			return
 		}
-<<<<<<< HEAD
-=======
-
-		queries, err = aH.queryBuilder.PrepareQueries(queryRangeParams, spanKeys)
-		if err != nil {
-			RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
-			return
-		}
-
-		if queryRangeParams.CompositeQuery.PanelType == v3.PanelTypeList || queryRangeParams.CompositeQuery.PanelType == v3.PanelTypeTrace {
-			result, err, errQuriesByName = aH.execClickHouseListQueries(r.Context(), queries)
-		} else {
-			result, err, errQuriesByName = aH.execClickHouseGraphQueries(r.Context(), queries)
-		}
-	case v3.QueryTypeClickHouseSQL:
-		queries := make(map[string]string)
-		for name, query := range queryRangeParams.CompositeQuery.ClickHouseQueries {
-			if query.Disabled {
-				continue
-			}
-			queries[name] = query.Query
-		}
-		result, err, errQuriesByName = aH.execClickHouseGraphQueries(r.Context(), queries)
-	case v3.QueryTypePromQL:
-		result, err, errQuriesByName = aH.execPromQueries(r.Context(), queryRangeParams)
-	default:
-		err = fmt.Errorf("invalid query type")
-		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, errQuriesByName)
-		return
->>>>>>> develop
 	}
 
 	result, err, errQuriesByName = aH.qurier.QueryRange(ctx, queryRangeParams, spanKeys)
