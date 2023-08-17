@@ -31,6 +31,7 @@ import (
 	baseapp "go.signoz.io/signoz/pkg/query-service/app"
 	"go.signoz.io/signoz/pkg/query-service/app/dashboards"
 	baseexplorer "go.signoz.io/signoz/pkg/query-service/app/explorer"
+	"go.signoz.io/signoz/pkg/query-service/app/logparsingpipeline"
 	"go.signoz.io/signoz/pkg/query-service/app/opamp"
 	opAmpModel "go.signoz.io/signoz/pkg/query-service/app/opamp/model"
 	baseauth "go.signoz.io/signoz/pkg/query-service/auth"
@@ -50,14 +51,20 @@ import (
 const AppDbEngine = "sqlite"
 
 type ServerOptions struct {
-	PromConfigPath  string
-	HTTPHostPort    string
-	PrivateHostPort string
+	PromConfigPath    string
+	SkipTopLvlOpsPath string
+	HTTPHostPort      string
+	PrivateHostPort   string
 	// alert specific params
-	DisableRules    bool
-	RuleRepoURL     string
-	CacheConfigPath string
-	FluxInterval    string
+	DisableRules      bool
+	RuleRepoURL       string
+	PreferDelta       bool
+	PreferSpanMetrics bool
+	MaxIdleConns      int
+	MaxOpenConns      int
+	DialTimeout       time.Duration
+	CacheConfigPath   string
+	FluxInterval      string
 }
 
 // Server runs HTTP api service
@@ -77,6 +84,9 @@ type Server struct {
 
 	// feature flags
 	featureLookup baseint.FeatureLookup
+
+	// Usage manager
+	usageManager *usage.Manager
 
 	unavailableChannel chan healthcheck.Status
 }
@@ -118,11 +128,26 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 	storage := os.Getenv("STORAGE")
 	if storage == "clickhouse" {
 		zap.S().Info("Using ClickHouse as datastore ...")
-		qb := db.NewDataConnector(localDB, serverOptions.PromConfigPath, lm)
+		qb := db.NewDataConnector(
+			localDB,
+			serverOptions.PromConfigPath,
+			lm,
+			serverOptions.MaxIdleConns,
+			serverOptions.MaxOpenConns,
+			serverOptions.DialTimeout,
+		)
 		go qb.Start(readerReady)
 		reader = qb
 	} else {
-		return nil, fmt.Errorf("Storage type: %s is not supported in query service", storage)
+		return nil, fmt.Errorf("storage type: %s is not supported in query service", storage)
+	}
+	skipConfig := &basemodel.SkipConfig{}
+	if serverOptions.SkipTopLvlOpsPath != "" {
+		// read skip config
+		skipConfig, err = basemodel.ReadSkipConfig(serverOptions.SkipTopLvlOpsPath)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	<-readerReady
@@ -146,6 +171,12 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 
 	// initiate agent config handler
 	if err := agentConf.Initiate(localDB, AppDbEngine); err != nil {
+		return nil, err
+	}
+
+	// ingestion pipelines manager
+	logParsingPipelineController, err := logparsingpipeline.NewLogParsingPipelinesController(localDB, "sqlite")
+	if err != nil {
 		return nil, err
 	}
 
@@ -177,13 +208,20 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 	}
 
 	apiOpts := api.APIHandlerOptions{
-		DataConnector:  reader,
-		AppDao:         modelDao,
-		RulesManager:   rm,
-		FeatureFlags:   lm,
-		LicenseManager: lm,
-		Cache:          c,
-		FluxInterval:   fluxInterval,
+		DataConnector:                 reader,
+		SkipConfig:                    skipConfig,
+		PreferDelta:                   serverOptions.PreferDelta,
+		PreferSpanMetrics:             serverOptions.PreferSpanMetrics,
+		MaxIdleConns:                  serverOptions.MaxIdleConns,
+		MaxOpenConns:                  serverOptions.MaxOpenConns,
+		DialTimeout:                   serverOptions.DialTimeout,
+		AppDao:                        modelDao,
+		RulesManager:                  rm,
+		FeatureFlags:                  lm,
+		LicenseManager:                lm,
+		LogsParsingPipelineController: logParsingPipelineController,
+		Cache:                         c,
+		FluxInterval:                  fluxInterval,
 	}
 
 	apiHandler, err := api.NewAPIHandler(apiOpts)
@@ -197,6 +235,7 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 		ruleManager:        rm,
 		serverOptions:      serverOptions,
 		unavailableChannel: make(chan healthcheck.Status),
+		usageManager:       usageManager,
 	}
 
 	httpServer, err := s.createPublicServer(apiHandler)
@@ -557,6 +596,9 @@ func (s *Server) Stop() error {
 	if s.ruleManager != nil {
 		s.ruleManager.Stop()
 	}
+
+	// stop usage manager
+	s.usageManager.Stop()
 
 	return nil
 }

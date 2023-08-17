@@ -74,7 +74,7 @@ func initZapLog(enableQueryServiceLogOTLPExport bool) *zap.Logger {
 }
 
 func main() {
-	var promConfigPath string
+	var promConfigPath, skipTopLvlOpsPath string
 
 	// disables rule execution but allows change to the rule definition
 	var disableRules bool
@@ -84,9 +84,21 @@ func main() {
 
 	var cacheConfigPath, fluxInterval string
 	var enableQueryServiceLogOTLPExport bool
+	var preferDelta bool
+	var preferSpanMetrics bool
+
+	var maxIdleConns int
+	var maxOpenConns int
+	var dialTimeout time.Duration
 
 	flag.StringVar(&promConfigPath, "config", "./config/prometheus.yml", "(prometheus config to read metrics)")
+	flag.StringVar(&skipTopLvlOpsPath, "skip-top-level-ops", "", "(config file to skip top level operations)")
 	flag.BoolVar(&disableRules, "rules.disable", false, "(disable rule evaluation)")
+	flag.BoolVar(&preferDelta, "prefer-delta", false, "(prefer delta over cumulative metrics)")
+	flag.BoolVar(&preferSpanMetrics, "prefer-span-metrics", false, "(prefer span metrics for service level metrics)")
+	flag.IntVar(&maxIdleConns, "max-idle-conns", 50, "(number of connections to maintain in the pool.)")
+	flag.IntVar(&maxOpenConns, "max-open-conns", 100, "(max connections for use at any time.)")
+	flag.DurationVar(&dialTimeout, "dial-timeout", 5*time.Second, "(the maximum time to establish a connection.)")
 	flag.StringVar(&ruleRepoURL, "rules.repo-url", baseconst.AlertHelpPage, "(host address used to build rule link in alert messages)")
 	flag.StringVar(&cacheConfigPath, "experimental.cache-config", "", "(cache config to use)")
 	flag.StringVar(&fluxInterval, "flux-interval", "5m", "(cache config to use)")
@@ -103,13 +115,19 @@ func main() {
 	version.PrintVersion()
 
 	serverOptions := &app.ServerOptions{
-		HTTPHostPort:    baseconst.HTTPHostPort,
-		PromConfigPath:  promConfigPath,
-		PrivateHostPort: baseconst.PrivateHostPort,
-		DisableRules:    disableRules,
-		RuleRepoURL:     ruleRepoURL,
-		CacheConfigPath: cacheConfigPath,
-		FluxInterval:    fluxInterval,
+		HTTPHostPort:      baseconst.HTTPHostPort,
+		PromConfigPath:    promConfigPath,
+		SkipTopLvlOpsPath: skipTopLvlOpsPath,
+		PreferDelta:       preferDelta,
+		PreferSpanMetrics: preferSpanMetrics,
+		PrivateHostPort:   baseconst.PrivateHostPort,
+		DisableRules:      disableRules,
+		RuleRepoURL:       ruleRepoURL,
+		MaxIdleConns:      maxIdleConns,
+		MaxOpenConns:      maxOpenConns,
+		DialTimeout:       dialTimeout,
+		CacheConfigPath:   cacheConfigPath,
+		FluxInterval:      fluxInterval,
 	}
 
 	// Read the jwt secret key
@@ -143,6 +161,7 @@ func main() {
 			logger.Info("Received HealthCheck status: ", zap.Int("status", int(status)))
 		case <-signalsChannel:
 			logger.Fatal("Received OS Interrupt Signal ... ")
+			server.Stop()
 		}
 	}
 }

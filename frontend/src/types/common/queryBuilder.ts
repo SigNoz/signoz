@@ -1,4 +1,5 @@
-import { GRAPH_TYPES } from 'container/NewDashboard/ComponentsSlider';
+import { PANEL_TYPES } from 'constants/queryBuilder';
+import { Format } from 'container/NewWidget/RightContainer/types';
 import {
 	IBuilderFormula,
 	IBuilderQuery,
@@ -143,6 +144,7 @@ export type PanelTypeKeys =
 	| 'VALUE'
 	| 'TABLE'
 	| 'LIST'
+	| 'TRACE'
 	| 'EMPTY_WIDGET';
 
 export type ReduceOperators = 'last' | 'sum' | 'avg' | 'max' | 'min';
@@ -156,7 +158,8 @@ export type QueryBuilderContextType = {
 	currentQuery: Query;
 	stagedQuery: Query | null;
 	initialDataSource: DataSource | null;
-	panelType: GRAPH_TYPES;
+	panelType: PANEL_TYPES | null;
+	isEnabledQuery: boolean;
 	handleSetQueryData: (index: number, queryData: IBuilderQuery) => void;
 	handleSetFormulaData: (index: number, formulaData: IBuilderFormula) => void;
 	handleSetQueryItemData: (
@@ -164,8 +167,10 @@ export type QueryBuilderContextType = {
 		type: EQueryType.PROM | EQueryType.CLICKHOUSE,
 		newQueryData: IPromQLQuery | IClickHouseQuery,
 	) => void;
-	handleSetPanelType: (newPanelType: GRAPH_TYPES) => void;
-	setupInitialDataSource: (newInitialDataSource: DataSource | null) => void;
+	handleSetConfig: (
+		newPanelType: PANEL_TYPES,
+		dataSource: DataSource | null,
+	) => void;
 	removeQueryBuilderEntityByIndex: (
 		type: keyof QueryBuilderData,
 		index: number,
@@ -183,6 +188,21 @@ export type QueryBuilderContextType = {
 	) => void;
 	handleRunQuery: () => void;
 	resetStagedQuery: () => void;
+	handleOnUnitsChange: (units: Format['id']) => void;
+	updateAllQueriesOperators: (
+		queryData: Query,
+		panelType: PANEL_TYPES,
+		dataSource: DataSource,
+	) => Query;
+	updateQueriesData: <T extends keyof QueryBuilderData>(
+		query: Query,
+		type: T,
+		updateCallback: (
+			item: QueryBuilderData[T][number],
+			index: number,
+		) => QueryBuilderData[T][number],
+	) => Query;
+	initQueryBuilderData: (query: Query) => void;
 };
 
 export type QueryAdditionalFilter = {

@@ -1,9 +1,11 @@
 import { Form, Row } from 'antd';
 import FormAlertRules from 'container/FormAlertRules';
-import { useState } from 'react';
+import { useGetCompositeQueryParam } from 'hooks/queryBuilder/useGetCompositeQueryParam';
+import { useEffect, useState } from 'react';
 import { AlertTypes } from 'types/api/alerts/alertTypes';
 import { AlertDef } from 'types/api/alerts/def';
 
+import { ALERT_TYPE_VS_SOURCE_MAPPING } from './config';
 import {
 	alertDefaults,
 	exceptionAlertDefaults,
@@ -17,6 +19,9 @@ function CreateRules(): JSX.Element {
 	const [alertType, setAlertType] = useState<AlertTypes>(
 		AlertTypes.METRICS_BASED_ALERT,
 	);
+
+	const compositeQuery = useGetCompositeQueryParam();
+
 	const [formInstance] = Form.useForm();
 
 	const onSelectType = (typ: AlertTypes): void => {
@@ -35,6 +40,19 @@ function CreateRules(): JSX.Element {
 				setInitValues(alertDefaults);
 		}
 	};
+
+	useEffect(() => {
+		if (!compositeQuery) {
+			return;
+		}
+		const dataSource = compositeQuery?.builder?.queryData[0]?.dataSource;
+
+		const alertType = ALERT_TYPE_VS_SOURCE_MAPPING[dataSource];
+
+		if (alertType) {
+			onSelectType(alertType);
+		}
+	}, [compositeQuery]);
 
 	if (!initValues) {
 		return (

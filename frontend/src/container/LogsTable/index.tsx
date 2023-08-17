@@ -5,13 +5,13 @@ import RawLogView from 'components/Logs/RawLogView';
 import LogsTableView from 'components/Logs/TableView';
 import Spinner from 'components/Spinner';
 import { contentStyle } from 'container/Trace/Search/config';
+import { useActiveLog } from 'hooks/logs/useActiveLog';
 import useFontFaceObserver from 'hooks/useFontObserver';
 import { memo, useCallback, useMemo } from 'react';
 import { useSelector } from 'react-redux';
 import { Virtuoso } from 'react-virtuoso';
-// interfaces
 import { AppState } from 'store/reducers';
-import { ILog } from 'types/api/logs/log';
+// interfaces
 import { ILogsReducer } from 'types/reducer/logs';
 
 // styles
@@ -22,11 +22,12 @@ export type LogViewMode = 'raw' | 'table' | 'list';
 type LogsTableProps = {
 	viewMode: LogViewMode;
 	linesPerRow: number;
-	onClickExpand: (logData: ILog) => void;
 };
 
 function LogsTable(props: LogsTableProps): JSX.Element {
-	const { viewMode, onClickExpand, linesPerRow } = props;
+	const { viewMode, linesPerRow } = props;
+
+	const { onSetActiveLog } = useActiveLog();
 
 	useFontFaceObserver(
 		[
@@ -63,29 +64,22 @@ function LogsTable(props: LogsTableProps): JSX.Element {
 			const log = logs[index];
 
 			if (viewMode === 'raw') {
-				return (
-					<RawLogView
-						key={log.id}
-						data={log}
-						linesPerRow={linesPerRow}
-						onClickExpand={onClickExpand}
-					/>
-				);
+				return <RawLogView key={log.id} data={log} linesPerRow={linesPerRow} />;
 			}
 
-			return <ListLogView key={log.id} logData={log} />;
+			return <ListLogView key={log.id} logData={log} selectedFields={selected} />;
 		},
-		[logs, linesPerRow, viewMode, onClickExpand],
+		[logs, viewMode, selected, linesPerRow],
 	);
 
 	const renderContent = useMemo(() => {
 		if (viewMode === 'table') {
 			return (
 				<LogsTableView
+					onClickExpand={onSetActiveLog}
 					logs={logs}
 					fields={selected}
 					linesPerRow={linesPerRow}
-					onClickExpand={onClickExpand}
 				/>
 			);
 		}
@@ -99,7 +93,7 @@ function LogsTable(props: LogsTableProps): JSX.Element {
 				/>
 			</Card>
 		);
-	}, [getItemContent, linesPerRow, logs, onClickExpand, selected, viewMode]);
+	}, [getItemContent, linesPerRow, logs, onSetActiveLog, selected, viewMode]);
 
 	if (isLoading) {
 		return <Spinner height={20} tip="Getting Logs" />;

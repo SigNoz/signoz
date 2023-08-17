@@ -1,12 +1,10 @@
 import { Button, Typography } from 'antd';
 import createDashboard from 'api/dashboard/create';
-import getAll from 'api/dashboard/getAll';
-import axios from 'axios';
-import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
-import { useNotifications } from 'hooks/useNotifications';
+import { useGetAllDashboard } from 'hooks/dashboard/useGetAllDashboard';
+import useAxiosError from 'hooks/useAxiosError';
 import { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useMutation, useQuery } from 'react-query';
+import { useMutation } from 'react-query';
 
 import { ExportPanelProps } from '.';
 import {
@@ -16,35 +14,34 @@ import {
 	Title,
 	Wrapper,
 } from './styles';
-import { getSelectOptions } from './utils';
+import { filterOptions, getSelectOptions } from './utils';
 
-function ExportPanel({ onExport }: ExportPanelProps): JSX.Element {
-	const { notifications } = useNotifications();
+function ExportPanel({ isLoading, onExport }: ExportPanelProps): JSX.Element {
 	const { t } = useTranslation(['dashboard']);
 
 	const [selectedDashboardId, setSelectedDashboardId] = useState<string | null>(
 		null,
 	);
 
-	const { data, isLoading, refetch } = useQuery({
-		queryFn: getAll,
-		queryKey: REACT_QUERY_KEY.GET_ALL_DASHBOARDS,
-	});
+	const {
+		data,
+		isLoading: isAllDashboardsLoading,
+		refetch,
+	} = useGetAllDashboard();
+
+	const handleError = useAxiosError();
 
 	const {
 		mutate: createNewDashboard,
 		isLoading: createDashboardLoading,
 	} = useMutation(createDashboard, {
-		onSuccess: () => {
+		onSuccess: (data) => {
+			if (data.payload) {
+				onExport(data?.payload);
+			}
 			refetch();
 		},
-		onError: (error) => {
-			if (axios.isAxiosError(error)) {
-				notifications.error({
-					message: error.message,
-				});
-			}
-		},
+		onError: handleError,
 	});
 
 	const options = useMemo(() => getSelectOptions(data?.payload || []), [data]);
@@ -73,6 +70,14 @@ function ExportPanel({ onExport }: ExportPanelProps): JSX.Element {
 		});
 	}, [t, createNewDashboard]);
 
+	const isDashboardLoading = isAllDashboardsLoading || createDashboardLoading;
+
+	const isDisabled =
+		isAllDashboardsLoading ||
+		!options?.length ||
+		!selectedDashboardId ||
+		isLoading;
+
 	return (
 		<Wrapper direction="vertical">
 			<Title>Export Panel</Title>
@@ -81,14 +86,17 @@ function ExportPanel({ onExport }: ExportPanelProps): JSX.Element {
 				<DashboardSelect
 					placeholder="Select Dashboard"
 					options={options}
-					loading={isLoading || createDashboardLoading}
-					disabled={isLoading || createDashboardLoading}
+					showSearch
+					loading={isDashboardLoading}
+					disabled={isDashboardLoading}
 					value={selectedDashboardId}
 					onSelect={handleSelect}
+					filterOption={filterOptions}
 				/>
 				<Button
 					type="primary"
-					disabled={isLoading || !options?.length || !selectedDashboardId}
+					loading={isLoading}
+					disabled={isDisabled}
 					onClick={handleExportClick}
 				>
 					Export

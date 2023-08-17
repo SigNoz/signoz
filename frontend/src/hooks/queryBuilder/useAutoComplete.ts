@@ -1,7 +1,6 @@
 import {
 	getRemovePrefixFromKey,
 	getTagToken,
-	isExistsNotExistsOperator,
 	replaceStringWithMaxLength,
 	tagRegexp,
 } from 'container/QueryBuilder/filters/QueryBuilderSearch/utils';
@@ -16,7 +15,15 @@ import { useSetCurrentKeyAndOperator } from './useSetCurrentKeyAndOperator';
 import { useTag } from './useTag';
 import { useTagValidation } from './useTagValidation';
 
-export const useAutoComplete = (query: IBuilderQuery): IAutoComplete => {
+export type WhereClauseConfig = {
+	customKey: string;
+	customOp: string;
+};
+
+export const useAutoComplete = (
+	query: IBuilderQuery,
+	whereClauseConfig?: WhereClauseConfig,
+): IAutoComplete => {
 	const [searchValue, setSearchValue] = useState<string>('');
 	const [searchKey, setSearchKey] = useState<string>('');
 
@@ -40,11 +47,11 @@ export const useAutoComplete = (query: IBuilderQuery): IAutoComplete => {
 	);
 
 	const { handleAddTag, handleClearTag, tags, updateTag } = useTag(
-		key,
 		isValidTag,
 		handleSearch,
 		query,
 		setSearchKey,
+		whereClauseConfig,
 	);
 
 	const handleSelect = useCallback(
@@ -59,11 +66,10 @@ export const useAutoComplete = (query: IBuilderQuery): IAutoComplete => {
 				});
 			}
 			if (!isMulti) {
-				if (isExistsNotExistsOperator(value)) handleAddTag(value);
-				if (isValidTag && !isExistsNotExistsOperator(value)) handleAddTag(value);
+				handleAddTag(value);
 			}
 		},
-		[handleAddTag, isMulti, isValidTag],
+		[handleAddTag, isMulti],
 	);
 
 	const handleKeyDown = useCallback(
@@ -102,6 +108,7 @@ export const useAutoComplete = (query: IBuilderQuery): IAutoComplete => {
 		isExist,
 		results,
 		result,
+		whereClauseConfig,
 	);
 
 	return {

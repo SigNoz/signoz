@@ -17,10 +17,12 @@ import {
 	Login,
 	Logs,
 	LogsExplorer,
+	LogsIndexToFields,
 	MySettings,
 	NewDashboardPage,
 	OrganizationSettings,
 	PasswordReset,
+	PipelinePage,
 	ServiceMapPage,
 	ServiceMetricsPage,
 	ServicesTablePage,
@@ -42,6 +44,13 @@ const routes: AppRoutes[] = [
 		exact: true,
 		isPrivate: false,
 		key: 'SIGN_UP',
+	},
+	{
+		component: LogsIndexToFields,
+		path: ROUTES.LOGS_INDEX_FIELDS,
+		exact: true,
+		isPrivate: true,
+		key: 'LOGS_INDEX_FIELDS',
 	},
 	{
 		component: ServicesTablePage,
@@ -252,6 +261,13 @@ const routes: AppRoutes[] = [
 		component: SomethingWentWrong,
 		key: 'SOMETHING_WENT_WRONG',
 		isPrivate: false,
+	},
+	{
+		path: ROUTES.PIPELINES,
+		exact: true,
+		component: PipelinePage,
+		key: 'PIPELINES',
+		isPrivate: true,
 	},
 ];
 

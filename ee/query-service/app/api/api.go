@@ -9,6 +9,7 @@ import (
 	"go.signoz.io/signoz/ee/query-service/interfaces"
 	"go.signoz.io/signoz/ee/query-service/license"
 	baseapp "go.signoz.io/signoz/pkg/query-service/app"
+	"go.signoz.io/signoz/pkg/query-service/app/logparsingpipeline"
 	"go.signoz.io/signoz/pkg/query-service/cache"
 	baseint "go.signoz.io/signoz/pkg/query-service/interfaces"
 	basemodel "go.signoz.io/signoz/pkg/query-service/model"
@@ -17,12 +18,19 @@ import (
 )
 
 type APIHandlerOptions struct {
-	DataConnector  interfaces.DataConnector
-	AppDao         dao.ModelDao
-	RulesManager   *rules.Manager
-	FeatureFlags   baseint.FeatureLookup
-	LicenseManager *license.Manager
-	Cache          cache.Cache
+	DataConnector                 interfaces.DataConnector
+	SkipConfig                    *basemodel.SkipConfig
+	PreferDelta                   bool
+	PreferSpanMetrics             bool
+	MaxIdleConns                  int
+	MaxOpenConns                  int
+	DialTimeout                   time.Duration
+	AppDao                        dao.ModelDao
+	RulesManager                  *rules.Manager
+	FeatureFlags                  baseint.FeatureLookup
+	LicenseManager                *license.Manager
+	LogsParsingPipelineController *logparsingpipeline.LogParsingPipelineController
+	Cache                         cache.Cache
 	// Querier Influx Interval
 	FluxInterval time.Duration
 }
@@ -36,12 +44,19 @@ type APIHandler struct {
 func NewAPIHandler(opts APIHandlerOptions) (*APIHandler, error) {
 
 	baseHandler, err := baseapp.NewAPIHandler(baseapp.APIHandlerOpts{
-		Reader:       opts.DataConnector,
-		AppDao:       opts.AppDao,
-		RuleManager:  opts.RulesManager,
-		FeatureFlags: opts.FeatureFlags,
-		Cache:        opts.Cache,
-		FluxInterval: opts.FluxInterval,
+		Reader:                        opts.DataConnector,
+		SkipConfig:                    opts.SkipConfig,
+		PerferDelta:                   opts.PreferDelta,
+		PreferSpanMetrics:             opts.PreferSpanMetrics,
+		MaxIdleConns:                  opts.MaxIdleConns,
+		MaxOpenConns:                  opts.MaxOpenConns,
+		DialTimeout:                   opts.DialTimeout,
+		AppDao:                        opts.AppDao,
+		RuleManager:                   opts.RulesManager,
+		FeatureFlags:                  opts.FeatureFlags,
+		LogsParsingPipelineController: opts.LogsParsingPipelineController,
+		Cache:                         opts.Cache,
+		FluxInterval:                  opts.FluxInterval,
 	})
 
 	if err != nil {

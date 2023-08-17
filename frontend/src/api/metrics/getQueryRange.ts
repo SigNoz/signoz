@@ -18,6 +18,7 @@ export const getMetricsQueryRange = async (
 			error: null,
 			message: response.data.status,
 			payload: response.data,
+			params: props,
 		};
 	} catch (error) {
 		return ErrorResponseHandler(error as AxiosError);

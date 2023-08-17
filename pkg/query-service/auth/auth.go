@@ -250,14 +250,14 @@ func RegisterFirstUser(ctx context.Context, req *RegisterRequest) (*model.User, 
 	}
 
 	user := &model.User{
-		Id:                 uuid.NewString(),
-		Name:               req.Name,
-		Email:              req.Email,
-		Password:           hash,
-		CreatedAt:          time.Now().Unix(),
-		ProfilePirctureURL: "", // Currently unused
-		GroupId:            group.Id,
-		OrgId:              org.Id,
+		Id:                uuid.NewString(),
+		Name:              req.Name,
+		Email:             req.Email,
+		Password:          hash,
+		CreatedAt:         time.Now().Unix(),
+		ProfilePictureURL: "", // Currently unused
+		GroupId:           group.Id,
+		OrgId:             org.Id,
 	}
 
 	return dao.DB().CreateUser(ctx, user, true)
@@ -328,14 +328,14 @@ func RegisterInvitedUser(ctx context.Context, req *RegisterRequest, nopassword b
 	}
 
 	user := &model.User{
-		Id:                 uuid.NewString(),
-		Name:               req.Name,
-		Email:              req.Email,
-		Password:           hash,
-		CreatedAt:          time.Now().Unix(),
-		ProfilePirctureURL: "", // Currently unused
-		GroupId:            group.Id,
-		OrgId:              invite.OrgId,
+		Id:                uuid.NewString(),
+		Name:              req.Name,
+		Email:             req.Email,
+		Password:          hash,
+		CreatedAt:         time.Now().Unix(),
+		ProfilePictureURL: "", // Currently unused
+		GroupId:           group.Id,
+		OrgId:             invite.OrgId,
 	}
 
 	// TODO(Ahsan): Ideally create user and delete invitation should happen in a txn.

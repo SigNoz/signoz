@@ -131,7 +131,7 @@ func enrichFieldWithMetadata(field v3.AttributeKey, fields map[string]v3.Attribu
 	// check if the field is present in the fields map
 	if existingField, ok := fields[field.Key]; ok {
 		if existingField.IsColumn {
-			return field
+			return existingField
 		}
 		field.Type = existingField.Type
 		field.DataType = existingField.DataType

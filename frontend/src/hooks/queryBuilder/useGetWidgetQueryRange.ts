@@ -1,6 +1,5 @@
-import { COMPOSITE_QUERY } from 'constants/queryBuilderQueryNames';
+import { initialQueriesMap } from 'constants/queryBuilder';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
-import useUrlQuery from 'hooks/useUrlQuery';
 import { getDashboardVariables } from 'lib/dashbaordVariables/getDashboardVariables';
 import { UseQueryOptions, UseQueryResult } from 'react-query';
 import { useSelector } from 'react-redux';
@@ -11,6 +10,7 @@ import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
 import { GlobalReducer } from 'types/reducer/globalTime';
 
 import { useGetQueryRange } from './useGetQueryRange';
+import { useQueryBuilder } from './useQueryBuilder';
 
 export const useGetWidgetQueryRange = (
 	{
@@ -19,31 +19,29 @@ export const useGetWidgetQueryRange = (
 	}: Pick<GetQueryResultsProps, 'graphType' | 'selectedTime'>,
 	options?: UseQueryOptions<SuccessResponse<MetricRangePayloadProps>, Error>,
 ): UseQueryResult<SuccessResponse<MetricRangePayloadProps>, Error> => {
-	const urlQuery = useUrlQuery();
-
 	const { selectedTime: globalSelectedInterval } = useSelector<
 		AppState,
 		GlobalReducer
 	>((state) => state.globalTime);
 
-	const compositeQuery = urlQuery.get(COMPOSITE_QUERY);
+	const { stagedQuery } = useQueryBuilder();
 
 	return useGetQueryRange(
 		{
 			graphType,
 			selectedTime,
 			globalSelectedInterval,
-			query: JSON.parse(compositeQuery || '{}'),
+			query: stagedQuery || initialQueriesMap.metrics,
 			variables: getDashboardVariables(),
 		},
 		{
-			enabled: !!compositeQuery,
+			enabled: !!stagedQuery,
 			retry: false,
 			queryKey: [
 				REACT_QUERY_KEY.GET_QUERY_RANGE,
 				selectedTime,
 				globalSelectedInterval,
-				compositeQuery,
+				stagedQuery,
 			],
 			...options,
 		},

@@ -2,6 +2,7 @@ package auth
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 	"time"
 
@@ -91,4 +92,22 @@ func ExtractJwtFromContext(ctx context.Context) (string, error) {
 
 func ExtractJwtFromRequest(r *http.Request) (string, error) {
 	return jwtmiddleware.FromAuthHeader(r)
+}
+
+func ExtractUserIdFromContext(ctx context.Context) (string, error) {
+	userId := ""
+	jwt, err := ExtractJwtFromContext(ctx)
+	if err != nil {
+		return "", model.InternalError(fmt.Errorf("failed to extract jwt from context %v", err))
+	}
+
+	claims, err := ParseJWT(jwt)
+	if err != nil {
+		return "", model.InternalError(fmt.Errorf("failed get claims from jwt %v", err))
+	}
+
+	if v, ok := claims["id"]; ok {
+		userId = v.(string)
+	}
+	return userId, nil
 }
