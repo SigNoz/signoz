@@ -17,14 +17,14 @@ import { useSelector } from 'react-redux';
 import { prepareQueryRangePayload } from 'store/actions/dashboard/prepareQueryRangePayload';
 import { AppState } from 'store/reducers';
 import { ILog } from 'types/api/logs/log';
-import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { GlobalReducer } from 'types/reducer/globalTime';
 
+import { idObject } from '../constants';
 import ListViewPanel from '../ListViewPanel';
 import LiveLogsList from '../LiveLogsList';
+import { prepareQueryByFilter } from '../utils';
 import { LiveLogsChart, Wrapper } from './styles';
-import { prepareQueryFilter } from './utils';
 
 function LiveLogsContainer(): JSX.Element {
 	const [logs, setLogs] = useState<ILog[]>([]);
@@ -82,34 +82,28 @@ function LiveLogsContainer(): JSX.Element {
 	useEventSourceEvent('message', handleGetLiveLogs);
 	useEventSourceEvent('error', handleError);
 
+	const getPreparedQuery = useCallback(
+		(query: Query): Query => {
+			const firstLogId: string | null = logs.length ? logs[0].id : null;
+
+			const preparedQuery: Query = prepareQueryByFilter(
+				query,
+				idObject,
+				firstLogId,
+			);
+
+			return preparedQuery;
+		},
+		[logs],
+	);
+
 	const handleStartNewConnection = useCallback(() => {
 		if (!compositeQuery) return;
-
-		const idObject: BaseAutocompleteData = {
-			key: 'id',
-			type: '',
-			dataType: 'string',
-			isColumn: true,
-		};
-
-		const preparedQuery: Query = {
-			...compositeQuery,
-			builder: {
-				...compositeQuery.builder,
-				queryData: compositeQuery.builder.queryData.map((item) => ({
-					...item,
-					filters:
-						logs.length > 0
-							? prepareQueryFilter(item.filters, idObject, logs[0].id)
-							: item.filters,
-				})),
-			},
-		};
 
 		handleCloseConnection();
 
 		const { queryPayload } = prepareQueryRangePayload({
-			query: preparedQuery,
+			query: compositeQuery,
 			graphType: PANEL_TYPES.LIST,
 			selectedTime: 'GLOBAL_TIME',
 			globalSelectedInterval: globalSelectedTime,
@@ -122,9 +116,8 @@ function LiveLogsContainer(): JSX.Element {
 		handleStartOpenConnection({ queryString });
 	}, [
 		compositeQuery,
-		logs,
-		handleCloseConnection,
 		globalSelectedTime,
+		handleCloseConnection,
 		handleStartOpenConnection,
 	]);
 
@@ -138,13 +131,13 @@ function LiveLogsContainer(): JSX.Element {
 
 	return (
 		<>
-			<LiveLogsTopNav onOpenConnection={handleStartNewConnection} />
+			<LiveLogsTopNav getPreparedQuery={getPreparedQuery} />
 			<Wrapper gutter={[0, 20]} style={{ color: themeColors.lightWhite }}>
 				<Col span={24}>
 					<BackButton />
 				</Col>
 				<Col span={24}>
-					<FiltersInput />
+					<FiltersInput getPreparedQuery={getPreparedQuery} />
 				</Col>
 				{initialLoading ? (
 					<Col span={24}>

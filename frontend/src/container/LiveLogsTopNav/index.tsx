@@ -1,5 +1,6 @@
 import { PauseCircleFilled, PlayCircleFilled } from '@ant-design/icons';
 import LocalTopNav from 'container/LocalTopNav';
+import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useEventSource } from 'providers/EventSource';
 import { memo, useCallback, useMemo } from 'react';
 
@@ -7,7 +8,7 @@ import { LiveButtonStyled } from './styles';
 import { LiveLogsTopNavProps } from './types';
 
 function LiveLogsTopNav({
-	onOpenConnection,
+	getPreparedQuery,
 }: LiveLogsTopNavProps): JSX.Element {
 	const {
 		isConnectionOpen,
@@ -16,6 +17,8 @@ function LiveLogsTopNav({
 		handleCloseConnection,
 		handleSetInitialLoading,
 	} = useEventSource();
+
+	const { redirectWithQueryBuilderData, currentQuery } = useQueryBuilder();
 
 	const isPlaying = useMemo(
 		() => isConnectionOpen || isConnectionLoading || initialLoading,
@@ -30,15 +33,18 @@ function LiveLogsTopNav({
 		if ((!isConnectionOpen && isConnectionLoading) || isConnectionOpen) {
 			handleCloseConnection();
 		} else {
-			onOpenConnection();
+			const preparedQuery = getPreparedQuery(currentQuery);
+			redirectWithQueryBuilderData(preparedQuery);
 		}
 	}, [
 		initialLoading,
 		isConnectionOpen,
 		isConnectionLoading,
+		currentQuery,
 		handleSetInitialLoading,
 		handleCloseConnection,
-		onOpenConnection,
+		getPreparedQuery,
+		redirectWithQueryBuilderData,
 	]);
 
 	const liveButton = useMemo(
