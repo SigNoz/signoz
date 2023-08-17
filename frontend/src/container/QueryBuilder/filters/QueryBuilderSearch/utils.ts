@@ -3,7 +3,7 @@ import * as Papa from 'papaparse';
 
 import { orderByValueDelimiter } from '../OrderByFilter/utils';
 
-export const tagRegexp = /([a-zA-Z0-9_.:@$()\-/\\]+)\s*(!=|=|<=|<|>=|>|IN|NOT_IN|LIKE|NOT_LIKE|REGEXP|NOT_REGEXP|EXISTS|NOT_EXISTS|CONTAINS|NOT_CONTAINS)\s*([\s\S]*)/g;
+export const tagRegexp = /([a-zA-Z0-9_.:@$()\-/\\]+)\s*(!=|=|<=|<|>=|>|IN|NOT_IN|LIKE|NOT_LIKE|REGEX|NOT_REGEX|EXISTS|NOT_EXISTS|CONTAINS|NOT_CONTAINS)\s*([\s\S]*)/g;
 
 export function isInNInOperator(value: string): boolean {
 	return value === OPERATORS.IN || value === OPERATORS.NIN;
@@ -55,10 +55,10 @@ export function getOperatorValue(op: string): string {
 			return 'in';
 		case 'NOT_IN':
 			return 'nin';
-		case 'REGEXP':
-			return 'regexp';
-		case 'NOT_REGEXP':
-			return 'nregexp';
+		case OPERATORS.REGEX:
+			return 'regex';
+		case OPERATORS.NREGEX:
+			return 'nregex';
 		case 'LIKE':
 			return 'like';
 		case 'NOT_LIKE':
@@ -84,10 +84,10 @@ export function getOperatorFromValue(op: string): string {
 			return 'NOT_IN';
 		case 'like':
 			return 'LIKE';
-		case 'regexp':
-			return 'REGEXP';
-		case 'nregexp':
-			return 'NOT_REGEXP';
+		case 'regex':
+			return OPERATORS.REGEX;
+		case 'nregex':
+			return OPERATORS.NREGEX;
 		case 'nlike':
 			return 'NOT_LIKE';
 		case 'exists':
