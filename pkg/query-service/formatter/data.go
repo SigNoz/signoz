@@ -14,6 +14,10 @@ func NewDataFormatter() Formatter {
 	return &dataFormatter{}
 }
 
+func (*dataFormatter) Name() string {
+	return "data"
+}
+
 func (f *dataFormatter) Format(value float64, unit string) string {
 	switch unit {
 	case "bytes":
