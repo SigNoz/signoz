@@ -13,8 +13,9 @@ import {
 	FilterSearchInputStyled,
 	SearchButtonStyled,
 } from './styles';
+import { FiltersInputProps } from './types';
 
-function FiltersInput(): JSX.Element {
+function FiltersInput({ getPreparedQuery }: FiltersInputProps): JSX.Element {
 	const {
 		stagedQuery,
 		handleSetQueryData,
@@ -53,12 +54,15 @@ function FiltersInput(): JSX.Element {
 			handleSetInitialLoading(false);
 		}
 
-		redirectWithQueryBuilderData(currentQuery);
+		const preparedQuery = getPreparedQuery(currentQuery);
+
+		redirectWithQueryBuilderData(preparedQuery);
 	}, [
 		initialLoading,
-		redirectWithQueryBuilderData,
 		currentQuery,
+		redirectWithQueryBuilderData,
 		handleSetInitialLoading,
+		getPreparedQuery,
 	]);
 
 	return (
