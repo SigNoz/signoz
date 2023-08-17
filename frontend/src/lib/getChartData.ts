@@ -22,6 +22,8 @@ const getChartData = ({
 		return epocCache[time];
 	}
 
+	// Process the data first to gather unique labels and data mappings
+	const dataMappings: Map<number, number | null>[] = [];
 	queryData.forEach(
 		({ queryData: innerQueryData, query: queryG, legend: legendG }) => {
 			innerQueryData.forEach(({ values = [], metric, legend, queryName }) => {
@@ -30,28 +32,32 @@ const getChartData = ({
 					queryName || queryG || '',
 					legend || legendG || '',
 				);
-				allLabels.push(labelNames !== 'undefined' ? labelNames : '');
+
+				allLabels.push(labelNames);
 
 				const dataMap = new Map<number, number | null>();
-
 				values.forEach(([time, second]) => {
-					uniqueTimeLabels.add(time);
-					dataMap.set(getCachedEpoc(time), parseFloat(second));
+					const epocTime = getCachedEpoc(time);
+					uniqueTimeLabels.add(epocTime);
+					dataMap.set(epocTime, parseFloat(second));
 				});
 
-				const dataValue: (number | null)[] = Array.from(uniqueTimeLabels).map(
-					(time) => dataMap.get(getCachedEpoc(time)) || null,
-				);
-
-				allData.push(dataValue);
+				dataMappings.push(dataMap);
 			});
 		},
 	);
 
-	const labels = Array.from(uniqueTimeLabels)
-		.sort((a, b) => a - b)
-		.map(getCachedEpoc)
-		.map((ms) => new Date(ms));
+	const sortedEpocTimes = Array.from(uniqueTimeLabels).sort((a, b) => a - b);
+
+	// Process dataMappings to construct allData
+	dataMappings.forEach((dataMap) => {
+		const dataValue: (number | null)[] = sortedEpocTimes.map(
+			(epocTime) => dataMap.get(epocTime) || null,
+		);
+		allData.push(dataValue);
+	});
+
+	const labels = sortedEpocTimes.map((ms) => new Date(ms));
 
 	const datasets: ChartDataset[] = allData.map((dataSet, index) => {
 		const baseConfig = {
