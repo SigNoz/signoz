@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"net/http"
 	"sort"
@@ -295,7 +296,7 @@ func (aH *APIHandler) RegisterQueryRangeV3Routes(router *mux.Router, am *AuthMid
 	subRouter.HandleFunc("/query_range", am.ViewAccess(aH.QueryRangeV3)).Methods(http.MethodPost)
 
 	// live logs
-	subRouter.HandleFunc("/logs/livetail", am.ViewAccess(aH.liveTailLogs)).Methods(http.MethodPost)
+	subRouter.HandleFunc("/logs/livetail", am.ViewAccess(aH.liveTailLogs)).Methods(http.MethodGet)
 }
 
 func (aH *APIHandler) Respond(w http.ResponseWriter, data interface{}) {
@@ -1127,7 +1128,6 @@ func (aH *APIHandler) testChannel(w http.ResponseWriter, r *http.Request) {
 		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
 		return
 	}
-
 	// send alert
 	apiErrorObj := aH.alertManager.TestReceiver(receiver)
 	if apiErrorObj != nil {
@@ -1934,18 +1934,18 @@ func (aH *APIHandler) editUser(w http.ResponseWriter, r *http.Request) {
 	if len(update.Name) > 0 {
 		old.Name = update.Name
 	}
-	if len(update.ProfilePirctureURL) > 0 {
-		old.ProfilePirctureURL = update.ProfilePirctureURL
+	if len(update.ProfilePictureURL) > 0 {
+		old.ProfilePictureURL = update.ProfilePictureURL
 	}
 
 	_, apiErr = dao.DB().EditUser(ctx, &model.User{
-		Id:                 old.Id,
-		Name:               old.Name,
-		OrgId:              old.OrgId,
-		Email:              old.Email,
-		Password:           old.Password,
-		CreatedAt:          old.CreatedAt,
-		ProfilePirctureURL: old.ProfilePirctureURL,
+		Id:                old.Id,
+		Name:              old.Name,
+		OrgId:             old.OrgId,
+		Email:             old.Email,
+		Password:          old.Password,
+		CreatedAt:         old.CreatedAt,
+		ProfilePictureURL: old.ProfilePictureURL,
 	})
 	if apiErr != nil {
 		RespondError(w, apiErr, nil)
@@ -3063,6 +3063,10 @@ func applyMetricLimit(results []*v3.Result, queryRangeParams *v3.QueryRangeParam
 
 func (aH *APIHandler) liveTailLogs(w http.ResponseWriter, r *http.Request) {
 
+	// get the param from url and add it to body
+	stringReader := strings.NewReader(r.URL.Query().Get("q"))
+	r.Body = io.NopCloser(stringReader)
+
 	queryRangeParams, apiErrorObj := ParseQueryRangeParams(r)
 	if apiErrorObj != nil {
 		zap.S().Errorf(apiErrorObj.Err.Error())
@@ -3123,7 +3127,7 @@ func (aH *APIHandler) liveTailLogs(w http.ResponseWriter, r *http.Request) {
 			var buf bytes.Buffer
 			enc := json.NewEncoder(&buf)
 			enc.Encode(log)
-			fmt.Fprintf(w, "event: log\ndata: %v\n\n", buf.String())
+			fmt.Fprintf(w, "data: %v\n\n", buf.String())
 			flusher.Flush()
 		case <-client.Done:
 			zap.S().Debug("done!")

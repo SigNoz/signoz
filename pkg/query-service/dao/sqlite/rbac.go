@@ -185,7 +185,7 @@ func (mds *ModelDaoSqlite) CreateUser(ctx context.Context,
 		`INSERT INTO users (id, name, email, password, created_at, profile_picture_url, group_id, org_id)
 		 VALUES (?, ?, ?, ?, ?, ?, ?,?);`,
 		user.Id, user.Name, user.Email, user.Password, user.CreatedAt,
-		user.ProfilePirctureURL, user.GroupId, user.OrgId,
+		user.ProfilePictureURL, user.GroupId, user.OrgId,
 	)
 
 	if err != nil {
@@ -275,13 +275,13 @@ func (mds *ModelDaoSqlite) GetUser(ctx context.Context,
 				u.group_id,
 				g.name as role,
 				o.name as organization,
-				COALESCE((select uf.flags 
-					from user_flags uf 
+				COALESCE((select uf.flags
+					from user_flags uf
 					where u.id = uf.user_id), '') as flags
 			from users u, groups g, organizations o
 			where
 				g.id=u.group_id and
-				o.id = u.org_id and 
+				o.id = u.org_id and
 				u.id=?;`
 
 	if err := mds.db.Select(&users, query, id); err != nil {

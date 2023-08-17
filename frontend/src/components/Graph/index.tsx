@@ -3,7 +3,6 @@ import {
 	BarElement,
 	CategoryScale,
 	Chart,
-	ChartType,
 	Decimation,
 	Filler,
 	Legend,
@@ -18,6 +17,7 @@ import {
 	Tooltip,
 } from 'chart.js';
 import annotationPlugin from 'chartjs-plugin-annotation';
+import { generateGridTitle } from 'container/GridPanelSwitch/utils';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import isEqual from 'lodash-es/isEqual';
 import {
@@ -26,6 +26,7 @@ import {
 	useCallback,
 	useEffect,
 	useImperativeHandle,
+	useMemo,
 	useRef,
 } from 'react';
 
@@ -83,6 +84,7 @@ const Graph = forwardRef<ToggleGraphProps | undefined, GraphProps>(
 		const nearestDatasetIndex = useRef<null | number>(null);
 		const chartRef = useRef<HTMLCanvasElement>(null);
 		const isDarkMode = useIsDarkMode();
+		const gridTitle = useMemo(() => generateGridTitle(title), [title]);
 
 		const currentTheme = isDarkMode ? 'dark' : 'light';
 		const xAxisTimeUnit = useXAxisTimeUnit(data); // Computes the relevant time unit for x axis by analyzing the time stamp data
@@ -119,7 +121,7 @@ const Graph = forwardRef<ToggleGraphProps | undefined, GraphProps>(
 				const options: CustomChartOptions = getGraphOptions(
 					animate,
 					staticLine,
-					title,
+					gridTitle,
 					nearestDatasetIndex,
 					yAxisUnit,
 					onDragSelect,
@@ -154,7 +156,7 @@ const Graph = forwardRef<ToggleGraphProps | undefined, GraphProps>(
 		}, [
 			animate,
 			staticLine,
-			title,
+			gridTitle,
 			yAxisUnit,
 			onDragSelect,
 			dragSelectColor,
