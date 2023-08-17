@@ -10,79 +10,67 @@ const getChartData = ({
 	createDataset,
 }: GetChartDataProps): ChartData => {
 	const uniqueTimeLabels = new Set<number>();
-	queryData.forEach((data) => {
-		data.queryData.forEach((query) => {
-			query.values.forEach((value) => {
-				uniqueTimeLabels.add(value[0]);
-			});
-		});
-	});
-	const labels = Array.from(uniqueTimeLabels).sort((a, b) => a - b);
+	const allLabels: string[] = [];
+	const allData: (number | null)[][] = [];
 
-	const response = queryData.map(
-		({ queryData, query: queryG, legend: legendG }) =>
-			queryData.map((e) => {
-				const { values = [], metric, legend, queryName } = e || {};
+	const epocCache: Record<number, number> = {};
+
+	function getCachedEpoc(time: number): number {
+		if (!epocCache[time]) {
+			epocCache[time] = parseInt(convertIntoEpoc(time * 1000), 10);
+		}
+		return epocCache[time];
+	}
+
+	queryData.forEach(
+		({ queryData: innerQueryData, query: queryG, legend: legendG }) => {
+			innerQueryData.forEach(({ values = [], metric, legend, queryName }) => {
 				const labelNames = getLabelName(
 					metric,
-					queryName || queryG || '', // query
+					queryName || queryG || '',
 					legend || legendG || '',
 				);
-				const dataValue = values?.map((e) => {
-					const [first = 0, second = ''] = e || [];
-					return {
-						first: new Date(parseInt(convertIntoEpoc(first * 1000), 10)), // converting in ms
-						second: Number(parseFloat(second)),
-					};
-				});
-				// Fill the missing data with null
-				const filledDataValues = Array.from(labels).map((e) => {
-					const td1 = new Date(parseInt(convertIntoEpoc(e * 1000), 10));
-					const data = dataValue.find((e1) => e1.first.getTime() === td1.getTime());
-					return (
-						data || {
-							first: new Date(parseInt(convertIntoEpoc(e * 1000), 10)),
-							second: null,
-						}
-					);
+				allLabels.push(labelNames !== 'undefined' ? labelNames : '');
+
+				const dataMap = new Map<number, number | null>();
+
+				values.forEach(([time, second]) => {
+					uniqueTimeLabels.add(time);
+					dataMap.set(getCachedEpoc(time), parseFloat(second));
 				});
 
-				return {
-					label: labelNames !== 'undefined' ? labelNames : '',
-					first: filledDataValues.map((e) => e.first),
-					second: filledDataValues.map((e) => e.second),
-				};
-			}),
+				const dataValue: (number | null)[] = Array.from(uniqueTimeLabels).map(
+					(time) => dataMap.get(getCachedEpoc(time)) || null,
+				);
+
+				allData.push(dataValue);
+			});
+		},
 	);
-	const allLabels = response
-		.map((e) => e.map((e) => e.label))
-		.reduce((a, b) => [...a, ...b], []);
 
-	const alldata = response
-		.map((e) => e.map((e) => e.second))
-		.reduce((a, b) => [...a, ...b], []);
+	const labels = Array.from(uniqueTimeLabels)
+		.sort((a, b) => a - b)
+		.map(getCachedEpoc)
+		.map((ms) => new Date(ms));
+
+	const datasets: ChartDataset[] = allData.map((dataSet, index) => {
+		const baseConfig = {
+			label: allLabels[index],
+			borderColor: colors[index % colors.length] || 'red',
+			data: dataSet,
+			borderWidth: 1.5,
+			spanGaps: true,
+			animations: false,
+			showLine: true,
+			pointRadius: 0,
+		};
+
+		return createDataset ? createDataset(dataSet, index, allLabels) : baseConfig;
+	});
 
 	return {
-		datasets: alldata.map((e, index) => {
-			const datasetBaseConfig = {
-				index,
-				label: allLabels[index],
-				borderColor: colors[index % colors.length] || 'red',
-				data: e,
-				borderWidth: 1.5,
-				spanGaps: true,
-				animations: false,
-				showLine: true,
-				pointRadius: 0,
-			};
-
-			return createDataset
-				? createDataset(e, index, allLabels)
-				: datasetBaseConfig;
-		}),
-		labels: response
-			.map((e) => e.map((e) => e.first))
-			.reduce((a, b) => [...a, ...b], [])[0],
+		datasets,
+		labels,
 	};
 };
 
