@@ -17,7 +17,7 @@ import { useParams } from 'react-router-dom';
 import { EQueryType } from 'types/common/dashboard';
 import { v4 as uuid } from 'uuid';
 
-import { GraphTitle, legend } from '../constant';
+import { GraphTitle, legend, MENU_ITEMS } from '../constant';
 import { getWidgetQueryBuilder } from '../MetricsApplication.factory';
 import { Card, GraphContainer, Row } from '../styles';
 import { Button } from './styles';
@@ -144,6 +144,7 @@ function External(): JSX.Element {
 					<Card>
 						<GraphContainer>
 							<Graph
+								headerMenuList={MENU_ITEMS}
 								name="external_call_error_percentage"
 								widget={externalCallErrorWidget}
 								yAxisUnit="%"
@@ -180,6 +181,7 @@ function External(): JSX.Element {
 						<GraphContainer>
 							<Graph
 								name="external_call_duration"
+								headerMenuList={MENU_ITEMS}
 								widget={externalCallDurationWidget}
 								yAxisUnit="ms"
 								onClickHandler={(ChartEvent, activeElements, chart, data): void => {
@@ -218,6 +220,7 @@ function External(): JSX.Element {
 								name="external_call_rps_by_address"
 								widget={externalCallRPSWidget}
 								yAxisUnit="reqps"
+								headerMenuList={MENU_ITEMS}
 								onClickHandler={(ChartEvent, activeElements, chart, data): void => {
 									onGraphClickHandler(setSelectedTimeStamp)(
 										ChartEvent,
@@ -253,6 +256,7 @@ function External(): JSX.Element {
 								name="external_call_duration_by_address"
 								widget={externalCallDurationAddressWidget}
 								yAxisUnit="ms"
+								headerMenuList={MENU_ITEMS}
 								onClickHandler={(ChartEvent, activeElements, chart, data): void => {
 									onGraphClickHandler(setSelectedTimeStamp)(
 										ChartEvent,

@@ -16,7 +16,7 @@ import { TagFilterItem } from 'types/api/queryBuilder/queryBuilderData';
 import { EQueryType } from 'types/common/dashboard';
 import { v4 as uuid } from 'uuid';
 
-import { GraphTitle } from '../constant';
+import { GraphTitle, MENU_ITEMS } from '../constant';
 import { getWidgetQueryBuilder } from '../MetricsApplication.factory';
 import { Card, GraphContainer, Row } from '../styles';
 import { Button } from './styles';
@@ -108,6 +108,7 @@ function DBCall(): JSX.Element {
 							name="database_call_rps"
 							widget={databaseCallsRPSWidget}
 							yAxisUnit="reqps"
+							headerMenuList={MENU_ITEMS}
 							onClickHandler={(ChartEvent, activeElements, chart, data): void => {
 								onGraphClickHandler(setSelectedTimeStamp)(
 									ChartEvent,
@@ -141,6 +142,7 @@ function DBCall(): JSX.Element {
 							name="database_call_avg_duration"
 							widget={databaseCallsAverageDurationWidget}
 							yAxisUnit="ms"
+							headerMenuList={MENU_ITEMS}
 							onClickHandler={(ChartEvent, activeElements, chart, data): void => {
 								onGraphClickHandler(setSelectedTimeStamp)(
 									ChartEvent,

@@ -8,7 +8,7 @@ import {
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import Graph from 'container/GridGraphLayout/Graph';
 import DisplayThreshold from 'container/GridGraphLayout/WidgetHeader/DisplayThreshold';
-import { GraphTitle } from 'container/MetricsApplication/constant';
+import { GraphTitle, MENU_ITEMS } from 'container/MetricsApplication/constant';
 import { getWidgetQueryBuilder } from 'container/MetricsApplication/MetricsApplication.factory';
 import { apDexMetricsQueryBuilderQueries } from 'container/MetricsApplication/MetricsPageQueries/OverviewQueries';
 import { ReactNode, useMemo } from 'react';
@@ -90,6 +90,7 @@ function ApDexMetrics({
 			yAxisUnit=""
 			threshold={threshold}
 			isQueryEnabled={isQueryEnabled}
+			headerMenuList={MENU_ITEMS}
 		/>
 	);
 }

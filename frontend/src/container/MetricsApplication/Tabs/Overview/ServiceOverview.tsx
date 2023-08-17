@@ -2,7 +2,7 @@ import Spinner from 'components/Spinner';
 import { FeatureKeys } from 'constants/features';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import Graph from 'container/GridGraphLayout/Graph/';
-import { GraphTitle } from 'container/MetricsApplication/constant';
+import { GraphTitle, MENU_ITEMS } from 'container/MetricsApplication/constant';
 import { getWidgetQueryBuilder } from 'container/MetricsApplication/MetricsApplication.factory';
 import { latency } from 'container/MetricsApplication/MetricsPageQueries/OverviewQueries';
 import { Card, GraphContainer } from 'container/MetricsApplication/styles';
@@ -96,6 +96,7 @@ function ServiceOverview({
 						yAxisUnit="ns"
 						onClickHandler={handleGraphClick('Service')}
 						isQueryEnabled={isQueryEnabled}
+						headerMenuList={MENU_ITEMS}
 					/>
 				</GraphContainer>
 			</Card>

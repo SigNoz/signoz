@@ -1,3 +1,5 @@
+import { MenuItemKeys } from 'container/GridGraphLayout/WidgetHeader/contants';
+
 export const legend = {
 	address: '{{address}}',
 };
@@ -10,6 +12,8 @@ export const LATENCY_AGGREGATEOPERATOR_SPAN_METRICS = [
 	'hist_quantile_99',
 ];
 export const OPERATION_LEGENDS = ['Operations'];
+
+export const MENU_ITEMS = [MenuItemKeys.View, MenuItemKeys.CreateAlerts];
 
 export enum FORMULA {
 	ERROR_PERCENTAGE = 'A*100/B',

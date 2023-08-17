@@ -3,6 +3,7 @@ import axios from 'axios';
 import Spinner from 'components/Spinner';
 import { SOMETHING_WENT_WRONG } from 'constants/api';
 import Graph from 'container/GridGraphLayout/Graph/';
+import { MENU_ITEMS } from 'container/MetricsApplication/constant';
 import { Card, GraphContainer } from 'container/MetricsApplication/styles';
 import { Widgets } from 'types/api/dashboard/getAll';
 
@@ -35,6 +36,7 @@ function TopLevelOperation({
 					{!topLevelOperationsLoading && (
 						<Graph
 							name={name}
+							headerMenuList={MENU_ITEMS}
 							widget={widget}
 							onClickHandler={handleGraphClick(opName)}
 							yAxisUnit={yAxisUnit}

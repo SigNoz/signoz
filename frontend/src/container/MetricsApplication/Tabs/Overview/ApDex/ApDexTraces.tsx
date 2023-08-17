@@ -2,7 +2,7 @@
 // This component is been kept for future reference.
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import Graph from 'container/GridGraphLayout/Graph';
-import { GraphTitle } from 'container/MetricsApplication/constant';
+import { GraphTitle, MENU_ITEMS } from 'container/MetricsApplication/constant';
 import { getWidgetQueryBuilder } from 'container/MetricsApplication/MetricsApplication.factory';
 import { apDexTracesQueryBuilderQueries } from 'container/MetricsApplication/MetricsPageQueries/OverviewQueries';
 import { useMemo } from 'react';
@@ -55,6 +55,7 @@ function ApDexTraces({
 			yAxisUnit=""
 			threshold={thresholdValue}
 			isQueryEnabled={isQueryEnabled}
+			headerMenuList={MENU_ITEMS}
 		/>
 	);
 }
