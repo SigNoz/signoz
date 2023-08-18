@@ -26,6 +26,7 @@ import {
 	useState,
 } from 'react';
 import { useTranslation } from 'react-i18next';
+import { UseQueryResult } from 'react-query';
 import { useDispatch, useSelector } from 'react-redux';
 import { generatePath } from 'react-router-dom';
 import { AppState } from 'store/reducers';
@@ -38,7 +39,9 @@ import ImportJSON from './ImportJSON';
 import { ButtonContainer, NewDashboardButton, TableContainer } from './styles';
 import Createdby from './TableComponents/CreatedBy';
 import DateComponent from './TableComponents/Date';
-import DeleteButton from './TableComponents/DeleteButton';
+import DeleteButton, {
+	DeleteButtonProps,
+} from './TableComponents/DeleteButton';
 import Name from './TableComponents/Name';
 import Tags from './TableComponents/Tags';
 
@@ -46,6 +49,7 @@ function ListOfAllDashboard(): JSX.Element {
 	const {
 		data: dashboardListResponse = [],
 		isLoading: isDashboardListLoading,
+		refetch: refetchDashboardList,
 	} = useGetAllDashboard();
 
 	const dispatch = useDispatch<Dispatch<AppActions>>();
@@ -129,12 +133,31 @@ function ListOfAllDashboard(): JSX.Element {
 				title: 'Action',
 				dataIndex: '',
 				width: 40,
-				render: DeleteButton,
+				render: ({
+					createdBy,
+					description,
+					id,
+					key,
+					lastUpdatedTime,
+					name,
+					tags,
+				}: DeleteButtonProps) => (
+					<DeleteButton
+						description={description}
+						id={id}
+						key={key}
+						lastUpdatedTime={lastUpdatedTime}
+						name={name}
+						tags={tags}
+						createdBy={createdBy}
+						refetchDashboardList={refetchDashboardList}
+					/>
+				),
 			});
 		}
 
 		return tableColumns;
-	}, [action]);
+	}, [action, refetchDashboardList]);
 
 	const data: Data[] =
 		filteredDashboards?.map((e) => ({
@@ -145,6 +168,7 @@ function ListOfAllDashboard(): JSX.Element {
 			name: e.data.title,
 			tags: e.data.tags || [],
 			key: e.uuid,
+			refetchDashboardList,
 		})) || [];
 
 	const onNewDashboardHandler = useCallback(async () => {
@@ -326,6 +350,7 @@ export interface Data {
 	createdBy: string;
 	lastUpdatedTime: string;
 	id: string;
+	refetchDashboardList: UseQueryResult['refetch'];
 }
 
 export default ListOfAllDashboard;
