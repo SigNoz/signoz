@@ -466,6 +466,7 @@ var testBuildTracesQueryData = []struct {
 	AggregateOperator v3.AggregateOperator
 	ExpectedQuery     string
 	PanelType         v3.PanelType
+	Options           Options
 }{
 	{
 		Name:  "Test aggregate count on fixed column of float64 type",
@@ -495,10 +496,11 @@ var testBuildTracesQueryData = []struct {
 			Expression:        "A",
 		},
 		TableName: "signoz_traces.distributed_signoz_index_v2",
-		ExpectedQuery: "SELECT toStartOfInterval(timestamp, INTERVAL 60 SECOND) AS ts, count()/60 as value from" +
+		ExpectedQuery: "SELECT toStartOfInterval(timestamp, INTERVAL 60 SECOND) AS ts, count()/1.000000 as value from" +
 			" signoz_traces.distributed_signoz_index_v2 where (timestamp >= '1680066360726210000' AND timestamp <=" +
 			" '1680066458000000000') group by ts order by value DESC",
 		PanelType: v3.PanelTypeGraph,
+		Options:   Options{GraphLimitQtype: "", PreferRPM: true},
 	},
 	{
 		Name:  "Test aggregate count on fixed column of float64 type with filter",
@@ -837,10 +839,13 @@ var testBuildTracesQueryData = []struct {
 		},
 		TableName: "signoz_traces.distributed_signoz_index_v2",
 		ExpectedQuery: "SELECT toStartOfInterval(timestamp, INTERVAL 60 SECOND) AS ts, stringTagMap['method'] as `method`" +
-			", sum(bytes)/60 as value from signoz_traces.distributed_signoz_index_v2 " +
+			", sum(bytes)/60.000000 as value from signoz_traces.distributed_signoz_index_v2 " +
 			"where (timestamp >= '1680066360726210000' AND timestamp <= '1680066458000000000')" +
 			" AND has(stringTagMap, 'method') group by `method`,ts order by `method` ASC",
 		PanelType: v3.PanelTypeGraph,
+		Options: Options{GraphLimitQtype: "",
+			PreferRPM: false,
+		},
 	},
 	{
 		Name:  "Test aggregate rate",
@@ -858,11 +863,12 @@ var testBuildTracesQueryData = []struct {
 		},
 		TableName: "signoz_traces.distributed_signoz_index_v2",
 		ExpectedQuery: "SELECT toStartOfInterval(timestamp, INTERVAL 60 SECOND) AS ts, stringTagMap['method'] as `method`" +
-			", count(numberTagMap['bytes'])/60 as value " +
+			", count(numberTagMap['bytes'])/1.000000 as value " +
 			"from signoz_traces.distributed_signoz_index_v2 where (timestamp >= '1680066360726210000' AND timestamp <= '1680066458000000000') " +
 			"AND has(stringTagMap, 'method') group by `method`,ts " +
 			"order by `method` ASC",
 		PanelType: v3.PanelTypeGraph,
+		Options:   Options{GraphLimitQtype: "", PreferRPM: true},
 	},
 	{
 		Name:  "Test aggregate RateSum without fixed column",
@@ -881,11 +887,12 @@ var testBuildTracesQueryData = []struct {
 		TableName: "signoz_traces.distributed_signoz_index_v2",
 		ExpectedQuery: "SELECT toStartOfInterval(timestamp, INTERVAL 60 SECOND) AS ts, " +
 			"stringTagMap['method'] as `method`, " +
-			"sum(numberTagMap['bytes'])/60 as value " +
+			"sum(numberTagMap['bytes'])/1.000000 as value " +
 			"from signoz_traces.distributed_signoz_index_v2 where (timestamp >= '1680066360726210000' AND timestamp <= '1680066458000000000') " +
 			"AND has(stringTagMap, 'method') group by `method`,ts " +
 			"order by `method` ASC",
 		PanelType: v3.PanelTypeGraph,
+		Options:   Options{GraphLimitQtype: "", PreferRPM: true},
 	},
 	{
 		Name:  "Test aggregate with having clause",
@@ -1131,7 +1138,7 @@ func TestBuildTracesQuery(t *testing.T) {
 		Convey("TestBuildTracesQuery", t, func() {
 			query, err := buildTracesQuery(tt.Start, tt.End, tt.Step, tt.BuilderQuery, tt.TableName, map[string]v3.AttributeKey{
 				"name": {Key: "name", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag, IsColumn: true},
-			}, tt.PanelType, "")
+			}, tt.PanelType, tt.Options)
 			So(err, ShouldBeNil)
 			So(query, ShouldEqual, tt.ExpectedQuery)
 		})
@@ -1146,7 +1153,7 @@ var testPrepTracesQueryData = []struct {
 	BuilderQuery  *v3.BuilderQuery
 	ExpectedQuery string
 	Keys          map[string]v3.AttributeKey
-	Type          string
+	Options       Options
 }{
 	{
 		Name:      "Test TS with limit- first",
@@ -1171,7 +1178,9 @@ var testPrepTracesQueryData = []struct {
 			" where (timestamp >= '1680066360726210000' AND timestamp <= '1680066458000000000') AND" +
 			" stringTagMap['method'] = 'GET' AND has(stringTagMap, 'method') group by `method` order by value DESC) LIMIT 10",
 		Keys: map[string]v3.AttributeKey{"name": {Key: "name", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag, IsColumn: true}},
-		Type: constants.FirstQueryGraphLimit,
+		Options: Options{
+			GraphLimitQtype: constants.FirstQueryGraphLimit,
+		},
 	},
 	{
 		Name:      "Test TS with limit- first - with order by value",
@@ -1198,7 +1207,9 @@ var testPrepTracesQueryData = []struct {
 			" AND timestamp <= '1680066458000000000') AND stringTagMap['method'] = 'GET' AND" +
 			" has(stringTagMap, 'method') group by `method` order by value ASC) LIMIT 10",
 		Keys: map[string]v3.AttributeKey{},
-		Type: constants.FirstQueryGraphLimit,
+		Options: Options{
+			GraphLimitQtype: constants.FirstQueryGraphLimit,
+		},
 	},
 	{
 		Name:      "Test TS with limit- first - with order by attribute",
@@ -1222,7 +1233,9 @@ var testPrepTracesQueryData = []struct {
 			" AND timestamp <= '1680066458000000000') " +
 			"group by `serviceName` order by `serviceName` ASC) LIMIT 10",
 		Keys: map[string]v3.AttributeKey{},
-		Type: constants.FirstQueryGraphLimit,
+		Options: Options{
+			GraphLimitQtype: constants.FirstQueryGraphLimit,
+		},
 	},
 	{
 		Name:      "Test TS with limit- first - with 2 group by and 2 order by",
@@ -1250,7 +1263,9 @@ var testPrepTracesQueryData = []struct {
 			" AND timestamp <= '1680066458000000000') AND has(stringTagMap, 'http.method') " +
 			"group by `serviceName`,`http.method` order by `serviceName` ASC,value ASC) LIMIT 10",
 		Keys: map[string]v3.AttributeKey{},
-		Type: constants.FirstQueryGraphLimit,
+		Options: Options{
+			GraphLimitQtype: constants.FirstQueryGraphLimit,
+		},
 	},
 	{
 		Name:      "Test TS with limit- second",
@@ -1276,7 +1291,9 @@ var testPrepTracesQueryData = []struct {
 			" AND timestamp <= '1680066458000000000') AND stringTagMap['method'] = 'GET' AND" +
 			" has(stringTagMap, 'method') AND (`method`) GLOBAL IN (%s) group by `method`,ts order by value DESC",
 		Keys: map[string]v3.AttributeKey{},
-		Type: constants.SecondQueryGraphLimit,
+		Options: Options{
+			GraphLimitQtype: constants.SecondQueryGraphLimit,
+		},
 	},
 	{
 		Name:      "Test TS with limit- second - with order by",
@@ -1302,7 +1319,9 @@ var testPrepTracesQueryData = []struct {
 			" as value from signoz_traces.distributed_signoz_index_v2 where (timestamp >= '1680066360726210000'" +
 			" AND timestamp <= '1680066458000000000') AND stringTagMap['method'] = 'GET' AND" +
 			" has(stringTagMap, 'method') AND (`method`) GLOBAL IN (%s) group by `method`,ts order by `method` ASC", Keys: map[string]v3.AttributeKey{},
-		Type: constants.SecondQueryGraphLimit,
+		Options: Options{
+			GraphLimitQtype: constants.SecondQueryGraphLimit,
+		},
 	},
 	{
 		Name:      "Test TS with limit - second - with two group by and two order by",
@@ -1335,14 +1354,16 @@ var testPrepTracesQueryData = []struct {
 			"AND (`method`,`name`) GLOBAL IN (%s) group by `method`,`name`,ts " +
 			"order by `method` ASC,`name` ASC",
 		Keys: map[string]v3.AttributeKey{},
-		Type: constants.SecondQueryGraphLimit,
+		Options: Options{
+			GraphLimitQtype: constants.SecondQueryGraphLimit,
+		},
 	},
 }
 
 func TestPrepareTracesQuery(t *testing.T) {
 	for _, tt := range testPrepTracesQueryData {
 		Convey("TestPrepareTracesQuery", t, func() {
-			query, err := PrepareTracesQuery(tt.Start, tt.End, tt.PanelType, tt.BuilderQuery, tt.Keys, tt.Type)
+			query, err := PrepareTracesQuery(tt.Start, tt.End, tt.PanelType, tt.BuilderQuery, tt.Keys, tt.Options)
 			So(err, ShouldBeNil)
 			So(query, ShouldEqual, tt.ExpectedQuery)
 		})
