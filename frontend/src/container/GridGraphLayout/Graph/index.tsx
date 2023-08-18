@@ -29,6 +29,7 @@ function GridCardGraph({
 	onClickHandler,
 	headerMenuList = [MenuItemKeys.View],
 	isQueryEnabled,
+	threshold,
 }: GridCardGraphProps): JSX.Element {
 	const { isAddWidget } = useSelector<AppState, DashboardReducer>(
 		(state) => state.dashboards,
@@ -70,11 +71,12 @@ function GridCardGraph({
 		{
 			queryKey: [
 				`GetMetricsQueryRange-${widget?.timePreferance}-${globalSelectedInterval}-${widget?.id}`,
-				widget,
 				maxTime,
 				minTime,
 				globalSelectedInterval,
 				variables,
+				widget?.query,
+				widget?.panelTypes,
 			],
 			keepPreviousData: true,
 			enabled: isGraphVisible && !isEmptyWidget && isQueryEnabled && !isAddWidget,
@@ -101,11 +103,11 @@ function GridCardGraph({
 
 	const isEmptyLayout = widget?.id === 'empty' || isEmpty(widget);
 
-	if (queryResponse.isRefetching) {
+	if (queryResponse.isRefetching || queryResponse.isLoading) {
 		return <Spinner height="20vh" tip="Loading..." />;
 	}
 
-	if (queryResponse.isError && !isEmptyLayout) {
+	if ((queryResponse.isError && !isEmptyLayout) || !isQueryEnabled) {
 		return (
 			<span ref={graphRef}>
 				{!isEmpty(widget) && prevChartDataSetRef && (
@@ -120,6 +122,7 @@ function GridCardGraph({
 						yAxisUnit={yAxisUnit}
 						layout={layout}
 						setLayout={setLayout}
+						threshold={threshold}
 						headerMenuList={headerMenuList}
 					/>
 				)}
@@ -127,27 +130,24 @@ function GridCardGraph({
 		);
 	}
 
-	if (queryResponse.status === 'loading' || queryResponse.status === 'idle') {
+	if (!isEmpty(widget) && prevChartDataSetRef?.labels) {
 		return (
 			<span ref={graphRef}>
-				{!isEmpty(widget) && prevChartDataSetRef?.labels ? (
-					<WidgetGraphComponent
-						enableModel={false}
-						enableWidgetHeader
-						widget={widget}
-						queryResponse={queryResponse}
-						errorMessage={errorMessage}
-						data={prevChartDataSetRef}
-						name={name}
-						yAxisUnit={yAxisUnit}
-						layout={layout}
-						setLayout={setLayout}
-						headerMenuList={headerMenuList}
-						onClickHandler={onClickHandler}
-					/>
-				) : (
-					<Spinner height="20vh" tip="Loading..." />
-				)}
+				<WidgetGraphComponent
+					enableModel={false}
+					enableWidgetHeader
+					widget={widget}
+					queryResponse={queryResponse}
+					errorMessage={errorMessage}
+					data={prevChartDataSetRef}
+					name={name}
+					yAxisUnit={yAxisUnit}
+					layout={layout}
+					setLayout={setLayout}
+					threshold={threshold}
+					headerMenuList={headerMenuList}
+					onClickHandler={onClickHandler}
+				/>
 			</span>
 		);
 	}
@@ -165,6 +165,7 @@ function GridCardGraph({
 					name={name}
 					yAxisUnit={yAxisUnit}
 					onDragSelect={onDragSelect}
+					threshold={threshold}
 					headerMenuList={headerMenuList}
 					onClickHandler={onClickHandler}
 				/>
@@ -179,6 +180,7 @@ GridCardGraph.defaultProps = {
 	onDragSelect: undefined,
 	onClickHandler: undefined,
 	isQueryEnabled: true,
+	threshold: undefined,
 	headerMenuList: [MenuItemKeys.View],
 };
 
