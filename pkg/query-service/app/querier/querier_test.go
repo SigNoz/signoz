@@ -404,15 +404,14 @@ func TestQueryRange(t *testing.T) {
 		{
 			Start: 1675115596722,
 			End:   1675115596722 + 120*60*1000,
-			Step:  5 * time.Minute.Milliseconds(),
 			CompositeQuery: &v3.CompositeQuery{
 				QueryType: v3.QueryTypeBuilder,
 				PanelType: v3.PanelTypeGraph,
 				BuilderQueries: map[string]*v3.BuilderQuery{
 					"A": {
 						QueryName:          "A",
-						StepInterval:       5 * time.Minute.Milliseconds(),
 						DataSource:         v3.DataSourceMetrics,
+						StepInterval:       60,
 						AggregateAttribute: v3.AttributeKey{Key: "http_server_requests_seconds_count", Type: v3.AttributeKeyTypeUnspecified, DataType: "float64", IsColumn: true},
 						Filters: &v3.FilterSet{
 							Operator: "AND",
@@ -437,15 +436,14 @@ func TestQueryRange(t *testing.T) {
 		{
 			Start: 1675115596722 + 60*60*1000,
 			End:   1675115596722 + 180*60*1000,
-			Step:  5 * time.Minute.Milliseconds(),
 			CompositeQuery: &v3.CompositeQuery{
 				QueryType: v3.QueryTypeBuilder,
 				PanelType: v3.PanelTypeGraph,
 				BuilderQueries: map[string]*v3.BuilderQuery{
 					"A": {
 						QueryName:          "A",
+						StepInterval:       60,
 						AggregateAttribute: v3.AttributeKey{Key: "http_server_requests_seconds_count", Type: v3.AttributeKeyTypeUnspecified, DataType: "float64", IsColumn: true},
-						StepInterval:       5 * time.Minute.Milliseconds(),
 						DataSource:         v3.DataSourceMetrics,
 						Filters: &v3.FilterSet{
 							Operator: "AND",
