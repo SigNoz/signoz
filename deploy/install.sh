@@ -494,7 +494,7 @@ fi
 
 start_docker
 
-# $sudo_cmd docker-compose -f ./docker/clickhouse-setup/docker-compose.yaml up -d --remove-orphans || true
+# $sudo_cmd docker-compose -f ./docker/clickhouse-setup/docker-compose.yaml -f ./docker/clickhouse-setup/docker-compose-flask.yaml up -d --remove-orphans || true
 
 
 echo ""
@@ -506,7 +506,7 @@ echo "🟡 Starting the SigNoz containers. It may take a few minutes ..."
 echo
 # The docker-compose command does some nasty stuff for the `--detach` functionality. So we add a `|| true` so that the
 # script doesn't exit because this command looks like it failed to do it's thing.
-$sudo_cmd docker-compose -f ./docker/clickhouse-setup/docker-compose.yaml up --detach --remove-orphans || true
+$sudo_cmd docker-compose -f ./docker/clickhouse-setup/docker-compose.yaml -f ./docker/clickhouse-setup/docker-compose-flask.yaml up --detach --remove-orphans || true
 
 wait_for_containers_start 60
 echo ""
