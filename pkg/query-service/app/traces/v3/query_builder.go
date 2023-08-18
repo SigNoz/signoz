@@ -10,6 +10,11 @@ import (
 	"go.signoz.io/signoz/pkg/query-service/utils"
 )
 
+type Options struct {
+	GraphLimitQtype string
+	PreferRPM       bool
+}
+
 var aggregateOperatorToPercentile = map[v3.AggregateOperator]float64{
 	v3.AggregateOperatorP05: 0.05,
 	v3.AggregateOperatorP10: 0.10,
@@ -232,7 +237,7 @@ func handleEmptyValuesInGroupBy(keys map[string]v3.AttributeKey, groupBy []v3.At
 	return "", nil
 }
 
-func buildTracesQuery(start, end, step int64, mq *v3.BuilderQuery, tableName string, keys map[string]v3.AttributeKey, panelType v3.PanelType, graphLimitQtype string) (string, error) {
+func buildTracesQuery(start, end, step int64, mq *v3.BuilderQuery, tableName string, keys map[string]v3.AttributeKey, panelType v3.PanelType, options Options) (string, error) {
 
 	filterSubQuery, err := buildTracesFilterQuery(mq.Filters, keys)
 	if err != nil {
@@ -249,7 +254,7 @@ func buildTracesQuery(start, end, step int64, mq *v3.BuilderQuery, tableName str
 	}
 
 	var queryTmpl string
-	if graphLimitQtype == constants.FirstQueryGraphLimit {
+	if options.GraphLimitQtype == constants.FirstQueryGraphLimit {
 		queryTmpl = "SELECT"
 	} else if panelType == v3.PanelTypeTable {
 		queryTmpl =
@@ -268,7 +273,7 @@ func buildTracesQuery(start, end, step int64, mq *v3.BuilderQuery, tableName str
 		"%s"
 
 	// we don't need value for first query
-	if graphLimitQtype == constants.FirstQueryGraphLimit {
+	if options.GraphLimitQtype == constants.FirstQueryGraphLimit {
 		queryTmpl = "SELECT " + getSelectKeys(mq.AggregateOperator, mq.GroupBy) + " from (" + queryTmpl + ")"
 	}
 
@@ -278,7 +283,7 @@ func buildTracesQuery(start, end, step int64, mq *v3.BuilderQuery, tableName str
 	}
 	filterSubQuery += emptyValuesInGroupByFilter
 
-	groupBy := groupByAttributeKeyTags(panelType, graphLimitQtype, mq.GroupBy...)
+	groupBy := groupByAttributeKeyTags(panelType, options.GraphLimitQtype, mq.GroupBy...)
 	if groupBy != "" {
 		groupBy = " group by " + groupBy
 	}
@@ -288,7 +293,7 @@ func buildTracesQuery(start, end, step int64, mq *v3.BuilderQuery, tableName str
 		orderBy = " order by " + orderBy
 	}
 
-	if graphLimitQtype == constants.SecondQueryGraphLimit {
+	if options.GraphLimitQtype == constants.SecondQueryGraphLimit {
 		filterSubQuery = filterSubQuery + " AND " + fmt.Sprintf("(%s) GLOBAL IN (", getSelectKeys(mq.AggregateOperator, mq.GroupBy)) + "%s)"
 	}
 
@@ -303,7 +308,13 @@ func buildTracesQuery(start, end, step int64, mq *v3.BuilderQuery, tableName str
 		v3.AggregateOperatorRateAvg,
 		v3.AggregateOperatorRateMin,
 		v3.AggregateOperatorRate:
-		op := fmt.Sprintf("%s(%s)/%d", aggregateOperatorToSQLFunc[mq.AggregateOperator], aggregationKey, step)
+
+		rate := float64(step)
+		if options.PreferRPM {
+			rate = rate / 60.0
+		}
+
+		op := fmt.Sprintf("%s(%s)/%f", aggregateOperatorToSQLFunc[mq.AggregateOperator], aggregationKey, rate)
 		query := fmt.Sprintf(queryTmpl, op, filterSubQuery, groupBy, having, orderBy)
 		return query, nil
 	case
@@ -488,25 +499,25 @@ func addOffsetToQuery(query string, offset uint64) string {
 	return fmt.Sprintf("%s OFFSET %d", query, offset)
 }
 
-func PrepareTracesQuery(start, end int64, panelType v3.PanelType, mq *v3.BuilderQuery, keys map[string]v3.AttributeKey, graphLimitQtype string) (string, error) {
-	if graphLimitQtype == constants.FirstQueryGraphLimit {
+func PrepareTracesQuery(start, end int64, panelType v3.PanelType, mq *v3.BuilderQuery, keys map[string]v3.AttributeKey, options Options) (string, error) {
+	if options.GraphLimitQtype == constants.FirstQueryGraphLimit {
 		// give me just the group by names
-		query, err := buildTracesQuery(start, end, mq.StepInterval, mq, constants.SIGNOZ_SPAN_INDEX_TABLENAME, keys, panelType, graphLimitQtype)
+		query, err := buildTracesQuery(start, end, mq.StepInterval, mq, constants.SIGNOZ_SPAN_INDEX_TABLENAME, keys, panelType, options)
 		if err != nil {
 			return "", err
 		}
 		query = addLimitToQuery(query, mq.Limit)
 
 		return query, nil
-	} else if graphLimitQtype == constants.SecondQueryGraphLimit {
-		query, err := buildTracesQuery(start, end, mq.StepInterval, mq, constants.SIGNOZ_SPAN_INDEX_TABLENAME, keys, panelType, graphLimitQtype)
+	} else if options.GraphLimitQtype == constants.SecondQueryGraphLimit {
+		query, err := buildTracesQuery(start, end, mq.StepInterval, mq, constants.SIGNOZ_SPAN_INDEX_TABLENAME, keys, panelType, options)
 		if err != nil {
 			return "", err
 		}
 		return query, nil
 	}
 
-	query, err := buildTracesQuery(start, end, mq.StepInterval, mq, constants.SIGNOZ_SPAN_INDEX_TABLENAME, keys, panelType, graphLimitQtype)
+	query, err := buildTracesQuery(start, end, mq.StepInterval, mq, constants.SIGNOZ_SPAN_INDEX_TABLENAME, keys, panelType, options)
 	if err != nil {
 		return "", err
 	}
