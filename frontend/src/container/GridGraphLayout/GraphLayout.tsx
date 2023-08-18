@@ -114,14 +114,10 @@ function GraphLayout({
 					const currentWidget = (widgets || [])?.find((e) => e.id === rest.i);
 
 					return (
-						<CardContainer
-							isDarkMode={isDarkMode}
-							key={currentWidget?.id}
-							data-grid={rest}
-						>
+						<CardContainer isDarkMode={isDarkMode} key={rest.i} data-grid={rest}>
 							<Card $panelType={currentWidget?.panelTypes || PANEL_TYPES.TIME_SERIES}>
 								<Graph
-									widget={currentWidget || ({} as Widgets)}
+									widget={currentWidget || ({ id: rest.i } as Widgets)}
 									name={currentWidget?.id || ''}
 									headerMenuList={[
 										MenuItemKeys.Clone,
