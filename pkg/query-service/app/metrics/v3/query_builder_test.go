@@ -27,7 +27,7 @@ func TestBuildQuery(t *testing.T) {
 				PanelType: v3.PanelTypeGraph,
 			},
 		}
-		query, err := PrepareMetricQuery(q.Start, q.End, q.CompositeQuery.QueryType, q.CompositeQuery.PanelType, q.CompositeQuery.BuilderQueries["A"])
+		query, err := PrepareMetricQuery(q.Start, q.End, q.CompositeQuery.QueryType, q.CompositeQuery.PanelType, q.CompositeQuery.BuilderQueries["A"], Options{PreferRPM: false})
 		require.NoError(t, err)
 		require.Contains(t, query, "WHERE metric_name = 'name'")
 	})
@@ -54,7 +54,7 @@ func TestBuildQueryWithFilters(t *testing.T) {
 				},
 			},
 		}
-		query, err := PrepareMetricQuery(q.Start, q.End, q.CompositeQuery.QueryType, q.CompositeQuery.PanelType, q.CompositeQuery.BuilderQueries["A"])
+		query, err := PrepareMetricQuery(q.Start, q.End, q.CompositeQuery.QueryType, q.CompositeQuery.PanelType, q.CompositeQuery.BuilderQueries["A"], Options{PreferRPM: false})
 		require.NoError(t, err)
 
 		require.Contains(t, query, "WHERE metric_name = 'name' AND temporality IN ['Cumulative', 'Unspecified'] AND JSONExtractString(labels, 'a') != 'b'")
@@ -90,7 +90,7 @@ func TestBuildQueryWithMultipleQueries(t *testing.T) {
 			},
 		}
 
-		query, err := PrepareMetricQuery(q.Start, q.End, q.CompositeQuery.QueryType, q.CompositeQuery.PanelType, q.CompositeQuery.BuilderQueries["A"])
+		query, err := PrepareMetricQuery(q.Start, q.End, q.CompositeQuery.QueryType, q.CompositeQuery.PanelType, q.CompositeQuery.BuilderQueries["A"], Options{PreferRPM: false})
 		require.NoError(t, err)
 
 		require.Contains(t, query, "WHERE metric_name = 'name' AND temporality IN ['Cumulative', 'Unspecified'] AND JSONExtractString(labels, 'in') IN ['a','b','c']")
@@ -286,7 +286,60 @@ func TestBuildQueryXRate(t *testing.T) {
 					PanelType: v3.PanelTypeGraph,
 				},
 			}
-			query, err := PrepareMetricQuery(q.Start, q.End, q.CompositeQuery.QueryType, q.CompositeQuery.PanelType, q.CompositeQuery.BuilderQueries["A"])
+			query, err := PrepareMetricQuery(q.Start, q.End, q.CompositeQuery.QueryType, q.CompositeQuery.PanelType, q.CompositeQuery.BuilderQueries["A"], Options{PreferRPM: false})
+			require.NoError(t, err)
+			require.Equal(t, query, c.expectedQuery)
+		}
+	})
+}
+
+func TestBuildQueryRPM(t *testing.T) {
+	t.Run("TestBuildQueryXRate", func(t *testing.T) {
+
+		tmpl := `SELECT  ts, ceil(value * 60) as value FROM (SELECT  ts, %s(value) as value FROM (SELECT  ts, if(runningDifference(ts) <= 0, nan, if(runningDifference(value) < 0, (value) / runningDifference(ts), runningDifference(value) / runningDifference(ts))) as value FROM(SELECT fingerprint,  toStartOfInterval(toDateTime(intDiv(timestamp_ms, 1000)), INTERVAL 0 SECOND) as ts, max(value) as value FROM signoz_metrics.distributed_samples_v2 INNER JOIN (SELECT  fingerprint FROM signoz_metrics.time_series_v2 WHERE metric_name = 'name' AND temporality IN ['Cumulative', 'Unspecified']) as filtered_time_series USING fingerprint WHERE metric_name = 'name' AND timestamp_ms >= 1650991982000 AND timestamp_ms <= 1651078382000 GROUP BY fingerprint, ts ORDER BY fingerprint,  ts) WHERE isNaN(value) = 0) GROUP BY GROUPING SETS ( (ts), () ) ORDER BY  ts)`
+
+		cases := []struct {
+			aggregateOperator v3.AggregateOperator
+			expectedQuery     string
+		}{
+			{
+				aggregateOperator: v3.AggregateOperatorAvgRate,
+				expectedQuery:     fmt.Sprintf(tmpl, aggregateOperatorToSQLFunc[v3.AggregateOperatorAvgRate]),
+			},
+			{
+				aggregateOperator: v3.AggregateOperatorMaxRate,
+				expectedQuery:     fmt.Sprintf(tmpl, aggregateOperatorToSQLFunc[v3.AggregateOperatorMaxRate]),
+			},
+			{
+				aggregateOperator: v3.AggregateOperatorMinRate,
+				expectedQuery:     fmt.Sprintf(tmpl, aggregateOperatorToSQLFunc[v3.AggregateOperatorMinRate]),
+			},
+			{
+				aggregateOperator: v3.AggregateOperatorSumRate,
+				expectedQuery:     fmt.Sprintf(tmpl, aggregateOperatorToSQLFunc[v3.AggregateOperatorSumRate]),
+			},
+		}
+
+		for _, c := range cases {
+
+			q := &v3.QueryRangeParamsV3{
+				Start: 1650991982000,
+				End:   1651078382000,
+				Step:  60,
+				CompositeQuery: &v3.CompositeQuery{
+					BuilderQueries: map[string]*v3.BuilderQuery{
+						"A": {
+							QueryName:          "A",
+							AggregateAttribute: v3.AttributeKey{Key: "name"},
+							AggregateOperator:  c.aggregateOperator,
+							Expression:         "A",
+						},
+					},
+					QueryType: v3.QueryTypeBuilder,
+					PanelType: v3.PanelTypeGraph,
+				},
+			}
+			query, err := PrepareMetricQuery(q.Start, q.End, q.CompositeQuery.QueryType, q.CompositeQuery.PanelType, q.CompositeQuery.BuilderQueries["A"], Options{PreferRPM: true})
 			require.NoError(t, err)
 			require.Equal(t, query, c.expectedQuery)
 		}
