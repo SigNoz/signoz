@@ -145,7 +145,7 @@ func NewAPIHandler(opts APIHandlerOpts) (*APIHandler, error) {
 		BuildTraceQuery:  tracesV3.PrepareTracesQuery,
 		BuildLogQuery:    logsv3.PrepareLogsQuery,
 	}
-	aH.queryBuilder = queryBuilder.NewQueryBuilder(builderOpts)
+	aH.queryBuilder = queryBuilder.NewQueryBuilder(builderOpts, aH.featureFlags)
 
 	aH.ready = aH.testReady
 
@@ -1128,7 +1128,6 @@ func (aH *APIHandler) testChannel(w http.ResponseWriter, r *http.Request) {
 		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
 		return
 	}
-
 	// send alert
 	apiErrorObj := aH.alertManager.TestReceiver(receiver)
 	if apiErrorObj != nil {
@@ -3128,7 +3127,7 @@ func (aH *APIHandler) liveTailLogs(w http.ResponseWriter, r *http.Request) {
 			var buf bytes.Buffer
 			enc := json.NewEncoder(&buf)
 			enc.Encode(log)
-			fmt.Fprintf(w, "event: log\ndata: %v\n\n", buf.String())
+			fmt.Fprintf(w, "data: %v\n\n", buf.String())
 			flusher.Flush()
 		case <-client.Done:
 			zap.S().Debug("done!")

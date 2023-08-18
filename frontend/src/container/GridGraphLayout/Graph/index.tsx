@@ -29,6 +29,7 @@ function GridCardGraph({
 	onClickHandler,
 	headerMenuList = [MenuItemKeys.View],
 	isQueryEnabled,
+	threshold,
 }: GridCardGraphProps): JSX.Element {
 	const { isAddWidget } = useSelector<AppState, DashboardReducer>(
 		(state) => state.dashboards,
@@ -70,11 +71,12 @@ function GridCardGraph({
 		{
 			queryKey: [
 				`GetMetricsQueryRange-${widget?.timePreferance}-${globalSelectedInterval}-${widget?.id}`,
-				widget,
 				maxTime,
 				minTime,
 				globalSelectedInterval,
 				variables,
+				widget?.query,
+				widget?.panelTypes,
 			],
 			keepPreviousData: true,
 			enabled: isGraphVisible && !isEmptyWidget && isQueryEnabled && !isAddWidget,
@@ -105,7 +107,7 @@ function GridCardGraph({
 		return <Spinner height="20vh" tip="Loading..." />;
 	}
 
-	if (queryResponse.isError && !isEmptyLayout) {
+	if ((queryResponse.isError && !isEmptyLayout) || !isQueryEnabled) {
 		return (
 			<span ref={graphRef}>
 				{!isEmpty(widget) && prevChartDataSetRef && (
@@ -120,6 +122,7 @@ function GridCardGraph({
 						yAxisUnit={yAxisUnit}
 						layout={layout}
 						setLayout={setLayout}
+						threshold={threshold}
 						headerMenuList={headerMenuList}
 					/>
 				)}
@@ -141,6 +144,7 @@ function GridCardGraph({
 					yAxisUnit={yAxisUnit}
 					layout={layout}
 					setLayout={setLayout}
+					threshold={threshold}
 					headerMenuList={headerMenuList}
 					onClickHandler={onClickHandler}
 				/>
@@ -161,6 +165,7 @@ function GridCardGraph({
 					name={name}
 					yAxisUnit={yAxisUnit}
 					onDragSelect={onDragSelect}
+					threshold={threshold}
 					headerMenuList={headerMenuList}
 					onClickHandler={onClickHandler}
 				/>
@@ -175,6 +180,7 @@ GridCardGraph.defaultProps = {
 	onDragSelect: undefined,
 	onClickHandler: undefined,
 	isQueryEnabled: true,
+	threshold: undefined,
 	headerMenuList: [MenuItemKeys.View],
 };
 

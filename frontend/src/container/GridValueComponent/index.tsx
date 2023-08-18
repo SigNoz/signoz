@@ -1,7 +1,8 @@
 import { Typography } from 'antd';
 import { getYAxisFormattedValue } from 'components/Graph/yAxisConfig';
 import ValueGraph from 'components/ValueGraph';
-import { memo } from 'react';
+import { generateGridTitle } from 'container/GridPanelSwitch/utils';
+import { memo, useMemo } from 'react';
 import { useLocation } from 'react-router-dom';
 
 import { TitleContainer, ValueContainer } from './styles';
@@ -15,6 +16,7 @@ function GridValueComponent({
 	const value = (((data.datasets[0] || []).data || [])[0] || 0) as number;
 
 	const location = useLocation();
+	const gridTitle = useMemo(() => generateGridTitle(title), [title]);
 
 	const isDashboardPage = location.pathname.split('/').length === 3;
 
@@ -29,7 +31,7 @@ function GridValueComponent({
 	return (
 		<>
 			<TitleContainer isDashboardPage={isDashboardPage}>
-				<Typography>{title}</Typography>
+				<Typography>{gridTitle}</Typography>
 			</TitleContainer>
 			<ValueContainer isDashboardPage={isDashboardPage}>
 				<ValueGraph

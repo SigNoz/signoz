@@ -35,6 +35,7 @@ const LogsTTL = "logs"
 
 const DurationSort = "DurationSort"
 const TimestampSort = "TimestampSort"
+const PreferRPM = "PreferRPM"
 
 func GetAlertManagerApiPrefix() string {
 	if os.Getenv("ALERTMANAGER_API_PREFIX") != "" {
@@ -55,6 +56,8 @@ var DurationSortFeature = GetOrDefaultEnv("DURATION_SORT_FEATURE", "true")
 
 var TimestampSortFeature = GetOrDefaultEnv("TIMESTAMP_SORT_FEATURE", "true")
 
+var PreferRPMFeature = GetOrDefaultEnv("PREFER_RPM_FEATURE", "false")
+
 func IsDurationSortFeatureEnabled() bool {
 	isDurationSortFeatureEnabledStr := DurationSortFeature
 	isDurationSortFeatureEnabledBool, err := strconv.ParseBool(isDurationSortFeatureEnabledStr)
@@ -71,6 +74,15 @@ func IsTimestampSortFeatureEnabled() bool {
 		return false
 	}
 	return isTimestampSortFeatureEnabledBool
+}
+
+func IsPreferRPMFeatureEnabled() bool {
+	preferRPMFeatureEnabledStr := PreferRPMFeature
+	preferRPMFeatureEnabledBool, err := strconv.ParseBool(preferRPMFeatureEnabledStr)
+	if err != nil {
+		return false
+	}
+	return preferRPMFeatureEnabledBool
 }
 
 var DEFAULT_FEATURE_SET = model.FeatureSet{
@@ -90,6 +102,13 @@ var DEFAULT_FEATURE_SET = model.FeatureSet{
 	model.Feature{
 		Name:       model.UseSpanMetrics,
 		Active:     false,
+		Usage:      0,
+		UsageLimit: -1,
+		Route:      "",
+	},
+	model.Feature{
+		Name:       PreferRPM,
+		Active:     IsPreferRPMFeatureEnabled(),
 		Usage:      0,
 		UsageLimit: -1,
 		Route:      "",

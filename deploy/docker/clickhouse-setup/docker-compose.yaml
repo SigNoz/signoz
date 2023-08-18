@@ -148,7 +148,7 @@ services:
   #     - ./user_scripts:/var/lib/clickhouse/user_scripts/
 
   alertmanager:
-    image: signoz/alertmanager:${ALERTMANAGER_TAG:-0.23.1}
+    image: signoz/alertmanager:${ALERTMANAGER_TAG:-0.23.2}
     container_name: signoz-alertmanager
     volumes:
       - ./data/alertmanager:/data

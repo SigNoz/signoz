@@ -1,6 +1,6 @@
 import { ChartData } from 'chart.js';
 import { GraphOnClickHandler, ToggleGraphProps } from 'components/Graph/types';
-import { Dispatch, MutableRefObject, SetStateAction } from 'react';
+import { Dispatch, MutableRefObject, ReactNode, SetStateAction } from 'react';
 import { Layout } from 'react-grid-layout';
 import { UseQueryResult } from 'react-query';
 import { DeleteWidgetProps } from 'store/actions/dashboard/deleteWidget';
@@ -39,6 +39,7 @@ export interface WidgetGraphComponentProps extends DispatchProps {
 	setLayout?: Dispatch<SetStateAction<LayoutProps[]>>;
 	onDragSelect?: (start: number, end: number) => void;
 	onClickHandler?: GraphOnClickHandler;
+	threshold?: ReactNode;
 	headerMenuList: MenuItemKeys[];
 }
 
@@ -50,6 +51,7 @@ export interface GridCardGraphProps {
 	setLayout?: Dispatch<SetStateAction<LayoutProps[]>>;
 	onDragSelect?: (start: number, end: number) => void;
 	onClickHandler?: GraphOnClickHandler;
+	threshold?: ReactNode;
 	headerMenuList?: WidgetGraphComponentProps['headerMenuList'];
 	isQueryEnabled: boolean;
 }
