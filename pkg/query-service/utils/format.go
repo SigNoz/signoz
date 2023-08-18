@@ -141,6 +141,13 @@ func ValidateAndCastValue(v interface{}, dataType v3.AttributeKeyDataType) (inte
 	}
 }
 
+func quoteEscapedString(str string) string {
+	// https://clickhouse.com/docs/en/sql-reference/syntax#string
+	str = strings.ReplaceAll(str, `\`, `\\`)
+	str = strings.ReplaceAll(str, `'`, `\'`)
+	return str
+}
+
 // ClickHouseFormattedValue formats the value to be used in clickhouse query
 func ClickHouseFormattedValue(v interface{}) string {
 	// if it's pointer convert it to a value
@@ -152,7 +159,7 @@ func ClickHouseFormattedValue(v interface{}) string {
 	case float32, float64:
 		return fmt.Sprintf("%f", x)
 	case string:
-		return fmt.Sprintf("'%s'", x)
+		return fmt.Sprintf("'%s'", quoteEscapedString(x))
 	case bool:
 		return fmt.Sprintf("%v", x)
 
@@ -164,7 +171,7 @@ func ClickHouseFormattedValue(v interface{}) string {
 		case string:
 			str := "["
 			for idx, sVal := range x {
-				str += fmt.Sprintf("'%s'", sVal)
+				str += fmt.Sprintf("'%s'", quoteEscapedString(sVal.(string)))
 				if idx != len(x)-1 {
 					str += ","
 				}
