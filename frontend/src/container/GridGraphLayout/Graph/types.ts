@@ -1,10 +1,8 @@
 import { ChartData } from 'chart.js';
 import { GraphOnClickHandler, ToggleGraphProps } from 'components/Graph/types';
-import { Dispatch, MutableRefObject, ReactNode, SetStateAction } from 'react';
+import { MutableRefObject, ReactNode } from 'react';
 import { Layout } from 'react-grid-layout';
 import { UseQueryResult } from 'react-query';
-import { DeleteWidgetProps } from 'store/actions/dashboard/deleteWidget';
-import AppActions from 'types/actions';
 import { ErrorResponse, SuccessResponse } from 'types/api';
 import { Widgets } from 'types/api/dashboard/getAll';
 import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
@@ -17,13 +15,7 @@ export interface GraphVisibilityLegendEntryProps {
 	legendEntry: LegendEntryProps[];
 }
 
-export interface DispatchProps {
-	deleteWidget: ({
-		widgetId,
-	}: DeleteWidgetProps) => (dispatch: Dispatch<AppActions>) => void;
-}
-
-export interface WidgetGraphComponentProps extends DispatchProps {
+export interface WidgetGraphComponentProps {
 	enableModel: boolean;
 	enableWidgetHeader: boolean;
 	widget: Widgets;
@@ -33,9 +25,7 @@ export interface WidgetGraphComponentProps extends DispatchProps {
 	errorMessage: string | undefined;
 	data: ChartData;
 	name: string;
-	yAxisUnit?: string;
-	layout?: Layout[];
-	setLayout?: Dispatch<SetStateAction<Layout[]>>;
+	setLayout?: (layout: Layout[]) => void;
 	onDragSelect?: (start: number, end: number) => void;
 	onClickHandler?: GraphOnClickHandler;
 	threshold?: ReactNode;
@@ -45,8 +35,7 @@ export interface WidgetGraphComponentProps extends DispatchProps {
 export interface GridCardGraphProps {
 	widget: Widgets;
 	name: string;
-	layout?: Layout[];
-	setLayout?: Dispatch<SetStateAction<Layout[]>>;
+	setLayout?: WidgetGraphComponentProps['setLayout'];
 	onDragSelect?: (start: number, end: number) => void;
 	onClickHandler?: GraphOnClickHandler;
 	threshold?: ReactNode;

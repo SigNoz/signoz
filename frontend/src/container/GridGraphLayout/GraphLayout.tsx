@@ -125,6 +125,7 @@ function GraphLayout({
 										MenuItemKeys.Edit,
 										MenuItemKeys.View,
 									]}
+									setLayout={setLayout}
 								/>
 							</Card>
 						</CardContainer>

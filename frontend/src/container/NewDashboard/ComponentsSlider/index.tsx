@@ -47,6 +47,20 @@ function DashboardGraphSlider(): JSX.Element {
 							},
 							...(data.layout || []),
 						],
+						widgets: [
+							...(data?.widgets || []),
+							{
+								id,
+								title: '',
+								description: '',
+								isStacked: false,
+								nullZeroValues: '',
+								opacity: '',
+								panelTypes: name,
+								query: initialQueriesMap.metrics,
+								timePreferance: 'GLOBAL_TIME',
+							},
+						],
 					},
 				},
 				{

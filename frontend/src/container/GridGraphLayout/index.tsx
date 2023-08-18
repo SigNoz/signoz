@@ -26,7 +26,7 @@ function GridGraph(): JSX.Element {
 	const onEmptyWidgetHandler = useCallback(() => {
 		handleToggleDashboardSlider(true);
 
-		setLayout([
+		setLayout((preLayout) => [
 			{
 				i: PANEL_TYPES.EMPTY_WIDGET,
 				w: 6,
@@ -34,9 +34,9 @@ function GridGraph(): JSX.Element {
 				h: 2,
 				y: 0,
 			},
-			...(data.layout || []),
+			...(preLayout || []),
 		]);
-	}, [data.layout, handleToggleDashboardSlider]);
+	}, [handleToggleDashboardSlider]);
 
 	return (
 		<GraphLayoutContainer

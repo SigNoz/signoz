@@ -2,6 +2,7 @@ import { Typography } from 'antd';
 import { ToggleGraphProps } from 'components/Graph/types';
 import { Events } from 'constants/events';
 import GridPanelSwitch from 'container/GridPanelSwitch';
+import { useUpdateDashboard } from 'hooks/dashboard/useUpdateDashboard';
 import { useChartMutable } from 'hooks/useChartMutable';
 import { useNotifications } from 'hooks/useNotifications';
 import createQueryParams from 'lib/createQueryParams';
@@ -17,13 +18,9 @@ import {
 	useRef,
 	useState,
 } from 'react';
-import { useTranslation } from 'react-i18next';
-import { connect, useSelector } from 'react-redux';
-import { bindActionCreators } from 'redux';
-import { ThunkDispatch } from 'redux-thunk';
-import { DeleteWidget } from 'store/actions/dashboard/deleteWidget';
+import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
-import AppActions from 'types/actions';
+import { Dashboard } from 'types/api/dashboard/getAll';
 import AppReducer from 'types/reducer/app';
 import DashboardReducer from 'types/reducer/dashboards';
 import { eventEmitter } from 'utils/getEventEmitter';
@@ -34,7 +31,7 @@ import WidgetHeader from '../WidgetHeader';
 import FullView from './FullView';
 import { PANEL_TYPES_VS_FULL_VIEW_TABLE } from './FullView/contants';
 import { FullViewContainer, Modal } from './styles';
-import { DispatchProps, WidgetGraphComponentProps } from './types';
+import { WidgetGraphComponentProps } from './types';
 import {
 	getGraphVisibilityStateOnDataChange,
 	toggleGraphsVisibilityInChart,
@@ -48,18 +45,16 @@ function WidgetGraphComponent({
 	queryResponse,
 	errorMessage,
 	name,
-	layout = [],
-	deleteWidget,
 	onDragSelect,
 	onClickHandler,
 	threshold,
 	headerMenuList,
+	setLayout,
 }: WidgetGraphComponentProps): JSX.Element {
 	const [deleteModal, setDeleteModal] = useState(false);
 	const [modal, setModal] = useState<boolean>(false);
 	const [hovered, setHovered] = useState(false);
 	const { notifications } = useNotifications();
-	const { t } = useTranslation(['common']);
 
 	const { graphVisibilityStates: localstoredVisibilityStates } = useMemo(
 		() =>
@@ -132,29 +127,48 @@ function WidgetGraphComponent({
 		[],
 	);
 
-	const onDeleteHandler = useCallback(() => {
-		const isEmptyWidget = widget?.id === 'empty' || isEmpty(widget);
-		const widgetId = isEmptyWidget ? layout[0].i : widget?.id;
+	const updateDashboardMutation = useUpdateDashboard();
 
-		featureResponse
-			.refetch()
-			.then(() => {
-				deleteWidget({ widgetId });
-				onToggleModal(setDeleteModal);
-			})
-			.catch(() => {
+	const onDeleteHandler = useCallback(() => {
+		const updatedWidgets = selectedDashboard?.data?.widgets?.filter(
+			(e) => e.id !== widget.id,
+		);
+
+		const updatedLayout =
+			selectedDashboard.data.layout?.filter((e) => e.i !== widget.id) || [];
+
+		const updatedSelectedDashboard: Dashboard = {
+			...selectedDashboard,
+			data: {
+				title: selectedDashboard.data.title,
+				description: selectedDashboard.data.description,
+				name: selectedDashboard.data.name,
+				tags: selectedDashboard.data.tags,
+				widgets: updatedWidgets,
+				layout: updatedLayout,
+				variables: selectedDashboard.data.variables,
+			},
+			uuid: selectedDashboard.uuid,
+		};
+
+		updateDashboardMutation.mutateAsync(updatedSelectedDashboard, {
+			onSuccess: (updatedDashboard) => {
+				if (setLayout) setLayout(updatedDashboard.payload?.data?.layout || []);
+				featureResponse.refetch();
+			},
+			onError: () => {
 				notifications.error({
-					message: t('common:something_went_wrong'),
+					message: 'Something went wrong',
 				});
-			});
+			},
+		});
 	}, [
-		widget,
-		layout,
 		featureResponse,
-		deleteWidget,
-		onToggleModal,
 		notifications,
-		t,
+		selectedDashboard,
+		setLayout,
+		updateDashboardMutation,
+		widget?.id,
 	]);
 
 	const onCloneHandler = async (): Promise<void> => {
@@ -309,25 +323,13 @@ function WidgetGraphComponent({
 
 WidgetGraphComponent.defaultProps = {
 	yAxisUnit: undefined,
-	layout: undefined,
 	setLayout: undefined,
 	onDragSelect: undefined,
 	onClickHandler: undefined,
 };
 
-const mapDispatchToProps = (
-	dispatch: ThunkDispatch<unknown, unknown, AppActions>,
-): DispatchProps => ({
-	deleteWidget: bindActionCreators(DeleteWidget, dispatch),
-});
-
-export default connect(
-	null,
-	mapDispatchToProps,
-)(
-	memo(
-		WidgetGraphComponent,
-		(prevProps, nextProps) =>
-			isEqual(prevProps.data, nextProps.data) && prevProps.name === nextProps.name,
-	),
+export default memo(
+	WidgetGraphComponent,
+	(prevProps, nextProps) =>
+		isEqual(prevProps.data, nextProps.data) && prevProps.name === nextProps.name,
 );
