@@ -230,6 +230,7 @@ func TestBuildQueryOperators(t *testing.T) {
 		t.Run(fmt.Sprintf("case %d", i), func(t *testing.T) {
 			mq := v3.BuilderQuery{
 				QueryName:          "A",
+				StepInterval:       60,
 				AggregateAttribute: v3.AttributeKey{Key: "signoz_calls_total"},
 				AggregateOperator:  v3.AggregateOperatorSum,
 			}
@@ -243,7 +244,7 @@ func TestBuildQueryOperators(t *testing.T) {
 func TestBuildQueryXRate(t *testing.T) {
 	t.Run("TestBuildQueryXRate", func(t *testing.T) {
 
-		tmpl := `SELECT  ts, %s(value) as value FROM (SELECT  ts, if(runningDifference(ts) <= 0, nan, if(runningDifference(value) < 0, (value) / runningDifference(ts), runningDifference(value) / runningDifference(ts))) as value FROM(SELECT fingerprint,  toStartOfInterval(toDateTime(intDiv(timestamp_ms, 1000)), INTERVAL 0 SECOND) as ts, max(value) as value FROM signoz_metrics.distributed_samples_v2 INNER JOIN (SELECT  fingerprint FROM signoz_metrics.time_series_v2 WHERE metric_name = 'name' AND temporality IN ['Cumulative', 'Unspecified']) as filtered_time_series USING fingerprint WHERE metric_name = 'name' AND timestamp_ms >= 1650991982000 AND timestamp_ms <= 1651078382000 GROUP BY fingerprint, ts ORDER BY fingerprint,  ts) WHERE isNaN(value) = 0) GROUP BY GROUPING SETS ( (ts), () ) ORDER BY  ts`
+		tmpl := `SELECT  ts, %s(value) as value FROM (SELECT  ts, if(runningDifference(ts) <= 0, nan, if(runningDifference(value) < 0, (value) / runningDifference(ts), runningDifference(value) / runningDifference(ts))) as value FROM(SELECT fingerprint,  toStartOfInterval(toDateTime(intDiv(timestamp_ms, 1000)), INTERVAL 60 SECOND) as ts, max(value) as value FROM signoz_metrics.distributed_samples_v2 INNER JOIN (SELECT  fingerprint FROM signoz_metrics.time_series_v2 WHERE metric_name = 'name' AND temporality IN ['Cumulative', 'Unspecified']) as filtered_time_series USING fingerprint WHERE metric_name = 'name' AND timestamp_ms >= 1650991980000 AND timestamp_ms <= 1651078380000 GROUP BY fingerprint, ts ORDER BY fingerprint,  ts) WHERE isNaN(value) = 0) GROUP BY GROUPING SETS ( (ts), () ) ORDER BY  ts`
 
 		cases := []struct {
 			aggregateOperator v3.AggregateOperator
@@ -272,11 +273,11 @@ func TestBuildQueryXRate(t *testing.T) {
 			q := &v3.QueryRangeParamsV3{
 				Start: 1650991982000,
 				End:   1651078382000,
-				Step:  60,
 				CompositeQuery: &v3.CompositeQuery{
 					BuilderQueries: map[string]*v3.BuilderQuery{
 						"A": {
 							QueryName:          "A",
+							StepInterval:       60,
 							AggregateAttribute: v3.AttributeKey{Key: "name"},
 							AggregateOperator:  c.aggregateOperator,
 							Expression:         "A",
@@ -296,7 +297,7 @@ func TestBuildQueryXRate(t *testing.T) {
 func TestBuildQueryRPM(t *testing.T) {
 	t.Run("TestBuildQueryXRate", func(t *testing.T) {
 
-		tmpl := `SELECT  ts, ceil(value * 60) as value FROM (SELECT  ts, %s(value) as value FROM (SELECT  ts, if(runningDifference(ts) <= 0, nan, if(runningDifference(value) < 0, (value) / runningDifference(ts), runningDifference(value) / runningDifference(ts))) as value FROM(SELECT fingerprint,  toStartOfInterval(toDateTime(intDiv(timestamp_ms, 1000)), INTERVAL 0 SECOND) as ts, max(value) as value FROM signoz_metrics.distributed_samples_v2 INNER JOIN (SELECT  fingerprint FROM signoz_metrics.time_series_v2 WHERE metric_name = 'name' AND temporality IN ['Cumulative', 'Unspecified']) as filtered_time_series USING fingerprint WHERE metric_name = 'name' AND timestamp_ms >= 1650991982000 AND timestamp_ms <= 1651078382000 GROUP BY fingerprint, ts ORDER BY fingerprint,  ts) WHERE isNaN(value) = 0) GROUP BY GROUPING SETS ( (ts), () ) ORDER BY  ts)`
+		tmpl := `SELECT  ts, ceil(value * 60) as value FROM (SELECT  ts, %s(value) as value FROM (SELECT  ts, if(runningDifference(ts) <= 0, nan, if(runningDifference(value) < 0, (value) / runningDifference(ts), runningDifference(value) / runningDifference(ts))) as value FROM(SELECT fingerprint,  toStartOfInterval(toDateTime(intDiv(timestamp_ms, 1000)), INTERVAL 60 SECOND) as ts, max(value) as value FROM signoz_metrics.distributed_samples_v2 INNER JOIN (SELECT  fingerprint FROM signoz_metrics.time_series_v2 WHERE metric_name = 'name' AND temporality IN ['Cumulative', 'Unspecified']) as filtered_time_series USING fingerprint WHERE metric_name = 'name' AND timestamp_ms >= 1650991980000 AND timestamp_ms <= 1651078380000 GROUP BY fingerprint, ts ORDER BY fingerprint,  ts) WHERE isNaN(value) = 0) GROUP BY GROUPING SETS ( (ts), () ) ORDER BY  ts)`
 
 		cases := []struct {
 			aggregateOperator v3.AggregateOperator
@@ -325,11 +326,11 @@ func TestBuildQueryRPM(t *testing.T) {
 			q := &v3.QueryRangeParamsV3{
 				Start: 1650991982000,
 				End:   1651078382000,
-				Step:  60,
 				CompositeQuery: &v3.CompositeQuery{
 					BuilderQueries: map[string]*v3.BuilderQuery{
 						"A": {
 							QueryName:          "A",
+							StepInterval:       60,
 							AggregateAttribute: v3.AttributeKey{Key: "name"},
 							AggregateOperator:  c.aggregateOperator,
 							Expression:         "A",
@@ -507,7 +508,7 @@ func TestBuildQueryAdjustedTimes(t *testing.T) {
 	for _, testCase := range cases {
 		t.Run(testCase.name, func(t *testing.T) {
 			q := testCase.params
-			query, err := PrepareMetricQuery(q.Start, q.End, q.CompositeQuery.QueryType, q.CompositeQuery.PanelType, q.CompositeQuery.BuilderQueries["A"])
+			query, err := PrepareMetricQuery(q.Start, q.End, q.CompositeQuery.QueryType, q.CompositeQuery.PanelType, q.CompositeQuery.BuilderQueries["A"], Options{PreferRPM: false})
 			require.NoError(t, err)
 
 			require.Contains(t, query, testCase.expected)
