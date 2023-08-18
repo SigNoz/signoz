@@ -6,6 +6,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 	metricsv3 "go.signoz.io/signoz/pkg/query-service/app/metrics/v3"
+	"go.signoz.io/signoz/pkg/query-service/featureManager"
 	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
 )
 
@@ -44,7 +45,8 @@ func TestBuildQueryWithMultipleQueriesAndFormula(t *testing.T) {
 		qbOptions := QueryBuilderOptions{
 			BuildMetricQuery: metricsv3.PrepareMetricQuery,
 		}
-		qb := NewQueryBuilder(qbOptions)
+		fm := featureManager.StartManager()
+		qb := NewQueryBuilder(qbOptions, fm)
 
 		queries, err := qb.PrepareQueries(q)
 
@@ -85,7 +87,8 @@ func TestBuildQueryWithIncorrectQueryRef(t *testing.T) {
 		qbOptions := QueryBuilderOptions{
 			BuildMetricQuery: metricsv3.PrepareMetricQuery,
 		}
-		qb := NewQueryBuilder(qbOptions)
+		fm := featureManager.StartManager()
+		qb := NewQueryBuilder(qbOptions, fm)
 
 		_, err := qb.PrepareQueries(q)
 
@@ -157,7 +160,8 @@ func TestBuildQueryWithThreeOrMoreQueriesRefAndFormula(t *testing.T) {
 		qbOptions := QueryBuilderOptions{
 			BuildMetricQuery: metricsv3.PrepareMetricQuery,
 		}
-		qb := NewQueryBuilder(qbOptions)
+		fm := featureManager.StartManager()
+		qb := NewQueryBuilder(qbOptions, fm)
 
 		queries, err := qb.PrepareQueries(q)
 
@@ -358,7 +362,8 @@ func TestDeltaQueryBuilder(t *testing.T) {
 			qbOptions := QueryBuilderOptions{
 				BuildMetricQuery: metricsv3.PrepareMetricQuery,
 			}
-			qb := NewQueryBuilder(qbOptions)
+			fm := featureManager.StartManager()
+			qb := NewQueryBuilder(qbOptions, fm)
 			queries, err := qb.PrepareQueries(c.query)
 
 			require.NoError(t, err)
