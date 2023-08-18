@@ -245,7 +245,6 @@ var testBuildLogsQueryData = []struct {
 		PanelType: v3.PanelTypeGraph,
 		Start:     1680066360726210000,
 		End:       1680066458000000000,
-		Step:      60,
 		BuilderQuery: &v3.BuilderQuery{
 			QueryName:         "A",
 			StepInterval:      60,
@@ -260,7 +259,6 @@ var testBuildLogsQueryData = []struct {
 		PanelType: v3.PanelTypeGraph,
 		Start:     1680066360726210000,
 		End:       1680066458000000000,
-		Step:      60,
 		BuilderQuery: &v3.BuilderQuery{
 			QueryName:          "A",
 			StepInterval:       60,
@@ -276,7 +274,6 @@ var testBuildLogsQueryData = []struct {
 		PanelType: v3.PanelTypeGraph,
 		Start:     1680066360726210000,
 		End:       1680066458000000000,
-		Step:      60,
 		BuilderQuery: &v3.BuilderQuery{
 			QueryName:          "A",
 			StepInterval:       60,
@@ -295,7 +292,6 @@ var testBuildLogsQueryData = []struct {
 		PanelType: v3.PanelTypeGraph,
 		Start:     1680066360726210000,
 		End:       1680066458000000000,
-		Step:      60,
 		BuilderQuery: &v3.BuilderQuery{
 			QueryName:          "A",
 			StepInterval:       60,
@@ -312,7 +308,6 @@ var testBuildLogsQueryData = []struct {
 		PanelType: v3.PanelTypeGraph,
 		Start:     1680066360726210000,
 		End:       1680066458000000000,
-		Step:      60,
 		BuilderQuery: &v3.BuilderQuery{
 			QueryName:          "A",
 			StepInterval:       60,
@@ -328,7 +323,6 @@ var testBuildLogsQueryData = []struct {
 		PanelType: v3.PanelTypeGraph,
 		Start:     1680066360726210000,
 		End:       1680066458000000000,
-		Step:      60,
 		BuilderQuery: &v3.BuilderQuery{
 			QueryName:          "A",
 			StepInterval:       60,
@@ -358,7 +352,6 @@ var testBuildLogsQueryData = []struct {
 		PanelType: v3.PanelTypeGraph,
 		Start:     1680066360726210000,
 		End:       1680066458000000000,
-		Step:      60,
 		BuilderQuery: &v3.BuilderQuery{
 			QueryName:          "A",
 			StepInterval:       60,
@@ -390,7 +383,6 @@ var testBuildLogsQueryData = []struct {
 		PanelType: v3.PanelTypeGraph,
 		Start:     1680066360726210000,
 		End:       1680066458000000000,
-		Step:      60,
 		BuilderQuery: &v3.BuilderQuery{
 			QueryName:          "A",
 			StepInterval:       60,
@@ -420,7 +412,6 @@ var testBuildLogsQueryData = []struct {
 		PanelType: v3.PanelTypeGraph,
 		Start:     1680066360726210000,
 		End:       1680066458000000000,
-		Step:      60,
 		BuilderQuery: &v3.BuilderQuery{
 			QueryName:          "A",
 			StepInterval:       60,
@@ -450,7 +441,6 @@ var testBuildLogsQueryData = []struct {
 		PanelType: v3.PanelTypeGraph,
 		Start:     1680066360726210000,
 		End:       1680066458000000000,
-		Step:      60,
 		BuilderQuery: &v3.BuilderQuery{
 			QueryName:          "A",
 			StepInterval:       60,
@@ -480,7 +470,6 @@ var testBuildLogsQueryData = []struct {
 		PanelType: v3.PanelTypeGraph,
 		Start:     1680066360726210000,
 		End:       1680066458000000000,
-		Step:      60,
 		BuilderQuery: &v3.BuilderQuery{
 			QueryName:          "A",
 			StepInterval:       60,
@@ -510,7 +499,6 @@ var testBuildLogsQueryData = []struct {
 		PanelType: v3.PanelTypeGraph,
 		Start:     1680066360726210000,
 		End:       1680066458000000000,
-		Step:      60,
 		BuilderQuery: &v3.BuilderQuery{
 			QueryName:          "A",
 			StepInterval:       60,
@@ -536,7 +524,6 @@ var testBuildLogsQueryData = []struct {
 		PanelType: v3.PanelTypeGraph,
 		Start:     1680066360726210000,
 		End:       1680066458000000000,
-		Step:      60,
 		BuilderQuery: &v3.BuilderQuery{
 			QueryName:          "A",
 			StepInterval:       60,
@@ -560,7 +547,6 @@ var testBuildLogsQueryData = []struct {
 		PanelType: v3.PanelTypeGraph,
 		Start:     1680066360726210000,
 		End:       1680066458000000000,
-		Step:      60,
 		BuilderQuery: &v3.BuilderQuery{
 			QueryName:          "A",
 			StepInterval:       60,
@@ -585,7 +571,6 @@ var testBuildLogsQueryData = []struct {
 		PanelType: v3.PanelTypeGraph,
 		Start:     1680066360726210000,
 		End:       1680066458000000000,
-		Step:      60,
 		BuilderQuery: &v3.BuilderQuery{
 			QueryName:          "A",
 			StepInterval:       60,
@@ -611,7 +596,6 @@ var testBuildLogsQueryData = []struct {
 		PanelType: v3.PanelTypeList,
 		Start:     1680066360726210000,
 		End:       1680066458000000000,
-		Step:      60,
 		BuilderQuery: &v3.BuilderQuery{
 			SelectColumns:     []v3.AttributeKey{},
 			QueryName:         "A",
@@ -630,7 +614,6 @@ var testBuildLogsQueryData = []struct {
 		PanelType: v3.PanelTypeList,
 		Start:     1680066360726210000,
 		End:       1680066458000000000,
-		Step:      60,
 		BuilderQuery: &v3.BuilderQuery{
 			SelectColumns:     []v3.AttributeKey{},
 			QueryName:         "A",
@@ -649,7 +632,6 @@ var testBuildLogsQueryData = []struct {
 		PanelType: v3.PanelTypeList,
 		Start:     1680066360726210000,
 		End:       1680066458000000000,
-		Step:      60,
 		BuilderQuery: &v3.BuilderQuery{
 			SelectColumns:     []v3.AttributeKey{},
 			QueryName:         "A",
@@ -669,7 +651,6 @@ var testBuildLogsQueryData = []struct {
 		PanelType: v3.PanelTypeGraph,
 		Start:     1680066360726210000,
 		End:       1680066458000000000,
-		Step:      60,
 		BuilderQuery: &v3.BuilderQuery{
 			QueryName:          "A",
 			StepInterval:       60,
@@ -692,7 +673,6 @@ var testBuildLogsQueryData = []struct {
 		PanelType: v3.PanelTypeGraph,
 		Start:     1680066360726210000,
 		End:       1680066458000000000,
-		Step:      60,
 		BuilderQuery: &v3.BuilderQuery{
 			QueryName:          "A",
 			StepInterval:       60,
@@ -719,7 +699,6 @@ var testBuildLogsQueryData = []struct {
 		PanelType: v3.PanelTypeGraph,
 		Start:     1680066360726210000,
 		End:       1680066458000000000,
-		Step:      60,
 		BuilderQuery: &v3.BuilderQuery{
 			QueryName:          "A",
 			StepInterval:       60,
@@ -746,7 +725,6 @@ var testBuildLogsQueryData = []struct {
 		PanelType: v3.PanelTypeGraph,
 		Start:     1680066360726210000,
 		End:       1680066458000000000,
-		Step:      60,
 		BuilderQuery: &v3.BuilderQuery{
 			QueryName:          "A",
 			StepInterval:       60,
@@ -775,9 +753,9 @@ var testBuildLogsQueryData = []struct {
 		PanelType: v3.PanelTypeTable,
 		Start:     1680066360726210000,
 		End:       1680066458000000000,
-		Step:      60,
 		BuilderQuery: &v3.BuilderQuery{
 			QueryName:         "A",
+			StepInterval:      60,
 			AggregateOperator: v3.AggregateOperatorCount,
 			Expression:        "A",
 		},
@@ -789,9 +767,9 @@ var testBuildLogsQueryData = []struct {
 		PanelType: v3.PanelTypeTable,
 		Start:     1680066360726210000,
 		End:       1680066458000000000,
-		Step:      60,
 		BuilderQuery: &v3.BuilderQuery{
 			QueryName:         "A",
+			StepInterval:      60,
 			AggregateOperator: v3.AggregateOperatorCount,
 			Expression:        "A",
 			GroupBy: []v3.AttributeKey{
@@ -806,9 +784,9 @@ var testBuildLogsQueryData = []struct {
 		PanelType: v3.PanelTypeTable,
 		Start:     1680066360726210000,
 		End:       1680066458000000000,
-		Step:      60,
 		BuilderQuery: &v3.BuilderQuery{
 			QueryName:         "A",
+			StepInterval:      60,
 			AggregateOperator: v3.AggregateOperatorCount,
 			Expression:        "A",
 			GroupBy: []v3.AttributeKey{

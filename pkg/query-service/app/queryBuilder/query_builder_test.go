@@ -225,7 +225,6 @@ func TestDeltaQueryBuilder(t *testing.T) {
 			query: &v3.QueryRangeParamsV3{
 				Start: 1650991982000,
 				End:   1651078382000,
-				Step:  60,
 				CompositeQuery: &v3.CompositeQuery{
 					QueryType: v3.QueryTypeBuilder,
 					PanelType: v3.PanelTypeGraph,
@@ -264,7 +263,6 @@ func TestDeltaQueryBuilder(t *testing.T) {
 			query: &v3.QueryRangeParamsV3{
 				Start: 1650991982000,
 				End:   1651078382000,
-				Step:  60,
 				CompositeQuery: &v3.CompositeQuery{
 					QueryType: v3.QueryTypeBuilder,
 					PanelType: v3.PanelTypeGraph,
@@ -335,7 +333,6 @@ func TestDeltaQueryBuilder(t *testing.T) {
 			query: &v3.QueryRangeParamsV3{
 				Start: 1650991982000,
 				End:   1651078382000,
-				Step:  60,
 				CompositeQuery: &v3.CompositeQuery{
 					QueryType: v3.QueryTypeBuilder,
 					PanelType: v3.PanelTypeGraph,
