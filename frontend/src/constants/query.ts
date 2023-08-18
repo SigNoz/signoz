@@ -12,4 +12,10 @@ export enum QueryParams {
 	aggregationOption = 'aggregationOption',
 	entity = 'entity',
 	resourceAttributes = 'resourceAttribute',
+	graphType = 'graphType',
+	widgetId = 'widgetId',
+	order = 'order',
+	q = 'q',
+	activeLogId = 'activeLogId',
+	timeRange = 'timeRange',
 }

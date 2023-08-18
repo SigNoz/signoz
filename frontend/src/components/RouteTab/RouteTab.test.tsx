@@ -3,6 +3,7 @@ import { createMemoryHistory } from 'history';
 import { Router } from 'react-router-dom';
 
 import RouteTab from './index';
+import { RouteTabProps } from './types';
 
 function DummyComponent1(): JSX.Element {
 	return <div>Dummy Component 1</div>;
@@ -11,16 +12,18 @@ function DummyComponent2(): JSX.Element {
 	return <div>Dummy Component 2</div>;
 }
 
-const testRoutes = [
+const testRoutes: RouteTabProps['routes'] = [
 	{
 		name: 'Tab1',
 		route: '/tab1',
 		Component: DummyComponent1,
+		key: 'Tab1',
 	},
 	{
 		name: 'Tab2',
 		route: '/tab2',
 		Component: DummyComponent2,
+		key: 'Tab2',
 	},
 ];
 

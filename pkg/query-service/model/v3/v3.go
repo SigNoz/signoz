@@ -3,10 +3,12 @@ package v3
 import (
 	"encoding/json"
 	"fmt"
+	"sort"
 	"strconv"
 	"time"
 
 	"github.com/google/uuid"
+	"go.signoz.io/signoz/pkg/query-service/model"
 )
 
 type DataSource string
@@ -105,7 +107,8 @@ func (a AggregateOperator) RequireAttribute(dataSource DataSource) bool {
 	switch dataSource {
 	case DataSourceMetrics:
 		switch a {
-		case AggregateOperatorNoOp:
+		case AggregateOperatorNoOp,
+			AggregateOperatorCount:
 			return false
 		default:
 			return true
@@ -177,11 +180,12 @@ const (
 	PanelTypeGraph PanelType = "graph"
 	PanelTypeTable PanelType = "table"
 	PanelTypeList  PanelType = "list"
+	PanelTypeTrace PanelType = "trace"
 )
 
 func (p PanelType) Validate() error {
 	switch p {
-	case PanelTypeValue, PanelTypeGraph, PanelTypeTable, PanelTypeList:
+	case PanelTypeValue, PanelTypeGraph, PanelTypeTable, PanelTypeList, PanelTypeTrace:
 		return nil
 	default:
 		return fmt.Errorf("invalid panel type: %s", p)
@@ -283,6 +287,10 @@ type AttributeKey struct {
 	IsColumn bool                 `json:"isColumn"`
 }
 
+func (a AttributeKey) CacheKey() string {
+	return fmt.Sprintf("%s-%s-%s-%t", a.Key, a.DataType, a.Type, a.IsColumn)
+}
+
 func (a AttributeKey) Validate() error {
 	switch a.DataType {
 	case AttributeKeyDataTypeBool, AttributeKeyDataTypeInt64, AttributeKeyDataTypeFloat64, AttributeKeyDataTypeString, AttributeKeyDataTypeUnspecified:
@@ -293,7 +301,7 @@ func (a AttributeKey) Validate() error {
 
 	if a.IsColumn {
 		switch a.Type {
-		case AttributeKeyTypeResource, AttributeKeyTypeTag:
+		case AttributeKeyTypeResource, AttributeKeyTypeTag, AttributeKeyTypeUnspecified:
 			break
 		default:
 			return fmt.Errorf("invalid attribute type: %s", a.Type)
@@ -319,6 +327,7 @@ type QueryRangeParamsV3 struct {
 	Step           int64                  `json:"step"` // step is in seconds; used for prometheus queries
 	CompositeQuery *CompositeQuery        `json:"compositeQuery"`
 	Variables      map[string]interface{} `json:"variables,omitempty"`
+	NoCache        bool                   `json:"noCache"`
 }
 
 type PromQuery struct {
@@ -364,6 +373,7 @@ type CompositeQuery struct {
 	PromQueries       map[string]*PromQuery       `json:"promQueries,omitempty"`
 	PanelType         PanelType                   `json:"panelType"`
 	QueryType         QueryType                   `json:"queryType"`
+	Unit              string                      `json:"unit,omitempty"`
 }
 
 func (c *CompositeQuery) Validate() error {
@@ -410,12 +420,21 @@ func (c *CompositeQuery) Validate() error {
 	return nil
 }
 
+type Temporality string
+
+const (
+	Unspecified Temporality = "Unspecified"
+	Delta       Temporality = "Delta"
+	Cumulative  Temporality = "Cumulative"
+)
+
 type BuilderQuery struct {
 	QueryName          string            `json:"queryName"`
 	StepInterval       int64             `json:"stepInterval"`
 	DataSource         DataSource        `json:"dataSource"`
 	AggregateOperator  AggregateOperator `json:"aggregateOperator"`
 	AggregateAttribute AttributeKey      `json:"aggregateAttribute,omitempty"`
+	Temporality        Temporality       `json:"temporality,omitempty"`
 	Filters            *FilterSet        `json:"filters,omitempty"`
 	GroupBy            []AttributeKey    `json:"groupBy,omitempty"`
 	Expression         string            `json:"expression"`
@@ -534,15 +553,27 @@ type FilterItem struct {
 	Operator FilterOperator `json:"op"`
 }
 
+func (f *FilterItem) CacheKey() string {
+	return fmt.Sprintf("key:%s,op:%s,value:%v", f.Key.CacheKey(), f.Operator, f.Value)
+}
+
 type OrderBy struct {
-	ColumnName string `json:"columnName"`
-	Order      string `json:"order"`
+	ColumnName string               `json:"columnName"`
+	Order      string               `json:"order"`
+	Key        string               `json:"-"`
+	DataType   AttributeKeyDataType `json:"-"`
+	Type       AttributeKeyType     `json:"-"`
+	IsColumn   bool                 `json:"-"`
 }
 
 type Having struct {
 	ColumnName string      `json:"columnName"`
 	Operator   string      `json:"op"`
 	Value      interface{} `json:"value"`
+}
+
+func (h *Having) CacheKey() string {
+	return fmt.Sprintf("column:%s,op:%s,value:%v", h.ColumnName, h.Operator, h.Value)
 }
 
 type QueryRangeResponse struct {
@@ -556,9 +587,24 @@ type Result struct {
 	List      []*Row    `json:"list"`
 }
 
+type LogsLiveTailClient struct {
+	Name  string
+	Logs  chan *model.GetLogsResponse
+	Done  chan *bool
+	Error chan error
+}
+
 type Series struct {
-	Labels map[string]string `json:"labels"`
-	Points []Point           `json:"values"`
+	Labels            map[string]string   `json:"labels"`
+	LabelsArray       []map[string]string `json:"labelsArray"`
+	Points            []Point             `json:"values"`
+	GroupingSetsPoint *Point              `json:"-"`
+}
+
+func (s *Series) SortPoints() {
+	sort.Slice(s.Points, func(i, j int) bool {
+		return s.Points[i].Timestamp < s.Points[j].Timestamp
+	})
 }
 
 type Row struct {
@@ -575,6 +621,21 @@ type Point struct {
 func (p *Point) MarshalJSON() ([]byte, error) {
 	v := strconv.FormatFloat(p.Value, 'f', -1, 64)
 	return json.Marshal(map[string]interface{}{"timestamp": p.Timestamp, "value": v})
+}
+
+// UnmarshalJSON implements json.Unmarshaler.
+func (p *Point) UnmarshalJSON(data []byte) error {
+	var v struct {
+		Timestamp int64  `json:"timestamp"`
+		Value     string `json:"value"`
+	}
+	if err := json.Unmarshal(data, &v); err != nil {
+		return err
+	}
+	p.Timestamp = v.Timestamp
+	var err error
+	p.Value, err = strconv.ParseFloat(v.Value, 64)
+	return err
 }
 
 // ExploreQuery is a query for the explore page
@@ -604,4 +665,9 @@ func (eq *ExplorerQuery) Validate() error {
 		eq.UUID = uuid.New().String()
 	}
 	return eq.CompositeQuery.Validate()
+}
+
+type LatencyMetricMetadataResponse struct {
+	Delta bool      `json:"delta"`
+	Le    []float64 `json:"le"`
 }

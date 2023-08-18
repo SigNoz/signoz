@@ -1,15 +1,9 @@
 import { NotificationInstance } from 'antd/es/notification/interface';
 import updateDashboardApi from 'api/dashboard/update';
-import {
-	initialClickHouseData,
-	initialQueryBuilderFormValues,
-	initialQueryPromQLData,
-} from 'constants/queryBuilder';
-import { GRAPH_TYPES } from 'container/NewDashboard/ComponentsSlider';
+import { initialQueriesMap, PANEL_TYPES } from 'constants/queryBuilder';
 import { Layout } from 'react-grid-layout';
 import store from 'store';
-import { Dashboard } from 'types/api/dashboard/getAll';
-import { EQueryType } from 'types/common/dashboard';
+import { Dashboard, Widgets } from 'types/api/dashboard/getAll';
 
 export const UpdateDashboard = async (
 	{
@@ -19,9 +13,11 @@ export const UpdateDashboard = async (
 		layout,
 		selectedDashboard,
 		isRedirected,
+		widgetData,
 	}: UpdateDashboardProps,
 	notify: NotificationInstance,
 ): Promise<Dashboard | undefined> => {
+	const copyTitle = `${widgetData?.title} - Copy`;
 	const updatedSelectedDashboard: Dashboard = {
 		...selectedDashboard,
 		data: {
@@ -33,29 +29,16 @@ export const UpdateDashboard = async (
 			widgets: [
 				...(data.widgets || []),
 				{
-					description: '',
+					description: widgetData?.description || '',
 					id: generateWidgetId,
 					isStacked: false,
-					nullZeroValues: '',
+					nullZeroValues: widgetData?.nullZeroValues || '',
 					opacity: '',
 					panelTypes: graphType,
-					query: {
-						queryType: EQueryType.QUERY_BUILDER,
-						promql: [initialQueryPromQLData],
-						clickhouse_sql: [initialClickHouseData],
-						builder: {
-							queryFormulas: [],
-							queryData: [initialQueryBuilderFormValues],
-						},
-					},
-					queryData: {
-						data: { queryData: [] },
-						error: false,
-						errorMessage: '',
-						loading: false,
-					},
-					timePreferance: 'GLOBAL_TIME',
-					title: '',
+					query: widgetData?.query || initialQueriesMap.metrics,
+					timePreferance: widgetData?.timePreferance || 'GLOBAL_TIME',
+					title: widgetData ? copyTitle : '',
+					yAxisUnit: widgetData?.yAxisUnit,
 				},
 			],
 			layout,
@@ -86,9 +69,10 @@ export const UpdateDashboard = async (
 
 interface UpdateDashboardProps {
 	data: Dashboard['data'];
-	graphType: GRAPH_TYPES;
+	graphType: PANEL_TYPES;
 	generateWidgetId: string;
 	layout: Layout[];
 	selectedDashboard: Dashboard;
 	isRedirected: boolean;
+	widgetData?: Widgets;
 }

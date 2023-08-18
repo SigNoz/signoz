@@ -81,6 +81,13 @@ function PasswordContainer(): JSX.Element {
 		}
 	};
 
+	const isDisabled =
+		isLoading ||
+		currentPassword.length === 0 ||
+		updatePassword.length === 0 ||
+		isPasswordPolicyError ||
+		currentPassword === updatePassword;
+
 	return (
 		<Space direction="vertical" size="large">
 			<Typography.Title level={3}>
@@ -132,13 +139,7 @@ function PasswordContainer(): JSX.Element {
 				)}
 			</Space>
 			<Button
-				disabled={
-					isLoading ||
-					currentPassword.length === 0 ||
-					updatePassword.length === 0 ||
-					isPasswordPolicyError ||
-					currentPassword !== updatePassword
-				}
+				disabled={isDisabled}
 				loading={isLoading}
 				onClick={onChangePasswordClickHandler}
 				type="primary"

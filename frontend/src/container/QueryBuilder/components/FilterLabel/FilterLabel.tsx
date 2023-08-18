@@ -1,3 +1,4 @@
+import { Typography } from 'antd';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { memo } from 'react';
 
@@ -11,5 +12,9 @@ export const FilterLabel = memo(function FilterLabel({
 }: FilterLabelProps): JSX.Element {
 	const isDarkMode = useIsDarkMode();
 
-	return <StyledLabel isDarkMode={isDarkMode}>{label}</StyledLabel>;
+	return (
+		<StyledLabel isDarkMode={isDarkMode}>
+			<Typography>{label}</Typography>
+		</StyledLabel>
+	);
 });
