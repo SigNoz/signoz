@@ -7,7 +7,7 @@ import { ThunkDispatch } from 'redux-thunk';
 import { DeleteDashboard, DeleteDashboardProps } from 'store/actions';
 import AppActions from 'types/actions';
 
-import { Data } from '../index';
+import { Data } from '../../index';
 import { TableLinkText } from './styles';
 
 function DeleteButton({
