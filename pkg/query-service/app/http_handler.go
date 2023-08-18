@@ -135,10 +135,11 @@ func NewAPIHandler(opts APIHandlerOpts) (*APIHandler, error) {
 	}
 
 	querierOpts := querier.QuerierOptions{
-		Reader:       opts.Reader,
-		Cache:        opts.Cache,
-		KeyGenerator: queryBuilder.NewKeyGenerator(),
-		FluxInterval: opts.FluxInterval,
+		Reader:        opts.Reader,
+		Cache:         opts.Cache,
+		KeyGenerator:  queryBuilder.NewKeyGenerator(),
+		FluxInterval:  opts.FluxInterval,
+		FeatureLookup: opts.FeatureFlags,
 	}
 
 	querier := querier.NewQuerier(querierOpts)

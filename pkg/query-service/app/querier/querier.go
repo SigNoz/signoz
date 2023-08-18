@@ -53,10 +53,11 @@ type querier struct {
 }
 
 type QuerierOptions struct {
-	Reader       interfaces.Reader
-	Cache        cache.Cache
-	KeyGenerator cache.KeyGenerator
-	FluxInterval time.Duration
+	Reader        interfaces.Reader
+	Cache         cache.Cache
+	KeyGenerator  cache.KeyGenerator
+	FluxInterval  time.Duration
+	FeatureLookup interfaces.FeatureLookup
 
 	// used for testing
 	TestingMode    bool
@@ -75,7 +76,7 @@ func NewQuerier(opts QuerierOptions) interfaces.Querier {
 			BuildTraceQuery:  tracesV3.PrepareTracesQuery,
 			BuildLogQuery:    logsV3.PrepareLogsQuery,
 			BuildMetricQuery: metricsV3.PrepareMetricQuery,
-		}),
+		}, opts.FeatureLookup),
 
 		testingMode:    opts.TestingMode,
 		returnedSeries: opts.ReturnedSeries,

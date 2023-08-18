@@ -68,19 +68,19 @@ func (q *querier) runBuilderQuery(
 		var err error
 		// for ts query with group by and limit form two queries
 		if params.CompositeQuery.PanelType == v3.PanelTypeGraph && builderQuery.Limit > 0 && len(builderQuery.GroupBy) > 0 {
-			limitQuery, err := tracesV3.PrepareTracesQuery(params.Start, params.End, params.CompositeQuery.PanelType, builderQuery, keys, constants.FirstQueryGraphLimit)
+			limitQuery, err := tracesV3.PrepareTracesQuery(params.Start, params.End, params.CompositeQuery.PanelType, builderQuery, keys, tracesV3.Options{GraphLimitQtype: constants.FirstQueryGraphLimit})
 			if err != nil {
 				ch <- channelResult{Err: err, Name: queryName, Query: limitQuery, Series: nil}
 				return
 			}
-			placeholderQuery, err := tracesV3.PrepareTracesQuery(params.Start, params.End, params.CompositeQuery.PanelType, builderQuery, keys, constants.SecondQueryGraphLimit)
+			placeholderQuery, err := tracesV3.PrepareTracesQuery(params.Start, params.End, params.CompositeQuery.PanelType, builderQuery, keys, tracesV3.Options{GraphLimitQtype: constants.SecondQueryGraphLimit})
 			if err != nil {
 				ch <- channelResult{Err: err, Name: queryName, Query: limitQuery, Series: nil}
 				return
 			}
 			query = fmt.Sprintf(placeholderQuery, limitQuery)
 		} else {
-			query, err = tracesV3.PrepareTracesQuery(params.Start, params.End, params.CompositeQuery.PanelType, builderQuery, keys, "")
+			query, err = tracesV3.PrepareTracesQuery(params.Start, params.End, params.CompositeQuery.PanelType, builderQuery, keys, tracesV3.Options{})
 			if err != nil {
 				ch <- channelResult{Err: err, Name: queryName, Query: query, Series: nil}
 				return
@@ -95,7 +95,7 @@ func (q *querier) runBuilderQuery(
 	// TODO(srikanthccv): ReduceTo avg should be handled; avg of avg is not correct
 	// cache keys are generated based on the query type
 	if _, ok := cacheKeys[queryName]; !ok {
-		query, err := metricsV3.PrepareMetricQuery(params.Start, params.End, params.CompositeQuery.QueryType, params.CompositeQuery.PanelType, builderQuery)
+		query, err := metricsV3.PrepareMetricQuery(params.Start, params.End, params.CompositeQuery.QueryType, params.CompositeQuery.PanelType, builderQuery, metricsV3.Options{})
 		if err != nil {
 			ch <- channelResult{Err: err, Name: queryName, Query: query, Series: nil}
 			return
@@ -125,6 +125,7 @@ func (q *querier) runBuilderQuery(
 			params.CompositeQuery.QueryType,
 			params.CompositeQuery.PanelType,
 			builderQuery,
+			metricsV3.Options{},
 		)
 		if err != nil {
 			ch <- channelResult{
