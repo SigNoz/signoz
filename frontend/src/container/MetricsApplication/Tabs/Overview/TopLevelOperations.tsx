@@ -17,7 +17,6 @@ function TopLevelOperation({
 	onDragSelect,
 	handleGraphClick,
 	widget,
-	yAxisUnit,
 }: TopLevelOperationProps): JSX.Element {
 	return (
 		<Card>
@@ -37,7 +36,6 @@ function TopLevelOperation({
 							name={name}
 							widget={widget}
 							onClickHandler={handleGraphClick(opName)}
-							yAxisUnit={yAxisUnit}
 							onDragSelect={onDragSelect}
 						/>
 					)}
@@ -56,7 +54,6 @@ interface TopLevelOperationProps {
 	onDragSelect: (start: number, end: number) => void;
 	handleGraphClick: (type: string) => ClickHandlerType;
 	widget: Widgets;
-	yAxisUnit: string;
 }
 
 export default TopLevelOperation;

@@ -1,7 +1,6 @@
 import updateDashboardApi from 'api/dashboard/update';
 import { AxiosError } from 'axios';
-import { getPreLayouts, LayoutProps } from 'container/GridGraphLayout';
-import { Dispatch, SetStateAction } from 'react';
+import { Dispatch } from 'react';
 import store from 'store';
 import AppActions from 'types/actions';
 import { UPDATE_DASHBOARD } from 'types/actions/dashboard';
@@ -9,7 +8,6 @@ import { Dashboard, Widgets } from 'types/api/dashboard/getAll';
 
 export const DeleteWidget = ({
 	widgetId,
-	setLayout,
 }: DeleteWidgetProps): ((dispatch: Dispatch<AppActions>) => void) => async (
 	dispatch: Dispatch<AppActions>,
 ): Promise<void> => {
@@ -43,9 +41,9 @@ export const DeleteWidget = ({
 				type: UPDATE_DASHBOARD,
 				payload: updatedSelectedDashboard,
 			});
-			if (setLayout) {
-				setLayout(getPreLayouts(updatedWidgets, updatedLayout));
-			}
+			// if (setLayout) {
+			// 	setLayout(getPreLayouts(updatedWidgets, updatedLayout));
+			// }
 		} else {
 			dispatch({
 				type: 'DELETE_WIDGET_ERROR',
@@ -66,5 +64,4 @@ export const DeleteWidget = ({
 
 export interface DeleteWidgetProps {
 	widgetId: Widgets['id'];
-	setLayout?: Dispatch<SetStateAction<LayoutProps[]>>;
 }

@@ -6,6 +6,7 @@ import { useThemeConfig } from 'hooks/useDarkMode';
 import { NotificationProvider } from 'hooks/useNotifications';
 import { ResourceProvider } from 'hooks/useResourceAttribute';
 import history from 'lib/history';
+import { DashboardProvider } from 'providers/Dashboard';
 import { QueryBuilderProvider } from 'providers/QueryBuilder';
 import { Suspense } from 'react';
 import { Route, Router, Switch } from 'react-router-dom';
@@ -23,22 +24,24 @@ function App(): JSX.Element {
 					<PrivateRoute>
 						<ResourceProvider>
 							<QueryBuilderProvider>
-								<AppLayout>
-									<Suspense fallback={<Spinner size="large" tip="Loading..." />}>
-										<Switch>
-											{routes.map(({ path, component, exact }) => (
-												<Route
-													key={`${path}`}
-													exact={exact}
-													path={path}
-													component={component}
-												/>
-											))}
+								<DashboardProvider>
+									<AppLayout>
+										<Suspense fallback={<Spinner size="large" tip="Loading..." />}>
+											<Switch>
+												{routes.map(({ path, component, exact }) => (
+													<Route
+														key={`${path}`}
+														exact={exact}
+														path={path}
+														component={component}
+													/>
+												))}
 
-											<Route path="*" component={NotFound} />
-										</Switch>
-									</Suspense>
-								</AppLayout>
+												<Route path="*" component={NotFound} />
+											</Switch>
+										</Suspense>
+									</AppLayout>
+								</DashboardProvider>
 							</QueryBuilderProvider>
 						</ResourceProvider>
 					</PrivateRoute>

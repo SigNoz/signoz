@@ -52,7 +52,6 @@ function ApDexTraces({
 			widget={apDexTracesWidget}
 			onDragSelect={onDragSelect}
 			onClickHandler={handleGraphClick('ApDex')}
-			yAxisUnit=""
 			threshold={thresholdValue}
 			isQueryEnabled={isQueryEnabled}
 		/>

@@ -12,7 +12,6 @@ import {
 	GET_DASHBOARD_ERROR,
 	GET_DASHBOARD_LOADING_START,
 	GET_DASHBOARD_SUCCESS,
-	IS_ADD_WIDGET,
 	SAVE_SETTING_TO_PANEL_SUCCESS,
 	TOGGLE_EDIT_MODE,
 	UPDATE_DASHBOARD,
@@ -28,7 +27,6 @@ const InitialValue: InitialValueTypes = {
 	error: false,
 	errorMessage: '',
 	isEditMode: false,
-	isAddWidget: false,
 };
 
 const dashboard = (
@@ -256,13 +254,6 @@ const dashboard = (
 						},
 					},
 				],
-			};
-		}
-
-		case IS_ADD_WIDGET: {
-			return {
-				...state,
-				isAddWidget: action.payload.isAddWidget,
 			};
 		}
 

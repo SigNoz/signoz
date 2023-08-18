@@ -1,68 +1,83 @@
 import { initialQueriesMap, PANEL_TYPES } from 'constants/queryBuilder';
 import { queryParamNamesMap } from 'constants/queryBuilderQueryNames';
+import { useUpdateDashboard } from 'hooks/dashboard/useUpdateDashboard';
 import { useIsDarkMode } from 'hooks/useDarkMode';
-import { useNotifications } from 'hooks/useNotifications';
 import createQueryParams from 'lib/createQueryParams';
 import history from 'lib/history';
+import { useDashboard } from 'providers/Dashboard';
 import { CSSProperties, useCallback } from 'react';
-import { connect, useSelector } from 'react-redux';
-import { bindActionCreators, Dispatch } from 'redux';
-import { ThunkDispatch } from 'redux-thunk';
-import {
-	ToggleAddWidget,
-	ToggleAddWidgetProps,
-} from 'store/actions/dashboard/toggleAddWidget';
+import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
-import AppActions from 'types/actions';
 import DashboardReducer from 'types/reducer/dashboards';
+import { v4 as uuid } from 'uuid';
 
 import menuItems from './menuItems';
 import { Card, Container, Text } from './styles';
 
-function DashboardGraphSlider({ toggleAddWidget }: Props): JSX.Element {
+function DashboardGraphSlider(): JSX.Element {
+	const isDarkMode = useIsDarkMode();
+
+	const { handleToggleDashboardSlider } = useDashboard();
+
 	const { dashboards } = useSelector<AppState, DashboardReducer>(
 		(state) => state.dashboards,
 	);
 
-	const { notifications } = useNotifications();
-
 	const [selectedDashboard] = dashboards;
 	const { data } = selectedDashboard;
 
+	const updateDashboardMutation = useUpdateDashboard();
+
 	const onClickHandler = useCallback(
 		(name: PANEL_TYPES) => (): void => {
-			try {
-				const emptyLayout = data.layout?.find((e) => e.i === 'empty');
+			const id = uuid();
 
-				if (emptyLayout === undefined) {
-					notifications.error({
-						message: 'Please click on Add Panel Button',
-					});
-					return;
-				}
+			updateDashboardMutation.mutateAsync(
+				{
+					uuid: selectedDashboard.uuid,
+					data: {
+						...data,
+						layout: [
+							{
+								i: id,
+								w: 6,
+								x: 0,
+								h: 2,
+								y: 0,
+							},
+							...(data.layout || []),
+						],
+					},
+				},
+				{
+					onSuccess: (data) => {
+						if (data.payload) {
+							handleToggleDashboardSlider(false);
 
-				toggleAddWidget(false);
+							const queryParams = {
+								graphType: name,
+								widgetId: id,
+								[queryParamNamesMap.compositeQuery]: JSON.stringify(
+									initialQueriesMap.metrics,
+								),
+							};
 
-				const queryParams = {
-					graphType: name,
-					widgetId: emptyLayout.i,
-					[queryParamNamesMap.compositeQuery]: JSON.stringify(
-						initialQueriesMap.metrics,
-					),
-				};
-
-				history.push(
-					`${history.location.pathname}/new?${createQueryParams(queryParams)}`,
-				);
-			} catch (error) {
-				notifications.error({
-					message: 'Something went wrong',
-				});
-			}
+							history.push(
+								`${history.location.pathname}/new?${createQueryParams(queryParams)}`,
+							);
+						}
+					},
+				},
+			);
 		},
-		[data, toggleAddWidget, notifications],
+		[
+			data,
+			handleToggleDashboardSlider,
+			selectedDashboard.uuid,
+			updateDashboardMutation,
+		],
 	);
-	const isDarkMode = useIsDarkMode();
+
 	const fillColor: CSSProperties['color'] = isDarkMode ? 'white' : 'black';
 
 	return (
@@ -77,18 +92,4 @@ function DashboardGraphSlider({ toggleAddWidget }: Props): JSX.Element {
 	);
 }
 
-interface DispatchProps {
-	toggleAddWidget: (
-		props: ToggleAddWidgetProps,
-	) => (dispatch: Dispatch<AppActions>) => void;
-}
-
-const mapDispatchToProps = (
-	dispatch: ThunkDispatch<unknown, unknown, AppActions>,
-): DispatchProps => ({
-	toggleAddWidget: bindActionCreators(ToggleAddWidget, dispatch),
-});
-
-type Props = DispatchProps;
-
-export default connect(null, mapDispatchToProps)(DashboardGraphSlider);
+export default DashboardGraphSlider;

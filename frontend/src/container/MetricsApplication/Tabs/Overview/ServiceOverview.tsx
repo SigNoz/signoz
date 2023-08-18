@@ -59,6 +59,7 @@ function ServiceOverview({
 				},
 				title: GraphTitle.LATENCY,
 				panelTypes: PANEL_TYPES.TIME_SERIES,
+				yAxisUnit: 'ns',
 			}),
 		[servicename, isSpanMetricEnable, topLevelOperationsRoute, tagFilterItems],
 	);
@@ -93,7 +94,6 @@ function ServiceOverview({
 						name="service_latency"
 						onDragSelect={onDragSelect}
 						widget={latencyWidget}
-						yAxisUnit="ns"
 						onClickHandler={handleGraphClick('Service')}
 						isQueryEnabled={isQueryEnabled}
 					/>

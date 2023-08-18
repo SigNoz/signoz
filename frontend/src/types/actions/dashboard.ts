@@ -39,8 +39,6 @@ export const SAVE_SETTING_TO_PANEL_ERROR = 'SAVE_SETTING_TO_PANEL_ERROR';
 export const DELETE_WIDGET_SUCCESS = 'DELETE_WIDGET_SUCCESS';
 export const DELETE_WIDGET_ERROR = 'DELETE_WIDGET_ERROR';
 
-export const IS_ADD_WIDGET = 'IS_ADD_WIDGET';
-
 export const DELETE_QUERY = 'DELETE_QUERY';
 export const FLUSH_DASHBOARD = 'FLUSH_DASHBOARD';
 export const UPDATE_DASHBOARD_VARIABLES = 'UPDATE_DASHBOARD_VARIABLES';
@@ -85,13 +83,6 @@ interface ApplySettingsToPanel {
 interface CreateDefaultWidget {
 	type: typeof CREATE_DEFAULT_WIDGET;
 	payload: Widgets;
-}
-
-interface IsAddWidget {
-	type: typeof IS_ADD_WIDGET;
-	payload: {
-		isAddWidget: boolean;
-	};
 }
 
 interface DashboardError {
@@ -182,7 +173,6 @@ export type DashboardActions =
 	| ApplySettingsToPanel
 	| SaveDashboardSuccess
 	| WidgetDeleteSuccess
-	| IsAddWidget
 	| UpdateQuery
 	| DeleteQuery
 	| FlushDashboard

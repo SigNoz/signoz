@@ -34,26 +34,27 @@ function DescriptionOfDashboard(): JSX.Element {
 	return (
 		<Card>
 			<Row>
-				<Col style={{ flex: 1 }}>
+				<Col flex={1}>
 					<Typography.Title level={4} style={{ padding: 0, margin: 0 }}>
 						{title}
 					</Typography.Title>
 					<Typography>{description}</Typography>
+
 					<div style={{ margin: '0.5rem 0' }}>
-						{tags?.map((e) => (
-							<Tag key={e}>{e}</Tag>
+						{tags?.map((tag) => (
+							<Tag key={tag}>{tag}</Tag>
 						))}
 					</div>
+
 					<DashboardVariableSelection />
 				</Col>
 				<Col>
 					<ShareModal
-						{...{
-							isJSONModalVisible,
-							onToggleHandler,
-							selectedData,
-						}}
+						isJSONModalVisible={isJSONModalVisible}
+						onToggleHandler={onToggleHandler}
+						selectedData={selectedData}
 					/>
+
 					<Space direction="vertical">
 						{editDashboard && <SettingsDrawer />}
 						<Button

@@ -54,9 +54,11 @@ export const SaveDashboard = ({
 				(e) => e.id === widgetId,
 			);
 
-			const isEmptyWidget = widgetId === 'empty';
+			const isEmptyWidget = widgetId === PANEL_TYPES.EMPTY_WIDGET;
 
-			const emptyLayoutIndex = data.layout?.findIndex((e) => e.i === 'empty');
+			const emptyLayoutIndex = data.layout?.findIndex(
+				(e) => e.i === PANEL_TYPES.EMPTY_WIDGET,
+			);
 
 			const newWidgetId = v4();
 

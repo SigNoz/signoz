@@ -9,7 +9,6 @@ import { ErrorResponse, SuccessResponse } from 'types/api';
 import { Widgets } from 'types/api/dashboard/getAll';
 import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
 
-import { LayoutProps } from '..';
 import { MenuItemKeys } from '../WidgetHeader/contants';
 import { LegendEntryProps } from './FullView/types';
 
@@ -36,7 +35,7 @@ export interface WidgetGraphComponentProps extends DispatchProps {
 	name: string;
 	yAxisUnit?: string;
 	layout?: Layout[];
-	setLayout?: Dispatch<SetStateAction<LayoutProps[]>>;
+	setLayout?: Dispatch<SetStateAction<Layout[]>>;
 	onDragSelect?: (start: number, end: number) => void;
 	onClickHandler?: GraphOnClickHandler;
 	threshold?: ReactNode;
@@ -46,9 +45,8 @@ export interface WidgetGraphComponentProps extends DispatchProps {
 export interface GridCardGraphProps {
 	widget: Widgets;
 	name: string;
-	yAxisUnit: string | undefined;
 	layout?: Layout[];
-	setLayout?: Dispatch<SetStateAction<LayoutProps[]>>;
+	setLayout?: Dispatch<SetStateAction<Layout[]>>;
 	onDragSelect?: (start: number, end: number) => void;
 	onClickHandler?: GraphOnClickHandler;
 	threshold?: ReactNode;

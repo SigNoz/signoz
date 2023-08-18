@@ -1,14 +1,16 @@
 import { ChartData } from 'chart.js';
 import Spinner from 'components/Spinner';
+import { PANEL_TYPES } from 'constants/queryBuilder';
 import { useGetQueryRange } from 'hooks/queryBuilder/useGetQueryRange';
 import { useStepInterval } from 'hooks/queryBuilder/useStepInterval';
 import usePreviousValue from 'hooks/usePreviousValue';
 import { getDashboardVariables } from 'lib/dashbaordVariables/getDashboardVariables';
 import getChartData from 'lib/getChartData';
 import isEmpty from 'lodash-es/isEmpty';
-import { memo, useMemo, useState } from 'react';
+import { memo, useCallback, useMemo, useState } from 'react';
 import { useInView } from 'react-intersection-observer';
-import { useSelector } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
+import { UpdateTimeInterval } from 'store/actions';
 import { AppState } from 'store/reducers';
 import DashboardReducer from 'types/reducer/dashboards';
 import { GlobalReducer } from 'types/reducer/globalTime';
@@ -22,17 +24,25 @@ import WidgetGraphComponent from './WidgetGraphComponent';
 function GridCardGraph({
 	widget,
 	name,
-	yAxisUnit,
 	layout = [],
 	setLayout,
-	onDragSelect,
 	onClickHandler,
 	headerMenuList = [MenuItemKeys.View],
 	isQueryEnabled,
 	threshold,
 }: GridCardGraphProps): JSX.Element {
-	const { isAddWidget } = useSelector<AppState, DashboardReducer>(
-		(state) => state.dashboards,
+	const dispatch = useDispatch();
+
+	const onDragSelect = useCallback(
+		(start: number, end: number) => {
+			const startTimestamp = Math.trunc(start);
+			const endTimestamp = Math.trunc(end);
+
+			if (startTimestamp !== endTimestamp) {
+				dispatch(UpdateTimeInterval('custom', [startTimestamp, endTimestamp]));
+			}
+		},
+		[dispatch],
 	);
 
 	const { ref: graphRef, inView: isGraphVisible } = useInView({
@@ -56,7 +66,7 @@ function GridCardGraph({
 	const updatedQuery = useStepInterval(widget?.query);
 
 	const isEmptyWidget = useMemo(
-		() => widget?.id === 'empty' || isEmpty(widget),
+		() => widget?.id === PANEL_TYPES.EMPTY_WIDGET || isEmpty(widget),
 		[widget],
 	);
 
@@ -70,7 +80,7 @@ function GridCardGraph({
 		},
 		{
 			queryKey: [
-				`GetMetricsQueryRange-${widget?.timePreferance}-${globalSelectedInterval}-${widget?.id}`,
+				widget?.id,
 				maxTime,
 				minTime,
 				globalSelectedInterval,
@@ -79,11 +89,12 @@ function GridCardGraph({
 				widget?.panelTypes,
 			],
 			keepPreviousData: true,
-			enabled: isGraphVisible && !isEmptyWidget && isQueryEnabled && !isAddWidget,
+			enabled: isGraphVisible && !isEmptyWidget && isQueryEnabled,
 			refetchOnMount: false,
 			onError: (error) => {
 				setErrorMessage(error.message);
 			},
+			refetchOnWindowFocus: false,
 		},
 	);
 
@@ -101,7 +112,8 @@ function GridCardGraph({
 
 	const prevChartDataSetRef = usePreviousValue<ChartData>(chartData);
 
-	const isEmptyLayout = widget?.id === 'empty' || isEmpty(widget);
+	const isEmptyLayout =
+		widget?.id === PANEL_TYPES.EMPTY_WIDGET || isEmpty(widget);
 
 	if (queryResponse.isRefetching || queryResponse.isLoading) {
 		return <Spinner height="20vh" tip="Loading..." />;
@@ -119,7 +131,6 @@ function GridCardGraph({
 						errorMessage={errorMessage}
 						data={prevChartDataSetRef}
 						name={name}
-						yAxisUnit={yAxisUnit}
 						layout={layout}
 						setLayout={setLayout}
 						threshold={threshold}
@@ -141,7 +152,6 @@ function GridCardGraph({
 					errorMessage={errorMessage}
 					data={prevChartDataSetRef}
 					name={name}
-					yAxisUnit={yAxisUnit}
 					layout={layout}
 					setLayout={setLayout}
 					threshold={threshold}
@@ -163,7 +173,6 @@ function GridCardGraph({
 					errorMessage={errorMessage}
 					data={chartData}
 					name={name}
-					yAxisUnit={yAxisUnit}
 					onDragSelect={onDragSelect}
 					threshold={threshold}
 					headerMenuList={headerMenuList}

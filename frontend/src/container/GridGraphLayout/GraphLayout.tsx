@@ -1,16 +1,17 @@
 import { PlusOutlined, SaveFilled } from '@ant-design/icons';
 import { PANEL_TYPES } from 'constants/queryBuilder';
+import { useUpdateDashboard } from 'hooks/dashboard/useUpdateDashboard';
 import useComponentPermission from 'hooks/useComponentPermission';
 import { useIsDarkMode } from 'hooks/useDarkMode';
-import { Dispatch, SetStateAction } from 'react';
+import { useNotifications } from 'hooks/useNotifications';
 import { Layout } from 'react-grid-layout';
 import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
-import { Widgets } from 'types/api/dashboard/getAll';
+import { Dashboard, Widgets } from 'types/api/dashboard/getAll';
 import AppReducer from 'types/reducer/app';
 import DashboardReducer from 'types/reducer/dashboards';
 
-import { LayoutProps, State } from '.';
+import Graph from './Graph';
 import {
 	Button,
 	ButtonContainer,
@@ -18,49 +19,80 @@ import {
 	CardContainer,
 	ReactGridLayout,
 } from './styles';
+import { MenuItemKeys } from './WidgetHeader/contants';
 
 function GraphLayout({
 	layouts,
-	saveLayoutState,
-	onLayoutSaveHandler,
-	addPanelLoading,
 	onAddPanelHandler,
-	onLayoutChangeHandler,
-	widgets,
 	setLayout,
+	widgets,
 }: GraphLayoutProps): JSX.Element {
-	const { isAddWidget } = useSelector<AppState, DashboardReducer>(
+	const { dashboards } = useSelector<AppState, DashboardReducer>(
 		(state) => state.dashboards,
 	);
+
+	const { featureResponse } = useSelector<AppState, AppReducer>(
+		(state) => state.app,
+	);
+
 	const { role } = useSelector<AppState, AppReducer>((state) => state.app);
 	const isDarkMode = useIsDarkMode();
+
+	const updateDashboardMutation = useUpdateDashboard();
+
+	const { notifications } = useNotifications();
 
 	const [saveLayoutPermission, addPanelPermission] = useComponentPermission(
 		['save_layout', 'add_panel'],
 		role,
 	);
 
+	const [selectedDashboard] = dashboards;
+
+	const onSaveHandler = (): void => {
+		const { data } = selectedDashboard;
+
+		const updatedDashboard: Dashboard = {
+			...selectedDashboard,
+			data: {
+				title: data.title,
+				description: data.description,
+				name: data.name,
+				tags: data.tags,
+				widgets: data.widgets,
+				variables: data.variables,
+				layout: layouts.filter((e) => e.i !== PANEL_TYPES.EMPTY_WIDGET),
+			},
+			uuid: selectedDashboard.uuid,
+		};
+
+		updateDashboardMutation.mutate(updatedDashboard, {
+			onSuccess: () => {
+				featureResponse.refetch();
+
+				notifications.success({
+					message: 'Layout saved successfully',
+				});
+			},
+		});
+	};
+
 	return (
 		<>
 			<ButtonContainer>
 				{saveLayoutPermission && (
 					<Button
-						loading={saveLayoutState.loading}
-						onClick={(): Promise<void> => onLayoutSaveHandler(layouts)}
+						loading={updateDashboardMutation.isLoading}
+						onClick={onSaveHandler}
 						icon={<SaveFilled />}
-						danger={saveLayoutState.error}
+						disabled={updateDashboardMutation.isLoading}
 					>
 						Save Layout
 					</Button>
 				)}
 
 				{addPanelPermission && (
-					<Button
-						loading={addPanelLoading}
-						disabled={addPanelLoading || isAddWidget}
-						onClick={onAddPanelHandler}
-						icon={<PlusOutlined />}
-					>
+					<Button onClick={onAddPanelHandler} icon={<PlusOutlined />}>
 						Add Panel
 					</Button>
 				)}
@@ -74,22 +106,30 @@ function GraphLayout({
 				isDraggable={addPanelPermission}
 				isDroppable={addPanelPermission}
 				isResizable={addPanelPermission}
-				useCSSTransforms
 				allowOverlap={false}
-				onLayoutChange={onLayoutChangeHandler}
+				onLayoutChange={setLayout}
 				draggableHandle=".drag-handle"
 			>
-				{layouts.map(({ Component, ...rest }) => {
+				{layouts.map(({ ...rest }) => {
 					const currentWidget = (widgets || [])?.find((e) => e.id === rest.i);
 
 					return (
 						<CardContainer
 							isDarkMode={isDarkMode}
-							key={currentWidget?.id || 'empty'} // don't change this key
+							key={currentWidget?.id}
 							data-grid={rest}
 						>
 							<Card $panelType={currentWidget?.panelTypes || PANEL_TYPES.TIME_SERIES}>
-								<Component setLayout={setLayout} />
+								<Graph
+									widget={currentWidget || ({} as Widgets)}
+									name={currentWidget?.id || ''}
+									headerMenuList={[
+										MenuItemKeys.Clone,
+										MenuItemKeys.Delete,
+										MenuItemKeys.Edit,
+										MenuItemKeys.View,
+									]}
+								/>
 							</Card>
 						</CardContainer>
 					);
@@ -100,14 +140,10 @@ function GraphLayout({
 }
 
 interface GraphLayoutProps {
-	layouts: LayoutProps[];
-	saveLayoutState: State;
-	onLayoutSaveHandler: (layout: Layout[]) => Promise<void>;
-	addPanelLoading: boolean;
+	layouts: Layout[];
 	onAddPanelHandler: VoidFunction;
-	onLayoutChangeHandler: (layout: Layout[]) => Promise<void>;
 	widgets: Widgets[] | undefined;
-	setLayout: Dispatch<SetStateAction<LayoutProps[]>>;
+	setLayout: (layout: Layout[]) => void;
 }
 
 export default GraphLayout;
