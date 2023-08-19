@@ -331,8 +331,8 @@ export const apDexMetricsQueryBuilderQueries = ({
 				isColumn: false,
 				type: MetricsType.Tag,
 			},
-			op: OPERATORS['='],
-			value: 'STATUS_CODE_UNSET',
+			op: OPERATORS['!='],
+			value: 'STATUS_CODE_ERROR',
 		},
 		{
 			id: '',
@@ -390,8 +390,8 @@ export const apDexMetricsQueryBuilderQueries = ({
 				isColumn: false,
 				type: MetricsType.Tag,
 			},
-			op: OPERATORS['='],
-			value: 'STATUS_CODE_UNSET',
+			op: OPERATORS['!='],
+			value: 'STATUS_CODE_ERROR',
 		},
 		{
 			id: '',
