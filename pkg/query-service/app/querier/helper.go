@@ -28,25 +28,52 @@ func (q *querier) runBuilderQuery(
 	defer wg.Done()
 	queryName := builderQuery.QueryName
 
+	var preferRPM bool
+
+	if q.featureLookUp != nil {
+		preferRPM = q.featureLookUp.CheckFeature(constants.PreferRPM) == nil
+	}
+
 	// TODO: handle other data sources
 	if builderQuery.DataSource == v3.DataSourceLogs {
 		var query string
 		var err error
 		// for ts query with limit replace it as it is already formed
 		if params.CompositeQuery.PanelType == v3.PanelTypeGraph && builderQuery.Limit > 0 && len(builderQuery.GroupBy) > 0 {
-			limitQuery, err := logsV3.PrepareLogsQuery(params.Start, params.End, params.CompositeQuery.QueryType, params.CompositeQuery.PanelType, builderQuery, logsV3.Options{GraphLimitQtype: constants.FirstQueryGraphLimit})
+			limitQuery, err := logsV3.PrepareLogsQuery(
+				params.Start,
+				params.End,
+				params.CompositeQuery.QueryType,
+				params.CompositeQuery.PanelType,
+				builderQuery,
+				logsV3.Options{GraphLimitQtype: constants.FirstQueryGraphLimit, PreferRPM: preferRPM},
+			)
 			if err != nil {
 				ch <- channelResult{Err: err, Name: queryName, Query: limitQuery, Series: nil}
 				return
 			}
-			placeholderQuery, err := logsV3.PrepareLogsQuery(params.Start, params.End, params.CompositeQuery.QueryType, params.CompositeQuery.PanelType, builderQuery, logsV3.Options{GraphLimitQtype: constants.SecondQueryGraphLimit})
+			placeholderQuery, err := logsV3.PrepareLogsQuery(
+				params.Start,
+				params.End,
+				params.CompositeQuery.QueryType,
+				params.CompositeQuery.PanelType,
+				builderQuery,
+				logsV3.Options{GraphLimitQtype: constants.SecondQueryGraphLimit, PreferRPM: preferRPM},
+			)
 			if err != nil {
 				ch <- channelResult{Err: err, Name: queryName, Query: placeholderQuery, Series: nil}
 				return
 			}
 			query = fmt.Sprintf(placeholderQuery, limitQuery)
 		} else {
-			query, err = logsV3.PrepareLogsQuery(params.Start, params.End, params.CompositeQuery.QueryType, params.CompositeQuery.PanelType, builderQuery, logsV3.Options{})
+			query, err = logsV3.PrepareLogsQuery(
+				params.Start,
+				params.End,
+				params.CompositeQuery.QueryType,
+				params.CompositeQuery.PanelType,
+				builderQuery,
+				logsV3.Options{PreferRPM: preferRPM},
+			)
 			if err != nil {
 				ch <- channelResult{Err: err, Name: queryName, Query: query, Series: nil}
 				return
@@ -68,19 +95,40 @@ func (q *querier) runBuilderQuery(
 		var err error
 		// for ts query with group by and limit form two queries
 		if params.CompositeQuery.PanelType == v3.PanelTypeGraph && builderQuery.Limit > 0 && len(builderQuery.GroupBy) > 0 {
-			limitQuery, err := tracesV3.PrepareTracesQuery(params.Start, params.End, params.CompositeQuery.PanelType, builderQuery, keys, tracesV3.Options{GraphLimitQtype: constants.FirstQueryGraphLimit})
+			limitQuery, err := tracesV3.PrepareTracesQuery(
+				params.Start,
+				params.End,
+				params.CompositeQuery.PanelType,
+				builderQuery,
+				keys,
+				tracesV3.Options{GraphLimitQtype: constants.FirstQueryGraphLimit, PreferRPM: preferRPM},
+			)
 			if err != nil {
 				ch <- channelResult{Err: err, Name: queryName, Query: limitQuery, Series: nil}
 				return
 			}
-			placeholderQuery, err := tracesV3.PrepareTracesQuery(params.Start, params.End, params.CompositeQuery.PanelType, builderQuery, keys, tracesV3.Options{GraphLimitQtype: constants.SecondQueryGraphLimit})
+			placeholderQuery, err := tracesV3.PrepareTracesQuery(
+				params.Start,
+				params.End,
+				params.CompositeQuery.PanelType,
+				builderQuery,
+				keys,
+				tracesV3.Options{GraphLimitQtype: constants.SecondQueryGraphLimit, PreferRPM: preferRPM},
+			)
 			if err != nil {
 				ch <- channelResult{Err: err, Name: queryName, Query: limitQuery, Series: nil}
 				return
 			}
 			query = fmt.Sprintf(placeholderQuery, limitQuery)
 		} else {
-			query, err = tracesV3.PrepareTracesQuery(params.Start, params.End, params.CompositeQuery.PanelType, builderQuery, keys, tracesV3.Options{})
+			query, err = tracesV3.PrepareTracesQuery(
+				params.Start,
+				params.End,
+				params.CompositeQuery.PanelType,
+				builderQuery,
+				keys,
+				tracesV3.Options{PreferRPM: preferRPM},
+			)
 			if err != nil {
 				ch <- channelResult{Err: err, Name: queryName, Query: query, Series: nil}
 				return
@@ -92,10 +140,11 @@ func (q *querier) runBuilderQuery(
 		return
 	}
 
-	// TODO(srikanthccv): ReduceTo avg should be handled; avg of avg is not correct
-	// cache keys are generated based on the query type
+	// What is happening here?
+	// We are only caching the graph panel queries. A non-existant cache key means that the query is not cached.
+	// If the query is not cached, we execute the query and return the result without caching it.
 	if _, ok := cacheKeys[queryName]; !ok {
-		query, err := metricsV3.PrepareMetricQuery(params.Start, params.End, params.CompositeQuery.QueryType, params.CompositeQuery.PanelType, builderQuery, metricsV3.Options{})
+		query, err := metricsV3.PrepareMetricQuery(params.Start, params.End, params.CompositeQuery.QueryType, params.CompositeQuery.PanelType, builderQuery, metricsV3.Options{PreferRPM: preferRPM})
 		if err != nil {
 			ch <- channelResult{Err: err, Name: queryName, Query: query, Series: nil}
 			return

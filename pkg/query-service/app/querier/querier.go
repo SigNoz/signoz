@@ -42,7 +42,8 @@ type querier struct {
 
 	fluxInterval time.Duration
 
-	builder *queryBuilder.QueryBuilder
+	builder       *queryBuilder.QueryBuilder
+	featureLookUp interfaces.FeatureLookup
 
 	// used for testing
 	// TODO(srikanthccv): remove this once we have a proper mock
@@ -77,6 +78,7 @@ func NewQuerier(opts QuerierOptions) interfaces.Querier {
 			BuildLogQuery:    logsV3.PrepareLogsQuery,
 			BuildMetricQuery: metricsV3.PrepareMetricQuery,
 		}, opts.FeatureLookup),
+		featureLookUp: opts.FeatureLookup,
 
 		testingMode:    opts.TestingMode,
 		returnedSeries: opts.ReturnedSeries,
@@ -147,6 +149,11 @@ func findMissingTimeRanges(start, end int64, seriesList []*v3.Series, fluxInterv
 		),
 	)
 
+	fmt.Println("cachedStart", cachedStart)
+	fmt.Println("cachedEnd", cachedEnd)
+	fmt.Println("start", start)
+	fmt.Println("end", end)
+
 	// There are five cases to consider
 	// 1. Cached time range is a subset of the requested time range
 	// 2. Cached time range is a superset of the requested time range
@@ -179,7 +186,7 @@ func findMissingTimeRanges(start, end int64, seriesList []*v3.Series, fluxInterv
 	var validMisses []missInterval
 	for idx := range misses {
 		miss := misses[idx]
-		if miss.start <= miss.end {
+		if miss.start < miss.end {
 			validMisses = append(validMisses, miss)
 		}
 	}
@@ -468,7 +475,7 @@ func (q *querier) QueryRange(ctx context.Context, params *v3.QueryRangeParamsV3,
 	if params.CompositeQuery != nil {
 		switch params.CompositeQuery.QueryType {
 		case v3.QueryTypeBuilder:
-			if params.CompositeQuery.PanelType == v3.PanelTypeList {
+			if params.CompositeQuery.PanelType == v3.PanelTypeList || params.CompositeQuery.PanelType == v3.PanelTypeTrace {
 				results, err, errQueriesByName = q.runBuilderListQueries(ctx, params, keys)
 			} else {
 				results, err, errQueriesByName = q.runBuilderQueries(ctx, params, keys)
