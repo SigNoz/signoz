@@ -107,7 +107,7 @@ func (ic *LogParsingPipelineController) ApplyPipelines(ctx context.Context, post
 	}
 
 	if err != nil {
-		return response, fmt.Errorf("failed to apply pipelines")
+		return response, fmt.Errorf("failed to apply pipelines. Error: %v", err)
 	}
 	return response, nil
 }

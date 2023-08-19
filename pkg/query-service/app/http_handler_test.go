@@ -2,13 +2,25 @@ package app
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
+	"io/ioutil"
+	"net"
 	"net/http"
 	"net/http/httptest"
+	"os"
 	"strings"
 	"testing"
 
+	"github.com/jmoiron/sqlx"
+	"github.com/open-telemetry/opamp-go/protobufs"
+	"go.signoz.io/signoz/pkg/query-service/agentConf"
+	"go.signoz.io/signoz/pkg/query-service/app/logparsingpipeline"
+	"go.signoz.io/signoz/pkg/query-service/app/opamp"
+	opampModel "go.signoz.io/signoz/pkg/query-service/app/opamp/model"
+	"go.signoz.io/signoz/pkg/query-service/auth"
 	"go.signoz.io/signoz/pkg/query-service/constants"
+	"go.signoz.io/signoz/pkg/query-service/dao"
 	"go.signoz.io/signoz/pkg/query-service/model"
 	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
 )
@@ -747,4 +759,246 @@ func TestApplyLimitOnMetricResult(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestCreateLogsPipeline(t *testing.T) {
+	// Integration tests for logs pipeline http handlers.
+	// Mostly for validating shape of the response.
+	type testcaseResponse struct {
+		statusCode int
+		data       interface{}
+	}
+	type testCase struct {
+		name             string
+		postData         *logparsingpipeline.PostablePipelines
+		expectedResponse testcaseResponse
+	}
+	testCases := []testCase{
+		{
+			name: "test valid pipeline",
+			postData: &logparsingpipeline.PostablePipelines{
+				Pipelines: []logparsingpipeline.PostablePipeline{
+					{
+						OrderId: 1,
+						Name:    "pipeline 1",
+						Alias:   "pipeline1",
+						Enabled: true,
+						Filter:  "attributes.method == \"GET\"",
+						Config: []model.PipelineOperator{
+							{
+								OrderId: 1,
+								ID:      "add",
+								Type:    "add",
+								Field:   "body",
+								Value:   "val",
+								Enabled: true,
+								Name:    "test",
+							},
+						},
+					},
+				},
+			},
+			expectedResponse: testcaseResponse{
+				statusCode: 200,
+				data:       logparsingpipeline.PipelinesResponse{},
+			},
+		},
+		{
+			name: "test invalid pipeline",
+			postData: &logparsingpipeline.PostablePipelines{
+				Pipelines: []logparsingpipeline.PostablePipeline{
+					{
+						OrderId: 1,
+						Name:    "pipeline 1",
+						Alias:   "pipeline1",
+						Enabled: true,
+						Filter:  "bad filter statement",
+						Config: []model.PipelineOperator{
+							{
+								OrderId: 1,
+								ID:      "add",
+								Type:    "add",
+								Field:   "body",
+								Value:   "val",
+								Enabled: true,
+								Name:    "test",
+							},
+						},
+					},
+				},
+			},
+			expectedResponse: testcaseResponse{
+				statusCode: 400,
+				data:       logparsingpipeline.PipelinesResponse{},
+			},
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			// Create a temp db for this test
+			testDBFile, err := os.CreateTemp("", "test-signoz-db-*")
+			if err != nil {
+				t.Fatal(err)
+			}
+			testDBFile.Close()
+			testDBFilePath := testDBFile.Name()
+			defer os.Remove(testDBFilePath)
+
+			testDB, err := sqlx.Open("sqlite3", testDBFilePath)
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			// Mock available agents.
+			agentConf.Initiate(testDB, "sqlite")
+			opampModel.InitDB(testDBFilePath)
+			opampServer := opamp.InitializeServer(constants.OpAmpWsEndpoint, nil)
+			opampServer.OnMessage(
+				&mockOpAmpConnection{},
+				&protobufs.AgentToServer{
+					InstanceUid: "test",
+					EffectiveConfig: &protobufs.EffectiveConfig{
+						ConfigMap: &protobufs.AgentConfigMap{
+							ConfigMap: map[string]*protobufs.AgentConfigFile{
+								"otel-collector.yaml": {
+									Body: []byte(`
+                                    receivers:
+                                      otlp:
+                                        protocols:
+                                          grpc:
+                                            endpoint: 0.0.0.0:4317
+                                          http:
+                                            endpoint: 0.0.0.0:4318
+                                    processors:
+                                      batch:
+                                        send_batch_size: 10000
+                                        send_batch_max_size: 11000
+                                        timeout: 10s
+                                    exporters:
+                                      otlp:
+                                        endpoint: otelcol2:4317
+                                    service:
+                                      pipelines:
+                                        logs:
+                                          receivers: [otlp]
+                                          processors: [batch]
+                                          exporters: [otlp]
+                                  `),
+									ContentType: "text/yaml",
+								},
+							},
+						},
+					},
+				},
+			)
+
+			//opampModel.AllAgents.FindOrCreateAgent("test", mockOpAmpConnection{})
+
+			// Init logs parsing controller
+			controller, err := logparsingpipeline.NewLogParsingPipelinesController(testDB, "sqlite")
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			// Construct apiHandler.
+			dao.InitDao("sqlite", testDBFilePath)
+			apiHandler, err := NewAPIHandler(APIHandlerOpts{
+				AppDao:                        dao.DB(),
+				LogsParsingPipelineController: controller,
+			})
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			// Make api request
+			user, apiErr := CreateTestUser(t)
+			if apiErr != nil {
+				t.Fatal(apiErr)
+			}
+			req, err := NewAuthenticatedPostRequest(user, "/api/v1/logs/pipelines", tc.postData)
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			respWriter := httptest.NewRecorder()
+			apiHandler.createLogsPipeline(respWriter, req)
+			response := respWriter.Result()
+			responseBody, err := ioutil.ReadAll(response.Body)
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			// Validate response.
+			if response.StatusCode != tc.expectedResponse.statusCode {
+				t.Errorf("Unexpected response status %d. Expected %d. Response body: %s",
+					response.StatusCode, tc.expectedResponse.statusCode,
+					responseBody,
+				)
+			}
+
+			// TODO(Raj): Validate data matches expectation too.
+		})
+	}
+}
+
+func CreateTestUser(t *testing.T) (*model.User, *model.ApiError) {
+	// Create a test user for auth
+	ctx := context.Background()
+	org, apiErr := dao.DB().CreateOrg(ctx, &model.Organization{
+		Name: "test",
+	})
+	//t.Logf("Org:%v\n\nerr:%T & %v & %v", org, err1, err1.Error(), err1)
+	if apiErr != nil {
+		t.Fatal(apiErr)
+	}
+
+	group, apiErr := dao.DB().CreateGroup(ctx, &model.Group{
+		Name: "test",
+	})
+	if apiErr != nil {
+		t.Fatal(apiErr)
+	}
+
+	return dao.DB().CreateUser(
+		ctx,
+		&model.User{
+			Name:     "test",
+			Email:    "test@test.com",
+			Password: "test",
+			OrgId:    org.Id,
+			GroupId:  group.Id,
+		},
+		true,
+	)
+}
+
+func NewAuthenticatedPostRequest(user *model.User, path string, postData interface{}) (*http.Request, error) {
+
+	userJwt, err := auth.GenerateJWTForUser(user)
+	if err != nil {
+		return nil, err
+	}
+	var b bytes.Buffer
+	err = json.NewEncoder(&b).Encode(postData)
+	if err != nil {
+		return nil, err
+	}
+	req := httptest.NewRequest(http.MethodPost, path, &b)
+	req.Header.Add("Authorization", "Bearer "+userJwt.AccessJwt)
+	return req, nil
+}
+
+type mockOpAmpConnection struct {
+}
+
+func (conn *mockOpAmpConnection) Send(ctx context.Context, msg *protobufs.ServerToAgent) error {
+	return nil
+}
+
+func (conn *mockOpAmpConnection) Disconnect() error {
+	return nil
+}
+func (conn *mockOpAmpConnection) RemoteAddr() net.Addr {
+	return nil
 }

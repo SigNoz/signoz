@@ -80,7 +80,7 @@ func main() {
 	if len(auth.JwtSecret) == 0 {
 		zap.S().Warn("No JWT secret key is specified.")
 	} else {
-		zap.S().Info("No JWT secret key set successfully.")
+		zap.S().Info("JWT secret key set successfully.")
 	}
 
 	server, err := app.NewServer(serverOptions)
