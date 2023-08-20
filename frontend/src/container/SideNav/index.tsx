@@ -2,6 +2,10 @@ import { CheckCircleTwoTone, WarningOutlined } from '@ant-design/icons';
 import { Menu, MenuProps } from 'antd';
 import getLocalStorageKey from 'api/browser/localstorage/get';
 import { IS_SIDEBAR_COLLAPSED } from 'constants/app';
+import {
+	NAV_ROUTES,
+	NESTED_ROUTES_MAPPING,
+} from 'constants/nestedRoutesMapping';
 import ROUTES from 'constants/routes';
 import history from 'lib/history';
 import {
@@ -116,6 +120,10 @@ function SideNav(): JSX.Element {
 		});
 
 		if (!currentRouteKey) return null;
+
+		if ((NAV_ROUTES as any)[currentRouteKey]) {
+			return (NESTED_ROUTES_MAPPING as any)[currentRouteKey];
+		}
 
 		return ROUTES[currentRouteKey];
 	}, [pathname]);
