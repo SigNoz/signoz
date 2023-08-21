@@ -804,7 +804,7 @@ func TestCreateLogsPipeline(t *testing.T) {
 			},
 		},
 		{
-			name: "test invalid pipeline",
+			name: "test invalid pipeline filter",
 			postData: &logparsingpipeline.PostablePipelines{
 				Pipelines: []logparsingpipeline.PostablePipeline{
 					{
@@ -819,6 +819,34 @@ func TestCreateLogsPipeline(t *testing.T) {
 								ID:      "add",
 								Type:    "add",
 								Field:   "body",
+								Value:   "val",
+								Enabled: true,
+								Name:    "test",
+							},
+						},
+					},
+				},
+			},
+			expectedResponse: testcaseResponse{
+				statusCode: 400,
+				data:       logparsingpipeline.PipelinesResponse{},
+			},
+		}, {
+			name: "test invalid pipeline operator",
+			postData: &logparsingpipeline.PostablePipelines{
+				Pipelines: []logparsingpipeline.PostablePipeline{
+					{
+						OrderId: 1,
+						Name:    "pipeline 1",
+						Alias:   "pipeline1",
+						Enabled: true,
+						Filter:  "true",
+						Config: []model.PipelineOperator{
+							{
+								OrderId: 1,
+								ID:      "add",
+								Type:    "add",
+								Field:   "badField",
 								Value:   "val",
 								Enabled: true,
 								Name:    "test",
