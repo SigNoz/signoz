@@ -1,6 +1,7 @@
 import { Card, Typography } from 'antd';
 import ListLogView from 'components/Logs/ListLogView';
 import RawLogView from 'components/Logs/RawLogView';
+import Spinner from 'components/Spinner';
 import { LOCALSTORAGE } from 'constants/localStorage';
 import InfinityTableView from 'container/LogsExplorerList/InfinityTableView';
 import { InfinityWrapperStyled } from 'container/LogsExplorerList/styles';
@@ -22,7 +23,7 @@ import { LiveLogsListProps } from './types';
 function LiveLogsList({ logs }: LiveLogsListProps): JSX.Element {
 	const ref = useRef<VirtuosoHandle>(null);
 
-	const { isConnectionError } = useEventSource();
+	const { isConnectionError, isConnectionLoading } = useEventSource();
 
 	const { activeLogId } = useCopyLogLink();
 
@@ -108,6 +109,15 @@ function LiveLogsList({ logs }: LiveLogsListProps): JSX.Element {
 			</Card>
 		);
 	}, [logs, options.format, options.maxLines, getItemContent, selectedFields]);
+
+	const isLoadingList = useMemo(() => isConnectionLoading && logs.length === 0, [
+		logs,
+		isConnectionLoading,
+	]);
+
+	if (isLoadingList) {
+		return <Spinner style={{ height: 'auto' }} tip="Getting logs" />;
+	}
 
 	return (
 		<>
