@@ -50,7 +50,8 @@ function LiveLogsContainer(): JSX.Element {
 	const compositeQuery = useGetCompositeQueryParam();
 
 	const updateLogs = useCallback(() => {
-		setLogs(batchedEventsRef.current);
+		const reversedData = batchedEventsRef.current.reverse();
+		setLogs((prevState) => [...reversedData, ...prevState]);
 
 		batchedEventsRef.current = [];
 	}, []);
@@ -102,8 +103,10 @@ function LiveLogsContainer(): JSX.Element {
 
 		handleCloseConnection();
 
+		const preparedQuery = getPreparedQuery(compositeQuery);
+
 		const { queryPayload } = prepareQueryRangePayload({
-			query: compositeQuery,
+			query: preparedQuery,
 			graphType: PANEL_TYPES.LIST,
 			selectedTime: 'GLOBAL_TIME',
 			globalSelectedInterval: globalSelectedTime,
@@ -117,6 +120,7 @@ function LiveLogsContainer(): JSX.Element {
 	}, [
 		compositeQuery,
 		globalSelectedTime,
+		getPreparedQuery,
 		handleCloseConnection,
 		handleStartOpenConnection,
 	]);
@@ -131,13 +135,13 @@ function LiveLogsContainer(): JSX.Element {
 
 	return (
 		<>
-			<LiveLogsTopNav getPreparedQuery={getPreparedQuery} />
+			<LiveLogsTopNav />
 			<Wrapper gutter={[0, 20]} style={{ color: themeColors.lightWhite }}>
 				<Col span={24}>
 					<BackButton />
 				</Col>
 				<Col span={24}>
-					<FiltersInput getPreparedQuery={getPreparedQuery} />
+					<FiltersInput />
 				</Col>
 				{initialLoading ? (
 					<Col span={24}>

@@ -5,17 +5,18 @@ import { useEventSource } from 'providers/EventSource';
 import { useCallback, useMemo } from 'react';
 import {
 	IBuilderQuery,
+	Query,
 	TagFilter,
 } from 'types/api/queryBuilder/queryBuilderData';
 
+import { getQueryWithoutFilterId } from '../utils';
 import {
 	ContainerStyled,
 	FilterSearchInputStyled,
 	SearchButtonStyled,
 } from './styles';
-import { FiltersInputProps } from './types';
 
-function FiltersInput({ getPreparedQuery }: FiltersInputProps): JSX.Element {
+function FiltersInput(): JSX.Element {
 	const {
 		stagedQuery,
 		handleSetQueryData,
@@ -54,7 +55,7 @@ function FiltersInput({ getPreparedQuery }: FiltersInputProps): JSX.Element {
 			handleSetInitialLoading(false);
 		}
 
-		const preparedQuery = getPreparedQuery(currentQuery);
+		const preparedQuery: Query = getQueryWithoutFilterId(currentQuery);
 
 		redirectWithQueryBuilderData(preparedQuery);
 	}, [
@@ -62,7 +63,6 @@ function FiltersInput({ getPreparedQuery }: FiltersInputProps): JSX.Element {
 		currentQuery,
 		redirectWithQueryBuilderData,
 		handleSetInitialLoading,
-		getPreparedQuery,
 	]);
 
 	return (

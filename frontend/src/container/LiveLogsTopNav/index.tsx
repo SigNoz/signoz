@@ -1,15 +1,13 @@
 import { PauseCircleFilled, PlayCircleFilled } from '@ant-design/icons';
+import { getQueryWithoutFilterId } from 'container/LiveLogs/utils';
 import LocalTopNav from 'container/LocalTopNav';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useEventSource } from 'providers/EventSource';
 import { memo, useCallback, useMemo } from 'react';
 
 import { LiveButtonStyled } from './styles';
-import { LiveLogsTopNavProps } from './types';
 
-function LiveLogsTopNav({
-	getPreparedQuery,
-}: LiveLogsTopNavProps): JSX.Element {
+function LiveLogsTopNav(): JSX.Element {
 	const {
 		isConnectionOpen,
 		isConnectionLoading,
@@ -33,7 +31,7 @@ function LiveLogsTopNav({
 		if ((!isConnectionOpen && isConnectionLoading) || isConnectionOpen) {
 			handleCloseConnection();
 		} else {
-			const preparedQuery = getPreparedQuery(currentQuery);
+			const preparedQuery = getQueryWithoutFilterId(currentQuery);
 			redirectWithQueryBuilderData(preparedQuery);
 		}
 	}, [
@@ -43,7 +41,6 @@ function LiveLogsTopNav({
 		currentQuery,
 		handleSetInitialLoading,
 		handleCloseConnection,
-		getPreparedQuery,
 		redirectWithQueryBuilderData,
 	]);
 
