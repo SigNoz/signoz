@@ -8,6 +8,10 @@ export const LiveLogsChart = styled(LiveLogsListChart)`
 	margin-bottom: 0.5rem;
 `;
 
-export const Wrapper = styled(Row)`
+export const ContentWrapper = styled(Row)`
 	color: rgba(${(themeColors.white, 0.85)});
+`;
+
+export const Wrapper = styled.div`
+	padding-bottom: 4rem;
 `;
