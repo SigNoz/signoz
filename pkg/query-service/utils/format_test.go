@@ -362,6 +362,19 @@ var testClickHouseFormattedValueData = []struct {
 		value: []interface{}{&one, &one},
 		want:  "[1,1]",
 	},
+	{
+		name:  "string with single quote",
+		value: "test'1",
+		want:  "'test\\'1'",
+	},
+	{
+		name: "[]interface{} with string with single quote",
+		value: []interface{}{
+			"test'1",
+			"test'2",
+		},
+		want: "['test\\'1','test\\'2']",
+	},
 }
 
 func TestClickHouseFormattedValue(t *testing.T) {
