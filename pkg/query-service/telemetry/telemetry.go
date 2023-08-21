@@ -131,6 +131,12 @@ type Telemetry struct {
 }
 
 func createTelemetry() {
+	if !constants.IsTelemetryEnabled() {
+		telemetry = &Telemetry{
+			isEnabled: false,
+		}
+		return
+	}
 
 	telemetry = &Telemetry{
 		operator:   analytics.New(api_key),
