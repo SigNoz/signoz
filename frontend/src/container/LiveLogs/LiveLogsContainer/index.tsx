@@ -24,7 +24,7 @@ import { idObject } from '../constants';
 import ListViewPanel from '../ListViewPanel';
 import LiveLogsList from '../LiveLogsList';
 import { prepareQueryByFilter } from '../utils';
-import { LiveLogsChart, Wrapper } from './styles';
+import { ContentWrapper, LiveLogsChart, Wrapper } from './styles';
 
 function LiveLogsContainer(): JSX.Element {
 	const [logs, setLogs] = useState<ILog[]>([]);
@@ -134,9 +134,9 @@ function LiveLogsContainer(): JSX.Element {
 	}, [stagedQuery, initialLoading, compositeQuery, handleStartNewConnection]);
 
 	return (
-		<>
+		<Wrapper>
 			<LiveLogsTopNav />
-			<Wrapper gutter={[0, 20]} style={{ color: themeColors.lightWhite }}>
+			<ContentWrapper gutter={[0, 20]} style={{ color: themeColors.lightWhite }}>
 				<Col span={24}>
 					<BackButton />
 				</Col>
@@ -165,8 +165,8 @@ function LiveLogsContainer(): JSX.Element {
 					</>
 				)}
 				<GoToTop />
-			</Wrapper>
-		</>
+			</ContentWrapper>
+		</Wrapper>
 	);
 }
 
