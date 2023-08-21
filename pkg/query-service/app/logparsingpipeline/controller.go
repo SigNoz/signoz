@@ -32,7 +32,10 @@ type PipelinesResponse struct {
 }
 
 // ApplyPipelines stores new or changed pipelines and initiates a new config update
-func (ic *LogParsingPipelineController) ApplyPipelines(ctx context.Context, postable []PostablePipeline) (*PipelinesResponse, error) {
+func (ic *LogParsingPipelineController) ApplyPipelines(
+	ctx context.Context,
+	postable []PostablePipeline,
+) (*PipelinesResponse, model.BaseApiError) {
 	// get user id from context
 	userId, err := auth.ExtractUserIdFromContext(ctx)
 	if err != nil {
@@ -53,7 +56,10 @@ func (ic *LogParsingPipelineController) ApplyPipelines(ctx context.Context, post
 			inserted, err := ic.insertPipeline(ctx, &r)
 			if err != nil || inserted == nil {
 				zap.S().Errorf("failed to insert edited pipeline %s", err.Error())
-				return nil, fmt.Errorf("failed to insert edited pipeline")
+				return nil, model.WrappedApiError(
+					err,
+					"failed to insert edited pipeline",
+				)
 			} else {
 				pipelines = append(pipelines, *inserted)
 			}
@@ -61,7 +67,10 @@ func (ic *LogParsingPipelineController) ApplyPipelines(ctx context.Context, post
 			selected, err := ic.GetPipeline(ctx, r.Id)
 			if err != nil || selected == nil {
 				zap.S().Errorf("failed to find edited pipeline %s", err.Error())
-				return nil, fmt.Errorf("failed to find pipeline, invalid request")
+				return nil, model.WrappedApiError(
+					err,
+					"failed to find pipeline, invalid request",
+				)
 			}
 			pipelines = append(pipelines, *selected)
 		}
@@ -69,14 +78,16 @@ func (ic *LogParsingPipelineController) ApplyPipelines(ctx context.Context, post
 	}
 
 	// prepare filter config (processor) from the pipelines
-	filterConfig, names, err := PreparePipelineProcessor(pipelines)
-	if err != nil {
+	filterConfig, names, prepErr := PreparePipelineProcessor(pipelines)
+	if prepErr != nil {
 		zap.S().Errorf("failed to generate processor config from pipelines for deployment %s", err.Error())
-		return nil, err
+		return nil, model.BadRequest(prepErr)
 	}
 
 	if !agentConf.Ready() {
-		return nil, fmt.Errorf("agent updater unavailable at the moment. Please try in sometime")
+		return nil, model.UnavailableError(fmt.Errorf(
+			"agent updater unavailable at the moment. Please try in sometime",
+		))
 	}
 
 	// prepare config elements
@@ -107,7 +118,7 @@ func (ic *LogParsingPipelineController) ApplyPipelines(ctx context.Context, post
 	}
 
 	if err != nil {
-		return response, fmt.Errorf("failed to apply pipelines. Error: %v", err)
+		return response, model.WrappedApiError(err, "failed to apply pipelines.")
 	}
 	return response, nil
 }

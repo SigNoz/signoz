@@ -46,6 +46,24 @@ func (a *ApiError) IsNil() bool {
 	return a == nil || a.Err == nil
 }
 
+type withMsgPrefix struct {
+	BaseApiError
+	msgPrefix string
+}
+
+func (e *withMsgPrefix) Error() string {
+	return e.msgPrefix + ": " + e.BaseApiError.Error()
+}
+
+func WrappedApiError(
+	apiErr BaseApiError, msgPrefix string,
+) BaseApiError {
+	return &withMsgPrefix{
+		BaseApiError: apiErr,
+		msgPrefix:    msgPrefix,
+	}
+}
+
 type ErrorType string
 
 const (
@@ -65,28 +83,42 @@ const (
 	ErrorStatusServiceUnavailable ErrorType = "service unavailable"
 )
 
-// BadRequest returns a ApiError object of bad request
-func BadRequest(err error) *ApiError {
+func toApiError(err error, apiErrType ErrorType) *ApiError {
+	if err == nil {
+		return nil
+	}
+
 	return &ApiError{
-		Typ: ErrorBadData,
+		Typ: apiErrType,
 		Err: err,
 	}
+}
+
+// BadRequest returns a ApiError object of bad request
+func BadRequest(err error) *ApiError {
+	return toApiError(err, ErrorBadData)
 }
 
 // BadRequestStr returns a ApiError object of bad request
 func BadRequestStr(s string) *ApiError {
-	return &ApiError{
-		Typ: ErrorBadData,
-		Err: fmt.Errorf(s),
-	}
+	return BadRequest(fmt.Errorf(s))
+}
+
+func NotFoundError(err error) *ApiError {
+	return toApiError(err, ErrorNotFound)
+}
+
+func UnauthorizedError(err error) *ApiError {
+	return toApiError(err, ErrorUnauthorized)
+}
+
+func UnavailableError(err error) *ApiError {
+	return toApiError(err, ErrorUnavailable)
 }
 
 // InternalError returns a ApiError object of internal type
 func InternalError(err error) *ApiError {
-	return &ApiError{
-		Typ: ErrorInternal,
-		Err: err,
-	}
+	return toApiError(err, ErrorInternal)
 }
 
 type QueryDataV2 struct {

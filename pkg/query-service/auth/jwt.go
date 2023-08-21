@@ -94,7 +94,7 @@ func ExtractJwtFromRequest(r *http.Request) (string, error) {
 	return jwtmiddleware.FromAuthHeader(r)
 }
 
-func ExtractUserIdFromContext(ctx context.Context) (string, error) {
+func ExtractUserIdFromContext(ctx context.Context) (string, model.BaseApiError) {
 	userId := ""
 	jwt, err := ExtractJwtFromContext(ctx)
 	if err != nil {

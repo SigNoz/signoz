@@ -39,24 +39,26 @@ func (r *Repo) InitDB(engine string) error {
 }
 
 // insertPipeline stores a given postable pipeline to database
-func (r *Repo) insertPipeline(ctx context.Context, postable *PostablePipeline) (*model.Pipeline, error) {
+func (r *Repo) insertPipeline(
+	ctx context.Context, postable *PostablePipeline,
+) (*model.Pipeline, *model.ApiError) {
 	if err := postable.IsValid(); err != nil {
-		return nil, errors.Wrap(err, "failed to validate postable pipeline")
+		return nil, model.BadRequest(errors.Wrap(err, "failed to validate postable pipeline"))
 	}
 
 	rawConfig, err := json.Marshal(postable.Config)
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to unmarshal postable pipeline config")
+		return nil, model.BadRequest(errors.Wrap(err, "failed to unmarshal postable pipeline config"))
 	}
 
 	jwt, err := auth.ExtractJwtFromContext(ctx)
 	if err != nil {
-		return nil, err
+		return nil, model.UnauthorizedError(err)
 	}
 
 	claims, err := auth.ParseJWT(jwt)
 	if err != nil {
-		return nil, err
+		return nil, model.UnauthorizedError(err)
 	}
 
 	insertRow := &model.Pipeline{
@@ -94,7 +96,7 @@ func (r *Repo) insertPipeline(ctx context.Context, postable *PostablePipeline) (
 
 	if err != nil {
 		zap.S().Errorf("error in inserting pipeline data: ", zap.Error(err))
-		return insertRow, errors.Wrap(err, "failed to insert pipeline")
+		return insertRow, model.InternalError(errors.Wrap(err, "failed to insert pipeline"))
 	}
 
 	return insertRow, nil
@@ -143,7 +145,9 @@ func (r *Repo) getPipelinesByVersion(ctx context.Context, version int) ([]model.
 }
 
 // GetPipelines returns pipeline and errors (if any)
-func (r *Repo) GetPipeline(ctx context.Context, id string) (*model.Pipeline, error) {
+func (r *Repo) GetPipeline(
+	ctx context.Context, id string,
+) (*model.Pipeline, model.BaseApiError) {
 	pipelines := []model.Pipeline{}
 
 	pipelineQuery := `SELECT id, 
@@ -183,7 +187,7 @@ func (r *Repo) GetPipeline(ctx context.Context, id string) (*model.Pipeline, err
 
 }
 
-func (r *Repo) DeletePipeline(ctx context.Context, id string) error {
+func (r *Repo) DeletePipeline(ctx context.Context, id string) *model.ApiError {
 	deleteQuery := `DELETE
 		FROM pipelines 
 		WHERE id = $1`

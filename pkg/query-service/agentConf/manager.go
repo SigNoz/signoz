@@ -9,6 +9,7 @@ import (
 	"go.signoz.io/signoz/pkg/query-service/app/opamp"
 	filterprocessor "go.signoz.io/signoz/pkg/query-service/app/opamp/otelconfig/filterprocessor"
 	tsp "go.signoz.io/signoz/pkg/query-service/app/opamp/otelconfig/tailsampler"
+	"go.signoz.io/signoz/pkg/query-service/model"
 	"go.uber.org/zap"
 	yaml "gopkg.in/yaml.v3"
 )
@@ -56,11 +57,16 @@ func GetConfigHistory(ctx context.Context, typ ElementTypeDef, limit int) ([]Con
 }
 
 // StartNewVersion launches a new config version for given set of elements
-func StartNewVersion(ctx context.Context, userId string, eleType ElementTypeDef, elementIds []string) (*ConfigVersion, error) {
+func StartNewVersion(
+	ctx context.Context,
+	userId string,
+	eleType ElementTypeDef,
+	elementIds []string,
+) (*ConfigVersion, model.BaseApiError) {
 
 	if !m.Ready() {
 		// agent is already being updated, ask caller to wait and re-try after sometime
-		return nil, fmt.Errorf("agent updater is busy")
+		return nil, model.UnavailableError(fmt.Errorf("agent updater is busy"))
 	}
 
 	// create a new version
@@ -212,9 +218,15 @@ func UpsertSamplingProcessor(ctx context.Context, version int, config *tsp.Confi
 }
 
 // UpsertLogParsingProcessors updates the agent with log parsing processors
-func UpsertLogParsingProcessor(ctx context.Context, version int, rawPipelineData []byte, config map[string]interface{}, names []string) error {
+func UpsertLogParsingProcessor(
+	ctx context.Context,
+	version int,
+	rawPipelineData []byte,
+	config map[string]interface{},
+	names []string,
+) model.BaseApiError {
 	if !atomic.CompareAndSwapUint32(&m.lock, 0, 1) {
-		return fmt.Errorf("agent updater is busy")
+		return model.UnavailableError(fmt.Errorf("agent updater is busy"))
 	}
 	defer atomic.StoreUint32(&m.lock, 0)
 

@@ -8,6 +8,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/jmoiron/sqlx"
+	"github.com/pkg/errors"
 	"go.signoz.io/signoz/pkg/query-service/agentConf/sqlite"
 	"go.signoz.io/signoz/pkg/query-service/model"
 	"go.uber.org/zap"
@@ -31,7 +32,9 @@ func (r *Repo) initDB(engine string) error {
 	}
 }
 
-func (r *Repo) GetConfigHistory(ctx context.Context, typ ElementTypeDef, limit int) ([]ConfigVersion, error) {
+func (r *Repo) GetConfigHistory(
+	ctx context.Context, typ ElementTypeDef, limit int,
+) ([]ConfigVersion, model.BaseApiError) {
 	var c []ConfigVersion
 	err := r.db.SelectContext(ctx, &c, fmt.Sprintf(`SELECT 
 		version, 
@@ -54,10 +57,17 @@ func (r *Repo) GetConfigHistory(ctx context.Context, typ ElementTypeDef, limit i
 		limit %v`, limit),
 		typ)
 
-	return c, err
+	if err == sql.ErrNoRows {
+		return nil, model.NotFoundError(err)
+	}
+	return c, model.InternalError(err)
 }
 
-func (r *Repo) GetConfigVersion(ctx context.Context, typ ElementTypeDef, v int) (*ConfigVersion, error) {
+func (r *Repo) GetConfigVersion(
+	ctx context.Context,
+	typ ElementTypeDef,
+	v int,
+) (*ConfigVersion, model.BaseApiError) {
 	var c ConfigVersion
 	err := r.db.GetContext(ctx, &c, `SELECT 
 		id, 
@@ -78,11 +88,16 @@ func (r *Repo) GetConfigVersion(ctx context.Context, typ ElementTypeDef, v int) 
 		WHERE element_type = $1 
 		AND version = $2`, typ, v)
 
-	return &c, err
-
+	if err == sql.ErrNoRows {
+		return nil, model.NotFoundError(err)
+	}
+	return &c, model.InternalError(err)
 }
 
-func (r *Repo) GetLatestVersion(ctx context.Context, typ ElementTypeDef) (*ConfigVersion, error) {
+func (r *Repo) GetLatestVersion(
+	ctx context.Context,
+	typ ElementTypeDef,
+) (*ConfigVersion, model.BaseApiError) {
 	var c ConfigVersion
 	err := r.db.GetContext(ctx, &c, `SELECT 
 		id, 
@@ -103,23 +118,28 @@ func (r *Repo) GetLatestVersion(ctx context.Context, typ ElementTypeDef) (*Confi
 			SELECT MAX(version) 
 			FROM agent_config_versions 
 			WHERE element_type=$2)`, typ, typ)
-	if err != nil {
-		// intially the table will be empty
-		return nil, err
+
+	if err == sql.ErrNoRows {
+		return nil, model.NotFoundError(err)
 	}
-	return &c, err
+	return &c, model.InternalError(err)
 }
 
-func (r *Repo) insertConfig(ctx context.Context, userId string, c *ConfigVersion, elements []string) (fnerr error) {
+func (r *Repo) insertConfig(
+	ctx context.Context,
+	userId string,
+	c *ConfigVersion,
+	elements []string,
+) (fnerr model.BaseApiError) {
 
 	if string(c.ElementType) == "" {
-		return fmt.Errorf("element type is required for creating agent config version")
+		return model.BadRequestStr("element type is required for creating agent config version")
 	}
 
 	// allowing empty elements for logs - use case is deleting all pipelines
 	if len(elements) == 0 && c.ElementType != ElementTypeLogPipelines {
 		zap.S().Error("insert config called with no elements ", c.ElementType)
-		return fmt.Errorf("config must have atleast one element")
+		return model.BadRequestStr("config must have atleast one element")
 	}
 
 	if c.Version != 0 {
@@ -127,14 +147,16 @@ func (r *Repo) insertConfig(ctx context.Context, userId string, c *ConfigVersion
 		// in a monotonically increasing order starting with 1. hence, we reject insert
 		// requests with version anything other than 0. here, 0 indicates un-assigned
 		zap.S().Error("invalid version assignment while inserting agent config", c.Version, c.ElementType)
-		return fmt.Errorf("user defined versions are not supported in the agent config")
+		return model.BadRequestStr("user defined versions are not supported in the agent config")
 	}
 
 	configVersion, err := r.GetLatestVersion(ctx, c.ElementType)
-	if err != nil {
-		if err != sql.ErrNoRows {
+	if err != nil && err.Type() != model.ErrorNotFound {
+		if err.Type() != model.ErrorNotFound {
 			zap.S().Error("failed to fetch latest config version", err)
-			return fmt.Errorf("failed to fetch latest config version")
+			return model.InternalError(fmt.Errorf(
+				"failed to fetch latest config version",
+			))
 		}
 	}
 
@@ -166,7 +188,7 @@ func (r *Repo) insertConfig(ctx context.Context, userId string, c *ConfigVersion
 		deploy_result) 
 	VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`
 
-	_, err = r.db.ExecContext(ctx,
+	_, insertErr := r.db.ExecContext(ctx,
 		configQuery,
 		c.ID,
 		c.Version,
@@ -178,9 +200,14 @@ func (r *Repo) insertConfig(ctx context.Context, userId string, c *ConfigVersion
 		c.DeployStatus,
 		c.DeployResult)
 
-	if err != nil {
-		zap.S().Error("error in inserting config version: ", zap.Error(err))
-		return fmt.Errorf("failed to insert ingestion rule")
+	if insertErr != nil {
+		zap.S().Error(
+			"error in inserting config version: ",
+			zap.Error(insertErr),
+		)
+		return model.InternalError(
+			errors.Wrap(insertErr, "failed to insert ingestion rule"),
+		)
 	}
 
 	elementsQuery := `INSERT INTO agent_config_elements(	
@@ -192,27 +219,29 @@ func (r *Repo) insertConfig(ctx context.Context, userId string, c *ConfigVersion
 
 	for _, e := range elements {
 
-		_, err = r.db.ExecContext(ctx,
+		_, insertErr = r.db.ExecContext(ctx,
 			elementsQuery,
 			uuid.NewString(),
 			c.ID,
 			c.ElementType,
 			e)
-		if err != nil {
-			return err
+		if insertErr != nil {
+			return model.InternalError(insertErr)
 		}
 	}
 
 	return nil
 }
 
-func (r *Repo) updateDeployStatus(ctx context.Context,
+func (r *Repo) updateDeployStatus(
+	ctx context.Context,
 	elementType ElementTypeDef,
 	version int,
 	status string,
 	result string,
 	lastHash string,
-	lastconf string) error {
+	lastconf string,
+) model.BaseApiError {
 
 	updateQuery := `UPDATE agent_config_versions
 	set deploy_status = $1, 
@@ -225,13 +254,20 @@ func (r *Repo) updateDeployStatus(ctx context.Context,
 	_, err := r.db.ExecContext(ctx, updateQuery, status, result, lastHash, lastconf, version, string(elementType))
 	if err != nil {
 		zap.S().Error("failed to update deploy status", err)
-		return model.BadRequestStr("failed to  update deploy status")
+		return model.InternalError(
+			errors.Wrap(err, "failed to update deploy status"),
+		)
 	}
 
 	return nil
 }
 
-func (r *Repo) updateDeployStatusByHash(ctx context.Context, confighash string, status string, result string) error {
+func (r *Repo) updateDeployStatusByHash(
+	ctx context.Context,
+	confighash string,
+	status string,
+	result string,
+) model.BaseApiError {
 
 	updateQuery := `UPDATE agent_config_versions
 	set deploy_status = $1, 
@@ -241,7 +277,9 @@ func (r *Repo) updateDeployStatusByHash(ctx context.Context, confighash string, 
 	_, err := r.db.ExecContext(ctx, updateQuery, status, result, confighash)
 	if err != nil {
 		zap.S().Error("failed to update deploy status", err)
-		return model.BadRequestStr("failed to update deploy status")
+		return model.InternalError(
+			errors.Wrap(err, "failed to update deploy status"),
+		)
 	}
 
 	return nil

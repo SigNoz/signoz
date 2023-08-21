@@ -2478,7 +2478,13 @@ func (ah *APIHandler) createLogsPipeline(w http.ResponseWriter, r *http.Request)
 
 	ctx := auth.AttachJwtToContext(context.Background(), r)
 
-	createPipeline := func(ctx context.Context, postable []logparsingpipeline.PostablePipeline) (*logparsingpipeline.PipelinesResponse, error) {
+	createPipeline := func(
+		ctx context.Context,
+		postable []logparsingpipeline.PostablePipeline,
+	) (
+		*logparsingpipeline.PipelinesResponse,
+		model.BaseApiError,
+	) {
 		if len(postable) == 0 {
 			zap.S().Warnf("found no pipelines in the http request, this will delete all the pipelines")
 		}
@@ -2494,7 +2500,7 @@ func (ah *APIHandler) createLogsPipeline(w http.ResponseWriter, r *http.Request)
 
 	res, err := createPipeline(ctx, req.Pipelines)
 	if err != nil {
-		RespondError(w, model.InternalError(err), nil)
+		RespondError(w, err, nil)
 		return
 	}
 
