@@ -3,7 +3,6 @@ import Spinner from 'components/Spinner';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { themeColors } from 'constants/theme';
 import GoToTop from 'container/GoToTop';
-import BackButton from 'container/LiveLogs/BackButton';
 import FiltersInput from 'container/LiveLogs/FiltersInput';
 import LiveLogsTopNav from 'container/LiveLogsTopNav';
 import { useGetCompositeQueryParam } from 'hooks/queryBuilder/useGetCompositeQueryParam';
@@ -44,7 +43,6 @@ function LiveLogsContainer(): JSX.Element {
 		handleStartOpenConnection,
 		handleCloseConnection,
 		initialLoading,
-		isConnectionLoading,
 	} = useEventSource();
 
 	const compositeQuery = useGetCompositeQueryParam();
@@ -138,9 +136,6 @@ function LiveLogsContainer(): JSX.Element {
 			<LiveLogsTopNav />
 			<ContentWrapper gutter={[0, 20]} style={{ color: themeColors.lightWhite }}>
 				<Col span={24}>
-					<BackButton />
-				</Col>
-				<Col span={24}>
 					<FiltersInput />
 				</Col>
 				{initialLoading ? (
@@ -156,11 +151,7 @@ function LiveLogsContainer(): JSX.Element {
 							<ListViewPanel />
 						</Col>
 						<Col span={24}>
-							{isConnectionLoading ? (
-								<Spinner style={{ height: 'auto' }} tip="Getting logs" />
-							) : (
-								<LiveLogsList logs={logs} />
-							)}
+							<LiveLogsList logs={logs} />
 						</Col>
 					</>
 				)}

@@ -38,10 +38,10 @@ function LiveLogsListChart({ className }: LiveLogsListChartProps): JSX.Element {
 	const { data, isFetching } = useGetExplorerQueryRange(
 		listChartQuery,
 		PANEL_TYPES.TIME_SERIES,
-
 		{
 			enabled: isConnectionOpen,
 			refetchInterval: LIVE_TAIL_GRAPH_INTERVAL,
+			keepPreviousData: true,
 		},
 		{ dataSource: DataSource.LOGS },
 	);

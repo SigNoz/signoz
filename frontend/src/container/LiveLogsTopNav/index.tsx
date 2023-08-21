@@ -1,4 +1,6 @@
 import { PauseCircleFilled, PlayCircleFilled } from '@ant-design/icons';
+import { Space } from 'antd';
+import BackButton from 'container/LiveLogs/BackButton';
 import { getQueryWithoutFilterId } from 'container/LiveLogs/utils';
 import LocalTopNav from 'container/LocalTopNav';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
@@ -46,14 +48,17 @@ function LiveLogsTopNav(): JSX.Element {
 
 	const liveButton = useMemo(
 		() => (
-			<LiveButtonStyled
-				icon={isPlaying ? <PauseCircleFilled /> : <PlayCircleFilled />}
-				danger={isPlaying}
-				onClick={onLiveButtonClick}
-				type="primary"
-			>
-				{isPlaying ? 'Pause' : 'Resume'}
-			</LiveButtonStyled>
+			<Space size={16}>
+				<LiveButtonStyled
+					icon={isPlaying ? <PauseCircleFilled /> : <PlayCircleFilled />}
+					danger={isPlaying}
+					onClick={onLiveButtonClick}
+					type="primary"
+				>
+					{isPlaying ? 'Pause' : 'Resume'}
+				</LiveButtonStyled>
+				<BackButton />
+			</Space>
 		),
 		[isPlaying, onLiveButtonClick],
 	);
