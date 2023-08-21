@@ -51,3 +51,21 @@ export const prepareQueryByFilter = (
 
 	return preparedQuery;
 };
+
+export const getQueryWithoutFilterId = (query: Query): Query => {
+	const preparedQuery: Query = {
+		...query,
+		builder: {
+			...query.builder,
+			queryData: query.builder.queryData.map((item) => ({
+				...item,
+				filters: {
+					...item.filters,
+					items: item.filters.items.filter((item) => item.key?.key !== 'id'),
+				},
+			})),
+		},
+	};
+
+	return preparedQuery;
+};
