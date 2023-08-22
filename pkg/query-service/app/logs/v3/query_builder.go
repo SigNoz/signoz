@@ -2,7 +2,6 @@ package v3
 
 import (
 	"fmt"
-	"math"
 	"strings"
 
 	"go.signoz.io/signoz/pkg/query-service/constants"
@@ -165,20 +164,6 @@ func buildLogsTimeSeriesFilterQuery(fs *v3.FilterSet, groupBy []v3.AttributeKey)
 	return queryString, nil
 }
 
-// getZerosForEpochNano returns the number of zeros to be appended to the epoch time for converting it to nanoseconds
-func getZerosForEpochNano(epoch int64) int64 {
-	count := 0
-	if epoch == 0 {
-		count = 1
-	} else {
-		for epoch != 0 {
-			epoch /= 10
-			count++
-		}
-	}
-	return int64(math.Pow(10, float64(19-count)))
-}
-
 func buildLogsQuery(panelType v3.PanelType, start, end, step int64, mq *v3.BuilderQuery, graphLimitQtype string, preferRPM bool) (string, error) {
 
 	filterSubQuery, err := buildLogsTimeSeriesFilterQuery(mq.Filters, mq.GroupBy)
@@ -187,7 +172,7 @@ func buildLogsQuery(panelType v3.PanelType, start, end, step int64, mq *v3.Build
 	}
 
 	// timerange will be sent in epoch millisecond
-	timeFilter := fmt.Sprintf("(timestamp >= %d AND timestamp <= %d)", start*getZerosForEpochNano(start), end*getZerosForEpochNano(end))
+	timeFilter := fmt.Sprintf("(timestamp >= %d AND timestamp <= %d)", utils.GetEpochNanoSecs(start), utils.GetEpochNanoSecs(end))
 
 	selectLabels := getSelectLabels(mq.AggregateOperator, mq.GroupBy)
 
