@@ -1,3 +1,4 @@
+import { OptionFormatTypes } from 'constants/optionsFormatTypes';
 import Controls, { ControlsProps } from 'container/Controls';
 import OptionsMenu from 'container/OptionsMenu';
 import { OptionsMenuConfig } from 'container/OptionsMenu/types';
@@ -21,7 +22,12 @@ function TraceExplorerControls({
 
 	return (
 		<Container>
-			{config && <OptionsMenu config={{ addColumn: config?.addColumn }} />}
+			{config && (
+				<OptionsMenu
+					selectedOptionFormat={OptionFormatTypes.LIST} // Defaulting it to List view as options are shown only in the List view tab
+					config={{ addColumn: config?.addColumn }}
+				/>
+			)}
 
 			<Controls
 				isLoading={isLoading}

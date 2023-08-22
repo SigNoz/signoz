@@ -7,6 +7,10 @@ func NewPercentConverter() Converter {
 	return &percentConverter{}
 }
 
+func (*percentConverter) Name() string {
+	return "percent"
+}
+
 func FromPercentUnit(u Unit) float64 {
 	switch u {
 	case "percent":
