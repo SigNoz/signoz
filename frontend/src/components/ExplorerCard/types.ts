@@ -45,23 +45,29 @@ export interface IsQueryUpdatedInViewProps {
 	stagedQuery: Query | null;
 }
 
+export interface SaveViewWithNameProps {
+	sourcePage: Lowercase<keyof typeof DataSource>;
+	handlePopOverClose: VoidFunction;
+	refetchAllView: VoidFunction;
+}
+
 export interface SaveViewHandlerProps {
 	viewName: string;
 	compositeQuery: ICompositeMetricQuery;
-	sourcePage: Lowercase<keyof typeof DataSource>;
+	sourcePage: SaveViewWithNameProps['sourcePage'];
 	extraData: string;
+	panelType: PANEL_TYPES | null;
+	notifications: NotificationInstance;
+	refetchAllView: SaveViewWithNameProps['refetchAllView'];
 	saveViewAsync: UseMutateAsyncFunction<
 		SaveViewPayloadProps,
 		Error,
 		SaveViewProps,
 		SaveViewPayloadProps
 	>;
-	refetchAllView: VoidFunction;
-	notifications: NotificationInstance;
-	handlePopOverClose: VoidFunction;
+	handlePopOverClose: SaveViewWithNameProps['handlePopOverClose'];
 	redirectWithQueryBuilderData: (
 		query: Query,
 		searchParams?: Record<string, unknown> | undefined,
 	) => void;
-	panelType: PANEL_TYPES | null;
 }

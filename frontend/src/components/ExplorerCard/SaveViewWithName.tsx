@@ -6,9 +6,9 @@ import { useSaveView } from 'hooks/saveViews/useSaveView';
 import { useNotifications } from 'hooks/useNotifications';
 import { mapCompositeQueryFromQuery } from 'lib/newQueryBuilder/queryBuilderMappers/mapCompositeQueryFromQuery';
 import { ChangeEvent, useCallback, useState } from 'react';
-import { DataSource } from 'types/common/queryBuilder';
 
 import { SaveButton } from './styles';
+import { SaveViewWithNameProps } from './types';
 import { saveViewHandler } from './utils';
 
 function SaveViewWithName({
@@ -37,36 +37,6 @@ function SaveViewWithName({
 	);
 
 	const onSaveHandler = useCallback(async () => {
-		// console.log('compositeQuery', compositeQuery);
-		// try {
-		// 	const { data } = await saveViewAsync({
-		// 		viewName: name,
-		// 		compositeQuery,
-		// 		sourcePage,
-		// 		extraData: '',
-		// 	});
-
-		// 	refetchAllView();
-		// 	if (!isLoading) {
-		// 		redirectWithQueryBuilderData(mapQueryDataFromApi(compositeQuery), {
-		// 			[queryParamNamesMap.panelTypes]: panelType,
-		// 			[querySearchParams.viewName]: name,
-		// 			// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-		// 			// @ts-ignore
-		// 			[querySearchParams.viewKey]: data.data,
-		// 		});
-		// 	}
-		// 	notifications.success({
-		// 		message: 'View Saved Successfully',
-		// 	});
-		// } catch (err) {
-		// 	notifications.error({
-		// 		message: axios.isAxiosError(err) ? err.message : SOMETHING_WENT_WRONG,
-		// 	});
-		// } finally {
-		// 	handlePopOverClose();
-		// }
-
 		saveViewHandler({
 			compositeQuery,
 			handlePopOverClose,
@@ -104,12 +74,6 @@ function SaveViewWithName({
 			</SaveButton>
 		</Card>
 	);
-}
-
-interface SaveViewWithNameProps {
-	sourcePage: Lowercase<keyof typeof DataSource>;
-	handlePopOverClose: VoidFunction;
-	refetchAllView: VoidFunction;
 }
 
 export default SaveViewWithName;
