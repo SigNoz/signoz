@@ -119,44 +119,6 @@ function ExplorerCard({
 	);
 
 	useEffect(() => {
-		// const currentViewDetails = getViewDetailsUsingViewKey(
-		// 	viewKey,
-		// 	data?.data?.data,
-		// );
-		// if (!currentViewDetails) {
-		// 	setIsQueryUpdated(false);
-		// 	return;
-		// }
-		// const { query } = currentViewDetails;
-
-		// const updatedCurrentQuery = {
-		// 	...stagedQuery,
-		// 	builder: {
-		// 		...stagedQuery?.builder,
-		// 		queryData: stagedQuery?.builder.queryData.map((queryData) => {
-		// 			const newAggregateAttribute = queryData.aggregateAttribute;
-		// 			delete newAggregateAttribute.id;
-		// 			return {
-		// 				...queryData,
-		// 				aggregateAttribute: {},
-		// 				groupBy: [],
-		// 			};
-		// 		}),
-		// 	},
-		// };
-
-		// console.log('Difference', updatedCurrentQuery.builder, query.builder);
-
-		// if (
-		// 	!isEqual(query.builder, updatedCurrentQuery?.builder) ||
-		// 	!isEqual(query.clickhouse_sql, updatedCurrentQuery?.clickhouse_sql) ||
-		// 	!isEqual(query.promql, updatedCurrentQuery?.promql)
-		// ) {
-		// 	setIsQueryUpdated(true);
-		// } else {
-		// 	setIsQueryUpdated(false);
-		// }
-
 		setIsQueryUpdated(
 			isQueryUpdatedInView({
 				data: data?.data?.data,
