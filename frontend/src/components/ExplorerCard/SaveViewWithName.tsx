@@ -1,6 +1,6 @@
 import { LoadingOutlined } from '@ant-design/icons';
 import { Card, Input, Typography } from 'antd';
-import { useGetPanelTypesQueryParam } from 'hooks/queryBuilder/useGetPanelTypesQueryParam';
+import { PANEL_TYPES } from 'constants/queryBuilder';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useSaveView } from 'hooks/saveViews/useSaveView';
 import { useNotifications } from 'hooks/useNotifications';
@@ -17,8 +17,11 @@ function SaveViewWithName({
 	refetchAllView,
 }: SaveViewWithNameProps): JSX.Element {
 	const [name, setName] = useState('');
-	const { currentQuery, redirectWithQueryBuilderData } = useQueryBuilder();
-	const panelType = useGetPanelTypesQueryParam();
+	const {
+		currentQuery,
+		panelType,
+		redirectWithQueryBuilderData,
+	} = useQueryBuilder();
 	const { notifications } = useNotifications();
 	const compositeQuery = mapCompositeQueryFromQuery(currentQuery, panelType);
 
@@ -42,7 +45,7 @@ function SaveViewWithName({
 			handlePopOverClose,
 			extraData: '',
 			notifications,
-			panelType,
+			panelType: panelType || PANEL_TYPES.LIST,
 			redirectWithQueryBuilderData,
 			refetchAllView,
 			saveViewAsync,

@@ -64,7 +64,7 @@ function ExplorerCard({
 	} = useQueryBuilder();
 
 	const {
-		data,
+		data: viewsData,
 		isLoading,
 		error,
 		isRefetching,
@@ -119,7 +119,10 @@ function ExplorerCard({
 
 	const onMenuItemSelectHandler = useCallback(
 		({ key }: { key: string }): void => {
-			const currentViewDetails = getViewDetailsUsingViewKey(key, data?.data?.data);
+			const currentViewDetails = getViewDetailsUsingViewKey(
+				key,
+				viewsData?.data?.data,
+			);
 			if (!currentViewDetails) return;
 			const { query, name, uuid } = currentViewDetails;
 
@@ -128,7 +131,7 @@ function ExplorerCard({
 				[querySearchParams.viewKey]: uuid,
 			});
 		},
-		[data?.data?.data, redirectWithQueryBuilderData],
+		[viewsData?.data?.data, redirectWithQueryBuilderData],
 	);
 
 	useEffect(() => {
@@ -142,14 +145,14 @@ function ExplorerCard({
 	useEffect(() => {
 		setIsQueryUpdated(
 			isQueryUpdatedInView({
-				data: data?.data?.data,
+				data: viewsData?.data?.data,
 				stagedQuery,
 				viewKey,
 			}),
 		);
 	}, [
 		currentQuery,
-		data?.data?.data,
+		viewsData?.data?.data,
 		stagedQuery,
 		stagedQuery?.builder.queryData,
 		viewKey,
@@ -176,10 +179,10 @@ function ExplorerCard({
 		[onMenuItemSelectHandler, refetchAllView, viewKey],
 	);
 
-	const updateMenuList = useMemo(() => generatorMenuItems(data?.data.data), [
-		data?.data.data,
-		generatorMenuItems,
-	]);
+	const updateMenuList = useMemo(
+		() => generatorMenuItems(viewsData?.data.data),
+		[viewsData?.data.data, generatorMenuItems],
+	);
 
 	const menu = useMemo(
 		(): MenuProps => ({
@@ -208,18 +211,20 @@ function ExplorerCard({
 									Updated Query
 								</Button>
 							)}
-							<Space>
-								<Typography.Text>Saved Views</Typography.Text>
-								<Dropdown.Button
-									menu={menu}
-									loading={isLoading || isRefetching}
-									icon={<DownOutlined />}
-									trigger={['click']}
-									overlayStyle={DropDownOverlay}
-								>
-									Select
-								</Dropdown.Button>
-							</Space>
+							{viewsData?.data.data && viewsData?.data.data.length && (
+								<Space>
+									<Typography.Text>Saved Views</Typography.Text>
+									<Dropdown.Button
+										menu={menu}
+										loading={isLoading || isRefetching}
+										icon={<DownOutlined />}
+										trigger={['click']}
+										overlayStyle={DropDownOverlay}
+									>
+										Select
+									</Dropdown.Button>
+								</Space>
+							)}
 							<Popover
 								placement="bottomLeft"
 								trigger="click"
