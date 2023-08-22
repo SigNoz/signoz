@@ -107,6 +107,20 @@ var buildFilterQueryData = []struct {
 		}},
 		ExpectedFilter: " AND stringTagMap['host'] NOT ILIKE '%102.%'",
 	},
+	{
+		Name: "Test regex",
+		FilterSet: &v3.FilterSet{Operator: "AND", Items: []v3.FilterItem{
+			{Key: v3.AttributeKey{Key: "name", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag, IsColumn: true}, Value: "name: \"(?P<host>\\S+)\"", Operator: "regex"},
+		}},
+		ExpectedFilter: " AND match(name, 'name: \"(?P<host>\\\\S+)\"')",
+	},
+	{
+		Name: "Test not regex",
+		FilterSet: &v3.FilterSet{Operator: "AND", Items: []v3.FilterItem{
+			{Key: v3.AttributeKey{Key: "name", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag}, Value: "102.", Operator: "nregex"},
+		}},
+		ExpectedFilter: " AND NOT match(stringTagMap['name'], '102.')",
+	},
 }
 
 func TestBuildTracesFilterQuery(t *testing.T) {
