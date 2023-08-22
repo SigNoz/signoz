@@ -125,7 +125,7 @@ function QueryBuilderSearch({
 
 	useEffect(() => {
 		const initialTagFilters: TagFilter = { items: [], op: 'AND' };
-		const initialSourceKeys = query.filters.items.map(
+		const initialSourceKeys = query.filters.items?.map(
 			(item) => item.key as BaseAutocompleteData,
 		);
 		initialTagFilters.items = tags.map((tag) => {
@@ -137,9 +137,9 @@ function QueryBuilderSearch({
 				id: uuid().slice(0, 8),
 				key: filterAttribute ?? {
 					key: tagKey,
-					dataType: null,
-					type: null,
-					isColumn: null,
+					dataType: '',
+					type: '',
+					isColumn: false,
 				},
 				op: getOperatorValue(tagOperator),
 				value:

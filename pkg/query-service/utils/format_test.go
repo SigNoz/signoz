@@ -362,6 +362,19 @@ var testClickHouseFormattedValueData = []struct {
 		value: []interface{}{&one, &one},
 		want:  "[1,1]",
 	},
+	{
+		name:  "string with single quote",
+		value: "test'1",
+		want:  "'test\\'1'",
+	},
+	{
+		name: "[]interface{} with string with single quote",
+		value: []interface{}{
+			"test'1",
+			"test'2",
+		},
+		want: "['test\\'1','test\\'2']",
+	},
 }
 
 func TestClickHouseFormattedValue(t *testing.T) {
@@ -370,6 +383,35 @@ func TestClickHouseFormattedValue(t *testing.T) {
 			got := ClickHouseFormattedValue(tt.value)
 			if !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("ClickHouseFormattedValue() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+var testGetEpochNanoSecsData = []struct {
+	Name       string
+	Epoch      int64
+	Multiplier int64
+	Result     int64
+}{
+	{
+		Name:   "Test 1",
+		Epoch:  1680712080000,
+		Result: 1680712080000000000,
+	},
+	{
+		Name:   "Test 1",
+		Epoch:  1680712080000000000,
+		Result: 1680712080000000000,
+	},
+}
+
+func TestGetEpochNanoSecs(t *testing.T) {
+	for _, tt := range testGetEpochNanoSecsData {
+		t.Run(tt.Name, func(t *testing.T) {
+			got := GetEpochNanoSecs(tt.Epoch)
+			if !reflect.DeepEqual(got, tt.Result) {
+				t.Errorf("ClickHouseFormattedValue() = %v, want %v", got, tt.Result)
 			}
 		})
 	}

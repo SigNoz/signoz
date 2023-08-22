@@ -119,10 +119,17 @@ type ClickHouseReader struct {
 }
 
 // NewTraceReader returns a TraceReader for the database
-func NewReader(localDB *sqlx.DB, configFile string, featureFlag interfaces.FeatureLookup) *ClickHouseReader {
+func NewReader(
+	localDB *sqlx.DB,
+	configFile string,
+	featureFlag interfaces.FeatureLookup,
+	maxIdleConns int,
+	maxOpenConns int,
+	dialTimeout time.Duration,
+) *ClickHouseReader {
 
 	datasource := os.Getenv("ClickHouseUrl")
-	options := NewOptions(datasource, primaryNamespace, archiveNamespace)
+	options := NewOptions(datasource, maxIdleConns, maxOpenConns, dialTimeout, primaryNamespace, archiveNamespace)
 	db, err := initialize(options)
 
 	if err != nil {
@@ -552,7 +559,9 @@ func getChannelType(receiver *am.Receiver) string {
 	if receiver.WechatConfigs != nil {
 		return "wechat"
 	}
-
+	if receiver.MSTeamsConfigs != nil {
+		return "msteams"
+	}
 	return ""
 }
 
@@ -575,6 +584,13 @@ func (r *ClickHouseReader) EditChannel(receiver *am.Receiver, id string) (*am.Re
 	}
 
 	channel_type := getChannelType(receiver)
+
+	// check if channel type is supported in the current user plan
+	if err := r.featureFlags.CheckFeature(fmt.Sprintf("ALERT_CHANNEL_%s", strings.ToUpper(channel_type))); err != nil {
+		zap.S().Warn("an unsupported feature was blocked", err)
+		return nil, &model.ApiError{Typ: model.ErrorBadData, Err: fmt.Errorf("unsupported feature. please upgrade your plan to access this feature")}
+	}
+
 	receiverString, _ := json.Marshal(receiver)
 
 	{
@@ -612,15 +628,20 @@ func (r *ClickHouseReader) EditChannel(receiver *am.Receiver, id string) (*am.Re
 
 func (r *ClickHouseReader) CreateChannel(receiver *am.Receiver) (*am.Receiver, *model.ApiError) {
 
+	channel_type := getChannelType(receiver)
+
+	// check if channel type is supported in the current user plan
+	if err := r.featureFlags.CheckFeature(fmt.Sprintf("ALERT_CHANNEL_%s", strings.ToUpper(channel_type))); err != nil {
+		zap.S().Warn("an unsupported feature was blocked", err)
+		return nil, &model.ApiError{Typ: model.ErrorBadData, Err: fmt.Errorf("unsupported feature. please upgrade your plan to access this feature")}
+	}
+
+	receiverString, _ := json.Marshal(receiver)
+
 	tx, err := r.localDB.Begin()
 	if err != nil {
 		return nil, &model.ApiError{Typ: model.ErrorInternal, Err: err}
 	}
-
-	channel_type := getChannelType(receiver)
-	receiverString, _ := json.Marshal(receiver)
-
-	// todo: check if the channel name already exists, raise an error if so
 
 	{
 		stmt, err := tx.Prepare(`INSERT INTO notification_channels (created_at, updated_at, name, type, data) VALUES($1,$2,$3,$4,$5);`)
@@ -4579,6 +4600,8 @@ func (r *ClickHouseReader) GetSpanAttributeKeys(ctx context.Context) (map[string
 func (r *ClickHouseReader) LiveTailLogsV3(ctx context.Context, query string, timestampStart uint64, idStart string, client *v3.LogsLiveTailClient) {
 	if timestampStart == 0 {
 		timestampStart = uint64(time.Now().UnixNano())
+	} else {
+		timestampStart = uint64(utils.GetEpochNanoSecs(int64(timestampStart)))
 	}
 
 	ticker := time.NewTicker(time.Duration(r.liveTailRefreshSeconds) * time.Second)

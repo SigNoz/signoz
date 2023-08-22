@@ -1,4 +1,5 @@
 import { PANEL_TYPES } from 'constants/queryBuilder';
+import { Format } from 'container/NewWidget/RightContainer/types';
 import {
 	IBuilderFormula,
 	IBuilderQuery,
@@ -187,6 +188,7 @@ export type QueryBuilderContextType = {
 	) => void;
 	handleRunQuery: () => void;
 	resetStagedQuery: () => void;
+	handleOnUnitsChange: (units: Format['id']) => void;
 	updateAllQueriesOperators: (
 		queryData: Query,
 		panelType: PANEL_TYPES,
