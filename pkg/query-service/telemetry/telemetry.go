@@ -8,6 +8,7 @@ import (
 	"os"
 	"strings"
 	"sync"
+	"testing"
 	"time"
 
 	ph "github.com/posthog/posthog-go"
@@ -131,6 +132,13 @@ type Telemetry struct {
 }
 
 func createTelemetry() {
+	// Do not do anything in CI (not even resolving the outbound IP address)
+	if testing.Testing() {
+		telemetry = &Telemetry{
+			isEnabled: false,
+		}
+		return
+	}
 
 	telemetry = &Telemetry{
 		operator:   analytics.New(api_key),
