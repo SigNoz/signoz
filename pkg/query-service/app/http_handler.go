@@ -2264,7 +2264,7 @@ func (aH *APIHandler) RegisterLogsRoutes(router *mux.Router, am *AuthMiddleware)
 
 	// log pipelines
 	subRouter.HandleFunc("/pipelines/{version}", am.ViewAccess(aH.listLogsPipelinesHandler)).Methods(http.MethodGet)
-	subRouter.HandleFunc("/pipelines", am.EditAccess(aH.createLogsPipeline)).Methods(http.MethodPost)
+	subRouter.HandleFunc("/pipelines", am.EditAccess(aH.CreateLogsPipeline)).Methods(http.MethodPost)
 }
 
 func (aH *APIHandler) logFields(w http.ResponseWriter, r *http.Request) {
@@ -2467,7 +2467,7 @@ func (ah *APIHandler) listLogsPipelinesByVersion(ctx context.Context, version in
 	return payload, nil
 }
 
-func (ah *APIHandler) createLogsPipeline(w http.ResponseWriter, r *http.Request) {
+func (ah *APIHandler) CreateLogsPipeline(w http.ResponseWriter, r *http.Request) {
 
 	req := logparsingpipeline.PostablePipelines{}
 
