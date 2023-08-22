@@ -3,7 +3,7 @@ import ROUTES from 'constants/routes';
 import { QueryClient, QueryClientProvider } from 'react-query';
 
 import { viewMockData } from './__mock__/viewData';
-import ExplorerCard from './index';
+import ExplorerCard from './ExplorerCard';
 
 jest.mock('react-router-dom', () => ({
 	...jest.requireActual('react-router-dom'),

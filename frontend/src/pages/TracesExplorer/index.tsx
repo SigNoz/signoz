@@ -1,6 +1,6 @@
 import { Tabs } from 'antd';
 import axios from 'axios';
-import ExplorerCard from 'components/ExplorerCard';
+import ExplorerCard from 'components/ExplorerCard/ExplorerCard';
 import { QueryParams } from 'constants/query';
 import {
 	initialAutocompleteData,

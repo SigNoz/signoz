@@ -1,5 +1,5 @@
 import { Col, Row } from 'antd';
-import ExplorerCard from 'components/ExplorerCard';
+import ExplorerCard from 'components/ExplorerCard/ExplorerCard';
 import LogExplorerQuerySection from 'container/LogExplorerQuerySection';
 import LogsExplorerViews from 'container/LogsExplorerViews';
 
