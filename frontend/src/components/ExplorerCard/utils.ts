@@ -1,11 +1,16 @@
+import { NotificationInstance } from 'antd/es/notification/interface';
 import axios from 'axios';
 import { SOMETHING_WENT_WRONG } from 'constants/api';
+import { initialQueriesMap, PANEL_TYPES } from 'constants/queryBuilder';
 import {
 	queryParamNamesMap,
 	querySearchParams,
 } from 'constants/queryBuilderQueryNames';
 import { mapQueryDataFromApi } from 'lib/newQueryBuilder/queryBuilderMappers/mapQueryDataFromApi';
 import { isEqual } from 'lodash-es';
+import { UseMutateAsyncFunction } from 'react-query';
+import { Query } from 'types/api/queryBuilder/queryBuilderData';
+import { DeleteViewPayloadProps } from 'types/api/saveViews/types';
 
 import {
 	GetViewDetailsUsingViewKey,
@@ -130,3 +135,45 @@ export const saveViewHandler = async ({
 		handlePopOverClose();
 	}
 };
+
+export const deleteViewHandler = async ({
+	deleteViewAsync,
+	refetchAllView,
+	redirectWithQueryBuilderData,
+	notifications,
+	panelType,
+	viewKey,
+	viewId,
+}: DeleteViewHandlerProps): Promise<void> => {
+	try {
+		await deleteViewAsync(viewId);
+		refetchAllView();
+		console.log('ViewKey', viewKey, viewId);
+		if (viewKey === viewId) {
+			redirectWithQueryBuilderData(initialQueriesMap.traces, {
+				[querySearchParams.viewName]: 'Query Builder',
+				[queryParamNamesMap.panelTypes]: panelType,
+			});
+		}
+		notifications.success({
+			message: 'View Deleted Successfully',
+		});
+	} catch (err) {
+		notifications.error({
+			message: axios.isAxiosError(err) ? err.message : SOMETHING_WENT_WRONG,
+		});
+	}
+};
+
+interface DeleteViewHandlerProps {
+	deleteViewAsync: UseMutateAsyncFunction<DeleteViewPayloadProps, Error, string>;
+	refetchAllView: VoidFunction;
+	redirectWithQueryBuilderData: (
+		query: Query,
+		searchParams?: Record<string, unknown> | undefined,
+	) => void;
+	notifications: NotificationInstance;
+	panelType: PANEL_TYPES | null;
+	viewKey: string;
+	viewId: string;
+}

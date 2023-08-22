@@ -24,19 +24,19 @@ export type GetViewDetailsUsingViewKey = (
 ) => { query: Query; name: string; uuid: string } | undefined;
 
 export interface UpdateQueryHandlerProps {
+	compositeQuery: ICompositeMetricQuery;
+	viewName: string;
+	viewKey: string;
+	sourcePage: string;
+	extraData: string;
+	notifications: NotificationInstance;
+	setIsQueryUpdated: (value: SetStateAction<boolean>) => void;
 	updateViewAsync: UseMutateAsyncFunction<
 		UpdateViewPayloadProps,
 		Error,
 		UpdateViewProps,
 		UpdateViewPayloadProps
 	>;
-	compositeQuery: ICompositeMetricQuery;
-	viewName: string;
-	viewKey: string;
-	sourcePage: string;
-	extraData: string;
-	setIsQueryUpdated: (value: SetStateAction<boolean>) => void;
-	notifications: NotificationInstance;
 }
 
 export interface IsQueryUpdatedInViewProps {
