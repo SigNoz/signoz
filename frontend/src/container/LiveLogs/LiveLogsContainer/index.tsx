@@ -1,5 +1,6 @@
 import { Col } from 'antd';
 import Spinner from 'components/Spinner';
+import { MAX_LOGS_LIST_SIZE } from 'constants/liveTail';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { themeColors } from 'constants/theme';
 import GoToTop from 'container/GoToTop';
@@ -49,7 +50,9 @@ function LiveLogsContainer(): JSX.Element {
 
 	const updateLogs = useCallback(() => {
 		const reversedData = batchedEventsRef.current.reverse();
-		setLogs((prevState) => [...reversedData, ...prevState]);
+		setLogs((prevState) =>
+			[...reversedData, ...prevState].slice(0, MAX_LOGS_LIST_SIZE),
+		);
 
 		batchedEventsRef.current = [];
 	}, []);
@@ -130,6 +133,8 @@ function LiveLogsContainer(): JSX.Element {
 			handleStartNewConnection();
 		}
 	}, [stagedQuery, initialLoading, compositeQuery, handleStartNewConnection]);
+
+	console.log({ logs });
 
 	return (
 		<Wrapper>
