@@ -1,4 +1,8 @@
-import { DownOutlined, SaveOutlined } from '@ant-design/icons';
+import {
+	DownOutlined,
+	SaveOutlined,
+	ShareAltOutlined,
+} from '@ant-design/icons';
 import {
 	Button,
 	Card,
@@ -21,6 +25,7 @@ import useErrorNotification from 'hooks/useErrorNotification';
 import { useNotifications } from 'hooks/useNotifications';
 import { mapCompositeQueryFromQuery } from 'lib/newQueryBuilder/queryBuilderMappers/mapCompositeQueryFromQuery';
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCopyToClipboard } from 'react-use';
 import { ViewProps } from 'types/api/saveViews/types';
 
 import MenuItemGenerator from './MenuItemGenerator';
@@ -42,6 +47,7 @@ function ExplorerCard({
 	children,
 }: ExplorerCardProps): JSX.Element {
 	const [isOpen, setIsOpen] = useState<boolean>(false);
+	const [copyUrl, setCopyUrl] = useCopyToClipboard();
 	const [isQueryUpdated, setIsQueryUpdated] = useState<boolean>(false);
 	const { notifications } = useNotifications();
 	const panelType = useGetPanelTypesQueryParam();
@@ -119,6 +125,14 @@ function ExplorerCard({
 	);
 
 	useEffect(() => {
+		if (copyUrl.value) {
+			notifications.success({
+				message: 'Copied to clipboard',
+			});
+		}
+	}, [copyUrl.value, notifications]);
+
+	useEffect(() => {
 		setIsQueryUpdated(
 			isQueryUpdatedInView({
 				data: data?.data?.data,
@@ -166,6 +180,10 @@ function ExplorerCard({
 		}),
 		[updateMenuList],
 	);
+
+	const onCopyUrlHandler = useCallback((): void => {
+		setCopyUrl(window.location.href);
+	}, [setCopyUrl]);
 
 	return (
 		<>
@@ -217,6 +235,7 @@ function ExplorerCard({
 									{isQueryUpdated ? 'Save as new View' : 'Save View'}
 								</Button>
 							</Popover>
+							<ShareAltOutlined onClick={onCopyUrlHandler} />
 						</Space>
 					</OffSetCol>
 				</Row>
