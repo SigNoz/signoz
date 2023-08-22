@@ -193,6 +193,7 @@ function VariableItem({
 						style={SelectItemStyle}
 						loading={isLoading}
 						showArrow
+						showSearch
 						data-testid="variable-select"
 					>
 						{enableSelectAll && (

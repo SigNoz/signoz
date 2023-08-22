@@ -180,6 +180,20 @@ var timeSeriesFilterQueryData = []struct {
 		ExpectedFilter: " AND attributes_string_value[indexOf(attributes_string_key, 'host')] NOT ILIKE '%102.%'",
 	},
 	{
+		Name: "Test regex",
+		FilterSet: &v3.FilterSet{Operator: "AND", Items: []v3.FilterItem{
+			{Key: v3.AttributeKey{Key: "host", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag, IsColumn: true}, Value: "host: \"(?P<host>\\S+)\"", Operator: "regex"},
+		}},
+		ExpectedFilter: " AND match(host, 'host: \"(?P<host>\\\\S+)\"')",
+	},
+	{
+		Name: "Test not regex",
+		FilterSet: &v3.FilterSet{Operator: "AND", Items: []v3.FilterItem{
+			{Key: v3.AttributeKey{Key: "host", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag}, Value: "102.", Operator: "nregex"},
+		}},
+		ExpectedFilter: " AND NOT match(attributes_string_value[indexOf(attributes_string_key, 'host')], '102.')",
+	},
+	{
 		Name: "Test groupBy",
 		FilterSet: &v3.FilterSet{Operator: "AND", Items: []v3.FilterItem{
 			{Key: v3.AttributeKey{Key: "host", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag}, Value: "102.", Operator: "ncontains"},
@@ -808,36 +822,6 @@ func TestBuildLogsQuery(t *testing.T) {
 			So(err, ShouldBeNil)
 			So(query, ShouldEqual, tt.ExpectedQuery)
 
-		})
-	}
-}
-
-var testGetZerosForEpochNanoData = []struct {
-	Name       string
-	Epoch      int64
-	Multiplier int64
-	Result     int64
-}{
-	{
-		Name:       "Test 1",
-		Epoch:      1680712080000,
-		Multiplier: 1000000,
-		Result:     1680712080000000000,
-	},
-	{
-		Name:       "Test 1",
-		Epoch:      1680712080000000000,
-		Multiplier: 1,
-		Result:     1680712080000000000,
-	},
-}
-
-func TestGetZerosForEpochNano(t *testing.T) {
-	for _, tt := range testGetZerosForEpochNanoData {
-		Convey("testGetZerosForEpochNanoData", t, func() {
-			multiplier := getZerosForEpochNano(tt.Epoch)
-			So(multiplier, ShouldEqual, tt.Multiplier)
-			So(tt.Epoch*multiplier, ShouldEqual, tt.Result)
 		})
 	}
 }
