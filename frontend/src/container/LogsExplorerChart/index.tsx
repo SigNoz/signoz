@@ -1,5 +1,6 @@
 import Graph from 'components/Graph';
 import Spinner from 'components/Spinner';
+import { themeColors } from 'constants/theme';
 import getChartData, { GetChartDataProps } from 'lib/getChartData';
 import { colors } from 'lib/getRandomColor';
 import { memo, useCallback, useMemo } from 'react';
@@ -15,8 +16,8 @@ function LogsExplorerChart({
 	const handleCreateDatasets: Required<GetChartDataProps>['createDataset'] = useCallback(
 		(element, index, allLabels) => ({
 			data: element,
-			backgroundColor: colors[index % colors.length] || 'red',
-			borderColor: colors[index % colors.length] || 'red',
+			backgroundColor: colors[index % colors.length] || themeColors.red,
+			borderColor: colors[index % colors.length] || themeColors.red,
 			...(isLabelEnabled
 				? {
 						label: allLabels[index],
