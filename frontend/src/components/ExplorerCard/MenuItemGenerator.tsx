@@ -7,6 +7,7 @@ import { useNotifications } from 'hooks/useNotifications';
 import { useCallback } from 'react';
 
 import { MenuItemContainer } from './styles';
+import { MenuItemLabelGeneratorProps } from './types';
 import { deleteViewHandler } from './utils';
 
 function MenuItemGenerator({
@@ -69,15 +70,6 @@ function MenuItemGenerator({
 			</Row>
 		</MenuItemContainer>
 	);
-}
-
-interface MenuItemLabelGeneratorProps {
-	viewName: string;
-	viewKey: string;
-	createdBy: string;
-	uuid: string;
-	refetchAllView: VoidFunction;
-	onMenuItemSelectHandler: ({ key }: { key: string }) => void;
 }
 
 export default MenuItemGenerator;

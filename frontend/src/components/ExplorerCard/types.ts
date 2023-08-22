@@ -27,7 +27,7 @@ export interface UpdateQueryHandlerProps {
 	compositeQuery: ICompositeMetricQuery;
 	viewName: string;
 	viewKey: string;
-	sourcePage: string;
+	sourcePage: ExplorerCardProps['sourcepage'];
 	extraData: string;
 	notifications: NotificationInstance;
 	setIsQueryUpdated: (value: SetStateAction<boolean>) => void;
@@ -46,15 +46,24 @@ export interface IsQueryUpdatedInViewProps {
 }
 
 export interface SaveViewWithNameProps {
-	sourcePage: Lowercase<keyof typeof DataSource>;
+	sourcePage: ExplorerCardProps['sourcepage'];
 	handlePopOverClose: VoidFunction;
 	refetchAllView: VoidFunction;
+}
+
+export interface MenuItemLabelGeneratorProps {
+	viewName: string;
+	viewKey: string;
+	createdBy: string;
+	uuid: string;
+	refetchAllView: VoidFunction;
+	onMenuItemSelectHandler: ({ key }: { key: string }) => void;
 }
 
 export interface SaveViewHandlerProps {
 	viewName: string;
 	compositeQuery: ICompositeMetricQuery;
-	sourcePage: SaveViewWithNameProps['sourcePage'];
+	sourcePage: ExplorerCardProps['sourcepage'];
 	extraData: string;
 	panelType: PANEL_TYPES | null;
 	notifications: NotificationInstance;
