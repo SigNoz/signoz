@@ -159,7 +159,6 @@ export const deleteViewHandler = async ({
 	try {
 		await deleteViewAsync(viewId);
 		refetchAllView();
-		console.log('ViewKey', viewKey, viewId);
 		if (viewKey === viewId) {
 			redirectWithQueryBuilderData(initialQueriesMap.traces, {
 				[querySearchParams.viewName]: 'Query Builder',

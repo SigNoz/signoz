@@ -25,6 +25,7 @@ import useErrorNotification from 'hooks/useErrorNotification';
 import { useNotifications } from 'hooks/useNotifications';
 import { mapCompositeQueryFromQuery } from 'lib/newQueryBuilder/queryBuilderMappers/mapCompositeQueryFromQuery';
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useCopyToClipboard } from 'react-use';
 import { ViewProps } from 'types/api/saveViews/types';
 
@@ -47,6 +48,7 @@ function ExplorerCard({
 	sourcepage,
 	children,
 }: ExplorerCardProps): JSX.Element {
+	const { t } = useTranslation('explorerCard');
 	const [isOpen, setIsOpen] = useState<boolean>(false);
 	const [copyUrl, setCopyUrl] = useCopyToClipboard();
 	const [isQueryUpdated, setIsQueryUpdated] = useState<boolean>(false);
@@ -140,7 +142,8 @@ function ExplorerCard({
 				message: 'Copied to clipboard',
 			});
 		}
-	}, [copyUrl.value, notifications]);
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [copyUrl.value]);
 
 	useEffect(() => {
 		setIsQueryUpdated(
@@ -208,7 +211,7 @@ function ExplorerCard({
 						<Space size="large">
 							{isQueryUpdated && (
 								<Button type="primary" onClick={onUpdateQueryHandler}>
-									Updated Query
+									Updated View
 								</Button>
 							)}
 							{viewsData?.data.data && viewsData?.data.data.length && (
@@ -240,7 +243,7 @@ function ExplorerCard({
 								onOpenChange={handleOpenChange}
 							>
 								<Button type="primary" icon={<SaveOutlined />}>
-									{isQueryUpdated ? 'Save as new View' : 'Save View'}
+									{isQueryUpdated ? t('save_as_new_view') : t('save_view')}
 								</Button>
 							</Popover>
 							<ShareAltOutlined onClick={onCopyUrlHandler} />
