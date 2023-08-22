@@ -4600,6 +4600,8 @@ func (r *ClickHouseReader) GetSpanAttributeKeys(ctx context.Context) (map[string
 func (r *ClickHouseReader) LiveTailLogsV3(ctx context.Context, query string, timestampStart uint64, idStart string, client *v3.LogsLiveTailClient) {
 	if timestampStart == 0 {
 		timestampStart = uint64(time.Now().UnixNano())
+	} else {
+		timestampStart = uint64(utils.GetEpochNanoSecs(int64(timestampStart)))
 	}
 
 	ticker := time.NewTicker(time.Duration(r.liveTailRefreshSeconds) * time.Second)
