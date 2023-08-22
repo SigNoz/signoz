@@ -1,9 +1,8 @@
-// Write a test for a component that renders a card with a title and a description
-
 import { fireEvent, render, screen } from '@testing-library/react';
 import ROUTES from 'constants/routes';
 import { QueryClient, QueryClientProvider } from 'react-query';
 
+import { viewMockData } from './__mock__/viewData';
 import ExplorerCard from './index';
 
 jest.mock('react-router-dom', () => ({
@@ -25,22 +24,9 @@ jest.mock('hooks/queryBuilder/useGetPanelTypesQueryParam', () => ({
 	useGetPanelTypesQueryParam: jest.fn(() => 'mockedPanelType'),
 }));
 
-const testData = [
-	{
-		uuid: 'view1',
-		name: 'View 1',
-		createdBy: 'User 1',
-	},
-	{
-		uuid: 'view2',
-		name: 'View 2',
-		createdBy: 'User 2',
-	},
-];
-
 jest.mock('hooks/saveViews/useGetAllViews', () => ({
 	useGetAllViews: jest.fn(() => ({
-		data: { data: { data: testData } },
+		data: { data: { data: viewMockData } },
 		isLoading: false,
 		error: null,
 		isRefetching: false,
@@ -70,7 +56,6 @@ describe('ExplorerCard', () => {
 		expect(screen.getByText('Query Builder')).toBeInTheDocument();
 	});
 
-	// test to check if save view button is present
 	it('renders a save view button', () => {
 		render(
 			<QueryClientProvider client={queryClient}>
@@ -80,11 +65,10 @@ describe('ExplorerCard', () => {
 		expect(screen.getByText('Save View')).toBeInTheDocument();
 	});
 
-	it('should change viewName when a dropdown item is selected', async () => {
+	it('should see all the view listed in dropdown', async () => {
 		const screen = render(
 			<ExplorerCard sourcepage="traces">Mock Children</ExplorerCard>,
 		);
-
 		const selectButton = screen.getByText('Select');
 
 		fireEvent.click(selectButton);
@@ -94,7 +78,6 @@ describe('ExplorerCard', () => {
 		});
 		fireEvent.click(spanElement);
 		const viewNameText = await screen.findByText('View 2');
-
 		expect(viewNameText).toBeInTheDocument();
 	});
 });
