@@ -133,7 +133,8 @@ func TestCreateLogsPipeline(t *testing.T) {
 			}
 
 			// Make api request
-			user, apiErr := createTestUser(t)
+			user, apiErr := createTestUser()
+
 			if apiErr != nil {
 				t.Fatal(apiErr)
 			}
@@ -158,6 +159,117 @@ func TestCreateLogsPipeline(t *testing.T) {
 				)
 			}
 		})
+	}
+}
+
+func TestUpdateLogParsingPipeline(t *testing.T) {
+	testDBFile, err := os.CreateTemp("", "test-signoz-db-*")
+	if err != nil {
+		t.Fatal(err)
+	}
+	testDBFilePath := testDBFile.Name()
+	defer os.Remove(testDBFilePath)
+	testDBFile.Close()
+
+	err = mockOpampAgent(testDBFilePath)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	apiHandler, err := mockApiHandler(testDBFilePath)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	// Make api request
+	user, apiErr := createTestUser()
+	if apiErr != nil {
+		t.Fatal(apiErr)
+	}
+
+	createReqPostData := &logparsingpipeline.PostablePipelines{
+		Pipelines: []logparsingpipeline.PostablePipeline{
+			{
+				OrderId: 1,
+				Name:    "pipeline 1",
+				Alias:   "pipeline1",
+				Enabled: true,
+				Filter:  "attributes.method == \"GET\"",
+				Config: []model.PipelineOperator{
+					{
+						OrderId: 1,
+						ID:      "add",
+						Type:    "add",
+						Field:   "body",
+						Value:   "val",
+						Enabled: true,
+						Name:    "test",
+					},
+				},
+			},
+		},
+	}
+	req, err := NewAuthenticatedPostRequest(user, "/api/v1/logs/pipelines", createReqPostData)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	respWriter := httptest.NewRecorder()
+	apiHandler.CreateLogsPipeline(respWriter, req)
+	response := respWriter.Result()
+	responseBody, err := ioutil.ReadAll(response.Body)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	// Validate response status code
+	if response.StatusCode != 200 {
+		t.Errorf("Unexpected response status %d. Expected 200. Response body: %s",
+			response.StatusCode,
+			responseBody,
+		)
+	}
+
+	updateReqPostData := &logparsingpipeline.PostablePipelines{
+		Pipelines: []logparsingpipeline.PostablePipeline{
+			{
+				OrderId: 1,
+				Name:    "pipeline 1",
+				Alias:   "pipeline1",
+				Enabled: true,
+				Filter:  "attributes.method == \"GET\"",
+				Config: []model.PipelineOperator{
+					{
+						OrderId: 1,
+						ID:      "add",
+						Type:    "add",
+						Field:   "body",
+						Value:   "val1",
+						Enabled: true,
+						Name:    "test",
+					},
+				},
+			},
+		},
+	}
+	req, err = NewAuthenticatedPostRequest(user, "/api/v1/logs/pipelines", updateReqPostData)
+	if err != nil {
+		t.Fatal(err)
+	}
+	respWriter = httptest.NewRecorder()
+	apiHandler.CreateLogsPipeline(respWriter, req)
+	response = respWriter.Result()
+	responseBody, err = ioutil.ReadAll(response.Body)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	// Validate response status code
+	if response.StatusCode != 200 {
+		t.Errorf("Unexpected response status %d. Expected 200. Response body: %s",
+			response.StatusCode,
+			responseBody,
+		)
 	}
 }
 
@@ -230,22 +342,21 @@ func mockApiHandler(testDBFilePath string) (*app.APIHandler, error) {
 	})
 }
 
-func createTestUser(t *testing.T) (*model.User, *model.ApiError) {
+func createTestUser() (*model.User, *model.ApiError) {
 	// Create a test user for auth
 	ctx := context.Background()
 	org, apiErr := dao.DB().CreateOrg(ctx, &model.Organization{
 		Name: "test",
 	})
-	//t.Logf("Org:%v\n\nerr:%T & %v & %v", org, err1, err1.Error(), err1)
 	if apiErr != nil {
-		t.Fatal(apiErr)
+		return nil, apiErr
 	}
 
 	group, apiErr := dao.DB().CreateGroup(ctx, &model.Group{
 		Name: "test",
 	})
 	if apiErr != nil {
-		t.Fatal(apiErr)
+		return nil, apiErr
 	}
 
 	return dao.DB().CreateUser(
