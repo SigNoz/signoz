@@ -35,13 +35,13 @@ export const externalCallErrorPercent = ({
 		key: WidgetKeys.SignozExternalCallLatencyCount,
 		dataType: DataType.FLOAT64,
 		isColumn: true,
-		type: null,
+		type: '',
 	};
 	const autocompleteDataB: BaseAutocompleteData = {
 		key: WidgetKeys.SignozExternalCallLatencyCount,
 		dataType: DataType.FLOAT64,
 		isColumn: true,
-		type: null,
+		type: '',
 	};
 
 	const additionalItemsA: TagFilterItem[] = [
@@ -118,13 +118,13 @@ export const externalCallDuration = ({
 		dataType: DataType.FLOAT64,
 		isColumn: true,
 		key: WidgetKeys.SignozExternalCallLatencySum,
-		type: null,
+		type: '',
 	};
 	const autocompleteDataB: BaseAutocompleteData = {
 		dataType: DataType.FLOAT64,
 		isColumn: true,
 		key: WidgetKeys.SignozExternalCallLatencyCount,
-		type: null,
+		type: '',
 	};
 	const expressions = [FORMULA.DATABASE_CALLS_AVG_DURATION];
 	const legendFormulas = ['Average Duration'];
@@ -177,7 +177,7 @@ export const externalCallRpsByAddress = ({
 			dataType: DataType.FLOAT64,
 			isColumn: true,
 			key: WidgetKeys.SignozExternalCallLatencyCount,
-			type: null,
+			type: '',
 		},
 	];
 	const filterItems: TagFilterItem[][] = [
@@ -218,13 +218,13 @@ export const externalCallDurationByAddress = ({
 		dataType: DataType.FLOAT64,
 		isColumn: true,
 		key: WidgetKeys.SignozExternalCallLatencySum,
-		type: null,
+		type: '',
 	};
 	const autocompleteDataB: BaseAutocompleteData = {
 		dataType: DataType.FLOAT64,
 		isColumn: true,
 		key: WidgetKeys.SignozExternalCallLatencyCount,
-		type: null,
+		type: '',
 	};
 	const expressions = [FORMULA.DATABASE_CALLS_AVG_DURATION];
 	const legendFormulas = [legend];
