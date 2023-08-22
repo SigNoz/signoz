@@ -410,10 +410,7 @@ func TestQueryRange(t *testing.T) {
 				BuilderQueries: map[string]*v3.BuilderQuery{
 					"A": {
 						QueryName:          "A",
-<<<<<<< HEAD
 						DataSource:         v3.DataSourceMetrics,
-=======
->>>>>>> develop
 						StepInterval:       60,
 						AggregateAttribute: v3.AttributeKey{Key: "http_server_requests_seconds_count", Type: v3.AttributeKeyTypeUnspecified, DataType: "float64", IsColumn: true},
 						Filters: &v3.FilterSet{
