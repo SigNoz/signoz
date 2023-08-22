@@ -23,7 +23,7 @@ func UpsertLogsParsingProcessor(
 	parsingProcessors map[string]interface{},
 	parsingProcessorsNames []string,
 	callback func(string, string, error),
-) (string, model.BaseApiError) {
+) (string, *model.ApiError) {
 	confHash := ""
 	if opAmpServer == nil {
 		return confHash, model.UnavailableError(fmt.Errorf(

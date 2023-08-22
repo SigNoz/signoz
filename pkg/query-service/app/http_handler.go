@@ -2483,7 +2483,7 @@ func (ah *APIHandler) CreateLogsPipeline(w http.ResponseWriter, r *http.Request)
 		postable []logparsingpipeline.PostablePipeline,
 	) (
 		*logparsingpipeline.PipelinesResponse,
-		model.BaseApiError,
+		*model.ApiError,
 	) {
 		if len(postable) == 0 {
 			zap.S().Warnf("found no pipelines in the http request, this will delete all the pipelines")

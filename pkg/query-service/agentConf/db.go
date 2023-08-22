@@ -34,7 +34,7 @@ func (r *Repo) initDB(engine string) error {
 
 func (r *Repo) GetConfigHistory(
 	ctx context.Context, typ ElementTypeDef, limit int,
-) ([]ConfigVersion, model.BaseApiError) {
+) ([]ConfigVersion, *model.ApiError) {
 	var c []ConfigVersion
 	err := r.db.SelectContext(ctx, &c, fmt.Sprintf(`SELECT 
 		version, 
@@ -67,7 +67,7 @@ func (r *Repo) GetConfigVersion(
 	ctx context.Context,
 	typ ElementTypeDef,
 	v int,
-) (*ConfigVersion, model.BaseApiError) {
+) (*ConfigVersion, *model.ApiError) {
 	var c ConfigVersion
 	err := r.db.GetContext(ctx, &c, `SELECT 
 		id, 
@@ -97,7 +97,7 @@ func (r *Repo) GetConfigVersion(
 func (r *Repo) GetLatestVersion(
 	ctx context.Context,
 	typ ElementTypeDef,
-) (*ConfigVersion, model.BaseApiError) {
+) (*ConfigVersion, *model.ApiError) {
 	var c ConfigVersion
 	err := r.db.GetContext(ctx, &c, `SELECT 
 		id, 
@@ -130,7 +130,7 @@ func (r *Repo) insertConfig(
 	userId string,
 	c *ConfigVersion,
 	elements []string,
-) (fnerr model.BaseApiError) {
+) (fnerr *model.ApiError) {
 
 	if string(c.ElementType) == "" {
 		return model.BadRequestStr("element type is required for creating agent config version")
@@ -152,12 +152,10 @@ func (r *Repo) insertConfig(
 
 	configVersion, err := r.GetLatestVersion(ctx, c.ElementType)
 	if err != nil && err.Type() != model.ErrorNotFound {
-		if err.Type() != model.ErrorNotFound {
-			zap.S().Error("failed to fetch latest config version", err)
-			return model.InternalError(fmt.Errorf(
-				"failed to fetch latest config version",
-			))
-		}
+		zap.S().Error("failed to fetch latest config version", err)
+		return model.InternalError(fmt.Errorf(
+			"failed to fetch latest config version",
+		))
 	}
 
 	if configVersion != nil {
@@ -241,7 +239,7 @@ func (r *Repo) updateDeployStatus(
 	result string,
 	lastHash string,
 	lastconf string,
-) model.BaseApiError {
+) *model.ApiError {
 
 	updateQuery := `UPDATE agent_config_versions
 	set deploy_status = $1, 
@@ -267,7 +265,7 @@ func (r *Repo) updateDeployStatusByHash(
 	confighash string,
 	status string,
 	result string,
-) model.BaseApiError {
+) *model.ApiError {
 
 	updateQuery := `UPDATE agent_config_versions
 	set deploy_status = $1, 

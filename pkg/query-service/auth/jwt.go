@@ -94,16 +94,16 @@ func ExtractJwtFromRequest(r *http.Request) (string, error) {
 	return jwtmiddleware.FromAuthHeader(r)
 }
 
-func ExtractUserIdFromContext(ctx context.Context) (string, model.BaseApiError) {
+func ExtractUserIdFromContext(ctx context.Context) (string, error) {
 	userId := ""
 	jwt, err := ExtractJwtFromContext(ctx)
 	if err != nil {
-		return "", model.InternalError(fmt.Errorf("failed to extract jwt from context %v", err))
+		return "", fmt.Errorf("failed to extract jwt from context %v", err)
 	}
 
 	claims, err := ParseJWT(jwt)
 	if err != nil {
-		return "", model.InternalError(fmt.Errorf("failed get claims from jwt %v", err))
+		return "", fmt.Errorf("failed get claims from jwt %v", err)
 	}
 
 	if v, ok := claims["id"]; ok {

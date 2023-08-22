@@ -35,11 +35,11 @@ type PipelinesResponse struct {
 func (ic *LogParsingPipelineController) ApplyPipelines(
 	ctx context.Context,
 	postable []PostablePipeline,
-) (*PipelinesResponse, model.BaseApiError) {
+) (*PipelinesResponse, *model.ApiError) {
 	// get user id from context
-	userId, err := auth.ExtractUserIdFromContext(ctx)
-	if err != nil {
-		return nil, model.InternalError(fmt.Errorf("failed to get userId from context %v", err))
+	userId, authErr := auth.ExtractUserIdFromContext(ctx)
+	if authErr != nil {
+		return nil, model.InternalError(fmt.Errorf("failed to get userId from context %v", authErr))
 	}
 
 	var pipelines []model.Pipeline
@@ -80,7 +80,7 @@ func (ic *LogParsingPipelineController) ApplyPipelines(
 	// prepare filter config (processor) from the pipelines
 	filterConfig, names, prepErr := PreparePipelineProcessor(pipelines)
 	if prepErr != nil {
-		zap.S().Errorf("failed to generate processor config from pipelines for deployment %s", err.Error())
+		zap.S().Errorf("failed to generate processor config from pipelines for deployment %s", prepErr.Error())
 		return nil, model.BadRequest(prepErr)
 	}
 

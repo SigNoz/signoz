@@ -62,7 +62,7 @@ func StartNewVersion(
 	userId string,
 	eleType ElementTypeDef,
 	elementIds []string,
-) (*ConfigVersion, model.BaseApiError) {
+) (*ConfigVersion, *model.ApiError) {
 
 	if !m.Ready() {
 		// agent is already being updated, ask caller to wait and re-try after sometime
@@ -224,7 +224,7 @@ func UpsertLogParsingProcessor(
 	rawPipelineData []byte,
 	config map[string]interface{},
 	names []string,
-) model.BaseApiError {
+) *model.ApiError {
 	if !atomic.CompareAndSwapUint32(&m.lock, 0, 1) {
 		return model.UnavailableError(fmt.Errorf("agent updater is busy"))
 	}

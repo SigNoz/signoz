@@ -7,6 +7,7 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/pkg/errors"
 	"github.com/prometheus/prometheus/promql/parser"
 	"github.com/prometheus/prometheus/util/stats"
 	"k8s.io/apimachinery/pkg/labels"
@@ -46,21 +47,12 @@ func (a *ApiError) IsNil() bool {
 	return a == nil || a.Err == nil
 }
 
-type withMsgPrefix struct {
-	BaseApiError
-	msgPrefix string
-}
-
-func (e *withMsgPrefix) Error() string {
-	return e.msgPrefix + ": " + e.BaseApiError.Error()
-}
-
 func WrappedApiError(
-	apiErr BaseApiError, msgPrefix string,
-) BaseApiError {
-	return &withMsgPrefix{
-		BaseApiError: apiErr,
-		msgPrefix:    msgPrefix,
+	apiErr *ApiError, msg string,
+) *ApiError {
+	return &ApiError{
+		Typ: apiErr.Typ,
+		Err: errors.Wrap(apiErr.Err, msg),
 	}
 }
 

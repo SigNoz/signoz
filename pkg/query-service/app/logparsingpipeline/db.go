@@ -147,7 +147,7 @@ func (r *Repo) getPipelinesByVersion(ctx context.Context, version int) ([]model.
 // GetPipelines returns pipeline and errors (if any)
 func (r *Repo) GetPipeline(
 	ctx context.Context, id string,
-) (*model.Pipeline, model.BaseApiError) {
+) (*model.Pipeline, *model.ApiError) {
 	pipelines := []model.Pipeline{}
 
 	pipelineQuery := `SELECT id, 
