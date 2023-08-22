@@ -324,7 +324,7 @@ type FilterAttributeValueResponse struct {
 type QueryRangeParamsV3 struct {
 	Start          int64                  `json:"start"`
 	End            int64                  `json:"end"`
-	Step           int64                  `json:"step"`
+	Step           int64                  `json:"step"` // step is in seconds; used for prometheus queries
 	CompositeQuery *CompositeQuery        `json:"compositeQuery"`
 	Variables      map[string]interface{} `json:"variables,omitempty"`
 	NoCache        bool                   `json:"noCache"`
