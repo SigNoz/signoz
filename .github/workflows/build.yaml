@@ -30,6 +30,10 @@ jobs:
   build-query-service:
     runs-on: ubuntu-latest
     steps:
+      - name: Setup golang
+        uses: actions/setup-go@v4
+        with:
+          go-version: "1.21"
       - name: Checkout code
         uses: actions/checkout@v3
       - name: Run tests
@@ -44,6 +48,10 @@ jobs:
   build-ee-query-service:
     runs-on: ubuntu-latest
     steps:
+      - name: Setup golang
+        uses: actions/setup-go@v4
+        with:
+          go-version: "1.21"
       - name: Checkout code
         uses: actions/checkout@v3
       - name: Build EE query-service image
