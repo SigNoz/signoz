@@ -1,22 +1,16 @@
-import { NotificationInstance } from 'antd/es/notification/interface';
 import axios from 'axios';
 import { SOMETHING_WENT_WRONG } from 'constants/api';
-import { PANEL_TYPES } from 'constants/queryBuilder';
 import {
 	queryParamNamesMap,
 	querySearchParams,
 } from 'constants/queryBuilderQueryNames';
 import { mapQueryDataFromApi } from 'lib/newQueryBuilder/queryBuilderMappers/mapQueryDataFromApi';
 import { isEqual } from 'lodash-es';
-import { UseMutateAsyncFunction } from 'react-query';
-import { ICompositeMetricQuery } from 'types/api/alerts/compositeQuery';
-import { Query } from 'types/api/queryBuilder/queryBuilderData';
-import { SaveViewPayloadProps, SaveViewProps } from 'types/api/saveViews/types';
-import { DataSource } from 'types/common/queryBuilder';
 
 import {
 	GetViewDetailsUsingViewKey,
 	IsQueryUpdatedInViewProps,
+	SaveViewHandlerProps,
 	UpdateQueryHandlerProps,
 } from './types';
 
@@ -117,9 +111,7 @@ export const saveViewHandler = async ({
 			sourcePage,
 			extraData,
 		});
-
 		refetchAllView();
-
 		redirectWithQueryBuilderData(mapQueryDataFromApi(compositeQuery), {
 			[queryParamNamesMap.panelTypes]: panelType,
 			[querySearchParams.viewName]: viewName,
@@ -138,24 +130,3 @@ export const saveViewHandler = async ({
 		handlePopOverClose();
 	}
 };
-
-interface SaveViewHandlerProps {
-	viewName: string;
-	compositeQuery: ICompositeMetricQuery;
-	sourcePage: Lowercase<keyof typeof DataSource>;
-	extraData: string;
-	saveViewAsync: UseMutateAsyncFunction<
-		SaveViewPayloadProps,
-		Error,
-		SaveViewProps,
-		SaveViewPayloadProps
-	>;
-	refetchAllView: VoidFunction;
-	notifications: NotificationInstance;
-	handlePopOverClose: VoidFunction;
-	redirectWithQueryBuilderData: (
-		query: Query,
-		searchParams?: Record<string, unknown> | undefined,
-	) => void;
-	panelType: PANEL_TYPES | null;
-}
