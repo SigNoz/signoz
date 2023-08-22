@@ -145,7 +145,7 @@ func NewAPIHandler(opts APIHandlerOpts) (*APIHandler, error) {
 		BuildTraceQuery:  tracesV3.PrepareTracesQuery,
 		BuildLogQuery:    logsv3.PrepareLogsQuery,
 	}
-	aH.queryBuilder = queryBuilder.NewQueryBuilder(builderOpts)
+	aH.queryBuilder = queryBuilder.NewQueryBuilder(builderOpts, aH.featureFlags)
 
 	aH.ready = aH.testReady
 

@@ -24,7 +24,7 @@ export const databaseCallsRPS = ({
 			key: WidgetKeys.SignozDBLatencyCount,
 			dataType: DataType.FLOAT64,
 			isColumn: true,
-			type: null,
+			type: '',
 		},
 	];
 	const groupBy: BaseAutocompleteData[] = [
@@ -67,13 +67,13 @@ export const databaseCallsAvgDuration = ({
 		key: WidgetKeys.SignozDbLatencySum,
 		dataType: DataType.FLOAT64,
 		isColumn: true,
-		type: null,
+		type: '',
 	};
 	const autocompleteDataB: BaseAutocompleteData = {
 		key: WidgetKeys.SignozDBLatencyCount,
 		dataType: DataType.FLOAT64,
 		isColumn: true,
-		type: null,
+		type: '',
 	};
 
 	const additionalItemsA: TagFilterItem[] = [

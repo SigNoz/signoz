@@ -2,6 +2,7 @@ package utils
 
 import (
 	"fmt"
+	"math"
 	"reflect"
 	"strconv"
 	"strings"
@@ -142,6 +143,13 @@ func ValidateAndCastValue(v interface{}, dataType v3.AttributeKeyDataType) (inte
 	}
 }
 
+func quoteEscapedString(str string) string {
+	// https://clickhouse.com/docs/en/sql-reference/syntax#string
+	str = strings.ReplaceAll(str, `\`, `\\`)
+	str = strings.ReplaceAll(str, `'`, `\'`)
+	return str
+}
+
 // ClickHouseFormattedValue formats the value to be used in clickhouse query
 func ClickHouseFormattedValue(v interface{}) string {
 	// if it's pointer convert it to a value
@@ -153,7 +161,7 @@ func ClickHouseFormattedValue(v interface{}) string {
 	case float32, float64:
 		return fmt.Sprintf("%f", x)
 	case string:
-		return fmt.Sprintf("'%s'", x)
+		return fmt.Sprintf("'%s'", quoteEscapedString(x))
 	case bool:
 		return fmt.Sprintf("%v", x)
 
@@ -165,7 +173,7 @@ func ClickHouseFormattedValue(v interface{}) string {
 		case string:
 			str := "["
 			for idx, sVal := range x {
-				str += fmt.Sprintf("'%s'", sVal)
+				str += fmt.Sprintf("'%s'", quoteEscapedString(sVal.(string)))
 				if idx != len(x)-1 {
 					str += ","
 				}
@@ -234,4 +242,19 @@ func GetClickhouseColumnName(typeName string, dataType, field string) string {
 
 	colName := fmt.Sprintf("%s_%s_%s", strings.ToLower(typeName), strings.ToLower(dataType), field)
 	return colName
+}
+
+// GetEpochNanoSecs takes epoch and returns it in ns
+func GetEpochNanoSecs(epoch int64) int64 {
+	temp := epoch
+	count := 0
+	if epoch == 0 {
+		count = 1
+	} else {
+		for epoch != 0 {
+			epoch /= 10
+			count++
+		}
+	}
+	return temp * int64(math.Pow(10, float64(19-count)))
 }
