@@ -2,6 +2,7 @@ package utils
 
 import (
 	"fmt"
+	"math"
 	"reflect"
 	"strconv"
 	"strings"
@@ -227,4 +228,19 @@ func getPointerValue(v interface{}) interface{} {
 	default:
 		return v
 	}
+}
+
+// GetEpochNanoSecs takes epoch and returns it in ns
+func GetEpochNanoSecs(epoch int64) int64 {
+	temp := epoch
+	count := 0
+	if epoch == 0 {
+		count = 1
+	} else {
+		for epoch != 0 {
+			epoch /= 10
+			count++
+		}
+	}
+	return temp * int64(math.Pow(10, float64(19-count)))
 }

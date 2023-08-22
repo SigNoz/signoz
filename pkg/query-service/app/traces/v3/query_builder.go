@@ -50,6 +50,8 @@ var tracesOperatorMappingV3 = map[v3.FilterOperator]string{
 	v3.FilterOperatorGreaterThanOrEq: ">=",
 	v3.FilterOperatorLike:            "ILIKE",
 	v3.FilterOperatorNotLike:         "NOT ILIKE",
+	v3.FilterOperatorRegex:           "match(%s, %s)",
+	v3.FilterOperatorNotRegex:        "NOT match(%s, %s)",
 	v3.FilterOperatorContains:        "ILIKE",
 	v3.FilterOperatorNotContains:     "NOT ILIKE",
 	v3.FilterOperatorExists:          "has(%s%s, '%s')",
@@ -173,7 +175,8 @@ func buildTracesFilterQuery(fs *v3.FilterSet, keys map[string]v3.AttributeKey) (
 				switch item.Operator {
 				case v3.FilterOperatorContains, v3.FilterOperatorNotContains:
 					conditions = append(conditions, fmt.Sprintf("%s %s '%%%s%%'", columnName, operator, item.Value))
-
+				case v3.FilterOperatorRegex, v3.FilterOperatorNotRegex:
+					conditions = append(conditions, fmt.Sprintf(operator, columnName, fmtVal))
 				case v3.FilterOperatorExists, v3.FilterOperatorNotExists:
 					if key.IsColumn {
 						subQuery, err := existsSubQueryForFixedColumn(key, item.Operator)

@@ -141,6 +141,7 @@ function LogsExplorerList({
 	return (
 		<>
 			<ExplorerControlPanel
+				selectedOptionFormat={options.format}
 				isLoading={isLoading}
 				isShowPageSize={false}
 				optionsMenuConfig={config}

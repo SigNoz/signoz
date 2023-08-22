@@ -2,7 +2,6 @@ package v3
 
 import (
 	"fmt"
-	"math"
 	"strings"
 
 	"go.signoz.io/signoz/pkg/query-service/constants"
@@ -44,8 +43,8 @@ var logOperators = map[v3.FilterOperator]string{
 	v3.FilterOperatorNotLike:         "NOT ILIKE",
 	v3.FilterOperatorContains:        "ILIKE",
 	v3.FilterOperatorNotContains:     "NOT ILIKE",
-	v3.FilterOperatorRegex:           "REGEXP",
-	v3.FilterOperatorNotRegex:        "NOT REGEXP",
+	v3.FilterOperatorRegex:           "match(%s, %s)",
+	v3.FilterOperatorNotRegex:        "NOT match(%s, %s)",
 	v3.FilterOperatorIn:              "IN",
 	v3.FilterOperatorNotIn:           "NOT IN",
 	v3.FilterOperatorExists:          "has(%s_%s_key, '%s')",
@@ -130,6 +129,10 @@ func buildLogsTimeSeriesFilterQuery(fs *v3.FilterSet, groupBy []v3.AttributeKey)
 					columnType := getClickhouseLogsColumnType(item.Key.Type)
 					columnDataType := getClickhouseLogsColumnDataType(item.Key.DataType)
 					conditions = append(conditions, fmt.Sprintf(logsOp, columnType, columnDataType, item.Key.Key))
+				case v3.FilterOperatorRegex, v3.FilterOperatorNotRegex:
+					columnName := getClickhouseColumnName(item.Key)
+					fmtVal := utils.ClickHouseFormattedValue(value)
+					conditions = append(conditions, fmt.Sprintf(logsOp, columnName, fmtVal))
 				case v3.FilterOperatorContains, v3.FilterOperatorNotContains:
 					columnName := getClickhouseColumnName(item.Key)
 					conditions = append(conditions, fmt.Sprintf("%s %s '%%%s%%'", columnName, logsOp, item.Value))
@@ -161,20 +164,6 @@ func buildLogsTimeSeriesFilterQuery(fs *v3.FilterSet, groupBy []v3.AttributeKey)
 	return queryString, nil
 }
 
-// getZerosForEpochNano returns the number of zeros to be appended to the epoch time for converting it to nanoseconds
-func getZerosForEpochNano(epoch int64) int64 {
-	count := 0
-	if epoch == 0 {
-		count = 1
-	} else {
-		for epoch != 0 {
-			epoch /= 10
-			count++
-		}
-	}
-	return int64(math.Pow(10, float64(19-count)))
-}
-
 func buildLogsQuery(panelType v3.PanelType, start, end, step int64, mq *v3.BuilderQuery, graphLimitQtype string, preferRPM bool) (string, error) {
 
 	filterSubQuery, err := buildLogsTimeSeriesFilterQuery(mq.Filters, mq.GroupBy)
@@ -183,7 +172,7 @@ func buildLogsQuery(panelType v3.PanelType, start, end, step int64, mq *v3.Build
 	}
 
 	// timerange will be sent in epoch millisecond
-	timeFilter := fmt.Sprintf("(timestamp >= %d AND timestamp <= %d)", start*utils.GetZerosForEpochNano(start), end*utils.GetZerosForEpochNano(end))
+	timeFilter := fmt.Sprintf("(timestamp >= %d AND timestamp <= %d)", utils.GetEpochNanoSecs(start), utils.GetEpochNanoSecs(end))
 
 	selectLabels := getSelectLabels(mq.AggregateOperator, mq.GroupBy)
 
