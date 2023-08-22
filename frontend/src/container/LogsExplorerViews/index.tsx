@@ -1,5 +1,6 @@
 import { Tabs, TabsProps } from 'antd';
 import TabLabel from 'components/TabLabel';
+import { AVAILABLE_EXPORT_PANEL_TYPES } from 'constants/panelTypes';
 import { QueryParams } from 'constants/query';
 import {
 	initialAutocompleteData,
@@ -299,11 +300,16 @@ function LogsExplorerViews(): JSX.Element {
 
 	const handleExport = useCallback(
 		(dashboard: Dashboard | null): void => {
-			if (!dashboard) return;
+			if (!dashboard || !panelType) return;
+
+			const panelTypeParam = AVAILABLE_EXPORT_PANEL_TYPES.includes(panelType)
+				? panelType
+				: PANEL_TYPES.TIME_SERIES;
 
 			const updatedDashboard = addEmptyWidgetInDashboardJSONWithQuery(
 				dashboard,
 				exportDefaultQuery,
+				panelTypeParam,
 			);
 
 			updateDashboard(updatedDashboard, {
@@ -334,9 +340,11 @@ function LogsExplorerViews(): JSX.Element {
 
 					const dashboardEditView = `${generatePath(ROUTES.DASHBOARD, {
 						dashboardId: data?.payload?.uuid,
-					})}/new?${QueryParams.graphType}=graph&${QueryParams.widgetId}=empty&${
-						queryParamNamesMap.compositeQuery
-					}=${encodeURIComponent(JSON.stringify(exportDefaultQuery))}`;
+					})}/new?${QueryParams.graphType}=${panelTypeParam}&${
+						QueryParams.widgetId
+					}=empty&${queryParamNamesMap.compositeQuery}=${encodeURIComponent(
+						JSON.stringify(exportDefaultQuery),
+					)}`;
 
 					history.push(dashboardEditView);
 				},
@@ -347,6 +355,7 @@ function LogsExplorerViews(): JSX.Element {
 			exportDefaultQuery,
 			history,
 			notifications,
+			panelType,
 			updateDashboard,
 			handleAxisError,
 		],

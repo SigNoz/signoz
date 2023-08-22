@@ -1,6 +1,7 @@
 import { Tabs } from 'antd';
 import axios from 'axios';
 import ExplorerCard from 'components/ExplorerCard';
+import { AVAILABLE_EXPORT_PANEL_TYPES } from 'constants/panelTypes';
 import { QueryParams } from 'constants/query';
 import {
 	initialAutocompleteData,
@@ -95,11 +96,16 @@ function TracesExplorer(): JSX.Element {
 
 	const handleExport = useCallback(
 		(dashboard: Dashboard | null): void => {
-			if (!dashboard) return;
+			if (!dashboard || !panelType) return;
+
+			const panelTypeParam = AVAILABLE_EXPORT_PANEL_TYPES.includes(panelType)
+				? panelType
+				: PANEL_TYPES.TIME_SERIES;
 
 			const updatedDashboard = addEmptyWidgetInDashboardJSONWithQuery(
 				dashboard,
 				exportDefaultQuery,
+				panelTypeParam,
 			);
 
 			updateDashboard(updatedDashboard, {
@@ -129,9 +135,11 @@ function TracesExplorer(): JSX.Element {
 					}
 					const dashboardEditView = `${generatePath(ROUTES.DASHBOARD, {
 						dashboardId: data?.payload?.uuid,
-					})}/new?${QueryParams.graphType}=graph&${QueryParams.widgetId}=empty&${
-						queryParamNamesMap.compositeQuery
-					}=${encodeURIComponent(JSON.stringify(exportDefaultQuery))}`;
+					})}/new?${QueryParams.graphType}=${panelTypeParam}&${
+						QueryParams.widgetId
+					}=empty&${queryParamNamesMap.compositeQuery}=${encodeURIComponent(
+						JSON.stringify(exportDefaultQuery),
+					)}`;
 
 					history.push(dashboardEditView);
 				},
@@ -144,7 +152,7 @@ function TracesExplorer(): JSX.Element {
 				},
 			});
 		},
-		[exportDefaultQuery, notifications, updateDashboard],
+		[exportDefaultQuery, notifications, panelType, updateDashboard],
 	);
 
 	const getUpdateQuery = useCallback(
