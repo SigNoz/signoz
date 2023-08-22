@@ -36,3 +36,16 @@ export interface SaveViewPayloadProps {
 export interface DeleteViewPayloadProps {
 	status: string;
 }
+
+export interface UpdateViewProps {
+	viewKey: string;
+	compositeQuery: ICompositeMetricQuery;
+	extraData: string;
+	sourcePage: string;
+	viewName: string;
+}
+
+export interface UpdateViewPayloadProps {
+	success: string;
+	data: ViewProps;
+}

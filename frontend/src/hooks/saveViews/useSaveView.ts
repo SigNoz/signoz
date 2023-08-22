@@ -10,7 +10,8 @@ export const useSaveView = ({
 }: SaveViewProps): UseMutationResult<
 	SaveViewPayloadProps,
 	Error,
-	SaveViewProps
+	SaveViewProps,
+	SaveViewPayloadProps
 > =>
 	useMutation({
 		mutationKey: [viewName, sourcePage, compositeQuery, extraData],

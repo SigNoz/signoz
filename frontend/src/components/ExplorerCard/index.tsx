@@ -11,12 +11,16 @@ import {
 	Typography,
 } from 'antd';
 import TextToolTip from 'components/TextToolTip';
+import { querySearchParams } from 'constants/queryBuilderQueryNames';
+import { useGetPanelTypesQueryParam } from 'hooks/queryBuilder/useGetPanelTypesQueryParam';
+import { useGetSearchQueryParam } from 'hooks/queryBuilder/useGetSearchQueryParam';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useGetAllViews } from 'hooks/saveViews/useGetAllViews';
+import { useUpdateView } from 'hooks/saveViews/useUpdateView';
 import useErrorNotification from 'hooks/useErrorNotification';
-import useUrlQuery from 'hooks/useUrlQuery';
-import { mapQueryDataFromApi } from 'lib/newQueryBuilder/queryBuilderMappers/mapQueryDataFromApi';
-import { useCallback, useMemo, useState } from 'react';
+import { useNotifications } from 'hooks/useNotifications';
+import { mapCompositeQueryFromQuery } from 'lib/newQueryBuilder/queryBuilderMappers/mapCompositeQueryFromQuery';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { ViewProps } from 'types/api/saveViews/types';
 
 import MenuItemGenerator from './MenuItemGenerator';
@@ -26,10 +30,37 @@ import {
 	ExplorerCardHeadContainer,
 	OffSetCol,
 } from './styles';
+import { ExplorerCardProps } from './types';
+import {
+	getViewDetailsUsingViewKey,
+	isQueryUpdatedInView,
+	updateQueryHandler,
+} from './utils';
 
-function ExplorerCard({ sourcepage, children }: Props): JSX.Element {
-	const urlQuery = useUrlQuery();
+function ExplorerCard({
+	sourcepage,
+	children,
+}: ExplorerCardProps): JSX.Element {
 	const [isOpen, setIsOpen] = useState<boolean>(false);
+	const [isQueryUpdated, setIsQueryUpdated] = useState<boolean>(false);
+	const { notifications } = useNotifications();
+	const panelType = useGetPanelTypesQueryParam();
+
+	const {
+		stagedQuery,
+		currentQuery,
+		redirectWithQueryBuilderData,
+	} = useQueryBuilder();
+
+	const {
+		data,
+		isLoading,
+		error,
+		isRefetching,
+		refetch: refetchAllView,
+	} = useGetAllViews(sourcepage);
+
+	useErrorNotification(error);
 
 	const handlePopOverClose = (): void => {
 		setIsOpen(false);
@@ -39,37 +70,107 @@ function ExplorerCard({ sourcepage, children }: Props): JSX.Element {
 		setIsOpen(newOpen);
 	};
 
-	const viewNameFromQuery = useMemo(() => urlQuery.get('viewName'), [urlQuery]);
-
-	console.log('viewNameFromQuery', viewNameFromQuery);
-
 	const viewName =
-		viewNameFromQuery !== null ? JSON.parse(viewNameFromQuery) : 'Query Builder';
-	const {
-		data,
-		isLoading,
-		error,
-		isRefetching,
-		refetch: refetchAllView,
-	} = useGetAllViews(sourcepage);
+		useGetSearchQueryParam(querySearchParams.viewName) || 'Query Builder';
 
-	const { redirectWithQueryBuilderData } = useQueryBuilder();
+	const viewKey = useGetSearchQueryParam(querySearchParams.viewKey) || '';
+
+	const { mutateAsync: updateViewAsync } = useUpdateView({
+		compositeQuery: mapCompositeQueryFromQuery(currentQuery, panelType),
+		viewKey,
+		extraData: '',
+		sourcePage: sourcepage,
+		viewName,
+	});
+
+	const onUpdateQueryHandler = useCallback(async () => {
+		updateQueryHandler({
+			compositeQuery: mapCompositeQueryFromQuery(currentQuery, panelType),
+			viewKey,
+			extraData: '',
+			sourcePage: sourcepage,
+			viewName,
+			notifications,
+			setIsQueryUpdated,
+			updateViewAsync,
+		});
+	}, [
+		currentQuery,
+		notifications,
+		panelType,
+		sourcepage,
+		updateViewAsync,
+		viewKey,
+		viewName,
+	]);
 
 	const onMenuItemSelectHandler = useCallback(
 		({ key }: { key: string }): void => {
-			const selectedView = data?.data.data.find((view) => view.uuid === key);
+			const currentViewDetails = getViewDetailsUsingViewKey(key, data?.data?.data);
+			if (!currentViewDetails) return;
+			const { query, name, uuid } = currentViewDetails;
 
-			if (!selectedView) return;
-
-			const { compositeQuery, name } = selectedView;
-			const query = mapQueryDataFromApi(compositeQuery);
-
-			redirectWithQueryBuilderData(query, { viewName: name });
+			redirectWithQueryBuilderData(query, {
+				[querySearchParams.viewName]: name,
+				[querySearchParams.viewKey]: uuid,
+			});
 		},
-		[data?.data.data, redirectWithQueryBuilderData],
+		[data?.data?.data, redirectWithQueryBuilderData],
 	);
 
-	useErrorNotification(error);
+	useEffect(() => {
+		// const currentViewDetails = getViewDetailsUsingViewKey(
+		// 	viewKey,
+		// 	data?.data?.data,
+		// );
+		// if (!currentViewDetails) {
+		// 	setIsQueryUpdated(false);
+		// 	return;
+		// }
+		// const { query } = currentViewDetails;
+
+		// const updatedCurrentQuery = {
+		// 	...stagedQuery,
+		// 	builder: {
+		// 		...stagedQuery?.builder,
+		// 		queryData: stagedQuery?.builder.queryData.map((queryData) => {
+		// 			const newAggregateAttribute = queryData.aggregateAttribute;
+		// 			delete newAggregateAttribute.id;
+		// 			return {
+		// 				...queryData,
+		// 				aggregateAttribute: {},
+		// 				groupBy: [],
+		// 			};
+		// 		}),
+		// 	},
+		// };
+
+		// console.log('Difference', updatedCurrentQuery.builder, query.builder);
+
+		// if (
+		// 	!isEqual(query.builder, updatedCurrentQuery?.builder) ||
+		// 	!isEqual(query.clickhouse_sql, updatedCurrentQuery?.clickhouse_sql) ||
+		// 	!isEqual(query.promql, updatedCurrentQuery?.promql)
+		// ) {
+		// 	setIsQueryUpdated(true);
+		// } else {
+		// 	setIsQueryUpdated(false);
+		// }
+
+		setIsQueryUpdated(
+			isQueryUpdatedInView({
+				data: data?.data?.data,
+				stagedQuery,
+				viewKey,
+			}),
+		);
+	}, [
+		currentQuery,
+		data?.data?.data,
+		stagedQuery,
+		stagedQuery?.builder.queryData,
+		viewKey,
+	]);
 
 	const generatorMenuItems = useCallback(
 		(data: ViewProps[] | undefined): MenuProps['items'] => {
@@ -80,6 +181,7 @@ function ExplorerCard({ sourcepage, children }: Props): JSX.Element {
 				label: (
 					<MenuItemGenerator
 						viewName={view.name}
+						viewKey={viewKey}
 						createdBy={view.createdBy}
 						uuid={view.uuid}
 						refetchAllView={refetchAllView}
@@ -88,7 +190,7 @@ function ExplorerCard({ sourcepage, children }: Props): JSX.Element {
 				),
 			}));
 		},
-		[onMenuItemSelectHandler, refetchAllView],
+		[onMenuItemSelectHandler, refetchAllView, viewKey],
 	);
 
 	const updateMenuList = useMemo(() => generatorMenuItems(data?.data.data), [
@@ -118,6 +220,11 @@ function ExplorerCard({ sourcepage, children }: Props): JSX.Element {
 					</Col>
 					<OffSetCol span={10} offset={8}>
 						<Space size="large">
+							{isQueryUpdated && (
+								<Button type="primary" onClick={onUpdateQueryHandler}>
+									Updated Query
+								</Button>
+							)}
 							<Space>
 								<Typography.Text>Saved Views</Typography.Text>
 								<Dropdown.Button
@@ -145,7 +252,7 @@ function ExplorerCard({ sourcepage, children }: Props): JSX.Element {
 								onOpenChange={handleOpenChange}
 							>
 								<Button type="primary" icon={<SaveOutlined />}>
-									Save View
+									{isQueryUpdated ? 'Save as new View' : 'Save View'}
 								</Button>
 							</Popover>
 						</Space>
@@ -155,11 +262,6 @@ function ExplorerCard({ sourcepage, children }: Props): JSX.Element {
 			<Card>{children}</Card>
 		</>
 	);
-}
-
-interface Props {
-	sourcepage: 'metrics' | 'traces' | 'logs';
-	children: React.ReactNode;
 }
 
 export default ExplorerCard;

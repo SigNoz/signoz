@@ -23,7 +23,5 @@ export const DropDownOverlay: CSSProperties = {
 };
 
 export const MenuItemContainer = styled(Card)`
-	&&& {
-		padding: 0;
-	}
+	padding: 0;
 `;

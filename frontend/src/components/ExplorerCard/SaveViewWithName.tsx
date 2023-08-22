@@ -2,6 +2,10 @@ import { LoadingOutlined } from '@ant-design/icons';
 import { Card, Input, Typography } from 'antd';
 import axios from 'axios';
 import { SOMETHING_WENT_WRONG } from 'constants/api';
+import {
+	queryParamNamesMap,
+	querySearchParams,
+} from 'constants/queryBuilderQueryNames';
 import { useGetPanelTypesQueryParam } from 'hooks/queryBuilder/useGetPanelTypesQueryParam';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useSaveView } from 'hooks/saveViews/useSaveView';
@@ -39,8 +43,9 @@ function SaveViewWithName({
 	);
 
 	const onSaveHandler = useCallback(async () => {
+		console.log('compositeQuery', compositeQuery);
 		try {
-			await mutateAsync({
+			const { data } = await mutateAsync({
 				viewName: name,
 				compositeQuery,
 				sourcePage,
@@ -48,9 +53,15 @@ function SaveViewWithName({
 			});
 
 			refetchAllView();
-			redirectWithQueryBuilderData(mapQueryDataFromApi(compositeQuery), {
-				viewName: name,
-			});
+			if (!isLoading) {
+				redirectWithQueryBuilderData(mapQueryDataFromApi(compositeQuery), {
+					[queryParamNamesMap.panelTypes]: panelType,
+					[querySearchParams.viewName]: name,
+					// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+					// @ts-ignore
+					[querySearchParams.viewKey]: data.data,
+				});
+			}
 			notifications.success({
 				message: 'View Saved Successfully',
 			});
@@ -64,9 +75,11 @@ function SaveViewWithName({
 	}, [
 		compositeQuery,
 		handlePopOverClose,
+		isLoading,
 		mutateAsync,
 		name,
 		notifications,
+		panelType,
 		redirectWithQueryBuilderData,
 		refetchAllView,
 		sourcePage,

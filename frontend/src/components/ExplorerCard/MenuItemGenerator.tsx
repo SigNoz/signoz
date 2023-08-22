@@ -3,6 +3,11 @@ import { Col, Row, Typography } from 'antd';
 import axios from 'axios';
 import { SOMETHING_WENT_WRONG } from 'constants/api';
 import { initialQueriesMap } from 'constants/queryBuilder';
+import {
+	queryParamNamesMap,
+	querySearchParams,
+} from 'constants/queryBuilderQueryNames';
+import { useGetPanelTypesQueryParam } from 'hooks/queryBuilder/useGetPanelTypesQueryParam';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useDeleteView } from 'hooks/saveViews/useDeleteView';
 import { useNotifications } from 'hooks/useNotifications';
@@ -12,12 +17,14 @@ import { MenuItemContainer } from './styles';
 
 function MenuItemGenerator({
 	viewName,
+	viewKey,
 	createdBy,
 	uuid,
 	refetchAllView,
 	onMenuItemSelectHandler,
 }: MenuItemLabelGeneratorProps): JSX.Element {
 	const { redirectWithQueryBuilderData } = useQueryBuilder();
+	const panelType = useGetPanelTypesQueryParam();
 
 	const { notifications } = useNotifications();
 
@@ -27,9 +34,13 @@ function MenuItemGenerator({
 		try {
 			await mutateAsync(uuid);
 			refetchAllView();
-			redirectWithQueryBuilderData(initialQueriesMap.metrics, {
-				viewName: 'Query Builder',
-			});
+			console.log('ViewKey', viewKey, uuid);
+			if (viewKey === uuid) {
+				redirectWithQueryBuilderData(initialQueriesMap.traces, {
+					[querySearchParams.viewName]: 'Query Builder',
+					[queryParamNamesMap.panelTypes]: panelType,
+				});
+			}
 			notifications.success({
 				message: 'View Deleted Successfully',
 			});
@@ -41,9 +52,11 @@ function MenuItemGenerator({
 	}, [
 		mutateAsync,
 		notifications,
+		panelType,
 		redirectWithQueryBuilderData,
 		refetchAllView,
 		uuid,
+		viewKey,
 	]);
 
 	const onLabelClickHandler = (): void => {
@@ -75,6 +88,7 @@ function MenuItemGenerator({
 
 interface MenuItemLabelGeneratorProps {
 	viewName: string;
+	viewKey: string;
 	createdBy: string;
 	uuid: string;
 	refetchAllView: VoidFunction;
