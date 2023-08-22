@@ -5,7 +5,7 @@
 import { fireEvent, render, waitFor } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from 'react-query';
 
-import SaveViewWithName from './SaveViewWithName';
+import SaveViewWithName from '../SaveViewWithName';
 
 const queryClient = new QueryClient({
 	defaultOptions: {

@@ -53,6 +53,10 @@ function ExplorerCard({
 	const { notifications } = useNotifications();
 	const panelType = useGetPanelTypesQueryParam();
 
+	const onCopyUrlHandler = (): void => {
+		setCopyUrl(window.location.href);
+	};
+
 	const {
 		stagedQuery,
 		currentQuery,
@@ -183,10 +187,6 @@ function ExplorerCard({
 		}),
 		[updateMenuList],
 	);
-
-	const onCopyUrlHandler = useCallback((): void => {
-		setCopyUrl(window.location.href);
-	}, [setCopyUrl]);
 
 	return (
 		<>
