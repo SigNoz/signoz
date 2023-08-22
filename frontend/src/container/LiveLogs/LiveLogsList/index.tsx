@@ -127,7 +127,7 @@ function LiveLogsList({ logs }: LiveLogsListProps): JSX.Element {
 				</Heading>
 			)}
 
-			{logs.length === 0 && <Typography>No logs lines found</Typography>}
+			{logs.length === 0 && <Typography>Fetching log lines</Typography>}
 
 			{!isConnectionError && logs.length !== 0 && (
 				<InfinityWrapperStyled>{renderContent}</InfinityWrapperStyled>
