@@ -22,21 +22,21 @@ export const serviceMetricsQuery = (
 		dataType: DataType.FLOAT64,
 		isColumn: true,
 		key: WidgetKeys.Signoz_latency_bucket,
-		type: null,
+		type: '',
 	};
 
 	const errorRateAutoCompleteData: BaseAutocompleteData = {
 		dataType: DataType.FLOAT64,
 		isColumn: true,
 		key: WidgetKeys.SignozCallsTotal,
-		type: null,
+		type: '',
 	};
 
 	const operationPrSecondAutoCompleteData: BaseAutocompleteData = {
 		dataType: DataType.FLOAT64,
 		isColumn: true,
 		key: WidgetKeys.SignozCallsTotal,
-		type: null,
+		type: '',
 	};
 
 	const autocompleteData = [
