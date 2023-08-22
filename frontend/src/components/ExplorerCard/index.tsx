@@ -28,6 +28,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useCopyToClipboard } from 'react-use';
 import { ViewProps } from 'types/api/saveViews/types';
 
+import { ExploreHeaderToolTip } from './constants';
 import MenuItemGenerator from './MenuItemGenerator';
 import SaveViewWithName from './SaveViewWithName';
 import {
@@ -193,8 +194,8 @@ function ExplorerCard({
 						<Space>
 							<Typography>{viewName}</Typography>
 							<TextToolTip
-								url="https://signoz.io/docs/userguide/query-builder/?utm_source=product&utm_medium=new-query-builder"
-								text="More details on how to use query builder"
+								url={ExploreHeaderToolTip.url}
+								text={ExploreHeaderToolTip.text}
 							/>
 						</Space>
 					</Col>
