@@ -44,8 +44,8 @@ var logOperators = map[v3.FilterOperator]string{
 	v3.FilterOperatorNotLike:         "NOT ILIKE",
 	v3.FilterOperatorContains:        "ILIKE",
 	v3.FilterOperatorNotContains:     "NOT ILIKE",
-	v3.FilterOperatorRegex:           "REGEXP",
-	v3.FilterOperatorNotRegex:        "NOT REGEXP",
+	v3.FilterOperatorRegex:           "match(%s, %s)",
+	v3.FilterOperatorNotRegex:        "NOT match(%s, %s)",
 	v3.FilterOperatorIn:              "IN",
 	v3.FilterOperatorNotIn:           "NOT IN",
 	v3.FilterOperatorExists:          "has(%s_%s_key, '%s')",
@@ -130,6 +130,10 @@ func buildLogsTimeSeriesFilterQuery(fs *v3.FilterSet, groupBy []v3.AttributeKey)
 					columnType := getClickhouseLogsColumnType(item.Key.Type)
 					columnDataType := getClickhouseLogsColumnDataType(item.Key.DataType)
 					conditions = append(conditions, fmt.Sprintf(logsOp, columnType, columnDataType, item.Key.Key))
+				case v3.FilterOperatorRegex, v3.FilterOperatorNotRegex:
+					columnName := getClickhouseColumnName(item.Key)
+					fmtVal := utils.ClickHouseFormattedValue(value)
+					conditions = append(conditions, fmt.Sprintf(logsOp, columnName, fmtVal))
 				case v3.FilterOperatorContains, v3.FilterOperatorNotContains:
 					columnName := getClickhouseColumnName(item.Key)
 					conditions = append(conditions, fmt.Sprintf("%s %s '%%%s%%'", columnName, logsOp, item.Value))
