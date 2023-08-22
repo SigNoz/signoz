@@ -1,21 +1,15 @@
 import { LoadingOutlined } from '@ant-design/icons';
 import { Card, Input, Typography } from 'antd';
-import axios from 'axios';
-import { SOMETHING_WENT_WRONG } from 'constants/api';
-import {
-	queryParamNamesMap,
-	querySearchParams,
-} from 'constants/queryBuilderQueryNames';
 import { useGetPanelTypesQueryParam } from 'hooks/queryBuilder/useGetPanelTypesQueryParam';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useSaveView } from 'hooks/saveViews/useSaveView';
 import { useNotifications } from 'hooks/useNotifications';
 import { mapCompositeQueryFromQuery } from 'lib/newQueryBuilder/queryBuilderMappers/mapCompositeQueryFromQuery';
-import { mapQueryDataFromApi } from 'lib/newQueryBuilder/queryBuilderMappers/mapQueryDataFromApi';
 import { ChangeEvent, useCallback, useState } from 'react';
 import { DataSource } from 'types/common/queryBuilder';
 
 import { SaveButton } from './styles';
+import { saveViewHandler } from './utils';
 
 function SaveViewWithName({
 	sourcePage,
@@ -28,7 +22,7 @@ function SaveViewWithName({
 	const { notifications } = useNotifications();
 	const compositeQuery = mapCompositeQueryFromQuery(currentQuery, panelType);
 
-	const { isLoading, mutateAsync } = useSaveView({
+	const { isLoading, mutateAsync: saveViewAsync } = useSaveView({
 		viewName: name,
 		compositeQuery,
 		sourcePage,
@@ -43,45 +37,57 @@ function SaveViewWithName({
 	);
 
 	const onSaveHandler = useCallback(async () => {
-		console.log('compositeQuery', compositeQuery);
-		try {
-			const { data } = await mutateAsync({
-				viewName: name,
-				compositeQuery,
-				sourcePage,
-				extraData: '',
-			});
+		// console.log('compositeQuery', compositeQuery);
+		// try {
+		// 	const { data } = await saveViewAsync({
+		// 		viewName: name,
+		// 		compositeQuery,
+		// 		sourcePage,
+		// 		extraData: '',
+		// 	});
 
-			refetchAllView();
-			if (!isLoading) {
-				redirectWithQueryBuilderData(mapQueryDataFromApi(compositeQuery), {
-					[queryParamNamesMap.panelTypes]: panelType,
-					[querySearchParams.viewName]: name,
-					// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-					// @ts-ignore
-					[querySearchParams.viewKey]: data.data,
-				});
-			}
-			notifications.success({
-				message: 'View Saved Successfully',
-			});
-		} catch (err) {
-			notifications.error({
-				message: axios.isAxiosError(err) ? err.message : SOMETHING_WENT_WRONG,
-			});
-		} finally {
-			handlePopOverClose();
-		}
+		// 	refetchAllView();
+		// 	if (!isLoading) {
+		// 		redirectWithQueryBuilderData(mapQueryDataFromApi(compositeQuery), {
+		// 			[queryParamNamesMap.panelTypes]: panelType,
+		// 			[querySearchParams.viewName]: name,
+		// 			// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+		// 			// @ts-ignore
+		// 			[querySearchParams.viewKey]: data.data,
+		// 		});
+		// 	}
+		// 	notifications.success({
+		// 		message: 'View Saved Successfully',
+		// 	});
+		// } catch (err) {
+		// 	notifications.error({
+		// 		message: axios.isAxiosError(err) ? err.message : SOMETHING_WENT_WRONG,
+		// 	});
+		// } finally {
+		// 	handlePopOverClose();
+		// }
+
+		saveViewHandler({
+			compositeQuery,
+			handlePopOverClose,
+			extraData: '',
+			notifications,
+			panelType,
+			redirectWithQueryBuilderData,
+			refetchAllView,
+			saveViewAsync,
+			sourcePage,
+			viewName: name,
+		});
 	}, [
 		compositeQuery,
 		handlePopOverClose,
-		isLoading,
-		mutateAsync,
 		name,
 		notifications,
 		panelType,
 		redirectWithQueryBuilderData,
 		refetchAllView,
+		saveViewAsync,
 		sourcePage,
 	]);
 
