@@ -1,18 +1,15 @@
-import { NotificationInstance } from 'antd/es/notification/interface';
 import axios from 'axios';
 import { SOMETHING_WENT_WRONG } from 'constants/api';
-import { initialQueriesMap, PANEL_TYPES } from 'constants/queryBuilder';
+import { initialQueriesMap } from 'constants/queryBuilder';
 import {
 	queryParamNamesMap,
 	querySearchParams,
 } from 'constants/queryBuilderQueryNames';
 import { mapQueryDataFromApi } from 'lib/newQueryBuilder/queryBuilderMappers/mapQueryDataFromApi';
 import { isEqual } from 'lodash-es';
-import { UseMutateAsyncFunction } from 'react-query';
-import { Query } from 'types/api/queryBuilder/queryBuilderData';
-import { DeleteViewPayloadProps } from 'types/api/saveViews/types';
 
 import {
+	DeleteViewHandlerProps,
 	GetViewDetailsUsingViewKey,
 	IsQueryUpdatedInViewProps,
 	SaveViewHandlerProps,
@@ -72,6 +69,7 @@ export const isQueryUpdatedInView = ({
 	}
 	const { query } = currentViewDetails;
 
+	// Omitting id from aggregateAttribute and groupBy
 	const updatedCurrentQuery = {
 		...stagedQuery,
 		builder: {
@@ -79,16 +77,29 @@ export const isQueryUpdatedInView = ({
 			queryData: stagedQuery?.builder.queryData.map((queryData) => {
 				const newAggregateAttribute = queryData.aggregateAttribute;
 				delete newAggregateAttribute.id;
+				const newGroupByAttributes = queryData.groupBy.map((groupByAttribute) => {
+					const newGroupByAttribute = groupByAttribute;
+					delete newGroupByAttribute.id;
+					return newGroupByAttribute;
+				});
 				return {
 					...queryData,
-					aggregateAttribute: {},
-					groupBy: [],
+					aggregateAttribute: newAggregateAttribute,
+					groupBy: newGroupByAttributes,
+					limit: queryData.limit ? queryData.limit : 0,
+					offset: queryData.offset ? queryData.offset : 0,
+					pageSize: queryData.pageSize ? queryData.pageSize : 0,
 				};
 			}),
 		},
 	};
 
-	console.log('Difference', updatedCurrentQuery.builder, query.builder);
+	console.log(
+		'Difference',
+		updatedCurrentQuery.builder,
+		query.builder,
+		isEqual(query.builder, updatedCurrentQuery?.builder),
+	);
 
 	return (
 		!isEqual(query.builder, updatedCurrentQuery?.builder) ||
@@ -164,16 +175,3 @@ export const deleteViewHandler = async ({
 		});
 	}
 };
-
-interface DeleteViewHandlerProps {
-	deleteViewAsync: UseMutateAsyncFunction<DeleteViewPayloadProps, Error, string>;
-	refetchAllView: VoidFunction;
-	redirectWithQueryBuilderData: (
-		query: Query,
-		searchParams?: Record<string, unknown> | undefined,
-	) => void;
-	notifications: NotificationInstance;
-	panelType: PANEL_TYPES | null;
-	viewKey: string;
-	viewId: string;
-}

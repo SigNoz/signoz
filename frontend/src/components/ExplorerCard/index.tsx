@@ -91,7 +91,7 @@ function ExplorerCard({
 	});
 
 	const onUpdateQueryHandler = useCallback(async () => {
-		updateQueryHandler({
+		await updateQueryHandler({
 			compositeQuery: mapCompositeQueryFromQuery(currentQuery, panelType),
 			viewKey,
 			extraData: '',
@@ -101,10 +101,12 @@ function ExplorerCard({
 			setIsQueryUpdated,
 			updateViewAsync,
 		});
+		refetchAllView();
 	}, [
 		currentQuery,
 		notifications,
 		panelType,
+		refetchAllView,
 		sourcepage,
 		updateViewAsync,
 		viewKey,

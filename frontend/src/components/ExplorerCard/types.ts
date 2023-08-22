@@ -5,13 +5,14 @@ import { UseMutateAsyncFunction } from 'react-query';
 import { ICompositeMetricQuery } from 'types/api/alerts/compositeQuery';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 import {
+	DeleteViewPayloadProps,
 	SaveViewPayloadProps,
 	SaveViewProps,
 	UpdateViewPayloadProps,
 	UpdateViewProps,
 	ViewProps,
 } from 'types/api/saveViews/types';
-import { DataSource } from 'types/common/queryBuilder';
+import { DataSource, QueryBuilderContextType } from 'types/common/queryBuilder';
 
 export interface ExplorerCardProps {
 	sourcepage: Lowercase<keyof typeof DataSource>;
@@ -75,8 +76,15 @@ export interface SaveViewHandlerProps {
 		SaveViewPayloadProps
 	>;
 	handlePopOverClose: SaveViewWithNameProps['handlePopOverClose'];
-	redirectWithQueryBuilderData: (
-		query: Query,
-		searchParams?: Record<string, unknown> | undefined,
-	) => void;
+	redirectWithQueryBuilderData: QueryBuilderContextType['redirectWithQueryBuilderData'];
+}
+
+export interface DeleteViewHandlerProps {
+	deleteViewAsync: UseMutateAsyncFunction<DeleteViewPayloadProps, Error, string>;
+	refetchAllView: MenuItemLabelGeneratorProps['refetchAllView'];
+	redirectWithQueryBuilderData: QueryBuilderContextType['redirectWithQueryBuilderData'];
+	notifications: NotificationInstance;
+	panelType: PANEL_TYPES | null;
+	viewKey: string;
+	viewId: string;
 }
