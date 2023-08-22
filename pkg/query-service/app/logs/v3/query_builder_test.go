@@ -828,36 +828,6 @@ func TestBuildLogsQuery(t *testing.T) {
 	}
 }
 
-var testGetZerosForEpochNanoData = []struct {
-	Name       string
-	Epoch      int64
-	Multiplier int64
-	Result     int64
-}{
-	{
-		Name:       "Test 1",
-		Epoch:      1680712080000,
-		Multiplier: 1000000,
-		Result:     1680712080000000000,
-	},
-	{
-		Name:       "Test 1",
-		Epoch:      1680712080000000000,
-		Multiplier: 1,
-		Result:     1680712080000000000,
-	},
-}
-
-func TestGetZerosForEpochNano(t *testing.T) {
-	for _, tt := range testGetZerosForEpochNanoData {
-		Convey("testGetZerosForEpochNanoData", t, func() {
-			multiplier := getZerosForEpochNano(tt.Epoch)
-			So(multiplier, ShouldEqual, tt.Multiplier)
-			So(tt.Epoch*multiplier, ShouldEqual, tt.Result)
-		})
-	}
-}
-
 var testOrderBy = []struct {
 	Name      string
 	PanelType v3.PanelType

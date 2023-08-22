@@ -387,3 +387,32 @@ func TestClickHouseFormattedValue(t *testing.T) {
 		})
 	}
 }
+
+var testGetEpochNanoSecsData = []struct {
+	Name       string
+	Epoch      int64
+	Multiplier int64
+	Result     int64
+}{
+	{
+		Name:   "Test 1",
+		Epoch:  1680712080000,
+		Result: 1680712080000000000,
+	},
+	{
+		Name:   "Test 1",
+		Epoch:  1680712080000000000,
+		Result: 1680712080000000000,
+	},
+}
+
+func TestGetEpochNanoSecs(t *testing.T) {
+	for _, tt := range testGetEpochNanoSecsData {
+		t.Run(tt.Name, func(t *testing.T) {
+			got := GetEpochNanoSecs(tt.Epoch)
+			if !reflect.DeepEqual(got, tt.Result) {
+				t.Errorf("ClickHouseFormattedValue() = %v, want %v", got, tt.Result)
+			}
+		})
+	}
+}
