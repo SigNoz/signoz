@@ -37,12 +37,19 @@ const convert = new Convert();
 interface RawLogViewProps {
 	isActiveLog?: boolean;
 	isReadOnly?: boolean;
+	isTextOverflowEllipsisDisabled?: boolean;
 	data: ILog;
 	linesPerRow: number;
 }
 
 function RawLogView(props: RawLogViewProps): JSX.Element {
-	const { isActiveLog = false, isReadOnly = false, data, linesPerRow } = props;
+	const {
+		isActiveLog = false,
+		isReadOnly = false,
+		data,
+		linesPerRow,
+		isTextOverflowEllipsisDisabled = false,
+	} = props;
 
 	const { isHighlighted, isLogsExplorerPage, onLogCopy } = useCopyLogLink(
 		data.id,
@@ -143,6 +150,7 @@ function RawLogView(props: RawLogViewProps): JSX.Element {
 			<RawLogContent
 				$isReadOnly={isReadOnly}
 				$isActiveLog={isActiveLog}
+				$isTextOverflowEllipsisDisabled={isTextOverflowEllipsisDisabled}
 				linesPerRow={linesPerRow}
 				dangerouslySetInnerHTML={html}
 			/>
@@ -181,6 +189,7 @@ function RawLogView(props: RawLogViewProps): JSX.Element {
 RawLogView.defaultProps = {
 	isActiveLog: false,
 	isReadOnly: false,
+	isTextOverflowEllipsisDisabled: false,
 };
 
 export default RawLogView;

@@ -35,6 +35,7 @@ interface RawLogContentProps {
 	linesPerRow: number;
 	$isReadOnly: boolean;
 	$isActiveLog: boolean;
+	$isTextOverflowEllipsisDisabled: boolean;
 }
 
 export const RawLogContent = styled.div<RawLogContentProps>`
@@ -42,12 +43,15 @@ export const RawLogContent = styled.div<RawLogContentProps>`
 	font-family: Fira Code, monospace;
 	font-weight: 300;
 
-	overflow: hidden;
-	text-overflow: ellipsis;
-	display: -webkit-box;
-	-webkit-line-clamp: ${(props): number => props.linesPerRow};
-	line-clamp: ${(props): number => props.linesPerRow};
-	-webkit-box-orient: vertical;
+	${(props): string =>
+		props.$isTextOverflowEllipsisDisabled
+			? 'white-space: nowrap'
+			: `overflow: hidden;
+		text-overflow: ellipsis; 
+		display: -webkit-box;
+		-webkit-line-clamp: ${props.linesPerRow};
+		line-clamp: ${props.linesPerRow}; 
+		-webkit-box-orient: vertical;`};
 
 	font-size: 1rem;
 	line-height: 2rem;
