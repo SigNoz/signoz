@@ -373,6 +373,7 @@ type CompositeQuery struct {
 	PromQueries       map[string]*PromQuery       `json:"promQueries,omitempty"`
 	PanelType         PanelType                   `json:"panelType"`
 	QueryType         QueryType                   `json:"queryType"`
+	Unit              string                      `json:"unit,omitempty"`
 }
 
 func (c *CompositeQuery) Validate() error {

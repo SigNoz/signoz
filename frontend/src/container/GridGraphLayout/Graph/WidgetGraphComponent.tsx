@@ -53,6 +53,7 @@ function WidgetGraphComponent({
 	setLayout,
 	onDragSelect,
 	onClickHandler,
+	threshold,
 	headerMenuList,
 }: WidgetGraphComponentProps): JSX.Element {
 	const [deleteModal, setDeleteModal] = useState(false);
@@ -279,6 +280,7 @@ function WidgetGraphComponent({
 								onClone={onCloneHandler}
 								queryResponse={queryResponse}
 								errorMessage={errorMessage}
+								threshold={threshold}
 								headerMenuList={headerMenuList}
 							/>
 						</div>
