@@ -42,7 +42,7 @@ export const latency = ({
 			: WidgetKeys.DurationNano,
 		dataType: DataType.FLOAT64,
 		isColumn: true,
-		type: isSpanMetricEnable ? null : MetricsType.Tag,
+		type: isSpanMetricEnable ? '' : MetricsType.Tag,
 	};
 
 	const autocompleteData = Array(3).fill(newAutoCompleteData);
@@ -101,21 +101,21 @@ export const apDexTracesQueryBuilderQueries = ({
 		dataType: DataType.FLOAT64,
 		isColumn: true,
 		key: '',
-		type: null,
+		type: '',
 	};
 
 	const autoCompleteDataB: BaseAutocompleteData = {
 		dataType: DataType.FLOAT64,
 		isColumn: true,
 		key: '',
-		type: null,
+		type: '',
 	};
 
 	const autoCompleteDataC: BaseAutocompleteData = {
 		dataType: DataType.FLOAT64,
 		isColumn: true,
 		key: '',
-		type: null,
+		type: '',
 	};
 
 	const filterItemA: TagFilterItem[] = [
@@ -279,21 +279,21 @@ export const apDexMetricsQueryBuilderQueries = ({
 		key: WidgetKeys.SignozLatencyCount,
 		dataType: DataType.FLOAT64,
 		isColumn: true,
-		type: null,
+		type: '',
 	};
 
 	const autoCompleteDataB: BaseAutocompleteData = {
 		key: WidgetKeys.Signoz_latency_bucket,
 		dataType: DataType.FLOAT64,
 		isColumn: true,
-		type: null,
+		type: '',
 	};
 
 	const autoCompleteDataC: BaseAutocompleteData = {
 		key: WidgetKeys.Signoz_latency_bucket,
 		dataType: DataType.FLOAT64,
 		isColumn: true,
-		type: null,
+		type: '',
 	};
 
 	const filterItemA: TagFilterItem[] = [
@@ -331,8 +331,8 @@ export const apDexMetricsQueryBuilderQueries = ({
 				isColumn: false,
 				type: MetricsType.Tag,
 			},
-			op: OPERATORS['='],
-			value: 'STATUS_CODE_UNSET',
+			op: OPERATORS['!='],
+			value: 'STATUS_CODE_ERROR',
 		},
 		{
 			id: '',
@@ -390,8 +390,8 @@ export const apDexMetricsQueryBuilderQueries = ({
 				isColumn: false,
 				type: MetricsType.Tag,
 			},
-			op: OPERATORS['='],
-			value: 'STATUS_CODE_UNSET',
+			op: OPERATORS['!='],
+			value: 'STATUS_CODE_ERROR',
 		},
 		{
 			id: '',
@@ -460,7 +460,7 @@ export const operationPerSec = ({
 			key: WidgetKeys.SignozLatencyCount,
 			dataType: DataType.FLOAT64,
 			isColumn: true,
-			type: null,
+			type: '',
 		},
 	];
 
@@ -512,13 +512,13 @@ export const errorPercentage = ({
 		key: WidgetKeys.SignozCallsTotal,
 		dataType: DataType.FLOAT64,
 		isColumn: true,
-		type: null,
+		type: '',
 	};
 	const autocompleteDataB: BaseAutocompleteData = {
 		key: WidgetKeys.SignozCallsTotal,
 		dataType: DataType.FLOAT64,
 		isColumn: true,
-		type: null,
+		type: '',
 	};
 
 	const autocompleteData = [autocompleteDataA, autocompleteDataB];

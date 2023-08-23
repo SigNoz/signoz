@@ -50,6 +50,8 @@ var tracesOperatorMappingV3 = map[v3.FilterOperator]string{
 	v3.FilterOperatorGreaterThanOrEq: ">=",
 	v3.FilterOperatorLike:            "ILIKE",
 	v3.FilterOperatorNotLike:         "NOT ILIKE",
+	v3.FilterOperatorRegex:           "match(%s, %s)",
+	v3.FilterOperatorNotRegex:        "NOT match(%s, %s)",
 	v3.FilterOperatorContains:        "ILIKE",
 	v3.FilterOperatorNotContains:     "NOT ILIKE",
 	v3.FilterOperatorExists:          "has(%s%s, '%s')",
@@ -173,7 +175,8 @@ func buildTracesFilterQuery(fs *v3.FilterSet, keys map[string]v3.AttributeKey) (
 				switch item.Operator {
 				case v3.FilterOperatorContains, v3.FilterOperatorNotContains:
 					conditions = append(conditions, fmt.Sprintf("%s %s '%%%s%%'", columnName, operator, item.Value))
-
+				case v3.FilterOperatorRegex, v3.FilterOperatorNotRegex:
+					conditions = append(conditions, fmt.Sprintf(operator, columnName, fmtVal))
 				case v3.FilterOperatorExists, v3.FilterOperatorNotExists:
 					if key.IsColumn {
 						subQuery, err := existsSubQueryForFixedColumn(key, item.Operator)
@@ -499,7 +502,13 @@ func addOffsetToQuery(query string, offset uint64) string {
 	return fmt.Sprintf("%s OFFSET %d", query, offset)
 }
 
+// PrepareTracesQuery returns the query string for traces
+// start and end are in epoch millisecond
+// step is in seconds
 func PrepareTracesQuery(start, end int64, panelType v3.PanelType, mq *v3.BuilderQuery, keys map[string]v3.AttributeKey, options Options) (string, error) {
+	// adjust the start and end time to the step interval
+	start = start - (start % (mq.StepInterval * 1000))
+	end = end - (end % (mq.StepInterval * 1000))
 	if options.GraphLimitQtype == constants.FirstQueryGraphLimit {
 		// give me just the group by names
 		query, err := buildTracesQuery(start, end, mq.StepInterval, mq, constants.SIGNOZ_SPAN_INDEX_TABLENAME, keys, panelType, options)
