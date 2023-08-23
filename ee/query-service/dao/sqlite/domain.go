@@ -90,7 +90,7 @@ func (m *modelDao) GetDomainByName(ctx context.Context, name string) (*model.Org
 
 	domain := &model.OrgDomain{Id: stored.Id, Name: stored.Name, OrgId: stored.OrgId}
 	if err := domain.LoadConfig(stored.Data); err != nil {
-		return domain, model.InternalError(err)
+		return nil, model.InternalError(err)
 	}
 	return domain, nil
 }
@@ -110,7 +110,7 @@ func (m *modelDao) GetDomain(ctx context.Context, id uuid.UUID) (*model.OrgDomai
 
 	domain := &model.OrgDomain{Id: stored.Id, Name: stored.Name, OrgId: stored.OrgId}
 	if err := domain.LoadConfig(stored.Data); err != nil {
-		return domain, model.InternalError(err)
+		return nil, model.InternalError(err)
 	}
 	return domain, nil
 }
@@ -247,7 +247,7 @@ func (m *modelDao) GetDomainByEmail(ctx context.Context, email string) (*model.O
 
 	domain := &model.OrgDomain{Id: stored.Id, Name: stored.Name, OrgId: stored.OrgId}
 	if err := domain.LoadConfig(stored.Data); err != nil {
-		return domain, model.InternalError(err)
+		return nil, model.InternalError(err)
 	}
 	return domain, nil
 }
