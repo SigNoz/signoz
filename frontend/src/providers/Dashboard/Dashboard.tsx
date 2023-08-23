@@ -8,6 +8,7 @@ import {
 	useMemo,
 	useState,
 } from 'react';
+import { Layout } from 'react-grid-layout';
 import { useQuery, UseQueryResult } from 'react-query';
 import { useSelector } from 'react-redux';
 import { useLocation, useRouteMatch } from 'react-router-dom';
@@ -23,6 +24,7 @@ const DashboardContext = createContext<IDashboardContext>({
 	dashboardResponse: {} as UseQueryResult<Dashboard, unknown>,
 	selectedDashboard: {} as Dashboard,
 	dashboardId: '',
+	layouts: [],
 });
 
 export function DashboardProvider({
@@ -34,6 +36,8 @@ export function DashboardProvider({
 		path: ROUTES.DASHBOARD,
 		exact: true,
 	});
+
+	const [layouts, setLayouts] = useState<Layout[]>([]);
 
 	const { isLoggedIn } = useSelector<AppState, AppReducer>((state) => state.app);
 
@@ -48,6 +52,9 @@ export function DashboardProvider({
 				get({
 					uuid: dashboardId,
 				}),
+			onSuccess: (data) => {
+				setLayouts(data.data.layout || []);
+			},
 		},
 	);
 
@@ -62,8 +69,9 @@ export function DashboardProvider({
 			dashboardResponse,
 			selectedDashboard: dashboardResponse.data,
 			dashboardId,
+			layouts,
 		}),
-		[isDashboardSliderOpen, dashboardResponse, dashboardId],
+		[isDashboardSliderOpen, dashboardResponse, dashboardId, layouts],
 	);
 
 	return (
