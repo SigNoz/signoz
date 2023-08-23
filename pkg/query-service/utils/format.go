@@ -7,6 +7,7 @@ import (
 	"strconv"
 	"strings"
 
+	"go.signoz.io/signoz/pkg/query-service/constants"
 	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
 	"go.uber.org/zap"
 )
@@ -228,6 +229,19 @@ func getPointerValue(v interface{}) interface{} {
 	default:
 		return v
 	}
+}
+
+func GetClickhouseColumnName(typeName string, dataType, field string) string {
+	if typeName == string(v3.AttributeKeyTypeTag) {
+		typeName = constants.Attributes
+	}
+
+	if typeName != string(v3.AttributeKeyTypeResource) {
+		typeName = typeName[:len(typeName)-1]
+	}
+
+	colName := fmt.Sprintf("%s_%s_%s", strings.ToLower(typeName), strings.ToLower(dataType), field)
+	return colName
 }
 
 // GetEpochNanoSecs takes epoch and returns it in ns
