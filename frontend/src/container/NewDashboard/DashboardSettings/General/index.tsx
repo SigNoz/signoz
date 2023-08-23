@@ -19,9 +19,10 @@ import { Button } from './styles';
 function GeneralDashboardSettings({
 	updateDashboardTitleDescriptionTags,
 }: DescriptionOfDashboardProps): JSX.Element {
-	const { dashboards } = useSelector<AppState, DashboardReducer>(
-		(state) => state.dashboards,
-	);
+	const { dashboards, generalConfigSaving } = useSelector<
+		AppState,
+		DashboardReducer
+	>((state) => state.dashboards);
 
 	const [selectedDashboard] = dashboards;
 	const selectedData = selectedDashboard.data;
@@ -83,8 +84,13 @@ function GeneralDashboardSettings({
 				</div>
 				<div>
 					<Divider />
-					<Button icon={<SaveOutlined />} onClick={onSaveHandler} type="primary">
-						{t('save')}
+					<Button
+						icon={<SaveOutlined />}
+						onClick={onSaveHandler}
+						type="primary"
+						loading={generalConfigSaving}
+					>
+						{t('saveAndClose')}
 					</Button>
 				</div>
 			</Space>

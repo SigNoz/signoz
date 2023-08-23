@@ -47,6 +47,8 @@ export const UPDATE_DASHBOARD_VARIABLES = 'UPDATE_DASHBOARD_VARIABLES';
 
 export const SET_CONFIGURE_DRAWER_VISIBLE = 'SET_CONFIGURE_DRAWER_VISIBLE';
 
+export const SET_GEN_CONFIG_SAVING = 'SET_GEN_CONFIG_SAVING';
+
 interface GetDashboard {
 	type: typeof GET_DASHBOARD;
 	payload: Dashboard;
@@ -175,6 +177,11 @@ interface SetConfigureDrawerVisible {
 	payload: boolean;
 }
 
+interface SetGeneralConfigSaving {
+	type: typeof SET_GEN_CONFIG_SAVING;
+	payload: boolean;
+}
+
 export type DashboardActions =
 	| GetDashboard
 	| UpdateDashboard
@@ -194,4 +201,5 @@ export type DashboardActions =
 	| DeleteQuery
 	| FlushDashboard
 	| UpdateDashboardVariables
-	| SetConfigureDrawerVisible;
+	| SetConfigureDrawerVisible
+	| SetGeneralConfigSaving;

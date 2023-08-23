@@ -1,7 +1,10 @@
 import update from 'api/dashboard/update';
 import { Dispatch } from 'redux';
 import AppActions from 'types/actions';
-import { SET_CONFIGURE_DRAWER_VISIBLE } from 'types/actions/dashboard';
+import {
+	SET_CONFIGURE_DRAWER_VISIBLE,
+	SET_GEN_CONFIG_SAVING,
+} from 'types/actions/dashboard';
 import { Dashboard } from 'types/api/dashboard/getAll';
 
 export const UpdateDashboardTitleDescriptionTags = ({
@@ -11,6 +14,11 @@ export const UpdateDashboardTitleDescriptionTags = ({
 ) => void) => async (dispatch: Dispatch<AppActions>): Promise<void> => {
 	try {
 		const { data } = dashboard;
+
+		dispatch({
+			type: SET_GEN_CONFIG_SAVING,
+			payload: true,
+		});
 
 		const response = await update({
 			data: {
@@ -52,6 +60,11 @@ export const UpdateDashboardTitleDescriptionTags = ({
 				errorMessage:
 					error instanceof Error ? error.toString() : 'Something went wrong',
 			},
+		});
+	} finally {
+		dispatch({
+			type: SET_GEN_CONFIG_SAVING,
+			payload: false,
 		});
 	}
 };
