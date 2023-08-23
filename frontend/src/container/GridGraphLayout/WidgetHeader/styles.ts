@@ -1,6 +1,5 @@
 import { grey } from '@ant-design/colors';
 import { Typography as TypographyComponent } from 'antd';
-import { themeColors } from 'constants/theme';
 import styled from 'styled-components';
 
 export const HeaderContainer = styled.div<{ hover: boolean }>`
@@ -46,9 +45,9 @@ export const WidgetHeaderContainer = styled.div`
 
 export const Typography = styled(TypographyComponent)`
 	&&& {
-		color: ${themeColors.white};
 		width: auto;
 		margin-left: 0.2rem;
+		color: ${grey[2]};
 	}
 `;
 

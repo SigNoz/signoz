@@ -43,7 +43,7 @@ function TextToolTip({
 	const iconOutlinedStyle = useMemo(
 		() => ({
 			...style,
-			color: isDarkMode ? themeColors.navyBlue : blue[0],
+			color: isDarkMode ? themeColors.navyBlue : blue[6],
 		}),
 		[isDarkMode],
 	);
