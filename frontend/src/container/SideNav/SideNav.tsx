@@ -4,23 +4,18 @@ import getLocalStorageKey from 'api/browser/localstorage/get';
 import { IS_SIDEBAR_COLLAPSED } from 'constants/app';
 import ROUTES from 'constants/routes';
 import history from 'lib/history';
-import {
-	ReactNode,
-	useCallback,
-	useLayoutEffect,
-	useMemo,
-	useState,
-} from 'react';
+import { useCallback, useLayoutEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useDispatch, useSelector } from 'react-redux';
 import { useLocation } from 'react-router-dom';
-import { SideBarCollapse } from 'store/actions/app';
+import { sideBarCollapse } from 'store/actions/app';
 import { AppState } from 'store/reducers';
 import AppReducer from 'types/reducer/app';
 
 import { routeConfig, styles } from './config';
 import { getQueryString } from './helper';
-import menus from './menuItems';
+import menuItems from './menuItems';
+import { SidebarItem } from './sideNav.types';
 import Slack from './Slack';
 import {
 	RedDot,
@@ -49,7 +44,7 @@ function SideNav(): JSX.Element {
 	}, []);
 
 	useLayoutEffect(() => {
-		dispatch(SideBarCollapse(collapsed));
+		dispatch(sideBarCollapse(collapsed));
 	}, [collapsed, dispatch]);
 
 	const onClickHandler = useCallback(
@@ -135,7 +130,7 @@ function SideNav(): JSX.Element {
 				selectedKeys={currentMenu ? [currentMenu] : []}
 				mode="vertical"
 				style={styles}
-				items={menus}
+				items={menuItems}
 				onClick={onClickMenuHandler}
 			/>
 			{sidebar.map((props, index) => (
@@ -156,14 +151,6 @@ function SideNav(): JSX.Element {
 			))}
 		</Sider>
 	);
-}
-
-interface SidebarItem {
-	onClick: VoidFunction;
-	icon?: ReactNode;
-	text?: ReactNode;
-	key: string;
-	label?: ReactNode;
 }
 
 export default SideNav;

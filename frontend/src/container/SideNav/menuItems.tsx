@@ -10,28 +10,12 @@ import {
 	MenuOutlined,
 	SettingOutlined,
 } from '@ant-design/icons';
-import { MenuProps, Space, Typography } from 'antd';
+import { MenuProps } from 'antd';
 import ROUTES from 'constants/routes';
-
-import { Tags } from './styles';
 
 type MenuItem = Required<MenuProps>['items'][number];
 
-export const createLabelWithTags = (
-	label: string,
-	tags: string[],
-): JSX.Element => (
-	<Space>
-		<div>{label}</div>
-		{tags.map((tag) => (
-			<Tags key={tag}>
-				<Typography.Text>{tag}</Typography.Text>
-			</Tags>
-		))}
-	</Space>
-);
-
-const menus: SidebarMenu[] = [
+const menuItems: SidebarMenu[] = [
 	{
 		key: ROUTES.APPLICATION,
 		label: 'Services',
@@ -115,4 +99,4 @@ type SidebarMenu = MenuItem & {
 	tags?: string[];
 };
 
-export default menus;
+export default menuItems;
