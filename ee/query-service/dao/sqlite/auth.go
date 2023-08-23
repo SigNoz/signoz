@@ -75,8 +75,8 @@ func (m *modelDao) PrepareSsoRedirect(ctx context.Context, redirectUri, email st
 		newUser, apiErr := m.createUserForSAMLRequest(ctx, email)
 		user = newUser
 		if apiErr != nil {
-			zap.S().Errorf(" failed to get user with email received from auth provider", apierr.Error())
-			return "", model.BadRequestStr("invalid user email received from the auth provider")
+			zap.S().Errorf("failed to create user with email received from auth provider: %v", apierr.Error())
+			return "", apiErr
 		}
 	} else {
 		user = &userPayload.User
