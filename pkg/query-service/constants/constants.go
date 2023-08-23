@@ -221,20 +221,15 @@ const (
 	UINT8                 = "Uint8"
 )
 
-var StaticInterestingLogFields = []model.LogField{
+var StaticSelectedLogFields = []model.LogField{
 	{
-		Name:     "trace_id",
-		DataType: STRING,
-		Type:     Static,
-	},
-	{
-		Name:     "span_id",
-		DataType: STRING,
-		Type:     Static,
-	},
-	{
-		Name:     "trace_flags",
+		Name:     "timestamp",
 		DataType: UINT32,
+		Type:     Static,
+	},
+	{
+		Name:     "id",
+		DataType: STRING,
 		Type:     Static,
 	},
 	{
@@ -247,16 +242,18 @@ var StaticInterestingLogFields = []model.LogField{
 		DataType: UINT8,
 		Type:     Static,
 	},
-}
-
-var StaticSelectedLogFields = []model.LogField{
 	{
-		Name:     "timestamp",
+		Name:     "trace_flags",
 		DataType: UINT32,
 		Type:     Static,
 	},
 	{
-		Name:     "id",
+		Name:     "trace_id",
+		DataType: STRING,
+		Type:     Static,
+	},
+	{
+		Name:     "span_id",
 		DataType: STRING,
 		Type:     Static,
 	},
