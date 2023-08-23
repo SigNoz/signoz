@@ -52,6 +52,7 @@ export const baseAutoCompleteIdKeysOrder: (keyof Omit<
 export const autocompleteType: Record<AutocompleteType, AutocompleteType> = {
 	resource: 'resource',
 	tag: 'tag',
+	'': '',
 };
 
 export const formulasNames: string[] = Array.from(
@@ -111,10 +112,10 @@ export const initialAutocompleteData: BaseAutocompleteData = {
 		{ dataType: null, key: '', isColumn: null, type: null },
 		baseAutoCompleteIdKeysOrder,
 	),
-	dataType: null,
+	dataType: '',
 	key: '',
-	isColumn: null,
-	type: null,
+	isColumn: false,
+	type: '',
 };
 
 export const initialFilters: TagFilter = {
@@ -260,6 +261,8 @@ export const OPERATORS = {
 	NIN: 'NOT_IN',
 	LIKE: 'LIKE',
 	NLIKE: 'NOT_LIKE',
+	REGEX: 'REGEX',
+	NREGEX: 'NOT_REGEX',
 	'=': '=',
 	'!=': '!=',
 	EXISTS: 'EXISTS',
@@ -284,6 +287,8 @@ export const QUERY_BUILDER_OPERATORS_BY_TYPES = {
 		OPERATORS.NOT_CONTAINS,
 		OPERATORS.EXISTS,
 		OPERATORS.NOT_EXISTS,
+		OPERATORS.REGEX,
+		OPERATORS.NREGEX,
 	],
 	int64: [
 		OPERATORS['='],

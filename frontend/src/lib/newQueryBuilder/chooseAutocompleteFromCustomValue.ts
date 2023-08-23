@@ -9,8 +9,9 @@ export const chooseAutocompleteFromCustomValue = (
 		(sourceAutoComplete) => value === sourceAutoComplete.key,
 	);
 
-	if (!firstBaseAutoCompleteValue)
-		return { ...initialAutocompleteData, key: value };
+	if (!firstBaseAutoCompleteValue) {
+		return { ...initialAutocompleteData, key: value, dataType: 'string' };
+	}
 
 	return firstBaseAutoCompleteValue;
 };
