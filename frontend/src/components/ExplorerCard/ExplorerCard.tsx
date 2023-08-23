@@ -15,8 +15,10 @@ import {
 	Typography,
 } from 'antd';
 import TextToolTip from 'components/TextToolTip';
-import { querySearchParams } from 'constants/queryBuilderQueryNames';
-import { useGetPanelTypesQueryParam } from 'hooks/queryBuilder/useGetPanelTypesQueryParam';
+import {
+	queryParamNamesMap,
+	querySearchParams,
+} from 'constants/queryBuilderQueryNames';
 import { useGetSearchQueryParam } from 'hooks/queryBuilder/useGetSearchQueryParam';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useGetAllViews } from 'hooks/saveViews/useGetAllViews';
@@ -52,7 +54,6 @@ function ExplorerCard({
 	const [copyUrl, setCopyUrl] = useCopyToClipboard();
 	const [isQueryUpdated, setIsQueryUpdated] = useState<boolean>(false);
 	const { notifications } = useNotifications();
-	const panelType = useGetPanelTypesQueryParam();
 
 	const onCopyUrlHandler = (): void => {
 		setCopyUrl(window.location.href);
@@ -61,6 +62,7 @@ function ExplorerCard({
 	const {
 		stagedQuery,
 		currentQuery,
+		panelType,
 		redirectWithQueryBuilderData,
 	} = useQueryBuilder();
 
@@ -139,11 +141,17 @@ function ExplorerCard({
 			});
 
 			redirectWithQueryBuilderData(query, {
+				[queryParamNamesMap.panelTypes]: panelType,
 				[querySearchParams.viewName]: name,
 				[querySearchParams.viewKey]: uuid,
 			});
 		},
-		[viewsData?.data?.data, redirectWithQueryBuilderData, currentPanelType],
+		[
+			viewsData?.data?.data,
+			redirectWithQueryBuilderData,
+			panelType,
+			currentPanelType,
+		],
 	);
 
 	useEffect(() => {
@@ -214,19 +222,15 @@ function ExplorerCard({
 							<TextToolTip
 								url={ExploreHeaderToolTip.url}
 								text={ExploreHeaderToolTip.text}
+								useFilledIcon={false}
 							/>
 						</Space>
 					</Col>
 					<OffSetCol span={10} offset={8}>
 						<Space size="large">
-							{isQueryUpdated && (
-								<Button type="primary" onClick={onUpdateQueryHandler}>
-									Updated View
-								</Button>
-							)}
 							{viewsData?.data.data && viewsData?.data.data.length && (
 								<Space>
-									<Typography.Text>Saved Views</Typography.Text>
+									{/* <Typography.Text>Saved Views</Typography.Text> */}
 									<Dropdown.Button
 										menu={menu}
 										loading={isLoading || isRefetching}
@@ -234,9 +238,18 @@ function ExplorerCard({
 										trigger={['click']}
 										overlayStyle={DropDownOverlay}
 									>
-										Select
+										Select View
 									</Dropdown.Button>
 								</Space>
+							)}
+							{isQueryUpdated && (
+								<Button
+									type="primary"
+									icon={<SaveOutlined />}
+									onClick={onUpdateQueryHandler}
+								>
+									Save changes
+								</Button>
 							)}
 							<Popover
 								placement="bottomLeft"
@@ -252,7 +265,10 @@ function ExplorerCard({
 								open={isOpen}
 								onOpenChange={handleOpenChange}
 							>
-								<Button type="primary" icon={<SaveOutlined />}>
+								<Button
+									type={isQueryUpdated ? 'default' : 'primary'}
+									icon={!isQueryUpdated && <SaveOutlined />}
+								>
 									{isQueryUpdated ? 'Save as new View' : 'Save View'}
 								</Button>
 							</Popover>
