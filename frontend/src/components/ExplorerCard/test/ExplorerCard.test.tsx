@@ -69,7 +69,7 @@ describe('ExplorerCard', () => {
 		const screen = render(
 			<ExplorerCard sourcepage="traces">Mock Children</ExplorerCard>,
 		);
-		const selectButton = screen.getByText('Select');
+		const selectButton = screen.getByText('Select View');
 
 		fireEvent.click(selectButton);
 
