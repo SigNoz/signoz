@@ -7,6 +7,8 @@ export interface ErrorResponse {
 	message: null;
 }
 
+export type ApiResponse<T> = { data: T };
+
 export interface SuccessResponse<T, P = unknown> {
 	statusCode: SuccessStatusCode;
 	message: string;

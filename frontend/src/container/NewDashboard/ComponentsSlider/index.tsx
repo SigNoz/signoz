@@ -4,7 +4,7 @@ import { useUpdateDashboard } from 'hooks/dashboard/useUpdateDashboard';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import createQueryParams from 'lib/createQueryParams';
 import history from 'lib/history';
-import { useDashboard } from 'providers/Dashboard';
+import { useDashboard } from 'providers/Dashboard/Dashboard';
 import { CSSProperties, useCallback } from 'react';
 import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';

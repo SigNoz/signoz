@@ -2,6 +2,7 @@ import { Row } from 'antd';
 import { NotificationInstance } from 'antd/es/notification/interface';
 import { useNotifications } from 'hooks/useNotifications';
 import { map, sortBy } from 'lodash-es';
+import { useDashboard } from 'providers/Dashboard/Dashboard';
 import { useState } from 'react';
 import { connect, useSelector } from 'react-redux';
 import { bindActionCreators, Dispatch } from 'redux';
@@ -11,20 +12,17 @@ import { AppState } from 'store/reducers';
 import AppActions from 'types/actions';
 import { IDashboardVariable } from 'types/api/dashboard/getAll';
 import AppReducer from 'types/reducer/app';
-import DashboardReducer from 'types/reducer/dashboards';
 
 import VariableItem from './VariableItem';
 
 function DashboardVariableSelection({
 	updateDashboardVariables,
-}: DispatchProps): JSX.Element {
-	const { dashboards } = useSelector<AppState, DashboardReducer>(
-		(state) => state.dashboards,
-	);
-	const [selectedDashboard] = dashboards;
-	const {
-		data: { variables = {} },
-	} = selectedDashboard;
+}: DispatchProps): JSX.Element | null {
+	const { selectedDashboard } = useDashboard();
+
+	const { data } = selectedDashboard || {};
+
+	const { variables } = data || {};
 
 	const [update, setUpdate] = useState<boolean>(false);
 	const [lastUpdatedVar, setLastUpdatedVar] = useState<string>('');
@@ -62,6 +60,10 @@ function DashboardVariableSelection({
 		}
 		onVarChanged(name);
 	};
+
+	if (!variables) {
+		return null;
+	}
 
 	return (
 		<Row style={{ gap: '1rem' }}>

@@ -6,7 +6,7 @@ import { useThemeConfig } from 'hooks/useDarkMode';
 import { NotificationProvider } from 'hooks/useNotifications';
 import { ResourceProvider } from 'hooks/useResourceAttribute';
 import history from 'lib/history';
-import { DashboardProvider } from 'providers/Dashboard';
+import { DashboardProvider } from 'providers/Dashboard/Dashboard';
 import { QueryBuilderProvider } from 'providers/QueryBuilder';
 import { Suspense } from 'react';
 import { Route, Router, Switch } from 'react-router-dom';

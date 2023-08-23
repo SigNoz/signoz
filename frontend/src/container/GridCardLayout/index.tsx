@@ -1,24 +1,18 @@
 import { PANEL_TYPES } from 'constants/queryBuilder';
-import { useDashboard } from 'providers/Dashboard';
+import { useDashboard } from 'providers/Dashboard/Dashboard';
 import { useCallback, useState } from 'react';
 import { Layout } from 'react-grid-layout';
-import { useSelector } from 'react-redux';
-import { AppState } from 'store/reducers';
-import DashboardReducer from 'types/reducer/dashboards';
 
 import GraphLayoutContainer from './GridCardLayout';
 
 function GridGraph(): JSX.Element {
-	const { dashboards } = useSelector<AppState, DashboardReducer>(
-		(state) => state.dashboards,
-	);
+	const { selectedDashboard } = useDashboard();
 
-	const [selectedDashboard] = dashboards;
-	const { data } = selectedDashboard;
-	const { widgets } = data;
+	const { data } = selectedDashboard || {};
+	const { widgets } = data || {};
 
 	const [layouts, setLayout] = useState<Layout[]>(
-		selectedDashboard.data.layout || [],
+		selectedDashboard?.data?.layout || [],
 	);
 
 	const { handleToggleDashboardSlider } = useDashboard();
