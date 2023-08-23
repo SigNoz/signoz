@@ -46,15 +46,27 @@ func (m *modelDao) GetDomainFromSsoResponse(ctx context.Context, relayState *url
 	}
 
 	if domainIdStr != "" {
-		domainId, _ := uuid.Parse(domainIdStr)
-		domain, _ = m.GetDomain(ctx, domainId)
+		domainId, err := uuid.Parse(domainIdStr)
+		if err != nil {
+			zap.S().Errorf("failed to parse domainId from relay state", err)
+			return nil, fmt.Errorf("failed to parse domainId from IdP response")
+		}
 
+		domain, err = m.GetDomain(ctx, domainId)
+		if (err != nil) || domain == nil {
+			zap.S().Errorf("failed to find domain from domainId received in IdP response", err.Error())
+			return nil, fmt.Errorf("invalid credentials")
+		}
 	}
 
 	if domainNameStr != "" {
 
-		domain, _ = m.GetDomainByName(ctx, domainNameStr)
-
+		domainFromDB, err := m.GetDomainByName(ctx, domainNameStr)
+		domain = domainFromDB
+		if (err != nil) || domain == nil {
+			zap.S().Errorf("failed to find domain from domainName received in IdP response", err.Error())
+			return nil, fmt.Errorf("invalid credentials")
+		}
 	}
 	if domain != nil {
 		return domain, nil
