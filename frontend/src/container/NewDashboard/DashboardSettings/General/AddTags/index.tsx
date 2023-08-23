@@ -1,9 +1,14 @@
 import { PlusOutlined } from '@ant-design/icons';
-import { Col, Tooltip, Typography } from 'antd';
-import Input from 'components/Input';
+import { Tooltip } from 'antd';
 import { Dispatch, SetStateAction, useState } from 'react';
 
-import { InputContainer, NewTagContainer, TagsContainer } from './styles';
+import {
+	InputContainer,
+	NewTagContainer,
+	StyledInput,
+	StyledTag,
+	TagsContainer,
+} from './styles';
 
 function AddTags({ tags, setTags }: AddTagsProps): JSX.Element {
 	const [inputValue, setInputValue] = useState<string>('');
@@ -48,24 +53,26 @@ function AddTags({ tags, setTags }: AddTagsProps): JSX.Element {
 			{tags.map((tag, index) => {
 				if (editInputIndex === index) {
 					return (
-						<Col key={tag} lg={4}>
-							<Input
+						<InputContainer key={tag} lg={4}>
+							<StyledInput
+								type="text"
 								size="small"
 								value={editInputValue}
-								onChangeHandler={(event): void =>
+								autoFocus
+								onChange={(event): void =>
 									onChangeHandler(event.target.value, setEditInputValue)
 								}
-								onBlurHandler={handleEditInputConfirm}
-								onPressEnterHandler={handleEditInputConfirm}
+								onBlur={handleEditInputConfirm}
+								onPressEnter={handleEditInputConfirm}
 							/>
-						</Col>
+						</InputContainer>
 					);
 				}
 
 				const isLongTag = tag.length > 20;
 
 				const tagElem = (
-					<NewTagContainer closable key={tag} onClose={(): void => handleClose(tag)}>
+					<StyledTag closable key={tag} onClose={(): void => handleClose(tag)}>
 						<span
 							onDoubleClick={(e): void => {
 								setEditInputIndex(index);
@@ -75,7 +82,7 @@ function AddTags({ tags, setTags }: AddTagsProps): JSX.Element {
 						>
 							{isLongTag ? `${tag.slice(0, 20)}...` : tag}
 						</span>
-					</NewTagContainer>
+					</StyledTag>
 				);
 
 				return isLongTag ? (
@@ -89,22 +96,23 @@ function AddTags({ tags, setTags }: AddTagsProps): JSX.Element {
 
 			{inputVisible && (
 				<InputContainer lg={4}>
-					<Input
+					<StyledInput
 						type="text"
 						size="small"
 						value={inputValue}
-						onChangeHandler={(event): void =>
+						autoFocus
+						onChange={(event): void =>
 							onChangeHandler(event.target.value, setInputValue)
 						}
-						onBlurHandler={handleInputConfirm}
-						onPressEnterHandler={handleInputConfirm}
+						onBlur={handleInputConfirm}
+						onPressEnter={handleInputConfirm}
 					/>
 				</InputContainer>
 			)}
 
 			{!inputVisible && (
 				<NewTagContainer icon={<PlusOutlined />} onClick={showInput}>
-					<Typography>New Tag</Typography>
+					<span>New Tag</span>
 				</NewTagContainer>
 			)}
 		</TagsContainer>
