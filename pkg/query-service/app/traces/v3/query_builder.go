@@ -502,7 +502,13 @@ func addOffsetToQuery(query string, offset uint64) string {
 	return fmt.Sprintf("%s OFFSET %d", query, offset)
 }
 
+// PrepareTracesQuery returns the query string for traces
+// start and end are in epoch millisecond
+// step is in seconds
 func PrepareTracesQuery(start, end int64, panelType v3.PanelType, mq *v3.BuilderQuery, keys map[string]v3.AttributeKey, options Options) (string, error) {
+	// adjust the start and end time to the step interval
+	start = start - (start % (mq.StepInterval * 1000))
+	end = end - (end % (mq.StepInterval * 1000))
 	if options.GraphLimitQtype == constants.FirstQueryGraphLimit {
 		// give me just the group by names
 		query, err := buildTracesQuery(start, end, mq.StepInterval, mq, constants.SIGNOZ_SPAN_INDEX_TABLENAME, keys, panelType, options)
