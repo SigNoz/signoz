@@ -17,6 +17,7 @@ import { DataSource, QueryBuilderContextType } from 'types/common/queryBuilder';
 export interface ExplorerCardProps {
 	sourcepage: Lowercase<keyof typeof DataSource>;
 	children: React.ReactNode;
+	currentPanelType?: PANEL_TYPES;
 }
 
 export type GetViewDetailsUsingViewKey = (

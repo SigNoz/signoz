@@ -46,6 +46,7 @@ import {
 function ExplorerCard({
 	sourcepage,
 	children,
+	currentPanelType,
 }: ExplorerCardProps): JSX.Element {
 	const [isOpen, setIsOpen] = useState<boolean>(false);
 	const [copyUrl, setCopyUrl] = useCopyToClipboard();
@@ -126,12 +127,23 @@ function ExplorerCard({
 			if (!currentViewDetails) return;
 			const { query, name, uuid } = currentViewDetails;
 
+			// AffregateOperator should be noop for list and trace Panel Type and count for graph and table Panel Type.
+			query.builder.queryData = query.builder.queryData.map((item) => {
+				const newItem = item;
+				if (currentPanelType === 'list' || currentPanelType === 'trace') {
+					newItem.aggregateOperator = 'noop';
+				} else {
+					newItem.aggregateOperator = 'count';
+				}
+				return newItem;
+			});
+
 			redirectWithQueryBuilderData(query, {
 				[querySearchParams.viewName]: name,
 				[querySearchParams.viewKey]: uuid,
 			});
 		},
-		[viewsData?.data?.data, redirectWithQueryBuilderData],
+		[viewsData?.data?.data, redirectWithQueryBuilderData, currentPanelType],
 	);
 
 	useEffect(() => {
