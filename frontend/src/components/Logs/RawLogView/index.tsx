@@ -21,8 +21,6 @@ import {
 	useMemo,
 	useState,
 } from 'react';
-// interfaces
-import { ILog } from 'types/api/logs/log';
 
 // styles
 import {
@@ -31,16 +29,9 @@ import {
 	RawLogContent,
 	RawLogViewContainer,
 } from './styles';
+import { RawLogViewProps } from './types';
 
 const convert = new Convert();
-
-interface RawLogViewProps {
-	isActiveLog?: boolean;
-	isReadOnly?: boolean;
-	isTextOverflowEllipsisDisabled?: boolean;
-	data: ILog;
-	linesPerRow: number;
-}
 
 function RawLogView({
 	isActiveLog,

@@ -3,6 +3,8 @@ import { Col, Row, Space } from 'antd';
 import styled from 'styled-components';
 import { getActiveLogBackground, getDefaultLogBackground } from 'utils/logs';
 
+import { RawLogContentProps } from './types';
+
 export const RawLogViewContainer = styled(Row)<{
 	$isDarkMode: boolean;
 	$isReadOnly?: boolean;
@@ -30,13 +32,6 @@ export const ExpandIconWrapper = styled(Col)`
 	cursor: pointer;
 	font-size: 12px;
 `;
-
-interface RawLogContentProps {
-	linesPerRow: number;
-	$isReadOnly?: boolean;
-	$isActiveLog?: boolean;
-	$isTextOverflowEllipsisDisabled?: boolean;
-}
 
 export const RawLogContent = styled.div<RawLogContentProps>`
 	margin-bottom: 0;
