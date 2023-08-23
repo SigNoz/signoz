@@ -63,7 +63,7 @@ func (m *modelDao) GetDomainFromSsoResponse(ctx context.Context, relayState *url
 	return nil, fmt.Errorf("failed to find domain received in IdP response")
 }
 
-// GetDomain returns org domain for a given domain id
+// GetDomainByName returns org domain for a given domain name
 func (m *modelDao) GetDomainByName(ctx context.Context, name string) (*model.OrgDomain, basemodel.BaseApiError) {
 
 	stored := StoredDomain{}
