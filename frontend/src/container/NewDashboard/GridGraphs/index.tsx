@@ -1,4 +1,4 @@
-import GridGraphLayout from 'container/GridGraphLayout';
+import GridGraphLayout from 'container/GridCardLayout';
 import ComponentsSlider from 'container/NewDashboard/ComponentsSlider';
 import { useDashboard } from 'providers/Dashboard';
 

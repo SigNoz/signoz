@@ -11,7 +11,7 @@ import { Dashboard, Widgets } from 'types/api/dashboard/getAll';
 import AppReducer from 'types/reducer/app';
 import DashboardReducer from 'types/reducer/dashboards';
 
-import Graph from './Graph';
+import GridCard from './GridCard';
 import {
 	Button,
 	ButtonContainer,
@@ -116,7 +116,7 @@ function GraphLayout({
 					return (
 						<CardContainer isDarkMode={isDarkMode} key={rest.i} data-grid={rest}>
 							<Card $panelType={currentWidget?.panelTypes || PANEL_TYPES.TIME_SERIES}>
-								<Graph
+								<GridCard
 									widget={currentWidget || ({ id: rest.i } as Widgets)}
 									name={currentWidget?.id || ''}
 									headerMenuList={[

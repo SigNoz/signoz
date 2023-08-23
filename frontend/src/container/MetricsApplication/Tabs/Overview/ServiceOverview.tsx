@@ -1,7 +1,7 @@
 import Spinner from 'components/Spinner';
 import { FeatureKeys } from 'constants/features';
 import { PANEL_TYPES } from 'constants/queryBuilder';
-import Graph from 'container/GridGraphLayout/Graph/';
+import Graph from 'container/GridCardLayout/GridCard';
 import { GraphTitle } from 'container/MetricsApplication/constant';
 import { getWidgetQueryBuilder } from 'container/MetricsApplication/MetricsApplication.factory';
 import { latency } from 'container/MetricsApplication/MetricsPageQueries/OverviewQueries';

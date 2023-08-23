@@ -1,6 +1,6 @@
 import { Col } from 'antd';
 import { PANEL_TYPES } from 'constants/queryBuilder';
-import Graph from 'container/GridGraphLayout/Graph/';
+import Graph from 'container/GridCardLayout/GridCard';
 import {
 	externalCallDuration,
 	externalCallDurationByAddress,

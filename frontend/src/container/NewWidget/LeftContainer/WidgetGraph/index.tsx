@@ -1,5 +1,5 @@
 import { InfoCircleOutlined } from '@ant-design/icons';
-import { Card } from 'container/GridGraphLayout/styles';
+import { Card } from 'container/GridCardLayout/styles';
 import { useGetWidgetQueryRange } from 'hooks/queryBuilder/useGetWidgetQueryRange';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { memo } from 'react';

@@ -2,7 +2,7 @@ import { Typography } from 'antd';
 import axios from 'axios';
 import Spinner from 'components/Spinner';
 import { SOMETHING_WENT_WRONG } from 'constants/api';
-import Graph from 'container/GridGraphLayout/Graph/';
+import Graph from 'container/GridCardLayout/GridCard';
 import { Card, GraphContainer } from 'container/MetricsApplication/styles';
 import { Widgets } from 'types/api/dashboard/getAll';
 

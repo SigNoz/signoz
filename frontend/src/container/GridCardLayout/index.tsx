@@ -6,7 +6,7 @@ import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
 import DashboardReducer from 'types/reducer/dashboards';
 
-import GraphLayoutContainer from './GraphLayout';
+import GraphLayoutContainer from './GridCardLayout';
 
 function GridGraph(): JSX.Element {
 	const { dashboards } = useSelector<AppState, DashboardReducer>(
