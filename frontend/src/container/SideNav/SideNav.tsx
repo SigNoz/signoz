@@ -103,16 +103,10 @@ function SideNav(): JSX.Element {
 		},
 	];
 
-	const currentMenu = useMemo(() => {
-		const routeKeys = Object.keys(ROUTES) as (keyof typeof ROUTES)[];
-		const currentRouteKey = routeKeys.find((key) => {
-			const route = ROUTES[key];
-			return pathname === route;
-		});
-
-		if (!currentRouteKey) return null;
-
-		return ROUTES[currentRouteKey];
+	const activeMenuKey = useMemo(() => {
+		const basePath = pathname?.split('/')?.[1]; // Get the base path, Eg; /dashboard/dc5beb63-589c-46a3-ad4c-1b9ca248ee33 -> /dashboard
+		if (basePath) return `/${basePath}`;
+		return null;
 	}, [pathname]);
 
 	const sidebarItems = (props: SidebarItem, index: number): SidebarItem => ({
@@ -127,7 +121,7 @@ function SideNav(): JSX.Element {
 			<Menu
 				theme="dark"
 				defaultSelectedKeys={[ROUTES.APPLICATION]}
-				selectedKeys={currentMenu ? [currentMenu] : []}
+				selectedKeys={activeMenuKey ? [activeMenuKey] : []}
 				mode="vertical"
 				style={styles}
 				items={menuItems}
@@ -142,7 +136,7 @@ function SideNav(): JSX.Element {
 					<Menu
 						theme="dark"
 						defaultSelectedKeys={[ROUTES.APPLICATION]}
-						selectedKeys={currentMenu ? [currentMenu] : []}
+						selectedKeys={activeMenuKey ? [activeMenuKey] : []}
 						mode="inline"
 						style={styles}
 						items={[sidebarItems(props, index)]}
