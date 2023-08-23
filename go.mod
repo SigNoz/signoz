@@ -33,7 +33,7 @@ require (
 	github.com/prometheus/common v0.39.0
 	github.com/prometheus/prometheus v2.5.0+incompatible
 	github.com/rs/cors v1.8.2
-	github.com/russellhaering/gosaml2 v0.8.0
+	github.com/russellhaering/gosaml2 v0.9.0
 	github.com/russellhaering/goxmldsig v1.2.0
 	github.com/samber/lo v1.38.1
 	github.com/sethvargo/go-password v0.2.0
