@@ -7,7 +7,7 @@ require (
 	github.com/SigNoz/govaluate v0.0.0-20220522085550-d19c08c206cb
 	github.com/SigNoz/zap_otlp/zap_otlp_encoder v0.0.0-20230523034029-2b7ff773052c
 	github.com/SigNoz/zap_otlp/zap_otlp_sync v0.0.0-20230517094211-cd3f3f0aea85
-	github.com/antonmedv/expr v1.12.4
+	github.com/antonmedv/expr v1.13.0
 	github.com/coreos/go-oidc/v3 v3.4.0
 	github.com/dustin/go-humanize v1.0.1
 	github.com/go-co-op/gocron v1.30.1

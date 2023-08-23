@@ -8,9 +8,10 @@ import (
 )
 
 var testCases = []struct {
-	Name  string
-	Query *v3.FilterSet
-	Expr  string
+	Name        string
+	Query       *v3.FilterSet
+	Expr        string
+	ExpectError bool
 }{
 	{
 		Name: "equal",
@@ -84,18 +85,26 @@ var testCases = []struct {
 		Expr: "body not matches '[0-1]+regex$'",
 	},
 	{
+		Name: "invalid regex",
+		Query: &v3.FilterSet{Operator: "AND", Items: []v3.FilterItem{
+			{Key: v3.AttributeKey{Key: "body", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeUnspecified, IsColumn: true}, Value: "[0-9]++", Operator: "nregex"},
+		}},
+		Expr:        "body not matches '[0-9]++",
+		ExpectError: true,
+	},
+	{
 		Name: "in",
 		Query: &v3.FilterSet{Operator: "AND", Items: []v3.FilterItem{
 			{Key: v3.AttributeKey{Key: "key", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag}, Value: []interface{}{1, 2, 3, 4}, Operator: "in"},
 		}},
-		Expr: "attributes.key in list[1,2,3,4]",
+		Expr: "attributes.key in [1,2,3,4]",
 	},
 	{
 		Name: "not in",
 		Query: &v3.FilterSet{Operator: "AND", Items: []v3.FilterItem{
 			{Key: v3.AttributeKey{Key: "key", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag}, Value: []interface{}{"1", "2"}, Operator: "nin"},
 		}},
-		Expr: "attributes.key not in list['1','2']",
+		Expr: "attributes.key not in ['1','2']",
 	},
 	{
 		Name: "exists",
@@ -111,14 +120,37 @@ var testCases = []struct {
 		}},
 		Expr: "'key' not in attributes",
 	},
+	{
+		Name: "Multi filter",
+		Query: &v3.FilterSet{Operator: "AND", Items: []v3.FilterItem{
+			{Key: v3.AttributeKey{Key: "key", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag}, Value: 10, Operator: "<="},
+			{Key: v3.AttributeKey{Key: "body", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeUnspecified, IsColumn: true}, Value: "[0-1]+regex$", Operator: "nregex"},
+			{Key: v3.AttributeKey{Key: "key", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag}, Operator: "nexists"},
+		}},
+		Expr: "attributes.key <= 10 and body not matches '[0-1]+regex$' and 'key' not in attributes",
+	},
+	{
+		Name: "incorrect multi filter",
+		Query: &v3.FilterSet{Operator: "AND", Items: []v3.FilterItem{
+			{Key: v3.AttributeKey{Key: "key", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag}, Value: 10, Operator: "<="},
+			{Key: v3.AttributeKey{Key: "body", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeUnspecified, IsColumn: true}, Value: "[0-9]++", Operator: "nregex"},
+			{Key: v3.AttributeKey{Key: "key", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag}, Operator: "nexists"},
+		}},
+		Expr:        "attributes.key <= 10 and body not matches '[0-9]++' and 'key' not in attributes",
+		ExpectError: true,
+	},
 }
 
 func TestParse(t *testing.T) {
 	for _, tt := range testCases {
 		Convey(tt.Name, t, func() {
 			x, err := Parse(tt.Query)
-			So(err, ShouldBeNil)
-			So(x, ShouldEqual, tt.Expr)
+			if tt.ExpectError {
+				So(err, ShouldNotBeNil)
+			} else {
+				So(err, ShouldBeNil)
+				So(x, ShouldEqual, tt.Expr)
+			}
 		})
 	}
 }

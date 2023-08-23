@@ -5,6 +5,7 @@ import (
 	"reflect"
 	"strings"
 
+	expr "github.com/antonmedv/expr"
 	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
 	"go.uber.org/zap"
 )
@@ -23,17 +24,15 @@ var logOperatorsToExpr = map[v3.FilterOperator]string{
 	v3.FilterOperatorLessThanOrEq:    "<=",
 	v3.FilterOperatorGreaterThan:     ">",
 	v3.FilterOperatorGreaterThanOrEq: ">=",
-	// v3.FilterOperatorLike:            "ILIKE",
-	// v3.FilterOperatorNotLike:         "NOT ILIKE",
-	v3.FilterOperatorContains:    "contains",
-	v3.FilterOperatorNotContains: "not contains",
-	v3.FilterOperatorRegex:       "matches",
-	v3.FilterOperatorNotRegex:    "not matches",
-	v3.FilterOperatorIn:          "in",
-	v3.FilterOperatorNotIn:       "not in",
-	v3.FilterOperatorExists:      "in",
-	v3.FilterOperatorNotExists:   "not in",
-	// (todo) check contains/not contains/
+	v3.FilterOperatorContains:        "contains",
+	v3.FilterOperatorNotContains:     "not contains",
+	v3.FilterOperatorRegex:           "matches",
+	v3.FilterOperatorNotRegex:        "not matches",
+	v3.FilterOperatorIn:              "in",
+	v3.FilterOperatorNotIn:           "not in",
+	v3.FilterOperatorExists:          "in",
+	v3.FilterOperatorNotExists:       "not in",
+	// we dont support like and nlike as of now.
 }
 
 func getName(v v3.AttributeKey) string {
@@ -64,17 +63,32 @@ func Parse(filters *v3.FilterSet) (string, error) {
 		name := getName(v.Key)
 		var filter string
 		switch v.Operator {
-		case v3.FilterOperatorIn, v3.FilterOperatorNotIn:
-			filter = fmt.Sprintf("%s %s list%s", name, logOperatorsToExpr[v.Operator], exprFormattedValue(v.Value))
+		// uncomment following lines when new version of expr is used
+		// case v3.FilterOperatorIn, v3.FilterOperatorNotIn:
+		// 	filter = fmt.Sprintf("%s %s list%s", name, logOperatorsToExpr[v.Operator], exprFormattedValue(v.Value))
+
 		case v3.FilterOperatorExists, v3.FilterOperatorNotExists:
 			filter = fmt.Sprintf("%s %s %s", exprFormattedValue(v.Key.Key), logOperatorsToExpr[v.Operator], getTypeName(v.Key.Type))
 		default:
 			filter = fmt.Sprintf("%s %s %s", name, logOperatorsToExpr[v.Operator], exprFormattedValue(v.Value))
 		}
+
+		// check if the filter is a correct expression language
+		_, err := expr.Compile(filter)
+		if err != nil {
+			return "", err
+		}
 		res = append(res, filter)
 	}
 
-	return strings.Join(res, filters.Operator), nil
+	// check the final filter
+	q := strings.Join(res, " "+strings.ToLower(filters.Operator)+" ")
+	_, err := expr.Compile(q)
+	if err != nil {
+		return "", err
+	}
+
+	return q, nil
 }
 
 func exprFormattedValue(v interface{}) string {
