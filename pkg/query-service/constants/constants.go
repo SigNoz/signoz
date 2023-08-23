@@ -3,6 +3,7 @@ package constants
 import (
 	"os"
 	"strconv"
+	"testing"
 	"time"
 
 	"go.signoz.io/signoz/pkg/query-service/model"
@@ -21,6 +22,10 @@ var ConfigSignozIo = "https://config.signoz.io/api/v1"
 var DEFAULT_TELEMETRY_ANONYMOUS = false
 
 func IsTelemetryEnabled() bool {
+	if testing.Testing() {
+		return false
+	}
+
 	isTelemetryEnabledStr := os.Getenv("TELEMETRY_ENABLED")
 	isTelemetryEnabledBool, err := strconv.ParseBool(isTelemetryEnabledStr)
 	if err != nil {
@@ -216,20 +221,15 @@ const (
 	UINT8                 = "Uint8"
 )
 
-var StaticInterestingLogFields = []model.LogField{
+var StaticSelectedLogFields = []model.LogField{
 	{
-		Name:     "trace_id",
-		DataType: STRING,
-		Type:     Static,
-	},
-	{
-		Name:     "span_id",
-		DataType: STRING,
-		Type:     Static,
-	},
-	{
-		Name:     "trace_flags",
+		Name:     "timestamp",
 		DataType: UINT32,
+		Type:     Static,
+	},
+	{
+		Name:     "id",
+		DataType: STRING,
 		Type:     Static,
 	},
 	{
@@ -242,16 +242,18 @@ var StaticInterestingLogFields = []model.LogField{
 		DataType: UINT8,
 		Type:     Static,
 	},
-}
-
-var StaticSelectedLogFields = []model.LogField{
 	{
-		Name:     "timestamp",
+		Name:     "trace_flags",
 		DataType: UINT32,
 		Type:     Static,
 	},
 	{
-		Name:     "id",
+		Name:     "trace_id",
+		DataType: STRING,
+		Type:     Static,
+	},
+	{
+		Name:     "span_id",
 		DataType: STRING,
 		Type:     Static,
 	},
