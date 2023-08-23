@@ -3,6 +3,7 @@ package constants
 import (
 	"os"
 	"strconv"
+	"testing"
 	"time"
 
 	"go.signoz.io/signoz/pkg/query-service/model"
@@ -21,6 +22,10 @@ var ConfigSignozIo = "https://config.signoz.io/api/v1"
 var DEFAULT_TELEMETRY_ANONYMOUS = false
 
 func IsTelemetryEnabled() bool {
+	if testing.Testing() {
+		return false
+	}
+
 	isTelemetryEnabledStr := os.Getenv("TELEMETRY_ENABLED")
 	isTelemetryEnabledBool, err := strconv.ParseBool(isTelemetryEnabledStr)
 	if err != nil {
