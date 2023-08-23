@@ -45,6 +45,8 @@ export const DELETE_QUERY = 'DELETE_QUERY';
 export const FLUSH_DASHBOARD = 'FLUSH_DASHBOARD';
 export const UPDATE_DASHBOARD_VARIABLES = 'UPDATE_DASHBOARD_VARIABLES';
 
+export const SET_CONFIGURE_DRAWER_VISIBLE = 'SET_CONFIGURE_DRAWER_VISIBLE';
+
 interface GetDashboard {
 	type: typeof GET_DASHBOARD;
 	payload: Dashboard;
@@ -168,6 +170,11 @@ interface UpdateDashboardVariables {
 	payload: Record<string, IDashboardVariable>;
 }
 
+interface SetConfigureDrawerVisible {
+	type: typeof SET_CONFIGURE_DRAWER_VISIBLE;
+	payload: boolean;
+}
+
 export type DashboardActions =
 	| GetDashboard
 	| UpdateDashboard
@@ -186,4 +193,5 @@ export type DashboardActions =
 	| UpdateQuery
 	| DeleteQuery
 	| FlushDashboard
-	| UpdateDashboardVariables;
+	| UpdateDashboardVariables
+	| SetConfigureDrawerVisible;

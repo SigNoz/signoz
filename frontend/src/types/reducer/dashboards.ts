@@ -7,4 +7,5 @@ export default interface DashboardReducer {
 	errorMessage: string;
 	isEditMode: boolean;
 	isAddWidget: boolean;
+	isConfigureDrawerVisible: boolean;
 }

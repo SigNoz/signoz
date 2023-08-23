@@ -1,6 +1,7 @@
 import update from 'api/dashboard/update';
 import { Dispatch } from 'redux';
 import AppActions from 'types/actions';
+import { SET_CONFIGURE_DRAWER_VISIBLE } from 'types/actions/dashboard';
 import { Dashboard } from 'types/api/dashboard/getAll';
 
 export const UpdateDashboardTitleDescriptionTags = ({
@@ -30,6 +31,11 @@ export const UpdateDashboardTitleDescriptionTags = ({
 			});
 			dispatch({
 				type: 'TOGGLE_EDIT_MODE',
+			});
+
+			dispatch({
+				type: SET_CONFIGURE_DRAWER_VISIBLE,
+				payload: false,
 			});
 		} else {
 			dispatch({
