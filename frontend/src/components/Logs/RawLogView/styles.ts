@@ -5,8 +5,8 @@ import { getActiveLogBackground, getDefaultLogBackground } from 'utils/logs';
 
 export const RawLogViewContainer = styled(Row)<{
 	$isDarkMode: boolean;
-	$isReadOnly: boolean;
-	$isActiveLog: boolean;
+	$isReadOnly?: boolean;
+	$isActiveLog?: boolean;
 }>`
 	position: relative;
 	width: 100%;
@@ -33,9 +33,9 @@ export const ExpandIconWrapper = styled(Col)`
 
 interface RawLogContentProps {
 	linesPerRow: number;
-	$isReadOnly: boolean;
-	$isActiveLog: boolean;
-	$isTextOverflowEllipsisDisabled: boolean;
+	$isReadOnly?: boolean;
+	$isActiveLog?: boolean;
+	$isTextOverflowEllipsisDisabled?: boolean;
 }
 
 export const RawLogContent = styled.div<RawLogContentProps>`
@@ -43,24 +43,24 @@ export const RawLogContent = styled.div<RawLogContentProps>`
 	font-family: Fira Code, monospace;
 	font-weight: 300;
 
-	${(props): string =>
-		props.$isTextOverflowEllipsisDisabled
+	${({ $isTextOverflowEllipsisDisabled, linesPerRow }): string =>
+		$isTextOverflowEllipsisDisabled
 			? 'white-space: nowrap'
 			: `overflow: hidden;
 		text-overflow: ellipsis; 
 		display: -webkit-box;
-		-webkit-line-clamp: ${props.linesPerRow};
-		line-clamp: ${props.linesPerRow}; 
+		-webkit-line-clamp: ${linesPerRow};
+		line-clamp: ${linesPerRow}; 
 		-webkit-box-orient: vertical;`};
 
 	font-size: 1rem;
 	line-height: 2rem;
 
-	cursor: ${(props): string =>
-		props.$isActiveLog || props.$isReadOnly ? 'initial' : 'pointer'};
+	cursor: ${({ $isActiveLog, $isReadOnly }): string =>
+		$isActiveLog || $isReadOnly ? 'initial' : 'pointer'};
 
-	${(props): string =>
-		props.$isReadOnly && !props.$isActiveLog ? 'padding: 0 1.5rem;' : ''}
+	${({ $isActiveLog, $isReadOnly }): string =>
+		$isReadOnly && $isActiveLog ? 'padding: 0 1.5rem;' : ''}
 `;
 
 export const ActionButtonsWrapper = styled(Space)`

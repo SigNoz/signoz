@@ -42,15 +42,13 @@ interface RawLogViewProps {
 	linesPerRow: number;
 }
 
-function RawLogView(props: RawLogViewProps): JSX.Element {
-	const {
-		isActiveLog = false,
-		isReadOnly = false,
-		data,
-		linesPerRow,
-		isTextOverflowEllipsisDisabled = false,
-	} = props;
-
+function RawLogView({
+	isActiveLog,
+	isReadOnly,
+	data,
+	linesPerRow,
+	isTextOverflowEllipsisDisabled,
+}: RawLogViewProps): JSX.Element {
 	const { isHighlighted, isLogsExplorerPage, onLogCopy } = useCopyLogLink(
 		data.id,
 	);
