@@ -2,7 +2,7 @@ version: "2.4"
 
 services:
   clickhouse:
-    image: clickhouse/clickhouse-server:22.8.8-alpine
+    image: clickhouse/clickhouse-server:23.7.3-alpine
     container_name: signoz-clickhouse
     # ports:
     # - "9000:9000"

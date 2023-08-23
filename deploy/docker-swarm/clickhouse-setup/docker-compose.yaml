@@ -1,8 +1,7 @@
 version: "3.9"
 
-x-clickhouse-defaults:
-  &clickhouse-defaults
-  image: clickhouse/clickhouse-server:22.8.8-alpine
+x-clickhouse-defaults: &clickhouse-defaults
+  image: clickhouse/clickhouse-server:23.7.3-alpine
   tty: true
   deploy:
     restart_policy:
@@ -34,8 +33,7 @@ x-clickhouse-defaults:
       soft: 262144
       hard: 262144
 
-x-clickhouse-depend:
-  &clickhouse-depend
+x-clickhouse-depend: &clickhouse-depend
   depends_on:
     - clickhouse
     # - clickhouse-2
