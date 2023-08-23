@@ -125,15 +125,16 @@ func (m *modelDao) PrecheckLogin(ctx context.Context, email, sourceUrl string) (
 	// assume user is valid unless proven otherwise
 	resp := &model.PrecheckResponse{IsUser: true, CanSelfRegister: false}
 
-	// // check if email is a valid user
-	// userPayload, baseApiErr := m.GetUserByEmail(ctx, email)
-	// if baseApiErr != nil {
-	// 	return resp, baseApiErr
-	// }
+	// check if email is a valid user
+	userPayload, baseApiErr := m.GetUserByEmail(ctx, email)
+	if baseApiErr != nil {
+		return resp, baseApiErr
+	}
 
-	// if userPayload == nil {
-	// 	resp.IsUser = false
-	// }
+	if userPayload == nil {
+		resp.IsUser = false
+	}
+
 	ssoAvailable := true
 	err := m.checkFeature(model.SSO)
 	if err != nil {
@@ -148,6 +149,8 @@ func (m *modelDao) PrecheckLogin(ctx context.Context, email, sourceUrl string) (
 	}
 
 	if ssoAvailable {
+
+		resp.IsUser = true
 
 		// find domain from email
 		orgDomain, apierr := m.GetDomainByEmail(ctx, email)
