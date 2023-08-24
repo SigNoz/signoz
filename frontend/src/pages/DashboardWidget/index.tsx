@@ -5,7 +5,7 @@ import ROUTES from 'constants/routes';
 import NewWidget from 'container/NewWidget';
 import history from 'lib/history';
 import { useEffect, useRef, useState } from 'react';
-import { connect, useSelector } from 'react-redux';
+import { connect, useDispatch, useSelector } from 'react-redux';
 import { generatePath, useLocation, useParams } from 'react-router-dom';
 import { bindActionCreators, Dispatch } from 'redux';
 import { ThunkDispatch } from 'redux-thunk';
@@ -17,6 +17,7 @@ import DashboardReducer from 'types/reducer/dashboards';
 function DashboardWidget({ getDashboard }: NewDashboardProps): JSX.Element {
 	const { search } = useLocation();
 	const { dashboardId } = useParams<DashboardWidgetPageParams>();
+	const dispatch = useDispatch();
 
 	const [selectedGraph, setSelectedGraph] = useState<PANEL_TYPES>();
 	const { loading, dashboards, error, errorMessage } = useSelector<
@@ -40,8 +41,11 @@ function DashboardWidget({ getDashboard }: NewDashboardProps): JSX.Element {
 			history.push(generatePath(ROUTES.DASHBOARD, { dashboardId }));
 		} else {
 			setSelectedGraph(graphType);
+			dispatch({
+				type: 'GET_DASHBOARD_LOADING_START',
+			});
 		}
-	}, [dashboardId, search]);
+	}, [dashboardId, dispatch, search]);
 
 	const counter = useRef(0);
 
@@ -63,7 +67,7 @@ function DashboardWidget({ getDashboard }: NewDashboardProps): JSX.Element {
 		dashboards[0].data.widgets === undefined ||
 		selectedWidget === undefined
 	) {
-		return <Spinner tip="Loading.." />;
+		return <Spinner tip="Loading..." />;
 	}
 
 	if (error) {
