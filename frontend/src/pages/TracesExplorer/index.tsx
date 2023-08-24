@@ -1,7 +1,6 @@
 import { Tabs } from 'antd';
 import axios from 'axios';
 import ExplorerCard from 'components/ExplorerCard/ExplorerCard';
-import { QueryParams } from 'constants/query';
 import { AVAILABLE_EXPORT_PANEL_TYPES } from 'constants/panelTypes';
 import {
 	initialAutocompleteData,
