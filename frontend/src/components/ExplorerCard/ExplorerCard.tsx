@@ -254,7 +254,7 @@ function ExplorerCard({
 	return (
 		<>
 			<ExplorerCardHeadContainer size="small">
-				<Row>
+				<Row align="middle">
 					<Col span={6}>
 						<Space>
 							<Typography>{viewName}</Typography>
