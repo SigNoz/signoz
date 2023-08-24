@@ -4,12 +4,12 @@ import { useUpdateDashboard } from 'hooks/dashboard/useUpdateDashboard';
 import useComponentPermission from 'hooks/useComponentPermission';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { useNotifications } from 'hooks/useNotifications';
+import { useDashboard } from 'providers/Dashboard/Dashboard';
 import { Layout } from 'react-grid-layout';
 import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
 import { Dashboard, Widgets } from 'types/api/dashboard/getAll';
 import AppReducer from 'types/reducer/app';
-import DashboardReducer from 'types/reducer/dashboards';
 
 import GridCard from './GridCard';
 import {
@@ -26,15 +26,14 @@ function GraphLayout({
 	onAddPanelHandler,
 	widgets,
 }: GraphLayoutProps): JSX.Element {
-	const { dashboards } = useSelector<AppState, DashboardReducer>(
-		(state) => state.dashboards,
-	);
+	const { selectedDashboard } = useDashboard();
 
 	const { featureResponse } = useSelector<AppState, AppReducer>(
 		(state) => state.app,
 	);
 
 	const { role } = useSelector<AppState, AppReducer>((state) => state.app);
+
 	const isDarkMode = useIsDarkMode();
 
 	const updateDashboardMutation = useUpdateDashboard();
@@ -46,9 +45,9 @@ function GraphLayout({
 		role,
 	);
 
-	const [selectedDashboard] = dashboards;
-
 	const onSaveHandler = (): void => {
+		if (!selectedDashboard) return;
+
 		const { data } = selectedDashboard;
 
 		const updatedDashboard: Dashboard = {
