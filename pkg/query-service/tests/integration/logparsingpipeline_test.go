@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
-	"fmt"
 	"io/ioutil"
 	"net"
 	"net/http"
@@ -34,8 +33,8 @@ import (
 func TestLogPipelinesLifecycle(t *testing.T) {
 	testbed := NewLogPipelinesTestBed(t)
 
-	pipelines := testbed.GetPipelines(t)
-	assert.Equal(t, len(pipelines), 0)
+	getPipelinesResp := testbed.GetPipelines(t)
+	assert.Equal(t, len(getPipelinesResp.Pipelines), 0)
 
 	// Should be able to create pipelines.
 	postablePipelines := logparsingpipeline.PostablePipelines{
@@ -70,12 +69,12 @@ func TestLogPipelinesLifecycle(t *testing.T) {
 			postablePipelines, statusCode, apiResponse,
 		)
 	}
-	pipelinesResp, err := unmarshalPipelinesResponse(apiResponse)
+	createPipelinesResp, err := unmarshalPipelinesResponse(apiResponse)
 	if err != nil {
 		t.Fatal(err)
 	}
 	assertPipelinesMatchPostablePipelines(
-		t, pipelinesResp.Pipelines, postablePipelines.Pipelines,
+		t, createPipelinesResp.Pipelines, postablePipelines.Pipelines,
 	)
 
 	// Should have sent the new effective config to opamp client.
@@ -90,7 +89,6 @@ func TestLogPipelinesLifecycle(t *testing.T) {
 
 	otelConfProcessors := otelConfSentToClient["processors"].(map[string]interface{})
 	otelConfSvcs := otelConfSentToClient["service"].(map[string]interface{})
-	fmt.Printf("\notelConfSvcs: %v\n", otelConfSvcs)
 	otelConfLogsSvc := otelConfSvcs["pipelines"].(map[string]interface{})["logs"].(map[string]interface{})
 
 	otelConfLogsSvcProcessorNames := otelConfLogsSvc["processors"].([]interface{})
@@ -107,7 +105,7 @@ func TestLogPipelinesLifecycle(t *testing.T) {
 
 	// Each pipeline is expected to become its own processor
 	// in the logs service in otel collector config.
-	_, expectedLogProcessorNames, err := logparsingpipeline.PreparePipelineProcessor(pipelinesResp.Pipelines)
+	_, expectedLogProcessorNames, err := logparsingpipeline.PreparePipelineProcessor(createPipelinesResp.Pipelines)
 	assert.Equal(t, expectedLogProcessorNames, otelConfLogsPipelineProcNames)
 
 	for _, procName := range expectedLogProcessorNames {
@@ -115,16 +113,45 @@ func TestLogPipelinesLifecycle(t *testing.T) {
 		assert.True(t, procExists)
 	}
 
-	// Deployment status should be pending.
-
-	// Deployment status should be complete after opamp client
-	// responds post deployment.
-
 	// Should be able to get the created pipelines.
-	pipelines = testbed.GetPipelines(t)
+	getPipelinesResp = testbed.GetPipelines(t)
 	assertPipelinesMatchPostablePipelines(
-		t, pipelines, postablePipelines.Pipelines,
+		t, getPipelinesResp.Pipelines, postablePipelines.Pipelines,
 	)
+
+	// Deployment status should be pending.
+	assert.Equal(t, createPipelinesResp.History[0].DeployStatus, agentConf.DeployInitiated)
+	assert.Equal(t, getPipelinesResp.History[0].DeployStatus, agentConf.DeployInitiated)
+
+	// Deployment status should be complete after opamp client responds post deployment.
+	testbed.OpampServer.OnMessage(testbed.OpampClientConn, &protobufs.AgentToServer{
+		InstanceUid: "test",
+		EffectiveConfig: &protobufs.EffectiveConfig{
+			ConfigMap: lastMsg.RemoteConfig.Config,
+		},
+		RemoteConfigStatus: &protobufs.RemoteConfigStatus{
+			Status:               protobufs.RemoteConfigStatuses_RemoteConfigStatuses_APPLIED,
+			LastRemoteConfigHash: lastMsg.RemoteConfig.ConfigHash,
+		},
+	})
+
+	getPipelinesResp = testbed.GetPipelines(t)
+	assertPipelinesMatchPostablePipelines(
+		t, getPipelinesResp.Pipelines, postablePipelines.Pipelines,
+	)
+
+	assert.Equal(t, getPipelinesResp.History[0].DeployStatus, agentConf.Deployed)
+
+	// Should be able to update pipeline.
+
+	// History should have 2 items now.
+
+	// Opamp service should get the latest conf
+
+	// Deployment status should be pending
+
+	// Deployment status should get updated again on receiving msg from client.
+
 }
 
 type LogPipelinesTestBed struct {
@@ -212,7 +239,7 @@ func (tb *LogPipelinesTestBed) PostPipelines(
 	return &result, response.StatusCode
 }
 
-func (tb *LogPipelinesTestBed) GetPipelines(t *testing.T) []model.Pipeline {
+func (tb *LogPipelinesTestBed) GetPipelines(t *testing.T) *logparsingpipeline.PipelinesResponse {
 	req, err := NewAuthenticatedTestRequest(
 		tb.TestUser, "/api/v1/logs/pipelines/latest", nil,
 	)
@@ -247,7 +274,7 @@ func (tb *LogPipelinesTestBed) GetPipelines(t *testing.T) []model.Pipeline {
 	if err != nil {
 		t.Fatal(err)
 	}
-	return pipelinesResp.Pipelines
+	return pipelinesResp
 }
 
 func unmarshalPipelinesResponse(apiResponse *app.ApiResponse) (
