@@ -10,10 +10,9 @@ import {
 	MenuOutlined,
 	SettingOutlined,
 } from '@ant-design/icons';
-import { MenuProps } from 'antd';
 import ROUTES from 'constants/routes';
 
-type MenuItem = Required<MenuProps>['items'][number];
+import { SidebarMenu } from './sideNav.types';
 
 const menuItems: SidebarMenu[] = [
 	{
@@ -94,9 +93,5 @@ const menuItems: SidebarMenu[] = [
 		icon: <ApiOutlined />,
 	},
 ];
-
-type SidebarMenu = MenuItem & {
-	tags?: string[];
-};
 
 export default menuItems;

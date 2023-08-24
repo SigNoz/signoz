@@ -1,5 +1,5 @@
 import { CheckCircleTwoTone, WarningOutlined } from '@ant-design/icons';
-import { Menu, MenuProps } from 'antd';
+import { MenuProps } from 'antd';
 import getLocalStorageKey from 'api/browser/localstorage/get';
 import { IS_SIDEBAR_COLLAPSED } from 'constants/app';
 import ROUTES from 'constants/routes';
@@ -15,14 +15,15 @@ import AppReducer from 'types/reducer/app';
 import { routeConfig, styles } from './config';
 import { getQueryString } from './helper';
 import menuItems from './menuItems';
-import { SidebarItem } from './sideNav.types';
+import { MenuItem, SecondaryMenuItemKey } from './sideNav.types';
 import Slack from './Slack';
 import {
+	MenuLabelContainer,
 	RedDot,
 	Sider,
-	SlackButton,
-	SlackMenuItemContainer,
-	VersionContainer,
+	StyledPrimaryMenu,
+	StyledSecondaryMenu,
+	StyledText,
 } from './styles';
 
 function SideNav(): JSX.Element {
@@ -75,31 +76,29 @@ function SideNav(): JSX.Element {
 
 	const isNotCurrentVersion = currentVersion !== latestVersion;
 
-	const sidebar: SidebarItem[] = [
+	const secondaryMenuItems: MenuItem[] = [
 		{
-			onClick: onClickSlackHandler,
-			icon: <Slack />,
-			text: <SlackButton>Support</SlackButton>,
-			key: 'slack',
-		},
-		{
-			onClick: onClickVersionHandler,
-			key: 'version',
+			key: SecondaryMenuItemKey.Version,
 			icon: isNotCurrentVersion ? (
 				<WarningOutlined style={{ color: '#E87040' }} />
 			) : (
 				<CheckCircleTwoTone twoToneColor={['#D5F2BB', '#1f1f1f']} />
 			),
-			text: (
-				<VersionContainer>
-					{!isCurrentVersionError ? (
-						<SlackButton>{currentVersion}</SlackButton>
-					) : (
-						<SlackButton>{t('n_a')}</SlackButton>
-					)}
+			label: (
+				<MenuLabelContainer>
+					<StyledText ellipsis>
+						{!isCurrentVersionError ? currentVersion : t('n_a')}
+					</StyledText>
 					{isNotCurrentVersion && <RedDot />}
-				</VersionContainer>
+				</MenuLabelContainer>
 			),
+			onClick: onClickVersionHandler,
+		},
+		{
+			key: SecondaryMenuItemKey.Slack,
+			icon: <Slack />,
+			label: <StyledText>Support</StyledText>,
+			onClick: onClickSlackHandler,
 		},
 	];
 
@@ -109,16 +108,9 @@ function SideNav(): JSX.Element {
 		return null;
 	}, [pathname]);
 
-	const sidebarItems = (props: SidebarItem, index: number): SidebarItem => ({
-		key: `${index}`,
-		icon: props.icon,
-		onClick: props.onClick,
-		label: props.text,
-	});
-
 	return (
 		<Sider collapsible collapsed={collapsed} onCollapse={onCollapse} width={200}>
-			<Menu
+			<StyledPrimaryMenu
 				theme="dark"
 				defaultSelectedKeys={[ROUTES.APPLICATION]}
 				selectedKeys={activeMenuKey ? [activeMenuKey] : []}
@@ -127,22 +119,13 @@ function SideNav(): JSX.Element {
 				items={menuItems}
 				onClick={onClickMenuHandler}
 			/>
-			{sidebar.map((props, index) => (
-				<SlackMenuItemContainer
-					index={index + 1}
-					key={`${index + 1}`}
-					collapsed={collapsed}
-				>
-					<Menu
-						theme="dark"
-						defaultSelectedKeys={[ROUTES.APPLICATION]}
-						selectedKeys={activeMenuKey ? [activeMenuKey] : []}
-						mode="inline"
-						style={styles}
-						items={[sidebarItems(props, index)]}
-					/>
-				</SlackMenuItemContainer>
-			))}
+			<StyledSecondaryMenu
+				theme="dark"
+				selectedKeys={activeMenuKey ? [activeMenuKey] : []}
+				mode="vertical"
+				style={styles}
+				items={secondaryMenuItems}
+			/>
 		</Sider>
 	);
 }
