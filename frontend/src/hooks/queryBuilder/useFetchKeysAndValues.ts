@@ -109,8 +109,8 @@ export const useFetchKeysAndValues = (
 			dataSource: query.dataSource,
 			aggregateAttribute: query.aggregateAttribute.key,
 			attributeKey: filterAttributeKey?.key ?? tagKey,
-			filterAttributeKeyDataType: filterAttributeKey?.dataType ?? null,
-			tagType: filterAttributeKey?.type ?? null,
+			filterAttributeKeyDataType: filterAttributeKey?.dataType ?? '',
+			tagType: filterAttributeKey?.type ?? '',
 			searchText: isInNInOperator(tagOperator)
 				? tagValue[tagValue.length - 1]?.toString() ?? '' // last element of tagvalue will be always user search value
 				: tagValue?.toString() ?? '',
