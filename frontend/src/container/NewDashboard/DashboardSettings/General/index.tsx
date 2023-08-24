@@ -1,33 +1,28 @@
 import { SaveOutlined } from '@ant-design/icons';
 import { Col, Divider, Input, Space, Typography } from 'antd';
 import AddTags from 'container/NewDashboard/DashboardSettings/General/AddTags';
+import { useDashboard } from 'providers/Dashboard/Dashboard';
 import { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { connect, useSelector } from 'react-redux';
+import { connect } from 'react-redux';
 import { bindActionCreators, Dispatch } from 'redux';
 import { ThunkDispatch } from 'redux-thunk';
 import {
 	UpdateDashboardTitleDescriptionTags,
 	UpdateDashboardTitleDescriptionTagsProps,
 } from 'store/actions';
-import { AppState } from 'store/reducers';
 import AppActions from 'types/actions';
-import DashboardReducer from 'types/reducer/dashboards';
 
 import { Button } from './styles';
 
 function GeneralDashboardSettings({
 	updateDashboardTitleDescriptionTags,
 }: DescriptionOfDashboardProps): JSX.Element {
-	const { dashboards } = useSelector<AppState, DashboardReducer>(
-		(state) => state.dashboards,
-	);
+	const { selectedDashboard, layouts } = useDashboard();
 
-	const [selectedDashboard] = dashboards;
-	const selectedData = selectedDashboard.data;
-	const { title } = selectedData;
-	const { tags } = selectedData;
-	const { description } = selectedData;
+	const selectedData = selectedDashboard?.data;
+
+	const { title = '', tags = [], description = '' } = selectedData || {};
 
 	const [updatedTitle, setUpdatedTitle] = useState<string>(title);
 	const [updatedTags, setUpdatedTags] = useState<string[]>(tags || []);
@@ -38,25 +33,33 @@ function GeneralDashboardSettings({
 	const { t } = useTranslation('common');
 
 	const onSaveHandler = useCallback(() => {
-		const dashboard = selectedDashboard;
 		// @TODO need to update this function to take title,description,tags only
-		updateDashboardTitleDescriptionTags({
-			dashboard: {
-				...dashboard,
-				data: {
-					...dashboard.data,
-					description: updatedDescription,
-					tags: updatedTags,
-					title: updatedTitle,
+		if (selectedDashboard) {
+			updateDashboardTitleDescriptionTags({
+				dashboard: {
+					...selectedDashboard,
+					data: {
+						name: selectedData?.name,
+						variables: selectedData?.variables || {},
+						widgets: selectedData?.widgets,
+						layout: layouts,
+						description: updatedDescription,
+						tags: updatedTags,
+						title: updatedTitle,
+					},
 				},
-			},
-		});
+			});
+		}
 	}, [
-		updatedTitle,
-		updatedTags,
-		updatedDescription,
 		selectedDashboard,
 		updateDashboardTitleDescriptionTags,
+		selectedData?.name,
+		selectedData?.variables,
+		selectedData?.widgets,
+		layouts,
+		updatedDescription,
+		updatedTags,
+		updatedTitle,
 	]);
 
 	return (

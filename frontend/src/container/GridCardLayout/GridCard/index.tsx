@@ -24,7 +24,6 @@ import WidgetGraphComponent from './WidgetGraphComponent';
 function GridCardGraph({
 	widget,
 	name,
-	setLayout,
 	onClickHandler,
 	headerMenuList = [MenuItemKeys.View],
 	isQueryEnabled,
@@ -130,7 +129,6 @@ function GridCardGraph({
 						errorMessage={errorMessage}
 						data={prevChartDataSetRef}
 						name={name}
-						setLayout={setLayout}
 						threshold={threshold}
 						headerMenuList={headerMenuList}
 					/>
@@ -150,7 +148,6 @@ function GridCardGraph({
 					errorMessage={errorMessage}
 					data={prevChartDataSetRef}
 					name={name}
-					setLayout={setLayout}
 					threshold={threshold}
 					headerMenuList={headerMenuList}
 					onClickHandler={onClickHandler}
@@ -174,7 +171,6 @@ function GridCardGraph({
 					threshold={threshold}
 					headerMenuList={headerMenuList}
 					onClickHandler={onClickHandler}
-					setLayout={setLayout}
 				/>
 			)}
 

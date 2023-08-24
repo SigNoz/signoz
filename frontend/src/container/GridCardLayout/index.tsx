@@ -1,26 +1,22 @@
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { useDashboard } from 'providers/Dashboard/Dashboard';
-import { useCallback, useState } from 'react';
+import { useCallback } from 'react';
 import { Layout } from 'react-grid-layout';
 
 import GraphLayoutContainer from './GridCardLayout';
 
 function GridGraph(): JSX.Element {
-	const { selectedDashboard } = useDashboard();
+	const { selectedDashboard, layouts, setLayouts } = useDashboard();
 
 	const { data } = selectedDashboard || {};
 	const { widgets } = data || {};
-
-	const [layouts, setLayout] = useState<Layout[]>(
-		selectedDashboard?.data?.layout || [],
-	);
 
 	const { handleToggleDashboardSlider } = useDashboard();
 
 	const onEmptyWidgetHandler = useCallback(() => {
 		handleToggleDashboardSlider(true);
 
-		setLayout((preLayout) => [
+		setLayouts((preLayout: Layout[]) => [
 			{
 				i: PANEL_TYPES.EMPTY_WIDGET,
 				w: 6,
@@ -30,14 +26,15 @@ function GridGraph(): JSX.Element {
 			},
 			...(preLayout || []),
 		]);
-	}, [handleToggleDashboardSlider]);
+	}, [handleToggleDashboardSlider, setLayouts]);
+
+	console.log({ layouts });
 
 	return (
 		<GraphLayoutContainer
 			layouts={layouts}
 			onAddPanelHandler={onEmptyWidgetHandler}
 			widgets={widgets}
-			setLayout={setLayout}
 		/>
 	);
 }

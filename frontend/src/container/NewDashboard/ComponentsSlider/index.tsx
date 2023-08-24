@@ -6,9 +6,6 @@ import createQueryParams from 'lib/createQueryParams';
 import history from 'lib/history';
 import { useDashboard } from 'providers/Dashboard/Dashboard';
 import { CSSProperties, useCallback } from 'react';
-import { useSelector } from 'react-redux';
-import { AppState } from 'store/reducers';
-import DashboardReducer from 'types/reducer/dashboards';
 import { v4 as uuid } from 'uuid';
 
 import menuItems from './menuItems';
@@ -17,14 +14,11 @@ import { Card, Container, Text } from './styles';
 function DashboardGraphSlider(): JSX.Element {
 	const isDarkMode = useIsDarkMode();
 
-	const { handleToggleDashboardSlider } = useDashboard();
+	const { handleToggleDashboardSlider, layouts } = useDashboard();
 
-	const { dashboards } = useSelector<AppState, DashboardReducer>(
-		(state) => state.dashboards,
-	);
+	const { selectedDashboard } = useDashboard();
 
-	const [selectedDashboard] = dashboards;
-	const { data } = selectedDashboard;
+	const { data } = selectedDashboard || {};
 
 	const updateDashboardMutation = useUpdateDashboard();
 
@@ -34,9 +28,13 @@ function DashboardGraphSlider(): JSX.Element {
 
 			updateDashboardMutation.mutateAsync(
 				{
-					uuid: selectedDashboard.uuid,
+					uuid: selectedDashboard?.uuid || '',
 					data: {
-						...data,
+						title: data?.title || '',
+						variables: data?.variables || {},
+						description: data?.description || '',
+						name: data?.name || '',
+						tags: data?.tags || [],
 						layout: [
 							{
 								i: id,
@@ -45,7 +43,8 @@ function DashboardGraphSlider(): JSX.Element {
 								h: 2,
 								y: 0,
 							},
-							...(data.layout || []),
+							...(layouts.filter((layout) => layout.i !== PANEL_TYPES.EMPTY_WIDGET) ||
+								[]),
 						],
 						widgets: [
 							...(data?.widgets || []),
@@ -87,8 +86,9 @@ function DashboardGraphSlider(): JSX.Element {
 		[
 			data,
 			handleToggleDashboardSlider,
-			selectedDashboard.uuid,
+			selectedDashboard?.uuid,
 			updateDashboardMutation,
+			layouts,
 		],
 	);
 

@@ -25,6 +25,7 @@ const DashboardContext = createContext<IDashboardContext>({
 	selectedDashboard: {} as Dashboard,
 	dashboardId: '',
 	layouts: [],
+	setLayouts: () => {},
 });
 
 export function DashboardProvider({
@@ -70,6 +71,7 @@ export function DashboardProvider({
 			selectedDashboard: dashboardResponse.data,
 			dashboardId,
 			layouts,
+			setLayouts,
 		}),
 		[isDashboardSliderOpen, dashboardResponse, dashboardId, layouts],
 	);

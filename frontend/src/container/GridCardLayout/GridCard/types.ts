@@ -1,7 +1,6 @@
 import { ChartData } from 'chart.js';
 import { GraphOnClickHandler, ToggleGraphProps } from 'components/Graph/types';
 import { MutableRefObject, ReactNode } from 'react';
-import { Layout } from 'react-grid-layout';
 import { UseQueryResult } from 'react-query';
 import { ErrorResponse, SuccessResponse } from 'types/api';
 import { Widgets } from 'types/api/dashboard/getAll';
@@ -25,7 +24,6 @@ export interface WidgetGraphComponentProps {
 	errorMessage: string | undefined;
 	data: ChartData;
 	name: string;
-	setLayout?: (layout: Layout[]) => void;
 	onDragSelect?: (start: number, end: number) => void;
 	onClickHandler?: GraphOnClickHandler;
 	threshold?: ReactNode;
@@ -35,7 +33,6 @@ export interface WidgetGraphComponentProps {
 export interface GridCardGraphProps {
 	widget: Widgets;
 	name: string;
-	setLayout?: WidgetGraphComponentProps['setLayout'];
 	onDragSelect?: (start: number, end: number) => void;
 	onClickHandler?: GraphOnClickHandler;
 	threshold?: ReactNode;

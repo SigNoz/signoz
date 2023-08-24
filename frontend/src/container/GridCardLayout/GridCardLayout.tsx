@@ -24,7 +24,6 @@ import { MenuItemKeys } from './WidgetHeader/contants';
 function GraphLayout({
 	layouts,
 	onAddPanelHandler,
-	setLayout,
 	widgets,
 }: GraphLayoutProps): JSX.Element {
 	const { dashboards } = useSelector<AppState, DashboardReducer>(
@@ -107,7 +106,6 @@ function GraphLayout({
 				isDroppable={addPanelPermission}
 				isResizable={addPanelPermission}
 				allowOverlap={false}
-				onLayoutChange={setLayout}
 				draggableHandle=".drag-handle"
 			>
 				{layouts.map(({ ...rest }) => {
@@ -125,7 +123,6 @@ function GraphLayout({
 										MenuItemKeys.Edit,
 										MenuItemKeys.View,
 									]}
-									setLayout={setLayout}
 								/>
 							</Card>
 						</CardContainer>
@@ -140,7 +137,6 @@ interface GraphLayoutProps {
 	layouts: Layout[];
 	onAddPanelHandler: VoidFunction;
 	widgets: Widgets[] | undefined;
-	setLayout: (layout: Layout[]) => void;
 }
 
 export default GraphLayout;

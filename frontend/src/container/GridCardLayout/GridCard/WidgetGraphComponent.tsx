@@ -8,6 +8,7 @@ import { useNotifications } from 'hooks/useNotifications';
 import createQueryParams from 'lib/createQueryParams';
 import history from 'lib/history';
 import { isEmpty, isEqual } from 'lodash-es';
+import { useDashboard } from 'providers/Dashboard/Dashboard';
 import {
 	Dispatch,
 	memo,
@@ -49,7 +50,6 @@ function WidgetGraphComponent({
 	onClickHandler,
 	threshold,
 	headerMenuList,
-	setLayout,
 }: WidgetGraphComponentProps): JSX.Element {
 	const [deleteModal, setDeleteModal] = useState(false);
 	const [modal, setModal] = useState<boolean>(false);
@@ -65,6 +65,8 @@ function WidgetGraphComponent({
 			}),
 		[data, name],
 	);
+
+	const { setLayouts } = useDashboard();
 
 	const [graphsVisibilityStates, setGraphsVisilityStates] = useState<boolean[]>(
 		localstoredVisibilityStates,
@@ -153,7 +155,7 @@ function WidgetGraphComponent({
 
 		updateDashboardMutation.mutateAsync(updatedSelectedDashboard, {
 			onSuccess: (updatedDashboard) => {
-				if (setLayout) setLayout(updatedDashboard.payload?.data?.layout || []);
+				if (setLayouts) setLayouts(updatedDashboard.payload?.data?.layout || []);
 				featureResponse.refetch();
 			},
 			onError: () => {
@@ -166,9 +168,9 @@ function WidgetGraphComponent({
 		featureResponse,
 		notifications,
 		selectedDashboard,
-		setLayout,
 		updateDashboardMutation,
 		widget?.id,
+		setLayouts,
 	]);
 
 	const onCloneHandler = async (): Promise<void> => {

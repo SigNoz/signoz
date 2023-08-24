@@ -9,4 +9,5 @@ export interface IDashboardContext {
 	selectedDashboard: Dashboard | undefined;
 	dashboardId: string;
 	layouts: Layout[];
+	setLayouts: React.Dispatch<React.SetStateAction<Layout[]>>;
 }
