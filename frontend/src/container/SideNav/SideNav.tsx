@@ -16,6 +16,7 @@ import { routeConfig, styles } from './config';
 import { getQueryString } from './helper';
 import menuItems from './menuItems';
 import { MenuItem, SecondaryMenuItemKey } from './sideNav.types';
+import { getActiveMenuKeyFromPath } from './sideNav.utils';
 import Slack from './Slack';
 import {
 	MenuLabelContainer,
@@ -102,11 +103,9 @@ function SideNav(): JSX.Element {
 		},
 	];
 
-	const activeMenuKey = useMemo(() => {
-		const basePath = pathname?.split('/')?.[1]; // Get the base path, Eg; /dashboard/dc5beb63-589c-46a3-ad4c-1b9ca248ee33 -> /dashboard
-		if (basePath) return `/${basePath}`;
-		return null;
-	}, [pathname]);
+	const activeMenuKey = useMemo(() => getActiveMenuKeyFromPath(pathname), [
+		pathname,
+	]);
 
 	return (
 		<Sider collapsible collapsed={collapsed} onCollapse={onCollapse} width={200}>

@@ -94,4 +94,11 @@ const menuItems: SidebarMenu[] = [
 	},
 ];
 
+/** Mapping of some newly added routes and their corresponding active sidebar menu key */
+export const NEW_ROUTES_MENU_ITEM_KEY_MAP = {
+	[ROUTES.TRACES_EXPLORER]: ROUTES.TRACE,
+	[ROUTES.TRACE_EXPLORER]: ROUTES.TRACE,
+	[ROUTES.LOGS_EXPLORER]: ROUTES.LOGS,
+};
+
 export default menuItems;
