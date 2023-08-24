@@ -6,6 +6,7 @@ import { ExplorerControlPanelProps } from './ExplorerControlPanel.interfaces';
 import { ContainerStyled } from './styles';
 
 function ExplorerControlPanel({
+	selectedOptionFormat,
 	isLoading,
 	isShowPageSize,
 	optionsMenuConfig,
@@ -15,7 +16,10 @@ function ExplorerControlPanel({
 			<Row justify="end" gutter={30}>
 				{optionsMenuConfig && (
 					<Col>
-						<OptionsMenu config={optionsMenuConfig} />
+						<OptionsMenu
+							selectedOptionFormat={selectedOptionFormat}
+							config={optionsMenuConfig}
+						/>
 					</Col>
 				)}
 				<Col>

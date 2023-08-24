@@ -4,6 +4,7 @@ import (
 	"reflect"
 	"testing"
 
+	"go.signoz.io/signoz/pkg/query-service/constants"
 	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
 )
 
@@ -383,6 +384,83 @@ func TestClickHouseFormattedValue(t *testing.T) {
 			got := ClickHouseFormattedValue(tt.value)
 			if !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("ClickHouseFormattedValue() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+var testGetClickhouseColumnName = []struct {
+	name     string
+	typeName string
+	dataType string
+	field    string
+	want     string
+}{
+	{
+		name:     "tag",
+		typeName: string(v3.AttributeKeyTypeTag),
+		dataType: string(v3.AttributeKeyDataTypeInt64),
+		field:    "tag1",
+		want:     "attribute_int64_tag1",
+	},
+	{
+		name:     "resource",
+		typeName: string(v3.AttributeKeyTypeResource),
+		dataType: string(v3.AttributeKeyDataTypeInt64),
+		field:    "tag1",
+		want:     "resource_int64_tag1",
+	},
+	{
+		name:     "attribute old parser",
+		typeName: constants.Attributes,
+		dataType: string(v3.AttributeKeyDataTypeInt64),
+		field:    "tag1",
+		want:     "attribute_int64_tag1",
+	},
+	{
+		name:     "resource old parser",
+		typeName: constants.Resources,
+		dataType: string(v3.AttributeKeyDataTypeInt64),
+		field:    "tag1",
+		want:     "resource_int64_tag1",
+	},
+}
+
+func TestGetClickhouseColumnName(t *testing.T) {
+	for _, tt := range testGetClickhouseColumnName {
+		t.Run(tt.name, func(t *testing.T) {
+			got := GetClickhouseColumnName(tt.typeName, tt.dataType, tt.field)
+			if !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("ClickHouseFormattedValue() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+var testGetEpochNanoSecsData = []struct {
+	Name       string
+	Epoch      int64
+	Multiplier int64
+	Result     int64
+}{
+	{
+		Name:   "Test 1",
+		Epoch:  1680712080000,
+		Result: 1680712080000000000,
+	},
+	{
+		Name:   "Test 1",
+		Epoch:  1680712080000000000,
+		Result: 1680712080000000000,
+	},
+}
+
+func TestGetEpochNanoSecs(t *testing.T) {
+	for _, tt := range testGetEpochNanoSecsData {
+		t.Run(tt.Name, func(t *testing.T) {
+			got := GetEpochNanoSecs(tt.Epoch)
+			if !reflect.DeepEqual(got, tt.Result) {
+				t.Errorf("ClickHouseFormattedValue() = %v, want %v", got, tt.Result)
 			}
 		})
 	}

@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/jmoiron/sqlx"
 	"go.signoz.io/signoz/pkg/query-service/model"
 )
 
@@ -11,19 +12,16 @@ const defaultApdexThreshold = 0.5
 
 func (mds *ModelDaoSqlite) GetApdexSettings(ctx context.Context, services []string) ([]model.ApdexSettings, *model.ApiError) {
 	var apdexSettings []model.ApdexSettings
-	var serviceName string
 
-	for i, service := range services {
-		if i == 0 {
-			serviceName = fmt.Sprintf("'%s'", service)
-		} else {
-			serviceName = fmt.Sprintf("%s, '%s'", serviceName, service)
+	query, args, err := sqlx.In("SELECT * FROM apdex_settings WHERE service_name IN (?)", services)
+	if err != nil {
+		return nil, &model.ApiError{
+			Err: err,
 		}
 	}
+	query = mds.db.Rebind(query)
 
-	query := fmt.Sprintf("SELECT * FROM apdex_settings WHERE service_name IN (%s)", serviceName)
-
-	err := mds.db.Select(&apdexSettings, query)
+	err = mds.db.Select(&apdexSettings, query, args...)
 	if err != nil {
 		return nil, &model.ApiError{
 			Err: err,

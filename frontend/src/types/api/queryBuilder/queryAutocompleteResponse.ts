@@ -1,15 +1,15 @@
 export type LocalDataType = 'number' | 'string' | 'bool';
 
-export type DataType = 'int64' | 'float64' | 'string' | 'bool';
+export type DataType = 'int64' | 'float64' | 'string' | 'bool' | '';
 
-export type AutocompleteType = 'tag' | 'resource';
+export type AutocompleteType = 'tag' | 'resource' | '';
 
 export interface BaseAutocompleteData {
 	id?: string;
-	dataType: DataType | null;
-	isColumn: boolean | null;
+	dataType: DataType;
+	isColumn: boolean;
 	key: string;
-	type: AutocompleteType | null;
+	type: AutocompleteType;
 }
 
 export interface IQueryAutocompleteResponse {

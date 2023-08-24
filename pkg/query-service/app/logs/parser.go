@@ -9,6 +9,7 @@ import (
 
 	"go.signoz.io/signoz/pkg/query-service/constants"
 	"go.signoz.io/signoz/pkg/query-service/model"
+	"go.signoz.io/signoz/pkg/query-service/utils"
 )
 
 var operatorMapping = map[string]string{
@@ -303,6 +304,11 @@ func replaceFieldInToken(queryToken string, selectedFieldsLookup map[string]mode
 				}
 			} else if strings.Compare(strings.ToLower(*col), "fulltext") != 0 && field.Type != constants.Static {
 				return "", fmt.Errorf("field not found for filtering")
+			}
+		} else {
+			field := selectedFieldsLookup[sqlColName]
+			if field.Type != constants.Static {
+				sqlColName = utils.GetClickhouseColumnName(field.Type, field.DataType, field.Name)
 			}
 		}
 	}
