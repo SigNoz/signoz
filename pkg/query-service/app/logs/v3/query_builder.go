@@ -83,7 +83,17 @@ func getClickhouseColumnName(key v3.AttributeKey) string {
 		columnType := getClickhouseLogsColumnType(key.Type)
 		columnDataType := getClickhouseLogsColumnDataType(key.DataType)
 		clickhouseColumn = fmt.Sprintf("%s_%s_value[indexOf(%s_%s_key, '%s')]", columnType, columnDataType, columnType, columnDataType, key.Key)
+		return clickhouseColumn
 	}
+
+	// check if it is a static field
+	if key.Type == v3.AttributeKeyTypeUnspecified {
+		// name is the column name
+		return clickhouseColumn
+	}
+
+	// materialized column created from query
+	clickhouseColumn = utils.GetClickhouseColumnName(string(key.Type), string(key.DataType), key.Key)
 	return clickhouseColumn
 }
 
@@ -123,6 +133,7 @@ func buildLogsTimeSeriesFilterQuery(fs *v3.FilterSet, groupBy []v3.AttributeKey)
 			if err != nil {
 				return "", fmt.Errorf("failed to validate and cast value for %s: %v", item.Key.Key, err)
 			}
+
 			if logsOp, ok := logOperators[op]; ok {
 				switch op {
 				case v3.FilterOperatorExists, v3.FilterOperatorNotExists:
@@ -153,6 +164,9 @@ func buildLogsTimeSeriesFilterQuery(fs *v3.FilterSet, groupBy []v3.AttributeKey)
 			columnType := getClickhouseLogsColumnType(attr.Type)
 			columnDataType := getClickhouseLogsColumnDataType(attr.DataType)
 			conditions = append(conditions, fmt.Sprintf("indexOf(%s_%s_key, '%s') > 0", columnType, columnDataType, attr.Key))
+		} else if attr.Type != v3.AttributeKeyTypeUnspecified {
+			// for materialzied columns
+			conditions = append(conditions, fmt.Sprintf("%s_exists=true", getClickhouseColumnName(attr)))
 		}
 	}
 

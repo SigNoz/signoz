@@ -49,7 +49,7 @@ func InitDB(dataSourceName string) (*sqlx.DB, error) {
 
 	_, err = db.Exec(table_schema)
 	if err != nil {
-		return nil, fmt.Errorf("Error in creating dashboard table: %s", err.Error())
+		return nil, fmt.Errorf("error in creating dashboard table: %s", err.Error())
 	}
 
 	table_schema = `CREATE TABLE IF NOT EXISTS rules (
@@ -61,7 +61,7 @@ func InitDB(dataSourceName string) (*sqlx.DB, error) {
 
 	_, err = db.Exec(table_schema)
 	if err != nil {
-		return nil, fmt.Errorf("Error in creating rules table: %s", err.Error())
+		return nil, fmt.Errorf("error in creating rules table: %s", err.Error())
 	}
 
 	table_schema = `CREATE TABLE IF NOT EXISTS notification_channels (
@@ -76,7 +76,7 @@ func InitDB(dataSourceName string) (*sqlx.DB, error) {
 
 	_, err = db.Exec(table_schema)
 	if err != nil {
-		return nil, fmt.Errorf("Error in creating notification_channles table: %s", err.Error())
+		return nil, fmt.Errorf("error in creating notification_channles table: %s", err.Error())
 	}
 
 	table_schema = `CREATE TABLE IF NOT EXISTS ttl_status (
@@ -92,7 +92,7 @@ func InitDB(dataSourceName string) (*sqlx.DB, error) {
 
 	_, err = db.Exec(table_schema)
 	if err != nil {
-		return nil, fmt.Errorf("Error in creating ttl_status table: %s", err.Error())
+		return nil, fmt.Errorf("error in creating ttl_status table: %s", err.Error())
 	}
 
 	return db, nil
@@ -179,7 +179,7 @@ func CreateDashboard(data map[string]interface{}, fm interfaces.FeatureLookup) (
 func GetDashboards() ([]Dashboard, *model.ApiError) {
 
 	dashboards := []Dashboard{}
-	query := fmt.Sprintf("SELECT * FROM dashboards;")
+	query := `SELECT * FROM dashboards`
 
 	err := db.Select(&dashboards, query)
 	if err != nil {
@@ -197,9 +197,9 @@ func DeleteDashboard(uuid string, fm interfaces.FeatureLookup) *model.ApiError {
 		return dErr
 	}
 
-	query := fmt.Sprintf("DELETE FROM dashboards WHERE uuid='%s';", uuid)
+	query := `DELETE FROM dashboards WHERE uuid=?`
 
-	result, err := db.Exec(query)
+	result, err := db.Exec(query, uuid)
 
 	if err != nil {
 		return &model.ApiError{Typ: model.ErrorExec, Err: err}
@@ -224,9 +224,9 @@ func DeleteDashboard(uuid string, fm interfaces.FeatureLookup) *model.ApiError {
 func GetDashboard(uuid string) (*Dashboard, *model.ApiError) {
 
 	dashboard := Dashboard{}
-	query := fmt.Sprintf("SELECT * FROM dashboards WHERE uuid='%s';", uuid)
+	query := `SELECT * FROM dashboards WHERE uuid=?`
 
-	err := db.Get(&dashboard, query)
+	err := db.Get(&dashboard, query, uuid)
 	if err != nil {
 		return nil, &model.ApiError{Typ: model.ErrorNotFound, Err: fmt.Errorf("no dashboard found with uuid: %s", uuid)}
 	}
