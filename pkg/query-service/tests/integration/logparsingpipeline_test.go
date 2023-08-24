@@ -4,15 +4,18 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
 	"net"
 	"net/http"
 	"net/http/httptest"
 	"os"
+	"strings"
 	"testing"
 
 	"github.com/gorilla/mux"
 	"github.com/jmoiron/sqlx"
+	"github.com/knadh/koanf/parsers/yaml"
 	"github.com/open-telemetry/opamp-go/protobufs"
 	"github.com/pkg/errors"
 	"github.com/stretchr/testify/assert"
@@ -25,65 +28,113 @@ import (
 	"go.signoz.io/signoz/pkg/query-service/constants"
 	"go.signoz.io/signoz/pkg/query-service/dao"
 	"go.signoz.io/signoz/pkg/query-service/model"
+	"golang.org/x/exp/maps"
 )
 
-func TestUpdateLogParsingPipeline(t *testing.T) {
-	testbed := NewLogParsingTestBed(t)
+func TestLogPipelinesLifecycle(t *testing.T) {
+	testbed := NewLogPipelinesTestBed(t)
 
 	pipelines := testbed.GetPipelines(t)
 	assert.Equal(t, len(pipelines), 0)
 
 	// Should be able to create pipelines.
-	testPipelines := []logparsingpipeline.PostablePipeline{
-		{
-			OrderId: 1,
-			Name:    "pipeline 1",
-			Alias:   "pipeline1",
-			Enabled: true,
-			Filter:  "attributes.method == \"GET\"",
-			Config: []model.PipelineOperator{
-				{
-					OrderId: 1,
-					ID:      "add",
-					Type:    "add",
-					Field:   "body",
-					Value:   "val",
-					Enabled: true,
-					Name:    "test",
+	postablePipelines := logparsingpipeline.PostablePipelines{
+		Pipelines: []logparsingpipeline.PostablePipeline{
+			{
+				OrderId: 1,
+				Name:    "pipeline 1",
+				Alias:   "pipeline1",
+				Enabled: true,
+				Filter:  "attributes.method == \"GET\"",
+				Config: []model.PipelineOperator{
+					{
+						OrderId: 1,
+						ID:      "add",
+						Type:    "add",
+						Field:   "body",
+						Value:   "val",
+						Enabled: true,
+						Name:    "test",
+					},
 				},
 			},
 		},
 	}
 
 	apiResponse, statusCode := testbed.PostPipelines(
-		t, logparsingpipeline.PostablePipelines{
-			Pipelines: testPipelines,
-		},
+		t, postablePipelines,
 	)
 	if statusCode != 200 {
-		t.Fatalf("Could not post pipeline %v\nresponse status: %d, body: %v", testPipelines, statusCode, apiResponse)
+		t.Fatalf(
+			"Could not post pipelines %v\nresponse status: %d, body: %v",
+			postablePipelines, statusCode, apiResponse,
+		)
 	}
 	pipelinesResp, err := unmarshalPipelinesResponse(apiResponse)
 	if err != nil {
 		t.Fatal(err)
 	}
 	assertPipelinesMatchPostablePipelines(
-		t, pipelinesResp.Pipelines, testPipelines,
+		t, pipelinesResp.Pipelines, postablePipelines.Pipelines,
 	)
 
+	// Should have sent the new effective config to opamp client.
+	lastMsg := testbed.OpampClientConn.LatestMsgFromServer()
+	otelConfigFiles := lastMsg.RemoteConfig.Config.ConfigMap
+	assert.Equal(t, len(otelConfigFiles), 1)
+	otelConfigYaml := maps.Values(otelConfigFiles)[0].Body
+	otelConfSentToClient, err := yaml.Parser().Unmarshal(otelConfigYaml)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	otelConfProcessors := otelConfSentToClient["processors"].(map[string]interface{})
+	otelConfSvcs := otelConfSentToClient["service"].(map[string]interface{})
+	fmt.Printf("\notelConfSvcs: %v\n", otelConfSvcs)
+	otelConfLogsSvc := otelConfSvcs["pipelines"].(map[string]interface{})["logs"].(map[string]interface{})
+
+	otelConfLogsSvcProcessorNames := otelConfLogsSvc["processors"].([]interface{})
+	otelConfLogsPipelineProcNames := []string{}
+	for _, procNameVal := range otelConfLogsSvcProcessorNames {
+		procName := procNameVal.(string)
+		if strings.HasPrefix(procName, constants.LogsPPLPfx) {
+			otelConfLogsPipelineProcNames = append(
+				otelConfLogsPipelineProcNames,
+				procName,
+			)
+		}
+	}
+
+	// Each pipeline is expected to become its own processor
+	// in the logs service in otel collector config.
+	_, expectedLogProcessorNames, err := logparsingpipeline.PreparePipelineProcessor(pipelinesResp.Pipelines)
+	assert.Equal(t, expectedLogProcessorNames, otelConfLogsPipelineProcNames)
+
+	for _, procName := range expectedLogProcessorNames {
+		_, procExists := otelConfProcessors[procName]
+		assert.True(t, procExists)
+	}
+
+	// Deployment status should be pending.
+
+	// Deployment status should be complete after opamp client
+	// responds post deployment.
+
+	// Should be able to get the created pipelines.
 	pipelines = testbed.GetPipelines(t)
 	assertPipelinesMatchPostablePipelines(
-		t, pipelines, testPipelines,
+		t, pipelines, postablePipelines.Pipelines,
 	)
 }
 
-type LogParsingTestBed struct {
-	TestUser    *model.User
-	ApiHandler  *app.APIHandler
-	OpampServer *opamp.Server
+type LogPipelinesTestBed struct {
+	TestUser        *model.User
+	ApiHandler      *app.APIHandler
+	OpampServer     *opamp.Server
+	OpampClientConn *mockOpAmpConnection
 }
 
-func NewLogParsingTestBed(t *testing.T) *LogParsingTestBed {
+func NewLogPipelinesTestBed(t *testing.T) *LogPipelinesTestBed {
 	// Create a tmp file based sqlite db for testing.
 	testDBFile, err := os.CreateTemp("", "test-signoz-db-*")
 	if err != nil {
@@ -114,7 +165,7 @@ func NewLogParsingTestBed(t *testing.T) *LogParsingTestBed {
 		t.Fatal(err)
 	}
 
-	opampServer, err := mockOpampAgent(testDBFilePath)
+	opampServer, clientConn, err := mockOpampAgent(testDBFilePath)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -124,14 +175,15 @@ func NewLogParsingTestBed(t *testing.T) *LogParsingTestBed {
 		t.Fatal(apiErr)
 	}
 
-	return &LogParsingTestBed{
-		TestUser:    user,
-		ApiHandler:  apiHandler,
-		OpampServer: opampServer,
+	return &LogPipelinesTestBed{
+		TestUser:        user,
+		ApiHandler:      apiHandler,
+		OpampServer:     opampServer,
+		OpampClientConn: clientConn,
 	}
 }
 
-func (tb *LogParsingTestBed) PostPipelines(
+func (tb *LogPipelinesTestBed) PostPipelines(
 	t *testing.T,
 	postablePipelines logparsingpipeline.PostablePipelines,
 ) (*app.ApiResponse, int) {
@@ -160,7 +212,7 @@ func (tb *LogParsingTestBed) PostPipelines(
 	return &result, response.StatusCode
 }
 
-func (tb *LogParsingTestBed) GetPipelines(t *testing.T) []model.Pipeline {
+func (tb *LogPipelinesTestBed) GetPipelines(t *testing.T) []model.Pipeline {
 	req, err := NewAuthenticatedTestRequest(
 		tb.TestUser, "/api/v1/logs/pipelines/latest", nil,
 	)
@@ -230,20 +282,21 @@ func assertPipelinesMatchPostablePipelines(
 	}
 }
 
-func mockOpampAgent(testDBFilePath string) (*opamp.Server, error) {
+func mockOpampAgent(testDBFilePath string) (*opamp.Server, *mockOpAmpConnection, error) {
 	// Mock an available opamp agent
 	testDB, err := opampModel.InitDB(testDBFilePath)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 	err = agentConf.Initiate(testDB, "sqlite")
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	opampServer := opamp.InitializeServer(constants.OpAmpWsEndpoint, nil)
+	opampClientConnection := &mockOpAmpConnection{}
 	opampServer.OnMessage(
-		&mockOpAmpConnection{},
+		opampClientConnection,
 		&protobufs.AgentToServer{
 			InstanceUid: "test",
 			EffectiveConfig: &protobufs.EffectiveConfig{
@@ -280,7 +333,7 @@ func mockOpampAgent(testDBFilePath string) (*opamp.Server, error) {
 			},
 		},
 	)
-	return opampServer, nil
+	return opampServer, opampClientConnection, nil
 }
 
 func createTestUser() (*model.User, *model.ApiError) {
@@ -341,10 +394,30 @@ func NewAuthenticatedTestRequest(
 }
 
 type mockOpAmpConnection struct {
+	serverToAgentMsgs []*protobufs.ServerToAgent
 }
 
 func (conn *mockOpAmpConnection) Send(ctx context.Context, msg *protobufs.ServerToAgent) error {
+	conn.serverToAgentMsgs = append(conn.serverToAgentMsgs, msg)
 	return nil
+}
+
+func (conn *mockOpAmpConnection) LatestMsgFromServer() *protobufs.ServerToAgent {
+	if len(conn.serverToAgentMsgs) < 1 {
+		return nil
+	}
+	return conn.serverToAgentMsgs[len(conn.serverToAgentMsgs)-1]
+}
+
+func (conn *mockOpAmpConnection) LatestPipelinesReceivedFromServer() ([]model.Pipeline, error) {
+	pipelines := []model.Pipeline{}
+	lastMsg := conn.LatestMsgFromServer()
+	if lastMsg == nil {
+		return pipelines, nil
+	}
+
+	return pipelines, nil
+	//c, err := yaml.Parser().Unmarshal([]byte(lastMsg.RemoteConfig))
 }
 
 func (conn *mockOpAmpConnection) Disconnect() error {
