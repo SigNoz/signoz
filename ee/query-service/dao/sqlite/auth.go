@@ -5,16 +5,61 @@ import (
 	"fmt"
 	"net/url"
 	"strings"
+	"time"
 
+	"github.com/google/uuid"
 	"go.signoz.io/signoz/ee/query-service/constants"
 	"go.signoz.io/signoz/ee/query-service/model"
+	baseauth "go.signoz.io/signoz/pkg/query-service/auth"
 	baseconst "go.signoz.io/signoz/pkg/query-service/constants"
 	basemodel "go.signoz.io/signoz/pkg/query-service/model"
-	baseauth "go.signoz.io/signoz/pkg/query-service/auth"
+	"go.signoz.io/signoz/pkg/query-service/utils"
 	"go.uber.org/zap"
 )
 
-// PrepareSsoRedirect prepares redirect page link after SSO response 
+func (m *modelDao) createUserForSAMLRequest(ctx context.Context, email string) (*basemodel.User, basemodel.BaseApiError) {
+	// get auth domain from email domain
+	domain, apierr := m.GetDomainByEmail(ctx, email)
+
+	if apierr != nil {
+		zap.S().Errorf("failed to get domain from email", apierr)
+		return nil, model.InternalErrorStr("failed to get domain from email")
+	}
+
+	hash, err := baseauth.PasswordHash(utils.GeneratePassowrd())
+	if err != nil {
+		zap.S().Errorf("failed to generate password hash when registering a user via SSO redirect", zap.Error(err))
+		return nil, model.InternalErrorStr("failed to generate password hash")
+	}
+
+	group, apiErr := m.GetGroupByName(ctx, baseconst.ViewerGroup)
+	if apiErr != nil {
+		zap.S().Debugf("GetGroupByName failed, err: %v\n", apiErr.Err)
+		return nil, apiErr
+	}
+
+	user := &basemodel.User{
+		Id:                uuid.NewString(),
+		Name:              "",
+		Email:             email,
+		Password:          hash,
+		CreatedAt:         time.Now().Unix(),
+		ProfilePictureURL: "", // Currently unused
+		GroupId:           group.Id,
+		OrgId:             domain.OrgId,
+	}
+
+	user, apiErr = m.CreateUser(ctx, user, false)
+	if apiErr != nil {
+		zap.S().Debugf("CreateUser failed, err: %v\n", apiErr.Err)
+		return nil, apiErr
+	}
+
+	return user, nil
+
+}
+
+// PrepareSsoRedirect prepares redirect page link after SSO response
 // is successfully parsed (i.e. valid email is available)
 func (m *modelDao) PrepareSsoRedirect(ctx context.Context, redirectUri, email string) (redirectURL string, apierr basemodel.BaseApiError) {
 
@@ -24,7 +69,20 @@ func (m *modelDao) PrepareSsoRedirect(ctx context.Context, redirectUri, email st
 		return "", model.BadRequestStr("invalid user email received from the auth provider")
 	}
 
-	tokenStore, err := baseauth.GenerateJWTForUser(&userPayload.User)
+	user := &basemodel.User{}
+
+	if userPayload == nil {
+		newUser, apiErr := m.createUserForSAMLRequest(ctx, email)
+		user = newUser
+		if apiErr != nil {
+			zap.S().Errorf("failed to create user with email received from auth provider: %v", apierr.Error())
+			return "", apiErr
+		}
+	} else {
+		user = &userPayload.User
+	}
+
+	tokenStore, err := baseauth.GenerateJWTForUser(user)
 	if err != nil {
 		zap.S().Errorf("failed to generate token for SSO login user", err)
 		return "", model.InternalErrorStr("failed to generate token for the user")
@@ -33,7 +91,7 @@ func (m *modelDao) PrepareSsoRedirect(ctx context.Context, redirectUri, email st
 	return fmt.Sprintf("%s?jwt=%s&usr=%s&refreshjwt=%s",
 		redirectUri,
 		tokenStore.AccessJwt,
-		userPayload.User.Id,
+		user.Id,
 		tokenStore.RefreshJwt), nil
 }
 
@@ -76,6 +134,7 @@ func (m *modelDao) PrecheckLogin(ctx context.Context, email, sourceUrl string) (
 	if userPayload == nil {
 		resp.IsUser = false
 	}
+
 	ssoAvailable := true
 	err := m.checkFeature(model.SSO)
 	if err != nil {
@@ -90,6 +149,8 @@ func (m *modelDao) PrecheckLogin(ctx context.Context, email, sourceUrl string) (
 	}
 
 	if ssoAvailable {
+
+		resp.IsUser = true
 
 		// find domain from email
 		orgDomain, apierr := m.GetDomainByEmail(ctx, email)
