@@ -1,4 +1,4 @@
-FROM golang:1.18-buster AS builder
+FROM golang:1.21-bookworm AS builder
 
 # LD_FLAGS is passed as argument from Makefile. It will be empty, if no argument passed
 ARG LD_FLAGS
@@ -43,6 +43,9 @@ COPY --from=builder /go/src/github.com/signoz/signoz/pkg/query-service/bin/query
 
 # copy prometheus YAML config
 COPY pkg/query-service/config/prometheus.yml /root/config/prometheus.yml
+
+# Make query-service executable for non-root users
+RUN chmod 755 /root /root/query-service
 
 # run the binary
 ENTRYPOINT ["./query-service"]
