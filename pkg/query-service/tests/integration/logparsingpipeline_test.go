@@ -53,7 +53,23 @@ func TestLogPipelinesLifecycle(t *testing.T) {
 						Field:   "body",
 						Value:   "val",
 						Enabled: true,
-						Name:    "test",
+						Name:    "test add",
+					},
+				},
+			}, {
+				OrderId: 2,
+				Name:    "pipeline 2",
+				Alias:   "pipeline2",
+				Enabled: true,
+				Filter:  "attributes.method == \"GET\"",
+				Config: []model.PipelineOperator{
+					{
+						OrderId: 1,
+						ID:      "remove",
+						Type:    "remove",
+						Field:   "body",
+						Enabled: true,
+						Name:    "test remove",
 					},
 				},
 			},
@@ -65,7 +81,7 @@ func TestLogPipelinesLifecycle(t *testing.T) {
 	)
 	if statusCode != 200 {
 		t.Fatalf(
-			"Could not post pipelines %v\nresponse status: %d, body: %v",
+			"Could not post pipelines: %v\nresponse status: %d, body: %v",
 			postablePipelines, statusCode, apiResponse,
 		)
 	}
@@ -77,41 +93,7 @@ func TestLogPipelinesLifecycle(t *testing.T) {
 		t, createPipelinesResp.Pipelines, postablePipelines.Pipelines,
 	)
 
-	// Should have sent the new effective config to opamp client.
-	lastMsg := testbed.OpampClientConn.LatestMsgFromServer()
-	otelConfigFiles := lastMsg.RemoteConfig.Config.ConfigMap
-	assert.Equal(t, len(otelConfigFiles), 1)
-	otelConfigYaml := maps.Values(otelConfigFiles)[0].Body
-	otelConfSentToClient, err := yaml.Parser().Unmarshal(otelConfigYaml)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	otelConfProcessors := otelConfSentToClient["processors"].(map[string]interface{})
-	otelConfSvcs := otelConfSentToClient["service"].(map[string]interface{})
-	otelConfLogsSvc := otelConfSvcs["pipelines"].(map[string]interface{})["logs"].(map[string]interface{})
-
-	otelConfLogsSvcProcessorNames := otelConfLogsSvc["processors"].([]interface{})
-	otelConfLogsPipelineProcNames := []string{}
-	for _, procNameVal := range otelConfLogsSvcProcessorNames {
-		procName := procNameVal.(string)
-		if strings.HasPrefix(procName, constants.LogsPPLPfx) {
-			otelConfLogsPipelineProcNames = append(
-				otelConfLogsPipelineProcNames,
-				procName,
-			)
-		}
-	}
-
-	// Each pipeline is expected to become its own processor
-	// in the logs service in otel collector config.
-	_, expectedLogProcessorNames, err := logparsingpipeline.PreparePipelineProcessor(createPipelinesResp.Pipelines)
-	assert.Equal(t, expectedLogProcessorNames, otelConfLogsPipelineProcNames)
-
-	for _, procName := range expectedLogProcessorNames {
-		_, procExists := otelConfProcessors[procName]
-		assert.True(t, procExists)
-	}
+	testbed.assertOpampClientReceivedConfigWithPipelines(t, createPipelinesResp.Pipelines)
 
 	// Should be able to get the created pipelines.
 	getPipelinesResp = testbed.GetPipelines(t)
@@ -120,20 +102,12 @@ func TestLogPipelinesLifecycle(t *testing.T) {
 	)
 
 	// Deployment status should be pending.
-	assert.Equal(t, createPipelinesResp.History[0].DeployStatus, agentConf.DeployInitiated)
-	assert.Equal(t, getPipelinesResp.History[0].DeployStatus, agentConf.DeployInitiated)
+	assert.Equal(t, 1, len(createPipelinesResp.History))
+	assert.Equal(t, agentConf.DeployInitiated, createPipelinesResp.History[0].DeployStatus)
+	assert.Equal(t, agentConf.DeployInitiated, getPipelinesResp.History[0].DeployStatus)
 
-	// Deployment status should be complete after opamp client responds post deployment.
-	testbed.OpampServer.OnMessage(testbed.OpampClientConn, &protobufs.AgentToServer{
-		InstanceUid: "test",
-		EffectiveConfig: &protobufs.EffectiveConfig{
-			ConfigMap: lastMsg.RemoteConfig.Config,
-		},
-		RemoteConfigStatus: &protobufs.RemoteConfigStatus{
-			Status:               protobufs.RemoteConfigStatuses_RemoteConfigStatuses_APPLIED,
-			LastRemoteConfigHash: lastMsg.RemoteConfig.ConfigHash,
-		},
-	})
+	// Deployment status should get updated after acknowledgement from opamp client
+	testbed.simulateOpampClientAppliedLastReceivedConfig()
 
 	getPipelinesResp = testbed.GetPipelines(t)
 	assertPipelinesMatchPostablePipelines(
@@ -143,15 +117,40 @@ func TestLogPipelinesLifecycle(t *testing.T) {
 	assert.Equal(t, getPipelinesResp.History[0].DeployStatus, agentConf.Deployed)
 
 	// Should be able to update pipeline.
+	postablePipelines.Pipelines[1].Enabled = false
+	apiResponse, statusCode = testbed.PostPipelines(
+		t, postablePipelines,
+	)
+	if statusCode != 200 {
+		t.Fatalf(
+			"Could not update pipelines with payload: %v\nresponse status: %d, body: %v",
+			postablePipelines, statusCode, apiResponse,
+		)
+	}
+	updatePipelinesResp, err := unmarshalPipelinesResponse(apiResponse)
+	if err != nil {
+		t.Fatal(err)
+	}
+	assertPipelinesMatchPostablePipelines(
+		t, updatePipelinesResp.Pipelines, postablePipelines.Pipelines,
+	)
 
-	// History should have 2 items now.
+	testbed.assertOpampClientReceivedConfigWithPipelines(t, updatePipelinesResp.Pipelines)
 
-	// Opamp service should get the latest conf
-
-	// Deployment status should be pending
+	// History should have 2 items now and the latest version should be pending deployment.
+	assert.Equal(t, 2, len(updatePipelinesResp.History))
+	assert.Equal(t, agentConf.DeployInitiated, updatePipelinesResp.History[0].DeployStatus)
 
 	// Deployment status should get updated again on receiving msg from client.
+	testbed.simulateOpampClientAppliedLastReceivedConfig()
 
+	getPipelinesResp = testbed.GetPipelines(t)
+	assertPipelinesMatchPostablePipelines(
+		t, getPipelinesResp.Pipelines, postablePipelines.Pipelines,
+	)
+
+	assert.Equal(t, 2, len(getPipelinesResp.History))
+	assert.Equal(t, getPipelinesResp.History[0].DeployStatus, agentConf.Deployed)
 }
 
 type LogPipelinesTestBed struct {
@@ -275,6 +274,61 @@ func (tb *LogPipelinesTestBed) GetPipelines(t *testing.T) *logparsingpipeline.Pi
 		t.Fatal(err)
 	}
 	return pipelinesResp
+}
+
+func (tb *LogPipelinesTestBed) assertOpampClientReceivedConfigWithPipelines(
+	t *testing.T, pipelines []model.Pipeline,
+) {
+	// Should have sent the new effective config to opamp client.
+	lastMsg := tb.OpampClientConn.latestMsgFromServer()
+	otelConfigFiles := lastMsg.RemoteConfig.Config.ConfigMap
+	assert.Equal(t, len(otelConfigFiles), 1)
+
+	otelConfigYaml := maps.Values(otelConfigFiles)[0].Body
+	otelConfSentToClient, err := yaml.Parser().Unmarshal(otelConfigYaml)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	otelConfProcessors := otelConfSentToClient["processors"].(map[string]interface{})
+	otelConfSvcs := otelConfSentToClient["service"].(map[string]interface{})
+	otelConfLogsSvc := otelConfSvcs["pipelines"].(map[string]interface{})["logs"].(map[string]interface{})
+
+	otelConfLogsSvcProcessorNames := otelConfLogsSvc["processors"].([]interface{})
+	otelConfLogsPipelineProcNames := []string{}
+	for _, procNameVal := range otelConfLogsSvcProcessorNames {
+		procName := procNameVal.(string)
+		if strings.HasPrefix(procName, constants.LogsPPLPfx) {
+			otelConfLogsPipelineProcNames = append(
+				otelConfLogsPipelineProcNames,
+				procName,
+			)
+		}
+	}
+
+	// Each pipeline is expected to become its own processor
+	// in the logs service in otel collector config.
+	_, expectedLogProcessorNames, err := logparsingpipeline.PreparePipelineProcessor(pipelines)
+	assert.Equal(t, expectedLogProcessorNames, otelConfLogsPipelineProcNames)
+
+	for _, procName := range expectedLogProcessorNames {
+		_, procExists := otelConfProcessors[procName]
+		assert.True(t, procExists)
+	}
+}
+
+func (tb *LogPipelinesTestBed) simulateOpampClientAppliedLastReceivedConfig() {
+	lastMsg := tb.OpampClientConn.latestMsgFromServer()
+	tb.OpampServer.OnMessage(tb.OpampClientConn, &protobufs.AgentToServer{
+		InstanceUid: "test",
+		EffectiveConfig: &protobufs.EffectiveConfig{
+			ConfigMap: lastMsg.RemoteConfig.Config,
+		},
+		RemoteConfigStatus: &protobufs.RemoteConfigStatus{
+			Status:               protobufs.RemoteConfigStatuses_RemoteConfigStatuses_APPLIED,
+			LastRemoteConfigHash: lastMsg.RemoteConfig.ConfigHash,
+		},
+	})
 }
 
 func unmarshalPipelinesResponse(apiResponse *app.ApiResponse) (
@@ -429,7 +483,7 @@ func (conn *mockOpAmpConnection) Send(ctx context.Context, msg *protobufs.Server
 	return nil
 }
 
-func (conn *mockOpAmpConnection) LatestMsgFromServer() *protobufs.ServerToAgent {
+func (conn *mockOpAmpConnection) latestMsgFromServer() *protobufs.ServerToAgent {
 	if len(conn.serverToAgentMsgs) < 1 {
 		return nil
 	}
@@ -438,7 +492,7 @@ func (conn *mockOpAmpConnection) LatestMsgFromServer() *protobufs.ServerToAgent 
 
 func (conn *mockOpAmpConnection) LatestPipelinesReceivedFromServer() ([]model.Pipeline, error) {
 	pipelines := []model.Pipeline{}
-	lastMsg := conn.LatestMsgFromServer()
+	lastMsg := conn.latestMsgFromServer()
 	if lastMsg == nil {
 		return pipelines, nil
 	}
