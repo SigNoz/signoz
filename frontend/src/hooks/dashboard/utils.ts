@@ -5,6 +5,7 @@ import { Query } from 'types/api/queryBuilder/queryBuilderData';
 export const addEmptyWidgetInDashboardJSONWithQuery = (
 	dashboard: Dashboard,
 	query: Query,
+	panelTypes?: PANEL_TYPES,
 ): Dashboard => ({
 	...dashboard,
 	data: {
@@ -30,7 +31,7 @@ export const addEmptyWidgetInDashboardJSONWithQuery = (
 				opacity: '',
 				title: '',
 				timePreferance: 'GLOBAL_TIME',
-				panelTypes: PANEL_TYPES.TIME_SERIES,
+				panelTypes: panelTypes || PANEL_TYPES.TIME_SERIES,
 			},
 		],
 	},
