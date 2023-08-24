@@ -319,6 +319,8 @@ func (aH *APIHandler) RegisterRoutes(router *mux.Router, am *AuthMiddleware) {
 	router.HandleFunc("/api/v1/channels", am.EditAccess(aH.createChannel)).Methods(http.MethodPost)
 	router.HandleFunc("/api/v1/testChannel", am.EditAccess(aH.testChannel)).Methods(http.MethodPost)
 
+	router.HandleFunc("/api/v1/alerts", am.ViewAccess(aH.getAlerts)).Methods(http.MethodGet)
+
 	router.HandleFunc("/api/v1/rules", am.ViewAccess(aH.listRules)).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/rules/{id}", am.ViewAccess(aH.getRule)).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/rules", am.EditAccess(aH.createRule)).Methods(http.MethodPost)
@@ -1193,6 +1195,25 @@ func (aH *APIHandler) createChannel(w http.ResponseWriter, r *http.Request) {
 
 	aH.Respond(w, nil)
 
+}
+
+func (aH *APIHandler) getAlerts(w http.ResponseWriter, r *http.Request) {
+	params := r.URL.Query()
+	amEndpoint := constants.GetAlertManagerApiPrefix()
+	resp, err := http.Get(amEndpoint + "v1/alerts" + "?" + params.Encode())
+	if err != nil {
+		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, nil)
+		return
+	}
+
+	defer resp.Body.Close()
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, nil)
+		return
+	}
+
+	aH.Respond(w, string(body))
 }
 
 func (aH *APIHandler) createRule(w http.ResponseWriter, r *http.Request) {
