@@ -1,6 +1,9 @@
 import { DeleteOutlined } from '@ant-design/icons';
 import { Col, Row, Typography } from 'antd';
-import { useGetPanelTypesQueryParam } from 'hooks/queryBuilder/useGetPanelTypesQueryParam';
+import {
+	queryParamNamesMap,
+	querySearchParams,
+} from 'constants/queryBuilderQueryNames';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useDeleteView } from 'hooks/saveViews/useDeleteView';
 import { useNotifications } from 'hooks/useNotifications';
@@ -8,24 +11,24 @@ import { useCallback } from 'react';
 
 import { MenuItemContainer } from './styles';
 import { MenuItemLabelGeneratorProps } from './types';
-import { deleteViewHandler } from './utils';
+import { deleteViewHandler, getViewDetailsUsingViewKey } from './utils';
 
 function MenuItemGenerator({
 	viewName,
 	viewKey,
 	createdBy,
 	uuid,
+	viewData,
+	currentPanelType,
 	refetchAllView,
-	onMenuItemSelectHandler,
 }: MenuItemLabelGeneratorProps): JSX.Element {
-	const { redirectWithQueryBuilderData } = useQueryBuilder();
-	const panelType = useGetPanelTypesQueryParam();
+	const { panelType, redirectWithQueryBuilderData } = useQueryBuilder();
 
 	const { notifications } = useNotifications();
 
 	const { mutateAsync: deleteViewAsync } = useDeleteView(uuid);
 
-	const onDeleteHandler = useCallback(async () => {
+	const onDeleteHandler = useCallback(() => {
 		deleteViewHandler({
 			deleteViewAsync,
 			notifications,
@@ -44,6 +47,32 @@ function MenuItemGenerator({
 		uuid,
 		viewKey,
 	]);
+
+	const onMenuItemSelectHandler = useCallback(
+		({ key }: { key: string }): void => {
+			const currentViewDetails = getViewDetailsUsingViewKey(key, viewData);
+			if (!currentViewDetails) return;
+			const { query, name, uuid } = currentViewDetails;
+
+			// AggregateOperator should be noop for list and trace Panel Type and count for graph and table Panel Type.
+			query.builder.queryData = query.builder.queryData.map((item) => {
+				const newItem = item;
+				if (currentPanelType === 'list' || currentPanelType === 'trace') {
+					newItem.aggregateOperator = 'noop';
+				} else {
+					newItem.aggregateOperator = 'count';
+				}
+				return newItem;
+			});
+
+			redirectWithQueryBuilderData(query, {
+				[queryParamNamesMap.panelTypes]: panelType,
+				[querySearchParams.viewName]: name,
+				[querySearchParams.viewKey]: uuid,
+			});
+		},
+		[viewData, redirectWithQueryBuilderData, panelType, currentPanelType],
+	);
 
 	const onLabelClickHandler = (): void => {
 		onMenuItemSelectHandler({

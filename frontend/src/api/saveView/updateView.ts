@@ -4,7 +4,7 @@ import {
 	UpdateViewProps,
 } from 'types/api/saveViews/types';
 
-export const updateView = async ({
+export const updateView = ({
 	compositeQuery,
 	viewName,
 	extraData,

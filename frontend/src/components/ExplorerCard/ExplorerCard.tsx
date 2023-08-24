@@ -16,11 +16,10 @@ import {
 	Space,
 	Typography,
 } from 'antd';
+import axios from 'axios';
 import TextToolTip from 'components/TextToolTip';
-import {
-	queryParamNamesMap,
-	querySearchParams,
-} from 'constants/queryBuilderQueryNames';
+import { SOMETHING_WENT_WRONG } from 'constants/api';
+import { querySearchParams } from 'constants/queryBuilderQueryNames';
 import { useGetSearchQueryParam } from 'hooks/queryBuilder/useGetSearchQueryParam';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useDeleteView } from 'hooks/saveViews/useDeleteView';
@@ -31,7 +30,6 @@ import { useNotifications } from 'hooks/useNotifications';
 import { mapCompositeQueryFromQuery } from 'lib/newQueryBuilder/queryBuilderMappers/mapCompositeQueryFromQuery';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useCopyToClipboard } from 'react-use';
-import { ViewProps } from 'types/api/saveViews/types';
 
 import { ExploreHeaderToolTip } from './constants';
 import MenuItemGenerator from './MenuItemGenerator';
@@ -42,12 +40,7 @@ import {
 	OffSetCol,
 } from './styles';
 import { ExplorerCardProps } from './types';
-import {
-	deleteViewHandler,
-	getViewDetailsUsingViewKey,
-	isQueryUpdatedInView,
-	updateQueryHandler,
-} from './utils';
+import { deleteViewHandler, isQueryUpdatedInView } from './utils';
 
 function ExplorerCard({
 	sourcepage,
@@ -122,18 +115,30 @@ function ExplorerCard({
 		viewKey,
 	]);
 
-	const onUpdateQueryHandler = useCallback(async () => {
-		await updateQueryHandler({
-			compositeQuery: mapCompositeQueryFromQuery(currentQuery, panelType),
-			viewKey,
-			extraData: '',
-			sourcePage: sourcepage,
-			viewName,
-			notifications,
-			setIsQueryUpdated,
-			updateViewAsync,
-		});
-		refetchAllView();
+	const onUpdateQueryHandler = useCallback(() => {
+		updateViewAsync(
+			{
+				compositeQuery: mapCompositeQueryFromQuery(currentQuery, panelType),
+				viewKey,
+				extraData: '',
+				sourcePage: sourcepage,
+				viewName,
+			},
+			{
+				onSuccess: () => {
+					setIsQueryUpdated(false);
+					notifications.success({
+						message: 'View Updated Successfully',
+					});
+					refetchAllView();
+				},
+				onError: (err) => {
+					notifications.error({
+						message: axios.isAxiosError(err) ? err.message : SOMETHING_WENT_WRONG,
+					});
+				},
+			},
+		);
 	}, [
 		currentQuery,
 		notifications,
@@ -144,40 +149,6 @@ function ExplorerCard({
 		viewKey,
 		viewName,
 	]);
-
-	const onMenuItemSelectHandler = useCallback(
-		({ key }: { key: string }): void => {
-			const currentViewDetails = getViewDetailsUsingViewKey(
-				key,
-				viewsData?.data?.data,
-			);
-			if (!currentViewDetails) return;
-			const { query, name, uuid } = currentViewDetails;
-
-			// AffregateOperator should be noop for list and trace Panel Type and count for graph and table Panel Type.
-			query.builder.queryData = query.builder.queryData.map((item) => {
-				const newItem = item;
-				if (currentPanelType === 'list' || currentPanelType === 'trace') {
-					newItem.aggregateOperator = 'noop';
-				} else {
-					newItem.aggregateOperator = 'count';
-				}
-				return newItem;
-			});
-
-			redirectWithQueryBuilderData(query, {
-				[queryParamNamesMap.panelTypes]: panelType,
-				[querySearchParams.viewName]: name,
-				[querySearchParams.viewKey]: uuid,
-			});
-		},
-		[
-			viewsData?.data?.data,
-			redirectWithQueryBuilderData,
-			panelType,
-			currentPanelType,
-		],
-	);
 
 	useEffect(() => {
 		if (copyUrl.value) {
@@ -204,11 +175,9 @@ function ExplorerCard({
 		viewKey,
 	]);
 
-	const generatorMenuItems = useCallback(
-		(data: ViewProps[] | undefined): MenuProps['items'] => {
-			if (!data) return [];
-
-			return data.map((view) => ({
+	const viewSelectMenuItem = useMemo(
+		() =>
+			viewsData?.data.data.map((view) => ({
 				key: view.uuid,
 				label: (
 					<MenuItemGenerator
@@ -217,24 +186,19 @@ function ExplorerCard({
 						createdBy={view.createdBy}
 						uuid={view.uuid}
 						refetchAllView={refetchAllView}
-						onMenuItemSelectHandler={onMenuItemSelectHandler}
+						viewData={viewsData.data.data}
+						currentPanelType={currentPanelType}
 					/>
 				),
-			}));
-		},
-		[onMenuItemSelectHandler, refetchAllView, viewKey],
-	);
-
-	const updateMenuList = useMemo(
-		() => generatorMenuItems(viewsData?.data.data),
-		[viewsData?.data.data, generatorMenuItems],
+			})),
+		[currentPanelType, refetchAllView, viewKey, viewsData?.data.data],
 	);
 
 	const menu = useMemo(
 		(): MenuProps => ({
-			items: updateMenuList,
+			items: viewSelectMenuItem,
 		}),
-		[updateMenuList],
+		[viewSelectMenuItem],
 	);
 
 	const moreOptionMenu = useMemo(

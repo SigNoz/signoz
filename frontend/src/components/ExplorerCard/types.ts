@@ -1,6 +1,5 @@
 import { NotificationInstance } from 'antd/es/notification/interface';
 import { PANEL_TYPES } from 'constants/queryBuilder';
-import { SetStateAction } from 'react';
 import { UseMutateAsyncFunction } from 'react-query';
 import { ICompositeMetricQuery } from 'types/api/alerts/compositeQuery';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
@@ -8,8 +7,6 @@ import {
 	DeleteViewPayloadProps,
 	SaveViewPayloadProps,
 	SaveViewProps,
-	UpdateViewPayloadProps,
-	UpdateViewProps,
 	ViewProps,
 } from 'types/api/saveViews/types';
 import { DataSource, QueryBuilderContextType } from 'types/common/queryBuilder';
@@ -24,22 +21,6 @@ export type GetViewDetailsUsingViewKey = (
 	viewKey: string,
 	data: ViewProps[] | undefined,
 ) => { query: Query; name: string; uuid: string } | undefined;
-
-export interface UpdateQueryHandlerProps {
-	compositeQuery: ICompositeMetricQuery;
-	viewName: string;
-	viewKey: string;
-	sourcePage: ExplorerCardProps['sourcepage'];
-	extraData: string;
-	notifications: NotificationInstance;
-	setIsQueryUpdated: (value: SetStateAction<boolean>) => void;
-	updateViewAsync: UseMutateAsyncFunction<
-		UpdateViewPayloadProps,
-		Error,
-		UpdateViewProps,
-		UpdateViewPayloadProps
-	>;
-}
 
 export interface IsQueryUpdatedInViewProps {
 	viewKey: string;
@@ -58,8 +39,9 @@ export interface MenuItemLabelGeneratorProps {
 	viewKey: string;
 	createdBy: string;
 	uuid: string;
+	viewData: ViewProps[];
+	currentPanelType: PANEL_TYPES | undefined;
 	refetchAllView: VoidFunction;
-	onMenuItemSelectHandler: ({ key }: { key: string }) => void;
 }
 
 export interface SaveViewHandlerProps {

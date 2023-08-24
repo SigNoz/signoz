@@ -13,7 +13,6 @@ import {
 	GetViewDetailsUsingViewKey,
 	IsQueryUpdatedInViewProps,
 	SaveViewHandlerProps,
-	UpdateQueryHandlerProps,
 } from './types';
 
 export const getViewDetailsUsingViewKey: GetViewDetailsUsingViewKey = (
@@ -27,35 +26,6 @@ export const getViewDetailsUsingViewKey: GetViewDetailsUsingViewKey = (
 		return { query, name, uuid };
 	}
 	return undefined;
-};
-
-export const updateQueryHandler = async ({
-	updateViewAsync,
-	compositeQuery,
-	viewName,
-	viewKey,
-	sourcePage,
-	extraData,
-	setIsQueryUpdated,
-	notifications,
-}: UpdateQueryHandlerProps): Promise<void> => {
-	try {
-		await updateViewAsync({
-			compositeQuery,
-			viewKey,
-			extraData,
-			sourcePage,
-			viewName,
-		});
-		setIsQueryUpdated(false);
-		notifications.success({
-			message: 'View Updated Successfully',
-		});
-	} catch (err) {
-		notifications.error({
-			message: axios.isAxiosError(err) ? err.message : SOMETHING_WENT_WRONG,
-		});
-	}
 };
 
 export const isQueryUpdatedInView = ({
@@ -78,9 +48,8 @@ export const isQueryUpdatedInView = ({
 				const newAggregateAttribute = queryData.aggregateAttribute;
 				delete newAggregateAttribute.id;
 				const newGroupByAttributes = queryData.groupBy.map((groupByAttribute) => {
-					const newGroupByAttribute = groupByAttribute;
-					delete newGroupByAttribute.id;
-					return newGroupByAttribute;
+					const { id, ...rest } = groupByAttribute;
+					return rest;
 				});
 				return {
 					...queryData,
@@ -93,13 +62,6 @@ export const isQueryUpdatedInView = ({
 			}),
 		},
 	};
-
-	console.log(
-		'Difference',
-		updatedCurrentQuery.builder,
-		query.builder,
-		isEqual(query.builder, updatedCurrentQuery?.builder),
-	);
 
 	return (
 		!isEqual(query.builder, updatedCurrentQuery?.builder) ||
