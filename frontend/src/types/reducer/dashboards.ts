@@ -8,5 +8,5 @@ export default interface DashboardReducer {
 	isEditMode: boolean;
 	isAddWidget: boolean;
 	isConfigureDrawerVisible: boolean;
-	generalConfigSaving: boolean;
+	isGeneralConfigSaving: boolean;
 }

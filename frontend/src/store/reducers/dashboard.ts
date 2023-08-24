@@ -32,7 +32,7 @@ const InitialValue: InitialValueTypes = {
 	isEditMode: false,
 	isAddWidget: false,
 	isConfigureDrawerVisible: false,
-	generalConfigSaving: false,
+	isGeneralConfigSaving: false,
 };
 
 const dashboard = (
@@ -336,7 +336,7 @@ const dashboard = (
 		case SET_GEN_CONFIG_SAVING: {
 			return {
 				...state,
-				generalConfigSaving: action.payload,
+				isGeneralConfigSaving: action.payload,
 			};
 		}
 		default:
