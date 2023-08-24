@@ -33,15 +33,22 @@ import (
 func TestLogPipelinesLifecycle(t *testing.T) {
 	testbed := NewLogPipelinesTestBed(t)
 
-	getPipelinesResp := testbed.GetPipelines(t)
-	assert.Equal(t, len(getPipelinesResp.Pipelines), 0)
+	getPipelinesResp := testbed.GetPipelinesFromQS(t)
+	assert.Equal(
+		t, len(getPipelinesResp.Pipelines), 0,
+		"There should be no pipelines at the start",
+	)
+	assert.Equal(
+		t, len(getPipelinesResp.History), 0,
+		"There should be no pipelines config history at the start",
+	)
 
-	// Should be able to create pipelines.
+	// Should be able to create pipelines config
 	postablePipelines := logparsingpipeline.PostablePipelines{
 		Pipelines: []logparsingpipeline.PostablePipeline{
 			{
 				OrderId: 1,
-				Name:    "pipeline 1",
+				Name:    "pipeline1",
 				Alias:   "pipeline1",
 				Enabled: true,
 				Filter:  "attributes.method == \"GET\"",
@@ -50,7 +57,7 @@ func TestLogPipelinesLifecycle(t *testing.T) {
 						OrderId: 1,
 						ID:      "add",
 						Type:    "add",
-						Field:   "body",
+						Field:   "body.test",
 						Value:   "val",
 						Enabled: true,
 						Name:    "test add",
@@ -58,7 +65,7 @@ func TestLogPipelinesLifecycle(t *testing.T) {
 				},
 			}, {
 				OrderId: 2,
-				Name:    "pipeline 2",
+				Name:    "pipeline2",
 				Alias:   "pipeline2",
 				Enabled: true,
 				Filter:  "attributes.method == \"GET\"",
@@ -67,7 +74,7 @@ func TestLogPipelinesLifecycle(t *testing.T) {
 						OrderId: 1,
 						ID:      "remove",
 						Type:    "remove",
-						Field:   "body",
+						Field:   "body.test",
 						Enabled: true,
 						Name:    "test remove",
 					},
@@ -76,29 +83,19 @@ func TestLogPipelinesLifecycle(t *testing.T) {
 		},
 	}
 
-	apiResponse, statusCode := testbed.PostPipelines(
+	createPipelinesResp := testbed.PostPipelinesToQS(
 		t, postablePipelines,
 	)
-	if statusCode != 200 {
-		t.Fatalf(
-			"Could not post pipelines: %v\nresponse status: %d, body: %v",
-			postablePipelines, statusCode, apiResponse,
-		)
-	}
-	createPipelinesResp, err := unmarshalPipelinesResponse(apiResponse)
-	if err != nil {
-		t.Fatal(err)
-	}
-	assertPipelinesMatchPostablePipelines(
-		t, createPipelinesResp.Pipelines, postablePipelines.Pipelines,
+	assertPipelinesMatchPostedPipelines(
+		t, createPipelinesResp.Pipelines, postablePipelines,
 	)
 
 	testbed.assertOpampClientReceivedConfigWithPipelines(t, createPipelinesResp.Pipelines)
 
 	// Should be able to get the created pipelines.
-	getPipelinesResp = testbed.GetPipelines(t)
-	assertPipelinesMatchPostablePipelines(
-		t, getPipelinesResp.Pipelines, postablePipelines.Pipelines,
+	getPipelinesResp = testbed.GetPipelinesFromQS(t)
+	assertPipelinesMatchPostedPipelines(
+		t, getPipelinesResp.Pipelines, postablePipelines,
 	)
 
 	// Deployment status should be pending.
@@ -109,33 +106,25 @@ func TestLogPipelinesLifecycle(t *testing.T) {
 	// Deployment status should get updated after acknowledgement from opamp client
 	testbed.simulateOpampClientAppliedLastReceivedConfig()
 
-	getPipelinesResp = testbed.GetPipelines(t)
-	assertPipelinesMatchPostablePipelines(
-		t, getPipelinesResp.Pipelines, postablePipelines.Pipelines,
+	getPipelinesResp = testbed.GetPipelinesFromQS(t)
+	assertPipelinesMatchPostedPipelines(
+		t, getPipelinesResp.Pipelines, postablePipelines,
 	)
 
 	assert.Equal(t, getPipelinesResp.History[0].DeployStatus, agentConf.Deployed)
 
 	// Should be able to update pipeline.
 	postablePipelines.Pipelines[1].Enabled = false
-	apiResponse, statusCode = testbed.PostPipelines(
+	updatePipelinesResp := testbed.PostPipelinesToQS(
 		t, postablePipelines,
 	)
-	if statusCode != 200 {
-		t.Fatalf(
-			"Could not update pipelines with payload: %v\nresponse status: %d, body: %v",
-			postablePipelines, statusCode, apiResponse,
-		)
-	}
-	updatePipelinesResp, err := unmarshalPipelinesResponse(apiResponse)
-	if err != nil {
-		t.Fatal(err)
-	}
-	assertPipelinesMatchPostablePipelines(
-		t, updatePipelinesResp.Pipelines, postablePipelines.Pipelines,
+	assertPipelinesMatchPostedPipelines(
+		t, updatePipelinesResp.Pipelines, postablePipelines,
 	)
 
-	testbed.assertOpampClientReceivedConfigWithPipelines(t, updatePipelinesResp.Pipelines)
+	testbed.assertOpampClientReceivedConfigWithPipelines(
+		t, updatePipelinesResp.Pipelines,
+	)
 
 	// History should have 2 items now and the latest version should be pending deployment.
 	assert.Equal(t, 2, len(updatePipelinesResp.History))
@@ -144,9 +133,9 @@ func TestLogPipelinesLifecycle(t *testing.T) {
 	// Deployment status should get updated again on receiving msg from client.
 	testbed.simulateOpampClientAppliedLastReceivedConfig()
 
-	getPipelinesResp = testbed.GetPipelines(t)
-	assertPipelinesMatchPostablePipelines(
-		t, getPipelinesResp.Pipelines, postablePipelines.Pipelines,
+	getPipelinesResp = testbed.GetPipelinesFromQS(t)
+	assertPipelinesMatchPostedPipelines(
+		t, getPipelinesResp.Pipelines, postablePipelines,
 	)
 
 	assert.Equal(t, 2, len(getPipelinesResp.History))
@@ -209,15 +198,16 @@ func NewLogPipelinesTestBed(t *testing.T) *LogPipelinesTestBed {
 	}
 }
 
-func (tb *LogPipelinesTestBed) PostPipelines(
+func (tb *LogPipelinesTestBed) PostPipelinesToQSExpectingStatusCode(
 	t *testing.T,
 	postablePipelines logparsingpipeline.PostablePipelines,
-) (*app.ApiResponse, int) {
+	expectedStatusCode int,
+) *logparsingpipeline.PipelinesResponse {
 	req, err := NewAuthenticatedTestRequest(
 		tb.TestUser, "/api/v1/logs/pipelines", postablePipelines,
 	)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("couldn't create authenticated test request: %v", err)
 	}
 
 	respWriter := httptest.NewRecorder()
@@ -226,19 +216,42 @@ func (tb *LogPipelinesTestBed) PostPipelines(
 	response := respWriter.Result()
 	responseBody, err := ioutil.ReadAll(response.Body)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("couldn't read response body received from posting pipelines to QS: %v", err)
 	}
 
 	var result app.ApiResponse
 	err = json.Unmarshal(responseBody, &result)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf(
+			"Could not unmarshal QS response into an ApiResponse.\nResponse body: %s",
+			responseBody,
+		)
 	}
 
-	return &result, response.StatusCode
+	if response.StatusCode != expectedStatusCode {
+		t.Fatalf(
+			"Received response status %d from posting log pipelines. Expected: %d",
+			response.StatusCode, expectedStatusCode,
+		)
+	}
+
+	pipelinesResp, err := unmarshalPipelinesResponse(&result)
+	if err != nil {
+		t.Fatal(err)
+	}
+	return pipelinesResp
 }
 
-func (tb *LogPipelinesTestBed) GetPipelines(t *testing.T) *logparsingpipeline.PipelinesResponse {
+func (tb *LogPipelinesTestBed) PostPipelinesToQS(
+	t *testing.T,
+	postablePipelines logparsingpipeline.PostablePipelines,
+) *logparsingpipeline.PipelinesResponse {
+	return tb.PostPipelinesToQSExpectingStatusCode(
+		t, postablePipelines, 200,
+	)
+}
+
+func (tb *LogPipelinesTestBed) GetPipelinesFromQS(t *testing.T) *logparsingpipeline.PipelinesResponse {
 	req, err := NewAuthenticatedTestRequest(
 		tb.TestUser, "/api/v1/logs/pipelines/latest", nil,
 	)
@@ -342,24 +355,27 @@ func unmarshalPipelinesResponse(apiResponse *app.ApiResponse) (
 	var pipelinesResp logparsingpipeline.PipelinesResponse
 	err = json.Unmarshal(dataJson, &pipelinesResp)
 	if err != nil {
-		return nil, errors.Wrap(err, "could not unmarshal data json into PipelinesResponse")
+		return nil, errors.Wrap(err, "could not unmarshal apiResponse.Data json into PipelinesResponse")
 	}
 
 	return &pipelinesResp, nil
 }
 
-func assertPipelinesMatchPostablePipelines(
+func assertPipelinesMatchPostedPipelines(
 	t *testing.T,
 	pipelines []model.Pipeline,
-	postablePipelines []logparsingpipeline.PostablePipeline,
+	postablePipelines logparsingpipeline.PostablePipelines,
 ) {
-	assert.Equal(t, len(pipelines), len(postablePipelines))
+	assert.Equal(
+		t, len(pipelines), len(postablePipelines.Pipelines),
+		"length mistmatch between pipelines and posted pipelines",
+	)
 	for i, pipeline := range pipelines {
-		postable := postablePipelines[i]
-		assert.Equal(t, pipeline.Name, postable.Name)
-		assert.Equal(t, pipeline.OrderId, postable.OrderId)
-		assert.Equal(t, pipeline.Enabled, postable.Enabled)
-		assert.Equal(t, pipeline.Config, postable.Config)
+		postable := postablePipelines.Pipelines[i]
+		assert.Equal(t, pipeline.Name, postable.Name, "pipeline.Name mismatch")
+		assert.Equal(t, pipeline.OrderId, postable.OrderId, "pipeline.OrderId mismatch")
+		assert.Equal(t, pipeline.Enabled, postable.Enabled, "pipeline.Enabled mismatch")
+		assert.Equal(t, pipeline.Config, postable.Config, "pipeline.Config mismatch")
 	}
 }
 
