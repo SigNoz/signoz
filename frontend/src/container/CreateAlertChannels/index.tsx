@@ -1,9 +1,11 @@
 import { Form } from 'antd';
 import createMsTeamsApi from 'api/channels/createMsTeams';
+import createOpsgenie from 'api/channels/createOpsgenie';
 import createPagerApi from 'api/channels/createPager';
 import createSlackApi from 'api/channels/createSlack';
 import createWebhookApi from 'api/channels/createWebhook';
 import testMsTeamsApi from 'api/channels/testMsTeams';
+import testOpsGenie from 'api/channels/testOpsgenie';
 import testPagerApi from 'api/channels/testPager';
 import testSlackApi from 'api/channels/testSlack';
 import testWebhookApi from 'api/channels/testWebhook';
@@ -18,6 +20,8 @@ import {
 	ChannelType,
 	MsTeamsChannel,
 	MsTeamsType,
+	OpsgenieChannel,
+	OpsgenieType,
 	PagerChannel,
 	PagerType,
 	SlackChannel,
@@ -37,7 +41,13 @@ function CreateAlertChannels({
 	const [formInstance] = Form.useForm();
 
 	const [selectedConfig, setSelectedConfig] = useState<
-		Partial<SlackChannel & WebhookChannel & PagerChannel & MsTeamsChannel>
+		Partial<
+			SlackChannel &
+				WebhookChannel &
+				PagerChannel &
+				MsTeamsChannel &
+				OpsgenieChannel
+		>
 	>({
 		text: `{{ range .Alerts -}}
      *Alert:* {{ .Labels.alertname }}{{ if .Labels.severity }} - {{ .Labels.severity }}{{ end }}
@@ -239,6 +249,42 @@ function CreateAlertChannels({
 		setSavingState(false);
 	}, [t, notifications, preparePagerRequest]);
 
+	const prepareOpsgenieRequest = useCallback(
+		() => ({
+			api_key: selectedConfig?.api_key || '',
+			name: selectedConfig?.name || '',
+			send_resolved: true,
+		}),
+		[selectedConfig],
+	);
+
+	const onOpsgenieHandler = useCallback(async () => {
+		setSavingState(true);
+
+		try {
+			const response = await createOpsgenie(prepareOpsgenieRequest());
+
+			if (response.statusCode === 200) {
+				notifications.success({
+					message: 'Success',
+					description: t('channel_creation_done'),
+				});
+				history.replace(ROUTES.ALL_CHANNELS);
+			} else {
+				notifications.error({
+					message: 'Error',
+					description: response.error || t('channel_creation_failed'),
+				});
+			}
+		} catch (error) {
+			notifications.error({
+				message: 'Error',
+				description: t('channel_creation_failed'),
+			});
+		}
+		setSavingState(false);
+	}, [prepareOpsgenieRequest, t, notifications]);
+
 	const prepareMsTeamsRequest = useCallback(
 		() => ({
 			webhook_url: selectedConfig?.webhook_url || '',
@@ -283,6 +329,7 @@ function CreateAlertChannels({
 				[SlackType]: onSlackHandler,
 				[WebhookType]: onWebhookHandler,
 				[PagerType]: onPagerHandler,
+				[OpsgenieType]: onOpsgenieHandler,
 				[MsTeamsType]: onMsTeamsHandler,
 			};
 			const functionToCall = functionMapper[value];
@@ -300,6 +347,7 @@ function CreateAlertChannels({
 			onSlackHandler,
 			onWebhookHandler,
 			onPagerHandler,
+			onOpsgenieHandler,
 			onMsTeamsHandler,
 			notifications,
 			t,
@@ -328,6 +376,10 @@ function CreateAlertChannels({
 					case MsTeamsType:
 						request = prepareMsTeamsRequest();
 						response = await testMsTeamsApi(request);
+						break;
+					case OpsgenieType:
+						request = prepareOpsgenieRequest();
+						response = await testOpsGenie(request);
 						break;
 					default:
 						notifications.error({
@@ -361,6 +413,7 @@ function CreateAlertChannels({
 			prepareWebhookRequest,
 			t,
 			preparePagerRequest,
+			prepareOpsgenieRequest,
 			prepareSlackRequest,
 			prepareMsTeamsRequest,
 			notifications,

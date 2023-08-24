@@ -6,6 +6,8 @@ import ROUTES from 'constants/routes';
 import {
 	ChannelType,
 	MsTeamsType,
+	OpsgenieChannel,
+	OpsgenieType,
 	PagerChannel,
 	PagerType,
 	SlackChannel,
@@ -20,6 +22,7 @@ import { Dispatch, ReactElement, SetStateAction } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import MsTeamsSettings from './Settings/MsTeams';
+import OpsgenieSettings from './Settings/Opsgenie';
 import PagerSettings from './Settings/Pager';
 import SlackSettings from './Settings/Slack';
 import WebhookSettings from './Settings/Webhook';
@@ -69,6 +72,8 @@ function FormAlertChannels({
 				return <PagerSettings setSelectedConfig={setSelectedConfig} />;
 			case MsTeamsType:
 				return <MsTeamsSettings setSelectedConfig={setSelectedConfig} />;
+			case OpsgenieType:
+				return <OpsgenieSettings setSelectedConfig={setSelectedConfig} />;
 			default:
 				return null;
 		}
@@ -101,6 +106,9 @@ function FormAlertChannels({
 						</Select.Option>
 						<Select.Option value="pagerduty" key="pagerduty">
 							Pagerduty
+						</Select.Option>
+						<Select.Option value="opsgenie" key="opsgenie">
+							Opsgenie
 						</Select.Option>
 						{!isOssFeature?.active && (
 							<Select.Option value="msteams" key="msteams">
@@ -147,7 +155,9 @@ interface FormAlertChannelsProps {
 	formInstance: FormInstance;
 	type: ChannelType;
 	setSelectedConfig: Dispatch<
-		SetStateAction<Partial<SlackChannel & WebhookChannel & PagerChannel>>
+		SetStateAction<
+			Partial<SlackChannel & WebhookChannel & PagerChannel & OpsgenieChannel>
+		>
 	>;
 	onTypeChangeHandler: (value: ChannelType) => void;
 	onSaveHandler: (props: ChannelType) => void;

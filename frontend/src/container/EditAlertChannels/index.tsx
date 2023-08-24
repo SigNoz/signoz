@@ -1,9 +1,11 @@
 import { Form } from 'antd';
 import editMsTeamsApi from 'api/channels/editMsTeams';
+import editOpsgenie from 'api/channels/editOpsgenie';
 import editPagerApi from 'api/channels/editPager';
 import editSlackApi from 'api/channels/editSlack';
 import editWebhookApi from 'api/channels/editWebhook';
 import testMsTeamsApi from 'api/channels/testMsTeams';
+import testOpsgenie from 'api/channels/testOpsgenie';
 import testPagerApi from 'api/channels/testPager';
 import testSlackApi from 'api/channels/testSlack';
 import testWebhookApi from 'api/channels/testWebhook';
@@ -12,6 +14,8 @@ import {
 	ChannelType,
 	MsTeamsChannel,
 	MsTeamsType,
+	OpsgenieChannel,
+	OpsgenieType,
 	PagerChannel,
 	PagerType,
 	SlackChannel,
@@ -35,7 +39,13 @@ function EditAlertChannels({
 
 	const [formInstance] = Form.useForm();
 	const [selectedConfig, setSelectedConfig] = useState<
-		Partial<SlackChannel & WebhookChannel & PagerChannel & MsTeamsChannel>
+		Partial<
+			SlackChannel &
+				WebhookChannel &
+				PagerChannel &
+				MsTeamsChannel &
+				OpsgenieChannel
+		>
 	>({
 		...initialValue,
 	});
@@ -193,6 +203,45 @@ function EditAlertChannels({
 		setSavingState(false);
 	}, [preparePagerRequest, notifications, selectedConfig, t]);
 
+	const prepareOpsgenieRequest = useCallback(
+		() => ({
+			name: selectedConfig.name || '',
+			api_key: selectedConfig.api_key || '',
+			id,
+		}),
+		[id, selectedConfig],
+	);
+
+	const onOpsgenieEditHandler = useCallback(async () => {
+		setSavingState(true);
+
+		if (selectedConfig?.api_key === '') {
+			notifications.error({
+				message: 'Error',
+				description: t('api_key_required'),
+			});
+			setSavingState(false);
+			return;
+		}
+
+		const response = await editOpsgenie(prepareOpsgenieRequest());
+
+		if (response.statusCode === 200) {
+			notifications.success({
+				message: 'Success',
+				description: t('channel_edit_done'),
+			});
+
+			history.replace(ROUTES.ALL_CHANNELS);
+		} else {
+			notifications.error({
+				message: 'Error',
+				description: response.error || t('channel_edit_failed'),
+			});
+		}
+		setSavingState(false);
+	}, [prepareOpsgenieRequest, t, notifications, selectedConfig]);
+
 	const prepareMsTeamsRequest = useCallback(
 		() => ({
 			webhook_url: selectedConfig?.webhook_url || '',
@@ -245,6 +294,8 @@ function EditAlertChannels({
 				onPagerEditHandler();
 			} else if (value === MsTeamsType) {
 				onMsTeamsEditHandler();
+			} else if (value === OpsgenieType) {
+				onOpsgenieEditHandler();
 			}
 		},
 		[
@@ -252,6 +303,7 @@ function EditAlertChannels({
 			onWebhookEditHandler,
 			onPagerEditHandler,
 			onMsTeamsEditHandler,
+			onOpsgenieEditHandler,
 		],
 	);
 
@@ -277,6 +329,10 @@ function EditAlertChannels({
 					case MsTeamsType:
 						request = prepareMsTeamsRequest();
 						if (request) response = await testMsTeamsApi(request);
+						break;
+					case OpsgenieType:
+						request = prepareOpsgenieRequest();
+						if (request) response = await testOpsgenie(request);
 						break;
 					default:
 						notifications.error({
@@ -312,6 +368,7 @@ function EditAlertChannels({
 			preparePagerRequest,
 			prepareSlackRequest,
 			prepareMsTeamsRequest,
+			prepareOpsgenieRequest,
 			notifications,
 		],
 	);
