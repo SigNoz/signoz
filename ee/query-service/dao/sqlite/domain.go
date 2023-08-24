@@ -4,8 +4,8 @@ import (
 	"context"
 	"database/sql"
 	"encoding/json"
-	"net/url"
 	"fmt"
+	"net/url"
 	"strings"
 	"time"
 
@@ -28,29 +28,70 @@ type StoredDomain struct {
 
 // GetDomainFromSsoResponse uses relay state received from IdP to fetch
 // user domain. The domain is further used to process validity of the response.
-// when sending login request to IdP we send relay state as URL (site url) 
-// with domainId as query parameter.   
+// when sending login request to IdP we send relay state as URL (site url)
+// with domainId or domainName as query parameter.
 func (m *modelDao) GetDomainFromSsoResponse(ctx context.Context, relayState *url.URL) (*model.OrgDomain, error) {
 	// derive domain id from relay state now
-	var domainIdStr string 
+	var domainIdStr string
+	var domainNameStr string
+	var domain *model.OrgDomain
+
 	for k, v := range relayState.Query() {
 		if k == "domainId" && len(v) > 0 {
 			domainIdStr = strings.Replace(v[0], ":", "-", -1)
 		}
+		if k == "domainName" && len(v) > 0 {
+			domainNameStr = v[0]
+		}
 	}
 
-	domainId, err := uuid.Parse(domainIdStr)
+	if domainIdStr != "" {
+		domainId, err := uuid.Parse(domainIdStr)
+		if err != nil {
+			zap.S().Errorf("failed to parse domainId from relay state", err)
+			return nil, fmt.Errorf("failed to parse domainId from IdP response")
+		}
+
+		domain, err = m.GetDomain(ctx, domainId)
+		if (err != nil) || domain == nil {
+			zap.S().Errorf("failed to find domain from domainId received in IdP response", err.Error())
+			return nil, fmt.Errorf("invalid credentials")
+		}
+	}
+
+	if domainNameStr != "" {
+
+		domainFromDB, err := m.GetDomainByName(ctx, domainNameStr)
+		domain = domainFromDB
+		if (err != nil) || domain == nil {
+			zap.S().Errorf("failed to find domain from domainName received in IdP response", err.Error())
+			return nil, fmt.Errorf("invalid credentials")
+		}
+	}
+	if domain != nil {
+		return domain, nil
+	}
+
+	return nil, fmt.Errorf("failed to find domain received in IdP response")
+}
+
+// GetDomainByName returns org domain for a given domain name
+func (m *modelDao) GetDomainByName(ctx context.Context, name string) (*model.OrgDomain, basemodel.BaseApiError) {
+
+	stored := StoredDomain{}
+	err := m.DB().Get(&stored, `SELECT * FROM org_domains WHERE name=$1 LIMIT 1`, name)
+
 	if err != nil {
-		zap.S().Errorf("failed to parse domain id from relay state", err)
-		return nil, fmt.Errorf("failed to parse response from IdP response")
+		if err == sql.ErrNoRows {
+			return nil, model.BadRequest(fmt.Errorf("invalid domain name"))
+		}
+		return nil, model.InternalError(err)
 	}
 
-	domain, err := m.GetDomain(ctx, domainId)
-	if (err != nil) || domain == nil {
-		zap.S().Errorf("failed to find domain received in IdP response", err.Error())
-		return nil, fmt.Errorf("invalid credentials")
+	domain := &model.OrgDomain{Id: stored.Id, Name: stored.Name, OrgId: stored.OrgId}
+	if err := domain.LoadConfig(stored.Data); err != nil {
+		return domain, model.InternalError(err)
 	}
-
 	return domain, nil
 }
 
