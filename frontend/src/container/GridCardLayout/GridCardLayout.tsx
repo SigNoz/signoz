@@ -5,7 +5,6 @@ import useComponentPermission from 'hooks/useComponentPermission';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { useNotifications } from 'hooks/useNotifications';
 import { useDashboard } from 'providers/Dashboard/Dashboard';
-import { Layout } from 'react-grid-layout';
 import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
 import { Dashboard, Widgets } from 'types/api/dashboard/getAll';
@@ -22,11 +21,10 @@ import {
 import { MenuItemKeys } from './WidgetHeader/contants';
 
 function GraphLayout({
-	layouts,
 	onAddPanelHandler,
 	widgets,
 }: GraphLayoutProps): JSX.Element {
-	const { selectedDashboard } = useDashboard();
+	const { selectedDashboard, layouts, setLayouts } = useDashboard();
 
 	const { featureResponse } = useSelector<AppState, AppReducer>(
 		(state) => state.app,
@@ -105,6 +103,7 @@ function GraphLayout({
 				isDroppable={addPanelPermission}
 				isResizable={addPanelPermission}
 				allowOverlap={false}
+				onLayoutChange={setLayouts}
 				draggableHandle=".drag-handle"
 			>
 				{layouts.map(({ ...rest }) => {
@@ -133,7 +132,6 @@ function GraphLayout({
 }
 
 interface GraphLayoutProps {
-	layouts: Layout[];
 	onAddPanelHandler: VoidFunction;
 	widgets: Widgets[] | undefined;
 }
