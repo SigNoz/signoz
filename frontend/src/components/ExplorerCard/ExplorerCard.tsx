@@ -1,5 +1,7 @@
 import {
+	DeleteOutlined,
 	DownOutlined,
+	MoreOutlined,
 	SaveOutlined,
 	ShareAltOutlined,
 } from '@ant-design/icons';
@@ -21,6 +23,7 @@ import {
 } from 'constants/queryBuilderQueryNames';
 import { useGetSearchQueryParam } from 'hooks/queryBuilder/useGetSearchQueryParam';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
+import { useDeleteView } from 'hooks/saveViews/useDeleteView';
 import { useGetAllViews } from 'hooks/saveViews/useGetAllViews';
 import { useUpdateView } from 'hooks/saveViews/useUpdateView';
 import useErrorNotification from 'hooks/useErrorNotification';
@@ -40,6 +43,7 @@ import {
 } from './styles';
 import { ExplorerCardProps } from './types';
 import {
+	deleteViewHandler,
 	getViewDetailsUsingViewKey,
 	isQueryUpdatedInView,
 	updateQueryHandler,
@@ -96,6 +100,27 @@ function ExplorerCard({
 		sourcePage: sourcepage,
 		viewName,
 	});
+
+	const { mutateAsync: deleteViewAsync } = useDeleteView(viewKey);
+
+	const onDeleteHandler = useCallback(async () => {
+		deleteViewHandler({
+			deleteViewAsync,
+			notifications,
+			panelType,
+			redirectWithQueryBuilderData,
+			refetchAllView,
+			viewId: viewKey,
+			viewKey,
+		});
+	}, [
+		deleteViewAsync,
+		notifications,
+		panelType,
+		redirectWithQueryBuilderData,
+		refetchAllView,
+		viewKey,
+	]);
 
 	const onUpdateQueryHandler = useCallback(async () => {
 		await updateQueryHandler({
@@ -212,6 +237,20 @@ function ExplorerCard({
 		[updateMenuList],
 	);
 
+	const moreOptionMenu = useMemo(
+		(): MenuProps => ({
+			items: [
+				{
+					key: 'delete',
+					label: <Typography.Text strong>Delete</Typography.Text>,
+					onClick: onDeleteHandler,
+					icon: <DeleteOutlined />,
+				},
+			],
+		}),
+		[onDeleteHandler],
+	);
+
 	return (
 		<>
 			<ExplorerCardHeadContainer size="small">
@@ -273,6 +312,11 @@ function ExplorerCard({
 								</Button>
 							</Popover>
 							<ShareAltOutlined onClick={onCopyUrlHandler} />
+							{viewKey && (
+								<Dropdown trigger={['click']} menu={moreOptionMenu}>
+									<MoreOutlined />
+								</Dropdown>
+							)}
 						</Space>
 					</OffSetCol>
 				</Row>

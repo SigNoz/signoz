@@ -163,6 +163,7 @@ export const deleteViewHandler = async ({
 			redirectWithQueryBuilderData(initialQueriesMap.traces, {
 				[querySearchParams.viewName]: 'Query Builder',
 				[queryParamNamesMap.panelTypes]: panelType,
+				[querySearchParams.viewKey]: '',
 			});
 		}
 		notifications.success({
