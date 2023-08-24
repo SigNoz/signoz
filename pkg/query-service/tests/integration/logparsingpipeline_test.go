@@ -32,14 +32,15 @@ import (
 
 func TestLogPipelinesLifecycle(t *testing.T) {
 	testbed := NewLogPipelinesTestBed(t)
+	assert := assert.New(t)
 
-	getPipelinesResp := testbed.GetPipelinesFromQS(t)
+	getPipelinesResp := testbed.GetPipelinesFromQS()
 	assert.Equal(
-		t, len(getPipelinesResp.Pipelines), 0,
+		0, len(getPipelinesResp.Pipelines),
 		"There should be no pipelines at the start",
 	)
 	assert.Equal(
-		t, len(getPipelinesResp.History), 0,
+		0, len(getPipelinesResp.History),
 		"There should be no pipelines config history at the start",
 	)
 
@@ -83,9 +84,7 @@ func TestLogPipelinesLifecycle(t *testing.T) {
 		},
 	}
 
-	createPipelinesResp := testbed.PostPipelinesToQS(
-		t, postablePipelines,
-	)
+	createPipelinesResp := testbed.PostPipelinesToQS(postablePipelines)
 	assertPipelinesMatchPostedPipelines(
 		t, createPipelinesResp.Pipelines, postablePipelines,
 	)
@@ -93,31 +92,29 @@ func TestLogPipelinesLifecycle(t *testing.T) {
 	testbed.assertOpampClientReceivedConfigWithPipelines(t, createPipelinesResp.Pipelines)
 
 	// Should be able to get the created pipelines.
-	getPipelinesResp = testbed.GetPipelinesFromQS(t)
+	getPipelinesResp = testbed.GetPipelinesFromQS()
 	assertPipelinesMatchPostedPipelines(
 		t, getPipelinesResp.Pipelines, postablePipelines,
 	)
 
 	// Deployment status should be pending.
-	assert.Equal(t, 1, len(createPipelinesResp.History))
-	assert.Equal(t, agentConf.DeployInitiated, createPipelinesResp.History[0].DeployStatus)
-	assert.Equal(t, agentConf.DeployInitiated, getPipelinesResp.History[0].DeployStatus)
+	assert.Equal(1, len(createPipelinesResp.History))
+	assert.Equal(agentConf.DeployInitiated, createPipelinesResp.History[0].DeployStatus)
+	assert.Equal(agentConf.DeployInitiated, getPipelinesResp.History[0].DeployStatus)
 
 	// Deployment status should get updated after acknowledgement from opamp client
 	testbed.simulateOpampClientAppliedLastReceivedConfig()
 
-	getPipelinesResp = testbed.GetPipelinesFromQS(t)
+	getPipelinesResp = testbed.GetPipelinesFromQS()
 	assertPipelinesMatchPostedPipelines(
 		t, getPipelinesResp.Pipelines, postablePipelines,
 	)
 
-	assert.Equal(t, getPipelinesResp.History[0].DeployStatus, agentConf.Deployed)
+	assert.Equal(getPipelinesResp.History[0].DeployStatus, agentConf.Deployed)
 
 	// Should be able to update pipeline.
 	postablePipelines.Pipelines[1].Enabled = false
-	updatePipelinesResp := testbed.PostPipelinesToQS(
-		t, postablePipelines,
-	)
+	updatePipelinesResp := testbed.PostPipelinesToQS(postablePipelines)
 	assertPipelinesMatchPostedPipelines(
 		t, updatePipelinesResp.Pipelines, postablePipelines,
 	)
@@ -127,26 +124,27 @@ func TestLogPipelinesLifecycle(t *testing.T) {
 	)
 
 	// History should have 2 items now and the latest version should be pending deployment.
-	assert.Equal(t, 2, len(updatePipelinesResp.History))
-	assert.Equal(t, agentConf.DeployInitiated, updatePipelinesResp.History[0].DeployStatus)
+	assert.Equal(2, len(updatePipelinesResp.History))
+	assert.Equal(agentConf.DeployInitiated, updatePipelinesResp.History[0].DeployStatus)
 
 	// Deployment status should get updated again on receiving msg from client.
 	testbed.simulateOpampClientAppliedLastReceivedConfig()
 
-	getPipelinesResp = testbed.GetPipelinesFromQS(t)
+	getPipelinesResp = testbed.GetPipelinesFromQS()
 	assertPipelinesMatchPostedPipelines(
 		t, getPipelinesResp.Pipelines, postablePipelines,
 	)
 
-	assert.Equal(t, 2, len(getPipelinesResp.History))
-	assert.Equal(t, getPipelinesResp.History[0].DeployStatus, agentConf.Deployed)
+	assert.Equal(2, len(getPipelinesResp.History))
+	assert.Equal(getPipelinesResp.History[0].DeployStatus, agentConf.Deployed)
 }
 
 type LogPipelinesTestBed struct {
-	TestUser        *model.User
-	ApiHandler      *app.APIHandler
-	OpampServer     *opamp.Server
-	OpampClientConn *mockOpAmpConnection
+	t               *testing.T
+	testUser        *model.User
+	apiHandler      *app.APIHandler
+	opampServer     *opamp.Server
+	opampClientConn *mockOpAmpConnection
 }
 
 func NewLogPipelinesTestBed(t *testing.T) *LogPipelinesTestBed {
@@ -191,45 +189,45 @@ func NewLogPipelinesTestBed(t *testing.T) *LogPipelinesTestBed {
 	}
 
 	return &LogPipelinesTestBed{
-		TestUser:        user,
-		ApiHandler:      apiHandler,
-		OpampServer:     opampServer,
-		OpampClientConn: clientConn,
+		t:               t,
+		testUser:        user,
+		apiHandler:      apiHandler,
+		opampServer:     opampServer,
+		opampClientConn: clientConn,
 	}
 }
 
 func (tb *LogPipelinesTestBed) PostPipelinesToQSExpectingStatusCode(
-	t *testing.T,
 	postablePipelines logparsingpipeline.PostablePipelines,
 	expectedStatusCode int,
 ) *logparsingpipeline.PipelinesResponse {
 	req, err := NewAuthenticatedTestRequest(
-		tb.TestUser, "/api/v1/logs/pipelines", postablePipelines,
+		tb.testUser, "/api/v1/logs/pipelines", postablePipelines,
 	)
 	if err != nil {
-		t.Fatalf("couldn't create authenticated test request: %v", err)
+		tb.t.Fatalf("couldn't create authenticated test request: %v", err)
 	}
 
 	respWriter := httptest.NewRecorder()
-	tb.ApiHandler.CreateLogsPipeline(respWriter, req)
+	tb.apiHandler.CreateLogsPipeline(respWriter, req)
 
 	response := respWriter.Result()
 	responseBody, err := ioutil.ReadAll(response.Body)
 	if err != nil {
-		t.Fatalf("couldn't read response body received from posting pipelines to QS: %v", err)
+		tb.t.Fatalf("couldn't read response body received from posting pipelines to QS: %v", err)
 	}
 
 	var result app.ApiResponse
 	err = json.Unmarshal(responseBody, &result)
 	if err != nil {
-		t.Fatalf(
+		tb.t.Fatalf(
 			"Could not unmarshal QS response into an ApiResponse.\nResponse body: %s",
 			responseBody,
 		)
 	}
 
 	if response.StatusCode != expectedStatusCode {
-		t.Fatalf(
+		tb.t.Fatalf(
 			"Received response status %d from posting log pipelines. Expected: %d",
 			response.StatusCode, expectedStatusCode,
 		)
@@ -237,41 +235,40 @@ func (tb *LogPipelinesTestBed) PostPipelinesToQSExpectingStatusCode(
 
 	pipelinesResp, err := unmarshalPipelinesResponse(&result)
 	if err != nil {
-		t.Fatal(err)
+		tb.t.Fatalf("could not unmarshal apiResponse.Data into PipelinesResponse: %v", err)
 	}
 	return pipelinesResp
 }
 
 func (tb *LogPipelinesTestBed) PostPipelinesToQS(
-	t *testing.T,
 	postablePipelines logparsingpipeline.PostablePipelines,
 ) *logparsingpipeline.PipelinesResponse {
 	return tb.PostPipelinesToQSExpectingStatusCode(
-		t, postablePipelines, 200,
+		postablePipelines, 200,
 	)
 }
 
-func (tb *LogPipelinesTestBed) GetPipelinesFromQS(t *testing.T) *logparsingpipeline.PipelinesResponse {
+func (tb *LogPipelinesTestBed) GetPipelinesFromQS() *logparsingpipeline.PipelinesResponse {
 	req, err := NewAuthenticatedTestRequest(
-		tb.TestUser, "/api/v1/logs/pipelines/latest", nil,
+		tb.testUser, "/api/v1/logs/pipelines/latest", nil,
 	)
 	if err != nil {
-		t.Fatal(err)
+		tb.t.Fatal(err)
 	}
 	req = mux.SetURLVars(req, map[string]string{
 		"version": "latest",
 	})
 
 	respWriter := httptest.NewRecorder()
-	tb.ApiHandler.ListLogsPipelinesHandler(respWriter, req)
+	tb.apiHandler.ListLogsPipelinesHandler(respWriter, req)
 	response := respWriter.Result()
 	responseBody, err := ioutil.ReadAll(response.Body)
 	if err != nil {
-		t.Fatal(err)
+		tb.t.Fatal(err)
 	}
 
 	if response.StatusCode != 200 {
-		t.Fatalf(
+		tb.t.Fatalf(
 			"could not list log parsing pipelines. status: %d, body: %v",
 			response.StatusCode, responseBody,
 		)
@@ -280,11 +277,11 @@ func (tb *LogPipelinesTestBed) GetPipelinesFromQS(t *testing.T) *logparsingpipel
 	var result app.ApiResponse
 	err = json.Unmarshal(responseBody, &result)
 	if err != nil {
-		t.Fatal(err)
+		tb.t.Fatal(err)
 	}
 	pipelinesResp, err := unmarshalPipelinesResponse(&result)
 	if err != nil {
-		t.Fatal(err)
+		tb.t.Fatal(err)
 	}
 	return pipelinesResp
 }
@@ -293,7 +290,7 @@ func (tb *LogPipelinesTestBed) assertOpampClientReceivedConfigWithPipelines(
 	t *testing.T, pipelines []model.Pipeline,
 ) {
 	// Should have sent the new effective config to opamp client.
-	lastMsg := tb.OpampClientConn.latestMsgFromServer()
+	lastMsg := tb.opampClientConn.latestMsgFromServer()
 	otelConfigFiles := lastMsg.RemoteConfig.Config.ConfigMap
 	assert.Equal(t, len(otelConfigFiles), 1)
 
@@ -331,8 +328,8 @@ func (tb *LogPipelinesTestBed) assertOpampClientReceivedConfigWithPipelines(
 }
 
 func (tb *LogPipelinesTestBed) simulateOpampClientAppliedLastReceivedConfig() {
-	lastMsg := tb.OpampClientConn.latestMsgFromServer()
-	tb.OpampServer.OnMessage(tb.OpampClientConn, &protobufs.AgentToServer{
+	lastMsg := tb.opampClientConn.latestMsgFromServer()
+	tb.opampServer.OnMessage(tb.opampClientConn, &protobufs.AgentToServer{
 		InstanceUid: "test",
 		EffectiveConfig: &protobufs.EffectiveConfig{
 			ConfigMap: lastMsg.RemoteConfig.Config,
