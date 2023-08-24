@@ -165,7 +165,7 @@ func ResetPassword(ctx context.Context, req *model.ResetPasswordRequest) error {
 		return errors.New("Invalid reset password request")
 	}
 
-	hash, err := passwordHash(req.Password)
+	hash, err := PasswordHash(req.Password)
 	if err != nil {
 		return errors.Wrap(err, "Failed to generate password hash")
 	}
@@ -192,7 +192,7 @@ func ChangePassword(ctx context.Context, req *model.ChangePasswordRequest) error
 		return ErrorInvalidCreds
 	}
 
-	hash, err := passwordHash(req.NewPassword)
+	hash, err := PasswordHash(req.NewPassword)
 	if err != nil {
 		return errors.Wrap(err, "Failed to generate password hash")
 	}
@@ -243,7 +243,7 @@ func RegisterFirstUser(ctx context.Context, req *RegisterRequest) (*model.User, 
 	var hash string
 	var err error
 
-	hash, err = passwordHash(req.Password)
+	hash, err = PasswordHash(req.Password)
 	if err != nil {
 		zap.S().Errorf("failed to generate password hash when registering a user", zap.Error(err))
 		return nil, model.InternalError(model.ErrSignupFailed{})
@@ -314,13 +314,13 @@ func RegisterInvitedUser(ctx context.Context, req *RegisterRequest, nopassword b
 
 	// check if password is not empty, as for SSO case it can be
 	if req.Password != "" {
-		hash, err = passwordHash(req.Password)
+		hash, err = PasswordHash(req.Password)
 		if err != nil {
 			zap.S().Errorf("failed to generate password hash when registering a user", zap.Error(err))
 			return nil, model.InternalError(model.ErrSignupFailed{})
 		}
 	} else {
-		hash, err = passwordHash(utils.GeneratePassowrd())
+		hash, err = PasswordHash(utils.GeneratePassowrd())
 		if err != nil {
 			zap.S().Errorf("failed to generate password hash when registering a user", zap.Error(err))
 			return nil, model.InternalError(model.ErrSignupFailed{})
@@ -419,7 +419,7 @@ func authenticateLogin(ctx context.Context, req *model.LoginRequest) (*model.Use
 }
 
 // Generate hash from the password.
-func passwordHash(pass string) (string, error) {
+func PasswordHash(pass string) (string, error) {
 	hash, err := bcrypt.GenerateFromPassword([]byte(pass), bcrypt.DefaultCost)
 	if err != nil {
 		return "", err
