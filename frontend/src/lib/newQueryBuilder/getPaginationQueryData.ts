@@ -46,7 +46,7 @@ export const getPaginationQueryData: SetupPaginationQueryData = ({
 							id: uuid(),
 							key: {
 								key: 'id',
-								type: null,
+								type: '',
 								dataType: 'string',
 								isColumn: true,
 							},

@@ -1,14 +1,13 @@
 import { Tabs } from 'antd';
 import axios from 'axios';
 import ExplorerCard from 'components/ExplorerCard';
-import { QueryParams } from 'constants/query';
+import { AVAILABLE_EXPORT_PANEL_TYPES } from 'constants/panelTypes';
 import {
 	initialAutocompleteData,
 	initialQueriesMap,
 	PANEL_TYPES,
 } from 'constants/queryBuilder';
 import { queryParamNamesMap } from 'constants/queryBuilderQueryNames';
-import ROUTES from 'constants/routes';
 import ExportPanel from 'container/ExportPanel';
 import { SIGNOZ_VALUE } from 'container/QueryBuilder/filters/OrderByFilter/constants';
 import QuerySection from 'container/TracesExplorer/QuerySection';
@@ -19,10 +18,10 @@ import { useShareBuilderUrl } from 'hooks/queryBuilder/useShareBuilderUrl';
 import { useNotifications } from 'hooks/useNotifications';
 import history from 'lib/history';
 import { useCallback, useEffect, useMemo } from 'react';
-import { generatePath } from 'react-router-dom';
 import { Dashboard } from 'types/api/dashboard/getAll';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource } from 'types/common/queryBuilder';
+import { generateExportToDashboardLink } from 'utils/dashboard/generateExportToDashboardLink';
 
 import { ActionsWrapper, Container } from './styles';
 import { getTabsItems } from './utils';
@@ -95,11 +94,16 @@ function TracesExplorer(): JSX.Element {
 
 	const handleExport = useCallback(
 		(dashboard: Dashboard | null): void => {
-			if (!dashboard) return;
+			if (!dashboard || !panelType) return;
+
+			const panelTypeParam = AVAILABLE_EXPORT_PANEL_TYPES.includes(panelType)
+				? panelType
+				: PANEL_TYPES.TIME_SERIES;
 
 			const updatedDashboard = addEmptyWidgetInDashboardJSONWithQuery(
 				dashboard,
 				exportDefaultQuery,
+				panelTypeParam,
 			);
 
 			updateDashboard(updatedDashboard, {
@@ -127,11 +131,11 @@ function TracesExplorer(): JSX.Element {
 
 						return;
 					}
-					const dashboardEditView = `${generatePath(ROUTES.DASHBOARD, {
-						dashboardId: data?.payload?.uuid,
-					})}/new?${QueryParams.graphType}=graph&${QueryParams.widgetId}=empty&${
-						queryParamNamesMap.compositeQuery
-					}=${encodeURIComponent(JSON.stringify(exportDefaultQuery))}`;
+					const dashboardEditView = generateExportToDashboardLink({
+						query: exportDefaultQuery,
+						panelType: panelTypeParam,
+						dashboardId: data.payload?.uuid || '',
+					});
 
 					history.push(dashboardEditView);
 				},
@@ -144,7 +148,7 @@ function TracesExplorer(): JSX.Element {
 				},
 			});
 		},
-		[exportDefaultQuery, notifications, updateDashboard],
+		[exportDefaultQuery, notifications, panelType, updateDashboard],
 	);
 
 	const getUpdateQuery = useCallback(
