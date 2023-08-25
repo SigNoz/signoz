@@ -1,4 +1,5 @@
-import { fireEvent, render, screen } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
+import { PANEL_TYPES } from 'constants/queryBuilder';
 import ROUTES from 'constants/routes';
 import { QueryClient, QueryClientProvider } from 'react-query';
 
@@ -20,8 +21,6 @@ const queryClient = new QueryClient({
 	},
 });
 
-const mockOnMenuItemSelectHandler = jest.fn();
-
 describe('MenuItemGenerator', () => {
 	it('should render MenuItemGenerator component', () => {
 		const screen = render(
@@ -32,7 +31,8 @@ describe('MenuItemGenerator', () => {
 					createdBy={viewMockData[0].createdBy}
 					uuid={viewMockData[0].uuid}
 					refetchAllView={jest.fn()}
-					onMenuItemSelectHandler={mockOnMenuItemSelectHandler}
+					viewData={viewMockData}
+					currentPanelType={PANEL_TYPES.TRACE}
 				/>
 			</QueryClientProvider>,
 		);
@@ -49,15 +49,16 @@ describe('MenuItemGenerator', () => {
 					createdBy={viewMockData[0].createdBy}
 					uuid={viewMockData[0].uuid}
 					refetchAllView={jest.fn()}
-					onMenuItemSelectHandler={mockOnMenuItemSelectHandler}
+					viewData={viewMockData}
+					currentPanelType={PANEL_TYPES.TRACE}
 				/>
 			</QueryClientProvider>,
 		);
 
-		fireEvent.click(screen.getByText(viewMockData[0].name));
-
-		expect(mockOnMenuItemSelectHandler).toHaveBeenCalledWith({
-			key: viewMockData[0].uuid,
+		const spanElement = screen.getByRole('img', {
+			name: 'delete',
 		});
+
+		expect(spanElement).toBeInTheDocument();
 	});
 });
