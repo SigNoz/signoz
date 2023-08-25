@@ -129,9 +129,14 @@ func buildLogsTimeSeriesFilterQuery(fs *v3.FilterSet, groupBy []v3.AttributeKey)
 	if fs != nil && len(fs.Items) != 0 {
 		for _, item := range fs.Items {
 			op := v3.FilterOperator(strings.ToLower(strings.TrimSpace(string(item.Operator))))
-			value, err := utils.ValidateAndCastValue(item.Value, item.Key.DataType)
-			if err != nil {
-				return "", fmt.Errorf("failed to validate and cast value for %s: %v", item.Key.Key, err)
+
+			var value interface{}
+			var err error
+			if op != v3.FilterOperatorExists && op != v3.FilterOperatorNotExists {
+				value, err = utils.ValidateAndCastValue(item.Value, item.Key.DataType)
+				if err != nil {
+					return "", fmt.Errorf("failed to validate and cast value for %s: %v", item.Key.Key, err)
+				}
 			}
 
 			if logsOp, ok := logOperators[op]; ok {
