@@ -3,8 +3,8 @@ import { themeColors } from 'constants/theme';
 import getAlphaColor from 'utils/getAlphaColor';
 
 export const getDefaultLogBackground = (
-	isReadOnly: boolean,
-	isDarkMode: boolean,
+	isReadOnly?: boolean,
+	isDarkMode?: boolean,
 ): string => {
 	if (isReadOnly) return '';
 	return `&:hover {
