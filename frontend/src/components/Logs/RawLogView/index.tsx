@@ -21,8 +21,6 @@ import {
 	useMemo,
 	useState,
 } from 'react';
-// interfaces
-import { ILog } from 'types/api/logs/log';
 
 // styles
 import {
@@ -31,19 +29,17 @@ import {
 	RawLogContent,
 	RawLogViewContainer,
 } from './styles';
+import { RawLogViewProps } from './types';
 
 const convert = new Convert();
 
-interface RawLogViewProps {
-	isActiveLog?: boolean;
-	isReadOnly?: boolean;
-	data: ILog;
-	linesPerRow: number;
-}
-
-function RawLogView(props: RawLogViewProps): JSX.Element {
-	const { isActiveLog = false, isReadOnly = false, data, linesPerRow } = props;
-
+function RawLogView({
+	isActiveLog,
+	isReadOnly,
+	data,
+	linesPerRow,
+	isTextOverflowEllipsisDisabled,
+}: RawLogViewProps): JSX.Element {
 	const { isHighlighted, isLogsExplorerPage, onLogCopy } = useCopyLogLink(
 		data.id,
 	);
@@ -143,6 +139,7 @@ function RawLogView(props: RawLogViewProps): JSX.Element {
 			<RawLogContent
 				$isReadOnly={isReadOnly}
 				$isActiveLog={isActiveLog}
+				$isTextOverflowEllipsisDisabled={isTextOverflowEllipsisDisabled}
 				linesPerRow={linesPerRow}
 				dangerouslySetInnerHTML={html}
 			/>
@@ -181,6 +178,7 @@ function RawLogView(props: RawLogViewProps): JSX.Element {
 RawLogView.defaultProps = {
 	isActiveLog: false,
 	isReadOnly: false,
+	isTextOverflowEllipsisDisabled: false,
 };
 
 export default RawLogView;
