@@ -324,7 +324,7 @@ type FilterAttributeValueResponse struct {
 type QueryRangeParamsV3 struct {
 	Start          int64                  `json:"start"`
 	End            int64                  `json:"end"`
-	Step           int64                  `json:"step"`
+	Step           int64                  `json:"step"` // step is in seconds; used for prometheus queries
 	CompositeQuery *CompositeQuery        `json:"compositeQuery"`
 	Variables      map[string]interface{} `json:"variables,omitempty"`
 	NoCache        bool                   `json:"noCache"`
@@ -638,24 +638,26 @@ func (p *Point) UnmarshalJSON(data []byte) error {
 	return err
 }
 
-// ExploreQuery is a query for the explore page
-// It is a composite query with a source page name
+// SavedView is a saved query for the explore page
+// It is a composite query with a source page name and user defined tags
 // The source page name is used to identify the page that initiated the query
-// The source page could be "traces", "logs", "metrics" or "dashboards", "alerts" etc.
-type ExplorerQuery struct {
+// The source page could be "traces", "logs", "metrics".
+type SavedView struct {
 	UUID           string          `json:"uuid,omitempty"`
+	Name           string          `json:"name"`
+	Category       string          `json:"category"`
+	CreatedAt      time.Time       `json:"createdAt"`
+	CreatedBy      string          `json:"createdBy"`
+	UpdatedAt      time.Time       `json:"updatedAt"`
+	UpdatedBy      string          `json:"updatedBy"`
 	SourcePage     string          `json:"sourcePage"`
+	Tags           []string        `json:"tags"`
 	CompositeQuery *CompositeQuery `json:"compositeQuery"`
 	// ExtraData is JSON encoded data used by frontend to store additional data
 	ExtraData string `json:"extraData"`
-	// 0 - false, 1 - true; this is int8 because sqlite doesn't support bool
-	IsView int8 `json:"isView"`
 }
 
-func (eq *ExplorerQuery) Validate() error {
-	if eq.IsView != 0 && eq.IsView != 1 {
-		return fmt.Errorf("isView must be 0 or 1")
-	}
+func (eq *SavedView) Validate() error {
 
 	if eq.CompositeQuery == nil {
 		return fmt.Errorf("composite query is required")

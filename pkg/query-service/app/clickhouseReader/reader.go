@@ -3440,7 +3440,6 @@ func (r *ClickHouseReader) GetLogFields(ctx context.Context) (*model.GetFieldsRe
 
 	extractSelectedAndInterestingFields(statements[0].Statement, constants.Attributes, &attributes, &response)
 	extractSelectedAndInterestingFields(statements[0].Statement, constants.Resources, &resources, &response)
-	extractSelectedAndInterestingFields(statements[0].Statement, constants.Static, &constants.StaticInterestingLogFields, &response)
 
 	return &response, nil
 }
@@ -3448,7 +3447,8 @@ func (r *ClickHouseReader) GetLogFields(ctx context.Context) (*model.GetFieldsRe
 func extractSelectedAndInterestingFields(tableStatement string, fieldType string, fields *[]model.LogField, response *model.GetFieldsResponse) {
 	for _, field := range *fields {
 		field.Type = fieldType
-		if isSelectedField(tableStatement, field.Name) {
+		// all static fields are assumed to be selected as we don't allow changing them
+		if isSelectedField(tableStatement, field) {
 			response.Selected = append(response.Selected, field)
 		} else {
 			response.Interesting = append(response.Interesting, field)
@@ -3456,28 +3456,72 @@ func extractSelectedAndInterestingFields(tableStatement string, fieldType string
 	}
 }
 
-func isSelectedField(tableStatement, field string) bool {
-	return strings.Contains(tableStatement, fmt.Sprintf("INDEX %s_idx", field))
+func isSelectedField(tableStatement string, field model.LogField) bool {
+	// in case of attributes and resources, if there is a materialized column present then it is selected
+	// TODO: handle partial change complete eg:- index is removed but materialized column is still present
+	name := utils.GetClickhouseColumnName(field.Type, field.DataType, field.Name)
+	return strings.Contains(tableStatement, fmt.Sprintf("`%s`", name))
 }
 
 func (r *ClickHouseReader) UpdateLogField(ctx context.Context, field *model.UpdateField) *model.ApiError {
+	// don't allow updating static fields
+	if field.Type == constants.Static {
+		err := errors.New("cannot update static fields")
+		return &model.ApiError{Err: err, Typ: model.ErrorBadData}
+	}
+
+	colname := utils.GetClickhouseColumnName(field.Type, field.DataType, field.Name)
+
 	// if a field is selected it means that the field needs to be indexed
 	if field.Selected {
-		// if the type is attribute or resource, create the materialized column first
-		if field.Type == constants.Attributes || field.Type == constants.Resources {
-			// create materialized
-			query := fmt.Sprintf("ALTER TABLE %s.%s ON CLUSTER %s ADD COLUMN IF NOT EXISTS %s %s MATERIALIZED %s_%s_value[indexOf(%s_%s_key, '%s')] CODEC(LZ4)", r.logsDB, r.logsLocalTable, cluster, field.Name, field.DataType, field.Type, strings.ToLower(field.DataType), field.Type, strings.ToLower(field.DataType), field.Name)
+		keyColName := fmt.Sprintf("%s_%s_key", field.Type, strings.ToLower(field.DataType))
+		valueColName := fmt.Sprintf("%s_%s_value", field.Type, strings.ToLower(field.DataType))
 
-			err := r.db.Exec(ctx, query)
-			if err != nil {
-				return &model.ApiError{Err: err, Typ: model.ErrorInternal}
-			}
+		// create materialized column
+		query := fmt.Sprintf("ALTER TABLE %s.%s ON CLUSTER %s ADD COLUMN IF NOT EXISTS %s %s MATERIALIZED %s[indexOf(%s, '%s')] CODEC(ZSTD(1))",
+			r.logsDB, r.logsLocalTable,
+			cluster,
+			colname, field.DataType,
+			valueColName,
+			keyColName,
+			field.Name,
+		)
+		err := r.db.Exec(ctx, query)
+		if err != nil {
+			return &model.ApiError{Err: err, Typ: model.ErrorInternal}
+		}
 
-			query = fmt.Sprintf("ALTER TABLE %s.%s ON CLUSTER %s ADD COLUMN IF NOT EXISTS %s %s MATERIALIZED -1", r.logsDB, r.logsTable, cluster, field.Name, field.DataType)
-			err = r.db.Exec(ctx, query)
-			if err != nil {
-				return &model.ApiError{Err: err, Typ: model.ErrorInternal}
-			}
+		query = fmt.Sprintf("ALTER TABLE %s.%s ON CLUSTER %s ADD COLUMN IF NOT EXISTS %s %s MATERIALIZED -1",
+			r.logsDB, r.logsTable,
+			cluster,
+			colname, field.DataType,
+		)
+		err = r.db.Exec(ctx, query)
+		if err != nil {
+			return &model.ApiError{Err: err, Typ: model.ErrorInternal}
+		}
+
+		// create exists column
+		query = fmt.Sprintf("ALTER TABLE %s.%s ON CLUSTER %s ADD COLUMN IF NOT EXISTS %s_exists bool MATERIALIZED if(indexOf(%s, '%s') != 0, true, false) CODEC(ZSTD(1))",
+			r.logsDB, r.logsLocalTable,
+			cluster,
+			colname,
+			keyColName,
+			field.Name,
+		)
+		err = r.db.Exec(ctx, query)
+		if err != nil {
+			return &model.ApiError{Err: err, Typ: model.ErrorInternal}
+		}
+
+		query = fmt.Sprintf("ALTER TABLE %s.%s ON CLUSTER %s ADD COLUMN IF NOT EXISTS %s_exists bool MATERIALIZED false",
+			r.logsDB, r.logsTable,
+			cluster,
+			colname,
+		)
+		err = r.db.Exec(ctx, query)
+		if err != nil {
+			return &model.ApiError{Err: err, Typ: model.ErrorInternal}
 		}
 
 		// create the index
@@ -3487,19 +3531,51 @@ func (r *ClickHouseReader) UpdateLogField(ctx context.Context, field *model.Upda
 		if field.IndexGranularity == 0 {
 			field.IndexGranularity = constants.DefaultLogSkipIndexGranularity
 		}
-		query := fmt.Sprintf("ALTER TABLE %s.%s ON CLUSTER %s ADD INDEX IF NOT EXISTS %s_idx (%s) TYPE %s  GRANULARITY %d", r.logsDB, r.logsLocalTable, cluster, field.Name, field.Name, field.IndexType, field.IndexGranularity)
-		err := r.db.Exec(ctx, query)
+		query = fmt.Sprintf("ALTER TABLE %s.%s ON CLUSTER %s ADD INDEX IF NOT EXISTS %s_idx (%s) TYPE %s  GRANULARITY %d",
+			r.logsDB, r.logsLocalTable,
+			cluster,
+			colname,
+			colname,
+			field.IndexType,
+			field.IndexGranularity,
+		)
+		err = r.db.Exec(ctx, query)
 		if err != nil {
 			return &model.ApiError{Err: err, Typ: model.ErrorInternal}
 		}
 
 	} else {
-		// remove index
-		query := fmt.Sprintf("ALTER TABLE %s.%s ON CLUSTER %s DROP INDEX IF EXISTS %s_idx", r.logsDB, r.logsLocalTable, cluster, field.Name)
+		// Delete the index first
+		query := fmt.Sprintf("ALTER TABLE %s.%s ON CLUSTER %s DROP INDEX IF EXISTS %s_idx", r.logsDB, r.logsLocalTable, cluster, colname)
 		err := r.db.Exec(ctx, query)
-		// we are ignoring errors with code 341 as it is an error with updating old part https://github.com/SigNoz/engineering-pod/issues/919#issuecomment-1366344346
-		if err != nil && !strings.HasPrefix(err.Error(), "code: 341") {
+		if err != nil {
 			return &model.ApiError{Err: err, Typ: model.ErrorInternal}
+		}
+
+		for _, table := range []string{r.logsLocalTable, r.logsTable} {
+			// drop materialized column from logs table
+			query := "ALTER TABLE %s.%s ON CLUSTER %s DROP COLUMN IF EXISTS %s "
+			err := r.db.Exec(ctx, fmt.Sprintf(query,
+				r.logsDB, table,
+				cluster,
+				colname,
+			),
+			)
+			if err != nil {
+				return &model.ApiError{Err: err, Typ: model.ErrorInternal}
+			}
+
+			// drop exists column on logs table
+			query = "ALTER TABLE %s.%s ON CLUSTER %s DROP COLUMN IF EXISTS %s_exists "
+			err = r.db.Exec(ctx, fmt.Sprintf(query,
+				r.logsDB, table,
+				cluster,
+				colname,
+			),
+			)
+			if err != nil {
+				return &model.ApiError{Err: err, Typ: model.ErrorInternal}
+			}
 		}
 	}
 	return nil
@@ -3897,8 +3973,11 @@ func (r *ClickHouseReader) GetLatencyMetricMetadata(ctx context.Context, metricN
 	}, nil
 }
 
-func isColumn(tableStatement, field string) bool {
-	return strings.Contains(tableStatement, fmt.Sprintf("`%s` ", field))
+func isColumn(tableStatement, attrType, field, datType string) bool {
+	// value of attrType will be `resource` or `tag`, if `tag` change it to `attribute`
+	name := utils.GetClickhouseColumnName(attrType, datType, field)
+
+	return strings.Contains(tableStatement, fmt.Sprintf("`%s` ", name))
 }
 
 func (r *ClickHouseReader) GetLogAggregateAttributes(ctx context.Context, req *v3.AggregateAttributeRequest) (*v3.AggregateAttributeResponse, error) {
@@ -3970,7 +4049,7 @@ func (r *ClickHouseReader) GetLogAggregateAttributes(ctx context.Context, req *v
 			Key:      tagKey,
 			DataType: v3.AttributeKeyDataType(dataType),
 			Type:     v3.AttributeKeyType(attType),
-			IsColumn: isColumn(statements[0].Statement, tagKey),
+			IsColumn: isColumn(statements[0].Statement, attType, tagKey, dataType),
 		}
 		response.AttributeKeys = append(response.AttributeKeys, key)
 	}
@@ -4025,7 +4104,7 @@ func (r *ClickHouseReader) GetLogAttributeKeys(ctx context.Context, req *v3.Filt
 			Key:      attributeKey,
 			DataType: v3.AttributeKeyDataType(attributeDataType),
 			Type:     v3.AttributeKeyType(tagType),
-			IsColumn: isColumn(statements[0].Statement, attributeKey),
+			IsColumn: isColumn(statements[0].Statement, tagType, attributeKey, attributeDataType),
 		}
 
 		response.AttributeKeys = append(response.AttributeKeys, key)
@@ -4600,6 +4679,8 @@ func (r *ClickHouseReader) GetSpanAttributeKeys(ctx context.Context) (map[string
 func (r *ClickHouseReader) LiveTailLogsV3(ctx context.Context, query string, timestampStart uint64, idStart string, client *v3.LogsLiveTailClient) {
 	if timestampStart == 0 {
 		timestampStart = uint64(time.Now().UnixNano())
+	} else {
+		timestampStart = uint64(utils.GetEpochNanoSecs(int64(timestampStart)))
 	}
 
 	ticker := time.NewTicker(time.Duration(r.liveTailRefreshSeconds) * time.Second)

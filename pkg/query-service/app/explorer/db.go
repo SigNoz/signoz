@@ -1,26 +1,32 @@
 package explorer
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/google/uuid"
 	"github.com/jmoiron/sqlx"
+	"go.signoz.io/signoz/pkg/query-service/auth"
 	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
 )
 
 var db *sqlx.DB
 
-type ExplorerQuery struct {
+type SavedView struct {
 	UUID       string    `json:"uuid" db:"uuid"`
+	Name       string    `json:"name" db:"name"`
+	Category   string    `json:"category" db:"category"`
 	CreatedAt  time.Time `json:"created_at" db:"created_at"`
+	CreatedBy  string    `json:"created_by" db:"created_by"`
 	UpdatedAt  time.Time `json:"updated_at" db:"updated_at"`
+	UpdatedBy  string    `json:"updated_by" db:"updated_by"`
 	SourcePage string    `json:"source_page" db:"source_page"`
-	// 0 - false, 1 - true
-	IsView    int8   `json:"is_view" db:"is_view"`
-	Data      string `json:"data" db:"data"`
-	ExtraData string `json:"extra_data" db:"extra_data"`
+	Tags       string    `json:"tags" db:"tags"`
+	Data       string    `json:"data" db:"data"`
+	ExtraData  string    `json:"extra_data" db:"extra_data"`
 }
 
 // InitWithDSN sets up setting up the connection pool global variable.
@@ -32,19 +38,23 @@ func InitWithDSN(dataSourceName string) (*sqlx.DB, error) {
 		return nil, err
 	}
 
-	tableSchema := `CREATE TABLE IF NOT EXISTS explorer_queries (
+	tableSchema := `CREATE TABLE IF NOT EXISTS saved_views (
 		uuid TEXT PRIMARY KEY,
+		name TEXT NOT NULL,
+		category TEXT NOT NULL,
 		created_at datetime NOT NULL,
+		created_by TEXT,
 		updated_at datetime NOT NULL,
+		updated_by TEXT,
 		source_page TEXT NOT NULL,
-		is_view INTEGER NOT NULL,
+		tags TEXT,
 		data TEXT NOT NULL,
 		extra_data TEXT
 	);`
 
 	_, err = db.Exec(tableSchema)
 	if err != nil {
-		return nil, fmt.Errorf("Error in creating explorer queries table: %s", err.Error())
+		return nil, fmt.Errorf("error in creating saved views table: %s", err.Error())
 	}
 
 	return db, nil
@@ -54,38 +64,79 @@ func InitWithDB(sqlDB *sqlx.DB) {
 	db = sqlDB
 }
 
-func GetQueries() ([]*v3.ExplorerQuery, error) {
-	var queries []ExplorerQuery
-	err := db.Select(&queries, "SELECT * FROM explorer_queries")
+func GetViews() ([]*v3.SavedView, error) {
+	var views []SavedView
+	err := db.Select(&views, "SELECT * FROM saved_views")
 	if err != nil {
-		return nil, fmt.Errorf("Error in getting explorer queries: %s", err.Error())
+		return nil, fmt.Errorf("error in getting saved views: %s", err.Error())
 	}
 
-	var explorerQueries []*v3.ExplorerQuery
-	for _, query := range queries {
+	var savedViews []*v3.SavedView
+	for _, view := range views {
 		var compositeQuery v3.CompositeQuery
-		err = json.Unmarshal([]byte(query.Data), &compositeQuery)
+		err = json.Unmarshal([]byte(view.Data), &compositeQuery)
 		if err != nil {
-			return nil, fmt.Errorf("Error in unmarshalling explorer query data: %s", err.Error())
+			return nil, fmt.Errorf("error in unmarshalling explorer query data: %s", err.Error())
 		}
-		explorerQueries = append(explorerQueries, &v3.ExplorerQuery{
-			UUID:           query.UUID,
-			SourcePage:     query.SourcePage,
+		savedViews = append(savedViews, &v3.SavedView{
+			UUID:           view.UUID,
+			Name:           view.Name,
+			Category:       view.Category,
+			CreatedAt:      view.CreatedAt,
+			CreatedBy:      view.CreatedBy,
+			UpdatedAt:      view.UpdatedAt,
+			UpdatedBy:      view.UpdatedBy,
+			Tags:           strings.Split(view.Tags, ","),
+			SourcePage:     view.SourcePage,
 			CompositeQuery: &compositeQuery,
-			IsView:         query.IsView,
-			ExtraData:      query.ExtraData,
+			ExtraData:      view.ExtraData,
 		})
 	}
-	return explorerQueries, nil
+	return savedViews, nil
 }
 
-func CreateQuery(query v3.ExplorerQuery) (string, error) {
-	data, err := json.Marshal(query.CompositeQuery)
+func GetViewsForFilters(sourcePage string, name string, category string) ([]*v3.SavedView, error) {
+	var views []SavedView
+	var err error
+	if len(category) == 0 {
+		err = db.Select(&views, "SELECT * FROM saved_views WHERE source_page = ? AND name LIKE ?", sourcePage, "%"+name+"%")
+	} else {
+		err = db.Select(&views, "SELECT * FROM saved_views WHERE source_page = ? AND category LIKE ? AND name LIKE ?", sourcePage, "%"+category+"%", "%"+name+"%")
+	}
 	if err != nil {
-		return "", fmt.Errorf("Error in marshalling explorer query data: %s", err.Error())
+		return nil, fmt.Errorf("error in getting saved views: %s", err.Error())
 	}
 
-	uuid_ := query.UUID
+	var savedViews []*v3.SavedView
+	for _, view := range views {
+		var compositeQuery v3.CompositeQuery
+		err = json.Unmarshal([]byte(view.Data), &compositeQuery)
+		if err != nil {
+			return nil, fmt.Errorf("error in unmarshalling explorer query data: %s", err.Error())
+		}
+		savedViews = append(savedViews, &v3.SavedView{
+			UUID:           view.UUID,
+			Name:           view.Name,
+			CreatedAt:      view.CreatedAt,
+			CreatedBy:      view.CreatedBy,
+			UpdatedAt:      view.UpdatedAt,
+			UpdatedBy:      view.UpdatedBy,
+			Tags:           strings.Split(view.Tags, ","),
+			SourcePage:     view.SourcePage,
+			CompositeQuery: &compositeQuery,
+			ExtraData:      view.ExtraData,
+		})
+	}
+	return savedViews, nil
+}
+
+func CreateView(ctx context.Context, view v3.SavedView) (string, error) {
+	data, err := json.Marshal(view.CompositeQuery)
+	if err != nil {
+		return "", fmt.Errorf("error in marshalling explorer query data: %s", err.Error())
+	}
+
+	uuid_ := view.UUID
 
 	if uuid_ == "" {
 		uuid_ = uuid.New().String()
@@ -93,63 +144,101 @@ func CreateQuery(query v3.ExplorerQuery) (string, error) {
 	createdAt := time.Now()
 	updatedAt := time.Now()
 
+	email, err := getEmailFromJwt(ctx)
+	if err != nil {
+		return "", err
+	}
+
+	createBy := email
+	updatedBy := email
+
 	_, err = db.Exec(
-		"INSERT INTO explorer_queries (uuid, created_at, updated_at, source_page, is_view, data, extra_data) VALUES (?, ?, ?, ?, ?, ?, ?)",
+		"INSERT INTO saved_views (uuid, name, category, created_at, created_by, updated_at, updated_by, source_page, tags, data, extra_data) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
 		uuid_,
+		view.Name,
+		view.Category,
 		createdAt,
+		createBy,
 		updatedAt,
-		query.SourcePage,
-		query.IsView,
+		updatedBy,
+		view.SourcePage,
+		strings.Join(view.Tags, ","),
 		data,
-		query.ExtraData,
+		view.ExtraData,
 	)
 	if err != nil {
-		return "", fmt.Errorf("Error in creating explorer query: %s", err.Error())
+		return "", fmt.Errorf("error in creating saved view: %s", err.Error())
 	}
 	return uuid_, nil
 }
 
-func GetQuery(uuid_ string) (*v3.ExplorerQuery, error) {
-	var query ExplorerQuery
-	err := db.Get(&query, "SELECT * FROM explorer_queries WHERE uuid = ?", uuid_)
+func GetView(uuid_ string) (*v3.SavedView, error) {
+	var view SavedView
+	err := db.Get(&view, "SELECT * FROM saved_views WHERE uuid = ?", uuid_)
 	if err != nil {
-		return nil, fmt.Errorf("Error in getting explorer query: %s", err.Error())
+		return nil, fmt.Errorf("error in getting saved view: %s", err.Error())
 	}
 
 	var compositeQuery v3.CompositeQuery
-	err = json.Unmarshal([]byte(query.Data), &compositeQuery)
+	err = json.Unmarshal([]byte(view.Data), &compositeQuery)
 	if err != nil {
-		return nil, fmt.Errorf("Error in unmarshalling explorer query data: %s", err.Error())
+		return nil, fmt.Errorf("error in unmarshalling explorer query data: %s", err.Error())
 	}
-	return &v3.ExplorerQuery{
-		UUID:           query.UUID,
-		SourcePage:     query.SourcePage,
+	return &v3.SavedView{
+		UUID:           view.UUID,
+		Name:           view.Name,
+		Category:       view.Category,
+		CreatedAt:      view.CreatedAt,
+		CreatedBy:      view.CreatedBy,
+		UpdatedAt:      view.UpdatedAt,
+		UpdatedBy:      view.UpdatedBy,
+		SourcePage:     view.SourcePage,
+		Tags:           strings.Split(view.Tags, ","),
 		CompositeQuery: &compositeQuery,
-		IsView:         query.IsView,
-		ExtraData:      query.ExtraData,
+		ExtraData:      view.ExtraData,
 	}, nil
 }
 
-func UpdateQuery(uuid_ string, query v3.ExplorerQuery) error {
-	data, err := json.Marshal(query.CompositeQuery)
+func UpdateView(ctx context.Context, uuid_ string, view v3.SavedView) error {
+	data, err := json.Marshal(view.CompositeQuery)
 	if err != nil {
-		return fmt.Errorf("Error in marshalling explorer query data: %s", err.Error())
+		return fmt.Errorf("error in marshalling explorer query data: %s", err.Error())
+	}
+
+	email, err := getEmailFromJwt(ctx)
+	if err != nil {
+		return err
 	}
 
 	updatedAt := time.Now()
+	updatedBy := email
 
-	_, err = db.Exec("UPDATE explorer_queries SET updated_at = ?, source_page = ?, is_view = ?, data = ?, extra_data = ? WHERE uuid = ?",
-		updatedAt, query.SourcePage, query.IsView, data, query.ExtraData, uuid_)
+	_, err = db.Exec("UPDATE saved_views SET updated_at = ?, updated_by = ?, name = ?, category = ?, source_page = ?, tags = ?, data = ?, extra_data = ? WHERE uuid = ?",
+		updatedAt, updatedBy, view.Name, view.Category, view.SourcePage, strings.Join(view.Tags, ","), data, view.ExtraData, uuid_)
 	if err != nil {
-		return fmt.Errorf("Error in updating explorer query: %s", err.Error())
+		return fmt.Errorf("error in updating saved view: %s", err.Error())
 	}
 	return nil
 }
 
-func DeleteQuery(uuid_ string) error {
-	_, err := db.Exec("DELETE FROM explorer_queries WHERE uuid = ?", uuid_)
+func DeleteView(uuid_ string) error {
+	_, err := db.Exec("DELETE FROM saved_views WHERE uuid = ?", uuid_)
 	if err != nil {
-		return fmt.Errorf("Error in deleting explorer query: %s", err.Error())
+		return fmt.Errorf("error in deleting explorer query: %s", err.Error())
 	}
 	return nil
+}
+
+func getEmailFromJwt(ctx context.Context) (string, error) {
+	jwt, err := auth.ExtractJwtFromContext(ctx)
+	if err != nil {
+		return "", err
+	}
+
+	claims, err := auth.ParseJWT(jwt)
+	if err != nil {
+		return "", err
+	}
+
+	return claims["email"].(string), nil
 }
