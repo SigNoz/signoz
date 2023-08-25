@@ -23,10 +23,12 @@ function FiltersInput(): JSX.Element {
 
 	const handleChange = useCallback(
 		(filters: TagFilter) => {
-			if (!stagedQuery) return;
-			const currentStagedQuery = stagedQuery.builder.queryData[0];
+			const listQueryData = stagedQuery?.builder.queryData[0];
+
+			if (!listQueryData) return;
+
 			const queryData: IBuilderQuery = {
-				...currentStagedQuery,
+				...listQueryData,
 				filters,
 			};
 
