@@ -1,0 +1,3 @@
+export const LIVE_TAIL_HEARTBEAT_TIMEOUT = 10 * 60 * 1000;
+
+export const LIVE_TAIL_GRAPH_INTERVAL = 60000;

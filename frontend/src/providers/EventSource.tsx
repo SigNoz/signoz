@@ -1,11 +1,13 @@
 import { apiV3 } from 'api/apiV1';
 import { ENVIRONMENT } from 'constants/env';
+import { LIVE_TAIL_HEARTBEAT_TIMEOUT } from 'constants/liveTail';
 import { EventListener, EventSourcePolyfill } from 'event-source-polyfill';
 import {
 	createContext,
 	PropsWithChildren,
 	useCallback,
 	useContext,
+	useEffect,
 	useMemo,
 	useRef,
 	useState,
@@ -19,7 +21,11 @@ interface IEventSourceContext {
 	isConnectionOpen: boolean;
 	isConnectionLoading: boolean;
 	isConnectionError: string;
-	handleStartOpenConnection: (url?: string) => void;
+	initialLoading: boolean;
+	handleStartOpenConnection: (urlProps: {
+		url?: string;
+		queryString: string;
+	}) => void;
 	handleCloseConnection: () => void;
 }
 
@@ -27,6 +33,7 @@ const EventSourceContext = createContext<IEventSourceContext>({
 	eventSourceInstance: null,
 	isConnectionOpen: false,
 	isConnectionLoading: false,
+	initialLoading: true,
 	isConnectionError: '',
 	handleStartOpenConnection: () => {},
 	handleCloseConnection: () => {},
@@ -39,61 +46,84 @@ export function EventSourceProvider({
 	const [isConnectionLoading, setIsConnectionLoading] = useState<boolean>(false);
 	const [isConnectionError, setIsConnectionError] = useState<string>('');
 
+	const [initialLoading, setInitialLoading] = useState<boolean>(true);
+
 	const { user } = useSelector<AppState, AppReducer>((state) => state.app);
 
 	const eventSourceRef = useRef<EventSourcePolyfill | null>(null);
 
-	const handleCloseConnection = useCallback(() => {
-		if (!eventSourceRef.current) return;
-
-		eventSourceRef.current.close();
-		setIsConnectionOpen(false);
-		setIsConnectionLoading(false);
-	}, []);
-
 	const handleOpenConnection: EventListener = useCallback(() => {
 		setIsConnectionLoading(false);
 		setIsConnectionOpen(true);
+		setInitialLoading(false);
 	}, []);
 
 	const handleErrorConnection: EventListener = useCallback(() => {
+		setIsConnectionOpen(false);
+		setIsConnectionLoading(false);
+		setIsConnectionError('error');
+		setInitialLoading(false);
+
 		if (!eventSourceRef.current) return;
 
-		handleCloseConnection();
+		eventSourceRef.current.close();
+	}, []);
 
+	const destroyEventSourceSession = useCallback(() => {
+		if (!eventSourceRef.current) return;
+
+		eventSourceRef.current.close();
 		eventSourceRef.current.removeEventListener('error', handleErrorConnection);
 		eventSourceRef.current.removeEventListener('open', handleOpenConnection);
-	}, [handleCloseConnection, handleOpenConnection]);
+	}, [handleErrorConnection, handleOpenConnection]);
+
+	const handleCloseConnection = useCallback(() => {
+		setIsConnectionOpen(false);
+		setIsConnectionLoading(false);
+		setIsConnectionError('');
+		setInitialLoading(false);
+
+		destroyEventSourceSession();
+	}, [destroyEventSourceSession]);
 
 	const handleStartOpenConnection = useCallback(
-		(url?: string) => {
-			const eventSourceUrl = url || `${ENVIRONMENT.baseURL}${apiV3}logs/livetail`;
+		(urlProps: { url?: string; queryString: string }): void => {
+			const { url, queryString } = urlProps;
 
-			const TIMEOUT_IN_MS = 10 * 60 * 1000;
+			const eventSourceUrl = url
+				? `${url}/?${queryString}`
+				: `${ENVIRONMENT.baseURL}${apiV3}logs/livetail?${queryString}`;
 
 			eventSourceRef.current = new EventSourcePolyfill(eventSourceUrl, {
 				headers: {
 					Authorization: `Bearer ${user?.accessJwt}`,
 				},
-				heartbeatTimeout: TIMEOUT_IN_MS,
+				heartbeatTimeout: LIVE_TAIL_HEARTBEAT_TIMEOUT,
 			});
 
 			setIsConnectionLoading(true);
 			setIsConnectionError('');
 
 			eventSourceRef.current.addEventListener('error', handleErrorConnection);
-
 			eventSourceRef.current.addEventListener('open', handleOpenConnection);
 		},
-		[handleErrorConnection, handleOpenConnection, user?.accessJwt],
+		[user, handleErrorConnection, handleOpenConnection],
 	);
 
-	const contextValue = useMemo(
+	useEffect(
+		() => (): void => {
+			handleCloseConnection();
+		},
+		[handleCloseConnection],
+	);
+
+	const contextValue: IEventSourceContext = useMemo(
 		() => ({
 			eventSourceInstance: eventSourceRef.current,
 			isConnectionError,
 			isConnectionLoading,
 			isConnectionOpen,
+			initialLoading,
 			handleStartOpenConnection,
 			handleCloseConnection,
 		}),
@@ -101,6 +131,7 @@ export function EventSourceProvider({
 			isConnectionError,
 			isConnectionLoading,
 			isConnectionOpen,
+			initialLoading,
 			handleStartOpenConnection,
 			handleCloseConnection,
 		],
