@@ -233,6 +233,34 @@ var timeSeriesFilterQueryData = []struct {
 		}},
 		ExpectedFilter: " AND attributes_string_value[indexOf(attributes_string_key, 'body')] ILIKE '%test%'",
 	},
+	{
+		Name: "Test exists on top level field",
+		FilterSet: &v3.FilterSet{Operator: "AND", Items: []v3.FilterItem{
+			{Key: v3.AttributeKey{Key: "trace_id", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeUnspecified, IsColumn: true}, Operator: "exists"},
+		}},
+		ExpectedFilter: " AND trace_id != ''",
+	},
+	{
+		Name: "Test not exists on top level field",
+		FilterSet: &v3.FilterSet{Operator: "AND", Items: []v3.FilterItem{
+			{Key: v3.AttributeKey{Key: "span_id", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeUnspecified, IsColumn: true}, Operator: "nexists"},
+		}},
+		ExpectedFilter: " AND span_id = ''",
+	},
+	{
+		Name: "Test exists on top level field number",
+		FilterSet: &v3.FilterSet{Operator: "AND", Items: []v3.FilterItem{
+			{Key: v3.AttributeKey{Key: "trace_flags", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeUnspecified, IsColumn: true}, Operator: "exists"},
+		}},
+		ExpectedFilter: " AND trace_flags != 0",
+	},
+	{
+		Name: "Test not exists on top level field number",
+		FilterSet: &v3.FilterSet{Operator: "AND", Items: []v3.FilterItem{
+			{Key: v3.AttributeKey{Key: "severity_number", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeUnspecified, IsColumn: true}, Operator: "nexists"},
+		}},
+		ExpectedFilter: " AND severity_number = 0",
+	},
 }
 
 func TestBuildLogsTimeSeriesFilterQuery(t *testing.T) {

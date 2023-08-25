@@ -137,9 +137,33 @@ func buildLogsTimeSeriesFilterQuery(fs *v3.FilterSet, groupBy []v3.AttributeKey)
 			if logsOp, ok := logOperators[op]; ok {
 				switch op {
 				case v3.FilterOperatorExists, v3.FilterOperatorNotExists:
-					columnType := getClickhouseLogsColumnType(item.Key.Type)
-					columnDataType := getClickhouseLogsColumnDataType(item.Key.DataType)
-					conditions = append(conditions, fmt.Sprintf(logsOp, columnType, columnDataType, item.Key.Key))
+					if item.Key.Type == v3.AttributeKeyTypeUnspecified {
+
+						top := "!="
+						if op == v3.FilterOperatorNotExists {
+							top = "="
+						}
+
+						if val, ok := constants.StaticFieldsLogsV3[item.Key.Key]; ok {
+							// skip for timestamp and id
+							if val.Key == "" {
+								continue
+							}
+
+							columnName := getClickhouseColumnName(item.Key)
+							if val.DataType == v3.AttributeKeyDataTypeString {
+								conditions = append(conditions, fmt.Sprintf("%s %s ''", columnName, top))
+							} else {
+								// we just have two types, number and string
+								conditions = append(conditions, fmt.Sprintf("%s %s 0", columnName, top))
+							}
+						}
+
+					} else {
+						columnType := getClickhouseLogsColumnType(item.Key.Type)
+						columnDataType := getClickhouseLogsColumnDataType(item.Key.DataType)
+						conditions = append(conditions, fmt.Sprintf(logsOp, columnType, columnDataType, item.Key.Key))
+					}
 				case v3.FilterOperatorRegex, v3.FilterOperatorNotRegex:
 					columnName := getClickhouseColumnName(item.Key)
 					fmtVal := utils.ClickHouseFormattedValue(value)

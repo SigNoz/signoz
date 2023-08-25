@@ -275,6 +275,15 @@ var testValidateAndCastValueData = []struct {
 		want:    nil,
 		wantErr: true,
 	},
+	{
+		name: "v3.AttributeKeyDataTypeFloat64: nil",
+		args: args{
+			v:        nil,
+			dataType: v3.AttributeKeyDataTypeFloat64,
+		},
+		want:    nil,
+		wantErr: false,
+	},
 }
 
 // Test cases for ValidateAndCastValue function in pkg/query-service/utils/format.go
@@ -375,6 +384,11 @@ var testClickHouseFormattedValueData = []struct {
 			"test'2",
 		},
 		want: "['test\\'1','test\\'2']",
+	},
+	{
+		name:  "check nil",
+		value: nil,
+		want:  "",
 	},
 }
 
