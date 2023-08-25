@@ -96,7 +96,16 @@ function ExplorerCard({
 
 	const { mutateAsync: deleteViewAsync } = useDeleteView(viewKey);
 
-	const onDeleteHandler = useCallback(async () => {
+	const showErrorNotification = useCallback(
+		(err: Error): void => {
+			notifications.error({
+				message: axios.isAxiosError(err) ? err.message : SOMETHING_WENT_WRONG,
+			});
+		},
+		[notifications],
+	);
+
+	const onDeleteHandler = useCallback(() => {
 		deleteViewHandler({
 			deleteViewAsync,
 			notifications,
@@ -115,7 +124,7 @@ function ExplorerCard({
 		viewKey,
 	]);
 
-	const onUpdateQueryHandler = useCallback(() => {
+	const onUpdateQueryHandler = (): void => {
 		updateViewAsync(
 			{
 				compositeQuery: mapCompositeQueryFromQuery(currentQuery, panelType),
@@ -133,22 +142,11 @@ function ExplorerCard({
 					refetchAllView();
 				},
 				onError: (err) => {
-					notifications.error({
-						message: axios.isAxiosError(err) ? err.message : SOMETHING_WENT_WRONG,
-					});
+					showErrorNotification(err);
 				},
 			},
 		);
-	}, [
-		currentQuery,
-		notifications,
-		panelType,
-		refetchAllView,
-		sourcepage,
-		updateViewAsync,
-		viewKey,
-		viewName,
-	]);
+	};
 
 	useEffect(() => {
 		if (copyUrl.value) {
@@ -177,7 +175,7 @@ function ExplorerCard({
 
 	const viewSelectMenuItem = useMemo(
 		() =>
-			viewsData?.data.data.map((view) => ({
+			viewsData?.data?.data?.map((view) => ({
 				key: view.uuid,
 				label: (
 					<MenuItemGenerator

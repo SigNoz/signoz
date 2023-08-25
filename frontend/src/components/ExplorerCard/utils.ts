@@ -1,3 +1,4 @@
+import { NotificationInstance } from 'antd/es/notification/interface';
 import axios from 'axios';
 import { SOMETHING_WENT_WRONG } from 'constants/api';
 import { initialQueriesMap } from 'constants/queryBuilder';
@@ -14,6 +15,15 @@ import {
 	IsQueryUpdatedInViewProps,
 	SaveViewHandlerProps,
 } from './types';
+
+const showErrorNotification = (
+	notifications: NotificationInstance,
+	err: Error,
+): void => {
+	notifications.error({
+		message: axios.isAxiosError(err) ? err.message : SOMETHING_WENT_WRONG,
+	});
+};
 
 export const getViewDetailsUsingViewKey: GetViewDetailsUsingViewKey = (
 	viewKey,
@@ -70,7 +80,7 @@ export const isQueryUpdatedInView = ({
 	);
 };
 
-export const saveViewHandler = async ({
+export const saveViewHandler = ({
 	saveViewAsync,
 	refetchAllView,
 	notifications,
@@ -81,35 +91,37 @@ export const saveViewHandler = async ({
 	extraData,
 	redirectWithQueryBuilderData,
 	panelType,
-}: SaveViewHandlerProps): Promise<void> => {
-	try {
-		const { data } = await saveViewAsync({
+}: SaveViewHandlerProps): void => {
+	saveViewAsync(
+		{
 			viewName,
 			compositeQuery,
 			sourcePage,
 			extraData,
-		});
-		refetchAllView();
-		redirectWithQueryBuilderData(mapQueryDataFromApi(compositeQuery), {
-			[queryParamNamesMap.panelTypes]: panelType,
-			[querySearchParams.viewName]: viewName,
-			// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-			// @ts-ignore
-			[querySearchParams.viewKey]: data.data,
-		});
-		notifications.success({
-			message: 'View Saved Successfully',
-		});
-	} catch (err) {
-		notifications.error({
-			message: axios.isAxiosError(err) ? err.message : SOMETHING_WENT_WRONG,
-		});
-	} finally {
-		handlePopOverClose();
-	}
+		},
+		{
+			onSuccess: (data) => {
+				refetchAllView();
+				redirectWithQueryBuilderData(mapQueryDataFromApi(compositeQuery), {
+					[queryParamNamesMap.panelTypes]: panelType,
+					[querySearchParams.viewName]: viewName,
+					[querySearchParams.viewKey]: data.data,
+				});
+				notifications.success({
+					message: 'View Saved Successfully',
+				});
+			},
+			onError: (err) => {
+				showErrorNotification(notifications, err);
+			},
+			onSettled: () => {
+				handlePopOverClose();
+			},
+		},
+	);
 };
 
-export const deleteViewHandler = async ({
+export const deleteViewHandler = ({
 	deleteViewAsync,
 	refetchAllView,
 	redirectWithQueryBuilderData,
@@ -117,23 +129,23 @@ export const deleteViewHandler = async ({
 	panelType,
 	viewKey,
 	viewId,
-}: DeleteViewHandlerProps): Promise<void> => {
-	try {
-		await deleteViewAsync(viewId);
-		refetchAllView();
-		if (viewKey === viewId) {
-			redirectWithQueryBuilderData(initialQueriesMap.traces, {
-				[querySearchParams.viewName]: 'Query Builder',
-				[queryParamNamesMap.panelTypes]: panelType,
-				[querySearchParams.viewKey]: '',
+}: DeleteViewHandlerProps): void => {
+	deleteViewAsync(viewKey, {
+		onSuccess: () => {
+			if (viewId === viewKey) {
+				redirectWithQueryBuilderData(initialQueriesMap.traces, {
+					[querySearchParams.viewName]: 'Query Builder',
+					[queryParamNamesMap.panelTypes]: panelType,
+					[querySearchParams.viewKey]: '',
+				});
+			}
+			notifications.success({
+				message: 'View Deleted Successfully',
 			});
-		}
-		notifications.success({
-			message: 'View Deleted Successfully',
-		});
-	} catch (err) {
-		notifications.error({
-			message: axios.isAxiosError(err) ? err.message : SOMETHING_WENT_WRONG,
-		});
-	}
+			refetchAllView();
+		},
+		onError: (err) => {
+			showErrorNotification(notifications, err);
+		},
+	});
 };

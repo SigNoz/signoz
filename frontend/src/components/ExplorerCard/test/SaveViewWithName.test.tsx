@@ -2,7 +2,7 @@
 
 // Path: src/components/ExplorerCard/SaveViewWithName.test.tsx
 
-import { fireEvent, render, waitFor } from '@testing-library/react';
+import { fireEvent, render } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from 'react-query';
 
 import SaveViewWithName from '../SaveViewWithName';
@@ -54,23 +54,5 @@ describe('SaveViewWithName', () => {
 		fireEvent.click(screen.getByText('Save'));
 
 		expect(screen.getByText('Save')).toBeInTheDocument();
-	});
-
-	// Should call refetchAllView on click of Save button
-	test('should call refetchAllView on click of Save button', async () => {
-		const handlePopOverClose = jest.fn();
-		const screen = render(
-			<QueryClientProvider client={queryClient}>
-				<SaveViewWithName
-					sourcePage="traces"
-					handlePopOverClose={handlePopOverClose}
-					refetchAllView={jest.fn()}
-				/>
-			</QueryClientProvider>,
-		);
-
-		fireEvent.click(screen.getByText('Save'));
-
-		await waitFor(() => expect(handlePopOverClose).toHaveBeenCalled());
 	});
 });

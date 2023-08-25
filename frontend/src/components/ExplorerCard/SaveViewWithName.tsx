@@ -39,7 +39,7 @@ function SaveViewWithName({
 		[],
 	);
 
-	const onSaveHandler = useCallback(async () => {
+	const onSaveHandler = (): void => {
 		saveViewHandler({
 			compositeQuery,
 			handlePopOverClose,
@@ -52,17 +52,7 @@ function SaveViewWithName({
 			sourcePage,
 			viewName: name,
 		});
-	}, [
-		compositeQuery,
-		handlePopOverClose,
-		name,
-		notifications,
-		panelType,
-		redirectWithQueryBuilderData,
-		refetchAllView,
-		saveViewAsync,
-		sourcePage,
-	]);
+	};
 
 	return (
 		<Card>
