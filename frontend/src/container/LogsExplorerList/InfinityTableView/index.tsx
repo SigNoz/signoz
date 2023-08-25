@@ -67,7 +67,6 @@ const InfinityTable = forwardRef<TableVirtuosoHandle, InfinityTableProps>(
 			onAddToQuery,
 		} = useActiveLog();
 
-		const { onEndReached } = infitiyTableProps;
 		const { dataSource, columns } = useTableView({
 			...tableViewProps,
 			onClickExpand: onSetActiveLog,
@@ -158,8 +157,11 @@ const InfinityTable = forwardRef<TableVirtuosoHandle, InfinityTableProps>(
 					}}
 					itemContent={itemContent}
 					fixedHeaderContent={tableHeader}
-					endReached={onEndReached}
 					totalCount={dataSource.length}
+					// eslint-disable-next-line react/jsx-props-no-spreading
+					{...(infitiyTableProps?.onEndReached
+						? { endReached: infitiyTableProps.onEndReached }
+						: {})}
 				/>
 
 				{activeContextLog && (

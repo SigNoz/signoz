@@ -1,9 +1,10 @@
-import { Col, Row } from 'antd';
+import { Col } from 'antd';
 import Spinner from 'components/Spinner';
 import { PANEL_TYPES } from 'constants/queryBuilder';
+import { themeColors } from 'constants/theme';
+import GoToTop from 'container/GoToTop';
 import BackButton from 'container/LiveLogs/BackButton';
 import FiltersInput from 'container/LiveLogs/FiltersInput';
-import LiveLogsListChart from 'container/LiveLogs/LiveLogsListChart';
 import LiveLogsTopNav from 'container/LiveLogsTopNav';
 import { useGetCompositeQueryParam } from 'hooks/queryBuilder/useGetCompositeQueryParam';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
@@ -20,6 +21,9 @@ import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteRe
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { GlobalReducer } from 'types/reducer/globalTime';
 
+import ListViewPanel from '../ListViewPanel';
+import LiveLogsList from '../LiveLogsList';
+import { LiveLogsChart, Wrapper } from './styles';
 import { prepareQueryFilter } from './utils';
 
 function LiveLogsContainer(): JSX.Element {
@@ -40,6 +44,7 @@ function LiveLogsContainer(): JSX.Element {
 		handleStartOpenConnection,
 		handleCloseConnection,
 		initialLoading,
+		isConnectionLoading,
 	} = useEventSource();
 
 	const compositeQuery = useGetCompositeQueryParam();
@@ -129,10 +134,12 @@ function LiveLogsContainer(): JSX.Element {
 		}
 	}, [stagedQuery, initialLoading, compositeQuery, handleStartNewConnection]);
 
+	console.log({ initialLoading });
+
 	return (
 		<>
 			<LiveLogsTopNav onOpenConnection={handleStartNewConnection} />
-			<Row gutter={[0, 20]}>
+			<Wrapper gutter={[0, 20]} style={{ color: themeColors.lightWhite }}>
 				<Col span={24}>
 					<BackButton />
 				</Col>
@@ -141,14 +148,27 @@ function LiveLogsContainer(): JSX.Element {
 				</Col>
 				{initialLoading ? (
 					<Col span={24}>
-						<Spinner style={{ height: 'auto' }} />
+						<Spinner style={{ height: 'auto' }} tip="Getting logs" />
 					</Col>
 				) : (
-					<Col span={24}>
-						<LiveLogsListChart />
-					</Col>
+					<>
+						<Col span={24}>
+							<LiveLogsChart />
+						</Col>
+						<Col span={24}>
+							<ListViewPanel />
+						</Col>
+						<Col span={24}>
+							{isConnectionLoading ? (
+								<Spinner style={{ height: 'auto' }} tip="Getting logs" />
+							) : (
+								<LiveLogsList logs={logs} />
+							)}
+						</Col>
+					</>
 				)}
-			</Row>
+				<GoToTop />
+			</Wrapper>
 		</>
 	);
 }

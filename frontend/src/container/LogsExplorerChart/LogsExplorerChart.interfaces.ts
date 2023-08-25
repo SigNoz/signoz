@@ -4,4 +4,5 @@ export type LogsExplorerChartProps = {
 	data: QueryData[];
 	isLoading: boolean;
 	isLabelEnabled?: boolean;
+	className?: string;
 };

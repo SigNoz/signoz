@@ -9,7 +9,9 @@ import { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { QueryData } from 'types/api/widgets/getQuery';
 import { DataSource, LogsAggregatorOperator } from 'types/common/queryBuilder';
 
-function LiveLogsListChart(): JSX.Element {
+import { LiveLogsListChartProps } from './types';
+
+function LiveLogsListChart({ className }: LiveLogsListChartProps): JSX.Element {
 	const { stagedQuery } = useQueryBuilder();
 	const { isConnectionOpen, isConnectionLoading } = useEventSource();
 
@@ -60,6 +62,7 @@ function LiveLogsListChart(): JSX.Element {
 			isLoading={isLoading}
 			data={chartData}
 			isLabelEnabled={false}
+			className={className}
 		/>
 	);
 }
