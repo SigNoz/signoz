@@ -1,30 +1,51 @@
 import { PauseCircleFilled, PlayCircleFilled } from '@ant-design/icons';
 import LocalTopNav from 'container/LocalTopNav';
 import { useEventSource } from 'providers/EventSource';
-import { useMemo } from 'react';
+import { memo, useCallback, useMemo } from 'react';
 
 import { LiveButtonStyled } from './styles';
+import { LiveLogsTopNavProps } from './types';
 
-function LiveLogsTopNav(): JSX.Element {
-	const { isConnectionOpen, isConnectionLoading } = useEventSource();
-
-	const isPaused = useMemo(() => isConnectionOpen || isConnectionLoading, [
+function LiveLogsTopNav({
+	onOpenConnection,
+}: LiveLogsTopNavProps): JSX.Element {
+	const {
 		isConnectionOpen,
 		isConnectionLoading,
+		initialLoading,
+		handleCloseConnection,
+	} = useEventSource();
+
+	const isPlaying = useMemo(
+		() => isConnectionOpen || isConnectionLoading || initialLoading,
+		[isConnectionOpen, isConnectionLoading, initialLoading],
+	);
+
+	const onLiveButtonClick = useCallback(() => {
+		if ((!isConnectionOpen && isConnectionLoading) || isConnectionOpen) {
+			handleCloseConnection();
+		} else {
+			onOpenConnection();
+		}
+	}, [
+		handleCloseConnection,
+		onOpenConnection,
+		isConnectionLoading,
+		isConnectionOpen,
 	]);
 
 	const liveButton = useMemo(
 		() => (
 			<LiveButtonStyled
-				loading={isConnectionLoading}
-				icon={isPaused ? <PauseCircleFilled /> : <PlayCircleFilled />}
-				danger={isPaused}
+				icon={isPlaying ? <PauseCircleFilled /> : <PlayCircleFilled />}
+				danger={isPlaying}
+				onClick={onLiveButtonClick}
 				type="primary"
 			>
-				{isPaused ? 'Pause' : 'Resume'}
+				{isPlaying ? 'Pause' : 'Resume'}
 			</LiveButtonStyled>
 		),
-		[isPaused, isConnectionLoading],
+		[isPlaying, onLiveButtonClick],
 	);
 
 	return (
@@ -35,4 +56,4 @@ function LiveLogsTopNav(): JSX.Element {
 	);
 }
 
-export default LiveLogsTopNav;
+export default memo(LiveLogsTopNav);
