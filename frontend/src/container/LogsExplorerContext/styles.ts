@@ -28,3 +28,7 @@ export const EditButton = styled(Button)<{ $isDarkMode: boolean }>`
 			? getAlphaColor(themeColors.white)[45]
 			: getAlphaColor(themeColors.black)[45]};
 `;
+
+export const LogContainer = styled.div`
+	overflow-x: auto;
+`;
