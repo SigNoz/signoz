@@ -8,6 +8,7 @@ import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useDeleteView } from 'hooks/saveViews/useDeleteView';
 import { useNotifications } from 'hooks/useNotifications';
 import { useCallback } from 'react';
+import { StringOperators } from 'types/common/queryBuilder';
 
 import { MenuItemContainer } from './styles';
 import { MenuItemLabelGeneratorProps } from './types';
@@ -28,7 +29,7 @@ function MenuItemGenerator({
 
 	const { mutateAsync: deleteViewAsync } = useDeleteView(uuid);
 
-	const onDeleteHandler = useCallback(() => {
+	const onDeleteHandler = (): void => {
 		deleteViewHandler({
 			deleteViewAsync,
 			notifications,
@@ -38,15 +39,7 @@ function MenuItemGenerator({
 			viewId: uuid,
 			viewKey,
 		});
-	}, [
-		deleteViewAsync,
-		notifications,
-		panelType,
-		redirectWithQueryBuilderData,
-		refetchAllView,
-		uuid,
-		viewKey,
-	]);
+	};
 
 	const onMenuItemSelectHandler = useCallback(
 		({ key }: { key: string }): void => {
@@ -58,9 +51,9 @@ function MenuItemGenerator({
 			query.builder.queryData = query.builder.queryData.map((item) => {
 				const newItem = item;
 				if (currentPanelType === 'list' || currentPanelType === 'trace') {
-					newItem.aggregateOperator = 'noop';
+					newItem.aggregateOperator = StringOperators.NOOP;
 				} else {
-					newItem.aggregateOperator = 'count';
+					newItem.aggregateOperator = StringOperators.COUNT;
 				}
 				return newItem;
 			});
