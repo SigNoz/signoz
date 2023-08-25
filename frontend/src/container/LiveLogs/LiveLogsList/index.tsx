@@ -3,6 +3,7 @@ import ListLogView from 'components/Logs/ListLogView';
 import RawLogView from 'components/Logs/RawLogView';
 import Spinner from 'components/Spinner';
 import { LOCALSTORAGE } from 'constants/localStorage';
+import { OptionFormatTypes } from 'constants/optionsFormatTypes';
 import InfinityTableView from 'container/LogsExplorerList/InfinityTableView';
 import { InfinityWrapperStyled } from 'container/LogsExplorerList/styles';
 import { convertKeysToColumnFields } from 'container/LogsExplorerList/utils';
@@ -13,6 +14,7 @@ import { useCopyLogLink } from 'hooks/logs/useCopyLogLink';
 import useFontFaceObserver from 'hooks/useFontObserver';
 import { useEventSource } from 'providers/EventSource';
 import { memo, useCallback, useEffect, useMemo, useRef } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Virtuoso, VirtuosoHandle } from 'react-virtuoso';
 // interfaces
 import { ILog } from 'types/api/logs/log';
@@ -22,6 +24,8 @@ import { LiveLogsListProps } from './types';
 
 function LiveLogsList({ logs }: LiveLogsListProps): JSX.Element {
 	const ref = useRef<VirtuosoHandle>(null);
+
+	const { t } = useTranslation(['logs']);
 
 	const { isConnectionError, isConnectionLoading } = useEventSource();
 
@@ -51,10 +55,7 @@ function LiveLogsList({ logs }: LiveLogsListProps): JSX.Element {
 		},
 	);
 
-	const selectedFields = useMemo(
-		() => convertKeysToColumnFields(options.selectColumns),
-		[options],
-	);
+	const selectedFields = convertKeysToColumnFields(options.selectColumns);
 
 	const getItemContent = useCallback(
 		(_: number, log: ILog): JSX.Element => {
@@ -110,24 +111,21 @@ function LiveLogsList({ logs }: LiveLogsListProps): JSX.Element {
 		);
 	}, [logs, options.format, options.maxLines, getItemContent, selectedFields]);
 
-	const isLoadingList = useMemo(() => isConnectionLoading && logs.length === 0, [
-		logs,
-		isConnectionLoading,
-	]);
+	const isLoadingList = isConnectionLoading && logs.length === 0;
 
 	if (isLoadingList) {
-		return <Spinner style={{ height: 'auto' }} tip="Getting logs" />;
+		return <Spinner style={{ height: 'auto' }} tip="Fetching Logs" />;
 	}
 
 	return (
 		<>
-			{options.format !== 'table' && (
+			{options.format !== OptionFormatTypes.TABLE && (
 				<Heading>
 					<Typography.Text>Event</Typography.Text>
 				</Heading>
 			)}
 
-			{logs.length === 0 && <Typography>Fetching log lines</Typography>}
+			{logs.length === 0 && <Typography>{t('fetching_log_lines')}</Typography>}
 
 			{!isConnectionError && logs.length !== 0 && (
 				<InfinityWrapperStyled>{renderContent}</InfinityWrapperStyled>

@@ -134,8 +134,6 @@ function LiveLogsContainer(): JSX.Element {
 		}
 	}, [stagedQuery, initialLoading, compositeQuery, handleStartNewConnection]);
 
-	console.log({ logs });
-
 	return (
 		<Wrapper>
 			<LiveLogsTopNav />
@@ -145,7 +143,7 @@ function LiveLogsContainer(): JSX.Element {
 				</Col>
 				{initialLoading ? (
 					<Col span={24}>
-						<Spinner style={{ height: 'auto' }} tip="Getting logs" />
+						<Spinner style={{ height: 'auto' }} tip="Fetching Logs" />
 					</Col>
 				) : (
 					<>

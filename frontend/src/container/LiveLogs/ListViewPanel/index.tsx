@@ -7,7 +7,7 @@ import {
 	viewModeOptionList,
 } from 'pages/Logs/config';
 import PopoverContent from 'pages/Logs/PopoverContent';
-import { useCallback, useMemo } from 'react';
+import { useCallback } from 'react';
 import { DataSource, StringOperators } from 'types/common/queryBuilder';
 
 function ListViewPanel(): JSX.Element {
@@ -17,10 +17,7 @@ function ListViewPanel(): JSX.Element {
 		aggregateOperator: StringOperators.NOOP,
 	});
 
-	const isFormatButtonVisible = useMemo(
-		() => logsOptions.includes(config.format?.value),
-		[config],
-	);
+	const isFormatButtonVisible = logsOptions.includes(config.format?.value);
 
 	const renderPopoverContent = useCallback(() => {
 		if (!config.maxLines) return null;
