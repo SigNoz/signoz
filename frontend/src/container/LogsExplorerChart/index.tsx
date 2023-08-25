@@ -12,6 +12,7 @@ function LogsExplorerChart({
 	data,
 	isLoading,
 	isLabelEnabled = true,
+	className,
 }: LogsExplorerChartProps): JSX.Element {
 	const handleCreateDatasets: Required<GetChartDataProps>['createDataset'] = useCallback(
 		(element, index, allLabels) => ({
@@ -41,7 +42,7 @@ function LogsExplorerChart({
 	);
 
 	return (
-		<CardStyled>
+		<CardStyled className={className}>
 			{isLoading ? (
 				<Spinner size="default" height="100%" />
 			) : (

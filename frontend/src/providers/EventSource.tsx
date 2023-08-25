@@ -81,7 +81,6 @@ export function EventSourceProvider({
 		setIsConnectionOpen(false);
 		setIsConnectionLoading(false);
 		setIsConnectionError('');
-		setInitialLoading(false);
 
 		destroyEventSourceSession();
 	}, [destroyEventSourceSession]);
