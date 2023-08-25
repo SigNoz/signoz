@@ -261,6 +261,20 @@ var timeSeriesFilterQueryData = []struct {
 		}},
 		ExpectedFilter: " AND severity_number = 0",
 	},
+	{
+		Name: "Test exists on materiazlied column",
+		FilterSet: &v3.FilterSet{Operator: "AND", Items: []v3.FilterItem{
+			{Key: v3.AttributeKey{Key: "method", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag, IsColumn: true}, Operator: "exists"},
+		}},
+		ExpectedFilter: " AND attribute_string_method_exists=true",
+	},
+	{
+		Name: "Test nexists on materiazlied column",
+		FilterSet: &v3.FilterSet{Operator: "AND", Items: []v3.FilterItem{
+			{Key: v3.AttributeKey{Key: "status", DataType: v3.AttributeKeyDataTypeInt64, Type: v3.AttributeKeyTypeTag, IsColumn: true}, Operator: "nexists"},
+		}},
+		ExpectedFilter: " AND attribute_int64_status_exists=false",
+	},
 }
 
 func TestBuildLogsTimeSeriesFilterQuery(t *testing.T) {

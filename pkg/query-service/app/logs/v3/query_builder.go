@@ -164,6 +164,13 @@ func buildLogsTimeSeriesFilterQuery(fs *v3.FilterSet, groupBy []v3.AttributeKey)
 							}
 						}
 
+					} else if item.Key.IsColumn {
+						name := getClickhouseColumnName(item.Key)
+						val := true
+						if op == v3.FilterOperatorNotExists {
+							val = false
+						}
+						conditions = append(conditions, fmt.Sprintf("%s_exists=%v", name, val))
 					} else {
 						columnType := getClickhouseLogsColumnType(item.Key.Type)
 						columnDataType := getClickhouseLogsColumnDataType(item.Key.DataType)
