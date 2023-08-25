@@ -23,7 +23,16 @@ function TextToolTip({
 			<div>
 				{`${text} `}
 				{url && (
-					<a href={url} rel="noopener noreferrer" target="_blank">
+					<a
+						// Stopping event propogation on click so that parent click listener are not triggered
+						// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
+						onClick={(event) => {
+							event.stopPropagation();
+						}}
+						href={url}
+						rel="noopener noreferrer"
+						target="_blank"
+					>
 						{urlText || 'here'}
 					</a>
 				)}
