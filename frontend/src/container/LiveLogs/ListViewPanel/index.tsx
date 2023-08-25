@@ -1,4 +1,5 @@
-import { Button, Popover, Select, Space } from 'antd';
+import { Button, Popover, Select } from 'antd';
+import Spinner from 'components/Spinner';
 import { LOCALSTORAGE } from 'constants/localStorage';
 import { useOptionsMenu } from 'container/OptionsMenu';
 import {
@@ -7,8 +8,11 @@ import {
 	viewModeOptionList,
 } from 'pages/Logs/config';
 import PopoverContent from 'pages/Logs/PopoverContent';
+import { useEventSource } from 'providers/EventSource';
 import { useCallback } from 'react';
 import { DataSource, StringOperators } from 'types/common/queryBuilder';
+
+import { SpinnerWrapper, Wrapper } from './styles';
 
 function ListViewPanel(): JSX.Element {
 	const { config } = useOptionsMenu({
@@ -16,6 +20,8 @@ function ListViewPanel(): JSX.Element {
 		dataSource: DataSource.LOGS,
 		aggregateOperator: StringOperators.NOOP,
 	});
+
+	const { isConnectionLoading } = useEventSource();
 
 	const isFormatButtonVisible = logsOptions.includes(config.format?.value);
 
@@ -35,7 +41,7 @@ function ListViewPanel(): JSX.Element {
 	}, [config]);
 
 	return (
-		<Space align="baseline" direction="horizontal">
+		<Wrapper>
 			<Select
 				style={defaultSelectStyle}
 				value={config.format?.value}
@@ -51,7 +57,12 @@ function ListViewPanel(): JSX.Element {
 					<Button>Format</Button>
 				</Popover>
 			)}
-		</Space>
+			{isConnectionLoading && (
+				<SpinnerWrapper>
+					<Spinner style={{ height: 'auto' }} />
+				</SpinnerWrapper>
+			)}
+		</Wrapper>
 	);
 }
 
