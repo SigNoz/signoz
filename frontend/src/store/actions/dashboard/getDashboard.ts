@@ -1,4 +1,5 @@
 import getDashboard from 'api/dashboard/get';
+import { SOMETHING_WENT_WRONG } from 'constants/api';
 import { initialQueriesMap, PANEL_TYPES } from 'constants/queryBuilder';
 import { Dispatch } from 'redux';
 import AppActions from 'types/actions';
@@ -46,7 +47,7 @@ export const GetDashboard = ({
 			dispatch({
 				type: 'GET_DASHBOARD_ERROR',
 				payload: {
-					errorMessage: 'Something went wrong',
+					errorMessage: SOMETHING_WENT_WRONG,
 				},
 			});
 		}
@@ -55,7 +56,7 @@ export const GetDashboard = ({
 			type: 'GET_DASHBOARD_ERROR',
 			payload: {
 				errorMessage:
-					error instanceof Error ? error.toString() : 'Something went wrong',
+					error instanceof Error ? error.toString() : SOMETHING_WENT_WRONG,
 			},
 		});
 	}

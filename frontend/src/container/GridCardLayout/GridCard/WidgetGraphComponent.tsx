@@ -1,5 +1,6 @@
 import { Typography } from 'antd';
 import { ToggleGraphProps } from 'components/Graph/types';
+import { SOMETHING_WENT_WRONG } from 'constants/api';
 import { Events } from 'constants/events';
 import GridPanelSwitch from 'container/GridPanelSwitch';
 import { useUpdateDashboard } from 'hooks/dashboard/useUpdateDashboard';
@@ -131,7 +132,7 @@ function WidgetGraphComponent({
 
 	const updateDashboardMutation = useUpdateDashboard();
 
-	const onDeleteHandler = useCallback(() => {
+	const onDeleteHandler = (): void => {
 		const updatedWidgets = selectedDashboard?.data?.widgets?.filter(
 			(e) => e.id !== widget.id,
 		);
@@ -160,18 +161,11 @@ function WidgetGraphComponent({
 			},
 			onError: () => {
 				notifications.error({
-					message: 'Something went wrong',
+					message: SOMETHING_WENT_WRONG,
 				});
 			},
 		});
-	}, [
-		featureResponse,
-		notifications,
-		selectedDashboard,
-		updateDashboardMutation,
-		widget?.id,
-		setLayouts,
-	]);
+	};
 
 	const onCloneHandler = async (): Promise<void> => {
 		const uuid = v4();
@@ -208,11 +202,9 @@ function WidgetGraphComponent({
 					graphType: widget?.panelTypes,
 					widgetId: uuid,
 				};
-				setTimeout(() => {
-					history.push(
-						`${history.location.pathname}/new?${createQueryParams(queryParams)}`,
-					);
-				}, 1500);
+				history.push(
+					`${history.location.pathname}/new?${createQueryParams(queryParams)}`,
+				);
 			});
 		}
 	};

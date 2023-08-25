@@ -7,7 +7,7 @@ import usePreviousValue from 'hooks/usePreviousValue';
 import { getDashboardVariables } from 'lib/dashbaordVariables/getDashboardVariables';
 import getChartData from 'lib/getChartData';
 import isEmpty from 'lodash-es/isEmpty';
-import { memo, useCallback, useMemo, useState } from 'react';
+import { memo, useMemo, useState } from 'react';
 import { useInView } from 'react-intersection-observer';
 import { useDispatch, useSelector } from 'react-redux';
 import { UpdateTimeInterval } from 'store/actions';
@@ -31,17 +31,14 @@ function GridCardGraph({
 }: GridCardGraphProps): JSX.Element {
 	const dispatch = useDispatch();
 
-	const onDragSelect = useCallback(
-		(start: number, end: number) => {
-			const startTimestamp = Math.trunc(start);
-			const endTimestamp = Math.trunc(end);
+	const onDragSelect = (start: number, end: number): void => {
+		const startTimestamp = Math.trunc(start);
+		const endTimestamp = Math.trunc(end);
 
-			if (startTimestamp !== endTimestamp) {
-				dispatch(UpdateTimeInterval('custom', [startTimestamp, endTimestamp]));
-			}
-		},
-		[dispatch],
-	);
+		if (startTimestamp !== endTimestamp) {
+			dispatch(UpdateTimeInterval('custom', [startTimestamp, endTimestamp]));
+		}
+	};
 
 	const { ref: graphRef, inView: isGraphVisible } = useInView({
 		threshold: 0,
@@ -63,10 +60,8 @@ function GridCardGraph({
 
 	const updatedQuery = useStepInterval(widget?.query);
 
-	const isEmptyWidget = useMemo(
-		() => widget?.id === PANEL_TYPES.EMPTY_WIDGET || isEmpty(widget),
-		[widget],
-	);
+	const isEmptyWidget =
+		widget?.id === PANEL_TYPES.EMPTY_WIDGET || isEmpty(widget);
 
 	const queryResponse = useGetQueryRange(
 		{

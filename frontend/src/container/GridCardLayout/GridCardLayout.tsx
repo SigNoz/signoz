@@ -1,4 +1,5 @@
 import { PlusOutlined, SaveFilled } from '@ant-design/icons';
+import { SOMETHING_WENT_WRONG } from 'constants/api';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { useUpdateDashboard } from 'hooks/dashboard/useUpdateDashboard';
 import useComponentPermission from 'hooks/useComponentPermission';
@@ -18,6 +19,7 @@ import {
 	CardContainer,
 	ReactGridLayout,
 } from './styles';
+import { GraphLayoutProps } from './types';
 import { MenuItemKeys } from './WidgetHeader/contants';
 
 function GraphLayout({
@@ -68,6 +70,11 @@ function GraphLayout({
 
 				notifications.success({
 					message: 'Layout saved successfully',
+				});
+			},
+			onError: () => {
+				notifications.error({
+					message: SOMETHING_WENT_WRONG,
 				});
 			},
 		});
@@ -129,11 +136,6 @@ function GraphLayout({
 			</ReactGridLayout>
 		</>
 	);
-}
-
-interface GraphLayoutProps {
-	onAddPanelHandler: VoidFunction;
-	widgets: Widgets[] | undefined;
 }
 
 export default GraphLayout;

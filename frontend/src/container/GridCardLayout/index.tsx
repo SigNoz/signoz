@@ -6,12 +6,14 @@ import { Layout } from 'react-grid-layout';
 import GraphLayoutContainer from './GridCardLayout';
 
 function GridGraph(): JSX.Element {
-	const { selectedDashboard, setLayouts } = useDashboard();
+	const {
+		selectedDashboard,
+		setLayouts,
+		handleToggleDashboardSlider,
+	} = useDashboard();
 
 	const { data } = selectedDashboard || {};
 	const { widgets } = data || {};
-
-	const { handleToggleDashboardSlider } = useDashboard();
 
 	const onEmptyWidgetHandler = useCallback(() => {
 		handleToggleDashboardSlider(true);
