@@ -5,7 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net"
 	"net/http"
 	"net/http/httptest"
@@ -59,7 +59,7 @@ func TestLogPipelinesLifecycle(t *testing.T) {
 						OrderId: 1,
 						ID:      "add",
 						Type:    "add",
-						Field:   "body.test",
+						Field:   "attributes.test",
 						Value:   "val",
 						Enabled: true,
 						Name:    "test add",
@@ -76,7 +76,7 @@ func TestLogPipelinesLifecycle(t *testing.T) {
 						OrderId: 1,
 						ID:      "remove",
 						Type:    "remove",
-						Field:   "body.test",
+						Field:   "attributes.test",
 						Enabled: true,
 						Name:    "test remove",
 					},
@@ -224,7 +224,7 @@ func (tb *LogPipelinesTestBed) PostPipelinesToQSExpectingStatusCode(
 	tb.apiHandler.CreateLogsPipeline(respWriter, req)
 
 	response := respWriter.Result()
-	responseBody, err := ioutil.ReadAll(response.Body)
+	responseBody, err := io.ReadAll(response.Body)
 	if err != nil {
 		tb.t.Fatalf("couldn't read response body received from posting pipelines to QS: %v", err)
 	}
@@ -274,7 +274,7 @@ func (tb *LogPipelinesTestBed) GetPipelinesFromQS() *logparsingpipeline.Pipeline
 	respWriter := httptest.NewRecorder()
 	tb.apiHandler.ListLogsPipelinesHandler(respWriter, req)
 	response := respWriter.Result()
-	responseBody, err := ioutil.ReadAll(response.Body)
+	responseBody, err := io.ReadAll(response.Body)
 	if err != nil {
 		tb.t.Fatalf("couldn't read response body received from QS: %v", err)
 	}
