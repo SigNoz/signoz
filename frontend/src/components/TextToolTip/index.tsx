@@ -18,17 +18,20 @@ function TextToolTip({
 }: TextToolTipProps): JSX.Element {
 	const isDarkMode = useIsDarkMode();
 
+	const onClickHandler = (
+		event: React.MouseEvent<HTMLAnchorElement, MouseEvent>,
+	): void => {
+		event.stopPropagation();
+	};
+
 	const overlay = useMemo(
 		() => (
 			<div>
 				{`${text} `}
 				{url && (
 					<a
-						// Stopping event propogation on click so that parent click listener are not triggered
-						// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
-						onClick={(event) => {
-							event.stopPropagation();
-						}}
+						// Stopping event propagation on click so that parent click listener are not triggered
+						onClick={onClickHandler}
 						href={url}
 						rel="noopener noreferrer"
 						target="_blank"
