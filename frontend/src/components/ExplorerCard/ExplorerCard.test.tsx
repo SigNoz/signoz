@@ -1,9 +1,7 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 
+import { QUERY_BUILDER_URL } from '../../constants/app';
 import ExplorerCard from './index';
-
-const hrefLink =
-	'https://signoz.io/docs/userguide/query-builder/?utm_source=product&utm_medium=new-query-builder';
 
 const toolTipText = 'More details on how to use query builder';
 
@@ -16,7 +14,7 @@ const renderExplorerCard: RenderExplorerCard = () =>
 		</ExplorerCard>,
 	);
 
-describe('Test ExplorerCard', () => {
+describe('Test components/ExplorerCard', () => {
 	it('Should render the component properly', async () => {
 		renderExplorerCard();
 
@@ -42,7 +40,7 @@ describe('Test ExplorerCard', () => {
 			const linkEl = screen.getByText('here');
 
 			expect(tooltip).toBeInTheDocument();
-			expect(linkEl).toHaveAttribute('href', hrefLink);
+			expect(linkEl).toHaveAttribute('href', QUERY_BUILDER_URL);
 			expect(linkEl).toHaveAttribute('target', '_blank');
 		});
 	});

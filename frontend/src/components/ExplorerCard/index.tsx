@@ -1,6 +1,8 @@
 import { Card, Space, Typography } from 'antd';
 import TextToolTip from 'components/TextToolTip';
 
+import { QUERY_BUILDER_URL } from '../../constants/app';
+
 function ExplorerCard({ children }: Props): JSX.Element {
 	return (
 		<Card
@@ -9,7 +11,7 @@ function ExplorerCard({ children }: Props): JSX.Element {
 				<Space>
 					<Typography>Query Builder</Typography>
 					<TextToolTip
-						url="https://signoz.io/docs/userguide/query-builder/?utm_source=product&utm_medium=new-query-builder"
+						url={QUERY_BUILDER_URL}
 						text="More details on how to use query builder"
 					/>
 				</Space>

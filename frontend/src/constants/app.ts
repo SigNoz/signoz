@@ -13,3 +13,6 @@ export const SIGNOZ_UPGRADE_PLAN_URL =
 	'https://upgrade.signoz.io/upgrade-from-app';
 
 export const DASHBOARD_TIME_IN_DURATION = 'refreshInterval';
+
+export const QUERY_BUILDER_URL =
+	'https://signoz.io/docs/userguide/query-builder/?utm_source=product&utm_medium=new-query-builder';
