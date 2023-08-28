@@ -492,7 +492,7 @@ export function QueryBuilderProvider({
 
 			const generatedUrl = `${location.pathname}?${urlQuery}`;
 
-			history.push(generatedUrl);
+			history.replace(generatedUrl);
 		},
 		[history, location.pathname, urlQuery],
 	);
