@@ -6,11 +6,13 @@ import useComponentPermission from 'hooks/useComponentPermission';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { useNotifications } from 'hooks/useNotifications';
 import { useDashboard } from 'providers/Dashboard/Dashboard';
+import { useTranslation } from 'react-i18next';
 import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
 import { Dashboard, Widgets } from 'types/api/dashboard/getAll';
 import AppReducer from 'types/reducer/app';
 
+import { headerMenuList } from './config';
 import GridCard from './GridCard';
 import {
 	Button,
@@ -20,13 +22,13 @@ import {
 	ReactGridLayout,
 } from './styles';
 import { GraphLayoutProps } from './types';
-import { MenuItemKeys } from './WidgetHeader/contants';
 
 function GraphLayout({
 	onAddPanelHandler,
 	widgets,
 }: GraphLayoutProps): JSX.Element {
 	const { selectedDashboard, layouts, setLayouts } = useDashboard();
+	const { t } = useTranslation(['dashboard']);
 
 	const { featureResponse } = useSelector<AppState, AppReducer>(
 		(state) => state.app,
@@ -48,17 +50,10 @@ function GraphLayout({
 	const onSaveHandler = (): void => {
 		if (!selectedDashboard) return;
 
-		const { data } = selectedDashboard;
-
 		const updatedDashboard: Dashboard = {
 			...selectedDashboard,
 			data: {
-				title: data.title,
-				description: data.description,
-				name: data.name,
-				tags: data.tags,
-				widgets: data.widgets,
-				variables: data.variables,
+				...selectedDashboard.data,
 				layout: layouts.filter((e) => e.i !== PANEL_TYPES.EMPTY_WIDGET),
 			},
 			uuid: selectedDashboard.uuid,
@@ -69,7 +64,7 @@ function GraphLayout({
 				featureResponse.refetch();
 
 				notifications.success({
-					message: 'Layout saved successfully',
+					message: t('dashboard:layout_saved_successfully'),
 				});
 			},
 			onError: () => {
@@ -90,13 +85,13 @@ function GraphLayout({
 						icon={<SaveFilled />}
 						disabled={updateDashboardMutation.isLoading}
 					>
-						Save Layout
+						{t('dashboard:save_layout')}
 					</Button>
 				)}
 
 				{addPanelPermission && (
 					<Button onClick={onAddPanelHandler} icon={<PlusOutlined />}>
-						Add Panel
+						{t('dashboard:add_panel')}
 					</Button>
 				)}
 			</ButtonContainer>
@@ -113,21 +108,17 @@ function GraphLayout({
 				onLayoutChange={setLayouts}
 				draggableHandle=".drag-handle"
 			>
-				{layouts.map(({ ...rest }) => {
-					const currentWidget = (widgets || [])?.find((e) => e.id === rest.i);
+				{layouts.map((layout) => {
+					const { i: id } = layout;
+					const currentWidget = (widgets || [])?.find((e) => e.id === id);
 
 					return (
-						<CardContainer isDarkMode={isDarkMode} key={rest.i} data-grid={rest}>
+						<CardContainer isDarkMode={isDarkMode} key={id} data-grid={layout}>
 							<Card $panelType={currentWidget?.panelTypes || PANEL_TYPES.TIME_SERIES}>
 								<GridCard
-									widget={currentWidget || ({ id: rest.i } as Widgets)}
+									widget={currentWidget || ({ id } as Widgets)}
 									name={currentWidget?.id || ''}
-									headerMenuList={[
-										MenuItemKeys.Clone,
-										MenuItemKeys.Delete,
-										MenuItemKeys.Edit,
-										MenuItemKeys.View,
-									]}
+									headerMenuList={headerMenuList}
 								/>
 							</Card>
 						</CardContainer>

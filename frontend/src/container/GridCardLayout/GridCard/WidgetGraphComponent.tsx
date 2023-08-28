@@ -143,13 +143,9 @@ function WidgetGraphComponent({
 		const updatedSelectedDashboard: Dashboard = {
 			...selectedDashboard,
 			data: {
-				title: selectedDashboard.data.title,
-				description: selectedDashboard.data.description,
-				name: selectedDashboard.data.name,
-				tags: selectedDashboard.data.tags,
+				...selectedDashboard.data,
 				widgets: updatedWidgets,
 				layout: updatedLayout,
-				variables: selectedDashboard.data.variables,
 			},
 			uuid: selectedDashboard.uuid,
 		};
