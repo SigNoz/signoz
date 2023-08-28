@@ -52,6 +52,7 @@ function SaveViewWithName({
 			sourcePage,
 			viewName: name,
 		});
+		setName('');
 	};
 
 	return (
