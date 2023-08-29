@@ -4694,13 +4694,12 @@ func (r *ClickHouseReader) LiveTailLogsV3(ctx context.Context, query string, tim
 			return
 		case <-ticker.C:
 			// get the new 100 logs as anything more older won't make sense
-			tmpQuery := fmt.Sprintf("timestamp >='%d'", timestampStart)
+			tmpQuery := fmt.Sprintf("AND timestamp >='%d'", timestampStart)
 			if idStart != "" {
 				tmpQuery = fmt.Sprintf("%s AND id > '%s'", tmpQuery, idStart)
 			}
-			tmpQuery = fmt.Sprintf(query, tmpQuery)
 			// the reason we are doing desc is that we need the latest logs first
-			tmpQuery = fmt.Sprintf("%s order by timestamp desc, id desc limit 100", tmpQuery)
+			tmpQuery = query + tmpQuery + " order by timestamp desc, id desc limit 100"
 
 			// using the old structure since we can directly read it to the struct as use it.
 			response := []model.GetLogsResponse{}
