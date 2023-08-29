@@ -1,9 +1,6 @@
-// Write a test for SaveViewWithName component using react testing library.
-
-// Path: src/components/ExplorerCard/SaveViewWithName.test.tsx
-
 import { fireEvent, render } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from 'react-query';
+import { DataSource } from 'types/common/queryBuilder';
 
 import SaveViewWithName from '../SaveViewWithName';
 
@@ -30,7 +27,7 @@ describe('SaveViewWithName', () => {
 		const screen = render(
 			<QueryClientProvider client={queryClient}>
 				<SaveViewWithName
-					sourcePage="traces"
+					sourcePage={DataSource.TRACES}
 					handlePopOverClose={jest.fn()}
 					refetchAllView={jest.fn()}
 				/>
@@ -44,7 +41,7 @@ describe('SaveViewWithName', () => {
 		const screen = render(
 			<QueryClientProvider client={queryClient}>
 				<SaveViewWithName
-					sourcePage="traces"
+					sourcePage={DataSource.TRACES}
 					handlePopOverClose={jest.fn()}
 					refetchAllView={jest.fn()}
 				/>

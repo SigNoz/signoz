@@ -31,7 +31,7 @@ import { mapCompositeQueryFromQuery } from 'lib/newQueryBuilder/queryBuilderMapp
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useCopyToClipboard } from 'react-use';
 
-import { ExploreHeaderToolTip } from './constants';
+import { ExploreHeaderToolTip, SaveButtonText } from './constants';
 import MenuItemGenerator from './MenuItemGenerator';
 import SaveViewWithName from './SaveViewWithName';
 import {
@@ -48,12 +48,15 @@ function ExplorerCard({
 	currentPanelType,
 }: ExplorerCardProps): JSX.Element {
 	const [isOpen, setIsOpen] = useState<boolean>(false);
-	const [copyUrl, setCopyUrl] = useCopyToClipboard();
+	const [, setCopyUrl] = useCopyToClipboard();
 	const [isQueryUpdated, setIsQueryUpdated] = useState<boolean>(false);
 	const { notifications } = useNotifications();
 
 	const onCopyUrlHandler = (): void => {
 		setCopyUrl(window.location.href);
+		notifications.success({
+			message: 'Copied to clipboard',
+		});
 	};
 
 	const {
@@ -96,14 +99,11 @@ function ExplorerCard({
 
 	const { mutateAsync: deleteViewAsync } = useDeleteView(viewKey);
 
-	const showErrorNotification = useCallback(
-		(err: Error): void => {
-			notifications.error({
-				message: axios.isAxiosError(err) ? err.message : SOMETHING_WENT_WRONG,
-			});
-		},
-		[notifications],
-	);
+	const showErrorNotification = (err: Error): void => {
+		notifications.error({
+			message: axios.isAxiosError(err) ? err.message : SOMETHING_WENT_WRONG,
+		});
+	};
 
 	const onDeleteHandler = useCallback(() => {
 		deleteViewHandler({
@@ -149,15 +149,6 @@ function ExplorerCard({
 	};
 
 	useEffect(() => {
-		if (copyUrl.value) {
-			notifications.success({
-				message: 'Copied to clipboard',
-			});
-		}
-		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [copyUrl.value]);
-
-	useEffect(() => {
 		setIsQueryUpdated(
 			isQueryUpdatedInView({
 				data: viewsData?.data?.data,
@@ -173,9 +164,9 @@ function ExplorerCard({
 		viewKey,
 	]);
 
-	const viewSelectMenuItem = useMemo(
-		() =>
-			viewsData?.data?.data?.map((view) => ({
+	const menu = useMemo(
+		(): MenuProps => ({
+			items: viewsData?.data?.data?.map((view) => ({
 				key: view.uuid,
 				label: (
 					<MenuItemGenerator
@@ -189,14 +180,8 @@ function ExplorerCard({
 					/>
 				),
 			})),
-		[currentPanelType, refetchAllView, viewKey, viewsData?.data.data],
-	);
-
-	const menu = useMemo(
-		(): MenuProps => ({
-			items: viewSelectMenuItem,
 		}),
-		[viewSelectMenuItem],
+		[currentPanelType, refetchAllView, viewKey, viewsData?.data?.data],
 	);
 
 	const moreOptionMenu = useMemo(
@@ -212,6 +197,9 @@ function ExplorerCard({
 		}),
 		[onDeleteHandler],
 	);
+
+	const saveButtonType = isQueryUpdated ? 'default' : 'primary';
+	const saveButtonIcon = isQueryUpdated ? null : <SaveOutlined />;
 
 	return (
 		<>
@@ -266,11 +254,10 @@ function ExplorerCard({
 								open={isOpen}
 								onOpenChange={handleOpenChange}
 							>
-								<Button
-									type={isQueryUpdated ? 'default' : 'primary'}
-									icon={!isQueryUpdated && <SaveOutlined />}
-								>
-									{isQueryUpdated ? 'Save as new View' : 'Save View'}
+								<Button type={saveButtonType} icon={saveButtonIcon}>
+									{isQueryUpdated
+										? SaveButtonText.SAVE_AS_NEW_VIEW
+										: SaveButtonText.SAVE_VIEW}
 								</Button>
 							</Popover>
 							<ShareAltOutlined onClick={onCopyUrlHandler} />

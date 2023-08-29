@@ -10,7 +10,7 @@ export interface ViewProps {
 	createdBy: string;
 	updatedAt: string;
 	updatedBy: string;
-	sourcePage: Lowercase<keyof typeof DataSource>;
+	sourcePage: DataSource;
 	tags: string[];
 	compositeQuery: ICompositeMetricQuery;
 	extraData: string;
@@ -23,7 +23,7 @@ export interface AllViewsProps {
 
 export interface SaveViewProps {
 	compositeQuery: ICompositeMetricQuery;
-	sourcePage: Lowercase<keyof typeof DataSource>;
+	sourcePage: DataSource;
 	viewName: string;
 	extraData: string;
 }

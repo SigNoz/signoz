@@ -19,7 +19,7 @@ export const useUpdateView = ({
 > =>
 	useMutation({
 		mutationKey: [viewName, sourcePage, compositeQuery, extraData],
-		mutationFn: async () =>
+		mutationFn: () =>
 			updateView({
 				compositeQuery,
 				viewName,

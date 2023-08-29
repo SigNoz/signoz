@@ -51,8 +51,8 @@ function SaveViewWithName({
 			saveViewAsync,
 			sourcePage,
 			viewName: name,
+			setName,
 		});
-		setName('');
 	};
 
 	return (

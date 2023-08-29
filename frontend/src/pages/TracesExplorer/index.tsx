@@ -204,7 +204,7 @@ function TracesExplorer(): JSX.Element {
 
 	return (
 		<>
-			<ExplorerCard sourcepage="traces" currentPanelType={currentTab}>
+			<ExplorerCard sourcepage={DataSource.TRACES} currentPanelType={currentTab}>
 				<QuerySection />
 			</ExplorerCard>
 

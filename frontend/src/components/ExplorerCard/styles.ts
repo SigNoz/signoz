@@ -12,6 +12,7 @@ export const OffSetCol = styled(Col)`
 export const SaveButton = styled(Button)`
 	&&& {
 		margin: 1rem 0;
+		width: 5rem;
 	}
 `;
 

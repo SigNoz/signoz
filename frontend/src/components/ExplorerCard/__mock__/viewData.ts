@@ -1,5 +1,6 @@
 import { ICompositeMetricQuery } from 'types/api/alerts/compositeQuery';
 import { ViewProps } from 'types/api/saveViews/types';
+import { DataSource } from 'types/common/queryBuilder';
 
 export const viewMockData: ViewProps[] = [
 	{
@@ -11,7 +12,7 @@ export const viewMockData: ViewProps[] = [
 		createdAt: '2021-07-07T06:31:00.000Z',
 		updatedAt: '2021-07-07T06:33:00.000Z',
 		extraData: '',
-		sourcePage: 'traces',
+		sourcePage: DataSource.TRACES,
 		tags: [],
 		updatedBy: 'User 1',
 	},
@@ -24,7 +25,7 @@ export const viewMockData: ViewProps[] = [
 		createdAt: '2021-07-07T06:30:00.000Z',
 		updatedAt: '2021-07-07T06:30:00.000Z',
 		extraData: '',
-		sourcePage: 'traces',
+		sourcePage: DataSource.TRACES,
 		tags: [],
 		updatedBy: 'User 2',
 	},

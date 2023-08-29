@@ -2,8 +2,8 @@ import { Col, Row } from 'antd';
 import ExplorerCard from 'components/ExplorerCard/ExplorerCard';
 import LogExplorerQuerySection from 'container/LogExplorerQuerySection';
 import LogsExplorerViews from 'container/LogsExplorerViews';
+import { DataSource } from 'types/common/queryBuilder';
 
-// ** Styles
 import { WrapperStyled } from './styles';
 
 function LogsExplorer(): JSX.Element {
@@ -11,7 +11,7 @@ function LogsExplorer(): JSX.Element {
 		<WrapperStyled>
 			<Row gutter={[0, 16]}>
 				<Col xs={24}>
-					<ExplorerCard sourcepage="logs">
+					<ExplorerCard sourcepage={DataSource.LOGS}>
 						<LogExplorerQuerySection />
 					</ExplorerCard>
 				</Col>

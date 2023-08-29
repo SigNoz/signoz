@@ -15,7 +15,7 @@ export const useSaveView = ({
 > =>
 	useMutation({
 		mutationKey: [viewName, sourcePage, compositeQuery, extraData],
-		mutationFn: async () =>
+		mutationFn: () =>
 			saveView({
 				compositeQuery,
 				sourcePage,

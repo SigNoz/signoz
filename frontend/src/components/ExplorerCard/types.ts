@@ -1,5 +1,6 @@
 import { NotificationInstance } from 'antd/es/notification/interface';
 import { PANEL_TYPES } from 'constants/queryBuilder';
+import { SetStateAction } from 'react';
 import { UseMutateAsyncFunction } from 'react-query';
 import { ICompositeMetricQuery } from 'types/api/alerts/compositeQuery';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
@@ -12,7 +13,7 @@ import {
 import { DataSource, QueryBuilderContextType } from 'types/common/queryBuilder';
 
 export interface ExplorerCardProps {
-	sourcepage: Lowercase<keyof typeof DataSource>;
+	sourcepage: DataSource;
 	children: React.ReactNode;
 	currentPanelType?: PANEL_TYPES;
 }
@@ -60,6 +61,7 @@ export interface SaveViewHandlerProps {
 	>;
 	handlePopOverClose: SaveViewWithNameProps['handlePopOverClose'];
 	redirectWithQueryBuilderData: QueryBuilderContextType['redirectWithQueryBuilderData'];
+	setName: (value: SetStateAction<string>) => void;
 }
 
 export interface DeleteViewHandlerProps {
