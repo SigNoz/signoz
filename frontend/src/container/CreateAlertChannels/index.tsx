@@ -25,7 +25,7 @@ import {
 	ValidatePagerChannel,
 	WebhookChannel,
 } from './config';
-import { PagerInitialConfig } from './defaults';
+import { OpsgenieInitialConfig, PagerInitialConfig } from './defaults';
 import { isChannelType } from './utils';
 
 function CreateAlertChannels({
@@ -83,6 +83,12 @@ function CreateAlertChannels({
 					name: selectedConfig?.name,
 					send_resolved: selectedConfig.send_resolved,
 					...PagerInitialConfig,
+				});
+			}
+
+			if (value === ChannelType.Opsgenie && currentType !== value) {
+				setSelectedConfig({
+					...OpsgenieInitialConfig,
 				});
 			}
 		},
