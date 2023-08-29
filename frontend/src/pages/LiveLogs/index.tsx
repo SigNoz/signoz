@@ -1,19 +1,24 @@
-import { Row } from 'antd';
-import BackButton from 'container/LiveLogs/BackButton';
+import { PANEL_TYPES } from 'constants/queryBuilder';
 import { liveLogsCompositeQuery } from 'container/LiveLogs/constants';
-import LiveLogsTopNav from 'container/LiveLogsTopNav';
+import LiveLogsContainer from 'container/LiveLogs/LiveLogsContainer';
+import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useShareBuilderUrl } from 'hooks/queryBuilder/useShareBuilderUrl';
+import { EventSourceProvider } from 'providers/EventSource';
+import { useEffect } from 'react';
+import { DataSource } from 'types/common/queryBuilder';
 
 function LiveLogs(): JSX.Element {
 	useShareBuilderUrl(liveLogsCompositeQuery);
+	const { handleSetConfig } = useQueryBuilder();
+
+	useEffect(() => {
+		handleSetConfig(PANEL_TYPES.LIST, DataSource.LOGS);
+	}, [handleSetConfig]);
 
 	return (
-		<>
-			<LiveLogsTopNav />
-			<Row>
-				<BackButton />
-			</Row>
-		</>
+		<EventSourceProvider>
+			<LiveLogsContainer />
+		</EventSourceProvider>
 	);
 }
 
