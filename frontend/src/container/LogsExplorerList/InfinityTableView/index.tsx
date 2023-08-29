@@ -10,6 +10,7 @@ import { getDraggedColumns } from 'hooks/useDragColumns/utils';
 import {
 	cloneElement,
 	forwardRef,
+	memo,
 	ReactElement,
 	ReactNode,
 	useCallback,
@@ -181,4 +182,4 @@ const InfinityTable = forwardRef<TableVirtuosoHandle, InfinityTableProps>(
 	},
 );
 
-export default InfinityTable;
+export default memo(InfinityTable);
