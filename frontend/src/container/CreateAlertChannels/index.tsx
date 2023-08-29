@@ -450,6 +450,7 @@ function CreateAlertChannels({
 					type,
 					...selectedConfig,
 					...PagerInitialConfig,
+					...OpsgenieInitialConfig,
 				},
 			}}
 		/>
