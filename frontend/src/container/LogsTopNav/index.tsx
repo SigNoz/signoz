@@ -11,7 +11,7 @@ import {
 	defaultLiveQueryDataConfig,
 } from 'container/LiveLogs/constants';
 import { QueryHistoryState } from 'container/LiveLogs/types';
-import LocalTopNav from 'container/LocalTopNav';
+import NestedTopNav from 'container/NestedTopNav';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useCallback, useMemo } from 'react';
 import { useQueryClient } from 'react-query';
@@ -81,7 +81,7 @@ function LogsTopNav(): JSX.Element {
 		[handleGoLive],
 	);
 	return (
-		<LocalTopNav
+		<NestedTopNav
 			actions={liveButton}
 			renderPermissions={{ isDateTimeEnabled: true }}
 		/>

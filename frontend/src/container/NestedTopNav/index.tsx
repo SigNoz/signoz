@@ -3,12 +3,12 @@ import { Col, Row, Space } from 'antd';
 import ShowBreadcrumbs from '../TopNav/Breadcrumbs';
 import DateTimeSelector from '../TopNav/DateTimeSelection';
 import { Container } from './styles';
-import { LocalTopNavProps } from './types';
+import { NestedTopNavProps } from './types';
 
-function LocalTopNav({
+function NestedTopNav({
 	actions,
 	renderPermissions,
-}: LocalTopNavProps): JSX.Element | null {
+}: NestedTopNavProps): JSX.Element | null {
 	return (
 		<Container>
 			<Col span={16}>
@@ -31,4 +31,4 @@ function LocalTopNav({
 	);
 }
 
-export default LocalTopNav;
+export default NestedTopNav;

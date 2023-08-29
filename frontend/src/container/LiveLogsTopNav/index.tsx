@@ -2,7 +2,7 @@ import { PauseCircleFilled, PlayCircleFilled } from '@ant-design/icons';
 import { Space } from 'antd';
 import BackButton from 'container/LiveLogs/BackButton';
 import { getQueryWithoutFilterId } from 'container/LiveLogs/utils';
-import LocalTopNav from 'container/LocalTopNav';
+import NestedTopNav from 'container/NestedTopNav';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useEventSource } from 'providers/EventSource';
 import { memo, useCallback, useMemo } from 'react';
@@ -54,6 +54,7 @@ function LiveLogsTopNav(): JSX.Element {
 				>
 					{isPlaying ? 'Pause' : 'Resume'}
 				</LiveButtonStyled>
+
 				<BackButton />
 			</Space>
 		),
@@ -61,7 +62,7 @@ function LiveLogsTopNav(): JSX.Element {
 	);
 
 	return (
-		<LocalTopNav
+		<NestedTopNav
 			actions={liveButton}
 			renderPermissions={{ isDateTimeEnabled: false }}
 		/>

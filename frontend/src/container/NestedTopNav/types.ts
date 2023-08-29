@@ -1,6 +1,6 @@
 import { ReactNode } from 'react';
 
-export type LocalTopNavProps = {
+export type NestedTopNavProps = {
 	actions?: ReactNode;
 	renderPermissions?: { isDateTimeEnabled: boolean };
 };
