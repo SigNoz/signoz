@@ -27,7 +27,7 @@ function LiveLogsList({ logs }: LiveLogsListProps): JSX.Element {
 
 	const { t } = useTranslation(['logs']);
 
-	const { isConnectionError, isConnectionLoading } = useEventSource();
+	const { isConnectionLoading } = useEventSource();
 
 	const { activeLogId } = useCopyLogLink();
 
@@ -82,35 +82,6 @@ function LiveLogsList({ logs }: LiveLogsListProps): JSX.Element {
 		});
 	}, [activeLogId, activeLogIndex]);
 
-	const renderContent = useMemo(() => {
-		if (options.format === 'table') {
-			return (
-				<InfinityTableView
-					ref={ref}
-					isLoading={false}
-					tableViewProps={{
-						logs,
-						fields: selectedFields,
-						linesPerRow: options.maxLines,
-						appendTo: 'end',
-					}}
-				/>
-			);
-		}
-
-		return (
-			<Card style={{ width: '100%' }} bodyStyle={{ ...contentStyle }}>
-				<Virtuoso
-					ref={ref}
-					useWindowScroll
-					data={logs}
-					totalCount={logs.length}
-					itemContent={getItemContent}
-				/>
-			</Card>
-		);
-	}, [logs, options.format, options.maxLines, getItemContent, selectedFields]);
-
 	const isLoadingList = isConnectionLoading && logs.length === 0;
 
 	if (isLoadingList) {
@@ -127,8 +98,31 @@ function LiveLogsList({ logs }: LiveLogsListProps): JSX.Element {
 
 			{logs.length === 0 && <Typography>{t('fetching_log_lines')}</Typography>}
 
-			{!isConnectionError && logs.length !== 0 && (
-				<InfinityWrapperStyled>{renderContent}</InfinityWrapperStyled>
+			{logs.length !== 0 && (
+				<InfinityWrapperStyled>
+					{options.format === 'table' ? (
+						<InfinityTableView
+							ref={ref}
+							isLoading={false}
+							tableViewProps={{
+								logs,
+								fields: selectedFields,
+								linesPerRow: options.maxLines,
+								appendTo: 'end',
+							}}
+						/>
+					) : (
+						<Card style={{ width: '100%' }} bodyStyle={{ ...contentStyle }}>
+							<Virtuoso
+								ref={ref}
+								useWindowScroll
+								data={logs}
+								totalCount={logs.length}
+								itemContent={getItemContent}
+							/>
+						</Card>
+					)}
+				</InfinityWrapperStyled>
 			)}
 		</>
 	);

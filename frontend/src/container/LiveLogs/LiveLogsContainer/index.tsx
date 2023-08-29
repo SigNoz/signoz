@@ -14,6 +14,7 @@ import { useNotifications } from 'hooks/useNotifications';
 import { useEventSource } from 'providers/EventSource';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useSelector } from 'react-redux';
+import { useLocation } from 'react-router-dom';
 import { prepareQueryRangePayload } from 'store/actions/dashboard/prepareQueryRangePayload';
 import { AppState } from 'store/reducers';
 import { ILog } from 'types/api/logs/log';
@@ -23,13 +24,17 @@ import { GlobalReducer } from 'types/reducer/globalTime';
 import { idObject } from '../constants';
 import ListViewPanel from '../ListViewPanel';
 import LiveLogsList from '../LiveLogsList';
+import { QueryHistoryState } from '../types';
 import { prepareQueryByFilter } from '../utils';
 import { ContentWrapper, LiveLogsChart, Wrapper } from './styles';
 
 function LiveLogsContainer(): JSX.Element {
+	const location = useLocation();
 	const [logs, setLogs] = useState<ILog[]>([]);
 
 	const { stagedQuery } = useQueryBuilder();
+
+	const queryLocationState = location.state as QueryHistoryState;
 
 	const batchedEventsRef = useRef<ILog[]>([]);
 
@@ -44,20 +49,23 @@ function LiveLogsContainer(): JSX.Element {
 		handleStartOpenConnection,
 		handleCloseConnection,
 		initialLoading,
+		isConnectionLoading,
 	} = useEventSource();
 
 	const compositeQuery = useGetCompositeQueryParam();
 
-	const updateLogs = useCallback(() => {
-		const reversedData = batchedEventsRef.current.reverse();
+	const updateLogs = useCallback((newLogs: ILog[]) => {
 		setLogs((prevState) =>
-			[...reversedData, ...prevState].slice(0, MAX_LOGS_LIST_SIZE),
+			[...newLogs, ...prevState].slice(0, MAX_LOGS_LIST_SIZE),
 		);
 
 		batchedEventsRef.current = [];
 	}, []);
 
-	const debouncedUpdateLogs = useDebouncedFn(updateLogs, 500);
+	const debouncedUpdateLogs = useDebouncedFn(() => {
+		const reversedData = batchedEventsRef.current.reverse();
+		updateLogs(reversedData);
+	}, 500);
 
 	const batchLiveLog = useCallback(
 		(log: ILog): void => {
@@ -99,40 +107,66 @@ function LiveLogsContainer(): JSX.Element {
 		[logs],
 	);
 
-	const handleStartNewConnection = useCallback(() => {
+	const openConnection = useCallback(
+		(query: Query) => {
+			const { queryPayload } = prepareQueryRangePayload({
+				query,
+				graphType: PANEL_TYPES.LIST,
+				selectedTime: 'GLOBAL_TIME',
+				globalSelectedInterval: globalSelectedTime,
+			});
+
+			const encodedQueryPayload = encodeURIComponent(JSON.stringify(queryPayload));
+			const queryString = `q=${encodedQueryPayload}`;
+
+			handleStartOpenConnection({ queryString });
+		},
+		[globalSelectedTime, handleStartOpenConnection],
+	);
+
+	const handleStartNewConnection = useCallback(
+		(query: Query) => {
+			handleCloseConnection();
+
+			const preparedQuery = getPreparedQuery(query);
+
+			openConnection(preparedQuery);
+		},
+		[getPreparedQuery, handleCloseConnection, openConnection],
+	);
+
+	useEffect(() => {
 		if (!compositeQuery) return;
 
-		handleCloseConnection();
-
-		const preparedQuery = getPreparedQuery(compositeQuery);
-
-		const { queryPayload } = prepareQueryRangePayload({
-			query: preparedQuery,
-			graphType: PANEL_TYPES.LIST,
-			selectedTime: 'GLOBAL_TIME',
-			globalSelectedInterval: globalSelectedTime,
-		});
-
-		const encodedQueryPayload = encodeURIComponent(JSON.stringify(queryPayload));
-
-		const queryString = `q=${encodedQueryPayload}`;
-
-		handleStartOpenConnection({ queryString });
+		if (
+			(initialLoading && !isConnectionLoading) ||
+			compositeQuery.id !== stagedQuery?.id
+		) {
+			handleStartNewConnection(compositeQuery);
+		}
 	}, [
 		compositeQuery,
-		globalSelectedTime,
-		getPreparedQuery,
-		handleCloseConnection,
-		handleStartOpenConnection,
+		initialLoading,
+		stagedQuery,
+		isConnectionLoading,
+		openConnection,
+		handleStartNewConnection,
 	]);
 
 	useEffect(() => {
-		if (!compositeQuery || !stagedQuery) return;
+		const prefetchedList = queryLocationState?.listQueryPayload[0]?.list;
 
-		if (compositeQuery.id !== stagedQuery.id || initialLoading) {
-			handleStartNewConnection();
+		if (prefetchedList) {
+			const prefetchedLogs: ILog[] = prefetchedList
+				.map((item) => ({
+					...item.data,
+					timestamp: item.timestamp,
+				}))
+				.reverse();
+
+			updateLogs(prefetchedLogs);
 		}
-	}, [stagedQuery, initialLoading, compositeQuery, handleStartNewConnection]);
+	}, [queryLocationState, updateLogs]);
 
 	return (
 		<Wrapper>
@@ -141,14 +175,16 @@ function LiveLogsContainer(): JSX.Element {
 				<Col span={24}>
 					<FiltersInput />
 				</Col>
-				{initialLoading ? (
+				{initialLoading && logs.length === 0 ? (
 					<Col span={24}>
 						<Spinner style={{ height: 'auto' }} tip="Fetching Logs" />
 					</Col>
 				) : (
 					<>
 						<Col span={24}>
-							<LiveLogsChart />
+							<LiveLogsChart
+								initialData={queryLocationState?.graphQueryPayload || null}
+							/>
 						</Col>
 						<Col span={24}>
 							<ListViewPanel />

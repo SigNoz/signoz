@@ -1,29 +1,49 @@
 import { ArrowLeftOutlined } from '@ant-design/icons';
 import { Button } from 'antd';
-import { initialQueriesMap } from 'constants/queryBuilder';
+import {
+	initialQueryBuilderFormValuesMap,
+	PANEL_TYPES,
+} from 'constants/queryBuilder';
+import { queryParamNamesMap } from 'constants/queryBuilderQueryNames';
 import ROUTES from 'constants/routes';
+import { useGetCompositeQueryParam } from 'hooks/queryBuilder/useGetCompositeQueryParam';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useCallback } from 'react';
 import { useHistory } from 'react-router-dom';
+import { DataSource } from 'types/common/queryBuilder';
+
+import { constructCompositeQuery } from '../constants';
 
 function BackButton(): JSX.Element {
 	const history = useHistory();
 
-	const { resetQuery } = useQueryBuilder();
+	const { updateAllQueriesOperators, resetQuery } = useQueryBuilder();
+
+	const compositeQuery = useGetCompositeQueryParam();
 
 	const handleBack = useCallback(() => {
-		const compositeQuery = initialQueriesMap.logs;
+		if (!compositeQuery) return;
 
-		const JSONCompositeQuery = encodeURIComponent(JSON.stringify(compositeQuery));
+		const nextCompositeQuery = constructCompositeQuery({
+			query: compositeQuery,
+			initialQueryData: initialQueryBuilderFormValuesMap.logs,
+			customQueryData: { disabled: false },
+		});
 
-		const path = `${ROUTES.LOGS_EXPLORER}?${JSONCompositeQuery}`;
+		const updatedQuery = updateAllQueriesOperators(
+			nextCompositeQuery,
+			PANEL_TYPES.LIST,
+			DataSource.LOGS,
+		);
 
-		const { queryType, ...queryState } = initialQueriesMap.logs;
+		resetQuery(updatedQuery);
 
-		resetQuery(queryState);
+		const JSONCompositeQuery = encodeURIComponent(JSON.stringify(updatedQuery));
+
+		const path = `${ROUTES.LOGS_EXPLORER}?${queryParamNamesMap.compositeQuery}=${JSONCompositeQuery}`;
 
 		history.push(path);
-	}, [history, resetQuery]);
+	}, [history, compositeQuery, resetQuery, updateAllQueriesOperators]);
 
 	return (
 		<Button icon={<ArrowLeftOutlined />} onClick={handleBack}>
