@@ -1,9 +1,10 @@
-import { Col, Row } from 'antd';
+import { Col } from 'antd';
 import Spinner from 'components/Spinner';
+import { MAX_LOGS_LIST_SIZE } from 'constants/liveTail';
 import { PANEL_TYPES } from 'constants/queryBuilder';
-import BackButton from 'container/LiveLogs/BackButton';
+import { themeColors } from 'constants/theme';
+import GoToTop from 'container/GoToTop';
 import FiltersInput from 'container/LiveLogs/FiltersInput';
-import LiveLogsListChart from 'container/LiveLogs/LiveLogsListChart';
 import LiveLogsTopNav from 'container/LiveLogsTopNav';
 import { useGetCompositeQueryParam } from 'hooks/queryBuilder/useGetCompositeQueryParam';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
@@ -16,11 +17,14 @@ import { useSelector } from 'react-redux';
 import { prepareQueryRangePayload } from 'store/actions/dashboard/prepareQueryRangePayload';
 import { AppState } from 'store/reducers';
 import { ILog } from 'types/api/logs/log';
-import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { GlobalReducer } from 'types/reducer/globalTime';
 
-import { prepareQueryFilter } from './utils';
+import { idObject } from '../constants';
+import ListViewPanel from '../ListViewPanel';
+import LiveLogsList from '../LiveLogsList';
+import { prepareQueryByFilter } from '../utils';
+import { ContentWrapper, LiveLogsChart, Wrapper } from './styles';
 
 function LiveLogsContainer(): JSX.Element {
 	const [logs, setLogs] = useState<ILog[]>([]);
@@ -45,7 +49,10 @@ function LiveLogsContainer(): JSX.Element {
 	const compositeQuery = useGetCompositeQueryParam();
 
 	const updateLogs = useCallback(() => {
-		setLogs(batchedEventsRef.current);
+		const reversedData = batchedEventsRef.current.reverse();
+		setLogs((prevState) =>
+			[...reversedData, ...prevState].slice(0, MAX_LOGS_LIST_SIZE),
+		);
 
 		batchedEventsRef.current = [];
 	}, []);
@@ -77,31 +84,27 @@ function LiveLogsContainer(): JSX.Element {
 	useEventSourceEvent('message', handleGetLiveLogs);
 	useEventSourceEvent('error', handleError);
 
+	const getPreparedQuery = useCallback(
+		(query: Query): Query => {
+			const firstLogId: string | null = logs.length ? logs[0].id : null;
+
+			const preparedQuery: Query = prepareQueryByFilter(
+				query,
+				idObject,
+				firstLogId,
+			);
+
+			return preparedQuery;
+		},
+		[logs],
+	);
+
 	const handleStartNewConnection = useCallback(() => {
 		if (!compositeQuery) return;
 
-		const idObject: BaseAutocompleteData = {
-			key: 'id',
-			type: '',
-			dataType: 'string',
-			isColumn: true,
-		};
-
-		const preparedQuery: Query = {
-			...compositeQuery,
-			builder: {
-				...compositeQuery.builder,
-				queryData: compositeQuery.builder.queryData.map((item) => ({
-					...item,
-					filters:
-						logs.length > 0
-							? prepareQueryFilter(item.filters, idObject, logs[0].id)
-							: item.filters,
-				})),
-			},
-		};
-
 		handleCloseConnection();
+
+		const preparedQuery = getPreparedQuery(compositeQuery);
 
 		const { queryPayload } = prepareQueryRangePayload({
 			query: preparedQuery,
@@ -117,39 +120,47 @@ function LiveLogsContainer(): JSX.Element {
 		handleStartOpenConnection({ queryString });
 	}, [
 		compositeQuery,
-		logs,
-		handleCloseConnection,
 		globalSelectedTime,
+		getPreparedQuery,
+		handleCloseConnection,
 		handleStartOpenConnection,
 	]);
 
 	useEffect(() => {
-		if (compositeQuery?.id !== stagedQuery?.id || initialLoading) {
+		if (!compositeQuery || !stagedQuery) return;
+
+		if (compositeQuery.id !== stagedQuery.id || initialLoading) {
 			handleStartNewConnection();
 		}
 	}, [stagedQuery, initialLoading, compositeQuery, handleStartNewConnection]);
 
 	return (
-		<>
-			<LiveLogsTopNav onOpenConnection={handleStartNewConnection} />
-			<Row gutter={[0, 20]}>
-				<Col span={24}>
-					<BackButton />
-				</Col>
+		<Wrapper>
+			<LiveLogsTopNav />
+			<ContentWrapper gutter={[0, 20]} style={{ color: themeColors.lightWhite }}>
 				<Col span={24}>
 					<FiltersInput />
 				</Col>
 				{initialLoading ? (
 					<Col span={24}>
-						<Spinner style={{ height: 'auto' }} />
+						<Spinner style={{ height: 'auto' }} tip="Fetching Logs" />
 					</Col>
 				) : (
-					<Col span={24}>
-						<LiveLogsListChart />
-					</Col>
+					<>
+						<Col span={24}>
+							<LiveLogsChart />
+						</Col>
+						<Col span={24}>
+							<ListViewPanel />
+						</Col>
+						<Col span={24}>
+							<LiveLogsList logs={logs} />
+						</Col>
+					</>
 				)}
-			</Row>
-		</>
+				<GoToTop />
+			</ContentWrapper>
+		</Wrapper>
 	);
 }
 

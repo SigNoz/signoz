@@ -27,7 +27,7 @@ function BackButton(): JSX.Element {
 
 	return (
 		<Button icon={<ArrowLeftOutlined />} onClick={handleBack}>
-			Back
+			Exit live view
 		</Button>
 	);
 }

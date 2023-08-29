@@ -1,12 +1,15 @@
 import { Col } from 'antd';
 import { initialQueriesMap } from 'constants/queryBuilder';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
+import { useEventSource } from 'providers/EventSource';
 import { useCallback, useMemo } from 'react';
 import {
 	IBuilderQuery,
+	Query,
 	TagFilter,
 } from 'types/api/queryBuilder/queryBuilderData';
 
+import { getQueryWithoutFilterId } from '../utils';
 import {
 	ContainerStyled,
 	FilterSearchInputStyled,
@@ -20,6 +23,8 @@ function FiltersInput(): JSX.Element {
 		redirectWithQueryBuilderData,
 		currentQuery,
 	} = useQueryBuilder();
+
+	const { initialLoading, handleSetInitialLoading } = useEventSource();
 
 	const handleChange = useCallback(
 		(filters: TagFilter) => {
@@ -46,8 +51,19 @@ function FiltersInput(): JSX.Element {
 	}, [stagedQuery]);
 
 	const handleSearch = useCallback(() => {
-		redirectWithQueryBuilderData(currentQuery);
-	}, [redirectWithQueryBuilderData, currentQuery]);
+		if (initialLoading) {
+			handleSetInitialLoading(false);
+		}
+
+		const preparedQuery: Query = getQueryWithoutFilterId(currentQuery);
+
+		redirectWithQueryBuilderData(preparedQuery);
+	}, [
+		initialLoading,
+		currentQuery,
+		redirectWithQueryBuilderData,
+		handleSetInitialLoading,
+	]);
 
 	return (
 		<ContainerStyled>

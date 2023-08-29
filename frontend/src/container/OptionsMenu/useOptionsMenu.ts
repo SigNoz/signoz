@@ -1,8 +1,8 @@
-import { RadioChangeEvent } from 'antd';
 import getFromLocalstorage from 'api/browser/localstorage/get';
 import setToLocalstorage from 'api/browser/localstorage/set';
 import { getAggregateKeys } from 'api/queryBuilder/getAttributeKeys';
 import { LOCALSTORAGE } from 'constants/localStorage';
+import { LogViewMode } from 'container/LogsTable';
 import { useGetAggregateKeys } from 'hooks/queryBuilder/useGetAggregateKeys';
 import useDebounce from 'hooks/useDebounce';
 import { useNotifications } from 'hooks/useNotifications';
@@ -213,10 +213,10 @@ const useOptionsMenu = ({
 	);
 
 	const handleFormatChange = useCallback(
-		(event: RadioChangeEvent) => {
+		(value: LogViewMode) => {
 			const optionsData: OptionsQuery = {
 				...optionsQueryData,
-				format: event.target.value,
+				format: value,
 			};
 
 			handleRedirectWithOptionsData(optionsData);

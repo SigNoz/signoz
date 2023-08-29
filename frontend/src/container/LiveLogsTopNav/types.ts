@@ -1,3 +1,5 @@
+import { Query } from 'types/api/queryBuilder/queryBuilderData';
+
 export type LiveLogsTopNavProps = {
-	onOpenConnection: () => void;
+	getPreparedQuery: (query: Query) => Query;
 };

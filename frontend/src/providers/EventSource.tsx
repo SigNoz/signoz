@@ -20,13 +20,14 @@ interface IEventSourceContext {
 	eventSourceInstance: EventSourcePolyfill | null;
 	isConnectionOpen: boolean;
 	isConnectionLoading: boolean;
-	isConnectionError: string;
+	isConnectionError: boolean;
 	initialLoading: boolean;
 	handleStartOpenConnection: (urlProps: {
 		url?: string;
 		queryString: string;
 	}) => void;
 	handleCloseConnection: () => void;
+	handleSetInitialLoading: (value: boolean) => void;
 }
 
 const EventSourceContext = createContext<IEventSourceContext>({
@@ -34,9 +35,10 @@ const EventSourceContext = createContext<IEventSourceContext>({
 	isConnectionOpen: false,
 	isConnectionLoading: false,
 	initialLoading: true,
-	isConnectionError: '',
+	isConnectionError: false,
 	handleStartOpenConnection: () => {},
 	handleCloseConnection: () => {},
+	handleSetInitialLoading: () => {},
 });
 
 export function EventSourceProvider({
@@ -44,13 +46,17 @@ export function EventSourceProvider({
 }: PropsWithChildren): JSX.Element {
 	const [isConnectionOpen, setIsConnectionOpen] = useState<boolean>(false);
 	const [isConnectionLoading, setIsConnectionLoading] = useState<boolean>(false);
-	const [isConnectionError, setIsConnectionError] = useState<string>('');
+	const [isConnectionError, setIsConnectionError] = useState<boolean>(false);
 
 	const [initialLoading, setInitialLoading] = useState<boolean>(true);
 
 	const { user } = useSelector<AppState, AppReducer>((state) => state.app);
 
 	const eventSourceRef = useRef<EventSourcePolyfill | null>(null);
+
+	const handleSetInitialLoading = useCallback((value: boolean) => {
+		setInitialLoading(value);
+	}, []);
 
 	const handleOpenConnection: EventListener = useCallback(() => {
 		setIsConnectionLoading(false);
@@ -61,7 +67,7 @@ export function EventSourceProvider({
 	const handleErrorConnection: EventListener = useCallback(() => {
 		setIsConnectionOpen(false);
 		setIsConnectionLoading(false);
-		setIsConnectionError('error');
+		setIsConnectionError(true);
 		setInitialLoading(false);
 
 		if (!eventSourceRef.current) return;
@@ -80,8 +86,7 @@ export function EventSourceProvider({
 	const handleCloseConnection = useCallback(() => {
 		setIsConnectionOpen(false);
 		setIsConnectionLoading(false);
-		setIsConnectionError('');
-		setInitialLoading(false);
+		setIsConnectionError(false);
 
 		destroyEventSourceSession();
 	}, [destroyEventSourceSession]);
@@ -102,7 +107,7 @@ export function EventSourceProvider({
 			});
 
 			setIsConnectionLoading(true);
-			setIsConnectionError('');
+			setIsConnectionError(false);
 
 			eventSourceRef.current.addEventListener('error', handleErrorConnection);
 			eventSourceRef.current.addEventListener('open', handleOpenConnection);
@@ -126,6 +131,7 @@ export function EventSourceProvider({
 			initialLoading,
 			handleStartOpenConnection,
 			handleCloseConnection,
+			handleSetInitialLoading,
 		}),
 		[
 			isConnectionError,
@@ -134,6 +140,7 @@ export function EventSourceProvider({
 			initialLoading,
 			handleStartOpenConnection,
 			handleCloseConnection,
+			handleSetInitialLoading,
 		],
 	);
 
