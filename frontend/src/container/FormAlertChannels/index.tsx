@@ -5,15 +5,10 @@ import { FeatureKeys } from 'constants/features';
 import ROUTES from 'constants/routes';
 import {
 	ChannelType,
-	MsTeamsType,
 	OpsgenieChannel,
-	OpsgenieType,
 	PagerChannel,
-	PagerType,
 	SlackChannel,
-	SlackType,
 	WebhookChannel,
-	WebhookType,
 } from 'container/CreateAlertChannels/config';
 import useFeatureFlags from 'hooks/useFeatureFlag';
 import { isFeatureKeys } from 'hooks/useFeatureFlag/utils';
@@ -64,15 +59,15 @@ function FormAlertChannels({
 		}
 
 		switch (type) {
-			case SlackType:
+			case ChannelType.Slack:
 				return <SlackSettings setSelectedConfig={setSelectedConfig} />;
-			case WebhookType:
+			case ChannelType.Webhook:
 				return <WebhookSettings setSelectedConfig={setSelectedConfig} />;
-			case PagerType:
+			case ChannelType.Pagerduty:
 				return <PagerSettings setSelectedConfig={setSelectedConfig} />;
-			case MsTeamsType:
+			case ChannelType.MsTeams:
 				return <MsTeamsSettings setSelectedConfig={setSelectedConfig} />;
-			case OpsgenieType:
+			case ChannelType.Opsgenie:
 				return <OpsgenieSettings setSelectedConfig={setSelectedConfig} />;
 			default:
 				return null;

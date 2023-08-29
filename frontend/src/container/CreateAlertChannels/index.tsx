@@ -19,21 +19,17 @@ import { useTranslation } from 'react-i18next';
 import {
 	ChannelType,
 	MsTeamsChannel,
-	MsTeamsType,
 	OpsgenieChannel,
-	OpsgenieType,
 	PagerChannel,
-	PagerType,
 	SlackChannel,
-	SlackType,
 	ValidatePagerChannel,
 	WebhookChannel,
-	WebhookType,
 } from './config';
 import { PagerInitialConfig } from './defaults';
+import { isChannelType } from './utils';
 
 function CreateAlertChannels({
-	preType = 'slack',
+	preType = ChannelType.Slack,
 }: CreateAlertChannelsProps): JSX.Element {
 	// init namespace for translations
 	const { t } = useTranslation('channels');
@@ -81,7 +77,7 @@ function CreateAlertChannels({
 			const currentType = type;
 			setType(value as ChannelType);
 
-			if (value === PagerType && currentType !== value) {
+			if (value === ChannelType.Pagerduty && currentType !== value) {
 				// reset config to pager defaults
 				setSelectedConfig({
 					name: selectedConfig?.name,
@@ -326,21 +322,24 @@ function CreateAlertChannels({
 	const onSaveHandler = useCallback(
 		async (value: ChannelType) => {
 			const functionMapper = {
-				[SlackType]: onSlackHandler,
-				[WebhookType]: onWebhookHandler,
-				[PagerType]: onPagerHandler,
-				[OpsgenieType]: onOpsgenieHandler,
-				[MsTeamsType]: onMsTeamsHandler,
+				[ChannelType.Slack]: onSlackHandler,
+				[ChannelType.Webhook]: onWebhookHandler,
+				[ChannelType.Pagerduty]: onPagerHandler,
+				[ChannelType.Opsgenie]: onOpsgenieHandler,
+				[ChannelType.MsTeams]: onMsTeamsHandler,
 			};
-			const functionToCall = functionMapper[value];
 
-			if (functionToCall) {
-				functionToCall();
-			} else {
-				notifications.error({
-					message: 'Error',
-					description: t('selected_channel_invalid'),
-				});
+			if (isChannelType(value)) {
+				const functionToCall = functionMapper[value as keyof typeof functionMapper];
+
+				if (functionToCall) {
+					functionToCall();
+				} else {
+					notifications.error({
+						message: 'Error',
+						description: t('selected_channel_invalid'),
+					});
+				}
 			}
 		},
 		[
@@ -361,23 +360,23 @@ function CreateAlertChannels({
 				let request;
 				let response;
 				switch (channelType) {
-					case WebhookType:
+					case ChannelType.Webhook:
 						request = prepareWebhookRequest();
 						response = await testWebhookApi(request);
 						break;
-					case SlackType:
+					case ChannelType.Slack:
 						request = prepareSlackRequest();
 						response = await testSlackApi(request);
 						break;
-					case PagerType:
+					case ChannelType.Pagerduty:
 						request = preparePagerRequest();
 						if (request) response = await testPagerApi(request);
 						break;
-					case MsTeamsType:
+					case ChannelType.MsTeams:
 						request = prepareMsTeamsRequest();
 						response = await testMsTeamsApi(request);
 						break;
-					case OpsgenieType:
+					case ChannelType.Opsgenie:
 						request = prepareOpsgenieRequest();
 						response = await testOpsGenie(request);
 						break;

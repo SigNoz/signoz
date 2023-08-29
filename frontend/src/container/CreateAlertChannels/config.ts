@@ -87,18 +87,14 @@ export const ValidatePagerChannel = (p: PagerChannel): string => {
 	return '';
 };
 
-export type ChannelType =
-	| 'slack'
-	| 'email'
-	| 'webhook'
-	| 'pagerduty'
-	| 'opsgenie'
-	| 'msteams';
-export const SlackType: ChannelType = 'slack';
-export const WebhookType: ChannelType = 'webhook';
-export const PagerType: ChannelType = 'pagerduty';
-export const OpsgenieType: ChannelType = 'opsgenie';
-export const MsTeamsType: ChannelType = 'msteams';
+export enum ChannelType {
+	Slack = 'slack',
+	Email = 'email',
+	Webhook = 'webhook',
+	Pagerduty = 'pagerduty',
+	Opsgenie = 'opsgenie',
+	MsTeams = 'msteams',
+}
 
 // LabelFilterStatement will be used for preparing filter conditions / matchers
 export interface LabelFilterStatement {

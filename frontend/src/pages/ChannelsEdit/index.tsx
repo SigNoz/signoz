@@ -2,14 +2,11 @@ import { Typography } from 'antd';
 import get from 'api/channels/get';
 import Spinner from 'components/Spinner';
 import {
+	ChannelType,
 	MsTeamsChannel,
-	MsTeamsType,
 	PagerChannel,
-	PagerType,
 	SlackChannel,
-	SlackType,
 	WebhookChannel,
-	WebhookType,
 } from 'container/CreateAlertChannels/config';
 import EditAlertChannels from 'container/EditAlertChannels';
 import { useTranslation } from 'react-i18next';
@@ -50,7 +47,7 @@ function ChannelsEdit(): JSX.Element {
 			const slackConfig = value.slack_configs[0];
 			channel = slackConfig;
 			return {
-				type: SlackType,
+				type: ChannelType.Slack,
 				channel,
 			};
 		}
@@ -59,7 +56,7 @@ function ChannelsEdit(): JSX.Element {
 			const msteamsConfig = value.msteams_configs[0];
 			channel = msteamsConfig;
 			return {
-				type: MsTeamsType,
+				type: ChannelType.MsTeams,
 				channel,
 			};
 		}
@@ -69,7 +66,7 @@ function ChannelsEdit(): JSX.Element {
 			channel.details = JSON.stringify(pagerConfig.details);
 			channel.detailsArray = { ...pagerConfig.details };
 			return {
-				type: PagerType,
+				type: ChannelType.Pagerduty,
 				channel,
 			};
 		}
@@ -89,12 +86,12 @@ function ChannelsEdit(): JSX.Element {
 				}
 			}
 			return {
-				type: WebhookType,
+				type: ChannelType.Webhook,
 				channel,
 			};
 		}
 		return {
-			type: SlackType,
+			type: ChannelType.Slack,
 			channel,
 		};
 	};
