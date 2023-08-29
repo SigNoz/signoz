@@ -1,4 +1,5 @@
 import { NotificationInstance } from 'antd/es/notification/interface';
+import { AxiosResponse } from 'axios';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { SetStateAction } from 'react';
 import { UseMutateAsyncFunction } from 'react-query';
@@ -54,7 +55,7 @@ export interface SaveViewHandlerProps {
 	notifications: NotificationInstance;
 	refetchAllView: SaveViewWithNameProps['refetchAllView'];
 	saveViewAsync: UseMutateAsyncFunction<
-		SaveViewPayloadProps,
+		AxiosResponse<SaveViewPayloadProps>,
 		Error,
 		SaveViewProps,
 		SaveViewPayloadProps

@@ -55,7 +55,8 @@ export const isQueryUpdatedInView = ({
 		builder: {
 			...stagedQuery?.builder,
 			queryData: stagedQuery?.builder.queryData.map((queryData) => {
-				const newAggregateAttribute = queryData.aggregateAttribute;
+				const { id, ...rest } = queryData.aggregateAttribute;
+				const newAggregateAttribute = rest;
 				const newGroupByAttributes = queryData.groupBy.map((groupByAttribute) => {
 					const { id, ...rest } = groupByAttribute;
 					return rest;
@@ -71,6 +72,13 @@ export const isQueryUpdatedInView = ({
 			}),
 		},
 	};
+
+	console.log(
+		'Differenct',
+		!isEqual(query.builder, updatedCurrentQuery?.builder),
+		query.builder,
+		updatedCurrentQuery?.builder,
+	);
 
 	return (
 		!isEqual(query.builder, updatedCurrentQuery?.builder) ||
@@ -105,7 +113,7 @@ export const saveViewHandler = ({
 				redirectWithQueryBuilderData(mapQueryDataFromApi(compositeQuery), {
 					[queryParamNamesMap.panelTypes]: panelType,
 					[querySearchParams.viewName]: viewName,
-					[querySearchParams.viewKey]: data.data,
+					[querySearchParams.viewKey]: data.data.data,
 				});
 				notifications.success({
 					message: 'View Saved Successfully',

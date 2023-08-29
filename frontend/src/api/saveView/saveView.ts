@@ -1,4 +1,5 @@
 import axios from 'api';
+import { AxiosResponse } from 'axios';
 import { SaveViewPayloadProps, SaveViewProps } from 'types/api/saveViews/types';
 
 export const saveView = ({
@@ -6,7 +7,7 @@ export const saveView = ({
 	sourcePage,
 	viewName,
 	extraData,
-}: SaveViewProps): Promise<SaveViewPayloadProps> =>
+}: SaveViewProps): Promise<AxiosResponse<SaveViewPayloadProps>> =>
 	axios.post('explorer/views', {
 		name: viewName,
 		sourcePage,
