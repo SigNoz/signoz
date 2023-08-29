@@ -87,9 +87,10 @@ function CreateAlertChannels({
 			}
 
 			if (value === ChannelType.Opsgenie && currentType !== value) {
-				setSelectedConfig({
+				setSelectedConfig((selectedConfig) => ({
+					...selectedConfig,
 					...OpsgenieInitialConfig,
-				});
+				}));
 			}
 		},
 		[type, selectedConfig],
