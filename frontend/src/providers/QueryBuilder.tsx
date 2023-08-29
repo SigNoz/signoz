@@ -67,7 +67,7 @@ export const QueryBuilderContext = createContext<QueryBuilderContextType>({
 	addNewQueryItem: () => {},
 	redirectWithQueryBuilderData: () => {},
 	handleRunQuery: () => {},
-	resetStagedQuery: () => {},
+	resetQuery: () => {},
 	updateAllQueriesOperators: () => initialQueriesMap.metrics,
 	updateQueriesData: () => initialQueriesMap.metrics,
 	initQueryBuilderData: () => {},
@@ -526,8 +526,12 @@ export function QueryBuilderProvider({
 		});
 	}, [currentQuery, queryType, maxTime, minTime, redirectWithQueryBuilderData]);
 
-	const resetStagedQuery = useCallback(() => {
+	const resetQuery = useCallback((newCurrentQuery?: QueryState) => {
 		setStagedQuery(null);
+
+		if (newCurrentQuery) {
+			setCurrentQuery(newCurrentQuery);
+		}
 	}, []);
 
 	useEffect(() => {
@@ -595,7 +599,7 @@ export function QueryBuilderProvider({
 			addNewQueryItem,
 			redirectWithQueryBuilderData,
 			handleRunQuery,
-			resetStagedQuery,
+			resetQuery,
 			updateAllQueriesOperators,
 			updateQueriesData,
 			initQueryBuilderData,
@@ -618,7 +622,7 @@ export function QueryBuilderProvider({
 			addNewQueryItem,
 			redirectWithQueryBuilderData,
 			handleRunQuery,
-			resetStagedQuery,
+			resetQuery,
 			updateAllQueriesOperators,
 			updateQueriesData,
 			initQueryBuilderData,

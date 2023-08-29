@@ -29,6 +29,7 @@ const ROUTES = {
 	NOT_FOUND: '/not-found',
 	LOGS: '/logs',
 	LOGS_EXPLORER: '/logs-explorer',
+	LIVE_LOGS: '/logs-explorer/live',
 	HOME_PAGE: '/',
 	PASSWORD_RESET: '/password-reset',
 	LIST_LICENSES: '/licenses',
