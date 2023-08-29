@@ -39,7 +39,7 @@ import {
 	Query,
 	TagFilter,
 } from 'types/api/queryBuilder/queryBuilderData';
-import { DataSource, StringOperators } from 'types/common/queryBuilder';
+import { DataSource, LogsAggregatorOperator } from 'types/common/queryBuilder';
 import { GlobalReducer } from 'types/reducer/globalTime';
 import { generateExportToDashboardLink } from 'utils/dashboard/generateExportToDashboardLink';
 
@@ -120,7 +120,7 @@ function LogsExplorerViews(): JSX.Element {
 
 		const modifiedQueryData: IBuilderQuery = {
 			...listQuery,
-			aggregateOperator: StringOperators.COUNT,
+			aggregateOperator: LogsAggregatorOperator.COUNT,
 		};
 
 		const modifiedQuery: Query = {
