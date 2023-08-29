@@ -7,7 +7,7 @@ import {
 	querySearchParams,
 } from 'constants/queryBuilderQueryNames';
 import { mapQueryDataFromApi } from 'lib/newQueryBuilder/queryBuilderMappers/mapQueryDataFromApi';
-import { isEqual } from 'lodash-es';
+import isEqual from 'lodash-es/isEqual';
 
 import {
 	DeleteViewHandlerProps,
@@ -56,7 +56,6 @@ export const isQueryUpdatedInView = ({
 			...stagedQuery?.builder,
 			queryData: stagedQuery?.builder.queryData.map((queryData) => {
 				const newAggregateAttribute = queryData.aggregateAttribute;
-				delete newAggregateAttribute.id;
 				const newGroupByAttributes = queryData.groupBy.map((groupByAttribute) => {
 					const { id, ...rest } = groupByAttribute;
 					return rest;
