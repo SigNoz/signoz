@@ -256,6 +256,7 @@ function CreateAlertChannels({
 			api_key: selectedConfig?.api_key || '',
 			name: selectedConfig?.name || '',
 			send_resolved: true,
+			description: selectedConfig?.description || '',
 		}),
 		[selectedConfig],
 	);
