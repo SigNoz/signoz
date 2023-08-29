@@ -404,12 +404,12 @@ func TestQueryRange(t *testing.T) {
 		{
 			Start: 1675115596722,
 			End:   1675115596722 + 120*60*1000,
-			Step:  5 * time.Minute.Microseconds(),
 			CompositeQuery: &v3.CompositeQuery{
 				QueryType: v3.QueryTypeBuilder,
 				BuilderQueries: map[string]*v3.BuilderQuery{
 					"A": {
 						QueryName:          "A",
+						StepInterval:       60,
 						AggregateAttribute: v3.AttributeKey{Key: "http_server_requests_seconds_count", Type: v3.AttributeKeyTypeUnspecified, DataType: "float64", IsColumn: true},
 						Filters: &v3.FilterSet{
 							Operator: "AND",
@@ -434,12 +434,12 @@ func TestQueryRange(t *testing.T) {
 		{
 			Start: 1675115596722 + 60*60*1000,
 			End:   1675115596722 + 180*60*1000,
-			Step:  5 * time.Minute.Microseconds(),
 			CompositeQuery: &v3.CompositeQuery{
 				QueryType: v3.QueryTypeBuilder,
 				BuilderQueries: map[string]*v3.BuilderQuery{
 					"A": {
 						QueryName:          "A",
+						StepInterval:       60,
 						AggregateAttribute: v3.AttributeKey{Key: "http_server_requests_seconds_count", Type: v3.AttributeKeyTypeUnspecified, DataType: "float64", IsColumn: true},
 						Filters: &v3.FilterSet{
 							Operator: "AND",
@@ -487,8 +487,8 @@ func TestQueryRange(t *testing.T) {
 	}
 	q := NewQuerier(opts)
 	expectedTimeRangeInQueryString := []string{
-		fmt.Sprintf("timestamp_ms >= %d AND timestamp_ms <= %d", 1675115596722, 1675115596722+120*60*1000),
-		fmt.Sprintf("timestamp_ms >= %d AND timestamp_ms <= %d", 1675115596722+120*60*1000+1, 1675115596722+180*60*1000),
+		fmt.Sprintf("timestamp_ms >= %d AND timestamp_ms <= %d", 1675115580000, 1675115580000+120*60*1000),
+		fmt.Sprintf("timestamp_ms >= %d AND timestamp_ms <= %d", 1675115580000+120*60*1000, 1675115580000+180*60*1000),
 	}
 
 	for i, param := range params {

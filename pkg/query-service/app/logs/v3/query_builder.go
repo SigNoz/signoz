@@ -2,7 +2,6 @@ package v3
 
 import (
 	"fmt"
-	"math"
 	"strings"
 
 	"go.signoz.io/signoz/pkg/query-service/constants"
@@ -44,8 +43,8 @@ var logOperators = map[v3.FilterOperator]string{
 	v3.FilterOperatorNotLike:         "NOT ILIKE",
 	v3.FilterOperatorContains:        "ILIKE",
 	v3.FilterOperatorNotContains:     "NOT ILIKE",
-	v3.FilterOperatorRegex:           "REGEXP",
-	v3.FilterOperatorNotRegex:        "NOT REGEXP",
+	v3.FilterOperatorRegex:           "match(%s, %s)",
+	v3.FilterOperatorNotRegex:        "NOT match(%s, %s)",
 	v3.FilterOperatorIn:              "IN",
 	v3.FilterOperatorNotIn:           "NOT IN",
 	v3.FilterOperatorExists:          "has(%s_%s_key, '%s')",
@@ -84,7 +83,17 @@ func getClickhouseColumnName(key v3.AttributeKey) string {
 		columnType := getClickhouseLogsColumnType(key.Type)
 		columnDataType := getClickhouseLogsColumnDataType(key.DataType)
 		clickhouseColumn = fmt.Sprintf("%s_%s_value[indexOf(%s_%s_key, '%s')]", columnType, columnDataType, columnType, columnDataType, key.Key)
+		return clickhouseColumn
 	}
+
+	// check if it is a static field
+	if key.Type == v3.AttributeKeyTypeUnspecified {
+		// name is the column name
+		return clickhouseColumn
+	}
+
+	// materialized column created from query
+	clickhouseColumn = utils.GetClickhouseColumnName(string(key.Type), string(key.DataType), key.Key)
 	return clickhouseColumn
 }
 
@@ -114,22 +123,63 @@ func getSelectKeys(aggregatorOperator v3.AggregateOperator, groupBy []v3.Attribu
 	return strings.Join(selectLabels, ",")
 }
 
-func buildLogsTimeSeriesFilterQuery(fs *v3.FilterSet, groupBy []v3.AttributeKey) (string, error) {
+func GetExistsNexistsFilter(op v3.FilterOperator, item v3.FilterItem) string {
+	if item.Key.Type == v3.AttributeKeyTypeUnspecified {
+		top := "!="
+		if op == v3.FilterOperatorNotExists {
+			top = "="
+		}
+		if val, ok := constants.StaticFieldsLogsV3[item.Key.Key]; ok {
+			// skip for timestamp and id
+			if val.Key == "" {
+				return ""
+			}
+
+			columnName := getClickhouseColumnName(item.Key)
+			if val.DataType == v3.AttributeKeyDataTypeString {
+				return fmt.Sprintf("%s %s ''", columnName, top)
+			} else {
+				// we just have two types, number and string
+				return fmt.Sprintf("%s %s 0", columnName, top)
+			}
+		}
+
+	} else if item.Key.IsColumn {
+		val := true
+		if op == v3.FilterOperatorNotExists {
+			val = false
+		}
+		return fmt.Sprintf("%s_exists=%v", getClickhouseColumnName(item.Key), val)
+	}
+	columnType := getClickhouseLogsColumnType(item.Key.Type)
+	columnDataType := getClickhouseLogsColumnDataType(item.Key.DataType)
+	return fmt.Sprintf(logOperators[op], columnType, columnDataType, item.Key.Key)
+}
+
+func buildLogsTimeSeriesFilterQuery(fs *v3.FilterSet, groupBy []v3.AttributeKey, aggregateAttribute v3.AttributeKey) (string, error) {
 	var conditions []string
 
 	if fs != nil && len(fs.Items) != 0 {
 		for _, item := range fs.Items {
 			op := v3.FilterOperator(strings.ToLower(strings.TrimSpace(string(item.Operator))))
-			value, err := utils.ValidateAndCastValue(item.Value, item.Key.DataType)
-			if err != nil {
-				return "", fmt.Errorf("failed to validate and cast value for %s: %v", item.Key.Key, err)
+
+			var value interface{}
+			var err error
+			if op != v3.FilterOperatorExists && op != v3.FilterOperatorNotExists {
+				value, err = utils.ValidateAndCastValue(item.Value, item.Key.DataType)
+				if err != nil {
+					return "", fmt.Errorf("failed to validate and cast value for %s: %v", item.Key.Key, err)
+				}
 			}
+
 			if logsOp, ok := logOperators[op]; ok {
 				switch op {
 				case v3.FilterOperatorExists, v3.FilterOperatorNotExists:
-					columnType := getClickhouseLogsColumnType(item.Key.Type)
-					columnDataType := getClickhouseLogsColumnDataType(item.Key.DataType)
-					conditions = append(conditions, fmt.Sprintf(logsOp, columnType, columnDataType, item.Key.Key))
+					conditions = append(conditions, GetExistsNexistsFilter(op, item))
+				case v3.FilterOperatorRegex, v3.FilterOperatorNotRegex:
+					columnName := getClickhouseColumnName(item.Key)
+					fmtVal := utils.ClickHouseFormattedValue(value)
+					conditions = append(conditions, fmt.Sprintf(logsOp, columnName, fmtVal))
 				case v3.FilterOperatorContains, v3.FilterOperatorNotContains:
 					columnName := getClickhouseColumnName(item.Key)
 					conditions = append(conditions, fmt.Sprintf("%s %s '%%%s%%'", columnName, logsOp, item.Value))
@@ -150,7 +200,16 @@ func buildLogsTimeSeriesFilterQuery(fs *v3.FilterSet, groupBy []v3.AttributeKey)
 			columnType := getClickhouseLogsColumnType(attr.Type)
 			columnDataType := getClickhouseLogsColumnDataType(attr.DataType)
 			conditions = append(conditions, fmt.Sprintf("indexOf(%s_%s_key, '%s') > 0", columnType, columnDataType, attr.Key))
+		} else if attr.Type != v3.AttributeKeyTypeUnspecified {
+			// for materialzied columns
+			conditions = append(conditions, fmt.Sprintf("%s_exists=true", getClickhouseColumnName(attr)))
 		}
+	}
+
+	// add conditions for aggregate attribute
+	if aggregateAttribute.Key != "" {
+		existsFilter := GetExistsNexistsFilter(v3.FilterOperatorExists, v3.FilterItem{Key: aggregateAttribute})
+		conditions = append(conditions, existsFilter)
 	}
 
 	queryString := strings.Join(conditions, " AND ")
@@ -161,29 +220,15 @@ func buildLogsTimeSeriesFilterQuery(fs *v3.FilterSet, groupBy []v3.AttributeKey)
 	return queryString, nil
 }
 
-// getZerosForEpochNano returns the number of zeros to be appended to the epoch time for converting it to nanoseconds
-func getZerosForEpochNano(epoch int64) int64 {
-	count := 0
-	if epoch == 0 {
-		count = 1
-	} else {
-		for epoch != 0 {
-			epoch /= 10
-			count++
-		}
-	}
-	return int64(math.Pow(10, float64(19-count)))
-}
-
 func buildLogsQuery(panelType v3.PanelType, start, end, step int64, mq *v3.BuilderQuery, graphLimitQtype string, preferRPM bool) (string, error) {
 
-	filterSubQuery, err := buildLogsTimeSeriesFilterQuery(mq.Filters, mq.GroupBy)
+	filterSubQuery, err := buildLogsTimeSeriesFilterQuery(mq.Filters, mq.GroupBy, mq.AggregateAttribute)
 	if err != nil {
 		return "", err
 	}
 
 	// timerange will be sent in epoch millisecond
-	timeFilter := fmt.Sprintf("(timestamp >= %d AND timestamp <= %d)", start*getZerosForEpochNano(start), end*getZerosForEpochNano(end))
+	timeFilter := fmt.Sprintf("(timestamp >= %d AND timestamp <= %d)", utils.GetEpochNanoSecs(start), utils.GetEpochNanoSecs(end))
 
 	selectLabels := getSelectLabels(mq.AggregateOperator, mq.GroupBy)
 
@@ -277,12 +322,6 @@ func buildLogsQuery(panelType v3.PanelType, start, end, step int64, mq *v3.Build
 		query := fmt.Sprintf(queryTmpl, op, filterSubQuery, groupBy, having, orderBy)
 		return query, nil
 	case v3.AggregateOperatorCount:
-		if mq.AggregateAttribute.Key != "" {
-			columnType := getClickhouseLogsColumnType(mq.AggregateAttribute.Type)
-			columnDataType := getClickhouseLogsColumnDataType(mq.AggregateAttribute.DataType)
-			filterSubQuery = fmt.Sprintf("%s AND has(%s_%s_key, '%s')", filterSubQuery, columnType, columnDataType, mq.AggregateAttribute.Key)
-		}
-
 		op := "toFloat64(count(*))"
 		query := fmt.Sprintf(queryTmpl, op, filterSubQuery, groupBy, having, orderBy)
 		return query, nil
@@ -300,7 +339,7 @@ func buildLogsQuery(panelType v3.PanelType, start, end, step int64, mq *v3.Build
 }
 
 func buildLogsLiveTailQuery(mq *v3.BuilderQuery) (string, error) {
-	filterSubQuery, err := buildLogsTimeSeriesFilterQuery(mq.Filters, mq.GroupBy)
+	filterSubQuery, err := buildLogsTimeSeriesFilterQuery(mq.Filters, mq.GroupBy, v3.AttributeKey{})
 	if err != nil {
 		return "", err
 	}
@@ -431,7 +470,15 @@ func isOrderByTs(orderBy []v3.OrderBy) bool {
 	return false
 }
 
+// PrepareLogsQuery prepares the query for logs
+// start and end are in epoch millisecond
+// step is in seconds
 func PrepareLogsQuery(start, end int64, queryType v3.QueryType, panelType v3.PanelType, mq *v3.BuilderQuery, options Options) (string, error) {
+
+	// adjust the start and end time to the step interval
+	start = start - (start % (mq.StepInterval * 1000))
+	end = end - (end % (mq.StepInterval * 1000))
+
 	if options.IsLivetailQuery {
 		query, err := buildLogsLiveTailQuery(mq)
 		if err != nil {

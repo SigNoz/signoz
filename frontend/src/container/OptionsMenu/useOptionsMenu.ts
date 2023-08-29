@@ -54,7 +54,7 @@ const useOptionsMenu = ({
 		() => ({
 			searchText: '',
 			aggregateAttribute: '',
-			tagType: null,
+			tagType: undefined,
 			dataSource,
 			aggregateOperator,
 		}),

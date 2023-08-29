@@ -15,11 +15,11 @@ func TestBuildQueryWithMultipleQueriesAndFormula(t *testing.T) {
 		q := &v3.QueryRangeParamsV3{
 			Start: 1650991982000,
 			End:   1651078382000,
-			Step:  60,
 			CompositeQuery: &v3.CompositeQuery{
 				BuilderQueries: map[string]*v3.BuilderQuery{
 					"A": {
 						QueryName:          "A",
+						StepInterval:       60,
 						DataSource:         v3.DataSourceMetrics,
 						AggregateAttribute: v3.AttributeKey{Key: "name"},
 						Filters: &v3.FilterSet{Operator: "AND", Items: []v3.FilterItem{
@@ -30,6 +30,7 @@ func TestBuildQueryWithMultipleQueriesAndFormula(t *testing.T) {
 					},
 					"B": {
 						QueryName:          "B",
+						StepInterval:       60,
 						AggregateAttribute: v3.AttributeKey{Key: "name2"},
 						DataSource:         v3.DataSourceMetrics,
 						AggregateOperator:  v3.AggregateOperatorRateAvg,
@@ -63,11 +64,11 @@ func TestBuildQueryWithIncorrectQueryRef(t *testing.T) {
 		q := &v3.QueryRangeParamsV3{
 			Start: 1650991982000,
 			End:   1651078382000,
-			Step:  60,
 			CompositeQuery: &v3.CompositeQuery{
 				BuilderQueries: map[string]*v3.BuilderQuery{
 					"A": {
 						QueryName:          "A",
+						StepInterval:       60,
 						DataSource:         v3.DataSourceMetrics,
 						AggregateAttribute: v3.AttributeKey{Key: "name"},
 						Filters: &v3.FilterSet{Operator: "AND", Items: []v3.FilterItem{
@@ -101,11 +102,11 @@ func TestBuildQueryWithThreeOrMoreQueriesRefAndFormula(t *testing.T) {
 		q := &v3.QueryRangeParamsV3{
 			Start: 1650991982000,
 			End:   1651078382000,
-			Step:  60,
 			CompositeQuery: &v3.CompositeQuery{
 				BuilderQueries: map[string]*v3.BuilderQuery{
 					"A": {
 						QueryName:          "A",
+						StepInterval:       60,
 						DataSource:         v3.DataSourceMetrics,
 						AggregateAttribute: v3.AttributeKey{Key: "name"},
 						Filters: &v3.FilterSet{Operator: "AND", Items: []v3.FilterItem{
@@ -117,6 +118,7 @@ func TestBuildQueryWithThreeOrMoreQueriesRefAndFormula(t *testing.T) {
 					},
 					"B": {
 						QueryName:          "B",
+						StepInterval:       60,
 						AggregateAttribute: v3.AttributeKey{Key: "name2"},
 						DataSource:         v3.DataSourceMetrics,
 
@@ -126,6 +128,7 @@ func TestBuildQueryWithThreeOrMoreQueriesRefAndFormula(t *testing.T) {
 					},
 					"C": {
 						QueryName:          "C",
+						StepInterval:       60,
 						AggregateAttribute: v3.AttributeKey{Key: "name3"},
 						DataSource:         v3.DataSourceMetrics,
 
@@ -222,7 +225,6 @@ func TestDeltaQueryBuilder(t *testing.T) {
 			query: &v3.QueryRangeParamsV3{
 				Start: 1650991982000,
 				End:   1651078382000,
-				Step:  60,
 				CompositeQuery: &v3.CompositeQuery{
 					QueryType: v3.QueryTypeBuilder,
 					PanelType: v3.PanelTypeGraph,
@@ -254,14 +256,13 @@ func TestDeltaQueryBuilder(t *testing.T) {
 				},
 			},
 			queryToTest: "A",
-			expected:    "SELECT  toStartOfInterval(toDateTime(intDiv(timestamp_ms, 1000)), INTERVAL 60 SECOND) as ts, sum(value)/60 as value FROM signoz_metrics.distributed_samples_v2 INNER JOIN (SELECT  fingerprint FROM signoz_metrics.time_series_v2 WHERE metric_name = 'signoz_latency_count' AND temporality = 'Delta'  AND JSONExtractString(labels, 'service_name') IN ['frontend'] AND JSONExtractString(labels, 'operation') IN ['HTTP GET /dispatch'] AND JSONExtractString(labels, '__temporality__') = 'Delta') as filtered_time_series USING fingerprint WHERE metric_name = 'signoz_latency_count' AND timestamp_ms >= 1650991982000 AND timestamp_ms <= 1651078382000 GROUP BY ts ORDER BY  ts",
+			expected:    "SELECT  toStartOfInterval(toDateTime(intDiv(timestamp_ms, 1000)), INTERVAL 60 SECOND) as ts, sum(value)/60 as value FROM signoz_metrics.distributed_samples_v2 INNER JOIN (SELECT  fingerprint FROM signoz_metrics.time_series_v2 WHERE metric_name = 'signoz_latency_count' AND temporality = 'Delta'  AND JSONExtractString(labels, 'service_name') IN ['frontend'] AND JSONExtractString(labels, 'operation') IN ['HTTP GET /dispatch'] AND JSONExtractString(labels, '__temporality__') = 'Delta') as filtered_time_series USING fingerprint WHERE metric_name = 'signoz_latency_count' AND timestamp_ms >= 1650991980000 AND timestamp_ms <= 1651078380000 GROUP BY ts ORDER BY  ts",
 		},
 		{
 			name: "TestQueryWithExpression - Error rate",
 			query: &v3.QueryRangeParamsV3{
 				Start: 1650991982000,
 				End:   1651078382000,
-				Step:  60,
 				CompositeQuery: &v3.CompositeQuery{
 					QueryType: v3.QueryTypeBuilder,
 					PanelType: v3.PanelTypeGraph,
@@ -325,14 +326,13 @@ func TestDeltaQueryBuilder(t *testing.T) {
 				},
 			},
 			queryToTest: "C",
-			expected:    "SELECT A.ts as ts, A.value * 100 / B.value as value FROM (SELECT  toStartOfInterval(toDateTime(intDiv(timestamp_ms, 1000)), INTERVAL 60 SECOND) as ts, sum(value)/60 as value FROM signoz_metrics.distributed_samples_v2 INNER JOIN (SELECT  fingerprint FROM signoz_metrics.time_series_v2 WHERE metric_name = 'signoz_latency_count' AND temporality = 'Delta'  AND JSONExtractString(labels, 'service_name') IN ['frontend'] AND JSONExtractString(labels, 'operation') IN ['HTTP GET /dispatch'] AND JSONExtractString(labels, 'status_code') IN ['STATUS_CODE_ERROR'] AND JSONExtractString(labels, '__temporality__') = 'Delta') as filtered_time_series USING fingerprint WHERE metric_name = 'signoz_latency_count' AND timestamp_ms >= 1650991982000 AND timestamp_ms <= 1651078382000 GROUP BY ts ORDER BY  ts) as A  INNER JOIN (SELECT  toStartOfInterval(toDateTime(intDiv(timestamp_ms, 1000)), INTERVAL 60 SECOND) as ts, sum(value)/60 as value FROM signoz_metrics.distributed_samples_v2 INNER JOIN (SELECT  fingerprint FROM signoz_metrics.time_series_v2 WHERE metric_name = 'signoz_latency_count' AND temporality = 'Delta'  AND JSONExtractString(labels, 'service_name') IN ['frontend'] AND JSONExtractString(labels, 'operation') IN ['HTTP GET /dispatch'] AND JSONExtractString(labels, '__temporality__') = 'Delta') as filtered_time_series USING fingerprint WHERE metric_name = 'signoz_latency_count' AND timestamp_ms >= 1650991982000 AND timestamp_ms <= 1651078382000 GROUP BY ts ORDER BY  ts) as B  ON A.ts = B.ts",
+			expected:    "SELECT A.ts as ts, A.value * 100 / B.value as value FROM (SELECT  toStartOfInterval(toDateTime(intDiv(timestamp_ms, 1000)), INTERVAL 60 SECOND) as ts, sum(value)/60 as value FROM signoz_metrics.distributed_samples_v2 INNER JOIN (SELECT  fingerprint FROM signoz_metrics.time_series_v2 WHERE metric_name = 'signoz_latency_count' AND temporality = 'Delta'  AND JSONExtractString(labels, 'service_name') IN ['frontend'] AND JSONExtractString(labels, 'operation') IN ['HTTP GET /dispatch'] AND JSONExtractString(labels, 'status_code') IN ['STATUS_CODE_ERROR'] AND JSONExtractString(labels, '__temporality__') = 'Delta') as filtered_time_series USING fingerprint WHERE metric_name = 'signoz_latency_count' AND timestamp_ms >= 1650991980000 AND timestamp_ms <= 1651078380000 GROUP BY ts ORDER BY  ts) as A  INNER JOIN (SELECT  toStartOfInterval(toDateTime(intDiv(timestamp_ms, 1000)), INTERVAL 60 SECOND) as ts, sum(value)/60 as value FROM signoz_metrics.distributed_samples_v2 INNER JOIN (SELECT  fingerprint FROM signoz_metrics.time_series_v2 WHERE metric_name = 'signoz_latency_count' AND temporality = 'Delta'  AND JSONExtractString(labels, 'service_name') IN ['frontend'] AND JSONExtractString(labels, 'operation') IN ['HTTP GET /dispatch'] AND JSONExtractString(labels, '__temporality__') = 'Delta') as filtered_time_series USING fingerprint WHERE metric_name = 'signoz_latency_count' AND timestamp_ms >= 1650991980000 AND timestamp_ms <= 1651078380000 GROUP BY ts ORDER BY  ts) as B  ON A.ts = B.ts",
 		},
 		{
 			name: "TestQuery - Quantile",
 			query: &v3.QueryRangeParamsV3{
 				Start: 1650991982000,
 				End:   1651078382000,
-				Step:  60,
 				CompositeQuery: &v3.CompositeQuery{
 					QueryType: v3.QueryTypeBuilder,
 					PanelType: v3.PanelTypeGraph,
@@ -353,7 +353,7 @@ func TestDeltaQueryBuilder(t *testing.T) {
 				},
 			},
 			queryToTest: "A",
-			expected:    "SELECT service_name,  ts, histogramQuantile(arrayMap(x -> toFloat64(x), groupArray(le)), groupArray(value), 0.950) as value FROM (SELECT service_name,le,  toStartOfInterval(toDateTime(intDiv(timestamp_ms, 1000)), INTERVAL 60 SECOND) as ts, sum(value)/60 as value FROM signoz_metrics.distributed_samples_v2 INNER JOIN (SELECT  JSONExtractString(labels, 'service_name') as service_name, JSONExtractString(labels, 'le') as le, fingerprint FROM signoz_metrics.time_series_v2 WHERE metric_name = 'signoz_latency_bucket' AND temporality = 'Delta' ) as filtered_time_series USING fingerprint WHERE metric_name = 'signoz_latency_bucket' AND timestamp_ms >= 1650991982000 AND timestamp_ms <= 1651078382000 GROUP BY service_name,le,ts ORDER BY service_name ASC,le ASC, ts) GROUP BY service_name,ts ORDER BY service_name ASC, ts",
+			expected:    "SELECT service_name,  ts, histogramQuantile(arrayMap(x -> toFloat64(x), groupArray(le)), groupArray(value), 0.950) as value FROM (SELECT service_name,le,  toStartOfInterval(toDateTime(intDiv(timestamp_ms, 1000)), INTERVAL 60 SECOND) as ts, sum(value)/60 as value FROM signoz_metrics.distributed_samples_v2 INNER JOIN (SELECT  JSONExtractString(labels, 'service_name') as service_name, JSONExtractString(labels, 'le') as le, fingerprint FROM signoz_metrics.time_series_v2 WHERE metric_name = 'signoz_latency_bucket' AND temporality = 'Delta' ) as filtered_time_series USING fingerprint WHERE metric_name = 'signoz_latency_bucket' AND timestamp_ms >= 1650991980000 AND timestamp_ms <= 1651078380000 GROUP BY service_name,le,ts ORDER BY service_name ASC,le ASC, ts) GROUP BY service_name,ts ORDER BY service_name ASC, ts",
 		},
 	}
 
