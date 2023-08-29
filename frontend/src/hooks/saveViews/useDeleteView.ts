@@ -7,5 +7,5 @@ export const useDeleteView = (
 ): UseMutationResult<DeleteViewPayloadProps, Error, string> =>
 	useMutation({
 		mutationKey: [uuid],
-		mutationFn: async () => deleteView(uuid),
+		mutationFn: () => deleteView(uuid),
 	});
