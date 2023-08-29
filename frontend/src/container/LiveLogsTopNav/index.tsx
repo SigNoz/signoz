@@ -16,10 +16,7 @@ function LiveLogsTopNav({
 		handleCloseConnection,
 	} = useEventSource();
 
-	const isPlaying = useMemo(
-		() => isConnectionOpen || isConnectionLoading || initialLoading,
-		[isConnectionOpen, isConnectionLoading, initialLoading],
-	);
+	const isPlaying = isConnectionOpen || isConnectionLoading || initialLoading;
 
 	const onLiveButtonClick = useCallback(() => {
 		if ((!isConnectionOpen && isConnectionLoading) || isConnectionOpen) {
