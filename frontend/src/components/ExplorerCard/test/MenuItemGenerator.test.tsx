@@ -1,5 +1,4 @@
 import { render, screen } from '@testing-library/react';
-import { PANEL_TYPES } from 'constants/queryBuilder';
 import MockQueryClientProvider from 'providers/test/MockQueryClientProvider';
 
 import { viewMockData } from '../__mock__/viewData';
@@ -16,7 +15,6 @@ describe('MenuItemGenerator', () => {
 					uuid={viewMockData[0].uuid}
 					refetchAllView={jest.fn()}
 					viewData={viewMockData}
-					currentPanelType={PANEL_TYPES.TRACE}
 				/>
 			</MockQueryClientProvider>,
 		);
@@ -34,7 +32,6 @@ describe('MenuItemGenerator', () => {
 					uuid={viewMockData[0].uuid}
 					refetchAllView={jest.fn()}
 					viewData={viewMockData}
-					currentPanelType={PANEL_TYPES.TRACE}
 				/>
 			</MockQueryClientProvider>,
 		);

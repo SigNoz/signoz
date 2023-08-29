@@ -33,7 +33,7 @@ export const getViewDetailsUsingViewKey: GetViewDetailsUsingViewKey = (
 	if (selectedView) {
 		const { compositeQuery, name, uuid } = selectedView;
 		const query = mapQueryDataFromApi(compositeQuery);
-		return { query, name, uuid };
+		return { query, name, uuid, panelType: compositeQuery.panelType };
 	}
 	return undefined;
 };
@@ -61,10 +61,25 @@ export const isQueryUpdatedInView = ({
 					const { id, ...rest } = groupByAttribute;
 					return rest;
 				});
+				const newItems = queryData.filters.items.map((item) => {
+					const { id, ...newItem } = item;
+					if (item.key) {
+						const { id, ...rest } = item.key;
+						return {
+							...newItem,
+							key: rest,
+						};
+					}
+					return newItem;
+				});
 				return {
 					...queryData,
 					aggregateAttribute: newAggregateAttribute,
 					groupBy: newGroupByAttributes,
+					filters: {
+						...queryData.filters,
+						items: newItems,
+					},
 					limit: queryData.limit ? queryData.limit : 0,
 					offset: queryData.offset ? queryData.offset : 0,
 					pageSize: queryData.pageSize ? queryData.pageSize : 0,
@@ -72,13 +87,6 @@ export const isQueryUpdatedInView = ({
 			}),
 		},
 	};
-
-	console.log(
-		'Differenct',
-		!isEqual(query.builder, updatedCurrentQuery?.builder),
-		query.builder,
-		updatedCurrentQuery?.builder,
-	);
 
 	return (
 		!isEqual(query.builder, updatedCurrentQuery?.builder) ||

@@ -45,7 +45,6 @@ import { deleteViewHandler, isQueryUpdatedInView } from './utils';
 function ExplorerCard({
 	sourcepage,
 	children,
-	currentPanelType,
 }: ExplorerCardProps): JSX.Element {
 	const [isOpen, setIsOpen] = useState<boolean>(false);
 	const [, setCopyUrl] = useCopyToClipboard();
@@ -176,12 +175,11 @@ function ExplorerCard({
 						uuid={view.uuid}
 						refetchAllView={refetchAllView}
 						viewData={viewsData.data.data}
-						currentPanelType={currentPanelType}
 					/>
 				),
 			})),
 		}),
-		[currentPanelType, refetchAllView, viewKey, viewsData?.data?.data],
+		[refetchAllView, viewKey, viewsData?.data?.data],
 	);
 
 	const moreOptionMenu = useMemo(

@@ -2,24 +2,18 @@ import { Tabs } from 'antd';
 import axios from 'axios';
 import ExplorerCard from 'components/ExplorerCard/ExplorerCard';
 import { AVAILABLE_EXPORT_PANEL_TYPES } from 'constants/panelTypes';
-import {
-	initialAutocompleteData,
-	initialQueriesMap,
-	PANEL_TYPES,
-} from 'constants/queryBuilder';
-import { queryParamNamesMap } from 'constants/queryBuilderQueryNames';
+import { initialQueriesMap, PANEL_TYPES } from 'constants/queryBuilder';
 import ExportPanel from 'container/ExportPanel';
-import { SIGNOZ_VALUE } from 'container/QueryBuilder/filters/OrderByFilter/constants';
 import QuerySection from 'container/TracesExplorer/QuerySection';
 import { useUpdateDashboard } from 'hooks/dashboard/useUpdateDashboard';
 import { addEmptyWidgetInDashboardJSONWithQuery } from 'hooks/dashboard/utils';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useShareBuilderUrl } from 'hooks/queryBuilder/useShareBuilderUrl';
+import { useHandleExplorerTabChange } from 'hooks/useHandleExplorerTabChange';
 import { useNotifications } from 'hooks/useNotifications';
 import history from 'lib/history';
 import { useCallback, useEffect, useMemo } from 'react';
 import { Dashboard } from 'types/api/dashboard/getAll';
-import { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource } from 'types/common/queryBuilder';
 import { generateExportToDashboardLink } from 'utils/dashboard/generateExportToDashboardLink';
 
@@ -33,9 +27,9 @@ function TracesExplorer(): JSX.Element {
 		currentQuery,
 		panelType,
 		updateAllQueriesOperators,
-		updateQueriesData,
-		redirectWithQueryBuilderData,
 	} = useQueryBuilder();
+
+	const { handleExplorerTabChange } = useHandleExplorerTabChange();
 
 	const currentTab = panelType || PANEL_TYPES.LIST;
 
@@ -151,44 +145,6 @@ function TracesExplorer(): JSX.Element {
 		[exportDefaultQuery, notifications, panelType, updateDashboard],
 	);
 
-	const getUpdateQuery = useCallback(
-		(newPanelType: PANEL_TYPES): Query => {
-			let query = updateAllQueriesOperators(
-				currentQuery,
-				newPanelType,
-				DataSource.TRACES,
-			);
-
-			if (
-				newPanelType === PANEL_TYPES.LIST ||
-				newPanelType === PANEL_TYPES.TRACE
-			) {
-				query = updateQueriesData(query, 'queryData', (item) => ({
-					...item,
-					orderBy: item.orderBy.filter((item) => item.columnName !== SIGNOZ_VALUE),
-					aggregateAttribute: initialAutocompleteData,
-				}));
-			}
-
-			return query;
-		},
-		[currentQuery, updateAllQueriesOperators, updateQueriesData],
-	);
-
-	const handleTabChange = useCallback(
-		(type: string): void => {
-			const newPanelType = type as PANEL_TYPES;
-			if (panelType === newPanelType) return;
-
-			const query = getUpdateQuery(newPanelType);
-
-			redirectWithQueryBuilderData(query, {
-				[queryParamNamesMap.panelTypes]: newPanelType,
-			});
-		},
-		[getUpdateQuery, panelType, redirectWithQueryBuilderData],
-	);
-
 	useShareBuilderUrl(defaultQuery);
 
 	useEffect(() => {
@@ -198,13 +154,13 @@ function TracesExplorer(): JSX.Element {
 			(currentTab === PANEL_TYPES.LIST || currentTab === PANEL_TYPES.TRACE) &&
 			shouldChangeView
 		) {
-			handleTabChange(PANEL_TYPES.TIME_SERIES);
+			handleExplorerTabChange(PANEL_TYPES.TIME_SERIES);
 		}
-	}, [currentTab, isMultipleQueries, isGroupByExist, handleTabChange]);
+	}, [currentTab, isMultipleQueries, isGroupByExist, handleExplorerTabChange]);
 
 	return (
 		<>
-			<ExplorerCard sourcepage={DataSource.TRACES} currentPanelType={currentTab}>
+			<ExplorerCard sourcepage={DataSource.TRACES}>
 				<QuerySection />
 			</ExplorerCard>
 
@@ -221,7 +177,7 @@ function TracesExplorer(): JSX.Element {
 					defaultActiveKey={currentTab}
 					activeKey={currentTab}
 					items={tabsItems}
-					onChange={handleTabChange}
+					onChange={handleExplorerTabChange}
 				/>
 			</Container>
 		</>

@@ -1,14 +1,10 @@
 import { DeleteOutlined } from '@ant-design/icons';
 import { Col, Row, Typography } from 'antd';
-import {
-	queryParamNamesMap,
-	querySearchParams,
-} from 'constants/queryBuilderQueryNames';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useDeleteView } from 'hooks/saveViews/useDeleteView';
+import { useHandleExplorerTabChange } from 'hooks/useHandleExplorerTabChange';
 import { useNotifications } from 'hooks/useNotifications';
 import { useCallback } from 'react';
-import { StringOperators } from 'types/common/queryBuilder';
 
 import { MenuItemContainer } from './styles';
 import { MenuItemLabelGeneratorProps } from './types';
@@ -20,11 +16,10 @@ function MenuItemGenerator({
 	createdBy,
 	uuid,
 	viewData,
-	currentPanelType,
 	refetchAllView,
 }: MenuItemLabelGeneratorProps): JSX.Element {
 	const { panelType, redirectWithQueryBuilderData } = useQueryBuilder();
-
+	const { handleExplorerTabChange } = useHandleExplorerTabChange();
 	const { notifications } = useNotifications();
 
 	const { mutateAsync: deleteViewAsync } = useDeleteView(uuid);
@@ -45,26 +40,20 @@ function MenuItemGenerator({
 		({ key }: { key: string }): void => {
 			const currentViewDetails = getViewDetailsUsingViewKey(key, viewData);
 			if (!currentViewDetails) return;
-			const { query, name, uuid } = currentViewDetails;
+			const {
+				query,
+				name,
+				uuid,
+				panelType: currentPanelType,
+			} = currentViewDetails;
 
-			// AggregateOperator should be noop for list and trace Panel Type and count for graph and table Panel Type.
-			query.builder.queryData = query.builder.queryData.map((item) => {
-				const newItem = item;
-				if (currentPanelType === 'list' || currentPanelType === 'trace') {
-					newItem.aggregateOperator = StringOperators.NOOP;
-				} else {
-					newItem.aggregateOperator = StringOperators.COUNT;
-				}
-				return newItem;
-			});
-
-			redirectWithQueryBuilderData(query, {
-				[queryParamNamesMap.panelTypes]: panelType,
-				[querySearchParams.viewName]: name,
-				[querySearchParams.viewKey]: uuid,
+			handleExplorerTabChange(currentPanelType, {
+				query,
+				name,
+				uuid,
 			});
 		},
-		[viewData, redirectWithQueryBuilderData, panelType, currentPanelType],
+		[viewData, handleExplorerTabChange],
 	);
 
 	const onLabelClickHandler = (): void => {

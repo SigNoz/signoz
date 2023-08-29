@@ -16,13 +16,14 @@ import { DataSource, QueryBuilderContextType } from 'types/common/queryBuilder';
 export interface ExplorerCardProps {
 	sourcepage: DataSource;
 	children: React.ReactNode;
-	currentPanelType?: PANEL_TYPES;
 }
 
 export type GetViewDetailsUsingViewKey = (
 	viewKey: string,
 	data: ViewProps[] | undefined,
-) => { query: Query; name: string; uuid: string } | undefined;
+) =>
+	| { query: Query; name: string; uuid: string; panelType: PANEL_TYPES }
+	| undefined;
 
 export interface IsQueryUpdatedInViewProps {
 	viewKey: string;
@@ -42,7 +43,6 @@ export interface MenuItemLabelGeneratorProps {
 	createdBy: string;
 	uuid: string;
 	viewData: ViewProps[];
-	currentPanelType: PANEL_TYPES | undefined;
 	refetchAllView: VoidFunction;
 }
 

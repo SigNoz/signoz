@@ -2,7 +2,6 @@ import { Tabs, TabsProps } from 'antd';
 import TabLabel from 'components/TabLabel';
 import { AVAILABLE_EXPORT_PANEL_TYPES } from 'constants/panelTypes';
 import {
-	initialAutocompleteData,
 	initialFilters,
 	initialQueriesMap,
 	initialQueryBuilderFormValues,
@@ -15,7 +14,6 @@ import GoToTop from 'container/GoToTop';
 import LogsExplorerChart from 'container/LogsExplorerChart';
 import LogsExplorerList from 'container/LogsExplorerList';
 import LogsExplorerTable from 'container/LogsExplorerTable';
-import { SIGNOZ_VALUE } from 'container/QueryBuilder/filters/OrderByFilter/constants';
 import TimeSeriesView from 'container/TimeSeriesView/TimeSeriesView';
 import { useUpdateDashboard } from 'hooks/dashboard/useUpdateDashboard';
 import { addEmptyWidgetInDashboardJSONWithQuery } from 'hooks/dashboard/utils';
@@ -24,6 +22,7 @@ import { useCopyLogLink } from 'hooks/logs/useCopyLogLink';
 import { useGetExplorerQueryRange } from 'hooks/queryBuilder/useGetExplorerQueryRange';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import useAxiosError from 'hooks/useAxiosError';
+import { useHandleExplorerTabChange } from 'hooks/useHandleExplorerTabChange';
 import { useNotifications } from 'hooks/useNotifications';
 import useUrlQueryData from 'hooks/useUrlQueryData';
 import { getPaginationQueryData } from 'lib/newQueryBuilder/getPaginationQueryData';
@@ -67,9 +66,9 @@ function LogsExplorerViews(): JSX.Element {
 		stagedQuery,
 		panelType,
 		updateAllQueriesOperators,
-		updateQueriesData,
-		redirectWithQueryBuilderData,
 	} = useQueryBuilder();
+
+	const { handleExplorerTabChange } = useHandleExplorerTabChange();
 
 	// State
 	const [page, setPage] = useState<number>(1);
@@ -170,42 +169,6 @@ function LogsExplorerViews(): JSX.Element {
 					end: timeRange.end,
 				}),
 		},
-	);
-
-	const getUpdateQuery = useCallback(
-		(newPanelType: PANEL_TYPES): Query => {
-			let query = updateAllQueriesOperators(
-				currentQuery,
-				newPanelType,
-				DataSource.TRACES,
-			);
-
-			if (newPanelType === PANEL_TYPES.LIST) {
-				query = updateQueriesData(query, 'queryData', (item) => ({
-					...item,
-					orderBy: item.orderBy.filter((item) => item.columnName !== SIGNOZ_VALUE),
-					aggregateAttribute: initialAutocompleteData,
-				}));
-			}
-
-			return query;
-		},
-		[currentQuery, updateAllQueriesOperators, updateQueriesData],
-	);
-
-	const handleChangeView = useCallback(
-		(type: string) => {
-			const newPanelType = type as PANEL_TYPES;
-
-			if (newPanelType === panelType) return;
-
-			const query = getUpdateQuery(newPanelType);
-
-			redirectWithQueryBuilderData(query, {
-				[queryParamNamesMap.panelTypes]: newPanelType,
-			});
-		},
-		[panelType, getUpdateQuery, redirectWithQueryBuilderData],
 	);
 
 	const getRequestData = useCallback(
@@ -362,9 +325,9 @@ function LogsExplorerViews(): JSX.Element {
 		const shouldChangeView = isMultipleQueries || isGroupByExist;
 
 		if (panelType === PANEL_TYPES.LIST && shouldChangeView) {
-			handleChangeView(PANEL_TYPES.TIME_SERIES);
+			handleExplorerTabChange(PANEL_TYPES.TIME_SERIES);
 		}
-	}, [panelType, isMultipleQueries, isGroupByExist, handleChangeView]);
+	}, [panelType, isMultipleQueries, isGroupByExist, handleExplorerTabChange]);
 
 	useEffect(() => {
 		const currentParams = data?.params as Omit<LogTimeRange, 'pageSize'>;
@@ -518,7 +481,7 @@ function LogsExplorerViews(): JSX.Element {
 				items={tabsItems}
 				defaultActiveKey={panelType || PANEL_TYPES.LIST}
 				activeKey={panelType || PANEL_TYPES.LIST}
-				onChange={handleChangeView}
+				onChange={handleExplorerTabChange}
 				destroyInactiveTabPane
 			/>
 
