@@ -11,9 +11,12 @@ import { DataSource, LogsAggregatorOperator } from 'types/common/queryBuilder';
 
 import { LiveLogsListChartProps } from './types';
 
-function LiveLogsListChart({ className }: LiveLogsListChartProps): JSX.Element {
+function LiveLogsListChart({
+	className,
+	initialData,
+}: LiveLogsListChartProps): JSX.Element {
 	const { stagedQuery } = useQueryBuilder();
-	const { isConnectionOpen, isConnectionLoading } = useEventSource();
+	const { isConnectionOpen } = useEventSource();
 
 	const listChartQuery: Query | null = useMemo(() => {
 		if (!stagedQuery) return null;
@@ -47,19 +50,16 @@ function LiveLogsListChart({ className }: LiveLogsListChartProps): JSX.Element {
 	);
 
 	const chartData: QueryData[] = useMemo(() => {
+		if (initialData) return initialData;
+
 		if (!data) return [];
 
 		return data.payload.data.result;
-	}, [data]);
-
-	const isLoading = useMemo(
-		() => isFetching || (isConnectionLoading && !isConnectionOpen),
-		[isConnectionLoading, isConnectionOpen, isFetching],
-	);
+	}, [data, initialData]);
 
 	return (
 		<LogsExplorerChart
-			isLoading={isLoading}
+			isLoading={initialData ? false : isFetching}
 			data={chartData}
 			isLabelEnabled={false}
 			className={className}

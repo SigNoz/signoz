@@ -27,7 +27,7 @@ function LiveLogsList({ logs }: LiveLogsListProps): JSX.Element {
 
 	const { t } = useTranslation(['logs']);
 
-	const { isConnectionError, isConnectionLoading } = useEventSource();
+	const { isConnectionLoading } = useEventSource();
 
 	const { activeLogId } = useCopyLogLink();
 
@@ -98,7 +98,7 @@ function LiveLogsList({ logs }: LiveLogsListProps): JSX.Element {
 
 			{logs.length === 0 && <Typography>{t('fetching_log_lines')}</Typography>}
 
-			{!isConnectionError && logs.length !== 0 && (
+			{logs.length !== 0 && (
 				<InfinityWrapperStyled>
 					{options.format === 'table' ? (
 						<InfinityTableView

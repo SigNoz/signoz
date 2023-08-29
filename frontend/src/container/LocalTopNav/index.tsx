@@ -17,7 +17,7 @@ function LocalTopNav({
 
 			<Col span={8}>
 				<Row justify="end">
-					<Space align="center" size={30} direction="horizontal">
+					<Space align="start" size={30} direction="horizontal">
 						{actions}
 						{renderPermissions?.isDateTimeEnabled && (
 							<div>
