@@ -18,7 +18,6 @@ function LiveLogsTopNav(): JSX.Element {
 		handleSetInitialLoading,
 	} = useEventSource();
 
-
 	const { redirectWithQueryBuilderData, currentQuery } = useQueryBuilder();
 
 	const isPlaying = isConnectionOpen || isConnectionLoading || initialLoading;
