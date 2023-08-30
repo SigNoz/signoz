@@ -1,4 +1,3 @@
-import { LoadingOutlined } from '@ant-design/icons';
 import { Card, Input, Typography } from 'antd';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
@@ -59,11 +58,7 @@ function SaveViewWithName({
 		<Card>
 			<Typography>Name of the View</Typography>
 			<Input placeholder="Enter Name" onChange={onChangeHandler} />
-			<SaveButton
-				onClick={onSaveHandler}
-				type="primary"
-				icon={isLoading && <LoadingOutlined />}
-			>
+			<SaveButton onClick={onSaveHandler} type="primary" loading={isLoading}>
 				Save
 			</SaveButton>
 		</Card>
