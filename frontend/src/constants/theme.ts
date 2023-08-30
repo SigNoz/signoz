@@ -52,6 +52,8 @@ const themeColors = {
 	gamboge: '#D89614',
 	bckgGrey: '#1d1d1d',
 	lightBlue: '#177ddc',
+	buttonSuccessRgb: '73, 170, 25',
+	red: '#E84749',
 };
 
 export { themeColors };
