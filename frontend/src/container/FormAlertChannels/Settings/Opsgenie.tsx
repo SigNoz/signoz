@@ -7,17 +7,20 @@ const { TextArea } = Input;
 
 function OpsgenieForm({ setSelectedConfig }: OpsgenieFormProps): JSX.Element {
 	const { t } = useTranslation('channels');
+
+	const handleInputChange = (field: string) => (
+		event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
+	): void => {
+		setSelectedConfig((value) => ({
+			...value,
+			[field]: event.target.value,
+		}));
+	};
+
 	return (
 		<>
 			<Form.Item name="api_key" label={t('field_opsgenie_api_key')} required>
-				<Input
-					onChange={(event): void => {
-						setSelectedConfig((value) => ({
-							...value,
-							api_key: event.target.value,
-						}));
-					}}
-				/>
+				<Input onChange={handleInputChange('api_key')} />
 			</Form.Item>
 
 			<Form.Item
@@ -28,12 +31,7 @@ function OpsgenieForm({ setSelectedConfig }: OpsgenieFormProps): JSX.Element {
 			>
 				<TextArea
 					rows={4}
-					onChange={(event): void =>
-						setSelectedConfig((value) => ({
-							...value,
-							description: event.target.value,
-						}))
-					}
+					onChange={handleInputChange('message')}
 					placeholder={t('placeholder_opsgenie_message')}
 				/>
 			</Form.Item>
@@ -46,12 +44,7 @@ function OpsgenieForm({ setSelectedConfig }: OpsgenieFormProps): JSX.Element {
 			>
 				<TextArea
 					rows={4}
-					onChange={(event): void =>
-						setSelectedConfig((value) => ({
-							...value,
-							description: event.target.value,
-						}))
-					}
+					onChange={handleInputChange('description')}
 					placeholder={t('placeholder_opsgenie_description')}
 				/>
 			</Form.Item>
@@ -64,16 +57,10 @@ function OpsgenieForm({ setSelectedConfig }: OpsgenieFormProps): JSX.Element {
 			>
 				<TextArea
 					rows={4}
-					onChange={(event): void =>
-						setSelectedConfig((value) => ({
-							...value,
-							description: event.target.value,
-						}))
-					}
+					onChange={handleInputChange('priority')}
 					placeholder={t('placeholder_opsgenie_priority')}
 				/>
 			</Form.Item>
-
 		</>
 	);
 }
