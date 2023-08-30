@@ -1,8 +1,16 @@
 import { fireEvent, render } from '@testing-library/react';
+import ROUTES from 'constants/routes';
 import { QueryClient, QueryClientProvider } from 'react-query';
 import { DataSource } from 'types/common/queryBuilder';
 
 import SaveViewWithName from '../SaveViewWithName';
+
+jest.mock('react-router-dom', () => ({
+	...jest.requireActual('react-router-dom'),
+	useLocation: (): { pathname: string } => ({
+		pathname: `${process.env.FRONTEND_API_ENDPOINT}${ROUTES.APPLICATION}/`,
+	}),
+}));
 
 const queryClient = new QueryClient({
 	defaultOptions: {
