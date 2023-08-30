@@ -42,12 +42,13 @@ export const isQueryUpdatedInView = ({
 	viewKey,
 	data,
 	stagedQuery,
+	currentPanelType,
 }: IsQueryUpdatedInViewProps): boolean => {
 	const currentViewDetails = getViewDetailsUsingViewKey(viewKey, data);
 	if (!currentViewDetails) {
 		return false;
 	}
-	const { query } = currentViewDetails;
+	const { query, panelType } = currentViewDetails;
 
 	// Omitting id from aggregateAttribute and groupBy
 	const updatedCurrentQuery = {
@@ -89,6 +90,7 @@ export const isQueryUpdatedInView = ({
 	};
 
 	return (
+		panelType !== currentPanelType ||
 		!isEqual(query.builder, updatedCurrentQuery?.builder) ||
 		!isEqual(query.clickhouse_sql, updatedCurrentQuery?.clickhouse_sql) ||
 		!isEqual(query.promql, updatedCurrentQuery?.promql)

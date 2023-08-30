@@ -153,6 +153,7 @@ function ExplorerCard({
 				data: viewsData?.data?.data,
 				stagedQuery,
 				viewKey,
+				currentPanelType: panelType,
 			}),
 		);
 	}, [
@@ -161,6 +162,7 @@ function ExplorerCard({
 		stagedQuery,
 		stagedQuery?.builder.queryData,
 		viewKey,
+		panelType,
 	]);
 
 	const menu = useMemo(

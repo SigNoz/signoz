@@ -7,6 +7,7 @@ import ExportPanel from 'container/ExportPanel';
 import QuerySection from 'container/TracesExplorer/QuerySection';
 import { useUpdateDashboard } from 'hooks/dashboard/useUpdateDashboard';
 import { addEmptyWidgetInDashboardJSONWithQuery } from 'hooks/dashboard/utils';
+import { useGetPanelTypesQueryParam } from 'hooks/queryBuilder/useGetPanelTypesQueryParam';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useShareBuilderUrl } from 'hooks/queryBuilder/useShareBuilderUrl';
 import { useHandleExplorerTabChange } from 'hooks/useHandleExplorerTabChange';
@@ -28,6 +29,8 @@ function TracesExplorer(): JSX.Element {
 		panelType,
 		updateAllQueriesOperators,
 	} = useQueryBuilder();
+
+	const currentPanelType = useGetPanelTypesQueryParam();
 
 	const { handleExplorerTabChange } = useHandleExplorerTabChange();
 
@@ -154,9 +157,15 @@ function TracesExplorer(): JSX.Element {
 			(currentTab === PANEL_TYPES.LIST || currentTab === PANEL_TYPES.TRACE) &&
 			shouldChangeView
 		) {
-			handleExplorerTabChange(PANEL_TYPES.TIME_SERIES);
+			handleExplorerTabChange(currentPanelType || PANEL_TYPES.TIME_SERIES);
 		}
-	}, [currentTab, isMultipleQueries, isGroupByExist, handleExplorerTabChange]);
+	}, [
+		currentTab,
+		isMultipleQueries,
+		isGroupByExist,
+		handleExplorerTabChange,
+		currentPanelType,
+	]);
 
 	return (
 		<>

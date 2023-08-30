@@ -29,6 +29,7 @@ export interface IsQueryUpdatedInViewProps {
 	viewKey: string;
 	data: ViewProps[] | undefined;
 	stagedQuery: Query | null;
+	currentPanelType: PANEL_TYPES | null;
 }
 
 export interface SaveViewWithNameProps {
