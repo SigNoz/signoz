@@ -2,8 +2,8 @@ import { Col, Row } from 'antd';
 import ExplorerCard from 'components/ExplorerCard/ExplorerCard';
 import LogExplorerQuerySection from 'container/LogExplorerQuerySection';
 import LogsExplorerViews from 'container/LogsExplorerViews';
-import { DataSource } from 'types/common/queryBuilder';
 import LogsTopNav from 'container/LogsTopNav';
+import { DataSource } from 'types/common/queryBuilder';
 
 import { WrapperStyled } from './styles';
 
