@@ -347,7 +347,7 @@ func buildLogsLiveTailQuery(mq *v3.BuilderQuery) (string, error) {
 	case v3.AggregateOperatorNoOp:
 		query := constants.LogsSQLSelect + "from signoz_logs.distributed_logs where "
 		if len(filterSubQuery) > 0 {
-			query = query + filterSubQuery + " "
+			query = query + filterSubQuery + " AND "
 		}
 
 		return query, nil
@@ -481,7 +481,6 @@ func PrepareLogsQuery(start, end int64, queryType v3.QueryType, panelType v3.Pan
 		if err != nil {
 			return "", err
 		}
-		fmt.Println("asass1  : " + query)
 		return query, nil
 	} else if options.GraphLimitQtype == constants.FirstQueryGraphLimit {
 		// give me just the groupby names

@@ -4694,7 +4694,7 @@ func (r *ClickHouseReader) LiveTailLogsV3(ctx context.Context, query string, tim
 			return
 		case <-ticker.C:
 			// get the new 100 logs as anything more older won't make sense
-			tmpQuery := fmt.Sprintf("AND timestamp >='%d'", timestampStart)
+			tmpQuery := fmt.Sprintf("timestamp >='%d'", timestampStart)
 			if idStart != "" {
 				tmpQuery = fmt.Sprintf("%s AND id > '%s'", tmpQuery, idStart)
 			}
