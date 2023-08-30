@@ -1,4 +1,5 @@
 import get from 'api/dashboard/get';
+import { PANEL_TYPES } from 'constants/queryBuilder';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import ROUTES from 'constants/routes';
 import {
@@ -54,7 +55,11 @@ export function DashboardProvider({
 					uuid: dashboardId,
 				}),
 			onSuccess: (data) => {
-				setLayouts(data.data.layout || []);
+				setLayouts(
+					data.data.layout?.filter(
+						(layout) => layout.i !== PANEL_TYPES.EMPTY_WIDGET,
+					) || [],
+				);
 			},
 		},
 	);
