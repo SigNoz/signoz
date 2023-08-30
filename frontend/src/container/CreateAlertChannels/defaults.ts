@@ -28,7 +28,7 @@ export const OpsgenieInitialConfig: Partial<OpsgenieChannel> = {
 	description: `{{ if gt (len .Alerts.Firing) 0 -}}
 	Alerts Firing:
 	{{ range .Alerts.Firing }}
-	 - Message: {{ .Annotations.message }}
+	 - Message: {{ .CommonLabels.alertname }}
 	Labels:
 	{{ range .Labels.SortedPairs }}   - {{ .Name }} = {{ .Value }}
 	{{ end }}   Annotations:
@@ -39,7 +39,7 @@ export const OpsgenieInitialConfig: Partial<OpsgenieChannel> = {
 	{{ if gt (len .Alerts.Resolved) 0 -}}
 	Alerts Resolved:
 	{{ range .Alerts.Resolved }}
-	 - Message: {{ .Annotations.message }}
+	 - Message: {{ .CommonLabels.alertname }}
 	Labels:
 	{{ range .Labels.SortedPairs }}   - {{ .Name }} = {{ .Value }}
 	{{ end }}   Annotations:
@@ -48,5 +48,5 @@ export const OpsgenieInitialConfig: Partial<OpsgenieChannel> = {
 	{{ end }}
 	{{- end }}`,
 	priority:
-		'{{ if eq .GroupLabels.severity "critical" }}P1{{ else if eq .GroupLabels.severity "warning" }}P2{{ else if eq .GroupLabels.severity "info" }}P3{{ else }}P4{{ end }}',
+		'{{ if eq .Labels.severity "critical" }}P1{{ else if eq .Labels.severity "warning" }}P2{{ else if eq .Labels.severity "info" }}P3{{ else }}P4{{ end }}',
 };

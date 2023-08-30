@@ -258,6 +258,8 @@ function CreateAlertChannels({
 			name: selectedConfig?.name || '',
 			send_resolved: true,
 			description: selectedConfig?.description || '',
+			message: selectedConfig?.message || '',
+			priority: selectedConfig?.priority || '',
 		}),
 		[selectedConfig],
 	);

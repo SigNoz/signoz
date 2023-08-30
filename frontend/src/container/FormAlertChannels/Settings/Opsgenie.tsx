@@ -21,6 +21,24 @@ function OpsgenieForm({ setSelectedConfig }: OpsgenieFormProps): JSX.Element {
 			</Form.Item>
 
 			<Form.Item
+				name="message"
+				help={t('help_opsgenie_message')}
+				label={t('field_opsgenie_message')}
+				required
+			>
+				<TextArea
+					rows={4}
+					onChange={(event): void =>
+						setSelectedConfig((value) => ({
+							...value,
+							description: event.target.value,
+						}))
+					}
+					placeholder={t('placeholder_opsgenie_message')}
+				/>
+			</Form.Item>
+
+			<Form.Item
 				name="description"
 				help={t('help_opsgenie_description')}
 				label={t('field_opsgenie_description')}
@@ -37,6 +55,25 @@ function OpsgenieForm({ setSelectedConfig }: OpsgenieFormProps): JSX.Element {
 					placeholder={t('placeholder_opsgenie_description')}
 				/>
 			</Form.Item>
+
+			<Form.Item
+				name="priority"
+				help={t('help_opsgenie_priority')}
+				label={t('field_opsgenie_priority')}
+				required
+			>
+				<TextArea
+					rows={4}
+					onChange={(event): void =>
+						setSelectedConfig((value) => ({
+							...value,
+							description: event.target.value,
+						}))
+					}
+					placeholder={t('placeholder_opsgenie_priority')}
+				/>
+			</Form.Item>
+
 		</>
 	);
 }
