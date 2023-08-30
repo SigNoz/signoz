@@ -202,6 +202,9 @@ function EditAlertChannels({
 		() => ({
 			name: selectedConfig.name || '',
 			api_key: selectedConfig.api_key || '',
+			message: selectedConfig.message || '',
+			description: selectedConfig.description || '',
+			priority: selectedConfig.priority || '',
 			id,
 		}),
 		[id, selectedConfig],

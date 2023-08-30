@@ -1,3 +1,4 @@
+/* eslint-disable sonarjs/cognitive-complexity */
 import { Typography } from 'antd';
 import get from 'api/channels/get';
 import Spinner from 'components/Spinner';
@@ -67,6 +68,15 @@ function ChannelsEdit(): JSX.Element {
 			channel.detailsArray = { ...pagerConfig.details };
 			return {
 				type: ChannelType.Pagerduty,
+				channel,
+			};
+		}
+
+		if (value && 'opsgenie_configs' in value) {
+			const opsgenieConfig = value.opsgenie_configs[0];
+			channel = opsgenieConfig;
+			return {
+				type: ChannelType.Opsgenie,
 				channel,
 			};
 		}
