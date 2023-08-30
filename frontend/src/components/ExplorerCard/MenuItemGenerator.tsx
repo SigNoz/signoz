@@ -4,7 +4,7 @@ import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useDeleteView } from 'hooks/saveViews/useDeleteView';
 import { useHandleExplorerTabChange } from 'hooks/useHandleExplorerTabChange';
 import { useNotifications } from 'hooks/useNotifications';
-import { useCallback } from 'react';
+import { MouseEvent, useCallback } from 'react';
 
 import { MenuItemContainer } from './styles';
 import { MenuItemLabelGeneratorProps } from './types';
@@ -24,7 +24,8 @@ function MenuItemGenerator({
 
 	const { mutateAsync: deleteViewAsync } = useDeleteView(uuid);
 
-	const onDeleteHandler = (): void => {
+	const onDeleteHandler = (event: MouseEvent<HTMLElement>): void => {
+		event.stopPropagation();
 		deleteViewHandler({
 			deleteViewAsync,
 			notifications,
@@ -63,9 +64,9 @@ function MenuItemGenerator({
 	};
 
 	return (
-		<MenuItemContainer>
+		<MenuItemContainer onClick={onLabelClickHandler}>
 			<Row justify="space-between">
-				<Col span={22} onClick={onLabelClickHandler}>
+				<Col span={22}>
 					<Row>
 						<Typography.Text strong>{viewName}</Typography.Text>
 					</Row>
