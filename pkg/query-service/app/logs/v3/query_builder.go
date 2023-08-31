@@ -213,10 +213,6 @@ func buildLogsTimeSeriesFilterQuery(fs *v3.FilterSet, groupBy []v3.AttributeKey,
 	}
 
 	queryString := strings.Join(conditions, " AND ")
-
-	if len(queryString) > 0 {
-		queryString = " AND " + queryString
-	}
 	return queryString, nil
 }
 
@@ -225,6 +221,9 @@ func buildLogsQuery(panelType v3.PanelType, start, end, step int64, mq *v3.Build
 	filterSubQuery, err := buildLogsTimeSeriesFilterQuery(mq.Filters, mq.GroupBy, mq.AggregateAttribute)
 	if err != nil {
 		return "", err
+	}
+	if len(filterSubQuery) > 0 {
+		filterSubQuery = " AND " + filterSubQuery
 	}
 
 	// timerange will be sent in epoch millisecond
@@ -346,13 +345,11 @@ func buildLogsLiveTailQuery(mq *v3.BuilderQuery) (string, error) {
 
 	switch mq.AggregateOperator {
 	case v3.AggregateOperatorNoOp:
-		queryTmpl := constants.LogsSQLSelect + "from signoz_logs.distributed_logs where %s"
-		if len(filterSubQuery) == 0 {
-			filterSubQuery = "%s"
-		} else {
-			filterSubQuery = "%s " + filterSubQuery
+		query := constants.LogsSQLSelect + "from signoz_logs.distributed_logs where "
+		if len(filterSubQuery) > 0 {
+			query = query + filterSubQuery + " AND "
 		}
-		query := fmt.Sprintf(queryTmpl, filterSubQuery)
+
 		return query, nil
 	default:
 		return "", fmt.Errorf("unsupported aggregate operator in live tail")

@@ -185,7 +185,7 @@
 		"react-resizable": "3.0.4",
 		"ts-jest": "^27.1.4",
 		"ts-node": "^10.2.1",
-		"typescript-plugin-css-modules": "^3.4.0",
+		"typescript-plugin-css-modules": "5.0.1",
 		"webpack-bundle-analyzer": "^4.5.0",
 		"webpack-cli": "^4.9.2"
 	},
