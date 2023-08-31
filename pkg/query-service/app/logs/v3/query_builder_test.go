@@ -123,7 +123,7 @@ var timeSeriesFilterQueryData = []struct {
 			{Key: v3.AttributeKey{Key: "user_name", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag}, Value: "john", Operator: "="},
 			{Key: v3.AttributeKey{Key: "k8s_namespace", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeResource}, Value: "my_service", Operator: "!="},
 		}},
-		ExpectedFilter: " AND attributes_string_value[indexOf(attributes_string_key, 'user_name')] = 'john' AND resources_string_value[indexOf(resources_string_key, 'k8s_namespace')] != 'my_service'",
+		ExpectedFilter: "attributes_string_value[indexOf(attributes_string_key, 'user_name')] = 'john' AND resources_string_value[indexOf(resources_string_key, 'k8s_namespace')] != 'my_service'",
 	},
 	{
 		Name: "Test materialized column",
@@ -131,77 +131,77 @@ var timeSeriesFilterQueryData = []struct {
 			{Key: v3.AttributeKey{Key: "user_name", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag, IsColumn: true}, Value: "john", Operator: "="},
 			{Key: v3.AttributeKey{Key: "k8s_namespace", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeResource}, Value: "my_service", Operator: "!="},
 		}},
-		ExpectedFilter: " AND attribute_string_user_name = 'john' AND resources_string_value[indexOf(resources_string_key, 'k8s_namespace')] != 'my_service'",
+		ExpectedFilter: "attribute_string_user_name = 'john' AND resources_string_value[indexOf(resources_string_key, 'k8s_namespace')] != 'my_service'",
 	},
 	{
 		Name: "Test like",
 		FilterSet: &v3.FilterSet{Operator: "AND", Items: []v3.FilterItem{
 			{Key: v3.AttributeKey{Key: "host", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag}, Value: "102.%", Operator: "like"},
 		}},
-		ExpectedFilter: " AND attributes_string_value[indexOf(attributes_string_key, 'host')] ILIKE '102.%'",
+		ExpectedFilter: "attributes_string_value[indexOf(attributes_string_key, 'host')] ILIKE '102.%'",
 	},
 	{
 		Name: "Test IN",
 		FilterSet: &v3.FilterSet{Operator: "AND", Items: []v3.FilterItem{
 			{Key: v3.AttributeKey{Key: "bytes", DataType: v3.AttributeKeyDataTypeFloat64, Type: v3.AttributeKeyTypeTag}, Value: []interface{}{1, 2, 3, 4}, Operator: "in"},
 		}},
-		ExpectedFilter: " AND attributes_float64_value[indexOf(attributes_float64_key, 'bytes')] IN [1,2,3,4]",
+		ExpectedFilter: "attributes_float64_value[indexOf(attributes_float64_key, 'bytes')] IN [1,2,3,4]",
 	},
 	{
 		Name: "Test DataType int64",
 		FilterSet: &v3.FilterSet{Operator: "AND", Items: []v3.FilterItem{
 			{Key: v3.AttributeKey{Key: "bytes", DataType: v3.AttributeKeyDataTypeInt64, Type: v3.AttributeKeyTypeTag}, Value: 10, Operator: ">"},
 		}},
-		ExpectedFilter: " AND attributes_int64_value[indexOf(attributes_int64_key, 'bytes')] > 10",
+		ExpectedFilter: "attributes_int64_value[indexOf(attributes_int64_key, 'bytes')] > 10",
 	},
 	{
 		Name: "Test NOT IN",
 		FilterSet: &v3.FilterSet{Operator: "AND", Items: []v3.FilterItem{
 			{Key: v3.AttributeKey{Key: "name", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag}, Value: []interface{}{"john", "bunny"}, Operator: "nin"},
 		}},
-		ExpectedFilter: " AND attributes_string_value[indexOf(attributes_string_key, 'name')] NOT IN ['john','bunny']",
+		ExpectedFilter: "attributes_string_value[indexOf(attributes_string_key, 'name')] NOT IN ['john','bunny']",
 	},
 	{
 		Name: "Test exists",
 		FilterSet: &v3.FilterSet{Operator: "AND", Items: []v3.FilterItem{
 			{Key: v3.AttributeKey{Key: "bytes", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag}, Value: "", Operator: "exists"},
 		}},
-		ExpectedFilter: " AND has(attributes_string_key, 'bytes')",
+		ExpectedFilter: "has(attributes_string_key, 'bytes')",
 	},
 	{
 		Name: "Test not exists",
 		FilterSet: &v3.FilterSet{Operator: "AND", Items: []v3.FilterItem{
 			{Key: v3.AttributeKey{Key: "bytes", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag}, Value: "", Operator: "nexists"},
 		}},
-		ExpectedFilter: " AND not has(attributes_string_key, 'bytes')",
+		ExpectedFilter: "not has(attributes_string_key, 'bytes')",
 	},
 	{
 		Name: "Test contains",
 		FilterSet: &v3.FilterSet{Operator: "AND", Items: []v3.FilterItem{
 			{Key: v3.AttributeKey{Key: "host", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag}, Value: "102.", Operator: "contains"},
 		}},
-		ExpectedFilter: " AND attributes_string_value[indexOf(attributes_string_key, 'host')] ILIKE '%102.%'",
+		ExpectedFilter: "attributes_string_value[indexOf(attributes_string_key, 'host')] ILIKE '%102.%'",
 	},
 	{
 		Name: "Test not contains",
 		FilterSet: &v3.FilterSet{Operator: "AND", Items: []v3.FilterItem{
 			{Key: v3.AttributeKey{Key: "host", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag}, Value: "102.", Operator: "ncontains"},
 		}},
-		ExpectedFilter: " AND attributes_string_value[indexOf(attributes_string_key, 'host')] NOT ILIKE '%102.%'",
+		ExpectedFilter: "attributes_string_value[indexOf(attributes_string_key, 'host')] NOT ILIKE '%102.%'",
 	},
 	{
 		Name: "Test regex",
 		FilterSet: &v3.FilterSet{Operator: "AND", Items: []v3.FilterItem{
 			{Key: v3.AttributeKey{Key: "host", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag, IsColumn: true}, Value: "host: \"(?P<host>\\S+)\"", Operator: "regex"},
 		}},
-		ExpectedFilter: " AND match(attribute_string_host, 'host: \"(?P<host>\\\\S+)\"')",
+		ExpectedFilter: "match(attribute_string_host, 'host: \"(?P<host>\\\\S+)\"')",
 	},
 	{
 		Name: "Test not regex",
 		FilterSet: &v3.FilterSet{Operator: "AND", Items: []v3.FilterItem{
 			{Key: v3.AttributeKey{Key: "host", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag}, Value: "102.", Operator: "nregex"},
 		}},
-		ExpectedFilter: " AND NOT match(attributes_string_value[indexOf(attributes_string_key, 'host')], '102.')",
+		ExpectedFilter: "NOT match(attributes_string_value[indexOf(attributes_string_key, 'host')], '102.')",
 	},
 	{
 		Name: "Test groupBy",
@@ -209,7 +209,7 @@ var timeSeriesFilterQueryData = []struct {
 			{Key: v3.AttributeKey{Key: "host", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag}, Value: "102.", Operator: "ncontains"},
 		}},
 		GroupBy:        []v3.AttributeKey{{Key: "host", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag}},
-		ExpectedFilter: " AND attributes_string_value[indexOf(attributes_string_key, 'host')] NOT ILIKE '%102.%' AND indexOf(attributes_string_key, 'host') > 0",
+		ExpectedFilter: "attributes_string_value[indexOf(attributes_string_key, 'host')] NOT ILIKE '%102.%' AND indexOf(attributes_string_key, 'host') > 0",
 	},
 	{
 		Name: "Test groupBy isColumn",
@@ -217,7 +217,7 @@ var timeSeriesFilterQueryData = []struct {
 			{Key: v3.AttributeKey{Key: "host", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag}, Value: "102.", Operator: "ncontains"},
 		}},
 		GroupBy:        []v3.AttributeKey{{Key: "host", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag, IsColumn: true}},
-		ExpectedFilter: " AND attributes_string_value[indexOf(attributes_string_key, 'host')] NOT ILIKE '%102.%' AND attribute_string_host_exists=true",
+		ExpectedFilter: "attributes_string_value[indexOf(attributes_string_key, 'host')] NOT ILIKE '%102.%' AND attribute_string_host_exists=true",
 	},
 	{
 		Name: "Wrong data",
@@ -231,49 +231,49 @@ var timeSeriesFilterQueryData = []struct {
 		FilterSet: &v3.FilterSet{Operator: "AND", Items: []v3.FilterItem{
 			{Key: v3.AttributeKey{Key: "body", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag}, Value: "%test%", Operator: "like"},
 		}},
-		ExpectedFilter: " AND attributes_string_value[indexOf(attributes_string_key, 'body')] ILIKE '%test%'",
+		ExpectedFilter: "attributes_string_value[indexOf(attributes_string_key, 'body')] ILIKE '%test%'",
 	},
 	{
 		Name: "Test exists on top level field",
 		FilterSet: &v3.FilterSet{Operator: "AND", Items: []v3.FilterItem{
 			{Key: v3.AttributeKey{Key: "trace_id", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeUnspecified, IsColumn: true}, Operator: "exists"},
 		}},
-		ExpectedFilter: " AND trace_id != ''",
+		ExpectedFilter: "trace_id != ''",
 	},
 	{
 		Name: "Test not exists on top level field",
 		FilterSet: &v3.FilterSet{Operator: "AND", Items: []v3.FilterItem{
 			{Key: v3.AttributeKey{Key: "span_id", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeUnspecified, IsColumn: true}, Operator: "nexists"},
 		}},
-		ExpectedFilter: " AND span_id = ''",
+		ExpectedFilter: "span_id = ''",
 	},
 	{
 		Name: "Test exists on top level field number",
 		FilterSet: &v3.FilterSet{Operator: "AND", Items: []v3.FilterItem{
 			{Key: v3.AttributeKey{Key: "trace_flags", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeUnspecified, IsColumn: true}, Operator: "exists"},
 		}},
-		ExpectedFilter: " AND trace_flags != 0",
+		ExpectedFilter: "trace_flags != 0",
 	},
 	{
 		Name: "Test not exists on top level field number",
 		FilterSet: &v3.FilterSet{Operator: "AND", Items: []v3.FilterItem{
 			{Key: v3.AttributeKey{Key: "severity_number", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeUnspecified, IsColumn: true}, Operator: "nexists"},
 		}},
-		ExpectedFilter: " AND severity_number = 0",
+		ExpectedFilter: "severity_number = 0",
 	},
 	{
 		Name: "Test exists on materiazlied column",
 		FilterSet: &v3.FilterSet{Operator: "AND", Items: []v3.FilterItem{
 			{Key: v3.AttributeKey{Key: "method", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag, IsColumn: true}, Operator: "exists"},
 		}},
-		ExpectedFilter: " AND attribute_string_method_exists=true",
+		ExpectedFilter: "attribute_string_method_exists=true",
 	},
 	{
 		Name: "Test nexists on materiazlied column",
 		FilterSet: &v3.FilterSet{Operator: "AND", Items: []v3.FilterItem{
 			{Key: v3.AttributeKey{Key: "status", DataType: v3.AttributeKeyDataTypeInt64, Type: v3.AttributeKeyTypeTag, IsColumn: true}, Operator: "nexists"},
 		}},
-		ExpectedFilter: " AND attribute_int64_status_exists=false",
+		ExpectedFilter: "attribute_int64_status_exists=false",
 	},
 	//  add new tests
 }
@@ -1168,7 +1168,26 @@ var testPrepLogsQueryData = []struct {
 			},
 		},
 		TableName:     "logs",
-		ExpectedQuery: "SELECT timestamp, id, trace_id, span_id, trace_flags, severity_text, severity_number, body,CAST((attributes_string_key, attributes_string_value), 'Map(String, String)') as  attributes_string,CAST((attributes_int64_key, attributes_int64_value), 'Map(String, Int64)') as  attributes_int64,CAST((attributes_float64_key, attributes_float64_value), 'Map(String, Float64)') as  attributes_float64,CAST((resources_string_key, resources_string_value), 'Map(String, String)') as resources_string from signoz_logs.distributed_logs where %s  AND attributes_string_value[indexOf(attributes_string_key, 'method')] = 'GET'",
+		ExpectedQuery: "SELECT timestamp, id, trace_id, span_id, trace_flags, severity_text, severity_number, body,CAST((attributes_string_key, attributes_string_value), 'Map(String, String)') as  attributes_string,CAST((attributes_int64_key, attributes_int64_value), 'Map(String, Int64)') as  attributes_int64,CAST((attributes_float64_key, attributes_float64_value), 'Map(String, Float64)') as  attributes_float64,CAST((resources_string_key, resources_string_value), 'Map(String, String)') as resources_string from signoz_logs.distributed_logs where attributes_string_value[indexOf(attributes_string_key, 'method')] = 'GET' AND ",
+		Options:       Options{IsLivetailQuery: true},
+	},
+	{
+		Name:      "Live Tail Query with contains",
+		PanelType: v3.PanelTypeList,
+		Start:     1680066360726,
+		End:       1680066458000,
+		BuilderQuery: &v3.BuilderQuery{
+			QueryName:         "A",
+			StepInterval:      60,
+			AggregateOperator: v3.AggregateOperatorNoOp,
+			Expression:        "A",
+			Filters: &v3.FilterSet{Operator: "AND", Items: []v3.FilterItem{
+				{Key: v3.AttributeKey{Key: "method", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag}, Value: "GET", Operator: "contains"},
+			},
+			},
+		},
+		TableName:     "logs",
+		ExpectedQuery: "SELECT timestamp, id, trace_id, span_id, trace_flags, severity_text, severity_number, body,CAST((attributes_string_key, attributes_string_value), 'Map(String, String)') as  attributes_string,CAST((attributes_int64_key, attributes_int64_value), 'Map(String, Int64)') as  attributes_int64,CAST((attributes_float64_key, attributes_float64_value), 'Map(String, Float64)') as  attributes_float64,CAST((resources_string_key, resources_string_value), 'Map(String, String)') as resources_string from signoz_logs.distributed_logs where attributes_string_value[indexOf(attributes_string_key, 'method')] ILIKE '%GET%' AND ",
 		Options:       Options{IsLivetailQuery: true},
 	},
 	{
@@ -1184,7 +1203,7 @@ var testPrepLogsQueryData = []struct {
 			Filters:           &v3.FilterSet{Operator: "AND", Items: []v3.FilterItem{}},
 		},
 		TableName:     "logs",
-		ExpectedQuery: "SELECT timestamp, id, trace_id, span_id, trace_flags, severity_text, severity_number, body,CAST((attributes_string_key, attributes_string_value), 'Map(String, String)') as  attributes_string,CAST((attributes_int64_key, attributes_int64_value), 'Map(String, Int64)') as  attributes_int64,CAST((attributes_float64_key, attributes_float64_value), 'Map(String, Float64)') as  attributes_float64,CAST((resources_string_key, resources_string_value), 'Map(String, String)') as resources_string from signoz_logs.distributed_logs where %s",
+		ExpectedQuery: "SELECT timestamp, id, trace_id, span_id, trace_flags, severity_text, severity_number, body,CAST((attributes_string_key, attributes_string_value), 'Map(String, String)') as  attributes_string,CAST((attributes_int64_key, attributes_int64_value), 'Map(String, Int64)') as  attributes_int64,CAST((attributes_float64_key, attributes_float64_value), 'Map(String, Float64)') as  attributes_float64,CAST((resources_string_key, resources_string_value), 'Map(String, String)') as resources_string from signoz_logs.distributed_logs where ",
 		Options:       Options{IsLivetailQuery: true},
 	},
 	{
