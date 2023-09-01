@@ -1375,13 +1375,13 @@
     minimatch "^3.0.4"
     strip-json-comments "^3.1.1"
 
-"@grafana/data@^8.4.3":
-  version "8.5.24"
-  resolved "https://registry.npmjs.org/@grafana/data/-/data-8.5.24.tgz"
-  integrity sha512-TZNt1MSo5S1C5JtWGS0FBBYSG4z0jjL1+t/cSt/s/9gR+60lf94341o3tV35MVF2eGRc6lSSr50FlBM+KoXvVQ==
+"@grafana/data@^8.5.24":
+  version "8.5.27"
+  resolved "https://registry.yarnpkg.com/@grafana/data/-/data-8.5.27.tgz#4c74fa19fd166fa4956fa68d6fa0169a2cad37b7"
+  integrity sha512-gu5Wy5aRPUhLdLMnFimDYrtsmKgNTaeBVZ2CTUu2ak5rYCpT2rmLdQJotBugZmg9KEiWAZNlkDWZOdv4sXGZVw==
   dependencies:
     "@braintree/sanitize-url" "6.0.0"
-    "@grafana/schema" "8.5.24"
+    "@grafana/schema" "8.5.27"
     "@types/d3-interpolate" "^1.4.0"
     d3-interpolate "1.4.0"
     date-fns "2.28.0"
@@ -1400,10 +1400,10 @@
     uplot "1.6.22"
     xss "1.0.11"
 
-"@grafana/schema@8.5.24":
-  version "8.5.24"
-  resolved "https://registry.npmjs.org/@grafana/schema/-/schema-8.5.24.tgz"
-  integrity sha512-hSFRNH8DDJPfxxzi2IaE93wmysbIDwRsSHH5pYdsNE1K51wYNTagMtPc0MnbdnfW0iMBS0LYaXrphCFWl2QCPw==
+"@grafana/schema@8.5.27":
+  version "8.5.27"
+  resolved "https://registry.yarnpkg.com/@grafana/schema/-/schema-8.5.27.tgz#92abca41d5a50e5d5c43a191dd91918b8f07de7f"
+  integrity sha512-UhdDHoQTUcsegY1r7Yk8rGhZ8mMrp/IGKoKOfLoDYWpxcgdqKAO18WsZLJxbehV3zOEWVmO7d/LywEwNSWO+hQ==
   dependencies:
     tslib "2.3.1"
 
