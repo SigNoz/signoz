@@ -5,13 +5,10 @@ import { FeatureKeys } from 'constants/features';
 import ROUTES from 'constants/routes';
 import {
 	ChannelType,
-	MsTeamsType,
+	OpsgenieChannel,
 	PagerChannel,
-	PagerType,
 	SlackChannel,
-	SlackType,
 	WebhookChannel,
-	WebhookType,
 } from 'container/CreateAlertChannels/config';
 import useFeatureFlags from 'hooks/useFeatureFlag';
 import { isFeatureKeys } from 'hooks/useFeatureFlag/utils';
@@ -20,6 +17,7 @@ import { Dispatch, ReactElement, SetStateAction } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import MsTeamsSettings from './Settings/MsTeams';
+import OpsgenieSettings from './Settings/Opsgenie';
 import PagerSettings from './Settings/Pager';
 import SlackSettings from './Settings/Slack';
 import WebhookSettings from './Settings/Webhook';
@@ -61,14 +59,16 @@ function FormAlertChannels({
 		}
 
 		switch (type) {
-			case SlackType:
+			case ChannelType.Slack:
 				return <SlackSettings setSelectedConfig={setSelectedConfig} />;
-			case WebhookType:
+			case ChannelType.Webhook:
 				return <WebhookSettings setSelectedConfig={setSelectedConfig} />;
-			case PagerType:
+			case ChannelType.Pagerduty:
 				return <PagerSettings setSelectedConfig={setSelectedConfig} />;
-			case MsTeamsType:
+			case ChannelType.MsTeams:
 				return <MsTeamsSettings setSelectedConfig={setSelectedConfig} />;
+			case ChannelType.Opsgenie:
+				return <OpsgenieSettings setSelectedConfig={setSelectedConfig} />;
 			default:
 				return null;
 		}
@@ -101,6 +101,9 @@ function FormAlertChannels({
 						</Select.Option>
 						<Select.Option value="pagerduty" key="pagerduty">
 							Pagerduty
+						</Select.Option>
+						<Select.Option value="opsgenie" key="opsgenie">
+							Opsgenie
 						</Select.Option>
 						{!isOssFeature?.active && (
 							<Select.Option value="msteams" key="msteams">
@@ -147,7 +150,9 @@ interface FormAlertChannelsProps {
 	formInstance: FormInstance;
 	type: ChannelType;
 	setSelectedConfig: Dispatch<
-		SetStateAction<Partial<SlackChannel & WebhookChannel & PagerChannel>>
+		SetStateAction<
+			Partial<SlackChannel & WebhookChannel & PagerChannel & OpsgenieChannel>
+		>
 	>;
 	onTypeChangeHandler: (value: ChannelType) => void;
 	onSaveHandler: (props: ChannelType) => void;
