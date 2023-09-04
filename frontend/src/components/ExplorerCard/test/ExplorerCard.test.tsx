@@ -58,18 +58,6 @@ describe('ExplorerCard', () => {
 		expect(screen.getByText('Save view')).toBeInTheDocument();
 	});
 
-	// it('should see all the view listed in dropdown', async () => {
-	// 	const screen = render(
-	// 		<ExplorerCard sourcepage={DataSource.TRACES}>Mock Children</ExplorerCard>,
-	// 	);
-	// 	const selectPlaceholder = screen.getByText('Select a view');
-
-	// 	fireEvent.mouseDown(selectPlaceholder);
-	// 	const viewNameText = await screen.findByText('View 2');
-	// 	expect(viewNameText).toBeInTheDocument();
-	// });
-
-	// Write a test case to see all the view listed in dropdown
 	it('should see all the view listed in dropdown', async () => {
 		const screen = render(
 			<ExplorerCard sourcepage={DataSource.TRACES}>Mock Children</ExplorerCard>,

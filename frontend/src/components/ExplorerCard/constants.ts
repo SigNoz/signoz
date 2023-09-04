@@ -8,3 +8,13 @@ export const SaveButtonText = {
 	SAVE_AS_NEW_VIEW: 'Save as new view',
 	SAVE_VIEW: 'Save view',
 };
+
+export type QuerySearchParamNames = 'viewName' | 'viewKey';
+
+export const querySearchParams: Record<
+	QuerySearchParamNames,
+	QuerySearchParamNames
+> = {
+	viewName: 'viewName',
+	viewKey: 'viewKey',
+};

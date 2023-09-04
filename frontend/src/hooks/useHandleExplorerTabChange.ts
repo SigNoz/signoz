@@ -1,8 +1,6 @@
+import { querySearchParams } from 'components/ExplorerCard/constants';
 import { initialAutocompleteData, PANEL_TYPES } from 'constants/queryBuilder';
-import {
-	queryParamNamesMap,
-	querySearchParams,
-} from 'constants/queryBuilderQueryNames';
+import { queryParamNamesMap } from 'constants/queryBuilderQueryNames';
 import { SIGNOZ_VALUE } from 'container/QueryBuilder/filters/OrderByFilter/constants';
 import { useCallback } from 'react';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';

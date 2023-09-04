@@ -2,13 +2,11 @@ import { NotificationInstance } from 'antd/es/notification/interface';
 import axios from 'axios';
 import { SOMETHING_WENT_WRONG } from 'constants/api';
 import { initialQueriesMap, PANEL_TYPES } from 'constants/queryBuilder';
-import {
-	queryParamNamesMap,
-	querySearchParams,
-} from 'constants/queryBuilderQueryNames';
+import { queryParamNamesMap } from 'constants/queryBuilderQueryNames';
 import { mapQueryDataFromApi } from 'lib/newQueryBuilder/queryBuilderMappers/mapQueryDataFromApi';
 import isEqual from 'lodash-es/isEqual';
 
+import { querySearchParams } from './constants';
 import {
 	DeleteViewHandlerProps,
 	GetViewDetailsUsingViewKey,
