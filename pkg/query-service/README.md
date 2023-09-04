@@ -13,7 +13,7 @@ https://github.com/SigNoz/signoz/blob/main/CONTRIBUTING.md#to-run-clickhouse-set
 - Change the alertmanager section in `signoz/deploy/docker/clickhouse-setup/docker-compose.yaml` as follows:
 ```console
 alertmanager:
-    image: signoz/alertmanager:0.23.2
+    image: signoz/alertmanager:0.23.3
     volumes:
       - ./data/alertmanager:/data
     expose:
