@@ -21,6 +21,7 @@ const breadcrumbNameMap = {
 	[ROUTES.ALL_DASHBOARD]: 'Dashboard',
 	[ROUTES.LOGS]: 'Logs',
 	[ROUTES.LOGS_EXPLORER]: 'Logs Explorer',
+	[ROUTES.LIVE_LOGS]: 'Live View',
 	[ROUTES.PIPELINES]: 'Pipelines',
 };
 

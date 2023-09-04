@@ -110,6 +110,10 @@ export const LogsExplorer = Loadable(
 	() => import(/* webpackChunkName: "Logs Explorer" */ 'pages/LogsExplorer'),
 );
 
+export const LiveLogs = Loadable(
+	() => import(/* webpackChunkName: "Live Logs" */ 'pages/LiveLogs'),
+);
+
 export const Login = Loadable(
 	() => import(/* webpackChunkName: "Login" */ 'pages/Login'),
 );

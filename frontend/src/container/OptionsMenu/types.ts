@@ -14,7 +14,9 @@ export interface InitialOptions
 }
 
 export type OptionsMenuConfig = {
-	format?: Pick<RadioProps, 'value' | 'onChange'>;
+	format?: Pick<RadioProps, 'value'> & {
+		onChange: (value: LogViewMode) => void;
+	};
 	maxLines?: Pick<InputNumberProps, 'value' | 'onChange'>;
 	addColumn?: Pick<
 		SelectProps,

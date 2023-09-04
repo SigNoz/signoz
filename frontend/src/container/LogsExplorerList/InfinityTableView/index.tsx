@@ -10,6 +10,7 @@ import { getDraggedColumns } from 'hooks/useDragColumns/utils';
 import {
 	cloneElement,
 	forwardRef,
+	memo,
 	ReactElement,
 	ReactNode,
 	useCallback,
@@ -67,7 +68,6 @@ const InfinityTable = forwardRef<TableVirtuosoHandle, InfinityTableProps>(
 			onAddToQuery,
 		} = useActiveLog();
 
-		const { onEndReached } = infitiyTableProps;
 		const { dataSource, columns } = useTableView({
 			...tableViewProps,
 			onClickExpand: onSetActiveLog,
@@ -158,8 +158,11 @@ const InfinityTable = forwardRef<TableVirtuosoHandle, InfinityTableProps>(
 					}}
 					itemContent={itemContent}
 					fixedHeaderContent={tableHeader}
-					endReached={onEndReached}
 					totalCount={dataSource.length}
+					// eslint-disable-next-line react/jsx-props-no-spreading
+					{...(infitiyTableProps?.onEndReached
+						? { endReached: infitiyTableProps.onEndReached }
+						: {})}
 				/>
 
 				{activeContextLog && (
@@ -179,4 +182,4 @@ const InfinityTable = forwardRef<TableVirtuosoHandle, InfinityTableProps>(
 	},
 );
 
-export default InfinityTable;
+export default memo(InfinityTable);
