@@ -5,6 +5,7 @@ import { useSaveView } from 'hooks/saveViews/useSaveView';
 import { useNotifications } from 'hooks/useNotifications';
 import { mapCompositeQueryFromQuery } from 'lib/newQueryBuilder/queryBuilderMappers/mapCompositeQueryFromQuery';
 import { ChangeEvent, useCallback, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 import { SaveButton } from './styles';
 import { SaveViewWithNameProps } from './types';
@@ -16,6 +17,7 @@ function SaveViewWithName({
 	refetchAllView,
 }: SaveViewWithNameProps): JSX.Element {
 	const [name, setName] = useState('');
+	const { t } = useTranslation(['explorer']);
 	const {
 		currentQuery,
 		panelType,
@@ -56,7 +58,7 @@ function SaveViewWithName({
 
 	return (
 		<Card>
-			<Typography>Name of the View</Typography>
+			<Typography>{t('name_of_the_view')}</Typography>
 			<Input placeholder="Enter Name" onChange={onChangeHandler} value={name} />
 			<SaveButton onClick={onSaveHandler} type="primary" loading={isLoading}>
 				Save
