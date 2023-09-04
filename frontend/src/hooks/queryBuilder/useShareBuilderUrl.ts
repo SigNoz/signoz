@@ -8,7 +8,7 @@ import { useQueryBuilder } from './useQueryBuilder';
 export type UseShareBuilderUrlParams = { defaultValue: Query };
 
 export const useShareBuilderUrl = (defaultQuery: Query): void => {
-	const { redirectWithQueryBuilderData, resetStagedQuery } = useQueryBuilder();
+	const { redirectWithQueryBuilderData } = useQueryBuilder();
 	const urlQuery = useUrlQuery();
 
 	const compositeQuery = useGetCompositeQueryParam();
@@ -18,11 +18,4 @@ export const useShareBuilderUrl = (defaultQuery: Query): void => {
 			redirectWithQueryBuilderData(defaultQuery);
 		}
 	}, [defaultQuery, urlQuery, redirectWithQueryBuilderData, compositeQuery]);
-
-	useEffect(
-		() => (): void => {
-			resetStagedQuery();
-		},
-		[resetStagedQuery],
-	);
 };
