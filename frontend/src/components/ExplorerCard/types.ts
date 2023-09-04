@@ -45,6 +45,7 @@ export interface MenuItemLabelGeneratorProps {
 	uuid: string;
 	viewData: ViewProps[];
 	refetchAllView: VoidFunction;
+	sourcePage: ExplorerCardProps['sourcepage'];
 }
 
 export interface SaveViewHandlerProps {
@@ -74,4 +75,6 @@ export interface DeleteViewHandlerProps {
 	panelType: PANEL_TYPES | null;
 	viewKey: string;
 	viewId: string;
+	updateAllQueriesOperators: QueryBuilderContextType['updateAllQueriesOperators'];
+	sourcePage: ExplorerCardProps['sourcepage'];
 }

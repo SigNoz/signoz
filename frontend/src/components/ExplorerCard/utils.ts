@@ -1,7 +1,7 @@
 import { NotificationInstance } from 'antd/es/notification/interface';
 import axios from 'axios';
 import { SOMETHING_WENT_WRONG } from 'constants/api';
-import { initialQueriesMap } from 'constants/queryBuilder';
+import { initialQueriesMap, PANEL_TYPES } from 'constants/queryBuilder';
 import {
 	queryParamNamesMap,
 	querySearchParams,
@@ -148,15 +148,24 @@ export const deleteViewHandler = ({
 	panelType,
 	viewKey,
 	viewId,
+	updateAllQueriesOperators,
+	sourcePage,
 }: DeleteViewHandlerProps): void => {
 	deleteViewAsync(viewKey, {
 		onSuccess: () => {
 			if (viewId === viewKey) {
-				redirectWithQueryBuilderData(initialQueriesMap.traces, {
-					[querySearchParams.viewName]: 'Query Builder',
-					[queryParamNamesMap.panelTypes]: panelType,
-					[querySearchParams.viewKey]: '',
-				});
+				redirectWithQueryBuilderData(
+					updateAllQueriesOperators(
+						initialQueriesMap.traces,
+						panelType || PANEL_TYPES.LIST,
+						sourcePage,
+					),
+					{
+						[querySearchParams.viewName]: 'Query Builder',
+						[queryParamNamesMap.panelTypes]: panelType,
+						[querySearchParams.viewKey]: '',
+					},
+				);
 			}
 			notifications.success({
 				message: 'View Deleted Successfully',

@@ -57,7 +57,7 @@ function SaveViewWithName({
 	return (
 		<Card>
 			<Typography>Name of the View</Typography>
-			<Input placeholder="Enter Name" onChange={onChangeHandler} />
+			<Input placeholder="Enter Name" onChange={onChangeHandler} value={name} />
 			<SaveButton onClick={onSaveHandler} type="primary" loading={isLoading}>
 				Save
 			</SaveButton>
