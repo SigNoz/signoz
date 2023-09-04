@@ -108,7 +108,7 @@ export const saveViewHandler = ({
 	extraData,
 	redirectWithQueryBuilderData,
 	panelType,
-	setName,
+	form,
 }: SaveViewHandlerProps): void => {
 	saveViewAsync(
 		{
@@ -134,7 +134,7 @@ export const saveViewHandler = ({
 			},
 			onSettled: () => {
 				handlePopOverClose();
-				setName('');
+				form.resetFields();
 			},
 		},
 	);
