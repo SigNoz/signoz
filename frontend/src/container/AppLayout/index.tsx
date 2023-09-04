@@ -6,7 +6,7 @@ import Header from 'container/Header';
 import SideNav from 'container/SideNav';
 import TopNav from 'container/TopNav';
 import { useNotifications } from 'hooks/useNotifications';
-import { ReactNode, useEffect, useMemo, useRef } from 'react';
+import { ReactNode, useEffect, useMemo, useRef, useState } from 'react';
 import { Helmet } from 'react-helmet-async';
 import { useTranslation } from 'react-i18next';
 import { useQueries } from 'react-query';
@@ -32,8 +32,18 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 	const { isLoggedIn, user } = useSelector<AppState, AppReducer>(
 		(state) => state.app,
 	);
+
+	const [renderFullScreen, setRenderFullScreen] = useState(false);
 	const { pathname } = useLocation();
 	const { t } = useTranslation(['titles']);
+
+	useEffect(() => {
+		if (pathname === '/onboarding') {
+			setRenderFullScreen(true);
+		}
+	}, [pathname]);
+
+	console.log('renderFullScreen', renderFullScreen);
 
 	const [
 		getUserVersionResponse,
@@ -228,6 +238,8 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 
 	const isToDisplayLayout = isLoggedIn;
 
+	console.log('isToDisplayLayout', isToDisplayLayout);
+
 	const routeKey = useMemo(() => getRouteKey(pathname), [pathname]);
 	const pageTitle = t(routeKey);
 
@@ -237,12 +249,12 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 				<title>{pageTitle}</title>
 			</Helmet>
 
-			{isToDisplayLayout && <Header />}
+			{(isToDisplayLayout || renderFullScreen) && <Header />}
 			<Layout>
 				{isToDisplayLayout && <SideNav />}
 				<LayoutContent>
 					<ChildrenContainer>
-						{isToDisplayLayout && <TopNav />}
+						{isToDisplayLayout && !renderFullScreen && <TopNav />}
 						{children}
 					</ChildrenContainer>
 				</LayoutContent>

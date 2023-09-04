@@ -3,6 +3,7 @@
 	"LOGIN": "SigNoz | Login",
 	"SERVICE_METRICS": "SigNoz | Service Metrics",
 	"SERVICE_MAP": "SigNoz | Service Map",
+	"ONBOARDING": "SigNoz | Onboarding",
 	"TRACE": "SigNoz | Trace",
 	"TRACE_DETAIL": "SigNoz | Trace Detail",
 	"TRACES_EXPLORER": "SigNoz | Traces Explorer",

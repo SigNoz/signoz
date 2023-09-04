@@ -131,6 +131,9 @@ const config = {
 	performance: {
 		hints: false,
 	},
+	optimization: {
+		minimize: false,
+	},
 };
 
 module.exports = config;

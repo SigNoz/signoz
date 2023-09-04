@@ -8,6 +8,7 @@ const ROUTES = {
 	TRACES_EXPLORER: '/traces-explorer',
 	SETTINGS: '/settings',
 	INSTRUMENTATION: '/get-started',
+	ONBOARDING: '/onboarding',
 	USAGE_EXPLORER: '/usage-explorer',
 	APPLICATION: '/services',
 	ALL_DASHBOARD: '/dashboard',

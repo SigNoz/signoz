@@ -21,6 +21,7 @@ import {
 	LogsIndexToFields,
 	MySettings,
 	NewDashboardPage,
+	Onboarding,
 	OrganizationSettings,
 	PasswordReset,
 	PipelinePage,
@@ -66,6 +67,13 @@ const routes: AppRoutes[] = [
 		component: ServiceMetricsPage,
 		isPrivate: true,
 		key: 'SERVICE_METRICS',
+	},
+	{
+		path: ROUTES.ONBOARDING,
+		exact: true,
+		component: Onboarding,
+		isPrivate: true,
+		key: 'ONBOARDING',
 	},
 	{
 		path: ROUTES.SERVICE_MAP,

@@ -8,6 +8,7 @@ import {
 	DeploymentUnitOutlined,
 	LineChartOutlined,
 	MenuOutlined,
+	RocketOutlined,
 	SettingOutlined,
 } from '@ant-design/icons';
 import ROUTES from 'constants/routes';
@@ -15,6 +16,11 @@ import ROUTES from 'constants/routes';
 import { SidebarMenu } from './sideNav.types';
 
 const menuItems: SidebarMenu[] = [
+	{
+		key: ROUTES.ONBOARDING,
+		label: 'Onboarding',
+		icon: <RocketOutlined />,
+	},
 	{
 		key: ROUTES.APPLICATION,
 		label: 'Services',

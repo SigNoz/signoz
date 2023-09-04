@@ -79,4 +79,5 @@ export const routePermission: Record<keyof typeof ROUTES, ROLES[]> = {
 	LOGS_PIPELINE: ['ADMIN', 'EDITOR', 'VIEWER'],
 	TRACE_EXPLORER: ['ADMIN', 'EDITOR', 'VIEWER'],
 	PIPELINES: ['ADMIN', 'EDITOR', 'VIEWER'],
+	ONBOARDING: ['ADMIN', 'EDITOR', 'VIEWER'],
 };
