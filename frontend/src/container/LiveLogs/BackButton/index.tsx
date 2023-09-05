@@ -17,7 +17,7 @@ import { constructCompositeQuery } from '../constants';
 function BackButton(): JSX.Element {
 	const history = useHistory();
 
-	const { updateAllQueriesOperators, resetQuery } = useQueryBuilder();
+	const { updateAllQueriesOperators } = useQueryBuilder();
 
 	const compositeQuery = useGetCompositeQueryParam();
 
@@ -36,14 +36,12 @@ function BackButton(): JSX.Element {
 			DataSource.LOGS,
 		);
 
-		resetQuery(updatedQuery);
-
 		const JSONCompositeQuery = encodeURIComponent(JSON.stringify(updatedQuery));
 
 		const path = `${ROUTES.LOGS_EXPLORER}?${queryParamNamesMap.compositeQuery}=${JSONCompositeQuery}`;
 
 		history.push(path);
-	}, [history, compositeQuery, resetQuery, updateAllQueriesOperators]);
+	}, [history, compositeQuery, updateAllQueriesOperators]);
 
 	return (
 		<Button icon={<ArrowLeftOutlined />} onClick={handleBack}>
