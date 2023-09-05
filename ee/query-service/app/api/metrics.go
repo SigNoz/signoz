@@ -137,8 +137,8 @@ func (ah *APIHandler) queryRangeMetricsV2(w http.ResponseWriter, r *http.Request
 					var s basemodel.Series
 					s.QueryName = name
 					s.Labels = v.Metric.Copy().Map()
-					for _, p := range v.Points {
-						s.Points = append(s.Points, basemodel.MetricPoint{Timestamp: p.T, Value: p.V})
+					for _, p := range v.Floats {
+						s.Points = append(s.Points, basemodel.MetricPoint{Timestamp: p.T, Value: p.F})
 					}
 					seriesList = append(seriesList, &s)
 				}
