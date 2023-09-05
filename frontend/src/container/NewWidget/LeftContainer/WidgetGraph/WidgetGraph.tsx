@@ -1,10 +1,13 @@
 import { Card, Typography } from 'antd';
 import Spinner from 'components/Spinner';
+import { DISPLAY_TYPES } from 'constants/queryBuilder';
 import GridPanelSwitch from 'container/GridPanelSwitch';
 import { WidgetGraphProps } from 'container/NewWidget/types';
 import { useGetWidgetQueryRange } from 'hooks/queryBuilder/useGetWidgetQueryRange';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
-import getChartData from 'lib/getChartData';
+import useUrlQuery from 'hooks/useUrlQuery';
+import getChartData, { GetChartDataProps } from 'lib/getChartData';
+import { colors } from 'lib/getRandomColor';
 import { useSelector } from 'react-redux';
 import { useLocation } from 'react-router-dom';
 import { AppState } from 'store/reducers';
@@ -17,6 +20,25 @@ function WidgetGraph({
 	yAxisUnit,
 	selectedTime,
 }: WidgetGraphProps): JSX.Element {
+	const createDataset: Required<GetChartDataProps>['createDataset'] = (
+		element,
+		index,
+		allLabels,
+	) => ({
+		fill: true,
+		label: allLabels[index],
+		borderColor: colors[index % colors.length] || 'red',
+		backgroundColor: colors[index % colors.length] || 'red',
+		data: element,
+		borderWidth: 1.5,
+		spanGaps: true,
+		animations: false,
+		showLine: true,
+		pointRadius: 0,
+	});
+
+	const urlQuery = useUrlQuery();
+	const display = urlQuery.get('display');
 	const { stagedQuery } = useQueryBuilder();
 	const { dashboards } = useSelector<AppState, DashboardReducer>(
 		(state) => state.dashboards,
@@ -65,6 +87,7 @@ function WidgetGraph({
 		queryData: [
 			{ queryData: getWidgetQueryRange.data?.payload.data.result ?? [] },
 		],
+		...(display === DISPLAY_TYPES.AREA ? { createDataset } : {}),
 	});
 
 	return (

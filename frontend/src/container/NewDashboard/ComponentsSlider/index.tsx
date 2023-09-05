@@ -1,4 +1,8 @@
-import { initialQueriesMap, PANEL_TYPES } from 'constants/queryBuilder';
+import {
+	DISPLAY_TYPES,
+	initialQueriesMap,
+	PANEL_TYPES,
+} from 'constants/queryBuilder';
 import { queryParamNamesMap } from 'constants/queryBuilderQueryNames';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { useNotifications } from 'hooks/useNotifications';
@@ -29,7 +33,7 @@ function DashboardGraphSlider({ toggleAddWidget }: Props): JSX.Element {
 	const { data } = selectedDashboard;
 
 	const onClickHandler = useCallback(
-		(name: PANEL_TYPES) => (): void => {
+		(name: PANEL_TYPES, display: DISPLAY_TYPES) => (): void => {
 			try {
 				const emptyLayout = data.layout?.find((e) => e.i === 'empty');
 
@@ -43,11 +47,11 @@ function DashboardGraphSlider({ toggleAddWidget }: Props): JSX.Element {
 				toggleAddWidget(false);
 
 				history.push(
-					`${history.location.pathname}/new?graphType=${name}&widgetId=${
-						emptyLayout.i
-					}&${queryParamNamesMap.compositeQuery}=${encodeURIComponent(
-						JSON.stringify(initialQueriesMap.metrics),
-					)}`,
+					`${
+						history.location.pathname
+					}/new?graphType=${name}&display=${display}&widgetId=${emptyLayout.i}&${
+						queryParamNamesMap.compositeQuery
+					}=${encodeURIComponent(JSON.stringify(initialQueriesMap.metrics))}`,
 				);
 			} catch (error) {
 				notifications.error({
@@ -63,7 +67,7 @@ function DashboardGraphSlider({ toggleAddWidget }: Props): JSX.Element {
 	return (
 		<Container>
 			{menuItems.map(({ name, Icon, display }) => (
-				<Card onClick={onClickHandler(name)} id={name} key={name}>
+				<Card onClick={onClickHandler(name, display)} id={name} key={name}>
 					<Icon fillColor={fillColor} />
 					<Text>{display}</Text>
 				</Card>
