@@ -1,3 +1,11 @@
+.container {
+	width: 100%;
+}
+
+.moduleSelectContainer {
+	width: 100%;
+}
+
 .onboardingContainer {
 	display: flex;
 	flex-direction: column;
@@ -29,6 +37,7 @@
 .moduleContainerRowStyles {
 	display: flex;
 	flex-direction: row;
+	justify-content: center;
 	gap: 36px;
 	margin: 36px;
 }
@@ -91,4 +100,22 @@
 .continue-to-next-step {
 	display: flex;
 	justify-content: center;
+	margin: 48px 0;
+}
+
+.stepsContainer {
+	position: relative;
+	height: 100%;
+	padding: 48px;
+}
+
+.actionButtonsContainer {
+	display: flex;
+	justify-content: space-between;
+
+	padding: 48px 0;
+	position: absolute;
+	width: calc(100% - 96px);
+	box-sizing: border-box;
+	bottom: 0;
 }

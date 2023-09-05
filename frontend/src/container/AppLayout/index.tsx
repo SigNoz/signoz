@@ -40,10 +40,10 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 	useEffect(() => {
 		if (pathname === '/onboarding') {
 			setRenderFullScreen(true);
+		} else {
+			setRenderFullScreen(false);
 		}
 	}, [pathname]);
-
-	console.log('renderFullScreen', renderFullScreen);
 
 	const [
 		getUserVersionResponse,
@@ -237,8 +237,6 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 	]);
 
 	const isToDisplayLayout = isLoggedIn;
-
-	console.log('isToDisplayLayout', isToDisplayLayout);
 
 	const routeKey = useMemo(() => getRouteKey(pathname), [pathname]);
 	const pageTitle = t(routeKey);

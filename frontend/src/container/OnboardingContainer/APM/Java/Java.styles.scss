@@ -1,0 +1,36 @@
+.java-setup-instructions-container {
+	.header {
+		h1 {
+			display: flex;
+			align-items: center;
+			color: #e5e7eb;
+		}
+	}
+}
+
+.label {
+	font-size: 14px;
+	margin-bottom: 8px;
+	font-weight: 300;
+}
+
+pre {
+	background-color: rgb(41, 45, 62);
+	padding: 8px;
+	overflow: auto;
+	border-radius: 3px;
+
+	code {
+		overflow: auto;
+		text-wrap: wrap;
+	}
+}
+
+.content-container {
+	padding: 16px;
+	margin: 16px 0;
+	background: rgba(17, 26, 44, 0.7);
+	letter-spacing: 0.7px;
+	line-height: 20px;
+	font-weight: 100;
+}
