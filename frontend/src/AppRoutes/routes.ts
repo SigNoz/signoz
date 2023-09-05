@@ -14,6 +14,7 @@ import {
 	GettingStarted,
 	LicensePage,
 	ListAllALertsPage,
+	LiveLogs,
 	Login,
 	Logs,
 	LogsExplorer,
@@ -232,6 +233,13 @@ const routes: AppRoutes[] = [
 		exact: true,
 		component: LogsExplorer,
 		key: 'LOGS_EXPLORER',
+		isPrivate: true,
+	},
+	{
+		path: ROUTES.LIVE_LOGS,
+		exact: true,
+		component: LiveLogs,
+		key: 'LIVE_LOGS',
 		isPrivate: true,
 	},
 	{

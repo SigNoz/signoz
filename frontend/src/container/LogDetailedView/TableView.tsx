@@ -91,7 +91,7 @@ function TableView({
 	const columns: ColumnsType<DataType> = [
 		{
 			title: 'Action',
-			width: 15,
+			width: 30,
 			render: (fieldData: Record<string, string>): JSX.Element | null => {
 				const fieldKey = fieldData.field.split('.').slice(-1);
 				if (!RESTRICTED_FIELDS.includes(fieldKey[0])) {

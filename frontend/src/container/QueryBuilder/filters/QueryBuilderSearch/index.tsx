@@ -35,6 +35,7 @@ function QueryBuilderSearch({
 	query,
 	onChange,
 	whereClauseConfig,
+	className,
 }: QueryBuilderSearchProps): JSX.Element {
 	const {
 		updateTag,
@@ -137,9 +138,9 @@ function QueryBuilderSearch({
 				id: uuid().slice(0, 8),
 				key: filterAttribute ?? {
 					key: tagKey,
-					dataType: null,
-					type: null,
-					isColumn: null,
+					dataType: '',
+					type: '',
+					isColumn: false,
 				},
 				op: getOperatorValue(tagOperator),
 				value:
@@ -163,6 +164,7 @@ function QueryBuilderSearch({
 			placeholder={PLACEHOLDER}
 			value={queryTags}
 			searchValue={searchValue}
+			className={className}
 			disabled={isMetricsDataSource && !query.aggregateAttribute.key}
 			style={selectStyle}
 			onSearch={handleSearch}
@@ -186,10 +188,12 @@ interface QueryBuilderSearchProps {
 	query: IBuilderQuery;
 	onChange: (value: TagFilter) => void;
 	whereClauseConfig?: WhereClauseConfig;
+	className?: string;
 }
 
 QueryBuilderSearch.defaultProps = {
 	whereClauseConfig: undefined,
+	className: '',
 };
 
 export interface CustomTagProps {
