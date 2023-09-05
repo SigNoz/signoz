@@ -9,6 +9,10 @@ func NewThroughputFormatter() Formatter {
 	return &throughputFormatter{}
 }
 
+func (*throughputFormatter) Name() string {
+	return "throughput"
+}
+
 func simpleCountUnit(value float64, decimals *int, symbol string) string {
 	units := []string{"", "K", "M", "B", "T"}
 	scaler := scaledUnits(1000, units, 0)

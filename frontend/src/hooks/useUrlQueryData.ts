@@ -23,7 +23,7 @@ const useUrlQueryData = <T>(
 
 			urlQuery.set(queryKey, newQuery);
 			const generatedUrl = `${location.pathname}?${urlQuery.toString()}`;
-			history.push(generatedUrl);
+			history.replace(generatedUrl);
 		},
 		[history, location, urlQuery, queryKey],
 	);

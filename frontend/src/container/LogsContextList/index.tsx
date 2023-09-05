@@ -154,7 +154,13 @@ function LogsContextList({
 
 	const getItemContent = useCallback(
 		(_: number, log: ILog): JSX.Element => (
-			<RawLogView isReadOnly key={log.id} data={log} linesPerRow={1} />
+			<RawLogView
+				isReadOnly
+				isTextOverflowEllipsisDisabled
+				key={log.id}
+				data={log}
+				linesPerRow={1}
+			/>
 		),
 		[],
 	);

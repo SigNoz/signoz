@@ -24,21 +24,21 @@ export const topOperationQueries = ({
 		key: WidgetKeys.Signoz_latency_bucket,
 		dataType: DataType.FLOAT64,
 		isColumn: true,
-		type: null,
+		type: '',
 	};
 
 	const errorRateAutoCompleteData: BaseAutocompleteData = {
 		key: WidgetKeys.SignozCallsTotal,
 		dataType: DataType.FLOAT64,
 		isColumn: true,
-		type: null,
+		type: '',
 	};
 
 	const numOfCallAutoCompleteData: BaseAutocompleteData = {
 		key: WidgetKeys.SignozLatencyCount,
 		dataType: DataType.FLOAT64,
 		isColumn: true,
-		type: null,
+		type: '',
 	};
 
 	const latencyAndNumberOfCallAdditionalItems: TagFilterItem[] = [

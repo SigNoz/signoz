@@ -24,8 +24,7 @@ const capabilities = protobufs.ServerCapabilities_ServerCapabilities_AcceptsEffe
 	protobufs.ServerCapabilities_ServerCapabilities_OffersRemoteConfig |
 	protobufs.ServerCapabilities_ServerCapabilities_AcceptsStatus
 
-func InitalizeServer(listener string, agents *model.Agents) error {
-
+func InitializeServer(listener string, agents *model.Agents) *Server {
 	if agents == nil {
 		agents = &model.AllAgents
 	}
@@ -34,7 +33,11 @@ func InitalizeServer(listener string, agents *model.Agents) error {
 		agents: agents,
 	}
 	opAmpServer.server = server.New(zap.S())
+	return opAmpServer
+}
 
+func InitializeAndStartServer(listener string, agents *model.Agents) error {
+	InitializeServer(listener, agents)
 	return opAmpServer.Start(listener)
 }
 
@@ -48,7 +51,7 @@ func (srv *Server) Start(listener string) error {
 	settings := server.StartSettings{
 		Settings: server.Settings{
 			Callbacks: server.CallbacksStruct{
-				OnMessageFunc:         srv.onMessage,
+				OnMessageFunc:         srv.OnMessage,
 				OnConnectionCloseFunc: srv.onDisconnect,
 			},
 		},
@@ -66,7 +69,7 @@ func (srv *Server) onDisconnect(conn types.Connection) {
 	srv.agents.RemoveConnection(conn)
 }
 
-func (srv *Server) onMessage(conn types.Connection, msg *protobufs.AgentToServer) *protobufs.ServerToAgent {
+func (srv *Server) OnMessage(conn types.Connection, msg *protobufs.AgentToServer) *protobufs.ServerToAgent {
 	agentID := msg.InstanceUid
 
 	agent, created, err := srv.agents.FindOrCreateAgent(agentID, conn)

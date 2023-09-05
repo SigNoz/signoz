@@ -54,6 +54,10 @@ func NewDataConverter() Converter {
 	return &dataConverter{}
 }
 
+func (*dataConverter) Name() string {
+	return "data"
+}
+
 func FromDataUnit(u Unit) float64 {
 	switch u {
 	case "bytes": // base 2
