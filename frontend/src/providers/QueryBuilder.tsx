@@ -27,6 +27,7 @@ import {
 	useCallback,
 	useEffect,
 	useMemo,
+	useRef,
 	useState,
 } from 'react';
 import { useSelector } from 'react-redux';
@@ -67,7 +68,6 @@ export const QueryBuilderContext = createContext<QueryBuilderContextType>({
 	addNewQueryItem: () => {},
 	redirectWithQueryBuilderData: () => {},
 	handleRunQuery: () => {},
-	resetQuery: () => {},
 	updateAllQueriesOperators: () => initialQueriesMap.metrics,
 	updateQueriesData: () => initialQueriesMap.metrics,
 	initQueryBuilderData: () => {},
@@ -80,6 +80,8 @@ export function QueryBuilderProvider({
 	const urlQuery = useUrlQuery();
 	const history = useHistory();
 	const location = useLocation();
+	const currentPathnameRef = useRef<string | null>(null);
+
 	const { maxTime, minTime } = useSelector<AppState, GlobalReducer>(
 		(state) => state.globalTime,
 	);
@@ -94,9 +96,7 @@ export function QueryBuilderProvider({
 
 	const [panelType, setPanelType] = useState<PANEL_TYPES | null>(null);
 
-	const [currentQuery, setCurrentQuery] = useState<QueryState>(
-		queryState || initialQueryState,
-	);
+	const [currentQuery, setCurrentQuery] = useState<QueryState>(queryState);
 	const [stagedQuery, setStagedQuery] = useState<Query | null>(null);
 
 	const [queryType, setQueryType] = useState<EQueryType>(queryTypeParam);
@@ -526,14 +526,6 @@ export function QueryBuilderProvider({
 		});
 	}, [currentQuery, queryType, maxTime, minTime, redirectWithQueryBuilderData]);
 
-	const resetQuery = useCallback((newCurrentQuery?: QueryState) => {
-		setStagedQuery(null);
-
-		if (newCurrentQuery) {
-			setCurrentQuery(newCurrentQuery);
-		}
-	}, []);
-
 	useEffect(() => {
 		if (!compositeQueryParam) return;
 
@@ -557,6 +549,14 @@ export function QueryBuilderProvider({
 		compositeQueryParam,
 		stagedQuery,
 	]);
+
+	useEffect(() => {
+		if (stagedQuery && location.pathname !== currentPathnameRef.current) {
+			currentPathnameRef.current = location.pathname;
+
+			setStagedQuery(null);
+		}
+	}, [location, stagedQuery, currentQuery]);
 
 	const handleOnUnitsChange = useCallback(
 		(unit: string) => {
@@ -599,7 +599,6 @@ export function QueryBuilderProvider({
 			addNewQueryItem,
 			redirectWithQueryBuilderData,
 			handleRunQuery,
-			resetQuery,
 			updateAllQueriesOperators,
 			updateQueriesData,
 			initQueryBuilderData,
@@ -622,7 +621,6 @@ export function QueryBuilderProvider({
 			addNewQueryItem,
 			redirectWithQueryBuilderData,
 			handleRunQuery,
-			resetQuery,
 			updateAllQueriesOperators,
 			updateQueriesData,
 			initQueryBuilderData,
