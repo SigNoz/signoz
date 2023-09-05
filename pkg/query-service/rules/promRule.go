@@ -193,8 +193,9 @@ func (r *PromRule) sample(alert *Alert, ts time.Time) pql.Sample {
 	lb.Set(qslabels.AlertStateLabel, alert.State.String())
 
 	s := pql.Sample{
-		Metric: lb.Labels(nil),
-		Point:  pql.Point{T: timestamp.FromTime(ts), V: 1},
+		Metric: lb.Labels(),
+		T:      timestamp.FromTime(ts),
+		F:      1,
 	}
 	return s
 }
@@ -349,7 +350,7 @@ func (r *PromRule) Eval(ctx context.Context, ts time.Time, queriers *Queriers) (
 			l[lbl.Name] = lbl.Value
 		}
 
-		tmplData := AlertTemplateData(l, valueFormatter.Format(smpl.V, r.Unit()), strconv.FormatFloat(r.targetVal(), 'f', 2, 64)+converter.UnitToName(r.ruleCondition.TargetUnit))
+		tmplData := AlertTemplateData(l, valueFormatter.Format(smpl.F, r.Unit()), strconv.FormatFloat(r.targetVal(), 'f', 2, 64)+converter.UnitToName(r.ruleCondition.TargetUnit))
 		// Inject some convenience variables that are easier to remember for users
 		// who are not used to Go's templating system.
 		defs := "{{$labels := .Labels}}{{$value := .Value}}{{$threshold := .Threshold}}"
@@ -387,7 +388,7 @@ func (r *PromRule) Eval(ctx context.Context, ts time.Time, queriers *Queriers) (
 			annotations = append(annotations, plabels.Label{Name: a.Name, Value: expand(a.Value)})
 		}
 
-		lbs := lb.Labels(nil)
+		lbs := lb.Labels()
 		h := lbs.Hash()
 		resultFPs[h] = struct{}{}
 
@@ -405,7 +406,7 @@ func (r *PromRule) Eval(ctx context.Context, ts time.Time, queriers *Queriers) (
 			Annotations:  annotations,
 			ActiveAt:     ts,
 			State:        StatePending,
-			Value:        smpl.V,
+			Value:        smpl.F,
 			GeneratorURL: r.GeneratorURL(),
 			Receivers:    r.preferredChannels,
 		}

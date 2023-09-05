@@ -120,7 +120,7 @@
 		"@babel/preset-env": "^7.22.14",
 		"@babel/preset-react": "^7.12.13",
 		"@babel/preset-typescript": "^7.21.4",
-		"@commitlint/cli": "^16.2.4",
+		"@commitlint/cli": "^16.3.0",
 		"@commitlint/config-conventional": "^16.2.4",
 		"@jest/globals": "^27.5.1",
 		"@playwright/test": "^1.22.0",
@@ -183,7 +183,7 @@
 		"react-hooks-testing-library": "0.6.0",
 		"react-hot-loader": "^4.13.0",
 		"react-resizable": "3.0.4",
-		"ts-jest": "^27.1.4",
+		"ts-jest": "^27.1.5",
 		"ts-node": "^10.2.1",
 		"typescript-plugin-css-modules": "5.0.1",
 		"webpack-bundle-analyzer": "^4.5.0",
@@ -197,6 +197,8 @@
 	"resolutions": {
 		"@types/react": "18.0.26",
 		"@types/react-dom": "18.0.10",
-		"debug": "4.3.4"
+		"debug": "4.3.4",
+		"semver": "7.5.4",
+		"xml2js": "0.5.0"
 	}
 }
