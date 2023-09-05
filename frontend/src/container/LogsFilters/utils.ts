@@ -1,10 +1,12 @@
-import AddToSelectedFields from 'api/logs/AddToSelectedField';
-import RemoveSelectedField from 'api/logs/RemoveFromSelectedField';
+import { message } from 'antd';
+import addToSelectedFields from 'api/logs/AddToSelectedField';
+import removeSelectedField from 'api/logs/RemoveFromSelectedField';
 import store from 'store';
 import {
 	UPDATE_INTERESTING_FIELDS,
 	UPDATE_SELECTED_FIELDS,
 } from 'types/actions/logs';
+import { ErrorResponse } from 'types/api';
 
 import { RESTRICTED_SELECTED_FIELDS } from './config';
 import { OnHandleAddInterestProps, OnHandleRemoveInterestProps } from './types';
@@ -24,30 +26,34 @@ export const onHandleAddInterest = async ({
 		return [...prevState];
 	});
 
-	await AddToSelectedFields({
-		...fieldData,
-		selected: true,
-	});
+	try {
+		await addToSelectedFields({
+			...fieldData,
+			selected: true,
+		});
 
-	dispatch({
-		type: UPDATE_INTERESTING_FIELDS,
-		payload: {
-			field: interesting.filter((e) => e.name !== fieldData.name),
-			type: 'selected',
-		},
-	});
+		dispatch({
+			type: UPDATE_INTERESTING_FIELDS,
+			payload: {
+				field: interesting.filter((e) => e.name !== fieldData.name),
+				type: 'selected',
+			},
+		});
 
-	dispatch({
-		type: UPDATE_SELECTED_FIELDS,
-		payload: {
-			field: [...selected, fieldData],
-			type: 'selected',
-		},
-	});
-
-	setInterestingFieldLoading(
-		interestingFieldLoading.filter((e) => e !== fieldIndex),
-	);
+		dispatch({
+			type: UPDATE_SELECTED_FIELDS,
+			payload: {
+				field: [...selected, fieldData],
+				type: 'selected',
+			},
+		});
+	} catch (errRes) {
+		message.error((errRes as ErrorResponse)?.error);
+	} finally {
+		setInterestingFieldLoading(
+			interestingFieldLoading.filter((e) => e !== fieldIndex),
+		);
+	}
 };
 
 export const onHandleRemoveInterest = async ({
@@ -67,28 +73,31 @@ export const onHandleRemoveInterest = async ({
 		return [...prevState];
 	});
 
-	await RemoveSelectedField({
-		...fieldData,
-		selected: false,
-	});
+	try {
+		await removeSelectedField({
+			...fieldData,
+			selected: false,
+		});
+		dispatch({
+			type: UPDATE_SELECTED_FIELDS,
+			payload: {
+				field: selected.filter((e) => e.name !== fieldData.name),
+				type: 'selected',
+			},
+		});
 
-	dispatch({
-		type: UPDATE_SELECTED_FIELDS,
-		payload: {
-			field: selected.filter((e) => e.name !== fieldData.name),
-			type: 'selected',
-		},
-	});
-
-	dispatch({
-		type: UPDATE_INTERESTING_FIELDS,
-		payload: {
-			field: [...interesting, fieldData],
-			type: 'interesting',
-		},
-	});
-
-	setSelectedFieldLoading(
-		interestingFieldLoading.filter((e) => e !== fieldIndex),
-	);
+		dispatch({
+			type: UPDATE_INTERESTING_FIELDS,
+			payload: {
+				field: [...interesting, fieldData],
+				type: 'interesting',
+			},
+		});
+	} catch (errRes) {
+		message.error((errRes as ErrorResponse)?.error);
+	} finally {
+		setSelectedFieldLoading(
+			interestingFieldLoading.filter((e) => e !== fieldIndex),
+		);
+	}
 };
