@@ -82,7 +82,7 @@ export const resourceAttributesToTagFilterItems = (
 
 	return queries.map((res) => ({
 		id: `${res.id}`,
-		key: { key: res.tagKey, isColumn: false, type: null, dataType: null },
+		key: { key: res.tagKey, isColumn: false, type: '', dataType: '' },
 		op: `${res.operator}`,
 		value: `${res.tagValue}`.split(','),
 	}));

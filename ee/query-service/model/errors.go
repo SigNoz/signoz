@@ -2,6 +2,7 @@ package model
 
 import (
 	"fmt"
+
 	basemodel "go.signoz.io/signoz/pkg/query-service/model"
 )
 
@@ -61,7 +62,6 @@ func InternalError(err error) *ApiError {
 	}
 }
 
-
 // InternalErrorStr returns a ApiError object of internal type for string input
 func InternalErrorStr(s string) *ApiError {
 	return &ApiError{
@@ -69,6 +69,7 @@ func InternalErrorStr(s string) *ApiError {
 		Err: fmt.Errorf(s),
 	}
 }
+
 var (
 	ErrorNone                  basemodel.ErrorType = ""
 	ErrorTimeout               basemodel.ErrorType = "timeout"

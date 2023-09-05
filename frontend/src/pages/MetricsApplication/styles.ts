@@ -2,7 +2,6 @@ import {
 	Button as ButtonComponent,
 	Typography as TypographyComponent,
 } from 'antd';
-import { themeColors } from 'constants/theme';
 import styled from 'styled-components';
 
 export const Button = styled(ButtonComponent)`
@@ -21,7 +20,6 @@ export const Typography = styled(TypographyComponent)`
 	&&& {
 		width: 24rem;
 		margin: 0.5rem 0;
-		color: ${themeColors.white};
 	}
 `;
 
