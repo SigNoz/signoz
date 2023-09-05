@@ -1,37 +1,33 @@
 import getTriggeredApi from 'api/alerts/getTriggered';
 import Spinner from 'components/Spinner';
-import { useNotifications } from 'hooks/useNotifications';
-import { useEffect } from 'react';
-import { useTranslation } from 'react-i18next';
+import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
+import useAxiosError from 'hooks/useAxiosError';
 import { useQuery } from 'react-query';
 import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
-import AppReducer from 'types/reducer/app';
 
 import TriggerComponent from './TriggeredAlert';
 
 function TriggeredAlerts(): JSX.Element {
-	const { t } = useTranslation(['common']);
-	const { notifications } = useNotifications();
-	const { user } = useSelector<AppState, AppReducer>((state) => state.app);
+	const userId = useSelector<AppState, string | undefined>(
+		(state) => state.app.user?.userId,
+	);
 
-	const alertsResponse = useQuery(['triggeredAlerts', user?.userId], {
-		queryFn: () =>
-			getTriggeredApi({
-				active: true,
-				inhibited: true,
-				silenced: false,
-			}),
-		refetchInterval: 30000,
-	});
+	const handleError = useAxiosError();
 
-	useEffect(() => {
-		if (alertsResponse?.data?.error) {
-			notifications.error({
-				message: alertsResponse.data?.error || t('something_went_wrong'),
-			});
-		}
-	}, [t, notifications, alertsResponse.data?.error]);
+	const alertsResponse = useQuery(
+		[REACT_QUERY_KEY.GET_TRIGGERED_ALERTS, userId],
+		{
+			queryFn: () =>
+				getTriggeredApi({
+					active: true,
+					inhibited: true,
+					silenced: false,
+				}),
+			refetchInterval: 30000,
+			onError: handleError,
+		},
+	);
 
 	if (alertsResponse.error) {
 		return <TriggerComponent allAlerts={[]} />;
