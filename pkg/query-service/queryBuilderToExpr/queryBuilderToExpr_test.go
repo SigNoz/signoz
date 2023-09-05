@@ -1,6 +1,7 @@
 package queryBuilderToExpr
 
 import (
+	"fmt"
 	"testing"
 
 	. "github.com/smartystreets/goconvey/convey"
@@ -18,14 +19,14 @@ var testCases = []struct {
 		Query: &v3.FilterSet{Operator: "AND", Items: []v3.FilterItem{
 			{Key: v3.AttributeKey{Key: "key", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag}, Value: "checkbody", Operator: "="},
 		}},
-		Expr: "attributes.key == 'checkbody'",
+		Expr: `attributes.key == "checkbody"`,
 	},
 	{
 		Name: "not equal",
 		Query: &v3.FilterSet{Operator: "AND", Items: []v3.FilterItem{
 			{Key: v3.AttributeKey{Key: "key", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag}, Value: "checkbody", Operator: "!="},
 		}},
-		Expr: "attributes.key != 'checkbody'",
+		Expr: `attributes.key != "checkbody"`,
 	},
 	{
 		Name: "less than",
@@ -61,35 +62,42 @@ var testCases = []struct {
 		Query: &v3.FilterSet{Operator: "AND", Items: []v3.FilterItem{
 			{Key: v3.AttributeKey{Key: "body", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeUnspecified, IsColumn: true}, Value: "checkbody", Operator: "contains"},
 		}},
-		Expr: "body contains 'checkbody'",
+		Expr: `body contains "checkbody"`,
 	},
 	{
 		Name: "body ncontains",
 		Query: &v3.FilterSet{Operator: "AND", Items: []v3.FilterItem{
 			{Key: v3.AttributeKey{Key: "body", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeUnspecified, IsColumn: true}, Value: "checkbody", Operator: "ncontains"},
 		}},
-		Expr: "body not contains 'checkbody'",
+		Expr: `body not contains "checkbody"`,
 	},
 	{
 		Name: "body regex",
 		Query: &v3.FilterSet{Operator: "AND", Items: []v3.FilterItem{
 			{Key: v3.AttributeKey{Key: "body", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeUnspecified, IsColumn: true}, Value: "[0-1]+regex$", Operator: "regex"},
 		}},
-		Expr: "body matches '[0-1]+regex$'",
+		Expr: `body matches "[0-1]+regex$"`,
 	},
 	{
 		Name: "body not regex",
 		Query: &v3.FilterSet{Operator: "AND", Items: []v3.FilterItem{
 			{Key: v3.AttributeKey{Key: "body", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeUnspecified, IsColumn: true}, Value: "[0-1]+regex$", Operator: "nregex"},
 		}},
-		Expr: "body not matches '[0-1]+regex$'",
+		Expr: `body not matches "[0-1]+regex$"`,
+	},
+	{
+		Name: "regex with escape characters",
+		Query: &v3.FilterSet{Operator: "AND", Items: []v3.FilterItem{
+			{Key: v3.AttributeKey{Key: "body", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeUnspecified, IsColumn: true}, Value: `^Executing \[\S+@\S+:[0-9]+\] \S+".*`, Operator: "regex"},
+		}},
+		Expr: `body matches "^Executing \\[\\S+@\\S+:[0-9]+\\] \\S+\".*"`,
 	},
 	{
 		Name: "invalid regex",
 		Query: &v3.FilterSet{Operator: "AND", Items: []v3.FilterItem{
 			{Key: v3.AttributeKey{Key: "body", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeUnspecified, IsColumn: true}, Value: "[0-9]++", Operator: "nregex"},
 		}},
-		Expr:        "body not matches '[0-9]++",
+		Expr:        `body not matches "[0-9]++"`,
 		ExpectError: true,
 	},
 	{
@@ -111,14 +119,14 @@ var testCases = []struct {
 		Query: &v3.FilterSet{Operator: "AND", Items: []v3.FilterItem{
 			{Key: v3.AttributeKey{Key: "key", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag}, Operator: "exists"},
 		}},
-		Expr: "'key' in attributes",
+		Expr: `"key" in attributes`,
 	},
 	{
 		Name: "not exists",
 		Query: &v3.FilterSet{Operator: "AND", Items: []v3.FilterItem{
 			{Key: v3.AttributeKey{Key: "key", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag}, Operator: "nexists"},
 		}},
-		Expr: "'key' not in attributes",
+		Expr: `"key" not in attributes`,
 	},
 	{
 		Name: "Multi filter",
@@ -127,7 +135,7 @@ var testCases = []struct {
 			{Key: v3.AttributeKey{Key: "body", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeUnspecified, IsColumn: true}, Value: "[0-1]+regex$", Operator: "nregex"},
 			{Key: v3.AttributeKey{Key: "key", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag}, Operator: "nexists"},
 		}},
-		Expr: "attributes.key <= 10 and body not matches '[0-1]+regex$' and 'key' not in attributes",
+		Expr: `attributes.key <= 10 and body not matches "[0-1]+regex$" and "key" not in attributes`,
 	},
 	{
 		Name: "incorrect multi filter",
@@ -136,7 +144,7 @@ var testCases = []struct {
 			{Key: v3.AttributeKey{Key: "body", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeUnspecified, IsColumn: true}, Value: "[0-9]++", Operator: "nregex"},
 			{Key: v3.AttributeKey{Key: "key", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag}, Operator: "nexists"},
 		}},
-		Expr:        "attributes.key <= 10 and body not matches '[0-9]++' and 'key' not in attributes",
+		Expr:        `attributes.key <= 10 and body not matches "[0-9]++" and "key" not in attributes`,
 		ExpectError: true,
 	},
 }
@@ -149,6 +157,7 @@ func TestParse(t *testing.T) {
 				So(err, ShouldNotBeNil)
 			} else {
 				So(err, ShouldBeNil)
+				fmt.Println(x)
 				So(x, ShouldEqual, tt.Expr)
 			}
 		})

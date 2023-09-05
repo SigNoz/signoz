@@ -10,13 +10,6 @@ import (
 	"go.uber.org/zap"
 )
 
-var operatorsSupported = map[string]struct{}{
-	"in":         {},
-	"contains":   {},
-	"startsWith": {},
-	"endsWith":   {},
-	"matches":    {},
-}
 var logOperatorsToExpr = map[v3.FilterOperator]string{
 	v3.FilterOperatorEqual:           "==",
 	v3.FilterOperatorNotEqual:        "!=",
@@ -98,7 +91,7 @@ func exprFormattedValue(v interface{}) string {
 	case float32, float64:
 		return fmt.Sprintf("%f", x)
 	case string:
-		return fmt.Sprintf("'%s'", quoteEscapedString(x))
+		return fmt.Sprintf("\"%s\"", quoteEscapedString(x))
 	case bool:
 		return fmt.Sprintf("%v", x)
 
@@ -130,8 +123,7 @@ func exprFormattedValue(v interface{}) string {
 }
 
 func quoteEscapedString(str string) string {
-	// https://clickhouse.com/docs/en/sql-reference/syntax#string
 	str = strings.ReplaceAll(str, `\`, `\\`)
-	str = strings.ReplaceAll(str, `'`, `\'`)
+	str = strings.ReplaceAll(str, `"`, `\"`)
 	return str
 }
