@@ -83,8 +83,7 @@ function ExplorerCard({
 		setIsOpen(newOpen);
 	};
 
-	const viewName =
-		useGetSearchQueryParam(querySearchParams.viewName) || 'Query Builder';
+	const viewName = useGetSearchQueryParam(querySearchParams.viewName) || '';
 
 	const viewKey = useGetSearchQueryParam(querySearchParams.viewKey) || '';
 
@@ -179,7 +178,7 @@ function ExplorerCard({
 				<Row align="middle">
 					<Col span={6}>
 						<Space>
-							<Typography>{viewName}</Typography>
+							<Typography>Query Builder</Typography>
 							<TextToolTip
 								url={ExploreHeaderToolTip.url}
 								text={ExploreHeaderToolTip.text}
@@ -197,7 +196,8 @@ function ExplorerCard({
 										placeholder="Select a view"
 										dropdownStyle={DropDownOverlay}
 										dropdownMatchSelectWidth={false}
-										value={null}
+										optionLabelProp="value"
+										value={viewName || undefined}
 									>
 										{viewsData?.data.data.map((view) => (
 											<Select.Option key={view.uuid} value={view.name}>

@@ -159,7 +159,7 @@ export const deleteViewHandler = ({
 						sourcePage,
 					),
 					{
-						[querySearchParams.viewName]: 'Query Builder',
+						[querySearchParams.viewName]: '',
 						[queryParamNamesMap.panelTypes]: panelType,
 						[querySearchParams.viewKey]: '',
 					},
