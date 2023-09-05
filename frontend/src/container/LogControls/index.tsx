@@ -116,7 +116,7 @@ function LogControls(): JSX.Element | null {
 			let hasMoreLogs = true;
 
 			while (hasMoreLogs) {
-				const idConditions = allLogs.length
+				const idConditions: Record<string, string> = allLogs.length
 					? getIdConditions('', allLogs[allLogs.length - 1].id, order)
 					: {};
 				/* eslint-disable no-await-in-loop */
