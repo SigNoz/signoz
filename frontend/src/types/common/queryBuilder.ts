@@ -6,6 +6,7 @@ import {
 	IClickHouseQuery,
 	IPromQLQuery,
 	Query,
+	QueryState,
 } from 'types/api/queryBuilder/queryBuilderData';
 
 import { EQueryType } from './dashboard';
@@ -187,6 +188,7 @@ export type QueryBuilderContextType = {
 		searchParams?: Record<string, unknown>,
 	) => void;
 	handleRunQuery: () => void;
+	resetQuery: (newCurrentQuery?: QueryState) => void;
 	handleOnUnitsChange: (units: Format['id']) => void;
 	updateAllQueriesOperators: (
 		queryData: Query,

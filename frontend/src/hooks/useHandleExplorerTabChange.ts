@@ -23,8 +23,7 @@ export const useHandleExplorerTabChange = (): {
 		updateQueriesData,
 	} = useQueryBuilder();
 
-	const viewName =
-		useGetSearchQueryParam(querySearchParams.viewName) || 'Query Builder';
+	const viewName = useGetSearchQueryParam(querySearchParams.viewName) || '';
 
 	const viewKey = useGetSearchQueryParam(querySearchParams.viewKey) || '';
 
