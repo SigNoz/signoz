@@ -141,7 +141,7 @@ export const useOrderByFilter = ({
 		const result = getUniqValues(validResult);
 
 		const orderByValues: OrderByPayload[] = result.map((item) => {
-			const match = Papa.parse(item.value, { delimiter: orderByValueDelimiter });
+			const match = parse(item.value, { delimiter: orderByValueDelimiter });
 
 			if (!match) {
 				return {
