@@ -8,7 +8,7 @@ import {
 	StyledSpace,
 	StyledTypography,
 } from 'components/Styled';
-import * as StyledStyles from 'components/Styled/styles';
+import { Flex, Spacing } from 'components/Styled/styles';
 import GanttChart, { ITraceMetaData } from 'container/GantChart';
 import { getNodeById } from 'container/GantChart/utils';
 import Timeline from 'container/Timeline';
@@ -128,7 +128,7 @@ function TraceDetail({ response }: TraceDetailProps): JSX.Element {
 	const isGlobalTimeVisible = tree && traceMetaData.globalStart;
 
 	return (
-		<StyledRow styledclass={[StyledStyles.Flex({ flex: 1 })]}>
+		<StyledRow styledclass={[Flex({ flex: 1 })]}>
 			<StyledCol flex="auto" styledclass={styles.leftContainer}>
 				<StyledRow styledclass={styles.flameAndTimelineContainer}>
 					<StyledCol
@@ -199,7 +199,7 @@ function TraceDetail({ response }: TraceDetailProps): JSX.Element {
 				<StyledRow
 					styledclass={[
 						styles.traceDetailContentSpacing,
-						StyledStyles.Spacing({
+						Spacing({
 							margin: '1.5rem 1rem 0.5rem',
 						}),
 					]}
