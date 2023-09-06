@@ -149,11 +149,6 @@ func findMissingTimeRanges(start, end int64, seriesList []*v3.Series, fluxInterv
 		),
 	)
 
-	fmt.Println("cachedStart", cachedStart)
-	fmt.Println("cachedEnd", cachedEnd)
-	fmt.Println("start", start)
-	fmt.Println("end", end)
-
 	// There are five cases to consider
 	// 1. Cached time range is a subset of the requested time range
 	// 2. Cached time range is a superset of the requested time range

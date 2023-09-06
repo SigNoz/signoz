@@ -77,7 +77,7 @@ type APIHandler struct {
 	ruleManager       *rules.Manager
 	featureFlags      interfaces.FeatureLookup
 	ready             func(http.HandlerFunc) http.HandlerFunc
-	qurier            interfaces.Querier
+	querier           interfaces.Querier
 	queryBuilder      *queryBuilder.QueryBuilder
 	preferDelta       bool
 	preferSpanMetrics bool
@@ -157,7 +157,7 @@ func NewAPIHandler(opts APIHandlerOpts) (*APIHandler, error) {
 		ruleManager:                   opts.RuleManager,
 		featureFlags:                  opts.FeatureFlags,
 		LogsParsingPipelineController: opts.LogsParsingPipelineController,
-		qurier:                        querier,
+		querier:                       querier,
 	}
 
 	builderOpts := queryBuilder.QueryBuilderOptions{
@@ -2959,7 +2959,7 @@ func (aH *APIHandler) queryRangeV3(ctx context.Context, queryRangeParams *v3.Que
 		}
 	}
 
-	result, err, errQuriesByName = aH.qurier.QueryRange(ctx, queryRangeParams, spanKeys)
+	result, err, errQuriesByName = aH.querier.QueryRange(ctx, queryRangeParams, spanKeys)
 
 	if err != nil {
 		apiErrObj := &model.ApiError{Typ: model.ErrorBadData, Err: err}
