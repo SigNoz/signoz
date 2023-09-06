@@ -8,6 +8,7 @@ import (
 	"reflect"
 	"sort"
 	"strconv"
+	"strings"
 	"sync"
 	"text/template"
 	"time"
@@ -15,11 +16,11 @@ import (
 	"go.uber.org/zap"
 
 	"github.com/ClickHouse/clickhouse-go/v2"
-	"go.signoz.io/signoz/pkg/query-service/converter"
-
 	"go.signoz.io/signoz/pkg/query-service/app/queryBuilder"
 	"go.signoz.io/signoz/pkg/query-service/constants"
+	"go.signoz.io/signoz/pkg/query-service/converter"
 	"go.signoz.io/signoz/pkg/query-service/interfaces"
+	"go.signoz.io/signoz/pkg/query-service/model"
 	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
 	"go.signoz.io/signoz/pkg/query-service/utils/labels"
 	querytemplate "go.signoz.io/signoz/pkg/query-service/utils/queryTemplate"
@@ -403,6 +404,7 @@ func (r *ThresholdRule) prepareQueryRange(ts time.Time) *v3.QueryRangeParamsV3 {
 		End:            end,
 		Step:           60,
 		CompositeQuery: r.ruleCondition.CompositeQuery,
+		Variables:      make(map[string]interface{}, 0),
 	}
 }
 
@@ -616,8 +618,88 @@ func (r *ThresholdRule) runChQuery(ctx context.Context, db clickhouse.Conn, quer
 	return result, nil
 }
 
-func (r *ThresholdRule) prepareBuilderQueries(ts time.Time) (map[string]string, error) {
+func getTopLevelOps(ch clickhouse.Conn, skipConfig *model.SkipConfig) map[string][]string {
+	operations := make(map[string][]string)
+	query := fmt.Sprintf(`SELECT DISTINCT name, serviceName FROM %s.%s`, constants.SIGNOZ_TRACE_DBNAME, constants.SIGNOZ_TOP_LEVEL_OPERATIONS_TABLE)
+
+	rows, err := ch.Query(context.Background(), query)
+
+	if err != nil {
+		zap.S().Error("Error in processing sql query: ", err)
+		return operations
+	}
+
+	defer rows.Close()
+	for rows.Next() {
+		var name, serviceName string
+		if err := rows.Scan(&name, &serviceName); err != nil {
+			return operations
+		}
+		if _, ok := operations[serviceName]; !ok {
+			operations[serviceName] = []string{}
+		}
+		if skipConfig.ShouldSkip(serviceName, name) {
+			continue
+		}
+		operations[serviceName] = append(operations[serviceName], name)
+	}
+	return operations
+}
+
+func PopulateVariables(queryRangeParams *v3.QueryRangeParamsV3, topLevelOps *map[string][]string) {
+	if queryRangeParams.CompositeQuery.QueryType == v3.QueryTypeBuilder {
+		for _, query := range queryRangeParams.CompositeQuery.BuilderQueries {
+			if query.Filters == nil || len(query.Filters.Items) == 0 {
+				continue
+			}
+			for idx := range query.Filters.Items {
+				item := &query.Filters.Items[idx]
+				if item.Key.Key == "service_name" || item.Key.Key == "serviceName" {
+					var serviceName string
+					if _, ok := item.Value.(string); ok {
+						serviceName = item.Value.(string)
+					} else if _, ok := item.Value.([]interface{}); ok {
+						serviceName = item.Value.([]interface{})[0].(string)
+					}
+
+					vals := []interface{}{}
+					for _, val := range (*topLevelOps)[serviceName] {
+						vals = append(vals, val)
+					}
+					queryRangeParams.Variables["top_level_operations"] = vals
+				}
+			}
+			for idx := range query.Filters.Items {
+				item := &query.Filters.Items[idx]
+				value := item.Value
+				if value != nil {
+					switch x := value.(type) {
+					case string:
+						variableName := strings.Trim(x, "{{ . }}")
+						if _, ok := queryRangeParams.Variables[variableName]; ok {
+							item.Value = queryRangeParams.Variables[variableName]
+						}
+					case []interface{}:
+						if len(x) > 0 {
+							switch x[0].(type) {
+							case string:
+								variableName := strings.Trim(x[0].(string), "{{ . }}")
+								if _, ok := queryRangeParams.Variables[variableName]; ok {
+									item.Value = queryRangeParams.Variables[variableName]
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+}
+
+func (r *ThresholdRule) prepareBuilderQueries(ts time.Time, ch clickhouse.Conn) (map[string]string, error) {
 	params := r.prepareQueryRange(ts)
+	topLevelOps := getTopLevelOps(ch, &model.SkipConfig{})
+	PopulateVariables(params, &topLevelOps)
 	runQueries, err := r.queryBuilder.PrepareQueries(params)
 
 	return runQueries, err
@@ -679,7 +761,7 @@ func (r *ThresholdRule) buildAndRunQuery(ctx context.Context, ts time.Time, ch c
 	// fetch the target query based on query type
 	if r.ruleCondition.QueryType() == v3.QueryTypeBuilder {
 
-		queries, err = r.prepareBuilderQueries(ts)
+		queries, err = r.prepareBuilderQueries(ts, ch)
 
 		if err != nil {
 			zap.S().Errorf("ruleid:", r.ID(), "\t msg: failed to prepare metric queries", zap.Error(err))

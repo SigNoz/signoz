@@ -3011,7 +3011,12 @@ func (aH *APIHandler) queryRangeV3(ctx context.Context, queryRangeParams *v3.Que
 }
 
 func (aH *APIHandler) QueryRangeV3(w http.ResponseWriter, r *http.Request) {
-	queryRangeParams, apiErrorObj := ParseQueryRangeParams(r)
+	topLevelOps, apiErr := aH.reader.GetTopLevelOperations(r.Context(), aH.skipConfig)
+	if apiErr != nil {
+		RespondError(w, apiErr, nil)
+		return
+	}
+	queryRangeParams, apiErrorObj := ParseQueryRangeParams(r, topLevelOps)
 
 	if apiErrorObj != nil {
 		zap.S().Errorf(apiErrorObj.Err.Error())
@@ -3094,8 +3099,12 @@ func (aH *APIHandler) liveTailLogs(w http.ResponseWriter, r *http.Request) {
 	// get the param from url and add it to body
 	stringReader := strings.NewReader(r.URL.Query().Get("q"))
 	r.Body = io.NopCloser(stringReader)
-
-	queryRangeParams, apiErrorObj := ParseQueryRangeParams(r)
+	topLevelOps, apiErr := aH.reader.GetTopLevelOperations(r.Context(), aH.skipConfig)
+	if apiErr != nil {
+		RespondError(w, apiErr, nil)
+		return
+	}
+	queryRangeParams, apiErrorObj := ParseQueryRangeParams(r, topLevelOps)
 	if apiErrorObj != nil {
 		zap.S().Errorf(apiErrorObj.Err.Error())
 		RespondError(w, apiErrorObj, nil)

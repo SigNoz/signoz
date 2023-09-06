@@ -191,6 +191,7 @@ const (
 	SIGNOZ_TIMESERIES_TABLENAME       = "distributed_time_series_v2"
 	SIGNOZ_TRACE_DBNAME               = "signoz_traces"
 	SIGNOZ_SPAN_INDEX_TABLENAME       = "distributed_signoz_index_v2"
+	SIGNOZ_TOP_LEVEL_OPERATIONS_TABLE = "distributed_top_level_operations"
 	SIGNOZ_TIMESERIES_LOCAL_TABLENAME = "time_series_v2"
 )
 

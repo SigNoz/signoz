@@ -948,7 +948,7 @@ func validateExpressions(expressions []string, funcs map[string]govaluate.Expres
 	return errs
 }
 
-func ParseQueryRangeParams(r *http.Request) (*v3.QueryRangeParamsV3, *model.ApiError) {
+func ParseQueryRangeParams(r *http.Request, topLevelOps *map[string][]string) (*v3.QueryRangeParamsV3, *model.ApiError) {
 
 	var queryRangeParams *v3.QueryRangeParamsV3
 
@@ -980,6 +980,23 @@ func ParseQueryRangeParams(r *http.Request) (*v3.QueryRangeParamsV3, *model.ApiE
 		for _, query := range queryRangeParams.CompositeQuery.BuilderQueries {
 			if query.Filters == nil || len(query.Filters.Items) == 0 {
 				continue
+			}
+			for idx := range query.Filters.Items {
+				item := &query.Filters.Items[idx]
+				if item.Key.Key == "service_name" || item.Key.Key == "serviceName" {
+					var serviceName string
+					if _, ok := item.Value.(string); ok {
+						serviceName = item.Value.(string)
+					} else if _, ok := item.Value.([]interface{}); ok {
+						serviceName = item.Value.([]interface{})[0].(string)
+					}
+
+					vals := []interface{}{}
+					for _, val := range (*topLevelOps)[serviceName] {
+						vals = append(vals, val)
+					}
+					queryRangeParams.Variables["top_level_operations"] = vals
+				}
 			}
 			for idx := range query.Filters.Items {
 				item := &query.Filters.Items[idx]
