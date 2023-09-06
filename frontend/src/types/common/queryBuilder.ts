@@ -187,7 +187,6 @@ export type QueryBuilderContextType = {
 		searchParams?: Record<string, unknown>,
 	) => void;
 	handleRunQuery: () => void;
-	resetStagedQuery: () => void;
 	handleOnUnitsChange: (units: Format['id']) => void;
 	updateAllQueriesOperators: (
 		queryData: Query,
