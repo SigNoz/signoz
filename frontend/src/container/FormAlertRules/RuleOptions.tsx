@@ -1,4 +1,5 @@
 import {
+	Checkbox,
 	Form,
 	InputNumber,
 	InputNumberProps,
@@ -158,6 +159,11 @@ function RuleOptions({
 	const categorySelectOptions = getCategorySelectOptionByName(
 		selectedCategory?.name,
 	);
+	console.log(
+		'alertDef?.condition',
+		alertDef?.condition,
+		alertDef?.condition?.for,
+	);
 
 	return (
 		<>
@@ -188,6 +194,41 @@ function RuleOptions({
 							onChange={onChangeAlertUnit}
 						/>
 					</Form.Item>
+				</Space>
+				<Space>
+					<Form.Item noStyle name={['condition', 'alertOnAbsent']}>
+						<Checkbox
+							checked={alertDef?.condition?.alertOnAbsent}
+							onChange={(e): void => {
+								setAlertDef({
+									...alertDef,
+									condition: {
+										...alertDef.condition,
+										alertOnAbsent: e.target.checked,
+									},
+								});
+							}}
+						/>
+					</Form.Item>
+					<Typography.Text>{t('text_alert_on_absent')}</Typography.Text>
+
+					<Form.Item noStyle name={['condition', 'for']}>
+						<InputNumber
+							value={alertDef?.condition?.for}
+							onChange={(value): void => {
+								setAlertDef({
+									...alertDef,
+									condition: {
+										...alertDef.condition,
+										for: Number(value) || 0,
+									},
+								});
+							}}
+							type="number"
+							onWheel={(e): void => e.currentTarget.blur()}
+						/>
+					</Form.Item>
+					<Typography.Text>{t('text_for')}</Typography.Text>
 				</Space>
 			</FormContainer>
 		</>

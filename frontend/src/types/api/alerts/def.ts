@@ -28,6 +28,8 @@ export interface RuleCondition {
 	op?: string | undefined;
 	target?: number | undefined;
 	matchType?: string | undefined;
+	alertOnAbsent?: boolean | undefined;
+	for?: number | undefined;
 	targetUnit?: string | undefined;
 }
 
