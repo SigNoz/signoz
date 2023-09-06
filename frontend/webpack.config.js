@@ -18,7 +18,9 @@ const plugins = [
 		process: 'process/browser',
 	}),
 	new webpack.DefinePlugin({
-		'process.env': JSON.stringify(process.env),
+		'process.env': JSON.stringify({
+			FRONTEND_API_ENDPOINT: process.env.FRONTEND_API_ENDPOINT,
+		}),
 	}),
 ];
 
