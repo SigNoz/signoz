@@ -1,6 +1,7 @@
 /* eslint-disable react/no-unstable-nested-components */
 
 import updateDashboardApi from 'api/dashboard/update';
+import { PANEL_TYPES } from 'constants/queryBuilder';
 import useComponentPermission from 'hooks/useComponentPermission';
 import { useNotifications } from 'hooks/useNotifications';
 import {
@@ -28,6 +29,7 @@ import { Dashboard, Widgets } from 'types/api/dashboard/getAll';
 import AppReducer from 'types/reducer/app';
 import DashboardReducer from 'types/reducer/dashboards';
 
+import { headerMenuList } from './config';
 import Graph from './Graph';
 import GraphLayoutContainer from './GraphLayout';
 import { UpdateDashboard } from './utils';
@@ -48,6 +50,7 @@ export const getPreLayouts = (
 					yAxisUnit={widget?.yAxisUnit}
 					layout={layout}
 					setLayout={setLayout}
+					headerMenuList={headerMenuList}
 				/>
 			);
 		},
@@ -232,6 +235,7 @@ function GridGraph(props: Props): JSX.Element {
 								layout={layout}
 								setLayout={setLayout}
 								onDragSelect={onDragSelect}
+								headerMenuList={headerMenuList}
 							/>
 						),
 					};
@@ -260,7 +264,7 @@ function GridGraph(props: Props): JSX.Element {
 				{
 					data,
 					generateWidgetId: id,
-					graphType: 'EMPTY_WIDGET',
+					graphType: PANEL_TYPES.EMPTY_WIDGET,
 					selectedDashboard,
 					layout,
 					isRedirected: false,

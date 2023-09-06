@@ -1,4 +1,5 @@
-import { GRAPH_TYPES } from 'container/NewDashboard/ComponentsSlider';
+import { PANEL_TYPES } from 'constants/queryBuilder';
+import { Format } from 'container/NewWidget/RightContainer/types';
 import {
 	IBuilderFormula,
 	IBuilderQuery,
@@ -157,7 +158,7 @@ export type QueryBuilderContextType = {
 	currentQuery: Query;
 	stagedQuery: Query | null;
 	initialDataSource: DataSource | null;
-	panelType: GRAPH_TYPES | null;
+	panelType: PANEL_TYPES | null;
 	isEnabledQuery: boolean;
 	handleSetQueryData: (index: number, queryData: IBuilderQuery) => void;
 	handleSetFormulaData: (index: number, formulaData: IBuilderFormula) => void;
@@ -167,7 +168,7 @@ export type QueryBuilderContextType = {
 		newQueryData: IPromQLQuery | IClickHouseQuery,
 	) => void;
 	handleSetConfig: (
-		newPanelType: GRAPH_TYPES,
+		newPanelType: PANEL_TYPES,
 		dataSource: DataSource | null,
 	) => void;
 	removeQueryBuilderEntityByIndex: (
@@ -186,11 +187,19 @@ export type QueryBuilderContextType = {
 		searchParams?: Record<string, unknown>,
 	) => void;
 	handleRunQuery: () => void;
-	resetStagedQuery: () => void;
+	handleOnUnitsChange: (units: Format['id']) => void;
 	updateAllQueriesOperators: (
 		queryData: Query,
-		panelType: GRAPH_TYPES,
+		panelType: PANEL_TYPES,
 		dataSource: DataSource,
+	) => Query;
+	updateQueriesData: <T extends keyof QueryBuilderData>(
+		query: Query,
+		type: T,
+		updateCallback: (
+			item: QueryBuilderData[T][number],
+			index: number,
+		) => QueryBuilderData[T][number],
 	) => Query;
 	initQueryBuilderData: (query: Query) => void;
 };

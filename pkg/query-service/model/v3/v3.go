@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"go.signoz.io/signoz/pkg/query-service/model"
 )
 
 type DataSource string
@@ -106,7 +107,8 @@ func (a AggregateOperator) RequireAttribute(dataSource DataSource) bool {
 	switch dataSource {
 	case DataSourceMetrics:
 		switch a {
-		case AggregateOperatorNoOp:
+		case AggregateOperatorNoOp,
+			AggregateOperatorCount:
 			return false
 		default:
 			return true
@@ -322,7 +324,7 @@ type FilterAttributeValueResponse struct {
 type QueryRangeParamsV3 struct {
 	Start          int64                  `json:"start"`
 	End            int64                  `json:"end"`
-	Step           int64                  `json:"step"`
+	Step           int64                  `json:"step"` // step is in seconds; used for prometheus queries
 	CompositeQuery *CompositeQuery        `json:"compositeQuery"`
 	Variables      map[string]interface{} `json:"variables,omitempty"`
 	NoCache        bool                   `json:"noCache"`
@@ -371,6 +373,7 @@ type CompositeQuery struct {
 	PromQueries       map[string]*PromQuery       `json:"promQueries,omitempty"`
 	PanelType         PanelType                   `json:"panelType"`
 	QueryType         QueryType                   `json:"queryType"`
+	Unit              string                      `json:"unit,omitempty"`
 }
 
 func (c *CompositeQuery) Validate() error {
@@ -584,10 +587,18 @@ type Result struct {
 	List      []*Row    `json:"list"`
 }
 
+type LogsLiveTailClient struct {
+	Name  string
+	Logs  chan *model.GetLogsResponse
+	Done  chan *bool
+	Error chan error
+}
+
 type Series struct {
-	Labels            map[string]string `json:"labels"`
-	Points            []Point           `json:"values"`
-	GroupingSetsPoint *Point            `json:"-"`
+	Labels            map[string]string   `json:"labels"`
+	LabelsArray       []map[string]string `json:"labelsArray"`
+	Points            []Point             `json:"values"`
+	GroupingSetsPoint *Point              `json:"-"`
 }
 
 func (s *Series) SortPoints() {
@@ -627,24 +638,26 @@ func (p *Point) UnmarshalJSON(data []byte) error {
 	return err
 }
 
-// ExploreQuery is a query for the explore page
-// It is a composite query with a source page name
+// SavedView is a saved query for the explore page
+// It is a composite query with a source page name and user defined tags
 // The source page name is used to identify the page that initiated the query
-// The source page could be "traces", "logs", "metrics" or "dashboards", "alerts" etc.
-type ExplorerQuery struct {
+// The source page could be "traces", "logs", "metrics".
+type SavedView struct {
 	UUID           string          `json:"uuid,omitempty"`
+	Name           string          `json:"name"`
+	Category       string          `json:"category"`
+	CreatedAt      time.Time       `json:"createdAt"`
+	CreatedBy      string          `json:"createdBy"`
+	UpdatedAt      time.Time       `json:"updatedAt"`
+	UpdatedBy      string          `json:"updatedBy"`
 	SourcePage     string          `json:"sourcePage"`
+	Tags           []string        `json:"tags"`
 	CompositeQuery *CompositeQuery `json:"compositeQuery"`
 	// ExtraData is JSON encoded data used by frontend to store additional data
 	ExtraData string `json:"extraData"`
-	// 0 - false, 1 - true; this is int8 because sqlite doesn't support bool
-	IsView int8 `json:"isView"`
 }
 
-func (eq *ExplorerQuery) Validate() error {
-	if eq.IsView != 0 && eq.IsView != 1 {
-		return fmt.Errorf("isView must be 0 or 1")
-	}
+func (eq *SavedView) Validate() error {
 
 	if eq.CompositeQuery == nil {
 		return fmt.Errorf("composite query is required")
@@ -654,4 +667,9 @@ func (eq *ExplorerQuery) Validate() error {
 		eq.UUID = uuid.New().String()
 	}
 	return eq.CompositeQuery.Validate()
+}
+
+type LatencyMetricMetadataResponse struct {
+	Delta bool      `json:"delta"`
+	Le    []float64 `json:"le"`
 }

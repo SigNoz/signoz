@@ -1,23 +1,22 @@
 import { Tabs } from 'antd';
 import axios from 'axios';
-import ExplorerCard from 'components/ExplorerCard';
-import { QueryParams } from 'constants/query';
+import ExplorerCard from 'components/ExplorerCard/ExplorerCard';
+import { AVAILABLE_EXPORT_PANEL_TYPES } from 'constants/panelTypes';
 import { initialQueriesMap, PANEL_TYPES } from 'constants/queryBuilder';
-import { queryParamNamesMap } from 'constants/queryBuilderQueryNames';
-import ROUTES from 'constants/routes';
 import ExportPanel from 'container/ExportPanel';
-import { GRAPH_TYPES } from 'container/NewDashboard/ComponentsSlider';
 import QuerySection from 'container/TracesExplorer/QuerySection';
 import { useUpdateDashboard } from 'hooks/dashboard/useUpdateDashboard';
 import { addEmptyWidgetInDashboardJSONWithQuery } from 'hooks/dashboard/utils';
+import { useGetPanelTypesQueryParam } from 'hooks/queryBuilder/useGetPanelTypesQueryParam';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useShareBuilderUrl } from 'hooks/queryBuilder/useShareBuilderUrl';
+import { useHandleExplorerTabChange } from 'hooks/useHandleExplorerTabChange';
 import { useNotifications } from 'hooks/useNotifications';
 import history from 'lib/history';
 import { useCallback, useEffect, useMemo } from 'react';
-import { generatePath } from 'react-router-dom';
 import { Dashboard } from 'types/api/dashboard/getAll';
 import { DataSource } from 'types/common/queryBuilder';
+import { generateExportToDashboardLink } from 'utils/dashboard/generateExportToDashboardLink';
 
 import { ActionsWrapper, Container } from './styles';
 import { getTabsItems } from './utils';
@@ -29,8 +28,11 @@ function TracesExplorer(): JSX.Element {
 		currentQuery,
 		panelType,
 		updateAllQueriesOperators,
-		redirectWithQueryBuilderData,
 	} = useQueryBuilder();
+
+	const currentPanelType = useGetPanelTypesQueryParam();
+
+	const { handleExplorerTabChange } = useHandleExplorerTabChange();
 
 	const currentTab = panelType || PANEL_TYPES.LIST;
 
@@ -89,11 +91,16 @@ function TracesExplorer(): JSX.Element {
 
 	const handleExport = useCallback(
 		(dashboard: Dashboard | null): void => {
-			if (!dashboard) return;
+			if (!dashboard || !panelType) return;
+
+			const panelTypeParam = AVAILABLE_EXPORT_PANEL_TYPES.includes(panelType)
+				? panelType
+				: PANEL_TYPES.TIME_SERIES;
 
 			const updatedDashboard = addEmptyWidgetInDashboardJSONWithQuery(
 				dashboard,
 				exportDefaultQuery,
+				panelTypeParam,
 			);
 
 			updateDashboard(updatedDashboard, {
@@ -121,11 +128,11 @@ function TracesExplorer(): JSX.Element {
 
 						return;
 					}
-					const dashboardEditView = `${generatePath(ROUTES.DASHBOARD, {
-						dashboardId: data?.payload?.uuid,
-					})}/new?${QueryParams.graphType}=graph&${QueryParams.widgetId}=empty&${
-						queryParamNamesMap.compositeQuery
-					}=${encodeURIComponent(JSON.stringify(exportDefaultQuery))}`;
+					const dashboardEditView = generateExportToDashboardLink({
+						query: exportDefaultQuery,
+						panelType: panelTypeParam,
+						dashboardId: data.payload?.uuid || '',
+					});
 
 					history.push(dashboardEditView);
 				},
@@ -138,29 +145,7 @@ function TracesExplorer(): JSX.Element {
 				},
 			});
 		},
-		[exportDefaultQuery, notifications, updateDashboard],
-	);
-
-	const handleTabChange = useCallback(
-		(newPanelType: string): void => {
-			if (panelType === newPanelType) return;
-
-			const query = updateAllQueriesOperators(
-				currentQuery,
-				newPanelType as GRAPH_TYPES,
-				DataSource.TRACES,
-			);
-
-			redirectWithQueryBuilderData(query, {
-				[queryParamNamesMap.panelTypes]: newPanelType,
-			});
-		},
-		[
-			currentQuery,
-			panelType,
-			redirectWithQueryBuilderData,
-			updateAllQueriesOperators,
-		],
+		[exportDefaultQuery, notifications, panelType, updateDashboard],
 	);
 
 	useShareBuilderUrl(defaultQuery);
@@ -172,13 +157,19 @@ function TracesExplorer(): JSX.Element {
 			(currentTab === PANEL_TYPES.LIST || currentTab === PANEL_TYPES.TRACE) &&
 			shouldChangeView
 		) {
-			handleTabChange(PANEL_TYPES.TIME_SERIES);
+			handleExplorerTabChange(currentPanelType || PANEL_TYPES.TIME_SERIES);
 		}
-	}, [currentTab, isMultipleQueries, isGroupByExist, handleTabChange]);
+	}, [
+		currentTab,
+		isMultipleQueries,
+		isGroupByExist,
+		handleExplorerTabChange,
+		currentPanelType,
+	]);
 
 	return (
 		<>
-			<ExplorerCard>
+			<ExplorerCard sourcepage={DataSource.TRACES}>
 				<QuerySection />
 			</ExplorerCard>
 
@@ -195,7 +186,7 @@ function TracesExplorer(): JSX.Element {
 					defaultActiveKey={currentTab}
 					activeKey={currentTab}
 					items={tabsItems}
-					onChange={handleTabChange}
+					onChange={handleExplorerTabChange}
 				/>
 			</Container>
 		</>

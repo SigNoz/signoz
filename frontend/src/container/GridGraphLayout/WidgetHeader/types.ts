@@ -3,7 +3,7 @@ import { ReactNode } from 'react';
 import { MenuItemKeys } from './contants';
 
 export interface MenuItem {
-	key: TWidgetOptions;
+	key: MenuItemKeys;
 	icon: ReactNode;
 	label: string;
 	isVisible: boolean;
@@ -11,15 +11,6 @@ export interface MenuItem {
 	danger?: boolean;
 }
 
-export type TWidgetOptions =
-	| MenuItemKeys.View
-	| MenuItemKeys.Edit
-	| MenuItemKeys.Delete
-	| MenuItemKeys.Clone;
-
-export type KeyMethodMappingProps<T extends TWidgetOptions> = {
-	[K in T]: {
-		key: TWidgetOptions;
-		method?: VoidFunction;
-	};
-};
+export interface DisplayThresholdProps {
+	threshold: ReactNode;
+}

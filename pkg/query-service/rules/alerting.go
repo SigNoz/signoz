@@ -145,6 +145,7 @@ type RuleCondition struct {
 	AlertOnAbsent  bool               `yaml:"alertOnAbsent,omitempty" json:"alertOnAbsent,omitempty"`
 	For            time.Duration      `yaml:"for,omitempty" json:"for,omitempty"`
 	MatchType      `json:"matchType,omitempty"`
+	TargetUnit     string `json:"targetUnit,omitempty"`
 }
 
 func (rc *RuleCondition) IsValid() bool {

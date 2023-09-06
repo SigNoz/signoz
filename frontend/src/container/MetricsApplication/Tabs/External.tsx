@@ -1,4 +1,5 @@
 import { Col } from 'antd';
+import { PANEL_TYPES } from 'constants/queryBuilder';
 import Graph from 'container/GridGraphLayout/Graph/';
 import {
 	externalCallDuration,
@@ -41,8 +42,8 @@ function External(): JSX.Element {
 
 	const externalCallErrorWidget = useMemo(
 		() =>
-			getWidgetQueryBuilder(
-				{
+			getWidgetQueryBuilder({
+				query: {
 					queryType: EQueryType.QUERY_BUILDER,
 					promql: [],
 					builder: externalCallErrorPercent({
@@ -53,8 +54,9 @@ function External(): JSX.Element {
 					clickhouse_sql: [],
 					id: uuid(),
 				},
-				GraphTitle.EXTERNAL_CALL_ERROR_PERCENTAGE,
-			),
+				title: GraphTitle.EXTERNAL_CALL_ERROR_PERCENTAGE,
+				panelTypes: PANEL_TYPES.TIME_SERIES,
+			}),
 		[servicename, tagFilterItems],
 	);
 
@@ -65,8 +67,8 @@ function External(): JSX.Element {
 
 	const externalCallDurationWidget = useMemo(
 		() =>
-			getWidgetQueryBuilder(
-				{
+			getWidgetQueryBuilder({
+				query: {
 					queryType: EQueryType.QUERY_BUILDER,
 					promql: [],
 					builder: externalCallDuration({
@@ -76,15 +78,16 @@ function External(): JSX.Element {
 					clickhouse_sql: [],
 					id: uuid(),
 				},
-				GraphTitle.EXTERNAL_CALL_DURATION,
-			),
+				title: GraphTitle.EXTERNAL_CALL_DURATION,
+				panelTypes: PANEL_TYPES.TIME_SERIES,
+			}),
 		[servicename, tagFilterItems],
 	);
 
 	const externalCallRPSWidget = useMemo(
 		() =>
-			getWidgetQueryBuilder(
-				{
+			getWidgetQueryBuilder({
+				query: {
 					queryType: EQueryType.QUERY_BUILDER,
 					promql: [],
 					builder: externalCallRpsByAddress({
@@ -95,15 +98,16 @@ function External(): JSX.Element {
 					clickhouse_sql: [],
 					id: uuid(),
 				},
-				GraphTitle.EXTERNAL_CALL_RPS_BY_ADDRESS,
-			),
+				title: GraphTitle.EXTERNAL_CALL_RPS_BY_ADDRESS,
+				panelTypes: PANEL_TYPES.TIME_SERIES,
+			}),
 		[servicename, tagFilterItems],
 	);
 
 	const externalCallDurationAddressWidget = useMemo(
 		() =>
-			getWidgetQueryBuilder(
-				{
+			getWidgetQueryBuilder({
+				query: {
 					queryType: EQueryType.QUERY_BUILDER,
 					promql: [],
 					builder: externalCallDurationByAddress({
@@ -114,8 +118,9 @@ function External(): JSX.Element {
 					clickhouse_sql: [],
 					id: uuid(),
 				},
-				GraphTitle.EXTERNAL_CALL_DURATION_BY_ADDRESS,
-			),
+				title: GraphTitle.EXTERNAL_CALL_DURATION_BY_ADDRESS,
+				panelTypes: PANEL_TYPES.TIME_SERIES,
+			}),
 		[servicename, tagFilterItems],
 	);
 
@@ -151,9 +156,6 @@ function External(): JSX.Element {
 										'external_call_error_percentage',
 									);
 								}}
-								allowClone={false}
-								allowDelete={false}
-								allowEdit={false}
 							/>
 						</GraphContainer>
 					</Card>
@@ -189,9 +191,6 @@ function External(): JSX.Element {
 										'external_call_duration',
 									);
 								}}
-								allowClone={false}
-								allowDelete={false}
-								allowEdit={false}
 							/>
 						</GraphContainer>
 					</Card>
@@ -228,9 +227,6 @@ function External(): JSX.Element {
 										'external_call_rps_by_address',
 									);
 								}}
-								allowClone={false}
-								allowDelete={false}
-								allowEdit={false}
 							/>
 						</GraphContainer>
 					</Card>
@@ -266,9 +262,6 @@ function External(): JSX.Element {
 										'external_call_duration_by_address',
 									);
 								}}
-								allowClone={false}
-								allowDelete={false}
-								allowEdit={false}
 							/>
 						</GraphContainer>
 					</Card>

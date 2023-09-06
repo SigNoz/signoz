@@ -1,4 +1,4 @@
-import { ITEMS } from 'container/NewDashboard/ComponentsSlider/menuItems';
+import { PANEL_TYPES } from 'constants/queryBuilder';
 import { timePreferenceType } from 'container/NewWidget/RightContainer/timeItems';
 import { Time } from 'container/TopNav/DateTimeSelection/config';
 import store from 'store';
@@ -36,7 +36,7 @@ const getStartEndRangeTime = ({
 
 interface GetStartEndRangeTimesProps {
 	type?: timePreferenceType;
-	graphType?: ITEMS | null;
+	graphType?: PANEL_TYPES | null;
 	interval?: Time;
 }
 

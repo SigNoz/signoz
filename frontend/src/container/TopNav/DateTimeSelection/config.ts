@@ -82,4 +82,7 @@ export const routesToSkip = [
 	ROUTES.ALERTS_NEW,
 	ROUTES.EDIT_ALERTS,
 	ROUTES.LIST_ALL_ALERT,
+	ROUTES.PIPELINES,
 ];
+
+export const routesToDisable = [ROUTES.LOGS_EXPLORER, ROUTES.LIVE_LOGS];

@@ -1,7 +1,7 @@
 import { themeColors } from 'constants/theme';
 import { CSSProperties } from 'react';
 
-const positionCss: CSSProperties['position'] = 'fixed';
+const positionCss: CSSProperties['position'] = 'absolute';
 
 export const spinnerStyles = { position: positionCss, right: '0.5rem' };
 export const tooltipStyles = {

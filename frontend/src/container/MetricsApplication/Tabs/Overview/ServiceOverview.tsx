@@ -1,45 +1,77 @@
+import Spinner from 'components/Spinner';
+import { FeatureKeys } from 'constants/features';
+import { PANEL_TYPES } from 'constants/queryBuilder';
 import Graph from 'container/GridGraphLayout/Graph/';
 import { GraphTitle } from 'container/MetricsApplication/constant';
 import { getWidgetQueryBuilder } from 'container/MetricsApplication/MetricsApplication.factory';
 import { latency } from 'container/MetricsApplication/MetricsPageQueries/OverviewQueries';
 import { Card, GraphContainer } from 'container/MetricsApplication/styles';
+import useFeatureFlag from 'hooks/useFeatureFlag';
+import useResourceAttribute from 'hooks/useResourceAttribute';
+import { resourceAttributesToTagFilterItems } from 'hooks/useResourceAttribute/utils';
 import { useMemo } from 'react';
 import { useParams } from 'react-router-dom';
-import { TagFilterItem } from 'types/api/queryBuilder/queryBuilderData';
 import { EQueryType } from 'types/common/dashboard';
 import { v4 as uuid } from 'uuid';
 
 import { ClickHandlerType } from '../Overview';
 import { Button } from '../styles';
 import { IServiceName } from '../types';
-import { onViewTracePopupClick } from '../util';
+import { handleNonInQueryRange, onViewTracePopupClick } from '../util';
 
 function ServiceOverview({
 	onDragSelect,
 	handleGraphClick,
 	selectedTraceTags,
 	selectedTimeStamp,
-	tagFilterItems,
+	topLevelOperationsRoute,
+	topLevelOperationsLoading,
 }: ServiceOverviewProps): JSX.Element {
 	const { servicename } = useParams<IServiceName>();
 
+	const isSpanMetricEnable = useFeatureFlag(FeatureKeys.USE_SPAN_METRICS)
+		?.active;
+
+	const { queries } = useResourceAttribute();
+
+	const tagFilterItems = useMemo(
+		() =>
+			handleNonInQueryRange(
+				resourceAttributesToTagFilterItems(queries, !isSpanMetricEnable),
+			) || [],
+		[isSpanMetricEnable, queries],
+	);
+
 	const latencyWidget = useMemo(
 		() =>
-			getWidgetQueryBuilder(
-				{
+			getWidgetQueryBuilder({
+				query: {
 					queryType: EQueryType.QUERY_BUILDER,
 					promql: [],
 					builder: latency({
 						servicename,
 						tagFilterItems,
+						isSpanMetricEnable,
+						topLevelOperationsRoute,
 					}),
 					clickhouse_sql: [],
 					id: uuid(),
 				},
-				GraphTitle.LATENCY,
-			),
-		[servicename, tagFilterItems],
+				title: GraphTitle.LATENCY,
+				panelTypes: PANEL_TYPES.TIME_SERIES,
+			}),
+		[servicename, isSpanMetricEnable, topLevelOperationsRoute, tagFilterItems],
 	);
+
+	const isQueryEnabled = topLevelOperationsRoute.length > 0;
+
+	if (topLevelOperationsLoading) {
+		return (
+			<Card>
+				<Spinner height="40vh" tip="Loading..." />
+			</Card>
+		);
+	}
 
 	return (
 		<>
@@ -63,9 +95,7 @@ function ServiceOverview({
 						widget={latencyWidget}
 						yAxisUnit="ns"
 						onClickHandler={handleGraphClick('Service')}
-						allowClone={false}
-						allowDelete={false}
-						allowEdit={false}
+						isQueryEnabled={isQueryEnabled}
 					/>
 				</GraphContainer>
 			</Card>
@@ -78,7 +108,8 @@ interface ServiceOverviewProps {
 	selectedTraceTags: string;
 	onDragSelect: (start: number, end: number) => void;
 	handleGraphClick: (type: string) => ClickHandlerType;
-	tagFilterItems: TagFilterItem[];
+	topLevelOperationsRoute: string[];
+	topLevelOperationsLoading: boolean;
 }
 
 export default ServiceOverview;

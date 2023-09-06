@@ -3,9 +3,11 @@ import { Col, FormInstance, Modal, Tooltip, Typography } from 'antd';
 import saveAlertApi from 'api/alerts/save';
 import testAlertApi from 'api/alerts/testAlert';
 import { FeatureKeys } from 'constants/features';
+import { PANEL_TYPES } from 'constants/queryBuilder';
 import ROUTES from 'constants/routes';
 import QueryTypeTag from 'container/NewWidget/LeftContainer/QueryTypeTag';
 import PlotTag from 'container/NewWidget/LeftContainer/WidgetGraph/PlotTag';
+import { BuilderUnitsFilter } from 'container/QueryBuilder/filters';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useShareBuilderUrl } from 'hooks/queryBuilder/useShareBuilderUrl';
 import { updateStepInterval } from 'hooks/queryBuilder/useStepInterval';
@@ -38,6 +40,7 @@ import {
 	ButtonContainer,
 	MainFormContainer,
 	PanelContainer,
+	StepContainer,
 	StyledLeftContainer,
 } from './styles';
 import UserGuide from './UserGuide';
@@ -58,6 +61,7 @@ function FormAlertRules({
 
 	const {
 		currentQuery,
+		panelType,
 		stagedQuery,
 		handleRunQuery,
 		redirectWithQueryBuilderData,
@@ -222,6 +226,7 @@ function FormAlertRules({
 					chQueries: mapQueryDataToApi(currentQuery.clickhouse_sql, 'name').data,
 					queryType: currentQuery.queryType,
 					panelType: initQuery.panelType,
+					unit: currentQuery.unit,
 				},
 			},
 		};
@@ -351,29 +356,44 @@ function FormAlertRules({
 
 	const renderQBChartPreview = (): JSX.Element => (
 		<ChartPreview
-			headline={<PlotTag queryType={currentQuery.queryType} />}
+			headline={
+				<PlotTag
+					queryType={currentQuery.queryType}
+					panelType={panelType || PANEL_TYPES.TIME_SERIES}
+				/>
+			}
 			name=""
-			threshold={alertDef.condition?.target}
 			query={stagedQuery}
 			selectedInterval={toChartInterval(alertDef.evalWindow)}
+			alertDef={alertDef}
 		/>
 	);
 
 	const renderPromChartPreview = (): JSX.Element => (
 		<ChartPreview
-			headline={<PlotTag queryType={currentQuery.queryType} />}
+			headline={
+				<PlotTag
+					queryType={currentQuery.queryType}
+					panelType={panelType || PANEL_TYPES.TIME_SERIES}
+				/>
+			}
 			name="Chart Preview"
-			threshold={alertDef.condition?.target}
 			query={stagedQuery}
+			alertDef={alertDef}
 		/>
 	);
 
 	const renderChQueryChartPreview = (): JSX.Element => (
 		<ChartPreview
-			headline={<PlotTag queryType={currentQuery.queryType} />}
+			headline={
+				<PlotTag
+					queryType={currentQuery.queryType}
+					panelType={panelType || PANEL_TYPES.TIME_SERIES}
+				/>
+			}
 			name="Chart Preview"
-			threshold={alertDef.condition?.target}
 			query={stagedQuery}
+			alertDef={alertDef}
 			selectedInterval={toChartInterval(alertDef.evalWindow)}
 		/>
 	);
@@ -387,9 +407,21 @@ function FormAlertRules({
 		currentQuery.queryType === EQueryType.QUERY_BUILDER &&
 		alertType !== AlertTypes.METRICS_BASED_ALERT;
 
+	const onUnitChangeHandler = (): void => {
+		// reset target unit
+		setAlertDef((def) => ({
+			...def,
+			condition: {
+				...def.condition,
+				targetUnit: undefined,
+			},
+		}));
+	};
+
 	return (
 		<>
 			{Element}
+
 			<PanelContainer>
 				<StyledLeftContainer flex="5 1 600px" md={18}>
 					<MainFormContainer
@@ -402,6 +434,11 @@ function FormAlertRules({
 						{currentQuery.queryType === EQueryType.PROM && renderPromChartPreview()}
 						{currentQuery.queryType === EQueryType.CLICKHOUSE &&
 							renderChQueryChartPreview()}
+
+						<StepContainer>
+							<BuilderUnitsFilter onChange={onUnitChangeHandler} />
+						</StepContainer>
+
 						<QuerySection
 							queryCategory={currentQuery.queryType}
 							setQueryCategory={onQueryCategoryChange}

@@ -16,6 +16,7 @@ export const QueryBuilder = memo(function QueryBuilder({
 	panelType: newPanelType,
 	actions,
 	filterConfigs = {},
+	queryComponents,
 }: QueryBuilderProps): JSX.Element {
 	const {
 		currentQuery,
@@ -74,6 +75,7 @@ export const QueryBuilder = memo(function QueryBuilder({
 								queryVariant={config?.queryVariant || 'dropdown'}
 								query={query}
 								filterConfigs={filterConfigs}
+								queryComponents={queryComponents}
 							/>
 						</Col>
 					))}

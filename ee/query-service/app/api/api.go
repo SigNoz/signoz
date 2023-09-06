@@ -2,12 +2,14 @@ package api
 
 import (
 	"net/http"
+	"time"
 
 	"github.com/gorilla/mux"
 	"go.signoz.io/signoz/ee/query-service/dao"
 	"go.signoz.io/signoz/ee/query-service/interfaces"
 	"go.signoz.io/signoz/ee/query-service/license"
 	baseapp "go.signoz.io/signoz/pkg/query-service/app"
+	"go.signoz.io/signoz/pkg/query-service/app/logparsingpipeline"
 	baseint "go.signoz.io/signoz/pkg/query-service/interfaces"
 	basemodel "go.signoz.io/signoz/pkg/query-service/model"
 	rules "go.signoz.io/signoz/pkg/query-service/rules"
@@ -15,14 +17,18 @@ import (
 )
 
 type APIHandlerOptions struct {
-	DataConnector     interfaces.DataConnector
-	SkipConfig        *basemodel.SkipConfig
-	PreferDelta       bool
-	PreferSpanMetrics bool
-	AppDao            dao.ModelDao
-	RulesManager      *rules.Manager
-	FeatureFlags      baseint.FeatureLookup
-	LicenseManager    *license.Manager
+	DataConnector                 interfaces.DataConnector
+	SkipConfig                    *basemodel.SkipConfig
+	PreferDelta                   bool
+	PreferSpanMetrics             bool
+	MaxIdleConns                  int
+	MaxOpenConns                  int
+	DialTimeout                   time.Duration
+	AppDao                        dao.ModelDao
+	RulesManager                  *rules.Manager
+	FeatureFlags                  baseint.FeatureLookup
+	LicenseManager                *license.Manager
+	LogsParsingPipelineController *logparsingpipeline.LogParsingPipelineController
 }
 
 type APIHandler struct {
@@ -34,13 +40,18 @@ type APIHandler struct {
 func NewAPIHandler(opts APIHandlerOptions) (*APIHandler, error) {
 
 	baseHandler, err := baseapp.NewAPIHandler(baseapp.APIHandlerOpts{
-		Reader:            opts.DataConnector,
-		SkipConfig:        opts.SkipConfig,
-		PerferDelta:       opts.PreferDelta,
-		PreferSpanMetrics: opts.PreferSpanMetrics,
-		AppDao:            opts.AppDao,
-		RuleManager:       opts.RulesManager,
-		FeatureFlags:      opts.FeatureFlags})
+		Reader:                        opts.DataConnector,
+		SkipConfig:                    opts.SkipConfig,
+		PerferDelta:                   opts.PreferDelta,
+		PreferSpanMetrics:             opts.PreferSpanMetrics,
+		MaxIdleConns:                  opts.MaxIdleConns,
+		MaxOpenConns:                  opts.MaxOpenConns,
+		DialTimeout:                   opts.DialTimeout,
+		AppDao:                        opts.AppDao,
+		RuleManager:                   opts.RulesManager,
+		FeatureFlags:                  opts.FeatureFlags,
+		LogsParsingPipelineController: opts.LogsParsingPipelineController,
+	})
 
 	if err != nil {
 		return nil, err

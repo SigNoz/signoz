@@ -90,9 +90,9 @@ func (q *querier) execPromQuery(ctx context.Context, params *model.QueryRangePar
 	for _, v := range matrix {
 		var s v3.Series
 		s.Labels = v.Metric.Copy().Map()
-		for idx := range v.Points {
-			p := v.Points[idx]
-			s.Points = append(s.Points, v3.Point{Timestamp: p.T, Value: p.V})
+		for idx := range v.Floats {
+			p := v.Floats[idx]
+			s.Points = append(s.Points, v3.Point{Timestamp: p.T, Value: p.F})
 		}
 		seriesList = append(seriesList, &s)
 	}
@@ -235,7 +235,7 @@ func (q *querier) runBuilderQueries(ctx context.Context, params *v3.QueryRangePa
 
 		// TODO: add support for logs and traces
 		if builderQuery.DataSource == v3.DataSourceLogs {
-			query, err := logsV3.PrepareLogsQuery(params.Start, params.End, params.CompositeQuery.QueryType, params.CompositeQuery.PanelType, builderQuery, "")
+			query, err := logsV3.PrepareLogsQuery(params.Start, params.End, params.CompositeQuery.QueryType, params.CompositeQuery.PanelType, builderQuery, logsV3.Options{})
 			if err != nil {
 				errQueriesByName[queryName] = err.Error()
 				continue
@@ -250,7 +250,10 @@ func (q *querier) runBuilderQueries(ctx context.Context, params *v3.QueryRangePa
 		}
 
 		if builderQuery.DataSource == v3.DataSourceTraces {
-			query, err := tracesV3.PrepareTracesQuery(params.Start, params.End, params.CompositeQuery.QueryType, params.CompositeQuery.PanelType, builderQuery, keys)
+			query, err := tracesV3.PrepareTracesQuery(params.Start, params.End, params.CompositeQuery.PanelType, builderQuery, keys, tracesV3.Options{
+				GraphLimitQtype: "",
+				PreferRPM:       false,
+			})
 			if err != nil {
 				errQueriesByName[queryName] = err.Error()
 				continue
@@ -285,6 +288,7 @@ func (q *querier) runBuilderQueries(ctx context.Context, params *v3.QueryRangePa
 				params.CompositeQuery.QueryType,
 				params.CompositeQuery.PanelType,
 				builderQuery,
+				metricsV3.Options{PreferRPM: false},
 			)
 			if err != nil {
 				errQueriesByName[queryName] = err.Error()

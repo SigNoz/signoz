@@ -1,19 +1,20 @@
 import {
+	alphabet,
 	initialFormulaBuilderFormValues,
 	initialQueryBuilderFormValuesMap,
 } from 'constants/queryBuilder';
 import getStep from 'lib/getStep';
 import store from 'store';
-import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
+import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 import {
-	IBuilderQuery,
-	TagFilterItem,
-} from 'types/api/queryBuilder/queryBuilderData';
-import {
-	DataSource,
 	MetricAggregateOperator,
 	QueryBuilderData,
 } from 'types/common/queryBuilder';
+
+import {
+	BuilderQueriesProps,
+	BuilderQuerieswithFormulaProps,
+} from '../Tabs/types';
 
 export const getQueryBuilderQueries = ({
 	autocompleteData,
@@ -43,11 +44,11 @@ export const getQueryBuilderQueries = ({
 				inputFormat: 'ns',
 				start: store.getState().globalTime.minTime,
 			}),
-			reduceTo: 'sum',
 			filters: {
 				items: filterItems[index],
 				op: 'AND',
 			},
+			reduceTo: 'sum',
 			dataSource,
 		};
 
@@ -61,83 +62,40 @@ export const getQueryBuilderQueries = ({
 });
 
 export const getQueryBuilderQuerieswithFormula = ({
-	autocompleteDataA,
-	autocompleteDataB,
-	additionalItemsA,
-	additionalItemsB,
-	legend,
+	autocompleteData,
+	additionalItems,
+	legends,
 	groupBy = [],
 	disabled,
-	expression,
-	legendFormula,
+	expressions,
+	legendFormulas,
+	aggregateOperators,
+	dataSource,
 }: BuilderQuerieswithFormulaProps): QueryBuilderData => ({
-	queryFormulas: [
-		{
-			...initialFormulaBuilderFormValues,
-			expression,
-			legend: legendFormula,
+	queryFormulas: expressions.map((expression, index) => ({
+		...initialFormulaBuilderFormValues,
+		expression,
+		legend: legendFormulas[index],
+	})),
+	queryData: autocompleteData.map((_, index) => ({
+		...initialQueryBuilderFormValuesMap.metrics,
+		aggregateOperator: aggregateOperators[index],
+		disabled: disabled[index],
+		groupBy,
+		legend: legends[index],
+		aggregateAttribute: autocompleteData[index],
+		queryName: alphabet[index],
+		expression: alphabet[index],
+		reduceTo: 'sum',
+		filters: {
+			items: additionalItems[index],
+			op: 'AND',
 		},
-	],
-	queryData: [
-		{
-			...initialQueryBuilderFormValuesMap.metrics,
-			aggregateOperator: MetricAggregateOperator.SUM_RATE,
-			disabled,
-			groupBy,
-			legend,
-			aggregateAttribute: autocompleteDataA,
-			reduceTo: 'sum',
-			filters: {
-				items: additionalItemsA,
-				op: 'AND',
-			},
-			stepInterval: getStep({
-				end: store.getState().globalTime.maxTime,
-				inputFormat: 'ns',
-				start: store.getState().globalTime.minTime,
-			}),
-		},
-		{
-			...initialQueryBuilderFormValuesMap.metrics,
-			aggregateOperator: MetricAggregateOperator.SUM_RATE,
-			disabled,
-			groupBy,
-			legend,
-			aggregateAttribute: autocompleteDataB,
-			queryName: 'B',
-			expression: 'B',
-			reduceTo: 'sum',
-			filters: {
-				items: additionalItemsB,
-				op: 'AND',
-			},
-			stepInterval: getStep({
-				end: store.getState().globalTime.maxTime,
-				inputFormat: 'ns',
-				start: store.getState().globalTime.minTime,
-			}),
-		},
-	],
+		stepInterval: getStep({
+			end: store.getState().globalTime.maxTime,
+			inputFormat: 'ns',
+			start: store.getState().globalTime.minTime,
+		}),
+		dataSource,
+	})),
 });
-
-interface BuilderQueriesProps {
-	autocompleteData: BaseAutocompleteData[];
-	groupBy?: BaseAutocompleteData[];
-	legends: string[];
-	filterItems: TagFilterItem[][];
-	aggregateOperator?: string[];
-	dataSource: DataSource;
-	queryNameAndExpression?: string[];
-}
-
-interface BuilderQuerieswithFormulaProps {
-	autocompleteDataA: BaseAutocompleteData;
-	autocompleteDataB: BaseAutocompleteData;
-	legend: string;
-	disabled: boolean;
-	groupBy?: BaseAutocompleteData[];
-	expression: string;
-	legendFormula: string;
-	additionalItemsA: TagFilterItem[];
-	additionalItemsB: TagFilterItem[];
-}

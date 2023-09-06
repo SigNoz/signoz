@@ -1,5 +1,8 @@
 import { Select, Spin, Tag, Tooltip } from 'antd';
-import { useAutoComplete } from 'hooks/queryBuilder/useAutoComplete';
+import {
+	useAutoComplete,
+	WhereClauseConfig,
+} from 'hooks/queryBuilder/useAutoComplete';
 import { useFetchKeysAndValues } from 'hooks/queryBuilder/useFetchKeysAndValues';
 import {
 	KeyboardEvent,
@@ -31,6 +34,8 @@ import {
 function QueryBuilderSearch({
 	query,
 	onChange,
+	whereClauseConfig,
+	className,
 }: QueryBuilderSearchProps): JSX.Element {
 	const {
 		updateTag,
@@ -45,7 +50,7 @@ function QueryBuilderSearch({
 		isFetching,
 		setSearchKey,
 		searchKey,
-	} = useAutoComplete(query);
+	} = useAutoComplete(query, whereClauseConfig);
 
 	const { sourceKeys, handleRemoveSourceKey } = useFetchKeysAndValues(
 		searchValue,
@@ -121,7 +126,7 @@ function QueryBuilderSearch({
 
 	useEffect(() => {
 		const initialTagFilters: TagFilter = { items: [], op: 'AND' };
-		const initialSourceKeys = query.filters.items.map(
+		const initialSourceKeys = query.filters.items?.map(
 			(item) => item.key as BaseAutocompleteData,
 		);
 		initialTagFilters.items = tags.map((tag) => {
@@ -133,9 +138,9 @@ function QueryBuilderSearch({
 				id: uuid().slice(0, 8),
 				key: filterAttribute ?? {
 					key: tagKey,
-					dataType: null,
-					type: null,
-					isColumn: null,
+					dataType: '',
+					type: '',
+					isColumn: false,
 				},
 				op: getOperatorValue(tagOperator),
 				value:
@@ -159,6 +164,7 @@ function QueryBuilderSearch({
 			placeholder={PLACEHOLDER}
 			value={queryTags}
 			searchValue={searchValue}
+			className={className}
 			disabled={isMetricsDataSource && !query.aggregateAttribute.key}
 			style={selectStyle}
 			onSearch={handleSearch}
@@ -169,7 +175,7 @@ function QueryBuilderSearch({
 			notFoundContent={isFetching ? <Spin size="small" /> : null}
 		>
 			{options.map((option) => (
-				<Select.Option key={option.label} value={option.label}>
+				<Select.Option key={option.label} value={option.value}>
 					{option.label}
 					{option.selected && <StyledCheckOutlined />}
 				</Select.Option>
@@ -181,7 +187,14 @@ function QueryBuilderSearch({
 interface QueryBuilderSearchProps {
 	query: IBuilderQuery;
 	onChange: (value: TagFilter) => void;
+	whereClauseConfig?: WhereClauseConfig;
+	className?: string;
 }
+
+QueryBuilderSearch.defaultProps = {
+	whereClauseConfig: undefined,
+	className: '',
+};
 
 export interface CustomTagProps {
 	label: ReactNode;

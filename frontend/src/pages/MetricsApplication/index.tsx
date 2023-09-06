@@ -8,6 +8,7 @@ import history from 'lib/history';
 import { useMemo } from 'react';
 import { generatePath, useParams } from 'react-router-dom';
 
+import ApDexApplication from './ApDex/ApDexApplication';
 import { MetricsApplicationTab, TAB_KEY_VS_LABEL } from './types';
 import useMetricsApplicationTabKey from './useMetricsApplicationTabKey';
 
@@ -24,6 +25,7 @@ function MetricsApplication(): JSX.Element {
 				route: `${generatePath(ROUTES.SERVICE_METRICS, {
 					servicename,
 				})}?tab=${MetricsApplicationTab.OVER_METRICS}`,
+				key: MetricsApplicationTab.OVER_METRICS,
 			},
 			{
 				Component: DBCall,
@@ -31,6 +33,7 @@ function MetricsApplication(): JSX.Element {
 				route: `${generatePath(ROUTES.SERVICE_METRICS, {
 					servicename,
 				})}?tab=${MetricsApplicationTab.DB_CALL_METRICS}`,
+				key: MetricsApplicationTab.DB_CALL_METRICS,
 			},
 			{
 				Component: External,
@@ -38,6 +41,7 @@ function MetricsApplication(): JSX.Element {
 				route: `${generatePath(ROUTES.SERVICE_METRICS, {
 					servicename,
 				})}?tab=${MetricsApplicationTab.EXTERNAL_METRICS}`,
+				key: MetricsApplicationTab.EXTERNAL_METRICS,
 			},
 		],
 		[servicename],
@@ -46,6 +50,7 @@ function MetricsApplication(): JSX.Element {
 	return (
 		<>
 			<ResourceAttributesFilter />
+			<ApDexApplication />
 			<RouteTab routes={routes} history={history} activeKey={activeKey} />
 		</>
 	);

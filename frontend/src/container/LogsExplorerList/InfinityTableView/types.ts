@@ -1,8 +1,9 @@
 import { UseTableViewProps } from 'components/Logs/TableView/types';
 
 export type InfinityTableProps = {
-	tableViewProps: UseTableViewProps;
-	infitiyTableProps: {
+	isLoading?: boolean;
+	tableViewProps: Omit<UseTableViewProps, 'onOpenLogsContext' | 'onClickExpand'>;
+	infitiyTableProps?: {
 		onEndReached: (index: number) => void;
 	};
 };
