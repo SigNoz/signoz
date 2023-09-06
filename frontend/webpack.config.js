@@ -12,6 +12,10 @@ dotenv.config();
 
 console.log(resolve(__dirname, './src/'));
 
+const cssLoader = 'css-loader';
+const sassLoader = 'sass-loader';
+const styleLoader = 'style-loader';
+
 const plugins = [
 	new HtmlWebpackPlugin({ template: 'src/index.html.ejs' }),
 	new webpack.ProvidePlugin({
@@ -68,9 +72,9 @@ const config = {
 			{
 				test: /\.css$/,
 				use: [
-					'style-loader',
+					styleLoader,
 					{
-						loader: 'css-loader',
+						loader: cssLoader,
 						options: {
 							modules: true,
 						},
@@ -92,10 +96,10 @@ const config = {
 				test: /\.less$/i,
 				use: [
 					{
-						loader: 'style-loader',
+						loader: styleLoader,
 					},
 					{
-						loader: 'css-loader',
+						loader: cssLoader,
 						options: {
 							modules: true,
 						},
@@ -108,6 +112,17 @@ const config = {
 							},
 						},
 					},
+				],
+			},
+			{
+				test: /\.s[ac]ss$/i,
+				use: [
+					// Creates `style` nodes from JS strings
+					styleLoader,
+					// Translates CSS into CommonJS
+					cssLoader,
+					// Compiles Sass to CSS
+					sassLoader,
 				],
 			},
 		],
