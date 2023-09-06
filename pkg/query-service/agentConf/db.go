@@ -216,14 +216,16 @@ func (r *Repo) insertConfig(
 	VALUES ($1, $2, $3, $4)`
 
 	for _, e := range elements {
-		_, dbErr = r.db.ExecContext(ctx,
+		_, dbErr = r.db.ExecContext(
+			ctx,
 			elementsQuery,
 			uuid.NewString(),
 			c.ID,
 			c.ElementType,
-			e)
+			e,
+		)
 		if dbErr != nil {
-			return model.InternalError(err)
+			return model.InternalError(dbErr)
 		}
 	}
 
@@ -267,7 +269,7 @@ func (r *Repo) updateDeployStatusByHash(
 	_, err := r.db.ExecContext(ctx, updateQuery, status, result, confighash)
 	if err != nil {
 		zap.S().Error("failed to update deploy status", err)
-		return model.BadRequestStr("failed to update deploy status")
+		return model.InternalError(errors.Wrap(err, "failed to update deploy status"))
 	}
 
 	return nil

@@ -202,7 +202,7 @@ func TestLogPipelinesValidation(t *testing.T) {
 		{
 			Name: "Invalid filter",
 			Pipeline: logparsingpipeline.PostablePipeline{
-				OrderId: 0,
+				OrderId: 1,
 				Name:    "pipeline 1",
 				Alias:   "pipeline1",
 				Enabled: true,
@@ -224,7 +224,7 @@ func TestLogPipelinesValidation(t *testing.T) {
 		{
 			Name: "Invalid operator field",
 			Pipeline: logparsingpipeline.PostablePipeline{
-				OrderId: 0,
+				OrderId: 1,
 				Name:    "pipeline 1",
 				Alias:   "pipeline1",
 				Enabled: true,
