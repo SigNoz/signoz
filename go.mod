@@ -18,7 +18,7 @@ require (
 	github.com/go-redis/redis/v8 v8.11.5
 	github.com/go-redis/redismock/v8 v8.11.5
 	github.com/golang-jwt/jwt v3.2.2+incompatible
-	github.com/google/uuid v1.3.1
+	github.com/google/uuid v1.3.0
 	github.com/gorilla/handlers v1.5.1
 	github.com/gorilla/mux v1.8.0
 	github.com/gosimple/slug v1.10.0
@@ -28,7 +28,7 @@ require (
 	github.com/mailru/easyjson v0.7.7
 	github.com/mattn/go-sqlite3 v2.0.3+incompatible
 	github.com/minio/minio-go/v6 v6.0.57
-	github.com/mitchellh/mapstructure v1.5.1-0.20220423185008-bf980b35cac4
+	github.com/mitchellh/mapstructure v1.5.0
 	github.com/oklog/oklog v0.3.2
 	github.com/open-telemetry/opamp-go v0.5.0
 	github.com/opentracing/opentracing-go v1.2.0
@@ -51,9 +51,9 @@ require (
 	go.opentelemetry.io/otel/sdk v1.16.0
 	go.uber.org/multierr v1.11.0
 	go.uber.org/zap v1.25.0
-	golang.org/x/crypto v0.12.0
+	golang.org/x/crypto v0.11.0
 	golang.org/x/exp v0.0.0-20230713183714-613f0c0eb8a1
-	golang.org/x/net v0.14.0
+	golang.org/x/net v0.12.0
 	golang.org/x/oauth2 v0.10.0
 	google.golang.org/grpc v1.57.0
 	google.golang.org/protobuf v1.31.0
@@ -79,7 +79,6 @@ require (
 	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc // indirect
 	github.com/dennwc/varint v1.0.0 // indirect
 	github.com/dgryski/go-rendezvous v0.0.0-20200823014737-9f7001d12a5f // indirect
-	github.com/docker/docker v24.0.5+incompatible // indirect
 	github.com/edsrzf/mmap-go v1.1.0 // indirect
 	github.com/felixge/httpsnoop v1.0.3 // indirect
 	github.com/form3tech-oss/jwt-go v3.2.2+incompatible // indirect
@@ -117,7 +116,6 @@ require (
 	github.com/mwitkow/go-conntrack v0.0.0-20190716064945-2f068394615f // indirect
 	github.com/oklog/run v1.1.0 // indirect
 	github.com/oklog/ulid v1.3.1 // indirect
-	github.com/opencontainers/image-spec v1.1.0-rc4 // indirect
 	github.com/paulmach/orb v0.10.0 // indirect
 	github.com/pierrec/lz4/v4 v4.1.18 // indirect
 	github.com/pkg/browser v0.0.0-20210911075715-681adbf594b8 // indirect
@@ -143,8 +141,8 @@ require (
 	go.uber.org/atomic v1.11.0 // indirect
 	go.uber.org/goleak v1.2.1 // indirect
 	golang.org/x/sync v0.3.0 // indirect
-	golang.org/x/sys v0.11.0 // indirect
-	golang.org/x/text v0.12.0 // indirect
+	golang.org/x/sys v0.10.0 // indirect
+	golang.org/x/text v0.11.0 // indirect
 	golang.org/x/time v0.3.0 // indirect
 	google.golang.org/appengine v1.6.7 // indirect
 	google.golang.org/genproto/googleapis/api v0.0.0-20230717213848-3f92550aa753 // indirect
