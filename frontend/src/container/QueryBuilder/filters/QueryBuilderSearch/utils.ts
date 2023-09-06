@@ -118,7 +118,7 @@ export function checkCommaInValue(str: string): string {
 }
 
 export function getRemoveOrderFromValue(tag: string): string {
-	const match = Papa.parse(tag, { delimiter: orderByValueDelimiter });
+	const match = parse(tag, { delimiter: orderByValueDelimiter });
 	if (match) {
 		const [key] = match.data.flat() as string[];
 		return key;
