@@ -77,8 +77,18 @@ func TestLogPipelinesLifecycle(t *testing.T) {
 						ID:      "remove",
 						Type:    "remove",
 						Field:   "attributes.test",
-						Enabled: true,
+						Enabled: false,
 						Name:    "test remove",
+						Output:  "add-again",
+					},
+					{
+						OrderId: 2,
+						ID:      "add-again",
+						Type:    "add",
+						Field:   "attributes.test2",
+						Value:   "test2Value",
+						Enabled: true,
+						Name:    "test add again",
 					},
 				},
 			},
@@ -231,8 +241,8 @@ func (tb *LogPipelinesTestBed) PostPipelinesToQSExpectingStatusCode(
 
 	if response.StatusCode != expectedStatusCode {
 		tb.t.Fatalf(
-			"Received response status %d after posting log pipelines. Expected: %d",
-			response.StatusCode, expectedStatusCode,
+			"Received response status %d after posting log pipelines. Expected: %d\nResponse body:%s\n",
+			response.StatusCode, expectedStatusCode, string(responseBody),
 		)
 	}
 
