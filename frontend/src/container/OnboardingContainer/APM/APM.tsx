@@ -2,6 +2,9 @@ import { useState } from 'react';
 import cx from 'classnames';
 import './APM.styles.scss';
 import Java from './Java/Java';
+import Python from './Python/Python';
+import Javascript from './Javascript/Javascript';
+import GoLang from './GoLang/GoLang';
 
 const supportedLanguages = [
 	{
@@ -25,19 +28,21 @@ const supportedLanguages = [
 export default function APM({ activeStep }): JSX.Element {
 	const [selectedLanguage, setSelectedLanguage] = useState('java');
 
-	const renderSelectedLanguageSetupInstructions = (): JSX.Element => {
+	const renderSelectedLanguageSetupInstructions = ():
+		| JSX.Element
+		| undefined => {
 		switch (selectedLanguage) {
 			case 'java':
 				return <Java activeStep={activeStep} />;
 				break;
 			case 'python':
-				return <div className=""> Python </div>;
+				return <Python activeStep={activeStep} />;
 				break;
 			case 'javascript':
-				return <div className=""> Javascript </div>;
+				return <Javascript activeStep={activeStep} />;
 				break;
 			case 'go':
-				return <div className=""> Go </div>;
+				return <GoLang activeStep={activeStep} />;
 				break;
 			default:
 				break;

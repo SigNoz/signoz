@@ -44,3 +44,60 @@
 .selected-langauage-setup-instructions {
 	padding: 24px 0;
 }
+
+div[class*='-setup-instructions-container'] {
+	.header {
+		display: flex;
+		align-items: center;
+
+		margin: 16px 0;
+
+		img {
+			height: 40px;
+		}
+
+		h1 {
+			font-size: 18px;
+			display: flex;
+			align-items: center;
+			color: #e5e7eb;
+			gap: 16px;
+			margin: 12px;
+		}
+	}
+}
+
+.label {
+	font-size: 14px;
+	margin-bottom: 8px;
+	font-weight: 300;
+}
+
+pre {
+	background-color: rgba(22, 104, 220, 1);
+	padding: 8px;
+	overflow: auto;
+	border-radius: 3px;
+
+	code {
+		overflow: auto;
+		text-wrap: wrap;
+	}
+}
+
+.content-container {
+	padding: 24px;
+	margin: 16px 0;
+	background: rgba(29, 29, 29, 1);
+	line-height: 20px;
+}
+
+.detailed-docs-link {
+	display: flex;
+	margin: 12px;
+	font-size: 12px;
+
+	a {
+		padding-left: 4px;
+	}
+}

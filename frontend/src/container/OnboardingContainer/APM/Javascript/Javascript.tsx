@@ -1,54 +1,59 @@
-import './Java.styles.scss';
+import './Javascript.styles.scss';
+
 import { MDXProvider } from '@mdx-js/react';
-import { Select, Space, Steps } from 'antd';
 
-import Post from './java.md';
+import { Steps, Select } from 'antd';
 
-export default function Java({ activeStep }): JSX.Element {
-	console.log(';activeStep', activeStep);
+import Post from './javascript.md';
+
+export default function Javascript({ activeStep }): JSX.Element {
 	return (
 		<>
 			{activeStep === 2 && (
-				<div className="java-setup-instructions-container">
+				<div className="javascript-setup-instructions-container">
 					<div className="header">
 						<img
 							className={'supported-language-img'}
-							src={`/Logos/java.png`}
+							src={`/Logos/javascript.png`}
 							alt=""
 						/>
 						<div className="title">
-							<h1>Java OpenTelemetry Instrumentation</h1>
+							<h1>Javascript OpenTelemetry Instrumentation</h1>
 							<div className="detailed-docs-link">
 								View detailed docs
-								<a target="_blank" href="https://signoz.io/docs/instrumentation/java/">
+								<a
+									target="_blank"
+									href="https://signoz.io/docs/instrumentation/javascript/"
+								>
 									here
 								</a>
 							</div>
 						</div>
 					</div>
+
 					<div className="framework-selector">
 						<div className="label"> Select Framework </div>
 
 						<Select
-							defaultValue="tomcat"
+							defaultValue="Express"
 							style={{ minWidth: 120 }}
 							placeholder="Select Framework"
 							options={[
 								{
-									value: 'tomcat',
-									label: 'Tomcat',
+									value: 'express',
+									label: 'Express',
 								},
 								{
-									value: 'spring_boot',
-									label: 'Spring Boot',
+									value: 'nestjs',
+									label: 'Nestjs',
 								},
 								{
-									value: 'jboss',
-									label: 'JBoss',
+									value: 'angular',
+									label: 'Angular',
 								},
 								{
 									value: 'other',
-									label: 'Others',
+									label: 'Other',
 								},
 							]}
 						/>

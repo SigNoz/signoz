@@ -8,6 +8,9 @@ import history from 'lib/history';
 import { useState } from 'react';
 
 import APM from './APM/APM';
+import DistributedTracing from './DistributedTracing/DistributedTracing';
+import LogsManagement from './LogsManagement/LogsManagement';
+import InfrastructureMonitoring from './InfrastructureMonitoring/InfrastructureMonitoring';
 
 const modulesMap = {
 	APM: 'APM',
@@ -162,7 +165,16 @@ export default function Onboarding(): JSX.Element {
 				<div className="stepsContainer">
 					<Steps current={current} items={steps} />
 					<div className="step-content">
-						{activeStep > 1 && <APM activeStep={activeStep} />}
+						{selectedModule === modulesMap.APM && <APM activeStep={activeStep} />}
+						{selectedModule === modulesMap.DistributedTracing && (
+							<DistributedTracing activeStep={activeStep} />
+						)}
+						{selectedModule === modulesMap.LogsManagement && (
+							<LogsManagement activeStep={activeStep} />
+						)}
+						{selectedModule === modulesMap.InfrastructureMonitoring && (
+							<InfrastructureMonitoring activeStep={activeStep} />
+						)}
 					</div>
 
 					<div className="actionButtonsContainer">

@@ -1,54 +1,60 @@
-import './Java.styles.scss';
+import './Python.styles.scss';
+
 import { MDXProvider } from '@mdx-js/react';
-import { Select, Space, Steps } from 'antd';
 
-import Post from './java.md';
+import { Steps, Select } from 'antd';
 
-export default function Java({ activeStep }): JSX.Element {
-	console.log(';activeStep', activeStep);
+import Post from './python.md';
+
+export default function Python({ activeStep }): JSX.Element {
 	return (
 		<>
 			{activeStep === 2 && (
-				<div className="java-setup-instructions-container">
+				<div className="python-setup-instructions-container">
 					<div className="header">
 						<img
 							className={'supported-language-img'}
-							src={`/Logos/java.png`}
+							src={`/Logos/python.png`}
 							alt=""
 						/>
+
 						<div className="title">
-							<h1>Java OpenTelemetry Instrumentation</h1>
+							<h1>Python OpenTelemetry Instrumentation</h1>
 							<div className="detailed-docs-link">
 								View detailed docs
-								<a target="_blank" href="https://signoz.io/docs/instrumentation/java/">
+								<a
+									target="_blank"
+									href="https://signoz.io/docs/instrumentation/python/"
+								>
 									here
 								</a>
 							</div>
 						</div>
 					</div>
+
 					<div className="framework-selector">
 						<div className="label"> Select Framework </div>
 
 						<Select
-							defaultValue="tomcat"
+							defaultValue="Django"
 							style={{ minWidth: 120 }}
 							placeholder="Select Framework"
 							options={[
 								{
-									value: 'tomcat',
-									label: 'Tomcat',
+									value: 'django',
+									label: 'Django',
 								},
 								{
-									value: 'spring_boot',
-									label: 'Spring Boot',
+									value: 'fastAPI',
+									label: 'FastAPI',
 								},
 								{
-									value: 'jboss',
-									label: 'JBoss',
+									value: 'flask',
+									label: 'Flask',
 								},
 								{
-									value: 'other',
-									label: 'Others',
+									value: 'falcon',
+									label: 'Falcon',
 								},
 							]}
 						/>

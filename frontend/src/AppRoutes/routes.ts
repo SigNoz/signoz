@@ -69,11 +69,11 @@ const routes: AppRoutes[] = [
 		key: 'SERVICE_METRICS',
 	},
 	{
-		path: ROUTES.ONBOARDING,
+		path: ROUTES.GET_STARTED,
 		exact: true,
 		component: Onboarding,
 		isPrivate: true,
-		key: 'ONBOARDING',
+		key: 'GET_STARTED',
 	},
 	{
 		path: ROUTES.SERVICE_MAP,
@@ -102,13 +102,6 @@ const routes: AppRoutes[] = [
 		component: UsageExplorerPage,
 		isPrivate: true,
 		key: 'USAGE_EXPLORER',
-	},
-	{
-		path: ROUTES.INSTRUMENTATION,
-		exact: true,
-		component: GettingStarted,
-		isPrivate: true,
-		key: 'INSTRUMENTATION',
 	},
 	{
 		path: ROUTES.ALL_DASHBOARD,

@@ -38,7 +38,7 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 	const { t } = useTranslation(['titles']);
 
 	useEffect(() => {
-		if (pathname === '/onboarding') {
+		if (pathname === '/get-started') {
 			setRenderFullScreen(true);
 		} else {
 			setRenderFullScreen(false);
