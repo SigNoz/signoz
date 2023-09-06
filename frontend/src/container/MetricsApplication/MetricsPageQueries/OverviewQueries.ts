@@ -16,6 +16,7 @@ import {
 	MetricsType,
 	OPERATION_LEGENDS,
 	QUERYNAME_AND_EXPRESSION,
+	TOP_LEVEL_OPERATIONS,
 	WidgetKeys,
 } from '../constant';
 import {
@@ -67,8 +68,8 @@ export const latency = ({
 				key: isSpanMetricEnable ? WidgetKeys.Operation : WidgetKeys.Name,
 				type: MetricsType.Tag,
 			},
-			op: OPERATORS.IN.toLowerCase(), // TODO: need to remove toLowerCase() this once backend is changed
-			value: [...topLevelOperationsRoute],
+			op: OPERATORS.IN,
+			value: TOP_LEVEL_OPERATIONS,
 		},
 		...tagFilterItems,
 	];
@@ -139,7 +140,7 @@ export const apDexTracesQueryBuilderQueries = ({
 				type: MetricsType.Tag,
 			},
 			op: OPERATORS.IN,
-			value: [...topLevelOperationsRoute],
+			value: TOP_LEVEL_OPERATIONS,
 		},
 		...tagFilterItems,
 	];
@@ -187,7 +188,7 @@ export const apDexTracesQueryBuilderQueries = ({
 				type: MetricsType.Tag,
 			},
 			op: OPERATORS.IN,
-			value: [...topLevelOperationsRoute],
+			value: TOP_LEVEL_OPERATIONS,
 		},
 	];
 
@@ -234,7 +235,7 @@ export const apDexTracesQueryBuilderQueries = ({
 				type: MetricsType.Tag,
 			},
 			op: OPERATORS.IN,
-			value: [...topLevelOperationsRoute],
+			value: TOP_LEVEL_OPERATIONS,
 		},
 	];
 
@@ -317,7 +318,7 @@ export const apDexMetricsQueryBuilderQueries = ({
 				type: MetricsType.Tag,
 			},
 			op: OPERATORS.IN,
-			value: [...topLevelOperationsRoute],
+			value: TOP_LEVEL_OPERATIONS,
 		},
 		...tagFilterItems,
 	];
@@ -365,7 +366,7 @@ export const apDexMetricsQueryBuilderQueries = ({
 				type: MetricsType.Tag,
 			},
 			op: OPERATORS.IN,
-			value: [...topLevelOperationsRoute],
+			value: TOP_LEVEL_OPERATIONS,
 		},
 		...tagFilterItems,
 	];
@@ -413,7 +414,7 @@ export const apDexMetricsQueryBuilderQueries = ({
 				type: MetricsType.Tag,
 			},
 			op: OPERATORS.IN,
-			value: [...topLevelOperationsRoute],
+			value: TOP_LEVEL_OPERATIONS,
 		},
 		...tagFilterItems,
 	];
@@ -486,7 +487,7 @@ export const operationPerSec = ({
 					type: MetricsType.Tag,
 				},
 				op: OPERATORS.IN,
-				value: topLevelOperations,
+				value: TOP_LEVEL_OPERATIONS,
 			},
 			...tagFilterItems,
 		],
@@ -544,7 +545,7 @@ export const errorPercentage = ({
 				type: MetricsType.Tag,
 			},
 			op: OPERATORS.IN,
-			value: topLevelOperations,
+			value: TOP_LEVEL_OPERATIONS,
 		},
 		{
 			id: '',
@@ -570,7 +571,7 @@ export const errorPercentage = ({
 				type: MetricsType.Resource,
 			},
 			op: OPERATORS.IN,
-			value: [`${servicename}`],
+			value: [servicename],
 		},
 		{
 			id: '',
@@ -581,7 +582,7 @@ export const errorPercentage = ({
 				type: MetricsType.Tag,
 			},
 			op: OPERATORS.IN,
-			value: topLevelOperations,
+			value: TOP_LEVEL_OPERATIONS,
 		},
 		...tagFilterItems,
 	];
