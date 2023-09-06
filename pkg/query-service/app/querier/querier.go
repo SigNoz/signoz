@@ -90,9 +90,9 @@ func (q *querier) execPromQuery(ctx context.Context, params *model.QueryRangePar
 	for _, v := range matrix {
 		var s v3.Series
 		s.Labels = v.Metric.Copy().Map()
-		for idx := range v.Points {
-			p := v.Points[idx]
-			s.Points = append(s.Points, v3.Point{Timestamp: p.T, Value: p.V})
+		for idx := range v.Floats {
+			p := v.Floats[idx]
+			s.Points = append(s.Points, v3.Point{Timestamp: p.T, Value: p.F})
 		}
 		seriesList = append(seriesList, &s)
 	}

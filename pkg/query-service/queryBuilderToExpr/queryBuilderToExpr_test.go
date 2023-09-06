@@ -1,7 +1,6 @@
 package queryBuilderToExpr
 
 import (
-	"fmt"
 	"testing"
 
 	. "github.com/smartystreets/goconvey/convey"

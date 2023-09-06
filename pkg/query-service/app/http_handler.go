@@ -645,8 +645,8 @@ func (aH *APIHandler) QueryRangeMetricsV2(w http.ResponseWriter, r *http.Request
 					var s model.Series
 					s.QueryName = name
 					s.Labels = v.Metric.Copy().Map()
-					for _, p := range v.Points {
-						s.Points = append(s.Points, model.MetricPoint{Timestamp: p.T, Value: p.V})
+					for _, p := range v.Floats {
+						s.Points = append(s.Points, model.MetricPoint{Timestamp: p.T, Value: p.F})
 					}
 					seriesList = append(seriesList, &s)
 				}
@@ -2838,8 +2838,8 @@ func (aH *APIHandler) execPromQueries(ctx context.Context, metricsQueryRangePara
 			for _, v := range matrix {
 				var s v3.Series
 				s.Labels = v.Metric.Copy().Map()
-				for _, p := range v.Points {
-					s.Points = append(s.Points, v3.Point{Timestamp: p.T, Value: p.V})
+				for _, p := range v.Floats {
+					s.Points = append(s.Points, v3.Point{Timestamp: p.T, Value: p.F})
 				}
 				seriesList = append(seriesList, &s)
 			}
