@@ -17,5 +17,5 @@ export const useShareBuilderUrl = (defaultQuery: Query): void => {
 		if (!compositeQuery) {
 			redirectWithQueryBuilderData(defaultQuery);
 		}
-	}, [defaultQuery, urlQuery, redirectWithQueryBuilderData, compositeQuery]);
+	}, [defaultQuery, urlQuery, compositeQuery, redirectWithQueryBuilderData]);
 };
