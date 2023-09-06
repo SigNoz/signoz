@@ -156,7 +156,7 @@ func TestLogPipelinesValidation(t *testing.T) {
 		ExpectedResponseStatusCode int
 	}{
 		{
-			Name: "Valid orderId",
+			Name: "Valid Pipeline",
 			Pipeline: logparsingpipeline.PostablePipeline{
 				OrderId: 1,
 				Name:    "pipeline 1",

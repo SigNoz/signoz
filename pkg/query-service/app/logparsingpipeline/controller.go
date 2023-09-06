@@ -6,6 +6,7 @@ import (
 	"fmt"
 
 	"github.com/jmoiron/sqlx"
+	"github.com/pkg/errors"
 	"go.signoz.io/signoz/pkg/query-service/agentConf"
 	"go.signoz.io/signoz/pkg/query-service/auth"
 	"go.signoz.io/signoz/pkg/query-service/model"
@@ -39,7 +40,7 @@ func (ic *LogParsingPipelineController) ApplyPipelines(
 	// get user id from context
 	userId, authErr := auth.ExtractUserIdFromContext(ctx)
 	if authErr != nil {
-		return nil, model.UnauthorizedError(fmt.Errorf("failed to get userId from context %v", authErr))
+		return nil, model.UnauthorizedError(errors.Wrap(authErr, "failed to get userId from context"))
 	}
 
 	var pipelines []model.Pipeline
@@ -66,10 +67,6 @@ func (ic *LogParsingPipelineController) ApplyPipelines(
 				zap.S().Errorf("failed to find edited pipeline %s", err.Error())
 				return nil, model.WrapApiError(err, "failed to find edited pipeline")
 			}
-			if selected == nil {
-				return nil, model.NotFoundError(fmt.Errorf("failed to find pipeline"))
-			}
-
 			pipelines = append(pipelines, *selected)
 		}
 
@@ -79,8 +76,8 @@ func (ic *LogParsingPipelineController) ApplyPipelines(
 	filterConfig, names, translationErr := PreparePipelineProcessor(pipelines)
 	if translationErr != nil {
 		zap.S().Errorf("failed to generate processor config from pipelines for deployment %w", translationErr)
-		return nil, model.BadRequest(fmt.Errorf(
-			"failed to generate processor config from pipelines for deployment %w", translationErr,
+		return nil, model.BadRequest(errors.Wrap(
+			translationErr, "failed to generate processor config from pipelines for deployment",
 		))
 	}
 
@@ -133,7 +130,7 @@ func (ic *LogParsingPipelineController) GetPipelinesByVersion(
 		return nil, model.InternalError(fmt.Errorf("failed to get pipelines for given version"))
 	}
 	configVersion, err := agentConf.GetConfigVersion(ctx, agentConf.ElementTypeLogPipelines, version)
-	if err != nil || configVersion == nil {
+	if err != nil {
 		zap.S().Errorf("failed to get config for version %d, %s", version, err.Error())
 		return nil, model.WrapApiError(err, "failed to get config for given version")
 	}

@@ -43,7 +43,9 @@ func (r *Repo) insertPipeline(
 	ctx context.Context, postable *PostablePipeline,
 ) (*model.Pipeline, *model.ApiError) {
 	if err := postable.IsValid(); err != nil {
-		return nil, model.BadRequest(err)
+		return nil, model.BadRequest(errors.Wrap(err,
+			"pipeline is not valid",
+		))
 	}
 
 	rawConfig, err := json.Marshal(postable.Config)
@@ -105,9 +107,7 @@ func (r *Repo) insertPipeline(
 }
 
 // getPipelinesByVersion returns pipelines associated with a given version
-func (r *Repo) getPipelinesByVersion(
-	ctx context.Context, version int,
-) ([]model.Pipeline, []error) {
+func (r *Repo) getPipelinesByVersion(ctx context.Context, version int) ([]model.Pipeline, []error) {
 	var errors []error
 	pipelines := []model.Pipeline{}
 
@@ -182,7 +182,7 @@ func (r *Repo) GetPipeline(
 		err := pipelines[0].ParseRawConfig()
 		if err != nil {
 			zap.S().Errorf("invalid pipeline config found", id, err)
-			return &pipelines[0], model.InternalError(
+			return nil, model.InternalError(
 				errors.Wrap(err, "found an invalid pipeline config"),
 			)
 		}

@@ -19,7 +19,10 @@ import (
 var lockLogsPipelineSpec sync.RWMutex
 
 func UpsertLogsParsingProcessor(
-	ctx context.Context, parsingProcessors map[string]interface{}, parsingProcessorsNames []string, callback func(string, string, error),
+	ctx context.Context,
+	parsingProcessors map[string]interface{},
+	parsingProcessorsNames []string,
+	callback func(string, string, error),
 ) (string, *coreModel.ApiError) {
 	confHash := ""
 	if opAmpServer == nil {

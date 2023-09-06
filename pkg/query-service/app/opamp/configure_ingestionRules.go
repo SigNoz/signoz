@@ -17,8 +17,10 @@ import (
 // inserts or updates ingestion controller processors depending
 // on the signal (metrics or traces)
 func UpsertControlProcessors(
-	ctx context.Context, signal string,
-	processors map[string]interface{}, callback model.OnChangeCallback,
+	ctx context.Context,
+	signal string,
+	processors map[string]interface{},
+	callback model.OnChangeCallback,
 ) (hash string, fnerr *coreModel.ApiError) {
 	// note: only processors enabled through tracesPipelinePlan will be added
 	// to pipeline. To enable or disable processors from pipeline, call
