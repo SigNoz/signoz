@@ -64,8 +64,12 @@ func (ic *LogParsingPipelineController) ApplyPipelines(
 			selected, err := ic.GetPipeline(ctx, r.Id)
 			if err != nil {
 				zap.S().Errorf("failed to find edited pipeline %s", err.Error())
-				return nil, model.WrapApiError(err, "failed to find pipeline, invalid request")
+				return nil, model.WrapApiError(err, "failed to find edited pipeline")
 			}
+			if selected == nil {
+				return nil, model.NotFoundError(fmt.Errorf("failed to find pipeline"))
+			}
+
 			pipelines = append(pipelines, *selected)
 		}
 

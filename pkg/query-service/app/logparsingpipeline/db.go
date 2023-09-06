@@ -48,8 +48,8 @@ func (r *Repo) insertPipeline(
 
 	rawConfig, err := json.Marshal(postable.Config)
 	if err != nil {
-		return nil, model.BadRequestStr(fmt.Sprintf(
-			"failed to unmarshal postable pipeline config: %w", err,
+		return nil, model.BadRequest(errors.Wrap(err,
+			"failed to unmarshal postable pipeline config",
 		))
 	}
 
