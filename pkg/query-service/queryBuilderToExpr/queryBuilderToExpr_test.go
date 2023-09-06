@@ -157,7 +157,6 @@ func TestParse(t *testing.T) {
 				So(err, ShouldNotBeNil)
 			} else {
 				So(err, ShouldBeNil)
-				fmt.Println(x)
 				So(x, ShouldEqual, tt.Expr)
 			}
 		})
