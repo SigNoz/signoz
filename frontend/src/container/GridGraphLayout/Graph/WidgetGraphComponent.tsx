@@ -197,9 +197,7 @@ function WidgetGraphComponent({
 				};
 				setTimeout(() => {
 					history.push(
-						`${encodeURIComponent(history.location.pathname)}/new?${createQueryParams(
-							queryParams,
-						)}`,
+						`${history.location.pathname}/new?${createQueryParams(queryParams)}`,
 					);
 				}, 1500);
 			});

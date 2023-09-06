@@ -52,9 +52,7 @@ function DashboardGraphSlider({ toggleAddWidget }: Props): JSX.Element {
 				};
 
 				history.push(
-					`${encodeURIComponent(history.location.pathname)}/new?${createQueryParams(
-						queryParams,
-					)}`,
+					`${history.location.pathname}/new?${createQueryParams(queryParams)}`,
 				);
 			} catch (error) {
 				notifications.error({

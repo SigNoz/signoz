@@ -103,9 +103,7 @@ function ErrorDetails(props: ErrorDetailsProps): JSX.Element {
 			};
 
 			history.replace(
-				`${encodeURIComponent(history.location.pathname)}?${createQueryParams(
-					queryParams,
-				)}`,
+				`${history.location.pathname}?${createQueryParams(queryParams)}`,
 			);
 		} catch (error) {
 			notifications.error({

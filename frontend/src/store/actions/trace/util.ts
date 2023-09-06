@@ -70,9 +70,7 @@ export const updateURL = (
 		userSelectedFilter: JSON.stringify(Object.fromEntries(userSelectedFilter)),
 	};
 	history.replace(
-		`${encodeURIComponent(history.location.pathname)}?${createQueryParams(
-			queryParams,
-		)}`,
+		`${history.location.pathname}?${createQueryParams(queryParams)}`,
 	);
 };
 
