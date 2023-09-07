@@ -1,4 +1,3 @@
-import './wdyr';
 import './ReactI18';
 
 import AppRoutes from 'AppRoutes';
