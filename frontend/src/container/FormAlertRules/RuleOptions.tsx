@@ -159,11 +159,6 @@ function RuleOptions({
 	const categorySelectOptions = getCategorySelectOptionByName(
 		selectedCategory?.name,
 	);
-	console.log(
-		'alertDef?.condition',
-		alertDef?.condition,
-		alertDef?.condition?.for,
-	);
 
 	return (
 		<>

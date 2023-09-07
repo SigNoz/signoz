@@ -607,7 +607,7 @@ func (r *ThresholdRule) runChQuery(ctx context.Context, db clickhouse.Conn, quer
 	zap.S().Debugf("ruleid:", r.ID(), "\t resultmap(potential alerts):", len(resultMap))
 
 	// if the data is missing for `For` duration then we should send alert
-	if r.lastTimestampWithDatapoints.Add(r.Condition().For).Before(time.Now()) {
+	if r.ruleCondition.AlertOnAbsent && r.lastTimestampWithDatapoints.Add(r.Condition().For).Before(time.Now()) {
 		zap.S().Debugf("ruleid:", r.ID(), "\t msg: no data found for rule condition")
 		lbls := labels.NewBuilder(labels.Labels{})
 		lbls.Set("lastSeen", r.lastTimestampWithDatapoints.Format("2006-01-02 15:04:05"))
