@@ -14,7 +14,7 @@ import { useQuery } from 'react-query';
 import { useLocation } from 'react-router-dom';
 import { SuccessResponse } from 'types/api';
 import { PayloadProps } from 'types/api/user/getUser';
-import * as loginPrecheck from 'types/api/user/loginPrecheck';
+import { PayloadProps as LoginPrecheckPayloadProps } from 'types/api/user/loginPrecheck';
 
 import {
 	ButtonContainer,
@@ -41,7 +41,7 @@ function SignUp({ version }: SignUpProps): JSX.Element {
 	const { t } = useTranslation(['signup']);
 	const [loading, setLoading] = useState(false);
 
-	const [precheck, setPrecheck] = useState<loginPrecheck.PayloadProps>({
+	const [precheck, setPrecheck] = useState<LoginPrecheckPayloadProps>({
 		sso: false,
 		isUser: false,
 	});

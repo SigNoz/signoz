@@ -4,6 +4,7 @@ import { Events } from 'constants/events';
 import GridPanelSwitch from 'container/GridPanelSwitch';
 import { useChartMutable } from 'hooks/useChartMutable';
 import { useNotifications } from 'hooks/useNotifications';
+import createQueryParams from 'lib/createQueryParams';
 import history from 'lib/history';
 import { isEmpty, isEqual } from 'lodash-es';
 import {
@@ -190,9 +191,13 @@ function WidgetGraphComponent({
 					message: 'Panel cloned successfully, redirecting to new copy.',
 				});
 
+				const queryParams = {
+					graphType: widget?.panelTypes,
+					widgetId: uuid,
+				};
 				setTimeout(() => {
 					history.push(
-						`${history.location.pathname}/new?graphType=${widget?.panelTypes}&widgetId=${uuid}`,
+						`${history.location.pathname}/new?${createQueryParams(queryParams)}`,
 					);
 				}, 1500);
 			});

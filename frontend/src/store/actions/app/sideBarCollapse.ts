@@ -3,7 +3,7 @@ import { IS_SIDEBAR_COLLAPSED } from 'constants/app';
 import { Dispatch } from 'redux';
 import AppActions from 'types/actions';
 
-export const SideBarCollapse = (
+export const sideBarCollapse = (
 	collapseState: boolean,
 ): ((dispatch: Dispatch<AppActions>) => void) => {
 	setLocalStorageKey(IS_SIDEBAR_COLLAPSED, `${collapseState}`);
