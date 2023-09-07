@@ -116,10 +116,12 @@ function LogsExplorerList({
 		}
 
 		return (
-			<Card style={{ width: '100%' }} bodyStyle={{ ...contentStyle }}>
+			<Card
+				style={{ width: '100%' }}
+				bodyStyle={{ ...contentStyle, height: '100%' }}
+			>
 				<Virtuoso
 					ref={ref}
-					useWindowScroll
 					data={logs}
 					endReached={onEndReached}
 					totalCount={logs.length}
