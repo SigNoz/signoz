@@ -5,6 +5,7 @@ import { ResizeTable } from 'components/ResizeTable';
 import { getNanoSeconds } from 'container/AllError/utils';
 import dayjs from 'dayjs';
 import { useNotifications } from 'hooks/useNotifications';
+import createQueryParams from 'lib/createQueryParams';
 import history from 'lib/history';
 import { urlKey } from 'pages/ErrorDetails/utils';
 import { useMemo, useState } from 'react';
@@ -95,10 +96,14 @@ function ErrorDetails(props: ErrorDetailsProps): JSX.Element {
 				return;
 			}
 
+			const queryParams = {
+				groupId: idPayload.groupID,
+				timestamp: getNanoSeconds(timestamp),
+				errorId: id,
+			};
+
 			history.replace(
-				`${history.location.pathname}?&groupId=${
-					idPayload.groupID
-				}&timestamp=${getNanoSeconds(timestamp)}&errorId=${id}`,
+				`${history.location.pathname}?${createQueryParams(queryParams)}`,
 			);
 		} catch (error) {
 			notifications.error({
