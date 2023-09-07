@@ -3,7 +3,7 @@ import { parse } from 'papaparse';
 
 import { orderByValueDelimiter } from '../OrderByFilter/utils';
 
-export const tagRegexp = /([a-zA-Z0-9_.:@$()\-/\\]+)\s*(!=|=|<=|<|>=|>|IN|NOT_IN|LIKE|NOT_LIKE|REGEX|NOT_REGEX|EXISTS|NOT_EXISTS|CONTAINS|NOT_CONTAINS)\s*([\s\S]*)/g;
+export const tagRegexp = /([a-zA-Z0-9_.:@$()\-/\\]+)\s*(!=|=|<=|<|>=|>|IN|NOT_IN|LIKE|NOT_LIKE|REGEX|NOT_REGEX|EXISTS|NOT_EXISTS|CONTAINS|NOT_CONTAINS|-->|--!>)\s*([\s\S]*)/g;
 
 export function isInNInOperator(value: string): boolean {
 	return value === OPERATORS.IN || value === OPERATORS.NIN;
