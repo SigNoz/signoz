@@ -1,4 +1,3 @@
-import Spinner from 'components/Spinner';
 import { FeatureKeys } from 'constants/features';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import Graph from 'container/GridGraphLayout/Graph/';
@@ -24,8 +23,6 @@ function ServiceOverview({
 	handleGraphClick,
 	selectedTraceTags,
 	selectedTimeStamp,
-	topLevelOperationsRoute,
-	topLevelOperationsLoading,
 }: ServiceOverviewProps): JSX.Element {
 	const { servicename } = useParams<IServiceName>();
 
@@ -52,7 +49,6 @@ function ServiceOverview({
 						servicename,
 						tagFilterItems,
 						isSpanMetricEnable,
-						topLevelOperationsRoute,
 					}),
 					clickhouse_sql: [],
 					id: uuid(),
@@ -60,18 +56,8 @@ function ServiceOverview({
 				title: GraphTitle.LATENCY,
 				panelTypes: PANEL_TYPES.TIME_SERIES,
 			}),
-		[servicename, isSpanMetricEnable, topLevelOperationsRoute, tagFilterItems],
+		[servicename, isSpanMetricEnable, tagFilterItems],
 	);
-
-	const isQueryEnabled = topLevelOperationsRoute.length > 0;
-
-	if (topLevelOperationsLoading) {
-		return (
-			<Card>
-				<Spinner height="40vh" tip="Loading..." />
-			</Card>
-		);
-	}
 
 	return (
 		<>
@@ -95,7 +81,6 @@ function ServiceOverview({
 						widget={latencyWidget}
 						yAxisUnit="ns"
 						onClickHandler={handleGraphClick('Service')}
-						isQueryEnabled={isQueryEnabled}
 						headerMenuList={MENU_ITEMS}
 					/>
 				</GraphContainer>
@@ -109,8 +94,6 @@ interface ServiceOverviewProps {
 	selectedTraceTags: string;
 	onDragSelect: (start: number, end: number) => void;
 	handleGraphClick: (type: string) => ClickHandlerType;
-	topLevelOperationsRoute: string[];
-	topLevelOperationsLoading: boolean;
 }
 
 export default ServiceOverview;

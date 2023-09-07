@@ -1,7 +1,3 @@
-import { Typography } from 'antd';
-import axios from 'axios';
-import Spinner from 'components/Spinner';
-import { SOMETHING_WENT_WRONG } from 'constants/api';
 import Graph from 'container/GridGraphLayout/Graph/';
 import { MENU_ITEMS } from 'container/MetricsApplication/constant';
 import { Card, GraphContainer } from 'container/MetricsApplication/styles';
@@ -12,9 +8,6 @@ import { ClickHandlerType } from '../Overview';
 function TopLevelOperation({
 	name,
 	opName,
-	topLevelOperationsIsError,
-	topLevelOperationsError,
-	topLevelOperationsLoading,
 	onDragSelect,
 	handleGraphClick,
 	widget,
@@ -22,29 +15,16 @@ function TopLevelOperation({
 }: TopLevelOperationProps): JSX.Element {
 	return (
 		<Card>
-			{topLevelOperationsIsError ? (
-				<Typography>
-					{axios.isAxiosError(topLevelOperationsError)
-						? topLevelOperationsError.response?.data
-						: SOMETHING_WENT_WRONG}
-				</Typography>
-			) : (
-				<GraphContainer>
-					{topLevelOperationsLoading && (
-						<Spinner size="large" tip="Loading..." height="40vh" />
-					)}
-					{!topLevelOperationsLoading && (
-						<Graph
-							name={name}
-							headerMenuList={MENU_ITEMS}
-							widget={widget}
-							onClickHandler={handleGraphClick(opName)}
-							yAxisUnit={yAxisUnit}
-							onDragSelect={onDragSelect}
-						/>
-					)}
-				</GraphContainer>
-			)}
+			<GraphContainer>
+				<Graph
+					name={name}
+					headerMenuList={MENU_ITEMS}
+					widget={widget}
+					onClickHandler={handleGraphClick(opName)}
+					yAxisUnit={yAxisUnit}
+					onDragSelect={onDragSelect}
+				/>
+			</GraphContainer>
 		</Card>
 	);
 }
@@ -52,9 +32,6 @@ function TopLevelOperation({
 interface TopLevelOperationProps {
 	name: string;
 	opName: string;
-	topLevelOperationsIsError: boolean;
-	topLevelOperationsError: unknown;
-	topLevelOperationsLoading: boolean;
 	onDragSelect: (start: number, end: number) => void;
 	handleGraphClick: (type: string) => ClickHandlerType;
 	widget: Widgets;

@@ -35,7 +35,6 @@ export const latency = ({
 	servicename,
 	tagFilterItems,
 	isSpanMetricEnable = false,
-	topLevelOperationsRoute,
 }: LatencyProps): QueryBuilderData => {
 	const newAutoCompleteData: BaseAutocompleteData = {
 		key: isSpanMetricEnable
@@ -95,7 +94,6 @@ export const latency = ({
 export const apDexTracesQueryBuilderQueries = ({
 	servicename,
 	tagFilterItems,
-	topLevelOperationsRoute,
 	threashold,
 }: ApDexProps): QueryBuilderData => {
 	const autoCompleteDataA: BaseAutocompleteData = {
@@ -271,7 +269,6 @@ export const apDexTracesQueryBuilderQueries = ({
 export const apDexMetricsQueryBuilderQueries = ({
 	servicename,
 	tagFilterItems,
-	topLevelOperationsRoute,
 	threashold,
 	delta,
 	metricsBuckets,
@@ -454,7 +451,6 @@ export const apDexMetricsQueryBuilderQueries = ({
 export const operationPerSec = ({
 	servicename,
 	tagFilterItems,
-	topLevelOperations,
 }: OperationPerSecProps): QueryBuilderData => {
 	const autocompleteData: BaseAutocompleteData[] = [
 		{
@@ -507,7 +503,6 @@ export const operationPerSec = ({
 export const errorPercentage = ({
 	servicename,
 	tagFilterItems,
-	topLevelOperations,
 }: OperationPerSecProps): QueryBuilderData => {
 	const autocompleteDataA: BaseAutocompleteData = {
 		key: WidgetKeys.SignozCallsTotal,

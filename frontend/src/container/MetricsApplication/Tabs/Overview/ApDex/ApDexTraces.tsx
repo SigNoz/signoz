@@ -16,7 +16,6 @@ import { ApDexDataSwitcherProps } from './types';
 function ApDexTraces({
 	handleGraphClick,
 	onDragSelect,
-	topLevelOperationsRoute,
 	tagFilterItems,
 	thresholdValue,
 }: ApDexDataSwitcherProps): JSX.Element {
@@ -31,7 +30,6 @@ function ApDexTraces({
 					builder: apDexTracesQueryBuilderQueries({
 						servicename,
 						tagFilterItems,
-						topLevelOperationsRoute,
 						threashold: thresholdValue || 0,
 					}),
 					clickhouse_sql: [],
@@ -40,11 +38,10 @@ function ApDexTraces({
 				title: GraphTitle.APDEX,
 				panelTypes: PANEL_TYPES.TIME_SERIES,
 			}),
-		[servicename, tagFilterItems, thresholdValue, topLevelOperationsRoute],
+		[servicename, tagFilterItems, thresholdValue],
 	);
 
-	const isQueryEnabled =
-		topLevelOperationsRoute.length > 0 && thresholdValue !== undefined;
+	const isQueryEnabled = thresholdValue !== undefined;
 
 	return (
 		<Graph

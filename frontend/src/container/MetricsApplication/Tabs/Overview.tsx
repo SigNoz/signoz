@@ -1,6 +1,3 @@
-import getTopLevelOperations, {
-	ServiceDataProps,
-} from 'api/metrics/getTopLevelOperations';
 import { ActiveElement, Chart, ChartData, ChartEvent } from 'chart.js';
 import { FeatureKeys } from 'constants/features';
 import { QueryParams } from 'constants/query';
@@ -16,14 +13,10 @@ import {
 } from 'hooks/useResourceAttribute/utils';
 import history from 'lib/history';
 import { useCallback, useMemo, useState } from 'react';
-import { useQuery } from 'react-query';
-import { useDispatch, useSelector } from 'react-redux';
+import { useDispatch } from 'react-redux';
 import { useLocation, useParams } from 'react-router-dom';
 import { UpdateTimeInterval } from 'store/actions';
-import { AppState } from 'store/reducers';
 import { EQueryType } from 'types/common/dashboard';
-import { GlobalReducer } from 'types/reducer/globalTime';
-import { Tags } from 'types/reducer/trace';
 import { v4 as uuid } from 'uuid';
 
 import { GraphTitle } from '../constant';
@@ -53,17 +46,10 @@ import {
 } from './util';
 
 function Application(): JSX.Element {
-	const { maxTime, minTime } = useSelector<AppState, GlobalReducer>(
-		(state) => state.globalTime,
-	);
 	const { servicename } = useParams<IServiceName>();
 	const [selectedTimeStamp, setSelectedTimeStamp] = useState<number>(0);
 	const { search } = useLocation();
 	const { queries } = useResourceAttribute();
-	const selectedTags = useMemo(
-		() => (convertRawQueriesToTraceSelectedTags(queries) as Tags[]) || [],
-		[queries],
-	);
 	const isSpanMetricEnabled = useFeatureFlag(FeatureKeys.USE_SPAN_METRICS)
 		?.active;
 
@@ -90,16 +76,6 @@ function Application(): JSX.Element {
 		[handleSetTimeStamp],
 	);
 
-	const {
-		data: topLevelOperations,
-		isLoading: topLevelOperationsLoading,
-		error: topLevelOperationsError,
-		isError: topLevelOperationsIsError,
-	} = useQuery<ServiceDataProps>({
-		queryKey: [servicename, minTime, maxTime, selectedTags],
-		queryFn: getTopLevelOperations,
-	});
-
 	const selectedTraceTags: string = JSON.stringify(
 		convertRawQueriesToTraceSelectedTags(queries) || [],
 	);
@@ -108,11 +84,6 @@ function Application(): JSX.Element {
 		() =>
 			handleNonInQueryRange(resourceAttributesToTagFilterItems(queries)) || [],
 		[queries],
-	);
-
-	const topLevelOperationsRoute = useMemo(
-		() => (topLevelOperations ? topLevelOperations[servicename || ''] : []),
-		[servicename, topLevelOperations],
 	);
 
 	const operationPerSecWidget = useMemo(
@@ -124,7 +95,6 @@ function Application(): JSX.Element {
 					builder: operationPerSec({
 						servicename,
 						tagFilterItems,
-						topLevelOperations: topLevelOperationsRoute,
 					}),
 					clickhouse_sql: [],
 					id: uuid(),
@@ -132,7 +102,7 @@ function Application(): JSX.Element {
 				title: GraphTitle.RATE_PER_OPS,
 				panelTypes: PANEL_TYPES.TIME_SERIES,
 			}),
-		[servicename, tagFilterItems, topLevelOperationsRoute],
+		[servicename, tagFilterItems],
 	);
 
 	const errorPercentageWidget = useMemo(
@@ -144,7 +114,6 @@ function Application(): JSX.Element {
 					builder: errorPercentage({
 						servicename,
 						tagFilterItems,
-						topLevelOperations: topLevelOperationsRoute,
 					}),
 					clickhouse_sql: [],
 					id: uuid(),
@@ -152,7 +121,7 @@ function Application(): JSX.Element {
 				title: GraphTitle.ERROR_PERCENTAGE,
 				panelTypes: PANEL_TYPES.TIME_SERIES,
 			}),
-		[servicename, tagFilterItems, topLevelOperationsRoute],
+		[servicename, tagFilterItems],
 	);
 
 	const onDragSelect = useCallback(
@@ -196,8 +165,6 @@ function Application(): JSX.Element {
 						handleGraphClick={handleGraphClick}
 						selectedTimeStamp={selectedTimeStamp}
 						selectedTraceTags={selectedTraceTags}
-						topLevelOperationsRoute={topLevelOperationsRoute}
-						topLevelOperationsLoading={topLevelOperationsLoading}
 					/>
 				</Col>
 
@@ -217,9 +184,6 @@ function Application(): JSX.Element {
 					<TopLevelOperation
 						handleGraphClick={handleGraphClick}
 						onDragSelect={onDragSelect}
-						topLevelOperationsError={topLevelOperationsError}
-						topLevelOperationsLoading={topLevelOperationsLoading}
-						topLevelOperationsIsError={topLevelOperationsIsError}
 						name="operations_per_sec"
 						widget={operationPerSecWidget}
 						yAxisUnit="ops"
@@ -245,7 +209,6 @@ function Application(): JSX.Element {
 						<ApDex
 							handleGraphClick={handleGraphClick}
 							onDragSelect={onDragSelect}
-							topLevelOperationsRoute={topLevelOperationsRoute}
 							tagFilterItems={tagFilterItems}
 						/>
 					</ColApDexContainer>
@@ -262,9 +225,6 @@ function Application(): JSX.Element {
 						<TopLevelOperation
 							handleGraphClick={handleGraphClick}
 							onDragSelect={onDragSelect}
-							topLevelOperationsError={topLevelOperationsError}
-							topLevelOperationsLoading={topLevelOperationsLoading}
-							topLevelOperationsIsError={topLevelOperationsIsError}
 							name="error_percentage_%"
 							widget={errorPercentageWidget}
 							yAxisUnit="%"
