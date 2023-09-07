@@ -25,7 +25,7 @@ import {
 } from './config';
 import { useSelectedLogView } from './hooks';
 import PopoverContent from './PopoverContent';
-import SpaceContainer from './styles';
+import SpaceContainer, { StyledCol } from './styles';
 
 function Logs(): JSX.Element {
 	const dispatch = useDispatch<Dispatch<AppActions>>();
@@ -93,7 +93,7 @@ function Logs(): JSX.Element {
 
 			<Row gutter={20} wrap={false}>
 				<LogsFilters />
-				<Col flex={1}>
+				<StyledCol flex={1}>
 					<Row>
 						<Col flex={1}>
 							<Space align="baseline" direction="horizontal">
@@ -131,7 +131,7 @@ function Logs(): JSX.Element {
 					</Row>
 
 					<LogsTable viewMode={viewMode} linesPerRow={linesPerRow} />
-				</Col>
+				</StyledCol>
 			</Row>
 
 			<LogDetailedView />

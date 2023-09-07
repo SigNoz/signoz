@@ -112,10 +112,12 @@ function LiveLogsList({ logs }: LiveLogsListProps): JSX.Element {
 							}}
 						/>
 					) : (
-						<Card style={{ width: '100%' }} bodyStyle={{ ...contentStyle }}>
+						<Card
+							style={{ width: '100%' }}
+							bodyStyle={{ ...contentStyle, height: '100%' }}
+						>
 							<Virtuoso
 								ref={ref}
-								useWindowScroll
 								data={logs}
 								totalCount={logs.length}
 								itemContent={getItemContent}

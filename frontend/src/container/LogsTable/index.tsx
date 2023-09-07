@@ -1,4 +1,4 @@
-import { Card, Typography } from 'antd';
+import { Typography } from 'antd';
 // components
 import ListLogView from 'components/Logs/ListLogView';
 import RawLogView from 'components/Logs/RawLogView';
@@ -15,7 +15,7 @@ import { AppState } from 'store/reducers';
 import { ILogsReducer } from 'types/reducer/logs';
 
 // styles
-import { Container, Heading } from './styles';
+import { Container, Heading, LogsCard } from './styles';
 
 export type LogViewMode = 'raw' | 'table' | 'list';
 
@@ -85,13 +85,9 @@ function LogsTable(props: LogsTableProps): JSX.Element {
 		}
 
 		return (
-			<Card bodyStyle={contentStyle}>
-				<Virtuoso
-					useWindowScroll
-					totalCount={logs.length}
-					itemContent={getItemContent}
-				/>
-			</Card>
+			<LogsCard bodyStyle={{ ...contentStyle, height: '100%' }}>
+				<Virtuoso totalCount={logs.length} itemContent={getItemContent} />
+			</LogsCard>
 		);
 	}, [getItemContent, linesPerRow, logs, onSetActiveLog, selected, viewMode]);
 

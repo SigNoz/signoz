@@ -6,6 +6,9 @@ export const Container = styled.div`
 	width: 100%;
 	margin-bottom: 1rem;
 	margin-top: 0.5rem;
+	display: flex;
+	flex-direction: column;
+	flex: 1;
 `;
 
 export const Heading = styled(Card)`
@@ -14,4 +17,8 @@ export const Heading = styled(Card)`
 	.ant-card-body {
 		padding: 0.3rem 0.5rem;
 	}
+`;
+
+export const LogsCard = styled(Card)`
+	flex: 1;
 `;
