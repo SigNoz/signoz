@@ -2,7 +2,7 @@ import ROUTES from 'constants/routes';
 import history from 'lib/history';
 import { generatePath } from 'react-router-dom';
 
-import { Data } from '..';
+import { Data } from '../..';
 import { TableLinkText } from './styles';
 
 function Name(name: Data['name'], data: Data): JSX.Element {
