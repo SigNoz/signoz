@@ -2,7 +2,7 @@ import { DEBOUNCE_DELAY } from 'constants/queryBuilderFilterConfig';
 import useDebounce from 'hooks/useDebounce';
 import { IOption } from 'hooks/useResourceAttribute/types';
 import { isEqual, uniqWith } from 'lodash-es';
-import * as Papa from 'papaparse';
+import { parse } from 'papaparse';
 import { useCallback, useMemo, useState } from 'react';
 import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { OrderByPayload } from 'types/api/queryBuilder/queryBuilderData';
@@ -45,7 +45,7 @@ export const useOrderByFilter = ({
 
 	const getUniqValues = useCallback((values: IOption[]): IOption[] => {
 		const modifiedValues = values.map((item) => {
-			const match = Papa.parse(item.value, { delimiter: orderByValueDelimiter });
+			const match = parse(item.value, { delimiter: orderByValueDelimiter });
 			if (!match) return { label: item.label, value: item.value };
 			// eslint-disable-next-line @typescript-eslint/naming-convention, @typescript-eslint/no-unused-vars
 			const [_, order] = match.data.flat() as string[];
@@ -141,7 +141,7 @@ export const useOrderByFilter = ({
 		const result = getUniqValues(validResult);
 
 		const orderByValues: OrderByPayload[] = result.map((item) => {
-			const match = Papa.parse(item.value, { delimiter: orderByValueDelimiter });
+			const match = parse(item.value, { delimiter: orderByValueDelimiter });
 
 			if (!match) {
 				return {
