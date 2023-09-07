@@ -1,9 +1,9 @@
 import { OPERATORS } from 'constants/queryBuilder';
-import * as Papa from 'papaparse';
+import { parse } from 'papaparse';
 
 import { orderByValueDelimiter } from '../OrderByFilter/utils';
 
-export const tagRegexp = /([a-zA-Z0-9_.:@$()\-/\\]+)\s*(!=|=|<=|<|>=|>|IN|NOT_IN|LIKE|NOT_LIKE|REGEX|NOT_REGEX|EXISTS|NOT_EXISTS|CONTAINS|NOT_CONTAINS)\s*([\s\S]*)/g;
+export const tagRegexp = /([a-zA-Z0-9_.:@$()\-/\\]+)\s*(!=|=|<=|<|>=|>|IN|NOT_IN|LIKE|NOT_LIKE|REGEX|NOT_REGEX|EXISTS|NOT_EXISTS|CONTAINS|NOT_CONTAINS|-->|--!>)\s*([\s\S]*)/g;
 
 export function isInNInOperator(value: string): boolean {
 	return value === OPERATORS.IN || value === OPERATORS.NIN;
@@ -25,7 +25,7 @@ export function getTagToken(tag: string): ITagToken {
 			tagKey: matchTagKey,
 			tagOperator: matchTagOperator,
 			tagValue: isInNInOperator(matchTagOperator)
-				? Papa.parse(matchTagValue).data.flat()
+				? parse(matchTagValue).data.flat()
 				: matchTagValue,
 		} as ITagToken;
 	}
@@ -118,7 +118,7 @@ export function checkCommaInValue(str: string): string {
 }
 
 export function getRemoveOrderFromValue(tag: string): string {
-	const match = Papa.parse(tag, { delimiter: orderByValueDelimiter });
+	const match = parse(tag, { delimiter: orderByValueDelimiter });
 	if (match) {
 		const [key] = match.data.flat() as string[];
 		return key;

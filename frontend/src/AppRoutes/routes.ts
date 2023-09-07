@@ -1,5 +1,4 @@
 import ROUTES from 'constants/routes';
-import DashboardWidget from 'pages/DashboardWidget';
 import { RouteProps } from 'react-router-dom';
 
 import {
@@ -8,6 +7,7 @@ import {
 	CreateAlertChannelAlerts,
 	CreateNewAlerts,
 	DashboardPage,
+	DashboardWidget,
 	EditAlertChannelsAlerts,
 	EditRulesPage,
 	ErrorDetails,

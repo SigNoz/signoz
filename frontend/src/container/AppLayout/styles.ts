@@ -7,7 +7,12 @@ export const Layout = styled(LayoutComponent)`
 		position: relative;
 		min-height: calc(100vh - 4rem);
 		overflow: hidden;
+		height: 100%;
 	}
+`;
+
+export const LayoutContent = styled(LayoutComponent.Content)`
+	overflow-y: auto;
 `;
 
 export const ChildrenContainer = styled.div`

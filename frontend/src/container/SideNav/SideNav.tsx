@@ -1,33 +1,30 @@
 import { CheckCircleTwoTone, WarningOutlined } from '@ant-design/icons';
-import { Menu, MenuProps } from 'antd';
+import { MenuProps } from 'antd';
 import getLocalStorageKey from 'api/browser/localstorage/get';
 import { IS_SIDEBAR_COLLAPSED } from 'constants/app';
 import ROUTES from 'constants/routes';
 import history from 'lib/history';
-import {
-	ReactNode,
-	useCallback,
-	useLayoutEffect,
-	useMemo,
-	useState,
-} from 'react';
+import { useCallback, useLayoutEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useDispatch, useSelector } from 'react-redux';
 import { useLocation } from 'react-router-dom';
-import { SideBarCollapse } from 'store/actions/app';
+import { sideBarCollapse } from 'store/actions/app';
 import { AppState } from 'store/reducers';
 import AppReducer from 'types/reducer/app';
 
 import { routeConfig, styles } from './config';
 import { getQueryString } from './helper';
-import menus from './menuItems';
+import menuItems from './menuItems';
+import { MenuItem, SecondaryMenuItemKey } from './sideNav.types';
+import { getActiveMenuKeyFromPath } from './sideNav.utils';
 import Slack from './Slack';
 import {
+	MenuLabelContainer,
 	RedDot,
 	Sider,
-	SlackButton,
-	SlackMenuItemContainer,
-	VersionContainer,
+	StyledPrimaryMenu,
+	StyledSecondaryMenu,
+	StyledText,
 } from './styles';
 
 function SideNav(): JSX.Element {
@@ -49,7 +46,7 @@ function SideNav(): JSX.Element {
 	}, []);
 
 	useLayoutEffect(() => {
-		dispatch(SideBarCollapse(collapsed));
+		dispatch(sideBarCollapse(collapsed));
 	}, [collapsed, dispatch]);
 
 	const onClickHandler = useCallback(
@@ -80,90 +77,56 @@ function SideNav(): JSX.Element {
 
 	const isNotCurrentVersion = currentVersion !== latestVersion;
 
-	const sidebar: SidebarItem[] = [
+	const secondaryMenuItems: MenuItem[] = [
 		{
-			onClick: onClickSlackHandler,
-			icon: <Slack />,
-			text: <SlackButton>Support</SlackButton>,
-			key: 'slack',
-		},
-		{
-			onClick: onClickVersionHandler,
-			key: 'version',
+			key: SecondaryMenuItemKey.Version,
 			icon: isNotCurrentVersion ? (
 				<WarningOutlined style={{ color: '#E87040' }} />
 			) : (
 				<CheckCircleTwoTone twoToneColor={['#D5F2BB', '#1f1f1f']} />
 			),
-			text: (
-				<VersionContainer>
-					{!isCurrentVersionError ? (
-						<SlackButton>{currentVersion}</SlackButton>
-					) : (
-						<SlackButton>{t('n_a')}</SlackButton>
-					)}
+			label: (
+				<MenuLabelContainer>
+					<StyledText ellipsis>
+						{!isCurrentVersionError ? currentVersion : t('n_a')}
+					</StyledText>
 					{isNotCurrentVersion && <RedDot />}
-				</VersionContainer>
+				</MenuLabelContainer>
 			),
+			onClick: onClickVersionHandler,
+		},
+		{
+			key: SecondaryMenuItemKey.Slack,
+			icon: <Slack />,
+			label: <StyledText>Support</StyledText>,
+			onClick: onClickSlackHandler,
 		},
 	];
 
-	const currentMenu = useMemo(() => {
-		const routeKeys = Object.keys(ROUTES) as (keyof typeof ROUTES)[];
-		const currentRouteKey = routeKeys.find((key) => {
-			const route = ROUTES[key];
-			return pathname === route;
-		});
-
-		if (!currentRouteKey) return null;
-
-		return ROUTES[currentRouteKey];
-	}, [pathname]);
-
-	const sidebarItems = (props: SidebarItem, index: number): SidebarItem => ({
-		key: `${index}`,
-		icon: props.icon,
-		onClick: props.onClick,
-		label: props.text,
-	});
+	const activeMenuKey = useMemo(() => getActiveMenuKeyFromPath(pathname), [
+		pathname,
+	]);
 
 	return (
 		<Sider collapsible collapsed={collapsed} onCollapse={onCollapse} width={200}>
-			<Menu
+			<StyledPrimaryMenu
 				theme="dark"
 				defaultSelectedKeys={[ROUTES.APPLICATION]}
-				selectedKeys={currentMenu ? [currentMenu] : []}
+				selectedKeys={activeMenuKey ? [activeMenuKey] : []}
 				mode="vertical"
 				style={styles}
-				items={menus}
+				items={menuItems}
 				onClick={onClickMenuHandler}
 			/>
-			{sidebar.map((props, index) => (
-				<SlackMenuItemContainer
-					index={index + 1}
-					key={`${index + 1}`}
-					collapsed={collapsed}
-				>
-					<Menu
-						theme="dark"
-						defaultSelectedKeys={[ROUTES.APPLICATION]}
-						selectedKeys={currentMenu ? [currentMenu] : []}
-						mode="inline"
-						style={styles}
-						items={[sidebarItems(props, index)]}
-					/>
-				</SlackMenuItemContainer>
-			))}
+			<StyledSecondaryMenu
+				theme="dark"
+				selectedKeys={activeMenuKey ? [activeMenuKey] : []}
+				mode="vertical"
+				style={styles}
+				items={secondaryMenuItems}
+			/>
 		</Sider>
 	);
-}
-
-interface SidebarItem {
-	onClick: VoidFunction;
-	icon?: ReactNode;
-	text?: ReactNode;
-	key: string;
-	label?: ReactNode;
 }
 
 export default SideNav;

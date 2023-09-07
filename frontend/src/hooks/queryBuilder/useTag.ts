@@ -4,8 +4,8 @@ import {
 	isExistsNotExistsOperator,
 	isInNInOperator,
 } from 'container/QueryBuilder/filters/QueryBuilderSearch/utils';
+import { unparse } from 'papaparse';
 // eslint-disable-next-line import/no-extraneous-dependencies
-import * as Papa from 'papaparse';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 
@@ -38,7 +38,7 @@ export const useTag = (
 			(query?.filters?.items || []).map((ele) => {
 				if (isInNInOperator(getOperatorFromValue(ele.op))) {
 					try {
-						const csvString = Papa.unparse([ele.value]);
+						const csvString = unparse([ele.value]);
 						return `${ele.key?.key} ${getOperatorFromValue(ele.op)} ${csvString}`;
 					} catch {
 						return `${ele.key?.key} ${getOperatorFromValue(ele.op)} ${ele.value}`;
