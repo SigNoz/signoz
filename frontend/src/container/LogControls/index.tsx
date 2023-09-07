@@ -8,7 +8,7 @@ import dayjs from 'dayjs';
 import { Pagination } from 'hooks/queryPagination';
 import { FlatLogData } from 'lib/logs/flatLogData';
 import { OrderPreferenceItems } from 'pages/Logs/config';
-import * as Papa from 'papaparse';
+import { unparse } from 'papaparse';
 import { memo, useCallback, useMemo } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { Dispatch } from 'redux';
@@ -121,7 +121,7 @@ function LogControls(): JSX.Element | null {
 	}, [flattenLogData]);
 
 	const downloadCsvFile = useCallback((): void => {
-		const csv = Papa.unparse(flattenLogData);
+		const csv = unparse(flattenLogData);
 		const csvBlob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
 		const csvUrl = URL.createObjectURL(csvBlob);
 		const downloadLink = document.createElement('a');

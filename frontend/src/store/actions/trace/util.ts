@@ -1,4 +1,5 @@
 import { AllTraceFilterEnum } from 'container/Trace/Filters';
+import createQueryParams from 'lib/createQueryParams';
 import history from 'lib/history';
 import { PayloadProps as GetFilterPayload } from 'types/api/trace/getFilters';
 import { TraceFilterEnum, TraceReducer } from 'types/reducer/trace';
@@ -51,20 +52,25 @@ export const updateURL = (
 		}
 	});
 
+	const preResultParams = preResult.reduce((acc, item) => {
+		acc[item.key] = item.value;
+		return acc;
+	}, {} as Record<string, string>);
+
+	const queryParams = {
+		selected: JSON.stringify(Object.fromEntries(selectedFilter)),
+		filterToFetchData: JSON.stringify(filterToFetchData),
+		spanAggregateCurrentPage,
+		spanAggregateOrder,
+		spanAggregateCurrentPageSize,
+		spanAggregateOrderParam,
+		selectedTags: JSON.stringify(selectedTags),
+		...preResultParams,
+		isFilterExclude: JSON.stringify(Object.fromEntries(isFilterExclude)),
+		userSelectedFilter: JSON.stringify(Object.fromEntries(userSelectedFilter)),
+	};
 	history.replace(
-		`${history.location.pathname}?selected=${JSON.stringify(
-			Object.fromEntries(selectedFilter),
-		)}&filterToFetchData=${JSON.stringify(
-			filterToFetchData,
-		)}&spanAggregateCurrentPage=${spanAggregateCurrentPage}&selectedTags=${JSON.stringify(
-			selectedTags,
-		)}&${preResult
-			.map((e) => `${e.key}=${e.value}`)
-			.join('&')}&isFilterExclude=${JSON.stringify(
-			Object.fromEntries(isFilterExclude),
-		)}&userSelectedFilter=${JSON.stringify(
-			Object.fromEntries(userSelectedFilter),
-		)}&spanAggregateCurrentPage=${spanAggregateCurrentPage}&spanAggregateOrder=${spanAggregateOrder}&spanAggregateCurrentPageSize=${spanAggregateCurrentPageSize}&spanAggregateOrderParam=${spanAggregateOrderParam}`,
+		`${history.location.pathname}?${createQueryParams(queryParams)}`,
 	);
 };
 

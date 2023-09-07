@@ -2,6 +2,7 @@ import { initialQueriesMap, PANEL_TYPES } from 'constants/queryBuilder';
 import { queryParamNamesMap } from 'constants/queryBuilderQueryNames';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { useNotifications } from 'hooks/useNotifications';
+import createQueryParams from 'lib/createQueryParams';
 import history from 'lib/history';
 import { CSSProperties, useCallback } from 'react';
 import { connect, useSelector } from 'react-redux';
@@ -42,12 +43,16 @@ function DashboardGraphSlider({ toggleAddWidget }: Props): JSX.Element {
 
 				toggleAddWidget(false);
 
+				const queryParams = {
+					graphType: name,
+					widgetId: emptyLayout.i,
+					[queryParamNamesMap.compositeQuery]: JSON.stringify(
+						initialQueriesMap.metrics,
+					),
+				};
+
 				history.push(
-					`${history.location.pathname}/new?graphType=${name}&widgetId=${
-						emptyLayout.i
-					}&${queryParamNamesMap.compositeQuery}=${encodeURIComponent(
-						JSON.stringify(initialQueriesMap.metrics),
-					)}`,
+					`${history.location.pathname}/new?${createQueryParams(queryParams)}`,
 				);
 			} catch (error) {
 				notifications.error({

@@ -5,7 +5,7 @@ import {
 	tagRegexp,
 } from 'container/QueryBuilder/filters/QueryBuilderSearch/utils';
 import { Option } from 'container/QueryBuilder/type';
-import * as Papa from 'papaparse';
+import { parse } from 'papaparse';
 import { KeyboardEvent, useCallback, useState } from 'react';
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 
@@ -61,7 +61,7 @@ export const useAutoComplete = (
 					const matches = prev?.matchAll(tagRegexp);
 					const [match] = matches ? Array.from(matches) : [];
 					const [, , , matchTagValue] = match;
-					const data = Papa.parse(matchTagValue).data.flat();
+					const data = parse(matchTagValue).data.flat();
 					return replaceStringWithMaxLength(prev, data as string[], value);
 				});
 			}

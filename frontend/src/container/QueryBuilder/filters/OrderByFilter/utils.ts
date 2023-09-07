@@ -1,5 +1,5 @@
 import { IOption } from 'hooks/useResourceAttribute/types';
-import * as Papa from 'papaparse';
+import { parse } from 'papaparse';
 import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import {
 	IBuilderQuery,
@@ -51,7 +51,7 @@ export function mapLabelValuePairs(
 
 export function getLabelFromValue(arr: IOption[]): string[] {
 	return arr.flat().map((item) => {
-		const match = Papa.parse(item.value, { delimiter: orderByValueDelimiter });
+		const match = parse(item.value, { delimiter: orderByValueDelimiter });
 		if (match) {
 			const [key] = match.data as string[];
 
