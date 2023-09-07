@@ -92,7 +92,7 @@ export const mapCompositeQueryFromQuery = (
 ): ICompositeMetricQuery => {
 	const functionToBuildQuery = queryTypeMethodMapping[query.queryType];
 
-	if (functionToBuildQuery) {
+	if (functionToBuildQuery && typeof functionToBuildQuery === 'function') {
 		return functionToBuildQuery(query, panelType);
 	}
 
