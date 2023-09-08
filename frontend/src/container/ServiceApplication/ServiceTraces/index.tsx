@@ -25,7 +25,7 @@ function ServiceTraces(): JSX.Element {
 		[queries],
 	);
 
-	const { data, error, isLoading, isError } = useQueryService({
+	const { data = [], error, isLoading, isError } = useQueryService({
 		minTime,
 		maxTime,
 		selectedTime,
@@ -33,8 +33,6 @@ function ServiceTraces(): JSX.Element {
 	});
 
 	useErrorNotification(error);
-
-	const services = data || [];
 
 	const [skipOnboarding, setSkipOnboarding] = useState(
 		localStorageGet(SKIP_ONBOARDING) === 'true',
@@ -46,7 +44,7 @@ function ServiceTraces(): JSX.Element {
 	};
 
 	if (
-		services.length === 0 &&
+		data.length === 0 &&
 		isLoading === false &&
 		!skipOnboarding &&
 		isError === true
@@ -54,7 +52,7 @@ function ServiceTraces(): JSX.Element {
 		return <SkipOnBoardingModal onContinueClick={onContinueClick} />;
 	}
 
-	return <ServiceTraceTable services={services} loading={isLoading} />;
+	return <ServiceTraceTable services={data} loading={isLoading} />;
 }
 
 export default ServiceTraces;
