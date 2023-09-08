@@ -144,7 +144,6 @@ const InfinityTable = forwardRef<TableVirtuosoHandle, InfinityTableProps>(
 		return (
 			<>
 				<TableVirtuoso
-					useWindowScroll
 					ref={ref}
 					style={infinityDefaultStyles}
 					data={dataSource}
