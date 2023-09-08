@@ -231,8 +231,8 @@ func (tb *LogPipelinesTestBed) PostPipelinesToQSExpectingStatusCode(
 
 	if response.StatusCode != expectedStatusCode {
 		tb.t.Fatalf(
-			"Received response status %d after posting log pipelines. Expected: %d",
-			response.StatusCode, expectedStatusCode,
+			"Received response status %d after posting log pipelines. Expected: %d\nResponse body:%s\n",
+			response.StatusCode, expectedStatusCode, string(responseBody),
 		)
 	}
 
