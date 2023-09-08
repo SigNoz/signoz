@@ -1,3 +1,5 @@
+import './logs.styles.scss';
+
 import { Button, Col, Divider, Popover, Row, Select, Space } from 'antd';
 import { QueryParams } from 'constants/query';
 import LogControls from 'container/LogControls';
@@ -93,7 +95,7 @@ function Logs(): JSX.Element {
 
 			<Row gutter={20} wrap={false}>
 				<LogsFilters />
-				<Col flex={1}>
+				<Col flex={1} className="logs-col-container">
 					<Row>
 						<Col flex={1}>
 							<Space align="baseline" direction="horizontal">
