@@ -2,6 +2,7 @@ import { Card, Typography } from 'antd';
 import ListLogView from 'components/Logs/ListLogView';
 import RawLogView from 'components/Logs/RawLogView';
 import Spinner from 'components/Spinner';
+import { CARD_BODY_STYLE } from 'constants/card';
 import { LOCALSTORAGE } from 'constants/localStorage';
 import { OptionFormatTypes } from 'constants/optionsFormatTypes';
 import InfinityTableView from 'container/LogsExplorerList/InfinityTableView';
@@ -9,7 +10,6 @@ import { InfinityWrapperStyled } from 'container/LogsExplorerList/styles';
 import { convertKeysToColumnFields } from 'container/LogsExplorerList/utils';
 import { Heading } from 'container/LogsTable/styles';
 import { useOptionsMenu } from 'container/OptionsMenu';
-import { contentStyle } from 'container/Trace/Search/config';
 import { useCopyLogLink } from 'hooks/logs/useCopyLogLink';
 import useFontFaceObserver from 'hooks/useFontObserver';
 import { useEventSource } from 'providers/EventSource';
@@ -112,10 +112,9 @@ function LiveLogsList({ logs }: LiveLogsListProps): JSX.Element {
 							}}
 						/>
 					) : (
-						<Card style={{ width: '100%' }} bodyStyle={{ ...contentStyle }}>
+						<Card style={{ width: '100%' }} bodyStyle={CARD_BODY_STYLE}>
 							<Virtuoso
 								ref={ref}
-								useWindowScroll
 								data={logs}
 								totalCount={logs.length}
 								itemContent={getItemContent}
