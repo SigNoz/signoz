@@ -208,7 +208,7 @@ func (aH *APIHandler) testReady(f http.HandlerFunc) http.HandlerFunc {
 	}
 }
 
-type response struct {
+type ApiResponse struct {
 	Status    status          `json:"status"`
 	Data      interface{}     `json:"data,omitempty"`
 	ErrorType model.ErrorType `json:"errorType,omitempty"`
@@ -217,7 +217,7 @@ type response struct {
 
 func RespondError(w http.ResponseWriter, apiErr model.BaseApiError, data interface{}) {
 	json := jsoniter.ConfigCompatibleWithStandardLibrary
-	b, err := json.Marshal(&response{
+	b, err := json.Marshal(&ApiResponse{
 		Status:    statusError,
 		ErrorType: apiErr.Type(),
 		Error:     apiErr.Error(),
@@ -260,7 +260,7 @@ func RespondError(w http.ResponseWriter, apiErr model.BaseApiError, data interfa
 
 func writeHttpResponse(w http.ResponseWriter, data interface{}) {
 	json := jsoniter.ConfigCompatibleWithStandardLibrary
-	b, err := json.Marshal(&response{
+	b, err := json.Marshal(&ApiResponse{
 		Status: statusSuccess,
 		Data:   data,
 	})
@@ -646,8 +646,8 @@ func (aH *APIHandler) QueryRangeMetricsV2(w http.ResponseWriter, r *http.Request
 					var s model.Series
 					s.QueryName = name
 					s.Labels = v.Metric.Copy().Map()
-					for _, p := range v.Points {
-						s.Points = append(s.Points, model.MetricPoint{Timestamp: p.T, Value: p.V})
+					for _, p := range v.Floats {
+						s.Points = append(s.Points, model.MetricPoint{Timestamp: p.T, Value: p.F})
 					}
 					seriesList = append(seriesList, &s)
 				}
@@ -2298,8 +2298,8 @@ func (aH *APIHandler) RegisterLogsRoutes(router *mux.Router, am *AuthMiddleware)
 	subRouter.HandleFunc("/aggregate", am.ViewAccess(aH.logAggregate)).Methods(http.MethodGet)
 
 	// log pipelines
-	subRouter.HandleFunc("/pipelines/{version}", am.ViewAccess(aH.listLogsPipelinesHandler)).Methods(http.MethodGet)
-	subRouter.HandleFunc("/pipelines", am.EditAccess(aH.createLogsPipeline)).Methods(http.MethodPost)
+	subRouter.HandleFunc("/pipelines/{version}", am.ViewAccess(aH.ListLogsPipelinesHandler)).Methods(http.MethodGet)
+	subRouter.HandleFunc("/pipelines", am.EditAccess(aH.CreateLogsPipeline)).Methods(http.MethodPost)
 }
 
 func (aH *APIHandler) logFields(w http.ResponseWriter, r *http.Request) {
@@ -2433,7 +2433,7 @@ func parseAgentConfigVersion(r *http.Request) (int, *model.ApiError) {
 	return int(version64), nil
 }
 
-func (ah *APIHandler) listLogsPipelinesHandler(w http.ResponseWriter, r *http.Request) {
+func (ah *APIHandler) ListLogsPipelinesHandler(w http.ResponseWriter, r *http.Request) {
 
 	version, err := parseAgentConfigVersion(r)
 	if err != nil {
@@ -2502,7 +2502,7 @@ func (ah *APIHandler) listLogsPipelinesByVersion(ctx context.Context, version in
 	return payload, nil
 }
 
-func (ah *APIHandler) createLogsPipeline(w http.ResponseWriter, r *http.Request) {
+func (ah *APIHandler) CreateLogsPipeline(w http.ResponseWriter, r *http.Request) {
 
 	req := logparsingpipeline.PostablePipelines{}
 
@@ -2852,8 +2852,8 @@ func (aH *APIHandler) execPromQueries(ctx context.Context, metricsQueryRangePara
 			for _, v := range matrix {
 				var s v3.Series
 				s.Labels = v.Metric.Copy().Map()
-				for _, p := range v.Points {
-					s.Points = append(s.Points, v3.Point{Timestamp: p.T, Value: p.V})
+				for _, p := range v.Floats {
+					s.Points = append(s.Points, v3.Point{Timestamp: p.T, Value: p.F})
 				}
 				seriesList = append(seriesList, &s)
 			}

@@ -3,11 +3,11 @@ import { Card, Typography } from 'antd';
 import ListLogView from 'components/Logs/ListLogView';
 import RawLogView from 'components/Logs/RawLogView';
 import Spinner from 'components/Spinner';
+import { CARD_BODY_STYLE } from 'constants/card';
 import { LOCALSTORAGE } from 'constants/localStorage';
 import ExplorerControlPanel from 'container/ExplorerControlPanel';
 import { Heading } from 'container/LogsTable/styles';
 import { useOptionsMenu } from 'container/OptionsMenu';
-import { contentStyle } from 'container/Trace/Search/config';
 import { useCopyLogLink } from 'hooks/logs/useCopyLogLink';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import useFontFaceObserver from 'hooks/useFontObserver';
@@ -116,10 +116,9 @@ function LogsExplorerList({
 		}
 
 		return (
-			<Card style={{ width: '100%' }} bodyStyle={{ ...contentStyle }}>
+			<Card style={{ width: '100%' }} bodyStyle={CARD_BODY_STYLE}>
 				<Virtuoso
 					ref={ref}
-					useWindowScroll
 					data={logs}
 					endReached={onEndReached}
 					totalCount={logs.length}

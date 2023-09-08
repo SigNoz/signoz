@@ -20,6 +20,7 @@ const AlertChannelSlack = "ALERT_CHANNEL_SLACK"
 const AlertChannelWebhook = "ALERT_CHANNEL_WEBHOOK"
 const AlertChannelPagerduty = "ALERT_CHANNEL_PAGERDUTY"
 const AlertChannelMsTeams = "ALERT_CHANNEL_MSTEAMS"
+const AlertChannelOpsgenie = "ALERT_CHANNEL_OPSGENIE"
 
 var BasicPlan = FeatureSet{
 	Feature{
@@ -87,6 +88,13 @@ var BasicPlan = FeatureSet{
 	},
 	Feature{
 		Name:       AlertChannelPagerduty,
+		Active:     true,
+		Usage:      0,
+		UsageLimit: -1,
+		Route:      "",
+	},
+	Feature{
+		Name:       AlertChannelOpsgenie,
 		Active:     true,
 		Usage:      0,
 		UsageLimit: -1,

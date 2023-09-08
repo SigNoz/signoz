@@ -134,7 +134,7 @@ function GridCardGraph({
 		return (
 			<span ref={graphRef}>
 				<WidgetGraphComponent
-					enableModel={false}
+					enableModel
 					enableWidgetHeader
 					widget={widget}
 					queryResponse={queryResponse}

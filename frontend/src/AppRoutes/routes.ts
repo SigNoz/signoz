@@ -1,5 +1,4 @@
 import ROUTES from 'constants/routes';
-import DashboardWidget from 'pages/DashboardWidget';
 import { RouteProps } from 'react-router-dom';
 
 import {
@@ -8,12 +7,14 @@ import {
 	CreateAlertChannelAlerts,
 	CreateNewAlerts,
 	DashboardPage,
+	DashboardWidget,
 	EditAlertChannelsAlerts,
 	EditRulesPage,
 	ErrorDetails,
 	GettingStarted,
 	LicensePage,
 	ListAllALertsPage,
+	LiveLogs,
 	Login,
 	Logs,
 	LogsExplorer,
@@ -232,6 +233,13 @@ const routes: AppRoutes[] = [
 		exact: true,
 		component: LogsExplorer,
 		key: 'LOGS_EXPLORER',
+		isPrivate: true,
+	},
+	{
+		path: ROUTES.LIVE_LOGS,
+		exact: true,
+		component: LiveLogs,
+		key: 'LIVE_LOGS',
 		isPrivate: true,
 	},
 	{
