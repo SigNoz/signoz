@@ -100,7 +100,7 @@ function LiveLogsList({ logs }: LiveLogsListProps): JSX.Element {
 
 			{logs.length !== 0 && (
 				<InfinityWrapperStyled>
-					{options.format === 'table' ? (
+					{options.format === OptionFormatTypes.TABLE ? (
 						<InfinityTableView
 							ref={ref}
 							isLoading={false}
