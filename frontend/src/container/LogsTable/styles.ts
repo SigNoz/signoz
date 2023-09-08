@@ -18,7 +18,3 @@ export const Heading = styled(Card)`
 		padding: 0.3rem 0.5rem;
 	}
 `;
-
-export const LogsCard = styled(Card)`
-	flex: 1;
-`;

@@ -1,10 +1,12 @@
-import { Typography } from 'antd';
+import './logsTable.styles.scss';
+
+import { Card, Typography } from 'antd';
 // components
 import ListLogView from 'components/Logs/ListLogView';
 import RawLogView from 'components/Logs/RawLogView';
 import LogsTableView from 'components/Logs/TableView';
 import Spinner from 'components/Spinner';
-import { contentStyle } from 'container/Trace/Search/config';
+import { CARD_BODY_STYLE } from 'constants/card';
 import { useActiveLog } from 'hooks/logs/useActiveLog';
 import useFontFaceObserver from 'hooks/useFontObserver';
 import { memo, useCallback, useMemo } from 'react';
@@ -15,7 +17,7 @@ import { AppState } from 'store/reducers';
 import { ILogsReducer } from 'types/reducer/logs';
 
 // styles
-import { Container, Heading, LogsCard } from './styles';
+import { Container, Heading } from './styles';
 
 export type LogViewMode = 'raw' | 'table' | 'list';
 
@@ -85,9 +87,9 @@ function LogsTable(props: LogsTableProps): JSX.Element {
 		}
 
 		return (
-			<LogsCard bodyStyle={{ ...contentStyle, height: '100%' }}>
+			<Card className="logs-card" bodyStyle={CARD_BODY_STYLE}>
 				<Virtuoso totalCount={logs.length} itemContent={getItemContent} />
-			</LogsCard>
+			</Card>
 		);
 	}, [getItemContent, linesPerRow, logs, onSetActiveLog, selected, viewMode]);
 
