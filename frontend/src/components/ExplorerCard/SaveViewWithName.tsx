@@ -1,13 +1,13 @@
-import { Card, Input, Typography } from 'antd';
+import { Card, Form, Input, Typography } from 'antd';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useSaveView } from 'hooks/saveViews/useSaveView';
 import { useNotifications } from 'hooks/useNotifications';
 import { mapCompositeQueryFromQuery } from 'lib/newQueryBuilder/queryBuilderMappers/mapCompositeQueryFromQuery';
-import { ChangeEvent, useCallback, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 import { SaveButton } from './styles';
-import { SaveViewWithNameProps } from './types';
+import { SaveViewFormProps, SaveViewWithNameProps } from './types';
 import { saveViewHandler } from './utils';
 
 function SaveViewWithName({
@@ -15,7 +15,8 @@ function SaveViewWithName({
 	handlePopOverClose,
 	refetchAllView,
 }: SaveViewWithNameProps): JSX.Element {
-	const [name, setName] = useState('');
+	const [form] = Form.useForm<SaveViewFormProps>();
+	const { t } = useTranslation(['explorer']);
 	const {
 		currentQuery,
 		panelType,
@@ -25,18 +26,11 @@ function SaveViewWithName({
 	const compositeQuery = mapCompositeQueryFromQuery(currentQuery, panelType);
 
 	const { isLoading, mutateAsync: saveViewAsync } = useSaveView({
-		viewName: name,
+		viewName: form.getFieldValue('viewName'),
 		compositeQuery,
 		sourcePage,
 		extraData: '',
 	});
-
-	const onChangeHandler = useCallback(
-		(e: ChangeEvent<HTMLInputElement>): void => {
-			setName(e.target.value);
-		},
-		[],
-	);
 
 	const onSaveHandler = (): void => {
 		saveViewHandler({
@@ -49,18 +43,32 @@ function SaveViewWithName({
 			refetchAllView,
 			saveViewAsync,
 			sourcePage,
-			viewName: name,
-			setName,
+			viewName: form.getFieldValue('viewName'),
+			form,
 		});
 	};
 
 	return (
 		<Card>
-			<Typography>Name of the View</Typography>
-			<Input placeholder="Enter Name" onChange={onChangeHandler} />
-			<SaveButton onClick={onSaveHandler} type="primary" loading={isLoading}>
-				Save
-			</SaveButton>
+			<Typography>{t('name_of_the_view')}</Typography>
+			<Form form={form} onFinish={onSaveHandler}>
+				<Form.Item
+					name={['viewName']}
+					required
+					requiredMark
+					rules={[
+						{
+							required: true,
+							message: 'Please enter view name',
+						},
+					]}
+				>
+					<Input placeholder="Enter Name" />
+				</Form.Item>
+				<SaveButton htmlType="submit" type="primary" loading={isLoading}>
+					Save
+				</SaveButton>
+			</Form>
 		</Card>
 	);
 }
