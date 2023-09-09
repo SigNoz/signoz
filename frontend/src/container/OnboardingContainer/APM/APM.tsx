@@ -1,3 +1,5 @@
+/* eslint-disable jsx-a11y/click-events-have-key-events */
+/* eslint-disable jsx-a11y/no-static-element-interactions */
 import { useState } from 'react';
 import cx from 'classnames';
 import './APM.styles.scss';
@@ -25,27 +27,25 @@ const supportedLanguages = [
 	},
 ];
 
-export default function APM({ activeStep }): JSX.Element {
+export default function APM({
+	activeStep,
+}: {
+	activeStep: number;
+}): JSX.Element {
 	const [selectedLanguage, setSelectedLanguage] = useState('java');
 
-	const renderSelectedLanguageSetupInstructions = ():
-		| JSX.Element
-		| undefined => {
+	const renderSelectedLanguageSetupInstructions = (): JSX.Element => {
 		switch (selectedLanguage) {
 			case 'java':
 				return <Java activeStep={activeStep} />;
-				break;
 			case 'python':
 				return <Python activeStep={activeStep} />;
-				break;
 			case 'javascript':
 				return <Javascript activeStep={activeStep} />;
-				break;
 			case 'go':
 				return <GoLang activeStep={activeStep} />;
-				break;
 			default:
-				break;
+				return <> </>;
 		}
 	};
 
@@ -68,7 +68,7 @@ export default function APM({ activeStep }): JSX.Element {
 									selectedLanguage === supportedLanguage.name ? 'selected' : '',
 								)}
 								key={supportedLanguage.name}
-								onClick={() => setSelectedLanguage(supportedLanguage.name)}
+								onClick={(): void => setSelectedLanguage(supportedLanguage.name)}
 							>
 								<img
 									className={cx('supported-langauge-img')}

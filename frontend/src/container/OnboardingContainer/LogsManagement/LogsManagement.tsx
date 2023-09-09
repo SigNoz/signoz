@@ -1,3 +1,115 @@
-export default function LogsManagement({ activeStep }) {
-	return <div>LogsManagement</div>;
+import { useState } from 'react';
+
+import cx from 'classnames';
+import './LogsManagement.styles.scss';
+
+import Kubernetes from './Kubernetes/Kubernetes';
+import Docker from './Docker/Docker';
+import ApplicationLogs from './ApplicationLogs/ApplicationLogs';
+import SysLogs from './SysLogs/SysLogs';
+import Nodejs from './Nodejs/Nodejs';
+
+const supportedLogTypes = [
+	{
+		name: 'Kubernetes Pod Logs',
+		id: 'kubernetes',
+		imgURL: `Logos/kubernetes.svg`,
+	},
+	{
+		name: 'Docker Container Logs',
+		id: 'docker',
+		imgURL: `Logos/docker.svg`,
+	},
+	{
+		name: 'SysLogs',
+		id: 'syslogs',
+		imgURL: `Logos/syslogs.svg`,
+	},
+	{
+		name: 'Application Logs',
+		id: 'application_logs_log_file',
+		imgURL: `Logos/software-window.svg`,
+	},
+	{
+		name: 'NodeJS Winston Logs ',
+		id: 'nodejs',
+		imgURL: `Logos/node-js.svg`,
+	},
+	{
+		name: 'Logs from existing Collectors',
+		id: 'application_logs_otel_sdk',
+		imgURL: `Logos/cmd-terminal.svg`,
+	},
+];
+
+export default function LogsManagement({ activeStep }): JSX.Element {
+	const [selectedLogsType, setSelectedLogsType] = useState('kubernetes');
+
+	const renderSelectedLanguageSetupInstructions = ():
+		| JSX.Element
+		| undefined => {
+		switch (selectedLogsType) {
+			case 'kubernetes':
+				return <Kubernetes activeStep={activeStep} />;
+
+			case 'docker':
+				return <Docker activeStep={activeStep} />;
+
+			case 'application_logs_log_file':
+				return <ApplicationLogs type={'from-log-file'} activeStep={activeStep} />;
+
+			case 'application_logs_otel_sdk':
+				return <ApplicationLogs type={'using-otel-sdk'} activeStep={activeStep} />;
+
+			case 'syslogs':
+				return <SysLogs activeStep={activeStep} />;
+			case 'nodejs':
+				return <Nodejs activeStep={activeStep} />;
+
+			default:
+				break;
+		}
+	};
+
+	return (
+		<div className="logs-management-module-container">
+			{activeStep === 2 && (
+				<>
+					<div className="header">
+						<h1>Select a Logs type</h1>
+						<h4> Choose the logs that you want to receive on SigNoz </h4>
+					</div>
+
+					<div className="supported-logs-type-container">
+						{supportedLogTypes.map((logType) => (
+							<div
+								className={cx(
+									'supported-logs-type',
+									selectedLogsType === logType.id ? 'selected' : '',
+								)}
+								key={logType.name}
+								onClick={() => setSelectedLogsType(logType.id)}
+							>
+								<img
+									className={cx('supported-logs-type-img')}
+									src={`${logType.imgURL}`}
+									alt=""
+								/>
+
+								<div> {logType.name} </div>
+							</div>
+						))}
+					</div>
+				</>
+			)}
+
+			{selectedLogsType && (
+				<div
+					className={cx('selected-logs-type-setup-instructions', selectedLogsType)}
+				>
+					{renderSelectedLanguageSetupInstructions()}
+				</div>
+			)}
+		</div>
+	);
 }

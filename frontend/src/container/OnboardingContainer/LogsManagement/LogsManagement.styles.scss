@@ -1,4 +1,4 @@
-.apm-module-container {
+.logs-management-module-container {
 	padding: 48px 0;
 
 	.header {
@@ -14,21 +14,26 @@
 	}
 }
 
-.supported-languages-container {
+.supported-logs-type-container {
 	display: flex;
+	flex-wrap: wrap;
 	gap: 24px;
 }
 
-.supported-language {
+.supported-logs-type {
 	display: flex;
 	justify-content: center;
-	align-items: center;
+	align-items: flex-start;
+	flex-direction: column;
+	gap: 16px;
 	width: 300px;
+	padding: 16px;
+	box-sizing: border-box;
 	height: 120px;
 	background: #1d1d1d;
 	border: 1px solid #424242;
 	border-radius: 3px;
-	color: #424242;
+	color: #e5e7eb;
 	cursor: pointer;
 
 	&.selected {
@@ -37,23 +42,26 @@
 	}
 }
 
-.supported-langauge-img {
-	height: 48px;
+.supported-logs-type-img {
+	height: 36px;
 }
 
-.selected-langauage-setup-instructions {
+.selected-logs-type-setup-instructions {
 	padding: 24px 0;
 }
 
 div[class*='-setup-instructions-container'] {
 	.header {
 		display: flex;
-		align-items: center;
+		align-items: flex-start;
+		gap: 12px;
 
 		margin: 16px 0;
 
 		img {
-			height: 40px;
+			height: 32px;
+			min-height: 32px;
+			min-width: 32px;
 		}
 
 		h1 {
@@ -62,7 +70,7 @@ div[class*='-setup-instructions-container'] {
 			align-items: center;
 			color: #e5e7eb;
 			gap: 16px;
-			margin: 12px;
+			margin: 0;
 		}
 	}
 }
@@ -94,7 +102,7 @@ pre {
 
 .detailed-docs-link {
 	display: flex;
-	margin: 12px;
+	margin: 8px 0;
 	font-size: 12px;
 
 	a {
@@ -102,43 +110,12 @@ pre {
 	}
 }
 
-.form-container {
+.language-tab-item {
 	display: flex;
-	align-items: flex-start;
-	width: 100%;
-	gap: 16px;
+	justify-content: center;
+	align-items: center;
 
-	& .ant-form-item {
-		margin-bottom: 0px;
-	}
-}
-
-$lightModeFontColor: rgb(29, 29, 29);
-
-.lightMode {
-	.apm-module-container {
-		.header {
-			color: $lightModeFontColor;
-		}
-
-		div[class*='-setup-instructions-container'] {
-			.header {
-				h1 {
-					color: $lightModeFontColor;
-				}
-			}
-
-			.framework-selector {
-				.label {
-					color: $lightModeFontColor;
-				}
-			}
-
-			.service-name-container {
-				.label {
-					color: $lightModeFontColor;
-				}
-			}
-		}
+	img {
+		height: 28px;
 	}
 }

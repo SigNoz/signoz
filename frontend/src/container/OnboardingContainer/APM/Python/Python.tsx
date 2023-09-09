@@ -1,22 +1,48 @@
 import './Python.styles.scss';
 
 import { MDXProvider } from '@mdx-js/react';
+import { Form, Input, Select } from 'antd';
+import { useState } from 'react';
 
-import { Steps, Select } from 'antd';
+import ConnectionStatus from '../common/ConnectionStatus/ConnectionStatus';
+import DjangoDocs from './md-docs/django.md';
+import FalconDocs from './md-docs/falcon.md';
+import FastAPIDocs from './md-docs/fastAPI.md';
+import FlaskDocs from './md-docs/flask.md';
+import PythonDocs from './md-docs/python.md';
 
-import Post from './python.md';
+export default function Python({
+	activeStep,
+}: {
+	activeStep: number;
+}): JSX.Element {
+	const [selectedFrameWork, setSelectedFrameWork] = useState('django');
 
-export default function Python({ activeStep }): JSX.Element {
+	const [form] = Form.useForm();
+
+	const renderDocs = (): JSX.Element => {
+		switch (selectedFrameWork) {
+			case 'django':
+				return <DjangoDocs />;
+			case 'fastAPI':
+				return <FastAPIDocs />;
+			case 'flask':
+				return <FlaskDocs />;
+			case 'falcon':
+				return <FalconDocs />;
+			default:
+				return <PythonDocs />;
+		}
+	};
+
+	console.log('form', form);
+
 	return (
 		<>
 			{activeStep === 2 && (
 				<div className="python-setup-instructions-container">
 					<div className="header">
-						<img
-							className={'supported-language-img'}
-							src={`/Logos/python.png`}
-							alt=""
-						/>
+						<img className="supported-language-img" src="/Logos/python.png" alt="" />
 
 						<div className="title">
 							<h1>Python OpenTelemetry Instrumentation</h1>
@@ -25,6 +51,7 @@ export default function Python({ activeStep }): JSX.Element {
 								<a
 									target="_blank"
 									href="https://signoz.io/docs/instrumentation/python/"
+									rel="noreferrer"
 								>
 									here
 								</a>
@@ -32,59 +59,63 @@ export default function Python({ activeStep }): JSX.Element {
 						</div>
 					</div>
 
-					<div className="framework-selector">
-						<div className="label"> Select Framework </div>
+					<div className="form-container">
+						<div className="framework-selector">
+							<div className="label"> Select Framework </div>
 
-						<Select
-							defaultValue="Django"
-							style={{ minWidth: 120 }}
-							placeholder="Select Framework"
-							options={[
-								{
-									value: 'django',
-									label: 'Django',
-								},
-								{
-									value: 'fastAPI',
-									label: 'FastAPI',
-								},
-								{
-									value: 'flask',
-									label: 'Flask',
-								},
-								{
-									value: 'falcon',
-									label: 'Falcon',
-								},
-							]}
-						/>
+							<Select
+								defaultValue="Django"
+								style={{ minWidth: 120 }}
+								placeholder="Select Framework"
+								onChange={(value): void => setSelectedFrameWork(value)}
+								options={[
+									{
+										value: 'django',
+										label: 'Django',
+									},
+									{
+										value: 'fastAPI',
+										label: 'FastAPI',
+									},
+									{
+										value: 'flask',
+										label: 'Flask',
+									},
+									{
+										value: 'falcon',
+										label: 'Falcon',
+									},
+									{
+										value: 'other',
+										label: 'Others',
+									},
+								]}
+							/>
+						</div>
+
+						<div className="service-name-container">
+							<div className="label"> Service Name </div>
+
+							<Form form={form} name="service-name" style={{ minWidth: '300px' }}>
+								<Form.Item
+									hasFeedback
+									name="Service Name"
+									rules={[{ required: true }]}
+									validateTrigger="onBlur"
+								>
+									<Input autoFocus />
+								</Form.Item>
+							</Form>
+						</div>
 					</div>
 
 					<div className="content-container">
-						<MDXProvider>
-							<Post />
-						</MDXProvider>
+						<MDXProvider>{renderDocs()}</MDXProvider>
 					</div>
 				</div>
 			)}
 			{activeStep === 3 && (
-				<div className="connection-status-container">
-					<Steps
-						progressDot
-						current={1}
-						direction="vertical"
-						items={[
-							{
-								title: 'Finished',
-								description: 'Ping Successful',
-							},
-							{
-								title: 'Waiting',
-								description: 'Receiving Data from the application',
-							},
-						]}
-					/>
-				</div>
+				<ConnectionStatus language="python" activeStep={activeStep} />
 			)}
 		</>
 	);

@@ -1,20 +1,45 @@
 import './Javascript.styles.scss';
 
 import { MDXProvider } from '@mdx-js/react';
+import { Form, Input, Select } from 'antd';
+import { useState } from 'react';
 
-import { Steps, Select } from 'antd';
+import ConnectionStatus from '../common/ConnectionStatus/ConnectionStatus';
+import AngularDocs from './md-docs/angular.md';
+import ExpressDocs from './md-docs/express.md';
+import JavascriptDocs from './md-docs/javascript.md';
+import NestJsDocs from './md-docs/nestjs.md';
 
-import Post from './javascript.md';
+export default function Javascript({
+	activeStep,
+}: {
+	activeStep: number;
+}): JSX.Element {
+	const [selectedFrameWork, setSelectedFrameWork] = useState('express');
 
-export default function Javascript({ activeStep }): JSX.Element {
+	const [form] = Form.useForm();
+
+	const renderDocs = (): JSX.Element => {
+		switch (selectedFrameWork) {
+			case 'express':
+				return <ExpressDocs />;
+			case 'nestjs':
+				return <NestJsDocs />;
+			case 'angular':
+				return <AngularDocs />;
+			default:
+				return <JavascriptDocs />;
+		}
+	};
+
 	return (
 		<>
 			{activeStep === 2 && (
 				<div className="javascript-setup-instructions-container">
 					<div className="header">
 						<img
-							className={'supported-language-img'}
-							src={`/Logos/javascript.png`}
+							className="supported-language-img"
+							src="/Logos/javascript.png"
 							alt=""
 						/>
 						<div className="title">
@@ -24,6 +49,7 @@ export default function Javascript({ activeStep }): JSX.Element {
 								<a
 									target="_blank"
 									href="https://signoz.io/docs/instrumentation/javascript/"
+									rel="noreferrer"
 								>
 									here
 								</a>
@@ -31,59 +57,59 @@ export default function Javascript({ activeStep }): JSX.Element {
 						</div>
 					</div>
 
-					<div className="framework-selector">
-						<div className="label"> Select Framework </div>
+					<div className="form-container">
+						<div className="framework-selector">
+							<div className="label"> Select Framework </div>
 
-						<Select
-							defaultValue="Express"
-							style={{ minWidth: 120 }}
-							placeholder="Select Framework"
-							options={[
-								{
-									value: 'express',
-									label: 'Express',
-								},
-								{
-									value: 'nestjs',
-									label: 'Nestjs',
-								},
-								{
-									value: 'angular',
-									label: 'Angular',
-								},
-								{
-									value: 'other',
-									label: 'Other',
-								},
-							]}
-						/>
+							<Select
+								defaultValue="express"
+								style={{ minWidth: 120 }}
+								placeholder="Select Framework"
+								onChange={(value): void => setSelectedFrameWork(value)}
+								options={[
+									{
+										value: 'express',
+										label: 'Express',
+									},
+									{
+										value: 'nestjs',
+										label: 'Nestjs',
+									},
+									{
+										value: 'angular',
+										label: 'Angular',
+									},
+									{
+										value: 'other',
+										label: 'Other',
+									},
+								]}
+							/>
+						</div>
+
+						<div className="service-name-container">
+							<div className="label"> Service Name </div>
+
+							<Form form={form} name="service-name" style={{ minWidth: '300px' }}>
+								<Form.Item
+									hasFeedback
+									name="Service Name"
+									rules={[{ required: true }]}
+									validateTrigger="onBlur"
+								>
+									<Input autoFocus />
+								</Form.Item>
+							</Form>
+						</div>
 					</div>
 
 					<div className="content-container">
-						<MDXProvider>
-							<Post />
-						</MDXProvider>
+						<MDXProvider>{renderDocs()}</MDXProvider>
 					</div>
 				</div>
 			)}
 			{activeStep === 3 && (
-				<div className="connection-status-container">
-					<Steps
-						progressDot
-						current={1}
-						direction="vertical"
-						items={[
-							{
-								title: 'Finished',
-								description: 'Ping Successful',
-							},
-							{
-								title: 'Waiting',
-								description: 'Receiving Data from the application',
-							},
-						]}
-					/>
-				</div>
+				<ConnectionStatus language="javascript" activeStep={activeStep} />
 			)}
 		</>
 	);

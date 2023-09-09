@@ -1,84 +1,113 @@
 import './Java.styles.scss';
+
 import { MDXProvider } from '@mdx-js/react';
-import { Select, Space, Steps } from 'antd';
+import { Form, Input, Select } from 'antd';
+import { useState } from 'react';
 
-import Post from './java.md';
+import ConnectionStatus from '../common/ConnectionStatus/ConnectionStatus';
+import JavaDocs from './md-docs/java.md';
+import JbossDocs from './md-docs/jboss.md';
+import SprintBootDocs from './md-docs/spring_boot.md';
+import TomcatDocs from './md-docs/tomcat.md';
 
-export default function Java({ activeStep }): JSX.Element {
-	console.log(';activeStep', activeStep);
+export default function Java({
+	activeStep,
+}: {
+	activeStep: number;
+}): JSX.Element {
+	const [selectedFrameWork, setSelectedFrameWork] = useState('spring_boot');
+
+	const [form] = Form.useForm();
+
+	const renderDocs = (): JSX.Element => {
+		switch (selectedFrameWork) {
+			case 'tomcat':
+				return <TomcatDocs />;
+			case 'spring_boot':
+				return <SprintBootDocs />;
+			case 'jboss':
+				return <JbossDocs />;
+			case 'other':
+				return <JavaDocs />;
+			default:
+				return <JavaDocs />;
+		}
+	};
+
 	return (
 		<>
 			{activeStep === 2 && (
 				<div className="java-setup-instructions-container">
 					<div className="header">
-						<img
-							className={'supported-language-img'}
-							src={`/Logos/java.png`}
-							alt=""
-						/>
+						<img className="supported-language-img" src="/Logos/java.png" alt="" />
 						<div className="title">
 							<h1>Java OpenTelemetry Instrumentation</h1>
 							<div className="detailed-docs-link">
 								View detailed docs
-								<a target="_blank" href="https://signoz.io/docs/instrumentation/java/">
+								<a
+									target="_blank"
+									href="https://signoz.io/docs/instrumentation/java/"
+									rel="noreferrer"
+								>
 									here
 								</a>
 							</div>
 						</div>
 					</div>
-					<div className="framework-selector">
-						<div className="label"> Select Framework </div>
 
-						<Select
-							defaultValue="tomcat"
-							style={{ minWidth: 120 }}
-							placeholder="Select Framework"
-							options={[
-								{
-									value: 'tomcat',
-									label: 'Tomcat',
-								},
-								{
-									value: 'spring_boot',
-									label: 'Spring Boot',
-								},
-								{
-									value: 'jboss',
-									label: 'JBoss',
-								},
-								{
-									value: 'other',
-									label: 'Others',
-								},
-							]}
-						/>
+					<div className="form-container">
+						<div className="framework-selector">
+							<div className="label"> Select Framework </div>
+
+							<Select
+								defaultValue="spring_boot"
+								style={{ minWidth: 120 }}
+								placeholder="Select Framework"
+								onChange={(value): void => setSelectedFrameWork(value)}
+								options={[
+									{
+										value: 'spring_boot',
+										label: 'Spring Boot',
+									},
+									{
+										value: 'tomcat',
+										label: 'Tomcat',
+									},
+									{
+										value: 'jboss',
+										label: 'JBoss',
+									},
+									{
+										value: 'other',
+										label: 'Others',
+									},
+								]}
+							/>
+						</div>
+
+						<div className="service-name-container">
+							<div className="label"> Service Name </div>
+
+							<Form form={form} name="service-name" style={{ minWidth: '300px' }}>
+								<Form.Item
+									hasFeedback
+									name="Service Name"
+									rules={[{ required: true }]}
+									validateTrigger="onBlur"
+								>
+									<Input autoFocus />
+								</Form.Item>
+							</Form>
+						</div>
 					</div>
 
 					<div className="content-container">
-						<MDXProvider>
-							<Post />
-						</MDXProvider>
+						<MDXProvider>{renderDocs()}</MDXProvider>
 					</div>
 				</div>
 			)}
 			{activeStep === 3 && (
-				<div className="connection-status-container">
-					<Steps
-						progressDot
-						current={1}
-						direction="vertical"
-						items={[
-							{
-								title: 'Finished',
-								description: 'Ping Successful',
-							},
-							{
-								title: 'Waiting',
-								description: 'Receiving Data from the application',
-							},
-						]}
-					/>
-				</div>
+				<ConnectionStatus language="java" activeStep={activeStep} />
 			)}
 		</>
 	);

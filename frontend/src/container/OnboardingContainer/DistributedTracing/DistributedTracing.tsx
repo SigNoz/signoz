@@ -1,5 +1,7 @@
-function DistributedTracing({ activeStep }): JSX.Element {
-	return <div>DistributedTracing</div>;
-}
+import './DistributedTracing.styles.scss';
 
-export default DistributedTracing;
+export default function DistributedTracing({ activeStep }) {
+	return (
+		<div className="distribute-tracing-module-container">Distributed Tracing</div>
+	);
+}

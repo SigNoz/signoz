@@ -1,5 +1,14 @@
 .container {
 	width: 100%;
+
+	&.darkMode {
+	}
+
+	&.lightMode {
+		.onboardingHeader {
+			color: #1d1d1d;
+		}
+	}
 }
 
 .moduleSelectContainer {
@@ -15,7 +24,7 @@
 	align-items: center;
 	height: 100%;
 	width: 100%;
-	color: #fff;
+	color: #e5e7eb;
 }
 
 .onboardingHeader {
@@ -51,7 +60,7 @@
 	width: 400px;
 	cursor: pointer;
 	height: 200px;
-	color: #fff;
+	color: #e5e7eb;
 	background-color: #141414;
 
 	/* colorBgContainer */
@@ -59,6 +68,13 @@
 	/* colorSplit */
 	border: 1px solid rgba(255, 255, 255, 0.06);
 	border-radius: 2px;
+	box-shadow: 5px 5px 25px 0 rgba(46, 61, 73, 0.2);
+
+	&.disabled {
+		opacity: 0.8;
+		cursor: not-allowed;
+		pointer-events: none;
+	}
 }
 
 .moduleStyles.selected {
@@ -71,17 +87,12 @@
 }
 
 .moduleTitleStyle {
-	font-weight: 600;
-	font-size: 1.2rem;
+	font-size: 1rem;
 	padding: 16px;
 	margin-bottom: 16px;
 	line-height: 1rem;
 	background: #1d1d1d;
 	border-bottom: 2px solid #141414;
-
-	font-weight: 400;
-	font-size: 20px;
-	line-height: 28px;
 }
 
 .moduleDesc {
@@ -118,4 +129,9 @@
 	width: calc(100% - 96px);
 	box-sizing: border-box;
 	bottom: 0;
+}
+
+.ant-steps-item-description {
+	font-size: 12px !important;
+	max-width: 100% !important;
 }

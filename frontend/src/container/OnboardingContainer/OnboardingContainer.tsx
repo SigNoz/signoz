@@ -1,16 +1,19 @@
+/* eslint-disable jsx-a11y/no-static-element-interactions */
+/* eslint-disable jsx-a11y/click-events-have-key-events */
 import './Onboarding.styles.scss';
 
 import { ArrowLeftOutlined, ArrowRightOutlined } from '@ant-design/icons';
-import { Button, message, Steps } from 'antd';
+import { Button, Steps } from 'antd';
 import cx from 'classnames';
 import ROUTES from 'constants/routes';
 import history from 'lib/history';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
 import APM from './APM/APM';
 import DistributedTracing from './DistributedTracing/DistributedTracing';
-import LogsManagement from './LogsManagement/LogsManagement';
 import InfrastructureMonitoring from './InfrastructureMonitoring/InfrastructureMonitoring';
+import LogsManagement from './LogsManagement/LogsManagement';
+import { useIsDarkMode } from 'hooks/useDarkMode';
 
 const modulesMap = {
 	APM: 'APM',
@@ -19,75 +22,148 @@ const modulesMap = {
 	InfrastructureMonitoring: 'Infrastructure Monitoring',
 };
 
-const useCases = [
-	{
+const defaultStepDesc = 'Configure data source';
+const getStarted = 'Get Started';
+const selectUseCase = 'Select the use-case';
+const instrumentApp = 'Instrument Application';
+const testConnection = 'Test Connection';
+
+const useCases = {
+	APM: {
 		id: modulesMap.APM,
 		title: 'Application Monitoring',
 		desc:
 			'Monitor performance of your applications & troubleshoot problems by installing within your infra.',
+		stepDesc: defaultStepDesc,
 	},
-	{
+	DistributedTracing: {
 		id: modulesMap.DistributedTracing,
 		title: 'Distributed Tracing',
 		desc:
 			'Get end-to-end visibility of the services with contextual tags and attributes, run insights faster and get relevant metrics.',
+		stepDesc: defaultStepDesc,
 	},
-	{
+	LogsManagement: {
 		id: modulesMap.LogsManagement,
 		title: 'Logs Management',
 		desc:
 			'Easily search and filter logs with query builder and automatically detect logs from K8s cluster.',
+		stepDesc: 'Choose the logs that you want to receive on SigNoz',
 	},
-	{
+	InfrastructureMonitoring: {
 		id: modulesMap.InfrastructureMonitoring,
 		title: 'Infrastructure Monitoring',
 		desc:
 			'Easily search and filter logs with query builder and automatically detect logs from K8s cluster.',
+		stepDesc: defaultStepDesc,
 	},
-];
+};
 
-// const description = 'This is a description.';
-
-const steps = [
+const defaultSteps = [
 	{
-		title: 'Get Started',
-		description: 'Select the use-case',
+		title: getStarted,
+		description: selectUseCase,
 		step: 1,
 	},
 	{
-		title: 'Instrument Application',
-		description: 'Configure data source',
+		title: instrumentApp,
+		description: defaultStepDesc,
 		step: 2,
 	},
 	{
-		title: 'Test Connection',
+		title: testConnection,
 		description: 'Verify that you’ve instrumented your application ',
 		step: 3,
 	},
 ];
 
 export default function Onboarding(): JSX.Element {
-	const [selectedModule, setSelectedModule] = useState(modulesMap.APM);
+	const [selectedModule, setSelectedModule] = useState(useCases.APM);
+
+	const [steps, setsteps] = useState(defaultSteps);
 	const [activeStep, setActiveStep] = useState(1);
+	const [current, setCurrent] = useState(0);
+	const isDarkMode = useIsDarkMode();
 
-	const handleNextStep = (): void => {
-		setActiveStep(activeStep + 1);
+	useEffect(() => {
+		if (selectedModule?.id === modulesMap.InfrastructureMonitoring) {
+			setsteps([
+				{
+					title: getStarted,
+					description: selectUseCase,
+					step: 1,
+				},
+				{
+					title: instrumentApp,
+					description: selectedModule.stepDesc,
+					step: 2,
+				},
+			]);
+		} else {
+			setsteps([
+				{
+					title: getStarted,
+					description: selectUseCase,
+					step: 1,
+				},
+				{
+					title: instrumentApp,
+					description: selectedModule.stepDesc,
+					step: 2,
+				},
+				{
+					title: testConnection,
+					description: 'Verify that you’ve instrumented your application ',
+					step: 3,
+				},
+			]);
+		}
+	}, [selectedModule]);
+
+	const handleNext = (): void => {
+		if (activeStep <= 3) {
+			setActiveStep(activeStep + 1);
+			setCurrent(current + 1);
+		}
 	};
 
-	const [current, setCurrent] = useState(1);
-
-	const next = () => {
-		setCurrent(current + 1);
-		setActiveStep(activeStep + 1);
+	const handlePrev = (): void => {
+		if (activeStep >= 1) {
+			setCurrent(current - 1);
+			setActiveStep(activeStep - 1);
+		}
 	};
 
-	const prev = () => {
-		setCurrent(current - 1);
-		setActiveStep(activeStep - 1);
+	const handleOnboardingComplete = (): void => {
+		switch (selectedModule.id) {
+			case modulesMap.APM:
+				history.push(ROUTES.APPLICATION);
+				break;
+			case modulesMap.DistributedTracing:
+				history.push(ROUTES.TRACE);
+				break;
+			case modulesMap.LogsManagement:
+				history.push(ROUTES.LOGS);
+				break;
+			case modulesMap.InfrastructureMonitoring:
+				history.push(ROUTES.APPLICATION);
+				break;
+			default:
+				break;
+		}
+	};
+
+	const handleStepChange = (value: number): void => {
+		setCurrent(value);
+		setActiveStep(value + 1);
+	};
+
+	const handleModuleSelect = (moduleName): void => {
+		setSelectedModule(moduleName);
 	};
 
 	return (
-		<div className={cx('container')}>
+		<div className={cx('container', isDarkMode ? 'darkMode' : 'lightMode')}>
 			{activeStep === 1 && (
 				<>
 					<div className="onboardingHeader">
@@ -100,61 +176,65 @@ export default function Onboarding(): JSX.Element {
 							<div
 								className={cx(
 									'moduleStyles',
-									selectedModule === useCases[0].id ? 'selected' : '',
+									selectedModule.id === useCases.APM.id ? 'selected' : '',
 								)}
-								key={useCases[0].id}
-								onClick={() => setSelectedModule(useCases[0].id)}
+								key={useCases.APM.id}
+								onClick={(): void => handleModuleSelect(useCases.APM)}
 							>
-								<div className="moduleTitleStyle">{useCases[0].title}</div>
-								<div className="moduleDesc"> {useCases[0].desc} </div>
+								<div className="moduleTitleStyle">{useCases.APM.title}</div>
+								<div className="moduleDesc"> {useCases.APM.desc} </div>
 							</div>
 
 							<div
 								className={cx(
 									'moduleStyles',
-									selectedModule === useCases[1].id ? 'selected' : '',
+									selectedModule.id === useCases.LogsManagement.id ? 'selected' : '',
 								)}
-								key={useCases[1].id}
-								onClick={() => setSelectedModule(useCases[1].id)}
+								key={useCases.LogsManagement.id}
+								onClick={(): void => handleModuleSelect(useCases.LogsManagement)}
 							>
-								<div className="moduleTitleStyle">{useCases[1].title}</div>
-								<div className="moduleDesc"> {useCases[1].desc} </div>
-							</div>
-						</div>
-
-						<div className="moduleContainerRowStyles">
-							<div
-								className={cx(
-									'moduleStyles',
-									selectedModule === useCases[2].id ? 'selected' : '',
-								)}
-								key={useCases[2].id}
-								onClick={() => setSelectedModule(useCases[2].id)}
-							>
-								<div className="moduleTitleStyle">{useCases[2].title}</div>
-								<div className="moduleDesc"> {useCases[2].desc} </div>
+								<div className="moduleTitleStyle">{useCases.LogsManagement.title}</div>
+								<div className="moduleDesc"> {useCases.LogsManagement.desc} </div>
 							</div>
 
 							<div
 								className={cx(
 									'moduleStyles',
-									selectedModule === useCases[3].id ? 'selected' : '',
+									selectedModule.id === useCases.InfrastructureMonitoring.id
+										? 'selected'
+										: '',
 								)}
-								key={useCases[3].id}
-								onClick={() => setSelectedModule(useCases[3].id)}
+								key={useCases.InfrastructureMonitoring.id}
+								onClick={(): void =>
+									handleModuleSelect(useCases.InfrastructureMonitoring)
+								}
 							>
-								<div className="moduleTitleStyle">{useCases[3].title}</div>
-								<div className="moduleDesc"> {useCases[3].desc} </div>
+								<div className="moduleTitleStyle">
+									{useCases.InfrastructureMonitoring.title}
+								</div>
+								<div className="moduleDesc">
+									{useCases.InfrastructureMonitoring.desc}
+								</div>
 							</div>
+
+							{/* <div
+								className={cx(
+									'moduleStyles',
+									selectedModule.id === useCases.DistributedTracing.id ? 'selected' : '',
+								)}
+								key={useCases.DistributedTracing.id}
+								onClick={() => handleModuleSelect(useCases.DistributedTracing)}
+							>
+								<div className="moduleTitleStyle">
+									{useCases.DistributedTracing.title}
+								</div>
+								<div className="moduleDesc"> {useCases.DistributedTracing.desc} </div>
+							</div> */}
 						</div>
 					</div>
 
 					<div className="continue-to-next-step">
-						<Button
-							type="primary"
-							icon={<ArrowRightOutlined />}
-							onClick={handleNextStep}
-						>
+						<Button type="primary" icon={<ArrowRightOutlined />} onClick={handleNext}>
 							Continue to next step
 						</Button>
 					</div>
@@ -163,16 +243,21 @@ export default function Onboarding(): JSX.Element {
 
 			{activeStep > 1 && (
 				<div className="stepsContainer">
-					<Steps current={current} items={steps} />
+					<Steps
+						current={current}
+						onChange={handleStepChange}
+						items={steps}
+						size="small"
+					/>
 					<div className="step-content">
-						{selectedModule === modulesMap.APM && <APM activeStep={activeStep} />}
-						{selectedModule === modulesMap.DistributedTracing && (
+						{selectedModule.id === modulesMap.APM && <APM activeStep={activeStep} />}
+						{selectedModule.id === modulesMap.DistributedTracing && (
 							<DistributedTracing activeStep={activeStep} />
 						)}
-						{selectedModule === modulesMap.LogsManagement && (
+						{selectedModule.id === modulesMap.LogsManagement && (
 							<LogsManagement activeStep={activeStep} />
 						)}
-						{selectedModule === modulesMap.InfrastructureMonitoring && (
+						{selectedModule.id === modulesMap.InfrastructureMonitoring && (
 							<InfrastructureMonitoring activeStep={activeStep} />
 						)}
 					</div>
@@ -182,7 +267,7 @@ export default function Onboarding(): JSX.Element {
 							<Button
 								style={{ margin: '0 8px' }}
 								icon={<ArrowLeftOutlined />}
-								onClick={() => prev()}
+								onClick={handlePrev}
 							>
 								Back
 							</Button>
@@ -192,20 +277,14 @@ export default function Onboarding(): JSX.Element {
 							<Button
 								type="primary"
 								icon={<ArrowRightOutlined />}
-								onClick={() => next()}
+								onClick={handleNext}
 							>
 								Continue to next step
 							</Button>
 						)}
 
 						{activeStep === steps.length && (
-							<Button
-								type="primary"
-								onClick={(): void => {
-									// message.success('Processing complete!');
-									history.push(ROUTES.APPLICATION);
-								}}
-							>
+							<Button type="primary" onClick={handleOnboardingComplete}>
 								Done
 							</Button>
 						)}

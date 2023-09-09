@@ -1,7 +1,6 @@
 import {
 	AlertOutlined,
 	AlignLeftOutlined,
-	ApiOutlined,
 	BarChartOutlined,
 	BugOutlined,
 	DashboardFilled,
@@ -19,7 +18,7 @@ const menuItems: SidebarMenu[] = [
 	{
 		key: ROUTES.GET_STARTED,
 		label: 'Get Started',
-		icon: <RocketOutlined />,
+		icon: <RocketOutlined rotate={45} />,
 	},
 	{
 		key: ROUTES.APPLICATION,
