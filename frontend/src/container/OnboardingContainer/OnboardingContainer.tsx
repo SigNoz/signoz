@@ -6,6 +6,7 @@ import { ArrowLeftOutlined, ArrowRightOutlined } from '@ant-design/icons';
 import { Button, Steps } from 'antd';
 import cx from 'classnames';
 import ROUTES from 'constants/routes';
+import { useIsDarkMode } from 'hooks/useDarkMode';
 import history from 'lib/history';
 import { useEffect, useState } from 'react';
 
@@ -13,7 +14,6 @@ import APM from './APM/APM';
 import DistributedTracing from './DistributedTracing/DistributedTracing';
 import InfrastructureMonitoring from './InfrastructureMonitoring/InfrastructureMonitoring';
 import LogsManagement from './LogsManagement/LogsManagement';
-import { useIsDarkMode } from 'hooks/useDarkMode';
 
 const modulesMap = {
 	APM: 'APM',
@@ -79,7 +79,6 @@ const defaultSteps = [
 
 export default function Onboarding(): JSX.Element {
 	const [selectedModule, setSelectedModule] = useState(useCases.APM);
-
 	const [steps, setsteps] = useState(defaultSteps);
 	const [activeStep, setActiveStep] = useState(1);
 	const [current, setCurrent] = useState(0);
@@ -121,7 +120,10 @@ export default function Onboarding(): JSX.Element {
 	}, [selectedModule]);
 
 	const handleNext = (): void => {
-		if (activeStep <= 3) {
+		// Need to add logic to validate service name and then allow next step transition in APM module
+		const isFormValid = true;
+
+		if (isFormValid && activeStep <= 3) {
 			setActiveStep(activeStep + 1);
 			setCurrent(current + 1);
 		}

@@ -10,6 +10,13 @@ import JbossDocs from './md-docs/jboss.md';
 import SprintBootDocs from './md-docs/spring_boot.md';
 import TomcatDocs from './md-docs/tomcat.md';
 
+const frameworksMap = {
+	tomcat: 'Tomcat',
+	spring_boot: 'Spring Boot',
+	jboss: 'JBoss',
+	other: 'Others',
+};
+
 export default function Java({
 	activeStep,
 }: {
@@ -27,8 +34,6 @@ export default function Java({
 				return <SprintBootDocs />;
 			case 'jboss':
 				return <JbossDocs />;
-			case 'other':
-				return <JavaDocs />;
 			default:
 				return <JavaDocs />;
 		}
@@ -67,19 +72,19 @@ export default function Java({
 								options={[
 									{
 										value: 'spring_boot',
-										label: 'Spring Boot',
+										label: frameworksMap.spring_boot,
 									},
 									{
 										value: 'tomcat',
-										label: 'Tomcat',
+										label: frameworksMap.tomcat,
 									},
 									{
 										value: 'jboss',
-										label: 'JBoss',
+										label: frameworksMap.jboss,
 									},
 									{
 										value: 'other',
-										label: 'Others',
+										label: frameworksMap.other,
 									},
 								]}
 							/>
@@ -107,7 +112,12 @@ export default function Java({
 				</div>
 			)}
 			{activeStep === 3 && (
-				<ConnectionStatus language="java" activeStep={activeStep} />
+				<ConnectionStatus
+					serviceName={form.getFieldValue('Service Name')}
+					language="java"
+					framework={frameworksMap[selectedFrameWork]}
+					activeStep={activeStep}
+				/>
 			)}
 		</>
 	);

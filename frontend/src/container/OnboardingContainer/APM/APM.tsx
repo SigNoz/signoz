@@ -1,12 +1,14 @@
 /* eslint-disable jsx-a11y/click-events-have-key-events */
 /* eslint-disable jsx-a11y/no-static-element-interactions */
-import { useState } from 'react';
-import cx from 'classnames';
 import './APM.styles.scss';
-import Java from './Java/Java';
-import Python from './Python/Python';
-import Javascript from './Javascript/Javascript';
+
+import cx from 'classnames';
+import { useState } from 'react';
+
 import GoLang from './GoLang/GoLang';
+import Java from './Java/Java';
+import Javascript from './Javascript/Javascript';
+import Python from './Python/Python';
 
 const supportedLanguages = [
 	{

@@ -99,6 +99,11 @@ function PrivateRoute({ children }: PrivateRouteProps): JSX.Element {
 									response.payload.refreshJwt,
 								);
 
+								if (userResponse) {
+									localStorage.setItem('loggedInUserName', userResponse.payload?.name);
+									localStorage.setItem('loggedInUserEmail', userResponse.payload?.email);
+								}
+
 								if (
 									userResponse &&
 									route.find((e) => e === userResponse.payload.role) === undefined

@@ -11,6 +11,14 @@ import FastAPIDocs from './md-docs/fastAPI.md';
 import FlaskDocs from './md-docs/flask.md';
 import PythonDocs from './md-docs/python.md';
 
+const frameworksMap = {
+	django: 'Django',
+	fastAPI: 'Fast API',
+	flask: 'Flask',
+	falcon: 'Falcon',
+	other: 'Others',
+};
+
 export default function Python({
 	activeStep,
 }: {
@@ -34,8 +42,6 @@ export default function Python({
 				return <PythonDocs />;
 		}
 	};
-
-	console.log('form', form);
 
 	return (
 		<>
@@ -71,23 +77,23 @@ export default function Python({
 								options={[
 									{
 										value: 'django',
-										label: 'Django',
+										label: frameworksMap.django,
 									},
 									{
 										value: 'fastAPI',
-										label: 'FastAPI',
+										label: frameworksMap.fastAPI,
 									},
 									{
 										value: 'flask',
-										label: 'Flask',
+										label: frameworksMap.flask,
 									},
 									{
 										value: 'falcon',
-										label: 'Falcon',
+										label: frameworksMap.falcon,
 									},
 									{
 										value: 'other',
-										label: 'Others',
+										label: frameworksMap.other,
 									},
 								]}
 							/>
@@ -115,7 +121,12 @@ export default function Python({
 				</div>
 			)}
 			{activeStep === 3 && (
-				<ConnectionStatus language="python" activeStep={activeStep} />
+				<ConnectionStatus
+					serviceName={form.getFieldValue('Service Name')}
+					language="python"
+					framework={selectedFrameWork}
+					activeStep={activeStep}
+				/>
 			)}
 		</>
 	);

@@ -1,6 +1,5 @@
 import './GoLang.styles.scss';
 
-import { InfoCircleOutlined } from '@ant-design/icons';
 import { MDXProvider } from '@mdx-js/react';
 import { Form, Input } from 'antd';
 
@@ -61,7 +60,12 @@ export default function GoLang({
 				</div>
 			)}
 			{activeStep === 3 && (
-				<ConnectionStatus language="go" activeStep={activeStep} />
+				<ConnectionStatus
+					serviceName={form.getFieldValue('Service Name')}
+					framework="go"
+					language="go"
+					activeStep={activeStep}
+				/>
 			)}
 		</>
 	);

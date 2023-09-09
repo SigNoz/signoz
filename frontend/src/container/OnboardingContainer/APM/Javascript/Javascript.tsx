@@ -10,6 +10,13 @@ import ExpressDocs from './md-docs/express.md';
 import JavascriptDocs from './md-docs/javascript.md';
 import NestJsDocs from './md-docs/nestjs.md';
 
+const frameworksMap = {
+	express: 'Express',
+	nestjs: 'Nest JS',
+	angular: 'Angular',
+	other: 'Others',
+};
+
 export default function Javascript({
 	activeStep,
 }: {
@@ -69,19 +76,19 @@ export default function Javascript({
 								options={[
 									{
 										value: 'express',
-										label: 'Express',
+										label: frameworksMap.express,
 									},
 									{
 										value: 'nestjs',
-										label: 'Nestjs',
+										label: frameworksMap.nestjs,
 									},
 									{
 										value: 'angular',
-										label: 'Angular',
+										label: frameworksMap.angular,
 									},
 									{
 										value: 'other',
-										label: 'Other',
+										label: frameworksMap.other,
 									},
 								]}
 							/>
@@ -90,12 +97,18 @@ export default function Javascript({
 						<div className="service-name-container">
 							<div className="label"> Service Name </div>
 
-							<Form form={form} name="service-name" style={{ minWidth: '300px' }}>
+							<Form
+								form={form}
+								name="service-name"
+								style={{ minWidth: '300px' }}
+								scrollToFirstError
+							>
 								<Form.Item
 									hasFeedback
 									name="Service Name"
 									rules={[{ required: true }]}
 									validateTrigger="onBlur"
+									requiredMark
 								>
 									<Input autoFocus />
 								</Form.Item>
@@ -109,7 +122,12 @@ export default function Javascript({
 				</div>
 			)}
 			{activeStep === 3 && (
-				<ConnectionStatus language="javascript" activeStep={activeStep} />
+				<ConnectionStatus
+					serviceName={form.getFieldValue('Service Name')}
+					language="javascript"
+					framework={selectedFrameWork}
+					activeStep={activeStep}
+				/>
 			)}
 		</>
 	);

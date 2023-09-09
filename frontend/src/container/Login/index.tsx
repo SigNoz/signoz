@@ -158,11 +158,17 @@ function Login({
 				password,
 			});
 			if (response.statusCode === 200) {
-				await afterLogin(
+				const user = await afterLogin(
 					response.payload.userId,
 					response.payload.accessJwt,
 					response.payload.refreshJwt,
 				);
+
+				if (user) {
+					localStorage.setItem('loggedInUserName', user.payload?.name);
+					localStorage.setItem('loggedInUserEmail', user.payload?.email);
+				}
+
 				history.push(ROUTES.APPLICATION);
 			} else {
 				notifications.error({
