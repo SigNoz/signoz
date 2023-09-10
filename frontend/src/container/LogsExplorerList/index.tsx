@@ -127,15 +127,7 @@ function LogsExplorerList({
 				/>
 			</Card>
 		);
-	}, [
-		isLoading,
-		logs,
-		options.format,
-		options.maxLines,
-		onEndReached,
-		getItemContent,
-		selectedFields,
-	]);
+	}, [isLoading, options, logs, onEndReached, getItemContent, selectedFields]);
 
 	return (
 		<>
