@@ -7,7 +7,7 @@ BUILD_VERSION   ?= $(shell git describe --always --tags)
 BUILD_HASH      ?= $(shell git rev-parse --short HEAD)
 BUILD_TIME      ?= $(shell date -u +"%Y-%m-%dT%H:%M:%SZ")
 BUILD_BRANCH    ?= $(shell git rev-parse --abbrev-ref HEAD)
-DEV_LICENSE_SIGNOZ_IO ?= https://staging-license.signoz.io/api/v1
+DEV_LICENSE_SIGNOZ_IO ?= https://mocki.io/v1/c30809a3-a029-4a59-9b5d-5b195f0a3780
 
 # Internal variables or constants.
 FRONTEND_DIRECTORY ?= frontend
