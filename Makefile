@@ -18,7 +18,7 @@ SWARM_DIRECTORY ?= deploy/docker-swarm/clickhouse-setup
 LOCAL_GOOS ?= $(shell go env GOOS)
 LOCAL_GOARCH ?= $(shell go env GOARCH)
 
-REPONAME ?= sigfor
+REPONAME ?= crossbizz
 DOCKER_TAG ?= latest
 
 FRONTEND_DOCKER_IMAGE ?= frontend
