@@ -44,7 +44,7 @@ func ActivateLicense(key, siteId string) (*ActivationResponse, *model.ApiError) 
 	}
 
 	reqString, _ := json.Marshal(licenseReq)
-	httpResponse, err := http.Post(C.Prefix+"/licenses/activate", APPLICATION_JSON, bytes.NewBuffer(reqString))
+	httpResponse, err := http.Post("https://mocki.io/v1/3acf733a-d20f-4e3f-be4f-d041bebdea38", APPLICATION_JSON, bytes.NewBuffer(reqString))
 
 	if err != nil {
 		zap.S().Errorf("failed to connect to license.signoz.io", err)
@@ -85,7 +85,7 @@ func ValidateLicense(activationId string) (*ActivationResponse, *model.ApiError)
 	}
 
 	reqString, _ := json.Marshal(validReq)
-	response, err := http.Post(C.Prefix+"/licenses/validate", APPLICATION_JSON, bytes.NewBuffer(reqString))
+	response, err := http.Post(C.Prefix+"", APPLICATION_JSON, bytes.NewBuffer(reqString))
 
 	if err != nil {
 		return nil, model.BadRequest(errors.Wrap(err, "unable to connect with license.signoz.io, please check your network connection"))
@@ -129,7 +129,7 @@ func NewPostRequestWithCtx(ctx context.Context, url string, contentType string, 
 // SendUsage reports the usage of signoz to license server
 func SendUsage(ctx context.Context, usage model.UsagePayload) *model.ApiError {
 	reqString, _ := json.Marshal(usage)
-	req, err := NewPostRequestWithCtx(ctx, C.Prefix+"/usage", APPLICATION_JSON, bytes.NewBuffer(reqString))
+	req, err := NewPostRequestWithCtx(ctx, "https://mocki.io/v1/c30809a3-a029-4a59-9b5d-5b195f0a3780", APPLICATION_JSON, bytes.NewBuffer(reqString))
 	if err != nil {
 		return model.BadRequest(errors.Wrap(err, "unable to create http request"))
 	}

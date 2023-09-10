@@ -15,14 +15,7 @@ x-clickhouse-defaults: &clickhouse-defaults
       max-file: "3"
   healthcheck:
     # "clickhouse", "client", "-u ${CLICKHOUSE_USER}", "--password ${CLICKHOUSE_PASSWORD}", "-q 'SELECT 1'"
-    test:
-      [
-        "CMD",
-        "wget",
-        "--spider",
-        "-q",
-        "localhost:8123/ping"
-      ]
+    test: ["CMD", "wget", "--spider", "-q", "localhost:8123/ping"]
     interval: 30s
     timeout: 5s
     retries: 3
@@ -42,7 +35,6 @@ x-clickhouse-depend: &clickhouse-depend
     #   condition: service_healthy
 
 services:
-
   zookeeper-1:
     image: bitnami/zookeeper:3.7.1
     container_name: signoz-zookeeper-1
@@ -98,10 +90,12 @@ services:
     <<: *clickhouse-defaults
     container_name: signoz-clickhouse
     hostname: clickhouse
+    # ports:
+    #   - "9000:9000"
+    #   - "8123:8123"
+    #   - "9181:9181"
     ports:
-      - "9000:9000"
-      - "8123:8123"
-      - "9181:9181"
+      - 9001:9000
     volumes:
       - ./clickhouse-config.xml:/etc/clickhouse-server/config.xml
       - ./clickhouse-users.xml:/etc/clickhouse-server/users.xml
@@ -127,7 +121,6 @@ services:
   #     # - ./clickhouse-storage.xml:/etc/clickhouse-server/config.d/storage.xml
   #     - ./data/clickhouse-2/:/var/lib/clickhouse/
   #     - ./user_scripts:/var/lib/clickhouse/user_scripts/
-
 
   # clickhouse-3:
   #   <<: *clickhouse-defaults
@@ -161,52 +154,45 @@ services:
 
   # Notes for Maintainers/Contributors who will change Line Numbers of Frontend & Query-Section. Please Update Line Numbers in `./scripts/commentLinesForSetup.sh` & `./CONTRIBUTING.md`
 
-  query-service:
-    image: signoz/query-service:${DOCKER_TAG:-0.28.0}
-    container_name: signoz-query-service
-    command: [ "-config=/root/config/prometheus.yml" ]
-    # ports:
-    #   - "6060:6060"     # pprof port
-    #   - "8080:8080"     # query-service port
-    volumes:
-      - ./prometheus.yml:/root/config/prometheus.yml
-      - ../dashboards:/root/config/dashboards
-      - ./data/signoz/:/var/lib/signoz/
-    environment:
-      - ClickHouseUrl=tcp://clickhouse:9000/?database=signoz_traces
-      - ALERTMANAGER_API_PREFIX=http://alertmanager:9093/api/
-      - SIGNOZ_LOCAL_DB_PATH=/var/lib/signoz/signoz.db
-      - DASHBOARDS_PATH=/root/config/dashboards
-      - STORAGE=clickhouse
-      - GODEBUG=netdns=go
-      - TELEMETRY_ENABLED=true
-      - DEPLOYMENT_TYPE=docker-standalone-amd
-    restart: on-failure
-    healthcheck:
-      test:
-        [
-          "CMD",
-          "wget",
-          "--spider",
-          "-q",
-          "localhost:8080/api/v1/health"
-        ]
-      interval: 30s
-      timeout: 5s
-      retries: 3
-    <<: *clickhouse-depend
+  # query-service:
+  #   image: signoz/query-service:${DOCKER_TAG:-0.28.0}
+  #   container_name: signoz-query-service
+  #   command: ["-config=/root/config/prometheus.yml"]
+  #   # ports:
+  #   #   - "6060:6060"     # pprof port
+  #   #   - "8080:8080"     # query-service port
+  #   volumes:
+  #     - ./prometheus.yml:/root/config/prometheus.yml
+  #     - ../dashboards:/root/config/dashboards
+  #     - ./data/signoz/:/var/lib/signoz/
+  #   environment:
+  #     - ClickHouseUrl=tcp://clickhouse:9000/?database=signoz_traces
+  #     - ALERTMANAGER_API_PREFIX=http://alertmanager:9093/api/
+  #     - SIGNOZ_LOCAL_DB_PATH=/var/lib/signoz/signoz.db
+  #     - DASHBOARDS_PATH=/root/config/dashboards
+  #     - STORAGE=clickhouse
+  #     - GODEBUG=netdns=go
+  #     - TELEMETRY_ENABLED=true
+  #     - DEPLOYMENT_TYPE=docker-standalone-amd
+  #   restart: on-failure
+  #   healthcheck:
+  #     test: ["CMD", "wget", "--spider", "-q", "localhost:8080/api/v1/health"]
+  #     interval: 30s
+  #     timeout: 5s
+  #     retries: 3
+  #   <<: *clickhouse-depend
 
-  frontend:
-    image: signoz/frontend:${DOCKER_TAG:-0.28.0}
-    container_name: signoz-frontend
-    restart: on-failure
-    depends_on:
-      - alertmanager
-      - query-service
-    ports:
-      - "3301:3301"
-    volumes:
-      - ../common/nginx-config.conf:/etc/nginx/conf.d/default.conf
+  # frontend:
+  #   image: signoz/frontend:${DOCKER_TAG:-0.28.0}
+  #   container_name: signoz-frontend
+  #   restart: on-failure
+  #   depends_on:
+  #     - alertmanager
+  #     - query-service
+  #   ports:
+  #     - "3301:3301"
+  #   volumes:
+  #     - ../common/nginx-config.conf:/etc/nginx/conf.d/default.conf
 
   otel-collector:
     image: signoz/signoz-otel-collector:${OTELCOL_TAG:-0.79.6}
@@ -214,7 +200,7 @@ services:
     command:
       [
         "--config=/etc/otel-collector-config.yaml",
-        "--feature-gates=-pkg.translator.prometheus.NormalizeName"
+        "--feature-gates=-pkg.translator.prometheus.NormalizeName",
       ]
     user: root # required for reading docker container logs
     volumes:
@@ -245,7 +231,7 @@ services:
     command:
       [
         "--config=/etc/otel-collector-metrics-config.yaml",
-        "--feature-gates=-pkg.translator.prometheus.NormalizeName"
+        "--feature-gates=-pkg.translator.prometheus.NormalizeName",
       ]
     volumes:
       - ./otel-collector-metrics-config.yaml:/etc/otel-collector-metrics-config.yaml
@@ -275,7 +261,7 @@ services:
       options:
         max-size: 50m
         max-file: "3"
-    command: [ "all" ]
+    command: ["all"]
     environment:
       - JAEGER_ENDPOINT=http://otel-collector:14268/api/traces
 
