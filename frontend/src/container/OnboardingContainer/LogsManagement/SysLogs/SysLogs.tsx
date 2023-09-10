@@ -3,6 +3,7 @@ import { MDXProvider } from '@mdx-js/react';
 import { Steps } from 'antd';
 
 import Post from './syslogs.md';
+import ConnectionStatus from '../common/LogsConnectionStatus/LogsConnectionStatus';
 
 export default function SysLogs({ activeStep }): JSX.Element {
 	return (
@@ -39,21 +40,7 @@ export default function SysLogs({ activeStep }): JSX.Element {
 			)}
 			{activeStep === 3 && (
 				<div className="connection-status-container">
-					<Steps
-						progressDot
-						current={1}
-						direction="vertical"
-						items={[
-							{
-								title: 'Finished',
-								description: 'Ping Successful',
-							},
-							{
-								title: 'Waiting',
-								description: 'Receiving Data from the application',
-							},
-						]}
-					/>
+					<ConnectionStatus logType="docker" activeStep={activeStep} />
 				</div>
 			)}
 		</>

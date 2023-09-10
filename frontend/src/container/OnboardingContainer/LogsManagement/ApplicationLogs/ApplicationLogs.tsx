@@ -1,7 +1,7 @@
 import { MDXProvider } from '@mdx-js/react';
+import { Tabs, TabsProps } from 'antd';
 
-import { Steps, Tabs, TabsProps } from 'antd';
-
+import ConnectionStatus from '../common/LogsConnectionStatus/LogsConnectionStatus';
 import LogsFromLogFile from './applicationLogsFromLogFile.md';
 import LogsUsingJavaOtelSDK from './applicationLogsUsingJavaOtelSDK.md';
 import LogsUsingPythonOtelSDK from './applicationLogsUsingPythonOtelSDK.md';
@@ -33,12 +33,11 @@ export default function ApplicationLogs({
 	type,
 	activeStep,
 }: ApplicationLogsProps): JSX.Element {
-	function renderContentForCollectingLogsOtelSDK(language: string) {
+	function renderContentForCollectingLogsOtelSDK(language: string): JSX.Element {
 		if (language === 'Java') {
 			return <LogsUsingJavaOtelSDK />;
-		} else {
-			return <LogsUsingPythonOtelSDK />;
 		}
+		return <LogsUsingPythonOtelSDK />;
 	}
 
 	enum ApplicationLogsType {
@@ -57,7 +56,7 @@ export default function ApplicationLogs({
 				<div className="golang-setup-instructions-container">
 					<div className="header">
 						<img
-							className={'supported-logs-type-img'}
+							className="supported-logs-type-img"
 							src={`/Logos/${
 								type === ApplicationLogsType.FROM_LOG_FILE
 									? 'software-window'
@@ -74,7 +73,7 @@ export default function ApplicationLogs({
 
 							<div className="detailed-docs-link">
 								View detailed docs
-								<a target="_blank" href={docsURL}>
+								<a target="_blank" href={docsURL} rel="noreferrer">
 									here
 								</a>
 							</div>
@@ -109,20 +108,13 @@ export default function ApplicationLogs({
 			)}
 			{activeStep === 3 && (
 				<div className="connection-status-container">
-					<Steps
-						progressDot
-						current={1}
-						direction="vertical"
-						items={[
-							{
-								title: 'Finished',
-								description: 'Ping Successful',
-							},
-							{
-								title: 'Waiting',
-								description: 'Receiving Data from the application',
-							},
-						]}
+					<ConnectionStatus
+						logType={
+							type === ApplicationLogsType.FROM_LOG_FILE
+								? 'Application Logs from Log File'
+								: 'Application Logs using existing OTEL Collector'
+						}
+						activeStep={activeStep}
 					/>
 				</div>
 			)}

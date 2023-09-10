@@ -1,13 +1,16 @@
-import { useState } from 'react';
-
-import cx from 'classnames';
+/* eslint-disable jsx-a11y/no-static-element-interactions */
+/* eslint-disable @typescript-eslint/explicit-function-return-type */
+/* eslint-disable jsx-a11y/click-events-have-key-events */
 import './LogsManagement.styles.scss';
 
-import Kubernetes from './Kubernetes/Kubernetes';
-import Docker from './Docker/Docker';
+import cx from 'classnames';
+import { useState } from 'react';
+
 import ApplicationLogs from './ApplicationLogs/ApplicationLogs';
-import SysLogs from './SysLogs/SysLogs';
+import Docker from './Docker/Docker';
+import Kubernetes from './Kubernetes/Kubernetes';
 import Nodejs from './Nodejs/Nodejs';
+import SysLogs from './SysLogs/SysLogs';
 
 const supportedLogTypes = [
 	{
@@ -56,10 +59,10 @@ export default function LogsManagement({ activeStep }): JSX.Element {
 				return <Docker activeStep={activeStep} />;
 
 			case 'application_logs_log_file':
-				return <ApplicationLogs type={'from-log-file'} activeStep={activeStep} />;
+				return <ApplicationLogs type="from-log-file" activeStep={activeStep} />;
 
 			case 'application_logs_otel_sdk':
-				return <ApplicationLogs type={'using-otel-sdk'} activeStep={activeStep} />;
+				return <ApplicationLogs type="using-otel-sdk" activeStep={activeStep} />;
 
 			case 'syslogs':
 				return <SysLogs activeStep={activeStep} />;
