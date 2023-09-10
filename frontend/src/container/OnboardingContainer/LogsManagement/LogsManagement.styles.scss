@@ -119,3 +119,33 @@ pre {
 		height: 28px;
 	}
 }
+
+$lightModeFontColor: rgb(29, 29, 29);
+
+.lightMode {
+	.logs-management-module-container {
+		.header {
+			color: $lightModeFontColor;
+		}
+
+		div[class*='-setup-instructions-container'] {
+			.header {
+				h1 {
+					color: $lightModeFontColor;
+				}
+			}
+
+			.framework-selector {
+				.label {
+					color: $lightModeFontColor;
+				}
+			}
+
+			.service-name-container {
+				.label {
+					color: $lightModeFontColor;
+				}
+			}
+		}
+	}
+}
