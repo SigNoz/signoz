@@ -149,6 +149,115 @@ func TestLogPipelinesLifecycle(t *testing.T) {
 	)
 }
 
+func TestLogPipelinesValidation(t *testing.T) {
+	testCases := []struct {
+		Name                       string
+		Pipeline                   logparsingpipeline.PostablePipeline
+		ExpectedResponseStatusCode int
+	}{
+		{
+			Name: "Valid Pipeline",
+			Pipeline: logparsingpipeline.PostablePipeline{
+				OrderId: 1,
+				Name:    "pipeline 1",
+				Alias:   "pipeline1",
+				Enabled: true,
+				Filter:  "attributes.method == \"GET\"",
+				Config: []model.PipelineOperator{
+					{
+						OrderId: 1,
+						ID:      "add",
+						Type:    "add",
+						Field:   "attributes.test",
+						Value:   "val",
+						Enabled: true,
+						Name:    "test add",
+					},
+				},
+			},
+			ExpectedResponseStatusCode: 200,
+		},
+		{
+			Name: "Invalid orderId",
+			Pipeline: logparsingpipeline.PostablePipeline{
+				OrderId: 0,
+				Name:    "pipeline 1",
+				Alias:   "pipeline1",
+				Enabled: true,
+				Filter:  "attributes.method == \"GET\"",
+				Config: []model.PipelineOperator{
+					{
+						OrderId: 1,
+						ID:      "add",
+						Type:    "add",
+						Field:   "attributes.test",
+						Value:   "val",
+						Enabled: true,
+						Name:    "test add",
+					},
+				},
+			},
+			ExpectedResponseStatusCode: 400,
+		},
+		{
+			Name: "Invalid filter",
+			Pipeline: logparsingpipeline.PostablePipeline{
+				OrderId: 1,
+				Name:    "pipeline 1",
+				Alias:   "pipeline1",
+				Enabled: true,
+				Filter:  "bad filter",
+				Config: []model.PipelineOperator{
+					{
+						OrderId: 1,
+						ID:      "add",
+						Type:    "add",
+						Field:   "attributes.test",
+						Value:   "val",
+						Enabled: true,
+						Name:    "test add",
+					},
+				},
+			},
+			ExpectedResponseStatusCode: 400,
+		},
+		{
+			Name: "Invalid operator field",
+			Pipeline: logparsingpipeline.PostablePipeline{
+				OrderId: 1,
+				Name:    "pipeline 1",
+				Alias:   "pipeline1",
+				Enabled: true,
+				Filter:  "attributes.method == \"GET\"",
+				Config: []model.PipelineOperator{
+					{
+						OrderId: 1,
+						ID:      "add",
+						Type:    "add",
+						Field:   "bad.field",
+						Value:   "val",
+						Enabled: true,
+						Name:    "test add",
+					},
+				},
+			},
+			ExpectedResponseStatusCode: 400,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.Name, func(t *testing.T) {
+			testbed := NewLogPipelinesTestBed(t)
+			testbed.PostPipelinesToQSExpectingStatusCode(
+				logparsingpipeline.PostablePipelines{
+					Pipelines: []logparsingpipeline.PostablePipeline{tc.Pipeline},
+				},
+				tc.ExpectedResponseStatusCode,
+			)
+		})
+	}
+}
+
 // LogPipelinesTestBed coordinates and mocks components involved in
 // configuring log pipelines and provides test helpers.
 type LogPipelinesTestBed struct {
@@ -282,7 +391,7 @@ func (tb *LogPipelinesTestBed) GetPipelinesFromQS() *logparsingpipeline.Pipeline
 	if response.StatusCode != 200 {
 		tb.t.Fatalf(
 			"could not list log parsing pipelines. status: %d, body: %v",
-			response.StatusCode, responseBody,
+			response.StatusCode, string(responseBody),
 		)
 	}
 
@@ -291,7 +400,7 @@ func (tb *LogPipelinesTestBed) GetPipelinesFromQS() *logparsingpipeline.Pipeline
 	if err != nil {
 		tb.t.Fatalf(
 			"Could not unmarshal QS response into an ApiResponse.\nResponse body: %s",
-			responseBody,
+			string(responseBody),
 		)
 	}
 	pipelinesResp, err := unmarshalPipelinesResponse(&result)

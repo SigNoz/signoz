@@ -1,7 +1,7 @@
+import { FormInstance } from 'antd';
 import { NotificationInstance } from 'antd/es/notification/interface';
 import { AxiosResponse } from 'axios';
 import { PANEL_TYPES } from 'constants/queryBuilder';
-import { SetStateAction } from 'react';
 import { UseMutateAsyncFunction } from 'react-query';
 import { ICompositeMetricQuery } from 'types/api/alerts/compositeQuery';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
@@ -38,6 +38,10 @@ export interface SaveViewWithNameProps {
 	refetchAllView: VoidFunction;
 }
 
+export interface SaveViewFormProps {
+	viewName: string;
+}
+
 export interface MenuItemLabelGeneratorProps {
 	viewName: string;
 	viewKey: string;
@@ -45,6 +49,7 @@ export interface MenuItemLabelGeneratorProps {
 	uuid: string;
 	viewData: ViewProps[];
 	refetchAllView: VoidFunction;
+	sourcePage: ExplorerCardProps['sourcepage'];
 }
 
 export interface SaveViewHandlerProps {
@@ -63,7 +68,7 @@ export interface SaveViewHandlerProps {
 	>;
 	handlePopOverClose: SaveViewWithNameProps['handlePopOverClose'];
 	redirectWithQueryBuilderData: QueryBuilderContextType['redirectWithQueryBuilderData'];
-	setName: (value: SetStateAction<string>) => void;
+	form: FormInstance<SaveViewFormProps>;
 }
 
 export interface DeleteViewHandlerProps {
@@ -74,4 +79,6 @@ export interface DeleteViewHandlerProps {
 	panelType: PANEL_TYPES | null;
 	viewKey: string;
 	viewId: string;
+	updateAllQueriesOperators: QueryBuilderContextType['updateAllQueriesOperators'];
+	sourcePage: ExplorerCardProps['sourcepage'];
 }

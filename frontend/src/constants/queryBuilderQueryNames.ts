@@ -6,8 +6,6 @@ type QueryParamNames =
 	| 'selectedFields'
 	| 'linesPerRow';
 
-export type QuerySearchParamNames = 'viewName' | 'viewKey';
-
 export const queryParamNamesMap: Record<QueryParamNames, QueryParamNames> = {
 	compositeQuery: 'compositeQuery',
 	panelTypes: 'panelTypes',
@@ -15,12 +13,4 @@ export const queryParamNamesMap: Record<QueryParamNames, QueryParamNames> = {
 	viewMode: 'viewMode',
 	selectedFields: 'selectedFields',
 	linesPerRow: 'linesPerRow',
-};
-
-export const querySearchParams: Record<
-	QuerySearchParamNames,
-	QuerySearchParamNames
-> = {
-	viewName: 'viewName',
-	viewKey: 'viewKey',
 };

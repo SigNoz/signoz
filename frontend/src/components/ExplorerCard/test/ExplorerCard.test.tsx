@@ -62,15 +62,12 @@ describe('ExplorerCard', () => {
 		const screen = render(
 			<ExplorerCard sourcepage={DataSource.TRACES}>Mock Children</ExplorerCard>,
 		);
-		const selectButton = screen.getByText('Select View');
+		const selectPlaceholder = screen.getByText('Select a view');
 
-		fireEvent.click(selectButton);
-
-		const spanElement = screen.getByRole('img', {
-			name: 'down',
+		fireEvent.mouseDown(selectPlaceholder);
+		const viewNameText = await screen.getAllByText('View 1');
+		viewNameText.forEach((element) => {
+			expect(element).toBeInTheDocument();
 		});
-		fireEvent.click(spanElement);
-		const viewNameText = await screen.findByText('View 2');
-		expect(viewNameText).toBeInTheDocument();
 	});
 });
