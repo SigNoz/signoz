@@ -450,7 +450,11 @@ export function QueryBuilderProvider({
 	);
 
 	const redirectWithQueryBuilderData = useCallback(
-		(query: Partial<Query>, searchParams?: Record<string, unknown>) => {
+		(
+			query: Partial<Query>,
+			searchParams?: Record<string, unknown>,
+			onHandlerSuccess?: (query: Query) => void,
+		) => {
 			const queryType =
 				!query.queryType || !Object.values(EQueryType).includes(query.queryType)
 					? EQueryType.QUERY_BUILDER
@@ -492,6 +496,10 @@ export function QueryBuilderProvider({
 			}
 
 			const generatedUrl = `${location.pathname}?${urlQuery}`;
+
+			if (onHandlerSuccess) {
+				onHandlerSuccess(currentGeneratedQuery);
+			}
 
 			history.replace(generatedUrl);
 		},

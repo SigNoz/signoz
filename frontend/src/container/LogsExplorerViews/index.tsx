@@ -68,7 +68,9 @@ function LogsExplorerViews(): JSX.Element {
 		updateAllQueriesOperators,
 	} = useQueryBuilder();
 
-	const { handleExplorerTabChange } = useHandleExplorerTabChange();
+	const { handleExplorerTabChange } = useHandleExplorerTabChange(
+		DataSource.LOGS,
+	);
 
 	// State
 	const [page, setPage] = useState<number>(1);
