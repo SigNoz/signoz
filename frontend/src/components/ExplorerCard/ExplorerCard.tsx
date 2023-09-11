@@ -1,6 +1,5 @@
 import {
 	DeleteOutlined,
-	DownOutlined,
 	MoreOutlined,
 	SaveOutlined,
 	ShareAltOutlined,
@@ -13,13 +12,13 @@ import {
 	MenuProps,
 	Popover,
 	Row,
+	Select,
 	Space,
 	Typography,
 } from 'antd';
 import axios from 'axios';
 import TextToolTip from 'components/TextToolTip';
 import { SOMETHING_WENT_WRONG } from 'constants/api';
-import { querySearchParams } from 'constants/queryBuilderQueryNames';
 import { useGetSearchQueryParam } from 'hooks/queryBuilder/useGetSearchQueryParam';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useDeleteView } from 'hooks/saveViews/useDeleteView';
@@ -28,10 +27,14 @@ import { useUpdateView } from 'hooks/saveViews/useUpdateView';
 import useErrorNotification from 'hooks/useErrorNotification';
 import { useNotifications } from 'hooks/useNotifications';
 import { mapCompositeQueryFromQuery } from 'lib/newQueryBuilder/queryBuilderMappers/mapCompositeQueryFromQuery';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useCopyToClipboard } from 'react-use';
 
-import { ExploreHeaderToolTip, SaveButtonText } from './constants';
+import {
+	ExploreHeaderToolTip,
+	querySearchParams,
+	SaveButtonText,
+} from './constants';
 import MenuItemGenerator from './MenuItemGenerator';
 import SaveViewWithName from './SaveViewWithName';
 import {
@@ -63,6 +66,7 @@ function ExplorerCard({
 		currentQuery,
 		panelType,
 		redirectWithQueryBuilderData,
+		updateAllQueriesOperators,
 	} = useQueryBuilder();
 
 	const {
@@ -75,11 +79,7 @@ function ExplorerCard({
 
 	useErrorNotification(error);
 
-	const handlePopOverClose = (): void => {
-		setIsOpen(false);
-	};
-
-	const handleOpenChange = (newOpen: boolean): void => {
+	const handleOpenChange = (newOpen = false): void => {
 		setIsOpen(newOpen);
 	};
 
@@ -104,7 +104,7 @@ function ExplorerCard({
 		});
 	};
 
-	const onDeleteHandler = useCallback(() => {
+	const onDeleteHandler = (): void =>
 		deleteViewHandler({
 			deleteViewAsync,
 			notifications,
@@ -113,15 +113,9 @@ function ExplorerCard({
 			refetchAllView,
 			viewId: viewKey,
 			viewKey,
+			updateAllQueriesOperators,
+			sourcePage: sourcepage,
 		});
-	}, [
-		deleteViewAsync,
-		notifications,
-		panelType,
-		redirectWithQueryBuilderData,
-		refetchAllView,
-		viewKey,
-	]);
 
 	const onUpdateQueryHandler = (): void => {
 		updateViewAsync(
@@ -165,38 +159,16 @@ function ExplorerCard({
 		panelType,
 	]);
 
-	const menu = useMemo(
-		(): MenuProps => ({
-			items: viewsData?.data?.data?.map((view) => ({
-				key: view.uuid,
-				label: (
-					<MenuItemGenerator
-						viewName={view.name}
-						viewKey={viewKey}
-						createdBy={view.createdBy}
-						uuid={view.uuid}
-						refetchAllView={refetchAllView}
-						viewData={viewsData.data.data}
-					/>
-				),
-			})),
-		}),
-		[refetchAllView, viewKey, viewsData?.data?.data],
-	);
-
-	const moreOptionMenu = useMemo(
-		(): MenuProps => ({
-			items: [
-				{
-					key: 'delete',
-					label: <Typography.Text strong>Delete</Typography.Text>,
-					onClick: onDeleteHandler,
-					icon: <DeleteOutlined />,
-				},
-			],
-		}),
-		[onDeleteHandler],
-	);
+	const moreOptionMenu: MenuProps = {
+		items: [
+			{
+				key: 'delete',
+				label: <Typography.Text strong>Delete</Typography.Text>,
+				onClick: onDeleteHandler,
+				icon: <DeleteOutlined />,
+			},
+		],
+	};
 
 	const saveButtonType = isQueryUpdated ? 'default' : 'primary';
 	const saveButtonIcon = isQueryUpdated ? null : <SaveOutlined />;
@@ -215,20 +187,32 @@ function ExplorerCard({
 							/>
 						</Space>
 					</Col>
-					<OffSetCol span={10} offset={8}>
+					<OffSetCol span={18}>
 						<Space size="large">
 							{viewsData?.data.data && viewsData?.data.data.length && (
 								<Space>
-									{/* <Typography.Text>Saved Views</Typography.Text> */}
-									<Dropdown.Button
-										menu={menu}
+									<Select
 										loading={isLoading || isRefetching}
-										icon={<DownOutlined />}
-										trigger={['click']}
-										overlayStyle={DropDownOverlay}
+										showSearch
+										placeholder="Select a view"
+										dropdownStyle={DropDownOverlay}
+										dropdownMatchSelectWidth={false}
+										value={null}
 									>
-										Select View
-									</Dropdown.Button>
+										{viewsData?.data.data.map((view) => (
+											<Select.Option key={view.uuid} value={view.name}>
+												<MenuItemGenerator
+													viewName={view.name}
+													viewKey={viewKey}
+													createdBy={view.createdBy}
+													uuid={view.uuid}
+													refetchAllView={refetchAllView}
+													viewData={viewsData.data.data}
+													sourcePage={sourcepage}
+												/>
+											</Select.Option>
+										))}
+									</Select>
 								</Space>
 							)}
 							{isQueryUpdated && (
@@ -246,7 +230,7 @@ function ExplorerCard({
 								content={
 									<SaveViewWithName
 										sourcePage={sourcepage}
-										handlePopOverClose={handlePopOverClose}
+										handlePopOverClose={handleOpenChange}
 										refetchAllView={refetchAllView}
 									/>
 								}
