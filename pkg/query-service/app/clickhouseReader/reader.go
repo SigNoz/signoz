@@ -798,14 +798,14 @@ func (r *ClickHouseReader) GetServices(ctx context.Context, queryParams *model.G
 					avg(durationNano) as avgDuration,
 					count(*) as numCalls
 				FROM %s.%s
-				WHERE serviceName = @serviceName AND name In [@names] AND timestamp>= @start AND timestamp<= @end`,
+				WHERE serviceName = @serviceName AND name In @names AND timestamp>= @start AND timestamp<= @end`,
 				r.TraceDB, r.indexTable,
 			)
 			errorQuery := fmt.Sprintf(
 				`SELECT
 					count(*) as numErrors
 				FROM %s.%s
-				WHERE serviceName = @serviceName AND name In [@names] AND timestamp>= @start AND timestamp<= @end AND statusCode=2`,
+				WHERE serviceName = @serviceName AND name In @names AND timestamp>= @start AND timestamp<= @end AND statusCode=2`,
 				r.TraceDB, r.indexTable,
 			)
 
@@ -893,7 +893,7 @@ func (r *ClickHouseReader) GetServiceOverview(ctx context.Context, queryParams *
 			quantile(0.50)(durationNano) as p50,
 			count(*) as numCalls
 		FROM %s.%s
-		WHERE serviceName = @serviceName AND name In [@names] AND timestamp>= @start AND timestamp<= @end`,
+		WHERE serviceName = @serviceName AND name In @names AND timestamp>= @start AND timestamp<= @end`,
 		r.TraceDB, r.indexTable,
 	)
 	args := []interface{}{}
@@ -924,7 +924,7 @@ func (r *ClickHouseReader) GetServiceOverview(ctx context.Context, queryParams *
 			toStartOfInterval(timestamp, INTERVAL @interval minute) as time,
 			count(*) as numErrors
 		FROM %s.%s
-		WHERE serviceName = @serviceName AND name In [@names] AND timestamp>= @start AND timestamp<= @end AND statusCode=2`,
+		WHERE serviceName = @serviceName AND name In @names AND timestamp>= @start AND timestamp<= @end AND statusCode=2`,
 		r.TraceDB, r.indexTable,
 	)
 	args = []interface{}{}

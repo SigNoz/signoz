@@ -9,6 +9,7 @@ import (
 	"go.signoz.io/signoz/pkg/query-service/app/opamp"
 	filterprocessor "go.signoz.io/signoz/pkg/query-service/app/opamp/otelconfig/filterprocessor"
 	tsp "go.signoz.io/signoz/pkg/query-service/app/opamp/otelconfig/tailsampler"
+	"go.signoz.io/signoz/pkg/query-service/model"
 	"go.uber.org/zap"
 	yaml "gopkg.in/yaml.v3"
 )
@@ -43,24 +44,32 @@ func Ready() bool {
 	return m.Ready()
 }
 
-func GetLatestVersion(ctx context.Context, elementType ElementTypeDef) (*ConfigVersion, error) {
+func GetLatestVersion(
+	ctx context.Context, elementType ElementTypeDef,
+) (*ConfigVersion, *model.ApiError) {
 	return m.GetLatestVersion(ctx, elementType)
 }
 
-func GetConfigVersion(ctx context.Context, elementType ElementTypeDef, version int) (*ConfigVersion, error) {
+func GetConfigVersion(
+	ctx context.Context, elementType ElementTypeDef, version int,
+) (*ConfigVersion, *model.ApiError) {
 	return m.GetConfigVersion(ctx, elementType, version)
 }
 
-func GetConfigHistory(ctx context.Context, typ ElementTypeDef, limit int) ([]ConfigVersion, error) {
+func GetConfigHistory(
+	ctx context.Context, typ ElementTypeDef, limit int,
+) ([]ConfigVersion, *model.ApiError) {
 	return m.GetConfigHistory(ctx, typ, limit)
 }
 
 // StartNewVersion launches a new config version for given set of elements
-func StartNewVersion(ctx context.Context, userId string, eleType ElementTypeDef, elementIds []string) (*ConfigVersion, error) {
+func StartNewVersion(
+	ctx context.Context, userId string, eleType ElementTypeDef, elementIds []string,
+) (*ConfigVersion, *model.ApiError) {
 
 	if !m.Ready() {
 		// agent is already being updated, ask caller to wait and re-try after sometime
-		return nil, fmt.Errorf("agent updater is busy")
+		return nil, model.UnavailableError(fmt.Errorf("agent updater is busy"))
 	}
 
 	// create a new version
@@ -75,24 +84,24 @@ func StartNewVersion(ctx context.Context, userId string, eleType ElementTypeDef,
 	return cfg, nil
 }
 
-func Redeploy(ctx context.Context, typ ElementTypeDef, version int) error {
+func Redeploy(ctx context.Context, typ ElementTypeDef, version int) *model.ApiError {
 
 	configVersion, err := GetConfigVersion(ctx, typ, version)
 	if err != nil {
 		zap.S().Debug("failed to fetch config version during redeploy", err)
-		return fmt.Errorf("failed to fetch details of the config version")
+		return model.WrapApiError(err, "failed to fetch details of the config version")
 	}
 
 	if configVersion == nil || (configVersion != nil && configVersion.LastConf == "") {
 		zap.S().Debug("config version has no conf yaml", configVersion)
-		return fmt.Errorf("the config version can not be redeployed")
+		return model.BadRequest(fmt.Errorf("the config version can not be redeployed"))
 	}
 	switch typ {
 	case ElementTypeSamplingRules:
 		var config *tsp.Config
 		if err := yaml.Unmarshal([]byte(configVersion.LastConf), &config); err != nil {
 			zap.S().Error("failed to read last conf correctly", err)
-			return fmt.Errorf("failed to read the stored config correctly")
+			return model.BadRequest(fmt.Errorf("failed to read the stored config correctly"))
 		}
 
 		// merge current config with new filter params
@@ -104,7 +113,7 @@ func Redeploy(ctx context.Context, typ ElementTypeDef, version int) error {
 		configHash, err := opamp.UpsertControlProcessors(ctx, "traces", processorConf, m.OnConfigUpdate)
 		if err != nil {
 			zap.S().Error("failed to call agent config update for trace processor:", err)
-			return fmt.Errorf("failed to deploy the config")
+			return model.InternalError(fmt.Errorf("failed to deploy the config"))
 		}
 
 		m.updateDeployStatus(ctx, ElementTypeSamplingRules, version, string(DeployInitiated), "Deployment started", configHash, configVersion.LastConf)
@@ -112,7 +121,7 @@ func Redeploy(ctx context.Context, typ ElementTypeDef, version int) error {
 		var filterConfig *filterprocessor.Config
 		if err := yaml.Unmarshal([]byte(configVersion.LastConf), &filterConfig); err != nil {
 			zap.S().Error("failed to read last conf correctly", err)
-			return fmt.Errorf("failed to read the stored config correctly")
+			return model.InternalError(fmt.Errorf("failed to read the stored config correctly"))
 		}
 		processorConf := map[string]interface{}{
 			"filter": filterConfig,
@@ -151,9 +160,9 @@ func UpsertFilterProcessor(ctx context.Context, version int, config *filterproce
 		return err
 	}
 
-	processorConfYaml, err := yaml.Marshal(config)
-	if err != nil {
-		zap.S().Warnf("unexpected error while transforming processor config to yaml", err)
+	processorConfYaml, yamlErr := yaml.Marshal(config)
+	if yamlErr != nil {
+		zap.S().Warnf("unexpected error while transforming processor config to yaml", yamlErr)
 	}
 
 	m.updateDeployStatus(ctx, ElementTypeDropRules, version, string(DeployInitiated), "Deployment started", configHash, string(processorConfYaml))
@@ -202,9 +211,9 @@ func UpsertSamplingProcessor(ctx context.Context, version int, config *tsp.Confi
 		return err
 	}
 
-	processorConfYaml, err := yaml.Marshal(config)
-	if err != nil {
-		zap.S().Warnf("unexpected error while transforming processor config to yaml", err)
+	processorConfYaml, yamlErr := yaml.Marshal(config)
+	if yamlErr != nil {
+		zap.S().Warnf("unexpected error while transforming processor config to yaml", yamlErr)
 	}
 
 	m.updateDeployStatus(ctx, ElementTypeSamplingRules, version, string(DeployInitiated), "Deployment started", configHash, string(processorConfYaml))
@@ -212,9 +221,15 @@ func UpsertSamplingProcessor(ctx context.Context, version int, config *tsp.Confi
 }
 
 // UpsertLogParsingProcessors updates the agent with log parsing processors
-func UpsertLogParsingProcessor(ctx context.Context, version int, rawPipelineData []byte, config map[string]interface{}, names []string) error {
+func UpsertLogParsingProcessor(
+	ctx context.Context,
+	version int,
+	rawPipelineData []byte,
+	config map[string]interface{},
+	names []string,
+) *model.ApiError {
 	if !atomic.CompareAndSwapUint32(&m.lock, 0, 1) {
-		return fmt.Errorf("agent updater is busy")
+		return model.UnavailableError(fmt.Errorf("agent updater is busy"))
 	}
 	defer atomic.StoreUint32(&m.lock, 0)
 

@@ -10,12 +10,18 @@ import (
 	"go.opentelemetry.io/collector/confmap"
 	model "go.signoz.io/signoz/pkg/query-service/app/opamp/model"
 	"go.signoz.io/signoz/pkg/query-service/app/opamp/otelconfig"
+	coreModel "go.signoz.io/signoz/pkg/query-service/model"
 	"go.uber.org/zap"
 )
 
 // inserts or updates ingestion controller processors depending
 // on the signal (metrics or traces)
-func UpsertControlProcessors(ctx context.Context, signal string, processors map[string]interface{}, callback model.OnChangeCallback) (hash string, fnerr error) {
+func UpsertControlProcessors(
+	ctx context.Context,
+	signal string,
+	processors map[string]interface{},
+	callback model.OnChangeCallback,
+) (hash string, fnerr *coreModel.ApiError) {
 	// note: only processors enabled through tracesPipelinePlan will be added
 	// to pipeline. To enable or disable processors from pipeline, call
 	// AddToTracePipeline() or RemoveFromTracesPipeline() prior to calling
@@ -25,24 +31,28 @@ func UpsertControlProcessors(ctx context.Context, signal string, processors map[
 
 	if signal != string(Metrics) && signal != string(Traces) {
 		zap.S().Error("received invalid signal int UpsertControlProcessors", signal)
-		fnerr = fmt.Errorf("signal not supported in ingestion rules: %s", signal)
+		fnerr = coreModel.BadRequest(fmt.Errorf(
+			"signal not supported in ingestion rules: %s", signal,
+		))
 		return
 	}
 
 	if opAmpServer == nil {
-		fnerr = fmt.Errorf("opamp server is down, unable to push config to agent at this moment")
+		fnerr = coreModel.UnavailableError(fmt.Errorf(
+			"opamp server is down, unable to push config to agent at this moment",
+		))
 		return
 	}
 
 	agents := opAmpServer.agents.GetAllAgents()
 	if len(agents) == 0 {
-		fnerr = fmt.Errorf("no agents available at the moment")
+		fnerr = coreModel.UnavailableError(fmt.Errorf("no agents available at the moment"))
 		return
 	}
 
 	if len(agents) > 1 && signal == string(Traces) {
 		zap.S().Debug("found multiple agents. this feature is not supported for traces pipeline (sampling rules)")
-		fnerr = fmt.Errorf("multiple agents not supported in sampling rules")
+		fnerr = coreModel.BadRequest(fmt.Errorf("multiple agents not supported in sampling rules"))
 		return
 	}
 
