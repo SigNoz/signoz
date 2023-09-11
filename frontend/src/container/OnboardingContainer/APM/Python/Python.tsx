@@ -10,6 +10,7 @@ import FalconDocs from './md-docs/falcon.md';
 import FastAPIDocs from './md-docs/fastAPI.md';
 import FlaskDocs from './md-docs/flask.md';
 import PythonDocs from './md-docs/python.md';
+import Header from 'container/OnboardingContainer/common/Header/Header';
 
 const frameworksMap = {
 	django: 'Django',
@@ -47,23 +48,13 @@ export default function Python({
 		<>
 			{activeStep === 2 && (
 				<div className="python-setup-instructions-container">
-					<div className="header">
-						<img className="supported-language-img" src="/Logos/python.png" alt="" />
-
-						<div className="title">
-							<h1>Python OpenTelemetry Instrumentation</h1>
-							<div className="detailed-docs-link">
-								View detailed docs
-								<a
-									target="_blank"
-									href="https://signoz.io/docs/instrumentation/python/"
-									rel="noreferrer"
-								>
-									here
-								</a>
-							</div>
-						</div>
-					</div>
+					<Header
+						entity="python"
+						heading="Python OpenTelemetry Instrumentation"
+						imgURL="/Logos/python.png"
+						docsURL="https://signoz.io/docs/instrumentation/python/"
+						imgClassName="supported-language-img"
+					/>
 
 					<div className="form-container">
 						<div className="framework-selector">

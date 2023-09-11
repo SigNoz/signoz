@@ -39,6 +39,8 @@ export default function ConnectionStatus({
 		[queries],
 	);
 
+	const [pollingInterval, setPollingInterval] = useState<number | false>(15000); // initial Polling interval of 15 secs , Set to false after 5 mins
+	const [retryCount, setRetryCount] = useState(20); // Retry for 5 mins
 	const [loading, setLoading] = useState(true);
 	const [isReceivingData, setIsReceivingData] = useState(false);
 
@@ -48,7 +50,7 @@ export default function ConnectionStatus({
 		selectedTime,
 		selectedTags,
 		options: {
-			refetchInterval: 15000,
+			refetchInterval: pollingInterval,
 		},
 	});
 
@@ -71,49 +73,25 @@ export default function ConnectionStatus({
 
 			case 'python':
 				return (
-					<div className="header">
-						<img className="supported-language-img" src="/Logos/python.png" alt="" />
-
-						<div className="title">
-							<h1>Python OpenTelemetry Instrumentation</h1>
-							<div className="detailed-docs-link">
-								View detailed docs
-								<a
-									target="_blank"
-									href="https://signoz.io/docs/instrumentation/python/"
-									rel="noreferrer"
-								>
-									here
-								</a>
-							</div>
-						</div>
-					</div>
+					<Header
+						entity="python"
+						heading="Python OpenTelemetry Instrumentation"
+						imgURL="/Logos/python.png"
+						docsURL="https://signoz.io/docs/instrumentation/python/"
+						imgClassName="supported-language-img"
+					/>
 				);
 
 			case 'javascript':
 				return (
-					<div className="header">
-						<img
-							className="supported-language-img"
-							src="/Logos/javascript.png"
-							alt=""
-						/>
-						<div className="title">
-							<h1>Javascript OpenTelemetry Instrumentation</h1>
-							<div className="detailed-docs-link">
-								View detailed docs
-								<a
-									target="_blank"
-									href="https://signoz.io/docs/instrumentation/javascript/"
-									rel="noreferrer"
-								>
-									here
-								</a>
-							</div>
-						</div>
-					</div>
+					<Header
+						entity="javascript"
+						heading="Javascript OpenTelemetry Instrumentation"
+						imgURL="/Logos/javascript.png"
+						docsURL="https://signoz.io/docs/instrumentation/javascript/"
+						imgClassName="supported-language-img"
+					/>
 				);
-
 			case 'go':
 				return (
 					<Header
@@ -133,6 +111,11 @@ export default function ConnectionStatus({
 	const verifyApplicationData = (response): void => {
 		if (data || isError) {
 			setLoading(false);
+			setRetryCount(retryCount - 1);
+
+			if (retryCount < 0) {
+				setPollingInterval(false);
+			}
 		}
 
 		if (response && Array.isArray(response)) {

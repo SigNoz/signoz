@@ -7,6 +7,7 @@ import {
 	LoadingOutlined,
 } from '@ant-design/icons';
 import { PANEL_TYPES } from 'constants/queryBuilder';
+import Header from 'container/OnboardingContainer/common/Header/Header';
 import { useGetExplorerQueryRange } from 'hooks/queryBuilder/useGetExplorerQueryRange';
 import { useEffect, useState } from 'react';
 import { ILog } from 'types/api/logs/log';
@@ -25,12 +26,19 @@ const LogsTypePropertyMap = {
 	otel: 'telemetry_sdk_language',
 };
 
-export default function ConnectionStatus({
+const enum ApplicationLogsType {
+	FROM_LOG_FILE = 'from-log-file',
+	USING_OTEL_COLLECTOR = 'using-otel-sdk',
+}
+
+export default function LogsConnectionStatus({
 	logType,
 	activeStep,
 }: ConnectionStatusProps): JSX.Element {
 	const [loading, setLoading] = useState(true);
 	const [isReceivingData, setIsReceivingData] = useState(false);
+	const [pollingInterval, setPollingInterval] = useState<number | false>(15000); // initial Polling interval of 15 secs , Set to false after 5 mins
+	const [retryCount, setRetryCount] = useState(20); // Retry for 5 mins
 
 	const requestData: Query = {
 		queryType: EQueryType.QUERY_BUILDER,
@@ -82,11 +90,17 @@ export default function ConnectionStatus({
 		refetch: fetchLogs,
 	} = useGetExplorerQueryRange(requestData, PANEL_TYPES.LIST, {
 		keepPreviousData: true,
+		refetchInterval: pollingInterval,
 	});
 
 	const verifyLogsData = (response): void => {
 		if (response || !isError) {
 			setLoading(false);
+			setRetryCount(retryCount - 1);
+
+			if (retryCount < 0) {
+				setPollingInterval(false);
+			}
 		}
 
 		const currentData = data?.payload.data.newResult.data.result || [];
@@ -121,98 +135,81 @@ export default function ConnectionStatus({
 
 	const renderDocsReference = (): JSX.Element => {
 		switch (logType) {
+			case 'kubernetes':
+				return (
+					<Header
+						entity="kubernetes"
+						heading="Collecting Kubernetes Pod logs"
+						imgURL="/Logos/kubernetes.svg"
+						docsURL="https://signoz.io/docs/userguide/collect_kubernetes_pod_logs/#collect-kubernetes-pod-logs-in-signoz-cloud"
+						imgClassName="supported-logs-type-img"
+					/>
+				);
+
 			case 'docker':
 				return (
-					<div className="header">
-						<img
-							className={'supported-logs-type-img'}
-							src={`/Logos/docker.svg`}
-							alt=""
-						/>
-						<div className="title">
-							<h1>Collecting Docker container logs</h1>
-
-							<div className="detailed-docs-link">
-								View detailed docs
-								<a
-									target="_blank"
-									href="https://signoz.io/docs/userguide/collect_docker_logs/"
-								>
-									here
-								</a>
-							</div>
-						</div>
-					</div>
+					<Header
+						entity="docker"
+						heading="Collecting Docker container logs"
+						imgURL="/Logos/docker.svg"
+						docsURL="https://signoz.io/docs/userguide/collect_docker_logs/"
+						imgClassName="supported-logs-type-img"
+					/>
 				);
 
-			case 'python':
+			case 'syslogs':
 				return (
-					<div className="header">
-						<img className="supported-language-img" src="/Logos/python.png" alt="" />
-
-						<div className="title">
-							<h1>Python OpenTelemetry Instrumentation</h1>
-							<div className="detailed-docs-link">
-								View detailed docs
-								<a
-									target="_blank"
-									href="https://signoz.io/docs/instrumentation/python/"
-									rel="noreferrer"
-								>
-									here
-								</a>
-							</div>
-						</div>
-					</div>
+					<Header
+						entity="syslog"
+						heading="Collecting Syslogs"
+						imgURL="/Logos/syslogs.svg"
+						docsURL="https://signoz.io/docs/userguide/collecting_syslogs/"
+						imgClassName="supported-logs-type-img"
+					/>
 				);
-
-			case 'javascript':
+			case 'nodejs':
 				return (
-					<div className="header">
-						<img
-							className="supported-language-img"
-							src="/Logos/javascript.png"
-							alt=""
-						/>
-						<div className="title">
-							<h1>Javascript OpenTelemetry Instrumentation</h1>
-							<div className="detailed-docs-link">
-								View detailed docs
-								<a
-									target="_blank"
-									href="https://signoz.io/docs/instrumentation/javascript/"
-									rel="noreferrer"
-								>
-									here
-								</a>
-							</div>
-						</div>
-					</div>
+					<Header
+						entity="nodejs"
+						heading="Collecting NodeJS winston logs"
+						imgURL="/Logos/node-js.svg"
+						docsURL="https://signoz.io/docs/userguide/collecting_nodejs_winston_logs/"
+						imgClassName="supported-logs-type-img"
+					/>
 				);
-
-			case 'go':
+			case 'nodejs':
 				return (
-					<div className="header">
-						<img className="supported-language-img" src="/Logos/go.png" alt="" />
-						<div className="title">
-							<h1>Go OpenTelemetry Instrumentation</h1>
-
-							<div className="detailed-docs-link">
-								View detailed docs
-								<a
-									target="_blank"
-									href="https://signoz.io/docs/instrumentation/golang/"
-									rel="noreferrer"
-								>
-									here
-								</a>
-							</div>
-						</div>
-					</div>
+					<Header
+						entity="nodejs"
+						heading="Collecting NodeJS winston logs"
+						imgURL="/Logos/node-js.svg"
+						docsURL="https://signoz.io/docs/userguide/collecting_nodejs_winston_logs/"
+						imgClassName="supported-logs-type-img"
+					/>
 				);
 
 			default:
-				return <> </>;
+				return (
+					<Header
+						entity="docker"
+						heading={
+							logType === ApplicationLogsType.FROM_LOG_FILE
+								? 'Collecting Application Logs from Log file'
+								: 'Collecting Application Logs Using OTEL SDK'
+						}
+						imgURL={`/Logos/${
+							logType === ApplicationLogsType.FROM_LOG_FILE
+								? 'software-window'
+								: 'cmd-terminal'
+						}.svg`}
+						docsURL={
+							logType === ApplicationLogsType.FROM_LOG_FILE
+								? 'https://signoz.io/docs/userguide/collect_logs_from_file/'
+								: 'https://signoz.io/docs/userguide/collecting_application_logs_otel_sdk_java/'
+						}
+						imgClassName="supported-logs-type-img"
+					/>
+				);
 		}
 	};
 

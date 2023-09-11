@@ -9,6 +9,7 @@ import AngularDocs from './md-docs/angular.md';
 import ExpressDocs from './md-docs/express.md';
 import JavascriptDocs from './md-docs/javascript.md';
 import NestJsDocs from './md-docs/nestjs.md';
+import Header from 'container/OnboardingContainer/common/Header/Header';
 
 const frameworksMap = {
 	express: 'Express',
@@ -43,26 +44,13 @@ export default function Javascript({
 		<>
 			{activeStep === 2 && (
 				<div className="javascript-setup-instructions-container">
-					<div className="header">
-						<img
-							className="supported-language-img"
-							src="/Logos/javascript.png"
-							alt=""
-						/>
-						<div className="title">
-							<h1>Javascript OpenTelemetry Instrumentation</h1>
-							<div className="detailed-docs-link">
-								View detailed docs
-								<a
-									target="_blank"
-									href="https://signoz.io/docs/instrumentation/javascript/"
-									rel="noreferrer"
-								>
-									here
-								</a>
-							</div>
-						</div>
-					</div>
+					<Header
+						entity="javascript"
+						heading="Javascript OpenTelemetry Instrumentation"
+						imgURL="/Logos/javascript.png"
+						docsURL="https://signoz.io/docs/instrumentation/javascript/"
+						imgClassName="supported-language-img"
+					/>
 
 					<div className="form-container">
 						<div className="framework-selector">

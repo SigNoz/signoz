@@ -5,6 +5,7 @@ import ConnectionStatus from '../common/LogsConnectionStatus/LogsConnectionStatu
 import LogsFromLogFile from './applicationLogsFromLogFile.md';
 import LogsUsingJavaOtelSDK from './applicationLogsUsingJavaOtelSDK.md';
 import LogsUsingPythonOtelSDK from './applicationLogsUsingPythonOtelSDK.md';
+import Header from 'container/OnboardingContainer/common/Header/Header';
 
 const items: TabsProps['items'] = [
 	{
@@ -54,31 +55,21 @@ export default function ApplicationLogs({
 		<>
 			{activeStep === 2 && (
 				<div className="golang-setup-instructions-container">
-					<div className="header">
-						<img
-							className="supported-logs-type-img"
-							src={`/Logos/${
-								type === ApplicationLogsType.FROM_LOG_FILE
-									? 'software-window'
-									: 'cmd-terminal'
-							}.svg`}
-							alt=""
-						/>
-						<div className="title">
-							{type === ApplicationLogsType.FROM_LOG_FILE ? (
-								<h1> Collecting Application Logs from Log file </h1>
-							) : (
-								<h1> Collecting Application Logs Using OTEL SDK </h1>
-							)}
-
-							<div className="detailed-docs-link">
-								View detailed docs
-								<a target="_blank" href={docsURL} rel="noreferrer">
-									here
-								</a>
-							</div>
-						</div>
-					</div>
+					<Header
+						entity="docker"
+						heading={
+							type === ApplicationLogsType.FROM_LOG_FILE
+								? 'Collecting Application Logs from Log file'
+								: 'Collecting Application Logs Using OTEL SDK'
+						}
+						imgURL={`/Logos/${
+							type === ApplicationLogsType.FROM_LOG_FILE
+								? 'software-window'
+								: 'cmd-terminal'
+						}.svg`}
+						docsURL={docsURL}
+						imgClassName="supported-logs-type-img"
+					/>
 
 					<div className="content-container">
 						<MDXProvider>
