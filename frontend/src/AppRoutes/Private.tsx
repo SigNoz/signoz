@@ -137,7 +137,7 @@ function PrivateRoute({ children }: PrivateRouteProps): JSX.Element {
 				} else if (pathname === ROUTES.HOME_PAGE) {
 					// routing to application page over root page
 					if (isLoggedInState) {
-						history.push(ROUTES.GET_STARTED);
+						history.push(ROUTES.APPLICATION);
 					} else {
 						navigateToLoginIfNotLoggedIn();
 					}

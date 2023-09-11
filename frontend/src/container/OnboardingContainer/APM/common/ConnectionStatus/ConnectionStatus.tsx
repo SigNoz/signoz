@@ -110,10 +110,10 @@ export default function ConnectionStatus({
 
 	const verifyApplicationData = (response): void => {
 		if (data || isError) {
-			setLoading(false);
 			setRetryCount(retryCount - 1);
 
 			if (retryCount < 0) {
+				setLoading(false);
 				setPollingInterval(false);
 			}
 		}
@@ -121,6 +121,7 @@ export default function ConnectionStatus({
 		if (response && Array.isArray(response)) {
 			for (let i = 0; i < response.length; i++) {
 				if (response[i]?.serviceName === serviceName) {
+					setLoading(false);
 					setIsReceivingData(true);
 
 					break;

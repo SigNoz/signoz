@@ -48,6 +48,13 @@ const routes: AppRoutes[] = [
 		key: 'SIGN_UP',
 	},
 	{
+		path: ROUTES.GET_STARTED,
+		exact: true,
+		component: Onboarding,
+		isPrivate: true,
+		key: 'GET_STARTED',
+	},
+	{
 		component: LogsIndexToFields,
 		path: ROUTES.LOGS_INDEX_FIELDS,
 		exact: true,
@@ -67,13 +74,6 @@ const routes: AppRoutes[] = [
 		component: ServiceMetricsPage,
 		isPrivate: true,
 		key: 'SERVICE_METRICS',
-	},
-	{
-		path: ROUTES.GET_STARTED,
-		exact: true,
-		component: Onboarding,
-		isPrivate: true,
-		key: 'GET_STARTED',
 	},
 	{
 		path: ROUTES.SERVICE_MAP,

@@ -4,7 +4,13 @@ import getLocalStorageKey from 'api/browser/localstorage/get';
 import { IS_SIDEBAR_COLLAPSED } from 'constants/app';
 import ROUTES from 'constants/routes';
 import history from 'lib/history';
-import { useCallback, useLayoutEffect, useMemo, useState } from 'react';
+import {
+	useCallback,
+	useEffect,
+	useLayoutEffect,
+	useMemo,
+	useState,
+} from 'react';
 import { useTranslation } from 'react-i18next';
 import { useDispatch, useSelector } from 'react-redux';
 import { useLocation } from 'react-router-dom';
@@ -14,7 +20,7 @@ import AppReducer from 'types/reducer/app';
 
 import { routeConfig, styles } from './config';
 import { getQueryString } from './helper';
-import menuItems from './menuItems';
+import defaultMenuItems from './menuItems';
 import { MenuItem, SecondaryMenuItemKey } from './sideNav.types';
 import { getActiveMenuKeyFromPath } from './sideNav.utils';
 import Slack from './Slack';
@@ -26,9 +32,11 @@ import {
 	StyledSecondaryMenu,
 	StyledText,
 } from './styles';
+import getFeaturesFlags from 'api/features/getFeatureFlags';
 
 function SideNav(): JSX.Element {
 	const dispatch = useDispatch();
+	const [menuItems, setMenuItems] = useState(defaultMenuItems);
 	const [collapsed, setCollapsed] = useState<boolean>(
 		getLocalStorageKey(IS_SIDEBAR_COLLAPSED) === 'true',
 	);
@@ -43,6 +51,41 @@ function SideNav(): JSX.Element {
 
 	const onCollapse = useCallback(() => {
 		setCollapsed((collapsed) => !collapsed);
+	}, []);
+
+	const isOnboardingEnabled = (featureFlags: any): boolean => {
+		for (let index = 0; index < featureFlags.length; index++) {
+			const featureFlag = featureFlags[index];
+			if (featureFlag.name === 'ONBOARDING') {
+				return featureFlag.active;
+			}
+		}
+
+		return false;
+	};
+
+	const setRoutesBasedOnFF = (featureFlags: any) => {
+		if (!isOnboardingEnabled(featureFlags)) {
+			const newRoutes = menuItems.filter(
+				(menuItem) => menuItem?.key !== ROUTES.GET_STARTED,
+			);
+
+			setMenuItems(newRoutes);
+		}
+	};
+
+	useEffect(() => {
+		async function fetchFeatureFlags() {
+			try {
+				const response = await getFeaturesFlags();
+
+				setRoutesBasedOnFF(response.payload);
+			} catch (error) {
+				console.error('Error fetching data:', error);
+			}
+		}
+
+		fetchFeatureFlags();
 	}, []);
 
 	useLayoutEffect(() => {

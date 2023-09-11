@@ -7,14 +7,50 @@ import { NotificationProvider } from 'hooks/useNotifications';
 import { ResourceProvider } from 'hooks/useResourceAttribute';
 import history from 'lib/history';
 import { QueryBuilderProvider } from 'providers/QueryBuilder';
-import { Suspense } from 'react';
+import { Suspense, useEffect, useState } from 'react';
 import { Route, Router, Switch } from 'react-router-dom';
 
 import PrivateRoute from './Private';
-import routes from './routes';
+import defaultRoutes from './routes';
+import getFeaturesFlags from 'api/features/getFeatureFlags';
+import ROUTES from 'constants/routes';
 
 function App(): JSX.Element {
 	const themeConfig = useThemeConfig();
+	const [routes, setRoutes] = useState(defaultRoutes);
+
+	const isOnboardingEnabled = (featureFlags: any): boolean => {
+		for (let index = 0; index < featureFlags.length; index++) {
+			const featureFlag = featureFlags[index];
+			if (featureFlag.name === 'ONBOARDING') {
+				return featureFlag.active;
+			}
+		}
+
+		return false;
+	};
+
+	const setRoutesBasedOnFF = (featureFlags: any) => {
+		if (!isOnboardingEnabled(featureFlags)) {
+			const newRoutes = routes.filter((route) => route?.key !== 'GET_STARTED');
+
+			setRoutes(newRoutes);
+		}
+	};
+
+	useEffect(() => {
+		async function fetchFeatureFlags() {
+			try {
+				const response = await getFeaturesFlags();
+
+				setRoutesBasedOnFF(response.payload);
+			} catch (error) {
+				console.error('Error fetching data:', error);
+			}
+		}
+
+		fetchFeatureFlags();
+	}, []);
 
 	return (
 		<ConfigProvider theme={themeConfig}>

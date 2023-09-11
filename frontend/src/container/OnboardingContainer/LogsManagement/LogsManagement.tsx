@@ -45,7 +45,11 @@ const supportedLogTypes = [
 	},
 ];
 
-export default function LogsManagement({ activeStep }): JSX.Element {
+export default function LogsManagement({
+	activeStep,
+}: {
+	activeStep: number;
+}): JSX.Element {
 	const [selectedLogsType, setSelectedLogsType] = useState('kubernetes');
 
 	const renderSelectedLanguageSetupInstructions = ():
