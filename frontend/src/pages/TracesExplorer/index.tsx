@@ -32,9 +32,7 @@ function TracesExplorer(): JSX.Element {
 
 	const currentPanelType = useGetPanelTypesQueryParam();
 
-	const { handleExplorerTabChange } = useHandleExplorerTabChange(
-		DataSource.TRACES,
-	);
+	const { handleExplorerTabChange } = useHandleExplorerTabChange();
 
 	const currentTab = panelType || PANEL_TYPES.LIST;
 

@@ -8,6 +8,7 @@ import {
 	Query,
 	QueryState,
 } from 'types/api/queryBuilder/queryBuilderData';
+import { ViewProps } from 'types/api/saveViews/types';
 
 import { EQueryType } from './dashboard';
 
@@ -186,7 +187,6 @@ export type QueryBuilderContextType = {
 	redirectWithQueryBuilderData: (
 		query: Query,
 		searchParams?: Record<string, unknown>,
-		handleOnSuccessRedirect?: (query: Query) => void,
 	) => void;
 	handleRunQuery: () => void;
 	resetQuery: (newCurrentQuery?: QueryState) => void;
@@ -205,6 +205,10 @@ export type QueryBuilderContextType = {
 		) => QueryBuilderData[T][number],
 	) => Query;
 	initQueryBuilderData: (query: Query) => void;
+	isStagedQueryUpdated: (
+		viewData: ViewProps[] | undefined,
+		viewKey: string,
+	) => boolean;
 };
 
 export type QueryAdditionalFilter = {

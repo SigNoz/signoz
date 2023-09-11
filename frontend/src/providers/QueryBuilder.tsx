@@ -1,3 +1,4 @@
+import { isQueryUpdatedInView } from 'components/ExplorerCard/utils';
 import { QueryParams } from 'constants/query';
 import {
 	alphabet,
@@ -42,6 +43,7 @@ import {
 	Query,
 	QueryState,
 } from 'types/api/queryBuilder/queryBuilderData';
+import { ViewProps } from 'types/api/saveViews/types';
 import { EQueryType } from 'types/common/dashboard';
 import {
 	DataSource,
@@ -73,6 +75,7 @@ export const QueryBuilderContext = createContext<QueryBuilderContextType>({
 	updateQueriesData: () => initialQueriesMap.metrics,
 	initQueryBuilderData: () => {},
 	handleOnUnitsChange: () => {},
+	isStagedQueryUpdated: () => false,
 });
 
 export function QueryBuilderProvider({
@@ -449,12 +452,19 @@ export function QueryBuilderProvider({
 		[updateQueryBuilderData],
 	);
 
+	const isStagedQueryUpdated = useCallback(
+		(viewData: ViewProps[] | undefined, viewKey: string): boolean =>
+			isQueryUpdatedInView({
+				currentPanelType: panelType,
+				data: viewData,
+				stagedQuery,
+				viewKey,
+			}),
+		[panelType, stagedQuery],
+	);
+
 	const redirectWithQueryBuilderData = useCallback(
-		(
-			query: Partial<Query>,
-			searchParams?: Record<string, unknown>,
-			onHandlerSuccess?: (query: Query) => void,
-		) => {
+		(query: Partial<Query>, searchParams?: Record<string, unknown>) => {
 			const queryType =
 				!query.queryType || !Object.values(EQueryType).includes(query.queryType)
 					? EQueryType.QUERY_BUILDER
@@ -496,10 +506,6 @@ export function QueryBuilderProvider({
 			}
 
 			const generatedUrl = `${location.pathname}?${urlQuery}`;
-
-			if (onHandlerSuccess) {
-				onHandlerSuccess(currentGeneratedQuery);
-			}
 
 			history.replace(generatedUrl);
 		},
@@ -621,6 +627,7 @@ export function QueryBuilderProvider({
 			updateQueriesData,
 			initQueryBuilderData,
 			handleOnUnitsChange,
+			isStagedQueryUpdated,
 		}),
 		[
 			query,
@@ -643,6 +650,7 @@ export function QueryBuilderProvider({
 			updateQueriesData,
 			initQueryBuilderData,
 			handleOnUnitsChange,
+			isStagedQueryUpdated,
 		],
 	);
 
