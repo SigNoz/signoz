@@ -68,6 +68,7 @@ export const QueryBuilderContext = createContext<QueryBuilderContextType>({
 	addNewQueryItem: () => {},
 	redirectWithQueryBuilderData: () => {},
 	handleRunQuery: () => {},
+	resetQuery: () => {},
 	updateAllQueriesOperators: () => initialQueriesMap.metrics,
 	updateQueriesData: () => initialQueriesMap.metrics,
 	initQueryBuilderData: () => {},
@@ -550,6 +551,14 @@ export function QueryBuilderProvider({
 		stagedQuery,
 	]);
 
+	const resetQuery = (newCurrentQuery?: QueryState): void => {
+		setStagedQuery(null);
+
+		if (newCurrentQuery) {
+			setCurrentQuery(newCurrentQuery);
+		}
+	};
+
 	useEffect(() => {
 		if (stagedQuery && location.pathname !== currentPathnameRef.current) {
 			currentPathnameRef.current = location.pathname;
@@ -599,6 +608,7 @@ export function QueryBuilderProvider({
 			addNewQueryItem,
 			redirectWithQueryBuilderData,
 			handleRunQuery,
+			resetQuery,
 			updateAllQueriesOperators,
 			updateQueriesData,
 			initQueryBuilderData,

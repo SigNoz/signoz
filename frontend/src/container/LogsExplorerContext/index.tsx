@@ -6,7 +6,7 @@ import LogsContextList from 'container/LogsContextList';
 import { FILTERS } from 'container/QueryBuilder/filters/OrderByFilter/config';
 import QueryBuilderSearch from 'container/QueryBuilder/filters/QueryBuilderSearch';
 import { useIsDarkMode } from 'hooks/useDarkMode';
-import { memo, useCallback, useMemo, useState } from 'react';
+import { memo, useCallback, useState } from 'react';
 import { Query, TagFilter } from 'types/api/queryBuilder/queryBuilderData';
 
 import { EditButton, LogContainer, TitleWrapper } from './styles';
@@ -57,11 +57,6 @@ function LogsExplorerContext({
 		[contextQuery, filters],
 	);
 
-	const contextListParams = useMemo(
-		() => ({ log, isEdit, filters, query: contextQuery }),
-		[isEdit, log, filters, contextQuery],
-	);
-
 	return (
 		<Modal
 			centered
@@ -93,8 +88,10 @@ function LogsExplorerContext({
 			)}
 			<LogsContextList
 				order={FILTERS.ASC}
-				// eslint-disable-next-line react/jsx-props-no-spreading
-				{...contextListParams}
+				filters={filters}
+				isEdit={isEdit}
+				log={log}
+				query={contextQuery}
 			/>
 			<LogContainer>
 				<RawLogView
@@ -107,8 +104,10 @@ function LogsExplorerContext({
 			</LogContainer>
 			<LogsContextList
 				order={FILTERS.DESC}
-				// eslint-disable-next-line react/jsx-props-no-spreading
-				{...contextListParams}
+				filters={filters}
+				isEdit={isEdit}
+				log={log}
+				query={contextQuery}
 			/>
 		</Modal>
 	);
