@@ -27,23 +27,15 @@ import AppReducer from 'types/reducer/app';
 
 import { ChildrenContainer, Layout, LayoutContent } from './styles';
 import { getRouteKey } from './utils';
+import ROUTES from 'constants/routes';
 
 function AppLayout(props: AppLayoutProps): JSX.Element {
 	const { isLoggedIn, user } = useSelector<AppState, AppReducer>(
 		(state) => state.app,
 	);
 
-	const [renderFullScreen, setRenderFullScreen] = useState(false);
 	const { pathname } = useLocation();
 	const { t } = useTranslation(['titles']);
-
-	useEffect(() => {
-		if (pathname === '/get-started') {
-			setRenderFullScreen(true);
-		} else {
-			setRenderFullScreen(false);
-		}
-	}, [pathname]);
 
 	const [
 		getUserVersionResponse,
@@ -240,6 +232,7 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 
 	const routeKey = useMemo(() => getRouteKey(pathname), [pathname]);
 	const pageTitle = t(routeKey);
+	const renderFullScreen = pathname === ROUTES.GET_STARTED;
 
 	return (
 		<Layout>

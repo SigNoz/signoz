@@ -1,5 +1,6 @@
 import { ConfigProvider } from 'antd';
 import NotFound from 'components/NotFound';
+import useFeatureFlag from 'hooks/useFeatureFlag';
 import Spinner from 'components/Spinner';
 import AppLayout from 'container/AppLayout';
 import { useThemeConfig } from 'hooks/useDarkMode';
@@ -13,7 +14,6 @@ import { Route, Router, Switch } from 'react-router-dom';
 import PrivateRoute from './Private';
 import defaultRoutes from './routes';
 import getFeaturesFlags from 'api/features/getFeatureFlags';
-import ROUTES from 'constants/routes';
 
 function App(): JSX.Element {
 	const themeConfig = useThemeConfig();

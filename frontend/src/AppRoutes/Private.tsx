@@ -100,8 +100,6 @@ function PrivateRoute({ children }: PrivateRouteProps): JSX.Element {
 									response.payload.refreshJwt,
 								);
 
-								console.log('user', userResponse);
-
 								if (userResponse) {
 									setLocalStorageApi(
 										LOCALSTORAGE.LOGGED_IN_USER_NAME,

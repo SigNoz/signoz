@@ -118,6 +118,11 @@ function HeaderContainer(): JSX.Element {
 				</NavLink>
 
 				<Space size="middle" align="center">
+					{!isLicenseActive && (
+						<Button onClick={onClickSignozCloud} type="primary">
+							Try Signoz Cloud
+						</Button>
+					)}
 					<Config frontendId="tooltip" />
 
 					<ToggleButton

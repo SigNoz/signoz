@@ -7,7 +7,7 @@ import {
 	ArrowRightOutlined,
 	LoadingOutlined,
 } from '@ant-design/icons';
-import { Button, StepProps, Steps, StepsProps } from 'antd';
+import { Button, Card, StepProps, Steps, StepsProps, Typography } from 'antd';
 import cx from 'classnames';
 import ROUTES from 'constants/routes';
 import { useIsDarkMode } from 'hooks/useDarkMode';
@@ -19,12 +19,11 @@ import DistributedTracing from './DistributedTracing/DistributedTracing';
 import InfrastructureMonitoring from './InfrastructureMonitoring/InfrastructureMonitoring';
 import LogsManagement from './LogsManagement/LogsManagement';
 
-const modulesMap = {
-	APM: 'APM',
-	DistributedTracing: 'Distributed_Tracing',
-	LogsManagement: 'Logs_Management',
-	InfrastructureMonitoring: 'Infrastructure Monitoring',
-};
+enum modulesMap {
+	APM = 'APM',
+	LogsManagement = 'LogsManagement',
+	InfrastructureMonitoring = 'InfrastructureMonitoring',
+}
 
 const defaultStepDesc = 'Configure data source';
 const getStarted = 'Get Started';
@@ -41,13 +40,6 @@ const useCases = {
 		title: 'Application Monitoring',
 		desc:
 			'Monitor performance of your applications & troubleshoot problems by installing within your infra.',
-		stepDesc: defaultStepDesc,
-	},
-	DistributedTracing: {
-		id: modulesMap.DistributedTracing,
-		title: 'Distributed Tracing',
-		desc:
-			'Get end-to-end visibility of the services with contextual tags and attributes, run insights faster and get relevant metrics.',
 		stepDesc: defaultStepDesc,
 	},
 	LogsManagement: {
@@ -151,9 +143,6 @@ export default function Onboarding(): JSX.Element {
 			case modulesMap.APM:
 				history.push(ROUTES.APPLICATION);
 				break;
-			case modulesMap.DistributedTracing:
-				history.push(ROUTES.TRACE);
-				break;
 			case modulesMap.LogsManagement:
 				history.push(ROUTES.LOGS);
 				break;
@@ -189,49 +178,37 @@ export default function Onboarding(): JSX.Element {
 
 					<div className="modulesContainer">
 						<div className="moduleContainerRowStyles">
-							<div
-								className={cx(
-									'moduleStyles',
-									selectedModule.id === useCases.APM.id ? 'selected' : '',
-								)}
-								key={useCases.APM.id}
-								onClick={(): void => handleModuleSelect(useCases.APM)}
-							>
-								<div className="moduleTitleStyle">{useCases.APM.title}</div>
-								<div className="moduleDesc"> {useCases.APM.desc} </div>
-							</div>
+							{Object.keys(modulesMap).map((module) => {
+								const selectedUseCase = useCases[module];
 
-							<div
-								className={cx(
-									'moduleStyles',
-									selectedModule.id === useCases.LogsManagement.id ? 'selected' : '',
-								)}
-								key={useCases.LogsManagement.id}
-								onClick={(): void => handleModuleSelect(useCases.LogsManagement)}
-							>
-								<div className="moduleTitleStyle">{useCases.LogsManagement.title}</div>
-								<div className="moduleDesc"> {useCases.LogsManagement.desc} </div>
-							</div>
-
-							<div
-								className={cx(
-									'moduleStyles',
-									selectedModule.id === useCases.InfrastructureMonitoring.id
-										? 'selected'
-										: '',
-								)}
-								key={useCases.InfrastructureMonitoring.id}
-								onClick={(): void =>
-									handleModuleSelect(useCases.InfrastructureMonitoring)
-								}
-							>
-								<div className="moduleTitleStyle">
-									{useCases.InfrastructureMonitoring.title}
-								</div>
-								<div className="moduleDesc">
-									{useCases.InfrastructureMonitoring.desc}
-								</div>
-							</div>
+								return (
+									<Card
+										className={cx(
+											'moduleStyles',
+											selectedModule.id === selectedUseCase.id ? 'selected' : '',
+										)}
+										key={selectedUseCase.id}
+										onClick={(): void => handleModuleSelect(selectedUseCase)}
+										style={{ width: 400 }}
+									>
+										<Typography.Title
+											className="moduleTitleStyle"
+											level={4}
+											style={{
+												borderBottom: isDarkMode ? '1px solid #303030' : '1px solid #ddd',
+											}}
+										>
+											{selectedUseCase.title}
+										</Typography.Title>
+										<Typography.Paragraph
+											className="moduleDesc"
+											style={{ backgroundColor: isDarkMode ? '#000' : '#FFF' }}
+										>
+											{selectedUseCase.desc}
+										</Typography.Paragraph>
+									</Card>
+								);
+							})}
 						</div>
 					</div>
 
@@ -253,9 +230,6 @@ export default function Onboarding(): JSX.Element {
 					/>
 					<div className="step-content">
 						{selectedModule.id === modulesMap.APM && <APM activeStep={activeStep} />}
-						{selectedModule.id === modulesMap.DistributedTracing && (
-							<DistributedTracing activeStep={activeStep} />
-						)}
 						{selectedModule.id === modulesMap.LogsManagement && (
 							<LogsManagement
 								activeStep={activeStep}
