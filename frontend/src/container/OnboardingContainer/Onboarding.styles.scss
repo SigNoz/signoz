@@ -123,10 +123,7 @@
 .actionButtonsContainer {
 	display: flex;
 	justify-content: space-between;
-
-	padding: 48px 0;
-	position: absolute;
-	width: calc(100% - 96px);
+	padding-bottom: 48px;
 	box-sizing: border-box;
 	bottom: 0;
 }

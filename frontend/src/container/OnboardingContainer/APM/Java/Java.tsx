@@ -9,6 +9,7 @@ import JavaDocs from './md-docs/java.md';
 import JbossDocs from './md-docs/jboss.md';
 import SprintBootDocs from './md-docs/spring_boot.md';
 import TomcatDocs from './md-docs/tomcat.md';
+import Header from 'container/OnboardingContainer/common/Header/Header';
 
 const frameworksMap = {
 	tomcat: 'Tomcat',
@@ -43,22 +44,13 @@ export default function Java({
 		<>
 			{activeStep === 2 && (
 				<div className="java-setup-instructions-container">
-					<div className="header">
-						<img className="supported-language-img" src="/Logos/java.png" alt="" />
-						<div className="title">
-							<h1>Java OpenTelemetry Instrumentation</h1>
-							<div className="detailed-docs-link">
-								View detailed docs
-								<a
-									target="_blank"
-									href="https://signoz.io/docs/instrumentation/java/"
-									rel="noreferrer"
-								>
-									here
-								</a>
-							</div>
-						</div>
-					</div>
+					<Header
+						entity="java"
+						heading="Java OpenTelemetry Instrumentation"
+						imgURL="/Logos/java.png"
+						docsURL="https://signoz.io/docs/instrumentation/java/"
+						imgClassName="supported-language-img"
+					/>
 
 					<div className="form-container">
 						<div className="framework-selector">

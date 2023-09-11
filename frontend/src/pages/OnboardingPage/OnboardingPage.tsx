@@ -1,16 +1,10 @@
-import OnboardingContainer from 'container/OnboardingContainer';
+import './OnboardingPage.styles.scss';
 
-const onboardingPageStyles: React.CSSProperties = {
-	display: 'flex',
-	justifyContent: 'center',
-	width: '100%',
-	minHeight: 'calc(100vh - 50px)',
-	color: '#fff',
-};
+import OnboardingContainer from 'container/OnboardingContainer';
 
 function OnboardingPage(): JSX.Element {
 	return (
-		<div style={onboardingPageStyles}>
+		<div className="onboardingPageContainer">
 			<OnboardingContainer />
 		</div>
 	);

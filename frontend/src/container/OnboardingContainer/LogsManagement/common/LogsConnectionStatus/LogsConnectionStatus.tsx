@@ -99,18 +99,12 @@ export default function ConnectionStatus({
 			for (let index = 0; index < currentLogs.length; index++) {
 				const log = currentLogs[index];
 
-				if (logType === 'kubernetes') {
-					if (log['attributes_string']['k8s_pod_name']) {
-						setIsReceivingData(true);
-						break;
-					}
-				}
-
-				if (logType === 'docker') {
-					if (log['attributes_string']['container_id']) {
-						setIsReceivingData(true);
-						break;
-					}
+				if (
+					(logType === 'kubernetes' && log['attributes_string']['k8s_pod_name']) ||
+					(logType === 'docker' && log['attributes_string']['container_id'])
+				) {
+					setIsReceivingData(true);
+					break;
 				}
 			}
 		}
@@ -125,11 +119,106 @@ export default function ConnectionStatus({
 		fetchLogs();
 	}, []);
 
-	console.log('logType', logType);
+	const renderDocsReference = (): JSX.Element => {
+		switch (logType) {
+			case 'docker':
+				return (
+					<div className="header">
+						<img
+							className={'supported-logs-type-img'}
+							src={`/Logos/docker.svg`}
+							alt=""
+						/>
+						<div className="title">
+							<h1>Collecting Docker container logs</h1>
+
+							<div className="detailed-docs-link">
+								View detailed docs
+								<a
+									target="_blank"
+									href="https://signoz.io/docs/userguide/collect_docker_logs/"
+								>
+									here
+								</a>
+							</div>
+						</div>
+					</div>
+				);
+
+			case 'python':
+				return (
+					<div className="header">
+						<img className="supported-language-img" src="/Logos/python.png" alt="" />
+
+						<div className="title">
+							<h1>Python OpenTelemetry Instrumentation</h1>
+							<div className="detailed-docs-link">
+								View detailed docs
+								<a
+									target="_blank"
+									href="https://signoz.io/docs/instrumentation/python/"
+									rel="noreferrer"
+								>
+									here
+								</a>
+							</div>
+						</div>
+					</div>
+				);
+
+			case 'javascript':
+				return (
+					<div className="header">
+						<img
+							className="supported-language-img"
+							src="/Logos/javascript.png"
+							alt=""
+						/>
+						<div className="title">
+							<h1>Javascript OpenTelemetry Instrumentation</h1>
+							<div className="detailed-docs-link">
+								View detailed docs
+								<a
+									target="_blank"
+									href="https://signoz.io/docs/instrumentation/javascript/"
+									rel="noreferrer"
+								>
+									here
+								</a>
+							</div>
+						</div>
+					</div>
+				);
+
+			case 'go':
+				return (
+					<div className="header">
+						<img className="supported-language-img" src="/Logos/go.png" alt="" />
+						<div className="title">
+							<h1>Go OpenTelemetry Instrumentation</h1>
+
+							<div className="detailed-docs-link">
+								View detailed docs
+								<a
+									target="_blank"
+									href="https://signoz.io/docs/instrumentation/golang/"
+									rel="noreferrer"
+								>
+									here
+								</a>
+							</div>
+						</div>
+					</div>
+				);
+
+			default:
+				return <> </>;
+		}
+	};
 
 	return (
 		<div className="connection-status-container">
-			{/* <div className="full-docs-link">{renderDocsReference()}</div> */}
+			<div className="full-docs-link">{renderDocsReference()}</div>
 			<div className="status-container">
 				<div className="service-info">
 					<div className="label"> Logs Type </div>

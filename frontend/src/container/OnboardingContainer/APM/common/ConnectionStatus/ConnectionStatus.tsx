@@ -6,6 +6,7 @@ import {
 	CloseCircleTwoTone,
 	LoadingOutlined,
 } from '@ant-design/icons';
+import Header from 'container/OnboardingContainer/common/Header/Header';
 import { useQueryService } from 'hooks/useQueryService';
 import useResourceAttribute from 'hooks/useResourceAttribute';
 import { convertRawQueriesToTraceSelectedTags } from 'hooks/useResourceAttribute/utils';
@@ -46,6 +47,9 @@ export default function ConnectionStatus({
 		maxTime,
 		selectedTime,
 		selectedTags,
+		options: {
+			refetchInterval: 15000,
+		},
 	});
 
 	useEffect(() => {
@@ -56,22 +60,13 @@ export default function ConnectionStatus({
 		switch (language) {
 			case 'java':
 				return (
-					<div className="header">
-						<img className="supported-language-img" src="/Logos/java.png" alt="" />
-						<div className="title">
-							<h1>Java OpenTelemetry Instrumentation</h1>
-							<div className="detailed-docs-link">
-								View detailed docs
-								<a
-									target="_blank"
-									href="https://signoz.io/docs/instrumentation/java/"
-									rel="noreferrer"
-								>
-									here
-								</a>
-							</div>
-						</div>
-					</div>
+					<Header
+						entity="java"
+						heading="Java OpenTelemetry Instrumentation"
+						imgURL="/Logos/java.png"
+						docsURL="https://signoz.io/docs/instrumentation/java/"
+						imgClassName="supported-language-img"
+					/>
 				);
 
 			case 'python':
@@ -121,23 +116,13 @@ export default function ConnectionStatus({
 
 			case 'go':
 				return (
-					<div className="header">
-						<img className="supported-language-img" src="/Logos/go.png" alt="" />
-						<div className="title">
-							<h1>Go OpenTelemetry Instrumentation</h1>
-
-							<div className="detailed-docs-link">
-								View detailed docs
-								<a
-									target="_blank"
-									href="https://signoz.io/docs/instrumentation/golang/"
-									rel="noreferrer"
-								>
-									here
-								</a>
-							</div>
-						</div>
-					</div>
+					<Header
+						entity="go"
+						heading="Go OpenTelemetry Instrumentation"
+						imgURL="/Logos/go.png"
+						docsURL="https://signoz.io/docs/instrumentation/golang/"
+						imgClassName="supported-language-img"
+					/>
 				);
 
 			default:

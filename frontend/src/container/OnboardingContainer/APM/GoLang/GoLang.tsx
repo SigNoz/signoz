@@ -5,6 +5,7 @@ import { Form, Input } from 'antd';
 
 import ConnectionStatus from '../common/ConnectionStatus/ConnectionStatus';
 import GoLangDocs from './goLang.md';
+import Header from 'container/OnboardingContainer/common/Header/Header';
 
 export default function GoLang({
 	activeStep,
@@ -17,23 +18,13 @@ export default function GoLang({
 		<>
 			{activeStep === 2 && (
 				<div className="golang-setup-instructions-container">
-					<div className="header">
-						<img className="supported-language-img" src="/Logos/go.png" alt="" />
-						<div className="title">
-							<h1>Go OpenTelemetry Instrumentation</h1>
-
-							<div className="detailed-docs-link">
-								View detailed docs
-								<a
-									target="_blank"
-									href="https://signoz.io/docs/instrumentation/golang/"
-									rel="noreferrer"
-								>
-									here
-								</a>
-							</div>
-						</div>
-					</div>
+					<Header
+						entity="go"
+						heading="Go OpenTelemetry Instrumentation"
+						imgURL="/Logos/go.png"
+						docsURL="https://signoz.io/docs/instrumentation/golang/"
+						imgClassName="supported-language-img"
+					/>
 
 					<div className="form-container">
 						<div className="service-name-container">

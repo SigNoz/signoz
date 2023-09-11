@@ -218,20 +218,6 @@ export default function Onboarding(): JSX.Element {
 									{useCases.InfrastructureMonitoring.desc}
 								</div>
 							</div>
-
-							{/* <div
-								className={cx(
-									'moduleStyles',
-									selectedModule.id === useCases.DistributedTracing.id ? 'selected' : '',
-								)}
-								key={useCases.DistributedTracing.id}
-								onClick={() => handleModuleSelect(useCases.DistributedTracing)}
-							>
-								<div className="moduleTitleStyle">
-									{useCases.DistributedTracing.title}
-								</div>
-								<div className="moduleDesc"> {useCases.DistributedTracing.desc} </div>
-							</div> */}
 						</div>
 					</div>
 
@@ -266,11 +252,7 @@ export default function Onboarding(): JSX.Element {
 
 					<div className="actionButtonsContainer">
 						{activeStep > 0 && (
-							<Button
-								style={{ margin: '0 8px' }}
-								icon={<ArrowLeftOutlined />}
-								onClick={handlePrev}
-							>
+							<Button icon={<ArrowLeftOutlined />} onClick={handlePrev}>
 								Back
 							</Button>
 						)}
