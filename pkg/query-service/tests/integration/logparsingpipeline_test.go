@@ -19,6 +19,7 @@ import (
 	"github.com/open-telemetry/opamp-go/protobufs"
 	"github.com/pkg/errors"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"go.signoz.io/signoz/pkg/query-service/agentConf"
 	"go.signoz.io/signoz/pkg/query-service/app"
 	"go.signoz.io/signoz/pkg/query-service/app/logparsingpipeline"
@@ -150,6 +151,8 @@ func TestLogPipelinesLifecycle(t *testing.T) {
 }
 
 func TestLogPipelinesValidation(t *testing.T) {
+	// QS should respond with appropriate http status code
+	// for valid and invalid pipelines requests
 	testCases := []struct {
 		Name                       string
 		Pipeline                   logparsingpipeline.PostablePipeline
@@ -256,6 +259,48 @@ func TestLogPipelinesValidation(t *testing.T) {
 			)
 		})
 	}
+}
+
+func TestOpAMPServerToAgentCommunication(t *testing.T) {
+	testbed := NewLogPipelinesTestBed(t)
+	require := require.New(t)
+
+	// If an agent connects before any pipelines exist,
+	// it should receive the same config it sent over
+	// in the first message on connection.
+	getPipelinesResp := testbed.GetPipelinesFromQS()
+	require.Equal(
+		0, len(getPipelinesResp.Pipelines),
+		"There should be no pipelines at the start",
+	)
+
+	agent1Conn := &mockOpAmpConnection{}
+	response := testbed.opampServer.OnMessage(
+		agent1Conn,
+		&protobufs.AgentToServer{
+			InstanceUid: "test",
+			EffectiveConfig: &protobufs.EffectiveConfig{
+				ConfigMap: &TestCollectorConfig,
+			},
+		},
+	)
+
+	errorMsg := fmt.Sprintf(
+		"opamp server OnMessage did not respond with expected effective config. Received: %v", response,
+	)
+	require.NotNil(response.RemoteConfig, errorMsg)
+	require.NotNil(response.RemoteConfig.Config, errorMsg)
+	require.Equal(
+		response.RemoteConfig.Config.ConfigMap,
+		&TestCollectorConfig,
+		errorMsg,
+	)
+
+	// If an agent connects after some pipelines exist,
+	// it should receive the merged config back.
+
+	// If pipelines change, all agents should receive
+	// the latest effective config.
 }
 
 // LogPipelinesTestBed coordinates and mocks components involved in
@@ -524,40 +569,42 @@ func mockOpampAgent(testDBFilePath string) (*opamp.Server, *mockOpAmpConnection,
 		&protobufs.AgentToServer{
 			InstanceUid: "test",
 			EffectiveConfig: &protobufs.EffectiveConfig{
-				ConfigMap: &protobufs.AgentConfigMap{
-					ConfigMap: map[string]*protobufs.AgentConfigFile{
-						"otel-collector.yaml": {
-							Body: []byte(`
-                                    receivers:
-                                      otlp:
-                                        protocols:
-                                          grpc:
-                                            endpoint: 0.0.0.0:4317
-                                          http:
-                                            endpoint: 0.0.0.0:4318
-                                    processors:
-                                      batch:
-                                        send_batch_size: 10000
-                                        send_batch_max_size: 11000
-                                        timeout: 10s
-                                    exporters:
-                                      otlp:
-                                        endpoint: otelcol2:4317
-                                    service:
-                                      pipelines:
-                                        logs:
-                                          receivers: [otlp]
-                                          processors: [batch]
-                                          exporters: [otlp]
-                                  `),
-							ContentType: "text/yaml",
-						},
-					},
-				},
+				ConfigMap: &TestCollectorConfig,
 			},
 		},
 	)
 	return opampServer, opampClientConnection, nil
+}
+
+var TestCollectorConfig protobufs.AgentConfigMap = protobufs.AgentConfigMap{
+	ConfigMap: map[string]*protobufs.AgentConfigFile{
+		"otel-collector.yaml": {
+			Body: []byte(`
+      receivers:
+        otlp:
+          protocols:
+            grpc:
+              endpoint: 0.0.0.0:4317
+            http:
+              endpoint: 0.0.0.0:4318
+      processors:
+        batch:
+          send_batch_size: 10000
+          send_batch_max_size: 11000
+          timeout: 10s
+      exporters:
+        otlp:
+          endpoint: otelcol2:4317
+      service:
+        pipelines:
+          logs:
+            receivers: [otlp]
+            processors: [batch]
+            exporters: [otlp]
+    `),
+			ContentType: "text/yaml",
+		},
+	},
 }
 
 func createTestUser() (*model.User, *model.ApiError) {
