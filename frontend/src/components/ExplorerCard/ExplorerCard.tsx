@@ -19,6 +19,7 @@ import {
 import axios from 'axios';
 import TextToolTip from 'components/TextToolTip';
 import { SOMETHING_WENT_WRONG } from 'constants/api';
+import { QueryParams } from 'constants/query';
 import { useGetSearchQueryParam } from 'hooks/queryBuilder/useGetSearchQueryParam';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useDeleteView } from 'hooks/saveViews/useDeleteView';
@@ -30,11 +31,7 @@ import { mapCompositeQueryFromQuery } from 'lib/newQueryBuilder/queryBuilderMapp
 import { useEffect, useState } from 'react';
 import { useCopyToClipboard } from 'react-use';
 
-import {
-	ExploreHeaderToolTip,
-	querySearchParams,
-	SaveButtonText,
-} from './constants';
+import { ExploreHeaderToolTip, SaveButtonText } from './constants';
 import MenuItemGenerator from './MenuItemGenerator';
 import SaveViewWithName from './SaveViewWithName';
 import {
@@ -83,9 +80,9 @@ function ExplorerCard({
 		setIsOpen(newOpen);
 	};
 
-	const viewName = useGetSearchQueryParam(querySearchParams.viewName) || '';
+	const viewName = useGetSearchQueryParam(QueryParams.viewName) || '';
 
-	const viewKey = useGetSearchQueryParam(querySearchParams.viewKey) || '';
+	const viewKey = useGetSearchQueryParam(QueryParams.viewKey) || '';
 
 	const { mutateAsync: updateViewAsync } = useUpdateView({
 		compositeQuery: mapCompositeQueryFromQuery(currentQuery, panelType),

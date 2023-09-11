@@ -1,3 +1,4 @@
+import { QueryParams } from 'constants/query';
 import {
 	alphabet,
 	baseAutoCompleteIdKeysOrder,
@@ -13,7 +14,6 @@ import {
 	MAX_QUERIES,
 	PANEL_TYPES,
 } from 'constants/queryBuilder';
-import { queryParamNamesMap } from 'constants/queryBuilderQueryNames';
 import { useGetCompositeQueryParam } from 'hooks/queryBuilder/useGetCompositeQueryParam';
 import { updateStepInterval } from 'hooks/queryBuilder/useStepInterval';
 import useUrlQuery from 'hooks/useUrlQuery';
@@ -481,7 +481,7 @@ export function QueryBuilderProvider({
 			};
 
 			urlQuery.set(
-				queryParamNamesMap.compositeQuery,
+				QueryParams.compositeQuery,
 				encodeURIComponent(JSON.stringify(currentGeneratedQuery)),
 			);
 

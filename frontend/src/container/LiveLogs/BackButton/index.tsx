@@ -1,10 +1,10 @@
 import { ArrowLeftOutlined } from '@ant-design/icons';
 import { Button } from 'antd';
+import { QueryParams } from 'constants/query';
 import {
 	initialQueryBuilderFormValuesMap,
 	PANEL_TYPES,
 } from 'constants/queryBuilder';
-import { queryParamNamesMap } from 'constants/queryBuilderQueryNames';
 import ROUTES from 'constants/routes';
 import { useGetCompositeQueryParam } from 'hooks/queryBuilder/useGetCompositeQueryParam';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
@@ -38,7 +38,7 @@ function BackButton(): JSX.Element {
 
 		const JSONCompositeQuery = encodeURIComponent(JSON.stringify(updatedQuery));
 
-		const path = `${ROUTES.LOGS_EXPLORER}?${queryParamNamesMap.compositeQuery}=${JSONCompositeQuery}`;
+		const path = `${ROUTES.LOGS_EXPLORER}?${QueryParams.compositeQuery}=${JSONCompositeQuery}`;
 
 		history.push(path);
 	}, [history, compositeQuery, updateAllQueriesOperators]);
