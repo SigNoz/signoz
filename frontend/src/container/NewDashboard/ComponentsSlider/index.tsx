@@ -6,6 +6,7 @@ import createQueryParams from 'lib/createQueryParams';
 import history from 'lib/history';
 import { CSSProperties, useCallback } from 'react';
 import { connect, useSelector } from 'react-redux';
+import { useLocation } from 'react-router-dom';
 import { bindActionCreators, Dispatch } from 'redux';
 import { ThunkDispatch } from 'redux-thunk';
 import {
@@ -23,6 +24,8 @@ function DashboardGraphSlider({ toggleAddWidget }: Props): JSX.Element {
 	const { dashboards } = useSelector<AppState, DashboardReducer>(
 		(state) => state.dashboards,
 	);
+
+	const { pathname } = useLocation();
 
 	const { notifications } = useNotifications();
 
@@ -51,16 +54,14 @@ function DashboardGraphSlider({ toggleAddWidget }: Props): JSX.Element {
 					),
 				};
 
-				history.push(
-					`${history.location.pathname}/new?${createQueryParams(queryParams)}`,
-				);
+				history.push(`${pathname}/new?${createQueryParams(queryParams)}`);
 			} catch (error) {
 				notifications.error({
 					message: 'Something went wrong',
 				});
 			}
 		},
-		[data, toggleAddWidget, notifications],
+		[data, toggleAddWidget, notifications, pathname],
 	);
 	const isDarkMode = useIsDarkMode();
 	const fillColor: CSSProperties['color'] = isDarkMode ? 'white' : 'black';
