@@ -8,7 +8,9 @@ import { DataSource } from 'types/common/queryBuilder';
 import { useGetSearchQueryParam } from './queryBuilder/useGetSearchQueryParam';
 import { useQueryBuilder } from './queryBuilder/useQueryBuilder';
 
-export const useHandleExplorerTabChange = (): {
+export const useHandleExplorerTabChange = (
+	dataSource: DataSource,
+): {
 	handleExplorerTabChange: (
 		type: string,
 		querySearchParameters?: ICurrentQueryData,
@@ -58,13 +60,26 @@ export const useHandleExplorerTabChange = (): {
 
 			const query = currentQueryData?.query || getUpdateQuery(newPanelType);
 
-			redirectWithQueryBuilderData(query, {
-				[QueryParams.panelTypes]: newPanelType,
-				[QueryParams.viewName]: currentQueryData?.name || viewName,
-				[QueryParams.viewKey]: currentQueryData?.uuid || viewKey,
-			});
+			redirectWithQueryBuilderData(
+				query,
+				{
+					[QueryParams.panelTypes]: newPanelType,
+					[QueryParams.viewName]: currentQueryData?.name || viewName,
+					[QueryParams.viewKey]: currentQueryData?.uuid || viewKey,
+				},
+				(currentRedirectedQuery) => {
+					console.log('asdf', currentRedirectedQuery, dataSource);
+				},
+			);
 		},
-		[getUpdateQuery, panelType, redirectWithQueryBuilderData, viewKey, viewName],
+		[
+			getUpdateQuery,
+			panelType,
+			redirectWithQueryBuilderData,
+			viewKey,
+			viewName,
+			dataSource,
+		],
 	);
 
 	return { handleExplorerTabChange };

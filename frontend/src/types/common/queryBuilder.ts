@@ -186,6 +186,7 @@ export type QueryBuilderContextType = {
 	redirectWithQueryBuilderData: (
 		query: Query,
 		searchParams?: Record<string, unknown>,
+		handleOnSuccessRedirect?: (query: Query) => void,
 	) => void;
 	handleRunQuery: () => void;
 	resetQuery: (newCurrentQuery?: QueryState) => void;
