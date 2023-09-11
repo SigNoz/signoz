@@ -1,5 +1,6 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 import getLocalStorageApi from 'api/browser/localstorage/get';
+import setLocalStorageApi from 'api/browser/localstorage/set';
 import loginApi from 'api/user/login';
 import { Logout } from 'api/utils';
 import Spinner from 'components/Spinner';
@@ -99,9 +100,19 @@ function PrivateRoute({ children }: PrivateRouteProps): JSX.Element {
 									response.payload.refreshJwt,
 								);
 
+								console.log('user', userResponse);
+
 								if (userResponse) {
-									localStorage.setItem('loggedInUserName', userResponse.payload?.name);
-									localStorage.setItem('loggedInUserEmail', userResponse.payload?.email);
+									setLocalStorageApi(
+										LOCALSTORAGE.LOGGED_IN_USER_NAME,
+										userResponse.payload?.name,
+									);
+									setLocalStorageApi(
+										LOCALSTORAGE.LOGGED_IN_USER_EMAIL,
+										userResponse.payload?.email,
+									);
+
+									setLocalStorageApi(LOCALSTORAGE.CHAT_SUPPORT, 'true');
 								}
 
 								if (

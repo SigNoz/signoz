@@ -56,8 +56,9 @@ function SideNav(): JSX.Element {
 	const isOnboardingEnabled = (featureFlags: any): boolean => {
 		for (let index = 0; index < featureFlags.length; index++) {
 			const featureFlag = featureFlags[index];
-			if (featureFlag.name === 'ONBOARDING') {
-				return featureFlag.active;
+			// Temporarily using OSS feature flag, need to switch to ONBOARDING once API changes are available
+			if (featureFlag.name === 'OSS') {
+				return !featureFlag.active;
 			}
 		}
 

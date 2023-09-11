@@ -2,8 +2,12 @@
 /* eslint-disable jsx-a11y/click-events-have-key-events */
 import './Onboarding.styles.scss';
 
-import { ArrowLeftOutlined, ArrowRightOutlined } from '@ant-design/icons';
-import { Button, Steps } from 'antd';
+import {
+	ArrowLeftOutlined,
+	ArrowRightOutlined,
+	LoadingOutlined,
+} from '@ant-design/icons';
+import { Button, StepProps, Steps, StepsProps } from 'antd';
 import cx from 'classnames';
 import ROUTES from 'constants/routes';
 import { useIsDarkMode } from 'hooks/useDarkMode';
@@ -27,6 +31,9 @@ const getStarted = 'Get Started';
 const selectUseCase = 'Select the use-case';
 const instrumentApp = 'Instrument Application';
 const testConnection = 'Test Connection';
+const verifyConnectionDesc = 'Verify that you’ve instrumented your application';
+
+const verifyableLogsType = ['kubernetes', 'docker'];
 
 const useCases = {
 	APM: {
@@ -59,21 +66,18 @@ const useCases = {
 	},
 };
 
-const defaultSteps = [
+const defaultSteps: StepProps[] = [
 	{
 		title: getStarted,
 		description: selectUseCase,
-		step: 1,
 	},
 	{
 		title: instrumentApp,
 		description: defaultStepDesc,
-		step: 2,
 	},
 	{
 		title: testConnection,
-		description: 'Verify that you’ve instrumented your application ',
-		step: 3,
+		description: verifyConnectionDesc,
 	},
 ];
 
@@ -82,42 +86,48 @@ export default function Onboarding(): JSX.Element {
 	const [steps, setsteps] = useState(defaultSteps);
 	const [activeStep, setActiveStep] = useState(1);
 	const [current, setCurrent] = useState(0);
+	const [selectedLogsType, setSelectedLogsType] = useState<string | null>(
+		'kubernetes',
+	);
 	const isDarkMode = useIsDarkMode();
+
+	const baseSteps = [
+		{
+			title: getStarted,
+			description: selectUseCase,
+		},
+		{
+			title: instrumentApp,
+			description: selectedModule.stepDesc,
+		},
+	];
 
 	useEffect(() => {
 		if (selectedModule?.id === modulesMap.InfrastructureMonitoring) {
-			setsteps([
-				{
-					title: getStarted,
-					description: selectUseCase,
-					step: 1,
-				},
-				{
-					title: instrumentApp,
-					description: selectedModule.stepDesc,
-					step: 2,
-				},
-			]);
+			setsteps([...baseSteps]);
+		} else if (selectedModule?.id === modulesMap.LogsManagement) {
+			if (selectedLogsType && verifyableLogsType?.indexOf(selectedLogsType) > -1) {
+				setsteps([
+					...baseSteps,
+					{
+						title: testConnection,
+						description: verifyConnectionDesc,
+						disabled: true,
+					},
+				]);
+			} else {
+				setsteps([...baseSteps]);
+			}
 		} else {
 			setsteps([
-				{
-					title: getStarted,
-					description: selectUseCase,
-					step: 1,
-				},
-				{
-					title: instrumentApp,
-					description: selectedModule.stepDesc,
-					step: 2,
-				},
+				...baseSteps,
 				{
 					title: testConnection,
-					description: 'Verify that you’ve instrumented your application ',
-					step: 3,
+					description: verifyConnectionDesc,
 				},
 			]);
 		}
-	}, [selectedModule]);
+	}, [selectedModule, selectedLogsType]);
 
 	const handleNext = (): void => {
 		// Need to add logic to validate service name and then allow next step transition in APM module
@@ -162,6 +172,10 @@ export default function Onboarding(): JSX.Element {
 
 	const handleModuleSelect = (moduleName): void => {
 		setSelectedModule(moduleName);
+	};
+
+	const handleLogTypeSelect = (logType: string): void => {
+		setSelectedLogsType(logType);
 	};
 
 	return (
@@ -243,7 +257,10 @@ export default function Onboarding(): JSX.Element {
 							<DistributedTracing activeStep={activeStep} />
 						)}
 						{selectedModule.id === modulesMap.LogsManagement && (
-							<LogsManagement activeStep={activeStep} />
+							<LogsManagement
+								activeStep={activeStep}
+								handleLogTypeSelect={handleLogTypeSelect}
+							/>
 						)}
 						{selectedModule.id === modulesMap.InfrastructureMonitoring && (
 							<InfrastructureMonitoring activeStep={activeStep} />

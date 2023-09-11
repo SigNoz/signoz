@@ -247,9 +247,9 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 				<title>{pageTitle}</title>
 			</Helmet>
 
-			{(isToDisplayLayout || renderFullScreen) && <Header />}
+			{isToDisplayLayout && <Header />}
 			<Layout>
-				{isToDisplayLayout && <SideNav />}
+				{isToDisplayLayout && !renderFullScreen && <SideNav />}
 				<LayoutContent>
 					<ChildrenContainer>
 						{isToDisplayLayout && !renderFullScreen && <TopNav />}

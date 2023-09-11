@@ -47,8 +47,10 @@ const supportedLogTypes = [
 
 export default function LogsManagement({
 	activeStep,
+	handleLogTypeSelect,
 }: {
 	activeStep: number;
+	handleLogTypeSelect: (id: string) => any;
 }): JSX.Element {
 	const [selectedLogsType, setSelectedLogsType] = useState('kubernetes');
 
@@ -95,7 +97,10 @@ export default function LogsManagement({
 									selectedLogsType === logType.id ? 'selected' : '',
 								)}
 								key={logType.name}
-								onClick={() => setSelectedLogsType(logType.id)}
+								onClick={() => {
+									handleLogTypeSelect(logType.id);
+									setSelectedLogsType(logType.id);
+								}}
 							>
 								<img
 									className={cx('supported-logs-type-img')}

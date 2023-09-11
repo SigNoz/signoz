@@ -1,3 +1,4 @@
+import setLocalStorageApi from 'api/browser/localstorage/set';
 import { Button, Form, Input, Space, Tooltip, Typography } from 'antd';
 import getUserVersion from 'api/user/getVersion';
 import loginApi from 'api/user/login';
@@ -15,6 +16,7 @@ import { PayloadProps as PrecheckResultType } from 'types/api/user/loginPrecheck
 import AppReducer from 'types/reducer/app';
 
 import { FormContainer, FormWrapper, Label, ParentContainer } from './styles';
+import { LOCALSTORAGE } from 'constants/localStorage';
 
 const { Title } = Typography;
 
@@ -165,8 +167,9 @@ function Login({
 				);
 
 				if (user) {
-					localStorage.setItem('loggedInUserName', user.payload?.name);
-					localStorage.setItem('loggedInUserEmail', user.payload?.email);
+					setLocalStorageApi(LOCALSTORAGE.LOGGED_IN_USER_NAME, user.payload?.name);
+					setLocalStorageApi(LOCALSTORAGE.LOGGED_IN_USER_EMAIL, user.payload?.email);
+					setLocalStorageApi(LOCALSTORAGE.CHAT_SUPPORT, 'true');
 				}
 
 				history.push(ROUTES.APPLICATION);
