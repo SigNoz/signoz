@@ -1,7 +1,5 @@
 import { MDXProvider } from '@mdx-js/react';
 
-import { Steps } from 'antd';
-
 import Post from './docker.md';
 import ConnectionStatus from '../common/LogsConnectionStatus/LogsConnectionStatus';
 

@@ -40,7 +40,7 @@ export default function SysLogs({ activeStep }): JSX.Element {
 			)}
 			{activeStep === 3 && (
 				<div className="connection-status-container">
-					<ConnectionStatus logType="docker" activeStep={activeStep} />
+					<ConnectionStatus logType="syslogs" activeStep={activeStep} />
 				</div>
 			)}
 		</>

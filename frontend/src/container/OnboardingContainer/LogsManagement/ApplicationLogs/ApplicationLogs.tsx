@@ -90,12 +90,7 @@ export default function ApplicationLogs({
 										const id = String(i + 1);
 
 										return {
-											label: (
-												<div className="language-tab-item">
-													{/* <img src={`/Logos/${language}.png`} alt="" /> */}
-													{language}
-												</div>
-											),
+											label: <div className="language-tab-item">{language}</div>,
 											key: id,
 											children: renderContentForCollectingLogsOtelSDK(language),
 										};
@@ -108,14 +103,7 @@ export default function ApplicationLogs({
 			)}
 			{activeStep === 3 && (
 				<div className="connection-status-container">
-					<ConnectionStatus
-						logType={
-							type === ApplicationLogsType.FROM_LOG_FILE
-								? 'Application Logs from Log File'
-								: 'Application Logs using existing OTEL Collector'
-						}
-						activeStep={activeStep}
-					/>
+					<ConnectionStatus logType={type} activeStep={activeStep} />
 				</div>
 			)}
 		</>

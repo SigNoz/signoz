@@ -9,6 +9,7 @@ import {
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { useGetExplorerQueryRange } from 'hooks/queryBuilder/useGetExplorerQueryRange';
 import { useEffect, useState } from 'react';
+import { ILog } from 'types/api/logs/log';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { EQueryType } from 'types/common/dashboard';
 import { DataSource } from 'types/common/queryBuilder';
@@ -17,6 +18,12 @@ interface ConnectionStatusProps {
 	logType: string;
 	activeStep: number;
 }
+
+const LogsTypePropertyMap = {
+	kubernetes: 'k8s_pod_name',
+	docker: 'container_id',
+	otel: 'telemetry_sdk_language',
+};
 
 export default function ConnectionStatus({
 	logType,
@@ -77,15 +84,40 @@ export default function ConnectionStatus({
 		keepPreviousData: true,
 	});
 
-	const verifyApplicationData = (response): void => {
-		if (data || !isError) {
+	const verifyLogsData = (response): void => {
+		if (response || !isError) {
 			setLoading(false);
-			setIsReceivingData(false);
+		}
+
+		const currentData = data?.payload.data.newResult.data.result || [];
+		if (currentData.length > 0 && currentData[0].list) {
+			const currentLogs: ILog[] = currentData[0].list.map((item) => ({
+				...item.data,
+				timestamp: item.timestamp,
+			}));
+
+			for (let index = 0; index < currentLogs.length; index++) {
+				const log = currentLogs[index];
+
+				if (logType === 'kubernetes') {
+					if (log['attributes_string']['k8s_pod_name']) {
+						setIsReceivingData(true);
+						break;
+					}
+				}
+
+				if (logType === 'docker') {
+					if (log['attributes_string']['container_id']) {
+						setIsReceivingData(true);
+						break;
+					}
+				}
+			}
 		}
 	};
 
 	useEffect(() => {
-		verifyApplicationData(data);
+		verifyLogsData(data);
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [isFetching, data, error, isError]);
 
@@ -93,7 +125,7 @@ export default function ConnectionStatus({
 		fetchLogs();
 	}, []);
 
-	console.log('data', data, isError);
+	console.log('logType', logType);
 
 	return (
 		<div className="connection-status-container">
