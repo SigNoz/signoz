@@ -3,7 +3,6 @@ package app
 import (
 	"bytes"
 	"context"
-	"database/sql"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -208,7 +207,7 @@ func (aH *APIHandler) testReady(f http.HandlerFunc) http.HandlerFunc {
 	}
 }
 
-type response struct {
+type ApiResponse struct {
 	Status    status          `json:"status"`
 	Data      interface{}     `json:"data,omitempty"`
 	ErrorType model.ErrorType `json:"errorType,omitempty"`
@@ -217,7 +216,7 @@ type response struct {
 
 func RespondError(w http.ResponseWriter, apiErr model.BaseApiError, data interface{}) {
 	json := jsoniter.ConfigCompatibleWithStandardLibrary
-	b, err := json.Marshal(&response{
+	b, err := json.Marshal(&ApiResponse{
 		Status:    statusError,
 		ErrorType: apiErr.Type(),
 		Error:     apiErr.Error(),
@@ -260,7 +259,7 @@ func RespondError(w http.ResponseWriter, apiErr model.BaseApiError, data interfa
 
 func writeHttpResponse(w http.ResponseWriter, data interface{}) {
 	json := jsoniter.ConfigCompatibleWithStandardLibrary
-	b, err := json.Marshal(&response{
+	b, err := json.Marshal(&ApiResponse{
 		Status: statusSuccess,
 		Data:   data,
 	})
@@ -319,6 +318,8 @@ func (aH *APIHandler) RegisterRoutes(router *mux.Router, am *AuthMiddleware) {
 	router.HandleFunc("/api/v1/channels", am.EditAccess(aH.createChannel)).Methods(http.MethodPost)
 	router.HandleFunc("/api/v1/testChannel", am.EditAccess(aH.testChannel)).Methods(http.MethodPost)
 
+	router.HandleFunc("/api/v1/alerts", am.ViewAccess(aH.getAlerts)).Methods(http.MethodGet)
+
 	router.HandleFunc("/api/v1/rules", am.ViewAccess(aH.listRules)).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/rules/{id}", am.ViewAccess(aH.getRule)).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/rules", am.EditAccess(aH.createRule)).Methods(http.MethodPost)
@@ -336,11 +337,11 @@ func (aH *APIHandler) RegisterRoutes(router *mux.Router, am *AuthMiddleware) {
 	router.HandleFunc("/api/v1/variables/query", am.ViewAccess(aH.queryDashboardVars)).Methods(http.MethodGet)
 	router.HandleFunc("/api/v2/variables/query", am.ViewAccess(aH.queryDashboardVarsV2)).Methods(http.MethodPost)
 
-	router.HandleFunc("/api/v1/explorer/queries", am.ViewAccess(aH.getExplorerQueries)).Methods(http.MethodGet)
-	router.HandleFunc("/api/v1/explorer/queries", am.EditAccess(aH.createExplorerQueries)).Methods(http.MethodPost)
-	router.HandleFunc("/api/v1/explorer/queries/{queryId}", am.ViewAccess(aH.getExplorerQuery)).Methods(http.MethodGet)
-	router.HandleFunc("/api/v1/explorer/queries/{queryId}", am.EditAccess(aH.updateExplorerQuery)).Methods(http.MethodPut)
-	router.HandleFunc("/api/v1/explorer/queries/{queryId}", am.EditAccess(aH.deleteExplorerQuery)).Methods(http.MethodDelete)
+	router.HandleFunc("/api/v1/explorer/views", am.ViewAccess(aH.getSavedViews)).Methods(http.MethodGet)
+	router.HandleFunc("/api/v1/explorer/views", am.ViewAccess(aH.createSavedViews)).Methods(http.MethodPost)
+	router.HandleFunc("/api/v1/explorer/views/{viewId}", am.ViewAccess(aH.getSavedView)).Methods(http.MethodGet)
+	router.HandleFunc("/api/v1/explorer/views/{viewId}", am.ViewAccess(aH.updateSavedView)).Methods(http.MethodPut)
+	router.HandleFunc("/api/v1/explorer/views/{viewId}", am.ViewAccess(aH.deleteSavedView)).Methods(http.MethodDelete)
 
 	router.HandleFunc("/api/v1/feedback", am.OpenAccess(aH.submitFeedback)).Methods(http.MethodPost)
 	// router.HandleFunc("/api/v1/get_percentiles", aH.getApplicationPercentiles).Methods(http.MethodGet)
@@ -643,8 +644,8 @@ func (aH *APIHandler) QueryRangeMetricsV2(w http.ResponseWriter, r *http.Request
 					var s model.Series
 					s.QueryName = name
 					s.Labels = v.Metric.Copy().Map()
-					for _, p := range v.Points {
-						s.Points = append(s.Points, model.MetricPoint{Timestamp: p.T, Value: p.V})
+					for _, p := range v.Floats {
+						s.Points = append(s.Points, model.MetricPoint{Timestamp: p.T, Value: p.F})
 					}
 					seriesList = append(seriesList, &s)
 				}
@@ -1193,6 +1194,25 @@ func (aH *APIHandler) createChannel(w http.ResponseWriter, r *http.Request) {
 
 	aH.Respond(w, nil)
 
+}
+
+func (aH *APIHandler) getAlerts(w http.ResponseWriter, r *http.Request) {
+	params := r.URL.Query()
+	amEndpoint := constants.GetAlertManagerApiPrefix()
+	resp, err := http.Get(amEndpoint + "v1/alerts" + "?" + params.Encode())
+	if err != nil {
+		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, nil)
+		return
+	}
+
+	defer resp.Body.Close()
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, nil)
+		return
+	}
+
+	aH.Respond(w, string(body))
 }
 
 func (aH *APIHandler) createRule(w http.ResponseWriter, r *http.Request) {
@@ -2263,8 +2283,8 @@ func (aH *APIHandler) RegisterLogsRoutes(router *mux.Router, am *AuthMiddleware)
 	subRouter.HandleFunc("/aggregate", am.ViewAccess(aH.logAggregate)).Methods(http.MethodGet)
 
 	// log pipelines
-	subRouter.HandleFunc("/pipelines/{version}", am.ViewAccess(aH.listLogsPipelinesHandler)).Methods(http.MethodGet)
-	subRouter.HandleFunc("/pipelines", am.EditAccess(aH.createLogsPipeline)).Methods(http.MethodPost)
+	subRouter.HandleFunc("/pipelines/{version}", am.ViewAccess(aH.ListLogsPipelinesHandler)).Methods(http.MethodGet)
+	subRouter.HandleFunc("/pipelines", am.EditAccess(aH.CreateLogsPipeline)).Methods(http.MethodPost)
 }
 
 func (aH *APIHandler) logFields(w http.ResponseWriter, r *http.Request) {
@@ -2398,11 +2418,11 @@ func parseAgentConfigVersion(r *http.Request) (int, *model.ApiError) {
 	return int(version64), nil
 }
 
-func (ah *APIHandler) listLogsPipelinesHandler(w http.ResponseWriter, r *http.Request) {
+func (ah *APIHandler) ListLogsPipelinesHandler(w http.ResponseWriter, r *http.Request) {
 
 	version, err := parseAgentConfigVersion(r)
 	if err != nil {
-		RespondError(w, err, nil)
+		RespondError(w, model.WrapApiError(err, "Failed to parse agent config version"), nil)
 		return
 	}
 
@@ -2423,12 +2443,14 @@ func (ah *APIHandler) listLogsPipelinesHandler(w http.ResponseWriter, r *http.Re
 }
 
 // listLogsPipelines lists logs piplines for latest version
-func (ah *APIHandler) listLogsPipelines(ctx context.Context) (*logparsingpipeline.PipelinesResponse, *model.ApiError) {
+func (ah *APIHandler) listLogsPipelines(ctx context.Context) (
+	*logparsingpipeline.PipelinesResponse, *model.ApiError,
+) {
 	// get lateset agent config
 	lastestConfig, err := agentConf.GetLatestVersion(ctx, logPipelines)
 	if err != nil {
-		if err != sql.ErrNoRows {
-			return nil, model.InternalError(fmt.Errorf("failed to get latest agent config version with error %w", err))
+		if err.Type() != model.ErrorNotFound {
+			return nil, model.WrapApiError(err, "failed to get latest agent config version")
 		} else {
 			return nil, nil
 		}
@@ -2436,38 +2458,40 @@ func (ah *APIHandler) listLogsPipelines(ctx context.Context) (*logparsingpipelin
 
 	payload, err := ah.LogsParsingPipelineController.GetPipelinesByVersion(ctx, lastestConfig.Version)
 	if err != nil {
-		return nil, model.InternalError(fmt.Errorf("failed to get pipelines with error %w", err))
+		return nil, model.WrapApiError(err, "failed to get pipelines")
 	}
 
 	// todo(Nitya): make a new API for history pagination
 	limit := 10
 	history, err := agentConf.GetConfigHistory(ctx, logPipelines, limit)
 	if err != nil {
-		return nil, model.InternalError(fmt.Errorf("failed to get config history with error %w", err))
+		return nil, model.WrapApiError(err, "failed to get config history")
 	}
 	payload.History = history
 	return payload, nil
 }
 
 // listLogsPipelinesByVersion lists pipelines along with config version history
-func (ah *APIHandler) listLogsPipelinesByVersion(ctx context.Context, version int) (*logparsingpipeline.PipelinesResponse, *model.ApiError) {
+func (ah *APIHandler) listLogsPipelinesByVersion(ctx context.Context, version int) (
+	*logparsingpipeline.PipelinesResponse, *model.ApiError,
+) {
 	payload, err := ah.LogsParsingPipelineController.GetPipelinesByVersion(ctx, version)
 	if err != nil {
-		return nil, model.InternalError(err)
+		return nil, model.WrapApiError(err, "failed to get pipelines by version")
 	}
 
 	// todo(Nitya): make a new API for history pagination
 	limit := 10
 	history, err := agentConf.GetConfigHistory(ctx, logPipelines, limit)
 	if err != nil {
-		return nil, model.InternalError(fmt.Errorf("failed to retrieve agent config history with error %w", err))
+		return nil, model.WrapApiError(err, "failed to retrieve agent config history")
 	}
 
 	payload.History = history
 	return payload, nil
 }
 
-func (ah *APIHandler) createLogsPipeline(w http.ResponseWriter, r *http.Request) {
+func (ah *APIHandler) CreateLogsPipeline(w http.ResponseWriter, r *http.Request) {
 
 	req := logparsingpipeline.PostablePipelines{}
 
@@ -2478,7 +2502,10 @@ func (ah *APIHandler) createLogsPipeline(w http.ResponseWriter, r *http.Request)
 
 	ctx := auth.AttachJwtToContext(context.Background(), r)
 
-	createPipeline := func(ctx context.Context, postable []logparsingpipeline.PostablePipeline) (*logparsingpipeline.PipelinesResponse, error) {
+	createPipeline := func(
+		ctx context.Context,
+		postable []logparsingpipeline.PostablePipeline,
+	) (*logparsingpipeline.PipelinesResponse, *model.ApiError) {
 		if len(postable) == 0 {
 			zap.S().Warnf("found no pipelines in the http request, this will delete all the pipelines")
 		}
@@ -2494,15 +2521,20 @@ func (ah *APIHandler) createLogsPipeline(w http.ResponseWriter, r *http.Request)
 
 	res, err := createPipeline(ctx, req.Pipelines)
 	if err != nil {
-		RespondError(w, model.InternalError(err), nil)
+		RespondError(w, err, nil)
 		return
 	}
 
 	ah.Respond(w, res)
 }
 
-func (aH *APIHandler) getExplorerQueries(w http.ResponseWriter, r *http.Request) {
-	queries, err := explorer.GetQueries()
+func (aH *APIHandler) getSavedViews(w http.ResponseWriter, r *http.Request) {
+	// get sourcePage, name, and category from the query params
+	sourcePage := r.URL.Query().Get("sourcePage")
+	name := r.URL.Query().Get("name")
+	category := r.URL.Query().Get("category")
+
+	queries, err := explorer.GetViewsForFilters(sourcePage, name, category)
 	if err != nil {
 		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, nil)
 		return
@@ -2510,19 +2542,20 @@ func (aH *APIHandler) getExplorerQueries(w http.ResponseWriter, r *http.Request)
 	aH.Respond(w, queries)
 }
 
-func (aH *APIHandler) createExplorerQueries(w http.ResponseWriter, r *http.Request) {
-	var query v3.ExplorerQuery
-	err := json.NewDecoder(r.Body).Decode(&query)
+func (aH *APIHandler) createSavedViews(w http.ResponseWriter, r *http.Request) {
+	var view v3.SavedView
+	err := json.NewDecoder(r.Body).Decode(&view)
 	if err != nil {
 		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
 		return
 	}
 	// validate the query
-	if err := query.Validate(); err != nil {
+	if err := view.Validate(); err != nil {
 		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
 		return
 	}
-	uuid, err := explorer.CreateQuery(query)
+	ctx := auth.AttachJwtToContext(context.Background(), r)
+	uuid, err := explorer.CreateView(ctx, view)
 	if err != nil {
 		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, nil)
 		return
@@ -2531,44 +2564,45 @@ func (aH *APIHandler) createExplorerQueries(w http.ResponseWriter, r *http.Reque
 	aH.Respond(w, uuid)
 }
 
-func (aH *APIHandler) getExplorerQuery(w http.ResponseWriter, r *http.Request) {
-	queryID := mux.Vars(r)["queryId"]
-	query, err := explorer.GetQuery(queryID)
+func (aH *APIHandler) getSavedView(w http.ResponseWriter, r *http.Request) {
+	viewID := mux.Vars(r)["viewId"]
+	view, err := explorer.GetView(viewID)
 	if err != nil {
 		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, nil)
 		return
 	}
 
-	aH.Respond(w, query)
+	aH.Respond(w, view)
 }
 
-func (aH *APIHandler) updateExplorerQuery(w http.ResponseWriter, r *http.Request) {
-	queryID := mux.Vars(r)["queryId"]
-	var query v3.ExplorerQuery
-	err := json.NewDecoder(r.Body).Decode(&query)
+func (aH *APIHandler) updateSavedView(w http.ResponseWriter, r *http.Request) {
+	viewID := mux.Vars(r)["viewId"]
+	var view v3.SavedView
+	err := json.NewDecoder(r.Body).Decode(&view)
 	if err != nil {
 		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
 		return
 	}
 	// validate the query
-	if err := query.Validate(); err != nil {
+	if err := view.Validate(); err != nil {
 		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
 		return
 	}
 
-	err = explorer.UpdateQuery(queryID, query)
+	ctx := auth.AttachJwtToContext(context.Background(), r)
+	err = explorer.UpdateView(ctx, viewID, view)
 	if err != nil {
 		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, nil)
 		return
 	}
 
-	aH.Respond(w, query)
+	aH.Respond(w, view)
 }
 
-func (aH *APIHandler) deleteExplorerQuery(w http.ResponseWriter, r *http.Request) {
+func (aH *APIHandler) deleteSavedView(w http.ResponseWriter, r *http.Request) {
 
-	queryID := mux.Vars(r)["queryId"]
-	err := explorer.DeleteQuery(queryID)
+	viewID := mux.Vars(r)["viewId"]
+	err := explorer.DeleteView(viewID)
 	if err != nil {
 		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, nil)
 		return
@@ -2810,8 +2844,8 @@ func (aH *APIHandler) execPromQueries(ctx context.Context, metricsQueryRangePara
 			for _, v := range matrix {
 				var s v3.Series
 				s.Labels = v.Metric.Copy().Map()
-				for _, p := range v.Points {
-					s.Points = append(s.Points, v3.Point{Timestamp: p.T, Value: p.V})
+				for _, p := range v.Floats {
+					s.Points = append(s.Points, v3.Point{Timestamp: p.T, Value: p.F})
 				}
 				seriesList = append(seriesList, &s)
 			}

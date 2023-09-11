@@ -29,6 +29,7 @@
 	"NOT_FOUND": "SigNoz | Page Not Found",
 	"LOGS": "SigNoz | Logs",
 	"LOGS_EXPLORER": "SigNoz | Logs Explorer",
+	"LIVE_LOGS": "SigNoz | Live Logs",
 	"HOME_PAGE": "Open source Observability Platform | SigNoz",
 	"PASSWORD_RESET": "SigNoz | Password Reset",
 	"LIST_LICENSES": "SigNoz | List of Licenses",

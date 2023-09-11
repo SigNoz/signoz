@@ -136,7 +136,7 @@ services:
   #     - ./data/clickhouse-3/:/var/lib/clickhouse/
 
   alertmanager:
-    image: signoz/alertmanager:0.23.2
+    image: signoz/alertmanager:0.23.3
     container_name: signoz-alertmanager
     volumes:
       - ./data/alertmanager:/data
@@ -186,7 +186,7 @@ services:
     <<: *clickhouse-depends
 
   otel-collector:
-    image: signoz/signoz-otel-collector:0.79.5
+    image: signoz/signoz-otel-collector:0.79.6
     container_name: signoz-otel-collector
     command:
       [
@@ -217,7 +217,7 @@ services:
     <<: *clickhouse-depends
 
   otel-collector-metrics:
-    image: signoz/signoz-otel-collector:0.79.5
+    image: signoz/signoz-otel-collector:0.79.6
     container_name: signoz-otel-collector-metrics
     command:
       [

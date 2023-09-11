@@ -4,11 +4,11 @@ import { AxiosError } from 'axios';
 import { ErrorResponse, SuccessResponse } from 'types/api';
 import {
 	MetricRangePayloadV3,
-	MetricsRangeProps,
+	QueryRangePayload,
 } from 'types/api/metrics/getQueryRange';
 
 export const getMetricsQueryRange = async (
-	props: MetricsRangeProps,
+	props: QueryRangePayload,
 ): Promise<SuccessResponse<MetricRangePayloadV3> | ErrorResponse> => {
 	try {
 		const response = await axios.post('/query_range', props);

@@ -3,7 +3,8 @@ import styled from 'styled-components';
 import { getActiveLogBackground } from 'utils/logs';
 
 interface TableHeaderCellStyledProps {
-	isDragColumn: boolean;
+	$isDragColumn: boolean;
+	$isDarkMode: boolean;
 }
 
 export const TableStyled = styled.table`
@@ -16,15 +17,20 @@ export const TableStyled = styled.table`
 	border-inline-end: 1px solid rgba(253, 253, 253, 0.12);
 `;
 
-export const TableCellStyled = styled.td`
+export const TableCellStyled = styled.td<TableHeaderCellStyledProps>`
 	padding: 0.5rem;
 	border-inline-end: 1px solid rgba(253, 253, 253, 0.12);
 	border-top: 1px solid rgba(253, 253, 253, 0.12);
-	background-color: ${themeColors.lightBlack};
+	background-color: ${(props): string =>
+		props.$isDarkMode ? themeColors.black : themeColors.whiteCream};
+
+	color: ${(props): string =>
+		props.$isDarkMode ? themeColors.white : themeColors.bckgGrey};
 `;
 
 export const TableRowStyled = styled.tr<{
 	$isActiveLog: boolean;
+	$isDarkMode: boolean;
 }>`
 	td {
 		${({ $isActiveLog }): string => getActiveLogBackground($isActiveLog)}
@@ -32,10 +38,12 @@ export const TableRowStyled = styled.tr<{
 
 	&:hover {
 		${TableCellStyled} {
-			${({ $isActiveLog }): string =>
+			${({ $isActiveLog, $isDarkMode }): string =>
 				$isActiveLog
 					? getActiveLogBackground()
-					: `background-color: ${themeColors.bckgGrey};`}
+					: `background-color: ${
+							!$isDarkMode ? themeColors.lightgrey : themeColors.bckgGrey
+					  };`}
 		}
 	}
 `;
@@ -43,8 +51,13 @@ export const TableRowStyled = styled.tr<{
 export const TableHeaderCellStyled = styled.th<TableHeaderCellStyledProps>`
 	padding: 0.5rem;
 	border-inline-end: 1px solid rgba(253, 253, 253, 0.12);
-	background-color: ${themeColors.bckgGrey};
-	${({ isDragColumn }): string => (isDragColumn ? 'cursor: col-resize;' : '')}
+	background-color: ${(props): string =>
+		!props.$isDarkMode ? themeColors.whiteCream : themeColors.bckgGrey};
+
+	${({ $isDragColumn }): string => ($isDragColumn ? 'cursor: col-resize;' : '')}
+
+	color: ${(props): string =>
+		props.$isDarkMode ? themeColors.white : themeColors.bckgGrey};
 
 	&:first-child {
 		border-start-start-radius: 2px;

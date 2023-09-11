@@ -25,7 +25,7 @@ import {
 } from 'types/actions/app';
 import AppReducer from 'types/reducer/app';
 
-import { ChildrenContainer, Layout } from './styles';
+import { ChildrenContainer, Layout, LayoutContent } from './styles';
 import { getRouteKey } from './utils';
 
 function AppLayout(props: AppLayoutProps): JSX.Element {
@@ -240,12 +240,12 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 			{isToDisplayLayout && <Header />}
 			<Layout>
 				{isToDisplayLayout && <SideNav />}
-				<Layout.Content>
+				<LayoutContent>
 					<ChildrenContainer>
 						{isToDisplayLayout && <TopNav />}
 						{children}
 					</ChildrenContainer>
-				</Layout.Content>
+				</LayoutContent>
 			</Layout>
 		</Layout>
 	);
