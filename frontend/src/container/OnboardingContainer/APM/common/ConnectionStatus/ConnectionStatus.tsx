@@ -1,4 +1,3 @@
-/* eslint-disable no-plusplus */
 import './ConnectionStatus.styles.scss';
 
 import {
@@ -13,6 +12,7 @@ import { convertRawQueriesToTraceSelectedTags } from 'hooks/useResourceAttribute
 import { useEffect, useMemo, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
+import { PayloadProps as QueryServicePayloadProps } from 'types/api/metrics/getService';
 import { GlobalReducer } from 'types/reducer/globalTime';
 import { Tags } from 'types/reducer/trace';
 
@@ -20,14 +20,12 @@ interface ConnectionStatusProps {
 	serviceName: string;
 	language: string;
 	framework: string;
-	activeStep: number;
 }
 
 export default function ConnectionStatus({
 	serviceName,
 	language,
 	framework,
-	activeStep,
 }: ConnectionStatusProps): JSX.Element {
 	const { maxTime, minTime, selectedTime } = useSelector<
 		AppState,
@@ -44,19 +42,17 @@ export default function ConnectionStatus({
 	const [loading, setLoading] = useState(true);
 	const [isReceivingData, setIsReceivingData] = useState(false);
 
-	const { data, error, isLoading, isError, refetch } = useQueryService({
-		minTime,
-		maxTime,
-		selectedTime,
-		selectedTags,
-		options: {
-			refetchInterval: pollingInterval,
+	const { data, error, isFetching: isServiceLoading, isError } = useQueryService(
+		{
+			minTime,
+			maxTime,
+			selectedTime,
+			selectedTags,
+			options: {
+				refetchInterval: pollingInterval,
+			},
 		},
-	});
-
-	useEffect(() => {
-		refetch();
-	}, []);
+	);
 
 	const renderDocsReference = (): JSX.Element => {
 		switch (language) {
@@ -108,7 +104,7 @@ export default function ConnectionStatus({
 		}
 	};
 
-	const verifyApplicationData = (response): void => {
+	const verifyApplicationData = (response?: QueryServicePayloadProps): void => {
 		if (data || isError) {
 			setRetryCount(retryCount - 1);
 
@@ -119,7 +115,7 @@ export default function ConnectionStatus({
 		}
 
 		if (response && Array.isArray(response)) {
-			for (let i = 0; i < response.length; i++) {
+			for (let i = 0; i < response.length; i += 1) {
 				if (response[i]?.serviceName === serviceName) {
 					setLoading(false);
 					setIsReceivingData(true);
@@ -133,7 +129,7 @@ export default function ConnectionStatus({
 	useEffect(() => {
 		verifyApplicationData(data);
 		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [isLoading, data, error, isError]);
+	}, [isServiceLoading, data, error, isError]);
 
 	return (
 		<div className="connection-status-container">
@@ -155,14 +151,14 @@ export default function ConnectionStatus({
 					<div className="label"> Status </div>
 
 					<div className="status">
-						{(loading || isLoading) && <LoadingOutlined />}
-						{!(loading || isLoading) && isReceivingData && (
+						{(loading || isServiceLoading) && <LoadingOutlined />}
+						{!(loading || isServiceLoading) && isReceivingData && (
 							<>
 								<CheckCircleTwoTone twoToneColor="#52c41a" />
 								<span> Success </span>
 							</>
 						)}
-						{!(loading || isLoading) && !isReceivingData && (
+						{!(loading || isServiceLoading) && !isReceivingData && (
 							<>
 								<CloseCircleTwoTone twoToneColor="#e84749" />
 								<span> Failed </span>
@@ -174,11 +170,11 @@ export default function ConnectionStatus({
 					<div className="label"> Details </div>
 
 					<div className="details">
-						{(loading || isLoading) && <div> Waiting for Update </div>}
-						{!(loading || isLoading) && isReceivingData && (
+						{(loading || isServiceLoading) && <div> Waiting for Update </div>}
+						{!(loading || isServiceLoading) && isReceivingData && (
 							<div> Received data from the application successfully. </div>
 						)}
-						{!(loading || isLoading) && !isReceivingData && (
+						{!(loading || isServiceLoading) && !isReceivingData && (
 							<div> Couldn't detect the install </div>
 						)}
 					</div>

@@ -10,7 +10,9 @@ import { PANEL_TYPES } from 'constants/queryBuilder';
 import Header from 'container/OnboardingContainer/common/Header/Header';
 import { useGetExplorerQueryRange } from 'hooks/queryBuilder/useGetExplorerQueryRange';
 import { useEffect, useState } from 'react';
+import { SuccessResponse } from 'types/api';
 import { ILog } from 'types/api/logs/log';
+import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { EQueryType } from 'types/common/dashboard';
 import { DataSource } from 'types/common/queryBuilder';
@@ -82,23 +84,24 @@ export default function LogsConnectionStatus({
 		},
 	};
 
-	const {
-		data,
-		isFetching,
-		error,
-		isError,
-		refetch: fetchLogs,
-	} = useGetExplorerQueryRange(requestData, PANEL_TYPES.LIST, {
-		keepPreviousData: true,
-		refetchInterval: pollingInterval,
-	});
+	const { data, isFetching, error, isError } = useGetExplorerQueryRange(
+		requestData,
+		PANEL_TYPES.LIST,
+		{
+			keepPreviousData: true,
+			refetchInterval: pollingInterval,
+			enabled: true,
+		},
+	);
 
-	const verifyLogsData = (response): void => {
+	const verifyLogsData = (
+		response?: SuccessResponse<MetricRangePayloadProps, unknown>,
+	): void => {
 		if (response || !isError) {
-			setLoading(false);
 			setRetryCount(retryCount - 1);
 
 			if (retryCount < 0) {
+				setLoading(false);
 				setPollingInterval(false);
 			}
 		}
@@ -128,10 +131,6 @@ export default function LogsConnectionStatus({
 		verifyLogsData(data);
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [isFetching, data, error, isError]);
-
-	useEffect(() => {
-		fetchLogs();
-	}, []);
 
 	const renderDocsReference = (): JSX.Element => {
 		switch (logType) {
@@ -164,16 +163,6 @@ export default function LogsConnectionStatus({
 						heading="Collecting Syslogs"
 						imgURL="/Logos/syslogs.svg"
 						docsURL="https://signoz.io/docs/userguide/collecting_syslogs/"
-						imgClassName="supported-logs-type-img"
-					/>
-				);
-			case 'nodejs':
-				return (
-					<Header
-						entity="nodejs"
-						heading="Collecting NodeJS winston logs"
-						imgURL="/Logos/node-js.svg"
-						docsURL="https://signoz.io/docs/userguide/collecting_nodejs_winston_logs/"
 						imgClassName="supported-logs-type-img"
 					/>
 				);
