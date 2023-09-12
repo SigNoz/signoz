@@ -2,6 +2,7 @@ import { DataNode } from 'antd/es/tree';
 
 import BodyTitleRenderer from './BodyTitleRenderer';
 import { AnyObject } from './LogDetailedView.types';
+import { DataTypes } from './types';
 
 export const recursiveParseJSON = (obj: string): Record<string, unknown> => {
 	try {
@@ -71,3 +72,31 @@ export function flattenObject(obj: AnyObject, prefix = ''): AnyObject {
 		return acc;
 	}, {});
 }
+
+const isFloat = (num: number): boolean => num % 1 !== 0;
+
+export const getDataTypes = (
+	value: number | number[] | string | string[],
+): DataTypes => {
+	if (typeof value === 'string') {
+		return DataTypes.String;
+	}
+
+	if (typeof value === 'number') {
+		return isFloat(value) ? DataTypes.Float64 : DataTypes.Int64;
+	}
+
+	if (Array.isArray(value)) {
+		const firstElement = value[0];
+
+		if (typeof firstElement === 'string') {
+			return DataTypes.ArrayString;
+		}
+
+		if (typeof firstElement === 'number') {
+			return isFloat(firstElement) ? DataTypes.ArrayFloat64 : DataTypes.ArrayInt64;
+		}
+	}
+
+	return DataTypes.Int64;
+};
