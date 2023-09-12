@@ -7,3 +7,5 @@ export interface FeatureFlagProps {
 	usage_limit: number;
 	route: string;
 }
+
+export type PayloadProps = FeatureFlagProps[];

@@ -1,24 +1,11 @@
 import { MDXProvider } from '@mdx-js/react';
-import { Tabs, TabsProps } from 'antd';
+import { Tabs } from 'antd';
+import Header from 'container/OnboardingContainer/common/Header/Header';
 
 import ConnectionStatus from '../common/LogsConnectionStatus/LogsConnectionStatus';
 import LogsFromLogFile from './applicationLogsFromLogFile.md';
 import LogsUsingJavaOtelSDK from './applicationLogsUsingJavaOtelSDK.md';
 import LogsUsingPythonOtelSDK from './applicationLogsUsingPythonOtelSDK.md';
-import Header from 'container/OnboardingContainer/common/Header/Header';
-
-const items: TabsProps['items'] = [
-	{
-		key: '1',
-		label: 'Java',
-		children: 'Content of Tab Pane 1',
-	},
-	{
-		key: '2',
-		label: 'Python',
-		children: 'Content of Tab Pane 2',
-	},
-];
 
 interface ApplicationLogsProps {
 	type: string;
@@ -94,7 +81,7 @@ export default function ApplicationLogs({
 			)}
 			{activeStep === 3 && (
 				<div className="connection-status-container">
-					<ConnectionStatus logType={type} activeStep={activeStep} />
+					<ConnectionStatus logType={type} />
 				</div>
 			)}
 		</>
