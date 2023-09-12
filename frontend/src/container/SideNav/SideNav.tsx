@@ -2,6 +2,7 @@ import { CheckCircleTwoTone, WarningOutlined } from '@ant-design/icons';
 import { MenuProps } from 'antd';
 import getLocalStorageKey from 'api/browser/localstorage/get';
 import { IS_SIDEBAR_COLLAPSED } from 'constants/app';
+import { FeatureKeys } from 'constants/features';
 import ROUTES from 'constants/routes';
 import history from 'lib/history';
 import { useCallback, useLayoutEffect, useMemo, useState } from 'react';
@@ -14,7 +15,7 @@ import AppReducer from 'types/reducer/app';
 
 import { routeConfig, styles } from './config';
 import { getQueryString } from './helper';
-import menuItems from './menuItems';
+import defaultMenuItems from './menuItems';
 import { MenuItem, SecondaryMenuItemKey } from './sideNav.types';
 import { getActiveMenuKeyFromPath } from './sideNav.utils';
 import Slack from './Slack';
@@ -32,10 +33,29 @@ function SideNav(): JSX.Element {
 	const [collapsed, setCollapsed] = useState<boolean>(
 		getLocalStorageKey(IS_SIDEBAR_COLLAPSED) === 'true',
 	);
-	const { currentVersion, latestVersion, isCurrentVersionError } = useSelector<
-		AppState,
-		AppReducer
-	>((state) => state.app);
+	const {
+		currentVersion,
+		latestVersion,
+		isCurrentVersionError,
+		featureResponse,
+	} = useSelector<AppState, AppReducer>((state) => state.app);
+
+	const menuItems = useMemo(
+		() =>
+			defaultMenuItems.filter((item) => {
+				const isOnboardingEnabled =
+					featureResponse.data?.find(
+						(feature) => feature.name === FeatureKeys.ONBOARDING,
+					)?.active || false;
+
+				if (!isOnboardingEnabled) {
+					return item.key !== ROUTES.GET_STARTED;
+				}
+
+				return true;
+			}),
+		[featureResponse],
+	);
 
 	const { pathname, search } = useLocation();
 
@@ -75,7 +95,17 @@ function SideNav(): JSX.Element {
 		history.push(ROUTES.VERSION);
 	};
 
-	const isNotCurrentVersion = currentVersion !== latestVersion;
+	const checkVersionState = (): boolean => {
+		const versionCore = currentVersion?.split('-')[0];
+
+		if (versionCore) {
+			return versionCore !== latestVersion;
+		}
+
+		return false;
+	};
+
+	const isNotCurrentVersion = checkVersionState();
 
 	const secondaryMenuItems: MenuItem[] = [
 		{

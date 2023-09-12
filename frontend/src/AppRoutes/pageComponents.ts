@@ -44,6 +44,10 @@ export const GettingStarted = Loadable(
 	() => import(/* webpackChunkName: "GettingStarted" */ 'pages/GettingStarted'),
 );
 
+export const Onboarding = Loadable(
+	() => import(/* webpackChunkName: "Onboarding" */ 'pages/OnboardingPage'),
+);
+
 export const DashboardPage = Loadable(
 	() => import(/* webpackChunkName: "DashboardPage" */ 'pages/Dashboard'),
 );
