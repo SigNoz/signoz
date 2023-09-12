@@ -1,7 +1,7 @@
 import { SettingOutlined } from '@ant-design/icons';
 import { Dropdown, Menu } from 'antd';
 
-import { TitleWrapper } from './utils';
+import { TitleWrapper } from './BodyTitleRenderer.styles';
 
 function BodyTitleRenderer({ title }: BodyTitleRendererProps): JSX.Element {
 	const menu = (

@@ -1,5 +1,4 @@
 import { DataNode } from 'antd/es/tree';
-import styled from 'styled-components';
 
 import BodyTitleRenderer from './BodyTitleRenderer';
 
@@ -14,16 +13,6 @@ export const recursiveParseJSON = (obj: string): Record<string, unknown> => {
 		return {};
 	}
 };
-
-export const TitleWrapper = styled.span`
-	.hover-reveal {
-		visibility: hidden;
-	}
-
-	&:hover .hover-reveal {
-		visibility: visible;
-	}
-`;
 
 export function jsonToDataNodes(
 	json: Record<string, unknown>,
