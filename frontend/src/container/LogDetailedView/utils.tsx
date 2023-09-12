@@ -21,7 +21,13 @@ export function jsonToDataNodes(
 	parentIsArray = false,
 ): DataNode[] {
 	return Object.entries(json).map(([key, value]) => {
-		const nodeKey = parentKey ? `${parentKey}.${key}` : key;
+		let nodeKey = parentKey || key;
+		if (parentIsArray) {
+			nodeKey += `.${value}`;
+		} else if (parentKey) {
+			nodeKey += `.${key}`;
+		}
+
 		const valueIsArray = Array.isArray(value);
 
 		if (parentIsArray) {
