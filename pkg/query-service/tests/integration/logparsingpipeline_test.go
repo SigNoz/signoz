@@ -278,7 +278,7 @@ func TestOpAMPServerToAgentCommunication(t *testing.T) {
 	response := testbed.opampServer.OnMessage(
 		agent1Conn,
 		&protobufs.AgentToServer{
-			InstanceUid: "test",
+			InstanceUid: "testAgent1",
 			EffectiveConfig: &protobufs.EffectiveConfig{
 				ConfigMap: &TestCollectorConfig,
 			},
@@ -292,15 +292,111 @@ func TestOpAMPServerToAgentCommunication(t *testing.T) {
 	require.NotNil(response.RemoteConfig.Config, errorMsg)
 	require.Equal(
 		response.RemoteConfig.Config.ConfigMap,
-		&TestCollectorConfig,
+		TestCollectorConfig.ConfigMap,
 		errorMsg,
 	)
 
 	// If an agent connects after some pipelines exist,
 	// it should receive the merged config back.
+	postablePipelines := logparsingpipeline.PostablePipelines{
+		Pipelines: []logparsingpipeline.PostablePipeline{
+			{
+				OrderId: 1,
+				Name:    "pipeline1",
+				Alias:   "pipeline1",
+				Enabled: true,
+				Filter:  "attributes.method == \"GET\"",
+				Config: []model.PipelineOperator{
+					{
+						OrderId: 1,
+						ID:      "add",
+						Type:    "add",
+						Field:   "attributes.test",
+						Value:   "val",
+						Enabled: true,
+						Name:    "test add",
+					},
+				},
+			},
+		},
+	}
+	createPipelinesResp := testbed.PostPipelinesToQS(postablePipelines)
+	assertPipelinesResponseMatchesPostedPipelines(
+		t, postablePipelines, createPipelinesResp,
+	)
+	testbed.assertPipelinesSentToOpampClient(createPipelinesResp.Pipelines)
+
+	agent2Conn := &mockOpAmpConnection{}
+	response2 := testbed.opampServer.OnMessage(
+		agent2Conn,
+		&protobufs.AgentToServer{
+			InstanceUid: "testAgent2",
+			EffectiveConfig: &protobufs.EffectiveConfig{
+				ConfigMap: &TestCollectorConfig,
+			},
+		},
+	)
+
+	errorMsg2 := fmt.Sprintf(
+		"opamp server OnMessage did not respond with expected effective config. Received: %v", response,
+	)
+	require.NotNil(response2.RemoteConfig, errorMsg2)
+	require.NotNil(response2.RemoteConfig.Config, errorMsg2)
+	configFiles := maps.Values(
+		response2.RemoteConfig.Config.ConfigMap,
+	)
+	require.Equal(1, len(configFiles), errorMsg2)
+
+	// Validate initial agent config is included in
+	// config recommended by the opamp server.
+	recommendedConfYaml := configFiles[0].Body
+	testAgentConfYaml := maps.Values(TestCollectorConfig.ConfigMap)[0].Body
+	assertCollectorConfIncludesSubset(
+		t, recommendedConfYaml, testAgentConfYaml,
+	)
+	assertCollectorConfHasLogPipelinesConfig(
+		t, recommendedConfYaml, createPipelinesResp.Pipelines,
+	)
+
+	// Validate processors used for pipelines as expected.
 
 	// If pipelines change, all agents should receive
 	// the latest effective config.
+}
+
+func assertCollectorConfIncludesSubset(
+	t *testing.T,
+	collectorConfYaml []byte,
+	expectedSubsetYaml []byte,
+) {
+	collectorConf, err := yaml.Parser().Unmarshal(collectorConfYaml)
+	if err != nil {
+		t.Fatalf("Failed to unmarshal collectorConfYaml")
+	}
+
+	expectedSubset, err := yaml.Parser().Unmarshal(expectedSubsetYaml)
+	if err != nil {
+		t.Fatalf("Failed to unmarshal expectedSubsetYaml")
+	}
+
+	for _, section := range []string{
+		"receivers", "processors", "exporters", "service",
+	} {
+		expectedSectionItemNames := maps.Keys(
+			expectedSubset[section].(map[string]interface{}),
+		)
+
+		for _, expectedItemName := range expectedSectionItemNames {
+			_, itemExistInCollectorConf := collectorConf[section].(map[string]interface{})[expectedItemName]
+			assert.True(
+				t, itemExistInCollectorConf,
+				fmt.Sprintf(
+					"Collector conf did not contain expected item: %s.%s",
+					section, expectedItemName,
+				),
+			)
+		}
+	}
 }
 
 // LogPipelinesTestBed coordinates and mocks components involved in
@@ -459,29 +555,39 @@ func (tb *LogPipelinesTestBed) assertPipelinesSentToOpampClient(
 	pipelines []model.Pipeline,
 ) {
 	lastMsg := tb.opampClientConn.latestMsgFromServer()
-	otelConfigFiles := lastMsg.RemoteConfig.Config.ConfigMap
+	collectorConfFiles := lastMsg.RemoteConfig.Config.ConfigMap
 	assert.Equal(
-		tb.t, len(otelConfigFiles), 1,
+		tb.t, len(collectorConfFiles), 1,
 		"otel config sent to client is expected to contain atleast 1 file",
 	)
 
-	otelConfigYaml := maps.Values(otelConfigFiles)[0].Body
-	otelConfSentToClient, err := yaml.Parser().Unmarshal(otelConfigYaml)
+	collectorConfYaml := maps.Values(collectorConfFiles)[0].Body
+	assertCollectorConfHasLogPipelinesConfig(
+		tb.t, collectorConfYaml, pipelines,
+	)
+}
+
+func assertCollectorConfHasLogPipelinesConfig(
+	t *testing.T,
+	collectorConfYaml []byte,
+	pipelines []model.Pipeline,
+) {
+	collectorConfSentToClient, err := yaml.Parser().Unmarshal(collectorConfYaml)
 	if err != nil {
-		tb.t.Fatalf("could not unmarshal config file sent to opamp client: %v", err)
+		t.Fatalf("could not unmarshal config file sent to opamp client: %v", err)
 	}
 
 	// Each pipeline is expected to become its own processor
 	// in the logs service in otel collector config.
-	otelConfSvcs := otelConfSentToClient["service"].(map[string]interface{})
-	otelConfLogsSvc := otelConfSvcs["pipelines"].(map[string]interface{})["logs"].(map[string]interface{})
-	otelConfLogsSvcProcessorNames := otelConfLogsSvc["processors"].([]interface{})
-	otelConfLogsPipelineProcNames := []string{}
-	for _, procNameVal := range otelConfLogsSvcProcessorNames {
+	collectorConfSvcs := collectorConfSentToClient["service"].(map[string]interface{})
+	collectorConfLogsSvc := collectorConfSvcs["pipelines"].(map[string]interface{})["logs"].(map[string]interface{})
+	collectorConfLogsSvcProcessorNames := collectorConfLogsSvc["processors"].([]interface{})
+	collectorConfLogsPipelineProcNames := []string{}
+	for _, procNameVal := range collectorConfLogsSvcProcessorNames {
 		procName := procNameVal.(string)
 		if strings.HasPrefix(procName, constants.LogsPPLPfx) {
-			otelConfLogsPipelineProcNames = append(
-				otelConfLogsPipelineProcNames,
+			collectorConfLogsPipelineProcNames = append(
+				collectorConfLogsPipelineProcNames,
 				procName,
 			)
 		}
@@ -489,17 +595,18 @@ func (tb *LogPipelinesTestBed) assertPipelinesSentToOpampClient(
 
 	_, expectedLogProcessorNames, err := logparsingpipeline.PreparePipelineProcessor(pipelines)
 	assert.Equal(
-		tb.t, expectedLogProcessorNames, otelConfLogsPipelineProcNames,
+		t, expectedLogProcessorNames, collectorConfLogsPipelineProcNames,
 		"config sent to opamp client doesn't contain expected log pipelines",
 	)
 
-	otelConfProcessors := otelConfSentToClient["processors"].(map[string]interface{})
+	collectorConfProcessors := collectorConfSentToClient["processors"].(map[string]interface{})
 	for _, procName := range expectedLogProcessorNames {
-		_, procExists := otelConfProcessors[procName]
-		assert.True(tb.t, procExists, fmt.Sprintf(
+		_, procExists := collectorConfProcessors[procName]
+		assert.True(t, procExists, fmt.Sprintf(
 			"%s processor not found in config sent to opamp client", procName,
 		))
 	}
+
 }
 
 func (tb *LogPipelinesTestBed) simulateOpampClientAcknowledgementForLatestConfig() {
