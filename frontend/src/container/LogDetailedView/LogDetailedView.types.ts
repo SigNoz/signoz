@@ -1,7 +1,8 @@
 export interface BodyTitleRendererProps {
 	title: string;
 	nodeKey: string;
-	isArray?: boolean;
+	value: unknown;
+	parentIsArray?: boolean;
 }
 
 export type AnyObject = { [key: string]: any };
