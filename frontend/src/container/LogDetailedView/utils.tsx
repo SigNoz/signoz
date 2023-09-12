@@ -1,7 +1,7 @@
-import { SettingOutlined } from '@ant-design/icons';
-import { Dropdown, Menu } from 'antd';
 import { DataNode } from 'antd/es/tree';
 import styled from 'styled-components';
+
+import BodyTitleRenderer from './BodyTitleRenderer';
 
 export const recursiveParseJSON = (obj: string): Record<string, unknown> => {
 	try {
@@ -15,7 +15,7 @@ export const recursiveParseJSON = (obj: string): Record<string, unknown> => {
 	}
 };
 
-const TitleWrapper = styled.span`
+export const TitleWrapper = styled.span`
 	.hover-reveal {
 		visibility: hidden;
 	}
@@ -32,22 +32,6 @@ export function jsonToDataNodes(
 	return Object.entries(json).map(([key, value]) => {
 		const nodeKey = parentKey ? `${parentKey}.${key}` : key;
 
-		const menu = (
-			<Menu>
-				<Menu.Item key="0">Option 1</Menu.Item>
-				<Menu.Item key="1">Option 2</Menu.Item>
-			</Menu>
-		);
-
-		const title = (
-			<TitleWrapper>
-				{key}
-				<Dropdown overlay={menu} trigger={['click']}>
-					<SettingOutlined style={{ marginLeft: 8 }} className="hover-reveal" />
-				</Dropdown>
-			</TitleWrapper>
-		);
-
 		if (typeof value === 'object' && value !== null) {
 			return {
 				key: nodeKey,
@@ -57,7 +41,7 @@ export function jsonToDataNodes(
 		}
 		return {
 			key: nodeKey,
-			title,
+			title: <BodyTitleRenderer title={key} />,
 		};
 	});
 }
