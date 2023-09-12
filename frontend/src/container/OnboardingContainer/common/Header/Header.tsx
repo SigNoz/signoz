@@ -1,3 +1,5 @@
+import cx from 'classnames';
+
 interface HeaderProps {
 	entity: string;
 	heading: string;
@@ -12,16 +14,16 @@ export default function Header({
 	imgURL,
 	docsURL,
 	imgClassName,
-}: HeaderProps) {
+}: HeaderProps): JSX.Element {
 	return (
-		<div className="header">
+		<div className={cx('header', entity)}>
 			<img className={imgClassName} src={imgURL} alt="" />
 			<div className="title">
 				<h1>{heading}</h1>
 
 				<div className="detailed-docs-link">
 					View detailed docs
-					<a target="_blank" href={docsURL}>
+					<a target="_blank" href={docsURL} rel="noreferrer">
 						here
 					</a>
 				</div>

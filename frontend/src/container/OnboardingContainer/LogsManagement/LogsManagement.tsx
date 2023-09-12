@@ -60,23 +60,18 @@ export default function LogsManagement({
 		switch (selectedLogsType) {
 			case 'kubernetes':
 				return <Kubernetes activeStep={activeStep} />;
-
 			case 'docker':
 				return <Docker activeStep={activeStep} />;
-
 			case 'application_logs_log_file':
 				return <ApplicationLogs type="from-log-file" activeStep={activeStep} />;
-
 			case 'application_logs_otel_sdk':
 				return <ApplicationLogs type="using-otel-sdk" activeStep={activeStep} />;
-
 			case 'syslogs':
 				return <SysLogs activeStep={activeStep} />;
 			case 'nodejs':
 				return <Nodejs activeStep={activeStep} />;
-
 			default:
-				break;
+				return <> </>;
 		}
 	};
 

@@ -6,7 +6,7 @@ import { Tabs } from 'antd';
 import Prometheus from './prometheus.md';
 import SpecificReceiver from './specific-metric-receiver.md';
 
-const enum receiverType {
+const enum ReceiverType {
 	specific_metric_receiver = 'Specific Metric Receiver',
 	Prometheus = 'Prometheus',
 }
@@ -26,14 +26,15 @@ export default function InfrastructureMonitoring({
 	activeStep,
 }: {
 	activeStep: number;
-}) {
-	const renderEnableReceiverByType = (receiverType: string) => {
-		if (receiverType === 'specific_metric_receiver') {
+}): JSX.Element {
+	const renderEnableReceiverByType = (receiverType: string): JSX.Element => {
+		if (receiverType === ReceiverType.specific_metric_receiver) {
 			return <SpecificReceiver />;
-		} else {
-			return <Prometheus />;
 		}
+
+		return <Prometheus />;
 	};
+
 	return (
 		<div className="infrastructure-monitoring-module-container">
 			{activeStep === 2 && (
@@ -43,6 +44,7 @@ export default function InfrastructureMonitoring({
 							By default, when you install SigNoz, only the &nbsp;
 							<a
 								target="_blank"
+								rel="noreferrer"
 								href="https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/main/receiver/hostmetricsreceiver/README.md"
 							>
 								Hostmetric receiver

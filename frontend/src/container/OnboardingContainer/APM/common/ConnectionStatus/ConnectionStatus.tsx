@@ -175,7 +175,7 @@ export default function ConnectionStatus({
 							<div> Received data from the application successfully. </div>
 						)}
 						{!(loading || isServiceLoading) && !isReceivingData && (
-							<div> Couldn't detect the install </div>
+							<div> Could not detect the install </div>
 						)}
 					</div>
 				</div>

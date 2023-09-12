@@ -11,7 +11,6 @@ import {
 	EditAlertChannelsAlerts,
 	EditRulesPage,
 	ErrorDetails,
-	GettingStarted,
 	LicensePage,
 	ListAllALertsPage,
 	LiveLogs,
