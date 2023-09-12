@@ -8,7 +8,7 @@ import { PANEL_TYPES } from 'constants/queryBuilder';
 import ROUTES from 'constants/routes';
 import { routeConfig } from 'container/SideNav/config';
 import { getQueryString } from 'container/SideNav/helper';
-import useFeatureFlag from 'hooks/useFeatureFlag';
+import useFeatureFlag, { useIsFeatureDisabled } from 'hooks/useFeatureFlag';
 import useResourceAttribute from 'hooks/useResourceAttribute';
 import {
 	convertRawQueriesToTraceSelectedTags,
@@ -64,6 +64,7 @@ function Application(): JSX.Element {
 		() => (convertRawQueriesToTraceSelectedTags(queries) as Tags[]) || [],
 		[queries],
 	);
+	const isPreferRPMDisabled = useIsFeatureDisabled(FeatureKeys.PreferRPM);
 	const isSpanMetricEnabled = useFeatureFlag(FeatureKeys.USE_SPAN_METRICS)
 		?.active;
 
@@ -129,10 +130,12 @@ function Application(): JSX.Element {
 					clickhouse_sql: [],
 					id: uuid(),
 				},
-				title: GraphTitle.RATE_PER_OPS,
+				title: isPreferRPMDisabled
+					? GraphTitle.RATE_PER_OPS
+					: GraphTitle.RATE_PER_OPS_MIN,
 				panelTypes: PANEL_TYPES.TIME_SERIES,
 			}),
-		[servicename, tagFilterItems, topLevelOperationsRoute],
+		[servicename, tagFilterItems, topLevelOperationsRoute, isPreferRPMDisabled],
 	);
 
 	const errorPercentageWidget = useMemo(
@@ -187,6 +190,8 @@ function Application(): JSX.Element {
 		);
 	};
 
+	const yAxisUnit = isPreferRPMDisabled ? 'ops' : 'opm';
+
 	return (
 		<>
 			<Row gutter={24}>
@@ -222,7 +227,7 @@ function Application(): JSX.Element {
 						topLevelOperationsIsError={topLevelOperationsIsError}
 						name="operations_per_sec"
 						widget={operationPerSecWidget}
-						yAxisUnit="ops"
+						yAxisUnit={yAxisUnit}
 						opName="Rate"
 					/>
 				</Col>

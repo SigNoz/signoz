@@ -1,10 +1,12 @@
 import { Col } from 'antd';
+import { FeatureKeys } from 'constants/features';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import Graph from 'container/GridGraphLayout/Graph/';
 import {
 	databaseCallsAvgDuration,
 	databaseCallsRPS,
 } from 'container/MetricsApplication/MetricsPageQueries/DBCallQueries';
+import { useIsFeatureDisabled } from 'hooks/useFeatureFlag';
 import useResourceAttribute from 'hooks/useResourceAttribute';
 import {
 	convertRawQueriesToTraceSelectedTags,
@@ -47,6 +49,8 @@ function DBCall(): JSX.Element {
 		[queries],
 	);
 
+	const isPreferRPMDisabled = useIsFeatureDisabled(FeatureKeys.PreferRPM);
+
 	const legend = '{{db_system}}';
 
 	const databaseCallsRPSWidget = useMemo(
@@ -63,11 +67,14 @@ function DBCall(): JSX.Element {
 					clickhouse_sql: [],
 					id: uuid(),
 				},
-				title: GraphTitle.DATABASE_CALLS_RPS,
+				title: isPreferRPMDisabled
+					? GraphTitle.DATABASE_CALLS_RPS
+					: GraphTitle.DATABASE_CALLS_RPM,
 				panelTypes: PANEL_TYPES.TIME_SERIES,
 			}),
-		[servicename, tagFilterItems],
+		[isPreferRPMDisabled, servicename, tagFilterItems],
 	);
+
 	const databaseCallsAverageDurationWidget = useMemo(
 		() =>
 			getWidgetQueryBuilder({

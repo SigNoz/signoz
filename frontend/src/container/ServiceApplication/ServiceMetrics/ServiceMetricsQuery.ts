@@ -11,8 +11,8 @@ import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteRe
 import { TagFilterItem } from 'types/api/queryBuilder/queryBuilderData';
 import {
 	DataSource,
-	MetricAggregateOperator,
 	QueryBuilderData,
+	TracesAggregatorOperator,
 } from 'types/common/queryBuilder';
 
 export const serviceMetricsQuery = (
@@ -51,9 +51,9 @@ export const serviceMetricsQuery = (
 			id: '',
 			key: {
 				dataType: DataType.STRING,
-				isColumn: false,
-				key: WidgetKeys.Service_name,
-				type: MetricsType.Resource,
+				isColumn: true,
+				key: WidgetKeys.ServiceName,
+				type: MetricsType.Tag,
 			},
 			op: OPERATORS.IN,
 			value: [topLevelOperation[0].toString()],
@@ -62,8 +62,8 @@ export const serviceMetricsQuery = (
 			id: '',
 			key: {
 				dataType: DataType.STRING,
-				isColumn: false,
-				key: WidgetKeys.Operation,
+				isColumn: true,
+				key: WidgetKeys.Name,
 				type: MetricsType.Tag,
 			},
 			op: OPERATORS.IN,
@@ -76,9 +76,9 @@ export const serviceMetricsQuery = (
 			id: '',
 			key: {
 				dataType: DataType.STRING,
-				isColumn: false,
-				key: WidgetKeys.Service_name,
-				type: MetricsType.Resource,
+				isColumn: true,
+				key: WidgetKeys.ServiceName,
+				type: MetricsType.Tag,
 			},
 			op: OPERATORS.IN,
 			value: [topLevelOperation[0].toString()],
@@ -86,19 +86,19 @@ export const serviceMetricsQuery = (
 		{
 			id: '',
 			key: {
-				dataType: DataType.INT64,
-				isColumn: false,
-				key: WidgetKeys.StatusCode,
+				dataType: DataType.BOOL,
+				isColumn: true,
+				key: WidgetKeys.hasError,
 				type: MetricsType.Tag,
 			},
 			op: OPERATORS.IN,
-			value: ['STATUS_CODE_ERROR'],
+			value: ['true'],
 		},
 		{
 			id: '',
 			key: {
 				dataType: DataType.STRING,
-				isColumn: false,
+				isColumn: true,
 				key: WidgetKeys.Operation,
 				type: MetricsType.Tag,
 			},
@@ -112,8 +112,8 @@ export const serviceMetricsQuery = (
 			id: '',
 			key: {
 				dataType: DataType.STRING,
-				isColumn: false,
-				key: WidgetKeys.Service_name,
+				isColumn: true,
+				key: WidgetKeys.ServiceName,
 				type: MetricsType.Resource,
 			},
 			op: OPERATORS.IN,
@@ -123,7 +123,7 @@ export const serviceMetricsQuery = (
 			id: '',
 			key: {
 				dataType: DataType.STRING,
-				isColumn: false,
+				isColumn: true,
 				key: WidgetKeys.Operation,
 				type: MetricsType.Tag,
 			},
@@ -137,8 +137,8 @@ export const serviceMetricsQuery = (
 			id: '',
 			key: {
 				dataType: DataType.STRING,
-				isColumn: false,
-				key: WidgetKeys.Service_name,
+				isColumn: true,
+				key: WidgetKeys.ServiceName,
 				type: MetricsType.Resource,
 			},
 			op: OPERATORS.IN,
@@ -165,10 +165,10 @@ export const serviceMetricsQuery = (
 	];
 
 	const aggregateOperators = [
-		MetricAggregateOperator.HIST_QUANTILE_99,
-		MetricAggregateOperator.SUM_RATE,
-		MetricAggregateOperator.SUM_RATE,
-		MetricAggregateOperator.SUM_RATE,
+		TracesAggregatorOperator.P99,
+		TracesAggregatorOperator.RATE,
+		TracesAggregatorOperator.RATE,
+		TracesAggregatorOperator.RATE,
 	];
 
 	const disabled = [false, true, true, false];
@@ -186,13 +186,13 @@ export const serviceMetricsQuery = (
 	const groupBy: BaseAutocompleteData[] = [
 		{
 			dataType: DataType.STRING,
-			isColumn: false,
-			key: WidgetKeys.Service_name,
+			isColumn: true,
+			key: WidgetKeys.ServiceName,
 			type: MetricsType.Tag,
 		},
 	];
 
-	const dataSource = DataSource.METRICS;
+	const dataSource = DataSource.TRACES;
 
 	return getQueryBuilderQuerieswithFormula({
 		autocompleteData,

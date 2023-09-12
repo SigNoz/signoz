@@ -1,5 +1,7 @@
 import { ResizeTable } from 'components/ResizeTable';
+import { FeatureKeys } from 'constants/features';
 import { useGetQueriesRange } from 'hooks/queryBuilder/useGetQueriesRange';
+import { useIsFeatureDisabled } from 'hooks/useFeatureFlag';
 import { useNotifications } from 'hooks/useNotifications';
 import { useMemo } from 'react';
 import { useSelector } from 'react-redux';
@@ -22,6 +24,8 @@ function ServiceMetricTable({
 	>((state) => state.globalTime);
 
 	const { notifications } = useNotifications();
+
+	const isPreferRPMDisabled = useIsFeatureDisabled(FeatureKeys.PreferRPM);
 
 	const queries = useGetQueriesRange(queryRangeRequestData, {
 		queryKey: [
@@ -52,7 +56,15 @@ function ServiceMetricTable({
 	);
 
 	const { search } = useLocation();
-	const tableColumns = useMemo(() => getColumns(search, true), [search]);
+	const tableColumns = useMemo(
+		() =>
+			getColumns({
+				search,
+				isMetricData: true,
+				isPreferRPMDisabled,
+			}),
+		[search, isPreferRPMDisabled],
+	);
 
 	return (
 		<ResizeTable

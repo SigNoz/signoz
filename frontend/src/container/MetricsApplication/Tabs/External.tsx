@@ -1,4 +1,5 @@
 import { Col } from 'antd';
+import { FeatureKeys } from 'constants/features';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import Graph from 'container/GridGraphLayout/Graph/';
 import {
@@ -7,6 +8,7 @@ import {
 	externalCallErrorPercent,
 	externalCallRpsByAddress,
 } from 'container/MetricsApplication/MetricsPageQueries/ExternalQueries';
+import { useIsFeatureDisabled } from 'hooks/useFeatureFlag';
 import useResourceAttribute from 'hooks/useResourceAttribute';
 import {
 	convertRawQueriesToTraceSelectedTags,
@@ -39,6 +41,8 @@ function External(): JSX.Element {
 			handleNonInQueryRange(resourceAttributesToTagFilterItems(queries)) || [],
 		[queries],
 	);
+
+	const isPreferRPMDisabled = useIsFeatureDisabled(FeatureKeys.PreferRPM);
 
 	const externalCallErrorWidget = useMemo(
 		() =>
@@ -98,10 +102,12 @@ function External(): JSX.Element {
 					clickhouse_sql: [],
 					id: uuid(),
 				},
-				title: GraphTitle.EXTERNAL_CALL_RPS_BY_ADDRESS,
+				title: isPreferRPMDisabled
+					? GraphTitle.EXTERNAL_CALL_RPS_BY_ADDRESS
+					: GraphTitle.EXTERNAL_CALL_RPM_BY_ADDRESS,
 				panelTypes: PANEL_TYPES.TIME_SERIES,
 			}),
-		[servicename, tagFilterItems],
+		[isPreferRPMDisabled, servicename, tagFilterItems],
 	);
 
 	const externalCallDurationAddressWidget = useMemo(
