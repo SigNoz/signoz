@@ -34,6 +34,8 @@ type Queries interface {
 	GetUsersByGroup(ctx context.Context, groupId string) ([]model.UserPayload, *model.ApiError)
 
 	GetApdexSettings(ctx context.Context, services []string) ([]model.ApdexSettings, *model.ApiError)
+
+	PrecheckLogin(ctx context.Context, email, sourceUrl string) (*model.PrecheckResponse, model.BaseApiError)
 }
 
 type Mutations interface {
