@@ -46,7 +46,7 @@ export const selectValueDivider = '__';
 
 export const baseAutoCompleteIdKeysOrder: (keyof Omit<
 	BaseAutocompleteData,
-	'id'
+	'id' | 'isJSON'
 >)[] = ['key', 'dataType', 'type', 'isColumn'];
 
 export const autocompleteType: Record<AutocompleteType, AutocompleteType> = {
@@ -116,6 +116,7 @@ export const initialAutocompleteData: BaseAutocompleteData = {
 	key: '',
 	isColumn: false,
 	type: '',
+	isJSON: false,
 };
 
 export const initialFilters: TagFilter = {
@@ -273,6 +274,8 @@ export const OPERATORS = {
 	'>': '>',
 	'<=': '<=',
 	'<': '<',
+	HAS: 'HAS',
+	NHAS: 'NHAS',
 };
 
 export const QUERY_BUILDER_OPERATORS_BY_TYPES = {

@@ -1,8 +1,10 @@
 import { SettingOutlined } from '@ant-design/icons';
-import { Dropdown, Menu } from 'antd';
+import { Dropdown, MenuProps } from 'antd';
+import { OPERATORS } from 'constants/queryBuilder';
 import { useActiveLog } from 'hooks/logs/useActiveLog';
 
 import { TitleWrapper } from './BodyTitleRenderer.styles';
+import { DROPDOWN_KEY } from './constant';
 import { BodyTitleRendererProps } from './LogDetailedView.types';
 import { generateFieldKeyForArray, getDataTypes } from './utils';
 
@@ -14,49 +16,57 @@ function BodyTitleRenderer({
 }: BodyTitleRendererProps): JSX.Element {
 	const { onAddToQuery } = useActiveLog();
 
-	const filterForHandler = (): void => {
+	const filterOutHandler = (isFilterIn: boolean) => (): void => {
 		if (parentIsArray) {
 			onAddToQuery(
 				generateFieldKeyForArray(nodeKey),
 				`${value}`,
-				'has',
+				isFilterIn ? OPERATORS.HAS : OPERATORS.NHAS,
 				true,
 				getDataTypes(value),
 			);
 		} else {
-			onAddToQuery(nodeKey, `${value}`, '=', true, getDataTypes(value));
-		}
-	};
-
-	const filterOutHandler = (): void => {
-		if (parentIsArray) {
 			onAddToQuery(
-				generateFieldKeyForArray(nodeKey),
+				nodeKey,
 				`${value}`,
-				'nhas',
+				isFilterIn ? OPERATORS.CONTAINS : OPERATORS.NOT_CONTAINS,
 				true,
 				getDataTypes(value),
 			);
-		} else {
-			onAddToQuery(nodeKey, `${value}`, 'not_contains', true, getDataTypes(value));
 		}
 	};
 
-	const menu = (
-		<Menu>
-			<Menu.Item key="0" onClick={filterForHandler}>
-				Filter for {nodeKey}
-			</Menu.Item>
-			<Menu.Item key="1" onClick={filterOutHandler}>
-				Filter out {nodeKey}
-			</Menu.Item>
-		</Menu>
-	);
+	const onClickHandler: MenuProps['onClick'] = (props): void => {
+		const mapper = {
+			[DROPDOWN_KEY.FILTER_IN]: filterOutHandler(true),
+			[DROPDOWN_KEY.FILTER_OUT]: filterOutHandler(false),
+		};
+
+		const handler = mapper[props.key];
+
+		if (handler) {
+			handler();
+		}
+	};
+
+	const menu: MenuProps = {
+		items: [
+			{
+				key: DROPDOWN_KEY.FILTER_IN,
+				label: `Filter for ${nodeKey}`,
+			},
+			{
+				key: DROPDOWN_KEY.FILTER_OUT,
+				label: `Filter out ${nodeKey}`,
+			},
+		],
+		onClick: onClickHandler,
+	};
 
 	return (
 		<TitleWrapper>
 			{title}
-			<Dropdown overlay={menu} trigger={['click']}>
+			<Dropdown menu={menu} trigger={['click']}>
 				<SettingOutlined style={{ marginLeft: 8 }} className="hover-reveal" />
 			</Dropdown>
 		</TitleWrapper>
