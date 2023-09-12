@@ -876,6 +876,74 @@ var testBuildLogsQueryData = []struct {
 		TableName:     "logs",
 		ExpectedQuery: "SELECT now() as ts, attributes_string_value[indexOf(attributes_string_key, 'name')] as name, toFloat64(count(*)) as value from signoz_logs.distributed_logs where (timestamp >= 1680066360726210000 AND timestamp <= 1680066458000000000) AND indexOf(attributes_string_key, 'name') > 0 group by name order by name DESC",
 	},
+	{
+		Name:      "TABLE: Test count with JSON Filter, groupBy, orderBy",
+		PanelType: v3.PanelTypeTable,
+		Start:     1680066360726210000,
+		End:       1680066458000000000,
+		BuilderQuery: &v3.BuilderQuery{
+			QueryName:         "A",
+			StepInterval:      60,
+			AggregateOperator: v3.AggregateOperatorCount,
+			Expression:        "A",
+			Filters: &v3.FilterSet{
+				Operator: "AND",
+				Items: []v3.FilterItem{
+					{
+						Key: v3.AttributeKey{
+							Key:      "body.message",
+							DataType: "string",
+							IsJSON:   true,
+						},
+						Operator: "contains",
+						Value:    "a",
+					},
+				},
+			},
+			GroupBy: []v3.AttributeKey{
+				{Key: "name", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag},
+			},
+			OrderBy: []v3.OrderBy{
+				{ColumnName: "name", Order: "DESC"},
+			},
+		},
+		TableName:     "logs",
+		ExpectedQuery: "SELECT now() as ts, attributes_string_value[indexOf(attributes_string_key, 'name')] as name, toFloat64(count(*)) as value from signoz_logs.distributed_logs where (timestamp >= 1680066360726210000 AND timestamp <= 1680066458000000000) AND JSON_VALUE(body, '$.message') ILIKE '%a%' AND indexOf(attributes_string_key, 'name') > 0 group by name order by name DESC",
+	},
+	{
+		Name:      "TABLE: Test count with JSON Filter Array, groupBy, orderBy",
+		PanelType: v3.PanelTypeTable,
+		Start:     1680066360726210000,
+		End:       1680066458000000000,
+		BuilderQuery: &v3.BuilderQuery{
+			QueryName:         "A",
+			StepInterval:      60,
+			AggregateOperator: v3.AggregateOperatorCount,
+			Expression:        "A",
+			Filters: &v3.FilterSet{
+				Operator: "AND",
+				Items: []v3.FilterItem{
+					{
+						Key: v3.AttributeKey{
+							Key:      "body.requestor_list[*]",
+							DataType: "array(string)",
+							IsJSON:   true,
+						},
+						Operator: "has",
+						Value:    "index_service",
+					},
+				},
+			},
+			GroupBy: []v3.AttributeKey{
+				{Key: "name", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag},
+			},
+			OrderBy: []v3.OrderBy{
+				{ColumnName: "name", Order: "DESC"},
+			},
+		},
+		TableName:     "logs",
+		ExpectedQuery: "SELECT now() as ts, attributes_string_value[indexOf(attributes_string_key, 'name')] as name, toFloat64(count(*)) as value from signoz_logs.distributed_logs where (timestamp >= 1680066360726210000 AND timestamp <= 1680066458000000000) AND has(JSONExtract(JSON_QUERY(body, '$.requestor_list[*]'), 'Array(String)'), 'index_service') AND indexOf(attributes_string_key, 'name') > 0 group by name order by name DESC",
+	},
 }
 
 func TestBuildLogsQuery(t *testing.T) {
