@@ -1,16 +1,21 @@
 import { ConfigProvider } from 'antd';
-import getFeaturesFlags from 'api/features/getFeatureFlags';
 import NotFound from 'components/NotFound';
 import Spinner from 'components/Spinner';
 import { FeatureKeys } from 'constants/features';
+import ROUTES from 'constants/routes';
 import AppLayout from 'container/AppLayout';
 import { useThemeConfig } from 'hooks/useDarkMode';
+import useGetFeatureFlag from 'hooks/useGetFeatureFlag';
 import { NotificationProvider } from 'hooks/useNotifications';
 import { ResourceProvider } from 'hooks/useResourceAttribute';
 import history from 'lib/history';
 import { QueryBuilderProvider } from 'providers/QueryBuilder';
-import { Suspense, useEffect, useState } from 'react';
+import { Suspense, useState } from 'react';
+import { useDispatch } from 'react-redux';
 import { Route, Router, Switch } from 'react-router-dom';
+import { Dispatch } from 'redux';
+import AppActions from 'types/actions';
+import { UPDATE_FEATURE_FLAG_RESPONSE } from 'types/actions/app';
 
 import PrivateRoute from './Private';
 import defaultRoutes from './routes';
@@ -19,41 +24,29 @@ function App(): JSX.Element {
 	const themeConfig = useThemeConfig();
 	const [routes, setRoutes] = useState(defaultRoutes);
 
-	const isOnboardingEnabled = (featureFlags: any): boolean => {
-		for (let index = 0; index < featureFlags.length; index += 1) {
-			const featureFlag = featureFlags[index];
+	const dispatch = useDispatch<Dispatch<AppActions>>();
 
-			// Temporarily using OSS feature flag, need to switch to ONBOARDING once API changes are available
-			if (featureFlag.name === FeatureKeys.ONBOARDING) {
-				return featureFlag.active;
-			}
-		}
+	const featureResponse = useGetFeatureFlag((allFlags) => {
+		const isOnboardingEnabled =
+			allFlags.find((flag) => flag.name === FeatureKeys.ONBOARDING)?.active ||
+			false;
 
-		return false;
-	};
+		dispatch({
+			type: UPDATE_FEATURE_FLAG_RESPONSE,
+			payload: {
+				featureFlag: allFlags,
+				refetch: featureResponse.refetch,
+			},
+		});
 
-	const setRoutesBasedOnFF = (featureFlags: any[]): void => {
-		if (!isOnboardingEnabled(featureFlags)) {
-			const newRoutes = routes.filter((route) => route?.key !== 'GET_STARTED');
+		if (isOnboardingEnabled) {
+			const newRoutes = routes.filter(
+				(route) => route?.key !== ROUTES.GET_STARTED,
+			);
 
 			setRoutes(newRoutes);
 		}
-	};
-
-	useEffect(() => {
-		// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
-		async function fetchFeatureFlags() {
-			try {
-				const response = await getFeaturesFlags();
-
-				setRoutesBasedOnFF(response.payload || []);
-			} catch (error) {
-				console.error('Error fetching data:', error);
-			}
-		}
-
-		fetchFeatureFlags();
-	}, []);
+	});
 
 	return (
 		<ConfigProvider theme={themeConfig}>

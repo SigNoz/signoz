@@ -1,5 +1,4 @@
 import getDynamicConfigs from 'api/dynamicConfigs/getDynamicConfigs';
-import getFeaturesFlags from 'api/features/getFeatureFlags';
 import getUserLatestVersion from 'api/user/getLatestVersion';
 import getUserVersion from 'api/user/getVersion';
 import ROUTES from 'constants/routes';
@@ -20,7 +19,6 @@ import {
 	UPDATE_CONFIGS,
 	UPDATE_CURRENT_ERROR,
 	UPDATE_CURRENT_VERSION,
-	UPDATE_FEATURE_FLAG_RESPONSE,
 	UPDATE_LATEST_VERSION,
 	UPDATE_LATEST_VERSION_ERROR,
 } from 'types/actions/app';
@@ -40,7 +38,6 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 	const [
 		getUserVersionResponse,
 		getUserLatestVersionResponse,
-		getFeaturesResponse,
 		getDynamicConfigsResponse,
 	] = useQueries([
 		{
@@ -54,20 +51,12 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 			enabled: isLoggedIn,
 		},
 		{
-			queryFn: getFeaturesFlags,
-			queryKey: ['getFeatureFlags', user?.accessJwt],
-		},
-		{
 			queryFn: getDynamicConfigs,
 			queryKey: ['getDynamicConfigs', user?.accessJwt],
 		},
 	]);
 
 	useEffect(() => {
-		if (getFeaturesResponse.status === 'idle') {
-			getFeaturesResponse.refetch();
-		}
-
 		if (getUserLatestVersionResponse.status === 'idle' && isLoggedIn) {
 			getUserLatestVersionResponse.refetch();
 		}
@@ -75,14 +64,10 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 		if (getUserVersionResponse.status === 'idle' && isLoggedIn) {
 			getUserVersionResponse.refetch();
 		}
-		if (getFeaturesResponse.status === 'idle') {
-			getFeaturesResponse.refetch();
-		}
 		if (getDynamicConfigsResponse.status === 'idle') {
 			getDynamicConfigsResponse.refetch();
 		}
 	}, [
-		getFeaturesResponse,
 		getUserLatestVersionResponse,
 		getUserVersionResponse,
 		isLoggedIn,
@@ -196,36 +181,10 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 		getUserLatestVersionResponse.isFetched,
 		getUserVersionResponse.isFetched,
 		getUserLatestVersionResponse.isSuccess,
-		getFeaturesResponse.isFetched,
-		getFeaturesResponse.isSuccess,
-		getFeaturesResponse.data,
 		getDynamicConfigsResponse.data,
 		getDynamicConfigsResponse.isFetched,
 		getDynamicConfigsResponse.isSuccess,
 		notifications,
-	]);
-
-	useEffect(() => {
-		if (
-			getFeaturesResponse.isFetched &&
-			getFeaturesResponse.isSuccess &&
-			getFeaturesResponse.data &&
-			getFeaturesResponse.data.payload
-		) {
-			dispatch({
-				type: UPDATE_FEATURE_FLAG_RESPONSE,
-				payload: {
-					featureFlag: getFeaturesResponse.data.payload,
-					refetch: getFeaturesResponse.refetch,
-				},
-			});
-		}
-	}, [
-		dispatch,
-		getFeaturesResponse.data,
-		getFeaturesResponse.isFetched,
-		getFeaturesResponse.isSuccess,
-		getFeaturesResponse.refetch,
 	]);
 
 	const isToDisplayLayout = isLoggedIn;
