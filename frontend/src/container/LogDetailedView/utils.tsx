@@ -18,20 +18,44 @@ export const recursiveParseJSON = (obj: string): Record<string, unknown> => {
 export function jsonToDataNodes(
 	json: Record<string, unknown>,
 	parentKey = '',
+	parentIsArray = false,
 ): DataNode[] {
 	return Object.entries(json).map(([key, value]) => {
-		const nodeKey = parentKey ? `${parentKey}.${key}` : key;
+		let nodeKey = parentKey || key;
+		if (parentIsArray) {
+			nodeKey += `.${value}`;
+		} else if (parentKey) {
+			nodeKey += `.${key}`;
+		}
+
+		const valueIsArray = Array.isArray(value);
+
+		if (parentIsArray) {
+			return {
+				key: nodeKey,
+				title: <BodyTitleRenderer title={value as string} nodeKey={nodeKey} />,
+				children: jsonToDataNodes({}, nodeKey, valueIsArray),
+			};
+		}
 
 		if (typeof value === 'object' && value !== null) {
 			return {
 				key: nodeKey,
-				title: key,
-				children: jsonToDataNodes(value as Record<string, unknown>, nodeKey),
+				title: valueIsArray ? (
+					<BodyTitleRenderer title={key} isArray nodeKey={nodeKey} />
+				) : (
+					key
+				),
+				children: jsonToDataNodes(
+					value as Record<string, unknown>,
+					valueIsArray ? `${nodeKey}[*]` : nodeKey,
+					valueIsArray,
+				),
 			};
 		}
 		return {
 			key: nodeKey,
-			title: <BodyTitleRenderer title={key} />,
+			title: <BodyTitleRenderer title={key} nodeKey={nodeKey} />,
 		};
 	});
 }

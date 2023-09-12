@@ -4,17 +4,21 @@ import { Dropdown, Menu } from 'antd';
 import { TitleWrapper } from './BodyTitleRenderer.styles';
 import { BodyTitleRendererProps } from './LogDetailedView.types';
 
-function BodyTitleRenderer({ title }: BodyTitleRendererProps): JSX.Element {
+function BodyTitleRenderer({
+	title,
+	isArray = false,
+	nodeKey,
+}: BodyTitleRendererProps): JSX.Element {
 	const menu = (
 		<Menu>
-			<Menu.Item key="0">Filter for {title}</Menu.Item>
-			<Menu.Item key="1">Filter out ${title}</Menu.Item>
+			<Menu.Item key="0">Filter for {nodeKey}</Menu.Item>
+			<Menu.Item key="1">Filter out {nodeKey}</Menu.Item>
 		</Menu>
 	);
 
 	return (
 		<TitleWrapper>
-			{title}
+			{title} {isArray && '[...]'}
 			<Dropdown overlay={menu} trigger={['click']}>
 				<SettingOutlined style={{ marginLeft: 8 }} className="hover-reveal" />
 			</Dropdown>
