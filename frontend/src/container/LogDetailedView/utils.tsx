@@ -75,9 +75,7 @@ export function flattenObject(obj: AnyObject, prefix = ''): AnyObject {
 
 const isFloat = (num: number): boolean => num % 1 !== 0;
 
-export const getDataTypes = (
-	value: number | number[] | string | string[],
-): DataTypes => {
+export const getDataTypes = (value: unknown): DataTypes => {
 	if (typeof value === 'string') {
 		return DataTypes.String;
 	}
