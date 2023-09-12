@@ -1,0 +1,35 @@
+.infrastructure-monitoring-module-container {
+	padding: 48px 0;
+
+	.content-container {
+		.heading {
+			.title {
+				a {
+					color: rgb(232, 112, 64);
+				}
+			}
+		}
+
+		.subheading {
+			display: flex;
+			flex-direction: column;
+			gap: 12px;
+			margin-bottom: 16px;
+
+			.recevier-types {
+				display: flex;
+				flex-direction: column;
+			}
+		}
+
+		h1 {
+			font-size: 24px;
+			font-weight: 500;
+		}
+
+		h4 {
+			font-size: 14px;
+			font-weight: 300;
+		}
+	}
+}
