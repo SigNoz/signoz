@@ -19,6 +19,7 @@ import {
 import axios from 'axios';
 import TextToolTip from 'components/TextToolTip';
 import { SOMETHING_WENT_WRONG } from 'constants/api';
+import { QueryParams } from 'constants/query';
 import { useGetSearchQueryParam } from 'hooks/queryBuilder/useGetSearchQueryParam';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useDeleteView } from 'hooks/saveViews/useDeleteView';
@@ -27,14 +28,10 @@ import { useUpdateView } from 'hooks/saveViews/useUpdateView';
 import useErrorNotification from 'hooks/useErrorNotification';
 import { useNotifications } from 'hooks/useNotifications';
 import { mapCompositeQueryFromQuery } from 'lib/newQueryBuilder/queryBuilderMappers/mapCompositeQueryFromQuery';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { useCopyToClipboard } from 'react-use';
 
-import {
-	ExploreHeaderToolTip,
-	querySearchParams,
-	SaveButtonText,
-} from './constants';
+import { ExploreHeaderToolTip, SaveButtonText } from './constants';
 import MenuItemGenerator from './MenuItemGenerator';
 import SaveViewWithName from './SaveViewWithName';
 import {
@@ -43,7 +40,7 @@ import {
 	OffSetCol,
 } from './styles';
 import { ExplorerCardProps } from './types';
-import { deleteViewHandler, isQueryUpdatedInView } from './utils';
+import { deleteViewHandler } from './utils';
 
 function ExplorerCard({
 	sourcepage,
@@ -51,7 +48,6 @@ function ExplorerCard({
 }: ExplorerCardProps): JSX.Element {
 	const [isOpen, setIsOpen] = useState<boolean>(false);
 	const [, setCopyUrl] = useCopyToClipboard();
-	const [isQueryUpdated, setIsQueryUpdated] = useState<boolean>(false);
 	const { notifications } = useNotifications();
 
 	const onCopyUrlHandler = (): void => {
@@ -62,11 +58,11 @@ function ExplorerCard({
 	};
 
 	const {
-		stagedQuery,
 		currentQuery,
 		panelType,
 		redirectWithQueryBuilderData,
 		updateAllQueriesOperators,
+		isStagedQueryUpdated,
 	} = useQueryBuilder();
 
 	const {
@@ -83,10 +79,11 @@ function ExplorerCard({
 		setIsOpen(newOpen);
 	};
 
-	const viewName =
-		useGetSearchQueryParam(querySearchParams.viewName) || 'Query Builder';
+	const viewName = useGetSearchQueryParam(QueryParams.viewName) || '';
 
-	const viewKey = useGetSearchQueryParam(querySearchParams.viewKey) || '';
+	const viewKey = useGetSearchQueryParam(QueryParams.viewKey) || '';
+
+	const isQueryUpdated = isStagedQueryUpdated(viewsData?.data?.data, viewKey);
 
 	const { mutateAsync: updateViewAsync } = useUpdateView({
 		compositeQuery: mapCompositeQueryFromQuery(currentQuery, panelType),
@@ -128,7 +125,6 @@ function ExplorerCard({
 			},
 			{
 				onSuccess: () => {
-					setIsQueryUpdated(false);
 					notifications.success({
 						message: 'View Updated Successfully',
 					});
@@ -140,24 +136,6 @@ function ExplorerCard({
 			},
 		);
 	};
-
-	useEffect(() => {
-		setIsQueryUpdated(
-			isQueryUpdatedInView({
-				data: viewsData?.data?.data,
-				stagedQuery,
-				viewKey,
-				currentPanelType: panelType,
-			}),
-		);
-	}, [
-		currentQuery,
-		viewsData?.data?.data,
-		stagedQuery,
-		stagedQuery?.builder.queryData,
-		viewKey,
-		panelType,
-	]);
 
 	const moreOptionMenu: MenuProps = {
 		items: [
@@ -179,7 +157,7 @@ function ExplorerCard({
 				<Row align="middle">
 					<Col span={6}>
 						<Space>
-							<Typography>{viewName}</Typography>
+							<Typography>Query Builder</Typography>
 							<TextToolTip
 								url={ExploreHeaderToolTip.url}
 								text={ExploreHeaderToolTip.text}
@@ -197,7 +175,8 @@ function ExplorerCard({
 										placeholder="Select a view"
 										dropdownStyle={DropDownOverlay}
 										dropdownMatchSelectWidth={false}
-										value={null}
+										optionLabelProp="value"
+										value={viewName || undefined}
 									>
 										{viewsData?.data.data.map((view) => (
 											<Select.Option key={view.uuid} value={view.name}>

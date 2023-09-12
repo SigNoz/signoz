@@ -1,6 +1,5 @@
-import { querySearchParams } from 'components/ExplorerCard/constants';
+import { QueryParams } from 'constants/query';
 import { initialAutocompleteData, PANEL_TYPES } from 'constants/queryBuilder';
-import { queryParamNamesMap } from 'constants/queryBuilderQueryNames';
 import { SIGNOZ_VALUE } from 'container/QueryBuilder/filters/OrderByFilter/constants';
 import { useCallback } from 'react';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
@@ -23,9 +22,9 @@ export const useHandleExplorerTabChange = (): {
 		updateQueriesData,
 	} = useQueryBuilder();
 
-	const viewName = useGetSearchQueryParam(querySearchParams.viewName) || '';
+	const viewName = useGetSearchQueryParam(QueryParams.viewName) || '';
 
-	const viewKey = useGetSearchQueryParam(querySearchParams.viewKey) || '';
+	const viewKey = useGetSearchQueryParam(QueryParams.viewKey) || '';
 
 	const getUpdateQuery = useCallback(
 		(newPanelType: PANEL_TYPES): Query => {
@@ -60,12 +59,12 @@ export const useHandleExplorerTabChange = (): {
 			const query = currentQueryData?.query || getUpdateQuery(newPanelType);
 
 			redirectWithQueryBuilderData(query, {
-				[queryParamNamesMap.panelTypes]: newPanelType,
-				[querySearchParams.viewName]: currentQueryData?.name || viewName,
-				[querySearchParams.viewKey]: currentQueryData?.uuid || viewKey,
+				[QueryParams.panelTypes]: newPanelType,
+				[QueryParams.viewName]: currentQueryData?.name || viewName,
+				[QueryParams.viewKey]: currentQueryData?.uuid || viewKey,
 			});
 		},
-		[getUpdateQuery, panelType, redirectWithQueryBuilderData, viewKey, viewName],
+		[panelType, getUpdateQuery, redirectWithQueryBuilderData, viewName, viewKey],
 	);
 
 	return { handleExplorerTabChange };
