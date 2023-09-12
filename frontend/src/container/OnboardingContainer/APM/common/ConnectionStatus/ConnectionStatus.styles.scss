@@ -1,0 +1,96 @@
+.connection-status-container {
+	height: calc(100vh - 420px);
+
+	.full-docs-link {
+		margin-bottom: 36px;
+
+		.header {
+			display: flex;
+			align-items: center;
+			gap: 16px;
+			margin: 16px 0;
+
+			img {
+				height: 40px;
+			}
+
+			h1 {
+				font-size: 18px;
+				display: flex;
+				align-items: center;
+				color: #e5e7eb;
+				gap: 16px;
+				margin: 0px;
+			}
+		}
+	}
+
+	.status-container {
+		display: flex;
+		justify-content: space-between;
+		gap: 24px;
+
+		.title {
+			text-transform: capitalize;
+		}
+	}
+
+	.service-info,
+	.language-info,
+	.status-info,
+	.details-info {
+		display: flex;
+		gap: 8px;
+		flex-direction: column;
+	}
+
+	.language-info {
+		.language {
+			text-transform: capitalize;
+		}
+	}
+
+	.service-info {
+		flex: 2;
+	}
+
+	.language-info {
+		flex: 2;
+	}
+
+	.status-info {
+		flex: 1;
+	}
+
+	.details-info {
+		flex: 3;
+	}
+
+	.status {
+		display: flex;
+		gap: 8px;
+
+		svg {
+			width: 16px;
+			height: 16px;
+		}
+	}
+}
+
+$lightModeFontColor: rgb(29, 29, 29);
+
+.lightMode {
+	.connection-status-container {
+		.header .title {
+			color: $lightModeFontColor;
+
+			h1 {
+				color: $lightModeFontColor;
+			}
+		}
+
+		.status-container {
+			color: $lightModeFontColor;
+		}
+	}
+}
