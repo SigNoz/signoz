@@ -1,6 +1,7 @@
 import { DataNode } from 'antd/es/tree';
 
 import BodyTitleRenderer from './BodyTitleRenderer';
+import { AnyObject } from './LogDetailedView.types';
 
 export const recursiveParseJSON = (obj: string): Record<string, unknown> => {
 	try {
@@ -34,8 +35,6 @@ export function jsonToDataNodes(
 		};
 	});
 }
-
-type AnyObject = { [key: string]: any };
 
 export function flattenObject(obj: AnyObject, prefix = ''): AnyObject {
 	return Object.keys(obj).reduce((acc: AnyObject, k: string): AnyObject => {

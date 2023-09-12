@@ -2,6 +2,7 @@ import { SettingOutlined } from '@ant-design/icons';
 import { Dropdown, Menu } from 'antd';
 
 import { TitleWrapper } from './BodyTitleRenderer.styles';
+import { BodyTitleRendererProps } from './LogDetailedView.types';
 
 function BodyTitleRenderer({ title }: BodyTitleRendererProps): JSX.Element {
 	const menu = (
@@ -19,10 +20,6 @@ function BodyTitleRenderer({ title }: BodyTitleRendererProps): JSX.Element {
 			</Dropdown>
 		</TitleWrapper>
 	);
-}
-
-interface BodyTitleRendererProps {
-	title: string;
 }
 
 export default BodyTitleRenderer;
