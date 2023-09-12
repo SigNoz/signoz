@@ -55,7 +55,7 @@ If you are on arm64 processors (Apple M1 Macs) run sudo make run-arm
 ```console
 cd pkg/query-service
 go build -o build/query-service main.go
-ClickHouseUrl=tcp://localhost:9001 STORAGE=clickhouse --prefer-delta=true build/query-service
+ClickHouseUrl=tcp://localhost:9001 STORAGE=clickhouse build/query-service --prefer-delta=true 
 ```
 
 # Frontend Configuration for local query-service.
