@@ -1,10 +1,13 @@
-import setLocalStorageApi from 'api/browser/localstorage/set';
 import { Button, Form, Input, Space, Tooltip, Typography } from 'antd';
+import setLocalStorageApi from 'api/browser/localstorage/set';
 import getUserVersion from 'api/user/getVersion';
 import loginApi from 'api/user/login';
 import loginPrecheckApi from 'api/user/loginPrecheck';
 import afterLogin from 'AppRoutes/utils';
+import { FeatureKeys } from 'constants/features';
+import { LOCALSTORAGE } from 'constants/localStorage';
 import ROUTES from 'constants/routes';
+import useFeatureFlag from 'hooks/useFeatureFlag';
 import { useNotifications } from 'hooks/useNotifications';
 import history from 'lib/history';
 import { useEffect, useState } from 'react';
@@ -16,7 +19,6 @@ import { PayloadProps as PrecheckResultType } from 'types/api/user/loginPrecheck
 import AppReducer from 'types/reducer/app';
 
 import { FormContainer, FormWrapper, Label, ParentContainer } from './styles';
-import { LOCALSTORAGE } from 'constants/localStorage';
 
 const { Title } = Typography;
 
@@ -40,6 +42,9 @@ function Login({
 	const { t } = useTranslation(['login']);
 	const [isLoading, setIsLoading] = useState<boolean>(false);
 	const { user } = useSelector<AppState, AppReducer>((state) => state.app);
+	const isChatSupportEnabled: boolean | undefined = useFeatureFlag(
+		FeatureKeys.CHAT_SUPPORT,
+	)?.active;
 
 	const [precheckResult, setPrecheckResult] = useState<PrecheckResultType>({
 		sso: false,
@@ -169,7 +174,10 @@ function Login({
 				if (user) {
 					setLocalStorageApi(LOCALSTORAGE.LOGGED_IN_USER_NAME, user.payload?.name);
 					setLocalStorageApi(LOCALSTORAGE.LOGGED_IN_USER_EMAIL, user.payload?.email);
-					setLocalStorageApi(LOCALSTORAGE.CHAT_SUPPORT, 'true');
+					setLocalStorageApi(
+						LOCALSTORAGE.CHAT_SUPPORT,
+						(isChatSupportEnabled || '').toString(),
+					);
 				}
 
 				history.push(ROUTES.APPLICATION);

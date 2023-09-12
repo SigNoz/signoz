@@ -1,7 +1,8 @@
 import { ConfigProvider } from 'antd';
+import getFeaturesFlags from 'api/features/getFeatureFlags';
 import NotFound from 'components/NotFound';
-import useFeatureFlag from 'hooks/useFeatureFlag';
 import Spinner from 'components/Spinner';
+import { FeatureKeys } from 'constants/features';
 import AppLayout from 'container/AppLayout';
 import { useThemeConfig } from 'hooks/useDarkMode';
 import { NotificationProvider } from 'hooks/useNotifications';
@@ -13,26 +14,25 @@ import { Route, Router, Switch } from 'react-router-dom';
 
 import PrivateRoute from './Private';
 import defaultRoutes from './routes';
-import getFeaturesFlags from 'api/features/getFeatureFlags';
 
 function App(): JSX.Element {
 	const themeConfig = useThemeConfig();
 	const [routes, setRoutes] = useState(defaultRoutes);
 
 	const isOnboardingEnabled = (featureFlags: any): boolean => {
-		for (let index = 0; index < featureFlags.length; index++) {
+		for (let index = 0; index < featureFlags.length; index += 1) {
 			const featureFlag = featureFlags[index];
 
 			// Temporarily using OSS feature flag, need to switch to ONBOARDING once API changes are available
-			if (featureFlag.name === 'OSS') {
-				return !featureFlag.active;
+			if (featureFlag.name === FeatureKeys.ONBOARDING) {
+				return featureFlag.active;
 			}
 		}
 
 		return false;
 	};
 
-	const setRoutesBasedOnFF = (featureFlags: any) => {
+	const setRoutesBasedOnFF = (featureFlags: any[]): void => {
 		if (!isOnboardingEnabled(featureFlags)) {
 			const newRoutes = routes.filter((route) => route?.key !== 'GET_STARTED');
 
@@ -41,11 +41,12 @@ function App(): JSX.Element {
 	};
 
 	useEffect(() => {
+		// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
 		async function fetchFeatureFlags() {
 			try {
 				const response = await getFeaturesFlags();
 
-				setRoutesBasedOnFF(response.payload);
+				setRoutesBasedOnFF(response.payload || []);
 			} catch (error) {
 				console.error('Error fetching data:', error);
 			}

@@ -1,7 +1,9 @@
 import { CheckCircleTwoTone, WarningOutlined } from '@ant-design/icons';
 import { MenuProps } from 'antd';
 import getLocalStorageKey from 'api/browser/localstorage/get';
+import getFeaturesFlags from 'api/features/getFeatureFlags';
 import { IS_SIDEBAR_COLLAPSED } from 'constants/app';
+import { FeatureKeys } from 'constants/features';
 import ROUTES from 'constants/routes';
 import history from 'lib/history';
 import {
@@ -32,7 +34,6 @@ import {
 	StyledSecondaryMenu,
 	StyledText,
 } from './styles';
-import getFeaturesFlags from 'api/features/getFeatureFlags';
 
 function SideNav(): JSX.Element {
 	const dispatch = useDispatch();
@@ -54,18 +55,18 @@ function SideNav(): JSX.Element {
 	}, []);
 
 	const isOnboardingEnabled = (featureFlags: any): boolean => {
-		for (let index = 0; index < featureFlags.length; index++) {
+		for (let index = 0; index < featureFlags.length; index += 1) {
 			const featureFlag = featureFlags[index];
 			// Temporarily using OSS feature flag, need to switch to ONBOARDING once API changes are available
-			if (featureFlag.name === 'OSS') {
-				return !featureFlag.active;
+			if (featureFlag.name === FeatureKeys.ONBOARDING) {
+				return featureFlag.active;
 			}
 		}
 
 		return false;
 	};
 
-	const setRoutesBasedOnFF = (featureFlags: any) => {
+	const setRoutesBasedOnFF = (featureFlags: any): void => {
 		if (!isOnboardingEnabled(featureFlags)) {
 			const newRoutes = menuItems.filter(
 				(menuItem) => menuItem?.key !== ROUTES.GET_STARTED,
@@ -76,6 +77,7 @@ function SideNav(): JSX.Element {
 	};
 
 	useEffect(() => {
+		// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
 		async function fetchFeatureFlags() {
 			try {
 				const response = await getFeaturesFlags();
