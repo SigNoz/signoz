@@ -22,27 +22,28 @@ export function jsonToDataNodes(
 ): DataNode[] {
 	return Object.entries(json).map(([key, value]) => {
 		const nodeKey = parentKey ? `${parentKey}.${key}` : key;
+		const valueIsArray = Array.isArray(value);
 
 		if (parentIsArray) {
 			return {
 				key: nodeKey,
 				title: <BodyTitleRenderer title={value as string} nodeKey={nodeKey} />,
-				children: jsonToDataNodes({}, nodeKey, Array.isArray(value)),
+				children: jsonToDataNodes({}, nodeKey, valueIsArray),
 			};
 		}
 
 		if (typeof value === 'object' && value !== null) {
 			return {
 				key: nodeKey,
-				title: Array.isArray(value) ? (
+				title: valueIsArray ? (
 					<BodyTitleRenderer title={key} isArray nodeKey={nodeKey} />
 				) : (
 					key
 				),
 				children: jsonToDataNodes(
 					value as Record<string, unknown>,
-					Array.isArray(value) ? `${nodeKey}[*]` : nodeKey,
-					Array.isArray(value),
+					valueIsArray ? `${nodeKey}[*]` : nodeKey,
+					valueIsArray,
 				),
 			};
 		}
