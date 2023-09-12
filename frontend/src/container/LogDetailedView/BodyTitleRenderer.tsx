@@ -8,7 +8,7 @@ function BodyTitleRenderer({ title }: BodyTitleRendererProps): JSX.Element {
 	const menu = (
 		<Menu>
 			<Menu.Item key="0">Filter for {title}</Menu.Item>
-			<Menu.Item key="1">Filter out ${title}</Menu.Item>
+			<Menu.Item key="1">Filter out {title}</Menu.Item>
 		</Menu>
 	);
 

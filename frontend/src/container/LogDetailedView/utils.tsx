@@ -18,15 +18,28 @@ export const recursiveParseJSON = (obj: string): Record<string, unknown> => {
 export function jsonToDataNodes(
 	json: Record<string, unknown>,
 	parentKey = '',
+	parentIsArray = false,
 ): DataNode[] {
 	return Object.entries(json).map(([key, value]) => {
 		const nodeKey = parentKey ? `${parentKey}.${key}` : key;
 
+		if (parentIsArray) {
+			return {
+				key: nodeKey,
+				title: <BodyTitleRenderer title={value as string} />,
+				children: jsonToDataNodes({}, nodeKey, Array.isArray(value)),
+			};
+		}
+
 		if (typeof value === 'object' && value !== null) {
 			return {
 				key: nodeKey,
-				title: key,
-				children: jsonToDataNodes(value as Record<string, unknown>, nodeKey),
+				title: `${key} ${Array.isArray(value) ? '[...]' : ''}`,
+				children: jsonToDataNodes(
+					value as Record<string, unknown>,
+					nodeKey,
+					Array.isArray(value),
+				),
 			};
 		}
 		return {
