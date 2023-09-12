@@ -105,6 +105,8 @@ function PrivateRoute({ children }: PrivateRouteProps): JSX.Element {
 									response.payload.refreshJwt,
 								);
 
+								console.log('userResponse', userResponse);
+
 								if (userResponse) {
 									setLocalStorageApi(
 										LOCALSTORAGE.LOGGED_IN_USER_NAME,
@@ -114,6 +116,8 @@ function PrivateRoute({ children }: PrivateRouteProps): JSX.Element {
 										LOCALSTORAGE.LOGGED_IN_USER_EMAIL,
 										userResponse.payload?.email,
 									);
+
+									console.log('isChatSupported', isChatSupportEnabled);
 
 									setLocalStorageApi(
 										LOCALSTORAGE.CHAT_SUPPORT,

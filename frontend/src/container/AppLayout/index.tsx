@@ -2,11 +2,12 @@ import getDynamicConfigs from 'api/dynamicConfigs/getDynamicConfigs';
 import getFeaturesFlags from 'api/features/getFeatureFlags';
 import getUserLatestVersion from 'api/user/getLatestVersion';
 import getUserVersion from 'api/user/getVersion';
+import ROUTES from 'constants/routes';
 import Header from 'container/Header';
 import SideNav from 'container/SideNav';
 import TopNav from 'container/TopNav';
 import { useNotifications } from 'hooks/useNotifications';
-import { ReactNode, useEffect, useMemo, useRef, useState } from 'react';
+import { ReactNode, useEffect, useMemo, useRef } from 'react';
 import { Helmet } from 'react-helmet-async';
 import { useTranslation } from 'react-i18next';
 import { useQueries } from 'react-query';
@@ -27,7 +28,6 @@ import AppReducer from 'types/reducer/app';
 
 import { ChildrenContainer, Layout, LayoutContent } from './styles';
 import { getRouteKey } from './utils';
-import ROUTES from 'constants/routes';
 
 function AppLayout(props: AppLayoutProps): JSX.Element {
 	const { isLoggedIn, user } = useSelector<AppState, AppReducer>(

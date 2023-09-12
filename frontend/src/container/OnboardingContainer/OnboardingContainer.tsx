@@ -187,15 +187,18 @@ export default function Onboarding(): JSX.Element {
 											'moduleStyles',
 											selectedModule.id === selectedUseCase.id ? 'selected' : '',
 										)}
+										style={{
+											backgroundColor: isDarkMode ? '#000' : '#FFF',
+										}}
 										key={selectedUseCase.id}
 										onClick={(): void => handleModuleSelect(selectedUseCase)}
-										style={{ width: 400 }}
 									>
 										<Typography.Title
 											className="moduleTitleStyle"
 											level={4}
 											style={{
 												borderBottom: isDarkMode ? '1px solid #303030' : '1px solid #ddd',
+												backgroundColor: isDarkMode ? '#141414' : '#FFF',
 											}}
 										>
 											{selectedUseCase.title}

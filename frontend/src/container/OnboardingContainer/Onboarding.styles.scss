@@ -57,6 +57,7 @@
 	padding: 0;
 	box-sizing: border-box;
 	cursor: pointer;
+	width: 400px;
 
 	.ant-card-body {
 		padding: 0px;
@@ -68,6 +69,10 @@
 	font-weight: 500;
 	padding: 16px;
 	margin: 0px !important;
+
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
 }
 
 .moduleStyles.selected {

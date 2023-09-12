@@ -17,13 +17,17 @@ const sassLoader = 'sass-loader';
 const styleLoader = 'style-loader';
 
 const plugins = [
-	new HtmlWebpackPlugin({ template: 'src/index.html.ejs' }),
+	new HtmlWebpackPlugin({
+		template: 'src/index.html.ejs',
+		INTERCOM_APP_ID: process.env.INTERCOM_APP_ID,
+	}),
 	new webpack.ProvidePlugin({
 		process: 'process/browser',
 	}),
 	new webpack.DefinePlugin({
 		'process.env': JSON.stringify({
 			FRONTEND_API_ENDPOINT: process.env.FRONTEND_API_ENDPOINT,
+			INTERCOM_APP_ID: process.env.INTERCOM_APP_ID,
 		}),
 	}),
 ];

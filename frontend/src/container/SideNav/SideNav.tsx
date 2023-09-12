@@ -121,7 +121,17 @@ function SideNav(): JSX.Element {
 		history.push(ROUTES.VERSION);
 	};
 
-	const isNotCurrentVersion = currentVersion !== latestVersion;
+	const checkVersionState = (): boolean => {
+		const versionCore = currentVersion?.split('-')[0];
+
+		if (versionCore) {
+			return versionCore !== latestVersion;
+		}
+
+		return false;
+	};
+
+	const isNotCurrentVersion = checkVersionState();
 
 	const secondaryMenuItems: MenuItem[] = [
 		{
