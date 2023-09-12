@@ -7,7 +7,7 @@ const ROUTES = {
 	TRACE_DETAIL: '/trace/:id',
 	TRACES_EXPLORER: '/traces-explorer',
 	SETTINGS: '/settings',
-	INSTRUMENTATION: '/get-started',
+	GET_STARTED: '/get-started',
 	USAGE_EXPLORER: '/usage-explorer',
 	APPLICATION: '/services',
 	ALL_DASHBOARD: '/dashboard',

@@ -119,7 +119,7 @@ func NewServer(serverOptions *ServerOptions) (*Server, error) {
 	} else {
 		return nil, fmt.Errorf("Storage type: %s is not supported in query service", storage)
 	}
-	var skipConfig *model.SkipConfig
+	skipConfig := &model.SkipConfig{}
 	if serverOptions.SkipTopLvlOpsPath != "" {
 		// read skip config
 		skipConfig, err = model.ReadSkipConfig(serverOptions.SkipTopLvlOpsPath)
