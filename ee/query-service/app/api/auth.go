@@ -107,7 +107,7 @@ func (ah *APIHandler) registerUser(w http.ResponseWriter, r *http.Request) {
 		RespondError(w, model.InternalError(basemodel.ErrSignupFailed{}), nil)
 	}
 
-	precheckResp := &model.PrecheckResponse{
+	precheckResp := &basemodel.PrecheckResponse{
 		SSO:    false,
 		IsUser: false,
 	}
