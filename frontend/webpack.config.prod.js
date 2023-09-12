@@ -80,6 +80,20 @@ const config = {
 				exclude: /node_modules/,
 			},
 			{
+				test: /\.mdx?$/,
+				use: [
+					// `babel-loader` is optional:
+					{ loader: 'babel-loader', options: {} },
+					{
+						loader: '@mdx-js/loader',
+						/** @type {import('@mdx-js/loader').Options} */
+						options: {
+							/* jsxImportSource: …, otherOptions… */
+						},
+					},
+				],
+			},
+			{
 				test: /\.css$/,
 				use: [
 					MiniCssExtractPlugin.loader,
@@ -95,11 +109,11 @@ const config = {
 				test: /\.s[ac]ss$/i,
 				use: [
 					// Creates `style` nodes from JS strings
-					'style-loader',
+					styleLoader,
 					// Translates CSS into CommonJS
-					'css-loader',
+					cssLoader,
 					// Compiles Sass to CSS
-					'sass-loader',
+					sassLoader,
 				],
 			},
 			{
@@ -133,17 +147,6 @@ const config = {
 							},
 						},
 					},
-				],
-			},
-			{
-				test: /\.s[ac]ss$/i,
-				use: [
-					// Creates `style` nodes from JS strings
-					styleLoader,
-					// Translates CSS into CommonJS
-					cssLoader,
-					// Compiles Sass to CSS
-					sassLoader,
 				],
 			},
 		],
