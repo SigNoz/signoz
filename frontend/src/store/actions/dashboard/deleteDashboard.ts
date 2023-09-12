@@ -1,10 +1,12 @@
 import deleteDashboardApi from 'api/dashboard/delete';
+import { UseQueryResult } from 'react-query';
 import { Dispatch } from 'redux';
 import AppActions from 'types/actions';
 import { Dashboard } from 'types/api/dashboard/getAll';
 
 export const DeleteDashboard = ({
 	uuid,
+	refetch,
 }: DeleteDashboardProps): ((dispatch: Dispatch<AppActions>) => void) => async (
 	dispatch: Dispatch<AppActions>,
 ): Promise<void> => {
@@ -14,6 +16,8 @@ export const DeleteDashboard = ({
 		});
 
 		if (response.statusCode === 200) {
+			refetch();
+
 			dispatch({
 				type: 'DELETE_DASHBOARD_SUCCESS',
 				payload: {
@@ -41,4 +45,5 @@ export const DeleteDashboard = ({
 
 export interface DeleteDashboardProps {
 	uuid: Dashboard['uuid'];
+	refetch: UseQueryResult['refetch'];
 }

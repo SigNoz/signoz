@@ -1,3 +1,5 @@
+import { QueryParams } from 'constants/query';
+
 export const ExploreHeaderToolTip = {
 	url:
 		'https://signoz.io/docs/userguide/query-builder/?utm_source=product&utm_medium=new-query-builder',
@@ -9,12 +11,4 @@ export const SaveButtonText = {
 	SAVE_VIEW: 'Save view',
 };
 
-export type QuerySearchParamNames = 'viewName' | 'viewKey';
-
-export const querySearchParams: Record<
-	QuerySearchParamNames,
-	QuerySearchParamNames
-> = {
-	viewName: 'viewName',
-	viewKey: 'viewKey',
-};
+export type QuerySearchParamNames = QueryParams.viewName | QueryParams.viewKey;
