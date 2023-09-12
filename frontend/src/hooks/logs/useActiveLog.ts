@@ -1,6 +1,7 @@
 import { getAggregateKeys } from 'api/queryBuilder/getAttributeKeys';
 import { QueryBuilderKeys } from 'constants/queryBuilder';
 import ROUTES from 'constants/routes';
+import { DataTypes } from 'container/LogDetailedView/types';
 import { getOperatorValue } from 'container/QueryBuilder/filters/QueryBuilderSearch/utils';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useNotifications } from 'hooks/useNotifications';
@@ -67,6 +68,8 @@ export const useActiveLog = (): UseActiveLog => {
 			fieldKey: string,
 			fieldValue: string,
 			operator: string,
+			isJSON?: boolean,
+			dataType?: DataTypes,
 		): Promise<void> => {
 			try {
 				const keysAutocompleteResponse = await queryClient.fetchQuery(
@@ -87,6 +90,8 @@ export const useActiveLog = (): UseActiveLog => {
 				const existAutocompleteKey = chooseAutocompleteFromCustomValue(
 					keysAutocomplete,
 					fieldKey,
+					isJSON,
+					dataType,
 				);
 
 				const currentOperator = getOperatorValue(operator);
