@@ -10,7 +10,7 @@ import { NotificationProvider } from 'hooks/useNotifications';
 import { ResourceProvider } from 'hooks/useResourceAttribute';
 import history from 'lib/history';
 import { QueryBuilderProvider } from 'providers/QueryBuilder';
-import { Suspense, useEffect, useState } from 'react';
+import { Suspense, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { Route, Router, Switch } from 'react-router-dom';
 import { Dispatch } from 'redux';
@@ -37,6 +37,10 @@ function App(): JSX.Element {
 			allFlags.find((flag) => flag.name === FeatureKeys.ONBOARDING)?.active ||
 			false;
 
+		const isChatSupportEnabled =
+			allFlags.find((flag) => flag.name === FeatureKeys.CHAT_SUPPORT)?.active ||
+			false;
+
 		dispatch({
 			type: UPDATE_FEATURE_FLAG_RESPONSE,
 			payload: {
@@ -52,17 +56,15 @@ function App(): JSX.Element {
 
 			setRoutes(newRoutes);
 		}
-	});
 
-	useEffect(() => {
-		if (isLoggedInState) {
+		if (isLoggedInState && isChatSupportEnabled) {
 			window.Intercom('boot', {
 				app_id: process.env.INTERCOM_APP_ID,
 				email: user?.email || '',
-				name: user?.name,
+				name: user?.name || '',
 			});
 		}
-	}, [isLoggedInState, user]);
+	});
 
 	return (
 		<ConfigProvider theme={themeConfig}>
