@@ -597,3 +597,20 @@ func (mds *ModelDaoSqlite) UpdateUserFlags(ctx context.Context, userId string, f
 
 	return flags, nil
 }
+
+func (mds *ModelDaoSqlite) PrecheckLogin(ctx context.Context, email, sourceUrl string) (*model.PrecheckResponse, model.BaseApiError) {
+	// assume user is valid unless proven otherwise and assign default values for rest of the fields
+	resp := &model.PrecheckResponse{IsUser: true, CanSelfRegister: false, SSO: false, SsoUrl: "", SsoError: ""}
+
+	// check if email is a valid user
+	userPayload, baseApiErr := mds.GetUserByEmail(ctx, email)
+	if baseApiErr != nil {
+		return resp, baseApiErr
+	}
+
+	if userPayload == nil {
+		resp.IsUser = false
+	}
+
+	return resp, nil
+}
