@@ -26,7 +26,7 @@ export function jsonToDataNodes(
 		if (parentIsArray) {
 			return {
 				key: nodeKey,
-				title: <BodyTitleRenderer title={value as string} />,
+				title: <BodyTitleRenderer title={value as string} nodeKey={nodeKey} />,
 				children: jsonToDataNodes({}, nodeKey, Array.isArray(value)),
 			};
 		}
@@ -34,17 +34,21 @@ export function jsonToDataNodes(
 		if (typeof value === 'object' && value !== null) {
 			return {
 				key: nodeKey,
-				title: `${key} ${Array.isArray(value) ? '[...]' : ''}`,
+				title: Array.isArray(value) ? (
+					<BodyTitleRenderer title={key} isArray nodeKey={nodeKey} />
+				) : (
+					key
+				),
 				children: jsonToDataNodes(
 					value as Record<string, unknown>,
-					nodeKey,
+					Array.isArray(value) ? `${nodeKey}[*]` : nodeKey,
 					Array.isArray(value),
 				),
 			};
 		}
 		return {
 			key: nodeKey,
-			title: <BodyTitleRenderer title={key} />,
+			title: <BodyTitleRenderer title={key} nodeKey={nodeKey} />,
 		};
 	});
 }
