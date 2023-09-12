@@ -34,7 +34,14 @@ export function jsonToDataNodes(
 		if (parentIsArray) {
 			return {
 				key: nodeKey,
-				title: <BodyTitleRenderer title={value as string} nodeKey={nodeKey} />,
+				title: (
+					<BodyTitleRenderer
+						title={value as string}
+						nodeKey={nodeKey}
+						value={value}
+						parentIsArray={parentIsArray}
+					/>
+				),
 				children: jsonToDataNodes({}, nodeKey, valueIsArray),
 			};
 		}
@@ -42,11 +49,7 @@ export function jsonToDataNodes(
 		if (typeof value === 'object' && value !== null) {
 			return {
 				key: nodeKey,
-				title: valueIsArray ? (
-					<BodyTitleRenderer title={key} isArray nodeKey={nodeKey} />
-				) : (
-					key
-				),
+				title: `${key} ${valueIsArray ? '[...]' : ''}`,
 				children: jsonToDataNodes(
 					value as Record<string, unknown>,
 					valueIsArray ? `${nodeKey}[*]` : nodeKey,
@@ -56,7 +59,14 @@ export function jsonToDataNodes(
 		}
 		return {
 			key: nodeKey,
-			title: <BodyTitleRenderer title={key} nodeKey={nodeKey} />,
+			title: (
+				<BodyTitleRenderer
+					title={key}
+					nodeKey={nodeKey}
+					value={value}
+					parentIsArray={parentIsArray}
+				/>
+			),
 		};
 	});
 }
@@ -75,9 +85,7 @@ export function flattenObject(obj: AnyObject, prefix = ''): AnyObject {
 
 const isFloat = (num: number): boolean => num % 1 !== 0;
 
-export const getDataTypes = (
-	value: number | number[] | string | string[],
-): DataTypes => {
+export const getDataTypes = (value: unknown): DataTypes => {
 	if (typeof value === 'string') {
 		return DataTypes.String;
 	}
@@ -99,4 +107,13 @@ export const getDataTypes = (
 	}
 
 	return DataTypes.Int64;
+};
+
+export const generateFieldKeyForArray = (fieldKey: string): string => {
+	const lastDotIndex = fieldKey.lastIndexOf('.');
+	let resultNodeKey = fieldKey;
+	if (lastDotIndex !== -1) {
+		resultNodeKey = fieldKey.substring(0, lastDotIndex);
+	}
+	return resultNodeKey;
 };

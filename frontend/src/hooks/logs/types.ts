@@ -1,3 +1,4 @@
+import { DataTypes } from 'container/LogDetailedView/types';
 import { MouseEventHandler } from 'react';
 import { ILog } from 'types/api/logs/log';
 
@@ -20,5 +21,11 @@ export type UseActiveLog = {
 	activeLog: ILog | null;
 	onSetActiveLog: (log: ILog) => void;
 	onClearActiveLog: () => void;
-	onAddToQuery: (fieldKey: string, fieldValue: string, operator: string) => void;
+	onAddToQuery: (
+		fieldKey: string,
+		fieldValue: string,
+		operator: string,
+		isJSON?: boolean,
+		dataType?: DataTypes,
+	) => void;
 };
