@@ -2,6 +2,7 @@ import './Javascript.styles.scss';
 
 import { MDXProvider } from '@mdx-js/react';
 import { Form, Input, Select } from 'antd';
+import Header from 'container/OnboardingContainer/common/Header/Header';
 import { useState } from 'react';
 
 import ConnectionStatus from '../common/ConnectionStatus/ConnectionStatus';
@@ -9,7 +10,6 @@ import AngularDocs from './md-docs/angular.md';
 import ExpressDocs from './md-docs/express.md';
 import JavascriptDocs from './md-docs/javascript.md';
 import NestJsDocs from './md-docs/nestjs.md';
-import Header from 'container/OnboardingContainer/common/Header/Header';
 
 const frameworksMap = {
 	express: 'Express',
@@ -114,7 +114,6 @@ export default function Javascript({
 					serviceName={form.getFieldValue('Service Name')}
 					language="javascript"
 					framework={selectedFrameWork}
-					activeStep={activeStep}
 				/>
 			)}
 		</>

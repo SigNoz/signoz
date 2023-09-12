@@ -1,10 +1,14 @@
 import { MDXProvider } from '@mdx-js/react';
-
-import Post from './kubernetes.md';
-import ConnectionStatus from '../common/LogsConnectionStatus/LogsConnectionStatus';
 import Header from 'container/OnboardingContainer/common/Header/Header';
 
-export default function Kubernetes({ activeStep }): JSX.Element {
+import ConnectionStatus from '../common/LogsConnectionStatus/LogsConnectionStatus';
+import Post from './kubernetes.md';
+
+export default function Kubernetes({
+	activeStep,
+}: {
+	activeStep: number;
+}): JSX.Element {
 	return (
 		<>
 			{activeStep === 2 && (
@@ -26,7 +30,7 @@ export default function Kubernetes({ activeStep }): JSX.Element {
 			)}
 			{activeStep === 3 && (
 				<div className="connection-status-container">
-					<ConnectionStatus logType="kubernetes" activeStep={activeStep} />
+					<ConnectionStatus logType="kubernetes" />
 				</div>
 			)}
 		</>

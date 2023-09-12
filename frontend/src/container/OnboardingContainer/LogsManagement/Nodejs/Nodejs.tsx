@@ -1,10 +1,8 @@
 import { MDXProvider } from '@mdx-js/react';
-
-import { Steps } from 'antd';
-
-import Post from './nodejs.md';
-import ConnectionStatus from '../common/LogsConnectionStatus/LogsConnectionStatus';
 import Header from 'container/OnboardingContainer/common/Header/Header';
+
+import ConnectionStatus from '../common/LogsConnectionStatus/LogsConnectionStatus';
+import Post from './nodejs.md';
 
 export default function Nodejs({
 	activeStep,
@@ -32,7 +30,7 @@ export default function Nodejs({
 			)}
 			{activeStep === 3 && (
 				<div className="connection-status-container">
-					<ConnectionStatus logType="nodejs" activeStep={activeStep} />
+					<ConnectionStatus logType="nodejs" />
 				</div>
 			)}
 		</>

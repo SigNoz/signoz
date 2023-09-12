@@ -1,13 +1,10 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 import getLocalStorageApi from 'api/browser/localstorage/get';
-import setLocalStorageApi from 'api/browser/localstorage/set';
 import loginApi from 'api/user/login';
 import { Logout } from 'api/utils';
 import Spinner from 'components/Spinner';
-import { FeatureKeys } from 'constants/features';
 import { LOCALSTORAGE } from 'constants/localStorage';
 import ROUTES from 'constants/routes';
-import useFeatureFlag from 'hooks/useFeatureFlag';
 import { useNotifications } from 'hooks/useNotifications';
 import history from 'lib/history';
 import { ReactChild, useEffect, useMemo } from 'react';
@@ -27,9 +24,6 @@ import afterLogin from './utils';
 
 function PrivateRoute({ children }: PrivateRouteProps): JSX.Element {
 	const { pathname } = useLocation();
-	const isChatSupportEnabled: boolean | undefined = useFeatureFlag(
-		FeatureKeys.CHAT_SUPPORT,
-	)?.active;
 
 	const mapRoutes = useMemo(
 		() =>
@@ -104,26 +98,6 @@ function PrivateRoute({ children }: PrivateRouteProps): JSX.Element {
 									response.payload.accessJwt,
 									response.payload.refreshJwt,
 								);
-
-								console.log('userResponse', userResponse);
-
-								if (userResponse) {
-									setLocalStorageApi(
-										LOCALSTORAGE.LOGGED_IN_USER_NAME,
-										userResponse.payload?.name,
-									);
-									setLocalStorageApi(
-										LOCALSTORAGE.LOGGED_IN_USER_EMAIL,
-										userResponse.payload?.email,
-									);
-
-									console.log('isChatSupported', isChatSupportEnabled);
-
-									setLocalStorageApi(
-										LOCALSTORAGE.CHAT_SUPPORT,
-										(isChatSupportEnabled || '').toString(),
-									);
-								}
 
 								if (
 									userResponse &&

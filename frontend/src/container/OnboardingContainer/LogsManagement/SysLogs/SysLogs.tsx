@@ -1,12 +1,14 @@
 import { MDXProvider } from '@mdx-js/react';
-
-import { Steps } from 'antd';
-
-import Post from './syslogs.md';
-import ConnectionStatus from '../common/LogsConnectionStatus/LogsConnectionStatus';
 import Header from 'container/OnboardingContainer/common/Header/Header';
 
-export default function SysLogs({ activeStep }): JSX.Element {
+import ConnectionStatus from '../common/LogsConnectionStatus/LogsConnectionStatus';
+import Post from './syslogs.md';
+
+export default function SysLogs({
+	activeStep,
+}: {
+	activeStep: number;
+}): JSX.Element {
 	return (
 		<>
 			{activeStep === 2 && (
@@ -28,7 +30,7 @@ export default function SysLogs({ activeStep }): JSX.Element {
 			)}
 			{activeStep === 3 && (
 				<div className="connection-status-container">
-					<ConnectionStatus logType="syslogs" activeStep={activeStep} />
+					<ConnectionStatus logType="syslogs" />
 				</div>
 			)}
 		</>

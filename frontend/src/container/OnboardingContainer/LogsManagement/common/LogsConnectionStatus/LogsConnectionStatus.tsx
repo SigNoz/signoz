@@ -1,4 +1,3 @@
-/* eslint-disable no-plusplus */
 import './LogsConnectionStatus.styles.scss';
 
 import {
@@ -19,14 +18,7 @@ import { DataSource } from 'types/common/queryBuilder';
 
 interface ConnectionStatusProps {
 	logType: string;
-	activeStep: number;
 }
-
-const LogsTypePropertyMap = {
-	kubernetes: 'k8s_pod_name',
-	docker: 'container_id',
-	otel: 'telemetry_sdk_language',
-};
 
 const enum ApplicationLogsType {
 	FROM_LOG_FILE = 'from-log-file',
@@ -35,7 +27,6 @@ const enum ApplicationLogsType {
 
 export default function LogsConnectionStatus({
 	logType,
-	activeStep,
 }: ConnectionStatusProps): JSX.Element {
 	const [loading, setLoading] = useState(true);
 	const [isReceivingData, setIsReceivingData] = useState(false);
@@ -44,7 +35,6 @@ export default function LogsConnectionStatus({
 
 	const requestData: Query = {
 		queryType: EQueryType.QUERY_BUILDER,
-		panelType: PANEL_TYPES.LIST,
 		builder: {
 			queryData: [
 				{
@@ -82,6 +72,9 @@ export default function LogsConnectionStatus({
 			],
 			queryFormulas: [],
 		},
+		clickhouse_sql: [],
+		id: '',
+		promql: [],
 	};
 
 	const { data, isFetching, error, isError } = useGetExplorerQueryRange(
@@ -113,14 +106,22 @@ export default function LogsConnectionStatus({
 				timestamp: item.timestamp,
 			}));
 
-			for (let index = 0; index < currentLogs.length; index++) {
+			for (let index = 0; index < currentLogs.length; index += 1) {
 				const log = currentLogs[index];
 
+				const attrStringObj = log?.attributes_string;
+
 				if (
-					(logType === 'kubernetes' && log['attributes_string']['k8s_pod_name']) ||
-					(logType === 'docker' && log['attributes_string']['container_id'])
+					(logType === 'kubernetes' &&
+						Object.prototype.hasOwnProperty.call(attrStringObj, 'k8s_pod_name')) ||
+					(logType === 'docker' &&
+						Object.prototype.hasOwnProperty.call(attrStringObj, 'container_id'))
 				) {
+					// Logs Found, stop polling
+					setLoading(false);
 					setIsReceivingData(true);
+					setRetryCount(-1);
+					setPollingInterval(false);
 					break;
 				}
 			}
@@ -239,7 +240,7 @@ export default function LogsConnectionStatus({
 							<div> Received logs successfully. </div>
 						)}
 						{!(loading || isFetching) && !isReceivingData && (
-							<div> Couldn't detect the logs </div>
+							<div> Could not detect the logs </div>
 						)}
 					</div>
 				</div>

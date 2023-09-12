@@ -2,10 +2,10 @@ import './GoLang.styles.scss';
 
 import { MDXProvider } from '@mdx-js/react';
 import { Form, Input } from 'antd';
+import Header from 'container/OnboardingContainer/common/Header/Header';
 
 import ConnectionStatus from '../common/ConnectionStatus/ConnectionStatus';
 import GoLangDocs from './goLang.md';
-import Header from 'container/OnboardingContainer/common/Header/Header';
 
 export default function GoLang({
 	activeStep,
@@ -55,7 +55,6 @@ export default function GoLang({
 					serviceName={form.getFieldValue('Service Name')}
 					framework="go"
 					language="go"
-					activeStep={activeStep}
 				/>
 			)}
 		</>

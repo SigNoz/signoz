@@ -2,6 +2,7 @@ import './Java.styles.scss';
 
 import { MDXProvider } from '@mdx-js/react';
 import { Form, Input, Select } from 'antd';
+import Header from 'container/OnboardingContainer/common/Header/Header';
 import { useState } from 'react';
 
 import ConnectionStatus from '../common/ConnectionStatus/ConnectionStatus';
@@ -9,14 +10,13 @@ import JavaDocs from './md-docs/java.md';
 import JbossDocs from './md-docs/jboss.md';
 import SprintBootDocs from './md-docs/spring_boot.md';
 import TomcatDocs from './md-docs/tomcat.md';
-import Header from 'container/OnboardingContainer/common/Header/Header';
 
-const frameworksMap = {
-	tomcat: 'Tomcat',
-	spring_boot: 'Spring Boot',
-	jboss: 'JBoss',
-	other: 'Others',
-};
+enum FrameworksMap {
+	tomcat = 'Tomcat',
+	spring_boot = 'Spring Boot',
+	jboss = 'JBoss',
+	other = 'Others',
+}
 
 export default function Java({
 	activeStep,
@@ -64,19 +64,19 @@ export default function Java({
 								options={[
 									{
 										value: 'spring_boot',
-										label: frameworksMap.spring_boot,
+										label: FrameworksMap.spring_boot,
 									},
 									{
 										value: 'tomcat',
-										label: frameworksMap.tomcat,
+										label: FrameworksMap.tomcat,
 									},
 									{
 										value: 'jboss',
-										label: frameworksMap.jboss,
+										label: FrameworksMap.jboss,
 									},
 									{
 										value: 'other',
-										label: frameworksMap.other,
+										label: FrameworksMap.other,
 									},
 								]}
 							/>
@@ -107,8 +107,7 @@ export default function Java({
 				<ConnectionStatus
 					serviceName={form.getFieldValue('Service Name')}
 					language="java"
-					framework={frameworksMap[selectedFrameWork]}
-					activeStep={activeStep}
+					framework={(FrameworksMap as any)[selectedFrameWork]}
 				/>
 			)}
 		</>

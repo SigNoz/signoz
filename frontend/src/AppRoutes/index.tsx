@@ -10,12 +10,14 @@ import { NotificationProvider } from 'hooks/useNotifications';
 import { ResourceProvider } from 'hooks/useResourceAttribute';
 import history from 'lib/history';
 import { QueryBuilderProvider } from 'providers/QueryBuilder';
-import { Suspense, useState } from 'react';
-import { useDispatch } from 'react-redux';
+import { Suspense, useEffect, useState } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
 import { Route, Router, Switch } from 'react-router-dom';
 import { Dispatch } from 'redux';
+import { AppState } from 'store/reducers';
 import AppActions from 'types/actions';
 import { UPDATE_FEATURE_FLAG_RESPONSE } from 'types/actions/app';
+import AppReducer from 'types/reducer/app';
 
 import PrivateRoute from './Private';
 import defaultRoutes from './routes';
@@ -23,6 +25,10 @@ import defaultRoutes from './routes';
 function App(): JSX.Element {
 	const themeConfig = useThemeConfig();
 	const [routes, setRoutes] = useState(defaultRoutes);
+	const { isLoggedIn: isLoggedInState, user } = useSelector<
+		AppState,
+		AppReducer
+	>((state) => state.app);
 
 	const dispatch = useDispatch<Dispatch<AppActions>>();
 
@@ -47,6 +53,16 @@ function App(): JSX.Element {
 			setRoutes(newRoutes);
 		}
 	});
+
+	useEffect(() => {
+		if (isLoggedInState) {
+			window.Intercom('boot', {
+				app_id: process.env.INTERCOM_APP_ID,
+				email: user?.email || '',
+				name: user?.name,
+			});
+		}
+	}, [isLoggedInState, user]);
 
 	return (
 		<ConfigProvider theme={themeConfig}>

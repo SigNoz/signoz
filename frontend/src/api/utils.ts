@@ -60,5 +60,7 @@ export const Logout = (): void => {
 		},
 	});
 
+	window.Intercom('shutdown');
+
 	history.push(ROUTES.LOGIN);
 };

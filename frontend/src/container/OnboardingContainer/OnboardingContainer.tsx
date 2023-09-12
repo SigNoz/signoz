@@ -2,12 +2,8 @@
 /* eslint-disable jsx-a11y/click-events-have-key-events */
 import './Onboarding.styles.scss';
 
-import {
-	ArrowLeftOutlined,
-	ArrowRightOutlined,
-	LoadingOutlined,
-} from '@ant-design/icons';
-import { Button, Card, StepProps, Steps, StepsProps, Typography } from 'antd';
+import { ArrowLeftOutlined, ArrowRightOutlined } from '@ant-design/icons';
+import { Button, Card, StepProps, Steps, Typography } from 'antd';
 import cx from 'classnames';
 import ROUTES from 'constants/routes';
 import { useIsDarkMode } from 'hooks/useDarkMode';
@@ -15,11 +11,10 @@ import history from 'lib/history';
 import { useEffect, useState } from 'react';
 
 import APM from './APM/APM';
-import DistributedTracing from './DistributedTracing/DistributedTracing';
 import InfrastructureMonitoring from './InfrastructureMonitoring/InfrastructureMonitoring';
 import LogsManagement from './LogsManagement/LogsManagement';
 
-enum modulesMap {
+enum ModulesMap {
 	APM = 'APM',
 	LogsManagement = 'LogsManagement',
 	InfrastructureMonitoring = 'InfrastructureMonitoring',
@@ -34,23 +29,30 @@ const verifyConnectionDesc = 'Verify that you’ve instrumented your application
 
 const verifyableLogsType = ['kubernetes', 'docker'];
 
+interface ModuleProps {
+	id: string;
+	title: string;
+	desc: string;
+	stepDesc: string;
+}
+
 const useCases = {
 	APM: {
-		id: modulesMap.APM,
+		id: ModulesMap.APM,
 		title: 'Application Monitoring',
 		desc:
 			'Monitor performance of your applications & troubleshoot problems by installing within your infra.',
 		stepDesc: defaultStepDesc,
 	},
 	LogsManagement: {
-		id: modulesMap.LogsManagement,
+		id: ModulesMap.LogsManagement,
 		title: 'Logs Management',
 		desc:
 			'Easily search and filter logs with query builder and automatically detect logs from K8s cluster.',
 		stepDesc: 'Choose the logs that you want to receive on SigNoz',
 	},
 	InfrastructureMonitoring: {
-		id: modulesMap.InfrastructureMonitoring,
+		id: ModulesMap.InfrastructureMonitoring,
 		title: 'Infrastructure Monitoring',
 		desc:
 			'Easily search and filter logs with query builder and automatically detect logs from K8s cluster.',
@@ -74,7 +76,9 @@ const defaultSteps: StepProps[] = [
 ];
 
 export default function Onboarding(): JSX.Element {
-	const [selectedModule, setSelectedModule] = useState(useCases.APM);
+	const [selectedModule, setSelectedModule] = useState<ModuleProps>(
+		useCases.APM,
+	);
 	const [steps, setsteps] = useState(defaultSteps);
 	const [activeStep, setActiveStep] = useState(1);
 	const [current, setCurrent] = useState(0);
@@ -95,9 +99,9 @@ export default function Onboarding(): JSX.Element {
 	];
 
 	useEffect(() => {
-		if (selectedModule?.id === modulesMap.InfrastructureMonitoring) {
+		if (selectedModule?.id === ModulesMap.InfrastructureMonitoring) {
 			setsteps([...baseSteps]);
-		} else if (selectedModule?.id === modulesMap.LogsManagement) {
+		} else if (selectedModule?.id === ModulesMap.LogsManagement) {
 			if (selectedLogsType && verifyableLogsType?.indexOf(selectedLogsType) > -1) {
 				setsteps([
 					...baseSteps,
@@ -119,6 +123,7 @@ export default function Onboarding(): JSX.Element {
 				},
 			]);
 		}
+		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [selectedModule, selectedLogsType]);
 
 	const handleNext = (): void => {
@@ -140,13 +145,13 @@ export default function Onboarding(): JSX.Element {
 
 	const handleOnboardingComplete = (): void => {
 		switch (selectedModule.id) {
-			case modulesMap.APM:
+			case ModulesMap.APM:
 				history.push(ROUTES.APPLICATION);
 				break;
-			case modulesMap.LogsManagement:
+			case ModulesMap.LogsManagement:
 				history.push(ROUTES.LOGS);
 				break;
-			case modulesMap.InfrastructureMonitoring:
+			case ModulesMap.InfrastructureMonitoring:
 				history.push(ROUTES.APPLICATION);
 				break;
 			default:
@@ -159,8 +164,8 @@ export default function Onboarding(): JSX.Element {
 		setActiveStep(value + 1);
 	};
 
-	const handleModuleSelect = (moduleName): void => {
-		setSelectedModule(moduleName);
+	const handleModuleSelect = (module: ModuleProps): void => {
+		setSelectedModule(module);
 	};
 
 	const handleLogTypeSelect = (logType: string): void => {
@@ -178,8 +183,8 @@ export default function Onboarding(): JSX.Element {
 
 					<div className="modulesContainer">
 						<div className="moduleContainerRowStyles">
-							{Object.keys(modulesMap).map((module) => {
-								const selectedUseCase = useCases[module];
+							{Object.keys(ModulesMap).map((module) => {
+								const selectedUseCase = (useCases as any)[module];
 
 								return (
 									<Card
@@ -232,14 +237,14 @@ export default function Onboarding(): JSX.Element {
 						size="small"
 					/>
 					<div className="step-content">
-						{selectedModule.id === modulesMap.APM && <APM activeStep={activeStep} />}
-						{selectedModule.id === modulesMap.LogsManagement && (
+						{selectedModule.id === ModulesMap.APM && <APM activeStep={activeStep} />}
+						{selectedModule.id === ModulesMap.LogsManagement && (
 							<LogsManagement
 								activeStep={activeStep}
 								handleLogTypeSelect={handleLogTypeSelect}
 							/>
 						)}
-						{selectedModule.id === modulesMap.InfrastructureMonitoring && (
+						{selectedModule.id === ModulesMap.InfrastructureMonitoring && (
 							<InfrastructureMonitoring activeStep={activeStep} />
 						)}
 					</div>

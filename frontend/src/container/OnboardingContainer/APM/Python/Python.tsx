@@ -2,6 +2,7 @@ import './Python.styles.scss';
 
 import { MDXProvider } from '@mdx-js/react';
 import { Form, Input, Select } from 'antd';
+import Header from 'container/OnboardingContainer/common/Header/Header';
 import { useState } from 'react';
 
 import ConnectionStatus from '../common/ConnectionStatus/ConnectionStatus';
@@ -10,7 +11,6 @@ import FalconDocs from './md-docs/falcon.md';
 import FastAPIDocs from './md-docs/fastAPI.md';
 import FlaskDocs from './md-docs/flask.md';
 import PythonDocs from './md-docs/python.md';
-import Header from 'container/OnboardingContainer/common/Header/Header';
 
 const frameworksMap = {
 	django: 'Django',
@@ -116,7 +116,6 @@ export default function Python({
 					serviceName={form.getFieldValue('Service Name')}
 					language="python"
 					framework={selectedFrameWork}
-					activeStep={activeStep}
 				/>
 			)}
 		</>
