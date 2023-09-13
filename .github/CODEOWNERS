@@ -6,8 +6,8 @@
 /frontend/ @palashgdev
 /deploy/ @prashant-shahi
 /sample-apps/ @prashant-shahi
-**/query-service/ @srikanthccv
-Makefile @srikanthccv
-go.* @srikanthccv
-.git* @srikanthccv
+**/query-service/ @SigNoz/backend
+Makefile @SigNoz/backend
+go.* @SigNoz/backend
+.git* @SigNoz/backend
 .github @prashant-shahi
