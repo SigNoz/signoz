@@ -1,4 +1,4 @@
-package opamp
+package model
 
 import (
 	"fmt"
@@ -91,7 +91,7 @@ var buildProcessorTestData = []struct {
 func TestBuildLogParsingProcessors(t *testing.T) {
 	for _, test := range buildProcessorTestData {
 		Convey(test.Name, t, func() {
-			err := buildLogParsingProcessors(test.agentConf, test.pipelineProcessor)
+			err := BuildLogParsingProcessors(test.agentConf, test.pipelineProcessor)
 			So(err, ShouldBeNil)
 			So(test.agentConf, ShouldResemble, test.outputConf)
 		})

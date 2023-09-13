@@ -7,39 +7,40 @@ import (
 	"github.com/open-telemetry/opamp-go/server"
 	"github.com/open-telemetry/opamp-go/server/types"
 	model "go.signoz.io/signoz/pkg/query-service/app/opamp/model"
-
 	"go.uber.org/zap"
 )
 
 var opAmpServer *Server
 
 type Server struct {
-	server       server.OpAMPServer
-	agents       *model.Agents
-	logger       *zap.Logger
-	capabilities int32
+	server               server.OpAMPServer
+	agents               *model.Agents
+	logger               *zap.Logger
+	capabilities         int32
+	logPipelinesProvider model.LogPipelinesProvider
 }
 
 const capabilities = protobufs.ServerCapabilities_ServerCapabilities_AcceptsEffectiveConfig |
 	protobufs.ServerCapabilities_ServerCapabilities_OffersRemoteConfig |
 	protobufs.ServerCapabilities_ServerCapabilities_AcceptsStatus
 
-func InitializeServer(listener string, agents *model.Agents) *Server {
+func InitializeServer(
+	agents *model.Agents,
+	logPipelinesProvider model.LogPipelinesProvider,
+) *Server {
 	if agents == nil {
 		agents = &model.AllAgents
 	}
 
 	opAmpServer = &Server{
-		agents: agents,
+		agents:               agents,
+		logPipelinesProvider: logPipelinesProvider,
 	}
 	opAmpServer.server = server.New(zap.S())
 	return opAmpServer
 }
 
-func InitializeAndStartServer(listener string, agents *model.Agents) error {
-	InitializeServer(listener, agents)
-	return opAmpServer.Start(listener)
-}
+// TODO(Raj): remove all usages of InitializeAndStartServer
 
 func StopServer() {
 	if opAmpServer != nil {
@@ -69,7 +70,10 @@ func (srv *Server) onDisconnect(conn types.Connection) {
 	srv.agents.RemoveConnection(conn)
 }
 
-func (srv *Server) OnMessage(conn types.Connection, msg *protobufs.AgentToServer) *protobufs.ServerToAgent {
+func (srv *Server) OnMessage(
+	conn types.Connection,
+	msg *protobufs.AgentToServer,
+) *protobufs.ServerToAgent {
 	agentID := msg.InstanceUid
 
 	agent, created, err := srv.agents.FindOrCreateAgent(agentID, conn)
@@ -89,7 +93,7 @@ func (srv *Server) OnMessage(conn types.Connection, msg *protobufs.AgentToServer
 		Capabilities: uint64(capabilities),
 	}
 
-	agent.UpdateStatus(msg, response)
+	agent.UpdateStatus(msg, response, srv.logPipelinesProvider)
 
 	return response
 }

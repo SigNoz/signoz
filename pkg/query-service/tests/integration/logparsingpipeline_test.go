@@ -290,11 +290,10 @@ func TestOpAMPServerToAgentCommunication(t *testing.T) {
 	)
 	require.NotNil(response.RemoteConfig, errorMsg)
 	require.NotNil(response.RemoteConfig.Config, errorMsg)
-	require.Equal(
-		response.RemoteConfig.Config.ConfigMap,
-		TestCollectorConfig.ConfigMap,
-		errorMsg,
-	)
+
+	expectedConfigYaml := maps.Values(TestCollectorConfig.ConfigMap)[0].Body
+	recommendedConfigYaml := maps.Values(response.RemoteConfig.Config.ConfigMap)[0].Body
+	requireYamlsAreEqual(t, expectedConfigYaml, recommendedConfigYaml)
 
 	// If an agent connects after some pipelines exist,
 	// it should receive the merged config back.
@@ -362,6 +361,30 @@ func TestOpAMPServerToAgentCommunication(t *testing.T) {
 
 	// If pipelines change, all agents should receive
 	// the latest effective config.
+}
+
+func requireYamlsAreEqual(
+	t *testing.T,
+	yaml1 []byte,
+	yaml2 []byte,
+) {
+
+	normalizeYaml := func(yamlText []byte) string {
+		// normalize text representations (order, array repr etc)
+		parser := yaml.Parser()
+
+		unmarshalled, err := parser.Unmarshal(yamlText)
+		require.Nil(t, err)
+
+		marshalled, err := parser.Marshal(unmarshalled)
+		require.Nil(t, err)
+
+		return string(marshalled)
+	}
+
+	require.Equal(
+		t, normalizeYaml(yaml1), normalizeYaml(yaml2),
+	)
 }
 
 func assertCollectorConfIncludesSubset(
@@ -440,10 +463,14 @@ func NewLogPipelinesTestBed(t *testing.T) *LogPipelinesTestBed {
 		t.Fatalf("could not create a new ApiHandler: %v", err)
 	}
 
-	opampServer, clientConn, err := mockOpampAgent(testDBFilePath)
+	opampServer, err := mockOpampServer(
+		testDBFilePath, controller,
+	)
 	if err != nil {
 		t.Fatalf("could not create opamp server and mock client connection: %v", err)
 	}
+
+	clientConn, _ := mockOpampAgent(opampServer)
 
 	user, apiErr := createTestUser()
 	if apiErr != nil {
@@ -658,20 +685,32 @@ func assertPipelinesResponseMatchesPostedPipelines(
 	}
 }
 
-func mockOpampAgent(testDBFilePath string) (*opamp.Server, *mockOpAmpConnection, error) {
+func mockOpampServer(
+	testDBFilePath string,
+	pipelinesProvider opampModel.LogPipelinesProvider,
+) (
+	*opamp.Server, error,
+) {
 	// Mock an available opamp agent
 	testDB, err := opampModel.InitDB(testDBFilePath)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 	err = agentConf.Initiate(testDB, "sqlite")
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 
-	opampServer := opamp.InitializeServer(constants.OpAmpWsEndpoint, nil)
+	opampServer := opamp.InitializeServer(nil, pipelinesProvider)
+	return opampServer, nil
+}
+
+func mockOpampAgent(opampServer *opamp.Server) (
+	*mockOpAmpConnection, *protobufs.ServerToAgent,
+) {
+	// Mock an available opamp agent
 	opampClientConnection := &mockOpAmpConnection{}
-	opampServer.OnMessage(
+	response := opampServer.OnMessage(
 		opampClientConnection,
 		&protobufs.AgentToServer{
 			InstanceUid: "test",
@@ -680,7 +719,7 @@ func mockOpampAgent(testDBFilePath string) (*opamp.Server, *mockOpAmpConnection,
 			},
 		},
 	)
-	return opampServer, opampClientConnection, nil
+	return opampClientConnection, response
 }
 
 var TestCollectorConfig protobufs.AgentConfigMap = protobufs.AgentConfigMap{

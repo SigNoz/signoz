@@ -7,6 +7,7 @@ import (
 	"sync"
 	"time"
 
+	"golang.org/x/exp/maps"
 	"google.golang.org/protobuf/proto"
 
 	"github.com/open-telemetry/opamp-go/protobufs"
@@ -72,10 +73,14 @@ func (agent *Agent) Upsert() error {
 	return nil
 }
 
-func (agent *Agent) UpdateStatus(statusMsg *protobufs.AgentToServer, response *protobufs.ServerToAgent) {
+func (agent *Agent) UpdateStatus(
+	statusMsg *protobufs.AgentToServer,
+	response *protobufs.ServerToAgent,
+	logPipelinesProvider LogPipelinesProvider,
+) {
 	agent.mux.Lock()
 	defer agent.mux.Unlock()
-	agent.processStatusUpdate(statusMsg, response)
+	agent.processStatusUpdate(statusMsg, response, logPipelinesProvider)
 }
 
 // extracts lb exporter support flag from agent description. the flag
@@ -185,6 +190,7 @@ func (agent *Agent) updateStatusField(newStatus *protobufs.AgentToServer) (agent
 	agentDescrChanged = agent.updateAgentDescription(newStatus) || agentDescrChanged
 	agent.updateRemoteConfigStatus(newStatus)
 	agent.updateHealth(newStatus)
+
 	return agentDescrChanged
 }
 
@@ -211,6 +217,7 @@ func (agent *Agent) hasCapability(capability protobufs.AgentCapabilities) bool {
 func (agent *Agent) processStatusUpdate(
 	newStatus *protobufs.AgentToServer,
 	response *protobufs.ServerToAgent,
+	logPipelinesProvider LogPipelinesProvider,
 ) {
 	// We don't have any status for this Agent, or we lost the previous status update from the Agent, so our
 	// current status is not up-to-date.
@@ -237,12 +244,14 @@ func (agent *Agent) processStatusUpdate(
 		response.Flags |= uint64(protobufs.ServerToAgentFlags_ServerToAgentFlags_ReportFullState)
 	}
 
+	agent.updateEffectiveConfig(newStatus, response)
+
 	configChanged := false
 	if agentDescrChanged {
 		// Agent description is changed.
 
 		// We need to recalculate the config.
-		configChanged = agent.updateRemoteConfig()
+		configChanged = agent.updateRemoteConfig(logPipelinesProvider)
 	}
 
 	// If remote config is changed and different from what the Agent has then
@@ -255,26 +264,57 @@ func (agent *Agent) processStatusUpdate(
 		response.RemoteConfig = agent.remoteConfig
 		agent.SendToAgent(response)
 	}
-
-	agent.updateEffectiveConfig(newStatus, response)
 }
 
-func (agent *Agent) updateRemoteConfig() bool {
-	hash := sha256.New()
+func (agent *Agent) updateRemoteConfig(
+	logPipelinesProvider LogPipelinesProvider,
+) bool {
+	//panic("TODO(Raj): set agent.remoteConfig to based on current state of pipelines and known agent.effectiveConfig")
+	configMap := map[string]*protobufs.AgentConfigFile{}
+	if agent.Status != nil &&
+		agent.Status.EffectiveConfig != nil &&
+		agent.Status.EffectiveConfig.ConfigMap != nil {
+
+		procs, names, err := logPipelinesProvider.GetLatestLogPipelineProcessors()
+		if err != nil {
+			// TODO(Raj): Handle this properly
+			panic(err)
+		}
+
+		recommendedConfig, err := GenerateEffectiveConfigWithPipelines(
+			agent.EffectiveConfig, procs, names,
+		)
+		if err != nil {
+			panic(err)
+		}
+		configName := "otel-collector-config.yaml"
+
+		effectiveConfigMap := agent.Status.EffectiveConfig.ConfigMap.ConfigMap
+		effectiveConfigNames := maps.Keys(effectiveConfigMap)
+		if len(effectiveConfigNames) > 0 {
+			configName = effectiveConfigNames[0]
+		}
+
+		configMap[configName] = &protobufs.AgentConfigFile{
+			Body:        recommendedConfig,
+			ContentType: "application/x-yaml",
+		}
+
+	}
 
 	cfg := protobufs.AgentRemoteConfig{
 		Config: &protobufs.AgentConfigMap{
-			ConfigMap: map[string]*protobufs.AgentConfigFile{},
+			ConfigMap: configMap,
 		},
 	}
 
 	// Calculate the hash.
+	hash := sha256.New()
 	for k, v := range cfg.Config.ConfigMap {
 		hash.Write([]byte(k))
 		hash.Write(v.Body)
 		hash.Write([]byte(v.ContentType))
 	}
-
 	cfg.ConfigHash = hash.Sum(nil)
 
 	configChanged := !isEqualRemoteConfig(agent.remoteConfig, &cfg)

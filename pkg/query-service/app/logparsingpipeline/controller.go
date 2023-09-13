@@ -140,3 +140,35 @@ func (ic *LogParsingPipelineController) GetPipelinesByVersion(
 		Pipelines:     pipelines,
 	}, nil
 }
+
+func (controller *LogParsingPipelineController) GetLatestLogPipelineProcessors() (
+	logPipelineProcessors map[string]interface{},
+	orderedProcessorNames []string,
+	err *model.ApiError,
+) {
+	latestConfig, err := agentConf.GetLatestVersion(context.Background(), agentConf.ElementTypeLogPipelines)
+	if err != nil {
+		if err.Type() != model.ErrorNotFound {
+			return nil, nil, model.WrapApiError(err, "failed to get latest agent config version")
+		} else {
+			return nil, nil, nil
+		}
+	}
+	latestVersion := latestConfig.Version
+
+	pipelines, fetchErrors := controller.getPipelinesByVersion(context.Background(), latestVersion)
+	if fetchErrors != nil {
+		zap.S().Errorf("failed to get pipelines for version %d, %w", latestVersion, fetchErrors)
+		return nil, nil, model.InternalError(fmt.Errorf("failed to get pipelines for given version"))
+	}
+
+	processors, orderedProcessorNames, translationErr := PreparePipelineProcessor(pipelines)
+	if translationErr != nil {
+		zap.S().Errorf("failed to generate processor config from pipelines %w", translationErr)
+		return nil, nil, model.BadRequest(errors.Wrap(
+			translationErr, "failed to generate processor config from pipelines for deployment",
+		))
+	}
+
+	return processors, orderedProcessorNames, nil
+}
