@@ -242,6 +242,7 @@ const (
 	AttributeKeyDataTypeArrayString  AttributeKeyDataType = "array(string)"
 	AttributeKeyDataTypeArrayInt64   AttributeKeyDataType = "array(int64)"
 	AttributeKeyDataTypeArrayFloat64 AttributeKeyDataType = "array(float64)"
+	AttributeKeyDataTypeArrayBool    AttributeKeyDataType = "array(bool)"
 )
 
 func (q AttributeKeyDataType) Validate() error {
@@ -297,7 +298,7 @@ func (a AttributeKey) CacheKey() string {
 
 func (a AttributeKey) Validate() error {
 	switch a.DataType {
-	case AttributeKeyDataTypeBool, AttributeKeyDataTypeInt64, AttributeKeyDataTypeFloat64, AttributeKeyDataTypeString, AttributeKeyDataTypeArrayFloat64, AttributeKeyDataTypeArrayString, AttributeKeyDataTypeArrayInt64, AttributeKeyDataTypeUnspecified:
+	case AttributeKeyDataTypeBool, AttributeKeyDataTypeInt64, AttributeKeyDataTypeFloat64, AttributeKeyDataTypeString, AttributeKeyDataTypeArrayFloat64, AttributeKeyDataTypeArrayString, AttributeKeyDataTypeArrayInt64, AttributeKeyDataTypeArrayBool, AttributeKeyDataTypeUnspecified:
 		break
 	default:
 		return fmt.Errorf("invalid attribute dataType: %s", a.DataType)
