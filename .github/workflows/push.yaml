@@ -123,3 +123,49 @@ jobs:
           fi
       - name: Build and push docker image
         run: make build-push-frontend
+
+  image-build-and-push-frontend-ee:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+      - name: Create .env file
+        run: echo 'INTERCOM_APP_ID="${{ secrets.INTERCOM_APP_ID }}"' > .env
+      - name: Install dependencies
+        working-directory: frontend
+        run: yarn install
+      - name: Run Prettier
+        working-directory: frontend
+        run: npm run prettify
+        continue-on-error: true
+      - name: Run ESLint
+        working-directory: frontend
+        run: npm run lint
+        continue-on-error: true
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+        with:
+          version: latest
+      - name: Login to DockerHub
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+      - uses: benjlevesque/short-sha@v2.2
+        id: short-sha
+      - name: Get branch name
+        id: branch-name
+        uses: tj-actions/branch-names@v5.1
+      - name: Set docker tag environment
+        run: |
+          if [ '${{ steps.branch-name.outputs.is_tag }}' == 'true' ]; then
+            tag="${{ steps.branch-name.outputs.tag }}"
+            tag="${tag:1}"
+            echo "DOCKER_TAG=${tag}-ee" >> $GITHUB_ENV
+          elif [ '${{ steps.branch-name.outputs.current_branch }}' == 'main' ]; then
+            echo "DOCKER_TAG=latest-ee" >> $GITHUB_ENV
+          else
+            echo "DOCKER_TAG=${{ steps.branch-name.outputs.current_branch }}-ee" >> $GITHUB_ENV
+          fi
+      - name: Build and push docker image
+        run: make build-push-frontend

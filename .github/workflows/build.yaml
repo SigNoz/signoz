@@ -27,6 +27,27 @@ jobs:
         run: |
           make build-frontend-amd64
 
+  build-frontend-ee:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+      - name: Create .env file
+        run: echo 'INTERCOM_APP_ID="${{ secrets.INTERCOM_APP_ID }}"' > .env
+      - name: Install dependencies
+        run: cd frontend && yarn install
+      - name: Run ESLint
+        run: cd frontend && npm run lint
+      - name: Run Jest
+        run: cd frontend && npm run jest
+      - name: TSC
+        run: yarn tsc
+        working-directory: ./frontend
+      - name: Build frontend docker image
+        shell: bash
+        run: |
+          make build-frontend-amd64
+
   build-query-service:
     runs-on: ubuntu-latest
     steps:
