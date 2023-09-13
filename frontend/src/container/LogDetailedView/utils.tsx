@@ -95,11 +95,19 @@ export const getDataTypes = (value: unknown): DataTypes => {
 		return isFloat(value) ? DataTypes.Float64 : DataTypes.Int64;
 	}
 
+	if (typeof value === 'boolean') {
+		return DataTypes.bool;
+	}
+
 	if (Array.isArray(value)) {
 		const firstElement = value[0];
 
 		if (typeof firstElement === 'string') {
 			return DataTypes.ArrayString;
+		}
+
+		if (typeof firstElement === 'boolean') {
+			return DataTypes.ArrayBool;
 		}
 
 		if (typeof firstElement === 'number') {
