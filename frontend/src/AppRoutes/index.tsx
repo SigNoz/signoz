@@ -32,6 +32,8 @@ function App(): JSX.Element {
 
 	const dispatch = useDispatch<Dispatch<AppActions>>();
 
+	const { hostname } = window.location;
+
 	const featureResponse = useGetFeatureFlag((allFlags) => {
 		const isOnboardingEnabled =
 			allFlags.find((flag) => flag.name === FeatureKeys.ONBOARDING)?.active ||
@@ -49,9 +51,12 @@ function App(): JSX.Element {
 			},
 		});
 
-		if (isOnboardingEnabled) {
+		if (
+			!isOnboardingEnabled ||
+			!(hostname && hostname.endsWith('signoz.cloud'))
+		) {
 			const newRoutes = routes.filter(
-				(route) => route?.key !== ROUTES.GET_STARTED,
+				(route) => route?.path !== ROUTES.GET_STARTED,
 			);
 
 			setRoutes(newRoutes);
