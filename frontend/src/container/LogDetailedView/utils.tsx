@@ -17,6 +17,22 @@ export const recursiveParseJSON = (obj: string): Record<string, unknown> => {
 	}
 };
 
+export const computeDataNode = (
+	key: string,
+	valueIsArray: boolean,
+	value: unknown,
+	nodeKey: string,
+): DataNode => ({
+	key: uniqueId(),
+	title: `${key} ${valueIsArray ? '[...]' : ''}`,
+	// eslint-disable-next-line @typescript-eslint/no-use-before-define
+	children: jsonToDataNodes(
+		value as Record<string, unknown>,
+		valueIsArray ? `${nodeKey}[*]` : nodeKey,
+		valueIsArray,
+	),
+});
+
 export function jsonToDataNodes(
 	json: Record<string, unknown>,
 	parentKey = '',
@@ -33,6 +49,10 @@ export function jsonToDataNodes(
 		const valueIsArray = Array.isArray(value);
 
 		if (parentIsArray) {
+			if (typeof value === 'object' && value !== null) {
+				return computeDataNode(key, valueIsArray, value, nodeKey);
+			}
+
 			return {
 				key: uniqueId(),
 				title: (
@@ -48,15 +68,7 @@ export function jsonToDataNodes(
 		}
 
 		if (typeof value === 'object' && value !== null) {
-			return {
-				key: uniqueId(),
-				title: `${key} ${valueIsArray ? '[...]' : ''}`,
-				children: jsonToDataNodes(
-					value as Record<string, unknown>,
-					valueIsArray ? `${nodeKey}[*]` : nodeKey,
-					valueIsArray,
-				),
-			};
+			return computeDataNode(key, valueIsArray, value, nodeKey);
 		}
 		return {
 			key: uniqueId(),
@@ -118,3 +130,6 @@ export const generateFieldKeyForArray = (fieldKey: string): string => {
 	}
 	return `body.${resultNodeKey}`;
 };
+
+export const removeObjectFromString = (str: string): string =>
+	str.replace(/\[object Object\]./g, '');
