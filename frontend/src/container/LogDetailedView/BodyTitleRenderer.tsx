@@ -29,7 +29,7 @@ function BodyTitleRenderer({
 			onAddToQuery(
 				`body.${nodeKey}`,
 				`${value}`,
-				isFilterIn ? OPERATORS.CONTAINS : OPERATORS.NOT_CONTAINS,
+				isFilterIn ? OPERATORS['='] : OPERATORS['!='],
 				true,
 				getDataTypes(value),
 			);

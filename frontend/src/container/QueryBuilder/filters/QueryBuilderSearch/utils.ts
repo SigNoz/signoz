@@ -57,6 +57,10 @@ export function getOperatorValue(op: string): string {
 			return 'nin';
 		case OPERATORS.REGEX:
 			return 'regex';
+		case OPERATORS.HAS:
+			return 'has';
+		case OPERATORS.NHAS:
+			return 'nhas';
 		case OPERATORS.NREGEX:
 			return 'nregex';
 		case 'LIKE':
