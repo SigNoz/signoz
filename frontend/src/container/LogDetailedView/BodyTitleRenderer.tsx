@@ -6,7 +6,11 @@ import { useActiveLog } from 'hooks/logs/useActiveLog';
 import { TitleWrapper } from './BodyTitleRenderer.styles';
 import { DROPDOWN_KEY } from './constant';
 import { BodyTitleRendererProps } from './LogDetailedView.types';
-import { generateFieldKeyForArray, getDataTypes } from './utils';
+import {
+	generateFieldKeyForArray,
+	getDataTypes,
+	removeObjectFromString,
+} from './utils';
 
 function BodyTitleRenderer({
 	title,
@@ -16,10 +20,13 @@ function BodyTitleRenderer({
 }: BodyTitleRendererProps): JSX.Element {
 	const { onAddToQuery } = useActiveLog();
 
-	const filterOutHandler = (isFilterIn: boolean) => (): void => {
+	const filterHandler = (isFilterIn: boolean) => (): void => {
 		if (parentIsArray) {
 			onAddToQuery(
-				generateFieldKeyForArray(nodeKey),
+				generateFieldKeyForArray(
+					removeObjectFromString(nodeKey),
+					getDataTypes(value),
+				),
 				`${value}`,
 				isFilterIn ? OPERATORS.HAS : OPERATORS.NHAS,
 				true,
@@ -27,7 +34,7 @@ function BodyTitleRenderer({
 			);
 		} else {
 			onAddToQuery(
-				`body.${nodeKey}`,
+				`body.${removeObjectFromString(nodeKey)}`,
 				`${value}`,
 				isFilterIn ? OPERATORS['='] : OPERATORS['!='],
 				true,
@@ -38,8 +45,8 @@ function BodyTitleRenderer({
 
 	const onClickHandler: MenuProps['onClick'] = (props): void => {
 		const mapper = {
-			[DROPDOWN_KEY.FILTER_IN]: filterOutHandler(true),
-			[DROPDOWN_KEY.FILTER_OUT]: filterOutHandler(false),
+			[DROPDOWN_KEY.FILTER_IN]: filterHandler(true),
+			[DROPDOWN_KEY.FILTER_OUT]: filterHandler(false),
 		};
 
 		const handler = mapper[props.key];
