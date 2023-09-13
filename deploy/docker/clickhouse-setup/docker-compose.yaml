@@ -147,7 +147,7 @@ services:
   #     - ./user_scripts:/var/lib/clickhouse/user_scripts/
 
   alertmanager:
-    image: signoz/alertmanager:${ALERTMANAGER_TAG:-0.23.3}
+    image: signoz/alertmanager:${ALERTMANAGER_TAG:-0.23.4}
     container_name: signoz-alertmanager
     volumes:
       - ./data/alertmanager:/data
@@ -213,7 +213,7 @@ services:
       - ../common/nginx-config.conf:/etc/nginx/conf.d/default.conf
 
   otel-collector:
-    image: signoz/signoz-otel-collector:${OTELCOL_TAG:-0.79.6}
+    image: signoz/signoz-otel-collector:${OTELCOL_TAG:-0.79.7}
     container_name: signoz-otel-collector
     command:
       [
@@ -244,7 +244,7 @@ services:
     <<: *clickhouse-depend
 
   otel-collector-metrics:
-    image: signoz/signoz-otel-collector:${OTELCOL_TAG:-0.79.6}
+    image: signoz/signoz-otel-collector:${OTELCOL_TAG:-0.79.7}
     container_name: signoz-otel-collector-metrics
     command:
       [
