@@ -8,6 +8,7 @@ import { useState } from 'react';
 
 import ApplicationLogs from './ApplicationLogs/ApplicationLogs';
 import Docker from './Docker/Docker';
+import ExistingCollectors from './ExistingCollectors/ExistingCollectors';
 import Kubernetes from './Kubernetes/Kubernetes';
 import Nodejs from './Nodejs/Nodejs';
 import SysLogs from './SysLogs/SysLogs';
@@ -39,8 +40,13 @@ const supportedLogTypes = [
 		imgURL: `Logos/node-js.svg`,
 	},
 	{
-		name: 'Logs from existing Collectors',
+		name: 'Application Logs using OTEL SDK',
 		id: 'application_logs_otel_sdk',
+		imgURL: `Logos/cmd-terminal.svg`,
+	},
+	{
+		name: 'Logs from existing collectors',
+		id: 'existing_collectors',
 		imgURL: `Logos/cmd-terminal.svg`,
 	},
 ];
@@ -70,6 +76,8 @@ export default function LogsManagement({
 				return <SysLogs activeStep={activeStep} />;
 			case 'nodejs':
 				return <Nodejs activeStep={activeStep} />;
+			case 'existing_collectors':
+				return <ExistingCollectors />;
 			default:
 				return <> </>;
 		}
