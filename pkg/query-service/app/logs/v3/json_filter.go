@@ -47,9 +47,11 @@ var jsonLogOperators = map[v3.FilterOperator]string{
 	v3.FilterOperatorNotRegex:        "NOT match(%s, %s)",
 	v3.FilterOperatorIn:              "IN",
 	v3.FilterOperatorNotIn:           "NOT IN",
+	v3.FilterOperatorHas:             "has(%s, %s)",
+	v3.FilterOperatorNotHas:          "NOT has(%s, %s)",
 }
 
-func getJSONFilterKey(key v3.AttributeKey) (string, error) {
+func getJSONFilterKey(key v3.AttributeKey, isArray bool) (string, error) {
 	keyArr := strings.Split(key.Key, ".")
 	if len(keyArr) < 2 {
 		return "", fmt.Errorf("incorrect key, should contain at least 2 parts")
@@ -66,36 +68,39 @@ func getJSONFilterKey(key v3.AttributeKey) (string, error) {
 		return "", fmt.Errorf("unsupported dataType for JSON: %s", key.DataType)
 	}
 
-	if dataType == "String" {
-		return fmt.Sprintf("JSON_VALUE(%s, '$.%s')", keyArr[0], strings.Join(keyArr[1:], ".")), nil
+	if isArray {
+		return fmt.Sprintf("JSONExtract(JSON_QUERY(%s, '$.%s'), '%s')", keyArr[0], strings.Join(keyArr[1:], "."), dataType), nil
 	}
 
-	return fmt.Sprintf("JSONExtract(JSON_QUERY(%s, '$.%s'), '%s')", keyArr[0], strings.Join(keyArr[1:], "."), dataType), nil
+	// for non array
+	keyname := fmt.Sprintf("JSON_VALUE(%s, '$.%s')", keyArr[0], strings.Join(keyArr[1:], "."))
+	if dataType != "String" {
+		keyname = fmt.Sprintf("JSONExtract(%s, '%s')", keyname, dataType)
+	}
 
+	return keyname, nil
 }
 
 func GetJSONFilter(item v3.FilterItem) (string, error) {
-	key, err := getJSONFilterKey(item.Key)
+
+	dataType := item.Key.DataType
+	isArray := false
+	// check if its an array and handle it
+	if val, ok := arrayValueTypeMapping[string(item.Key.DataType)]; ok {
+		if item.Operator != v3.FilterOperatorHas && item.Operator != v3.FilterOperatorNotHas {
+			return "", fmt.Errorf("only has operator is supported for array")
+		}
+		isArray = true
+		dataType = v3.AttributeKeyDataType(val)
+	}
+
+	key, err := getJSONFilterKey(item.Key, isArray)
 	if err != nil {
 		return "", err
 	}
 
-	// check if its an array and handle it
-	if dataType, ok := arrayValueTypeMapping[string(item.Key.DataType)]; ok {
-		if item.Operator != "has" {
-			return "", fmt.Errorf("only has operator is supported for array")
-		}
-		value, err := utils.ValidateAndCastValue(item.Value, v3.AttributeKeyDataType(dataType))
-		if err != nil {
-			return "", fmt.Errorf("failed to validate and cast value for %s: %v", item.Key.Key, err)
-		}
-		fmtVal := utils.ClickHouseFormattedValue(value)
-		filter := fmt.Sprintf("has(%s, %s)", key, fmtVal)
-		return filter, nil
-	}
-
 	// non array
-	value, err := utils.ValidateAndCastValue(item.Value, item.Key.DataType)
+	value, err := utils.ValidateAndCastValue(item.Value, dataType)
 	if err != nil {
 		return "", fmt.Errorf("failed to validate and cast value for %s: %v", item.Key.Key, err)
 	}
@@ -103,7 +108,7 @@ func GetJSONFilter(item v3.FilterItem) (string, error) {
 	op := v3.FilterOperator(strings.ToLower(strings.TrimSpace(string(item.Operator))))
 	if logsOp, ok := jsonLogOperators[op]; ok {
 		switch op {
-		case v3.FilterOperatorRegex, v3.FilterOperatorNotRegex:
+		case v3.FilterOperatorRegex, v3.FilterOperatorNotRegex, v3.FilterOperatorHas, v3.FilterOperatorNotHas:
 			fmtVal := utils.ClickHouseFormattedValue(value)
 			return fmt.Sprintf(logsOp, key, fmtVal), nil
 		case v3.FilterOperatorContains, v3.FilterOperatorNotContains:

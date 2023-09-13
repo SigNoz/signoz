@@ -549,6 +549,9 @@ const (
 
 	FilterOperatorExists    FilterOperator = "exists"
 	FilterOperatorNotExists FilterOperator = "nexists"
+
+	FilterOperatorHas    FilterOperator = "has"
+	FilterOperatorNotHas FilterOperator = "nhas"
 )
 
 type FilterItem struct {

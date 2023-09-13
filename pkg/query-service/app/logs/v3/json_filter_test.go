@@ -10,6 +10,7 @@ import (
 var testGetJSONFilterKeyData = []struct {
 	Name          string
 	Key           v3.AttributeKey
+	IsArray       bool
 	ClickhouseKey string
 	Error         bool
 }{
@@ -20,7 +21,8 @@ var testGetJSONFilterKeyData = []struct {
 			DataType: "array(string)",
 			IsJSON:   true,
 		},
-		Error: true,
+		IsArray: true,
+		Error:   true,
 	},
 	{
 		Name: "Using anything other than body",
@@ -29,7 +31,8 @@ var testGetJSONFilterKeyData = []struct {
 			DataType: "array(string)",
 			IsJSON:   true,
 		},
-		Error: true,
+		IsArray: true,
+		Error:   true,
 	},
 	{
 		Name: "Array String",
@@ -38,6 +41,7 @@ var testGetJSONFilterKeyData = []struct {
 			DataType: "array(string)",
 			IsJSON:   true,
 		},
+		IsArray:       true,
 		ClickhouseKey: "JSONExtract(JSON_QUERY(body, '$.requestor_list[*]'), '" + ARRAY_STRING + "')",
 	},
 	{
@@ -47,6 +51,7 @@ var testGetJSONFilterKeyData = []struct {
 			DataType: "array(string)",
 			IsJSON:   true,
 		},
+		IsArray:       true,
 		ClickhouseKey: "JSONExtract(JSON_QUERY(body, '$.nested[*].key[*]'), '" + ARRAY_STRING + "')",
 	},
 	{
@@ -56,6 +61,7 @@ var testGetJSONFilterKeyData = []struct {
 			DataType: "array(int64)",
 			IsJSON:   true,
 		},
+		IsArray:       true,
 		ClickhouseKey: "JSONExtract(JSON_QUERY(body, '$.int_numbers[*]'), '" + ARRAY_INT64 + "')",
 	},
 	{
@@ -65,6 +71,7 @@ var testGetJSONFilterKeyData = []struct {
 			DataType: "array(float64)",
 			IsJSON:   true,
 		},
+		IsArray:       true,
 		ClickhouseKey: "JSONExtract(JSON_QUERY(body, '$.nested_num[*].float_nums[*]'), '" + ARRAY_FLOAT64 + "')",
 	},
 	{
@@ -74,6 +81,7 @@ var testGetJSONFilterKeyData = []struct {
 			DataType: "string",
 			IsJSON:   true,
 		},
+		IsArray:       false,
 		ClickhouseKey: "JSON_VALUE(body, '$.message')",
 	},
 	{
@@ -83,7 +91,8 @@ var testGetJSONFilterKeyData = []struct {
 			DataType: "int64",
 			IsJSON:   true,
 		},
-		ClickhouseKey: "JSONExtract(JSON_QUERY(body, '$.status'), '" + INT64 + "')",
+		IsArray:       false,
+		ClickhouseKey: "JSONExtract(JSON_VALUE(body, '$.status'), '" + INT64 + "')",
 	},
 	{
 		Name: "Float",
@@ -92,14 +101,15 @@ var testGetJSONFilterKeyData = []struct {
 			DataType: "float64",
 			IsJSON:   true,
 		},
-		ClickhouseKey: "JSONExtract(JSON_QUERY(body, '$.fraction'), '" + FLOAT64 + "')",
+		IsArray:       false,
+		ClickhouseKey: "JSONExtract(JSON_VALUE(body, '$.fraction'), '" + FLOAT64 + "')",
 	},
 }
 
 func TestGetJSONFilterKey(t *testing.T) {
 	for _, tt := range testGetJSONFilterKeyData {
 		Convey("testgetKey", t, func() {
-			columnName, err := getJSONFilterKey(tt.Key)
+			columnName, err := getJSONFilterKey(tt.Key, tt.IsArray)
 			if tt.Error {
 				So(err, ShouldNotBeNil)
 			} else {
@@ -150,10 +160,10 @@ var testGetJSONFilterData = []struct {
 				DataType: "array(float64)",
 				IsJSON:   true,
 			},
-			Operator: "has",
+			Operator: "nhas",
 			Value:    2.2,
 		},
-		Filter: "has(JSONExtract(JSON_QUERY(body, '$.nested_num[*].float_nums[*]'), '" + ARRAY_FLOAT64 + "'), 2.200000)",
+		Filter: "NOT has(JSONExtract(JSON_QUERY(body, '$.nested_num[*].float_nums[*]'), '" + ARRAY_FLOAT64 + "'), 2.200000)",
 	},
 	{
 		Name: "eq operator",
@@ -179,7 +189,7 @@ var testGetJSONFilterData = []struct {
 			Operator: "=",
 			Value:    1,
 		},
-		Filter: "JSONExtract(JSON_QUERY(body, '$.status'), '" + INT64 + "') = 1",
+		Filter: "JSONExtract(JSON_VALUE(body, '$.status'), '" + INT64 + "') = 1",
 	},
 	{
 		Name: "neq operator number",
@@ -192,7 +202,7 @@ var testGetJSONFilterData = []struct {
 			Operator: "=",
 			Value:    1.1,
 		},
-		Filter: "JSONExtract(JSON_QUERY(body, '$.status'), '" + FLOAT64 + "') = 1.100000",
+		Filter: "JSONExtract(JSON_VALUE(body, '$.status'), '" + FLOAT64 + "') = 1.100000",
 	},
 	{
 		Name: "greater than operator",
@@ -205,7 +215,7 @@ var testGetJSONFilterData = []struct {
 			Operator: ">",
 			Value:    1,
 		},
-		Filter: "JSONExtract(JSON_QUERY(body, '$.status'), '" + INT64 + "') > 1",
+		Filter: "JSONExtract(JSON_VALUE(body, '$.status'), '" + INT64 + "') > 1",
 	},
 	{
 		Name: "regex operator",
