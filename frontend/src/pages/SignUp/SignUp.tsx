@@ -5,7 +5,9 @@ import loginApi from 'api/user/login';
 import signUpApi from 'api/user/signup';
 import afterLogin from 'AppRoutes/utils';
 import WelcomeLeftContainer from 'components/WelcomeLeftContainer';
+import { FeatureKeys } from 'constants/features';
 import ROUTES from 'constants/routes';
+import useFeatureFlag from 'hooks/useFeatureFlag';
 import { useNotifications } from 'hooks/useNotifications';
 import history from 'lib/history';
 import { useEffect, useState } from 'react';
@@ -56,6 +58,8 @@ function SignUp({ version }: SignUpProps): JSX.Element {
 	const params = new URLSearchParams(search);
 	const token = params.get('token');
 	const [isDetailsDisable, setIsDetailsDisable] = useState<boolean>(false);
+
+	const isOnboardingEnabled = useFeatureFlag(FeatureKeys.ONBOARDING)?.active;
 
 	const getInviteDetailsResponse = useQuery({
 		queryFn: () =>
@@ -237,7 +241,11 @@ function SignUp({ version }: SignUpProps): JSX.Element {
 					await commonHandler(
 						values,
 						async (): Promise<void> => {
-							history.push(ROUTES.APPLICATION);
+							if (isOnboardingEnabled) {
+								history.push(ROUTES.GET_STARTED);
+							} else {
+								history.push(ROUTES.APPLICATION);
+							}
 						},
 					);
 				}

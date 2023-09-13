@@ -26,6 +26,7 @@ const plugins = [
 	}),
 	new webpack.DefinePlugin({
 		'process.env': JSON.stringify({
+			NODE_ENV: process.env.NODE_ENV,
 			FRONTEND_API_ENDPOINT: process.env.FRONTEND_API_ENDPOINT,
 			INTERCOM_APP_ID: process.env.INTERCOM_APP_ID,
 		}),
