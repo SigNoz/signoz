@@ -6,7 +6,6 @@ import Header from 'container/OnboardingContainer/common/Header/Header';
 import { useState } from 'react';
 
 import ConnectionStatus from '../common/ConnectionStatus/ConnectionStatus';
-import AngularDocs from './md-docs/angular.md';
 import ExpressDocs from './md-docs/express.md';
 import JavascriptDocs from './md-docs/javascript.md';
 import NestJsDocs from './md-docs/nestjs.md';
@@ -14,8 +13,7 @@ import NestJsDocs from './md-docs/nestjs.md';
 const frameworksMap = {
 	express: 'Express',
 	nestjs: 'Nest JS',
-	angular: 'Angular',
-	other: 'Others',
+	nodejs: 'Nodejs',
 };
 
 export default function Javascript({
@@ -23,20 +21,18 @@ export default function Javascript({
 }: {
 	activeStep: number;
 }): JSX.Element {
-	const [selectedFrameWork, setSelectedFrameWork] = useState('express');
+	const [selectedFrameWork, setSelectedFrameWork] = useState('nodejs');
 
 	const [form] = Form.useForm();
 
 	const renderDocs = (): JSX.Element => {
 		switch (selectedFrameWork) {
-			case 'express':
-				return <ExpressDocs />;
+			case 'nodejs':
+				return <JavascriptDocs />;
 			case 'nestjs':
 				return <NestJsDocs />;
-			case 'angular':
-				return <AngularDocs />;
 			default:
-				return <JavascriptDocs />;
+				return <ExpressDocs />;
 		}
 	};
 
@@ -63,20 +59,16 @@ export default function Javascript({
 								onChange={(value): void => setSelectedFrameWork(value)}
 								options={[
 									{
+										value: 'nodejs',
+										label: frameworksMap.nodejs,
+									},
+									{
 										value: 'express',
 										label: frameworksMap.express,
 									},
 									{
 										value: 'nestjs',
 										label: frameworksMap.nestjs,
-									},
-									{
-										value: 'angular',
-										label: frameworksMap.angular,
-									},
-									{
-										value: 'other',
-										label: frameworksMap.other,
 									},
 								]}
 							/>

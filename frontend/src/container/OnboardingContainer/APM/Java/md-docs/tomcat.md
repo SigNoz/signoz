@@ -1,8 +1,14 @@
+## Requirements
+
+Java 8 or higher
+
 ## Send Traces to SigNoz Cloud
 
 OpenTelemetry provides a handy Java JAR agent that can be attached to any Java 8+ application and dynamically injects bytecode to capture telemetry from a number of popular libraries and frameworks.
 
 Based on your application environment, you can choose the setup below to send traces to SigNoz Cloud.
+
+### Application on VMs
 
 From VMs, there are two ways to send data to SigNoz Cloud.
 
@@ -10,9 +16,8 @@ From VMs, there are two ways to send data to SigNoz Cloud.
 - [Send traces via OTel Collector binary](#send-traces-via-otel-collector-binary) (recommended)
 
 #### **Send traces directly to SigNoz Cloud**
-
 OpenTelemetry Java agent can send traces directly to SigNoz Cloud.
-
+  
 Step 1. Download otel java binary agent
 
 ```bash
@@ -24,6 +29,7 @@ Step 2. Enable the instrumentation agent and run your application
 If you run your `.war` package by putting in `webapps` folder, just add `setenv.sh` in your Tomcat `bin` folder.
 
 This should set these environment variables and start sending telemetry data to SigNoz Cloud.
+
 
 ```bash
 export CATALINA_OPTS="$CATALINA_OPTS -javaagent:/path/to/opentelemetry-javaagent.jar"
@@ -37,11 +43,11 @@ export OTEL_RESOURCE_ATTRIBUTES=service.name=<app_name>
 
 Depending on the choice of your region for SigNoz cloud, the ingest endpoint will vary according to this table.
 
-| Region | Endpoint                   |
-| ------ | -------------------------- |
-| US     | ingest.us.signoz.cloud:443 |
-| IN     | ingest.in.signoz.cloud:443 |
-| EU     | ingest.eu.signoz.cloud:443 |
+ US -	ingest.us.signoz.cloud:443 <br></br>
+
+ IN -	ingest.in.signoz.cloud:443 <br></br>
+
+ EU - ingest.eu.signoz.cloud:443 <br></br>
 
 ---
 
@@ -52,7 +58,6 @@ OTel Collector binary helps to collect logs, hostmetrics, resource and infra att
 You can find instructions to install OTel Collector binary [here](https://signoz.io/docs/tutorial/opentelemetry-binary-usage-in-virtual-machine/) in your VM. Once you are done setting up your OTel Collector binary, you can follow the below steps for instrumenting your Java application.
 
 Step 1. Download OTel java binary agent<br></br>
-
 ```bash
 wget https://github.com/open-telemetry/opentelemetry-java-instrumentation/releases/latest/download/opentelemetry-javaagent.jar
 ```
@@ -63,11 +68,16 @@ If you run your `.war` package by putting in `webapps` folder, just add `setenv.
 
 This should set these environment variables and start sending telemetry data to SigNoz Cloud.
 
+
 ```bash
 export CATALINA_OPTS="$CATALINA_OPTS -javaagent:/path/to/opentelemetry-javaagent.jar"
 ```
 
 - path/to - Update it to the path of your downloaded Java JAR agent.
+
+---
+  
+### Applications Deployed on Kubernetes
 
 For Java application deployed on Kubernetes, you need to install OTel Collector agent in your k8s infra to collect and send traces to SigNoz Cloud. You can find the instructions to install OTel Collector agent [here](/docs/tutorial/kubernetes-infra-metrics/).
 
@@ -82,9 +92,9 @@ Once you have set up OTel Collector agent, you can proceed with OpenTelemetry ja
 2. Enable the instrumentation agent and run your application<br></br>
 
    If you run your `.war` package by putting in `webapps` folder, just add `setenv.sh` in your Tomcat `bin` folder.
-
+   
    This should set the environment variable and start sending telemetry data to SigNoz Cloud.
-
+   
    ```bash
    export CATALINA_OPTS="$CATALINA_OPTS -javaagent:/path/to/opentelemetry-javaagent.jar"
    ```

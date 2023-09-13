@@ -1,8 +1,14 @@
+## Requirements
+
+Java 8 or higher
+
 ## Send Traces to SigNoz Cloud
 
 OpenTelemetry provides a handy Java JAR agent that can be attached to any Java 8+ application and dynamically injects bytecode to capture telemetry from a number of popular libraries and frameworks.
 
 Based on your application environment, you can choose the setup below to send traces to SigNoz Cloud.
+
+### Application on VMs
 
 From VMs, there are two ways to send data to SigNoz Cloud.
 
@@ -33,11 +39,12 @@ java -javaagent:$PWD/opentelemetry-javaagent.jar -jar <my-app>.jar
 
 Depending on the choice of your region for SigNoz cloud, the ingest endpoint will vary according to this table.
 
-| Region | Endpoint                   |
-| ------ | -------------------------- |
-| US     | ingest.us.signoz.cloud:443 |
-| IN     | ingest.in.signoz.cloud:443 |
-| EU     | ingest.eu.signoz.cloud:443 |
+ US -	ingest.us.signoz.cloud:443 <br></br>
+
+ IN -	ingest.in.signoz.cloud:443 <br></br>
+
+ EU - ingest.eu.signoz.cloud:443 <br></br>
+
 
 ---
 
@@ -62,6 +69,10 @@ java -javaagent:$PWD/opentelemetry-javaagent.jar -jar <myapp>.jar
 - `<myapp>` is the name of your application jar file
 - In case you download `opentelemetry-javaagent.jar` file in different directory than that of the project, replace `$PWD` with the path of the otel jar file.
 
+---
+
+### Applications Deployed on Kubernetes
+
 For Java application deployed on Kubernetes, you need to install OTel Collector agent in your k8s infra to collect and send traces to SigNoz Cloud. You can find the instructions to install OTel Collector agent [here](/docs/tutorial/kubernetes-infra-metrics/).
 
 Once you have set up OTel Collector agent, you can proceed with OpenTelemetry java instrumentation by following the below steps:
@@ -73,7 +84,7 @@ Once you have set up OTel Collector agent, you can proceed with OpenTelemetry ja
    ```
 
 2. Run your application<br></br>
-
+   
    ```bash
    java -javaagent:$PWD/opentelemetry-javaagent.jar -jar <myapp>.jar
    ```
@@ -82,5 +93,4 @@ Once you have set up OTel Collector agent, you can proceed with OpenTelemetry ja
    - In case you download `opentelemetry-javaagent.jar` file in different directory than that of the project, replace `$PWD` with the path of the otel jar file.
 
 3. Make sure to dockerise your application along with OpenTelemetry instrumentation.
-
-You can validate if your application is sending traces to SigNoz cloud by following the instructions [here](#validating-instrumentation-by-checking-for-traces).
+  
