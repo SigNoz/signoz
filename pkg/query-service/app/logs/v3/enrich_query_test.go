@@ -87,6 +87,24 @@ var testEnrichmentRequiredData = []struct {
 		EnrichmentRequired: true,
 	},
 	{
+		Name: "filter enrichment not required required json",
+		Params: v3.QueryRangeParamsV3{
+			CompositeQuery: &v3.CompositeQuery{
+				BuilderQueries: map[string]*v3.BuilderQuery{
+					"test": {
+						QueryName:  "test",
+						Expression: "test",
+						DataSource: v3.DataSourceLogs,
+						Filters: &v3.FilterSet{Operator: "AND", Items: []v3.FilterItem{
+							{Key: v3.AttributeKey{Key: "user_name", IsJSON: true}, Value: "john", Operator: "="},
+						}},
+					},
+				},
+			},
+		},
+		EnrichmentRequired: false,
+	},
+	{
 		Name: "groupBy enrichment not required",
 		Params: v3.QueryRangeParamsV3{
 			CompositeQuery: &v3.CompositeQuery{
