@@ -122,13 +122,25 @@ export const getDataTypes = (value: unknown): DataTypes => {
 	return DataTypes.Int64;
 };
 
-export const generateFieldKeyForArray = (fieldKey: string): string => {
-	const lastDotIndex = fieldKey.lastIndexOf('.');
+export const generateFieldKeyForArray = (
+	fieldKey: string,
+	dataType: DataTypes,
+): string => {
+	let lastDotIndex = fieldKey.lastIndexOf('.');
 	let resultNodeKey = fieldKey;
 	if (lastDotIndex !== -1) {
 		resultNodeKey = fieldKey.substring(0, lastDotIndex);
 	}
-	return `body.${resultNodeKey}`;
+
+	let newResultNodeKey = resultNodeKey;
+
+	if (dataType === DataTypes.Float64) {
+		lastDotIndex = resultNodeKey.lastIndexOf('.');
+		if (lastDotIndex !== -1) {
+			newResultNodeKey = resultNodeKey.substring(0, lastDotIndex);
+		}
+	}
+	return `body.${newResultNodeKey}`;
 };
 
 export const removeObjectFromString = (str: string): string =>

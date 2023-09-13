@@ -23,7 +23,10 @@ function BodyTitleRenderer({
 	const filterHandler = (isFilterIn: boolean) => (): void => {
 		if (parentIsArray) {
 			onAddToQuery(
-				generateFieldKeyForArray(removeObjectFromString(nodeKey)),
+				generateFieldKeyForArray(
+					removeObjectFromString(nodeKey),
+					getDataTypes(value),
+				),
 				`${value}`,
 				isFilterIn ? OPERATORS.HAS : OPERATORS.NHAS,
 				true,
