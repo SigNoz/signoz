@@ -23,7 +23,7 @@ function BodyTitleRenderer({
 				`${value}`,
 				isFilterIn ? OPERATORS.HAS : OPERATORS.NHAS,
 				true,
-				getDataTypes(value),
+				parentIsArray ? getDataTypes([value]) : getDataTypes(value),
 			);
 		} else {
 			onAddToQuery(
