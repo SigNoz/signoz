@@ -1,4 +1,5 @@
 import { DataNode } from 'antd/es/tree';
+import { uniqueId } from 'lodash-es';
 
 import BodyTitleRenderer from './BodyTitleRenderer';
 import { AnyObject } from './LogDetailedView.types';
@@ -33,7 +34,7 @@ export function jsonToDataNodes(
 
 		if (parentIsArray) {
 			return {
-				key: nodeKey,
+				key: uniqueId(),
 				title: (
 					<BodyTitleRenderer
 						title={value as string}
@@ -48,7 +49,7 @@ export function jsonToDataNodes(
 
 		if (typeof value === 'object' && value !== null) {
 			return {
-				key: nodeKey,
+				key: uniqueId(),
 				title: `${key} ${valueIsArray ? '[...]' : ''}`,
 				children: jsonToDataNodes(
 					value as Record<string, unknown>,
@@ -58,7 +59,7 @@ export function jsonToDataNodes(
 			};
 		}
 		return {
-			key: nodeKey,
+			key: uniqueId(),
 			title: (
 				<BodyTitleRenderer
 					title={key}
@@ -115,5 +116,5 @@ export const generateFieldKeyForArray = (fieldKey: string): string => {
 	if (lastDotIndex !== -1) {
 		resultNodeKey = fieldKey.substring(0, lastDotIndex);
 	}
-	return resultNodeKey;
+	return `body.${resultNodeKey}`;
 };

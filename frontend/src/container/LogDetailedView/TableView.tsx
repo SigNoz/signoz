@@ -165,6 +165,7 @@ function TableView({
 			render: (field, record): JSX.Element => {
 				if (record.field === 'body') {
 					const parsedBody = recursiveParseJSON(field);
+					parsedBody.bool = [true, true, false];
 					if (!isEmpty(parsedBody)) {
 						return <Tree showLine treeData={jsonToDataNodes(parsedBody)} />;
 					}

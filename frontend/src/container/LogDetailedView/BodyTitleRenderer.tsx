@@ -27,7 +27,7 @@ function BodyTitleRenderer({
 			);
 		} else {
 			onAddToQuery(
-				nodeKey,
+				`body.${nodeKey}`,
 				`${value}`,
 				isFilterIn ? OPERATORS.CONTAINS : OPERATORS.NOT_CONTAINS,
 				true,
@@ -53,11 +53,11 @@ function BodyTitleRenderer({
 		items: [
 			{
 				key: DROPDOWN_KEY.FILTER_IN,
-				label: `Filter for ${nodeKey}`,
+				label: `Filter for ${value}`,
 			},
 			{
 				key: DROPDOWN_KEY.FILTER_OUT,
-				label: `Filter out ${nodeKey}`,
+				label: `Filter out ${value}`,
 			},
 		],
 		onClick: onClickHandler,
@@ -65,7 +65,7 @@ function BodyTitleRenderer({
 
 	return (
 		<TitleWrapper>
-			{title}
+			{title.toString()} {!parentIsArray && `- ${value}`}
 			<Dropdown menu={menu} trigger={['click']}>
 				<SettingOutlined style={{ marginLeft: 8 }} className="hover-reveal" />
 			</Dropdown>
