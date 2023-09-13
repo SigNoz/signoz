@@ -1,6 +1,12 @@
+## Requirements
+
+- Python 3.8 or newer
+
 ## Send Traces to SigNoz Cloud
 
 Based on your application environment, you can choose the setup below to send traces to SigNoz Cloud.
+
+### Application on VMs
 
 From VMs, there are two ways to send data to SigNoz Cloud.
 
@@ -37,13 +43,14 @@ opentelemetry-instrument <your_run_command>
 
 Depending on the choice of your region for SigNoz cloud, the ingest endpoint will vary according to this table.
 
-| Region | Endpoint                   |
-| ------ | -------------------------- |
-| US     | ingest.us.signoz.cloud:443 |
-| IN     | ingest.in.signoz.cloud:443 |
-| EU     | ingest.eu.signoz.cloud:443 |
+ US -	ingest.us.signoz.cloud:443 <br></br>
 
-Step 4. Validate if your application is sending traces to SigNoz cloud by following the instructions [here](#validating-instrumentation-by-checking-for-traces).
+ IN -	ingest.in.signoz.cloud:443 <br></br>
+
+ EU - ingest.eu.signoz.cloud:443 <br></br>
+
+Note:
+Don’t run app in reloader/hot-reload mode as it breaks instrumentation.
 
 ---
 
@@ -71,7 +78,7 @@ Step 3. To run your application and send data to collector in same VM:
 ```bash
 OTEL_RESOURCE_ATTRIBUTES=service.name=<service_name> \
 OTEL_EXPORTER_OTLP_ENDPOINT="http://localhost:4317" \
-opentelemetry-instrument <your_run_command>
+OTEL_EXPORTER_OTLP_PROTOCOL=grpc opentelemetry-instrument <your run command>
 ```
 
 where,
@@ -79,9 +86,20 @@ where,
 - *`<service_name>`* is the name of the service you want
 - *`<your_run_command>`* can be `python3 app.py` or `flask run`
 
+*<service_name>* is the name of service you want
+
+*<your_run_command>* can be `python3 app.py` or `flask run`
+
+`http://localhost:4317` for gRPC exporter and `http://localhost:4318` for HTTP exporter.
+
+The port numbers are 4317 and 4318 for the gRPC and HTTP exporters respectively.
+
 In case you have OtelCollector Agent in different VM, replace localhost:4317 with `<IP Address of the VM>:4317`.
 
-Step 4. You can validate if your application is sending traces to SigNoz cloud by following the instructions [here](#validating-instrumentation-by-checking-for-traces).
+---
+
+
+### Applications Deployed on Kubernetes
 
 For Python application deployed on Kubernetes, you need to install OTel Collector agent in your k8s infra to collect and send traces to SigNoz Cloud. You can find the instructions to install OTel Collector agent [here](https://signoz.io/docs/tutorial/kubernetes-infra-metrics/).
 
@@ -105,7 +123,7 @@ Step 3. Run your application:
 ```bash
 OTEL_RESOURCE_ATTRIBUTES=service.name=<service_name> \
 OTEL_EXPORTER_OTLP_ENDPOINT="http://localhost:4317" \
-opentelemetry-instrument <your_run_command>
+OTEL_EXPORTER_OTLP_PROTOCOL=grpc opentelemetry-instrument <your run command>
 ```
 
 where,
@@ -113,6 +131,5 @@ where,
 - *`<service_name>`* is the name of the service you want
 - *`<your_run_command>`* can be `python3 app.py` or `flask run`
 
-Step 4. Make sure to dockerise your application along with OpenTelemetry instrumentation.
 
-You can validate if your application is sending traces to SigNoz cloud by following the instructions [here](#validating-instrumentation-by-checking-for-traces).
+Step 4. Make sure to dockerise your application along with OpenTelemetry instrumentation.
