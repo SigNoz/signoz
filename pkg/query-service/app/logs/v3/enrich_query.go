@@ -27,6 +27,9 @@ func EnrichmentRequired(params *v3.QueryRangeParamsV3) bool {
 		// check filter attribute
 		if query.Filters != nil && len(query.Filters.Items) != 0 {
 			for _, item := range query.Filters.Items {
+				if item.Key.IsJSON {
+					continue
+				}
 				if !isEnriched(item.Key) {
 					return true
 				}
@@ -97,6 +100,9 @@ func enrichLogsQuery(query *v3.BuilderQuery, fields map[string]v3.AttributeKey) 
 	// enrich filter attribute
 	if query.Filters != nil && len(query.Filters.Items) != 0 {
 		for i := 0; i < len(query.Filters.Items); i++ {
+			if query.Filters.Items[i].Key.IsJSON {
+				continue
+			}
 			query.Filters.Items[i].Key = enrichFieldWithMetadata(query.Filters.Items[i].Key, fields)
 		}
 	}

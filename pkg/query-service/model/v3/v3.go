@@ -234,11 +234,14 @@ type FilterAttributeKeyRequest struct {
 type AttributeKeyDataType string
 
 const (
-	AttributeKeyDataTypeUnspecified AttributeKeyDataType = ""
-	AttributeKeyDataTypeString      AttributeKeyDataType = "string"
-	AttributeKeyDataTypeInt64       AttributeKeyDataType = "int64"
-	AttributeKeyDataTypeFloat64     AttributeKeyDataType = "float64"
-	AttributeKeyDataTypeBool        AttributeKeyDataType = "bool"
+	AttributeKeyDataTypeUnspecified  AttributeKeyDataType = ""
+	AttributeKeyDataTypeString       AttributeKeyDataType = "string"
+	AttributeKeyDataTypeInt64        AttributeKeyDataType = "int64"
+	AttributeKeyDataTypeFloat64      AttributeKeyDataType = "float64"
+	AttributeKeyDataTypeBool         AttributeKeyDataType = "bool"
+	AttributeKeyDataTypeArrayString  AttributeKeyDataType = "array(string)"
+	AttributeKeyDataTypeArrayInt64   AttributeKeyDataType = "array(int64)"
+	AttributeKeyDataTypeArrayFloat64 AttributeKeyDataType = "array(float64)"
 )
 
 func (q AttributeKeyDataType) Validate() error {
@@ -285,6 +288,7 @@ type AttributeKey struct {
 	DataType AttributeKeyDataType `json:"dataType"`
 	Type     AttributeKeyType     `json:"type"`
 	IsColumn bool                 `json:"isColumn"`
+	IsJSON   bool                 `json:"isJSON"`
 }
 
 func (a AttributeKey) CacheKey() string {
@@ -293,7 +297,7 @@ func (a AttributeKey) CacheKey() string {
 
 func (a AttributeKey) Validate() error {
 	switch a.DataType {
-	case AttributeKeyDataTypeBool, AttributeKeyDataTypeInt64, AttributeKeyDataTypeFloat64, AttributeKeyDataTypeString, AttributeKeyDataTypeUnspecified:
+	case AttributeKeyDataTypeBool, AttributeKeyDataTypeInt64, AttributeKeyDataTypeFloat64, AttributeKeyDataTypeString, AttributeKeyDataTypeArrayFloat64, AttributeKeyDataTypeArrayString, AttributeKeyDataTypeArrayInt64, AttributeKeyDataTypeUnspecified:
 		break
 	default:
 		return fmt.Errorf("invalid attribute dataType: %s", a.DataType)
@@ -545,6 +549,9 @@ const (
 
 	FilterOperatorExists    FilterOperator = "exists"
 	FilterOperatorNotExists FilterOperator = "nexists"
+
+	FilterOperatorHas    FilterOperator = "has"
+	FilterOperatorNotHas FilterOperator = "nhas"
 )
 
 type FilterItem struct {

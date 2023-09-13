@@ -17,13 +17,18 @@ const sassLoader = 'sass-loader';
 const styleLoader = 'style-loader';
 
 const plugins = [
-	new HtmlWebpackPlugin({ template: 'src/index.html.ejs' }),
+	new HtmlWebpackPlugin({
+		template: 'src/index.html.ejs',
+		INTERCOM_APP_ID: process.env.INTERCOM_APP_ID,
+	}),
 	new webpack.ProvidePlugin({
 		process: 'process/browser',
 	}),
 	new webpack.DefinePlugin({
 		'process.env': JSON.stringify({
+			NODE_ENV: process.env.NODE_ENV,
 			FRONTEND_API_ENDPOINT: process.env.FRONTEND_API_ENDPOINT,
+			INTERCOM_APP_ID: process.env.INTERCOM_APP_ID,
 		}),
 	}),
 ];
@@ -68,6 +73,20 @@ const config = {
 				test: [/\.jsx?$/, /\.tsx?$/],
 				use: ['babel-loader'],
 				exclude: /node_modules/,
+			},
+			{
+				test: /\.mdx?$/,
+				use: [
+					// `babel-loader` is optional:
+					{ loader: 'babel-loader', options: {} },
+					{
+						loader: '@mdx-js/loader',
+						/** @type {import('@mdx-js/loader').Options} */
+						options: {
+							/* jsxImportSource: …, otherOptions… */
+						},
+					},
+				],
 			},
 			{
 				test: /\.css$/,
@@ -130,6 +149,9 @@ const config = {
 	plugins,
 	performance: {
 		hints: false,
+	},
+	optimization: {
+		minimize: false,
 	},
 };
 
