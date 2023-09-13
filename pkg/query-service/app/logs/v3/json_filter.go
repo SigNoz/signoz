@@ -12,24 +12,29 @@ const (
 	STRING        = "String"
 	INT64         = "Int64"
 	FLOAT64       = "Float64"
+	BOOL          = "Bool"
 	ARRAY_STRING  = "Array(String)"
 	ARRAY_INT64   = "Array(Int64)"
 	ARRAY_FLOAT64 = "Array(Float64)"
+	ARRAY_BOOL    = "Array(Bool)"
 )
 
 var dataTypeMapping = map[string]string{
 	"string":         STRING,
 	"int64":          INT64,
 	"float64":        FLOAT64,
+	"bool":           BOOL,
 	"array(string)":  ARRAY_STRING,
 	"array(int64)":   ARRAY_INT64,
 	"array(float64)": ARRAY_FLOAT64,
+	"array(bool)":    ARRAY_BOOL,
 }
 
 var arrayValueTypeMapping = map[string]string{
 	"array(string)":  "string",
 	"array(int64)":   "int64",
 	"array(float64)": "float64",
+	"array(bool)":    "bool",
 }
 
 var jsonLogOperators = map[v3.FilterOperator]string{
@@ -74,7 +79,7 @@ func getJSONFilterKey(key v3.AttributeKey, isArray bool) (string, error) {
 
 	// for non array
 	keyname := fmt.Sprintf("JSON_VALUE(%s, '$.%s')", keyArr[0], strings.Join(keyArr[1:], "."))
-	if dataType != "String" {
+	if dataType != STRING {
 		keyname = fmt.Sprintf("JSONExtract(%s, '%s')", keyname, dataType)
 	}
 
