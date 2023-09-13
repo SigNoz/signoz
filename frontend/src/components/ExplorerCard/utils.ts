@@ -1,12 +1,11 @@
 import { NotificationInstance } from 'antd/es/notification/interface';
 import axios from 'axios';
 import { SOMETHING_WENT_WRONG } from 'constants/api';
+import { QueryParams } from 'constants/query';
 import { initialQueriesMap, PANEL_TYPES } from 'constants/queryBuilder';
-import { queryParamNamesMap } from 'constants/queryBuilderQueryNames';
 import { mapQueryDataFromApi } from 'lib/newQueryBuilder/queryBuilderMappers/mapQueryDataFromApi';
 import isEqual from 'lodash-es/isEqual';
 
-import { querySearchParams } from './constants';
 import {
 	DeleteViewHandlerProps,
 	GetViewDetailsUsingViewKey,
@@ -119,9 +118,9 @@ export const saveViewHandler = ({
 			onSuccess: (data) => {
 				refetchAllView();
 				redirectWithQueryBuilderData(mapQueryDataFromApi(compositeQuery), {
-					[queryParamNamesMap.panelTypes]: panelType,
-					[querySearchParams.viewName]: viewName,
-					[querySearchParams.viewKey]: data.data.data,
+					[QueryParams.panelTypes]: panelType,
+					[QueryParams.viewName]: viewName,
+					[QueryParams.viewKey]: data.data.data,
 				});
 				notifications.success({
 					message: 'View Saved Successfully',
@@ -159,9 +158,9 @@ export const deleteViewHandler = ({
 						sourcePage,
 					),
 					{
-						[querySearchParams.viewName]: 'Query Builder',
-						[queryParamNamesMap.panelTypes]: panelType,
-						[querySearchParams.viewKey]: '',
+						[QueryParams.viewName]: '',
+						[QueryParams.panelTypes]: panelType,
+						[QueryParams.viewKey]: '',
 					},
 				);
 			}

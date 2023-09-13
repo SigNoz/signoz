@@ -1,5 +1,5 @@
 import { Col, Row, Select } from 'antd';
-import { queryParamNamesMap } from 'constants/queryBuilderQueryNames';
+import { QueryParams } from 'constants/query';
 import {
 	defaultSelectStyle,
 	ITEMS_PER_PAGE_OPTIONS,
@@ -14,7 +14,7 @@ function PageSizeSelect({
 	isShow,
 }: PageSizeSelectProps): JSX.Element | null {
 	const { redirectWithQuery, queryData: pageSize } = useUrlQueryData<number>(
-		queryParamNamesMap.pageSize,
+		QueryParams.pageSize,
 		ITEMS_PER_PAGE_OPTIONS[0],
 	);
 

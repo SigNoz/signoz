@@ -1,5 +1,5 @@
+import { QueryParams } from 'constants/query';
 import { initialQueriesMap, PANEL_TYPES } from 'constants/queryBuilder';
-import { queryParamNamesMap } from 'constants/queryBuilderQueryNames';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { useNotifications } from 'hooks/useNotifications';
 import createQueryParams from 'lib/createQueryParams';
@@ -49,9 +49,7 @@ function DashboardGraphSlider({ toggleAddWidget }: Props): JSX.Element {
 				const queryParams = {
 					graphType: name,
 					widgetId: emptyLayout.i,
-					[queryParamNamesMap.compositeQuery]: JSON.stringify(
-						initialQueriesMap.metrics,
-					),
+					[QueryParams.compositeQuery]: JSON.stringify(initialQueriesMap.metrics),
 				};
 
 				history.push(`${pathname}/new?${createQueryParams(queryParams)}`);

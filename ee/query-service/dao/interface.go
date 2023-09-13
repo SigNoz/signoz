@@ -21,7 +21,6 @@ type ModelDao interface {
 	DB() *sqlx.DB
 
 	// auth methods
-	PrecheckLogin(ctx context.Context, email, sourceUrl string) (*model.PrecheckResponse, basemodel.BaseApiError)
 	CanUsePassword(ctx context.Context, email string) (bool, basemodel.BaseApiError)
 	PrepareSsoRedirect(ctx context.Context, redirectUri, email string) (redirectURL string, apierr basemodel.BaseApiError)
 	GetDomainFromSsoResponse(ctx context.Context, relayState *url.URL) (*model.OrgDomain, error)

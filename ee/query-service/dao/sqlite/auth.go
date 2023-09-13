@@ -120,10 +120,10 @@ func (m *modelDao) CanUsePassword(ctx context.Context, email string) (bool, base
 
 // PrecheckLogin is called when the login or signup page is loaded
 // to check sso login is to be prompted
-func (m *modelDao) PrecheckLogin(ctx context.Context, email, sourceUrl string) (*model.PrecheckResponse, basemodel.BaseApiError) {
+func (m *modelDao) PrecheckLogin(ctx context.Context, email, sourceUrl string) (*basemodel.PrecheckResponse, basemodel.BaseApiError) {
 
 	// assume user is valid unless proven otherwise
-	resp := &model.PrecheckResponse{IsUser: true, CanSelfRegister: false}
+	resp := &basemodel.PrecheckResponse{IsUser: true, CanSelfRegister: false}
 
 	// check if email is a valid user
 	userPayload, baseApiErr := m.GetUserByEmail(ctx, email)
