@@ -8,12 +8,7 @@ import { HelmetProvider } from 'react-helmet-async';
 import { QueryClient, QueryClientProvider } from 'react-query';
 import { ReactQueryDevtools } from 'react-query/devtools';
 import { Provider } from 'react-redux';
-import reportWebVitals from 'reportWebVitals';
 import store from 'store';
-
-if (process.env.NODE_ENV === 'development') {
-	reportWebVitals(console.log);
-}
 
 const queryClient = new QueryClient({
 	defaultOptions: {
