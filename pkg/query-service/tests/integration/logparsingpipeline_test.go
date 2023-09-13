@@ -357,10 +357,21 @@ func TestOpAMPServerToAgentCommunication(t *testing.T) {
 		t, recommendedConfYaml, createPipelinesResp.Pipelines,
 	)
 
-	// Validate processors used for pipelines as expected.
-
 	// If pipelines change, all agents should receive
 	// the latest effective config.
+	postablePipelines.Pipelines[0].Config[0].Value = "new value"
+	updatePipelinesResp := testbed.PostPipelinesToQS(postablePipelines)
+	assertPipelinesResponseMatchesPostedPipelines(
+		t, postablePipelines, updatePipelinesResp,
+	)
+	testbed.assertPipelinesSentToOpampClient(updatePipelinesResp.Pipelines)
+
+	assertOpampClientReceivedPipelines(
+		t, agent1Conn, updatePipelinesResp.Pipelines,
+	)
+	assertOpampClientReceivedPipelines(
+		t, agent2Conn, updatePipelinesResp.Pipelines,
+	)
 }
 
 func requireYamlsAreEqual(
@@ -581,16 +592,26 @@ func (tb *LogPipelinesTestBed) GetPipelinesFromQS() *logparsingpipeline.Pipeline
 func (tb *LogPipelinesTestBed) assertPipelinesSentToOpampClient(
 	pipelines []model.Pipeline,
 ) {
-	lastMsg := tb.opampClientConn.latestMsgFromServer()
+	assertOpampClientReceivedPipelines(
+		tb.t, tb.opampClientConn, pipelines,
+	)
+}
+
+func assertOpampClientReceivedPipelines(
+	t *testing.T,
+	conn *mockOpAmpConnection,
+	pipelines []model.Pipeline,
+) {
+	lastMsg := conn.latestMsgFromServer()
 	collectorConfFiles := lastMsg.RemoteConfig.Config.ConfigMap
 	assert.Equal(
-		tb.t, len(collectorConfFiles), 1,
+		t, len(collectorConfFiles), 1,
 		"otel config sent to client is expected to contain atleast 1 file",
 	)
 
 	collectorConfYaml := maps.Values(collectorConfFiles)[0].Body
 	assertCollectorConfHasLogPipelinesConfig(
-		tb.t, collectorConfYaml, pipelines,
+		t, collectorConfYaml, pipelines,
 	)
 }
 
