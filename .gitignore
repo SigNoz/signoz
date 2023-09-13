@@ -37,7 +37,7 @@ frontend/src/constants/env.ts
 **/locust-scripts/__pycache__/
 **/__debug_bin
 
-frontend/*.env
+frontend/.env
 pkg/query-service/signoz.db
 
 pkg/query-service/tests/test-deploy/data/
