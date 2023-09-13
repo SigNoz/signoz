@@ -153,11 +153,11 @@ services:
   query-service:
     image: signoz/query-service:latest
     container_name: signoz-query-service
-    command: 
-    [ 
-      "-config=/root/config/prometheus.yml",
-      "--prefer-delta=true"
-    ]
+    command:
+      [
+        "-config=/root/config/prometheus.yml",
+        "--prefer-delta=true"
+      ]
     # ports:
     #   - "6060:6060"     # pprof port
     #   - "8080:8080"     # query-service port
