@@ -122,7 +122,7 @@ var testGetJSONFilterKeyData = []struct {
 			IsJSON:   true,
 		},
 		IsArray:       false,
-		ClickhouseKey: "JSON_VALUE(body, '$.boolkey')",
+		ClickhouseKey: "JSONExtract(JSON_VALUE(body, '$.boolkey'), '" + BOOL + "')",
 	},
 }
 
@@ -186,17 +186,17 @@ var testGetJSONFilterData = []struct {
 		Filter: "NOT has(JSONExtract(JSON_QUERY(body, '$.nested_num[*].float_nums[*]'), '" + ARRAY_FLOAT64 + "'), 2.200000)",
 	},
 	{
-		Name: "Array membership float64",
+		Name: "Array membership bool",
 		FilterItem: v3.FilterItem{
 			Key: v3.AttributeKey{
-				Key:      "body.boolkey",
-				DataType: "bool",
+				Key:      "body.bool[*]",
+				DataType: "array(bool)",
 				IsJSON:   true,
 			},
-			Operator: "=",
+			Operator: "has",
 			Value:    true,
 		},
-		Filter: "JSON_VALUE(body, '$.boolkey') = 'true'",
+		Filter: "has(JSONExtract(JSON_QUERY(body, '$.bool[*]'), '" + ARRAY_BOOL + "'), true)",
 	},
 	{
 		Name: "eq operator",
@@ -248,7 +248,7 @@ var testGetJSONFilterData = []struct {
 			Operator: "=",
 			Value:    true,
 		},
-		Filter: "JSON_VALUE(body, '$.boolkey') = 'true'",
+		Filter: "JSONExtract(JSON_VALUE(body, '$.boolkey'), '" + BOOL + "') = true",
 	},
 	{
 		Name: "greater than operator",

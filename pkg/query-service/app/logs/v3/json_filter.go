@@ -79,7 +79,7 @@ func getJSONFilterKey(key v3.AttributeKey, isArray bool) (string, error) {
 
 	// for non array
 	keyname := fmt.Sprintf("JSON_VALUE(%s, '$.%s')", keyArr[0], strings.Join(keyArr[1:], "."))
-	if dataType != STRING && dataType != BOOL {
+	if dataType != STRING {
 		keyname = fmt.Sprintf("JSONExtract(%s, '%s')", keyname, dataType)
 	}
 
@@ -108,11 +108,6 @@ func GetJSONFilter(item v3.FilterItem) (string, error) {
 	value, err := utils.ValidateAndCastValue(item.Value, dataType)
 	if err != nil {
 		return "", fmt.Errorf("failed to validate and cast value for %s: %v", item.Key.Key, err)
-	}
-
-	// treat bool as a string
-	if dataType == v3.AttributeKeyDataTypeBool && !isArray {
-		value = fmt.Sprintf("%v", value)
 	}
 
 	op := v3.FilterOperator(strings.ToLower(strings.TrimSpace(string(item.Operator))))
