@@ -8,7 +8,7 @@ const breadcrumbNameMap = {
 	[ROUTES.TRACES_EXPLORER]: 'Traces Explorer',
 	[ROUTES.SERVICE_MAP]: 'Service Map',
 	[ROUTES.USAGE_EXPLORER]: 'Usage Explorer',
-	[ROUTES.INSTRUMENTATION]: 'Get Started',
+	[ROUTES.GET_STARTED]: 'Get Started',
 	[ROUTES.ALL_CHANNELS]: 'Channels',
 	[ROUTES.SETTINGS]: 'Settings',
 	[ROUTES.DASHBOARD]: 'Dashboard',

@@ -3,7 +3,6 @@ package app
 import (
 	"bytes"
 	"context"
-	"database/sql"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -408,6 +407,7 @@ func (aH *APIHandler) RegisterRoutes(router *mux.Router, am *AuthMiddleware) {
 
 	router.HandleFunc("/api/v1/register", am.OpenAccess(aH.registerUser)).Methods(http.MethodPost)
 	router.HandleFunc("/api/v1/login", am.OpenAccess(aH.loginUser)).Methods(http.MethodPost)
+	router.HandleFunc("/api/v1/loginPrecheck", am.OpenAccess(aH.precheckLogin)).Methods(http.MethodGet)
 
 	router.HandleFunc("/api/v1/user", am.AdminAccess(aH.listUsers)).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/user/{id}", am.SelfAccess(aH.getUser)).Methods(http.MethodGet)
@@ -1884,6 +1884,20 @@ func (aH *APIHandler) registerUser(w http.ResponseWriter, r *http.Request) {
 	aH.Respond(w, nil)
 }
 
+func (aH *APIHandler) precheckLogin(w http.ResponseWriter, r *http.Request) {
+
+	email := r.URL.Query().Get("email")
+	sourceUrl := r.URL.Query().Get("ref")
+
+	resp, apierr := aH.appDao.PrecheckLogin(context.Background(), email, sourceUrl)
+	if apierr != nil {
+		RespondError(w, apierr, resp)
+		return
+	}
+
+	aH.Respond(w, resp)
+}
+
 func (aH *APIHandler) loginUser(w http.ResponseWriter, r *http.Request) {
 	req, err := parseLoginRequest(r)
 	if aH.HandleError(w, err, http.StatusBadRequest) {
@@ -2443,7 +2457,7 @@ func (ah *APIHandler) ListLogsPipelinesHandler(w http.ResponseWriter, r *http.Re
 
 	version, err := parseAgentConfigVersion(r)
 	if err != nil {
-		RespondError(w, err, nil)
+		RespondError(w, model.WrapApiError(err, "Failed to parse agent config version"), nil)
 		return
 	}
 
@@ -2464,12 +2478,14 @@ func (ah *APIHandler) ListLogsPipelinesHandler(w http.ResponseWriter, r *http.Re
 }
 
 // listLogsPipelines lists logs piplines for latest version
-func (ah *APIHandler) listLogsPipelines(ctx context.Context) (*logparsingpipeline.PipelinesResponse, *model.ApiError) {
+func (ah *APIHandler) listLogsPipelines(ctx context.Context) (
+	*logparsingpipeline.PipelinesResponse, *model.ApiError,
+) {
 	// get lateset agent config
 	lastestConfig, err := agentConf.GetLatestVersion(ctx, logPipelines)
 	if err != nil {
-		if err != sql.ErrNoRows {
-			return nil, model.InternalError(fmt.Errorf("failed to get latest agent config version with error %w", err))
+		if err.Type() != model.ErrorNotFound {
+			return nil, model.WrapApiError(err, "failed to get latest agent config version")
 		} else {
 			return nil, nil
 		}
@@ -2477,31 +2493,33 @@ func (ah *APIHandler) listLogsPipelines(ctx context.Context) (*logparsingpipelin
 
 	payload, err := ah.LogsParsingPipelineController.GetPipelinesByVersion(ctx, lastestConfig.Version)
 	if err != nil {
-		return nil, model.InternalError(fmt.Errorf("failed to get pipelines with error %w", err))
+		return nil, model.WrapApiError(err, "failed to get pipelines")
 	}
 
 	// todo(Nitya): make a new API for history pagination
 	limit := 10
 	history, err := agentConf.GetConfigHistory(ctx, logPipelines, limit)
 	if err != nil {
-		return nil, model.InternalError(fmt.Errorf("failed to get config history with error %w", err))
+		return nil, model.WrapApiError(err, "failed to get config history")
 	}
 	payload.History = history
 	return payload, nil
 }
 
 // listLogsPipelinesByVersion lists pipelines along with config version history
-func (ah *APIHandler) listLogsPipelinesByVersion(ctx context.Context, version int) (*logparsingpipeline.PipelinesResponse, *model.ApiError) {
+func (ah *APIHandler) listLogsPipelinesByVersion(ctx context.Context, version int) (
+	*logparsingpipeline.PipelinesResponse, *model.ApiError,
+) {
 	payload, err := ah.LogsParsingPipelineController.GetPipelinesByVersion(ctx, version)
 	if err != nil {
-		return nil, model.InternalError(err)
+		return nil, model.WrapApiError(err, "failed to get pipelines by version")
 	}
 
 	// todo(Nitya): make a new API for history pagination
 	limit := 10
 	history, err := agentConf.GetConfigHistory(ctx, logPipelines, limit)
 	if err != nil {
-		return nil, model.InternalError(fmt.Errorf("failed to retrieve agent config history with error %w", err))
+		return nil, model.WrapApiError(err, "failed to retrieve agent config history")
 	}
 
 	payload.History = history
@@ -2519,7 +2537,10 @@ func (ah *APIHandler) CreateLogsPipeline(w http.ResponseWriter, r *http.Request)
 
 	ctx := auth.AttachJwtToContext(context.Background(), r)
 
-	createPipeline := func(ctx context.Context, postable []logparsingpipeline.PostablePipeline) (*logparsingpipeline.PipelinesResponse, error) {
+	createPipeline := func(
+		ctx context.Context,
+		postable []logparsingpipeline.PostablePipeline,
+	) (*logparsingpipeline.PipelinesResponse, *model.ApiError) {
 		if len(postable) == 0 {
 			zap.S().Warnf("found no pipelines in the http request, this will delete all the pipelines")
 		}
@@ -2535,7 +2556,7 @@ func (ah *APIHandler) CreateLogsPipeline(w http.ResponseWriter, r *http.Request)
 
 	res, err := createPipeline(ctx, req.Pipelines)
 	if err != nil {
-		RespondError(w, model.InternalError(err), nil)
+		RespondError(w, err, nil)
 		return
 	}
 

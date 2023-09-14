@@ -9,6 +9,8 @@ const Basic = "BASIC_PLAN"
 const Pro = "PRO_PLAN"
 const Enterprise = "ENTERPRISE_PLAN"
 const DisableUpsell = "DISABLE_UPSELL"
+const Onboarding = "ONBOARDING"
+const ChatSupport = "CHAT_SUPPORT"
 
 var BasicPlan = basemodel.FeatureSet{
 	basemodel.Feature{
@@ -275,5 +277,19 @@ var EnterprisePlan = basemodel.FeatureSet{
 		Usage:      0,
 		UsageLimit: -1,
 		Route:      "",
+	},
+	basemodel.Feature{
+		Name: Onboarding,
+		Active: true,
+		Usage: 0,
+		UsageLimit: -1,
+		Route: "",
+	},
+	basemodel.Feature{
+		Name: ChatSupport,
+		Active: true,
+		Usage: 0,
+		UsageLimit: -1,
+		Route: "",
 	},
 }

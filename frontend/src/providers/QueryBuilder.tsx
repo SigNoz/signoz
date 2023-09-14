@@ -1,3 +1,5 @@
+import { isQueryUpdatedInView } from 'components/ExplorerCard/utils';
+import { QueryParams } from 'constants/query';
 import {
 	alphabet,
 	baseAutoCompleteIdKeysOrder,
@@ -13,7 +15,6 @@ import {
 	MAX_QUERIES,
 	PANEL_TYPES,
 } from 'constants/queryBuilder';
-import { queryParamNamesMap } from 'constants/queryBuilderQueryNames';
 import { useGetCompositeQueryParam } from 'hooks/queryBuilder/useGetCompositeQueryParam';
 import { updateStepInterval } from 'hooks/queryBuilder/useStepInterval';
 import useUrlQuery from 'hooks/useUrlQuery';
@@ -42,6 +43,7 @@ import {
 	Query,
 	QueryState,
 } from 'types/api/queryBuilder/queryBuilderData';
+import { ViewProps } from 'types/api/saveViews/types';
 import { EQueryType } from 'types/common/dashboard';
 import {
 	DataSource,
@@ -68,10 +70,12 @@ export const QueryBuilderContext = createContext<QueryBuilderContextType>({
 	addNewQueryItem: () => {},
 	redirectWithQueryBuilderData: () => {},
 	handleRunQuery: () => {},
+	resetQuery: () => {},
 	updateAllQueriesOperators: () => initialQueriesMap.metrics,
 	updateQueriesData: () => initialQueriesMap.metrics,
 	initQueryBuilderData: () => {},
 	handleOnUnitsChange: () => {},
+	isStagedQueryUpdated: () => false,
 });
 
 export function QueryBuilderProvider({
@@ -448,6 +452,17 @@ export function QueryBuilderProvider({
 		[updateQueryBuilderData],
 	);
 
+	const isStagedQueryUpdated = useCallback(
+		(viewData: ViewProps[] | undefined, viewKey: string): boolean =>
+			isQueryUpdatedInView({
+				currentPanelType: panelType,
+				data: viewData,
+				stagedQuery,
+				viewKey,
+			}),
+		[panelType, stagedQuery],
+	);
+
 	const redirectWithQueryBuilderData = useCallback(
 		(query: Partial<Query>, searchParams?: Record<string, unknown>) => {
 			const queryType =
@@ -480,7 +495,7 @@ export function QueryBuilderProvider({
 			};
 
 			urlQuery.set(
-				queryParamNamesMap.compositeQuery,
+				QueryParams.compositeQuery,
 				encodeURIComponent(JSON.stringify(currentGeneratedQuery)),
 			);
 
@@ -550,6 +565,14 @@ export function QueryBuilderProvider({
 		stagedQuery,
 	]);
 
+	const resetQuery = (newCurrentQuery?: QueryState): void => {
+		setStagedQuery(null);
+
+		if (newCurrentQuery) {
+			setCurrentQuery(newCurrentQuery);
+		}
+	};
+
 	useEffect(() => {
 		if (stagedQuery && location.pathname !== currentPathnameRef.current) {
 			currentPathnameRef.current = location.pathname;
@@ -599,10 +622,12 @@ export function QueryBuilderProvider({
 			addNewQueryItem,
 			redirectWithQueryBuilderData,
 			handleRunQuery,
+			resetQuery,
 			updateAllQueriesOperators,
 			updateQueriesData,
 			initQueryBuilderData,
 			handleOnUnitsChange,
+			isStagedQueryUpdated,
 		}),
 		[
 			query,
@@ -625,6 +650,7 @@ export function QueryBuilderProvider({
 			updateQueriesData,
 			initQueryBuilderData,
 			handleOnUnitsChange,
+			isStagedQueryUpdated,
 		],
 	);
 

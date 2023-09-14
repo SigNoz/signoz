@@ -1,6 +1,6 @@
 import { AlertOutlined, AreaChartOutlined } from '@ant-design/icons';
 import { Button, Modal, Space } from 'antd';
-import { queryParamNamesMap } from 'constants/queryBuilderQueryNames';
+import { QueryParams } from 'constants/query';
 import ROUTES from 'constants/routes';
 import history from 'lib/history';
 import { useCallback, useState } from 'react';
@@ -22,9 +22,9 @@ function ExportPanel({
 
 	const onCreateAlertsHandler = useCallback(() => {
 		history.push(
-			`${ROUTES.ALERTS_NEW}?${
-				queryParamNamesMap.compositeQuery
-			}=${encodeURIComponent(JSON.stringify(query))}`,
+			`${ROUTES.ALERTS_NEW}?${QueryParams.compositeQuery}=${encodeURIComponent(
+				JSON.stringify(query),
+			)}`,
 		);
 	}, [query]);
 

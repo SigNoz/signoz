@@ -1,9 +1,9 @@
 import { PlayCircleFilled } from '@ant-design/icons';
+import { QueryParams } from 'constants/query';
 import {
 	initialQueryBuilderFormValuesMap,
 	PANEL_TYPES,
 } from 'constants/queryBuilder';
-import { queryParamNamesMap } from 'constants/queryBuilderQueryNames';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import ROUTES from 'constants/routes';
 import {
@@ -63,7 +63,7 @@ function LogsTopNav(): JSX.Element {
 
 		const JSONCompositeQuery = encodeURIComponent(JSON.stringify(compositeQuery));
 
-		const path = `${ROUTES.LIVE_LOGS}?${queryParamNamesMap.compositeQuery}=${JSONCompositeQuery}`;
+		const path = `${ROUTES.LIVE_LOGS}?${QueryParams.compositeQuery}=${JSONCompositeQuery}`;
 
 		history.push(path, queryHistoryState);
 	}, [history, panelType, queryClient, stagedQuery]);

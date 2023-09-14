@@ -1,37 +1,25 @@
 import {
 	AlertOutlined,
 	AlignLeftOutlined,
-	ApiOutlined,
 	BarChartOutlined,
 	BugOutlined,
 	DashboardFilled,
 	DeploymentUnitOutlined,
 	LineChartOutlined,
 	MenuOutlined,
+	RocketOutlined,
 	SettingOutlined,
 } from '@ant-design/icons';
-import { MenuProps, Space, Typography } from 'antd';
 import ROUTES from 'constants/routes';
 
-import { Tags } from './styles';
+import { SidebarMenu } from './sideNav.types';
 
-type MenuItem = Required<MenuProps>['items'][number];
-
-export const createLabelWithTags = (
-	label: string,
-	tags: string[],
-): JSX.Element => (
-	<Space>
-		<div>{label}</div>
-		{tags.map((tag) => (
-			<Tags key={tag}>
-				<Typography.Text>{tag}</Typography.Text>
-			</Tags>
-		))}
-	</Space>
-);
-
-const menus: SidebarMenu[] = [
+const menuItems: SidebarMenu[] = [
+	{
+		key: ROUTES.GET_STARTED,
+		label: 'Get Started',
+		icon: <RocketOutlined rotate={45} />,
+	},
 	{
 		key: ROUTES.APPLICATION,
 		label: 'Services',
@@ -41,38 +29,11 @@ const menus: SidebarMenu[] = [
 		key: ROUTES.TRACE,
 		label: 'Traces',
 		icon: <MenuOutlined />,
-		// children: [
-		// {
-		// 	key: ROUTES.TRACE,
-		// 	label: 'Traces',
-		// },
-		// TODO: uncomment when will be ready explorer
-		// {
-		// 	key: ROUTES.TRACES_EXPLORER,
-		// 	label: "Explorer",
-		// },
-		// ],
 	},
 	{
 		key: ROUTES.LOGS,
 		label: 'Logs',
 		icon: <AlignLeftOutlined />,
-		// children: [
-		// {
-		// 	key: ROUTES.LOGS,
-		// 	label: 'Search',
-		// },
-		// TODO: uncomment when will be ready explorer
-		// {
-		// 	key: ROUTES.LOGS_EXPLORER,
-		// 	label: 'Views',
-		// },
-		// ],
-		// {
-		// 	key: ROUTES.PIPELINES,
-		// 	label: 'Pipelines',
-		// },
-		// ],
 	},
 	{
 		key: ROUTES.ALL_DASHBOARD,
@@ -104,15 +65,13 @@ const menus: SidebarMenu[] = [
 		label: 'Settings',
 		icon: <SettingOutlined />,
 	},
-	{
-		key: ROUTES.INSTRUMENTATION,
-		label: 'Get Started',
-		icon: <ApiOutlined />,
-	},
 ];
 
-type SidebarMenu = MenuItem & {
-	tags?: string[];
+/** Mapping of some newly added routes and their corresponding active sidebar menu key */
+export const NEW_ROUTES_MENU_ITEM_KEY_MAP = {
+	[ROUTES.TRACES_EXPLORER]: ROUTES.TRACE,
+	[ROUTES.TRACE_EXPLORER]: ROUTES.TRACE,
+	[ROUTES.LOGS_EXPLORER]: ROUTES.LOGS,
 };
 
-export default menus;
+export default menuItems;
