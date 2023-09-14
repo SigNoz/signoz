@@ -131,7 +131,7 @@ services:
   #     - ./data/clickhouse-3/:/var/lib/clickhouse/
 
   alertmanager:
-    image: signoz/alertmanager:0.23.3
+    image: signoz/alertmanager:0.23.4
     volumes:
       - ./data/alertmanager:/data
     command:
@@ -144,7 +144,7 @@ services:
         condition: on-failure
 
   query-service:
-    image: signoz/query-service:0.28.0
+    image: signoz/query-service:0.29.0
     command:
       [
         "-config=/root/config/prometheus.yml",
@@ -184,7 +184,7 @@ services:
     <<: *clickhouse-depend
 
   frontend:
-    image: signoz/frontend:0.28.0
+    image: signoz/frontend:0.29.0
     deploy:
       restart_policy:
         condition: on-failure
@@ -197,7 +197,7 @@ services:
       - ../common/nginx-config.conf:/etc/nginx/conf.d/default.conf
 
   otel-collector:
-    image: signoz/signoz-otel-collector:0.79.6
+    image: signoz/signoz-otel-collector:0.79.7
     command:
       [
         "--config=/etc/otel-collector-config.yaml",
@@ -230,7 +230,7 @@ services:
     <<: *clickhouse-depend
 
   otel-collector-metrics:
-    image: signoz/signoz-otel-collector:0.79.6
+    image: signoz/signoz-otel-collector:0.79.7
     command:
       [
         "--config=/etc/otel-collector-metrics-config.yaml",
