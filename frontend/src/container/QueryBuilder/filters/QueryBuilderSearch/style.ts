@@ -15,3 +15,9 @@ export const TypographyText = styled(Typography.Text)<{
 export const StyledCheckOutlined = styled(CheckOutlined)`
 	float: right;
 `;
+
+export const SelectOptionContainer = styled.div`
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+`;
