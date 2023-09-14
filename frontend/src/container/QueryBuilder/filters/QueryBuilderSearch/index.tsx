@@ -1,4 +1,7 @@
 import { Select, Spin, Tag, Tooltip } from 'antd';
+import { OPERATORS } from 'constants/queryBuilder';
+import { DataTypes } from 'container/LogDetailedView/types';
+import { getDataTypes } from 'container/LogDetailedView/utils';
 import {
 	useAutoComplete,
 	WhereClauseConfig,
@@ -119,6 +122,17 @@ function QueryBuilderSearch({
 		[query.dataSource],
 	);
 
+	const fetchValueDataType = (
+		value: unknown,
+		operator: string,
+	): DataTypes | unknown => {
+		if (operator === OPERATORS.HAS || operator === OPERATORS.NHAS) {
+			return getDataTypes([value]);
+		}
+
+		return '';
+	};
+
 	const queryTags = useMemo(() => {
 		if (!query.aggregateAttribute.key && isMetricsDataSource) return [];
 		return tags;
@@ -129,26 +143,31 @@ function QueryBuilderSearch({
 		const initialSourceKeys = query.filters.items?.map(
 			(item) => item.key as BaseAutocompleteData,
 		);
+
 		initialTagFilters.items = tags.map((tag) => {
 			const { tagKey, tagOperator, tagValue } = getTagToken(tag);
 			const filterAttribute = [...initialSourceKeys, ...sourceKeys].find(
 				(key) => key.key === getRemovePrefixFromKey(tagKey),
 			);
+
+			const computedTagValue =
+				tagValue && Array.isArray(tagValue) && tagValue[tagValue.length - 1] === ''
+					? tagValue?.slice(0, -1)
+					: tagValue ?? '';
+
 			return {
 				id: uuid().slice(0, 8),
 				key: filterAttribute ?? {
 					key: tagKey,
-					dataType: '',
+					dataType: fetchValueDataType(computedTagValue, tagOperator),
 					type: '',
 					isColumn: false,
 				},
 				op: getOperatorValue(tagOperator),
-				value:
-					tagValue[tagValue.length - 1] === ''
-						? tagValue?.slice(0, -1)
-						: tagValue ?? '',
+				value: computedTagValue,
 			};
 		});
+
 		onChange(initialTagFilters);
 		/* eslint-disable react-hooks/exhaustive-deps */
 	}, [sourceKeys]);
