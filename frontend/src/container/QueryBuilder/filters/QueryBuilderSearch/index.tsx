@@ -151,7 +151,7 @@ function QueryBuilderSearch({
 		);
 
 		initialTagFilters.items = tags.map((tag, index) => {
-			const isJsonTrue = query.filters.items[index].key?.isJSON;
+			const isJsonTrue = query.filters?.items[index]?.key?.isJSON;
 
 			const { tagKey, tagOperator, tagValue } = getTagToken(tag);
 
