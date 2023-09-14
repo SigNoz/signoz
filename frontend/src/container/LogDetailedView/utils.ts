@@ -47,7 +47,7 @@ export const getFieldAttributes = (field: string): IFieldAttributes => {
 		const stringWithoutPrefix = field.slice('attributes_'.length);
 		const parts = stringWithoutPrefix.split('.');
 		[dataType, newField] = parts;
-	} else if (field.startsWith('resource_')) {
+	} else if (field.startsWith('resources_')) {
 		logType = MetricsType.Resource;
 		const stringWithoutPrefix = field.slice('resource_'.length);
 		const parts = stringWithoutPrefix.split('.');
