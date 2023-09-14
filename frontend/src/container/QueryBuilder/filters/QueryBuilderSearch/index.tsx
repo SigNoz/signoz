@@ -85,15 +85,22 @@ function QueryBuilderSearch({
 			handleSearch(value);
 		};
 
+		const isDisabled =
+			!!searchValue ||
+			OPERATORS.HAS === tagOperator ||
+			OPERATORS.NHAS === tagOperator;
+
 		return (
 			<Tag closable={!searchValue && closable} onClose={onCloseHandler}>
 				<Tooltip title={chipValue}>
 					<TypographyText
 						ellipsis
 						$isInNin={isInNin}
-						disabled={!!searchValue}
+						disabled={isDisabled}
 						$isEnabled={!!searchValue}
-						onClick={(): void => tagEditHandler(value)}
+						onClick={(): void => {
+							if (!isDisabled) tagEditHandler(value);
+						}}
 					>
 						{chipValue}
 					</TypographyText>
@@ -143,8 +150,11 @@ function QueryBuilderSearch({
 			(item) => item.key as BaseAutocompleteData,
 		);
 
-		initialTagFilters.items = tags.map((tag) => {
+		initialTagFilters.items = tags.map((tag, index) => {
+			const isJsonTrue = query.filters.items[index].key?.isJSON;
+
 			const { tagKey, tagOperator, tagValue } = getTagToken(tag);
+
 			const filterAttribute = [...initialSourceKeys, ...sourceKeys].find(
 				(key) => key.key === getRemovePrefixFromKey(tagKey),
 			);
@@ -161,6 +171,7 @@ function QueryBuilderSearch({
 					dataType: fetchValueDataType(computedTagValue, tagOperator),
 					type: '',
 					isColumn: false,
+					isJSON: isJsonTrue,
 				},
 				op: getOperatorValue(tagOperator),
 				value: computedTagValue,
