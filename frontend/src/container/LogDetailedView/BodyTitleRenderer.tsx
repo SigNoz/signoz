@@ -1,3 +1,4 @@
+import { orange } from '@ant-design/colors';
 import { SettingOutlined } from '@ant-design/icons';
 import { Dropdown, MenuProps } from 'antd';
 import { OPERATORS } from 'constants/queryBuilder';
@@ -72,15 +73,15 @@ function BodyTitleRenderer({
 
 	return (
 		<TitleWrapper>
-			{title.toString()}{' '}
-			{!parentIsArray && (
-				<span>
-					: <span style={{ color: 'orange' }}>{`${value}`}</span>
-				</span>
-			)}
 			<Dropdown menu={menu} trigger={['click']}>
 				<SettingOutlined style={{ marginLeft: 8 }} className="hover-reveal" />
 			</Dropdown>
+			{title.toString()}{' '}
+			{!parentIsArray && (
+				<span>
+					: <span style={{ color: orange[6] }}>{`${value}`}</span>
+				</span>
+			)}
 		</TitleWrapper>
 	);
 }

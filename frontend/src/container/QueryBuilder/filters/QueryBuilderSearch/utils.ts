@@ -102,6 +102,10 @@ export function getOperatorFromValue(op: string): string {
 			return 'CONTAINS';
 		case 'ncontains':
 			return 'NOT_CONTAINS';
+		case 'has':
+			return OPERATORS.HAS;
+		case 'nhas':
+			return OPERATORS.NHAS;
 		default:
 			return op;
 	}
