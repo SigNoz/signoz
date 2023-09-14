@@ -14,6 +14,7 @@ import { ResizeTable } from 'components/ResizeTable';
 import TextToolTip from 'components/TextToolTip';
 import ROUTES from 'constants/routes';
 import SearchFilter from 'container/ListOfDashboard/SearchFilter';
+import { useGetAllDashboard } from 'hooks/dashboard/useGetAllDashboard';
 import useComponentPermission from 'hooks/useComponentPermission';
 import history from 'lib/history';
 import {
@@ -25,6 +26,7 @@ import {
 	useState,
 } from 'react';
 import { useTranslation } from 'react-i18next';
+import { UseQueryResult } from 'react-query';
 import { useDispatch, useSelector } from 'react-redux';
 import { generatePath } from 'react-router-dom';
 import { AppState } from 'store/reducers';
@@ -32,20 +34,24 @@ import AppActions from 'types/actions';
 import { GET_ALL_DASHBOARD_SUCCESS } from 'types/actions/dashboard';
 import { Dashboard } from 'types/api/dashboard/getAll';
 import AppReducer from 'types/reducer/app';
-import DashboardReducer from 'types/reducer/dashboards';
 
 import ImportJSON from './ImportJSON';
 import { ButtonContainer, NewDashboardButton, TableContainer } from './styles';
 import Createdby from './TableComponents/CreatedBy';
 import DateComponent from './TableComponents/Date';
-import DeleteButton from './TableComponents/DeleteButton';
+import DeleteButton, {
+	DeleteButtonProps,
+} from './TableComponents/DeleteButton';
 import Name from './TableComponents/Name';
 import Tags from './TableComponents/Tags';
 
 function ListOfAllDashboard(): JSX.Element {
-	const { dashboards, loading } = useSelector<AppState, DashboardReducer>(
-		(state) => state.dashboards,
-	);
+	const {
+		data: dashboardListResponse = [],
+		isLoading: isDashboardListLoading,
+		refetch: refetchDashboardList,
+	} = useGetAllDashboard();
+
 	const dispatch = useDispatch<Dispatch<AppActions>>();
 	const { role } = useSelector<AppState, AppReducer>((state) => state.app);
 
@@ -66,8 +72,10 @@ function ListOfAllDashboard(): JSX.Element {
 	const [filteredDashboards, setFilteredDashboards] = useState<Dashboard[]>();
 
 	useEffect(() => {
-		setFilteredDashboards(dashboards);
-	}, [dashboards]);
+		if (dashboardListResponse.length) {
+			setFilteredDashboards(dashboardListResponse);
+		}
+	}, [dashboardListResponse]);
 
 	const [newDashboardState, setNewDashboardState] = useState({
 		loading: false,
@@ -125,22 +133,43 @@ function ListOfAllDashboard(): JSX.Element {
 				title: 'Action',
 				dataIndex: '',
 				width: 40,
-				render: DeleteButton,
+				render: ({
+					createdBy,
+					description,
+					id,
+					key,
+					lastUpdatedTime,
+					name,
+					tags,
+				}: DeleteButtonProps) => (
+					<DeleteButton
+						description={description}
+						id={id}
+						key={key}
+						lastUpdatedTime={lastUpdatedTime}
+						name={name}
+						tags={tags}
+						createdBy={createdBy}
+						refetchDashboardList={refetchDashboardList}
+					/>
+				),
 			});
 		}
 
 		return tableColumns;
-	}, [action]);
+	}, [action, refetchDashboardList]);
 
-	const data: Data[] = (filteredDashboards || dashboards).map((e) => ({
-		createdBy: e.created_at,
-		description: e.data.description || '',
-		id: e.uuid,
-		lastUpdatedTime: e.updated_at,
-		name: e.data.title,
-		tags: e.data.tags || [],
-		key: e.uuid,
-	}));
+	const data: Data[] =
+		filteredDashboards?.map((e) => ({
+			createdBy: e.created_at,
+			description: e.data.description || '',
+			id: e.uuid,
+			lastUpdatedTime: e.updated_at,
+			name: e.data.title,
+			tags: e.data.tags || [],
+			key: e.uuid,
+			refetchDashboardList,
+		})) || [];
 
 	const onNewDashboardHandler = useCallback(async () => {
 		try {
@@ -209,7 +238,7 @@ function ListOfAllDashboard(): JSX.Element {
 			menuItems.push({
 				key: t('create_dashboard').toString(),
 				label: t('create_dashboard'),
-				disabled: loading,
+				disabled: isDashboardListLoading,
 				onClick: onNewDashboardHandler,
 			});
 		}
@@ -228,7 +257,7 @@ function ListOfAllDashboard(): JSX.Element {
 		});
 
 		return menuItems;
-	}, [createNewDashboard, loading, onNewDashboardHandler, t]);
+	}, [createNewDashboard, isDashboardListLoading, onNewDashboardHandler, t]);
 
 	const menu: MenuProps = useMemo(
 		() => ({
@@ -250,7 +279,11 @@ function ListOfAllDashboard(): JSX.Element {
 						}}
 					/>
 					{newDashboard && (
-						<Dropdown disabled={loading} trigger={['click']} menu={menu}>
+						<Dropdown
+							disabled={isDashboardListLoading}
+							trigger={['click']}
+							menu={menu}
+						>
 							<NewDashboardButton
 								icon={<PlusOutlined />}
 								type="primary"
@@ -266,7 +299,7 @@ function ListOfAllDashboard(): JSX.Element {
 		),
 		[
 			newDashboard,
-			loading,
+			isDashboardListLoading,
 			menu,
 			newDashboardState.loading,
 			newDashboardState.error,
@@ -278,9 +311,9 @@ function ListOfAllDashboard(): JSX.Element {
 		<Card>
 			{GetHeader}
 
-			{!loading && (
+			{!isDashboardListLoading && (
 				<SearchFilter
-					searchData={dashboards}
+					searchData={dashboardListResponse}
 					filterDashboards={setFilteredDashboards}
 				/>
 			)}
@@ -300,7 +333,7 @@ function ListOfAllDashboard(): JSX.Element {
 					showHeader
 					bordered
 					sticky
-					loading={loading}
+					loading={isDashboardListLoading}
 					dataSource={data}
 					showSorterTooltip
 				/>
@@ -317,6 +350,7 @@ export interface Data {
 	createdBy: string;
 	lastUpdatedTime: string;
 	id: string;
+	refetchDashboardList: UseQueryResult['refetch'];
 }
 
 export default ListOfAllDashboard;

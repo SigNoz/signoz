@@ -163,6 +163,29 @@ var prepareProcessorTestData = []struct {
 			},
 		},
 	},
+	{
+		Name: "first op disabled",
+		Operators: []model.PipelineOperator{
+			{
+				ID:      "move_filename",
+				Output:  "move_function",
+				Enabled: false,
+				Name:    "move_filename",
+			},
+			{
+				ID:      "move_function",
+				Enabled: true,
+				Name:    "move_function",
+			},
+		},
+		Output: []model.PipelineOperator{
+			{
+				ID:      "move_function",
+				Enabled: true,
+				Name:    "move_function",
+			},
+		},
+	},
 }
 
 func TestPreparePipelineProcessor(t *testing.T) {

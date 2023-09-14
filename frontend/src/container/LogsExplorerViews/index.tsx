@@ -1,13 +1,13 @@
 import { Tabs, TabsProps } from 'antd';
 import TabLabel from 'components/TabLabel';
 import { AVAILABLE_EXPORT_PANEL_TYPES } from 'constants/panelTypes';
+import { QueryParams } from 'constants/query';
 import {
 	initialFilters,
 	initialQueriesMap,
 	initialQueryBuilderFormValues,
 	PANEL_TYPES,
 } from 'constants/queryBuilder';
-import { queryParamNamesMap } from 'constants/queryBuilderQueryNames';
 import { DEFAULT_PER_PAGE_VALUE } from 'container/Controls/config';
 import ExportPanel from 'container/ExportPanel';
 import GoToTop from 'container/GoToTop';
@@ -50,7 +50,7 @@ function LogsExplorerViews(): JSX.Element {
 
 	const { activeLogId, timeRange, onTimeRangeChange } = useCopyLogLink();
 	const { queryData: pageSize } = useUrlQueryData(
-		queryParamNamesMap.pageSize,
+		QueryParams.pageSize,
 		DEFAULT_PER_PAGE_VALUE,
 	);
 

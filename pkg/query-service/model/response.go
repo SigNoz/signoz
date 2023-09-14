@@ -7,6 +7,7 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/pkg/errors"
 	"github.com/prometheus/prometheus/promql/parser"
 	"github.com/prometheus/prometheus/util/stats"
 	"k8s.io/apimachinery/pkg/labels"
@@ -86,6 +87,34 @@ func InternalError(err error) *ApiError {
 	return &ApiError{
 		Typ: ErrorInternal,
 		Err: err,
+	}
+}
+
+func NotFoundError(err error) *ApiError {
+	return &ApiError{
+		Typ: ErrorNotFound,
+		Err: err,
+	}
+}
+
+func UnauthorizedError(err error) *ApiError {
+	return &ApiError{
+		Typ: ErrorUnauthorized,
+		Err: err,
+	}
+}
+
+func UnavailableError(err error) *ApiError {
+	return &ApiError{
+		Typ: ErrorUnavailable,
+		Err: err,
+	}
+}
+
+func WrapApiError(err *ApiError, msg string) *ApiError {
+	return &ApiError{
+		Typ: err.Type(),
+		Err: errors.Wrap(err.ToError(), msg),
 	}
 }
 

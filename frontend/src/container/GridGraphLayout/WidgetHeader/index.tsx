@@ -8,7 +8,7 @@ import {
 } from '@ant-design/icons';
 import { Dropdown, MenuProps, Tooltip, Typography } from 'antd';
 import Spinner from 'components/Spinner';
-import { queryParamNamesMap } from 'constants/queryBuilderQueryNames';
+import { QueryParams } from 'constants/query';
 import ROUTES from 'constants/routes';
 import useComponentPermission from 'hooks/useComponentPermission';
 import history from 'lib/history';
@@ -73,7 +73,7 @@ function WidgetHeader({
 		history.push(
 			`${window.location.pathname}/new?widgetId=${widgetId}&graphType=${
 				widget.panelTypes
-			}&${queryParamNamesMap.compositeQuery}=${encodeURIComponent(
+			}&${QueryParams.compositeQuery}=${encodeURIComponent(
 				JSON.stringify(widget.query),
 			)}`,
 		);
@@ -81,9 +81,9 @@ function WidgetHeader({
 
 	const onCreateAlertsHandler = useCallback(() => {
 		history.push(
-			`${ROUTES.ALERTS_NEW}?${
-				queryParamNamesMap.compositeQuery
-			}=${encodeURIComponent(JSON.stringify(widget.query))}`,
+			`${ROUTES.ALERTS_NEW}?${QueryParams.compositeQuery}=${encodeURIComponent(
+				JSON.stringify(widget.query),
+			)}`,
 		);
 	}, [widget]);
 

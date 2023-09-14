@@ -79,7 +79,6 @@ const interceptorRejected = async (
 
 			// when refresh token is expired
 			if (response.status === 401 && response.config.url === '/login') {
-				console.log('logging out ');
 				Logout();
 			}
 		}
