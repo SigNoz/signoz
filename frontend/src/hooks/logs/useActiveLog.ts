@@ -1,4 +1,5 @@
 import { getAggregateKeys } from 'api/queryBuilder/getAttributeKeys';
+import { SOMETHING_WENT_WRONG } from 'constants/api';
 import { QueryBuilderKeys } from 'constants/queryBuilder';
 import ROUTES from 'constants/routes';
 import { DataTypes } from 'container/LogDetailedView/types';
@@ -8,7 +9,6 @@ import { useNotifications } from 'hooks/useNotifications';
 import { getGeneratedFilterQueryString } from 'lib/getGeneratedFilterQueryString';
 import { chooseAutocompleteFromCustomValue } from 'lib/newQueryBuilder/chooseAutocompleteFromCustomValue';
 import { useCallback, useMemo, useState } from 'react';
-import { useTranslation } from 'react-i18next';
 import { useQueryClient } from 'react-query';
 import { useDispatch, useSelector } from 'react-redux';
 import { useHistory, useLocation } from 'react-router-dom';
@@ -33,8 +33,6 @@ export const useActiveLog = (): UseActiveLog => {
 	const history = useHistory();
 	const { currentQuery, redirectWithQueryBuilderData } = useQueryBuilder();
 	const { notifications } = useNotifications();
-
-	const { t } = useTranslation('common');
 
 	const isLogsPage = useMemo(() => pathname === ROUTES.LOGS, [pathname]);
 
@@ -105,9 +103,7 @@ export const useActiveLog = (): UseActiveLog => {
 							filters: {
 								...item.filters,
 								items: [
-									...item.filters.items.filter(
-										(item) => item.key?.id !== existAutocompleteKey.id,
-									),
+									...item.filters.items,
 									{
 										id: uuid(),
 										key: existAutocompleteKey,
@@ -122,10 +118,10 @@ export const useActiveLog = (): UseActiveLog => {
 
 				redirectWithQueryBuilderData(nextQuery);
 			} catch {
-				notifications.error({ message: t('something_went_wrong') });
+				notifications.error({ message: SOMETHING_WENT_WRONG });
 			}
 		},
-		[currentQuery, notifications, queryClient, redirectWithQueryBuilderData, t],
+		[currentQuery, notifications, queryClient, redirectWithQueryBuilderData],
 	);
 
 	const onAddToQueryLogs = useCallback(

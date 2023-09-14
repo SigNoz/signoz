@@ -72,7 +72,12 @@ function BodyTitleRenderer({
 
 	return (
 		<TitleWrapper>
-			{title.toString()} {!parentIsArray && `- ${value}`}
+			{title.toString()}{' '}
+			{!parentIsArray && (
+				<span>
+					: <span style={{ color: 'orange' }}>{`${value}`}</span>
+				</span>
+			)}
 			<Dropdown menu={menu} trigger={['click']}>
 				<SettingOutlined style={{ marginLeft: 8 }} className="hover-reveal" />
 			</Dropdown>
