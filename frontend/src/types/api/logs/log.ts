@@ -10,6 +10,7 @@ export interface ILog {
 	body: string;
 	resources_string: Record<string, never>;
 	attributesString: Record<string, never>;
+	attributes_string: Record<string, never>;
 	attributesInt: Record<string, never>;
 	attributesFloat: Record<string, never>;
 }

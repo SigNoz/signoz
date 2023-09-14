@@ -1,6 +1,6 @@
 import { SOMETHING_WENT_WRONG } from 'constants/api';
+import { QueryParams } from 'constants/query';
 import { initialQueriesMap, PANEL_TYPES } from 'constants/queryBuilder';
-import { queryParamNamesMap } from 'constants/queryBuilderQueryNames';
 import { useUpdateDashboard } from 'hooks/dashboard/useUpdateDashboard';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { useNotifications } from 'hooks/useNotifications';
@@ -75,9 +75,7 @@ function DashboardGraphSlider(): JSX.Element {
 						const queryParams = {
 							graphType: name,
 							widgetId: id,
-							[queryParamNamesMap.compositeQuery]: JSON.stringify(
-								initialQueriesMap.metrics,
-							),
+							[QueryParams.compositeQuery]: JSON.stringify(initialQueriesMap.metrics),
 						};
 
 						history.push(

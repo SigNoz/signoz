@@ -10,7 +10,11 @@ import AppActions from 'types/actions';
 import { Data } from '../index';
 import { TableLinkText } from './styles';
 
-function DeleteButton({ deleteDashboard, id }: DeleteButtonProps): JSX.Element {
+function DeleteButton({
+	deleteDashboard,
+	id,
+	refetchDashboardList,
+}: DeleteButtonProps): JSX.Element {
 	const [modal, contextHolder] = Modal.useModal();
 
 	const openConfirmationDialog = useCallback((): void => {
@@ -20,13 +24,14 @@ function DeleteButton({ deleteDashboard, id }: DeleteButtonProps): JSX.Element {
 			onOk() {
 				deleteDashboard({
 					uuid: id,
+					refetch: refetchDashboardList,
 				});
 			},
 			okText: 'Delete',
 			okButtonProps: { danger: true },
 			centered: true,
 		});
-	}, [id, modal, deleteDashboard]);
+	}, [modal, deleteDashboard, id, refetchDashboardList]);
 
 	return (
 		<>
@@ -51,13 +56,22 @@ const mapDispatchToProps = (
 	deleteDashboard: bindActionCreators(DeleteDashboard, dispatch),
 });
 
-type DeleteButtonProps = Data & DispatchProps;
+export type DeleteButtonProps = Data & DispatchProps;
 
 const WrapperDeleteButton = connect(null, mapDispatchToProps)(DeleteButton);
 
 // This is to avoid the type collision
 function Wrapper(props: Data): JSX.Element {
-	const { createdBy, description, id, key, lastUpdatedTime, name, tags } = props;
+	const {
+		createdBy,
+		description,
+		id,
+		key,
+		refetchDashboardList,
+		lastUpdatedTime,
+		name,
+		tags,
+	} = props;
 
 	return (
 		<WrapperDeleteButton
@@ -69,6 +83,7 @@ function Wrapper(props: Data): JSX.Element {
 				lastUpdatedTime,
 				name,
 				tags,
+				refetchDashboardList,
 			}}
 		/>
 	);

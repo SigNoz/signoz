@@ -21,6 +21,7 @@ import {
 	useState,
 } from 'react';
 import { useSelector } from 'react-redux';
+import { useLocation } from 'react-router-dom';
 import { AppState } from 'store/reducers';
 import { Dashboard } from 'types/api/dashboard/getAll';
 import AppReducer from 'types/reducer/app';
@@ -56,6 +57,7 @@ function WidgetGraphComponent({
 	const [modal, setModal] = useState<boolean>(false);
 	const [hovered, setHovered] = useState(false);
 	const { notifications } = useNotifications();
+	const { pathname } = useLocation();
 
 	const { graphVisibilityStates: localstoredVisibilityStates } = useMemo(
 		() =>
@@ -198,9 +200,7 @@ function WidgetGraphComponent({
 					graphType: widget?.panelTypes,
 					widgetId: uuid,
 				};
-				history.push(
-					`${history.location.pathname}/new?${createQueryParams(queryParams)}`,
-				);
+				history.push(`${pathname}/new?${createQueryParams(queryParams)}`);
 			});
 		}
 	};

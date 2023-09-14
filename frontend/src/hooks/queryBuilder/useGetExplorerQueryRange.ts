@@ -24,18 +24,15 @@ export const useGetExplorerQueryRange = (
 		GlobalReducer
 	>((state) => state.globalTime);
 
-	const key = useMemo(
-		() =>
-			typeof options?.queryKey === 'string'
-				? options?.queryKey
-				: REACT_QUERY_KEY.GET_QUERY_RANGE,
-		[options?.queryKey],
-	);
+	const key =
+		typeof options?.queryKey === 'string'
+			? options?.queryKey
+			: REACT_QUERY_KEY.GET_QUERY_RANGE;
 
 	const isEnabled = useMemo(() => {
 		if (!options) return isEnabledQuery;
 		if (typeof options.enabled === 'boolean') {
-			return isEnabledQuery && options.enabled;
+			return isEnabledQuery || options.enabled;
 		}
 
 		return isEnabledQuery;

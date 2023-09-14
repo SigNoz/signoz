@@ -123,7 +123,6 @@ function HeaderContainer(): JSX.Element {
 							Try Signoz Cloud
 						</Button>
 					)}
-
 					<Config frontendId="tooltip" />
 
 					<ToggleButton
