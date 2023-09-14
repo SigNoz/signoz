@@ -1,4 +1,4 @@
-import { blue, orange } from '@ant-design/colors';
+import { orange } from '@ant-design/colors';
 import { LinkOutlined } from '@ant-design/icons';
 import { Input, Space, Tooltip } from 'antd';
 import { ColumnsType } from 'antd/es/table';
@@ -21,6 +21,7 @@ import { SET_DETAILED_LOG_DATA } from 'types/actions/logs';
 import { ILog } from 'types/api/logs/log';
 
 import ActionItem, { ActionItemProps } from './ActionItem';
+import FieldRenderer from './FieldRenderer';
 import { flattenObject, recursiveParseJSON } from './utils';
 
 // Fields which should be restricted from adding it to query
@@ -91,7 +92,7 @@ function TableView({
 	const columns: ColumnsType<DataType> = [
 		{
 			title: 'Action',
-			width: 30,
+			width: 11,
 			render: (fieldData: Record<string, string>): JSX.Element | null => {
 				const fieldKey = fieldData.field.split('.').slice(-1);
 				if (!RESTRICTED_FIELDS.includes(fieldKey[0])) {
@@ -110,12 +111,12 @@ function TableView({
 			title: 'Field',
 			dataIndex: 'field',
 			key: 'field',
-			width: 30,
+			width: 50,
 			align: 'left',
 			ellipsis: true,
 			render: (field: string, record): JSX.Element => {
 				const fieldKey = field.split('.').slice(-1);
-				const renderedField = <span style={{ color: blue[4] }}>{field}</span>;
+				const renderedField = <FieldRenderer field={field} />;
 
 				if (record.field === 'trace_id') {
 					const traceId = flattenLogData[record.field];
@@ -161,7 +162,7 @@ function TableView({
 			title: 'Value',
 			dataIndex: 'value',
 			key: 'value',
-			width: 80,
+			width: 70,
 			ellipsis: false,
 			render: (field, record): JSX.Element => {
 				if (record.field === 'body') {
