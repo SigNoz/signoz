@@ -19,6 +19,7 @@ import {
 } from 'react';
 import { useTranslation } from 'react-i18next';
 import { connect, useSelector } from 'react-redux';
+import { useLocation } from 'react-router-dom';
 import { bindActionCreators } from 'redux';
 import { ThunkDispatch } from 'redux-thunk';
 import { DeleteWidget } from 'store/actions/dashboard/deleteWidget';
@@ -62,6 +63,7 @@ function WidgetGraphComponent({
 	const [hovered, setHovered] = useState(false);
 	const { notifications } = useNotifications();
 	const { t } = useTranslation(['common']);
+	const { pathname } = useLocation();
 
 	const { graphVisibilityStates: localstoredVisibilityStates } = useMemo(
 		() =>
@@ -195,11 +197,7 @@ function WidgetGraphComponent({
 					graphType: widget?.panelTypes,
 					widgetId: uuid,
 				};
-				setTimeout(() => {
-					history.push(
-						`${history.location.pathname}/new?${createQueryParams(queryParams)}`,
-					);
-				}, 1500);
+				history.push(`${pathname}/new?${createQueryParams(queryParams)}`);
 			});
 		}
 	};

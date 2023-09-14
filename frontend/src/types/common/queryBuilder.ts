@@ -8,6 +8,7 @@ import {
 	Query,
 	QueryState,
 } from 'types/api/queryBuilder/queryBuilderData';
+import { ViewProps } from 'types/api/saveViews/types';
 
 import { EQueryType } from './dashboard';
 
@@ -204,6 +205,10 @@ export type QueryBuilderContextType = {
 		) => QueryBuilderData[T][number],
 	) => Query;
 	initQueryBuilderData: (query: Query) => void;
+	isStagedQueryUpdated: (
+		viewData: ViewProps[] | undefined,
+		viewKey: string,
+	) => boolean;
 };
 
 export type QueryAdditionalFilter = {

@@ -387,6 +387,7 @@ func (aH *APIHandler) RegisterRoutes(router *mux.Router, am *AuthMiddleware) {
 
 	router.HandleFunc("/api/v1/register", am.OpenAccess(aH.registerUser)).Methods(http.MethodPost)
 	router.HandleFunc("/api/v1/login", am.OpenAccess(aH.loginUser)).Methods(http.MethodPost)
+	router.HandleFunc("/api/v1/loginPrecheck", am.OpenAccess(aH.precheckLogin)).Methods(http.MethodGet)
 
 	router.HandleFunc("/api/v1/user", am.AdminAccess(aH.listUsers)).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/user/{id}", am.SelfAccess(aH.getUser)).Methods(http.MethodGet)
@@ -1861,6 +1862,20 @@ func (aH *APIHandler) registerUser(w http.ResponseWriter, r *http.Request) {
 	}
 
 	aH.Respond(w, nil)
+}
+
+func (aH *APIHandler) precheckLogin(w http.ResponseWriter, r *http.Request) {
+
+	email := r.URL.Query().Get("email")
+	sourceUrl := r.URL.Query().Get("ref")
+
+	resp, apierr := aH.appDao.PrecheckLogin(context.Background(), email, sourceUrl)
+	if apierr != nil {
+		RespondError(w, apierr, resp)
+		return
+	}
+
+	aH.Respond(w, resp)
 }
 
 func (aH *APIHandler) loginUser(w http.ResponseWriter, r *http.Request) {
