@@ -1,3 +1,5 @@
+import { MetricsType } from 'container/MetricsApplication/constant';
+
 export interface BodyTitleRendererProps {
 	title: string;
 	nodeKey: string;
@@ -6,3 +8,13 @@ export interface BodyTitleRendererProps {
 }
 
 export type AnyObject = { [key: string]: any };
+
+export interface FieldRendererProps {
+	field: string;
+}
+
+export interface IFieldAttributes {
+	dataType?: string;
+	newField?: string;
+	logType?: MetricsType;
+}
