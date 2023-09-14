@@ -1,4 +1,5 @@
-import { DataTypes } from './types';
+import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
+
 import { flattenObject, getDataTypes, recursiveParseJSON } from './utils';
 
 describe('recursiveParseJSON', () => {

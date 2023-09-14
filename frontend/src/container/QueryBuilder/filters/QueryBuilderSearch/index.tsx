@@ -1,6 +1,5 @@
 import { Select, Spin, Tag, Tooltip } from 'antd';
 import { OPERATORS } from 'constants/queryBuilder';
-import { DataTypes } from 'container/LogDetailedView/types';
 import { getDataTypes } from 'container/LogDetailedView/utils';
 import {
 	useAutoComplete,
@@ -15,7 +14,10 @@ import {
 	useEffect,
 	useMemo,
 } from 'react';
-import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
+import {
+	BaseAutocompleteData,
+	DataTypes,
+} from 'types/api/queryBuilder/queryAutocompleteResponse';
 import {
 	IBuilderQuery,
 	TagFilter,
@@ -122,15 +124,12 @@ function QueryBuilderSearch({
 		[query.dataSource],
 	);
 
-	const fetchValueDataType = (
-		value: unknown,
-		operator: string,
-	): DataTypes | unknown => {
+	const fetchValueDataType = (value: unknown, operator: string): DataTypes => {
 		if (operator === OPERATORS.HAS || operator === OPERATORS.NHAS) {
 			return getDataTypes([value]);
 		}
 
-		return '';
+		return DataTypes.EMPTY;
 	};
 
 	const queryTags = useMemo(() => {

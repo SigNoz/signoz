@@ -1,6 +1,6 @@
-import { DataTypes } from 'container/LogDetailedView/types';
 import { MouseEventHandler } from 'react';
 import { ILog } from 'types/api/logs/log';
+import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
 
 export type LogTimeRange = {
 	start: number;

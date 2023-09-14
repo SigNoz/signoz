@@ -4,6 +4,7 @@ import { createNewBuilderItemName } from 'lib/newQueryBuilder/createNewBuilderIt
 import {
 	AutocompleteType,
 	BaseAutocompleteData,
+	DataTypes,
 	LocalDataType,
 } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import {
@@ -112,7 +113,7 @@ export const initialAutocompleteData: BaseAutocompleteData = {
 		{ dataType: null, key: '', isColumn: null, type: null },
 		baseAutoCompleteIdKeysOrder,
 	),
-	dataType: '',
+	dataType: DataTypes.EMPTY,
 	key: '',
 	isColumn: false,
 	type: '',

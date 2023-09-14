@@ -1,6 +1,8 @@
 import { initialAutocompleteData } from 'constants/queryBuilder';
-import { DataTypes } from 'container/LogDetailedView/types';
-import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
+import {
+	BaseAutocompleteData,
+	DataTypes,
+} from 'types/api/queryBuilder/queryAutocompleteResponse';
 
 export const chooseAutocompleteFromCustomValue = (
 	sourceList: BaseAutocompleteData[],
@@ -16,7 +18,7 @@ export const chooseAutocompleteFromCustomValue = (
 		return {
 			...initialAutocompleteData,
 			key: value,
-			dataType: dataType || '',
+			dataType: dataType || DataTypes.EMPTY,
 			isJSON,
 		};
 	}

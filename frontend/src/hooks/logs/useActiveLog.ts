@@ -2,7 +2,6 @@ import { getAggregateKeys } from 'api/queryBuilder/getAttributeKeys';
 import { SOMETHING_WENT_WRONG } from 'constants/api';
 import { QueryBuilderKeys } from 'constants/queryBuilder';
 import ROUTES from 'constants/routes';
-import { DataTypes } from 'container/LogDetailedView/types';
 import { getOperatorValue } from 'container/QueryBuilder/filters/QueryBuilderSearch/utils';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useNotifications } from 'hooks/useNotifications';
@@ -15,7 +14,10 @@ import { useHistory, useLocation } from 'react-router-dom';
 import { AppState } from 'store/reducers';
 import { SET_DETAILED_LOG_DATA } from 'types/actions/logs';
 import { ILog } from 'types/api/logs/log';
-import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
+import {
+	BaseAutocompleteData,
+	DataTypes,
+} from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { ILogsReducer } from 'types/reducer/logs';
 import { v4 as uuid } from 'uuid';

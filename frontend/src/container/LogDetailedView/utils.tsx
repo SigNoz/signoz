@@ -1,9 +1,9 @@
 import { DataNode } from 'antd/es/tree';
 import { uniqueId } from 'lodash-es';
+import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
 
 import BodyTitleRenderer from './BodyTitleRenderer';
 import { AnyObject } from './LogDetailedView.types';
-import { DataTypes } from './types';
 
 export const recursiveParseJSON = (obj: string): Record<string, unknown> => {
 	try {
