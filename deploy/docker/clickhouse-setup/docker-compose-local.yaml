@@ -22,7 +22,11 @@ services:
       - ./prometheus.yml:/root/config/prometheus.yml
       - ../dashboards:/root/config/dashboards
       - ./data/signoz/:/var/lib/signoz/
-    command: [ "-config=/root/config/prometheus.yml" ]
+    command:
+      [
+        "-config=/root/config/prometheus.yml",
+        "--prefer-delta=true"
+      ]
     ports:
       - "6060:6060"
       - "8080:8080"

@@ -1,5 +1,7 @@
 import { ErrorStatusCode, SuccessStatusCode } from 'types/common';
 
+export type ApiResponse<T> = { data: T };
+
 export interface ErrorResponse {
 	statusCode: ErrorStatusCode;
 	payload: null;

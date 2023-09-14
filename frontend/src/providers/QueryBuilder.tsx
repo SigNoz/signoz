@@ -1,3 +1,5 @@
+import { isQueryUpdatedInView } from 'components/ExplorerCard/utils';
+import { QueryParams } from 'constants/query';
 import {
 	alphabet,
 	baseAutoCompleteIdKeysOrder,
@@ -13,7 +15,6 @@ import {
 	MAX_QUERIES,
 	PANEL_TYPES,
 } from 'constants/queryBuilder';
-import { queryParamNamesMap } from 'constants/queryBuilderQueryNames';
 import { useGetCompositeQueryParam } from 'hooks/queryBuilder/useGetCompositeQueryParam';
 import { updateStepInterval } from 'hooks/queryBuilder/useStepInterval';
 import useUrlQuery from 'hooks/useUrlQuery';
@@ -27,6 +28,7 @@ import {
 	useCallback,
 	useEffect,
 	useMemo,
+	useRef,
 	useState,
 } from 'react';
 import { useSelector } from 'react-redux';
@@ -41,6 +43,7 @@ import {
 	Query,
 	QueryState,
 } from 'types/api/queryBuilder/queryBuilderData';
+import { ViewProps } from 'types/api/saveViews/types';
 import { EQueryType } from 'types/common/dashboard';
 import {
 	DataSource,
@@ -72,6 +75,7 @@ export const QueryBuilderContext = createContext<QueryBuilderContextType>({
 	updateQueriesData: () => initialQueriesMap.metrics,
 	initQueryBuilderData: () => {},
 	handleOnUnitsChange: () => {},
+	isStagedQueryUpdated: () => false,
 });
 
 export function QueryBuilderProvider({
@@ -80,6 +84,8 @@ export function QueryBuilderProvider({
 	const urlQuery = useUrlQuery();
 	const history = useHistory();
 	const location = useLocation();
+	const currentPathnameRef = useRef<string | null>(null);
+
 	const { maxTime, minTime } = useSelector<AppState, GlobalReducer>(
 		(state) => state.globalTime,
 	);
@@ -94,9 +100,7 @@ export function QueryBuilderProvider({
 
 	const [panelType, setPanelType] = useState<PANEL_TYPES | null>(null);
 
-	const [currentQuery, setCurrentQuery] = useState<QueryState>(
-		queryState || initialQueryState,
-	);
+	const [currentQuery, setCurrentQuery] = useState<QueryState>(queryState);
 	const [stagedQuery, setStagedQuery] = useState<Query | null>(null);
 
 	const [queryType, setQueryType] = useState<EQueryType>(queryTypeParam);
@@ -448,6 +452,17 @@ export function QueryBuilderProvider({
 		[updateQueryBuilderData],
 	);
 
+	const isStagedQueryUpdated = useCallback(
+		(viewData: ViewProps[] | undefined, viewKey: string): boolean =>
+			isQueryUpdatedInView({
+				currentPanelType: panelType,
+				data: viewData,
+				stagedQuery,
+				viewKey,
+			}),
+		[panelType, stagedQuery],
+	);
+
 	const redirectWithQueryBuilderData = useCallback(
 		(query: Partial<Query>, searchParams?: Record<string, unknown>) => {
 			const queryType =
@@ -480,7 +495,7 @@ export function QueryBuilderProvider({
 			};
 
 			urlQuery.set(
-				queryParamNamesMap.compositeQuery,
+				QueryParams.compositeQuery,
 				encodeURIComponent(JSON.stringify(currentGeneratedQuery)),
 			);
 
@@ -526,14 +541,6 @@ export function QueryBuilderProvider({
 		});
 	}, [currentQuery, queryType, maxTime, minTime, redirectWithQueryBuilderData]);
 
-	const resetQuery = useCallback((newCurrentQuery?: QueryState) => {
-		setStagedQuery(null);
-
-		if (newCurrentQuery) {
-			setCurrentQuery(newCurrentQuery);
-		}
-	}, []);
-
 	useEffect(() => {
 		if (!compositeQueryParam) return;
 
@@ -557,6 +564,22 @@ export function QueryBuilderProvider({
 		compositeQueryParam,
 		stagedQuery,
 	]);
+
+	const resetQuery = (newCurrentQuery?: QueryState): void => {
+		setStagedQuery(null);
+
+		if (newCurrentQuery) {
+			setCurrentQuery(newCurrentQuery);
+		}
+	};
+
+	useEffect(() => {
+		if (stagedQuery && location.pathname !== currentPathnameRef.current) {
+			currentPathnameRef.current = location.pathname;
+
+			setStagedQuery(null);
+		}
+	}, [location, stagedQuery, currentQuery]);
 
 	const handleOnUnitsChange = useCallback(
 		(unit: string) => {
@@ -604,6 +627,7 @@ export function QueryBuilderProvider({
 			updateQueriesData,
 			initQueryBuilderData,
 			handleOnUnitsChange,
+			isStagedQueryUpdated,
 		}),
 		[
 			query,
@@ -622,11 +646,11 @@ export function QueryBuilderProvider({
 			addNewQueryItem,
 			redirectWithQueryBuilderData,
 			handleRunQuery,
-			resetQuery,
 			updateAllQueriesOperators,
 			updateQueriesData,
 			initQueryBuilderData,
 			handleOnUnitsChange,
+			isStagedQueryUpdated,
 		],
 	);
 

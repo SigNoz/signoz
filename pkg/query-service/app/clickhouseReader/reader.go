@@ -676,7 +676,7 @@ func (r *ClickHouseReader) CreateChannel(receiver *am.Receiver) (*am.Receiver, *
 }
 
 func (r *ClickHouseReader) GetInstantQueryMetricsResult(ctx context.Context, queryParams *model.InstantQueryMetricsParams) (*promql.Result, *stats.QueryStats, *model.ApiError) {
-	qry, err := r.queryEngine.NewInstantQuery(r.remoteStorage, &promql.QueryOpts{}, queryParams.Query, queryParams.Time)
+	qry, err := r.queryEngine.NewInstantQuery(ctx, r.remoteStorage, nil, queryParams.Query, queryParams.Time)
 	if err != nil {
 		return nil, nil, &model.ApiError{Typ: model.ErrorBadData, Err: err}
 	}
@@ -695,7 +695,7 @@ func (r *ClickHouseReader) GetInstantQueryMetricsResult(ctx context.Context, que
 }
 
 func (r *ClickHouseReader) GetQueryRangeResult(ctx context.Context, query *model.QueryRangeParams) (*promql.Result, *stats.QueryStats, *model.ApiError) {
-	qry, err := r.queryEngine.NewRangeQuery(r.remoteStorage, &promql.QueryOpts{}, query.Query, query.Start, query.End, query.Step)
+	qry, err := r.queryEngine.NewRangeQuery(ctx, r.remoteStorage, nil, query.Query, query.Start, query.End, query.Step)
 
 	if err != nil {
 		return nil, nil, &model.ApiError{Typ: model.ErrorBadData, Err: err}
@@ -798,14 +798,14 @@ func (r *ClickHouseReader) GetServices(ctx context.Context, queryParams *model.G
 					avg(durationNano) as avgDuration,
 					count(*) as numCalls
 				FROM %s.%s
-				WHERE serviceName = @serviceName AND name In [@names] AND timestamp>= @start AND timestamp<= @end`,
+				WHERE serviceName = @serviceName AND name In @names AND timestamp>= @start AND timestamp<= @end`,
 				r.TraceDB, r.indexTable,
 			)
 			errorQuery := fmt.Sprintf(
 				`SELECT
 					count(*) as numErrors
 				FROM %s.%s
-				WHERE serviceName = @serviceName AND name In [@names] AND timestamp>= @start AND timestamp<= @end AND statusCode=2`,
+				WHERE serviceName = @serviceName AND name In @names AND timestamp>= @start AND timestamp<= @end AND statusCode=2`,
 				r.TraceDB, r.indexTable,
 			)
 
@@ -893,7 +893,7 @@ func (r *ClickHouseReader) GetServiceOverview(ctx context.Context, queryParams *
 			quantile(0.50)(durationNano) as p50,
 			count(*) as numCalls
 		FROM %s.%s
-		WHERE serviceName = @serviceName AND name In [@names] AND timestamp>= @start AND timestamp<= @end`,
+		WHERE serviceName = @serviceName AND name In @names AND timestamp>= @start AND timestamp<= @end`,
 		r.TraceDB, r.indexTable,
 	)
 	args := []interface{}{}
@@ -924,7 +924,7 @@ func (r *ClickHouseReader) GetServiceOverview(ctx context.Context, queryParams *
 			toStartOfInterval(timestamp, INTERVAL @interval minute) as time,
 			count(*) as numErrors
 		FROM %s.%s
-		WHERE serviceName = @serviceName AND name In [@names] AND timestamp>= @start AND timestamp<= @end AND statusCode=2`,
+		WHERE serviceName = @serviceName AND name In @names AND timestamp>= @start AND timestamp<= @end AND statusCode=2`,
 		r.TraceDB, r.indexTable,
 	)
 	args = []interface{}{}
@@ -3275,7 +3275,7 @@ func (r *ClickHouseReader) FetchTemporality(ctx context.Context, metricNames []s
 
 	metricNameToTemporality := make(map[string]map[v3.Temporality]bool)
 
-	query := fmt.Sprintf(`SELECT DISTINCT metric_name, temporality FROM %s.%s WHERE metric_name IN [$1]`, signozMetricDBName, signozTSTableName)
+	query := fmt.Sprintf(`SELECT DISTINCT metric_name, temporality FROM %s.%s WHERE metric_name IN $1`, signozMetricDBName, signozTSTableName)
 
 	rows, err := r.db.Query(ctx, query, metricNames)
 	if err != nil {

@@ -5,6 +5,7 @@ import { ResizeTable } from 'components/ResizeTable';
 import { getNanoSeconds } from 'container/AllError/utils';
 import dayjs from 'dayjs';
 import { useNotifications } from 'hooks/useNotifications';
+import createQueryParams from 'lib/createQueryParams';
 import history from 'lib/history';
 import { urlKey } from 'pages/ErrorDetails/utils';
 import { useMemo, useState } from 'react';
@@ -13,12 +14,13 @@ import { useQuery } from 'react-query';
 import { useLocation } from 'react-router-dom';
 import { PayloadProps as GetByErrorTypeAndServicePayload } from 'types/api/errors/getByErrorTypeAndService';
 
+import { keyToExclude } from './config';
 import { DashedContainer, EditorContainer, EventContainer } from './styles';
 
 function ErrorDetails(props: ErrorDetailsProps): JSX.Element {
 	const { idPayload } = props;
 	const { t } = useTranslation(['errorDetails', 'common']);
-	const { search } = useLocation();
+	const { search, pathname } = useLocation();
 
 	const params = useMemo(() => new URLSearchParams(search), [search]);
 
@@ -69,18 +71,6 @@ function ErrorDetails(props: ErrorDetailsProps): JSX.Element {
 		[],
 	);
 
-	const keyToExclude = useMemo(
-		() => [
-			'exceptionStacktrace',
-			'exceptionType',
-			'errorId',
-			'timestamp',
-			'exceptionMessage',
-			'exceptionEscaped',
-		],
-		[],
-	);
-
 	const { notifications } = useNotifications();
 
 	const onClickErrorIdHandler = async (
@@ -95,11 +85,13 @@ function ErrorDetails(props: ErrorDetailsProps): JSX.Element {
 				return;
 			}
 
-			history.replace(
-				`${history.location.pathname}?&groupId=${
-					idPayload.groupID
-				}&timestamp=${getNanoSeconds(timestamp)}&errorId=${id}`,
-			);
+			const queryParams = {
+				groupId: idPayload.groupID,
+				timestamp: getNanoSeconds(timestamp),
+				errorId: id,
+			};
+
+			history.replace(`${pathname}?${createQueryParams(queryParams)}`);
 		} catch (error) {
 			notifications.error({
 				message: t('something_went_wrong'),

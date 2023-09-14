@@ -5,6 +5,7 @@ import { LOCALSTORAGE } from 'constants/localStorage';
 import LogsExplorerContext from 'container/LogsExplorerContext';
 import { useActiveLog } from 'hooks/logs/useActiveLog';
 import { useCopyLogLink } from 'hooks/logs/useCopyLogLink';
+import { useIsDarkMode } from 'hooks/useDarkMode';
 import useDragColumns from 'hooks/useDragColumns';
 import { getDraggedColumns } from 'hooks/useDragColumns/utils';
 import {
@@ -40,8 +41,11 @@ const CustomTableRow: TableComponents<ILog>['TableRow'] = ({
 }) => {
 	const { isHighlighted } = useCopyLogLink(props.item.id);
 
+	const isDarkMode = useIsDarkMode();
+
 	return (
 		<TableRowStyled
+			$isDarkMode={isDarkMode}
 			$isActiveLog={isHighlighted}
 			// eslint-disable-next-line react/jsx-props-no-spreading
 			{...props}
@@ -77,6 +81,8 @@ const InfinityTable = forwardRef<TableVirtuosoHandle, InfinityTableProps>(
 			Record<string, unknown>
 		>(LOCALSTORAGE.LOGS_LIST_COLUMNS);
 
+		const isDarkMode = useIsDarkMode();
+
 		const tableColumns = useMemo(
 			() => getDraggedColumns<Record<string, unknown>>(columns, draggedColumns),
 			[columns, draggedColumns],
@@ -109,14 +115,18 @@ const InfinityTable = forwardRef<TableVirtuosoHandle, InfinityTableProps>(
 						const props = elementWithChildren.props as Record<string, unknown>;
 
 						return (
-							<TableCellStyled key={column.key}>
+							<TableCellStyled
+								$isDragColumn={false}
+								$isDarkMode={isDarkMode}
+								key={column.key}
+							>
 								{cloneElement(children, props)}
 							</TableCellStyled>
 						);
 					})}
 				</>
 			),
-			[tableColumns],
+			[tableColumns, isDarkMode],
 		);
 
 		const tableHeader = useCallback(
@@ -127,7 +137,8 @@ const InfinityTable = forwardRef<TableVirtuosoHandle, InfinityTableProps>(
 
 						return (
 							<TableHeaderCellStyled
-								isDragColumn={isDragColumn}
+								$isDarkMode={isDarkMode}
+								$isDragColumn={isDragColumn}
 								key={column.key}
 								// eslint-disable-next-line react/jsx-props-no-spreading
 								{...(isDragColumn && { className: 'dragHandler' })}
@@ -138,13 +149,12 @@ const InfinityTable = forwardRef<TableVirtuosoHandle, InfinityTableProps>(
 					})}
 				</tr>
 			),
-			[tableColumns],
+			[tableColumns, isDarkMode],
 		);
 
 		return (
 			<>
 				<TableVirtuoso
-					useWindowScroll
 					ref={ref}
 					style={infinityDefaultStyles}
 					data={dataSource}

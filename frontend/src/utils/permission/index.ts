@@ -56,7 +56,6 @@ export const routePermission: Record<keyof typeof ROUTES, ROLES[]> = {
 	EDIT_ALERTS: ['ADMIN'],
 	ERROR_DETAIL: ['ADMIN', 'EDITOR', 'VIEWER'],
 	HOME_PAGE: ['ADMIN', 'EDITOR', 'VIEWER'],
-	INSTRUMENTATION: ['ADMIN', 'EDITOR', 'VIEWER'],
 	LIST_ALL_ALERT: ['ADMIN', 'EDITOR', 'VIEWER'],
 	LOGIN: ['ADMIN', 'EDITOR', 'VIEWER'],
 	NOT_FOUND: ['ADMIN', 'VIEWER', 'EDITOR'],
@@ -79,4 +78,5 @@ export const routePermission: Record<keyof typeof ROUTES, ROLES[]> = {
 	LOGS_PIPELINE: ['ADMIN', 'EDITOR', 'VIEWER'],
 	TRACE_EXPLORER: ['ADMIN', 'EDITOR', 'VIEWER'],
 	PIPELINES: ['ADMIN', 'EDITOR', 'VIEWER'],
+	GET_STARTED: ['ADMIN', 'EDITOR', 'VIEWER'],
 };
