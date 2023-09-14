@@ -1,3 +1,7 @@
+import { MetricsType } from 'container/MetricsApplication/constant';
+
+import { IFieldAttributes } from './LogDetailedView.types';
+
 export const recursiveParseJSON = (obj: string): Record<string, unknown> => {
 	try {
 		const value = JSON.parse(obj);
@@ -32,3 +36,23 @@ export function flattenObject(obj: AnyObject, prefix = ''): AnyObject {
 		return acc;
 	}, {});
 }
+
+export const getFieldAttributes = (field: string): IFieldAttributes => {
+	let dataType;
+	let newField;
+	let logType;
+
+	if (field.startsWith('attributes_')) {
+		logType = MetricsType.Tag;
+		const stringWithoutPrefix = field.slice('attributes_'.length);
+		const parts = stringWithoutPrefix.split('.');
+		[dataType, newField] = parts;
+	} else if (field.startsWith('resources_')) {
+		logType = MetricsType.Resource;
+		const stringWithoutPrefix = field.slice('resources_'.length);
+		const parts = stringWithoutPrefix.split('.');
+		[dataType, newField] = parts;
+	}
+
+	return { dataType, newField, logType };
+};
