@@ -74,7 +74,7 @@ function BodyTitleRenderer({
 	return (
 		<TitleWrapper>
 			<Dropdown menu={menu} trigger={['click']}>
-				<SettingOutlined style={{ marginLeft: 8 }} className="hover-reveal" />
+				<SettingOutlined style={{ marginRight: 8 }} className="hover-reveal" />
 			</Dropdown>
 			{title.toString()}{' '}
 			{!parentIsArray && (
