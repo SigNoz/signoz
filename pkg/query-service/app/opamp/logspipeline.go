@@ -12,37 +12,49 @@ import (
 	"github.com/open-telemetry/opamp-go/protobufs"
 	model "go.signoz.io/signoz/pkg/query-service/app/opamp/model"
 	"go.signoz.io/signoz/pkg/query-service/constants"
+	coreModel "go.signoz.io/signoz/pkg/query-service/model"
 	"go.uber.org/zap"
 )
 
 var lockLogsPipelineSpec sync.RWMutex
 
-func UpsertLogsParsingProcessor(ctx context.Context, parsingProcessors map[string]interface{}, parsingProcessorsNames []string, callback func(string, string, error)) (string, error) {
+func UpsertLogsParsingProcessor(
+	ctx context.Context,
+	parsingProcessors map[string]interface{},
+	parsingProcessorsNames []string,
+	callback func(string, string, error),
+) (string, *coreModel.ApiError) {
 	confHash := ""
 	if opAmpServer == nil {
-		return confHash, fmt.Errorf("opamp server is down, unable to push config to agent at this moment")
+		return confHash, coreModel.UnavailableError(fmt.Errorf(
+			"opamp server is down, unable to push config to agent at this moment",
+		))
 	}
 
 	agents := opAmpServer.agents.GetAllAgents()
 	if len(agents) == 0 {
-		return confHash, fmt.Errorf("no agents available at the moment")
+		return confHash, coreModel.UnavailableError(fmt.Errorf(
+			"no agents available at the moment",
+		))
 	}
 
 	for _, agent := range agents {
 		config := agent.EffectiveConfig
 		c, err := yaml.Parser().Unmarshal([]byte(config))
 		if err != nil {
-			return confHash, err
+			return confHash, coreModel.BadRequest(err)
 		}
 
 		buildLogParsingProcessors(c, parsingProcessors)
 
 		p, err := getOtelPipelinFromConfig(c)
 		if err != nil {
-			return confHash, err
+			return confHash, coreModel.BadRequest(err)
 		}
 		if p.Pipelines.Logs == nil {
-			return confHash, fmt.Errorf("logs pipeline doesn't exist")
+			return confHash, coreModel.InternalError(fmt.Errorf(
+				"logs pipeline doesn't exist",
+			))
 		}
 
 		// build the new processor list
@@ -54,19 +66,19 @@ func UpsertLogsParsingProcessor(ctx context.Context, parsingProcessors map[strin
 
 		updatedConf, err := yaml.Parser().Marshal(c)
 		if err != nil {
-			return confHash, err
+			return confHash, coreModel.BadRequest(err)
 		}
 
 		// zap.S().Infof("sending new config", string(updatedConf))
 		hash := sha256.New()
 		_, err = hash.Write(updatedConf)
 		if err != nil {
-			return confHash, err
+			return confHash, coreModel.InternalError(err)
 		}
 		agent.EffectiveConfig = string(updatedConf)
 		err = agent.Upsert()
 		if err != nil {
-			return confHash, err
+			return confHash, coreModel.InternalError(err)
 		}
 
 		agent.SendToAgent(&protobufs.ServerToAgent{

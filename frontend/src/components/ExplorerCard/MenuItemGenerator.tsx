@@ -17,9 +17,15 @@ function MenuItemGenerator({
 	uuid,
 	viewData,
 	refetchAllView,
+	sourcePage,
 }: MenuItemLabelGeneratorProps): JSX.Element {
-	const { panelType, redirectWithQueryBuilderData } = useQueryBuilder();
+	const {
+		panelType,
+		redirectWithQueryBuilderData,
+		updateAllQueriesOperators,
+	} = useQueryBuilder();
 	const { handleExplorerTabChange } = useHandleExplorerTabChange();
+
 	const { notifications } = useNotifications();
 
 	const { mutateAsync: deleteViewAsync } = useDeleteView(uuid);
@@ -34,6 +40,8 @@ function MenuItemGenerator({
 			refetchAllView,
 			viewId: uuid,
 			viewKey,
+			updateAllQueriesOperators,
+			sourcePage,
 		});
 	};
 

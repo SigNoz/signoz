@@ -1,0 +1,152 @@
+.logs-management-module-container {
+	min-height: calc(100vh - 300px);
+	padding: 48px 0;
+
+	.header {
+		h1 {
+			font-size: 24px;
+			font-weight: 500;
+		}
+
+		h4 {
+			font-size: 14px;
+			font-weight: 300;
+		}
+	}
+}
+
+.supported-logs-type-container {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 24px;
+}
+
+.supported-logs-type {
+	display: flex;
+	justify-content: center;
+	align-items: flex-start;
+	flex-direction: column;
+	gap: 16px;
+	width: 300px;
+	padding: 16px;
+	box-sizing: border-box;
+	height: 120px;
+	background: #1d1d1d;
+	border: 1px solid #424242;
+	border-radius: 3px;
+	color: #e5e7eb;
+	cursor: pointer;
+
+	&.selected {
+		background-color: #111a2c;
+		border: 0.5px solid #3c89e8;
+	}
+}
+
+.supported-logs-type-img {
+	height: 36px;
+}
+
+.selected-logs-type-setup-instructions {
+	padding: 24px 0;
+}
+
+div[class*='-setup-instructions-container'] {
+	.header {
+		display: flex;
+		align-items: flex-start;
+		gap: 12px;
+
+		margin: 16px 0;
+
+		img {
+			height: 32px;
+			min-height: 32px;
+			min-width: 32px;
+		}
+
+		h1 {
+			font-size: 18px;
+			display: flex;
+			align-items: center;
+			color: #e5e7eb;
+			gap: 16px;
+			margin: 0;
+		}
+	}
+}
+
+.label {
+	font-size: 14px;
+	margin-bottom: 8px;
+	font-weight: 300;
+}
+
+pre {
+	background-color: #292d3e;
+	padding: 8px;
+	overflow: auto;
+	border-radius: 3px;
+
+	code {
+		overflow: auto;
+		text-wrap: wrap;
+	}
+}
+
+.content-container {
+	padding: 24px;
+	margin: 16px 0;
+	background: rgba(29, 29, 29, 1);
+	line-height: 20px;
+}
+
+.detailed-docs-link {
+	display: flex;
+	margin: 8px 0;
+	font-size: 12px;
+
+	a {
+		padding-left: 4px;
+	}
+}
+
+.language-tab-item {
+	display: flex;
+	justify-content: center;
+	align-items: center;
+
+	img {
+		height: 28px;
+	}
+}
+
+$lightModeFontColor: rgb(29, 29, 29);
+
+.lightMode {
+	.logs-management-module-container {
+		.header {
+			color: $lightModeFontColor;
+		}
+
+		div[class*='-setup-instructions-container'] {
+			.header {
+				h1 {
+					color: $lightModeFontColor;
+				}
+			}
+
+			.framework-selector {
+				.label {
+					color: $lightModeFontColor;
+				}
+			}
+
+			.service-name-container {
+				.label {
+					color: $lightModeFontColor;
+				}
+			}
+		}
+	}
+}

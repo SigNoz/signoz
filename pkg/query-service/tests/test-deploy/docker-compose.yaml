@@ -136,7 +136,7 @@ services:
   #     - ./data/clickhouse-3/:/var/lib/clickhouse/
 
   alertmanager:
-    image: signoz/alertmanager:0.23.3
+    image: signoz/alertmanager:0.23.4
     container_name: signoz-alertmanager
     volumes:
       - ./data/alertmanager:/data
@@ -153,7 +153,11 @@ services:
   query-service:
     image: signoz/query-service:latest
     container_name: signoz-query-service
-    command: [ "-config=/root/config/prometheus.yml" ]
+    command:
+      [
+        "-config=/root/config/prometheus.yml",
+        "--prefer-delta=true"
+      ]
     # ports:
     #   - "6060:6060"     # pprof port
     #   - "8080:8080"     # query-service port
@@ -186,7 +190,7 @@ services:
     <<: *clickhouse-depends
 
   otel-collector:
-    image: signoz/signoz-otel-collector:0.79.6
+    image: signoz/signoz-otel-collector:0.79.7
     container_name: signoz-otel-collector
     command:
       [
@@ -217,7 +221,7 @@ services:
     <<: *clickhouse-depends
 
   otel-collector-metrics:
-    image: signoz/signoz-otel-collector:0.79.6
+    image: signoz/signoz-otel-collector:0.79.7
     container_name: signoz-otel-collector-metrics
     command:
       [
