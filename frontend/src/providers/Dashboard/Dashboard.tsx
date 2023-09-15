@@ -27,6 +27,7 @@ const DashboardContext = createContext<IDashboardContext>({
 	dashboardId: '',
 	layouts: [],
 	setLayouts: () => {},
+	setSelectedDashboard: () => {},
 });
 
 export function DashboardProvider({
@@ -46,6 +47,8 @@ export function DashboardProvider({
 	const pathnameArray = pathname.split('/');
 	const dashboardId = pathnameArray[pathnameArray.length - 1];
 
+	const [selectedDashboard, setSelectedDashboard] = useState<Dashboard>();
+
 	const dashboardResponse = useQuery(
 		[REACT_QUERY_KEY.DASHBOARD_BY_ID, dashboardId],
 		{
@@ -55,6 +58,8 @@ export function DashboardProvider({
 					uuid: dashboardId,
 				}),
 			onSuccess: (data) => {
+				setSelectedDashboard(data);
+
 				setLayouts(
 					data.data.layout?.filter(
 						(layout) => layout.i !== PANEL_TYPES.EMPTY_WIDGET,
@@ -73,12 +78,20 @@ export function DashboardProvider({
 			isDashboardSliderOpen,
 			handleToggleDashboardSlider,
 			dashboardResponse,
-			selectedDashboard: dashboardResponse.data,
+			selectedDashboard,
 			dashboardId,
 			layouts,
 			setLayouts,
+			setSelectedDashboard,
 		}),
-		[isDashboardSliderOpen, dashboardResponse, dashboardId, layouts],
+		[
+			isDashboardSliderOpen,
+			dashboardResponse,
+			selectedDashboard,
+			dashboardId,
+			layouts,
+			setSelectedDashboard,
+		],
 	);
 
 	return (

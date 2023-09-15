@@ -7,14 +7,13 @@ import usePreviousValue from 'hooks/usePreviousValue';
 import { getDashboardVariables } from 'lib/dashbaordVariables/getDashboardVariables';
 import getChartData from 'lib/getChartData';
 import isEmpty from 'lodash-es/isEmpty';
+import { useDashboard } from 'providers/Dashboard/Dashboard';
 import { memo, useMemo, useState } from 'react';
 import { useInView } from 'react-intersection-observer';
 import { useDispatch, useSelector } from 'react-redux';
 import { UpdateTimeInterval } from 'store/actions';
 import { AppState } from 'store/reducers';
-import DashboardReducer from 'types/reducer/dashboards';
 import { GlobalReducer } from 'types/reducer/globalTime';
-import { getSelectedDashboardVariable } from 'utils/dashboard/selectedDashboard';
 
 import EmptyWidget from '../EmptyWidget';
 import { MenuItemKeys } from '../WidgetHeader/contants';
@@ -30,6 +29,7 @@ function GridCardGraph({
 	threshold,
 }: GridCardGraphProps): JSX.Element {
 	const dispatch = useDispatch();
+	const [errorMessage, setErrorMessage] = useState<string>();
 
 	const onDragSelect = (start: number, end: number): void => {
 		const startTimestamp = Math.trunc(start);
@@ -46,17 +46,12 @@ function GridCardGraph({
 		initialInView: false,
 	});
 
-	const [errorMessage, setErrorMessage] = useState<string | undefined>('');
+	const { selectedDashboard } = useDashboard();
 
 	const { minTime, maxTime, selectedTime: globalSelectedInterval } = useSelector<
 		AppState,
 		GlobalReducer
 	>((state) => state.globalTime);
-	const { dashboards } = useSelector<AppState, DashboardReducer>(
-		(state) => state.dashboards,
-	);
-
-	const variables = getSelectedDashboardVariable(dashboards);
 
 	const updatedQuery = useStepInterval(widget?.query);
 
@@ -69,7 +64,7 @@ function GridCardGraph({
 			graphType: widget?.panelTypes,
 			query: updatedQuery,
 			globalSelectedInterval,
-			variables: getDashboardVariables(),
+			variables: getDashboardVariables(selectedDashboard?.data.variables),
 		},
 		{
 			queryKey: [
@@ -77,7 +72,7 @@ function GridCardGraph({
 				maxTime,
 				minTime,
 				globalSelectedInterval,
-				variables,
+				selectedDashboard?.data?.variables,
 				widget?.query,
 				widget?.panelTypes,
 			],

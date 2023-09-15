@@ -4,15 +4,14 @@ import { Button, Modal, Row, Space, Tag } from 'antd';
 import { NotificationInstance } from 'antd/es/notification/interface';
 import { ResizeTable } from 'components/ResizeTable';
 import { useNotifications } from 'hooks/useNotifications';
+import { useDashboard } from 'providers/Dashboard/Dashboard';
 import { useRef, useState } from 'react';
-import { connect, useSelector } from 'react-redux';
+import { connect } from 'react-redux';
 import { bindActionCreators, Dispatch } from 'redux';
 import { ThunkDispatch } from 'redux-thunk';
 import { UpdateDashboardVariables } from 'store/actions/dashboard/updatedDashboardVariables';
-import { AppState } from 'store/reducers';
 import AppActions from 'types/actions';
 import { IDashboardVariable } from 'types/api/dashboard/getAll';
-import DashboardReducer from 'types/reducer/dashboards';
 
 import { TVariableViewMode } from './types';
 import VariableItem from './VariableItem/VariableItem';
@@ -23,17 +22,11 @@ function VariablesSetting({
 	const variableToDelete = useRef<string | null>(null);
 	const [deleteVariableModal, setDeleteVariableModal] = useState(false);
 
-	const { dashboards } = useSelector<AppState, DashboardReducer>(
-		(state) => state.dashboards,
-	);
+	const { selectedDashboard } = useDashboard();
 
 	const { notifications } = useNotifications();
 
-	const [selectedDashboard] = dashboards;
-
-	const {
-		data: { variables = {} },
-	} = selectedDashboard;
+	const { variables = {} } = selectedDashboard?.data || {};
 
 	const variablesTableData = Object.keys(variables).map((variableName) => ({
 		key: variableName,
