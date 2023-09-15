@@ -1,4 +1,6 @@
-import { flattenObject, recursiveParseJSON } from './utils';
+import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
+
+import { flattenObject, getDataTypes, recursiveParseJSON } from './utils';
 
 describe('recursiveParseJSON', () => {
 	it('should return an empty object if the input is not valid JSON', () => {
@@ -144,5 +146,42 @@ describe('flattenObject in the objects recursively', () => {
 		};
 
 		expect(flattenObject(complexObj)).toEqual(expected);
+	});
+});
+
+describe('Get Data Types utils', () => {
+	it('should return String for string input', () => {
+		expect(getDataTypes('hello')).toBe(DataTypes.String);
+	});
+
+	it('should return Float64 for float input', () => {
+		expect(getDataTypes(3.14)).toBe(DataTypes.Float64);
+	});
+
+	it('should return Int64 for integer input', () => {
+		expect(getDataTypes(42)).toBe(DataTypes.Int64);
+	});
+
+	// Test for arrays
+	it('should return ArrayString for string array input', () => {
+		expect(getDataTypes(['hello', 'world'])).toBe(DataTypes.ArrayString);
+	});
+
+	it('should return ArrayFloat64 for float array input', () => {
+		expect(getDataTypes([1.23, 4.56, 7.89])).toBe(DataTypes.ArrayFloat64);
+	});
+
+	it('should return ArrayInt64 for integer array input', () => {
+		expect(getDataTypes([1, 2, 3])).toBe(DataTypes.ArrayInt64);
+	});
+
+	// Edge cases
+	it('should return Int64 for empty array input', () => {
+		expect(getDataTypes([])).toBe(DataTypes.Int64);
+	});
+
+	it('should handle mixed array (return based on first element)', () => {
+		expect(getDataTypes([1, 2.5, 3])).toBe(DataTypes.ArrayInt64);
+		expect(getDataTypes([2.5, 3, 1])).toBe(DataTypes.ArrayFloat64);
 	});
 });

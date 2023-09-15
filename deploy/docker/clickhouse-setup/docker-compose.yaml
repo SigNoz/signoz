@@ -147,7 +147,7 @@ services:
   #     - ./user_scripts:/var/lib/clickhouse/user_scripts/
 
   alertmanager:
-    image: signoz/alertmanager:${ALERTMANAGER_TAG:-0.23.3}
+    image: signoz/alertmanager:${ALERTMANAGER_TAG:-0.23.4}
     container_name: signoz-alertmanager
     volumes:
       - ./data/alertmanager:/data
@@ -162,9 +162,13 @@ services:
   # Notes for Maintainers/Contributors who will change Line Numbers of Frontend & Query-Section. Please Update Line Numbers in `./scripts/commentLinesForSetup.sh` & `./CONTRIBUTING.md`
 
   query-service:
-    image: signoz/query-service:${DOCKER_TAG:-0.28.0}
+    image: signoz/query-service:${DOCKER_TAG:-0.29.0}
     container_name: signoz-query-service
-    command: [ "-config=/root/config/prometheus.yml" ]
+    command:
+      [
+        "-config=/root/config/prometheus.yml",
+        "--prefer-delta=true"
+      ]
     # ports:
     #   - "6060:6060"     # pprof port
     #   - "8080:8080"     # query-service port
@@ -197,7 +201,7 @@ services:
     <<: *clickhouse-depend
 
   frontend:
-    image: signoz/frontend:${DOCKER_TAG:-0.28.0}
+    image: signoz/frontend:${DOCKER_TAG:-0.29.0}
     container_name: signoz-frontend
     restart: on-failure
     depends_on:
@@ -209,7 +213,7 @@ services:
       - ../common/nginx-config.conf:/etc/nginx/conf.d/default.conf
 
   otel-collector:
-    image: signoz/signoz-otel-collector:${OTELCOL_TAG:-0.79.6}
+    image: signoz/signoz-otel-collector:${OTELCOL_TAG:-0.79.7}
     container_name: signoz-otel-collector
     command:
       [
@@ -240,7 +244,7 @@ services:
     <<: *clickhouse-depend
 
   otel-collector-metrics:
-    image: signoz/signoz-otel-collector:${OTELCOL_TAG:-0.79.6}
+    image: signoz/signoz-otel-collector:${OTELCOL_TAG:-0.79.7}
     container_name: signoz-otel-collector-metrics
     command:
       [

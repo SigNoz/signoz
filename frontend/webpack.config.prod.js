@@ -5,6 +5,7 @@ const { resolve } = require('path');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
 const CopyPlugin = require('copy-webpack-plugin');
 const CompressionPlugin = require('compression-webpack-plugin');
+const dotenv = require('dotenv');
 const webpack = require('webpack');
 const TsconfigPathsPlugin = require('tsconfig-paths-webpack-plugin');
 const TerserPlugin = require('terser-webpack-plugin');
@@ -12,6 +13,12 @@ const CssMinimizerPlugin = require('css-minimizer-webpack-plugin');
 const MiniCssExtractPlugin = require('mini-css-extract-plugin');
 const { BundleAnalyzerPlugin } = require('webpack-bundle-analyzer');
 const Critters = require('critters-webpack-plugin');
+
+dotenv.config();
+
+const cssLoader = 'css-loader';
+const sassLoader = 'sass-loader';
+const styleLoader = 'style-loader';
 
 const plugins = [
 	new HtmlWebpackPlugin({ template: 'src/index.html.ejs' }),
@@ -25,7 +32,10 @@ const plugins = [
 		process: 'process/browser',
 	}),
 	new webpack.DefinePlugin({
-		'process.env': JSON.stringify(process.env),
+		'process.env': JSON.stringify({
+			FRONTEND_API_ENDPOINT: process.env.FRONTEND_API_ENDPOINT,
+			INTERCOM_APP_ID: process.env.INTERCOM_APP_ID,
+		}),
 	}),
 	new MiniCssExtractPlugin(),
 	new Critters({
@@ -74,15 +84,40 @@ const config = {
 				exclude: /node_modules/,
 			},
 			{
+				test: /\.mdx?$/,
+				use: [
+					// `babel-loader` is optional:
+					{ loader: 'babel-loader', options: {} },
+					{
+						loader: '@mdx-js/loader',
+						/** @type {import('@mdx-js/loader').Options} */
+						options: {
+							/* jsxImportSource: …, otherOptions… */
+						},
+					},
+				],
+			},
+			{
 				test: /\.css$/,
 				use: [
 					MiniCssExtractPlugin.loader,
 					{
-						loader: 'css-loader',
+						loader: cssLoader,
 						options: {
 							modules: true,
 						},
 					},
+				],
+			},
+			{
+				test: /\.s[ac]ss$/i,
+				use: [
+					// Creates `style` nodes from JS strings
+					styleLoader,
+					// Translates CSS into CommonJS
+					cssLoader,
+					// Compiles Sass to CSS
+					sassLoader,
 				],
 			},
 			{
@@ -100,10 +135,10 @@ const config = {
 				test: /\.less$/i,
 				use: [
 					{
-						loader: 'style-loader',
+						loader: styleLoader,
 					},
 					{
-						loader: 'css-loader',
+						loader: cssLoader,
 						options: {
 							modules: true,
 						},
