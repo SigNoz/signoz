@@ -1,6 +1,7 @@
 import { DataNode } from 'antd/es/tree';
 import { MetricsType } from 'container/MetricsApplication/constant';
 import { uniqueId } from 'lodash-es';
+import { ILog, ILogAggregateAttributesResources } from 'types/api/logs/log';
 import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
 
 import BodyTitleRenderer from './BodyTitleRenderer';
@@ -11,6 +12,15 @@ export const recursiveParseJSON = (obj: string): Record<string, unknown> => {
 		const value = JSON.parse(obj);
 		if (typeof value === 'string') {
 			return recursiveParseJSON(value);
+		}
+		if (typeof value === 'object') {
+			Object.entries(value).forEach(([key, val]) => {
+				if (typeof val === 'string') {
+					value[key] = val.trim();
+				} else if (typeof val === 'object') {
+					value[key] = recursiveParseJSON(JSON.stringify(val));
+				}
+			});
 		}
 		return value;
 	} catch (e) {
@@ -173,4 +183,36 @@ export const getFieldAttributes = (field: string): IFieldAttributes => {
 	}
 
 	return { dataType, newField, logType };
+};
+
+export const aggregateAttributesResourcesToString = (logData: ILog): string => {
+	const outputJson: ILogAggregateAttributesResources = {
+		body: logData.body,
+		date: logData.date,
+		id: logData.id,
+		severityNumber: logData.severityNumber,
+		severityText: logData.severityText,
+		spanId: logData.spanId,
+		timestamp: logData.timestamp,
+		traceFlags: logData.traceFlags,
+		traceId: logData.traceId,
+		attributes: {},
+		resources: {},
+	};
+
+	Object.keys(logData).forEach((key) => {
+		if (key.startsWith('attributes_')) {
+			outputJson.attributes = outputJson.attributes || {};
+			Object.assign(outputJson.attributes, logData[key as keyof ILog]);
+		} else if (key.startsWith('resources_')) {
+			outputJson.resources = outputJson.resources || {};
+			Object.assign(outputJson.resources, logData[key as keyof ILog]);
+		} else {
+			// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+			// @ts-ignore
+			outputJson[key] = logData[key as keyof ILog];
+		}
+	});
+
+	return JSON.stringify(outputJson, null, 2);
 };
