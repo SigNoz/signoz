@@ -1,4 +1,5 @@
 import { MetricsType } from 'container/MetricsApplication/constant';
+import { ILog, ILogAggregateAttributesResources } from 'types/api/logs/log';
 
 import { IFieldAttributes } from './LogDetailedView.types';
 
@@ -55,4 +56,36 @@ export const getFieldAttributes = (field: string): IFieldAttributes => {
 	}
 
 	return { dataType, newField, logType };
+};
+
+export const aggregateAttributesResourcesToString = (logData: ILog): string => {
+	const outputJson: ILogAggregateAttributesResources = {
+		body: logData.body,
+		date: logData.date,
+		id: logData.id,
+		severityNumber: logData.severityNumber,
+		severityText: logData.severityText,
+		spanId: logData.spanId,
+		timestamp: logData.timestamp,
+		traceFlags: logData.traceFlags,
+		traceId: logData.traceId,
+		attributes: {},
+		resources: {},
+	};
+
+	Object.keys(logData).forEach((key) => {
+		if (key.startsWith('attributes_')) {
+			outputJson.attributes = outputJson.attributes || {};
+			Object.assign(outputJson.attributes, logData[key as keyof ILog]);
+		} else if (key.startsWith('resources_')) {
+			outputJson.resources = outputJson.resources || {};
+			Object.assign(outputJson.resources, logData[key as keyof ILog]);
+		} else {
+			// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+			// @ts-ignore
+			outputJson[key] = logData[key as keyof ILog];
+		}
+	});
+
+	return JSON.stringify(outputJson, null, 2);
 };
