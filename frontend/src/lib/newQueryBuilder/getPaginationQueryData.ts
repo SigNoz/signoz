@@ -1,4 +1,5 @@
 import { FILTERS } from 'container/QueryBuilder/filters/OrderByFilter/config';
+import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import {
 	IBuilderQuery,
 	OrderByPayload,
@@ -47,7 +48,7 @@ export const getPaginationQueryData: SetupPaginationQueryData = ({
 							key: {
 								key: 'id',
 								type: '',
-								dataType: 'string',
+								dataType: DataTypes.String,
 								isColumn: true,
 							},
 							op: orderByTimestamp.order === FILTERS.ASC ? '>' : '<',
