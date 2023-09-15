@@ -151,18 +151,16 @@ export const Query = memo(function Query({
 			case PANEL_TYPES.TIME_SERIES: {
 				return (
 					<>
-						{!isMetricsDataSource && (
-							<Col span={11}>
-								<Row gutter={[11, 5]}>
-									<Col flex="5.93rem">
-										<FilterLabel label="Limit" />
-									</Col>
-									<Col flex="1 1 12.5rem">
-										<LimitFilter query={query} onChange={handleChangeLimit} />
-									</Col>
-								</Row>
-							</Col>
-						)}
+						<Col span={11}>
+							<Row gutter={[11, 5]}>
+								<Col flex="5.93rem">
+									<FilterLabel label="Limit" />
+								</Col>
+								<Col flex="1 1 12.5rem">
+									<LimitFilter query={query} onChange={handleChangeLimit} />
+								</Col>
+							</Row>
+						</Col>
 						<Col span={11}>
 							<Row gutter={[11, 5]}>
 								<Col flex="5.93rem">
