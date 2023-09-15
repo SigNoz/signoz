@@ -19,6 +19,7 @@ import (
 	"github.com/open-telemetry/opamp-go/protobufs"
 	"github.com/pkg/errors"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"go.signoz.io/signoz/pkg/query-service/agentConf"
 	"go.signoz.io/signoz/pkg/query-service/app"
 	"go.signoz.io/signoz/pkg/query-service/app/logparsingpipeline"
@@ -28,7 +29,10 @@ import (
 	"go.signoz.io/signoz/pkg/query-service/constants"
 	"go.signoz.io/signoz/pkg/query-service/dao"
 	"go.signoz.io/signoz/pkg/query-service/model"
+	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
+	"go.signoz.io/signoz/pkg/query-service/queryBuilderToExpr"
 	"golang.org/x/exp/maps"
+	"golang.org/x/exp/slices"
 )
 
 func TestLogPipelinesLifecycle(t *testing.T) {
@@ -46,6 +50,23 @@ func TestLogPipelinesLifecycle(t *testing.T) {
 	)
 
 	// Should be able to create pipelines config
+	pipelineFilterSet := &v3.FilterSet{
+		Operator: "AND",
+		Items: []v3.FilterItem{
+			{
+				Key: v3.AttributeKey{
+					Key:      "method",
+					DataType: v3.AttributeKeyDataTypeString,
+					Type:     v3.AttributeKeyTypeTag,
+				},
+				Operator: "=",
+				Value:    "GET",
+			},
+		},
+	}
+	pipelineFilterSetJson, err := json.Marshal(pipelineFilterSet)
+	require.Nil(t, err)
+
 	postablePipelines := logparsingpipeline.PostablePipelines{
 		Pipelines: []logparsingpipeline.PostablePipeline{
 			{
@@ -53,7 +74,7 @@ func TestLogPipelinesLifecycle(t *testing.T) {
 				Name:    "pipeline1",
 				Alias:   "pipeline1",
 				Enabled: true,
-				Filter:  "attributes.method == \"GET\"",
+				Filter:  string(pipelineFilterSetJson),
 				Config: []model.PipelineOperator{
 					{
 						OrderId: 1,
@@ -70,7 +91,7 @@ func TestLogPipelinesLifecycle(t *testing.T) {
 				Name:    "pipeline2",
 				Alias:   "pipeline2",
 				Enabled: true,
-				Filter:  "attributes.method == \"GET\"",
+				Filter:  string(pipelineFilterSetJson),
 				Config: []model.PipelineOperator{
 					{
 						OrderId: 1,
@@ -150,6 +171,23 @@ func TestLogPipelinesLifecycle(t *testing.T) {
 }
 
 func TestLogPipelinesValidation(t *testing.T) {
+	validPipelineFilterSet := &v3.FilterSet{
+		Operator: "AND",
+		Items: []v3.FilterItem{
+			{
+				Key: v3.AttributeKey{
+					Key:      "method",
+					DataType: v3.AttributeKeyDataTypeString,
+					Type:     v3.AttributeKeyTypeTag,
+				},
+				Operator: "=",
+				Value:    "GET",
+			},
+		},
+	}
+	validPipelineFilter, err := json.Marshal(validPipelineFilterSet)
+	require.Nil(t, err)
+
 	testCases := []struct {
 		Name                       string
 		Pipeline                   logparsingpipeline.PostablePipeline
@@ -162,7 +200,7 @@ func TestLogPipelinesValidation(t *testing.T) {
 				Name:    "pipeline 1",
 				Alias:   "pipeline1",
 				Enabled: true,
-				Filter:  "attributes.method == \"GET\"",
+				Filter:  string(validPipelineFilter),
 				Config: []model.PipelineOperator{
 					{
 						OrderId: 1,
@@ -184,7 +222,7 @@ func TestLogPipelinesValidation(t *testing.T) {
 				Name:    "pipeline 1",
 				Alias:   "pipeline1",
 				Enabled: true,
-				Filter:  "attributes.method == \"GET\"",
+				Filter:  string(validPipelineFilter),
 				Config: []model.PipelineOperator{
 					{
 						OrderId: 1,
@@ -228,7 +266,7 @@ func TestLogPipelinesValidation(t *testing.T) {
 				Name:    "pipeline 1",
 				Alias:   "pipeline1",
 				Enabled: true,
-				Filter:  "attributes.method == \"GET\"",
+				Filter:  string(validPipelineFilter),
 				Config: []model.PipelineOperator{
 					{
 						OrderId: 1,
@@ -414,29 +452,29 @@ func (tb *LogPipelinesTestBed) assertPipelinesSentToOpampClient(
 	pipelines []model.Pipeline,
 ) {
 	lastMsg := tb.opampClientConn.latestMsgFromServer()
-	otelConfigFiles := lastMsg.RemoteConfig.Config.ConfigMap
+	collectorConfigFiles := lastMsg.RemoteConfig.Config.ConfigMap
 	assert.Equal(
-		tb.t, len(otelConfigFiles), 1,
+		tb.t, len(collectorConfigFiles), 1,
 		"otel config sent to client is expected to contain atleast 1 file",
 	)
 
-	otelConfigYaml := maps.Values(otelConfigFiles)[0].Body
-	otelConfSentToClient, err := yaml.Parser().Unmarshal(otelConfigYaml)
+	collectorConfigYaml := maps.Values(collectorConfigFiles)[0].Body
+	collectorConfSentToClient, err := yaml.Parser().Unmarshal(collectorConfigYaml)
 	if err != nil {
 		tb.t.Fatalf("could not unmarshal config file sent to opamp client: %v", err)
 	}
 
 	// Each pipeline is expected to become its own processor
 	// in the logs service in otel collector config.
-	otelConfSvcs := otelConfSentToClient["service"].(map[string]interface{})
-	otelConfLogsSvc := otelConfSvcs["pipelines"].(map[string]interface{})["logs"].(map[string]interface{})
-	otelConfLogsSvcProcessorNames := otelConfLogsSvc["processors"].([]interface{})
-	otelConfLogsPipelineProcNames := []string{}
-	for _, procNameVal := range otelConfLogsSvcProcessorNames {
+	collectorConfSvcs := collectorConfSentToClient["service"].(map[string]interface{})
+	collectorConfLogsSvc := collectorConfSvcs["pipelines"].(map[string]interface{})["logs"].(map[string]interface{})
+	collectorConfLogsSvcProcessorNames := collectorConfLogsSvc["processors"].([]interface{})
+	collectorConfLogsPipelineProcNames := []string{}
+	for _, procNameVal := range collectorConfLogsSvcProcessorNames {
 		procName := procNameVal.(string)
 		if strings.HasPrefix(procName, constants.LogsPPLPfx) {
-			otelConfLogsPipelineProcNames = append(
-				otelConfLogsPipelineProcNames,
+			collectorConfLogsPipelineProcNames = append(
+				collectorConfLogsPipelineProcNames,
 				procName,
 			)
 		}
@@ -444,16 +482,47 @@ func (tb *LogPipelinesTestBed) assertPipelinesSentToOpampClient(
 
 	_, expectedLogProcessorNames, err := logparsingpipeline.PreparePipelineProcessor(pipelines)
 	assert.Equal(
-		tb.t, expectedLogProcessorNames, otelConfLogsPipelineProcNames,
+		tb.t, expectedLogProcessorNames, collectorConfLogsPipelineProcNames,
 		"config sent to opamp client doesn't contain expected log pipelines",
 	)
 
-	otelConfProcessors := otelConfSentToClient["processors"].(map[string]interface{})
+	collectorConfProcessors := collectorConfSentToClient["processors"].(map[string]interface{})
 	for _, procName := range expectedLogProcessorNames {
-		_, procExists := otelConfProcessors[procName]
+		pipelineProcessorInConf, procExists := collectorConfProcessors[procName]
 		assert.True(tb.t, procExists, fmt.Sprintf(
 			"%s processor not found in config sent to opamp client", procName,
 		))
+
+		// Validate that filter expr in collector conf is as expected.
+
+		// extract expr present in collector conf processor
+		pipelineProcOps := pipelineProcessorInConf.(map[string]interface{})["operators"].([]interface{})
+
+		routerOpIdx := slices.IndexFunc(
+			pipelineProcOps,
+			func(op interface{}) bool { return op.(map[string]interface{})["id"] == "router_signoz" },
+		)
+		require.GreaterOrEqual(tb.t, routerOpIdx, 0)
+		routerOproutes := pipelineProcOps[routerOpIdx].(map[string]interface{})["routes"].([]interface{})
+		pipelineFilterExpr := routerOproutes[0].(map[string]interface{})["expr"].(string)
+
+		// find model.Pipeline whose processor is being validated here
+		pipelineIdx := slices.IndexFunc(
+			pipelines, func(p model.Pipeline) bool {
+				return logparsingpipeline.CollectorConfProcessorName(p) == procName
+			},
+		)
+		require.GreaterOrEqual(tb.t, pipelineIdx, 0)
+		logPipelineBeingValidated := pipelines[pipelineIdx]
+
+		// validate collector conf filter expr is as expected.
+		var pipelineFilterSet v3.FilterSet
+		err := json.Unmarshal([]byte(logPipelineBeingValidated.Filter), &pipelineFilterSet)
+		require.Nil(tb.t, err)
+
+		expectedExpr, err := queryBuilderToExpr.Parse(&pipelineFilterSet)
+		require.Nil(tb.t, err)
+		require.Equal(tb.t, expectedExpr, pipelineFilterExpr)
 	}
 }
 
