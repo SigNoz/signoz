@@ -23,6 +23,8 @@ const operatorTypeMapper: Record<string, OperatorType> = {
 	[OPERATORS.NOT_CONTAINS]: 'SINGLE_VALUE',
 	[OPERATORS['=']]: 'SINGLE_VALUE',
 	[OPERATORS['!=']]: 'SINGLE_VALUE',
+	[OPERATORS.HAS]: 'SINGLE_VALUE',
+	[OPERATORS.NHAS]: 'SINGLE_VALUE',
 };
 
 export const useOperatorType = (operator: string): OperatorType =>

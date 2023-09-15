@@ -1,4 +1,5 @@
 import { getAggregateKeys } from 'api/queryBuilder/getAttributeKeys';
+import { SOMETHING_WENT_WRONG } from 'constants/api';
 import { QueryBuilderKeys } from 'constants/queryBuilder';
 import ROUTES from 'constants/routes';
 import { getOperatorValue } from 'container/QueryBuilder/filters/QueryBuilderSearch/utils';
@@ -7,14 +8,16 @@ import { useNotifications } from 'hooks/useNotifications';
 import { getGeneratedFilterQueryString } from 'lib/getGeneratedFilterQueryString';
 import { chooseAutocompleteFromCustomValue } from 'lib/newQueryBuilder/chooseAutocompleteFromCustomValue';
 import { useCallback, useMemo, useState } from 'react';
-import { useTranslation } from 'react-i18next';
 import { useQueryClient } from 'react-query';
 import { useDispatch, useSelector } from 'react-redux';
 import { useHistory, useLocation } from 'react-router-dom';
 import { AppState } from 'store/reducers';
 import { SET_DETAILED_LOG_DATA } from 'types/actions/logs';
 import { ILog } from 'types/api/logs/log';
-import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
+import {
+	BaseAutocompleteData,
+	DataTypes,
+} from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { ILogsReducer } from 'types/reducer/logs';
 import { v4 as uuid } from 'uuid';
@@ -32,8 +35,6 @@ export const useActiveLog = (): UseActiveLog => {
 	const history = useHistory();
 	const { currentQuery, redirectWithQueryBuilderData } = useQueryBuilder();
 	const { notifications } = useNotifications();
-
-	const { t } = useTranslation('common');
 
 	const isLogsPage = useMemo(() => pathname === ROUTES.LOGS, [pathname]);
 
@@ -67,6 +68,8 @@ export const useActiveLog = (): UseActiveLog => {
 			fieldKey: string,
 			fieldValue: string,
 			operator: string,
+			isJSON?: boolean,
+			dataType?: DataTypes,
 		): Promise<void> => {
 			try {
 				const keysAutocompleteResponse = await queryClient.fetchQuery(
@@ -87,6 +90,8 @@ export const useActiveLog = (): UseActiveLog => {
 				const existAutocompleteKey = chooseAutocompleteFromCustomValue(
 					keysAutocomplete,
 					fieldKey,
+					isJSON,
+					dataType,
 				);
 
 				const currentOperator = getOperatorValue(operator);
@@ -100,9 +105,7 @@ export const useActiveLog = (): UseActiveLog => {
 							filters: {
 								...item.filters,
 								items: [
-									...item.filters.items.filter(
-										(item) => item.key?.id !== existAutocompleteKey.id,
-									),
+									...item.filters.items,
 									{
 										id: uuid(),
 										key: existAutocompleteKey,
@@ -117,10 +120,10 @@ export const useActiveLog = (): UseActiveLog => {
 
 				redirectWithQueryBuilderData(nextQuery);
 			} catch {
-				notifications.error({ message: t('something_went_wrong') });
+				notifications.error({ message: SOMETHING_WENT_WRONG });
 			}
 		},
-		[currentQuery, notifications, queryClient, redirectWithQueryBuilderData, t],
+		[currentQuery, notifications, queryClient, redirectWithQueryBuilderData],
 	);
 
 	const onAddToQueryLogs = useCallback(
