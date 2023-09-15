@@ -1,77 +1,97 @@
 package logparsingpipeline
 
 import (
+	"encoding/json"
 	"testing"
 
 	. "github.com/smartystreets/goconvey/convey"
+	"github.com/stretchr/testify/require"
 	"go.signoz.io/signoz/pkg/query-service/model"
+	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
 )
 
-var correctQueriesTest = []struct {
-	Name     string
-	Pipeline PostablePipeline
-	IsValid  bool
-}{
-	{
-		Name: "No orderId",
-		Pipeline: PostablePipeline{
-			Name:    "pipeline 1",
-			Alias:   "pipeline1",
-			Enabled: true,
-			Filter:  "attributes.method == \"GET\"",
-			Config:  []model.PipelineOperator{},
-		},
-		IsValid: false,
-	},
-	{
-		Name: "Invalid orderId",
-		Pipeline: PostablePipeline{
-			OrderId: 0,
-			Name:    "pipeline 1",
-			Alias:   "pipeline1",
-			Enabled: true,
-			Filter:  "attributes.method == \"GET\"",
-			Config:  []model.PipelineOperator{},
-		},
-		IsValid: false,
-	},
-	{
-		Name: "Valid orderId",
-		Pipeline: PostablePipeline{
-			OrderId: 1,
-			Name:    "pipeline 1",
-			Alias:   "pipeline1",
-			Enabled: true,
-			Filter:  "attributes.method == \"GET\"",
-			Config:  []model.PipelineOperator{},
-		},
-		IsValid: true,
-	},
-	{
-		Name: "Invalid filter",
-		Pipeline: PostablePipeline{
-			OrderId: 1,
-			Name:    "pipeline 1",
-			Alias:   "pipeline1",
-			Enabled: true,
-			Filter:  "test filter",
-		},
-		IsValid: false,
-	},
-	{
-		Name: "Valid filter",
-		Pipeline: PostablePipeline{
-			OrderId: 1,
-			Name:    "pipeline 1",
-			Alias:   "pipeline1",
-			Enabled: true,
-			Filter:  "attributes.method == \"GET\"",
-		},
-		IsValid: true,
-	},
-}
-
 func TestIsValidPostablePipeline(t *testing.T) {
+	validPipelineFilterSet := &v3.FilterSet{
+		Operator: "AND",
+		Items: []v3.FilterItem{
+			{
+				Key: v3.AttributeKey{
+					Key:      "method",
+					DataType: v3.AttributeKeyDataTypeString,
+					Type:     v3.AttributeKeyTypeTag,
+				},
+				Operator: "=",
+				Value:    "GET",
+			},
+		},
+	}
+	validPipelineFilter, err := json.Marshal(validPipelineFilterSet)
+	require.Nil(t, err)
+
+	var correctQueriesTest = []struct {
+		Name     string
+		Pipeline PostablePipeline
+		IsValid  bool
+	}{
+		{
+			Name: "No orderId",
+			Pipeline: PostablePipeline{
+				Name:    "pipeline 1",
+				Alias:   "pipeline1",
+				Enabled: true,
+				Filter:  string(validPipelineFilter),
+				Config:  []model.PipelineOperator{},
+			},
+			IsValid: false,
+		},
+		{
+			Name: "Invalid orderId",
+			Pipeline: PostablePipeline{
+				OrderId: 0,
+				Name:    "pipeline 1",
+				Alias:   "pipeline1",
+				Enabled: true,
+				Filter:  string(validPipelineFilter),
+				Config:  []model.PipelineOperator{},
+			},
+			IsValid: false,
+		},
+		{
+			Name: "Valid orderId",
+			Pipeline: PostablePipeline{
+				OrderId: 1,
+				Name:    "pipeline 1",
+				Alias:   "pipeline1",
+				Enabled: true,
+				Filter:  string(validPipelineFilter),
+				Config:  []model.PipelineOperator{},
+			},
+			IsValid: true,
+		},
+		{
+			Name: "Invalid filter",
+			Pipeline: PostablePipeline{
+				OrderId: 1,
+				Name:    "pipeline 1",
+				Alias:   "pipeline1",
+				Enabled: true,
+				Filter:  "test filter",
+			},
+			IsValid: false,
+		},
+		{
+			Name: "Valid filter",
+			Pipeline: PostablePipeline{
+				OrderId: 1,
+				Name:    "pipeline 1",
+				Alias:   "pipeline1",
+				Enabled: true,
+				Filter:  string(validPipelineFilter),
+			},
+			IsValid: true,
+		},
+	}
+
 	for _, test := range correctQueriesTest {
 		Convey(test.Name, t, func() {
 			err := test.Pipeline.IsValid()
