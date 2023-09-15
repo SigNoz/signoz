@@ -171,16 +171,14 @@ export const Query = memo(function Query({
 								</Col>
 							</Row>
 						</Col>
-						{!isMetricsDataSource && (
-							<Col span={11}>
-								<Row gutter={[11, 5]}>
-									<Col flex="5.93rem">
-										<FilterLabel label="Order by" />
-									</Col>
-									<Col flex="1 1 12.5rem">{renderOrderByFilter()}</Col>
-								</Row>
-							</Col>
-						)}
+						<Col span={11}>
+							<Row gutter={[11, 5]}>
+								<Col flex="5.93rem">
+									<FilterLabel label="Order by" />
+								</Col>
+								<Col flex="1 1 12.5rem">{renderOrderByFilter()}</Col>
+							</Row>
+						</Col>
 
 						<Col span={11}>{renderAggregateEveryFilter()}</Col>
 					</>
@@ -249,7 +247,6 @@ export const Query = memo(function Query({
 		}
 	}, [
 		panelType,
-		isMetricsDataSource,
 		query,
 		filterConfigs?.limit?.isHidden,
 		filterConfigs?.having?.isHidden,
