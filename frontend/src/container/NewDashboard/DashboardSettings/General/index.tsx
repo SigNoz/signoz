@@ -39,7 +39,7 @@ function GeneralDashboardSettings(): JSX.Element {
 					...selectedDashboard.data,
 					description: updatedDescription,
 					tags: updatedTags,
-					name: updatedTitle,
+					title: updatedTitle,
 				},
 			},
 			{
@@ -81,7 +81,13 @@ function GeneralDashboardSettings(): JSX.Element {
 				</div>
 				<div>
 					<Divider />
-					<Button icon={<SaveOutlined />} onClick={onSaveHandler} type="primary">
+					<Button
+						disabled={updateDashboardMutation.isLoading}
+						loading={updateDashboardMutation.isLoading}
+						icon={<SaveOutlined />}
+						onClick={onSaveHandler}
+						type="primary"
+					>
 						{t('save')}
 					</Button>
 				</div>
