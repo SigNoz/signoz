@@ -5,7 +5,7 @@ import { ChartData } from 'chart.js';
 import { ColumnsKeyAndDataIndex, ColumnsTitle } from '../contants';
 import { DataSetProps } from '../types';
 import { getGraphManagerTableHeaderTitle } from '../utils';
-import { getCheckBox } from './GetCheckBox';
+import CustomCheckBox from './CustomCheckBox';
 import { getLabel } from './GetLabel';
 
 export const getGraphManagerTableColumns = ({
@@ -20,11 +20,14 @@ export const getGraphManagerTableColumns = ({
 		width: 50,
 		dataIndex: ColumnsKeyAndDataIndex.Index,
 		key: ColumnsKeyAndDataIndex.Index,
-		...getCheckBox({
-			checkBoxOnChangeHandler,
-			graphVisibilityState,
-			data,
-		}),
+		render: (_: string, __: DataSetProps, index: number): JSX.Element => (
+			<CustomCheckBox
+				data={data}
+				index={index}
+				checkBoxOnChangeHandler={checkBoxOnChangeHandler}
+				graphVisibilityState={graphVisibilityState}
+			/>
+		),
 	},
 	{
 		title: ColumnsTitle[ColumnsKeyAndDataIndex.Label],

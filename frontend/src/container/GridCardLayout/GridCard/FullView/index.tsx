@@ -12,6 +12,7 @@ import { useStepInterval } from 'hooks/queryBuilder/useStepInterval';
 import { useChartMutable } from 'hooks/useChartMutable';
 import { getDashboardVariables } from 'lib/dashbaordVariables/getDashboardVariables';
 import getChartData from 'lib/getChartData';
+import { useDashboard } from 'providers/Dashboard/Dashboard';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
@@ -39,6 +40,8 @@ function FullView({
 		AppState,
 		GlobalReducer
 	>((state) => state.globalTime);
+
+	const { selectedDashboard } = useDashboard();
 
 	const getSelectedTime = useCallback(
 		() =>
@@ -81,7 +84,7 @@ function FullView({
 			graphType: widget.panelTypes,
 			query: updatedQuery,
 			globalSelectedInterval: globalSelectedTime,
-			variables: getDashboardVariables(),
+			variables: getDashboardVariables(selectedDashboard?.data.variables),
 		},
 		{
 			queryKey,

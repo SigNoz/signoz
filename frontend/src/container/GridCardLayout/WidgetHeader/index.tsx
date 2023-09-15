@@ -202,7 +202,8 @@ function WidgetHeader({
 				</HeaderContainer>
 			</Dropdown>
 			<ThesholdContainer>{threshold}</ThesholdContainer>
-			{(queryResponse.status === 'idle' || queryResponse.status === 'loading') &&
+			{queryResponse.isFetching &&
+				!queryResponse.isError &&
 				widget.id !== PANEL_TYPES.EMPTY_WIDGET && (
 					<Spinner height="5vh" style={spinnerStyles} />
 				)}

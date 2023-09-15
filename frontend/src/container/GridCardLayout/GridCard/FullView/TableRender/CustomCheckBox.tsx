@@ -1,3 +1,4 @@
+import { grey } from '@ant-design/colors';
 import { Checkbox, ConfigProvider } from 'antd';
 import { CheckboxChangeEvent } from 'antd/es/checkbox';
 
@@ -15,13 +16,15 @@ function CustomCheckBox({
 		checkBoxOnChangeHandler(e, index);
 	};
 
+	const color = datasets[index]?.borderColor?.toString() || grey[0];
+
 	return (
 		<ConfigProvider
 			theme={{
 				token: {
-					colorPrimary: datasets[index].borderColor?.toString(),
-					colorBorder: datasets[index].borderColor?.toString(),
-					colorBgContainer: datasets[index].borderColor?.toString(),
+					colorPrimary: color,
+					colorBorder: color,
+					colorBgContainer: color,
 				},
 			}}
 		>
