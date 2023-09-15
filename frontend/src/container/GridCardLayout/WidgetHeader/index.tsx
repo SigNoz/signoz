@@ -9,6 +9,7 @@ import {
 import { Dropdown, MenuProps, Tooltip, Typography } from 'antd';
 import Spinner from 'components/Spinner';
 import { QueryParams } from 'constants/query';
+import { PANEL_TYPES } from 'constants/queryBuilder';
 import ROUTES from 'constants/routes';
 import useComponentPermission from 'hooks/useComponentPermission';
 import history from 'lib/history';
@@ -125,7 +126,7 @@ function WidgetHeader({
 				icon: <FullscreenOutlined />,
 				label: MENUITEM_KEYS_VS_LABELS[MenuItemKeys.View],
 				isVisible: headerMenuList?.includes(MenuItemKeys.View) || false,
-				disabled: queryResponse.isLoading,
+				disabled: queryResponse.isFetching,
 			},
 			{
 				key: MenuItemKeys.Edit,
@@ -157,7 +158,7 @@ function WidgetHeader({
 				disabled: false,
 			},
 		],
-		[queryResponse.isLoading, headerMenuList, editWidget, deleteWidget],
+		[headerMenuList, queryResponse.isFetching, editWidget, deleteWidget],
 	);
 
 	const updatedMenuList = useMemo(() => generateMenuList(actions), [actions]);
@@ -201,9 +202,10 @@ function WidgetHeader({
 				</HeaderContainer>
 			</Dropdown>
 			<ThesholdContainer>{threshold}</ThesholdContainer>
-			{queryResponse.isFetching && !queryResponse.isError && (
-				<Spinner height="5vh" style={spinnerStyles} />
-			)}
+			{(queryResponse.status === 'idle' || queryResponse.status === 'loading') &&
+				widget.id !== PANEL_TYPES.EMPTY_WIDGET && (
+					<Spinner height="5vh" style={spinnerStyles} />
+				)}
 			{queryResponse.isError && (
 				<Tooltip title={errorMessage} placement={errorTooltipPosition}>
 					<ExclamationCircleOutlined style={tooltipStyles} />

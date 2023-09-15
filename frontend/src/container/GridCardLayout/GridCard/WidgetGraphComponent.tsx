@@ -8,7 +8,7 @@ import { useChartMutable } from 'hooks/useChartMutable';
 import { useNotifications } from 'hooks/useNotifications';
 import createQueryParams from 'lib/createQueryParams';
 import history from 'lib/history';
-import { isEmpty, isEqual } from 'lodash-es';
+import isEqual from 'lodash-es/isEqual';
 import { useDashboard } from 'providers/Dashboard/Dashboard';
 import {
 	Dispatch,
@@ -25,7 +25,6 @@ import { useLocation } from 'react-router-dom';
 import { AppState } from 'store/reducers';
 import { Dashboard } from 'types/api/dashboard/getAll';
 import AppReducer from 'types/reducer/app';
-import DashboardReducer from 'types/reducer/dashboards';
 import { eventEmitter } from 'utils/getEventEmitter';
 import { v4 } from 'uuid';
 
@@ -41,8 +40,6 @@ import {
 } from './utils';
 
 function WidgetGraphComponent({
-	enableModel,
-	enableWidgetHeader,
 	data,
 	widget,
 	queryResponse,
@@ -75,10 +72,7 @@ function WidgetGraphComponent({
 		localstoredVisibilityStates,
 	);
 
-	const { dashboards } = useSelector<AppState, DashboardReducer>(
-		(state) => state.dashboards,
-	);
-	const [selectedDashboard] = dashboards;
+	const { selectedDashboard } = useDashboard();
 
 	const canModifyChart = useChartMutable({
 		panelType: widget.panelTypes,
@@ -135,6 +129,8 @@ function WidgetGraphComponent({
 	const updateDashboardMutation = useUpdateDashboard();
 
 	const onDeleteHandler = (): void => {
+		if (!selectedDashboard) return;
+
 		const updatedWidgets = selectedDashboard?.data?.widgets?.filter(
 			(e) => e.id !== widget.id,
 		);
@@ -166,6 +162,8 @@ function WidgetGraphComponent({
 	};
 
 	const onCloneHandler = async (): Promise<void> => {
+		if (!selectedDashboard) return;
+
 		const uuid = v4();
 
 		const layout = [
@@ -221,8 +219,21 @@ function WidgetGraphComponent({
 		onToggleModal(setModal);
 	};
 
-	const getModals = (): JSX.Element => (
-		<>
+	return (
+		<span
+			onMouseOver={(): void => {
+				setHovered(true);
+			}}
+			onFocus={(): void => {
+				setHovered(true);
+			}}
+			onMouseOut={(): void => {
+				setHovered(false);
+			}}
+			onBlur={(): void => {
+				setHovered(false);
+			}}
+		>
 			<Modal
 				destroyOnClose
 				onCancel={onDeleteModelHandler}
@@ -254,59 +265,35 @@ function WidgetGraphComponent({
 					/>
 				</FullViewContainer>
 			</Modal>
-		</>
-	);
 
-	return (
-		<span
-			onMouseOver={(): void => {
-				setHovered(true);
-			}}
-			onFocus={(): void => {
-				setHovered(true);
-			}}
-			onMouseOut={(): void => {
-				setHovered(false);
-			}}
-			onBlur={(): void => {
-				setHovered(false);
-			}}
-		>
-			{enableModel && getModals()}
-			{!isEmpty(widget) && data && (
-				<>
-					{enableWidgetHeader && (
-						<div className="drag-handle">
-							<WidgetHeader
-								parentHover={hovered}
-								title={widget?.title}
-								widget={widget}
-								onView={handleOnView}
-								onDelete={handleOnDelete}
-								onClone={onCloneHandler}
-								queryResponse={queryResponse}
-								errorMessage={errorMessage}
-								threshold={threshold}
-								headerMenuList={headerMenuList}
-							/>
-						</div>
-					)}
-					<GridPanelSwitch
-						panelType={widget.panelTypes}
-						data={data}
-						isStacked={widget.isStacked}
-						opacity={widget.opacity}
-						title={' '}
-						name={name}
-						yAxisUnit={widget.yAxisUnit}
-						onClickHandler={onClickHandler}
-						onDragSelect={onDragSelect}
-						panelData={queryResponse.data?.payload?.data.newResult.data.result || []}
-						query={widget.query}
-						ref={lineChartRef}
-					/>
-				</>
-			)}
+			<div className="drag-handle">
+				<WidgetHeader
+					parentHover={hovered}
+					title={widget?.title}
+					widget={widget}
+					onView={handleOnView}
+					onDelete={handleOnDelete}
+					onClone={onCloneHandler}
+					queryResponse={queryResponse}
+					errorMessage={errorMessage}
+					threshold={threshold}
+					headerMenuList={headerMenuList}
+				/>
+			</div>
+			<GridPanelSwitch
+				panelType={widget.panelTypes}
+				data={data}
+				isStacked={widget.isStacked}
+				opacity={widget.opacity}
+				title={' '}
+				name={name}
+				yAxisUnit={widget.yAxisUnit}
+				onClickHandler={onClickHandler}
+				onDragSelect={onDragSelect}
+				panelData={queryResponse.data?.payload?.data.newResult.data.result || []}
+				query={widget.query}
+				ref={lineChartRef}
+			/>
 		</span>
 	);
 }

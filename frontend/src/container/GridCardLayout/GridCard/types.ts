@@ -15,8 +15,6 @@ export interface GraphVisibilityLegendEntryProps {
 }
 
 export interface WidgetGraphComponentProps {
-	enableModel: boolean;
-	enableWidgetHeader: boolean;
 	widget: Widgets;
 	queryResponse: UseQueryResult<
 		SuccessResponse<MetricRangePayloadProps> | ErrorResponse

@@ -1,9 +1,6 @@
-import { ChartData } from 'chart.js';
-import Spinner from 'components/Spinner';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { useGetQueryRange } from 'hooks/queryBuilder/useGetQueryRange';
 import { useStepInterval } from 'hooks/queryBuilder/useStepInterval';
-import usePreviousValue from 'hooks/usePreviousValue';
 import { getDashboardVariables } from 'lib/dashbaordVariables/getDashboardVariables';
 import getChartData from 'lib/getChartData';
 import isEmpty from 'lodash-es/isEmpty';
@@ -68,7 +65,6 @@ function GridCardGraph({
 		},
 		{
 			queryKey: [
-				widget?.id,
 				maxTime,
 				minTime,
 				globalSelectedInterval,
@@ -82,7 +78,6 @@ function GridCardGraph({
 			onError: (error) => {
 				setErrorMessage(error.message);
 			},
-			refetchOnWindowFocus: false,
 		},
 	);
 
@@ -98,71 +93,21 @@ function GridCardGraph({
 		[queryResponse],
 	);
 
-	const prevChartDataSetRef = usePreviousValue<ChartData>(chartData);
-
-	const isEmptyLayout =
-		widget?.id === PANEL_TYPES.EMPTY_WIDGET || isEmpty(widget);
-
-	if (queryResponse.isRefetching || queryResponse.isLoading) {
-		return <Spinner height="20vh" tip="Loading..." />;
-	}
-
-	if ((queryResponse.isError && !isEmptyLayout) || !isQueryEnabled) {
-		return (
-			<span ref={graphRef}>
-				{!isEmpty(widget) && prevChartDataSetRef && (
-					<WidgetGraphComponent
-						enableModel
-						enableWidgetHeader
-						widget={widget}
-						queryResponse={queryResponse}
-						errorMessage={errorMessage}
-						data={prevChartDataSetRef}
-						name={name}
-						threshold={threshold}
-						headerMenuList={headerMenuList}
-					/>
-				)}
-			</span>
-		);
-	}
-
-	if (!isEmpty(widget) && prevChartDataSetRef?.labels) {
-		return (
-			<span ref={graphRef}>
-				<WidgetGraphComponent
-					enableModel
-					enableWidgetHeader
-					widget={widget}
-					queryResponse={queryResponse}
-					errorMessage={errorMessage}
-					data={prevChartDataSetRef}
-					name={name}
-					threshold={threshold}
-					headerMenuList={headerMenuList}
-					onClickHandler={onClickHandler}
-				/>
-			</span>
-		);
-	}
+	const isEmptyLayout = widget?.id === PANEL_TYPES.EMPTY_WIDGET;
 
 	return (
 		<span ref={graphRef}>
-			{!isEmpty(widget) && !!queryResponse.data?.payload && (
-				<WidgetGraphComponent
-					enableModel={!isEmptyLayout}
-					enableWidgetHeader={!isEmptyLayout}
-					widget={widget}
-					queryResponse={queryResponse}
-					errorMessage={errorMessage}
-					data={chartData}
-					name={name}
-					onDragSelect={onDragSelect}
-					threshold={threshold}
-					headerMenuList={headerMenuList}
-					onClickHandler={onClickHandler}
-				/>
-			)}
+			<WidgetGraphComponent
+				widget={widget}
+				queryResponse={queryResponse}
+				errorMessage={errorMessage}
+				data={chartData}
+				name={name}
+				onDragSelect={onDragSelect}
+				threshold={threshold}
+				headerMenuList={headerMenuList}
+				onClickHandler={onClickHandler}
+			/>
 
 			{isEmptyLayout && <EmptyWidget />}
 		</span>
