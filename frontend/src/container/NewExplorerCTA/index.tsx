@@ -11,23 +11,24 @@ function NewExplorerCTA(): JSX.Element | null {
 	const location = useLocation();
 
 	const isTraceOrLogsExplorerPage = useMemo(
-		() => location.pathname === ROUTES.LOGS || location.pathname === ROUTES.TRACE,
+		() =>
+			location.pathname === ROUTES.LOGS_EXPLORER ||
+			location.pathname === ROUTES.TRACE,
 		[location.pathname],
 	);
 
 	const onClickHandler = (): void => {
-		if (location.pathname === ROUTES.LOGS) {
-			history.push(ROUTES.LOGS_EXPLORER);
+		if (location.pathname === ROUTES.LOGS_EXPLORER) {
+			history.push(ROUTES.LOGS);
 		} else if (location.pathname === ROUTES.TRACE) {
 			history.push(ROUTES.TRACES_EXPLORER);
 		}
 	};
 
-	const buttonText = useMemo(
-		() =>
-			`Try new ${ROUTES.LOGS === location.pathname ? 'Logs' : 'Traces'} Explorer`,
-		[location.pathname],
-	);
+	const buttonText = {
+		[ROUTES.LOGS_EXPLORER]: 'Try old Logs Explorer',
+		[ROUTES.TRACE]: 'Try new Traces Explorer',
+	};
 
 	if (!isTraceOrLogsExplorerPage) {
 		return null;
@@ -41,7 +42,7 @@ function NewExplorerCTA(): JSX.Element | null {
 				danger
 				type="primary"
 			>
-				{buttonText}
+				{buttonText[location.pathname]}
 			</Button>
 		</Badge.Ribbon>
 	);
