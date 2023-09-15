@@ -21,8 +21,6 @@ function NewDashboardPage({ getDashboard }: NewDashboardProps): JSX.Element {
 
 	const { dashboardId } = useParams<Params>();
 
-	console.log('dashboards', dashboards);
-
 	useEffect(() => {
 		getDashboard({
 			uuid: dashboardId,
