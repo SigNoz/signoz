@@ -1,10 +1,6 @@
 import { Layout } from 'react-grid-layout';
 import { ApplySettingsToPanelProps } from 'store/actions/dashboard/applySettingsToPanel';
-import {
-	Dashboard,
-	IDashboardVariable,
-	Widgets,
-} from 'types/api/dashboard/getAll';
+import { Dashboard, Widgets } from 'types/api/dashboard/getAll';
 import { QueryData } from 'types/api/widgets/getQuery';
 
 export const GET_DASHBOARD = 'GET_DASHBOARD';
@@ -18,8 +14,6 @@ export const GET_ALL_DASHBOARD_ERROR = 'GET_ALL_DASHBOARD_ERROR';
 export const GET_DASHBOARD_LOADING_START = 'GET_DASHBOARD_LOADING_START';
 export const GET_DASHBOARD_SUCCESS = 'GET_DASHBOARD_SUCCESS';
 export const GET_DASHBOARD_ERROR = 'GET_DASHBOARD_ERROR';
-export const UPDATE_TITLE_DESCRIPTION_TAGS_SUCCESS =
-	'UPDATE_TITLE_DESCRIPTION_TAGS_SUCCESS';
 export const UPDATE_TITLE_DESCRIPTION_TAGS_ERROR =
 	'UPDATE_TITLE_DESCRIPTION_TAGS_ERROR';
 export const TOGGLE_EDIT_MODE = 'TOGGLE_EDIT_MODE';
@@ -98,15 +92,6 @@ interface DashboardError {
 	};
 }
 
-interface UpdateDashboardTitle {
-	type: typeof UPDATE_TITLE_DESCRIPTION_TAGS_SUCCESS;
-	payload: {
-		title: Dashboard['data']['title'];
-		description: Dashboard['data']['description'];
-		tags: Dashboard['data']['tags'];
-	};
-}
-
 interface ToggleEditMode {
 	type: typeof TOGGLE_EDIT_MODE;
 }
@@ -154,10 +139,6 @@ interface DeleteQuery {
 interface FlushDashboard {
 	type: typeof FLUSH_DASHBOARD;
 }
-interface UpdateDashboardVariables {
-	type: typeof UPDATE_DASHBOARD_VARIABLES;
-	payload: Record<string, IDashboardVariable>;
-}
 
 export type DashboardActions =
 	| GetDashboard
@@ -167,7 +148,6 @@ export type DashboardActions =
 	| GetAllDashboardSuccess
 	| DashboardStart
 	| GetDashboardSuccess
-	| UpdateDashboardTitle
 	| ToggleEditMode
 	| CreateDefaultWidget
 	| ApplySettingsToPanel
@@ -175,5 +155,4 @@ export type DashboardActions =
 	| WidgetDeleteSuccess
 	| UpdateQuery
 	| DeleteQuery
-	| FlushDashboard
-	| UpdateDashboardVariables;
+	| FlushDashboard;

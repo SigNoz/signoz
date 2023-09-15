@@ -1,4 +1,4 @@
-import { notification, Row } from 'antd';
+import { Row } from 'antd';
 import { useUpdateDashboard } from 'hooks/dashboard/useUpdateDashboard';
 import { useNotifications } from 'hooks/useNotifications';
 import { map, sortBy } from 'lodash-es';
@@ -56,7 +56,7 @@ function DashboardVariableSelection(): JSX.Element | null {
 					}
 				},
 				onError: () => {
-					notification.error({
+					notifications.error({
 						message: 'Error while updating variable',
 					});
 				},

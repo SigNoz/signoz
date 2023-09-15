@@ -1,24 +1,19 @@
 import { SaveOutlined } from '@ant-design/icons';
 import { Col, Divider, Input, Space, Typography } from 'antd';
+import { SOMETHING_WENT_WRONG } from 'constants/api';
 import AddTags from 'container/NewDashboard/DashboardSettings/General/AddTags';
+import { useUpdateDashboard } from 'hooks/dashboard/useUpdateDashboard';
+import { useNotifications } from 'hooks/useNotifications';
 import { useDashboard } from 'providers/Dashboard/Dashboard';
-import { useCallback, useState } from 'react';
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { connect } from 'react-redux';
-import { bindActionCreators, Dispatch } from 'redux';
-import { ThunkDispatch } from 'redux-thunk';
-import {
-	UpdateDashboardTitleDescriptionTags,
-	UpdateDashboardTitleDescriptionTagsProps,
-} from 'store/actions';
-import AppActions from 'types/actions';
 
 import { Button } from './styles';
 
-function GeneralDashboardSettings({
-	updateDashboardTitleDescriptionTags,
-}: DescriptionOfDashboardProps): JSX.Element {
-	const { selectedDashboard, layouts } = useDashboard();
+function GeneralDashboardSettings(): JSX.Element {
+	const { selectedDashboard, setSelectedDashboard } = useDashboard();
+
+	const updateDashboardMutation = useUpdateDashboard();
 
 	const selectedData = selectedDashboard?.data;
 
@@ -32,35 +27,35 @@ function GeneralDashboardSettings({
 
 	const { t } = useTranslation('common');
 
-	const onSaveHandler = useCallback(() => {
-		// @TODO need to update this function to take title,description,tags only
-		if (selectedDashboard) {
-			updateDashboardTitleDescriptionTags({
-				dashboard: {
-					...selectedDashboard,
-					data: {
-						name: selectedData?.name,
-						variables: selectedData?.variables || {},
-						widgets: selectedData?.widgets,
-						layout: layouts,
-						description: updatedDescription,
-						tags: updatedTags,
-						title: updatedTitle,
-					},
+	const { notifications } = useNotifications();
+
+	const onSaveHandler = (): void => {
+		if (!selectedDashboard) return;
+
+		updateDashboardMutation.mutateAsync(
+			{
+				...selectedDashboard,
+				data: {
+					...selectedDashboard.data,
+					description: updatedDescription,
+					tags: updatedTags,
+					name: updatedTitle,
 				},
-			});
-		}
-	}, [
-		selectedDashboard,
-		updateDashboardTitleDescriptionTags,
-		selectedData?.name,
-		selectedData?.variables,
-		selectedData?.widgets,
-		layouts,
-		updatedDescription,
-		updatedTags,
-		updatedTitle,
-	]);
+			},
+			{
+				onSuccess: (updatedDashboard) => {
+					if (updatedDashboard.payload) {
+						setSelectedDashboard(updatedDashboard.payload);
+					}
+				},
+				onError: () => {
+					notifications.error({
+						message: SOMETHING_WENT_WRONG,
+					});
+				},
+			},
+		);
+	};
 
 	return (
 		<Col>
@@ -95,21 +90,4 @@ function GeneralDashboardSettings({
 	);
 }
 
-interface DispatchProps {
-	updateDashboardTitleDescriptionTags: (
-		props: UpdateDashboardTitleDescriptionTagsProps,
-	) => (dispatch: Dispatch<AppActions>) => void;
-}
-
-const mapDispatchToProps = (
-	dispatch: ThunkDispatch<unknown, unknown, AppActions>,
-): DispatchProps => ({
-	updateDashboardTitleDescriptionTags: bindActionCreators(
-		UpdateDashboardTitleDescriptionTags,
-		dispatch,
-	),
-});
-
-type DescriptionOfDashboardProps = DispatchProps;
-
-export default connect(null, mapDispatchToProps)(GeneralDashboardSettings);
+export default GeneralDashboardSettings;
