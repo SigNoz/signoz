@@ -30,7 +30,6 @@ import (
 	"go.signoz.io/signoz/pkg/query-service/dao"
 	"go.signoz.io/signoz/pkg/query-service/model"
 	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
-	"go.signoz.io/signoz/pkg/query-service/queryBuilderToExpr"
 	"golang.org/x/exp/maps"
 	"golang.org/x/exp/slices"
 )
@@ -513,14 +512,7 @@ func (tb *LogPipelinesTestBed) assertPipelinesSentToOpampClient(
 			},
 		)
 		require.GreaterOrEqual(tb.t, pipelineIdx, 0)
-		logPipelineBeingValidated := pipelines[pipelineIdx]
-
-		// validate collector conf filter expr is as expected.
-		var pipelineFilterSet v3.FilterSet
-		err := json.Unmarshal([]byte(logPipelineBeingValidated.Filter), &pipelineFilterSet)
-		require.Nil(tb.t, err)
-
-		expectedExpr, err := queryBuilderToExpr.Parse(&pipelineFilterSet)
+		expectedExpr, err := logparsingpipeline.PipelineFilterExpr(pipelines[pipelineIdx].Filter)
 		require.Nil(tb.t, err)
 		require.Equal(tb.t, expectedExpr, pipelineFilterExpr)
 	}

@@ -6,8 +6,6 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/antonmedv/expr"
-
 	"go.signoz.io/signoz/pkg/query-service/model"
 )
 
@@ -46,8 +44,8 @@ func (p *PostablePipeline) IsValid() error {
 		return fmt.Errorf("pipeline filter is required")
 	}
 
-	// check the expression
-	_, err := expr.Compile(p.Filter, expr.AsBool(), expr.AllowUndefinedVariables())
+	// check the filter
+	_, err := PipelineFilterExpr(p.Filter)
 	if err != nil {
 		return fmt.Errorf(fmt.Sprintf("filter for pipeline %v is not correct: %v", p.Name, err.Error()))
 	}
