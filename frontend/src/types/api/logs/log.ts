@@ -14,3 +14,20 @@ export interface ILog {
 	attributesInt: Record<string, never>;
 	attributesFloat: Record<string, never>;
 }
+
+type OmitAttributesResources = Pick<
+	ILog,
+	Exclude<
+		keyof ILog,
+		| 'resources_string'
+		| 'attributesString'
+		| 'attributes_string'
+		| 'attributesInt'
+		| 'attributesFloat'
+	>
+>;
+
+export type ILogAggregateAttributesResources = OmitAttributesResources & {
+	attributes: Record<string, never>;
+	resources: Record<string, never>;
+};

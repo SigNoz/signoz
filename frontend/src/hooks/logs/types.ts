@@ -1,5 +1,6 @@
 import { MouseEventHandler } from 'react';
 import { ILog } from 'types/api/logs/log';
+import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
 
 export type LogTimeRange = {
 	start: number;
@@ -20,5 +21,11 @@ export type UseActiveLog = {
 	activeLog: ILog | null;
 	onSetActiveLog: (log: ILog) => void;
 	onClearActiveLog: () => void;
-	onAddToQuery: (fieldKey: string, fieldValue: string, operator: string) => void;
+	onAddToQuery: (
+		fieldKey: string,
+		fieldValue: string,
+		operator: string,
+		isJSON?: boolean,
+		dataType?: DataTypes,
+	) => void;
 };

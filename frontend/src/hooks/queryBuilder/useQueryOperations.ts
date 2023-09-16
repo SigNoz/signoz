@@ -7,7 +7,7 @@ import {
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { getOperatorsBySourceAndPanelType } from 'lib/newQueryBuilder/getOperatorsBySourceAndPanelType';
 import { findDataTypeOfOperator } from 'lib/query/findDataTypeOfOperator';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 import {
@@ -148,13 +148,9 @@ export const useQueryOperations: UseQueryOperations = ({
 		[query, index, handleSetQueryData],
 	);
 
-	const isMetricsDataSource = useMemo(
-		() => query.dataSource === DataSource.METRICS,
-		[query.dataSource],
-	);
-	const isTracePanelType = useMemo(() => panelType === PANEL_TYPES.TRACE, [
-		panelType,
-	]);
+	const isMetricsDataSource = query.dataSource === DataSource.METRICS;
+
+	const isTracePanelType = panelType === PANEL_TYPES.TRACE;
 
 	useEffect(() => {
 		if (initialDataSource && dataSource !== initialDataSource) return;

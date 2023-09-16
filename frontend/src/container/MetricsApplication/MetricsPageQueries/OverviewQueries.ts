@@ -1,5 +1,8 @@
 import { OPERATORS } from 'constants/queryBuilder';
-import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
+import {
+	BaseAutocompleteData,
+	DataTypes,
+} from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { TagFilterItem } from 'types/api/queryBuilder/queryBuilderData';
 import {
 	DataSource,
@@ -8,7 +11,6 @@ import {
 } from 'types/common/queryBuilder';
 
 import {
-	DataType,
 	FORMULA,
 	GraphTitle,
 	LATENCY_AGGREGATEOPERATOR,
@@ -40,7 +42,7 @@ export const latency = ({
 		key: isSpanMetricEnable
 			? WidgetKeys.Signoz_latency_bucket
 			: WidgetKeys.DurationNano,
-		dataType: DataType.FLOAT64,
+		dataType: DataTypes.Float64,
 		isColumn: true,
 		type: isSpanMetricEnable ? '' : MetricsType.Tag,
 	};
@@ -52,7 +54,7 @@ export const latency = ({
 			id: '',
 			key: {
 				key: isSpanMetricEnable ? WidgetKeys.Service_name : WidgetKeys.ServiceName,
-				dataType: DataType.STRING,
+				dataType: DataTypes.String,
 				type: isSpanMetricEnable ? MetricsType.Resource : MetricsType.Tag,
 				isColumn: !isSpanMetricEnable,
 			},
@@ -62,7 +64,7 @@ export const latency = ({
 		{
 			id: '',
 			key: {
-				dataType: DataType.STRING,
+				dataType: DataTypes.String,
 				isColumn: !isSpanMetricEnable,
 				key: isSpanMetricEnable ? WidgetKeys.Operation : WidgetKeys.Name,
 				type: MetricsType.Tag,
@@ -97,21 +99,21 @@ export const apDexTracesQueryBuilderQueries = ({
 	threashold,
 }: ApDexProps): QueryBuilderData => {
 	const autoCompleteDataA: BaseAutocompleteData = {
-		dataType: DataType.FLOAT64,
+		dataType: DataTypes.Float64,
 		isColumn: true,
 		key: '',
 		type: '',
 	};
 
 	const autoCompleteDataB: BaseAutocompleteData = {
-		dataType: DataType.FLOAT64,
+		dataType: DataTypes.Float64,
 		isColumn: true,
 		key: '',
 		type: '',
 	};
 
 	const autoCompleteDataC: BaseAutocompleteData = {
-		dataType: DataType.FLOAT64,
+		dataType: DataTypes.Float64,
 		isColumn: true,
 		key: '',
 		type: '',
@@ -122,7 +124,7 @@ export const apDexTracesQueryBuilderQueries = ({
 			id: '',
 			key: {
 				key: WidgetKeys.ServiceName,
-				dataType: DataType.STRING,
+				dataType: DataTypes.String,
 				isColumn: true,
 				type: MetricsType.Tag,
 			},
@@ -133,7 +135,7 @@ export const apDexTracesQueryBuilderQueries = ({
 			id: '',
 			key: {
 				key: WidgetKeys.Name,
-				dataType: DataType.STRING,
+				dataType: DataTypes.String,
 				isColumn: true,
 				type: MetricsType.Tag,
 			},
@@ -148,7 +150,7 @@ export const apDexTracesQueryBuilderQueries = ({
 			id: '',
 			key: {
 				key: WidgetKeys.HasError,
-				dataType: DataType.BOOL,
+				dataType: DataTypes.bool,
 				isColumn: true,
 				type: MetricsType.Tag,
 			},
@@ -159,7 +161,7 @@ export const apDexTracesQueryBuilderQueries = ({
 			id: '',
 			key: {
 				key: WidgetKeys.DurationNano,
-				dataType: DataType.FLOAT64,
+				dataType: DataTypes.Float64,
 				isColumn: true,
 				type: MetricsType.Tag,
 			},
@@ -170,7 +172,7 @@ export const apDexTracesQueryBuilderQueries = ({
 			id: '',
 			key: {
 				key: WidgetKeys.ServiceName,
-				dataType: DataType.STRING,
+				dataType: DataTypes.String,
 				isColumn: true,
 				type: MetricsType.Tag,
 			},
@@ -181,7 +183,7 @@ export const apDexTracesQueryBuilderQueries = ({
 			id: '',
 			key: {
 				key: WidgetKeys.Name,
-				dataType: DataType.STRING,
+				dataType: DataTypes.String,
 				isColumn: true,
 				type: MetricsType.Tag,
 			},
@@ -195,7 +197,7 @@ export const apDexTracesQueryBuilderQueries = ({
 			id: '',
 			key: {
 				key: WidgetKeys.DurationNano,
-				dataType: DataType.FLOAT64,
+				dataType: DataTypes.Float64,
 				isColumn: true,
 				type: MetricsType.Tag,
 			},
@@ -206,7 +208,7 @@ export const apDexTracesQueryBuilderQueries = ({
 			id: '',
 			key: {
 				key: WidgetKeys.HasError,
-				dataType: DataType.BOOL,
+				dataType: DataTypes.bool,
 				isColumn: true,
 				type: MetricsType.Tag,
 			},
@@ -217,7 +219,7 @@ export const apDexTracesQueryBuilderQueries = ({
 			id: '',
 			key: {
 				key: WidgetKeys.ServiceName,
-				dataType: DataType.STRING,
+				dataType: DataTypes.String,
 				isColumn: true,
 				type: MetricsType.Tag,
 			},
@@ -228,7 +230,7 @@ export const apDexTracesQueryBuilderQueries = ({
 			id: '',
 			key: {
 				key: WidgetKeys.Name,
-				dataType: DataType.STRING,
+				dataType: DataTypes.String,
 				isColumn: true,
 				type: MetricsType.Tag,
 			},
@@ -275,21 +277,21 @@ export const apDexMetricsQueryBuilderQueries = ({
 }: ApDexMetricsQueryBuilderQueriesProps): QueryBuilderData => {
 	const autoCompleteDataA: BaseAutocompleteData = {
 		key: WidgetKeys.SignozLatencyCount,
-		dataType: DataType.FLOAT64,
+		dataType: DataTypes.Float64,
 		isColumn: true,
 		type: '',
 	};
 
 	const autoCompleteDataB: BaseAutocompleteData = {
 		key: WidgetKeys.Signoz_latency_bucket,
-		dataType: DataType.FLOAT64,
+		dataType: DataTypes.Float64,
 		isColumn: true,
 		type: '',
 	};
 
 	const autoCompleteDataC: BaseAutocompleteData = {
 		key: WidgetKeys.Signoz_latency_bucket,
-		dataType: DataType.FLOAT64,
+		dataType: DataTypes.Float64,
 		isColumn: true,
 		type: '',
 	};
@@ -299,7 +301,7 @@ export const apDexMetricsQueryBuilderQueries = ({
 			id: '',
 			key: {
 				key: WidgetKeys.Service_name,
-				dataType: DataType.STRING,
+				dataType: DataTypes.String,
 				isColumn: false,
 				type: MetricsType.Tag,
 			},
@@ -310,7 +312,7 @@ export const apDexMetricsQueryBuilderQueries = ({
 			id: '',
 			key: {
 				key: WidgetKeys.Operation,
-				dataType: DataType.STRING,
+				dataType: DataTypes.String,
 				isColumn: false,
 				type: MetricsType.Tag,
 			},
@@ -325,7 +327,7 @@ export const apDexMetricsQueryBuilderQueries = ({
 			id: '',
 			key: {
 				key: WidgetKeys.StatusCode,
-				dataType: DataType.STRING,
+				dataType: DataTypes.String,
 				isColumn: false,
 				type: MetricsType.Tag,
 			},
@@ -336,7 +338,7 @@ export const apDexMetricsQueryBuilderQueries = ({
 			id: '',
 			key: {
 				key: WidgetKeys.Le,
-				dataType: DataType.STRING,
+				dataType: DataTypes.String,
 				isColumn: false,
 				type: MetricsType.Tag,
 			},
@@ -347,7 +349,7 @@ export const apDexMetricsQueryBuilderQueries = ({
 			id: '',
 			key: {
 				key: WidgetKeys.Service_name,
-				dataType: DataType.STRING,
+				dataType: DataTypes.String,
 				isColumn: false,
 				type: MetricsType.Tag,
 			},
@@ -358,7 +360,7 @@ export const apDexMetricsQueryBuilderQueries = ({
 			id: '',
 			key: {
 				key: WidgetKeys.Operation,
-				dataType: DataType.STRING,
+				dataType: DataTypes.String,
 				isColumn: false,
 				type: MetricsType.Tag,
 			},
@@ -373,7 +375,7 @@ export const apDexMetricsQueryBuilderQueries = ({
 			id: '',
 			key: {
 				key: WidgetKeys.Le,
-				dataType: DataType.STRING,
+				dataType: DataTypes.String,
 				isColumn: false,
 				type: MetricsType.Tag,
 			},
@@ -384,7 +386,7 @@ export const apDexMetricsQueryBuilderQueries = ({
 			id: '',
 			key: {
 				key: WidgetKeys.StatusCode,
-				dataType: DataType.STRING,
+				dataType: DataTypes.String,
 				isColumn: false,
 				type: MetricsType.Tag,
 			},
@@ -395,7 +397,7 @@ export const apDexMetricsQueryBuilderQueries = ({
 			id: '',
 			key: {
 				key: WidgetKeys.Service_name,
-				dataType: DataType.STRING,
+				dataType: DataTypes.String,
 				isColumn: false,
 				type: MetricsType.Tag,
 			},
@@ -406,7 +408,7 @@ export const apDexMetricsQueryBuilderQueries = ({
 			id: '',
 			key: {
 				key: WidgetKeys.Operation,
-				dataType: DataType.STRING,
+				dataType: DataTypes.String,
 				isColumn: false,
 				type: MetricsType.Tag,
 			},
@@ -455,7 +457,7 @@ export const operationPerSec = ({
 	const autocompleteData: BaseAutocompleteData[] = [
 		{
 			key: WidgetKeys.SignozLatencyCount,
-			dataType: DataType.FLOAT64,
+			dataType: DataTypes.Float64,
 			isColumn: true,
 			type: '',
 		},
@@ -467,7 +469,7 @@ export const operationPerSec = ({
 				id: '',
 				key: {
 					key: WidgetKeys.Service_name,
-					dataType: DataType.STRING,
+					dataType: DataTypes.String,
 					isColumn: false,
 					type: MetricsType.Resource,
 				},
@@ -478,7 +480,7 @@ export const operationPerSec = ({
 				id: '',
 				key: {
 					key: WidgetKeys.Operation,
-					dataType: DataType.STRING,
+					dataType: DataTypes.String,
 					isColumn: false,
 					type: MetricsType.Tag,
 				},
@@ -506,13 +508,13 @@ export const errorPercentage = ({
 }: OperationPerSecProps): QueryBuilderData => {
 	const autocompleteDataA: BaseAutocompleteData = {
 		key: WidgetKeys.SignozCallsTotal,
-		dataType: DataType.FLOAT64,
+		dataType: DataTypes.Float64,
 		isColumn: true,
 		type: '',
 	};
 	const autocompleteDataB: BaseAutocompleteData = {
 		key: WidgetKeys.SignozCallsTotal,
-		dataType: DataType.FLOAT64,
+		dataType: DataTypes.Float64,
 		isColumn: true,
 		type: '',
 	};
@@ -524,7 +526,7 @@ export const errorPercentage = ({
 			id: '',
 			key: {
 				key: WidgetKeys.Service_name,
-				dataType: DataType.STRING,
+				dataType: DataTypes.String,
 				isColumn: false,
 				type: MetricsType.Resource,
 			},
@@ -535,7 +537,7 @@ export const errorPercentage = ({
 			id: '',
 			key: {
 				key: WidgetKeys.Operation,
-				dataType: DataType.STRING,
+				dataType: DataTypes.String,
 				isColumn: false,
 				type: MetricsType.Tag,
 			},
@@ -546,7 +548,7 @@ export const errorPercentage = ({
 			id: '',
 			key: {
 				key: WidgetKeys.StatusCode,
-				dataType: DataType.INT64,
+				dataType: DataTypes.Int64,
 				isColumn: false,
 				type: MetricsType.Tag,
 			},
@@ -561,7 +563,7 @@ export const errorPercentage = ({
 			id: '',
 			key: {
 				key: WidgetKeys.Service_name,
-				dataType: DataType.STRING,
+				dataType: DataTypes.String,
 				isColumn: false,
 				type: MetricsType.Resource,
 			},
@@ -572,7 +574,7 @@ export const errorPercentage = ({
 			id: '',
 			key: {
 				key: WidgetKeys.Operation,
-				dataType: DataType.STRING,
+				dataType: DataTypes.String,
 				isColumn: false,
 				type: MetricsType.Tag,
 			},
