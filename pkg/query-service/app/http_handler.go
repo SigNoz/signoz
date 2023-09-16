@@ -3062,7 +3062,7 @@ func applyMetricLimit(results []*v3.Result, queryRangeParams *v3.QueryRangeParam
 			limit := builderQueries[result.QueryName].Limit
 
 			orderByList := builderQueries[result.QueryName].OrderBy
-			if limit != 0 {
+			if limit >= 0 {
 				if len(orderByList) == 0 {
 					// If no orderBy is specified, sort by value in descending order
 					orderByList = []v3.OrderBy{{ColumnName: constants.SigNozOrderByValue, Order: "desc"}}
@@ -3070,6 +3070,18 @@ func applyMetricLimit(results []*v3.Result, queryRangeParams *v3.QueryRangeParam
 				sort.SliceStable(result.Series, func(i, j int) bool {
 					for _, orderBy := range orderByList {
 						if orderBy.ColumnName == constants.SigNozOrderByValue {
+
+							// For table type queries (we rely on the fact that one value for row), sort
+							// based on final aggregation value
+							if len(result.Series[i].Points) == 1 && len(result.Series[j].Points) == 1 {
+								if orderBy.Order == "asc" {
+									return result.Series[i].Points[0].Value < result.Series[j].Points[0].Value
+								} else if orderBy.Order == "desc" {
+									return result.Series[i].Points[0].Value > result.Series[j].Points[0].Value
+								}
+							}
+
+							// For graph type queries, sort based on GroupingSetsPoint
 							if result.Series[i].GroupingSetsPoint == nil || result.Series[j].GroupingSetsPoint == nil {
 								// Handle nil GroupingSetsPoint, if needed
 								// Here, we assume non-nil values are always less than nil values
@@ -3102,7 +3114,7 @@ func applyMetricLimit(results []*v3.Result, queryRangeParams *v3.QueryRangeParam
 					return i < j
 				})
 
-				if len(result.Series) > int(limit) {
+				if limit > 0 && len(result.Series) > int(limit) {
 					result.Series = result.Series[:limit]
 				}
 			}
