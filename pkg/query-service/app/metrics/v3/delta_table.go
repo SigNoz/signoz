@@ -51,7 +51,7 @@ func buildDeltaMetricQueryForTable(start, end, _ int64, mq *v3.BuilderQuery, tab
 	samplesTableTimeFilter := fmt.Sprintf("metric_name = %s AND timestamp_ms >= %d AND timestamp_ms <= %d", utils.ClickHouseFormattedValue(mq.AggregateAttribute.Key), start, end)
 
 	queryTmpl :=
-		"SELECT %s toStartOfHour(now()) as ts," + // now() has no menaing & used as a placeholder for ts
+		"SELECT %s toStartOfYear(toDateTime(intDiv(timestamp_ms, 1000))) as ts," + // now() has no menaing & used as a placeholder for ts
 			" %s as value" +
 			" FROM " + constants.SIGNOZ_METRIC_DBNAME + "." + constants.SIGNOZ_SAMPLES_TABLENAME +
 			" INNER JOIN" +
